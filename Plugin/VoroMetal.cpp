@@ -443,7 +443,7 @@ void voroMetal3D::print_geo_line_loop(int index, std::vector<int> &indices,
                                       std::ofstream &file)
 {
   std::size_t i;
-  file << "Line Loop(" << index << ")={";
+  file << "Curve Loop(" << index << ")={";
   for(i = 0; i < indices.size(); i++) {
     if(orientations[i] == 1) file << "-";
     file << indices[i];

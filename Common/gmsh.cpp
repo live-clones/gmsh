@@ -4355,13 +4355,13 @@ GMSH_API void gmsh::model::mesh::setSizeCallback(
   std::function<double(int, int, double, double, double)> callback)
 {
   if(!_checkInit()) return;
-  CTX::instance()->mesh.lcCallback = callback;
+  GModel::current()->lcCallback = callback;
 }
 
 GMSH_API void gmsh::model::mesh::removeSizeCallback()
 {
   if(!_checkInit()) return;
-  CTX::instance()->mesh.lcCallback = nullptr;
+  GModel::current()->lcCallback = nullptr;
 }
 
 GMSH_API void

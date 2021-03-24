@@ -59,6 +59,7 @@ static void computeNaturalCross (PolyMesh::Vertex *v,
 
 static void printLabelling (const char* fn, PolyMesh *pm, std::map<PolyMesh::Vertex*,int> &_labels)
 {
+  if (Msg::GetVerbosity()  < 99)return;
   FILE *f = fopen(fn,"w");
   fprintf(f,"View \"labels\"{\n");
   for (auto v :  pm->vertices){
@@ -145,6 +146,8 @@ void meshGFaceQuadrangulateBipartiteLabelling (int faceTag){
   std::map<PolyMesh::Vertex*,int> _labels;
   std::map<PolyMesh::Vertex*,SVector3> _dirs;
 
+  Msg::Info("Quadrangulation of face %d using Bipartite Labelling",faceTag);
+  
   for (auto v : pm->vertices)_labels[v] = -1;
   
   for (auto v : pm->vertices){
@@ -309,7 +312,7 @@ void meshGFaceQuadrangulateBipartiteLabelling (int faceTag){
     }    
   }
   printLabelling ("labelling_final_split.pos",pm, _labels);  
-
+  
   for (auto he : pm->hedges){
     if (he->v != nullptr && he->opposite  != nullptr){
       PolyMesh::Vertex *v0 = he->v;
@@ -323,15 +326,15 @@ void meshGFaceQuadrangulateBipartiteLabelling (int faceTag){
   }
   pm->clean();
   printLabelling ("labelling_final_split_quad.pos",pm, _labels);  
-
+  
+  
   PolyMesh2GFace(pm, faceTag);
 
   delete pm;
 
-  GFace *gf = GModel::current()->getFaceByTag(faceTag);
+  /*  GFace *gf = GModel::current()->getFaceByTag(faceTag);
   SurfaceProjector sp;
   fillSurfaceProjector(gf, &sp);
   optimizeGeometryQuadMesh(gf, &sp);
-
-
+  */
 }

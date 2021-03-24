@@ -2430,6 +2430,7 @@ optionWindow::optionWindow(int deltaFontSize)
         {"Blossom", 0, nullptr, nullptr},
         {"Simple Full-Quad", 0, nullptr, nullptr},
         {"Blossom Full-Quad", 0, nullptr, nullptr},
+        {"Christos's bipartite labelling", 0, nullptr, nullptr},
         {nullptr}};
       static Fl_Menu_Item menu_subdivision_algo[] = {
         {"None", 0, nullptr, nullptr},

@@ -93,11 +93,20 @@ int PolyMesh2GFace(PolyMesh *pm, int faceTag) {
   gf->triangles.clear();
   gf->quadrangles.clear();
 
+  std::map<int, MVertex*> news;
+  
   for (auto f : pm->faces){
     PolyMesh::Vertex *v[4] = {f->he->v,f->he->next->v,f->he->next->next->v,f->he->next->next->next->v};
     MVertex *v_gmsh[4];
     for (int i=0;i<pm->num_sides(f->he);i++){
-      if (v[i]->data != -1)v_gmsh[i] = GModel::current()->getMeshVertexByTag(v[i]->data);
+      if (v[i]->data != -1){
+	auto it = news.find(v[i]->data);
+	if (it == news.end())
+	  v_gmsh[i] = GModel::current()->getMeshVertexByTag(v[i]->data);
+	else
+	  v_gmsh[i] = it->second;
+	//	if (! v_gmsh[i] ) printf("error %d\n",v[i]->data);
+      }
       else {
 	double uv[2] = {0,0};
 	GPoint gp = gf->closestPoint(SPoint3(v[i]->position.x(),v[i]->position.y(),
@@ -105,8 +114,10 @@ int PolyMesh2GFace(PolyMesh *pm, int faceTag) {
 	if (gp.succeeded())
 	  v_gmsh[i] = new MFaceVertex (gp.x(),gp.y(),gp.z(),gf,gp.u(),gp.v());
 	else
-	  v_gmsh[i] = new MFaceVertex (v[i]->position.x(),v[i]->position.y(), v[i]->position.z(),gf,gp.u(),gp.v());
+	  v_gmsh[i] = new MFaceVertex (v[i]->position.x(),v[i]->position.y(), v[i]->position.z(),gf,v[i]->position.x(),v[i]->position.y());
 	gf->mesh_vertices.push_back(v_gmsh[i]);	
+	v[i]->data = v_gmsh[i]->getNum();
+	news[v[i]->data] =  v_gmsh[i];
       }
     }
     if (pm->num_sides(f->he) == 3)

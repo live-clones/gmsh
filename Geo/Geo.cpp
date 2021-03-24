@@ -3458,7 +3458,7 @@ bool SortEdgesInLoop(int num, List_T *edges, bool reorient)
         if(c2->end == c0->beg) {
           if(List_Nbr(temp)) {
             Msg::Info(
-              "Starting subloop %d in Curve Loop %d (are you sure about this?)",
+              "Starting subloop %d in curve loop %d (are you sure about this?)",
               ++k, num);
             c0 = c1 = *(Curve **)List_Pointer(temp, 0);
             List_Add(edges, &c1->Num);
@@ -3469,7 +3469,7 @@ bool SortEdgesInLoop(int num, List_T *edges, bool reorient)
       }
     }
     if(j++ > nbEdges) {
-      Msg::Error("Curve Loop %d is wrong", num);
+      Msg::Error("Curve loop %d is wrong", num);
       ok = false;
       break;
     }

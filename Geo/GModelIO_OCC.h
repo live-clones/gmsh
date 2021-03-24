@@ -512,7 +512,7 @@ public:
   }
   bool addCurveLoop(int &tag, const std::vector<int> &curveTags)
   {
-    return _error("add line loop");
+    return _error("add curve loop");
   }
   bool addRectangle(int &tag, double x, double y, double z, double dx,
                     double dy, double roundedRadius = 0.)

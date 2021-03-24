@@ -5895,8 +5895,9 @@ double opt_mesh_algo_recombine(OPT_ARGS_NUM)
        (int)val != CTX::instance()->mesh.algoRecombine)
       Msg::SetOnelabChanged(2);
     CTX::instance()->mesh.algoRecombine = (int)val;
-    if(CTX::instance()->mesh.algoRecombine < 0 &&
-       CTX::instance()->mesh.algoRecombine > 3)
+    printf("%d\n",(int)val);
+    if(CTX::instance()->mesh.algoRecombine < 0 ||
+       CTX::instance()->mesh.algoRecombine > 4)
       CTX::instance()->mesh.algoRecombine = 0;
   }
 #if defined(HAVE_FLTK)

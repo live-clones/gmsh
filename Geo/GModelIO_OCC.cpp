@@ -1430,7 +1430,7 @@ bool OCC_Internals::addWire(int &tag, const std::vector<int> &curveTags,
                             bool checkClosed)
 {
   if(tag >= 0 && _tagWire.IsBound(tag)) {
-    Msg::Error("OpenCASCADE wire or line loop with tag %d already exists", tag);
+    Msg::Error("OpenCASCADE wire or curve loop with tag %d already exists", tag);
     return false;
   }
 
@@ -1455,7 +1455,7 @@ bool OCC_Internals::addWire(int &tag, const std::vector<int> &curveTags,
     }
     wire = w.Wire();
     if(checkClosed && !wire.Closed()) {
-      Msg::Error("Line Loop is not closed");
+      Msg::Error("Curve loop is not closed");
       return false;
     }
     if(tag < 0) tag = getMaxTag(-1) + 1;
@@ -1636,7 +1636,7 @@ bool OCC_Internals::addPlaneSurface(int &tag, const std::vector<int> &wireTags)
     // OCC factories, allow negative tags - and simply ignore the sign here
     int wireTag = std::abs(wireTags[i]);
     if(!_tagWire.IsBound(wireTag)) {
-      Msg::Error("Unknown OpenCASCADE line loop with tag %d", wireTag);
+      Msg::Error("Unknown OpenCASCADE curve loop with tag %d", wireTag);
       return false;
     }
     TopoDS_Wire wire = TopoDS::Wire(_tagWire.Find(wireTag));
@@ -1645,7 +1645,7 @@ bool OCC_Internals::addPlaneSurface(int &tag, const std::vector<int> &wireTags)
 
   TopoDS_Face result;
   if(wires.size() == 0) {
-    Msg::Error("Plane surface requires at least one line loop");
+    Msg::Error("Plane surface requires at least one curve loop");
     return false;
   }
 
@@ -1659,7 +1659,7 @@ bool OCC_Internals::addPlaneSurface(int &tag, const std::vector<int> &wireTags)
     }
     f.Build();
     if(!f.IsDone()) {
-      Msg::Error("Could not create face");
+      Msg::Error("Could not create surface");
       return false;
     }
     result = f.Face();
@@ -1694,7 +1694,7 @@ bool OCC_Internals::addSurfaceFilling(int &tag, int wireTag,
     BRepOffsetAPI_MakeFilling f;
     // bounding edge constraints
     if(!_tagWire.IsBound(wireTag)) {
-      Msg::Error("Unknown OpenCASCADE line loop with tag %d", wireTag);
+      Msg::Error("Unknown OpenCASCADE curve loop with tag %d", wireTag);
       return false;
     }
     TopoDS_Wire wire = TopoDS::Wire(_tagWire.Find(wireTag));
@@ -1766,7 +1766,7 @@ bool OCC_Internals::addBSplineFilling(int &tag, int wireTag,
   try {
     GeomFill_BSplineCurves f;
     if(!_tagWire.IsBound(wireTag)) {
-      Msg::Error("Unknown OpenCASCADE line loop with tag %d", wireTag);
+      Msg::Error("Unknown OpenCASCADE curve loop with tag %d", wireTag);
       return false;
     }
     TopoDS_Wire wire = TopoDS::Wire(_tagWire.Find(wireTag));
@@ -1835,7 +1835,7 @@ bool OCC_Internals::addBezierFilling(int &tag, int wireTag,
   try {
     GeomFill_BezierCurves f;
     if(!_tagWire.IsBound(wireTag)) {
-      Msg::Error("Unknown OpenCASCADE line loop with tag %d", wireTag);
+      Msg::Error("Unknown OpenCASCADE curve loop with tag %d", wireTag);
       return false;
     }
     TopoDS_Wire wire = TopoDS::Wire(_tagWire.Find(wireTag));
@@ -2099,7 +2099,7 @@ bool OCC_Internals::addBSplineSurface(
   for(std::size_t i = 0; i < wireTags.size(); i++) {
     int wireTag = std::abs(wireTags[i]);
     if(!_tagWire.IsBound(wireTag)) {
-      Msg::Error("Unknown OpenCASCADE line loop with tag %d", wireTag);
+      Msg::Error("Unknown OpenCASCADE curve loop with tag %d", wireTag);
       return false;
     }
     TopoDS_Wire wire = TopoDS::Wire(_tagWire.Find(wireTag));
@@ -2180,7 +2180,7 @@ bool OCC_Internals::addBezierSurface(int &tag,
   for(std::size_t i = 0; i < wireTags.size(); i++) {
     int wireTag = std::abs(wireTags[i]);
     if(!_tagWire.IsBound(wireTag)) {
-      Msg::Error("Unknown OpenCASCADE line loop with tag %d", wireTag);
+      Msg::Error("Unknown OpenCASCADE curve loop with tag %d", wireTag);
       return false;
     }
     TopoDS_Wire wire = TopoDS::Wire(_tagWire.Find(wireTag));
@@ -2232,7 +2232,7 @@ bool OCC_Internals::addTrimmedSurface(int &tag, int surfaceTag,
   for(std::size_t i = 0; i < wireTags.size(); i++) {
     int wireTag = std::abs(wireTags[i]);
     if(!_tagWire.IsBound(wireTag)) {
-      Msg::Error("Unknown OpenCASCADE line loop with tag %d", wireTag);
+      Msg::Error("Unknown OpenCASCADE curve loop with tag %d", wireTag);
       return false;
     }
     TopoDS_Wire wire = TopoDS::Wire(_tagWire.Find(wireTag));
@@ -2649,7 +2649,7 @@ bool OCC_Internals::addThruSections(
     // ts.SetSmoothing(Standard_True);
     for(std::size_t i = 0; i < wireTags.size(); i++) {
       if(!_tagWire.IsBound(wireTags[i])) {
-        Msg::Error("Unknown OpenCASCADE wire or line loop with tag %d",
+        Msg::Error("Unknown OpenCASCADE wire or curve loop with tag %d",
                    wireTags[i]);
         return false;
       }
