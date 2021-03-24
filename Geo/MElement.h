@@ -22,6 +22,7 @@
 class GModel;
 class nodalBasis;
 class JacobianBasis;
+class bezierCoeff;
 template <class scalar> class fullVector;
 template <class scalar> class fullMatrix;
 
@@ -374,7 +375,11 @@ public:
     return getJacobian(u, v, w, jac);
   }
   void getSignedJacobian(fullVector<double> &jacobian, int o = -1) const;
+
   void getNodesCoord(fullMatrix<double> &nodesXYZ) const;
+  void getNodesCoordNonSerendip(fullMatrix<double> &nodesXYZ) const;
+  bezierCoeff *getBezierVerticesCoord() const;
+
   virtual std::size_t getNumShapeFunctions() const { return getNumVertices(); }
   virtual std::size_t getNumPrimaryShapeFunctions() const
   {

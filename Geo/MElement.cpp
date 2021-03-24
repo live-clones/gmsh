@@ -976,6 +976,46 @@ void MElement::getNodesCoord(fullMatrix<double> &nodesXYZ) const
   }
 }
 
+void MElement::getNodesCoordNonSerendip(fullMatrix<double> &nodesXYZ) const
+{
+  int tag = ElementType::getType(getType(), getPolynomialOrder(), false);
+  const nodalBasis *basis = BasisFactory::getNodalBasis(tag);
+  const fullMatrix<double> nodesUVW = basis->getReferenceNodes();
+  nodesXYZ.resize(nodesUVW.size1(), 3, false);
+
+  getNodesCoord(nodesXYZ);
+
+  double xyz[3];
+  for(int i = getNumVertices(); i < nodesUVW.size1(); ++i) {
+    pnt(nodesUVW(i, 0), nodesUVW(i, 1), nodesUVW(i, 2), xyz);
+    nodesXYZ(i, 0) = xyz[0];
+    nodesXYZ(i, 1) = xyz[1];
+    nodesXYZ(i, 2) = xyz[2];
+  }
+}
+
+bezierCoeff *MElement::getBezierVerticesCoord() const
+{
+  const bezierBasis *basis;
+  basis = BasisFactory::getBezierBasis(getType(), getPolynomialOrder());
+  const fullMatrix<double> pntUVW =
+    basis->getSamplingPointsToComputeBezierCoeff();
+
+  fullMatrix<double> pntXYZ(pntUVW.size1(), 3);
+  double xyz[3];
+  for(int i = 0; i < pntUVW.size1(); ++i) {
+    double u = pntUVW(i, 0);
+    double v = pntUVW(i, 1);
+    double w = pntUVW(i, 2);
+    pnt(u, v, w, xyz);
+    pntXYZ(i, 0) = xyz[0];
+    pntXYZ(i, 1) = xyz[1];
+    pntXYZ(i, 2) = xyz[2];
+  }
+
+  return new bezierCoeff(getFuncSpaceData(getPolynomialOrder(), false), pntXYZ);
+}
+
 double MElement::getEigenvaluesMetric(double u, double v, double w,
                                       double values[3]) const
 {

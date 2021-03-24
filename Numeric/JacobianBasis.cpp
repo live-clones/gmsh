@@ -151,8 +151,8 @@ GradientBasis::GradientBasis(int elementTag, FuncSpaceData fsdata)
   // w.r.t. the first reference coordinate at some sampling points.
   // Those sampling points is determined by 'fsdata'.
   // The ordering of the sampling points is "ordered" (see pointsGenerator.cpp)
-  // and is thus different from the Gmsh ordering convention. This is for being
-  // able to convert Lagrange coefficients to Bezier coefficients easily.
+  // and is thus different from the Gmsh ordering convention. This order is
+  // useful for efficiently converting Lagrange to Bezier coefficients.
   fullMatrix<double> samplingPoints;
   gmshGenerateOrderedPoints(fsdata, samplingPoints);
   const int numSampPnts = samplingPoints.size1();

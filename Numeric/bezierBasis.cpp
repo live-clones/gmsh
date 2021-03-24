@@ -237,15 +237,16 @@ void bezierBasis::_construct()
     return;
   }
 
-  fullMatrix<double> bezSamplingPoints;
-  gmshGenerateOrderedPoints(_funcSpaceData, bezSamplingPoints, true);
+  fullMatrix<double> samplingPntsBezDom;
+  gmshGenerateOrderedPoints(_funcSpaceData, samplingPntsBezDom, true);
   generateExponents(_funcSpaceData, _exponents);
 
   fullMatrix<double> matBez2Lag =
-    generateBez2LagMatrix(_exponents, bezSamplingPoints, order, _dimSimplex);
-  matBez2Lag.invert(matrixLag2Bez);
+    generateBez2LagMatrix(_exponents, samplingPntsBezDom, order, _dimSimplex);
+  matBez2Lag.invert(_matrixLag2Bez);
 
-  gmshGenerateOrderedPointsLine(order, ordered1dBezPoints);
+  gmshGenerateOrderedPointsLine(order, _ordered1dBezPoints);
+  gmshGenerateOrderedPoints(_funcSpaceData, _samplingPntsLagDomain);
 }
 
 void bezierBasis::_constructPyr()
@@ -263,13 +264,15 @@ void bezierBasis::_constructPyr()
   // Note that the sampling points for the Jacobian determinant of pyramids are
   // for z in [0, a] with a < 1. The third coordinate of Bezier points should
   // also be in [0, a]. The same for subpoints.
-  fullMatrix<double> bezierPoints;
-  gmshGenerateOrderedPoints(_funcSpaceData, bezierPoints, true);
+  fullMatrix<double> samplingPntsBezDom;
+  gmshGenerateOrderedPoints(_funcSpaceData, samplingPntsBezDom, true);
   generateExponents(_funcSpaceData, _exponents);
 
   fullMatrix<double> matBez2Lag =
-    generateBez2LagMatrixPyramid(_exponents, bezierPoints, pyr, nij, nk);
-  matBez2Lag.invert(matrixLag2Bez);
+    generateBez2LagMatrixPyramid(_exponents, samplingPntsBezDom, pyr, nij, nk);
+  matBez2Lag.invert(_matrixLag2Bez);
+
+  gmshGenerateOrderedPoints(_funcSpaceData, _samplingPntsLagDomain);
 }
 
 const bezierBasisRaiser *bezierBasis::getRaiser() const
@@ -605,13 +608,33 @@ bezierCoeffMemoryPool *bezierCoeff::_pool0 = nullptr;
 bezierCoeffMemoryPool *bezierCoeff::_pool1 = nullptr;
 fullMatrix<double> bezierCoeff::_sub = fullMatrix<double>();
 
-bezierCoeff::bezierCoeff(FuncSpaceData data, const fullMatrix<double> &lagCoeff,
-                         int num)
-  : _numPool(num), _funcSpaceData(data),
-    _basis(BasisFactory::getBezierBasis(data))
+bezierCoeff::bezierCoeff(const FuncSpaceData fsData,
+                         const fullMatrix<double> &orderedLagCoeff, int num)
+  : _numPool(num), _funcSpaceData(fsData),
+    _basis(BasisFactory::getBezierBasis(fsData))
 {
-  _r = lagCoeff.size1();
-  _c = lagCoeff.size2();
+  bool abort = false;
+  if(fsData.getSerendipity()) {
+    // Bezier interpolation cannot expand an incomplete function space
+    Msg::Error("Call of Bezier expansion for Serendipity space.");
+    abort = true;
+  }
+  if(!abort && orderedLagCoeff.size1() != _basis->getNumCoeff()) {
+    Msg::Error("Call of Bezier expansion with a wrong number of Lagrange "
+               "coefficients (%d vs %d).", orderedLagCoeff.size1(),
+               _basis->getNumCoeff());
+    abort = true;
+  }
+  if(abort) {
+    _r = 0;
+    _c = 0;
+    _ownData = false;
+    _numPool = -1;
+    return;
+  }
+
+  _r = orderedLagCoeff.size1();
+  _c = orderedLagCoeff.size2();
   _ownData = false;
   if(num == 0 && _pool0)
     _data = _pool0->giveBlock(this);
@@ -622,15 +645,35 @@ bezierCoeff::bezierCoeff(FuncSpaceData data, const fullMatrix<double> &lagCoeff,
     _data = new double[_r * _c];
   }
 
-  _computeCoefficients(lagCoeff.getDataPtr());
+  _computeCoefficients(orderedLagCoeff.getDataPtr());
 }
 
-bezierCoeff::bezierCoeff(FuncSpaceData data, const fullVector<double> &lagCoeff,
-                         int num)
-  : _numPool(num), _funcSpaceData(data),
-    _basis(BasisFactory::getBezierBasis(data))
+bezierCoeff::bezierCoeff(const FuncSpaceData fsData,
+                         const fullVector<double> &orderedLagCoeff, int num)
+  : _numPool(num), _funcSpaceData(fsData),
+    _basis(BasisFactory::getBezierBasis(fsData))
 {
-  _r = lagCoeff.size();
+  bool abort = false;
+  if(fsData.getSerendipity()) {
+    // Bezier interpolation cannot expand an incomplete function space
+    Msg::Error("Call of Bezier expansion for Serendipity space.");
+    abort = true;
+  }
+  if(!abort && orderedLagCoeff.size() != _basis->getNumCoeff()) {
+    Msg::Error("Call of Bezier expansion with a wrong number of Lagrange "
+               "coefficients (%d vs %d).", orderedLagCoeff.size(),
+               _basis->getNumCoeff());
+    abort = true;
+  }
+  if(abort) {
+    _r = 0;
+    _c = 0;
+    _ownData = false;
+    _numPool = -1;
+    return;
+  }
+
+  _r = orderedLagCoeff.size();
   _c = 1;
   _ownData = false;
   if(num == 0 && _pool0)
@@ -642,7 +685,7 @@ bezierCoeff::bezierCoeff(FuncSpaceData data, const fullVector<double> &lagCoeff,
     _data = new double[_r * _c];
   }
 
-  _computeCoefficients(lagCoeff.getDataPtr());
+  _computeCoefficients(orderedLagCoeff.getDataPtr());
 }
 
 bezierCoeff::bezierCoeff(const bezierCoeff &other, bool swap)
@@ -668,6 +711,7 @@ bezierCoeff::bezierCoeff(const bezierCoeff &other, bool swap)
       _ownData = true;
       _data = new double[_r * _c];
     }
+    for(int i = 0; i < _r * _c; ++i) { _data[i] = other._data[i]; }
   }
 }
 
@@ -694,16 +738,16 @@ void bezierCoeff::_computeCoefficients(const double *lagCoeffDataConst)
   const int order = _funcSpaceData.getSpaceOrder();
   const int npt = order + 1;
   const fullMatrix<double> lag(const_cast<double *>(lagCoeffDataConst), _r, _c);
-  const fullVector<double> &x = _basis->ordered1dBezPoints;
+  const fullVector<double> &x = _basis->_ordered1dBezPoints;
   fullMatrix<double> bez(_data, _r, _c);
 
   switch(type) {
   case TYPE_TRI:
   case TYPE_TET:
-    // Note: For simplices, less significant errors in matrixLag2Bez but
+    // Note: For simplices, less significant errors in _matrixLag2Bez but
     // an algorithm exists (see same paper than algo convertLag2Bez), yet
     // it is complex. It may be implemented in the future if it is necessary.
-    _basis->matrixLag2Bez.mult(lag, bez);
+    _basis->_matrixLag2Bez.mult(lag, bez);
     return;
   case TYPE_LIN: convertLag2Bez(lag, order, x, bez); return;
   case TYPE_QUA:
@@ -755,7 +799,7 @@ void bezierCoeff::_computeCoefficients(const double *lagCoeffDataConst)
         const int inc = c * _r + k * nptTri;
         proxLag.setAsProxy(lagCoeffData + inc, nptTri);
         proxBez.setAsProxy(_data + inc, nptTri);
-        fsTri->matrixLag2Bez.mult(proxLag, proxBez);
+        fsTri->_matrixLag2Bez.mult(proxLag, proxBez);
       }
     }
     for(int ij = 0; ij < nptTri; ++ij) {
