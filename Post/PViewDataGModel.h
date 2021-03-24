@@ -145,6 +145,34 @@ public:
       _data = 0;
     }
   }
+  void renumberData(const std::map<int, int> &mapping)
+  {
+    if(!_data) return;
+    int imax = 0, imin = 0;
+    for(auto m : mapping) {
+      imax = std::max(imax, m.second);
+      imin = std::min(imin, m.second);
+    }
+    if(imin < 0) {
+      Msg::Warning("Wrong destination index %d in step data renumbering", imin);
+      return;
+    }
+    std::vector<Real *> data2(imax + 1, nullptr);
+    std::vector<int> mult2(imax + 1, 1);
+    for(auto m : mapping) {
+      if(m.first >= 0 && m.first < _data->size()) {
+        data2[m.second] = (*_data)[m.first];
+      }
+      else {
+        Msg::Warning("Wrong source index %d in step data renumbering", m.first);
+        return;
+      }
+      if(m.first >= 0 && m.first < _mult.size())
+        mult2[m.second] = _mult[m.first];
+    }
+    *_data = data2;
+    _mult = mult2;
+  }
   std::vector<double> &getGaussPoints(int msh)
   {
     if((int)_gaussPoints.size() <= msh) _gaussPoints.resize(msh + 1);
@@ -268,6 +296,7 @@ public:
 
   // Allow to destroy the data
   void destroyData();
+
   // I/O routines
   bool readMSH(const std::string &viewName, const std::string &fileName,
                int fileIndex, FILE *fp, bool binary, bool swap, int step,

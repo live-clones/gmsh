@@ -57,6 +57,10 @@
 #include "meshRefine.h"
 #endif
 
+#if defined(HAVE_POST)
+#include "PViewDataGModel.h"
+#endif
+
 #if defined(HAVE_KBIPACK)
 #include "Homology.h"
 #endif
@@ -1490,12 +1494,42 @@ std::size_t GModel::getMFace(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3,
   }
 }
 
+static void getDependentViewData(GModel *m, PViewDataGModel::DataType type,
+                                 std::vector<stepData<double>*> &data)
+{
+  for(std::size_t i = 0; i < PView::list.size(); i++) {
+    PViewDataGModel *d = dynamic_cast<PViewDataGModel *>
+      (PView::list[i]->getData());
+    if(d && d->getType() == type) {
+      for(int step = 0; step < d->getNumTimeSteps(); step++) {
+        if(d->getStepData(step)->getModel() == m)
+          data.push_back(d->getStepData(step));
+      }
+    }
+  }
+}
+
 void GModel::renumberMeshVertices()
 {
   destroyMeshCaches();
   setMaxVertexNumber(CTX::instance()->mesh.firstNodeTag - 1);
   std::vector<GEntity *> entities;
   getEntities(entities);
+
+  // check if any nodal post-processing datasets depend on the model; if so,
+  // keep track of the old node numbering
+  std::map<MVertex *, int> old;
+  std::vector<stepData<double>*> data;
+  getDependentViewData(this, PViewDataGModel::NodeData, data);
+  if(data.size()) {
+    for(std::size_t i = 0; i < entities.size(); i++) {
+      GEntity *ge = entities[i];
+      for(std::size_t j = 0; j < ge->getNumMeshVertices(); j++) {
+        MVertex *v = ge->getMeshVertex(j);
+        old[v] = v->getNum();
+      }
+    }
+  }
 
   // check if we will potentially only save a subset of elements, i.e. those
   // belonging to physical groups
@@ -1561,6 +1595,23 @@ void GModel::renumberMeshVertices()
       }
     }
   }
+
+  // renumber any dependent nodal post-processing datasets
+  if(data.size()) {
+    int n = data.size();
+    Msg::Info("Renumbering nodal model data (%d step%s)", n, n > 1 ? "s" : "");
+    std::map<int, int> remap;
+    for(std::size_t i = 0; i < entities.size(); i++) {
+      GEntity *ge = entities[i];
+      for(std::size_t j = 0; j < ge->getNumMeshVertices(); j++) {
+        MVertex *v = ge->getMeshVertex(j);
+        remap[old[v]] = v->getNum();
+      }
+    }
+    for(auto d : data) {
+      d->renumberData(remap);
+    }
+  }
 }
 
 void GModel::renumberMeshElements()
@@ -1569,6 +1620,22 @@ void GModel::renumberMeshElements()
   setMaxElementNumber(CTX::instance()->mesh.firstElementTag - 1);
   std::vector<GEntity *> entities;
   getEntities(entities);
+
+  // check if any element-based post-processing datasets depend on the model; if
+  // so, keep track of the old element numbering
+  std::map<MElement *, int> old;
+  std::vector<stepData<double>*> data[2];
+  getDependentViewData(this, PViewDataGModel::ElementData, data[0]);
+  getDependentViewData(this, PViewDataGModel::ElementNodeData, data[1]);
+  if(data[0].size() || data[1].size()) {
+    for(std::size_t i = 0; i < entities.size(); i++) {
+      GEntity *ge = entities[i];
+      for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
+        MElement *e = ge->getMeshElement(j);
+        old[e] = e->getNum();
+      }
+    }
+  }
 
   // check if we will potentially only save a subset of elements, i.e. those
   // belonging to physical groups
@@ -1606,6 +1673,26 @@ void GModel::renumberMeshElements()
       GEntity *ge = entities[i];
       for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
         ge->getMeshElement(j)->forceNum(++n);
+      }
+    }
+  }
+
+  // renumber any dependent element post-processing datasets
+  if(data[0].size() || data[1].size()) {
+    int n = data[0].size() + data[1].size();
+    Msg::Info("Renumbering element model data (%d step%s)", n,
+              n > 1 ? "s" : "");
+    std::map<int, int> remap;
+    for(std::size_t i = 0; i < entities.size(); i++) {
+      GEntity *ge = entities[i];
+      for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
+        MElement *e = ge->getMeshElement(j);
+        remap[old[e]] = e->getNum();
+      }
+    }
+    for(int i = 0; i < 2; i++) {
+      for(auto d : data[i]) {
+        d->renumberData(remap);
       }
     }
   }
