@@ -1495,6 +1495,7 @@ std::size_t GModel::getMFace(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3,
   }
 }
 
+#if defined(HAVE_POST)
 static void getDependentViewData(GModel *m, PViewDataGModel::DataType type,
                                  std::vector<stepData<double>*> &data)
 {
@@ -1509,6 +1510,7 @@ static void getDependentViewData(GModel *m, PViewDataGModel::DataType type,
     }
   }
 }
+#endif
 
 void GModel::renumberMeshVertices()
 {
@@ -1517,6 +1519,7 @@ void GModel::renumberMeshVertices()
   std::vector<GEntity *> entities;
   getEntities(entities);
 
+#if defined(HAVE_POST)
   // check if any nodal post-processing datasets depend on the model; if so,
   // keep track of the old node numbering
   std::map<MVertex *, int> old;
@@ -1531,6 +1534,7 @@ void GModel::renumberMeshVertices()
       }
     }
   }
+#endif
 
   // check if we will potentially only save a subset of elements, i.e. those
   // belonging to physical groups
@@ -1597,6 +1601,7 @@ void GModel::renumberMeshVertices()
     }
   }
 
+#if defined(HAVE_POST)
   // renumber any dependent nodal post-processing datasets
   if(data.size()) {
     int n = data.size();
@@ -1613,6 +1618,7 @@ void GModel::renumberMeshVertices()
       d->renumberData(remap);
     }
   }
+#endif
 }
 
 void GModel::renumberMeshElements()
@@ -1622,6 +1628,7 @@ void GModel::renumberMeshElements()
   std::vector<GEntity *> entities;
   getEntities(entities);
 
+#if defined(HAVE_POST)
   // check if any element-based post-processing datasets depend on the model; if
   // so, keep track of the old element numbering
   std::map<MElement *, int> old;
@@ -1637,6 +1644,7 @@ void GModel::renumberMeshElements()
       }
     }
   }
+#endif
 
   // check if we will potentially only save a subset of elements, i.e. those
   // belonging to physical groups
@@ -1678,6 +1686,7 @@ void GModel::renumberMeshElements()
     }
   }
 
+#if defined(HAVE_POST)
   // renumber any dependent element post-processing datasets
   if(data[0].size() || data[1].size()) {
     int n = data[0].size() + data[1].size();
@@ -1697,6 +1706,7 @@ void GModel::renumberMeshElements()
       }
     }
   }
+#endif
 }
 
 std::size_t GModel::getNumMeshElements(unsigned c[6])

@@ -160,14 +160,14 @@ public:
     std::vector<Real *> data2(imax + 1, nullptr);
     std::vector<int> mult2(imax + 1, 1);
     for(auto m : mapping) {
-      if(m.first >= 0 && m.first < _data->size()) {
+      if(m.first >= 0 && m.first < (int)_data->size()) {
         data2[m.second] = (*_data)[m.first];
       }
       else {
         Msg::Warning("Wrong source index %d in step data renumbering", m.first);
         return;
       }
-      if(m.first >= 0 && m.first < _mult.size())
+      if(m.first >= 0 && m.first < (int)_mult.size())
         mult2[m.second] = _mult[m.first];
     }
     *_data = data2;
