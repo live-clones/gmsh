@@ -58,6 +58,7 @@
 #endif
 
 #if defined(HAVE_POST)
+#include "PView.h"
 #include "PViewDataGModel.h"
 #endif
 
