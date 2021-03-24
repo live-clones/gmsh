@@ -1386,7 +1386,8 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "QuadqsSizemapMethod" , opt_mesh_quadqs_sizemap_method, 0. ,
     "Size map method in QuadQuasiStructured. 0: default, 1: cross-field,"
       "2: cross-field + CAD small features adaptation,"
-      "3: from background mesh (e.g. sizes in current triangulation)"
+      "3: from background mesh (e.g. sizes in current triangulation),"
+      "4: cross-field + CAD small features adaptation (clamped by background mesh)"
   },
   { F|O, "QuadqsTopologyOptimizationMethods" , opt_mesh_quadqs_topo_optim_methods, 0. ,
     "Topology optimization methods in QuadQuasiStructured. 0: default (all),"

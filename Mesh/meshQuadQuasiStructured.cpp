@@ -68,10 +68,18 @@ template <typename Key, typename Hash = robin_hood::hash<Key>,
 using unordered_set =
   robin_hood::detail::Table<true, MaxLoadFactor100, Key, void, Hash, KeyEqual>;
 
+
+constexpr int SizeMapDefault    = 0;
+constexpr int SizeMapCrossField = 1;
+constexpr int SizeMapCrossFieldAndSmallCad = 2;
+constexpr int SizeMapBackgroundMesh = 3;
+constexpr int SizeMapCrossFieldAndBMeshOnCurves = 4;
+
 const std::string BMESH_NAME = "bmesh_quadqs";
 
 constexpr bool PARANO_QUALITY = false;
 constexpr bool PARANO_VALIDITY = false;
+constexpr bool DBG_EXPORT = false;
 
 
 /* scaling applied on integer values stored in view (background field),
@@ -303,13 +311,15 @@ int fillSizemapFromScalarBackgroundField(
 
 std::string nameOfSizeMapMethod(int method) {
   if (method == 0) {
-    return "default (cross-field conformal scaling and CAD adaptation)";
+    return "default (" + nameOfSizeMapMethod(4) + ")";
   } else if (method == 1) {
     return "cross-field conformal scaling";
   } else if (method == 2) {
     return "cross-field conformal scaling and CAD adaptation";
   } else if (method == 3) {
     return "background mesh sizes";
+  } else if (method == 4) {
+    return "cross-field conformal scaling and CAD adaptation (clamped by background mesh)";
   }
   return "unknown";
 }
@@ -425,7 +435,7 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
         return 0;
       }
       else if(field && field->numComponents() == 1) {
-        if(qqsSizemapMethod == 0) {
+        if(qqsSizemapMethod == SizeMapDefault) {
           Msg::Info("scalar background field exists, using it as size map");
           externalSizemap = true;
         }
@@ -602,7 +612,7 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
         }
       }
       else if(qqsSizemapMethod ==
-              3) { /* Size map from background triangulation */
+              SizeMapBackgroundMesh) { /* Size map from background triangulation */
         int sts = fillSizemapFromTriangleSizes(triangles, localSizemap);
         if(sts != 0) {
           Msg::Warning("- Face %i: failed to fill size map from triangle sizes",
@@ -664,9 +674,9 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
         }
       }
 
-#if defined(_OPENMP)
-#pragma omp critical
-#endif
+      #if defined(_OPENMP)
+      #pragma omp critical
+      #endif
       {
         append(global_triangles, triangles);
         append(global_triangle_directions, triangleDirections);
@@ -675,8 +685,10 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
           global_size_map.push_back({kv.first, kv.second});
         }
       }
+
     }
   }
+
   sort_unique(global_size_map);
 
   /* Warning: from now on, code is not optimized in terms of data structures
@@ -701,10 +713,21 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
 
   /* Minimal size on curves */
   std::unordered_map<MVertex *, double> cadMinimalSizeOnCurves;
-  if((qqsSizemapMethod == 0 && !externalSizemap) || qqsSizemapMethod == 2) {
-    int scad = computeMinimalSizeOnCurves(bmesh, cadMinimalSizeOnCurves);
-    if(scad != 0) {
-      Msg::Warning("failed to compute minimal size on CAD curves");
+  if (!externalSizemap) {
+    if (   qqsSizemapMethod == SizeMapDefault 
+        || qqsSizemapMethod == SizeMapCrossFieldAndBMeshOnCurves
+        || qqsSizemapMethod == SizeMapCrossFieldAndSmallCad)  {
+
+      bool clampMinWithTriEdges = false;
+      if (qqsSizemapMethod == SizeMapDefault 
+          || qqsSizemapMethod == SizeMapCrossFieldAndBMeshOnCurves)  {
+        clampMinWithTriEdges = true;
+      }
+
+      int scad = computeMinimalSizeOnCurves(bmesh, clampMinWithTriEdges, cadMinimalSizeOnCurves);
+      if(scad != 0) {
+        Msg::Warning("failed to compute minimal size on CAD curves");
+      }
     }
   }
 
@@ -1626,6 +1649,10 @@ int RefineMeshWithBackgroundMeshProjection(GModel *gm)
     GeoLog::flush();
   }
 
+  if (DBG_EXPORT) {
+    gm->writeMSH("qqs_init.msh", 4.1);
+  }
+
   Msg::Info(
     "Refine mesh (midpoint subdivision, with background projection) ...");
 
@@ -1955,6 +1982,10 @@ int RefineMeshWithBackgroundMeshProjection(GModel *gm)
     errorAndAbortIfInvalidVertexInModel(gm, "after refine + proj");
   }
 
+  if (DBG_EXPORT) {
+    gm->writeMSH("qqs_subdiv.msh", 4.1);
+  }
+
   return 0;
 }
 
@@ -2105,6 +2136,10 @@ int quadMeshingOfSimpleFacesWithPatterns(GModel *gm,
       gm, "global check after face pattern meshing");
   }
 
+  if (DBG_EXPORT) {
+    gm->writeMSH("qqs_simplefaces.msh", 4.1);
+  }
+
   return 0;
 }
 
@@ -2160,6 +2195,10 @@ int optimizeTopologyWithDiskQuadrangulationRemeshing(GModel *gm)
   if(PARANO_VALIDITY) {
     errorAndAbortIfInvalidVertexInModel(
       gm, "global check after disk quadrangulation remeshing");
+  }
+
+  if (DBG_EXPORT) {
+    gm->writeMSH("qqs_diskrmsh.msh", 4.1);
   }
 
   return 0;
@@ -2243,6 +2282,10 @@ int optimizeTopologyWithCavityRemeshing(GModel *gm)
   }
 
   GeoLog::flush();
+
+  if (DBG_EXPORT) {
+    gm->writeMSH("qqs_cavrmsh.msh", 4.1);
+  }
 
   return 0;
 }
