@@ -998,11 +998,8 @@ bezierCoeff MElement::getBezierVerticesCoord() const
 {
   const bezierBasis *basis;
   basis = BasisFactory::getBezierBasis(getType(), getPolynomialOrder());
-  const fullMatrix<double> pntUVW = basis->getSamplingRefPoints();
-
-  // FIXME transform pntUVW from Bezier domain to Lagrange domain
-
-  // pntUVW.print("pntUVW");
+  const fullMatrix<double> pntUVW =
+    basis->getSamplingPointsToComputeBezierCoeff();
 
   fullMatrix<double> pntXYZ(pntUVW.size1(), 3);
   double xyz[3];
@@ -1015,7 +1012,6 @@ bezierCoeff MElement::getBezierVerticesCoord() const
     pntXYZ(i, 1) = xyz[1];
     pntXYZ(i, 2) = xyz[2];
   }
-  // pntXYZ.print("pntXYZ");
 
   return bezierCoeff(getFuncSpaceData(getPolynomialOrder(), false), pntXYZ);
 }

@@ -25,9 +25,9 @@ private:
   const FuncSpaceData _funcSpaceData;
   bezierBasisRaiser *_raiser;
   fullMatrix<double> _exponents;
-  fullMatrix<double> _samplingPoints;
   fullMatrix<double> _matrixLag2Bez;
   fullVector<double> _ordered1dBezPoints;
+  fullMatrix<double> _samplingPntsLagDomain;
 
   friend class bezierBasisRaiser;
   friend class bezierCoeff;
@@ -47,9 +47,9 @@ public:
   inline FuncSpaceData getFuncSpaceData() const { return _funcSpaceData; }
   const bezierBasisRaiser *getRaiser() const;
 
-  inline const fullMatrix<double> &getSamplingRefPoints() const
+  inline const fullMatrix<double> &getSamplingPointsToComputeBezierCoeff() const
   {
-    return _samplingPoints;
+    return _samplingPntsLagDomain;
   }
 
 private:
@@ -149,10 +149,12 @@ public:
               const fullVector<double> &orderedLagCoeff, int numOfPool = -1);
   bezierCoeff(const FuncSpaceData fsData,
               const fullMatrix<double> &orderedLagCoeff, int numOfPool = -1);
-  // [orderedLagCoeff] : the coefficients in the order given by
-  // function gmshGenerateOrderedPoints(..)
+  // [orderedLagCoeff] : the Lagrange coefficients in the order given by
+  //   function gmshGenerateOrderedPoints(..)
+  //   -> use bezierBasis::getSamplingPointsToComputeBezierCoeff(..) method
+  //      to get the sampling points at which compute those coefficients.
   // [numOfPool] : the number of the pool (0 or 1) that should be used.
-  // To activate this functionality, first call usePools(..) function.
+  //   To activate this functionality, first call usePools(..) function.
 
   ~bezierCoeff();
 

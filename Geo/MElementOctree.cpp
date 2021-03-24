@@ -33,14 +33,7 @@ void MElementBB(void *a, double *min, double *max)
     }
   }
   else {
-    // fullMatrix<double> nodesXYZ(e->getNumVertices(), 3);
-    // e->getNodesCoord(nodesXYZ);
-    // nodesXYZ.print("getNodesCoordNonSerendip");
-
     bezierCoeff bezNodes = e->getBezierVerticesCoord();
-    // fullMatrix<double> nodes;
-    // bezNodes.setMatrixAsProxy(nodes);
-    // nodes.print("bezier");
 
     min[0] = max[0] = bezNodes(0, 0);
     min[1] = max[1] = bezNodes(0, 1);

@@ -237,14 +237,16 @@ void bezierBasis::_construct()
     return;
   }
 
-  gmshGenerateOrderedPoints(_funcSpaceData, _samplingPoints, true);
+  fullMatrix<double> samplingPntsBezDom;
+  gmshGenerateOrderedPoints(_funcSpaceData, samplingPntsBezDom, true);
   generateExponents(_funcSpaceData, _exponents);
 
   fullMatrix<double> matBez2Lag =
-    generateBez2LagMatrix(_exponents, _samplingPoints, order, _dimSimplex);
+    generateBez2LagMatrix(_exponents, samplingPntsBezDom, order, _dimSimplex);
   matBez2Lag.invert(_matrixLag2Bez);
 
   gmshGenerateOrderedPointsLine(order, _ordered1dBezPoints);
+  gmshGenerateOrderedPoints(_funcSpaceData, _samplingPntsLagDomain);
 }
 
 void bezierBasis::_constructPyr()
@@ -262,12 +264,15 @@ void bezierBasis::_constructPyr()
   // Note that the sampling points for the Jacobian determinant of pyramids are
   // for z in [0, a] with a < 1. The third coordinate of Bezier points should
   // also be in [0, a]. The same for subpoints.
-  gmshGenerateOrderedPoints(_funcSpaceData, _samplingPoints, true);
+  fullMatrix<double> samplingPntsBezDom;
+  gmshGenerateOrderedPoints(_funcSpaceData, samplingPntsBezDom, true);
   generateExponents(_funcSpaceData, _exponents);
 
   fullMatrix<double> matBez2Lag =
-    generateBez2LagMatrixPyramid(_exponents, _samplingPoints, pyr, nij, nk);
+    generateBez2LagMatrixPyramid(_exponents, samplingPntsBezDom, pyr, nij, nk);
   matBez2Lag.invert(_matrixLag2Bez);
+
+  gmshGenerateOrderedPoints(_funcSpaceData, _samplingPntsLagDomain);
 }
 
 const bezierBasisRaiser *bezierBasis::getRaiser() const
@@ -608,21 +613,19 @@ bezierCoeff::bezierCoeff(const FuncSpaceData fsData,
   : _numPool(num), _funcSpaceData(fsData),
     _basis(BasisFactory::getBezierBasis(fsData))
 {
-  // Bezier interpolation cannot expand an incomplete function space :
   bool abort = false;
   if(fsData.getSerendipity()) {
+    // Bezier interpolation cannot expand an incomplete function space
     Msg::Error("Call of Bezier expansion for Serendipity space. Contact the "
                "Gmsh developers.");
     abort = true;
   }
-
   if(!abort && orderedLagCoeff.size1() != _basis->getNumCoeff()) {
     Msg::Error("Call of Bezier expansion with a wrong array size (%d vs %d). "
-               "Contact the Gmsh developers.", orderedLagCoeff.size1(),
-               _basis->getNumCoeff());
+               "Contact the Gmsh developers.",
+               orderedLagCoeff.size1(), _basis->getNumCoeff());
     abort = true;
   }
-
   if(abort) {
     _r = 0;
     _c = 0;
@@ -651,21 +654,19 @@ bezierCoeff::bezierCoeff(const FuncSpaceData fsData,
   : _numPool(num), _funcSpaceData(fsData),
     _basis(BasisFactory::getBezierBasis(fsData))
 {
-  // Bezier interpolation cannot expand an incomplete function space :
   bool abort = false;
   if(fsData.getSerendipity()) {
+    // Bezier interpolation cannot expand an incomplete function space
     Msg::Error("Call of Bezier expansion for Serendipity space. Contact the "
                "Gmsh developers.");
     abort = true;
   }
-
   if(!abort && orderedLagCoeff.size() != _basis->getNumCoeff()) {
     Msg::Error("Call of Bezier expansion with a wrong array size (%d vs %d). "
-               "Contact the Gmsh developers.", orderedLagCoeff.size(),
-               _basis->getNumCoeff());
+               "Contact the Gmsh developers.",
+               orderedLagCoeff.size(), _basis->getNumCoeff());
     abort = true;
   }
-
   if(abort) {
     _r = 0;
     _c = 0;
@@ -712,9 +713,7 @@ bezierCoeff::bezierCoeff(const bezierCoeff &other, bool swap)
       _ownData = true;
       _data = new double[_r * _c];
     }
-    for(int i = 0; i < _r * _c; ++i) {
-      _data[i] = other._data[i];
-    }
+    for(int i = 0; i < _r * _c; ++i) { _data[i] = other._data[i]; }
   }
 }
 
