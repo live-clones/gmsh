@@ -38,7 +38,7 @@ void MElementBB(void *a, double *min, double *max)
     min[0] = max[0] = bezNodes(0, 0);
     min[1] = max[1] = bezNodes(0, 1);
     min[2] = max[2] = bezNodes(0, 2);
-    for(std::size_t i = 1; i < bezNodes.getNumCoeff(); i++) {
+    for(int i = 1; i < bezNodes.getNumCoeff(); i++) {
       min[0] = std::min(min[0], bezNodes(i, 0));
       max[0] = std::max(max[0], bezNodes(i, 0));
       min[1] = std::min(min[1], bezNodes(i, 1));
