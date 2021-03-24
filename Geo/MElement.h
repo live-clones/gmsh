@@ -375,7 +375,7 @@ public:
 
   void getNodesCoord(fullMatrix<double> &nodesXYZ) const;
   void getNodesCoordNonSerendip(fullMatrix<double> &nodesXYZ) const;
-  bezierCoeff getBezierVerticesCoord() const;
+  bezierCoeff *getBezierVerticesCoord() const;
 
   virtual std::size_t getNumShapeFunctions() const { return getNumVertices(); }
   virtual std::size_t getNumPrimaryShapeFunctions() const

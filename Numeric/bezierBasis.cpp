@@ -616,14 +616,13 @@ bezierCoeff::bezierCoeff(const FuncSpaceData fsData,
   bool abort = false;
   if(fsData.getSerendipity()) {
     // Bezier interpolation cannot expand an incomplete function space
-    Msg::Error("Call of Bezier expansion for Serendipity space. Contact the "
-               "Gmsh developers.");
+    Msg::Error("Call of Bezier expansion for Serendipity space.");
     abort = true;
   }
   if(!abort && orderedLagCoeff.size1() != _basis->getNumCoeff()) {
-    Msg::Error("Call of Bezier expansion with a wrong array size (%d vs %d). "
-               "Contact the Gmsh developers.",
-               orderedLagCoeff.size1(), _basis->getNumCoeff());
+    Msg::Error("Call of Bezier expansion with a wrong number of Lagrange "
+               "coefficients (%d vs %d).", orderedLagCoeff.size1(),
+               _basis->getNumCoeff());
     abort = true;
   }
   if(abort) {
@@ -657,14 +656,13 @@ bezierCoeff::bezierCoeff(const FuncSpaceData fsData,
   bool abort = false;
   if(fsData.getSerendipity()) {
     // Bezier interpolation cannot expand an incomplete function space
-    Msg::Error("Call of Bezier expansion for Serendipity space. Contact the "
-               "Gmsh developers.");
+    Msg::Error("Call of Bezier expansion for Serendipity space.");
     abort = true;
   }
   if(!abort && orderedLagCoeff.size() != _basis->getNumCoeff()) {
-    Msg::Error("Call of Bezier expansion with a wrong array size (%d vs %d). "
-               "Contact the Gmsh developers.",
-               orderedLagCoeff.size(), _basis->getNumCoeff());
+    Msg::Error("Call of Bezier expansion with a wrong number of Lagrange "
+               "coefficients (%d vs %d).", orderedLagCoeff.size(),
+               _basis->getNumCoeff());
     abort = true;
   }
   if(abort) {

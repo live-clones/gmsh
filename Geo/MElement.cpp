@@ -994,7 +994,7 @@ void MElement::getNodesCoordNonSerendip(fullMatrix<double> &nodesXYZ) const
   }
 }
 
-bezierCoeff MElement::getBezierVerticesCoord() const
+bezierCoeff *MElement::getBezierVerticesCoord() const
 {
   const bezierBasis *basis;
   basis = BasisFactory::getBezierBasis(getType(), getPolynomialOrder());
@@ -1013,7 +1013,7 @@ bezierCoeff MElement::getBezierVerticesCoord() const
     pntXYZ(i, 2) = xyz[2];
   }
 
-  return bezierCoeff(getFuncSpaceData(getPolynomialOrder(), false), pntXYZ);
+  return new bezierCoeff(getFuncSpaceData(getPolynomialOrder(), false), pntXYZ);
 }
 
 double MElement::getEigenvaluesMetric(double u, double v, double w,

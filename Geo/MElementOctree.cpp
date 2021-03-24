@@ -33,12 +33,12 @@ void MElementBB(void *a, double *min, double *max)
     }
   }
   else {
-    bezierCoeff bezNodes = e->getBezierVerticesCoord();
+    bezierCoeff &bezNodes = *e->getBezierVerticesCoord();
 
     min[0] = max[0] = bezNodes(0, 0);
     min[1] = max[1] = bezNodes(0, 1);
     min[2] = max[2] = bezNodes(0, 2);
-    for(std::size_t i = 1; i < e->getNumVertices(); i++) {
+    for(std::size_t i = 1; i < bezNodes.getNumCoeff(); i++) {
       min[0] = std::min(min[0], bezNodes(i, 0));
       max[0] = std::max(max[0], bezNodes(i, 0));
       min[1] = std::min(min[1], bezNodes(i, 1));
@@ -46,6 +46,8 @@ void MElementBB(void *a, double *min, double *max)
       min[2] = std::min(min[2], bezNodes(i, 2));
       max[2] = std::max(max[2], bezNodes(i, 2));
     }
+
+    delete &bezNodes;
   }
 
   SBoundingBox3d bb(min[0], min[1], min[2], max[0], max[1], max[2]);
