@@ -1,5 +1,6 @@
 (Work-in-progress): new quasi-structured quad algorithm (replaces the "packing
-of parallelogram" algorithm).
+of parallelogram" algorithm); mesh renumbering now also renumbers dependent
+post-processing views; mesh size callback is now per-model.
 
 4.8.1 (March 21, 2021): improved performance when transforming many OCC
 entities; fixed regression in high-order meshing of surfaces with singular

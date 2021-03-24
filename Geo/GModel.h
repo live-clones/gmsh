@@ -12,6 +12,7 @@
 #include <map>
 #include <string>
 #include <unordered_map>
+#include <functional>
 #include "GVertex.h"
 #include "GEdge.h"
 #include "GFace.h"
@@ -683,6 +684,9 @@ public:
                           const std::vector<int> &subdomain,
                           const std::vector<int> &dim);
   void computeHomology();
+
+  // mesh size callback
+  std::function<double(int, int, double, double, double)> lcCallback;
 
   // compute automatic sizing field from curvature
   void computeSizeField();

@@ -112,7 +112,6 @@ void CTX::init()
   mesh.minCircleNodes = mesh.order = 0;
   mesh.secondOrderLinear = mesh.secondOrderIncomplete = 0;
   mesh.lightLines = 2;
-  mesh.lcCallback = nullptr;
 }
 
 CTX *CTX::_instance = nullptr;
