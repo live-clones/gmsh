@@ -24,15 +24,17 @@ class GlobalBackgroundMesh;
  *        - the prescribed mesh size
  *
  * @param[in] gbm Background mesh on which to compute the minimal sizes
+ * @param[in] clampMinWithTriEdges If true, the minimum length is the maximum
+ * of the previously computed size (from CAD) and local background mesh triangle size.
+ * This option is useful to avoid over-refinement.
  * @param[out] minSize the minimal distance, for each MVertex of GVertex / GEdge 
  *
  * @return 0 if success
  */
 int computeMinimalSizeOnCurves(
     GlobalBackgroundMesh& gbm,
+    bool clampMinWithTriEdges,
     std::unordered_map<MVertex*,double>& minSize);
-
-
 
 /**
  * @brief One way smoothing to get a smooth scalar field where

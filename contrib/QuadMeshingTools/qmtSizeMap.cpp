@@ -93,6 +93,7 @@ using namespace QMT;
 
 int computeMinimalSizeOnCurves(
     GlobalBackgroundMesh& gbm,
+    bool clampMinWithTriEdges,
     std::unordered_map<MVertex*,double>& minSize) {
   Msg::Debug("compute minimal size on curves (using background mesh) ...");
   /* Important information: all mesh elements are queried in the GlobalBackgroundMesh,
@@ -173,6 +174,27 @@ int computeMinimalSizeOnCurves(
         }
 
         if (vMin > 0 && vMin < 1.e22) setMinimum(v, minSize, vMin);
+      }
+    }
+  }
+
+  if (clampMinWithTriEdges) {
+    for (GFace* gf: model_faces(gm)) {
+      auto it = gbm.faceBackgroundMeshes.find(gf);
+      if (it == gbm.faceBackgroundMeshes.end()) {
+        Msg::Error("face %i not found in background mesh", gf->tag());
+        continue;
+      }
+      for (MTriangle& t: it->second.triangles) for (size_t le = 0; le < 3; ++le) {
+        MVertex* v1 = t.getVertex(le);
+        MVertex* v2 = t.getVertex((le+1)%3);
+        double len = v1->distance(v2);
+        if (v1->onWhat()->cast2Face() == nullptr) {
+          auto itv = minSize.find(v1);
+          if (itv != minSize.end()) {
+            itv->second = std::max(itv->second,len);
+          }
+        }
       }
     }
   }
