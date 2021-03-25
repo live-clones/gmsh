@@ -1678,6 +1678,10 @@ int RefineMeshWithBackgroundMeshProjection(GModel *gm)
     std::vector<GEdge*> fedges = face_edges(gf);
     for (GEdge* ge: fedges) edgeToFaces[ge].insert(gf);
   }
+
+  #if defined(_OPENMP)
+  #pragma omp parallel for schedule(dynamic)
+  #endif
   for(size_t e = 0; e < edges.size(); ++e) {
     GEdge *ge = edges[e];
     if(CTX::instance()->mesh.meshOnlyVisible && !ge->getVisibility()) continue;
@@ -1716,6 +1720,10 @@ int RefineMeshWithBackgroundMeshProjection(GModel *gm)
       }
     }
   }
+
+  #if defined(_OPENMP)
+  #pragma omp parallel for schedule(dynamic)
+  #endif
   for(size_t f = 0; f < faces.size(); ++f) {
     GFace *gf = faces[f];
     if(CTX::instance()->mesh.meshOnlyVisible && !gf->getVisibility()) continue;
@@ -1732,7 +1740,7 @@ int RefineMeshWithBackgroundMeshProjection(GModel *gm)
         Msg::Error("- Face %i: vertex %li is associated to entity (%i,%i)",
             gf->tag(), v->getNum(), v->onWhat()->dim(),
             v->onWhat()->tag());
-        return -1;
+        continue;
       }
       MFaceVertex *mfv = dynamic_cast<MFaceVertex *>(v);
       if(mfv == nullptr) {
@@ -1899,7 +1907,7 @@ int RefineMeshWithBackgroundMeshProjection(GModel *gm)
 }
 
 
-int checkAndReplaceQuadDominantMesh(GFace* gf, int valenceMaxBdr = 8, int valenceMaxIn = 12) {
+int checkAndReplaceQuadDominantMesh(GFace* gf, int valenceMaxBdr = 6, int valenceMaxIn = 8) {
   /* Check valence */
   unordered_map<MVertex *, int > valence;
   for (MQuadrangle* q: gf->quadrangles) for (size_t lv = 0; lv < 4; ++lv) {
@@ -1913,7 +1921,7 @@ int checkAndReplaceQuadDominantMesh(GFace* gf, int valenceMaxBdr = 8, int valenc
   for (auto& kv: valence) {
     if (kv.first->onWhat() == gf) {
       vMaxInt = std::max(vMaxInt,kv.second);
-    } else {
+    } else if (kv.first->onWhat()->cast2Edge() != nullptr){
       vMaxBdr = std::max(vMaxBdr,kv.second);
     }
   }
