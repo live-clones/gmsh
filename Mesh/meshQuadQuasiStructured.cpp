@@ -93,7 +93,7 @@ int buildBackgroundField(
   const std::vector<std::array<double, 5> >& global_singularity_list,
   const std::string &viewName = "guiding_field")
 {
-  Msg::Debug("build background guiding field ...");
+  Msg::Info("Build background field (view 'guiding_field') ...");
   if(global_triangles.size() != global_triangle_directions.size()) {
     Msg::Error("build background field: incoherent sizes in input");
     return -1;
@@ -748,6 +748,7 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
   /* One-way propagation of values */
   const double gradientMax =
     1.2; /* this param should be a global gmsh option */
+  Msg::Info("Sizemap smoothing (progression ratio: %.2f)", gradientMax);
   int sop = sizeMapOneWaySmoothing(global_triangles, sizeMap, gradientMax);
   if(sop != 0) { Msg::Warning("failed to compute one-way size map smoothing"); }
 
@@ -1633,22 +1634,17 @@ int improveInteriorValences(
 int RefineMeshWithBackgroundMeshProjection(GModel *gm)
 {
   const bool SHOW_INTERMEDIATE_VIEWS = (Msg::GetVerbosity() >= 99);
-
-  const bool SHOW_QUADTRI = SHOW_INTERMEDIATE_VIEWS;
-  if(SHOW_QUADTRI) {
+  if(SHOW_INTERMEDIATE_VIEWS) {
     std::vector<MElement *> elements;
     for(GFace *gf : model_faces(gm)) {
       append(elements,
              dynamic_cast_vector<MTriangle *, MElement *>(gf->triangles));
       append(elements,
              dynamic_cast_vector<MQuadrangle *, MElement *>(gf->quadrangles));
-      // showUVParametrization(gf,dynamic_cast_vector<MTriangle*,MElement*>(gf->triangles),"quadtri_uvs");
-      // showUVParametrization(gf,dynamic_cast_vector<MQuadrangle*,MElement*>(gf->quadrangles),"quadtri_uvs");
     }
     GeoLog::add(elements, "qqs_quadtri");
     GeoLog::flush();
   }
-
   if (DBG_EXPORT) {
     gm->writeMSH("qqs_init.msh", 4.1);
   }
@@ -1659,10 +1655,131 @@ int RefineMeshWithBackgroundMeshProjection(GModel *gm)
   bool linear = true;
   RefineMesh(gm, linear, true, false);
 
-  if(Msg::GetVerbosity() >= 99) {
+  if(true || Msg::GetVerbosity() >= 99) {
     std::unordered_map<std::string, double> stats;
     appendQuadMeshStatistics(gm, stats, "MPS_");
     printStatistics(stats, "Quad mesh after subdivision, before projection:");
+    gm->writeMSH("qqs_subdiv_noproj.msh", 4.1);
+  }
+
+
+  /* Convert vertex types:
+   * - MVertex on curve -> MEdgeVertex
+   * - MVertex on face  -> MFaceVertex */
+  std::vector<GEdge *> edges = model_edges(gm);
+  std::vector<GFace *> faces = model_faces(gm);
+  /* Build custom edgeToFaces because ge->faces() does not work
+   * for embedded edges */
+  std::unordered_map<GEdge*,std::vector<MVertex*> > toProjectOnCurve;
+  std::unordered_map<GFace*,std::vector<MVertex*> > toProjectOnFace;
+  std::unordered_map<GEdge*,std::unordered_set<GFace*> > edgeToFaces;
+  for (GFace* gf: model_faces(gm)) {
+    std::vector<GEdge*> fedges = face_edges(gf);
+    for (GEdge* ge: fedges) edgeToFaces[ge].insert(gf);
+  }
+  for(size_t e = 0; e < edges.size(); ++e) {
+    GEdge *ge = edges[e];
+    if(CTX::instance()->mesh.meshOnlyVisible && !ge->getVisibility()) continue;
+    if(ge->lines.size() == 0 || ge->mesh_vertices.size() == 0) continue;
+    unordered_map<MVertex *, MVertex *> old2new_ge;
+    std::vector<MVertex*>& projList = toProjectOnCurve[ge];
+    projList.reserve(ge->mesh_vertices.size());
+    for(size_t i = 0; i < ge->mesh_vertices.size(); ++i) {
+      MVertex *v = ge->mesh_vertices[i];
+      MEdgeVertex *mev = dynamic_cast<MEdgeVertex *>(v);
+      if(mev == nullptr) {
+        MVertex* v2 = new MEdgeVertex(v->point().x(), v->point().y(), v->point().z(), ge, 0.);
+        ge->mesh_vertices[i] = v2;
+        old2new_ge[v] = v2;
+        projList.push_back(v2);
+        delete v;
+      }
+    }
+    /* Update lines */
+    for(MLine *l : ge->lines) {
+      for(size_t lv = 0; lv < 2; ++lv) {
+        MVertex *v = l->getVertex(lv);
+        auto it = old2new_ge.find(v);
+        if(it != old2new_ge.end()) { l->setVertex(lv, it->second); }
+      }
+    }
+    /* Update elements in adjacent faces */
+    for(GFace *gf : edgeToFaces[ge]) {
+      for(size_t i = 0; i < gf->getNumMeshElements(); ++i) {
+        MElement *e = gf->getMeshElement(i);
+        for(size_t lv = 0; lv < e->getNumVertices(); ++lv) {
+          MVertex *v = e->getVertex(lv);
+          auto it = old2new_ge.find(v);
+          if(it != old2new_ge.end()) { e->setVertex(lv, it->second); }
+        }
+      }
+    }
+  }
+  for(size_t f = 0; f < faces.size(); ++f) {
+    GFace *gf = faces[f];
+    if(CTX::instance()->mesh.meshOnlyVisible && !gf->getVisibility()) continue;
+    if(CTX::instance()->debugSurface > 0 &&
+       gf->tag() != CTX::instance()->debugSurface)
+      continue;
+    if(gf->triangles.size() == 0 && gf->quadrangles.size() == 0) continue;
+    unordered_map<MVertex *, MVertex *> old2new_gf;
+    std::vector<MVertex*>& projList = toProjectOnFace[gf];
+    projList.reserve(gf->mesh_vertices.size());
+    for(size_t i = 0; i < gf->mesh_vertices.size(); ++i) {
+      MVertex *v = gf->mesh_vertices[i];
+      if(v->onWhat() != gf) {
+        Msg::Error("- Face %i: vertex %li is associated to entity (%i,%i)",
+            gf->tag(), v->getNum(), v->onWhat()->dim(),
+            v->onWhat()->tag());
+        return -1;
+      }
+      MFaceVertex *mfv = dynamic_cast<MFaceVertex *>(v);
+      if(mfv == nullptr) {
+        MVertex* v2 = new MFaceVertex(v->point().x(), v->point().y(),
+            v->point().z(), gf, 0., 0.);
+        gf->mesh_vertices[i] = v2;
+        old2new_gf[v] = v2;
+        projList.push_back(v2);
+        delete v;
+      }
+    }
+    /* Update elements */
+    for(size_t i = 0; i < gf->getNumMeshElements(); ++i) {
+      MElement *e = gf->getMeshElement(i);
+      for(size_t lv = 0; lv < e->getNumVertices(); ++lv) {
+        MVertex *v = e->getVertex(lv);
+        auto it2 = old2new_gf.find(v);
+        if(it2 != old2new_gf.end()) { e->setVertex(lv, it2->second); }
+      }
+    }
+  }
+
+  /* Geometric projection on model */
+
+  /* - projections on curves */
+  #if defined(_OPENMP)
+  #pragma omp parallel for schedule(dynamic)
+  #endif
+  for (size_t e = 0; e < edges.size(); ++e) {
+    GEdge* ge = edges[e];
+    auto it = toProjectOnCurve.find(ge);
+    if (it == toProjectOnCurve.end()) continue;
+
+    double tMin = ge->parBounds(0).low();
+    double tMax = ge->parBounds(0).high();
+
+    for (size_t j = 0; j < it->second.size(); ++j) {
+      MVertex* v = it->second[j];
+      double tGuess = tMin + (tMax-tMin) * double(j+1)/double(it->second.size()+1);
+      GPoint proj = ge->closestPoint(v->point(), tGuess);
+      if(proj.succeeded()) {
+        v->setXYZ(proj.x(), proj.y(), proj.z());
+        v->setParameter(0, proj.u());
+      } else {
+        Msg::Warning("- Edge %i, vertex %li: curve projection failed",
+            ge->tag(), v->getNum());
+      }
+    }
   }
 
   GlobalBackgroundMesh *bmesh = nullptr;
@@ -1674,293 +1791,83 @@ int RefineMeshWithBackgroundMeshProjection(GModel *gm)
                  "using CAD projection (slow)");
   }
 
-  std::vector<GEdge *> edges = model_edges(gm);
-
-  /* Build custom edgeToFaces because ge->faces() does not work
-   * for embedded edges */
-  std::unordered_map<GEdge*,std::unordered_set<GFace*> > edgeToFaces;
-  for (GFace* gf: model_faces(gm)) {
-    std::vector<GEdge*> fedges = face_edges(gf);
-    for (GEdge* ge: fedges) edgeToFaces[ge].insert(gf);
-  }
-
-#if defined(_OPENMP)
-#pragma omp parallel for schedule(dynamic)
-#endif
-  for(size_t e = 0; e < edges.size(); ++e) {
-    GEdge *ge = edges[e];
-    if(CTX::instance()->mesh.meshOnlyVisible && !ge->getVisibility()) continue;
-    if(ge->lines.size() == 0 || ge->mesh_vertices.size() == 0) continue;
-
-    Msg::Debug("- Curve %i: project midpoints on curve", ge->tag());
-    unordered_map<MVertex *, MVertex *> old2new_ge;
-    unordered_map<MVertex *, SPoint3> backupPositionLinear;
-    double tPrev = 0;
-    for(size_t i = 0; i < ge->mesh_vertices.size(); ++i) {
-      MVertex *v = ge->mesh_vertices[i];
-      MEdgeVertex *mev = dynamic_cast<MEdgeVertex *>(v);
-      if(mev == nullptr) {
-        double t = tPrev;
-        GPoint proj = ge->closestPoint(v->point(), t);
-        if(proj.succeeded()) {
-          /* Need to change the type of the MVertex */
-          MVertex *v2 =
-            new MEdgeVertex(proj.x(), proj.y(), proj.z(), ge, proj.u());
-          tPrev = proj.u();
-          ge->mesh_vertices[i] = v2;
-          old2new_ge[v] = v2;
-          backupPositionLinear[v2] = v->point();
-          delete v;
-        }
-        else {
-          Msg::Warning("- Edge %i, vertex %li: curve projection failed",
-                       ge->tag(), v->getNum());
-          MVertex *v2 = new MEdgeVertex(v->point().x(), v->point().y(),
-                                        v->point().z(), ge, tPrev);
-          ge->mesh_vertices[i] = v2;
-          old2new_ge[v] = v2;
-          backupPositionLinear[v2] = v->point();
-          delete v;
-        }
-        tPrev = t;
-      }
-    }
-
-    bool qualityOk = true;
-
-    /* Update Lines */
-    for(MLine *l : ge->lines)
-      for(size_t lv = 0; lv < 2; ++lv) {
-        MVertex *v = l->getVertex(lv);
-        auto it = old2new_ge.find(v);
-        if(it != old2new_ge.end()) { l->setVertex(lv, it->second); }
-      }
-
-    /* Update adjacent faces */
-    for(GFace *gf : edgeToFaces[ge]) {
-      for(size_t i = 0; i < gf->getNumMeshElements(); ++i) {
-        MElement *e = gf->getMeshElement(i);
-        for(size_t lv = 0; lv < e->getNumVertices(); ++lv) {
-          MVertex *v = e->getVertex(lv);
-          auto it = old2new_ge.find(v);
-          if(it != old2new_ge.end()) { e->setVertex(lv, it->second); }
-        }
-      }
-
-      /* Check quality of quads */
-      if(gf->quadrangles.size() > 0) {
-        double sicnMin, sicnAvg;
-        computeSICN(
-          dynamic_cast_vector<MQuadrangle *, MElement *>(gf->quadrangles),
-          sicnMin, sicnAvg);
-        if(sicnMin < 0.) {
-          Msg::Warning("- refine with projection: quality negative (%.3f) on "
-                       "face %i after curve %i projection, rollback",
-                       sicnMin, gf->tag(), ge->tag());
-          qualityOk = false;
-        }
-      }
-    }
-
-    if(!qualityOk) { /* restore positions on the curve */
-      for(auto &kv : backupPositionLinear) { kv.first->setXYZ(kv.second); }
-    }
-    if(PARANO_VALIDITY) {
-      errorAndAbortIfInvalidVertexInElements(
-        dynamic_cast_vector<MLine *, MElement *>(ge->lines),
-        "after curve proj");
-    }
-  }
-
-  std::vector<GFace *> faces = model_faces(gm);
-#if defined(_OPENMP)
-#pragma omp parallel for schedule(dynamic)
-#endif
+  /* - projections on faces */
+  #if defined(_OPENMP)
+  #pragma omp parallel for schedule(dynamic)
+  #endif
   for(size_t f = 0; f < faces.size(); ++f) {
     GFace *gf = faces[f];
-    if(CTX::instance()->mesh.meshOnlyVisible && !gf->getVisibility()) continue;
-    if(CTX::instance()->debugSurface > 0 &&
-       gf->tag() != CTX::instance()->debugSurface)
-      continue;
-    if(gf->triangles.size() == 0 && gf->quadrangles.size() == 0) continue;
 
-    SurfaceProjector *sp = nullptr;
+    auto it = toProjectOnFace.find(gf);
+    if (it == toProjectOnFace.end()) continue;
+
+    Msg::Info("- Face %i: project %li vertices and smooth the quad mesh ...", 
+        gf->tag(), it->second.size());
+
+    SurfaceProjector* sp = nullptr;
     if(bmesh) {
-      auto it = bmesh->faceBackgroundMeshes.find(gf);
-      if(it == bmesh->faceBackgroundMeshes.end()) {
+      auto it2 = bmesh->faceBackgroundMeshes.find(gf);
+      if(it2 == bmesh->faceBackgroundMeshes.end()) {
         Msg::Error("background mesh not found for face %i", gf->tag());
-        continue;
-      }
+      } else {
+        /* Get pointers to triangles in the background mesh */
+        std::vector<MTriangle *> triangles(it2->second.triangles.size());
+        for(size_t i = 0; i < it2->second.triangles.size(); ++i) {
+          triangles[i] = &(it2->second.triangles[i]);
+        }
 
-      /* Get pointers to triangles in the background mesh */
-      std::vector<MTriangle *> triangles(it->second.triangles.size());
-      for(size_t i = 0; i < it->second.triangles.size(); ++i) {
-        triangles[i] = &(it->second.triangles[i]);
-      }
-
-      sp = new SurfaceProjector();
-      bool oki = sp->initialize(gf, triangles);
-      if(!oki) {
-        Msg::Warning("failed to initialize surface projector");
-        delete sp;
-        sp = nullptr;
-      }
-    }
-
-    /* Project the vertices which have been introduced by the RefineMesh */
-    Msg::Debug("- Face %i: project midpoints on surface", gf->tag());
-    bool evalOnCAD = gf->haveParametrization();
-    bool projOnCad = false;
-    if(evalOnCAD && !haveNiceParametrization(gf)) {
-      /* Strong disortion in parametrization, use projection */
-      evalOnCAD = false;
-      projOnCad = true;
-    }
-
-    if(Msg::GetVerbosity() >= 999) {
-      /* In some models (S9 from MAMBO) and with some resolution (clscale 0.1),
-       * there is this issue of vertex on wrong face ...
-       * I guess this is because the CAD is garbage (duplicated corners,
-       * degenerate edges) */
-      Msg::Debug("- Face %i, verify vertices before ...", gf->tag());
-      for(size_t i = 0; i < gf->getNumMeshElements(); ++i) {
-        MElement *e = gf->getMeshElement(i);
-        for(size_t lv = 0; lv < e->getNumVertices(); ++lv) {
-          MVertex *v = e->getVertex(lv);
-          if(v->onWhat()->cast2Face() && v->onWhat() != gf) {
-            Msg::Error(
-              "- Face %i: element vertex %li is associated to entity (%i,%i)",
-              gf->tag(), v->getNum(), v->onWhat()->dim(), v->onWhat()->tag());
-            abort();
-          }
+        sp = new SurfaceProjector();
+        bool oki = sp->initialize(gf, triangles);
+        if(!oki) {
+          Msg::Warning("failed to initialize surface projector");
+          delete sp;
+          sp = nullptr;
         }
       }
     }
 
-    unordered_map<MVertex *, MVertex *> old2new_gf;
-    unordered_map<MVertex *, SPoint3> backupPositionLinear;
-
-    for(size_t i = 0; i < gf->mesh_vertices.size(); ++i) {
-      MVertex *v = gf->mesh_vertices[i];
-      if(v->onWhat() != gf) {
-        Msg::Error("- Face %i: vertex %li is associated to entity (%i,%i)",
-                   gf->tag(), v->getNum(), v->onWhat()->dim(),
-                   v->onWhat()->tag());
-        abort();
-      }
-      MFaceVertex *mfv = dynamic_cast<MFaceVertex *>(v);
-      if(mfv == nullptr) {
-        GPoint proj;
-        if(sp != nullptr) {
-          proj = sp->closestPoint(v->point().data(), evalOnCAD, projOnCad);
-
-          if(!proj.succeeded() && gf->haveParametrization()) {
-            double uvg[2] = {0., 0.};
-            proj = gf->closestPoint(v->point(), uvg);
-          }
-        }
-        else {
+    /* Project the vertices */
+    const bool evalOnCAD = false;
+    const bool projOnCad = false;
+    for (size_t j = 0; j < it->second.size(); ++j) {
+      MVertex* v = it->second[j];
+      GPoint proj;
+      if(sp != nullptr) {
+        proj = sp->closestPoint(v->point().data(), evalOnCAD, projOnCad);
+        if(!proj.succeeded() && gf->haveParametrization()) {
           double uvg[2] = {0., 0.};
           proj = gf->closestPoint(v->point(), uvg);
         }
-        if(proj.succeeded()) {
-          /* Need to change the type of the MVertex */
-          MVertex *v2 = new MFaceVertex(proj.x(), proj.y(), proj.z(), gf,
-                                        proj.u(), proj.v());
-          gf->mesh_vertices[i] = v2;
-          backupPositionLinear[v2] = v->point();
-          old2new_gf[v] = v2;
-          delete v;
-        }
-        else {
-          MVertex *v2 = new MFaceVertex(v->point().x(), v->point().y(),
-                                        v->point().z(), gf, 0., 0.);
-          gf->mesh_vertices[i] = v2;
-          backupPositionLinear[v2] = v->point();
-          old2new_gf[v] = v2;
-          delete v;
-          Msg::Warning("- Face %i, vertex %li: surface projection failed",
-                       gf->tag(), v->getNum());
-        }
+      } else {
+        double uvg[2] = {0., 0.};
+        proj = gf->closestPoint(v->point(), uvg);
+      }
+      if(proj.succeeded()) {
+        v->setXYZ(proj.x(), proj.y(), proj.z());
+        v->setParameter(0, proj.u());
+        v->setParameter(1, proj.v());
+      } else {
+        Msg::Warning("- Face %i, vertex %li: surface projection failed",
+            gf->tag(), v->getNum());
       }
     }
 
-    /* Update elements */
-    for(size_t i = 0; i < gf->getNumMeshElements(); ++i) {
-      MElement *e = gf->getMeshElement(i);
-      for(size_t lv = 0; lv < e->getNumVertices(); ++lv) {
-        MVertex *v = e->getVertex(lv);
-        auto it2 = old2new_gf.find(v);
-        if(it2 != old2new_gf.end()) { e->setVertex(lv, it2->second); }
-      }
-    }
-
-    if(Msg::GetVerbosity() >= 99) {
-      Msg::Debug("- Face %i, verify vertices ...", gf->tag());
-      for(size_t i = 0; i < gf->getNumMeshElements(); ++i) {
-        MElement *e = gf->getMeshElement(i);
-        for(size_t lv = 0; lv < e->getNumVertices(); ++lv) {
-          MVertex *v = e->getVertex(lv);
-          if(v->onWhat()->cast2Edge()) {
-            MEdgeVertex *mev = dynamic_cast<MEdgeVertex *>(v);
-            if(mev == nullptr) {
-              Msg::Error("vertex attached to curve %i but not MEdgeVertex",
-                         v->onWhat()->cast2Edge()->tag());
-              abort();
-            }
-          }
-          else if(v->onWhat()->cast2Face()) {
-            MFaceVertex *mfv = dynamic_cast<MFaceVertex *>(v);
-            if(mfv == nullptr) {
-              Msg::Error("vertex attached to face %i but not MFaceVertex",
-                         v->onWhat()->cast2Face()->tag());
-              abort();
-            }
-          }
-          else if(v->onWhat()->cast2Vertex()) {
-          }
-          else {
-            Msg::Error("vertex not attach to a CAD entity");
-          }
-        }
-      }
-    }
-
-    /* Check quality of quads */
-    if(gf->quadrangles.size() > 0) {
-      bool qualityOk = true;
-      double sicnMin, sicnAvg;
-      computeSICN(
-        dynamic_cast_vector<MQuadrangle *, MElement *>(gf->quadrangles),
-        sicnMin, sicnAvg);
-      if(sicnMin < 0.) {
-        Msg::Warning("- refine with projection: quality negative (%.3f) on "
-                     "face %i after projection, rollback",
-                     sicnMin, gf->tag());
-        qualityOk = false;
-      }
-      if(!qualityOk) {
-        for(auto &kv : backupPositionLinear) { kv.first->setXYZ(kv.second); }
-      }
-    }
-
-    /* Smooth geometry (quick) */
-    if(sp != nullptr) {
-      double timeMax = 0.1;
+    /* Quad mesh smoothing */
+    double timeMax = 0.3;
+    optimizeGeometryQuadMesh(gf, sp, timeMax);
+    double sicnMin, sicnAvg;
+    computeSICN(
+      dynamic_cast_vector<MQuadrangle *, MElement *>(gf->quadrangles),
+      sicnMin, sicnAvg);
+    if(sicnMin < 0.) {
+      double timeMax = 2.;
       optimizeGeometryQuadMesh(gf, sp, timeMax);
     }
 
-    if(sp != nullptr) delete sp;
-
-    if(PARANO_VALIDITY) {
-      errorAndAbortIfInvalidVertexInElements(
-        dynamic_cast_vector<MQuadrangle *, MElement *>(gf->quadrangles),
-        "after surf proj");
-    }
+    if (sp) delete sp;
   }
 
-  const bool SHOW_QUADINIT = SHOW_INTERMEDIATE_VIEWS;
-  if(SHOW_QUADINIT) {
+  if(SHOW_INTERMEDIATE_VIEWS) {
     std::vector<MElement *> elements;
     for(GFace *gf : model_faces(gm)) {
       append(elements,
