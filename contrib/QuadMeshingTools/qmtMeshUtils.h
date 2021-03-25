@@ -75,8 +75,12 @@ std::vector<SPoint2> paramOnElement(GFace* gf, MElement* e);
 /* warning: triangles are allocated, should be delete by the caller */
 std::vector<MTriangle*> trianglesFromQuads(const std::vector<MQuadrangle*>& quads);
 
-bool getGFaceTriangles(GFace* gf, std::vector<MTriangle*>& triangles, bool& requireDelete);
-
+/* Find a way to get triangles associated to GFace (will look into current mesh, can split quads,
+ * will check in background mesh)
+ * If new triangles are allocated (e.g. by splitting quads), they are added to requireDelete
+ * If copyExisting: existing triangles are copied into new ones (added to requireDelete) */
+bool getGFaceTriangles(GFace* gf, std::vector<MTriangle*>& triangles, std::vector<MTriangle*>& requireDelete,
+    bool copyExisting = false);
 
 bool fillSurfaceProjector(GFace* gf, SurfaceProjector* sp);
 

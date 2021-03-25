@@ -49,6 +49,7 @@ struct contextMeshOptions {
   int nLayersPerGap;
   double gradation;
   int quadqsSizemapMethod, quadqsTopoOptimMethods;
+  double quadqsRemeshingBoldness;
   // mesh IO
   int fileFormat, firstElementTag, firstNodeTag;
   double mshFileVersion, medFileMinorVersion, scalingFactor;
