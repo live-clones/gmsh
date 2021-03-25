@@ -224,6 +224,7 @@ struct TFace {
 // Data structure for half-edge of T-mesh
 struct TEdge {
     TFace *tface1, *tface2; // pointer to T-faces on left and right of he
+    TVertex *tvertex1, *tvertex2; // T-vertices at the endpoints
     int len; // integer length
     HalfEdge* he; // first half-edge
     GEdge* gedge; // corresponding GEdge
@@ -442,6 +443,8 @@ struct TMesh {
                         TVertex* tvertex2 = vertexmap[he->v1];
                         tvertex1->adj.pb({tvertex2, tedge});
                         tvertex2->adj.pb({tvertex1, tedge});
+                        tedge->tvertex1 = tvertex1;
+                        tedge->tvertex2 = tvertex2;
                     }
                 //}
                 } while(!onTMesh.count(he->prev));
@@ -796,6 +799,46 @@ GeoLog::flush();
 return true;
 }
 
+// Transfinite Interpolation, for computing interior points
+bool transfinite_interpolation(
+    const vector<SVector3>& c1,
+    const vector<SVector3>& c2,
+    const vector<SVector3>& c3,
+    const vector<SVector3>& c4,
+    vector<SVector3>& pts) {
+  if (c1.size() <= 2 || c2.size() <= 2 || c3.size() <= 2 || c4.size() <= 2) {
+    Msg::Error("cannot TFI, c1.size=%d, c2.size=%d, c3.size=%d, c4.size=%d", c1.size(),c2.size(),c3.size(),c4.size());
+    return false;
+  }
+  if (c1.size() != c3.size() || c2.size() != c4.size()) {
+    Msg::Error("cannot TFI, c1.size=%d, c2.size=%d, c3.size=%d, c4.size=%d", c1.size(),c2.size(),c3.size(),c4.size());
+    return false;
+  }
+
+  size_t Ni = c1.size()-2;
+  size_t Nj = c2.size()-2;
+
+  vector<SVector3> c1_u, c3_u, c2_v, c4_v;
+  c1_u = std::vector<SVector3>(c1.begin()+1, c1.end()-1);
+  c3_u = std::vector<SVector3>(c3.begin()+1, c3.end()-1);
+  c2_v = std::vector<SVector3>(c2.begin()+1, c2.end()-1);
+  c4_v = std::vector<SVector3>(c4.begin()+1, c4.end()-1);
+  std::reverse(c3_u.begin(),c3_u.end());
+  std::reverse(c4_v.begin(),c4_v.end());
+
+  pts.resize(Ni*Nj);
+  F(i,Ni) F(j,Nj) {
+    double u = (1.+i) / (1.+Ni);
+    double v = (1.+j) / (1.+Nj);
+    pts[Ni*j+i] = (1.-v) * c1_u[i] + v * c3_u[i] + (1.-u) * c4_v[j] + u * c2_v[j]
+      - ((1.-u)*(1.-v)*c1[0] + u*v*c3[0] + u * (1.-v) * c2[0] + (1.-u)*v*c4[0]);
+  }
+
+  return true;
+}
+
+
+
 
 // Main function
 void alignQuadMesh(GModel* gm) {
@@ -831,8 +874,18 @@ void alignQuadMesh(GModel* gm) {
 
 
     // Draw T-edges with positive length
-    for(TEdge* tedge : TM.tedges) if(solution[tedge->id])
+    for(TEdge* tedge : TM.tedges) if(solution[tedge->id]) {
         tedge->geolog(0, "length > 0");
+        //tedge->tface1->geolog(rand(), "area > 0");
+        //tedge->tface2->geolog(rand(), "area > 0");
+    }
+
+    //set<TFace*> posarea(ALL(TM.tfaces));
+    //for(TEdge* tedge : TM.tedges) if(solution[tedge->id] == 0) {
+        //posarea.erase(tedge->tface1);
+        //posarea.erase(tedge->tface2);
+    //}
+    //for(TFace* tface : posarea) tface->geolog(rand(), "area > 0");
 
     // Merge T-vertices with distance 0 into clusters
     V<Cluster*> clusters;
@@ -899,108 +952,250 @@ void alignQuadMesh(GModel* gm) {
             tvertex->geolog(color, "clusters");
     }
 
-    // Draw edges between connected clusters (if not both on CAD)
-    set<pair<Cluster*,Cluster*>> connected; // pairs of clusters that are already connected
-    for(TVertex* tvertex1 : TM.tvertices) {
-        for(auto p : tvertex1->adj) {
-            TVertex* tvertex2 = p.first;
-            Cluster *cluster1 = inCluster[tvertex1], *cluster2 = inCluster[tvertex2];
-            if(connected.count({cluster1,cluster2}) || connected.count({cluster2,cluster1})) continue;
-            connected.insert({cluster1, cluster2});
-            int type1 = cluster1->type, type2 = cluster2->type;
-            if(type1 <= 1 || type2 <= 1) { // if not both on CAD
-                GFace* gf = (type1 <= 1) ? cluster1->gface : cluster2->gface;
-                Vertex* center1 = cluster1->center, *center2 = cluster2->center;
-
-                // Find shortest path on mesh between center1 and center2
-                queue<Vertex*> q; q.push(center1);
-                map<Vertex*, Vertex*> parent; parent[center1] = NULL;
-                bool done = false;
-                while(!done && S(q)) {
-                    Vertex* u = q.front(); q.pop();
-                    HalfEdge* he = u->he;
-                    F(k, u->valence) {
-                        he = he->oppo->next;
-                        Vertex* v = he->v2;
-                        if(v == center2) {
-                            parent[v] = u;
-                            done = true; break;
-                        }
-                        if(!isOnCAD(v) && !parent.count(v)) {
-                            parent[v] = u;
-                            q.push(v);
-                        }
-                    }
-                }
-
-                V<Vertex*> path; path.pb(center2);
-                Vertex* u = center2;
-                do {
-                    u = parent[u];
-                    path.pb(u);
-                } while(u != center1);
-
-                V<SPoint3> pts(S(path));
-                F(i, S(path)) pts[i] = path[i]->ptr->point();
-                V<SPoint3> ipts;
-                int nb_ipts = 10;
-                bool oks = compute_subdivided_edge_internal_points(pts, nb_ipts, ipts);
-                // Add first and last point
-                ipts.insert(ipts.begin(), pts[0]);
-                ipts.pb(pts.back());
-
-                int color = rand();
-                FR(i, 1, S(ipts)) {
-                    GeoLog::add({SVector3(ipts[i-1]), SVector3(ipts[i])}, color, "minimal mesh");
-                    //GeoLog::add({SVector3(path[i-1]->ptr->point()), SVector3(path[i]->ptr->point())}, color, "minimal mesh");
-                }
-
-                H(S(path));
-
-
-                //SPoint2 param1, param2;
-                //P("coucou");
-                //bool status1 = reparamMeshVertexOnFace(center1, gf, param1);
-                //bool status2 = reparamMeshVertexOnFace(center2, gf, param2);
-                //GPoint proj1 = gf->closestPoint(center1->point(), center1->point());
-                //GPoint proj2 = gf->closestPoint(center2->point(), center2->point());
-                //cout << param1 << endl;
-                //cout << proj1.u() << " " << proj1.v() << endl;
-                //cout << param2 << endl;
-                //cout << proj2.u() << " " << proj2.v() << endl;
-
-
-                //int n = 50;
-                //V<GPoint> curve(n+1);
-                //F(i,n+1) {
-                    //double lambda = (double)i/n;
-                    //SPoint2 param(proj1.u() * (1-lambda) + proj2.u() * (lambda), proj1.v() * (1-lambda) + proj2.v() * (lambda));
-                    //curve[i] = gf->point(param);
-                    ////P(curve[i]);
-                    ////cout << curve[i] << endl;
-                //}
-
-                ////cout << gpoint1 << " " << gpoint2 << endl;
-                //cout << endl;
-
-                //// Draw curve
-                //FR(i,1,n+1) {
-                    //SVector3 p1(curve[i-1].x(), curve[i-1].y(), curve[i-1].z());
-                    //SVector3 p2(curve[i].x(), curve[i].y(), curve[i].z());
-                    ////SVector3 p1(curve[i-1].x(), curve[i-1].y(), curve[i-1].z());
-                    //GeoLog::add({p1, p2}, 0, "minimal mesh");
-                //}
-            }
+    // Construct minimal mesh
+    map<pair<Cluster*,Cluster*>, V<Vertex*>> paths; // paths between clusters
+    set<HalfEdge*> onMinMesh; // set of half-edges lying on the minimal mesh
+    // add whole CAD to minmesh
+    for(TEdge* tedge : TM.tedges) if(tedge->gedge != NULL || tedge->isStitch) {
+        HalfEdge* he = tedge->he;
+        F(i, tedge->len) {
+            onMinMesh.insert(he);
+            he = he->next->oppo->next;
         }
     }
-    
-    P("coucou");
 
-    // Draw CAD
-    for(TEdge* tedge : TM.tedges)
-        if(tedge->gedge != NULL || tedge->isStitch)
-            tedge->geolog(0, "minimal mesh");
-            //tedge->geolog(1, "minimal mesh");
+    for(TFace* tface : TM.tfaces) {
+        // First check if T-face has positive area (otherwise skip it)
+        bool positiveArea = true;
+        F(k,4) {
+            int len = 0;
+            for(TEdge* tedge : tface->sides[k])
+                len += solution[tedge->id];
+            if(len == 0) positiveArea = false;
+        }
+        if(!positiveArea) continue;
+        tface->geolog(rand(), "area > 0");
+
+        array<V<SVector3>,4> side_vertices; // vertices on sides of patch
+        array<Cluster*,4> corners;
+        int color = rand();
+        F(k,4) {
+            for(TEdge* tedge : tface->sides[k]) {
+                Cluster *cluster1 = inCluster[tedge->tvertex1], *cluster2 = inCluster[tedge->tvertex2];
+                if(cluster1 == cluster2) continue;
+                if(tface == tedge->tface2) // T-face is on wrong side of T-edge
+                    swap(cluster1, cluster2);
+                if(corners[k] == NULL) corners[k] = cluster1;
+                int type1 = cluster1->type, type2 = cluster2->type;
+                if(type1 > 1 && type2 > 2) { // if both on CAD
+                    H(tedge->gedge);
+                    H(tedge->tvertex1->vertex);
+                    H(tedge->tvertex2->vertex);
+                    H(cluster1->center);
+                    H(cluster2->center);
+                    cout << endl;
+                }
+                V<Vertex*> path;
+                if(paths.count({cluster2, cluster1})) { // path already exists
+                    path = paths[{cluster2,cluster1}];
+                    reverse(ALL(path));
+                } else {
+                    Vertex* center1 = cluster1->center, *center2 = cluster2->center;
+                    queue<Vertex*> q; q.push(center1);
+                    map<Vertex*, Vertex*> parent; parent[center1] = NULL;
+                    bool done = false;
+                    bool bothOnCAD = (type1 > 1 && type2 > 1);
+                    // Find shortest path on mesh between center1 and center2
+                    while(!done && S(q)) {
+                        Vertex* u = q.front(); q.pop();
+                        HalfEdge* he = u->he;
+                        F(k, u->valence) {
+                            he = he->oppo->next;
+                            Vertex* v = he->v2;
+                            if(v == center2) {
+                                parent[v] = u;
+                                done = true; break;
+                            }
+                            if(isOnCAD(v) == bothOnCAD && !parent.count(v)) {
+                                parent[v] = u;
+                                q.push(v);
+                            }
+                        }
+                    }
+
+                    //if(parent[center2] == NULL) {
+                        //center1->geolog(0, "fail");
+                        //center2->geolog(1, "fail");
+                        //gmsh::initialize();
+                        //GeoLog::flush();
+                        //gmsh::fltk::run();
+                    //}
+
+                    path.pb(center2);
+                    Vertex* u = center2;
+                    do {
+                        u = parent[u];
+                        path.pb(u);
+                    } while(u != center1);
+                    reverse(ALL(path)); // center1 -> center2
+                    paths[{cluster1, cluster2}] = path;
+                }
+                // Path has been determined
+                H(S(path));
+                if(S(path)) {
+                    V<SPoint3> pts(S(path));
+                    F(i, S(path)) pts[i] = path[i]->ptr->point();
+                    V<SPoint3> ipts;
+                    int nb_ipts = 10 * solution[tedge->id];
+                    H(nb_ipts);
+                    H(S(pts));
+                    bool oks = compute_subdivided_edge_internal_points(pts, nb_ipts, ipts);
+                    // Add first and last point
+                    ipts.insert(ipts.begin(), pts[0]);
+                    ipts.pb(pts.back());
+
+                    F(i, S(ipts)) side_vertices[k].pb(ipts[i]);
+
+                    int color = rand();
+                    FR(i, 1, S(ipts)) {
+                        ostringstream name; name << "patch " << tface;
+                        //GeoLog::add({SVector3(ipts[i-1]), SVector3(ipts[i])}, i, name.str());
+                        //GeoLog::add({SVector3(path[i-1]->ptr->point()), SVector3(path[i]->ptr->point())}, color, "minimal mesh");
+                    }
+                }
+            }
+            //corners[k]->center->geolog(color, "corners");
+        }
+        H(S(side_vertices[0]));
+        H(S(side_vertices[1]));
+        H(S(side_vertices[2]));
+        H(S(side_vertices[3]));
+        V<SVector3> ipts;
+        transfinite_interpolation(side_vertices[0], side_vertices[1], side_vertices[2], side_vertices[3], ipts);
+        H(S(ipts));
+
+        int n = S(side_vertices[0]), m = S(side_vertices[1]);
+        V<V<SVector3>> apts(n, V<SVector3>(m)); // all points: side_vertices + ipts
+        F(i, n) {
+            F(j, m) {
+                if(i == 0) apts[i][j] = side_vertices[3][m-1-j];
+                else if(j == 0) apts[i][j] = side_vertices[0][i];
+                else if(i == n-1) apts[i][j] = side_vertices[1][j];
+                else if(j == m-1) apts[i][j] = side_vertices[2][n-1-i];
+                else apts[i][j] = ipts[(i-1)+(j-1)*(n-2)];
+            }
+        }
+        color = rand();
+        F(i,n) F(j,m) {
+            if(i < n-1) GeoLog::add({apts[i][j], apts[i+1][j]}, 0, "new edges");
+            if(j < m-1) GeoLog::add({apts[i][j], apts[i][j+1]}, 0, "new edges");
+            if(i < n-1 && j < m-1) GeoLog::add({apts[i][j], apts[i+1][j], apts[i+1][j+1], apts[i][j+1]}, color, "new faces");
+        }
+    }
+
+
+    //set<pair<Cluster*,Cluster*>> connected; // pairs of clusters that are already connected
+    //for(TVertex* tvertex1 : TM.tvertices) {
+        //for(auto p : tvertex1->adj) {
+            //TVertex* tvertex2 = p.first;
+            //Cluster *cluster1 = inCluster[tvertex1], *cluster2 = inCluster[tvertex2];
+            //if(cluster1 == cluster2 || connected.count({cluster1,cluster2}) || connected.count({cluster2,cluster1})) continue;
+            //connected.insert({cluster1, cluster2});
+            //int type1 = cluster1->type, type2 = cluster2->type;
+            //if(type1 <= 1 || type2 <= 1) { // if not both on CAD
+                //GFace* gf = (type1 <= 1) ? cluster1->gface : cluster2->gface;
+                //Vertex* center1 = cluster1->center, *center2 = cluster2->center;
+                //TEdge* tedge = p.second;
+
+                //// Find shortest path on mesh between center1 and center2
+                //queue<Vertex*> q; q.push(center1);
+                //map<Vertex*, Vertex*> parent; parent[center1] = NULL;
+                //bool done = false;
+                //while(!done && S(q)) {
+                    //Vertex* u = q.front(); q.pop();
+                    //HalfEdge* he = u->he;
+                    //F(k, u->valence) {
+                        //he = he->oppo->next;
+                        //Vertex* v = he->v2;
+                        //if(v == center2) {
+                            //parent[v] = u;
+                            //done = true; break;
+                        //}
+                        //if(!isOnCAD(v) && !parent.count(v)) {
+                            //parent[v] = u;
+                            //q.push(v);
+                        //}
+                    //}
+                //}
+
+                //V<Vertex*> path; path.pb(center2);
+                //Vertex* u = center2;
+                //do {
+                    //u = parent[u];
+                    //path.pb(u);
+                //} while(u != center1);
+
+                //V<SPoint3> pts(S(path));
+                //F(i, S(path)) pts[i] = path[i]->ptr->point();
+                //V<SPoint3> ipts;
+                //int nb_ipts = 10 * solution[tedge->id];
+                //bool oks = compute_subdivided_edge_internal_points(pts, nb_ipts, ipts);
+                //// Add first and last point
+                //ipts.insert(ipts.begin(), pts[0]);
+                //ipts.pb(pts.back());
+
+                //int color = rand();
+                //FR(i, 1, S(ipts)) {
+                    //GeoLog::add({SVector3(ipts[i-1]), SVector3(ipts[i])}, color, "minimal mesh");
+                    ////GeoLog::add({SVector3(path[i-1]->ptr->point()), SVector3(path[i]->ptr->point())}, color, "minimal mesh");
+                //}
+
+                //H(S(path));
+
+
+                ////SPoint2 param1, param2;
+                ////P("coucou");
+                ////bool status1 = reparamMeshVertexOnFace(center1, gf, param1);
+                ////bool status2 = reparamMeshVertexOnFace(center2, gf, param2);
+                ////GPoint proj1 = gf->closestPoint(center1->point(), center1->point());
+                ////GPoint proj2 = gf->closestPoint(center2->point(), center2->point());
+                ////cout << param1 << endl;
+                ////cout << proj1.u() << " " << proj1.v() << endl;
+                ////cout << param2 << endl;
+                ////cout << proj2.u() << " " << proj2.v() << endl;
+
+
+                ////int n = 50;
+                ////V<GPoint> curve(n+1);
+                ////F(i,n+1) {
+                    ////double lambda = (double)i/n;
+                    ////SPoint2 param(proj1.u() * (1-lambda) + proj2.u() * (lambda), proj1.v() * (1-lambda) + proj2.v() * (lambda));
+                    ////curve[i] = gf->point(param);
+                    //////P(curve[i]);
+                    //////cout << curve[i] << endl;
+                ////}
+
+                //////cout << gpoint1 << " " << gpoint2 << endl;
+                ////cout << endl;
+
+                ////// Draw curve
+                ////FR(i,1,n+1) {
+                    ////SVector3 p1(curve[i-1].x(), curve[i-1].y(), curve[i-1].z());
+                    ////SVector3 p2(curve[i].x(), curve[i].y(), curve[i].z());
+                    //////SVector3 p1(curve[i-1].x(), curve[i-1].y(), curve[i-1].z());
+                    ////GeoLog::add({p1, p2}, 0, "minimal mesh");
+                ////}
+            //}
+        //}
+    //}
+    
+    //P("coucou");
+
+    //// Draw CAD
+    //for(TEdge* tedge : TM.tedges)
+        //if(tedge->gedge != NULL || tedge->isStitch)
+            //tedge->geolog(0, "minimal mesh");
+            ////tedge->geolog(1, "minimal mesh");
 
     gmsh::initialize();
     GeoLog::flush();
