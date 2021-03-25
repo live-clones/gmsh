@@ -553,6 +553,8 @@ static void Mesh2D(GModel *m)
   Msg::SetNumThreads(prevNumThreads);
 
   if(CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT) {
+    replaceBadQuadDominantMeshes(m);
+
     /* In the quasi-structured pipeline, the quad-dominant mesh
      * is subdivided into a full quad mesh */
     /* TODO: - a faster CAD projection approach (from uv)
@@ -560,6 +562,7 @@ static void Mesh2D(GModel *m)
     // bool linear = false;
     // RefineMesh(m, linear, true, false);
     RefineMeshWithBackgroundMeshProjection(m);
+
 
     OptimizeMesh(m, "QuadQuasiStructured");
   }

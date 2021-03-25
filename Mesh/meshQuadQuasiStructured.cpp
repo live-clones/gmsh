@@ -18,6 +18,7 @@
 #include "GModel.h"
 #include "meshGEdge.h"
 #include "meshGFace.h"
+#include "meshGFaceOptimize.h"
 #include "meshGRegion.h"
 #include "BackgroundMesh.h"
 #include "Generator.h"
@@ -1827,8 +1828,9 @@ int RefineMeshWithBackgroundMeshProjection(GModel *gm)
     }
 
     /* Project the vertices */
-    const bool evalOnCAD = false;
-    const bool projOnCad = false;
+    bool evalOnCAD = false;
+    bool projOnCad = false;
+    if (gf->haveParametrization() && haveNiceParametrization(gf)) evalOnCAD = true;
     for (size_t j = 0; j < it->second.size(); ++j) {
       MVertex* v = it->second[j];
       GPoint proj;
@@ -1895,6 +1897,70 @@ int RefineMeshWithBackgroundMeshProjection(GModel *gm)
 
   return 0;
 }
+
+
+int checkAndReplaceQuadDominantMesh(GFace* gf, int valenceMaxBdr = 8, int valenceMaxIn = 12) {
+  /* Check valence */
+  unordered_map<MVertex *, int > valence;
+  for (MQuadrangle* q: gf->quadrangles) for (size_t lv = 0; lv < 4; ++lv) {
+    valence[q->getVertex(lv)] += 1;
+  }
+  for (MTriangle* t: gf->triangles) for (size_t lv = 0; lv < 3; ++lv) {
+    valence[t->getVertex(lv)] += 1;
+  }
+  int vMaxInt = 0;
+  int vMaxBdr = 0;
+  for (auto& kv: valence) {
+    if (kv.first->onWhat() == gf) {
+      vMaxInt = std::max(vMaxInt,kv.second);
+    } else {
+      vMaxBdr = std::max(vMaxBdr,kv.second);
+    }
+  }
+  if (vMaxInt <= valenceMaxIn && vMaxBdr <= valenceMaxBdr) return 0;
+
+  Msg::Warning("- Face %i: quad-tri mesh have valence %i (interior) and %i (bdr), replace it with meshadapt ...",
+      gf->tag(), vMaxInt, vMaxBdr);
+
+  int algo2d = gf->getMeshingAlgo();
+  gf->setMeshingAlgo(ALGO_2D_MESHADAPT);
+  gf->mesh(false);
+  gf->setMeshingAlgo(algo2d);
+
+  if (gf->meshStatistics.status != GFace::DONE) {
+    Msg::Warning("- Face %i: failed to build triangulation", gf->tag());
+    return -1;
+  }
+
+  /* Recombine triangles in quads */
+  recombineIntoQuads(gf, false, 0, false, .1);
+
+  return 0;
+}
+
+int replaceBadQuadDominantMeshes(GModel *gm) {
+  std::vector<GFace*> faces = model_faces(gm);
+
+  #if defined(_OPENMP)
+  #pragma omp parallel for schedule(dynamic)
+  #endif
+  for(size_t f = 0; f < faces.size(); ++f) {
+    GFace *gf = faces[f];
+    if(CTX::instance()->mesh.meshOnlyVisible && !gf->getVisibility()) continue;
+    if(CTX::instance()->debugSurface > 0 &&
+       gf->tag() != CTX::instance()->debugSurface)
+      continue;
+    if(gf->getNumMeshElements() == 0) continue;
+
+    int st = checkAndReplaceQuadDominantMesh(gf);
+    if (st != 0) {
+      Msg::Warning("- Face %i: failed to replace bad quad-tri mesh", gf->tag());
+    }
+  }
+
+  return 0;
+}
+
 
 int optimizeQuadMeshWithDiskQuadrangulationRemeshing(GFace *gf)
 {
@@ -2238,6 +2304,11 @@ int RefineMeshWithBackgroundMeshProjection(GModel *gm)
              "RefineMeshWithBackgroundMeshProjection");
   return -10;
 }
+int replaceBadQuadDominantMeshes(GModel *gm) {
+  Msg::Error("Module QUADMESHINGTOOLS required for function "
+             "replaceBadQuadDominantMeshes");
+  return -10;
+}
 
 #endif
 /* endif: QUADMESHINGTOOLS*/
@@ -2327,6 +2398,7 @@ int transferSeamGEdgesVerticesToGFace(GModel *gm)
   }
   return 0;
 }
+
 
 QuadqsContextUpdater::QuadqsContextUpdater()
 {

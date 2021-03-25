@@ -123,10 +123,22 @@ int quadMeshingOfSimpleFacesWithPatterns(GModel *gm,
  *        on the CAD surfaces, using the background mesh for
  *        faster projections.
  *
- * @param gm The model containg the surface meshes
+ * @param gm The model containing the surface meshes
  *
  * @return 0 if success
  */
 int RefineMeshWithBackgroundMeshProjection(GModel *gm);
+
+/**
+ * @brief The initial unstructured quad-tri mesh may contain
+ * very bad configurations (e.g. valence 50+) due to failures
+ * in algo pack. This method replaces them by meshes produced
+ * with algo meshadapt.
+ *
+ * @param gm The model containing the surface meshes
+ *
+ * @return 0 if success
+ */
+int replaceBadQuadDominantMeshes(GModel *gm);
 
 #endif

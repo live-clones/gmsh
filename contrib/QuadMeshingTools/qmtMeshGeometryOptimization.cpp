@@ -478,10 +478,11 @@ namespace QMT {
       for (size_t j = 0; j < bnd.size(); ++j) {
         if (bnd[j] == v0 && j > 0) {
           std::rotate(bnd.begin(),bnd.begin()+j,bnd.end());
+          break;
         }
       }
       if (bnd.front() != v0) {
-        Msg::Warning("buildCondensedStructure: wrong start");
+        Msg::Warning("buildCondensedStructure: wrong start (bnd size: %li)", bnd.size());
         return false;
       }
 
