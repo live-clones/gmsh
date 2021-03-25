@@ -1892,7 +1892,7 @@ Shape :
       else{
         r = GModel::current()->getGEOInternals()->addCurveLoop(num, tags);
       }
-      if(!r) yymsg(0, "Could not add line loop");
+      if(!r) yymsg(0, "Could not add curve loop");
       List_Delete($7);
       Free($2);
       $$.Type = MSH_SEGM_LOOP;
@@ -1921,7 +1921,7 @@ Shape :
       bool r = true;
       if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         if(wires.size() != 1){
-          yymsg(0, "OpenCASCADE surface filling requires a single line loop");
+          yymsg(0, "OpenCASCADE surface filling requires a single curve loop");
         }
         else{
           std::vector<int> constraints; ListOfDouble2Vector($7, constraints);
@@ -1989,7 +1989,7 @@ Shape :
       bool r = true;
       if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         if(wires.size() != 1) {
-          yymsg(0, "OpenCASCADE BSpline filling requires a single line loop");
+          yymsg(0, "OpenCASCADE BSpline filling requires a single curve loop");
         }
         else {
           r = GModel::current()->getOCCInternals()->addBSplineFilling(num, wires[0]);
@@ -2010,7 +2010,7 @@ Shape :
       bool r = true;
       if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         if(wires.size() != 1) {
-          yymsg(0, "OpenCASCADE BSpline filling requires a single line loop");
+          yymsg(0, "OpenCASCADE BSpline filling requires a single curve loop");
         }
         else {
           r = GModel::current()->getOCCInternals()->addBezierFilling(num, wires[0]);

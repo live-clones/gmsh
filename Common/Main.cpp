@@ -41,7 +41,9 @@ int wmain(int argc, wchar_t *wargv[], wchar_t *envp[])
 
 int main(int argc, char *argv[])
 {
+
 #endif
+
 #if defined(HAVE_FLTK)
   return GmshMainFLTK(argc, argv);
 #else

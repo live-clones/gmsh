@@ -242,10 +242,10 @@ double BGM_MeshSizeWithoutScaling(GEntity *ge, double U, double V, double X,
 
   // lc from callback
   double l6 = MAX_LC;
-  if(CTX::instance()->mesh.lcCallback) {
+  if(GModel::current()->lcCallback) {
     int dim = (ge ? ge->dim() : -1);
     int tag = (ge ? ge->tag() : -1);
-    l6 = CTX::instance()->mesh.lcCallback(dim, tag, X, Y, Z);
+    l6 = GModel::current()->lcCallback(dim, tag, X, Y, Z);
   }
 
   // take the minimum

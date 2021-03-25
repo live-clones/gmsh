@@ -206,7 +206,7 @@ int allEdgesLinked(int ed, List_T *edges)
 
   if(!Tree_Nbr(points)) {
     found = 1;
-    // at this point we can orient all the edges in a line loop in a consistent
+    // at this point we can orient all the edges in a curve loop in a consistent
     // manner (left- or right-oriented, depending on the orientation of the
     // first edge), and we can sort them so that they form a path (we can only
     // do this now since we allow to select disconnected parts of the loop in
