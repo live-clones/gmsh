@@ -954,6 +954,7 @@ cwrap_header = """// {0}
 #include <vector>
 #include <string>
 #include <utility>
+#include <functional>
 
 #ifndef M_PI
 #define M_PI (3.14159265358979323846)
