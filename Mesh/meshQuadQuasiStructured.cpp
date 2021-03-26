@@ -408,8 +408,11 @@ bool getGFaceBackgroundMeshLinesAndTriangles(
   return true;
 }
 
-int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
-                                       bool deleteGModelMesh, int N)
+int BuildBackgroundMeshAndGuidingField(GModel *gm, 
+    bool overwriteGModelMesh,
+    bool deleteGModelMeshAfter, 
+    bool overwriteField,
+    int N)
 {
   if(CTX::instance()->abortOnError && Msg::GetErrorCount()) return 0;
   if(CTX::instance()->mesh.algo2d != ALGO_2D_PACK_PRLGRMS &&
@@ -433,9 +436,14 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
     if(fields->getBackgroundField() > 0) {
       Field *field = fields->get(fields->getBackgroundField());
       if(field && field->numComponents() == 3) {
-        Msg::Info(
-          "vector background field exists, using it as a guiding field");
-        return 0;
+        if (!overwriteField) {
+          Msg::Info(
+              "vector background field exists, using it as a guiding field");
+          return 0;
+        } else {
+          Msg::Info("disabled current vector background field, building a new one");
+          fields->setBackgroundFieldId(0);
+        }
       }
       else if(field && field->numComponents() == 1) {
         if(qqsSizemapMethod == SizeMapDefault) {
@@ -452,10 +460,8 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
   }
 
   if(overwriteGModelMesh) {
-    Msg::Debug("delete GModel mesh");
-    std::for_each(gm->firstRegion(), gm->lastRegion(), deMeshGRegion());
-    std::for_each(gm->firstFace(), gm->lastFace(), deMeshGFace());
-    std::for_each(gm->firstRegion(), gm->lastRegion(), deMeshGRegion());
+    Msg::Debug("delete current GModel mesh");
+    gm->deleteMesh();
   }
 
   /* Check if triangulation available */
@@ -478,14 +484,6 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
     generateMeshWithSpecialParameters(gm, scalingOnTriangulation);
   }
 
-  // {
-  //   setQuadqsTransfiniteConstraints(gm, 0.34);
-  //   gm->deleteMesh();
-  //   generateMeshWithSpecialParameters(gm, scalingOnTriangulation);
-  //   gmsh::initialize();
-  //   gmsh::fltk::run();
-  //   abort();
-  // }
 
   GlobalBackgroundMesh &bmesh = getBackgroundMesh(BMESH_NAME);
   bool overwrite = true;
@@ -495,7 +493,7 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
     return -1;
   }
 
-  if(deleteGModelMesh) {
+  if(deleteGModelMeshAfter) {
     Msg::Debug("delete GModel mesh");
     gm->deleteMesh();
   }
@@ -2282,7 +2280,9 @@ int optimizeTopologyWithCavityRemeshing(GModel *gm)
 /* else: without QUADMESHINGTOOLS module*/
 
 int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
-                                       bool deleteGModelMeshAfter, int N)
+                                       bool deleteGModelMeshAfter, 
+                                       bool overwriteField,
+                                       int N)
 {
   Msg::Error("Module QUADMESHINGTOOLS required for function "
              "BuildBackgroundMeshAndGuidingField");
@@ -2414,19 +2414,48 @@ int transferSeamGEdgesVerticesToGFace(GModel *gm)
   return 0;
 }
 
-
 QuadqsContextUpdater::QuadqsContextUpdater()
 {
-  algo2d = CTX::instance()->mesh.algo2d;
-  recombineAll = CTX::instance()->mesh.recombineAll;
-  algoRecombine = CTX::instance()->mesh.algoRecombine;
-  recombineOptimizeTopology = CTX::instance()->mesh.recombineOptimizeTopology;
-  lcFactor = CTX::instance()->mesh.lcFactor;
-  lcMin = CTX::instance()->mesh.lcMin;
-  lcMax = CTX::instance()->mesh.lcMax;
-  lcFromPoints = CTX::instance()->mesh.lcFromPoints;
-  minCurveNodes = CTX::instance()->mesh.minCurveNodes;
-  minCircleNodes = CTX::instance()->mesh.minCircleNodes;
+#if defined(HAVE_QUADMESHINGTOOLS)
+  backups_int.push_back(new RestoreValueAtEndOfLife<int>(&CTX::instance()->mesh.algo2d));
+  backups_int.push_back(new RestoreValueAtEndOfLife<int>(&CTX::instance()->mesh.recombineAll));
+  backups_int.push_back(new RestoreValueAtEndOfLife<int>(&CTX::instance()->mesh.algoRecombine));
+  backups_int.push_back(new RestoreValueAtEndOfLife<int>(&CTX::instance()->mesh.recombineOptimizeTopology));
+  backups_double.push_back(new RestoreValueAtEndOfLife<double>(&CTX::instance()->mesh.lcFactor));
+  backups_double.push_back(new RestoreValueAtEndOfLife<double>(&CTX::instance()->mesh.lcMin));
+  backups_double.push_back(new RestoreValueAtEndOfLife<double>(&CTX::instance()->mesh.lcMax));
+  backups_int.push_back(new RestoreValueAtEndOfLife<int>(&CTX::instance()->mesh.lcFromPoints));
+  backups_int.push_back(new RestoreValueAtEndOfLife<int>(&CTX::instance()->mesh.minCurveNodes));
+  backups_int.push_back(new RestoreValueAtEndOfLife<int>(&CTX::instance()->mesh.minCircleNodes));
+
+  // Backup GEdge meshing attributes
+  for (GEdge* ge: model_edges(GModel::current())) {
+    backups_char.push_back(new RestoreValueAtEndOfLife<char>(&ge->meshAttributes.method));
+    backups_double.push_back(new RestoreValueAtEndOfLife<double>(&ge->meshAttributes.coeffTransfinite));
+    backups_double.push_back(new RestoreValueAtEndOfLife<double>(&ge->meshAttributes.meshSize));
+    backups_double.push_back(new RestoreValueAtEndOfLife<double>(&ge->meshAttributes.meshSizeFactor));
+    backups_int.push_back(new RestoreValueAtEndOfLife<int>(&ge->meshAttributes.nbPointsTransfinite));
+    backups_int.push_back(new RestoreValueAtEndOfLife<int>(&ge->meshAttributes.typeTransfinite));
+    backups_int.push_back(new RestoreValueAtEndOfLife<int>(&ge->meshAttributes.minimumMeshSegments));
+    backups_bool.push_back(new RestoreValueAtEndOfLife<bool>(&ge->meshAttributes.reverseMesh));
+  }
+
+  // Backup GFace meshing attributes
+  for (GFace* gf: model_faces(GModel::current())) {
+    backups_int.push_back(new RestoreValueAtEndOfLife<int>(&gf->meshAttributes.recombine));
+    backups_double.push_back(new RestoreValueAtEndOfLife<double>(&gf->meshAttributes.recombineAngle));
+    backups_char.push_back(new RestoreValueAtEndOfLife<char>(&gf->meshAttributes.method));
+    backups_int.push_back(new RestoreValueAtEndOfLife<int>(&gf->meshAttributes.transfiniteArrangement));
+    backups_int.push_back(new RestoreValueAtEndOfLife<int>(&gf->meshAttributes.transfiniteSmoothing));
+    backups_bool.push_back(new RestoreValueAtEndOfLife<bool>(&gf->meshAttributes.reverseMesh));
+    backups_double.push_back(new RestoreValueAtEndOfLife<double>(&gf->meshAttributes.meshSize));
+    backups_double.push_back(new RestoreValueAtEndOfLife<double>(&gf->meshAttributes.meshSizeFactor));
+    backups_int.push_back(new RestoreValueAtEndOfLife<int>(&gf->meshAttributes.algorithm));
+    backups_int.push_back(new RestoreValueAtEndOfLife<int>(&gf->meshAttributes.meshSizeFromBoundary));
+  }
+#else
+  Msg::Error("Module QUADMESHINGTOOLS required to use QuadqsContextUpdater");
+#endif
 
   setQuadqsOptions();
 }
@@ -2436,6 +2465,7 @@ QuadqsContextUpdater::~QuadqsContextUpdater() { restoreInitialOption(); }
 void QuadqsContextUpdater::setQuadqsOptions()
 {
   Msg::Debug("set special quadqs options in the global context");
+
   CTX::instance()->mesh.algo2d = ALGO_2D_QUAD_QUASI_STRUCT;
   CTX::instance()->mesh.recombineAll = 1;
   CTX::instance()->mesh.algoRecombine = 0;
@@ -2450,15 +2480,21 @@ void QuadqsContextUpdater::setQuadqsOptions()
 
 void QuadqsContextUpdater::restoreInitialOption()
 {
+#if defined(HAVE_QUADMESHINGTOOLS)
   Msg::Debug("restore options in the global context");
-  CTX::instance()->mesh.algo2d = algo2d;
-  CTX::instance()->mesh.recombineAll = recombineAll;
-  CTX::instance()->mesh.algoRecombine = algoRecombine;
-  CTX::instance()->mesh.recombineOptimizeTopology = recombineOptimizeTopology;
-  CTX::instance()->mesh.lcFactor = lcFactor;
-  CTX::instance()->mesh.lcMin = lcMin;
-  CTX::instance()->mesh.lcMax = lcMax;
-  CTX::instance()->mesh.lcFromPoints = lcFromPoints;
-  CTX::instance()->mesh.minCurveNodes = minCurveNodes;
-  CTX::instance()->mesh.minCircleNodes = minCircleNodes;
+  for (size_t i = 0; i < backups_char.size(); ++i) {
+    delete backups_char[i];
+  }
+  for (size_t i = 0; i < backups_bool.size(); ++i) {
+    delete backups_bool[i];
+  }
+  for (size_t i = 0; i < backups_int.size(); ++i) {
+    delete backups_int[i];
+  }
+  for (size_t i = 0; i < backups_double.size(); ++i) {
+    delete backups_double[i];
+  }
+#else
+  Msg::Error("Module QUADMESHINGTOOLS required to use QuadqsContextUpdater");
+#endif
 }
