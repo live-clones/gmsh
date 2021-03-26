@@ -420,6 +420,8 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
     return -1;
   }
 
+  const bool midpointSubdivisionAfter = true;
+
   const bool SHOW_INTERMEDIATE_VIEWS = (Msg::GetVerbosity() >= 99);
 
   Msg::Info("Build background mesh and guiding field ...");
@@ -662,7 +664,9 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
         }
 
         /* Midpoint subdivision => 4 times more quads */
-        targetNumberOfQuads /= 4;
+        if (midpointSubdivisionAfter) {
+          targetNumberOfQuads /= 4;
+        }
 
         if(targetNumberOfQuads == 0) targetNumberOfQuads = 1;
 
@@ -753,6 +757,21 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
   int sop = sizeMapOneWaySmoothing(global_triangles, sizeMap, gradientMax);
   if(sop != 0) { Msg::Warning("failed to compute one-way size map smoothing"); }
 
+  /* Clamp with global minimum/maximum mesh size */
+  {
+    // TODO: should be multiplied by lcFactor or not ?
+    double fs = midpointSubdivisionAfter ? 2. : 1.;
+    double sizeMin = CTX::instance()->mesh.lcMin * CTX::instance()->mesh.lcFactor;
+    double sizeMax = fs * CTX::instance()->mesh.lcMax * CTX::instance()->mesh.lcFactor;
+    for (auto& kv: sizeMap) {
+      if (kv.second < sizeMin) {
+        kv.second = sizeMin;
+      } else if (kv.second > sizeMax) {
+        kv.second = sizeMax;
+      }
+    }
+  }
+
   if(SHOW_INTERMEDIATE_VIEWS) {
     std::vector<MElement *> elements =
       dynamic_cast_vector<MTriangle *, MElement *>(global_triangles);
@@ -761,18 +780,6 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
     showUVParametrization(bmesh);
   }
 
-  /* Clamp with global minimum/maximum mesh size */
-  // {
-  // // TODO: apply on sizeMap instead
-  //   // TODO: should be multiplied by lcFactor or not ?
-  //   for (auto& kv: global_size_map) {
-  //     if (kv.second < CTX::instance()->mesh.lcMin) {
-  //       kv.second = CTX::instance()->mesh.lcMin;
-  //     } else if (kv.second > CTX::instance()->mesh.lcMax) {
-  //       kv.second = CTX::instance()->mesh.lcMax;
-  //     }
-  //   }
-  // }
 
   printSizeMapStats(global_triangles, sizeMap);
 
