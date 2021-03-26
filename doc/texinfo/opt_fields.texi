@@ -570,7 +570,7 @@ default value: @code{6371000}
 @end table
 
 @item MathEval
-Evaluate a mathematical expression. The expression can contain x, y, z for spatial coordinates, F0, F1, ... for field values, and and mathematical functions.@*
+Evaluate a mathematical expression. The expression can contain x, y, z for spatial coordinates, F0, F1, ... for field values, and mathematical functions.@*
 Options:@*
 @table @code
 @item F
@@ -580,7 +580,7 @@ default value: @code{"F2 + Sin(z)"}
 @end table
 
 @item MathEvalAniso
-Evaluate a metric expression. The expressions can contain x, y, z for spatial coordinates, F0, F1, ... for field values, and and mathematical functions.@*
+Evaluate a metric expression. The expressions can contain x, y, z for spatial coordinates, F0, F1, ... for field values, and mathematical functions.@*
 Options:@*
 @table @code
 @item M11
