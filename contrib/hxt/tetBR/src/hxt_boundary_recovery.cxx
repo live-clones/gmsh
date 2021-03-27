@@ -461,7 +461,7 @@ int tetgenmesh::reconstructmesh(void *p){
         HXT_CHECK( hxtAlignedFree(&(mesh->triangles.color)));      
         HXT_INFO("deleting %u triangles",mesh->triangles.num);
         mesh->triangles.num = 0; // firstindex; // in->firstnumber;
-        {    
+        {
           face subloop;
           subloop.shver = 0;
           subfaces->traversalinit();
