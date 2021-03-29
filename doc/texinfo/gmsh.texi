@@ -2977,13 +2977,13 @@ triangles any quadrangles on boundary surfaces shared with tetrahedral
 volumes. (They have no effect for 1D or 2D extrusions.)
 @code{QuadTriNoNewVerts} subdivides any of the region's quad-faced 3D
 elements that touch these boundary triangles into pyramids, prisms, or
-tetrahedra as necessary, all WITHOUT adding new
-nodes. @code{QuadTriAddVerts} works in a simular way, but subdivides
-3D elements touching the boundary triangles by adding a new node
-inside each element at the node-based centroid. Either method results
-in a structured extrusion with an outer layer of subdivided elements
-that interface the inner, unmodified elements to the triangle-meshed
-region boundaries.
+tetrahedra as necessary, all wiothout adding new
+nodes. @code{QuadTriAddVerts} works in a simular way, but subdivides 3D
+elements touching the boundary triangles by adding a new node inside
+each element at the node-based centroid. Either method results in a
+structured extrusion with an outer layer of subdivided elements that
+interface the inner, unmodified elements to the triangle-meshed region
+boundaries.
 
 In some rare cases, due to certain lateral boundary conditions, it may
 not be possible make a valid element subdivision with
@@ -3036,22 +3036,43 @@ smaller than Pi. With the OpenCASCADE kernel the angle should be
 strictly smaller than 2 Pi.
 
 @item Extrude @{ Surface @{ @var{expression-list} @}; @var{layers} < Using Index[@var{expr}]; > < Using View[@var{expr}]; > < ScaleLastLayer; > @}
-Extrudes a boundary layer from the specified surfaces. If no view is
-specified, the boundary layer is created using gouraud-shaped (smoothed)
-normal field. Specifying a boundary layer index allows to extrude
-several independent boundary layers (with independent normal smoothing).
+Extrudes a ``topological'' boundary layer from the specified
+surfaces. If no view is specified, the mesh of the boundary layer
+entities is created using a gouraud-shaded (smoothed) normal field. If a
+scalar view is specified, it locally prescribes the thickness of the
+layer. If a vector-valued view is specified it locally prescribes both
+the extrusion direction and the thickness. Specifying a boundary layer
+index allows to extrude several independent boundary layers (with
+independent normal smoothing). @code{ScaleLastLayer} scales the height
+of the last (top) layer of each normal's extrusion by the average length
+of the edges in all the source elements that contain the source node
+(actually, the average of the averages for each element--edges actually
+touching the source node are counted twice). This allows the height of
+the last layer to vary along with the size of the source elements in
+order to achieve better element quality. For example, in a boundary
+layer extruded with the Layers definition 'Layers@{ @{1,4,2@}, @{0.5,
+0.6, 1.6@} @},' a source node adjacent to elements with an overall
+average edge length of 5.0 will extrude to have a last layer height =
+(1.6-0.6) * 5.0 = 5.0. Topological boundary layers are only available
+with the built-in kernel. See
+@url{@value{GITLAB-PREFIX}/benchmarks/extrude/sphere_boundary_layer.geo,sphere_boundary_layer.geo}
+or
+@url{@value{GITLAB-PREFIX}/benchmarks/extrude/sphere_boundary_layer_from_view.geo,sphere_boundary_layer_from_view.geo}
+for @code{.geo} file examples, and
+@url{@value{GITLAB-PREFIX}/demos/api/aneurysm.py,aneurysm.py} for an API
+example.
 
-@code{ScaleLastLayer} scales the height of the last (top) layer of each
-normal's extrusion by the average length of the edges in all the source
-elements that contain the source node (actually, the average of the
-averages for each element--edges actually touching the source node are
-counted twice). This allows the height of the last layer to vary along
-with the size of the source elements in order to achieve better element
-quality. For example, in a boundary layer extruded with the Layers
-definition 'Layers@{ @{1,4,2@}, @{0.5, 0.6, 1.6@} @},' a source node
-adjacent to elements with an overall average edge length of 5.0 will
-extrude to have a last layer height = (1.6-0.6) * 5.0 = 5.0.
-
+The advantage of this approach is that it provides a topological
+description of the boundary layer, which means that it can be connected
+to other geometrical entities. The disadvantage is that the mesh is just
+a ``simple'' extrusion: no fans, no special treatments of reentrant
+corners, etc. Another boundary layer algorithm is currently available
+through the @code{BoundaryLayer} field (@pxref{Specifying mesh element
+sizes}). It only works in 2D however, and is a meshing constraint: it
+works directly at the mesh level, without creating geometrical
+entities. See
+e.g. @url{@value{GITLAB-PREFIX}/benchmarks/2d/BL0.geo,BL0.geo} or
+@url{@value{GITLAB-PREFIX}/benchmarks/2d/naca12_2d.geo,naca12_2d.geo}.
 
 @item Transfinite Curve @{ @var{expression-list-or-all} @} = @var{expression} < Using Progression | Bump @var{expression} >;
 Selects the curves in @var{expression-list} to be meshed with the 1D
