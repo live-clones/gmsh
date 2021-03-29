@@ -6,7 +6,15 @@
 #ifndef MESH_QUAD_QUASI_STRUCTURED_H
 #define MESH_QUAD_QUASI_STRUCTURED_H
 
+#include <vector>
+
 class GModel;
+class GFace;
+class GEdge;
+
+namespace CppUtils {
+  template <typename T> class RestoreValueAtEndOfLife;
+}
 
 /**
  * @brief The QuadQuasiStructured meshing mode requires control
@@ -26,16 +34,10 @@ protected:
   void restoreInitialOption();
 
 protected:
-  int algo2d;
-  int recombineAll;
-  int algoRecombine;
-  int recombineOptimizeTopology;
-  double lcFactor;
-  double lcMin;
-  double lcMax;
-  int lcFromPoints;
-  int minCurveNodes;
-  int minCircleNodes;
+  std::vector<CppUtils::RestoreValueAtEndOfLife<bool>* > backups_bool;
+  std::vector<CppUtils::RestoreValueAtEndOfLife<char>* > backups_char;
+  std::vector<CppUtils::RestoreValueAtEndOfLife<int>* > backups_int;
+  std::vector<CppUtils::RestoreValueAtEndOfLife<double>* > backups_double;
 };
 
 /**
@@ -45,6 +47,7 @@ protected:
  * @param[in] overwriteGModelMesh delete existing mesh, rebuild from CAD
  * @param[in] deleteGModelMeshAfter after background mesh creation, delete the
  * GModel mesh
+ * @param[in] overwriteField overwrite existing background field
  * @param[in] N the N-symmetry field invariance. N=4 for cross and N=6 for
  * asterisk fields
  *
@@ -53,6 +56,7 @@ protected:
 int BuildBackgroundMeshAndGuidingField(GModel *gm,
                                        bool overwriteGModelMesh = false,
                                        bool deleteGModelMeshAfter = false,
+                                       bool overwriteField = false,
                                        int N = 4);
 
 /**
