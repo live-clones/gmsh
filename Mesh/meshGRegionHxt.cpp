@@ -263,13 +263,17 @@ static HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions, HXTMesh *m,
     }
   }
 
+  #pragma omp parallel for
   for(int c = 0; c < regions.size(); c++) {
     regions[c]->tetrahedra.resize(count[c], nullptr);
-    
-    for(size_t i = 0; i < count[c]; i++) {
+    count[c] = 0;
+  }
+
+  #pragma omp parallel for collapse(2)
+  for(int c = 0; c < regions.size(); c++) {
+    for(size_t i = 0; i < regions[c]->tetrahedra.size(); i++) {
       regions[c]->tetrahedra[i] = new MTetrahedron(nullptr, nullptr, nullptr, nullptr);
     }
-    count[c] = 0;
   }
 
 
