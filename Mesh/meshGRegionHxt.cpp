@@ -242,28 +242,64 @@ static HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions, HXTMesh *m,
     gf->second->triangles.push_back(new MTriangle(c2v[i0], c2v[i1], c2v[i2]));
   }
 
+  // count the number of tetrahedra in each region in parallel
+  int numThrds = omp_get_max_threads();
+  size_t* count;
+  HXT_CHECK( hxtCalloc(&count, regions.size() * numThrds, sizeof(size_t)) );
+#pragma omp parallel
+  {
+    int threadID = omp_get_thread_num();
+    size_t* ccLocal = &count[regions.size() * threadID];
+    #pragma omp for
+    for(size_t i = 0; i < m->tetrahedra.num; i++) {
+      uint32_t c = m->tetrahedra.color[i];
+      if(c < regions.size())
+        ccLocal[c]++;
+    } // implicit barrier
+
+    #pragma omp critical
+    for(int c = 0; threadID && c < regions.size(); c++) {
+      count[c] += ccLocal[c];
+    }
+  }
+
+  for(int c = 0; c < regions.size(); c++) {
+    regions[c]->tetrahedra.resize(count[c], nullptr);
+    
+    for(size_t i = 0; i < count[c]; i++) {
+      regions[c]->tetrahedra[i] = new MTetrahedron(nullptr, nullptr, nullptr, nullptr);
+    }
+    count[c] = 0;
+  }
+
+
+
   for(size_t i = 0; i < m->tetrahedra.num; i++) {
-    uint16_t c = m->tetrahedra.color[i];
+    uint32_t c = m->tetrahedra.color[i];
     if(c >= regions.size())
       continue;
 
     GRegion *gr = regions[c];
     MVertex *vv[4];
     uint32_t *nodes = &m->tetrahedra.node[4 * i];
+    size_t index = count[c]++;
     for(int j = 0; j < 4; j++) {
       if(c2v[nodes[j]]){
         vv[j] = c2v[nodes[j]];
-        continue;
+      }
+      else {
+        double *x = &m->vertices.coord[4 * nodes[j]];
+        vv[j] = new MVertex(x[0], x[1], x[2], gr);
+        gr->mesh_vertices.push_back(vv[j]);
+        c2v[nodes[j]] = vv[j];
       }
 
-      double *x = &m->vertices.coord[4 * nodes[j]];
-      vv[j] = new MVertex(x[0], x[1], x[2], gr);
-      gr->mesh_vertices.push_back(vv[j]);
-      c2v[nodes[j]] = vv[j];
+      gr->tetrahedra[index]->setVertex(j, vv[j]);
     }
-
-    gr->tetrahedra.push_back(new MTetrahedron(vv[0], vv[1], vv[2], vv[3]));
   }
+
+
+  HXT_CHECK( hxtFree(&count) );
   Msg::Debug("End Hxt2Gmsh");
   return HXT_STATUS_OK;
 }
