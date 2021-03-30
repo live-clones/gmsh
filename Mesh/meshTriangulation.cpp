@@ -86,14 +86,13 @@ struct pair_hash {
 
 int PolyMesh2GFace(PolyMesh *pm, int faceTag) {
   GFace *gf = GModel::current()->getFaceByTag(faceTag);
-  std::map<PolyMesh::Vertex,size_t> newV;
 
   for (auto t : gf->triangles)delete t;
   for (auto q : gf->quadrangles)delete q;
   gf->triangles.clear();
   gf->quadrangles.clear();
 
-  std::map<int, MVertex*> news;
+  std::unordered_map<int, MVertex*> news;
   
   for (auto f : pm->faces){
     PolyMesh::Vertex *v[4] = {f->he->v,f->he->next->v,f->he->next->next->v,f->he->next->next->next->v};
@@ -128,14 +127,13 @@ int PolyMesh2GFace(PolyMesh *pm, int faceTag) {
   return 0;
 }
 
-
 int GFace2PolyMesh(int faceTag, PolyMesh **pm)
 {
   gmsh::initialize();
   *pm = new PolyMesh;
 
   std::unordered_map<size_t, size_t> nodeLabels;
-  std::map<std::pair<size_t, size_t>, PolyMesh::HalfEdge *>   opposites;
+  std::unordered_map<std::pair<size_t, size_t>, PolyMesh::HalfEdge *, pair_hash>   opposites;
 
   std::vector<int> elementTypes;
   std::vector<std::vector<std::size_t> > elementTags;
@@ -181,18 +179,32 @@ int GFace2PolyMesh(int faceTag, PolyMesh **pm)
 	he[j]->next = he[(j+1)%nNod];
 	he[j]->prev = he[(j-1+nNod)%nNod];
 	he[j]->f = ff;
-	size_t n0 = v[j]->data;
-	size_t n1 = v[(j+1)%nNod]->data;
-	std::pair<size_t, size_t> pj =
-	  std::make_pair(std::min(n0,n1),std::max(n0,n1));
-	auto itj = opposites.find(pj);
-	if(itj == opposites.end()) opposites[pj] = he[j];
-	else {
-	  he[j]->opposite = itj->second;
-	  itj->second->opposite = he[j];
-	}
+	//	size_t n0 = v[j]->data;
+	//	size_t n1 = v[(j+1)%nNod]->data;
+	//	std::pair<size_t, size_t> pj =
+	//	  std::make_pair(std::min(n0,n1),std::max(n0,n1));
+	//	auto itj = opposites.find(pj);
+	//	if(itj == opposites.end()) opposites[pj] = he[j];
+	//	else {
+	//	  he[j]->opposite = itj->second;
+	//	  itj->second->opposite = he[j];
+	//	}
       }      
     }
+  }
+
+  HalfEdgePtrLessThan compare;
+  std::sort ((*pm)->hedges.begin(), (*pm)->hedges.end(), compare);
+
+  HalfEdgePtrEqual equal;
+  for (size_t i=0 ; i< (*pm)->hedges.size() - 1; i++){
+    PolyMesh::HalfEdge *h0 = (*pm)->hedges[i];
+    PolyMesh::HalfEdge *h1 = (*pm)->hedges[i+1];
+    if (equal(h0,h1)){
+      h0->opposite = h1;
+      h1->opposite = h0;
+      i++;
+    }    
   }
   return 0;
 }
@@ -568,7 +580,7 @@ struct nodeCopies {
 
 //// INITIAL MESH --------- colored
 
-static void getNodeCopies(GFace *gf, std::map<size_t, nodeCopies> &copies)
+static void getNodeCopies(GFace *gf, std::unordered_map<size_t, nodeCopies> &copies)
 {
   std::vector<GEdge *> edges = gf->edges();
   std::vector<GEdge *> emb_edges = gf->getEmbeddedEdges();
@@ -609,7 +621,7 @@ static void getNodeCopies(GFace *gf, std::map<size_t, nodeCopies> &copies)
         else {
           reparamMeshVertexOnFace(v, gf, param);
         }
-        std::map<size_t, nodeCopies>::iterator it = copies.find(v->getNum());
+        std::unordered_map<size_t, nodeCopies>::iterator it = copies.find(v->getNum());
         if(it == copies.end()) {
           nodeCopies c(v, param.x(), param.y());
           copies.insert(std::make_pair(v->getNum(), c));
@@ -636,7 +648,7 @@ PolyMesh *GFaceInitialMesh(int faceTag, int recover)
 
   PolyMesh *pm = new PolyMesh;
 
-  std::map<size_t, nodeCopies> copies;
+  std::unordered_map<size_t, nodeCopies> copies;
   getNodeCopies(gf, copies);
 
   SBoundingBox3d bb;
@@ -648,7 +660,7 @@ PolyMesh *GFaceInitialMesh(int faceTag, int recover)
   pm->initialize_rectangle(bb.min().x(), bb.max().x(), bb.min().y(),
                            bb.max().y());
   PolyMesh::Face *f = pm->faces[0];
-  for(std::map<size_t, nodeCopies>::iterator it = copies.begin();
+  for(std::unordered_map<size_t, nodeCopies>::iterator it = copies.begin();
       it != copies.end(); ++it) {
     for(size_t i = 0; i < it->second.nbCopies; i++) {
       double x = it->second.u[i];

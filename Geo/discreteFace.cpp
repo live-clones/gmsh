@@ -205,7 +205,7 @@ GPoint discreteFace::closestPoint(const SPoint3 &queryPoint, double maxDistance,
     pp.setNoSuccess();
     return pp;
   }
-  
+
   dfWrapper wrapper(queryPoint);
   do {
     wrapper._distance = 1.e22;

@@ -341,8 +341,8 @@ bool generateMeshWithSpecialParameters(GModel *gm,
   CTX::instance()->mesh.lcFactor = lcFactor * scalingOnTriangulation;
   CTX::instance()->mesh.recombineAll = 0;
   CTX::instance()->mesh.algoRecombine = 0;
-  CTX::instance()->mesh.algo2d =
-    ALGO_2D_MESHADAPT; /* slow but frontal does not always work */
+  CTX::instance()->mesh.algo2d = ALGO_2D_FRONTAL;
+  //    ALGO_2D_MESHADAPT; /* slow but frontal does not always work */
 
   /* Generate the triangulation with standard gmsh pipeline */
   GenerateMesh(gm, 2);
@@ -357,6 +357,42 @@ bool generateMeshWithSpecialParameters(GModel *gm,
 
   /* Lock again before going back to GenerateMesh() */
   if(shouldLock) CTX::instance()->lock = 1;
+
+  return true;
+}
+
+bool getGFaceBackgroundMeshLinesAndTriangles(
+    GlobalBackgroundMesh& bmesh, GFace* gf,
+    std::vector<MLine*>& lines, std::vector<MTriangle*>& triangles) {
+  lines.clear();
+  triangles.clear();
+
+  /* Collect pointers to background mesh elements */
+  std::vector<GEdge *> edges = face_edges(gf);
+  for(GEdge *ge : edges) {
+    auto it = bmesh.edgeBackgroundMeshes.find(ge);
+    if(it == bmesh.edgeBackgroundMeshes.end()) {
+      Msg::Warning("getGFaceBackgroundMeshLinesAndTriangles: GEdge %i not found "
+          "in background mesh",
+          ge->tag());
+      continue;
+    }
+    lines.reserve(lines.size() + it->second.lines.size());
+    for(size_t i = 0; i < it->second.lines.size(); ++i) {
+      lines.push_back(&(it->second.lines[i]));
+    }
+  }
+  auto it = bmesh.faceBackgroundMeshes.find(gf);
+  if(it == bmesh.faceBackgroundMeshes.end()) {
+    Msg::Warning("getGFaceBackgroundMeshLinesAndTriangles: GFace %i not found "
+        "in background mesh",
+        gf->tag());
+    return false;
+  }
+  triangles.reserve(triangles.size() + it->second.triangles.size());
+  for(size_t i = 0; i < it->second.triangles.size(); ++i) {
+    triangles.push_back(&(it->second.triangles[i]));
+  }
 
   return true;
 }
@@ -495,38 +531,13 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
         continue;
 
       /* Compute a cross field on each face */
+
+      /* Get mesh elements for solver */
       std::vector<MLine *> lines;
       std::vector<MTriangle *> triangles;
-
-      /* Collect pointers to background mesh elements */
-      std::vector<GEdge *> edges = face_edges(gf);
-      for(GEdge *ge : edges) {
-        auto it = bmesh.edgeBackgroundMeshes.find(ge);
-        if(it == bmesh.edgeBackgroundMeshes.end()) {
-          Msg::Warning("BuildBackgroundMeshAndGuidingField: GEdge %i not found "
-                       "in background mesh",
-                       ge->tag());
-          continue;
-        }
-        lines.reserve(lines.size() + it->second.lines.size());
-        for(size_t i = 0; i < it->second.lines.size(); ++i) {
-          lines.push_back(&(it->second.lines[i]));
-        }
-      }
-      auto it = bmesh.faceBackgroundMeshes.find(gf);
-      if(it == bmesh.faceBackgroundMeshes.end()) {
-        Msg::Warning("BuildBackgroundMeshAndGuidingField: GFace %i not found "
-                     "in background mesh",
-                     gf->tag());
-        continue;
-      }
-      triangles.reserve(triangles.size() + it->second.triangles.size());
-      for(size_t i = 0; i < it->second.triangles.size(); ++i) {
-        triangles.push_back(&(it->second.triangles[i]));
-      }
-
-      if(triangles.size() == 0) {
-        Msg::Error("- Face %i: no triangles in background mesh", gf->tag());
+      bool oklt = getGFaceBackgroundMeshLinesAndTriangles(bmesh, gf, lines, triangles);
+      if (!oklt && triangles.size() == 0) {
+        Msg::Error("- Face %i: failed to get triangles from background mesh", gf->tag());
         continue;
       }
 
@@ -774,7 +785,7 @@ bool getSingularitiesFromBackgroundField(GFace* gf,
     if(guiding_field && guiding_field->numComponents() == 3) { field = guiding_field; }
   }
   if (field == nullptr) {
-    Msg::Error("get singularities: face %i, failed to get background field", gf->tag());
+    Msg::Debug("get singularities: face %i, failed to get background field", gf->tag());
     return false;
   }
 
@@ -804,8 +815,53 @@ bool getSingularitiesFromBackgroundField(GFace* gf,
   return true;
 }
 
+bool getSingularitiesFromNewCrossFieldComputation(
+    GlobalBackgroundMesh& bmesh,
+    GFace* gf,
+    std::vector<std::pair<SPoint3, int> >& singularities) {
+  const int N = 4;
+
+  std::vector<MLine *> lines;
+  std::vector<MTriangle *> triangles;
+  bool oklt = getGFaceBackgroundMeshLinesAndTriangles(bmesh, gf, lines, triangles);
+  if (!oklt && triangles.size() == 0) {
+    Msg::Error("- Face %i: failed to get triangles from background mesh", gf->tag());
+    return false;
+  }
+
+  /* Cross field */
+  std::vector<std::array<double, 3> > triEdgeTheta;
+  int nbDiffusionLevels = 4;
+  double thresholdNormConvergence = 1.e-2;
+  int nbBoundaryExtensionLayer = 1;
+  int verbosity = 0;
+  Msg::Info("- Face %i: compute cross field (%li triangles, %li B.C. "
+      "edges, %i diffusion levels) ...",
+      gf->tag(), triangles.size(), lines.size(),
+      nbDiffusionLevels);
+  int scf = computeCrossFieldWithHeatEquation(
+      N, triangles, lines, triEdgeTheta, nbDiffusionLevels,
+      thresholdNormConvergence, nbBoundaryExtensionLayer, verbosity);
+  if(scf != 0) {
+    Msg::Warning("- Face %i: failed to compute cross field", gf->tag());
+  }
+
+  /* Cross field singularities */
+  bool addSingularitiesAtAcuteCorners = true;
+  double thresholdInDeg = 30.;
+  int scsi = detectCrossFieldSingularities(N, triangles, triEdgeTheta,
+      addSingularitiesAtAcuteCorners,
+      thresholdInDeg, singularities);
+  if(scsi != 0) {
+    Msg::Warning("- Face %i: failed to compute cross field singularities",
+        gf->tag());
+  }
+
+  return true;
+}
+
 void computeBdrVertexIdealValence(const std::vector<MQuadrangle *> &quads,
-                                  unordered_map<MVertex *, double> &qValIdeal)
+    unordered_map<MVertex *, double> &qValIdeal)
 {
   qValIdeal.clear();
   for(MQuadrangle *f : quads) {
@@ -1863,7 +1919,7 @@ int RefineMeshWithBackgroundMeshProjection(GModel *gm)
 
     /* Smooth geometry (quick) */
     if(sp != nullptr) {
-      double timeMax = 0.3;
+      double timeMax = 0.1;
       optimizeGeometryQuadMesh(gf, sp, timeMax);
     }
 
@@ -2139,6 +2195,8 @@ int optimizeTopologyWithCavityRemeshing(GModel *gm)
     }
   }
 
+  GlobalBackgroundMesh &bmesh = getBackgroundMesh(BMESH_NAME);
+
 #if defined(_OPENMP)
 #pragma omp parallel for schedule(dynamic)
 #endif
@@ -2156,7 +2214,10 @@ int optimizeTopologyWithCavityRemeshing(GModel *gm)
     std::vector<std::pair<SPoint3, int> > singularities;
     bool okg = getSingularitiesFromBackgroundField(gf, singularities);
     if (!okg) {
-      Msg::Warning("- Face %i: failed to get singularities from background field", gf->tag());
+      okg = getSingularitiesFromNewCrossFieldComputation(bmesh, gf, singularities);
+      if (!okg) {
+        Msg::Warning("- Face %i: failed to get singularities", gf->tag());
+      }
     }
 
     bool invertNormals = meshOrientationIsOppositeOfCadOrientation(gf);

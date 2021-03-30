@@ -1395,6 +1395,11 @@ StringXNumber MeshOptions_Number[] = {
       "001: cavity remeshing,"
       "xxx: combination of multiple methods (e.g. 111 for all)"
   },
+  { F|O, "QuadqsRemeshingBoldness" , opt_mesh_quadqs_remeshing_boldness, 0.501 ,
+    "Controls how much cavity remeshing is allowed to distort"
+      " the quad mesh. From 0 (no quality decrease during remeshing) to 1"
+      " (quality can tend to 0 during remeshing)."
+  },
 
   { F|O, "Quadrangles" , opt_mesh_quadrangles , 1. ,
     "Display mesh quadrangles?" },

@@ -811,7 +811,6 @@ void meshGEdge::operator()(GEdge *ge)
     vv.insert(vv.end(), mesh_vertices.begin(), mesh_vertices.end());
     for(std::size_t i = 0; i < _addEnd.size(); i++)
       vv.push_back(_addEnd[_addEnd.size() - 1 - i]);
-    //    vv.insert(vv.end(), _addEnd.rend(), _addEnd.rbegin());
     mesh_vertices = vv;
   }
 

@@ -480,4 +480,30 @@ public:
   }
 };
 
+struct HalfEdgePtrLessThan {
+  bool operator()(PolyMesh::HalfEdge *l1, PolyMesh::HalfEdge *l2) const
+  {
+    PolyMesh::Vertex *l10 = std::min(l1->v,l1->next->v);
+    PolyMesh::Vertex *l11 = std::max(l1->v,l1->next->v);
+    PolyMesh::Vertex *l20 = std::min(l2->v,l2->next->v);
+    PolyMesh::Vertex *l21 = std::max(l2->v,l2->next->v);
+    if (l10 < l20)return true;
+    if (l10 > l20)return false;
+    if (l11 > l21)return true;
+    return false;
+  }
+};
+
+struct HalfEdgePtrEqual {
+  bool operator()(PolyMesh::HalfEdge *l1, PolyMesh::HalfEdge *l2) const
+  {
+    PolyMesh::Vertex *l10 = std::min(l1->v,l1->next->v);
+    PolyMesh::Vertex *l11 = std::max(l1->v,l1->next->v);
+    PolyMesh::Vertex *l20 = std::min(l2->v,l2->next->v);
+    PolyMesh::Vertex *l21 = std::max(l2->v,l2->next->v);
+    if (l10 == l20 && l11 == l21)return true;
+    return false;
+  }
+};
+
 #endif

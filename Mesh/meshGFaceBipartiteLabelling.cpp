@@ -5,7 +5,7 @@
 // Original idea of Christos Georgiadis -- 2021 
 
 #include <queue>
-#include <map>
+#include <unordered_map>
 #include "meshTriangulation.h"
 #include "SVector3.h"
 #include "GModel.h"
@@ -57,7 +57,7 @@ static void computeNaturalCross (PolyMesh::Vertex *v,
   }
 }
 
-static void printLabelling (const char* fn, PolyMesh *pm, std::map<PolyMesh::Vertex*,int> &_labels)
+static void printLabelling (const char* fn, PolyMesh *pm, std::unordered_map<PolyMesh::Vertex*,int> &_labels)
 {
   if (Msg::GetVerbosity()  < 99)return;
   FILE *f = fopen(fn,"w");
@@ -143,8 +143,8 @@ void meshGFaceQuadrangulateBipartiteLabelling (int faceTag){
   int result = GFace2PolyMesh (faceTag, &pm);
   if (result == -1)return;
   std::queue<PolyMesh::Vertex*> _queue;
-  std::map<PolyMesh::Vertex*,int> _labels;
-  std::map<PolyMesh::Vertex*,SVector3> _dirs;
+  std::unordered_map<PolyMesh::Vertex*,int> _labels;
+  std::unordered_map<PolyMesh::Vertex*,SVector3> _dirs;
 
   Msg::Info("Quadrangulation of face %d using Bipartite Labelling",faceTag);
   
@@ -241,7 +241,7 @@ void meshGFaceQuadrangulateBipartiteLabelling (int faceTag){
 	if (_labels[best->next->v] == -1){	  
 	  //	  printf("(%lu %g)", best->next->v->data, it.first);
 	  _dirs[best->next->v] = best->d();
-	  _labels[best->next->v] = !currentLabel;
+	  _labels[best->next->v] = /*rand()%2; // TEST*/ !currentLabel;
 	  _queue.push(best->next->v);
 	}
       }
