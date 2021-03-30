@@ -252,13 +252,13 @@ static HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions, HXTMesh *m,
 
 
   const uint32_t nR = regions.size();
+  const uint32_t nV = m->vertices.num;
   int nthreads = omp_get_max_threads();
   size_t* ht_all, *ht_tot; // histograms for tets
   HXT_CHECK( hxtCalloc(&ht_all, nR * (nthreads + 1), sizeof(size_t)) );
   uint32_t* hp_all, *hp_tot; // histograms for points
-  HXT_CHECK( hxtCalloc(&hp_all, nR * (nthreads + 1), sizeof(size_t)) );
-  uint32_t* ptR_all; // color per point and per thread
-  HXT_CHECK( hxtAlignedMalloc(&ptR_all, sizeof(uint32_t) * m->vertices.num * nthreads) );
+  HXT_CHECK( hxtCalloc(&hp_all, nR * (nthreads + 1) * 3 + (size_t) nV * nthreads, sizeof(uint32_t)) );
+  uint32_t* vR_all = hp_all + nR * (nthreads + 1); // color per point and per thread
 
   #pragma omp parallel
   {
@@ -272,8 +272,7 @@ static HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions, HXTMesh *m,
     int threadID = omp_get_thread_num();
     size_t* ht_this = ht_all + nR * threadID;
     uint32_t* hp_this = hp_all + nR * threadID;
-    uint32_t* ptR_this = ptR_all + m->vertices.num * threadID;
-    memset(ptR_this, -1, m->vertices.num * sizeof(uint32_t));
+    uint32_t* vR_this = vR_all + nV * threadID;
 
     // count the number of tetrahedra in each region in parallel
     #pragma omp for schedule(static)
@@ -286,54 +285,58 @@ static HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions, HXTMesh *m,
       for(int j = 0; j < 4; j++) {
         uint32_t pt = nodes[j];
         if(!c2v[pt])
-          ptR_this[pt] = c;
+          vR_this[pt] = c + 1;
       }
     }
 
     #pragma omp for schedule(static)
-    for(uint32_t pt = 0; pt < m->vertices.num; pt++) {
+    for(uint32_t pt = 0; pt < nV; pt++) {
       if(c2v[pt]) continue;
 
-      uint32_t color = UINT32_MAX;
+      uint32_t color = 0;
       for(int thrd = 0; thrd < nthreads; thrd++) {
-        if(ptR_all[thrd * m->vertices.num + pt] != UINT32_MAX) {
-          color = ptR_all[thrd * m->vertices.num + pt];
+        if(vR_all[thrd * nV + pt]) {
+          color = vR_all[thrd * nV + pt];
           break;
         }
       }
+      color--;
 #ifdef DEBUG
       if(color >= nR)
         exit(HXT_ERROR_MSG(HXT_STATUS_ERROR, "no volume or color for pt %u", pt));
 #endif
-      ptR_all[pt] = color;
+      vR_all[pt] = color;
       hp_this[color]++;
     }
 
     #pragma omp for
-    for(uint32_t c = 0; c < nR; c++) {
-      size_t sumt = 0;
-      uint32_t sump = 0;
-      for(int j = 0; j < nthreads + 1; j++) {
-        size_t tsumt = ht_all[j * nR + c] + sumt;
-        uint32_t tsump = hp_all[j * nR + c] + sump;
-        ht_all[j * nR + c] = sumt;
-        hp_all[j * nR + c] = sump;
-        sumt = tsumt;
-        sump = tsump;
+    for(uint32_t c2 = 0; c2 < 2 * nR; c2++) { // parallelism x 2 :p
+      uint32_t c = c2 >> 1;
+      if(c2 & 1) {
+        size_t sumt = 0;
+        for(int j = 0; j < nthreads + 1; j++) {
+          size_t tsumt = ht_all[j * nR + c] + sumt;
+          ht_all[j * nR + c] = sumt;
+          sumt = tsumt;
+        }
+        regions[c]->tetrahedra.resize(ht_tot[c], nullptr);
+      }
+      else {
+        uint32_t sump = 0;
+        for(int j = 0; j < nthreads + 1; j++) {
+          uint32_t tsump = hp_all[j * nR + c] + sump;
+          hp_all[j * nR + c] = sump;
+          sump = tsump;
+        }
+        regions[c]->mesh_vertices.resize(hp_tot[c], nullptr);
       }
     }
 
-    #pragma omp for
-    for(int c = 0; c < nR; c++) {
-      regions[c]->tetrahedra.resize(ht_tot[c], nullptr);
-      regions[c]->mesh_vertices.resize(hp_tot[c], nullptr);
-    }
-
     #pragma omp for schedule(static)
-    for(uint32_t pt = 0; pt < m->vertices.num; pt++) {
+    for(uint32_t pt = 0; pt < nV; pt++) {
       if(c2v[pt]) continue;
 
-      uint32_t c = ptR_all[pt];
+      uint32_t c = vR_all[pt];
       GRegion *gr = regions[c];
       double *x = &m->vertices.coord[4 * pt];
       c2v[pt] = new MVertex(x[0], x[1], x[2], gr);
@@ -351,7 +354,6 @@ static HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions, HXTMesh *m,
     }
   }
 
-  HXT_CHECK( hxtAlignedFree(&ptR_all) );
   HXT_CHECK( hxtFree(&ht_all) );
   HXT_CHECK( hxtFree(&hp_all) );
   Msg::Debug("End Hxt2Gmsh");
