@@ -1103,7 +1103,7 @@ public:
   {
     return "Evaluate a mathematical expression. The expression can contain "
            "x, y, z for spatial coordinates, F0, F1, ... for field values, and "
-           "and mathematical functions.";
+           "mathematical functions.";
   }
 };
 
@@ -1192,7 +1192,7 @@ public:
   {
     return "Evaluate a metric expression. The expressions can contain "
            "x, y, z for spatial coordinates, F0, F1, ... for field values, and "
-           "and mathematical functions.";
+           "mathematical functions.";
   }
 };
 

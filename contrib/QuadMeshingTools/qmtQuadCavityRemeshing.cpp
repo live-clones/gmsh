@@ -2617,10 +2617,6 @@ int remeshPatchWithQuadPattern(
     }
   }
 
-  if (stGeoGlobal != 0) { /* 3D laplacian smoothing (no surf proj) */
-
-  }
-
   if (!gf->haveParametrization() || stGeoGlobal != 0 || stats.sicnMinAfter < minSICNrequired) {
     /* Project */
     bool okp = patchProjectOnSurface(diff.after, sp);

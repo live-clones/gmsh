@@ -18,6 +18,7 @@
 #include "GModel.h"
 #include "meshGEdge.h"
 #include "meshGFace.h"
+#include "meshGFaceOptimize.h"
 #include "meshGRegion.h"
 #include "BackgroundMesh.h"
 #include "Generator.h"
@@ -68,10 +69,18 @@ template <typename Key, typename Hash = robin_hood::hash<Key>,
 using unordered_set =
   robin_hood::detail::Table<true, MaxLoadFactor100, Key, void, Hash, KeyEqual>;
 
+
+constexpr int SizeMapDefault    = 0;
+constexpr int SizeMapCrossField = 1;
+constexpr int SizeMapCrossFieldAndSmallCad = 2;
+constexpr int SizeMapBackgroundMesh = 3;
+constexpr int SizeMapCrossFieldAndBMeshOnCurves = 4;
+
 const std::string BMESH_NAME = "bmesh_quadqs";
 
 constexpr bool PARANO_QUALITY = false;
 constexpr bool PARANO_VALIDITY = false;
+constexpr bool DBG_EXPORT = false;
 
 
 /* scaling applied on integer values stored in view (background field),
@@ -85,7 +94,7 @@ int buildBackgroundField(
   const std::vector<std::array<double, 5> >& global_singularity_list,
   const std::string &viewName = "guiding_field")
 {
-  Msg::Debug("build background guiding field ...");
+  Msg::Info("Build background field (view 'guiding_field') ...");
   if(global_triangles.size() != global_triangle_directions.size()) {
     Msg::Error("build background field: incoherent sizes in input");
     return -1;
@@ -303,13 +312,15 @@ int fillSizemapFromScalarBackgroundField(
 
 std::string nameOfSizeMapMethod(int method) {
   if (method == 0) {
-    return "default (cross-field conformal scaling and CAD adaptation)";
+    return "default (" + nameOfSizeMapMethod(4) + ")";
   } else if (method == 1) {
     return "cross-field conformal scaling";
   } else if (method == 2) {
     return "cross-field conformal scaling and CAD adaptation";
   } else if (method == 3) {
     return "background mesh sizes";
+  } else if (method == 4) {
+    return "cross-field conformal scaling and CAD adaptation (clamped by background mesh)";
   }
   return "unknown";
 }
@@ -397,8 +408,11 @@ bool getGFaceBackgroundMeshLinesAndTriangles(
   return true;
 }
 
-int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
-                                       bool deleteGModelMesh, int N)
+int BuildBackgroundMeshAndGuidingField(GModel *gm, 
+    bool overwriteGModelMesh,
+    bool deleteGModelMeshAfter, 
+    bool overwriteField,
+    int N)
 {
   if(CTX::instance()->abortOnError && Msg::GetErrorCount()) return 0;
   if(CTX::instance()->mesh.algo2d != ALGO_2D_PACK_PRLGRMS &&
@@ -408,6 +422,8 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
     Msg::Error("guiding field: %i-symmetry field not supported", N);
     return -1;
   }
+
+  const bool midpointSubdivisionAfter = true;
 
   const bool SHOW_INTERMEDIATE_VIEWS = (Msg::GetVerbosity() >= 99);
 
@@ -420,12 +436,17 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
     if(fields->getBackgroundField() > 0) {
       Field *field = fields->get(fields->getBackgroundField());
       if(field && field->numComponents() == 3) {
-        Msg::Info(
-          "vector background field exists, using it as a guiding field");
-        return 0;
+        if (!overwriteField) {
+          Msg::Info(
+              "vector background field exists, using it as a guiding field");
+          return 0;
+        } else {
+          Msg::Info("disabled current vector background field, building a new one");
+          fields->setBackgroundFieldId(0);
+        }
       }
       else if(field && field->numComponents() == 1) {
-        if(qqsSizemapMethod == 0) {
+        if(qqsSizemapMethod == SizeMapDefault) {
           Msg::Info("scalar background field exists, using it as size map");
           externalSizemap = true;
         }
@@ -439,10 +460,8 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
   }
 
   if(overwriteGModelMesh) {
-    Msg::Debug("delete GModel mesh");
-    std::for_each(gm->firstRegion(), gm->lastRegion(), deMeshGRegion());
-    std::for_each(gm->firstFace(), gm->lastFace(), deMeshGFace());
-    std::for_each(gm->firstRegion(), gm->lastRegion(), deMeshGRegion());
+    Msg::Debug("delete current GModel mesh");
+    gm->deleteMesh();
   }
 
   /* Check if triangulation available */
@@ -465,14 +484,6 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
     generateMeshWithSpecialParameters(gm, scalingOnTriangulation);
   }
 
-  // {
-  //   setQuadqsTransfiniteConstraints(gm, 0.34);
-  //   gm->deleteMesh();
-  //   generateMeshWithSpecialParameters(gm, scalingOnTriangulation);
-  //   gmsh::initialize();
-  //   gmsh::fltk::run();
-  //   abort();
-  // }
 
   GlobalBackgroundMesh &bmesh = getBackgroundMesh(BMESH_NAME);
   bool overwrite = true;
@@ -482,7 +493,7 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
     return -1;
   }
 
-  if(deleteGModelMesh) {
+  if(deleteGModelMeshAfter) {
     Msg::Debug("delete GModel mesh");
     gm->deleteMesh();
   }
@@ -602,7 +613,7 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
         }
       }
       else if(qqsSizemapMethod ==
-              3) { /* Size map from background triangulation */
+              SizeMapBackgroundMesh) { /* Size map from background triangulation */
         int sts = fillSizemapFromTriangleSizes(triangles, localSizemap);
         if(sts != 0) {
           Msg::Warning("- Face %i: failed to fill size map from triangle sizes",
@@ -651,7 +662,9 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
         }
 
         /* Midpoint subdivision => 4 times more quads */
-        targetNumberOfQuads /= 4;
+        if (midpointSubdivisionAfter) {
+          targetNumberOfQuads /= 4;
+        }
 
         if(targetNumberOfQuads == 0) targetNumberOfQuads = 1;
 
@@ -664,9 +677,9 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
         }
       }
 
-#if defined(_OPENMP)
-#pragma omp critical
-#endif
+      #if defined(_OPENMP)
+      #pragma omp critical
+      #endif
       {
         append(global_triangles, triangles);
         append(global_triangle_directions, triangleDirections);
@@ -675,8 +688,10 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
           global_size_map.push_back({kv.first, kv.second});
         }
       }
+
     }
   }
+
   sort_unique(global_size_map);
 
   /* Warning: from now on, code is not optimized in terms of data structures
@@ -701,10 +716,21 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
 
   /* Minimal size on curves */
   std::unordered_map<MVertex *, double> cadMinimalSizeOnCurves;
-  if((qqsSizemapMethod == 0 && !externalSizemap) || qqsSizemapMethod == 2) {
-    int scad = computeMinimalSizeOnCurves(bmesh, cadMinimalSizeOnCurves);
-    if(scad != 0) {
-      Msg::Warning("failed to compute minimal size on CAD curves");
+  if (!externalSizemap) {
+    if (   qqsSizemapMethod == SizeMapDefault 
+        || qqsSizemapMethod == SizeMapCrossFieldAndBMeshOnCurves
+        || qqsSizemapMethod == SizeMapCrossFieldAndSmallCad)  {
+
+      bool clampMinWithTriEdges = false;
+      if (qqsSizemapMethod == SizeMapDefault 
+          || qqsSizemapMethod == SizeMapCrossFieldAndBMeshOnCurves)  {
+        clampMinWithTriEdges = true;
+      }
+
+      int scad = computeMinimalSizeOnCurves(bmesh, clampMinWithTriEdges, cadMinimalSizeOnCurves);
+      if(scad != 0) {
+        Msg::Warning("failed to compute minimal size on CAD curves");
+      }
     }
   }
 
@@ -725,8 +751,24 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
   /* One-way propagation of values */
   const double gradientMax =
     1.2; /* this param should be a global gmsh option */
+  Msg::Info("Sizemap smoothing (progression ratio: %.2f)", gradientMax);
   int sop = sizeMapOneWaySmoothing(global_triangles, sizeMap, gradientMax);
   if(sop != 0) { Msg::Warning("failed to compute one-way size map smoothing"); }
+
+  /* Clamp with global minimum/maximum mesh size */
+  {
+    // TODO: should be multiplied by lcFactor or not ?
+    double fs = midpointSubdivisionAfter ? 2. : 1.;
+    double sizeMin = CTX::instance()->mesh.lcMin * CTX::instance()->mesh.lcFactor;
+    double sizeMax = fs * CTX::instance()->mesh.lcMax * CTX::instance()->mesh.lcFactor;
+    for (auto& kv: sizeMap) {
+      if (kv.second < sizeMin) {
+        kv.second = sizeMin;
+      } else if (kv.second > sizeMax) {
+        kv.second = sizeMax;
+      }
+    }
+  }
 
   if(SHOW_INTERMEDIATE_VIEWS) {
     std::vector<MElement *> elements =
@@ -736,18 +778,6 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
     showUVParametrization(bmesh);
   }
 
-  /* Clamp with global minimum/maximum mesh size */
-  // {
-  // // TODO: apply on sizeMap instead
-  //   // TODO: should be multiplied by lcFactor or not ?
-  //   for (auto& kv: global_size_map) {
-  //     if (kv.second < CTX::instance()->mesh.lcMin) {
-  //       kv.second = CTX::instance()->mesh.lcMin;
-  //     } else if (kv.second > CTX::instance()->mesh.lcMax) {
-  //       kv.second = CTX::instance()->mesh.lcMax;
-  //     }
-  //   }
-  // }
 
   printSizeMapStats(global_triangles, sizeMap);
 
@@ -1610,20 +1640,19 @@ int improveInteriorValences(
 int RefineMeshWithBackgroundMeshProjection(GModel *gm)
 {
   const bool SHOW_INTERMEDIATE_VIEWS = (Msg::GetVerbosity() >= 99);
-
-  const bool SHOW_QUADTRI = SHOW_INTERMEDIATE_VIEWS;
-  if(SHOW_QUADTRI) {
+  if(SHOW_INTERMEDIATE_VIEWS) {
     std::vector<MElement *> elements;
     for(GFace *gf : model_faces(gm)) {
       append(elements,
              dynamic_cast_vector<MTriangle *, MElement *>(gf->triangles));
       append(elements,
              dynamic_cast_vector<MQuadrangle *, MElement *>(gf->quadrangles));
-      // showUVParametrization(gf,dynamic_cast_vector<MTriangle*,MElement*>(gf->triangles),"quadtri_uvs");
-      // showUVParametrization(gf,dynamic_cast_vector<MQuadrangle*,MElement*>(gf->quadrangles),"quadtri_uvs");
     }
     GeoLog::add(elements, "qqs_quadtri");
     GeoLog::flush();
+  }
+  if (DBG_EXPORT) {
+    gm->writeMSH("qqs_init.msh", 4.1);
   }
 
   Msg::Info(
@@ -1632,10 +1661,139 @@ int RefineMeshWithBackgroundMeshProjection(GModel *gm)
   bool linear = true;
   RefineMesh(gm, linear, true, false);
 
-  if(Msg::GetVerbosity() >= 99) {
+  if(true || Msg::GetVerbosity() >= 99) {
     std::unordered_map<std::string, double> stats;
     appendQuadMeshStatistics(gm, stats, "MPS_");
     printStatistics(stats, "Quad mesh after subdivision, before projection:");
+    gm->writeMSH("qqs_subdiv_noproj.msh", 4.1);
+  }
+
+
+  /* Convert vertex types:
+   * - MVertex on curve -> MEdgeVertex
+   * - MVertex on face  -> MFaceVertex */
+  std::vector<GEdge *> edges = model_edges(gm);
+  std::vector<GFace *> faces = model_faces(gm);
+  /* Build custom edgeToFaces because ge->faces() does not work
+   * for embedded edges */
+  std::unordered_map<GEdge*,std::vector<MVertex*> > toProjectOnCurve;
+  std::unordered_map<GFace*,std::vector<MVertex*> > toProjectOnFace;
+  std::unordered_map<GEdge*,std::unordered_set<GFace*> > edgeToFaces;
+  for (GFace* gf: model_faces(gm)) {
+    std::vector<GEdge*> fedges = face_edges(gf);
+    for (GEdge* ge: fedges) edgeToFaces[ge].insert(gf);
+  }
+
+  #if defined(_OPENMP)
+  #pragma omp parallel for schedule(dynamic)
+  #endif
+  for(size_t e = 0; e < edges.size(); ++e) {
+    GEdge *ge = edges[e];
+    if(CTX::instance()->mesh.meshOnlyVisible && !ge->getVisibility()) continue;
+    if(ge->lines.size() == 0 || ge->mesh_vertices.size() == 0) continue;
+    unordered_map<MVertex *, MVertex *> old2new_ge;
+    std::vector<MVertex*>& projList = toProjectOnCurve[ge];
+    projList.reserve(ge->mesh_vertices.size());
+    for(size_t i = 0; i < ge->mesh_vertices.size(); ++i) {
+      MVertex *v = ge->mesh_vertices[i];
+      MEdgeVertex *mev = dynamic_cast<MEdgeVertex *>(v);
+      if(mev == nullptr) {
+        MVertex* v2 = new MEdgeVertex(v->point().x(), v->point().y(), v->point().z(), ge, 0.);
+        ge->mesh_vertices[i] = v2;
+        old2new_ge[v] = v2;
+        projList.push_back(v2);
+        delete v;
+      }
+    }
+    /* Update lines */
+    for(MLine *l : ge->lines) {
+      for(size_t lv = 0; lv < 2; ++lv) {
+        MVertex *v = l->getVertex(lv);
+        auto it = old2new_ge.find(v);
+        if(it != old2new_ge.end()) { l->setVertex(lv, it->second); }
+      }
+    }
+    /* Update elements in adjacent faces */
+    for(GFace *gf : edgeToFaces[ge]) {
+      for(size_t i = 0; i < gf->getNumMeshElements(); ++i) {
+        MElement *e = gf->getMeshElement(i);
+        for(size_t lv = 0; lv < e->getNumVertices(); ++lv) {
+          MVertex *v = e->getVertex(lv);
+          auto it = old2new_ge.find(v);
+          if(it != old2new_ge.end()) { e->setVertex(lv, it->second); }
+        }
+      }
+    }
+  }
+
+  #if defined(_OPENMP)
+  #pragma omp parallel for schedule(dynamic)
+  #endif
+  for(size_t f = 0; f < faces.size(); ++f) {
+    GFace *gf = faces[f];
+    if(CTX::instance()->mesh.meshOnlyVisible && !gf->getVisibility()) continue;
+    if(CTX::instance()->debugSurface > 0 &&
+       gf->tag() != CTX::instance()->debugSurface)
+      continue;
+    if(gf->triangles.size() == 0 && gf->quadrangles.size() == 0) continue;
+    unordered_map<MVertex *, MVertex *> old2new_gf;
+    std::vector<MVertex*>& projList = toProjectOnFace[gf];
+    projList.reserve(gf->mesh_vertices.size());
+    for(size_t i = 0; i < gf->mesh_vertices.size(); ++i) {
+      MVertex *v = gf->mesh_vertices[i];
+      if(v->onWhat() != gf) {
+        Msg::Error("- Face %i: vertex %li is associated to entity (%i,%i)",
+            gf->tag(), v->getNum(), v->onWhat()->dim(),
+            v->onWhat()->tag());
+        continue;
+      }
+      MFaceVertex *mfv = dynamic_cast<MFaceVertex *>(v);
+      if(mfv == nullptr) {
+        MVertex* v2 = new MFaceVertex(v->point().x(), v->point().y(),
+            v->point().z(), gf, 0., 0.);
+        gf->mesh_vertices[i] = v2;
+        old2new_gf[v] = v2;
+        projList.push_back(v2);
+        delete v;
+      }
+    }
+    /* Update elements */
+    for(size_t i = 0; i < gf->getNumMeshElements(); ++i) {
+      MElement *e = gf->getMeshElement(i);
+      for(size_t lv = 0; lv < e->getNumVertices(); ++lv) {
+        MVertex *v = e->getVertex(lv);
+        auto it2 = old2new_gf.find(v);
+        if(it2 != old2new_gf.end()) { e->setVertex(lv, it2->second); }
+      }
+    }
+  }
+
+  /* Geometric projection on model */
+
+  /* - projections on curves */
+  #if defined(_OPENMP)
+  #pragma omp parallel for schedule(dynamic)
+  #endif
+  for (size_t e = 0; e < edges.size(); ++e) {
+    GEdge* ge = edges[e];
+    auto it = toProjectOnCurve.find(ge);
+    if (it == toProjectOnCurve.end()) continue;
+
+    double tMin = ge->parBounds(0).low();
+    double tMax = ge->parBounds(0).high();
+
+    for (size_t j = 0; j < it->second.size(); ++j) {
+      MVertex* v = it->second[j];
+      double tGuess = tMin + (tMax-tMin) * double(j+1)/double(it->second.size()+1);
+      GPoint proj = ge->closestPoint(v->point(), tGuess);
+      if(proj.succeeded()) {
+        v->setXYZ(proj.x(), proj.y(), proj.z());
+        v->setParameter(0, proj.u());
+      } else {
+        Msg::Warning("- Edge %i, vertex %li: curve projection failed",
+            ge->tag(), v->getNum());
+      }
+    }
   }
 
   GlobalBackgroundMesh *bmesh = nullptr;
@@ -1647,293 +1805,84 @@ int RefineMeshWithBackgroundMeshProjection(GModel *gm)
                  "using CAD projection (slow)");
   }
 
-  std::vector<GEdge *> edges = model_edges(gm);
-
-  /* Build custom edgeToFaces because ge->faces() does not work
-   * for embedded edges */
-  std::unordered_map<GEdge*,std::unordered_set<GFace*> > edgeToFaces;
-  for (GFace* gf: model_faces(gm)) {
-    std::vector<GEdge*> fedges = face_edges(gf);
-    for (GEdge* ge: fedges) edgeToFaces[ge].insert(gf);
-  }
-
-#if defined(_OPENMP)
-#pragma omp parallel for schedule(dynamic)
-#endif
-  for(size_t e = 0; e < edges.size(); ++e) {
-    GEdge *ge = edges[e];
-    if(CTX::instance()->mesh.meshOnlyVisible && !ge->getVisibility()) continue;
-    if(ge->lines.size() == 0 || ge->mesh_vertices.size() == 0) continue;
-
-    Msg::Debug("- Curve %i: project midpoints on curve", ge->tag());
-    unordered_map<MVertex *, MVertex *> old2new_ge;
-    unordered_map<MVertex *, SPoint3> backupPositionLinear;
-    double tPrev = 0;
-    for(size_t i = 0; i < ge->mesh_vertices.size(); ++i) {
-      MVertex *v = ge->mesh_vertices[i];
-      MEdgeVertex *mev = dynamic_cast<MEdgeVertex *>(v);
-      if(mev == nullptr) {
-        double t = tPrev;
-        GPoint proj = ge->closestPoint(v->point(), t);
-        if(proj.succeeded()) {
-          /* Need to change the type of the MVertex */
-          MVertex *v2 =
-            new MEdgeVertex(proj.x(), proj.y(), proj.z(), ge, proj.u());
-          tPrev = proj.u();
-          ge->mesh_vertices[i] = v2;
-          old2new_ge[v] = v2;
-          backupPositionLinear[v2] = v->point();
-          delete v;
-        }
-        else {
-          Msg::Warning("- Edge %i, vertex %li: curve projection failed",
-                       ge->tag(), v->getNum());
-          MVertex *v2 = new MEdgeVertex(v->point().x(), v->point().y(),
-                                        v->point().z(), ge, tPrev);
-          ge->mesh_vertices[i] = v2;
-          old2new_ge[v] = v2;
-          backupPositionLinear[v2] = v->point();
-          delete v;
-        }
-        tPrev = t;
-      }
-    }
-
-    bool qualityOk = true;
-
-    /* Update Lines */
-    for(MLine *l : ge->lines)
-      for(size_t lv = 0; lv < 2; ++lv) {
-        MVertex *v = l->getVertex(lv);
-        auto it = old2new_ge.find(v);
-        if(it != old2new_ge.end()) { l->setVertex(lv, it->second); }
-      }
-
-    /* Update adjacent faces */
-    for(GFace *gf : edgeToFaces[ge]) {
-      for(size_t i = 0; i < gf->getNumMeshElements(); ++i) {
-        MElement *e = gf->getMeshElement(i);
-        for(size_t lv = 0; lv < e->getNumVertices(); ++lv) {
-          MVertex *v = e->getVertex(lv);
-          auto it = old2new_ge.find(v);
-          if(it != old2new_ge.end()) { e->setVertex(lv, it->second); }
-        }
-      }
-
-      /* Check quality of quads */
-      if(gf->quadrangles.size() > 0) {
-        double sicnMin, sicnAvg;
-        computeSICN(
-          dynamic_cast_vector<MQuadrangle *, MElement *>(gf->quadrangles),
-          sicnMin, sicnAvg);
-        if(sicnMin < 0.) {
-          Msg::Warning("- refine with projection: quality negative (%.3f) on "
-                       "face %i after curve %i projection, rollback",
-                       sicnMin, gf->tag(), ge->tag());
-          qualityOk = false;
-        }
-      }
-    }
-
-    if(!qualityOk) { /* restore positions on the curve */
-      for(auto &kv : backupPositionLinear) { kv.first->setXYZ(kv.second); }
-    }
-    if(PARANO_VALIDITY) {
-      errorAndAbortIfInvalidVertexInElements(
-        dynamic_cast_vector<MLine *, MElement *>(ge->lines),
-        "after curve proj");
-    }
-  }
-
-  std::vector<GFace *> faces = model_faces(gm);
-#if defined(_OPENMP)
-#pragma omp parallel for schedule(dynamic)
-#endif
+  /* - projections on faces */
+  #if defined(_OPENMP)
+  #pragma omp parallel for schedule(dynamic)
+  #endif
   for(size_t f = 0; f < faces.size(); ++f) {
     GFace *gf = faces[f];
-    if(CTX::instance()->mesh.meshOnlyVisible && !gf->getVisibility()) continue;
-    if(CTX::instance()->debugSurface > 0 &&
-       gf->tag() != CTX::instance()->debugSurface)
-      continue;
-    if(gf->triangles.size() == 0 && gf->quadrangles.size() == 0) continue;
 
-    SurfaceProjector *sp = nullptr;
+    auto it = toProjectOnFace.find(gf);
+    if (it == toProjectOnFace.end()) continue;
+
+    Msg::Info("- Face %i: project %li vertices and smooth the quad mesh ...", 
+        gf->tag(), it->second.size());
+
+    SurfaceProjector* sp = nullptr;
     if(bmesh) {
-      auto it = bmesh->faceBackgroundMeshes.find(gf);
-      if(it == bmesh->faceBackgroundMeshes.end()) {
+      auto it2 = bmesh->faceBackgroundMeshes.find(gf);
+      if(it2 == bmesh->faceBackgroundMeshes.end()) {
         Msg::Error("background mesh not found for face %i", gf->tag());
-        continue;
-      }
+      } else {
+        /* Get pointers to triangles in the background mesh */
+        std::vector<MTriangle *> triangles(it2->second.triangles.size());
+        for(size_t i = 0; i < it2->second.triangles.size(); ++i) {
+          triangles[i] = &(it2->second.triangles[i]);
+        }
 
-      /* Get pointers to triangles in the background mesh */
-      std::vector<MTriangle *> triangles(it->second.triangles.size());
-      for(size_t i = 0; i < it->second.triangles.size(); ++i) {
-        triangles[i] = &(it->second.triangles[i]);
-      }
-
-      sp = new SurfaceProjector();
-      bool oki = sp->initialize(gf, triangles);
-      if(!oki) {
-        Msg::Warning("failed to initialize surface projector");
-        delete sp;
-        sp = nullptr;
+        sp = new SurfaceProjector();
+        bool oki = sp->initialize(gf, triangles);
+        if(!oki) {
+          Msg::Warning("failed to initialize surface projector");
+          delete sp;
+          sp = nullptr;
+        }
       }
     }
 
-    /* Project the vertices which have been introduced by the RefineMesh */
-    Msg::Debug("- Face %i: project midpoints on surface", gf->tag());
-    bool evalOnCAD = gf->haveParametrization();
+    /* Project the vertices */
+    bool evalOnCAD = false;
     bool projOnCad = false;
-    if(evalOnCAD && !haveNiceParametrization(gf)) {
-      /* Strong disortion in parametrization, use projection */
-      evalOnCAD = false;
-      projOnCad = true;
-    }
-
-    if(Msg::GetVerbosity() >= 999) {
-      /* In some models (S9 from MAMBO) and with some resolution (clscale 0.1),
-       * there is this issue of vertex on wrong face ...
-       * I guess this is because the CAD is garbage (duplicated corners,
-       * degenerate edges) */
-      Msg::Debug("- Face %i, verify vertices before ...", gf->tag());
-      for(size_t i = 0; i < gf->getNumMeshElements(); ++i) {
-        MElement *e = gf->getMeshElement(i);
-        for(size_t lv = 0; lv < e->getNumVertices(); ++lv) {
-          MVertex *v = e->getVertex(lv);
-          if(v->onWhat()->cast2Face() && v->onWhat() != gf) {
-            Msg::Error(
-              "- Face %i: element vertex %li is associated to entity (%i,%i)",
-              gf->tag(), v->getNum(), v->onWhat()->dim(), v->onWhat()->tag());
-            abort();
-          }
-        }
-      }
-    }
-
-    unordered_map<MVertex *, MVertex *> old2new_gf;
-    unordered_map<MVertex *, SPoint3> backupPositionLinear;
-
-    for(size_t i = 0; i < gf->mesh_vertices.size(); ++i) {
-      MVertex *v = gf->mesh_vertices[i];
-      if(v->onWhat() != gf) {
-        Msg::Error("- Face %i: vertex %li is associated to entity (%i,%i)",
-                   gf->tag(), v->getNum(), v->onWhat()->dim(),
-                   v->onWhat()->tag());
-        abort();
-      }
-      MFaceVertex *mfv = dynamic_cast<MFaceVertex *>(v);
-      if(mfv == nullptr) {
-        GPoint proj;
-        if(sp != nullptr) {
-          proj = sp->closestPoint(v->point().data(), evalOnCAD, projOnCad);
-
-          if(!proj.succeeded() && gf->haveParametrization()) {
-            double uvg[2] = {0., 0.};
-            proj = gf->closestPoint(v->point(), uvg);
-          }
-        }
-        else {
+    if (gf->haveParametrization() && haveNiceParametrization(gf)) evalOnCAD = true;
+    for (size_t j = 0; j < it->second.size(); ++j) {
+      MVertex* v = it->second[j];
+      GPoint proj;
+      if(sp != nullptr) {
+        proj = sp->closestPoint(v->point().data(), evalOnCAD, projOnCad);
+        if(!proj.succeeded() && gf->haveParametrization()) {
           double uvg[2] = {0., 0.};
           proj = gf->closestPoint(v->point(), uvg);
         }
-        if(proj.succeeded()) {
-          /* Need to change the type of the MVertex */
-          MVertex *v2 = new MFaceVertex(proj.x(), proj.y(), proj.z(), gf,
-                                        proj.u(), proj.v());
-          gf->mesh_vertices[i] = v2;
-          backupPositionLinear[v2] = v->point();
-          old2new_gf[v] = v2;
-          delete v;
-        }
-        else {
-          MVertex *v2 = new MFaceVertex(v->point().x(), v->point().y(),
-                                        v->point().z(), gf, 0., 0.);
-          gf->mesh_vertices[i] = v2;
-          backupPositionLinear[v2] = v->point();
-          old2new_gf[v] = v2;
-          delete v;
-          Msg::Warning("- Face %i, vertex %li: surface projection failed",
-                       gf->tag(), v->getNum());
-        }
+      } else {
+        double uvg[2] = {0., 0.};
+        proj = gf->closestPoint(v->point(), uvg);
+      }
+      if(proj.succeeded()) {
+        v->setXYZ(proj.x(), proj.y(), proj.z());
+        v->setParameter(0, proj.u());
+        v->setParameter(1, proj.v());
+      } else {
+        Msg::Warning("- Face %i, vertex %li: surface projection failed",
+            gf->tag(), v->getNum());
       }
     }
 
-    /* Update elements */
-    for(size_t i = 0; i < gf->getNumMeshElements(); ++i) {
-      MElement *e = gf->getMeshElement(i);
-      for(size_t lv = 0; lv < e->getNumVertices(); ++lv) {
-        MVertex *v = e->getVertex(lv);
-        auto it2 = old2new_gf.find(v);
-        if(it2 != old2new_gf.end()) { e->setVertex(lv, it2->second); }
-      }
-    }
-
-    if(Msg::GetVerbosity() >= 99) {
-      Msg::Debug("- Face %i, verify vertices ...", gf->tag());
-      for(size_t i = 0; i < gf->getNumMeshElements(); ++i) {
-        MElement *e = gf->getMeshElement(i);
-        for(size_t lv = 0; lv < e->getNumVertices(); ++lv) {
-          MVertex *v = e->getVertex(lv);
-          if(v->onWhat()->cast2Edge()) {
-            MEdgeVertex *mev = dynamic_cast<MEdgeVertex *>(v);
-            if(mev == nullptr) {
-              Msg::Error("vertex attached to curve %i but not MEdgeVertex",
-                         v->onWhat()->cast2Edge()->tag());
-              abort();
-            }
-          }
-          else if(v->onWhat()->cast2Face()) {
-            MFaceVertex *mfv = dynamic_cast<MFaceVertex *>(v);
-            if(mfv == nullptr) {
-              Msg::Error("vertex attached to face %i but not MFaceVertex",
-                         v->onWhat()->cast2Face()->tag());
-              abort();
-            }
-          }
-          else if(v->onWhat()->cast2Vertex()) {
-          }
-          else {
-            Msg::Error("vertex not attach to a CAD entity");
-          }
-        }
-      }
-    }
-
-    /* Check quality of quads */
-    if(gf->quadrangles.size() > 0) {
-      bool qualityOk = true;
-      double sicnMin, sicnAvg;
-      computeSICN(
-        dynamic_cast_vector<MQuadrangle *, MElement *>(gf->quadrangles),
-        sicnMin, sicnAvg);
-      if(sicnMin < 0.) {
-        Msg::Warning("- refine with projection: quality negative (%.3f) on "
-                     "face %i after projection, rollback",
-                     sicnMin, gf->tag());
-        qualityOk = false;
-      }
-      if(!qualityOk) {
-        for(auto &kv : backupPositionLinear) { kv.first->setXYZ(kv.second); }
-      }
-    }
-
-    /* Smooth geometry (quick) */
-    if(sp != nullptr) {
-      double timeMax = 0.1;
+    /* Quad mesh smoothing */
+    double timeMax = 0.3;
+    optimizeGeometryQuadMesh(gf, sp, timeMax);
+    double sicnMin, sicnAvg;
+    computeSICN(
+      dynamic_cast_vector<MQuadrangle *, MElement *>(gf->quadrangles),
+      sicnMin, sicnAvg);
+    if(sicnMin < 0.) {
+      double timeMax = 2.;
       optimizeGeometryQuadMesh(gf, sp, timeMax);
     }
 
-    if(sp != nullptr) delete sp;
-
-    if(PARANO_VALIDITY) {
-      errorAndAbortIfInvalidVertexInElements(
-        dynamic_cast_vector<MQuadrangle *, MElement *>(gf->quadrangles),
-        "after surf proj");
-    }
+    if (sp) delete sp;
   }
 
-  const bool SHOW_QUADINIT = SHOW_INTERMEDIATE_VIEWS;
-  if(SHOW_QUADINIT) {
+  if(SHOW_INTERMEDIATE_VIEWS) {
     std::vector<MElement *> elements;
     for(GFace *gf : model_faces(gm)) {
       append(elements,
@@ -1955,8 +1904,76 @@ int RefineMeshWithBackgroundMeshProjection(GModel *gm)
     errorAndAbortIfInvalidVertexInModel(gm, "after refine + proj");
   }
 
+  if (DBG_EXPORT) {
+    gm->writeMSH("qqs_subdiv.msh", 4.1);
+  }
+
   return 0;
 }
+
+
+int checkAndReplaceQuadDominantMesh(GFace* gf, int valenceMaxBdr = 6, int valenceMaxIn = 8) {
+  /* Check valence */
+  unordered_map<MVertex *, int > valence;
+  for (MQuadrangle* q: gf->quadrangles) for (size_t lv = 0; lv < 4; ++lv) {
+    valence[q->getVertex(lv)] += 1;
+  }
+  for (MTriangle* t: gf->triangles) for (size_t lv = 0; lv < 3; ++lv) {
+    valence[t->getVertex(lv)] += 1;
+  }
+  int vMaxInt = 0;
+  int vMaxBdr = 0;
+  for (auto& kv: valence) {
+    if (kv.first->onWhat() == gf) {
+      vMaxInt = std::max(vMaxInt,kv.second);
+    } else if (kv.first->onWhat()->cast2Edge() != nullptr){
+      vMaxBdr = std::max(vMaxBdr,kv.second);
+    }
+  }
+  if (vMaxInt <= valenceMaxIn && vMaxBdr <= valenceMaxBdr) return 0;
+
+  Msg::Warning("- Face %i: quad-tri mesh have valence %i (interior) and %i (bdr), replace it with meshadapt ...",
+      gf->tag(), vMaxInt, vMaxBdr);
+
+  int algo2d = gf->getMeshingAlgo();
+  gf->setMeshingAlgo(ALGO_2D_MESHADAPT);
+  gf->mesh(false);
+  gf->setMeshingAlgo(algo2d);
+
+  if (gf->meshStatistics.status != GFace::DONE) {
+    Msg::Warning("- Face %i: failed to build triangulation", gf->tag());
+    return -1;
+  }
+
+  /* Recombine triangles in quads */
+  recombineIntoQuads(gf, false, 0, false, .1);
+
+  return 0;
+}
+
+int replaceBadQuadDominantMeshes(GModel *gm) {
+  std::vector<GFace*> faces = model_faces(gm);
+
+  #if defined(_OPENMP)
+  #pragma omp parallel for schedule(dynamic)
+  #endif
+  for(size_t f = 0; f < faces.size(); ++f) {
+    GFace *gf = faces[f];
+    if(CTX::instance()->mesh.meshOnlyVisible && !gf->getVisibility()) continue;
+    if(CTX::instance()->debugSurface > 0 &&
+       gf->tag() != CTX::instance()->debugSurface)
+      continue;
+    if(gf->getNumMeshElements() == 0) continue;
+
+    int st = checkAndReplaceQuadDominantMesh(gf);
+    if (st != 0) {
+      Msg::Warning("- Face %i: failed to replace bad quad-tri mesh", gf->tag());
+    }
+  }
+
+  return 0;
+}
+
 
 int optimizeQuadMeshWithDiskQuadrangulationRemeshing(GFace *gf)
 {
@@ -2105,6 +2122,10 @@ int quadMeshingOfSimpleFacesWithPatterns(GModel *gm,
       gm, "global check after face pattern meshing");
   }
 
+  if (DBG_EXPORT) {
+    gm->writeMSH("qqs_simplefaces.msh", 4.1);
+  }
+
   return 0;
 }
 
@@ -2160,6 +2181,10 @@ int optimizeTopologyWithDiskQuadrangulationRemeshing(GModel *gm)
   if(PARANO_VALIDITY) {
     errorAndAbortIfInvalidVertexInModel(
       gm, "global check after disk quadrangulation remeshing");
+  }
+
+  if (DBG_EXPORT) {
+    gm->writeMSH("qqs_diskrmsh.msh", 4.1);
   }
 
   return 0;
@@ -2244,6 +2269,10 @@ int optimizeTopologyWithCavityRemeshing(GModel *gm)
 
   GeoLog::flush();
 
+  if (DBG_EXPORT) {
+    gm->writeMSH("qqs_cavrmsh.msh", 4.1);
+  }
+
   return 0;
 }
 
@@ -2251,7 +2280,9 @@ int optimizeTopologyWithCavityRemeshing(GModel *gm)
 /* else: without QUADMESHINGTOOLS module*/
 
 int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
-                                       bool deleteGModelMeshAfter, int N)
+                                       bool deleteGModelMeshAfter, 
+                                       bool overwriteField,
+                                       int N)
 {
   Msg::Error("Module QUADMESHINGTOOLS required for function "
              "BuildBackgroundMeshAndGuidingField");
@@ -2286,6 +2317,11 @@ int RefineMeshWithBackgroundMeshProjection(GModel *gm)
 {
   Msg::Error("Module QUADMESHINGTOOLS required for function "
              "RefineMeshWithBackgroundMeshProjection");
+  return -10;
+}
+int replaceBadQuadDominantMeshes(GModel *gm) {
+  Msg::Error("Module QUADMESHINGTOOLS required for function "
+             "replaceBadQuadDominantMeshes");
   return -10;
 }
 
@@ -2380,16 +2416,46 @@ int transferSeamGEdgesVerticesToGFace(GModel *gm)
 
 QuadqsContextUpdater::QuadqsContextUpdater()
 {
-  algo2d = CTX::instance()->mesh.algo2d;
-  recombineAll = CTX::instance()->mesh.recombineAll;
-  algoRecombine = CTX::instance()->mesh.algoRecombine;
-  recombineOptimizeTopology = CTX::instance()->mesh.recombineOptimizeTopology;
-  lcFactor = CTX::instance()->mesh.lcFactor;
-  lcMin = CTX::instance()->mesh.lcMin;
-  lcMax = CTX::instance()->mesh.lcMax;
-  lcFromPoints = CTX::instance()->mesh.lcFromPoints;
-  minCurveNodes = CTX::instance()->mesh.minCurveNodes;
-  minCircleNodes = CTX::instance()->mesh.minCircleNodes;
+#if defined(HAVE_QUADMESHINGTOOLS)
+  backups_int.push_back(new RestoreValueAtEndOfLife<int>(&CTX::instance()->mesh.algo2d));
+  backups_int.push_back(new RestoreValueAtEndOfLife<int>(&CTX::instance()->mesh.recombineAll));
+  backups_int.push_back(new RestoreValueAtEndOfLife<int>(&CTX::instance()->mesh.algoRecombine));
+  backups_int.push_back(new RestoreValueAtEndOfLife<int>(&CTX::instance()->mesh.recombineOptimizeTopology));
+  backups_double.push_back(new RestoreValueAtEndOfLife<double>(&CTX::instance()->mesh.lcFactor));
+  backups_double.push_back(new RestoreValueAtEndOfLife<double>(&CTX::instance()->mesh.lcMin));
+  backups_double.push_back(new RestoreValueAtEndOfLife<double>(&CTX::instance()->mesh.lcMax));
+  backups_int.push_back(new RestoreValueAtEndOfLife<int>(&CTX::instance()->mesh.lcFromPoints));
+  backups_int.push_back(new RestoreValueAtEndOfLife<int>(&CTX::instance()->mesh.minCurveNodes));
+  backups_int.push_back(new RestoreValueAtEndOfLife<int>(&CTX::instance()->mesh.minCircleNodes));
+
+  // Backup GEdge meshing attributes
+  for (GEdge* ge: model_edges(GModel::current())) {
+    backups_char.push_back(new RestoreValueAtEndOfLife<char>(&ge->meshAttributes.method));
+    backups_double.push_back(new RestoreValueAtEndOfLife<double>(&ge->meshAttributes.coeffTransfinite));
+    backups_double.push_back(new RestoreValueAtEndOfLife<double>(&ge->meshAttributes.meshSize));
+    backups_double.push_back(new RestoreValueAtEndOfLife<double>(&ge->meshAttributes.meshSizeFactor));
+    backups_int.push_back(new RestoreValueAtEndOfLife<int>(&ge->meshAttributes.nbPointsTransfinite));
+    backups_int.push_back(new RestoreValueAtEndOfLife<int>(&ge->meshAttributes.typeTransfinite));
+    backups_int.push_back(new RestoreValueAtEndOfLife<int>(&ge->meshAttributes.minimumMeshSegments));
+    backups_bool.push_back(new RestoreValueAtEndOfLife<bool>(&ge->meshAttributes.reverseMesh));
+  }
+
+  // Backup GFace meshing attributes
+  for (GFace* gf: model_faces(GModel::current())) {
+    backups_int.push_back(new RestoreValueAtEndOfLife<int>(&gf->meshAttributes.recombine));
+    backups_double.push_back(new RestoreValueAtEndOfLife<double>(&gf->meshAttributes.recombineAngle));
+    backups_char.push_back(new RestoreValueAtEndOfLife<char>(&gf->meshAttributes.method));
+    backups_int.push_back(new RestoreValueAtEndOfLife<int>(&gf->meshAttributes.transfiniteArrangement));
+    backups_int.push_back(new RestoreValueAtEndOfLife<int>(&gf->meshAttributes.transfiniteSmoothing));
+    backups_bool.push_back(new RestoreValueAtEndOfLife<bool>(&gf->meshAttributes.reverseMesh));
+    backups_double.push_back(new RestoreValueAtEndOfLife<double>(&gf->meshAttributes.meshSize));
+    backups_double.push_back(new RestoreValueAtEndOfLife<double>(&gf->meshAttributes.meshSizeFactor));
+    backups_int.push_back(new RestoreValueAtEndOfLife<int>(&gf->meshAttributes.algorithm));
+    backups_int.push_back(new RestoreValueAtEndOfLife<int>(&gf->meshAttributes.meshSizeFromBoundary));
+  }
+#else
+  Msg::Error("Module QUADMESHINGTOOLS required to use QuadqsContextUpdater");
+#endif
 
   setQuadqsOptions();
 }
@@ -2399,6 +2465,7 @@ QuadqsContextUpdater::~QuadqsContextUpdater() { restoreInitialOption(); }
 void QuadqsContextUpdater::setQuadqsOptions()
 {
   Msg::Debug("set special quadqs options in the global context");
+
   CTX::instance()->mesh.algo2d = ALGO_2D_QUAD_QUASI_STRUCT;
   CTX::instance()->mesh.recombineAll = 1;
   CTX::instance()->mesh.algoRecombine = 0;
@@ -2413,15 +2480,21 @@ void QuadqsContextUpdater::setQuadqsOptions()
 
 void QuadqsContextUpdater::restoreInitialOption()
 {
+#if defined(HAVE_QUADMESHINGTOOLS)
   Msg::Debug("restore options in the global context");
-  CTX::instance()->mesh.algo2d = algo2d;
-  CTX::instance()->mesh.recombineAll = recombineAll;
-  CTX::instance()->mesh.algoRecombine = algoRecombine;
-  CTX::instance()->mesh.recombineOptimizeTopology = recombineOptimizeTopology;
-  CTX::instance()->mesh.lcFactor = lcFactor;
-  CTX::instance()->mesh.lcMin = lcMin;
-  CTX::instance()->mesh.lcMax = lcMax;
-  CTX::instance()->mesh.lcFromPoints = lcFromPoints;
-  CTX::instance()->mesh.minCurveNodes = minCurveNodes;
-  CTX::instance()->mesh.minCircleNodes = minCircleNodes;
+  for (size_t i = 0; i < backups_char.size(); ++i) {
+    delete backups_char[i];
+  }
+  for (size_t i = 0; i < backups_bool.size(); ++i) {
+    delete backups_bool[i];
+  }
+  for (size_t i = 0; i < backups_int.size(); ++i) {
+    delete backups_int[i];
+  }
+  for (size_t i = 0; i < backups_double.size(); ++i) {
+    delete backups_double[i];
+  }
+#else
+  Msg::Error("Module QUADMESHINGTOOLS required to use QuadqsContextUpdater");
+#endif
 }

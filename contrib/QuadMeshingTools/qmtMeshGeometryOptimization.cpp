@@ -478,10 +478,11 @@ namespace QMT {
       for (size_t j = 0; j < bnd.size(); ++j) {
         if (bnd[j] == v0 && j > 0) {
           std::rotate(bnd.begin(),bnd.begin()+j,bnd.end());
+          break;
         }
       }
       if (bnd.front() != v0) {
-        Msg::Warning("buildCondensedStructure: wrong start");
+        Msg::Warning("buildCondensedStructure: wrong start (bnd size: %li)", bnd.size());
         return false;
       }
 
@@ -1244,7 +1245,7 @@ bool kernelLoopWithProjection(
     bool okc = buildCondensedStructure(patch.elements,patch.intVertices,
         old2new,new2old, quads,v2q,oneRings,points);
     if (!okc) {
-      Msg::Error("buildCondensedStructure: failed to build condensed representation");
+      Msg::Warning("kernelLoopWithProjection: failed to build condensed representation");
       return false;
     }
     compress(oneRings, one_ring_first, one_ring_values);

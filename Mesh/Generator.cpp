@@ -554,6 +554,8 @@ static void Mesh2D(GModel *m)
   Msg::SetNumThreads(prevNumThreads);
 
   if(CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT) {
+    replaceBadQuadDominantMeshes(m);
+
     /* In the quasi-structured pipeline, the quad-dominant mesh
      * is subdivided into a full quad mesh */
     /* TODO: - a faster CAD projection approach (from uv)
@@ -561,6 +563,7 @@ static void Mesh2D(GModel *m)
     // bool linear = false;
     // RefineMesh(m, linear, true, false);
     RefineMeshWithBackgroundMeshProjection(m);
+
 
     OptimizeMesh(m, "QuadQuasiStructured");
   }
@@ -1471,19 +1474,28 @@ void GenerateMesh(GModel *m, int ask)
     int old = m->getMeshStatus(false);
     bool doIt = (ask >= 1 && ask <= 3);
     bool exists = backgroundMeshAndGuidingFieldExists(m);
+    bool overwriteGModelMesh = false; /* use current mesh if available */
+    bool overwriteField = false;
     if(old == 1 && ask == 1 && exists) doIt = true;
     if(old == 1 && ask == 2 && exists) doIt = false;
+    if(old == 2 && exists && (ask == 1 || ask ==2)) {
+      /* User has a mesh and wants a new one (all options may have changed) */
+      doIt = true;
+      overwriteField = true;
+      overwriteGModelMesh = true;
+    }
+    if(old == 2 && ask == 1 && exists) doIt = true;
     if(old == 2 && ask == 2 && exists) doIt = true;
     if(doIt) {
-      bool overwriteGModelMesh = false; /* use current mesh if available */
       bool deleteGModelMeshAfter =
         true; /* mesh saved in background, no longer needed */
       BuildBackgroundMeshAndGuidingField(m, overwriteGModelMesh,
-                                         deleteGModelMeshAfter);
+                                         deleteGModelMeshAfter, 
+                                         overwriteField);
     }
 
     if(CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT 
-        && old == 2 && ask == 2 && exists) {
+        && old == 2 && exists && (ask == 1 || ask == 2)) {
       /* transferSeamGEdgesVerticesToGFace() called by quadqs remove the 1D
        * meshes of the seam GEdge, so 2D initial meshing does not work without
        * first remeshing the seam GEdge. We delete the whole mesh by security */
@@ -1492,7 +1504,9 @@ void GenerateMesh(GModel *m, int ask)
 
     if(CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT) {
       /* note: the creation of QuadqsContextUpdater modifies many
-       *       meshing parameters */
+       *       meshing parameters
+       *       current parameter values are saved and will be restored
+       *       at the destruction of qqs */
       qqs = new QuadqsContextUpdater();
     }
 
