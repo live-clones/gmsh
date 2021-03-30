@@ -24,8 +24,7 @@
 #if defined(HAVE_HXT)
 
 extern "C" {
-#include "hxt_omp.h"
-#include "hxt_tools.h"
+#include "hxt_sort.h"
 #include "hxt_tetMesh.h"
 #include "hxt_tetDelaunay.h"
 }
@@ -156,6 +155,11 @@ static HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions, HXTMesh *m,
 {
   Msg::Debug("Start Hxt2Gmsh");
 
+  HXT_CHECK( hxtAlignedFree(&m->tetrahedra.neigh) );
+  HXT_CHECK( hxtAlignedFree(&m->tetrahedra.flag) );
+  HXT_CHECK( hxtAlignedFree(&m->points.node) );
+  HXT_CHECK( hxtAlignedFree(&m->points.color) );
+
   // TODO: we probably don't need i2e and i2f... HXT makes the colors match.
   std::map<uint32_t, GEdge *> i2e;
   std::map<uint32_t, GFace *> i2f;
@@ -209,6 +213,8 @@ static HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions, HXTMesh *m,
     }
     ge->second->lines.push_back(new MLine(c2v[i0], c2v[i1]));
   }
+  HXT_CHECK( hxtAlignedFree(&m->lines.node) );
+  HXT_CHECK( hxtAlignedFree(&m->lines.color) );
 
   for(size_t i = 0; i < m->triangles.num; i++) {
     uint32_t c = m->triangles.color[i];
@@ -241,69 +247,111 @@ static HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions, HXTMesh *m,
     }
     gf->second->triangles.push_back(new MTriangle(c2v[i0], c2v[i1], c2v[i2]));
   }
+  HXT_CHECK( hxtAlignedFree(&m->triangles.node) );
+  HXT_CHECK( hxtAlignedFree(&m->triangles.color) );
 
-  // count the number of tetrahedra in each region in parallel
-  int numThrds = omp_get_max_threads();
-  size_t* count;
-  HXT_CHECK( hxtCalloc(&count, regions.size() * numThrds, sizeof(size_t)) );
-#pragma omp parallel
+
+  const uint32_t n = regions.size();
+  int nthreads = omp_get_max_threads();
+  size_t* ht_all, *ht_tot;
+  HXT_CHECK( hxtCalloc(&ht_all, n * (nthreads + 1), sizeof(size_t)) );
+  // uint32_t* hp_all, *hp_tot;
+  // HXT_CHECK( hxtCalloc(&hp_all, n * (nthreads + 1), sizeof(size_t)) );
+
+  uint8_t* ptOwner_all;
+  const size_t nbytes = (m->vertices.num + 7) >> 3;
+  HXT_CHECK( hxtCalloc(&ptOwner_all, nbytes * nthreads, sizeof(uint8_t)) );
+  #pragma omp parallel
   {
     int threadID = omp_get_thread_num();
-    size_t* ccLocal = &count[regions.size() * threadID];
-    #pragma omp for
+    size_t* ht_this = ht_all + n * threadID;
+    uint8_t* ptOwner_this = ptOwner_all + nbytes * threadID;
+    #pragma omp single
+    {
+      nthreads = omp_get_num_threads(); /* the real number of threads */
+      ht_tot = ht_all + n * nthreads;
+    }
+
+    // count the number of tetrahedra in each region in parallel
+    #pragma omp for schedule(static)
     for(size_t i = 0; i < m->tetrahedra.num; i++) {
       uint32_t c = m->tetrahedra.color[i];
-      if(c < regions.size())
-        ccLocal[c]++;
-    } // implicit barrier
+      if(c >= n) continue;
 
-    #pragma omp critical
-    for(int c = 0; threadID && c < regions.size(); c++) {
-      count[c] += ccLocal[c];
-    }
-  }
-
-  #pragma omp parallel for
-  for(int c = 0; c < regions.size(); c++) {
-    regions[c]->tetrahedra.resize(count[c], nullptr);
-    count[c] = 0;
-  }
-
-  #pragma omp parallel for collapse(2)
-  for(int c = 0; c < regions.size(); c++) {
-    for(size_t i = 0; i < regions[c]->tetrahedra.size(); i++) {
-      regions[c]->tetrahedra[i] = new MTetrahedron(nullptr, nullptr, nullptr, nullptr);
-    }
-  }
-
-
-
-  for(size_t i = 0; i < m->tetrahedra.num; i++) {
-    uint32_t c = m->tetrahedra.color[i];
-    if(c >= regions.size())
-      continue;
-
-    GRegion *gr = regions[c];
-    MVertex *vv[4];
-    uint32_t *nodes = &m->tetrahedra.node[4 * i];
-    size_t index = count[c]++;
-    for(int j = 0; j < 4; j++) {
-      if(c2v[nodes[j]]){
-        vv[j] = c2v[nodes[j]];
+      ht_this[c]++;
+      uint32_t *nodes = &m->tetrahedra.node[4 * i];
+      for(int j = 0; j < 4; j++) {
+        ptOwner_this[nodes[j] >> 3] |= 1U << (nodes[j] & 7);
       }
-      else {
-        double *x = &m->vertices.coord[4 * nodes[j]];
-        vv[j] = new MVertex(x[0], x[1], x[2], gr);
-        gr->mesh_vertices.push_back(vv[j]);
-        c2v[nodes[j]] = vv[j];
+    }
+
+    #pragma omp for
+    for(uint32_t pt = 0; pt < m->vertices.num; pt++) {
+      unsigned byte = pt >> 3;
+      unsigned bit = 1U << (pt & 7);
+      int i = 0;
+      if(!c2v[pt]) {
+        double *x = &m->vertices.coord[4 * pt];
+        c2v[pt] = new MVertex(x[0], x[1], x[2], nullptr);
+        for(; i<nthreads; i++) {
+          int thrd = (i + threadID) % nthreads;
+          if(ptOwner_all[nbytes * thrd + byte] & bit)
+            break;
+        }
       }
 
-      gr->tetrahedra[index]->setVertex(j, vv[j]);
+      for(; i<nthreads; i++) {
+        int thrd = (i + threadID) % nthreads;
+        ptOwner_all[nbytes * thrd + byte] &= ~bit;
+      }
+    }
+
+    #pragma omp for
+    for(uint32_t c = 0; c < n; c++) {
+      size_t sum = 0;
+      for(int j = 0; j < nthreads + 1; j++) {
+        size_t tsum = ht_all[j * n + c] + sum;
+        ht_all[j * n + c] = sum;
+        sum = tsum;
+      }
+    }
+
+    #pragma omp for
+    for(int c = 0; c < n; c++) {
+      regions[c]->tetrahedra.resize(ht_tot[c], nullptr);
+      ht_tot[c] = 0;
+    }
+
+
+    #pragma omp for schedule(static)
+    for(size_t i = 0; i < m->tetrahedra.num; i++) {
+      uint32_t c = m->tetrahedra.color[i];
+      if(c >= n) continue;
+
+      GRegion *gr = regions[c];
+      uint32_t *nodes = &m->tetrahedra.node[4 * i];
+      for(int j = 0; j < 4; j++) {
+        // if(!c2v[nodes[j]]) {
+        //   fprintf(stderr, "point is not allocated...this should never happen\n");
+        //   exit(1);
+        // }
+        if(ptOwner_this[nodes[j] >> 3] & (1U << (nodes[j] & 7))) {
+          MVertex *v = c2v[nodes[j]];
+          if(v->onWhat() == nullptr) {
+            v->setEntity(gr);
+
+            #pragma omp critical
+            gr->mesh_vertices.push_back(v);
+          }
+        }
+      }
+      gr->tetrahedra[ht_this[c]++] = new MTetrahedron(c2v[nodes[0]], c2v[nodes[1]], c2v[nodes[2]], c2v[nodes[3]]);
     }
   }
 
-
-  HXT_CHECK( hxtFree(&count) );
+  HXT_CHECK( hxtFree(&ptOwner_all) );
+  HXT_CHECK( hxtFree(&ht_all) );
+  // HXT_CHECK( hxtFree(&hp_all) );
   Msg::Debug("End Hxt2Gmsh");
   return HXT_STATUS_OK;
 }
