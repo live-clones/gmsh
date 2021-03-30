@@ -160,10 +160,8 @@ static HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions, HXTMesh *m,
   HXT_CHECK( hxtAlignedFree(&m->points.node) );
   HXT_CHECK( hxtAlignedFree(&m->points.color) );
 
-  // TODO: we probably don't need i2e and i2f... HXT makes the colors match.
   std::map<uint32_t, GEdge *> i2e;
   std::map<uint32_t, GFace *> i2f;
-
   { // deleting old faces and edges, and filling i2e
     std::vector<GFace *> allSurfaces;
     std::vector<GEdge *> allCurves;
@@ -364,7 +362,7 @@ HXTStatus Gmsh2Hxt(std::vector<GRegion *> &regions, HXTMesh *m,
                    std::map<MVertex *, uint32_t> &v2c,
                    std::vector<MVertex *> &c2v)
 {
-  std::set<MVertex *> all; // a set automatically remove duplicated vertices...
+  std::set<MVertex *> all;
   std::vector<GFace *> surfaces;
   std::vector<GEdge *> curves;
   std::vector<GVertex *> points;
@@ -489,11 +487,7 @@ static HXTStatus _meshGRegionHxt(std::vector<GRegion *> &regions)
 
   std::map<MVertex *, uint32_t> v2c;
   std::vector<MVertex *> c2v;
-
-  double t0 = omp_get_wtime();
   Gmsh2Hxt(regions, mesh, v2c, c2v);
-  double t1 = omp_get_wtime();
-  HXT_INFO("Gmsh -> Hxt conversion took %f s", t1 - t0);
 
   HXTTetMeshOptions options = {
     0, // int defaultThreads;
@@ -522,11 +516,7 @@ static HXTStatus _meshGRegionHxt(std::vector<GRegion *> &regions)
 
   HXT_CHECK(hxtTetMesh(mesh, &options));
 
-  double t2 = omp_get_wtime();
   HXT_CHECK(Hxt2Gmsh(regions, mesh, v2c, c2v));
-  double t3 = omp_get_wtime();
-  HXT_INFO("Hxt meshing took %f s", t2 - t1);
-  HXT_INFO("Hxt -> Gmsh conversion took %f s", t3 - t2);
   HXT_CHECK(hxtMeshDelete(&mesh));
   return HXT_STATUS_OK;
 }
