@@ -251,119 +251,107 @@ static HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions, HXTMesh *m,
   HXT_CHECK( hxtAlignedFree(&m->triangles.color) );
 
 
-  const uint32_t n = regions.size();
+  const uint32_t nR = regions.size();
   int nthreads = omp_get_max_threads();
-  size_t* ht_all, *ht_tot;
-  HXT_CHECK( hxtCalloc(&ht_all, n * (nthreads + 1), sizeof(size_t)) );
-  uint32_t* hp_all, *hp_tot;
-  HXT_CHECK( hxtCalloc(&hp_all, n * (nthreads + 1), sizeof(size_t)) );
+  size_t* ht_all, *ht_tot; // histograms for tets
+  HXT_CHECK( hxtCalloc(&ht_all, nR * (nthreads + 1), sizeof(size_t)) );
+  uint32_t* hp_all, *hp_tot; // histograms for points
+  HXT_CHECK( hxtCalloc(&hp_all, nR * (nthreads + 1), sizeof(size_t)) );
+  uint32_t* ptR_all; // color per point and per thread
+  HXT_CHECK( hxtAlignedMalloc(&ptR_all, sizeof(uint32_t) * m->vertices.num * nthreads) );
 
-  uint8_t* ptOwner_all;
-  const size_t nbytes = (m->vertices.num + 7) >> 3;
-  HXT_CHECK( hxtCalloc(&ptOwner_all, nbytes * nthreads, sizeof(uint8_t)) );
   #pragma omp parallel
   {
-    int threadID = omp_get_thread_num();
-    size_t* ht_this = ht_all + n * threadID;
-    uint32_t* hp_this = hp_all + n * threadID;
-    uint8_t* ptOwner_this = ptOwner_all + nbytes * threadID;
     #pragma omp single
     {
       nthreads = omp_get_num_threads(); /* the real number of threads */
-      ht_tot = ht_all + n * nthreads;
-      hp_tot = hp_all + n * nthreads;
+      ht_tot = ht_all + nR * nthreads;
+      hp_tot = hp_all + nR * nthreads;
     }
+
+    int threadID = omp_get_thread_num();
+    size_t* ht_this = ht_all + nR * threadID;
+    uint32_t* hp_this = hp_all + nR * threadID;
+    uint32_t* ptR_this = ptR_all + m->vertices.num * threadID;
+    memset(ptR_this, -1, m->vertices.num * sizeof(uint32_t));
 
     // count the number of tetrahedra in each region in parallel
     #pragma omp for schedule(static)
     for(size_t i = 0; i < m->tetrahedra.num; i++) {
       uint32_t c = m->tetrahedra.color[i];
-      if(c >= n) continue;
+      if(c >= nR) continue;
 
       ht_this[c]++;
       uint32_t *nodes = &m->tetrahedra.node[4 * i];
       for(int j = 0; j < 4; j++) {
         uint32_t pt = nodes[j];
-        ptOwner_this[pt >> 3] |= 1U << (pt & 7);
-      }
-    }
-
-    #pragma omp for
-    for(uint32_t pt = 0; pt < m->vertices.num; pt++) {
-      unsigned byte = pt >> 3;
-      unsigned bit = 1U << (pt & 7);
-      int i = 0;
-      if(!c2v[pt]) {
-        for(; i < nthreads; i++) {
-          int thrd = (i + threadID) % nthreads;
-          if(ptOwner_all[nbytes * thrd + byte] & bit)
-            break;
-        }
-        i++;
-      }
-
-      for(; i < nthreads; i++) {
-        int thrd = (i + threadID) % nthreads;
-        ptOwner_all[nbytes * thrd + byte] &= ~bit;
+        if(!c2v[pt])
+          ptR_this[pt] = c;
       }
     }
 
     #pragma omp for schedule(static)
-    for(size_t i = 0; i < m->tetrahedra.num; i++) {
-      uint32_t c = m->tetrahedra.color[i];
-      if(c >= n) continue;
+    for(uint32_t pt = 0; pt < m->vertices.num; pt++) {
+      if(c2v[pt]) continue;
 
-      GRegion *gr = regions[c];
-      uint32_t *nodes = &m->tetrahedra.node[4 * i];
-      for(int j = 0; j < 4; j++) {
-        uint32_t pt = nodes[j];
-        if(ptOwner_this[pt >> 3] & (1U << (pt & 7)) && !c2v[pt]) {
-          double *x = &m->vertices.coord[4 * pt];
-          c2v[pt] = new MVertex(x[0], x[1], x[2], gr);
-          hp_this[c]++;
+      uint32_t color = UINT32_MAX;
+      for(int thrd = 0; thrd < nthreads; thrd++) {
+        if(ptR_all[thrd * m->vertices.num + pt] != UINT32_MAX) {
+          color = ptR_all[thrd * m->vertices.num + pt];
+          break;
         }
       }
+#ifdef DEBUG
+      if(color >= nR)
+        exit(HXT_ERROR_MSG(HXT_STATUS_ERROR, "no volume or color for pt %u", pt));
+#endif
+      ptR_all[pt] = color;
+      hp_this[color]++;
     }
 
     #pragma omp for
-    for(uint32_t c = 0; c < n; c++) {
+    for(uint32_t c = 0; c < nR; c++) {
       size_t sumt = 0;
       uint32_t sump = 0;
       for(int j = 0; j < nthreads + 1; j++) {
-        size_t tsumt = ht_all[j * n + c] + sumt;
-        uint32_t tsump = hp_all[j * n + c] + sump;
-        ht_all[j * n + c] = sumt;
-        hp_all[j * n + c] = sump;
+        size_t tsumt = ht_all[j * nR + c] + sumt;
+        uint32_t tsump = hp_all[j * nR + c] + sump;
+        ht_all[j * nR + c] = sumt;
+        hp_all[j * nR + c] = sump;
         sumt = tsumt;
         sump = tsump;
       }
     }
 
     #pragma omp for
-    for(int c = 0; c < n; c++) {
+    for(int c = 0; c < nR; c++) {
       regions[c]->tetrahedra.resize(ht_tot[c], nullptr);
       regions[c]->mesh_vertices.resize(hp_tot[c], nullptr);
     }
 
     #pragma omp for schedule(static)
+    for(uint32_t pt = 0; pt < m->vertices.num; pt++) {
+      if(c2v[pt]) continue;
+
+      uint32_t c = ptR_all[pt];
+      GRegion *gr = regions[c];
+      double *x = &m->vertices.coord[4 * pt];
+      c2v[pt] = new MVertex(x[0], x[1], x[2], gr);
+      gr->mesh_vertices[hp_this[c]++] = c2v[pt];
+    }
+
+
+    #pragma omp for schedule(static)
     for(size_t i = 0; i < m->tetrahedra.num; i++) {
       uint32_t c = m->tetrahedra.color[i];
-      if(c >= n) continue;
+      if(c >= nR) continue;
 
-      GRegion *gr = regions[c];
       uint32_t *nodes = &m->tetrahedra.node[4 * i];
-      for(int j = 0; j < 4; j++) {
-        uint32_t pt = nodes[j];
-        if(ptOwner_this[pt >> 3] & (1U << (pt & 7))) {
-          ptOwner_this[pt >> 3] &= ~(1U << (pt & 7));
-          gr->mesh_vertices[hp_this[c]++] = c2v[pt];
-        }
-      }
-      gr->tetrahedra[ht_this[c]++] = new MTetrahedron(c2v[nodes[0]], c2v[nodes[1]], c2v[nodes[2]], c2v[nodes[3]]);
+      regions[c]->tetrahedra[ht_this[c]++] = new MTetrahedron(c2v[nodes[0]], c2v[nodes[1]], c2v[nodes[2]], c2v[nodes[3]]);
     }
   }
 
-  HXT_CHECK( hxtFree(&ptOwner_all) );
+  HXT_CHECK( hxtAlignedFree(&ptR_all) );
   HXT_CHECK( hxtFree(&ht_all) );
   HXT_CHECK( hxtFree(&hp_all) );
   Msg::Debug("End Hxt2Gmsh");
