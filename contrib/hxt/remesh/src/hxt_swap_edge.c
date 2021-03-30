@@ -706,10 +706,10 @@ HXTStatus hxtSwapEdge (HXTMesh *mesh,
                                              &mesh->vertices.coord[4*nt1]);
   double quality_new0 = hxtQualityP1Triangle(&mesh->vertices.coord[4*n1], 
                                              &mesh->vertices.coord[4*nt1], 
-                                             &mesh->vertices.coord [4*nt0]);
+                                             &mesh->vertices.coord[4*nt0]);
   double quality_new1 = hxtQualityP1Triangle(&mesh->vertices.coord[4*nt0], 
-                                             &mesh->vertices.coord [4*nt1], 
-                                             &mesh->vertices.coord [4*n0]);
+                                             &mesh->vertices.coord[4*nt1], 
+                                             &mesh->vertices.coord[4*n0]);
 
 
   // WITH RIGHT-ANGLED QUALITY 
@@ -735,7 +735,10 @@ HXTStatus hxtSwapEdge (HXTMesh *mesh,
   if (quality_new <= quality_old) return HXT_STATUS_OK; 
 
 
+
+  //*************************
   // At this point we can actually swap
+  //*************************
   
   // First we find the index of edge to be swapped in each triangle
   uint32_t edgeIndexOft0 = UINT32_MAX;

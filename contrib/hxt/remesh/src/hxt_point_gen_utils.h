@@ -37,6 +37,8 @@ HXTStatus hxtPointGenSizemapFromNelements(HXTMesh *mesh, uint64_t nelem, double 
 
 // Extract lines from dihedral angles function
 HXTStatus hxtPointGenOpenLines(HXTMesh *mesh);
+
+HXTStatus hxtPointGenClassifyDihedralLines_NEW(HXTMesh *mesh, double angle);
 HXTStatus hxtPointGenClassifyDihedralLines(HXTMesh *mesh, HXTEdges *edges); 
 
 // Function to associate elements

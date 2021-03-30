@@ -50,6 +50,7 @@ opt(DINTEGRATION "Enable discrete integration (needed for levelsets)" ${DEFAULT}
 opt(DOMHEX "Enable experimental DOMHEX code" ${DEFAULT})
 opt(EIGEN "Enable Eigen for linear algebra (instead of Blas/Lapack)" ON)
 opt(FLTK "Enable FLTK graphical user interface (requires mesh/post)" ${DEFAULT})
+opt(GECODE "Enable Gecode solver (linked as a library, experimental)" ${DEFAULT})
 opt(GETDP "Enable GetDP solver (linked as a library, experimental)" ${DEFAULT})
 opt(GMM "Enable GMM linear solvers (simple alternative to PETSc)" ${DEFAULT})
 opt(GMP "Enable GMP for Kbipack (advanced)" ON)
@@ -1466,6 +1467,106 @@ if(ENABLE_PRIVATE_API AND ENABLE_WRAP_PYTHON)
     endif()
   endif()
 endif()
+
+if(ENABLE_GECODE)
+    find_path(GECODE_INCLUDE gecode/kernel.hh
+              PATH_SUFFIXES include)
+    
+    find_file(GECODE_CONFIG_LOC gecode/support/config.hpp
+              HINTS ${GECODE_INCLUDE}
+              PATH_SUFFIXES include)
+    
+    if(NOT "${GECODE_CONFIG_LOC}" STREQUAL "GECODE_CONFIG_LOC-NOTFOUND")
+      file(READ "${GECODE_CONFIG_LOC}" GECODE_CONFIG)
+      string(REGEX MATCH "\#define GECODE_VERSION \"([0-9]+.[0-9]+.[0-9]+)\"" _ "${GECODE_CONFIG}")
+      set(GECODE_VERSION "${CMAKE_MATCH_1}")
+      string(REGEX MATCH "\#define GECODE_LIBRARY_VERSION \"([0-9]+-[0-9]+-[0-9]+)\"" _ "${GECODE_CONFIG}")
+      set(GECODE_LIBRARY_VERSION "${CMAKE_MATCH_1}")
+      string(REGEX MATCH "\#define GECODE_STATIC_LIBS ([0-9]+)" _ "${GECODE_CONFIG}")
+      set(GECODE_STATIC_LIBS "${CMAKE_MATCH_1}")
+      string(REGEX MATCH "\#define GECODE_HAS_GIST" GECODE_HAS_GIST "${GECODE_CONFIG}")
+      string(REGEX MATCH "\#define GECODE_HAS_MPFR" GECODE_HAS_MPFR "${GECODE_CONFIG}")
+    endif()
+    
+    set(GECODE_COMPONENTS Driver Flatzinc Float Int Kernel Minimodel Search Set Support)
+    if(GECODE_HAS_GIST)
+      list(APPEND GECODE_COMPONENTS Gist)
+    endif()
+    
+    foreach(GECODE_COMP ${GECODE_COMPONENTS})
+      # Try to find gecode library
+      string(TOLOWER "gecode${GECODE_COMP}" GECODE_LIB)
+      set(GECODE_LIB_LOC "GECODE_LIB_LOC-NOTFOUND")
+      find_library(GECODE_LIB_LOC NAMES ${GECODE_LIB} lib${GECODE_LIB} ${GECODE_LIB}-${GECODE_LIBRARY_VERSION}-r-x64 ${GECODE_LIB}-${GECODE_LIBRARY_VERSION}-d-x64
+                   HINTS ${GECODE_INCLUDE}
+                   PATH_SUFFIXES lib)
+      if(NOT "${GECODE_LIB_LOC}" STREQUAL "GECODE_LIB_LOC-NOTFOUND")
+          list(APPEND GECODE_LIBRARY ${GECODE_LIB_LOC})
+          add_library(Gecode::${GECODE_COMP} UNKNOWN IMPORTED)
+          set_target_properties(Gecode::${GECODE_COMP} PROPERTIES
+                                IMPORTED_LOCATION ${GECODE_LIB_LOC}
+                                INTERFACE_INCLUDE_DIRECTORIES ${GECODE_INCLUDE})
+          set(Gecode_FIND_REQUIRED_${GECODE_COMP} TRUE)
+          set(Gecode_${GECODE_COMP}_FOUND TRUE)
+      endif()
+    endforeach(GECODE_COMP)
+    
+    if(WIN32 AND GECODE_HAS_GIST AND GECODE_STATIC_LIBS)
+      find_package(Qt5 QUIET COMPONENTS Core Gui Widgets PrintSupport)
+      set_target_properties(Gecode::Gist PROPERTIES
+                            INTERFACE_LINK_LIBRARIES "Qt5::Core;Qt5::Gui;Qt5::Widgets;Qt5::PrintSupport")
+    endif()
+    
+    unset(GECODE_REQ_LIBS)
+    unset(GECODE_LIB_WIN)
+    unset(GECODE_LIB_LOC)
+    
+    if(GECODE_LIBRARY AND GECODE_HAS_MPFR)
+        find_path(MPFR_INCLUDE NAMES mpfr.h
+            PATHS $ENV{GMPDIR} $ENV{MPFRDIR} ${INCLUDE_INSTALL_DIR})
+
+        find_library(MPFR_LIBRARY mpfr
+            PATHS $ENV{GMPDIR} $ENV{MPFRDIR} ${LIB_INSTALL_DIR})
+
+        find_package_handle_standard_args(MPFR
+            FOUND_VAR MPFR_FOUND
+            REQUIRED_VARS MPFR_LIBRARY MPFR_INCLUDE
+            FAIL_MESSAGE "Could NOT find MPFR, use MPFR_ROOT to hint its location"
+            )
+
+        mark_as_advanced(MPFR_INCLUDE MPFR_LIBRARY)
+
+        set(MPFR_INCLUDES ${MPFR_INCLUDE})
+        set(MPFR_LIBRARIES ${MPFR_LIBRARY})
+
+        list(APPEND GECODE_LIBRARY ${MPFR_LIBRARIES})
+        list(APPEND GECODE_TARGETS ${MPFR_LIBRARIES})
+    endif()
+    
+    include(FindPackageHandleStandardArgs)
+    # handle the QUIETLY and REQUIRED arguments and set GECODE_FOUND to TRUE
+    # if all listed variables are TRUE
+    find_package_handle_standard_args(
+      Gecode
+      REQUIRED_VARS GECODE_INCLUDE GECODE_LIBRARY
+      VERSION_VAR GECODE_VERSION
+      HANDLE_COMPONENTS
+      FAIL_MESSAGE "Could NOT find Gecode, use Gecode_ROOT to hint its location"
+    )
+    
+    mark_as_advanced(GECODE_INCLUDE GECODE_LIBRARY)
+    
+    if (GECODE_LIBRARY)
+        set_config_option(HAVE_GECODE "Gecode")
+
+        set(GECODE_LIBRARIES ${GECODE_LIBRARY})
+        set(GECODE_INCLUDE_DIRS ${GECODE_INCLUDE})
+
+        list(APPEND EXTERNAL_LIBRARIES ${GECODE_LIBRARY})
+        list(APPEND EXTERNAL_INCLUDES ${GECODE_INCLUDE})
+    endif()
+endif()
+
 
 check_function_exists(vsnprintf HAVE_VSNPRINTF)
 if(NOT HAVE_VSNPRINTF AND NOT ENABLE_BUILD_IOS AND NOT ENABLE_BUILD_ANDROID)

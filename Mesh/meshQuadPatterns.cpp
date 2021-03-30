@@ -1663,7 +1663,9 @@ namespace QuadPatternMatching {
     /* Initial smoothing */
     bool ok = false;
     if (newVertices.size() > 0) {
-      if (parametrizationAvailable(gf)) {
+      bool smoothingInParam = parametrizationAvailable(gf);
+      if (gf->geomType() == GEntity::Sphere) smoothingInParam = false;
+      if (smoothingInParam) {
         /* Smooth in uv parameters */
         ok = laplacianSmoothingInParametricDomain(gf, bndOrdered, newVertices, newElements);
       } else {
@@ -1674,10 +1676,10 @@ namespace QuadPatternMatching {
       }
       if (ok) {
         quadQualityStats(newElements, minSICN_after, avgSICN_after);
-        Msg::Debug("- uv laplacian smoothing of (%li quads, %li free vertices): SICN min: %f -> %f, avg: %f -> %f", 
+        Msg::Debug("- smoothing of (%li quads, %li free vertices): SICN min: %f -> %f, avg: %f -> %f", 
             newElements.size(), newVertices.size(), minSICN_before, minSICN_after, avgSICN_before, avgSICN_after);
       } else {
-        Msg::Debug("- uv laplacian smoothing of (%li quads, %li free vertices): failed", 
+        Msg::Debug("- smoothing of (%li quads, %li free vertices): failed", 
             newElements.size(), newVertices.size());
       }
     }
@@ -1688,6 +1690,8 @@ namespace QuadPatternMatching {
         if (minSICN_after < qualityMin) keep = false;
         if (minSICN_after < qualityFactor * minSICN_before) keep = false;
       }
+      Msg::Debug("- mesh optim of (%li quads, %li free vertices): keep=%i, SICN min: %f -> %f, avg: %f -> %f", 
+          newElements.size(), newVertices.size(), int(keep), minSICN_before, minSICN_after, avgSICN_before, avgSICN_after);
       return keep;
     }
 
@@ -2201,10 +2205,11 @@ namespace QuadPatternMatching {
         if (it != entity->mesh_vertices.end()) {
           entity->mesh_vertices.erase(it);
         } else {
-          Msg::Error("remeshPatchWithQuadPattern | vertex (num %li) not found in its GEntity, weird");
+          Msg::Error("remeshPatchWithQuadPattern | vertex (num %li) not found in its GEntity (tag = %i, dim = %i), weird", v->getNum(), entity->tag(), entity->dim());
+          // BUG HERE ? Should build GFaceDiff, valid it, then execute it 
         }
       } else {
-        Msg::Error("remeshPatchWithQuadPattern | vertex (num %li) not in a GEntity ? weird");
+        Msg::Error("remeshPatchWithQuadPattern | vertex (num %li) not in a GEntity ? weird", v->getNum());
       }
       delete v;
     }

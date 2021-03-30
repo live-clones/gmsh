@@ -1398,7 +1398,8 @@ int GModel::getMeshStatus(bool countDiscrete)
        (!onlyVisible || (onlyVisible && gf->getVisibility())))
       meshDone2D = false;
   }
-  if(numEle2D && toMesh2D && meshDone2D)
+  //if(numEle2D && toMesh2D && meshDone2D)
+  if(numEle2D && toMesh2D) /* quadqs: removed meshDone2D check to be coherent with 3D */
     return 2;
 
   std::size_t numEle1D = 0;

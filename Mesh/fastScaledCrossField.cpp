@@ -353,7 +353,7 @@ int computeQuadSizeMapFromCrossFieldConformalFactor(
     Msg::Error("total integral is 0 ... (%li triangles, smin=%.3e, smax=%.3e)", triangles.size(), smin, smax);
     return -1;
   }
-  Msg::Debug("-- component with %li triangles, exp(-H): min=%.3e, max=%.3e, integral=%.3e", triangles.size(), smin, smax, integral);
+  Msg::Debug("-- component with %li triangles, exp(-H): min=%.3e, max=%.3e, #=%.3e", triangles.size(), smin, smax, integral);
   std::sort(vertices.begin(), vertices.end());
   vertices.erase(std::unique(vertices.begin(), vertices.end() ), vertices.end());
 
@@ -370,7 +370,7 @@ int computeQuadSizeMapFromCrossFieldConformalFactor(
     smin = std::min(smin,it->second);
     smax = std::max(smax,it->second);
   }
-  Msg::Debug("-- component with %li triangles, size map: min=%.3e, max=%.3e", triangles.size(), smin, smax);
+  Msg::Debug("-- component with %li triangles, size map: min=%.3e, max=%.3e, factor applied: %.3f", triangles.size(), smin, smax, FAC);
 
   return 0;
 }
@@ -520,16 +520,35 @@ int computeCrossFieldConformalScaling(
     _lsys->addToRightHandSide(num3, RHS3 * V);
   }
   _lsys->systemSolve();
-  Msg::Info("Conformal Factor Computed (%d unknowns)",
-      myAssembler->sizeOfR());
 
   /* Extract solution */
   size_t i = 0;
+  double vmin = DBL_MAX;
+  double vmax = -DBL_MAX;
   for (MVertex* v: vs) {
     double h;
     myAssembler->getDofValue(v, 0, 1, h);
+    vmin = std::min(vmin,h);
+    vmax = std::max(vmax,h);
     scaling[v] = h;
     i += 1;
+  }
+
+  Msg::Info("Conformal Factor Computed (%d unknowns), H value range: [%.3f,%.3f], width = %.3f",
+      myAssembler->sizeOfR(),vmin,vmax,vmax-vmin);
+
+  if (false) {
+    for (MTriangle* t: triangles) {
+      std::vector<std::array<double,3> > pts(3);
+      std::vector<double> vals(3);
+      for (size_t lv = 0; lv < 3; ++lv) {
+        MVertex* v = t->getVertex(lv);
+        pts[lv] = {v->point().x(),v->point().y(),v->point().z()};
+        vals[lv] = exp(-scaling[v]);
+      }
+      GeoLog::add(pts,vals,"cs (exp(-H)");
+    }
+    GeoLog::flush();
   }
 
   delete _lsys;

@@ -25,6 +25,7 @@
 #include "HilbertCurve.h"
 #include "meshWinslow2d.h"
 #include "fullMatrix.h"
+#include "gmsh.h"
 
 #if defined(HAVE_DOMHEX)
 #include "pointInsertion.h"
@@ -1669,6 +1670,9 @@ void bowyerWatsonParallelograms(
   //    _printTris ("name.pos", AllTris.begin(), AllTris.end(), &DATA);
   transferDataStructure(gf, AllTris, DATA);
   //  backgroundMesh::unset();
+
+  Msg::Debug("bowyerWatsonParallelograms: %li candidate points -> %li inserted vertices",
+      packed.size(), gf->mesh_vertices.size());
 
   // pack is made for quads --> we do the quads taking into account
   // the crossfield (i.e. edges that are aligned are preferred for combination)
