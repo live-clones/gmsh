@@ -4623,7 +4623,7 @@ int QuadGenerator::cutLimitCycleCandidates(std::vector<uint64_t> *limitCycleIDs)
 	std::vector<std::array<int, 2>> values=m_flaggedTri[(*triangles)[j]];
 	for(uint64_t t=0; t<values.size(); t++){
 	  Separatrice *sep2=&(m_vectSep[values[t][0]]);
-	  if(sep2->isSaved()){
+	  if(sep2->isSaved() && sep->getID()!=sep2->getID()){
 	    std::vector<std::array<double,3>> *points2= sep2->getPCoord();
 	    position=values[t][1];
 	    std::array<double,3> p1=(*points1)[j-1];
@@ -4861,7 +4861,7 @@ int QuadGenerator::detectDefectSepAndRepropagate(){
   return 1;
 }
 
-int QuadGenerator::detectAndSolveLoopEdges(){
+int QuadGenerator::detectAndSolveOnlyOneLoopEdges(){
   for(size_t k=0;k<m_vectSep.size();k++){
     Separatrice *sep=&(m_vectSep[k]);
     if(sep->isBoundary()){
@@ -4899,7 +4899,6 @@ int QuadGenerator::detectAndSolveLoopEdges(){
 	}
 	std::cout<< "nIntersections: " << nIntersections << std::endl;
 	if(!floatingSep && nIntersections==1){
-
 	  //find the position of the first intersection
 	  std::vector<std::array<double,3>>* pointCoordSepNotShifted = sep->getPCoord();
 	  std::vector<uint64_t>* triSepNotShifted = sep->getPTriangles();
@@ -4907,6 +4906,7 @@ int QuadGenerator::detectAndSolveLoopEdges(){
 	  std::vector<int>* listInter = sep->getPIntersection();
 	  if(listInter->size()!=1){
 	    std::cout << "wrong intersections number in detectAndCorrectLoopEdges" << std::endl;
+	    continue;
 	  }
 	  size_t positionShifting=0;
 	  std::cout << "flag1" << std::endl;
@@ -4989,7 +4989,8 @@ int QuadGenerator::detectAndSolveLoopEdges(){
 	  comparison();
 	  std::cout << "comparison ok" << std::endl;
 	  std::cout << "rebuilt" << std::endl;
-	  //detectAndSolveLoopEdges();
+	  // detectAndSolveLoopEdges();
+	  return 1;
 	}
 	if(floatingSep && nIntersections==0){
 	  //take random point and trace a new sep
@@ -5131,10 +5132,11 @@ int QuadGenerator::detectAndSolveLoopEdges(){
 	  std::vector<int>* listInter = sep->getPIntersection();
 	  if(listInter->size()!=1){
 	    std::cout << "wrong intersections number in detectAndCorrectLoopEdges" << std::endl;
+	    continue;
 	  }
 	  size_t positionShifting=0;
 	  std::cout << "flag1" << std::endl;
-	  for(size_t i=0;i<triSepNotShifted->size();i++){
+	  for(size_t i=1;i<triSepNotShifted->size();i++){
 	    if(m_flaggedTri[triSepNotShifted->at(i)].size()>1){
 	      for(size_t j=0;j<m_flaggedTri[triSepNotShifted->at(i)].size();j++){
 		for(size_t l=0;l<listInter->size();l++){
@@ -5269,10 +5271,11 @@ int QuadGenerator::detectAndSolveLoopEdges(){
 	  std::vector<int>* listInter = sep->getPIntersection();
 	  if(listInter->size()!=2){
 	    std::cout << "wrong intersections number in detectAndCorrectLoopEdges" << std::endl;
+	    continue;
 	  }
 	  size_t positionShifting=0;
 	  std::cout << "flag1" << std::endl;
-	  for(size_t i=0;i<triSepNotShifted->size();i++){
+	  for(size_t i=1;i<triSepNotShifted->size();i++){
 	    if(m_flaggedTri[triSepNotShifted->at(i)].size()>1){
 	      for(size_t j=0;j<m_flaggedTri[triSepNotShifted->at(i)].size();j++){
 		for(size_t l=0;l<listInter->size();l++){
@@ -5363,6 +5366,22 @@ int QuadGenerator::detectAndSolveLoopEdges(){
 	}
       }
     }
+  }
+  return 0;
+}
+
+int QuadGenerator::detectAndSolveLoopEdges(){
+  int nItMax=0;
+  for(size_t k=0;k<m_vectSep.size();k++){
+    Separatrice *sep=&(m_vectSep[k]);
+    if(sep->isBoundary())
+      nItMax++;
+  }
+  int oneLoopEdgeSolved=1;
+  int cptWhile=0;
+  while(oneLoopEdgeSolved && cptWhile<nItMax){
+    oneLoopEdgeSolved = detectAndSolveOnlyOneLoopEdges();
+    cptWhile++;
   }
   return 1;
 }

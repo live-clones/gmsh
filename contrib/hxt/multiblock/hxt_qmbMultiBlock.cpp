@@ -14,6 +14,7 @@ extern "C"{
 #include <algorithm>
 #include <map>
 #include <set>
+#include <queue>
 #include <stack>
 
 
@@ -1846,6 +1847,12 @@ HXTStatus MultiBlock::buildQuadLayout(){
   createMbTriPatchs();
   dbgPosPatchData("dbgBlockPatch2.pos");
   computePatchsParametrization();
+  // std::set<uint64_t> setTri;
+  // for(size_t k=0;k<m_mbQuadParametrization[0].m_triangles.size();k++)
+  //   setTri.insert(m_mbQuadParametrization[0].m_triangles[k]);
+  // std::cout << "starting barycenter computation" << std::endl;
+  // findPatchBarycenter(setTri);
+  
   // //DBG CRITICAL
   // int indQuadTest=0;
   // std::vector<std::array<double,3>> physCoordLine;
@@ -1898,7 +1905,91 @@ HXTStatus MultiBlock::buildQuadLayout(){
   HXT_CHECK(hxtFree(&nodesOnBdry));
   m_mbDecompExists=1;
   return HXT_STATUS_OK;
+}
 
+void MultiBlock::findPatchBarycenter(const std::set<uint64_t> &setTri){
+  HXTEdges *edges=m_Edges;
+  HXTMesh *mesh=edges->edg2mesh;
+  std::vector<uint32_t> multVert(mesh->vertices.num,0);
+  std::vector<uint32_t> multEdges(edges->numEdges,0);
+  uint32_t nLocVertices=0;
+  std::cout << "flag1" << std::endl;
+  for(uint64_t t: setTri){
+    for(size_t k=0;k<3;k++)
+      multVert[mesh->triangles.node[3*t+k]]++;
+    for(size_t k=0;k<3;k++)
+      multEdges[edges->tri2edg[3*t+k]]++;
+  }
+  std::vector<bool> isBndVertex(mesh->vertices.num,false);
+  for(size_t k=0;k<edges->numEdges;k++){
+    if(multEdges[k]==1){
+      isBndVertex[edges->node[2*k+0]]=true;
+      isBndVertex[edges->node[2*k+1]]=true;
+    }
+
+  }
+  for(size_t k=0;k<mesh->vertices.num;k++){
+    if(multVert[k]>0){
+      nLocVertices++;
+    }
+  }
+  // std::vector<uint32_t> loc2GlobVert(0,nLocVertices);
+  // std::vector<uint32_t> glob2LocVert((uint32_t)(-1),mesh->vertices.num);
+  // size_t locId=0;
+  // for(size_t k=0;k<mesh->vertices.num;k++){
+  //   if(multVert[k]>0){
+  //     loc2GlobVert[locId]=k;
+  //     glob2LocVert[k]=locId;
+  //     locId++;
+  //   }
+  // }
+  std::cout << "flag2" << std::endl;
+  typedef std::pair<double, uint32_t> weightedVertex;
+  std::map<uint32_t, std::set<weightedVertex>> weightedConnectivity;
+  std::map<uint32_t, double> distanceToPatchBnd;
+  for(uint64_t iE=0;iE<edges->numEdges;iE++){
+    if(multEdges[iE]>0){
+      const double *v0 = mesh->vertices.coord + 4*edges->node[2*iE+0];
+      const double *v1 = mesh->vertices.coord + 4*edges->node[2*iE+1];
+      double edgeK[3]={v1[0]-v0[0],v1[1]-v0[1],v1[2]-v0[2]};
+      double length=0.0;
+      hxtNorm2V3(edgeK, &length);
+      weightedConnectivity[edges->node[2*iE+0]].insert(weightedVertex(length,edges->node[2*iE+1]));
+      weightedConnectivity[edges->node[2*iE+1]].insert(weightedVertex(length,edges->node[2*iE+0]));
+      distanceToPatchBnd[edges->node[2*iE+0]]=std::numeric_limits<double>::max();
+      distanceToPatchBnd[edges->node[2*iE+1]]=std::numeric_limits<double>::max();
+    }
+  }
+  std::cout << "flag3" << std::endl;
+  std::priority_queue<weightedVertex,std::vector<weightedVertex>, std::greater<weightedVertex>> priorityQueue;
+  for(uint32_t k=0;k<mesh->vertices.num;k++){
+    if(isBndVertex[k]){
+      distanceToPatchBnd[k]=0.0;
+      priorityQueue.push(weightedVertex(0.0,k));
+    }
+  }
+  std::cout << "flag4" << std::endl;
+  while(!priorityQueue.empty()){
+    std::cout << "flag5" << std::endl;
+    uint32_t v=priorityQueue.top().second;
+    double distV=distanceToPatchBnd[v];
+    priorityQueue.pop();
+    for(const weightedVertex &wV: weightedConnectivity[v]){
+      double dist=distanceToPatchBnd[wV.second];
+      if(dist>distV+wV.first){
+	distanceToPatchBnd[wV.second]=distV+wV.first;
+	priorityQueue.push(weightedVertex(distanceToPatchBnd[wV.second],wV.second));
+      }
+    }
+  }
+  // const char *fileName = "patchDist.pos";
+  // FILE *f = fopen(fileName,"w");
+  // fprintf(f,"View \"Distance\" {\n");
+  // for(const auto &kv: distanceToPatchBnd){
+  //   fprintf(f,"SP(%g,%g,%g){%g};\n", mesh->vertices.coord[4*kv.first+0], mesh->vertices.coord[4*kv.first+1], mesh->vertices.coord[4*kv.first+2], kv.second);
+  // }
+  // fprintf(f,"};");
+  // fclose(f);
 }
 
 void MultiBlock::buildTotalPatches(){
