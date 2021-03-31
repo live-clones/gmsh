@@ -10,8 +10,10 @@
 #include "SVector3.h"
 #include "GModel.h"
 #include "GFace.h"
+#if defined(HAVE_QUADMESHINGTOOLS)
 #include "qmtMeshGeometryOptimization.h"
 #include "qmtMeshUtils.h"
+#endif
 #include "meshOctreeLibOL.h"
 
 static void computeNaturalCross (PolyMesh::Vertex *v,
