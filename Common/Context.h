@@ -9,6 +9,7 @@
 #include <vector>
 #include <map>
 #include <string>
+#include <functional>
 
 #define NUM_SOLVERS 10
 
