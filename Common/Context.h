@@ -9,7 +9,6 @@
 #include <vector>
 #include <map>
 #include <string>
-#include <functional>
 
 #define NUM_SOLVERS 10
 
@@ -51,7 +50,6 @@ struct contextMeshOptions {
   double gradation;
   int quadqsSizemapMethod, quadqsTopoOptimMethods;
   double quadqsRemeshingBoldness;
-  std::function<double(int, int, double, double, double)> lcCallback;
   // mesh IO
   int fileFormat, firstElementTag, firstNodeTag;
   double mshFileVersion, medFileMinorVersion, scalingFactor;
