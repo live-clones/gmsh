@@ -140,13 +140,16 @@ static void printLabelling (const char* fn, PolyMesh *pm, std::unordered_map<Pol
 
 void meshGFaceQuadrangulateBipartiteLabelling (int faceTag){
   PolyMesh *pm = nullptr;
+  Msg::Debug("Quadrangulation of face %d using Bipartite Labelling",faceTag);
+
+  printf("%d  Quadrangulation of face\n",faceTag);
   int result = GFace2PolyMesh (faceTag, &pm);
+  printf("%d  Transfer to Half Edge done\n",faceTag);
   if (result == -1)return;
   std::queue<PolyMesh::Vertex*> _queue;
   std::unordered_map<PolyMesh::Vertex*,int> _labels;
   std::unordered_map<PolyMesh::Vertex*,SVector3> _dirs;
 
-  Msg::Info("Quadrangulation of face %d using Bipartite Labelling",faceTag);
   
   for (auto v : pm->vertices)_labels[v] = -1;
   
@@ -180,6 +183,7 @@ void meshGFaceQuadrangulateBipartiteLabelling (int faceTag){
     }
   }
 
+  printf("%d  Initial labelling done\n",faceTag);
     
   while(!_queue.empty()){
     //    printf("SIZE %lu\n",_queue.size());
@@ -249,6 +253,8 @@ void meshGFaceQuadrangulateBipartiteLabelling (int faceTag){
     }
   }
 
+  printf("%d  internal labelling done\n",faceTag);
+  
   // enhancement.
   bool changed = false;
   printLabelling ("labelling_initial.pos",pm, _labels);  
@@ -285,6 +291,8 @@ void meshGFaceQuadrangulateBipartiteLabelling (int faceTag){
   } while(changed);
   printLabelling ("labelling_final.pos",pm, _labels);  
 
+  printf("%d  optimum labelling done\n",faceTag);
+
   // split invalid edges
   
   for (auto he : pm->hedges){
@@ -311,6 +319,9 @@ void meshGFaceQuadrangulateBipartiteLabelling (int faceTag){
       }
     }    
   }
+
+  printf("%d  steiner points added\n",faceTag);
+
   printLabelling ("labelling_final_split.pos",pm, _labels);  
   
   for (auto he : pm->hedges){
@@ -327,8 +338,11 @@ void meshGFaceQuadrangulateBipartiteLabelling (int faceTag){
   pm->clean();
   printLabelling ("labelling_final_split_quad.pos",pm, _labels);  
   
+  printf("%d  quads created\n",faceTag);
   
   PolyMesh2GFace(pm, faceTag);
+
+  printf("%d  2 gmsh done\n",faceTag);
 
   delete pm;
 

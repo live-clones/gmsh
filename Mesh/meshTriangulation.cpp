@@ -151,6 +151,7 @@ int GFace2PolyMesh(int faceTag, PolyMesh **pm)
       return -1;
     }
     PolyMesh::Vertex *v[4] = {nullptr,nullptr,nullptr,nullptr};
+    printf("%lu elements\n",elementTags[K].size());
     for(size_t i = 0; i < elementTags[K].size(); i++) {
       for (int j=0;j<nNod;j++){
 	size_t nodeTag = nodeTags[K][nNod*i+j];
