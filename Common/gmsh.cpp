@@ -1295,6 +1295,38 @@ GMSH_API void gmsh::model::mesh::clear(const vectorpair &dimTags)
   GModel::current()->deleteMesh(entities);
 }
 
+static void _getEntities(const gmsh::vectorpair &dimTags,
+                         std::vector<GEntity*> &entities)
+{
+  if(dimTags.empty()) {
+    GModel::current()->getEntities(entities);
+  }
+  else {
+    for(auto dimTag : dimTags) {
+      int dim = dimTag.first, tag = dimTag.second;
+      GEntity *ge = GModel::current()->getEntityByTag(dim, tag);
+      if(!ge) {
+        Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
+        return;
+      }
+      entities.push_back(ge);
+    }
+  }
+}
+
+GMSH_API void gmsh::model::mesh::reverse(const vectorpair &dimTags)
+{
+  if(!_checkInit()) return;
+  std::vector<GEntity *> entities;
+  _getEntities(dimTags, entities);
+  for(auto ge : entities) {
+    for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
+      ge->getMeshElement(j)->reverse();
+    }
+  }
+  GModel::current()->destroyMeshCaches();
+}
+
 static void _getAdditionalNodesOnBoundary(GEntity *entity,
                                           std::vector<std::size_t> &nodeTags,
                                           std::vector<double> &coord,
@@ -3251,25 +3283,6 @@ gmsh::model::mesh::getFaces(const int faceType,
     }
     else {
       Msg::Error("Unknown mesh node %d, %d or %d", n0, n1, n2);
-    }
-  }
-}
-
-static void _getEntities(const gmsh::vectorpair &dimTags,
-                         std::vector<GEntity*> &entities)
-{
-  if(dimTags.empty()) {
-    GModel::current()->getEntities(entities);
-  }
-  else {
-    for(auto dimTag : dimTags) {
-      int dim = dimTag.first, tag = dimTag.second;
-      GEntity *ge = GModel::current()->getEntityByTag(dim, tag);
-      if(!ge) {
-        Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
-        return;
-      }
-      entities.push_back(ge);
     }
   }
 }
