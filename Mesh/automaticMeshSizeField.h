@@ -68,6 +68,8 @@ typedef struct ForestOptions{
   double                    *nodalCurvature;
   std::vector<double>       *featureSizeAtVertices;
   double                    *nodeNormals;
+
+  std::vector<std::array<double,9>> *triangleDirections;
   double                    *directions;
   double                    *directionsU;
   double                    *directionsV;
@@ -89,7 +91,7 @@ typedef struct Forest{
 // Data available on each tree cell
 typedef struct size_data{
   double size[3];       // Isotropic mesh size or anisotropic sizes hc1, hc2 and hn
-  double dir[9];        // Principal directions (aniso only)
+  double dir[9];        // Principal directions for anisotropic size field : [u1 u2 u3 (v1 v2 v3 w1 w2 w3)]
   SMetric3 M;           // Metric tensor
   // Size gradient : ds[0->2] is the gradient of the isotropic size if isotropic size field
   // If anisotropic, ds[0->2] is grad(hc1), ds[3->5] is grad(hc2) and ds[6->8] is grad(hn)
@@ -150,7 +152,7 @@ class automaticMeshSizeField : public Field {
 
 public:
   ~automaticMeshSizeField();
-  automaticMeshSizeField(std::string fFile = "",
+  automaticMeshSizeField(std::string fFile       = CTX::instance()->bgmFileName,
                          int minElementsPerTwoPi = CTX::instance()->mesh.lcFromCurvature,
                          int nLayersPerGap       = CTX::instance()->mesh.nLayersPerGap,
                          double gradation        = CTX::instance()->mesh.gradation,
@@ -198,7 +200,7 @@ public:
       _gradation, "Maximum growth ratio for the edges lengths", &updateNeeded);
 
     options["smoothing"] = new FieldOptionBool(
-      _smoothing, "Enable size smoothing (should always be true)",
+      _smoothing, "Enable size limitation (should always be true)",
       &updateNeeded);
 
     options["features"] = new FieldOptionBool(

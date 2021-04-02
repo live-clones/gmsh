@@ -931,6 +931,9 @@ void GetOptions(bool readConfigFiles, bool exitOnError)
           Msg::Error("Missing gradation");
           if(exitOnError) Msg::Exit(1);
         }
+        i++;
+        if(i < argv.size())
+          CTX::instance()->bgmFileName = argv[i++];
       }
       else if(argv[i] == "-windows") {
         i++;
