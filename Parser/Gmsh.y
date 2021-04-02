@@ -4833,15 +4833,15 @@ Constraints :
     '{' RecursiveListOfDouble '}' PeriodicTransform tEND
     {
       if(List_Nbr($4) != List_Nbr($8)){
-        yymsg(0, "Number of master lines (%d) different from number of "
-              "slaves (%d) ", List_Nbr($8), List_Nbr($4));
+        yymsg(0, "Wrong number of curves in periodicity constraint (%d -> %d)",
+              List_Nbr($8), List_Nbr($4));
       }
       else{
         std::vector<double> transfo;
         if(List_Nbr($10) != 0) {
           if(List_Nbr($10) < 12){
-            yymsg(0, "Affine transformation requires at least 12 entries (we have %d)",
-                  List_Nbr($10));
+            yymsg(0, "Affine transformation requires at least 12 entries "
+                  "(%d provided)", List_Nbr($10));
           }
           else {
             transfo.resize(List_Nbr($10));
@@ -4865,13 +4865,14 @@ Constraints :
     '{' RecursiveListOfDouble '}' PeriodicTransform tEND
     {
       if(List_Nbr($4) != List_Nbr($8)){
-        yymsg(0, "Number of master surfaces (%d) different from number of "
-              "slaves (%d) ", List_Nbr($8), List_Nbr($4));
+        yymsg(0, "Wrong number surfaces in periodicity constraint (%d -> %d)",
+              List_Nbr($8), List_Nbr($4));
       }
       else{
         if(List_Nbr($10) < 12){
           // FIXME full automatic case here if List_Nbr($10) == 0)
-          yymsg(0, "Affine transformation requires at least 12 entries");
+          yymsg(0, "Affine transformation requires at least 12 entries "
+                "(%d provided)", List_Nbr($10));
         }
         else {
           std::vector<double> transfo(16,0);
@@ -4892,17 +4893,17 @@ Constraints :
     '{' RecursiveListOfDouble '}' tRotate '{' VExpr ',' VExpr ',' FExpr '}' tEND
     {
       if(List_Nbr($4) != List_Nbr($8)){
-        yymsg(0, "Number of master curves (%d) different from number of "
-              "slaves (%d) ", List_Nbr($8), List_Nbr($4));
+        yymsg(0, "Wrong number of curves in periodicity constraint (%d -> %d)",
+              List_Nbr($8), List_Nbr($4));
       }
       else{
-        SPoint3 axis($12[0],$12[1],$12[2]);
-        SPoint3 origin($14[0],$14[1],$14[2]);
+        SPoint3 axis($12[0], $12[1], $12[2]);
+        SPoint3 origin($14[0], $14[1], $14[2]);
         double  angle($16);
-        SPoint3 translation(0,0,0);
+        SPoint3 translation(0, 0, 0);
 
         std::vector<double> transfo;
-        computeAffineTransformation(origin,axis,angle,translation,transfo);
+        computeAffineTransformation(origin, axis, angle, translation, transfo);
 
         for(int i = 0; i < List_Nbr($4); i++){
           double d_master, d_slave;
@@ -4918,17 +4919,17 @@ Constraints :
     '{' RecursiveListOfDouble '}' tRotate '{' VExpr ',' VExpr ',' FExpr '}' tEND
     {
       if(List_Nbr($4) != List_Nbr($8)){
-        yymsg(0, "Number of master surfaces (%d) different from number of "
-              "slaves (%d) ", List_Nbr($8), List_Nbr($4));
+        yymsg(0, "Wrong number of surfaces in periodicity constraint (%d -> %d)",
+              List_Nbr($8), List_Nbr($4));
       }
       else{
-        SPoint3 origin($14[0],$14[1],$14[2]);
-        SPoint3 axis($12[0],$12[1],$12[2]);
+        SPoint3 origin($14[0], $14[1], $14[2]);
+        SPoint3 axis($12[0], $12[1], $12[2]);
         double  angle($16);
-        SPoint3 translation(0,0,0);
+        SPoint3 translation(0, 0, 0);
 
         std::vector<double> transfo;
-        computeAffineTransformation(origin,axis,angle,translation,transfo);
+        computeAffineTransformation(origin, axis, angle, translation, transfo);
 
         for(int i = 0; i < List_Nbr($4); i++){
           double d_master, d_slave;
@@ -4944,17 +4945,17 @@ Constraints :
     '{' RecursiveListOfDouble '}' tTranslate VExpr tEND
     {
       if(List_Nbr($4) != List_Nbr($8)){
-        yymsg(0, "Number of master curves (%d) different from number of "
-              "slaves (%d) ", List_Nbr($8), List_Nbr($4));
+        yymsg(0, "Wrong number of curves in periodicity constraint (%d -> %d)",
+              List_Nbr($8), List_Nbr($4));
       }
       else{
-        SPoint3 origin(0,0,0);
-        SPoint3 axis(0,0,0);
+        SPoint3 origin(0, 0, 0);
+        SPoint3 axis(0, 0, 0);
         double  angle(0);
-        SPoint3 translation($11[0],$11[1],$11[2]);
+        SPoint3 translation($11[0], $11[1], $11[2]);
 
         std::vector<double> transfo;
-        computeAffineTransformation(origin,axis,angle,translation,transfo);
+        computeAffineTransformation(origin, axis, angle, translation, transfo);
 
         for(int i = 0; i < List_Nbr($4); i++){
           double d_master, d_slave;
@@ -4970,17 +4971,17 @@ Constraints :
     '{' RecursiveListOfDouble '}' tTranslate VExpr tEND
     {
       if(List_Nbr($4) != List_Nbr($8)){
-        yymsg(0, "Number of master surfaces (%d) different from number of "
-              "slaves (%d) ", List_Nbr($8), List_Nbr($4));
+        yymsg(0, "Wrong number of surfaces in periodicity constraint (%d -> %d)",
+              List_Nbr($8), List_Nbr($4));
       }
       else{
-        SPoint3 origin(0,0,0);
-        SPoint3 axis(0,0,0);
+        SPoint3 origin(0, 0, 0);
+        SPoint3 axis(0, 0, 0);
         double  angle(0);
-        SPoint3 translation($11[0],$11[1],$11[2]);
+        SPoint3 translation($11[0], $11[1], $11[2]);
 
         std::vector<double> transfo;
-        computeAffineTransformation(origin,axis,angle,translation,transfo);
+        computeAffineTransformation(origin, axis, angle, translation, transfo);
 
         for(int i = 0; i < List_Nbr($4); i++){
           double d_master, d_slave;
@@ -4996,8 +4997,8 @@ Constraints :
     tAFFECT FExpr '{' RecursiveListOfDouble '}' tEND
     {
       if(List_Nbr($5) != List_Nbr($10)){
-        yymsg(0, "Number of master surface curves (%d) different from number of "
-              "slave (%d) curves", List_Nbr($10), List_Nbr($5));
+        yymsg(0, "Wrong number of surface curves in periodicity constraint (%d -> %d)",
+              List_Nbr($10), List_Nbr($5));
       }
       else{
         int j_master = (int)$8;
@@ -5016,12 +5017,13 @@ Constraints :
     }
   | GeoEntity '{' RecursiveListOfDouble '}' tIn GeoEntity '{' FExpr '}' tEND
     {
-      if(($6==2 || $6==3) && $1<$6 ) {
+      if(($6 == 2 || $6 == 3) && $1 < $6) {
         std::vector<int> tags; ListOfDouble2Vector($3, tags);
         addEmbedded($1, tags, $6, (int)$8);
       }
       else {
-        yymsg(0, "GeoEntity of dim %d In GeoEntity of dim %d not allowed", $1, $6);
+        yymsg(0, "Entity of dimension %d cannot be embedded in entity of dimension %d",
+              $1, $6);
       }
       List_Delete($3);
     }
@@ -7082,21 +7084,21 @@ void computeAffineTransformation(SPoint3& origin, SPoint3& axis,
 
   tfo.resize(16);
 
-  tfo[0*4+0] = ca + ux*ux*(1.-ca);
-  tfo[0*4+1] = ux*uy*(1.-ca) - uz * sa;
-  tfo[0*4+2] = ux*uz*(1.-ca) + uy * sa;
+  tfo[0*4+0] = ca + ux * ux * (1. - ca);
+  tfo[0*4+1] = ux * uy * (1. - ca) - uz * sa;
+  tfo[0*4+2] = ux * uz * (1. - ca) + uy * sa;
 
-  tfo[1*4+0] = ux*uy*(1.-ca) + uz * sa;
-  tfo[1*4+1] = ca + uy*uy*(1.-ca);
-  tfo[1*4+2] = uy*uz*(1.-ca) - ux * sa;
+  tfo[1*4+0] = ux * uy * (1. - ca) + uz * sa;
+  tfo[1*4+1] = ca + uy * uy * (1. - ca);
+  tfo[1*4+2] = uy * uz * (1. - ca) - ux * sa;
 
-  tfo[2*4+0] = ux*uz*(1.-ca) - uy * sa;
-  tfo[2*4+1] = uy*uz*(1.-ca) + ux * sa;
-  tfo[2*4+2] = ca + uz*uz*(1.-ca);
+  tfo[2*4+0] = ux * uz * (1. - ca) - uy * sa;
+  tfo[2*4+1] = uy * uz * (1. - ca) + ux * sa;
+  tfo[2*4+2] = ca + uz * uz * (1. - ca);
 
   int idx = 0;
   for(size_t i = 0; i < 3; i++,idx++) {
-    int tIdx = i*4+3;
+    int tIdx = i * 4 + 3;
     tfo[tIdx] = origin[i] + translation[i];
     for(int j = 0; j < 3; j++,idx++) tfo[tIdx] -= tfo[idx] * origin[j];
   }
