@@ -5,6 +5,8 @@
 //
 // Contributed by Arthur Bawin
 
+#define ANISO 0
+
 #include "automaticMeshSizeField.h"
 #include "GModel.h"
 #include "GRegion.h"
@@ -18,7 +20,9 @@
 #include "Numeric.h"
 #include "robustPredicates.h"
 #include "discreteEdge.h"
+#if defined(ANISO)
 #include "qmtCrossField.h"
+#endif
 
 #include <queue>
 #include <list>
@@ -48,8 +52,6 @@ extern "C" {
 #if defined(HAVE_P4EST)
 #include <p8est_search.h>
 #endif
-
-#define ANISO 0
 
 #if defined(HAVE_HXT) && defined(HAVE_P4EST)
 // Mark all the points which are in mesh->(points | lines) but not in triangles
