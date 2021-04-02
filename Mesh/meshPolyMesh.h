@@ -8,6 +8,7 @@
 
 #include <vector>
 #include <stack>
+#include <algorithm>
 #include <stdio.h>
 #include <algorithm>
 #include <unordered_map>
