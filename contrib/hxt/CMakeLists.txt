@@ -20,6 +20,7 @@ set(SRC
     hxt_mesh.c
     hxt_message.c
     hxt_sort.c
+    hxt_tools.c
    )
 
 set(INC

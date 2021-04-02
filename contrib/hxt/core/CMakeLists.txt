@@ -26,6 +26,7 @@ set(HXT_CORE_SRC
     "${CMAKE_CURRENT_SOURCE_DIR}/src/hxt_message.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/hxt_opt.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/hxt_sort.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/hxt_tools.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/include/hxt_bbox.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/include/hxt_mesh.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/include/hxt_message.h"

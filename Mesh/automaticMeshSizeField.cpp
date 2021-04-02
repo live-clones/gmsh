@@ -4004,7 +4004,7 @@ HXTStatus automaticMeshSizeField::updateHXT()
           Msg::Info("Skipping curvature computation on face %d with 0 element", face->tag());
         } else{
           // Compute curvature of the face
-          CurvatureRusinkiewicz(tris, nodes, curv, face->tag());
+          CurvatureRusinkiewicz(tris, nodes, curv);
           // Assemble curvature vectors of the face in global nodalCurvature structure
           for (uint32_t i = 0; i < meshFace->vertices.num; ++i){
             uint32_t nodeGlobal = v2cBnd[ c2vLoc[i] ];
