@@ -624,7 +624,7 @@ int SystemCallExe(const std::string &exe, const std::string &argsOrCommand,
   }
   if(!blocking) cmd += " &";
   Msg::Info("Calling '%s'", cmd.c_str());
-  if(!system(cmd.c_str())) return 1;
+  return system(cmd.c_str());
 #endif
   return 0;
 }

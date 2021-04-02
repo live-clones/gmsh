@@ -371,7 +371,7 @@ void OCC_Internals::bind(const TopoDS_Solid &solid, int tag, bool recursive)
     for(exp0.Init(solid, TopAbs_FACE); exp0.More(); exp0.Next()) {
       TopoDS_Face face = TopoDS::Face(exp0.Current());
       if(!_faceTag.IsBound(face)) {
-        int t = getMaxTag(3) + 1;
+        int t = getMaxTag(2) + 1;
         bind(face, t, recursive);
       }
     }
@@ -571,6 +571,65 @@ void OCC_Internals::unbind(TopoDS_Shape shape, int dim, int tag, bool recursive)
   case -1: unbind(TopoDS::Wire(shape), tag, recursive); break;
   case -2: unbind(TopoDS::Shell(shape), tag, recursive); break;
   default: break;
+  }
+}
+
+void OCC_Internals::unbindWithoutChecks(TopoDS_Shape shape)
+{
+  TopExp_Explorer exp0;
+  for(exp0.Init(shape, TopAbs_SOLID); exp0.More(); exp0.Next()) {
+    TopoDS_Solid solid = TopoDS::Solid(exp0.Current());
+    if(_solidTag.IsBound(solid)) {
+      int tag = _solidTag.Find(solid);
+      _solidTag.UnBind(solid);
+      _tagSolid.UnBind(tag);
+      _toRemove.insert(std::make_pair(3, tag));
+    }
+  }
+  for(exp0.Init(shape, TopAbs_SHELL); exp0.More(); exp0.Next()) {
+    TopoDS_Shell shell = TopoDS::Shell(exp0.Current());
+    if(_shellTag.IsBound(shell)) {
+      int tag = _shellTag.Find(shell);
+      _shellTag.UnBind(shell);
+      _tagShell.UnBind(tag);
+      _toRemove.insert(std::make_pair(-2, tag));
+    }
+  }
+  for(exp0.Init(shape, TopAbs_FACE); exp0.More(); exp0.Next()) {
+    TopoDS_Face face = TopoDS::Face(exp0.Current());
+    if(_faceTag.IsBound(face)) {
+      int tag = _faceTag.Find(face);
+      _faceTag.UnBind(face);
+      _tagFace.UnBind(tag);
+      _toRemove.insert(std::make_pair(2, tag));
+    }
+  }
+  for(exp0.Init(shape, TopAbs_WIRE); exp0.More(); exp0.Next()) {
+    TopoDS_Wire wire = TopoDS::Wire(exp0.Current());
+    if(_wireTag.IsBound(wire)) {
+      int tag = _wireTag.Find(wire);
+      _wireTag.UnBind(wire);
+      _tagWire.UnBind(tag);
+      _toRemove.insert(std::make_pair(-1, tag));
+    }
+  }
+  for(exp0.Init(shape, TopAbs_EDGE); exp0.More(); exp0.Next()) {
+    TopoDS_Edge edge = TopoDS::Edge(exp0.Current());
+    if(_edgeTag.IsBound(edge)) {
+      int tag = _edgeTag.Find(edge);
+      _edgeTag.UnBind(edge);
+      _tagEdge.UnBind(tag);
+      _toRemove.insert(std::make_pair(1, tag));
+    }
+  }
+  for(exp0.Init(shape, TopAbs_VERTEX); exp0.More(); exp0.Next()) {
+    TopoDS_Vertex vertex = TopoDS::Vertex(exp0.Current());
+    if(_vertexTag.IsBound(vertex)) {
+      int tag = _vertexTag.Find(vertex);
+      _vertexTag.UnBind(vertex);
+      _tagVertex.UnBind(tag);
+      _toRemove.insert(std::make_pair(0, tag));
+    }
   }
 }
 
@@ -1377,7 +1436,7 @@ bool OCC_Internals::addWire(int &tag, const std::vector<int> &curveTags,
                             bool checkClosed)
 {
   if(tag >= 0 && _tagWire.IsBound(tag)) {
-    Msg::Error("OpenCASCADE wire or line loop with tag %d already exists", tag);
+    Msg::Error("OpenCASCADE wire or curve loop with tag %d already exists", tag);
     return false;
   }
 
@@ -1402,7 +1461,7 @@ bool OCC_Internals::addWire(int &tag, const std::vector<int> &curveTags,
     }
     wire = w.Wire();
     if(checkClosed && !wire.Closed()) {
-      Msg::Error("Line Loop is not closed");
+      Msg::Error("Curve loop is not closed");
       return false;
     }
     if(tag < 0) tag = getMaxTag(-1) + 1;
@@ -1583,7 +1642,7 @@ bool OCC_Internals::addPlaneSurface(int &tag, const std::vector<int> &wireTags)
     // OCC factories, allow negative tags - and simply ignore the sign here
     int wireTag = std::abs(wireTags[i]);
     if(!_tagWire.IsBound(wireTag)) {
-      Msg::Error("Unknown OpenCASCADE line loop with tag %d", wireTag);
+      Msg::Error("Unknown OpenCASCADE curve loop with tag %d", wireTag);
       return false;
     }
     TopoDS_Wire wire = TopoDS::Wire(_tagWire.Find(wireTag));
@@ -1592,7 +1651,7 @@ bool OCC_Internals::addPlaneSurface(int &tag, const std::vector<int> &wireTags)
 
   TopoDS_Face result;
   if(wires.size() == 0) {
-    Msg::Error("Plane surface requires at least one line loop");
+    Msg::Error("Plane surface requires at least one curve loop");
     return false;
   }
 
@@ -1606,7 +1665,7 @@ bool OCC_Internals::addPlaneSurface(int &tag, const std::vector<int> &wireTags)
     }
     f.Build();
     if(!f.IsDone()) {
-      Msg::Error("Could not create face");
+      Msg::Error("Could not create surface");
       return false;
     }
     result = f.Face();
@@ -1641,7 +1700,7 @@ bool OCC_Internals::addSurfaceFilling(int &tag, int wireTag,
     BRepOffsetAPI_MakeFilling f;
     // bounding edge constraints
     if(!_tagWire.IsBound(wireTag)) {
-      Msg::Error("Unknown OpenCASCADE line loop with tag %d", wireTag);
+      Msg::Error("Unknown OpenCASCADE curve loop with tag %d", wireTag);
       return false;
     }
     TopoDS_Wire wire = TopoDS::Wire(_tagWire.Find(wireTag));
@@ -1713,7 +1772,7 @@ bool OCC_Internals::addBSplineFilling(int &tag, int wireTag,
   try {
     GeomFill_BSplineCurves f;
     if(!_tagWire.IsBound(wireTag)) {
-      Msg::Error("Unknown OpenCASCADE line loop with tag %d", wireTag);
+      Msg::Error("Unknown OpenCASCADE curve loop with tag %d", wireTag);
       return false;
     }
     TopoDS_Wire wire = TopoDS::Wire(_tagWire.Find(wireTag));
@@ -1782,7 +1841,7 @@ bool OCC_Internals::addBezierFilling(int &tag, int wireTag,
   try {
     GeomFill_BezierCurves f;
     if(!_tagWire.IsBound(wireTag)) {
-      Msg::Error("Unknown OpenCASCADE line loop with tag %d", wireTag);
+      Msg::Error("Unknown OpenCASCADE curve loop with tag %d", wireTag);
       return false;
     }
     TopoDS_Wire wire = TopoDS::Wire(_tagWire.Find(wireTag));
@@ -2046,7 +2105,7 @@ bool OCC_Internals::addBSplineSurface(
   for(std::size_t i = 0; i < wireTags.size(); i++) {
     int wireTag = std::abs(wireTags[i]);
     if(!_tagWire.IsBound(wireTag)) {
-      Msg::Error("Unknown OpenCASCADE line loop with tag %d", wireTag);
+      Msg::Error("Unknown OpenCASCADE curve loop with tag %d", wireTag);
       return false;
     }
     TopoDS_Wire wire = TopoDS::Wire(_tagWire.Find(wireTag));
@@ -2127,7 +2186,7 @@ bool OCC_Internals::addBezierSurface(int &tag,
   for(std::size_t i = 0; i < wireTags.size(); i++) {
     int wireTag = std::abs(wireTags[i]);
     if(!_tagWire.IsBound(wireTag)) {
-      Msg::Error("Unknown OpenCASCADE line loop with tag %d", wireTag);
+      Msg::Error("Unknown OpenCASCADE curve loop with tag %d", wireTag);
       return false;
     }
     TopoDS_Wire wire = TopoDS::Wire(_tagWire.Find(wireTag));
@@ -2179,7 +2238,7 @@ bool OCC_Internals::addTrimmedSurface(int &tag, int surfaceTag,
   for(std::size_t i = 0; i < wireTags.size(); i++) {
     int wireTag = std::abs(wireTags[i]);
     if(!_tagWire.IsBound(wireTag)) {
-      Msg::Error("Unknown OpenCASCADE line loop with tag %d", wireTag);
+      Msg::Error("Unknown OpenCASCADE curve loop with tag %d", wireTag);
       return false;
     }
     TopoDS_Wire wire = TopoDS::Wire(_tagWire.Find(wireTag));
@@ -2596,7 +2655,7 @@ bool OCC_Internals::addThruSections(
     // ts.SetSmoothing(Standard_True);
     for(std::size_t i = 0; i < wireTags.size(); i++) {
       if(!_tagWire.IsBound(wireTags[i])) {
-        Msg::Error("Unknown OpenCASCADE wire or line loop with tag %d",
+        Msg::Error("Unknown OpenCASCADE wire or curve loop with tag %d",
                    wireTags[i]);
         return false;
       }
@@ -3440,7 +3499,7 @@ bool OCC_Internals::booleanOperator(
         Msg::Debug("BOOL (%d,%d) other", dim, tag);
       }
     }
-    for(int dim = -2; dim <= 3; dim++) _recomputeMaxTag(dim);
+    for(int d = -2; d <= 3; d++) _recomputeMaxTag(d);
     // bind all remaining entities and add the new ones to the returned list
     _multiBind(result, -1, outDimTags, false, true, true);
     _filterTags(outDimTags, minDim);
@@ -3672,11 +3731,26 @@ bool OCC_Internals::_transform(
     return false;
   }
   for(std::size_t i = 0; i < inDimTags.size(); i++) {
-    // FIXME we should implement rebind(object, result, dim) which would
-    // unbind/bind all subshapes to the same tags
     int dim = inDimTags[i].first;
     int tag = inDimTags[i].second;
+#if 0
+    // safe, but slow: unbind() has linear complexity with respect to the number
+    // of entities in the model (due to the dependency checking of upward
+    // adjencencies and the maximum tag update). Using this in a for loop to
+    // translate copies of entities leads to quadratic complexity.
     unbind(inShapes[i], dim, tag, true);
+#else
+    // bypass it by unbinding the shape and all its subshapes without checking
+    // dependencies: this is a bit dangerous, as one could translate e.g. the
+    // face of a cube (this is not allowed!) - which will unbind the face of the
+    // cube. But the original face will actually be re-bound (with a warning) at
+    // the next syncronization point, so it's not too bad...
+    unbindWithoutChecks(inShapes[i]);
+    for(int d = -2; d <= 3; d++) _recomputeMaxTag(d);
+
+    // FIXME: it would be even better to code a rebind() function to reuse the
+    // tags not only of the shape, but of all the sub-shapes as well
+#endif
     bind(outShapes[i], dim, tag, true);
   }
 

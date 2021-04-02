@@ -87,9 +87,8 @@ public:
     }
     return true;
   }
-
-  /* implicit conversion to std::array<double,3> */
-  operator std::array<double,3>() const { return {P[0],P[1],P[2]}; }
+  // implicit conversion to std::array<double, 3>
+  operator std::array<double, 3>() const { return {{P[0], P[1], P[2]}}; }
 };
 
 inline SPoint3 operator+(const SPoint3 &a, const SPoint3 &b)

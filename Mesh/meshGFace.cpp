@@ -2806,7 +2806,8 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
       Msg::Error("ALGO_2D_PACK_PRLGRMS_CSTR deprecated");
       // bowyerWatsonParallelogramsConstrained(
       //   gf, gf->constr_vertices, &equivalence, &parametricCoordinates);
-    } else if(gf->getMeshingAlgo() == ALGO_2D_DELAUNAY ||
+    }
+    else if(gf->getMeshingAlgo() == ALGO_2D_DELAUNAY ||
             gf->getMeshingAlgo() == ALGO_2D_AUTO)
       bowyerWatson(gf, 1000000000, &equivalence, &parametricCoordinates);
     else
@@ -2832,8 +2833,8 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
     bool blossom = (CTX::instance()->mesh.algoRecombine == 1);
     int topo = CTX::instance()->mesh.recombineOptimizeTopology;
     bool nodeRepositioning = true;
-    if (CTX::instance()->mesh.algo2d == ALGO_2D_PACK_PRLGRMS ||
-        CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT) {
+    if(CTX::instance()->mesh.algo2d == ALGO_2D_PACK_PRLGRMS ||
+       CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT) {
       nodeRepositioning = false;
     }
     recombineIntoQuads(gf, blossom, topo, nodeRepositioning, 0.1);
@@ -2896,7 +2897,6 @@ static bool isMeshValid(GFace *gf)
 // for debugging, change value from -1 to -100;
 int debugSurface = -1; //-100;
 
-
 void meshGFace::operator()(GFace *gf, bool print)
 {
   gf->model()->setCurrentMeshEntity(gf);
@@ -2932,7 +2932,7 @@ void meshGFace::operator()(GFace *gf, bool print)
   /* The ALGO_2D_QUAD_QUASI_STRUCT is using ALGO_2D_PACK_PRLGRMS
    * to generate a initial quad-dominant mesh */
   bool quadqs = false;
-  if (CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT) {
+  if(CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT) {
     quadqs = true;
     CTX::instance()->mesh.algo2d = ALGO_2D_PACK_PRLGRMS;
   }
@@ -3009,7 +3009,7 @@ void meshGFace::operator()(GFace *gf, bool print)
     gf->unsetMeshingAlgo();
   }
 
-  if (quadqs) CTX::instance()->mesh.algo2d = ALGO_2D_QUAD_QUASI_STRUCT;
+  if(quadqs) CTX::instance()->mesh.algo2d = ALGO_2D_QUAD_QUASI_STRUCT;
 }
 
 static bool getGFaceNormalFromVert(GFace *gf, MElement *el, SVector3 &nf)

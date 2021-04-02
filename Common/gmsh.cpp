@@ -1295,6 +1295,38 @@ GMSH_API void gmsh::model::mesh::clear(const vectorpair &dimTags)
   GModel::current()->deleteMesh(entities);
 }
 
+static void _getEntities(const gmsh::vectorpair &dimTags,
+                         std::vector<GEntity*> &entities)
+{
+  if(dimTags.empty()) {
+    GModel::current()->getEntities(entities);
+  }
+  else {
+    for(auto dimTag : dimTags) {
+      int dim = dimTag.first, tag = dimTag.second;
+      GEntity *ge = GModel::current()->getEntityByTag(dim, tag);
+      if(!ge) {
+        Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
+        return;
+      }
+      entities.push_back(ge);
+    }
+  }
+}
+
+GMSH_API void gmsh::model::mesh::reverse(const vectorpair &dimTags)
+{
+  if(!_checkInit()) return;
+  std::vector<GEntity *> entities;
+  _getEntities(dimTags, entities);
+  for(auto ge : entities) {
+    for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
+      ge->getMeshElement(j)->reverse();
+    }
+  }
+  GModel::current()->destroyMeshCaches();
+}
+
 static void _getAdditionalNodesOnBoundary(GEntity *entity,
                                           std::vector<std::size_t> &nodeTags,
                                           std::vector<double> &coord,
@@ -3255,25 +3287,6 @@ gmsh::model::mesh::getFaces(const int faceType,
   }
 }
 
-static void _getEntities(const gmsh::vectorpair &dimTags,
-                         std::vector<GEntity*> &entities)
-{
-  if(dimTags.empty()) {
-    GModel::current()->getEntities(entities);
-  }
-  else {
-    for(auto dimTag : dimTags) {
-      int dim = dimTag.first, tag = dimTag.second;
-      GEntity *ge = GModel::current()->getEntityByTag(dim, tag);
-      if(!ge) {
-        Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
-        return;
-      }
-      entities.push_back(ge);
-    }
-  }
-}
-
 GMSH_API void gmsh::model::mesh::createEdges(const vectorpair &dimTags)
 {
   if(!_checkInit()) return;
@@ -4355,13 +4368,13 @@ GMSH_API void gmsh::model::mesh::setSizeCallback(
   std::function<double(int, int, double, double, double)> callback)
 {
   if(!_checkInit()) return;
-  CTX::instance()->mesh.lcCallback = callback;
+  GModel::current()->lcCallback = callback;
 }
 
 GMSH_API void gmsh::model::mesh::removeSizeCallback()
 {
   if(!_checkInit()) return;
-  CTX::instance()->mesh.lcCallback = nullptr;
+  GModel::current()->lcCallback = nullptr;
 }
 
 GMSH_API void
@@ -6476,6 +6489,7 @@ _addModelData(const int tag, const int step, const std::string &modelName,
     d->initAdaptiveData(view->getOptions()->timeStep,
                         view->getOptions()->maxRecursionLevel,
                         view->getOptions()->targetError);
+  view->setChanged(true);
 #else
   Msg::Error("Views require the post-processing module");
 #endif
@@ -6722,6 +6736,7 @@ GMSH_API void gmsh::view::addListData(const int tag,
   for(int idxtype = 0; idxtype < 24; idxtype++) {
     if(dataType == types[idxtype]) {
       d->importList(idxtype, numElements, data, true);
+      view->setChanged(true);
       return;
     }
   }
@@ -6838,6 +6853,7 @@ gmsh::view::addListDataString(const int tag, const std::vector<double> &coord,
     }
   }
   d->finalize();
+  view->setChanged(true);
 #else
   Msg::Error("Views require the post-processing module");
 #endif
@@ -6965,6 +6981,7 @@ GMSH_API void gmsh::view::setInterpolationMatrices(
 
   if(dGeo <= 0) {
     data->setInterpolationMatrices(itype, F, P);
+    view->setChanged(true);
     return;
   }
 
@@ -6985,6 +7002,7 @@ GMSH_API void gmsh::view::setInterpolationMatrices(
     for(int j = 0; j < 3; j++) { Pg(i, j) = expGeo[3 * i + j]; }
   }
   data->setInterpolationMatrices(itype, F, P, Fg, Pg);
+  view->setChanged(true);
 #else
   Msg::Error("Views require the post-processing module");
 #endif
@@ -7026,6 +7044,7 @@ GMSH_API void gmsh::view::copyOptions(const int refTag, const int tag)
     return;
   }
   view->setOptions(ref->getOptions());
+  view->setChanged(true);
 #if defined(HAVE_FLTK)
   if(FlGui::available()) FlGui::instance()->updateViews(true, true);
 #endif

@@ -64,9 +64,10 @@ string	{alpha}({alpha}|{digit})*
 "\'"			{ parsestring('\''); return tBIGSTR; }
 "newreg"		{ gmsh_yylval.d = NEWREG(); return tDOUBLE; }
 "newp"  		{ gmsh_yylval.d = NEWPOINT(); return tDOUBLE; }
-"newl"  		{ gmsh_yylval.d = NEWLINE(); return tDOUBLE; }
-"newc"  		{ gmsh_yylval.d = NEWLINE(); return tDOUBLE; }
-"newll"  		{ gmsh_yylval.d = NEWLINELOOP(); return tDOUBLE; }
+"newl"  		{ gmsh_yylval.d = NEWCURVE(); return tDOUBLE; }
+"newc"  		{ gmsh_yylval.d = NEWCURVE(); return tDOUBLE; }
+"newll"  		{ gmsh_yylval.d = NEWCURVELOOP(); return tDOUBLE; }
+"newcl"  		{ gmsh_yylval.d = NEWCURVELOOP(); return tDOUBLE; }
 "news"  		{ gmsh_yylval.d = NEWSURFACE(); return tDOUBLE; }
 "newsl"  		{ gmsh_yylval.d = NEWSURFACELOOP(); return tDOUBLE; }
 "newv"  		{ gmsh_yylval.d = NEWVOLUME(); return tDOUBLE; }

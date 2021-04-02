@@ -12,7 +12,7 @@
 #include <array>
 #include <unordered_map>
 #include <cstdint>
-#include <math.h>
+#include <cmath>
 #include <queue>
 #include <algorithm>
 
@@ -93,6 +93,7 @@ using namespace QMT;
 
 int computeMinimalSizeOnCurves(
     GlobalBackgroundMesh& gbm,
+    bool clampMinWithTriEdges,
     std::unordered_map<MVertex*,double>& minSize) {
   Msg::Debug("compute minimal size on curves (using background mesh) ...");
   /* Important information: all mesh elements are queried in the GlobalBackgroundMesh,
@@ -177,6 +178,27 @@ int computeMinimalSizeOnCurves(
     }
   }
 
+  if (clampMinWithTriEdges) {
+    for (GFace* gf: model_faces(gm)) {
+      auto it = gbm.faceBackgroundMeshes.find(gf);
+      if (it == gbm.faceBackgroundMeshes.end()) {
+        Msg::Error("face %i not found in background mesh", gf->tag());
+        continue;
+      }
+      for (MTriangle& t: it->second.triangles) for (size_t le = 0; le < 3; ++le) {
+        MVertex* v1 = t.getVertex(le);
+        MVertex* v2 = t.getVertex((le+1)%3);
+        double len = v1->distance(v2);
+        if (v1->onWhat()->cast2Face() == nullptr) {
+          auto itv = minSize.find(v1);
+          if (itv != minSize.end()) {
+            itv->second = std::max(itv->second,len);
+          }
+        }
+      }
+    }
+  }
+
   return 0;
 }
 
@@ -192,7 +214,7 @@ int sizeMapOneWaySmoothing(
   std::unordered_map<MVertex*, std::vector<MVertex*> > v2v;
   buildVertexToVertexMap(triangles, v2v);
 
-  std::priority_queue<std::pair<double,MVertex*>,  std::vector<std::pair<double,MVertex*> >,  std::greater<std::pair<double,MVertex*> > > Q; 
+  std::priority_queue<std::pair<double,MVertex*>,  std::vector<std::pair<double,MVertex*> >,  std::greater<std::pair<double,MVertex*> > > Q;
   for (const auto& kv: values) {
     Q.push({kv.second,kv.first});
   }
@@ -241,4 +263,3 @@ void quantileFiltering(std::unordered_map<MVertex*,double>& scaling, double crit
     }
   }
 }
-

@@ -12,6 +12,7 @@
 #include <map>
 #include <string>
 #include <unordered_map>
+#include <functional>
 #include "GVertex.h"
 #include "GEdge.h"
 #include "GFace.h"
@@ -561,7 +562,7 @@ public:
   void scaleMesh(double factor);
 
   // set/get entity that is currently being meshed (for error reporting)
-  void setCurrentMeshEntity(GEntity *e) { _currentMeshEntity = e; }
+  void setCurrentMeshEntity(GEntity *e);
   GEntity *getCurrentMeshEntity() { return _currentMeshEntity; }
 
   // set/get entities/vertices linked meshing errors
@@ -684,6 +685,9 @@ public:
                           const std::vector<int> &dim);
   void computeHomology();
 
+  // mesh size callback
+  std::function<double(int, int, double, double, double)> lcCallback;
+
   // compute automatic sizing field from curvature
   void computeSizeField();
 
@@ -769,9 +773,10 @@ public:
                 double scalingFactor = 1.0);
 
   // I-deas universal mesh format
-  int readUNV(const std::string &name);
+  int readUNV(const std::string &name, bool readGroupsOfElements = true);
   int writeUNV(const std::string &name, bool saveAll = false,
-               bool saveGroupsOfNodes = false, double scalingFactor = 1.0);
+               bool saveGroupsOfElements = true, bool saveGroupsOfNodes = false,
+               double scalingFactor = 1.0);
 
   // Medit (INRIA) mesh format
   int readMESH(const std::string &name);

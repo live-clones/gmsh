@@ -44,3 +44,7 @@ Transfinite Line {14,10} = 50 Using Bump 0.3;
 Transfinite Line {11,8,7,12,6,5,13,15,3,4,16,1,2,9} = 30 Using Progression 1;
 Transfinite Surface {18} = {9,13,11,10};
 Recombine Surface {18};
+
+// use this to get a smoother mesh:
+
+//Mesh.Smoothing = 100;

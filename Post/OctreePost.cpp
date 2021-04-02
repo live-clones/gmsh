@@ -39,13 +39,14 @@ static void minmax(int n, double *X, double *Y, double *Z, double *min,
 
   SBoundingBox3d bb(min[0], min[1], min[2], max[0], max[1], max[2]);
 
-  if (CTX::instance()->mesh.algo2d == ALGO_2D_PACK_PRLGRMS 
-      || CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT) {
+  if(CTX::instance()->mesh.algo2d == ALGO_2D_PACK_PRLGRMS ||
+     CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT) {
     /* TODO FIXME: ugly temporary fix, but we need larger bbox for the
      * guiding field sampling on curved surfaces, thicken is not sufficient */
     bb *= 1.1;
     bb.makeCube();
-  } else {
+  }
+  else {
     bb.thicken(0.01); // make 1% thicker
   }
 
@@ -295,12 +296,13 @@ void OctreePost::_create(PViewData *data)
 
     SBoundingBox3d bb = l->getBoundingBox();
 
-    if (CTX::instance()->mesh.algo2d == ALGO_2D_PACK_PRLGRMS 
-        || CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT) {
+    if(CTX::instance()->mesh.algo2d == ALGO_2D_PACK_PRLGRMS ||
+       CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT) {
       /* TODO FIXME: ugly temporary fix, but we need larger bbox for the
        * guiding field sampling on curved surfaces, thicken is not sufficient */
       bb *= 1.1;
-    } else{
+    }
+    else {
       bb.thicken(0.01); // make 1% thicker
     }
 

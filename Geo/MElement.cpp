@@ -976,6 +976,46 @@ void MElement::getNodesCoord(fullMatrix<double> &nodesXYZ) const
   }
 }
 
+void MElement::getNodesCoordNonSerendip(fullMatrix<double> &nodesXYZ) const
+{
+  int tag = ElementType::getType(getType(), getPolynomialOrder(), false);
+  const nodalBasis *basis = BasisFactory::getNodalBasis(tag);
+  const fullMatrix<double> nodesUVW = basis->getReferenceNodes();
+  nodesXYZ.resize(nodesUVW.size1(), 3, false);
+
+  getNodesCoord(nodesXYZ);
+
+  double xyz[3];
+  for(int i = getNumVertices(); i < nodesUVW.size1(); ++i) {
+    pnt(nodesUVW(i, 0), nodesUVW(i, 1), nodesUVW(i, 2), xyz);
+    nodesXYZ(i, 0) = xyz[0];
+    nodesXYZ(i, 1) = xyz[1];
+    nodesXYZ(i, 2) = xyz[2];
+  }
+}
+
+bezierCoeff *MElement::getBezierVerticesCoord() const
+{
+  const bezierBasis *basis;
+  basis = BasisFactory::getBezierBasis(getType(), getPolynomialOrder());
+  const fullMatrix<double> pntUVW =
+    basis->getSamplingPointsToComputeBezierCoeff();
+
+  fullMatrix<double> pntXYZ(pntUVW.size1(), 3);
+  double xyz[3];
+  for(int i = 0; i < pntUVW.size1(); ++i) {
+    double u = pntUVW(i, 0);
+    double v = pntUVW(i, 1);
+    double w = pntUVW(i, 2);
+    pnt(u, v, w, xyz);
+    pntXYZ(i, 0) = xyz[0];
+    pntXYZ(i, 1) = xyz[1];
+    pntXYZ(i, 2) = xyz[2];
+  }
+
+  return new bezierCoeff(getFuncSpaceData(getPolynomialOrder(), false), pntXYZ);
+}
+
 double MElement::getEigenvaluesMetric(double u, double v, double w,
                                       double values[3]) const
 {
@@ -1698,12 +1738,7 @@ void MElement::writeMATLAB(FILE *fp, int filetype, int elementary, int physical,
 void MElement::writeUNV(FILE *fp, int num, int elementary, int physical)
 {
   int type = getTypeForUNV();
-  if(!type) {
-    Msg::Warning("Unknown element type for UNV export (MSH type %d) - "
-                 "output file might be invalid",
-                 getTypeForMSH());
-    return;
-  }
+  if(!type) return;
 
   int n = getNumVertices();
   int physical_property = elementary;
@@ -1751,7 +1786,8 @@ void MElement::writeNEU(FILE *fp, unsigned gambitType, int idAdjust, int phys)
 
   fprintf(fp, "%8lu %2d %2lu ", _num - idAdjust, gambitType, getNumVertices());
   for(std::size_t i = 0; i < getNumVertices(); ++i) {
-    fprintf(fp, "%8ld", getVertex(i)->getIndex());
+    if(i == 7) fprintf(fp, "\n               ");
+    fprintf(fp, "%8ld", getVertexNEU(i)->getIndex());
   }
   fprintf(fp, "\n");
 

@@ -129,6 +129,8 @@ set(SRC
     hxt_tetColor.c
     hxt_tetColor.h
     hxt_tetDelaunay.c
+    hxt_tetDelaunayReshape.c
+    hxt_tetDelaunayReshape.h
     hxt_tetFlag.c
     hxt_tetMesh.c
     hxt_tetNodalSize.c

@@ -468,7 +468,7 @@ void GFace::writeGEO(FILE *fp)
       num.push_back((*it)->tag());
     for(auto it = dir.begin(); it != dir.end(); it++)
       ori.push_back((*it) > 0 ? 1 : -1);
-    fprintf(fp, "Line Loop(%d) = ", tag());
+    fprintf(fp, "Curve Loop(%d) = ", tag());
     for(std::size_t i = 0; i < num.size(); i++) {
       if(i)
         fprintf(fp, ", %d", num[i] * ori[i]);
@@ -1085,7 +1085,7 @@ void GFace::XYZtoUV(double X, double Y, double Z, double &U, double &V,
   if(!onSurface) return;
 
   if(relax < 1.e-6)
-    Msg::Error("Could not converge: surface mesh will be wrong");
+    Msg::Error("Inverse surface mapping could not converge");
   else {
     Msg::Info("point %g %g %g : Relaxation factor = %g", X, Y, Z, 0.75 * relax);
     XYZtoUV(X, Y, Z, U, V, 0.75 * relax);

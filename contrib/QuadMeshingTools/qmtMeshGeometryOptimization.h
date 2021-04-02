@@ -53,6 +53,12 @@ int patchOptimizeGeometryGlobal(
  * - Winslow if regular vertex
  * - Angle-based smoothing is irregular vertex
  */
+enum SmoothingKernel {
+  Laplacian,
+  WinslowFDM,
+  AngleBased
+};
+
 struct GeomOptimOptions {
   double useDmoIfSICNbelow = 0.1; /* use the DMO kernel if SICN quality below threshold */
   size_t outerLoopIterMax = 100; /* maximum number of loops over all vertices */
@@ -68,6 +74,8 @@ struct GeomOptimOptions {
   double qualityRangeMax = 0.8;
   bool withBackup = true; /* save the geometry before, restore if quality decreased */
   bool force3DwithProjection = false;
+  SmoothingKernel kernelRegular = SmoothingKernel::WinslowFDM;
+  SmoothingKernel kernelIrregular = SmoothingKernel::Laplacian;
 };
 
 /**
@@ -120,3 +128,15 @@ bool patchProjectOnSurface(GFaceMeshPatch& patch, SurfaceProjector* sp = nullptr
  * @return true if success
  */
 bool optimizeGeometryQuadMesh(GFace* gf, SurfaceProjector* sp = nullptr, double timeMax = DBL_MAX);
+
+/**
+ * @brief High-level function which try to make good parameter choices
+ *        automatically.
+ *
+ * @param gf The face containing the quad-tri mesh to smooth
+ * @param sp Surface projector (faster than CAD projection)
+ * @param timeMax Time budget for the smoothing
+ *
+ * @return true if success
+ */
+bool optimizeGeometryQuadTriMesh(GFace* gf, SurfaceProjector* sp = nullptr, double timeMax = DBL_MAX);

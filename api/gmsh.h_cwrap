@@ -6,7 +6,7 @@
 #ifndef GMSH_H
 #define GMSH_H
 
-// This file redefines the Gmsh C++ API in terms of the C API (v4.8.0).
+// This file redefines the Gmsh C++ API in terms of the C API (v4.8.3).
 //
 // This is provided as a convenience for users of the binary Gmsh SDK whose C++
 // compiler ABI is not compatible with the ABI of the C++ compiler used to create
@@ -25,6 +25,7 @@
 #include <vector>
 #include <string>
 #include <utility>
+#include <functional>
 
 #ifndef M_PI
 #define M_PI (3.14159265358979323846)
@@ -995,7 +996,7 @@ namespace gmsh { // Top-level functions
       }
 
       // Clear the mesh, i.e. delete all the nodes and elements, for the entities
-      // `dimTags'. if `dimTags' is empty, clear the whole mesh. Note that the mesh
+      // `dimTags'. If `dimTags' is empty, clear the whole mesh. Note that the mesh
       // of an entity can only be cleared if this entity is not on the boundary of
       // another entity with a non-empty mesh.
       inline void clear(const gmsh::vectorpair & dimTags = gmsh::vectorpair())
@@ -1003,6 +1004,18 @@ namespace gmsh { // Top-level functions
         int ierr = 0;
         int *api_dimTags_; size_t api_dimTags_n_; vectorpair2intptr(dimTags, &api_dimTags_, &api_dimTags_n_);
         gmshModelMeshClear(api_dimTags_, api_dimTags_n_, &ierr);
+        if(ierr) throwLastError();
+        gmshFree(api_dimTags_);
+      }
+
+      // Reverse the orientation of the elements in the entities `dimTags'. If
+      // `dimTags' is empty, reverse the orientation of the elements in the whole
+      // mesh.
+      inline void reverse(const gmsh::vectorpair & dimTags = gmsh::vectorpair())
+      {
+        int ierr = 0;
+        int *api_dimTags_; size_t api_dimTags_n_; vectorpair2intptr(dimTags, &api_dimTags_, &api_dimTags_n_);
+        gmshModelMeshReverse(api_dimTags_, api_dimTags_n_, &ierr);
         if(ierr) throwLastError();
         gmshFree(api_dimTags_);
       }
@@ -1892,9 +1905,9 @@ namespace gmsh { // Top-level functions
         gmshFree(api_sizes_);
       }
 
-      // Set a global mesh size callback. The callback should take 5 arguments
-      // (`dim', `tag', `x', `y' and `z') and return the value of the mesh size at
-      // coordinates (`x', `y', `z').
+      // Set a mesh size callback for the current model. The callback should take 5
+      // arguments (`dim', `tag', `x', `y' and `z') and return the value of the
+      // mesh size at coordinates (`x', `y', `z').
       inline void setSizeCallback(std::function<double(int, int, double, double, double)> callback)
       {
         int ierr = 0;
@@ -1909,7 +1922,7 @@ namespace gmsh { // Top-level functions
         if(ierr) throwLastError();
       }
 
-      // Remove the global mesh size callback.
+      // Remove the mesh size callback from the current model.
       inline void removeSizeCallback()
       {
         int ierr = 0;

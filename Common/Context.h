@@ -9,7 +9,6 @@
 #include <vector>
 #include <map>
 #include <string>
-#include <functional>
 
 #define NUM_SOLVERS 10
 
@@ -49,13 +48,14 @@ struct contextMeshOptions {
   unsigned int randomSeed;
   int nLayersPerGap;
   double gradation;
-  int quadqsSizemapMethod;
-  std::function<double(int, int, double, double, double)> lcCallback;
+  int quadqsSizemapMethod, quadqsTopoOptimMethods;
+  double quadqsRemeshingBoldness;
   // mesh IO
   int fileFormat, firstElementTag, firstNodeTag;
   double mshFileVersion, medFileMinorVersion, scalingFactor;
   int medImportGroupsOfNodes, medSingleModel;
   int saveAll, saveTri, saveGroupsOfNodes, saveGroupsOfElements;
+  int readGroupsOfElements;
   int binary, bdfFieldFormat;
   int unvStrictFormat, stlRemoveDuplicateTriangles, stlOneSolidPerSurface;
   double stlLinearDeflection, stlAngularDeflection;

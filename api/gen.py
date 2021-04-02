@@ -257,8 +257,11 @@ mesh.add('getLastEntityError', doc, None, ovectorpair('dimTags'))
 doc = '''Get the last nodes (if any) where a meshing error occurred. Currently only populated by the new 3D meshing algorithms.'''
 mesh.add('getLastNodeError', doc, None, ovectorsize('nodeTags'))
 
-doc = '''Clear the mesh, i.e. delete all the nodes and elements, for the entities `dimTags'. if `dimTags' is empty, clear the whole mesh. Note that the mesh of an entity can only be cleared if this entity is not on the boundary of another entity with a non-empty mesh.'''
+doc = '''Clear the mesh, i.e. delete all the nodes and elements, for the entities `dimTags'. If `dimTags' is empty, clear the whole mesh. Note that the mesh of an entity can only be cleared if this entity is not on the boundary of another entity with a non-empty mesh.'''
 mesh.add('clear', doc, None, ivectorpair('dimTags', 'gmsh::vectorpair()', "[]", "[]"))
+
+doc = '''Reverse the orientation of the elements in the entities `dimTags'. If `dimTags' is empty, reverse the orientation of the elements in the whole mesh.'''
+mesh.add('reverse', doc, None, ivectorpair('dimTags', 'gmsh::vectorpair()', "[]", "[]"))
 
 doc = '''Get the nodes classified on the entity of dimension `dim' and tag `tag'. If `tag' < 0, get the nodes for all entities of dimension `dim'. If `dim' and `tag' are negative, get all the nodes in the mesh. `nodeTags' contains the node tags (their unique, strictly positive identification numbers). `coord' is a vector of length 3 times the length of `nodeTags' that contains the x, y, z coordinates of the nodes, concatenated: [n1x, n1y, n1z, n2x, ...]. If `dim' >= 0 and `returnParamtricCoord' is set, `parametricCoord' contains the parametric coordinates ([u1, u2, ...] or [u1, v1, u2, ...]) of the nodes, if available. The length of `parametricCoord' can be 0 or `dim' times the length of `nodeTags'. If `includeBoundary' is set, also return the nodes classified on the boundary of the entity (which will be reparametrized on the entity if `dim' >= 0 in order to compute their parametric coordinates).'''
 mesh.add('getNodes', doc, None, ovectorsize('nodeTags'), ovectordouble('coord'), ovectordouble('parametricCoord'), iint('dim', '-1'), iint('tag', '-1'), ibool('includeBoundary', 'false', 'False'), ibool('returnParametricCoord', 'true', 'True'))
@@ -401,10 +404,10 @@ mesh.add('setSize', doc, None, ivectorpair('dimTags'), idouble('size'))
 doc = '''Set mesh size constraints at the given parametric points `parametricCoord' on the model entity of dimension `dim' and tag `tag'. Currently only entities of dimension 1 (lines) are handled.'''
 mesh.add('setSizeAtParametricPoints', doc, None, iint('dim'), iint('tag'), ivectordouble('parametricCoord'), ivectordouble('sizes'))
 
-doc = '''Set a global mesh size callback. The callback should take 5 arguments (`dim', `tag', `x', `y' and `z') and return the value of the mesh size at coordinates (`x', `y', `z').'''
+doc = '''Set a mesh size callback for the current model. The callback should take 5 arguments (`dim', `tag', `x', `y' and `z') and return the value of the mesh size at coordinates (`x', `y', `z').'''
 mesh.add('setSizeCallback', doc, None, isizefun('callback'))
 
-doc = '''Remove the global mesh size callback.'''
+doc = '''Remove the mesh size callback from the current model.'''
 mesh.add('removeSizeCallback', doc, None)
 
 doc = '''Set a transfinite meshing constraint on the curve `tag', with `numNodes' nodes distributed according to `meshType' and `coef'. Currently supported types are "Progression" (geometrical progression with power `coef'), "Bump" (refinement toward both extremities of the curve) and "Beta" (beta law).'''

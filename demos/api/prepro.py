@@ -19,15 +19,15 @@ if len(sys.argv) > 1:
 # - "ONELAB Context/Surface Template/"
 # - "ONELAB Context/Volume Template/"
 #
-# Double- (or right-) clicking on an entity in the GUI will then pop-up a
-# context window where instances of these variables for the given entity can be
-# edited. For example, if the "ONELAB Context/Curve Template/0Boundary
-# condition" exists, double-clicking on curve 123 in the model (or in the
-# visibility browser) will create "ONELAB Context/Curve 123/0Boundary condition"
-# (or "ONELAB Context/Physical Curve 1000/0Boundary condition" depending on the
-# choice in the context window, if curve 123 belongs to the physical curve
-# 1000). The context window is also shown automatically when a new physical
-# group is created in the GUI.
+# Double-clicking on an entity in the GUI will then pop-up a context window
+# where instances of these variables for the given entity can be edited. For
+# example, if the "ONELAB Context/Curve Template/0Boundary condition" exists,
+# double-clicking on curve 123 in the model (or in the visibility browser) will
+# create "ONELAB Context/Curve 123/0Boundary condition" (or "ONELAB
+# Context/Physical Curve 1000/0Boundary condition" depending on the choice in
+# the context window, if curve 123 belongs to the physical curve 1000). The
+# context window is also shown automatically when a new physical group is
+# created in the GUI.
 #
 # As usual, every time the ONELAB database is changed the "ONELAB/Action"
 # parameter is set to "check", which gives the Python code the opportunity to

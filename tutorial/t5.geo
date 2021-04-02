@@ -65,7 +65,7 @@ Macro CheeseHole
 
   // In the following commands we use the reserved variable name `newp', which
   // automatically selects a new point tag. Analogously to `newp', the special
-  // variables `newl', `newll, `news', `newsl' and `newv' select new curve,
+  // variables `newc', `newcl, `news', `newsl' and `newv' select new curve,
   // curve loop, surface, surface loop and volume tags.
   //
   // If `Geometry.OldNewReg' is set to 0, the new tags are chosen as the highest
@@ -99,14 +99,14 @@ Macro CheeseHole
   // arbitrary number of boundary curves; and `ThruSections' allows to create
   // ruled surfaces (see `t19.geo').
 
-  l1 = newll; Curve Loop(l1) = {c5,c10,c4};
-  l2 = newll; Curve Loop(l2) = {c9,-c5,c1};
-  l3 = newll; Curve Loop(l3) = {c12,-c8,-c1};
-  l4 = newll; Curve Loop(l4) = {c8,-c4,c11};
-  l5 = newll; Curve Loop(l5) = {-c10,c6,c3};
-  l6 = newll; Curve Loop(l6) = {-c11,-c3,c7};
-  l7 = newll; Curve Loop(l7) = {-c2,-c7,-c12};
-  l8 = newll; Curve Loop(l8) = {-c6,-c9,c2};
+  l1 = newcl; Curve Loop(l1) = {c5,c10,c4};
+  l2 = newcl; Curve Loop(l2) = {c9,-c5,c1};
+  l3 = newcl; Curve Loop(l3) = {c12,-c8,-c1};
+  l4 = newcl; Curve Loop(l4) = {c8,-c4,c11};
+  l5 = newcl; Curve Loop(l5) = {-c10,c6,c3};
+  l6 = newcl; Curve Loop(l6) = {-c11,-c3,c7};
+  l7 = newcl; Curve Loop(l7) = {-c2,-c7,-c12};
+  l8 = newcl; Curve Loop(l8) = {-c6,-c9,c2};
 
   s1 = news; Surface(s1) = {l1};
   s2 = news; Surface(s2) = {l2};

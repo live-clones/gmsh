@@ -57,6 +57,11 @@
 #include "meshRefine.h"
 #endif
 
+#if defined(HAVE_POST)
+#include "PView.h"
+#include "PViewDataGModel.h"
+#endif
+
 #if defined(HAVE_KBIPACK)
 #include "Homology.h"
 #endif
@@ -68,7 +73,8 @@ GModel::GModel(const std::string &name)
   : _destroying(false), _name(name), _visible(1), _elementOctree(nullptr),
     _geo_internals(nullptr), _occ_internals(nullptr), _acis_internals(nullptr),
     _parasolid_internals(nullptr), _fields(nullptr),
-    _currentMeshEntity(nullptr), _numPartitions(0), normals(nullptr)
+    _currentMeshEntity(nullptr), _numPartitions(0), normals(nullptr),
+    lcCallback(nullptr)
 {
   _maxVertexNum = CTX::instance()->mesh.firstNodeTag - 1;
   _maxElementNum = CTX::instance()->mesh.firstElementTag - 1;
@@ -210,18 +216,26 @@ void GModel::destroy(bool keepName)
 
 void GModel::destroyMeshCaches()
 {
-  _vertexVectorCache.clear();
-  std::vector<MVertex *>().swap(_vertexVectorCache);
-  _vertexMapCache.clear();
-  std::map<int, MVertex *>().swap(_vertexMapCache);
-  _elementVectorCache.clear();
-  std::vector<MElement *>().swap(_elementVectorCache);
-  _elementMapCache.clear();
-  std::map<int, MElement *>().swap(_elementMapCache);
-  _elementIndexCache.clear();
-  std::map<int, int>().swap(_elementIndexCache);
-  delete _elementOctree;
-  _elementOctree = nullptr;
+  // this is called in GEntity::deleteMesh()
+#if defined(_OPENMP)
+#pragma omp critical
+#endif
+  {
+    _vertexVectorCache.clear();
+    std::vector<MVertex *>().swap(_vertexVectorCache);
+    _vertexMapCache.clear();
+    std::map<int, MVertex *>().swap(_vertexMapCache);
+    _elementVectorCache.clear();
+    std::vector<MElement *>().swap(_elementVectorCache);
+    _elementMapCache.clear();
+    std::map<int, MElement *>().swap(_elementMapCache);
+    _elementIndexCache.clear();
+    std::map<int, int>().swap(_elementIndexCache);
+    if(_elementOctree) {
+      delete _elementOctree;
+      _elementOctree = nullptr;
+    }
+  }
 }
 
 void GModel::deleteMesh()
@@ -1482,12 +1496,46 @@ std::size_t GModel::getMFace(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3,
   }
 }
 
+#if defined(HAVE_POST)
+static void getDependentViewData(GModel *m, PViewDataGModel::DataType type,
+                                 std::vector<stepData<double>*> &data)
+{
+  for(std::size_t i = 0; i < PView::list.size(); i++) {
+    PViewDataGModel *d = dynamic_cast<PViewDataGModel *>
+      (PView::list[i]->getData());
+    if(d && d->getType() == type) {
+      for(int step = 0; step < d->getNumTimeSteps(); step++) {
+        if(d->getStepData(step)->getModel() == m)
+          data.push_back(d->getStepData(step));
+      }
+    }
+  }
+}
+#endif
+
 void GModel::renumberMeshVertices()
 {
   destroyMeshCaches();
   setMaxVertexNumber(CTX::instance()->mesh.firstNodeTag - 1);
   std::vector<GEntity *> entities;
   getEntities(entities);
+
+#if defined(HAVE_POST)
+  // check if any nodal post-processing datasets depend on the model; if so,
+  // keep track of the old node numbering
+  std::map<MVertex *, int> old;
+  std::vector<stepData<double>*> data;
+  getDependentViewData(this, PViewDataGModel::NodeData, data);
+  if(data.size()) {
+    for(std::size_t i = 0; i < entities.size(); i++) {
+      GEntity *ge = entities[i];
+      for(std::size_t j = 0; j < ge->getNumMeshVertices(); j++) {
+        MVertex *v = ge->getMeshVertex(j);
+        old[v] = v->getNum();
+      }
+    }
+  }
+#endif
 
   // check if we will potentially only save a subset of elements, i.e. those
   // belonging to physical groups
@@ -1553,6 +1601,25 @@ void GModel::renumberMeshVertices()
       }
     }
   }
+
+#if defined(HAVE_POST)
+  // renumber any dependent nodal post-processing datasets
+  if(data.size()) {
+    int n = data.size();
+    Msg::Info("Renumbering nodal model data (%d step%s)", n, n > 1 ? "s" : "");
+    std::map<int, int> remap;
+    for(std::size_t i = 0; i < entities.size(); i++) {
+      GEntity *ge = entities[i];
+      for(std::size_t j = 0; j < ge->getNumMeshVertices(); j++) {
+        MVertex *v = ge->getMeshVertex(j);
+        remap[old[v]] = v->getNum();
+      }
+    }
+    for(auto d : data) {
+      d->renumberData(remap);
+    }
+  }
+#endif
 }
 
 void GModel::renumberMeshElements()
@@ -1561,6 +1628,24 @@ void GModel::renumberMeshElements()
   setMaxElementNumber(CTX::instance()->mesh.firstElementTag - 1);
   std::vector<GEntity *> entities;
   getEntities(entities);
+
+#if defined(HAVE_POST)
+  // check if any element-based post-processing datasets depend on the model; if
+  // so, keep track of the old element numbering
+  std::map<MElement *, int> old;
+  std::vector<stepData<double>*> data[2];
+  getDependentViewData(this, PViewDataGModel::ElementData, data[0]);
+  getDependentViewData(this, PViewDataGModel::ElementNodeData, data[1]);
+  if(data[0].size() || data[1].size()) {
+    for(std::size_t i = 0; i < entities.size(); i++) {
+      GEntity *ge = entities[i];
+      for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
+        MElement *e = ge->getMeshElement(j);
+        old[e] = e->getNum();
+      }
+    }
+  }
+#endif
 
   // check if we will potentially only save a subset of elements, i.e. those
   // belonging to physical groups
@@ -1601,6 +1686,28 @@ void GModel::renumberMeshElements()
       }
     }
   }
+
+#if defined(HAVE_POST)
+  // renumber any dependent element post-processing datasets
+  if(data[0].size() || data[1].size()) {
+    int n = data[0].size() + data[1].size();
+    Msg::Info("Renumbering element model data (%d step%s)", n,
+              n > 1 ? "s" : "");
+    std::map<int, int> remap;
+    for(std::size_t i = 0; i < entities.size(); i++) {
+      GEntity *ge = entities[i];
+      for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
+        MElement *e = ge->getMeshElement(j);
+        remap[old[e]] = e->getNum();
+      }
+    }
+    for(int i = 0; i < 2; i++) {
+      for(auto d : data[i]) {
+        d->renumberData(remap);
+      }
+    }
+  }
+#endif
 }
 
 std::size_t GModel::getNumMeshElements(unsigned c[6])
@@ -1944,6 +2051,14 @@ void GModel::scaleMesh(double factor)
       v->y() *= factor;
       v->z() *= factor;
     }
+}
+
+void GModel::setCurrentMeshEntity(GEntity *e)
+{
+#if defined(_OPENMP)
+#pragma omp critical
+#endif
+  _currentMeshEntity = e;
 }
 
 int GModel::partitionMesh(int numPart)
@@ -2320,12 +2435,14 @@ void GModel::_storePhysicalTagsInEntities(
     }
 
     if(ge) {
-      auto it2 = it->second.begin();
-      for(; it2 != it->second.end(); ++it2) {
+      for(auto it2 = it->second.begin(); it2 != it->second.end(); ++it2) {
         if(std::find(ge->physicals.begin(), ge->physicals.end(), it2->first) ==
            ge->physicals.end()) {
           ge->physicals.push_back(it2->first);
         }
+        if(it2->second.size() && it2->second != "unnamed")
+          _physicalNames.insert
+            (std::make_pair(std::make_pair(dim, it2->first), it2->second));
       }
     }
   }

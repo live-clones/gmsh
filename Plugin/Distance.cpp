@@ -219,7 +219,7 @@ PView *GMSH_DistancePlugin::execute(PView *v)
     }
     if(!existEntity) {
       if(id_point) Msg::Warning("Physical Point %d does not exist", id_point);
-      if(id_line) Msg::Warning("Physical Line %d does not exist", id_line);
+      if(id_line) Msg::Warning("Physical Curve %d does not exist", id_line);
       if(id_face) Msg::Warning("Physical Surface %d does not exist", id_face);
     }
     else {
@@ -271,7 +271,7 @@ PView *GMSH_DistancePlugin::execute(PView *v)
     }
     if(!existEntity) {
       if(id_point) Msg::Warning("Physical Point %d does not exist", id_point);
-      if(id_line) Msg::Warning("Physical Line %d does not exist", id_line);
+      if(id_line) Msg::Warning("Physical Curve %d does not exist", id_line);
       if(id_face) Msg::Warning("Physical Surface %d does not exist", id_face);
     }
     else {

@@ -349,7 +349,7 @@ void HierarchicalBasisH1Brick::generateGradientBasis(
   std::vector<double> *vectorTarget2(nullptr);
   std::vector<std::vector<double> > *dvectorTarget2(nullptr);
   for(int iFace = 0; iFace < _nfaceQuad; iFace++) {
-    int indexLambda;
+    int indexLambda = 0;
     switch(iFace) {
     case(0):
       indexLambda = 5;

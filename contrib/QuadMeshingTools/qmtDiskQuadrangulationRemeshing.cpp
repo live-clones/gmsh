@@ -12,7 +12,7 @@
 // #include <array>
 // #include <unordered_map>
 // #include <cstdint>
-// #include <math.h>
+// #include <cmath>
 // #include <queue>
 // #include <algorithm>
 
@@ -35,7 +35,6 @@
 #include "cppUtils.h"
 #include "qmtMeshUtils.h"
 #include "qmtMeshGeometryOptimization.h"
-// #include "dataDiskQuadrangulations.hpp" // list of disk quadrangulations as a raw string literal
 #include "dataDiskQuadrangulationsSplit.hpp" // list of disk quadrangulations as many strings
 
 using namespace CppUtils;
@@ -109,8 +108,8 @@ namespace QMT {
       B_disk_quadrangulations[B].push_back(qdrl);
 
       /* Assumes:
-       * - first B vertices are on the boundary 
-       * - canonical valence ordering according to boundary valence loop 
+       * - first B vertices are on the boundary
+       * - canonical valence ordering according to boundary valence loop
        *   (should be compatible with the generator) */
       bdrValLoop.clear();
       bdrValLoop.resize(B,0);
@@ -136,10 +135,10 @@ namespace QMT {
   }
 
   double computeIrregularity(
-      const vector<id4>& quads, 
+      const vector<id4>& quads,
       const vector<int>& valence,
       const std::vector<int>& bndIdealValence,
-      const std::vector<std::pair<int,int> >& bndAllowedValenceRange) 
+      const std::vector<std::pair<int,int> >& bndAllowedValenceRange)
   {
     double irregularity = 0.;
     /* Boundary vertices */
@@ -161,7 +160,7 @@ namespace QMT {
 
 
   bool computeBestMatchingConfiguration(
-      const vector<id4>& quads, 
+      const vector<id4>& quads,
       const vector<int>& valence,
       const vector<int>& bndIdealValence,
       const vector<std::pair<int,int> >& bndAllowedValenceRange,
@@ -301,7 +300,7 @@ namespace QMT {
     return true;
   }
 
-  bool smallCavitySmoothing(GFaceMeshPatch& patch, 
+  bool smallCavitySmoothing(GFaceMeshPatch& patch,
       SurfaceProjector* sp, bool invertNormalsForQuality,
       GeomOptimStats& stats) {
     if (patch.intVertices.size() == 0) {
@@ -380,7 +379,7 @@ int remeshLocalWithDiskQuadrangulation(
     small_patterns = &(B_disk_quadrangulations[bdrVertices.size()]);
   } else {
     // TODO: a simple remeshing by using parallel quads ?
-    Msg::Warning("disk quadrangulation remeshing: no pattern for input boundary loop size (%li bdr vertices)", 
+    Msg::Warning("disk quadrangulation remeshing: no pattern for input boundary loop size (%li bdr vertices)",
         bdrVertices.size());
     return -1;
   }
@@ -409,7 +408,7 @@ int remeshLocalWithDiskQuadrangulation(
   }
   std::sort(irregularity_pattern_rotation.begin(),irregularity_pattern_rotation.end());
 
-  /* Keep the best pattern for which it is possible to find a 
+  /* Keep the best pattern for which it is possible to find a
    * untangled and sufficient quality geometry */
   size_t N = 5; /* maximum number of pattern tested */
   if (irregularity_pattern_rotation.size() < N) N = irregularity_pattern_rotation.size();
@@ -455,7 +454,7 @@ int remeshLocalWithDiskQuadrangulation(
 
       PatchGeometryBackup bdrBackup(largerPatch);
 
-      Msg::Debug("try smoothing the extended cavity (%li -> %li free vertices)", 
+      Msg::Debug("try smoothing the extended cavity (%li -> %li free vertices)",
           patch.intVertices.size(), largerPatch.intVertices.size());
 
       GeomOptimStats stats;
@@ -487,5 +486,3 @@ int remeshLocalWithDiskQuadrangulation(
 
   return 0;
 }
-
-

@@ -12,7 +12,7 @@
 #include <array>
 #include <unordered_map>
 #include <cstdint>
-#include <math.h>
+#include <cmath>
 #include <algorithm>
 
 namespace ArrayGeometry {

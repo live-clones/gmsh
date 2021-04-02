@@ -12,13 +12,15 @@
 // #include <array>
 // #include <unordered_map>
 // #include <cstdint>
-// #include <math.h>
+// #include <cmath>
 #include <queue>
 #include <unordered_set>
+#include <cassert>
 // #include <algorithm>
 
 /* Gmsh includes */
 #include "GmshMessage.h"
+#include "Context.h"
 #include "OS.h"
 #include "GVertex.h"
 #include "GEdge.h"
@@ -121,7 +123,7 @@ namespace QMT {
     {PATTERN_QUAD_REGULAR,{{0,1,2,3}}},
 
     /* triangular patch with one val3 singularity */
-    {PATTERN_TRIANGLE,{{0,1,6,5},{1,2,3,6},{3,4,5,6}}}, 
+    {PATTERN_TRIANGLE,{{0,1,6,5},{1,2,3,6},{3,4,5,6}}},
 
     /* pentagonal patch with one val5 singularity */
     {PATTERN_PENTAGON,{{0, 1, 2, 3}, {0, 5, 4, 1}, {0, 7, 6, 5}, {0, 9, 8, 7}, {0, 3, 10, 9}}},
@@ -298,7 +300,7 @@ namespace QMT {
       vector<int> best_x;
       std::vector<int> undetermined;
       /* Loop from last line to first line */
-      for (int i = m-1; i >= 0; --i) { 
+      for (int i = m-1; i >= 0; --i) {
         undetermined.clear();
         /* Check line */
         int total = -1 * get(i,n-1);
@@ -421,7 +423,7 @@ namespace QMT {
           id2 oedge = {v1,v2};
           id2 vpair = sorted(v1,v2);
           auto it = vpair2e.find(vpair);
-          id e = 0; 
+          id e = 0;
           if (it == vpair2e.end()) {
             e = edges.size();
             edges.push_back(oedge);
@@ -560,7 +562,7 @@ namespace QMT {
     // - give ideal_repartition to the get_positive_solution_DFS() fct ?
     //   to control a bit the quantization
     // - other idea: use row echelon to compute null space [x_kernel, ...] and find
-    //               solution x0 + lambda * x_kernel that maximize an objective 
+    //               solution x0 + lambda * x_kernel that maximize an objective
     //               function ?
     vector<double> ideal_repartition;
     if (P.patternId == PATTERN_2CORNERS) {
@@ -678,8 +680,6 @@ namespace QMT {
       std::vector<MElement*>& newQuads,
       std::vector<MVertex*>& newVertices){
 
-    bool haveParam = gf->haveParametrization();
-
     std::vector<MVertex*> s3r = reverseVector(s3);
     std::vector<MVertex*> s4r = reverseVector(s4);
     std::vector< std::vector<MVertex*> > grid(s1.size());
@@ -711,6 +711,7 @@ namespace QMT {
           SVector3 p = (1.-v) * s1u + v * s3u + (1.-u) * s4v + u * s2v
             - ((1.-u)*(1.-v)*c00 + u*v*c11 + u * (1.-v) * c10 + (1.-u)*v*c01);
           double uv[2] = {0.,0.};
+          // TODO: interpolate uv if param available
           MVertex *vNew = new MFaceVertex(p.x(),p.y(),p.z(),gf,uv[0],uv[1]);
           newVertices.push_back(vNew);
           grid[i][j] = vNew;
@@ -723,14 +724,14 @@ namespace QMT {
         MQuadrangle *q = new MQuadrangle (grid[i][j],grid[i+1][j],grid[i+1][j+1],grid[i][j+1]);
         newQuads.push_back(q);
       }
-    }    
+    }
   }
 
 
   bool addQuadsAccordingToPattern(
       const QuadMeshPattern& P,
       const std::vector<int>& quantization,
-      GFace* gf, 
+      GFace* gf,
       const std::vector<std::vector<MVertex*> >& sides, /* vertices on the boundary, not changed */
       std::vector<MVertex*>& newVertices,               /* new vertices inside the cavity */
       std::vector<MElement*>& newElements,              /* new quads inside the cavity */
@@ -748,7 +749,7 @@ namespace QMT {
 
     /* Associate exising vertices to pattern sides */
     SVector3 center(0.,0.,0.);
-    if (oldCenter) {
+    if (oldCenter != nullptr) {
       center = oldCenter->point();
     } else {
       double csum = 0.;
@@ -800,15 +801,13 @@ namespace QMT {
 
     /* Create vertices on internal points */
     for (size_t v = 0; v < P.n; ++v) if (!P.vOnBdr[v]) {
-      GPoint pp;
-      if (oldCenter) {
-        double uv[2];
-        oldCenter->getParameter(0,uv[0]);
-        oldCenter->getParameter(1,uv[1]);
-        pp = GPoint(center.x(),center.y(),center.z(),gf,uv[0],uv[1]);
-      } else {
-        pp = GPoint(center.x(),center.y(),center.z(),gf,0,0);
+      double uvc[2] = {0.,0.};
+      if (oldCenter != nullptr && gf->haveParametrization()
+          && dynamic_cast<MFaceVertex*>(oldCenter)) {
+        oldCenter->getParameter(0,uvc[0]);
+        oldCenter->getParameter(1,uvc[1]);
       }
+      GPoint pp = GPoint(center.x(),center.y(),center.z(),gf,uvc[0],uvc[1]);
 
       bool moveTowardBdr = true;
       if (moveTowardBdr) {
@@ -831,13 +830,15 @@ namespace QMT {
 
       double uv[2] = {0.,0.};
       MVertex *sing = new MFaceVertex(pp.x(),pp.y(),pp.z(),gf,pp.u(),pp.v());
-      GPoint proj = gf->closestPoint(sing->point(),uv);
-      if (proj.succeeded()) {
-        sing->x() = proj.x();
-        sing->y() = proj.y();
-        sing->z() = proj.z();
-        sing->setParameter(0,proj.u());
-        sing->setParameter(1,proj.v());
+      if (gf->haveParametrization()) {
+        GPoint proj = gf->closestPoint(sing->point(),uv);
+        if (proj.succeeded()) {
+          sing->x() = proj.x();
+          sing->y() = proj.y();
+          sing->z() = proj.z();
+          sing->setParameter(0,proj.u());
+          sing->setParameter(1,proj.v());
+        }
       }
 
       newVertices.push_back(sing);
@@ -901,7 +902,7 @@ namespace QMT {
     newElements.clear();
   }
 
-  template<class T> 
+  template<class T>
     void remove_element_if_inside(const T& value, std::vector<T>& vec) {
       auto it = std::find(vec.begin(),vec.end(),value);
       if (it != vec.end()) {
@@ -965,15 +966,17 @@ namespace QMT {
   struct GrowingCavity {
     std::vector<bool> quadIsInside;      /* fixed size: farmer.quads.size() */
     std::vector<uint32_t> quadEdgeIsBdr; /* fixed size: 4*farmer.quads.size() */
+    std::vector<uint32_t> vertexValenceInside; /* fixed size: farmer.vertices.size() */
     unordered_set<uint32_t> verticesInt; /* growing with cavity */
     unordered_set<uint32_t> verticesBdr; /* growing with cavity */
     unordered_set<uint32_t> elements;    /* growing with cavity */
     /* nb of irregular vertices strictly inside cavity (include singularities) */
-    uint32_t nIrregInterior = 0; 
+    uint32_t nIrregInterior = 0;
 
     void clear() {
       quadIsInside.clear();
       quadEdgeIsBdr.clear();
+      vertexValenceInside.clear();
       verticesInt.clear();
       verticesBdr.clear();
       elements.clear();
@@ -986,9 +989,9 @@ namespace QMT {
       GFace* gf = nullptr;
 
       /* contiguous representation of the GFace quad mesh  */
-      std::vector<MVertex*> vertices; 
+      std::vector<MVertex*> vertices;
       unordered_map<MVertex*,uint32_t> vertexLocal;
-      std::vector<MQuadrangle*> quadrangles; 
+      std::vector<MQuadrangle*> quadrangles;
       unordered_map<MQuadrangle*,uint32_t> quadLocal;
       std::vector<std::array<uint32_t,4> > quads;
 
@@ -1002,6 +1005,10 @@ namespace QMT {
 
       /* growth constraints */
       std::vector<bool> vertexForbidden;
+      std::vector<bool> quadEdgeForbidden;
+
+      /* outside allocation for functions */
+      vector<uint32_t> _vertex2pos;
 
     public:
       CavityFarmer(GFace* gf_):gf(gf_) {};
@@ -1016,6 +1023,7 @@ namespace QMT {
         v2q_first.clear();
         v2q_values.clear();
         vertexForbidden.clear();
+        quadEdgeForbidden.clear();
         cav.clear();
         cavBackup.clear();
       }
@@ -1140,6 +1148,38 @@ namespace QMT {
           }
         }
 
+        /* Embedded edges in faces */
+        for (GEdge* ge: gf->embeddedEdges()) {
+          unordered_set<id2,id2hash> embLines;
+          for (MLine* line: ge->lines) {
+            MVertex* v1 = line->getVertex(0);
+            MVertex* v2 = line->getVertex(1);
+            auto it1 = vertexLocal.find(v1);
+            auto it2 = vertexLocal.find(v2);
+            if (it1 == vertexLocal.end() || it2 == vertexLocal.end()) {
+              Msg::Debug("cavity farmer update: vertex of embedded line not found, weird");
+              continue;
+            }
+            id2 vpair = sorted(it1->second,it2->second);
+            embLines.insert(vpair);
+          }
+          if (embLines.size() == 0) continue;
+          if (quadEdgeForbidden.size() == 0) {
+            quadEdgeForbidden.resize(4*quads.size(),false);
+            for (uint32_t f = 0; f < quads.size(); ++f) {
+              for (uint32_t le = 0; le < 4; ++le) {
+                const uint32_t v1 = quads[f][le];
+                const uint32_t v2 = quads[f][(le+1)%4];
+                id2 vpair = sorted(v1,v2);
+                auto it = embLines.find(vpair);
+                if (it != embLines.end()) {
+                  quadEdgeForbidden[4*f+le] = true;
+                }
+              }
+            }
+          }
+        }
+
         return true;
       }
 
@@ -1162,7 +1202,7 @@ namespace QMT {
             if (qOut != nullptr) {
               *qOut = f;
             }
-          } 
+          }
         }
         return true;
       }
@@ -1200,14 +1240,21 @@ namespace QMT {
             return false;
           }
           for (size_t le = 0; le < 4; ++le) {
+            cav.vertexValenceInside[quads[f][le]] += 1;
             touched.push_back(quads[f][le]);
             uint32_t opp = adjacent[4*f+le];
-            if (cav.quadEdgeIsBdr[4*f+le]) { 
+            if (cav.quadEdgeIsBdr[4*f+le]) {
               Msg::Error("cavity farmer: quad edge already cavity bdr, should not happen");
               return false;
-            } else if (opp != NO_U32 && cav.quadEdgeIsBdr[opp]) { 
-              /* adjacent quad was in cavity and boundary 
-                 => no longer boundary */
+            } else if (opp != NO_U32 && cav.quadEdgeIsBdr[opp]) {
+              /* adjacent quad was in cavity and boundary */
+
+              if (checkForbidden && quadEdgeForbidden.size() > 0) {
+                /* check if adding the quad would include a forbidden quad edge */
+                if (quadEdgeForbidden[4*f+le]) return false;
+              }
+
+              /* adjacent quad was in cavity and boundary => no longer boundary */
               cav.quadEdgeIsBdr[opp] = false;
             } else {
               /* adjacent quad edge was not cavity bdr, this one becomes one */
@@ -1218,8 +1265,9 @@ namespace QMT {
         sort_unique(touched);
 
         for (uint32_t v: touched) {
-          uint32_t valIn, valOut;
-          vertexValence(v, valIn, valOut);
+          uint32_t n = v2q_first[v+1]-v2q_first[v];
+          uint32_t valIn = cav.vertexValenceInside[v];
+          uint32_t valOut = n - valIn;
           if (valOut > 0) {
             cav.verticesBdr.insert(v);
           } else if (valOut == 0 && valIn > 0) {
@@ -1256,14 +1304,15 @@ namespace QMT {
       }
 
 
-      double cavityIrregularity(uint32_t& nIrregular, uint32_t& nConvexCorners) { 
+      double cavityIrregularity(uint32_t& nIrregular, uint32_t& nConvexCorners) {
         nIrregular = 0;
         nConvexCorners = 0;
         double ir = 0.;
         for (uint32_t v: cav.verticesInt) {
-          uint32_t valIn, valOut;
-          vertexValence(v, valIn, valOut);
-          if (valOut) {
+          uint32_t n = v2q_first[v+1]-v2q_first[v];
+          uint32_t valIn = cav.vertexValenceInside[v];
+          uint32_t valOut = n - valIn;
+          if (valOut > 0) {
             Msg::Error("weird: cavity interior vertex has valence-out=%i",valOut);
           }
           if (valIn != 4) {
@@ -1272,11 +1321,11 @@ namespace QMT {
           }
         }
         for (uint32_t v: cav.verticesBdr) {
-          uint32_t valIn, valOut;
-          vertexValence(v, valIn, valOut);
+          uint32_t n = v2q_first[v+1]-v2q_first[v];
+          uint32_t valIn = cav.vertexValenceInside[v];
           if (valIn == 1) {
             nConvexCorners += 1;
-          } else if (valIn > 2) { 
+          } else if (valIn > 2) {
             /* inside-valence 3+ on cavity boundary will be eliminated
              * inside-valence 1 is a cavity corner, does not count as irregular here*/
             nIrregular += 1;
@@ -1288,8 +1337,9 @@ namespace QMT {
 
       bool isValidConvexCavity() {
         for (uint32_t v: cav.verticesBdr) {
-          uint32_t valIn, valOut;
-          vertexValence(v, valIn, valOut);
+          uint32_t n = v2q_first[v+1]-v2q_first[v];
+          uint32_t valIn = cav.vertexValenceInside[v];
+          uint32_t valOut = n - valIn;
           if (valOut == 1) {
             MVertex* vp = vertices[v];
             GFace* gf = vp->onWhat()->cast2Face();
@@ -1319,12 +1369,16 @@ namespace QMT {
           running = false;
           std::vector<uint32_t> quadsAtConcavities;
           for (uint32_t v: cav.verticesBdr) {
-            uint32_t valIn, valOut;
-            uint32_t qOut = NO_U32;
-            vertexValence(v, valIn, valOut, &qOut);
+            uint32_t n = v2q_first[v+1]-v2q_first[v];
+            uint32_t valIn = cav.vertexValenceInside[v];
+            uint32_t valOut = n - valIn;
+
             /* Add exterior quad if cavity bdr vertex out-valence is one
              * and cavity bdr vertex is inside the GFace */
             if (valOut == 1) {
+              uint32_t qOut = NO_U32;
+              vertexValence(v, valIn, valOut, &qOut);
+              assert(qOut != NO_U32);
               GFace* pgf = vertices[v]->onWhat()->cast2Face();
               if (pgf == nullptr) continue;
               quadsAtConcavities.push_back(qOut);
@@ -1346,7 +1400,10 @@ namespace QMT {
         /* Prepare the cavity boundary edges to make
          * a continuous loop on them */
         vector<uint32_t> pos2vertex;
-        vector<uint32_t> vertex2pos(vertices.size(),NO_U32); /* allocation outside ? */
+        if (_vertex2pos.size() != vertices.size()) {
+          _vertex2pos.resize(vertices.size());
+        }
+        std::fill(_vertex2pos.begin(),_vertex2pos.end(), NO_U32); /* _vertex2pos allocated outside */
         vector<uint32_t> pos2nextVertex;
         vector<bool> isCorner;
         pos2vertex.reserve(cav.verticesBdr.size());
@@ -1365,15 +1422,15 @@ namespace QMT {
                 edgeFound += 1;
                 if (edgeFound == 1) { /* edgeFound >= 2 means non manifold */
                   uint32_t v2 = quads[q][(le+1)%4];
-                  if (vertex2pos[v] != NO_U32) {
+                  if (_vertex2pos[v] != NO_U32) {
                     Msg::Debug("cavity farmer: get sides, vertex already assigned, not manifold bdr loop");
                     return false;
                   }
-                  vertex2pos[v] = pos2vertex.size();
+                  _vertex2pos[v] = pos2vertex.size();
                   pos2vertex.push_back(v);
                   pos2nextVertex.push_back(v2);
-                  uint32_t valIn, valOut;
-                  vertexValence(v, valIn, valOut);
+                  uint32_t n = v2q_first[v+1]-v2q_first[v];
+                  uint32_t valIn = cav.vertexValenceInside[v];
                   if (valIn == 1) {
                     isCorner.push_back(true);
                     Ncorners += 1;
@@ -1406,7 +1463,7 @@ namespace QMT {
           return false;
         }
 
-        if (v0 == NO_U32) { 
+        if (v0 == NO_U32) {
           /* No corner, the cavity is a disk */
           v0 = pos2vertex[0];
           sides.resize(1);
@@ -1415,12 +1472,13 @@ namespace QMT {
 
         /* Propagation along the boundary */
         uint32_t nCornerVisited = 0;
+        uint32_t nVertexVisited = 0;
         uint32_t v = v0;
         uint32_t iter = 0;
         while (true) {
           iter += 1;
           if (iter > 2 * cav.verticesBdr.size()) {
-            Msg::Warning("cavity farmer, get sides: infinite loop ? iter = %i but #bdr=%li, may happen if loop not manifold", 
+            Msg::Warning("cavity farmer, get sides: infinite loop ? iter = %i but #bdr=%li, may happen if loop not manifold",
                 iter, cav.verticesBdr.size());
             return false;
             // debug_show_cavity("infinite_loop",false);
@@ -1430,7 +1488,7 @@ namespace QMT {
             // abort();
           }
 
-          uint32_t pos = vertex2pos[v];
+          uint32_t pos = _vertex2pos[v];
           if (isCorner[pos]) {
             nCornerVisited += 1;
             sides.resize(sides.size()+1);
@@ -1440,14 +1498,19 @@ namespace QMT {
           uint32_t v2 = pos2nextVertex[pos];
           sides.back().push_back(v2);
           v = v2;
+          nVertexVisited += 1;
 
           if (v2 == v0) { /* closed the loop */
             break;
           }
         }
 
-        if (nCornerVisited != Ncorners) {
-          Msg::Debug("getCavitySides: not all corners were visited, bdr has multiple loops ?");
+        if (nCornerVisited != Ncorners || nVertexVisited != cav.verticesBdr.size()) {
+          Msg::Debug("getCavitySides: not all cavity bdr corners/vertices were visited, bdr has multiple loops (i.e. not a topo. disk)");
+
+          // debug_show_cavity("bad_cav_" + std::to_string(nVertexVisited) + "!=" + std::to_string(cav.verticesBdr.size()));
+          // GeoLog::flush();
+          
           return false;
         }
 
@@ -1555,7 +1618,7 @@ namespace QMT {
                 Msg::Debug("cavity grow one side: %li quads, side %i, FAILED to convexify after adding %li quads",
                   cav.elements.size(), k, cQuads.size());}
               cav = cavBackup;
-              continue; 
+              continue;
             }
 
             /* Extended cavity is good, keep it */
@@ -1590,6 +1653,7 @@ namespace QMT {
         cavBackup.clear();
         cav.quadIsInside.resize(quads.size(),false);
         cav.quadEdgeIsBdr.resize(4*quads.size(),false);
+        cav.vertexValenceInside.resize(vertices.size(),0);
 
         /* constrain the growth */
         vertexForbidden.clear();
@@ -1616,7 +1680,9 @@ namespace QMT {
 
         bool oka = addQuads(lquads);
         if (!oka) {
-          Msg::Error("cavity farmer: failed to initialize");
+          // Initialization may be rejected if it includes forbidden vertices or quad edges
+          // (e.g. around the vertex of an embedded line)
+          Msg::Debug("cavity remeshing: failed to initialize (%li quads)", lquads.size());
           return false;
         }
 
@@ -1639,7 +1705,7 @@ namespace QMT {
           }
 
           /* nb of irregular vertices in cavity, counting interior and boundary, and singularities */
-          uint32_t curCavityNirreg = 0; 
+          uint32_t curCavityNirreg = 0;
           uint32_t curNcorners = 0;
           double curCavityIrregularity = cavityIrregularity(curCavityNirreg, curNcorners);
           /* If no new irregular vertices, continue the growth */
@@ -1661,7 +1727,7 @@ namespace QMT {
               continue;
             }
 
-            if (pId == PATTERN_QUAD_DIAG35 || pId == PATTERN_QUAD_ALIGNED35 
+            if (pId == PATTERN_QUAD_DIAG35 || pId == PATTERN_QUAD_ALIGNED35
                 || pId == PATTERN_QUAD_CHORD_UTURN) {
               /* these patterns have two irregular vertices inside, no need to check
                * if there are only two irregular vertices in current cavity */
@@ -1682,7 +1748,7 @@ namespace QMT {
             std::vector<size_t> sideSizes(sides.size());
             for (size_t i = 0; i < sideSizes.size(); ++i) sideSizes[i] = sides[i].size();
 
-            if (pId == PATTERN_QUAD_REGULAR) { 
+            if (pId == PATTERN_QUAD_REGULAR) {
               /* two opposite sides must have same number of vertices, no need to check else */
               if (sideSizes.size() != 4) continue;
               if (sideSizes[0] != sideSizes[2] || sideSizes[1] != sideSizes[3]) continue;
@@ -1748,7 +1814,7 @@ namespace QMT {
             return true;
           }
         }
-        
+
         if (lastNbIrregular > 0) {
           if (DBG_VERBOSE) {Msg::Debug("------ grow cavity: iter %li, %li quads, MAXIMAL growth, RETURN cavity",
               iter, rcav.elements.size());}
@@ -1801,6 +1867,28 @@ namespace QMT {
     return false;
   }
 
+  bool keepCavityRemeshing(
+      double sicnMinBefore, 
+      double sicnAvgBefore,
+      double sicnMinAfter, 
+      double sicnAvgAfter) {
+    double boldness = CTX::instance()->mesh.quadqsRemeshingBoldness;
+    if (boldness < 0.) boldness = 0.;
+    if (boldness > 1.) boldness = 1.;
+    if (boldness == 1. && sicnMinAfter > 0.) {
+      return true;
+    } else if (boldness == 0. && sicnMinAfter < sicnMinBefore) {
+      return false;
+    }
+    if (boldness == 0.501) { /* backward compatibility */
+      return ((sicnMinAfter > 0.3 && sicnAvgAfter > 0.5) || sicnMinAfter > sicnMinBefore);
+    }
+    double acceptMin = (1.-boldness) * sicnMinBefore;
+    double acceptAvg = (1.-boldness) * sicnAvgBefore * 0.5;
+    if (sicnMinAfter > acceptMin && sicnAvgAfter > acceptAvg) return true;
+
+    return false;
+  }
 
   bool remeshCavity(GFace* gf, RemeshableCavity& cav, QuadqsGFaceContext& ctx,
       const std::vector<MElement*>& cavityNeighborsForSmoothing) {
@@ -1814,9 +1902,9 @@ namespace QMT {
     }
 
     /* Call the remeshing code */
-    const double minSICNafer = 0.1;
+    const double minSICNafer = 0.;
     GFaceMeshDiff diff;
-    int st = remeshPatchWithQuadPattern(gf, cav.patternNoAndRot, cav.sides, cav.elements, 
+    int st = remeshPatchWithQuadPattern(gf, cav.patternNoAndRot, cav.sides, cav.elements,
         cav.intVertices, minSICNafer, ctx.invertNormalsForQuality, ctx.sp, diff);
     if (st != 0) {
       if (DBG_VERBOSE) {Msg::Debug("remesh cavity: %li quads, failed to remesh path with quad pattern",
@@ -1829,7 +1917,7 @@ namespace QMT {
     computeSICN(diff.before.elements, sicnMin, sicnAvg);
     double sicnMinAfter, sicnAvgAfter;
     computeSICN(diff.after.elements, sicnMinAfter, sicnAvgAfter);
-    if ((sicnMin > 0.3 && sicnAvg > 0.5) || sicnMinAfter > sicnMin) {
+    if (keepCavityRemeshing(sicnMin, sicnAvg, sicnMinAfter, sicnAvgAfter)) {
       constexpr bool verifyTopology = true;
       size_t neb = diff.before.elements.size();
       size_t nea = diff.after.elements.size();
@@ -2027,7 +2115,7 @@ namespace QMT {
       }
     }
 
-    void decreaseCounterCloseStarts(const CavityFarmer& farmer, 
+    void decreaseCounterCloseStarts(const CavityFarmer& farmer,
         const SPoint3& pos, size_t Nclose = 4) {
       std::vector<std::pair<double,StartStats*> > dist_stats;
       for (auto& kv: starts) {
@@ -2052,16 +2140,16 @@ namespace QMT {
 
   };
 
-  bool remeshQuadrilateralCavities(GFace* gf, 
+  bool remeshQuadrilateralCavities(GFace* gf,
       const std::vector<std::pair<SPoint3,int> >& singularities,
       const std::vector<size_t>& patternsToCheck,
       const unordered_map<size_t,size_t>& patternSizeLimits,
       CavityRegulator& regulator,
-      QuadqsGFaceContext& ctx) 
+      QuadqsGFaceContext& ctx)
   {
     if (ctx.finished) return true;
 
-    Msg::Debug("-- remeshing quadrilateral cavities (%i quads, %i patterns to check) ...", 
+    Msg::Debug("-- remeshing quadrilateral cavities (%i quads, %i patterns to check) ...",
         gf->quadrangles.size(), patternsToCheck.size());
     unordered_set<MVertex*> allowedIrregularVertices;
     unordered_set<MVertex*> forbiddenIrregularVertices;
@@ -2076,6 +2164,7 @@ namespace QMT {
     for (GEdge* ge: gf->edges()) {
       /* Ignore periodic curves */
       if (ge->vertices().size() != 2) continue;
+      if (ge->periodic(0)) continue;
       if (ge->vertices().front() == ge->vertices().back()) continue;
       gedges.push(ge);
     }
@@ -2088,10 +2177,10 @@ namespace QMT {
     }
 
     /* for PASS_FROM_IRREGULAR
-     * The priority queue contains the irregular vertices not associated 
+     * The priority queue contains the irregular vertices not associated
      * to cross field singularity and a priority based on repulsion.
      * Higher values appear first when doing Q.top() */
-    std::priority_queue<std::pair<double,MVertex*>,  std::vector<std::pair<double,MVertex*> > > Qirreg; 
+    std::priority_queue<std::pair<double,MVertex*>,  std::vector<std::pair<double,MVertex*> > > Qirreg;
 
     CavityFarmer farmer(gf);
 
@@ -2101,7 +2190,7 @@ namespace QMT {
     for (size_t pass : {PASS_FROM_CORNERS, PASS_ALONG_GEDGES, PASS_FROM_IRREGULAR}) {
       bool updateRequired = true;
       bool inProgress = true;
-      while (inProgress 
+      while (inProgress
           || (pass == PASS_FROM_CORNERS && gcorners.size() > 0)
           || (pass == PASS_ALONG_GEDGES && gedges.size() > 0)
           || (pass == PASS_FROM_IRREGULAR && Qirreg.size() > 0)) {
@@ -2117,7 +2206,6 @@ namespace QMT {
 
           /* Get vertices to preserve from cross field singularities */
           assignSingularitiesToIrregularVertices(gf, farmer, singularities, singularVertices);
-
           forbiddenIrregularVertices.clear();
           for (MVertex* v: singularVertices) forbiddenIrregularVertices.insert(v);
 
@@ -2164,7 +2252,7 @@ namespace QMT {
             bool oka = farmer.vertexAdjacentQuads(v, adjQuads);
             if (oka) {
               append(quadsInit,adjQuads);
-            } 
+            }
           }
           sort_unique(quadsInit);
           if (quadsInit.size() == 0 || quadsInit.size() >= 3) continue; /* do not start from concave corners */
@@ -2181,7 +2269,7 @@ namespace QMT {
             bool oka = farmer.vertexAdjacentQuads(v, adjQuads);
             if (oka) {
               append(quadsInit,adjQuads);
-            } 
+            }
           }
           sort_unique(quadsInit);
         } else if (pass == PASS_FROM_IRREGULAR) {
@@ -2246,16 +2334,16 @@ namespace QMT {
     return true;
   }
 
-  bool remeshSingularityCavities(GFace* gf, 
+  bool remeshSingularityCavities(GFace* gf,
       const std::vector<std::pair<SPoint3,int> >& singularities,
       const std::vector<size_t>& patternsToCheck,
       const unordered_map<size_t,size_t>& patternSizeLimits,
       CavityRegulator& regulator,
-      QuadqsGFaceContext& ctx) 
+      QuadqsGFaceContext& ctx)
   {
     if (ctx.finished) return true;
 
-    Msg::Debug("-- remeshing singularity cavities (face %i, %i quads, %i patterns to check) ...", 
+    Msg::Debug("-- remeshing singularity cavities (face %i, %i quads, %i patterns to check) ...",
         gf->tag(), gf->quadrangles.size(), patternsToCheck.size());
     unordered_set<MVertex*> allowedIrregularVertices;
     unordered_set<MVertex*> forbiddenIrregularVertices;
@@ -2264,10 +2352,10 @@ namespace QMT {
 
     size_t nbCavityRemeshed = 0;
 
-    /* The priority queue contains the irregular vertices associated to 
+    /* The priority queue contains the irregular vertices associated to
      * cross field singularity and a priority based on repulsion.
      * Higher values appear first when doing Q.top() */
-    std::priority_queue<std::pair<double,MVertex*>,  std::vector<std::pair<double,MVertex*> > > Q; 
+    std::priority_queue<std::pair<double,MVertex*>,  std::vector<std::pair<double,MVertex*> > > Q;
 
     CavityFarmer farmer(gf);
 
@@ -2330,7 +2418,7 @@ namespace QMT {
       int nTryMax = 3;
       regulator.declare(start,nTryMax);
 
-      Msg::Debug("---< start cavity with %i quads adjacent to singularity vertex %li", 
+      Msg::Debug("---< start cavity with %i quads adjacent to singularity vertex %li",
           quadsInit.size(), vSing->getNum());
 
       /* Grow a convex cavity containg irregular vertices to remove */
@@ -2398,8 +2486,8 @@ std::vector<size_t> getAllLoadedPatterns() {
 
 bool patchIsRemeshableWithQuadPattern(
     const std::vector<size_t>& patternsToCheck,
-    size_t Ncorners, 
-    const std::vector<size_t>& sideSizes, 
+    size_t Ncorners,
+    const std::vector<size_t>& sideSizes,
     std::pair<size_t,int>& patternNoAndRot,
     double& irregularityMeasure) {
   irregularityMeasure = DBL_MAX;
@@ -2493,7 +2581,7 @@ int remeshPatchWithQuadPattern(
   }
 
   /* Ensure coherent orientation between the new mesh and the boundary.
-   * The reference orientation (a,b) is from the sides before applying 
+   * The reference orientation (a,b) is from the sides before applying
    * rotation. */
   MVertex* a = sides[0][0];
   MVertex* b = sides[0][1];
@@ -2543,8 +2631,10 @@ int remeshPatchWithQuadPattern(
     opt.invertCADNormals = invertNormalsForQuality;
     opt.outerLoopIterMax = 100;
     opt.timeMax = 0.5;
+    opt.kernelRegular = SmoothingKernel::WinslowFDM;
+    opt.kernelIrregular = SmoothingKernel::Laplacian;
     opt.localLocking = true;
-    opt.dxGlobalMax = 1.e-3;
+    opt.dxGlobalMax = 0.;
     opt.dxLocalMax = 1.e-5;
     opt.withBackup = false;
     patchOptimizeGeometryWithKernel(diff.after, opt, stats);
@@ -2758,7 +2848,7 @@ int meshFaceWithGlobalPattern(GFace* gf, bool invertNormalsForQuality, double mi
 
   if (sides.size() == 0) {
     Msg::Debug("face %i (%li edges), failed to build sides",gf->tag(),edges.size());
-    DBG(disk);
+    // DBG(disk);
     return -1;
   }
 
@@ -2858,7 +2948,7 @@ int meshFaceWithGlobalPattern(GFace* gf, bool invertNormalsForQuality, double mi
 
   const double minSICNafer = -DBL_MAX; /* do not filter based on quality */
   GFaceMeshDiff diff;
-  int st = remeshPatchWithQuadPattern(gf, patternNoAndRot, sideVertices, oldElements, 
+  int st = remeshPatchWithQuadPattern(gf, patternNoAndRot, sideVertices, oldElements,
       oldVertices, minSICNafer, invertNormalsForQuality, sp, diff);
   if (st != 0) {
     if (DBG_VERBOSE) {Msg::Debug("remesh cavity: %li quads, failed to remesh path with quad pattern",

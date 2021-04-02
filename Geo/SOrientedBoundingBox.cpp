@@ -22,7 +22,8 @@
 #endif
 
 SOrientedBoundingRectangle::SOrientedBoundingRectangle()
-  : center({0.0, 0.0}), size({0.0, 0.0}), axisX({0.0, 0.0}), axisY({0.0, 0.0})
+  : center({{0.0, 0.0}}), size({{0.0, 0.0}}), axisX({{0.0, 0.0}}),
+    axisY({{0.0, 0.0}})
 {
 }
 

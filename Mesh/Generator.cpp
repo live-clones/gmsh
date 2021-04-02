@@ -379,17 +379,16 @@ static void Mesh1D(GModel *m)
 #pragma omp parallel for schedule(dynamic)
 #endif
     for(size_t K = 0; K < sss; K++) {
+      int localPending = 0;
       GEdge *ed = temp[K];
       if(ed->meshStatistics.status == GEdge::PENDING) {
         ed->mesh(true);
 #if defined(_OPENMP)
 #pragma omp critical
 #endif
-        {
-          nPending++;
-        }
+	localPending = ++nPending;
       }
-      if(!nIter) Msg::ProgressMeter(nPending, false, "Meshing 1D...");
+      if(!nIter) Msg::ProgressMeter(localPending, false, "Meshing 1D...");
     }
 
     if(!nPending) break;
@@ -530,17 +529,16 @@ static void Mesh2D(GModel *m)
 #pragma omp parallel for schedule(dynamic)
 #endif
       for(size_t K = 0; K < temp.size(); K++) {
+	int localPending = 0;
         if(temp[K]->meshStatistics.status == GFace::PENDING) {
           backgroundMesh::current()->unset();
           temp[K]->mesh(true);
 #if defined(_OPENMP)
 #pragma omp critical
 #endif
-          {
-            nPending++;
-          }
+	  localPending = ++nPending;
         }
-        if(!nIter) Msg::ProgressMeter(nPending, false, "Meshing 2D...");
+        if(!nIter) Msg::ProgressMeter(localPending, false, "Meshing 2D...");
       }
       if(!nPending) break;
       // iter == 2 is for meshing re-parametrized surfaces; after that, we
@@ -554,14 +552,17 @@ static void Mesh2D(GModel *m)
 
   Msg::SetNumThreads(prevNumThreads);
 
-  if (CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT) {
+  if(CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT) {
+    replaceBadQuadDominantMeshes(m);
+
     /* In the quasi-structured pipeline, the quad-dominant mesh
      * is subdivided into a full quad mesh */
-    /* TODO: - a faster CAD projection approach (from uv) 
+    /* TODO: - a faster CAD projection approach (from uv)
      *       - verify quality during projection */
-    // bool linear = false; 
+    // bool linear = false;
     // RefineMesh(m, linear, true, false);
     RefineMeshWithBackgroundMeshProjection(m);
+
 
     OptimizeMesh(m, "QuadQuasiStructured");
   }
@@ -997,7 +998,7 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter)
      how != "HighOrder" && how != "HighOrderElastic" &&
      how != "HighOrderFastCurving" && how != "Laplace2D" &&
      how != "Relocate2D" && how != "Relocate3D" &&
-     how != "DiskQuadrangulation" && how != "QuadCavityRemeshing" && 
+     how != "DiskQuadrangulation" && how != "QuadCavityRemeshing" &&
      how != "QuadQuasiStructured") {
     Msg::Error("Unknown mesh optimization method '%s'", how.c_str());
     return;
@@ -1079,45 +1080,51 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter)
       GRegion *gr = *it;
       RelocateVertices(gr, niter);
     }
-  } 
+  }
   else if(how == "DiskQuadrangulation") {
-    for (GFace* gf: m->getFaces()) if (gf->meshStatistics.status == GFace::DONE){
-      gf->meshStatistics.status = GFace::PENDING;
-    }
+    for(GFace *gf : m->getFaces())
+      if(gf->meshStatistics.status == GFace::DONE) {
+        gf->meshStatistics.status = GFace::PENDING;
+      }
 
     transferSeamGEdgesVerticesToGFace(m);
     optimizeTopologyWithDiskQuadrangulationRemeshing(m);
 
-    for (GFace* gf: m->getFaces()) if (gf->meshStatistics.status == GFace::PENDING){
-      gf->meshStatistics.status = GFace::DONE;
-    }
+    for(GFace *gf : m->getFaces())
+      if(gf->meshStatistics.status == GFace::PENDING) {
+        gf->meshStatistics.status = GFace::DONE;
+      }
   }
   else if(how == "QuadCavityRemeshing") {
-    for (GFace* gf: m->getFaces()) if (gf->meshStatistics.status == GFace::DONE){
-      gf->meshStatistics.status = GFace::PENDING;
-    }
+    for(GFace *gf : m->getFaces())
+      if(gf->meshStatistics.status == GFace::DONE) {
+        gf->meshStatistics.status = GFace::PENDING;
+      }
 
     transferSeamGEdgesVerticesToGFace(m);
     optimizeTopologyWithCavityRemeshing(m);
-    
-    for (GFace* gf: m->getFaces()) if (gf->meshStatistics.status == GFace::PENDING){
-      gf->meshStatistics.status = GFace::DONE;
-    }
+
+    for(GFace *gf : m->getFaces())
+      if(gf->meshStatistics.status == GFace::PENDING) {
+        gf->meshStatistics.status = GFace::DONE;
+      }
   }
   else if(how == "QuadQuasiStructured") {
     /* The following methods only act on faces whose status is PENDING */
-    for (GFace* gf: m->getFaces()) if (gf->meshStatistics.status == GFace::DONE){
-      gf->meshStatistics.status = GFace::PENDING;
-    }
+    for(GFace *gf : m->getFaces())
+      if(gf->meshStatistics.status == GFace::DONE) {
+        gf->meshStatistics.status = GFace::PENDING;
+      }
 
     transferSeamGEdgesVerticesToGFace(m);
     quadMeshingOfSimpleFacesWithPatterns(m);
     optimizeTopologyWithDiskQuadrangulationRemeshing(m);
     optimizeTopologyWithCavityRemeshing(m);
 
-    for (GFace* gf: m->getFaces()) if (gf->meshStatistics.status == GFace::PENDING){
-      gf->meshStatistics.status = GFace::DONE;
-    }
+    for(GFace *gf : m->getFaces())
+      if(gf->meshStatistics.status == GFace::PENDING) {
+        gf->meshStatistics.status = GFace::DONE;
+      }
   }
 
   if(Msg::GetVerbosity() > 98)
@@ -1447,7 +1454,6 @@ void GenerateMesh(GModel *m, int ask)
   m->clearLastMeshEntityError();
   m->clearLastMeshVertexError();
 
-
   // Initialize pseudo random mesh generator with the same seed
   srand(CTX::instance()->mesh.randomSeed);
 
@@ -1456,36 +1462,56 @@ void GenerateMesh(GModel *m, int ask)
   SetOrder1(m, false, true);
   FixPeriodicMesh(m);
 
-  // Some meshing algorithms require a global background mesh 
+  // Some meshing algorithms require a global background mesh
   // and a guiding field (e.g. cross field + size map)
-  QuadqsContextUpdater* qqs = nullptr;
-  if (CTX::instance()->mesh.algo2d == ALGO_2D_PACK_PRLGRMS
-      || CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT) {
+  QuadqsContextUpdater *qqs = nullptr;
+  if(CTX::instance()->mesh.algo2d == ALGO_2D_PACK_PRLGRMS ||
+     CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT) {
     int old = m->getMeshStatus(false);
-    bool doIt = (ask >= 1 && ask <= 3); 
+    bool doIt = (ask >= 1 && ask <= 3);
     bool exists = backgroundMeshAndGuidingFieldExists(m);
-    if (old == 1 && ask == 1 && exists) doIt = true; 
-    if (old == 1 && ask == 2 && exists) doIt = false;
-    if (old == 2 && ask == 2 && exists) doIt = true; 
-    if (doIt) {
-      bool overwriteGModelMesh = false; /* use current mesh if available */
-      bool deleteGModelMeshAfter = true; /* mesh saved in background, no longer needed */
-      BuildBackgroundMeshAndGuidingField(m, overwriteGModelMesh, deleteGModelMeshAfter);
+    bool overwriteGModelMesh = false; /* use current mesh if available */
+    bool overwriteField = false;
+    if(old == 1 && ask == 1 && exists) doIt = true;
+    if(old == 1 && ask == 2 && exists) doIt = false;
+    if(old == 2 && exists && (ask == 1 || ask ==2)) {
+      /* User has a mesh and wants a new one (all options may have changed) */
+      doIt = true;
+      overwriteField = true;
+      overwriteGModelMesh = true;
+    }
+    if(old == 2 && ask == 1 && exists) doIt = true;
+    if(old == 2 && ask == 2 && exists) doIt = true;
+    if(doIt) {
+      bool deleteGModelMeshAfter =
+        true; /* mesh saved in background, no longer needed */
+      BuildBackgroundMeshAndGuidingField(m, overwriteGModelMesh,
+                                         deleteGModelMeshAfter, 
+                                         overwriteField);
     }
 
-    if (CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT) {
+    if(CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT 
+        && old == 2 && exists && (ask == 1 || ask == 2)) {
+      /* transferSeamGEdgesVerticesToGFace() called by quadqs remove the 1D
+       * meshes of the seam GEdge, so 2D initial meshing does not work without
+       * first remeshing the seam GEdge. We delete the whole mesh by security */
+      m->deleteMesh();
+    }
+
+    if(CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT) {
       /* note: the creation of QuadqsContextUpdater modifies many
-       *       meshing parameters */
+       *       meshing parameters
+       *       current parameter values are saved and will be restored
+       *       at the destruction of qqs */
       qqs = new QuadqsContextUpdater();
     }
 
-    if (CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT) {
+    if(CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT) {
       std::set<GFace *> faces;
-      for (GFace* gf: m->getFaces()) if (gf->edges().size() == 4) {
-        faces.insert(gf);
-      }
+      for(GFace *gf : m->getFaces())
+        if(gf->edges().size() == 4) { faces.insert(gf); }
       double maxDiffRel = 0.34; /* do not deviate more than 34% from size map */
-      MeshSetTransfiniteFacesAutomatic(faces,2.35,true,maxDiffRel);
+      MeshSetTransfiniteFacesAutomatic(faces, 2.35, true, maxDiffRel);
     }
   }
 
@@ -1564,7 +1590,7 @@ void GenerateMesh(GModel *m, int ask)
 
   Msg::PrintErrorCounter("Mesh generation error summary");
 
-  if (qqs != nullptr) delete qqs;
+  if(qqs != nullptr) delete qqs;
 
   CTX::instance()->lock = 0;
   // ProfilerStop();

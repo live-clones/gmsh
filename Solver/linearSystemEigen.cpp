@@ -9,11 +9,7 @@
 
 #if defined(HAVE_EIGEN)
 
-
-linearSystemEigen<double>::linearSystemEigen()
-{
-  solverType = EigenSparseLU;
-}
+linearSystemEigen<double>::linearSystemEigen() { solverType = EigenSparseLU; }
 
 bool linearSystemEigen<double>::isAllocated() const
 {
@@ -25,7 +21,7 @@ bool linearSystemEigen<double>::isAllocated() const
 
 void linearSystemEigen<double>::allocate(int nbRows)
 {
-  A.resize(nbRows,nbRows);
+  A.resize(nbRows, nbRows);
   B.resize(nbRows);
   X.resize(nbRows);
   B.fill(0.);
@@ -46,111 +42,117 @@ void linearSystemEigen<double>::zeroMatrix()
   X.setZero();
 }
 
-void linearSystemEigen<double>::zeroRightHandSide()
-{
-  B.fill(0.);
-}
+void linearSystemEigen<double>::zeroRightHandSide() { B.fill(0.); }
 
-void linearSystemEigen<double>::zeroSolution()
-{
-  X.fill(0.);
-}
+void linearSystemEigen<double>::zeroSolution() { X.fill(0.); }
 
-void linearSystemEigen<double>::setSolverType(linearSystemEigenSolver solverName) {
+void linearSystemEigen<double>::setSolverType(
+  linearSystemEigenSolver solverName)
+{
   solverType = solverName;
 }
 
 int linearSystemEigen<double>::systemSolve()
 {
-  if       (solverType == EigenCholeskyLLT) {
+  if(solverType == EigenCholeskyLLT) {
     Eigen::SimplicialLLT<Eigen::SparseMatrix<double> > solver;
     solver.compute(A);
-    if (solver.info() != Eigen::ComputationInfo::Success) {
+    if(solver.info() != Eigen::ComputationInfo::Success) {
       Msg::Warning("Eigen: failed to solve linear system with CholeskyLLT");
       return -1;
     }
     X = solver.solve(B);
-    if (solver.info() != Eigen::ComputationInfo::Success) {
+    if(solver.info() != Eigen::ComputationInfo::Success) {
       Msg::Warning("Eigen: failed to solve linear system with CholeskyLLT");
       return -1;
     }
-  } else if(solverType == EigenCholeskyLDLT) {
+  }
+  else if(solverType == EigenCholeskyLDLT) {
     Eigen::SimplicialLDLT<Eigen::SparseMatrix<double> > solver;
     solver.compute(A);
-    if (solver.info() != Eigen::ComputationInfo::Success) {
+    if(solver.info() != Eigen::ComputationInfo::Success) {
       Msg::Warning("Eigen: failed to solve linear system with CholeskyLDLT");
       return -1;
     }
     X = solver.solve(B);
-    if (solver.info() != Eigen::ComputationInfo::Success) {
+    if(solver.info() != Eigen::ComputationInfo::Success) {
       Msg::Warning("Eigen: failed to solve linear system with CholeskyLDLT");
       return -1;
     }
-  } else if(solverType == EigenSparseLU) {
+  }
+  else if(solverType == EigenSparseLU) {
     Eigen::SparseLU<Eigen::SparseMatrix<double> > solver;
     solver.compute(A);
-    if (solver.info() != Eigen::ComputationInfo::Success) {
+    if(solver.info() != Eigen::ComputationInfo::Success) {
       Msg::Warning("Eigen: failed to solve linear system with SparseLU");
       return -1;
     }
     X = solver.solve(B);
-    if (solver.info() != Eigen::ComputationInfo::Success) {
+    if(solver.info() != Eigen::ComputationInfo::Success) {
       Msg::Warning("Eigen: failed to solve linear system with SparseLU");
       return -1;
     }
-  } else if(solverType == EigenSparseQR) {
+  }
+  else if(solverType == EigenSparseQR) {
     /* Note: maybe another ordering method is better, see Eigen documentation */
-    Eigen::SparseQR<Eigen::SparseMatrix<double>, Eigen::NaturalOrdering<int> > solver;
+    Eigen::SparseQR<Eigen::SparseMatrix<double>, Eigen::NaturalOrdering<int> >
+      solver;
     solver.compute(A);
-    if (solver.info() != Eigen::ComputationInfo::Success) {
+    if(solver.info() != Eigen::ComputationInfo::Success) {
       Msg::Warning("Eigen: failed to solve linear system with SparseQR");
       return -1;
     }
     X = solver.solve(B);
-    if (solver.info() != Eigen::ComputationInfo::Success) {
+    if(solver.info() != Eigen::ComputationInfo::Success) {
       Msg::Warning("Eigen: failed to solve linear system with SparseQR");
       return -1;
     }
-  } else if(solverType == EigenCG) {
+  }
+  else if(solverType == EigenCG) {
     Eigen::ConjugateGradient<Eigen::SparseMatrix<double> > solver;
     solver.compute(A);
-    if (solver.info() != Eigen::ComputationInfo::Success) {
-      Msg::Warning("Eigen: failed to solve linear system with Conjugate Gradient");
+    if(solver.info() != Eigen::ComputationInfo::Success) {
+      Msg::Warning(
+        "Eigen: failed to solve linear system with Conjugate Gradient");
       return -1;
     }
     X = solver.solve(B);
-    if (solver.info() != Eigen::ComputationInfo::Success) {
-      Msg::Warning("Eigen: failed to solve linear system with Conjugate Gradient");
+    if(solver.info() != Eigen::ComputationInfo::Success) {
+      Msg::Warning(
+        "Eigen: failed to solve linear system with Conjugate Gradient");
       return -1;
     }
-  } else if(solverType == EigenCGLeastSquare) {
+  }
+  else if(solverType == EigenCGLeastSquare) {
     Eigen::LeastSquaresConjugateGradient<Eigen::SparseMatrix<double> > solver;
     solver.compute(A);
-    if (solver.info() != Eigen::ComputationInfo::Success) {
-      Msg::Warning("Eigen: failed to solve linear system with Least Square Conjugate Gradient");
+    if(solver.info() != Eigen::ComputationInfo::Success) {
+      Msg::Warning("Eigen: failed to solve linear system with Least Square "
+                   "Conjugate Gradient");
       return -1;
     }
     X = solver.solve(B);
-    if (solver.info() != Eigen::ComputationInfo::Success) {
-      Msg::Warning("Eigen: failed to solve linear system with Least Square Conjugate Gradient");
+    if(solver.info() != Eigen::ComputationInfo::Success) {
+      Msg::Warning("Eigen: failed to solve linear system with Least Square "
+                   "Conjugate Gradient");
       return -1;
     }
-  } else if(solverType == EigenBiCGSTAB) {
+  }
+  else if(solverType == EigenBiCGSTAB) {
     Eigen::BiCGSTAB<Eigen::SparseMatrix<double> > solver;
     solver.compute(A);
-    if (solver.info() != Eigen::ComputationInfo::Success) {
+    if(solver.info() != Eigen::ComputationInfo::Success) {
       Msg::Warning("Eigen: failed to solve linear system with BiCGSTAB");
       return -1;
     }
     X = solver.solve(B);
-    if (solver.info() != Eigen::ComputationInfo::Success) {
+    if(solver.info() != Eigen::ComputationInfo::Success) {
       Msg::Warning("Eigen: failed to solve linear system with BiCGSTAB");
       return -1;
     }
   }
   return 1;
 }
-
 
 void linearSystemEigen<double>::insertInSparsityPattern(int row, int col) {}
 
@@ -166,13 +168,13 @@ double linearSystemEigen<double>::normInfSolution() const
 
 void linearSystemEigen<double>::addToMatrix(int row, int col, const double &val)
 {
-  A.coeffRef(row,col) += val; /* slow ! */
+  A.coeffRef(row, col) += val; /* slow ! */
 }
 
 void linearSystemEigen<double>::getFromMatrix(int row, int col,
                                               double &val) const
 {
-  val = A.coeff(row,col);
+  val = A.coeff(row, col);
 }
 
 void linearSystemEigen<double>::addToRightHandSide(int row, const double &val,
@@ -181,7 +183,8 @@ void linearSystemEigen<double>::addToRightHandSide(int row, const double &val,
   if((int)B.size() <= row) {
     B.resize(row + 1);
     B[row] = val;
-  } else {
+  }
+  else {
     B[row] += val;
   }
 }
