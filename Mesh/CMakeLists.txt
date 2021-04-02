@@ -12,6 +12,7 @@ set(SRC
     meshGFaceBamg.cpp meshGFaceBDS.cpp meshGFaceDelaunayInsertion.cpp
     meshGFaceOptimize.cpp
     meshGFaceBipartiteLabelling.cpp
+    meshGFaceQuadLayer.cpp
   meshGRegion.cpp
     meshGRegionBoundaryRecovery.cpp
     meshGRegionHxt.cpp meshGRegionNetgen.cpp

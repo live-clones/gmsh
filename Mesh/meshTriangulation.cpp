@@ -22,6 +22,7 @@
 #include "qualityMeasures.h"
 #include "Numeric.h"
 #include "SPoint3.h"
+#include "meshGFaceQuadLayer.h"
 
 void swap(double &a, double &b)
 {
@@ -645,6 +646,7 @@ static void getNodeCopies(GFace *gf, std::unordered_map<size_t, nodeCopies> &cop
 
 PolyMesh *GFaceInitialMesh(int faceTag, int recover)
 {
+  Msg::Info("!!!!!!!!!!!!! GFaceInitialMesh, tag %i, recover: %i !!!!!!!!!!!!!!\n", faceTag, recover);
   GFace *gf = GModel::current()->getFaceByTag(faceTag);
 
   PolyMesh *pm = new PolyMesh;
@@ -731,6 +733,8 @@ PolyMesh *GFaceInitialMesh(int faceTag, int recover)
   // holes will be tagged -1
 
   //  pm->print4debug(200000);
+
+  insertBoundaryQuadLayer(pm);
 
   return pm;
 }

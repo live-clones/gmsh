@@ -9,6 +9,8 @@
 #include <vector>
 #include <stack>
 #include <stdio.h>
+#include <algorithm>
+#include <unordered_map>
 #include "SVector3.h"
 
 class PolyMesh {
@@ -21,10 +23,12 @@ public:
   public:
     Vertex(double x, double y, double z, int _d = -1)
       : position(x, y, z), he(NULL), data(_d)
-    {
-    }
+    {}
+    Vertex(SVector3 pt, int _d = -1)
+      : position(pt), he(NULL), data(_d)
+    {}
     SVector3 position;
-    PolyMesh::HalfEdge *he; // one incident half edge
+    PolyMesh::HalfEdge *he; // one incident half edge (outgoing: he->v = this)
     int data;
   };
 
@@ -34,7 +38,7 @@ public:
       : v(vv), f(NULL), prev(NULL), next(NULL), opposite(NULL), data(-1)
     {
     }
-    Vertex *v; // origin
+    Vertex *v; // origin of the oriented half-edge (v0 of [v0,v1])
     Face *f; // incident face
     HalfEdge *prev; // previous half edge on the face
     HalfEdge *next; // next half edge on the face
@@ -45,6 +49,13 @@ public:
       t.normalize();
       return t;
     }
+    double len () const {
+      SVector3 t = next->v->position - v->position;
+      return t.norm();
+    }
+
+    inline Vertex* first() const {return v;}
+    inline Vertex* second() const {return next->v;}
   };
 
   class Face {
@@ -61,11 +72,50 @@ public:
   void reset()
   {
     for(auto it : vertices) delete it;
+    vertices.clear();
     for(auto it : hedges) delete it;
+    hedges.clear();
     for(auto it : faces) delete it;
+    faces.clear();
   }
 
   ~PolyMesh() { reset(); }
+
+  PolyMesh* clone() const {
+    PolyMesh* b = new PolyMesh();
+    b->vertices.resize(this->vertices.size(),nullptr);
+    b->hedges.resize(this->hedges.size(),nullptr);
+    b->faces.resize(this->faces.size(),nullptr);
+    /* Create the instances and the redirections */
+    std::unordered_map<PolyMesh::Vertex*,PolyMesh::Vertex*> v_old2new;
+    for (size_t i = 0; i < b->vertices.size(); ++i) if (this->vertices[i]) {
+      b->vertices[i] = new PolyMesh::Vertex(this->vertices[i]->position,this->vertices[i]->data);
+      v_old2new[this->vertices[i]] = b->vertices[i];
+    }
+    std::unordered_map<PolyMesh::HalfEdge*,PolyMesh::HalfEdge*> he_old2new;
+    for (size_t i = 0; i < b->hedges.size(); ++i) if (this->hedges[i]) {
+      b->hedges[i] = new PolyMesh::HalfEdge(nullptr);
+      he_old2new[this->hedges[i]] = b->hedges[i];
+    }
+    std::unordered_map<PolyMesh::Face*,PolyMesh::Face*> f_old2new;
+    for (size_t i = 0; i < b->faces.size(); ++i) if (this->faces[i]) {
+      b->faces[i] = new PolyMesh::Face(nullptr);
+      f_old2new[this->faces[i]] = b->faces[i];
+    }
+    /* Fill the content */
+    for (size_t i = 0; i < b->vertices.size(); ++i) if (b->vertices[i]) {
+      if (this->vertices[i]->he) {
+        b->vertices[i]->he = he_old2new[this->vertices[i]->he];
+      }
+    }
+    for (size_t i = 0; i < b->hedges.size(); ++i) if (b->hedges[i]) {
+      if (this->hedges[i]->v) {
+        b->hedges[i]->v = v_old2new[this->hedges[i]->v];
+      }
+    }
+
+    return b;
+  }
 
   void print4debug(const int debugTag)
   {
@@ -243,8 +293,10 @@ public:
   void cleanv(){
     std::vector<Vertex*> uv;
     for (auto v : vertices) {
-      if (v->he)uv.push_back(v);
-      else delete v;
+      if (v != nullptr) {
+        if (v->he)uv.push_back(v);
+        else delete v;
+      }
     }
     vertices = uv;
   }
@@ -252,8 +304,10 @@ public:
   void cleanh(){
     std::vector<HalfEdge*> uh;
     for (auto h : hedges) {
-      if (h->f)uh.push_back(h);
-      else delete h;
+      if (h != nullptr) {
+        if (h->f)uh.push_back(h);
+        else delete h;
+      }
     }
     hedges = uh;
   }
@@ -261,8 +315,10 @@ public:
   void cleanf(){
     std::vector<Face*> uf;
     for (auto f : faces) {
-      if (f->he)uf.push_back(f);
-      else delete f;
+      if (f != nullptr) {
+        if (f->he)uf.push_back(f);
+        else delete f;
+      }
     }
     faces = uf;
   }

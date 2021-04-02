@@ -40,7 +40,7 @@
 #include "meshGFaceBipartiteLabelling.h"
 
 // define this to use the old initial delaunay
-#define OLD_CODE_DELAUNAY 1
+// #define OLD_CODE_DELAUNAY 1
 
 #ifndef OLD_CODE_DELAUNAY
 #include "meshTriangulation.h"
@@ -2095,7 +2095,8 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
 
     // TEST !!!
 #ifndef OLD_CODE_DELAUNAY
-    //  PolyMesh * pm = GFaceInitialMesh (gf->tag(), 1);
+  Msg::Warning("TODOMX: uncommenting for testing only");
+  PolyMesh * pm = GFaceInitialMesh (gf->tag(), 1);
 #endif
   // TEST !!!
 
