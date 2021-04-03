@@ -1085,6 +1085,13 @@ GMSH_API void gmshModelMeshSetSize(int * dimTags, size_t dimTags_n,
                                    const double size,
                                    int * ierr);
 
+/* Get the mesh size constraints (if any) associated with the model entities
+ * `dimTags'. A zero entry in the output `sizes' vector indicates that no size
+ * constraint is specified on the corresponding entity. */
+GMSH_API void gmshModelMeshGetSizes(int * dimTags, size_t dimTags_n,
+                                    double ** sizes, size_t * sizes_n,
+                                    int * ierr);
+
 /* Set mesh size constraints at the given parametric points `parametricCoord'
  * on the model entity of dimension `dim' and tag `tag'. Currently only
  * entities of dimension 1 (lines) are handled. */

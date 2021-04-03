@@ -1232,6 +1232,14 @@ namespace gmsh { // Top-level functions
       GMSH_API void setSize(const gmsh::vectorpair & dimTags,
                             const double size);
 
+      // gmsh::model::mesh::getSizes
+      //
+      // Get the mesh size constraints (if any) associated with the model entities
+      // `dimTags'. A zero entry in the output `sizes' vector indicates that no
+      // size constraint is specified on the corresponding entity.
+      GMSH_API void getSizes(const gmsh::vectorpair & dimTags,
+                             std::vector<double> & sizes);
+
       // gmsh::model::mesh::setSizeAtParametricPoints
       //
       // Set mesh size constraints at the given parametric points `parametricCoord'

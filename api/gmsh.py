@@ -2875,6 +2875,29 @@ class model:
         set_size = setSize
 
         @staticmethod
+        def getSizes(dimTags):
+            """
+            gmsh.model.mesh.getSizes(dimTags)
+
+            Get the mesh size constraints (if any) associated with the model entities
+            `dimTags'. A zero entry in the output `sizes' vector indicates that no size
+            constraint is specified on the corresponding entity.
+
+            Return `sizes'.
+            """
+            api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
+            api_sizes_, api_sizes_n_ = POINTER(c_double)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshGetSizes(
+                api_dimTags_, api_dimTags_n_,
+                byref(api_sizes_), byref(api_sizes_n_),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return _ovectordouble(api_sizes_, api_sizes_n_.value)
+        get_sizes = getSizes
+
+        @staticmethod
         def setSizeAtParametricPoints(dim, tag, parametricCoord, sizes):
             """
             gmsh.model.mesh.setSizeAtParametricPoints(dim, tag, parametricCoord, sizes)

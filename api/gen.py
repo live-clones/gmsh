@@ -401,6 +401,9 @@ mesh.add('getGhostElements', doc, None, iint('dim'), iint('tag'), ovectorsize('e
 doc = '''Set a mesh size constraint on the model entities `dimTags'. Currently only entities of dimension 0 (points) are handled.'''
 mesh.add('setSize', doc, None, ivectorpair('dimTags'), idouble('size'))
 
+doc = '''Get the mesh size constraints (if any) associated with the model entities `dimTags'. A zero entry in the output `sizes' vector indicates that no size constraint is specified on the corresponding entity.'''
+mesh.add('getSizes', doc, None, ivectorpair('dimTags'), ovectordouble('sizes'))
+
 doc = '''Set mesh size constraints at the given parametric points `parametricCoord' on the model entity of dimension `dim' and tag `tag'. Currently only entities of dimension 1 (lines) are handled.'''
 mesh.add('setSizeAtParametricPoints', doc, None, iint('dim'), iint('tag'), ivectordouble('parametricCoord'), ivectordouble('sizes'))
 

@@ -1614,6 +1614,24 @@ GMSH_API void gmshModelMeshSetSize(int * dimTags, size_t dimTags_n, const double
   }
 }
 
+GMSH_API void gmshModelMeshGetSizes(int * dimTags, size_t dimTags_n, double ** sizes, size_t * sizes_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::vectorpair api_dimTags_(dimTags_n/2);
+    for(size_t i = 0; i < dimTags_n/2; ++i){
+      api_dimTags_[i].first = dimTags[i * 2 + 0];
+      api_dimTags_[i].second = dimTags[i * 2 + 1];
+    }
+    std::vector<double> api_sizes_;
+    gmsh::model::mesh::getSizes(api_dimTags_, api_sizes_);
+    vector2ptr(api_sizes_, sizes, sizes_n);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API void gmshModelMeshSetSizeAtParametricPoints(const int dim, const int tag, double * parametricCoord, size_t parametricCoord_n, double * sizes, size_t sizes_n, int * ierr)
 {
   if(ierr) *ierr = 0;

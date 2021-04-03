@@ -2441,6 +2441,30 @@ end
 const set_size = setSize
 
 """
+    gmsh.model.mesh.getSizes(dimTags)
+
+Get the mesh size constraints (if any) associated with the model entities
+`dimTags`. A zero entry in the output `sizes` vector indicates that no size
+constraint is specified on the corresponding entity.
+
+Return `sizes`.
+"""
+function getSizes(dimTags)
+    api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
+    api_dimTags_n_ = length(api_dimTags_)
+    api_sizes_ = Ref{Ptr{Cdouble}}()
+    api_sizes_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshGetSizes, gmsh.lib), Cvoid,
+          (Ptr{Cint}, Csize_t, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
+          api_dimTags_, api_dimTags_n_, api_sizes_, api_sizes_n_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    sizes = unsafe_wrap(Array, api_sizes_[], api_sizes_n_[], own=true)
+    return sizes
+end
+const get_sizes = getSizes
+
+"""
     gmsh.model.mesh.setSizeAtParametricPoints(dim, tag, parametricCoord, sizes)
 
 Set mesh size constraints at the given parametric points `parametricCoord` on

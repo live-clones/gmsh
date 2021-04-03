@@ -4353,6 +4353,25 @@ GMSH_API void gmsh::model::mesh::setSize(const vectorpair &dimTags,
   }
 }
 
+GMSH_API void gmsh::model::mesh::getSizes(const vectorpair &dimTags,
+                                          std::vector<double> &sizes)
+{
+  if(!_checkInit()) return;
+  sizes.clear();
+  if(dimTags.empty()) return;
+  sizes.resize(dimTags.size(), 0.);
+  for(std::size_t i = 0; i < dimTags.size(); i++) {
+    int dim = dimTags[i].first, tag = dimTags[i].second;
+    if(dim == 0) {
+      GVertex *gv = GModel::current()->getVertexByTag(tag);
+      if(gv) {
+        double s = gv->prescribedMeshSizeAtVertex();
+        if(s != MAX_LC) sizes[i] = s;
+      }
+    }
+  }
+}
+
 GMSH_API void gmsh::model::mesh::setSizeAtParametricPoints(
   const int dim, const int tag, const std::vector<double> &parametricCoord,
   const std::vector<double> &sizes)
