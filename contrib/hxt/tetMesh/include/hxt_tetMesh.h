@@ -74,7 +74,7 @@ typedef struct {
 /** Function: hxtTetMesh
  *  ====================
  * 
- * Given a surface mesh taht bounds some volumes, this function
+ * Given a surface mesh that bounds some volumes, this function
  *  - computes a tetrahedralization of the volumes
  *  - optionally refines the tetrahedralization by adding new points, according
  *    to a mesh sizing function
