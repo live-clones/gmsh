@@ -1497,7 +1497,7 @@ public:
     _viewIndex = 0;
     _viewTag = -1;
     _cropNegativeValues = true;
-    updateNeeded = true; // in case we don't set IView or ViewTag explicitely
+    updateNeeded = true; // in case we don't set ViewIndex or ViewTag explicitely
 
     options["ViewIndex"] = new FieldOptionInt(
       _viewIndex, "Post-processing view index", &updateNeeded);
@@ -1674,7 +1674,7 @@ public:
   const char *getName() { return "PostView"; }
   std::string getDescription()
   {
-    return "Evaluate the post processing view IView.";
+    return "Evaluate the post processing view ViewIndex.";
   }
 };
 
@@ -3310,7 +3310,7 @@ void FieldManager::setBackgroundMesh(int iView)
 {
   int id = newId();
   Field *f = newField(id, "PostView");
-  f->options["IView"]->numericalValue(iView);
+  f->options["ViewIndex"]->numericalValue(iView);
   (*this)[id] = f;
   _backgroundField = id;
 }
