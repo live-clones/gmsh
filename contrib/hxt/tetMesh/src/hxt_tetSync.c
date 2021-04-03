@@ -63,7 +63,7 @@ HXTStatus waitForPossibleReallocation(HXT2Sync* shared,
   int val = 0;
   do{
     // threads are waiting here for another thread's reallocation
-    // untill all threads finished
+    // until all threads finished
     HXT_CHECK( synchronizeReallocation(shared, &val) );
   }while(val < numThreads);
   return HXT_STATUS_OK;

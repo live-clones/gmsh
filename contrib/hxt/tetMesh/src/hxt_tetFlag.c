@@ -653,7 +653,7 @@ HXTStatus hxtConstrainTriangles(HXTMesh* mesh, uint64_t* tri2TetMap)
     }
   }
 
-  // constrain corresponding flag, teetrahedron by tetrahedron to avoid race conditions
+  // constrain corresponding flag, tetrahedron by tetrahedron to avoid race conditions
   #pragma omp parallel for
   for (uint64_t i=0; i<mesh->tetrahedra.num; i++) {
     for (uint64_t j=0; j<4; j++) {
@@ -673,11 +673,11 @@ HXTStatus hxtConstrainTriangles(HXTMesh* mesh, uint64_t* tri2TetMap)
  *   Constrain an edge in all tetrahedra surrounding it
  *********************************************************
  * In single-thread cases, put edgeFlag==NULL.
- * This function will directly set the contraint bit corresponding to the edge
+ * This function will directly set the constraint bit corresponding to the edge
  * '6*firstTet+edge' on all tetrahedra surrounding this edge.
  *
  * In multi-threaded case, if multiple thread modify different edges of the
- * same tetrahedra, modifying the same flag would resuld in a race condition.
+ * same tetrahedra, modifying the same flag would result in a race condition.
  * Therefore, in parallel section, you must give an array with a char per edge.
  * This function will set the edges corresponding to '6*firstTet+edge' to 1.
  */

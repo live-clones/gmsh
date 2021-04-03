@@ -7,8 +7,8 @@
 #include <stdint.h>
 
 /* check if the cavity is star shaped
-   This isn't usefull for pure Delaunay but when we constrain cavity with color,
-   it is usefull */
+   This isn't useful for pure Delaunay but when we constrain cavity with color,
+   it is useful */
 static HXTStatus isStarShaped(TetLocal* local, HXTMesh* mesh, const uint32_t vta, uint64_t* blindFaceIndex)
 {
   HXTVertex* vertices = (HXTVertex*) mesh->vertices.coord;
@@ -144,7 +144,7 @@ HXTStatus respectEdgeConstraint(TetLocal* local, HXTMesh* mesh, const uint32_t v
               break;
 
           if(getDeletedFlag(mesh, curTet)!=0) {
-            // mark that the edge as been treate
+            // mark that the edge as been treated
             #ifdef DEBUG
               if((mesh->tetrahedra.color[curTet] & (1U<<getEdgeFromFacets(in_facet, out_facet)))!=0)
                 return HXT_ERROR_MSG(HXT_STATUS_ERROR, "the flag says that the tet has already been processed for this edge...");

@@ -380,6 +380,6 @@ HXTStatus setFlagsToProcessOnlyVolumesInBrep(HXTMesh* mesh)
 
 
 
-// TODO: compute a boundinng box following some surface mesh colors !
+// TODO: compute a bounding box following some surface mesh colors !
 // we should get this bbox from the triangles (and not the tetrahedra) to be quick
 // we should thus have a function that receive a volume color and receive a list of surface colors !

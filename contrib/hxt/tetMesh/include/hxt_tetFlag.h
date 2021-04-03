@@ -56,11 +56,11 @@ HXTStatus hxtConstrainTriangles(HXTMesh* mesh, uint64_t* tri2TetMap);
  *   Constrain an edge in all tetrahedra surrounding it
  *
  * In single-thread cases, put edgeFlag==NULL.
- * This function will directly set the contraint bit corresponding to the edge
+ * This function will directly set the constraint bit corresponding to the edge
  * '6*firstTet+edge' on all tetrahedra surrounding this edge.
  *
  * In multi-threaded case, if multiple thread modify different edges of the
- * same tetrahedra, modifying the same flag would resuld in a race condition.
+ * same tetrahedra, modifying the same flag would result in a race condition.
  * Therefore, in parallel section, you must give an array with a char per edge.
  * This function will set the edges corresponding to '6*firstTet+edge' to 1.
  *
@@ -129,10 +129,10 @@ HXTStatus hxtConstrainLinesNotInTriangles(HXTMesh* mesh, uint64_t* lines2TetMap,
  *  flag is a 16-bit number
  *
  *  0X1    | 0  edge between facet 0 and facet 1 is constrained, node 2-3
- *  0X2    | 1  edge betwwen facet 0 and facet 2 is constrained, node 1-3
- *  0X4    | 2  edge betwwen facet 0 and facet 3 is constrained, node 1-2
- *  0X8    | 3  edge betwwen facet 1 and facet 2 is constrained, node 0-3
- *  0X10   | 4  edge betwwen facet 1 and facet 3 is constrained, node 0-2
+ *  0X2    | 1  edge between facet 0 and facet 2 is constrained, node 1-3
+ *  0X4    | 2  edge between facet 0 and facet 3 is constrained, node 1-2
+ *  0X8    | 3  edge between facet 1 and facet 2 is constrained, node 0-3
+ *  0X10   | 4  edge between facet 1 and facet 3 is constrained, node 0-2
  *  0X20   | 5  edge between facet 2 and facet 3 is constrained, node 0-1
  *  0X40   | 6  the tetrahedron is deleted
  *  0X80   | 7  the tetrahedron has already been processed (a vertex was already inserted inside it and it failed)

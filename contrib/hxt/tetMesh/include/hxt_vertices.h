@@ -56,7 +56,7 @@ typedef struct {
  * \param vertices: the vertices coordinates
  * \param n: the number of vertices
  * \param shift[3]: a value between 0 and 1 that commands how the Hilbert/Moore curve is deformed in each dimension.
- *  {0.5, 0.5, 0.5} is the underformed Hilbert/Moore curve.
+ *  {0.5, 0.5, 0.5} is the undeformed Hilbert/Moore curve.
  *
  * \details Compute the Hilbert/Moore index of each vertex in its \ref HXTVertex.padding.hilbertDist structure member.
  *          A deformation of the Hilbert/Moore curve can be done with the shift parameter

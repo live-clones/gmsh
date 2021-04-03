@@ -347,7 +347,7 @@ static inline int tet_tri_intersection(SPRCavity* SPR,
   e5e0 = get_orient3d(SPR, tet[2], tet[3], tri[0], tri[1]);
 
   // if a point of the edge is coplanar with the facet of
-  // the tet, we don't really care trying to check the intersecton
+  // the tet, we don't really care trying to check the intersection
   // between the edge and this facet. Indeed:
   // - if the whole line is coplanar to the facet and intersects it,
   // it will intersect another facet
@@ -446,7 +446,7 @@ static SPRNOINLINE int tet_edge_intersection(SPRCavity* SPR,
     l1_to_tet = 3;
   }
 
-  if(l0_to_tet!=-1 && l1_to_tet!=-1) // the line is there: no interseection
+  if(l0_to_tet!=-1 && l1_to_tet!=-1) // the line is there: no intersection
     return 0;
 
   int f0v0 = get_orient3d(SPR, edge[0], tet[1], tet[2], tet[3]);
@@ -500,7 +500,7 @@ static SPRNOINLINE int tet_edge_intersection(SPRCavity* SPR,
   int c5 = get_orient3d(SPR, tet[2], tet[3], edge[0], edge[1]);
 
   // if one point of the edge is coplanar with the facet of
-  // the tet, we don't really care trying to check the intersecton
+  // the tet, we don't really care trying to check the intersection
   // between the edge and this facet.
   // If the point is on the facet, it would have been detected earlier
   // If the line is coplanar to the facet and intersects it,
@@ -1074,7 +1074,7 @@ HXTStatus hxtSPR(SPRCavity* SPR)
 }
 
 
-/* if hxtSPR or hxtSPR_advanced stopped abruttely
+/* if hxtSPR or hxtSPR_advanced stopped abruptly
  * because it reached max_search_nodes, we can rewind
  * the cavity to its initial state thanks to this function
  */

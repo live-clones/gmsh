@@ -14,7 +14,7 @@
 //// creates a mesh with all points of the surface mesh
 HXTStatus hxtEmptyMesh(HXTMesh* mesh, HXTDelaunayOptions* delOptions);
 
-/// Add points at tets circumcenter in order to fullfill a mesh size constraint 
+/// Add points at tets circumcenter in order to fulfill a mesh size constraint 
 HXTStatus hxtRefineTetrahedra(HXTMesh* mesh, HXTDelaunayOptions* delOptions);
 
 #endif

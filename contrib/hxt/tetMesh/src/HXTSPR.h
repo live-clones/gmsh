@@ -35,7 +35,7 @@ extern "C" {
  * and at most `ntri=n^2 − 3n = 2*ntet+2` triangles */
 #define SPR_MAX_TETS ((SPR_MAX_PTS*SPR_MAX_PTS - 3*SPR_MAX_PTS - 2)/2) //463
 
-/* In pratices however, the number of triangles will certainly never be greater than 500
+/* In practice however, the number of triangles will certainly never be greater than 500
  * because the different constraints of the SPR make the upper bound impossible to be reached
  * Same argument for constrained interior triangles and edges */
 #define SPR_MAX_BNDTRIANGLES 500
