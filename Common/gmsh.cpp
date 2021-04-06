@@ -1181,7 +1181,7 @@ GMSH_API void gmsh::model::mesh::generate(const int dim)
 }
 
 GMSH_API void gmsh::model::mesh::partition(const int numPart,
-                                           const vectorpair &elementPartition)
+                                           const vectorpairsize &elementPartition)
 {
   if(!_checkInit()) return;
   std::vector<std::pair<MElement *, int> > epart;

@@ -47,6 +47,7 @@ namespace gmsh {
   // different dimensions, the entities are packed as a vector of (dim, tag)
   // integer pairs.
   typedef std::vector<std::pair<int, int> > vectorpair;
+  typedef std::vector<std::pair<size_t, size_t> > vectorpairsize;
 
 }
 
@@ -592,7 +593,7 @@ namespace gmsh { // Top-level functions
       // `elementPartition' can optionaly be provided to specify the partitioning
       // of each element explicitely.
       GMSH_API void partition(const int numPart,
-                              const gmsh::vectorpair & elementPartition = gmsh::vectorpair());
+                              const gmsh::vectorpairsize & elementPartition = gmsh::vectorpairsize());
 
       // gmsh::model::mesh::unpartition
       //

@@ -173,6 +173,19 @@ def _ivectorpair(o):
             raise Exception("Invalid data for input vector of pairs")
         return ((c_int * 2) * len(o))(*o), c_size_t(len(o) * 2)
 
+def _ivectorpairsize(o):
+    if use_numpy:
+        array = numpy.ascontiguousarray(o, numpy.uint64)
+        if(len(o) and (array.ndim != 2 or array.shape[1] != 2)):
+            raise Exception("Invalid data for input vector of pairs")
+        ct = array.ctypes
+        ct.array = array
+        return ct, c_size_t(len(o) * 2)
+    else:
+        if(len(o) and len(o[0]) != 2):
+            raise Exception("Invalid data for input vector of pairs")
+        return ((c_size_t * 2) * len(o))(*o), c_size_t(len(o) * 2)
+
 def _ivectorstring(o):
     return (c_char_p * len(o))(*(s.encode() for s in o)), c_size_t(len(o))
 
@@ -1532,7 +1545,7 @@ class model:
             `elementPartition' can optionaly be provided to specify the partitioning of
             each element explicitely.
             """
-            api_elementPartition_, api_elementPartition_n_ = _ivectorpair(elementPartition)
+            api_elementPartition_, api_elementPartition_n_ = _ivectorpairsize(elementPartition)
             ierr = c_int()
             lib.gmshModelMeshPartition(
                 c_int(numPart),

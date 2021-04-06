@@ -505,7 +505,7 @@ GMSH_API void gmshModelMeshGenerate(const int dim,
  * `elementPartition' can optionaly be provided to specify the partitioning of
  * each element explicitely. */
 GMSH_API void gmshModelMeshPartition(const int numPart,
-                                     int * elementPartition, size_t elementPartition_n,
+                                     size_t * elementPartition, size_t elementPartition_n,
                                      int * ierr);
 
 /* Unpartition the mesh of the current model. */

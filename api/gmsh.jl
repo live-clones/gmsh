@@ -1233,18 +1233,18 @@ function generate(dim = 3)
 end
 
 """
-    gmsh.model.mesh.partition(numPart, elementPartition = Tuple{Cint,Cint}[])
+    gmsh.model.mesh.partition(numPart, elementPartition = Tuple{Csize_t,Csize_t}[])
 
 Partition the mesh of the current model into `numPart` partitions.
 `elementPartition` can optionaly be provided to specify the partitioning of each
 element explicitely.
 """
-function partition(numPart, elementPartition = Tuple{Cint,Cint}[])
+function partition(numPart, elementPartition = Tuple{Csize_t,Csize_t}[])
     api_elementPartition_ = collect(Cint, Iterators.flatten(elementPartition))
     api_elementPartition_n_ = length(api_elementPartition_)
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshPartition, gmsh.lib), Cvoid,
-          (Cint, Ptr{Cint}, Csize_t, Ptr{Cint}),
+          (Cint, Ptr{Csize_t}, Csize_t, Ptr{Cint}),
           numPart, api_elementPartition_, api_elementPartition_n_, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
