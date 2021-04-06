@@ -3297,10 +3297,11 @@ Add a constraint to reverse the orientation of the mesh of the given
 curve(s) or surface(s) during meshing. @value{SYNC}
 
 @item ReorientMesh Volume @{ @var{expression-list} @} ;
-Add a constraint to reorient (during mesh generation) the meshes of the
+Add a constraint to reorient the meshes (during mesh generation) of the
 bounding surfaces of the given volumes so that the normals point outward
-to the volumes. Currently only available with the OpenCASCADE kernel, as
-it relies on the STL triangulation. @value{SYNC}
+to the volumes; and if a mesh already exists, reorient it. Currently
+only available with the OpenCASCADE kernel, as it relies on the STL
+triangulation. @value{SYNC}
 
 @item Save @var{char-expression};
 Save the current mesh in a file named @var{char-expression}, using the
