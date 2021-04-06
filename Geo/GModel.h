@@ -588,7 +588,10 @@ public:
   void setNumPartitions(std::size_t npart) { _numPartitions = npart; }
 
   // partition the mesh
-  int partitionMesh(int num);
+  int partitionMesh(
+      int num,
+      std::vector<std::pair<MElement*,int> >
+          elementPartition=std::vector<std::pair<MElement*,int> >());
   // unpartition the mesh
   int unpartitionMesh();
   // import a mesh partitionned by a tag given by element (i.e. the old way we

@@ -1182,11 +1182,20 @@ GMSH_API void gmsh::model::mesh::generate(const int dim)
   CTX::instance()->mesh.changed = ENT_ALL;
 }
 
-GMSH_API void gmsh::model::mesh::partition(const int numPart)
+GMSH_API void gmsh::model::mesh::partition(const int numPart,
+                                           const vectorpair &elementPartition)
 {
   if(!_checkInit()) return;
+  std::vector<std::pair<MElement*, int> > epart;
+  if (elementPartition.size() == 0) {
+    epart.reserve(elementPartition.size());
+    for (const auto ep : elementPartition) {
+      MElement *el = GModel::current()->getMeshElementByTag(ep.first);
+      epart.push_back(std::make_pair(el, ep.second));
+    }
+  }
   GModel::current()->partitionMesh(
-    numPart >= 0 ? numPart : CTX::instance()->mesh.numPartitions);
+    numPart >= 0 ? numPart : CTX::instance()->mesh.numPartitions, epart);
   CTX::instance()->mesh.changed = ENT_ALL;
 }
 

@@ -6,7 +6,7 @@
 #ifndef GMSH_H
 #define GMSH_H
 
-// This file redefines the Gmsh C++ API in terms of the C API (v4.8.3).
+// This file redefines the Gmsh C++ API in terms of the C API (v4.8.4).
 //
 // This is provided as a convenience for users of the binary Gmsh SDK whose C++
 // compiler ABI is not compatible with the ABI of the C++ compiler used to create
@@ -916,11 +916,16 @@ namespace gmsh { // Top-level functions
       }
 
       // Partition the mesh of the current model into `numPart' partitions.
-      inline void partition(const int numPart)
+      // elementPartition can optionaly be provided to specify the partitioning of
+      // each element explicitely.
+      inline void partition(const int numPart,
+                            const gmsh::vectorpair & elementPartition = gmsh::vectorpair())
       {
         int ierr = 0;
-        gmshModelMeshPartition(numPart, &ierr);
+        int *api_elementPartition_; size_t api_elementPartition_n_; vectorpair2intptr(elementPartition, &api_elementPartition_, &api_elementPartition_n_);
+        gmshModelMeshPartition(numPart, api_elementPartition_, api_elementPartition_n_, &ierr);
         if(ierr) throwLastError();
+        gmshFree(api_elementPartition_);
       }
 
       // Unpartition the mesh of the current model.

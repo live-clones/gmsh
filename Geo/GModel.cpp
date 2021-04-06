@@ -2061,13 +2061,20 @@ void GModel::setCurrentMeshEntity(GEntity *e)
   _currentMeshEntity = e;
 }
 
-int GModel::partitionMesh(int numPart)
+int GModel::partitionMesh(int numPart,
+    std::vector<std::pair<MElement*,int> > elementPartition)
 {
 #if defined(HAVE_MESH) && (defined(HAVE_METIS))
   opt_mesh_partition_num(0, GMSH_SET, numPart);
   if(numPart > 0) {
     if(_numPartitions > 0) UnpartitionMesh(this);
-    int ier = PartitionMesh(this);
+    int ier;
+    if (elementPartition.size() == 0) {
+      ier = PartitionMesh(this);
+    }
+    else {
+      ier = PartitionUsingThisSplit(this, numPart, elementPartition);
+    }
     return ier;
   }
   else {

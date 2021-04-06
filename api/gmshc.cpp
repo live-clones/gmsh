@@ -827,11 +827,16 @@ GMSH_API void gmshModelMeshGenerate(const int dim, int * ierr)
   }
 }
 
-GMSH_API void gmshModelMeshPartition(const int numPart, int * ierr)
+GMSH_API void gmshModelMeshPartition(const int numPart, int * elementPartition, size_t elementPartition_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    gmsh::model::mesh::partition(numPart);
+    gmsh::vectorpair api_elementPartition_(elementPartition_n/2);
+    for(size_t i = 0; i < elementPartition_n/2; ++i){
+      api_elementPartition_[i].first = elementPartition[i * 2 + 0];
+      api_elementPartition_[i].second = elementPartition[i * 2 + 1];
+    }
+    gmsh::model::mesh::partition(numPart, api_elementPartition_);
   }
   catch(...){
     if(ierr) *ierr = 1;
