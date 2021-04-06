@@ -285,16 +285,17 @@ GPoint OCCFace::closestPoint(const SPoint3 &qp,
     return GFace::closestPoint(qp, initialGuess);
 }
 
-SPoint2 OCCFace::parFromPoint(const SPoint3 &qp, bool onSurface) const
+SPoint2 OCCFace::parFromPoint(const SPoint3 &qp, bool onSurface,
+                              bool convTestXYZ) const
 {
   // less robust but can be much faster
   if(CTX::instance()->geom.occUseGenericClosestPoint)
-    return GFace::parFromPoint(qp);
+    return GFace::parFromPoint(qp, onSurface, convTestXYZ);
   double uv[2];
   if(_project(qp.data(), uv, nullptr))
     return SPoint2(uv[0], uv[1]);
-  else
-    return GFace::parFromPoint(qp);
+  else // fallback: force convergence test in XYZ coordinates
+    return GFace::parFromPoint(qp, true, true);
 }
 
 GEntity::GeomType OCCFace::geomType() const

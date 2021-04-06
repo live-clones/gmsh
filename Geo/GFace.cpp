@@ -468,7 +468,7 @@ void GFace::writeGEO(FILE *fp)
       num.push_back((*it)->tag());
     for(auto it = dir.begin(); it != dir.end(); it++)
       ori.push_back((*it) > 0 ? 1 : -1);
-    fprintf(fp, "Line Loop(%d) = ", tag());
+    fprintf(fp, "Curve Loop(%d) = ", tag());
     for(std::size_t i = 0; i < num.size(); i++) {
       if(i)
         fprintf(fp, ", %d", num[i] * ori[i]);
@@ -988,11 +988,12 @@ void GFace::getMetricEigenVectors(const SPoint2 &param, double eigVal[2],
 }
 
 void GFace::XYZtoUV(double X, double Y, double Z, double &U, double &V,
-                    double relax, bool onSurface) const
+                    double relax, bool onSurface, bool convTestXYZ) const
 {
   const double Precision = onSurface ? 1.e-8 : 1.e-3;
   const int MaxIter = onSurface ? 25 : 10;
   const int NumInitGuess = 9;
+  bool testXYZ = (convTestXYZ || CTX::instance()->mesh.NewtonConvergenceTestXYZ);
 
   double Unew = 0., Vnew = 0., err, err2;
   int iter;
@@ -1063,17 +1064,15 @@ void GFace::XYZtoUV(double X, double Y, double Z, double &U, double &V,
 
       if(iter < MaxIter && err <= tol && Unew <= umax && Vnew <= vmax &&
          Unew >= umin && Vnew >= vmin) {
-        if(onSurface && err2 > 1.e-4 * CTX::instance()->lc &&
-           !CTX::instance()->mesh.NewtonConvergenceTestXYZ) {
+        if(onSurface && err2 > 1.e-4 * CTX::instance()->lc && !testXYZ) {
           Msg::Warning("Converged at iter. %d for initial guess (%d,%d) "
                        "with uv error = %g, but xyz error = %g in point "
-                       "(%e,%e,%e) on surface %d",
+                       "(%e, %e, %e) on surface %d",
                        iter, i, j, err, err2, X, Y, Z, tag());
         }
 
-        if(onSurface && err2 > 1.e-4 * CTX::instance()->lc &&
-           CTX::instance()->mesh.NewtonConvergenceTestXYZ) {
-          // not converged in XYZ coordinates
+        if(onSurface && err2 > 1.e-4 * CTX::instance()->lc && testXYZ) {
+          // not converged in XYZ coordinates: try again
         }
         else {
           return;
@@ -1084,18 +1083,19 @@ void GFace::XYZtoUV(double X, double Y, double Z, double &U, double &V,
 
   if(!onSurface) return;
 
-  if(relax < 1.e-6)
-    Msg::Error("Could not converge: surface mesh will be wrong");
+  if(relax < 1.e-3)
+    Msg::Error("Inverse surface mapping could not converge");
   else {
     Msg::Info("point %g %g %g : Relaxation factor = %g", X, Y, Z, 0.75 * relax);
-    XYZtoUV(X, Y, Z, U, V, 0.75 * relax);
+    XYZtoUV(X, Y, Z, U, V, 0.75 * relax, onSurface, convTestXYZ);
   }
 }
 
-SPoint2 GFace::parFromPoint(const SPoint3 &p, bool onSurface) const
+SPoint2 GFace::parFromPoint(const SPoint3 &p, bool onSurface,
+                            bool convTestXYZ) const
 {
   double U = 0., V = 0.;
-  XYZtoUV(p.x(), p.y(), p.z(), U, V, 1.0, onSurface);
+  XYZtoUV(p.x(), p.y(), p.z(), U, V, 1.0, onSurface, convTestXYZ);
   return SPoint2(U, V);
 }
 

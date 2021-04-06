@@ -943,7 +943,7 @@ gmsh::model::getParametrization(const int dim, const int tag,
     GFace *gf = static_cast<GFace *>(entity);
     for(std::size_t i = 0; i < coord.size(); i += 3) {
       SPoint3 p(coord[i], coord[i + 1], coord[i + 2]);
-      SPoint2 uv = gf->parFromPoint(p);
+      SPoint2 uv = gf->parFromPoint(p, true, true);
       parametricCoord.push_back(uv.x());
       parametricCoord.push_back(uv.y());
     }
@@ -6476,6 +6476,7 @@ _addModelData(const int tag, const int step, const std::string &modelName,
     d->initAdaptiveData(view->getOptions()->timeStep,
                         view->getOptions()->maxRecursionLevel,
                         view->getOptions()->targetError);
+  view->setChanged(true);
 #else
   Msg::Error("Views require the post-processing module");
 #endif
@@ -6722,6 +6723,7 @@ GMSH_API void gmsh::view::addListData(const int tag,
   for(int idxtype = 0; idxtype < 24; idxtype++) {
     if(dataType == types[idxtype]) {
       d->importList(idxtype, numElements, data, true);
+      view->setChanged(true);
       return;
     }
   }
@@ -6838,6 +6840,7 @@ gmsh::view::addListDataString(const int tag, const std::vector<double> &coord,
     }
   }
   d->finalize();
+  view->setChanged(true);
 #else
   Msg::Error("Views require the post-processing module");
 #endif
@@ -6965,6 +6968,7 @@ GMSH_API void gmsh::view::setInterpolationMatrices(
 
   if(dGeo <= 0) {
     data->setInterpolationMatrices(itype, F, P);
+    view->setChanged(true);
     return;
   }
 
@@ -6985,6 +6989,7 @@ GMSH_API void gmsh::view::setInterpolationMatrices(
     for(int j = 0; j < 3; j++) { Pg(i, j) = expGeo[3 * i + j]; }
   }
   data->setInterpolationMatrices(itype, F, P, Fg, Pg);
+  view->setChanged(true);
 #else
   Msg::Error("Views require the post-processing module");
 #endif
@@ -7026,6 +7031,7 @@ GMSH_API void gmsh::view::copyOptions(const int refTag, const int tag)
     return;
   }
   view->setOptions(ref->getOptions());
+  view->setChanged(true);
 #if defined(HAVE_FLTK)
   if(FlGui::available()) FlGui::instance()->updateViews(true, true);
 #endif

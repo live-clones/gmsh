@@ -287,7 +287,8 @@ GPoint gmshFace::closestPoint(const SPoint3 &qp,
   return GPoint(v.Pos.X, v.Pos.Y, v.Pos.Z, this, u);
 }
 
-SPoint2 gmshFace::parFromPoint(const SPoint3 &qp, bool onSurface) const
+SPoint2 gmshFace::parFromPoint(const SPoint3 &qp, bool onSurface,
+                               bool convTestXYZ) const
 {
   if(_s->Typ == MSH_SURF_PLAN) {
     double x, y, z, VX[3], VY[3];
@@ -298,7 +299,7 @@ SPoint2 gmshFace::parFromPoint(const SPoint3 &qp, bool onSurface) const
     return SPoint2(u, v);
   }
   else {
-    return GFace::parFromPoint(qp, onSurface);
+    return GFace::parFromPoint(qp, onSurface, convTestXYZ);
   }
 }
 

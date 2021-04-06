@@ -45,7 +45,8 @@ public:
   virtual GEntity::GeomType geomType() const;
   virtual ModelType getNativeType() const { return OpenCascadeModel; }
   virtual void *getNativePtr() const { return (void *)&_s; }
-  virtual SPoint2 parFromPoint(const SPoint3 &, bool onSurface = true) const;
+  virtual SPoint2 parFromPoint(const SPoint3 &, bool onSurface = true,
+                               bool convTestXYZ = false) const;
   virtual double curvatureMax(const SPoint2 &param) const;
   virtual double curvatures(const SPoint2 &param, SVector3 &dirMax,
                             SVector3 &dirMin, double &curvMax,
