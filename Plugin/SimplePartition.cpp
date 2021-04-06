@@ -171,8 +171,7 @@ void GMSH_SimplePartitionPlugin::run()
 
   opt_mesh_partition_create_topology(0, GMSH_SET | GMSH_GUI, createTopology);
 
-  int ier = PartitionUsingThisSplit(m, numSlicesX * numSlicesY * numSlicesZ,
-                                    elmToPartition);
+  int ier = PartitionUsingThisSplit(m, elmToPartition);
   if(!ier) {
     opt_mesh_color_carousel(0, GMSH_SET | GMSH_GUI, 3.);
     CTX::instance()->mesh.changed = ENT_ALL;

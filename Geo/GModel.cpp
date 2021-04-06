@@ -2066,7 +2066,7 @@ int GModel::partitionMesh(
     if(elementPartition.empty())
       return PartitionMesh(this, numPart);
     else
-      return PartitionUsingThisSplit(this, numPart, elementPartition);
+      return PartitionUsingThisSplit(this, elementPartition);
   }
   return 1;
 #else

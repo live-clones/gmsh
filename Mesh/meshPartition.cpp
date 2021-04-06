@@ -15,6 +15,7 @@
 #include <cstdlib>
 #include <map>
 #include <unordered_map>
+#include <unordered_set>
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "GModel.h"
@@ -2512,11 +2513,19 @@ int UnpartitionMesh(GModel *model)
 
 // Create the partition according to the element split given by elmToPartition
 // Returns: 0 = success, 1 = no elements found.
-int PartitionUsingThisSplit(GModel *model, int numPart,
+int PartitionUsingThisSplit(GModel *model,
                             std::vector<std::pair<MElement *, int> > &elmToPart)
 {
   Graph graph(model);
   if(makeGraph(model, graph, -1)) return 1;
+  
+  int numPart = 0;
+  std::unordered_set< int > partTags;
+  for(std::size_t i = 0; i < elmToPart.size(); i++) {
+    partTags.insert(elmToPart[i].second);
+  }
+  numPart = partTags.size();
+  
   graph.createDualGraph(false);
   graph.nparts(numPart);
 
@@ -2600,7 +2609,7 @@ int ConvertOldPartitioningToNewOne(GModel *model)
     }
   }
 
-  return PartitionUsingThisSplit(model, partitions.size(), elmToPartition);
+  return PartitionUsingThisSplit(model, elmToPartition);
 }
 
 #else
@@ -2616,7 +2625,7 @@ int UnpartitionMesh(GModel *model) { return 0; }
 int ConvertOldPartitioningToNewOne(GModel *model) { return 0; }
 
 int PartitionUsingThisSplit(
-  GModel *model, std::size_t npart,
+  GModel *model,
   std::vector<std::pair<MElement *, int> > &elmToPartition)
 {
   Msg::Error("Gmsh must be compiled with METIS support to partition meshes");
