@@ -1236,7 +1236,7 @@ end
     gmsh.model.mesh.partition(numPart, elementPartition = Tuple{Cint,Cint}[])
 
 Partition the mesh of the current model into `numPart` partitions.
-elementPartition can optionaly be provided to specify the partitioning of each
+`elementPartition` can optionaly be provided to specify the partitioning of each
 element explicitely.
 """
 function partition(numPart, elementPartition = Tuple{Cint,Cint}[])

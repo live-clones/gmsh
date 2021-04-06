@@ -1076,8 +1076,8 @@ C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t1.cpp#L121,t1.cpp}, @url{@value{GI
 
 @item gmsh/model/mesh/partition
 Partition the mesh of the current model into @code{numPart} partitions.
-elementPartition can optionaly be provided to specify the partitioning of each
-element explicitely.
+@code{elementPartition} can optionaly be provided to specify the partitioning of
+each element explicitely.
 
 @table @asis
 @item Input:

@@ -2247,21 +2247,21 @@ int PartitionFaceMinEdgeLength(GFace *gf, int np, double tol)
 
 // Partition a mesh into n parts. Returns: 0 = success, 1 = error
 
-int PartitionMesh(GModel *model)
+int PartitionMesh(GModel *model, int numPart)
 {
-  if(CTX::instance()->mesh.numPartitions <= 0) return 0;
+  if(numPart <= 0) return 0;
 
   Msg::StatusBar(true, "Partitioning mesh...");
   double t1 = Cpu(), w1 = TimeOfDay();
 
   Graph graph(model);
   if(makeGraph(model, graph, -1)) return 1;
-  graph.nparts(CTX::instance()->mesh.numPartitions);
+  graph.nparts(numPart);
   if(partitionGraph(graph, true)) return 1;
 
   std::vector<std::size_t> elmCount[TYPE_MAX_NUM + 1];
   for(int i = 0; i < TYPE_MAX_NUM + 1; i++) {
-    elmCount[i].resize(CTX::instance()->mesh.numPartitions, 0);
+    elmCount[i].resize(numPart, 0);
   }
 
   // Assign partitions to elements
@@ -2305,8 +2305,7 @@ int PartitionMesh(GModel *model)
     if(totCount > 0) {
       Msg::Info(" - Repartition of %d %s: %lu(min) %lu(max) %g(avg)", totCount,
                 ElementType::nameOfParentType(i, totCount > 1).c_str(),
-                minCount, maxCount,
-                totCount / (double)CTX::instance()->mesh.numPartitions);
+                minCount, maxCount, totCount / (double)numPart);
     }
   }
 
@@ -2513,13 +2512,13 @@ int UnpartitionMesh(GModel *model)
 
 // Create the partition according to the element split given by elmToPartition
 // Returns: 0 = success, 1 = no elements found.
-int PartitionUsingThisSplit(GModel *model, std::size_t npart,
+int PartitionUsingThisSplit(GModel *model, int numPart,
                             std::vector<std::pair<MElement *, int> > &elmToPart)
 {
   Graph graph(model);
   if(makeGraph(model, graph, -1)) return 1;
   graph.createDualGraph(false);
-  graph.nparts(npart);
+  graph.nparts(numPart);
 
   hashmapelementpart elmToPartition;
   for(std::size_t i = 0; i < elmToPart.size(); i++)

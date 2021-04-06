@@ -1529,7 +1529,7 @@ class model:
             gmsh.model.mesh.partition(numPart, elementPartition=[])
 
             Partition the mesh of the current model into `numPart' partitions.
-            elementPartition can optionaly be provided to specify the partitioning of
+            `elementPartition' can optionaly be provided to specify the partitioning of
             each element explicitely.
             """
             api_elementPartition_, api_elementPartition_n_ = _ivectorpair(elementPartition)

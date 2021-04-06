@@ -2,7 +2,8 @@ Work-in-progress: new quasi-structured quad algorithm (replaces the "packing of
 parallelogram" algorithm); mesh renumbering now also renumbers dependent
 post-processing views; mesh size callback is now per-model; small bug fixes.
 
-* Incompatible API changes: new optional arguments to model/isInside
+* Incompatible API changes: new optional arguments to model/isInside and
+  mesh/partition.
 
 4.8.2 (March 27, 2021): fixed regression in OCC transforms; fixed cwrap API.
 
@@ -29,7 +30,7 @@ improvements.
 
 * Incompatible API changes: new optional arguments to mesh/classifySurfaces,
   occ/addBSplineSurface, occ/addBezierSurface, occ/addPipe and view/probe;
-  renamed mesh/getEdgeNumber as mesh/getEdges
+  renamed mesh/getEdgeNumber as mesh/getEdges.
 
 4.7.1 (November 16, 2020): small bug fixes and improvements.
 
@@ -50,7 +51,7 @@ and added support for stock Mmg 5; Gmsh now requires C++11 and CMake 3.1, and
 uses Eigen by default instead of Blas/Lapack for dense linear algebra; small bug
 fixes.
 
-* Incompatible API changes: new optional argument to geo/addCurveLoop
+* Incompatible API changes: new optional argument to geo/addCurveLoop.
 
 4.6.0 (June 22, 2020): new options to only generate initial 2D or 3D meshes
 (without node insertion), and to only mesh non-meshed entities; added ability to
@@ -66,7 +67,8 @@ preserves node and element tags; small bug fixes.
   mesh/createTopology, mesh/createGeometry, occ/addThruSections,
   mesh/getPeriodicNodes; new arguments to mesh/getBasisFunctions; removed
   mesh/preallocateBasisFunctions, mesh/precomputeBasisFunctions and
-  mesh/getBasisFunctionsForElements; renamed occ/setMeshSize as occ/mesh/setSize
+  mesh/getBasisFunctionsForElements; renamed occ/setMeshSize as
+  occ/mesh/setSize.
 
 4.5.6 (March 30, 2020): better calculation of OCC bounding boxes using STL; API
 tutorials; small bug fixes.
@@ -141,7 +143,7 @@ entities; fixed regression introduced in 4.1.4 that could lead to
 non-deterministic 2D meshes; small bug fixes.
 
 * Incompatible API changes: added optional arguments to mesh/getNodes and
-  mesh/getElementByCoordinates
+  mesh/getElementByCoordinates.
 
 4.2.3 (April 3, 2019): added STL export by physical surface; added ability to
 remove embedded entities; added handling of boundary entities in

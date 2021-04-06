@@ -916,8 +916,8 @@ namespace gmsh { // Top-level functions
       }
 
       // Partition the mesh of the current model into `numPart' partitions.
-      // elementPartition can optionaly be provided to specify the partitioning of
-      // each element explicitely.
+      // `elementPartition' can optionaly be provided to specify the partitioning
+      // of each element explicitely.
       inline void partition(const int numPart,
                             const gmsh::vectorpair & elementPartition = gmsh::vectorpair())
       {
