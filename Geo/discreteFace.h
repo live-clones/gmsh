@@ -43,7 +43,8 @@ public:
   virtual ~discreteFace() {}
   using GFace::point;
   GPoint point(double par1, double par2) const;
-  SPoint2 parFromPoint(const SPoint3 &p, bool onSurface = true) const;
+  SPoint2 parFromPoint(const SPoint3 &p, bool onSurface = true,
+                       bool convTestXYZ = false) const;
   Range<double> parBounds(int i) const;
   bool containsParam(const SPoint2 &pt);
   GPoint closestPoint(const SPoint3 &queryPoint, double maxDistance,

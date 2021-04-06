@@ -943,7 +943,7 @@ gmsh::model::getParametrization(const int dim, const int tag,
     GFace *gf = static_cast<GFace *>(entity);
     for(std::size_t i = 0; i < coord.size(); i += 3) {
       SPoint3 p(coord[i], coord[i + 1], coord[i + 2]);
-      SPoint2 uv = gf->parFromPoint(p);
+      SPoint2 uv = gf->parFromPoint(p, true, true);
       parametricCoord.push_back(uv.x());
       parametricCoord.push_back(uv.y());
     }

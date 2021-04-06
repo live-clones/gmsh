@@ -32,7 +32,8 @@ public:
   virtual bool haveParametrization();
   virtual ModelType getNativeType() const { return GmshModel; }
   virtual void *getNativePtr() const { return _s; }
-  virtual SPoint2 parFromPoint(const SPoint3 &, bool onSurface = true) const;
+  virtual SPoint2 parFromPoint(const SPoint3 &, bool onSurface = true,
+                               bool convTestXYZ = false) const;
   virtual void resetMeshAttributes();
   void resetNativePtr(Surface *s);
   bool degenerate(int dim) const;

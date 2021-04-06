@@ -257,7 +257,8 @@ GPoint discreteFace::closestPoint(const SPoint3 &queryPoint,
   return closestPoint(queryPoint, 1e-1);
 }
 
-SPoint2 discreteFace::parFromPoint(const SPoint3 &p, bool onSurface) const
+SPoint2 discreteFace::parFromPoint(const SPoint3 &p, bool onSurface,
+                                   bool convTestXYZ) const
 {
   GPoint gp = closestPoint(p, 1e-6);
   return SPoint2(gp.u(), gp.v());
