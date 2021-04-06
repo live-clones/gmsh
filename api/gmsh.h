@@ -487,13 +487,15 @@ namespace gmsh { // Top-level functions
 
     // gmsh::model::isInside
     //
-    // Check if the parametric coordinates provided in `parametricCoord' correspond
-    // to points inside the entitiy of dimension `dim' and tag `tag', and return
-    // the number of points inside. This feature is only available for a subset of
-    // curves and surfaces, depending on the underyling geometrical representation.
+    // Check if the coordinates (or the parametric coordinates if `parametric' is
+    // set) provided in `coord' correspond to points inside the entity of dimension
+    // `dim' and tag `tag', and return the number of points inside. This feature is
+    // only available for a subset of curves and surfaces, depending on the
+    // underyling geometrical representation.
     GMSH_API int isInside(const int dim,
                           const int tag,
-                          const std::vector<double> & parametricCoord);
+                          const std::vector<double> & coord,
+                          const bool parametric = true);
 
     // gmsh::model::getClosestPoint
     //

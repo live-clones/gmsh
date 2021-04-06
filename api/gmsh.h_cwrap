@@ -767,19 +767,21 @@ namespace gmsh { // Top-level functions
       max.assign(api_max_, api_max_ + api_max_n_); gmshFree(api_max_);
     }
 
-    // Check if the parametric coordinates provided in `parametricCoord' correspond
-    // to points inside the entitiy of dimension `dim' and tag `tag', and return
-    // the number of points inside. This feature is only available for a subset of
-    // curves and surfaces, depending on the underyling geometrical representation.
+    // Check if the coordinates (or the parametric coordinates if `parametric' is
+    // set) provided in `coord' correspond to points inside the entity of dimension
+    // `dim' and tag `tag', and return the number of points inside. This feature is
+    // only available for a subset of curves and surfaces, depending on the
+    // underyling geometrical representation.
     inline int isInside(const int dim,
                         const int tag,
-                        const std::vector<double> & parametricCoord)
+                        const std::vector<double> & coord,
+                        const bool parametric = true)
     {
       int ierr = 0;
-      double *api_parametricCoord_; size_t api_parametricCoord_n_; vector2ptr(parametricCoord, &api_parametricCoord_, &api_parametricCoord_n_);
-      int result_api_ = gmshModelIsInside(dim, tag, api_parametricCoord_, api_parametricCoord_n_, &ierr);
+      double *api_coord_; size_t api_coord_n_; vector2ptr(coord, &api_coord_, &api_coord_n_);
+      int result_api_ = gmshModelIsInside(dim, tag, api_coord_, api_coord_n_, (int)parametric, &ierr);
       if(ierr) throwLastError();
-      gmshFree(api_parametricCoord_);
+      gmshFree(api_coord_);
       return result_api_;
     }
 

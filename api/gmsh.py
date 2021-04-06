@@ -1286,24 +1286,25 @@ class model:
     get_parametrization_bounds = getParametrizationBounds
 
     @staticmethod
-    def isInside(dim, tag, parametricCoord):
+    def isInside(dim, tag, coord, parametric=True):
         """
-        gmsh.model.isInside(dim, tag, parametricCoord)
+        gmsh.model.isInside(dim, tag, coord, parametric=True)
 
-        Check if the parametric coordinates provided in `parametricCoord'
-        correspond to points inside the entitiy of dimension `dim' and tag `tag',
-        and return the number of points inside. This feature is only available for
-        a subset of curves and surfaces, depending on the underyling geometrical
-        representation.
+        Check if the coordinates (or the parametric coordinates if `parametric' is
+        set) provided in `coord' correspond to points inside the entity of
+        dimension `dim' and tag `tag', and return the number of points inside. This
+        feature is only available for a subset of curves and surfaces, depending on
+        the underyling geometrical representation.
 
         Return an integer value.
         """
-        api_parametricCoord_, api_parametricCoord_n_ = _ivectordouble(parametricCoord)
+        api_coord_, api_coord_n_ = _ivectordouble(coord)
         ierr = c_int()
         api_result_ = lib.gmshModelIsInside(
             c_int(dim),
             c_int(tag),
-            api_parametricCoord_, api_parametricCoord_n_,
+            api_coord_, api_coord_n_,
+            c_int(bool(parametric)),
             byref(ierr))
         if ierr.value != 0:
             raise Exception(logger.getLastError())

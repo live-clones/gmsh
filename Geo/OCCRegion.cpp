@@ -14,13 +14,14 @@
 
 #if defined(HAVE_OCC)
 
+#include <BRepBndLib.hxx>
+#include <BRepClass3d_SolidClassifier.hxx>
+#include <BRepTools.hxx>
+#include <BRep_Builder.hxx>
 #include <Bnd_Box.hxx>
+#include <TopExp_Explorer.hxx>
 #include <TopoDS.hxx>
 #include <TopoDS_Compound.hxx>
-#include <TopExp_Explorer.hxx>
-#include <BRep_Builder.hxx>
-#include <BRepBndLib.hxx>
-#include <BRepTools.hxx>
 
 OCCRegion::OCCRegion(GModel *m, TopoDS_Solid s, int num)
   : GRegion(m, num), _s(s)
@@ -117,6 +118,15 @@ SBoundingBox3d OCCRegion::bounds(bool fast)
 }
 
 GEntity::GeomType OCCRegion::geomType() const { return Volume; }
+
+bool OCCRegion::containsPoint(const SPoint3 &pt) const
+{
+  BRepClass3d_SolidClassifier solidClassifier(_s);
+  solidClassifier.Perform(gp_Pnt{pt.x(), pt.y(), pt.z()},
+                          CTX::instance()->geom.tolerance);
+  const TopAbs_State state = solidClassifier.State();
+  return (state == TopAbs_IN || state == TopAbs_ON);
+}
 
 void OCCRegion::writeBREP(const char *filename)
 {

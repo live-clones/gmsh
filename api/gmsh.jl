@@ -1029,20 +1029,21 @@ end
 const get_parametrization_bounds = getParametrizationBounds
 
 """
-    gmsh.model.isInside(dim, tag, parametricCoord)
+    gmsh.model.isInside(dim, tag, coord, parametric = true)
 
-Check if the parametric coordinates provided in `parametricCoord` correspond to
-points inside the entitiy of dimension `dim` and tag `tag`, and return the
-number of points inside. This feature is only available for a subset of curves
-and surfaces, depending on the underyling geometrical representation.
+Check if the coordinates (or the parametric coordinates if `parametric` is set)
+provided in `coord` correspond to points inside the entity of dimension `dim`
+and tag `tag`, and return the number of points inside. This feature is only
+available for a subset of curves and surfaces, depending on the underyling
+geometrical representation.
 
 Return an integer value.
 """
-function isInside(dim, tag, parametricCoord)
+function isInside(dim, tag, coord, parametric = true)
     ierr = Ref{Cint}()
     api_result_ = ccall((:gmshModelIsInside, gmsh.lib), Cint,
-          (Cint, Cint, Ptr{Cdouble}, Csize_t, Ptr{Cint}),
-          dim, tag, convert(Vector{Cdouble}, parametricCoord), length(parametricCoord), ierr)
+          (Cint, Cint, Ptr{Cdouble}, Csize_t, Cint, Ptr{Cint}),
+          dim, tag, convert(Vector{Cdouble}, coord), length(coord), parametric, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_result_
 end

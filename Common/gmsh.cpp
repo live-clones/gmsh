@@ -971,7 +971,8 @@ GMSH_API void gmsh::model::getParametrizationBounds(const int dim,
 }
 
 GMSH_API int gmsh::model::isInside(const int dim, const int tag,
-                                   const std::vector<double> &parametricCoord)
+                                   const std::vector<double> &coord,
+                                   const bool parametric)
 {
   if(!_checkInit()) return -1;
   GEntity *entity = GModel::current()->getEntityByTag(dim, tag);
@@ -980,21 +981,33 @@ GMSH_API int gmsh::model::isInside(const int dim, const int tag,
     return 0;
   }
   int num = 0;
-  if(dim == 1) {
-    GEdge *ge = static_cast<GEdge *>(entity);
-    for(std::size_t i = 0; i < parametricCoord.size(); i++) {
-      if(ge->containsParam(parametricCoord[i])) num++;
+  if(parametric) {
+    if(dim == 1) {
+      GEdge *ge = static_cast<GEdge *>(entity);
+      for(std::size_t i = 0; i < coord.size(); i++) {
+        if(ge->containsParam(coord[i])) num++;
+      }
+    }
+    else if(dim == 2) {
+      GFace *gf = static_cast<GFace *>(entity);
+      if(coord.size() % 2) {
+        Msg::Error("Number of parametric coordinates should be even");
+        return num;
+      }
+      for(std::size_t i = 0; i < coord.size(); i += 2) {
+        SPoint2 param(coord[i], coord[i + 1]);
+        if(gf->containsParam(param)) num++;
+      }
     }
   }
-  else if(dim == 2) {
-    if(parametricCoord.size() % 2) {
-      Msg::Error("Number of parametric coordinates should be even");
-      return num;
+  else{
+    if(coord.size() % 3) {
+      Msg::Error("Number of coordinates should be a multiple of 3");
+      return 0;
     }
-    GFace *gf = static_cast<GFace *>(entity);
-    for(std::size_t i = 0; i < parametricCoord.size(); i += 2) {
-      SPoint2 param(parametricCoord[i], parametricCoord[i + 1]);
-      if(gf->containsParam(param)) num++;
+    for(std::size_t i = 0; i < coord.size(); i += 3) {
+      SPoint3 pt(coord[i], coord[i + 1], coord[i + 2]);
+      if(entity->containsPoint(pt)) num++;
     }
   }
   return num;

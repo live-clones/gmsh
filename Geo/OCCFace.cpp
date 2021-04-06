@@ -21,6 +21,7 @@
 #include <BRepBndLib.hxx>
 #include <BRepClass_FaceClassifier.hxx>
 #include <BRepLProp_SLProps.hxx>
+#include <BRepTools.hxx>
 #include <BRep_Builder.hxx>
 #include <Bnd_Box.hxx>
 #include <GeomAPI_ProjectPointOnSurf.hxx>
@@ -39,7 +40,6 @@
 #include <TopoDS.hxx>
 #include <gp_Pln.hxx>
 #include <gp_Sphere.hxx>
-#include <BRepTools.hxx>
 
 OCCFace::OCCFace(GModel *m, TopoDS_Face s, int num)
   : GFace(m, num), _s(s), _sf(s, Standard_True), _radius(-1)
@@ -289,7 +289,7 @@ SPoint2 OCCFace::parFromPoint(const SPoint3 &qp, bool onSurface) const
 {
   // less robust but can be much faster
   if(CTX::instance()->geom.occUseGenericClosestPoint)
-    return GFace::parFromPoint(qp);
+    return GFace::parFromPoint(qp, on);
   double uv[2];
   if(_project(qp.data(), uv, nullptr))
     return SPoint2(uv[0], uv[1]);
@@ -358,6 +358,7 @@ double OCCFace::curvatures(const SPoint2 &param, SVector3 &dirMax,
 
 bool OCCFace::containsPoint(const SPoint3 &pt) const
 {
+#if 0
   if(geomType() == Plane) {
     gp_Pln pl = Handle(Geom_Plane)::DownCast(_occface)->Pln();
     double n[3], c;
@@ -393,9 +394,17 @@ bool OCCFace::containsPoint(const SPoint3 &pt) const
     // we're inside if angle equals 2 * pi
     return std::abs(angle) > 2 * M_PI - 0.5 && std::abs(angle) < 2 * M_PI + 0.5;
   }
-  else
+  else {
     Msg::Error("Not done yet...");
+  }
   return false;
+#else
+  const Standard_Real tolerance = BRep_Tool::Tolerance(_s);
+  BRepClass_FaceClassifier faceClassifier;
+  faceClassifier.Perform(_s, gp_Pnt{pt.x(), pt.y(), pt.z()}, tolerance);
+  const TopAbs_State state = faceClassifier.State();
+  return (state == TopAbs_IN || state == TopAbs_ON);
+#endif
 }
 
 bool OCCFace::buildSTLTriangulation(bool force)

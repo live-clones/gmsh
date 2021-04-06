@@ -25,6 +25,7 @@ public:
   virtual GeomType geomType() const;
   virtual ModelType getNativeType() const { return OpenCascadeModel; }
   virtual void *getNativePtr() const { return (void *)&_s; }
+  virtual bool containsPoint(const SPoint3 &pt) const;
   void writeBREP(const char *filename);
 };
 

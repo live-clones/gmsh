@@ -412,14 +412,15 @@ GMSH_API void gmshModelGetParametrizationBounds(const int dim,
                                                 double ** max, size_t * max_n,
                                                 int * ierr);
 
-/* Check if the parametric coordinates provided in `parametricCoord'
- * correspond to points inside the entitiy of dimension `dim' and tag `tag',
- * and return the number of points inside. This feature is only available for
- * a subset of curves and surfaces, depending on the underyling geometrical
- * representation. */
+/* Check if the coordinates (or the parametric coordinates if `parametric' is
+ * set) provided in `coord' correspond to points inside the entity of
+ * dimension `dim' and tag `tag', and return the number of points inside. This
+ * feature is only available for a subset of curves and surfaces, depending on
+ * the underyling geometrical representation. */
 GMSH_API int gmshModelIsInside(const int dim,
                                const int tag,
-                               double * parametricCoord, size_t parametricCoord_n,
+                               double * coord, size_t coord_n,
+                               const int parametric,
                                int * ierr);
 
 /* Get the points `closestCoord' on the entity of dimension `dim' and tag

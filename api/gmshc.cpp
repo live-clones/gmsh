@@ -696,13 +696,13 @@ GMSH_API void gmshModelGetParametrizationBounds(const int dim, const int tag, do
   }
 }
 
-GMSH_API int gmshModelIsInside(const int dim, const int tag, double * parametricCoord, size_t parametricCoord_n, int * ierr)
+GMSH_API int gmshModelIsInside(const int dim, const int tag, double * coord, size_t coord_n, const int parametric, int * ierr)
 {
   int result_api_ = 0;
   if(ierr) *ierr = 0;
   try {
-    std::vector<double> api_parametricCoord_(parametricCoord, parametricCoord + parametricCoord_n);
-    result_api_ = gmsh::model::isInside(dim, tag, api_parametricCoord_);
+    std::vector<double> api_coord_(coord, coord + coord_n);
+    result_api_ = gmsh::model::isInside(dim, tag, api_coord_, parametric);
   }
   catch(...){
     if(ierr) *ierr = 1;
