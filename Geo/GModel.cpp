@@ -777,10 +777,8 @@ void GModel::addPhysicalGroup(int dim, int tag, const std::vector<int> &tags)
     if(ge)
       ge->physicals.push_back((t > 0) ? tag : -tag);
     else
-      Msg::Warning(
-        "Unknown entity of dimension %d and tag %d in physical group "
-        "%d",
-        dim, t, tag);
+      Msg::Warning("Unknown entity of dimension %d and tag %d in physical "
+                   "group %d", dim, t, tag);
   }
 }
 
@@ -1039,7 +1037,7 @@ checkConformity(std::multimap<MFace, MElement *, MFaceLessThan> &faceToElement,
       for(std::size_t iV = 0; iV < face.getNumVertices(); iV++)
         if(face.getVertex(iV)->onWhat()->dim() == 3 || connectivity != 1) {
           for(std::size_t jV = 0; jV < face.getNumVertices(); jV++)
-            Msg::Info("Vertex %i dim %i", face.getVertex(jV)->getNum(),
+            Msg::Info("Node %i on entity of dim %i", face.getVertex(jV)->getNum(),
                       face.getVertex(iV)->onWhat()->dim());
           Msg::Error("Non conforming element %i (%i connection(s) for a face "
                      "located on dim %i (vertex %i))",
