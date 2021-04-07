@@ -15,7 +15,6 @@
 #include <cstdlib>
 #include <map>
 #include <unordered_map>
-#include <unordered_set>
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "GModel.h"
@@ -221,8 +220,7 @@ public:
 
     return elements;
   }
-  void assignGhostCells()
-  {
+  std::vector<GEntity *> createGhostEntities() {
     std::vector<GEntity *> ghostEntities(_nparts, (GEntity *)nullptr);
     int elementaryNumber = _model->getMaxElementaryNumber(_dim);
     for(std::size_t i = 1; i <= _nparts; i++) {
@@ -242,6 +240,11 @@ public:
       default: break;
       }
     }
+    return ghostEntities;
+  }
+  void assignGhostCells()
+  {
+    std::vector<GEntity *> ghostEntities = createGhostEntities();
     for(std::size_t i = 0; i < _ne; i++) {
       std::set<int> ghostCellsPartition;
       for(idx_t j = _xadj[i]; j < _xadj[i + 1]; j++) {
@@ -2510,7 +2513,7 @@ int UnpartitionMesh(GModel *model)
 }
 
 // Create the partition according to the element split given by elmToPartition
-// Returns: 0 = success, 1 = no elements found.
+// Returns: 0 = success, 1 = no elements found/invalid data.
 int PartitionUsingThisSplit(GModel *model,
                             std::vector<std::pair<MElement *, int> > &elmToPart)
 {
@@ -2518,18 +2521,22 @@ int PartitionUsingThisSplit(GModel *model,
   if(makeGraph(model, graph, -1)) return 1;
 
   int numPart = 0;
-  std::unordered_set<int> partTags;
-  for(std::size_t i = 0; i < elmToPart.size(); i++) {
-    partTags.insert(elmToPart[i].second);
+  hashmapelementpart elmToPartition;
+  std::vector<std::pair<MElement*, int> > elmGhosts;
+  for(auto item : elmToPart) {
+    MElement *el = item.first;
+    int part = item.second;
+    if(part == 0) {
+      Msg::Error("Partition tag cannot be 0");
+      return 1;
+    }
+    if(part > 0) elmToPartition[el] = part;
+    else elmGhosts.push_back(std::make_pair(el, -part));
+    numPart = std::max(std::abs(part), numPart);
   }
-  numPart = partTags.size();
 
   graph.createDualGraph(false);
   graph.nparts(numPart);
-
-  hashmapelementpart elmToPartition;
-  for(std::size_t i = 0; i < elmToPart.size(); i++)
-    elmToPartition[elmToPart[i].first] = elmToPart[i].second;
 
   if(elmToPartition.size() != graph.ne()) {
     Msg::Error("All elements are not partitioned");
@@ -2562,7 +2569,6 @@ int PartitionUsingThisSplit(GModel *model,
   model->setNumPartitions(graph.nparts());
 
   createNewEntities(model, elmToPartition);
-  elmToPartition.clear();
 
   if(CTX::instance()->mesh.partitionCreateTopology) {
     Msg::StatusBar(true, "Creating partition topology...");
@@ -2576,11 +2582,40 @@ int PartitionUsingThisSplit(GModel *model,
   assignPhysicals(model);
   assignMeshVertices(model);
 
-  if(CTX::instance()->mesh.partitionCreateGhostCells) {
+  if (!elmGhosts.empty()) {
+    std::sort(elmGhosts.begin(), elmGhosts.end());
+    auto last = std::unique(elmGhosts.begin(), elmGhosts.end());
+    elmGhosts.erase(last, elmGhosts.end());
+    std::vector<ghostFace*> ghostFace(numPart, nullptr);
+    std::vector<GEntity *> ghostEntities = graph.createGhostEntities();
+    for (auto elmGhost : elmGhosts) {
+      MElement *el = elmGhost.first;
+      int part = elmGhost.second;
+      if(el->getDim() == graph.dim()) {
+        switch(graph.dim()) {
+          case 1:
+            static_cast<ghostEdge *>(ghostEntities[part-1])
+              ->addElement(el->getType(), el, elmToPartition[el]);
+            break;
+          case 2:
+            static_cast<ghostFace *>(ghostEntities[part-1])
+              ->addElement(el->getType(), el, elmToPartition[el]);
+            break;
+          case 3:
+            static_cast<ghostRegion *>(ghostEntities[part-1])
+              ->addElement(el->getType(), el, elmToPartition[el]);
+            break;
+          default: break;
+        }
+      }
+    }
+  }
+  else if(CTX::instance()->mesh.partitionCreateGhostCells) {
     graph.clearDualGraph();
     graph.createDualGraph(false);
     graph.assignGhostCells();
   }
+  elmToPartition.clear();
 
   return 0;
 }
