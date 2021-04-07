@@ -1370,9 +1370,9 @@ namespace gmsh { // Top-level functions
       // gmsh::model::mesh::setOutwardOrientation
       //
       // Set meshing constraints on the bounding surfaces of the volume of tag
-      // `tag' so that all surfaces are oriented with outward pointing normals.
-      // Currently only available with the OpenCASCADE kernel, as it relies on the
-      // STL triangulation.
+      // `tag' so that all surfaces are oriented with outward pointing normals; and
+      // if a mesh already exists, reorient it. Currently only available with the
+      // OpenCASCADE kernel, as it relies on the STL triangulation.
       GMSH_API void setOutwardOrientation(const int tag);
 
       // gmsh::model::mesh::removeConstraints

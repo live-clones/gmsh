@@ -21,6 +21,10 @@
 #include "ExtrudeParams.h"
 #include "GmshDefines.h"
 
+#if defined(HAVE_MESH)
+#include "meshGFace.h"
+#endif
+
 GRegion::GRegion(GModel *model, int tag) : GEntity(model, tag)
 {
   GRegion::resetMeshAttributes();
@@ -888,6 +892,14 @@ bool GRegion::setOutwardOrientationMeshConstraint()
         gf->meshAttributes.reverseMesh = true;
         Msg::Info("Setting reverse mesh attribute on surface %d", gf->tag());
       }
+      else {
+        gf->meshAttributes.reverseMesh = false;
+      }
+#if defined(HAVE_MESH)
+      // if a mesh already exists, reorient it
+      orientMeshGFace o;
+      o(gf);
+#endif
       ++it;
     }
   }

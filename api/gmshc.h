@@ -1204,9 +1204,9 @@ GMSH_API void gmshModelMeshSetCompound(const int dim,
                                        int * ierr);
 
 /* Set meshing constraints on the bounding surfaces of the volume of tag `tag'
- * so that all surfaces are oriented with outward pointing normals. Currently
- * only available with the OpenCASCADE kernel, as it relies on the STL
- * triangulation. */
+ * so that all surfaces are oriented with outward pointing normals; and if a
+ * mesh already exists, reorient it. Currently only available with the
+ * OpenCASCADE kernel, as it relies on the STL triangulation. */
 GMSH_API void gmshModelMeshSetOutwardOrientation(const int tag,
                                                  int * ierr);
 

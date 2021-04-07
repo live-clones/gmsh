@@ -2701,8 +2701,9 @@ const set_compound = setCompound
     gmsh.model.mesh.setOutwardOrientation(tag)
 
 Set meshing constraints on the bounding surfaces of the volume of tag `tag` so
-that all surfaces are oriented with outward pointing normals. Currently only
-available with the OpenCASCADE kernel, as it relies on the STL triangulation.
+that all surfaces are oriented with outward pointing normals; and if a mesh
+already exists, reorient it. Currently only available with the OpenCASCADE
+kernel, as it relies on the STL triangulation.
 """
 function setOutwardOrientation(tag)
     ierr = Ref{Cint}()
