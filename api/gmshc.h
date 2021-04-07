@@ -502,10 +502,11 @@ GMSH_API void gmshModelMeshGenerate(const int dim,
                                     int * ierr);
 
 /* Partition the mesh of the current model into `numPart' partitions.
- * `elementPartition' can optionaly be provided to specify the partitioning of
- * each element explicitely. */
+ * Optionally, `elementTags' and `partitions' can be provided to specify the
+ * partition of each element explicitly. */
 GMSH_API void gmshModelMeshPartition(const int numPart,
-                                     size_t * elementPartition, size_t elementPartition_n,
+                                     size_t * elementTags, size_t elementTags_n,
+                                     int * partitions, size_t partitions_n,
                                      int * ierr);
 
 /* Unpartition the mesh of the current model. */

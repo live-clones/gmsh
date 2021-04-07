@@ -213,34 +213,6 @@ def ivectorpair(name, value=None, python_value=None, julia_value=None):
     return a
 
 
-def ivectorpairsize(name, value=None, python_value=None, julia_value=None):
-    if julia_value == "[]":
-        julia_value = "Tuple{Csize_t,Csize_t}[]"
-    a = arg(name, value, python_value, julia_value,
-            "const " + ns + "::vectorpairsize &", "const size_t *", False)
-    api_name = "api_" + name + "_"
-    api_name_n = "api_" + name + "_n_"
-    a.c_pre = ("    " + ns + "::vectorpairsize " + api_name + "(" + name +
-               "_n/2);\n" + "    for(size_t i = 0; i < " + name +
-               "_n/2; ++i){\n" + "      " + api_name + "[i].first = " + name +
-               "[i * 2 + 0];\n" + "      " + api_name + "[i].second = " +
-               name + "[i * 2 + 1];\n" + "    }\n")
-    a.c_arg = api_name
-    a.c = "size_t * " + name + ", size_t " + name + "_n"
-    a.cwrap_pre = ("size_t *" + api_name + "; size_t " + api_name_n + "; " +
-                   "vectorpairsize2sizeptr(" + name + ", &" + api_name + ", &" +
-                   api_name_n + ");\n")
-    a.cwrap_arg = api_name + ", " + api_name_n
-    a.cwrap_post = ns + "Free(" + api_name + ");\n"
-    a.python_pre = api_name + ", " + api_name_n + " = _ivectorpairsize(" + name + ")"
-    a.python_arg = api_name + ", " + api_name_n
-    a.julia_ctype = "Ptr{Csize_t}, Csize_t"
-    a.julia_pre = (api_name + " = collect(Cint, Iterators.flatten(" + name +
-                   "))\n    " + api_name_n + " = length(" + api_name + ")")
-    a.julia_arg = (api_name + ", " + api_name_n)
-    return a
-
-
 def ivectorvectorint(name, value=None, python_value=None, julia_value=None):
     if julia_value == "[]":
         julia_value = "Vector{Cint}[]"
@@ -868,7 +840,6 @@ namespace {7} {{
   // different dimensions, the entities are packed as a vector of (dim, tag)
   // integer pairs.
   typedef std::vector<std::pair<int, int> > vectorpair;
-  typedef std::vector<std::pair<size_t, size_t> > vectorpairsize;
 
 }}
 
@@ -1020,16 +991,6 @@ template<typename t>
 {1}void vectorpair2intptr(const {0}::vectorpair &v, int **p, size_t *size)
 {{
   *p = (int*){0}Malloc(sizeof(int) * v.size() * 2);
-  for(size_t i = 0; i < v.size(); ++i){{
-    (*p)[i * 2 + 0] = v[i].first;
-    (*p)[i * 2 + 1] = v[i].second;
-  }}
-  *size = v.size() * 2;
-}}
-
-{1}void vectorpairsize2sizeptr(const {0}::vectorpairsize &v, size_t **p, size_t *size)
-{{
-  *p = (size_t*){0}Malloc(sizeof(size_t) * v.size() * 2);
   for(size_t i = 0; i < v.size(); ++i){{
     (*p)[i * 2 + 0] = v[i].first;
     (*p)[i * 2 + 1] = v[i].second;
@@ -1236,19 +1197,6 @@ def _ivectorpair(o):
         if(len(o) and len(o[0]) != 2):
             raise Exception("Invalid data for input vector of pairs")
         return ((c_int * 2) * len(o))(*o), c_size_t(len(o) * 2)
-
-def _ivectorpairsize(o):
-    if use_numpy:
-        array = numpy.ascontiguousarray(o, numpy.uint64)
-        if(len(o) and (array.ndim != 2 or array.shape[1] != 2)):
-            raise Exception("Invalid data for input vector of pairs")
-        ct = array.ctypes
-        ct.array = array
-        return ct, c_size_t(len(o) * 2)
-    else:
-        if(len(o) and len(o[0]) != 2):
-            raise Exception("Invalid data for input vector of pairs")
-        return ((c_size_t * 2) * len(o))(*o), c_size_t(len(o) * 2)
 
 def _ivectorstring(o):
     return (c_char_p * len(o))(*(s.encode() for s in o)), c_size_t(len(o))

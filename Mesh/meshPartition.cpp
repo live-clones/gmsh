@@ -2261,9 +2261,7 @@ int PartitionMesh(GModel *model, int numPart)
   if(partitionGraph(graph, true)) return 1;
 
   std::vector<std::size_t> elmCount[TYPE_MAX_NUM + 1];
-  for(int i = 0; i < TYPE_MAX_NUM + 1; i++) {
-    elmCount[i].resize(numPart, 0);
-  }
+  for(int i = 0; i < TYPE_MAX_NUM + 1; i++) { elmCount[i].resize(numPart, 0); }
 
   // Assign partitions to elements
   hashmapelementpart elmToPartition;
@@ -2518,14 +2516,14 @@ int PartitionUsingThisSplit(GModel *model,
 {
   Graph graph(model);
   if(makeGraph(model, graph, -1)) return 1;
-  
+
   int numPart = 0;
-  std::unordered_set< int > partTags;
+  std::unordered_set<int> partTags;
   for(std::size_t i = 0; i < elmToPart.size(); i++) {
     partTags.insert(elmToPart[i].second);
   }
   numPart = partTags.size();
-  
+
   graph.createDualGraph(false);
   graph.nparts(numPart);
 
@@ -2625,8 +2623,7 @@ int UnpartitionMesh(GModel *model) { return 0; }
 int ConvertOldPartitioningToNewOne(GModel *model) { return 0; }
 
 int PartitionUsingThisSplit(
-  GModel *model,
-  std::vector<std::pair<MElement *, int> > &elmToPartition)
+  GModel *model, std::vector<std::pair<MElement *, int> > &elmToPartition)
 {
   Msg::Error("Gmsh must be compiled with METIS support to partition meshes");
   return 0;

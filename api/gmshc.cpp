@@ -41,16 +41,6 @@ void vectorpair2intptr(const gmsh::vectorpair &v, int **p, size_t *size)
   *size = v.size() * 2;
 }
 
-void vectorpairsize2sizeptr(const gmsh::vectorpairsize &v, size_t **p, size_t *size)
-{
-  *p = (size_t*)gmshMalloc(sizeof(size_t) * v.size() * 2);
-  for(size_t i = 0; i < v.size(); ++i){
-    (*p)[i * 2 + 0] = v[i].first;
-    (*p)[i * 2 + 1] = v[i].second;
-  }
-  *size = v.size() * 2;
-}
-
 void vectorstring2charptrptr(const std::vector<std::string> &v, char ***p, size_t *size)
 {
   *p = (char**)gmshMalloc(sizeof(char*) * v.size());
@@ -837,16 +827,13 @@ GMSH_API void gmshModelMeshGenerate(const int dim, int * ierr)
   }
 }
 
-GMSH_API void gmshModelMeshPartition(const int numPart, size_t * elementPartition, size_t elementPartition_n, int * ierr)
+GMSH_API void gmshModelMeshPartition(const int numPart, size_t * elementTags, size_t elementTags_n, int * partitions, size_t partitions_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    gmsh::vectorpairsize api_elementPartition_(elementPartition_n/2);
-    for(size_t i = 0; i < elementPartition_n/2; ++i){
-      api_elementPartition_[i].first = elementPartition[i * 2 + 0];
-      api_elementPartition_[i].second = elementPartition[i * 2 + 1];
-    }
-    gmsh::model::mesh::partition(numPart, api_elementPartition_);
+    std::vector<std::size_t> api_elementTags_(elementTags, elementTags + elementTags_n);
+    std::vector<int> api_partitions_(partitions, partitions + partitions_n);
+    gmsh::model::mesh::partition(numPart, api_elementTags_, api_partitions_);
   }
   catch(...){
     if(ierr) *ierr = 1;

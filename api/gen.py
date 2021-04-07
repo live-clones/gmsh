@@ -233,8 +233,8 @@ mesh = model.add_module('mesh', 'mesh functions')
 doc = '''Generate a mesh of the current model, up to dimension `dim' (0, 1, 2 or 3).'''
 mesh.add('generate', doc, None, iint('dim', '3'))
 
-doc = '''Partition the mesh of the current model into `numPart' partitions. `elementPartition' can optionaly be provided to specify the partitioning of each element explicitely.'''
-mesh.add('partition', doc, None, iint('numPart'), ivectorpairsize('elementPartition', 'gmsh::vectorpairsize()','[]', '[]'))
+doc = '''Partition the mesh of the current model into `numPart' partitions. Optionally, `elementTags' and `partitions' can be provided to specify the partition of each element explicitly.'''
+mesh.add('partition', doc, None, iint('numPart'), ivectorsize('elementTags', 'std::vector<std::size_t>()','[]', '[]'), ivectorint('partitions', 'std::vector<int>()','[]', '[]'))
 
 doc = '''Unpartition the mesh of the current model.'''
 mesh.add('unpartition', doc, None)

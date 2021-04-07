@@ -1180,17 +1180,27 @@ GMSH_API void gmsh::model::mesh::generate(const int dim)
   CTX::instance()->mesh.changed = ENT_ALL;
 }
 
-GMSH_API void gmsh::model::mesh::partition(const int numPart,
-                                           const vectorpairsize &elementPartition)
+GMSH_API void
+gmsh::model::mesh::partition(const int numPart,
+                             const std::vector<std::size_t> &elementTags,
+                             const std::vector<int> &partitions)
 {
   if(!_checkInit()) return;
   std::vector<std::pair<MElement *, int> > epart;
-  if(elementPartition.size()) {
-    epart.reserve(elementPartition.size());
-    for(const auto & ep : elementPartition) {
-      MElement *el = GModel::current()->getMeshElementByTag(ep.first);
-      if(el) epart.push_back(std::make_pair(el, ep.second));
-      else Msg::Error("Unknown element %d", ep.first);
+  if(elementTags.size()) {
+    if(elementTags.size() != partitions.size()) {
+      Msg::Error("Number of element tags (%d) does not match number of "
+                 "partitions (%d)",
+                 elementTags.size(), partitions.size());
+      return;
+    }
+    epart.reserve(elementTags.size());
+    for(std::size_t i = 0; i < elementTags.size(); i++) {
+      MElement *el = GModel::current()->getMeshElementByTag(elementTags[i]);
+      if(el)
+        epart.push_back(std::make_pair(el, partitions[i]));
+      else
+        Msg::Error("Unknown element %d", elementTags[i]);
     }
   }
   GModel::current()->partitionMesh(

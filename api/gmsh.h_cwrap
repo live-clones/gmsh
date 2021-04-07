@@ -68,16 +68,6 @@ namespace gmsh {
     *size = v.size() * 2;
   }
   
-  inline void vectorpairsize2sizeptr(const gmsh::vectorpairsize &v, size_t **p, size_t *size)
-  {
-    *p = (size_t*)gmshMalloc(sizeof(size_t) * v.size() * 2);
-    for(size_t i = 0; i < v.size(); ++i){
-      (*p)[i * 2 + 0] = v[i].first;
-      (*p)[i * 2 + 1] = v[i].second;
-    }
-    *size = v.size() * 2;
-  }
-  
   inline void vectorstring2charptrptr(const std::vector<std::string> &v, char ***p, size_t *size)
   {
     *p = (char**)gmshMalloc(sizeof(char*) * v.size());
@@ -926,16 +916,19 @@ namespace gmsh { // Top-level functions
       }
 
       // Partition the mesh of the current model into `numPart' partitions.
-      // `elementPartition' can optionaly be provided to specify the partitioning
-      // of each element explicitely.
+      // Optionally, `elementTags' and `partitions' can be provided to specify the
+      // partition of each element explicitly.
       inline void partition(const int numPart,
-                            const gmsh::vectorpairsize & elementPartition = gmsh::vectorpairsize())
+                            const std::vector<std::size_t> & elementTags = std::vector<std::size_t>(),
+                            const std::vector<int> & partitions = std::vector<int>())
       {
         int ierr = 0;
-        size_t *api_elementPartition_; size_t api_elementPartition_n_; vectorpairsize2sizeptr(elementPartition, &api_elementPartition_, &api_elementPartition_n_);
-        gmshModelMeshPartition(numPart, api_elementPartition_, api_elementPartition_n_, &ierr);
+        size_t *api_elementTags_; size_t api_elementTags_n_; vector2ptr(elementTags, &api_elementTags_, &api_elementTags_n_);
+        int *api_partitions_; size_t api_partitions_n_; vector2ptr(partitions, &api_partitions_, &api_partitions_n_);
+        gmshModelMeshPartition(numPart, api_elementTags_, api_elementTags_n_, api_partitions_, api_partitions_n_, &ierr);
         if(ierr) throwLastError();
-        gmshFree(api_elementPartition_);
+        gmshFree(api_elementTags_);
+        gmshFree(api_partitions_);
       }
 
       // Unpartition the mesh of the current model.
