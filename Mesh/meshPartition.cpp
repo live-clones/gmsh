@@ -2586,7 +2586,6 @@ int PartitionUsingThisSplit(GModel *model,
     std::sort(elmGhosts.begin(), elmGhosts.end());
     auto last = std::unique(elmGhosts.begin(), elmGhosts.end());
     elmGhosts.erase(last, elmGhosts.end());
-    std::vector<ghostFace*> ghostFace(numPart, nullptr);
     std::vector<GEntity *> ghostEntities = graph.createGhostEntities();
     for (auto elmGhost : elmGhosts) {
       MElement *el = elmGhost.first;
@@ -2594,15 +2593,15 @@ int PartitionUsingThisSplit(GModel *model,
       if(el->getDim() == graph.dim()) {
         switch(graph.dim()) {
           case 1:
-            static_cast<ghostEdge *>(ghostEntities[part-1])
+            static_cast<ghostEdge *>(ghostEntities[part - 1])
               ->addElement(el->getType(), el, elmToPartition[el]);
             break;
           case 2:
-            static_cast<ghostFace *>(ghostEntities[part-1])
+            static_cast<ghostFace *>(ghostEntities[part - 1])
               ->addElement(el->getType(), el, elmToPartition[el]);
             break;
           case 3:
-            static_cast<ghostRegion *>(ghostEntities[part-1])
+            static_cast<ghostRegion *>(ghostEntities[part - 1])
               ->addElement(el->getType(), el, elmToPartition[el]);
             break;
           default: break;
