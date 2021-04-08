@@ -233,8 +233,8 @@ mesh = model.add_module('mesh', 'mesh functions')
 doc = '''Generate a mesh of the current model, up to dimension `dim' (0, 1, 2 or 3).'''
 mesh.add('generate', doc, None, iint('dim', '3'))
 
-doc = '''Partition the mesh of the current model into `numPart' partitions.'''
-mesh.add('partition', doc, None, iint('numPart'))
+doc = '''Partition the mesh of the current model into `numPart' partitions. Optionally, `elementTags' and `partitions' can be provided to specify the partition of each element explicitly.'''
+mesh.add('partition', doc, None, iint('numPart'), ivectorsize('elementTags', 'std::vector<std::size_t>()','[]', '[]'), ivectorint('partitions', 'std::vector<int>()','[]', '[]'))
 
 doc = '''Unpartition the mesh of the current model.'''
 mesh.add('unpartition', doc, None)
@@ -371,17 +371,17 @@ mesh.add('createFaces', doc, None, ivectorpair('dimTags', 'gmsh::vectorpair()', 
 doc = '''Get the local multipliers (to guarantee H(curl)-conformity) of the order 0 H(curl) basis functions. Warning: this is an experimental feature and will probably change in a future release.'''
 mesh.add('getLocalMultipliersForHcurl0', doc, None, iint('elementType'), ovectorint('localMultipliers'), iint('tag','-1'))
 
-doc = '''Generate the `keys' for the elements of type `elementType' in the entity of tag `tag', for the `functionSpaceType' function space. Each key uniquely identifies a basis function in the function space. If `returnCoord' is set, the `coord' vector contains the x, y, z coordinates locating basis functions for sorting purposes. Warning: this is an experimental feature and will probably change in a future release.'''
-mesh.add('getKeysForElements', doc, None, iint('elementType'), istring('functionSpaceType'), ovectorpair('keys'), ovectordouble('coord'), iint('tag', '-1'), ibool('returnCoord', 'true', 'True'))
+doc = '''Generate the pair of keys for the elements of type `elementType' in the entity of tag `tag', for the `functionSpaceType' function space. Each pair (`typeKey', `entityKey') uniquely identifies a basis function in the function space. If `returnCoord' is set, the `coord' vector contains the x, y, z coordinates locating basis functions for sorting purposes. Warning: this is an experimental feature and will probably change in a future release.'''
+mesh.add('getKeysForElements', doc, None, iint('elementType'), istring('functionSpaceType'), ovectorint('typeKeys'), ovectorsize('entityKeys'), ovectordouble('coord'), iint('tag', '-1'), ibool('returnCoord', 'true', 'True'))
 
-doc = '''Get the keys for a single element `elementTag'.'''
-mesh.add('getKeysForElement', doc, None, isize('elementTag'), istring('functionSpaceType'), ovectorpair('keys'), ovectordouble('coord'), ibool('returnCoord', 'true', 'True'))
+doc = '''Get the pair of keys for a single element `elementTag'.'''
+mesh.add('getKeysForElement', doc, None, isize('elementTag'), istring('functionSpaceType'), ovectorint('typeKeys'), ovectorsize('entityKeys'), ovectordouble('coord'), ibool('returnCoord', 'true', 'True'))
 
 doc = '''Get the number of keys by elements of type `elementType' for function space named `functionSpaceType'.'''
 mesh.add('getNumberOfKeysForElements', doc, oint, iint('elementType'), istring('functionSpaceType'))
 
-doc = '''Get information about the `keys'. `infoKeys' returns information about the functions associated with the `keys'. `infoKeys[0].first' describes the type of function (0 for  vertex function, 1 for edge function, 2 for face function and 3 for bubble function). `infoKeys[0].second' gives the order of the function associated with the key. Warning: this is an experimental feature and will probably change in a future release.'''
-mesh.add('getInformationForElements', doc, None, ivectorpair('keys'), iint('elementType'), istring('functionSpaceType'), ovectorpair('infoKeys'))
+doc = '''Get information about the pair of `keys'. `infoKeys' returns information about the functions associated with the pairs (`typeKeys', entityKey'). `infoKeys[0].first' describes the type of function (0 for  vertex function, 1 for edge function, 2 for face function and 3 for bubble function). `infoKeys[0].second' gives the order of the function associated with the key. Warning: this is an experimental feature and will probably change in a future release.'''
+mesh.add('getInformationForElements', doc, None, ivectorint('typeKeys'), ivectorsize('entityKeys'), iint('elementType'), istring('functionSpaceType'), ovectorpair('infoKeys'))
 
 doc = '''Get the barycenters of all elements of type `elementType' classified on the entity of tag `tag'. If `primary' is set, only the primary nodes of the elements are taken into account for the barycenter calculation. If `fast' is set, the function returns the sum of the primary node coordinates (without normalizing by the number of nodes). If `tag' < 0, get the barycenters for all entities. If `numTasks' > 1, only compute and return the part of the data indexed by `task'.'''
 mesh.add('getBarycenters', doc, None, iint('elementType'), iint('tag'), ibool('fast'), ibool('primary'), ovectordouble('barycenters'), isize('task', '0'), isize('numTasks', '1'))
