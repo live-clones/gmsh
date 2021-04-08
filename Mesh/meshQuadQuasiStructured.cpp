@@ -1665,7 +1665,9 @@ int RefineMeshWithBackgroundMeshProjection(GModel *gm)
     std::unordered_map<std::string, double> stats;
     appendQuadMeshStatistics(gm, stats, "MPS_");
     printStatistics(stats, "Quad mesh after subdivision, before projection:");
-    gm->writeMSH("qqs_subdiv_noproj.msh", 4.1);
+    if (DBG_EXPORT) {
+      gm->writeMSH("qqs_subdiv_noproj.msh", 4.1);
+    }
   }
 
 
