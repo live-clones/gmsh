@@ -1929,13 +1929,13 @@ probably change in a future release.
 @end table
 
 @item gmsh/model/mesh/getKeysForElements
-Generate the pair of @code{keys} for the elements of type @code{elementType} in
-the entity of tag @code{tag}, for the @code{functionSpaceType} function space.
-Each pair (@code{typeKey}, @code{entityKey}) uniquely identifies a basis
-function in the function space. If @code{returnCoord} is set, the @code{coord}
-vector contains the x, y, z coordinates locating basis functions for sorting
-purposes. Warning: this is an experimental feature and will probably change in a
-future release.
+Generate the pair of keys for the elements of type @code{elementType} in the
+entity of tag @code{tag}, for the @code{functionSpaceType} function space. Each
+pair (@code{typeKey}, @code{entityKey}) uniquely identifies a basis function in
+the function space. If @code{returnCoord} is set, the @code{coord} vector
+contains the x, y, z coordinates locating basis functions for sorting purposes.
+Warning: this is an experimental feature and will probably change in a future
+release.
 
 @table @asis
 @item Input:

@@ -2227,7 +2227,7 @@ const get_local_multipliers_for_hcurl0 = getLocalMultipliersForHcurl0
 """
     gmsh.model.mesh.getKeysForElements(elementType, functionSpaceType, tag = -1, returnCoord = true)
 
-Generate the pair of `keys` for the elements of type `elementType` in the entity
+Generate the pair of keys for the elements of type `elementType` in the entity
 of tag `tag`, for the `functionSpaceType` function space. Each pair (`typeKey`,
 `entityKey`) uniquely identifies a basis function in the function space. If
 `returnCoord` is set, the `coord` vector contains the x, y, z coordinates

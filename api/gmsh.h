@@ -1119,7 +1119,7 @@ namespace gmsh { // Top-level functions
 
       // gmsh::model::mesh::getKeysForElements
       //
-      // Generate the pair of `keys' for the elements of type `elementType' in the
+      // Generate the pair of keys for the elements of type `elementType' in the
       // entity of tag `tag', for the `functionSpaceType' function space. Each pair
       // (`typeKey', `entityKey') uniquely identifies a basis function in the
       // function space. If `returnCoord' is set, the `coord' vector contains the

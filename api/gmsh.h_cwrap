@@ -1720,7 +1720,7 @@ namespace gmsh { // Top-level functions
         localMultipliers.assign(api_localMultipliers_, api_localMultipliers_ + api_localMultipliers_n_); gmshFree(api_localMultipliers_);
       }
 
-      // Generate the pair of `keys' for the elements of type `elementType' in the
+      // Generate the pair of keys for the elements of type `elementType' in the
       // entity of tag `tag', for the `functionSpaceType' function space. Each pair
       // (`typeKey', `entityKey') uniquely identifies a basis function in the
       // function space. If `returnCoord' is set, the `coord' vector contains the
