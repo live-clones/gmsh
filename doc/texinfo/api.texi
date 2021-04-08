@@ -1980,8 +1980,8 @@ integer value
 @item gmsh/model/mesh/getInformationForElements
 Get information about the pair of @code{keys}. @code{infoKeys} returns
 information about the functions associated with the pairs (@code{typeKeys},
-entityKey}). @code{infoKeys[0].first} describes the type of function (0 for
-vertex function, 1 for edge function, 2 for face function and 3 for bubble
+@code{entityKey}). @code{infoKeys[0].first} describes the type of function (0
+for  vertex function, 1 for edge function, 2 for face function and 3 for bubble
 function). @code{infoKeys[0].second} gives the order of the function associated
 with the key. Warning: this is an experimental feature and will probably change
 in a future release.
