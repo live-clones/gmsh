@@ -1504,7 +1504,7 @@ public:
     options["ViewTag"] =
       new FieldOptionInt(_viewTag, "Post-processing view tag", &updateNeeded);
     options["CropNegativeValues"] = new FieldOptionBool(
-      _cropNegativeValues, "return LC_MAX instead of a negative value (this "
+      _cropNegativeValues, "return MAX_LC instead of a negative value (this "
                            "option is needed for backward compatibility with "
                            "the BackgroundMesh option");
 

@@ -51,8 +51,8 @@ public:
         duplicates->insert(v);
       }
       if(warnIfExists) {
-        Msg::Warning("Vertex %d (%.16g, %.16g, %.16g) already exists in the "
-                     "mesh with tolerance %g: Vertex %d (%.16g, %.16g, %.16g)",
+        Msg::Warning("Node %d (%.16g, %.16g, %.16g) already exists in the "
+                     "mesh with tolerance %g as node %d (%.16g, %.16g, %.16g)",
                      v->getNum(), v->x(), v->y(), v->z(), _tol, out->getNum(),
                      out->x(), out->y(), out->z());
       }

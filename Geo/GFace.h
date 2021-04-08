@@ -148,7 +148,7 @@ public:
 
   // compute the parameters UV from a point XYZ
   void XYZtoUV(double X, double Y, double Z, double &U, double &V, double relax,
-               bool onSurface = true) const;
+               bool onSurface = true, bool convTestXYZ = false) const;
 
   // get the bounding box
   virtual SBoundingBox3d bounds(bool fast = false);
@@ -181,7 +181,8 @@ public:
 
   // return the parameter location on the face given a point in space
   // that is on the face
-  virtual SPoint2 parFromPoint(const SPoint3 &, bool onSurface = true) const;
+  virtual SPoint2 parFromPoint(const SPoint3 &, bool onSurface = true,
+                               bool convTestXYZ = false) const;
 
   // true if the parameter value is interior to the face
   virtual bool containsParam(const SPoint2 &pt);

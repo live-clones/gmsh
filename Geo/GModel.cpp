@@ -777,10 +777,8 @@ void GModel::addPhysicalGroup(int dim, int tag, const std::vector<int> &tags)
     if(ge)
       ge->physicals.push_back((t > 0) ? tag : -tag);
     else
-      Msg::Warning(
-        "Unknown entity of dimension %d and tag %d in physical group "
-        "%d",
-        dim, t, tag);
+      Msg::Warning("Unknown entity of dimension %d and tag %d in physical "
+                   "group %d", dim, t, tag);
   }
 }
 
@@ -1039,7 +1037,7 @@ checkConformity(std::multimap<MFace, MElement *, MFaceLessThan> &faceToElement,
       for(std::size_t iV = 0; iV < face.getNumVertices(); iV++)
         if(face.getVertex(iV)->onWhat()->dim() == 3 || connectivity != 1) {
           for(std::size_t jV = 0; jV < face.getNumVertices(); jV++)
-            Msg::Info("Vertex %i dim %i", face.getVertex(jV)->getNum(),
+            Msg::Info("Node %i on entity of dim %i", face.getVertex(jV)->getNum(),
                       face.getVertex(iV)->onWhat()->dim());
           Msg::Error("Non conforming element %i (%i connection(s) for a face "
                      "located on dim %i (vertex %i))",
@@ -1498,11 +1496,11 @@ std::size_t GModel::getMFace(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3,
 
 #if defined(HAVE_POST)
 static void getDependentViewData(GModel *m, PViewDataGModel::DataType type,
-                                 std::vector<stepData<double>*> &data)
+                                 std::vector<stepData<double> *> &data)
 {
   for(std::size_t i = 0; i < PView::list.size(); i++) {
-    PViewDataGModel *d = dynamic_cast<PViewDataGModel *>
-      (PView::list[i]->getData());
+    PViewDataGModel *d =
+      dynamic_cast<PViewDataGModel *>(PView::list[i]->getData());
     if(d && d->getType() == type) {
       for(int step = 0; step < d->getNumTimeSteps(); step++) {
         if(d->getStepData(step)->getModel() == m)
@@ -1524,7 +1522,7 @@ void GModel::renumberMeshVertices()
   // check if any nodal post-processing datasets depend on the model; if so,
   // keep track of the old node numbering
   std::map<MVertex *, int> old;
-  std::vector<stepData<double>*> data;
+  std::vector<stepData<double> *> data;
   getDependentViewData(this, PViewDataGModel::NodeData, data);
   if(data.size()) {
     for(std::size_t i = 0; i < entities.size(); i++) {
@@ -1615,9 +1613,7 @@ void GModel::renumberMeshVertices()
         remap[old[v]] = v->getNum();
       }
     }
-    for(auto d : data) {
-      d->renumberData(remap);
-    }
+    for(auto d : data) { d->renumberData(remap); }
   }
 #endif
 }
@@ -1633,7 +1629,7 @@ void GModel::renumberMeshElements()
   // check if any element-based post-processing datasets depend on the model; if
   // so, keep track of the old element numbering
   std::map<MElement *, int> old;
-  std::vector<stepData<double>*> data[2];
+  std::vector<stepData<double> *> data[2];
   getDependentViewData(this, PViewDataGModel::ElementData, data[0]);
   getDependentViewData(this, PViewDataGModel::ElementNodeData, data[1]);
   if(data[0].size() || data[1].size()) {
@@ -1702,9 +1698,7 @@ void GModel::renumberMeshElements()
       }
     }
     for(int i = 0; i < 2; i++) {
-      for(auto d : data[i]) {
-        d->renumberData(remap);
-      }
+      for(auto d : data[i]) { d->renumberData(remap); }
     }
   }
 #endif
@@ -2061,18 +2055,18 @@ void GModel::setCurrentMeshEntity(GEntity *e)
   _currentMeshEntity = e;
 }
 
-int GModel::partitionMesh(int numPart)
+int GModel::partitionMesh(
+  int numPart, std::vector<std::pair<MElement *, int> > elementPartition)
 {
 #if defined(HAVE_MESH) && (defined(HAVE_METIS))
-  opt_mesh_partition_num(0, GMSH_SET, numPart);
   if(numPart > 0) {
     if(_numPartitions > 0) UnpartitionMesh(this);
-    int ier = PartitionMesh(this);
-    return ier;
+    if(elementPartition.empty())
+      return PartitionMesh(this, numPart);
+    else
+      return PartitionUsingThisSplit(this, elementPartition);
   }
-  else {
-    return 1;
-  }
+  return 1;
 #else
   Msg::Error("Mesh or Metis module not compiled");
   return 1;
@@ -2441,8 +2435,8 @@ void GModel::_storePhysicalTagsInEntities(
           ge->physicals.push_back(it2->first);
         }
         if(it2->second.size() && it2->second != "unnamed")
-          _physicalNames.insert
-            (std::make_pair(std::make_pair(dim, it2->first), it2->second));
+          _physicalNames.insert(
+            std::make_pair(std::make_pair(dim, it2->first), it2->second));
       }
     }
   }
