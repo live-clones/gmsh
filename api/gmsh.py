@@ -2641,22 +2641,25 @@ class model:
             """
             gmsh.model.mesh.getKeysForElements(elementType, functionSpaceType, tag=-1, returnCoord=True)
 
-            Generate the `keys' for the elements of type `elementType' in the entity of
-            tag `tag', for the `functionSpaceType' function space. Each key uniquely
-            identifies a basis function in the function space. If `returnCoord' is set,
-            the `coord' vector contains the x, y, z coordinates locating basis
-            functions for sorting purposes. Warning: this is an experimental feature
-            and will probably change in a future release.
+            Generate the pair of `keys' for the elements of type `elementType' in the
+            entity of tag `tag', for the `functionSpaceType' function space. Each pair
+            (`typeKey', `entityKey') uniquely identifies a basis function in the
+            function space. If `returnCoord' is set, the `coord' vector contains the x,
+            y, z coordinates locating basis functions for sorting purposes. Warning:
+            this is an experimental feature and will probably change in a future
+            release.
 
-            Return `keys', `coord'.
+            Return `typeKeys', `entityKeys', `coord'.
             """
-            api_keys_, api_keys_n_ = POINTER(c_int)(), c_size_t()
+            api_typeKeys_, api_typeKeys_n_ = POINTER(c_int)(), c_size_t()
+            api_entityKeys_, api_entityKeys_n_ = POINTER(c_size_t)(), c_size_t()
             api_coord_, api_coord_n_ = POINTER(c_double)(), c_size_t()
             ierr = c_int()
             lib.gmshModelMeshGetKeysForElements(
                 c_int(elementType),
                 c_char_p(functionSpaceType.encode()),
-                byref(api_keys_), byref(api_keys_n_),
+                byref(api_typeKeys_), byref(api_typeKeys_n_),
+                byref(api_entityKeys_), byref(api_entityKeys_n_),
                 byref(api_coord_), byref(api_coord_n_),
                 c_int(tag),
                 c_int(bool(returnCoord)),
@@ -2664,7 +2667,8 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return (
-                _ovectorpair(api_keys_, api_keys_n_.value),
+                _ovectorint(api_typeKeys_, api_typeKeys_n_.value),
+                _ovectorsize(api_entityKeys_, api_entityKeys_n_.value),
                 _ovectordouble(api_coord_, api_coord_n_.value))
         get_keys_for_elements = getKeysForElements
 
@@ -2673,24 +2677,27 @@ class model:
             """
             gmsh.model.mesh.getKeysForElement(elementTag, functionSpaceType, returnCoord=True)
 
-            Get the keys for a single element `elementTag'.
+            Get the pair of keys for a single element `elementTag'.
 
-            Return `keys', `coord'.
+            Return `typeKeys', `entityKeys', `coord'.
             """
-            api_keys_, api_keys_n_ = POINTER(c_int)(), c_size_t()
+            api_typeKeys_, api_typeKeys_n_ = POINTER(c_int)(), c_size_t()
+            api_entityKeys_, api_entityKeys_n_ = POINTER(c_size_t)(), c_size_t()
             api_coord_, api_coord_n_ = POINTER(c_double)(), c_size_t()
             ierr = c_int()
             lib.gmshModelMeshGetKeysForElement(
                 c_size_t(elementTag),
                 c_char_p(functionSpaceType.encode()),
-                byref(api_keys_), byref(api_keys_n_),
+                byref(api_typeKeys_), byref(api_typeKeys_n_),
+                byref(api_entityKeys_), byref(api_entityKeys_n_),
                 byref(api_coord_), byref(api_coord_n_),
                 c_int(bool(returnCoord)),
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return (
-                _ovectorpair(api_keys_, api_keys_n_.value),
+                _ovectorint(api_typeKeys_, api_typeKeys_n_.value),
+                _ovectorsize(api_entityKeys_, api_entityKeys_n_.value),
                 _ovectordouble(api_coord_, api_coord_n_.value))
         get_keys_for_element = getKeysForElement
 
@@ -2715,24 +2722,27 @@ class model:
         get_number_of_keys_for_elements = getNumberOfKeysForElements
 
         @staticmethod
-        def getInformationForElements(keys, elementType, functionSpaceType):
+        def getInformationForElements(typeKeys, entityKeys, elementType, functionSpaceType):
             """
-            gmsh.model.mesh.getInformationForElements(keys, elementType, functionSpaceType)
+            gmsh.model.mesh.getInformationForElements(typeKeys, entityKeys, elementType, functionSpaceType)
 
-            Get information about the `keys'. `infoKeys' returns information about the
-            functions associated with the `keys'. `infoKeys[0].first' describes the
-            type of function (0 for  vertex function, 1 for edge function, 2 for face
-            function and 3 for bubble function). `infoKeys[0].second' gives the order
-            of the function associated with the key. Warning: this is an experimental
-            feature and will probably change in a future release.
+            Get information about the pair of `keys'. `infoKeys' returns information
+            about the functions associated with the pairs (`typeKeys', entityKey').
+            `infoKeys[0].first' describes the type of function (0 for  vertex function,
+            1 for edge function, 2 for face function and 3 for bubble function).
+            `infoKeys[0].second' gives the order of the function associated with the
+            key. Warning: this is an experimental feature and will probably change in a
+            future release.
 
             Return `infoKeys'.
             """
-            api_keys_, api_keys_n_ = _ivectorpair(keys)
+            api_typeKeys_, api_typeKeys_n_ = _ivectorint(typeKeys)
+            api_entityKeys_, api_entityKeys_n_ = _ivectorsize(entityKeys)
             api_infoKeys_, api_infoKeys_n_ = POINTER(c_int)(), c_size_t()
             ierr = c_int()
             lib.gmshModelMeshGetInformationForElements(
-                api_keys_, api_keys_n_,
+                api_typeKeys_, api_typeKeys_n_,
+                api_entityKeys_, api_entityKeys_n_,
                 c_int(elementType),
                 c_char_p(functionSpaceType.encode()),
                 byref(api_infoKeys_), byref(api_infoKeys_n_),

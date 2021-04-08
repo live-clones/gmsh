@@ -979,24 +979,27 @@ GMSH_API void gmshModelMeshGetLocalMultipliersForHcurl0(const int elementType,
                                                         const int tag,
                                                         int * ierr);
 
-/* Generate the `keys' for the elements of type `elementType' in the entity of
- * tag `tag', for the `functionSpaceType' function space. Each key uniquely
- * identifies a basis function in the function space. If `returnCoord' is set,
- * the `coord' vector contains the x, y, z coordinates locating basis
- * functions for sorting purposes. Warning: this is an experimental feature
- * and will probably change in a future release. */
+/* Generate the pair of `keys' for the elements of type `elementType' in the
+ * entity of tag `tag', for the `functionSpaceType' function space. Each pair
+ * (`typeKey', `entityKey') uniquely identifies a basis function in the
+ * function space. If `returnCoord' is set, the `coord' vector contains the x,
+ * y, z coordinates locating basis functions for sorting purposes. Warning:
+ * this is an experimental feature and will probably change in a future
+ * release. */
 GMSH_API void gmshModelMeshGetKeysForElements(const int elementType,
                                               const char * functionSpaceType,
-                                              int ** keys, size_t * keys_n,
+                                              int ** typeKeys, size_t * typeKeys_n,
+                                              size_t ** entityKeys, size_t * entityKeys_n,
                                               double ** coord, size_t * coord_n,
                                               const int tag,
                                               const int returnCoord,
                                               int * ierr);
 
-/* Get the keys for a single element `elementTag'. */
+/* Get the pair of keys for a single element `elementTag'. */
 GMSH_API void gmshModelMeshGetKeysForElement(const size_t elementTag,
                                              const char * functionSpaceType,
-                                             int ** keys, size_t * keys_n,
+                                             int ** typeKeys, size_t * typeKeys_n,
+                                             size_t ** entityKeys, size_t * entityKeys_n,
                                              double ** coord, size_t * coord_n,
                                              const int returnCoord,
                                              int * ierr);
@@ -1007,13 +1010,15 @@ GMSH_API int gmshModelMeshGetNumberOfKeysForElements(const int elementType,
                                                      const char * functionSpaceType,
                                                      int * ierr);
 
-/* Get information about the `keys'. `infoKeys' returns information about the
- * functions associated with the `keys'. `infoKeys[0].first' describes the
- * type of function (0 for  vertex function, 1 for edge function, 2 for face
- * function and 3 for bubble function). `infoKeys[0].second' gives the order
- * of the function associated with the key. Warning: this is an experimental
- * feature and will probably change in a future release. */
-GMSH_API void gmshModelMeshGetInformationForElements(int * keys, size_t keys_n,
+/* Get information about the pair of `keys'. `infoKeys' returns information
+ * about the functions associated with the pairs (`typeKeys', entityKey').
+ * `infoKeys[0].first' describes the type of function (0 for  vertex function,
+ * 1 for edge function, 2 for face function and 3 for bubble function).
+ * `infoKeys[0].second' gives the order of the function associated with the
+ * key. Warning: this is an experimental feature and will probably change in a
+ * future release. */
+GMSH_API void gmshModelMeshGetInformationForElements(int * typeKeys, size_t typeKeys_n,
+                                                     size_t * entityKeys, size_t entityKeys_n,
                                                      const int elementType,
                                                      const char * functionSpaceType,
                                                      int ** infoKeys, size_t * infoKeys_n,
