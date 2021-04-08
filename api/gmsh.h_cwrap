@@ -916,11 +916,19 @@ namespace gmsh { // Top-level functions
       }
 
       // Partition the mesh of the current model into `numPart' partitions.
-      inline void partition(const int numPart)
+      // Optionally, `elementTags' and `partitions' can be provided to specify the
+      // partition of each element explicitly.
+      inline void partition(const int numPart,
+                            const std::vector<std::size_t> & elementTags = std::vector<std::size_t>(),
+                            const std::vector<int> & partitions = std::vector<int>())
       {
         int ierr = 0;
-        gmshModelMeshPartition(numPart, &ierr);
+        size_t *api_elementTags_; size_t api_elementTags_n_; vector2ptr(elementTags, &api_elementTags_, &api_elementTags_n_);
+        int *api_partitions_; size_t api_partitions_n_; vector2ptr(partitions, &api_partitions_, &api_partitions_n_);
+        gmshModelMeshPartition(numPart, api_elementTags_, api_elementTags_n_, api_partitions_, api_partitions_n_, &ierr);
         if(ierr) throwLastError();
+        gmshFree(api_elementTags_);
+        gmshFree(api_partitions_);
       }
 
       // Unpartition the mesh of the current model.
@@ -1712,41 +1720,48 @@ namespace gmsh { // Top-level functions
         localMultipliers.assign(api_localMultipliers_, api_localMultipliers_ + api_localMultipliers_n_); gmshFree(api_localMultipliers_);
       }
 
-      // Generate the `keys' for the elements of type `elementType' in the entity
-      // of tag `tag', for the `functionSpaceType' function space. Each key
-      // uniquely identifies a basis function in the function space. If
-      // `returnCoord' is set, the `coord' vector contains the x, y, z coordinates
-      // locating basis functions for sorting purposes. Warning: this is an
-      // experimental feature and will probably change in a future release.
+      // Generate the pair of keys for the elements of type `elementType' in the
+      // entity of tag `tag', for the `functionSpaceType' function space. Each pair
+      // (`typeKey', `entityKey') uniquely identifies a basis function in the
+      // function space. If `returnCoord' is set, the `coord' vector contains the
+      // x, y, z coordinates locating basis functions for sorting purposes.
+      // Warning: this is an experimental feature and will probably change in a
+      // future release.
       inline void getKeysForElements(const int elementType,
                                      const std::string & functionSpaceType,
-                                     gmsh::vectorpair & keys,
+                                     std::vector<int> & typeKeys,
+                                     std::vector<std::size_t> & entityKeys,
                                      std::vector<double> & coord,
                                      const int tag = -1,
                                      const bool returnCoord = true)
       {
         int ierr = 0;
-        int *api_keys_; size_t api_keys_n_;
+        int *api_typeKeys_; size_t api_typeKeys_n_;
+        size_t *api_entityKeys_; size_t api_entityKeys_n_;
         double *api_coord_; size_t api_coord_n_;
-        gmshModelMeshGetKeysForElements(elementType, functionSpaceType.c_str(), &api_keys_, &api_keys_n_, &api_coord_, &api_coord_n_, tag, (int)returnCoord, &ierr);
+        gmshModelMeshGetKeysForElements(elementType, functionSpaceType.c_str(), &api_typeKeys_, &api_typeKeys_n_, &api_entityKeys_, &api_entityKeys_n_, &api_coord_, &api_coord_n_, tag, (int)returnCoord, &ierr);
         if(ierr) throwLastError();
-        keys.resize(api_keys_n_ / 2); for(size_t i = 0; i < api_keys_n_ / 2; ++i){ keys[i].first = api_keys_[i * 2 + 0]; keys[i].second = api_keys_[i * 2 + 1]; } gmshFree(api_keys_);
+        typeKeys.assign(api_typeKeys_, api_typeKeys_ + api_typeKeys_n_); gmshFree(api_typeKeys_);
+        entityKeys.assign(api_entityKeys_, api_entityKeys_ + api_entityKeys_n_); gmshFree(api_entityKeys_);
         coord.assign(api_coord_, api_coord_ + api_coord_n_); gmshFree(api_coord_);
       }
 
-      // Get the keys for a single element `elementTag'.
+      // Get the pair of keys for a single element `elementTag'.
       inline void getKeysForElement(const std::size_t elementTag,
                                     const std::string & functionSpaceType,
-                                    gmsh::vectorpair & keys,
+                                    std::vector<int> & typeKeys,
+                                    std::vector<std::size_t> & entityKeys,
                                     std::vector<double> & coord,
                                     const bool returnCoord = true)
       {
         int ierr = 0;
-        int *api_keys_; size_t api_keys_n_;
+        int *api_typeKeys_; size_t api_typeKeys_n_;
+        size_t *api_entityKeys_; size_t api_entityKeys_n_;
         double *api_coord_; size_t api_coord_n_;
-        gmshModelMeshGetKeysForElement(elementTag, functionSpaceType.c_str(), &api_keys_, &api_keys_n_, &api_coord_, &api_coord_n_, (int)returnCoord, &ierr);
+        gmshModelMeshGetKeysForElement(elementTag, functionSpaceType.c_str(), &api_typeKeys_, &api_typeKeys_n_, &api_entityKeys_, &api_entityKeys_n_, &api_coord_, &api_coord_n_, (int)returnCoord, &ierr);
         if(ierr) throwLastError();
-        keys.resize(api_keys_n_ / 2); for(size_t i = 0; i < api_keys_n_ / 2; ++i){ keys[i].first = api_keys_[i * 2 + 0]; keys[i].second = api_keys_[i * 2 + 1]; } gmshFree(api_keys_);
+        typeKeys.assign(api_typeKeys_, api_typeKeys_ + api_typeKeys_n_); gmshFree(api_typeKeys_);
+        entityKeys.assign(api_entityKeys_, api_entityKeys_ + api_entityKeys_n_); gmshFree(api_entityKeys_);
         coord.assign(api_coord_, api_coord_ + api_coord_n_); gmshFree(api_coord_);
       }
 
@@ -1761,23 +1776,27 @@ namespace gmsh { // Top-level functions
         return result_api_;
       }
 
-      // Get information about the `keys'. `infoKeys' returns information about the
-      // functions associated with the `keys'. `infoKeys[0].first' describes the
-      // type of function (0 for  vertex function, 1 for edge function, 2 for face
-      // function and 3 for bubble function). `infoKeys[0].second' gives the order
-      // of the function associated with the key. Warning: this is an experimental
-      // feature and will probably change in a future release.
-      inline void getInformationForElements(const gmsh::vectorpair & keys,
+      // Get information about the pair of `keys'. `infoKeys' returns information
+      // about the functions associated with the pairs (`typeKeys', entityKey').
+      // `infoKeys[0].first' describes the type of function (0 for  vertex
+      // function, 1 for edge function, 2 for face function and 3 for bubble
+      // function). `infoKeys[0].second' gives the order of the function associated
+      // with the key. Warning: this is an experimental feature and will probably
+      // change in a future release.
+      inline void getInformationForElements(const std::vector<int> & typeKeys,
+                                            const std::vector<std::size_t> & entityKeys,
                                             const int elementType,
                                             const std::string & functionSpaceType,
                                             gmsh::vectorpair & infoKeys)
       {
         int ierr = 0;
-        int *api_keys_; size_t api_keys_n_; vectorpair2intptr(keys, &api_keys_, &api_keys_n_);
+        int *api_typeKeys_; size_t api_typeKeys_n_; vector2ptr(typeKeys, &api_typeKeys_, &api_typeKeys_n_);
+        size_t *api_entityKeys_; size_t api_entityKeys_n_; vector2ptr(entityKeys, &api_entityKeys_, &api_entityKeys_n_);
         int *api_infoKeys_; size_t api_infoKeys_n_;
-        gmshModelMeshGetInformationForElements(api_keys_, api_keys_n_, elementType, functionSpaceType.c_str(), &api_infoKeys_, &api_infoKeys_n_, &ierr);
+        gmshModelMeshGetInformationForElements(api_typeKeys_, api_typeKeys_n_, api_entityKeys_, api_entityKeys_n_, elementType, functionSpaceType.c_str(), &api_infoKeys_, &api_infoKeys_n_, &ierr);
         if(ierr) throwLastError();
-        gmshFree(api_keys_);
+        gmshFree(api_typeKeys_);
+        gmshFree(api_entityKeys_);
         infoKeys.resize(api_infoKeys_n_ / 2); for(size_t i = 0; i < api_infoKeys_n_ / 2; ++i){ infoKeys[i].first = api_infoKeys_[i * 2 + 0]; infoKeys[i].second = api_infoKeys_[i * 2 + 1]; } gmshFree(api_infoKeys_);
       }
 

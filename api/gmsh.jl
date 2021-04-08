@@ -1233,15 +1233,17 @@ function generate(dim = 3)
 end
 
 """
-    gmsh.model.mesh.partition(numPart)
+    gmsh.model.mesh.partition(numPart, elementTags = Csize_t[], partitions = Cint[])
 
-Partition the mesh of the current model into `numPart` partitions.
+Partition the mesh of the current model into `numPart` partitions. Optionally,
+`elementTags` and `partitions` can be provided to specify the partition of each
+element explicitly.
 """
-function partition(numPart)
+function partition(numPart, elementTags = Csize_t[], partitions = Cint[])
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshPartition, gmsh.lib), Cvoid,
-          (Cint, Ptr{Cint}),
-          numPart, ierr)
+          (Cint, Ptr{Csize_t}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Cint}),
+          numPart, convert(Vector{Csize_t}, elementTags), length(elementTags), convert(Vector{Cint}, partitions), length(partitions), ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
@@ -2225,53 +2227,57 @@ const get_local_multipliers_for_hcurl0 = getLocalMultipliersForHcurl0
 """
     gmsh.model.mesh.getKeysForElements(elementType, functionSpaceType, tag = -1, returnCoord = true)
 
-Generate the `keys` for the elements of type `elementType` in the entity of tag
-`tag`, for the `functionSpaceType` function space. Each key uniquely identifies
-a basis function in the function space. If `returnCoord` is set, the `coord`
-vector contains the x, y, z coordinates locating basis functions for sorting
-purposes. Warning: this is an experimental feature and will probably change in a
-future release.
+Generate the pair of keys for the elements of type `elementType` in the entity
+of tag `tag`, for the `functionSpaceType` function space. Each pair (`typeKey`,
+`entityKey`) uniquely identifies a basis function in the function space. If
+`returnCoord` is set, the `coord` vector contains the x, y, z coordinates
+locating basis functions for sorting purposes. Warning: this is an experimental
+feature and will probably change in a future release.
 
-Return `keys`, `coord`.
+Return `typeKeys`, `entityKeys`, `coord`.
 """
 function getKeysForElements(elementType, functionSpaceType, tag = -1, returnCoord = true)
-    api_keys_ = Ref{Ptr{Cint}}()
-    api_keys_n_ = Ref{Csize_t}()
+    api_typeKeys_ = Ref{Ptr{Cint}}()
+    api_typeKeys_n_ = Ref{Csize_t}()
+    api_entityKeys_ = Ref{Ptr{Csize_t}}()
+    api_entityKeys_n_ = Ref{Csize_t}()
     api_coord_ = Ref{Ptr{Cdouble}}()
     api_coord_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetKeysForElements, gmsh.lib), Cvoid,
-          (Cint, Ptr{Cchar}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Cint, Ptr{Cint}),
-          elementType, functionSpaceType, api_keys_, api_keys_n_, api_coord_, api_coord_n_, tag, returnCoord, ierr)
+          (Cint, Ptr{Cchar}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Cint, Ptr{Cint}),
+          elementType, functionSpaceType, api_typeKeys_, api_typeKeys_n_, api_entityKeys_, api_entityKeys_n_, api_coord_, api_coord_n_, tag, returnCoord, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    tmp_api_keys_ = unsafe_wrap(Array, api_keys_[], api_keys_n_[], own=true)
-    keys = [ (tmp_api_keys_[i], tmp_api_keys_[i+1]) for i in 1:2:length(tmp_api_keys_) ]
+    typeKeys = unsafe_wrap(Array, api_typeKeys_[], api_typeKeys_n_[], own=true)
+    entityKeys = unsafe_wrap(Array, api_entityKeys_[], api_entityKeys_n_[], own=true)
     coord = unsafe_wrap(Array, api_coord_[], api_coord_n_[], own=true)
-    return keys, coord
+    return typeKeys, entityKeys, coord
 end
 const get_keys_for_elements = getKeysForElements
 
 """
     gmsh.model.mesh.getKeysForElement(elementTag, functionSpaceType, returnCoord = true)
 
-Get the keys for a single element `elementTag`.
+Get the pair of keys for a single element `elementTag`.
 
-Return `keys`, `coord`.
+Return `typeKeys`, `entityKeys`, `coord`.
 """
 function getKeysForElement(elementTag, functionSpaceType, returnCoord = true)
-    api_keys_ = Ref{Ptr{Cint}}()
-    api_keys_n_ = Ref{Csize_t}()
+    api_typeKeys_ = Ref{Ptr{Cint}}()
+    api_typeKeys_n_ = Ref{Csize_t}()
+    api_entityKeys_ = Ref{Ptr{Csize_t}}()
+    api_entityKeys_n_ = Ref{Csize_t}()
     api_coord_ = Ref{Ptr{Cdouble}}()
     api_coord_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetKeysForElement, gmsh.lib), Cvoid,
-          (Csize_t, Ptr{Cchar}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
-          elementTag, functionSpaceType, api_keys_, api_keys_n_, api_coord_, api_coord_n_, returnCoord, ierr)
+          (Csize_t, Ptr{Cchar}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
+          elementTag, functionSpaceType, api_typeKeys_, api_typeKeys_n_, api_entityKeys_, api_entityKeys_n_, api_coord_, api_coord_n_, returnCoord, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    tmp_api_keys_ = unsafe_wrap(Array, api_keys_[], api_keys_n_[], own=true)
-    keys = [ (tmp_api_keys_[i], tmp_api_keys_[i+1]) for i in 1:2:length(tmp_api_keys_) ]
+    typeKeys = unsafe_wrap(Array, api_typeKeys_[], api_typeKeys_n_[], own=true)
+    entityKeys = unsafe_wrap(Array, api_entityKeys_[], api_entityKeys_n_[], own=true)
     coord = unsafe_wrap(Array, api_coord_[], api_coord_n_[], own=true)
-    return keys, coord
+    return typeKeys, entityKeys, coord
 end
 const get_keys_for_element = getKeysForElement
 
@@ -2294,26 +2300,25 @@ end
 const get_number_of_keys_for_elements = getNumberOfKeysForElements
 
 """
-    gmsh.model.mesh.getInformationForElements(keys, elementType, functionSpaceType)
+    gmsh.model.mesh.getInformationForElements(typeKeys, entityKeys, elementType, functionSpaceType)
 
-Get information about the `keys`. `infoKeys` returns information about the
-functions associated with the `keys`. `infoKeys[0].first` describes the type of
-function (0 for  vertex function, 1 for edge function, 2 for face function and 3
-for bubble function). `infoKeys[0].second` gives the order of the function
-associated with the key. Warning: this is an experimental feature and will
-probably change in a future release.
+Get information about the pair of `keys`. `infoKeys` returns information about
+the functions associated with the pairs (`typeKeys`, entityKey`).
+`infoKeys[0].first` describes the type of function (0 for  vertex function, 1
+for edge function, 2 for face function and 3 for bubble function).
+`infoKeys[0].second` gives the order of the function associated with the key.
+Warning: this is an experimental feature and will probably change in a future
+release.
 
 Return `infoKeys`.
 """
-function getInformationForElements(keys, elementType, functionSpaceType)
-    api_keys_ = collect(Cint, Iterators.flatten(keys))
-    api_keys_n_ = length(api_keys_)
+function getInformationForElements(typeKeys, entityKeys, elementType, functionSpaceType)
     api_infoKeys_ = Ref{Ptr{Cint}}()
     api_infoKeys_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetInformationForElements, gmsh.lib), Cvoid,
-          (Ptr{Cint}, Csize_t, Cint, Ptr{Cchar}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
-          api_keys_, api_keys_n_, elementType, functionSpaceType, api_infoKeys_, api_infoKeys_n_, ierr)
+          (Ptr{Cint}, Csize_t, Ptr{Csize_t}, Csize_t, Cint, Ptr{Cchar}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
+          convert(Vector{Cint}, typeKeys), length(typeKeys), convert(Vector{Csize_t}, entityKeys), length(entityKeys), elementType, functionSpaceType, api_infoKeys_, api_infoKeys_n_, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     tmp_api_infoKeys_ = unsafe_wrap(Array, api_infoKeys_[], api_infoKeys_n_[], own=true)
     infoKeys = [ (tmp_api_infoKeys_[i], tmp_api_infoKeys_[i+1]) for i in 1:2:length(tmp_api_infoKeys_) ]
