@@ -1119,25 +1119,28 @@ namespace gmsh { // Top-level functions
 
       // gmsh::model::mesh::getKeysForElements
       //
-      // Generate the `keys' for the elements of type `elementType' in the entity
-      // of tag `tag', for the `functionSpaceType' function space. Each key
-      // uniquely identifies a basis function in the function space. If
-      // `returnCoord' is set, the `coord' vector contains the x, y, z coordinates
-      // locating basis functions for sorting purposes. Warning: this is an
-      // experimental feature and will probably change in a future release.
+      // Generate the pair of `keys' for the elements of type `elementType' in the
+      // entity of tag `tag', for the `functionSpaceType' function space. Each pair
+      // (`typeKey', `entityKey') uniquely identifies a basis function in the
+      // function space. If `returnCoord' is set, the `coord' vector contains the
+      // x, y, z coordinates locating basis functions for sorting purposes.
+      // Warning: this is an experimental feature and will probably change in a
+      // future release.
       GMSH_API void getKeysForElements(const int elementType,
                                        const std::string & functionSpaceType,
-                                       gmsh::vectorpair & keys,
+                                       std::vector<int> & typeKeys,
+                                       std::vector<std::size_t> & entityKeys,
                                        std::vector<double> & coord,
                                        const int tag = -1,
                                        const bool returnCoord = true);
 
       // gmsh::model::mesh::getKeysForElement
       //
-      // Get the keys for a single element `elementTag'.
+      // Get the pair of keys for a single element `elementTag'.
       GMSH_API void getKeysForElement(const std::size_t elementTag,
                                       const std::string & functionSpaceType,
-                                      gmsh::vectorpair & keys,
+                                      std::vector<int> & typeKeys,
+                                      std::vector<std::size_t> & entityKeys,
                                       std::vector<double> & coord,
                                       const bool returnCoord = true);
 
@@ -1150,13 +1153,15 @@ namespace gmsh { // Top-level functions
 
       // gmsh::model::mesh::getInformationForElements
       //
-      // Get information about the `keys'. `infoKeys' returns information about the
-      // functions associated with the `keys'. `infoKeys[0].first' describes the
-      // type of function (0 for  vertex function, 1 for edge function, 2 for face
-      // function and 3 for bubble function). `infoKeys[0].second' gives the order
-      // of the function associated with the key. Warning: this is an experimental
-      // feature and will probably change in a future release.
-      GMSH_API void getInformationForElements(const gmsh::vectorpair & keys,
+      // Get information about the pair of `keys'. `infoKeys' returns information
+      // about the functions associated with the pairs (`typeKeys', entityKey').
+      // `infoKeys[0].first' describes the type of function (0 for  vertex
+      // function, 1 for edge function, 2 for face function and 3 for bubble
+      // function). `infoKeys[0].second' gives the order of the function associated
+      // with the key. Warning: this is an experimental feature and will probably
+      // change in a future release.
+      GMSH_API void getInformationForElements(const std::vector<int> & typeKeys,
+                                              const std::vector<std::size_t> & entityKeys,
                                               const int elementType,
                                               const std::string & functionSpaceType,
                                               gmsh::vectorpair & infoKeys);
