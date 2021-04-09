@@ -1727,7 +1727,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
   // the delaunay algo is based directly on internal gmsh structures BDS mesh is
   // passed in order not to recompute local coordinates of vertices
   if(algoDelaunay2D(gf) && !onlyInitialMesh) {
-    if(gf->getMeshingAlgo() == ALGO_2D_FRONTAL) { bowyerWatsonFrontal(gf); }
+    if(gf->getMeshingAlgo() == ALGO_2D_FRONTAL) {bowyerWatsonFrontal(gf); }
     else if(gf->getMeshingAlgo() == ALGO_2D_FRONTAL_QUAD) {
       bowyerWatsonFrontalLayers(gf, true);
     }
@@ -2977,7 +2977,8 @@ void meshGFace::operator()(GFace *gf, bool print)
   // test validity for non-Gmsh models (currently we cannot reliably evaluate
   // the normal on the boundary of surfaces with the Gmsh kernel)
   if(CTX::instance()->mesh.algoSwitchOnFailure &&
-     gf->getNativeType() != GEntity::GmshModel && algoDelaunay2D(gf) &&
+     gf->getNativeType() != GEntity::GmshModel &&
+     gf->geomType() != GEntity::Plane && algoDelaunay2D(gf) &&
      !isMeshValid(gf)) {
     Msg::Debug(
       "Delaunay-based mesher failed on surface %d -> moving to MeshAdapt",
