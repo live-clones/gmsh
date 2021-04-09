@@ -164,7 +164,7 @@ int buildBackgroundField(
 
   gm->getFields()->setBackgroundMesh(view->getTag());
 
-  if(Msg::GetVerbosity() >= 99) {
+  if(true || Msg::GetVerbosity() >= 99) {
     std::string name = gm->getName() + "_bgm.pos";
     Msg::Warning("export background field to '%s' ", name.c_str());
     view->write(name, 0);

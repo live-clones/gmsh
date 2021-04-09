@@ -22,6 +22,8 @@ using namespace Gecode;
 #include "MQuadrangle.h"
 #include "MLine.h"
 #include "PView.h"
+#include "Field.h"
+#include "PViewDataList.h"
 
 // Some shortcuts
 #define P(x) {cout << x << endl;}
@@ -66,11 +68,55 @@ ostream &operator<<(ostream &os, GPoint p) {
 int mod(int a, int m) { return (a % m + m) % m; }
 
 const bool ERROR_VISU = true;
+/* scaling applied on integer values stored in view (background field),
+ * so the visualization is not broken by the integers */
+constexpr double VIEW_INT_SCALING = 1.e-8;
 
 void draw() {
 	gmsh::initialize();
 	GeoLog::flush();
 	gmsh::fltk::run();
+}
+
+bool myGetSingularitiesFromBackgroundField(GFace* gf,
+    std::vector<std::pair<SPoint3, int> >& singularities) {
+  singularities.clear();
+
+  Field* field = nullptr;
+  FieldManager *fields = gf->model()->getFields();
+  if(fields->getBackgroundField() > 0) {
+    Field *guiding_field = fields->get(fields->getBackgroundField());
+    if(guiding_field && guiding_field->numComponents() == 3) { field = guiding_field; }
+  }
+  if (field == nullptr) {
+    Msg::Error("get singularities: face %i, failed to get background field", gf->tag());
+    return false;
+  }
+
+  int viewTag = int(field->options["IView"]->numericalValue());
+  PView* view = PView::getViewByTag(viewTag);
+  if (view == nullptr) {
+    Msg::Error("failed to get view for tag = %i", viewTag);
+    return false;
+  }
+  PViewDataList *d = dynamic_cast<PViewDataList *>(view->getData());
+  if (d == nullptr) {
+    Msg::Error("view type is wrong");
+    return false;
+  }
+
+  size_t nVP = d->VP.size()/6;
+  for (size_t i = 0; i < nVP; ++i) {
+    int gfTag = int(std::round(d->VP[6*i+3] / VIEW_INT_SCALING));
+    if (gfTag != gf->tag()) continue;
+    int index = int(std::round(d->VP[6*i+4] / VIEW_INT_SCALING));
+    double x = d->VP[6*i+0];
+    double y = d->VP[6*i+1];
+    double z = d->VP[6*i+2];
+    singularities.push_back(std::make_pair(SPoint3(x,y,z),index));
+  }
+
+  return true;
 }
 
 struct HalfEdge;
@@ -82,10 +128,14 @@ struct Vertex {
 	//SVector3 p; // coordinates (ptr->point())
 	HalfEdge* he; // reference to one (arbitrary) half-edge (tail of arrow)
 	int valence; // number of incident faces
-	bool isTrulySingular; // is it a true singularity (i.e. not part of a 3-5 pair)?
-	Vertex(MVertex* _ptr, HalfEdge* _he, int _valence) : ptr(_ptr), he(_he), valence(_valence) {}
+	// bool isTrulySingular; // is it a true singularity (i.e. not part of a 3-5 pair)?
+	bool isSingularity; // does it correspond to a cross-field singularity?
+	Vertex(MVertex* _ptr, HalfEdge* _he, int _valence) : ptr(_ptr), he(_he), valence(_valence), isSingularity(false) {}
 	void geolog(double value, const string& viewName) {
 		GeoLog::add((SVector3)ptr->point(), value, viewName);
+	}
+	double dist(const Vertex* v) { // distance to another vertex
+		return ptr->distance(v->ptr);
 	}
 };
 
@@ -116,6 +166,8 @@ struct Face {
 		GeoLog::add({pts[0], pts[1], pts[2], pts[3]}, value, viewName);
 	}
 };
+
+
 
 // Data structure for a mesh represented by half-edges
 struct MeshHalfEdges {
@@ -179,6 +231,33 @@ struct MeshHalfEdges {
 				he->oppo->gedge = gedge;
 			}
 		}
+
+		// Identify singularities
+		for(GFace* gf : gm->getFaces()) {
+			V<pair<SPoint3, int>> singularities;
+			myGetSingularitiesFromBackgroundField(gf, singularities);
+			for(auto p : singularities) {
+				SPoint3 sing = p.first;
+				int val = 4 - p.second;
+				// H(val);
+				// GeoLog::add(sing, val, "singularities");
+				Vertex* closestVertex = NULL;
+				double minDist = DBL_MAX;
+				for(Vertex* v : vertices) {
+					if(!v->isSingularity && v->valence == val) {
+						double dist = v->ptr->point().distance(sing);
+						if(closestVertex == NULL || dist < minDist) {
+							closestVertex = v;
+							minDist = dist;
+						}
+					}
+				}
+				closestVertex->isSingularity = true;
+				closestVertex->geolog(0, "isSingularity");
+				// GeoLog::add(closestVertex->ptr->point(), val, "matching vertex");
+			}
+		}
+
 	}
 	// Draw the base complex
 	void geologBaseComplex() {
@@ -226,12 +305,14 @@ struct TFace {
 	void geolog(double value, const string& viewName) {
 		for(Face* face : faces) face->geolog(value, viewName);
 	}
+	GFace* gface;
 };
 
 // Data structure for half-edge of T-mesh
 struct TEdge {
-	TFace *tface1, *tface2; // pointer to T-faces on left and right of he
+	TFace* tface; // T-face on left of he
 	TVertex *tvertex1, *tvertex2; // T-vertices at the endpoints
+	TEdge* oppo; // opposite T-edge
 	int len; // integer length
 	HalfEdge* he; // first half-edge
 	GEdge* gedge; // corresponding GEdge
@@ -254,11 +335,11 @@ struct TraceHalfEdges {
 	Vertex* orig; // origin of trace (singular vertex)
 	// Vertex* dest; // origin of trace that intersects (NULL if CAD)
 	V<HalfEdge*> hedges; // sequence of half-edges forming the trace
-	V<TraceHalfEdgesIntersection*> intersections; // intersecting traces
+	// V<TraceHalfEdgesIntersection*> intersections; // intersecting traces
 	double alpha; // prescribed max deviation for this trace
 	bool onLeft, onRight; // have we encountered a trace on left/right with angle < alpha ?
-	int listar; // distance between i and star, the first intersection with a trace that starts inside the pi/2 sector
-	int l; // length the the trace
+	// int listar; // distance between i and star, the first intersection with a trace that starts inside the pi/2 sector
+	// int len; // total length the the trace
 };
 
 // Trace described in T-mesh
@@ -266,10 +347,15 @@ struct Trace {
 	TVertex* orig; // origin of trace (singular vertex)
 	TVertex* dest; // origin of trace that intersects (NULL if CAD)
 	V<TEdge*> tedges; // sequence of T-edges forming the trace
-	V<TraceIntersection*> intersections; // intersecting traces
-	int listar; // distance (in # of T-edges) between i and star, the first intersection with a trace that starts inside the pi/2 sector
-	// double alpha; // prescribed max deviation for this trace
-	void geolog(double value, string name) { for(TEdge* tedge : tedges) tedge->geolog(value, name); }
+	map<TEdge*, int> tedge2index; // index along Trace of given T-edge
+	V<int> len; // len[i] = tedges[0]->len + ... + tedges[i]->len (S(len) == S(tedges))
+	V<TraceIntersection*> intersections; // intersecting traces (S(intersections) == S(tedges)-1)
+	int istar; // index of star; star is the first intersection with a trace that starts inside the pi/2 sector
+	double alpha; // prescribed max deviation for this trace
+	void geolog(double value, string name) { 
+		orig->geolog(value, name);
+		for(TEdge* tedge : tedges) tedge->geolog(value, name); 
+	}
 };
 
 // Intersection of TraceHalfEdges
@@ -281,7 +367,7 @@ struct TraceHalfEdgesIntersection {
 // Intersection of Traces
 struct TraceIntersection {
 	Trace* t; // intersecting trace
-	int li, lj;  // lengths of current and intersecting traces, resp.
+	int i, j; // index along current and intersecting trace, resp.
 };
 
 struct TMesh {
@@ -290,7 +376,7 @@ struct TMesh {
 	V<TVertex*> tvertices;
 	V<Trace*> traces;
 	map<HalfEdge*, TEdge*> hedgemap; // map half-edges to T-half-edges they lie on
-	map<GEdge*, V<TEdge*>> gedge2tedges;
+	map<GEdge*, V<TEdge*>> gedge2tedges; // sequence of T-edges forming a given GEdge (arbitrary orientation)
 
 	// Destructor
 	~TMesh() {
@@ -302,33 +388,36 @@ struct TMesh {
 	TMesh(MeshHalfEdges &M, double alpha_user) {
 		// TODO: what if a GVertex is incident to only 2 GEdges? Normally there will be a warning :-)
 
-		// TODO: identify "true" singularities, i.e. singularities not part of a 3-5 pair
-		int maxdist = 2; // if 2 singularities has distance <= maxdist, they are not true singularities
-		for(Vertex* vertex : M.vertices) {
-			if(vertex->valence == 4) {
-				vertex->isTrulySingular = false;
-				continue;
-			}
-			queue<pair<Vertex*, int>> q; q.push({vertex, 0});
-			set<Vertex*> vis; vis.insert(vertex);
-			vertex->isTrulySingular = true;
-			while(vertex->isTrulySingular && S(q)) {
-				Vertex* u = q.front().first;
-				int d = q.front().second;
-				q.pop();
-				if(d == maxdist) continue;
-				HalfEdge* he = u->he;
-				F(i, u->valence) {
-					he = he->oppo->next;
-					Vertex* v = he->v2;
-					if(!vis.count(v)) {
-						if(v->valence != 4) vertex->isTrulySingular = false;
-						vis.insert(v);
-						q.push({v, d+1});
-					}
-				}
-			}
-		}
+		// // TODO: identify "true" singularities, i.e. singularities not part of a 3-5 pair
+		// int maxdist = 2; // if 2 singularities has distance <= maxdist, they are not true singularities
+		// for(Vertex* vertex : M.vertices) {
+		// 	if(vertex->valence == 4) {
+		// 		vertex->isTrulySingular = false;
+		// 		continue;
+		// 	}
+		// 	queue<pair<Vertex*, int>> q; q.push({vertex, 0});
+		// 	set<Vertex*> vis; vis.insert(vertex);
+		// 	vertex->isTrulySingular = true;
+		// 	while(vertex->isTrulySingular && S(q)) {
+		// 		Vertex* u = q.front().first;
+		// 		int d = q.front().second;
+		// 		q.pop();
+		// 		if(d == maxdist) continue;
+		// 		HalfEdge* he = u->he;
+		// 		F(i, u->valence) {
+		// 			he = he->oppo->next;
+		// 			Vertex* v = he->v2;
+		// 			if(!vis.count(v)) {
+		// 				if(v->valence != 4) vertex->isTrulySingular = false;
+		// 				vis.insert(v);
+		// 				q.push({v, d+1});
+		// 			}
+		// 		}
+		// 	}
+		// }
+
+		// Draw true singularities
+		for(Vertex* v : M.vertices) if(v->isSingularity || isGVertex(v)) v->geolog(0, "singularities");
 
 		// Initialize traces
 		// alpha = 0 when the origin of the trace is a GVertex!
@@ -339,19 +428,19 @@ struct TMesh {
 		for(Vertex* vertex : M.vertices) {
 			bool isGeo = isGVertex(vertex);
 			// If vertex is singular, or a GVertex
-			if(isGeo || vertex->isTrulySingular) {
+			if(isGeo || vertex->isSingularity) {
 				HalfEdge * he = vertex->he;
 				F(i, vertex->valence) {
 					he = he->oppo->next;
-					if(!isGeo || he->gedge != NULL) { // if isGVertex, half-edge should lie on a GEdge
+					if(!isGeo || (vertex->valence != 4 || he->gedge != NULL)) { // if isGVertex, half-edge should lie on a GEdge
 						// New trace!
 						TraceHalfEdges* trace = new TraceHalfEdges;
 						trace->orig = vertex;
-						trace->alpha = isGeo ? 0 : alpha_user;
+						trace->alpha = (isGeo && he->gedge != NULL) ? 0 : alpha_user;
 						trace->hedges.pb(he);
-						trace->l = 1;
+						// trace->l = 1;
 						trace->onLeft = trace->onRight = false;
-						trace->listar = -1;
+						// trace->listar = -1;
 						hetraces.pb(trace);
 						hedge2trace[he] = trace;
 						hedge2index[he] = 0;
@@ -370,41 +459,20 @@ struct TMesh {
 			for(TraceHalfEdges* trace : hetraces) {
 				if(openTraces.count(trace)) { // if trace is not completed
 					HalfEdge* he = trace->hedges.back(); // last half-edge of trace
-					bool done = true;
-					if(he->v2->isTrulySingular || isGVertex(he->v2)) { // truly singular or geometric vertex: we're done here
+					if(he->v2->valence != 4 || isGVertex(he->v2)) { // singular or geometric vertex: we're done here
 						// trace->dest = he->v2;
 						openTraces.erase(trace);
 					} else {
 						HalfEdge *hedgeLeft = he->next, *hedgeRight = he->oppo->prev->oppo;
 						if(!trace->onRight && hedge2trace.count(hedgeLeft)) { // trace on the right
-							if(trace->listar == -1 && hedge2index[he] + 1 > hedge2index[hedgeLeft]) {
-								trace->listar = hedge2index[he] + 1;
-							} 
-							if(hedge2index[hedgeLeft] <= tan(trace->alpha) * (hedge2index[he] + 1))
+							TraceHalfEdges* t = hedge2trace[hedgeLeft];
+							if(t->orig->isSingularity && t->orig != trace->orig && hedge2index[hedgeLeft] <= tan(trace->alpha) * (hedge2index[he] + 1))
 								trace->onRight = true;
-							else {
-								// If angle > alpha, we need to prevent the creation of a separatrix
-								TraceHalfEdgesIntersection* inters = new TraceHalfEdgesIntersection;
-								inters->t = hedge2trace[hedgeLeft];
-								inters->li = hedge2index[he] + 1;
-								inters->lj = hedge2index[hedgeLeft];
-								trace->intersections.pb(inters);
-							}
 						}
 						if(!trace->onLeft && hedge2trace.count(hedgeRight)) { // trace on the left
-							if(trace->listar == -1 && hedge2index[he] + 1 > hedge2index[hedgeRight]) {
-								trace->listar = hedge2index[he] + 1;
-							}
-							if(hedge2index[hedgeRight] <= tan(trace->alpha) * (hedge2index[he] + 1))
+							TraceHalfEdges* t = hedge2trace[hedgeRight];
+							if(t->orig->isSingularity && t->orig != trace->orig && hedge2index[hedgeRight] <= tan(trace->alpha) * (hedge2index[he] + 1))
 								trace->onLeft = true;
-							else {
-								// If angle > alpha, we need to prevent the creation of a separatrix
-								TraceHalfEdgesIntersection* inters = new TraceHalfEdgesIntersection;
-								inters->t = hedge2trace[hedgeRight];
-								inters->li = hedge2index[he] + 1;
-								inters->lj = hedge2index[hedgeRight];
-								trace->intersections.pb(inters);
-							}
 						}
 						if(trace->onLeft && trace->onRight) {
 							openTraces.erase(trace);
@@ -418,21 +486,6 @@ struct TMesh {
 							onTMesh.insert(next->oppo);
 						}
 					}
-					// else if(!isGVertex(trace->orig) && hedge2trace.count(he->next)) // trace on the left
-					// 	trace->dest = hedge2trace[he->next]->orig;
-					// else if(!isGVertex(trace->orig) && hedge2trace.count(he->oppo->prev->oppo)) // trace on the right
-					// 	trace->dest = hedge2trace[he->oppo->prev->oppo]->orig;
-					//else if(isOnCAD(he->v2)) // hitting on the CAD
-						//trace->dest = NULL;
-					// else {
-					// 	done = false;
-					// 	HalfEdge* next = he->next->oppo->next;
-					// 	trace->hedges.pb(next);
-					// 	hedge2trace[next] = trace;
-					// 	onTMesh.insert(next);
-					// 	onTMesh.insert(next->oppo);
-					// }
-					// if(done) openTraces.erase(trace);
 				}
 			}
 		}
@@ -441,14 +494,15 @@ struct TMesh {
 
 		// Draw onTMesh
 		for(HalfEdge* he : onTMesh) he->geolog(0, "onTMesh");
-		// Draw true singularities
-		for(Vertex* v : M.vertices) if(v->isTrulySingular || isGVertex(v)) v->geolog(0, "true singularities");
 
 		// Assign faces to T-faces
+		#pragma region
 		map<Face*, TFace*> face2tface;
 		for(Face* face : M.faces) {
 			if(!face2tface.count(face)) { // if face has no parent yet
 				TFace* tface = new TFace; tfaces.pb(tface);
+				tface->gface = NULL;
+				GFace* gf;
 				queue<Face*> q; // queue of faces
 				q.push(face); face2tface[face] = tface;
 				while(S(q)) {
@@ -456,6 +510,8 @@ struct TMesh {
 					tface->faces.pb(f);
 					HalfEdge* he = f->he;
 					F(k, 4) {
+						if(tface->gface == NULL && (gf = dynamic_cast<GFace*>(he->v1->ptr->onWhat())) != NULL)
+							tface->gface = gf;
 						if(!onTMesh.count(he)) {
 							Face* af = he->oppo->face; // adjacent face
 							if(!face2tface.count(af)) {
@@ -468,40 +524,46 @@ struct TMesh {
 				}
 			}
 		}
+		#pragma endregion
 
 		// Draw T-faces
 		for(TFace* tface : tfaces) tface->geolog(rand(), "T-faces");
 
-		// Check for periodic T-faces and split them
 		set<TFace*> isTFaceProcessed;
 		set<HalfEdge*> hedgesOnStitch;
-		for(HalfEdge* hes : M.hedges) if(onTMesh.count(hes)) {
-			TFace* tface = face2tface[hes->face]; // current T-face
-			if(isTFaceProcessed.count(tface)) continue;
-			isTFaceProcessed.insert(tface);
-			HalfEdge* he = hes;
-			while(face2tface[he->face] == tface) {
-				he = he->next->oppo->next;
-				if(he == hes) {
-					P("periodic T-face!");
-					he = he->next;
-					while(face2tface[he->face] == tface) {
-						onTMesh.insert(he);
-						onTMesh.insert(he->oppo);
-						hedgesOnStitch.insert(he);
-						hedgesOnStitch.insert(he->oppo);
-						he = he->next->oppo->next;
-					}
-					break;
-				}
-			}
-		}
+		// // Check for periodic T-faces and split them
+		// #pragma region
+		// for(HalfEdge* hes : M.hedges) if(onTMesh.count(hes)) {
+		// 	TFace* tface = face2tface[hes->face]; // current T-face
+		// 	if(isTFaceProcessed.count(tface)) continue;
+		// 	isTFaceProcessed.insert(tface);
+		// 	HalfEdge* he = hes;
+		// 	while(face2tface[he->face] == tface) {
+		// 		he = he->next->oppo->next;
+		// 		if(he == hes) {
+		// 			P("periodic T-face!");
+		// 			he = he->next;
+		// 			while(face2tface[he->face] == tface) {
+		// 				onTMesh.insert(he);
+		// 				onTMesh.insert(he->oppo);
+		// 				hedgesOnStitch.insert(he);
+		// 				hedgesOnStitch.insert(he->oppo);
+		// 				he = he->next->oppo->next;
+		// 			}
+		// 			break;
+		// 		}
+		// 	}
+		// }
+		// #pragma endregion
 
-		P("done splitting periodic T-faces");
+		// P("done splitting periodic T-faces");
+		// draw();
 
 		// Build T-edges
+		#pragma region
 		map<Vertex*, TVertex*> vertexmap; // map vertices to corresponding T-vertices
 		isTFaceProcessed.clear();
+		int n_tedges = 0;
 		for(HalfEdge* hes : M.hedges) {
 			if(!onTMesh.count(hes)) continue;
 			TFace* tface = face2tface[hes->face]; // current T-face
@@ -514,93 +576,144 @@ struct TMesh {
 			he = he->next; // now he has origin at some corner of tface
 			F(s, 4) { // for each side of the patch
 				do {
-					TFace* atface = face2tface[he->oppo->face]; // adjacent T-face
-					if(hedgemap.count(he)) { // If T-edge already exists
-						TEdge* tedge = hedgemap[he];
-						tface->sides[s].pb(tedge);
-						F(i, tedge->len) he = he->next->oppo->next;
+					// TFace* atface = face2tface[he->oppo->face]; // adjacent T-face
+					// if(hedgemap.count(he)) { // If T-edge already exists
+					// 	TEdge* tedge = hedgemap[he];
+					// 	tface->sides[s].pb(tedge);
+					// 	F(i, tedge->len) he = he->next->oppo->next;
+					// } else {
+					TEdge* tedge = new TEdge;
+					tedges.pb(tedge); tface->sides[s].pb(tedge);
+					tedge->he = he, tedge->len = 0, tedge->gedge = he->gedge,
+						tedge->tface = tface, //tedge->id = S(tedges)-1,
+						tedge->isStitch = hedgesOnStitch.count(he);
+					if(hedgemap.count(he->oppo)) { // If opposite T-edge already exists
+						tedge->oppo = hedgemap[he->oppo];
+						hedgemap[he->oppo]->oppo = tedge;
+						tedge->id = tedge->oppo->id;
 					} else {
-						TEdge* tedge = new TEdge;
-						tedges.pb(tedge); tface->sides[s].pb(tedge);
-						tedge->he = he, tedge->len = 0, tedge->gedge = he->gedge,
-							tedge->tface1 = tface, tedge->tface2 = atface, tedge->id = S(tedges)-1,
-							tedge->isStitch = hedgesOnStitch.count(he);
-						if(tedge->gedge != NULL) gedge2tedges[tedge->gedge].pb(tedge);
-						if(!vertexmap.count(he->v1)) {
-							TVertex* tvertex = new TVertex; tvertices.pb(tvertex);
-							tvertex->vertex = he->v1;
-							vertexmap[he->v1] = tvertex;
-							tvertex->isSingular = (he->v1->valence != 4);
-						}
-						TVertex* tvertex1 = vertexmap[he->v1];
-						do {
-							tedge->len++;
-							hedgemap[he] = tedge;
-							hedgemap[he->oppo] = tedge;
-							if(he->gedge != tedge->gedge)
-								P("WARNING: T-edge overlaps multiple GEdges!");
-							he = he->next->oppo->next;
-						} while(!onTMesh.count(he->prev) && !onTMesh.count(he->oppo->next));
-						if(!vertexmap.count(he->v1)) { // not very elegant :-(
-							TVertex* tvertex = new TVertex; tvertices.pb(tvertex);
-							tvertex->vertex = he->v1;
-							vertexmap[he->v1] = tvertex;
-							tvertex->isSingular = (he->v1->valence != 4);
-						}
-						// Add T-edge to T-vertex adjacencies
-						TVertex* tvertex2 = vertexmap[he->v1];
-						tvertex1->adj.pb({tvertex2, tedge});
-						tvertex2->adj.pb({tvertex1, tedge});
-						tedge->tvertex1 = tvertex1;
-						tedge->tvertex2 = tvertex2;
+						tedge->id = n_tedges++;
 					}
-				//}
+					if(tedge->gedge != NULL) gedge2tedges[tedge->gedge].pb(tedge);
+					if(!vertexmap.count(he->v1)) {
+						TVertex* tvertex = new TVertex; tvertices.pb(tvertex);
+						tvertex->vertex = he->v1;
+						vertexmap[he->v1] = tvertex;
+						tvertex->isSingular = (he->v1->valence != 4);
+					}
+					TVertex* tvertex1 = vertexmap[he->v1];
+					do {
+						tedge->len++;
+						hedgemap[he] = tedge;
+						hedgemap[he->oppo] = tedge;
+						if(he->gedge != tedge->gedge)
+							P("WARNING: T-edge overlaps multiple GEdges!");
+						he = he->next->oppo->next;
+					} while(!onTMesh.count(he->prev) && !onTMesh.count(he->oppo->next) && !isGVertex(he->v1));
+					if(!vertexmap.count(he->v1)) { // not very elegant :-(
+						TVertex* tvertex = new TVertex; tvertices.pb(tvertex);
+						tvertex->vertex = he->v1;
+						vertexmap[he->v1] = tvertex;
+						tvertex->isSingular = (he->v1->valence != 4);
+					}
+					// Add T-edge to T-vertex adjacencies
+					TVertex* tvertex2 = vertexmap[he->v1];
+					tvertex1->adj.pb({tvertex2, tedge});
+					tvertex2->adj.pb({tvertex1, tedge});
+					tedge->tvertex1 = tvertex1;
+					tedge->tvertex2 = tvertex2;
+					// }
 				} while(!onTMesh.count(he->prev));
 				he = he->prev->oppo;
 			}
 		}
-
 		P("done building T-edges");
+		#pragma endregion
+
+		H(n_tedges);
+		H(S(tedges));
 
 		// Build traces
-		map<TEdge*, int> tedge2traceindex; // index along trace of a given T-edge
-		V<TEdge*> hetraceindex2tedge; // T-edge given index along hetrace
 		map<TraceHalfEdges*, Trace*> hetrace2trace;
 		for(TraceHalfEdges* hetrace : hetraces) {
 			Trace* trace = new Trace;
+			trace->alpha = hetrace->alpha;
 			hetrace2trace[hetrace] = trace;
+			H(vertexmap.count(hetrace->orig));
+			if(!vertexmap.count(hetrace->orig)) {
+				hetrace->orig->geolog(0, "not in vertexmap");
+				// draw();
+			}
 			trace->orig = vertexmap[hetrace->orig];
 			for(HalfEdge* he : hetrace->hedges) {
 				TEdge* tedge = hedgemap[he];
-				hetraceindex2tedge.pb(tedge);
 				if(trace->tedges.empty() || tedge != trace->tedges.back()) {
-					tedge2traceindex[tedge] = S(trace->tedges);
+					trace->tedge2index[tedge] = S(trace->tedges);
 					trace->tedges.pb(tedge);
+					if(trace->len.empty()) trace->len.pb(tedge->len);
+					else trace->len.pb(tedge->len + trace->len.back());
 				}
-			}
-			if(hetrace->listar == -1) { // no star!
-				trace->listar = -1;
-			} else {
-				H(hetraceindex2tedge[hetrace->listar]);
-				trace->listar = tedge2traceindex[hetraceindex2tedge[hetrace->listar]];
-			}
-			H(hetrace->listar);
-			// H(hetraceindex2tedge[hetrace->listar]);
-			
-			H(trace->listar);
-			if(trace->listar == 0)  {
-				trace->geolog(0, "listar = 0");
-				draw();
 			}
 			traces.pb(trace);
 		}
-		// Build intersections
-		for(TraceHalfEdges* hetrace : hetraces) {
-			for(TraceHalfEdgesIntersection* hetraceInters : hetrace->intersections) {
-				TraceIntersection* traceInters = new TraceIntersection;
-				traceInters->t = hetrace2trace[hetraceInters->t];
-				traceInters->li = tedge2traceindex[hetraceindex2tedge[hetraceInters->li]];
-				traceInters->lj = tedge2traceindex[hetraceindex2tedge[hetraceInters->lj]];
+
+		// Build intersections and istar
+		F(itrace, S(traces)) {
+			P("treating trace " + to_string(itrace));
+			Trace* trace = traces[itrace];
+			// trace->geolog(0, "intersections of trace " + to_string(itrace));
+			H(S(trace->tedges));
+		// for(Trace* trace : traces) {
+			trace->istar = -1; // not found yet
+			F(i, S(trace->tedges)) {
+				TEdge* tedge = trace->tedges[i];
+				if(tedge->tvertex2->isSingular || isGVertex(tedge->tvertex2->vertex)) continue;
+				H(i);
+				// Determine last half-edge
+				HalfEdge* he = tedge->he;
+				F(k, tedge->len-1) he = he->next->oppo->next;
+				HalfEdge *heLeft = he->next->oppo, *heRight = he->oppo->prev;
+				if(hedge2trace.count(heLeft)) { // there's an intersection on the left
+					Trace* t = hetrace2trace[hedge2trace[heLeft]];
+					H(t);
+					int j = t->tedge2index[hedgemap[heLeft]];
+					if(trace->istar == -1 && t->len[j] < trace->len[i])  { // we have found istar :-)
+						trace->istar = i; 
+						he->v2->geolog(0, "istar");
+					}
+					if(t->len[j] > tan(trace->alpha) * trace->len[i]) { // new intersection
+						TraceIntersection* inters = new TraceIntersection;
+						inters->t = t, inters->i = i, inters->j = j;
+						H(inters->i);
+						H(inters->j);
+						trace->intersections.pb(inters);
+						// he->v2->geolog(0, "intersections of trace " + to_string(itrace));
+						// t->geolog(rand(), "intersections of trace " + to_string(itrace));
+					}
+				}
+				if(hedge2trace.count(heRight)) { // there's an intersection on the right
+					Trace* t = hetrace2trace[hedge2trace[heRight]];
+					H(t);
+					int j = t->tedge2index[hedgemap[heRight]];
+					if(trace->istar == -1 && t->len[j] < trace->len[i]) { // we have found istar :-)
+						trace->istar = i; 
+						he->v2->geolog(0, "istar");
+					}
+					if(t->len[j] > tan(trace->alpha) * trace->len[i]) { // new intersection
+						TraceIntersection* inters = new TraceIntersection;
+						inters->t = t, inters->i = i, inters->j = j;
+						H(inters->i);
+						H(inters->j);
+						trace->intersections.pb(inters);
+						// he->v2->geolog(1, "intersections of trace " + to_string(itrace));
+						// t->geolog(2, "intersections of trace " + to_string(itrace));
+						// he->v2->geolog(0, "intersections");
+					}
+				}
+				// cout << endl;
+			}
+			if(trace->istar == -1) {
+				trace->istar = S(trace->tedges)-1;
 			}
 		}
 
@@ -615,29 +728,25 @@ struct TMesh {
 	}
 };
 
-// Gecode model
-class AlignQuadMesh : public IntMinimizeSpace {
+class OptimizeLengths : public IntMinimizeSpace {
 	protected:
 		IntVarArray l; // lengths of T-edges
 		IntVarArray d; // diff between current and desired edge lengths
-		IntVar nz; // number of T-edges with zero length
 		IntVar costvar; // cost to minimize
 		const TMesh& TM;
 	public:
-		AlignQuadMesh(const TMesh& TM_) :
-			l(*this, S(TM_.tedges), 0, 10),
-			//l(*this, S(TM_.tedges), 0, Int::Limits::max),
-			d(*this, S(TM_.tedges), 0, Int::Limits::max),
-			nz(*this, 0, S(TM_.tedges)),
-			costvar(*this, Int::Limits::min, Int::Limits::max),
+		OptimizeLengths(const TMesh& TM_, V<int> lens) :
+			l(*this, S(lens), 0, Int::Limits::max),
+			d(*this, S(lens), 0, Int::Limits::max),
+			costvar(*this, 0, Int::Limits::max),
 			TM(TM_) {
 
-
-			// Constrain GEdge's to have length > 0
-			for(auto it : TM.gedge2tedges) {
-				IntVarArgs g(S(it.second));
-				F(i, S(it.second)) g[i] = l[it.second[i]->id];
-				rel(*this, sum(g) > 0);
+			// Constrain zero and nonzero T-edges
+			F(i, S(lens)) {
+				if(lens[i])
+					rel(*this, l[i] > 0);
+				else
+					rel(*this, l[i] == 0);
 			}
 
 			// Constrain opposite sides of T-faces to have equal length
@@ -652,49 +761,165 @@ class AlignQuadMesh : public IntMinimizeSpace {
 				rel(*this, sum(s[1]) == sum(s[3]));
 			}
 
-			// Compute distance between all pairs of irregular vertices
-			map<TVertex*, map<TVertex*, int>> dist;
-			for(TVertex* tvertex : TM.tvertices) if(tvertex->isSingular && !isGVertex(tvertex->vertex)) { // we don't care about non-singular vertices!
-				// initialize dist[tvertex]
-				for(TVertex* v : TM.tvertices)
-					dist[tvertex][v] = (tvertex == v) ? 0 : INT_MAX;
-				priority_queue<pair<int,TVertex*>> pq; pq.push({0, tvertex});
-				while(S(pq)) {
-					pair<int,TVertex*> p = pq.top(); pq.pop();
-					TVertex* u = p.second; int du = -p.first;
-					if(dist[tvertex][u] < du) continue;
-					for(pair<TVertex*, TEdge*> pa : u->adj) {
-						TVertex* v = pa.first; TEdge* e = pa.second;
-						int dv = du + e->len;
-						if(dist[tvertex][v] > dv) {
-							dist[tvertex][v] = dv;
-							pq.push({-dv, v});
-						}
+			// Cost function
+			for(TEdge* tedge : TM.tedges) rel(*this, d[tedge->id] == abs(l[tedge->id] - tedge->len)); // L1 norm
+			// for(TEdge* tedge : TM.tedges) rel(*this, d[tedge->id] == (l[tedge->id] - tedge->len) * (l[tedge->id] - tedge->len)); // L2 norm
+			rel(*this, costvar == sum(d));
+
+			// Branching function
+			Rnd rnd(42); branch(*this, l, INT_VAR_RND(rnd), INT_VAL_MIN()); // TODO: is there a smarter way?
+		}
+		// copier
+		OptimizeLengths(OptimizeLengths& s) : IntMinimizeSpace(s), TM(s.TM) {
+			l.update(*this, s.l);
+			d.update(*this, s.d);
+			costvar.update(*this, s.costvar);
+		}
+		virtual Space* copy(void) {
+			return new OptimizeLengths(*this);
+		}
+		// printer
+		void print(void) const {
+			cout << l << ". Cost = " << costvar << endl;
+		}
+		// cost function
+		virtual IntVar cost(void) const {
+			return costvar;
+		}
+		// extract solution
+		void getSolution(V<int>& sol) {
+			sol.resize(S(l));
+			F(i, S(l))
+				sol[i] = l[i].val();
+		}
+};
+
+// Gecode model
+class AlignQuadMesh : public IntMinimizeSpace {
+	protected:
+		IntVarArray l; // lengths of T-edges
+		IntVarArray d; // diff between current and desired edge lengths
+		IntVar nz; // number of T-edges with zero length
+		IntVar costvar; // cost to minimize
+		const TMesh& TM;
+	public:
+		AlignQuadMesh(const TMesh& TM_, int lmax) :
+			l(*this, S(TM_.tedges)/2, 0, lmax),
+			// l(*this, S(TM_.tedges)/2, 0, 44),
+			// l(*this, S(TM_.tedges)/2, 0, Int::Limits::max),
+			d(*this, S(TM_.tedges)/2, 0, Int::Limits::max),
+			nz(*this, 0, S(TM_.tedges)/2),
+			costvar(*this, Int::Limits::min, Int::Limits::max),
+			TM(TM_) {
+
+			// // Constrain opposite T-edges to have the same length
+			// for(TEdge* tedge : TM.tedges) {
+			// 	rel(*this, l[tedge->id] == l[tedge->oppo->id]);
+			// }
+
+			// // Constrain GEdge's to have length > 0 (TODO: still necessary?)
+			// for(auto it : TM.gedge2tedges) {
+			// 	IntVarArgs g(S(it.second));
+			// 	F(i, S(it.second)) g[i] = l[it.second[i]->id];
+			// 	rel(*this, sum(g) > 0);
+			// }
+
+			for(TEdge* tedge : TM.tedges) {
+				if(isOnCAD(tedge->tvertex1->vertex) && isOnCAD(tedge->tvertex2->vertex)) {
+					GEdge* gedge1 = dynamic_cast<GEdge*>(tedge->tvertex1->vertex->ptr->onWhat());
+					GEdge* gedge2 = dynamic_cast<GEdge*>(tedge->tvertex2->vertex->ptr->onWhat());
+					if(gedge1 != NULL && gedge2 != NULL && gedge1 != gedge2) {
+						tedge->geolog(0, "T-edge forced > 0");
+						rel(*this, l[tedge->id] > 0);
 					}
 				}
 			}
 
-			// Constrain traces to have positive length
-			for(Trace* trace : TM.traces) {
-				bool collapse = false;
-				if(trace->dest != NULL && trace->orig->isSingular && !isGVertex(trace->orig->vertex) && trace->dest->isSingular && !isGVertex(trace->dest->vertex) && dist[trace->orig][trace->dest] <= 2) {
-					P("pair of 3-5 detected!");
-					trace->geolog(rand(), "dist <= 2");
-					collapse = true;
+			// Constrain opposite sides of T-faces to have equal length
+			for(TFace* tface : TM.tfaces) {
+				array<IntVarArgs,4> s; // 4 sides
+				F(k, 4) {
+					s[k] = IntVarArgs(S(tface->sides[k]));
+					F(i, S(tface->sides[k]))
+						s[k][i] = l[tface->sides[k][i]->id];
 				}
-
-				IntVarArgs t(S(trace->tedges));
-				F(i, S(trace->tedges))
-					t[i] = l[trace->tedges[i]->id];
-				//if(collapse)
-					//rel(*this, sum(t) == 0);
-				//else
-					//rel(*this, sum(t) > 0);
-				if(!collapse)
-					rel(*this, sum(t) > 0);
+				rel(*this, sum(s[0]) == sum(s[2]));
+				rel(*this, sum(s[1]) == sum(s[3]));
 			}
 
-			P("done constraining traces to have positive length");
+			// Validity constraints
+			for(Trace* trace : TM.traces) {
+				H(trace->orig);
+				// if(!trace->orig->vertex->isSingularity) continue; // ignore non-truly singular vertices
+				// if(trace->istar == -1) continue;
+				IntVarArgs s(trace->istar+1);
+				H(trace->istar+1)
+				F(i, trace->istar+1) {
+					H(trace->tedges[i]->id);
+					s[i] = l[trace->tedges[i]->id];
+				}
+				rel(*this, sum(s) > 0);
+			}
+
+			// Layout constraints
+			// F(itrace, S(TM.traces)) {
+			for(Trace* trace : TM.traces) {
+				// Trace* trace = TM.traces[itrace];
+				// if(!trace->orig->vertex->isSingularity) continue; // ignore non-truly singular vertices
+				for(TraceIntersection* inters : trace->intersections) {	
+					if(inters->t->len[inters->j] > tan(trace->alpha) * trace->len[inters->i]) {
+						// New layout constraint
+						IntVarArgs s(inters->j+1);
+						F(i, inters->j+1)
+							s[i] = l[inters->t->tedges[i]->id];
+						rel(*this, sum(s) > 0);
+					}
+				}
+			}
+
+			// // Compute distance between all pairs of irregular vertices
+			// map<TVertex*, map<TVertex*, int>> dist;
+			// for(TVertex* tvertex : TM.tvertices) if(tvertex->isSingular && !isGVertex(tvertex->vertex)) { // we don't care about non-singular vertices!
+			// 	// initialize dist[tvertex]
+			// 	for(TVertex* v : TM.tvertices)
+			// 		dist[tvertex][v] = (tvertex == v) ? 0 : INT_MAX;
+			// 	priority_queue<pair<int,TVertex*>> pq; pq.push({0, tvertex});
+			// 	while(S(pq)) {
+			// 		pair<int,TVertex*> p = pq.top(); pq.pop();
+			// 		TVertex* u = p.second; int du = -p.first;
+			// 		if(dist[tvertex][u] < du) continue;
+			// 		for(pair<TVertex*, TEdge*> pa : u->adj) {
+			// 			TVertex* v = pa.first; TEdge* e = pa.second;
+			// 			int dv = du + e->len;
+			// 			if(dist[tvertex][v] > dv) {
+			// 				dist[tvertex][v] = dv;
+			// 				pq.push({-dv, v});
+			// 			}
+			// 		}
+			// 	}
+			// }
+
+			// // Constrain traces to have positive length
+			// for(Trace* trace : TM.traces) {
+			// 	bool collapse = false;
+			// 	if(trace->dest != NULL && trace->orig->isSingular && !isGVertex(trace->orig->vertex) && trace->dest->isSingular && !isGVertex(trace->dest->vertex) && dist[trace->orig][trace->dest] <= 2) {
+			// 		P("pair of 3-5 detected!");
+			// 		trace->geolog(rand(), "dist <= 2");
+			// 		collapse = true;
+			// 	}
+
+			// 	IntVarArgs t(S(trace->tedges));
+			// 	F(i, S(trace->tedges))
+			// 		t[i] = l[trace->tedges[i]->id];
+			// 	//if(collapse)
+			// 		//rel(*this, sum(t) == 0);
+			// 	//else
+			// 		//rel(*this, sum(t) > 0);
+			// 	if(!collapse)
+			// 		rel(*this, sum(t) > 0);
+			// }
+
+			// P("done constraining traces to have positive length");
 
 			// Constrain singularities to not collapse
 			//int nc = 0;
@@ -763,15 +988,15 @@ class AlignQuadMesh : public IntMinimizeSpace {
 					rel(*this, l[tedge->id] > 0);
 
 			// Cost function
-			rel(*this, costvar == sum(l)); // minimize sum of edge lengths
+			// rel(*this, costvar == sum(l)); // minimize sum of edge lengths
 			for(TEdge* tedge : TM.tedges) rel(*this, d[tedge->id] == abs(l[tedge->id] - tedge->len));
 			count(*this, l, 0, IRT_EQ, nz); // nz == number of zero length T-edges
-			//rel(*this, costvar == 1000*(-nz) + sum(d));
-			//rel(*this, costvar == -nz);
+			rel(*this, costvar == 10000*(-nz) + sum(d));
+			// rel(*this, costvar == -nz);
 
 			// Branching function
-			//branch(*this, l, INT_VAR_SIZE_MIN(), INT_VAL_MIN()); // TODO: is there a smarter way?
-			//Rnd rnd(42); branch(*this, l, INT_VAR_RND(rnd), INT_VAL_RND(rnd)); // TODO: is there a smarter way?
+			// branch(*this, l, INT_VAR_SIZE_MIN(), INT_VAL_MIN()); // TODO: is there a smarter way?
+			// Rnd rnd(42); branch(*this, l, INT_VAR_RND(rnd), INT_VAL_RND(rnd)); // TODO: is there a smarter way?
 			Rnd rnd(42); branch(*this, l, INT_VAR_RND(rnd), INT_VAL_MIN()); // TODO: is there a smarter way?
 
 			//// Merit function
@@ -798,7 +1023,7 @@ class AlignQuadMesh : public IntMinimizeSpace {
 		}
 		// printer
 		void print(void) const {
-			cout << "There are " << nz << " zero-length T-edges: " << l << endl;
+			cout << "There are " << nz << " zero-length T-edges: " << l << ". Cost = " << costvar << endl;
 		}
 		// cost function
 		virtual IntVar cost(void) const {
@@ -811,6 +1036,8 @@ class AlignQuadMesh : public IntMinimizeSpace {
 				sol[i] = l[i].val();
 		}
 };
+
+
 
 struct Cluster {
 	V<TVertex*> tvertices;
@@ -969,11 +1196,14 @@ bool transfinite_interpolation(
 
 
 
-
 // Main function
 void alignQuadMesh(GModel* gm) {
+
+	
 	// Build MeshHalfEdges
 	MeshHalfEdges M(gm);
+
+
 
 	H(tan(M_PI/4));
 
@@ -981,32 +1211,61 @@ void alignQuadMesh(GModel* gm) {
 	TMesh TM(M, M_PI/4); // build
 	TM.geolog("T-mesh"); // draw
 
+
+
 	H(S(TM.tfaces));
 	H(S(TM.tedges));
 	H(S(TM.tvertices));
 
-	// gmsh::initialize();
-	// GeoLog::flush();
-	// gmsh::fltk::run();
+	// for(TEdge* tedge : TM.tedges) {
+	// 	H(tedge->id);
+	// }
+
 	draw();
 
 	// Initialize and run Gecode model
 	P("building model");
-	AlignQuadMesh* model = new AlignQuadMesh(TM);
+	AlignQuadMesh* model = new AlignQuadMesh(TM, 3); // TODO: determine lmax
 	BAB<AlignQuadMesh> engine(model);
 	delete model;
 	P("running BAB...");
 	clock_t start = clock();
-	V<int> solution;
+	V<int> lens;
 	while(AlignQuadMesh* state = engine.next()) {
-		state->getSolution(solution);
-		int sum = 0; for(int i : solution) sum += i; // compute sum of edge lengths
+		state->getSolution(lens);
+		// int sum = 0; for(int i : solution) sum += i; // compute sum of edge lengths
 		state->print();
 		//cout << "solution (sum = " << sum << "): " << solution << endl;
+	}
+	if(S(lens) == 0) {
+		P("no solution found :-(");
+		return;
 	}
 	double elapsed = double(clock()-start) / CLOCKS_PER_SEC;
 	H(elapsed);
 
+	OptimizeLengths* model2 = new OptimizeLengths(TM, lens);
+	Search::TimeStop ts(10000);
+	Search::Options options;
+	options.stop = &ts;
+	BAB<OptimizeLengths> engine2(model2, options);
+	delete model2;
+	P("running BAB...");
+	start = clock();
+	V<int> solution;
+	while(OptimizeLengths* state = engine2.next()) {
+		state->getSolution(solution);
+		state->print();
+	}
+	if(S(solution) == 0) {
+		P("no solution found :-(");
+		return;
+	}
+	elapsed = double(clock()-start) / CLOCKS_PER_SEC;
+	H(elapsed);
+	// V<int> solution = lens;
+
+	
 
 	// Draw T-edges with positive length
 	for(TEdge* tedge : TM.tedges) if(solution[tedge->id]) {
@@ -1070,8 +1329,8 @@ void alignQuadMesh(GModel* gm) {
 				break; // since there can be only one sing per cluster
 			}
 		}
-		H(cluster->type);
-		H(cluster->gface);
+		// H(cluster->type);
+		// H(cluster->gface);
 
 		if(cluster->type == 0) // any vertex will do
 			cluster->center = cluster->tvertices[0]->vertex;
@@ -1099,6 +1358,8 @@ void alignQuadMesh(GModel* gm) {
 		}
 	}
 
+	// int pathcount = 0;
+
 	for(TFace* tface : TM.tfaces) {
 		// First check if T-face has positive area (otherwise skip it)
 		bool positiveArea = true;
@@ -1117,90 +1378,140 @@ void alignQuadMesh(GModel* gm) {
 		F(k,4) {
 			for(TEdge* tedge : tface->sides[k]) {
 				Cluster *cluster1 = inCluster[tedge->tvertex1], *cluster2 = inCluster[tedge->tvertex2];
-				if(cluster1 == cluster2) continue;
-				if(tface == tedge->tface2) // T-face is on wrong side of T-edge
-					swap(cluster1, cluster2);
+				// if(cluster1 == cluster2) continue;
+				// if(tface == tedge->tface2) // T-face is on wrong side of T-edge
+				// 	swap(cluster1, cluster2);
 				if(corners[k] == NULL) corners[k] = cluster1;
 				int type1 = cluster1->type, type2 = cluster2->type;
 				if(type1 > 1 && type2 > 2) { // if both on CAD
-					H(tedge->gedge);
-					H(tedge->tvertex1->vertex);
-					H(tedge->tvertex2->vertex);
-					H(cluster1->center);
-					H(cluster2->center);
-					cout << endl;
+					// H(tedge->gedge);
+					// H(tedge->tvertex1->vertex);
+					// H(tedge->tvertex2->vertex);
+					// H(cluster1->center);
+					// H(cluster2->center);
+					// cout << endl;
 				}
 				V<Vertex*> path;
 				if(paths.count({cluster2, cluster1})) { // path already exists
 					path = paths[{cluster2,cluster1}];
 					reverse(ALL(path));
+				} else if(cluster1 == cluster2) {
+					path.pb(cluster1->center);
 				} else {
 					Vertex* center1 = cluster1->center, *center2 = cluster2->center;
-					queue<Vertex*> q; q.push(center1);
 					map<Vertex*, Vertex*> parent; parent[center1] = NULL;
-					bool done = false;
-					bool bothOnCAD = (type1 > 1 && type2 > 1);
-					// Find shortest path on mesh between center1 and center2
-					while(!done && S(q)) {
-						Vertex* u = q.front(); q.pop();
-						HalfEdge* he = u->he;
-						F(k, u->valence) {
-							he = he->oppo->next;
-							Vertex* v = he->v2;
-							if(v == center2) {
-								parent[v] = u;
-								done = true; break;
+					V<Vertex*> q; q.pb(center1);
+					while(true) {
+						V<Vertex*> qn;
+						bool done = false;
+						for(Vertex* u : q) {
+							HalfEdge* he = u->he;
+							F(k, u->valence) {
+								he = he->oppo->next;
+								Vertex* v = he->v2;
+								if(!parent.count(v)) {
+									parent[v] = u;
+									if(v == center2) {
+										done = true;
+										break;
+									}
+									qn.pb(v);
+								}
 							}
-							if((!bothOnCAD || isOnCAD(v)) && !parent.count(v)) {
-								parent[v] = u;
-								q.push(v);
-							}
+							if(done) break;
 						}
+						if(done) break;
+						q = qn;
+						// Sort q according to distance to center2
+						sort(ALL(q), [center1, center2](Vertex* a, Vertex* b)->bool { return a->dist(center1) + a->dist(center2) <  b->dist(center1) + b->dist(center2); });
 					}
+					
+					// queue<Vertex*> q; q.push(center1);
+					// map<Vertex*, Vertex*> parent; parent[center1] = NULL;
+					// bool done = false;
+					// bool bothOnCAD = (type1 > 1 && type2 > 1);
+					// // Find shortest path on mesh between center1 and center2
+					// while(!done && S(q)) {
+					// 	Vertex* u = q.front(); q.pop();
+					// 	HalfEdge* he = u->he;
+					// 	F(k, u->valence) {
+					// 		he = he->oppo->next;
+					// 		Vertex* v = he->v2;
+					// 		if(v == center2) {
+					// 			parent[v] = u;
+					// 			done = true; break;
+					// 		}
+					// 		if(/*(!bothOnCAD || isOnCAD(v)) && */!parent.count(v)) {
+					// 			parent[v] = u;
+					// 			q.push(v);
+					// 		}
+					// 	}
+					// }
 
 					path.pb(center2);
 					Vertex* u = center2;
 					do {
 						u = parent[u];
 						path.pb(u);
-						P("coucou");
+						// P("coucou");
 					} while(u != center1);
 					reverse(ALL(path)); // center1 -> center2
 					paths[{cluster1, cluster2}] = path;
+					// paths[{cluster2, cluster1}] = path;
+					FR(i, 1, S(path))
+						GeoLog::add({SVector3(path[i-1]->ptr->point()), SVector3(path[i]->ptr->point())}, color, "minimal mesh");
 				}
 				// Path has been determined
-				H(S(path));
-				if(S(path)) {
+				// H(S(path));
+				// FR(i, 1, S(path))
+				// 	GeoLog::add({SVector3(path[i-1]->ptr->point()), SVector3(path[i]->ptr->point())}, color, "minimal mesh");
+				if(S(path) == 1) { // path has length 0 (same clusters)
+					if(tedge == tface->sides[k].front())
+						side_vertices[k].pb(path[0]->ptr->point());
+				} else {
 					V<SPoint3> pts(S(path));
 					F(i, S(path)) pts[i] = path[i]->ptr->point();
 					V<SPoint3> ipts;
-					int nb_ipts = 10 * solution[tedge->id];
-					H(nb_ipts);
-					H(S(pts));
-					bool oks = compute_subdivided_edge_internal_points(pts, nb_ipts, ipts);
+					int nb_ipts = 1 * solution[tedge->id] - 1;
+					// H(nb_ipts);
+					// H(S(pts));
+					compute_subdivided_edge_internal_points(pts, nb_ipts, ipts);
 					// Add first and last point
-					ipts.insert(ipts.begin(), pts[0]);
+					// H(S(tface->sides[k]));
+					if(tedge == tface->sides[k].front()) {
+						ipts.insert(ipts.begin(), pts[0]);
+						// P("yes");
+					}
 					ipts.pb(pts.back());
 
 					F(i, S(ipts)) side_vertices[k].pb(ipts[i]);
 
 					int color = rand();
 					FR(i, 1, S(ipts)) {
-						ostringstream name; name << "patch " << tface;
-						//GeoLog::add({SVector3(ipts[i-1]), SVector3(ipts[i])}, i, name.str());
-						//GeoLog::add({SVector3(path[i-1]->ptr->point()), SVector3(path[i]->ptr->point())}, color, "minimal mesh");
+						// ostringstream name; name << "patch " << tface;
+						// GeoLog::add({SVector3(ipts[i-1]), SVector3(ipts[i])}, i, name.str());
+						// GeoLog::add({SVector3(ipts[i-1]), SVector3(ipts[i])}, color, "minimal mesh");
+						GeoLog::add({ipts[i-1], ipts[i]}, color, "minimal mesh (resampled)");
+						// GeoLog::add({SVector3(path[i-1]->ptr->point()), SVector3(path[i]->ptr->point())}, color, "minimal mesh");
 					}
+					// draw();
 				}
 			}
 			//corners[k]->center->geolog(color, "corners");
 		}
-		H(S(side_vertices[0]));
-		H(S(side_vertices[1]));
-		H(S(side_vertices[2]));
-		H(S(side_vertices[3]));
+		// H(S(side_vertices[0]));
+		// H(S(side_vertices[1]));
+		// H(S(side_vertices[2]));
+		// H(S(side_vertices[3]));
+		if(S(side_vertices[0]) != S(side_vertices[2]) || S(side_vertices[1]) != S(side_vertices[3])) {
+			tface->geolog(0, "TFI fail");
+			draw();
+			
+		}
 		V<SVector3> ipts;
-		transfinite_interpolation(side_vertices[0], side_vertices[1], side_vertices[2], side_vertices[3], ipts);
-		H(S(ipts));
+		if(S(side_vertices[0]) != 2 && S(side_vertices[1]) != 2)
+			transfinite_interpolation(side_vertices[0], side_vertices[1], side_vertices[2], side_vertices[3], ipts);
+		// H(S(ipts));
 
 		int n = S(side_vertices[0]), m = S(side_vertices[1]);
 		V<V<SVector3>> apts(n, V<SVector3>(m)); // all points: side_vertices + ipts
@@ -1211,6 +1522,9 @@ void alignQuadMesh(GModel* gm) {
 				else if(i == n-1) apts[i][j] = side_vertices[1][j];
 				else if(j == m-1) apts[i][j] = side_vertices[2][n-1-i];
 				else apts[i][j] = ipts[(i-1)+(j-1)*(n-2)];
+				// Project on GFace
+				GPoint proj = tface->gface->closestPoint(SPoint3(apts[i][j]), SPoint3(apts[i][j]));
+				apts[i][j] = SVector3(proj.x(), proj.y(), proj.z());
 			}
 		}
 		color = rand();
@@ -1219,6 +1533,8 @@ void alignQuadMesh(GModel* gm) {
 			if(j < m-1) GeoLog::add({apts[i][j], apts[i][j+1]}, 0, "new edges");
 			if(i < n-1 && j < m-1) GeoLog::add({apts[i][j], apts[i+1][j], apts[i+1][j+1], apts[i][j+1]}, color, "new faces");
 		}
+
+		
 	}
 
 	P("done!");
