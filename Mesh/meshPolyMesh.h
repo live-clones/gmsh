@@ -7,6 +7,7 @@
 #define MESH_POLYMESH_H
 
 #include <vector>
+#include <algotithm>
 #include <stack>
 #include <stdio.h>
 #include "SVector3.h"
