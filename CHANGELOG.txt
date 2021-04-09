@@ -6,6 +6,8 @@ post-processing views; mesh size callback is now per-model; small bug fixes.
   mesh/partition; modified arguments to mesh/getKeysForElements,
   mesh/getKeysForElement and mesh/getInformationForElements.
 
+4.8.3 (April 6, 2021): small bug fixes.
+
 4.8.2 (March 27, 2021): fixed regression in OCC transforms; fixed cwrap API.
 
 4.8.1 (March 21, 2021): improved performance when transforming many OCC
