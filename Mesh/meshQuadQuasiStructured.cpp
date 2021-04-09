@@ -1661,11 +1661,13 @@ int RefineMeshWithBackgroundMeshProjection(GModel *gm)
   bool linear = true;
   RefineMesh(gm, linear, true, false);
 
-  if(true || Msg::GetVerbosity() >= 99) {
+  if(Msg::GetVerbosity() >= 99) {
     std::unordered_map<std::string, double> stats;
     appendQuadMeshStatistics(gm, stats, "MPS_");
     printStatistics(stats, "Quad mesh after subdivision, before projection:");
-    gm->writeMSH("qqs_subdiv_noproj.msh", 4.1);
+    if (DBG_EXPORT) {
+      gm->writeMSH("qqs_subdiv_noproj.msh", 4.1);
+    }
   }
 
 
@@ -2466,9 +2468,12 @@ void QuadqsContextUpdater::setQuadqsOptions()
 {
   Msg::Debug("set special quadqs options in the global context");
 
-  CTX::instance()->mesh.algo2d = ALGO_2D_QUAD_QUASI_STRUCT;
+  // CTX::instance()->mesh.algo2d = ALGO_2D_QUAD_QUASI_STRUCT;
   CTX::instance()->mesh.recombineAll = 1;
-  CTX::instance()->mesh.algoRecombine = 0;
+  // CTX::instance()->mesh.algoRecombine = 4; /* bipartite labelling */
+  if (CTX::instance()->mesh.algoRecombine != 4) {
+    CTX::instance()->mesh.algoRecombine = 0; /* midpoint subdivision */
+  }
   CTX::instance()->mesh.recombineOptimizeTopology = 0;
   CTX::instance()->mesh.lcFactor = 1.;
   CTX::instance()->mesh.lcMin = 0.;

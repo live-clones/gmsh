@@ -8,6 +8,7 @@
 
 #include <queue>
 #include <stack>
+#include <unordered_map>
 #include "GmshConfig.h"
 #include "surfaceFiller.h"
 #include "Field.h"
@@ -376,13 +377,70 @@ static void findPhysicalGroupsForSingularities(GFace *gf,
   }
 }
 
+int boundaryVertexLabelling(GFace* gf, 
+    std::unordered_map<MVertex*,uint8_t>& bdrVertexColor) {
+  bdrVertexColor.clear();
+
+  /* Vertex to vertex adjacencies */
+  std::unordered_map<MVertex*,std::vector<MVertex*> > v2v;
+  std::vector<GEdge*> edges = gf->edges();
+  for (GEdge* ege: gf->embeddedEdges()) edges.push_back(ege);
+  for (GEdge* ge: edges) for (MLine* l: ge->lines) {
+    MVertex* v1 = l->getVertex(0);
+    MVertex* v2 = l->getVertex(1);
+    v2v[v1].push_back(v2);
+    v2v[v2].push_back(v1);
+
+    if (v2->onWhat()->dim() == 0) {
+      auto it2 = bdrVertexColor.find(v2);
+      if (it2 == bdrVertexColor.end()) {
+        bdrVertexColor[v2] = 0;
+      }
+    }
+  }
+
+  /* Greedy assignement */
+  std::queue<MVertex*> Q;
+
+  /* Initialize color to 0 on corners */
+  for (auto& kv: v2v) if (kv.first->onWhat()->dim() == 0) {
+    bdrVertexColor[kv.first] = 0;
+    Q.push(kv.first);
+  }
+
+  /* BFS propagation */
+  while (Q.size() > 0) {
+    MVertex* v = Q.front();
+    Q.pop();
+    auto it = v2v.find(v);
+    if (it == v2v.end()) continue;
+    uint8_t col = bdrVertexColor[v];
+    uint8_t col2 = (col == 0) ? 1 : 0;
+    for (MVertex* v2: it->second) {
+      auto it2 = bdrVertexColor.find(v2);
+      if (it2 == bdrVertexColor.end()) {
+        bdrVertexColor[v2] = col2;
+        Q.push(v2);
+      } else {
+        if (CTX::instance()->mesh.algoRecombine == 4 && it2->second != col2) {
+          Msg::Warning("- Face %i, boundary labelling: identical colors on adjacent vertices", gf->tag());
+        }
+      }
+    }
+  }
+
+
+  return 0;
+}
+
 
 void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed,
-                             std::vector<SMetric3> &metrics)
+                             std::vector<SMetric3> &metrics,
+                             std::map<MVertex*,int>& bipartiteLabel) 
 {
 
-  printf("ALGO %d %d\n", CTX::instance()->mesh.algo2d,
-	 CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT);
+  // printf("ALGO %d %d\n", CTX::instance()->mesh.algo2d,
+	//  CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT);
   
   FILE *f = NULL;
   FILE *f2 = NULL;
@@ -428,6 +486,8 @@ void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed,
       if(vertex->onWhat()->dim() < 2) bnd_vertices.insert(vertex);
     }
   }
+  std::unordered_map<MVertex*,uint8_t> bdrVertexColor;
+  boundaryVertexLabelling(gf, bdrVertexColor);
 
   // Renormalize size map taking into account quantization...
   double globalMult = 1.0;
@@ -450,51 +510,54 @@ void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed,
     int NP = 1;
     SPoint2 midpoint;
     double du[4] = {0,0,0,0}, dv[4]= {0,0,0,0};
-    
+
     for (int i=0;i<2;i++){
       if (gf->periodic(i)){
-	reparamMeshVertexOnFace(*it, gf, midpoint);
-	Range<double> bnds = gf->parBounds(i);      
-	//	if (1 || midpoint[i] == bnds.low()){
-	  if (i == 0)
-	    du[NP] =  bnds.high() -  bnds.low();
-	  else
-	    dv[NP] =  bnds.high() -  bnds.low();
-	  NP++;
-	  //	}
-	  //	else if (midpoint[i] == bnds.high()){
-	  if (i == 0)
-	    du[NP] =  -(bnds.high() -  bnds.low());
-	  else
-	    dv[NP] =  -(bnds.high() -  bnds.low());
-	  NP++;
-	  //	}
+        reparamMeshVertexOnFace(*it, gf, midpoint);
+        Range<double> bnds = gf->parBounds(i);      
+        //	if (1 || midpoint[i] == bnds.low()){
+        if (i == 0)
+          du[NP] =  bnds.high() -  bnds.low();
+        else
+          dv[NP] =  bnds.high() -  bnds.low();
+        NP++;
+        //	}
+        //	else if (midpoint[i] == bnds.high()){
+        if (i == 0)
+          du[NP] =  -(bnds.high() -  bnds.low());
+        else
+          dv[NP] =  -(bnds.high() -  bnds.low());
+        NP++;
+        //	}
       }
     }
     for (int i=0;i<NP;i++){
       bool singular = !compute4neighbors(gf, *it, midpoint, newp, metricField, cross_field, du[i],dv[i],globalMult );
       if (!singular){
-	surfacePointWithExclusionRegion *sp =
-	  new surfacePointWithExclusionRegion(*it, newp, midpoint, metricField);
-	minu = std::min(midpoint.x(),minu);
-	maxu = std::max(midpoint.x(),maxu);
-	minv = std::min(midpoint.y(),minv);
-	maxv = std::max(midpoint.y(),maxv);
-	vertices.push_back(sp);
-	fifo.push(sp);
-	double _min[2], _max[2];
-	sp->minmax(_min, _max);
-	rtree.Insert(_min, _max, sp);
+        uint8_t color = 0;
+        auto itc = bdrVertexColor.find(*it);
+        if (itc != bdrVertexColor.end()) color = itc->second;
+        surfacePointWithExclusionRegion *sp =
+          new surfacePointWithExclusionRegion(*it, newp, midpoint, metricField,nullptr,color);
+        minu = std::min(midpoint.x(),minu);
+        maxu = std::max(midpoint.x(),maxu);
+        minv = std::min(midpoint.y(),minv);
+        maxv = std::max(midpoint.y(),maxv);
+        vertices.push_back(sp);
+        fifo.push(sp);
+        double _min[2], _max[2];
+        sp->minmax(_min, _max);
+        rtree.Insert(_min, _max, sp);
       }
       else{
-	singularities.push_back(*it);
-	break;
+        singularities.push_back(*it);
+        break;
       }
     }
   }
 
   //  printf("bounds = %g %g %g %g \n",minu,maxu,minv,maxv);
-  
+
   while(!fifo.empty()) {
     //    printf("%d vertices in the domain\n",vertices.size());
     //    if (vertices.size() > 5000)break;
@@ -502,36 +565,36 @@ void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed,
     fifo.pop();
     for(int i = 0; i < 4; i++) {
       if(!close2sing (singularities,gf,parent->_p[i],cross_field)
-	 && !inExclusionZone(parent->_v, parent->_p[i], rtree) &&
-	 !outBounds(parent->_p[i],minu,maxu,minv,maxv)&&
-	gf->containsParam(parent->_p[i]))
-	{
-	  GPoint gp = gf->point(parent->_p[i]);
-	  MFaceVertex *v =
-	    new MFaceVertex(gp.x(), gp.y(), gp.z(), gf, gp.u(), gp.v());
-	  SPoint2 midpoint;
-	  compute4neighbors(gf, v, midpoint, newp, metricField, cross_field,0, 0, globalMult);
-	  surfacePointWithExclusionRegion *sp =
-	    new surfacePointWithExclusionRegion(v, newp, midpoint, metricField, parent);
-	  fifo.push(sp);
-	  vertices.push_back(sp);
-	  double _min[2], _max[2];
-	  sp->minmax(_min, _max);
-	  rtree.Insert(_min, _max, sp);
-	}
+          && !inExclusionZone(parent->_v, parent->_p[i], rtree) &&
+          !outBounds(parent->_p[i],minu,maxu,minv,maxv)&&
+          gf->containsParam(parent->_p[i]))
+      {
+        GPoint gp = gf->point(parent->_p[i]);
+        MFaceVertex *v =
+          new MFaceVertex(gp.x(), gp.y(), gp.z(), gf, gp.u(), gp.v());
+        SPoint2 midpoint;
+        compute4neighbors(gf, v, midpoint, newp, metricField, cross_field,0, 0, globalMult);
+        surfacePointWithExclusionRegion *sp =
+          new surfacePointWithExclusionRegion(v, newp, midpoint, metricField, parent);
+        fifo.push(sp);
+        vertices.push_back(sp);
+        double _min[2], _max[2];
+        sp->minmax(_min, _max);
+        rtree.Insert(_min, _max, sp);
+      }
       else{
-	if(Msg::GetVerbosity() == 99) {
-	  GPoint gp = gf->point(parent->_p[i]);
-	  MFaceVertex *v =
-	    new MFaceVertex(gp.x(), gp.y(), gp.z(), gf, gp.u(), gp.v());
-	  SPoint2 midpoint;
-	  compute4neighbors(gf, v, midpoint, newp, metricField, cross_field, 0, 0 , globalMult);
-	  surfacePointWithExclusionRegion *sp =
-	    new surfacePointWithExclusionRegion(v, newp, midpoint, metricField,parent);
-	  if (!gf->containsParam(parent->_p[i]))
-	    sp->print(f2, i);	  
-	  //	 printf("AI\n");
-	}
+        if(Msg::GetVerbosity() == 99) {
+          GPoint gp = gf->point(parent->_p[i]);
+          MFaceVertex *v =
+            new MFaceVertex(gp.x(), gp.y(), gp.z(), gf, gp.u(), gp.v());
+          SPoint2 midpoint;
+          compute4neighbors(gf, v, midpoint, newp, metricField, cross_field, 0, 0 , globalMult);
+          surfacePointWithExclusionRegion *sp =
+            new surfacePointWithExclusionRegion(v, newp, midpoint, metricField,parent);
+          if (!gf->containsParam(parent->_p[i]))
+            sp->print(f2, i);	  
+          //	 printf("AI\n");
+        }
       }
     }
   }
@@ -541,10 +604,15 @@ void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed,
     if(vertices[i]->_v->onWhat() == gf) {
       packed.push_back(vertices[i]->_v);
       metrics.push_back(vertices[i]->_meshMetric);
+      bipartiteLabel[vertices[i]->_v] = (int) vertices[i]->_color;
       SPoint2 midpoint;
       reparamMeshVertexOnFace(vertices[i]->_v, gf, midpoint);
     }
     delete vertices[i];
+  }
+  // add boundary vertex labels in the bipartiteLabel map
+  for (auto& kv: bdrVertexColor) {
+    bipartiteLabel[kv.first] = (int) kv.second;
   }
   if (f){
     fprintf(f2, "};");
@@ -557,74 +625,74 @@ void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed,
 /* OLD STUFF 
 
    double uvt[3] = {newPoint[0], newPoint[1], 0.0};
-  curveFunctorCircle cc(n2, n1, middle, d);
-  surfaceFunctorGFace ss(gf);
+   curveFunctorCircle cc(n2, n1, middle, d);
+   surfaceFunctorGFace ss(gf);
 
-  if(intersectCurveSurface(cc, ss, uvt, d * 1.e-8)) {
-    // if(gf->containsParam(SPoint2(uvt[0], uvt[1]))) {
-      newPoint[0] = uvt[0];
-      newPoint[1] = uvt[1];
-      return true;
-    // }
-  }
+   if(intersectCurveSurface(cc, ss, uvt, d * 1.e-8)) {
+// if(gf->containsParam(SPoint2(uvt[0], uvt[1]))) {
+newPoint[0] = uvt[0];
+newPoint[1] = uvt[1];
+return true;
+// }
+}
 
-  
-  surfaceFunctorGFace ss(gf); //
-  SVector3 dirs[4] = {t1 * (-1.0), t2 * (-1.0), t1 * (1.0), t2 * (1.0)}; //
-  for(int i = 0; i < 4; i++) { //
-    double uvt[3] = {newPoint[i][0], newPoint[i][1], 0.0}; //
-    
-    curveFunctorCircle cf(
-			  dirs[i], n, SVector3(v_center->x(), v_center->y(), v_center->z()),
-			  L);
-    if(intersectCurveSurface(cf, ss, uvt, size_1 * 1.e-2)) { //
-      GPoint pp = gf->point(SPoint2(uvt[0], uvt[1]));
-      double D =
-	sqrt((pp.x() - v_center->x()) * (pp.x() - v_center->x()) +
-	     (pp.y() - v_center->y()) * (pp.y() - v_center->y()) +
-	     (pp.z() - v_center->z()) * (pp.z() - v_center->z()));
-      double DP =
-	sqrt((newPoint[i][0] - uvt[0]) * (newPoint[i][0] - uvt[0]) +
-	     (newPoint[i][1] - uvt[1]) * (newPoint[i][1] - uvt[1]));
-      double newErr = 100 * fabs(D - L) / (D + L);
-      if(newErr < 1 && DP < .1) {
-	newPoint[i][0] = uvt[0];
-	newPoint[i][1] = uvt[1];
-      }
-      else {      
-	SPoint3 test (v_center->x() + dirs[i].x() * L,
-		      v_center->y() + dirs[i].y() * L,
-		      v_center->z() + dirs[i].z() * L);      
-	
-	
-	GPoint pp = gf->closestPoint(test,uvt);
-	if (pp.succeeded()){
-	  newPoint[i][0] = pp.u();
-	  newPoint[i][1] = pp.v();
-	}
-	else return false;
-      }
-    }
-    else {      
-      SPoint3 test (v_center->x() + dirs[i].x() * L,
-		    v_center->y() + dirs[i].y() * L,
-		    v_center->z() + dirs[i].z() * L);      
-      
-      
-      GPoint pp = gf->closestPoint(test,uvt);
-      if (pp.succeeded()){
-	newPoint[i][0] = pp.u();
-	newPoint[i][1] = pp.v();
-      }
-      else return false;
-    }
-  }
 
-  
-  // return the four new vertices
-  for(int i = 0; i < 4; i++) {
-    newP[i] = SPoint2(newPoint[i][0], newPoint[i][1]);
-  }
-  return true;
+surfaceFunctorGFace ss(gf); //
+SVector3 dirs[4] = {t1 * (-1.0), t2 * (-1.0), t1 * (1.0), t2 * (1.0)}; //
+for(int i = 0; i < 4; i++) { //
+double uvt[3] = {newPoint[i][0], newPoint[i][1], 0.0}; //
 
- */
+curveFunctorCircle cf(
+dirs[i], n, SVector3(v_center->x(), v_center->y(), v_center->z()),
+L);
+if(intersectCurveSurface(cf, ss, uvt, size_1 * 1.e-2)) { //
+GPoint pp = gf->point(SPoint2(uvt[0], uvt[1]));
+double D =
+sqrt((pp.x() - v_center->x()) * (pp.x() - v_center->x()) +
+(pp.y() - v_center->y()) * (pp.y() - v_center->y()) +
+(pp.z() - v_center->z()) * (pp.z() - v_center->z()));
+double DP =
+sqrt((newPoint[i][0] - uvt[0]) * (newPoint[i][0] - uvt[0]) +
+(newPoint[i][1] - uvt[1]) * (newPoint[i][1] - uvt[1]));
+double newErr = 100 * fabs(D - L) / (D + L);
+if(newErr < 1 && DP < .1) {
+newPoint[i][0] = uvt[0];
+newPoint[i][1] = uvt[1];
+}
+else {      
+SPoint3 test (v_center->x() + dirs[i].x() * L,
+v_center->y() + dirs[i].y() * L,
+v_center->z() + dirs[i].z() * L);      
+
+
+GPoint pp = gf->closestPoint(test,uvt);
+if (pp.succeeded()){
+newPoint[i][0] = pp.u();
+newPoint[i][1] = pp.v();
+}
+else return false;
+}
+}
+else {      
+SPoint3 test (v_center->x() + dirs[i].x() * L,
+v_center->y() + dirs[i].y() * L,
+v_center->z() + dirs[i].z() * L);      
+
+
+GPoint pp = gf->closestPoint(test,uvt);
+if (pp.succeeded()){
+newPoint[i][0] = pp.u();
+newPoint[i][1] = pp.v();
+}
+else return false;
+}
+}
+
+
+// return the four new vertices
+for(int i = 0; i < 4; i++) {
+newP[i] = SPoint2(newPoint[i][0], newPoint[i][1]);
+}
+return true;
+
+*/

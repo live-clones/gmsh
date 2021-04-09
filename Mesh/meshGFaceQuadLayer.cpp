@@ -74,7 +74,7 @@ inline double angleAcosDot(const SVector3& a, const SVector3& b) {
   return acos(dp);
 }
 
-double boundaryAngleAtOrigin(PolyMesh* pm, PolyMesh::HalfEdge* he) {
+double boundaryAngleAtOrigin(const PolyMesh* pm, PolyMesh::HalfEdge* he) {
   PolyMesh::HalfEdge* he0 = he;
   int faceTag = he0->f->data;
   double agl = 0.;
@@ -108,7 +108,7 @@ PolyMesh::HalfEdge* nextOnBoundary(PolyMesh::HalfEdge* he) {
   return nullptr;
 }
 
-bool getBoundaryLoop(PolyMesh* pm, 
+bool getBoundaryLoop(const PolyMesh* pm, 
     PolyMesh::HalfEdge* he0, 
     std::vector<PolyMesh::HalfEdge*>& loop) {
 
@@ -311,6 +311,83 @@ bool quadFlipPush(PolyMesh* pm, PolyMesh::HalfEdge* he, int faceTag) {
   return true;
 }
 
+struct QuadLayer {
+  /* New components to add in the empty mesh */
+  std::vector<PolyMesh::Vertex*> vertices;
+  std::vector<std::array<PolyMesh::Vertex*,2> > edges;
+  std::vector<std::array<PolyMesh::Vertex*,4> > quads;
+};
+
+int generateQuadLayer(
+    const PolyMesh* pm,
+    const std::vector<PolyMesh::HalfEdge*>& loop,
+    QuadLayer& layer) {
+
+  /* Create a copy of the loop, so the halfedges
+   * can be modified without changing the initial
+   * PolyMesh */
+  std::vector<PolyMesh::HalfEdge*> cloop(loop.size(),nullptr);
+  // std::unordered_map<PolyMesh::HalfEdge*,PolyMesh::HalfEdge*> old2new;
+  for (size_t i = 0; i < loop.size(); ++i) {
+    cloop[i] = new PolyMesh::HalfEdge(loop[i]->v);
+    cloop[i]->data = loop[i]->data;
+    // old2new[loop[i]] = cloop[i];
+  }
+  for (size_t i = 0; i < cloop.size(); ++i) {
+    cloop[i]->next = cloop[(i+1)%cloop.size()];
+    cloop[(i+1)%cloop.size()]->prev = cloop[i];
+  }
+
+  // TODOMX FROM HERE
+  //
+  //
+  // .....
+  //
+  //
+  //
+
+  for (size_t i = 0; i < cloop.size(); ++i) {
+    delete cloop[i];
+  }
+  return 0;
+}
+
+int generateBoundaryQuadLayers(
+    const PolyMesh* pm,
+    std::vector<QuadLayer>& layers) {
+  Msg::Info("generate quad layer on boundary ...");
+
+  /* Compute angle at each boundary vertex */
+  std::unordered_map<PolyMesh::Vertex*,double> bdrAngle;
+  for (PolyMesh::HalfEdge* he0: pm->hedges) if (he0 != nullptr) {
+    PolyMesh::HalfEdge* he0op = he0->opposite;
+    if (he0op == nullptr) continue; /* on border of bounding box, not face bdr */
+    if (he0->f->data > 0 && he0op->f->data < 0) {
+      bdrAngle[he0->v] = boundaryAngleAtOrigin(pm,he0);
+    }
+  }
+
+  /* Extract the boundary loops */
+  std::unordered_set<PolyMesh::HalfEdge*> visited;
+  std::vector<std::vector<PolyMesh::HalfEdge*> > loops;
+  for (PolyMesh::HalfEdge* he0: pm->hedges) {
+    PolyMesh::HalfEdge* he0op = he0->opposite;
+    if (he0op == nullptr) continue; /* on border of bounding box, not face bdr */
+    if (he0->f->data > 0 && he0op->f->data < 0) {
+      if (visited.find(he0) != visited.end()) continue;
+      std::vector<PolyMesh::HalfEdge*> loop;
+      bool ok = getBoundaryLoop(pm,he0,loop);
+      if (!ok) {
+        Msg::Error("insertBoundaryQuadLayer: failed to get boundary loop");
+        return -1;
+      }
+      for (PolyMesh::HalfEdge* he: loop) visited.insert(he);
+      if (loop.size() > 0) loops.push_back(loop);
+    }
+  }
+
+  return 0;
+}
 
 int insertBoundaryQuadLayer(PolyMesh* pm) {
   Msg::Info("insert quad layer on boundary ...");

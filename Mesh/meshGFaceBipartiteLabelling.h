@@ -1,4 +1,10 @@
 #ifndef _MESHGFACEBIPARTITE_
 #define _MESHGFACEBIPARTITE_
-void meshGFaceQuadrangulateBipartiteLabelling (int faceTag);
+
+#include <map>
+class MVertex;
+
+void meshGFaceQuadrangulateBipartiteLabelling (int faceTag,
+    std::map<MVertex*,int>* bipartiteLabel = nullptr);
+
 #endif

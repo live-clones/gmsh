@@ -36,6 +36,7 @@ public:
   SPoint2 _p[4];
   SPoint2 _q[4];
   SMetric3 _meshMetric;
+  uint8_t _color;
   /*
      + p3
      p4   |
@@ -46,7 +47,8 @@ public:
    */
   surfacePointWithExclusionRegion(MVertex *v, SPoint2 p[8],
                                   SPoint2 &_mp, SMetric3 &meshMetric,
-                                  surfacePointWithExclusionRegion *father = 0);
+                                  surfacePointWithExclusionRegion *father = nullptr,
+                                  uint8_t color = 0);
 
   bool inExclusionZone(const SPoint2 &p, MVertex *v);
   void minmax(double _min[2], double _max[2]) const;

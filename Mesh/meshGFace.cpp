@@ -40,7 +40,7 @@
 #include "meshGFaceBipartiteLabelling.h"
 
 // define this to use the old initial delaunay
-// #define OLD_CODE_DELAUNAY 1
+#define OLD_CODE_DELAUNAY 1
 
 #ifndef OLD_CODE_DELAUNAY
 #include "meshTriangulation.h"
@@ -1727,6 +1727,9 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
   if(!onlyInitialMesh)
     modifyInitialMeshForBoundaryLayers(gf, blQuads, blTris, verts, debug);
 
+
+  std::map<MVertex*, int> bipartiteLabel; /* for algo pack with bipartite labelling */
+
   // the delaunay algo is based directly on internal gmsh structures BDS mesh is
   // passed in order not to recompute local coordinates of vertices
   if(algoDelaunay2D(gf) && !onlyInitialMesh) {
@@ -1735,11 +1738,10 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
       bowyerWatsonFrontalLayers(gf, true);
     }
     else if(gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS) {
-      bowyerWatsonParallelograms(gf);
+      bowyerWatsonParallelograms(gf, nullptr, nullptr, &bipartiteLabel);
     }
     else if(gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS_CSTR) {
       Msg::Error("ALGO_2D_PACK_PRLGRMS_CSTR deprecated");
-      // bowyerWatsonParallelogramsConstrained(gf, gf->constr_vertices);
     }
     else if(gf->getMeshingAlgo() == ALGO_2D_DELAUNAY ||
             gf->getMeshingAlgo() == ALGO_2D_AUTO) {
@@ -1783,7 +1785,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
     int topo = CTX::instance()->mesh.recombineOptimizeTopology;
     bool nodeRepositioning = false;
     if (CTX::instance()->mesh.algoRecombine == 4)
-      meshGFaceQuadrangulateBipartiteLabelling(gf->tag()); 
+      meshGFaceQuadrangulateBipartiteLabelling(gf->tag(),&bipartiteLabel); 
     else
       recombineIntoQuads(gf, blossom, topo, nodeRepositioning, 0.1);
   }
@@ -2097,6 +2099,7 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
 #ifndef OLD_CODE_DELAUNAY
   Msg::Warning("TODOMX: uncommenting for testing only");
   PolyMesh * pm = GFaceInitialMesh (gf->tag(), 1);
+  delete pm;
 #endif
   // TEST !!!
 
@@ -2801,6 +2804,8 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
                              verts.end());
   }
 
+  std::map<MVertex*, int> bipartiteLabel; /* for algo pack with bipartite labelling */
+
   if(algoDelaunay2D(gf) && !onlyInitialMesh) {
     if(gf->getMeshingAlgo() == ALGO_2D_FRONTAL)
       bowyerWatsonFrontal(gf, &equivalence, &parametricCoordinates,
@@ -2808,11 +2813,9 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
     else if(gf->getMeshingAlgo() == ALGO_2D_FRONTAL_QUAD)
       bowyerWatsonFrontalLayers(gf, true, &equivalence, &parametricCoordinates);
     else if(gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS)
-      bowyerWatsonParallelograms(gf, &equivalence, &parametricCoordinates);
+      bowyerWatsonParallelograms(gf, &equivalence, &parametricCoordinates, &bipartiteLabel);
     else if(gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS_CSTR) {
       Msg::Error("ALGO_2D_PACK_PRLGRMS_CSTR deprecated");
-      // bowyerWatsonParallelogramsConstrained(
-      //   gf, gf->constr_vertices, &equivalence, &parametricCoordinates);
     }
     else if(gf->getMeshingAlgo() == ALGO_2D_DELAUNAY ||
             gf->getMeshingAlgo() == ALGO_2D_AUTO)
@@ -2846,7 +2849,7 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
       nodeRepositioning = false;
     }
     if (CTX::instance()->mesh.algoRecombine == 4)
-      meshGFaceQuadrangulateBipartiteLabelling(gf->tag()); 
+      meshGFaceQuadrangulateBipartiteLabelling(gf->tag(),&bipartiteLabel); 
     else
       recombineIntoQuads(gf, blossom, topo, nodeRepositioning, 0.1);
   }
@@ -2980,7 +2983,8 @@ void meshGFace::operator()(GFace *gf, bool print)
   bool periodic = (gf->getNativeType() != GEntity::GmshModel) &&
                   (gf->periodic(0) || gf->periodic(1) || singularEdges);
 
-  quadMeshRemoveHalfOfOneDMesh halfmesh(gf, periodic);
+  // TODOMX
+  // quadMeshRemoveHalfOfOneDMesh halfmesh(gf, periodic);
 
   if(periodic) {
     if(!meshGeneratorPeriodic(gf, 0, repairSelfIntersecting1dMesh,
@@ -2998,7 +3002,8 @@ void meshGFace::operator()(GFace *gf, bool print)
   Msg::Debug("Type %d %d triangles generated, %d internal nodes",
              gf->geomType(), gf->triangles.size(), gf->mesh_vertices.size());
 
-  halfmesh.finish();
+  // TODOMX
+  // halfmesh.finish();
 
   if(gf->getNumMeshElements() == 0 &&
      gf->meshStatistics.status == GFace::DONE) {

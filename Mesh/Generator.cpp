@@ -554,16 +554,18 @@ static void Mesh2D(GModel *m)
   Msg::SetNumThreads(prevNumThreads);
 
   if(CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT) {
-    replaceBadQuadDominantMeshes(m);
+    const bool mps = (CTX::instance()->mesh.algoRecombine == 0);
+    if (mps) {
+      replaceBadQuadDominantMeshes(m);
 
-    /* In the quasi-structured pipeline, the quad-dominant mesh
-     * is subdivided into a full quad mesh */
-    /* TODO: - a faster CAD projection approach (from uv)
-     *       - verify quality during projection */
-    // bool linear = false;
-    // RefineMesh(m, linear, true, false);
-    RefineMeshWithBackgroundMeshProjection(m);
-
+      /* In the quasi-structured pipeline, the quad-dominant mesh
+       * is subdivided into a full quad mesh */
+      /* TODO: - a faster CAD projection approach (from uv)
+       *       - verify quality during projection */
+      // bool linear = false;
+      // RefineMesh(m, linear, true, false);
+      RefineMeshWithBackgroundMeshProjection(m);
+    }
 
     OptimizeMesh(m, "QuadQuasiStructured");
   }
@@ -1502,7 +1504,9 @@ void GenerateMesh(GModel *m, int ask)
       m->deleteMesh();
     }
 
-    if(CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT) {
+    if(CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT
+        || CTX::instance()->mesh.algo2d == ALGO_2D_PACK_PRLGRMS
+        ) {
       /* note: the creation of QuadqsContextUpdater modifies many
        *       meshing parameters
        *       current parameter values are saved and will be restored

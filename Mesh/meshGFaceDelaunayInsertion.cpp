@@ -1600,12 +1600,14 @@ void bowyerWatsonFrontalLayers(
 
 void bowyerWatsonParallelograms(
   GFace *gf, std::map<MVertex *, MVertex *> *equivalence,
-  std::map<MVertex *, SPoint2> *parametricCoordinates)
+  std::map<MVertex *, SPoint2> *parametricCoordinates,
+  std::map<MVertex *, int> *bipartiteLabel)
 {
   std::set<MTri3 *, compareTri3Ptr> AllTris;
   bidimMeshData DATA(equivalence, parametricCoordinates);
   std::vector<MVertex *> packed;
   std::vector<SMetric3> metrics;
+
 
   Msg::Debug("- Face %i: bowyerWatsonParallelograms ...", gf->tag());
   if(!gf->haveParametrization()) {
@@ -1616,9 +1618,12 @@ void bowyerWatsonParallelograms(
   }
 
 #if defined(HAVE_DOMHEX)
+  std::map<MVertex*, int> bipartiteLabelLocal;
   if(old_algo_hexa()) {
+    /* bipartiteLabel contains bdr vertices and the ones in 'packed' when generated
+     * with packingOfParallelograms() */
     Msg::Debug("bowyerWatsonParallelograms: call packingOfParallelograms()");
-    packingOfParallelograms(gf, packed, metrics);
+    packingOfParallelograms(gf, packed, metrics, bipartiteLabelLocal);
   }
   else {
     Msg::Debug("bowyerWatsonParallelograms: call Filler2D::pointInsertion2D()");
@@ -1635,6 +1640,7 @@ void bowyerWatsonParallelograms(
     Msg::Error("Invalid meshing data structure");
     return;
   }
+
 
   // std::sort(packed.begin(), packed.end(), MVertexPtrLessThanLexicographic());
   SortHilbert(packed);
@@ -1654,13 +1660,28 @@ void bowyerWatsonParallelograms(
       double newPoint[2];
       packed[i]->getParameter(0, newPoint[0]);
       packed[i]->getParameter(1, newPoint[1]);
+
+      int color = 0;
+      auto itc = bipartiteLabelLocal.find(packed[i]);
+      if (itc != bipartiteLabelLocal.end()) {
+        color = itc->second;
+        bipartiteLabelLocal.erase(itc);
+      }
+
       delete packed[i];
+
       double metric[3];
       buildMetric(gf, newPoint, metric);
 
       bool success =
         insertAPoint(gf, AllTris.begin(), newPoint, metric, DATA, AllTris,
                      nullptr, oneNewTriangle, &oneNewTriangle);
+
+      if (bipartiteLabel != nullptr && success) {
+        MVertex* nv = gf->mesh_vertices.back();
+        (*bipartiteLabel)[nv] = color;
+      }
+
       if(!success) oneNewTriangle = nullptr;
       i++;
     }
@@ -1684,6 +1705,13 @@ void bowyerWatsonParallelograms(
   Msg::Debug(
     "bowyerWatsonParallelograms: %li candidate points -> %li inserted vertices",
     packed.size(), gf->mesh_vertices.size());
+
+  /* Bipartite colors on the boundary */
+  if (bipartiteLabel != nullptr) {
+    for (auto& kv: bipartiteLabelLocal) if (kv.first->onWhat()->dim() < 2){
+      (*bipartiteLabel)[kv.first] = kv.second;
+    }
+  }
 
   splitElementsInBoundaryLayerIfNeeded(gf);
 }

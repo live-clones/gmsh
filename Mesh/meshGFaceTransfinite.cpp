@@ -746,7 +746,7 @@ bool MeshSetTransfiniteFacesAutomatic(std::set<GFace *> &candidate_faces,
 
     int N = int(avgNbPoints + 0.5);
     if(N == 0) N = 2;
-    if(N % 2 == 1) N = N + 1;
+    if(N % 2 == 0) N = N + 1;
 
     Msg::Debug("- chord with %li edges -> %i points\n", chord.size(), N);
 

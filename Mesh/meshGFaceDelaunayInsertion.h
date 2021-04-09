@@ -159,7 +159,8 @@ void bowyerWatsonFrontalLayers(
   std::map<MVertex *, SPoint2> *parametricCoordinates = nullptr);
 void bowyerWatsonParallelograms(
   GFace *gf, std::map<MVertex *, MVertex *> *equivalence = nullptr,
-  std::map<MVertex *, SPoint2> *parametricCoordinates = nullptr);
+  std::map<MVertex *, SPoint2> *parametricCoordinates = nullptr,
+  std::map<MVertex *, int> *bipartiteLabel = nullptr);
 void bowyerWatsonParallelogramsConstrained(
   GFace *gf, const std::set<MVertex *> &constr_vertices,
   std::map<MVertex *, MVertex *> *equivalence = nullptr,

@@ -57,6 +57,7 @@ public:
 
     inline Vertex* first() const {return v;}
     inline Vertex* second() const {return next->v;}
+    inline SVector3 center() const { return 0.5 * (first()->position+second()->position); }
   };
 
   class Face {
@@ -535,6 +536,7 @@ public:
     }
     return 0;
   }
+
 };
 
 struct HalfEdgePtrLessThan {
@@ -562,5 +564,199 @@ struct HalfEdgePtrEqual {
     return false;
   }
 };
+
+
+// TODOMX: trying some halfedge designs
+//         DO NOT COMMIT
+//
+// using HVertexIdx = size_t;
+// using HalfEdgeIdx = size_t;
+// using HFaceIdx = size_t;
+// constexpr size_t NO_IDX = (size_t)-1;
+// 
+// struct HVertex {
+//   SVector3 position;
+//   HalfEdgeIdx he = NO_IDX;
+//   int data = 0;
+// };
+// 
+// struct HalfEdge {
+//   HVertexIdx v = NO_IDX;
+//   HFaceIdx f = NO_IDX;
+//   HalfEdgeIdx prev = NO_IDX;
+//   HalfEdgeIdx next = NO_IDX;
+//   HalfEdgeIdx opposite = NO_IDX;
+//   int data = 0;
+// };
+// 
+// struct HFace {
+//   HalfEdgeIdx he = NO_IDX;
+//   int data = 0;
+// };
+// 
+// struct HMesh {
+//   public:
+//     HMesh() {}
+//     inline HalfEdge& next(const HalfEdge& he) const;
+//     inline HalfEdgeIdx next(HalfEdgeIdx he) const;
+//     inline HalfEdgeIdx prev(HalfEdgeIdx he) const;
+//     inline HalfEdgeIdx opposite(HalfEdgeIdx he) const;
+//     inline HVertexIdx origin(HalfEdgeIdx he) const;
+//     inline HVertexIdx tip(HalfEdgeIdx he) const;
+//     inline HalfEdgeIdx halfedge(HVertexIdx v) const;
+// 
+//     inline size_t degree(HalfEdgeIdx v) const;
+//     inline size_t faceNumVertices(HFaceIdx f) const;
+//     inline SVector3 vertexNormal(HVertexIdx v) const;
+//     inline HalfEdgeIdx getHalfEdge(HVertexIdx v0, HVertexIdx v1) const;
+// 
+//     inline HFaceIdx createTriangle(HVertexIdx v0, HVertexIdx v1, HVertexIdx v2);
+//     inline bool swapEdge(HalfEdgeIdx he);
+//     inline bool splitEdge(HalfEdgeIdx he);
+//     inline bool mergeFaces(HalfEdgeIdx he);
+// 
+//   public:
+//     std::vector<HVertex> vertices;
+//     std::vector<HalfEdge> halfedges;
+//     std::vector<HFace> faces;
+//     std::vector<bool> vDeleted;
+//     std::vector<bool> heDeleted;
+//     std::vector<bool> fDeleted;
+// };
+// 
+// constexpr size_t NO_ID = (size_t)-1;
+// 
+// struct HalfEdgeMesh {
+//   /* Navigation */
+//   inline size_t next(size_t he) const {return hes_.next[he];}
+//   inline size_t prev(size_t he) const {return hes_.prev[he];}
+//   inline size_t opposite(size_t he) const {return hes_.opposite[he];}
+//   inline size_t origin(size_t he) const {return hes_.vertex[he];}
+//   inline size_t face(size_t he) const {return hes_.face[he];}
+//   inline size_t tip(size_t he) const {return origin(next(he));}
+//   inline size_t vertexHalfEdge(size_t v) const {return vs_.hedge[v];}
+//   inline size_t faceHalfEdge(size_t f) const {return fs_.hedge[f];}
+// 
+//   /* Creation */
+//   inline void setHalfEdge(size_t he, size_t v = NO_ID, size_t next = NO_ID, size_t prev = NO_ID,
+//       size_t opposite = NO_ID, size_t face = NO_ID, int data = 0);
+// 
+//   inline size_t createHalfEdge(size_t v = NO_ID, size_t next = NO_ID, size_t prev = NO_ID,
+//       size_t opposite = NO_ID, size_t face = NO_ID, int data = 0) {
+//     size_t he = hes_.allocate();
+//     setHalfEdge(he, v, next, prev, opposite, face, data);
+//     return he;
+//   }
+// 
+// 
+//   /* Internal datastructures */
+//   protected:
+//     struct Vertices {
+//       std::vector<SVector3> point;
+//       std::vector<size_t> hedge;
+//       std::vector<int> data;
+//       std::vector<size_t> emptyList;
+// 
+//       void set_default(size_t i) {
+//         point[i] = SVector3(-999.,-999.,-999.);
+//         hedge[i] = (size_t) -1;
+//         data[i] = 0;
+//       }
+// 
+//       size_t allocate() {
+//         if (emptyList.size() > 0) {
+//           size_t i = emptyList.back();
+//           emptyList.pop_back();
+//           set_default(i);
+//           return i;
+//         }
+//         size_t i = point.size();
+//         point.resize(i+1);
+//         hedge.resize(i+1);
+//         data.resize(i+1);
+//         set_default(i);
+//         return i;
+//       }
+// 
+//     };
+// 
+//     struct HalfEdges {
+//       std::vector<size_t> next;
+//       std::vector<size_t> prev;
+//       std::vector<size_t> opposite;
+//       std::vector<size_t> vertex;
+//       std::vector<size_t> face;
+//       std::vector<int> data;
+//       std::vector<size_t> emptyList;
+// 
+//       void set_default(size_t i) {
+//         next[i] = (size_t) -1;
+//         prev[i] = (size_t) -1;
+//         opposite[i] = (size_t) -1;
+//         vertex[i] = (size_t) -1;
+//         face[i] = (size_t) -1;
+//         data[i] = 0;
+//       }
+// 
+//       size_t allocate() {
+//         if (emptyList.size() > 0) {
+//           size_t i = emptyList.back();
+//           emptyList.pop_back();
+//           set_default(i);
+//           return i;
+//         }
+//         size_t i = next.size();
+//         next.resize(i+1);
+//         prev.resize(i+1);
+//         opposite.resize(i+1);
+//         vertex.resize(i+1);
+//         face.resize(i+1);
+//         data.resize(i+1);
+//         set_default(i);
+//         return i;
+//       }
+//     };
+// 
+//     struct Faces {
+//       std::vector<size_t> hedge;
+//       std::vector<int> data;
+//       std::vector<size_t> emptyList;
+// 
+//       void set_default(size_t i) {
+//         hedge[i] = (size_t) -1;
+//         data[i] = 0;
+//       }
+// 
+//       size_t allocate() {
+//         if (emptyList.size() > 0) {
+//           size_t i = emptyList.back();
+//           emptyList.pop_back();
+//           set_default(i);
+//           return i;
+//         }
+//         size_t i = hedge.size();
+//         hedge.resize(i+1);
+//         data.resize(i+1);
+//         set_default(i);
+//         return i;
+//       }
+//     };
+// 
+//     Vertices vs_;
+//     HalfEdges hes_;
+//     Faces fs_;
+// };
+// 
+// void test() {
+//   HMesh M;
+// 
+//   // HalfEdgeIdx he;
+//   // M.next(M.next(he));
+// 
+//   // HalfEdge hev;
+//   // M.next(hev).
+// 
+// 
+// };
 
 #endif

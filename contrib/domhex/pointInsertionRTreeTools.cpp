@@ -13,7 +13,7 @@
 #include "fullMatrix.h"
 
 surfacePointWithExclusionRegion::surfacePointWithExclusionRegion(MVertex *v, SPoint2 p[8], SPoint2 &_mp, SMetric3 &meshMetric,
-								 surfacePointWithExclusionRegion *father)
+								 surfacePointWithExclusionRegion *father, uint8_t color)
 {
   _v = v;
   _meshMetric = meshMetric;
@@ -27,9 +27,11 @@ surfacePointWithExclusionRegion::surfacePointWithExclusionRegion(MVertex *v, SPo
 
   if(!father) {
     _father = NULL;
+    _color = color;
   }
   else {
     _father = father->_v;
+    _color = !(father->_color);
   }
 }
 
