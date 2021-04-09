@@ -1301,6 +1301,7 @@ void bowyerWatsonFrontal(GFace *gf, std::map<MVertex *, MVertex *> *equivalence,
   Range<double> RV = gf->parBounds(1);
   SPoint2 FAR(2 * RU.high(), 2 * RV.high());
 
+  
   // insert points
   int ITERATION = 0;
   while(1) {
@@ -1315,7 +1316,7 @@ void bowyerWatsonFrontal(GFace *gf, std::map<MVertex *, MVertex *> *equivalence,
     //   _printTris (name, ActiveTris.begin(), ActiveTris.end(), &DATA);
     // }
 
-    // printf("%d active tris \n",ActiveTris.size());
+    //    printf("%d active tris \n",ActiveTris.size());
     if(!ActiveTris.size()) break;
     MTri3 *worst = (*ActiveTris.begin());
     ActiveTris.erase(ActiveTris.begin());
@@ -1327,7 +1328,6 @@ void bowyerWatsonFrontal(GFace *gf, std::map<MVertex *, MVertex *> *equivalence,
                    gf->mesh_vertices.size(), worst->getRadius());
       double newPoint[2], metric[3];
       if(optimalPointFrontalB(gf, worst, active_edge, DATA, newPoint, metric)) {
-        // printf("iteration %d passes first round\n",ITERATION);
         SPoint2 NP(newPoint[0], newPoint[1]);
         int nnnn;
         if(!true_boundary ||
@@ -1338,9 +1338,13 @@ void bowyerWatsonFrontal(GFace *gf, std::map<MVertex *, MVertex *> *equivalence,
     }
   }
 
+  //  char name[245];
+  //  sprintf(name,"delFrontal_GFace_%d_Layer_%d_Active.pos",gf->tag(),ITERATION);
+  //  _printTris (name, AllTris.begin(), AllTris.end(), &DATA);
   transferDataStructure(gf, AllTris, DATA);
 
   splitElementsInBoundaryLayerIfNeeded(gf);
+
 }
 
 static void optimalPointFrontalQuad(GFace *gf, MTri3 *worst, int active_edge,

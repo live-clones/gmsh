@@ -1640,11 +1640,6 @@ void GFace::mesh(bool verbose)
   if(compound.size())
     meshAttributes.meshSizeFactor = CTX::instance()->mesh.compoundLcFactor;
 
-    // FIXME TEST
-#if 0
-  GFaceInitialMesh (tag());
-#endif
-
   meshGFace mesher;
   mesher(this, verbose);
 
