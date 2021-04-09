@@ -15,6 +15,7 @@
 #if defined(HAVE_QUADMESHINGTOOLS)
 #include "qmtMeshGeometryOptimization.h"
 #include "qmtMeshUtils.h"
+#include "cppUtils.h"
 #include "geolog.h"
 #endif
 #include "gmsh.h"
@@ -143,7 +144,22 @@ static void printLabelling (const char* fn, PolyMesh *pm, std::unordered_map<Pol
 //   return 0;
 // }
 
-void laplacianSmoothingQuadMesh(PolyMesh::Vertex* v,
+void laplacianSmoothing(PolyMesh::Vertex* v) {
+  SVector3 avg(0.,0.,0.);
+  double n = 0.;
+  PolyMesh::HalfEdge *he = v->he;
+  do {
+    he = he->opposite;
+    if(he == NULL) return;
+    avg = avg + he->v->position;
+    n += 1;
+    he = he->next;
+  } while(he != v->he);
+  if (n == 0.) return;
+  v->position = avg * double(1./n);
+}
+
+void laplacianSmoothingForQuadMesh(PolyMesh::Vertex* v,
     std::unordered_map<PolyMesh::Vertex*,int> &_labels
     ) {
   auto itv = _labels.find(v);
@@ -178,7 +194,9 @@ double quadQuality(PolyMesh* pm, PolyMesh::Face* f) {
     MVertex c(v2->position.x(),v2->position.y(),v2->position.z());
     MVertex d(v3->position.x(),v3->position.y(),v3->position.z());
     MQuadrangle q(&a,&b,&c,&d);
-    return q.minSICNShapeMeasure();
+    double sicn = q.minSICNShapeMeasure();
+    if (std::isnan(sicn)) sicn = -999.;
+    return sicn;
   }
   Msg::Error("quadQuality: not a quad");
   return -1.;
@@ -195,7 +213,9 @@ double quadQualityAfterMerge(PolyMesh::HalfEdge* he) {
   MVertex c(v2->position.x(),v2->position.y(),v2->position.z());
   MVertex d(v3->position.x(),v3->position.y(),v3->position.z());
   MQuadrangle q(&a,&b,&c,&d);
-  return q.minSICNShapeMeasure();
+  double sicn = q.minSICNShapeMeasure();
+  if (std::isnan(sicn)) sicn = -999.;
+  return sicn;
 }
 
 SVector3 face_center(PolyMesh::Face* f) { 
@@ -235,7 +255,7 @@ void setQuadRelations(PolyMesh::Face* f,
   setConsecutive(d,a);
 }
 
-bool fixFlatBoundaryQuad(PolyMesh* pm, PolyMesh::HalfEdge* he0) {
+bool fixFlatBoundaryQuadWithInterior(PolyMesh* pm, PolyMesh::HalfEdge* he0) {
   PolyMesh::Face* f0 = he0->f;
   PolyMesh::HalfEdge* he1 = he0->next;
   PolyMesh::HalfEdge* he2 = he1->next;
@@ -244,7 +264,7 @@ bool fixFlatBoundaryQuad(PolyMesh* pm, PolyMesh::HalfEdge* he0) {
 
   int valInterior = pm->degree(v2);
   if (valInterior == 5) {
-    printf("FIX VAL 5 ...\n");
+    Msg::Debug("fixFlatBoundaryQuadWithInterior: tip is valence 5, fixing ...");
     PolyMesh::HalfEdge* he4 = he1->opposite->prev->opposite->prev;
     PolyMesh::HalfEdge* he4b = he4->opposite;
 
@@ -298,9 +318,13 @@ bool fixFlatBoundaryQuad(PolyMesh* pm, PolyMesh::HalfEdge* he0) {
     setQuadRelations(f0,he0,he1,sp,s);
     setQuadRelations(nfr,he2,he3,sb,sbn);
     setQuadRelations(nft,spb,he4o,he4bo,sbnb);
+
+    laplacianSmoothing(v5);
+    laplacianSmoothing(v6);
+
     return true;
   } else if (valInterior == 4) {
-    printf("FIX VAL 4 ...\n");
+    Msg::Debug("fixFlatBoundaryQuadWithInterior: tip is valence 4, fixing ...");
     PolyMesh::HalfEdge* tl = he1->opposite->prev->opposite;
     PolyMesh::HalfEdge* tr = tl->prev;
     PolyMesh::Vertex* vtop = tl->next->next->v;
@@ -360,11 +384,167 @@ bool fixFlatBoundaryQuad(PolyMesh* pm, PolyMesh::HalfEdge* he0) {
     he1->opposite->v = v5;
     he2->opposite->next->v = v6;
 
+    laplacianSmoothing(v5);
+    laplacianSmoothing(v6);
+
+    return true;
+  } else if (valInterior == 3) {
+    Msg::Debug("fixFlatBoundaryQuadWithInterior: tip is valence 3, fixing ...");
+    PolyMesh::Face* f1 = he1->opposite->f;
+    PolyMesh::Face* f2 = he2->opposite->f;
+
+    setQuadRelations(f1, 
+        he0, 
+        he1->opposite->next,
+        he1->opposite->next->next,
+        he1->opposite->next->next->next);
+
+    setQuadRelations(f2, 
+        he3, 
+        he2->opposite->next,
+        he2->opposite->next->next,
+        he2->opposite->next->next->next);
+
+    /* Flag for delete by pm->clean */
+    f0->he = nullptr;
+    v2->he = nullptr;
+    he1->f = nullptr;
+    he1->opposite->f = nullptr;
+    he2->f = nullptr;
+    he2->opposite->f = nullptr;
+
     return true;
   }
 
   Msg::Warning("flat boundary quad but interior valence %i, no rule to fix it", valInterior);
   return false;
+}
+
+bool fixFlatBoundaryQuadWithNeighbor(PolyMesh* pm, PolyMesh::HalfEdge* he0) {
+  PolyMesh::Face* f0 = he0->f;
+  PolyMesh::HalfEdge* he1 = he0->next;
+  PolyMesh::HalfEdge* he2 = he1->next;
+  PolyMesh::HalfEdge* he3 = he2->next;
+  PolyMesh::Vertex* v2 = he2->v;
+  if (he1->opposite != nullptr) {
+    Msg::Debug("fixFlatBoundaryQuadWithNeighbor: quad on left ...");
+    PolyMesh::HalfEdge* he4 = he1->opposite;
+    PolyMesh::HalfEdge* he7 = he4->prev;
+    PolyMesh::Face* f1 = he4->f;
+    PolyMesh::Vertex* a = new PolyMesh::Vertex(face_center(f0),-1);
+    PolyMesh::Vertex* b = new PolyMesh::Vertex(face_center(f1),-1);
+    pm->vertices.push_back(a);
+    pm->vertices.push_back(b);
+    PolyMesh::HalfEdge* ab = new PolyMesh::HalfEdge(a);
+    PolyMesh::HalfEdge* ba = new PolyMesh::HalfEdge(b);
+    pm->hedges.push_back(ab);
+    pm->hedges.push_back(ba);
+    setOpposite(ab,ba);
+    a->he = ab;
+    b->he = ba;
+    PolyMesh::HalfEdge* av0 = new PolyMesh::HalfEdge(a);
+    PolyMesh::HalfEdge* v0a = new PolyMesh::HalfEdge(he0->v);
+    pm->hedges.push_back(av0);
+    pm->hedges.push_back(v0a);
+    setOpposite(av0,v0a);
+    PolyMesh::HalfEdge* av2 = new PolyMesh::HalfEdge(a);
+    PolyMesh::HalfEdge* v2a = new PolyMesh::HalfEdge(he2->v);
+    pm->hedges.push_back(av2);
+    pm->hedges.push_back(v2a);
+    setOpposite(av2,v2a);
+    PolyMesh::HalfEdge* bv7 = new PolyMesh::HalfEdge(b);
+    PolyMesh::HalfEdge* v7b = new PolyMesh::HalfEdge(he7->v);
+    pm->hedges.push_back(bv7);
+    pm->hedges.push_back(v7b);
+    setOpposite(bv7,v7b);
+    he4->v = b;
+    PolyMesh::Face* fb = new PolyMesh::Face(he0);
+    PolyMesh::Face* ft = new PolyMesh::Face(he7);
+    pm->faces.push_back(fb);
+    pm->faces.push_back(ft);
+    fb->data = f0->data;
+    ft->data = f0->data;
+    v2->he = he2;
+    he0->v->he = he0;
+    he7->v->he = he7;
+    setQuadRelations(f0,he2,he3,v0a,av2);
+    setQuadRelations(f1,he4,he4->next,he4->next->next,v7b);
+    setQuadRelations(ft,he7,v2a,ab,bv7);
+    setQuadRelations(fb,he0,he1,ba,av0);
+
+    laplacianSmoothing(a);
+    laplacianSmoothing(b);
+    laplacianSmoothing(a);
+    laplacianSmoothing(b);
+    return true;
+  } else if (he2->opposite != nullptr) {
+    Msg::Debug("fixFlatBoundaryQuadWithNeighbor: quad on right ...");
+    PolyMesh::HalfEdge* he4 = he2->opposite;
+    PolyMesh::HalfEdge* he5 = he4->next;
+    PolyMesh::HalfEdge* he6 = he4->next->next;
+    PolyMesh::Face* f1 = he4->f;
+    PolyMesh::Vertex* a = new PolyMesh::Vertex(face_center(f0),-1);
+    PolyMesh::Vertex* b = new PolyMesh::Vertex(face_center(f1),-1);
+    pm->vertices.push_back(a);
+    pm->vertices.push_back(b);
+    PolyMesh::HalfEdge* ab = new PolyMesh::HalfEdge(a);
+    PolyMesh::HalfEdge* ba = new PolyMesh::HalfEdge(b);
+    pm->hedges.push_back(ab);
+    pm->hedges.push_back(ba);
+    setOpposite(ab,ba);
+    a->he = ab;
+    b->he = ba;
+    PolyMesh::HalfEdge* av0 = new PolyMesh::HalfEdge(a);
+    PolyMesh::HalfEdge* v0a = new PolyMesh::HalfEdge(he0->v);
+    pm->hedges.push_back(av0);
+    pm->hedges.push_back(v0a);
+    setOpposite(av0,v0a);
+
+    he4->v = a;
+
+    PolyMesh::HalfEdge* bv3 = new PolyMesh::HalfEdge(b);
+    PolyMesh::HalfEdge* v3b = new PolyMesh::HalfEdge(he3->v);
+    pm->hedges.push_back(bv3);
+    pm->hedges.push_back(v3b);
+    setOpposite(bv3,v3b);
+
+    PolyMesh::HalfEdge* bv6 = new PolyMesh::HalfEdge(b);
+    PolyMesh::HalfEdge* v6b = new PolyMesh::HalfEdge(he6->v);
+    pm->hedges.push_back(bv6);
+    pm->hedges.push_back(v6b);
+    setOpposite(bv6,v6b);
+
+    PolyMesh::Face* fb = new PolyMesh::Face(he3);
+    PolyMesh::Face* ft = new PolyMesh::Face(he4);
+    pm->faces.push_back(fb);
+    pm->faces.push_back(ft);
+    fb->data = f0->data;
+    ft->data = f0->data;
+    he3->v->he = he3;
+    he0->v->he = he0;
+    he6->v->he = he6;
+    setQuadRelations(f0,he0,he1,he2,av0);
+    setQuadRelations(f1,he6,he6->next,v3b,bv6);
+    setQuadRelations(ft,ba,he4,he5,v6b);
+    setQuadRelations(fb,he3,v0a,ab,bv3);
+    laplacianSmoothing(a);
+    laplacianSmoothing(b);
+    laplacianSmoothing(a);
+    laplacianSmoothing(b);
+    return true;
+  }
+  Msg::Warning("flat boundary quad but tip on bdr, no rule to fix it");
+  return false;
+}
+
+inline double angleAcosDot(const SVector3& a, const SVector3& b) {
+  double dp = dot(a,b);
+  if (dp < -1.) {
+    dp = -1.;
+  } else if (dp > 1.) {
+    dp = 1.;
+  }
+  return acos(dp);
 }
 
 void meshGFaceQuadrangulateBipartiteLabelling (int faceTag,
@@ -578,8 +758,7 @@ void meshGFaceQuadrangulateBipartiteLabelling (int faceTag,
           n += 1;
           PolyMesh::Vertex* nv = pm->vertices[pm->vertices.size()-1];
           _labels[nv] = l0 == 1 ? 0 : 1;
-          laplacianSmoothingQuadMesh(nv,_labels);
-          GeoLog::add(nv->position,0.,"split");
+          laplacianSmoothingForQuadMesh(nv,_labels);
         }
       }
       else if (l0 == l1 && l0 == l2){
@@ -588,8 +767,7 @@ void meshGFaceQuadrangulateBipartiteLabelling (int faceTag,
           n += 1;
           PolyMesh::Vertex* nv = pm->vertices[pm->vertices.size()-1];
           _labels[nv] = l0 == 1 ? 0 : 1;
-          laplacianSmoothingQuadMesh(nv,_labels);
-          GeoLog::add(nv->position,1.,"split");
+          laplacianSmoothingForQuadMesh(nv,_labels);
         }	
       }
     }    
@@ -625,18 +803,41 @@ void meshGFaceQuadrangulateBipartiteLabelling (int faceTag,
     onBdr.insert(he->first());
     onBdr.insert(he->second());
   } 
+  size_t nflatfix = 0;
   for (auto he0 : pm->hedges) if (he0->opposite == nullptr && he0->next->opposite == nullptr) {
     PolyMesh::HalfEdge* he1 = he0->next;
     PolyMesh::HalfEdge* he2 = he1->next;
     PolyMesh::HalfEdge* he3 = he2->next;
-    if (he2->opposite == nullptr || he3->opposite == nullptr) continue;
-    PolyMesh::Vertex* intVertex = he3->v;
-    if (onBdr.find(intVertex) != onBdr.end()) continue;
-    double sicn = quadQuality(pm, he0->f);
-    if (sicn < 0.1) {
-      bool okf = fixFlatBoundaryQuad(pm, he1);
-      if (!okf) {
-        Msg::Error("failed to fix flat quad on boundary");
+    if (he2->opposite != nullptr && he3->opposite != nullptr) {
+      /* The tip of the flat quad is inside the surface mesh */
+      PolyMesh::Vertex* intVertex = he3->v;
+      if (onBdr.find(intVertex) != onBdr.end()) continue;
+      double sicn = quadQuality(pm, he1->f);
+      double aglDeg = angleAcosDot(he0->d(),he1->d()) * 180./M_PI;
+      if (aglDeg < 5 || (sicn < 0.1 && aglDeg < 30)) {
+        // printf("quality: %f, agl: %f\n",sicn, aglDeg);
+        // GeoLog::add(he0->center(),he0->d(),"agl"+std::to_string(aglDeg));
+        // GeoLog::add(he1->center(),he1->d(),"agl"+std::to_string(aglDeg));
+        bool okf = fixFlatBoundaryQuadWithInterior(pm, he1);
+        if (okf) {
+          nflatfix += 1;
+        } else {
+          Msg::Error("failed to fix flat quad on boundary");
+        }
+      }
+    } else if (he2->opposite != nullptr || he3->opposite != nullptr) {
+      /* The tip of the flat quad is on the boundary, so the configuration
+       * is very constrained, but there is one side adjacent to another quad */
+      double sicn = quadQuality(pm, he1->f);
+      double aglDeg = angleAcosDot(he0->d(),he1->d()) * 180./M_PI;
+      if (aglDeg < 5 || (sicn < 0.1 && aglDeg < 30)) {
+        // printf("quality: %f, agl: %f\n",sicn, aglDeg);
+        bool okf = fixFlatBoundaryQuadWithNeighbor(pm, he1);
+        if (okf) {
+          nflatfix += 1;
+        } else {
+          Msg::Error("failed to fix flat quad on boundary");
+        }
       }
     }
   }
@@ -651,9 +852,11 @@ void meshGFaceQuadrangulateBipartiteLabelling (int faceTag,
 
   GFace *gf = GModel::current()->getFaceByTag(faceTag);
   if (gf->triangles.size() > 0) {
-    Msg::Warning("- Face %i: bipartite labelling and recombination: %i splits, %li quads, %li triangles", gf->tag(), nsplit, gf->quadrangles.size(), gf->triangles.size());
+    Msg::Warning("- Face %i: bipartite labelling and recombination: %i splits, %li flat fixed, %li quads, %li triangles",
+        gf->tag(), nsplit, nflatfix, gf->quadrangles.size(), gf->triangles.size());
   } else {
-    Msg::Info("- Face %i: bipartite labelling and recombination: %i splits, %li quads, %li triangles", gf->tag(), nsplit, gf->quadrangles.size(), gf->triangles.size());
+    Msg::Info("- Face %i: bipartite labelling and recombination: %i splits, %li flat fixed, %li quads, %li triangles", 
+        gf->tag(), nsplit, nflatfix, gf->quadrangles.size(), gf->triangles.size());
   }
 
   GeoLog::flush(); // TODOMX debug
