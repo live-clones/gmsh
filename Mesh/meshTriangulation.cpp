@@ -84,45 +84,52 @@ struct pair_hash {
   }
 };
 
-int PolyMesh2GFace(PolyMesh *pm, int faceTag) {
+int PolyMesh2GFace(PolyMesh *pm, int faceTag)
+{
   GFace *gf = GModel::current()->getFaceByTag(faceTag);
 
-  for (auto t : gf->triangles)delete t;
-  for (auto q : gf->quadrangles)delete q;
+  for(auto t : gf->triangles) delete t;
+  for(auto q : gf->quadrangles) delete q;
   gf->triangles.clear();
   gf->quadrangles.clear();
 
-  std::unordered_map<int, MVertex*> news;
-  
-  for (auto f : pm->faces){
-    PolyMesh::Vertex *v[4] = {f->he->v,f->he->next->v,f->he->next->next->v,f->he->next->next->next->v};
+  std::unordered_map<int, MVertex *> news;
+
+  for(auto f : pm->faces) {
+    PolyMesh::Vertex *v[4] = {f->he->v, f->he->next->v, f->he->next->next->v,
+                              f->he->next->next->next->v};
     MVertex *v_gmsh[4];
-    for (int i=0;i<pm->num_sides(f->he);i++){
-      if (v[i]->data != -1){
-	auto it = news.find(v[i]->data);
-	if (it == news.end())
-	  v_gmsh[i] = GModel::current()->getMeshVertexByTag(v[i]->data);
-	else
-	  v_gmsh[i] = it->second;
-	//	if (! v_gmsh[i] ) printf("error %d\n",v[i]->data);
+    for(int i = 0; i < pm->num_sides(f->he); i++) {
+      if(v[i]->data != -1) {
+        auto it = news.find(v[i]->data);
+        if(it == news.end())
+          v_gmsh[i] = GModel::current()->getMeshVertexByTag(v[i]->data);
+        else
+          v_gmsh[i] = it->second;
+        //	if (! v_gmsh[i] ) printf("error %d\n",v[i]->data);
       }
       else {
-	double uv[2] = {0,0};
-	GPoint gp = gf->closestPoint(SPoint3(v[i]->position.x(),v[i]->position.y(),
-					     v[i]->position.z()),uv);
-	if (gp.succeeded())
-	  v_gmsh[i] = new MFaceVertex (gp.x(),gp.y(),gp.z(),gf,gp.u(),gp.v());
-	else
-	  v_gmsh[i] = new MFaceVertex (v[i]->position.x(),v[i]->position.y(), v[i]->position.z(),gf,v[i]->position.x(),v[i]->position.y());
-	gf->mesh_vertices.push_back(v_gmsh[i]);	
-	v[i]->data = v_gmsh[i]->getNum();
-	news[v[i]->data] =  v_gmsh[i];
+        double uv[2] = {0, 0};
+        GPoint gp = gf->closestPoint(
+          SPoint3(v[i]->position.x(), v[i]->position.y(), v[i]->position.z()),
+          uv);
+        if(gp.succeeded())
+          v_gmsh[i] =
+            new MFaceVertex(gp.x(), gp.y(), gp.z(), gf, gp.u(), gp.v());
+        else
+          v_gmsh[i] = new MFaceVertex(v[i]->position.x(), v[i]->position.y(),
+                                      v[i]->position.z(), gf,
+                                      v[i]->position.x(), v[i]->position.y());
+        gf->mesh_vertices.push_back(v_gmsh[i]);
+        v[i]->data = v_gmsh[i]->getNum();
+        news[v[i]->data] = v_gmsh[i];
       }
     }
-    if (pm->num_sides(f->he) == 3)
-      gf->triangles.push_back(new MTriangle (v_gmsh[0],v_gmsh[1],v_gmsh[2]));
-    else if (pm->num_sides(f->he) == 4)
-      gf->quadrangles.push_back(new MQuadrangle (v_gmsh[0],v_gmsh[1],v_gmsh[2],v_gmsh[3]));    
+    if(pm->num_sides(f->he) == 3)
+      gf->triangles.push_back(new MTriangle(v_gmsh[0], v_gmsh[1], v_gmsh[2]));
+    else if(pm->num_sides(f->he) == 4)
+      gf->quadrangles.push_back(
+        new MQuadrangle(v_gmsh[0], v_gmsh[1], v_gmsh[2], v_gmsh[3]));
   }
   return 0;
 }
@@ -133,79 +140,84 @@ int GFace2PolyMesh(int faceTag, PolyMesh **pm)
   *pm = new PolyMesh;
 
   std::unordered_map<size_t, size_t> nodeLabels;
-  std::unordered_map<std::pair<size_t, size_t>, PolyMesh::HalfEdge *, pair_hash>   opposites;
+  std::unordered_map<std::pair<size_t, size_t>, PolyMesh::HalfEdge *, pair_hash>
+    opposites;
 
   std::vector<int> elementTypes;
   std::vector<std::vector<std::size_t> > elementTags;
   std::vector<std::vector<std::size_t> > nodeTags;
   gmsh::model::mesh::getElements(elementTypes, elementTags, nodeTags, 2,
-				 faceTag);
-    
-  for (size_t K=0;K<elementTypes.size();K++){
+                                 faceTag);
+
+  for(size_t K = 0; K < elementTypes.size(); K++) {
     int eT = elementTypes[K];
     int nNod = 0;
-    if (eT == 2)nNod = 3;
-    else if (eT == 3)nNod = 4;
+    if(eT == 2)
+      nNod = 3;
+    else if(eT == 3)
+      nNod = 4;
     else {
-      Msg::Error("GFace2PolyMesh only support quads (element Tag 3) and triangles (element Tag 2)");
+      Msg::Error("GFace2PolyMesh only support quads (element Tag 3) and "
+                 "triangles (element Tag 2)");
       return -1;
     }
-    PolyMesh::Vertex *v[4] = {nullptr,nullptr,nullptr,nullptr};
-    printf("%lu elements\n",elementTags[K].size());
+    PolyMesh::Vertex *v[4] = {nullptr, nullptr, nullptr, nullptr};
+    printf("%lu elements\n", elementTags[K].size());
     for(size_t i = 0; i < elementTags[K].size(); i++) {
-      for (int j=0;j<nNod;j++){
-	size_t nodeTag = nodeTags[K][nNod*i+j];
-	auto it = nodeLabels.find(nodeTag);
-	if (it == nodeLabels.end()){
-	  std::vector<double> coord(3),parametricCoord(3);
-	  gmsh::model::mesh::getNode(nodeTag,coord,parametricCoord);
-	  v[j] = new PolyMesh::Vertex(coord[0],coord[1],coord[2],nodeTag);
-	  nodeLabels[nodeTag] = (*pm)->vertices.size();
-	  (*pm)->vertices.push_back(v[j]);
-	}
-	else v[j] = (*pm)->vertices[it->second];
+      for(int j = 0; j < nNod; j++) {
+        size_t nodeTag = nodeTags[K][nNod * i + j];
+        auto it = nodeLabels.find(nodeTag);
+        if(it == nodeLabels.end()) {
+          std::vector<double> coord(3), parametricCoord(3);
+          gmsh::model::mesh::getNode(nodeTag, coord, parametricCoord);
+          v[j] = new PolyMesh::Vertex(coord[0], coord[1], coord[2], nodeTag);
+          nodeLabels[nodeTag] = (*pm)->vertices.size();
+          (*pm)->vertices.push_back(v[j]);
+        }
+        else
+          v[j] = (*pm)->vertices[it->second];
       }
 
       PolyMesh::HalfEdge *he[4];
-      for (int j=0;j<nNod;j++){
-	he[j] = new PolyMesh::HalfEdge(v[j]);
-	(*pm)->hedges.push_back(he[j]);
-	v[j]->he = he[j];
+      for(int j = 0; j < nNod; j++) {
+        he[j] = new PolyMesh::HalfEdge(v[j]);
+        (*pm)->hedges.push_back(he[j]);
+        v[j]->he = he[j];
       }
 
       PolyMesh::Face *ff = new PolyMesh::Face(he[0]);
       (*pm)->faces.push_back(ff);
-      
-      for (int j=0;j<nNod;j++){
-	he[j]->next = he[(j+1)%nNod];
-	he[j]->prev = he[(j-1+nNod)%nNod];
-	he[j]->f = ff;
-	//	size_t n0 = v[j]->data;
-	//	size_t n1 = v[(j+1)%nNod]->data;
-	//	std::pair<size_t, size_t> pj =
-	//	  std::make_pair(std::min(n0,n1),std::max(n0,n1));
-	//	auto itj = opposites.find(pj);
-	//	if(itj == opposites.end()) opposites[pj] = he[j];
-	//	else {
-	//	  he[j]->opposite = itj->second;
-	//	  itj->second->opposite = he[j];
-	//	}
-      }      
+
+      for(int j = 0; j < nNod; j++) {
+        he[j]->next = he[(j + 1) % nNod];
+        he[j]->prev = he[(j - 1 + nNod) % nNod];
+        he[j]->f = ff;
+        //	size_t n0 = v[j]->data;
+        //	size_t n1 = v[(j+1)%nNod]->data;
+        //	std::pair<size_t, size_t> pj =
+        //	  std::make_pair(std::min(n0,n1),std::max(n0,n1));
+        //	auto itj = opposites.find(pj);
+        //	if(itj == opposites.end()) opposites[pj] = he[j];
+        //	else {
+        //	  he[j]->opposite = itj->second;
+        //	  itj->second->opposite = he[j];
+        //	}
+      }
     }
   }
 
   HalfEdgePtrLessThan compare;
-  std::sort ((*pm)->hedges.begin(), (*pm)->hedges.end(), compare);
+  std::sort((*pm)->hedges.begin(), (*pm)->hedges.end(), compare);
 
   HalfEdgePtrEqual equal;
-  for (size_t i=0 ; i< (*pm)->hedges.size() - 1; i++){
+  for(size_t i = 0; i < (*pm)->hedges.size() - 1; i++) {
     PolyMesh::HalfEdge *h0 = (*pm)->hedges[i];
-    PolyMesh::HalfEdge *h1 = (*pm)->hedges[i+1];
-    if (equal(h0,h1)){
+    PolyMesh::HalfEdge *h1 = (*pm)->hedges[i + 1];
+    if(equal(h0, h1)) {
       h0->opposite = h1;
       h1->opposite = h0;
       i++;
-    }    
+    }
   }
   return 0;
 }
@@ -581,7 +593,8 @@ struct nodeCopies {
 
 //// INITIAL MESH --------- colored
 
-static void getNodeCopies(GFace *gf, std::unordered_map<size_t, nodeCopies> &copies)
+static void getNodeCopies(GFace *gf,
+                          std::unordered_map<size_t, nodeCopies> &copies)
 {
   std::vector<GEdge *> edges = gf->edges();
   std::vector<GEdge *> emb_edges = gf->getEmbeddedEdges();
@@ -622,7 +635,8 @@ static void getNodeCopies(GFace *gf, std::unordered_map<size_t, nodeCopies> &cop
         else {
           reparamMeshVertexOnFace(v, gf, param);
         }
-        std::unordered_map<size_t, nodeCopies>::iterator it = copies.find(v->getNum());
+        std::unordered_map<size_t, nodeCopies>::iterator it =
+          copies.find(v->getNum());
         if(it == copies.end()) {
           nodeCopies c(v, param.x(), param.y());
           copies.insert(std::make_pair(v->getNum(), c));

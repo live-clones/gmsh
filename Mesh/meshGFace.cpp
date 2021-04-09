@@ -268,7 +268,8 @@ public:
     if(!CTX::instance()->mesh.recombineAll && !gf->meshAttributes.recombine)
       return;
     if(CTX::instance()->mesh.algoRecombine < 2 &&
-       CTX::instance()->mesh.algoRecombine != 4 ) return;
+       CTX::instance()->mesh.algoRecombine != 4)
+      return;
     if(gf->compound.size()) return;
     if(periodic) {
       Msg::Error("Full-quad recombination not ready yet for periodic surfaces");
@@ -1730,7 +1731,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
   // the delaunay algo is based directly on internal gmsh structures BDS mesh is
   // passed in order not to recompute local coordinates of vertices
   if(algoDelaunay2D(gf) && !onlyInitialMesh) {
-    if(gf->getMeshingAlgo() == ALGO_2D_FRONTAL) {bowyerWatsonFrontal(gf); }
+    if(gf->getMeshingAlgo() == ALGO_2D_FRONTAL) { bowyerWatsonFrontal(gf); }
     else if(gf->getMeshingAlgo() == ALGO_2D_FRONTAL_QUAD) {
       bowyerWatsonFrontalLayers(gf, true);
     }
@@ -1777,13 +1778,14 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
   splitElementsInBoundaryLayerIfNeeded(gf);
 
   if((CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine) &&
-     !onlyInitialMesh &&  (CTX::instance()->mesh.algoRecombine <= 1 ||
-			   CTX::instance()->mesh.algoRecombine == 4)) {
+     !onlyInitialMesh &&
+     (CTX::instance()->mesh.algoRecombine <= 1 ||
+      CTX::instance()->mesh.algoRecombine == 4)) {
     bool blossom = (CTX::instance()->mesh.algoRecombine == 1);
     int topo = CTX::instance()->mesh.recombineOptimizeTopology;
     bool nodeRepositioning = false;
-    if (CTX::instance()->mesh.algoRecombine == 4)
-      meshGFaceQuadrangulateBipartiteLabelling(gf->tag()); 
+    if(CTX::instance()->mesh.algoRecombine == 4)
+      meshGFaceQuadrangulateBipartiteLabelling(gf->tag());
     else
       recombineIntoQuads(gf, blossom, topo, nodeRepositioning, 0.1);
   }
@@ -2844,8 +2846,8 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
        CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT) {
       nodeRepositioning = false;
     }
-    if (CTX::instance()->mesh.algoRecombine == 4)
-      meshGFaceQuadrangulateBipartiteLabelling(gf->tag()); 
+    if(CTX::instance()->mesh.algoRecombine == 4)
+      meshGFaceQuadrangulateBipartiteLabelling(gf->tag());
     else
       recombineIntoQuads(gf, blossom, topo, nodeRepositioning, 0.1);
   }
