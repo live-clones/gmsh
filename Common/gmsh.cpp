@@ -3314,8 +3314,10 @@ GMSH_API void gmsh::model::mesh::createEdges(const vectorpair &dimTags)
     GEntity *ge = entities[i];
     for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
       MElement *e = ge->getMeshElement(j);
-      for(int k = 0; k < e->getNumEdges(); k++)
-        GModel::current()->addMEdge(e->getEdge(k));
+      for(int k = 0; k < e->getNumEdges(); k++) {
+        MEdge edge = e->getEdge(k);
+        GModel::current()->addMEdge(edge);
+      }
     }
   }
 }
@@ -3329,8 +3331,10 @@ GMSH_API void gmsh::model::mesh::createFaces(const vectorpair &dimTags)
     GEntity *ge = entities[i];
     for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
       MElement *e = ge->getMeshElement(j);
-      for(int k = 0; k < e->getNumFaces(); k++)
-        GModel::current()->addMFace(e->getFace(k));
+      for(int k = 0; k < e->getNumFaces(); k++) {
+        MFace face = e->getFace(k);
+        GModel::current()->addMFace(face);
+      }
     }
   }
 }

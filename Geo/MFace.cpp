@@ -45,7 +45,16 @@ void sortVertices(const std::vector<MVertex *> &v, std::vector<char> &s)
     }
     return;
   }
-
+  else if(v.size() == 4) {
+    MVertex * sorted[4] {v[0], v[1], v[2], v[3]};
+    std::sort(&sorted[0], &sorted[3], compare);
+    s.reserve(4);
+    for(std::size_t i = 0; i < 4; i++)
+      s.push_back(
+        std::distance(v.begin(), std::find(v.begin(), v.end(), sorted[i])));
+    return;
+  }
+  
   std::vector<MVertex *> sorted = v;
   std::sort(sorted.begin(), sorted.end(), compare);
   s.reserve(sorted.size());
