@@ -1286,6 +1286,7 @@ int computeCrossFieldConformalScaling(
       scaling[v] = 1.;
     }
     delete _lsys;
+    delete myAssembler;
     return 0;
   }
 
@@ -1303,14 +1304,18 @@ int computeCrossFieldConformalScaling(
     i += 1;
   }
   if (sMin == DBL_MAX || sMax == -DBL_MAX || sMin == 0.) {
-    Msg::Error("Conformal scaling computed (%d unknowns, %li triangles -> min=%.3f, max=%.3f), wrong",
+    Msg::Warning("Conformal scaling computed (%d unknowns, %li triangles -> min=%.3f, max=%.3f), wrong, set uniform",
         myAssembler->sizeOfR(), triangles.size(), sMin, sMax);
+    for (MVertex* v: vs) {
+      scaling[v] = 1.;
+    }
   } else {
     Msg::Debug("Conformal scaling computed (%d unknowns, %li triangles -> min=%.3f, max=%.3f, width=%.3f)",
         myAssembler->sizeOfR(), triangles.size(), sMin, sMax, sMax - sMin);
   }
 
   delete _lsys;
+  delete myAssembler;
 
   if (false) {
     std::vector<MElement*> elts = dynamic_cast_vector<MTriangle*,MElement*>(triangles);

@@ -607,6 +607,7 @@ double opt_mesh_ignore_parametrization(OPT_ARGS_NUM);
 double opt_mesh_quadqs_sizemap_method(OPT_ARGS_NUM);
 double opt_mesh_quadqs_topo_optim_methods(OPT_ARGS_NUM);
 double opt_mesh_quadqs_remeshing_boldness(OPT_ARGS_NUM);
+double opt_mesh_quadqs_scaling_on_triangulation(OPT_ARGS_NUM);
 double opt_solver_listen(OPT_ARGS_NUM);
 double opt_solver_timeout(OPT_ARGS_NUM);
 double opt_solver_plugins(OPT_ARGS_NUM);

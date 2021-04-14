@@ -95,10 +95,11 @@ int PolyMesh2GFace(PolyMesh *pm, int faceTag) {
 
   std::unordered_map<int, MVertex*> news;
   
-  for (auto f : pm->faces) if (f != nullptr) {
+  for (auto f : pm->faces) if (f != nullptr && f->he != nullptr) {
     PolyMesh::Vertex *v[4] = {f->he->v,f->he->next->v,f->he->next->next->v,f->he->next->next->next->v};
     MVertex *v_gmsh[4];
     for (int i=0;i<pm->num_sides(f->he);i++){
+      // printf("f=%p, i=%i, v=%p\n",f,i,v[i]);
       if (v[i] == nullptr) {
         Msg::Error("PolyMesh2GFace: face with %i sides, %i-th vertex is null", pm->num_sides(f->he), i);
         return -1;
@@ -120,6 +121,7 @@ int PolyMesh2GFace(PolyMesh *pm, int faceTag) {
         else
           v_gmsh[i] = new MFaceVertex (v[i]->position.x(),v[i]->position.y(), v[i]->position.z(),gf,v[i]->position.x(),v[i]->position.y());
         gf->mesh_vertices.push_back(v_gmsh[i]);	
+        gf->model()->addMVertexToVertexCache(v_gmsh[i]);
         v[i]->data = v_gmsh[i]->getNum();
         news[v[i]->data] =  v_gmsh[i];
       }
@@ -145,41 +147,94 @@ int GFace2PolyMesh(int faceTag, PolyMesh **pm)
   gmsh::initialize();
   *pm = new PolyMesh;
 
+
   std::unordered_map<size_t, size_t> nodeLabels;
   std::unordered_map<std::pair<size_t, size_t>, PolyMesh::HalfEdge *, pair_hash>   opposites;
 
-  std::vector<int> elementTypes;
-  std::vector<std::vector<std::size_t> > elementTags;
-  std::vector<std::vector<std::size_t> > nodeTags;
-  gmsh::model::mesh::getElements(elementTypes, elementTags, nodeTags, 2,
-				 faceTag);
-    
-  for (size_t K=0;K<elementTypes.size();K++){
-    int eT = elementTypes[K];
-    int nNod = 0;
-    if (eT == 2)nNod = 3;
-    else if (eT == 3)nNod = 4;
-    else {
-      Msg::Error("GFace2PolyMesh only support quads (element Tag 3) and triangles (element Tag 2)");
+  bool useAPI = false;
+
+  if (useAPI) {
+    std::vector<int> elementTypes;
+    std::vector<std::vector<std::size_t> > elementTags;
+    std::vector<std::vector<std::size_t> > nodeTags;
+    gmsh::model::mesh::getElements(elementTypes, elementTags, nodeTags, 2,
+        faceTag);
+
+    for (size_t K=0;K<elementTypes.size();K++){
+      int eT = elementTypes[K];
+      int nNod = 0;
+      if (eT == 2)nNod = 3;
+      else if (eT == 3)nNod = 4;
+      else {
+        Msg::Error("GFace2PolyMesh only support quads (element Tag 3) and triangles (element Tag 2)");
+        return -1;
+      }
+      PolyMesh::Vertex *v[4] = {nullptr,nullptr,nullptr,nullptr};
+      for(size_t i = 0; i < elementTags[K].size(); i++) {
+        for (int j=0;j<nNod;j++){
+          size_t nodeTag = nodeTags[K][nNod*i+j];
+          auto it = nodeLabels.find(nodeTag);
+          if (it == nodeLabels.end()){
+            std::vector<double> coord(3),parametricCoord(3);
+            gmsh::model::mesh::getNode(nodeTag,coord,parametricCoord);
+            v[j] = new PolyMesh::Vertex(coord[0],coord[1],coord[2],nodeTag);
+            nodeLabels[nodeTag] = (*pm)->vertices.size();
+            (*pm)->vertices.push_back(v[j]);
+          }
+          else v[j] = (*pm)->vertices[it->second];
+        }
+
+        PolyMesh::HalfEdge *he[4];
+        for (int j=0;j<nNod;j++){
+          he[j] = new PolyMesh::HalfEdge(v[j]);
+          (*pm)->hedges.push_back(he[j]);
+          v[j]->he = he[j];
+        }
+
+        PolyMesh::Face *ff = new PolyMesh::Face(he[0]);
+        (*pm)->faces.push_back(ff);
+
+        for (int j=0;j<nNod;j++){
+          he[j]->next = he[(j+1)%nNod];
+          he[j]->prev = he[(j-1+nNod)%nNod];
+          he[j]->f = ff;
+          //	size_t n0 = v[j]->data;
+          //	size_t n1 = v[(j+1)%nNod]->data;
+          //	std::pair<size_t, size_t> pj =
+          //	  std::make_pair(std::min(n0,n1),std::max(n0,n1));
+          //	auto itj = opposites.find(pj);
+          //	if(itj == opposites.end()) opposites[pj] = he[j];
+          //	else {
+          //	  he[j]->opposite = itj->second;
+          //	  itj->second->opposite = he[j];
+          //	}
+        }      
+      }
+    }
+  } else {
+    GFace *gf = GModel::current()->getFaceByTag(faceTag);
+    if (gf == nullptr) {
       return -1;
     }
     PolyMesh::Vertex *v[4] = {nullptr,nullptr,nullptr,nullptr};
-    for(size_t i = 0; i < elementTags[K].size(); i++) {
-      for (int j=0;j<nNod;j++){
-        size_t nodeTag = nodeTags[K][nNod*i+j];
+    for (size_t i = 0; i < gf->getNumMeshElements(); ++i) {
+      MElement* elt = gf->getMeshElement(i);
+      size_t nNod = elt->getNumVertices();
+      for (size_t j=0;j<nNod;j++){
+        MVertex* pv = elt->getVertex(j);
+        size_t nodeTag = pv->getNum();
         auto it = nodeLabels.find(nodeTag);
         if (it == nodeLabels.end()){
-          std::vector<double> coord(3),parametricCoord(3);
-          gmsh::model::mesh::getNode(nodeTag,coord,parametricCoord);
-          v[j] = new PolyMesh::Vertex(coord[0],coord[1],coord[2],nodeTag);
+          SPoint3 pt = pv->point();
+          v[j] = new PolyMesh::Vertex(pt.x(),pt.y(),pt.z(),nodeTag);
           nodeLabels[nodeTag] = (*pm)->vertices.size();
           (*pm)->vertices.push_back(v[j]);
+        } else {
+          v[j] = (*pm)->vertices[it->second];
         }
-        else v[j] = (*pm)->vertices[it->second];
       }
-
       PolyMesh::HalfEdge *he[4];
-      for (int j=0;j<nNod;j++){
+      for (size_t j=0;j<nNod;j++){
         he[j] = new PolyMesh::HalfEdge(v[j]);
         (*pm)->hedges.push_back(he[j]);
         v[j]->he = he[j];
@@ -188,20 +243,10 @@ int GFace2PolyMesh(int faceTag, PolyMesh **pm)
       PolyMesh::Face *ff = new PolyMesh::Face(he[0]);
       (*pm)->faces.push_back(ff);
 
-      for (int j=0;j<nNod;j++){
+      for (size_t j=0;j<nNod;j++){
         he[j]->next = he[(j+1)%nNod];
         he[j]->prev = he[(j-1+nNod)%nNod];
         he[j]->f = ff;
-        //	size_t n0 = v[j]->data;
-        //	size_t n1 = v[(j+1)%nNod]->data;
-        //	std::pair<size_t, size_t> pj =
-        //	  std::make_pair(std::min(n0,n1),std::max(n0,n1));
-        //	auto itj = opposites.find(pj);
-        //	if(itj == opposites.end()) opposites[pj] = he[j];
-        //	else {
-        //	  he[j]->opposite = itj->second;
-        //	  itj->second->opposite = he[j];
-        //	}
       }      
     }
   }

@@ -6591,6 +6591,11 @@ double opt_mesh_quadqs_topo_optim_methods(OPT_ARGS_NUM) {
   return CTX::instance()->mesh.quadqsTopoOptimMethods;
 }
 
+double opt_mesh_quadqs_scaling_on_triangulation(OPT_ARGS_NUM) {
+  if(action & GMSH_SET) CTX::instance()->mesh.quadqsScalingOnTriangulation = (double)val;
+  return CTX::instance()->mesh.quadqsScalingOnTriangulation;
+}
+
 double opt_solver_listen(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->solver.listen = (int)val;

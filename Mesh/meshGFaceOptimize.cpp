@@ -1056,13 +1056,13 @@ static void _recombineIntoQuads(GFace *gf, bool blossom, bool cubicGraph = 1)
   buildEdgeToElement(gf->triangles, adj);
 
   FieldManager *fields = gf->model()->getFields();
-  Field *cross_field = NULL;
+  Field *cross_field = nullptr;
   SVector3 t1;
   // double L; /* unused ? */
   if(fields->getBackgroundField() > 0) {
     cross_field = fields->get(fields->getBackgroundField());
-    if(cross_field->numComponents() != 3) { // we hae a true scaled cross fiel
-      cross_field = NULL;
+    if(cross_field->numComponents() != 3) { // check if we have a true scaled cross field
+      cross_field = nullptr;
     }
   }
 

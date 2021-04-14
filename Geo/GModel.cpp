@@ -1845,6 +1845,25 @@ MVertex *GModel::getMeshVertexByTag(int n)
     return _vertexMapCache[n];
 }
 
+void GModel::addMVertexToVertexCache(MVertex* v)
+{
+  if(_vertexVectorCache.empty() && _vertexMapCache.empty()) {
+    Msg::Debug("Rebuilding mesh node cache");
+    rebuildMeshVertexCache();
+  }
+  if (_vertexVectorCache.size() > 0) {
+    #if defined(_OPENMP)
+    #pragma omp critical
+    #endif
+    if (v->getNum() >= _vertexVectorCache.size()) {
+      _vertexVectorCache.resize(v->getNum()+1, nullptr);
+    }
+    _vertexVectorCache[v->getNum()] = v;
+  } else {
+    _vertexMapCache[v->getNum()] = v;
+  }
+}
+
 void GModel::getMeshVerticesForPhysicalGroup(int dim, int num,
                                              std::vector<MVertex *> &v)
 {

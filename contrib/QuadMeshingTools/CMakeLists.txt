@@ -1,6 +1,7 @@
 set(QMT_SRC
   qmtMeshGeometryOptimization.cpp
   qmtDiskQuadrangulationRemeshing.cpp
+  qmtQuadLocalCleanUp.cpp
   qmtQuadCavityRemeshing.cpp
   qmtCrossField.cpp
   qmtCurveQuantization.cpp

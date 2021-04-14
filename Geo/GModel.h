@@ -548,6 +548,9 @@ public:
   // access a mesh vertex by tag, using the vertex cache
   MVertex *getMeshVertexByTag(int n);
 
+  // add a mesh vertex to the global mesh vertex cache
+  void addMVertexToVertexCache(MVertex* v);
+
   // get all the mesh vertices associated with the physical group
   // of dimension "dim" and id number "num"
   void getMeshVerticesForPhysicalGroup(int dim, int num,

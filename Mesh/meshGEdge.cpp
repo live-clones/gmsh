@@ -393,6 +393,23 @@ static void printFandPrimitive(int tag, std::vector<IntPoint> &Points)
 }
 */
 
+// odd rounding: 3.9 -> 3,  4.1 -> 5
+int closestOddNumberOfPoints(double value)
+{
+  double r = std::round(value);
+  int N = int(r);
+  if (N < 2) N = 2; // minimum is two points
+  if (N % 2 == 0) {
+    if (r <= value) {
+      N = N + 1;
+    } else {
+      N = N - 1;
+    }
+  }
+  if (N < 3) return 3;
+  return N;
+}
+
 // new algo for recombining + splitting
 static int increaseN(int N)
 {
@@ -661,21 +678,30 @@ int meshGEdgeProcessing(GEdge *ge, const double t_begin, double t_end, int &N,
   }
 
   // force odd number of points if blossom is used for recombination
+  // or if using bipartite recombination
   if((ge->meshAttributes.method != MESH_TRANSFINITE ||
       CTX::instance()->mesh.flexibleTransfinite) &&
      CTX::instance()->mesh.algoRecombine != 0) {
     std::vector<GFace *> const &faces = ge->faces();
     if(CTX::instance()->mesh.recombineAll && faces.size()) {
-      if(N % 2 == 0) N++;
-      if(CTX::instance()->mesh.algoRecombine == 2 ||
-          CTX::instance()->mesh.algoRecombine == 4) N = increaseN(N);
+      if (CTX::instance()->mesh.algoRecombine == 4) {
+        N = closestOddNumberOfPoints(a+2.);
+        if (N < ge->minimumMeshSegments()+1) N = ge->minimumMeshSegments() + 1;
+      } else {
+        if(N % 2 == 0) N++;
+        if(CTX::instance()->mesh.algoRecombine == 2) N = increaseN(N);
+      }
     }
     else {
       for(auto it = faces.begin(); it != faces.end(); it++) {
         if((*it)->meshAttributes.recombine) {
-          if(N % 2 == 0) N++;
-          if(CTX::instance()->mesh.algoRecombine == 2 ||
-              CTX::instance()->mesh.algoRecombine == 4) N = increaseN(N);
+          if (CTX::instance()->mesh.algoRecombine == 4) {
+            N = closestOddNumberOfPoints(a+2.);
+            if (N < ge->minimumMeshSegments()+1) N = ge->minimumMeshSegments() + 1;
+          } else {
+            if(N % 2 == 0) N++;
+            if(CTX::instance()->mesh.algoRecombine == 2) N = increaseN(N);
+          }
           break;
         }
       }

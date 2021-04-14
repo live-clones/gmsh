@@ -280,6 +280,7 @@ int fillSizemapFromTriangleSizes(const std::vector<MTriangle *> &triangles,
     if(sum == 0.) continue;
     sizeMap[v] = avg / sum;
   }
+  // TODOMX: smoothing of the result
   return 0;
 }
 
@@ -326,7 +327,7 @@ std::string nameOfSizeMapMethod(int method) {
 }
 
 bool generateMeshWithSpecialParameters(GModel *gm,
-                                       double &scalingOnTriangulation)
+                                       double scalingOnTriangulation)
 {
   Msg::Debug("build background triangulation ...");
 
@@ -340,7 +341,6 @@ bool generateMeshWithSpecialParameters(GModel *gm,
   /* Change meshing parameters to build a good triangulation
    * for cross field */
   /* - the triangulation must be a bit more refined than the quad mesh */
-  scalingOnTriangulation = 0.75;
   int minCurveNodes = CTX::instance()->mesh.minCurveNodes;
   int minCircleNodes = CTX::instance()->mesh.minCircleNodes;
   double lcFactor = CTX::instance()->mesh.lcFactor;
@@ -423,14 +423,16 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm,
     return -1;
   }
 
-  const bool midpointSubdivisionAfter = true;
+  bool midpointSubdivisionAfter = true;
+  if (CTX::instance()->mesh.algoRecombine == 4) {
+    midpointSubdivisionAfter = false;
+  }
 
   const bool SHOW_INTERMEDIATE_VIEWS = (Msg::GetVerbosity() >= 99);
 
   Msg::Info("Build background mesh and guiding field ...");
   bool externalSizemap = false;
   const int qqsSizemapMethod = CTX::instance()->mesh.quadqsSizemapMethod;
-
   {
     FieldManager *fields = gm->getFields();
     if(fields->getBackgroundField() > 0) {
@@ -476,14 +478,12 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm,
   }
 
   /* Generate triangulation */
-  /* - scalingOnTriangulation: updated by generateMeshWithSpecialParameters
-   *   this factor is used to get a triangulation a bit more finer than the
-   *   target quadrangulation, to get a more accurate cross field */
-  double scalingOnTriangulation = 1;
+  /* - scalingOnTriangulation: this factor is used to get a triangulation a bit
+   * more finer than the target quadrangulation, to get a more accurate cross field */
+  double edgeScaling = CTX::instance()->mesh.quadqsScalingOnTriangulation;
   if(!surfaceMeshed) {
-    generateMeshWithSpecialParameters(gm, scalingOnTriangulation);
+    generateMeshWithSpecialParameters(gm, edgeScaling);
   }
-
 
   GlobalBackgroundMesh &bmesh = getBackgroundMesh(BMESH_NAME);
   bool overwrite = true;
@@ -515,7 +515,9 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm,
   std::vector<std::array<double, 5> > global_singularity_list; /* format: gf->tag(), index, x, y, z */
   /* Per GFace computations, in parallel */
   {
-    Msg::Info("- quadqs sizemap method: %s", nameOfSizeMapMethod(CTX::instance()->mesh.quadqsSizemapMethod).c_str());
+    Msg::Info("- quadqs sizemap method: %s, expect midpoint subdivision: %i", 
+        nameOfSizeMapMethod(CTX::instance()->mesh.quadqsSizemapMethod).c_str(),
+        midpointSubdivisionAfter);
 
     std::vector<GFace *> faces = model_faces(gm);
     size_t ntris = 0;
@@ -618,11 +620,14 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm,
         if(sts != 0) {
           Msg::Warning("- Face %i: failed to fill size map from triangle sizes",
                        gf->tag());
-        } else if (sts == 0 && scalingOnTriangulation > 0.) {
+        } else if (sts == 0 && edgeScaling > 0.) {
           /* re-adjust the target edge size as if the triangulation was
            * not finer for more accurate cross field */
           for (auto& kv: localSizemap) {
-            kv.second /= scalingOnTriangulation;
+            kv.second /= edgeScaling;
+            if (midpointSubdivisionAfter) {
+              kv.second *= 2;
+            }
           }
         }
       }
@@ -657,7 +662,7 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm,
           }
           else {
             targetNumberOfQuads = 0.5 * it->second.triangles.size();
-            targetNumberOfQuads *= std::pow(scalingOnTriangulation, 2);
+            targetNumberOfQuads *= std::pow(edgeScaling, 2);
           }
         }
 
@@ -687,6 +692,8 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm,
         for(auto &kv : localSizemap) {
           global_size_map.push_back({kv.first, kv.second});
         }
+        //GeoLog::add(dynamic_cast_vector<MTriangle*,MElement*>(triangles), 
+        //    localSizemap, "sizemap_f"+std::to_string(gf->tag()));
       }
 
     }
@@ -775,7 +782,19 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm,
       dynamic_cast_vector<MTriangle *, MElement *>(global_triangles);
     GeoLog::add(elements, sizeMap, "size_map");
     GeoLog::flush();
-    showUVParametrization(bmesh);
+    // showUVParametrization(bmesh);
+    std::unordered_map<MVertex*,double> sizemap_init;
+    for(auto &kv : global_size_map) {
+      MVertex *v = kv.first;
+      auto it = sizemap_init.find(v);
+      if(it == sizemap_init.end()) {
+        sizemap_init[kv.first] = kv.second; /* "natural" size */
+      } else {
+        it->second = std::min(it->second,kv.second);
+      }
+    }
+    GeoLog::add(elements, sizemap_init, "size_map_init");
+    GeoLog::flush();
   }
 
 
@@ -2014,24 +2033,31 @@ int optimizeQuadMeshWithDiskQuadrangulationRemeshing(GFace *gf)
 
   double t1 = Cpu();
 
-  int sc = improveCornerValences(gf, qValIdeal, adj, opt, stats);
-  if(sc != 0) {
-    Msg::Warning("optimize quad topology: failed to improve corner valences");
-  }
-  if(PARANO_QUALITY) {
-    errorAndAbortIfNegativeElement(
-      gf, dynamic_cast_vector<MQuadrangle *, MElement *>(gf->quadrangles),
-      "after corner");
+  const bool ENABLE_CORNER = false;
+  const bool ENABLE_CURVE = true;
+
+  if (ENABLE_CORNER) {
+    int sc = improveCornerValences(gf, qValIdeal, adj, opt, stats);
+    if(sc != 0) {
+      Msg::Warning("optimize quad topology: failed to improve corner valences");
+    }
+    if(PARANO_QUALITY) {
+      errorAndAbortIfNegativeElement(
+          gf, dynamic_cast_vector<MQuadrangle *, MElement *>(gf->quadrangles),
+          "after corner");
+    }
   }
 
-  int scu = improveCurveValences(gf, qValIdeal, adj, opt, stats);
-  if(scu != 0) {
-    Msg::Warning("optimize quad topology: failed to improve curve valences");
-  }
-  if(PARANO_QUALITY) {
-    errorAndAbortIfNegativeElement(
-      gf, dynamic_cast_vector<MQuadrangle *, MElement *>(gf->quadrangles),
-      "after curve");
+  if (ENABLE_CURVE) {
+    int scu = improveCurveValences(gf, qValIdeal, adj, opt, stats);
+    if(scu != 0) {
+      Msg::Warning("optimize quad topology: failed to improve curve valences");
+    }
+    if(PARANO_QUALITY) {
+      errorAndAbortIfNegativeElement(
+          gf, dynamic_cast_vector<MQuadrangle *, MElement *>(gf->quadrangles),
+          "after curve");
+    }
   }
 
   int sci = improveInteriorValences(gf, qValIdeal, adj, opt, stats);
