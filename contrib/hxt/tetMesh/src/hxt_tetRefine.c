@@ -215,7 +215,7 @@ static int getBestCenter(double p[4][4], double nodalSize[4], double center[4], 
     if(!isfinite(bary0) || !isfinite(bary1) || !isfinite(bary2) || !isfinite(bary3))
       bary0 = bary1 = bary2 = bary3 = 0.25;
 
-    // compute the cartesian coordinates from the barycentric ones
+    // compute the Cartesian coordinates from the barycentric ones
     double otherCenter[4];
     otherCenter[0] = bary0*p[0][0] + bary1*p[1][0] + bary2*p[2][0] + bary3*p[3][0];
     otherCenter[1] = bary0*p[0][1] + bary1*p[1][1] + bary2*p[2][1] + bary3*p[3][1];

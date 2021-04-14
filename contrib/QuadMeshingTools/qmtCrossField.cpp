@@ -1141,15 +1141,15 @@ int computeCrossFieldConformalScaling(
     return -1;
   }
 
-#if defined(HAVE_PETSC)
+#if defined(HAVE_EIGEN)
+  Msg::Debug("- with EIGEN solver");
+  linearSystemEigen<double> *_lsys = new linearSystemEigen<double>;
+#elif defined(HAVE_PETSC)
   Msg::Debug("- with PETSc solver");
   linearSystemPETSc<double> *_lsys = new linearSystemPETSc<double>;
 #elif defined(HAVE_MUMPS)
   Msg::Debug("- with MUMPS solver");
   linearSystemMUMPS<double> *_lsys = new linearSystemMUMPS<double>;
-#elif defined(HAVE_EIGEN)
-  Msg::Debug("- with EIGEN solver");
-  linearSystemEigen<double> *_lsys = new linearSystemEigen<double>;
 #else
   Msg::Debug("- with dense solver (slow, should not be used)");
   linearSystemFull<double> *_lsys = new linearSystemFull<double>;
@@ -1304,10 +1304,10 @@ int computeCrossFieldConformalScaling(
     i += 1;
   }
   if (sMin == DBL_MAX || sMax == -DBL_MAX || sMin == 0.) {
-    Msg::Warning("Conformal scaling computed (%d unknowns, %li triangles -> min=%.3f, max=%.3f), wrong, set uniform",
+    Msg::Warning("Conformal scaling computed (%d unknowns, %li triangles -> min=%.3f, max=%.3f), wrong, use uniform scaling",
         myAssembler->sizeOfR(), triangles.size(), sMin, sMax);
     for (MVertex* v: vs) {
-      scaling[v] = 1.;
+        scaling[v] = 1.;
     }
   } else {
     Msg::Debug("Conformal scaling computed (%d unknowns, %li triangles -> min=%.3f, max=%.3f, width=%.3f)",

@@ -199,8 +199,8 @@ model.add('getParametrization', doc, None, iint('dim'), iint('tag'), ivectordoub
 doc = '''Get the `min' and `max' bounds of the parametric coordinates for the entity of dimension `dim' and tag `tag'.'''
 model.add('getParametrizationBounds', doc, None, iint('dim'), iint('tag'), ovectordouble('min'), ovectordouble('max'))
 
-doc = '''Check if the parametric coordinates provided in `parametricCoord' correspond to points inside the entitiy of dimension `dim' and tag `tag', and return the number of points inside. This feature is only available for a subset of curves and surfaces, depending on the underyling geometrical representation.'''
-model.add('isInside', doc, oint, iint('dim'), iint('tag'), ivectordouble('parametricCoord'))
+doc = '''Check if the coordinates (or the parametric coordinates if `parametric' is set) provided in `coord' correspond to points inside the entity of dimension `dim' and tag `tag', and return the number of points inside. This feature is only available for a subset of curves and surfaces, depending on the underyling geometrical representation.'''
+model.add('isInside', doc, oint, iint('dim'), iint('tag'), ivectordouble('coord'), ibool('parametric', 'true', 'True'))
 
 doc = '''Get the points `closestCoord' on the entity of dimension `dim' and tag `tag' to the points `coord', by orthogonal projection. `coord' and `closestCoord' are given as triplets of x, y, z coordinates, concatenated: [p1x, p1y, p1z, p2x, ...]. `parametricCoord' returns the parametric coordinates t on the curve (if `dim' = 1) or pairs of u and v coordinates concatenated on the surface (if `dim' = 2), i.e. [p1t, p2t, ...] or [p1u, p1v, p2u, ...].'''
 model.add('getClosestPoint', doc, None, iint('dim'), iint('tag'), ivectordouble('coord'), ovectordouble('closestCoord'), ovectordouble('parametricCoord'))
@@ -233,8 +233,8 @@ mesh = model.add_module('mesh', 'mesh functions')
 doc = '''Generate a mesh of the current model, up to dimension `dim' (0, 1, 2 or 3).'''
 mesh.add('generate', doc, None, iint('dim', '3'))
 
-doc = '''Partition the mesh of the current model into `numPart' partitions.'''
-mesh.add('partition', doc, None, iint('numPart'))
+doc = '''Partition the mesh of the current model into `numPart' partitions. Optionally, `elementTags' and `partitions' can be provided to specify the partition of each element explicitly.'''
+mesh.add('partition', doc, None, iint('numPart'), ivectorsize('elementTags', 'std::vector<std::size_t>()','[]', '[]'), ivectorint('partitions', 'std::vector<int>()','[]', '[]'))
 
 doc = '''Unpartition the mesh of the current model.'''
 mesh.add('unpartition', doc, None)
@@ -257,8 +257,11 @@ mesh.add('getLastEntityError', doc, None, ovectorpair('dimTags'))
 doc = '''Get the last nodes (if any) where a meshing error occurred. Currently only populated by the new 3D meshing algorithms.'''
 mesh.add('getLastNodeError', doc, None, ovectorsize('nodeTags'))
 
-doc = '''Clear the mesh, i.e. delete all the nodes and elements, for the entities `dimTags'. if `dimTags' is empty, clear the whole mesh. Note that the mesh of an entity can only be cleared if this entity is not on the boundary of another entity with a non-empty mesh.'''
+doc = '''Clear the mesh, i.e. delete all the nodes and elements, for the entities `dimTags'. If `dimTags' is empty, clear the whole mesh. Note that the mesh of an entity can only be cleared if this entity is not on the boundary of another entity with a non-empty mesh.'''
 mesh.add('clear', doc, None, ivectorpair('dimTags', 'gmsh::vectorpair()', "[]", "[]"))
+
+doc = '''Reverse the orientation of the elements in the entities `dimTags'. If `dimTags' is empty, reverse the orientation of the elements in the whole mesh.'''
+mesh.add('reverse', doc, None, ivectorpair('dimTags', 'gmsh::vectorpair()', "[]", "[]"))
 
 doc = '''Get the nodes classified on the entity of dimension `dim' and tag `tag'. If `tag' < 0, get the nodes for all entities of dimension `dim'. If `dim' and `tag' are negative, get all the nodes in the mesh. `nodeTags' contains the node tags (their unique, strictly positive identification numbers). `coord' is a vector of length 3 times the length of `nodeTags' that contains the x, y, z coordinates of the nodes, concatenated: [n1x, n1y, n1z, n2x, ...]. If `dim' >= 0 and `returnParamtricCoord' is set, `parametricCoord' contains the parametric coordinates ([u1, u2, ...] or [u1, v1, u2, ...]) of the nodes, if available. The length of `parametricCoord' can be 0 or `dim' times the length of `nodeTags'. If `includeBoundary' is set, also return the nodes classified on the boundary of the entity (which will be reparametrized on the entity if `dim' >= 0 in order to compute their parametric coordinates).'''
 mesh.add('getNodes', doc, None, ovectorsize('nodeTags'), ovectordouble('coord'), ovectordouble('parametricCoord'), iint('dim', '-1'), iint('tag', '-1'), ibool('includeBoundary', 'false', 'False'), ibool('returnParametricCoord', 'true', 'True'))
@@ -368,17 +371,17 @@ mesh.add('createFaces', doc, None, ivectorpair('dimTags', 'gmsh::vectorpair()', 
 doc = '''Get the local multipliers (to guarantee H(curl)-conformity) of the order 0 H(curl) basis functions. Warning: this is an experimental feature and will probably change in a future release.'''
 mesh.add('getLocalMultipliersForHcurl0', doc, None, iint('elementType'), ovectorint('localMultipliers'), iint('tag','-1'))
 
-doc = '''Generate the `keys' for the elements of type `elementType' in the entity of tag `tag', for the `functionSpaceType' function space. Each key uniquely identifies a basis function in the function space. If `returnCoord' is set, the `coord' vector contains the x, y, z coordinates locating basis functions for sorting purposes. Warning: this is an experimental feature and will probably change in a future release.'''
-mesh.add('getKeysForElements', doc, None, iint('elementType'), istring('functionSpaceType'), ovectorpair('keys'), ovectordouble('coord'), iint('tag', '-1'), ibool('returnCoord', 'true', 'True'))
+doc = '''Generate the pair of keys for the elements of type `elementType' in the entity of tag `tag', for the `functionSpaceType' function space. Each pair (`typeKey', `entityKey') uniquely identifies a basis function in the function space. If `returnCoord' is set, the `coord' vector contains the x, y, z coordinates locating basis functions for sorting purposes. Warning: this is an experimental feature and will probably change in a future release.'''
+mesh.add('getKeysForElements', doc, None, iint('elementType'), istring('functionSpaceType'), ovectorint('typeKeys'), ovectorsize('entityKeys'), ovectordouble('coord'), iint('tag', '-1'), ibool('returnCoord', 'true', 'True'))
 
-doc = '''Get the keys for a single element `elementTag'.'''
-mesh.add('getKeysForElement', doc, None, isize('elementTag'), istring('functionSpaceType'), ovectorpair('keys'), ovectordouble('coord'), ibool('returnCoord', 'true', 'True'))
+doc = '''Get the pair of keys for a single element `elementTag'.'''
+mesh.add('getKeysForElement', doc, None, isize('elementTag'), istring('functionSpaceType'), ovectorint('typeKeys'), ovectorsize('entityKeys'), ovectordouble('coord'), ibool('returnCoord', 'true', 'True'))
 
 doc = '''Get the number of keys by elements of type `elementType' for function space named `functionSpaceType'.'''
 mesh.add('getNumberOfKeysForElements', doc, oint, iint('elementType'), istring('functionSpaceType'))
 
-doc = '''Get information about the `keys'. `infoKeys' returns information about the functions associated with the `keys'. `infoKeys[0].first' describes the type of function (0 for  vertex function, 1 for edge function, 2 for face function and 3 for bubble function). `infoKeys[0].second' gives the order of the function associated with the key. Warning: this is an experimental feature and will probably change in a future release.'''
-mesh.add('getInformationForElements', doc, None, ivectorpair('keys'), iint('elementType'), istring('functionSpaceType'), ovectorpair('infoKeys'))
+doc = '''Get information about the pair of `keys'. `infoKeys' returns information about the functions associated with the pairs (`typeKeys', `entityKey'). `infoKeys[0].first' describes the type of function (0 for  vertex function, 1 for edge function, 2 for face function and 3 for bubble function). `infoKeys[0].second' gives the order of the function associated with the key. Warning: this is an experimental feature and will probably change in a future release.'''
+mesh.add('getInformationForElements', doc, None, ivectorint('typeKeys'), ivectorsize('entityKeys'), iint('elementType'), istring('functionSpaceType'), ovectorpair('infoKeys'))
 
 doc = '''Get the barycenters of all elements of type `elementType' classified on the entity of tag `tag'. If `primary' is set, only the primary nodes of the elements are taken into account for the barycenter calculation. If `fast' is set, the function returns the sum of the primary node coordinates (without normalizing by the number of nodes). If `tag' < 0, get the barycenters for all entities. If `numTasks' > 1, only compute and return the part of the data indexed by `task'.'''
 mesh.add('getBarycenters', doc, None, iint('elementType'), iint('tag'), ibool('fast'), ibool('primary'), ovectordouble('barycenters'), isize('task', '0'), isize('numTasks', '1'))
@@ -397,6 +400,9 @@ mesh.add('getGhostElements', doc, None, iint('dim'), iint('tag'), ovectorsize('e
 
 doc = '''Set a mesh size constraint on the model entities `dimTags'. Currently only entities of dimension 0 (points) are handled.'''
 mesh.add('setSize', doc, None, ivectorpair('dimTags'), idouble('size'))
+
+doc = '''Get the mesh size constraints (if any) associated with the model entities `dimTags'. A zero entry in the output `sizes' vector indicates that no size constraint is specified on the corresponding entity.'''
+mesh.add('getSizes', doc, None, ivectorpair('dimTags'), ovectordouble('sizes'))
 
 doc = '''Set mesh size constraints at the given parametric points `parametricCoord' on the model entity of dimension `dim' and tag `tag'. Currently only entities of dimension 1 (lines) are handled.'''
 mesh.add('setSizeAtParametricPoints', doc, None, iint('dim'), iint('tag'), ivectordouble('parametricCoord'), ivectordouble('sizes'))
@@ -437,7 +443,7 @@ mesh.add('setSizeFromBoundary', doc, None, iint('dim'), iint('tag'), iint('val')
 doc = '''Set a compound meshing constraint on the model entities of dimension `dim' and tags `tags'. During meshing, compound entities are treated as a single discrete entity, which is automatically reparametrized.'''
 mesh.add('setCompound', doc, None, iint('dim'), ivectorint('tags'))
 
-doc = '''Set meshing constraints on the bounding surfaces of the volume of tag `tag' so that all surfaces are oriented with outward pointing normals. Currently only available with the OpenCASCADE kernel, as it relies on the STL triangulation.'''
+doc = '''Set meshing constraints on the bounding surfaces of the volume of tag `tag' so that all surfaces are oriented with outward pointing normals; and if a mesh already exists, reorient it. Currently only available with the OpenCASCADE kernel, as it relies on the STL triangulation.'''
 mesh.add('setOutwardOrientation', doc, None, iint('tag'))
 
 doc = '''Remove all meshing constraints from the model entities `dimTags'. If `dimTags' is empty, remove all constraings.'''

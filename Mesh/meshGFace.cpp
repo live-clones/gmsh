@@ -268,7 +268,8 @@ public:
     if(!CTX::instance()->mesh.recombineAll && !gf->meshAttributes.recombine)
       return;
     if(CTX::instance()->mesh.algoRecombine < 2 &&
-       CTX::instance()->mesh.algoRecombine != 4 ) return;
+       CTX::instance()->mesh.algoRecombine != 4)
+      return;
     if(gf->compound.size()) return;
     if(periodic) {
       Msg::Error("Full-quad recombination not ready yet for periodic surfaces");
@@ -2097,9 +2098,7 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
 
     // TEST !!!
 #ifndef OLD_CODE_DELAUNAY
-  Msg::Warning("TODOMX: uncommenting for testing only");
-  PolyMesh * pm = GFaceInitialMesh (gf->tag(), 1);
-  delete pm;
+    //  PolyMesh * pm = GFaceInitialMesh (gf->tag(), 1);
 #endif
   // TEST !!!
 
@@ -3013,7 +3012,8 @@ void meshGFace::operator()(GFace *gf, bool print)
   // test validity for non-Gmsh models (currently we cannot reliably evaluate
   // the normal on the boundary of surfaces with the Gmsh kernel)
   if(CTX::instance()->mesh.algoSwitchOnFailure &&
-     gf->getNativeType() != GEntity::GmshModel && algoDelaunay2D(gf) &&
+     gf->getNativeType() != GEntity::GmshModel &&
+     gf->geomType() != GEntity::Plane && algoDelaunay2D(gf) &&
      !isMeshValid(gf)) {
     Msg::Debug(
       "Delaunay-based mesher failed on surface %d -> moving to MeshAdapt",

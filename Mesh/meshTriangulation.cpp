@@ -22,7 +22,6 @@
 #include "qualityMeasures.h"
 #include "Numeric.h"
 #include "SPoint3.h"
-#include "meshGFaceQuadLayer.h"
 
 void swap(double &a, double &b)
 {
@@ -85,59 +84,52 @@ struct pair_hash {
   }
 };
 
-int PolyMesh2GFace(PolyMesh *pm, int faceTag) {
+int PolyMesh2GFace(PolyMesh *pm, int faceTag)
+{
   GFace *gf = GModel::current()->getFaceByTag(faceTag);
 
-  for (auto t : gf->triangles)delete t;
-  for (auto q : gf->quadrangles)delete q;
+  for(auto t : gf->triangles) delete t;
+  for(auto q : gf->quadrangles) delete q;
   gf->triangles.clear();
   gf->quadrangles.clear();
 
-  std::unordered_map<int, MVertex*> news;
-  
-  for (auto f : pm->faces) if (f != nullptr && f->he != nullptr) {
-    PolyMesh::Vertex *v[4] = {f->he->v,f->he->next->v,f->he->next->next->v,f->he->next->next->next->v};
+  std::unordered_map<int, MVertex *> news;
+
+  for(auto f : pm->faces) if (f && f->he) {
+    PolyMesh::Vertex *v[4] = {f->he->v, f->he->next->v, f->he->next->next->v,
+                              f->he->next->next->next->v};
     MVertex *v_gmsh[4];
-    for (int i=0;i<pm->num_sides(f->he);i++){
-      // printf("f=%p, i=%i, v=%p\n",f,i,v[i]);
-      if (v[i] == nullptr) {
-        Msg::Error("PolyMesh2GFace: face with %i sides, %i-th vertex is null", pm->num_sides(f->he), i);
-        return -1;
-      }
-      if (v[i]->data != -1){
+    for(int i = 0; i < pm->num_sides(f->he); i++) {
+      if(v[i]->data != -1) {
         auto it = news.find(v[i]->data);
-        if (it == news.end())
+        if(it == news.end())
           v_gmsh[i] = GModel::current()->getMeshVertexByTag(v[i]->data);
         else
           v_gmsh[i] = it->second;
         //	if (! v_gmsh[i] ) printf("error %d\n",v[i]->data);
       }
       else {
-        double uv[2] = {0,0};
-        GPoint gp = gf->closestPoint(SPoint3(v[i]->position.x(),v[i]->position.y(),
-              v[i]->position.z()),uv);
-        if (gp.succeeded())
-          v_gmsh[i] = new MFaceVertex (gp.x(),gp.y(),gp.z(),gf,gp.u(),gp.v());
+        double uv[2] = {0, 0};
+        GPoint gp = gf->closestPoint(
+          SPoint3(v[i]->position.x(), v[i]->position.y(), v[i]->position.z()),
+          uv);
+        if(gp.succeeded())
+          v_gmsh[i] =
+            new MFaceVertex(gp.x(), gp.y(), gp.z(), gf, gp.u(), gp.v());
         else
-          v_gmsh[i] = new MFaceVertex (v[i]->position.x(),v[i]->position.y(), v[i]->position.z(),gf,v[i]->position.x(),v[i]->position.y());
-        gf->mesh_vertices.push_back(v_gmsh[i]);	
-        gf->model()->addMVertexToVertexCache(v_gmsh[i]);
+          v_gmsh[i] = new MFaceVertex(v[i]->position.x(), v[i]->position.y(),
+                                      v[i]->position.z(), gf,
+                                      v[i]->position.x(), v[i]->position.y());
+        gf->mesh_vertices.push_back(v_gmsh[i]);
         v[i]->data = v_gmsh[i]->getNum();
-        news[v[i]->data] =  v_gmsh[i];
+        news[v[i]->data] = v_gmsh[i];
       }
     }
-    if (pm->num_sides(f->he) == 3) {
-      if (v_gmsh[0] == v_gmsh[1] || v_gmsh[0] == v_gmsh[2] || v_gmsh[1] == v_gmsh[2]) {
-        Msg::Warning("PolyMesh2GFace: creating collapsed triangle");
-      }
-      gf->triangles.push_back(new MTriangle (v_gmsh[0],v_gmsh[1],v_gmsh[2]));
-    } else if (pm->num_sides(f->he) == 4) {
-      if (v_gmsh[0] == v_gmsh[1] || v_gmsh[1] == v_gmsh[2] 
-          || v_gmsh[2] == v_gmsh[3] || v_gmsh[3] == v_gmsh[0]) {
-        Msg::Warning("PolyMesh2GFace: creating collapsed quad");
-      }
-      gf->quadrangles.push_back(new MQuadrangle (v_gmsh[0],v_gmsh[1],v_gmsh[2],v_gmsh[3]));    
-    }
+    if(pm->num_sides(f->he) == 3)
+      gf->triangles.push_back(new MTriangle(v_gmsh[0], v_gmsh[1], v_gmsh[2]));
+    else if(pm->num_sides(f->he) == 4)
+      gf->quadrangles.push_back(
+        new MQuadrangle(v_gmsh[0], v_gmsh[1], v_gmsh[2], v_gmsh[3]));
   }
   return 0;
 }
@@ -277,13 +269,13 @@ static int delaunayEdgeCriterionPlaneIsotropic(PolyMesh::HalfEdge *he, void *)
 
   // FIXME : should be oriented anyway !
   double result = -robustPredicates::incircle(v0->position, v1->position,
-      v2->position, v->position);
+                                              v2->position, v->position);
 
   return (result > 0) ? 1 : 0;
 }
 
 static void faceCircumCenter(PolyMesh::HalfEdge *he, GFace *gf, double *res,
-    double *uv)
+                             double *uv)
 {
   PolyMesh::Vertex *v0 = he->v;
   PolyMesh::Vertex *v1 = he->next->v;
@@ -306,40 +298,40 @@ static double faceQuality(PolyMesh::HalfEdge *he, GFace *gf)
   GPoint p1 = gf->point(v1->position.x(), v1->position.y());
   GPoint p2 = gf->point(v2->position.x(), v2->position.y());
   return qmTriangle::gamma(p0.x(), p0.y(), p0.z(), p1.x(), p1.y(), p1.z(),
-      p2.x(), p2.y(), p2.z());
+                           p2.x(), p2.y(), p2.z());
 }
 
 /*
-   static int qualityCriterion3D(PolyMesh::HalfEdge *he, void *p){
-   if (he->data > 0) return -1;
-   if (he->opposite == nullptr) return -1;
-   if (p == nullptr) return -1;
+static int qualityCriterion3D(PolyMesh::HalfEdge *he, void *p){
+  if (he->data > 0) return -1;
+  if (he->opposite == nullptr) return -1;
+  if (p == nullptr) return -1;
 
-   GFace *gf = (GFace*)p;
+  GFace *gf = (GFace*)p;
 
-   PolyMesh::Vertex *v0 = he->v;
-   PolyMesh::Vertex *v1 = he->next->v;
-   PolyMesh::Vertex *v2 = he->next->next->v;
-   PolyMesh::Vertex *v3 = he->opposite->next->next->v;
+  PolyMesh::Vertex *v0 = he->v;
+  PolyMesh::Vertex *v1 = he->next->v;
+  PolyMesh::Vertex *v2 = he->next->next->v;
+  PolyMesh::Vertex *v3 = he->opposite->next->next->v;
 
-   GPoint p0 = gf->point (v0->position.x(),v0->position.y());
-   GPoint p1 = gf->point (v1->position.x(),v1->position.y());
-   GPoint p2 = gf->point (v2->position.x(),v2->position.y());
-   GPoint p3 = gf->point (v3->position.x(),v3->position.y());
+  GPoint p0 = gf->point (v0->position.x(),v0->position.y());
+  GPoint p1 = gf->point (v1->position.x(),v1->position.y());
+  GPoint p2 = gf->point (v2->position.x(),v2->position.y());
+  GPoint p3 = gf->point (v3->position.x(),v3->position.y());
 
-   double q1 = qmTriangle::gamma
-   (p0.x(),p0.y(),p0.z(),p1.x(),p1.y(),p1.z(),p2.x(),p2.y(),p2.z()); double q2 =
-   qmTriangle::gamma
-   (p2.x(),p2.y(),p2.z(),p3.x(),p3.y(),p3.z(),p0.x(),p0.y(),p0.z());
+  double q1 = qmTriangle::gamma
+(p0.x(),p0.y(),p0.z(),p1.x(),p1.y(),p1.z(),p2.x(),p2.y(),p2.z()); double q2 =
+qmTriangle::gamma
+(p2.x(),p2.y(),p2.z(),p3.x(),p3.y(),p3.z(),p0.x(),p0.y(),p0.z());
 
-   double o1 = qmTriangle::gamma
-   (p1.x(),p1.y(),p1.z(),p2.x(),p2.y(),p2.z(),p3.x(),p3.y(),p3.z()); double o2 =
-   qmTriangle::gamma
-   (p3.x(),p3.y(),p3.z(),p0.x(),p0.y(),p0.z(),p1.x(),p1.y(),p1.z());
+  double o1 = qmTriangle::gamma
+(p1.x(),p1.y(),p1.z(),p2.x(),p2.y(),p2.z(),p3.x(),p3.y(),p3.z()); double o2 =
+qmTriangle::gamma
+(p3.x(),p3.y(),p3.z(),p0.x(),p0.y(),p0.z(),p1.x(),p1.y(),p1.z());
 
-   return std::max(fabs(q1),fabs(q2)) > std::max(fabs(o1),fabs(o2)) ? 0 : 1;
-   }
-   */
+  return std::max(fabs(q1),fabs(q2)) > std::max(fabs(o1),fabs(o2)) ? 0 : 1;
+}
+*/
 
 static PolyMesh::Face *Walk(PolyMesh::Face *f, double x, double y)
 {
@@ -357,11 +349,11 @@ static PolyMesh::Face *Walk(PolyMesh::Face *f, double x, double y)
 
     if(s0 >= 0 && s1 >= 0 && s2 >= 0) {
       /*      printf("Face %g %g %g / %g %g %g / %g %g %g \n",
-              v0->position.x(), v0->position.y(), v0->position.z(),
-              v1->position.x(), v1->position.y(), v1->position.z(),
-              v2->position.x(), v2->position.y(), v2->position.z());
-              printf("point %g %g CURRENT FACE %p %g %g %g\n", x,y,he->f,
-              s0,s1,s2);*/
+         v0->position.x(), v0->position.y(), v0->position.z(),
+         v1->position.x(), v1->position.y(), v1->position.z(),
+         v2->position.x(), v2->position.y(), v2->position.z());
+         printf("point %g %g CURRENT FACE %p %g %g %g\n", x,y,he->f,
+         s0,s1,s2);*/
       //      getchar();
       return he->f;
     }
@@ -379,11 +371,11 @@ static PolyMesh::Face *Walk(PolyMesh::Face *f, double x, double y)
       he = s1 > s2 ? he->next->opposite : he->next->next->opposite;
     else {
       printf("Face %g %g %g / %g %g %g / %g %g %g \n", v0->position.x(),
-          v0->position.y(), v0->position.z(), v1->position.x(),
-          v1->position.y(), v1->position.z(), v2->position.x(),
-          v2->position.y(), v2->position.z());
+             v0->position.y(), v0->position.z(), v1->position.x(),
+             v1->position.y(), v1->position.z(), v2->position.x(),
+             v2->position.y(), v2->position.z());
       printf("ERROR point %g %g CURRENT FACE %p %g %g %g\n", x, y, he->f, s0,
-          s1, s2);
+             s1, s2);
     }
     if(he == NULL) break;
   }
@@ -396,7 +388,7 @@ static PolyMesh::Face *Walk(PolyMesh::Face *f, double x, double y)
 // ----------------------------------- assume it's internal !!!
 
 static int intersect(PolyMesh::Vertex *v0, PolyMesh::Vertex *v1,
-    PolyMesh::Vertex *b0, PolyMesh::Vertex *b1)
+                     PolyMesh::Vertex *b0, PolyMesh::Vertex *b1)
 {
   double s0 =
     robustPredicates::orient2d(v0->position, v1->position, b0->position);
@@ -412,7 +404,7 @@ static int intersect(PolyMesh::Vertex *v0, PolyMesh::Vertex *v1,
 }
 
 int recover_edge(PolyMesh *pm, PolyMesh::Vertex *v_start,
-    PolyMesh::Vertex *v_end)
+                 PolyMesh::Vertex *v_end)
 {
   PolyMesh::HalfEdge *he = v_start->he;
   std::list<PolyMesh::HalfEdge *> _list;
@@ -482,10 +474,10 @@ int recover_edge(PolyMesh *pm, PolyMesh::Vertex *v_start,
     _list.erase(_list.begin());
     // ensure that swap is allowed (convex quad)
     if(intersect(he->v, he->next->v, he->next->next->v,
-          he->opposite->next->next->v)) {
+                 he->opposite->next->next->v)) {
       // ensure that swap removes one intersection
       int still_intersect = intersect(v_start, v_end, he->next->next->v,
-          he->opposite->next->next->v);
+                                      he->opposite->next->next->v);
       //      printf("swapping %d %d\n",he->v->data,he->next->v->data);
       pm->swap_edge(he);
       //      pm->print4debug(K++);
@@ -512,7 +504,7 @@ static PolyMesh::HalfEdge *Color(PolyMesh::HalfEdge *he, int color)
     he = f->he;
     for(int i = 0; i < 3; i++) {
       if(he->data == -1 && he->opposite != NULL &&
-          he->opposite->f->data == -1) {
+         he->opposite->f->data == -1) {
         _stack.push(he->opposite->f);
       }
       else if(he->data != -1 && he->opposite != NULL) {
@@ -552,8 +544,8 @@ void GFaceDelaunayRefinement(size_t faceTag)
         if(f && f->data == (int)faceTag) {
           std::vector<PolyMesh::HalfEdge *> _touched;
           pm->split_triangle(gp.u(), gp.v(), 0, f,
-              delaunayEdgeCriterionPlaneIsotropic, gf,
-              &_touched);
+                             delaunayEdgeCriterionPlaneIsotropic, gf,
+                             &_touched);
           if(_touched.size() == 3) {
             // we should unsplit ...
             // pm->undo_split(_touched);
@@ -638,7 +630,8 @@ struct nodeCopies {
 
 //// INITIAL MESH --------- colored
 
-static void getNodeCopies(GFace *gf, std::unordered_map<size_t, nodeCopies> &copies)
+static void getNodeCopies(GFace *gf,
+                          std::unordered_map<size_t, nodeCopies> &copies)
 {
   std::vector<GEdge *> edges = gf->edges();
   std::vector<GEdge *> emb_edges = gf->getEmbeddedEdges();
@@ -679,7 +672,8 @@ static void getNodeCopies(GFace *gf, std::unordered_map<size_t, nodeCopies> &cop
         else {
           reparamMeshVertexOnFace(v, gf, param);
         }
-        std::unordered_map<size_t, nodeCopies>::iterator it = copies.find(v->getNum());
+        std::unordered_map<size_t, nodeCopies>::iterator it =
+          copies.find(v->getNum());
         if(it == copies.end()) {
           nodeCopies c(v, param.x(), param.y());
           copies.insert(std::make_pair(v->getNum(), c));
@@ -702,7 +696,6 @@ static void getNodeCopies(GFace *gf, std::unordered_map<size_t, nodeCopies> &cop
 
 PolyMesh *GFaceInitialMesh(int faceTag, int recover)
 {
-  Msg::Info("!!!!!!!!!!!!! GFaceInitialMesh, tag %i, recover: %i !!!!!!!!!!!!!!\n", faceTag, recover);
   GFace *gf = GModel::current()->getFaceByTag(faceTag);
 
   PolyMesh *pm = new PolyMesh;
@@ -717,7 +710,7 @@ PolyMesh *GFaceInitialMesh(int faceTag, int recover)
   }
   bb *= 1.1;
   pm->initialize_rectangle(bb.min().x(), bb.max().x(), bb.min().y(),
-      bb.max().y());
+                           bb.max().y());
   PolyMesh::Face *f = pm->faces[0];
   for(std::unordered_map<size_t, nodeCopies>::iterator it = copies.begin();
       it != copies.end(); ++it) {
@@ -751,8 +744,8 @@ PolyMesh *GFaceInitialMesh(int faceTag, int recover)
         auto c1 = copies.find(l->getVertex(1)->getNum());
         if(c0 == copies.end() || c1 == copies.end())
           Msg::Error("unable to find %lu %lu %d %d", l->getVertex(0)->getNum(),
-              l->getVertex(1)->getNum(), c0 == copies.end(),
-              c1 == copies.end());
+                     l->getVertex(1)->getNum(), c0 == copies.end(),
+                     c1 == copies.end());
         if(c0->second.nbCopies > c1->second.nbCopies) {
           auto cc = c0;
           c0 = c1;
@@ -765,8 +758,8 @@ PolyMesh *GFaceInitialMesh(int faceTag, int recover)
           int result = recover_edge(pm, v0, v1);
           if(result < 0) {
             Msg::Warning("Impossible to recover edge %lu %lu (error tag %d)",
-                l->getVertex(0)->getNum(), l->getVertex(0)->getNum(),
-                result);
+                         l->getVertex(0)->getNum(), l->getVertex(0)->getNum(),
+                         result);
           }
           else {
             PolyMesh::HalfEdge *he = pm->getEdge(v0, v1);
@@ -790,41 +783,39 @@ PolyMesh *GFaceInitialMesh(int faceTag, int recover)
 
   //  pm->print4debug(200000);
 
-  insertBoundaryQuadLayer(pm);
-
   return pm;
 }
 //------------------------------------------------
 
 #if 0
-bb *= 1./1.1;
-const size_t N = 100000;
-std::vector<double> X(N),Y(N);
-std::vector<size_t> HC(N), IND(N);
-for (size_t i = 0; i< N ; i++){
-  double R = drand48();
-  X[i] = bb.min().x() + R * (bb.max().x()-bb.min().x());
-  R = drand48();
-  Y[i] = bb.min().y() + R * (bb.max().y()-bb.min().y());
-  HC[i] = HilbertCoordinates(X[i], Y[i], bb.center().x(), bb.center().y(),
-      bb.max().x() - bb.center().x(),0,
-      0, bb.max().y() - bb.center().y());
-  IND[i] = i;
-}
-std::sort( IND.begin(),IND.end(), [&](size_t i,size_t j){return HC[i]<HC[j];} );
-double t1 = gmsh::logger::getCpuTime();
-for (size_t i = 0; i< N ; i++){
-  size_t I = IND[i];
-  f = Walk (f,X[I],Y[I]);
-  pm->split_triangle(X[I],Y[I],0,f,delaunayEdgeCriterionPlaneIsotropic,NULL);
-}
-double t2 = gmsh::logger::getCpuTime();
-//    printf("%12.5E Seconds\n",t2-t1);
-pm->print4debug( nodeTags.size() );
+  bb *= 1./1.1;
+  const size_t N = 100000;
+  std::vector<double> X(N),Y(N);
+  std::vector<size_t> HC(N), IND(N);
+  for (size_t i = 0; i< N ; i++){
+    double R = drand48();
+    X[i] = bb.min().x() + R * (bb.max().x()-bb.min().x());
+    R = drand48();
+    Y[i] = bb.min().y() + R * (bb.max().y()-bb.min().y());
+    HC[i] = HilbertCoordinates(X[i], Y[i], bb.center().x(), bb.center().y(),
+			       bb.max().x() - bb.center().x(),0,
+			       0, bb.max().y() - bb.center().y());
+    IND[i] = i;
+  }
+  std::sort( IND.begin(),IND.end(), [&](size_t i,size_t j){return HC[i]<HC[j];} );
+    double t1 = gmsh::logger::getCpuTime();
+    for (size_t i = 0; i< N ; i++){
+      size_t I = IND[i];
+      f = Walk (f,X[I],Y[I]);
+      pm->split_triangle(X[I],Y[I],0,f,delaunayEdgeCriterionPlaneIsotropic,NULL);
+    }
+    double t2 = gmsh::logger::getCpuTime();
+    //    printf("%12.5E Seconds\n",t2-t1);
+    pm->print4debug( nodeTags.size() );
 }
 #endif
 #if 0
-PolyMesh::Vertex *v0 = pm->vertices[nodeLabels[1]];
-PolyMesh::Vertex *v1 = pm->vertices[nodeLabels[3]];
-int result = recover_edge (pm, v0, v1);
+    PolyMesh::Vertex *v0 = pm->vertices[nodeLabels[1]];
+    PolyMesh::Vertex *v1 = pm->vertices[nodeLabels[3]];
+    int result = recover_edge (pm, v0, v1);
 #endif

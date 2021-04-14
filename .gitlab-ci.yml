@@ -25,6 +25,7 @@ linux64_ci:
     - export CXXFLAGS=-Werror
     - cmake ..
     - make -j 8
+    - make doc
     - ctest -j 8 --output-on-failure
     - valgrind --leak-check=full --error-exitcode=1 ./gmsh ../tutorial/t5.geo -3
   tags:

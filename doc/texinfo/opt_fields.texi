@@ -713,11 +713,11 @@ default value: @code{1}
 @end table
 
 @item PostView
-Evaluate the post processing view IView.@*
+Evaluate the post processing view ViewIndex.@*
 Options:@*
 @table @code
 @item CropNegativeValues
-return LC_MAX instead of a negative value (this option is needed for backward compatibility with the BackgroundMesh option@*
+return MAX_LC instead of a negative value (this option is needed for backward compatibility with the BackgroundMesh option@*
 type: boolean@*
 default value: @code{1}
 @item ViewIndex

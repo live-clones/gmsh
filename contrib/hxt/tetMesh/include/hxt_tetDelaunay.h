@@ -81,7 +81,7 @@ typedef struct {
  * if the vertex was successfully inserted or not.
  *  - nodeInfo[i].status==HXT_STATUS_TRUE  if the vertex was successfully inserted.
  *  - nodeInfo[i].status==HXT_STATUS_FALSE  if the vertex was not inserted.
- *  - nodeInfo[i].status==HXT_STATUS_TRYAGAIN  if an error occured before the vertex could be inserted
+ *  - nodeInfo[i].status==HXT_STATUS_TRYAGAIN  if an error occurred before the vertex could be inserted
  *
  * \warning
  *  - the order of nodeInfo will change

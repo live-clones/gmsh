@@ -7,10 +7,9 @@
 #define MESH_POLYMESH_H
 
 #include <vector>
+#include <algorithm>
 #include <stack>
-#include <algorithm>
 #include <stdio.h>
-#include <algorithm>
 #include <unordered_map>
 #include "SVector3.h"
 
@@ -29,7 +28,7 @@ public:
       : position(pt), he(NULL), data(_d)
     {}
     SVector3 position;
-    PolyMesh::HalfEdge *he; // one incident half edge (outgoing: he->v = this)
+    PolyMesh::HalfEdge *he; // one incident half edge
     int data;
   };
 
@@ -74,50 +73,11 @@ public:
   void reset()
   {
     for(auto it : vertices) delete it;
-    vertices.clear();
     for(auto it : hedges) delete it;
-    hedges.clear();
     for(auto it : faces) delete it;
-    faces.clear();
   }
 
   ~PolyMesh() { reset(); }
-
-  PolyMesh* clone() const {
-    PolyMesh* b = new PolyMesh();
-    b->vertices.resize(this->vertices.size(),nullptr);
-    b->hedges.resize(this->hedges.size(),nullptr);
-    b->faces.resize(this->faces.size(),nullptr);
-    /* Create the instances and the redirections */
-    std::unordered_map<PolyMesh::Vertex*,PolyMesh::Vertex*> v_old2new;
-    for (size_t i = 0; i < b->vertices.size(); ++i) if (this->vertices[i]) {
-      b->vertices[i] = new PolyMesh::Vertex(this->vertices[i]->position,this->vertices[i]->data);
-      v_old2new[this->vertices[i]] = b->vertices[i];
-    }
-    std::unordered_map<PolyMesh::HalfEdge*,PolyMesh::HalfEdge*> he_old2new;
-    for (size_t i = 0; i < b->hedges.size(); ++i) if (this->hedges[i]) {
-      b->hedges[i] = new PolyMesh::HalfEdge(nullptr);
-      he_old2new[this->hedges[i]] = b->hedges[i];
-    }
-    std::unordered_map<PolyMesh::Face*,PolyMesh::Face*> f_old2new;
-    for (size_t i = 0; i < b->faces.size(); ++i) if (this->faces[i]) {
-      b->faces[i] = new PolyMesh::Face(nullptr);
-      f_old2new[this->faces[i]] = b->faces[i];
-    }
-    /* Fill the content */
-    for (size_t i = 0; i < b->vertices.size(); ++i) if (b->vertices[i]) {
-      if (this->vertices[i]->he) {
-        b->vertices[i]->he = he_old2new[this->vertices[i]->he];
-      }
-    }
-    for (size_t i = 0; i < b->hedges.size(); ++i) if (b->hedges[i]) {
-      if (this->hedges[i]->v) {
-        b->hedges[i]->v = v_old2new[this->hedges[i]->v];
-      }
-    }
-
-    return b;
-  }
 
   void print4debug(const int debugTag)
   {
@@ -166,29 +126,28 @@ public:
     size_t count = 0;
     const HalfEdge *start = he;
     do {
-      count ++;
+      count++;
       he = he->next;
     } while(he != start);
     return count;
   }
 
-  
   // compute the normal of an internal vertex v
   inline SVector3 normal(const Vertex *v) const
   {
-    SVector3 n (0,0,0);
+    SVector3 n(0, 0, 0);
     HalfEdge *he = v->he;
     do {
       SVector3 n1 = he->d();
       he = he->opposite;
       if(he == NULL) return -1;
       he = he->next;
-      n += crossprod(n1,he->d());
+      n += crossprod(n1, he->d());
     } while(he != v->he);
     n.normalize();
     return n;
   }
-  
+
   inline HalfEdge *getEdge(Vertex *v0, Vertex *v1)
   {
     HalfEdge *he = v0->he;
@@ -264,27 +223,28 @@ public:
     return 0;
   }
 
-  inline int merge_faces(HalfEdge *he){
+  inline int merge_faces(HalfEdge *he)
+  {
     PolyMesh::HalfEdge *heo = he->opposite;
-    
+
     if(heo == nullptr) return -1;
-    
+
     PolyMesh::Face *to_delete = heo->f;
-    
-    do{
+
+    do {
       heo->f = he->f;
       heo = heo->next;
-    }while(heo != he->opposite);
-    
+    } while(heo != he->opposite);
+
     he->next->prev = heo->prev;
     heo->prev->next = he->next;
     he->prev->next = heo->next;
     heo->next->prev = he->prev;
-    
+
     he->f->he = he->next;
     he->v->he = heo->next;
     heo->v->he = he->next;
-    
+
     // remove afterwards...
     he->v = nullptr;
     heo->v = nullptr;
@@ -292,80 +252,86 @@ public:
     return 0;
   }
 
-  void cleanv(){
-    std::vector<Vertex*> uv;
-    for (auto v : vertices) {
-      if (v != nullptr) {
-        if (v->he)uv.push_back(v);
-        else delete v;
-      }
+  void cleanv()
+  {
+    std::vector<Vertex *> uv;
+    for(auto v : vertices) {
+      if(v->he)
+        uv.push_back(v);
+      else
+        delete v;
     }
     vertices = uv;
   }
 
-  void cleanh(){
-    std::vector<HalfEdge*> uh;
-    for (auto h : hedges) {
-      if (h != nullptr) {
-        if (h->f)uh.push_back(h);
-        else delete h;
-      }
+  void cleanh()
+  {
+    std::vector<HalfEdge *> uh;
+    for(auto h : hedges) {
+      if(h->f)
+        uh.push_back(h);
+      else
+        delete h;
     }
     hedges = uh;
   }
-  
-  void cleanf(){
-    std::vector<Face*> uf;
-    for (auto f : faces) {
-      if (f != nullptr) {
-        if (f->he)uf.push_back(f);
-        else delete f;
-      }
+
+  void cleanf()
+  {
+    std::vector<Face *> uf;
+    for(auto f : faces) {
+      if(f->he)
+        uf.push_back(f);
+      else
+        delete f;
     }
     faces = uf;
   }
 
-  void clean(){
+  void clean()
+  {
     cleanv();
     cleanh();
     cleanf();
   }
-  
+
   inline int split_edge(HalfEdge *he0m, const SVector3 &position, int data)
   {
-    
-    
     HalfEdge *he1m = he0m->opposite;
     if(he1m == nullptr) return -1;
 
-    Vertex *mid = new Vertex (position.x(),position.y(),position.z(),data);    
+    Vertex *mid = new Vertex(position.x(), position.y(), position.z(), data);
     vertices.push_back(mid);
-    
+
     HalfEdge *he12 = he0m->next;
     HalfEdge *he20 = he0m->next->next;
     HalfEdge *he03 = he0m->opposite->next;
     HalfEdge *he31 = he0m->opposite->next->next;
 
-    if (he03->v != he0m->v)Msg::Error("error 1");
-    if (he1m->v != he12->v)Msg::Error("error 2");
-    
+    if(he03->v != he0m->v) Msg::Error("error 1");
+    if(he1m->v != he12->v) Msg::Error("error 2");
+
     Vertex *v0 = he03->v;
     Vertex *v1 = he12->v;
     Vertex *v2 = he20->v;
     Vertex *v3 = he31->v;
 
-    HalfEdge *hem0 = new HalfEdge (mid);
-    HalfEdge *hem1 = new HalfEdge (mid);
-    HalfEdge *hem2 = new HalfEdge (mid);
-    HalfEdge *hem3 = new HalfEdge (mid);
-    
-    HalfEdge *he2m = new HalfEdge (v2);
-    HalfEdge *he3m = new HalfEdge (v3);
+    HalfEdge *hem0 = new HalfEdge(mid);
+    HalfEdge *hem1 = new HalfEdge(mid);
+    HalfEdge *hem2 = new HalfEdge(mid);
+    HalfEdge *hem3 = new HalfEdge(mid);
 
-    he0m->opposite = hem0;   hem0->opposite = he0m; 
-    he1m->opposite = hem1;   hem1->opposite = he1m; 
-    he2m->opposite = hem2;   hem2->opposite = he2m; 
-    he3m->opposite = hem3;   hem3->opposite = he3m; 
+    HalfEdge *he2m = new HalfEdge(v2);
+    HalfEdge *he3m = new HalfEdge(v3);
+
+    he0m->opposite = hem0;
+    hem0->opposite = he0m;
+    he1m->opposite = hem1;
+    hem1->opposite = he1m;
+    he2m->opposite = hem2;
+    hem2->opposite = he2m;
+    he3m->opposite = hem3;
+    hem3->opposite = he3m;
 
     hedges.push_back(hem0);
     hedges.push_back(hem1);
@@ -380,7 +346,7 @@ public:
     Face *f3m0 = new Face(he3m);
     faces.push_back(f2m1);
     faces.push_back(f3m0);
-    
+
     createFace(f0m2, v0, mid, v2, he0m, hem2, he20);
     createFace(f1m3, v1, mid, v3, he1m, hem3, he31);
     createFace(f2m1, v2, mid, v1, he2m, hem1, he12);
@@ -388,7 +354,6 @@ public:
     return 0;
   }
 
-  
   //
   // v0   he0
   // ------------------>------ v1
@@ -536,19 +501,18 @@ public:
     }
     return 0;
   }
-
 };
 
 struct HalfEdgePtrLessThan {
   bool operator()(PolyMesh::HalfEdge *l1, PolyMesh::HalfEdge *l2) const
   {
-    PolyMesh::Vertex *l10 = std::min(l1->v,l1->next->v);
-    PolyMesh::Vertex *l11 = std::max(l1->v,l1->next->v);
-    PolyMesh::Vertex *l20 = std::min(l2->v,l2->next->v);
-    PolyMesh::Vertex *l21 = std::max(l2->v,l2->next->v);
-    if (l10 < l20)return true;
-    if (l10 > l20)return false;
-    if (l11 > l21)return true;
+    PolyMesh::Vertex *l10 = std::min(l1->v, l1->next->v);
+    PolyMesh::Vertex *l11 = std::max(l1->v, l1->next->v);
+    PolyMesh::Vertex *l20 = std::min(l2->v, l2->next->v);
+    PolyMesh::Vertex *l21 = std::max(l2->v, l2->next->v);
+    if(l10 < l20) return true;
+    if(l10 > l20) return false;
+    if(l11 > l21) return true;
     return false;
   }
 };
@@ -556,207 +520,13 @@ struct HalfEdgePtrLessThan {
 struct HalfEdgePtrEqual {
   bool operator()(PolyMesh::HalfEdge *l1, PolyMesh::HalfEdge *l2) const
   {
-    PolyMesh::Vertex *l10 = std::min(l1->v,l1->next->v);
-    PolyMesh::Vertex *l11 = std::max(l1->v,l1->next->v);
-    PolyMesh::Vertex *l20 = std::min(l2->v,l2->next->v);
-    PolyMesh::Vertex *l21 = std::max(l2->v,l2->next->v);
-    if (l10 == l20 && l11 == l21)return true;
+    PolyMesh::Vertex *l10 = std::min(l1->v, l1->next->v);
+    PolyMesh::Vertex *l11 = std::max(l1->v, l1->next->v);
+    PolyMesh::Vertex *l20 = std::min(l2->v, l2->next->v);
+    PolyMesh::Vertex *l21 = std::max(l2->v, l2->next->v);
+    if(l10 == l20 && l11 == l21) return true;
     return false;
   }
 };
-
-
-// TODOMX: trying some halfedge designs
-//         DO NOT COMMIT
-//
-// using HVertexIdx = size_t;
-// using HalfEdgeIdx = size_t;
-// using HFaceIdx = size_t;
-// constexpr size_t NO_IDX = (size_t)-1;
-// 
-// struct HVertex {
-//   SVector3 position;
-//   HalfEdgeIdx he = NO_IDX;
-//   int data = 0;
-// };
-// 
-// struct HalfEdge {
-//   HVertexIdx v = NO_IDX;
-//   HFaceIdx f = NO_IDX;
-//   HalfEdgeIdx prev = NO_IDX;
-//   HalfEdgeIdx next = NO_IDX;
-//   HalfEdgeIdx opposite = NO_IDX;
-//   int data = 0;
-// };
-// 
-// struct HFace {
-//   HalfEdgeIdx he = NO_IDX;
-//   int data = 0;
-// };
-// 
-// struct HMesh {
-//   public:
-//     HMesh() {}
-//     inline HalfEdge& next(const HalfEdge& he) const;
-//     inline HalfEdgeIdx next(HalfEdgeIdx he) const;
-//     inline HalfEdgeIdx prev(HalfEdgeIdx he) const;
-//     inline HalfEdgeIdx opposite(HalfEdgeIdx he) const;
-//     inline HVertexIdx origin(HalfEdgeIdx he) const;
-//     inline HVertexIdx tip(HalfEdgeIdx he) const;
-//     inline HalfEdgeIdx halfedge(HVertexIdx v) const;
-// 
-//     inline size_t degree(HalfEdgeIdx v) const;
-//     inline size_t faceNumVertices(HFaceIdx f) const;
-//     inline SVector3 vertexNormal(HVertexIdx v) const;
-//     inline HalfEdgeIdx getHalfEdge(HVertexIdx v0, HVertexIdx v1) const;
-// 
-//     inline HFaceIdx createTriangle(HVertexIdx v0, HVertexIdx v1, HVertexIdx v2);
-//     inline bool swapEdge(HalfEdgeIdx he);
-//     inline bool splitEdge(HalfEdgeIdx he);
-//     inline bool mergeFaces(HalfEdgeIdx he);
-// 
-//   public:
-//     std::vector<HVertex> vertices;
-//     std::vector<HalfEdge> halfedges;
-//     std::vector<HFace> faces;
-//     std::vector<bool> vDeleted;
-//     std::vector<bool> heDeleted;
-//     std::vector<bool> fDeleted;
-// };
-// 
-// constexpr size_t NO_ID = (size_t)-1;
-// 
-// struct HalfEdgeMesh {
-//   /* Navigation */
-//   inline size_t next(size_t he) const {return hes_.next[he];}
-//   inline size_t prev(size_t he) const {return hes_.prev[he];}
-//   inline size_t opposite(size_t he) const {return hes_.opposite[he];}
-//   inline size_t origin(size_t he) const {return hes_.vertex[he];}
-//   inline size_t face(size_t he) const {return hes_.face[he];}
-//   inline size_t tip(size_t he) const {return origin(next(he));}
-//   inline size_t vertexHalfEdge(size_t v) const {return vs_.hedge[v];}
-//   inline size_t faceHalfEdge(size_t f) const {return fs_.hedge[f];}
-// 
-//   /* Creation */
-//   inline void setHalfEdge(size_t he, size_t v = NO_ID, size_t next = NO_ID, size_t prev = NO_ID,
-//       size_t opposite = NO_ID, size_t face = NO_ID, int data = 0);
-// 
-//   inline size_t createHalfEdge(size_t v = NO_ID, size_t next = NO_ID, size_t prev = NO_ID,
-//       size_t opposite = NO_ID, size_t face = NO_ID, int data = 0) {
-//     size_t he = hes_.allocate();
-//     setHalfEdge(he, v, next, prev, opposite, face, data);
-//     return he;
-//   }
-// 
-// 
-//   /* Internal datastructures */
-//   protected:
-//     struct Vertices {
-//       std::vector<SVector3> point;
-//       std::vector<size_t> hedge;
-//       std::vector<int> data;
-//       std::vector<size_t> emptyList;
-// 
-//       void set_default(size_t i) {
-//         point[i] = SVector3(-999.,-999.,-999.);
-//         hedge[i] = (size_t) -1;
-//         data[i] = 0;
-//       }
-// 
-//       size_t allocate() {
-//         if (emptyList.size() > 0) {
-//           size_t i = emptyList.back();
-//           emptyList.pop_back();
-//           set_default(i);
-//           return i;
-//         }
-//         size_t i = point.size();
-//         point.resize(i+1);
-//         hedge.resize(i+1);
-//         data.resize(i+1);
-//         set_default(i);
-//         return i;
-//       }
-// 
-//     };
-// 
-//     struct HalfEdges {
-//       std::vector<size_t> next;
-//       std::vector<size_t> prev;
-//       std::vector<size_t> opposite;
-//       std::vector<size_t> vertex;
-//       std::vector<size_t> face;
-//       std::vector<int> data;
-//       std::vector<size_t> emptyList;
-// 
-//       void set_default(size_t i) {
-//         next[i] = (size_t) -1;
-//         prev[i] = (size_t) -1;
-//         opposite[i] = (size_t) -1;
-//         vertex[i] = (size_t) -1;
-//         face[i] = (size_t) -1;
-//         data[i] = 0;
-//       }
-// 
-//       size_t allocate() {
-//         if (emptyList.size() > 0) {
-//           size_t i = emptyList.back();
-//           emptyList.pop_back();
-//           set_default(i);
-//           return i;
-//         }
-//         size_t i = next.size();
-//         next.resize(i+1);
-//         prev.resize(i+1);
-//         opposite.resize(i+1);
-//         vertex.resize(i+1);
-//         face.resize(i+1);
-//         data.resize(i+1);
-//         set_default(i);
-//         return i;
-//       }
-//     };
-// 
-//     struct Faces {
-//       std::vector<size_t> hedge;
-//       std::vector<int> data;
-//       std::vector<size_t> emptyList;
-// 
-//       void set_default(size_t i) {
-//         hedge[i] = (size_t) -1;
-//         data[i] = 0;
-//       }
-// 
-//       size_t allocate() {
-//         if (emptyList.size() > 0) {
-//           size_t i = emptyList.back();
-//           emptyList.pop_back();
-//           set_default(i);
-//           return i;
-//         }
-//         size_t i = hedge.size();
-//         hedge.resize(i+1);
-//         data.resize(i+1);
-//         set_default(i);
-//         return i;
-//       }
-//     };
-// 
-//     Vertices vs_;
-//     HalfEdges hes_;
-//     Faces fs_;
-// };
-// 
-// void test() {
-//   HMesh M;
-// 
-//   // HalfEdgeIdx he;
-//   // M.next(M.next(he));
-// 
-//   // HalfEdge hev;
-//   // M.next(hev).
-// 
-// 
-// };
 
 #endif

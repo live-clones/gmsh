@@ -220,8 +220,7 @@ public:
 
     return elements;
   }
-  void assignGhostCells()
-  {
+  std::vector<GEntity *> createGhostEntities() {
     std::vector<GEntity *> ghostEntities(_nparts, (GEntity *)nullptr);
     int elementaryNumber = _model->getMaxElementaryNumber(_dim);
     for(std::size_t i = 1; i <= _nparts; i++) {
@@ -241,6 +240,11 @@ public:
       default: break;
       }
     }
+    return ghostEntities;
+  }
+  void assignGhostCells()
+  {
+    std::vector<GEntity *> ghostEntities = createGhostEntities();
     for(std::size_t i = 0; i < _ne; i++) {
       std::set<int> ghostCellsPartition;
       for(idx_t j = _xadj[i]; j < _xadj[i + 1]; j++) {
@@ -2247,22 +2251,20 @@ int PartitionFaceMinEdgeLength(GFace *gf, int np, double tol)
 
 // Partition a mesh into n parts. Returns: 0 = success, 1 = error
 
-int PartitionMesh(GModel *model)
+int PartitionMesh(GModel *model, int numPart)
 {
-  if(CTX::instance()->mesh.numPartitions <= 0) return 0;
+  if(numPart <= 0) return 0;
 
   Msg::StatusBar(true, "Partitioning mesh...");
   double t1 = Cpu(), w1 = TimeOfDay();
 
   Graph graph(model);
   if(makeGraph(model, graph, -1)) return 1;
-  graph.nparts(CTX::instance()->mesh.numPartitions);
+  graph.nparts(numPart);
   if(partitionGraph(graph, true)) return 1;
 
   std::vector<std::size_t> elmCount[TYPE_MAX_NUM + 1];
-  for(int i = 0; i < TYPE_MAX_NUM + 1; i++) {
-    elmCount[i].resize(CTX::instance()->mesh.numPartitions, 0);
-  }
+  for(int i = 0; i < TYPE_MAX_NUM + 1; i++) { elmCount[i].resize(numPart, 0); }
 
   // Assign partitions to elements
   hashmapelementpart elmToPartition;
@@ -2305,8 +2307,7 @@ int PartitionMesh(GModel *model)
     if(totCount > 0) {
       Msg::Info(" - Repartition of %d %s: %lu(min) %lu(max) %g(avg)", totCount,
                 ElementType::nameOfParentType(i, totCount > 1).c_str(),
-                minCount, maxCount,
-                totCount / (double)CTX::instance()->mesh.numPartitions);
+                minCount, maxCount, totCount / (double)numPart);
     }
   }
 
@@ -2512,18 +2513,30 @@ int UnpartitionMesh(GModel *model)
 }
 
 // Create the partition according to the element split given by elmToPartition
-// Returns: 0 = success, 1 = no elements found.
-int PartitionUsingThisSplit(GModel *model, std::size_t npart,
+// Returns: 0 = success, 1 = no elements found/invalid data.
+int PartitionUsingThisSplit(GModel *model,
                             std::vector<std::pair<MElement *, int> > &elmToPart)
 {
   Graph graph(model);
   if(makeGraph(model, graph, -1)) return 1;
-  graph.createDualGraph(false);
-  graph.nparts(npart);
 
+  int numPart = 0;
   hashmapelementpart elmToPartition;
-  for(std::size_t i = 0; i < elmToPart.size(); i++)
-    elmToPartition[elmToPart[i].first] = elmToPart[i].second;
+  std::vector<std::pair<MElement*, int> > elmGhosts;
+  for(auto item : elmToPart) {
+    MElement *el = item.first;
+    int part = item.second;
+    if(part == 0) {
+      Msg::Error("Partition tag cannot be 0");
+      return 1;
+    }
+    if(part > 0) elmToPartition[el] = part;
+    else elmGhosts.push_back(std::make_pair(el, -part));
+    numPart = std::max(std::abs(part), numPart);
+  }
+
+  graph.createDualGraph(false);
+  graph.nparts(numPart);
 
   if(elmToPartition.size() != graph.ne()) {
     Msg::Error("All elements are not partitioned");
@@ -2556,7 +2569,6 @@ int PartitionUsingThisSplit(GModel *model, std::size_t npart,
   model->setNumPartitions(graph.nparts());
 
   createNewEntities(model, elmToPartition);
-  elmToPartition.clear();
 
   if(CTX::instance()->mesh.partitionCreateTopology) {
     Msg::StatusBar(true, "Creating partition topology...");
@@ -2570,11 +2582,39 @@ int PartitionUsingThisSplit(GModel *model, std::size_t npart,
   assignPhysicals(model);
   assignMeshVertices(model);
 
-  if(CTX::instance()->mesh.partitionCreateGhostCells) {
+  if (!elmGhosts.empty()) {
+    std::sort(elmGhosts.begin(), elmGhosts.end());
+    auto last = std::unique(elmGhosts.begin(), elmGhosts.end());
+    elmGhosts.erase(last, elmGhosts.end());
+    std::vector<GEntity *> ghostEntities = graph.createGhostEntities();
+    for (auto elmGhost : elmGhosts) {
+      MElement *el = elmGhost.first;
+      int part = elmGhost.second;
+      if(el->getDim() == graph.dim()) {
+        switch(graph.dim()) {
+          case 1:
+            static_cast<ghostEdge *>(ghostEntities[part - 1])
+              ->addElement(el->getType(), el, elmToPartition[el]);
+            break;
+          case 2:
+            static_cast<ghostFace *>(ghostEntities[part - 1])
+              ->addElement(el->getType(), el, elmToPartition[el]);
+            break;
+          case 3:
+            static_cast<ghostRegion *>(ghostEntities[part - 1])
+              ->addElement(el->getType(), el, elmToPartition[el]);
+            break;
+          default: break;
+        }
+      }
+    }
+  }
+  else if(CTX::instance()->mesh.partitionCreateGhostCells) {
     graph.clearDualGraph();
     graph.createDualGraph(false);
     graph.assignGhostCells();
   }
+  elmToPartition.clear();
 
   return 0;
 }
@@ -2601,7 +2641,7 @@ int ConvertOldPartitioningToNewOne(GModel *model)
     }
   }
 
-  return PartitionUsingThisSplit(model, partitions.size(), elmToPartition);
+  return PartitionUsingThisSplit(model, elmToPartition);
 }
 
 #else
@@ -2617,8 +2657,7 @@ int UnpartitionMesh(GModel *model) { return 0; }
 int ConvertOldPartitioningToNewOne(GModel *model) { return 0; }
 
 int PartitionUsingThisSplit(
-  GModel *model, std::size_t npart,
-  std::vector<std::pair<MElement *, int> > &elmToPartition)
+  GModel *model, std::vector<std::pair<MElement *, int> > &elmToPartition)
 {
   Msg::Error("Gmsh must be compiled with METIS support to partition meshes");
   return 0;

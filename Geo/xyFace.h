@@ -50,7 +50,8 @@ public:
   virtual GEntity::GeomType geomType() const { return GEntity::Plane; }
   ModelType getNativeType() const { return GmshModel; }
   void *getNativePtr() const { return nullptr; }
-  virtual SPoint2 parFromPoint(const SPoint3 &p, bool onSurface = true) const
+  virtual SPoint2 parFromPoint(const SPoint3 &p, bool onSurface = true,
+                               bool convTestXYZ = false) const
   {
     return SPoint2(p.x(), p.y());
   }
