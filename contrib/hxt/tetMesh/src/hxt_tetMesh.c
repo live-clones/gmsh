@@ -72,6 +72,8 @@ HXTStatus hxtTetMesh(HXTMesh* mesh,
   HXTDelaunayOptions delOptions = {.bbox = &bbox,
                                    .verbosity = options->verbosity,
                                    .reproducible = options->reproducible,
+                                   .perfectDelaunay = 1,
+                                   .allowOuterInsertion = 1,
                                    .delaunayThreads = options->delaunayThreads};
 
   HXTNodalSizes nodalSizes = {
@@ -172,7 +174,8 @@ HXTStatus hxtTetMesh(HXTMesh* mesh,
     HXT_CHECK( setFlagsToProcessOnlyVolumesInBrep(mesh) );
 
     nodalSizes.enabled = 1; // activate the filtering...
-
+    delOptions.perfectDelaunay = 0;
+    delOptions.allowOuterInsertion = 0;
     HXT_CHECK( hxtRefineTetrahedra(mesh, &delOptions) );
 
     HXT_CHECK( hxtNodalSizesDestroy(&nodalSizes) );
