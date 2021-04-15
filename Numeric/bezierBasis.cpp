@@ -191,7 +191,12 @@ bezierBasis::bezierBasis(FuncSpaceData data)
     _construct();
 }
 
-bezierBasis::~bezierBasis() { delete _raiser; }
+bezierBasis::~bezierBasis()
+{
+  if(_raiser != nullptr) {
+    delete _raiser;
+  }
+}
 
 void bezierBasis::_construct()
 {
