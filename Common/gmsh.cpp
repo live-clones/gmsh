@@ -264,6 +264,7 @@ GMSH_API void gmsh::model::add(const std::string &name)
 {
   if(!_checkInit()) return;
   GModel *m = new GModel(name);
+  GModel::current(GModel::list.size() - 1);
   if(!m) Msg::Error("Could not add model '%s'", name.c_str());
 }
 
@@ -3974,12 +3975,12 @@ GMSH_API void gmsh::model::mesh::getInformationForElements(
     Msg::Error("Unknown function space type '%s'", functionSpaceType.c_str());
     return;
   }
-  
+
   if(typeKeys.size() != entityKeys.size()) {
     Msg::Error("The size of 'typeKeys' is different of the size of 'entityKeys' ('%i', '%i')", typeKeys.size(), entityKeys.size());
     return;
   }
-  
+
   HierarchicalBasis *basis(nullptr);
   int familyType = ElementType::getParentType(elementType);
   if(fsName == "H1Legendre" || fsName == "GradH1Legendre") {
