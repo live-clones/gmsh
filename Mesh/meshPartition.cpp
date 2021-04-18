@@ -2646,7 +2646,7 @@ int ConvertOldPartitioningToNewOne(GModel *model)
 
 #else
 
-int PartitionMesh(GModel *model)
+int PartitionMesh(GModel *model, int numPart)
 {
   Msg::Error("Gmsh must be compiled with METIS support to partition meshes");
   return 0;
