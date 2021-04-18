@@ -291,10 +291,12 @@ int GRegion::delFace(GFace *face)
 void GRegion::setBoundFaces(const std::set<int> &tagFaces)
 {
   for(auto it = tagFaces.begin(); it != tagFaces.end(); ++it) {
-    GFace *face = model()->getFaceByTag(*it);
-    if(face) {
-      l_faces.push_back(face);
-      face->addRegion(this);
+    GFace *gf = model()->getFaceByTag(*it);
+    if(gf) {
+      if(std::find(l_faces.begin(), l_faces.end(), gf) == l_faces.end()) {
+        l_faces.push_back(gf);
+        gf->addRegion(this);
+      }
     }
     else {
       Msg::Error("Unknown surface %d in volume %d", *it, tag());
@@ -312,11 +314,13 @@ void GRegion::setBoundFaces(const std::vector<int> &tagFaces,
     setBoundFaces(tags);
   }
   for(std::size_t i = 0; i != tagFaces.size(); i++) {
-    GFace *face = model()->getFaceByTag(tagFaces[i]);
-    if(face) {
-      l_faces.push_back(face);
-      face->addRegion(this);
-      l_dirs.push_back(signFaces[i]);
+    GFace *gf = model()->getFaceByTag(tagFaces[i]);
+    if(gf) {
+      if(std::find(l_faces.begin(), l_faces.end(), gf) == l_faces.end()) {
+        l_faces.push_back(gf);
+        gf->addRegion(this);
+        l_dirs.push_back(signFaces[i]);
+      }
     }
     else {
       Msg::Error("Unknown surface %d in volume %d", tagFaces[i], tag());
