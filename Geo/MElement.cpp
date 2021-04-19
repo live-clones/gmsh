@@ -1003,11 +1003,13 @@ bezierCoeff *MElement::getBezierVerticesCoord() const
 
   fullMatrix<double> pntXYZ(pntUVW.size1(), 3);
   double xyz[3];
+  double uvw[3];
   for(int i = 0; i < pntUVW.size1(); ++i) {
-    double u = pntUVW(i, 0);
-    double v = pntUVW(i, 1);
-    double w = pntUVW(i, 2);
-    pnt(u, v, w, xyz);
+    uvw[0] = uvw[1] = uvw[2] = 0.;
+    for(int j = 0; j < pntUVW.size2(); ++j) {
+      uvw[j] = pntUVW(i, j);
+    }
+    pnt(uvw[0], uvw[1], uvw[2], xyz);
     pntXYZ(i, 0) = xyz[0];
     pntXYZ(i, 1) = xyz[1];
     pntXYZ(i, 2) = xyz[2];
