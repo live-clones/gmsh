@@ -2,6 +2,9 @@
 //
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+//
+// Contributor(s):
+//   Michael Ermakov (ermakov@ipmnet.ru)
 
 #include <map>
 #include <queue>
@@ -39,6 +42,9 @@
 // f(u,v) = u c2 (v) + (1-v) c1(u) + v c3(u) - u(1-v) s2 - uv s3
 #define TRAN_TRI(c1, c2, c3, s1, s2, s3, u, v)                                 \
   u *c2 + (1. - v) * c1 + v *c3 - (u * (1. - v) * s2 + u * v * s3)
+
+#define TRAN_TRI3(c1, c2, c3, s1, s2, s3, u, v)                                \
+  (1. - v) * c1 + u *c2 + (1. - u) * c3 - (1. - v) * ((1. - u) * s1 + u * s2)
 
 void findTransfiniteCorners(GFace *gf, std::vector<MVertex *> &corners)
 {
@@ -235,57 +241,73 @@ int MeshTransfiniteSurface(GFace *gf)
     V.push_back(param[1]);
   }
 
+  bool transfinite_standard = true;
+
   int N1 = N[0], N2 = N[1], N3 = N[2], N4 = N[3];
   int L = N2 - N1, H = N3 - N2;
   if(corners.size() == 4) {
     int Lb = N4 - N3, Hb = m_vertices.size() - N4;
-    if(Lb != L || Hb != H) {
-      Msg::Error("Surface %d cannot be meshed using the transfinite algo "
-                 "(divisions %d != %d or %d != %d)",
-                 gf->tag(), Lb, L, Hb, H);
-      return 0;
+    if(Lb + H == L && Hb == H) {
+      transfinite_standard = false;
+      Msg::Info("Meshing surface %d (Transfinite 3)", gf->tag());
+    }
+    else {
+      if(Lb != L || Hb != H) {
+        Msg::Error("Surface %d cannot be meshed using the transfinite algo "
+                   "(divisions %d != %d or %d != %d)",
+                   gf->tag(), Lb, L, Hb, H);
+        return 0;
+      }
     }
   }
   else {
     int Lb = m_vertices.size() - N3;
-    if(Lb != L) {
-      Msg::Error("Surface %d cannot be meshed using the transfinite algo "
-                 "(divisions %d != %d)",
-                 gf->tag(), L, Lb);
-      return 0;
+    if(Lb == L && H == L) {
+      transfinite_standard = false;
+      Msg::Info("Meshing surface %d (Transfinite 3)", gf->tag());
+    }
+    else {
+      if(Lb != L) {
+        Msg::Error("Surface %d cannot be meshed using the transfinite algo "
+                   "(divisions %d != %d)",
+                   gf->tag(), L, Lb);
+        return 0;
+      }
     }
   }
 
-  std::vector<double> lengths_i;
-  lengths_i.reserve(L);
+  if(transfinite_standard) {
+    std::vector<double> lengths_i;
+    lengths_i.reserve(L);
 
-  lengths_i.push_back(0.0);
+    lengths_i.push_back(0.0);
 
-  double L_i = 0.0;
+    double L_i = 0.0;
 
-  for(int i = 0; i < L; i++) {
-    MVertex *v1 = m_vertices[i];
-    MVertex *v2 = m_vertices[i + 1];
+    for(int i = 0; i < L; i++) {
+      MVertex *v1 = m_vertices[i];
+      MVertex *v2 = m_vertices[i + 1];
 
-    L_i += v1->distance(v2);
-    lengths_i.push_back(L_i);
-  }
+      L_i += v1->distance(v2);
+      lengths_i.push_back(L_i);
+    }
 
-  std::vector<double> lengths_j;
-  lengths_j.reserve(L + H);
+    std::vector<double> lengths_j;
+    lengths_j.reserve(L + H);
 
-  lengths_j.push_back(0.0);
+    lengths_j.push_back(0.0);
 
-  double L_j = 0.0;
+    double L_j = 0.0;
 
-  for(int i = L; i < L + H; i++) {
-    MVertex *v1 = m_vertices[i];
-    MVertex *v2 = m_vertices[i + 1];
+    for(int i = L; i < L + H; i++) {
+      MVertex *v1 = m_vertices[i];
+      MVertex *v2 = m_vertices[i + 1];
 
-    L_j += v1->distance(v2);
-    lengths_j.push_back(L_j);
-  }
-  /*
+      L_j += v1->distance(v2);
+      lengths_j.push_back(L_j);
+    }
+
+    /*
       2L+H +------------+ L+H
            |            |
            |            |
@@ -293,241 +315,463 @@ int MeshTransfiniteSurface(GFace *gf)
            |            |
    2L+2H+2 +------------+
            0            L
-  */
+    */
 
-  std::vector<std::vector<MVertex *> > &tab(gf->transfinite_vertices);
-  tab.resize(L + 1);
-  for(int i = 0; i <= L; i++) tab[i].resize(H + 1);
+    std::vector<std::vector<MVertex *> > &tab(gf->transfinite_vertices);
+    tab.resize(L + 1);
+    for(int i = 0; i <= L; i++) tab[i].resize(H + 1);
 
-  if(corners.size() == 4) {
-    tab[0][0] = m_vertices[0];
-    tab[L][0] = m_vertices[L];
-    tab[L][H] = m_vertices[L + H];
-    tab[0][H] = m_vertices[2 * L + H];
-    for(int i = 1; i < L; i++) {
-      tab[i][0] = m_vertices[i];
-      tab[i][H] = m_vertices[2 * L + H - i];
+    if(corners.size() == 4) {
+      tab[0][0] = m_vertices[0];
+      tab[L][0] = m_vertices[L];
+      tab[L][H] = m_vertices[L + H];
+      tab[0][H] = m_vertices[2 * L + H];
+      for(int i = 1; i < L; i++) {
+        tab[i][0] = m_vertices[i];
+        tab[i][H] = m_vertices[2 * L + H - i];
+      }
+      for(int i = 1; i < H; i++) {
+        tab[L][i] = m_vertices[L + i];
+        tab[0][i] = m_vertices[2 * L + 2 * H - i];
+      }
     }
-    for(int i = 1; i < H; i++) {
-      tab[L][i] = m_vertices[L + i];
-      tab[0][i] = m_vertices[2 * L + 2 * H - i];
-    }
-  }
-  else {
-    tab[0][0] = m_vertices[0];
-    tab[L][0] = m_vertices[L];
-    tab[L][H] = m_vertices[L + H];
-    // degenerated, only necessary for transfinite volume algo
-    tab[0][H] = m_vertices[0];
-    for(int i = 1; i < L; i++) {
-      tab[i][0] = m_vertices[i];
-      tab[i][H] = m_vertices[2 * L + H - i];
-    }
-    for(int i = 1; i < H; i++) {
-      tab[L][i] = m_vertices[L + i];
+    else {
+      tab[0][0] = m_vertices[0];
+      tab[L][0] = m_vertices[L];
+      tab[L][H] = m_vertices[L + H];
       // degenerated, only necessary for transfinite volume algo
-      tab[0][i] = m_vertices[0];
-    }
-  }
-
-  double UC1 = U[N1], UC2 = U[N2], UC3 = U[N3];
-  double VC1 = V[N1], VC2 = V[N2], VC3 = V[N3];
-
-  // create points using transfinite interpolation
-  if(corners.size() == 4) {
-    double UC4 = U[N4];
-    double VC4 = V[N4];
-    for(int i = 1; i < L; i++) {
-      double u = lengths_i[i] / L_i;
-      for(int j = 1; j < H; j++) {
-        double v = lengths_j[j] / L_j;
-        int iP1 = N1 + i;
-        int iP2 = N2 + j;
-        int iP3 = N4 - i;
-        int iP4 = (N4 + (N3 - N2) - j) % m_vertices.size();
-        double Up =
-          TRAN_QUA(U[iP1], U[iP2], U[iP3], U[iP4], UC1, UC2, UC3, UC4, u, v);
-        double Vp =
-          TRAN_QUA(V[iP1], V[iP2], V[iP3], V[iP4], VC1, VC2, VC3, VC4, u, v);
-        GPoint gp = gf->point(SPoint2(Up, Vp));
-        MFaceVertex *newv = new MFaceVertex(gp.x(), gp.y(), gp.z(), gf, Up, Vp);
-        gf->mesh_vertices.push_back(newv);
-        tab[i][j] = newv;
+      tab[0][H] = m_vertices[0];
+      for(int i = 1; i < L; i++) {
+        tab[i][0] = m_vertices[i];
+        tab[i][H] = m_vertices[2 * L + H - i];
+      }
+      for(int i = 1; i < H; i++) {
+        tab[L][i] = m_vertices[L + i];
+        // degenerated, only necessary for transfinite volume algo
+        tab[0][i] = m_vertices[0];
       }
     }
-  }
-  else {
-    for(int i = 1; i < L; i++) {
-      double u = lengths_i[i] / L_i;
-      for(int j = 1; j < H; j++) {
-        double v = lengths_j[j] / L_j;
-        int iP1 = N1 + i;
-        int iP2 = N2 + j;
-        int iP3 = ((N3 + N2) - i) % m_vertices.size();
-        double Up, Vp;
-        if(gf->geomType() != GEntity::RuledSurface) {
-          Up = TRAN_TRI(U[iP1], U[iP2], U[iP3], UC1, UC2, UC3, u, v);
-          Vp = TRAN_TRI(V[iP1], V[iP2], V[iP3], VC1, VC2, VC3, u, v);
-        }
-        else {
-          // FIXME: to get nice meshes we would need to make the u,v
-          // coords match with the (degenerate) coordinates of the
-          // underlying ruled surface; so instead we just interpolate
-          // in real space
-          double xp = TRAN_TRI(m_vertices[iP1]->x(), m_vertices[iP2]->x(),
-                               m_vertices[iP3]->x(), m_vertices[N1]->x(),
-                               m_vertices[N2]->x(), m_vertices[N3]->x(), u, v);
-          double yp = TRAN_TRI(m_vertices[iP1]->y(), m_vertices[iP2]->y(),
-                               m_vertices[iP3]->y(), m_vertices[N1]->y(),
-                               m_vertices[N2]->y(), m_vertices[N3]->y(), u, v);
-          double zp = TRAN_TRI(m_vertices[iP1]->z(), m_vertices[iP2]->z(),
-                               m_vertices[iP3]->z(), m_vertices[N1]->z(),
-                               m_vertices[N2]->z(), m_vertices[N3]->z(), u, v);
-          // xp,yp,zp can be off the surface so we cannot use parFromPoint
-          gf->XYZtoUV(xp, yp, zp, Up, Vp, 1.0, false);
-        }
-        GPoint gp = gf->point(SPoint2(Up, Vp));
-        MFaceVertex *newv = new MFaceVertex(gp.x(), gp.y(), gp.z(), gf, Up, Vp);
-        gf->mesh_vertices.push_back(newv);
-        tab[i][j] = newv;
-      }
-    }
-  }
 
-  // should we apply the elliptic smoother?
-  int numSmooth = 0;
-  if(gf->meshAttributes.transfiniteSmoothing < 0 &&
-     CTX::instance()->mesh.nbSmoothing > 1)
-    numSmooth = CTX::instance()->mesh.nbSmoothing;
-  else if(gf->meshAttributes.transfiniteSmoothing > 0)
-    numSmooth = gf->meshAttributes.transfiniteSmoothing;
+    double UC1 = U[N1], UC2 = U[N2], UC3 = U[N3];
+    double VC1 = V[N1], VC2 = V[N2], VC3 = V[N3];
 
-  if(corners.size() == 4 && numSmooth) {
-    std::vector<std::vector<double> > u(L + 1), v(L + 1);
-    for(int i = 0; i <= L; i++) {
-      u[i].resize(H + 1);
-      v[i].resize(H + 1);
-    }
-    for(int i = 0; i <= L; i++) {
-      for(int j = 0; j <= H; j++) {
-        int iP1 = N1 + i;
-        int iP2 = N2 + j;
-        int iP3 = N4 - i;
-        int iP4 = (N4 + (N3 - N2) - j) % m_vertices.size();
-        if(j == 0) {
-          u[i][j] = U[iP1];
-          v[i][j] = V[iP1];
-        }
-        else if(i == L) {
-          u[i][j] = U[iP2];
-          v[i][j] = V[iP2];
-        }
-        else if(j == H) {
-          u[i][j] = U[iP3];
-          v[i][j] = V[iP3];
-        }
-        else if(i == 0) {
-          u[i][j] = U[iP4];
-          v[i][j] = V[iP4];
-        }
-        else {
-          tab[i][j]->getParameter(0, u[i][j]);
-          tab[i][j]->getParameter(1, v[i][j]);
+    // create points using transfinite interpolation
+    if(corners.size() == 4) {
+      double UC4 = U[N4];
+      double VC4 = V[N4];
+      for(int i = 1; i < L; i++) {
+        double u = lengths_i[i] / L_i;
+        for(int j = 1; j < H; j++) {
+          double v = lengths_j[j] / L_j;
+          int iP1 = N1 + i;
+          int iP2 = N2 + j;
+          int iP3 = N4 - i;
+          int iP4 = (N4 + (N3 - N2) - j) % m_vertices.size();
+          double Up =
+            TRAN_QUA(U[iP1], U[iP2], U[iP3], U[iP4], UC1, UC2, UC3, UC4, u, v);
+          double Vp =
+            TRAN_QUA(V[iP1], V[iP2], V[iP3], V[iP4], VC1, VC2, VC3, VC4, u, v);
+          GPoint gp = gf->point(SPoint2(Up, Vp));
+          MFaceVertex *newv =
+            new MFaceVertex(gp.x(), gp.y(), gp.z(), gf, Up, Vp);
+          gf->mesh_vertices.push_back(newv);
+          tab[i][j] = newv;
         }
       }
     }
-    for(int IT = 0; IT < numSmooth; IT++) {
+    else {
+      for(int i = 1; i < L; i++) {
+        double u = lengths_i[i] / L_i;
+        for(int j = 1; j < H; j++) {
+          double v = lengths_j[j] / L_j;
+          int iP1 = N1 + i;
+          int iP2 = N2 + j;
+          int iP3 = ((N3 + N2) - i) % m_vertices.size();
+          double Up, Vp;
+          if(gf->geomType() != GEntity::RuledSurface) {
+            Up = TRAN_TRI(U[iP1], U[iP2], U[iP3], UC1, UC2, UC3, u, v);
+            Vp = TRAN_TRI(V[iP1], V[iP2], V[iP3], VC1, VC2, VC3, u, v);
+          }
+          else {
+            // FIXME: to get nice meshes we would need to make the u,v
+            // coords match with the (degenerate) coordinates of the
+            // underlying ruled surface; so instead we just interpolate
+            // in real space
+            double xp =
+              TRAN_TRI(m_vertices[iP1]->x(), m_vertices[iP2]->x(),
+                       m_vertices[iP3]->x(), m_vertices[N1]->x(),
+                       m_vertices[N2]->x(), m_vertices[N3]->x(), u, v);
+            double yp =
+              TRAN_TRI(m_vertices[iP1]->y(), m_vertices[iP2]->y(),
+                       m_vertices[iP3]->y(), m_vertices[N1]->y(),
+                       m_vertices[N2]->y(), m_vertices[N3]->y(), u, v);
+            double zp =
+              TRAN_TRI(m_vertices[iP1]->z(), m_vertices[iP2]->z(),
+                       m_vertices[iP3]->z(), m_vertices[N1]->z(),
+                       m_vertices[N2]->z(), m_vertices[N3]->z(), u, v);
+            // xp,yp,zp can be off the surface so we cannot use parFromPoint
+            gf->XYZtoUV(xp, yp, zp, Up, Vp, 1.0, false);
+          }
+          GPoint gp = gf->point(SPoint2(Up, Vp));
+          MFaceVertex *newv =
+            new MFaceVertex(gp.x(), gp.y(), gp.z(), gf, Up, Vp);
+          gf->mesh_vertices.push_back(newv);
+          tab[i][j] = newv;
+        }
+      }
+    }
+
+    // should we apply the elliptic smoother?
+    int numSmooth = 0;
+    if(gf->meshAttributes.transfiniteSmoothing < 0 &&
+       CTX::instance()->mesh.nbSmoothing > 1)
+      numSmooth = CTX::instance()->mesh.nbSmoothing;
+    else if(gf->meshAttributes.transfiniteSmoothing > 0)
+      numSmooth = gf->meshAttributes.transfiniteSmoothing;
+
+    if(corners.size() == 4 && numSmooth) {
+      std::vector<std::vector<double> > u(L + 1), v(L + 1);
+      for(int i = 0; i <= L; i++) {
+        u[i].resize(H + 1);
+        v[i].resize(H + 1);
+      }
+      for(int i = 0; i <= L; i++) {
+        for(int j = 0; j <= H; j++) {
+          int iP1 = N1 + i;
+          int iP2 = N2 + j;
+          int iP3 = N4 - i;
+          int iP4 = (N4 + (N3 - N2) - j) % m_vertices.size();
+          if(j == 0) {
+            u[i][j] = U[iP1];
+            v[i][j] = V[iP1];
+          }
+          else if(i == L) {
+            u[i][j] = U[iP2];
+            v[i][j] = V[iP2];
+          }
+          else if(j == H) {
+            u[i][j] = U[iP3];
+            v[i][j] = V[iP3];
+          }
+          else if(i == 0) {
+            u[i][j] = U[iP4];
+            v[i][j] = V[iP4];
+          }
+          else {
+            tab[i][j]->getParameter(0, u[i][j]);
+            tab[i][j]->getParameter(1, v[i][j]);
+          }
+        }
+      }
+      for(int IT = 0; IT < numSmooth; IT++) {
+        for(int i = 1; i < L; i++) {
+          for(int j = 1; j < H; j++) {
+            double alpha = 0.25 * (std::pow(u[i][j + 1] - u[i][j - 1], 2) +
+                                   std::pow(v[i][j + 1] - v[i][j - 1], 2));
+            double gamma = 0.25 * (std::pow(u[i + 1][j] - u[i - 1][j], 2) +
+                                   std::pow(v[i + 1][j] - v[i - 1][j], 2));
+            double beta =
+              0.0625 *
+              ((u[i + 1][j] - u[i - 1][j]) * (u[i][j + 1] - u[i][j - 1]) +
+               (v[i + 1][j] - v[i - 1][j]) * (v[i][j + 1] - v[i][j - 1]));
+            u[i][j] = 0.5 *
+                      (alpha * (u[i + 1][j] + u[i - 1][j]) +
+                       gamma * (u[i][j + 1] + u[i][j - 1]) -
+                       2. * beta *
+                         (u[i + 1][j + 1] - u[i - 1][j + 1] - u[i + 1][j - 1] +
+                          u[i - 1][j - 1])) /
+                      (alpha + gamma);
+            v[i][j] = 0.5 *
+                      (alpha * (v[i + 1][j] + v[i - 1][j]) +
+                       gamma * (v[i][j + 1] + v[i][j - 1]) -
+                       2. * beta *
+                         (v[i + 1][j + 1] - v[i - 1][j + 1] - v[i + 1][j - 1] +
+                          v[i - 1][j - 1])) /
+                      (alpha + gamma);
+          }
+        }
+      }
       for(int i = 1; i < L; i++) {
         for(int j = 1; j < H; j++) {
-          double alpha = 0.25 * (std::pow(u[i][j + 1] - u[i][j - 1], 2) +
-                                 std::pow(v[i][j + 1] - v[i][j - 1], 2));
-          double gamma = 0.25 * (std::pow(u[i + 1][j] - u[i - 1][j], 2) +
-                                 std::pow(v[i + 1][j] - v[i - 1][j], 2));
-          double beta =
-            0.0625 *
-            ((u[i + 1][j] - u[i - 1][j]) * (u[i][j + 1] - u[i][j - 1]) +
-             (v[i + 1][j] - v[i - 1][j]) * (v[i][j + 1] - v[i][j - 1]));
-          u[i][j] = 0.5 *
-                    (alpha * (u[i + 1][j] + u[i - 1][j]) +
-                     gamma * (u[i][j + 1] + u[i][j - 1]) -
-                     2. * beta *
-                       (u[i + 1][j + 1] - u[i - 1][j + 1] - u[i + 1][j - 1] +
-                        u[i - 1][j - 1])) /
-                    (alpha + gamma);
-          v[i][j] = 0.5 *
-                    (alpha * (v[i + 1][j] + v[i - 1][j]) +
-                     gamma * (v[i][j + 1] + v[i][j - 1]) -
-                     2. * beta *
-                       (v[i + 1][j + 1] - v[i - 1][j + 1] - v[i + 1][j - 1] +
-                        v[i - 1][j - 1])) /
-                    (alpha + gamma);
+          GPoint p = gf->point(SPoint2(u[i][j], v[i][j]));
+          tab[i][j]->x() = p.x();
+          tab[i][j]->y() = p.y();
+          tab[i][j]->z() = p.z();
+          tab[i][j]->setParameter(0, u[i][j]);
+          tab[i][j]->setParameter(1, v[i][j]);
         }
       }
     }
-    for(int i = 1; i < L; i++) {
-      for(int j = 1; j < H; j++) {
-        GPoint p = gf->point(SPoint2(u[i][j], v[i][j]));
-        tab[i][j]->x() = p.x();
-        tab[i][j]->y() = p.y();
-        tab[i][j]->z() = p.z();
-        tab[i][j]->setParameter(0, u[i][j]);
-        tab[i][j]->setParameter(1, v[i][j]);
-      }
-    }
-  }
 
-  // create elements
-  if(corners.size() == 4) {
-    for(int i = 0; i < L; i++) {
-      for(int j = 0; j < H; j++) {
-        MVertex *v1 = tab[i][j];
-        MVertex *v2 = tab[i + 1][j];
-        MVertex *v3 = tab[i + 1][j + 1];
-        MVertex *v4 = tab[i][j + 1];
-        if(CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine)
-          gf->quadrangles.push_back(new MQuadrangle(v1, v2, v3, v4));
-        else if(gf->meshAttributes.transfiniteArrangement == 1 ||
-                (gf->meshAttributes.transfiniteArrangement == 2 &&
-                 ((i % 2 == 0 && j % 2 == 1) || (i % 2 == 1 && j % 2 == 0))) ||
-                (gf->meshAttributes.transfiniteArrangement == -2 &&
-                 ((i % 2 == 0 && j % 2 == 0) || (i % 2 == 1 && j % 2 == 1)))) {
-          //        else if(rand() % 2 == 0){
-          gf->triangles.push_back(new MTriangle(v1, v2, v3));
-          gf->triangles.push_back(new MTriangle(v3, v4, v1));
+    // create elements
+    if(corners.size() == 4) {
+      for(int i = 0; i < L; i++) {
+        for(int j = 0; j < H; j++) {
+          MVertex *v1 = tab[i][j];
+          MVertex *v2 = tab[i + 1][j];
+          MVertex *v3 = tab[i + 1][j + 1];
+          MVertex *v4 = tab[i][j + 1];
+          if(CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine)
+            gf->quadrangles.push_back(new MQuadrangle(v1, v2, v3, v4));
+          else if(gf->meshAttributes.transfiniteArrangement == 1 ||
+                  (gf->meshAttributes.transfiniteArrangement == 2 &&
+                   ((i % 2 == 0 && j % 2 == 1) ||
+                    (i % 2 == 1 && j % 2 == 0))) ||
+                  (gf->meshAttributes.transfiniteArrangement == -2 &&
+                   ((i % 2 == 0 && j % 2 == 0) ||
+                    (i % 2 == 1 && j % 2 == 1)))) {
+            //        else if(rand() % 2 == 0){
+            gf->triangles.push_back(new MTriangle(v1, v2, v3));
+            gf->triangles.push_back(new MTriangle(v3, v4, v1));
+          }
+          else {
+            gf->triangles.push_back(new MTriangle(v1, v2, v4));
+            gf->triangles.push_back(new MTriangle(v4, v2, v3));
+          }
         }
-        else {
-          gf->triangles.push_back(new MTriangle(v1, v2, v4));
-          gf->triangles.push_back(new MTriangle(v4, v2, v3));
+      }
+    }
+    else {
+      for(int j = 0; j < H; j++) {
+        MVertex *v1 = tab[0][0];
+        MVertex *v2 = tab[1][j];
+        MVertex *v3 = tab[1][j + 1];
+        gf->triangles.push_back(new MTriangle(v1, v2, v3));
+      }
+      for(int i = 1; i < L; i++) {
+        for(int j = 0; j < H; j++) {
+          MVertex *v1 = tab[i][j];
+          MVertex *v2 = tab[i + 1][j];
+          MVertex *v3 = tab[i + 1][j + 1];
+          MVertex *v4 = tab[i][j + 1];
+          if(CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine)
+            gf->quadrangles.push_back(new MQuadrangle(v1, v2, v3, v4));
+          else if(gf->meshAttributes.transfiniteArrangement == 1 ||
+                  (gf->meshAttributes.transfiniteArrangement == 2 &&
+                   ((i % 2 == 0 && j % 2 == 1) ||
+                    (i % 2 == 1 && j % 2 == 0))) ||
+                  (gf->meshAttributes.transfiniteArrangement == -2 &&
+                   ((i % 2 == 0 && j % 2 == 0) ||
+                    (i % 2 == 1 && j % 2 == 1)))) {
+            gf->triangles.push_back(new MTriangle(v1, v2, v3));
+            gf->triangles.push_back(new MTriangle(v3, v4, v1));
+          }
+          else {
+            gf->triangles.push_back(new MTriangle(v1, v2, v4));
+            gf->triangles.push_back(new MTriangle(v4, v2, v3));
+          }
         }
       }
     }
   }
   else {
-    for(int j = 0; j < H; j++) {
-      MVertex *v1 = tab[0][0];
-      MVertex *v2 = tab[1][j];
-      MVertex *v3 = tab[1][j + 1];
-      gf->triangles.push_back(new MTriangle(v1, v2, v3));
+    std::vector<double> lengths_i;
+    lengths_i.reserve(L);
+
+    lengths_i.push_back(0.0);
+
+    double L_i = 0.0;
+
+    for(int i = 0; i < L; i++) {
+      MVertex *v1 = m_vertices[i];
+      MVertex *v2 = m_vertices[i + 1];
+
+      L_i += v1->distance(v2);
+      lengths_i.push_back(L_i);
     }
-    for(int i = 1; i < L; i++) {
-      for(int j = 0; j < H; j++) {
-        MVertex *v1 = tab[i][j];
-        MVertex *v2 = tab[i + 1][j];
-        MVertex *v3 = tab[i + 1][j + 1];
-        MVertex *v4 = tab[i][j + 1];
-        if(CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine)
-          gf->quadrangles.push_back(new MQuadrangle(v1, v2, v3, v4));
-        else if(gf->meshAttributes.transfiniteArrangement == 1 ||
-                (gf->meshAttributes.transfiniteArrangement == 2 &&
-                 ((i % 2 == 0 && j % 2 == 1) || (i % 2 == 1 && j % 2 == 0))) ||
-                (gf->meshAttributes.transfiniteArrangement == -2 &&
-                 ((i % 2 == 0 && j % 2 == 0) || (i % 2 == 1 && j % 2 == 1)))) {
-          gf->triangles.push_back(new MTriangle(v1, v2, v3));
-          gf->triangles.push_back(new MTriangle(v3, v4, v1));
+
+    std::vector<double> lengths_j;
+    lengths_j.reserve(L + H);
+
+    lengths_j.push_back(0.0);
+
+    double L_j = 0.0;
+
+    for(int i = L; i < L + H; i++) {
+      MVertex *v1 = m_vertices[i];
+      MVertex *v2 = m_vertices[i + 1];
+
+      L_j += v1->distance(v2);
+      lengths_j.push_back(L_j);
+    }
+    /*
+      2L+H +------------+ L+H
+           |            |
+           |            |
+           |            |
+           |            |
+   2L+2H+2 +------------+
+           0            L
+    */
+
+    std::vector<std::vector<MVertex *> > &tab(gf->transfinite_vertices);
+    tab.resize(L + 1);
+
+    if(corners.size() == 4) {
+      for(int i = 0; i <= L; i++) tab[i].resize(H + 1);
+
+      int L = N2 - N1, H = N3 - N2, L2 = N4 - N3;
+
+      tab[0][0] = m_vertices[0];
+      tab[L][0] = m_vertices[L];
+      tab[L2][H] = m_vertices[L + H];
+      tab[0][H] = m_vertices[L + L2 + H];
+
+      for(int i = 1; i < L; i++) { tab[i][0] = m_vertices[i]; }
+      for(int i = 1; i < L2; i++) { tab[i][H] = m_vertices[L + H + L2 - i]; }
+      for(int i = L2 + 1; i < L; i++) { tab[i][L - i] = m_vertices[L + L - i]; }
+      for(int i = 1; i < H; i++) { tab[0][i] = m_vertices[L + H + L2 + H - i]; }
+    }
+    else {
+      int i;
+      for(i = 0; i <= L; ++i) { tab[i].resize(H + 1 - i); }
+      for(i = 0; i <= L; ++i) { tab[i][0] = m_vertices[i]; }
+      int j;
+      for(j = 1; j <= H; ++j) { tab[L - j][j] = m_vertices[L + j]; }
+      for(j = 1; j < H; ++j) { tab[0][j] = m_vertices[L + H + H - j]; }
+    }
+
+    double UC1 = U[N1], UC2 = U[N2], UC3 = U[N3];
+    double VC1 = V[N1], VC2 = V[N2], VC3 = V[N3];
+
+    // create points using transfinite interpolation
+    if(corners.size() == 4) {
+      int L = N2 - N1, H = N3 - N2, L2 = N4 - N3;
+      std::vector<double> U_ib, V_ib;
+      U_ib.resize(H + 1);
+      V_ib.resize(H + 1);
+
+      double UC4 = U[N4];
+      double VC4 = V[N4];
+      for(int i = 1; i <= L2; i++) {
+        double u = lengths_i[i] / L_i;
+        for(int j = 1; j < H; j++) {
+          double v = lengths_j[j] / L_j;
+          int iP1 = N1 + i;
+          int iP2 = N2 + j;
+          int iP3 = N4 - i;
+          int iP4 = (N4 + (N3 - N2) - j) % m_vertices.size();
+          double Up =
+            TRAN_QUA(U[iP1], U[iP2], U[iP3], U[iP4], UC1, UC2, UC3, UC4, u, v);
+          double Vp =
+            TRAN_QUA(V[iP1], V[iP2], V[iP3], V[iP4], VC1, VC2, VC3, VC4, u, v);
+
+          if(i == L2) {
+            U_ib[j] = Up;
+            V_ib[j] = Vp;
+          }
+
+          GPoint gp = gf->point(SPoint2(Up, Vp));
+          MFaceVertex *newv =
+            new MFaceVertex(gp.x(), gp.y(), gp.z(), gf, Up, Vp);
+          gf->mesh_vertices.push_back(newv);
+          tab[i][j] = newv;
         }
-        else {
-          gf->triangles.push_back(new MTriangle(v1, v2, v4));
-          gf->triangles.push_back(new MTriangle(v4, v2, v3));
+      }
+
+      for(int i = L2 + 1; i < L; i++) {
+        for(int j = 1; j < H + 1 + L2 - i - 1; j++) {
+          double v = lengths_j[j] / L_j;
+
+          double d = lengths_i[L2] / L_i;
+          double u = d + (1.0 - d) / (L - L2 - j) +
+                     (1.0 - d) * (i - L2 - 1) / (L - L2 - j);
+
+          int iP2 = N2 + j;
+
+          int k;
+          for(k = L2; k < L; ++k) {
+            if(lengths_i[k - 1] / L_i < u && u <= lengths_i[k] / L_i) { break; }
+          }
+          double t = (u - lengths_i[k - 1] / L_i) /
+                     (lengths_i[k] / L_i - lengths_i[k - 1] / L_i);
+          double UiP1 = U[k - 1] + t * (U[k] - U[k - 1]);
+          double ViP1 = V[k - 1] + t * (V[k] - V[k - 1]);
+
+          double Up = TRAN_TRI3(UiP1, U[iP2], U_ib[j], U[L2], UC2, UC3, u, v);
+          double Vp = TRAN_TRI3(ViP1, V[iP2], V_ib[j], V[L2], VC2, VC3, u, v);
+
+          GPoint gp = gf->point(SPoint2(Up, Vp));
+          MFaceVertex *newv =
+            new MFaceVertex(gp.x(), gp.y(), gp.z(), gf, Up, Vp);
+          gf->mesh_vertices.push_back(newv);
+          tab[i][j] = newv;
+        }
+      }
+    }
+    else {
+      int i, j;
+      for(i = 1; i < L; ++i) {
+        for(j = 1; j < H - i; ++j) {
+          double u = lengths_i[i] / (lengths_i[H - j]);
+          double v = lengths_j[j] / L_j;
+
+          int iP2 = N2 + j;
+          int iP3 = N3 + N2 - j;
+
+          int k;
+          for(k = 1; k < L; ++k) {
+            if(lengths_i[k - 1] / L_i < u && u <= lengths_i[k] / L_i) { break; }
+          }
+          double t = (u - lengths_i[k - 1] / L_i) /
+                     (lengths_i[k] / L_i - lengths_i[k - 1] / L_i);
+
+          double UiP1 = U[k - 1] + t * (U[k] - U[k - 1]);
+          double ViP1 = V[k - 1] + t * (V[k] - V[k - 1]);
+
+          double Up = TRAN_TRI3(UiP1, U[iP2], U[iP3], UC1, UC2, UC3, u, v);
+          double Vp = TRAN_TRI3(ViP1, V[iP2], V[iP3], VC1, VC2, VC3, u, v);
+          GPoint gp = gf->point(SPoint2(Up, Vp));
+          MFaceVertex *newv =
+            new MFaceVertex(gp.x(), gp.y(), gp.z(), gf, Up, Vp);
+          gf->mesh_vertices.push_back(newv);
+          tab[i][j] = newv;
+        }
+      }
+    }
+
+    // should we apply the elliptic smoother?
+
+    // create elements
+    if(corners.size() == 4) {
+      int L = N2 - N1, H = N3 - N2, L2 = N4 - N3;
+      int i, j;
+      for(i = 0; i < L2; ++i) {
+        for(j = 0; j < H; ++j) {
+          gf->triangles.push_back(
+            new MTriangle(tab[i][j], tab[i][j + 1], tab[i + 1][j]));
+          gf->triangles.push_back(
+            new MTriangle(tab[i][j + 1], tab[i + 1][j], tab[i + 1][j + 1]));
+        }
+      }
+
+      for(i = L2; i < L; ++i) {
+        for(j = 0; j < H + 1 + L2 - (i + 1); ++j) {
+          gf->triangles.push_back(
+            new MTriangle(tab[i][j], tab[i][j + 1], tab[i + 1][j]));
+        }
+      }
+
+      for(i = L2; i < L; ++i) {
+        for(j = 0; j < H + 1 + L2 - (i + 1) - 1; ++j) {
+          gf->triangles.push_back(
+            new MTriangle(tab[i][j + 1], tab[i + 1][j], tab[i + 1][j + 1]));
+        }
+      }
+    }
+    else {
+      int i, j;
+      for(i = 1; i <= L; ++i) {
+        for(j = 0; j < H + 1 - i; ++j) {
+          gf->triangles.push_back(
+            new MTriangle(tab[i - 1][j], tab[i - 1][j + 1], tab[i][j]));
+        }
+      }
+
+      for(i = 1; i < L; ++i) {
+        for(j = 0; j < H + 1 - i - 1; ++j) {
+          gf->triangles.push_back(
+            new MTriangle(tab[i][j], tab[i][j + 1], tab[i - 1][j + 1]));
         }
       }
     }
