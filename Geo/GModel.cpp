@@ -1449,10 +1449,10 @@ std::size_t GModel::getNumMeshParentElements() const
   return n;
 }
 
-std::size_t GModel::addMEdge(const MEdge &edge)
+std::size_t GModel::addMEdge(MEdge &edge)
 {
-  std::pair<MEdge, std::size_t> key(edge, _mapEdgeNum.size() + 1);
-  std::pair<hashmapMEdge::iterator, bool> it = _mapEdgeNum.insert(key);
+  std::pair<MEdge, std::size_t> key(std::move(edge), _mapEdgeNum.size() + 1);
+  std::pair<hashmapMEdge::iterator, bool> it = _mapEdgeNum.insert(std::move(key));
   return it.first->second;
 }
 
@@ -1471,10 +1471,10 @@ std::size_t GModel::getMEdge(MVertex *v0, MVertex *v1, MEdge &edge)
   }
 }
 
-std::size_t GModel::addMFace(const MFace &face)
+std::size_t GModel::addMFace(MFace &face)
 {
-  std::pair<MFace, std::size_t> key(face, _mapFaceNum.size() + 1);
-  std::pair<hashmapMFace::iterator, bool> it = _mapFaceNum.insert(key);
+  std::pair<MFace, std::size_t> key(std::move(face), _mapFaceNum.size() + 1);
+  std::pair<hashmapMFace::iterator, bool> it = _mapFaceNum.insert(std::move(key));
   return it.first->second;
 }
 
