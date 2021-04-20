@@ -34,11 +34,11 @@ Abort selection in geometry creation mode
 @item s
 Go to solver module
 @item x
-Toogle x coordinate freeze in geometry creation mode
+Toggle x coordinate freeze in geometry creation mode
 @item y
-Toogle y coordinate freeze in geometry creation mode
+Toggle y coordinate freeze in geometry creation mode
 @item z
-Toogle z coordinate freeze in geometry creation mode
+Toggle z coordinate freeze in geometry creation mode
 @item Shift+a
 Bring all windows to front
 @item Shift+g

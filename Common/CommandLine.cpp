@@ -243,9 +243,9 @@ GetShortcutsUsage(const std::string &ctrl)
   s.push_back(mp("p", "Go to post-processing module"));
   s.push_back(mp("q", "Abort selection in geometry creation mode"));
   s.push_back(mp("s", "Go to solver module"));
-  s.push_back(mp("x", "Toogle x coordinate freeze in geometry creation mode"));
-  s.push_back(mp("y", "Toogle y coordinate freeze in geometry creation mode"));
-  s.push_back(mp("z", "Toogle z coordinate freeze in geometry creation mode"));
+  s.push_back(mp("x", "Toggle x coordinate freeze in geometry creation mode"));
+  s.push_back(mp("y", "Toggle y coordinate freeze in geometry creation mode"));
+  s.push_back(mp("z", "Toggle z coordinate freeze in geometry creation mode"));
   s.push_back(mp("Shift+a", "Bring all windows to front"));
   s.push_back(mp("Shift+g", "Show geometry options"));
   s.push_back(mp("Shift+m", "Show mesh options"));

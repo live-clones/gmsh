@@ -175,7 +175,7 @@ Tags of curves in the geometric model for which a boundary layer is needed@*
 type: list@*
 default value: @code{@{@}}
 @item ExcludedSurfacesList
-Tags of surfaces in the geometric model where the boundary layer should not be contructed@*
+Tags of surfaces in the geometric model where the boundary layer should not be constructed@*
 type: list@*
 default value: @code{@{@}}
 @item FanPointsList

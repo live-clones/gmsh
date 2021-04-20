@@ -1285,7 +1285,7 @@ if(ENABLE_OCC)
   if(OCC_VERSION AND OCC_VERSION STRLESS ${OCC_MINIMAL_VERSION})
     message(WARNING "Gmsh requires OpenCASCADE >= ${OCC_MINIMAL_VERSION}. "
         "Use CMAKE_PREFIX_PATH or the CASROOT environment variable "
-        "to explicitely specify the installation path of OpenCASCADE")
+        "to explicitly specify the installation path of OpenCASCADE")
   elseif(OCC_INC)
     set(OCC_LIBS_REQUIRED
 	# subset of DataExchange

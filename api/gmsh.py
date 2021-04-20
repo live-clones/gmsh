@@ -5312,7 +5312,7 @@ class model:
             Add a surface loop (a closed shell) in the OpenCASCADE CAD representation,
             formed by `surfaceTags'.  If `tag' is positive, set the tag explicitly;
             otherwise a new tag is selected automatically. Return the tag of the
-            surface loop. Setting `sewing' allows to build a shell made of surfaces
+            surface loop. Setting `sewing' allows one to build a shell made of surfaces
             that share geometrically identical (but topologically different) curves.
 
             Return an integer value.
@@ -6471,7 +6471,7 @@ class view:
         argument associate a time value with the data. `numComponents' gives the
         number of data components (1 for scalar data, 3 for vector data, etc.) per
         entity; if negative, it is automatically inferred (when possible) from the
-        input data. `partition' allows to specify data in several sub-sets.
+        input data. `partition' allows one to specify data in several sub-sets.
         """
         api_tags_, api_tags_n_ = _ivectorsize(tags)
         api_data_, api_data_n_, api_data_nn_ = _ivectorvectordouble(data)

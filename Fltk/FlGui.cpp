@@ -535,7 +535,7 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
   // load default system icons (for file browser)
   Fl_File_Icon::load_system_icons();
 
-  // FLTK >= 1.3.3 allows to set a default global window icon
+  // FLTK >= 1.3.3 allows one to set a default global window icon
   Fl_RGB_Image icon(&gmsh_icon_pixmap);
   Fl_Window::default_icon(&icon);
 

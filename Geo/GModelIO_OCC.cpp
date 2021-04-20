@@ -2269,8 +2269,8 @@ bool OCC_Internals::addSurfaceLoop(int &tag,
   }
 
   if(sewing) {
-    // this allows to build a shell made of surfaces that share geometrically
-    // identical (but topologically different) curves.
+    // this allows one to build a shell made of surfaces that share
+    // geometrically identical (but topologically different) curves.
     TopoDS_Shape result;
     try {
       BRepBuilderAPI_Sewing s;

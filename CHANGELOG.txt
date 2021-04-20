@@ -133,7 +133,7 @@ OpenCASCADE ellipse arcs; new interactive filter in visibility window; flatter
 GUI; small bug fixes.
 
 * Incompatible API changes: mesh/getJacobians and mesh/getBasisFunctions now
-  take integration points explicitely; mesh/setNodes and mesh/setElements have
+  take integration points explicitly; mesh/setNodes and mesh/setElements have
   been replaced by mesh/addNodes and mesh/addElements; added optional arguments
   to mesh/classifySurfaces and occ/addSurfaceLoop; changed arguments of
   occ/addEllipseArc to follow geo/addEllipseArc.
@@ -562,7 +562,7 @@ behavior; new plugins (HarmonicToTime, Integrate, Eigenvectors); tetrahedral
 mesh file reading speedup (50% faster on large meshes); large memory footprint
 reduction (up to 50%) for the visualization of triangular/tetrahedral meshes;
 the solver interface now supports TCP/IP connections; new generalized raise mode
-(allows to use complex expressions to offset post-processing maps); upgraded
+(allows one to use complex expressions to offset post-processing maps); upgraded
 Netgen kernel to version 4.4; new optional TIME list in parsed views to specify
 the values of the time steps; several bug fixes in the Elliptic mesh algorithm;
 various other small bug fixes and enhancements.

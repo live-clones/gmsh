@@ -634,6 +634,8 @@ std::string MElement::getInfoString(bool multline)
     sstream << " " << getVertex(i)->getNum();
   if(multline) sstream << "\n";
 
+  sstream << " Volume: " << getVolume() << "\n";
+
   SPoint3 pt = barycenter();
   sstream << " Barycenter: (" << pt[0] << ", " << pt[1] << ", " << pt[2] << ")";
   if(multline) sstream << "\n";

@@ -799,7 +799,7 @@ Default value: @code{2000}
 @item Plugin(MeshVolume)
 Plugin(MeshVolume) computes the volume of the mesh.@*
 @*
-Only the elements in the physical group `PhysicalGroup' of dimension `Dimension' are taken into account, unless 'PhysicalGroup' is negative, in which case all the elements of the given `Dimension' are considered. If `Dimension` is negative, all the elments are considered.@*
+Only the elements in the physical group `PhysicalGroup' of dimension `Dimension' are taken into account, unless 'PhysicalGroup' is negative, in which case all the elements of the given `Dimension' are considered. If `Dimension` is negative, all the elements are considered.@*
 @*
 Plugin(MeshVolume) creates one new list-based view.
 Numeric options:
@@ -1156,7 +1156,7 @@ Default value: @code{0}
 @end table
 
 @item Plugin(SimplePartition)
-Plugin(SimplePartition) partitions the current mesh into `NumSlicesX', `NumSlicesY' and `NumSlicesZ' slices along the X-, Y- and Z-axis, respectively. The distribtion of these slices is governed by `MappingX', `MappingY' and `MappingZ', where `t' is a normalized absissa along each direction. (Setting `MappingX' to `t' will thus lead to equidistant slices along the X-axis.)@*
+Plugin(SimplePartition) partitions the current mesh into `NumSlicesX', `NumSlicesY' and `NumSlicesZ' slices along the X-, Y- and Z-axis, respectively. The distribution of these slices is governed by `MappingX', `MappingY' and `MappingZ', where `t' is a normalized absissa along each direction. (Setting `MappingX' to `t' will thus lead to equidistant slices along the X-axis.)@*
 @*
 The plugin creates the topology of the partitioned entities if `CreateTopology' is set.
 String options:
@@ -1318,7 +1318,7 @@ Default value: @code{-1}
 Plugin(Summation) sums every time steps of 'Reference View' and (every) 'Other View X'and store the result in a new view.@*
 If 'View 0' < 0 then the current view is selected.@*
 If 'View 1...8' < 0 then this view is skipped.@*
-Views can have diffrent number of time steps@*
+Views can have different number of time steps@*
 Warning: the Plugin assume that every views sharethe same mesh and that meshes do not move between time steps!
 String options:
 @table @code

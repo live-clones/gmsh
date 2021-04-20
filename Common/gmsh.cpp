@@ -3279,7 +3279,7 @@ GMSH_API void gmsh::model::mesh::getFaces(
   faceTags.clear();
   orientations.clear();
   if(faceType != 3 && faceType != 4) {
-    Msg::Error("Unknow face type (should be 3 or 4)");
+    Msg::Error("Unknown face type (should be 3 or 4)");
     return;
   }
   std::size_t numFaces = nodeTags.size() / faceType;

@@ -141,7 +141,7 @@ backgroundMesh::backgroundMesh(GFace *_gf, bool cfd)
       _sizes[itv2->first] = CTX::instance()->mesh.lcMax;
     }
   }
-  // ensure that other criteria are fullfilled
+  // ensure that other criteria are fulfilled
   updateSizes(_gf);
 
   // compute optimal mesh orientations

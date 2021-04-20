@@ -136,7 +136,7 @@ public:
   virtual int getVolumeSign() { return (getVolume() >= 0) ? 1 : -1; }
   virtual double gammaShapeMeasure();
   virtual double getInnerRadius();
-  virtual double getCircumRadius();
+  virtual double getOuterRadius();
   virtual double etaShapeMeasure();
   virtual void xyz2uvw(double xyz[3], double uvw[3]) const;
   virtual void getNode(int num, double &u, double &v, double &w) const

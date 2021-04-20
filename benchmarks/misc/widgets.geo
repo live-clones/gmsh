@@ -7,7 +7,7 @@ DefineConstant
    Macro "GmshMergeFile", AutoCheck 0}
  m2 = {"script_convert_to_m.geo", Name "Actions/Set views in m",
    Macro "GmshMergeFile", AutoCheck 0}
- m3 = {"script_show_lines.geo", Name "Actions/Toogle line display",
+ m3 = {"script_show_lines.geo", Name "Actions/Toggle line display",
    Macro "GmshMergeFile", AutoCheck 0, Highlight "Pink"}
  m4 = {"script_mesh_model.geo", Name "Actions/Mesh model",
    Macro "GmshMergeFile", AutoCheck 0}
