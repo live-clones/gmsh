@@ -44,7 +44,7 @@ std::string GMSH_SimplePartitionPlugin::getHelp() const
 {
   return "Plugin(SimplePartition) partitions the current mesh into "
          "`NumSlicesX', `NumSlicesY' and `NumSlicesZ' slices along the X-, Y- "
-         "and Z-axis, respectively. The distribtion of these slices is "
+         "and Z-axis, respectively. The distribution of these slices is "
          "governed "
          "by `MappingX', `MappingY' and `MappingZ', where `t' is a normalized "
          "absissa along each direction. (Setting `MappingX' to `t' will thus "

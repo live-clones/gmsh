@@ -4547,7 +4547,7 @@ const add_trimmed_surface = addTrimmedSurface
 Add a surface loop (a closed shell) in the OpenCASCADE CAD representation,
 formed by `surfaceTags`.  If `tag` is positive, set the tag explicitly;
 otherwise a new tag is selected automatically. Return the tag of the surface
-loop. Setting `sewing` allows to build a shell made of surfaces that share
+loop. Setting `sewing` allows one to build a shell made of surfaces that share
 geometrically identical (but topologically different) curves.
 
 Return an integer value.
@@ -5582,7 +5582,7 @@ precision numbers representing the data associated with the corresponding tag.
 The optional `time` argument associate a time value with the data.
 `numComponents` gives the number of data components (1 for scalar data, 3 for
 vector data, etc.) per entity; if negative, it is automatically inferred (when
-possible) from the input data. `partition` allows to specify data in several
+possible) from the input data. `partition` allows one to specify data in several
 sub-sets.
 """
 function addModelData(tag, step, modelName, dataType, tags, data, time = 0., numComponents = -1, partition = 0)

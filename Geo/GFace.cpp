@@ -1749,17 +1749,17 @@ void GFace::setMeshMaster(GFace *master, const std::vector<double> &tfo)
     master->embeddedVertices();
   m_vertices.insert(m_embedded_vertices.begin(), m_embedded_vertices.end());
 
-  // check topological correspondance
+  // check topological correspondence
   if(l_vertices.size() != m_vertices.size()) {
     Msg::Error(
-      "Different number of points (%d vs %d) for periodic correspondance "
+      "Different number of points (%d vs %d) for periodic correspondence "
       "between surfaces %d and %d",
       l_vertices.size(), m_vertices.size(), master->tag(), tag());
     return;
   }
   if(l_vtxToEdge.size() != m_vtxToEdge.size()) {
     Msg::Error(
-      "Different number of curves (%d vs %d) for periodic correspondance "
+      "Different number of curves (%d vs %d) for periodic correspondence "
       "between surfaces %d and %d",
       l_vtxToEdge.size(), m_vtxToEdge.size(), master->tag(), tag());
     return;
@@ -1798,7 +1798,7 @@ void GFace::setMeshMaster(GFace *master, const std::vector<double> &tfo)
   }
 
   if(gVertexCounterparts.size() != m_vertices.size()) {
-    Msg::Error("Could not find all point correspondances for the periodic "
+    Msg::Error("Could not find all point correspondences for the periodic "
                "connection from surface %d to %d",
                master->tag(), tag());
     return;

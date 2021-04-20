@@ -242,7 +242,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.IgnorePeriodicity
-Skip periodic node section and skip periodic boundary alignement step when reading meshes in the MSH2 format.@*
+Skip periodic node section and skip periodic boundary alignment step when reading meshes in the MSH2 format.@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 

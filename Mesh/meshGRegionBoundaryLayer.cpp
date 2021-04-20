@@ -247,7 +247,7 @@ public:
             MVertex *v = edges[i]->lines[j]->getVertex(k);
             auto it = _vertices.find(v);
             if(it == _vertices.end())
-              Msg::Error("Unknow node in boundary layer");
+              Msg::Error("Unknown node in boundary layer");
             it->add_line(edges[i]->lines[j], edges[i]);
           }
         }

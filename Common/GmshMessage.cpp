@@ -1358,7 +1358,7 @@ void Msg::ExchangeOnelabParameter(const std::string &key,
     else
       val = ps[0].getValues(); // use value from server
     // keep track of these attributes, which can be changed server-side (unless
-    // they are not visible or, for the range/choices, when explicitely setting
+    // they are not visible or, for the range/choices, when explicitly setting
     // these attributes as ReadOnly)
     if(ps[0].getVisible()){
       if(!(fopt.count("ReadOnlyRange") && fopt["ReadOnlyRange"][0])){

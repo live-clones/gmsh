@@ -24,7 +24,7 @@ class MVertex;
 class MVertex {
 protected:
   // the id of the vertex: this number is unique and is guaranteed never to
-  // change once a vertex has been created, unless the mesh is explicitely
+  // change once a vertex has been created, unless the mesh is explicitly
   // renumbered
   std::size_t _num;
   // a vertex index, used during mesh generation or for some IO operations (this

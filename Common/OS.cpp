@@ -638,8 +638,8 @@ void RedirectIOToConsole()
 {
 #if defined(WIN32) && !defined(__CYGWIN__)
   // Win32 GUI apps do not write to the DOS console; make it work again by
-  // attaching to parent console, which allows to use the DOS shell to work with
-  // Gmsh on the command line (without this hack, you need to either use a
+  // attaching to parent console, which allows one to use the DOS shell to work
+  // with Gmsh on the command line (without this hack, you need to either use a
   // better shell (e.g. bash), or compile a /subsystem:console version
   if(!AttachConsole(ATTACH_PARENT_PROCESS)) return;
   // redirect unbuffered stdout, stdin and stderr to the console

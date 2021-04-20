@@ -1497,7 +1497,7 @@ public:
     _viewIndex = 0;
     _viewTag = -1;
     _cropNegativeValues = true;
-    updateNeeded = true; // in case we don't set ViewIndex or ViewTag explicitely
+    updateNeeded = true; // in case we don't set ViewIndex or ViewTag explicitly
 
     options["ViewIndex"] = new FieldOptionInt(
       _viewIndex, "Post-processing view index", &updateNeeded);
@@ -2851,7 +2851,7 @@ BoundaryLayerField::BoundaryLayerField()
   options["ExcludedSurfacesList"] =
     new FieldOptionList(_excludedSurfaceTags,
                         "Tags of surfaces in the geometric model where the "
-                        "boundary layer should not be contructed",
+                        "boundary layer should not be constructed",
                         &updateNeeded);
 
   // deprecated names

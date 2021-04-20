@@ -976,7 +976,7 @@ insertAPoint(GFace *gf, std::set<MTri3 *, compareTri3Ptr>::iterator it,
                    center[0], center[1]);
       if(result == -2)
         Msg::Debug("Point %g %g cannot be inserted because euler formula is "
-                   "not fullfilled",
+                   "not fulfilled",
                    center[0], center[1]);
       if(result == -3)
         Msg::Debug(
@@ -1301,7 +1301,7 @@ void bowyerWatsonFrontal(GFace *gf, std::map<MVertex *, MVertex *> *equivalence,
   Range<double> RV = gf->parBounds(1);
   SPoint2 FAR(2 * RU.high(), 2 * RV.high());
 
-  
+
   // insert points
   int ITERATION = 0;
   while(1) {
