@@ -801,7 +801,7 @@ static void TestConformity(GModel *gm)
           bnd.erase(it);
       }
     }
-    printf("vol(%d) = %12.5E\n", gr->tag(), vol);
+    Msg::Info("vol(%d) = %12.5E", gr->tag(), vol);
 
     for(auto itf = bnd.begin(); itf != bnd.end(); ++itf) {
       GFace *gfound = findInFaceSearchStructure(*itf, search);
@@ -1165,8 +1165,8 @@ void RecombineMesh(GModel *m)
                     CTX::instance()->mesh.algoRecombine == 3);
     int topo = CTX::instance()->mesh.recombineOptimizeTopology;
     if (CTX::instance()->mesh.algoRecombine == 4)
-      meshGFaceQuadrangulateBipartiteLabelling(gf->tag()); 
-    else 
+      meshGFaceQuadrangulateBipartiteLabelling(gf->tag());
+    else
       recombineIntoQuads(gf, blossom, topo, true, .01);
   }
 
@@ -1490,11 +1490,11 @@ void GenerateMesh(GModel *m, int ask)
       bool deleteGModelMeshAfter =
         true; /* mesh saved in background, no longer needed */
       BuildBackgroundMeshAndGuidingField(m, overwriteGModelMesh,
-                                         deleteGModelMeshAfter, 
+                                         deleteGModelMeshAfter,
                                          overwriteField);
     }
 
-    if(CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT 
+    if(CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT
         && old == 2 && exists && (ask == 1 || ask == 2)) {
       /* transferSeamGEdgesVerticesToGFace() called by quadqs remove the 1D
        * meshes of the seam GEdge, so 2D initial meshing does not work without
