@@ -51,7 +51,7 @@ closestVertexFinder::~closestVertexFinder()
 #endif
 }
 
-MVertex *closestVertexFinder ::operator()(const SPoint3 &p)
+MVertex *closestVertexFinder::operator()(const SPoint3 &p)
 {
 #if defined(HAVE_ANN)
 
@@ -65,8 +65,8 @@ MVertex *closestVertexFinder ::operator()(const SPoint3 &p)
 #endif
 }
 
-MVertex *closestVertexFinder ::operator()(const SPoint3 &p,
-                                          const std::vector<double> &tfo)
+MVertex *closestVertexFinder::operator()(const SPoint3 &p,
+                                         const std::vector<double> &tfo)
 {
 #if defined(HAVE_ANN)
 
