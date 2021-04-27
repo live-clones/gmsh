@@ -5,7 +5,7 @@
 
 #include <sstream>
 #include "GmshConfig.h"
-#if defined(HAVE_FLTK)
+#if defined(HAVE_FLTK) && defined(_WIN32)
 #define NOMINMAX
 // Opencascade define NOMSG and a bunch of other macros to avoid some
 // definitions from windows.h, but FLTK needs MSG macro.
