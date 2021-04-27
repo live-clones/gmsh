@@ -5,6 +5,13 @@
 
 #include <sstream>
 #include "GmshConfig.h"
+#if defined(HAVE_FLTK)
+#define NOMINMAX
+// Opencascade define NOMSG and a bunch of other macros to avoid some
+// definitions from windows.h, but FLTK needs MSG macro.
+// Including windows.h at the beginning makes defining NOMSG irrelevant.
+#include "windows.h"
+#endif
 #include "GmshDefines.h"
 #include "GmshGlobal.h"
 #include "MallocUtils.h"
