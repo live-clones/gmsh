@@ -46,6 +46,7 @@ void sortVertices(const std::vector<MVertex *> &v, std::vector<char> &s)
     return;
   }
   else if(v.size() == 4) {
+    // avoid overhead of general case below
     MVertex * sorted[4] {v[0], v[1], v[2], v[3]};
     std::sort(&sorted[0], &sorted[4], compare);
     s.reserve(4);
@@ -55,7 +56,7 @@ void sortVertices(const std::vector<MVertex *> &v, std::vector<char> &s)
     }
     return;
   }
-  
+
   std::vector<MVertex *> sorted = v;
   std::sort(sorted.begin(), sorted.end(), compare);
   s.reserve(sorted.size());
@@ -81,10 +82,9 @@ MFace::MFace(const std::vector<MVertex *> &v)
   sortVertices(_v, _si);
 }
 void MFace::getOrientationFlagForFace(std::vector<int> &faceOrientationFlag)
-{ // Reference :  "Higher-Order Finite Element  Methods"; Pavel Solin, Karel
-  // Segeth ,
-  //                 Ivo Dolezel , Chapman and Hall/CRC; Edition : Har/Cdr
-  //                 (2003)
+{
+  // Reference : "Higher-Order Finite Element Methods"; Pavel Solin, Karel
+  // Segeth, Ivo Dolezel, Chapman and Hall/CRC (2003)
   if(_v.size() == 3) { // triangular face
     if(_v[int(_si[0])]->getNum() == _v[0]->getNum()) {
       faceOrientationFlag[0] = 0;
