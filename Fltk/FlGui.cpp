@@ -1226,6 +1226,11 @@ void FlGui::copyCurrentOpenglWindowToClipboard()
 #endif
 }
 
+drawContext *FlGui::getCurrentDrawContext()
+{
+  return getCurrentOpenglWindow()->getDrawContext();
+}
+
 char FlGui::selectEntity(int type)
 {
   return getCurrentOpenglWindow()->selectEntity(
@@ -1510,4 +1515,22 @@ void FlGui::openModule(const std::string &name)
   if(!onelab) return;
   if(!onelab->isManuallyClosed("0Modules/" + name))
     onelab->openTreeItem("0Modules/" + name);
+}
+
+void FlGui::openTreeItem(const std::string &name)
+{
+  if(!onelab) return;
+  onelab->openTreeItem(name);
+}
+
+void FlGui::closeTreeItem(const std::string &name)
+{
+  if(!onelab) return;
+  onelab->closeTreeItem(name);
+}
+
+void FlGui::showOnelabContext(int dim, int tag)
+{
+  if(!onelabContext) return;
+  onelabContext->show(dim, tag);
 }
