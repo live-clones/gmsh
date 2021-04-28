@@ -264,6 +264,7 @@ GMSH_API void gmsh::model::add(const std::string &name)
   if(!_checkInit()) return;
   GModel *m = new GModel(name);
   if(!m) Msg::Error("Could not add model '%s'", name.c_str());
+  GModel::current(GModel::list.size() - 1);
 }
 
 GMSH_API void gmsh::model::remove()
