@@ -75,11 +75,11 @@ int GFace::getMeshSizeFromBoundary() const
 
 int GFace::delEdge(GEdge *edge)
 {
-  const auto found = std::find(begin(l_edges), end(l_edges), edge);
+  const auto found = std::find(l_edges.begin(), l_edges.end(), edge);
 
-  if(found != end(l_edges)) { l_edges.erase(found); }
+  if(found != l_edges.end()) { l_edges.erase(found); }
 
-  const auto pos = std::distance(begin(l_edges), found);
+  const auto pos = std::distance(l_edges.begin(), found);
 
   if(l_dirs.empty()) { return 0; }
 
@@ -89,16 +89,14 @@ int GFace::delEdge(GEdge *edge)
   }
 
   const auto orientation = l_dirs.at(pos);
-
   l_dirs.erase(std::next(begin(l_dirs), pos));
-
   return orientation;
 }
 
 void GFace::setBoundEdges(const std::vector<int> &tagEdges)
 {
   std::vector<GEdge *> e;
-  for(std::size_t i = 0; i != tagEdges.size(); i++) {
+  for(std::size_t i = 0; i < tagEdges.size(); i++) {
     GEdge *ge = model()->getEdgeByTag(tagEdges[i]);
     if(ge) {
       e.push_back(ge);
@@ -120,12 +118,14 @@ void GFace::setBoundEdges(const std::vector<int> &tagEdges,
     Msg::Error("Wrong number of curve signs in surface %d", tag());
     setBoundEdges(tagEdges);
   }
-  for(std::vector<int>::size_type i = 0; i != tagEdges.size(); i++) {
+  for(std::vector<int>::size_type i = 0; i < tagEdges.size(); i++) {
     GEdge *ge = model()->getEdgeByTag(tagEdges[i]);
     if(ge) {
-      l_edges.push_back(ge);
-      l_dirs.push_back(signEdges[i]);
-      ge->addFace(this);
+      if(std::find(l_edges.begin(), l_edges.end(), ge) == l_edges.end()) {
+        l_edges.push_back(ge);
+        l_dirs.push_back(signEdges[i]);
+        ge->addFace(this);
+      }
     }
     else {
       Msg::Error("Unknown curve %d in surface %d", tagEdges[i], tag());
