@@ -2614,29 +2614,6 @@ class model:
         create_faces = createFaces
 
         @staticmethod
-        def getLocalMultipliersForHcurl0(elementType, tag=-1):
-            """
-            gmsh.model.mesh.getLocalMultipliersForHcurl0(elementType, tag=-1)
-
-            Get the local multipliers (to guarantee H(curl)-conformity) of the order 0
-            H(curl) basis functions. Warning: this is an experimental feature and will
-            probably change in a future release.
-
-            Return `localMultipliers'.
-            """
-            api_localMultipliers_, api_localMultipliers_n_ = POINTER(c_int)(), c_size_t()
-            ierr = c_int()
-            lib.gmshModelMeshGetLocalMultipliersForHcurl0(
-                c_int(elementType),
-                byref(api_localMultipliers_), byref(api_localMultipliers_n_),
-                c_int(tag),
-                byref(ierr))
-            if ierr.value != 0:
-                raise Exception(logger.getLastError())
-            return _ovectorint(api_localMultipliers_, api_localMultipliers_n_.value)
-        get_local_multipliers_for_hcurl0 = getLocalMultipliersForHcurl0
-
-        @staticmethod
         def getKeysForElements(elementType, functionSpaceType, tag=-1, returnCoord=True):
             """
             gmsh.model.mesh.getKeysForElements(elementType, functionSpaceType, tag=-1, returnCoord=True)

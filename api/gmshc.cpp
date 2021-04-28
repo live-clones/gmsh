@@ -1459,19 +1459,6 @@ GMSH_API void gmshModelMeshCreateFaces(int * dimTags, size_t dimTags_n, int * ie
   }
 }
 
-GMSH_API void gmshModelMeshGetLocalMultipliersForHcurl0(const int elementType, int ** localMultipliers, size_t * localMultipliers_n, const int tag, int * ierr)
-{
-  if(ierr) *ierr = 0;
-  try {
-    std::vector<int> api_localMultipliers_;
-    gmsh::model::mesh::getLocalMultipliersForHcurl0(elementType, api_localMultipliers_, tag);
-    vector2ptr(api_localMultipliers_, localMultipliers, localMultipliers_n);
-  }
-  catch(...){
-    if(ierr) *ierr = 1;
-  }
-}
-
 GMSH_API void gmshModelMeshGetKeysForElements(const int elementType, const char * functionSpaceType, int ** typeKeys, size_t * typeKeys_n, size_t ** entityKeys, size_t * entityKeys_n, double ** coord, size_t * coord_n, const int tag, const int returnCoord, int * ierr)
 {
   if(ierr) *ierr = 0;

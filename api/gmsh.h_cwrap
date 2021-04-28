@@ -1706,20 +1706,6 @@ namespace gmsh { // Top-level functions
         gmshFree(api_dimTags_);
       }
 
-      // Get the local multipliers (to guarantee H(curl)-conformity) of the order 0
-      // H(curl) basis functions. Warning: this is an experimental feature and will
-      // probably change in a future release.
-      inline void getLocalMultipliersForHcurl0(const int elementType,
-                                               std::vector<int> & localMultipliers,
-                                               const int tag = -1)
-      {
-        int ierr = 0;
-        int *api_localMultipliers_; size_t api_localMultipliers_n_;
-        gmshModelMeshGetLocalMultipliersForHcurl0(elementType, &api_localMultipliers_, &api_localMultipliers_n_, tag, &ierr);
-        if(ierr) throwLastError();
-        localMultipliers.assign(api_localMultipliers_, api_localMultipliers_ + api_localMultipliers_n_); gmshFree(api_localMultipliers_);
-      }
-
       // Generate the pair of keys for the elements of type `elementType' in the
       // entity of tag `tag', for the `functionSpaceType' function space. Each pair
       // (`typeKey', `entityKey') uniquely identifies a basis function in the

@@ -2203,28 +2203,6 @@ end
 const create_faces = createFaces
 
 """
-    gmsh.model.mesh.getLocalMultipliersForHcurl0(elementType, tag = -1)
-
-Get the local multipliers (to guarantee H(curl)-conformity) of the order 0
-H(curl) basis functions. Warning: this is an experimental feature and will
-probably change in a future release.
-
-Return `localMultipliers`.
-"""
-function getLocalMultipliersForHcurl0(elementType, tag = -1)
-    api_localMultipliers_ = Ref{Ptr{Cint}}()
-    api_localMultipliers_n_ = Ref{Csize_t}()
-    ierr = Ref{Cint}()
-    ccall((:gmshModelMeshGetLocalMultipliersForHcurl0, gmsh.lib), Cvoid,
-          (Cint, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
-          elementType, api_localMultipliers_, api_localMultipliers_n_, tag, ierr)
-    ierr[] != 0 && error(gmsh.logger.getLastError())
-    localMultipliers = unsafe_wrap(Array, api_localMultipliers_[], api_localMultipliers_n_[], own=true)
-    return localMultipliers
-end
-const get_local_multipliers_for_hcurl0 = getLocalMultipliersForHcurl0
-
-"""
     gmsh.model.mesh.getKeysForElements(elementType, functionSpaceType, tag = -1, returnCoord = true)
 
 Generate the pair of keys for the elements of type `elementType` in the entity

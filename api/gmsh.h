@@ -1108,15 +1108,6 @@ namespace gmsh { // Top-level functions
       // Create unique mesh faces for the entities `dimTags'.
       GMSH_API void createFaces(const gmsh::vectorpair & dimTags = gmsh::vectorpair());
 
-      // gmsh::model::mesh::getLocalMultipliersForHcurl0
-      //
-      // Get the local multipliers (to guarantee H(curl)-conformity) of the order 0
-      // H(curl) basis functions. Warning: this is an experimental feature and will
-      // probably change in a future release.
-      GMSH_API void getLocalMultipliersForHcurl0(const int elementType,
-                                                 std::vector<int> & localMultipliers,
-                                                 const int tag = -1);
-
       // gmsh::model::mesh::getKeysForElements
       //
       // Generate the pair of keys for the elements of type `elementType' in the

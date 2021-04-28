@@ -3340,49 +3340,10 @@ GMSH_API void gmsh::model::mesh::createFaces(const vectorpair &dimTags)
   }
 }
 
-GMSH_API void gmsh::model::mesh::getLocalMultipliersForHcurl0(
-  const int elementType, std::vector<int> &localMultipliers, const int tag)
-{
-  // FIXME: this should eventually be removed, or replaced with something more
-  // generic
-  localMultipliers.clear();
-  int dim = ElementType::getDimension(elementType);
-  std::map<int, std::vector<GEntity *> > typeEnt;
-  _getEntitiesForElementTypes(dim, tag, typeEnt);
-  const std::vector<GEntity *> &entities(typeEnt[elementType]);
-  int familyType = ElementType::getParentType(elementType);
-  std::size_t numElements = 0, numEdgesPerEle = 0;
-
-  for(std::size_t i = 0; i < entities.size(); i++) {
-    GEntity *ge = entities[i];
-    std::size_t n = ge->getNumMeshElementsByType(familyType);
-    numElements += n;
-    if(n && !numEdgesPerEle)
-      numEdgesPerEle = ge->getMeshElementByType(familyType, 0)->getNumEdges();
-  }
-  if(!numElements || !numEdgesPerEle) return;
-  localMultipliers.resize(numElements * numEdgesPerEle, 1);
-  size_t indexNumElement = 0;
-  for(std::size_t ii = 0; ii < entities.size(); ii++) {
-    GEntity *ge = entities[ii];
-    for(std::size_t j = 0; j < ge->getNumMeshElementsByType(familyType); j++) {
-      MElement *e = ge->getMeshElementByType(familyType, j);
-      for(int iEdge = 0; iEdge < e->getNumEdges(); iEdge++) {
-        MEdge edge = e->getEdge(iEdge);
-        MEdge edgeSolin = e->getEdgeSolin(iEdge);
-        if(edge.getMinVertex() != edgeSolin.getVertex(0)) {
-          localMultipliers[indexNumElement * numEdgesPerEle + iEdge] = -1;
-        }
-      }
-      indexNumElement++;
-    }
-  }
-}
-
 GMSH_API void gmsh::model::mesh::getKeysForElements(
   const int elementType, const std::string &functionSpaceType,
-  std::vector< int > &typeKeys, std::vector< std::size_t > &entityKeys, std::vector<double> &coord, const int tag,
-  const bool generateCoord)
+  std::vector<int> &typeKeys, std::vector<std::size_t> &entityKeys,
+  std::vector<double> &coord, const int tag, const bool generateCoord)
 {
   if(!_checkInit()) return;
   coord.clear();
@@ -3478,9 +3439,9 @@ GMSH_API void gmsh::model::mesh::getKeysForElements(
                                        nodalB->getNumShapeFunctions() * 3);
       }
       typeKeys.reserve(typeKeys.size() +
-                   numElementsInEntitie * nodalB->getNumShapeFunctions());
+                       numElementsInEntitie * nodalB->getNumShapeFunctions());
       entityKeys.reserve(entityKeys.size() +
-                   numElementsInEntitie * nodalB->getNumShapeFunctions());
+                         numElementsInEntitie * nodalB->getNumShapeFunctions());
 
       for(std::size_t j = 0; j < numElementsInEntitie; ++j) {
         MElement *e = ge->getMeshElementByType(familyType, j);
@@ -3541,8 +3502,10 @@ GMSH_API void gmsh::model::mesh::getKeysForElements(
       coord.reserve(coord.size() +
                     numElementsInEntitie * numDofsPerElement * 3);
     }
-    typeKeys.reserve(typeKeys.size() + numElementsInEntitie * numDofsPerElement);
-    entityKeys.reserve(entityKeys.size() + numElementsInEntitie * numDofsPerElement);
+    typeKeys.reserve(typeKeys.size() +
+                     numElementsInEntitie * numDofsPerElement);
+    entityKeys.reserve(entityKeys.size() +
+                       numElementsInEntitie * numDofsPerElement);
 
     for(std::size_t j = 0; j < numElementsInEntitie; j++) {
       MElement *e = ge->getMeshElementByType(familyType, j);
@@ -3641,7 +3604,8 @@ GMSH_API void gmsh::model::mesh::getKeysForElements(
 
 GMSH_API void gmsh::model::mesh::getKeysForElement(
   const std::size_t elementTag, const std::string &functionSpaceType,
-  std::vector< int > &typeKeys, std::vector< std::size_t > &entityKeys, std::vector<double> &coord, const bool generateCoord)
+  std::vector<int> &typeKeys, std::vector<std::size_t> &entityKeys,
+  std::vector<double> &coord, const bool generateCoord)
 {
   if(!_checkInit()) return;
   coord.clear();
@@ -3967,8 +3931,9 @@ GMSH_API int gmsh::model::mesh::getNumberOfKeysForElements(
 }
 
 GMSH_API void gmsh::model::mesh::getInformationForElements(
-  const std::vector< int > &typeKeys, const std::vector< std::size_t > &entityKeys, const int elementType,
-  const std::string &functionSpaceType, gmsh::vectorpair &infoKeys)
+  const std::vector<int> &typeKeys, const std::vector<std::size_t> &entityKeys,
+  const int elementType, const std::string &functionSpaceType,
+  gmsh::vectorpair &infoKeys)
 {
   infoKeys.clear();
   int basisOrder = 0;
@@ -3981,7 +3946,9 @@ GMSH_API void gmsh::model::mesh::getInformationForElements(
   }
 
   if(typeKeys.size() != entityKeys.size()) {
-    Msg::Error("The size of 'typeKeys' is different of the size of 'entityKeys' ('%i', '%i')", typeKeys.size(), entityKeys.size());
+    Msg::Error("The size of 'typeKeys' is different of the size of "
+               "'entityKeys' ('%i', '%i')",
+               typeKeys.size(), entityKeys.size());
     return;
   }
 

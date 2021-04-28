@@ -971,14 +971,6 @@ GMSH_API void gmshModelMeshCreateEdges(int * dimTags, size_t dimTags_n,
 GMSH_API void gmshModelMeshCreateFaces(int * dimTags, size_t dimTags_n,
                                        int * ierr);
 
-/* Get the local multipliers (to guarantee H(curl)-conformity) of the order 0
- * H(curl) basis functions. Warning: this is an experimental feature and will
- * probably change in a future release. */
-GMSH_API void gmshModelMeshGetLocalMultipliersForHcurl0(const int elementType,
-                                                        int ** localMultipliers, size_t * localMultipliers_n,
-                                                        const int tag,
-                                                        int * ierr);
-
 /* Generate the pair of keys for the elements of type `elementType' in the
  * entity of tag `tag', for the `functionSpaceType' function space. Each pair
  * (`typeKey', `entityKey') uniquely identifies a basis function in the
