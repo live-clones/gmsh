@@ -39,6 +39,7 @@ class onelabContextWindow;
 class onelabGroup;
 class helpWindow;
 class Fl_Widget;
+class drawContext;
 
 class GVertex;
 class GEdge;
@@ -137,6 +138,8 @@ public:
   void storeCurrentWindowsInfo();
   // get the last opengl window that received an event
   openglWindow *getCurrentOpenglWindow();
+  // get the draw context from the last opengl window that received an event
+  drawContext *getCurrentDrawContext();
   // override which opengl window should be considered as current, by given an
   // absolute index amongst all the existing opengl windows
   void setCurrentOpenglWindow(int which);
@@ -160,10 +163,16 @@ public:
   void rebuildTree(bool deleteWidgets);
   // open module in tree
   void openModule(const std::string &name);
+  // open tree item
+  void openTreeItem(const std::string &name);
+  // close tree item
+  void closeTreeItem(const std::string &name);
   // apply color scheme to widgets
   void applyColorScheme(bool redraw = false);
   // should the quit callback exit the app, or just close all windows?
   bool quitShouldExit() { return _quitShouldExit; }
+  // show onelab context window for the given entity
+  void showOnelabContext(int dim, int tag);
 };
 
 void redraw_cb(Fl_Widget *w, void *data);

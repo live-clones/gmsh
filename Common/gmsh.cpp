@@ -84,9 +84,6 @@
 
 #if defined(HAVE_FLTK)
 #include "FlGui.h"
-#include "openglWindow.h"
-#include "onelabContextWindow.h"
-#include "onelabGroup.h"
 #endif
 
 #if defined(HAVE_ONELAB)
@@ -1107,8 +1104,7 @@ GMSH_API void gmsh::model::setVisibilityPerWindow(const int value,
   if(!_checkInit()) return;
 #if defined(HAVE_FLTK)
   FlGui::instance()->setCurrentOpenglWindow(windowIndex);
-  drawContext *ctx =
-    FlGui::instance()->getCurrentOpenglWindow()->getDrawContext();
+  drawContext *ctx = FlGui::instance()->getCurrentDrawContext();
   GModel *m = GModel::current();
   if(value)
     ctx->show(m);
@@ -7162,8 +7158,7 @@ GMSH_API void gmsh::view::setVisibilityPerWindow(const int tag, const int value,
   }
 #if defined(HAVE_FLTK)
   FlGui::instance()->setCurrentOpenglWindow(windowIndex);
-  drawContext *ctx =
-    FlGui::instance()->getCurrentOpenglWindow()->getDrawContext();
+  drawContext *ctx = FlGui::instance()->getCurrentDrawContext();
   if(value)
     ctx->show(view);
   else
@@ -7464,7 +7459,7 @@ GMSH_API void gmsh::fltk::showContextWindow(const int dim, const int tag)
   if(!_checkInit()) return;
 #if defined(HAVE_FLTK)
   _createFltk();
-  FlGui::instance()->onelabContext->show(dim, tag);
+  FlGui::instance()->showOnelabContext(dim, tag);
 #endif
 }
 
@@ -7473,7 +7468,7 @@ GMSH_API void gmsh::fltk::openTreeItem(const std::string &name)
   if(!_checkInit()) return;
 #if defined(HAVE_FLTK)
   _createFltk();
-  FlGui::instance()->onelab->openTreeItem(name);
+  FlGui::instance()->openTreeItem(name);
 #endif
 }
 
@@ -7482,7 +7477,7 @@ GMSH_API void gmsh::fltk::closeTreeItem(const std::string &name)
   if(!_checkInit()) return;
 #if defined(HAVE_FLTK)
   _createFltk();
-  FlGui::instance()->onelab->closeTreeItem(name);
+  FlGui::instance()->closeTreeItem(name);
 #endif
 }
 
