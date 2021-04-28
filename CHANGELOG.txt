@@ -1,6 +1,7 @@
-4.8.4 (April 28, 2021) : small bug fixes.
+4.8.4 (April 28, 2021) : set current model in gmsh/model/add; small bug fixes.
 
-4.8.3 (April 6, 2021): small bug fixes.
+4.8.3 (April 6, 2021): better handling of errors in inverse surface mapping;
+fixed Mesh.MedFileMinorVersion for MED 4; small bug fixes.
 
 4.8.2 (March 27, 2021): fixed regression in OCC transforms; fixed cwrap API.
 
