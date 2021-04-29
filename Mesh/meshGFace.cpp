@@ -1778,7 +1778,6 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
   splitElementsInBoundaryLayerIfNeeded(gf);
 
   if((CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine) &&
-     !onlyInitialMesh &&
      (CTX::instance()->mesh.algoRecombine <= 1 ||
       CTX::instance()->mesh.algoRecombine == 4)) {
     bool blossom = (CTX::instance()->mesh.algoRecombine == 1);
@@ -2848,8 +2847,9 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
     }
     if(CTX::instance()->mesh.algoRecombine == 4)
       meshGFaceQuadrangulateBipartiteLabelling(gf->tag());
-    else
+    else {
       recombineIntoQuads(gf, blossom, topo, nodeRepositioning, 0.1);
+    }
   }
 
   computeElementShapes(gf, gf->meshStatistics.worst_element_shape,
