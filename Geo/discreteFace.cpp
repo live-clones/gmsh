@@ -30,6 +30,7 @@ void discreteFace::param::clear()
   rtree3d.RemoveAll();
   v2d.clear();
   v3d.clear();
+  bbox = SBoundingBox3d();
   t2d.clear();
   t3d.clear();
   CURV.clear();
@@ -280,6 +281,12 @@ bool discreteFace::containsParam(const SPoint2 &pt)
   return false;
 }
 
+SBoundingBox3d discreteFace::bounds(bool fast)
+{
+  if(_param.empty()) return GFace::bounds(fast);
+  return _param.bbox;
+}
+
 SVector3 discreteFace::normal(const SPoint2 &param) const
 {
   if(_param.empty()) return SVector3();
@@ -511,6 +518,7 @@ void discreteFace::_createGeometryFromSTL()
     _param.v3d.push_back(MVertex(stl_vertices_xyz[i].x(),
                                  stl_vertices_xyz[i].y(),
                                  stl_vertices_xyz[i].z()));
+    _param.bbox += _param.v3d.back().point();
   }
 
   for(size_t i = 0; i < stl_triangles.size() / 3; i++) {
