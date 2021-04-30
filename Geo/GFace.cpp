@@ -1342,8 +1342,27 @@ bool GFace::buildSTLTriangulation(bool force)
   stl_vertices_xyz.clear();
   stl_triangles.clear();
 
-  // Build a simple triangulation for surfaces which we know are not trimmed
-  if(geomType() == ParametricSurface) {
+  if(triangles.size()) {
+    // if a mesh exists, import it as the STL representation
+    std::map<MVertex *, int, MVertexPtrLessThan> nodes;
+    for(std::size_t i = 0; i < triangles.size(); i++) {
+      for(int j = 0; j < 3; j++) {
+        MVertex *v = triangles[i]->getVertex(j);
+        if(!nodes.count(v)) {
+          stl_vertices_xyz.push_back(SPoint3(v->x(), v->y(), v->z()));
+          nodes[v] = stl_vertices_xyz.size() - 1;
+        }
+      }
+    }
+    for(std::size_t i = 0; i < triangles.size(); i++) {
+      for(int j = 0; j < 3; j++) {
+        stl_triangles.push_back(nodes[triangles[i]->getVertex(j)]);
+      }
+    }
+    return true;
+  }
+  else if(geomType() == ParametricSurface) {
+    // build a simple triangulation for surfaces which we know are not trimmed
     const int nu = 64, nv = 64;
     Range<double> ubounds = parBounds(0);
     Range<double> vbounds = parBounds(1);
@@ -1390,8 +1409,7 @@ bool GFace::fillVertexArray(bool force)
   unsigned int c =
     useColor() ? getColor() : CTX::instance()->color.geom.surface;
   unsigned int col[4] = {c, c, c, c};
-  if(stl_vertices_xyz.size() &&
-     (stl_vertices_xyz.size() == stl_normals.size())) {
+  if(stl_vertices_xyz.size()) {
     for(std::size_t i = 0; i < stl_triangles.size(); i += 3) {
       SPoint3 &p1(stl_vertices_xyz[stl_triangles[i]]);
       SPoint3 &p2(stl_vertices_xyz[stl_triangles[i + 1]]);
@@ -1399,10 +1417,18 @@ bool GFace::fillVertexArray(bool force)
       double x[3] = {p1.x(), p2.x(), p3.x()};
       double y[3] = {p1.y(), p2.y(), p3.y()};
       double z[3] = {p1.z(), p2.z(), p3.z()};
-      SVector3 n[3] = {stl_normals[stl_triangles[i]],
-                       stl_normals[stl_triangles[i + 1]],
-                       stl_normals[stl_triangles[i + 2]]};
-      va_geom_triangles->add(x, y, z, n, col);
+      if(stl_vertices_xyz.size() == stl_normals.size()) {
+        SVector3 n[3] = {stl_normals[stl_triangles[i]],
+                         stl_normals[stl_triangles[i + 1]],
+                         stl_normals[stl_triangles[i + 2]]};
+        va_geom_triangles->add(x, y, z, n, col);
+      }
+      else {
+        double nn[3];
+        normal3points(x[0], y[0], z[0], x[1], y[1], z[1],x[2], y[2], z[2], nn);
+        SVector3 n[3] = {SVector3(nn), SVector3(nn), SVector3(nn)};
+        va_geom_triangles->add(x, y, z, n, col);
+      }
     }
   }
   else if(stl_vertices_uv.size()) {
@@ -1416,8 +1442,16 @@ bool GFace::fillVertexArray(bool force)
       double x[3] = {gp1.x(), gp2.x(), gp3.x()};
       double y[3] = {gp1.y(), gp2.y(), gp3.y()};
       double z[3] = {gp1.z(), gp2.z(), gp3.z()};
-      SVector3 n[3] = {normal(p1), normal(p2), normal(p3)};
-      va_geom_triangles->add(x, y, z, n, col);
+      if(stl_vertices_uv.size() == stl_normals.size()) {
+        SVector3 n[3] = {stl_normals[stl_triangles[i]],
+                         stl_normals[stl_triangles[i + 1]],
+                         stl_normals[stl_triangles[i + 2]]};
+        va_geom_triangles->add(x, y, z, n, col);
+      }
+      else {
+        SVector3 n[3] = {normal(p1), normal(p2), normal(p3)};
+        va_geom_triangles->add(x, y, z, n, col);
+      }
     }
   }
   va_geom_triangles->finalize();
@@ -1447,30 +1481,49 @@ bool GFace::fillPointCloud(double maxDist, std::vector<SPoint3> *points,
 {
   if(!points) return false;
 
-  if(buildSTLTriangulation() && stl_vertices_uv.size()) {
-    for(std::size_t i = 0; i < stl_triangles.size(); i += 3) {
-      SPoint2 &p0(stl_vertices_uv[stl_triangles[i]]);
-      SPoint2 &p1(stl_vertices_uv[stl_triangles[i + 1]]);
-      SPoint2 &p2(stl_vertices_uv[stl_triangles[i + 2]]);
-      GPoint gp0 = point(p0);
-      GPoint gp1 = point(p1);
-      GPoint gp2 = point(p2);
-      double maxEdge = std::max(gp0.distance(gp1),
-                                std::max(gp1.distance(gp2), gp2.distance(gp0)));
-      int N = (int)(maxEdge / maxDist);
-      for(double u = 0.; u < 1.; u += 1. / N) {
-        for(double v = 0.; v < 1 - u; v += 1. / N) {
-          SPoint2 p = p0 * (1. - u - v) + p1 * u + p2 * v;
-          GPoint gp(point(p));
-          points->push_back(SPoint3(gp.x(), gp.y(), gp.z()));
-          if(uvpoints) uvpoints->push_back(p);
-          if(normals) normals->push_back(normal(p));
+  if(buildSTLTriangulation()) {
+    if(stl_vertices_uv.size()) {
+      for(std::size_t i = 0; i < stl_triangles.size(); i += 3) {
+        SPoint2 &p0(stl_vertices_uv[stl_triangles[i]]);
+        SPoint2 &p1(stl_vertices_uv[stl_triangles[i + 1]]);
+        SPoint2 &p2(stl_vertices_uv[stl_triangles[i + 2]]);
+        GPoint gp0 = point(p0);
+        GPoint gp1 = point(p1);
+        GPoint gp2 = point(p2);
+        double maxEdge = std::max(gp0.distance(gp1),
+                                  std::max(gp1.distance(gp2), gp2.distance(gp0)));
+        int N = std::max((int)(maxEdge / maxDist), 1);
+        for(double u = 0.; u < 1.; u += 1. / N) {
+          for(double v = 0.; v < 1 - u; v += 1. / N) {
+            SPoint2 p = p0 * (1. - u - v) + p1 * u + p2 * v;
+            GPoint gp(point(p));
+            points->push_back(SPoint3(gp.x(), gp.y(), gp.z()));
+            if(uvpoints) uvpoints->push_back(p);
+            if(normals) normals->push_back(normal(p));
+          }
+        }
+      }
+    }
+    else if(stl_vertices_xyz.size()) {
+      for(std::size_t i = 0; i < stl_triangles.size(); i += 3) {
+        SPoint3 &p0(stl_vertices_xyz[stl_triangles[i]]);
+        SPoint3 &p1(stl_vertices_xyz[stl_triangles[i + 1]]);
+        SPoint3 &p2(stl_vertices_xyz[stl_triangles[i + 2]]);
+        double maxEdge = std::max(p0.distance(p1),
+                                  std::max(p1.distance(p2), p2.distance(p0)));
+        int N = std::max((int)(maxEdge / maxDist), 1);
+        for(double u = 0.; u < 1.; u += 1. / N) {
+          for(double v = 0.; v < 1 - u; v += 1. / N) {
+            SPoint3 p = p0 * (1. - u - v) + p1 * u + p2 * v;
+            points->push_back(p);
+          }
         }
       }
     }
   }
   else {
-    int N = 1000; //(int)(maxDX / maxDist);
+    // uniform sampling of underlying parametric plane
+    int N = std::max((int)(bounds().diag() / maxDist), 2);
     Range<double> b1 = parBounds(0);
     Range<double> b2 = parBounds(1);
     for(int i = 0; i < N; i++) {

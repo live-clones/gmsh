@@ -417,13 +417,8 @@ bool OCCFace::buildSTLTriangulation(bool force)
   if(!model()->getOCCInternals()->makeFaceSTL(
        _s, stl_vertices_uv, stl_vertices_xyz, stl_normals, stl_triangles)) {
     Msg::Info("OpenCASCADE triangulation of surface %d failed", tag());
-    // add a dummy triangle so that we won't try again
-    stl_vertices_uv.push_back(SPoint2(0., 0.));
-    stl_vertices_xyz.push_back(SPoint3(0., 0., 0.));
-    stl_triangles.push_back(0);
-    stl_triangles.push_back(0);
-    stl_triangles.push_back(0);
-    return false;
+    // try the default algorithm in GFace
+    return GFace::buildSTLTriangulation(force);
   }
 
   // compute the triangulation of the edges which are the boundaries of this
