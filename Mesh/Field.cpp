@@ -274,8 +274,8 @@ public:
       _stereoRadius, "Radius of the sphere of the stereograpic coordinates");
 
     // deprecated names
-    options["IField"] = new FieldOptionInt(
-      _inField, "Tag of the field to evaluate", nullptr, true);
+    options["IField"] =
+      new FieldOptionInt(_inField, "[Deprecated]", nullptr, true);
   }
   const char *getName() { return "LonLat"; }
   using Field::operator();
@@ -552,22 +552,22 @@ public:
       new FieldOptionDouble(_v2o, "Element size at point 2, outer radius");
 
     // deprecated names
-    options["R1_inner"] = new FieldOptionDouble(
-      _r1i, "Inner radius of Frustum at endpoint 1", nullptr, true);
-    options["R1_outer"] = new FieldOptionDouble(
-      _r1o, "Outer radius of Frustum at endpoint 1", nullptr, true);
-    options["R2_inner"] = new FieldOptionDouble(
-      _r2i, "Inner radius of Frustum at endpoint 2", nullptr, true);
-    options["R2_outer"] = new FieldOptionDouble(
-      _r2o, "Outer radius of Frustum at endpoint 2", nullptr, true);
-    options["V1_inner"] = new FieldOptionDouble(
-      _v1i, "Element size at point 1, inner radius", nullptr, true);
-    options["V1_outer"] = new FieldOptionDouble(
-      _v1o, "Element size at point 1, outer radius", nullptr, true);
-    options["V2_inner"] = new FieldOptionDouble(
-      _v2i, "Element size at point 2, inner radius", nullptr, true);
-    options["V2_outer"] = new FieldOptionDouble(
-      _v2o, "Element size at point 2, outer radius", nullptr, true);
+    options["R1_inner"] =
+      new FieldOptionDouble(_r1i, "[Deprecated]", nullptr, true);
+    options["R1_outer"] =
+      new FieldOptionDouble(_r1o, "[Deprecated]", nullptr, true);
+    options["R2_inner"] =
+      new FieldOptionDouble(_r2i, "[Deprecated]", nullptr, true);
+    options["R2_outer"] =
+      new FieldOptionDouble(_r2o, "[Deprecated]", nullptr, true);
+    options["V1_inner"] =
+      new FieldOptionDouble(_v1i, "[Deprecated]", nullptr, true);
+    options["V1_outer"] =
+      new FieldOptionDouble(_v1o, "[Deprecated]", nullptr, true);
+    options["V2_inner"] =
+      new FieldOptionDouble(_v2i, "[Deprecated]", nullptr, true);
+    options["V2_outer"] =
+      new FieldOptionDouble(_v2o, "[Deprecated]", nullptr, true);
   }
   const char *getName() { return "Frustum"; }
   using Field::operator();
@@ -642,12 +642,12 @@ public:
                       "F = a very big value if Field[InField] > DistMax)");
 
     // deprecated names
-    options["IField"] = new FieldOptionInt(
-      _inField, "Tag of the field to evaluate", nullptr, true);
-    options["LcMin"] = new FieldOptionDouble(
-      _lcMin, "Element size inside DistMin", nullptr, true);
-    options["LcMax"] = new FieldOptionDouble(
-      _lcMax, "Element size outside DistMax", nullptr, true);
+    options["IField"] =
+      new FieldOptionInt(_inField, "[Deprecated]", nullptr, true);
+    options["LcMin"] =
+      new FieldOptionDouble(_lcMin, "[Deprecated]", nullptr, true);
+    options["LcMax"] =
+      new FieldOptionDouble(_lcMax, "[Deprecated]", nullptr, true);
   }
   using Field::operator();
   double operator()(double x, double y, double z, GEntity *ge = nullptr)
@@ -697,7 +697,7 @@ public:
 
     // deprecated names
     options["IField"] =
-      new FieldOptionInt(_inField, "Input field tag", nullptr, true);
+      new FieldOptionInt(_inField, "[Deprecated]", nullptr, true);
   }
   using Field::operator();
   double operator()(double x, double y, double z, GEntity *ge = nullptr)
@@ -753,7 +753,7 @@ public:
 
     // deprecated names
     options["IField"] =
-      new FieldOptionInt(_inField, "Input field tag", nullptr, true);
+      new FieldOptionInt(_inField, "[Deprecated]", nullptr, true);
   }
   void grad_norm(Field &f, double x, double y, double z, double *g)
   {
@@ -808,7 +808,7 @@ public:
 
     // deprecated names
     options["IField"] =
-      new FieldOptionInt(_inField, "Input field tag", nullptr, true);
+      new FieldOptionInt(_inField, "[Deprecated]", nullptr, true);
   }
   using Field::operator();
   double operator()(double x, double y, double z, GEntity *ge = nullptr)
@@ -862,7 +862,7 @@ public:
 
     // deprecated names
     options["IField"] =
-      new FieldOptionInt(_inField, "Input field tag", nullptr, true);
+      new FieldOptionInt(_inField, "[Deprecated]", nullptr, true);
   }
   using Field::operator();
   double operator()(double x, double y, double z, GEntity *ge = nullptr)
@@ -901,7 +901,7 @@ public:
 
     // deprecated names
     options["IField"] =
-      new FieldOptionInt(_inField, "Input field tag", nullptr, true);
+      new FieldOptionInt(_inField, "[Deprecated]", nullptr, true);
   }
   using Field::operator();
   double operator()(double x, double y, double z, GEntity *ge = nullptr)
@@ -1134,18 +1134,18 @@ public:
       _f[5], "Element 23 of the metric tensor", &updateNeeded);
 
     // deprecated names
-    options["m11"] = new FieldOptionString(
-      _f[0], "Element 11 of the metric tensor", &updateNeeded, true);
-    options["m22"] = new FieldOptionString(
-      _f[1], "Element 22 of the metric tensor", &updateNeeded, true);
-    options["m33"] = new FieldOptionString(
-      _f[2], "Element 33 of the metric tensor", &updateNeeded, true);
-    options["m12"] = new FieldOptionString(
-      _f[3], "Element 12 of the metric tensor", &updateNeeded, true);
-    options["m13"] = new FieldOptionString(
-      _f[4], "Element 13 of the metric tensor", &updateNeeded, true);
-    options["m23"] = new FieldOptionString(
-      _f[5], "Element 23 of the metric tensor", &updateNeeded, true);
+    options["m11"] =
+      new FieldOptionString(_f[0], "[Deprecated]", &updateNeeded, true);
+    options["m22"] =
+      new FieldOptionString(_f[1], "[Deprecated]", &updateNeeded, true);
+    options["m33"] =
+      new FieldOptionString(_f[2], "[Deprecated]", &updateNeeded, true);
+    options["m12"] =
+      new FieldOptionString(_f[3], "[Deprecated]", &updateNeeded, true);
+    options["m13"] =
+      new FieldOptionString(_f[4], "[Deprecated]", &updateNeeded, true);
+    options["m23"] =
+      new FieldOptionString(_f[5], "[Deprecated]", &updateNeeded, true);
   }
   void operator()(double x, double y, double z, SMetric3 &metr,
                   GEntity *ge = nullptr)
@@ -1451,7 +1451,7 @@ public:
 
     // deprecated names
     options["IField"] =
-      new FieldOptionInt(_inField, "Input field tag", nullptr, true);
+      new FieldOptionInt(_inField, "[Deprecated]", nullptr, true);
   }
   std::string getDescription()
   {
@@ -1506,8 +1506,8 @@ public:
                            "the BackgroundMesh option");
 
     // deprecated names
-    options["IView"] = new FieldOptionInt(
-      _viewIndex, "Post-processing view index", &updateNeeded, true);
+    options["IView"] =
+      new FieldOptionInt(_viewIndex, "[Deprecated]", &updateNeeded, true);
   }
   ~PostViewField()
   {
@@ -1898,15 +1898,15 @@ public:
 
     // deprecated names
     options["IField"] =
-      new FieldOptionInt(_inField, "Input field tag", nullptr, true);
+      new FieldOptionInt(_inField, "[Deprecated]", nullptr, true);
     options["VerticesList"] =
-      new FieldOptionList(_pointTags, "Point tags", nullptr, true);
+      new FieldOptionList(_pointTags, "[Deprecated]", nullptr, true);
     options["EdgesList"] =
-      new FieldOptionList(_curveTags, "Curve tags", nullptr, true);
+      new FieldOptionList(_curveTags, "[Deprecated]", nullptr, true);
     options["FacesList"] =
-      new FieldOptionList(_surfaceTags, "Surface tags", nullptr, true);
+      new FieldOptionList(_surfaceTags, "[Deprecated]", nullptr, true);
     options["RegionsList"] =
-      new FieldOptionList(_volumeTags, "Volume tags", nullptr, true);
+      new FieldOptionList(_volumeTags, "[Deprecated]", nullptr, true);
   }
   std::string getDescription()
   {
@@ -1994,44 +1994,24 @@ public:
                    "closest curve");
 
     // deprecated names
-    options["EdgesList"] = new FieldOptionList(
-      _curveTags, "Tags of curves in the geometric model", &updateNeeded, true);
-    options["NNodesByEdge"] = new FieldOptionInt(
-      _sampling, "Number of points used to discretized each curve",
-      &updateNeeded, true);
-    options["dMin"] = new FieldOptionDouble(
-      _dMin,
-      "Minimum distance, below this distance from the curves, "
-      "prescribe the minimum mesh sizes",
-      nullptr, true);
-    options["dMax"] = new FieldOptionDouble(
-      _dMax,
-      "Maxmium distance, above this distance from the curves, prescribe "
-      "the maximum mesh sizes",
-      nullptr, true);
-    options["lMinTangent"] = new FieldOptionDouble(
-      _lMinTangent,
-      "Minimum mesh size in the direction tangeant to the "
-      "closest curve",
-      nullptr, true);
-    options["lMaxTangent"] = new FieldOptionDouble(
-      _lMaxTangent,
-      "Maximum mesh size in the direction tangeant to the "
-      "closest curve",
-      nullptr, true);
+    options["EdgesList"] =
+      new FieldOptionList(_curveTags, "[Deprecated]", &updateNeeded, true);
+    options["NNodesByEdge"] =
+      new FieldOptionInt(_sampling, "[Deprecated]", &updateNeeded, true);
+    options["dMin"] =
+      new FieldOptionDouble(_dMin, "[Deprecated]", nullptr, true);
+    options["dMax"] =
+      new FieldOptionDouble(_dMax, "[Deprecated]", nullptr, true);
+    options["lMinTangent"] =
+      new FieldOptionDouble(_lMinTangent, "[Deprecated]", nullptr, true);
+    options["lMaxTangent"] =
+      new FieldOptionDouble(_lMaxTangent, "[Deprecated]", nullptr, true);
     options["lMinNormal"] =
-      new FieldOptionDouble(_lMinNormal,
-                            "Minimum mesh size in the direction normal to the "
-                            "closest curve",
-                            nullptr, true);
+      new FieldOptionDouble(_lMinNormal, "[Deprecated]", nullptr, true);
     options["lMaxNormal"] =
-      new FieldOptionDouble(_lMaxNormal,
-                            "Maximum mesh size in the direction normal to the "
-                            "closest curve",
-                            nullptr, true);
-    options["NumPointsPerCurve"] = new FieldOptionInt(
-      _sampling, "Number of points used to discretized each curve",
-      &updateNeeded, true);
+      new FieldOptionDouble(_lMaxNormal, "[Deprecated]", nullptr, true);
+    options["NumPointsPerCurve"] =
+      new FieldOptionInt(_sampling, "[Deprecated]", &updateNeeded, true);
 
     // make sure all internal GEO CAD data has been synced with GModel
     GModel::current()->getGEOInternals()->synchronize(GModel::current());
@@ -2176,23 +2156,16 @@ public:
       _zFieldId, "Tag of the field to use as z coordinate", &updateNeeded);
 
     // deprecated names
-    options["NodesList"] = new FieldOptionList(
-      _pointTags, "Tags of points in the geometric model", &updateNeeded, true);
-    options["EdgesList"] = new FieldOptionList(
-      _curveTags, "Tags of curves in the geometric model", &updateNeeded, true);
-    options["FacesList"] = new FieldOptionList(
-      _surfaceTags, "Tags of surfaces in the geometric model", &updateNeeded,
-      true);
+    options["NodesList"] =
+      new FieldOptionList(_pointTags, "[Deprecated]", &updateNeeded, true);
+    options["EdgesList"] =
+      new FieldOptionList(_curveTags, "[Deprecated]", &updateNeeded, true);
+    options["FacesList"] =
+      new FieldOptionList(_surfaceTags, "[Deprecated]", &updateNeeded, true);
     options["NNodesByEdge"] =
-      new FieldOptionInt(_sampling,
-                         "Number of points used to discretize each curve "
-                         "(and surface, relative to their bounding box size)",
-                         &updateNeeded, true);
+      new FieldOptionInt(_sampling, "[Deprecated]", &updateNeeded, true);
     options["NumPointsPerCurve"] =
-      new FieldOptionInt(_sampling,
-                         "Number of points used to discretize each curve "
-                         "(and surface, relative to their bounding box size)",
-                         &updateNeeded, true);
+      new FieldOptionInt(_sampling, "[Deprecated]", &updateNeeded, true);
   }
   ~AttractorField()
   {
@@ -2557,36 +2530,28 @@ public:
       _curveTags, "Tags of curves in the geometric model", &updateNeeded);
     options["SurfacesList"] = new FieldOptionList(
       _surfaceTags, "Tags of surfaces in the geometric model", &updateNeeded);
-    options["Sampling"] =
-      new FieldOptionInt(_sampling,
-                         "Number of sampling points (per dimension) to discretized each curve "
-                         "(and surface, relative to their bounding box size)",
-                         &updateNeeded);
+    options["Sampling"] = new FieldOptionInt(_sampling,
+      "Number of sampling points (per dimension) to discretize each curve "
+      "(and surface, relative to their bounding box size)",
+      &updateNeeded);
 
     // deprecated names
-    options["NodesList"] = new FieldOptionList(
-      _pointTags, "Tags of points in the geometric model", &updateNeeded, true);
-    options["EdgesList"] = new FieldOptionList(
-      _curveTags, "Tags of curves in the geometric model", &updateNeeded, true);
+    options["NodesList"] =
+      new FieldOptionList(_pointTags, "[Deprecated]", &updateNeeded, true);
+    options["EdgesList"] =
+      new FieldOptionList(_curveTags, "[Deprecated]", &updateNeeded, true);
     options["NNodesByEdge"] =
-      new FieldOptionInt(_sampling,
-                         "Number of points used to discretized each curve "
-                         "(and surface, relative to their bounding box size)",
-                         &updateNeeded, true);
-    options["FacesList"] = new FieldOptionList(
-      _surfaceTags, "Tags of surfaces in the geometric model", &updateNeeded,
-      true);
-    options["FieldX"] = new FieldOptionInt(
-      _xFieldId, "Id of the field to use as x coordinate", &updateNeeded, true);
-    options["FieldY"] = new FieldOptionInt(
-      _yFieldId, "Id of the field to use as y coordinate", &updateNeeded, true);
-    options["FieldZ"] = new FieldOptionInt(
-     _zFieldId, "Id of the field to use as z coordinate", &updateNeeded, true);
+      new FieldOptionInt(_sampling, "[Deprecated]", &updateNeeded, true);
+    options["FacesList"] =
+      new FieldOptionList(_surfaceTags, "[Deprecated]", &updateNeeded, true);
+    options["FieldX"] =
+      new FieldOptionInt(_xFieldId, "[Deprecated]", &updateNeeded, true);
+    options["FieldY"] =
+      new FieldOptionInt(_yFieldId, "[Deprecated]", &updateNeeded, true);
+    options["FieldZ"] =
+      new FieldOptionInt(_zFieldId, "[Deprecated]", &updateNeeded, true);
     options["NumPointsPerCurve"] =
-      new FieldOptionInt(_sampling,
-                         "Number of points used to discretized each curve "
-                         "(and surface, relative to their bounding box size)",
-                         &updateNeeded, true);
+      new FieldOptionInt(_sampling, "[Deprecated]", &updateNeeded, true);
   }
   DistanceField(int dim, int tag, int nbe)
     : _sampling(nbe), _index(nullptr), _pc2kd(_P), _outIndex(0),
@@ -2764,42 +2729,24 @@ BoundaryLayerField::BoundaryLayerField()
                         &updateNeeded);
 
   // deprecated names
-  options["EdgesList"] = new FieldOptionList(
-    _curveTags,
-    "Tags of curves in the geometric model for which a boundary "
-    "layer is needed",
-    &updateNeeded, true);
+  options["EdgesList"] =
+    new FieldOptionList(_curveTags, "[Deprecated]", &updateNeeded, true);
   options["FanNodesList"] =
-    new FieldOptionList(_fanPointTags,
-                        "Tags of points in the geometric model for which a fan "
-                        "is created",
-                        &updateNeeded, true);
-  options["NodesList"] = new FieldOptionList(
-    _pointTags,
-    "Tags of points in the geometric model for which a boundary "
-    "layer ends",
-    &updateNeeded, true);
-  options["hwall_n"] = new FieldOptionDouble(
-    hWallN,
-    "Mesh size normal to the curvem per point (overwrites "
-    "Size when defined)",
-    nullptr, true);
-  options["hwall_n_nodes"] = new FieldOptionListDouble(
-    _hWallNNodes,
-    "Mesh size normal to the curve, per point (overwrites "
-    "Size when defined)",
-    nullptr, true);
-  options["ratio"] = new FieldOptionDouble(
-    ratio, "Size ratio between two successive layers", nullptr, true);
-  options["hfar"] = new FieldOptionDouble(
-    hFar, "Element size far from the wall", nullptr, true);
-  options["thickness"] = new FieldOptionDouble(
-    thickness, "Maximal thickness of the boundary layer", nullptr, true);
+    new FieldOptionList(_fanPointTags, "[Deprecated]", &updateNeeded, true);
+  options["NodesList"] =
+    new FieldOptionList(_pointTags, "[Deprecated]", &updateNeeded, true);
+  options["hwall_n"] =
+    new FieldOptionDouble(hWallN, "[Deprecated]", nullptr, true);
+  options["hwall_n_nodes"] =
+    new FieldOptionListDouble(_hWallNNodes, "[Deprecated]", nullptr, true);
+  options["ratio"] =
+    new FieldOptionDouble(ratio, "[Deprecated]", nullptr, true);
+  options["hfar"] =
+    new FieldOptionDouble(hFar, "[Deprecated]", nullptr, true);
+  options["thickness"] =
+    new FieldOptionDouble(thickness, "[Deprecated]", nullptr, true);
   options["ExcludedFaceList"] =
-    new FieldOptionList(_excludedSurfaceTags,
-                        "Tags of surfaces in the geometric model where the "
-                        "boundary layer should not be constructed",
-                        &updateNeeded, true);
+    new FieldOptionList(_excludedSurfaceTags, "[Deprecated]", &updateNeeded, true);
 }
 
 void BoundaryLayerField::removeAttractors()
