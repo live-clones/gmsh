@@ -173,8 +173,7 @@ public:
            "  v(1,0,0) ...      ... \n\n"
            "where O are the coordinates of the first node, D are the distances "
            "between nodes in each direction, n are the numbers of nodes in "
-           "each "
-           "direction, and v are the values on each node.";
+           "each direction, and v are the values on each node.";
   }
   const char *getName() { return "Structured"; }
   virtual ~StructuredField()
@@ -310,8 +309,7 @@ public:
            "  YMin <= y <= YMax &&\n"
            "  ZMin <= z <= ZMax\n\n"
            "If Thickness is > 0, the mesh size is interpolated between VIn and "
-           "VOut "
-           "in a layer around the box of the prescribed thickness.";
+           "VOut in a layer around the box of the prescribed thickness.";
   }
   BoxField()
   {
@@ -460,8 +458,7 @@ public:
            "  ||dX||^2 < R^2 &&\n"
            "  dX = (X - XC)^2 + (Y-YC)^2 + (Z-ZC)^2\n\n"
            "If Thickness is > 0, the mesh size is interpolated between VIn and "
-           "VOut "
-           "in a layer around the ball of the prescribed thickness.";
+           "VOut in a layer around the ball of the prescribed thickness.";
   }
   BallField()
   {
@@ -1379,39 +1376,39 @@ public:
            "import math\n"
            "import sys\n"
            "if sys.platform == \"win32\" :\n"
-           "import msvcrt\n"
-           "msvcrt.setmode(0, os.O_BINARY)\n"
-           "msvcrt.setmode(1, os.O_BINARY)\n"
+           "    import msvcrt\n"
+           "    msvcrt.setmode(0, os.O_BINARY)\n"
+           "    msvcrt.setmode(1, os.O_BINARY)\n"
            "while(True):\n"
-           "____xyz = struct.unpack(\"ddd\", os.read(0,24))\n"
-           "____if math.isnan(xyz[0]):\n"
-           "_________break\n"
-           "____f = 0.001 + xyz[1]*0.009\n"
-           "____os.write(1,struct.pack(\"d\",f))\n"
+           "    xyz = struct.unpack(\"ddd\", os.read(0,24))\n"
+           "    if math.isnan(xyz[0]):\n"
+           "        break\n"
+           "    f = 0.001 + xyz[1]*0.009\n"
+           "    os.write(1,struct.pack(\"d\",f))\n"
            "\n"
            "Example of client (python3):\n"
            "import struct\n"
            "import sys\n"
            "import math\n"
            "while(True):\n"
-           "____xyz = struct.unpack(\"ddd\", sys.stdin.buffer.read(24))\n"
-           "____if math.isnan(xyz[0]):\n"
-           "________break\n"
-           "____f = 0.001 + xyz[1]*0.009\n"
-           "____sys.stdout.buffer.write(struct.pack(\"d\",f))\n"
-           "____sys.stdout.flush()\n"
+           "    xyz = struct.unpack(\"ddd\", sys.stdin.buffer.read(24))\n"
+           "    if math.isnan(xyz[0]):\n"
+           "        break\n"
+           "    f = 0.001 + xyz[1]*0.009\n"
+           "    sys.stdout.buffer.write(struct.pack(\"d\",f))\n"
+           "    sys.stdout.flush()\n"
            "\n"
            "Example of client (c, unix):\n"
            "#include <unistd.h>\n"
            "int main(int argc, char **argv) {\n"
-           "__double xyz[3];\n"
-           "__while(read(STDIN_FILENO, &xyz, 3*sizeof(double)) == "
+           "  double xyz[3];\n"
+           "  while(read(STDIN_FILENO, &xyz, 3*sizeof(double)) == "
            "3*sizeof(double)) {\n"
-           "____if (xyz[0] != xyz[0]) break; //nan\n"
-           "____double f = 0.001 + 0.009 * xyz[1];\n"
-           "____write(STDOUT_FILENO, &f, sizeof(double));\n"
-           "__}\n"
-           "__return 0;\n"
+           "    if (xyz[0] != xyz[0]) break; //nan\n"
+           "    double f = 0.001 + 0.009 * xyz[1];\n"
+           "    write(STDOUT_FILENO, &f, sizeof(double));\n"
+           "  }\n"
+           "  return 0;\n"
            "}\n"
            "\n"
            "Example of client (c, windows):\n"
@@ -1419,16 +1416,16 @@ public:
            "#include <io.h>\n"
            "#include <fcntl.h>\n"
            "int main(int argc, char **argv) {\n"
-           "__double xyz[3];\n"
-           "__setmode(fileno(stdin),O_BINARY);\n"
-           "__setmode(fileno(stdout),O_BINARY);\n"
-           "__while(read(fileno(stdin), &xyz, 3*sizeof(double)) == "
+           "  double xyz[3];\n"
+           "  setmode(fileno(stdin),O_BINARY);\n"
+           "  setmode(fileno(stdout),O_BINARY);\n"
+           "  while(read(fileno(stdin), &xyz, 3*sizeof(double)) == "
            "3*sizeof(double)) {\n"
-           "____if (xyz[0] != xyz[0])\n"
-           "______break;\n"
-           "____double f = f = 0.01 + 0.09 * xyz[1];\n"
-           "____write(fileno(stdout), &f, sizeof(double));\n"
-           "__}\n"
+           "    if (xyz[0] != xyz[0])\n"
+           "      break;\n"
+           "    double f = f = 0.01 + 0.09 * xyz[1];\n"
+           "    write(fileno(stdout), &f, sizeof(double));\n"
+           "  }\n"
            "}\n";
   }
 };
@@ -1955,7 +1952,7 @@ private:
   ANNdistArray _dist;
   std::list<int> _curveTags;
   double _dMin, _dMax, _lMinTangent, _lMaxTangent, _lMinNormal, _lMaxNormal;
-  int _numPointsPerCurve;
+  int _sampling;
   std::vector<SVector3> _tg;
 
 public:
@@ -1963,7 +1960,7 @@ public:
   {
     _index = new ANNidx[1];
     _dist = new ANNdist[1];
-    _numPointsPerCurve = 20;
+    _sampling = 20;
     updateNeeded = true;
     _dMin = 0.1;
     _dMax = 0.5;
@@ -1974,8 +1971,8 @@ public:
 
     options["CurvesList"] = new FieldOptionList(
       _curveTags, "Tags of curves in the geometric model", &updateNeeded);
-    options["NumPointsPerCurve"] = new FieldOptionInt(
-      _numPointsPerCurve, "Number of points used to discretized each curve",
+    options["Sampling"] = new FieldOptionInt(
+      _sampling, "Number of sampling points on each curve",
       &updateNeeded);
     options["DistMin"] = new FieldOptionDouble(
       _dMin, "Minimum distance, below this distance from the curves, "
@@ -2000,7 +1997,7 @@ public:
     options["EdgesList"] = new FieldOptionList(
       _curveTags, "Tags of curves in the geometric model", &updateNeeded, true);
     options["NNodesByEdge"] = new FieldOptionInt(
-      _numPointsPerCurve, "Number of points used to discretized each curve",
+      _sampling, "Number of points used to discretized each curve",
       &updateNeeded, true);
     options["dMin"] = new FieldOptionDouble(
       _dMin,
@@ -2032,6 +2029,9 @@ public:
                             "Maximum mesh size in the direction normal to the "
                             "closest curve",
                             nullptr, true);
+    options["NumPointsPerCurve"] = new FieldOptionInt(
+      _sampling, "Number of points used to discretized each curve",
+      &updateNeeded, true);
 
     // make sure all internal GEO CAD data has been synced with GModel
     GModel::current()->getGEOInternals()->synchronize(GModel::current());
@@ -2049,10 +2049,8 @@ public:
   {
     return "Compute the distance to the given curves and specify the mesh size "
            "independently in the direction normal and parallel to the nearest "
-           "curve. "
-           "(Each curve is replaced by NumPointsPerCurve equidistant points, "
-           "to "
-           "which the distance is actually computed.)";
+           "curve. For efficiency each curve is replaced by a set of Sampling "
+           "points, to which the distance is actually computed.";
   }
   void update()
   {
@@ -2060,15 +2058,15 @@ public:
       annDeallocPts(_zeroNodes);
       delete _kdTree;
     }
-    int totpoints = _numPointsPerCurve * _curveTags.size();
+    int totpoints = _sampling * _curveTags.size();
     if(totpoints) { _zeroNodes = annAllocPts(totpoints, 3); }
     _tg.resize(totpoints);
     int k = 0;
     for(auto it = _curveTags.begin(); it != _curveTags.end(); ++it) {
       GEdge *e = GModel::current()->getEdgeByTag(*it);
       if(e) {
-        for(int i = 0; i < _numPointsPerCurve; i++) {
-          double u = (double)i / (_numPointsPerCurve - 1);
+        for(int i = 0; i < _sampling; i++) {
+          double u = (double)i / (_sampling - 1);
           Range<double> b = e->parBounds(0);
           double t = b.low() + u * (b.high() - b.low());
           GPoint gp = e->point(t);
@@ -2132,13 +2130,13 @@ private:
   std::vector<AttractorInfo> _infos;
   int _xFieldId, _yFieldId, _zFieldId;
   Field *_xField, *_yField, *_zField;
-  int _numPointsPerCurve;
+  int _sampling;
   ANNidxArray _index;
   ANNdistArray _dist;
 
 public:
   AttractorField(int dim, int tag, int nbe)
-    : _kdTree(nullptr), _zeroNodes(nullptr), _numPointsPerCurve(nbe)
+    : _kdTree(nullptr), _zeroNodes(nullptr), _sampling(nbe)
   {
     _index = new ANNidx[1];
     _dist = new ANNdist[1];
@@ -2156,7 +2154,7 @@ public:
   {
     _index = new ANNidx[1];
     _dist = new ANNdist[1];
-    _numPointsPerCurve = 20;
+    _sampling = 20;
     _xFieldId = _yFieldId = _zFieldId = -1;
 
     options["PointsList"] = new FieldOptionList(
@@ -2165,10 +2163,10 @@ public:
       _curveTags, "Tags of curves in the geometric model", &updateNeeded);
     options["SurfacesList"] = new FieldOptionList(
       _surfaceTags, "Tags of surfaces in the geometric model", &updateNeeded);
-    options["NumPointsPerCurve"] =
-      new FieldOptionInt(_numPointsPerCurve,
-                         "Number of points used to discretize each curve "
-                         "(and surface, relative to their bounding box size)",
+    options["Sampling"] =
+      new FieldOptionInt(_sampling,
+                         "Linear number of samples (i.e. per dimension) to "
+                         "discretize each curve and surface",
                          &updateNeeded);
     options["FieldX"] = new FieldOptionInt(
       _xFieldId, "Tag of the field to use as x coordinate", &updateNeeded);
@@ -2186,7 +2184,12 @@ public:
       _surfaceTags, "Tags of surfaces in the geometric model", &updateNeeded,
       true);
     options["NNodesByEdge"] =
-      new FieldOptionInt(_numPointsPerCurve,
+      new FieldOptionInt(_sampling,
+                         "Number of points used to discretize each curve "
+                         "(and surface, relative to their bounding box size)",
+                         &updateNeeded, true);
+    options["NumPointsPerCurve"] =
+      new FieldOptionInt(_sampling,
                          "Number of points used to discretize each curve "
                          "(and surface, relative to their bounding box size)",
                          &updateNeeded, true);
@@ -2202,10 +2205,9 @@ public:
   std::string getDescription()
   {
     return "Compute the distance to the given points, curves or surfaces. "
-           "(Curves are replaced by NumPointsPerCurve equidistant points, "
-           "to which the distance is actually computed. In the same way, "
-           "surfaces are replaced by a point cloud, sampled according to "
-           "NumPointsPerCurve and the size of their bounding box). "
+           "For efficiency, curves and surfaces are replaced by a set "
+           "of points (sampled according to Sampling), to which the distance "
+           "is actually computed. "
            "The Attractor field is deprecated: use the Distance field instead.";
   }
   void getCoord(double x, double y, double z, double &cx, double &cy,
@@ -2239,31 +2241,6 @@ public:
       }
       std::vector<SPoint3> points;
       std::vector<SPoint2> uvpoints;
-      std::vector<int> offset;
-      offset.push_back(0);
-      for(auto it = _surfaceTags.begin(); it != _surfaceTags.end(); ++it) {
-        GFace *f = GModel::current()->getFaceByTag(*it);
-        if(f) {
-          if(f->mesh_vertices.size()) {
-            for(std::size_t i = 0; i < f->mesh_vertices.size(); i++) {
-              MVertex *v = f->mesh_vertices[i];
-              double uu, vv;
-              v->getParameter(0, uu);
-              v->getParameter(1, vv);
-              points.push_back(SPoint3(v->x(), v->y(), v->z()));
-              uvpoints.push_back(SPoint2(uu, vv));
-            }
-          }
-          else {
-            SBoundingBox3d bb = f->bounds();
-            SVector3 dd = bb.max() - bb.min();
-            double maxDist = dd.norm() / _numPointsPerCurve;
-            f->fillPointCloud(maxDist, &points, &uvpoints);
-            offset.push_back(points.size());
-          }
-        }
-      }
-
       double x, y, z;
       std::vector<double> px, py, pz;
 
@@ -2293,7 +2270,7 @@ public:
               _infos.push_back(AttractorInfo(*it, 1, u, 0));
             }
           }
-          int NNN = _numPointsPerCurve - e->mesh_vertices.size();
+          int NNN = _sampling - e->mesh_vertices.size();
           for(int i = 1; i < NNN - 1; i++) {
             double u = (double)i / (NNN - 1);
             Range<double> b = e->parBounds(0);
@@ -2307,43 +2284,21 @@ public:
           }
         }
       }
-      // This can lead to weird results as we generate attractors over the whole
-      // parametric plane (we should really use a mesh, e.g. a refined STL.)
-      int count = 0;
+
       for(auto it = _surfaceTags.begin(); it != _surfaceTags.end(); ++it) {
         GFace *f = GModel::current()->getFaceByTag(*it);
         if(f) {
-          if(points.size()) {
-            for(int j = offset[count]; j < offset[count + 1]; j++) {
-              px.push_back(points[j].x());
-              py.push_back(points[j].y());
-              pz.push_back(points[j].z());
-              _infos.push_back(
-                AttractorInfo(*it, 2, uvpoints[j].x(), uvpoints[j].y()));
-            }
-            count++;
+          double maxDist = f->bounds().diag() / _sampling;
+          f->fillPointCloud(maxDist, &points, &uvpoints);
+          for(std::size_t i = 0; i < points.size(); i++) {
+            getCoord(points[i].x(), points[i].y(), points[i].z(), x, y, z, f);
+            px.push_back(x);
+            py.push_back(y);
+            pz.push_back(z);
           }
-          else {
-            for(int i = 0; i < _numPointsPerCurve; i++) {
-              for(int j = 0; j < _numPointsPerCurve; j++) {
-                double u = (double)i / (_numPointsPerCurve - 1);
-                double v = (double)j / (_numPointsPerCurve - 1);
-                Range<double> b1 = f->parBounds(0);
-                Range<double> b2 = f->parBounds(1);
-                double t1 = b1.low() + u * (b1.high() - b1.low());
-                double t2 = b2.low() + v * (b2.high() - b2.low());
-                GPoint gp = f->point(t1, t2);
-                getCoord(gp.x(), gp.y(), gp.z(), x, y, z, f);
-                px.push_back(x);
-                py.push_back(y);
-                pz.push_back(z);
-                _infos.push_back(AttractorInfo(*it, 2, u, v));
-              }
-            }
-          }
-        }
-        else {
-          Msg::Error("Face %d not yet created", *it);
+          for(std::size_t i = 0; i < uvpoints.size(); i++)
+            _infos.push_back
+              (AttractorInfo(*it, 2, uvpoints[i].x(), uvpoints[i].y()));
         }
       }
 
@@ -2512,7 +2467,7 @@ private:
   const char *getName() { return "Octree"; }
   std::string getDescription()
   {
-    return "Pre compute another field on an octree to speed-up evalution";
+    return "Pre compute another field on an octree to speed-up evalution.";
   }
   void update()
   {
@@ -2581,9 +2536,8 @@ template <typename Derived> struct PointCloudAdaptor {
 class DistanceField : public Field {
   std::list<int> _pointTags, _curveTags, _surfaceTags;
   std::vector<AttractorInfo> _infos;
-  int _xFieldId, _yFieldId, _zFieldId;
-  Field *_xField, *_yField, *_zField;
-  int _numPointsPerCurve;
+  int _sampling;
+  int _xFieldId, _yFieldId, _zFieldId; // unused
   PointCloud _P;
   nanoflann::KDTreeSingleIndexAdaptor
   <nanoflann::L2_Simple_Adaptor<double, PointCloudAdaptor<PointCloud> >,
@@ -2595,8 +2549,7 @@ class DistanceField : public Field {
 public:
   DistanceField() : _index(nullptr), _pc2kd(_P), _outIndex(0), _outDistSqr(0)
   {
-    _numPointsPerCurve = 20;
-    _xFieldId = _yFieldId = _zFieldId = -1;
+    _sampling = 20;
 
     options["PointsList"] = new FieldOptionList(
       _pointTags, "Tags of points in the geometric model", &updateNeeded);
@@ -2604,17 +2557,11 @@ public:
       _curveTags, "Tags of curves in the geometric model", &updateNeeded);
     options["SurfacesList"] = new FieldOptionList(
       _surfaceTags, "Tags of surfaces in the geometric model", &updateNeeded);
-    options["NumPointsPerCurve"] =
-      new FieldOptionInt(_numPointsPerCurve,
-                         "Number of points used to discretized each curve "
+    options["Sampling"] =
+      new FieldOptionInt(_sampling,
+                         "Number of sampling points (per dimension) to discretized each curve "
                          "(and surface, relative to their bounding box size)",
                          &updateNeeded);
-    options["FieldX"] = new FieldOptionInt(
-      _xFieldId, "Id of the field to use as x coordinate", &updateNeeded);
-    options["FieldY"] = new FieldOptionInt(
-      _yFieldId, "Id of the field to use as y coordinate", &updateNeeded);
-    options["FieldZ"] = new FieldOptionInt(
-      _zFieldId, "Id of the field to use as z coordinate", &updateNeeded);
 
     // deprecated names
     options["NodesList"] = new FieldOptionList(
@@ -2622,16 +2569,27 @@ public:
     options["EdgesList"] = new FieldOptionList(
       _curveTags, "Tags of curves in the geometric model", &updateNeeded, true);
     options["NNodesByEdge"] =
-      new FieldOptionInt(_numPointsPerCurve,
+      new FieldOptionInt(_sampling,
                          "Number of points used to discretized each curve "
                          "(and surface, relative to their bounding box size)",
                          &updateNeeded, true);
     options["FacesList"] = new FieldOptionList(
       _surfaceTags, "Tags of surfaces in the geometric model", &updateNeeded,
       true);
+    options["FieldX"] = new FieldOptionInt(
+      _xFieldId, "Id of the field to use as x coordinate", &updateNeeded, true);
+    options["FieldY"] = new FieldOptionInt(
+      _yFieldId, "Id of the field to use as y coordinate", &updateNeeded, true);
+    options["FieldZ"] = new FieldOptionInt(
+     _zFieldId, "Id of the field to use as z coordinate", &updateNeeded, true);
+    options["NumPointsPerCurve"] =
+      new FieldOptionInt(_sampling,
+                         "Number of points used to discretized each curve "
+                         "(and surface, relative to their bounding box size)",
+                         &updateNeeded, true);
   }
   DistanceField(int dim, int tag, int nbe)
-    : _numPointsPerCurve(nbe), _index(nullptr), _pc2kd(_P), _outIndex(0),
+    : _sampling(nbe), _index(nullptr), _pc2kd(_P), _outIndex(0),
       _outDistSqr(0)
   {
     if(dim == 0)
@@ -2640,8 +2598,7 @@ public:
       _curveTags.push_back(tag);
     else if(dim == 3)
       _surfaceTags.push_back(tag);
-    _xField = _yField = _zField = nullptr;
-    _xFieldId = _yFieldId = _zFieldId = -1;
+    _xFieldId = _yFieldId = _zFieldId = -1; // not used
     updateNeeded = true;
   }
   ~DistanceField()
@@ -2652,10 +2609,9 @@ public:
   std::string getDescription()
   {
     return "Compute the distance to the given points, curves or surfaces. "
-           "(Curves are replaced by NumPointsPerCurve equidistant points, "
-           "to which the distance is actually computed. In the same way, "
-           "surfaces are replaced by a point cloud, sampled according to "
-           "NumPointsPerCurve and the size of their bounding box).";
+           "For efficiency, curves and surfaces are replaced by a set "
+           "of points (sampled according to Sampling), to which the distance "
+           "is actually computed.";
   }
   std::pair<AttractorInfo, SPoint3> getAttractorInfo() const
   {
@@ -2666,44 +2622,9 @@ public:
   void update()
   {
     if(updateNeeded) {
-      _xField = _xFieldId >= 0 ?
-                  (GModel::current()->getFields()->get(_xFieldId)) :
-                  nullptr;
-      _yField = _yFieldId >= 0 ?
-                  (GModel::current()->getFields()->get(_yFieldId)) :
-                  nullptr;
-      _zField = _zFieldId >= 0 ?
-                  (GModel::current()->getFields()->get(_zFieldId)) :
-                  nullptr;
-
       _infos.clear();
       std::vector<SPoint3> &points = _P.pts;
       points.clear();
-      for(auto it = _surfaceTags.begin(); it != _surfaceTags.end(); ++it) {
-        GFace *f = GModel::current()->getFaceByTag(*it);
-        if(f) {
-          if(f->mesh_vertices.size()) {
-            for(std::size_t i = 0; i < f->mesh_vertices.size(); i++) {
-              MVertex *v = f->mesh_vertices[i];
-              points.push_back(SPoint3(v->x(), v->y(), v->z()));
-              double uu = 0., vv = 0.;
-              v->getParameter(0, uu);
-              v->getParameter(1, vv);
-              _infos.push_back(AttractorInfo(*it, 2, uu, vv));
-            }
-          }
-          else {
-            SBoundingBox3d bb = f->bounds();
-            SVector3 dd = bb.max() - bb.min();
-            double maxDist = dd.norm() / _numPointsPerCurve;
-            std::vector<SPoint2> uvpoints;
-            f->fillPointCloud(maxDist, &points, &uvpoints);
-            for(std::size_t i = 0; i < uvpoints.size(); i++)
-              _infos.push_back(
-                AttractorInfo(*it, 2, uvpoints[i].x(), uvpoints[i].y()));
-          }
-        }
-      }
 
       for(auto it = _pointTags.begin(); it != _pointTags.end(); ++it) {
         GVertex *gv = GModel::current()->getVertexByTag(*it);
@@ -2726,7 +2647,7 @@ public:
               _infos.push_back(AttractorInfo(*it, 1, t, 0));
             }
           }
-          int NNN = _numPointsPerCurve - e->mesh_vertices.size();
+          int NNN = _sampling - e->mesh_vertices.size();
           for(int i = 1; i < NNN - 1; i++) {
             double u = (double)i / (NNN - 1);
             Range<double> b = e->parBounds(0);
@@ -2735,6 +2656,18 @@ public:
             points.push_back(SPoint3(gp.x(), gp.y(), gp.z()));
             _infos.push_back(AttractorInfo(*it, 1, t, 0));
           }
+        }
+      }
+
+      for(auto it = _surfaceTags.begin(); it != _surfaceTags.end(); ++it) {
+        GFace *f = GModel::current()->getFaceByTag(*it);
+        if(f) {
+          double maxDist = f->bounds().diag() / _sampling;
+          std::vector<SPoint2> uvpoints;
+          f->fillPointCloud(maxDist, &points, &uvpoints);
+          for(std::size_t i = 0; i < uvpoints.size(); i++)
+            _infos.push_back
+              (AttractorInfo(*it, 2, uvpoints[i].x(), uvpoints[i].y()));
         }
       }
 

@@ -2,7 +2,7 @@
 
 @ftable @code
 @item Attractor
-Compute the distance to the given points, curves or surfaces. (Curves are replaced by NumPointsPerCurve equidistant points, to which the distance is actually computed. In the same way, surfaces are replaced by a point cloud, sampled according to NumPointsPerCurve and the size of their bounding box). The Attractor field is deprecated: use the Distance field instead.@*
+Compute the distance to the given points, curves or surfaces. For efficiency, curves and surfaces are replaced by a set of points (sampled according to Sampling), to which the distance is actually computed. The Attractor field is deprecated: use the Distance field instead.@*
 Options:@*
 @table @code
 @item CurvesList
@@ -21,14 +21,14 @@ default value: @code{-1}
 Tag of the field to use as z coordinate@*
 type: integer@*
 default value: @code{-1}
-@item NumPointsPerCurve
-Number of points used to discretize each curve (and surface, relative to their bounding box size)@*
-type: integer@*
-default value: @code{20}
 @item PointsList
 Tags of points in the geometric model@*
 type: list@*
 default value: @code{@{@}}
+@item Sampling
+Linear number of samples (i.e. per dimension) to discretize each curve and surface@*
+type: integer@*
+default value: @code{20}
 @item SurfacesList
 Tags of surfaces in the geometric model@*
 type: list@*
@@ -36,7 +36,7 @@ default value: @code{@{@}}
 @end table
 
 @item AttractorAnisoCurve
-Compute the distance to the given curves and specify the mesh size independently in the direction normal and parallel to the nearest curve. (Each curve is replaced by NumPointsPerCurve equidistant points, to which the distance is actually computed.)@*
+Compute the distance to the given curves and specify the mesh size independently in the direction normal and parallel to the nearest curve. For efficiency each curve is replaced by a set of Sampling points, to which the distance is actually computed.@*
 Options:@*
 @table @code
 @item CurvesList
@@ -51,8 +51,8 @@ default value: @code{0.5}
 Minimum distance, below this distance from the curves, prescribe the minimum mesh sizes@*
 type: float@*
 default value: @code{0.1}
-@item NumPointsPerCurve
-Number of points used to discretized each curve@*
+@item Sampling
+Number of sampling points on each curve@*
 type: integer@*
 default value: @code{20}
 @item SizeMaxNormal
@@ -335,33 +335,21 @@ default value: @code{0}
 @end table
 
 @item Distance
-Compute the distance to the given points, curves or surfaces. (Curves are replaced by NumPointsPerCurve equidistant points, to which the distance is actually computed. In the same way, surfaces are replaced by a point cloud, sampled according to NumPointsPerCurve and the size of their bounding box).@*
+Compute the distance to the given points, curves or surfaces. For efficiency, curves and surfaces are replaced by a set of points (sampled according to Sampling), to which the distance is actually computed.@*
 Options:@*
 @table @code
 @item CurvesList
 Tags of curves in the geometric model@*
 type: list@*
 default value: @code{@{@}}
-@item FieldX
-Id of the field to use as x coordinate@*
-type: integer@*
-default value: @code{-1}
-@item FieldY
-Id of the field to use as y coordinate@*
-type: integer@*
-default value: @code{-1}
-@item FieldZ
-Id of the field to use as z coordinate@*
-type: integer@*
-default value: @code{-1}
-@item NumPointsPerCurve
-Number of points used to discretized each curve (and surface, relative to their bounding box size)@*
-type: integer@*
-default value: @code{20}
 @item PointsList
 Tags of points in the geometric model@*
 type: list@*
 default value: @code{@{@}}
+@item Sampling
+Number of sampling points (per dimension) to discretized each curve (and surface, relative to their bounding box size)@*
+type: integer@*
+default value: @code{20}
 @item SurfacesList
 Tags of surfaces in the geometric model@*
 type: list@*
@@ -379,38 +367,38 @@ import struct@*
 import math@*
 import sys@*
 if sys.platform == "win32" :@*
-import msvcrt@*
-msvcrt.setmode(0, os.O_BINARY)@*
-msvcrt.setmode(1, os.O_BINARY)@*
+    import msvcrt@*
+    msvcrt.setmode(0, os.O_BINARY)@*
+    msvcrt.setmode(1, os.O_BINARY)@*
 while(True):@*
-____xyz = struct.unpack("ddd", os.read(0,24))@*
-____if math.isnan(xyz[0]):@*
-_________break@*
-____f = 0.001 + xyz[1]*0.009@*
-____os.write(1,struct.pack("d",f))@*
+    xyz = struct.unpack("ddd", os.read(0,24))@*
+    if math.isnan(xyz[0]):@*
+        break@*
+    f = 0.001 + xyz[1]*0.009@*
+    os.write(1,struct.pack("d",f))@*
 @*
 Example of client (python3):@*
 import struct@*
 import sys@*
 import math@*
 while(True):@*
-____xyz = struct.unpack("ddd", sys.stdin.buffer.read(24))@*
-____if math.isnan(xyz[0]):@*
-________break@*
-____f = 0.001 + xyz[1]*0.009@*
-____sys.stdout.buffer.write(struct.pack("d",f))@*
-____sys.stdout.flush()@*
+    xyz = struct.unpack("ddd", sys.stdin.buffer.read(24))@*
+    if math.isnan(xyz[0]):@*
+        break@*
+    f = 0.001 + xyz[1]*0.009@*
+    sys.stdout.buffer.write(struct.pack("d",f))@*
+    sys.stdout.flush()@*
 @*
 Example of client (c, unix):@*
 #include <unistd.h>@*
 int main(int argc, char **argv) @{@*
-__double xyz[3];@*
-__while(read(STDIN_FILENO, &xyz, 3*sizeof(double)) == 3*sizeof(double)) @{@*
-____if (xyz[0] != xyz[0]) break; //nan@*
-____double f = 0.001 + 0.009 * xyz[1];@*
-____write(STDOUT_FILENO, &f, sizeof(double));@*
-__@}@*
-__return 0;@*
+  double xyz[3];@*
+  while(read(STDIN_FILENO, &xyz, 3*sizeof(double)) == 3*sizeof(double)) @{@*
+    if (xyz[0] != xyz[0]) break; //nan@*
+    double f = 0.001 + 0.009 * xyz[1];@*
+    write(STDOUT_FILENO, &f, sizeof(double));@*
+  @}@*
+  return 0;@*
 @}@*
 @*
 Example of client (c, windows):@*
@@ -418,15 +406,15 @@ Example of client (c, windows):@*
 #include <io.h>@*
 #include <fcntl.h>@*
 int main(int argc, char **argv) @{@*
-__double xyz[3];@*
-__setmode(fileno(stdin),O_BINARY);@*
-__setmode(fileno(stdout),O_BINARY);@*
-__while(read(fileno(stdin), &xyz, 3*sizeof(double)) == 3*sizeof(double)) @{@*
-____if (xyz[0] != xyz[0])@*
-______break;@*
-____double f = f = 0.01 + 0.09 * xyz[1];@*
-____write(fileno(stdout), &f, sizeof(double));@*
-__@}@*
+  double xyz[3];@*
+  setmode(fileno(stdin),O_BINARY);@*
+  setmode(fileno(stdout),O_BINARY);@*
+  while(read(fileno(stdin), &xyz, 3*sizeof(double)) == 3*sizeof(double)) @{@*
+    if (xyz[0] != xyz[0])@*
+      break;@*
+    double f = f = 0.01 + 0.09 * xyz[1];@*
+    write(fileno(stdout), &f, sizeof(double));@*
+  @}@*
 @}@*
 @*
 Options:@*
@@ -677,7 +665,7 @@ default value: @code{@{@}}
 @end table
 
 @item Octree
-Pre compute another field on an octree to speed-up evalution@*
+Pre compute another field on an octree to speed-up evalution.@*
 Options:@*
 @table @code
 @item InField
