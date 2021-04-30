@@ -109,6 +109,7 @@ struct contextGeometryOptions {
   double pointSize, curveWidth, selectedPointSize, selectedCurveWidth;
   int pointType, curveType, surfaceType, numSubEdges;
   double normals, tangents, scalingFactor;
+  int snapPoints;
   int highlightOrphans, clip, useTransform;
   int doubleClickedEntityTag;
   std::string doubleClickedPointCommand, doubleClickedCurveCommand;

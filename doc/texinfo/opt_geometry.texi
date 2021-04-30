@@ -236,6 +236,11 @@ Use old newreg definition for geometrical transformations (compatibility option 
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Geometry.OrientedPhysicals
+Use sign of elementary entity in physical definition as orientation indicator@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Geometry.Points
 Display geometry points?@*
 Default value: @code{1}@*
@@ -271,8 +276,8 @@ Global geometry scaling factor@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Geometry.OrientedPhysicals
-Use sign of elementary entity in physical definition as orientation indicator@*
+@item Geometry.SnapPoints
+Snap points on curves if their evaluation using the parametrization is larger than the geometrical tolerance (currently only with the OpenCASCADE kernel)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 

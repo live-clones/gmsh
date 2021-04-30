@@ -4731,6 +4731,12 @@ double opt_geometry_scaling_factor(OPT_ARGS_NUM)
   return CTX::instance()->geom.scalingFactor;
 }
 
+double opt_geometry_snap_points(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->geom.snapPoints = val;
+  return CTX::instance()->geom.snapPoints;
+}
+
 double opt_geometry_snap0(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->geom.snap[0] = val;

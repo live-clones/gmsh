@@ -508,6 +508,8 @@ void GModel::remove()
 
 void GModel::snapVertices()
 {
+  if(!CTX::instance()->geom.snapPoints) return;
+
   auto vit = firstVertex();
 
   double tol = CTX::instance()->geom.tolerance;
@@ -531,9 +533,8 @@ void GModel::snapVertices()
                       (gp.z() - (*vit)->z()) * (gp.z() - (*vit)->z()));
       if(d > tol) {
         (*vit)->setPosition(gp);
-        Msg::Info(
-          "Snapping geometry vertex %d to curve control point (dist = %g)",
-          (*vit)->tag(), d);
+        Msg::Info("Snapping geometry point %d to curve (distance = %g)",
+                  (*vit)->tag(), d);
       }
     }
     vit++;

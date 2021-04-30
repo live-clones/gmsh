@@ -971,6 +971,8 @@ StringXNumber GeometryOptions_Number[] = {
   { F|O, "OldNewReg" , opt_geometry_old_newreg , 1. ,
     "Use old newreg definition for geometrical transformations (compatibility "
     "option for old Gmsh geometries)" },
+  { F|O, "OrientedPhysicals" , opt_geometry_oriented_physicals, 1. ,
+    "Use sign of elementary entity in physical definition as orientation indicator" },
 
   { F|O, "Points" , opt_geometry_points , 1. ,
     "Display geometry points?" },
@@ -990,8 +992,9 @@ StringXNumber GeometryOptions_Number[] = {
 
   { F|O, "ScalingFactor" , opt_geometry_scaling_factor , 1.0 ,
     "Global geometry scaling factor" },
-  { F|O, "OrientedPhysicals" , opt_geometry_oriented_physicals, 1. ,
-    "Use sign of elementary entity in physical definition as orientation indicator" },
+  { F|O, "SnapPoints" , opt_geometry_snap_points , 1. ,
+    "Snap points on curves if their evaluation using the parametrization is larger "
+    "than the geometrical tolerance (currently only with the OpenCASCADE kernel)"},
   { F|O, "SnapX" , opt_geometry_snap0 , 0.1 ,
     "Snapping grid spacing along the X-axis" },
   { F|O, "SnapY" , opt_geometry_snap1 , 0.1 ,

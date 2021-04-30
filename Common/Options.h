@@ -418,6 +418,7 @@ double opt_geometry_num_sub_edges(OPT_ARGS_NUM);
 double opt_geometry_extrude_spline_points(OPT_ARGS_NUM);
 double opt_geometry_extrude_return_lateral(OPT_ARGS_NUM);
 double opt_geometry_scaling_factor(OPT_ARGS_NUM);
+double opt_geometry_snap_points(OPT_ARGS_NUM);
 double opt_geometry_snap0(OPT_ARGS_NUM);
 double opt_geometry_snap1(OPT_ARGS_NUM);
 double opt_geometry_snap2(OPT_ARGS_NUM);
