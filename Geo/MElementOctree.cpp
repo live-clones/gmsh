@@ -142,7 +142,7 @@ MElementOctree::MElementOctree(const std::vector<MElement *> &v)
 MElementOctree::~MElementOctree() { Octree_Delete(_octree); }
 
 std::vector<MElement *> MElementOctree::findAll(double x, double y, double z,
-                                                int dim, bool strict)
+                                                int dim, bool strict) const
 {
   double maxTol = 1.;
   double tolIncr = 10.;
