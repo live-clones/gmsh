@@ -26,7 +26,7 @@ Tags of points in the geometric model@*
 type: list@*
 default value: @code{@{@}}
 @item Sampling
-Linear number of samples (i.e. per dimension) to discretize each curve and surface@*
+Linear (i.e. per dimension) number of sampling points to discretize each curve and surface@*
 type: integer@*
 default value: @code{20}
 @item SurfacesList
@@ -347,7 +347,7 @@ Tags of points in the geometric model@*
 type: list@*
 default value: @code{@{@}}
 @item Sampling
-Number of sampling points (per dimension) to discretize each curve (and surface, relative to their bounding box size)@*
+Linear (i.e. per dimension) number of sampling points to discretize each curve and surface@*
 type: integer@*
 default value: @code{20}
 @item SurfacesList

@@ -2143,11 +2143,9 @@ public:
       _curveTags, "Tags of curves in the geometric model", &updateNeeded);
     options["SurfacesList"] = new FieldOptionList(
       _surfaceTags, "Tags of surfaces in the geometric model", &updateNeeded);
-    options["Sampling"] =
-      new FieldOptionInt(_sampling,
-                         "Linear number of samples (i.e. per dimension) to "
-                         "discretize each curve and surface",
-                         &updateNeeded);
+    options["Sampling"] = new FieldOptionInt(
+      _sampling, "Linear (i.e. per dimension) number of sampling points to "
+      "discretize each curve and surface", &updateNeeded);
     options["FieldX"] = new FieldOptionInt(
       _xFieldId, "Tag of the field to use as x coordinate", &updateNeeded);
     options["FieldY"] = new FieldOptionInt(
@@ -2530,10 +2528,9 @@ public:
       _curveTags, "Tags of curves in the geometric model", &updateNeeded);
     options["SurfacesList"] = new FieldOptionList(
       _surfaceTags, "Tags of surfaces in the geometric model", &updateNeeded);
-    options["Sampling"] = new FieldOptionInt(_sampling,
-      "Number of sampling points (per dimension) to discretize each curve "
-      "(and surface, relative to their bounding box size)",
-      &updateNeeded);
+    options["Sampling"] = new FieldOptionInt(
+      _sampling, "Linear (i.e. per dimension) number of sampling points to "
+      "discretize each curve and surface", &updateNeeded);
 
     // deprecated names
     options["NodesList"] =
