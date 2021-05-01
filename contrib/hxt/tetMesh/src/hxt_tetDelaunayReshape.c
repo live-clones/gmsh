@@ -302,22 +302,28 @@ HXTStatus reshapeCavityIfNeeded(TetLocal* local, HXTMesh* mesh, const uint32_t v
   for(uint64_t i=0; i<numTet; i++) {
     uint64_t curTet = tets[i];
 
-    for(int j=0; j<4; j++) {
+    for(int f=0; f<4; f++) {
       // search in the table, but without replacing...
-      uint64_t neigh = mesh->tetrahedra.neigh[4 * curTet + j];
+      uint64_t neigh = mesh->tetrahedra.neigh[4 * curTet + f];
       
-      if(neigh != HXT_NO_ADJACENT && getDeletedFlag(mesh, neigh / 4)) {
+      if(getFacetConstraint(mesh, curTet, f) || !getDeletedFlag(mesh, neigh / 4) ) { // it should be the next one in the ball, (we didn't change the order since @diggingACavity)
+        if(local->ball.array[curFace].neigh==neigh) {
+          local->ball.array[curFace].neigh = 4 * i + f; // recreate the ball array instead
+          faces[4 * i + f] = curFace;
+          curFace++;
+        }
+        else {
+          // should normally only happen if a tetrahedron was deleted in respectEdgeConstraint()
+          return HXT_ERROR_MSG(HXT_STATUS_ERROR, "not yet implemented");
+        }
+      }
+      else {
         uint64_t deletedIndex = hashTableGet(pairs, mask, neigh / 4);
         HXT_ASSERT(deletedIndex != HXT_NO_ADJACENT);
 
-        faces[4 * i + j] = 4 * deletedIndex + neigh % 4;
+        faces[4 * i + f] = 4 * deletedIndex + neigh % 4;
       }
-      else { // it should be the next one in the ball, (we didn't change the order since @diggingACavity)
-        HXT_ASSERT(local->ball.array[curFace].neigh==neigh);
-        local->ball.array[curFace].neigh = 4 * i + j;
-        faces[4 * i + j] = curFace;
-        curFace++;
-      }
+
     }
   }
 
@@ -361,7 +367,7 @@ HXTStatus reshapeCavityIfNeeded(TetLocal* local, HXTMesh* mesh, const uint32_t v
     askForBall(local, 3);
     for(int f=0; f<4; f++) {
       uint64_t neigh = mesh->tetrahedra.neigh[4 * tetToUndelete + f];
-      if(!getDeletedFlag(mesh, neigh / 4)) { // it is an exterior facet, so we have to remove it from the ball !
+      if(getFacetConstraint(mesh, tetToUndelete, f) || !getDeletedFlag(mesh, neigh / 4) ) { // it is an exterior facet, so we have to remove it from the ball !
         uint64_t face = faces[4 * (in / 4) + f];
         if(face < curFace) {
           curFace--;
