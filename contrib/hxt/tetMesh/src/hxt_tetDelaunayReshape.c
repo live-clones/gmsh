@@ -129,6 +129,8 @@ HXTStatus respectEdgeConstraint(TetLocal* local, HXTMesh* mesh, const uint32_t v
               if(nodes[out_facet]==newV)
                 break;
 
+            HXT_ASSERT(newV != HXT_GHOST_VERTEX);
+            HXT_ASSERT(nodes[in_facet] != HXT_GHOST_VERTEX);
             double* coord1 = mesh->vertices.coord + newV;
             double* coord2 = mesh->vertices.coord + nodes[in_facet];
 
@@ -246,7 +248,7 @@ HXTStatus reshapeCavityIfNeeded(TetLocal* local, HXTMesh* mesh, const uint32_t v
   // 1. put all the deleted tet in a hash table : key = meshIndex, value = deletedIndex
   // 2. create the faces array
   // 3. iterate over all deleted tet, and fill the faces array using the hash table. A special bit is set for non deleted neighbors
-  // 4. reshape the cavity
+  // 4 & 5. reshape the cavity
 
   // point 1 and 2 can take a lot of memory... can we recycle some ??
 
@@ -302,16 +304,10 @@ HXTStatus reshapeCavityIfNeeded(TetLocal* local, HXTMesh* mesh, const uint32_t v
   #endif
 
   HXT_CHECK( hxtFree(&pairs) );
-
-
-  /* 4. iterate over all faces, and undelete (remove from the cavity) the associated tet when the face does not see vta
-   * We have got to update the faces array and the boundary correctly
-   * We also have to update the curFace index such that all faces below it are good
-   * and all faces above or equal are unchecked.
-   */
-  double *vtaCoord = &mesh->vertices.coord[4 * vta];
   
-
+  /* 4. Undelete tet that were marked as "tet to undelete" in respectEdgeConstraint.
+   * We have got to update the faces array and the boundary correctly
+   */
   if(undeleteTet) {
     for(uint64_t i=0; i<numTet; i++) {
       uint64_t tetToUndelete = tets[i];
@@ -348,17 +344,23 @@ HXTStatus reshapeCavityIfNeeded(TetLocal* local, HXTMesh* mesh, const uint32_t v
     }
   }
 
+
+  /* 5. iterate over all faces, and undelete (remove from the cavity) the associated tet when the face does not see vta
+   * We have got to update the faces array and the boundary correctly
+   * We also have to update the curFace index such that all faces below it are good
+   * and all faces above or equal are unchecked.
+   */
+  double *vtaCoord = &mesh->vertices.coord[4 * vta];
   curFace = blindFace;
   while (curFace<local->ball.num) {
-    if(local->ball.array[curFace].node[2]==HXT_GHOST_VERTEX){
-      curFace++;
-      continue;
-    }
-
     uint64_t in = local->ball.array[curFace].neigh;
     uint64_t tetToUndelete = tets[in / 4];
 
     if(!getToUndeleteFlag(mesh, tetToUndelete)) {
+      if(local->ball.array[curFace].node[2]==HXT_GHOST_VERTEX){
+        curFace++;
+        continue;
+      }
       double* b = &mesh->vertices.coord[4 * local->ball.array[curFace].node[0]];
       double* c = &mesh->vertices.coord[4 * local->ball.array[curFace].node[1]];
       double* d = &mesh->vertices.coord[4 * local->ball.array[curFace].node[2]];
@@ -372,7 +374,7 @@ HXTStatus reshapeCavityIfNeeded(TetLocal* local, HXTMesh* mesh, const uint32_t v
     }
 
 
-    // 4.1: undelete the tetrahedron
+    // 5.1: undelete the tetrahedron
     // unsigned facet = in % 4;
     unsetDeletedFlag(mesh, tetToUndelete);
     tets[in / 4] = HXT_NO_ADJACENT;// correct deletion from the array is handled at point 6.
@@ -414,14 +416,14 @@ HXTStatus reshapeCavityIfNeeded(TetLocal* local, HXTMesh* mesh, const uint32_t v
   HXT_CHECK( hxtFree(&faces) );
 
 
-  // 5. put back the correct values in ball neighbors
+  // 6. put back the correct values in ball neighbors
   for(uint64_t curFace=0; curFace<local->ball.num; curFace++) {
     uint64_t in = local->ball.array[curFace].neigh;
     local->ball.array[curFace].neigh = mesh->tetrahedra.neigh[4*tets[in/4] + in%4];
   }
 
 
-  // 6. correctly delete the tetrahedra in the deleted array
+  // 7. correctly delete the tetrahedra in the deleted array
   uint64_t shift = 0;
   for(uint64_t i=0; i<numTet; i++) {
     if(tets[i]==HXT_NO_ADJACENT)
