@@ -294,10 +294,12 @@ void *searchElement(octantBucket *_buckets_head, double *_pt,
   int flag;
   octantBucket *ptrBucket;
   ELink ptr1;
+
+  void *ptrToEle = nullptr;
 #if defined(_OPENMP)
 #pragma omp atomic read
 #endif
-  void *ptrToEle = _globalPara->ptrToPrevElement;
+  ptrToEle = _globalPara->ptrToPrevElement;
 
   if(ptrToEle) {
     flag = xyzInElementBB(_pt, ptrToEle, BBElement);
