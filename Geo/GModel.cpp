@@ -1728,6 +1728,9 @@ std::size_t GModel::getNumMeshElements(unsigned c[6])
 MElement *GModel::getMeshElementByCoord(SPoint3 &p, SPoint3 &param, int dim,
                                         bool strict)
 {
+#if defined(_OPENMP)
+#pragma omp single
+#endif
   if(!_elementOctree) {
     Msg::Debug("Rebuilding mesh element octree");
     _elementOctree = new MElementOctree(this);
@@ -1747,6 +1750,9 @@ MElement *GModel::getMeshElementByCoord(SPoint3 &p, SPoint3 &param, int dim,
 std::vector<MElement *> GModel::getMeshElementsByCoord(SPoint3 &p, int dim,
                                                        bool strict)
 {
+#if defined(_OPENMP)
+#pragma omp single
+#endif
   if(!_elementOctree) {
     Msg::Debug("Rebuilding mesh element octree");
     _elementOctree = new MElementOctree(this);
@@ -1829,6 +1835,9 @@ void GModel::rebuildMeshElementCache(bool onlyIfNecessary)
 
 MVertex *GModel::getMeshVertexByTag(int n)
 {
+#if defined(_OPENMP)
+#pragma omp single
+#endif
   if(_vertexVectorCache.empty() && _vertexMapCache.empty()) {
     Msg::Debug("Rebuilding mesh node cache");
     rebuildMeshVertexCache();
@@ -1862,6 +1871,9 @@ void GModel::getMeshVerticesForPhysicalGroup(int dim, int num,
 
 MElement *GModel::getMeshElementByTag(int n)
 {
+#if defined(_OPENMP)
+#pragma omp single
+#endif
   if(_elementVectorCache.empty() && _elementMapCache.empty()) {
     Msg::Debug("Rebuilding mesh element cache");
     rebuildMeshElementCache();

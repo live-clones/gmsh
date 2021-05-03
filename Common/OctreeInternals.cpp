@@ -294,7 +294,12 @@ void *searchElement(octantBucket *_buckets_head, double *_pt,
   int flag;
   octantBucket *ptrBucket;
   ELink ptr1;
-  void *ptrToEle = _globalPara->ptrToPrevElement;
+
+  void *ptrToEle = nullptr;
+#if defined(_OPENMP)
+#pragma omp atomic read
+#endif
+  ptrToEle = _globalPara->ptrToPrevElement;
 
   if(ptrToEle) {
     flag = xyzInElementBB(_pt, ptrToEle, BBElement);
@@ -325,6 +330,9 @@ void *searchElement(octantBucket *_buckets_head, double *_pt,
     flag = xyzInElementBB(_pt, ptr1->region, BBElement);
     if(flag == 1) flag = xyzInElement(ptr1->region, _pt);
     if(flag == 1) {
+#if defined(_OPENMP)
+#pragma omp atomic write
+#endif
       _globalPara->ptrToPrevElement = ptr1->region;
       return ptr1->region;
     }
@@ -336,6 +344,9 @@ void *searchElement(octantBucket *_buckets_head, double *_pt,
     flag = xyzInElementBB(_pt, *iter, BBElement);
     if(flag == 1) flag = xyzInElement(*iter, _pt);
     if(flag == 1) {
+#if defined(_OPENMP)
+#pragma omp atomic write
+#endif
       _globalPara->ptrToPrevElement = *iter;
       return *iter;
     }
