@@ -1772,7 +1772,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
   splitElementsInBoundaryLayerIfNeeded(gf);
 
   if((CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine) &&
-     !onlyInitialMesh && CTX::instance()->mesh.algoRecombine <= 1) {
+     CTX::instance()->mesh.algoRecombine <= 1) {
     bool blossom = (CTX::instance()->mesh.algoRecombine == 1);
     int topo = CTX::instance()->mesh.recombineOptimizeTopology;
     recombineIntoQuads(gf, blossom, topo, true, 0.1);
