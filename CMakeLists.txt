@@ -2115,6 +2115,7 @@ macro(filter_tests IN OUT)
     if(${GMSH_OS} MATCHES "Linux32")
       # OCC STL generation crashes on our Linux32 docker
       string(REGEX MATCH "t18" BAD1 ${FILE})
+      string(REGEX MATCH "rod_distance_field" BAD2 ${FILE})
     endif()
     # OpenCASCADE
     if(NOT HAVE_OCC AND NOT BAD1 AND NOT BAD2 AND NOT BAD3)
