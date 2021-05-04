@@ -1728,12 +1728,14 @@ std::size_t GModel::getNumMeshElements(unsigned c[6])
 MElement *GModel::getMeshElementByCoord(SPoint3 &p, SPoint3 &param, int dim,
                                         bool strict)
 {
+  if(!_elementOctree) {
 #if defined(_OPENMP)
 #pragma omp single
 #endif
-  if(!_elementOctree) {
-    Msg::Debug("Rebuilding mesh element octree");
-    _elementOctree = new MElementOctree(this);
+    {
+      Msg::Debug("Rebuilding mesh element octree");
+      _elementOctree = new MElementOctree(this);
+    }
   }
   MElement *e = _elementOctree->find(p.x(), p.y(), p.z(), dim, strict);
   if(e) {
@@ -1750,12 +1752,14 @@ MElement *GModel::getMeshElementByCoord(SPoint3 &p, SPoint3 &param, int dim,
 std::vector<MElement *> GModel::getMeshElementsByCoord(SPoint3 &p, int dim,
                                                        bool strict)
 {
+  if(!_elementOctree) {
 #if defined(_OPENMP)
 #pragma omp single
 #endif
-  if(!_elementOctree) {
-    Msg::Debug("Rebuilding mesh element octree");
-    _elementOctree = new MElementOctree(this);
+    {
+      Msg::Debug("Rebuilding mesh element octree");
+      _elementOctree = new MElementOctree(this);
+    }
   }
   return _elementOctree->findAll(p.x(), p.y(), p.z(), dim, strict);
 }
@@ -1835,12 +1839,14 @@ void GModel::rebuildMeshElementCache(bool onlyIfNecessary)
 
 MVertex *GModel::getMeshVertexByTag(int n)
 {
+  if(_vertexVectorCache.empty() && _vertexMapCache.empty()) {
 #if defined(_OPENMP)
 #pragma omp single
 #endif
-  if(_vertexVectorCache.empty() && _vertexMapCache.empty()) {
-    Msg::Debug("Rebuilding mesh node cache");
-    rebuildMeshVertexCache();
+    {
+      Msg::Debug("Rebuilding mesh node cache");
+      rebuildMeshVertexCache();
+    }
   }
 
   if(n < (int)_vertexVectorCache.size())
@@ -1871,12 +1877,14 @@ void GModel::getMeshVerticesForPhysicalGroup(int dim, int num,
 
 MElement *GModel::getMeshElementByTag(int n)
 {
+  if(_elementVectorCache.empty() && _elementMapCache.empty()) {
 #if defined(_OPENMP)
 #pragma omp single
 #endif
-  if(_elementVectorCache.empty() && _elementMapCache.empty()) {
-    Msg::Debug("Rebuilding mesh element cache");
-    rebuildMeshElementCache();
+    {
+      Msg::Debug("Rebuilding mesh element cache");
+      rebuildMeshElementCache();
+    }
   }
 
   if(n < (int)_elementVectorCache.size())
