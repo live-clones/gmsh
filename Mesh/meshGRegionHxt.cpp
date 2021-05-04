@@ -43,20 +43,26 @@ static HXTStatus nodalSizesCallBack(double *pts, uint32_t *volume,
   double lcGlob = CTX::instance()->lc;
   int useInterpolatedSize = CTX::instance()->mesh.lcExtendFromBoundary;
 
-  HXT_INFO("Mesh size callback %suse interpolated size",
-           useInterpolatedSize ? "" : "does not ");
+  HXT_INFO("Computing %smesh sizes...", useInterpolatedSize ? "interpolated " : "");
 
+#if defined(_OPENMP)
+#pragma omp parallel for schedule(dynamic)
+#endif
   for(size_t i = 0; i < numPts; i++) {
-    HXT_ASSERT_MSG(volume[i] < allGR->size(), "volume ID %u is too big\n", volume[i]);
+    if(volume[i] < 0 || volume[i] >= allGR->size()) {
+      Msg::Error("Invalid volume tag %d in mesh size calculation", volume[i]);
+      continue;
+    }
     GRegion *gr = (*allGR)[volume[i]];
-    double lc = std::min(
-      lcGlob, BGM_MeshSizeWithoutScaling(gr, 0, 0, pts[4 * i + 0],
-                                         pts[4 * i + 1], pts[4 * i + 2]));
+    double lc = BGM_MeshSizeWithoutScaling(gr, 0, 0, pts[4 * i + 0],
+                                           pts[4 * i + 1], pts[4 * i + 2]);
     if(useInterpolatedSize && pts[4 * i + 3] > 0.0)
-      pts[4 * i + 3] = std::min(pts[4 * i + 3], lc);
+      pts[4 * i + 3] = std::min(pts[4 * i + 3], std::min(lcGlob, lc));
     else
-      pts[4 * i + 3] = lc;
+      pts[4 * i + 3] = std::min(lcGlob, lc);
   }
+
+  HXT_INFO("Done computing %smesh sizes", useInterpolatedSize ? "interpolated " : "");
 
   return HXT_STATUS_OK;
 }
@@ -253,11 +259,12 @@ static HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions, HXTMesh *m,
   if(nthreads > 1) {
     const uint32_t nR = regions.size();
     const uint32_t nV = m->vertices.num;
-    
+
     size_t* ht_all, *ht_tot; // histograms for tets
     HXT_CHECK( hxtCalloc(&ht_all, nR * (nthreads + 1), sizeof(size_t)) );
     uint32_t* hp_all, *hp_tot; // histograms for points
-    HXT_CHECK( hxtCalloc(&hp_all, nR * (nthreads + 1) * 3 + (size_t) nV * nthreads, sizeof(uint32_t)) );
+    HXT_CHECK( hxtCalloc(&hp_all, nR * (nthreads + 1) * 3 + (size_t) nV * nthreads,
+                         sizeof(uint32_t)) );
     uint32_t* vR_all = hp_all + nR * (nthreads + 1); // color per point and per thread
 
     #pragma omp parallel
@@ -350,7 +357,8 @@ static HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions, HXTMesh *m,
         if(c >= nR) continue;
 
         uint32_t *nodes = &m->tetrahedra.node[4 * i];
-        regions[c]->tetrahedra[ht_this[c]++] = new MTetrahedron(c2v[nodes[0]], c2v[nodes[1]], c2v[nodes[2]], c2v[nodes[3]]);
+        regions[c]->tetrahedra[ht_this[c]++] = new MTetrahedron
+          (c2v[nodes[0]], c2v[nodes[1]], c2v[nodes[2]], c2v[nodes[3]]);
       }
     }
 
