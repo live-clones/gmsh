@@ -1807,6 +1807,7 @@ public:
 class MinField : public Field {
 private:
   std::list<int> _fieldIds;
+  std::vector<Field*> _fields;
 
 public:
   MinField()
@@ -1821,20 +1822,31 @@ public:
   using Field::operator();
   double operator()(double x, double y, double z, GEntity *ge = nullptr)
   {
-    double v = MAX_LC;
-    for(auto it = _fieldIds.begin(); it != _fieldIds.end(); it++) {
-      Field *f = (GModel::current()->getFields()->get(*it));
-      if(f && *it != id) {
-        if(f->isotropic())
-          v = std::min(v, (*f)(x, y, z, ge));
-        else {
-          SMetric3 ff;
-          (*f)(x, y, z, ff, ge);
-          fullMatrix<double> V(3, 3);
-          fullVector<double> S(3);
-          ff.eig(V, S, 1);
-          v = std::min(v, sqrt(1. / S(2))); // S(2) is largest eigenvalue
+#if defined(_OPENMP)
+#pragma omp critical
+#endif
+    {
+      if(updateNeeded) {
+        _fields.clear();
+        for(auto it = _fieldIds.begin(); it != _fieldIds.end(); it++) {
+          Field *f = (GModel::current()->getFields()->get(*it));
+          if(f && *it != id) _fields.push_back(f);
         }
+        updateNeeded = false;
+      }
+    }
+
+    double v = MAX_LC;
+    for(auto f : _fields) {
+      if(f->isotropic())
+        v = std::min(v, (*f)(x, y, z, ge));
+      else {
+        SMetric3 ff;
+        (*f)(x, y, z, ff, ge);
+        fullMatrix<double> V(3, 3);
+        fullVector<double> S(3);
+        ff.eig(V, S, 1);
+        v = std::min(v, sqrt(1. / S(2))); // S(2) is largest eigenvalue
       }
     }
     return v;
@@ -1845,6 +1857,7 @@ public:
 class MaxField : public Field {
 private:
   std::list<int> _fieldIds;
+  std::vector<Field*> _fields;
 
 public:
   MaxField()
@@ -1859,20 +1872,31 @@ public:
   using Field::operator();
   double operator()(double x, double y, double z, GEntity *ge = nullptr)
   {
-    double v = -MAX_LC;
-    for(auto it = _fieldIds.begin(); it != _fieldIds.end(); it++) {
-      Field *f = (GModel::current()->getFields()->get(*it));
-      if(f && *it != id) {
-        if(f->isotropic())
-          v = std::max(v, (*f)(x, y, z, ge));
-        else {
-          SMetric3 ff;
-          (*f)(x, y, z, ff, ge);
-          fullMatrix<double> V(3, 3);
-          fullVector<double> S(3);
-          ff.eig(V, S, 1);
-          v = std::max(v, sqrt(1. / S(0))); // S(0) is smallest eigenvalue
+#if defined(_OPENMP)
+#pragma omp critical
+#endif
+    {
+      if(updateNeeded) {
+        _fields.clear();
+        for(auto it = _fieldIds.begin(); it != _fieldIds.end(); it++) {
+          Field *f = (GModel::current()->getFields()->get(*it));
+          if(f && *it != id) _fields.push_back(f);
         }
+        updateNeeded = false;
+      }
+    }
+
+    double v = -MAX_LC;
+    for(auto f : _fields) {
+      if(f->isotropic())
+        v = std::max(v, (*f)(x, y, z, ge));
+      else {
+        SMetric3 ff;
+        (*f)(x, y, z, ff, ge);
+        fullMatrix<double> V(3, 3);
+        fullVector<double> S(3);
+        ff.eig(V, S, 1);
+        v = std::max(v, sqrt(1. / S(0))); // S(0) is smallest eigenvalue
       }
     }
     return v;
@@ -2069,8 +2093,7 @@ public:
     if(updateNeeded) update();
     double xyz[3] = {x, y, z};
 #if defined(_OPENMP)
-#pragma omp                                                                    \
-  critical // just to avoid crash (still incorrect) - should use nanoflann
+#pragma omp critical // avoid crash (still incorrect) - use Distance instead
 #endif
     _kdTree->annkSearch(xyz, 1, _index, _dist);
     double d = sqrt(_dist[0]);
@@ -2093,8 +2116,7 @@ public:
     if(updateNeeded) update();
     double xyz[3] = {X, Y, Z};
 #if defined(_OPENMP)
-#pragma omp                                                                    \
-  critical // just to avoid crash (still incorrect) - should use nanoflann
+#pragma omp critical // avoid crash (still incorrect) - use Distance instead
 #endif
     _kdTree->annkSearch(xyz, 1, _index, _dist);
     double d = sqrt(_dist[0]);
@@ -2304,8 +2326,7 @@ public:
     double xyz[3];
     getCoord(X, Y, Z, xyz[0], xyz[1], xyz[2], ge);
 #if defined(_OPENMP)
-#pragma omp                                                                    \
-  critical // just to avoid crash (still incorrect) - should use nanoflann
+#pragma omp critical // avoid crash (still incorrect) - use Distance instead
 #endif
     _kdTree->annkSearch(xyz, 1, _index, _dist);
     double d = _dist[0];
