@@ -1730,6 +1730,7 @@ MElement *GModel::getMeshElementByCoord(SPoint3 &p, SPoint3 &param, int dim,
 {
   if(!_elementOctree) {
 #if defined(_OPENMP)
+#pragma omp barrier
 #pragma omp single
 #endif
     {
@@ -1754,6 +1755,7 @@ std::vector<MElement *> GModel::getMeshElementsByCoord(SPoint3 &p, int dim,
 {
   if(!_elementOctree) {
 #if defined(_OPENMP)
+#pragma omp barrier
 #pragma omp single
 #endif
     {
@@ -1841,6 +1843,7 @@ MVertex *GModel::getMeshVertexByTag(int n)
 {
   if(_vertexVectorCache.empty() && _vertexMapCache.empty()) {
 #if defined(_OPENMP)
+#pragma omp barrier
 #pragma omp single
 #endif
     {
@@ -1879,6 +1882,7 @@ MElement *GModel::getMeshElementByTag(int n)
 {
   if(_elementVectorCache.empty() && _elementMapCache.empty()) {
 #if defined(_OPENMP)
+#pragma omp barrier
 #pragma omp single
 #endif
     {
