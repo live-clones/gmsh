@@ -887,7 +887,7 @@ StringXNumber GeometryOptions_Number[] = {
     "Number of control points for splines created during extrusion" },
 
   { F|O, "HighlightOrphans" , opt_geometry_highlight_orphans, 0. ,
-    "Highlight orphan entities (lines connected to a single surface, etc.)?" },
+    "Highlight orphan and boundary curves and surfaces?" },
 
   { F|O, "LabelType" , opt_geometry_label_type , 0. ,
     "Type of entity label (0: description, 1: elementary entity tag, "
@@ -919,6 +919,9 @@ StringXNumber GeometryOptions_Number[] = {
   { F|O, "NumSubEdges" , opt_geometry_num_sub_edges , 40. ,
     "Number of edge subdivisions between control points when displaying curves" },
 
+  { F|O, "OCCAutoEmbed" , opt_geometry_occ_auto_embed , 1. ,
+    "Automatically embed points, curves and faces in higher dimensional entities if "
+    "they are marked as 'internal' by OpenCASCADE" },
   { F|O, "OCCAutoFix" , opt_geometry_occ_auto_fix , 1. ,
     "Automatically fix orientation of wires, faces, shells and volumes when creating "
     "new entities with the OpenCASCADE kernel" },

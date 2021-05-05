@@ -50,7 +50,8 @@ void OCCRegion::_setup()
       if(model()->getOCCInternals())
         f = model()->getOCCInternals()->getFaceForOCCShape(model(), face);
       if(!f) { Msg::Error("Unknown surface in volume %d", tag()); }
-      else if(face.Orientation() == TopAbs_INTERNAL) {
+      else if(face.Orientation() == TopAbs_INTERNAL &&
+              CTX::instance()->geom.occAutoEmbed) {
         Msg::Debug("Adding embedded surface %d in volume %d", f->tag(), tag());
         embedded_faces.push_back(f);
       }
@@ -67,7 +68,8 @@ void OCCRegion::_setup()
     if(model()->getOCCInternals())
       e = model()->getOCCInternals()->getEdgeForOCCShape(model(), edge);
     if(!e) { Msg::Error("Unknown curve in volume %d", tag()); }
-    else if(edge.Orientation() == TopAbs_INTERNAL) {
+    else if(edge.Orientation() == TopAbs_INTERNAL &&
+            CTX::instance()->geom.occAutoEmbed) {
       Msg::Debug("Adding embedded curve %d in volume %d", e->tag(), tag());
       embedded_edges.push_back(e);
       // OCCEdge *occe = (OCCEdge*)e;
@@ -81,7 +83,8 @@ void OCCRegion::_setup()
     if(model()->getOCCInternals())
       v = model()->getOCCInternals()->getVertexForOCCShape(model(), vertex);
     if(!v) { Msg::Error("Unknown point in volume %d", tag()); }
-    else if(vertex.Orientation() == TopAbs_INTERNAL) {
+    else if(vertex.Orientation() == TopAbs_INTERNAL &&
+            CTX::instance()->geom.occAutoEmbed) {
       Msg::Debug("Adding embedded point %d in volume %d", v->tag(), tag());
       embedded_vertices.push_back(v);
     }

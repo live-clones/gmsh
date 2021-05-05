@@ -4552,6 +4552,12 @@ double opt_geometry_light_two_side(OPT_ARGS_NUM)
   return CTX::instance()->geom.lightTwoSide;
 }
 
+double opt_geometry_occ_auto_embed(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->geom.occAutoEmbed = val ? 1 : 0;
+  return CTX::instance()->geom.occAutoEmbed;
+}
+
 double opt_geometry_occ_auto_fix(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->geom.occAutoFix = val ? 1 : 0;

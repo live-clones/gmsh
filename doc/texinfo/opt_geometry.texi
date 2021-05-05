@@ -87,7 +87,7 @@ Default value: @code{5}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.HighlightOrphans
-Highlight orphan entities (lines connected to a single surface, etc.)?@*
+Highlight orphan and boundary curves and surfaces?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -129,6 +129,11 @@ Saved in: @code{General.OptionsFileName}
 @item Geometry.NumSubEdges
 Number of edge subdivisions between control points when displaying curves@*
 Default value: @code{40}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Geometry.OCCAutoEmbed
+Automatically embed points, curves and faces in higher dimensional entities if they are marked as 'internal' by OpenCASCADE@*
+Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.OCCAutoFix

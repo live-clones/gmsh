@@ -75,14 +75,13 @@ void OCCFace::_setup()
       if(model()->getOCCInternals())
         e = model()->getOCCInternals()->getEdgeForOCCShape(model(), edge);
       if(!e) { Msg::Error("Unknown curve in surface %d", tag()); }
-      else if(edge.Orientation() == TopAbs_INTERNAL) {
+      else if(edge.Orientation() == TopAbs_INTERNAL &&
+              CTX::instance()->geom.occAutoEmbed) {
         Msg::Debug("Adding embedded curve %d in surface %d", e->tag(), tag());
         embedded_edges.push_back(e);
         /*
-        if(e->getBeginVertex())
-          embedded_vertices.insert(e->getBeginVertex());
-        if(e->getEndVertex())
-          embedded_vertices.insert(e->getEndVertex());
+        if(e->getBeginVertex()) embedded_vertices.insert(e->getBeginVertex());
+        if(e->getEndVertex()) embedded_vertices.insert(e->getEndVertex());
         */
       }
       else {
@@ -117,7 +116,8 @@ void OCCFace::_setup()
     if(model()->getOCCInternals())
       v = model()->getOCCInternals()->getVertexForOCCShape(model(), vertex);
     if(!v) { Msg::Error("Unknown point in surface %d", tag()); }
-    else if(vertex.Orientation() == TopAbs_INTERNAL) {
+    else if(vertex.Orientation() == TopAbs_INTERNAL &&
+            CTX::instance()->geom.occAutoEmbed) {
       Msg::Debug("Adding embedded point %d in surface %d", v->tag(), tag());
       embedded_vertices.insert(v);
     }
