@@ -283,8 +283,10 @@ GMSH_API int gmshModelAddDiscreteEntity(const int dim,
                                         int * boundary, size_t boundary_n,
                                         int * ierr);
 
-/* Remove the entities `dimTags' of the current model. If `recursive' is true,
- * remove all the entities on their boundaries, down to dimension 0. */
+/* Remove the entities `dimTags' of the current model, provided that they are
+ * not on the boundary of (or embedded in) higher-dimensional entities. If
+ * `recursive' is true, remove all the entities on their boundaries, down to
+ * dimension 0. */
 GMSH_API void gmshModelRemoveEntities(int * dimTags, size_t dimTags_n,
                                       const int recursive,
                                       int * ierr);
@@ -1709,7 +1711,8 @@ GMSH_API void gmshModelGeoCopy(int * dimTags, size_t dimTags_n,
                                int ** outDimTags, size_t * outDimTags_n,
                                int * ierr);
 
-/* Remove the entities `dimTags' in the built-in CAD representation. If
+/* Remove the entities `dimTags' in the built-in CAD representation, provided
+ * that they are not on the boundary of higher-dimensional entities. If
  * `recursive' is true, remove all the entities on their boundaries, down to
  * dimension 0. */
 GMSH_API void gmshModelGeoRemove(int * dimTags, size_t dimTags_n,
@@ -2441,9 +2444,10 @@ GMSH_API void gmshModelOccCopy(int * dimTags, size_t dimTags_n,
                                int ** outDimTags, size_t * outDimTags_n,
                                int * ierr);
 
-/* Remove the entities `dimTags' in the OpenCASCADE CAD representation. If
- * `recursive' is true, remove all the entities on their boundaries, down to
- * dimension 0. */
+/* Remove the entities `dimTags' in the OpenCASCADE CAD representation,
+ * provided that they are not on the boundary of higher-dimensional entities.
+ * If `recursive' is true, remove all the entities on their boundaries, down
+ * to dimension 0. */
 GMSH_API void gmshModelOccRemove(int * dimTags, size_t dimTags_n,
                                  const int recursive,
                                  int * ierr);

@@ -953,8 +953,10 @@ class model:
         """
         gmsh.model.removeEntities(dimTags, recursive=False)
 
-        Remove the entities `dimTags' of the current model. If `recursive' is true,
-        remove all the entities on their boundaries, down to dimension 0.
+        Remove the entities `dimTags' of the current model, provided that they are
+        not on the boundary of (or embedded in) higher-dimensional entities. If
+        `recursive' is true, remove all the entities on their boundaries, down to
+        dimension 0.
         """
         api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
         ierr = c_int()
@@ -4391,7 +4393,8 @@ class model:
             """
             gmsh.model.geo.remove(dimTags, recursive=False)
 
-            Remove the entities `dimTags' in the built-in CAD representation. If
+            Remove the entities `dimTags' in the built-in CAD representation, provided
+            that they are not on the boundary of higher-dimensional entities. If
             `recursive' is true, remove all the entities on their boundaries, down to
             dimension 0.
             """
@@ -6027,9 +6030,10 @@ class model:
             """
             gmsh.model.occ.remove(dimTags, recursive=False)
 
-            Remove the entities `dimTags' in the OpenCASCADE CAD representation. If
-            `recursive' is true, remove all the entities on their boundaries, down to
-            dimension 0.
+            Remove the entities `dimTags' in the OpenCASCADE CAD representation,
+            provided that they are not on the boundary of higher-dimensional entities.
+            If `recursive' is true, remove all the entities on their boundaries, down
+            to dimension 0.
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             ierr = c_int()

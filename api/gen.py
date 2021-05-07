@@ -160,7 +160,7 @@ model.add('getDimension', doc, oint)
 doc = '''Add a discrete model entity (defined by a mesh) of dimension `dim' in the current model. Return the tag of the new discrete entity, equal to `tag' if `tag' is positive, or a new tag if `tag' < 0. `boundary' specifies the tags of the entities on the boundary of the discrete entity, if any. Specifying `boundary' allows Gmsh to construct the topology of the overall model.'''
 model.add('addDiscreteEntity', doc, oint, iint('dim'), iint('tag', '-1'), ivectorint('boundary', 'std::vector<int>()', "[]", "[]"))
 
-doc = '''Remove the entities `dimTags' of the current model. If `recursive' is true, remove all the entities on their boundaries, down to dimension 0.'''
+doc = '''Remove the entities `dimTags' of the current model, provided that they are not on the boundary of (or embedded in) higher-dimensional entities. If `recursive' is true, remove all the entities on their boundaries, down to dimension 0.'''
 model.add('removeEntities', doc, None, ivectorpair('dimTags'), ibool('recursive', 'false', 'False'))
 
 doc = '''Remove the entity name `name' from the current model.'''
@@ -606,7 +606,7 @@ geo.add('symmetrize', doc, None, ivectorpair('dimTags'), idouble('a'), idouble('
 doc = '''Copy the entities `dimTags' in the built-in CAD representation; the new entities are returned in `outDimTags'.'''
 geo.add('copy', doc, None, ivectorpair('dimTags'), ovectorpair('outDimTags'))
 
-doc = '''Remove the entities `dimTags' in the built-in CAD representation. If `recursive' is true, remove all the entities on their boundaries, down to dimension 0.'''
+doc = '''Remove the entities `dimTags' in the built-in CAD representation, provided that they are not on the boundary of higher-dimensional entities. If `recursive' is true, remove all the entities on their boundaries, down to dimension 0.'''
 geo.add('remove', doc, None, ivectorpair('dimTags'), ibool('recursive', 'false', 'False'))
 
 doc = '''Remove all duplicate entities in the built-in CAD representation (different entities at the same geometrical location).'''
@@ -802,7 +802,7 @@ occ.add('affineTransform', doc, None, ivectorpair('dimTags'), ivectordouble('a')
 doc = '''Copy the entities `dimTags' in the OpenCASCADE CAD representation; the new entities are returned in `outDimTags'.'''
 occ.add('copy', doc, None, ivectorpair('dimTags'), ovectorpair('outDimTags'))
 
-doc = '''Remove the entities `dimTags' in the OpenCASCADE CAD representation. If `recursive' is true, remove all the entities on their boundaries, down to dimension 0.'''
+doc = '''Remove the entities `dimTags' in the OpenCASCADE CAD representation, provided that they are not on the boundary of higher-dimensional entities. If `recursive' is true, remove all the entities on their boundaries, down to dimension 0.'''
 occ.add('remove', doc, None, ivectorpair('dimTags'), ibool('recursive', 'false', 'False'))
 
 doc = '''Remove all duplicate entities in the OpenCASCADE CAD representation (different entities at the same geometrical location) after intersecting (using boolean fragments) all highest dimensional entities.'''

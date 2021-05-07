@@ -345,8 +345,10 @@ namespace gmsh { // Top-level functions
 
     // gmsh::model::removeEntities
     //
-    // Remove the entities `dimTags' of the current model. If `recursive' is true,
-    // remove all the entities on their boundaries, down to dimension 0.
+    // Remove the entities `dimTags' of the current model, provided that they are
+    // not on the boundary of (or embedded in) higher-dimensional entities. If
+    // `recursive' is true, remove all the entities on their boundaries, down to
+    // dimension 0.
     GMSH_API void removeEntities(const gmsh::vectorpair & dimTags,
                                  const bool recursive = false);
 
@@ -1940,7 +1942,8 @@ namespace gmsh { // Top-level functions
 
       // gmsh::model::geo::remove
       //
-      // Remove the entities `dimTags' in the built-in CAD representation. If
+      // Remove the entities `dimTags' in the built-in CAD representation, provided
+      // that they are not on the boundary of higher-dimensional entities. If
       // `recursive' is true, remove all the entities on their boundaries, down to
       // dimension 0.
       GMSH_API void remove(const gmsh::vectorpair & dimTags,
@@ -2749,9 +2752,10 @@ namespace gmsh { // Top-level functions
 
       // gmsh::model::occ::remove
       //
-      // Remove the entities `dimTags' in the OpenCASCADE CAD representation. If
-      // `recursive' is true, remove all the entities on their boundaries, down to
-      // dimension 0.
+      // Remove the entities `dimTags' in the OpenCASCADE CAD representation,
+      // provided that they are not on the boundary of higher-dimensional entities.
+      // If `recursive' is true, remove all the entities on their boundaries, down
+      // to dimension 0.
       GMSH_API void remove(const gmsh::vectorpair & dimTags,
                            const bool recursive = false);
 

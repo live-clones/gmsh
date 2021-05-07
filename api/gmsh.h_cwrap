@@ -542,8 +542,10 @@ namespace gmsh { // Top-level functions
       return result_api_;
     }
 
-    // Remove the entities `dimTags' of the current model. If `recursive' is true,
-    // remove all the entities on their boundaries, down to dimension 0.
+    // Remove the entities `dimTags' of the current model, provided that they are
+    // not on the boundary of (or embedded in) higher-dimensional entities. If
+    // `recursive' is true, remove all the entities on their boundaries, down to
+    // dimension 0.
     inline void removeEntities(const gmsh::vectorpair & dimTags,
                                const bool recursive = false)
     {
@@ -2959,7 +2961,8 @@ namespace gmsh { // Top-level functions
         outDimTags.resize(api_outDimTags_n_ / 2); for(size_t i = 0; i < api_outDimTags_n_ / 2; ++i){ outDimTags[i].first = api_outDimTags_[i * 2 + 0]; outDimTags[i].second = api_outDimTags_[i * 2 + 1]; } gmshFree(api_outDimTags_);
       }
 
-      // Remove the entities `dimTags' in the built-in CAD representation. If
+      // Remove the entities `dimTags' in the built-in CAD representation, provided
+      // that they are not on the boundary of higher-dimensional entities. If
       // `recursive' is true, remove all the entities on their boundaries, down to
       // dimension 0.
       inline void remove(const gmsh::vectorpair & dimTags,
@@ -4143,9 +4146,10 @@ namespace gmsh { // Top-level functions
         outDimTags.resize(api_outDimTags_n_ / 2); for(size_t i = 0; i < api_outDimTags_n_ / 2; ++i){ outDimTags[i].first = api_outDimTags_[i * 2 + 0]; outDimTags[i].second = api_outDimTags_[i * 2 + 1]; } gmshFree(api_outDimTags_);
       }
 
-      // Remove the entities `dimTags' in the OpenCASCADE CAD representation. If
-      // `recursive' is true, remove all the entities on their boundaries, down to
-      // dimension 0.
+      // Remove the entities `dimTags' in the OpenCASCADE CAD representation,
+      // provided that they are not on the boundary of higher-dimensional entities.
+      // If `recursive' is true, remove all the entities on their boundaries, down
+      // to dimension 0.
       inline void remove(const gmsh::vectorpair & dimTags,
                          const bool recursive = false)
       {

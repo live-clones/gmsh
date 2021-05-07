@@ -422,7 +422,6 @@ void GModel::remove(GVertex *v)
 
 void GModel::remove(int dim, int tag, bool recursive)
 {
-  // TODO: we should also check dependencies in embedded entities
   if(dim == 3) {
     GRegion *gr = getRegionByTag(tag);
     if(gr) {
@@ -444,6 +443,11 @@ void GModel::remove(int dim, int tag, bool recursive)
           skip = true;
           break;
         }
+        auto ef = (*it)->embeddedFaces();
+        if(std::find(ef.begin(), ef.end(), gf) != ef.end()) {
+          skip = true;
+          break;
+        }
       }
       if(!skip) {
         remove(gf);
@@ -459,11 +463,25 @@ void GModel::remove(int dim, int tag, bool recursive)
     GEdge *ge = getEdgeByTag(tag);
     if(ge) {
       bool skip = false;
-      for(auto it = firstFace(); it != lastFace(); it++) {
-        std::vector<GEdge *> const &e = (*it)->edges();
-        if(std::find(e.begin(), e.end(), ge) != e.end()) {
+      for(auto it = firstRegion(); it != lastRegion(); it++) {
+        auto ee = (*it)->embeddedEdges();
+        if(std::find(ee.begin(), ee.end(), ge) != ee.end()) {
           skip = true;
           break;
+        }
+      }
+      if(!skip) {
+        for(auto it = firstFace(); it != lastFace(); it++) {
+          std::vector<GEdge *> const &e = (*it)->edges();
+          if(std::find(e.begin(), e.end(), ge) != e.end()) {
+            skip = true;
+            break;
+          }
+          auto ee = (*it)->embeddedEdges();
+          if(std::find(ee.begin(), ee.end(), ge) != ee.end()) {
+            skip = true;
+            break;
+          }
         }
       }
       if(!skip) {
@@ -484,6 +502,24 @@ void GModel::remove(int dim, int tag, bool recursive)
         if(ge->getBeginVertex() == gv || ge->getEndVertex() == gv) {
           skip = true;
           break;
+        }
+      }
+      if(!skip) {
+        for(auto it = firstFace(); it != lastFace(); it++) {
+          auto ev = (*it)->embeddedVertices();
+          if(std::find(ev.begin(), ev.end(), gv) != ev.end()) {
+            skip = true;
+            break;
+          }
+        }
+      }
+      if(!skip) {
+        for(auto it = firstRegion(); it != lastRegion(); it++) {
+          auto ev = (*it)->embeddedVertices();
+          if(std::find(ev.begin(), ev.end(), gv) != ev.end()) {
+            skip = true;
+            break;
+          }
         }
       }
       if(!skip) { remove(gv); }

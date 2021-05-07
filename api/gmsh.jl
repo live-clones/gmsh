@@ -726,8 +726,9 @@ const add_discrete_entity = addDiscreteEntity
 """
     gmsh.model.removeEntities(dimTags, recursive = false)
 
-Remove the entities `dimTags` of the current model. If `recursive` is true,
-remove all the entities on their boundaries, down to dimension 0.
+Remove the entities `dimTags` of the current model, provided that they are not
+on the boundary of (or embedded in) higher-dimensional entities. If `recursive`
+is true, remove all the entities on their boundaries, down to dimension 0.
 """
 function removeEntities(dimTags, recursive = false)
     api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
@@ -3764,8 +3765,9 @@ end
 """
     gmsh.model.geo.remove(dimTags, recursive = false)
 
-Remove the entities `dimTags` in the built-in CAD representation. If `recursive`
-is true, remove all the entities on their boundaries, down to dimension 0.
+Remove the entities `dimTags` in the built-in CAD representation, provided that
+they are not on the boundary of higher-dimensional entities. If `recursive` is
+true, remove all the entities on their boundaries, down to dimension 0.
 """
 function remove(dimTags, recursive = false)
     api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
@@ -5169,9 +5171,9 @@ end
 """
     gmsh.model.occ.remove(dimTags, recursive = false)
 
-Remove the entities `dimTags` in the OpenCASCADE CAD representation. If
-`recursive` is true, remove all the entities on their boundaries, down to
-dimension 0.
+Remove the entities `dimTags` in the OpenCASCADE CAD representation, provided
+that they are not on the boundary of higher-dimensional entities. If `recursive`
+is true, remove all the entities on their boundaries, down to dimension 0.
 """
 function remove(dimTags, recursive = false)
     api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
