@@ -351,7 +351,7 @@ Linear (i.e. per dimension) number of sampling points to discretize each curve a
 type: integer@*
 default value: @code{20}
 @item SurfacesList
-Tags of surfaces in the geometric model@*
+Tags of surfaces in the geometric model (only OpenCASCADE and discrete surfaces are currently supported)@*
 type: list@*
 default value: @code{@{@}}
 @end table

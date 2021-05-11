@@ -165,7 +165,7 @@ public:
       "Discrete surface (parametrizable, isomorphic to a disk)",
       "Volume",
       "Discrete volume",
-      "Partition vertex",
+      "Partition point",
       "Partition curve",
       "Partition surface",
       "Partition volume",

@@ -2548,7 +2548,9 @@ public:
     options["CurvesList"] = new FieldOptionList(
       _curveTags, "Tags of curves in the geometric model", &updateNeeded);
     options["SurfacesList"] = new FieldOptionList(
-      _surfaceTags, "Tags of surfaces in the geometric model", &updateNeeded);
+      _surfaceTags, "Tags of surfaces in the geometric model "
+      "(only OpenCASCADE and discrete surfaces are currently supported)",
+      &updateNeeded);
     options["Sampling"] = new FieldOptionInt(
       _sampling, "Linear (i.e. per dimension) number of sampling points to "
       "discretize each curve and surface", &updateNeeded);

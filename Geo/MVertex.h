@@ -234,7 +234,7 @@ struct MVertexPtrHash {
 bool reparamMeshEdgeOnFace(MVertex *v1, MVertex *v2, GFace *gf, SPoint2 &param1,
                            SPoint2 &param2);
 bool reparamMeshVertexOnFace(MVertex const *v, const GFace *gf, SPoint2 &param,
-                             bool onSurface = true);
+                             bool onSurface = true, bool failOnSeam = true);
 bool reparamMeshVertexOnEdge(MVertex *v, const GEdge *ge, double &param);
 
 double angle3Vertices(const MVertex *p1, const MVertex *p2, const MVertex *p3);
