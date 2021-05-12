@@ -116,7 +116,7 @@ default value: @code{1}
 @end table
 
 @item Ball
-The value of this field is VIn inside a spherical ball, VOut outside. The ball is defined by@*
+Return VIn inside a spherical ball, and VOut outside. The ball is defined by@*
 @*
   ||dX||^2 < R^2 &&@*
   dX = (X - XC)^2 + (Y-YC)^2 + (Z-ZC)^2@*
@@ -135,11 +135,11 @@ default value: @code{0}
 @item VIn
 Value inside the ball@*
 type: float@*
-default value: @code{0}
+default value: @code{1e+22}
 @item VOut
 Value outside the ball@*
 type: float@*
-default value: @code{0}
+default value: @code{1e+22}
 @item XCenter
 X coordinate of the ball center@*
 type: float@*
@@ -211,7 +211,7 @@ Mesh size normal to the curve@*
 type: float@*
 default value: @code{0.1}
 @item SizeFar
-Element size far from the curves@*
+Mesh size far from the curves@*
 type: float@*
 default value: @code{1}
 @item SizesList
@@ -225,7 +225,7 @@ default value: @code{0.01}
 @end table
 
 @item Box
-The value of this field is VIn inside the box, VOut outside the box. The box is defined by@*
+Return VIn inside the box, and VOut outside. The box is defined by@*
 @*
   Xmin <= x <= XMax &&@*
   YMin <= y <= YMax &&@*
@@ -241,11 +241,11 @@ default value: @code{0}
 @item VIn
 Value inside the box@*
 type: float@*
-default value: @code{0}
+default value: @code{1e+22}
 @item VOut
 Value outside the box@*
 type: float@*
-default value: @code{0}
+default value: @code{1e+22}
 @item XMax
 Maximum X coordinate of the box@*
 type: float@*
@@ -272,6 +272,40 @@ type: float@*
 default value: @code{0}
 @end table
 
+@item Constant
+Return VIn when inside the entities (and on their boundary if IncludeBoundary is set), and VOut outside.@*
+Options:@*
+@table @code
+@item CurvesList
+Curve tags@*
+type: list@*
+default value: @code{@{@}}
+@item IncludeBoundary
+Include the boundary of the entities@*
+type: boolean@*
+default value: @code{1}
+@item PointsList
+Point tags@*
+type: list@*
+default value: @code{@{@}}
+@item SurfacesList
+Surface tags@*
+type: list@*
+default value: @code{@{@}}
+@item VIn
+Value inside the entities@*
+type: float@*
+default value: @code{1e+22}
+@item VOut
+Value outside the entities@*
+type: float@*
+default value: @code{1e+22}
+@item VolumesList
+Volume tags@*
+type: list@*
+default value: @code{@{@}}
+@end table
+
 @item Curvature
 Compute the curvature of Field[InField]:@*
 @*
@@ -289,7 +323,7 @@ default value: @code{1}
 @end table
 
 @item Cylinder
-The value of this field is VIn inside a frustrated cylinder, VOut outside. The cylinder is given by@*
+Return VIn inside a frustrated cylinder, and VOut outside. The cylinder is defined by@*
 @*
   ||dX||^2 < R^2 &&@*
   (X-X0).A < ||A||^2@*
@@ -303,11 +337,11 @@ default value: @code{0}
 @item VIn
 Value inside the cylinder@*
 type: float@*
-default value: @code{0}
+default value: @code{1e+22}
 @item VOut
 Value outside the cylinder@*
 type: float@*
-default value: @code{0}
+default value: @code{1e+22}
 @item XAxis
 X component of the cylinder axis@*
 type: float@*
@@ -426,7 +460,15 @@ default value: @code{""}
 @end table
 
 @item Frustum
-This field is an extended cylinder with inner (i) and outer (o) radiuseson both endpoints (1 and 2). Length scale is bilinearly interpolated betweenthese locations (inner and outer radiuses, endpoints 1 and 2)The field values for a point P are given by :  u = P1P.P1P2/||P1P2||   r = || P1P - u*P1P2 ||   Ri = (1-u)*R1i + u*R2i   Ro = (1-u)*R1o + u*R2o   v = (r-Ri)/(Ro-Ri)  lc = (1-v)*( (1-u)*v1i + u*v2i ) + v*( (1-u)*v1o + u*v2o )    where (u,v) in [0,1]x[0,1]@*
+Interpolate mesh sizes on a extended cylinder frustrum defined by inner (R1i and R2i) and outer (R1o and R2o) radii and two endpoints P1 and P2.The field value F for a point P is given by :@*
+@*
+  u = P1P . P1P2 / ||P1P2|| @*
+  r = || P1P - u*P1P2 || @*
+  Ri = (1 - u) * R1i + u * R2i @*
+  Ro = (1 - u) * R1o + u * R2o @*
+  v = (r - Ri) / (Ro - Ri) @*
+  F = (1 - v) * ((1 - u) * v1i + u * v2i) +       v * ((1 - u) * v1o + u * v2o)@*
+with (u, v) in [0, 1] x [0, 1].@*
 Options:@*
 @table @code
 @item InnerR1
@@ -438,11 +480,11 @@ Inner radius of Frustum at endpoint 2@*
 type: float@*
 default value: @code{0}
 @item InnerV1
-Element size at point 1, inner radius@*
+Mesh size at point 1, inner radius@*
 type: float@*
 default value: @code{0.1}
 @item InnerV2
-Element size at point 2, inner radius@*
+Mesh size at point 2, inner radius@*
 type: float@*
 default value: @code{0.1}
 @item OuterR1
@@ -454,11 +496,11 @@ Outer radius of Frustum at endpoint 2@*
 type: float@*
 default value: @code{1}
 @item OuterV1
-Element size at point 1, outer radius@*
+Mesh size at point 1, outer radius@*
 type: float@*
 default value: @code{1}
 @item OuterV2
-Element size at point 2, outer radius@*
+Mesh size at point 2, outer radius@*
 type: float@*
 default value: @code{1}
 @item X1
@@ -524,7 +566,7 @@ Compute finite difference the Laplacian of Field[InField]:@*
       G(x,y+d,z) + G(x,y-d,z) +@*
       G(x,y,z+d) + G(x,y,z-d) - 6 * G(x,y,z),@*
 @*
-where G = Field[InField] and d = Delta@*
+where G = Field[InField] and d = Delta.@*
 Options:@*
 @table @code
 @item Delta
@@ -540,7 +582,7 @@ default value: @code{1}
 @item LonLat
 Evaluate Field[InField] in geographic coordinates (longitude, latitude):@*
 @*
-  F = Field[InField](atan(y/x), asin(z/sqrt(x^2+y^2+z^2))@*
+  F = Field[InField](atan(y / x), asin(z / sqrt(x^2 + y^2 + z^2))@*
 Options:@*
 @table @code
 @item FromStereo
@@ -624,14 +666,14 @@ default value: @code{1}
 @end table
 
 @item Mean
-Simple smoother:@*
+Return the mean value@*
 @*
-  F = (G(x+delta,y,z) + G(x-delta,y,z) +@*
-       G(x,y+delta,z) + G(x,y-delta,z) +@*
-       G(x,y,z+delta) + G(x,y,z-delta) +@*
-       G(x,y,z)) / 7,@*
+  F = (G(x + delta, y, z) + G(x - delta, y, z) +@*
+       G(x, y + delta, z) + G(x, y - delta, z) +@*
+       G(x, y, z + delta) + G(x, y, z - delta) +@*
+       G(x, y, z)) / 7,@*
 @*
-where G = Field[InField]@*
+where G = Field[InField].@*
 Options:@*
 @table @code
 @item Delta
@@ -701,7 +743,7 @@ default value: @code{1}
 @end table
 
 @item PostView
-Evaluate the post processing view ViewIndex.@*
+Evaluate the post processing view with index ViewIndex, or with tag ViewTag if ViewTag is positive.@*
 Options:@*
 @table @code
 @item CropNegativeValues
@@ -719,7 +761,7 @@ default value: @code{-1}
 @end table
 
 @item Restrict
-Restrict the application of a field to a given list of geometrical points, curves, surfaces or volumes.@*
+Restrict the application of a field to a given list of geometrical points, curves, surfaces or volumes (as well as their boundaries if IncludeBoundary is set).@*
 Options:@*
 @table @code
 @item CurvesList
@@ -730,6 +772,10 @@ default value: @code{@{@}}
 Input field tag@*
 type: integer@*
 default value: @code{1}
+@item IncludeBoundary
+Include the boundary of the entities@*
+type: boolean@*
+default value: @code{0}
 @item PointsList
 Point tags@*
 type: list@*
@@ -780,17 +826,15 @@ default value: @code{0}
 @end table
 
 @item Threshold
-F = SizeMin if Field[InField] <= DistMin,@*
-F = SizeMax if Field[InField] >= DistMax,@*
-F = interpolation between SizeMin and SizeMax if DistMin < Field[InField] < DistMax@*
+Return F = SizeMin if Field[InField] <= DistMin, F = SizeMax if Field[InField] >= DistMax, and the interpolation between SizeMin and SizeMax if DistMin < Field[InField] < DistMax.@*
 Options:@*
 @table @code
 @item DistMax
-Distance from entity after which element size will be SizeMax@*
+Distance from entity after which the mesh size will be SizeMax@*
 type: float@*
 default value: @code{10}
 @item DistMin
-Distance from entity up to which element size will be SizeMin@*
+Distance from entity up to which the mesh size will be SizeMin@*
 type: float@*
 default value: @code{1}
 @item InField
@@ -802,15 +846,15 @@ True to interpolate between SizeMin and LcMax using a sigmoid, false to interpol
 type: boolean@*
 default value: @code{0}
 @item SizeMax
-Element size outside DistMax@*
+Mesh size outside DistMax@*
 type: float@*
 default value: @code{1}
 @item SizeMin
-Element size inside DistMin@*
+Mesh size inside DistMin@*
 type: float@*
 default value: @code{0.1}
 @item StopAtDistMax
-True to not impose element size outside DistMax (i.e., F = a very big value if Field[InField] > DistMax)@*
+True to not impose mesh size outside DistMax (i.e., F = a very big value if Field[InField] > DistMax)@*
 type: boolean@*
 default value: @code{0}
 @end table

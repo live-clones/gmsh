@@ -257,7 +257,7 @@ public:
   {
     return "Evaluate Field[InField] in geographic coordinates (longitude, "
            "latitude):\n\n"
-           "  F = Field[InField](atan(y/x), asin(z/sqrt(x^2+y^2+z^2))";
+           "  F = Field[InField](atan(y / x), asin(z / sqrt(x^2 + y^2 + z^2))";
   }
   LonLatField()
   {
@@ -303,8 +303,8 @@ private:
 public:
   std::string getDescription()
   {
-    return "The value of this field is VIn inside the box, VOut outside the "
-           "box. The box is defined by\n\n"
+    return "Return VIn inside the box, and VOut outside. The box is defined "
+           "by\n\n"
            "  Xmin <= x <= XMax &&\n"
            "  YMin <= y <= YMax &&\n"
            "  ZMin <= z <= ZMax\n\n"
@@ -313,7 +313,8 @@ public:
   }
   BoxField()
   {
-    _vIn = _vOut = _xMin = _xMax = _yMin = _yMax = _zMin = _zMax = _thick = 0;
+    _vIn = _vOut = MAX_LC;
+    _xMin = _xMax = _yMin = _yMax = _zMin = _zMax = _thick = 0.;
 
     options["VIn"] = new FieldOptionDouble(_vIn, "Value inside the box");
     options["VOut"] = new FieldOptionDouble(_vOut, "Value outside the box");
@@ -394,16 +395,16 @@ private:
 public:
   std::string getDescription()
   {
-    return "The value of this field is VIn inside a frustrated cylinder, VOut "
-           "outside. "
-           "The cylinder is given by\n\n"
+    return "Return VIn inside a frustrated cylinder, and VOut outside. "
+           "The cylinder is defined by\n\n"
            "  ||dX||^2 < R^2 &&\n"
            "  (X-X0).A < ||A||^2\n"
            "  dX = (X - X0) - ((X - X0).A)/(||A||^2) . A";
   }
   CylinderField()
   {
-    _vIn = _vOut = _xc = _yc = _zc = _xa = _ya = _R = 0;
+    _vIn = _vOut = MAX_LC;
+    _xc = _yc = _zc = _xa = _ya = _R = 0.;
     _za = 1.;
 
     options["VIn"] = new FieldOptionDouble(_vIn, "Value inside the cylinder");
@@ -452,8 +453,7 @@ private:
 public:
   std::string getDescription()
   {
-    return "The value of this field is VIn inside a spherical ball, VOut "
-           "outside. "
+    return "Return VIn inside a spherical ball, and VOut outside. "
            "The ball is defined by\n\n"
            "  ||dX||^2 < R^2 &&\n"
            "  dX = (X - XC)^2 + (Y-YC)^2 + (Z-ZC)^2\n\n"
@@ -462,7 +462,8 @@ public:
   }
   BallField()
   {
-    _vIn = _vOut = _xc = _yc = _zc = _R = _thick = 0;
+    _vIn = _vOut = MAX_LC;
+    _xc = _yc = _zc = _R = _thick = 0.;
 
     options["VIn"] = new FieldOptionDouble(_vIn, "Value inside the ball");
     options["VOut"] = new FieldOptionDouble(_vOut, "Value outside the ball");
@@ -504,19 +505,18 @@ private:
 public:
   std::string getDescription()
   {
-    return "This field is an extended cylinder with inner (i) and outer (o) "
-           "radiuses"
-           "on both endpoints (1 and 2). Length scale is bilinearly "
-           "interpolated between"
-           "these locations (inner and outer radiuses, endpoints 1 and 2)"
-           "The field values for a point P are given by :"
-           "  u = P1P.P1P2/||P1P2|| "
-           "  r = || P1P - u*P1P2 || "
-           "  Ri = (1-u)*R1i + u*R2i "
-           "  Ro = (1-u)*R1o + u*R2o "
-           "  v = (r-Ri)/(Ro-Ri)"
-           "  lc = (1-v)*( (1-u)*v1i + u*v2i ) + v*( (1-u)*v1o + u*v2o )"
-           "    where (u,v) in [0,1]x[0,1]";
+    return "Interpolate mesh sizes on a extended cylinder frustrum defined "
+           "by inner (R1i and R2i) and outer (R1o and R2o) radii and two "
+           "endpoints P1 and P2."
+           "The field value F for a point P is given by :\n\n"
+           "  u = P1P . P1P2 / ||P1P2|| \n"
+           "  r = || P1P - u*P1P2 || \n"
+           "  Ri = (1 - u) * R1i + u * R2i \n"
+           "  Ro = (1 - u) * R1o + u * R2o \n"
+           "  v = (r - Ri) / (Ro - Ri) \n"
+           "  F = (1 - v) * ((1 - u) * v1i + u * v2i) + "
+           "      v * ((1 - u) * v1o + u * v2o)\n"
+           "with (u, v) in [0, 1] x [0, 1].";
   }
   FrustumField()
   {
@@ -543,13 +543,13 @@ public:
     options["OuterR2"] =
       new FieldOptionDouble(_r2o, "Outer radius of Frustum at endpoint 2");
     options["InnerV1"] =
-      new FieldOptionDouble(_v1i, "Element size at point 1, inner radius");
+      new FieldOptionDouble(_v1i, "Mesh size at point 1, inner radius");
     options["OuterV1"] =
-      new FieldOptionDouble(_v1o, "Element size at point 1, outer radius");
+      new FieldOptionDouble(_v1o, "Mesh size at point 1, outer radius");
     options["InnerV2"] =
-      new FieldOptionDouble(_v2i, "Element size at point 2, inner radius");
+      new FieldOptionDouble(_v2i, "Mesh size at point 2, inner radius");
     options["OuterV2"] =
-      new FieldOptionDouble(_v2o, "Element size at point 2, outer radius");
+      new FieldOptionDouble(_v2o, "Mesh size at point 2, outer radius");
 
     // deprecated names
     options["R1_inner"] =
@@ -608,10 +608,10 @@ public:
   virtual const char *getName() { return "Threshold"; }
   virtual std::string getDescription()
   {
-    return "F = SizeMin if Field[InField] <= DistMin,\n"
-           "F = SizeMax if Field[InField] >= DistMax,\n"
-           "F = interpolation between SizeMin and SizeMax if DistMin < "
-           "Field[InField] < DistMax";
+    return "Return F = SizeMin if Field[InField] <= DistMin, "
+           "F = SizeMax if Field[InField] >= DistMax, and "
+           "the interpolation between SizeMin and SizeMax if DistMin < "
+           "Field[InField] < DistMax.";
   }
   ThresholdField()
   {
@@ -626,19 +626,19 @@ public:
     options["InField"] =
       new FieldOptionInt(_inField, "Tag of the field to evaluate");
     options["DistMin"] = new FieldOptionDouble(
-      _dMin, "Distance from entity up to which element size will be SizeMin");
+      _dMin, "Distance from entity up to which the mesh size will be SizeMin");
     options["DistMax"] = new FieldOptionDouble(
-      _dMax, "Distance from entity after which element size will be SizeMax");
+      _dMax, "Distance from entity after which the mesh size will be SizeMax");
     options["SizeMin"] =
-      new FieldOptionDouble(_lcMin, "Element size inside DistMin");
+      new FieldOptionDouble(_lcMin, "Mesh size inside DistMin");
     options["SizeMax"] =
-      new FieldOptionDouble(_lcMax, "Element size outside DistMax");
+      new FieldOptionDouble(_lcMax, "Mesh size outside DistMax");
     options["Sigmoid"] = new FieldOptionBool(
       _sigmoid,
       "True to interpolate between SizeMin and LcMax using a sigmoid, "
       "false to interpolate linearly");
     options["StopAtDistMax"] = new FieldOptionBool(
-      _stopAtDistMax, "True to not impose element size outside DistMax (i.e., "
+      _stopAtDistMax, "True to not impose mesh size outside DistMax (i.e., "
                       "F = a very big value if Field[InField] > DistMax)");
 
     // deprecated names
@@ -850,7 +850,7 @@ public:
            "  F = G(x+d,y,z) + G(x-d,y,z) +\n"
            "      G(x,y+d,z) + G(x,y-d,z) +\n"
            "      G(x,y,z+d) + G(x,y,z-d) - 6 * G(x,y,z),\n\n"
-           "where G = Field[InField] and d = Delta";
+           "where G = Field[InField] and d = Delta.";
   }
   LaplacianField() : _inField(0), _delta(CTX::instance()->lc / 1e4)
   {
@@ -886,12 +886,12 @@ public:
   const char *getName() { return "Mean"; }
   std::string getDescription()
   {
-    return "Simple smoother:\n\n"
-           "  F = (G(x+delta,y,z) + G(x-delta,y,z) +\n"
-           "       G(x,y+delta,z) + G(x,y-delta,z) +\n"
-           "       G(x,y,z+delta) + G(x,y,z-delta) +\n"
-           "       G(x,y,z)) / 7,\n\n"
-           "where G = Field[InField]";
+    return "Return the mean value\n\n"
+           "  F = (G(x + delta, y, z) + G(x - delta, y, z) +\n"
+           "       G(x, y + delta, z) + G(x, y - delta, z) +\n"
+           "       G(x, y, z + delta) + G(x, y, z - delta) +\n"
+           "       G(x, y, z)) / 7,\n\n"
+           "where G = Field[InField].";
   }
   MeanField() : _inField(0), _delta(CTX::instance()->lc / 1e4)
   {
@@ -1671,7 +1671,8 @@ public:
   const char *getName() { return "PostView"; }
   std::string getDescription()
   {
-    return "Evaluate the post processing view ViewIndex.";
+    return "Evaluate the post processing view with index ViewIndex, or "
+           "with tag ViewTag if ViewTag is positive.";
   }
 };
 
@@ -1907,18 +1908,22 @@ public:
 class RestrictField : public Field {
 private:
   int _inField;
+  bool _boundary;
   std::list<int> _pointTags, _curveTags, _surfaceTags, _volumeTags;
 
 public:
   RestrictField()
   {
     _inField = 1;
+    _boundary = false;
 
     options["InField"] = new FieldOptionInt(_inField, "Input field tag");
     options["PointsList"] = new FieldOptionList(_pointTags, "Point tags");
     options["CurvesList"] = new FieldOptionList(_curveTags, "Curve tags");
     options["SurfacesList"] = new FieldOptionList(_surfaceTags, "Surface tags");
     options["VolumesList"] = new FieldOptionList(_volumeTags, "Volume tags");
+    options["IncludeBoundary"] =
+      new FieldOptionBool(_boundary, "Include the boundary of the entities");
 
     // deprecated names
     options["IField"] =
@@ -1935,7 +1940,8 @@ public:
   std::string getDescription()
   {
     return "Restrict the application of a field to a given list of geometrical "
-           "points, curves, surfaces or volumes.";
+           "points, curves, surfaces or volumes (as well as their boundaries "
+           "if IncludeBoundary is set).";
   }
   using Field::operator();
   double operator()(double x, double y, double z, GEntity *ge = nullptr)
@@ -1952,9 +1958,99 @@ public:
        (ge->dim() == 3 && std::find(_volumeTags.begin(), _volumeTags.end(),
                                     ge->tag()) != _volumeTags.end()))
       return (*f)(x, y, z);
+    if(_boundary) {
+      if(ge->dim() <= 2) {
+        std::list<GRegion *> volumes = ge->regions();
+        for(auto v : volumes) {
+          if(std::find(_volumeTags.begin(), _volumeTags.end(), v->tag()) !=
+             _volumeTags.end()) return (*f)(x, y, z);
+        }
+      }
+      if(ge->dim() <= 1) {
+        std::vector<GFace *> surfaces = ge->faces();
+        for(auto s : surfaces) {
+          if(std::find(_surfaceTags.begin(), _surfaceTags.end(), s->tag()) !=
+             _surfaceTags.end()) return (*f)(x, y, z);
+        }
+      }
+      if(ge->dim() == 0) {
+        std::vector<GEdge *> curves = ge->edges();
+        for(auto c : curves) {
+          if(std::find(_curveTags.begin(), _curveTags.end(), c->tag()) !=
+             _curveTags.end()) return (*f)(x, y, z);
+        }
+      }
+    }
     return MAX_LC;
   }
   const char *getName() { return "Restrict"; }
+};
+
+class ConstantField : public Field {
+private:
+  double _vIn, _vOut;
+  bool _boundary;
+  std::list<int> _pointTags, _curveTags, _surfaceTags, _volumeTags;
+
+public:
+  ConstantField()
+  {
+    _vIn = _vOut = MAX_LC;
+    _boundary = true;
+
+    options["VIn"] = new FieldOptionDouble(_vIn, "Value inside the entities");
+    options["VOut"] = new FieldOptionDouble(_vOut, "Value outside the entities");
+    options["PointsList"] = new FieldOptionList(_pointTags, "Point tags");
+    options["CurvesList"] = new FieldOptionList(_curveTags, "Curve tags");
+    options["SurfacesList"] = new FieldOptionList(_surfaceTags, "Surface tags");
+    options["VolumesList"] = new FieldOptionList(_volumeTags, "Volume tags");
+    options["IncludeBoundary"] =
+      new FieldOptionBool(_boundary, "Include the boundary of the entities");
+  }
+  std::string getDescription()
+  {
+    return "Return VIn when inside the entities (and on their boundary if "
+           "IncludeBoundary is set), and VOut outside.";
+  }
+  using Field::operator();
+  double operator()(double x, double y, double z, GEntity *ge = nullptr)
+  {
+    if(!ge) return MAX_LC;
+    if((ge->dim() == 0 && std::find(_pointTags.begin(), _pointTags.end(),
+                                    ge->tag()) != _pointTags.end()) ||
+       (ge->dim() == 1 && std::find(_curveTags.begin(), _curveTags.end(),
+                                    ge->tag()) != _curveTags.end()) ||
+       (ge->dim() == 2 && std::find(_surfaceTags.begin(), _surfaceTags.end(),
+                                    ge->tag()) != _surfaceTags.end()) ||
+       (ge->dim() == 3 && std::find(_volumeTags.begin(), _volumeTags.end(),
+                                    ge->tag()) != _volumeTags.end()))
+      return _vIn;
+    if(_boundary) {
+      if(ge->dim() <= 2) {
+        std::list<GRegion *> volumes = ge->regions();
+        for(auto v : volumes) {
+          if(std::find(_volumeTags.begin(), _volumeTags.end(), v->tag()) !=
+             _volumeTags.end()) return _vIn;
+        }
+      }
+      if(ge->dim() <= 1) {
+        std::vector<GFace *> surfaces = ge->faces();
+        for(auto s : surfaces) {
+          if(std::find(_surfaceTags.begin(), _surfaceTags.end(), s->tag()) !=
+             _surfaceTags.end()) return _vIn;
+        }
+      }
+      if(ge->dim() == 0) {
+        std::vector<GEdge *> curves = ge->edges();
+        for(auto c : curves) {
+          if(std::find(_curveTags.begin(), _curveTags.end(), c->tag()) !=
+             _curveTags.end()) return _vIn;
+        }
+      }
+    }
+    return _vOut;
+  }
+  const char *getName() { return "Constant"; }
 };
 
 struct AttractorInfo {
@@ -2726,7 +2822,7 @@ BoundaryLayerField::BoundaryLayerField()
   options["Ratio"] =
     new FieldOptionDouble(ratio, "Size ratio between two successive layers");
   options["SizeFar"] =
-    new FieldOptionDouble(hFar, "Element size far from the curves");
+    new FieldOptionDouble(hFar, "Mesh size far from the curves");
   options["Thickness"] =
     new FieldOptionDouble(thickness, "Maximal thickness of the boundary layer");
   options["Quads"] = new FieldOptionInt(
@@ -3091,6 +3187,7 @@ FieldManager::FieldManager()
   mapTypeName["Octree"] = new FieldFactoryT<OctreeField>();
   mapTypeName["Distance"] = new FieldFactoryT<DistanceField>();
   mapTypeName["Restrict"] = new FieldFactoryT<RestrictField>();
+  mapTypeName["Constant"] = new FieldFactoryT<ConstantField>();
   mapTypeName["Min"] = new FieldFactoryT<MinField>();
   mapTypeName["MinAniso"] = new FieldFactoryT<MinAnisoField>();
   mapTypeName["IntersectAniso"] = new FieldFactoryT<IntersectAnisoField>();
