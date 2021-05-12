@@ -26,7 +26,6 @@ gmshFace::gmshFace(GModel *m, Surface *s) : GFace(m, s->Num)
   gmshFace::resetMeshAttributes();
 }
 
-// a face is degenerate if
 bool gmshFace::degenerate(int dim) const
 {
   std::vector<GEdge *> const &eds = edges();
@@ -39,7 +38,6 @@ bool gmshFace::degenerate(int dim) const
     if(start != next && t.find(e) == t.end()) { numNonDegenerate++; }
     t.insert(e);
   }
-  //  printf("%d \n",numNonDegenerate);
   return numNonDegenerate <= 1;
 }
 
@@ -327,8 +325,8 @@ bool gmshFace::haveParametrization()
 bool gmshFace::containsPoint(const SPoint3 &pt) const
 {
   if(_s->Typ == MSH_SURF_PLAN) {
-    // OK to use the normal from the mean plane here: we compensate
-    // for the (possibly wrong) orientation at the end
+    // OK to use the normal from the mean plane here: we compensate for the
+    // (possibly wrong) orientation at the end
     double n[3] = {meanPlane.a, meanPlane.b, meanPlane.c};
     norme(n);
     double angle = 0.;
