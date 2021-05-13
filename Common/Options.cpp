@@ -948,10 +948,11 @@ void PrintOptionsDoc()
     }
     fprintf(file, "%s@ftable @code\n", warn);
     FieldManager &fields = *GModel::current()->getFields();
-    for(auto it =
-          fields.mapTypeName.begin(); it != fields.mapTypeName.end(); it++) {
-      fprintf(file, "@item %s\n", it->first.c_str());
+    for(auto it = fields.mapTypeName.begin(); it != fields.mapTypeName.end();
+        it++) {
       Field *f = (*it->second)();
+      if(f->isDeprecated()) continue;
+      fprintf(file, "@item %s\n", it->first.c_str());
       std::string field_description = f->getDescription();
       Sanitize_String_Texi(field_description);
       fprintf(file, "%s@*\n", field_description.c_str());

@@ -2236,6 +2236,7 @@ public:
   AttractorField(int dim, int tag, int nbe)
     : _kdTree(nullptr), _zeroNodes(nullptr), _sampling(nbe)
   {
+    _deprecated = true;
     _index = new ANNidx[1];
     _dist = new ANNdist[1];
     if(dim == 0)
@@ -2250,6 +2251,7 @@ public:
   }
   AttractorField() : _kdTree(nullptr), _zeroNodes(nullptr)
   {
+    _deprecated = true;
     _index = new ANNidx[1];
     _dist = new ANNdist[1];
     _sampling = 20;
