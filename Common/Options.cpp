@@ -4134,6 +4134,7 @@ double opt_general_num_threads(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
     if(val > 0) Msg::SetNumThreads(val);
+    else Msg::SetNumThreads(Msg::GetStartMaxThreads());
   }
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI))

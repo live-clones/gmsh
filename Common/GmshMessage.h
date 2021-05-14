@@ -48,6 +48,8 @@ private:
   static bool _infoMem;
   // starting time (gettimeofday at startup)
   static double _startTime;
+  // max number of threads at startup
+  static int _startMaxThreads;
   // counters
   static int _warningCount, _errorCount, _atLeastOneErrorInRun;
   static std::string _firstWarning, _firstError, _lastError;
@@ -175,6 +177,7 @@ public:
                               const std::string &exe = "");
   static void SetOnelabChanged(int value, const std::string &client = "Gmsh");
   static void ImportPhysicalGroupsInOnelab();
+  static int GetStartMaxThreads(){ return _startMaxThreads; }
 };
 
 // a class to print the progression and estimated remaining time

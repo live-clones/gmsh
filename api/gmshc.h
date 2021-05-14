@@ -37,12 +37,14 @@
 GMSH_API void gmshFree(void *p);
 GMSH_API void *gmshMalloc(size_t n);
 
-/* Initialize Gmsh API. This must be called before any call to the other
+/* Initialize the Gmsh API. This must be called before any call to the other
  * functions in the API. If `argc' and `argv' (or just `argv' in Python or
  * Julia) are provided, they will be handled in the same way as the command
  * line arguments in the Gmsh app. If `readConfigFiles' is set, read system
  * Gmsh configuration files (gmshrc and gmsh-options). Initializing the API
- * sets the options "General.Terminal" to 1 and "General.AbortOnError" to 2. */
+ * sets the options "General.Terminal" to 1 and "General.AbortOnError" to 2.
+ * If compiled with OpenMP support, it also sets the number of threads to
+ * "General.NumThreads". */
 GMSH_API void gmshInitialize(int argc, char ** argv,
                              const int readConfigFiles,
                              int * ierr);
