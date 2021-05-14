@@ -57,6 +57,13 @@ void OCCRegion::_setup()
       }
       else {
         l_faces.push_back(f);
+        // face.orientation() contains the orientation of the TopoDS_Face
+        // w.r.t. the underlying Geom_Surface, and the value is multiplied by
+        // the orientation of the shell
+        if(face.Orientation() == TopAbs_REVERSED)
+          l_dirs.push_back(-1);
+        else
+          l_dirs.push_back(1);
         f->addRegion(this);
       }
     }
