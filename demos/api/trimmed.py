@@ -5,7 +5,7 @@ gmsh.initialize(sys.argv)
 
 v0 = gmsh.model.occ.addSphere(0,0,0, 2)
 
-# create wires in the parametric plane of the spherical surface [0,2*pi]x[0,pi]
+# create wires in the parametric plane of the spherical surface [-pi,pi]x[-pi/2,pi/2]
 c1 = gmsh.model.occ.addCircle(0.5,0.5,0, 0.4)
 w1 = gmsh.model.occ.addWire([c1])
 
