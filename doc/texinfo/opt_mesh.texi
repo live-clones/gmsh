@@ -803,12 +803,12 @@ Saved in: @code{General.OptionsFileName}
 
 @item Mesh.StlAngularDeflection
 Maximum angular deflection when creating STL representation of surfaces (currently only used with the OpenCASCADE kernel)@*
-Default value: @code{0.35}@*
+Default value: @code{0.3}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.StlLinearDeflection
-Maximum linear deflection when creating STL representation of surfaces (currently only used with the OpenCASCADE kernel)@*
-Default value: @code{0.01}@*
+Maximum relative linear deflection when creating STL representation of surfaces (currently only used with the OpenCASCADE kernel)@*
+Default value: @code{0.001}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.StlOneSolidPerSurface

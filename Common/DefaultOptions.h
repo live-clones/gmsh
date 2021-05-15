@@ -1500,11 +1500,11 @@ StringXNumber MeshOptions_Number[] = {
     "Smooth the mesh normals?" },
   { F|O, "SmoothRatio" , opt_mesh_smooth_ratio , 1.8 ,
     "Ratio between mesh sizes at nodes of a same edge (used in BAMG)" },
-  { F|O, "StlAngularDeflection" , opt_mesh_stl_angular_deflection , 0.35 ,
+  { F|O, "StlAngularDeflection" , opt_mesh_stl_angular_deflection , 0.3 ,
     "Maximum angular deflection when creating STL representation of surfaces "
     "(currently only used with the OpenCASCADE kernel)"},
-  { F|O, "StlLinearDeflection" , opt_mesh_stl_linear_deflection , 0.01 ,
-    "Maximum linear deflection when creating STL representation of surfaces "
+  { F|O, "StlLinearDeflection" , opt_mesh_stl_linear_deflection , 0.001 ,
+    "Maximum relative linear deflection when creating STL representation of surfaces "
     "(currently only used with the OpenCASCADE kernel)"},
   { F|O, "StlOneSolidPerSurface" , opt_mesh_stl_one_solid_per_surface, 0. ,
     "Create one solid per surface when exporting STL files? (0: single solid, "

@@ -1899,9 +1899,42 @@ bool OCC_Internals::addBezierFilling(int &tag, int wireTag,
   return true;
 }
 
-static bool makeTrimmedSurface(Handle(Geom_Surface) & surf,
-                               std::vector<TopoDS_Wire> &wires, bool wire3D,
-                               TopoDS_Face &result)
+static bool makeEdgeOnSurface(const TopoDS_Edge &edge,
+                              const Handle(Geom_Surface) &surf,
+                              bool curve3D, TopoDS_Edge &edgeOnSurf)
+{
+  try {
+    Standard_Real first, last;
+    Handle(Geom_Curve) c = BRep_Tool::Curve(edge, first, last);
+    if(curve3D) {
+      // use the 3D curves in the wire and project them onto the patch
+      Handle(Geom_Curve) cProj = GeomProjLib::Project
+        (new Geom_TrimmedCurve(c, first, last, Standard_True, Standard_False),
+         surf);
+      edgeOnSurf = BRepBuilderAPI_MakeEdge
+        (cProj, cProj->FirstParameter(), cProj->LastParameter());
+    }
+    else {
+      // assume the 3D curve is actually a 2D curve in the parametric plane of the
+      // surface: to retrieve the 2D curve, project the 3D curve on the z=0 plane
+      Handle(Geom_Plane) p = new Geom_Plane(0, 0, 1, 0);
+      TopLoc_Location loc;
+      Handle(Geom2d_Curve) c2d =
+        BRep_Tool::CurveOnSurface(edge, p, loc, first, last);
+      // BRep_Tool::CurveOnPlane(edge, p, loc, first, last); // OCCT >= 7.2
+      edgeOnSurf = BRepBuilderAPI_MakeEdge(c2d, surf, first, last);
+    }
+  }
+  catch(Standard_Failure &err) {
+    Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
+    return false;
+  }
+  return true;
+}
+
+static bool makeTrimmedSurface(const Handle(Geom_Surface) &surf,
+                               const std::vector<TopoDS_Wire> &wires,
+                               bool wire3D, TopoDS_Face &result)
 {
   if(wires.empty()) { // natural bounds
     result = BRepBuilderAPI_MakeFace(surf, CTX::instance()->geom.tolerance);
@@ -1949,32 +1982,9 @@ static bool makeTrimmedSurface(Handle(Geom_Surface) & surf,
       BRepBuilderAPI_MakeWire w;
       TopExp_Explorer exp0;
       for(exp0.Init(wires[i], TopAbs_EDGE); exp0.More(); exp0.Next()) {
-        TopoDS_Edge edge = TopoDS::Edge(exp0.Current());
-        Standard_Real first, last;
-        Handle(Geom_Curve) c = BRep_Tool::Curve(edge, first, last);
-        if(wire3D) {
-          // use the 3D curves in the wire and project them onto the patch
-          Handle(Geom_Curve) cProj = GeomProjLib::Project(
-            new Geom_TrimmedCurve(c, first, last, Standard_True,
-                                  Standard_False),
-            surf);
-          TopoDS_Edge edgeProj = BRepBuilderAPI_MakeEdge(
-            cProj, cProj->FirstParameter(), cProj->LastParameter());
-          w.Add(edgeProj);
-        }
-        else {
-          // assume the 3D curves are actually 2D curves in the parametric space
-          // of the patch: to retrieve the 2D curves, project the 3D curves on
-          // the z=0 plane
-          Handle(Geom_Plane) p = new Geom_Plane(0, 0, 1, 0);
-          TopLoc_Location loc;
-          Handle(Geom2d_Curve) c2d =
-            BRep_Tool::CurveOnSurface(edge, p, loc, first, last);
-          // BRep_Tool::CurveOnPlane(edge, p, loc, first, last); // OCCT >= 7.2
-          TopoDS_Edge edgeSurf =
-            BRepBuilderAPI_MakeEdge(c2d, surf, first, last);
-          w.Add(edgeSurf);
-        }
+        TopoDS_Edge edge = TopoDS::Edge(exp0.Current()), edgeOnSurf;
+        if(makeEdgeOnSurface(edge, surf, wire3D, edgeOnSurf))
+          w.Add(edgeOnSurf);
       }
       TopoDS_Wire wire = w.Wire();
       wiresProj.push_back(wire);
@@ -5095,21 +5105,21 @@ static bool makeSTL(const TopoDS_Face &s, std::vector<SPoint2> *verticesUV,
   double ang = CTX::instance()->mesh.stlAngularDeflection;
 
 #if OCC_VERSION_HEX > 0x070300
-  BRepMesh_IncrementalMesh aMesher(s, lin, Standard_False, ang, Standard_True);
+  BRepMesh_IncrementalMesh aMesher(s, lin, Standard_True, ang, Standard_True);
 #elif OCC_VERSION_HEX > 0x070000
   Bnd_Box aBox;
   BRepBndLib::Add(s, aBox);
   BRepMesh_FastDiscret::Parameters parameters;
   parameters.Deflection = lin;
+  parameters.Relative = Standard_True;
   parameters.Angle = ang;
-  parameters.Relative = Standard_False;
   BRepMesh_FastDiscret aMesher(aBox, parameters);
   aMesher.Perform(s);
 #else
   Bnd_Box aBox;
   BRepBndLib::Add(s, aBox);
   BRepMesh_FastDiscret aMesher(lin, ang, aBox, Standard_False, Standard_False,
-                               Standard_True, Standard_False);
+                               Standard_True, Standard_True);
   aMesher.Perform(s);
 #endif
 
