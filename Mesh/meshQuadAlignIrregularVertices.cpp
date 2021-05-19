@@ -23,6 +23,8 @@ using namespace Gecode;
 #include "PView.h"
 #include "Field.h"
 #include "PViewDataList.h"
+#include "meshWinslow2d.h" // for smoothing
+#include "meshGFaceOptimize.h"
 
 // Some shortcuts
 #define P(x) {cout << x << endl;}
@@ -1286,11 +1288,11 @@ return true;
 
 // Transfinite Interpolation, for computing interior points
 bool transfinite_interpolation(
-	const vector<SVector3>& c1,
-	const vector<SVector3>& c2,
-	const vector<SVector3>& c3,
-	const vector<SVector3>& c4,
-	vector<SVector3>& pts) {
+	const vector<SPoint3>& c1,
+	const vector<SPoint3>& c2,
+	const vector<SPoint3>& c3,
+	const vector<SPoint3>& c4,
+	vector<SPoint3>& pts) {
   if (c1.size() <= 2 || c2.size() <= 2 || c3.size() <= 2 || c4.size() <= 2) {
 	Msg::Error("cannot TFI, c1.size=%d, c2.size=%d, c3.size=%d, c4.size=%d", c1.size(),c2.size(),c3.size(),c4.size());
 	return false;
@@ -1303,11 +1305,11 @@ bool transfinite_interpolation(
   size_t Ni = c1.size()-2;
   size_t Nj = c2.size()-2;
 
-  vector<SVector3> c1_u, c3_u, c2_v, c4_v;
-  c1_u = std::vector<SVector3>(c1.begin()+1, c1.end()-1);
-  c3_u = std::vector<SVector3>(c3.begin()+1, c3.end()-1);
-  c2_v = std::vector<SVector3>(c2.begin()+1, c2.end()-1);
-  c4_v = std::vector<SVector3>(c4.begin()+1, c4.end()-1);
+  vector<SPoint3> c1_u, c3_u, c2_v, c4_v;
+  c1_u = std::vector<SPoint3>(c1.begin()+1, c1.end()-1);
+  c3_u = std::vector<SPoint3>(c3.begin()+1, c3.end()-1);
+  c2_v = std::vector<SPoint3>(c2.begin()+1, c2.end()-1);
+  c4_v = std::vector<SPoint3>(c4.begin()+1, c4.end()-1);
   std::reverse(c3_u.begin(),c3_u.end());
   std::reverse(c4_v.begin(),c4_v.end());
 
@@ -1315,13 +1317,21 @@ bool transfinite_interpolation(
   F(i,Ni) F(j,Nj) {
 	double u = (1.+i) / (1.+Ni);
 	double v = (1.+j) / (1.+Nj);
-	pts[Ni*j+i] = (1.-v) * c1_u[i] + v * c3_u[i] + (1.-u) * c4_v[j] + u * c2_v[j]
-	  - ((1.-u)*(1.-v)*c1[0] + u*v*c3[0] + u * (1.-v) * c2[0] + (1.-u)*v*c4[0]);
+	pts[Ni*j+i] = SPoint3((1.-v) * c1_u[i] + v * c3_u[i] + (1.-u) * c4_v[j] + u * c2_v[j]
+	  - ((1.-u)*(1.-v)*c1[0] + u*v*c3[0] + u * (1.-v) * c2[0] + (1.-u)*v*c4[0]));
   }
 
   return true;
 }
 
+void geolog(MQuadrangle* quad, double color, string name) {
+	GeoLog::add({
+		quad->getVertex(0)->point(),
+		quad->getVertex(1)->point(),
+		quad->getVertex(2)->point(),
+		quad->getVertex(3)->point()
+	}, color, name);
+}
 
 
 // Main function
@@ -1346,8 +1356,8 @@ void alignQuadMesh(GModel* gm) {
 	// Initialize and run Gecode model
 	P("building model");
 	AlignQuadMesh* model = new AlignQuadMesh(TM, 2); // TODO: determine lmax
-	// Search::TimeStop ts(30000);
-	Search::TimeStop ts(2000);
+	Search::TimeStop ts(100000);
+	// Search::TimeStop ts(2000);
 	Search::Options options;
 	options.stop = &ts;
 	BAB<AlignQuadMesh> engine(model, options);
@@ -1401,6 +1411,8 @@ void alignQuadMesh(GModel* gm) {
 		//tedge->tface1->geolog(rand(), "area > 0");
 		//tedge->tface2->geolog(rand(), "area > 0");
 	}
+
+	// draw();
 
 	// Split T-edges with quantization > 1 and T-faces with area > 0
 	TMesh TM2;
@@ -1501,10 +1513,6 @@ void alignQuadMesh(GModel* gm) {
 			// side_pos[s].back() = curr_pos;
 			side_tvertices[s].pb(tface->sides[s].back()->tvertex2);
 			side_pos[s].pb(curr_pos);
-
-			H(S(side_tvertices[s]));
-			H(side_pos[s]);
-			H(S(side_tedges[s]));
 		}
 
 		// Create interior vertices and edges
@@ -1533,13 +1541,6 @@ void alignQuadMesh(GModel* gm) {
 		// 		int ys = ny * (dy*x1 + y1*nx) / (nx*ny - dx*dy);
 		// 	}
 		// }
-
-		H(nx);
-		H(ny);
-
-		// H(side_len);
-		F(s, 4) cout << side_len[s] << ' ';
-		cout << endl;
 
 		// Create faces and interior edges
 		// TODO: oppo of interior edges
@@ -1615,11 +1616,6 @@ void alignQuadMesh(GModel* gm) {
 
 		iface++;
 	}
-
-	H(TM2.nTEdges);
-	H(S(TM2.tvertices));
-	H(S(TM2.tedges));
-	H(S(TM2.tfaces));
 
 	set<Vertex*> sv;
 	for(TVertex* tvertex : TM2.tvertices) {
@@ -1710,7 +1706,6 @@ void alignQuadMesh(GModel* gm) {
 	}
 
 	// Construct minimal mesh
-	map<pair<Cluster*,Cluster*>, V<Vertex*>> paths; // paths between clusters
 	set<HalfEdge*> onMinMesh; // set of half-edges lying on the minimal mesh
 	// add whole CAD to minmesh
 	for(TEdge* tedge : TM2.tedges) if(tedge->gedge != NULL || tedge->isStitch) {
@@ -1745,8 +1740,15 @@ void alignQuadMesh(GModel* gm) {
 	// }
 	// exit(0);
 
+	map<pair<Cluster*,Cluster*>, V<Vertex*>> paths; // paths between clusters
+	map<pair<Cluster*,Cluster*>, V<MVertex*>> clusterpair2mvertices; // for every cluster pair, we store its new mesh vertices
+	map<pair<Cluster*,Cluster*>, V<MLine*>> clusterpair2mlines; // for every cluster pair, we store its new MLines
+	map<Cluster*, MVertex*> cluster2mvertex; // map a given cluster to its corresponding new mvertex (to avoid duplicates)
 	map<GEdge*, V<MEdgeVertex*>> gedge2mvertices; // for every GEdge, we store its new mesh vertices
 	map<GEdge*, V<MLine*>> gedge2mlines;
+	map<GFace*, V<MFaceVertex*>> gface2mvertices;
+	map<GFace*, V<MQuadrangle*>> gface2mquads;
+	V<V<MQuadrangle*>> patches;
 	set<pair<Cluster*, Cluster*>> processedClusterPairs;
 	int totalArea = 0;
 	for(TFace* tface : TM2.tfaces) {
@@ -1762,194 +1764,287 @@ void alignQuadMesh(GModel* gm) {
 		if(area == 0) continue;
 		totalArea += area;
 		tface->geolog(rand(), "area > 0");
+		GFace* gface = tface->gface;
+		patches.emplace_back();
 
 		// Iterate on each side of the patch
-		array<V<SVector3>,4> side_vertices; // vertices on sides of patch
+		array<V<MVertex*>,4> side_vertices; // vertices on sides of patch
+		array<V<MLine*>,4> side_mlines; // MLines on sides of patch
 		F(k,4) {
 			int color = rand();
-			for(TEdge* tedge : tface->sides[k]) { // for every T-edge on the side
-				// tedge->geolog(rand(), "T-edge #" + to_string(cnt++));
-				Cluster *cluster1 = inCluster[tedge->tvertex1], *cluster2 = inCluster[tedge->tvertex2];
-				Vertex* center1 = cluster1->center, *center2 = cluster2->center;
-				// If first T-edge, add vertex to side_vertices
-				if(tedge == tface->sides[k].front())
-					side_vertices[k].pb(cluster1->center->ptr->point());
-				// If same cluster (i.e. tedge->len == 0), skip
-				if(cluster1 == cluster2) continue;
-
-				GEdge* gedge; GVertex *gvertex1, *gvertex2;
-				if(clusterpair2gedge.count({cluster1, cluster2})) {
-					gedge = clusterpair2gedge[{cluster1, cluster2}];
-					gvertex1 = dynamic_cast<GVertex*>(center1->ptr->onWhat());
-					gvertex2 = dynamic_cast<GVertex*>(center2->ptr->onWhat());
-				} else
-					gedge = NULL;
-
+			
+			// Find (only) T-edge with q = 1
+			TEdge* tedge; 
+			F(i, S(tface->sides[k])) {
+				tedge = tface->sides[k][i];
+				if(tedge->len > 0) break;
+			}
+			
+			Cluster *cluster1 = inCluster[tedge->tvertex1], *cluster2 = inCluster[tedge->tvertex2];
+			Vertex* center1 = cluster1->center, *center2 = cluster2->center;
+			
+			// Determine GEdge and GVertices, if any
+			GEdge* gedge = NULL;
+			if(clusterpair2gedge.count({cluster1, cluster2})) {
+				gedge = clusterpair2gedge[{cluster1, cluster2}];
+			}
+			GVertex* gvertex1 = dynamic_cast<GVertex*>(center1->ptr->onWhat());
+			GVertex* gvertex2 = dynamic_cast<GVertex*>(center2->ptr->onWhat());
+			
+			if(clusterpair2mvertices.count({cluster1, cluster2})) {
+				side_vertices[k] = clusterpair2mvertices[{cluster1, cluster2}];
+				side_mlines[k] = clusterpair2mlines[{cluster1, cluster2}];
+			} else {
+				// Determine shortest path
 				V<Vertex*> path;
-				if(paths.count({cluster2, cluster1})) { // path already exists
-					path = paths[{cluster2,cluster1}];
-					reverse(ALL(path));
-				} else {
-					map<Vertex*, Vertex*> parent; parent[center1] = NULL;
-					V<Vertex*> q; q.pb(center1);
-					while(true) {
-						V<Vertex*> qn;
-						bool done = false;
-						for(Vertex* u : q) {
-							for(HalfEdge* he : u->hedges) {
-								Vertex* v = he->v2;
-								// If path corresponds to a GEdge, force the path to stay on the GEdge
-								if(gedge != NULL && v != center2 && dynamic_cast<GEdge*>(v->ptr->onWhat()) == NULL)
-									continue;
-								if(!parent.count(v)) {
-									parent[v] = u;
-									if(v == center2) {
-										done = true;
-										break;
-									}
-									qn.pb(v);
+				map<Vertex*, Vertex*> parent; parent[center1] = NULL;
+				V<Vertex*> q; q.pb(center1);
+				while(true) {
+					V<Vertex*> qn;
+					bool done = false;
+					for(Vertex* u : q) {
+						for(HalfEdge* he : u->hedges) {
+							Vertex* v = he->v2;
+							// If path corresponds to a GEdge, force the path to stay on the GEdge
+							if(gedge != NULL && v != center2 && dynamic_cast<GEdge*>(v->ptr->onWhat()) == NULL)
+								continue;
+							if(!parent.count(v)) {
+								parent[v] = u;
+								if(v == center2) {
+									done = true;
+									break;
 								}
+								qn.pb(v);
 							}
-							if(done) break;
 						}
 						if(done) break;
-						q = qn;
-						// Sort q according to distance to center2
-						sort(ALL(q), [center1, center2](Vertex* a, Vertex* b)->bool { return a->dist(center1) + a->dist(center2) <  b->dist(center1) + b->dist(center2); });
 					}
-					
-					path.pb(center2);
-					Vertex* u = center2;
-					do {
-						u = parent[u];
-						path.pb(u);
-						// P("coucou");
-					} while(u != center1);
-					reverse(ALL(path)); // center1 -> center2
-					paths[{cluster1, cluster2}] = path;
-					// paths[{cluster2, cluster1}] = path;
-					FR(i, 1, S(path))
-						GeoLog::add({SVector3(path[i-1]->ptr->point()), SVector3(path[i]->ptr->point())}, color, "minimal mesh");
+					if(done) break;
+					q = qn;
+					// Sort q according to distance to center2
+					sort(ALL(q), [center1, center2](Vertex* a, Vertex* b)->bool { return a->dist(center1) + a->dist(center2) <  b->dist(center1) + b->dist(center2); });
 				}
-				// Path has been determined
-				// H(S(path));
-				// FR(i, 1, S(path))
-				// 	GeoLog::add({SVector3(path[i-1]->ptr->point()), SVector3(path[i]->ptr->point())}, color, "minimal mesh");
+				path.pb(center2);
+				Vertex* u = center2;
+				do {
+					u = parent[u];
+					path.pb(u);
+				} while(u != center1);
+				reverse(ALL(path)); // center1 -> center2
+				FR(i, 1, S(path))
+					GeoLog::add({SVector3(path[i-1]->ptr->point()), SVector3(path[i]->ptr->point())}, color, "minimal mesh");
+
+				// Resample path
 				V<SPoint3> pts(S(path));
 				F(i	, S(path)) pts[i] = path[i]->ptr->point();
-				V<SPoint3> ipts;
-				// int nb_ipts = 5 * solution[tedge->id] - 1;
-				int nb_ipts = 5 * tedge->len - 1;
+				V<SPoint3> ipts; // new internal points
+				int nb_ipts = 4;
 				compute_subdivided_edge_internal_points(pts, nb_ipts, ipts);
-				// Add first and last point
-				// if(tedge == tface->sides[k].front()) {
-				// 	ipts.insert(ipts.begin(), pts[0]);
-				// }
-				ipts.insert(ipts.begin(), pts[0]);
+				
+				// Form side vertices vector, and plot
+				ipts.insert(ipts.begin(), pts.front());
 				ipts.pb(pts.back());
-
-				FR(i, 1, S(ipts)) side_vertices[k].pb(ipts[i]);
-
-				if(S(ipts) == 1) {
-					tedge->geolog(0, "S(ipts) == 1");
-				}
-
 				FR(i, 1, S(ipts))
 					GeoLog::add({ipts[i-1], ipts[i]}, tedge->id, "minimal mesh (resampled)");
 
-				// draw();
+				// Create MVertices
 
-				// If GEdge, create MEdgeVertices
-				if(gedge != NULL && !processedClusterPairs.count({cluster1, cluster2})) { 
-				// if(gedge != NULL && !gedge2mvertices.count(gedge)) {
-					processedClusterPairs.insert({cluster1, cluster2});
-					processedClusterPairs.insert({cluster2, cluster1});
-					V<MVertex*> mvertices(S(ipts));
-					// mvertices[0] = gvertex2mvertex[gvertex1];
-					// GeoLog::add(gvertex2mvertex[gvertex1]->point(), 0, "gvertex1");
-					FR(i, 0, S(ipts)) {
-						if(i == 0 && gvertex1 != NULL) 
-							mvertices[0] = gvertex2mvertex[gvertex1];
-						else if(i == S(ipts)-1 && gvertex2 != NULL) 
-							mvertices[S(ipts)-1] = gvertex2mvertex[gvertex2];
-						else {
-							double param;
-							gedge->closestPoint(ipts[i], param);
-							MEdgeVertex* mev = new MEdgeVertex(ipts[i].x(), ipts[i].y(), ipts[i].z(), gedge, param);
-							gedge2mvertices[gedge].pb(mev);
-							mvertices[i] = mev;
-							// gedge->addMeshVertex(mev);
-						}
+				// Cluster 1
+				if(gvertex1)
+					side_vertices[k].pb(gvertex2mvertex[gvertex1]);
+				else if(cluster2mvertex.count(cluster1))
+					side_vertices[k].pb(cluster2mvertex[cluster1]);
+				else {
+					SPoint3 p = ipts.front();
+					GEdge* local_gedge = dynamic_cast<GEdge*>(cluster1->center->ptr->onWhat());
+					if(local_gedge) { 
+						double param; local_gedge->closestPoint(p, param);
+						MEdgeVertex* mev = new MEdgeVertex(p.x(), p.y(), p.z(), local_gedge, param);
+						gedge2mvertices[local_gedge].pb(mev);
+						side_vertices[k].pb(mev);
+						cluster2mvertex[cluster1] = mev;
+					} else {
+						double uv[2]; gface->closestPoint(p, uv); // get params
+						MFaceVertex* mfv = new MFaceVertex(p.x(), p.y(), p.z(), tface->gface, uv[0], uv[1]);
+						gface2mvertices[gface].pb(mfv);
+						side_vertices[k].pb(mfv);
+						cluster2mvertex[cluster1] = mfv;
+					} 
+				}
+
+				// Internal points
+				FR(i, 1, S(ipts)-1) {
+					SPoint3 p = ipts[i];
+					if(gedge) {
+						double param; gedge->closestPoint(p, param);
+						MEdgeVertex* mev = new MEdgeVertex(p.x(), p.y(), p.z(), gedge, param);
+						gedge2mvertices[gedge].pb(mev);
+						side_vertices[k].pb(mev);
+					} else {
+						double uv[2]; gface->closestPoint(p, uv); // get parameters
+						MFaceVertex* mfv = new MFaceVertex(p.x(), p.y(), p.z(), tface->gface, uv[0], uv[1]);
+						gface2mvertices[gface].pb(mfv);
+						side_vertices[k].pb(mfv);
 					}
-					// mvertices[S(ipts)-1] = gvertex2mvertex[gvertex2];
-					H(gvertex2mvertex.count(gvertex2));
-					H(gvertex2mvertex[gvertex2]);
-					// GeoLog::add(gvertex2mvertex[gvertex2]->point(), 0, "gvertex2");
-					// Create MLines
-					FR(i, 1, S(ipts)) {
-						MLine* ml = new MLine(mvertices[i-1], mvertices[i]);
-						GeoLog::add({mvertices[i-1]->point(), mvertices[i]->point()}, 0, "ml");
-						gedge2mlines[gedge].pb(ml);
-					}
+				}
+
+				// Cluster 2
+				if(gvertex2)
+					side_vertices[k].pb(gvertex2mvertex[gvertex2]);
+				else if(cluster2mvertex.count(cluster2))
+					side_vertices[k].pb(cluster2mvertex[cluster2]);
+				else {
+					SPoint3 p = ipts.back();
+					GEdge* local_gedge = dynamic_cast<GEdge*>(cluster2->center->ptr->onWhat());
+					if(local_gedge) { 
+						double param; local_gedge->closestPoint(p, param);
+						MEdgeVertex* mev = new MEdgeVertex(p.x(), p.y(), p.z(), local_gedge, param);
+						gedge2mvertices[local_gedge].pb(mev);
+						side_vertices[k].pb(mev);
+						cluster2mvertex[cluster2] = mev;
+					} else {
+						double uv[2]; gface->closestPoint(p, uv); // get params
+						MFaceVertex* mfv = new MFaceVertex(p.x(), p.y(), p.z(), tface->gface, uv[0], uv[1]);
+						gface2mvertices[gface].pb(mfv);
+						side_vertices[k].pb(mfv);
+						cluster2mvertex[cluster2] = mfv;
+					} 
+				}
+
+				// Store vertices corresponding to cluster pair
+				clusterpair2mvertices[{cluster1, cluster2}] = side_vertices[k];
+				V<MVertex*> rev = side_vertices[k]; reverse(ALL(rev));
+				clusterpair2mvertices[{cluster2, cluster1}] = rev;
+
+				// Create MLines
+				FR(i, 1, S(ipts)) {
+					MLine* ml = new MLine(side_vertices[k][i-1], side_vertices[k][i]);
+					GeoLog::add({side_vertices[k][i-1]->point(), side_vertices[k][i]->point()}, 0, "ml");
+					side_mlines[k].pb(ml);
+					// clusterpair2mlines[{cluster1, cluster2}].pb(ml);
+					if(gedge != NULL) gedge2mlines[gedge].pb(ml);
+				}
+				clusterpair2mlines[{cluster1, cluster2}] = side_mlines[k];
+				V<MLine*> rev_mline = side_mlines[k]; reverse(ALL(rev_mline));
+				clusterpair2mlines[{cluster2, cluster1}] = rev_mline;
+			}
+		}
+		// if(S(side_vertices[0]) != S(side_vertices[2]) || S(side_vertices[1]) != S(side_vertices[3])) {
+		// 	tface->geolog(0, "TFI fail");
+		// 	draw();			
+		// }
+
+		// Create internal MVertices and MQuadrangles
+		array<V<SPoint3>, 4> side_pts;
+		F(s, 4)
+			for(MVertex* mv : side_vertices[s])
+				side_pts[s].pb(mv->point());
+		V<SPoint3> ipts;
+		if(S(side_pts[0]) != 2 && S(side_pts[1]) != 2)
+			transfinite_interpolation(side_pts[0], side_pts[1], side_pts[2], side_pts[3], ipts);
+
+		int n = S(side_pts[0]), m = S(side_pts[1]);
+		V<V<MVertex*>> all_mv(n, V<MVertex*>(m)); // all vertices: side_pts + ipts
+		F(i, n) {
+			F(j, m) {
+				if(i == 0) all_mv[i][j] = side_vertices[3][m-1-j];
+				else if(j == 0) all_mv[i][j] = side_vertices[0][i];
+				else if(i == n-1) all_mv[i][j] = side_vertices[1][j];
+				else if(j == m-1) all_mv[i][j] = side_vertices[2][n-1-i];
+				else {
+					double guess[2];
+					GPoint gp = gface->closestPoint(ipts[(i-1)+(j-1)*(n-2)], guess);
+					all_mv[i][j] = new MFaceVertex(gp.x(), gp.y(), gp.z(), gface, gp.u(), gp.v());
+					// gface2mvertices[gface].pb((MFaceVertex*)all_mv[i][j]);
 				}
 			}
 		}
-		if(S(side_vertices[0]) != S(side_vertices[2]) || S(side_vertices[1]) != S(side_vertices[3])) {
-			tface->geolog(0, "TFI fail");
-			draw();
-			
-		}
-		V<SVector3> ipts;
-		if(S(side_vertices[0]) != 2 && S(side_vertices[1]) != 2)
-			transfinite_interpolation(side_vertices[0], side_vertices[1], side_vertices[2], side_vertices[3], ipts);
 
-		int n = S(side_vertices[0]), m = S(side_vertices[1]);
-		V<V<SVector3>> apts(n, V<SVector3>(m)); // all points: side_vertices + ipts
-		F(i, n) {
-			F(j, m) {
-				if(i == 0) apts[i][j] = side_vertices[3][m-1-j];
-				else if(j == 0) apts[i][j] = side_vertices[0][i];
-				else if(i == n-1) apts[i][j] = side_vertices[1][j];
-				else if(j == m-1) apts[i][j] = side_vertices[2][n-1-i];
-				else apts[i][j] = ipts[(i-1)+(j-1)*(n-2)];
-				// Project on GFace
-				GPoint proj = tface->gface->closestPoint(SPoint3(apts[i][j]), SPoint3(apts[i][j]));
-				apts[i][j] = SVector3(proj.x(), proj.y(), proj.z());
-			}
-		}
-		int color = rand();
-		F(i,n) F(j,m) {
-			if(i < n-1) GeoLog::add({apts[i][j], apts[i+1][j]}, 0, "new edges");
-			if(j < m-1) GeoLog::add({apts[i][j], apts[i][j+1]}, 0, "new edges");
-			if(i < n-1 && j < m-1) GeoLog::add({apts[i][j], apts[i+1][j], apts[i+1][j+1], apts[i][j+1]}, color, "new faces");
+		// // Set up MLines
+		// V<V<MLine*>> mlh(n-1, V<MLine*>(m)); // horizontal MLines
+		// V<V<MLine*>> mlv(n, V<MLine*>(m-1)); // vertical MLines
+		// F(i, n-1) mlh[i][0] = side_mlines[0][i];
+		// F(j, m-1) mlv[n-1][j] = side_mlines[1][j];
+		// F(i, n-1) mlh[i][m-1] = side_mlines[2][n-1-i];
+		// F(j, m-1) mlv[0][j] = side_mlines[3][m-1-j];
+
+		// int color = rand();
+		// F(i,n-1) F(j,m-1) {
+		// 	if(j > 0) mlh[i][j] = new MLine(all_mv[i][j], all_mv[i+1][j]);
+		// 	if(i > 0) mlv[i][j] = new MLine(all_mv[i][j], all_mv[i][j+1]);
+		// }
+
+		// Create MQuandrangles
+		F(i, n-1) F(j, m-1) {
+			MQuadrangle* mq = new MQuadrangle(all_mv[i][j], all_mv[i+1][j], all_mv[i+1][j+1], all_mv[i][j+1]);
+			gface2mquads[gface].pb(mq);
+			patches.back().pb(mq);
 		}
 	}
 
 	// Put new mesh into GModel
 	gm->deleteMesh();
+
 	// GVertices
 	for(GVertex* gvertex : gm->getVertices()) {
-		// if(!gvertex2mvertex.count(gvertex)) exit(0);
-		// assert(gvertex2mvertex.count(gvertex));
-		GeoLog::add(gvertex2mvertex[gvertex]->point(), 0, "gvertices");
-		// gvertex2mvertex[gvertex]->geolog("gvertices", 0);
 		gvertex->addMeshVertex(gvertex2mvertex[gvertex]);
 	}
 	// GEdges
 	for(GEdge* gedge : gm->getEdges()) {
-		H(S(gedge2mvertices[gedge]));
-		H(S(gedge2mlines[gedge]));
 		for(MEdgeVertex* mev : gedge2mvertices[gedge]) {
 			gedge->addMeshVertex(mev);
 		}
-		for(MLine* ml : gedge2mlines[gedge]) {
-			// H(ml->getNumVertices());
-			// GeoLog::add({ml->getVertex(0)->point(), ml->getVertex(1)->point()}, 0, "mev");
+		for(MLine* ml : gedge2mlines[gedge])
 			gedge->addLine(ml);
-		}
 	}
 	// GFaces
+	for(GFace* gface : gm->getFaces()) {
+		for(MFaceVertex* mfv : gface2mvertices[gface])
+			gface->addMeshVertex(mfv);
+		for(MQuadrangle* mq : gface2mquads[gface])
+			gface->addQuadrangle(mq);
+	}
 
+	// Sanity check: no duplicate MVertices
+	V<GEntity*> gentities; gm->getEntities(gentities);
+	map<SPoint3, int> count_sp3;
+	for(GEntity* ge : gentities) {
+		for(MVertex* v : ge->mesh_vertices) {
+			++count_sp3[v->point()];
+			if(dynamic_cast<GFace*>(v->onWhat())) {
+				GeoLog::add(v->point(), 0, "on GFace");
+			}
+		}
+	}
+	FIT(it, count_sp3) {
+		if(it->second > 1) {
+			Msg::Error("duplicate MVertices (%d)!", it->second);
+			GeoLog::add(it->first, it->second, "!duplicates");
+		}
+	}
+
+	v2t_cont adj;
+	for(GFace* gf : gm->getFaces()) {
+		buildVertexToElement(gf->quadrangles, adj);
+	}
+
+	FIT(it, adj) {
+		GeoLog::add(it->first->point(), S(it->second), "#incident faces");
+	}
+
+
+
+	// Smoothing
+	meshWinslow2d(gm);
+
+	// Color quads by patch
+	for(V<MQuadrangle*> patch : patches) {
+		int color = rand();
+		for(MQuadrangle* quad : patch) {
+			geolog(quad, color, "patches");
+			// GeoLog::add({}, color, "patches");
+		}
+	}
 
 	draw();
 }

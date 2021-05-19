@@ -37,6 +37,8 @@ set(SRC
   meshQuadQuasiStructured.cpp
   meshOctreeLibOL.cpp
   meshQuadAlignIrregularVertices.cpp
+  meshWinslow2d.cpp
+  meshQuadUtils.cpp
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h)
