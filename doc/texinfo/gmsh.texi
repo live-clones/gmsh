@@ -6516,6 +6516,11 @@ Physical Surfaces and Physical Volumes). See the reference manual as
 well as the tutorials (in particular @ref{t1}) for a detailed
 description and some examples.
 
+The Gmsh API can be used to build sophisticated interactive workflows
+where the definition of boundary conditions and material properties can
+be fully tailored to your preferred solver. For an example see
+@url{@value{GITLAB-PREFIX}/demos/api/prepro.py,demos/api/prepro.py}.
+
 @item How can I display only the mesh associated with selected geometrical entities?
 
 See ``How can I display only selected parts of my model?''.

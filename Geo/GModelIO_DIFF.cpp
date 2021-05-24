@@ -418,7 +418,13 @@ int GModel::writeDIFF(const std::string &name, bool binary, bool saveAll,
     return 0;
   }
 
-  if(noPhysicalGroups()) saveAll = true;
+  // TODO: make this an option
+  bool usePhysicalTags = true;
+
+  if(noPhysicalGroups()) {
+    saveAll = true;
+    usePhysicalTags = false;
+  }
 
   // get the number of vertices and flag vertices to skip
   int numVertices = indexMeshVertices(saveAll, 0, false);
@@ -434,13 +440,25 @@ int GModel::writeDIFF(const std::string &name, bool binary, bool saveAll,
     std::vector<GFace *> faces = (*it)->faces();
     for(auto itf = faces.begin(); itf != faces.end(); itf++) {
       GFace *gf = *itf;
-      boundaryIndicators.push_back(gf->tag());
+      if(usePhysicalTags) {
+        for(auto p : gf->physicals) boundaryIndicators.push_back(p);
+      }
+      else {
+        boundaryIndicators.push_back(gf->tag());
+      }
       for(std::size_t i = 0; i < gf->getNumMeshElements(); i++) {
         MElement *e = gf->getMeshElement(i);
         for(std::size_t j = 0; j < e->getNumVertices(); j++) {
           MVertex *v = e->getVertex(j);
-          if(v->getIndex() > 0)
-            vertexTags[v->getIndex() - 1].push_back(gf->tag());
+          if(v->getIndex() > 0) {
+            if(usePhysicalTags) {
+              for(auto p : gf->physicals)
+                vertexTags[v->getIndex() - 1].push_back(p);
+            }
+            else {
+              vertexTags[v->getIndex() - 1].push_back(gf->tag());
+            }
+          }
         }
       }
     }
@@ -533,8 +551,15 @@ int GModel::writeDIFF(const std::string &name, bool binary, bool saveAll,
     if(entities[i]->physicals.size() || saveAll) {
       for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
         MElement *e = entities[i]->getMeshElement(j);
-        if(e->getStringForDIFF() && e->getDim() == dim)
-          e->writeDIFF(fp, ++num, binary, entities[i]->tag());
+        if(e->getStringForDIFF() && e->getDim() == dim) {
+          if(usePhysicalTags) {
+            for(auto p : entities[i]->physicals)
+              e->writeDIFF(fp, ++num, binary, p);
+          }
+          else {
+            e->writeDIFF(fp, ++num, binary, entities[i]->tag());
+          }
+        }
       }
     }
   }
