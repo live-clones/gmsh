@@ -340,6 +340,12 @@ if(ENABLE_OPENMP)
     set(CMAKE_CXX_FLAGS
         "${CMAKE_CXX_FLAGS} -Xpreprocessor -fopenmp")
     list(APPEND EXTERNAL_LIBRARIES "-L/usr/local/lib -lomp")
+  elseif(${CMAKE_SYSTEM_NAME} MATCHES "Linux" AND EXISTS "/usr/local/lib64/libgomp.a")
+    # custom static openmp for official linux builds
+    set_config_option(HAVE_OPENMP "OpenMP[static]")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Xpreprocessor -fopenmp")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Xpreprocessor -fopenmp")
+    list(APPEND EXTERNAL_LIBRARIES "/usr/local/lib64/libgomp.a")
   endif()
 endif()
 
