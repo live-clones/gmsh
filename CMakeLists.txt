@@ -2117,12 +2117,6 @@ macro(filter_tests IN OUT)
     unset(BAD1)
     unset(BAD2)
     unset(BAD3)
-    # OS-specific
-    if(${GMSH_OS} MATCHES "Linux32")
-      # OCC STL generation crashes on our Linux32 docker
-      string(REGEX MATCH "t18" BAD1 ${FILE})
-      string(REGEX MATCH "rod_distance_field" BAD2 ${FILE})
-    endif()
     # OpenCASCADE
     if(NOT HAVE_OCC AND NOT BAD1 AND NOT BAD2 AND NOT BAD3)
       file(STRINGS ${FILE} BAD1 REGEX "^SetFactory.*OpenCASCADE.*")
@@ -2156,9 +2150,8 @@ if(ENABLE_TESTS AND NOT DISABLE_GMSH_TESTS)
     FILE(RELATIVE_PATH TEST ${CMAKE_CURRENT_BINARY_DIR} ${TESTFILE})
     add_test(${TEST} ./gmsh ${TEST} -3 -nopopup -o ./tmp.msh)
   endforeach()
-  # test c++ api tutorials with dynamic builds (except on 32 bit windows for
-  # now: our win32 setup does not currently handle exceptions)
-  if(ENABLE_BUILD_DYNAMIC AND NOT ${GMSH_OS} MATCHES "Windows32")
+  # test c++ api tutorials with dynamic builds
+  if(ENABLE_BUILD_DYNAMIC)
     file(GLOB_RECURSE ALLFILES tutorial/c++/*.cpp)
     filter_tests("${ALLFILES}" TESTFILES)
     foreach(TESTFILE ${TESTFILES})
