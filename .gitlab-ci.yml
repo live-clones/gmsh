@@ -156,10 +156,10 @@ linux64-nox-sdk_official_snapshot:
   script:
     - md build
     - cd build
-    - bash -c "/usr/bin/cmake -DCMAKE_BUILD_TYPE=Release -DGMSH_HOST=gmsh.info -DENABLE_OPENMP=1 -DCMAKE_PREFIX_PATH='/usr/local;/usr/x86_64-w64-mingw32/sys-root/mingw' -DCMAKE_C_COMPILER=/usr/bin/x86_64-w64-mingw32-gcc.exe -DCMAKE_CXX_COMPILER=/usr/bin/x86_64-w64-mingw32-g++.exe -DCMAKE_Fortran_COMPILER=/usr/bin/x86_64-w64-mingw32-gfortran.exe -DCMAKE_RC_COMPILER=/usr/bin/x86_64-w64-mingw32-windres.exe -DENABLE_OS_SPECIFIC_INSTALL=1 -DENABLE_PETSC=1 -DPETSC_ARCH=real_mumps_seq -DPETSC_DIR=/home/geuzaine/src/petsc ${EXTRA_OPTION} .."
-    - bash -c "/usr/bin/make package -j 4"
-    - bash -c "/usr/bin/scp -o StrictHostKeyChecking=no -i /home/geuzaine/.ssh/id_rsa gmsh-*.zip geuzaine@gmsh.info:.wwwgmsh/bin/Windows/"
-    - bash -c "/usr/bin/ctest -j 4 --output-on-failure"
+    - c:\cygwin64\bin\bash -c "/usr/bin/cmake -DCMAKE_BUILD_TYPE=Release -DGMSH_HOST=gmsh.info -DENABLE_OPENMP=1 -DCMAKE_PREFIX_PATH='/usr/local;/usr/x86_64-w64-mingw32/sys-root/mingw' -DCMAKE_C_COMPILER=/usr/bin/x86_64-w64-mingw32-gcc.exe -DCMAKE_CXX_COMPILER=/usr/bin/x86_64-w64-mingw32-g++.exe -DCMAKE_Fortran_COMPILER=/usr/bin/x86_64-w64-mingw32-gfortran.exe -DCMAKE_RC_COMPILER=/usr/bin/x86_64-w64-mingw32-windres.exe -DENABLE_OS_SPECIFIC_INSTALL=1 -DENABLE_PETSC=1 -DPETSC_ARCH=real_mumps_seq -DPETSC_DIR=/home/geuzaine/src/petsc ${EXTRA_OPTION} .."
+    - c:\cygwin64\bin\bash -c "/usr/bin/make package -j 4"
+    - c:\cygwin64\bin\bash -c "/usr/bin/scp -o StrictHostKeyChecking=no -i /home/geuzaine/.ssh/id_rsa gmsh-*.zip geuzaine@gmsh.info:.wwwgmsh/bin/Windows/"
+    - c:\cygwin64\bin\bash -c "/usr/bin/ctest -j 4 --output-on-failure"
 
 windows64_official_snapshot:
   <<: *windows_official
@@ -175,7 +175,7 @@ windows64_official_release:
   <<: *windows_official
   after_script:
     - cd build
-    - bash -c 'VERSION=`cat version.txt`; /usr/bin/ssh -o StrictHostKeyChecking=no -i /home/geuzaine/.ssh/id_rsa geuzaine@gmsh.info "cd .wwwgmsh/bin/Windows && rm -f gmsh-stable-Windows64.zip && ln -s gmsh-${VERSION}-Windows64.zip gmsh-stable-Windows64.zip"'
+    - c:\cygwin64\bin\bash -c 'VERSION=`cat version.txt`; /usr/bin/ssh -o StrictHostKeyChecking=no -i /home/geuzaine/.ssh/id_rsa geuzaine@gmsh.info "cd .wwwgmsh/bin/Windows && rm -f gmsh-stable-Windows64.zip && ln -s gmsh-${VERSION}-Windows64.zip gmsh-stable-Windows64.zip"'
   tags:
     - windows64
     - official
@@ -198,7 +198,7 @@ windows64-sdk_official_release:
   <<: *windows_official
   after_script:
     - cd build
-    - bash -c 'VERSION=`cat version.txt`; /usr/bin/ssh -o StrictHostKeyChecking=no -i /home/geuzaine/.ssh/id_rsa geuzaine@gmsh.info "cd .wwwgmsh/bin/Windows && rm -f gmsh-stable-Windows64-sdk.zip && ln -s gmsh-${VERSION}-Windows64-sdk.zip gmsh-stable-Windows64-sdk.zip"'
+    - c:\cygwin64\bin\bash -c 'VERSION=`cat version.txt`; /usr/bin/ssh -o StrictHostKeyChecking=no -i /home/geuzaine/.ssh/id_rsa geuzaine@gmsh.info "cd .wwwgmsh/bin/Windows && rm -f gmsh-stable-Windows64-sdk.zip && ln -s gmsh-${VERSION}-Windows64-sdk.zip gmsh-stable-Windows64-sdk.zip"'
   tags:
     - windows64
     - official
