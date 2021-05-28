@@ -2084,7 +2084,7 @@ if(APPLE AND ENABLE_OS_SPECIFIC_INSTALL AND HAVE_FLTK)
     # automatic codesigning of the .app
     set(CPACK_BUNDLE_APPLE_CERT_APP "Developer ID Application: Christophe Geuzaine")
     # enable hardened runtime (necessary for notarization and app store)
-    set(CPACK_BUNDLE_APPLE_CODESIGN_PARAMETER "--deep --f --options runtime")
+    set(CPACK_BUNDLE_APPLE_CODESIGN_PARAMETER "--deep --force --options runtime")
   endif()
   install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/Fltk/MacIconsGeo.icns DESTINATION .
           RENAME GmshGeo.icns)
