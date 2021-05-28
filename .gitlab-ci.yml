@@ -99,17 +99,17 @@ windows64_msvc_ci:
     - docker
 
 linux64_official_snapshot:
-  image: onelab/debian.buster.64bit
+  image: onelab/debian.stretch.64bit
   variables:
-    EXTRA_OPTION: ""
+    EXTRA_OPTION: "-DCMAKE_EXE_LINKER_FLAGS=-static-libstdc++"
   <<: *linux_official
   except:
     - tags
 
 linux64_official_release:
-  image: onelab/debian.buster.64bit
+  image: onelab/debian.stretch.64bit
   variables:
-    EXTRA_OPTION: "-DGMSH_RELEASE=1"
+    EXTRA_OPTION: "-DGMSH_RELEASE=1 -DCMAKE_EXE_LINKER_FLAGS=-static-libstdc++"
   <<: *linux_official
   after_script:
     - cd build
@@ -119,7 +119,7 @@ linux64_official_release:
     - /^gmsh_.*$/
 
 linux64-sdk_official_snapshot:
-  image: onelab/debian.buster.64bit
+  image: onelab/debian.stretch.64bit
   variables:
     EXTRA_OPTION: "-DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1"
   <<: *linux_official
@@ -127,7 +127,7 @@ linux64-sdk_official_snapshot:
     - tags
 
 linux64-sdk_official_release:
-  image: onelab/debian.buster.64bit
+  image: onelab/debian.stretch.64bit
   variables:
     EXTRA_OPTION: "-DGMSH_RELEASE=1 -DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1"
   <<: *linux_official
@@ -139,7 +139,7 @@ linux64-sdk_official_release:
     - /^gmsh_.*$/
 
 linux64-nox-sdk_official_snapshot:
-  image: onelab/debian.buster.64bit
+  image: onelab/debian.stretch.64bit
   variables:
     EXTRA_OPTION: "-DGMSH_EXTRA_VERSION=-nox -DENABLE_FLTK=0 -DENABLE_OCC_CAF=0 -DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1"
   <<: *linux_official
@@ -156,7 +156,7 @@ linux64-nox-sdk_official_snapshot:
   script:
     - md build
     - cd build
-    - c:\cygwin64\bin\bash -c "/usr/bin/cmake -DCMAKE_MAKE_PROGRAM=/usr/bin/make -DCMAKE_BUILD_TYPE=Release -DGMSH_HOST=gmsh.info -DENABLE_OPENMP=1 -DCMAKE_PREFIX_PATH='/usr/local;/usr/x86_64-w64-mingw32/sys-root/mingw' -DCMAKE_C_COMPILER=/usr/bin/x86_64-w64-mingw32-gcc.exe -DCMAKE_CXX_COMPILER=/usr/bin/x86_64-w64-mingw32-g++.exe -DCMAKE_Fortran_COMPILER=/usr/bin/x86_64-w64-mingw32-gfortran.exe -DCMAKE_RC_COMPILER=/usr/bin/x86_64-w64-mingw32-windres.exe -DENABLE_OS_SPECIFIC_INSTALL=1 -DENABLE_PETSC=1 -DPETSC_ARCH=real_mumps_seq -DPETSC_DIR=/home/geuzaine/src/petsc ${EXTRA_OPTION} .."
+    - c:\cygwin64\bin\bash -c "/usr/bin/cmake -DCMAKE_BUILD_TYPE=Release -DGMSH_HOST=gmsh.info -DENABLE_OPENMP=1 -DCMAKE_PREFIX_PATH='/usr/local;/usr/x86_64-w64-mingw32/sys-root/mingw' -DCMAKE_C_COMPILER=/usr/bin/x86_64-w64-mingw32-gcc.exe -DCMAKE_CXX_COMPILER=/usr/bin/x86_64-w64-mingw32-g++.exe -DCMAKE_Fortran_COMPILER=/usr/bin/x86_64-w64-mingw32-gfortran.exe -DCMAKE_RC_COMPILER=/usr/bin/x86_64-w64-mingw32-windres.exe -DENABLE_OS_SPECIFIC_INSTALL=1 -DENABLE_PETSC=1 -DPETSC_ARCH=real_mumps_seq -DPETSC_DIR=/home/geuzaine/src/petsc ${EXTRA_OPTION} .."
     - c:\cygwin64\bin\bash -c "/usr/bin/make package -j 4"
     - c:\cygwin64\bin\bash -c "/usr/bin/scp -o StrictHostKeyChecking=no -i /home/geuzaine/.ssh/id_rsa gmsh-*.zip geuzaine@gmsh.info:.wwwgmsh/bin/Windows/"
     - c:\cygwin64\bin\bash -c "/usr/bin/ctest -j 4 --output-on-failure"
