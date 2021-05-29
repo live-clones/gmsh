@@ -1537,26 +1537,35 @@ endif()
 check_cxx_compiler_flag("-O0" NOOPT)
 if(NOOPT OR ENABLE_BUILD_IOS)
   if(ENABLE_BUILD_IOS) # optimized iOS 10 64 bits screws somewhere in Geo
-    file(GLOB_RECURSE NOOPT_SRC Numeric/robustPredicates.cpp Geo/G*.cpp Mesh/BDS.cpp
-         Parser/Gmsh.tab.cpp contrib/blossom/* Mesh/Background*)
+    file(GLOB_RECURSE NOOPT_SRC Geo/G*.cpp Mesh/BDS.cpp Parser/Gmsh.tab.cpp
+         contrib/blossom/* contrib/bamg/* Mesh/Background*)
   else()
-    file(GLOB_RECURSE NOOPT_SRC Numeric/robustPredicates.cpp Mesh/BDS.cpp
-         Parser/Gmsh.tab.cpp contrib/blossom/* contrib/bamg/* Mesh/Background*)
+# test if new compilers make this superfluous
+#    file(GLOB_RECURSE NOOPT_SRC Mesh/BDS.cpp Parser/Gmsh.tab.cpp
+#         contrib/blossom/* contrib/bamg/* Mesh/Background*)
+    file(GLOB_RECURSE NOOPT_SRC contrib/bamg/*)
   endif()
   set_compile_flags(NOOPT_SRC "-O0")
 endif()
 
-# do not use arithmetic contraction in predicates.cpp
-# if("${CMAKE_C_COMPILER_ID}" STREQUAL "MSVC")
-#   set_source_files_properties(Numeric/robustPredicates.cpp PROPERTIES
-#     COMPILE_FLAGS "/fp:strict")
-# elseif(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
-#   set_source_files_properties(Numeric/robustPredicates.cpp PROPERTIES
-#     COMPILE_FLAGS "-fno-unsafe-math-optimizations -ffp-contract=off")
-# elseif(CMAKE_C_COMPILER_ID STREQUAL "Intel")
-#   set_source_files_properties(Numeric/robustPredicates.cpp PROPERTIES
-#     COMPILE_FLAGS "-fp-model strict")
-# endif()
+if(MSVC OR (CMAKE_C_COMPILER_ID STREQUAL "Intel" AND WIN32))
+  set_source_files_properties(
+    "${CMAKE_CURRENT_SOURCE_DIR}/Numeric/robustPredicates.cpp"
+    PROPERTIES COMPILE_FLAGS "/fp:strict")
+elseif(CMAKE_C_COMPILER_ID STREQUAL "Intel")
+  set_source_files_properties(
+    "${CMAKE_CURRENT_SOURCE_DIR}/Numeric/robustPredicates.cpp"
+    PROPERTIES COMPILE_FLAGS "-fp-model strict")
+elseif(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+  set_source_files_properties(
+    "${CMAKE_CURRENT_SOURCE_DIR}/Numeric/robustPredicates.cpp"
+    PROPERTIES COMPILE_FLAGS "-fno-unsafe-math-optimizations -ffp-contract=off")
+else()
+  message(WARNING "Unknown compiler: make sure compiled functions from "
+          "Numeric/robustPredicates.cpp do not use extended double precision "
+          "and follow the IEEE754 standard. It is crucial for the robustness of "
+          "geometric predicates.")
+endif()
 
 # enable Revoropt and set compile flags for the corresponding plugin
 if(ENABLE_REVOROPT)
