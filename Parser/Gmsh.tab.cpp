@@ -14060,8 +14060,8 @@ yyreduce:
           }
           else{
             char dummy[1024];
-            fscanf(File, "%s", dummy);
-            yymsg(0, "Ignoring '%s' in file '%s'", dummy, (yyvsp[(3) - (4)].c));
+            if(fscanf(File, "%s", dummy))
+              yymsg(0, "Ignoring '%s' in file '%s'", dummy, (yyvsp[(3) - (4)].c));
           }
         }
 	fclose(File);
