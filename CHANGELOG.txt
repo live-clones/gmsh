@@ -2,9 +2,8 @@ Work-in-progress: new quasi-structured quad algorithm (replaces the "packing of
 parallelogram" algorithm); mesh renumbering now also renumbers dependent
 post-processing views; mesh size callback is now per-model; OCC STL
 representation is now generated using relative deflection tolerance; official
-binary builds now support OpenMP parallelization and are 64 bit only (minimal
-supported OS versions are Windows 10, macOS 10.15 and Linux glibc 2.24); small
-bug fixes.
+binary builds now support OpenMP parallelization and are 64 bit only (build OS
+upgraded to Windows 10, macOS 10.15 and Linux glibc 2.24); small bug fixes.
 
 * Incompatible API changes: new optional arguments to model/isInside and
   mesh/partition; modified arguments to mesh/getKeysForElements,

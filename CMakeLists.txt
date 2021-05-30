@@ -1518,9 +1518,9 @@ if(WALL AND NOT MSVC)
   endif()
   if(WIN32 OR NOT HAVE_64BIT_SIZE_T)
     # FIXME: remove printf family warnings on 32 bit systems and windows
-    check_cxx_compiler_flag("-Wformat=" WFORMAT)
+    check_cxx_compiler_flag("-Wno-format" WFORMAT)
     if(WFORMAT)
-      set(WF "${WF} -Wformat=")
+      set(WF "${WF} -Wno-format")
     endif()
   endif()
   set_compile_flags(WALL_SRC ${WF})
@@ -1533,21 +1533,19 @@ if(NOWARN)
   set_compile_flags(NOWARN_SRC "-w")
 endif()
 
-# disable compile optimization on some known problematic files
+# fine-tune optimization flags for particular files
 check_cxx_compiler_flag("-O0" NOOPT)
 if(NOOPT OR ENABLE_BUILD_IOS)
-  if(ENABLE_BUILD_IOS) # optimized iOS 10 64 bits screws somewhere in Geo
+  if(ENABLE_BUILD_IOS)
+    # optimized builds on iOS 10 64 bits fail spectacularly
     file(GLOB_RECURSE NOOPT_SRC Geo/G*.cpp Mesh/BDS.cpp Parser/Gmsh.tab.cpp
          contrib/blossom/* contrib/bamg/* Mesh/Background*)
   else()
-# test if new compilers make this superfluous
-#    file(GLOB_RECURSE NOOPT_SRC Mesh/BDS.cpp Parser/Gmsh.tab.cpp
-#         contrib/blossom/* contrib/bamg/* Mesh/Background*)
+    # bamg fails even with -O1
     file(GLOB_RECURSE NOOPT_SRC contrib/bamg/*)
   endif()
   set_compile_flags(NOOPT_SRC "-O0")
 endif()
-
 if(MSVC OR (CMAKE_C_COMPILER_ID STREQUAL "Intel" AND WIN32))
   set_source_files_properties(
     "${CMAKE_CURRENT_SOURCE_DIR}/Numeric/robustPredicates.cpp"
