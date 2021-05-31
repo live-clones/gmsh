@@ -103,6 +103,11 @@ void List_Add(List_T *liste, int data)
   List_Add(liste, &data);
 }
 
+int List_Nbr(List_T *liste)
+{
+  return liste ? liste->n : 0;
+}
+
 void List_Read(List_T *liste, int index, void *data)
 {
   if(!liste || (index < 0) || (index >= liste->n)) {
