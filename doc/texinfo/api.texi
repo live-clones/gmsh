@@ -3943,9 +3943,9 @@ surface), @code{tol3d} (the maximum distance allowed between the support surface
 and the constraints), @code{tolAng} (the maximum angle allowed between the
 normal of the surface and the constraints), @code{tolCurv} (the maximum
 difference of curvature allowed between the surface and the constraint),
-@code{maxDegree@code{ (the highest degree which the polynomial defining the
-filling surface can have) and, @code{maxSegments} (the largest number of
-segments which the filling surface can have).
+@code{maxDegree} (the highest degree which the polynomial defining the filling
+surface can have) and, @code{maxSegments} (the largest number of segments which
+the filling surface can have).
 
 @table @asis
 @item Input:

@@ -2022,7 +2022,7 @@ GMSH_API int gmshModelOccAddPlaneSurface(int * wireTags, size_t wireTags_n,
  * and the constraints), `tolAng' (the maximum angle allowed between the
  * normal of the surface and the constraints), `tolCurv' (the maximum
  * difference of curvature allowed between the surface and the constraint),
- * `maxDegree` (the highest degree which the polynomial defining the filling
+ * `maxDegree' (the highest degree which the polynomial defining the filling
  * surface can have) and, `maxSegments' (the largest number of segments which
  * the filling surface can have). */
 GMSH_API int gmshModelOccAddSurfaceFilling(const int wireTag,
