@@ -2285,10 +2285,34 @@ namespace gmsh { // Top-level functions
       // loop `wireTag'. If `tag' is positive, set the tag explicitly; otherwise a
       // new tag is selected automatically. Return the tag of the surface. If
       // `pointTags' are provided, force the surface to pass through the given
-      // points.
+      // points. The other optional arguments are `degree' (the degree of the
+      // energy criterion to minimize for computing the deformation of the
+      // surface), `numPointsOnCurves' (the average number of points for
+      // discretisation of the bounding curves), `numIter' (the maximum number of
+      // iterations of the optimization process), `anisotropic' (improve
+      // performance when the ratio of the length along the two parametric
+      // coordinates of the surface is high), `tol2d' (tolerance to the constraints
+      // in the parametric plane of the surface), `tol3d' (the maximum distance
+      // allowed between the support surface and the constraints), `tolAng' (the
+      // maximum angle allowed between the normal of the surface and the
+      // constraints), `tolCurv' (the maximum difference of curvature allowed
+      // between the surface and the constraint), `maxDegree` (the highest degree
+      // which the polynomial defining the filling surface can have) and,
+      // `maxSegments' (the largest number of segments which the filling surface
+      // can have).
       GMSH_API int addSurfaceFilling(const int wireTag,
                                      const int tag = -1,
-                                     const std::vector<int> & pointTags = std::vector<int>());
+                                     const std::vector<int> & pointTags = std::vector<int>(),
+                                     const int degree = 3,
+                                     const int numPointsOnCurves = 15,
+                                     const int numIter = 2,
+                                     const bool anisotropic = false,
+                                     const double tol2d = 0.00001,
+                                     const double tol3d = 0.0001,
+                                     const double tolAng = 0.01,
+                                     const double tolCurv = 0.1,
+                                     const int maxDegree = 8,
+                                     const int maxSegments = 9);
 
       // gmsh::model::occ::addBSplineFilling
       //

@@ -4384,20 +4384,33 @@ end
 const add_plane_surface = addPlaneSurface
 
 """
-    gmsh.model.occ.addSurfaceFilling(wireTag, tag = -1, pointTags = Cint[])
+    gmsh.model.occ.addSurfaceFilling(wireTag, tag = -1, pointTags = Cint[], degree = 3, numPointsOnCurves = 15, numIter = 2, anisotropic = false, tol2d = 0.00001, tol3d = 0.0001, tolAng = 0.01, tolCurv = 0.1, maxDegree = 8, maxSegments = 9)
 
 Add a surface in the OpenCASCADE CAD representation, filling the curve loop
 `wireTag`. If `tag` is positive, set the tag explicitly; otherwise a new tag is
 selected automatically. Return the tag of the surface. If `pointTags` are
-provided, force the surface to pass through the given points.
+provided, force the surface to pass through the given points. The other optional
+arguments are `degree` (the degree of the energy criterion to minimize for
+computing the deformation of the surface), `numPointsOnCurves` (the average
+number of points for discretisation of the bounding curves), `numIter` (the
+maximum number of iterations of the optimization process), `anisotropic`
+(improve performance when the ratio of the length along the two parametric
+coordinates of the surface is high), `tol2d` (tolerance to the constraints in
+the parametric plane of the surface), `tol3d` (the maximum distance allowed
+between the support surface and the constraints), `tolAng` (the maximum angle
+allowed between the normal of the surface and the constraints), `tolCurv` (the
+maximum difference of curvature allowed between the surface and the constraint),
+`maxDegree` (the highest degree which the polynomial defining the filling
+surface can have) and, `maxSegments` (the largest number of segments which the
+filling surface can have).
 
 Return an integer value.
 """
-function addSurfaceFilling(wireTag, tag = -1, pointTags = Cint[])
+function addSurfaceFilling(wireTag, tag = -1, pointTags = Cint[], degree = 3, numPointsOnCurves = 15, numIter = 2, anisotropic = false, tol2d = 0.00001, tol3d = 0.0001, tolAng = 0.01, tolCurv = 0.1, maxDegree = 8, maxSegments = 9)
     ierr = Ref{Cint}()
     api_result_ = ccall((:gmshModelOccAddSurfaceFilling, gmsh.lib), Cint,
-          (Cint, Cint, Ptr{Cint}, Csize_t, Ptr{Cint}),
-          wireTag, tag, convert(Vector{Cint}, pointTags), length(pointTags), ierr)
+          (Cint, Cint, Ptr{Cint}, Csize_t, Cint, Cint, Cint, Cint, Cdouble, Cdouble, Cdouble, Cdouble, Cint, Cint, Ptr{Cint}),
+          wireTag, tag, convert(Vector{Cint}, pointTags), length(pointTags), degree, numPointsOnCurves, numIter, anisotropic, tol2d, tol3d, tolAng, tolCurv, maxDegree, maxSegments, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_result_
 end

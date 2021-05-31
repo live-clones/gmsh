@@ -5851,13 +5851,21 @@ GMSH_API int gmsh::model::occ::addPlaneSurface(const std::vector<int> &wireTags,
 
 GMSH_API int
 gmsh::model::occ::addSurfaceFilling(const int wireTag, const int tag,
-                                    const std::vector<int> &pointTags)
+                                    const std::vector<int> &pointTags,
+                                    const int degree, const int numPointsOnCurves,
+                                    const int numIter, const bool anisotropic,
+                                    const double tol2d, const double tol3d,
+                                    const double tolAng, const double tolCurv,
+                                    const int maxDegree, const int maxSegments)
 {
   if(!_checkInit()) return -1;
   _createOcc();
   int outTag = tag;
-  GModel::current()->getOCCInternals()->addSurfaceFilling(outTag, wireTag,
-                                                          pointTags);
+  std::vector<int> surf, surfCont;
+  GModel::current()->getOCCInternals()->addSurfaceFilling
+    (outTag, wireTag, pointTags, surf, surfCont, degree, numPointsOnCurves,
+     numIter, anisotropic, tol2d, tol3d, tolAng, tolCurv, maxDegree,
+     maxSegments);
   return outTag;
 }
 
