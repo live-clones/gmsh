@@ -14,8 +14,10 @@ def log_message(message, newline=True):
 
 
 def upload_package(args):
-    process = subprocess.Popen(['xcrun', 'altool', '--notarize-app', '-t', 'osx', '-f', args.package,
-                                '--primary-bundle-id', args.primary_bundle_id, '-u', args.username,
+    process = subprocess.Popen(['xcrun', 'altool', '--notarize-app', '-t', 'osx',
+                                '-f', args.package,
+                                '--primary-bundle-id', args.primary_bundle_id,
+                                '-u', args.username,
                                 '--output-format', 'json', '-p', args.password],
                                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     log_message('>> Uploading dmg to apple')
@@ -36,24 +38,26 @@ def upload_package(args):
 
 def check_status(args, uuid):
     process = subprocess.Popen(['xcrun', 'altool', '--notarization-info', uuid,
-                                '-u', args.username, '-p', args.password, '--output-format', 'json'],
+                                '-u', args.username, '-p', args.password,
+                                '--output-format', 'json'],
                                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     output, error = process.communicate()
     output_str = output.decode('utf-8') + error.decode('utf-8')
-
-    in_progress = 'Status: in progress' in output_str
-    success = 'Status: success' in output_str
-
-    if not in_progress and not success:
-        log_message(output_str)
-        log_message('[Error] Notarization failed')
-        exit(1)
-
-    return in_progress
+    m = json.loads(output_str)
+    if 'notarization-info' in m and 'Status' in m['notarization-info']:
+        status = m['notarization-info']['Status']
+        if 'in progress' in status:
+            return True
+        elif 'success' in status:
+            return False
+    log_message(output_str)
+    log_message('[Error] Notarization failed')
+    exit(1)
 
 
 def staple(args):
-    process = subprocess.Popen(['xcrun', 'stapler', 'staple', args.package], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    process = subprocess.Popen(['xcrun', 'stapler', 'staple', args.package],
+                               stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     output, error = process.communicate()
     log_message(output.decode('utf-8'))
     log_message(error.decode('utf-8'))
