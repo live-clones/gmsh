@@ -1,4 +1,4 @@
-# from https://github.com/najiji/notarizer/blob/master/notarize.py
+# adapted from from https://github.com/najiji/notarizer/blob/master/notarize.py
 
 import argparse
 import os
@@ -20,14 +20,12 @@ def upload_package(args):
                                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     log_message('>> Uploading dmg to apple')
     output, error = process.communicate()
-    output_str = output.decode('utf-8')
-    error_str = error.decode('utf-8')
+    output_str = output.decode('utf-8') + error.decode('utf-8')
     log_message(output_str)
-    log_message(error_str)
-    if not 'No errors uploading' in error_str:
+    if not 'No errors uploading' in output_str:
         log_message('[Error] Upload failed')
         exit(1)
-    m = re.match('.*RequestUUID = (.*)\n', error_str, re.S)
+    m = re.match('.*RequestUUID = (.*)\n', output_str, re.S)
     if not m:
         log_message('[Error] No UUID created')
         exit(1)
@@ -41,15 +39,13 @@ def check_status(args, uuid):
                                 '-u', args.username, '-p', args.password, '--output-format', 'json'],
                                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     output, error = process.communicate()
-    output_str = output.decode('utf-8')
-    error_str = error.decode('utf-8')
+    output_str = output.decode('utf-8') + error.decode('utf-8')
 
-    in_progress = 'Status: in progress' in error_str
-    success = 'Status: success' in error_str
+    in_progress = 'Status: in progress' in output_str
+    success = 'Status: success' in output_str
 
     if not in_progress and not success:
         log_message(output_str)
-        log_message(error.decode('utf-8'))
         log_message('[Error] Notarization failed')
         exit(1)
 
