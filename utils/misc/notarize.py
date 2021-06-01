@@ -68,8 +68,8 @@ def main():
     args = parser.parse_args()
 
     if not args.package.endswith('.dmg'):
-        log_message('Supplied package %s is not a dmg file' % args.package)
-        exit(1)
+        log_message('Supplied package %s is not a dmg file - skipping' % args.package)
+        exit(0)
 
     uuid = upload_package(args)
 
