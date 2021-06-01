@@ -27,7 +27,7 @@ def upload_package(args):
         exit(1)
     m = json.loads(output_str)
     if 'notarization-upload' in m and 'RequestUUID' in m['notarization-upload']:
-        uuid = mm['notarization-upload']['RequestUUID']
+        uuid = m['notarization-upload']['RequestUUID']
         log_message('>> Job UUID: %s' % uuid)
         return uuid
     log_message('[Error] No UUID created')
