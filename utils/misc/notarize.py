@@ -73,6 +73,7 @@ def main():
 
     uuid = upload_package(args)
 
+    time.sleep(30)
     while check_status(args, uuid):
         log_message('.. Notarization in progress. Checking back in 30s')
         time.sleep(30)
