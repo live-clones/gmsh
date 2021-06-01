@@ -3,7 +3,7 @@
 import argparse
 import os
 import subprocess
-import re
+import json
 import sys
 import time
 
@@ -25,13 +25,13 @@ def upload_package(args):
     if not 'No errors uploading' in output_str:
         log_message('[Error] Upload failed')
         exit(1)
-    m = re.match('.*RequestUUID = (.*)\n', output_str, re.S)
-    if not m:
-        log_message('[Error] No UUID created')
-        exit(1)
-    uuid = m.group(1)
-    log_message('>> Job UUID: %s' % uuid)
-    return uuid
+    m = json.loads(output_str)
+    if 'notarization-upload' in m and 'RequestUUID' in m['notarization-upload']:
+        uuid = mm['notarization-upload']['RequestUUID']
+        log_message('>> Job UUID: %s' % uuid)
+        return uuid
+    log_message('[Error] No UUID created')
+    exit(1)
 
 
 def check_status(args, uuid):
