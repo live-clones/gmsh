@@ -1476,25 +1476,28 @@ const get_nodes_by_element_type = getNodesByElementType
     gmsh.model.mesh.getNode(nodeTag)
 
 Get the coordinates and the parametric coordinates (if any) of the node with tag
-`tag`. This function relies on an internal cache (a vector in case of dense node
-numbering, a map otherwise); for large meshes accessing nodes in bulk is often
-preferable.
+`tag`, as well as the dimension `dim` and tag `tag` of the entity on which the
+node is classified. This function relies on an internal cache (a vector in case
+of dense node numbering, a map otherwise); for large meshes accessing nodes in
+bulk is often preferable.
 
-Return `coord`, `parametricCoord`.
+Return `coord`, `parametricCoord`, `dim`, `tag`.
 """
 function getNode(nodeTag)
     api_coord_ = Ref{Ptr{Cdouble}}()
     api_coord_n_ = Ref{Csize_t}()
     api_parametricCoord_ = Ref{Ptr{Cdouble}}()
     api_parametricCoord_n_ = Ref{Csize_t}()
+    api_dim_ = Ref{Cint}()
+    api_tag_ = Ref{Cint}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetNode, gmsh.lib), Cvoid,
-          (Csize_t, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
-          nodeTag, api_coord_, api_coord_n_, api_parametricCoord_, api_parametricCoord_n_, ierr)
+          (Csize_t, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}, Ptr{Cint}, Ptr{Cint}),
+          nodeTag, api_coord_, api_coord_n_, api_parametricCoord_, api_parametricCoord_n_, api_dim_, api_tag_, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     coord = unsafe_wrap(Array, api_coord_[], api_coord_n_[], own=true)
     parametricCoord = unsafe_wrap(Array, api_parametricCoord_[], api_parametricCoord_n_[], own=true)
-    return coord, parametricCoord
+    return coord, parametricCoord, api_dim_[], api_tag_[]
 end
 const get_node = getNode
 
@@ -1676,23 +1679,27 @@ const get_elements = getElements
 """
     gmsh.model.mesh.getElement(elementTag)
 
-Get the type and node tags of the element with tag `tag`. This function relies
-on an internal cache (a vector in case of dense element numbering, a map
-otherwise); for large meshes accessing elements in bulk is often preferable.
+Get the type and node tags of the element with tag `tag`, as well as the
+dimension `dim` and tag `tag` of the entity on which the element is classified.
+This function relies on an internal cache (a vector in case of dense element
+numbering, a map otherwise); for large meshes accessing elements in bulk is
+often preferable.
 
-Return `elementType`, `nodeTags`.
+Return `elementType`, `nodeTags`, `dim`, `tag`.
 """
 function getElement(elementTag)
     api_elementType_ = Ref{Cint}()
     api_nodeTags_ = Ref{Ptr{Csize_t}}()
     api_nodeTags_n_ = Ref{Csize_t}()
+    api_dim_ = Ref{Cint}()
+    api_tag_ = Ref{Cint}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetElement, gmsh.lib), Cvoid,
-          (Csize_t, Ptr{Cint}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cint}),
-          elementTag, api_elementType_, api_nodeTags_, api_nodeTags_n_, ierr)
+          (Csize_t, Ptr{Cint}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cint}, Ptr{Cint}, Ptr{Cint}),
+          elementTag, api_elementType_, api_nodeTags_, api_nodeTags_n_, api_dim_, api_tag_, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     nodeTags = unsafe_wrap(Array, api_nodeTags_[], api_nodeTags_n_[], own=true)
-    return api_elementType_[], nodeTags
+    return api_elementType_[], nodeTags, api_dim_[], api_tag_[]
 end
 const get_element = getElement
 

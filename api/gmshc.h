@@ -595,12 +595,15 @@ GMSH_API void gmshModelMeshGetNodesByElementType(const int elementType,
                                                  int * ierr);
 
 /* Get the coordinates and the parametric coordinates (if any) of the node
- * with tag `tag'. This function relies on an internal cache (a vector in case
- * of dense node numbering, a map otherwise); for large meshes accessing nodes
- * in bulk is often preferable. */
+ * with tag `tag', as well as the dimension `dim' and tag `tag' of the entity
+ * on which the node is classified. This function relies on an internal cache
+ * (a vector in case of dense node numbering, a map otherwise); for large
+ * meshes accessing nodes in bulk is often preferable. */
 GMSH_API void gmshModelMeshGetNode(const size_t nodeTag,
                                    double ** coord, size_t * coord_n,
                                    double ** parametricCoord, size_t * parametricCoord_n,
+                                   int * dim,
+                                   int * tag,
                                    int * ierr);
 
 /* Set the coordinates and the parametric coordinates (if any) of the node
@@ -680,13 +683,16 @@ GMSH_API void gmshModelMeshGetElements(int ** elementTypes, size_t * elementType
                                        const int tag,
                                        int * ierr);
 
-/* Get the type and node tags of the element with tag `tag'. This function
- * relies on an internal cache (a vector in case of dense element numbering, a
- * map otherwise); for large meshes accessing elements in bulk is often
- * preferable. */
+/* Get the type and node tags of the element with tag `tag', as well as the
+ * dimension `dim' and tag `tag' of the entity on which the element is
+ * classified. This function relies on an internal cache (a vector in case of
+ * dense element numbering, a map otherwise); for large meshes accessing
+ * elements in bulk is often preferable. */
 GMSH_API void gmshModelMeshGetElement(const size_t elementTag,
                                       int * elementType,
                                       size_t ** nodeTags, size_t * nodeTags_n,
+                                      int * dim,
+                                      int * tag,
                                       int * ierr);
 
 /* Search the mesh for an element located at coordinates (`x', `y', `z'). This
