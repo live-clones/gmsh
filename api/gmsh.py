@@ -1778,25 +1778,32 @@ class model:
             gmsh.model.mesh.getNode(nodeTag)
 
             Get the coordinates and the parametric coordinates (if any) of the node
-            with tag `tag'. This function relies on an internal cache (a vector in case
-            of dense node numbering, a map otherwise); for large meshes accessing nodes
-            in bulk is often preferable.
+            with tag `tag', as well as the dimension `dim' and tag `tag' of the entity
+            on which the node is classified. This function relies on an internal cache
+            (a vector in case of dense node numbering, a map otherwise); for large
+            meshes accessing nodes in bulk is often preferable.
 
-            Return `coord', `parametricCoord'.
+            Return `coord', `parametricCoord', `dim', `tag'.
             """
             api_coord_, api_coord_n_ = POINTER(c_double)(), c_size_t()
             api_parametricCoord_, api_parametricCoord_n_ = POINTER(c_double)(), c_size_t()
+            api_dim_ = c_int()
+            api_tag_ = c_int()
             ierr = c_int()
             lib.gmshModelMeshGetNode(
                 c_size_t(nodeTag),
                 byref(api_coord_), byref(api_coord_n_),
                 byref(api_parametricCoord_), byref(api_parametricCoord_n_),
+                byref(api_dim_),
+                byref(api_tag_),
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return (
                 _ovectordouble(api_coord_, api_coord_n_.value),
-                _ovectordouble(api_parametricCoord_, api_parametricCoord_n_.value))
+                _ovectordouble(api_parametricCoord_, api_parametricCoord_n_.value),
+                api_dim_.value,
+                api_tag_.value)
         get_node = getNode
 
         @staticmethod
@@ -1990,26 +1997,33 @@ class model:
             """
             gmsh.model.mesh.getElement(elementTag)
 
-            Get the type and node tags of the element with tag `tag'. This function
-            relies on an internal cache (a vector in case of dense element numbering, a
-            map otherwise); for large meshes accessing elements in bulk is often
-            preferable.
+            Get the type and node tags of the element with tag `tag', as well as the
+            dimension `dim' and tag `tag' of the entity on which the element is
+            classified. This function relies on an internal cache (a vector in case of
+            dense element numbering, a map otherwise); for large meshes accessing
+            elements in bulk is often preferable.
 
-            Return `elementType', `nodeTags'.
+            Return `elementType', `nodeTags', `dim', `tag'.
             """
             api_elementType_ = c_int()
             api_nodeTags_, api_nodeTags_n_ = POINTER(c_size_t)(), c_size_t()
+            api_dim_ = c_int()
+            api_tag_ = c_int()
             ierr = c_int()
             lib.gmshModelMeshGetElement(
                 c_size_t(elementTag),
                 byref(api_elementType_),
                 byref(api_nodeTags_), byref(api_nodeTags_n_),
+                byref(api_dim_),
+                byref(api_tag_),
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return (
                 api_elementType_.value,
-                _ovectorsize(api_nodeTags_, api_nodeTags_n_.value))
+                _ovectorsize(api_nodeTags_, api_nodeTags_n_.value),
+                api_dim_.value,
+                api_tag_.value)
         get_element = getElement
 
         @staticmethod

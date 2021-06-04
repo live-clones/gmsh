@@ -1523,7 +1523,8 @@ GMSH_API void gmsh::model::mesh::getNodesByElementType(
 
 GMSH_API void gmsh::model::mesh::getNode(const std::size_t nodeTag,
                                          std::vector<double> &coord,
-                                         std::vector<double> &parametricCoord)
+                                         std::vector<double> &parametricCoord,
+                                         int &dim, int &tag)
 {
   if(!_checkInit()) return;
   MVertex *v = GModel::current()->getMeshVertexByTag(nodeTag);
@@ -1539,6 +1540,15 @@ GMSH_API void gmsh::model::mesh::getNode(const std::size_t nodeTag,
   double u;
   if(v->getParameter(0, u)) parametricCoord.push_back(u);
   if(v->getParameter(1, u)) parametricCoord.push_back(u);
+  if(v->onWhat()) {
+    dim = v->onWhat()->dim();
+    tag = v->onWhat()->tag();
+  }
+  else{
+    Msg::Warning("Node %d is not classified on any entity", nodeTag);
+    dim = -1;
+    tag = -1;
+  }
 }
 
 GMSH_API void
@@ -1756,10 +1766,12 @@ GMSH_API void gmsh::model::mesh::getElements(
 
 GMSH_API void gmsh::model::mesh::getElement(const std::size_t elementTag,
                                             int &elementType,
-                                            std::vector<std::size_t> &nodeTags)
+                                            std::vector<std::size_t> &nodeTags,
+                                            int &dim, int &tag)
 {
   if(!_checkInit()) return;
-  MElement *e = GModel::current()->getMeshElementByTag(elementTag);
+  int entityTag;
+  MElement *e = GModel::current()->getMeshElementByTag(elementTag, entityTag);
   if(!e) {
     Msg::Error("Unknown element %d", elementTag);
     return;
@@ -1774,6 +1786,8 @@ GMSH_API void gmsh::model::mesh::getElement(const std::size_t elementTag,
     }
     nodeTags.push_back(v->getNum());
   }
+  dim = e->getDim();
+  tag = entityTag;
 }
 
 GMSH_API void gmsh::model::mesh::getElementByCoordinates(

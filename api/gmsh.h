@@ -698,12 +698,15 @@ namespace gmsh { // Top-level functions
       // gmsh::model::mesh::getNode
       //
       // Get the coordinates and the parametric coordinates (if any) of the node
-      // with tag `tag'. This function relies on an internal cache (a vector in
-      // case of dense node numbering, a map otherwise); for large meshes accessing
-      // nodes in bulk is often preferable.
+      // with tag `tag', as well as the dimension `dim' and tag `tag' of the entity
+      // on which the node is classified. This function relies on an internal cache
+      // (a vector in case of dense node numbering, a map otherwise); for large
+      // meshes accessing nodes in bulk is often preferable.
       GMSH_API void getNode(const std::size_t nodeTag,
                             std::vector<double> & coord,
-                            std::vector<double> & parametricCoord);
+                            std::vector<double> & parametricCoord,
+                            int & dim,
+                            int & tag);
 
       // gmsh::model::mesh::setNode
       //
@@ -793,13 +796,16 @@ namespace gmsh { // Top-level functions
 
       // gmsh::model::mesh::getElement
       //
-      // Get the type and node tags of the element with tag `tag'. This function
-      // relies on an internal cache (a vector in case of dense element numbering,
-      // a map otherwise); for large meshes accessing elements in bulk is often
-      // preferable.
+      // Get the type and node tags of the element with tag `tag', as well as the
+      // dimension `dim' and tag `tag' of the entity on which the element is
+      // classified. This function relies on an internal cache (a vector in case of
+      // dense element numbering, a map otherwise); for large meshes accessing
+      // elements in bulk is often preferable.
       GMSH_API void getElement(const std::size_t elementTag,
                                int & elementType,
-                               std::vector<std::size_t> & nodeTags);
+                               std::vector<std::size_t> & nodeTags,
+                               int & dim,
+                               int & tag);
 
       // gmsh::model::mesh::getElementByCoordinates
       //

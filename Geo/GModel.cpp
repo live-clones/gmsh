@@ -226,9 +226,9 @@ void GModel::destroyMeshCaches()
     _vertexMapCache.clear();
     std::map<int, MVertex *>().swap(_vertexMapCache);
     _elementVectorCache.clear();
-    std::vector<MElement *>().swap(_elementVectorCache);
+    std::vector<std::pair<MElement *, int> >().swap(_elementVectorCache);
     _elementMapCache.clear();
-    std::map<int, MElement *>().swap(_elementMapCache);
+    std::map<int, std::pair<MElement *, int> >().swap(_elementMapCache);
     _elementIndexCache.clear();
     std::map<int, int>().swap(_elementIndexCache);
     if(_elementOctree) {
@@ -1858,18 +1858,20 @@ void GModel::rebuildMeshElementCache(bool onlyIfNecessary)
     getEntities(entities);
     if(dense) {
       // numbering starts at 1
-      _elementVectorCache.resize(_maxElementNum + 1, (MElement *)nullptr);
+      _elementVectorCache.resize(_maxElementNum + 1,
+                                 std::pair<MElement*, int>(nullptr, 0));
       for(std::size_t i = 0; i < entities.size(); i++)
         for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
           MElement *e = entities[i]->getMeshElement(j);
-          _elementVectorCache[e->getNum()] = e;
+          _elementVectorCache[e->getNum()] =
+            std::make_pair(e, entities[i]->tag());
         }
     }
     else {
       for(std::size_t i = 0; i < entities.size(); i++)
         for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
           MElement *e = entities[i]->getMeshElement(j);
-          _elementMapCache[e->getNum()] = e;
+          _elementMapCache[e->getNum()] = std::make_pair(e, entities[i]->tag());
         }
     }
   }
@@ -1914,7 +1916,7 @@ void GModel::getMeshVerticesForPhysicalGroup(int dim, int num,
   v.insert(v.begin(), sv.begin(), sv.end());
 }
 
-MElement *GModel::getMeshElementByTag(int n)
+MElement *GModel::getMeshElementByTag(int n, int &entityTag)
 {
   if(_elementVectorCache.empty() && _elementMapCache.empty()) {
 #if defined(_OPENMP)
@@ -1927,10 +1929,13 @@ MElement *GModel::getMeshElementByTag(int n)
     }
   }
 
+  std::pair<MElement*, int> ret;
   if(n < (int)_elementVectorCache.size())
-    return _elementVectorCache[n];
+    ret = _elementVectorCache[n];
   else
-    return _elementMapCache[n];
+    ret = _elementMapCache[n];
+  entityTag = ret.second;
+  return ret.first;
 }
 
 int GModel::getMeshElementIndex(MElement *e)
