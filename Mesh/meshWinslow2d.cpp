@@ -415,7 +415,7 @@ public:
 
 void meshWinslow1d (GEdge * ge, int nIter, Field *f) {
   // return;
-  nIter = 1000;
+  // nIter = 1000;
   std::vector<GFace*> faces = ge->faces();
   if (faces.size() != 2)return;
   
@@ -578,7 +578,7 @@ void meshWinslow2d (GModel * gm, int nIter, Field *f) {
   int sIter = nIter/4;
   sIter = 10;
 
-  for (int NIT = 0;NIT<4;NIT++){  
+  for (int NIT = 0;NIT<10;NIT++){  
     for (size_t i=0;i<tempe.size();i++)
       meshWinslow1d (tempe[i],sIter, f); 
 
