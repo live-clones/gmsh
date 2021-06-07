@@ -2122,7 +2122,7 @@ const get_number_of_orientations = getNumberOfOrientations
 
 Get the global unique mesh edge identifiers `edgeTags` and orientations
 `edgeOrientation` for an input list of node tag pairs defining these edges,
-concatenated in the vector `nodeTags`.
+concatenated in the vector `nodeTags`. Reference orientation: vA < vB.
 
 Return `edgeTags`, `edgeOrientations`.
 """

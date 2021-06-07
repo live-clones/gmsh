@@ -1082,7 +1082,8 @@ namespace gmsh { // Top-level functions
       //
       // Get the global unique mesh edge identifiers `edgeTags' and orientations
       // `edgeOrientation' for an input list of node tag pairs defining these
-      // edges, concatenated in the vector `nodeTags'.
+      // edges, concatenated in the vector `nodeTags'. Reference orientation: vA <
+      // vB.
       GMSH_API void getEdges(const std::vector<std::size_t> & nodeTags,
                              std::vector<std::size_t> & edgeTags,
                              std::vector<int> & edgeOrientations);

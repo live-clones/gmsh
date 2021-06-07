@@ -947,7 +947,7 @@ GMSH_API void gmshModelMeshPreallocateBasisFunctionsOrientationForElements(const
 
 /* Get the global unique mesh edge identifiers `edgeTags' and orientations
  * `edgeOrientation' for an input list of node tag pairs defining these edges,
- * concatenated in the vector `nodeTags'. */
+ * concatenated in the vector `nodeTags'. Reference orientation: vA < vB. */
 GMSH_API void gmshModelMeshGetEdges(size_t * nodeTags, size_t nodeTags_n,
                                     size_t ** edgeTags, size_t * edgeTags_n,
                                     int ** edgeOrientations, size_t * edgeOrientations_n,

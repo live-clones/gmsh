@@ -1456,17 +1456,16 @@ std::size_t GModel::addMEdge(MEdge &edge)
   return it.first->second;
 }
 
-std::size_t GModel::getMEdge(MVertex *v0, MVertex *v1, MEdge &edge)
+std::size_t GModel::getMEdge(MVertex *v0, MVertex *v1)
 {
   MEdge e(v0, v1);
   auto it = _mapEdgeNum.find(e);
   if(it != _mapEdgeNum.end()) {
-    edge = it->first;
     return it->second;
   }
   else {
-    Msg::Error("Unknown edge %d %d", edge.getVertex(0)->getNum(),
-               edge.getVertex(1)->getNum());
+    Msg::Error("Unknown edge %d %d", e.getVertex(0)->getNum(),
+               e.getVertex(1)->getNum());
     return 0;
   }
 }
