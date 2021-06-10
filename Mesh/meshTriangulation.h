@@ -19,6 +19,6 @@ PolyMesh *GFaceInitialMesh(int faceTag, int recover = 0);
 void GFaceDelaunayRefinementOldMesher(int faceTag);
 void GFaceDelaunayRefinement(int faceTag);
 int GFace2PolyMesh(int faceTag, PolyMesh **pm);
-// int PolyMesh2GFace (const PolyMesh *pm, size_t faceTag);
+int PolyMesh2GFace(PolyMesh *pm, int faceTag);
 
 #endif

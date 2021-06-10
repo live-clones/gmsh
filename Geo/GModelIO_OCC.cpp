@@ -1688,7 +1688,17 @@ bool OCC_Internals::addPlaneSurface(int &tag, const std::vector<int> &wireTags)
 bool OCC_Internals::addSurfaceFilling(int &tag, int wireTag,
                                       const std::vector<int> &pointTags,
                                       const std::vector<int> &surfaceTags,
-                                      const std::vector<int> &surfaceContinuity)
+                                      const std::vector<int> &surfaceContinuity,
+                                      const int degree,
+                                      const int numPointsOnCurves,
+                                      const int numIter,
+                                      const bool anisotropic,
+                                      const double tol2d,
+                                      const double tol3d,
+                                      const double tolAng,
+                                      const double tolCurv,
+                                      const int maxDegree,
+                                      const int maxSegments)
 {
   if(tag >= 0 && _tagFace.IsBound(tag)) {
     Msg::Error("OpenCASCADE surface with tag %d already exists", tag);
@@ -1697,7 +1707,9 @@ bool OCC_Internals::addSurfaceFilling(int &tag, int wireTag,
 
   TopoDS_Face result;
   try {
-    BRepOffsetAPI_MakeFilling f;
+    BRepOffsetAPI_MakeFilling f(degree, numPointsOnCurves, numIter, anisotropic,
+                                tol2d, tol3d, tolAng, tolCurv, maxDegree,
+                                maxSegments);
     // bounding edge constraints
     if(!_tagWire.IsBound(wireTag)) {
       Msg::Error("Unknown OpenCASCADE curve loop with tag %d", wireTag);
@@ -1899,9 +1911,42 @@ bool OCC_Internals::addBezierFilling(int &tag, int wireTag,
   return true;
 }
 
-static bool makeTrimmedSurface(Handle(Geom_Surface) & surf,
-                               std::vector<TopoDS_Wire> &wires, bool wire3D,
-                               TopoDS_Face &result)
+static bool makeEdgeOnSurface(const TopoDS_Edge &edge,
+                              const Handle(Geom_Surface) &surf,
+                              bool curve3D, TopoDS_Edge &edgeOnSurf)
+{
+  try {
+    Standard_Real first, last;
+    Handle(Geom_Curve) c = BRep_Tool::Curve(edge, first, last);
+    if(curve3D) {
+      // use the 3D curves in the wire and project them onto the patch
+      Handle(Geom_Curve) cProj = GeomProjLib::Project
+        (new Geom_TrimmedCurve(c, first, last, Standard_True, Standard_False),
+         surf);
+      edgeOnSurf = BRepBuilderAPI_MakeEdge
+        (cProj, cProj->FirstParameter(), cProj->LastParameter());
+    }
+    else {
+      // assume the 3D curve is actually a 2D curve in the parametric plane of the
+      // surface: to retrieve the 2D curve, project the 3D curve on the z=0 plane
+      Handle(Geom_Plane) p = new Geom_Plane(0, 0, 1, 0);
+      TopLoc_Location loc;
+      Handle(Geom2d_Curve) c2d =
+        BRep_Tool::CurveOnSurface(edge, p, loc, first, last);
+      // BRep_Tool::CurveOnPlane(edge, p, loc, first, last); // OCCT >= 7.2
+      edgeOnSurf = BRepBuilderAPI_MakeEdge(c2d, surf, first, last);
+    }
+  }
+  catch(Standard_Failure &err) {
+    Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
+    return false;
+  }
+  return true;
+}
+
+static bool makeTrimmedSurface(const Handle(Geom_Surface) &surf,
+                               const std::vector<TopoDS_Wire> &wires,
+                               bool wire3D, TopoDS_Face &result)
 {
   if(wires.empty()) { // natural bounds
     result = BRepBuilderAPI_MakeFace(surf, CTX::instance()->geom.tolerance);
@@ -1949,32 +1994,9 @@ static bool makeTrimmedSurface(Handle(Geom_Surface) & surf,
       BRepBuilderAPI_MakeWire w;
       TopExp_Explorer exp0;
       for(exp0.Init(wires[i], TopAbs_EDGE); exp0.More(); exp0.Next()) {
-        TopoDS_Edge edge = TopoDS::Edge(exp0.Current());
-        Standard_Real first, last;
-        Handle(Geom_Curve) c = BRep_Tool::Curve(edge, first, last);
-        if(wire3D) {
-          // use the 3D curves in the wire and project them onto the patch
-          Handle(Geom_Curve) cProj = GeomProjLib::Project(
-            new Geom_TrimmedCurve(c, first, last, Standard_True,
-                                  Standard_False),
-            surf);
-          TopoDS_Edge edgeProj = BRepBuilderAPI_MakeEdge(
-            cProj, cProj->FirstParameter(), cProj->LastParameter());
-          w.Add(edgeProj);
-        }
-        else {
-          // assume the 3D curves are actually 2D curves in the parametric space
-          // of the patch: to retrieve the 2D curves, project the 3D curves on
-          // the z=0 plane
-          Handle(Geom_Plane) p = new Geom_Plane(0, 0, 1, 0);
-          TopLoc_Location loc;
-          Handle(Geom2d_Curve) c2d =
-            BRep_Tool::CurveOnSurface(edge, p, loc, first, last);
-          // BRep_Tool::CurveOnPlane(edge, p, loc, first, last); // OCCT >= 7.2
-          TopoDS_Edge edgeSurf =
-            BRepBuilderAPI_MakeEdge(c2d, surf, first, last);
-          w.Add(edgeSurf);
-        }
+        TopoDS_Edge edge = TopoDS::Edge(exp0.Current()), edgeOnSurf;
+        if(makeEdgeOnSurface(edge, surf, wire3D, edgeOnSurf))
+          w.Add(edgeOnSurf);
       }
       TopoDS_Wire wire = w.Wire();
       wiresProj.push_back(wire);
@@ -2269,8 +2291,8 @@ bool OCC_Internals::addSurfaceLoop(int &tag,
   }
 
   if(sewing) {
-    // this allows to build a shell made of surfaces that share geometrically
-    // identical (but topologically different) curves.
+    // this allows one to build a shell made of surfaces that share
+    // geometrically identical (but topologically different) curves.
     TopoDS_Shape result;
     try {
       BRepBuilderAPI_Sewing s;
@@ -4763,13 +4785,6 @@ void OCC_Internals::_healShape(TopoDS_Shape &myshape, double tolerance,
       }
       myshape = rebuild.Apply(myshape);
     }
-    _somap.Clear();
-    _shmap.Clear();
-    _fmap.Clear();
-    _wmap.Clear();
-    _emap.Clear();
-    _vmap.Clear();
-    _addShapeToMaps(myshape);
 
     {
       ShapeBuild_ReShape rebuild;
@@ -4784,7 +4799,7 @@ void OCC_Internals::_healShape(TopoDS_Shape &myshape, double tolerance,
         if(sff.Status(ShapeExtend_DONE1) || sff.Status(ShapeExtend_DONE2) ||
            sff.Status(ShapeExtend_DONE3) || sff.Status(ShapeExtend_DONE4) ||
            sff.Status(ShapeExtend_DONE5)) {
-          Msg::Info(" . Repaired face %d", _fmap.FindIndex(face));
+          Msg::Info(" . Repaired face");
           if(sff.Status(ShapeExtend_DONE1))
             Msg::Info(" . Some wires are fixed");
           else if(sff.Status(ShapeExtend_DONE2))
@@ -4795,8 +4810,8 @@ void OCC_Internals::_healShape(TopoDS_Shape &myshape, double tolerance,
             Msg::Info(" . Small area wire removed");
           else if(sff.Status(ShapeExtend_DONE5))
             Msg::Info(" . Natural bounds added");
-          TopoDS_Face newface = sff.Face();
 
+          TopoDS_Face newface = sff.Face();
           rebuild.Replace(face, newface);
         }
       }
@@ -4815,81 +4830,63 @@ void OCC_Internals::_healShape(TopoDS_Shape &myshape, double tolerance,
 
   if(fixSmallEdges) {
     Msg::Info(" - Fixing small edges");
-    ShapeBuild_ReShape rebuild;
 
-    for(exp0.Init(myshape, TopAbs_FACE); exp0.More(); exp0.Next()) {
-      TopoDS_Face face = TopoDS::Face(exp0.Current());
+    {
+      ShapeBuild_ReShape rebuild;
 
-      for(exp1.Init(face, TopAbs_WIRE); exp1.More(); exp1.Next()) {
-        TopoDS_Wire oldwire = TopoDS::Wire(exp1.Current());
-        ShapeFix_Wire sfw(oldwire, face, tolerance);
-        sfw.ModifyTopologyMode() = Standard_True;
+      for(exp0.Init(myshape, TopAbs_FACE); exp0.More(); exp0.Next()) {
+        TopoDS_Face face = TopoDS::Face(exp0.Current());
 
-        sfw.ClosedWireMode() = Standard_True;
+        for(exp1.Init(face, TopAbs_WIRE); exp1.More(); exp1.Next()) {
+          TopoDS_Wire oldwire = TopoDS::Wire(exp1.Current());
+          ShapeFix_Wire sfw(oldwire, face, tolerance);
+          sfw.ModifyTopologyMode() = Standard_True;
+          sfw.ClosedWireMode() = Standard_True;
+          bool replace = false;
+          replace = sfw.FixReorder() || replace;
+          replace = sfw.FixConnected() || replace;
 
-        bool replace = false;
-        replace = sfw.FixReorder() || replace;
-        replace = sfw.FixConnected() || replace;
+          if(sfw.FixSmall(Standard_False, tolerance) &&
+             !(sfw.StatusSmall(ShapeExtend_FAIL1) ||
+               sfw.StatusSmall(ShapeExtend_FAIL2) ||
+               sfw.StatusSmall(ShapeExtend_FAIL3))) {
+            Msg::Info(" . Fixed small edge in wire");
+            replace = true;
+          }
+          else if(sfw.StatusSmall(ShapeExtend_FAIL1))
+            Msg::Warning("Failed to fix small edge in wire, edge cannot be "
+                         "checked (no 3d curve and no pcurve)");
+          else if(sfw.StatusSmall(ShapeExtend_FAIL2))
+            Msg::Warning("Failed to fix small edge in wire, edge is null-"
+                         "length and has different vertives at begin and end, "
+                         "and lockvtx is True or ModifiyTopologyMode is False");
+          else if(sfw.StatusSmall(ShapeExtend_FAIL3))
+            Msg::Warning("Failed to fix small edge in wire, CheckConnected has "
+                         "failed");
 
-        if(sfw.FixSmall(Standard_False, tolerance) &&
-           !(sfw.StatusSmall(ShapeExtend_FAIL1) ||
-             sfw.StatusSmall(ShapeExtend_FAIL2) ||
-             sfw.StatusSmall(ShapeExtend_FAIL3))) {
-          Msg::Info(" . Fixed small edge in wire %d", _wmap.FindIndex(oldwire));
-          replace = true;
-        }
-        else if(sfw.StatusSmall(ShapeExtend_FAIL1))
-          Msg::Warning(
-            "Failed to fix small edge in wire %d, edge cannot be checked "
-            "(no 3d curve and no pcurve)",
-            _wmap.FindIndex(oldwire));
-        else if(sfw.StatusSmall(ShapeExtend_FAIL2))
-          Msg::Warning(
-            "Failed to fix small edge in wire %d, "
-            "edge is null-length and has different vertives at begin and "
-            "end, and lockvtx is True or ModifiyTopologyMode is False",
-            _wmap.FindIndex(oldwire));
-        else if(sfw.StatusSmall(ShapeExtend_FAIL3))
-          Msg::Warning(
-            "Failed to fix small edge in wire, CheckConnected has failed",
-            _wmap.FindIndex(oldwire));
-
-        replace = sfw.FixEdgeCurves() || replace;
-        replace = sfw.FixDegenerated() || replace;
-        replace = sfw.FixSelfIntersection() || replace;
-        replace = sfw.FixLacking(Standard_True) || replace;
-        if(replace) {
-          TopoDS_Wire newwire = sfw.Wire();
-          rebuild.Replace(oldwire, newwire);
+          replace = sfw.FixEdgeCurves() || replace;
+          replace = sfw.FixDegenerated() || replace;
+          replace = sfw.FixSelfIntersection() || replace;
+          replace = sfw.FixLacking(Standard_True) || replace;
+          if(replace) {
+            TopoDS_Wire newwire = sfw.Wire();
+            rebuild.Replace(oldwire, newwire);
+          }
         }
       }
+      myshape = rebuild.Apply(myshape);
     }
-
-    myshape = rebuild.Apply(myshape);
-    _somap.Clear();
-    _shmap.Clear();
-    _fmap.Clear();
-    _wmap.Clear();
-    _emap.Clear();
-    _vmap.Clear();
-    _addShapeToMaps(myshape);
 
     {
       ShapeBuild_ReShape rebuild;
 
       for(exp1.Init(myshape, TopAbs_EDGE); exp1.More(); exp1.Next()) {
         TopoDS_Edge edge = TopoDS::Edge(exp1.Current());
-        if(_vmap.FindIndex(TopExp::FirstVertex(edge)) ==
-           _vmap.FindIndex(TopExp::LastVertex(edge))) {
-          GProp_GProps system;
-          BRepGProp::LinearProperties(edge, system);
-          if(system.Mass() < tolerance) {
-            Msg::Info(
-              "  - Removing degenerated edge %d from vertex %d to vertex %d",
-              _emap.FindIndex(edge), _vmap.FindIndex(TopExp::FirstVertex(edge)),
-              _vmap.FindIndex(TopExp::LastVertex(edge)));
-            rebuild.Remove(edge);
-          }
+        GProp_GProps system;
+        BRepGProp::LinearProperties(edge, system);
+        if(system.Mass() < tolerance) {
+          Msg::Info("  - Removing degenerated edge");
+          rebuild.Remove(edge);
         }
       }
       myshape = rebuild.Apply(myshape);
@@ -5050,49 +5047,63 @@ bool OCC_Internals::healShapes(
   BRep_Builder b;
   TopoDS_Compound c;
   b.MakeCompound(c);
-  if(inDimTags.empty()) {
-    // construct a compound with all the shapes with tags
-    _somap.Clear();
-    _shmap.Clear();
-    _fmap.Clear();
-    _wmap.Clear();
-    _emap.Clear();
-    _vmap.Clear();
-    TopTools_DataMapIteratorOfDataMapOfIntegerShape exp0(_tagVertex);
-    for(; exp0.More(); exp0.Next()) _addShapeToMaps(exp0.Value());
-    TopTools_DataMapIteratorOfDataMapOfIntegerShape exp1(_tagEdge);
-    for(; exp1.More(); exp1.Next()) _addShapeToMaps(exp1.Value());
-    TopTools_DataMapIteratorOfDataMapOfIntegerShape exp2(_tagFace);
-    for(; exp2.More(); exp2.Next()) _addShapeToMaps(exp2.Value());
-    TopTools_DataMapIteratorOfDataMapOfIntegerShape exp3(_tagSolid);
-    for(; exp3.More(); exp3.Next()) _addShapeToMaps(exp3.Value());
-    for(int i = 1; i <= _vmap.Extent(); i++) b.Add(c, _vmap(i));
-    for(int i = 1; i <= _emap.Extent(); i++) b.Add(c, _emap(i));
-    for(int i = 1; i <= _wmap.Extent(); i++) b.Add(c, _wmap(i));
-    for(int i = 1; i <= _fmap.Extent(); i++) b.Add(c, _fmap(i));
-    for(int i = 1; i <= _shmap.Extent(); i++) b.Add(c, _shmap(i));
-    for(int i = 1; i <= _somap.Extent(); i++) b.Add(c, _somap(i));
-    // unbind everything
-    unbind();
+
+  // construct a compound with all the shapes with tags
+  _somap.Clear();
+  _shmap.Clear();
+  _fmap.Clear();
+  _wmap.Clear();
+  _emap.Clear();
+  _vmap.Clear();
+  TopTools_DataMapIteratorOfDataMapOfIntegerShape exp0(_tagVertex);
+  for(; exp0.More(); exp0.Next()) _addShapeToMaps(exp0.Value());
+  TopTools_DataMapIteratorOfDataMapOfIntegerShape exp1(_tagEdge);
+  for(; exp1.More(); exp1.Next()) _addShapeToMaps(exp1.Value());
+  TopTools_DataMapIteratorOfDataMapOfIntegerShape exp2(_tagFace);
+  for(; exp2.More(); exp2.Next()) _addShapeToMaps(exp2.Value());
+  TopTools_DataMapIteratorOfDataMapOfIntegerShape exp3(_tagSolid);
+  for(; exp3.More(); exp3.Next()) _addShapeToMaps(exp3.Value());
+  for(int i = 1; i <= _vmap.Extent(); i++) b.Add(c, _vmap(i));
+  for(int i = 1; i <= _emap.Extent(); i++) b.Add(c, _emap(i));
+  for(int i = 1; i <= _wmap.Extent(); i++) b.Add(c, _wmap(i));
+  for(int i = 1; i <= _fmap.Extent(); i++) b.Add(c, _fmap(i));
+  for(int i = 1; i <= _shmap.Extent(); i++) b.Add(c, _shmap(i));
+  for(int i = 1; i <= _somap.Extent(); i++) b.Add(c, _somap(i));
+
+  std::vector<TopoDS_Shape> toHeal;
+  for(std::size_t i = 0; i < inDimTags.size(); i++) {
+    int dim = inDimTags[i].first;
+    int tag = inDimTags[i].second;
+    if(!_isBound(dim, tag)) {
+      Msg::Error("Unknown OpenCASCADE entity of dimension %d with tag %d",
+                 dim, tag);
+      return false;
+    }
+    toHeal.push_back(_find(dim, tag));
+  }
+
+  // unbind everything
+  unbind();
+
+  if(toHeal.empty()) { // heal all the shapes
+    _healShape(c, tolerance, fixDegenerated, fixSmallEdges, fixSmallFaces,
+               sewFaces, makeSolids, 1.0);
   }
   else {
-    // construct a compound with the given shapes
-    for(std::size_t i = 0; i < inDimTags.size(); i++) {
-      int dim = inDimTags[i].first;
-      int tag = inDimTags[i].second;
-      if(!_isBound(dim, tag)) {
-        Msg::Error("Unknown OpenCASCADE entity of dimension %d with tag %d",
-                   dim, tag);
-        return false;
-      }
-      TopoDS_Shape shape = _find(dim, tag);
-      b.Add(c, shape);
+    for(std::size_t i = 0; i < toHeal.size(); i++) {
+      TopoDS_Shape olds = toHeal[i];
+      TopoDS_Shape news = olds;
+      _healShape(news, tolerance, fixDegenerated, fixSmallEdges, fixSmallFaces,
+                 sewFaces, makeSolids, 1.0);
+      ShapeBuild_ReShape rebuild;
+      rebuild.Replace(olds, news);
+      c = TopoDS::Compound(rebuild.Apply(c));
     }
   }
 
-  _healShape(c, tolerance, fixDegenerated, fixSmallEdges, fixSmallFaces,
-             sewFaces, makeSolids, 1.0);
+  // rebind
   _multiBind(c, -1, outDimTags, false, true);
+
   return true;
 }
 
@@ -5106,21 +5117,21 @@ static bool makeSTL(const TopoDS_Face &s, std::vector<SPoint2> *verticesUV,
   double ang = CTX::instance()->mesh.stlAngularDeflection;
 
 #if OCC_VERSION_HEX > 0x070300
-  BRepMesh_IncrementalMesh aMesher(s, lin, Standard_False, ang, Standard_True);
+  BRepMesh_IncrementalMesh aMesher(s, lin, Standard_True, ang, Standard_True);
 #elif OCC_VERSION_HEX > 0x070000
   Bnd_Box aBox;
   BRepBndLib::Add(s, aBox);
   BRepMesh_FastDiscret::Parameters parameters;
   parameters.Deflection = lin;
+  parameters.Relative = Standard_True;
   parameters.Angle = ang;
-  parameters.Relative = Standard_False;
   BRepMesh_FastDiscret aMesher(aBox, parameters);
   aMesher.Perform(s);
 #else
   Bnd_Box aBox;
   BRepBndLib::Add(s, aBox);
   BRepMesh_FastDiscret aMesher(lin, ang, aBox, Standard_False, Standard_False,
-                               Standard_True, Standard_False);
+                               Standard_True, Standard_True);
   aMesher.Perform(s);
 #endif
 

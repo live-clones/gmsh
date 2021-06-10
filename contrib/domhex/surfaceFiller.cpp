@@ -60,7 +60,6 @@ bool compute4neighbors(
   SVector3 t1;
   (*f)(v_center->x(), v_center->y(), v_center->z(), t1, gf);
   double L = t1.norm()*mult;
-  //  printf("L = %12.5E\n",L);
   metricField = SMetric3(1. / (L * L));
   
   // get the unit normal at that point
@@ -132,9 +131,6 @@ bool compute4neighbors(
   
   double size_1 = sqrt (covar1[0]*covar1[0]+covar1[1]*covar1[1]);
   double size_2 = sqrt (covar2[0]*covar2[0]+covar2[1]*covar2[1]);
-  
-  //  if (singular){
-  //  }
   
   
   double newPoint[8][2] = {{midpoint[0] - covar1[0],
@@ -385,6 +381,9 @@ void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed,
                              std::vector<SMetric3> &metrics)
 {
 
+  printf("ALGO %d %d\n", CTX::instance()->mesh.algo2d,
+	 CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT);
+  
   FILE *f = NULL;
   FILE *f2 = NULL;
   if(Msg::GetVerbosity() == 99) {

@@ -226,9 +226,9 @@ void GModel::destroyMeshCaches()
     _vertexMapCache.clear();
     std::map<int, MVertex *>().swap(_vertexMapCache);
     _elementVectorCache.clear();
-    std::vector<MElement *>().swap(_elementVectorCache);
+    std::vector<std::pair<MElement *, int> >().swap(_elementVectorCache);
     _elementMapCache.clear();
-    std::map<int, MElement *>().swap(_elementMapCache);
+    std::map<int, std::pair<MElement *, int> >().swap(_elementMapCache);
     _elementIndexCache.clear();
     std::map<int, int>().swap(_elementIndexCache);
     if(_elementOctree) {
@@ -422,7 +422,6 @@ void GModel::remove(GVertex *v)
 
 void GModel::remove(int dim, int tag, bool recursive)
 {
-  // TODO: we should also check dependencies in embedded entities
   if(dim == 3) {
     GRegion *gr = getRegionByTag(tag);
     if(gr) {
@@ -444,6 +443,11 @@ void GModel::remove(int dim, int tag, bool recursive)
           skip = true;
           break;
         }
+        auto ef = (*it)->embeddedFaces();
+        if(std::find(ef.begin(), ef.end(), gf) != ef.end()) {
+          skip = true;
+          break;
+        }
       }
       if(!skip) {
         remove(gf);
@@ -459,11 +463,25 @@ void GModel::remove(int dim, int tag, bool recursive)
     GEdge *ge = getEdgeByTag(tag);
     if(ge) {
       bool skip = false;
-      for(auto it = firstFace(); it != lastFace(); it++) {
-        std::vector<GEdge *> const &e = (*it)->edges();
-        if(std::find(e.begin(), e.end(), ge) != e.end()) {
+      for(auto it = firstRegion(); it != lastRegion(); it++) {
+        auto ee = (*it)->embeddedEdges();
+        if(std::find(ee.begin(), ee.end(), ge) != ee.end()) {
           skip = true;
           break;
+        }
+      }
+      if(!skip) {
+        for(auto it = firstFace(); it != lastFace(); it++) {
+          std::vector<GEdge *> const &e = (*it)->edges();
+          if(std::find(e.begin(), e.end(), ge) != e.end()) {
+            skip = true;
+            break;
+          }
+          auto ee = (*it)->embeddedEdges();
+          if(std::find(ee.begin(), ee.end(), ge) != ee.end()) {
+            skip = true;
+            break;
+          }
         }
       }
       if(!skip) {
@@ -484,6 +502,24 @@ void GModel::remove(int dim, int tag, bool recursive)
         if(ge->getBeginVertex() == gv || ge->getEndVertex() == gv) {
           skip = true;
           break;
+        }
+      }
+      if(!skip) {
+        for(auto it = firstFace(); it != lastFace(); it++) {
+          auto ev = (*it)->embeddedVertices();
+          if(std::find(ev.begin(), ev.end(), gv) != ev.end()) {
+            skip = true;
+            break;
+          }
+        }
+      }
+      if(!skip) {
+        for(auto it = firstRegion(); it != lastRegion(); it++) {
+          auto ev = (*it)->embeddedVertices();
+          if(std::find(ev.begin(), ev.end(), gv) != ev.end()) {
+            skip = true;
+            break;
+          }
         }
       }
       if(!skip) { remove(gv); }
@@ -508,6 +544,8 @@ void GModel::remove()
 
 void GModel::snapVertices()
 {
+  if(!CTX::instance()->geom.snapPoints) return;
+
   auto vit = firstVertex();
 
   double tol = CTX::instance()->geom.tolerance;
@@ -531,9 +569,8 @@ void GModel::snapVertices()
                       (gp.z() - (*vit)->z()) * (gp.z() - (*vit)->z()));
       if(d > tol) {
         (*vit)->setPosition(gp);
-        Msg::Info(
-          "Snapping geometry vertex %d to curve control point (dist = %g)",
-          (*vit)->tag(), d);
+        Msg::Info("Snapping geometry point %d to curve (distance = %g)",
+                  (*vit)->tag(), d);
       }
     }
     vit++;
@@ -777,10 +814,8 @@ void GModel::addPhysicalGroup(int dim, int tag, const std::vector<int> &tags)
     if(ge)
       ge->physicals.push_back((t > 0) ? tag : -tag);
     else
-      Msg::Warning(
-        "Unknown entity of dimension %d and tag %d in physical group "
-        "%d",
-        dim, t, tag);
+      Msg::Warning("Unknown entity of dimension %d and tag %d in physical "
+                   "group %d", dim, t, tag);
   }
 }
 
@@ -1039,7 +1074,7 @@ checkConformity(std::multimap<MFace, MElement *, MFaceLessThan> &faceToElement,
       for(std::size_t iV = 0; iV < face.getNumVertices(); iV++)
         if(face.getVertex(iV)->onWhat()->dim() == 3 || connectivity != 1) {
           for(std::size_t jV = 0; jV < face.getNumVertices(); jV++)
-            Msg::Info("Vertex %i dim %i", face.getVertex(jV)->getNum(),
+            Msg::Info("Node %i on entity of dim %i", face.getVertex(jV)->getNum(),
                       face.getVertex(iV)->onWhat()->dim());
           Msg::Error("Non conforming element %i (%i connection(s) for a face "
                      "located on dim %i (vertex %i))",
@@ -1451,10 +1486,10 @@ std::size_t GModel::getNumMeshParentElements() const
   return n;
 }
 
-std::size_t GModel::addMEdge(const MEdge &edge)
+std::size_t GModel::addMEdge(MEdge &edge)
 {
-  std::pair<MEdge, std::size_t> key(edge, _mapEdgeNum.size() + 1);
-  std::pair<hashmapMEdge::iterator, bool> it = _mapEdgeNum.insert(key);
+  std::pair<MEdge, std::size_t> key(std::move(edge), _mapEdgeNum.size() + 1);
+  std::pair<hashmapMEdge::iterator, bool> it = _mapEdgeNum.insert(std::move(key));
   return it.first->second;
 }
 
@@ -1473,10 +1508,10 @@ std::size_t GModel::getMEdge(MVertex *v0, MVertex *v1, MEdge &edge)
   }
 }
 
-std::size_t GModel::addMFace(const MFace &face)
+std::size_t GModel::addMFace(MFace &face)
 {
-  std::pair<MFace, std::size_t> key(face, _mapFaceNum.size() + 1);
-  std::pair<hashmapMFace::iterator, bool> it = _mapFaceNum.insert(key);
+  std::pair<MFace, std::size_t> key(std::move(face), _mapFaceNum.size() + 1);
+  std::pair<hashmapMFace::iterator, bool> it = _mapFaceNum.insert(std::move(key));
   return it.first->second;
 }
 
@@ -1498,11 +1533,11 @@ std::size_t GModel::getMFace(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3,
 
 #if defined(HAVE_POST)
 static void getDependentViewData(GModel *m, PViewDataGModel::DataType type,
-                                 std::vector<stepData<double>*> &data)
+                                 std::vector<stepData<double> *> &data)
 {
   for(std::size_t i = 0; i < PView::list.size(); i++) {
-    PViewDataGModel *d = dynamic_cast<PViewDataGModel *>
-      (PView::list[i]->getData());
+    PViewDataGModel *d =
+      dynamic_cast<PViewDataGModel *>(PView::list[i]->getData());
     if(d && d->getType() == type) {
       for(int step = 0; step < d->getNumTimeSteps(); step++) {
         if(d->getStepData(step)->getModel() == m)
@@ -1524,7 +1559,7 @@ void GModel::renumberMeshVertices()
   // check if any nodal post-processing datasets depend on the model; if so,
   // keep track of the old node numbering
   std::map<MVertex *, int> old;
-  std::vector<stepData<double>*> data;
+  std::vector<stepData<double> *> data;
   getDependentViewData(this, PViewDataGModel::NodeData, data);
   if(data.size()) {
     for(std::size_t i = 0; i < entities.size(); i++) {
@@ -1615,9 +1650,7 @@ void GModel::renumberMeshVertices()
         remap[old[v]] = v->getNum();
       }
     }
-    for(auto d : data) {
-      d->renumberData(remap);
-    }
+    for(auto d : data) { d->renumberData(remap); }
   }
 #endif
 }
@@ -1633,7 +1666,7 @@ void GModel::renumberMeshElements()
   // check if any element-based post-processing datasets depend on the model; if
   // so, keep track of the old element numbering
   std::map<MElement *, int> old;
-  std::vector<stepData<double>*> data[2];
+  std::vector<stepData<double> *> data[2];
   getDependentViewData(this, PViewDataGModel::ElementData, data[0]);
   getDependentViewData(this, PViewDataGModel::ElementNodeData, data[1]);
   if(data[0].size() || data[1].size()) {
@@ -1702,9 +1735,7 @@ void GModel::renumberMeshElements()
       }
     }
     for(int i = 0; i < 2; i++) {
-      for(auto d : data[i]) {
-        d->renumberData(remap);
-      }
+      for(auto d : data[i]) { d->renumberData(remap); }
     }
   }
 #endif
@@ -1734,8 +1765,14 @@ MElement *GModel::getMeshElementByCoord(SPoint3 &p, SPoint3 &param, int dim,
                                         bool strict)
 {
   if(!_elementOctree) {
-    Msg::Debug("Rebuilding mesh element octree");
-    _elementOctree = new MElementOctree(this);
+#if defined(_OPENMP)
+#pragma omp barrier
+#pragma omp single
+#endif
+    {
+      Msg::Debug("Rebuilding mesh element octree");
+      _elementOctree = new MElementOctree(this);
+    }
   }
   MElement *e = _elementOctree->find(p.x(), p.y(), p.z(), dim, strict);
   if(e) {
@@ -1753,8 +1790,14 @@ std::vector<MElement *> GModel::getMeshElementsByCoord(SPoint3 &p, int dim,
                                                        bool strict)
 {
   if(!_elementOctree) {
-    Msg::Debug("Rebuilding mesh element octree");
-    _elementOctree = new MElementOctree(this);
+#if defined(_OPENMP)
+#pragma omp barrier
+#pragma omp single
+#endif
+    {
+      Msg::Debug("Rebuilding mesh element octree");
+      _elementOctree = new MElementOctree(this);
+    }
   }
   return _elementOctree->findAll(p.x(), p.y(), p.z(), dim, strict);
 }
@@ -1815,18 +1858,20 @@ void GModel::rebuildMeshElementCache(bool onlyIfNecessary)
     getEntities(entities);
     if(dense) {
       // numbering starts at 1
-      _elementVectorCache.resize(_maxElementNum + 1, (MElement *)nullptr);
+      _elementVectorCache.resize(_maxElementNum + 1,
+                                 std::pair<MElement*, int>(nullptr, 0));
       for(std::size_t i = 0; i < entities.size(); i++)
         for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
           MElement *e = entities[i]->getMeshElement(j);
-          _elementVectorCache[e->getNum()] = e;
+          _elementVectorCache[e->getNum()] =
+            std::make_pair(e, entities[i]->tag());
         }
     }
     else {
       for(std::size_t i = 0; i < entities.size(); i++)
         for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
           MElement *e = entities[i]->getMeshElement(j);
-          _elementMapCache[e->getNum()] = e;
+          _elementMapCache[e->getNum()] = std::make_pair(e, entities[i]->tag());
         }
     }
   }
@@ -1835,8 +1880,14 @@ void GModel::rebuildMeshElementCache(bool onlyIfNecessary)
 MVertex *GModel::getMeshVertexByTag(int n)
 {
   if(_vertexVectorCache.empty() && _vertexMapCache.empty()) {
-    Msg::Debug("Rebuilding mesh node cache");
-    rebuildMeshVertexCache();
+#if defined(_OPENMP)
+#pragma omp barrier
+#pragma omp single
+#endif
+    {
+      Msg::Debug("Rebuilding mesh node cache");
+      rebuildMeshVertexCache();
+    }
   }
 
   if(n < (int)_vertexVectorCache.size())
@@ -1865,17 +1916,26 @@ void GModel::getMeshVerticesForPhysicalGroup(int dim, int num,
   v.insert(v.begin(), sv.begin(), sv.end());
 }
 
-MElement *GModel::getMeshElementByTag(int n)
+MElement *GModel::getMeshElementByTag(int n, int &entityTag)
 {
   if(_elementVectorCache.empty() && _elementMapCache.empty()) {
-    Msg::Debug("Rebuilding mesh element cache");
-    rebuildMeshElementCache();
+#if defined(_OPENMP)
+#pragma omp barrier
+#pragma omp single
+#endif
+    {
+      Msg::Debug("Rebuilding mesh element cache");
+      rebuildMeshElementCache();
+    }
   }
 
+  std::pair<MElement*, int> ret;
   if(n < (int)_elementVectorCache.size())
-    return _elementVectorCache[n];
+    ret = _elementVectorCache[n];
   else
-    return _elementMapCache[n];
+    ret = _elementMapCache[n];
+  entityTag = ret.second;
+  return ret.first;
 }
 
 int GModel::getMeshElementIndex(MElement *e)
@@ -2061,18 +2121,18 @@ void GModel::setCurrentMeshEntity(GEntity *e)
   _currentMeshEntity = e;
 }
 
-int GModel::partitionMesh(int numPart)
+int GModel::partitionMesh(
+  int numPart, std::vector<std::pair<MElement *, int> > elementPartition)
 {
 #if defined(HAVE_MESH) && (defined(HAVE_METIS))
-  opt_mesh_partition_num(0, GMSH_SET, numPart);
   if(numPart > 0) {
     if(_numPartitions > 0) UnpartitionMesh(this);
-    int ier = PartitionMesh(this);
-    return ier;
+    if(elementPartition.empty())
+      return PartitionMesh(this, numPart);
+    else
+      return PartitionUsingThisSplit(this, elementPartition);
   }
-  else {
-    return 1;
-  }
+  return 1;
 #else
   Msg::Error("Mesh or Metis module not compiled");
   return 1;
@@ -2441,8 +2501,8 @@ void GModel::_storePhysicalTagsInEntities(
           ge->physicals.push_back(it2->first);
         }
         if(it2->second.size() && it2->second != "unnamed")
-          _physicalNames.insert
-            (std::make_pair(std::make_pair(dim, it2->first), it2->second));
+          _physicalNames.insert(
+            std::make_pair(std::make_pair(dim, it2->first), it2->second));
       }
     }
   }

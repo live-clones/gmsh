@@ -58,7 +58,7 @@ SPoint3 MTetrahedron::circumcenter()
 #endif
 }
 
-double MTetrahedron::getCircumRadius()
+double MTetrahedron::getOuterRadius()
 {
 #if defined(HAVE_MESH)
   SPoint3 center = circumcenter();

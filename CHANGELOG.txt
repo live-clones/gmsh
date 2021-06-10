@@ -1,6 +1,20 @@
 Work-in-progress: new quasi-structured quad algorithm (replaces the "packing of
 parallelogram" algorithm); mesh renumbering now also renumbers dependent
-post-processing views; mesh size callback is now per-model; small bug fixes.
+post-processing views; mesh size callback is now per-model; OCC STL
+representation is now generated using relative deflection tolerance; official
+binary builds now support OpenMP parallelization and are 64 bit only (build OS
+upgraded to Windows 10, macOS 10.15 and Linux glibc 2.24); small bug fixes.
+
+* Incompatible API changes: new arguments to mesh/getNode and mesh/getElement;
+  new optional arguments to model/isInside, mesh/partition and
+  occ/addSurfaceFilling; modified arguments to mesh/getKeysForElements,
+  mesh/getKeysForElement and mesh/getInformationForElements; removed
+  mesh/getLocalMultipliersForHcurl0.
+
+4.8.4 (April 28, 2021): set current model in gmsh/model/add; small bug fixes.
+
+4.8.3 (April 6, 2021): better handling of errors in inverse surface mapping;
+fixed Mesh.MedFileMinorVersion for MED 4; small bug fixes.
 
 4.8.2 (March 27, 2021): fixed regression in OCC transforms; fixed cwrap API.
 
@@ -27,7 +41,7 @@ improvements.
 
 * Incompatible API changes: new optional arguments to mesh/classifySurfaces,
   occ/addBSplineSurface, occ/addBezierSurface, occ/addPipe and view/probe;
-  renamed mesh/getEdgeNumber as mesh/getEdges
+  renamed mesh/getEdgeNumber as mesh/getEdges.
 
 4.7.1 (November 16, 2020): small bug fixes and improvements.
 
@@ -48,7 +62,7 @@ and added support for stock Mmg 5; Gmsh now requires C++11 and CMake 3.1, and
 uses Eigen by default instead of Blas/Lapack for dense linear algebra; small bug
 fixes.
 
-* Incompatible API changes: new optional argument to geo/addCurveLoop
+* Incompatible API changes: new optional argument to geo/addCurveLoop.
 
 4.6.0 (June 22, 2020): new options to only generate initial 2D or 3D meshes
 (without node insertion), and to only mesh non-meshed entities; added ability to
@@ -64,7 +78,8 @@ preserves node and element tags; small bug fixes.
   mesh/createTopology, mesh/createGeometry, occ/addThruSections,
   mesh/getPeriodicNodes; new arguments to mesh/getBasisFunctions; removed
   mesh/preallocateBasisFunctions, mesh/precomputeBasisFunctions and
-  mesh/getBasisFunctionsForElements; renamed occ/setMeshSize as occ/mesh/setSize
+  mesh/getBasisFunctionsForElements; renamed occ/setMeshSize as
+  occ/mesh/setSize.
 
 4.5.6 (March 30, 2020): better calculation of OCC bounding boxes using STL; API
 tutorials; small bug fixes.
@@ -126,7 +141,7 @@ OpenCASCADE ellipse arcs; new interactive filter in visibility window; flatter
 GUI; small bug fixes.
 
 * Incompatible API changes: mesh/getJacobians and mesh/getBasisFunctions now
-  take integration points explicitely; mesh/setNodes and mesh/setElements have
+  take integration points explicitly; mesh/setNodes and mesh/setElements have
   been replaced by mesh/addNodes and mesh/addElements; added optional arguments
   to mesh/classifySurfaces and occ/addSurfaceLoop; changed arguments of
   occ/addEllipseArc to follow geo/addEllipseArc.
@@ -139,7 +154,7 @@ entities; fixed regression introduced in 4.1.4 that could lead to
 non-deterministic 2D meshes; small bug fixes.
 
 * Incompatible API changes: added optional arguments to mesh/getNodes and
-  mesh/getElementByCoordinates
+  mesh/getElementByCoordinates.
 
 4.2.3 (April 3, 2019): added STL export by physical surface; added ability to
 remove embedded entities; added handling of boundary entities in
@@ -555,7 +570,7 @@ behavior; new plugins (HarmonicToTime, Integrate, Eigenvectors); tetrahedral
 mesh file reading speedup (50% faster on large meshes); large memory footprint
 reduction (up to 50%) for the visualization of triangular/tetrahedral meshes;
 the solver interface now supports TCP/IP connections; new generalized raise mode
-(allows to use complex expressions to offset post-processing maps); upgraded
+(allows one to use complex expressions to offset post-processing maps); upgraded
 Netgen kernel to version 4.4; new optional TIME list in parsed views to specify
 the values of the time steps; several bug fixes in the Elliptic mesh algorithm;
 various other small bug fixes and enhancements.

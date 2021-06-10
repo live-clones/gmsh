@@ -709,7 +709,7 @@ readMSH4Nodes(GModel *const model, FILE *fp, bool binary, bool &dense,
   return vertexCache;
 }
 
-static std::pair<std::size_t, MElement *> *
+static std::pair<std::size_t, std::pair<MElement *, int> > *
 readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
                  std::size_t &totalNumElements, std::size_t &maxElementNum,
                  bool swap, double version)
@@ -745,8 +745,8 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
   std::size_t elementRead = 0;
   std::size_t minElementNum = std::numeric_limits<std::size_t>::max();
 
-  std::pair<std::size_t, MElement *> *elementCache =
-    new std::pair<std::size_t, MElement *>[totalNumElements];
+  std::pair<std::size_t, std::pair<MElement *, int> > *elementCache =
+    new std::pair<std::size_t, std::pair<MElement *, int> >[totalNumElements];
   Msg::Info("%lu element%s", totalNumElements, totalNumElements > 1 ? "s" : "");
   Msg::StartProgressMeter(totalNumElements);
 
@@ -847,7 +847,7 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
         maxElementNum = std::max(maxElementNum, data[j]);
 
         elementCache[elementRead] =
-          std::pair<std::size_t, MElement *>(data[j], element);
+          std::make_pair(data[j], std::make_pair(element, entityTag));
         elementRead++;
 
         if(totalNumElements > 100000)
@@ -910,7 +910,7 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
         maxElementNum = std::max(maxElementNum, elmTag);
 
         elementCache[elementRead] =
-          std::pair<std::size_t, MElement *>(elmTag, element);
+          std::make_pair(elmTag, std::make_pair(element, entityTag));
         elementRead++;
 
         if(totalNumElements > 100000)
@@ -1394,7 +1394,7 @@ int GModel::_readMSH4(const std::string &name)
     else if(!strncmp(&str[1], "Elements", 8)) {
       bool dense = false;
       std::size_t totalNumElements = 0, maxElementNum = 0;
-      std::pair<std::size_t, MElement *> *elementCache =
+      std::pair<std::size_t, std::pair<MElement *, int> > *elementCache =
         readMSH4Elements(this, fp, binary, dense, totalNumElements,
                          maxElementNum, swap, version);
       Msg::StopProgressMeter();
@@ -1404,9 +1404,10 @@ int GModel::_readMSH4(const std::string &name)
         return 0;
       }
       if(dense) {
-        _elementVectorCache.resize(maxElementNum + 1, (MElement *)nullptr);
+        _elementVectorCache.resize(maxElementNum + 1,
+                                   std::pair<MElement*, int>(nullptr, 0));
         for(std::size_t i = 0; i < totalNumElements; i++) {
-          if(!_elementVectorCache[elementCache[i].first]) {
+          if(!_elementVectorCache[elementCache[i].first].first) {
             _elementVectorCache[elementCache[i].first] = elementCache[i].second;
           }
           else {

@@ -411,6 +411,11 @@ void GEdge::writeGEO(FILE *fp)
   if(meshAttributes.reverseMesh) fprintf(fp, "Reverse Line {%d};\n", tag());
 }
 
+bool GEdge::containsPoint(const SPoint3 &pt) const
+{
+  return containsParam(parFromPoint(pt));
+}
+
 bool GEdge::containsParam(double pt) const
 {
   Range<double> rg = parBounds(0);

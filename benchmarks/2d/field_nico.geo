@@ -24,12 +24,10 @@ R=0.001;
 fact=0.01;
 
 Field[1] = Distance;
-Field[1].NNodesByEdge = 100;
-Field[1].EdgesList = {1};
-
+Field[1].CurvesList = {1};
+Field[1].Sampling = 100;
 
 Field[2] = MathEval;
 Field[2].F = Sprintf("%g*(Exp(-%g/(F1*F1))+%g)", h, R, fact);
-//
 
-Background Field =2;
+Background Field = 2;

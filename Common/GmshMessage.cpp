@@ -61,6 +61,7 @@ std::map<std::string, double> Msg::_timers;
 bool Msg::_infoCpu = false;
 bool Msg::_infoMem = false;
 double Msg::_startTime = 0.;
+int Msg::_startMaxThreads = 0;
 int Msg::_warningCount = 0;
 int Msg::_errorCount = 0;
 int Msg::_atLeastOneErrorInRun = 0;
@@ -101,7 +102,9 @@ static void addGmshPathToEnvironmentVar(const std::string &name)
 {
   std::string gmshPath = SplitFileName(CTX::instance()->exeFileName)[0];
   if(gmshPath.size()){
-    std::string path, tmp = GetEnvironmentVar(name);
+    std::string tmp = GetEnvironmentVar(name);
+    if(tmp.find(gmshPath) != std::string::npos) return; // already there
+    std::string path;
     if(tmp.empty()) {
       path = gmshPath;
     }
@@ -119,6 +122,7 @@ static void addGmshPathToEnvironmentVar(const std::string &name)
 void Msg::Initialize(int argc, char **argv)
 {
   _startTime = TimeOfDay();
+  _startMaxThreads = GetMaxThreads();
 #if defined(HAVE_MPI)
   int flag;
   MPI_Initialized(&flag);
@@ -203,6 +207,8 @@ void Msg::Finalize()
     MPI_Finalize();
 #endif
   FinalizeOnelab();
+  if(GetMaxThreads() != _startMaxThreads)
+    SetNumThreads(_startMaxThreads);
 }
 
 int Msg::GetCommRank()
@@ -1358,7 +1364,7 @@ void Msg::ExchangeOnelabParameter(const std::string &key,
     else
       val = ps[0].getValues(); // use value from server
     // keep track of these attributes, which can be changed server-side (unless
-    // they are not visible or, for the range/choices, when explicitely setting
+    // they are not visible or, for the range/choices, when explicitly setting
     // these attributes as ReadOnly)
     if(ps[0].getVisible()){
       if(!(fopt.count("ReadOnlyRange") && fopt["ReadOnlyRange"][0])){

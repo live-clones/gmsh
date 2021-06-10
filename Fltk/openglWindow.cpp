@@ -380,8 +380,9 @@ int openglWindow::handle(int event)
     return Fl_Gl_Window::handle(event);
 
   case FL_PUSH:
-    if(Fl::event_clicks() == 1 && !selectionMode) {
-      // double-click and not in selection mode
+    if(Fl::event_clicks() == 1 && !selectionMode &&
+       CTX::instance()->mouseSelection) {
+      // double-click and not in selection mode, but with mouse selection enabled
       std::vector<GVertex *> vertices;
       std::vector<GEdge *> edges;
       std::vector<GFace *> faces;

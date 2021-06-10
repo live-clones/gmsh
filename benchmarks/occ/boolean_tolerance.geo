@@ -21,14 +21,14 @@ a() = BooleanFragments{ Curve{5}; Curve{6}; Curve{7}; Curve{8}; Delete; }{ };
 Curve {a()} In Surface {1};
 
 Field[1] = Distance;
-Field[1].EdgesList = {a()};
-Field[1].NNodesByEdge = 200;
+Field[1].CurvesList = {a()};
+Field[1].Sampling = 200;
 Field[2] = Threshold;
 Field[2].DistMax = 0.1;
 Field[2].DistMin = 0.01;
-Field[2].IField = 1;
-Field[2].LcMax = 0.1;
-Field[2].LcMin = 0.005;
+Field[2].InField = 1;
+Field[2].SizeMax = 0.1;
+Field[2].SizeMin = 0.005;
 
 Background Field = 2;
-Mesh.CharacteristicLengthExtendFromBoundary = 0;
+Mesh.MeshSizeExtendFromBoundary = 0;

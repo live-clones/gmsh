@@ -14,17 +14,14 @@ Point(22) = {0.9, 0.9 ,0, lc};
 Line(5) = {11,22};
 
 Field[1] = Distance;
-Field[1].NNodesByEdge = 100;
-Field[1].EdgesList = {3,5};
+Field[1].CurvesList = {3,5};
+Field[1].Sampling = 100;
 
 Field[2] = Threshold;
-Field[2].IField = 1;
-Field[2].LcMin = lc/10;
-Field[2].LcMax = lc;
+Field[2].InField = 1;
+Field[2].SizeMin = lc/10;
+Field[2].SizeMax = lc;
 Field[2].DistMin = 0.15/2;
 Field[2].DistMax = 0.3/2;
 
 Background Field = 2;
-
-//Mesh.CharacteristicLengthFromPoints = 1;
-//Mesh.CharacteristicLengthExtendFromBoundary = 1;

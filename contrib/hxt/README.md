@@ -142,8 +142,6 @@ set_target_properties(my_target hxt_core hxt_predicates hxt_tetBR hxt_tetMesh
 
 tetMesh:
 
- - optimize `respectEdgeConstraint` in the same way we did for `reshapeCavityIfNeeded`
- - optimize the first tet optimization to avoid being stuck if all points are on the same plane
  - compute Moore indices on the fly for points already in the mesh (find heuristic for when the old tactic should be employed)
  - try a GSC parallelization based on Geogram point-associated locks
  - add edge-collapse and point insertion

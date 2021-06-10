@@ -75,11 +75,11 @@ int GFace::getMeshSizeFromBoundary() const
 
 int GFace::delEdge(GEdge *edge)
 {
-  const auto found = std::find(begin(l_edges), end(l_edges), edge);
+  const auto found = std::find(l_edges.begin(), l_edges.end(), edge);
 
-  if(found != end(l_edges)) { l_edges.erase(found); }
+  if(found != l_edges.end()) { l_edges.erase(found); }
 
-  const auto pos = std::distance(begin(l_edges), found);
+  const auto pos = std::distance(l_edges.begin(), found);
 
   if(l_dirs.empty()) { return 0; }
 
@@ -89,16 +89,14 @@ int GFace::delEdge(GEdge *edge)
   }
 
   const auto orientation = l_dirs.at(pos);
-
   l_dirs.erase(std::next(begin(l_dirs), pos));
-
   return orientation;
 }
 
 void GFace::setBoundEdges(const std::vector<int> &tagEdges)
 {
   std::vector<GEdge *> e;
-  for(std::size_t i = 0; i != tagEdges.size(); i++) {
+  for(std::size_t i = 0; i < tagEdges.size(); i++) {
     GEdge *ge = model()->getEdgeByTag(tagEdges[i]);
     if(ge) {
       e.push_back(ge);
@@ -120,12 +118,14 @@ void GFace::setBoundEdges(const std::vector<int> &tagEdges,
     Msg::Error("Wrong number of curve signs in surface %d", tag());
     setBoundEdges(tagEdges);
   }
-  for(std::vector<int>::size_type i = 0; i != tagEdges.size(); i++) {
+  for(std::vector<int>::size_type i = 0; i < tagEdges.size(); i++) {
     GEdge *ge = model()->getEdgeByTag(tagEdges[i]);
     if(ge) {
-      l_edges.push_back(ge);
-      l_dirs.push_back(signEdges[i]);
-      ge->addFace(this);
+      if(std::find(l_edges.begin(), l_edges.end(), ge) == l_edges.end()) {
+        l_edges.push_back(ge);
+        l_dirs.push_back(signEdges[i]);
+        ge->addFace(this);
+      }
     }
     else {
       Msg::Error("Unknown curve %d in surface %d", tagEdges[i], tag());
@@ -988,11 +988,12 @@ void GFace::getMetricEigenVectors(const SPoint2 &param, double eigVal[2],
 }
 
 void GFace::XYZtoUV(double X, double Y, double Z, double &U, double &V,
-                    double relax, bool onSurface) const
+                    double relax, bool onSurface, bool convTestXYZ) const
 {
   const double Precision = onSurface ? 1.e-8 : 1.e-3;
   const int MaxIter = onSurface ? 25 : 10;
   const int NumInitGuess = 9;
+  bool testXYZ = (convTestXYZ || CTX::instance()->mesh.NewtonConvergenceTestXYZ);
 
   double Unew = 0., Vnew = 0., err, err2;
   int iter;
@@ -1063,17 +1064,14 @@ void GFace::XYZtoUV(double X, double Y, double Z, double &U, double &V,
 
       if(iter < MaxIter && err <= tol && Unew <= umax && Vnew <= vmax &&
          Unew >= umin && Vnew >= vmin) {
-        if(onSurface && err2 > 1.e-4 * CTX::instance()->lc &&
-           !CTX::instance()->mesh.NewtonConvergenceTestXYZ) {
+        if(onSurface && err2 > 1.e-4 * CTX::instance()->lc && !testXYZ) {
           Msg::Warning("Converged at iter. %d for initial guess (%d,%d) "
                        "with uv error = %g, but xyz error = %g in point "
-                       "(%e,%e,%e) on surface %d",
+                       "(%e, %e, %e) on surface %d",
                        iter, i, j, err, err2, X, Y, Z, tag());
         }
-
-        if(onSurface && err2 > 1.e-4 * CTX::instance()->lc &&
-           CTX::instance()->mesh.NewtonConvergenceTestXYZ) {
-          // not converged in XYZ coordinates
+        if(onSurface && err2 > 1.e-4 * CTX::instance()->lc && testXYZ) {
+          // not converged in XYZ coordinates: try again
         }
         else {
           return;
@@ -1084,18 +1082,19 @@ void GFace::XYZtoUV(double X, double Y, double Z, double &U, double &V,
 
   if(!onSurface) return;
 
-  if(relax < 1.e-6)
+  if(relax < 1.e-3)
     Msg::Error("Inverse surface mapping could not converge");
   else {
     Msg::Info("point %g %g %g : Relaxation factor = %g", X, Y, Z, 0.75 * relax);
-    XYZtoUV(X, Y, Z, U, V, 0.75 * relax);
+    XYZtoUV(X, Y, Z, U, V, 0.75 * relax, onSurface, convTestXYZ);
   }
 }
 
-SPoint2 GFace::parFromPoint(const SPoint3 &p, bool onSurface) const
+SPoint2 GFace::parFromPoint(const SPoint3 &p, bool onSurface,
+                            bool convTestXYZ) const
 {
   double U = 0., V = 0.;
-  XYZtoUV(p.x(), p.y(), p.z(), U, V, 1.0, onSurface);
+  XYZtoUV(p.x(), p.y(), p.z(), U, V, 1.0, onSurface, convTestXYZ);
   return SPoint2(U, V);
 }
 
@@ -1343,8 +1342,27 @@ bool GFace::buildSTLTriangulation(bool force)
   stl_vertices_xyz.clear();
   stl_triangles.clear();
 
-  // Build a simple triangulation for surfaces which we know are not trimmed
-  if(geomType() == ParametricSurface) {
+  if(triangles.size()) {
+    // if a mesh exists, import it as the STL representation
+    std::map<MVertex *, int, MVertexPtrLessThan> nodes;
+    for(std::size_t i = 0; i < triangles.size(); i++) {
+      for(int j = 0; j < 3; j++) {
+        MVertex *v = triangles[i]->getVertex(j);
+        if(!nodes.count(v)) {
+          stl_vertices_xyz.push_back(SPoint3(v->x(), v->y(), v->z()));
+          nodes[v] = stl_vertices_xyz.size() - 1;
+        }
+      }
+    }
+    for(std::size_t i = 0; i < triangles.size(); i++) {
+      for(int j = 0; j < 3; j++) {
+        stl_triangles.push_back(nodes[triangles[i]->getVertex(j)]);
+      }
+    }
+    return true;
+  }
+  else if(geomType() == ParametricSurface) {
+    // build a simple triangulation for surfaces which we know are not trimmed
     const int nu = 64, nv = 64;
     Range<double> ubounds = parBounds(0);
     Range<double> vbounds = parBounds(1);
@@ -1391,8 +1409,7 @@ bool GFace::fillVertexArray(bool force)
   unsigned int c =
     useColor() ? getColor() : CTX::instance()->color.geom.surface;
   unsigned int col[4] = {c, c, c, c};
-  if(stl_vertices_xyz.size() &&
-     (stl_vertices_xyz.size() == stl_normals.size())) {
+  if(stl_vertices_xyz.size()) {
     for(std::size_t i = 0; i < stl_triangles.size(); i += 3) {
       SPoint3 &p1(stl_vertices_xyz[stl_triangles[i]]);
       SPoint3 &p2(stl_vertices_xyz[stl_triangles[i + 1]]);
@@ -1400,10 +1417,18 @@ bool GFace::fillVertexArray(bool force)
       double x[3] = {p1.x(), p2.x(), p3.x()};
       double y[3] = {p1.y(), p2.y(), p3.y()};
       double z[3] = {p1.z(), p2.z(), p3.z()};
-      SVector3 n[3] = {stl_normals[stl_triangles[i]],
-                       stl_normals[stl_triangles[i + 1]],
-                       stl_normals[stl_triangles[i + 2]]};
-      va_geom_triangles->add(x, y, z, n, col);
+      if(stl_vertices_xyz.size() == stl_normals.size()) {
+        SVector3 n[3] = {stl_normals[stl_triangles[i]],
+                         stl_normals[stl_triangles[i + 1]],
+                         stl_normals[stl_triangles[i + 2]]};
+        va_geom_triangles->add(x, y, z, n, col);
+      }
+      else {
+        double nn[3];
+        normal3points(x[0], y[0], z[0], x[1], y[1], z[1],x[2], y[2], z[2], nn);
+        SVector3 n[3] = {SVector3(nn), SVector3(nn), SVector3(nn)};
+        va_geom_triangles->add(x, y, z, n, col);
+      }
     }
   }
   else if(stl_vertices_uv.size()) {
@@ -1417,8 +1442,16 @@ bool GFace::fillVertexArray(bool force)
       double x[3] = {gp1.x(), gp2.x(), gp3.x()};
       double y[3] = {gp1.y(), gp2.y(), gp3.y()};
       double z[3] = {gp1.z(), gp2.z(), gp3.z()};
-      SVector3 n[3] = {normal(p1), normal(p2), normal(p3)};
-      va_geom_triangles->add(x, y, z, n, col);
+      if(stl_vertices_uv.size() == stl_normals.size()) {
+        SVector3 n[3] = {stl_normals[stl_triangles[i]],
+                         stl_normals[stl_triangles[i + 1]],
+                         stl_normals[stl_triangles[i + 2]]};
+        va_geom_triangles->add(x, y, z, n, col);
+      }
+      else {
+        SVector3 n[3] = {normal(p1), normal(p2), normal(p3)};
+        va_geom_triangles->add(x, y, z, n, col);
+      }
     }
   }
   va_geom_triangles->finalize();
@@ -1448,30 +1481,49 @@ bool GFace::fillPointCloud(double maxDist, std::vector<SPoint3> *points,
 {
   if(!points) return false;
 
-  if(buildSTLTriangulation() && stl_vertices_uv.size()) {
-    for(std::size_t i = 0; i < stl_triangles.size(); i += 3) {
-      SPoint2 &p0(stl_vertices_uv[stl_triangles[i]]);
-      SPoint2 &p1(stl_vertices_uv[stl_triangles[i + 1]]);
-      SPoint2 &p2(stl_vertices_uv[stl_triangles[i + 2]]);
-      GPoint gp0 = point(p0);
-      GPoint gp1 = point(p1);
-      GPoint gp2 = point(p2);
-      double maxEdge = std::max(gp0.distance(gp1),
-                                std::max(gp1.distance(gp2), gp2.distance(gp0)));
-      int N = (int)(maxEdge / maxDist);
-      for(double u = 0.; u < 1.; u += 1. / N) {
-        for(double v = 0.; v < 1 - u; v += 1. / N) {
-          SPoint2 p = p0 * (1. - u - v) + p1 * u + p2 * v;
-          GPoint gp(point(p));
-          points->push_back(SPoint3(gp.x(), gp.y(), gp.z()));
-          if(uvpoints) uvpoints->push_back(p);
-          if(normals) normals->push_back(normal(p));
+  if(buildSTLTriangulation()) {
+    if(stl_vertices_xyz.size()) {
+      for(std::size_t i = 0; i < stl_triangles.size(); i += 3) {
+        SPoint3 &p0(stl_vertices_xyz[stl_triangles[i]]);
+        SPoint3 &p1(stl_vertices_xyz[stl_triangles[i + 1]]);
+        SPoint3 &p2(stl_vertices_xyz[stl_triangles[i + 2]]);
+        double maxEdge = std::max(p0.distance(p1),
+                                  std::max(p1.distance(p2), p2.distance(p0)));
+        int N = std::max((int)(maxEdge / maxDist), 1);
+        for(double u = 0.; u < 1.; u += 1. / N) {
+          for(double v = 0.; v < 1 - u; v += 1. / N) {
+            SPoint3 p = p0 * (1. - u - v) + p1 * u + p2 * v;
+            points->push_back(p);
+          }
+        }
+      }
+    }
+    else if(stl_vertices_uv.size()) {
+      for(std::size_t i = 0; i < stl_triangles.size(); i += 3) {
+        SPoint2 &p0(stl_vertices_uv[stl_triangles[i]]);
+        SPoint2 &p1(stl_vertices_uv[stl_triangles[i + 1]]);
+        SPoint2 &p2(stl_vertices_uv[stl_triangles[i + 2]]);
+        GPoint gp0 = point(p0);
+        GPoint gp1 = point(p1);
+        GPoint gp2 = point(p2);
+        double maxEdge = std::max(gp0.distance(gp1),
+                                  std::max(gp1.distance(gp2), gp2.distance(gp0)));
+        int N = std::max((int)(maxEdge / maxDist), 1);
+        for(double u = 0.; u < 1.; u += 1. / N) {
+          for(double v = 0.; v < 1 - u; v += 1. / N) {
+            SPoint2 p = p0 * (1. - u - v) + p1 * u + p2 * v;
+            GPoint gp(point(p));
+            points->push_back(SPoint3(gp.x(), gp.y(), gp.z()));
+            if(uvpoints) uvpoints->push_back(p);
+            if(normals) normals->push_back(normal(p));
+          }
         }
       }
     }
   }
   else {
-    int N = 1000; //(int)(maxDX / maxDist);
+    // uniform sampling of underlying parametric plane
+    int N = std::max((int)(bounds().diag() / maxDist), 2);
     Range<double> b1 = parBounds(0);
     Range<double> b2 = parBounds(1);
     for(int i = 0; i < N; i++) {
@@ -1641,11 +1693,6 @@ void GFace::mesh(bool verbose)
   if(compound.size())
     meshAttributes.meshSizeFactor = CTX::instance()->mesh.compoundLcFactor;
 
-    // FIXME TEST
-#if 0
-  GFaceInitialMesh (tag());
-#endif
-
   meshGFace mesher;
   mesher(this, verbose);
 
@@ -1755,17 +1802,17 @@ void GFace::setMeshMaster(GFace *master, const std::vector<double> &tfo)
     master->embeddedVertices();
   m_vertices.insert(m_embedded_vertices.begin(), m_embedded_vertices.end());
 
-  // check topological correspondance
+  // check topological correspondence
   if(l_vertices.size() != m_vertices.size()) {
     Msg::Error(
-      "Different number of points (%d vs %d) for periodic correspondance "
+      "Different number of points (%d vs %d) for periodic correspondence "
       "between surfaces %d and %d",
       l_vertices.size(), m_vertices.size(), master->tag(), tag());
     return;
   }
   if(l_vtxToEdge.size() != m_vtxToEdge.size()) {
     Msg::Error(
-      "Different number of curves (%d vs %d) for periodic correspondance "
+      "Different number of curves (%d vs %d) for periodic correspondence "
       "between surfaces %d and %d",
       l_vtxToEdge.size(), m_vtxToEdge.size(), master->tag(), tag());
     return;
@@ -1804,7 +1851,7 @@ void GFace::setMeshMaster(GFace *master, const std::vector<double> &tfo)
   }
 
   if(gVertexCounterparts.size() != m_vertices.size()) {
-    Msg::Error("Could not find all point correspondances for the periodic "
+    Msg::Error("Could not find all point correspondences for the periodic "
                "connection from surface %d to %d",
                master->tag(), tag());
     return;

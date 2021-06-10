@@ -33,7 +33,7 @@ std::string GMSH_SummationPlugin::getHelp() const
          "and store the result in a new view.\n"
          "If 'View 0' < 0 then the current view is selected.\n"
          "If 'View 1...8' < 0 then this view is skipped.\n"
-         "Views can have diffrent number of time steps\n"
+         "Views can have different number of time steps\n"
          "Warning: the Plugin assume that every views share"
          "the same mesh and that meshes do not move between time steps!";
 }

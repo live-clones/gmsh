@@ -1621,8 +1621,8 @@ static int CompareTwoCurves(const void *a, const void *b)
   }
 
   // compare boundary layer curves using their source extrusion entity, which is
-  // assumed to be unique; this allows to have 2 distinct boundary layer curves
-  // with the same beg/end points
+  // assumed to be unique; this allows one to have 2 distinct boundary layer
+  // curves with the same beg/end points
   if(c1->Typ == MSH_SEGM_BND_LAYER && c1->Extrude &&
      c2->Typ == MSH_SEGM_BND_LAYER && c2->Extrude) {
     int comp =

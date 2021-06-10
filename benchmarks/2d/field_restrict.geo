@@ -31,24 +31,24 @@ Plane Surface(10) = {9, 3};
 // specifying explicit element sizes as a function of the distance to
 // the point a0 (square function here)
 Field[1] = Distance;
-Field[1].EdgesList = {la1,la2,6};
-Field[1].NNodesByEdge = 100;
+Field[1].CurvesList = {la1,la2,6};
+Field[1].Sampling = 100;
 Field[2] = MathEval;
 Field[2].F = Sprintf("F1^2 + %g", res1/4);
 Field[3] = Restrict;
-Field[3].IField = 2;
-Field[3].FacesList = {10};
-Field[3].EdgesList = {la1,la2, 5:8};
+Field[3].InField = 2;
+Field[3].SurfacesList = {10};
+Field[3].CurvesList = {la1,la2, 5:8};
 
 Field[4] = MathEval;
 Field[4].F = "0.2";
 Field[5] = Restrict;
-Field[5].IField = 4;
-Field[5].FacesList = {sa};
+Field[5].InField = 4;
+Field[5].SurfacesList = {sa};
 
 Field[6] = Min;
 Field[6].FieldsList = {3,5};
 
 Background Field = 6;
 
-Mesh.CharacteristicLengthExtendFromBoundary = 0;
+Mesh.MeshSizeExtendFromBoundary = 0;

@@ -34,7 +34,7 @@ static void _computeCoeffLengthVectors(const fullMatrix<double> &mat,
   case TYPE_TET: coeff.resize(sz1, 6); break;
   case TYPE_PYR: coeff.resize(sz1, 6); break;
   default:
-    Msg::Warning("Unkown element type %d for quality computation", type);
+    Msg::Warning("Unknown element type %d for quality computation", type);
     coeff.resize(0, 0);
     return;
   }

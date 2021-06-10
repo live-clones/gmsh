@@ -14,8 +14,8 @@
 
 /* return internal error (that you must catch) if:
  *    - the cavity overlap different partitions  => HXT_STATUS_CONFLICT
- *    - there is a contraint inside the cavity   => HXT_STATUS_CONSTRAINT
- *    - does'nt result in a better triangulation => HXT_STATUS_NOTBETTER
+ *    - there is a constraint inside the cavity   => HXT_STATUS_CONSTRAINT
+ *    - doesn't result in a better triangulation => HXT_STATUS_NOTBETTER
  *    - there is more than 7 pts around the edge => HXT_STATUS_INTERNAL
  * a facet without neighbor (set to HXT_NO_ADJACENT) is also a constraint.
  */

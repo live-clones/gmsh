@@ -88,7 +88,7 @@ static inline HXTStatus hxtTetrahedraInit(HXTMesh* mesh, HXTNodeInfo* nodeInfo, 
         double crossx = bdy * cdz - bdz * cdy;
         double crossy = bdz * cdx - bdx * cdz;
         double crossz = bdx * cdy - bdy * cdx;
-        // check for colinearity: cross product
+        // check for collinearity: cross product
         if(crossx == 0.0 && crossy == 0.0 && crossz == 0.0)
           continue;
         for (l=k+1; orientation==0 && l<nToInsert; l++)
@@ -222,7 +222,7 @@ unsigned computePasses(uint32_t passes[12],
 
 
 /******************************************
- * initialisation of the TetLocal structure
+ * initialization of the TetLocal structure
  ******************************************/
 static inline HXTStatus localInit(TetLocal* local){
   local->ball.size = 1024;
@@ -1031,12 +1031,13 @@ static HXTStatus insertion(HXT2Sync* shared2sync,
   HXT_CHECK(status);
 
   if(!perfectDelaunay) {
+    int undeleteTet;
     if(edgeConstraint) {
       // printf("we have an edge constraint\n");
-      HXT_CHECK( respectEdgeConstraint(local, mesh, vta, color, prevDeleted) );
+      HXT_CHECK( respectEdgeConstraint(local, mesh, vta, color, prevDeleted, &undeleteTet) );
     }
     // reshape the cavity if it is not star shaped
-    HXT_CHECK( reshapeCavityIfNeeded(local, mesh, vta, prevDeleted) );
+    HXT_CHECK( reshapeCavityIfNeeded(local, mesh, vta, prevDeleted, undeleteTet) );
   }
 
 
@@ -1196,7 +1197,7 @@ static HXTStatus parallelDelaunay3D(HXTMesh* mesh,
         Initializations and allocations
   ******************************************************/
   if(mesh->tetrahedra.num<5){
-    HXT_ASSERT_MSG(options->numVerticesInMesh==0 && mesh->tetrahedra.num==0, "no ghosts or unvalid mesh");
+    HXT_ASSERT_MSG(options->numVerticesInMesh==0 && mesh->tetrahedra.num==0, "no ghosts or invalid mesh");
     HXT_INFO_COND(options->verbosity>0,
                   "Initialization of tet. mesh");
     HXT_CHECK( hxtTetrahedraInit(mesh, nodeInfo, nToInsert, options->verbosity) );
@@ -1365,7 +1366,7 @@ static HXTStatus parallelDelaunay3D(HXTMesh* mesh,
              * we will select the tet in the good partition that has the lowest lexicographic ordering of its nodes.
              * In this section, we run the maximum number of threads: max threads (=>not corresponding to partitions threads)
              * Each of the max thread look at a chunk of tetrahedra and updates its own array with his idea of what tet.
-             * will be the first for each partiton thread.
+             * will be the first for each partition thread.
              * Next (line 1659 as I'm writing this), each partition threads will check the results obtained by each maxThreads
              * threads and take the tet which appear first lexicographically. */
             uint64_t* startTetLocal = startTetGlobal + threadID * nthreads;
@@ -1491,8 +1492,8 @@ static HXTStatus parallelDelaunay3D(HXTMesh* mesh,
             if(nodeInfo[passStart + passIndex].status==HXT_STATUS_TRYAGAIN){
               HXTStatus status = insertion(&shared2sync,
                                            &Locals[threadID],
-                                           options->allowOuterInsertion,
                                            options->perfectDelaunay,
+                                           options->allowOuterInsertion,
                                            verticesID,
                                            options->nodalSizes,
                                            &curTet,

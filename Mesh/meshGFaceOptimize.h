@@ -26,7 +26,7 @@ struct edge_angle {
   bool operator<(const edge_angle &other) const { return other.angle < angle; }
 };
 
-// TODO: switch to unordered_map here & verify deterministic bahavior
+// TODO: switch to unordered_map here & verify deterministic behavior
 typedef std::map<MVertex *, std::vector<MElement *>, MVertexPtrLessThan>
   v2t_cont;
 // typedef std::unordered_map<MVertex *, std::vector<MElement *> > v2t_cont;

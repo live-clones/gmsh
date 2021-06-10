@@ -84,9 +84,6 @@
 
 #if defined(HAVE_FLTK)
 #include "FlGui.h"
-#include "openglWindow.h"
-#include "onelabContextWindow.h"
-#include "onelabGroup.h"
 #endif
 
 #if defined(HAVE_ONELAB)
@@ -130,7 +127,8 @@ GMSH_API void gmsh::initialize(int argc, char **argv, bool readConfigFiles)
     // (to always keep going after errors like in the Gmsh app, set
     // "General.AbortOnError" to 0)
     CTX::instance()->abortOnError = 2;
-    // show messages on the terminal (to disable this set "General.Terminal" to 0)
+    // show messages on the terminal (to disable this set "General.Terminal" to
+    // 0)
     CTX::instance()->terminal = 1;
     _initialized = 1;
     _argc = argc;
@@ -263,6 +261,7 @@ GMSH_API void gmsh::model::add(const std::string &name)
 {
   if(!_checkInit()) return;
   GModel *m = new GModel(name);
+  GModel::current(GModel::list.size() - 1);
   if(!m) Msg::Error("Could not add model '%s'", name.c_str());
 }
 
@@ -349,9 +348,7 @@ GMSH_API void gmsh::model::getPhysicalGroups(vectorpair &dimTags, const int dim)
   GModel::current()->getPhysicalGroups(groups);
   for(int d = 0; d < 4; d++) {
     if(dim < 0 || d == dim) {
-      for(auto it =
-            groups[d].begin();
-          it != groups[d].end(); it++)
+      for(auto it = groups[d].begin(); it != groups[d].end(); it++)
         dimTags.push_back(std::pair<int, int>(d, it->first));
     }
   }
@@ -497,23 +494,22 @@ GMSH_API void gmsh::model::getAdjacencies(const int dim, const int tag,
   }
   switch(dim) {
   case 0:
-    for(auto &e: static_cast<GVertex*>(ge)->edges())
+    for(auto &e : static_cast<GVertex *>(ge)->edges())
       upward.push_back(e->tag());
     break;
   case 1:
-    for(auto &e: static_cast<GEdge*>(ge)->faces())
-      upward.push_back(e->tag());
-    for(auto &e: static_cast<GEdge*>(ge)->vertices())
+    for(auto &e : static_cast<GEdge *>(ge)->faces()) upward.push_back(e->tag());
+    for(auto &e : static_cast<GEdge *>(ge)->vertices())
       downward.push_back(e->tag());
     break;
   case 2:
-    for(auto &e: static_cast<GFace*>(ge)->regions())
+    for(auto &e : static_cast<GFace *>(ge)->regions())
       upward.push_back(e->tag());
-    for(auto &e: static_cast<GFace*>(ge)->edges())
+    for(auto &e : static_cast<GFace *>(ge)->edges())
       downward.push_back(e->tag());
     break;
   case 3:
-    for(auto &e: static_cast<GRegion*>(ge)->faces())
+    for(auto &e : static_cast<GRegion *>(ge)->faces())
       downward.push_back(e->tag());
     break;
   }
@@ -943,7 +939,7 @@ gmsh::model::getParametrization(const int dim, const int tag,
     GFace *gf = static_cast<GFace *>(entity);
     for(std::size_t i = 0; i < coord.size(); i += 3) {
       SPoint3 p(coord[i], coord[i + 1], coord[i + 2]);
-      SPoint2 uv = gf->parFromPoint(p);
+      SPoint2 uv = gf->parFromPoint(p, true, true);
       parametricCoord.push_back(uv.x());
       parametricCoord.push_back(uv.y());
     }
@@ -971,7 +967,8 @@ GMSH_API void gmsh::model::getParametrizationBounds(const int dim,
 }
 
 GMSH_API int gmsh::model::isInside(const int dim, const int tag,
-                                   const std::vector<double> &parametricCoord)
+                                   const std::vector<double> &coord,
+                                   const bool parametric)
 {
   if(!_checkInit()) return -1;
   GEntity *entity = GModel::current()->getEntityByTag(dim, tag);
@@ -980,21 +977,33 @@ GMSH_API int gmsh::model::isInside(const int dim, const int tag,
     return 0;
   }
   int num = 0;
-  if(dim == 1) {
-    GEdge *ge = static_cast<GEdge *>(entity);
-    for(std::size_t i = 0; i < parametricCoord.size(); i++) {
-      if(ge->containsParam(parametricCoord[i])) num++;
+  if(parametric) {
+    if(dim == 1) {
+      GEdge *ge = static_cast<GEdge *>(entity);
+      for(std::size_t i = 0; i < coord.size(); i++) {
+        if(ge->containsParam(coord[i])) num++;
+      }
+    }
+    else if(dim == 2) {
+      GFace *gf = static_cast<GFace *>(entity);
+      if(coord.size() % 2) {
+        Msg::Error("Number of parametric coordinates should be even");
+        return num;
+      }
+      for(std::size_t i = 0; i < coord.size(); i += 2) {
+        SPoint2 param(coord[i], coord[i + 1]);
+        if(gf->containsParam(param)) num++;
+      }
     }
   }
-  else if(dim == 2) {
-    if(parametricCoord.size() % 2) {
-      Msg::Error("Number of parametric coordinates should be even");
-      return num;
+  else {
+    if(coord.size() % 3) {
+      Msg::Error("Number of coordinates should be a multiple of 3");
+      return 0;
     }
-    GFace *gf = static_cast<GFace *>(entity);
-    for(std::size_t i = 0; i < parametricCoord.size(); i += 2) {
-      SPoint2 param(parametricCoord[i], parametricCoord[i + 1]);
-      if(gf->containsParam(param)) num++;
+    for(std::size_t i = 0; i < coord.size(); i += 3) {
+      SPoint3 pt(coord[i], coord[i + 1], coord[i + 2]);
+      if(entity->containsPoint(pt)) num++;
     }
   }
   return num;
@@ -1106,8 +1115,7 @@ GMSH_API void gmsh::model::setVisibilityPerWindow(const int value,
   if(!_checkInit()) return;
 #if defined(HAVE_FLTK)
   FlGui::instance()->setCurrentOpenglWindow(windowIndex);
-  drawContext *ctx =
-    FlGui::instance()->getCurrentOpenglWindow()->getDrawContext();
+  drawContext *ctx = FlGui::instance()->getCurrentDrawContext();
   GModel *m = GModel::current();
   if(value)
     ctx->show(m);
@@ -1169,11 +1177,31 @@ GMSH_API void gmsh::model::mesh::generate(const int dim)
   CTX::instance()->mesh.changed = ENT_ALL;
 }
 
-GMSH_API void gmsh::model::mesh::partition(const int numPart)
+GMSH_API void
+gmsh::model::mesh::partition(const int numPart,
+                             const std::vector<std::size_t> &elementTags,
+                             const std::vector<int> &partitions)
 {
   if(!_checkInit()) return;
+  std::vector<std::pair<MElement *, int> > epart;
+  if(elementTags.size()) {
+    if(elementTags.size() != partitions.size()) {
+      Msg::Error("Number of element tags (%d) does not match number of "
+                 "partitions (%d)",
+                 elementTags.size(), partitions.size());
+      return;
+    }
+    epart.reserve(elementTags.size());
+    for(std::size_t i = 0; i < elementTags.size(); i++) {
+      MElement *el = GModel::current()->getMeshElementByTag(elementTags[i]);
+      if(el)
+        epart.push_back(std::make_pair(el, partitions[i]));
+      else
+        Msg::Error("Unknown element %d", elementTags[i]);
+    }
+  }
   GModel::current()->partitionMesh(
-    numPart >= 0 ? numPart : CTX::instance()->mesh.numPartitions);
+    numPart >= 0 ? numPart : CTX::instance()->mesh.numPartitions, epart);
   CTX::instance()->mesh.changed = ENT_ALL;
 }
 
@@ -1296,11 +1324,9 @@ GMSH_API void gmsh::model::mesh::clear(const vectorpair &dimTags)
 }
 
 static void _getEntities(const gmsh::vectorpair &dimTags,
-                         std::vector<GEntity*> &entities)
+                         std::vector<GEntity *> &entities)
 {
-  if(dimTags.empty()) {
-    GModel::current()->getEntities(entities);
-  }
+  if(dimTags.empty()) { GModel::current()->getEntities(entities); }
   else {
     for(auto dimTag : dimTags) {
       int dim = dimTag.first, tag = dimTag.second;
@@ -1359,7 +1385,7 @@ static void _getAdditionalNodesOnBoundary(GEntity *entity,
       coord.push_back(v->z());
       if(entity->dim() == 2 && parametric) {
         SPoint2 param;
-        if(!reparamMeshVertexOnFace(v, (GFace *)entity, param))
+        if(!reparamMeshVertexOnFace(v, (GFace *)entity, param, true, false))
           Msg::Warning("Failed to compute parameters of node %d on surface %d",
                        v->getNum(), entity->tag());
         parametricCoord.push_back(param.x());
@@ -1377,7 +1403,7 @@ static void _getAdditionalNodesOnBoundary(GEntity *entity,
       coord.push_back(v->z());
       if(entity->dim() == 2 && parametric) {
         SPoint2 param;
-        if(!reparamMeshVertexOnFace(v, (GFace *)entity, param))
+        if(!reparamMeshVertexOnFace(v, (GFace *)entity, param, true, false))
           Msg::Warning("Failed to compute parameters of node %d on surface %d",
                        v->getNum(), entity->tag());
         parametricCoord.push_back(param.x());
@@ -1497,7 +1523,8 @@ GMSH_API void gmsh::model::mesh::getNodesByElementType(
 
 GMSH_API void gmsh::model::mesh::getNode(const std::size_t nodeTag,
                                          std::vector<double> &coord,
-                                         std::vector<double> &parametricCoord)
+                                         std::vector<double> &parametricCoord,
+                                         int &dim, int &tag)
 {
   if(!_checkInit()) return;
   MVertex *v = GModel::current()->getMeshVertexByTag(nodeTag);
@@ -1513,6 +1540,15 @@ GMSH_API void gmsh::model::mesh::getNode(const std::size_t nodeTag,
   double u;
   if(v->getParameter(0, u)) parametricCoord.push_back(u);
   if(v->getParameter(1, u)) parametricCoord.push_back(u);
+  if(v->onWhat()) {
+    dim = v->onWhat()->dim();
+    tag = v->onWhat()->tag();
+  }
+  else{
+    Msg::Warning("Node %d is not classified on any entity", nodeTag);
+    dim = -1;
+    tag = -1;
+  }
 }
 
 GMSH_API void
@@ -1730,10 +1766,12 @@ GMSH_API void gmsh::model::mesh::getElements(
 
 GMSH_API void gmsh::model::mesh::getElement(const std::size_t elementTag,
                                             int &elementType,
-                                            std::vector<std::size_t> &nodeTags)
+                                            std::vector<std::size_t> &nodeTags,
+                                            int &dim, int &tag)
 {
   if(!_checkInit()) return;
-  MElement *e = GModel::current()->getMeshElementByTag(elementTag);
+  int entityTag;
+  MElement *e = GModel::current()->getMeshElementByTag(elementTag, entityTag);
   if(!e) {
     Msg::Error("Unknown element %d", elementTag);
     return;
@@ -1748,6 +1786,8 @@ GMSH_API void gmsh::model::mesh::getElement(const std::size_t elementTag,
     }
     nodeTags.push_back(v->getNum());
   }
+  dim = e->getDim();
+  tag = entityTag;
 }
 
 GMSH_API void gmsh::model::mesh::getElementByCoordinates(
@@ -1950,27 +1990,18 @@ GMSH_API int gmsh::model::mesh::getElementType(const std::string &family,
 {
   if(!_checkInit()) return -1;
   int familyType =
-    (family == "Point" || family == "point") ?
-      TYPE_PNT :
-      (family == "Line" || family == "line") ?
-      TYPE_LIN :
-      (family == "Triangle" || family == "triangle") ?
-      TYPE_TRI :
-      (family == "Quadrangle" || family == "quadrangle") ?
-      TYPE_QUA :
-      (family == "Tetrahedron" || family == "tetrahedron") ?
-      TYPE_TET :
-      (family == "Pyramid" || family == "pyramid") ?
-      TYPE_PYR :
-      (family == "Prism" || family == "prism") ?
-      TYPE_PRI :
-      (family == "Hexahedron" || family == "hexahedron") ?
-      TYPE_HEX :
-      (family == "Polygon" || family == "polygon") ?
-      TYPE_POLYG :
-      (family == "Polyhedron" || family == "polyhedron") ?
-      TYPE_POLYH :
-      (family == "Trihedron" || family == "trihedron") ? TYPE_TRIH : -1;
+    (family == "Point" || family == "point")             ? TYPE_PNT :
+    (family == "Line" || family == "line")               ? TYPE_LIN :
+    (family == "Triangle" || family == "triangle")       ? TYPE_TRI :
+    (family == "Quadrangle" || family == "quadrangle")   ? TYPE_QUA :
+    (family == "Tetrahedron" || family == "tetrahedron") ? TYPE_TET :
+    (family == "Pyramid" || family == "pyramid")         ? TYPE_PYR :
+    (family == "Prism" || family == "prism")             ? TYPE_PRI :
+    (family == "Hexahedron" || family == "hexahedron")   ? TYPE_HEX :
+    (family == "Polygon" || family == "polygon")         ? TYPE_POLYG :
+    (family == "Polyhedron" || family == "polyhedron")   ? TYPE_POLYH :
+    (family == "Trihedron" || family == "trihedron")     ? TYPE_TRIH :
+                                                           -1;
   return ElementType::getType(familyType, order, serendip);
 }
 
@@ -2732,8 +2763,8 @@ GMSH_API void gmsh::model::mesh::getBasisFunctions(
       for(unsigned int iOrientation = 0; iOrientation < maxOrientation;
           ++iOrientation) {
         if(wantedOrientations.size() != 0) {
-          auto it = std::find(
-            wantedOrientations.begin(), wantedOrientations.end(), iOrientation);
+          auto it = std::find(wantedOrientations.begin(),
+                              wantedOrientations.end(), iOrientation);
           if(it != wantedOrientations.end()) {
             iOrientationIndex = &(*it) - &wantedOrientations[0];
           }
@@ -2890,8 +2921,8 @@ GMSH_API void gmsh::model::mesh::getBasisFunctions(
       for(unsigned int iOrientation = 0; iOrientation < maxOrientation;
           ++iOrientation) {
         if(wantedOrientations.size() != 0) {
-          auto it = std::find(
-            wantedOrientations.begin(), wantedOrientations.end(), iOrientation);
+          auto it = std::find(wantedOrientations.begin(),
+                              wantedOrientations.end(), iOrientation);
           if(it != wantedOrientations.end()) {
             iOrientationIndex = &(*it) - &wantedOrientations[0];
           }
@@ -3251,16 +3282,14 @@ gmsh::model::mesh::getEdges(const std::vector<std::size_t> &nodeTags,
   }
 }
 
-GMSH_API void
-gmsh::model::mesh::getFaces(const int faceType,
-                            const std::vector<std::size_t> &nodeTags,
-                            std::vector<std::size_t> &faceTags,
-                            std::vector<int> &orientations)
+GMSH_API void gmsh::model::mesh::getFaces(
+  const int faceType, const std::vector<std::size_t> &nodeTags,
+  std::vector<std::size_t> &faceTags, std::vector<int> &orientations)
 {
   faceTags.clear();
   orientations.clear();
   if(faceType != 3 && faceType != 4) {
-    Msg::Error("Unknow face type (should be 3 or 4)");
+    Msg::Error("Unknown face type (should be 3 or 4)");
     return;
   }
   std::size_t numFaces = nodeTags.size() / faceType;
@@ -3275,8 +3304,8 @@ gmsh::model::mesh::getFaces(const int faceType,
     MVertex *v0 = GModel::current()->getMeshVertexByTag(n0);
     MVertex *v1 = GModel::current()->getMeshVertexByTag(n1);
     MVertex *v2 = GModel::current()->getMeshVertexByTag(n2);
-    MVertex *v3 = (faceType == 4) ? GModel::current()->getMeshVertexByTag(n3) :
-      nullptr;
+    MVertex *v3 =
+      (faceType == 4) ? GModel::current()->getMeshVertexByTag(n3) : nullptr;
     if(v0 && v1 && v2) {
       MFace face;
       faceTags[i] = GModel::current()->getMFace(v0, v1, v2, v3, face);
@@ -3296,8 +3325,10 @@ GMSH_API void gmsh::model::mesh::createEdges(const vectorpair &dimTags)
     GEntity *ge = entities[i];
     for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
       MElement *e = ge->getMeshElement(j);
-      for(int k = 0; k < e->getNumEdges(); k++)
-        GModel::current()->addMEdge(e->getEdge(k));
+      for(int k = 0; k < e->getNumEdges(); k++) {
+        MEdge edge = e->getEdge(k);
+        GModel::current()->addMEdge(edge);
+      }
     }
   }
 }
@@ -3311,59 +3342,23 @@ GMSH_API void gmsh::model::mesh::createFaces(const vectorpair &dimTags)
     GEntity *ge = entities[i];
     for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
       MElement *e = ge->getMeshElement(j);
-      for(int k = 0; k < e->getNumFaces(); k++)
-        GModel::current()->addMFace(e->getFace(k));
-    }
-  }
-}
-
-GMSH_API void gmsh::model::mesh::getLocalMultipliersForHcurl0(
-  const int elementType, std::vector<int> &localMultipliers, const int tag)
-{
-  // FIXME: this should eventually be removed, or replaced with something more
-  // generic
-  localMultipliers.clear();
-  int dim = ElementType::getDimension(elementType);
-  std::map<int, std::vector<GEntity *> > typeEnt;
-  _getEntitiesForElementTypes(dim, tag, typeEnt);
-  const std::vector<GEntity *> &entities(typeEnt[elementType]);
-  int familyType = ElementType::getParentType(elementType);
-  std::size_t numElements = 0, numEdgesPerEle = 0;
-
-  for(std::size_t i = 0; i < entities.size(); i++) {
-    GEntity *ge = entities[i];
-    std::size_t n = ge->getNumMeshElementsByType(familyType);
-    numElements += n;
-    if(n && !numEdgesPerEle)
-      numEdgesPerEle = ge->getMeshElementByType(familyType, 0)->getNumEdges();
-  }
-  if(!numElements || !numEdgesPerEle) return;
-  localMultipliers.resize(numElements * numEdgesPerEle, 1);
-  size_t indexNumElement = 0;
-  for(std::size_t ii = 0; ii < entities.size(); ii++) {
-    GEntity *ge = entities[ii];
-    for(std::size_t j = 0; j < ge->getNumMeshElementsByType(familyType); j++) {
-      MElement *e = ge->getMeshElementByType(familyType, j);
-      for(int iEdge = 0; iEdge < e->getNumEdges(); iEdge++) {
-        MEdge edge = e->getEdge(iEdge);
-        MEdge edgeSolin = e->getEdgeSolin(iEdge);
-        if(edge.getMinVertex() != edgeSolin.getVertex(0)) {
-          localMultipliers[indexNumElement * numEdgesPerEle + iEdge] = -1;
-        }
+      for(int k = 0; k < e->getNumFaces(); k++) {
+        MFace face = e->getFace(k);
+        GModel::current()->addMFace(face);
       }
-      indexNumElement++;
     }
   }
 }
 
 GMSH_API void gmsh::model::mesh::getKeysForElements(
   const int elementType, const std::string &functionSpaceType,
-  gmsh::vectorpair &keys, std::vector<double> &coord, const int tag,
-  const bool generateCoord)
+  std::vector<int> &typeKeys, std::vector<std::size_t> &entityKeys,
+  std::vector<double> &coord, const int tag, const bool generateCoord)
 {
   if(!_checkInit()) return;
   coord.clear();
-  keys.clear();
+  typeKeys.clear();
+  entityKeys.clear();
   int order = 0;
   int numComponents = 0;
   std::string fsName = "";
@@ -3453,14 +3448,16 @@ GMSH_API void gmsh::model::mesh::getKeysForElements(
         coord.reserve(coord.size() + numElementsInEntitie *
                                        nodalB->getNumShapeFunctions() * 3);
       }
-      keys.reserve(keys.size() +
-                   numElementsInEntitie * nodalB->getNumShapeFunctions());
+      typeKeys.reserve(typeKeys.size() +
+                       numElementsInEntitie * nodalB->getNumShapeFunctions());
+      entityKeys.reserve(entityKeys.size() +
+                         numElementsInEntitie * nodalB->getNumShapeFunctions());
 
       for(std::size_t j = 0; j < numElementsInEntitie; ++j) {
         MElement *e = ge->getMeshElementByType(familyType, j);
         for(size_t k = 0; k < e->getNumVertices(); ++k) {
-          keys.push_back(
-            std::pair<int, std::size_t>(0, e->getVertex(k)->getNum()));
+          typeKeys.push_back(0);
+          entityKeys.push_back(e->getVertex(k)->getNum());
           if(generateCoord) {
             coord.push_back(e->getVertex(k)->x());
             coord.push_back(e->getVertex(k)->y());
@@ -3515,14 +3512,17 @@ GMSH_API void gmsh::model::mesh::getKeysForElements(
       coord.reserve(coord.size() +
                     numElementsInEntitie * numDofsPerElement * 3);
     }
-    keys.reserve(keys.size() + numElementsInEntitie * numDofsPerElement);
+    typeKeys.reserve(typeKeys.size() +
+                     numElementsInEntitie * numDofsPerElement);
+    entityKeys.reserve(entityKeys.size() +
+                       numElementsInEntitie * numDofsPerElement);
 
     for(std::size_t j = 0; j < numElementsInEntitie; j++) {
       MElement *e = ge->getMeshElementByType(familyType, j);
       // vertices
       for(int k = 0; k < vSize; k++) {
-        keys.push_back(
-          std::pair<int, std::size_t>(0, e->getVertex(k)->getNum()));
+        typeKeys.push_back(0);
+        entityKeys.push_back(e->getVertex(k)->getNum());
         if(generateCoord) {
           coord.push_back(e->getVertex(k)->x());
           coord.push_back(e->getVertex(k)->y());
@@ -3544,7 +3544,8 @@ GMSH_API void gmsh::model::mesh::getKeysForElements(
           }
           std::size_t edgeGlobalIndice = GModel::current()->addMEdge(edge);
           for(int k = 1; k < const1; k++) {
-            keys.push_back(std::pair<int, std::size_t>(k, edgeGlobalIndice));
+            typeKeys.push_back(k);
+            entityKeys.push_back(edgeGlobalIndice);
             if(generateCoord) {
               coord.push_back(coordEdge[0]);
               coord.push_back(coordEdge[1]);
@@ -3574,7 +3575,8 @@ GMSH_API void gmsh::model::mesh::getKeysForElements(
           int it2 = const2;
           if(jj >= numberQuadFaces) { it2 = const3; }
           for(int k = const1; k < it2; k++) {
-            keys.push_back(std::pair<int, std::size_t>(k, faceGlobalIndice));
+            typeKeys.push_back(k);
+            entityKeys.push_back(faceGlobalIndice);
             if(generateCoord) {
               coord.push_back(coordFace[0]);
               coord.push_back(coordFace[1]);
@@ -3597,7 +3599,8 @@ GMSH_API void gmsh::model::mesh::getKeysForElements(
           bubbleCenterCoord[2] /= e->getNumVertices();
         }
         for(int k = std::max(const3, const2); k < const4; k++) {
-          keys.push_back(std::pair<int, std::size_t>(k, e->getNum()));
+          typeKeys.push_back(k);
+          entityKeys.push_back(e->getNum());
           if(generateCoord) {
             coord.push_back(bubbleCenterCoord[0]);
             coord.push_back(bubbleCenterCoord[1]);
@@ -3611,11 +3614,13 @@ GMSH_API void gmsh::model::mesh::getKeysForElements(
 
 GMSH_API void gmsh::model::mesh::getKeysForElement(
   const std::size_t elementTag, const std::string &functionSpaceType,
-  gmsh::vectorpair &keys, std::vector<double> &coord, const bool generateCoord)
+  std::vector<int> &typeKeys, std::vector<std::size_t> &entityKeys,
+  std::vector<double> &coord, const bool generateCoord)
 {
   if(!_checkInit()) return;
   coord.clear();
-  keys.clear();
+  typeKeys.clear();
+  entityKeys.clear();
   int order = 0;
   int numComponents = 0;
   std::string fsName = "";
@@ -3685,10 +3690,12 @@ GMSH_API void gmsh::model::mesh::getKeysForElement(
   }
   else if(fsName == "IsoParametric" || fsName == "Lagrange" ||
           fsName == "GradIsoParametric" || fsName == "GradLagrange") {
-    keys.reserve(e->getNumVertices());
+    typeKeys.reserve(e->getNumVertices());
+    entityKeys.reserve(e->getNumVertices());
     if(generateCoord) { coord.reserve(3 * e->getNumVertices()); }
     for(size_t k = 0; k < e->getNumVertices(); ++k) {
-      keys.push_back(std::pair<int, std::size_t>(0, e->getVertex(k)->getNum()));
+      typeKeys.push_back(0);
+      entityKeys.push_back(e->getVertex(k)->getNum());
       if(generateCoord) {
         coord.push_back(e->getVertex(k)->x());
         coord.push_back(e->getVertex(k)->y());
@@ -3734,12 +3741,14 @@ GMSH_API void gmsh::model::mesh::getKeysForElement(
   int numDofsPerElement = vSize + bSize + eSize + fSize;
   delete basis;
 
-  keys.reserve(numDofsPerElement);
+  typeKeys.reserve(numDofsPerElement);
+  entityKeys.reserve(numDofsPerElement);
   if(generateCoord) { coord.reserve(3 * numDofsPerElement); }
 
   // vertices
   for(int k = 0; k < vSize; k++) {
-    keys.push_back(std::pair<int, std::size_t>(0, e->getVertex(k)->getNum()));
+    typeKeys.push_back(0);
+    entityKeys.push_back(e->getVertex(k)->getNum());
     if(generateCoord) {
       coord.push_back(e->getVertex(k)->x());
       coord.push_back(e->getVertex(k)->y());
@@ -3761,7 +3770,8 @@ GMSH_API void gmsh::model::mesh::getKeysForElement(
       }
       std::size_t edgeGlobalIndice = GModel::current()->addMEdge(edge);
       for(int k = 1; k < const1; k++) {
-        keys.push_back(std::pair<int, std::size_t>(k, edgeGlobalIndice));
+        typeKeys.push_back(k);
+        entityKeys.push_back(edgeGlobalIndice);
         if(generateCoord) {
           coord.push_back(coordEdge[0]);
           coord.push_back(coordEdge[1]);
@@ -3790,7 +3800,8 @@ GMSH_API void gmsh::model::mesh::getKeysForElement(
       int it2 = const2;
       if(jj >= numberQuadFaces) { it2 = const3; }
       for(int k = const1; k < it2; k++) {
-        keys.push_back(std::pair<int, std::size_t>(k, faceGlobalIndice));
+        typeKeys.push_back(k);
+        entityKeys.push_back(faceGlobalIndice);
         if(generateCoord) {
           coord.push_back(coordFace[0]);
           coord.push_back(coordFace[1]);
@@ -3813,7 +3824,8 @@ GMSH_API void gmsh::model::mesh::getKeysForElement(
       bubbleCenterCoord[2] /= e->getNumVertices();
     }
     for(int k = std::max(const3, const2); k < const4; k++) {
-      keys.push_back(std::pair<int, std::size_t>(k, e->getNum()));
+      typeKeys.push_back(k);
+      entityKeys.push_back(e->getNum());
       if(generateCoord) {
         coord.push_back(bubbleCenterCoord[0]);
         coord.push_back(bubbleCenterCoord[1]);
@@ -3929,8 +3941,9 @@ GMSH_API int gmsh::model::mesh::getNumberOfKeysForElements(
 }
 
 GMSH_API void gmsh::model::mesh::getInformationForElements(
-  const gmsh::vectorpair &keys, const int elementType,
-  const std::string &functionSpaceType, gmsh::vectorpair &infoKeys)
+  const std::vector<int> &typeKeys, const std::vector<std::size_t> &entityKeys,
+  const int elementType, const std::string &functionSpaceType,
+  gmsh::vectorpair &infoKeys)
 {
   infoKeys.clear();
   int basisOrder = 0;
@@ -3941,6 +3954,14 @@ GMSH_API void gmsh::model::mesh::getInformationForElements(
     Msg::Error("Unknown function space type '%s'", functionSpaceType.c_str());
     return;
   }
+
+  if(typeKeys.size() != entityKeys.size()) {
+    Msg::Error("The size of 'typeKeys' is different of the size of "
+               "'entityKeys' ('%i', '%i')",
+               typeKeys.size(), entityKeys.size());
+    return;
+  }
+
   HierarchicalBasis *basis(nullptr);
   int familyType = ElementType::getParentType(elementType);
   if(fsName == "H1Legendre" || fsName == "GradH1Legendre") {
@@ -4018,8 +4039,8 @@ GMSH_API void gmsh::model::mesh::getInformationForElements(
       return;
     }
 
-    infoKeys.reserve(keys.size());
-    for(size_t i = 0; i < keys.size() / numberOfKeys; ++i) {
+    infoKeys.reserve(typeKeys.size());
+    for(size_t i = 0; i < typeKeys.size() / numberOfKeys; ++i) {
       for(size_t j = 0; j < numberOfKeys - numberOfBubble; ++j) {
         infoKeys.push_back(std::pair<int, int>(0, basisOrder));
       }
@@ -4044,7 +4065,7 @@ GMSH_API void gmsh::model::mesh::getInformationForElements(
   std::vector<int> orderInfo(numDofsPerElement);
   basis->getKeysInfo(functionTypeInfo, orderInfo);
   delete basis;
-  std::size_t keySize = keys.size();
+  std::size_t keySize = typeKeys.size();
   infoKeys.resize(keySize);
   std::size_t it = keySize / numDofsPerElement;
   for(std::size_t i = 0; i < it; i++) {
@@ -4353,6 +4374,25 @@ GMSH_API void gmsh::model::mesh::setSize(const vectorpair &dimTags,
   }
 }
 
+GMSH_API void gmsh::model::mesh::getSizes(const vectorpair &dimTags,
+                                          std::vector<double> &sizes)
+{
+  if(!_checkInit()) return;
+  sizes.clear();
+  if(dimTags.empty()) return;
+  sizes.resize(dimTags.size(), 0.);
+  for(std::size_t i = 0; i < dimTags.size(); i++) {
+    int dim = dimTags[i].first, tag = dimTags[i].second;
+    if(dim == 0) {
+      GVertex *gv = GModel::current()->getVertexByTag(tag);
+      if(gv) {
+        double s = gv->prescribedMeshSizeAtVertex();
+        if(s != MAX_LC) sizes[i] = s;
+      }
+    }
+  }
+}
+
 GMSH_API void gmsh::model::mesh::setSizeAtParametricPoints(
   const int dim, const int tag, const std::vector<double> &parametricCoord,
   const std::vector<double> &sizes)
@@ -4392,7 +4432,9 @@ gmsh::model::mesh::setTransfiniteCurve(const int tag, const int numNodes,
       ge->meshAttributes.nbPointsTransfinite = numNodes;
       ge->meshAttributes.typeTransfinite =
         (meshType == "Progression" || meshType == "Power") ? 1 :
-        (meshType == "Bump") ? 2 : (meshType == "Beta") ? 3 : 1;
+        (meshType == "Bump")                               ? 2 :
+        (meshType == "Beta")                               ? 3 :
+                                                             1;
       ge->meshAttributes.coeffTransfinite = std::abs(coef);
       // in .geo file we use a negative tag to do this trick; it's a bad idea
       if(coef < 0) ge->meshAttributes.typeTransfinite *= -1;
@@ -4419,14 +4461,12 @@ gmsh::model::mesh::setTransfiniteSurface(const int tag,
   }
   gf->meshAttributes.method = MESH_TRANSFINITE;
   gf->meshAttributes.transfiniteArrangement =
-    (arrangement == "Right") ?
-      1 :
-      (arrangement == "Left") ?
-      -1 :
-      (arrangement == "AlternateRight") ?
-      2 :
-      (arrangement == "AlternateLeft") ? -2 :
-                                         (arrangement == "Alternate") ? 2 : -1;
+    (arrangement == "Right")          ? 1 :
+    (arrangement == "Left")           ? -1 :
+    (arrangement == "AlternateRight") ? 2 :
+    (arrangement == "AlternateLeft")  ? -2 :
+    (arrangement == "Alternate")      ? 2 :
+                                        -1;
   if(cornerTags.empty() || cornerTags.size() == 3 || cornerTags.size() == 4) {
     for(std::size_t j = 0; j < cornerTags.size(); j++) {
       GVertex *gv = GModel::current()->getVertexByTag(cornerTags[j]);
@@ -4902,15 +4942,13 @@ GMSH_API void gmsh::model::mesh::getPeriodicNodes(
   }
   if(ge->getMeshMaster() != ge) {
     tagMaster = ge->getMeshMaster()->tag();
-    for(auto it =
-          ge->correspondingVertices.begin();
+    for(auto it = ge->correspondingVertices.begin();
         it != ge->correspondingVertices.end(); ++it) {
       nodeTags.push_back(it->first->getNum());
       nodeTagsMaster.push_back(it->second->getNum());
     }
     if(includeHighOrderNodes) {
-      for(auto it =
-            ge->correspondingHighOrderVertices.begin();
+      for(auto it = ge->correspondingHighOrderVertices.begin();
           it != ge->correspondingHighOrderVertices.end(); ++it) {
         nodeTags.push_back(it->first->getNum());
         nodeTagsMaster.push_back(it->second->getNum());
@@ -4934,11 +4972,9 @@ GMSH_API void gmsh::model::mesh::removeDuplicateNodes()
   CTX::instance()->mesh.changed = ENT_ALL;
 }
 
-GMSH_API void
-gmsh::model::mesh::classifySurfaces(const double angle, const bool boundary,
-                                    const bool forReparametrization,
-                                    const double curveAngle,
-                                    const bool exportDiscrete)
+GMSH_API void gmsh::model::mesh::classifySurfaces(
+  const double angle, const bool boundary, const bool forReparametrization,
+  const double curveAngle, const bool exportDiscrete)
 {
   if(!_checkInit()) return;
   GModel::current()->classifySurfaces(angle, boundary, forReparametrization,
@@ -5013,7 +5049,7 @@ GMSH_API void gmsh::model::mesh::triangulate(const std::vector<double> &coord,
     v->setIndex(j);
     verts[j++] = v;
   }
-  std::vector<MTriangle*> tris;
+  std::vector<MTriangle *> tris;
   delaunayMeshIn2D(verts, tris);
   tri.resize(3 * tris.size());
   for(std::size_t i = 0; i < tris.size(); i++) {
@@ -5021,17 +5057,16 @@ GMSH_API void gmsh::model::mesh::triangulate(const std::vector<double> &coord,
     for(std::size_t j = 0; j < 3; j++)
       tri[3 * i + j] = t->getVertex(j)->getIndex() + 1; // start at 1
   }
-  for(std::size_t i = 0; i < verts.size(); i++)
-    delete verts[i];
-  for(std::size_t i = 0; i < tris.size(); i++)
-    delete tris[i];
+  for(std::size_t i = 0; i < verts.size(); i++) delete verts[i];
+  for(std::size_t i = 0; i < tris.size(); i++) delete tris[i];
 #else
   Msg::Error("triangulate requires the mesh module");
 #endif
 }
 
-GMSH_API void gmsh::model::mesh::tetrahedralize(const std::vector<double> &coord,
-                                                std::vector<std::size_t> &tetra)
+GMSH_API void
+gmsh::model::mesh::tetrahedralize(const std::vector<double> &coord,
+                                  std::vector<std::size_t> &tetra)
 {
   if(!_checkInit()) return;
   if(coord.size() % 3) {
@@ -5039,14 +5074,14 @@ GMSH_API void gmsh::model::mesh::tetrahedralize(const std::vector<double> &coord
     return;
   }
 #if defined(HAVE_MESH)
-  std::vector<MVertex*> verts(coord.size() / 3);
+  std::vector<MVertex *> verts(coord.size() / 3);
   std::size_t j = 0;
   for(std::size_t i = 0; i < coord.size(); i += 3) {
     MVertex *v = new MVertex(coord[i], coord[i + 1], coord[i + 2]);
     v->setIndex(j);
     verts[j++] = v;
   }
-  std::vector<MTetrahedron*> tets;
+  std::vector<MTetrahedron *> tets;
   if(CTX::instance()->mesh.algo3d == ALGO_3D_HXT)
     delaunayMeshIn3DHxt(verts, tets);
   else
@@ -5057,10 +5092,8 @@ GMSH_API void gmsh::model::mesh::tetrahedralize(const std::vector<double> &coord
     for(std::size_t j = 0; j < 4; j++)
       tetra[4 * i + j] = t->getVertex(j)->getIndex() + 1; // start at 1
   }
-  for(std::size_t i = 0; i < verts.size(); i++)
-    delete verts[i];
-  for(std::size_t i = 0; i < tets.size(); i++)
-    delete tets[i];
+  for(std::size_t i = 0; i < verts.size(); i++) delete verts[i];
+  for(std::size_t i = 0; i < tets.size(); i++) delete tets[i];
 #else
   Msg::Error("tetrahedralize requires the mesh module");
 #endif
@@ -5436,13 +5469,10 @@ GMSH_API void gmsh::model::geo::twist(
     _getExtrudeParams(numElements, heights, recombine));
 }
 
-GMSH_API void gmsh::model::geo::extrudeBoundaryLayer(const vectorpair &dimTags,
-                                                     vectorpair &outDimTags,
-                                                     const std::vector<int> &numElements,
-                                                     const std::vector<double> &heights,
-                                                     const bool recombine,
-                                                     const bool second,
-                                                     const int viewIndex)
+GMSH_API void gmsh::model::geo::extrudeBoundaryLayer(
+  const vectorpair &dimTags, vectorpair &outDimTags,
+  const std::vector<int> &numElements, const std::vector<double> &heights,
+  const bool recombine, const bool second, const int viewIndex)
 {
   if(!_checkInit()) return;
   outDimTags.clear();
@@ -5584,7 +5614,9 @@ gmsh::model::geo::mesh::setTransfiniteCurve(const int tag, const int nPoints,
 {
   if(!_checkInit()) return;
   int type = (meshType == "Progression" || meshType == "Power") ? 1 :
-             (meshType == "Bump") ? 2 : (meshType == "Beta") ? 3 : 1;
+             (meshType == "Bump")                               ? 2 :
+             (meshType == "Beta")                               ? 3 :
+                                                                  1;
   double c = std::abs(coef);
   // in .geo file we use a negative tag to do this trick; it's a bad idea
   if(coef < 0) type = -type;
@@ -5600,14 +5632,12 @@ GMSH_API void gmsh::model::geo::mesh::setTransfiniteSurface(
   const std::vector<int> &cornerTags)
 {
   if(!_checkInit()) return;
-  int t = (arrangement == "Right") ?
-            1 :
-            (arrangement == "Left") ? -1 :
-                                      (arrangement == "AlternateRight") ?
-                                      2 :
-                                      (arrangement == "AlternateLeft") ?
-                                      -2 :
-                                      (arrangement == "Alternate") ? 2 : -1;
+  int t = (arrangement == "Right")          ? 1 :
+          (arrangement == "Left")           ? -1 :
+          (arrangement == "AlternateRight") ? 2 :
+          (arrangement == "AlternateLeft")  ? -2 :
+          (arrangement == "Alternate")      ? 2 :
+                                              -1;
   GModel::current()->getGEOInternals()->setTransfiniteSurface(tag, t,
                                                               cornerTags);
 }
@@ -5835,13 +5865,21 @@ GMSH_API int gmsh::model::occ::addPlaneSurface(const std::vector<int> &wireTags,
 
 GMSH_API int
 gmsh::model::occ::addSurfaceFilling(const int wireTag, const int tag,
-                                    const std::vector<int> &pointTags)
+                                    const std::vector<int> &pointTags,
+                                    const int degree, const int numPointsOnCurves,
+                                    const int numIter, const bool anisotropic,
+                                    const double tol2d, const double tol3d,
+                                    const double tolAng, const double tolCurv,
+                                    const int maxDegree, const int maxSegments)
 {
   if(!_checkInit()) return -1;
   _createOcc();
   int outTag = tag;
-  GModel::current()->getOCCInternals()->addSurfaceFilling(outTag, wireTag,
-                                                          pointTags);
+  std::vector<int> surf, surfCont;
+  GModel::current()->getOCCInternals()->addSurfaceFilling
+    (outTag, wireTag, pointTags, surf, surfCont, degree, numPointsOnCurves,
+     numIter, anisotropic, tol2d, tol3d, tolAng, tolCurv, maxDegree,
+     maxSegments);
   return outTag;
 }
 
@@ -5873,8 +5911,8 @@ GMSH_API int gmsh::model::occ::addBSplineSurface(
   const int degreeU, const int degreeV, const std::vector<double> &weights,
   const std::vector<double> &knotsU, const std::vector<double> &knotsV,
   const std::vector<int> &multiplicitiesU,
-  const std::vector<int> &multiplicitiesV,
-  const std::vector<int> &wireTags, const bool wire3D)
+  const std::vector<int> &multiplicitiesV, const std::vector<int> &wireTags,
+  const bool wire3D)
 {
   if(!_checkInit()) return -1;
   int outTag = tag;
@@ -5884,11 +5922,9 @@ GMSH_API int gmsh::model::occ::addBSplineSurface(
   return outTag;
 }
 
-GMSH_API int
-gmsh::model::occ::addBezierSurface(const std::vector<int> &pointTags,
-                                   const int numPointsU, const int tag,
-                                   const std::vector<int> &wireTags,
-                                   const bool wire3D)
+GMSH_API int gmsh::model::occ::addBezierSurface(
+  const std::vector<int> &pointTags, const int numPointsU, const int tag,
+  const std::vector<int> &wireTags, const bool wire3D)
 {
   if(!_checkInit()) return -1;
   int outTag = tag;
@@ -5900,13 +5936,12 @@ gmsh::model::occ::addBezierSurface(const std::vector<int> &pointTags,
 GMSH_API int
 gmsh::model::occ::addTrimmedSurface(const int surfaceTag,
                                     const std::vector<int> &wireTags,
-                                    const bool wire3D,
-                                    const int tag)
+                                    const bool wire3D, const int tag)
 {
   if(!_checkInit()) return -1;
   int outTag = tag;
-  GModel::current()->getOCCInternals()->addTrimmedSurface(
-    outTag, surfaceTag, wireTags, wire3D);
+  GModel::current()->getOCCInternals()->addTrimmedSurface(outTag, surfaceTag,
+                                                          wireTags, wire3D);
   return outTag;
 }
 
@@ -7108,34 +7143,36 @@ GMSH_API void gmsh::view::probe(const int tag, const double x, const double y,
   int numVal = 0;
   switch(numComp) {
   case 1:
-    if(data->searchScalarWithTol(x, y, z, &val[0], step, nullptr, tolerance, qn, qx,
-                                 qy, qz, gradient, dim)) {
+    if(data->searchScalarWithTol(x, y, z, &val[0], step, nullptr, tolerance, qn,
+                                 qx, qy, qz, gradient, dim)) {
       numVal = numSteps * mult * 1;
     }
     break;
   case 3:
-    if(data->searchVectorWithTol(x, y, z, &val[0], step, nullptr, tolerance, qn, qx,
-                                 qy, qz, gradient, dim)) {
+    if(data->searchVectorWithTol(x, y, z, &val[0], step, nullptr, tolerance, qn,
+                                 qx, qy, qz, gradient, dim)) {
       numVal = numSteps * mult * 3;
     }
     break;
   case 9:
-    if(data->searchTensorWithTol(x, y, z, &val[0], step, nullptr, tolerance, qn, qx,
-                                 qy, qz, gradient, dim)) {
+    if(data->searchTensorWithTol(x, y, z, &val[0], step, nullptr, tolerance, qn,
+                                 qx, qy, qz, gradient, dim)) {
       numVal = numSteps * mult * 9;
     }
     break;
   default:
-    if(data->searchScalarWithTol(x, y, z, &val[0], step, nullptr, tolerance, qn, qx,
-                                 qy, qz, gradient, dim)) {
+    if(data->searchScalarWithTol(x, y, z, &val[0], step, nullptr, tolerance, qn,
+                                 qx, qy, qz, gradient, dim)) {
       numVal = numSteps * mult * 1;
     }
-    else if(data->searchVectorWithTol(x, y, z, &val[0], step, nullptr, tolerance, qn,
-                                      qx, qy, qz, gradient, dim)) {
+    else if(data->searchVectorWithTol(x, y, z, &val[0], step, nullptr,
+                                      tolerance, qn, qx, qy, qz, gradient,
+                                      dim)) {
       numVal = numSteps * mult * 3;
     }
-    else if(data->searchTensorWithTol(x, y, z, &val[0], step, nullptr, tolerance, qn,
-                                      qx, qy, qz, gradient, dim)) {
+    else if(data->searchTensorWithTol(x, y, z, &val[0], step, nullptr,
+                                      tolerance, qn, qx, qy, qz, gradient,
+                                      dim)) {
       numVal = numSteps * mult * 9;
     }
     break;
@@ -7174,8 +7211,7 @@ GMSH_API void gmsh::view::setVisibilityPerWindow(const int tag, const int value,
   }
 #if defined(HAVE_FLTK)
   FlGui::instance()->setCurrentOpenglWindow(windowIndex);
-  drawContext *ctx =
-    FlGui::instance()->getCurrentOpenglWindow()->getDrawContext();
+  drawContext *ctx = FlGui::instance()->getCurrentDrawContext();
   if(value)
     ctx->show(view);
   else
@@ -7259,7 +7295,7 @@ static void _errorHandlerFltk(const char *fmt, ...)
 static void _createFltk()
 {
   if(!FlGui::available())
-    FlGui::instance(_argc, _argv, false,  _errorHandlerFltk);
+    FlGui::instance(_argc, _argv, false, _errorHandlerFltk);
 }
 #endif
 
@@ -7476,7 +7512,7 @@ GMSH_API void gmsh::fltk::showContextWindow(const int dim, const int tag)
   if(!_checkInit()) return;
 #if defined(HAVE_FLTK)
   _createFltk();
-  FlGui::instance()->onelabContext->show(dim, tag);
+  FlGui::instance()->showOnelabContext(dim, tag);
 #endif
 }
 
@@ -7485,7 +7521,7 @@ GMSH_API void gmsh::fltk::openTreeItem(const std::string &name)
   if(!_checkInit()) return;
 #if defined(HAVE_FLTK)
   _createFltk();
-  FlGui::instance()->onelab->openTreeItem(name);
+  FlGui::instance()->openTreeItem(name);
 #endif
 }
 
@@ -7494,7 +7530,7 @@ GMSH_API void gmsh::fltk::closeTreeItem(const std::string &name)
   if(!_checkInit()) return;
 #if defined(HAVE_FLTK)
   _createFltk();
-  FlGui::instance()->onelab->closeTreeItem(name);
+  FlGui::instance()->closeTreeItem(name);
 #endif
 }
 

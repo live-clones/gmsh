@@ -69,9 +69,8 @@ template <typename Key, typename Hash = robin_hood::hash<Key>,
 using unordered_set =
   robin_hood::detail::Table<true, MaxLoadFactor100, Key, void, Hash, KeyEqual>;
 
-
-constexpr int SizeMapDefault    = 0;
-constexpr int SizeMapCrossField = 1;
+constexpr int SizeMapDefault = 0;
+//constexpr int SizeMapCrossField = 1;
 constexpr int SizeMapCrossFieldAndSmallCad = 2;
 constexpr int SizeMapBackgroundMesh = 3;
 constexpr int SizeMapCrossFieldAndBMeshOnCurves = 4;
@@ -82,7 +81,6 @@ constexpr bool PARANO_QUALITY = false;
 constexpr bool PARANO_VALIDITY = false;
 constexpr bool DBG_EXPORT = false;
 
-
 /* scaling applied on integer values stored in view (background field),
  * so the visualization is not broken by the integers */
 constexpr double VIEW_INT_SCALING = 1.e-8;
@@ -91,7 +89,7 @@ int buildBackgroundField(
   GModel *gm, const std::vector<MTriangle *> &global_triangles,
   const std::vector<std::array<double, 9> > &global_triangle_directions,
   const std::unordered_map<MVertex *, double> &global_size_map,
-  const std::vector<std::array<double, 5> >& global_singularity_list,
+  const std::vector<std::array<double, 5> > &global_singularity_list,
   const std::string &viewName = "guiding_field")
 {
   Msg::Info("Build background field (view 'guiding_field') ...");
@@ -153,21 +151,23 @@ int buildBackgroundField(
 #endif
 
   /* singularities */
-  if (global_singularity_list.size() > 0){
+  if(global_singularity_list.size() > 0) {
     int idxtypeVP = 1; /* Post type: VP */
     std::vector<double> datalistSING;
-    datalistSING.reserve(global_singularity_list.size()*6);
-    for (size_t i = 0; i < global_singularity_list.size(); ++i) {
+    datalistSING.reserve(global_singularity_list.size() * 6);
+    for(size_t i = 0; i < global_singularity_list.size(); ++i) {
       datalistSING.push_back(global_singularity_list[i][2]); /* x */
       datalistSING.push_back(global_singularity_list[i][3]); /* y */
       datalistSING.push_back(global_singularity_list[i][4]); /* z */
-      datalistSING.push_back(VIEW_INT_SCALING*double(global_singularity_list[i][0])); /* gf->tag() */
-      datalistSING.push_back(VIEW_INT_SCALING*double(global_singularity_list[i][1])); /* index */
+      datalistSING.push_back(
+        VIEW_INT_SCALING *
+        double(global_singularity_list[i][0])); /* gf->tag() */
+      datalistSING.push_back(VIEW_INT_SCALING *
+                             double(global_singularity_list[i][1])); /* index */
       datalistSING.push_back(0.); /* empty */
     }
-    d->importList(idxtypeVP, datalistSING.size()/6, datalistSING, false);
+    d->importList(idxtypeVP, datalistSING.size() / 6, datalistSING, false);
   }
-
 
   d->finalize();
 
@@ -310,17 +310,21 @@ int fillSizemapFromScalarBackgroundField(
   return 0;
 }
 
-std::string nameOfSizeMapMethod(int method) {
-  if (method == 0) {
-    return "default (" + nameOfSizeMapMethod(4) + ")";
-  } else if (method == 1) {
+std::string nameOfSizeMapMethod(int method)
+{
+  if(method == 0) { return "default (" + nameOfSizeMapMethod(4) + ")"; }
+  else if(method == 1) {
     return "cross-field conformal scaling";
-  } else if (method == 2) {
+  }
+  else if(method == 2) {
     return "cross-field conformal scaling and CAD adaptation";
-  } else if (method == 3) {
+  }
+  else if(method == 3) {
     return "background mesh sizes";
-  } else if (method == 4) {
-    return "cross-field conformal scaling and CAD adaptation (clamped by background mesh)";
+  }
+  else if(method == 4) {
+    return "cross-field conformal scaling and CAD adaptation (clamped by "
+           "background mesh)";
   }
   return "unknown";
 }
@@ -352,8 +356,8 @@ bool generateMeshWithSpecialParameters(GModel *gm,
   CTX::instance()->mesh.lcFactor = lcFactor * scalingOnTriangulation;
   CTX::instance()->mesh.recombineAll = 0;
   CTX::instance()->mesh.algoRecombine = 0;
-  CTX::instance()->mesh.algo2d =
-    ALGO_2D_MESHADAPT; /* slow but frontal does not always work */
+  CTX::instance()->mesh.algo2d = ALGO_2D_FRONTAL;
+  //    ALGO_2D_MESHADAPT; /* slow but frontal does not always work */
 
   /* Generate the triangulation with standard gmsh pipeline */
   GenerateMesh(gm, 2);
@@ -373,8 +377,9 @@ bool generateMeshWithSpecialParameters(GModel *gm,
 }
 
 bool getGFaceBackgroundMeshLinesAndTriangles(
-    GlobalBackgroundMesh& bmesh, GFace* gf,
-    std::vector<MLine*>& lines, std::vector<MTriangle*>& triangles) {
+  GlobalBackgroundMesh &bmesh, GFace *gf, std::vector<MLine *> &lines,
+  std::vector<MTriangle *> &triangles)
+{
   lines.clear();
   triangles.clear();
 
@@ -383,9 +388,10 @@ bool getGFaceBackgroundMeshLinesAndTriangles(
   for(GEdge *ge : edges) {
     auto it = bmesh.edgeBackgroundMeshes.find(ge);
     if(it == bmesh.edgeBackgroundMeshes.end()) {
-      Msg::Warning("getGFaceBackgroundMeshLinesAndTriangles: GEdge %i not found "
-          "in background mesh",
-          ge->tag());
+      Msg::Warning(
+        "getGFaceBackgroundMeshLinesAndTriangles: GEdge %i not found "
+        "in background mesh",
+        ge->tag());
       continue;
     }
     lines.reserve(lines.size() + it->second.lines.size());
@@ -396,8 +402,8 @@ bool getGFaceBackgroundMeshLinesAndTriangles(
   auto it = bmesh.faceBackgroundMeshes.find(gf);
   if(it == bmesh.faceBackgroundMeshes.end()) {
     Msg::Warning("getGFaceBackgroundMeshLinesAndTriangles: GFace %i not found "
-        "in background mesh",
-        gf->tag());
+                 "in background mesh",
+                 gf->tag());
     return false;
   }
   triangles.reserve(triangles.size() + it->second.triangles.size());
@@ -408,11 +414,9 @@ bool getGFaceBackgroundMeshLinesAndTriangles(
   return true;
 }
 
-int BuildBackgroundMeshAndGuidingField(GModel *gm, 
-    bool overwriteGModelMesh,
-    bool deleteGModelMeshAfter, 
-    bool overwriteField,
-    int N)
+int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
+                                       bool deleteGModelMeshAfter,
+                                       bool overwriteField, int N)
 {
   if(CTX::instance()->abortOnError && Msg::GetErrorCount()) return 0;
   if(CTX::instance()->mesh.algo2d != ALGO_2D_PACK_PRLGRMS &&
@@ -436,12 +440,14 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm,
     if(fields->getBackgroundField() > 0) {
       Field *field = fields->get(fields->getBackgroundField());
       if(field && field->numComponents() == 3) {
-        if (!overwriteField) {
+        if(!overwriteField) {
           Msg::Info(
-              "vector background field exists, using it as a guiding field");
+            "vector background field exists, using it as a guiding field");
           return 0;
-        } else {
-          Msg::Info("disabled current vector background field, building a new one");
+        }
+        else {
+          Msg::Info(
+            "disabled current vector background field, building a new one");
           fields->setBackgroundFieldId(0);
         }
       }
@@ -484,7 +490,6 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm,
     generateMeshWithSpecialParameters(gm, scalingOnTriangulation);
   }
 
-
   GlobalBackgroundMesh &bmesh = getBackgroundMesh(BMESH_NAME);
   bool overwrite = true;
   int status = bmesh.importGModelMeshes(gm, overwrite);
@@ -512,10 +517,13 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm,
   std::vector<MTriangle *> global_triangles;
   std::vector<std::array<double, 9> > global_triangle_directions;
   std::vector<std::pair<MVertex *, double> > global_size_map;
-  std::vector<std::array<double, 5> > global_singularity_list; /* format: gf->tag(), index, x, y, z */
+  std::vector<std::array<double, 5> >
+    global_singularity_list; /* format: gf->tag(), index, x, y, z */
   /* Per GFace computations, in parallel */
   {
-    Msg::Info("- quadqs sizemap method: %s", nameOfSizeMapMethod(CTX::instance()->mesh.quadqsSizemapMethod).c_str());
+    Msg::Info(
+      "- quadqs sizemap method: %s",
+      nameOfSizeMapMethod(CTX::instance()->mesh.quadqsSizemapMethod).c_str());
 
     std::vector<GFace *> faces = model_faces(gm);
     size_t ntris = 0;
@@ -546,9 +554,11 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm,
       /* Get mesh elements for solver */
       std::vector<MLine *> lines;
       std::vector<MTriangle *> triangles;
-      bool oklt = getGFaceBackgroundMeshLinesAndTriangles(bmesh, gf, lines, triangles);
-      if (!oklt && triangles.size() == 0) {
-        Msg::Error("- Face %i: failed to get triangles from background mesh", gf->tag());
+      bool oklt =
+        getGFaceBackgroundMeshLinesAndTriangles(bmesh, gf, lines, triangles);
+      if(!oklt && triangles.size() == 0) {
+        Msg::Error("- Face %i: failed to get triangles from background mesh",
+                   gf->tag());
         continue;
       }
 
@@ -580,10 +590,13 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm,
         Msg::Warning("- Face %i: failed to compute cross field singularities",
                      gf->tag());
       }
-      std::vector<std::array<double,5> > singularity_list(singularities.size());
-      for (size_t k = 0; k < singularities.size(); ++k) {
-        singularity_list[k] = {double(gf->tag()), double(singularities[k].second),
-          singularities[k].first.x(), singularities[k].first.y(), singularities[k].first.z()};
+      std::vector<std::array<double, 5> > singularity_list(
+        singularities.size());
+      for(size_t k = 0; k < singularities.size(); ++k) {
+        singularity_list[k] = {
+          double(gf->tag()), double(singularities[k].second),
+          singularities[k].first.x(), singularities[k].first.y(),
+          singularities[k].first.z()};
       }
 
       if(SHOW_INTERMEDIATE_VIEWS) {
@@ -613,17 +626,17 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm,
         }
       }
       else if(qqsSizemapMethod ==
-              SizeMapBackgroundMesh) { /* Size map from background triangulation */
+              SizeMapBackgroundMesh) { /* Size map from background triangulation
+                                        */
         int sts = fillSizemapFromTriangleSizes(triangles, localSizemap);
         if(sts != 0) {
           Msg::Warning("- Face %i: failed to fill size map from triangle sizes",
                        gf->tag());
-        } else if (sts == 0 && scalingOnTriangulation > 0.) {
+        }
+        else if(sts == 0 && scalingOnTriangulation > 0.) {
           /* re-adjust the target edge size as if the triangulation was
            * not finer for more accurate cross field */
-          for (auto& kv: localSizemap) {
-            kv.second /= scalingOnTriangulation;
-          }
+          for(auto &kv : localSizemap) { kv.second /= scalingOnTriangulation; }
         }
       }
       else {
@@ -662,9 +675,7 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm,
         }
 
         /* Midpoint subdivision => 4 times more quads */
-        if (midpointSubdivisionAfter) {
-          targetNumberOfQuads /= 4;
-        }
+        if(midpointSubdivisionAfter) { targetNumberOfQuads /= 4; }
 
         if(targetNumberOfQuads == 0) targetNumberOfQuads = 1;
 
@@ -677,9 +688,9 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm,
         }
       }
 
-      #if defined(_OPENMP)
-      #pragma omp critical
-      #endif
+#if defined(_OPENMP)
+#pragma omp critical
+#endif
       {
         append(global_triangles, triangles);
         append(global_triangle_directions, triangleDirections);
@@ -688,7 +699,6 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm,
           global_size_map.push_back({kv.first, kv.second});
         }
       }
-
     }
   }
 
@@ -716,18 +726,18 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm,
 
   /* Minimal size on curves */
   std::unordered_map<MVertex *, double> cadMinimalSizeOnCurves;
-  if (!externalSizemap) {
-    if (   qqsSizemapMethod == SizeMapDefault 
-        || qqsSizemapMethod == SizeMapCrossFieldAndBMeshOnCurves
-        || qqsSizemapMethod == SizeMapCrossFieldAndSmallCad)  {
-
+  if(!externalSizemap) {
+    if(qqsSizemapMethod == SizeMapDefault ||
+       qqsSizemapMethod == SizeMapCrossFieldAndBMeshOnCurves ||
+       qqsSizemapMethod == SizeMapCrossFieldAndSmallCad) {
       bool clampMinWithTriEdges = false;
-      if (qqsSizemapMethod == SizeMapDefault 
-          || qqsSizemapMethod == SizeMapCrossFieldAndBMeshOnCurves)  {
+      if(qqsSizemapMethod == SizeMapDefault ||
+         qqsSizemapMethod == SizeMapCrossFieldAndBMeshOnCurves) {
         clampMinWithTriEdges = true;
       }
 
-      int scad = computeMinimalSizeOnCurves(bmesh, clampMinWithTriEdges, cadMinimalSizeOnCurves);
+      int scad = computeMinimalSizeOnCurves(bmesh, clampMinWithTriEdges,
+                                            cadMinimalSizeOnCurves);
       if(scad != 0) {
         Msg::Warning("failed to compute minimal size on CAD curves");
       }
@@ -759,12 +769,13 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm,
   {
     // TODO: should be multiplied by lcFactor or not ?
     double fs = midpointSubdivisionAfter ? 2. : 1.;
-    double sizeMin = CTX::instance()->mesh.lcMin * CTX::instance()->mesh.lcFactor;
-    double sizeMax = fs * CTX::instance()->mesh.lcMax * CTX::instance()->mesh.lcFactor;
-    for (auto& kv: sizeMap) {
-      if (kv.second < sizeMin) {
-        kv.second = sizeMin;
-      } else if (kv.second > sizeMax) {
+    double sizeMin =
+      CTX::instance()->mesh.lcMin * CTX::instance()->mesh.lcFactor;
+    double sizeMax =
+      fs * CTX::instance()->mesh.lcMax * CTX::instance()->mesh.lcFactor;
+    for(auto &kv : sizeMap) {
+      if(kv.second < sizeMin) { kv.second = sizeMin; }
+      else if(kv.second > sizeMax) {
         kv.second = sizeMax;
       }
     }
@@ -778,12 +789,12 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm,
     showUVParametrization(bmesh);
   }
 
-
   printSizeMapStats(global_triangles, sizeMap);
 
   /* Build the background field */
-  int sbf = buildBackgroundField(
-    gm, global_triangles, global_triangle_directions, sizeMap, global_singularity_list, "guiding_field");
+  int sbf =
+    buildBackgroundField(gm, global_triangles, global_triangle_directions,
+                         sizeMap, global_singularity_list, "guiding_field");
   if(sbf != 0) {
     Msg::Warning("failed to build background guiding field");
     return -1;
@@ -804,58 +815,64 @@ bool backgroundMeshAndGuidingFieldExists(GModel *gm)
   return bgmOk && bfOk;
 }
 
-bool getSingularitiesFromBackgroundField(GFace* gf,
-    std::vector<std::pair<SPoint3, int> >& singularities) {
+bool getSingularitiesFromBackgroundField(
+  GFace *gf, std::vector<std::pair<SPoint3, int> > &singularities)
+{
   singularities.clear();
 
-  Field* field = nullptr;
+  Field *field = nullptr;
   FieldManager *fields = gf->model()->getFields();
   if(fields->getBackgroundField() > 0) {
     Field *guiding_field = fields->get(fields->getBackgroundField());
-    if(guiding_field && guiding_field->numComponents() == 3) { field = guiding_field; }
+    if(guiding_field && guiding_field->numComponents() == 3) {
+      field = guiding_field;
+    }
   }
-  if (field == nullptr) {
-    Msg::Debug("get singularities: face %i, failed to get background field", gf->tag());
+  if(field == nullptr) {
+    Msg::Debug("get singularities: face %i, failed to get background field",
+               gf->tag());
     return false;
   }
 
   int viewTag = int(field->options["IView"]->numericalValue());
-  PView* view = PView::getViewByTag(viewTag);
-  if (view == nullptr) {
+  PView *view = PView::getViewByTag(viewTag);
+  if(view == nullptr) {
     Msg::Error("failed to get view for tag = %i", viewTag);
     return false;
   }
   PViewDataList *d = dynamic_cast<PViewDataList *>(view->getData());
-  if (d == nullptr) {
+  if(d == nullptr) {
     Msg::Error("view type is wrong");
     return false;
   }
 
-  size_t nVP = d->VP.size()/6;
-  for (size_t i = 0; i < nVP; ++i) {
-    int gfTag = int(std::round(d->VP[6*i+3] / VIEW_INT_SCALING));
-    if (gfTag != gf->tag()) continue;
-    int index = int(std::round(d->VP[6*i+4] / VIEW_INT_SCALING));
-    double x = d->VP[6*i+0];
-    double y = d->VP[6*i+1];
-    double z = d->VP[6*i+2];
-    singularities.push_back(std::make_pair(SPoint3(x,y,z),index));
+  size_t nVP = d->VP.size() / 6;
+  for(size_t i = 0; i < nVP; ++i) {
+    int gfTag = int(std::round(d->VP[6 * i + 3] / VIEW_INT_SCALING));
+    if(gfTag != gf->tag()) continue;
+    int index = int(std::round(d->VP[6 * i + 4] / VIEW_INT_SCALING));
+    double x = d->VP[6 * i + 0];
+    double y = d->VP[6 * i + 1];
+    double z = d->VP[6 * i + 2];
+    singularities.push_back(std::make_pair(SPoint3(x, y, z), index));
   }
 
   return true;
 }
 
 bool getSingularitiesFromNewCrossFieldComputation(
-    GlobalBackgroundMesh& bmesh,
-    GFace* gf,
-    std::vector<std::pair<SPoint3, int> >& singularities) {
+  GlobalBackgroundMesh &bmesh, GFace *gf,
+  std::vector<std::pair<SPoint3, int> > &singularities)
+{
   const int N = 4;
 
   std::vector<MLine *> lines;
   std::vector<MTriangle *> triangles;
-  bool oklt = getGFaceBackgroundMeshLinesAndTriangles(bmesh, gf, lines, triangles);
-  if (!oklt && triangles.size() == 0) {
-    Msg::Error("- Face %i: failed to get triangles from background mesh", gf->tag());
+  bool oklt =
+    getGFaceBackgroundMeshLinesAndTriangles(bmesh, gf, lines, triangles);
+  if(!oklt && triangles.size() == 0) {
+    Msg::Error("- Face %i: failed to get triangles from background mesh",
+               gf->tag());
     return false;
   }
 
@@ -866,12 +883,11 @@ bool getSingularitiesFromNewCrossFieldComputation(
   int nbBoundaryExtensionLayer = 1;
   int verbosity = 0;
   Msg::Info("- Face %i: compute cross field (%li triangles, %li B.C. "
-      "edges, %i diffusion levels) ...",
-      gf->tag(), triangles.size(), lines.size(),
-      nbDiffusionLevels);
+            "edges, %i diffusion levels) ...",
+            gf->tag(), triangles.size(), lines.size(), nbDiffusionLevels);
   int scf = computeCrossFieldWithHeatEquation(
-      N, triangles, lines, triEdgeTheta, nbDiffusionLevels,
-      thresholdNormConvergence, nbBoundaryExtensionLayer, verbosity);
+    N, triangles, lines, triEdgeTheta, nbDiffusionLevels,
+    thresholdNormConvergence, nbBoundaryExtensionLayer, verbosity);
   if(scf != 0) {
     Msg::Warning("- Face %i: failed to compute cross field", gf->tag());
   }
@@ -880,18 +896,18 @@ bool getSingularitiesFromNewCrossFieldComputation(
   bool addSingularitiesAtAcuteCorners = true;
   double thresholdInDeg = 30.;
   int scsi = detectCrossFieldSingularities(N, triangles, triEdgeTheta,
-      addSingularitiesAtAcuteCorners,
-      thresholdInDeg, singularities);
+                                           addSingularitiesAtAcuteCorners,
+                                           thresholdInDeg, singularities);
   if(scsi != 0) {
     Msg::Warning("- Face %i: failed to compute cross field singularities",
-        gf->tag());
+                 gf->tag());
   }
 
   return true;
 }
 
 void computeBdrVertexIdealValence(const std::vector<MQuadrangle *> &quads,
-    unordered_map<MVertex *, double> &qValIdeal)
+                                  unordered_map<MVertex *, double> &qValIdeal)
 {
   qValIdeal.clear();
   for(MQuadrangle *f : quads) {
@@ -1253,8 +1269,9 @@ int improveCornerValences(
         Msg::Debug("patch has %li bdr loops, weird", patch.bdrVertices.size());
         continue;
       }
-      if (patch.embVertices.size() > 0) {
-        Msg::Debug("patch has %li embedded vertices loops, avoid", patch.embVertices.size());
+      if(patch.embVertices.size() > 0) {
+        Msg::Debug("patch has %li embedded vertices loops, avoid",
+                   patch.embVertices.size());
         continue;
       }
 
@@ -1372,8 +1389,9 @@ int improveCurveValences(
       Msg::Debug("patch has %li bdr loops, weird", patch.bdrVertices.size());
       continue;
     }
-    if (patch.embVertices.size() > 0) {
-      Msg::Debug("patch has %li embedded vertices loops, avoid", patch.embVertices.size());
+    if(patch.embVertices.size() > 0) {
+      Msg::Debug("patch has %li embedded vertices loops, avoid",
+                 patch.embVertices.size());
       continue;
     }
 
@@ -1535,8 +1553,9 @@ int improveInteriorValences(
     bool okp = patchFromElements(gf, quads, patch);
     if(!okp || patch.bdrVertices.size() != 1) continue;
 
-    if (patch.embVertices.size() > 0) {
-      Msg::Debug("patch has %li embedded vertices loops, avoid", patch.embVertices.size());
+    if(patch.embVertices.size() > 0) {
+      Msg::Debug("patch has %li embedded vertices loops, avoid",
+                 patch.embVertices.size());
       continue;
     }
 
@@ -1651,9 +1670,7 @@ int RefineMeshWithBackgroundMeshProjection(GModel *gm)
     GeoLog::add(elements, "qqs_quadtri");
     GeoLog::flush();
   }
-  if (DBG_EXPORT) {
-    gm->writeMSH("qqs_init.msh", 4.1);
-  }
+  if(DBG_EXPORT) { gm->writeMSH("qqs_init.msh", 4.1); }
 
   Msg::Info(
     "Refine mesh (midpoint subdivision, with background projection) ...");
@@ -1665,9 +1682,8 @@ int RefineMeshWithBackgroundMeshProjection(GModel *gm)
     std::unordered_map<std::string, double> stats;
     appendQuadMeshStatistics(gm, stats, "MPS_");
     printStatistics(stats, "Quad mesh after subdivision, before projection:");
-    gm->writeMSH("qqs_subdiv_noproj.msh", 4.1);
+    if(DBG_EXPORT) { gm->writeMSH("qqs_subdiv_noproj.msh", 4.1); }
   }
-
 
   /* Convert vertex types:
    * - MVertex on curve -> MEdgeVertex
@@ -1676,29 +1692,30 @@ int RefineMeshWithBackgroundMeshProjection(GModel *gm)
   std::vector<GFace *> faces = model_faces(gm);
   /* Build custom edgeToFaces because ge->faces() does not work
    * for embedded edges */
-  std::unordered_map<GEdge*,std::vector<MVertex*> > toProjectOnCurve;
-  std::unordered_map<GFace*,std::vector<MVertex*> > toProjectOnFace;
-  std::unordered_map<GEdge*,std::unordered_set<GFace*> > edgeToFaces;
-  for (GFace* gf: model_faces(gm)) {
-    std::vector<GEdge*> fedges = face_edges(gf);
-    for (GEdge* ge: fedges) edgeToFaces[ge].insert(gf);
+  std::unordered_map<GEdge *, std::vector<MVertex *> > toProjectOnCurve;
+  std::unordered_map<GFace *, std::vector<MVertex *> > toProjectOnFace;
+  std::unordered_map<GEdge *, std::unordered_set<GFace *> > edgeToFaces;
+  for(GFace *gf : model_faces(gm)) {
+    std::vector<GEdge *> fedges = face_edges(gf);
+    for(GEdge *ge : fedges) edgeToFaces[ge].insert(gf);
   }
 
-  #if defined(_OPENMP)
-  #pragma omp parallel for schedule(dynamic)
-  #endif
+#if defined(_OPENMP)
+#pragma omp parallel for schedule(dynamic)
+#endif
   for(size_t e = 0; e < edges.size(); ++e) {
     GEdge *ge = edges[e];
     if(CTX::instance()->mesh.meshOnlyVisible && !ge->getVisibility()) continue;
     if(ge->lines.size() == 0 || ge->mesh_vertices.size() == 0) continue;
     unordered_map<MVertex *, MVertex *> old2new_ge;
-    std::vector<MVertex*>& projList = toProjectOnCurve[ge];
+    std::vector<MVertex *> &projList = toProjectOnCurve[ge];
     projList.reserve(ge->mesh_vertices.size());
     for(size_t i = 0; i < ge->mesh_vertices.size(); ++i) {
       MVertex *v = ge->mesh_vertices[i];
       MEdgeVertex *mev = dynamic_cast<MEdgeVertex *>(v);
       if(mev == nullptr) {
-        MVertex* v2 = new MEdgeVertex(v->point().x(), v->point().y(), v->point().z(), ge, 0.);
+        MVertex *v2 = new MEdgeVertex(v->point().x(), v->point().y(),
+                                      v->point().z(), ge, 0.);
         ge->mesh_vertices[i] = v2;
         old2new_ge[v] = v2;
         projList.push_back(v2);
@@ -1726,9 +1743,9 @@ int RefineMeshWithBackgroundMeshProjection(GModel *gm)
     }
   }
 
-  #if defined(_OPENMP)
-  #pragma omp parallel for schedule(dynamic)
-  #endif
+#if defined(_OPENMP)
+#pragma omp parallel for schedule(dynamic)
+#endif
   for(size_t f = 0; f < faces.size(); ++f) {
     GFace *gf = faces[f];
     if(CTX::instance()->mesh.meshOnlyVisible && !gf->getVisibility()) continue;
@@ -1737,20 +1754,20 @@ int RefineMeshWithBackgroundMeshProjection(GModel *gm)
       continue;
     if(gf->triangles.size() == 0 && gf->quadrangles.size() == 0) continue;
     unordered_map<MVertex *, MVertex *> old2new_gf;
-    std::vector<MVertex*>& projList = toProjectOnFace[gf];
+    std::vector<MVertex *> &projList = toProjectOnFace[gf];
     projList.reserve(gf->mesh_vertices.size());
     for(size_t i = 0; i < gf->mesh_vertices.size(); ++i) {
       MVertex *v = gf->mesh_vertices[i];
       if(v->onWhat() != gf) {
         Msg::Error("- Face %i: vertex %li is associated to entity (%i,%i)",
-            gf->tag(), v->getNum(), v->onWhat()->dim(),
-            v->onWhat()->tag());
+                   gf->tag(), v->getNum(), v->onWhat()->dim(),
+                   v->onWhat()->tag());
         continue;
       }
       MFaceVertex *mfv = dynamic_cast<MFaceVertex *>(v);
       if(mfv == nullptr) {
-        MVertex* v2 = new MFaceVertex(v->point().x(), v->point().y(),
-            v->point().z(), gf, 0., 0.);
+        MVertex *v2 = new MFaceVertex(v->point().x(), v->point().y(),
+                                      v->point().z(), gf, 0., 0.);
         gf->mesh_vertices[i] = v2;
         old2new_gf[v] = v2;
         projList.push_back(v2);
@@ -1768,30 +1785,32 @@ int RefineMeshWithBackgroundMeshProjection(GModel *gm)
     }
   }
 
-  /* Geometric projection on model */
+/* Geometric projection on model */
 
-  /* - projections on curves */
-  #if defined(_OPENMP)
-  #pragma omp parallel for schedule(dynamic)
-  #endif
-  for (size_t e = 0; e < edges.size(); ++e) {
-    GEdge* ge = edges[e];
+/* - projections on curves */
+#if defined(_OPENMP)
+#pragma omp parallel for schedule(dynamic)
+#endif
+  for(size_t e = 0; e < edges.size(); ++e) {
+    GEdge *ge = edges[e];
     auto it = toProjectOnCurve.find(ge);
-    if (it == toProjectOnCurve.end()) continue;
+    if(it == toProjectOnCurve.end()) continue;
 
     double tMin = ge->parBounds(0).low();
     double tMax = ge->parBounds(0).high();
 
-    for (size_t j = 0; j < it->second.size(); ++j) {
-      MVertex* v = it->second[j];
-      double tGuess = tMin + (tMax-tMin) * double(j+1)/double(it->second.size()+1);
+    for(size_t j = 0; j < it->second.size(); ++j) {
+      MVertex *v = it->second[j];
+      double tGuess =
+        tMin + (tMax - tMin) * double(j + 1) / double(it->second.size() + 1);
       GPoint proj = ge->closestPoint(v->point(), tGuess);
       if(proj.succeeded()) {
         v->setXYZ(proj.x(), proj.y(), proj.z());
         v->setParameter(0, proj.u());
-      } else {
+      }
+      else {
         Msg::Warning("- Edge %i, vertex %li: curve projection failed",
-            ge->tag(), v->getNum());
+                     ge->tag(), v->getNum());
       }
     }
   }
@@ -1805,25 +1824,26 @@ int RefineMeshWithBackgroundMeshProjection(GModel *gm)
                  "using CAD projection (slow)");
   }
 
-  /* - projections on faces */
-  #if defined(_OPENMP)
-  #pragma omp parallel for schedule(dynamic)
-  #endif
+/* - projections on faces */
+#if defined(_OPENMP)
+#pragma omp parallel for schedule(dynamic)
+#endif
   for(size_t f = 0; f < faces.size(); ++f) {
     GFace *gf = faces[f];
 
     auto it = toProjectOnFace.find(gf);
-    if (it == toProjectOnFace.end()) continue;
+    if(it == toProjectOnFace.end()) continue;
 
-    Msg::Info("- Face %i: project %li vertices and smooth the quad mesh ...", 
-        gf->tag(), it->second.size());
+    Msg::Info("- Face %i: project %li vertices and smooth the quad mesh ...",
+              gf->tag(), it->second.size());
 
-    SurfaceProjector* sp = nullptr;
+    SurfaceProjector *sp = nullptr;
     if(bmesh) {
       auto it2 = bmesh->faceBackgroundMeshes.find(gf);
       if(it2 == bmesh->faceBackgroundMeshes.end()) {
         Msg::Error("background mesh not found for face %i", gf->tag());
-      } else {
+      }
+      else {
         /* Get pointers to triangles in the background mesh */
         std::vector<MTriangle *> triangles(it2->second.triangles.size());
         for(size_t i = 0; i < it2->second.triangles.size(); ++i) {
@@ -1843,9 +1863,10 @@ int RefineMeshWithBackgroundMeshProjection(GModel *gm)
     /* Project the vertices */
     bool evalOnCAD = false;
     bool projOnCad = false;
-    if (gf->haveParametrization() && haveNiceParametrization(gf)) evalOnCAD = true;
-    for (size_t j = 0; j < it->second.size(); ++j) {
-      MVertex* v = it->second[j];
+    if(gf->haveParametrization() && haveNiceParametrization(gf))
+      evalOnCAD = true;
+    for(size_t j = 0; j < it->second.size(); ++j) {
+      MVertex *v = it->second[j];
       GPoint proj;
       if(sp != nullptr) {
         proj = sp->closestPoint(v->point().data(), evalOnCAD, projOnCad);
@@ -1853,7 +1874,8 @@ int RefineMeshWithBackgroundMeshProjection(GModel *gm)
           double uvg[2] = {0., 0.};
           proj = gf->closestPoint(v->point(), uvg);
         }
-      } else {
+      }
+      else {
         double uvg[2] = {0., 0.};
         proj = gf->closestPoint(v->point(), uvg);
       }
@@ -1861,9 +1883,10 @@ int RefineMeshWithBackgroundMeshProjection(GModel *gm)
         v->setXYZ(proj.x(), proj.y(), proj.z());
         v->setParameter(0, proj.u());
         v->setParameter(1, proj.v());
-      } else {
+      }
+      else {
         Msg::Warning("- Face %i, vertex %li: surface projection failed",
-            gf->tag(), v->getNum());
+                     gf->tag(), v->getNum());
       }
     }
 
@@ -1871,15 +1894,14 @@ int RefineMeshWithBackgroundMeshProjection(GModel *gm)
     double timeMax = 0.3;
     optimizeGeometryQuadMesh(gf, sp, timeMax);
     double sicnMin, sicnAvg;
-    computeSICN(
-      dynamic_cast_vector<MQuadrangle *, MElement *>(gf->quadrangles),
-      sicnMin, sicnAvg);
+    computeSICN(dynamic_cast_vector<MQuadrangle *, MElement *>(gf->quadrangles),
+                sicnMin, sicnAvg);
     if(sicnMin < 0.) {
       double timeMax = 2.;
       optimizeGeometryQuadMesh(gf, sp, timeMax);
     }
 
-    if (sp) delete sp;
+    if(sp) delete sp;
   }
 
   if(SHOW_INTERMEDIATE_VIEWS) {
@@ -1904,43 +1926,40 @@ int RefineMeshWithBackgroundMeshProjection(GModel *gm)
     errorAndAbortIfInvalidVertexInModel(gm, "after refine + proj");
   }
 
-  if (DBG_EXPORT) {
-    gm->writeMSH("qqs_subdiv.msh", 4.1);
-  }
+  if(DBG_EXPORT) { gm->writeMSH("qqs_subdiv.msh", 4.1); }
 
   return 0;
 }
 
-
-int checkAndReplaceQuadDominantMesh(GFace* gf, int valenceMaxBdr = 6, int valenceMaxIn = 8) {
+int checkAndReplaceQuadDominantMesh(GFace *gf, int valenceMaxBdr = 6,
+                                    int valenceMaxIn = 8)
+{
   /* Check valence */
-  unordered_map<MVertex *, int > valence;
-  for (MQuadrangle* q: gf->quadrangles) for (size_t lv = 0; lv < 4; ++lv) {
-    valence[q->getVertex(lv)] += 1;
-  }
-  for (MTriangle* t: gf->triangles) for (size_t lv = 0; lv < 3; ++lv) {
-    valence[t->getVertex(lv)] += 1;
-  }
+  unordered_map<MVertex *, int> valence;
+  for(MQuadrangle *q : gf->quadrangles)
+    for(size_t lv = 0; lv < 4; ++lv) { valence[q->getVertex(lv)] += 1; }
+  for(MTriangle *t : gf->triangles)
+    for(size_t lv = 0; lv < 3; ++lv) { valence[t->getVertex(lv)] += 1; }
   int vMaxInt = 0;
   int vMaxBdr = 0;
-  for (auto& kv: valence) {
-    if (kv.first->onWhat() == gf) {
-      vMaxInt = std::max(vMaxInt,kv.second);
-    } else if (kv.first->onWhat()->cast2Edge() != nullptr){
-      vMaxBdr = std::max(vMaxBdr,kv.second);
+  for(auto &kv : valence) {
+    if(kv.first->onWhat() == gf) { vMaxInt = std::max(vMaxInt, kv.second); }
+    else if(kv.first->onWhat()->cast2Edge() != nullptr) {
+      vMaxBdr = std::max(vMaxBdr, kv.second);
     }
   }
-  if (vMaxInt <= valenceMaxIn && vMaxBdr <= valenceMaxBdr) return 0;
+  if(vMaxInt <= valenceMaxIn && vMaxBdr <= valenceMaxBdr) return 0;
 
-  Msg::Warning("- Face %i: quad-tri mesh have valence %i (interior) and %i (bdr), replace it with meshadapt ...",
-      gf->tag(), vMaxInt, vMaxBdr);
+  Msg::Warning("- Face %i: quad-tri mesh have valence %i (interior) and %i "
+               "(bdr), replace it with meshadapt ...",
+               gf->tag(), vMaxInt, vMaxBdr);
 
   int algo2d = gf->getMeshingAlgo();
   gf->setMeshingAlgo(ALGO_2D_MESHADAPT);
   gf->mesh(false);
   gf->setMeshingAlgo(algo2d);
 
-  if (gf->meshStatistics.status != GFace::DONE) {
+  if(gf->meshStatistics.status != GFace::DONE) {
     Msg::Warning("- Face %i: failed to build triangulation", gf->tag());
     return -1;
   }
@@ -1951,12 +1970,13 @@ int checkAndReplaceQuadDominantMesh(GFace* gf, int valenceMaxBdr = 6, int valenc
   return 0;
 }
 
-int replaceBadQuadDominantMeshes(GModel *gm) {
-  std::vector<GFace*> faces = model_faces(gm);
+int replaceBadQuadDominantMeshes(GModel *gm)
+{
+  std::vector<GFace *> faces = model_faces(gm);
 
-  #if defined(_OPENMP)
-  #pragma omp parallel for schedule(dynamic)
-  #endif
+#if defined(_OPENMP)
+#pragma omp parallel for schedule(dynamic)
+#endif
   for(size_t f = 0; f < faces.size(); ++f) {
     GFace *gf = faces[f];
     if(CTX::instance()->mesh.meshOnlyVisible && !gf->getVisibility()) continue;
@@ -1966,14 +1986,13 @@ int replaceBadQuadDominantMeshes(GModel *gm) {
     if(gf->getNumMeshElements() == 0) continue;
 
     int st = checkAndReplaceQuadDominantMesh(gf);
-    if (st != 0) {
+    if(st != 0) {
       Msg::Warning("- Face %i: failed to replace bad quad-tri mesh", gf->tag());
     }
   }
 
   return 0;
 }
-
 
 int optimizeQuadMeshWithDiskQuadrangulationRemeshing(GFace *gf)
 {
@@ -2072,17 +2091,16 @@ int optimizeQuadMeshWithDiskQuadrangulationRemeshing(GFace *gf)
 int quadMeshingOfSimpleFacesWithPatterns(GModel *gm,
                                          double minimumQualityRequired)
 {
-  if (CTX::instance()->mesh.quadqsTopoOptimMethods != 0
-      && CTX::instance()->mesh.quadqsTopoOptimMethods != 100
-      && CTX::instance()->mesh.quadqsTopoOptimMethods != 101
-      && CTX::instance()->mesh.quadqsTopoOptimMethods != 110
-      && CTX::instance()->mesh.quadqsTopoOptimMethods != 111
-     ) {
-    Msg::Debug("optimize topology of simple CAD faces with patterns: avoided because quadqsTopoOptimMethods = %i",
-        CTX::instance()->mesh.quadqsTopoOptimMethods);
+  if(CTX::instance()->mesh.quadqsTopoOptimMethods != 0 &&
+     CTX::instance()->mesh.quadqsTopoOptimMethods != 100 &&
+     CTX::instance()->mesh.quadqsTopoOptimMethods != 101 &&
+     CTX::instance()->mesh.quadqsTopoOptimMethods != 110 &&
+     CTX::instance()->mesh.quadqsTopoOptimMethods != 111) {
+    Msg::Debug("optimize topology of simple CAD faces with patterns: avoided "
+               "because quadqsTopoOptimMethods = %i",
+               CTX::instance()->mesh.quadqsTopoOptimMethods);
     return 0;
   }
-
 
   std::vector<GFace *> faces = model_faces(gm);
   Msg::Info("Pattern-based quad meshing of simple CAD faces ...", faces.size());
@@ -2100,7 +2118,8 @@ int quadMeshingOfSimpleFacesWithPatterns(GModel *gm,
        gf->tag() != CTX::instance()->debugSurface)
       continue;
     if(gf->triangles.size() > 0 || gf->quadrangles.size() == 0) continue;
-    if(gf->embeddedEdges().size() > 0 || gf->embeddedVertices().size() > 0) continue;
+    if(gf->embeddedEdges().size() > 0 || gf->embeddedVertices().size() > 0)
+      continue;
 
     bool invertNormals = meshOrientationIsOppositeOfCadOrientation(gf);
     meshFaceWithGlobalPattern(gf, invertNormals, minimumQualityRequired);
@@ -2122,23 +2141,21 @@ int quadMeshingOfSimpleFacesWithPatterns(GModel *gm,
       gm, "global check after face pattern meshing");
   }
 
-  if (DBG_EXPORT) {
-    gm->writeMSH("qqs_simplefaces.msh", 4.1);
-  }
+  if(DBG_EXPORT) { gm->writeMSH("qqs_simplefaces.msh", 4.1); }
 
   return 0;
 }
 
 int optimizeTopologyWithDiskQuadrangulationRemeshing(GModel *gm)
 {
-  if (CTX::instance()->mesh.quadqsTopoOptimMethods != 0
-      && CTX::instance()->mesh.quadqsTopoOptimMethods !=  10
-      && CTX::instance()->mesh.quadqsTopoOptimMethods !=  11
-      && CTX::instance()->mesh.quadqsTopoOptimMethods != 110
-      && CTX::instance()->mesh.quadqsTopoOptimMethods != 111
-     ) {
-    Msg::Debug("optimize topology with disk quadrangulation remeshing: avoided because quadqsTopoOptimMethods = %i",
-        CTX::instance()->mesh.quadqsTopoOptimMethods);
+  if(CTX::instance()->mesh.quadqsTopoOptimMethods != 0 &&
+     CTX::instance()->mesh.quadqsTopoOptimMethods != 10 &&
+     CTX::instance()->mesh.quadqsTopoOptimMethods != 11 &&
+     CTX::instance()->mesh.quadqsTopoOptimMethods != 110 &&
+     CTX::instance()->mesh.quadqsTopoOptimMethods != 111) {
+    Msg::Debug("optimize topology with disk quadrangulation remeshing: avoided "
+               "because quadqsTopoOptimMethods = %i",
+               CTX::instance()->mesh.quadqsTopoOptimMethods);
     return 0;
   }
 
@@ -2183,23 +2200,21 @@ int optimizeTopologyWithDiskQuadrangulationRemeshing(GModel *gm)
       gm, "global check after disk quadrangulation remeshing");
   }
 
-  if (DBG_EXPORT) {
-    gm->writeMSH("qqs_diskrmsh.msh", 4.1);
-  }
+  if(DBG_EXPORT) { gm->writeMSH("qqs_diskrmsh.msh", 4.1); }
 
   return 0;
 }
 
 int optimizeTopologyWithCavityRemeshing(GModel *gm)
 {
-  if (CTX::instance()->mesh.quadqsTopoOptimMethods != 0
-      && CTX::instance()->mesh.quadqsTopoOptimMethods !=   1
-      && CTX::instance()->mesh.quadqsTopoOptimMethods !=  11
-      && CTX::instance()->mesh.quadqsTopoOptimMethods != 101
-      && CTX::instance()->mesh.quadqsTopoOptimMethods != 111
-     ) {
-    Msg::Debug("optimize topology with cavity remeshing: avoided because quadqsTopoOptimMethods = %i",
-        CTX::instance()->mesh.quadqsTopoOptimMethods);
+  if(CTX::instance()->mesh.quadqsTopoOptimMethods != 0 &&
+     CTX::instance()->mesh.quadqsTopoOptimMethods != 1 &&
+     CTX::instance()->mesh.quadqsTopoOptimMethods != 11 &&
+     CTX::instance()->mesh.quadqsTopoOptimMethods != 101 &&
+     CTX::instance()->mesh.quadqsTopoOptimMethods != 111) {
+    Msg::Debug("optimize topology with cavity remeshing: avoided because "
+               "quadqsTopoOptimMethods = %i",
+               CTX::instance()->mesh.quadqsTopoOptimMethods);
     return 0;
   }
 
@@ -2210,7 +2225,7 @@ int optimizeTopologyWithCavityRemeshing(GModel *gm)
 
   initQuadPatterns();
 
-  if (!backgroudMeshExists(BMESH_NAME)) {
+  if(!backgroudMeshExists(BMESH_NAME)) {
     Msg::Info("no background mesh, creating one with the current quad mesh");
     GlobalBackgroundMesh &bmesh = getBackgroundMesh(BMESH_NAME);
     int status = bmesh.importGModelMeshes(gm, true);
@@ -2238,9 +2253,10 @@ int optimizeTopologyWithCavityRemeshing(GModel *gm)
     /* Get singularities from global storage */
     std::vector<std::pair<SPoint3, int> > singularities;
     bool okg = getSingularitiesFromBackgroundField(gf, singularities);
-    if (!okg) {
-      okg = getSingularitiesFromNewCrossFieldComputation(bmesh, gf, singularities);
-      if (!okg) {
+    if(!okg) {
+      okg =
+        getSingularitiesFromNewCrossFieldComputation(bmesh, gf, singularities);
+      if(!okg) {
         Msg::Warning("- Face %i: failed to get singularities", gf->tag());
       }
     }
@@ -2269,9 +2285,7 @@ int optimizeTopologyWithCavityRemeshing(GModel *gm)
 
   GeoLog::flush();
 
-  if (DBG_EXPORT) {
-    gm->writeMSH("qqs_cavrmsh.msh", 4.1);
-  }
+  if(DBG_EXPORT) { gm->writeMSH("qqs_cavrmsh.msh", 4.1); }
 
   return 0;
 }
@@ -2280,9 +2294,8 @@ int optimizeTopologyWithCavityRemeshing(GModel *gm)
 /* else: without QUADMESHINGTOOLS module*/
 
 int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
-                                       bool deleteGModelMeshAfter, 
-                                       bool overwriteField,
-                                       int N)
+                                       bool deleteGModelMeshAfter,
+                                       bool overwriteField, int N)
 {
   Msg::Error("Module QUADMESHINGTOOLS required for function "
              "BuildBackgroundMeshAndGuidingField");
@@ -2319,7 +2332,8 @@ int RefineMeshWithBackgroundMeshProjection(GModel *gm)
              "RefineMeshWithBackgroundMeshProjection");
   return -10;
 }
-int replaceBadQuadDominantMeshes(GModel *gm) {
+int replaceBadQuadDominantMeshes(GModel *gm)
+{
   Msg::Error("Module QUADMESHINGTOOLS required for function "
              "replaceBadQuadDominantMeshes");
   return -10;
@@ -2417,41 +2431,69 @@ int transferSeamGEdgesVerticesToGFace(GModel *gm)
 QuadqsContextUpdater::QuadqsContextUpdater()
 {
 #if defined(HAVE_QUADMESHINGTOOLS)
-  backups_int.push_back(new RestoreValueAtEndOfLife<int>(&CTX::instance()->mesh.algo2d));
-  backups_int.push_back(new RestoreValueAtEndOfLife<int>(&CTX::instance()->mesh.recombineAll));
-  backups_int.push_back(new RestoreValueAtEndOfLife<int>(&CTX::instance()->mesh.algoRecombine));
-  backups_int.push_back(new RestoreValueAtEndOfLife<int>(&CTX::instance()->mesh.recombineOptimizeTopology));
-  backups_double.push_back(new RestoreValueAtEndOfLife<double>(&CTX::instance()->mesh.lcFactor));
-  backups_double.push_back(new RestoreValueAtEndOfLife<double>(&CTX::instance()->mesh.lcMin));
-  backups_double.push_back(new RestoreValueAtEndOfLife<double>(&CTX::instance()->mesh.lcMax));
-  backups_int.push_back(new RestoreValueAtEndOfLife<int>(&CTX::instance()->mesh.lcFromPoints));
-  backups_int.push_back(new RestoreValueAtEndOfLife<int>(&CTX::instance()->mesh.minCurveNodes));
-  backups_int.push_back(new RestoreValueAtEndOfLife<int>(&CTX::instance()->mesh.minCircleNodes));
+  backups_int.push_back(
+    new RestoreValueAtEndOfLife<int>(&CTX::instance()->mesh.algo2d));
+  backups_int.push_back(
+    new RestoreValueAtEndOfLife<int>(&CTX::instance()->mesh.recombineAll));
+  backups_int.push_back(
+    new RestoreValueAtEndOfLife<int>(&CTX::instance()->mesh.algoRecombine));
+  backups_int.push_back(new RestoreValueAtEndOfLife<int>(
+    &CTX::instance()->mesh.recombineOptimizeTopology));
+  backups_double.push_back(
+    new RestoreValueAtEndOfLife<double>(&CTX::instance()->mesh.lcFactor));
+  backups_double.push_back(
+    new RestoreValueAtEndOfLife<double>(&CTX::instance()->mesh.lcMin));
+  backups_double.push_back(
+    new RestoreValueAtEndOfLife<double>(&CTX::instance()->mesh.lcMax));
+  backups_int.push_back(
+    new RestoreValueAtEndOfLife<int>(&CTX::instance()->mesh.lcFromPoints));
+  backups_int.push_back(
+    new RestoreValueAtEndOfLife<int>(&CTX::instance()->mesh.minCurveNodes));
+  backups_int.push_back(
+    new RestoreValueAtEndOfLife<int>(&CTX::instance()->mesh.minCircleNodes));
 
   // Backup GEdge meshing attributes
-  for (GEdge* ge: model_edges(GModel::current())) {
-    backups_char.push_back(new RestoreValueAtEndOfLife<char>(&ge->meshAttributes.method));
-    backups_double.push_back(new RestoreValueAtEndOfLife<double>(&ge->meshAttributes.coeffTransfinite));
-    backups_double.push_back(new RestoreValueAtEndOfLife<double>(&ge->meshAttributes.meshSize));
-    backups_double.push_back(new RestoreValueAtEndOfLife<double>(&ge->meshAttributes.meshSizeFactor));
-    backups_int.push_back(new RestoreValueAtEndOfLife<int>(&ge->meshAttributes.nbPointsTransfinite));
-    backups_int.push_back(new RestoreValueAtEndOfLife<int>(&ge->meshAttributes.typeTransfinite));
-    backups_int.push_back(new RestoreValueAtEndOfLife<int>(&ge->meshAttributes.minimumMeshSegments));
-    backups_bool.push_back(new RestoreValueAtEndOfLife<bool>(&ge->meshAttributes.reverseMesh));
+  for(GEdge *ge : model_edges(GModel::current())) {
+    backups_char.push_back(
+      new RestoreValueAtEndOfLife<char>(&ge->meshAttributes.method));
+    backups_double.push_back(new RestoreValueAtEndOfLife<double>(
+      &ge->meshAttributes.coeffTransfinite));
+    backups_double.push_back(
+      new RestoreValueAtEndOfLife<double>(&ge->meshAttributes.meshSize));
+    backups_double.push_back(
+      new RestoreValueAtEndOfLife<double>(&ge->meshAttributes.meshSizeFactor));
+    backups_int.push_back(new RestoreValueAtEndOfLife<int>(
+      &ge->meshAttributes.nbPointsTransfinite));
+    backups_int.push_back(
+      new RestoreValueAtEndOfLife<int>(&ge->meshAttributes.typeTransfinite));
+    backups_int.push_back(new RestoreValueAtEndOfLife<int>(
+      &ge->meshAttributes.minimumMeshSegments));
+    backups_bool.push_back(
+      new RestoreValueAtEndOfLife<bool>(&ge->meshAttributes.reverseMesh));
   }
 
   // Backup GFace meshing attributes
-  for (GFace* gf: model_faces(GModel::current())) {
-    backups_int.push_back(new RestoreValueAtEndOfLife<int>(&gf->meshAttributes.recombine));
-    backups_double.push_back(new RestoreValueAtEndOfLife<double>(&gf->meshAttributes.recombineAngle));
-    backups_char.push_back(new RestoreValueAtEndOfLife<char>(&gf->meshAttributes.method));
-    backups_int.push_back(new RestoreValueAtEndOfLife<int>(&gf->meshAttributes.transfiniteArrangement));
-    backups_int.push_back(new RestoreValueAtEndOfLife<int>(&gf->meshAttributes.transfiniteSmoothing));
-    backups_bool.push_back(new RestoreValueAtEndOfLife<bool>(&gf->meshAttributes.reverseMesh));
-    backups_double.push_back(new RestoreValueAtEndOfLife<double>(&gf->meshAttributes.meshSize));
-    backups_double.push_back(new RestoreValueAtEndOfLife<double>(&gf->meshAttributes.meshSizeFactor));
-    backups_int.push_back(new RestoreValueAtEndOfLife<int>(&gf->meshAttributes.algorithm));
-    backups_int.push_back(new RestoreValueAtEndOfLife<int>(&gf->meshAttributes.meshSizeFromBoundary));
+  for(GFace *gf : model_faces(GModel::current())) {
+    backups_int.push_back(
+      new RestoreValueAtEndOfLife<int>(&gf->meshAttributes.recombine));
+    backups_double.push_back(
+      new RestoreValueAtEndOfLife<double>(&gf->meshAttributes.recombineAngle));
+    backups_char.push_back(
+      new RestoreValueAtEndOfLife<char>(&gf->meshAttributes.method));
+    backups_int.push_back(new RestoreValueAtEndOfLife<int>(
+      &gf->meshAttributes.transfiniteArrangement));
+    backups_int.push_back(new RestoreValueAtEndOfLife<int>(
+      &gf->meshAttributes.transfiniteSmoothing));
+    backups_bool.push_back(
+      new RestoreValueAtEndOfLife<bool>(&gf->meshAttributes.reverseMesh));
+    backups_double.push_back(
+      new RestoreValueAtEndOfLife<double>(&gf->meshAttributes.meshSize));
+    backups_double.push_back(
+      new RestoreValueAtEndOfLife<double>(&gf->meshAttributes.meshSizeFactor));
+    backups_int.push_back(
+      new RestoreValueAtEndOfLife<int>(&gf->meshAttributes.algorithm));
+    backups_int.push_back(new RestoreValueAtEndOfLife<int>(
+      &gf->meshAttributes.meshSizeFromBoundary));
   }
 #else
   Msg::Error("Module QUADMESHINGTOOLS required to use QuadqsContextUpdater");
@@ -2482,16 +2524,10 @@ void QuadqsContextUpdater::restoreInitialOption()
 {
 #if defined(HAVE_QUADMESHINGTOOLS)
   Msg::Debug("restore options in the global context");
-  for (size_t i = 0; i < backups_char.size(); ++i) {
-    delete backups_char[i];
-  }
-  for (size_t i = 0; i < backups_bool.size(); ++i) {
-    delete backups_bool[i];
-  }
-  for (size_t i = 0; i < backups_int.size(); ++i) {
-    delete backups_int[i];
-  }
-  for (size_t i = 0; i < backups_double.size(); ++i) {
+  for(size_t i = 0; i < backups_char.size(); ++i) { delete backups_char[i]; }
+  for(size_t i = 0; i < backups_bool.size(); ++i) { delete backups_bool[i]; }
+  for(size_t i = 0; i < backups_int.size(); ++i) { delete backups_int[i]; }
+  for(size_t i = 0; i < backups_double.size(); ++i) {
     delete backups_double[i];
   }
 #else

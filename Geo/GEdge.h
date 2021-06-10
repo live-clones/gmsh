@@ -218,6 +218,9 @@ public:
   double getLowerBound() const { return parBounds(0).low(); };
   double getUpperBound() const { return parBounds(0).high(); };
 
+  // true if the entity contains the given point to within tolerance.
+  virtual bool containsPoint(const SPoint3 &pt) const;
+
   // return the point on the face closest to the given point
   virtual GPoint closestPoint(const SPoint3 &queryPoint, double &param) const;
 
