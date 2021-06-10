@@ -6,15 +6,18 @@
 // Contributed by Arthur Bawin
 
 #define ANISO 0
+#define ZPOS 1e-8
 
 #include "automaticMeshSizeField.h"
 #include "GModel.h"
 #include "GRegion.h"
 #include "GFace.h"
 #include "GEntity.h"
+#include "MPoint.h"
 #include "MVertex.h"
 #include "MTetrahedron.h"
 #include "SBoundingBox3d.h"
+#include "fullMatrix.h"
 #include "GmshMessage.h"
 #include "curvature.h"
 #include "Numeric.h"
@@ -54,6 +57,11 @@ extern "C" {
 #endif
 
 #if defined(HAVE_HXT) && defined(HAVE_P4EST)
+
+int modifiedCells;
+
+std::map< p4est_quadrant_t*, std::map< p4est_quadrant_t*, std::vector<int>>> closestDirs;
+
 // Mark all the points which are in mesh->(points | lines) but not in triangles
 // Used to get the empty mesh of 2D boundary mesh
 static void markMeshPoints(HXTMesh* mesh){
@@ -410,11 +418,12 @@ HXTStatus Gmsh2Hxt(std::vector<GFace *> &faces, std::vector<GRegion *> &regions,
   return HXT_STATUS_OK;
 }
 
-HXTStatus Gmsh2Hxt(std::vector<GFace *> &faces, HXTMesh *m, std::map<MVertex *, uint32_t> &v2c, std::vector<MVertex *> &c2v){
+HXTStatus Gmsh2Hxt(std::vector<GFace *> &faces, HXTMesh *m, std::map<MVertex *, uint32_t> &v2c, std::vector<MVertex *> &c2v, GModel *model=nullptr){
   std::vector<GEdge *> edges;
   HXT_CHECK(getAllEdgesOfAllFaces(faces, m, edges));
   std::set<MVertex *> all;
 
+  uint64_t npts = 0;
   uint64_t ntri = 0;
   uint64_t nedg = 0;
 
@@ -434,6 +443,17 @@ HXTStatus Gmsh2Hxt(std::vector<GFace *> &faces, HXTMesh *m, std::map<MVertex *, 
       all.insert(gf->triangles[i]->getVertex(0));
       all.insert(gf->triangles[i]->getVertex(1));
       all.insert(gf->triangles[i]->getVertex(2));
+    }
+  }
+
+  // Adds floating nodes (eg control nodes of NURBS) to the HXTMesh
+  if(model){
+    for(GVertex *gv : model->getVertices()){
+      npts += gv->points.size();
+      for(size_t i = 0; i < gv->points.size(); i++){
+        MVertex *v = gv->points[i]->getVertex(0);
+        all.insert(v);
+      }
     }
   }
 
@@ -483,6 +503,20 @@ HXTStatus Gmsh2Hxt(std::vector<GFace *> &faces, HXTMesh *m, std::map<MVertex *, 
       m->triangles.node[3 * index + 2] = v2c[gf->triangles[i]->getVertex(2)];
       m->triangles.color[index] = gf->tag();
       index++;
+    }
+  }
+
+  if(model){
+    m->points.num = m->points.size = npts;
+    HXT_CHECK(hxtAlignedMalloc(&m->points.node, (m->points.num) * sizeof(uint32_t)));
+    HXT_CHECK(hxtAlignedMalloc(&m->points.color,(m->points.num) * sizeof(uint32_t)));
+    index = 0;
+    for(GVertex *gv : model->getVertices()){
+      for(size_t i = 0; i < gv->points.size(); i++){
+        m->points.node[index] = v2c[gv->points[i]->getVertex(0)];
+        m->points.color[index] = gv->tag();
+        index++;
+      }
     }
   }
   return HXT_STATUS_OK;
@@ -665,6 +699,41 @@ static p4est_connectivity_t *p8est_connectivity_new_cube(ForestOptions *forestOp
     tree_to_face, NULL, &num_ett, NULL, NULL, NULL, &num_ctt, NULL, NULL);
 }
 
+static p4est_connectivity_t *p8est_connectivity_new_cube2D(ForestOptions *forestOptions)
+{
+  const p4est_topidx_t num_vertices = 8;
+  const p4est_topidx_t num_trees = 1;
+  const p4est_topidx_t num_ett = 0;
+  const p4est_topidx_t num_ctt = 0;
+
+  double centreX = (forestOptions->bbox[0] + forestOptions->bbox[3]) / 2.0;
+  double centreY = (forestOptions->bbox[1] + forestOptions->bbox[4]) / 2.0;
+  double centreZ = -ZPOS; // The 2D model is shifted by ZPOS in the z-coordinate
+  double cX = (forestOptions->bbox[3] - forestOptions->bbox[0]) / 2.0;
+  double cY = (forestOptions->bbox[4] - forestOptions->bbox[1]) / 2.0;
+  double cZ = (forestOptions->bbox[5] - forestOptions->bbox[2]) / 2.0;
+
+  double scalingFactor =
+    1.3; // The octree is this times bigger than the surface mesh's bounding box
+  double c = scalingFactor * fmax(fmax(cX, cY), cZ);
+
+  // TODO : Compute any bounding box, not necessarily aligned with the axes
+  const double vertices[8 * 3] = {
+    centreX - c, centreY - c, centreZ - c, centreX + c, centreY - c,
+    centreZ - c, centreX - c, centreY + c, centreZ - c, centreX + c,
+    centreY + c, centreZ - c, centreX - c, centreY - c, centreZ + c,
+    centreX + c, centreY - c, centreZ + c, centreX - c, centreY + c,
+    centreZ + c, centreX + c, centreY + c, centreZ + c,
+  };
+  const p4est_topidx_t tree_to_vertex[1 * 8] = {0, 1, 2, 3, 4, 5, 6, 7};
+  const p4est_topidx_t tree_to_tree[1 * 6] = {0, 0, 0, 0, 0, 0};
+  const int8_t tree_to_face[1 * 6] = {0, 1, 2, 3, 4, 5};
+
+  return p4est_connectivity_new_copy(
+    num_vertices, num_trees, 0, 0, vertices, tree_to_vertex, tree_to_tree,
+    tree_to_face, NULL, &num_ett, NULL, NULL, NULL, &num_ctt, NULL, NULL);
+}
+
 static p4est_connectivity_t *p8est_connectivity_new_square(ForestOptions *forestOptions)
 {
   const p4est_topidx_t num_vertices = 8;
@@ -677,7 +746,7 @@ static p4est_connectivity_t *p8est_connectivity_new_square(ForestOptions *forest
   double cX = (forestOptions->bbox[3] - forestOptions->bbox[0]) / 2.0;
   double cY = (forestOptions->bbox[4] - forestOptions->bbox[1]) / 2.0;
 
-  double scalingFactor = 1.5; // The octree is this times bigger than the surface mesh's bounding box
+  double scalingFactor = 1.3; // The octree is this times bigger than the surface mesh's bounding box
   double c = scalingFactor * fmax(cX, cY);
 
   // TODO : Compute any bounding box, not necessarily aligned with the axes
@@ -741,25 +810,116 @@ static inline void initializeCell(p4est_t* p4est, p4est_topidx_t which_tree, p4e
   ForestOptions  *forestOptions = (ForestOptions *) p4est->user_pointer;
   size_data_t    *data = (size_data_t *) q->p.user_data;
 
+  data = new size_data_t();
+
   double center[3];
   getCellCenter(p4est, which_tree, q, center);
-
+  data->c[0] = center[0];
+  data->c[1] = center[1];
+  data->c[2] = center[2];
   // Set cell size
   data->size[0] = forestOptions->sizeFunction(center[0], center[1], center[2], forestOptions->hbulk);
   if(forestOptions->aniso){
     data->size[1] = forestOptions->sizeFunction(center[0], center[1], center[2], forestOptions->hbulk);
     data->size[2] = forestOptions->sizeFunction(center[0], center[1], center[2], forestOptions->hbulk);
   }
-
   data->M = SMetric3(1. / (forestOptions->hbulk * forestOptions->hbulk));
-
   // Set size gradient to zero
   for(int i = 0; i < (forestOptions->aniso ? 9 : 3); ++i) data->ds[i] = 0.0;
   // Set cell dimension (edge length)
   getCellSize(p4est, which_tree, q, &(data->h));
 
   data->hasIntersection = false;
+  // data->isPlanar = (fabs(data->c[2]) <= data->h/2. && data->c[2] >= 0.) ? true : false;
+  data->isPlanar = ((data->c[2] - data->h/2. <= ZPOS) && (data->c[2] + data->h/2. >= ZPOS));
+  data->isStillSmoothed = false;
+
+  // // data->testMap = {{10, 0}, {3, 0}, {5, 0}, {2, 0}};
+  // std::cout<< "Foo avant : "<<data->testMap.empty()<<std::endl;
+  // // for(auto const& x : data->testMap){
+  // //     std::cout << x.first  // string (key)
+  // //               << ':' 
+  // //               << x.second // string's value 
+  // //               << std::endl;
+  // // }
+  // std::cout<< "Foo size : "<<data->testMap.size()<<std::endl;
+  data->testMap[7] = 4;
+  std::cout<<data->testMap[7]<<std::endl;
+  // std::cout<< "Foo size : "<<data->testMap.max_size()<<std::endl;
+  // // std::pair<std::map<int, int>::iterator,bool> res = data->testMap.insert(std::make_pair(10,4));
+  // // std::cout<<res.second<<std::endl;
+  // std::cout<< "Foo après : "<<data->testMap.empty()<<std::endl;
+  // std::cout<< "Foo myMap : "<<data->myMap.empty()<<std::endl;
+  // // data->myMap.insert({0,"allo"});
+  // // std::cout<<data->myMap[0]<<std::endl;
+  // // data->testMap = {};
+  // // data->testMap[10] = 4;
+  // // data->testMap[2] = 12;
+  // // data->testMap[3] = 15;
+  // // for(auto const& x : data->testMap){
+  // //     std::cout << x.first  // string (key)
+  // //               << ':' 
+  // //               << x.second // string's value 
+  // //               << std::endl;
+  // // }
 }
+
+// /* Callback used by p4est to initialize the user_data on each tree cell. */
+// static inline void initializeCell(p4est_t* p4est, p4est_topidx_t which_tree, p4est_quadrant_t *q){
+//   ForestOptions  *forestOptions = (ForestOptions *) p4est->user_pointer;
+//   size_data_t    *data = (size_data_t *) q->p.user_data;
+
+//   double center[3];
+//   getCellCenter(p4est, which_tree, q, center);
+//   double size[3];
+//   size[0] = forestOptions->sizeFunction(center[0], center[1], center[2], forestOptions->hbulk);
+//   if(forestOptions->aniso){
+//     size[1] = forestOptions->sizeFunction(center[0], center[1], center[2], forestOptions->hbulk);
+//     size[2] = forestOptions->sizeFunction(center[0], center[1], center[2], forestOptions->hbulk);
+//   }
+//   std::map<int,int> testMap = {};
+//   SMetric3 M = SMetric3(1. / (forestOptions->hbulk * forestOptions->hbulk));
+//   double h;
+//   getCellSize(p4est, which_tree, q, &h);
+//   bool hasIntersection = false;
+//   bool isPlanar = ((data->c[2] - data->h/2. <= ZPOS) && (data->c[2] + data->h/2. >= ZPOS)) ? true : false;
+
+//   // size_data_t dataCpy = size_data_t{
+//   //   {size[0],size[1],size[2]},
+//   //   {0.,0.,0.,0.,0.,0.,0.,0.,0.},
+//   //   {0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.},
+//   //   testMap,
+//   //   M,           // Metric tensor
+//   //   {0.,0.,0.,0.,0.,0.,0.,0.,0.},
+//   //   h,            // Length of an octant's edge
+//   //   {center[0],center[1],center[2]}, 
+//   //   hasIntersection, // Has an intersection with the boundary mesh
+//   //   isPlanar
+//   // };
+
+//   data->size = {size[0],size[1],size[2]};
+//   data->dir = {0.,0.,0.,0.,0.,0.,0.,0.,0.};
+//   data->dirCorner = {0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.};
+//   data->testMap = testMap;
+//   data->M = M;           // Metric tensor
+//   data->ds = {0.,0.,0.,0.,0.,0.,0.,0.,0.};
+//   data->h = h;            // Length of an octant's edge
+//   data->c = {center[0],center[1],center[2]}; 
+//   data->hasIntersection = hasIntersection; // Has an intersection with the boundary mesh
+//   data->isPlanar = isPlanar;
+
+//   std::cout<<data->isPlanar<<std::endl;
+//   // data->testMap = {{10, 0}, {3, 0}, {5, 0}, {2, 0}};
+//   data->testMap[10] = 4;
+//   data->testMap[2] = 12;
+//   data->testMap[3] = 15;
+//   for(auto const& x : data->testMap){
+//       std::cout << x.first  // string (key)
+//                 << ':' 
+//                 << x.second // string's value 
+//                 << std::endl;
+//   }
+// }
 
 /* Creates (allocates) the forestOptions structure. */
 HXTStatus forestOptionsCreate(ForestOptions **forestOptions)
@@ -853,7 +1013,8 @@ HXTStatus forestCreate(int argc, char **argv, Forest **forest,
     connect = p8est_connectivity_new_cube(forestOptions);
   }
   else {
-    connect = p8est_connectivity_new_square(forestOptions);
+    // connect = p8est_connectivity_new_square(forestOptions);
+    connect = p8est_connectivity_new_cube2D(forestOptions);
   }
 
   if(connect == NULL) return HXT_ERROR(HXT_STATUS_OUT_OF_MEMORY);
@@ -868,6 +1029,8 @@ HXTStatus forestCreate(int argc, char **argv, Forest **forest,
   // Assign bulkSize callback if no sizeFunction is specified.
   if(forestOptions->sizeFunction == nullptr)
     forestOptions->sizeFunction = &bulkSize;
+
+  std::cout << "SIZEOF = "<<sizeof(size_data_t)<<std::endl;
 
   (*forest)->p4est = p4est_new(mpicomm, connect, sizeof(size_data_t),
                                initializeCell, (void *)forestOptions);
@@ -955,9 +1118,9 @@ static int curvatureRefineCallback(p4est_t *p4est, p4est_topidx_t which_tree, p4
     // propagate small feature size far from the feature.
     // Cell is refined according to the chosen density of nodes.
     double hc = 2*M_PI/(forestOptions->nodePerTwoPi * kmax);
-    double nElemPerCell = 2;
+    int factor = 1;
 
-    if(h > fmax(forestOptions->hmin, fmin(hc/nElemPerCell, hf)) && h >= forestOptions->hmin){
+    if(h > fmax(forestOptions->hmin, fmin(hc, hf)*factor) && h >= forestOptions->hmin){
       return 1;
     } else{
       return 0;
@@ -1041,14 +1204,8 @@ static void assignSizeAfterRefinement(p4est_iter_volume_info_t * info, void *use
         data->size[2] = fmax( forestOptions->hmin, fmin(forestOptions->hmax, hf ));
       } else{
         data->size[0] = fmax( forestOptions->hmin, fmin(forestOptions->hmax, 2*M_PI/(forestOptions->nodePerTwoPi * kmax) ));
-        data->size[0] = 1;
-        // data->size[0] = fmax( forestOptions->hmin, 0.01 + (1+center[0])/2*0.2) ; 
         data->size[1] = fmax( forestOptions->hmin, fmin(forestOptions->hmax, hf ));
-        // data->size[1] = fmax( forestOptions->hmin, 0.01);
-        data->size[1] = 0.01;
-        data->size[2] = fmax( forestOptions->hmin, fmin(forestOptions->hmax, data->size[2] ));
         data->size[2] = NAN;
-        // Msg::Info("Taille initiale :kmax = %4.4e (%4.4e - %4.4e - %4.4e)\n", kmax, data->size[0], data->size[1], data->size[2]);
       }
     }
   }
@@ -1193,89 +1350,560 @@ static void computeGradientCenterAniso(p4est_iter_face_info_t * info, void *user
   side[0] = p4est_iter_fside_array_index_int (sides, 0);
   side[1] = p4est_iter_fside_array_index_int (sides, 1);
 
+  bool isPlanar = false;
+  for(int i = 0; i < sides->elem_count; i++){
+    if(side[i]->is_hanging){
+      for(int j = 0; j < P4EST_HALF; ++j){
+        data = (size_data_t *) side[i]->is.hanging.quad[j]->p.user_data;
+        isPlanar = isPlanar || data->isPlanar;
+      }
+    } else{
+      data = (size_data_t *) side[i]->is.full.quad->p.user_data;
+      isPlanar = isPlanar || data->isPlanar;
+    }
+  }
+
+  if(isPlanar){
   for(int k = 0; k < forestOptions->dim; ++k){
     if(sides->elem_count == 2){
       for(int i = 0; i < 2; i++){
         iOpp = 1 - i;
         which_face_opp = side[iOpp]->face; /* 0,1 == -+x, 2,3 == -+y, 4,5 == -+z */
+        if(which_face_opp == 4 || which_face_opp == 5){
+          continue;
+        }
 
         // Current cells are hanging
         if(side[i]->is_hanging){
-          // Msg::Error("Not full-full\n"); Msg::Exit(1);
           data_opp = (size_data_t *) side[iOpp]->is.full.quad->p.user_data;
-          SVector3 e_opp(data_opp->dir[3*k+0], data_opp->dir[3*k+1], data_opp->dir[3*k+2]); // Unit directions of the opposite cells
-          double he_avg = 0.; // Average sizes on the current cells based on neighboring directions
-          double foo = 0.;
-          for(int j = 0; j < P4EST_HALF; ++j){
-            data = (size_data_t *) side[i]->is.hanging.quad[j]->p.user_data;
-            he_avg += 1.0/sqrt(dot(e_opp, data->M, e_opp)); // Length along these directions based on the current cell's metric
-            foo    += dot(e_opp, data->M, e_opp);
-          }
-          he_avg /= P4EST_HALF;
-          foo /= P4EST_HALF;
-          he_avg = 1./sqrt(foo);
+          if(data_opp->isPlanar){
+            SVector3 e_opp(data_opp->dir[3*k+0], data_opp->dir[3*k+1], data_opp->dir[3*k+2]); // Unit directions of the opposite cells
+            double he_avg = 0.; // Average sizes on the current cells based on neighboring directions
+            double foo = 0.;
+            int nPlanar = 0;
+            for(int j = 0; j < P4EST_HALF; ++j){
+              data = (size_data_t *) side[i]->is.hanging.quad[j]->p.user_data;
+              if(data->isPlanar){
+                ++nPlanar;
+                he_avg += 1.0/sqrt(dot(e_opp, data->M, e_opp)); // Length along these directions based on the current cell's metric
+                foo    += dot(e_opp, data->M, e_opp);
+              }
+            }
+            // he_avg /= P4EST_HALF;
+            he_avg /= nPlanar;
+            // foo /= P4EST_HALF;
+            foo /= nPlanar;
+            he_avg = 1./sqrt(foo);
 
-          switch(which_face_opp){
-            case 0 : data_opp->ds[3*k+0] -= 0.5 * (he_avg - data_opp->size[k])/(data_opp->h/2. + data->h/2.); break;
-            case 1 : data_opp->ds[3*k+0] += 0.5 * (he_avg - data_opp->size[k])/(data_opp->h/2. + data->h/2.); break;
-            case 2 : data_opp->ds[3*k+1] -= 0.5 * (he_avg - data_opp->size[k])/(data_opp->h/2. + data->h/2.); break;
-            case 3 : data_opp->ds[3*k+1] += 0.5 * (he_avg - data_opp->size[k])/(data_opp->h/2. + data->h/2.); break;
-            case 4 : data_opp->ds[3*k+2] -= 0.5 * (he_avg - data_opp->size[k])/(data_opp->h/2. + data->h/2.); break;
-            case 5 : data_opp->ds[3*k+2] += 0.5 * (he_avg - data_opp->size[k])/(data_opp->h/2. + data->h/2.); break;
+            switch(which_face_opp){
+              case 0 : data_opp->ds[3*k+0] -= 0.5 * (he_avg - data_opp->size[k])/(data_opp->h/2. + data->h/2.); break;
+              case 1 : data_opp->ds[3*k+0] += 0.5 * (he_avg - data_opp->size[k])/(data_opp->h/2. + data->h/2.); break;
+              case 2 : data_opp->ds[3*k+1] -= 0.5 * (he_avg - data_opp->size[k])/(data_opp->h/2. + data->h/2.); break;
+              case 3 : data_opp->ds[3*k+1] += 0.5 * (he_avg - data_opp->size[k])/(data_opp->h/2. + data->h/2.); break;
+              case 4 : data_opp->ds[3*k+2] -= 0.5 * (he_avg - data_opp->size[k])/(data_opp->h/2. + data->h/2.); break;
+              case 5 : data_opp->ds[3*k+2] += 0.5 * (he_avg - data_opp->size[k])/(data_opp->h/2. + data->h/2.); break;
+            }
           }
         } else{ // Current cell is full
           data = (size_data_t *) side[i]->is.full.quad->p.user_data;
+          if(data->isPlanar){
+            if(side[iOpp]->is_hanging){
+              // Msg::Error("Not full-full\n");
+              // Msg::Exit(1);
+              // Current full - Opposite hanging
 
-          if(side[iOpp]->is_hanging){
-            // Msg::Error("Not full-full\n");
-            // Msg::Exit(1);
-            // Current full - Opposite hanging
+              // double h1_avg = 0, h2_avg = 0, h3_avg = 0;
+              // for(int j = 0; j < P4EST_HALF; ++j){
+              //   data_opp = (size_data_t *) side[iOpp]->is.hanging.quad[j]->p.user_data;
+              //   // Unit directions of the opposite cells
+              //   SVector3 e1(data_opp->dir[0k], data_opp->dir[k1], data_opp->dir[2k]); // A corriger avec 3*k+
+              //   // Length along these directions based on the current cell's metric
+              //   h1_avg += 1sqrt(dot(e1, data->M, e1));
+              // }
+              // h1_avg /= P4EST_HALF;
 
-            // double h1_avg = 0, h2_avg = 0, h3_avg = 0;
-            // for(int j = 0; j < P4EST_HALF; ++j){
-            //   data_opp = (size_data_t *) side[iOpp]->is.hanging.quad[j]->p.user_data;
-            //   // Unit directions of the opposite cells
-            //   SVector3 e1(data_opp->dir[0k], data_opp->dir[k1], data_opp->dir[2k]); // A corriger avec 3*k+
-            //   // Length along these directions based on the current cell's metric
-            //   h1_avg += 1sqrt(dot(e1, data->M, e1));
-            // }
-            // h1_avg /= P4EST_HALF;
+              for(int j = 0; j < P4EST_HALF; ++j){
+                data_opp = (size_data_t *) side[iOpp]->is.hanging.quad[j]->p.user_data;
+                if(data_opp->isPlanar){
+                  // Unit directions of the opposite cells
+                  SVector3 e_opp(data_opp->dir[3*k+0], data_opp->dir[3*k+1], data_opp->dir[3*k+2]);
+                  // Length along this direction based on the current cell's metric
+                  double he = 1.0/sqrt(dot(e_opp, data->M, e_opp));
 
-            for(int j = 0; j < P4EST_HALF; ++j){
-              data_opp = (size_data_t *) side[iOpp]->is.hanging.quad[j]->p.user_data;
-              // Unit directions of the opposite cells
-              SVector3 e(data_opp->dir[3*k+0], data_opp->dir[3*k+1], data_opp->dir[3*k+2]);
-              // Length along this direction based on the current cell's metric
-              double he = 1.0/sqrt(dot(e, data->M, e));
-
-              switch(which_face_opp){
-                case 0 : data_opp->ds[3*k+0] -= 0.5 * (he - data_opp->size[k])/(data_opp->h/2. + data->h/2.); break;
-                case 1 : data_opp->ds[3*k+0] += 0.5 * (he - data_opp->size[k])/(data_opp->h/2. + data->h/2.); break;
-                case 2 : data_opp->ds[3*k+1] -= 0.5 * (he - data_opp->size[k])/(data_opp->h/2. + data->h/2.); break;
-                case 3 : data_opp->ds[3*k+1] += 0.5 * (he - data_opp->size[k])/(data_opp->h/2. + data->h/2.); break;
-                case 4 : data_opp->ds[3*k+2] -= 0.5 * (he - data_opp->size[k])/(data_opp->h/2. + data->h/2.); break;
-                case 5 : data_opp->ds[3*k+2] += 0.5 * (he - data_opp->size[k])/(data_opp->h/2. + data->h/2.); break;
+                  switch(which_face_opp){
+                    case 0 : data_opp->ds[3*k+0] -= 0.5 * (he - data_opp->size[k])/(data_opp->h/2. + data->h/2.); break;
+                    case 1 : data_opp->ds[3*k+0] += 0.5 * (he - data_opp->size[k])/(data_opp->h/2. + data->h/2.); break;
+                    case 2 : data_opp->ds[3*k+1] -= 0.5 * (he - data_opp->size[k])/(data_opp->h/2. + data->h/2.); break;
+                    case 3 : data_opp->ds[3*k+1] += 0.5 * (he - data_opp->size[k])/(data_opp->h/2. + data->h/2.); break;
+                    case 4 : data_opp->ds[3*k+2] -= 0.5 * (he - data_opp->size[k])/(data_opp->h/2. + data->h/2.); break;
+                    case 5 : data_opp->ds[3*k+2] += 0.5 * (he - data_opp->size[k])/(data_opp->h/2. + data->h/2.); break;
+                  }
+                }
               }
             }
-          }
-          else{
-            // Current full - Opposite full
-            data_opp = (size_data_t *) side[iOpp]->is.full.quad->p.user_data;
-            SVector3 e_opp(data_opp->dir[3*k+0], data_opp->dir[3*k+1], data_opp->dir[3*k+2]); // The unit direction of the opposite cell associated to size[k]
-            double he = 1.0/sqrt(dot(e_opp, data->M, e_opp)); // The length along this direction based on the current cell's metric
+            else{
+              // Current full - Opposite full
+              data_opp = (size_data_t *) side[iOpp]->is.full.quad->p.user_data;
+              if(data_opp->isPlanar){
+                SVector3 e_opp(data_opp->dir[3*k+0], data_opp->dir[3*k+1], data_opp->dir[3*k+2]); // The unit direction of the opposite cell associated to size[k]
+                double he = 1.0/sqrt(dot(e_opp, data->M, e_opp)); // The length along this direction based on the current cell's metric
 
-            switch(which_face_opp){
-              case 0 : data_opp->ds[3*k+0] -= 0.5 * (he - data_opp->size[k])/(data_opp->h/2. + data->h/2.); break;
-              case 1 : data_opp->ds[3*k+0] += 0.5 * (he - data_opp->size[k])/(data_opp->h/2. + data->h/2.); break;
-              case 2 : data_opp->ds[3*k+1] -= 0.5 * (he - data_opp->size[k])/(data_opp->h/2. + data->h/2.); break;
-              case 3 : data_opp->ds[3*k+1] += 0.5 * (he - data_opp->size[k])/(data_opp->h/2. + data->h/2.); break;
-              case 4 : data_opp->ds[3*k+2] -= 0.5 * (he - data_opp->size[k])/(data_opp->h/2. + data->h/2.); break;
-              case 5 : data_opp->ds[3*k+2] += 0.5 * (he - data_opp->size[k])/(data_opp->h/2. + data->h/2.); break;
+                switch(which_face_opp){
+                  case 0 : data_opp->ds[3*k+0] -= 0.5 * (he - data_opp->size[k])/(data_opp->h/2. + data->h/2.); break;
+                  case 1 : data_opp->ds[3*k+0] += 0.5 * (he - data_opp->size[k])/(data_opp->h/2. + data->h/2.); break;
+                  case 2 : data_opp->ds[3*k+1] -= 0.5 * (he - data_opp->size[k])/(data_opp->h/2. + data->h/2.); break;
+                  case 3 : data_opp->ds[3*k+1] += 0.5 * (he - data_opp->size[k])/(data_opp->h/2. + data->h/2.); break;
+                  case 4 : data_opp->ds[3*k+2] -= 0.5 * (he - data_opp->size[k])/(data_opp->h/2. + data->h/2.); break;
+                  case 5 : data_opp->ds[3*k+2] += 0.5 * (he - data_opp->size[k])/(data_opp->h/2. + data->h/2.); break;
+                }
+              }
             }
-          }
+          } // isPlanar
         }
       }
     }
+  }
+  }
+  // Nothing to do on the boundaries (0 flux)
+}
+
+// static void computeGradientCenterAniso(p4est_iter_face_info_t * info, void *user_data){
+//   p4est_iter_face_side_t *side[2];
+//   sc_array_t             *sides = &(info->sides);
+//   size_data_t            *data, *data_opp;
+//   int                     which_face;
+//   ForestOptions          *forestOptions = (ForestOptions *) user_data;
+//   int                     iOpp;
+
+//   side[0] = p4est_iter_fside_array_index_int (sides, 0);
+//   side[1] = p4est_iter_fside_array_index_int (sides, 1);
+
+//   bool isPlanar = false;
+//   for(int i = 0; i < sides->elem_count; i++){
+//     if(side[i]->is_hanging){
+//       for(int j = 0; j < P4EST_HALF; ++j){
+//         data = (size_data_t *) side[i]->is.hanging.quad[j]->p.user_data;
+//         isPlanar = isPlanar || data->isPlanar;
+//       }
+//     } else{
+//       data = (size_data_t *) side[i]->is.full.quad->p.user_data;
+//       isPlanar = isPlanar || data->isPlanar;
+//     }
+//   }
+
+//   if(isPlanar){
+//     for(int k = 0; k < forestOptions->dim; ++k){
+//       if(sides->elem_count == 2){
+//         for(int i = 0; i < 2; i++){
+//           iOpp = 1 - i;
+//           which_face = side[i]->face; /* 0,1 == -+x, 2,3 == -+y, 4,5 == -+z */
+//           if(which_face == 4 || which_face == 5){
+//             continue;
+//           }
+
+//           // Current cells are hanging
+//           if(side[i]->is_hanging){
+//             data_opp = (size_data_t *) side[iOpp]->is.full.quad->p.user_data;
+//             if(data_opp->isPlanar){
+//               for(int j = 0; j < P4EST_HALF; ++j){
+//                 data = (size_data_t *) side[i]->is.hanging.quad[j]->p.user_data;
+//                 if(data->isPlanar){
+//                   SVector3 e(data->dir[3*k+0], data->dir[3*k+1], data->dir[3*k+2]); // Unit directions of the opposite cells
+//                   double he_opp = 1.0/sqrt(dot(e, data_opp->M, e));
+//                   switch(which_face){
+//                     case 0 : data->ds[3*k+0] -= 0.5 * (he_opp - data->size[k])/(data_opp->h/2. + data->h/2.); break;
+//                     case 1 : data->ds[3*k+0] += 0.5 * (he_opp - data->size[k])/(data_opp->h/2. + data->h/2.); break;
+//                     case 2 : data->ds[3*k+1] -= 0.5 * (he_opp - data->size[k])/(data_opp->h/2. + data->h/2.); break;
+//                     case 3 : data->ds[3*k+1] += 0.5 * (he_opp - data->size[k])/(data_opp->h/2. + data->h/2.); break;
+//                     case 4 : data->ds[3*k+2] -= 0.5 * (he_opp - data->size[k])/(data_opp->h/2. + data->h/2.); break;
+//                     case 5 : data->ds[3*k+2] += 0.5 * (he_opp - data->size[k])/(data_opp->h/2. + data->h/2.); break;
+//                   }
+//                 }
+//               }
+//             }
+//           } else{ // Current cell is full
+//             data = (size_data_t *) side[i]->is.full.quad->p.user_data;
+//             if(data->isPlanar){
+//               SVector3 e(data->dir[3*k+0], data->dir[3*k+1], data->dir[3*k+2]);
+//               if(side[iOpp]->is_hanging){
+
+//                 double he_opp_avg = 0.;
+//                 int nPlanar = 0;
+//                 for(int j = 0; j < P4EST_HALF; ++j){
+//                   data_opp = (size_data_t *) side[iOpp]->is.hanging.quad[j]->p.user_data;
+//                   if(data_opp->isPlanar){
+//                     // he_opp_avg += 1.0/sqrt(dot(e, data_opp->M, e));
+//                     he_opp_avg += dot(e, data_opp->M, e);
+//                   }
+//                 }
+//                 he_opp_avg /= nPlanar;
+//                 he_opp_avg = 1./sqrt(he_opp_avg);
+
+//                 switch(which_face){
+//                   case 0 : data->ds[3*k+0] -= 0.5 * (he_opp_avg - data->size[k])/(data_opp->h/2. + data->h/2.); break;
+//                   case 1 : data->ds[3*k+0] += 0.5 * (he_opp_avg - data->size[k])/(data_opp->h/2. + data->h/2.); break;
+//                   case 2 : data->ds[3*k+1] -= 0.5 * (he_opp_avg - data->size[k])/(data_opp->h/2. + data->h/2.); break;
+//                   case 3 : data->ds[3*k+1] += 0.5 * (he_opp_avg - data->size[k])/(data_opp->h/2. + data->h/2.); break;
+//                   case 4 : data->ds[3*k+2] -= 0.5 * (he_opp_avg - data->size[k])/(data_opp->h/2. + data->h/2.); break;
+//                   case 5 : data->ds[3*k+2] += 0.5 * (he_opp_avg - data->size[k])/(data_opp->h/2. + data->h/2.); break;
+//                 }
+
+//               } else{
+//                 // Current full - Opposite full
+//                 data_opp = (size_data_t *) side[iOpp]->is.full.quad->p.user_data;
+//                 if(data_opp->isPlanar){
+//                   double he_opp = 1.0/sqrt(dot(e, data_opp->M, e)); // The length along this direction based on the current cell's metric
+//                   switch(which_face){
+//                     case 0 : data->ds[3*k+0] -= 0.5 * (he_opp - data->size[k])/(data_opp->h/2. + data->h/2.); break;
+//                     case 1 : data->ds[3*k+0] += 0.5 * (he_opp - data->size[k])/(data_opp->h/2. + data->h/2.); break;
+//                     case 2 : data->ds[3*k+1] -= 0.5 * (he_opp - data->size[k])/(data_opp->h/2. + data->h/2.); break;
+//                     case 3 : data->ds[3*k+1] += 0.5 * (he_opp - data->size[k])/(data_opp->h/2. + data->h/2.); break;
+//                     case 4 : data->ds[3*k+2] -= 0.5 * (he_opp - data->size[k])/(data_opp->h/2. + data->h/2.); break;
+//                     case 5 : data->ds[3*k+2] += 0.5 * (he_opp - data->size[k])/(data_opp->h/2. + data->h/2.); break;
+//                   }
+//                 }
+//               }
+//             } // isPlanar
+//           }
+//         }
+//       }
+//     }
+//   }
+//   // Nothing to do on the boundaries (0 flux)
+// }
+
+static void toutEnUn(p4est_iter_face_info_t * info, void *user_data){
+  p4est_iter_face_side_t *side[2];
+  sc_array_t             *sides = &(info->sides);
+  size_data_t            *data, *data_opp;
+  int                     which_face;
+  ForestOptions          *forestOptions = (ForestOptions *) user_data;
+  int                     iOpp;
+  double                  alpha = forestOptions->gradation - 1.0;
+
+  side[0] = p4est_iter_fside_array_index_int (sides, 0);
+  side[1] = p4est_iter_fside_array_index_int (sides, 1);
+
+  bool isPlanar = false;
+  for(int i = 0; i < sides->elem_count; i++){
+    if(side[i]->is_hanging){
+      for(int j = 0; j < P4EST_HALF; ++j){
+        data = (size_data_t *) side[i]->is.hanging.quad[j]->p.user_data;
+        isPlanar = isPlanar || data->isPlanar;
+      }
+    } else{
+      data = (size_data_t *) side[i]->is.full.quad->p.user_data;
+      isPlanar = isPlanar || data->isPlanar;
+    }
+  }
+
+  if(isPlanar){
+    // for(int k = 0; k < forestOptions->dim; ++k){
+      if(sides->elem_count == 2){
+        for(int i = 0; i < 2; i++){
+          iOpp = 1 - i;
+          which_face = side[i]->face; /* 0,1 == -+x, 2,3 == -+y, 4,5 == -+z */
+          if(which_face == 4 || which_face == 5){
+            continue;
+          }
+
+          // Current cells are hanging
+          if(side[i]->is_hanging){
+            // Msg::Error("Foo\n");
+            p4est_quadrant_t *q_opp = side[iOpp]->is.full.quad;
+            data_opp = (size_data_t *) q_opp->p.user_data;
+            if(data_opp->isPlanar){
+              for(int j = 0; j < P4EST_HALF; ++j){
+                p4est_quadrant_t *q = side[i]->is.hanging.quad[j];
+                data = (size_data_t *) q->p.user_data;
+                if(data->isPlanar){
+                  switch(which_face){
+                    case 0 : 
+                      for(int k = 0; k < forestOptions->dim; ++k){
+                        SVector3 e(data->dir[3*k+0], data->dir[3*k+1], data->dir[3*k+2]);
+                        // double he_opp = 1.0/sqrt(dot(e, data_opp->M, e));
+                        int closestDir = closestDirs[q][q_opp][k];
+                        double he_opp = data_opp->size[closestDir];
+                        data->ds[3*k+0] = (he_opp - data->size[k])/(data_opp->h/2. + data->h/2.);
+                        if(fabs(data->ds[3*k+0]) > alpha){
+                          if(data->size[k] > he_opp){
+                            data->size[k] = fmin(data->size[k], he_opp + alpha * (data_opp->h/2. + data->h/2.));
+                          } else{
+                            int closestDir = closestDirs[q][q_opp][k];
+                            data_opp->size[closestDir] = fmin(data_opp->size[closestDir], data->size[k] + alpha * (data_opp->h/2. + data->h/2.));
+                          }
+                          ++modifiedCells;
+                        }
+                      }
+                      break;
+                    case 1 : 
+                      for(int k = 0; k < forestOptions->dim; ++k){
+                        SVector3 e(data->dir[3*k+0], data->dir[3*k+1], data->dir[3*k+2]);
+                        // double he_opp = 1.0/sqrt(dot(e, data_opp->M, e));
+                        int closestDir = closestDirs[q][q_opp][k];
+                        double he_opp = data_opp->size[closestDir];
+                        data->ds[3*k+0] = (he_opp - data->size[k])/(data_opp->h/2. + data->h/2.);
+                        if(fabs(data->ds[3*k+0]) > alpha){
+                          if(data->size[k] > he_opp){
+                            data->size[k] = fmin(data->size[k], he_opp + alpha * (data_opp->h/2. + data->h/2.));
+                          } else{
+                            int closestDir = closestDirs[q][q_opp][k];
+                            data_opp->size[closestDir] = fmin(data_opp->size[closestDir], data->size[k] + alpha * (data_opp->h/2. + data->h/2.));
+                          }
+                           ++modifiedCells;
+                        }
+                      }
+                      break;
+                    case 2 : 
+                      for(int k = 0; k < forestOptions->dim; ++k){
+                        SVector3 e(data->dir[3*k+0], data->dir[3*k+1], data->dir[3*k+2]);
+                        // double he_opp = 1.0/sqrt(dot(e, data_opp->M, e));
+                        int closestDir = closestDirs[q][q_opp][k];
+                        double he_opp = data_opp->size[closestDir];
+                        data->ds[3*k+1] = (he_opp - data->size[k])/(data_opp->h/2. + data->h/2.);
+                        if(fabs(data->ds[3*k+1]) > alpha){
+                          if(data->size[k] > he_opp){
+                            data->size[k] = fmin(data->size[k], he_opp + alpha * (data_opp->h/2. + data->h/2.));
+                          } else{
+                            int closestDir = closestDirs[q][q_opp][k];
+                            data_opp->size[closestDir] = fmin(data_opp->size[closestDir], data->size[k] + alpha * (data_opp->h/2. + data->h/2.));
+                          }
+                           ++modifiedCells;
+                        }
+                      }
+                      break;
+                    case 3 : 
+                      for(int k = 0; k < forestOptions->dim; ++k){
+                        SVector3 e(data->dir[3*k+0], data->dir[3*k+1], data->dir[3*k+2]);
+                        // double he_opp = 1.0/sqrt(dot(e, data_opp->M, e));
+                        int closestDir = closestDirs[q][q_opp][k];
+                        double he_opp = data_opp->size[closestDir];
+                        data->ds[3*k+1] = (he_opp - data->size[k])/(data_opp->h/2. + data->h/2.);
+                        if(fabs(data->ds[3*k+1]) > alpha){
+                          if(data->size[k] > he_opp){
+                            data->size[k] = fmin(data->size[k], he_opp + alpha * (data_opp->h/2. + data->h/2.));
+                          } else{
+                            int closestDir = closestDirs[q][q_opp][k];
+                            data_opp->size[closestDir] = fmin(data_opp->size[closestDir], data->size[k] + alpha * (data_opp->h/2. + data->h/2.));
+                          }
+                           ++modifiedCells;
+                        }
+                      }
+                      break;
+                    case 4 : 
+                      // data->ds[3*k+2] -= 0.5 * (he_opp - data->size[k])/(data_opp->h/2. + data->h/2.);
+                      break;
+                    case 5 : 
+                      // data->ds[3*k+2] += 0.5 * (he_opp - data->size[k])/(data_opp->h/2. + data->h/2.);
+                      break;
+                  }
+                }
+              }
+            }
+          } else{ // Current cell is full
+            p4est_quadrant_t *q = side[i]->is.full.quad;
+            data = (size_data_t *) q->p.user_data;
+            if(data->isPlanar){
+    
+              if(side[iOpp]->is_hanging){
+
+                // Msg::Error("Foo\n");
+
+                // double he_opp_avg = 0.;
+                // int nPlanar = 0;
+                for(int j = 0; j < P4EST_HALF; ++j){
+                  p4est_quadrant_t *q_opp = side[iOpp]->is.hanging.quad[j];
+                  data_opp = (size_data_t *) q_opp->p.user_data;
+                  if(data_opp->isPlanar){
+                //     // he_opp_avg += 1.0/sqrt(dot(e, data_opp->M, e));
+                //     he_opp_avg += dot(e, data_opp->M, e);
+                    switch(which_face){
+                      case 0 : 
+                        for(int k = 0; k < forestOptions->dim; ++k){
+                          SVector3 e(data->dir[3*k+0], data->dir[3*k+1], data->dir[3*k+2]);
+                          // double he_opp = 1.0/sqrt(dot(e, data_opp->M, e));
+                          int closestDir = closestDirs[q][q_opp][k];
+                          double he_opp = data_opp->size[closestDir];
+                          data->ds[3*k+0] = (he_opp - data->size[k])/(data_opp->h/2. + data->h/2.);
+                          if(fabs(data->ds[3*k+0]) > alpha){
+                            if(data->size[k] > he_opp){
+                              data->size[k] = fmin(data->size[k], he_opp + alpha * (data_opp->h/2. + data->h/2.));
+                            } else{
+                              int closestDir = closestDirs[q][q_opp][k];
+                              data_opp->size[closestDir] = fmin(data_opp->size[closestDir], data->size[k] + alpha * (data_opp->h/2. + data->h/2.));
+                            }
+                            ++modifiedCells;
+                          }
+                        }
+                        break;
+                      case 1 : 
+                        for(int k = 0; k < forestOptions->dim; ++k){
+                          SVector3 e(data->dir[3*k+0], data->dir[3*k+1], data->dir[3*k+2]);
+                          // double he_opp = 1.0/sqrt(dot(e, data_opp->M, e));
+                          int closestDir = closestDirs[q][q_opp][k];
+                          double he_opp = data_opp->size[closestDir];
+                          data->ds[3*k+0] = (he_opp - data->size[k])/(data_opp->h/2. + data->h/2.);
+                          if(fabs(data->ds[3*k+0]) > alpha){
+                            if(data->size[k] > he_opp){
+                              data->size[k] = fmin(data->size[k], he_opp + alpha * (data_opp->h/2. + data->h/2.));
+                            } else{
+                              int closestDir = closestDirs[q][q_opp][k];
+                              data_opp->size[closestDir] = fmin(data_opp->size[closestDir], data->size[k] + alpha * (data_opp->h/2. + data->h/2.));
+                            }
+                             ++modifiedCells;
+                          }
+                        }
+                        break;
+                      case 2 : 
+                        for(int k = 0; k < forestOptions->dim; ++k){
+                          SVector3 e(data->dir[3*k+0], data->dir[3*k+1], data->dir[3*k+2]);
+                          // double he_opp = 1.0/sqrt(dot(e, data_opp->M, e));
+                          int closestDir = closestDirs[q][q_opp][k];
+                          double he_opp = data_opp->size[closestDir];
+                          data->ds[3*k+1] = (he_opp - data->size[k])/(data_opp->h/2. + data->h/2.);
+                          if(fabs(data->ds[3*k+1]) > alpha){
+                            if(data->size[k] > he_opp){
+                              data->size[k] = fmin(data->size[k], he_opp + alpha * (data_opp->h/2. + data->h/2.));
+                            } else{
+                              int closestDir = closestDirs[q][q_opp][k];
+                              data_opp->size[closestDir] = fmin(data_opp->size[closestDir], data->size[k] + alpha * (data_opp->h/2. + data->h/2.));
+                            }
+                             ++modifiedCells;
+                          }
+                        }
+                        break;
+                      case 3 : 
+                        for(int k = 0; k < forestOptions->dim; ++k){
+                          SVector3 e(data->dir[3*k+0], data->dir[3*k+1], data->dir[3*k+2]);
+                          // double he_opp = 1.0/sqrt(dot(e, data_opp->M, e));
+                          int closestDir = closestDirs[q][q_opp][k];
+                          double he_opp = data_opp->size[closestDir];
+                          data->ds[3*k+1] = (he_opp - data->size[k])/(data_opp->h/2. + data->h/2.);
+                          if(fabs(data->ds[3*k+1]) > alpha){
+                            if(data->size[k] > he_opp){
+                              data->size[k] = fmin(data->size[k], he_opp + alpha * (data_opp->h/2. + data->h/2.));
+                            } else{
+                              int closestDir = closestDirs[q][q_opp][k];
+                              data_opp->size[closestDir] = fmin(data_opp->size[closestDir], data->size[k] + alpha * (data_opp->h/2. + data->h/2.));
+                            }
+                             ++modifiedCells;
+                          }
+                        }
+                        break;
+                      case 4 : 
+                        // data->ds[3*k+2] -= 0.5 * (he_opp - data->size[k])/(data_opp->h/2. + data->h/2.);
+                        break;
+                      case 5 : 
+                        // data->ds[3*k+2] += 0.5 * (he_opp - data->size[k])/(data_opp->h/2. + data->h/2.);
+                        break;
+                    }
+                  }
+                }
+                // he_opp_avg /= nPlanar;
+                // he_opp_avg = 1./sqrt(he_opp_avg);
+
+                // switch(which_face){
+                //   case 0 : data->ds[3*k+0] -= 0.5 * (he_opp_avg - data->size[k])/(data_opp->h/2. + data->h/2.); break;
+                //   case 1 : data->ds[3*k+0] += 0.5 * (he_opp_avg - data->size[k])/(data_opp->h/2. + data->h/2.); break;
+                //   case 2 : data->ds[3*k+1] -= 0.5 * (he_opp_avg - data->size[k])/(data_opp->h/2. + data->h/2.); break;
+                //   case 3 : data->ds[3*k+1] += 0.5 * (he_opp_avg - data->size[k])/(data_opp->h/2. + data->h/2.); break;
+                //   case 4 : data->ds[3*k+2] -= 0.5 * (he_opp_avg - data->size[k])/(data_opp->h/2. + data->h/2.); break;
+                //   case 5 : data->ds[3*k+2] += 0.5 * (he_opp_avg - data->size[k])/(data_opp->h/2. + data->h/2.); break;
+                // }
+
+              } else{
+                // Current full - Opposite full
+                p4est_quadrant_t *q_opp = side[iOpp]->is.full.quad;
+                data_opp = (size_data_t *) q_opp->p.user_data;
+                if(data_opp->isPlanar){
+                  
+                  switch(which_face){
+                    case 0 : 
+                      for(int k = 0; k < forestOptions->dim; ++k){
+                        SVector3 e(data->dir[3*k+0], data->dir[3*k+1], data->dir[3*k+2]);
+                        // double he_opp = 1.0/sqrt(dot(e, data_opp->M, e));
+                        int closestDir = closestDirs[q][q_opp][k];
+                        double he_opp = data_opp->size[closestDir];
+                        data->ds[3*k+0] = (he_opp - data->size[k])/(data_opp->h/2. + data->h/2.);
+                        if(fabs(data->ds[3*k+0]) > alpha){
+                          if(data->size[k] > he_opp){
+                            data->size[k] = fmin(data->size[k], he_opp + alpha * (data_opp->h/2. + data->h/2.));
+                          } else{
+                            int closestDir = closestDirs[q][q_opp][k];
+                            data_opp->size[closestDir] = fmin(data_opp->size[closestDir], data->size[k] + alpha * (data_opp->h/2. + data->h/2.));
+                          }
+                          ++modifiedCells;
+                        }
+                      }
+                      break;
+                    case 1 : 
+                      for(int k = 0; k < forestOptions->dim; ++k){
+                        SVector3 e(data->dir[3*k+0], data->dir[3*k+1], data->dir[3*k+2]);
+                        // double he_opp = 1.0/sqrt(dot(e, data_opp->M, e));
+                        int closestDir = closestDirs[q][q_opp][k];
+                        double he_opp = data_opp->size[closestDir];
+                        data->ds[3*k+0] = (he_opp - data->size[k])/(data_opp->h/2. + data->h/2.);
+                        if(fabs(data->ds[3*k+0]) > alpha){
+                          if(data->size[k] > he_opp){
+                            data->size[k] = fmin(data->size[k], he_opp + alpha * (data_opp->h/2. + data->h/2.));
+                          } else{
+                            int closestDir = closestDirs[q][q_opp][k];
+                            data_opp->size[closestDir] = fmin(data_opp->size[closestDir], data->size[k] + alpha * (data_opp->h/2. + data->h/2.));
+                          }
+                           ++modifiedCells;
+                        }
+                      }
+                      break;
+                    case 2 : 
+                      for(int k = 0; k < forestOptions->dim; ++k){
+                        SVector3 e(data->dir[3*k+0], data->dir[3*k+1], data->dir[3*k+2]);
+                        // double he_opp = 1.0/sqrt(dot(e, data_opp->M, e));
+                        int closestDir = closestDirs[q][q_opp][k];
+                        double he_opp = data_opp->size[closestDir];
+                        data->ds[3*k+1] = (he_opp - data->size[k])/(data_opp->h/2. + data->h/2.);
+                        if(fabs(data->ds[3*k+1]) > alpha){
+                          if(data->size[k] > he_opp){
+                            data->size[k] = fmin(data->size[k], he_opp + alpha * (data_opp->h/2. + data->h/2.));
+                          } else{
+                            int closestDir = closestDirs[q][q_opp][k];
+                            data_opp->size[closestDir] = fmin(data_opp->size[closestDir], data->size[k] + alpha * (data_opp->h/2. + data->h/2.));
+                          }
+                           ++modifiedCells;
+                        }
+                      }
+                      break;
+                    case 3 : 
+                      for(int k = 0; k < forestOptions->dim; ++k){
+                        SVector3 e(data->dir[3*k+0], data->dir[3*k+1], data->dir[3*k+2]);
+                        // double he_opp = 1.0/sqrt(dot(e, data_opp->M, e));
+                        int closestDir = closestDirs[q][q_opp][k];
+                        double he_opp = data_opp->size[closestDir];
+                        data->ds[3*k+1] = (he_opp - data->size[k])/(data_opp->h/2. + data->h/2.);
+                        if(fabs(data->ds[3*k+1]) > alpha){
+                          if(data->size[k] > he_opp){
+                            data->size[k] = fmin(data->size[k], he_opp + alpha * (data_opp->h/2. + data->h/2.));
+                          } else{
+                            int closestDir = closestDirs[q][q_opp][k];
+                            data_opp->size[closestDir] = fmin(data_opp->size[closestDir], data->size[k] + alpha * (data_opp->h/2. + data->h/2.));
+                          }
+                           ++modifiedCells;
+                        }
+                      }
+                      break;
+                    case 4 : 
+                      // data->ds[3*k+2] -= 0.5 * (he_opp - data->size[k])/(data_opp->h/2. + data->h/2.);
+                      break;
+                    case 5 : 
+                      // data->ds[3*k+2] += 0.5 * (he_opp - data->size[k])/(data_opp->h/2. + data->h/2.);
+                      break;
+                  }
+                }
+              } // else
+            } // isPlanar
+          }
+        }
+      }
+    // }
   }
   // Nothing to do on the boundaries (0 flux)
 }
@@ -1303,10 +1931,12 @@ static inline void getMaxGradient(p4est_iter_volume_info_t *info, void *user_dat
 static inline void getMaxGradientAniso2D(p4est_iter_volume_info_t * info, void *user_data){
   p4est_quadrant_t *q = info->quad;
   size_data_t      *data = (size_data_t *) q->p.user_data;
-  double           *gradMax = static_cast<double*>(user_data);
-  for(int i = 0; i < 5; ++i){
-    if(i != 2){
-      gradMax[i] = SC_MAX (fabs(data->ds[i]), gradMax[i]);
+  if(data->isPlanar){
+    double           *gradMax = static_cast<double*>(user_data);
+    for(int i = 0; i < 5; ++i){
+      if(i != 2){
+        gradMax[i] = SC_MAX (fabs(data->ds[i]), gradMax[i]);
+      }
     }
   }
 }
@@ -1415,153 +2045,65 @@ static void limitSize(p4est_iter_face_info_t *info, void *user_data){
   }
 }
 
-static void limitSizeAniso(p4est_iter_face_info_t * info, void *user_data){
+static void setClosestDirections(p4est_iter_face_info_t * info, void *user_data){
   p4est_iter_face_side_t *side[2];
-  sc_array_t        *sides = &(info->sides);
-  size_data_t       *data;
-  size_data_t       *data_opp;
-  int                which_dir;
-  int                iOpp;
-
-  ForestOptions     *forestOptions = (ForestOptions*) user_data;
-  double             alpha = forestOptions->gradation - 1.0;
+  sc_array_t             *sides = &(info->sides);
+  size_data_t            *data;
+  size_data_t            *data_opp;
+  int                     which_dir;
+  int                     iOpp;
+  ForestOptions          *forestOptions = (ForestOptions*) user_data;
 
   side[0] = p4est_iter_fside_array_index_int (sides, 0);
   side[1] = p4est_iter_fside_array_index_int (sides, 1);
 
-  for(int k = 0; k < forestOptions->dim; ++k){
-    if(sides->elem_count==2){
+  bool isPlanar = false;
+  for(int i = 0; i < sides->elem_count; i++){
+    if(side[i]->is_hanging){
+      for(int j = 0; j < P4EST_HALF; ++j){
+        data = (size_data_t *) side[i]->is.hanging.quad[j]->p.user_data;
+        isPlanar = isPlanar || data->isPlanar;
+      }
+    } else{
+      data = (size_data_t *) side[i]->is.full.quad->p.user_data;
+      isPlanar = isPlanar || data->isPlanar;
+    }
+  }
 
+  if(isPlanar){
+    if(sides->elem_count==2){
       for(int i = 0; i < 2; ++i){
         iOpp = 1 - i;
-        which_dir = side[i]->face / 2; // Direction x (0), y (1) ou z(2)
+        which_dir = side[i]->face / 2; // Direction x(0), y(1) ou z(2)
+        if(which_dir == 2){
+          continue;
+        }
 
         if(side[i]->is_hanging){
-          // Msg::Info("Hanging-Full (1)\n");
-          // Msg::Exit(1);
           // Current hanging - Opposes full
-          data_opp = (size_data_t *) side[iOpp]->is.full.quad->p.user_data;
-          SVector3 e_opp(data_opp->dir[3*k+0], data_opp->dir[3*k+1], data_opp->dir[3*k+2]);
-          if(fabs(e_opp.norm()-1.) > 1e-6){
-            Msg::Error("e_opp non unitaire : %4.10e\n", e_opp.norm());
-          }
+          p4est_quadrant_t *q_opp = side[iOpp]->is.full.quad;
+          data_opp = (size_data_t *) q_opp->p.user_data;
+          if(data_opp->isPlanar){
 
-          for(int j = 0; j < P4EST_HALF; ++j){
-            data = (size_data_t *) side[i]->is.hanging.quad[j]->p.user_data;
-            SVector3 e(data->dir[3*k+0], data->dir[3*k+1], data->dir[3*k+2]);
-            if(fabs(e.norm()-1.) > 1e-6){
-              Msg::Error("e non unitaire : %4.10e\n", e.norm());
-            }
-            double he = 1.0/sqrt(dot(e_opp, data->M, e_opp)); // Size of opposite directions in current metric
-            double he_opp = 1.0/sqrt(dot(e, data_opp->M, e)); // Size of current directions in opposite metric
+            for(int j = 0; j < P4EST_HALF; ++j){
+              p4est_quadrant_t *q = side[i]->is.hanging.quad[j];
+              data = (size_data_t *) q->p.user_data;
+              if(data->isPlanar){
 
-            if(fabs(data->ds[3*k+which_dir]) > alpha){
+                std::vector<int> tmp{-1,-1,2}; // In 2D the z-directions are identical
+                for(int k = 0; k < forestOptions->dim; ++k){
+                  SVector3 e(data->dir[3*k+0],data->dir[3*k+1],data->dir[3*k+2]);
+                  if(fabs(e.norm()-1.) > 1e-6){ Msg::Error("e non unitaire : %4.10e\n", e.norm()); }
 
-              if(data->size[k] > he_opp){
-                // Msg::Info("Hanging-Full (1-1)\n");
-                data->size[k] = fmin(data->size[k], he_opp + alpha * (data_opp->h/2. + data->h/2.));
-              }
-              else if(data_opp->size[k] > he){
-                // Msg::Info("Hanging-Full (1-2)\n");
-                data_opp->size[k] = fmin(data_opp->size[k], he + alpha * (data_opp->h/2. + data->h/2.));
-              }
-              // Gradient is too large but no size is greater than its projection
-              else if(data->size[k] < he_opp){
-                // Msg::Info("Hanging-Full (1-3)\n");
-                double dotMax = -1.0, dotProd;
-                int closestDir = -1;
-                for(int ii = 0; ii < forestOptions->dim; ++ii){
-                  SVector3 e_opp_ii(data_opp->dir[3*ii+0], data_opp->dir[3*ii+1], data_opp->dir[3*ii+2]);
-                  if(fabs(e_opp_ii.norm()-1.) > 1e-6){
-                    Msg::Error("e_opp_ii non unitaire : %4.10e\n", e_opp_ii.norm());
-                  }
-                  dotProd = fabs(dot(e, e_opp_ii));
-                  if(dotProd > dotMax){
-                    dotMax = fmax(dotMax, dotProd);
-                    closestDir = ii;
-                  }
-                }
-                if(dotMax < sqrt(2)/2.-1e-6){
-                  e.print();
-                  SVector3 foo0(data_opp->dir[3*0+0], data_opp->dir[3*0+1], data_opp->dir[3*0+2]); foo0.print();
-                  SVector3 foo1(data_opp->dir[3*1+0], data_opp->dir[3*1+1], data_opp->dir[3*1+2]); foo1.print();
-                  SVector3 foo2(data_opp->dir[3*2+0], data_opp->dir[3*2+1], data_opp->dir[3*2+2]); foo2.print();
-                  Msg::Error("dotMax = %4.4e - closestDir = %d\n", dotMax, closestDir);
-                }
-                if(closestDir >= 0) data_opp->size[closestDir] = fmin(data_opp->size[closestDir], data->size[k] + alpha * (data_opp->h/2. + data->h/2.));
-              }
-              else if(data_opp->size[k] < he){
-                // Msg::Info("Hanging-Full (1-4)\n");
-                double dotMax = -1.0, dotProd;
-                int closestDir;
-                for(int ii = 0; ii < forestOptions->dim; ++ii){
-                  SVector3 e_ii(data->dir[3*ii+0], data->dir[3*ii+1], data->dir[3*ii+2]);
-                  if(fabs(e_ii.norm()-1.) > 1e-6){
-                    Msg::Error("e_ii non unitaire : %4.10e\n", e_ii.norm());
-                  }
-                  dotProd = fabs(dot(e_ii, e_opp));
-                  if(dotProd > dotMax){
-                    dotMax = fmax(dotMax, dotProd);
-                    closestDir = ii;
-                  }
-                }
-                if(dotMax < sqrt(2)/2.-1e-6){
-                  e_opp.print();
-                  SVector3 foo0(data->dir[3*0+0], data->dir[3*0+1], data->dir[3*0+2]); foo0.print();
-                  SVector3 foo1(data->dir[3*1+0], data->dir[3*1+1], data->dir[3*1+2]); foo1.print();
-                  SVector3 foo2(data->dir[3*2+0], data->dir[3*2+1], data->dir[3*2+2]); foo2.print();
-                  Msg::Error("dotMax = %4.4e - closestDir = %d\n", dotMax, closestDir);
-                }
-                if(closestDir >= 0) data->size[closestDir] = fmin(data->size[closestDir], data_opp->size[k] + alpha * (data_opp->h/2. + data->h/2.));
-              } 
-              else{
-                // Msg::Info("Hanging-Full (1-5)\n");
-              }
-            } // if ds > alpha-1
-          } // for j hanging
-        } // if hanging
-        else{
-
-          data = (size_data_t *) side[i]->is.full.quad->p.user_data;
-          SVector3 e(data->dir[3*k+0], data->dir[3*k+1], data->dir[3*k+2]);
-          if(fabs(e.norm()-1.) > 1e-6){
-            Msg::Error("e non unitaire : %4.10e\n", e.norm());
-          }
-
-          if(fabs(data->ds[3*k+which_dir]) > alpha){
-            if(side[iOpp]->is_hanging){
-              // Msg::Error("Full-Hanging (2)\n");
-              // Msg::Exit(1);
-              // Current full - Oppose hanging
-              for(int j = 0; j < P4EST_HALF; ++j){
-                data_opp = (size_data_t *) side[iOpp]->is.hanging.quad[j]->p.user_data;
-                SVector3 e_opp(data_opp->dir[3*k+0], data_opp->dir[3*k+1], data_opp->dir[3*k+2]);
-                if(fabs(e_opp.norm()-1.) > 1e-6){
-                  Msg::Error("e_opp non unitaire : %4.10e\n", e_opp.norm());
-                }
-                double he = 1.0/sqrt(dot(e_opp, data->M, e_opp)); // Size of opposite directions in current metric
-                double he_opp = 1.0/sqrt(dot(e, data_opp->M, e)); // Size of current directions in opposite metric
-
-                // Msg::Info("Current full - Oppose hanging : j = %d - he = %4.4e - he_opp = %4.4e\n", j, he, he_opp);
-
-                if(data->size[k] > he_opp){
-                  data->size[k] = fmin(data->size[k], he_opp + alpha * (data_opp->h/2. + data->h/2.));
-                }
-                if(data_opp->size[k] > he){
-                  data_opp->size[k] = fmin(data_opp->size[k], he + alpha * (data_opp->h/2. + data->h/2.));
-                } // Gradient is too large but no size is greater than its projection
-                if(data->size[k] < he_opp){
+                  // Identifying closest directions on the current cell
                   double dotMax = -1.0, dotProd;
-                  int closestDir;
                   for(int ii = 0; ii < forestOptions->dim; ++ii){
                     SVector3 e_opp_ii(data_opp->dir[3*ii+0], data_opp->dir[3*ii+1], data_opp->dir[3*ii+2]);
-                    if(fabs(e_opp_ii.norm()-1.) > 1e-6){
-                      Msg::Error("e_opp_ii non unitaire : %4.10e\n", e_opp_ii.norm());
-                    }
+                    if(fabs(e_opp_ii.norm()-1.) > 1e-6){ Msg::Error("e_opp_ii non unitaire : %4.10e\n", e_opp_ii.norm()); }
                     dotProd = fabs(dot(e, e_opp_ii));
-                    if(dotProd > dotMax){
+                    if(dotProd > dotMax && tmp[k] != ii){
                       dotMax = fmax(dotMax, dotProd);
-                      closestDir = ii;
+                      tmp[k] = ii;
                     }
                   }
                   if(dotMax < sqrt(2)/2.-1e-6){
@@ -1569,125 +2111,466 @@ static void limitSizeAniso(p4est_iter_face_info_t * info, void *user_data){
                     SVector3 foo0(data_opp->dir[3*0+0], data_opp->dir[3*0+1], data_opp->dir[3*0+2]); foo0.print();
                     SVector3 foo1(data_opp->dir[3*1+0], data_opp->dir[3*1+1], data_opp->dir[3*1+2]); foo1.print();
                     SVector3 foo2(data_opp->dir[3*2+0], data_opp->dir[3*2+1], data_opp->dir[3*2+2]); foo2.print();
-                    Msg::Error("dotMax = %4.4e - closestDir = %d\n", dotMax, closestDir);
+                    Msg::Error("dotMax = %4.4e - closestDir = %d\n", dotMax, tmp[k]);
                   }
-                  if(closestDir >= 0) data_opp->size[closestDir] = fmin(data_opp->size[closestDir], data->size[k] + alpha * (data_opp->h/2. + data->h/2.));
-                }
-                if(data_opp->size[k] < he){
-                  double dotMax = -1.0, dotProd;
-                  int closestDir;
-                  for(int ii = 0; ii < forestOptions->dim; ++ii){
-                    SVector3 e_ii(data->dir[3*ii+0], data->dir[3*ii+1], data->dir[3*ii+2]);
-                    if(fabs(e_ii.norm()-1.) > 1e-6){
-                      Msg::Error("e_ii non unitaire : %4.10e\n", e_ii.norm());
+                } // for each direction k
+
+                closestDirs[q].insert(std::make_pair(q_opp,tmp));
+                // for (auto cD : tmp) std::cout << cD << ' ';
+                // std::cout<<std::endl;
+                // data->closestDir[q_opp] = tmp;
+
+              } // isPlanar
+            } // for j hanging
+          } // isPlanar
+        } // if hanging
+        else{
+          p4est_quadrant_t *q = side[i]->is.full.quad;
+          data = (size_data_t *) q->p.user_data;
+          if(data->isPlanar){
+
+            if(side[iOpp]->is_hanging){
+              // Current full - Opposite hanging
+              for(int j = 0; j < P4EST_HALF; ++j){
+                p4est_quadrant_t *q_opp = side[iOpp]->is.hanging.quad[j];
+                data_opp = (size_data_t *) q_opp->p.user_data;
+                if(data_opp->isPlanar){
+
+                  std::vector<int> tmp{-1,-1,2};
+                  for(int k = 0; k < forestOptions->dim; ++k){
+                    SVector3 e(data->dir[3*k+0], data->dir[3*k+1], data->dir[3*k+2]);
+                    if(fabs(e.norm()-1.) > 1e-6){ Msg::Error("e non unitaire : %4.10e\n", e.norm()); }
+
+                    double dotMax = -1.0, dotProd;
+                    for(int ii = 0; ii < forestOptions->dim; ++ii){
+                      SVector3 e_opp_ii(data_opp->dir[3*ii+0], data_opp->dir[3*ii+1], data_opp->dir[3*ii+2]);
+                      if(fabs(e_opp_ii.norm()-1.) > 1e-6){ Msg::Error("e_opp_ii non unitaire : %4.10e\n", e_opp_ii.norm()); }
+                      dotProd = fabs(dot(e, e_opp_ii));
+                      if(dotProd > dotMax && tmp[k] != ii){
+                        dotMax = fmax(dotMax, dotProd);
+                        tmp[k] = ii;
+                      }
                     }
-                    dotProd = fabs(dot(e_ii, e_opp));
-                    if(dotProd > dotMax){
+                    if(dotMax < sqrt(2)/2.-1e-6){
+                      e.print();
+                      SVector3 foo0(data_opp->dir[3*0+0], data_opp->dir[3*0+1], data_opp->dir[3*0+2]); foo0.print();
+                      SVector3 foo1(data_opp->dir[3*1+0], data_opp->dir[3*1+1], data_opp->dir[3*1+2]); foo1.print();
+                      SVector3 foo2(data_opp->dir[3*2+0], data_opp->dir[3*2+1], data_opp->dir[3*2+2]); foo2.print();
+                      Msg::Error("dotMax = %4.4e - closestDir = %d\n", dotMax, tmp[k]);
+                    }
+                  } // for each direction k
+
+                  closestDirs[q].insert(std::make_pair(q_opp,tmp));
+                  // for (auto cD : tmp) std::cout << "foo" << cD << ' ';
+                  // std::cout<<std::endl;
+                  // data->closestDir[q_opp].push_back(tmp[0]);
+                  // data->closestDir[q_opp].push_back(tmp[1]);
+                  // data->closestDir[q_opp].push_back(tmp[2]);
+                  // Msg::Info("Foo : %d - %d - %d\n", data->closestDir[q_opp][0],data->closestDir[q_opp][1],data->closestDir[q_opp][2]);
+
+                } // isPlanar
+              }
+            } else{
+              // Current full - Oppose full
+              p4est_quadrant_t *q_opp = side[iOpp]->is.full.quad;
+              data_opp = (size_data_t *) q_opp->p.user_data;
+              if(data_opp->isPlanar){
+
+                std::vector<int> tmp{-1,-1,2};
+                for(int k = 0; k < forestOptions->dim; ++k){
+                  SVector3 e(data->dir[3*k+0], data->dir[3*k+1], data->dir[3*k+2]);
+                  if(fabs(e.norm()-1.) > 1e-6){ Msg::Error("e non unitaire : %4.10e\n", e.norm()); }
+
+                  double dotMax = -1.0, dotProd;
+                  for(int ii = 0; ii < forestOptions->dim; ++ii){
+                    SVector3 e_opp_ii(data_opp->dir[3*ii+0], data_opp->dir[3*ii+1], data_opp->dir[3*ii+2]);
+                    if(fabs(e_opp_ii.norm()-1.) > 1e-6){
+                      Msg::Error("e_opp_ii non unitaire : %4.10e\n", e_opp_ii.norm());
+                    }
+                    dotProd = fabs(dot(e, e_opp_ii));
+                    if(dotProd > dotMax && tmp[k] != ii){
                       dotMax = fmax(dotMax, dotProd);
-                      closestDir = ii;
+                      tmp[k] = ii;
                     }
                   }
                   if(dotMax < sqrt(2)/2.-1e-6){
-                    e_opp.print();
-                    SVector3 foo0(data->dir[3*0+0], data->dir[3*0+1], data->dir[3*0+2]); foo0.print();
-                    SVector3 foo1(data->dir[3*1+0], data->dir[3*1+1], data->dir[3*1+2]); foo1.print();
-                    SVector3 foo2(data->dir[3*2+0], data->dir[3*2+1], data->dir[3*2+2]); foo2.print();
-                    Msg::Error("dotMax = %4.4e - closestDir = %d\n", dotMax, closestDir);
+                    e.print();
+                    SVector3 foo0(data_opp->dir[3*0+0], data_opp->dir[3*0+1], data_opp->dir[3*0+2]); foo0.print();
+                    SVector3 foo1(data_opp->dir[3*1+0], data_opp->dir[3*1+1], data_opp->dir[3*1+2]); foo1.print();
+                    SVector3 foo2(data_opp->dir[3*2+0], data_opp->dir[3*2+1], data_opp->dir[3*2+2]); foo2.print();
+                    Msg::Error("dotMax = %4.4e - closestDir = %d\n", dotMax, tmp[k]);
                   }
-                  if(closestDir >= 0) data->size[closestDir] = fmin(data->size[closestDir], data_opp->size[k] + alpha * (data_opp->h/2. + data->h/2.));
-                }
-              }
-              // Msg::Info("\n");
-            } else{
-              // Current full - Oppose full
-              // Msg::Info("Full-Full (3)\n");
-              data_opp = (size_data_t *) side[iOpp]->is.full.quad->p.user_data;
-              SVector3 e_opp(data_opp->dir[3*k+0], data_opp->dir[3*k+1], data_opp->dir[3*k+2]);
-              if(fabs(e_opp.norm()-1.) > 1e-6){
-                Msg::Error("e_opp non unitaire : %4.10e\n", e_opp.norm());
-              }
+                } // for each direction k
 
-              // Length along these directions based on each metric
-              double he = 1.0/sqrt(dot(e_opp, data->M, e_opp)); // Size of opposite directions in current metric
-              double he_opp = 1.0/sqrt(dot(e, data_opp->M, e)); // Size of current directions in opposite metric
+                closestDirs[q].insert(std::make_pair(q_opp,tmp));
+                // int tmpArray[3] = {tmp[0], tmp[1], tmp[2]};
+                // for (auto cD : tmp) std::cout << cD << ' ';
+                // std::cout<<std::endl;
+                // data->closestDir[q_opp] = tmp;
+                // std::cout<<q_opp<<std::endl;
+                // data->testMap[10] = 4;
+                // data->testMap[2] = 12;
+                // data->testMap[3] = 15;
+                // for(auto const& x : data->testMap){
+                //     std::cout << x.first  // string (key)
+                //               << ':' 
+                //               << x.second // string's value 
+                //               << std::endl;
+                // }
+                // data->closestDirArray[q_opp] = tmpArray[0];
+                // data->closestDir.insert(std::make_pair(q_opp,tmp));
+                // data->closestDir[q_opp].push_back(tmp[1]);
+                // data->closestDir[q_opp].push_back(tmp[2]);
+                // Msg::Info("Foo : %d - %d - %d\n", data->closestDirArray[q_opp][0],data->closestDirArray[q_opp][1],data->closestDirArray[q_opp][2]);
+                // Msg::Info("Foo : %d\n", data->closestDirArray[q_opp]);
 
-              // Current size is greater than its projection on the opposing cell
-              if(data->size[k] > he_opp){
-                // Msg::Info("Full-Full (3-1)\n");
-                data->size[k] = fmin(data->size[k], he_opp + alpha * (data_opp->h/2. + data->h/2.));
-              }
-              // Opposing size is greater than its projection on the current cell
-              else if(data_opp->size[k] > he){
-                // Msg::Info("Full-Full (3-2)\n");
-                data_opp->size[k] = fmin(data_opp->size[k], he + alpha * (data_opp->h/2. + data->h/2.));
-              }
-              // Gradient is too large but no size is greater than its projection
-              // On regarde la direction la plus proche chez le voisin, et on limite la taille selon cette direction chez le voisin
-              else if(data->size[k] < he_opp){  // printf("ERREUR 3 : (norme e = %4.4e) size[%d] = %4.4e - he_opp = %4.4e - s_cor = %4.4e- size_opp[%d] = %4.4e - he = %4.4e\n", e.norm(), k, data->size[k], he_opp, he_opp + alpha * (data_opp->h/2. + data->h/2.), k, data_opp->size[k], he);
-                // Msg::Info("Full-Full (3-3)\n");
-                double dotMax = -1.0, dotProd;
-                int closestDir;
-                for(int ii = 0; ii < forestOptions->dim; ++ii){
-                  SVector3 e_opp_ii(data_opp->dir[3*ii+0], data_opp->dir[3*ii+1], data_opp->dir[3*ii+2]);
-                  if(fabs(e_opp_ii.norm()-1.) > 1e-6){
-                    Msg::Error("e_opp_ii non unitaire : %4.10e\n", e_opp_ii.norm());
-                  }
-                  dotProd = fabs(dot(e, e_opp_ii));
-                  // Msg::Info("dotProd = %4.4e\n", dotProd);
-                  if(dotProd > dotMax){
-                    dotMax = fmax(dotMax, dotProd);
-                    closestDir = ii;
-                  }
-                  // Msg::Info("dotMax = %4.4e\n", dotMax);
-                }
-                if(dotMax < sqrt(2)/2.-1e-6){
-                  e.print();
-                  SVector3 foo0(data_opp->dir[3*0+0], data_opp->dir[3*0+1], data_opp->dir[3*0+2]); foo0.print();
-                  SVector3 foo1(data_opp->dir[3*1+0], data_opp->dir[3*1+1], data_opp->dir[3*1+2]); foo1.print();
-                  SVector3 foo2(data_opp->dir[3*2+0], data_opp->dir[3*2+1], data_opp->dir[3*2+2]); foo2.print();
-                  Msg::Error("dotMax = %4.4e - closestDir = %d\n", dotMax, closestDir);
-                }
-                if(closestDir >= 0) data_opp->size[closestDir] = fmin(data_opp->size[closestDir], data->size[k] + alpha * (data_opp->h/2. + data->h/2.));
-              }
-              else if(data_opp->size[k] < he){
-                // Msg::Info("Full-Full (3-4)\n");
-                double dotMax = -1.0, dotProd;
-                int closestDir;
-                for(int ii = 0; ii < forestOptions->dim; ++ii){
-                  SVector3 e_ii(data->dir[3*ii+0], data->dir[3*ii+1], data->dir[3*ii+2]);
-                  if(fabs(e_ii.norm()-1.) > 1e-6){
-                    Msg::Error("e_ii non unitaire : %4.10e\n", e_ii.norm());
-                  }
-                  dotProd = fabs(dot(e_ii, e_opp));
-                  if(dotProd > dotMax){
-                    dotMax = fmax(dotMax, dotProd);
-                    closestDir = ii;
-                  }
-                  // Msg::Info("dotMax = %4.4e\n", dotMax);
-                }
-                if(dotMax < sqrt(2)/2.-1e-6){
-                  e_opp.print();
-                  SVector3 foo0(data->dir[3*0+0], data->dir[3*0+1], data->dir[3*0+2]); foo0.print();
-                  SVector3 foo1(data->dir[3*1+0], data->dir[3*1+1], data->dir[3*1+2]); foo1.print();
-                  SVector3 foo2(data->dir[3*2+0], data->dir[3*2+1], data->dir[3*2+2]); foo2.print();
-                  Msg::Error("dotMax = %4.4e - closestDir = %d\n", dotMax, closestDir);
-                }
-                // SVector3 e11(data->dir[3*0+0], data->dir[3*0+1], data->dir[3*0+2]);
-                // SVector3 e22(data->dir[3*1+0], data->dir[3*1+1], data->dir[3*1+2]);
-                // SVector3 e33(data->dir[3*2+0], data->dir[3*2+1], data->dir[3*2+2]);
-                // Msg::Info("e_opp = (%+2.2e,%+2.2e,%+2.2e) - e1 = (%+2.2e,%+2.2e,%+2.2e) - e2 = (%+2.2e,%+2.2e,%+2.2e) - e3 = (%+2.2e,%+2.2e,%+2.2e) - Best is %d with dot = %4.4e\n",
-                //   e_opp[0], e_opp[1], e_opp[2], e11[0], e11[1], e11[2], e22[0], e22[1], e22[2], e33[0], e33[1], e33[2], closestDir, dotMax);
-                if(closestDir >= 0) data->size[closestDir] = fmin(data->size[closestDir], data_opp->size[k] + alpha * (data_opp->h/2. + data->h/2.));
-              }
-              else{
-                // Msg::Info("Full-Full (3-5)\n");
-              }
-
-            }
-          } // if gradient is too large
-        } // else
+              } // isPlanar
+            } // isFull
+          } // isPlanar
+        }
       }
     }
+  }
+}
+
+static void limitSizeAniso(p4est_iter_face_info_t * info, void *user_data){
+  p4est_iter_face_side_t *side[2];
+  sc_array_t        *sides = &(info->sides);
+  size_data_t       *data;
+  size_data_t       *data_opp;
+  int                which_dir;
+  int                iOpp;
+  ForestOptions     *forestOptions = (ForestOptions*) user_data;
+  double             alpha = forestOptions->gradation - 1.0;
+
+  side[0] = p4est_iter_fside_array_index_int (sides, 0);
+  side[1] = p4est_iter_fside_array_index_int (sides, 1);
+
+  bool isPlanar = false;
+  for(int i = 0; i < sides->elem_count; i++){
+    if(side[i]->is_hanging){
+      for(int j = 0; j < P4EST_HALF; ++j){
+        data = (size_data_t *) side[i]->is.hanging.quad[j]->p.user_data;
+        isPlanar = isPlanar || data->isPlanar;
+      }
+    } else{
+      data = (size_data_t *) side[i]->is.full.quad->p.user_data;
+      isPlanar = isPlanar || data->isPlanar;
+    }
+  }
+
+  if(isPlanar){
+  if(sides->elem_count==2){
+    for(int k = 0; k < forestOptions->dim; ++k){
+      for(int i = 0; i < 2; ++i){
+        iOpp = 1 - i;
+        which_dir = side[i]->face / 2; // Direction x(0), y(1) ou z(2)
+        if(which_dir == 2){
+          continue;
+        }
+
+        if(side[i]->is_hanging){
+          // Current hanging - Opposes full
+          p4est_quadrant_t *q_opp = side[iOpp]->is.full.quad;
+          data_opp = (size_data_t *) q_opp->p.user_data;
+          if(data_opp->isPlanar){
+            SVector3 e_opp(data_opp->dir[3*k+0], data_opp->dir[3*k+1], data_opp->dir[3*k+2]);
+            if(fabs(e_opp.norm()-1.) > 1e-6){
+              Msg::Error("e_opp non unitaire : %4.10e\n", e_opp.norm());
+            }
+
+            for(int j = 0; j < P4EST_HALF; ++j){
+              p4est_quadrant_t *q = side[i]->is.hanging.quad[j];
+              data = (size_data_t *) q->p.user_data;
+              if(data->isPlanar){
+                SVector3 e(data->dir[3*k+0], data->dir[3*k+1], data->dir[3*k+2]);
+                if(fabs(e.norm()-1.) > 1e-6){
+                  Msg::Error("e non unitaire : %4.10e\n", e.norm());
+                }
+                double he = 1.0/sqrt(dot(e_opp, data->M, e_opp)); // Size of opposite directions in current metric
+                double he_opp = 1.0/sqrt(dot(e, data_opp->M, e)); // Size of current directions in opposite metric
+
+                if(fabs(data->ds[3*k+which_dir]) > alpha){
+
+                  if(data->size[k] > he_opp){
+                    data->size[k] = fmin(data->size[k], he_opp + alpha * (data_opp->h/2. + data->h/2.));
+                    ++modifiedCells;
+                    data->isStillSmoothed = true;
+                  }
+                  else if(data_opp->size[k] > he){
+                    data_opp->size[k] = fmin(data_opp->size[k], he + alpha * (data_opp->h/2. + data->h/2.));
+                    ++modifiedCells;
+                    data->isStillSmoothed = true;
+                  }
+                  // Gradient is too large but no size is greater than its projection
+                  else if(data->size[k] < he_opp){
+                    double dotMax = -1.0, dotProd;
+                    int closestDir = -1;
+                    for(int ii = 0; ii < forestOptions->dim; ++ii){
+                      SVector3 e_opp_ii(data_opp->dir[3*ii+0], data_opp->dir[3*ii+1], data_opp->dir[3*ii+2]);
+                      if(fabs(e_opp_ii.norm()-1.) > 1e-6){
+                        Msg::Error("e_opp_ii non unitaire : %4.10e\n", e_opp_ii.norm());
+                      }
+                      dotProd = fabs(dot(e, e_opp_ii));
+                      if(dotProd > dotMax){
+                        dotMax = fmax(dotMax, dotProd);
+                        closestDir = ii;
+                      }
+                    }
+                    if(dotMax < sqrt(2)/2.-1e-6){
+                      e.print();
+                      SVector3 foo0(data_opp->dir[3*0+0], data_opp->dir[3*0+1], data_opp->dir[3*0+2]); foo0.print();
+                      SVector3 foo1(data_opp->dir[3*1+0], data_opp->dir[3*1+1], data_opp->dir[3*1+2]); foo1.print();
+                      SVector3 foo2(data_opp->dir[3*2+0], data_opp->dir[3*2+1], data_opp->dir[3*2+2]); foo2.print();
+                      Msg::Error("dotMax = %4.4e - closestDir = %d\n", dotMax, closestDir);
+                    }
+                    if(closestDir != closestDirs[q][q_opp][k]) Msg::Error("Mismatch 1\n");
+                    if(closestDir >= 0){
+                      data_opp->size[closestDir] = fmin(data_opp->size[closestDir], data->size[k] + alpha/dotMax * (data_opp->h/2. + data->h/2.));
+                      ++modifiedCells;
+                      data->isStillSmoothed = true;
+                    }
+                  }
+                  else if(data_opp->size[k] < he){
+                    double dotMax = -1.0, dotProd;
+                    int closestDir;
+                    for(int ii = 0; ii < forestOptions->dim; ++ii){
+                      SVector3 e_ii(data->dir[3*ii+0], data->dir[3*ii+1], data->dir[3*ii+2]);
+                      if(fabs(e_ii.norm()-1.) > 1e-6){
+                        Msg::Error("e_ii non unitaire : %4.10e\n", e_ii.norm());
+                      }
+                      dotProd = fabs(dot(e_ii, e_opp));
+                      if(dotProd > dotMax){
+                        dotMax = fmax(dotMax, dotProd);
+                        closestDir = ii;
+                      }
+                    }
+                    if(dotMax < sqrt(2)/2.-1e-6){
+                      e_opp.print();
+                      SVector3 foo0(data->dir[3*0+0], data->dir[3*0+1], data->dir[3*0+2]); foo0.print();
+                      SVector3 foo1(data->dir[3*1+0], data->dir[3*1+1], data->dir[3*1+2]); foo1.print();
+                      SVector3 foo2(data->dir[3*2+0], data->dir[3*2+1], data->dir[3*2+2]); foo2.print();
+                      Msg::Error("dotMax = %4.4e - closestDir = %d\n", dotMax, closestDir);
+                    }
+                    // int closestDir = closestDirs[q][q_opp][k];
+                    if(closestDir != closestDirs[q][q_opp][k]) Msg::Error("Mismatch 2\n");
+                    if(closestDir >= 0){
+                      data->size[closestDir] = fmin(data->size[closestDir], data_opp->size[k] + alpha/dotMax * (data_opp->h/2. + data->h/2.));
+                      ++modifiedCells;
+                      data->isStillSmoothed = true;
+                    }
+                  } else{
+                    Msg::Info("Autre\n");
+                  }
+                } // if ds > alpha-1
+              } // isPlanar
+            } // for j hanging
+          } // isPlanar
+        } // if hanging
+        else{
+          p4est_quadrant_t *q = side[i]->is.full.quad;
+          data = (size_data_t *) q->p.user_data;
+          if(data->isPlanar){
+            SVector3 e(data->dir[3*k+0], data->dir[3*k+1], data->dir[3*k+2]);
+            if(fabs(e.norm()-1.) > 1e-6){
+              Msg::Error("e non unitaire : %4.10e\n", e.norm());
+            }
+
+            if(fabs(data->ds[3*k+which_dir]) > alpha){
+              if(side[iOpp]->is_hanging){
+                // Msg::Error("Full-Hanging (2)\n");
+                // Msg::Exit(1);
+                // Current full - Oppose hanging
+                for(int j = 0; j < P4EST_HALF; ++j){
+                  p4est_quadrant_t *q_opp = side[iOpp]->is.hanging.quad[j];
+                  data_opp = (size_data_t *) q_opp->p.user_data;
+                  if(data_opp->isPlanar){
+                    SVector3 e_opp(data_opp->dir[3*k+0], data_opp->dir[3*k+1], data_opp->dir[3*k+2]);
+                    if(fabs(e_opp.norm()-1.) > 1e-6){
+                      Msg::Error("e_opp non unitaire : %4.10e\n", e_opp.norm());
+                    }
+                    double he = 1.0/sqrt(dot(e_opp, data->M, e_opp)); // Size of opposite directions in current metric
+                    double he_opp = 1.0/sqrt(dot(e, data_opp->M, e)); // Size of current directions in opposite metric
+
+                    // Msg::Info("Current full - Oppose hanging : j = %d - he = %4.4e - he_opp = %4.4e\n", j, he, he_opp);
+
+                    if(data->size[k] > he_opp){
+                      data->size[k] = fmin(data->size[k], he_opp + alpha * (data_opp->h/2. + data->h/2.));
+                      ++modifiedCells;
+                      data->isStillSmoothed = true;
+                    }
+                    else if(data_opp->size[k] > he){
+                      data_opp->size[k] = fmin(data_opp->size[k], he + alpha * (data_opp->h/2. + data->h/2.));
+                      ++modifiedCells;
+                      data->isStillSmoothed = true;
+                    } // Gradient is too large but no size is greater than its projection
+                    else if(data->size[k] < he_opp){
+                      double dotMax = -1.0, dotProd;
+                      int closestDir;
+                      for(int ii = 0; ii < forestOptions->dim; ++ii){
+                        SVector3 e_opp_ii(data_opp->dir[3*ii+0], data_opp->dir[3*ii+1], data_opp->dir[3*ii+2]);
+                        if(fabs(e_opp_ii.norm()-1.) > 1e-6){
+                          Msg::Error("e_opp_ii non unitaire : %4.10e\n", e_opp_ii.norm());
+                        }
+                        dotProd = fabs(dot(e, e_opp_ii));
+                        if(dotProd > dotMax){
+                          dotMax = fmax(dotMax, dotProd);
+                          closestDir = ii;
+                        }
+                      }
+                      if(dotMax < sqrt(2)/2.-1e-6){
+                        e.print();
+                        SVector3 foo0(data_opp->dir[3*0+0], data_opp->dir[3*0+1], data_opp->dir[3*0+2]); foo0.print();
+                        SVector3 foo1(data_opp->dir[3*1+0], data_opp->dir[3*1+1], data_opp->dir[3*1+2]); foo1.print();
+                        SVector3 foo2(data_opp->dir[3*2+0], data_opp->dir[3*2+1], data_opp->dir[3*2+2]); foo2.print();
+                        Msg::Error("dotMax = %4.4e - closestDir = %d\n", dotMax, closestDir);
+                      }
+                      if(closestDir != closestDirs[q][q_opp][k]) Msg::Error("Mismatch 1\n");
+                      if(closestDir >= 0){
+                        data_opp->size[closestDir] = fmin(data_opp->size[closestDir], data->size[k] + alpha/dotMax * (data_opp->h/2. + data->h/2.));
+                        ++modifiedCells;
+                        data->isStillSmoothed = true;
+                      }
+                    }
+                    else if(data_opp->size[k] < he){
+                      double dotMax = -1.0, dotProd;
+                      int closestDir;
+                      for(int ii = 0; ii < forestOptions->dim; ++ii){
+                        SVector3 e_ii(data->dir[3*ii+0], data->dir[3*ii+1], data->dir[3*ii+2]);
+                        if(fabs(e_ii.norm()-1.) > 1e-6){
+                          Msg::Error("e_ii non unitaire : %4.10e\n", e_ii.norm());
+                        }
+                        dotProd = fabs(dot(e_ii, e_opp));
+                        if(dotProd > dotMax){
+                          dotMax = fmax(dotMax, dotProd);
+                          closestDir = ii;
+                        }
+                      }
+                      if(dotMax < sqrt(2)/2.-1e-6){
+                        e_opp.print();
+                        SVector3 foo0(data->dir[3*0+0], data->dir[3*0+1], data->dir[3*0+2]); foo0.print();
+                        SVector3 foo1(data->dir[3*1+0], data->dir[3*1+1], data->dir[3*1+2]); foo1.print();
+                        SVector3 foo2(data->dir[3*2+0], data->dir[3*2+1], data->dir[3*2+2]); foo2.print();
+                        Msg::Error("dotMax = %4.4e - closestDir = %d\n", dotMax, closestDir);
+                      }
+                      if(closestDir != closestDirs[q][q_opp][k]) Msg::Error("Mismatch 2\n");
+                      if(closestDir >= 0){
+                        data->size[closestDir] = fmin(data->size[closestDir], data_opp->size[k] + alpha/dotMax * (data_opp->h/2. + data->h/2.));
+                        ++modifiedCells;
+                        data->isStillSmoothed = true;
+                      }
+                    }
+                    else{
+                    Msg::Info("Autre\n");
+                  }
+                  }
+                }
+              } else{
+                // Current full - Oppose full
+                p4est_quadrant_t *q_opp = side[iOpp]->is.full.quad;
+                data_opp = (size_data_t *) q_opp->p.user_data;
+                if(data_opp->isPlanar){
+                  SVector3 e_opp(data_opp->dir[3*k+0], data_opp->dir[3*k+1], data_opp->dir[3*k+2]);
+                  if(fabs(e_opp.norm()-1.) > 1e-6){
+                    Msg::Error("e_opp non unitaire : %4.10e\n", e_opp.norm());
+                  }
+
+                  // Length along these directions based on each metric
+                  double he = 1.0/sqrt(dot(e_opp, data->M, e_opp)); // Size of opposite directions in current metric
+                  double he_opp = 1.0/sqrt(dot(e, data_opp->M, e)); // Size of current directions in opposite metric
+
+                  // Current size is greater than its projection on the opposing cell
+                  if(data->size[k] > he_opp){
+                    data->size[k] = fmin(data->size[k], he_opp + alpha * (data_opp->h/2. + data->h/2.));
+                    ++modifiedCells;
+                    // Msg::Info("1\n");
+                    data->isStillSmoothed = true;
+                  }
+                  // Opposing size is greater than its projection on the current cell
+                  else if(data_opp->size[k] > he){
+                    data_opp->size[k] = fmin(data_opp->size[k], he + alpha * (data_opp->h/2. + data->h/2.));
+                    ++modifiedCells;
+                    // Msg::Info("2\n");
+                    data->isStillSmoothed = true;
+                  }
+                  // Gradient is too large but no size is greater than its projection
+                  // On regarde la direction la plus proche chez le voisin, et on limite la taille selon cette direction chez le voisin
+                  else if(data->size[k] < he_opp){  // printf("ERREUR 3 : (norme e = %4.4e) size[%d] = %4.4e - he_opp = %4.4e - s_cor = %4.4e- size_opp[%d] = %4.4e - he = %4.4e\n", e.norm(), k, data->size[k], he_opp, he_opp + alpha * (data_opp->h/2. + data->h/2.), k, data_opp->size[k], he);
+                    double dotMax = -1.0, dotProd;
+                    int closestDir;
+                    for(int ii = 0; ii < forestOptions->dim; ++ii){
+                      SVector3 e_opp_ii(data_opp->dir[3*ii+0], data_opp->dir[3*ii+1], data_opp->dir[3*ii+2]);
+                      if(fabs(e_opp_ii.norm()-1.) > 1e-6){
+                        Msg::Error("e_opp_ii non unitaire : %4.10e\n", e_opp_ii.norm());
+                      }
+                      dotProd = fabs(dot(e, e_opp_ii));
+                      if(dotProd > dotMax){
+                        dotMax = fmax(dotMax, dotProd);
+                        closestDir = ii;
+                      }
+                    }
+                    if(dotMax < sqrt(2)/2.-1e-6){
+                      e.print();
+                      SVector3 foo0(data_opp->dir[3*0+0], data_opp->dir[3*0+1], data_opp->dir[3*0+2]); foo0.print();
+                      SVector3 foo1(data_opp->dir[3*1+0], data_opp->dir[3*1+1], data_opp->dir[3*1+2]); foo1.print();
+                      SVector3 foo2(data_opp->dir[3*2+0], data_opp->dir[3*2+1], data_opp->dir[3*2+2]); foo2.print();
+                      Msg::Error("dotMax = %4.4e - closestDir = %d\n", dotMax, closestDir);
+                    }
+                    if(closestDir != closestDirs[q][q_opp][k]) Msg::Error("Mismatch 1\n");
+                    if(closestDir >= 0){
+                      data_opp->size[closestDir] = fmin(data_opp->size[closestDir], data->size[k] + alpha/dotMax * (data_opp->h/2. + data->h/2.));
+                      ++modifiedCells;
+                      // Msg::Info("3\n");
+                      data->isStillSmoothed = true;
+                    }
+                  }
+                  else if(data_opp->size[k] < he){
+                    // Msg::Info("Full-Full (3-4)\n");
+                    double dotMax = -1.0, dotProd;
+                    int closestDir;
+                    for(int ii = 0; ii < forestOptions->dim; ++ii){
+                      SVector3 e_ii(data->dir[3*ii+0], data->dir[3*ii+1], data->dir[3*ii+2]);
+                      if(fabs(e_ii.norm()-1.) > 1e-6){
+                        Msg::Error("e_ii non unitaire : %4.10e\n", e_ii.norm());
+                      }
+                      dotProd = fabs(dot(e_ii, e_opp));
+                      if(dotProd > dotMax){
+                        dotMax = fmax(dotMax, dotProd);
+                        closestDir = ii;
+                      }
+                      // Msg::Info("dotMax = %4.4e\n", dotMax);
+                    }
+                    if(dotMax < sqrt(2)/2.-1e-6){
+                      e_opp.print();
+                      SVector3 foo0(data->dir[3*0+0], data->dir[3*0+1], data->dir[3*0+2]); foo0.print();
+                      SVector3 foo1(data->dir[3*1+0], data->dir[3*1+1], data->dir[3*1+2]); foo1.print();
+                      SVector3 foo2(data->dir[3*2+0], data->dir[3*2+1], data->dir[3*2+2]); foo2.print();
+                      Msg::Error("dotMax = %4.4e - closestDir = %d\n", dotMax, closestDir);
+                    }
+                    // SVector3 e11(data->dir[3*0+0], data->dir[3*0+1], data->dir[3*0+2]);
+                    // SVector3 e22(data->dir[3*1+0], data->dir[3*1+1], data->dir[3*1+2]);
+                    // SVector3 e33(data->dir[3*2+0], data->dir[3*2+1], data->dir[3*2+2]);
+                    // Msg::Info("e_opp = (%+2.2e,%+2.2e,%+2.2e) - e1 = (%+2.2e,%+2.2e,%+2.2e) - e2 = (%+2.2e,%+2.2e,%+2.2e) - e3 = (%+2.2e,%+2.2e,%+2.2e) - Best is %d with dot = %4.4e\n",
+                    //   e_opp[0], e_opp[1], e_opp[2], e11[0], e11[1], e11[2], e22[0], e22[1], e22[2], e33[0], e33[1], e33[2], closestDir, dotMax);
+                    if(closestDir != closestDirs[q][q_opp][k]) Msg::Error("Mismatch 2\n");
+                    if(closestDir >= 0){
+                      data->size[closestDir] = fmin(data->size[closestDir], data_opp->size[k] + alpha/dotMax * (data_opp->h/2. + data->h/2.));
+                      ++modifiedCells;
+                      // Msg::Info("4\n");
+                      data->isStillSmoothed = true;
+                    }
+                  }
+                  else{
+                    Msg::Info("Autre\n");
+                  }
+                } // isPlanar
+              } // isFull
+            } // if gradient is too large
+          } // else
+        }
+      }
+    }
+  }
   }
 }
 
@@ -1716,7 +2599,9 @@ static void assembleMetricTensorCallback(p4est_iter_volume_info_t * info, void *
                1.0/(data->size[2]*data->size[2]),
                v1, v2, n);
     data->M = m;
-  } else{
+  } 
+
+  else if(forestOptions->dim == 2 && data->isPlanar){
     SVector3  v1(data->dir[0],data->dir[1],data->dir[2]);
     SVector3   n(data->dir[3],data->dir[4],data->dir[5]);
     SVector3   z(0.,0.,1.);
@@ -1752,17 +2637,32 @@ HXTStatus forestAssembleMetricTensors(Forest *forest){
   return HXT_STATUS_OK;
 }
 
+static void resetSmoothIndicator(p4est_iter_volume_info_t * info, void *user_data){
+  p4est_quadrant_t   *q = info->quad;
+  size_data_t        *data = (size_data_t *) q->p.user_data;
+  data->isStillSmoothed = false;
+}
+
 HXTStatus forestSizeSmoothing(Forest *forest){
-  double gradMax[9], gradLinf;
-  int iter = 0, nmax = 25;
+  double gradMax[9], gradLinf, gradLinf_im1 = -1e22;
+  int iter = 0, nmax = 100;
   int aniso = forest->forestOptions->aniso;
   int dim = forest->forestOptions->dim;
+  double delta_i = 1e22, delta_im1;
+
+  Msg::Info("Identifying closest directions...\t");
+  p4est_iterate (forest->p4est, NULL, (void*) forest->forestOptions, NULL, setClosestDirections, NULL, NULL);
+  Msg::Info("Done\n");
 
   do{
+    p4est_iterate(forest->p4est, NULL, (void*) forest->forestOptions, resetSmoothIndicator, NULL, NULL, NULL);
+    modifiedCells = 0;
     gradLinf = -1e22;
+    delta_im1 = delta_i;
     if(aniso){ HXT_CHECK( forestAssembleMetricTensors(forest)); }
-    HXT_CHECK( forestComputeGradient(forest) );    // Compute gradient
-    HXT_CHECK( forestLimitSize(forest)       );    // Limit large sizes to limit gradient to foresOptions->gradMax
+    // HXT_CHECK( forestComputeGradient(forest) );    // Compute gradient
+    // HXT_CHECK( forestLimitSize(forest)       );    // Limit large sizes to limit gradient to foresOptions->gradMax
+    p4est_iterate(forest->p4est, NULL, (void*) forest->forestOptions, NULL, toutEnUn, NULL, NULL);
     for(int i = 0; i < (aniso ? 9 : 3); ++i) gradMax[i] = -1e22; // Stopping criterion
     if(dim == 2){
       gradMax[2] = gradMax[5] = gradMax[6] = gradMax[7] = gradMax[8] = NAN;
@@ -1780,21 +2680,51 @@ HXTStatus forestSizeSmoothing(Forest *forest){
         fabs(gradMax[0]), fabs(gradMax[1]), fabs(gradMax[2]));
       }
     } else{
-      // if(dim==2){
-      //   Msg::Info("Max gradient during size limitation : grad hc = (%10.5e - %10.5e) - grad hn = (%10.5e - %10.5e)",
-      //   fabs(gradMax[0]), fabs(gradMax[1]), fabs(gradMax[2]), fabs(gradMax[3]));
-      // }
-      // if(dim==3){
-        Msg::Info("Max gradient during size limitation : %10.3e - grad h1 = (%10.3e - %10.3e - %10.3e) - grad h2 = (%10.3e - %10.3e - %10.3e) - grad hn = (%10.3e - %10.3e - %10.3e)",
-        gradLinf,
-        fabs(gradMax[0]), fabs(gradMax[1]), fabs(gradMax[2]),
-        fabs(gradMax[3]), fabs(gradMax[4]), fabs(gradMax[5]),
-        fabs(gradMax[6]), fabs(gradMax[7]), fabs(gradMax[8]));
-      // }
+      if(dim==2){
+        Msg::Info("Modified cells : %8d Max gradient : %10.3e - grad h1 = (%10.3e - %10.3e - %10.3e) - grad h2 = (%10.3e - %10.3e - %10.3e)",
+          modifiedCells,
+          gradLinf,
+          fabs(gradMax[0]), fabs(gradMax[1]), fabs(gradMax[2]),
+          fabs(gradMax[3]), fabs(gradMax[4]), fabs(gradMax[5]));
+      }
+      if(dim==3){
+        Msg::Info("Modified cells : %8d Max gradient : %10.3e - grad h1 = (%10.3e - %10.3e - %10.3e) - grad h2 = (%10.3e - %10.3e - %10.3e) - grad hn = (%10.3e - %10.3e - %10.3e)",
+          modifiedCells,
+          gradLinf,
+          fabs(gradMax[0]), fabs(gradMax[1]), fabs(gradMax[2]),
+          fabs(gradMax[3]), fabs(gradMax[4]), fabs(gradMax[5]),
+          fabs(gradMax[6]), fabs(gradMax[7]), fabs(gradMax[8]));
+      }
     }
-  } while(iter++ < nmax && gradLinf > forest->forestOptions->gradation - 1.0 + 1e-5);
+    delta_i = gradLinf - gradLinf_im1;
+    gradLinf_im1 = gradLinf;
+  // } while(iter++ < nmax && gradLinf > forest->forestOptions->gradation - 1.0 + 1e-5 && fabs(delta_i) >= 1e-2 && fabs(delta_im1) >= 1e-2);
+  } while(modifiedCells > 0 && iter++ < nmax && gradLinf > forest->forestOptions->gradation - 1.0 + 1e-5);
 
   return HXT_STATUS_OK;
+}
+
+static inline void barycentric(SPoint3 p, SPoint3 a, SPoint3 b, SPoint3 c, double &u, double &v, double &w){
+    SVector3 v0 = b - a, v1 = c - a, v2 = p - a;
+    double den = v0[0] * v1[1] - v1[0] * v0[1];
+    v = (v2[0] * v1[1] - v1[0] * v2[1]) / den;
+    w = (v0[0] * v2[1] - v2[0] * v0[1]) / den;
+    u = 1.0 - v - w;
+}
+
+static inline SVector3 interpolateDirTri(double *dir, uint32_t n0, uint32_t n1, uint32_t n2, double *uvw){
+  // double t0 = (dir[9*n0]*dir[9*n0+1] < 0) ? atan2(-dir[9*n0+1],dir[9*n0]) : atan2(dir[9*n0+1],dir[9*n0]); // Angle associated to e1 at vertex 0
+  // double t1 = (dir[9*n1]*dir[9*n1+1] < 0) ? atan2(-dir[9*n1+1],dir[9*n1]) : atan2(dir[9*n1+1],dir[9*n1]); // Angle associated to e1 at vertex 1
+  // double t2 = (dir[9*n2]*dir[9*n2+1] < 0) ? atan2(-dir[9*n2+1],dir[9*n2]) : atan2(dir[9*n2+1],dir[9*n2]); // Angle associated to e1 at vertex 2
+  double t0 = fmin(atan2(-dir[9*n0+1],-dir[9*n0]),atan2(dir[9*n0+1],dir[9*n0])); // Angle associated to e1 at vertex 0
+  double t1 = fmin(atan2(-dir[9*n1+1],-dir[9*n1]),atan2(dir[9*n1+1],dir[9*n1])); // Angle associated to e1 at vertex 1
+  double t2 = fmin(atan2(-dir[9*n2+1],-dir[9*n2]),atan2(dir[9*n2+1],dir[9*n2])); // Angle associated to e1 at vertex 2
+
+  double cI = (1. - uvw[0] - uvw[1]) * cos(t0) + uvw[0] * cos(t1) + uvw[1] * cos(t2);
+  double sI = (1. - uvw[0] - uvw[1]) * sin(t0) + uvw[0] * sin(t1) + uvw[1] * sin(t2);
+  double tI = atan2(sI,cI);
+
+  return SVector3(cos(tI),sin(tI),0.);
 }
 
 // So far, directions in the octree are assigned based on the closest volume mesh node's directions
@@ -1811,244 +2741,308 @@ static void assignDirectionsCallback(p4est_iter_volume_info_t * info, void *user
   double h, center[3], min[3], max[3];
   getCellSize(p4est, which_tree, q, &h);
   getCellCenter(p4est, which_tree, q, center);
-  getCellBBox(p4est, which_tree, q, min, max);
-  std::vector<uint64_t> candidates;
-  forestOptions->domRTree->Search(min, max, rtreeCallback, &candidates);
 
-  if(!candidates.empty()){
-#ifndef FREEZE_DIRECTIONS
-    uint32_t closestNode = -1;
-    // uint32_t closestElem = -1;
-    double dist, minDist = DBL_MAX;
-    bool isInsideAnElem = false;
-    for(auto elem : candidates){
-      if(forestOptions->dim == 3){
-        uint32_t n0 = meshDom->tetrahedra.node[4*elem];
-        uint32_t n1 = meshDom->tetrahedra.node[4*elem+1];
-        uint32_t n2 = meshDom->tetrahedra.node[4*elem+2];
-        uint32_t n3 = meshDom->tetrahedra.node[4*elem+3];
-        MTetrahedron tet((*forestOptions->c2vDom)[n0], (*forestOptions->c2vDom)[n1], (*forestOptions->c2vDom)[n2], (*forestOptions->c2vDom)[n3]);
-        double uvw[3]; tet.xyz2uvw(center, uvw);
-        bool isInside = tet.isInside(uvw[0], uvw[1], uvw[2]);
-        if(isInside){ // Center of the octant is in an tetrahedron
-          isInsideAnElem = true;
-          double *dir = forestOptions->directions;
-          const double directions[36] = {dir[9*n0],dir[9*n0+1],dir[9*n0+2],dir[9*n0+3],dir[9*n0+4],dir[9*n0+5],dir[9*n0+6],dir[9*n0+7],dir[9*n0+8],
-                                         dir[9*n1],dir[9*n1+1],dir[9*n1+2],dir[9*n1+3],dir[9*n1+4],dir[9*n1+5],dir[9*n1+6],dir[9*n1+7],dir[9*n1+8],
-                                         dir[9*n2],dir[9*n2+1],dir[9*n2+2],dir[9*n2+3],dir[9*n2+4],dir[9*n2+5],dir[9*n2+6],dir[9*n2+7],dir[9*n2+8],
-                                         dir[9*n3],dir[9*n3+1],dir[9*n3+2],dir[9*n3+3],dir[9*n3+4],dir[9*n3+5],dir[9*n3+6],dir[9*n3+7],dir[9*n3+8]};
-          double dirAtParamNode[9], quality = 0.0;
-          int flagTrusted[3] = {0};
-          hxtOr3DgetCrossInTetFromDir(directions, uvw, dirAtParamNode, &quality, flagTrusted);
-          for(size_t i = 0; i < 9; ++i){
-            data->dir[i] = dirAtParamNode[i];
+  if(data->isPlanar){
+    getCellBBox(p4est, which_tree, q, min, max);
+    double cooCorner[12] = {center[0] + h/2., center[1] + h/2., 0.,
+                            center[0] + h/2., center[1] - h/2., 0.,
+                            center[0] - h/2., center[1] - h/2., 0.,
+                            center[0] - h/2., center[1] + h/2., 0.,}; // Just min[] and max[] probably work too
+    std::vector<uint64_t> candidates;
+    forestOptions->domRTree->Search(min, max, rtreeCallback, &candidates);
+
+    if(!candidates.empty()){
+      std::vector<int> cornersToFind{0,1,2,3};
+      double dist[5];
+      double minDist[5] = {DBL_MAX, DBL_MAX, DBL_MAX, DBL_MAX, DBL_MAX} ;
+      int closestNode[5] = {-1, -1, -1, -1, -1};
+      bool isInsideAnElem[5] = {false, false, false, false, false};
+      for(uint64_t elem : candidates){
+        std::vector<int>::iterator it = cornersToFind.begin();
+        if(forestOptions->dim == 3){
+          uint32_t n0 = meshDom->tetrahedra.node[4*elem];
+          uint32_t n1 = meshDom->tetrahedra.node[4*elem+1];
+          uint32_t n2 = meshDom->tetrahedra.node[4*elem+2];
+          uint32_t n3 = meshDom->tetrahedra.node[4*elem+3];
+          MTetrahedron tet((*forestOptions->c2vDom)[n0], (*forestOptions->c2vDom)[n1], (*forestOptions->c2vDom)[n2], (*forestOptions->c2vDom)[n3]);
+          double uvw[3]; tet.xyz2uvw(center, uvw);
+          bool isInside = tet.isInside(uvw[0], uvw[1], uvw[2]);
+          if(isInside){ // Center of the octant is in an tetrahedron
+            isInsideAnElem[0] = true;
+            double *dir = forestOptions->directions;
+            const double directions[36] = {dir[9*n0],dir[9*n0+1],dir[9*n0+2],dir[9*n0+3],dir[9*n0+4],dir[9*n0+5],dir[9*n0+6],dir[9*n0+7],dir[9*n0+8],
+                                           dir[9*n1],dir[9*n1+1],dir[9*n1+2],dir[9*n1+3],dir[9*n1+4],dir[9*n1+5],dir[9*n1+6],dir[9*n1+7],dir[9*n1+8],
+                                           dir[9*n2],dir[9*n2+1],dir[9*n2+2],dir[9*n2+3],dir[9*n2+4],dir[9*n2+5],dir[9*n2+6],dir[9*n2+7],dir[9*n2+8],
+                                           dir[9*n3],dir[9*n3+1],dir[9*n3+2],dir[9*n3+3],dir[9*n3+4],dir[9*n3+5],dir[9*n3+6],dir[9*n3+7],dir[9*n3+8]};
+            double dirAtParamNode[9], quality = 0.0;
+            int flagTrusted[3] = {0};
+            hxtOr3DgetCrossInTetFromDir(directions, uvw, dirAtParamNode, &quality, flagTrusted);
+            for(size_t i = 0; i < 9; ++i){
+              data->dir[i] = dirAtParamNode[i];
+            }
+            break;
+          } else{ // Looking for closest tet node to the center of the octant
+            for(size_t i = 0; i < 4; ++i){
+              uint32_t iNode = meshDom->tetrahedra.node[4*elem+i];
+              double *x = meshDom->vertices.coord + 4*iNode;
+              dist[0] = sqrt( (center[0]-x[0])*(center[0]-x[0]) + (center[1]-x[1])*(center[1]-x[1]) + (center[2]-x[2])*(center[2]-x[2]));
+              if(dist[0] < minDist[0]){
+                minDist[0] = dist[0];
+                closestNode[0] = iNode;
+              }
+            }
           }
-          break;
-        } else{ // Looking for closest tet node to the center of the octant
-          for(size_t i = 0; i < 4; ++i){
-            uint32_t iNode = meshDom->tetrahedra.node[4*elem+i];
+        } else{ // dim = 2
+          uint32_t n0 = meshDom->triangles.node[3*elem];
+          uint32_t n1 = meshDom->triangles.node[3*elem+1];
+          uint32_t n2 = meshDom->triangles.node[3*elem+2];
+          MTriangle tri((*forestOptions->c2vDom)[n0], (*forestOptions->c2vDom)[n1], (*forestOptions->c2vDom)[n2]);
+          // Assign directions to the center of the octant
+          double uvw[3]; tri.xyz2uvw(center, uvw);
+          bool isInside = tri.isInside(uvw[0], uvw[1], uvw[2]);
+          if(isInside && !isInsideAnElem[0]){ // Center of the octant is in a triangle
+            isInsideAnElem[0] = true;
+            double *dir = forestOptions->directions;
+            SVector3 d0(dir[9*n0+0],dir[9*n0+1],dir[9*n0+2]);
+            SVector3 d1(dir[9*n1+0],dir[9*n1+1],dir[9*n1+2]);
+            SVector3 d2(dir[9*n2+0],dir[9*n2+1],dir[9*n2+2]);
+
+            // SVector3 avg = d0 * (1-uvw[0]-uvw[1]) + d1 * uvw[0] + d2 * uvw[1];
+            SVector3 avg = interpolateDirTri(dir,n0,n1,n2,uvw);
+
+            if(fabs(dot(avg,d0)) < 0.8 || fabs(dot(avg,d1)) < 0.8 || fabs(dot(avg,d2)) < 0.8){
+              d0.print();
+              d1.print();
+              d2.print();
+              avg.print();
+              Msg::Error("dot\n");
+            }
+
+
+            SVector3 v = crossprod(avg,SVector3(0.,0.,1.));
+            // Check interpolated direction is unit
+            if(avg.norm() > 1e-6 && v.norm() > 1e-6){
+              avg.normalize();
+              v.normalize();
+            }
+            if(fabs(avg.norm() - 1.) > 1e-2 || fabs(v.norm() - 1.) > 1e-2){
+              Msg::Error("Moyenne non unitaire : avg.norm = %4.4e - v.norm = %4.4e\n", avg.norm(), v.norm());
+              Msg::Exit(1);
+            }
+            for(size_t i = 0; i < 3; ++i){
+              data->dir[i]   = avg[i];
+              data->dir[3+i] = v[i];
+            }
+            data->dir[6] = 0.;
+            data->dir[7] = 0.;
+            data->dir[8] = 1.;
+          }
+          // Assign directions to the corners (temporary fix to have a smoother metric field after queries)
+          // for(size_t i = 0; i < 4; ++i){
+          while(it != cornersToFind.end()){
+            int c = *it;
+            double uvwCorner[3]; tri.xyz2uvw(cooCorner+3*c, uvwCorner);
+            bool isInside = tri.isInside(uvwCorner[0], uvwCorner[1], uvwCorner[2]);
+            if(isInside && !isInsideAnElem[1+c]){ // Corner is in a triangle
+              isInsideAnElem[1+c] = true;
+              double *dir = forestOptions->directions;
+              // SVector3 d0(dir[9*n0+0],dir[9*n0+1],dir[9*n0+2]);
+              // SVector3 d1(dir[9*n1+0],dir[9*n1+1],dir[9*n1+2]);
+              // SVector3 d2(dir[9*n2+0],dir[9*n2+1],dir[9*n2+2]);
+              // SVector3 avg = d0 * (1-uvwCorner[0]-uvwCorner[1]) + d1 * uvwCorner[0] + d2 * uvwCorner[1];
+              SVector3 avg = interpolateDirTri(dir,n0,n1,n2,uvwCorner);
+
+              SVector3 v = crossprod(avg,SVector3(0.,0.,1.));
+              // Check interpolated direction is unit
+              if(avg.norm() > 1e-6 && v.norm() > 1e-6){
+                avg.normalize();
+                v.normalize();
+              }
+              if(fabs(avg.norm() - 1.) > 1e-2 || fabs(v.norm() - 1.) > 1e-2){
+                Msg::Error("Moyenne non unitaire : avg.norm = %4.4e - v.norm = %4.4e\n", avg.norm(), v.norm());
+                Msg::Exit(1);
+              }
+              for(size_t j = 0; j < 3; ++j){
+                data->dirCorner[9*c+j]   = avg[j];
+                data->dirCorner[9*c+3+j] = v[j];
+              }
+              data->dirCorner[9*c+6] = 0.;
+              data->dirCorner[9*c+7] = 0.;
+              data->dirCorner[9*c+8] = 1.;
+              it = cornersToFind.erase(it);
+            } else{
+              ++it;
+            }
+          }
+          // Looking for closest tri node to the center of the octant (not used if inside an element)
+          for(size_t i = 0; i < 3; ++i){
+            uint32_t iNode = meshDom->triangles.node[3*elem+i];
             double *x = meshDom->vertices.coord + 4*iNode;
-            dist = sqrt( (center[0]-x[0])*(center[0]-x[0]) + (center[1]-x[1])*(center[1]-x[1]) + (center[2]-x[2])*(center[2]-x[2]));
-            if(dist < minDist){
-              minDist = dist;
-              closestNode = iNode;
+            dist[0] = sqrt( (center[0]   -x[0])*(center[0]   -x[0]) + (center[1]    -x[1])*(center[1]    -x[1]) );
+            dist[1] = sqrt( (cooCorner[0]-x[0])*(cooCorner[0]-x[0]) + (cooCorner[1] -x[1])*(cooCorner[1] -x[1]) );
+            dist[2] = sqrt( (cooCorner[3]-x[0])*(cooCorner[3]-x[0]) + (cooCorner[4] -x[1])*(cooCorner[4] -x[1]) );
+            dist[3] = sqrt( (cooCorner[6]-x[0])*(cooCorner[6]-x[0]) + (cooCorner[7] -x[1])*(cooCorner[7] -x[1]) );
+            dist[4] = sqrt( (cooCorner[9]-x[0])*(cooCorner[9]-x[0]) + (cooCorner[10]-x[1])*(cooCorner[11]-x[1]) );
+            for(size_t j = 0; j < 5; ++j){
+              if(dist[j] < minDist[j]){
+                minDist[j] = dist[j];
+                closestNode[j] = iNode;
+              }
             }
           }
         }
-      } else{ // dim = 2
-        uint32_t n0 = meshDom->triangles.node[3*elem];
-        uint32_t n1 = meshDom->triangles.node[3*elem+1];
-        uint32_t n2 = meshDom->triangles.node[3*elem+2];
-        MTriangle tri((*forestOptions->c2vDom)[n0], (*forestOptions->c2vDom)[n1], (*forestOptions->c2vDom)[n2]);
-        double uvw[3]; tri.xyz2uvw(center, uvw);
-        bool isInside = tri.isInside(uvw[0], uvw[1], uvw[2]);
-        if(isInside){ // Center of the octant is in a triangle
-          isInsideAnElem = true;
-          // std::vector<std::array<double,9>> *dir = forestOptions->triangleDirections;
-          // SVector3 v(0.,0.,0.), u0((*dir)[elem][0],(*dir)[elem][1],(*dir)[elem][2]),
-          //                       u1((*dir)[elem][3],(*dir)[elem][4],(*dir)[elem][5]),
-          //                       u2((*dir)[elem][6],(*dir)[elem][7],(*dir)[elem][8]);
-          // SVector3 u_avg = u0 * (1-uvw[0]-uvw[1]) + u1 * uvw[0] + u2 * uvw[1];
-          // v = crossprod(u_avg, SVector3(0.,0.,1.)); // Direction orthogonal to the averaged u
+      } // for elem : candidates
 
-          // if(u_avg.norm() > 1e-6 && v.norm() > 1e-6){
-          //   u_avg.normalize();
-          //   v.normalize();
-          // }
-          // if(fabs(u_avg.norm() - 1.) > 1e-2 || fabs(v.norm() - 1.) > 1e-2){
-          //   Msg::Error("In assignDirections : directions are not unit : u_avg.norm = %4.4e - v.norm = %4.4e\n", u_avg.norm(), v.norm());
-          // }
-
-          // for(size_t i = 0; i < 3; ++i){
-          //   data->dir[i]   = u_avg[i];
-          //   data->dir[3+i] = v[i];
-          // }
-
-          double *dir = forestOptions->directions;
-          // for(size_t j = 0; j < 2; ++j){
-          SVector3 d0(dir[9*n0+0],dir[9*n0+1],dir[9*n0+2]);
-          SVector3 d1(dir[9*n1+0],dir[9*n1+1],dir[9*n1+2]);
-          SVector3 d2(dir[9*n2+0],dir[9*n2+1],dir[9*n2+2]);
-          SVector3 avg = d0 * (1-uvw[0]-uvw[1]) + d1 * uvw[0] + d2 * uvw[1];
-          SVector3 v = crossprod(avg,SVector3(0.,0.,1.));
-          // Check interpolated direction is unit
-          if(avg.norm() > 1e-6 && v.norm() > 1e-6){
-            avg.normalize();
-            v.normalize();
+      // Assign size if nodes are not inside an element
+      for(size_t ii = 0; ii < 5; ++ii){
+        if(!isInsideAnElem[ii]){
+          if(closestNode[ii] >= 0){
+            if(forestOptions->dim == 3){
+              for(size_t i = 0; i < 9; ++i)
+                if(ii==0){ data->dir[i] = forestOptions->directions[9*closestNode[ii]+i]; } // Center
+                else     { data->dirCorner[i] = forestOptions->directions[9*closestNode[ii]+i]; Msg::Error("assignDirections in 3D : TODO\n"); } // Corners
+            } else{
+              if(ii==0){ 
+                for(size_t i = 0; i < 6; ++i){
+                  data->dir[i] = forestOptions->directions[9*closestNode[ii]+i];
+                  data->dir[6] = 0.;
+                  data->dir[7] = 0.;
+                  data->dir[8] = 1.;
+                }
+              } else{
+                for(size_t i = 0; i < 6; ++i){
+                  data->dirCorner[9*(ii-1)+i] = forestOptions->directions[9*closestNode[ii]+i];
+                  data->dirCorner[9*(ii-1)+6] = 0.;
+                  data->dirCorner[9*(ii-1)+7] = 0.;
+                  data->dirCorner[9*(ii-1)+8] = 1.;
+                }
+              }
+            }
           }
-          if(fabs(avg.norm() - 1.) > 1e-2 || fabs(v.norm() - 1.) > 1e-2){
-            Msg::Error("Moyenne non unitaire : avg.norm = %4.4e - v.norm = %4.4e\n", avg.norm(), v.norm());
-            Msg::Exit(1);
-          }
-          for(size_t i = 0; i < 3; ++i){
-            data->dir[i]   = avg[i];
-            data->dir[3+i] = v[i];
-          }
+          // if(closestTetToCenter >= 0){
+          //   for(size_t i = 0; i < 3; ++i){
+          //     data->dir[i]   = forestOptions->directionsU[3*closestTetToCenter+i];
+          //     data->dir[3+i] = forestOptions->directionsV[3*closestTetToCenter+i];
+          //     data->dir[6+i] = forestOptions->directionsW[3*closestTetToCenter+i];
+          //   }
           // }
-
-          data->dir[6] = 0.;
-          data->dir[7] = 0.;
-          data->dir[8] = 1.;
-
-          // break;
-        } 
-        // Looking for closest tri node to the center of the octant
-        for(size_t i = 0; i < 3; ++i){
-          uint32_t iNode = meshDom->triangles.node[3*elem+i];
-          double *x = meshDom->vertices.coord + 4*iNode;
-          dist = sqrt( (center[0]-x[0])*(center[0]-x[0]) + (center[1]-x[1])*(center[1]-x[1]) + (center[2]-x[2])*(center[2]-x[2]));
-          if(dist < minDist){
-            minDist = dist;
-            // closestElem = elem;
-            // closestNode = i;
-            closestNode = iNode;
-          }
         }
       }
-    } // for elem : candidates
-
-    if(!isInsideAnElem){
-      // if(closestNode >= 0 && closestElem >= 0){
-      if(closestNode >= 0){
-        if(forestOptions->dim == 3){
-          for(size_t i = 0; i < 9; ++i)
-            data->dir[i] = forestOptions->directions[9*closestNode+i];
-        } else{
-          // SVector3 u((*forestOptions->triangleDirections)[closestElem][3*closestNode],
-          //            (*forestOptions->triangleDirections)[closestElem][3*closestNode+1],
-          //            (*forestOptions->triangleDirections)[closestElem][3*closestNode+2]);
-          // SVector3 v = crossprod(u, SVector3(0.,0.,1.));
-
-          // if(u.norm() > 1e-6 && v.norm() > 1e-6){
-          //   u.normalize();
-          //   v.normalize();
-          // }
-          // if(fabs(u.norm() - 1.) > 1e-2 || fabs(v.norm() - 1.) > 1e-2){
-          //   Msg::Error("In assignDirections : directions are not unit : u.norm = %4.4e - v.norm = %4.4e\n", u.norm(), v.norm());
-          // }
-
-          // for(size_t i = 0; i < 3; ++i){
-          //   data->dir[i]   = u[i];
-          //   data->dir[3+i] = v[i];
-          // }
-          for(size_t i = 0; i < 6; ++i)
-            data->dir[i] = forestOptions->directions[9*closestNode+i];
-          data->dir[6] = 0.;
-          data->dir[7] = 0.;
-          data->dir[8] = 1.;
-        }
-      }
-      // if(closestTetToCenter >= 0){
-      //   for(size_t i = 0; i < 3; ++i){
-      //     data->dir[i]   = forestOptions->directionsU[3*closestTetToCenter+i];
-      //     data->dir[3+i] = forestOptions->directionsV[3*closestTetToCenter+i];
-      //     data->dir[6+i] = forestOptions->directionsW[3*closestTetToCenter+i];
-      //   }
-      // }
-    }
-#endif
-    data->hasIntersection = true;
-  } else{
-#ifndef FREEZE_DIRECTIONS    
-    // Assign directions of the closest node (not the best...)
-    uint32_t closestNode = -1;
-    // uint32_t closestElem = -1;
-    double minDist = DBL_MAX, dist;
-    if(forestOptions->dim == 3){
-      for(uint32_t iNode = 0; iNode < meshBnd->vertices.num; ++iNode){
-        double *x = meshBnd->vertices.coord + 4*iNode;
-        dist = sqrt( (center[0]-x[0])*(center[0]-x[0]) + (center[1]-x[1])*(center[1]-x[1]) + (center[2]-x[2])*(center[2]-x[2]));
-        if(dist < minDist){
-          minDist = dist;
-          closestNode = iNode;
-        }
-      }
-      if(closestNode >= 0){
-        for(size_t i = 0; i < 9; ++i)
-          data->dir[i] = forestOptions->directions[9*closestNode+i];
-      }
+      data->hasIntersection = true;
     } else{
-      for(uint64_t iElm = 0; iElm < meshDom->triangles.num; ++iElm){
-        for(size_t j = 0; j < 3; ++j){
-          uint32_t iNode = meshDom->triangles.node[3*iElm+j];
-          double *x = meshDom->vertices.coord + 4*iNode;
-          dist = sqrt( (center[0]-x[0])*(center[0]-x[0]) + (center[1]-x[1])*(center[1]-x[1]) + (center[2]-x[2])*(center[2]-x[2]));
-          if(dist < minDist){
-            minDist = dist;
-            // closestNode = j;
-            closestNode = iNode;
-            // closestElem = iElm;
+      // Assign directions of the closest node (not the best...)
+      int closestNode[5] = {-1, -1, -1, -1, -1}; // TODO : Correct this for 3D
+      double minDist[5] = {DBL_MAX, DBL_MAX, DBL_MAX, DBL_MAX, DBL_MAX}, dist[5];
+      if(forestOptions->dim == 3){
+        // for(uint32_t iNode = 0; iNode < meshBnd->vertices.num; ++iNode){
+        //   double *x = meshBnd->vertices.coord + 4*iNode;
+        //   dist[0] = sqrt( (center[0]-x[0])*(center[0]-x[0]) + (center[1]-x[1])*(center[1]-x[1]) + (center[2]-x[2])*(center[2]-x[2]));
+        //   dist[1] = sqrt( (cooCorner[0]-x[0])*(cooCorner[0]-x[0]) + (cooCorner[1]-x[1])*(cooCorner[1]-x[1]) + (cooCorner[2]-x[2])*(cooCorner[2]-x[2]));
+        //   dist[2] = sqrt( (cooCorner[3]-x[0])*(cooCorner[3]-x[0]) + (cooCorner[4]-x[1])*(cooCorner[4]-x[1]) + (cooCorner[5]-x[2])*(cooCorner[5]-x[2]));
+        //   dist[3] = sqrt( (cooCorner[6]-x[0])*(cooCorner[6]-x[0]) + (cooCorner[7]-x[1])*(cooCorner[7]-x[1]) + (cooCorner[8]-x[2])*(cooCorner[8]-x[2]));
+        //   dist[4] = sqrt( (cooCorner[9]-x[0])*(cooCorner[9]-x[0]) + (cooCorner[10]-x[1])*(cooCorner[11]-x[1]) + (cooCorner[11]-x[2])*(cooCorner[11]-x[2]));
+        //   for(size_t i = 0; i < 5; ++i){
+        //     if(dist[i] < minDist[i]){
+        //       minDist[i] = dist[i];
+        //       closestNode[i] = iNode;
+        //     }
+        //   }
+        // }
+        // if(closestNode[0] >= 0){
+        //   for(size_t i = 0; i < 9; ++i)
+        //     data->dir[i] = forestOptions->directions[9*closestNode+i];
+        // }
+        // for(size_t i = 1; i < 5; ++i){
+        //   if(closestNode[i] >= 0){
+        //     for(size_t ii = 0; ii < 9; ++ii)
+        //       data->dirCorner[9*(i-1)+ii] = forestOptions->directions[9*closestNode+ii];
+        //   }
+        // }
+        Msg::Error("TODO : Correct direction assignment in 3D\n");
+      } else{
+        for(uint64_t iElm = 0; iElm < meshDom->triangles.num; ++iElm){
+          for(size_t j = 0; j < 3; ++j){
+            uint32_t iNode = meshDom->triangles.node[3*iElm+j];
+            double *x = meshDom->vertices.coord + 4*iNode;
+            dist[0] = sqrt( (center[0]   -x[0])*(center[0]   -x[0]) + (center[1]    -x[1])*(center[1]    -x[1]));
+            dist[1] = sqrt( (cooCorner[0]-x[0])*(cooCorner[0]-x[0]) + (cooCorner[1] -x[1])*(cooCorner[1] -x[1]));
+            dist[2] = sqrt( (cooCorner[3]-x[0])*(cooCorner[3]-x[0]) + (cooCorner[4] -x[1])*(cooCorner[4] -x[1]));
+            dist[3] = sqrt( (cooCorner[6]-x[0])*(cooCorner[6]-x[0]) + (cooCorner[7] -x[1])*(cooCorner[7] -x[1]));
+            dist[4] = sqrt( (cooCorner[9]-x[0])*(cooCorner[9]-x[0]) + (cooCorner[10]-x[1])*(cooCorner[11]-x[1]));
+            for(size_t i = 0; i < 5; ++i){
+              if(dist[i] < minDist[i]){
+                minDist[i] = dist[i];
+                closestNode[i] = iNode;
+              }
+            }
+          }
+        }
+        if(closestNode[0] >= 0){
+          for(size_t i = 0; i < 6; ++i)
+            data->dir[i] = forestOptions->directions[9*closestNode[0]+i];
+          data->dir[6] = 0.;
+          data->dir[7] = 0.;
+          data->dir[8] = 1.;
+        }
+        for(size_t i = 1; i < 5; ++i){
+          if(closestNode[i] >= 0){
+            for(size_t ii = 0; ii < 6; ++ii)
+              data->dirCorner[9*(i-1)+ii] = forestOptions->directions[9*closestNode[i]+ii];
+            data->dirCorner[9*(i-1)+6] = 0.;
+            data->dirCorner[9*(i-1)+7] = 0.;
+            data->dirCorner[9*(i-1)+8] = 1.;
           }
         }
       }
-      if(closestNode >= 0){
-      // if(closestElem >= 0){
-        // SVector3 u((*forestOptions->triangleDirections)[closestElem][3*closestNode],
-        //            (*forestOptions->triangleDirections)[closestElem][3*closestNode+1],
-        //            (*forestOptions->triangleDirections)[closestElem][3*closestNode+2]);
-        // SVector3 v = crossprod(u, SVector3(0.,0.,1.));
+      data->hasIntersection = false;
+    }
+  }
+}
 
-        // if(u.norm() > 1e-6 && v.norm() > 1e-6){
-        //     u.normalize();
-        //     v.normalize();
-        //   }
-        //   if(fabs(u.norm() - 1.) > 1e-2 || fabs(v.norm() - 1.) > 1e-2){
-        //     Msg::Error("In assignDirections : directions are not unit : u.norm = %4.4e - v.norm = %4.4e\n", u.norm(), v.norm());
-        //   }
+static void markPlanarCells(p4est_iter_face_info_t *info, void *user_data){
+  p4est_iter_face_side_t *side[2];
+  sc_array_t             *sides = &(info->sides);
+  size_data_t            *data;
+  size_data_t            *data_opp;
+  int                     which_dir;
+  int                     iOpp;
+  ForestOptions          *forestOptions = (ForestOptions*) user_data;
 
-        // for(size_t i = 0; i < 3; ++i){
-        //   data->dir[i]   = u[i];
-        //   data->dir[3+i] = v[i];
-        // }
+  side[0] = p4est_iter_fside_array_index_int (sides, 0);
+  side[1] = p4est_iter_fside_array_index_int (sides, 1);
 
-        // if(u.norm() <= 1e-6){
-        //   u.print();
-        //   Msg::Error("Foo3\n");
-        // }
-        for(size_t i = 0; i < 6; ++i)
-          data->dir[i] = forestOptions->directions[9*closestNode+i];
-        data->dir[6] = 0.;
-        data->dir[7] = 0.;
-        data->dir[8] = 1.;
+  if(sides->elem_count==2){
+    for(int i = 0; i < 2; ++i){
+      iOpp = 1 - i;
+      if(side[i]->is_hanging){
+        // Current hanging - Opposes full
+        data_opp = (size_data_t *) side[iOpp]->is.full.quad->p.user_data;
+        if(fabs(data_opp->c[2]) <= data_opp->h/2. && data_opp->c[2] >= 0.){
+          for(int j = 0; j < P4EST_HALF; ++j){
+            data = (size_data_t *) side[i]->is.hanging.quad[j]->p.user_data;
+            data->isPlanar = true;
+          }
+        }
+      } else{
+        data = (size_data_t *) side[i]->is.full.quad->p.user_data;
+        if(side[iOpp]->is_hanging){
+          // Current full - Oppose hanging
+          for(int j = 0; j < P4EST_HALF; ++j){
+            data_opp = (size_data_t *) side[iOpp]->is.hanging.quad[j]->p.user_data;
+            if(fabs(data_opp->c[2]) <= data_opp->h/2. && data_opp->c[2] >= 0.){
+              data->isPlanar = true;
+            }
+          }
+        } else{
+          // Current full - Oppose full
+          data_opp = (size_data_t *) side[iOpp]->is.full.quad->p.user_data;
+          if(fabs(data_opp->c[2]) <= data_opp->h/2. && data_opp->c[2] >= 0.){
+            data->isPlanar = true;
+          }
+        }
       }
     }
-#endif
-    data->hasIntersection = false;
   }
-#ifdef FREEZE_DIRECTIONS
-  data->dir[0] = sqrt(2)/2.;
-  data->dir[1] = sqrt(2)/2.;
-  data->dir[2] = 0.;
-
-  data->dir[3] = -sqrt(2)/2.;
-  data->dir[4] = sqrt(2)/2.;
-  data->dir[5] = 0.;
-
-  data->dir[6] = 0.;
-  data->dir[7] = 0.;
-  data->dir[8] = 1.;
-#endif
-
 }
 
 #if defined(ANISO)
@@ -2082,7 +3076,7 @@ HXTStatus forestSmoothDirections(Forest *forest){
         double *v2 = fO->nodalCurvature + 6*iNbc + 3;
         double *n  = fO->nodeNormals    + 3*iNbc;
 
-        // double *x = meshDom->vertices.coord + 4*iNbc;
+        double *x = meshDom->vertices.coord + 4*iNbc;
 
         double tol = 1e-6;
         SVector3 V1(v1[0],v1[1],v1[2]); if(V1.norm() >= tol){ V1.normalize(); };
@@ -2094,16 +3088,16 @@ HXTStatus forestSmoothDirections(Forest *forest){
         dirBC[3] = V2[0]; dirBC[4] = V2[1]; dirBC[5] = V2[2];
         dirBC[6] =  N[0]; dirBC[7] =  N[1]; dirBC[8] =  N[2];
 
-        // for (int j = 0; j < 3; ++j) {
-        //   double d[3] = {dirBC[3*j+0], dirBC[3*j+1], dirBC[3*j+2]};
-        //   if(j==0){
-        //     fprintf(myfile,"VP(%.16g,%.16g,%.16g){%.16g,%.16g,%.16g};\n",x[0],x[1],x[2], 1.0/2.0*d[0], 1.0/2.0*d[1], 1.0/2.0*d[2]);
-        //     fprintf(myfile,"VP(%.16g,%.16g,%.16g){%.16g,%.16g,%.16g};\n",x[0],x[1],x[2],-1.0/2.0*d[0],-1.0/2.0*d[1],-1.0/2.0*d[2]);
-        //   } else{
-        //     fprintf(myfile,"VP(%.16g,%.16g,%.16g){%.16g,%.16g,%.16g};\n",x[0],x[1],x[2], d[0], d[1], d[2]);
-        //     fprintf(myfile,"VP(%.16g,%.16g,%.16g){%.16g,%.16g,%.16g};\n",x[0],x[1],x[2],-d[0],-d[1],-d[2]);
-        //   }
-        // }
+        for (int j = 0; j < 3; ++j) {
+          double d[3] = {dirBC[3*j+0], dirBC[3*j+1], dirBC[3*j+2]};
+          if(j==0){
+            fprintf(myfile,"VP(%.16g,%.16g,%.16g){%.16g,%.16g,%.16g};\n",x[0],x[1],x[2], 1.0/2.0*d[0], 1.0/2.0*d[1], 1.0/2.0*d[2]);
+            fprintf(myfile,"VP(%.16g,%.16g,%.16g){%.16g,%.16g,%.16g};\n",x[0],x[1],x[2],-1.0/2.0*d[0],-1.0/2.0*d[1],-1.0/2.0*d[2]);
+          } else{
+            fprintf(myfile,"VP(%.16g,%.16g,%.16g){%.16g,%.16g,%.16g};\n",x[0],x[1],x[2], d[0], d[1], d[2]);
+            fprintf(myfile,"VP(%.16g,%.16g,%.16g){%.16g,%.16g,%.16g};\n",x[0],x[1],x[2],-d[0],-d[1],-d[2]);
+          }
+        }
 
         // Converting BC directions to BC frames
         if(V1.norm() >= tol && V2.norm() >= tol && N.norm() >= tol){
@@ -2136,32 +3130,32 @@ HXTStatus forestSmoothDirections(Forest *forest){
     HXT_CHECK(hxtOr3DComputeFrames(meshDom, frames, precision, maxIter, solver, epsilon, L, P, isBoundaryCondition));
     HXT_CHECK(hxtOr3DWritePosCrossesFromFrames(meshDom, frames, "myFrames.pos", NULL));
 
-    HxtUVWParamOptions uvwOptions;
-    uvwOptions.ignore_scaling = 0;
-    uvwOptions.debug = 1;
-    uvwOptions.verbose = 1;
-    double *liftU; //Une direction par tet, liftU[3*tetNum + i], i = 0..2
-    HXT_CHECK(hxtMalloc(&liftU, meshDom->tetrahedra.num*3*sizeof(double)));
-    double *liftV; //Une direction par tet, liftV[3*tetNum + i], i = 0..2
-    HXT_CHECK(hxtMalloc(&liftV, meshDom->tetrahedra.num*3*sizeof(double)));
-    double *liftW; //Une direction par tet, liftW[3*tetNum + i], i = 0..2
-    HXT_CHECK(hxtMalloc(&liftW, meshDom->tetrahedra.num*3*sizeof(double)));
-    double *directionsVertices;
-    HXT_CHECK(hxtMalloc(&directionsVertices, sizeof(double)*9*meshDom->tetrahedra.num));
-    for (uint64_t i = 0; i < meshDom->vertices.num; ++i){ //Transforme les représentations des frames en 3 directions orthogonales qui sont stockées dans directionsVertices
-      double stableDir[3]={0.0};
-      hxtOr3DframeToDirections(frames + 9*i, stableDir, directionsVertices + 9*i);
-     }
-    double *directionsElem;
-    HXT_CHECK(hxtMalloc(&directionsElem, sizeof(double)*9*meshDom->tetrahedra.num));
-    double *smoothnessIndicator;
-    HXT_CHECK(hxtMalloc(&smoothnessIndicator, meshDom->tetrahedra.num*sizeof(double)));
+    // HxtUVWParamOptions uvwOptions;
+    // uvwOptions.ignore_scaling = 0;
+    // uvwOptions.debug = 1;
+    // uvwOptions.verbose = 1;
+    // double *liftU; //Une direction par tet, liftU[3*tetNum + i], i = 0..2
+    // HXT_CHECK(hxtMalloc(&liftU, meshDom->tetrahedra.num*3*sizeof(double)));
+    // double *liftV; //Une direction par tet, liftV[3*tetNum + i], i = 0..2
+    // HXT_CHECK(hxtMalloc(&liftV, meshDom->tetrahedra.num*3*sizeof(double)));
+    // double *liftW; //Une direction par tet, liftW[3*tetNum + i], i = 0..2
+    // HXT_CHECK(hxtMalloc(&liftW, meshDom->tetrahedra.num*3*sizeof(double)));
+    // double *directionsVertices;
+    // HXT_CHECK(hxtMalloc(&directionsVertices, sizeof(double)*9*meshDom->tetrahedra.num));
+    // for (uint64_t i = 0; i < meshDom->vertices.num; ++i){ //Transforme les représentations des frames en 3 directions orthogonales qui sont stockées dans directionsVertices
+    //   double stableDir[3]={0.0};
+    //   hxtOr3DframeToDirections(frames + 9*i, stableDir, directionsVertices + 9*i);
+    //  }
+    // double *directionsElem;
+    // HXT_CHECK(hxtMalloc(&directionsElem, sizeof(double)*9*meshDom->tetrahedra.num));
+    // double *smoothnessIndicator;
+    // HXT_CHECK(hxtMalloc(&smoothnessIndicator, meshDom->tetrahedra.num*sizeof(double)));
 
-    HXT_CHECK(hxtOr3DcrossNodesToElem(meshDom, directionsVertices, directionsElem, smoothnessIndicator)); //On a besoin de transformer les croix par noeuds en croix par tet pour faire le lifting plus facilement
-    HXT_CHECK(get_lifting(meshDom, directionsElem, smoothnessIndicator, &uvwOptions, liftU, liftV, liftW));
-    hxtOr3DWritePosVectorTet(meshDom, liftU, "liftU.pos"); //Crée un fichier pos pour visualiser le lifting
-    hxtOr3DWritePosVectorTet(meshDom, liftV, "liftV.pos");
-    hxtOr3DWritePosVectorTet(meshDom, liftW, "liftW.pos");
+    // HXT_CHECK(hxtOr3DcrossNodesToElem(meshDom, directionsVertices, directionsElem, smoothnessIndicator)); //On a besoin de transformer les croix par noeuds en croix par tet pour faire le lifting plus facilement
+    // HXT_CHECK(get_lifting(meshDom, directionsElem, smoothnessIndicator, &uvwOptions, liftU, liftV, liftW));
+    // hxtOr3DWritePosVectorTet(meshDom, liftU, "liftU.pos"); //Crée un fichier pos pour visualiser le lifting
+    // hxtOr3DWritePosVectorTet(meshDom, liftV, "liftV.pos");
+    // hxtOr3DWritePosVectorTet(meshDom, liftW, "liftW.pos");
 
     //--une fois les frames calculées, il faut postraiter pour récupérer les directions
     // boucle sur tous les noeuds du maillage iN
@@ -2203,11 +3197,11 @@ HXTStatus forestSmoothDirections(Forest *forest){
 
     HXT_CHECK(hxtOr3DWritePosCrossesFromFrames(meshBnd, frames, "thisShouldBeBetter.pos", NULL));
 
-    for(uint64_t i = 0; i < 3*meshDom->tetrahedra.num; ++i){
-      fO->directionsU[i] = liftU[i];
-      fO->directionsV[i] = liftV[i];
-      fO->directionsW[i] = liftW[i];
-    }
+    // for(uint64_t i = 0; i < 3*meshDom->tetrahedra.num; ++i){
+    //   fO->directionsU[i] = liftU[i];
+    //   fO->directionsV[i] = liftV[i];
+    //   fO->directionsW[i] = liftW[i];
+    // }
 
     // HXT_CHECK(hxtFree(&directionsElem));
     // HXT_CHECK(hxtFree(&smoothnessIndicator));
@@ -2220,222 +3214,8 @@ HXTStatus forestSmoothDirections(Forest *forest){
   } else{ // dim = 2
     std::vector<std::array<double,9>> *triDir = fO->triangleDirections;
 #ifndef FREEZE_DIRECTIONS
-    bool load = false;
-    if(!load){
-      FILE* myDir = fopen("justTheDirections.txt","w");
-      std::vector<MTriangle*> triangles;
-      for(size_t i = 0; i < meshDom->triangles.num; ++i){
-        triangles.push_back(new MTriangle((*fO->c2vDom)[ meshDom->triangles.node[3*i+0] ],
-                                          (*fO->c2vDom)[ meshDom->triangles.node[3*i+1] ],
-                                          (*fO->c2vDom)[ meshDom->triangles.node[3*i+2] ]));
-      }
-
-      std::vector<MLine*> lines;
-      for(size_t i = 0; i < meshBnd->lines.num; ++i){
-        lines.push_back(new MLine((*fO->c2vBnd)[ meshBnd->lines.node[2*i+0] ],
-                                  (*fO->c2vBnd)[ meshBnd->lines.node[2*i+1] ]));
-      }
-
-      std::vector<std::array<double,3> > triEdgeTheta;
-
-      computeCrossFieldWithHeatEquation(4,triangles,lines,triEdgeTheta);
-      convertToPerTriangleCrossFieldDirections(4,triangles,triEdgeTheta, *triDir);
-
-      for(size_t i = 0; i < meshDom->vertices.num; ++i){
-        for(size_t j = 0; j < 9; ++j){
-          directions[9*i+j] = 0.0;
-        }
-      }
-
-      SVector3 ez(0.,0.,1.);
-      // Impose directions on boundary nodes
-      for(size_t i = 0; i < meshBnd->lines.num; ++i){
-        uint32_t node0 = meshBnd->lines.node[2*i+0];
-        uint32_t node1 = meshBnd->lines.node[2*i+1];
-        MVertex *v0 = (*forest->forestOptions->c2vBnd)[node0];
-        MVertex *v1 = (*forest->forestOptions->c2vBnd)[node1];
-        MEdge e(v0,v1);
-        SVector3 dir0 = e.tangent();
-        SVector3 dir1 = crossprod(dir0,ez);
-        // Check directions are unit
-        if(dir0.norm() > 1e-6 && dir1.norm() > 1e-6){
-          dir0.normalize();
-          dir1.normalize();
-        }
-        if(fabs(dir0.norm() - 1.) > 1e-2 || fabs(dir1.norm() - 1.) > 1e-2){
-          Msg::Error("In smoothDirections : directions are not unit : dir0.norm = %4.4e - dir1.norm = %4.4e\n", dir0.norm(), dir1.norm());
-          Msg::Exit(1);
-        }
-        // Check directions are orthogonal
-        if(fabs(dot(dir0,dir1)) > 1e-6){
-          Msg::Error("In smoothDirections : directions are not orthogonal : dot = %4.4e\n", fabs(dot(dir0,dir1)));
-          Msg::Exit(1);
-        }
-        uint32_t node0Dom = (*forest->forestOptions->v2cDom)[v0];
-        directions[9 * node0Dom + 0] = dir0[0];
-        directions[9 * node0Dom + 1] = dir0[1];
-        directions[9 * node0Dom + 2] = dir0[2];
-        directions[9 * node0Dom + 3] = dir1[0];
-        directions[9 * node0Dom + 4] = dir1[1];
-        directions[9 * node0Dom + 5] = dir1[2];
-        isBoundaryCondition[node0Dom] = 1;
-      }
-
-      // Assign directions on interior nodes
-      for(size_t i = 0; i < meshDom->triangles.num; ++i){
-        for(size_t j = 0; j < 3; ++j){
-          uint32_t iNode = meshDom->triangles.node[3*i+j];
-          if(!isBoundaryCondition[iNode]){
-            SVector3 dir0((*triDir)[i][3*j+0],(*triDir)[i][3*j+1],(*triDir)[i][3*j+2]);
-            SVector3 dir1 = crossprod(dir0,ez);
-            // Check directions are unit
-            if(dir0.norm() > 1e-6 && dir1.norm() > 1e-6){
-              dir0.normalize();
-              dir1.normalize();
-            }
-            if(fabs(dir0.norm() - 1.) > 1e-2 || fabs(dir1.norm() - 1.) > 1e-2){
-              Msg::Error("In smoothDirections : directions are not unit : dir0.norm = %4.4e - dir1.norm = %4.4e\n", dir0.norm(), dir1.norm());
-              Msg::Exit(1);
-            }
-            // Check directions are orthogonal
-            if(fabs(dot(dir0,dir1)) > 1e-6){
-              Msg::Error("In smoothDirections : directions are not orthogonal : dot = %4.4e\n", fabs(dot(dir0,dir1)));
-              Msg::Exit(1);
-            }
-            directions[9*iNode+0] = dir0[0];
-            directions[9*iNode+1] = dir0[1];
-            directions[9*iNode+2] = dir0[2];
-            directions[9*iNode+3] = dir1[0];
-            directions[9*iNode+4] = dir1[1];
-            directions[9*iNode+5] = dir1[2];
-          }
-        }
-      }
-
-      // Lift the directions
-      std::list<uint32_t> *adj = new std::list<uint32_t>[meshDom->vertices.num];
-      for(size_t i = 0; i < meshDom->triangles.num; ++i){
-        adj[meshDom->triangles.node[3*i+0]].push_back(meshDom->triangles.node[3*i+1]);
-        adj[meshDom->triangles.node[3*i+1]].push_back(meshDom->triangles.node[3*i+0]);
-        adj[meshDom->triangles.node[3*i+0]].push_back(meshDom->triangles.node[3*i+2]);
-        adj[meshDom->triangles.node[3*i+2]].push_back(meshDom->triangles.node[3*i+0]);
-        adj[meshDom->triangles.node[3*i+1]].push_back(meshDom->triangles.node[3*i+2]);
-        adj[meshDom->triangles.node[3*i+2]].push_back(meshDom->triangles.node[3*i+1]);
-      }
-
-      uint32_t current = (*fO->v2cDom)[(*fO->c2vBnd)[0]];
-      // std::vector<bool> visited(meshDom->vertices.num,false);
-      std::list<uint32_t> q;
-      // visited[current] = true;
-      for(size_t i = 0; i < meshBnd->vertices.num; ++i){
-        q.push_back((*fO->v2cDom)[(*fO->c2vBnd)[i]]);
-      }
-      std::list<uint32_t>::iterator i;
-      
-      while(!q.empty()){
-        current = q.front();
-        q.pop_front();
-        for (i = adj[current].begin(); i != adj[current].end(); ++i){
-          if(!isBoundaryCondition[*i]){
-            // Adjust directions numbering
-            SVector3 dir0(directions[9*(*i)+0],directions[9*(*i)+1],directions[9*(*i)+2]);
-            SVector3 dir0ref(directions[9*current+0],directions[9*current+1],directions[9*current+2]);
-            SVector3 dir1ref(directions[9*current+3],directions[9*current+4],directions[9*current+5]);
-            if(fabs(dot(dir0,dir1ref)) > fabs(dot(dir0,dir0ref))){
-              SVector3 dir1(directions[9*(*i)+3],directions[9*(*i)+4],directions[9*(*i)+5]);
-              directions[9*(*i)+0] = dir1[0];
-              directions[9*(*i)+1] = dir1[1];
-              directions[9*(*i)+2] = dir1[2];
-              directions[9*(*i)+3] = dir0[0];
-              directions[9*(*i)+4] = dir0[1];
-              directions[9*(*i)+5] = dir0[2];
-            }
-            isBoundaryCondition[*i] = true;
-            q.push_back(*i);
-          }
-        }
-      }
-
-      // Be super duper sure it's normalized
-      for(size_t i = 0; i < meshDom->vertices.num; ++i){
-        for(size_t j = 0; j < 2; ++j){
-          SVector3 d(directions[9*i+3*j+0],directions[9*i+3*j+1],directions[9*i+3*j+2]);
-          if( fabs(d.norm() - 1.) > 1e-5){
-            Msg::Error("Direction non unitaire : d.norm = %4.4e\n", d.norm());
-          }
-        }
-      }
-
-      Msg::Info("Writing 2D directions");
-      for(size_t i = 0; i < meshDom->triangles.num; ++i){
-        SVector3 foo1((*triDir)[i][0], (*triDir)[i][1], (*triDir)[i][2]);
-        SVector3 foo2((*triDir)[i][3], (*triDir)[i][4], (*triDir)[i][5]);
-        SVector3 foo3((*triDir)[i][6], (*triDir)[i][7], (*triDir)[i][8]);
-        if(foo1.norm() <= 1e-3) Msg::Error("Dir1");
-        if(foo2.norm() <= 1e-3) Msg::Error("Dir2");
-        if(foo3.norm() <= 1e-3) Msg::Error("Dir3");
-        fprintf(myDir, "%10.10e %10.10e %10.10e %10.10e %10.10e %10.10e %10.10e %10.10e %10.10e\n",
-          (*triDir)[i][0], (*triDir)[i][1], (*triDir)[i][2],
-          (*triDir)[i][3], (*triDir)[i][4], (*triDir)[i][5],
-          (*triDir)[i][6], (*triDir)[i][7], (*triDir)[i][8]);
-      }
-
-      // for(size_t i = 0; i < meshDom->triangles.num; ++i){
-      for(size_t i = 0; i < meshDom->vertices.num; ++i){
-        // for(int j = 0; j < 3; ++j){
-        //   MEdge e = triangles[i]->getEdge(j);
-        //   SVector3 b1(0.,0.,0.), b2(0.,0.,0.);
-        //   b1 = e.normal();
-
-        //   MVertex *v0 = e.getVertex(0);
-        //   MVertex *v1 = e.getVertex(1);
-        //   // uint32_t iNode = meshDom->triangles.node[3*i+j];
-          double *x = meshDom->vertices.coord + 4*i;
-          // double *x0 = meshDom->vertices.coord + 4*(*forestOptions->v2cDom)[v0];
-        //   double *x1 = meshDom->vertices.coord + 4*(*forestOptions->v2cDom)[v1];
-        //   double theta = triEdgeTheta[i][j];
-
-        //   b1 =  cos(theta) * e.tangent() + sin(theta) * e.normal();
-        //   b1.normalize();
-        //   b2 = -sin(theta) * e.tangent() + cos(theta) * e.normal();
-        //   b2.normalize();
-          
-          // if(j==0){
-          //   fprintf(myfile,"VP(%.16g,%.16g,%.16g){%.16g,%.16g,%.16g};\n",(x0[0]+x1[0])/2.,(x0[1]+x1[1])/2.,(x0[2]+x1[2])/2., 1.0/2.0*b1[0], 1.0/2.0*b1[1], 1.0/2.0*b1[2]);
-          //   fprintf(myfile,"VP(%.16g,%.16g,%.16g){%.16g,%.16g,%.16g};\n",(x0[0]+x1[0])/2.,(x0[1]+x1[1])/2.,(x0[2]+x1[2])/2.,-1.0/2.0*b1[0],-1.0/2.0*b1[1],-1.0/2.0*b1[2]);
-          // } else{
-            // fprintf(myfile,"VP(%.16g,%.16g,%.16g){%.16g,%.16g,%.16g};\n",(x0[0]+x1[0])/2.,(x0[1]+x1[1])/2.,(x0[2]+x1[2])/2., 0.1*b1[0], 0.1*b1[1], 0.1*b1[2]);
-            // fprintf(myfile,"VP(%.16g,%.16g,%.16g){%.16g,%.16g,%.16g};\n",(x0[0]+x1[0])/2.,(x0[1]+x1[1])/2.,(x0[2]+x1[2])/2.,-0.1*b1[0],-0.1*b1[1],-0.1*b1[2]);
-            // fprintf(myfile,"VP(%.16g,%.16g,%.16g){%.16g,%.16g,%.16g};\n",(x0[0]+x1[0])/2.,(x0[1]+x1[1])/2.,(x0[2]+x1[2])/2., b2[0], b2[1], b2[2]);
-            // fprintf(myfile,"VP(%.16g,%.16g,%.16g){%.16g,%.16g,%.16g};\n",(x0[0]+x1[0])/2.,(x0[1]+x1[1])/2.,(x0[2]+x1[2])/2.,-b2[0],-b2[1],-b2[2]);
-        fprintf(myfile,"VP(%.16g,%.16g,%.16g){%.16g,%.16g,%.16g};\n",x[0],x[1],x[2], 0.5*directions[9*i+0], 0.5*directions[9*i+1], 0.5*directions[9*i+2]);
-        fprintf(myfile,"VP(%.16g,%.16g,%.16g){%.16g,%.16g,%.16g};\n",x[0],x[1],x[2],-0.5*directions[9*i+0],-0.5*directions[9*i+1],-0.5*directions[9*i+2]);
-        fprintf(myfile,"VP(%.16g,%.16g,%.16g){%.16g,%.16g,%.16g};\n",x[0],x[1],x[2], directions[9*i+3], directions[9*i+4], directions[9*i+5]);
-        fprintf(myfile,"VP(%.16g,%.16g,%.16g){%.16g,%.16g,%.16g};\n",x[0],x[1],x[2],-directions[9*i+3],-directions[9*i+4],-directions[9*i+5]);
-          // }
-        // }
-      }
-      // for(size_t i = 0; i < meshDom->triangles.num; i+=5){
-      //   for(int j = 0; j < 3; ++j){
-      //     SVector3 v( (*triDir)[i][3*j],
-      //                 (*triDir)[i][3*j+1],
-      //                 (*triDir)[i][3*j+2]);
-      //     uint32_t iNode = meshDom->triangles.node[3*i+j];
-      //     double *x = meshDom->vertices.coord + 4*iNode;
-          
-      //     // if(j==0){
-      //     //   fprintf(myfile,"VP(%.16g,%.16g,%.16g){%.16g,%.16g,%.16g};\n",(x0[0]+x1[0])/2.,(x0[1]+x1[1])/2.,(x0[2]+x1[2])/2., 1.0/2.0*b1[0], 1.0/2.0*b1[1], 1.0/2.0*b1[2]);
-      //     //   fprintf(myfile,"VP(%.16g,%.16g,%.16g){%.16g,%.16g,%.16g};\n",(x0[0]+x1[0])/2.,(x0[1]+x1[1])/2.,(x0[2]+x1[2])/2.,-1.0/2.0*b1[0],-1.0/2.0*b1[1],-1.0/2.0*b1[2]);
-      //     // } else{
-      //       fprintf(myfile,"VP(%.16g,%.16g,%.16g){%.16g,%.16g,%.16g};\n",x[0],x[1],x[2],v[0],v[1],v[2]);
-      //       // fprintf(myfile,"VP(%.16g,%.16g,%.16g){%.16g,%.16g,%.16g};\n",x[0],x[1],x[2],v[0],v[1],v[2]);
-      //       // fprintf(myfile,"VP(%.16g,%.16g,%.16g){%.16g,%.16g,%.16g};\n",x[0],x[1],x[2], b2[0], b2[1], b2[2]);
-      //       // fprintf(myfile,"VP(%.16g,%.16g,%.16g){%.16g,%.16g,%.16g};\n",x[0],x[1],x[2],-b2[0],-b2[1],-b2[2]);
-      //     // }
-      //   }
-      // }
-      fclose(myDir);
-    } else{
+    bool load = true;
+    if(load){
       Msg::Info("Loading directions");
       FILE *myDir = fopen("justTheDirections.txt", "r");
       char buf[BUFSIZ];
@@ -2477,6 +3257,244 @@ HXTStatus forestSmoothDirections(Forest *forest){
           (*triDir)[cnt-1][6], (*triDir)[cnt-1][7], (*triDir)[cnt-1][8]);
 
       fclose(myDir);
+    } else{
+      FILE* myDir = fopen("justTheDirections.txt","w");
+      std::vector<MTriangle*> triangles;
+      for(size_t i = 0; i < meshDom->triangles.num; ++i){
+        triangles.push_back(new MTriangle((*fO->c2vDom)[ meshDom->triangles.node[3*i+0] ],
+                                          (*fO->c2vDom)[ meshDom->triangles.node[3*i+1] ],
+                                          (*fO->c2vDom)[ meshDom->triangles.node[3*i+2] ]));
+      }
+
+      std::vector<MLine*> lines;
+      for(size_t i = 0; i < meshBnd->lines.num; ++i){
+        lines.push_back(new MLine((*fO->c2vBnd)[ meshBnd->lines.node[2*i+0] ],
+                                  (*fO->c2vBnd)[ meshBnd->lines.node[2*i+1] ]));
+      }
+
+      std::vector<std::array<double,3> > triEdgeTheta;
+      computeCrossFieldWithHeatEquation(4,triangles,lines,triEdgeTheta);
+      convertToPerTriangleCrossFieldDirections(4,triangles,triEdgeTheta, *triDir);
+
+      Msg::Info("Writing 2D directions");
+      for(size_t i = 0; i < meshDom->triangles.num; ++i){
+        SVector3 foo1((*triDir)[i][0], (*triDir)[i][1], (*triDir)[i][2]);
+        SVector3 foo2((*triDir)[i][3], (*triDir)[i][4], (*triDir)[i][5]);
+        SVector3 foo3((*triDir)[i][6], (*triDir)[i][7], (*triDir)[i][8]);
+        if(foo1.norm() <= 1e-3) Msg::Error("Dir1");
+        if(foo2.norm() <= 1e-3) Msg::Error("Dir2");
+        if(foo3.norm() <= 1e-3) Msg::Error("Dir3");
+        fprintf(myDir, "%10.10e %10.10e %10.10e %10.10e %10.10e %10.10e %10.10e %10.10e %10.10e\n",
+          (*triDir)[i][0], (*triDir)[i][1], (*triDir)[i][2],
+          (*triDir)[i][3], (*triDir)[i][4], (*triDir)[i][5],
+          (*triDir)[i][6], (*triDir)[i][7], (*triDir)[i][8]);
+      }
+      fclose(myDir);
+    }
+
+    for(size_t i = 0; i < meshDom->vertices.num; ++i){
+      for(size_t j = 0; j < 9; ++j){
+        directions[9*i+j] = NAN;
+      }
+    }
+
+    SVector3 ez(0.,0.,1.);
+    // Impose directions on boundary nodes
+    for(size_t i = 0; i < meshBnd->lines.num; ++i){
+      uint32_t node0 = meshBnd->lines.node[2*i+0];
+      uint32_t node1 = meshBnd->lines.node[2*i+1];
+      MVertex *v0 = (*forest->forestOptions->c2vBnd)[node0];
+      MVertex *v1 = (*forest->forestOptions->c2vBnd)[node1];
+      MEdge e(v0,v1);
+      SVector3 dir0 = e.tangent();
+      SVector3 dir1 = crossprod(dir0,ez);
+      // Check directions are unit
+      if(dir0.norm() > 1e-6 && dir1.norm() > 1e-6){
+        dir0.normalize();
+        dir1.normalize();
+      }
+      if(fabs(dir0.norm() - 1.) > 1e-2 || fabs(dir1.norm() - 1.) > 1e-2){
+        Msg::Error("In smoothDirections : directions are not unit : dir0.norm = %4.4e - dir1.norm = %4.4e\n", dir0.norm(), dir1.norm());
+        Msg::Exit(1);
+      }
+      // Check directions are orthogonal
+      if(fabs(dot(dir0,dir1)) > 1e-6){
+        Msg::Error("In smoothDirections : directions are not orthogonal : dot = %4.4e\n", fabs(dot(dir0,dir1)));
+        Msg::Exit(1);
+      }
+      uint32_t node0Dom = (*forest->forestOptions->v2cDom)[v0];
+      directions[9 * node0Dom + 0] = dir0[0];
+      directions[9 * node0Dom + 1] = dir0[1];
+      directions[9 * node0Dom + 2] = dir0[2];
+      directions[9 * node0Dom + 3] = dir1[0];
+      directions[9 * node0Dom + 4] = dir1[1];
+      directions[9 * node0Dom + 5] = dir1[2];
+      isBoundaryCondition[node0Dom] = 1;
+    }
+
+    // Assign directions on interior nodes
+    for(size_t i = 0; i < meshDom->triangles.num; ++i){
+      for(size_t j = 0; j < 3; ++j){
+        uint32_t iNode = meshDom->triangles.node[3*i+j];
+        if(!isBoundaryCondition[iNode]){
+          SVector3 dir0((*triDir)[i][3*j+0],(*triDir)[i][3*j+1],(*triDir)[i][3*j+2]);
+          SVector3 dir1 = crossprod(dir0,ez);
+          // Check directions are unit
+          if(dir0.norm() > 1e-6 && dir1.norm() > 1e-6){
+            dir0.normalize();
+            dir1.normalize();
+          }
+          if(fabs(dir0.norm() - 1.) > 1e-2 || fabs(dir1.norm() - 1.) > 1e-2){
+            Msg::Error("In smoothDirections : directions are not unit : dir0.norm = %4.4e - dir1.norm = %4.4e\n", dir0.norm(), dir1.norm());
+            Msg::Exit(1);
+          }
+          // Check directions are orthogonal
+          if(fabs(dot(dir0,dir1)) > 1e-6){
+            Msg::Error("In smoothDirections : directions are not orthogonal : dot = %4.4e\n", fabs(dot(dir0,dir1)));
+            Msg::Exit(1);
+          }
+          directions[9*iNode+0] = dir0[0];
+          directions[9*iNode+1] = dir0[1];
+          directions[9*iNode+2] = dir0[2];
+          directions[9*iNode+3] = dir1[0];
+          directions[9*iNode+4] = dir1[1];
+          directions[9*iNode+5] = dir1[2];
+        }
+      }
+    }
+
+    // Lift the directions (part1)
+    std::list<uint32_t> *adj = new std::list<uint32_t>[meshDom->vertices.num];
+    for(size_t i = 0; i < meshDom->triangles.num; ++i){
+      adj[meshDom->triangles.node[3*i+0]].push_back(meshDom->triangles.node[3*i+1]);
+      adj[meshDom->triangles.node[3*i+1]].push_back(meshDom->triangles.node[3*i+0]);
+      adj[meshDom->triangles.node[3*i+0]].push_back(meshDom->triangles.node[3*i+2]);
+      adj[meshDom->triangles.node[3*i+2]].push_back(meshDom->triangles.node[3*i+0]);
+      adj[meshDom->triangles.node[3*i+1]].push_back(meshDom->triangles.node[3*i+2]);
+      adj[meshDom->triangles.node[3*i+2]].push_back(meshDom->triangles.node[3*i+1]);
+    }
+
+    // Assign directions on floating nodes (if any)
+    FILE* myfile3 = fopen("patch.pos","w");
+    fprintf(myfile3,"View \"patch\"{\n");
+    for(size_t i = 0; i < meshDom->points.num; ++i){
+      uint32_t iNode = meshDom->points.node[i];
+      if(isnan(directions[9*iNode+0])){
+        double *x = meshDom->vertices.coord + 4*iNode;
+        fprintf(myfile3,"SP(%.16g,%.16g,%.16g){%.16g};\n", x[0], x[1], x[2], iNode, iNode, iNode);
+        double dx = 1e-3;
+        double min[3] = {x[0]-dx, x[1]-dx, x[2]-dx};
+        double max[3] = {x[0]+dx, x[1]+dx, x[2]+dx};
+        std::vector<uint64_t> candidates;
+        fO->domRTree->Search(min, max, rtreeCallback, &candidates);
+        bool isSet = false;
+        for(auto elem : candidates){
+          uint32_t n0 = meshDom->triangles.node[3*elem];
+          uint32_t n1 = meshDom->triangles.node[3*elem+1];
+          uint32_t n2 = meshDom->triangles.node[3*elem+2];
+
+          adj[n0].push_back(iNode); // Add an adjacency relation for the lifting
+          adj[iNode].push_back(n0);
+
+          MTriangle tri((*fO->c2vDom)[n0], (*fO->c2vDom)[n1], (*fO->c2vDom)[n2]);
+          double uvw[3]; tri.xyz2uvw(x, uvw);
+          bool isInside = tri.isInside(uvw[0], uvw[1], uvw[2]);
+          if(isInside){
+            fprintf(myfile3,"ST(%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g,%.16g){%.16g,%.16g,%.16g};\n",
+              (*fO->c2vDom)[n0]->point().x(),(*fO->c2vDom)[n0]->point().y(),(*fO->c2vDom)[n0]->point().z(),
+              (*fO->c2vDom)[n1]->point().x(),(*fO->c2vDom)[n1]->point().y(),(*fO->c2vDom)[n1]->point().z(),
+              (*fO->c2vDom)[n2]->point().x(),(*fO->c2vDom)[n2]->point().y(),(*fO->c2vDom)[n2]->point().z(),
+              1.0,1.0,1.0);
+            SVector3 d0(directions[9*n0+0],directions[9*n0+1],directions[9*n0+2]);
+            SVector3 d1(directions[9*n1+0],directions[9*n1+1],directions[9*n1+2]);
+            SVector3 d2(directions[9*n2+0],directions[9*n2+1],directions[9*n2+2]);
+
+            double ub, vb, wb;
+            barycentric(SPoint3(x), (*fO->c2vDom)[n0]->point(), (*fO->c2vDom)[n1]->point(), (*fO->c2vDom)[n2]->point(), ub, vb, wb);
+            // SVector3 avg = d0 * (1.-uvw[0]-uvw[1]) + d1 * uvw[0] + d2 * uvw[1];
+            SVector3 avg = d0 * ub + d1 * vb + d2 * wb;
+
+            SVector3 v = crossprod(avg,SVector3(0.,0.,1.));
+            // Check interpolated direction is unit
+            if(avg.norm() > 1e-6 && v.norm() > 1e-6){
+              avg.normalize();
+              v.normalize();
+            }
+            if(fabs(avg.norm() - 1.) > 1e-2 || fabs(v.norm() - 1.) > 1e-2){
+              Msg::Error("Moyenne non unitaire : avg.norm = %4.4e - v.norm = %4.4e\n", avg.norm(), v.norm());
+              Msg::Exit(1);
+            }
+            for(size_t i = 0; i < 3; ++i){
+              directions[9*iNode+i]   = avg[i];
+              directions[9*iNode+3+i] = v[i];
+            }
+            // }
+
+            directions[9*iNode+6] = 0.;
+            directions[9*iNode+7] = 0.;
+            directions[9*iNode+8] = 1.;
+            
+            isSet = true;
+            // Msg::Info("Directions initialized at floating node %d\n", iNode);
+          }
+        }
+        if(!isSet){
+          Msg::Warning("Directions at floating node %d were not initialized : node is not inside any triangle\n", iNode);
+        }
+      }
+    }
+    fprintf(myfile3,"};"); fclose(myfile3);
+
+    // Lift the directions (part2)
+    uint32_t current = (*fO->v2cDom)[(*fO->c2vBnd)[0]];
+    // std::vector<bool> visited(meshDom->vertices.num,false);
+    std::list<uint32_t> q;
+    // visited[current] = true;
+    for(size_t i = 0; i < meshBnd->vertices.num; ++i){
+      q.push_back((*fO->v2cDom)[(*fO->c2vBnd)[i]]);
+    }
+    std::list<uint32_t>::iterator i;
+    
+    while(!q.empty()){
+      current = q.front();
+      q.pop_front();
+      for (i = adj[current].begin(); i != adj[current].end(); ++i){
+        if(!isBoundaryCondition[*i]){
+          // Adjust directions numbering
+          SVector3    dir0(directions[9*(*i)+0],   directions[9*(*i)+1],   directions[9*(*i)+2]);
+          SVector3 dir0ref(directions[9*current+0],directions[9*current+1],directions[9*current+2]);
+          SVector3 dir1ref(directions[9*current+3],directions[9*current+4],directions[9*current+5]);
+          if(fabs(dot(dir0,dir1ref)) > fabs(dot(dir0,dir0ref))){
+            SVector3 dir1(directions[9*(*i)+3],directions[9*(*i)+4],directions[9*(*i)+5]);
+            directions[9*(*i)+0] = dir1[0];
+            directions[9*(*i)+1] = dir1[1];
+            directions[9*(*i)+2] = dir1[2];
+            directions[9*(*i)+3] = dir0[0];
+            directions[9*(*i)+4] = dir0[1];
+            directions[9*(*i)+5] = dir0[2];
+          }
+          isBoundaryCondition[*i] = true;
+          q.push_back(*i);
+        }
+      }
+    }
+
+    // Be super duper sure it's normalized
+    for(size_t i = 0; i < meshDom->vertices.num; ++i){
+      for(size_t j = 0; j < 2; ++j){
+        SVector3 d(directions[9*i+3*j+0],directions[9*i+3*j+1],directions[9*i+3*j+2]);
+        if( fabs(d.norm() - 1.) > 1e-5){
+          Msg::Error("Direction non unitaire : d.norm = %4.4e\n", d.norm());
+        }
+      }
+    }
+
+    for(size_t i = 0; i < meshDom->vertices.num; ++i){
+      double *x = meshDom->vertices.coord + 4*i;
+      fprintf(myfile,"VP(%.16g,%.16g,%.16g){%.16g,%.16g,%.16g};\n",x[0],x[1],x[2], 0.5*directions[9*i+0], 0.5*directions[9*i+1], 0.5*directions[9*i+2]);
+      fprintf(myfile,"VP(%.16g,%.16g,%.16g){%.16g,%.16g,%.16g};\n",x[0],x[1],x[2],-0.5*directions[9*i+0],-0.5*directions[9*i+1],-0.5*directions[9*i+2]);
+      fprintf(myfile,"VP(%.16g,%.16g,%.16g){%.16g,%.16g,%.16g};\n",x[0],x[1],x[2], directions[9*i+3], directions[9*i+4], directions[9*i+5]);
+      fprintf(myfile,"VP(%.16g,%.16g,%.16g){%.16g,%.16g,%.16g};\n",x[0],x[1],x[2],-directions[9*i+3],-directions[9*i+4],-directions[9*i+5]);
     }
 #endif
   }
@@ -2485,7 +3503,15 @@ HXTStatus forestSmoothDirections(Forest *forest){
 
   // HXT_CHECK(hxtOr3DWritePosCrossesFromFrames(meshDom, frames, "myFramesBeforeSolve.pos", NULL));
 
+  printf("Marking intersecting octants and their neighbors...\n");
+  // p4est_iterate(forest->p4est, NULL, (void*) forest->forestOptions, NULL, markPlanarCells, NULL, NULL);
+  printf("Done\n");
+  // printf("Drawing...\n");
+  // HXT_CHECK(forestExport(forest, "foo.pos"));
+  // printf("Done\n");
+  printf("Transferring directions to the octree...\n");
   p4est_iterate(forest->p4est, NULL, (void*) forest->forestOptions, assignDirectionsCallback, NULL, NULL, NULL);
+  printf("Done\n");
 
   return HXT_STATUS_OK;
 }
@@ -2560,13 +3586,67 @@ static int searchAndAssignConstantAniso(p4est_t *p4est,
   in_box &= (p->y <= center[1] + h/2.) && (p->y >= center[1] - h/2.);
   in_box &= (p->z <= center[2] + h/2.) && (p->z >= center[2] - h/2.);
 
-  // A point can be on the exact boundary of two cells, hence we take the min.
   if(in_box && is_leaf){
     // p->size = fmax(forestOptions->hmin, fmin(forestOptions->hmax, p->size) );
     p->m = data->M;
     // p->m = SMetric3(1.0);
     // p->m.print("p->m");
     p->isFound = true;
+  }
+
+  return in_box;
+}
+
+static int searchAndAssignLinearAniso(p4est_t *p4est,
+                                      p4est_topidx_t which_tree,
+                                      p4est_quadrant_t *q,
+                                      p4est_locidx_t local_num, void *point)
+{
+  bool in_box, is_leaf = local_num >= 0;
+  size_data_t *data = (size_data_t *)q->p.user_data;
+  size_point_t *p = (size_point_t *)point;
+  ForestOptions *fO = (ForestOptions *) p4est->user_pointer;
+  double h, center[3];
+  if(!is_leaf)
+    getCellSize(p4est, which_tree, q, &h);
+  else
+    h = data->h;
+  getCellCenter(p4est, which_tree, q, center);
+
+  double eps = 1e-12;
+  in_box  = (p->x <= center[0] + h/2. + eps) && (p->x >= center[0] - h/2. - eps);
+  in_box &= (p->y <= center[1] + h/2. + eps) && (p->y >= center[1] - h/2. - eps);
+  in_box &= (p->z <= center[2] + h/2. + eps) && (p->z >= center[2] - h/2. - eps);
+
+  if(in_box && is_leaf){
+    // if(fO->dim == 2){
+      double *dC = data->dirCorner;
+      // SMetric3 m1(1.0,1.0,1.0,SVector3(dC[0] ,dC[1] ,dC[2] ),SVector3(dC[3] ,dC[4] ,dC[5] ),SVector3(dC[6] ,dC[7] ,dC[8] ));
+      // SMetric3 m2(1.0,1.0,1.0,SVector3(dC[9] ,dC[10],dC[11]),SVector3(dC[12],dC[13],dC[14]),SVector3(dC[15],dC[16],dC[17]));
+      // SMetric3 m3(1.0,1.0,1.0,SVector3(dC[18],dC[19],dC[20]),SVector3(dC[21],dC[22],dC[23]),SVector3(dC[24],dC[25],dC[26]));
+      // SMetric3 m4(1.0,1.0,1.0,SVector3(dC[27],dC[28],dC[29]),SVector3(dC[30],dC[31],dC[32]),SVector3(dC[33],dC[34],dC[35]));
+      double t1 = fmin(atan2(-dC[1] ,-dC[0] ), atan2(dC[1] ,dC[0] )); // Angle associated to e1 at corner 1 ( 1, 1)
+      double t2 = fmin(atan2(-dC[10],-dC[9] ), atan2(dC[10],dC[9] )); // Angle associated to e1 at corner 2 ( 1,-1)
+      double t3 = fmin(atan2(-dC[19],-dC[18]), atan2(dC[19],dC[18])); // Angle associated to e1 at corner 3 (-1,-1)
+      double t4 = fmin(atan2(-dC[28],-dC[27]), atan2(dC[28],dC[27])); // Angle associated to e1 at corner 4 (-1, 1)
+
+      double xsi = 2.*(p->x-center[0])/h;
+      double eta = 2.*(p->y-center[1])/h;
+
+      double cI = (1+xsi)*(1+eta)/4. * cos(t1) + (1+xsi)*(1-eta)/4. * cos(t2) + (1-xsi)*(1-eta)/4. * cos(t3) + (1-xsi)*(1+eta)/4. * cos(t4);
+      double sI = (1+xsi)*(1+eta)/4. * sin(t1) + (1+xsi)*(1-eta)/4. * sin(t2) + (1-xsi)*(1-eta)/4. * sin(t3) + (1-xsi)*(1+eta)/4. * sin(t4);
+      double tI = atan2(sI,cI);
+
+      SVector3 v0(cos(tI),sin(tI),0.);
+      SVector3  n(     0.,     0.,1.);
+      SVector3 v1 = crossprod(v0, n);
+
+      double h0 = data->size[0] + data->ds[0]*(p->x-center[0]) + data->ds[1]*(p->y-center[1]); // + data->ds[2]*(p->z-center[2]);
+      double h1 = data->size[1] + data->ds[3]*(p->x-center[0]) + data->ds[4]*(p->y-center[1]); // + data->ds[5]*(p->z-center[2]);
+      SMetric3 m(1.0/(h0*h0), 1.0/(h1*h1), 1.0, v0, v1, n);
+      p->m = m;
+      p->isFound = true;
+    // }
   }
 
   return in_box;
@@ -2702,7 +3782,13 @@ HXTStatus forestSearchOneAniso(Forest *forest, double x, double y, double z,
   p->m = SMetric3(1.0);
   p->isFound = false;
 
-  p4est_search(forest->p4est, nullptr, searchAndAssignConstantAniso, points);
+  // p4est_search(forest->p4est, nullptr, searchAndAssignConstantAniso, points);
+  if(linear) {
+    p4est_search(forest->p4est, NULL, searchAndAssignLinearAniso, points);
+  }
+  else {
+    p4est_search(forest->p4est, NULL, searchAndAssignConstantAniso, points);
+  }
 
   if(!p->isFound)
     Msg::Info("Point (%f,%f,%f) n'a pas été trouvé dans l'octree 8-|", x, y, z);
@@ -3410,10 +4496,13 @@ static void exportToCrossesAnisoCallback(p4est_iter_volume_info_t * info, void *
   p4est_t            *p4est = info->p4est;
   p4est_topidx_t      which_tree = info->treeid;
 
+  if(data->isPlanar){
+  // if(fabs(data->c[2]) <= data->h/2. && data->c[2] >= 0.){
+
   FILE* f = (FILE*) user_data;
   double center[3], x[8], y[8], z[8];
   getCellCenter(p4est, which_tree, q, center);
-  double h = data->h/2.0, epsilon = 1e-12, s = data->size[0];
+  double h = data->h/2.0, epsilon = 1e-12, s = 1.0; //data->size[0];
   x[0] = x[3] = x[4] = x[7] = center[0]-h - epsilon;
   x[1] = x[2] = x[5] = x[6] = center[0]+h + epsilon;
   y[0] = y[1] = y[4] = y[5] = center[1]-h - epsilon;
@@ -3439,44 +4528,47 @@ static void exportToCrossesAnisoCallback(p4est_iter_volume_info_t * info, void *
   fprintf(f, "SL(%f,%f,%f, %f,%f,%f){%f,%f};\n", x[6], y[6], z[6], x[7], y[7], z[7], s, s);
   fprintf(f, "SL(%f,%f,%f, %f,%f,%f){%f,%f};\n", x[4], y[4], z[4], x[7], y[7], z[7], s, s);
 
-  // double cross[9];
-
   double dir[9]={data->dir[0], data->dir[1], data->dir[2],
                  data->dir[3], data->dir[4], data->dir[5],
                  data->dir[6], data->dir[7], data->dir[8]};
 
-  // double frame[9]={0.0};
-  // hxtOr3DdirectionsToFrame(dir, frame);
+  for (int j = 0; j < 2; ++j) {
+    double d[3] = {dir[3*j+0], dir[3*j+1], dir[3*j+2]};
+    // fprintf(f,"VP(%.16g,%.16g,%.16g){%.16g,%.16g,%.16g};\n",center[0],center[1],center[2], data->size[j]*d[0], data->size[j]*d[1], data->size[j]*d[2]);
+    // fprintf(f,"VP(%.16g,%.16g,%.16g){%.16g,%.16g,%.16g};\n",center[0],center[1],center[2],-data->size[j]*d[0],-data->size[j]*d[1],-data->size[j]*d[2]);
+    if(j==1){
+      // fprintf(f,"VP(%.16g,%.16g,%.16g){%.16g,%.16g,%.16g};\n",center[0],center[1],center[2], 0.5*d[0], 0.5*d[1], 0.5*d[2]);
+      fprintf(f,"VP(%.16g,%.16g,%.16g){%.16g,%.16g,%.16g};\n",center[0],center[1],center[2], data->size[j]*d[0], data->size[j]*d[1], data->size[j]*d[2]);
+      // fprintf(f,"VP(%.16g,%.16g,%.16g){%.16g,%.16g,%.16g};\n",center[0],center[1],center[2],-0.5*d[0],-0.5*d[1],-0.5*d[2]);
+      fprintf(f,"VP(%.16g,%.16g,%.16g){%.16g,%.16g,%.16g};\n",center[0],center[1],center[2],-data->size[j]*d[0],-data->size[j]*d[1],-data->size[j]*d[2]);
+    } else{
+      // fprintf(f,"VP(%.16g,%.16g,%.16g){%.16g,%.16g,%.16g};\n",center[0],center[1],center[2], d[0], d[1], d[2]);
+      fprintf(f,"VP(%.16g,%.16g,%.16g){%.16g,%.16g,%.16g};\n",center[0],center[1],center[2], data->size[j]*d[0], data->size[j]*d[1], data->size[j]*d[2]);
+      // fprintf(f,"VP(%.16g,%.16g,%.16g){%.16g,%.16g,%.16g};\n",center[0],center[1],center[2],-d[0],-d[1],-d[2]);
+      fprintf(f,"VP(%.16g,%.16g,%.16g){%.16g,%.16g,%.16g};\n",center[0],center[1],center[2],-data->size[j]*d[0],-data->size[j]*d[1],-data->size[j]*d[2]);
+    }
+  }
 
-  // // double *x = mesh->vertices.coord +4*i;
-  // // const double *vertexFrame = frames+i*9;
-  // double stableDir[3]={0.0};
-  // hxtOr3DframeToDirections(frame, stableDir, cross);
-  // double color[3];
-  // for(int k=0;k<3;k++)
-  //   color[k]=1.0;
-  // double quality=0.0;
-  // hxtOr3DcomputeQuality(frame,&quality);
-  // if(quality>0.25){
-  //   for(int k=0; k<3; k++){
-  //     double val=stableDir[k]-0.9;
-  //     (val<0)? color[k]=0.:color[k]=0.5;
-  //   }
-  // }
-  // if(data->hasIntersection){
+  // Directions at corners
+  double cooCorner[12] = {center[0] + h, center[1] + h, 0.,
+                          center[0] + h, center[1] - h, 0.,
+                          center[0] - h, center[1] - h, 0.,
+                          center[0] - h, center[1] + h, 0.,};
+  for(int iC = 0; iC < 4; ++iC){
+    double *coo = cooCorner+3*iC;
     for (int j = 0; j < 2; ++j) {
-      double d[3] = {dir[3*j+0], dir[3*j+1], dir[3*j+2]};
-      // fprintf(f,"VP(%.16g,%.16g,%.16g){%.16g,%.16g,%.16g};\n",center[0],center[1],center[2], data->size[j]*d[0], data->size[j]*d[1], data->size[j]*d[2]);
-      // fprintf(f,"VP(%.16g,%.16g,%.16g){%.16g,%.16g,%.16g};\n",center[0],center[1],center[2],-data->size[j]*d[0],-data->size[j]*d[1],-data->size[j]*d[2]);
-      if(j==0){
-        fprintf(f,"VP(%.16g,%.16g,%.16g){%.16g,%.16g,%.16g};\n",center[0],center[1],center[2], 0.5*d[0], 0.5*d[1], 0.5*d[2]);
-        fprintf(f,"VP(%.16g,%.16g,%.16g){%.16g,%.16g,%.16g};\n",center[0],center[1],center[2],-0.5*d[0],-0.5*d[1],-0.5*d[2]);
+      double d[3] = {data->dirCorner[9*iC+3*j+0], data->dirCorner[9*iC+3*j+1], data->dirCorner[9*iC+3*j+2]};
+      if(j==1){
+        fprintf(f,"VP(%.16g,%.16g,%.16g){%.16g,%.16g,%.16g};\n",coo[0],coo[1],coo[2], 0.5*d[0], 0.5*d[1], 0.5*d[2]);
+        fprintf(f,"VP(%.16g,%.16g,%.16g){%.16g,%.16g,%.16g};\n",coo[0],coo[1],coo[2],-0.5*d[0],-0.5*d[1],-0.5*d[2]);
       } else{
-        fprintf(f,"VP(%.16g,%.16g,%.16g){%.16g,%.16g,%.16g};\n",center[0],center[1],center[2], d[0], d[1], d[2]);
-        fprintf(f,"VP(%.16g,%.16g,%.16g){%.16g,%.16g,%.16g};\n",center[0],center[1],center[2],-d[0],-d[1],-d[2]);
+        fprintf(f,"VP(%.16g,%.16g,%.16g){%.16g,%.16g,%.16g};\n",coo[0],coo[1],coo[2], d[0], d[1], d[2]);
+        fprintf(f,"VP(%.16g,%.16g,%.16g){%.16g,%.16g,%.16g};\n",coo[0],coo[1],coo[2],-d[0],-d[1],-d[2]);
       }
     }
-  // }
+  }
+
+  }
 }
 
 static void exportToFramesAnisoCallback(p4est_iter_volume_info_t * info, void *user_data){
@@ -3639,7 +4731,7 @@ HXTStatus forestWriteSolFile2D(Forest *forest, const char *solFile){
     double y = forest->forestOptions->mesh3D->vertices.coord[(size_t) 4*i+1];
     double z = forest->forestOptions->mesh3D->vertices.coord[(size_t) 4*i+2];
     SMetric3 m;
-    HXT_CHECK(forestSearchOneAniso(forest, x, y, z, m, false));
+    HXT_CHECK(forestSearchOneAniso(forest, x, y, z, m, true));
     fprintf(f, "%f %f %f\n", m(0,0), m(0,1), m(1,1));
   }
 
@@ -3662,7 +4754,7 @@ HXTStatus forestWriteSolFile3DSurface(Forest *forest, const char *solFile){
     double y = forest->forestOptions->mesh2D->vertices.coord[(size_t) 4*i+1];
     double z = forest->forestOptions->mesh2D->vertices.coord[(size_t) 4*i+2];
     SMetric3 m;
-    HXT_CHECK(forestSearchOneAniso(forest, x, y, z, m, false));
+    HXT_CHECK(forestSearchOneAniso(forest, x, y, z, m, true));
     fprintf(f, "%f %f %f %f %f %f\n", m(0,0), m(0,1), m(1,1), m(0,2), m(1,2), m(2,2));
   }
 
@@ -3685,7 +4777,7 @@ HXTStatus forestWriteSolFile3DVolume(Forest *forest, const char *solFile){
     double y = forest->forestOptions->mesh3D->vertices.coord[(size_t) 4*i+1];
     double z = forest->forestOptions->mesh3D->vertices.coord[(size_t) 4*i+2];
     SMetric3 m;
-    HXT_CHECK(forestSearchOneAniso(forest, x, y, z, m, false));
+    HXT_CHECK(forestSearchOneAniso(forest, x, y, z, m, true));
     fprintf(f, "%f %f %f %f %f %f\n", m(0,0), m(0,1), m(1,1), m(0,2), m(1,2), m(2,2));
   }
 
@@ -3762,7 +4854,7 @@ void automaticMeshSizeField::operator()(double X, double Y, double Z,
                                         SMetric3 &m, GEntity *ge)
 {
 #if defined(HAVE_HXT) && defined(HAVE_P4EST)
-  HXTStatus s = forestSearchOneAniso(forest, X, Y, Z, m, false);
+  HXTStatus s = forestSearchOneAniso(forest, X, Y, Z, m, true);
   if(fabs(m.determinant()) < 1e-13)
     m = SMetric3();
   if (s != HXT_STATUS_OK) Msg::Error ("Cannot find point %g %g %g in the octree",X,Y,Z);
@@ -3883,7 +4975,8 @@ HXTStatus automaticMeshSizeField::updateHXT()
       } else{
         Msg::Info("Model has %d edges and %d faces\n", edges.size(), faces.size());
       }
-      HXT_CHECK(Gmsh2Hxt(faces, meshDom, v2cDom, c2vDom));
+      // HXT_CHECK(Gmsh2Hxt(faces, meshDom, v2cDom, c2vDom));
+      HXT_CHECK(Gmsh2Hxt(faces, meshDom, v2cDom, c2vDom, GModel::current()));
       HXT_CHECK(Gmsh2Hxt(edges, meshBnd, v2cBnd, c2vBnd));
     }
 
@@ -3896,8 +4989,8 @@ HXTStatus automaticMeshSizeField::updateHXT()
     if(_nPointsPerGap == -1){ // TODO : make this clean
       Msg::Info("Nombre de noeuds : %d\n", forestOptions->mesh3D->vertices.num);
       Msg::Info("Nombre de noeuds : %d\n", forest->forestOptions->mesh3D->vertices.num);
-      HXT_CHECK(forestWriteSolFile2D(forest, "metric.sol"));
-      HXT_CHECK(forestWriteSolFile3DSurface(forest, "metricBnd.sol"));
+      // HXT_CHECK(forestWriteSolFile2D(forest, "metric.sol"));
+      // HXT_CHECK(forestWriteSolFile3DSurface(forest, "metricBnd.sol"));
       HXT_CHECK(forestWriteSolFile3DVolume(forest, "metricDom.sol"));
     }
   }
@@ -4115,7 +5208,7 @@ HXTStatus automaticMeshSizeField::updateHXT()
         Msg::Info("Model has %d edges and %d faces\n", edges.size(), faces.size());
       }
 
-      HXT_CHECK(Gmsh2Hxt(faces, meshDom, v2cDom, c2vDom));
+      HXT_CHECK(Gmsh2Hxt(faces, meshDom, v2cDom, c2vDom, GModel::current()));
       HXT_CHECK(Gmsh2Hxt(edges, meshBnd, v2cBnd, c2vBnd));
 
       if(meshBnd->vertices.num == 0){
@@ -4124,6 +5217,12 @@ HXTStatus automaticMeshSizeField::updateHXT()
         HXT_CHECK(hxtMeshDelete(&meshBnd));
         Msg::Exit(1);
       }
+
+      // Noeuds flottants (par exemple points de controle de NURBS)
+      // int nVert = GModel::current()->getVertices().size();
+      // Msg::Info("%d NOEUDS FLOTTANTS ?\n", nVert);
+      // std::set<MVertex *> all;
+
 
       // 2. Compute curvature of the edges
       HXT_CHECK(hxtMalloc(&nodalCurvature,meshBnd->vertices.num*sizeof(double)));
@@ -4270,7 +5369,7 @@ HXTStatus automaticMeshSizeField::updateHXT()
         L = fmax(L, bbox_vertices[i + 3] - bbox_vertices[i]);
       }
       _hbulk < 0 ? _hbulk = L / 20. : _hbulk;
-      _hmin < 0 ? _hmin = L / 1000. : _hmin;
+      _hmin < 0 ? _hmin = L / 4000. : _hmin;
       Msg::Info("Bulk size is set to %f", _hbulk);
       Msg::Info("Min  size is set to %f", _hmin);
     }
@@ -4342,14 +5441,14 @@ HXTStatus automaticMeshSizeField::updateHXT()
     // Export .sol file for MMG if aniso
     if(forestOptions->aniso){
       // if(dim == 2){ 
-        HXT_CHECK(forestWriteSolFile2D(forest, "metric.sol"));
+        // HXT_CHECK(forestWriteSolFile2D(forest, "metric.sol"));
       // } else{
-        HXT_CHECK(forestWriteSolFile3DSurface(forest, "metricBnd.sol"));
+        // HXT_CHECK(forestWriteSolFile3DSurface(forest, "metricBnd.sol"));
         HXT_CHECK(forestWriteSolFile3DVolume(forest, "metricDom.sol"));
       // }
     }
 
-    debug = false;
+    debug = true;
     if(debug) {
       // Export size field in .pos file
       forestFile = GModel::current()->getName() + ".pos";

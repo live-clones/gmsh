@@ -89,16 +89,22 @@ typedef struct Forest{
 } Forest;
 
 // Data available on each tree cell
-typedef struct size_data{
+typedef struct size_data_t{
   double size[3];       // Isotropic mesh size or anisotropic sizes hc1, hc2 and hn
   double dir[9];        // Principal directions for anisotropic size field : [u1 u2 u3 (v1 v2 v3 w1 w2 w3)]
+  double dirCorner[36];
+  // std::map<p4est_quadrant_t*, int*> closestDirArray;
+  std::map<int,int> testMap;
   SMetric3 M;           // Metric tensor
   // Size gradient : ds[0->2] is the gradient of the isotropic size if isotropic size field
   // If anisotropic, ds[0->2] is grad(hc1), ds[3->5] is grad(hc2) and ds[6->8] is grad(hn)
   // hc1 and hc2 are the curvature sizes and hn is the normal (feature) size.
   double ds[9];
   double h;             // Length of an octant's edge
+  double c[3];          // Coordinates of center
   bool hasIntersection; // Has an intersection with the boundary mesh
+  bool isPlanar;
+  bool isStillSmoothed;
 } size_data_t;
 
 // A node to search in the tree

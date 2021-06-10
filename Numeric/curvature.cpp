@@ -169,6 +169,10 @@ static void computeLocalFrame(double *n, double *u, double *v)
   crossprod(v, n, u);
 }
 
+// inline double maxAbs(double x, double y, double z) { return std::max(std::abs(x),std::max(std::abs(y),std::abs(z))); }
+// inline void normalizeFast(vec3& a) { a = 1./sqrt(length2(a)) * a; } /* no check, not safe, not accurate */
+// inline void normalize(vec3& a) { double amp = maxAbs(a); if (amp == 0.) { return; } a = amp * a; normalizeFast(a); }
+
 bool CurvatureRusinkiewicz(
   const std::vector<int> &triangles, const std::vector<SPoint3> &nodes,
   std::vector<std::pair<SVector3, SVector3> > &nodalCurvatures)
