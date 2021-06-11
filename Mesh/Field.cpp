@@ -1553,9 +1553,15 @@ public:
     PView *v = getView();
     if(!v) return MAX_LC;
     if(updateNeeded) {
-      if(_octree) delete _octree;
-      _octree = new OctreePost(v);
-      updateNeeded = false;
+#if defined(_OPENMP)
+#pragma omp barrier
+#pragma omp single
+#endif
+      {
+        if(_octree) delete _octree;
+        _octree = new OctreePost(v);
+        updateNeeded = false;
+      }
     }
 
     double l = 0.;
@@ -1605,9 +1611,15 @@ public:
       return;
     }
     if(updateNeeded) {
-      if(_octree) delete _octree;
-      _octree = new OctreePost(vie);
-      updateNeeded = false;
+#if defined(_OPENMP)
+#pragma omp barrier
+#pragma omp single
+#endif
+      {
+        if(_octree) delete _octree;
+        _octree = new OctreePost(vie);
+        updateNeeded = false;
+      }
     }
     if(numComponents() == 3) { // scaled cross field
       double values[3];
@@ -1636,9 +1648,15 @@ public:
     PView *v = getView();
     if(!v) return;
     if(updateNeeded) {
-      if(_octree) delete _octree;
-      _octree = new OctreePost(v);
-      updateNeeded = false;
+#if defined(_OPENMP)
+#pragma omp barrier
+#pragma omp single
+#endif
+      {
+        if(_octree) delete _octree;
+        _octree = new OctreePost(v);
+        updateNeeded = false;
+      }
     }
     double l[9] = {0., 0., 0., 0., 0., 0., 0., 0., 0.};
     // use large tolerance (in element reference coordinates) to maximize chance
