@@ -143,7 +143,6 @@ static void TransferVolumeMesh(GRegion *gr, Ng_Mesh *ngmesh,
   }
 
   // create new tets
-  std::set<MVertex *> aaa;
   for(int i = 0; i < nbe; i++) {
     int tmp[4];
     Ng_GetVolumeElement(ngmesh, i + 1, tmp);
