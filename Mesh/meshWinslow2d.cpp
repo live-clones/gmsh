@@ -445,7 +445,10 @@ void meshWinslow1d (GEdge * ge, int nIter, Field *f) {
       dx += stencils[j].smooth(ge);
     }
     if (i == 0)dx0 = dx;
-    if (dx < .001*dx0) break;
+    if (dx < .001*dx0) {
+      DBG(i,nIter,dx,dx0);
+      break;
+    }
   }     
 }
 
@@ -493,7 +496,9 @@ void meshWinslow2d (GFace  * gf, const std::vector<MQuadrangle*>& quads,
       dx += xx ;
     }
     if (i == 0)dx0 = dx;
-    if (dx < .002*dx0) break;
+    if (dx < .002*dx0) {
+      break;
+    }
   }  
 }
 
@@ -574,11 +579,49 @@ void meshWinslow2d (GModel * gm, int nIter, Field *f) {
     printf("face %d --> %lu quads\n",temp[i]->tag(),temp[i]->quadrangles.size());
     // allowProjections (temp[i]);
   }
+
+  v2t_cont adj; // map every vertex to its neighboring quads
+  for(GFace* gf : gm->getFaces()) {
+    buildVertexToElement(gf->quadrangles, adj);
+  }
+  V<winslowStencil> stencils;
+  FIT(it, adj) {
+    stencils.pb(winslowStencil(it->first, it->second));
+  }
+
+  // nIter = 10000;
+
+  double dx0;
+  size_t foo;
+  F(i, nIter) {
+    double dx = 0;
+    for(winslowStencil& st : stencils) {
+      GEntity* gentity = st.center->onWhat();
+      GFace* gf; GEdge* ge;
+      if((gf = dynamic_cast<GFace*>(gentity))) {
+        GEntity::GeomType GT = gf->geomType();
+        double radius; SPoint3 c;
+        gf->isSphere(radius, c);
+        dx += st.smooth(gf, GT, radius, c, foo, 0);
+      } else if((ge = dynamic_cast<GEdge*>(gentity))) {
+        dx += st.smooth(ge);
+      }
+    }
+    DBG(i, nIter, dx, dx0);
+    if(i == 0) dx0 = dx;
+    if(dx < 0.001*dx0) {
+      P("coucou");
+      break;
+    }
+  }
+
+  return;
+
   
   int sIter = nIter/4;
-  sIter = 10;
+  // sIter = 10;
 
-  for (int NIT = 0;NIT<10;NIT++){  
+  for (int NIT = 0;NIT<4;NIT++){  
     for (size_t i=0;i<tempe.size();i++)
       meshWinslow1d (tempe[i],sIter, f); 
 
@@ -586,9 +629,9 @@ void meshWinslow2d (GModel * gm, int nIter, Field *f) {
 #if defined(_OPENMP)
 #pragma omp parallel for schedule(dynamic)
 #endif
-    for (size_t i=0;i<temp.size();i++){
-      meshWinslow2d (temp[i],sIter, f, false);
-    }
+    // for (size_t i=0;i<temp.size();i++){
+    //   meshWinslow2d (temp[i],sIter, f, false);
+    // }
     // return;
   }
 
