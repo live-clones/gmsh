@@ -1034,6 +1034,22 @@ namespace gmsh { // Top-level functions
         gmshFree(api_dimTags_);
       }
 
+      // Apply the affine transformation `affineTransform' (16 entries of a 4x4
+      // matrix, by row; only the 12 first can be provided for convenience) to the
+      // coordinates of the nodes classified on the entities `dimTags'. If
+      // `dimTags' is empty, transform all the nodes in the mesh.
+      inline void affineTransform(const std::vector<double> & affineTransform,
+                                  const gmsh::vectorpair & dimTags = gmsh::vectorpair())
+      {
+        int ierr = 0;
+        double *api_affineTransform_; size_t api_affineTransform_n_; vector2ptr(affineTransform, &api_affineTransform_, &api_affineTransform_n_);
+        int *api_dimTags_; size_t api_dimTags_n_; vectorpair2intptr(dimTags, &api_dimTags_, &api_dimTags_n_);
+        gmshModelMeshAffineTransform(api_affineTransform_, api_affineTransform_n_, api_dimTags_, api_dimTags_n_, &ierr);
+        if(ierr) throwLastError();
+        gmshFree(api_affineTransform_);
+        gmshFree(api_dimTags_);
+      }
+
       // Get the nodes classified on the entity of dimension `dim' and tag `tag'.
       // If `tag' < 0, get the nodes for all entities of dimension `dim'. If `dim'
       // and `tag' are negative, get all the nodes in the mesh. `nodeTags' contains
@@ -4134,8 +4150,7 @@ namespace gmsh { // Top-level functions
 
       // Mirror the entities `dimTags' in the OpenCASCADE CAD representation, with
       // respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' = 0.
-      // (This is a synonym for `mirror', which will be deprecated in a future
-      // release.)
+      // (This is a deprecated synonym for `mirror'.)
       inline void symmetrize(const gmsh::vectorpair & dimTags,
                              const double a,
                              const double b,
@@ -4149,19 +4164,20 @@ namespace gmsh { // Top-level functions
         gmshFree(api_dimTags_);
       }
 
-      // Apply a general affine transformation matrix `a' (16 entries of a 4x4
-      // matrix, by row; only the 12 first can be provided for convenience) to the
-      // entities `dimTags' in the OpenCASCADE CAD representation.
+      // Apply a general affine transformation matrix `affineTransform' (16 entries
+      // of a 4x4 matrix, by row; only the 12 first can be provided for
+      // convenience) to the entities `dimTags' in the OpenCASCADE CAD
+      // representation.
       inline void affineTransform(const gmsh::vectorpair & dimTags,
-                                  const std::vector<double> & a)
+                                  const std::vector<double> & affineTransform)
       {
         int ierr = 0;
         int *api_dimTags_; size_t api_dimTags_n_; vectorpair2intptr(dimTags, &api_dimTags_, &api_dimTags_n_);
-        double *api_a_; size_t api_a_n_; vector2ptr(a, &api_a_, &api_a_n_);
-        gmshModelOccAffineTransform(api_dimTags_, api_dimTags_n_, api_a_, api_a_n_, &ierr);
+        double *api_affineTransform_; size_t api_affineTransform_n_; vector2ptr(affineTransform, &api_affineTransform_, &api_affineTransform_n_);
+        gmshModelOccAffineTransform(api_dimTags_, api_dimTags_n_, api_affineTransform_, api_affineTransform_n_, &ierr);
         if(ierr) throwLastError();
         gmshFree(api_dimTags_);
-        gmshFree(api_a_);
+        gmshFree(api_affineTransform_);
       }
 
       // Copy the entities `dimTags' in the OpenCASCADE CAD representation; the new

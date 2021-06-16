@@ -263,6 +263,9 @@ mesh.add('clear', doc, None, ivectorpair('dimTags', 'gmsh::vectorpair()', "[]", 
 doc = '''Reverse the orientation of the elements in the entities `dimTags'. If `dimTags' is empty, reverse the orientation of the elements in the whole mesh.'''
 mesh.add('reverse', doc, None, ivectorpair('dimTags', 'gmsh::vectorpair()', "[]", "[]"))
 
+doc = '''Apply the affine transformation `affineTransform' (16 entries of a 4x4 matrix, by row; only the 12 first can be provided for convenience) to the coordinates of the nodes classified on the entities `dimTags'. If `dimTags' is empty, transform all the nodes in the mesh.'''
+mesh.add('affineTransform', doc, None, ivectordouble('affineTransform'), ivectorpair('dimTags', 'gmsh::vectorpair()', "[]", "[]"))
+
 doc = '''Get the nodes classified on the entity of dimension `dim' and tag `tag'. If `tag' < 0, get the nodes for all entities of dimension `dim'. If `dim' and `tag' are negative, get all the nodes in the mesh. `nodeTags' contains the node tags (their unique, strictly positive identification numbers). `coord' is a vector of length 3 times the length of `nodeTags' that contains the x, y, z coordinates of the nodes, concatenated: [n1x, n1y, n1z, n2x, ...]. If `dim' >= 0 and `returnParamtricCoord' is set, `parametricCoord' contains the parametric coordinates ([u1, u2, ...] or [u1, v1, u2, ...]) of the nodes, if available. The length of `parametricCoord' can be 0 or `dim' times the length of `nodeTags'. If `includeBoundary' is set, also return the nodes classified on the boundary of the entity (which will be reparametrized on the entity if `dim' >= 0 in order to compute their parametric coordinates).'''
 mesh.add('getNodes', doc, None, ovectorsize('nodeTags'), ovectordouble('coord'), ovectordouble('parametricCoord'), iint('dim', '-1'), iint('tag', '-1'), ibool('includeBoundary', 'false', 'False'), ibool('returnParametricCoord', 'true', 'True'))
 
@@ -793,11 +796,11 @@ occ.add('dilate', doc, None, ivectorpair('dimTags'), idouble('x'), idouble('y'),
 
 doc = '''Mirror the entities `dimTags' in the OpenCASCADE CAD representation, with respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' = 0.'''
 occ.add('mirror', doc, None, ivectorpair('dimTags'), idouble('a'), idouble('b'), idouble('c'), idouble('d'))
-doc += ''' (This is a synonym for `mirror', which will be deprecated in a future release.)'''
+doc += ''' (This is a deprecated synonym for `mirror'.)'''
 occ.add('symmetrize', doc, None, ivectorpair('dimTags'), idouble('a'), idouble('b'), idouble('c'), idouble('d'))
 
-doc = '''Apply a general affine transformation matrix `a' (16 entries of a 4x4 matrix, by row; only the 12 first can be provided for convenience) to the entities `dimTags' in the OpenCASCADE CAD representation.'''
-occ.add('affineTransform', doc, None, ivectorpair('dimTags'), ivectordouble('a'))
+doc = '''Apply a general affine transformation matrix `affineTransform' (16 entries of a 4x4 matrix, by row; only the 12 first can be provided for convenience) to the entities `dimTags' in the OpenCASCADE CAD representation.'''
+occ.add('affineTransform', doc, None, ivectorpair('dimTags'), ivectordouble('affineTransform'))
 
 doc = '''Copy the entities `dimTags' in the OpenCASCADE CAD representation; the new entities are returned in `outDimTags'.'''
 occ.add('copy', doc, None, ivectorpair('dimTags'), ovectorpair('outDimTags'))

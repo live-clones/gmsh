@@ -5,40 +5,43 @@ import sys
 # nodes to 0) by getting the mesh, performing a modification, and storing the
 # modified mesh in the same model.
 
-if len(sys.argv) < 2:
-    print("Usage: " + sys.argv[0] + " file.msh")
-    exit(0)
+# (The approach followed here is overkill to # just change node coordinates of
+# course - if you merely want to change coordinates see `flatten2.py' instead.)
 
-gmsh.initialize()
-gmsh.open(sys.argv[1])
+ if len(sys.argv) < 2:
+ print("Usage: " + sys.argv[0] + " file.msh")
+ exit(0)
 
-nodeTags = {}
-nodeCoords = {}
-elementTypes = {}
-elementTags = {}
-elementNodeTags = {}
+ gmsh.initialize()
+ gmsh.open(sys.argv[1])
 
-entities = gmsh.model.getEntities()
+ nodeTags = {}
+ nodeCoords = {}
+ elementTypes = {}
+ elementTags = {}
+ elementNodeTags = {}
 
-# get the nodes and elements
-for e in entities:
-    nodeTags[e], nodeCoords[e], _ = gmsh.model.mesh.getNodes(e[0], e[1])
-    elementTypes[e], elementTags[e], elementNodeTags[
-        e] = gmsh.model.mesh.getElements(e[0], e[1])
+ entities = gmsh.model.getEntities()
 
-# delete the mesh
-gmsh.model.mesh.clear()
+ # get the nodes and elements
+ for e in entities:
+ nodeTags[e], nodeCoords[e], _ = gmsh.model.mesh.getNodes(e[0], e[1])
+ elementTypes[e], elementTags[e], elementNodeTags[
+     e] = gmsh.model.mesh.getElements(e[0], e[1])
 
-# store new mesh
-for e in entities:
-    for i in range(2, len(nodeCoords[e]), 3):
-        nodeCoords[e][i] = 0
-    gmsh.model.mesh.addNodes(e[0], e[1], nodeTags[e], nodeCoords[e])
-    gmsh.model.mesh.addElements(e[0], e[1], elementTypes[e], elementTags[e],
-                                elementNodeTags[e])
+ # delete the mesh
+ gmsh.model.mesh.clear()
 
-if '-nopopup' not in sys.argv:
-    gmsh.fltk.run()
-#gmsh.write('flat.msh')
+ # store new mesh
+ for e in entities:
+ for i in range(2, len(nodeCoords[e]), 3):
+ nodeCoords[e][i] = 0
+ gmsh.model.mesh.addNodes(e[0], e[1], nodeTags[e], nodeCoords[e])
+ gmsh.model.mesh.addElements(e[0], e[1], elementTypes[e], elementTags[e],
+                             elementNodeTags[e])
 
-gmsh.finalize()
+ if '-nopopup' not in sys.argv:
+ gmsh.fltk.run()
+ #gmsh.write('flat.msh')
+
+ gmsh.finalize()

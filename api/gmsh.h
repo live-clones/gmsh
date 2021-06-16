@@ -661,6 +661,15 @@ namespace gmsh { // Top-level functions
       // mesh.
       GMSH_API void reverse(const gmsh::vectorpair & dimTags = gmsh::vectorpair());
 
+      // gmsh::model::mesh::affineTransform
+      //
+      // Apply the affine transformation `affineTransform' (16 entries of a 4x4
+      // matrix, by row; only the 12 first can be provided for convenience) to the
+      // coordinates of the nodes classified on the entities `dimTags'. If
+      // `dimTags' is empty, transform all the nodes in the mesh.
+      GMSH_API void affineTransform(const std::vector<double> & affineTransform,
+                                    const gmsh::vectorpair & dimTags = gmsh::vectorpair());
+
       // gmsh::model::mesh::getNodes
       //
       // Get the nodes classified on the entity of dimension `dim' and tag `tag'.
@@ -2759,8 +2768,7 @@ namespace gmsh { // Top-level functions
       //
       // Mirror the entities `dimTags' in the OpenCASCADE CAD representation, with
       // respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' = 0.
-      // (This is a synonym for `mirror', which will be deprecated in a future
-      // release.)
+      // (This is a deprecated synonym for `mirror'.)
       GMSH_API void symmetrize(const gmsh::vectorpair & dimTags,
                                const double a,
                                const double b,
@@ -2769,11 +2777,12 @@ namespace gmsh { // Top-level functions
 
       // gmsh::model::occ::affineTransform
       //
-      // Apply a general affine transformation matrix `a' (16 entries of a 4x4
-      // matrix, by row; only the 12 first can be provided for convenience) to the
-      // entities `dimTags' in the OpenCASCADE CAD representation.
+      // Apply a general affine transformation matrix `affineTransform' (16 entries
+      // of a 4x4 matrix, by row; only the 12 first can be provided for
+      // convenience) to the entities `dimTags' in the OpenCASCADE CAD
+      // representation.
       GMSH_API void affineTransform(const gmsh::vectorpair & dimTags,
-                                    const std::vector<double> & a);
+                                    const std::vector<double> & affineTransform);
 
       // gmsh::model::occ::copy
       //

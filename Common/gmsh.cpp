@@ -1353,6 +1353,27 @@ GMSH_API void gmsh::model::mesh::reverse(const vectorpair &dimTags)
   GModel::current()->destroyMeshCaches();
 }
 
+GMSH_API void
+gmsh::model::mesh::affineTransform(const std::vector<double> &affineTransform,
+                                   const vectorpair &dimTags)
+{
+  if(!_checkInit()) return;
+  std::vector<GEntity *> entities;
+  _getEntities(dimTags, entities);
+  for(auto ge : entities) {
+    for(std::size_t j = 0; j < ge->getNumMeshVertices(); j++) {
+      MVertex *v = ge->getMeshVertex(j);
+      SPoint3 pt = v->point();
+      if(pt.transform(affineTransform))
+        v->setXYZ(pt);
+      else
+        Msg::Error("Could not transform node %d (%g, %g, %g) on %s",
+                   v->getNum(), v->x(), v->y(), v->z(),
+                   _getEntityName(ge->dim(), ge->tag()).c_str());
+    }
+  }
+}
+
 static void _getAdditionalNodesOnBoundary(GEntity *entity,
                                           std::vector<std::size_t> &nodeTags,
                                           std::vector<double> &coord,
@@ -1544,7 +1565,7 @@ GMSH_API void gmsh::model::mesh::getNode(const std::size_t nodeTag,
     dim = v->onWhat()->dim();
     tag = v->onWhat()->tag();
   }
-  else{
+  else {
     Msg::Warning("Node %d is not classified on any entity", nodeTag);
     dim = -1;
     tag = -1;
@@ -5863,23 +5884,21 @@ GMSH_API int gmsh::model::occ::addPlaneSurface(const std::vector<int> &wireTags,
   return outTag;
 }
 
-GMSH_API int
-gmsh::model::occ::addSurfaceFilling(const int wireTag, const int tag,
-                                    const std::vector<int> &pointTags,
-                                    const int degree, const int numPointsOnCurves,
-                                    const int numIter, const bool anisotropic,
-                                    const double tol2d, const double tol3d,
-                                    const double tolAng, const double tolCurv,
-                                    const int maxDegree, const int maxSegments)
+GMSH_API int gmsh::model::occ::addSurfaceFilling(
+  const int wireTag, const int tag, const std::vector<int> &pointTags,
+  const int degree, const int numPointsOnCurves, const int numIter,
+  const bool anisotropic, const double tol2d, const double tol3d,
+  const double tolAng, const double tolCurv, const int maxDegree,
+  const int maxSegments)
 {
   if(!_checkInit()) return -1;
   _createOcc();
   int outTag = tag;
   std::vector<int> surf, surfCont;
-  GModel::current()->getOCCInternals()->addSurfaceFilling
-    (outTag, wireTag, pointTags, surf, surfCont, degree, numPointsOnCurves,
-     numIter, anisotropic, tol2d, tol3d, tolAng, tolCurv, maxDegree,
-     maxSegments);
+  GModel::current()->getOCCInternals()->addSurfaceFilling(
+    outTag, wireTag, pointTags, surf, surfCont, degree, numPointsOnCurves,
+    numIter, anisotropic, tol2d, tol3d, tolAng, tolCurv, maxDegree,
+    maxSegments);
   return outTag;
 }
 
@@ -6246,12 +6265,13 @@ GMSH_API void gmsh::model::occ::symmetrize(const vectorpair &dimTags,
   gmsh::model::occ::mirror(dimTags, a, b, c, d);
 }
 
-GMSH_API void gmsh::model::occ::affineTransform(const vectorpair &dimTags,
-                                                const std::vector<double> &a)
+GMSH_API void
+gmsh::model::occ::affineTransform(const vectorpair &dimTags,
+                                  const std::vector<double> &affineTransform)
 {
   if(!_checkInit()) return;
   _createOcc();
-  GModel::current()->getOCCInternals()->affine(dimTags, a);
+  GModel::current()->getOCCInternals()->affine(dimTags, affineTransform);
 }
 
 GMSH_API void gmsh::model::occ::copy(const vectorpair &dimTags,

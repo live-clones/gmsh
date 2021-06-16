@@ -562,6 +562,14 @@ GMSH_API void gmshModelMeshClear(int * dimTags, size_t dimTags_n,
 GMSH_API void gmshModelMeshReverse(int * dimTags, size_t dimTags_n,
                                    int * ierr);
 
+/* Apply the affine transformation `affineTransform' (16 entries of a 4x4
+ * matrix, by row; only the 12 first can be provided for convenience) to the
+ * coordinates of the nodes classified on the entities `dimTags'. If `dimTags'
+ * is empty, transform all the nodes in the mesh. */
+GMSH_API void gmshModelMeshAffineTransform(double * affineTransform, size_t affineTransform_n,
+                                           int * dimTags, size_t dimTags_n,
+                                           int * ierr);
+
 /* Get the nodes classified on the entity of dimension `dim' and tag `tag'. If
  * `tag' < 0, get the nodes for all entities of dimension `dim'. If `dim' and
  * `tag' are negative, get all the nodes in the mesh. `nodeTags' contains the
@@ -2453,8 +2461,7 @@ GMSH_API void gmshModelOccMirror(int * dimTags, size_t dimTags_n,
 
 /* Mirror the entities `dimTags' in the OpenCASCADE CAD representation, with
  * respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' = 0.
- * (This is a synonym for `mirror', which will be deprecated in a future
- * release.) */
+ * (This is a deprecated synonym for `mirror'.) */
 GMSH_API void gmshModelOccSymmetrize(int * dimTags, size_t dimTags_n,
                                      const double a,
                                      const double b,
@@ -2462,11 +2469,11 @@ GMSH_API void gmshModelOccSymmetrize(int * dimTags, size_t dimTags_n,
                                      const double d,
                                      int * ierr);
 
-/* Apply a general affine transformation matrix `a' (16 entries of a 4x4
- * matrix, by row; only the 12 first can be provided for convenience) to the
- * entities `dimTags' in the OpenCASCADE CAD representation. */
+/* Apply a general affine transformation matrix `affineTransform' (16 entries
+ * of a 4x4 matrix, by row; only the 12 first can be provided for convenience)
+ * to the entities `dimTags' in the OpenCASCADE CAD representation. */
 GMSH_API void gmshModelOccAffineTransform(int * dimTags, size_t dimTags_n,
-                                          double * a, size_t a_n,
+                                          double * affineTransform, size_t affineTransform_n,
                                           int * ierr);
 
 /* Copy the entities `dimTags' in the OpenCASCADE CAD representation; the new

@@ -1409,6 +1409,26 @@ function reverse(dimTags = Tuple{Cint,Cint}[])
 end
 
 """
+    gmsh.model.mesh.affineTransform(affineTransform, dimTags = Tuple{Cint,Cint}[])
+
+Apply the affine transformation `affineTransform` (16 entries of a 4x4 matrix,
+by row; only the 12 first can be provided for convenience) to the coordinates of
+the nodes classified on the entities `dimTags`. If `dimTags` is empty, transform
+all the nodes in the mesh.
+"""
+function affineTransform(affineTransform, dimTags = Tuple{Cint,Cint}[])
+    api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
+    api_dimTags_n_ = length(api_dimTags_)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshAffineTransform, gmsh.lib), Cvoid,
+          (Ptr{Cdouble}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Cint}),
+          convert(Vector{Cdouble}, affineTransform), length(affineTransform), api_dimTags_, api_dimTags_n_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+const affine_transform = affineTransform
+
+"""
     gmsh.model.mesh.getNodes(dim = -1, tag = -1, includeBoundary = false, returnParametricCoord = true)
 
 Get the nodes classified on the entity of dimension `dim` and tag `tag`. If
@@ -5134,7 +5154,7 @@ end
 
 Mirror the entities `dimTags` in the OpenCASCADE CAD representation, with
 respect to the plane of equation `a` * x + `b` * y + `c` * z + `d` = 0. (This is
-a synonym for `mirror`, which will be deprecated in a future release.)
+a deprecated synonym for `mirror`.)
 """
 function symmetrize(dimTags, a, b, c, d)
     api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
@@ -5148,19 +5168,19 @@ function symmetrize(dimTags, a, b, c, d)
 end
 
 """
-    gmsh.model.occ.affineTransform(dimTags, a)
+    gmsh.model.occ.affineTransform(dimTags, affineTransform)
 
-Apply a general affine transformation matrix `a` (16 entries of a 4x4 matrix, by
-row; only the 12 first can be provided for convenience) to the entities
-`dimTags` in the OpenCASCADE CAD representation.
+Apply a general affine transformation matrix `affineTransform` (16 entries of a
+4x4 matrix, by row; only the 12 first can be provided for convenience) to the
+entities `dimTags` in the OpenCASCADE CAD representation.
 """
-function affineTransform(dimTags, a)
+function affineTransform(dimTags, affineTransform)
     api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
     api_dimTags_n_ = length(api_dimTags_)
     ierr = Ref{Cint}()
     ccall((:gmshModelOccAffineTransform, gmsh.lib), Cvoid,
           (Ptr{Cint}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Cint}),
-          api_dimTags_, api_dimTags_n_, convert(Vector{Cdouble}, a), length(a), ierr)
+          api_dimTags_, api_dimTags_n_, convert(Vector{Cdouble}, affineTransform), length(affineTransform), ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end

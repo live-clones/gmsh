@@ -1701,6 +1701,27 @@ class model:
                 raise Exception(logger.getLastError())
 
         @staticmethod
+        def affineTransform(affineTransform, dimTags=[]):
+            """
+            gmsh.model.mesh.affineTransform(affineTransform, dimTags=[])
+
+            Apply the affine transformation `affineTransform' (16 entries of a 4x4
+            matrix, by row; only the 12 first can be provided for convenience) to the
+            coordinates of the nodes classified on the entities `dimTags'. If `dimTags'
+            is empty, transform all the nodes in the mesh.
+            """
+            api_affineTransform_, api_affineTransform_n_ = _ivectordouble(affineTransform)
+            api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
+            ierr = c_int()
+            lib.gmshModelMeshAffineTransform(
+                api_affineTransform_, api_affineTransform_n_,
+                api_dimTags_, api_dimTags_n_,
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+        affine_transform = affineTransform
+
+        @staticmethod
         def getNodes(dim=-1, tag=-1, includeBoundary=False, returnParametricCoord=True):
             """
             gmsh.model.mesh.getNodes(dim=-1, tag=-1, includeBoundary=False, returnParametricCoord=True)
@@ -6008,8 +6029,7 @@ class model:
 
             Mirror the entities `dimTags' in the OpenCASCADE CAD representation, with
             respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' = 0.
-            (This is a synonym for `mirror', which will be deprecated in a future
-            release.)
+            (This is a deprecated synonym for `mirror'.)
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             ierr = c_int()
@@ -6024,20 +6044,20 @@ class model:
                 raise Exception(logger.getLastError())
 
         @staticmethod
-        def affineTransform(dimTags, a):
+        def affineTransform(dimTags, affineTransform):
             """
-            gmsh.model.occ.affineTransform(dimTags, a)
+            gmsh.model.occ.affineTransform(dimTags, affineTransform)
 
-            Apply a general affine transformation matrix `a' (16 entries of a 4x4
-            matrix, by row; only the 12 first can be provided for convenience) to the
-            entities `dimTags' in the OpenCASCADE CAD representation.
+            Apply a general affine transformation matrix `affineTransform' (16 entries
+            of a 4x4 matrix, by row; only the 12 first can be provided for convenience)
+            to the entities `dimTags' in the OpenCASCADE CAD representation.
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
-            api_a_, api_a_n_ = _ivectordouble(a)
+            api_affineTransform_, api_affineTransform_n_ = _ivectordouble(affineTransform)
             ierr = c_int()
             lib.gmshModelOccAffineTransform(
                 api_dimTags_, api_dimTags_n_,
-                api_a_, api_a_n_,
+                api_affineTransform_, api_affineTransform_n_,
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())

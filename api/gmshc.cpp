@@ -958,6 +958,23 @@ GMSH_API void gmshModelMeshReverse(int * dimTags, size_t dimTags_n, int * ierr)
   }
 }
 
+GMSH_API void gmshModelMeshAffineTransform(double * affineTransform, size_t affineTransform_n, int * dimTags, size_t dimTags_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<double> api_affineTransform_(affineTransform, affineTransform + affineTransform_n);
+    gmsh::vectorpair api_dimTags_(dimTags_n/2);
+    for(size_t i = 0; i < dimTags_n/2; ++i){
+      api_dimTags_[i].first = dimTags[i * 2 + 0];
+      api_dimTags_[i].second = dimTags[i * 2 + 1];
+    }
+    gmsh::model::mesh::affineTransform(api_affineTransform_, api_dimTags_);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API void gmshModelMeshGetNodes(size_t ** nodeTags, size_t * nodeTags_n, double ** coord, size_t * coord_n, double ** parametricCoord, size_t * parametricCoord_n, const int dim, const int tag, const int includeBoundary, const int returnParametricCoord, int * ierr)
 {
   if(ierr) *ierr = 0;
@@ -3412,7 +3429,7 @@ GMSH_API void gmshModelOccSymmetrize(int * dimTags, size_t dimTags_n, const doub
   }
 }
 
-GMSH_API void gmshModelOccAffineTransform(int * dimTags, size_t dimTags_n, double * a, size_t a_n, int * ierr)
+GMSH_API void gmshModelOccAffineTransform(int * dimTags, size_t dimTags_n, double * affineTransform, size_t affineTransform_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
@@ -3421,8 +3438,8 @@ GMSH_API void gmshModelOccAffineTransform(int * dimTags, size_t dimTags_n, doubl
       api_dimTags_[i].first = dimTags[i * 2 + 0];
       api_dimTags_[i].second = dimTags[i * 2 + 1];
     }
-    std::vector<double> api_a_(a, a + a_n);
-    gmsh::model::occ::affineTransform(api_dimTags_, api_a_);
+    std::vector<double> api_affineTransform_(affineTransform, affineTransform + affineTransform_n);
+    gmsh::model::occ::affineTransform(api_dimTags_, api_affineTransform_);
   }
   catch(...){
     if(ierr) *ierr = 1;
