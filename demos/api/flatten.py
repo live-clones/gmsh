@@ -8,40 +8,40 @@ import sys
 # (The approach followed here is overkill to # just change node coordinates of
 # course - if you merely want to change coordinates see `flatten2.py' instead.)
 
- if len(sys.argv) < 2:
- print("Usage: " + sys.argv[0] + " file.msh")
- exit(0)
+if len(sys.argv) < 2:
+    print("Usage: " + sys.argv[0] + " file.msh")
+    exit(0)
 
- gmsh.initialize()
- gmsh.open(sys.argv[1])
+gmsh.initialize()
+gmsh.open(sys.argv[1])
 
- nodeTags = {}
- nodeCoords = {}
- elementTypes = {}
- elementTags = {}
- elementNodeTags = {}
+nodeTags = {}
+nodeCoords = {}
+elementTypes = {}
+elementTags = {}
+elementNodeTags = {}
 
- entities = gmsh.model.getEntities()
+entities = gmsh.model.getEntities()
 
- # get the nodes and elements
- for e in entities:
- nodeTags[e], nodeCoords[e], _ = gmsh.model.mesh.getNodes(e[0], e[1])
- elementTypes[e], elementTags[e], elementNodeTags[
-     e] = gmsh.model.mesh.getElements(e[0], e[1])
+# get the nodes and elements
+for e in entities:
+    nodeTags[e], nodeCoords[e], _ = gmsh.model.mesh.getNodes(e[0], e[1])
+    elementTypes[e], elementTags[e], elementNodeTags[e] = gmsh.model.mesh.getElements(e[0], e[1])
 
- # delete the mesh
- gmsh.model.mesh.clear()
+# delete the mesh
+gmsh.model.mesh.clear()
 
- # store new mesh
- for e in entities:
- for i in range(2, len(nodeCoords[e]), 3):
- nodeCoords[e][i] = 0
- gmsh.model.mesh.addNodes(e[0], e[1], nodeTags[e], nodeCoords[e])
- gmsh.model.mesh.addElements(e[0], e[1], elementTypes[e], elementTags[e],
-                             elementNodeTags[e])
+# store new mesh
+for e in entities:
+    for i in range(2, len(nodeCoords[e]), 3):
+        nodeCoords[e][i] = 0
+    gmsh.model.mesh.addNodes(e[0], e[1], nodeTags[e], nodeCoords[e])
+    gmsh.model.mesh.addElements(e[0], e[1], elementTypes[e], elementTags[e],
+                                elementNodeTags[e])
 
- if '-nopopup' not in sys.argv:
- gmsh.fltk.run()
- #gmsh.write('flat.msh')
+if '-nopopup' not in sys.argv:
+    gmsh.fltk.run()
 
- gmsh.finalize()
+#gmsh.write('flat.msh')
+
+gmsh.finalize()
