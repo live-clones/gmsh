@@ -80,3 +80,22 @@ mark_as_advanced(GECODE_INCLUDE GECODE_LIBRARY)
 set(GECODE_LIBRARIES ${GECODE_LIBRARY})
 set(GECODE_INCLUDE_DIRS ${GECODE_INCLUDE})
 
+# Matteo's code
+if(NOT GECODE_FOUND)
+  find_path(GECODE_INCLUDE gecode/kernel.hh PATH_SUFFIXES include)
+  find_library(GECODE_LIBRARY Gecode)
+  if(NOT GECODE_LIBRARY)
+    message(FATAL_ERROR "Gecode not found")
+  endif()
+
+  if (GECODE_LIBRARY)
+      set_config_option(HAVE_GECODE "Gecode")
+
+      set(GECODE_LIBRARIES ${GECODE_LIBRARY})
+      set(GECODE_INCLUDE_DIRS ${GECODE_INCLUDE})
+
+      list(APPEND EXTERNAL_LIBRARIES ${GECODE_LIBRARY})
+      list(APPEND EXTERNAL_INCLUDES ${GECODE_INCLUDE})
+  endif()
+
+endif()

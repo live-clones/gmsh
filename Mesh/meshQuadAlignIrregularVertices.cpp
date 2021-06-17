@@ -875,19 +875,20 @@ struct CMesh {
 		
 		// Step 1: split T-edges with quantization > 1 and T-faces with area > 0
 		
-		TMesh TM2;
+		TMesh TM2; // Split T-mesh
 		TM2.tvertices = TM.tvertices; // copy T-vertices
 		for(TVertex* tvertex : TM2.tvertices) tvertex->adj.clear(); // clear adj
 		TM2.nTEdges = 0;
 		map<TEdge*, V<TEdge*>> tedge2new; // OLD T-edge to NEW T-edges
 		map<TEdge*, V<TVertex*>> tedge2tvertices; // OLD T-edge to NEW T-vertices
-		map<TEdge*, V<int>> tedge2pos; // TODO: what is this?
+		map<TEdge*, V<int>> tedge2pos; // OLD T-edge to NEW positions of T-vertices along T-edge
 		// pos denotes a position in terms of the OLD quantization
+		// len denotes the NEW quantization
 		int iface = 0;
 		for(TFace* tface : TM.tfaces) {
 			array<V<TVertex*>,4> side_tvertices; // T-vertices separating the NEW quantization
 			array<V<int>, 4> side_pos; // integer position of T-vertices along side (in terms of OLD quantization)
-			array<V<V<TEdge*>>, 4> side_tedges; // old T-edges grouped by new T-faces (separated by T-vertices in side_tvertices) 
+			array<V<V<TEdge*>>, 4> side_tedges; // new T-edges grouped by old T-edges (separated by T-vertices in side_tvertices) 
 			array<int, 4> side_len; // total length of each side
 			F(s, 4) {
 				int curr_pos = 0; // old quantization
@@ -912,18 +913,20 @@ struct CMesh {
 
 					// Create new T-vertices
 					V<TVertex*> tvertices;
-					V<int> pos;
+					V<int> pos; // position of T-vertices along T-edge
 					if(tedge2tvertices.count(tedge->oppo)) {
+						// If opposite T-edge has been processed already: get corresponding new T-vertieces
 						tvertices = tedge2tvertices[tedge->oppo]; reverse(ALL(tvertices));
-						pos = tedge2pos[tedge->oppo]; reverse(ALL(pos));
+						D(i, S(tedge2pos[tedge->oppo]))
+							pos.pb(tedge->len - tedge2pos[tedge->oppo][i]);
 					} else {
 						tvertices.pb(tedge->tvertex1);
 						pos.pb(0); // pos of T-vertices alons T-edge
-						FR(i, 1, q[tedge->id]) {
+						FR(i, 1, q[tedge->id]) { // q-1 new T-vertices need to be created
 							TVertex* tvertex = new TVertex;
 							tvertex->vertex = vertices[i*tedge->len / q[tedge->id]];
 							tvertex->isSingular = false;
-							tvertex->isGVertex = tvertex->vertex->isGVertex;
+							tvertex->isGVertex = tvertex->vertex->isGVertex; // should always be false
 							tvertices.pb(tvertex);
 							pos.pb(i*tedge->len / q[tedge->id]);
 							TM2.tvertices.pb(tvertex);
@@ -975,9 +978,9 @@ struct CMesh {
 			// Create interior vertices and edges
 			int nx = max(1, side_len[0]), ny = max(1, side_len[1]); // number of T-faces along dimension
 
-			if(nx > 1 && ny > 1) {
-				Msg::Warning("nx > 1 && ny > 1: this will probably segfault!");
-			}
+			// if(nx > 1 && ny > 1) {
+			// 	Msg::Warning("nx > 1 && ny > 1: this will probably segfault!");
+			// }
 
 			V<V<TVertex*>> tvertices(nx+1, V<TVertex*>(ny+1));
 			// Sides 0 and 2
@@ -994,8 +997,8 @@ struct CMesh {
 			// Interior T-vertices
 			if(nx > 1 && ny > 1) {
 				int mx = side_pos[0].back(), my = side_pos[1].back(); // dimensions in terms of OLD quantization
-				Msg::Info("nx = %d, ny = %d", nx, ny);
-				Msg::Info("mx = %d, my = %d", mx, my);
+				// Msg::Info("nx = %d, ny = %d", nx, ny);
+				// Msg::Info("mx = %d, my = %d", mx, my);
 				V<V<Vertex*>> vertices(mx+1, V<Vertex*>(my+1));
 				HalfEdge* he0 = tface->sides[0].front()->he;
 				F(j, my+1) {
@@ -1007,19 +1010,33 @@ struct CMesh {
 						he = he->next->oppo->next;
 					}
 				}
+				int color = rand();
+				F(i, mx+1) F(j, my+1) vertices[i][j]->geolog(color, "vertices");
 
 				// F(i, mx+1) F(j, my+1) {
 				// 	vertices[i][j]->geolog(0, "patch vertices");
 				// }
 				tface->geolog(0, "tface");
+
+				H(side_pos[0]);
+				H(side_pos[1]);
+				H(side_pos[2]);
+				H(side_pos[3]);
+
 				// draw();
 
 				FR(i, 1, nx) {
 					FR(j, 1, ny) {
 						int x1 = side_pos[0][i];
-						int x2 = side_pos[2][nx-i];
-						int y1 = side_pos[3][ny-j];
+						int x2 = mx - side_pos[2][nx-i];
+						int y1 = my - side_pos[3][ny-j];
 						int y2 = side_pos[1][j];
+						vertices[x1][0]->geolog(0, "x1");
+						vertices[x2][my]->geolog(1, "x2");
+						vertices[0][y1]->geolog(2, "y1");
+						vertices[mx][y2]->geolog(3, "y2");
+						// vertices[x2][y2]->geolog(2, "2");
+						// draw();
 						// Msg::Info("(x1,y1) = (%d,%d), (x2,y2) = (%d,%d)", x1, y1, x2, y2);
 						int dx = x2 - x1, dy = y2 - y1;
 						int xs = mx * (dx*y1 + x1*my) / (mx*my - dx*dy);
@@ -1142,7 +1159,7 @@ struct CMesh {
 		Msg::Info("Done splitting T-edges");
 
 
-		// draw();
+		draw();
 
 		// for(TEdge* tedge : TM2.tedges) {
 		// 	if(!tedge->gedge) {
@@ -1872,7 +1889,7 @@ V<int> optimizeQuantization(TMesh& TM, int strategy = 0) {
 
 	Search::Options options;
 	// Search::TimeStop ts(60000);
-	double tMax = 30;
+	double tMax = 10;
   if (strategy == 0) {
     tMax = 3;
   }
@@ -2268,691 +2285,4 @@ void alignQuadMesh(GModel* gm) {
 			geolog(mline, 0, "patches");
 
 	draw();
-
-	// // Split T-edges with quantization > 1 and T-faces with area > 0
-	// TMesh TM2;
-	// TM2.tvertices = TM.tvertices; // copy T-vertices
-	// // Clear adj
-	// for(TVertex* tvertex : TM2.tvertices) tvertex->adj.clear();
-	// TM2.nTEdges = 0;
-	// map<TEdge*, V<TEdge*>> tedge2new;
-	// map<TEdge*, V<TVertex*>> tedge2tvertices; // OLD T-edge to NEW T-vertices
-	// map<TEdge*, V<int>> tedge2pos;
-	// int iface = 0;
-	// for(TFace* tface : TM.tfaces) {
-	// 	array<V<TVertex*>,4> side_tvertices; // T-vertices separating the NEW quantization
-	// 	array<V<int>, 4> side_pos; // integer position of T-vertices along side (in terms of OLD quantization)
-	// 	array<V<V<TEdge*>>, 4> side_tedges; // old T-edges grouped by new T-faces (separated by T-vertices in side_tvertices) 
-	// 	array<int, 4> side_len; // total length of each side
-	// 	F(s, 4) {
-	// 		int curr_pos = 0; // old quantization
-	// 		int curr_len = 0; // new quantization
-	// 		side_tvertices[s].pb(tface->sides[s].front()->tvertex1); // add corner
-	// 		side_pos[s].pb(0);
-	// 		side_tedges[s].pb(V<TEdge*>());
-			
-	// 		side_len[s] = 0;
-	// 		for(TEdge* tedge : tface->sides[s])
-	// 			side_len[s] += parentn[tedge->id];
-
-	// 		for(TEdge* tedge : tface->sides[s]) {
-	// 			// int sol = parentn[tedge->id];
-	// 			// List vertices on T-edge
-	// 			V<Vertex*> vertices;
-	// 			HalfEdge* he = tedge->he;
-	// 			F(i, tedge->len) {
-	// 				vertices.pb(he->v1);
-	// 				he = he->next->oppo->next;
-	// 			}
-	// 			vertices.pb(he->v1);
-
-	// 			// Create new T-vertices
-	// 			V<TVertex*> tvertices;
-	// 			V<int> pos;
-	// 			if(tedge2tvertices.count(tedge->oppo)) {
-	// 				tvertices = tedge2tvertices[tedge->oppo]; reverse(ALL(tvertices));
-	// 				pos = tedge2pos[tedge->oppo]; reverse(ALL(pos));
-	// 			} else {
-	// 				tvertices.pb(tedge->tvertex1);
-	// 				pos.pb(0); // pos of T-vertices alons T-edge
-	// 				FR(i, 1, parentn[tedge->id]) {
-	// 					TVertex* tvertex = new TVertex;
-	// 					tvertex->vertex = vertices[i*tedge->len / parentn[tedge->id]];
-	// 					tvertex->isSingular = false;
-	// 					tvertex->isGVertex = tvertex->vertex->isGVertex;
-	// 					tvertices.pb(tvertex);
-	// 					pos.pb(i*tedge->len / parentn[tedge->id]);
-	// 					TM2.tvertices.pb(tvertex);
-	// 				}
-	// 				tvertices.pb(tedge->tvertex2);
-	// 				pos.pb(tedge->len);
-	// 				tedge2tvertices[tedge] = tvertices;
-	// 				tedge2pos[tedge] = pos;
-	// 			}
-
-	// 			// Create new T-edges
-	// 			V<TEdge*> newtedges;
-	// 			// int side_len = 0; // total side length
-	// 			F(i, max(1, parentn[tedge->id])) {
-	// 				TEdge* newtedge = new TEdge;
-	// 				// newtedge->tface = tface;
-	// 				newtedge->tvertex1 = tvertices[i];
-	// 				newtedge->tvertex2 = tvertices[i+1];
-	// 				newtedge->len = min(1, parentn[tedge->id]);
-	// 				newtedge->gedge = tedge->gedge;
-	// 				if(tedge2new.count(tedge->oppo)) {
-	// 					newtedge->oppo = tedge2new[tedge->oppo][max(1, parentn[tedge->id])-1-i];
-	// 					newtedge->id = newtedge->oppo->id;
-	// 				} else {
-	// 					newtedge->oppo = NULL;
-	// 					newtedge->id = TM2.nTEdges++;
-	// 				}
-	// 				TM2.tedges.pb(newtedge);
-	// 				newtedges.pb(newtedge);
-	// 				side_tedges[s].back().pb(newtedge);
-	// 				// Determine if we add this T-vertex to the side_tvertices
-	// 				curr_len += newtedge->len;
-	// 				if(newtedge->len == 1 && curr_len < side_len[s]) {
-	// 					side_tvertices[s].pb(newtedge->tvertex2);
-	// 					side_pos[s].pb(curr_pos + pos[i+1]);
-	// 					if(curr_len < side_len[s]) side_tedges[s].pb(V<TEdge*>());
-	// 				}
-	// 				newtedge->tvertex1->adj.pb({newtedge->tvertex2, newtedge});
-	// 			}
-	// 			tedge2new[tedge] = newtedges; // map old T-edge to sequence of new T-edges
-	// 			curr_pos += tedge->len;
-	// 		}
-
-	// 		// Replace last side T-vertex by corner
-	// 		// side_tvertices[s].back() = tface->sides[s].back()->tvertex2;
-	// 		// side_pos[s].back() = curr_pos;
-	// 		side_tvertices[s].pb(tface->sides[s].back()->tvertex2);
-	// 		side_pos[s].pb(curr_pos);
-	// 	}
-
-	// 	// Create interior vertices and edges
-	// 	int nx = max(1, side_len[0]), ny = max(1, side_len[1]); // number of T-faces along dimension
-	// 	V<V<TVertex*>> tvertices(nx+1, V<TVertex*>(ny+1));
-	// 	// Sides 0 and 2
-	// 	F(i, nx+1) {
-	// 		tvertices[i][0] = side_tvertices[0][i]; // side 0
-	// 		tvertices[i][ny] = side_tvertices[2][nx-i]; // side 2
-	// 	}
-	// 	// Sides 1 and 3
-	// 	F(i, ny+1) {
-	// 		tvertices[0][i] = side_tvertices[3][ny-i]; // side 3
-	// 		tvertices[nx][i] = side_tvertices[1][i]; // side 1
-	// 	}
-	// 	// TODO later!!
-	// 	// // Interior T-vertices
-	// 	// FR(i, 1, nx) {
-	// 	// 	FR(j, 1, ny) {
-	// 	// 		int x1 = side_pos[0][i];
-	// 	// 		int x2 = side_pos[2][nx-i];
-	// 	// 		int y1 = side_pos[3][ny-j];
-	// 	// 		int y2 = side_pos[1][j];
-	// 	// 		int dx = x2 - x1, dy = y2 - y1;
-	// 	// 		int xs = nx * (dx*y1 + x1*ny) / (nx*ny - dx*dy);
-	// 	// 		int ys = ny * (dy*x1 + y1*nx) / (nx*ny - dx*dy);
-	// 	// 	}
-	// 	// }
-
-	// 	// Create faces and interior edges
-	// 	// TODO: oppo of interior edges
-	// 	F(i, nx) F(j, ny) {
-	// 		TFace* newtface = new TFace;
-	// 		newtface->gface = tface->gface;
-	// 		// Bottom edge
-	// 		if(j == 0)
-	// 			newtface->sides[0] = side_tedges[0][i];
-	// 		else {
-	// 			TEdge* tedge = new TEdge;
-	// 			tedge->tface = newtface;
-	// 			tedge->tvertex1 = tvertices[i][j];
-	// 			tedge->tvertex2 = tvertices[i+1][j];
-	// 			//tedge->oppo = TODO;
-	// 			tedge->gedge = NULL;
-	// 			tedge->len = (side_len[0] > 0);
-	// 			tedge->id = TM2.nTEdges++;
-	// 			TM2.tedges.pb(tedge);
-	// 			newtface->sides[0] = {tedge};
-	// 			tedge->tvertex1->adj.pb({tedge->tvertex2, tedge});
-	// 		}
-	// 		// Right edge
-	// 		if(i+1 == nx)
-	// 			newtface->sides[1] = side_tedges[1][j];
-	// 		else {
-	// 			TEdge* tedge = new TEdge;
-	// 			tedge->tface = newtface;
-	// 			tedge->tvertex1 = tvertices[i+1][j];
-	// 			tedge->tvertex2 = tvertices[i+1][j+1];
-	// 			//tedge->oppo = TODO;
-	// 			tedge->gedge = NULL;
-	// 			tedge->len = (side_len[1] > 0);
-	// 			tedge->id = TM2.nTEdges++;
-	// 			TM2.tedges.pb(tedge);
-	// 			newtface->sides[1] = {tedge};
-	// 			tedge->tvertex1->adj.pb({tedge->tvertex2, tedge});
-	// 		} 
-	// 		// Top edge
-	// 		if(j+1 == ny)
-	// 			newtface->sides[2] = side_tedges[2][nx-1-i];
-	// 		else {
-	// 			TEdge* tedge = new TEdge;
-	// 			tedge->tface = newtface;
-	// 			tedge->tvertex1 = tvertices[i+1][j+1];
-	// 			tedge->tvertex2 = tvertices[i][j+1];
-	// 			//tedge->oppo = TODO;
-	// 			tedge->gedge = NULL;
-	// 			tedge->len = (side_len[2] > 0);
-	// 			tedge->id = TM2.nTEdges++;
-	// 			TM2.tedges.pb(tedge);
-	// 			newtface->sides[2] = {tedge};
-	// 			tedge->tvertex1->adj.pb({tedge->tvertex2, tedge});
-	// 		}
-	// 		// Left edge
-	// 		if(i == 0)
-	// 			newtface->sides[3] = side_tedges[3][ny-1-j];
-	// 		else {
-	// 			TEdge* tedge = new TEdge;
-	// 			tedge->tface = newtface;
-	// 			tedge->tvertex1 = tvertices[i][j+1];
-	// 			tedge->tvertex2 = tvertices[i][j];
-	// 			//tedge->oppo = TODO;
-	// 			tedge->gedge = NULL;
-	// 			tedge->len = (side_len[3] > 0);
-	// 			tedge->id = TM2.nTEdges++;
-	// 			TM2.tedges.pb(tedge);
-	// 			newtface->sides[3] = {tedge};
-	// 			tedge->tvertex1->adj.pb({tedge->tvertex2, tedge});
-	// 		}
-	// 		TM2.tfaces.pb(newtface);
-	// 	}
-
-	// 	iface++;
-	// }
-
-	// set<Vertex*> sv;
-	// for(TVertex* tvertex : TM2.tvertices) {
-	// 	if(sv.count(tvertex->vertex)) {
-	// 		tvertex->geolog(0, "double");
-	// 		draw();
-	// 	}
-	// 	sv.insert(tvertex->vertex);
-	// }
-
-	// // for(TVertex* tvertex : TM2.tvertices) tvertex->geolog(rand(), "TM2 T-vertices");
-	// // for(TEdge* tedge : TM2.tedges) tedge->geolog(rand(), "TM2 T-edges");
-
-	// // TM2.geolog("TM2");
- 
-	// for(TEdge* tedge : TM2.tedges) {
-	// 	GeoLog::add({tedge->tvertex1->vertex->ptr->point(), tedge->tvertex2->vertex->ptr->point()}, tedge->len, "topo edges");
-	// }
-	// for(TVertex* tvertex : TM2.tvertices) {
-	// 	tvertex->geolog(0, "topo vertices");
-	// }
-
-	// // V<V<Tedge*>> quadloops;
-	// // map<TEdge*, int> tedge2quadloop;
-	// // for(TEdge* tedge_start : TM2.tedges) {
-	// // 	if(tedge2quadloop.count(tedge_start)) continue;
-	// // 	quadloops.emplace_back();
-	// // 	TEdge* tedge = tedge_start;
-	// // 	do {
-
-	// // 	} 
-	// // }
-
-	// V<int> p(TM2.nTEdges), size(TM2.nTEdges, 1);
-	// F(i, TM2.nTEdges) p[i] = i;
-	// for(TFace* tface : TM2.tfaces) {
-	// 	F(s, 2) {
-	// 		int a = -1, b = -1;
-	// 		for(TEdge* tedge : tface->sides[s+0]) if(tedge->len) a = tedge->id;
-	// 		for(TEdge* tedge : tface->sides[s+2]) if(tedge->len) b = tedge->id;
-	// 		if(a == -1 || b == -1) continue;
-	// 		a = find(a, p), b = find(b, p);
-	// 		if(a != b) {
-	// 			if(size[b] > size[a]) swap(a,b);
-	// 			p[b] = a, size[a] += size[b];
-	// 		}
-	// 	}
-	// }
-
-	// map<int,int> quadloopid; int nquadloops = 0;
-	// set<int> processed;
-	// map<GEdge*, V<int>> gedge2quadloop;
-	// for(TEdge* tedge : TM2.tedges) if(tedge->len && !processed.count(tedge->id)) {
-	// 	int quadloop = p[tedge->id];
-	// 	if(!quadloopid.count(quadloop)) {
-	// 		quadloopid[quadloop] = nquadloops++;
-	// 	}
-
-	// 	GeoLog::add({tedge->tvertex1->vertex->ptr->point(), tedge->tvertex2->vertex->ptr->point()}, quadloopid[quadloop], "quad loops");
-	// 	// tedge->geolog(quadloopid[quadloop], "quad loops");
-	// 	if(tedge->gedge) gedge2quadloop[tedge->gedge].pb(quadloopid[quadloop]);
-	// 	processed.insert(tedge->id);
-	// }
-
-	// // for(GEdge* gedge : gm->getEdges()) {
-	// // 	stringstream ss; ss << gedge2quadloop[gedge];
-	// // 	geolog(gedge, rand(), ss.str());
-	// // 	// H(gedge2quadloop[gedge]);
-	// // }
-	
-	// H(p);
-	// H(size);
-
-	// draw();
-
-	// // Build new mesh
-
-	// // Merge T-vertices with distance 0 into clusters
-	// V<Cluster*> clusters;
-	// map<TVertex*, Cluster*> inCluster;
-	// int i = 0;
-	// for(TVertex* tvertex : TM2.tvertices) if(!inCluster.count(tvertex)) {
-	// 	tvertex->geolog(i++, "new cluster");
-	// 	Cluster* cluster = new Cluster; clusters.pb(cluster);
-	// 	cluster->tvertices.pb(tvertex);
-	// 	inCluster[tvertex] = cluster;
-	// 	queue<TVertex*> q; q.push(tvertex);
-	// 	while(S(q)) {
-	// 		TVertex* u = q.front(); q.pop();
-	// 		for(auto p : u->adj) {
-	// 			TVertex* v = p.first;
-	// 			// if(!inCluster.count(v) && parentn[p.second->id] == 0) {
-	// 			if(!inCluster.count(v) && p.second->len == 0) {
-	// 				p.second->geolog(rand(), "adj");
-	// 				cluster->tvertices.pb(v);
-	// 				inCluster[v] = cluster;
-	// 				q.push(v);
-	// 			}
-	// 		}
-	// 	}
-	// 	// Determine type and center
-	// 	cluster->type = 0;
-	// 	cluster->gface = NULL;
-	// 	cluster->center = NULL;
-	// 	for(TVertex* tvertex : cluster->tvertices) {
-	// 		Vertex* vertex = tvertex->vertex;
-	// 		GEntity* gentity = vertex->ptr->onWhat();
-	// 		GFace* gf = dynamic_cast<GFace*>(gentity);
-	// 		if(gf != NULL) {
-	// 			cluster->gface = gf;
-	// 		}
-	// 		if(dynamic_cast<GVertex*>(gentity) != NULL) {
-	// 			cluster->type = 2;
-	// 			cluster->center = vertex;
-	// 			break; // since there can be only one GVertex per cluster
-	// 		} 
-	// 		if(dynamic_cast<GEdge*>(gentity) != NULL) {
-	// 			cluster->type = 3;
-	// 			cluster->center = vertex;
-	// 			// We don't break since there could be a GVertex in the cluster
-	// 		}
-	// 		if(cluster->center == NULL && tvertex->isSingular) { // non-geometric singularity
-	// 			cluster->type = 1;
-	// 			cluster->center = vertex;
-	// 			// break; // since there can be only one sing per cluster
-	// 		}
-	// 	}
-
-	// 	if(cluster->type == 0) // any vertex will do
-	// 		cluster->center = cluster->tvertices[0]->vertex;
-	// 		//centers.back() = clusters.back()[0]->vertex->ptr;
-	// 		//centers.back() = mean;
-	// 	GeoLog::add(SVector3(cluster->center->ptr->point()), cluster->type, "centers");
-	// }
-
-	// // Draw T-vertices, grouped by cluster
-	// for(Cluster* cluster : clusters) {
-	// 	int color = rand();
-	// 	for(TVertex* tvertex : cluster->tvertices)
-	// 		tvertex->geolog(color, "cluster");
-	// }
-
-	// // Construct minimal mesh
-	// set<HalfEdge*> onMinMesh; // set of half-edges lying on the minimal mesh
-	// // add whole CAD to minmesh
-	// for(TEdge* tedge : TM2.tedges) if(tedge->gedge != NULL || tedge->isStitch) {
-	// 	HalfEdge* he = tedge->he;
-	// 	F(i, tedge->len) {
-	// 		onMinMesh.insert(he);
-	// 		if(i != tedge->len-1) he = he->next->oppo->next;
-	// 	}
-	// }
-
-	// // Assign pairs of clusters to corresponding GEdge
-	// map<pair<Cluster*, Cluster*>, GEdge*> clusterpair2gedge;
-	// for(TEdge* tedge : TM2.tedges) if(tedge->gedge != NULL) {
-	// 	Cluster *cluster1 = inCluster[tedge->tvertex1], *cluster2 = inCluster[tedge->tvertex2];
-	// 	clusterpair2gedge[{cluster1, cluster2}] = clusterpair2gedge[{cluster2, cluster1}] = tedge->gedge;
-	// }
-
-	// // Build new mesh
-	
-	// // GVertices
-	// map<GVertex*, MVertex*> gvertex2mvertex;
-	// for(TVertex* tvertex : TM2.tvertices) if(tvertex->isGVertex) {
-	// 	MVertex* mv = tvertex->vertex->ptr;
-	// 	GVertex* gvertex = (GVertex*) mv->onWhat();
-	// 	MVertex* newmv = new MVertex(mv->x(), mv->y(), mv->z(), gvertex);
-	// 	gvertex2mvertex[gvertex] = newmv;
-	// }
-
-	// // for(GVertex* gvertex : gm->getVertices()) {
-	// // 	H(gvertex2mvertex[gvertex]);
-	// // 	// H(gvertex2mvertex.count(gvertex));
-	// // }
-	// // exit(0);
-
-	// map<pair<Cluster*,Cluster*>, V<Vertex*>> paths; // paths between clusters
-	// map<pair<Cluster*,Cluster*>, V<MVertex*>> clusterpair2mvertices; // for every cluster pair, we store its new mesh vertices
-	// map<pair<Cluster*,Cluster*>, V<MLine*>> clusterpair2mlines; // for every cluster pair, we store its new MLines
-	// map<Cluster*, MVertex*> cluster2mvertex; // map a given cluster to its corresponding new mvertex (to avoid duplicates)
-	// map<GEdge*, V<MEdgeVertex*>> gedge2mvertices; // for every GEdge, we store its new mesh vertices
-	// map<GEdge*, V<MLine*>> gedge2mlines;
-	// map<GFace*, V<MFaceVertex*>> gface2mvertices;
-	// map<GFace*, V<MQuadrangle*>> gface2mquads;
-	// V<V<MQuadrangle*>> patches;
-	// set<pair<Cluster*, Cluster*>> processedClusterPairs;
-	// int totalArea = 0;
-	// for(TFace* tface : TM2.tfaces) {
-	// 	// First check if T-face has positive area (otherwise skip it)
-	// 	int area = 1;
-	// 	F(k,2) {
-	// 		int len = 0;
-	// 		for(TEdge* tedge : tface->sides[k])
-	// 			len += tedge->len;
-	// 			// len += parentn[tedge->id];
-	// 		area *= len;
-	// 	}
-	// 	if(area == 0) continue;
-	// 	totalArea += area;
-	// 	tface->geolog(rand(), "area > 0");
-	// 	GFace* gface = tface->gface;
-	// 	patches.emplace_back();
-
-	// 	// Iterate on each side of the patch
-	// 	array<V<MVertex*>,4> side_vertices; // vertices on sides of patch
-	// 	array<V<MLine*>,4> side_mlines; // MLines on sides of patch
-	// 	F(k,4) {
-	// 		int color = rand();
-			
-	// 		// Find (only) T-edge with q = 1
-	// 		TEdge* tedge; 
-	// 		F(i, S(tface->sides[k])) {
-	// 			tedge = tface->sides[k][i];
-	// 			if(tedge->len > 0) break;
-	// 		}
-			
-	// 		Cluster *cluster1 = inCluster[tedge->tvertex1], *cluster2 = inCluster[tedge->tvertex2];
-	// 		Vertex* center1 = cluster1->center, *center2 = cluster2->center;
-			
-	// 		// Determine GEdge and GVertices, if any
-	// 		GEdge* gedge = NULL;
-	// 		if(clusterpair2gedge.count({cluster1, cluster2})) {
-	// 			gedge = clusterpair2gedge[{cluster1, cluster2}];
-	// 		}
-	// 		GVertex* gvertex1 = dynamic_cast<GVertex*>(center1->ptr->onWhat());
-	// 		GVertex* gvertex2 = dynamic_cast<GVertex*>(center2->ptr->onWhat());
-			
-	// 		if(clusterpair2mvertices.count({cluster1, cluster2})) {
-	// 			side_vertices[k] = clusterpair2mvertices[{cluster1, cluster2}];
-	// 			side_mlines[k] = clusterpair2mlines[{cluster1, cluster2}];
-	// 		} else {
-	// 			// Determine shortest path
-	// 			V<Vertex*> path;
-	// 			map<Vertex*, Vertex*> parent; parent[center1] = NULL;
-	// 			V<Vertex*> q; q.pb(center1);
-	// 			while(true) {
-	// 				V<Vertex*> qn;
-	// 				bool done = false;
-	// 				for(Vertex* u : q) {
-	// 					for(HalfEdge* he : u->hedges) {
-	// 						Vertex* v = he->v2;
-	// 						// If path corresponds to a GEdge, force the path to stay on the GEdge
-	// 						if(gedge != NULL && v != center2 && dynamic_cast<GEdge*>(v->ptr->onWhat()) == NULL)
-	// 							continue;
-	// 						if(!parent.count(v)) {
-	// 							parent[v] = u;
-	// 							if(v == center2) {
-	// 								done = true;
-	// 								break;
-	// 							}
-	// 							qn.pb(v);
-	// 						}
-	// 					}
-	// 					if(done) break;
-	// 				}
-	// 				if(done) break;
-	// 				q = qn;
-	// 				// Sort q according to distance to center2
-	// 				sort(ALL(q), [center1, center2](Vertex* a, Vertex* b)->bool { return a->dist(center1) + a->dist(center2) <  b->dist(center1) + b->dist(center2); });
-	// 			}
-	// 			path.pb(center2);
-	// 			Vertex* u = center2;
-	// 			do {
-	// 				u = parent[u];
-	// 				path.pb(u);
-	// 			} while(u != center1);
-	// 			reverse(ALL(path)); // center1 -> center2
-	// 			FR(i, 1, S(path))
-	// 				GeoLog::add({SVector3(path[i-1]->ptr->point()), SVector3(path[i]->ptr->point())}, color, "minimal mesh");
-
-	// 			// Resample path
-	// 			V<SPoint3> pts(S(path));
-	// 			F(i	, S(path)) pts[i] = path[i]->ptr->point();
-	// 			V<SPoint3> ipts; // new internal points
-	// 			int nb_ipts = 4;
-	// 			compute_subdivided_edge_internal_points(pts, nb_ipts, ipts);
-				
-	// 			// Form side vertices vector, and plot
-	// 			ipts.insert(ipts.begin(), pts.front());
-	// 			ipts.pb(pts.back());
-	// 			FR(i, 1, S(ipts))
-	// 				GeoLog::add({ipts[i-1], ipts[i]}, tedge->id, "minimal mesh (resampled)");
-
-	// 			// Create MVertices
-
-	// 			// Cluster 1
-	// 			if(gvertex1)
-	// 				side_vertices[k].pb(gvertex2mvertex[gvertex1]);
-	// 			else if(cluster2mvertex.count(cluster1))
-	// 				side_vertices[k].pb(cluster2mvertex[cluster1]);
-	// 			else {
-	// 				SPoint3 p = ipts.front();
-	// 				GEdge* local_gedge = dynamic_cast<GEdge*>(cluster1->center->ptr->onWhat());
-	// 				if(local_gedge) { 
-	// 					double param; local_gedge->closestPoint(p, param);
-	// 					MEdgeVertex* mev = new MEdgeVertex(p.x(), p.y(), p.z(), local_gedge, param);
-	// 					gedge2mvertices[local_gedge].pb(mev);
-	// 					side_vertices[k].pb(mev);
-	// 					cluster2mvertex[cluster1] = mev;
-	// 				} else {
-	// 					double uv[2]; gface->closestPoint(p, uv); // get params
-	// 					MFaceVertex* mfv = new MFaceVertex(p.x(), p.y(), p.z(), tface->gface, uv[0], uv[1]);
-	// 					gface2mvertices[gface].pb(mfv);
-	// 					side_vertices[k].pb(mfv);
-	// 					cluster2mvertex[cluster1] = mfv;
-	// 				} 
-	// 			}
-
-	// 			// Internal points
-	// 			FR(i, 1, S(ipts)-1) {
-	// 				SPoint3 p = ipts[i];
-	// 				if(gedge) {
-	// 					double param; gedge->closestPoint(p, param);
-	// 					MEdgeVertex* mev = new MEdgeVertex(p.x(), p.y(), p.z(), gedge, param);
-	// 					gedge2mvertices[gedge].pb(mev);
-	// 					side_vertices[k].pb(mev);
-	// 				} else {
-	// 					double uv[2]; gface->closestPoint(p, uv); // get parameters
-	// 					MFaceVertex* mfv = new MFaceVertex(p.x(), p.y(), p.z(), tface->gface, uv[0], uv[1]);
-	// 					gface2mvertices[gface].pb(mfv);
-	// 					side_vertices[k].pb(mfv);
-	// 				}
-	// 			}
-
-	// 			// Cluster 2
-	// 			if(gvertex2)
-	// 				side_vertices[k].pb(gvertex2mvertex[gvertex2]);
-	// 			else if(cluster2mvertex.count(cluster2))
-	// 				side_vertices[k].pb(cluster2mvertex[cluster2]);
-	// 			else {
-	// 				SPoint3 p = ipts.back();
-	// 				GEdge* local_gedge = dynamic_cast<GEdge*>(cluster2->center->ptr->onWhat());
-	// 				if(local_gedge) { 
-	// 					double param; local_gedge->closestPoint(p, param);
-	// 					MEdgeVertex* mev = new MEdgeVertex(p.x(), p.y(), p.z(), local_gedge, param);
-	// 					gedge2mvertices[local_gedge].pb(mev);
-	// 					side_vertices[k].pb(mev);
-	// 					cluster2mvertex[cluster2] = mev;
-	// 				} else {
-	// 					double uv[2]; gface->closestPoint(p, uv); // get params
-	// 					MFaceVertex* mfv = new MFaceVertex(p.x(), p.y(), p.z(), tface->gface, uv[0], uv[1]);
-	// 					gface2mvertices[gface].pb(mfv);
-	// 					side_vertices[k].pb(mfv);
-	// 					cluster2mvertex[cluster2] = mfv;
-	// 				} 
-	// 			}
-
-	// 			// Store vertices corresponding to cluster pair
-	// 			clusterpair2mvertices[{cluster1, cluster2}] = side_vertices[k];
-	// 			V<MVertex*> rev = side_vertices[k]; reverse(ALL(rev));
-	// 			clusterpair2mvertices[{cluster2, cluster1}] = rev;
-
-	// 			// Create MLines
-	// 			FR(i, 1, S(ipts)) {
-	// 				MLine* ml = new MLine(side_vertices[k][i-1], side_vertices[k][i]);
-	// 				GeoLog::add({side_vertices[k][i-1]->point(), side_vertices[k][i]->point()}, 0, "ml");
-	// 				side_mlines[k].pb(ml);
-	// 				// clusterpair2mlines[{cluster1, cluster2}].pb(ml);
-	// 				if(gedge != NULL) gedge2mlines[gedge].pb(ml);
-	// 			}
-	// 			clusterpair2mlines[{cluster1, cluster2}] = side_mlines[k];
-	// 			V<MLine*> rev_mline = side_mlines[k]; reverse(ALL(rev_mline));
-	// 			clusterpair2mlines[{cluster2, cluster1}] = rev_mline;
-	// 		}
-	// 	}
-	// 	// if(S(side_vertices[0]) != S(side_vertices[2]) || S(side_vertices[1]) != S(side_vertices[3])) {
-	// 	// 	tface->geolog(0, "TFI fail");
-	// 	// 	draw();			
-	// 	// }
-
-	// 	// Create internal MVertices and MQuadrangles
-	// 	array<V<SPoint3>, 4> side_pts;
-	// 	F(s, 4)
-	// 		for(MVertex* mv : side_vertices[s])
-	// 			side_pts[s].pb(mv->point());
-	// 	V<SPoint3> ipts;
-	// 	if(S(side_pts[0]) != 2 && S(side_pts[1]) != 2)
-	// 		transfinite_interpolation(side_pts[0], side_pts[1], side_pts[2], side_pts[3], ipts);
-
-	// 	int n = S(side_pts[0]), m = S(side_pts[1]);
-	// 	V<V<MVertex*>> all_mv(n, V<MVertex*>(m)); // all vertices: side_pts + ipts
-	// 	F(i, n) {
-	// 		F(j, m) {
-	// 			if(i == 0) all_mv[i][j] = side_vertices[3][m-1-j];
-	// 			else if(j == 0) all_mv[i][j] = side_vertices[0][i];
-	// 			else if(i == n-1) all_mv[i][j] = side_vertices[1][j];
-	// 			else if(j == m-1) all_mv[i][j] = side_vertices[2][n-1-i];
-	// 			else {
-	// 				double guess[2];
-	// 				GPoint gp = gface->closestPoint(ipts[(i-1)+(j-1)*(n-2)], guess);
-	// 				all_mv[i][j] = new MFaceVertex(gp.x(), gp.y(), gp.z(), gface, gp.u(), gp.v());
-	// 				// gface2mvertices[gface].pb((MFaceVertex*)all_mv[i][j]);
-	// 			}
-	// 		}
-	// 	}
-
-	// 	// // Set up MLines
-	// 	// V<V<MLine*>> mlh(n-1, V<MLine*>(m)); // horizontal MLines
-	// 	// V<V<MLine*>> mlv(n, V<MLine*>(m-1)); // vertical MLines
-	// 	// F(i, n-1) mlh[i][0] = side_mlines[0][i];
-	// 	// F(j, m-1) mlv[n-1][j] = side_mlines[1][j];
-	// 	// F(i, n-1) mlh[i][m-1] = side_mlines[2][n-1-i];
-	// 	// F(j, m-1) mlv[0][j] = side_mlines[3][m-1-j];
-
-	// 	// int color = rand();
-	// 	// F(i,n-1) F(j,m-1) {
-	// 	// 	if(j > 0) mlh[i][j] = new MLine(all_mv[i][j], all_mv[i+1][j]);
-	// 	// 	if(i > 0) mlv[i][j] = new MLine(all_mv[i][j], all_mv[i][j+1]);
-	// 	// }
-
-	// 	// Create MQuandrangles
-	// 	F(i, n-1) F(j, m-1) {
-	// 		MQuadrangle* mq = new MQuadrangle(all_mv[i][j], all_mv[i+1][j], all_mv[i+1][j+1], all_mv[i][j+1]);
-	// 		gface2mquads[gface].pb(mq);
-	// 		patches.back().pb(mq);
-	// 	}
-	// }
-
-	// // Put new mesh into GModel
-	// gm->deleteMesh();
-
-	// // GVertices
-	// for(GVertex* gvertex : gm->getVertices()) {
-	// 	gvertex->addMeshVertex(gvertex2mvertex[gvertex]);
-	// }
-	// // GEdges
-	// for(GEdge* gedge : gm->getEdges()) {
-	// 	for(MEdgeVertex* mev : gedge2mvertices[gedge]) {
-	// 		gedge->addMeshVertex(mev);
-	// 	}
-	// 	for(MLine* ml : gedge2mlines[gedge])
-	// 		gedge->addLine(ml);
-	// }
-	// // GFaces
-	// for(GFace* gface : gm->getFaces()) {
-	// 	for(MFaceVertex* mfv : gface2mvertices[gface])
-	// 		gface->addMeshVertex(mfv);
-	// 	for(MQuadrangle* mq : gface2mquads[gface])
-	// 		gface->addQuadrangle(mq);
-	// }
-
-	// // Sanity check: no duplicate MVertices
-	// V<GEntity*> gentities; gm->getEntities(gentities);
-	// map<SPoint3, int> count_sp3;
-	// for(GEntity* ge : gentities) {
-	// 	for(MVertex* v : ge->mesh_vertices) {
-	// 		++count_sp3[v->point()];
-	// 		if(dynamic_cast<GFace*>(v->onWhat())) {
-	// 			GeoLog::add(v->point(), 0, "on GFace");
-	// 		}
-	// 	}
-	// }
-	// FIT(it, count_sp3) {
-	// 	if(it->second > 1) {
-	// 		Msg::Error("duplicate MVertices (%d)!", it->second);
-	// 		GeoLog::add(it->first, it->second, "!duplicates");
-	// 	}
-	// }
-
-	// v2t_cont adj;
-	// for(GFace* gf : gm->getFaces()) {
-	// 	buildVertexToElement(gf->quadrangles, adj);
-	// }
-
-	// FIT(it, adj) {
-	// 	GeoLog::add(it->first->point(), S(it->second), "#incident faces");
-	// }
-
-
-
-	// // Smoothing
-	// meshWinslow2d(gm);
-
-	// // Color quads by patch
-	// for(V<MQuadrangle*> patch : patches) {
-	// 	int color = rand();
-	// 	for(MQuadrangle* quad : patch) {
-	// 		geolog(quad, color, "patches");
-	// 		// GeoLog::add({}, color, "patches");
-	// 	}
-	// }
-
-	// draw();
 }
