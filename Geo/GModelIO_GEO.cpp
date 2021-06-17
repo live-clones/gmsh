@@ -1469,7 +1469,9 @@ void GEO_Internals::synchronize(GModel *model, bool resetMeshAttributes)
       else {
         if(f->getNativeType() == GEntity::GmshModel)
           ((gmshFace *)f)->resetNativePtr(s);
-        if(resetMeshAttributes) f->resetMeshAttributes();
+        if(resetMeshAttributes) {
+	  f->resetMeshAttributes();
+	}
       }
     }
     List_Delete(surfaces);
@@ -1528,8 +1530,16 @@ void GEO_Internals::synchronize(GModel *model, bool resetMeshAttributes)
   for(auto it = _meshCompounds.begin(); it != _meshCompounds.end(); ++it) {
     int dim = it->first;
     std::vector<int> compound = it->second;
+
+    int N = compound.size() ;
+    int compoundAlgorithm = 0;
+    if (N && compound[ N- 1] < 0){
+      compoundAlgorithm = - compound[ N- 1];
+      N--;
+    }
+    
     std::vector<GEntity *> ents;
-    for(std::size_t i = 0; i < compound.size(); i++) {
+    for(std::size_t i = 0; i < N; i++) {
       int tag = compound[i];
       GEntity *ent = nullptr;
       switch(dim) {
@@ -1539,6 +1549,10 @@ void GEO_Internals::synchronize(GModel *model, bool resetMeshAttributes)
       default: Msg::Error("Compound mesh constraint with dimension %d", dim);
       }
       if(ent) ents.push_back(ent);
+      if(ent && dim == 2){
+	GFace *gf = dynamic_cast<GFace*>(ent);
+	gf->meshAttributes.compoundAlgorithm = compoundAlgorithm;
+      }
     }
     for(std::size_t i = 0; i < ents.size(); i++) { ents[i]->compound = ents; }
   }

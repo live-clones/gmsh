@@ -50,6 +50,7 @@ opt(DINTEGRATION "Enable discrete integration (needed for levelsets)" ${DEFAULT}
 opt(DOMHEX "Enable experimental DOMHEX code" ${DEFAULT})
 opt(EIGEN "Enable Eigen for linear algebra (instead of Blas/Lapack)" ON)
 opt(FLTK "Enable FLTK graphical user interface (requires mesh/post)" ${DEFAULT})
+opt(GEOMETRYCENTRAL "Enable geometry-central library (experimental)" ${DEFAULT})
 opt(GETDP "Enable GetDP solver (linked as a library, experimental)" ${DEFAULT})
 opt(GMM "Enable GMM linear solvers (simple alternative to PETSc)" ${DEFAULT})
 opt(GMP "Enable GMP for Kbipack (advanced)" ON)
@@ -406,6 +407,17 @@ macro(set_compile_flags LISTNAME FLAGS)
   endforeach()
 endmacro()
 
+## GEOMETRY CENTRAL 
+if(ENABLE_GEOMETRYCENTRAL)
+    find_library(GEOMETRYCENTRAL_LIB NAMES geometry-central)
+    find_path(GEOMETRYCENTRAL_INC "surface/meshio.h" PATH_SUFFIXES geometrycentral)
+    if(GEOMETRYCENTRAL_LIB AND GEOMETRYCENTRAL_INC)
+      list(APPEND EXTERNAL_LIBRARIES ${GEOMETRYCENTRAL_LIB})
+      list(APPEND EXTERNAL_INCLUDES ${GEOMETRYCENTRAL_INC})
+      set_config_option(HAVE_GEOMETRYCENTRAL "geometry-central")
+    endif()
+endif()
+
 if(ENABLE_EIGEN)
   if(ENABLE_SYSTEM_CONTRIB)
     find_path(EIGEN_INC "Eigen/Dense" HINTS eigen3)
@@ -421,6 +433,9 @@ if(ENABLE_EIGEN)
   # We could also add an option to use BLAS with Eigen
   # add_definitions(-DEIGEN_USE_BLAS)
 endif()
+
+
+
 
 if(NOT HAVE_EIGEN AND ENABLE_BLAS_LAPACK)
   if(BLAS_LAPACK_LIBRARIES)
@@ -979,7 +994,7 @@ if(HAVE_MESH)
   endif()
 
   if(ENABLE_MMG)
-    find_library(MMG_LIB NAMES Mmg mmg)
+    find_library(MMG_LIB NAMES geometry-central)
     find_path(MMG_INC "libmmg.h" PATH_SUFFIXES mmg)
     if(MMG_LIB AND MMG_INC)
       list(APPEND EXTERNAL_LIBRARIES ${MMG_LIB})

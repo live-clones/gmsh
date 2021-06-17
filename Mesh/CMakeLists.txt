@@ -12,6 +12,7 @@ set(SRC
     meshGFaceBamg.cpp meshGFaceBDS.cpp meshGFaceDelaunayInsertion.cpp
     meshGFaceOptimize.cpp
     meshGFaceBipartiteLabelling.cpp
+    meshGFacePack.cpp
   meshGRegion.cpp
     meshGRegionBoundaryRecovery.cpp
     meshGRegionHxt.cpp meshGRegionNetgen.cpp
@@ -37,6 +38,7 @@ set(SRC
   automaticMeshSizeField.cpp
   meshQuadQuasiStructured.cpp
   meshOctreeLibOL.cpp
+  sizeField.cpp
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h)

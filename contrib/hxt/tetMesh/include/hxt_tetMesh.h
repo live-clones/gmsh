@@ -43,7 +43,9 @@ typedef struct {
                           the quality of the mesh by topological transformations
                           above the threshold given by `qualityMin`
                           (Boolean option) */
-
+  double toleranceInitialDelaunay; /* A parameter given to tetgen that is a tolerance 
+				      for deciding if a distance is actually 0 */
+  
   struct {    
     /* function giving the quality of an element, or NULL for Gamma: v */
     double (*callback)(double* p0, double* p1, double* p2, double* p3, void* userData);

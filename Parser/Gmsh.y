@@ -4774,6 +4774,7 @@ Constraints :
             gf->meshAttributes.recombineAngle = $4;
           }
         }
+	
         List_Delete($3);
       }
     }
@@ -5159,6 +5160,13 @@ Constraints :
   | tCompound GeoEntity123 ListOfDouble tEND
     {
       std::vector<int> tags; ListOfDouble2Vector($3, tags);
+      GModel::current()->getGEOInternals()->setCompoundMesh($2, tags);
+      List_Delete($3);
+    }
+  | tCompound GeoEntity123 ListOfDouble tMeshAlgorithm FExpr tEND
+    {
+      std::vector<int> tags; ListOfDouble2Vector($3, tags);
+      tags.push_back(- (int) $5);
       GModel::current()->getGEOInternals()->setCompoundMesh($2, tags);
       List_Delete($3);
     }

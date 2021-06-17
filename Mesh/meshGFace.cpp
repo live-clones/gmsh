@@ -40,7 +40,7 @@
 #include "meshGFaceBipartiteLabelling.h"
 
 // define this to use the old initial delaunay
-#define OLD_CODE_DELAUNAY 1
+//#define OLD_CODE_DELAUNAY 1
 
 #ifndef OLD_CODE_DELAUNAY
 #include "meshTriangulation.h"
@@ -1163,6 +1163,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
                    bool onlyInitialMesh, bool debug,
                    std::vector<GEdge *> *replacement_edges)
 {
+
   if(CTX::instance()->debugSurface > 0 &&
      gf->tag() != CTX::instance()->debugSurface) {
     gf->meshStatistics.status = GFace::DONE;
@@ -1387,7 +1388,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
     }
     // TEST --> recover and color so most of the code below
     // can go away. Works also for periodic faces
-    GFaceInitialMesh(gf->tag(), 1);
+    //    GFaceInitialMesh(gf->tag(), 1);
 
     PolyMesh *pm = GFaceInitialMesh(gf->tag(), 1);
 
@@ -1777,12 +1778,13 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
 
   splitElementsInBoundaryLayerIfNeeded(gf);
 
+  
   if((CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine) &&
      (CTX::instance()->mesh.algoRecombine <= 1 ||
       CTX::instance()->mesh.algoRecombine == 4)) {
     bool blossom = (CTX::instance()->mesh.algoRecombine == 1);
     int topo = CTX::instance()->mesh.recombineOptimizeTopology;
-    bool nodeRepositioning = false;
+    bool nodeRepositioning = true;
     if(CTX::instance()->mesh.algoRecombine == 4)
       meshGFaceQuadrangulateBipartiteLabelling(gf->tag());
     else
@@ -2841,7 +2843,7 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
     bool blossom = (CTX::instance()->mesh.algoRecombine == 1);
     int topo = CTX::instance()->mesh.recombineOptimizeTopology;
     bool nodeRepositioning = true;
-    if(CTX::instance()->mesh.algo2d == ALGO_2D_PACK_PRLGRMS ||
+    if(/*CTX::instance()->mesh.algo2d == ALGO_2D_PACK_PRLGRMS ||*/
        CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT) {
       nodeRepositioning = false;
     }

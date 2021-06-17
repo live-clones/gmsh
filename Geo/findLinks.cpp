@@ -283,7 +283,8 @@ static void createFaceLinks(Tree_T *links)
 }
 
 int allFacesLinked(int fac, List_T *faces)
-{
+{  
+
   Tree_T *links = Tree_Create(sizeof(lnk), complink);
   Tree_T *edges = Tree_Create(sizeof(int), fcmp_int);
 

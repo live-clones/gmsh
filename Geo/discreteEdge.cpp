@@ -101,7 +101,6 @@ SPoint2 discreteEdge::reparamOnFace(const GFace *face, double epar,
 
 double discreteEdge::curvature(double par) const
 {
-  return 1.e-12;
   double tLoc;
   int iEdge;
   if(_discretization.size() <= 3)

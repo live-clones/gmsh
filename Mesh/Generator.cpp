@@ -36,6 +36,7 @@
 #include "Generator.h"
 #include "meshQuadQuasiStructured.h"
 #include "meshGFaceBipartiteLabelling.h"
+#include "sizeField.h"
 
 #if defined(_OPENMP)
 #include <omp.h>
@@ -573,6 +574,8 @@ static void Mesh2D(GModel *m)
   Msg::StatusBar(true, "Done meshing 2D (Wall %gs, CPU %gs)",
                  CTX::instance()->meshTimer[1], t2 - t1);
 
+  // if two passes ...
+  //printf("%lu fiels\n",  m->getFields()->size());
   PrintMesh2dStatistics(m);
 }
 
@@ -1534,6 +1537,9 @@ void GenerateMesh(GModel *m, int ask)
   if(ask == 2 || (ask > 2 && old < 2)) {
     std::for_each(m->firstRegion(), m->lastRegion(), deMeshGRegion());
     Mesh2D(m);
+    // if two passes --> juste fait le ...
+    createSizeFieldFromExistingMesh (m, false);
+    // Mesh2D(m);
   }
 
   // 3D mesh

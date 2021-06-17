@@ -107,12 +107,17 @@ static inline int computeTetGenVersion(uint32_t v1, uint32_t* v2Choices, const i
 }
 
 
-int tetgenmesh::reconstructmesh(void *p){
+int tetgenmesh::reconstructmesh(void *p, double tol){
   HXTMesh *mesh = (HXTMesh*) p;
   in = new tetgenio();
   b = new tetgenbehavior();
   char opts[128];
-  sprintf(opts, "YpeQT%g", 1.e-12);
+  printf("tol = %12.5E\n",tol);
+  sprintf(opts, "YpeQT%gp/%g", tol,tol);
+  //sprintf(opts, "YpeQT%gp/%g", CTX::instance()->mesh.toleranceInitialDelaunay,
+  //        CTX::instance()->mesh.angleToleranceFacetOverlap);
+  
+
   b->parse_commandline(opts);
 
   initializepools();
@@ -589,12 +594,12 @@ int tetgenmesh::reconstructmesh(void *p){
 }
 
 extern "C" {
-  HXTStatus hxt_boundary_recovery(HXTMesh *mesh)
+  HXTStatus hxt_boundary_recovery(HXTMesh *mesh, double tol)
   {
     HXTStatus status;
     try{
       tetgenmesh *m = new tetgenmesh();
-      status = (HXTStatus) m->reconstructmesh((void*)mesh);
+      status = (HXTStatus) m->reconstructmesh((void*)mesh, tol);
       if(status!=HXT_STATUS_OK)
         HXT_TRACE(status);
       delete m;

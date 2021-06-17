@@ -1557,15 +1557,16 @@ public:
       _octree = new OctreePost(v);
       updateNeeded = false;
     }
-
+    //    double SIZE = v->getData()->getBoundingBox().diag();
+    
     double l = 0.;
     // use large tolerance (in element reference coordinates) to maximize chance
     // of finding an element
     if(numComponents() == 3) { // scaled cross field
       double values[3];
-      if(!_octree->searchVectorWithTol(x, y, z, values, 0, nullptr, 0.05)) {
+      if(!_octree->searchVectorWithTol(x, y, z, values, 0, nullptr, 0.0005)) {
         if(!_octree->searchVectorWithTol(x, y, z, values, 0, nullptr, .1)) {
-          Msg::Debug("Field sampling: no vector element found containing point "
+          Msg::Warning("Field sampling: no vector element found containing point "
                      "(%g,%g,%g) (for norm)",
                      x, y, z);
         }
@@ -1581,9 +1582,15 @@ public:
     }
     else if(numComponents() == 1) {
       if(!_octree->searchScalarWithTol(x, y, z, &l, 0, nullptr, 0.05)) {
-        Msg::Debug(
-          "Field sampling: no scalar element found containing point (%g,%g,%g)",
-          x, y, z);
+	if(!_octree->searchScalarWithTol(x, y, z, &l, 0, nullptr, 0.15)) {
+	  if(!_octree->searchScalarWithTol(x, y, z, &l, 0, nullptr, 0.25)) {
+	    if(!_octree->searchScalarWithTol(x, y, z, &l, 0, nullptr, 0.35)) {
+	      Msg::Debug(
+			 "Field sampling: no scalar element found containing point (%g,%g,%g)",
+			 x, y, z);
+	    }
+	  }
+	}
       }
     }
     else {
