@@ -46,6 +46,13 @@ namespace lp_solve {
     return (r == TRUE);
   }
 
+  bool LpSolveSolver::setInteger(int i) {
+    lprec* lp = static_cast<lprec*>(state);
+    if (lp == NULL) return false;
+    unsigned char r = set_int(lp, i+1, TRUE);
+    return (r == TRUE);
+  }
+
   bool LpSolveSolver::addConstraintRow(const std::vector<std::pair<int,double> >& column_value, int op, double rhs) {
     lprec* lp = static_cast<lprec*>(state);
     if (lp == NULL) return false;
@@ -85,11 +92,20 @@ namespace lp_solve {
     lprec* lp = static_cast<lprec*>(state);
     if (lp == NULL) return false;
 
+    write_LP(lp, stdout);
     set_verbose(lp, IMPORTANT);
+
     int ret = solve(lp);
     if (ret == OPTIMAL) {
       double mv = get_objective(lp);
       Msg::Info("lp_solve: solution found, energy = %f", mv);
+
+      slt.resize(lp->columns,0.);
+      get_variables(lp, slt.data());
+      return true;
+    } else if (ret == SUBOPTIMAL) {
+      double mv = get_objective(lp);
+      Msg::Warning("lp_solve: solution found but sub-optimal, energy = %f", mv);
 
       slt.resize(lp->columns,0.);
       get_variables(lp, slt.data());

@@ -1603,7 +1603,9 @@ class AlignQuadMesh : public IntMinimizeSpace {
 		}
 		// printer
 		void print(ostream& os) const {
-			os << "Solution: " << l << ". Cost = " << costvar << endl;
+      int nz = 0;
+      F(i,l.size()) if (l[i].val() == 0) nz += 1;
+      os << "Solution: " << l << ". Cost = " << costvar << ". #0: " << nz << endl;
 		}
 		// cost function
 		virtual IntVar cost(void) const {
@@ -1658,7 +1660,9 @@ class OptimizeLengths : public IntMinimizeSpace {
 		}
 		// printer
 		void print(void) const {
-      cout << l << ". Cost = " << costvar << endl;
+      int nz = 0;
+      F(i,l.size()) if (l[i].val() == 0) nz += 1;
+      cout << l << ". Cost = " << costvar << ". #0: " << nz << endl;
 		}
 		// cost function
 		virtual IntVar cost(void) const {
@@ -1909,7 +1913,8 @@ V<int> optimizeQuantizationLpSolve(TMesh& TM) {
   V<int> valueMin(N,0);
   V<int> valueMax(N,INT_MAX);
   for(TEdge * tedge : TM.tedges) {
-    valueMax[tedge->id] = tedge->len;
+    valueMax[tedge->id] = tedge->len+1;
+
     GEdge* gedge1 = dynamic_cast<GEdge*>(tedge->tvertex1->vertex->ptr->onWhat());
     GEdge* gedge2 = dynamic_cast<GEdge*>(tedge->tvertex2->vertex->ptr->onWhat());
     if(gedge1 != NULL && gedge2 != NULL && gedge1 != gedge2) {
@@ -1923,11 +1928,11 @@ V<int> optimizeQuantizationLpSolve(TMesh& TM) {
     }
   }
 
-
   lp_solve::LpSolveSolver solver(N);
 
   // variable range
   F(i,N) {
+    solver.setInteger(i);
     solver.setBounds(i,valueMin[i],valueMax[i]);
   }
 
@@ -1944,7 +1949,7 @@ V<int> optimizeQuantizationLpSolve(TMesh& TM) {
     { // sum side 0 = sum side 2
       std::vector<std::pair<int,double> > column_value;
       F(i,S(s[0])) column_value.push_back({s[0][i],1.});
-      F(i,S(s[2])) column_value.push_back({s[1][i],-1.});
+      F(i,S(s[2])) column_value.push_back({s[2][i],-1.});
       solver.addConstraintRow(column_value, lp_solve::LPS_EQ, 0);
     }
     { // sum side 1 = sum side 3
@@ -2005,12 +2010,17 @@ V<int> optimizeQuantizationLpSolve(TMesh& TM) {
 	V<double> sol;
   if (solver.lpSolve(sol)) {
     Msg::Info("quantization found with lp_solve:");
+
+    int nz = 0;
+    F(i,sol.size()) if (sol[i] == 0) nz += 1;
     P(sol);
+    std::cout << "#0: " << nz << endl;
   }
 
-  // todo convert to int
+  V<int> sol_int(sol.size(),0);
+  F(i,N) sol_int[i] = (int) sol[i];
 
-	return {};
+	return sol_int;
 }
 
 void buildMeshFromCMesh(CMesh& CM, GModel* gm) {
@@ -2313,17 +2323,17 @@ void alignQuadMesh(GModel* gm) {
 	draw();
 	
 
+	// Quantization optimization (start from initial quantization)
+  // Msg::Info("---------------------- Quantization starting from initial values -------------------");
+	// V<int> q = optimizeQuantization(TM, 1);
+
 	// Quantization optimization (start from 0)
   Msg::Info("---------------------- Quantization starting from 0 -------------------");
 	V<int> q0 = optimizeQuantization(TM, 0);
 
-	// Quantization optimization (start from initial quantization)
-  Msg::Info("---------------------- Quantization starting from initial values -------------------");
-	V<int> q = optimizeQuantization(TM, 1);
-
 	// Quantization optimization with LpSolve
   Msg::Info("---------------------- Quantization with lp_solve -------------------");
-	V<int> qlp = optimizeQuantizationLpSolve(TM);
+	V<int> q = optimizeQuantizationLpSolve(TM);
 
 	if(S(q) == 0) return; // no quantization found :(
 
