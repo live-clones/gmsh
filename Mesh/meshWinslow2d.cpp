@@ -626,13 +626,14 @@ void meshWinslow2d (GModel * gm, int nIter, Field *f) {
       meshWinslow1d (tempe[i],sIter, f); 
 
 
-#if defined(_OPENMP)
-#pragma omp parallel for schedule(dynamic)
-#endif
+// #if defined(_OPENMP)
+// #pragma omp parallel for schedule(dynamic)
+// #endif
     // for (size_t i=0;i<temp.size();i++){
     //   meshWinslow2d (temp[i],sIter, f, false);
     // }
     // return;
+ 
   }
 
   return;  

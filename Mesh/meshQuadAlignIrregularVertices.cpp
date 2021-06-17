@@ -339,8 +339,10 @@ int buildMeshHalfEdgesFromGModel(GModel* gm, MeshHalfEdges& M) {
 					}
 				}
 			}
-			closestVertex->isSingularity = true;
-			closestVertex->geolog(0, "singularities");
+      if (closestVertex) {
+        closestVertex->isSingularity = true;
+        closestVertex->geolog(0, "singularities");
+      }
 		}
 	}
 	return 0;
@@ -376,6 +378,7 @@ struct TEdge {
 	GEdge* gedge; // corresponding GEdge
 	int id; // gecode identifier
 	bool isStitch;
+	bool isOn35path = false;
 	void geolog(double value, const string& viewName) {
 		HalfEdge* hei = he;
 		F(i, len) {
@@ -430,6 +433,7 @@ struct TMesh {
 	V<TEdge*> tedges;
 	V<TVertex*> tvertices;
 	V<Trace*> traces;
+	V<TEdge*> id2te; /* id to one of the two opposite TEdge* */
 	map<HalfEdge*, TEdge*> hedgemap; // map half-edges to T-half-edges they lie on
 	map<GEdge*, V<TEdge*>> gedge2tedges; // sequence of T-edges forming a given GEdge (arbitrary orientation)
 	int nTEdges; // number of undirected T-edges
@@ -804,6 +808,11 @@ struct TMesh {
 		// for(Trace* trace : traces)
 		// 	trace->geolog(rand(), "traces");
 		
+
+    // Maxence: add id to TEdge for Gecode
+    id2te.resize(nTEdges,nullptr);
+		for(TEdge* tedge : tedges) id2te[tedge->id] = tedge;
+
 		assert(S(tedges) == 2*nTEdges);
 	}
 	void geolog(const string& viewName) {
@@ -1365,7 +1374,7 @@ class AlignQuadMesh : public IntMinimizeSpace {
 		IntVar costvar; // cost to minimize
 		const TMesh& TM;
 	public:
-		AlignQuadMesh(const TMesh& TM_, int lmax) :
+		AlignQuadMesh(const TMesh& TM_, int lmax, int strategy) :
 			// l(*this, TM_.nTEdges, 0, lmax),
 			l(*this, TM_.nTEdges, 0, Int::Limits::max),
 			costvar(*this, 0, Int::Limits::max),
@@ -1386,7 +1395,8 @@ class AlignQuadMesh : public IntMinimizeSpace {
 			}
 
 			// Constrain opposite sides of T-faces to have equal length
-			IntVarArgs a(S(TM.tfaces));
+			// IntVarArgs a(S(TM.tfaces));
+			IntVarArray a(*this,S(TM.tfaces));
 			F(f, S(TM.tfaces)) {
 				TFace* tface = TM.tfaces[f];
 				array<IntVarArgs,4> s; // 4 sides
@@ -1438,56 +1448,71 @@ class AlignQuadMesh : public IntMinimizeSpace {
 				}
 			}
 
-			// // For every non-singularity irregular vertex, find its match and force collapse
-			// map<TVertex*, TVertex*> match;
-			// for(TVertex* tvertex : TM.tvertices) {
-			// 	// If vertex is irregular, but not a singularity nor a GVertex,
-			// 	if(tvertex->vertex->valence != 4 && !tvertex->vertex->isSingularity && !tvertex->isGVertex) {
-			// 		if(match.count(tvertex)) continue; // Matching vertex already found
-			// 		map<TVertex*, int> dist;
-			// 		map<TVertex*, pair<TVertex*, TEdge*>> par; // parent
-			// 		for(TVertex* v : TM.tvertices) dist[v] = (tvertex == v) ? 0 : INT_MAX;
-			// 		priority_queue<pair<int,TVertex*>> pq; pq.push({0, tvertex});
-			// 		while(S(pq)) {
-			// 			auto p = pq.top(); pq.pop();
-			// 			TVertex* u = p.second; int du = -p.first;
-			// 			if(dist[u] < du) continue;
-			// 			if(u->vertex->valence + tvertex->vertex->valence == 8 && !u->vertex->isSingularity && !u->isGVertex) {
-			// 				match[tvertex] = u;
-			// 				match[u] = tvertex;
-			// 				int color = rand();
-			// 				tvertex->geolog(color, "matching pairs");
-			// 				u->geolog(color, "matching pairs");
-			// 				break;
-			// 			}
-			// 			for(auto pa : u->adj) {
-			// 				TVertex* v = pa.first; TEdge* e = pa.second;
-			// 				// if(v == u) P("v == u !!!");
-			// 				int dv = du + e->len;
-			// 				if(dist[v] > dv) {
-			// 					dist[v] = dv;
-			// 					par[v] = {u, e};
-			// 					pq.push({-dv, v});
-			// 				}
-			// 			}
-			// 		}
-			// 		// Form path and force it to collapse
-			// 		TVertex* u = match[tvertex];
-			// 		V<TEdge*> path; // sequence of T-edges connecting the matching pair
-			// 		while(u != tvertex) {
-			// 			auto pa = par[u];
-			// 			path.pb(pa.second);
-			// 			u = pa.first;
-			// 		}
-			// 		IntVarArgs p(S(path));
-			// 		int color = rand();
-			// 		F(i, S(path)) {
-			// 			p[i] = l[path[i]->id];
-			// 			path[i]->geolog(color, "paths connecting 3-5 pairs");
-			// 		}
-			// 		rel(*this, sum(p) == 0);
-			// 	}
-			// }
+			// For every non-singularity irregular vertex, find its match and force collapse
+			map<TVertex*, TVertex*> match;
+			vector<vector<int> > pathes_35;
+			for(TVertex* tvertex : TM.tvertices) {
+				// If vertex is irregular, but not a singularity nor a GVertex,
+				if(tvertex->vertex->valence != 4 && !tvertex->vertex->isSingularity && !tvertex->isGVertex) {
+					if(match.count(tvertex)) continue; // Matching vertex already found
+					map<TVertex*, int> dist;
+					map<TVertex*, pair<TVertex*, TEdge*>> par; // parent
+					for(TVertex* v : TM.tvertices) dist[v] = (tvertex == v) ? 0 : INT_MAX;
+					priority_queue<pair<int,TVertex*>> pq; pq.push({0, tvertex});
+					while(S(pq)) {
+						auto p = pq.top(); pq.pop();
+						TVertex* u = p.second; int du = -p.first;
+						if(dist[u] < du) continue;
+						if(u->vertex->valence + tvertex->vertex->valence == 8 && !u->vertex->isSingularity && !u->isGVertex) {
+							match[tvertex] = u;
+							match[u] = tvertex;
+							int color = rand();
+							tvertex->geolog(color, "matching pairs");
+							u->geolog(color, "matching pairs");
+							break;
+						}
+						for(auto pa : u->adj) {
+							TVertex* v = pa.first; TEdge* e = pa.second;
+							// if(v == u) P("v == u !!!");
+							int dv = du + e->len;
+							if(dist[v] > dv) {
+								dist[v] = dv;
+								par[v] = {u, e};
+								pq.push({-dv, v});
+							}
+						}
+					}
+
+					// Form path and force it to collapse
+					TVertex* u = match[tvertex];
+					V<TEdge*> path; // sequence of T-edges connecting the matching pair
+					while(u != tvertex) {
+						auto pa = par[u];
+						path.pb(pa.second);
+						u = pa.first;
+					}
+
+          vector<int> path_ids;
+          F(i, S(path)) {
+            path_ids.push_back(path[i]->id);
+          }
+          pathes_35.push_back(path_ids);
+
+          // // Gecode constraints
+					// IntVarArgs p(S(path));
+					// int color = rand();
+					// F(i, S(path)) {
+					// 	p[i] = l[path[i]->id];
+					// 	path[i]->geolog(color, "paths connecting 3-5 pairs");
+					// }
+					// rel(*this, sum(p) == 0);
+				}
+			}
+      F(i,S(pathes_35)) F(j,S(pathes_35[i])) {
+        TM.tedges[pathes_35[i][j]]->isOn35path = true;
+      }
+      Msg::Info("Number of 3-5 pathes: %li", S(pathes_35));
+
 			// draw();
 
 			// Constrain stitches to have length > 0
@@ -1497,21 +1522,66 @@ class AlignQuadMesh : public IntMinimizeSpace {
 					Msg::Info("stitch found");
 				}
 
-			// Cost function
-			rel(*this, costvar == sum(a));
 
 			// Branching function
 			// branch(*this, l, INT_VAR_NONE(), INT_VAL_MIN()); // branch on first unassigned variable
-			branch(*this, l, INT_VAR_MAX_MIN(), INT_VAL_MIN()); // branch on smallest maximum value
+
+      // // Current branching
+			// branch(*this, l, INT_VAR_MAX_MIN(), INT_VAL_MIN()); // branch on smallest maximum value
+
 			// Rnd rnd(42); branch(*this, l, INT_VAR_NONE(), INT_VAL_MAX()); // give max value to first unassigned variable
 			// Rnd rnd(42); branch(*this, l, INT_VAR_RND(rnd), INT_VAL_RND(rnd)); // TODO: is there a smarter way?
 			// Rnd rnd(42); branch(*this, l, INT_VAR_RND(rnd), INT_VAL_MIN()); // TODO: is there a smarter way?
 
-			//// Merit function
-			//auto m = [](const Space &home, IntVar x, int i) {
-				//const AlignQuadMesh& model = static_cast<const AlignQuadMesh&>(home);
-				//return model.TM.tedges[i]->len;
-			//};
+			// branch(*this, l, INT_VAR_MERIT_MIN(choose_variable), INT_VAL_MAX());
+
+      Msg::Info("BAB strategy: %i", strategy);
+      if (strategy == 0) {
+        branch(*this, l, INT_VAR_MAX_MIN(), INT_VAL_MIN()); // branch on smallest maximum value
+
+        // Cost function
+        rel(*this, costvar == sum(a)); // mimimize sum of areas
+      } else {
+        // Variable selection
+        auto choose_variable = [](const Space &home, IntVar x, int i) {
+          const AlignQuadMesh& model = static_cast<const AlignQuadMesh&>(home);
+          TEdge* te = model.TM.id2te[i];
+          // Msg::Info("[var] %i, merit: %i", i, te->len);
+          return te->len;
+        };
+        // Value selection
+        auto choose_value = [](const Space &home, IntVar x, int i) {
+          const AlignQuadMesh& model = static_cast<const AlignQuadMesh&>(home);
+          TEdge* te = model.TM.id2te[i];
+          int value = 1;
+          if (te->len == x.max()) {
+            value = te->len;
+          } else {
+            value = x.min();
+          }
+          // if (model.TM.tedges[i]->isOn35path) {
+          //   value = x.min();
+          // } else {
+          //   value = x.max();
+          // }
+          // Msg::Info("[value] var %i: min=%i, max=%i, len=%i  ->   %i", i, x.min(), x.max(), te->len, value);
+          // Msg::Info("        degree = %i, afc = %i", x.degree(), x.afc());
+          return value;
+
+        };
+        branch(*this, l, INT_VAR_MERIT_MIN(choose_variable), INT_VAL(choose_value));
+
+        // minimize number of non-zero area patches
+        // IntVar nnz(*this,0,int(TM.tfaces.size()));
+        // count(*this, a, 0, IRT_GR, nnz); 
+        // rel(*this, costvar == nnz);
+
+        // maximize number of zero-length edges
+        IntVar nz(*this,0,TM.nTEdges);
+        count(*this, l, 0, IRT_EQ, nz); // nz == number of zero length T-edges
+        rel(*this, costvar == TM.nTEdges-nz);
+      }
+
 			//// First choose shortest edges and assign min value
 			//branch(*this, l, INT_VAR_MERIT_MIN(m), INT_VAL_MIN());
 			// First choose longest edges and assign min value
@@ -1585,7 +1655,7 @@ class OptimizeLengths : public IntMinimizeSpace {
 		}
 		// printer
 		void print(void) const {
-			cout << l << ". Cost = " << costvar << endl;
+      cout << l << ". Cost = " << costvar << endl;
 		}
 		// cost function
 		virtual IntVar cost(void) const {
@@ -1789,8 +1859,9 @@ bool myGetSingularitiesFromBackgroundField(GFace* gf, vector<pair<SPoint3, int> 
 	return true;
 }
 
-V<int> optimizeQuantization(TMesh& TM) {
-	AlignQuadMesh* model = new AlignQuadMesh(TM, 2); // TODO: determine lmax
+V<int> optimizeQuantization(TMesh& TM, int strategy = 0) {
+	AlignQuadMesh* model = new AlignQuadMesh(TM, 2, strategy); // TODO: determine lmax
+
 	// Options opt("Align Quad Mesh");
 	// Script::run<AlignQuadMesh, BAB, Options>(opt);
 	// Gist::Print<AlignQuadMesh> p("Print solution");
@@ -1798,9 +1869,15 @@ V<int> optimizeQuantization(TMesh& TM) {
 	// opt.inspect.click(&p);
 	// Gist::bab(model, opt);
 	// draw();
+
 	Search::Options options;
 	// Search::TimeStop ts(60000);
-	Search::TimeStop ts(1000);
+	double tMax = 30;
+  if (strategy == 0) {
+    tMax = 3;
+  }
+  Msg::Info("BAB search ... (time max: %.3fsec)", tMax);
+	Search::TimeStop ts(tMax*1000);
 	options.stop = &ts;
 	BAB<AlignQuadMesh> engine(model, options);
 	delete model;
@@ -2120,8 +2197,13 @@ void alignQuadMesh(GModel* gm) {
 	draw();
 	
 
-	// Quantization optimization
-	V<int> q = optimizeQuantization(TM);
+	// Quantization optimization (start from 0)
+  Msg::Info("---------------------- Quantization starting from 0 -------------------");
+	V<int> q0 = optimizeQuantization(TM, 0);
+
+	// Quantization optimization (start from initial quantization)
+  Msg::Info("---------------------- Quantization starting from initial values -------------------");
+	V<int> q = optimizeQuantization(TM, 1);
 
 	if(S(q) == 0) return; // no quantization found :(
 
