@@ -1,0 +1,16 @@
+Microsoft (R) COFF/PE Dumper Version 9.00.30729.01
+Copyright (C) Microsoft Corporation.  All rights reserved.
+
+
+Dump of file bin\win64\lpsolve55.dll
+
+File Type: DLL
+
+  Summary
+
+        6000 .data
+        1000 .pdata
+        5000 .rdata
+        1000 .reloc
+        1000 .rsrc
+        E000 .text

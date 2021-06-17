@@ -28,6 +28,9 @@ using namespace Gecode;
 #include "meshWinslow2d.h" // for smoothing
 #include "meshGFaceOptimize.h"
 
+// QuadMeshingTools
+#include "lp_solve_wrapper.h"
+
 // Some shortcuts
 #define P(x) {cout << x << endl;}
 #define H(x) P(#x << ": " << (x))
@@ -1897,6 +1900,119 @@ V<int> optimizeQuantization(TMesh& TM, int strategy = 0) {
 	return sol;
 }
 
+
+
+V<int> optimizeQuantizationLpSolve(TMesh& TM) {
+
+  size_t N = TM.nTEdges;
+
+  V<int> valueMin(N,0);
+  V<int> valueMax(N,INT_MAX);
+  for(TEdge * tedge : TM.tedges) {
+    valueMax[tedge->id] = tedge->len;
+    GEdge* gedge1 = dynamic_cast<GEdge*>(tedge->tvertex1->vertex->ptr->onWhat());
+    GEdge* gedge2 = dynamic_cast<GEdge*>(tedge->tvertex2->vertex->ptr->onWhat());
+    if(gedge1 != NULL && gedge2 != NULL && gedge1 != gedge2) {
+      valueMin[tedge->id] = 1;
+    }
+
+
+    // Constrain stitches to have length > 0
+    if(tedge->isStitch) {
+      valueMin[tedge->id] = 1;
+    }
+  }
+
+
+  lp_solve::LpSolveSolver solver(N);
+
+  // variable range
+  F(i,N) {
+    solver.setBounds(i,valueMin[i],valueMax[i]);
+  }
+
+
+  // Constrain opposite sides of T-faces to have equal length
+  F(f, S(TM.tfaces)) {
+    TFace* tface = TM.tfaces[f];
+    array<V<int>,4> s; // 4 sides
+    F(k, 4) {
+      s[k].resize(S(tface->sides[k]));
+      F(i, S(tface->sides[k]))
+        s[k][i] = tface->sides[k][i]->id;
+    }
+    { // sum side 0 = sum side 2
+      std::vector<std::pair<int,double> > column_value;
+      F(i,S(s[0])) column_value.push_back({s[0][i],1.});
+      F(i,S(s[2])) column_value.push_back({s[1][i],-1.});
+      solver.addConstraintRow(column_value, lp_solve::LPS_EQ, 0);
+    }
+    { // sum side 1 = sum side 3
+      std::vector<std::pair<int,double> > column_value;
+      F(i,S(s[1])) column_value.push_back({s[1][i],1.});
+      F(i,S(s[3])) column_value.push_back({s[3][i],-1.});
+      solver.addConstraintRow(column_value, lp_solve::LPS_EQ, 0);
+    }
+  }
+
+  // Validity constraints
+  for(Trace* trace : TM.traces) {
+    // if(trace->orig->vertex->valence != 4) {
+    if(true) {
+      std::vector<std::pair<int,double> > column_value;
+      F(i, trace->istar+1) {
+        column_value.push_back({trace->tedges[i]->id,1.});
+      }
+      solver.addConstraintRow(column_value, lp_solve::LPS_GE, 1);
+    } else {
+      Msg::Warning("trace origin has valence 4");
+    }
+  }
+
+  // Layout constraints
+  for(Trace* trace : TM.traces) {
+    for(TraceIntersection* inters : trace->intersections) {	
+      if(inters->t->len[inters->j] > tan(trace->alpha) * trace->len[inters->i]) {
+        // // If origin of the intersecting trace is a GVertex, check that it has at least 3 GEdge incident half-edges
+        // if(inters->t->orig->isGVertex) {
+        // 	int cnt = 0;
+        // 	for(HalfEdge* he : inters->t->orig->vertex->hedges) {
+        // 		cnt += (he->gedge != NULL);
+        // 	}
+        // 	if(cnt < 3) continue;
+        // }
+
+        // New layout constraint
+        std::vector<std::pair<int,double> > column_value;
+        F(i, inters->j+1) {
+          column_value.push_back({inters->t->tedges[i]->id,1});
+        }
+        solver.addConstraintRow(column_value, lp_solve::LPS_GE, 1);
+      }
+    }
+  }
+
+  // Objective function
+  {
+    std::vector<std::pair<int,double> > column_value;
+    F(i,N) {
+      double w = 1./double(TM.id2te[i]->len);
+      column_value.push_back({i,w});
+    }
+    solver.setObjectiveFunction(column_value,true);
+  }
+
+	V<double> sol;
+  if (solver.lpSolve(sol)) {
+    Msg::Info("quantization found with lp_solve:");
+    P(sol);
+  }
+
+  // todo convert to int
+
+	return {};
+}
+
 void buildMeshFromCMesh(CMesh& CM, GModel* gm) {
 	
 	// Map C-elements to elements of the new mesh
@@ -2204,6 +2320,10 @@ void alignQuadMesh(GModel* gm) {
 	// Quantization optimization (start from initial quantization)
   Msg::Info("---------------------- Quantization starting from initial values -------------------");
 	V<int> q = optimizeQuantization(TM, 1);
+
+	// Quantization optimization with LpSolve
+  Msg::Info("---------------------- Quantization with lp_solve -------------------");
+	V<int> qlp = optimizeQuantizationLpSolve(TM);
 
 	if(S(q) == 0) return; // no quantization found :(
 
