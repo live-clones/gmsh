@@ -10,6 +10,7 @@ set(QMT_SRC
   cppUtils.cpp
   geolog.cpp
   row_echelon_integer.cpp
+  lp_solve_wrapper.cpp
   )
 
 file(GLOB_RECURSE HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h)
