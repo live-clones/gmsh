@@ -400,6 +400,9 @@ int MergeFile(const std::string &fileName, bool errorIfMissing,
   else if(ext == ".mesh" || ext == ".MESH") {
     status = GModel::current()->readMESH(fileName);
   }
+  else if(ext == ".off" || ext == ".OFF") {
+    status = GModel::current()->readOFF(fileName);
+  }
   else if(ext == ".diff" || ext == ".DIFF") {
     status = GModel::current()->readDIFF(fileName);
   }
