@@ -1409,6 +1409,26 @@ function reverse(dimTags = Tuple{Cint,Cint}[])
 end
 
 """
+    gmsh.model.mesh.affineTransform(affineTransform, dimTags = Tuple{Cint,Cint}[])
+
+Apply the affine transformation `affineTransform` (16 entries of a 4x4 matrix,
+by row; only the 12 first can be provided for convenience) to the coordinates of
+the nodes classified on the entities `dimTags`. If `dimTags` is empty, transform
+all the nodes in the mesh.
+"""
+function affineTransform(affineTransform, dimTags = Tuple{Cint,Cint}[])
+    api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
+    api_dimTags_n_ = length(api_dimTags_)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshAffineTransform, gmsh.lib), Cvoid,
+          (Ptr{Cdouble}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Cint}),
+          convert(Vector{Cdouble}, affineTransform), length(affineTransform), api_dimTags_, api_dimTags_n_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+const affine_transform = affineTransform
+
+"""
     gmsh.model.mesh.getNodes(dim = -1, tag = -1, includeBoundary = false, returnParametricCoord = true)
 
 Get the nodes classified on the entity of dimension `dim` and tag `tag`. If
@@ -1476,25 +1496,28 @@ const get_nodes_by_element_type = getNodesByElementType
     gmsh.model.mesh.getNode(nodeTag)
 
 Get the coordinates and the parametric coordinates (if any) of the node with tag
-`tag`. This function relies on an internal cache (a vector in case of dense node
-numbering, a map otherwise); for large meshes accessing nodes in bulk is often
-preferable.
+`tag`, as well as the dimension `dim` and tag `tag` of the entity on which the
+node is classified. This function relies on an internal cache (a vector in case
+of dense node numbering, a map otherwise); for large meshes accessing nodes in
+bulk is often preferable.
 
-Return `coord`, `parametricCoord`.
+Return `coord`, `parametricCoord`, `dim`, `tag`.
 """
 function getNode(nodeTag)
     api_coord_ = Ref{Ptr{Cdouble}}()
     api_coord_n_ = Ref{Csize_t}()
     api_parametricCoord_ = Ref{Ptr{Cdouble}}()
     api_parametricCoord_n_ = Ref{Csize_t}()
+    api_dim_ = Ref{Cint}()
+    api_tag_ = Ref{Cint}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetNode, gmsh.lib), Cvoid,
-          (Csize_t, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
-          nodeTag, api_coord_, api_coord_n_, api_parametricCoord_, api_parametricCoord_n_, ierr)
+          (Csize_t, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}, Ptr{Cint}, Ptr{Cint}),
+          nodeTag, api_coord_, api_coord_n_, api_parametricCoord_, api_parametricCoord_n_, api_dim_, api_tag_, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     coord = unsafe_wrap(Array, api_coord_[], api_coord_n_[], own=true)
     parametricCoord = unsafe_wrap(Array, api_parametricCoord_[], api_parametricCoord_n_[], own=true)
-    return coord, parametricCoord
+    return coord, parametricCoord, api_dim_[], api_tag_[]
 end
 const get_node = getNode
 
@@ -1676,23 +1699,27 @@ const get_elements = getElements
 """
     gmsh.model.mesh.getElement(elementTag)
 
-Get the type and node tags of the element with tag `tag`. This function relies
-on an internal cache (a vector in case of dense element numbering, a map
-otherwise); for large meshes accessing elements in bulk is often preferable.
+Get the type and node tags of the element with tag `tag`, as well as the
+dimension `dim` and tag `tag` of the entity on which the element is classified.
+This function relies on an internal cache (a vector in case of dense element
+numbering, a map otherwise); for large meshes accessing elements in bulk is
+often preferable.
 
-Return `elementType`, `nodeTags`.
+Return `elementType`, `nodeTags`, `dim`, `tag`.
 """
 function getElement(elementTag)
     api_elementType_ = Ref{Cint}()
     api_nodeTags_ = Ref{Ptr{Csize_t}}()
     api_nodeTags_n_ = Ref{Csize_t}()
+    api_dim_ = Ref{Cint}()
+    api_tag_ = Ref{Cint}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetElement, gmsh.lib), Cvoid,
-          (Csize_t, Ptr{Cint}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cint}),
-          elementTag, api_elementType_, api_nodeTags_, api_nodeTags_n_, ierr)
+          (Csize_t, Ptr{Cint}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cint}, Ptr{Cint}, Ptr{Cint}),
+          elementTag, api_elementType_, api_nodeTags_, api_nodeTags_n_, api_dim_, api_tag_, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     nodeTags = unsafe_wrap(Array, api_nodeTags_[], api_nodeTags_n_[], own=true)
-    return api_elementType_[], nodeTags
+    return api_elementType_[], nodeTags, api_dim_[], api_tag_[]
 end
 const get_element = getElement
 
@@ -4384,20 +4411,33 @@ end
 const add_plane_surface = addPlaneSurface
 
 """
-    gmsh.model.occ.addSurfaceFilling(wireTag, tag = -1, pointTags = Cint[])
+    gmsh.model.occ.addSurfaceFilling(wireTag, tag = -1, pointTags = Cint[], degree = 3, numPointsOnCurves = 15, numIter = 2, anisotropic = false, tol2d = 0.00001, tol3d = 0.0001, tolAng = 0.01, tolCurv = 0.1, maxDegree = 8, maxSegments = 9)
 
 Add a surface in the OpenCASCADE CAD representation, filling the curve loop
 `wireTag`. If `tag` is positive, set the tag explicitly; otherwise a new tag is
 selected automatically. Return the tag of the surface. If `pointTags` are
-provided, force the surface to pass through the given points.
+provided, force the surface to pass through the given points. The other optional
+arguments are `degree` (the degree of the energy criterion to minimize for
+computing the deformation of the surface), `numPointsOnCurves` (the average
+number of points for discretisation of the bounding curves), `numIter` (the
+maximum number of iterations of the optimization process), `anisotropic`
+(improve performance when the ratio of the length along the two parametric
+coordinates of the surface is high), `tol2d` (tolerance to the constraints in
+the parametric plane of the surface), `tol3d` (the maximum distance allowed
+between the support surface and the constraints), `tolAng` (the maximum angle
+allowed between the normal of the surface and the constraints), `tolCurv` (the
+maximum difference of curvature allowed between the surface and the constraint),
+`maxDegree` (the highest degree which the polynomial defining the filling
+surface can have) and, `maxSegments` (the largest number of segments which the
+filling surface can have).
 
 Return an integer value.
 """
-function addSurfaceFilling(wireTag, tag = -1, pointTags = Cint[])
+function addSurfaceFilling(wireTag, tag = -1, pointTags = Cint[], degree = 3, numPointsOnCurves = 15, numIter = 2, anisotropic = false, tol2d = 0.00001, tol3d = 0.0001, tolAng = 0.01, tolCurv = 0.1, maxDegree = 8, maxSegments = 9)
     ierr = Ref{Cint}()
     api_result_ = ccall((:gmshModelOccAddSurfaceFilling, gmsh.lib), Cint,
-          (Cint, Cint, Ptr{Cint}, Csize_t, Ptr{Cint}),
-          wireTag, tag, convert(Vector{Cint}, pointTags), length(pointTags), ierr)
+          (Cint, Cint, Ptr{Cint}, Csize_t, Cint, Cint, Cint, Cint, Cdouble, Cdouble, Cdouble, Cdouble, Cint, Cint, Ptr{Cint}),
+          wireTag, tag, convert(Vector{Cint}, pointTags), length(pointTags), degree, numPointsOnCurves, numIter, anisotropic, tol2d, tol3d, tolAng, tolCurv, maxDegree, maxSegments, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_result_
 end
@@ -5114,7 +5154,7 @@ end
 
 Mirror the entities `dimTags` in the OpenCASCADE CAD representation, with
 respect to the plane of equation `a` * x + `b` * y + `c` * z + `d` = 0. (This is
-a synonym for `mirror`, which will be deprecated in a future release.)
+a deprecated synonym for `mirror`.)
 """
 function symmetrize(dimTags, a, b, c, d)
     api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
@@ -5128,19 +5168,19 @@ function symmetrize(dimTags, a, b, c, d)
 end
 
 """
-    gmsh.model.occ.affineTransform(dimTags, a)
+    gmsh.model.occ.affineTransform(dimTags, affineTransform)
 
-Apply a general affine transformation matrix `a` (16 entries of a 4x4 matrix, by
-row; only the 12 first can be provided for convenience) to the entities
-`dimTags` in the OpenCASCADE CAD representation.
+Apply a general affine transformation matrix `affineTransform` (16 entries of a
+4x4 matrix, by row; only the 12 first can be provided for convenience) to the
+entities `dimTags` in the OpenCASCADE CAD representation.
 """
-function affineTransform(dimTags, a)
+function affineTransform(dimTags, affineTransform)
     api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
     api_dimTags_n_ = length(api_dimTags_)
     ierr = Ref{Cint}()
     ccall((:gmshModelOccAffineTransform, gmsh.lib), Cvoid,
           (Ptr{Cint}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Cint}),
-          api_dimTags_, api_dimTags_n_, convert(Vector{Cdouble}, a), length(a), ierr)
+          api_dimTags_, api_dimTags_n_, convert(Vector{Cdouble}, affineTransform), length(affineTransform), ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end

@@ -225,7 +225,9 @@ int GFace2PolyMesh(int faceTag, PolyMesh **pm)
         auto it = nodeLabels.find(nodeTag);
         if(it == nodeLabels.end()) {
           std::vector<double> coord(3), parametricCoord(3);
-          gmsh::model::mesh::getNode(nodeTag, coord, parametricCoord);
+          int entityDim, entityTag;
+          gmsh::model::mesh::getNode(nodeTag, coord, parametricCoord,
+                                     entityDim, entityTag);
           v[j] = new PolyMesh::Vertex(coord[0], coord[1], coord[2], nodeTag);
           nodeLabels[nodeTag] = (*pm)->vertices.size();
           (*pm)->vertices.push_back(v[j]);

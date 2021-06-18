@@ -77,7 +77,7 @@ public:
   double *data() { return P; }
   bool transform(const std::vector<double> &tfo)
   {
-    if(tfo.size() != 16) return false;
+    if(tfo.size() < 12) return false;
     double old[3] = {P[0], P[1], P[2]};
     P[0] = P[1] = P[2] = 0.;
     int idx = 0;

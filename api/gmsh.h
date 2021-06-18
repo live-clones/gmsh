@@ -661,6 +661,15 @@ namespace gmsh { // Top-level functions
       // mesh.
       GMSH_API void reverse(const gmsh::vectorpair & dimTags = gmsh::vectorpair());
 
+      // gmsh::model::mesh::affineTransform
+      //
+      // Apply the affine transformation `affineTransform' (16 entries of a 4x4
+      // matrix, by row; only the 12 first can be provided for convenience) to the
+      // coordinates of the nodes classified on the entities `dimTags'. If
+      // `dimTags' is empty, transform all the nodes in the mesh.
+      GMSH_API void affineTransform(const std::vector<double> & affineTransform,
+                                    const gmsh::vectorpair & dimTags = gmsh::vectorpair());
+
       // gmsh::model::mesh::getNodes
       //
       // Get the nodes classified on the entity of dimension `dim' and tag `tag'.
@@ -698,12 +707,15 @@ namespace gmsh { // Top-level functions
       // gmsh::model::mesh::getNode
       //
       // Get the coordinates and the parametric coordinates (if any) of the node
-      // with tag `tag'. This function relies on an internal cache (a vector in
-      // case of dense node numbering, a map otherwise); for large meshes accessing
-      // nodes in bulk is often preferable.
+      // with tag `tag', as well as the dimension `dim' and tag `tag' of the entity
+      // on which the node is classified. This function relies on an internal cache
+      // (a vector in case of dense node numbering, a map otherwise); for large
+      // meshes accessing nodes in bulk is often preferable.
       GMSH_API void getNode(const std::size_t nodeTag,
                             std::vector<double> & coord,
-                            std::vector<double> & parametricCoord);
+                            std::vector<double> & parametricCoord,
+                            int & dim,
+                            int & tag);
 
       // gmsh::model::mesh::setNode
       //
@@ -793,13 +805,16 @@ namespace gmsh { // Top-level functions
 
       // gmsh::model::mesh::getElement
       //
-      // Get the type and node tags of the element with tag `tag'. This function
-      // relies on an internal cache (a vector in case of dense element numbering,
-      // a map otherwise); for large meshes accessing elements in bulk is often
-      // preferable.
+      // Get the type and node tags of the element with tag `tag', as well as the
+      // dimension `dim' and tag `tag' of the entity on which the element is
+      // classified. This function relies on an internal cache (a vector in case of
+      // dense element numbering, a map otherwise); for large meshes accessing
+      // elements in bulk is often preferable.
       GMSH_API void getElement(const std::size_t elementTag,
                                int & elementType,
-                               std::vector<std::size_t> & nodeTags);
+                               std::vector<std::size_t> & nodeTags,
+                               int & dim,
+                               int & tag);
 
       // gmsh::model::mesh::getElementByCoordinates
       //
@@ -2285,10 +2300,34 @@ namespace gmsh { // Top-level functions
       // loop `wireTag'. If `tag' is positive, set the tag explicitly; otherwise a
       // new tag is selected automatically. Return the tag of the surface. If
       // `pointTags' are provided, force the surface to pass through the given
-      // points.
+      // points. The other optional arguments are `degree' (the degree of the
+      // energy criterion to minimize for computing the deformation of the
+      // surface), `numPointsOnCurves' (the average number of points for
+      // discretisation of the bounding curves), `numIter' (the maximum number of
+      // iterations of the optimization process), `anisotropic' (improve
+      // performance when the ratio of the length along the two parametric
+      // coordinates of the surface is high), `tol2d' (tolerance to the constraints
+      // in the parametric plane of the surface), `tol3d' (the maximum distance
+      // allowed between the support surface and the constraints), `tolAng' (the
+      // maximum angle allowed between the normal of the surface and the
+      // constraints), `tolCurv' (the maximum difference of curvature allowed
+      // between the surface and the constraint), `maxDegree' (the highest degree
+      // which the polynomial defining the filling surface can have) and,
+      // `maxSegments' (the largest number of segments which the filling surface
+      // can have).
       GMSH_API int addSurfaceFilling(const int wireTag,
                                      const int tag = -1,
-                                     const std::vector<int> & pointTags = std::vector<int>());
+                                     const std::vector<int> & pointTags = std::vector<int>(),
+                                     const int degree = 3,
+                                     const int numPointsOnCurves = 15,
+                                     const int numIter = 2,
+                                     const bool anisotropic = false,
+                                     const double tol2d = 0.00001,
+                                     const double tol3d = 0.0001,
+                                     const double tolAng = 0.01,
+                                     const double tolCurv = 0.1,
+                                     const int maxDegree = 8,
+                                     const int maxSegments = 9);
 
       // gmsh::model::occ::addBSplineFilling
       //
@@ -2729,8 +2768,7 @@ namespace gmsh { // Top-level functions
       //
       // Mirror the entities `dimTags' in the OpenCASCADE CAD representation, with
       // respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' = 0.
-      // (This is a synonym for `mirror', which will be deprecated in a future
-      // release.)
+      // (This is a deprecated synonym for `mirror'.)
       GMSH_API void symmetrize(const gmsh::vectorpair & dimTags,
                                const double a,
                                const double b,
@@ -2739,11 +2777,12 @@ namespace gmsh { // Top-level functions
 
       // gmsh::model::occ::affineTransform
       //
-      // Apply a general affine transformation matrix `a' (16 entries of a 4x4
-      // matrix, by row; only the 12 first can be provided for convenience) to the
-      // entities `dimTags' in the OpenCASCADE CAD representation.
+      // Apply a general affine transformation matrix `affineTransform' (16 entries
+      // of a 4x4 matrix, by row; only the 12 first can be provided for
+      // convenience) to the entities `dimTags' in the OpenCASCADE CAD
+      // representation.
       GMSH_API void affineTransform(const gmsh::vectorpair & dimTags,
-                                    const std::vector<double> & a);
+                                    const std::vector<double> & affineTransform);
 
       // gmsh::model::occ::copy
       //

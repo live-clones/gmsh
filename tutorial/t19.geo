@@ -19,8 +19,8 @@ Circle(3) = {-0.1,-0.1,2, 0.3}; Curve Loop(3) = 3;
 ThruSections(1) = {1:3};
 
 // With `Ruled ThruSections' you can force the use of ruled surfaces:
-Circle(11) = {2+0,0,0, 0.5};       Curve Loop(11) = 11;
-Circle(12) = {2+0.1,0.05,1, 0.1};  Curve Loop(12) = 12;
+Circle(11) = {2+0,0,0, 0.5};      Curve Loop(11) = 11;
+Circle(12) = {2+0.1,0.05,1, 0.1}; Curve Loop(12) = 12;
 Circle(13) = {2-0.1,-0.1,2, 0.3}; Curve Loop(13) = 13;
 Ruled ThruSections(11) = {11:13};
 

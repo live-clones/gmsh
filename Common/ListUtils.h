@@ -21,9 +21,7 @@ void List_Delete(List_T *liste);
 void List_Realloc(List_T *liste, int n);
 void List_Add(List_T *liste, void *data);
 void List_Add(List_T *liste, int data);
-
-inline int List_Nbr(List_T *liste) { return liste ? liste->n : 0; }
-
+int List_Nbr(List_T *liste);
 void List_Read(List_T *liste, int index, void *data);
 void List_Write(List_T *liste, int index, void *data);
 void List_Put(List_T *liste, int index, void *data);

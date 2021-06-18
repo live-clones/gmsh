@@ -562,6 +562,14 @@ GMSH_API void gmshModelMeshClear(int * dimTags, size_t dimTags_n,
 GMSH_API void gmshModelMeshReverse(int * dimTags, size_t dimTags_n,
                                    int * ierr);
 
+/* Apply the affine transformation `affineTransform' (16 entries of a 4x4
+ * matrix, by row; only the 12 first can be provided for convenience) to the
+ * coordinates of the nodes classified on the entities `dimTags'. If `dimTags'
+ * is empty, transform all the nodes in the mesh. */
+GMSH_API void gmshModelMeshAffineTransform(double * affineTransform, size_t affineTransform_n,
+                                           int * dimTags, size_t dimTags_n,
+                                           int * ierr);
+
 /* Get the nodes classified on the entity of dimension `dim' and tag `tag'. If
  * `tag' < 0, get the nodes for all entities of dimension `dim'. If `dim' and
  * `tag' are negative, get all the nodes in the mesh. `nodeTags' contains the
@@ -595,12 +603,15 @@ GMSH_API void gmshModelMeshGetNodesByElementType(const int elementType,
                                                  int * ierr);
 
 /* Get the coordinates and the parametric coordinates (if any) of the node
- * with tag `tag'. This function relies on an internal cache (a vector in case
- * of dense node numbering, a map otherwise); for large meshes accessing nodes
- * in bulk is often preferable. */
+ * with tag `tag', as well as the dimension `dim' and tag `tag' of the entity
+ * on which the node is classified. This function relies on an internal cache
+ * (a vector in case of dense node numbering, a map otherwise); for large
+ * meshes accessing nodes in bulk is often preferable. */
 GMSH_API void gmshModelMeshGetNode(const size_t nodeTag,
                                    double ** coord, size_t * coord_n,
                                    double ** parametricCoord, size_t * parametricCoord_n,
+                                   int * dim,
+                                   int * tag,
                                    int * ierr);
 
 /* Set the coordinates and the parametric coordinates (if any) of the node
@@ -680,13 +691,16 @@ GMSH_API void gmshModelMeshGetElements(int ** elementTypes, size_t * elementType
                                        const int tag,
                                        int * ierr);
 
-/* Get the type and node tags of the element with tag `tag'. This function
- * relies on an internal cache (a vector in case of dense element numbering, a
- * map otherwise); for large meshes accessing elements in bulk is often
- * preferable. */
+/* Get the type and node tags of the element with tag `tag', as well as the
+ * dimension `dim' and tag `tag' of the entity on which the element is
+ * classified. This function relies on an internal cache (a vector in case of
+ * dense element numbering, a map otherwise); for large meshes accessing
+ * elements in bulk is often preferable. */
 GMSH_API void gmshModelMeshGetElement(const size_t elementTag,
                                       int * elementType,
                                       size_t ** nodeTags, size_t * nodeTags_n,
+                                      int * dim,
+                                      int * tag,
                                       int * ierr);
 
 /* Search the mesh for an element located at coordinates (`x', `y', `z'). This
@@ -2011,10 +2025,33 @@ GMSH_API int gmshModelOccAddPlaneSurface(int * wireTags, size_t wireTags_n,
  * `wireTag'. If `tag' is positive, set the tag explicitly; otherwise a new
  * tag is selected automatically. Return the tag of the surface. If
  * `pointTags' are provided, force the surface to pass through the given
- * points. */
+ * points. The other optional arguments are `degree' (the degree of the energy
+ * criterion to minimize for computing the deformation of the surface),
+ * `numPointsOnCurves' (the average number of points for discretisation of the
+ * bounding curves), `numIter' (the maximum number of iterations of the
+ * optimization process), `anisotropic' (improve performance when the ratio of
+ * the length along the two parametric coordinates of the surface is high),
+ * `tol2d' (tolerance to the constraints in the parametric plane of the
+ * surface), `tol3d' (the maximum distance allowed between the support surface
+ * and the constraints), `tolAng' (the maximum angle allowed between the
+ * normal of the surface and the constraints), `tolCurv' (the maximum
+ * difference of curvature allowed between the surface and the constraint),
+ * `maxDegree' (the highest degree which the polynomial defining the filling
+ * surface can have) and, `maxSegments' (the largest number of segments which
+ * the filling surface can have). */
 GMSH_API int gmshModelOccAddSurfaceFilling(const int wireTag,
                                            const int tag,
                                            int * pointTags, size_t pointTags_n,
+                                           const int degree,
+                                           const int numPointsOnCurves,
+                                           const int numIter,
+                                           const int anisotropic,
+                                           const double tol2d,
+                                           const double tol3d,
+                                           const double tolAng,
+                                           const double tolCurv,
+                                           const int maxDegree,
+                                           const int maxSegments,
                                            int * ierr);
 
 /* Add a BSpline surface in the OpenCASCADE CAD representation, filling the
@@ -2424,8 +2461,7 @@ GMSH_API void gmshModelOccMirror(int * dimTags, size_t dimTags_n,
 
 /* Mirror the entities `dimTags' in the OpenCASCADE CAD representation, with
  * respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' = 0.
- * (This is a synonym for `mirror', which will be deprecated in a future
- * release.) */
+ * (This is a deprecated synonym for `mirror'.) */
 GMSH_API void gmshModelOccSymmetrize(int * dimTags, size_t dimTags_n,
                                      const double a,
                                      const double b,
@@ -2433,11 +2469,11 @@ GMSH_API void gmshModelOccSymmetrize(int * dimTags, size_t dimTags_n,
                                      const double d,
                                      int * ierr);
 
-/* Apply a general affine transformation matrix `a' (16 entries of a 4x4
- * matrix, by row; only the 12 first can be provided for convenience) to the
- * entities `dimTags' in the OpenCASCADE CAD representation. */
+/* Apply a general affine transformation matrix `affineTransform' (16 entries
+ * of a 4x4 matrix, by row; only the 12 first can be provided for convenience)
+ * to the entities `dimTags' in the OpenCASCADE CAD representation. */
 GMSH_API void gmshModelOccAffineTransform(int * dimTags, size_t dimTags_n,
-                                          double * a, size_t a_n,
+                                          double * affineTransform, size_t affineTransform_n,
                                           int * ierr);
 
 /* Copy the entities `dimTags' in the OpenCASCADE CAD representation; the new

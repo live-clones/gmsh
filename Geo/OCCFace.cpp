@@ -153,7 +153,8 @@ void OCCFace::_setup()
   }
   for(std::size_t i = 0; i < embedded_edges.size(); i++) {
     GEdge *e = embedded_edges[i];
-    e->addFace(this);
+    // should not addFace(), as the edge is not on the boundary
+    //e->addFace(this);
     OCCEdge *occe = dynamic_cast<OCCEdge *>(e);
     if(occe && !e->is3D()) occe->setTrimmed(this);
   }

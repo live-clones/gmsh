@@ -863,7 +863,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item Mesh.ToleranceInitialDelaunay
 Tolerance for initial 3D Delaunay mesher@*
-Default value: @code{1e-08}@*
+Default value: @code{1e-12}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Triangles

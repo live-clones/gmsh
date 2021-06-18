@@ -1532,7 +1532,7 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "ToleranceEdgeLength" , opt_mesh_tolerance_edge_length, 0.0,
     "Skip a model edge in mesh generation if its length is less than user's "
     "defined tolerance" },
-  { F|O, "ToleranceInitialDelaunay" , opt_mesh_tolerance_initial_delaunay, 1.e-8,
+  { F|O, "ToleranceInitialDelaunay" , opt_mesh_tolerance_initial_delaunay, 1.e-12,
     "Tolerance for initial 3D Delaunay mesher" },
   { F|O, "Triangles" , opt_mesh_triangles , 1. ,
     "Display mesh triangles?" },

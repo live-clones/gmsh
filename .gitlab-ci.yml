@@ -23,7 +23,7 @@ linux64_ci:
     - mkdir build
     - cd build
     - export CXXFLAGS=-Werror
-    - cmake ..
+    - cmake -DENABLE_OPENMP=1 ..
     - make -j 8
     - make doc
     - ctest -j 8 --output-on-failure
@@ -89,7 +89,7 @@ windows64_msvc_ci:
   script:
     - mkdir build
     - cd build
-    - cmake -DCMAKE_BUILD_TYPE=Release -DGMSH_HOST=gmsh.info -DCMAKE_PREFIX_PATH='/usr/local' -DENABLE_PETSC=1 -DPETSC_ARCH=real_mumps_seq -DPETSC_DIR=/petsc-3.14.4 ${EXTRA_OPTION} ..
+    - cmake -DGMSH_HOST=gmsh.info -DENABLE_OPENMP=1 -DENABLE_PETSC=1 -DPETSC_ARCH=real_mumps_seq -DPETSC_DIR=/petsc-3.14.4 ${EXTRA_OPTION} ..
     - make package -j 8
     - PKG=`ls gmsh-*.tar*`
     - scp ${PKG} geuzaine@gmsh.info:.wwwgmsh/bin/Linux/${PKG/\.tar\.gz/\.tgz}
@@ -99,17 +99,17 @@ windows64_msvc_ci:
     - docker
 
 linux64_official_snapshot:
-  image: onelab/debian.wheezy.64bit
+  image: onelab/debian.stretch.64bit
   variables:
-    EXTRA_OPTION: "-DBLAS_LAPACK_LIBRARIES='/usr/local/lib/libopenblas.a;/usr/local/lib64/libgfortran.a;/usr/local/lib64/libquadmath.a;-lpthread;-static-libstdc++'"
+    EXTRA_OPTION: "-DCMAKE_EXE_LINKER_FLAGS=-static-libstdc++"
   <<: *linux_official
   except:
     - tags
 
 linux64_official_release:
-  image: onelab/debian.wheezy.64bit
+  image: onelab/debian.stretch.64bit
   variables:
-    EXTRA_OPTION: "-DGMSH_RELEASE=1 -DBLAS_LAPACK_LIBRARIES='/usr/local/lib/libopenblas.a;/usr/local/lib64/libgfortran.a;/usr/local/lib64/libquadmath.a;-lpthread;-static-libstdc++'"
+    EXTRA_OPTION: "-DGMSH_RELEASE=1 -DCMAKE_EXE_LINKER_FLAGS=-static-libstdc++"
   <<: *linux_official
   after_script:
     - cd build
@@ -119,17 +119,17 @@ linux64_official_release:
     - /^gmsh_.*$/
 
 linux64-sdk_official_snapshot:
-  image: onelab/debian.wheezy.64bit
+  image: onelab/debian.stretch.64bit
   variables:
-    EXTRA_OPTION: "-DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1 -DBLAS_LAPACK_LIBRARIES='/usr/local/lib/libopenblas.a;/usr/local/lib64/libgfortran.a;/usr/local/lib64/libquadmath.a;-lpthread'"
+    EXTRA_OPTION: "-DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1"
   <<: *linux_official
   except:
     - tags
 
 linux64-sdk_official_release:
-  image: onelab/debian.wheezy.64bit
+  image: onelab/debian.stretch.64bit
   variables:
-    EXTRA_OPTION: "-DGMSH_RELEASE=1 -DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1 -DBLAS_LAPACK_LIBRARIES='/usr/local/lib/libopenblas.a;/usr/local/lib64/libgfortran.a;/usr/local/lib64/libquadmath.a;-lpthread'"
+    EXTRA_OPTION: "-DGMSH_RELEASE=1 -DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1"
   <<: *linux_official
   after_script:
     - cd build
@@ -139,52 +139,12 @@ linux64-sdk_official_release:
     - /^gmsh_.*$/
 
 linux64-nox-sdk_official_snapshot:
-  image: onelab/debian.wheezy.64bit
+  image: onelab/debian.stretch.64bit
   variables:
-    EXTRA_OPTION: "-DGMSH_EXTRA_VERSION=-nox -DENABLE_FLTK=0 -DENABLE_OCC_CAF=0 -DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1 -DBLAS_LAPACK_LIBRARIES='/usr/local/lib/libopenblas.a;/usr/local/lib64/libgfortran.a;/usr/local/lib64/libquadmath.a;-lpthread'"
+    EXTRA_OPTION: "-DGMSH_EXTRA_VERSION=-nox -DENABLE_FLTK=0 -DENABLE_OCC_CAF=0 -DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1"
   <<: *linux_official
   except:
     - tags
-
-linux32_official_snapshot:
-  image: onelab/debian.wheezy.32bit
-  variables:
-    EXTRA_OPTION: "-DBLAS_LAPACK_LIBRARIES='/usr/local/lib/libopenblas.a;/usr/local/lib/libgfortran.a;/usr/local/lib/libquadmath.a;-lpthread;-static-libstdc++'"
-  <<: *linux_official
-  except:
-    - tags
-
-linux32_official_release:
-  image: onelab/debian.wheezy.32bit
-  variables:
-    EXTRA_OPTION: "-DGMSH_RELEASE=1 -DBLAS_LAPACK_LIBRARIES='/usr/local/lib/libopenblas.a;/usr/local/lib/libgfortran.a;/usr/local/lib/libquadmath.a;-lpthread;-static-libstdc++'"
-  <<: *linux_official
-  after_script:
-    - cd build
-    - VERSION=`cat version.txt`
-    - ssh geuzaine@gmsh.info "cd .wwwgmsh/bin/Linux && rm -f gmsh-stable-Linux32.tgz && ln -s gmsh-${VERSION}-Linux32.tgz gmsh-stable-Linux32.tgz"
-  only:
-    - /^gmsh_.*$/
-
-linux32-sdk_official_snapshot:
-  image: onelab/debian.wheezy.32bit
-  variables:
-    EXTRA_OPTION: "-DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1 -DBLAS_LAPACK_LIBRARIES='/usr/local/lib/libopenblas.a;/usr/local/lib/libgfortran.a;/usr/local/lib/libquadmath.a;-lpthread'"
-  <<: *linux_official
-  except:
-    - tags
-
-linux32-sdk_official_release:
-  image: onelab/debian.wheezy.32bit
-  variables:
-    EXTRA_OPTION: "-DGMSH_RELEASE=1 -DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1 -DBLAS_LAPACK_LIBRARIES='/usr/local/lib/libopenblas.a;/usr/local/lib/libgfortran.a;/usr/local/lib/libquadmath.a;-lpthread'"
-  <<: *linux_official
-  after_script:
-    - cd build
-    - VERSION=`cat version.txt`
-    - ssh geuzaine@gmsh.info "cd .wwwgmsh/bin/Linux && rm -f gmsh-stable-Linux32-sdk.tgz && ln -s gmsh-${VERSION}-Linux32-sdk.tgz gmsh-stable-Linux32-sdk.tgz"
-  only:
-    - /^gmsh_.*$/
 
 # --------------------------------------------
 # Official Windows builds (master branch only)
@@ -196,10 +156,10 @@ linux32-sdk_official_release:
   script:
     - md build
     - cd build
-    - bash -c "/usr/bin/cmake -DCMAKE_BUILD_TYPE=Release -DGMSH_HOST=gmsh.info -DCMAKE_PREFIX_PATH='/usr/local/opencascade;/usr/local;/usr/mingw32/sys-root/mingw' -DCMAKE_C_COMPILER=/usr/bin/mingw32-gcc.exe -DCMAKE_CXX_COMPILER=/usr/bin/mingw32-g++.exe -DCMAKE_Fortran_COMPILER=/usr/bin/mingw32-gfortran.exe -DCMAKE_RC_COMPILER=/usr/bin/mingw32-windres.exe -DBLAS_LAPACK_LIBRARIES='/usr/local/lib/libopenblas.a;-lgfortran;-lquadmath' -DENABLE_OS_SPECIFIC_INSTALL=1 -DENABLE_PETSC=1 -DPETSC_ARCH=real_mumps_seq -DPETSC_DIR=/home/geuzaine/src/petsc ${EXTRA_OPTION} .."
-    - bash -c "/usr/bin/make package -j 3"
-    - bash -c "/usr/bin/scp -o StrictHostKeyChecking=no -i /home/geuzaine/.ssh/id_rsa gmsh-*.zip geuzaine@gmsh.info:.wwwgmsh/bin/Windows/"
-    - bash -c "/usr/bin/ctest -j 3 --output-on-failure"
+    - c:\cygwin64\bin\bash -c "/usr/bin/cmake -DGMSH_HOST=gmsh.info -DENABLE_OPENMP=1 -DCMAKE_PREFIX_PATH='/usr/local;/usr/x86_64-w64-mingw32/sys-root/mingw' -DCMAKE_C_COMPILER=/usr/bin/x86_64-w64-mingw32-gcc.exe -DCMAKE_CXX_COMPILER=/usr/bin/x86_64-w64-mingw32-g++.exe -DCMAKE_Fortran_COMPILER=/usr/bin/x86_64-w64-mingw32-gfortran.exe -DCMAKE_RC_COMPILER=/usr/bin/x86_64-w64-mingw32-windres.exe -DENABLE_OS_SPECIFIC_INSTALL=1 -DENABLE_PETSC=1 -DPETSC_ARCH=real_mumps_seq -DPETSC_DIR=/home/geuzaine/src/petsc ${EXTRA_OPTION} .."
+    - c:\cygwin64\bin\bash -c "/usr/bin/make package -j 4"
+    - c:\cygwin64\bin\bash -c "/usr/bin/scp -o StrictHostKeyChecking=no -i /home/geuzaine/.ssh/id_rsa gmsh-*.zip geuzaine@gmsh.info:.wwwgmsh/bin/Windows/"
+    - c:\cygwin64\bin\bash -c "/usr/bin/ctest -j 4 --output-on-failure"
 
 windows64_official_snapshot:
   <<: *windows_official
@@ -215,7 +175,7 @@ windows64_official_release:
   <<: *windows_official
   after_script:
     - cd build
-    - bash -c 'VERSION=`cat version.txt`; /usr/bin/ssh -o StrictHostKeyChecking=no -i /home/geuzaine/.ssh/id_rsa geuzaine@gmsh.info "cd .wwwgmsh/bin/Windows && rm -f gmsh-stable-Windows64.zip && ln -s gmsh-${VERSION}-Windows64.zip gmsh-stable-Windows64.zip"'
+    - c:\cygwin64\bin\bash -c 'VERSION=`cat version.txt`; /usr/bin/ssh -o StrictHostKeyChecking=no -i /home/geuzaine/.ssh/id_rsa geuzaine@gmsh.info "cd .wwwgmsh/bin/Windows && rm -f gmsh-stable-Windows64.zip && ln -s gmsh-${VERSION}-Windows64.zip gmsh-stable-Windows64.zip"'
   tags:
     - windows64
     - official
@@ -224,7 +184,7 @@ windows64_official_release:
 
 windows64-sdk_official_snapshot:
   variables:
-    EXTRA_OPTION: "-DENABLE_PACKAGE_STRIP=0 -DENABLE_OS_SPECIFIC_INSTALL=0 -DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1"
+    EXTRA_OPTION: "-DENABLE_OS_SPECIFIC_INSTALL=0 -DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1"
   <<: *windows_official
   tags:
     - windows64
@@ -238,53 +198,9 @@ windows64-sdk_official_release:
   <<: *windows_official
   after_script:
     - cd build
-    - bash -c 'VERSION=`cat version.txt`; /usr/bin/ssh -o StrictHostKeyChecking=no -i /home/geuzaine/.ssh/id_rsa geuzaine@gmsh.info "cd .wwwgmsh/bin/Windows && rm -f gmsh-stable-Windows64-sdk.zip && ln -s gmsh-${VERSION}-Windows64-sdk.zip gmsh-stable-Windows64-sdk.zip"'
+    - c:\cygwin64\bin\bash -c 'VERSION=`cat version.txt`; /usr/bin/ssh -o StrictHostKeyChecking=no -i /home/geuzaine/.ssh/id_rsa geuzaine@gmsh.info "cd .wwwgmsh/bin/Windows && rm -f gmsh-stable-Windows64-sdk.zip && ln -s gmsh-${VERSION}-Windows64-sdk.zip gmsh-stable-Windows64-sdk.zip"'
   tags:
     - windows64
-    - official
-  only:
-    - /^gmsh_.*$/
-
-windows32_official_snapshot:
-  <<: *windows_official
-  tags:
-    - windows32
-    - official
-  except:
-    - tags
-
-windows32_official_release:
-  variables:
-    EXTRA_OPTION: "-DGMSH_RELEASE=1"
-  <<: *windows_official
-  after_script:
-    - cd build
-    - bash -c 'VERSION=`cat version.txt`; /usr/bin/ssh -o StrictHostKeyChecking=no -i /home/geuzaine/.ssh/id_rsa geuzaine@gmsh.info "cd .wwwgmsh/bin/Windows && rm -f gmsh-stable-Windows32.zip && ln -s gmsh-${VERSION}-Windows32.zip gmsh-stable-Windows32.zip"'
-  tags:
-    - windows32
-    - official
-  only:
-    - /^gmsh_.*$/
-
-windows32-sdk_official_snapshot:
-  variables:
-    EXTRA_OPTION: "-DENABLE_OS_SPECIFIC_INSTALL=0 -DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1"
-  <<: *windows_official
-  tags:
-    - windows32
-    - official
-  except:
-    - tags
-
-windows32-sdk_official_release:
-  variables:
-    EXTRA_OPTION: "-DGMSH_RELEASE=1 -DENABLE_OS_SPECIFIC_INSTALL=0 -DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1"
-  <<: *windows_official
-  after_script:
-    - cd build
-    - bash -c 'VERSION=`cat version.txt`; /usr/bin/ssh -o StrictHostKeyChecking=no -i /home/geuzaine/.ssh/id_rsa geuzaine@gmsh.info "cd .wwwgmsh/bin/Windows && rm -f gmsh-stable-Windows32-sdk.zip && ln -s gmsh-${VERSION}-Windows32-sdk.zip gmsh-stable-Windows32-sdk.zip"'
-  tags:
-    - windows32
     - official
   only:
     - /^gmsh_.*$/
@@ -299,14 +215,12 @@ windows32-sdk_official_release:
   script:
     - mkdir build
     - cd build
-    - /usr/local/bin/cmake -DCMAKE_BUILD_TYPE=Release -DGMSH_HOST=gmsh.info -DCMAKE_PREFIX_PATH='/usr/local/opencascade;/usr/local' -DCMAKE_C_COMPILER=/opt/local/bin/clang-mp-3.9 -DCMAKE_CXX_COMPILER=/opt/local/bin/clang++-mp-3.9 -DENABLE_CAIRO=0 -DBLAS_LAPACK_LIBRARIES='/usr/local/lib/libopenblas.a;/opt/local/lib/gcc5/libgfortran.a;/opt/local/lib/gcc5/libquadmath.a;/opt/local/lib/gcc5/gcc/x86_64-apple-darwin13/5.4.0/libgcc.a' -DENABLE_OS_SPECIFIC_INSTALL=1 -DENABLE_GMP=0 -DENABLE_PETSC=1 -DPETSC_ARCH=real_mumps_seq -DPETSC_DIR=/Users/geuzaine/src/petsc ${EXTRA_OPTION} ..
-    - make package -j 2
+    - /usr/local/bin/cmake -DGMSH_HOST=gmsh.info -DENABLE_OPENMP=1 -DENABLE_CAIRO=0 -DENABLE_OS_SPECIFIC_INSTALL=1 -DENABLE_PETSC=1 -DPETSC_ARCH=real_mumps_seq -DPETSC_DIR=/Users/geuzaine/src/petsc ${EXTRA_OPTION} ..
+    - make package -j 4
     - PKG=`ls gmsh-*.[dt][ma][gr]*`
-    - if [[ $PKG == *".dmg"* ]]; then scp ${PKG} ace@ace36.montefiore.ulg.ac.be:/tmp; fi
-    - if [[ $PKG == *".dmg"* ]]; then ssh ace@ace36.montefiore.ulg.ac.be /Users/ace/re-sign.sh /tmp/${PKG}; fi
-    - if [[ $PKG == *".dmg"* ]]; then scp ace@ace36.montefiore.ulg.ac.be:/tmp/${PKG} .; fi
+    - python3 ../utils/misc/notarize.py --package ${PKG} --username cgeuzaine@ulg.ac.be --primary-bundle-id org.geuz.Gmsh --password "@keychain:Gmsh Notarization"
     - scp ${PKG} geuzaine@gmsh.info:.wwwgmsh/bin/MacOSX/${PKG/\.tar\.gz/\.tgz}
-    - /usr/local/bin/ctest -j 2 --output-on-failure
+    - /usr/local/bin/ctest -j 4 --output-on-failure
   tags:
     - macos64
     - official
