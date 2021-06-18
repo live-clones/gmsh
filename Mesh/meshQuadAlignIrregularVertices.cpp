@@ -27,9 +27,11 @@ using namespace Gecode;
 #include "PViewDataList.h"
 #include "meshWinslow2d.h" // for smoothing
 #include "meshGFaceOptimize.h"
+#include "pointsGenerators.h"
 
 // QuadMeshingTools
 #include "lp_solve_wrapper.h"
+#include "qmtMeshUtils.h"
 
 // Some shortcuts
 #define P(x) {cout << x << endl;}
@@ -1814,6 +1816,46 @@ GeoLog::flush();
 return true;
 }
 
+// Resample polyline
+bool sample_polyline(const std::vector<SPoint3>& pts, double t, SPoint3& pt) {
+  if (t < 0. || t > 1.) return false;
+  if (t == 0.) {
+    pt = pts.front();
+    return true;
+  } else if (t == 1.) {
+    pt = pts.back();
+    return true;
+  }
+
+  double totalLen = 0.;
+  F(i,pts.size()-1.) {
+    double len = pts[i].distance(pts[i+1]);
+    totalLen += len;
+  }
+  double targetLen = t * totalLen;
+
+  bool found = false;
+  double acc = 0.;
+  for(size_t j = 0; j < pts.size()-1; ++j) {
+    double len_j = acc;
+    acc += pts[j].distance(pts[j+1]);
+    double len_jp1 = acc;
+
+    if (len_j < targetLen && targetLen <= len_jp1) {
+      double lambda = (targetLen - len_j) / (len_jp1 - len_j);
+      pt = SPoint3((1.-lambda) * pts[j] + lambda * pts[j+1]);
+      found = true;
+      break;
+    }
+  }
+  if (!found) {
+    Msg::Error("sample_polyline: not found, t=%f, totalLen=%f, targetLen=%f, acc=%f",t,totalLen,targetLen,acc);
+    return false;
+  }
+
+  return true;
+}
+
 // Transfinite Interpolation, for computing interior points
 bool transfinite_interpolation( const vector<SPoint3>& c1, const vector<SPoint3>& c2,
 	const vector<SPoint3>& c3, const vector<SPoint3>& c4, vector<SPoint3>& pts) {
@@ -1937,7 +1979,6 @@ V<int> optimizeQuantizationLpSolve(TMesh& TM) {
   V<int> valueMin(N,0);
   V<int> valueMax(N,INT_MAX);
   for(TEdge * tedge : TM.tedges) {
-    // valueMax[tedge->id] = tedge->len+1;
     valueMax[tedge->id] = tedge->len;
 
     GEdge* gedge1 = dynamic_cast<GEdge*>(tedge->tvertex1->vertex->ptr->onWhat());
@@ -2334,6 +2375,180 @@ void optimizePatchQuantization(CMesh& CM) {
 	// draw();
 }
 
+bool getConvexPatchSides(
+    const std::vector<MElement*>& elts,
+    const std::vector<MVertex*>& bnd,
+    std::vector<std::vector<MVertex*> >& sides) {
+  sides.clear();
+  std::unordered_map<MVertex*,int> valence;
+  for (MElement* e: elts) F(lv,e->getNumVertices()) {
+    valence[e->getVertex(lv)] += 1;
+  }
+  F(i0,bnd.size()) if (valence[bnd[i0]] == 1) {
+    sides.resize(sides.size()+1);
+
+    F(inc,bnd.size()) {
+      MVertex* v = bnd[(i0+inc)%bnd.size()];
+      sides.back().push_back(v);
+      if (inc > 0 && inc < bnd.size()-1 && valence[v] == 1) {
+        sides.resize(sides.size()+1);
+        sides.back().push_back(v);
+      }
+    }
+
+
+    break;
+  }
+
+  return sides.size() > 0;
+}
+
+#define TRAN_QUA(c1, c2, c3, c4, s1, s2, s3, s4, u, v)                         \
+  (1. - u) * c4 + u *c2 + (1. - v) * c1 + v *c3 -                              \
+    ((1. - u) * (1. - v) * s1 + u * (1. - v) * s2 + u * v * s3 +               \
+     (1. - u) * v * s4)
+
+bool buildHighOrderQuadMeshFromBaseComplex(GModel* gm, CMesh& CM, int N) {
+  vector<array<MVertex*,4> > patchCorners;
+  vector<array<vector<SPoint3>,4> > patchPolylines;
+  vector<GFace*> patchGFaces;
+  unordered_map<MVertex*,GEntity*> cornerEntity;
+
+  /* Collect info in current mesh */
+  for(CFace* cface : CM.cfaces) {
+    vector<MElement*> elts;
+    for(MQuadrangle* quad : cface->mquads) {
+      elts.push_back(quad);
+    }
+
+    std::vector<MVertex*> bnd;
+    bool okb = buildBoundary(elts,bnd);
+    if (!okb) {
+      Msg::Error("failed to build patch boundary (should not happen)");
+      return false;
+    }
+    if (bnd.back() != bnd.front()) { // ensure repetition of first vertex
+      bnd.push_back(bnd.front());
+    }
+    std::vector<std::vector<MVertex*> > sides;
+    bool oks = getConvexPatchSides(elts, bnd, sides);
+    if (!oks || sides.size() != 4) {
+      Msg::Error("failed to get 4 patch sides, got %li (should not happen)", sides.size());
+      return false;
+    }
+    patchCorners.push_back({sides[0].front(), sides[1].front(), sides[2].front(), sides[3].front()});
+    patchGFaces.push_back(cface->gface);
+    patchPolylines.resize(patchPolylines.size()+1);
+    F(k,4) {
+      cornerEntity[sides[k].front()] = sides[k].front()->onWhat();
+      F(lv,sides[k].size()) {
+        patchPolylines.back()[k].push_back(sides[k][lv]->point());
+      }
+    }
+  }
+
+	// Build corners and put them in the GModel
+	unordered_map<MVertex*,MVertex*> old2new;
+  for (auto& kv: cornerEntity) {
+    GEntity* ge = kv.second;
+    MVertex* v = kv.first;
+    MVertex* nv = nullptr;
+    if (ge->dim() == 0) {
+      nv = new MVertex(v->x(),v->y(),v->z(), ge);
+    } else if (ge->dim() == 1) {
+      double t = 0;
+      if (dynamic_cast<MEdgeVertex*>(v)) {
+        v->getParameter(0,t);
+      }
+      nv = new MEdgeVertex(v->x(),v->y(),v->z(),ge,t);
+    } else if (ge->dim() == 2) {
+      double uv0 = 0.;
+      double uv1 = 0.;
+      if (dynamic_cast<MFaceVertex*>(v)) {
+        v->getParameter(0,uv0);
+        v->getParameter(1,uv1);
+      }
+      nv = new MFaceVertex(v->x(),v->y(),v->z(),ge,uv0,uv1);
+    }
+    old2new[v] = nv;
+  }
+
+	// Delete old mesh and put new one into GModel
+	gm->deleteMesh();
+
+	// Create corners and coarse quads
+  for (auto& kv: cornerEntity) {
+    GEntity* ge = kv.second;
+    MVertex* v = kv.first;
+    MVertex* nv = old2new[v];
+    ge->addMeshVertex(nv);
+  }
+  vector<std::pair<GFace*,size_t> > newQuadLocation(patchCorners.size());
+  F(f,patchCorners.size()) {
+    MVertex* v0 = old2new[patchCorners[f][0]];
+    MVertex* v1 = old2new[patchCorners[f][1]];
+    MVertex* v2 = old2new[patchCorners[f][2]];
+    MVertex* v3 = old2new[patchCorners[f][3]];
+    MQuadrangle* q = new MQuadrangle(v0,v1,v2,v3);
+    patchGFaces[f]->addQuadrangle(q);
+    newQuadLocation[f] = {patchGFaces[f],patchGFaces[f]->quadrangles.size()-1};
+  }
+
+  gm->setOrderN(N, true, false);
+
+  /* Compute position of high-order nodes from patch polylines */
+  F(f,newQuadLocation.size()) {
+    GFace* gf = newQuadLocation[f].first;
+    size_t idx = newQuadLocation[f].second;
+    MQuadrangle* q = gf->quadrangles[idx];
+    array<vector<SPoint3>,4> cs;
+    F(le,4) {
+      vector<MVertex*> vs;
+      q->getEdgeVertices(le,vs);
+
+      vector<SPoint3> newPts;
+      compute_subdivided_edge_internal_points(patchPolylines[f][le],vs.size()-2,newPts);
+
+      F(lv,newPts.size()) {
+        vs[lv+2]->setXYZ(newPts[lv]);
+      }
+
+      newPts.insert(newPts.begin(),patchPolylines[f][le].front());
+      newPts.push_back(patchPolylines[f][le].back());
+      cs[le] = newPts;
+    }
+
+    // transfinite interpolation to get interior points
+    fullMatrix<double> mat = gmshGenerateMonomialsQuadrangle(q->getPolynomialOrder());
+    size_t E = q->getPolynomialOrder() - 1;
+    for (size_t lv = 4+4*E; lv < q->getNumVertices(); ++lv) {
+      double u = mat(lv,0) / double(E+1);
+      double v = mat(lv,1) / double(E+1);
+      SPoint3 c1u,c2v,c3u,c4v;
+      sample_polyline(cs[0],u,c1u);
+      sample_polyline(cs[1],v,c2v);
+      sample_polyline(cs[2],1.-u,c3u); // 1-u because ordering inverted
+      sample_polyline(cs[3],1.-v,c4v); // 1-v because ordering inverted
+      SPoint3 pt = SPoint3(TRAN_QUA(c1u,c2v,c3u,c4v,cs[0][0],cs[1][0],cs[2][0],cs[3][0], u, v));
+      q->getVertex(lv)->setXYZ(pt);
+
+      if (gf->geomType() != GFace::Plane && gf->haveParametrization()) {
+        double uv[2];
+        GPoint proj = gf->closestPoint(q->getVertex(lv)->point(),uv);
+        if (proj.succeeded()) {
+          q->getVertex(lv)->setXYZ(proj.x(),proj.y(),proj.z());
+          q->getVertex(lv)->setParameter(0,proj.u());
+          q->getVertex(lv)->setParameter(1,proj.v());
+        }
+      }
+    }
+  }
+  
+
+  return true;
+}
+
+
 /*****************/
 /* Main function */
 /*****************/
@@ -2445,9 +2660,16 @@ void alignQuadMesh(GModel* gm) {
 				for(MLine* mline : cedge->mlines)
 					geolog(mline, 0, "patches");
 		}
+
+    if (it == nit - 1) { // last iteration
+      int N = 5;
+      Msg::Info("Build high-order mesh ... (N = %i, %li quads)", N, CM.cfaces.size());
+      buildHighOrderQuadMeshFromBaseComplex(gm, CM, N);
+    }
 	}
 
 	H(np);
+
 
 	draw();
 }
