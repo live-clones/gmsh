@@ -498,8 +498,8 @@ struct TMesh {
 		map<HalfEdge*, TraceHalfEdges*> hedge2trace; // map half-edge to trace it lies on
 		map<HalfEdge*, int> hedge2index; // index of half-edge along trace (0,1,..)
 		for(Vertex* vertex : M.vertices) {
-			// If vertex is a singularity, or a GVertex
-			if(vertex->isGVertex || vertex->isSingularity) {
+			// If vertex is irregular, or a GVertex
+			if(vertex->isGVertex || vertex->valence != 4) {
 				for(HalfEdge* he : vertex->hedges) {
 					// if(vertex->valence != 4 || he->gedge != NULL) { // if isGVertex, half-edge should lie on a GEdge
 						// New trace!
@@ -539,12 +539,12 @@ struct TMesh {
 						if(he->oppo != NULL) hedgeRight = he->oppo->prev->oppo;
 						if(!trace->onRight && hedge2trace.count(hedgeLeft)) { // trace on the right
 							TraceHalfEdges* t = hedge2trace[hedgeLeft];
-							if(t->orig->isSingularity && t->orig != trace->orig && hedge2index[hedgeLeft] <= tan(trace->alpha) * (hedge2index[he] + 1))
+							if(t->orig->valence != 4 && t->orig != trace->orig && hedge2index[hedgeLeft] <= tan(trace->alpha) * (hedge2index[he] + 1))
 								trace->onRight = true;
 						}
 						if(hedgeRight != NULL && !trace->onLeft && hedge2trace.count(hedgeRight)) { // trace on the left
 							TraceHalfEdges* t = hedge2trace[hedgeRight];
-							if(t->orig->isSingularity && t->orig != trace->orig && hedge2index[hedgeRight] <= tan(trace->alpha) * (hedge2index[he] + 1))
+							if(t->orig->valence != 4 && t->orig != trace->orig && hedge2index[hedgeRight] <= tan(trace->alpha) * (hedge2index[he] + 1))
 								trace->onLeft = true;
 						}
 						if(trace->onLeft && trace->onRight) {
@@ -563,22 +563,22 @@ struct TMesh {
 			}
 		}
 
-		// Propagate streamlines from remaining irregular vertices (3-5's)
-		for(Vertex* vertex : M.vertices) {
-			if(!vertex->isGVertex && !vertex->isSingularity && vertex->valence != 4) {
-				for(HalfEdge* heStart : vertex->hedges) {
-					HalfEdge* he = heStart;
-					while(true) {
-						onTMesh.insert(he);
-						onTMesh.insert(he->oppo);
-						HalfEdge *hedgeLeft = he->next, *hedgeRight = he->oppo->prev->oppo;
-						if(he->v2->valence != 4 || he->v2->isGVertex || onTMesh.count(hedgeLeft) || onTMesh.count(hedgeRight))
-							break;
-						he = he->next->oppo->next;
-					}
-				}
-			}
-		}
+		// // Propagate streamlines from remaining irregular vertices (3-5's)
+		// for(Vertex* vertex : M.vertices) {
+		// 	if(!vertex->isGVertex && !vertex->isSingularity && vertex->valence != 4) {
+		// 		for(HalfEdge* heStart : vertex->hedges) {
+		// 			HalfEdge* he = heStart;
+		// 			while(true) {
+		// 				onTMesh.insert(he);
+		// 				onTMesh.insert(he->oppo);
+		// 				HalfEdge *hedgeLeft = he->next, *hedgeRight = he->oppo->prev->oppo;
+		// 				if(he->v2->valence != 4 || he->v2->isGVertex || onTMesh.count(hedgeLeft) || onTMesh.count(hedgeRight))
+		// 					break;
+		// 				he = he->next->oppo->next;
+		// 			}
+		// 		}
+		// 	}
+		// }
 
 		// Draw traces
 		for(TraceHalfEdges* trace : hetraces) trace->geolog(rand(), "hetraces");
@@ -742,6 +742,8 @@ struct TMesh {
 					else trace->len.pb(tedge->len + trace->len.back());
 				}
 			}
+			trace->dest = trace->tedges.back()->tvertex2;
+			trace->dest->geolog(rand(), "dest");
 			traces.pb(trace);
 		}
 
@@ -749,14 +751,14 @@ struct TMesh {
 		F(itrace, S(traces)) {
 			// P("treating trace " + to_string(itrace));
 			Trace* trace = traces[itrace];
+			// if(trace->orig->isGVertex) trace->orig->geolog(0, "trace->orig->isGVertex");
 			// trace->geolog(0, "intersections of trace " + to_string(itrace));
 			// H(S(trace->tedges));
 		// for(Trace* trace : traces) {
 			trace->istar = -1; // not found yet
 			F(i, S(trace->tedges)) {
 				TEdge* tedge = trace->tedges[i];
-				if(tedge->tvertex2->isSingular || tedge->tvertex2->isGVertex) continue;
-				// H(i);
+				if(tedge->tvertex2->vertex->valence != 4 || tedge->tvertex2->isGVertex) continue;
 				// Determine last half-edge
 				HalfEdge* he = tedge->he;
 				F(k, tedge->len-1) he = he->next->oppo->next;
@@ -766,7 +768,7 @@ struct TMesh {
 					Trace* t = hetrace2trace[hedge2trace[heLeft]];
 					// H(t);
 					int j = t->tedge2index[hedgemap[heLeft]];
-					if(trace->istar == -1 && t->len[j] < trace->len[i])  { // we have found istar :-)
+					if(trace->istar == -1 && t->len[j] < trace->len[i] && (trace->orig->vertex->valence + t->orig->vertex->valence != 8 || trace->orig->isGVertex || t->orig->isGVertex))  { // we have found istar :-)
 						trace->istar = i; 
 						// he->v2->geolog(0, "istar");
 					}
@@ -783,11 +785,12 @@ struct TMesh {
 				if(he->oppo != NULL && hedge2trace.count(heRight = he->oppo->prev)) { // there's an intersection on the right
 				// if(hedge2trace.count(heRight)) { // there's an intersection on the right
 					Trace* t = hetrace2trace[hedge2trace[heRight]];
-					// H(t);
+					// H(t);	
 					int j = t->tedge2index[hedgemap[heRight]];
-					if(trace->istar == -1 && t->len[j] < trace->len[i]) { // we have found istar :-)
+					// We don't want to prevent 3-5 pairs from collapsing
+					if(trace->istar == -1 && t->len[j] < trace->len[i] && (trace->orig->vertex->valence + t->orig->vertex->valence != 8 || trace->orig->isGVertex || t->orig->isGVertex)) { // we have found istar :-)
 						trace->istar = i; 
-						he->v2->geolog(0, "istar");
+						// he->v2->geolog(0, "istar");
 					}
 					if(t->len[j] > tan(trace->alpha) * trace->len[i]) { // new intersection
 						TraceIntersection* inters = new TraceIntersection;
@@ -802,14 +805,18 @@ struct TMesh {
 				}
 				// cout << endl;
 			}
-			if(trace->istar == -1) {
+			// If trace connects a 3-5 pair, leave istar = -1
+			if(trace->istar == -1 && (trace->orig->vertex->valence + trace->dest->vertex->valence != 8 || trace->orig->isGVertex || trace->dest->isGVertex)) {
 				trace->istar = S(trace->tedges)-1;
 			}
 		}
 
-		// // Draw traces
-		// for(Trace* trace : traces)
-		// 	trace->geolog(rand(), "traces");
+		// Draw traces
+		for(Trace* trace : traces) {
+			int color = rand();
+			trace->geolog(color, "traces");
+			if(trace->istar != -1) trace->tedges[trace->istar]->tvertex2->geolog(color, "istar");
+		}
 		
 
     // Maxence: add id to TEdge for Gecode
@@ -1019,7 +1026,7 @@ struct CMesh {
 				// F(i, mx+1) F(j, my+1) {
 				// 	vertices[i][j]->geolog(0, "patch vertices");
 				// }
-				tface->geolog(0, "tface");
+				// tface->geolog(0, "tface");
 
 				H(side_pos[0]);
 				H(side_pos[1]);
@@ -1162,7 +1169,7 @@ struct CMesh {
 		Msg::Info("Done splitting T-edges");
 
 
-		draw();
+		// draw();
 
 		// for(TEdge* tedge : TM2.tedges) {
 		// 	if(!tedge->gedge) {
@@ -1930,7 +1937,8 @@ V<int> optimizeQuantizationLpSolve(TMesh& TM) {
   V<int> valueMin(N,0);
   V<int> valueMax(N,INT_MAX);
   for(TEdge * tedge : TM.tedges) {
-    valueMax[tedge->id] = tedge->len+1;
+    // valueMax[tedge->id] = tedge->len+1;
+    valueMax[tedge->id] = tedge->len;
 
     GEdge* gedge1 = dynamic_cast<GEdge*>(tedge->tvertex1->vertex->ptr->onWhat());
     GEdge* gedge2 = dynamic_cast<GEdge*>(tedge->tvertex2->vertex->ptr->onWhat());
@@ -1980,21 +1988,20 @@ V<int> optimizeQuantizationLpSolve(TMesh& TM) {
   // Validity constraints
   for(Trace* trace : TM.traces) {
     // if(trace->orig->vertex->valence != 4) {
-    if(true) {
+    if(trace->istar != -1) {
       std::vector<std::pair<int,double> > column_value;
       F(i, trace->istar+1) {
         column_value.push_back({trace->tedges[i]->id,1.});
       }
       solver.addConstraintRow(column_value, lp_solve::LPS_GE, 1);
-    } else {
-      Msg::Warning("trace origin has valence 4");
     }
   }
 
   // Layout constraints
   for(Trace* trace : TM.traces) {
     for(TraceIntersection* inters : trace->intersections) {	
-      if(inters->t->len[inters->j] > tan(trace->alpha) * trace->len[inters->i]) {
+	  // If intersection correspondonds to a 3-5 pair, don't put a constraint to allow them to collapse
+      if(inters->t->len[inters->j] > tan(trace->alpha) * trace->len[inters->i] && (trace->orig->vertex->valence + inters->t->orig->vertex->valence != 8 || trace->orig->isGVertex || inters->t->orig->isGVertex)) {
         // // If origin of the intersecting trace is a GVertex, check that it has at least 3 GEdge incident half-edges
         // if(inters->t->orig->isGVertex) {
         // 	int cnt = 0;
@@ -2013,6 +2020,16 @@ V<int> optimizeQuantizationLpSolve(TMesh& TM) {
       }
     }
   }
+
+//   // Prevent any irregular vertex from collapsing on CAD
+//   for(TVertex* tvertex : TM.tvertices) if(tvertex->vertex->valence != 4) {
+// 	  for(HalfEdge* hes : tvertex->vertex->hedges) {
+// 		  HalfEdge* he = hes;
+// 		  while(!he->v2->isOnCAD && ) {
+
+// 		  }
+// 	  }
+//   }
 
   // Objective function
   {
@@ -2323,96 +2340,110 @@ void optimizePatchQuantization(CMesh& CM) {
 
 void alignQuadMesh(GModel* gm) {
 
-	// Build MeshHalfEdges
-	MeshHalfEdges M; buildMeshHalfEdgesFromGModel(gm, M);
-	Msg::Info("M has %d faces, %d half-edges, and %d vertices.", S(M.faces), S(M.hedges), S(M.vertices));
+	int nit = 2;
 
-	M.geolog("M");
+	V<int> np;
 
+	F(it, nit) {
 
-	// Build T-Mesh
-	TMesh TM(M, M_PI/4); // build
-	// TMesh TM(M, 0); // build
-	TM.geolog("T-mesh"); // draw
-	Msg::Info("TM has %d T-faces, %d half-T-edges (%d T-edges), and %d T-vertices",
-		S(TM.tfaces), S(TM.tedges), TM.nTEdges, S(TM.tvertices));
+		// Build MeshHalfEdges
+		MeshHalfEdges M; buildMeshHalfEdgesFromGModel(gm, M);
+		Msg::Info("M has %d faces, %d half-edges, and %d vertices.", S(M.faces), S(M.hedges), S(M.vertices));
 
-	draw();
-	
-
-	// Quantization optimization (start from initial quantization)
-  // Msg::Info("---------------------- Quantization starting from initial values -------------------");
-	// V<int> q = optimizeQuantization(TM, 1);
-
-	// Quantization optimization (start from 0)
-  Msg::Info("---------------------- Quantization starting from 0 -------------------");
-	V<int> q0 = optimizeQuantization(TM, 0);
-
-	// Quantization optimization with LpSolve
-  Msg::Info("---------------------- Quantization with lp_solve -------------------");
-	V<int> q = optimizeQuantizationLpSolve(TM);
-
-	if(S(q) == 0) return; // no quantization found :(
-
-	// Draw T-edges with positive length
-	for(TEdge* tedge : TM.tedges) if(q[tedge->id]) {
-		tedge->geolog(q[tedge->id], "length > 0");
-		if(q[tedge->id] > 1) tedge->geolog(0, "length > 1");
-	}
-
-	// Build coarse patches
-	CMesh CM(TM, q);
+		M.geolog("M");
 
 
-	// Optimize patch quantization
-	optimizePatchQuantization(CM);
+		// Build T-Mesh
+		TMesh TM(M, M_PI/4); // build
+		// TMesh TM(M, 0); // build
+		TM.geolog("T-mesh"); // draw
+		Msg::Info("TM has %d T-faces, %d half-T-edges (%d T-edges), and %d T-vertices",
+			S(TM.tfaces), S(TM.tedges), TM.nTEdges, S(TM.tvertices));
 
-	// Build mesh
-	buildMeshFromCMesh(CM, gm);
+		// draw();
+		
 
-	// Sanity checks
-	// Sanity check: no duplicate MVertices
-	V<GEntity*> gentities; gm->getEntities(gentities);
-	map<SPoint3, int> count_sp3;
-	for(GEntity* ge : gentities) {
-		for(MVertex* v : ge->mesh_vertices) {
-			++count_sp3[v->point()];
-			if(dynamic_cast<GFace*>(v->onWhat())) {
-				GeoLog::add(v->point(), 0, "on GFace");
+		// Quantization optimization (start from initial quantization)
+	// Msg::Info("---------------------- Quantization starting from initial values -------------------");
+		// V<int> q = optimizeQuantization(TM, 1);
+
+		// Quantization optimization (start from 0)
+	Msg::Info("---------------------- Quantization starting from 0 -------------------");
+		V<int> q0 = optimizeQuantization(TM, 0);
+
+		// Quantization optimization with LpSolve
+	Msg::Info("---------------------- Quantization with lp_solve -------------------");
+		V<int> q = optimizeQuantizationLpSolve(TM);
+
+		if(S(q) == 0) return; // no quantization found :(
+
+		// Draw T-edges with positive length
+		for(TEdge* tedge : TM.tedges) if(q[tedge->id]) {
+			tedge->geolog(q[tedge->id], "length > 0");
+			if(q[tedge->id] > 1) tedge->geolog(0, "length > 1");
+		}
+
+		// Build coarse patches
+		CMesh CM(TM, q);
+
+		np.pb(S(CM.cfaces));
+
+		// Optimize patch quantization
+		optimizePatchQuantization(CM);
+
+		
+		// Build mesh
+		buildMeshFromCMesh(CM, gm);
+
+		// Sanity checks
+		// Sanity check: no duplicate MVertices
+		V<GEntity*> gentities; gm->getEntities(gentities);
+		map<SPoint3, int> count_sp3;
+		for(GEntity* ge : gentities) {
+			for(MVertex* v : ge->mesh_vertices) {
+				++count_sp3[v->point()];
+				if(dynamic_cast<GFace*>(v->onWhat())) {
+					GeoLog::add(v->point(), 0, "on GFace");
+				}
 			}
 		}
-	}
-	FIT(it, count_sp3) {
-		if(it->second > 1) {
-			Msg::Error("duplicate MVertices (%d)!", it->second);
-			GeoLog::add(it->first, it->second, "!duplicates");
+		FIT(it, count_sp3) {
+			if(it->second > 1) {
+				Msg::Error("duplicate MVertices (%d)!", it->second);
+				GeoLog::add(it->first, it->second, "!duplicates");
+			}
+		}
+
+		v2t_cont adj;
+		for(GFace* gf : gm->getFaces()) {
+			buildVertexToElement(gf->quadrangles, adj);
+		}
+
+		FIT(it, adj) {
+			GeoLog::add(it->first->point(), S(it->second), "#incident faces");
+		}
+
+		if(it == nit-1) {
+
+			// Smooth mesh
+			meshWinslow2d(gm, 1000);
+
+			// Color quads by patch
+			for(CFace* cface : CM.cfaces) {
+				int color = rand();
+				for(MQuadrangle* quad : cface->mquads) {
+					geolog(quad, color, "patches");
+					// GeoLog::add({}, color, "patches");
+				}
+			}
+			// Color patch boundaries
+			for(CEdge* cedge : CM.cedges)
+				for(MLine* mline : cedge->mlines)
+					geolog(mline, 0, "patches");
 		}
 	}
 
-	v2t_cont adj;
-	for(GFace* gf : gm->getFaces()) {
-		buildVertexToElement(gf->quadrangles, adj);
-	}
-
-	FIT(it, adj) {
-		GeoLog::add(it->first->point(), S(it->second), "#incident faces");
-	}
-
-	// Smooth mesh
-	meshWinslow2d(gm, 1000);
-
-	// Color quads by patch
-	for(CFace* cface : CM.cfaces) {
-		int color = rand();
-		for(MQuadrangle* quad : cface->mquads) {
-			geolog(quad, color, "patches");
-			// GeoLog::add({}, color, "patches");
-		}
-	}
-	// Color patch boundaries
-	for(CEdge* cedge : CM.cedges)
-		for(MLine* mline : cedge->mlines)
-			geolog(mline, 0, "patches");
+	H(np);
 
 	draw();
 }
