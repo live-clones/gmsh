@@ -2340,7 +2340,7 @@ void optimizePatchQuantization(CMesh& CM) {
 
 void alignQuadMesh(GModel* gm) {
 
-	int nit = 2;
+	int nit = 1;
 
 	V<int> np;
 
@@ -2429,12 +2429,16 @@ void alignQuadMesh(GModel* gm) {
 			meshWinslow2d(gm, 1000);
 
 			// Color quads by patch
+			gm->setNumPartitions(S(CM.cfaces));
+			int num = 0;
 			for(CFace* cface : CM.cfaces) {
 				int color = rand();
 				for(MQuadrangle* quad : cface->mquads) {
+					quad->setPartition(num);
 					geolog(quad, color, "patches");
 					// GeoLog::add({}, color, "patches");
 				}
+				num++;
 			}
 			// Color patch boundaries
 			for(CEdge* cedge : CM.cedges)
