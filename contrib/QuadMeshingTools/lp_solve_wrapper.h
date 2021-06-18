@@ -22,6 +22,7 @@ namespace lp_solve {
       bool setInteger(int i);
       bool addConstraintRow(const std::vector<std::pair<int,double> >& column_value, int op, double rhs);
       bool setObjectiveFunction(const std::vector<std::pair<int,double> >& column_value, bool minimize = true);
+      bool setBasisUpperBound();
       bool lpSolve(std::vector<double>& slt);
 
     private:

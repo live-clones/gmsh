@@ -53,6 +53,16 @@ namespace lp_solve {
     return (r == TRUE);
   }
 
+  bool LpSolveSolver::setBasisUpperBound() {
+    lprec* lp = static_cast<lprec*>(state);
+    if (lp == NULL) return false;
+    int nrows = get_Nrows(lp);
+    std::vector<int> basis(1+nrows,0);
+    for (size_t i = 0; i < basis.size(); ++i) basis[i] = i;
+    unsigned char r = set_basis(lp, basis.data(), FALSE);
+    return (r == TRUE);
+  }
+
   bool LpSolveSolver::addConstraintRow(const std::vector<std::pair<int,double> >& column_value, int op, double rhs) {
     lprec* lp = static_cast<lprec*>(state);
     if (lp == NULL) return false;

@@ -2082,6 +2082,15 @@ V<int> optimizeQuantizationLpSolve(TMesh& TM) {
     solver.setObjectiveFunction(column_value,true);
   }
 
+  // Tell the solver to start from upper bound (see lp_solve documentation)
+  if (true) {
+    // maxence: not the right values ? don't know how to use it to specify initial guess :/
+    bool okb = solver.setBasisUpperBound();
+    if (!okb) {
+      Msg::Warning("failed to set basis for lp_solve");
+    }
+  }
+
 	V<double> sol;
   if (solver.lpSolve(sol)) {
     Msg::Info("quantization found with lp_solve:");
