@@ -2083,7 +2083,7 @@ V<int> optimizeQuantizationLpSolve(TMesh& TM) {
   }
 
   // Tell the solver to start from upper bound (see lp_solve documentation)
-  if (false) {
+  if (true) {
     // maxence: not the right values ? don't know how to use it to specify initial guess :/
     bool okb = solver.setBasisUpperBound();
     if (!okb) {
@@ -2493,6 +2493,7 @@ bool buildHighOrderQuadMeshFromBaseComplex(GModel* gm, CMesh& CM, int N) {
     ge->addMeshVertex(nv);
   }
   vector<std::pair<GFace*,size_t> > newQuadLocation(patchCorners.size());
+  int numPartition = 0;
   F(f,patchCorners.size()) {
     MVertex* v0 = old2new[patchCorners[f][0]];
     MVertex* v1 = old2new[patchCorners[f][1]];
@@ -2501,6 +2502,7 @@ bool buildHighOrderQuadMeshFromBaseComplex(GModel* gm, CMesh& CM, int N) {
     MQuadrangle* q = new MQuadrangle(v0,v1,v2,v3);
     patchGFaces[f]->addQuadrangle(q);
     newQuadLocation[f] = {patchGFaces[f],patchGFaces[f]->quadrangles.size()-1};
+	q->setPartition(numPartition++);
   }
 
   gm->setOrderN(N, true, false);
@@ -2564,7 +2566,7 @@ bool buildHighOrderQuadMeshFromBaseComplex(GModel* gm, CMesh& CM, int N) {
 
 void alignQuadMesh(GModel* gm) {
 
-	int nit = 2;
+	int nit = 1;
 
 	V<int> np;
 
@@ -2576,7 +2578,7 @@ void alignQuadMesh(GModel* gm) {
 
 		M.geolog("M");
 
-
+Msg::Info("---------------------- Building T-mesh -------------------");
 		// Build T-Mesh
 		TMesh TM(M, M_PI/4); // build
 		// TMesh TM(M, 0); // build
@@ -2592,8 +2594,8 @@ void alignQuadMesh(GModel* gm) {
 		// V<int> q = optimizeQuantization(TM, 1);
 
 		// Quantization optimization (start from 0)
-	// Msg::Info("---------------------- Quantization starting from 0 -------------------");
-	// 	V<int> q0 = optimizeQuantization(TM, 0);
+// Msg::Info("---------------------- Quantization starting from 0 -------------------");
+// 		V<int> q0 = optimizeQuantization(TM, 0);
 
 		// Quantization optimization with LpSolve
 	Msg::Info("---------------------- Quantization with lp_solve -------------------");
@@ -2607,6 +2609,7 @@ void alignQuadMesh(GModel* gm) {
 			if(q[tedge->id] > 1) tedge->geolog(0, "length > 1");
 		}
 
+Msg::Info("---------------------- Building coarse patches -------------------");
 		// Build coarse patches
 		CMesh CM(TM, q);
 
@@ -2616,6 +2619,7 @@ void alignQuadMesh(GModel* gm) {
 		optimizePatchQuantization(CM);
 
 		
+Msg::Info("---------------------- Building mesh -------------------");
 		// Build mesh
 		buildMeshFromCMesh(CM, gm);
 
@@ -2647,30 +2651,33 @@ void alignQuadMesh(GModel* gm) {
 			GeoLog::add(it->first->point(), S(it->second), "#incident faces");
 		}
 
-		if(it == nit-1) {
+		if(it == nit-1) { // last iteration
 
-			// Smooth mesh
+Msg::Info("---------------------- Smoothing ----------------------");
 			meshWinslow2d(gm, 1000);
 
 			// Color quads by patch
+			gm->setNumPartitions(S(CM.cfaces));
+			int num = 0;
 			for(CFace* cface : CM.cfaces) {
 				int color = rand();
 				for(MQuadrangle* quad : cface->mquads) {
+					quad->setPartition(num);
 					geolog(quad, color, "patches");
 					// GeoLog::add({}, color, "patches");
 				}
+				num++;
 			}
 			// Color patch boundaries
 			for(CEdge* cedge : CM.cedges)
 				for(MLine* mline : cedge->mlines)
 					geolog(mline, 0, "patches");
-		}
-
-    if (it == nit - 1) { // last iteration
-      int N = 5;
-      Msg::Info("Build high-order mesh ... (N = %i, %li quads)", N, CM.cfaces.size());
-      buildHighOrderQuadMeshFromBaseComplex(gm, CM, N);
-    }
+	
+Msg::Info("---------------------- High-Order ----------------------");
+			int N = 5;
+			Msg::Info("Build high-order mesh ... (N = %i, %li quads)", N, CM.cfaces.size());
+			buildHighOrderQuadMeshFromBaseComplex(gm, CM, N);
+    	}
 	}
 
 	H(np);
