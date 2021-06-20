@@ -2508,7 +2508,7 @@ bool buildHighOrderQuadMeshFromBaseComplex(GModel* gm, CMesh& CM, int N) {
 
   gm->setOrderN(N, true, false);
 
-  Msg::Info("Compute position of high-order nodes ...");
+  Msg::Info("Compute position of high-order nodes (transfinite interpolation) ...");
   /* Compute position of high-order nodes from patch polylines */
   F(f,newQuadLocation.size()) {
     GFace* gf = newQuadLocation[f].first;
@@ -2544,14 +2544,29 @@ bool buildHighOrderQuadMeshFromBaseComplex(GModel* gm, CMesh& CM, int N) {
       sample_polyline(cs[3],1.-v,c4v); // 1-v because ordering inverted
       SPoint3 pt = SPoint3(TRAN_QUA(c1u,c2v,c3u,c4v,cs[0][0],cs[1][0],cs[2][0],cs[3][0], u, v));
       q->getVertex(lv)->setXYZ(pt);
+    }
+  }
 
-      if (gf->geomType() != GFace::Plane && gf->haveParametrization()) {
-        double uv[2];
-        GPoint proj = gf->closestPoint(q->getVertex(lv)->point(),uv);
+  Msg::Info("Project high-order nodes on CAD ...");
+  for (GEdge* ge: gm->getEdges()) {
+    for (MVertex* v: ge->mesh_vertices) {
+      double t = 0.;
+      GPoint proj = ge->closestPoint(v->point(),t);
+      if (proj.succeeded()) {
+        v->setXYZ(proj.x(),proj.y(),proj.z());
+        v->setParameter(0,proj.u());
+      }
+    }
+  }
+  for (GFace* gf: gm->getFaces()) {
+    if (gf->geomType() != GFace::Plane && gf->haveParametrization()) {
+      for (MVertex* v: gf->mesh_vertices) {
+        double uv[2] = {0.,0.};
+        GPoint proj = gf->closestPoint(v->point(),uv);
         if (proj.succeeded()) {
-          q->getVertex(lv)->setXYZ(proj.x(),proj.y(),proj.z());
-          q->getVertex(lv)->setParameter(0,proj.u());
-          q->getVertex(lv)->setParameter(1,proj.v());
+          v->setXYZ(proj.x(),proj.y(),proj.z());
+          v->setParameter(0,proj.u());
+          v->setParameter(1,proj.v());
         }
       }
     }
