@@ -28,6 +28,7 @@ using namespace Gecode;
 #include "meshWinslow2d.h" // for smoothing
 #include "meshGFaceOptimize.h"
 #include "pointsGenerators.h"
+#include "meshOctreeLibOL.h"
 
 // QuadMeshingTools
 #include "lp_solve_wrapper.h"
@@ -2507,6 +2508,7 @@ bool buildHighOrderQuadMeshFromBaseComplex(GModel* gm, CMesh& CM, int N) {
 
   gm->setOrderN(N, true, false);
 
+  Msg::Info("Compute position of high-order nodes ...");
   /* Compute position of high-order nodes from patch polylines */
   F(f,newQuadLocation.size()) {
     GFace* gf = newQuadLocation[f].first;
@@ -2569,6 +2571,17 @@ void alignQuadMesh(GModel* gm) {
 	int nit = 1;
 
 	V<int> np;
+
+  // Build discrete surface projectors for faster smoothing
+  std::unordered_map<GFace*,SurfaceProjector*> faceProjector;
+  for (GFace* gf: gm->getFaces()) {
+    faceProjector[gf] = new SurfaceProjector();
+    bool oksp = fillSurfaceProjector(gf,faceProjector[gf]);
+    if (!oksp) {
+      Msg::Warning("failed to build surface projector for face %i", gf->tag());
+    }
+  }
+
 
 	F(it, nit) {
 
@@ -2651,37 +2664,42 @@ Msg::Info("---------------------- Building mesh -------------------");
 			GeoLog::add(it->first->point(), S(it->second), "#incident faces");
 		}
 
-		if(it == nit-1) { // last iteration
+    if(it == nit-1) { // last iteration
 
-Msg::Info("---------------------- Smoothing ----------------------");
-			meshWinslow2d(gm, 1000);
+      Msg::Info("---------------------- Smoothing ----------------------");
+      meshWinslow2d(gm, 1000, nullptr, &faceProjector);
 
-			// Color quads by patch
-			gm->setNumPartitions(S(CM.cfaces));
-			int num = 0;
-			for(CFace* cface : CM.cfaces) {
-				int color = rand();
-				for(MQuadrangle* quad : cface->mquads) {
-					quad->setPartition(num);
-					geolog(quad, color, "patches");
-					// GeoLog::add({}, color, "patches");
-				}
-				num++;
-			}
-			// Color patch boundaries
-			for(CEdge* cedge : CM.cedges)
-				for(MLine* mline : cedge->mlines)
-					geolog(mline, 0, "patches");
-	
-Msg::Info("---------------------- High-Order ----------------------");
-			int N = 5;
-			Msg::Info("Build high-order mesh ... (N = %i, %li quads)", N, CM.cfaces.size());
-			buildHighOrderQuadMeshFromBaseComplex(gm, CM, N);
-    	}
-	}
+      // Color quads by patch
+      gm->setNumPartitions(S(CM.cfaces));
+      int num = 0;
+      for(CFace* cface : CM.cfaces) {
+        int color = rand();
+        for(MQuadrangle* quad : cface->mquads) {
+          quad->setPartition(num);
+          geolog(quad, color, "patches");
+          // GeoLog::add({}, color, "patches");
+        }
+        num++;
+      }
+      // Color patch boundaries
+      for(CEdge* cedge : CM.cedges)
+        for(MLine* mline : cedge->mlines)
+          geolog(mline, 0, "patches");
 
-	H(np);
+      Msg::Info("---------------------- High-Order ----------------------");
+      int N = 5;
+      Msg::Info("Build high-order mesh ... (N = %i, %li quads)", N, CM.cfaces.size());
+      buildHighOrderQuadMeshFromBaseComplex(gm, CM, N);
+    }
+  }
+
+  H(np);
 
 
-	draw();
+  draw();
+
+  // Clean the surface projectors
+  for (auto& kv: faceProjector) {
+    delete kv.second;
+  }
 }

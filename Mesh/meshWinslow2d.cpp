@@ -15,8 +15,7 @@
 #include "MEdge.h"
 #include "MLine.h"
 #include "meshWinslow2d.h"
-// #include "meshSurfaceProjection.h"
-// #include "meshOctreeLibOL.h"
+#include "meshOctreeLibOL.h"
 #include "meshGFaceOptimize.h"
 #include "Field.h"
 #include "geolog.h"
@@ -160,10 +159,11 @@ public:
   std::vector<MVertex *> stencil;
   const std::vector<MElement*> elements;
   std::vector<SVector3> ptsStencil;
+  SurfaceProjector* sp;
   ;
   winslowStencil (MVertex *v,
 		  const std::vector<MElement*> &_e,
-		  GFace *gf = NULL) : elements (_e)
+		  GFace *gf = NULL, SurfaceProjector* _sp = NULL) : elements (_e), sp(_sp)
   {
     type = classOfStencil(_e);
     if (type == 1 && _e.size() >= 3){
@@ -397,7 +397,12 @@ public:
       center->setXYZ(p.x(),p.y(),p.z());
     }
     else {
-      GPoint gp = CLOSESTPOINT(gf,p,uv, GT);
+      GPoint gp;
+      if (this->sp != nullptr) { /* projection on discrete triangulation */
+        gp = this->sp->closestPoint(p.data(),false,false);
+      } else {
+        gp = CLOSESTPOINT(gf,p,uv, GT);
+      }
       if (!gp.succeeded()){
         return 0;
       }
@@ -569,7 +574,7 @@ void meshWinslow2d (GFace * gf, int nIter, Field *f, bool remove) {
 }
 
 
-void meshWinslow2d (GModel * gm, int nIter, Field *f) {
+void meshWinslow2d (GModel * gm, int nIter, Field *f, std::unordered_map<GFace*,SurfaceProjector*>* projectors) {
   std::vector<GFace*> temp;
   std::vector<GEdge*> tempe;
   temp.insert(temp.begin(), gm->firstFace(), gm->lastFace());
@@ -586,7 +591,15 @@ void meshWinslow2d (GModel * gm, int nIter, Field *f) {
   }
   V<winslowStencil> stencils;
   FIT(it, adj) {
-    stencils.pb(winslowStencil(it->first, it->second));
+    MVertex* v = it->first;
+    SurfaceProjector* sp = nullptr;
+    if (projectors && dynamic_cast<GFace*>(v->onWhat())) {
+      auto itsp = projectors->find(dynamic_cast<GFace*>(v->onWhat()));
+      if (itsp != projectors->end()) {
+        sp = itsp->second;
+      }
+    }
+    stencils.pb(winslowStencil(v, it->second,NULL,sp));
   }
 
   // nIter = 10000;
@@ -610,8 +623,24 @@ void meshWinslow2d (GModel * gm, int nIter, Field *f) {
     DBG(i, nIter, dx, dx0);
     if(i == 0) dx0 = dx;
     if(dx < 0.001*dx0) {
-      P("coucou");
+      P("converged");
       break;
+    }
+  }
+
+  if (projectors) {
+    Msg::Info("winslow smoothing: final projection on CAD ...");
+    for(winslowStencil& st : stencils) if (st.sp != nullptr) {
+      GFace* gf = dynamic_cast<GFace*>(st.center->onWhat());
+      if (gf != nullptr && gf->haveParametrization()) {
+        double uv[2] = {0.,0.};
+        GPoint gp = gf->closestPoint(st.center->point(),uv);
+        if (gp.succeeded()) {
+          st.center->setXYZ(gp.x(),gp.y(),gp.z());
+          st.center->setParameter(0,gp.u());
+          st.center->setParameter(1,gp.v());
+        }
+      }
     }
   }
 
