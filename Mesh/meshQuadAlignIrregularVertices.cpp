@@ -2083,7 +2083,7 @@ V<int> optimizeQuantizationLpSolve(TMesh& TM) {
   }
 
   // Tell the solver to start from upper bound (see lp_solve documentation)
-  if (true) {
+  if (false) {
     // maxence: not the right values ? don't know how to use it to specify initial guess :/
     bool okb = solver.setBasisUpperBound();
     if (!okb) {
@@ -2592,8 +2592,8 @@ void alignQuadMesh(GModel* gm) {
 		// V<int> q = optimizeQuantization(TM, 1);
 
 		// Quantization optimization (start from 0)
-	Msg::Info("---------------------- Quantization starting from 0 -------------------");
-		V<int> q0 = optimizeQuantization(TM, 0);
+	// Msg::Info("---------------------- Quantization starting from 0 -------------------");
+	// 	V<int> q0 = optimizeQuantization(TM, 0);
 
 		// Quantization optimization with LpSolve
 	Msg::Info("---------------------- Quantization with lp_solve -------------------");
