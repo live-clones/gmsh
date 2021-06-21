@@ -71,8 +71,8 @@ bool compute4neighbors(
     L = t1.norm()*mult;    
     // HOUSTON WE HAVE A PROBLEM
     if (L > 1.e10){
-      double DU = drand48()*1.e-3*iter;
-      double DV = drand48()*1.e-3*iter;
+      double DU = ((double)rand()/RAND_MAX)*1.e-3*iter;
+      double DV = ((double)rand()/RAND_MAX)*1.e-3*iter;
       GPoint pp = gf->point(DU+midpoint.x(),DV+midpoint.y());
       X = pp.x();
       Y = pp.y();
