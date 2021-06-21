@@ -14,13 +14,14 @@
 
 #if defined(HAVE_OCC)
 
+#include <BRepBndLib.hxx>
+#include <BRepClass3d_SolidClassifier.hxx>
+#include <BRepTools.hxx>
+#include <BRep_Builder.hxx>
 #include <Bnd_Box.hxx>
+#include <TopExp_Explorer.hxx>
 #include <TopoDS.hxx>
 #include <TopoDS_Compound.hxx>
-#include <TopExp_Explorer.hxx>
-#include <BRep_Builder.hxx>
-#include <BRepBndLib.hxx>
-#include <BRepTools.hxx>
 
 OCCRegion::OCCRegion(GModel *m, TopoDS_Solid s, int num)
   : GRegion(m, num), _s(s)
@@ -49,12 +50,20 @@ void OCCRegion::_setup()
       if(model()->getOCCInternals())
         f = model()->getOCCInternals()->getFaceForOCCShape(model(), face);
       if(!f) { Msg::Error("Unknown surface in volume %d", tag()); }
-      else if(face.Orientation() == TopAbs_INTERNAL) {
+      else if(face.Orientation() == TopAbs_INTERNAL &&
+              CTX::instance()->geom.occAutoEmbed) {
         Msg::Debug("Adding embedded surface %d in volume %d", f->tag(), tag());
         embedded_faces.push_back(f);
       }
       else {
         l_faces.push_back(f);
+        // face.orientation() contains the orientation of the TopoDS_Face
+        // w.r.t. the underlying Geom_Surface, and the value is multiplied by
+        // the orientation of the shell
+        if(face.Orientation() == TopAbs_REVERSED)
+          l_dirs.push_back(-1);
+        else
+          l_dirs.push_back(1);
         f->addRegion(this);
       }
     }
@@ -66,7 +75,8 @@ void OCCRegion::_setup()
     if(model()->getOCCInternals())
       e = model()->getOCCInternals()->getEdgeForOCCShape(model(), edge);
     if(!e) { Msg::Error("Unknown curve in volume %d", tag()); }
-    else if(edge.Orientation() == TopAbs_INTERNAL) {
+    else if(edge.Orientation() == TopAbs_INTERNAL &&
+            CTX::instance()->geom.occAutoEmbed) {
       Msg::Debug("Adding embedded curve %d in volume %d", e->tag(), tag());
       embedded_edges.push_back(e);
       // OCCEdge *occe = (OCCEdge*)e;
@@ -80,7 +90,8 @@ void OCCRegion::_setup()
     if(model()->getOCCInternals())
       v = model()->getOCCInternals()->getVertexForOCCShape(model(), vertex);
     if(!v) { Msg::Error("Unknown point in volume %d", tag()); }
-    else if(vertex.Orientation() == TopAbs_INTERNAL) {
+    else if(vertex.Orientation() == TopAbs_INTERNAL &&
+            CTX::instance()->geom.occAutoEmbed) {
       Msg::Debug("Adding embedded point %d in volume %d", v->tag(), tag());
       embedded_vertices.push_back(v);
     }
@@ -117,6 +128,15 @@ SBoundingBox3d OCCRegion::bounds(bool fast)
 }
 
 GEntity::GeomType OCCRegion::geomType() const { return Volume; }
+
+bool OCCRegion::containsPoint(const SPoint3 &pt) const
+{
+  BRepClass3d_SolidClassifier solidClassifier(_s);
+  solidClassifier.Perform(gp_Pnt{pt.x(), pt.y(), pt.z()},
+                          CTX::instance()->geom.tolerance);
+  const TopAbs_State state = solidClassifier.State();
+  return (state == TopAbs_IN || state == TopAbs_ON);
+}
 
 void OCCRegion::writeBREP(const char *filename)
 {

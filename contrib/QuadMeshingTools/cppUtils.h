@@ -227,5 +227,21 @@ namespace CppUtils {
           std::forward<T>(rest)...);
     }
 
+  template <typename T>
+    class RestoreValueAtEndOfLife
+    {
+      public:
+        RestoreValueAtEndOfLife<T>(T* ptr) {
+          _ptr = ptr;
+          _value = *ptr;
+        }
+        ~RestoreValueAtEndOfLife<T>() {
+          *_ptr = _value;
+        }
+      protected:
+        T* _ptr;
+        T _value;
+    };
+
   void dummy();
 }

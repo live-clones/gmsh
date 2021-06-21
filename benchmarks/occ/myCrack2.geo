@@ -11,13 +11,13 @@ Spline(9) = {9, 10, 11, 12, 13};
 BooleanFragments{ Surface{1}; Delete; }{ Curve{9}; Delete; }
 
 Field[1] = Distance;
-Field[1].NNodesByEdge = 200;
-Field[1].EdgesList = {9};
+Field[1].Sampling = 200;
+Field[1].CurvesList = {9};
 
 Field[2] = Threshold;
-Field[2].IField = 1;
-Field[2].LcMin = 0.005;
-Field[2].LcMax = 0.05;
+Field[2].InField = 1;
+Field[2].SizeMin = 0.005;
+Field[2].SizeMax = 0.05;
 Field[2].DistMin = 0.01;
 Field[2].DistMax = 0.1;
 

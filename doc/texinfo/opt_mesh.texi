@@ -242,7 +242,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.IgnorePeriodicity
-Skip periodic node section and skip periodic boundary alignement step when reading meshes in the MSH2 format.@*
+Skip periodic node section and skip periodic boundary alignment step when reading meshes in the MSH2 format.@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -621,6 +621,21 @@ Display mesh trihedra?@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.QuadqsSizemapMethod
+Size map method in QuadQuasiStructured. 0: default, 1: cross-field,2: cross-field + CAD small features adaptation,3: from background mesh (e.g. sizes in current triangulation),4: cross-field + CAD small features adaptation (clamped by background mesh)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.QuadqsTopologyOptimizationMethods
+Topology optimization methods in QuadQuasiStructured. 0: default (all),100: pattern-based CAD faces,010: disk quadrangulation remeshing,001: cavity remeshing,xxx: combination of multiple methods (e.g. 111 for all)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.QuadqsRemeshingBoldness
+Controls how much cavity remeshing is allowed to distort the quad mesh. From 0 (no quality decrease during remeshing) to 1 (quality can tend to 0 during remeshing).@*
+Default value: @code{0.501}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.Quadrangles
 Display mesh quadrangles?@*
 Default value: @code{1}@*
@@ -788,12 +803,12 @@ Saved in: @code{General.OptionsFileName}
 
 @item Mesh.StlAngularDeflection
 Maximum angular deflection when creating STL representation of surfaces (currently only used with the OpenCASCADE kernel)@*
-Default value: @code{0.35}@*
+Default value: @code{0.3}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.StlLinearDeflection
-Maximum linear deflection when creating STL representation of surfaces (currently only used with the OpenCASCADE kernel)@*
-Default value: @code{0.01}@*
+Maximum relative linear deflection when creating STL representation of surfaces (currently only used with the OpenCASCADE kernel)@*
+Default value: @code{0.001}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.StlOneSolidPerSurface
@@ -848,7 +863,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item Mesh.ToleranceInitialDelaunay
 Tolerance for initial 3D Delaunay mesher@*
-Default value: @code{1e-08}@*
+Default value: @code{1e-12}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Triangles

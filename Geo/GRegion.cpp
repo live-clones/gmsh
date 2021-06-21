@@ -21,6 +21,10 @@
 #include "ExtrudeParams.h"
 #include "GmshDefines.h"
 
+#if defined(HAVE_MESH)
+#include "meshGFace.h"
+#endif
+
 GRegion::GRegion(GModel *model, int tag) : GEntity(model, tag)
 {
   GRegion::resetMeshAttributes();
@@ -268,11 +272,11 @@ void GRegion::setColor(unsigned int val, bool recursive)
 
 int GRegion::delFace(GFace *face)
 {
-  const auto found = std::find(begin(l_faces), end(l_faces), face);
+  const auto found = std::find(l_faces.begin(), l_faces.end(), face);
 
-  if(found != end(l_faces)) { l_faces.erase(found); }
+  if(found != l_faces.end()) { l_faces.erase(found); }
 
-  const auto pos = std::distance(begin(l_faces), found);
+  const auto pos = std::distance(l_faces.begin(), found);
 
   if(l_dirs.empty()) { return 0; }
 
@@ -283,7 +287,7 @@ int GRegion::delFace(GFace *face)
 
   const auto orientation = l_dirs.at(pos);
 
-  l_dirs.erase(std::next(begin(l_dirs), pos));
+  l_dirs.erase(std::next(l_dirs.begin(), pos));
 
   return orientation;
 }
@@ -291,10 +295,12 @@ int GRegion::delFace(GFace *face)
 void GRegion::setBoundFaces(const std::set<int> &tagFaces)
 {
   for(auto it = tagFaces.begin(); it != tagFaces.end(); ++it) {
-    GFace *face = model()->getFaceByTag(*it);
-    if(face) {
-      l_faces.push_back(face);
-      face->addRegion(this);
+    GFace *gf = model()->getFaceByTag(*it);
+    if(gf) {
+      if(std::find(l_faces.begin(), l_faces.end(), gf) == l_faces.end()) {
+        l_faces.push_back(gf);
+        gf->addRegion(this);
+      }
     }
     else {
       Msg::Error("Unknown surface %d in volume %d", *it, tag());
@@ -312,11 +318,13 @@ void GRegion::setBoundFaces(const std::vector<int> &tagFaces,
     setBoundFaces(tags);
   }
   for(std::size_t i = 0; i != tagFaces.size(); i++) {
-    GFace *face = model()->getFaceByTag(tagFaces[i]);
-    if(face) {
-      l_faces.push_back(face);
-      face->addRegion(this);
-      l_dirs.push_back(signFaces[i]);
+    GFace *gf = model()->getFaceByTag(tagFaces[i]);
+    if(gf) {
+      if(std::find(l_faces.begin(), l_faces.end(), gf) == l_faces.end()) {
+        l_faces.push_back(gf);
+        gf->addRegion(this);
+        l_dirs.push_back(signFaces[i]);
+      }
     }
     else {
       Msg::Error("Unknown surface %d in volume %d", tagFaces[i], tag());
@@ -888,6 +896,14 @@ bool GRegion::setOutwardOrientationMeshConstraint()
         gf->meshAttributes.reverseMesh = true;
         Msg::Info("Setting reverse mesh attribute on surface %d", gf->tag());
       }
+      else {
+        gf->meshAttributes.reverseMesh = false;
+      }
+#if defined(HAVE_MESH)
+      // if a mesh already exists, reorient it
+      orientMeshGFace o;
+      o(gf);
+#endif
       ++it;
     }
   }

@@ -6,6 +6,13 @@ gmsh.initialize()
 # load step file
 gmsh.open('as1-tu-203.stp')
 
+# uncomment this to fragment all volumes, i.e. make the geometry conformal
+# gmsh.model.occ.removeAllDuplicates()
+# gmsh.model.occ.synchronize()
+
+gmsh.option.setNumber('Mesh.MeshSizeFromCurvature', 15)
+gmsh.option.setNumber('Mesh.MeshSizeMax', 8)
+
 # get all model entities
 ent = gmsh.model.getEntities()
 

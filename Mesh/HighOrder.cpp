@@ -192,9 +192,13 @@ static bool computeEquidistantParameters(GFace *gf, double u0, double uN,
     const double t = i * fact;
     u[i] = u0 + (uN - u0) * t;
     v[i] = v0 + (vN - v0) * t;
-    // FIXME: don't use closestPoint for plane surfaces, as it's very slow with
-    // OCC
-    if(geodesic && gf->geomType() != GEntity::Plane) {
+    // only use closestPoint for non-plane surfaces (for performance reasons -
+    // it's very slow in OpenCASCADE), and not with the built-in representation
+    // (since it does not support complex surfaces anyway)
+    if(geodesic &&
+       gf->getNativeType() != GEntity::GmshModel &&
+       gf->getNativeType() != GEntity::UnknownModel &&
+       gf->geomType() != GEntity::Plane) {
       SPoint3 pc(t * pN + (1. - t) * p0);
       double guess[2] = {u[i], v[i]};
       GPoint gp = gf->closestPoint(pc, guess);
@@ -343,10 +347,12 @@ static bool getEdgeVerticesOnGeo(GFace *gf, MVertex *v0, MVertex *v1,
     else {
       pnt0 = v0->point();
       pnt1 = v1->point();
-      // FIXME: using the geodesic is sometimes a bad idea when the edge is "far
-      // away" from the surface (e.g. on the diameter of a circle!)
+      // warning: using the geodesic is sometimes a bad idea when the edge is
+      // "far away" from the surface (e.g. on the diameter of a circle!);
+      // however removing this can cause failures on surfaces with singular
+      // parametrizations like spheroids (see #1271)
       computeEquidistantParameters(gf, p0[0], p1[0], p0[1], p1[1], pnt0, pnt1,
-                                   nPts + 2, false, US, VS);
+                                   nPts + 2, true, US, VS);
     }
   }
   else {

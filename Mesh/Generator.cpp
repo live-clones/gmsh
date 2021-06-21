@@ -35,6 +35,7 @@
 #include "Options.h"
 #include "Generator.h"
 #include "meshQuadQuasiStructured.h"
+#include "meshGFaceBipartiteLabelling.h"
 
 #if defined(_OPENMP)
 #include <omp.h>
@@ -379,17 +380,16 @@ static void Mesh1D(GModel *m)
 #pragma omp parallel for schedule(dynamic)
 #endif
     for(size_t K = 0; K < sss; K++) {
+      int localPending = 0;
       GEdge *ed = temp[K];
       if(ed->meshStatistics.status == GEdge::PENDING) {
         ed->mesh(true);
 #if defined(_OPENMP)
 #pragma omp critical
 #endif
-        {
-          nPending++;
-        }
+	localPending = ++nPending;
       }
-      if(!nIter) Msg::ProgressMeter(nPending, false, "Meshing 1D...");
+      if(!nIter) Msg::ProgressMeter(localPending, false, "Meshing 1D...");
     }
 
     if(!nPending) break;
@@ -530,17 +530,16 @@ static void Mesh2D(GModel *m)
 #pragma omp parallel for schedule(dynamic)
 #endif
       for(size_t K = 0; K < temp.size(); K++) {
+	int localPending = 0;
         if(temp[K]->meshStatistics.status == GFace::PENDING) {
           backgroundMesh::current()->unset();
           temp[K]->mesh(true);
 #if defined(_OPENMP)
 #pragma omp critical
 #endif
-          {
-            nPending++;
-          }
+	  localPending = ++nPending;
         }
-        if(!nIter) Msg::ProgressMeter(nPending, false, "Meshing 2D...");
+        if(!nIter) Msg::ProgressMeter(localPending, false, "Meshing 2D...");
       }
       if(!nPending) break;
       // iter == 2 is for meshing re-parametrized surfaces; after that, we
@@ -555,6 +554,8 @@ static void Mesh2D(GModel *m)
   Msg::SetNumThreads(prevNumThreads);
 
   if(CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT) {
+    replaceBadQuadDominantMeshes(m);
+
     /* In the quasi-structured pipeline, the quad-dominant mesh
      * is subdivided into a full quad mesh */
     /* TODO: - a faster CAD projection approach (from uv)
@@ -562,6 +563,7 @@ static void Mesh2D(GModel *m)
     // bool linear = false;
     // RefineMesh(m, linear, true, false);
     RefineMeshWithBackgroundMeshProjection(m);
+
 
     OptimizeMesh(m, "QuadQuasiStructured");
   }
@@ -799,7 +801,7 @@ static void TestConformity(GModel *gm)
           bnd.erase(it);
       }
     }
-    printf("vol(%d) = %12.5E\n", gr->tag(), vol);
+    Msg::Info("vol(%d) = %12.5E", gr->tag(), vol);
 
     for(auto itf = bnd.begin(); itf != bnd.end(); ++itf) {
       GFace *gfound = findInFaceSearchStructure(*itf, search);
@@ -1162,7 +1164,10 @@ void RecombineMesh(GModel *m)
     bool blossom = (CTX::instance()->mesh.algoRecombine == 1 ||
                     CTX::instance()->mesh.algoRecombine == 3);
     int topo = CTX::instance()->mesh.recombineOptimizeTopology;
-    recombineIntoQuads(gf, blossom, topo, true, .01);
+    if (CTX::instance()->mesh.algoRecombine == 4)
+      meshGFaceQuadrangulateBipartiteLabelling(gf->tag());
+    else
+      recombineIntoQuads(gf, blossom, topo, true, .01);
   }
 
   double t2 = Cpu(), w2 = TimeOfDay();
@@ -1469,19 +1474,28 @@ void GenerateMesh(GModel *m, int ask)
     int old = m->getMeshStatus(false);
     bool doIt = (ask >= 1 && ask <= 3);
     bool exists = backgroundMeshAndGuidingFieldExists(m);
+    bool overwriteGModelMesh = false; /* use current mesh if available */
+    bool overwriteField = false;
     if(old == 1 && ask == 1 && exists) doIt = true;
     if(old == 1 && ask == 2 && exists) doIt = false;
+    if(old == 2 && exists && (ask == 1 || ask ==2)) {
+      /* User has a mesh and wants a new one (all options may have changed) */
+      doIt = true;
+      overwriteField = true;
+      overwriteGModelMesh = true;
+    }
+    if(old == 2 && ask == 1 && exists) doIt = true;
     if(old == 2 && ask == 2 && exists) doIt = true;
     if(doIt) {
-      bool overwriteGModelMesh = false; /* use current mesh if available */
       bool deleteGModelMeshAfter =
         true; /* mesh saved in background, no longer needed */
       BuildBackgroundMeshAndGuidingField(m, overwriteGModelMesh,
-                                         deleteGModelMeshAfter);
+                                         deleteGModelMeshAfter,
+                                         overwriteField);
     }
 
-    if(CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT 
-        && old == 2 && ask == 2 && exists) {
+    if(CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT
+        && old == 2 && exists && (ask == 1 || ask == 2)) {
       /* transferSeamGEdgesVerticesToGFace() called by quadqs remove the 1D
        * meshes of the seam GEdge, so 2D initial meshing does not work without
        * first remeshing the seam GEdge. We delete the whole mesh by security */
@@ -1490,7 +1504,9 @@ void GenerateMesh(GModel *m, int ask)
 
     if(CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT) {
       /* note: the creation of QuadqsContextUpdater modifies many
-       *       meshing parameters */
+       *       meshing parameters
+       *       current parameter values are saved and will be restored
+       *       at the destruction of qqs */
       qqs = new QuadqsContextUpdater();
     }
 

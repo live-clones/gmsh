@@ -188,7 +188,7 @@ int main(int argc, char **argv)
   auto checkForEvent = [=]() -> bool {
     std::vector<std::string> action;
     gmsh::onelab::getString("ONELAB/Action", action);
-    if(action.size() and action[0] == "check") {
+    if(action.size() && action[0] == "check") {
       gmsh::onelab::setString("ONELAB/Action", {""});
       partitionMesh();
       gmsh::graphics::draw();

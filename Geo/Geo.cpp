@@ -808,7 +808,7 @@ Curve *DuplicateCurve(Curve *c)
 {
   bool ok = true;
   Curve *pc =
-    CreateCurve(NEWLINE(), 0, 1, nullptr, nullptr, -1, -1, 0., 1., ok);
+    CreateCurve(NEWCURVE(), 0, 1, nullptr, nullptr, -1, -1, 0., 1., ok);
   CopyCurve(c, pc);
   Tree_Insert(GModel::current()->getGEOInternals()->Curves, &pc);
   for(int i = 0; i < List_Nbr(c->Control_Points); i++) {
@@ -1621,8 +1621,8 @@ static int CompareTwoCurves(const void *a, const void *b)
   }
 
   // compare boundary layer curves using their source extrusion entity, which is
-  // assumed to be unique; this allows to have 2 distinct boundary layer curves
-  // with the same beg/end points
+  // assumed to be unique; this allows one to have 2 distinct boundary layer
+  // curves with the same beg/end points
   if(c1->Typ == MSH_SEGM_BND_LAYER && c1->Extrude &&
      c2->Typ == MSH_SEGM_BND_LAYER && c2->Extrude) {
     int comp =
@@ -2503,7 +2503,7 @@ int ExtrudePoint(int type, int ip, double T0, double T1, double T2, double A0,
     List_Reset(ListOfTransformedPoints);
     ApplyTransformationToPoint(matrix, chapeau);
     if(!ComparePosition(&pv, &chapeau)) return pv->Num;
-    c = CreateCurve(NEWLINE(), MSH_SEGM_LINE, 1, nullptr, nullptr, -1, -1, 0.,
+    c = CreateCurve(NEWCURVE(), MSH_SEGM_LINE, 1, nullptr, nullptr, -1, -1, 0.,
                     1., ok);
     c->Control_Points = List_Create(2, 1, sizeof(Vertex *));
     c->Extrude = new ExtrudeParams;
@@ -2517,7 +2517,7 @@ int ExtrudePoint(int type, int ip, double T0, double T1, double T2, double A0,
   case BOUNDARY_LAYER:
     chapeau->Typ = MSH_POINT_BND_LAYER;
     if(e) chapeau->boundaryLayerIndex = e->mesh.BoundaryLayerIndex;
-    c = CreateCurve(NEWLINE(), MSH_SEGM_BND_LAYER, 1, nullptr, nullptr, -1, -1,
+    c = CreateCurve(NEWCURVE(), MSH_SEGM_BND_LAYER, 1, nullptr, nullptr, -1, -1,
                     0., 1., ok);
     c->Control_Points = List_Create(2, 1, sizeof(Vertex *));
     c->Extrude = new ExtrudeParams;
@@ -2548,7 +2548,7 @@ int ExtrudePoint(int type, int ip, double T0, double T1, double T2, double A0,
     List_Reset(ListOfTransformedPoints);
     ApplyTransformationToPoint(matrix, chapeau);
     if(!ComparePosition(&pv, &chapeau)) return pv->Num;
-    c = CreateCurve(NEWLINE(), MSH_SEGM_CIRC, 1, nullptr, nullptr, -1, -1, 0.,
+    c = CreateCurve(NEWCURVE(), MSH_SEGM_CIRC, 1, nullptr, nullptr, -1, -1, 0.,
                     1., ok);
     c->Control_Points = List_Create(3, 1, sizeof(Vertex *));
     c->Extrude = new ExtrudeParams;
@@ -2576,7 +2576,7 @@ int ExtrudePoint(int type, int ip, double T0, double T1, double T2, double A0,
   case TRANSLATE_ROTATE:
     d = CTX::instance()->geom.extrudeSplinePoints;
     d = d ? d : 1;
-    c = CreateCurve(NEWLINE(), MSH_SEGM_SPLN, 1, nullptr, nullptr, -1, -1, 0.,
+    c = CreateCurve(NEWCURVE(), MSH_SEGM_SPLN, 1, nullptr, nullptr, -1, -1, 0.,
                     1., ok);
     c->Control_Points = List_Create(
       CTX::instance()->geom.extrudeSplinePoints + 1, 1, sizeof(Vertex *));
@@ -3215,7 +3215,7 @@ static Curve *_create_splitted_curve(Curve *c, List_T *nodes)
   int beg, end;
   List_Read(nodes, 0, &beg);
   List_Read(nodes, List_Nbr(nodes) - 1, &end);
-  int id = NEWLINE();
+  int id = NEWCURVE();
   Curve *cnew = nullptr;
   bool ok = true;
   switch(c->Typ) {
@@ -3458,7 +3458,7 @@ bool SortEdgesInLoop(int num, List_T *edges, bool reorient)
         if(c2->end == c0->beg) {
           if(List_Nbr(temp)) {
             Msg::Info(
-              "Starting subloop %d in Curve Loop %d (are you sure about this?)",
+              "Starting subloop %d in curve loop %d (are you sure about this?)",
               ++k, num);
             c0 = c1 = *(Curve **)List_Pointer(temp, 0);
             List_Add(edges, &c1->Num);
@@ -3469,7 +3469,7 @@ bool SortEdgesInLoop(int num, List_T *edges, bool reorient)
       }
     }
     if(j++ > nbEdges) {
-      Msg::Error("Curve Loop %d is wrong", num);
+      Msg::Error("Curve loop %d is wrong", num);
       ok = false;
       break;
     }
@@ -3588,7 +3588,7 @@ int NEWPOINT()
   return tag;
 }
 
-int NEWLINE()
+int NEWCURVE()
 {
   int tag = 0;
   if(CTX::instance()->geom.oldNewreg)
@@ -3600,7 +3600,7 @@ int NEWLINE()
   return tag;
 }
 
-int NEWLINELOOP()
+int NEWCURVELOOP()
 {
   int tag = 0;
   if(CTX::instance()->geom.oldNewreg)

@@ -14,12 +14,12 @@ Extrude {0,0.0,1}{ Surface{6}; }
 Point(55) = {0.3,0.3,0.3,1};
 
 Field[1] = Distance;
-Field[1].NodesList = {55};
+Field[1].PointsList = {55};
 
 Field[2] = Threshold;
-Field[2].IField = 1;
-Field[2].LcMin = lc/20;
-Field[2].LcMax = lc;
+Field[2].InField = 1;
+Field[2].SizeMin = lc/20;
+Field[2].SizeMax = lc;
 Field[2].DistMin = 0.3;
 Field[2].DistMax = 0.5;
 

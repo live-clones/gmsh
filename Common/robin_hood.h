@@ -10,7 +10,7 @@
 //
 // Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2020 Martin Ankerl <http://martin.ankerl.com>
+// Copyright (c) 2018-2021 Martin Ankerl <http://martin.ankerl.com>
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -35,8 +35,8 @@
 
 // see https://semver.org/
 #define ROBIN_HOOD_VERSION_MAJOR 3  // for incompatible API changes
-#define ROBIN_HOOD_VERSION_MINOR 10 // for adding functionality in a backwards-compatible manner
-#define ROBIN_HOOD_VERSION_PATCH 0  // for backwards-compatible bug fixes
+#define ROBIN_HOOD_VERSION_MINOR 11 // for adding functionality in a backwards-compatible manner
+#define ROBIN_HOOD_VERSION_PATCH 1  // for backwards-compatible bug fixes
 
 #include <algorithm>
 #include <cstdlib>
@@ -47,6 +47,7 @@
 #include <string>
 #include <type_traits>
 #include <utility>
+#include <limits>
 #if __cplusplus >= 201703L
 #    include <string_view>
 #endif
@@ -190,6 +191,17 @@ static Counts& counts() {
 #    endif
 #else
 #    define ROBIN_HOOD_PRIVATE_DEFINITION_HAS_NATIVE_WCHART() 1
+#endif
+
+// detect if MSVC supports the pair(std::piecewise_construct_t,...) consructor being constexpr
+#ifdef _MSC_VER
+#    if _MSC_VER <= 1900
+#        define ROBIN_HOOD_PRIVATE_DEFINITION_BROKEN_CONSTEXPR() 1
+#    else
+#        define ROBIN_HOOD_PRIVATE_DEFINITION_BROKEN_CONSTEXPR() 0
+#    endif
+#else
+#    define ROBIN_HOOD_PRIVATE_DEFINITION_BROKEN_CONSTEXPR() 0
 #endif
 
 // workaround missing "is_trivially_copyable" in g++ < 5.0
@@ -602,14 +614,20 @@ struct pair {
         , second(std::forward<U2>(b)) {}
 
     template <typename... U1, typename... U2>
-    constexpr pair(
-        std::piecewise_construct_t /*unused*/, std::tuple<U1...> a,
-        std::tuple<U2...> b) noexcept(noexcept(pair(std::declval<std::tuple<U1...>&>(),
-                                                    std::declval<std::tuple<U2...>&>(),
-                                                    ROBIN_HOOD_STD::index_sequence_for<U1...>(),
-                                                    ROBIN_HOOD_STD::index_sequence_for<U2...>())))
+    // MSVC 2015 produces error "C2476: ‘constexpr’ constructor does not initialize all members"
+    // if this constructor is constexpr
+#if !ROBIN_HOOD(BROKEN_CONSTEXPR)
+    constexpr
+#endif
+        pair(std::piecewise_construct_t /*unused*/, std::tuple<U1...> a,
+             std::tuple<U2...>
+                 b) noexcept(noexcept(pair(std::declval<std::tuple<U1...>&>(),
+                                           std::declval<std::tuple<U2...>&>(),
+                                           ROBIN_HOOD_STD::index_sequence_for<U1...>(),
+                                           ROBIN_HOOD_STD::index_sequence_for<U2...>())))
         : pair(a, b, ROBIN_HOOD_STD::index_sequence_for<U1...>(),
-               ROBIN_HOOD_STD::index_sequence_for<U2...>()) {}
+               ROBIN_HOOD_STD::index_sequence_for<U2...>()) {
+    }
 
     // constructor called from the std::piecewise_construct_t ctor
     template <typename... U1, size_t... I1, typename... U2, size_t... I2>
@@ -1769,6 +1787,12 @@ public:
         }
     }
 
+    void insert(std::initializer_list<value_type> ilist) {
+        for (auto&& vt : ilist) {
+            insert(std::move(vt));
+        }
+    }
+
     template <typename... Args>
     std::pair<iterator, bool> emplace(Args&&... args) {
         ROBIN_HOOD_TRACE(this)
@@ -2403,14 +2427,25 @@ private:
                                        << maxNumElementsAllowed << ", load="
                                        << (static_cast<double>(mNumElements) * 100.0 /
                                            (static_cast<double>(mMask) + 1)))
-        if (mNumElements * 2 < calcMaxNumElementsAllowed(mMask + 1)) {
-            return false;
-        }
 
-        // Each resize use a different hash so we don't so easily overflow.
-        mHashMultiplier += hash_multiplier_constant;
-        rehashPowerOfTwo((mMask + 1) * 2, false);
+        nextHashMultiplier();
+        if (mNumElements * 2 < calcMaxNumElementsAllowed(mMask + 1)) {
+            // we have to resize, even though there would still be plenty of space left!
+            // Try to rehash instead. Delete freed memory so we don't steadyily increase mem in case
+            // we have to rehash a few times
+            rehashPowerOfTwo(mMask + 1, true);
+        } else {
+            // Each resize use a different hash so we don't so easily overflow.
+            // Make sure we only have odd numbers, so that the multiplication is reversible!
+            rehashPowerOfTwo((mMask + 1) * 2, false);
+        }
         return true;
+    }
+
+    void nextHashMultiplier() {
+        // adding an *even* number, so that the multiplier will always stay odd. This is necessary
+        // so that the hash stays a mixing function (and thus doesn't have any information loss).
+        mHashMultiplier += UINT64_C(0xc4ceb9fe1a85ec54);
     }
 
     void destroy() {
@@ -2443,7 +2478,7 @@ private:
     }
 
     // members are sorted so no padding occurs
-    uint64_t mHashMultiplier = hash_multiplier_constant;                    // 8 byte  8
+    uint64_t mHashMultiplier = UINT64_C(0xc4ceb9fe1a85ec53);                // 8 byte  8
     Node* mKeyVals = reinterpret_cast_no_cast_align_warning<Node*>(&mMask); // 8 byte 16
     uint8_t* mInfo = reinterpret_cast<uint8_t*>(&mMask);                    // 8 byte 24
     size_t mNumElements = 0;                                                // 8 byte 32

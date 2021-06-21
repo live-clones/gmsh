@@ -9,7 +9,6 @@
 #include <vector>
 #include <map>
 #include <string>
-#include <functional>
 
 #define NUM_SOLVERS 10
 
@@ -50,7 +49,7 @@ struct contextMeshOptions {
   int nLayersPerGap;
   double gradation;
   int quadqsSizemapMethod, quadqsTopoOptimMethods;
-  std::function<double(int, int, double, double, double)> lcCallback;
+  double quadqsRemeshingBoldness;
   // mesh IO
   int fileFormat, firstElementTag, firstNodeTag;
   double mshFileVersion, medFileMinorVersion, scalingFactor;
@@ -92,7 +91,8 @@ struct contextGeometryOptions {
   int extrudeSplinePoints, extrudeReturnLateral;
   int autoCoherence;
   double tolerance, toleranceBoolean, snap[3], transform[3][3], offset[3];
-  int occAutoFix, occFixDegenerated, occFixSmallEdges, occFixSmallFaces;
+  int occAutoFix, occAutoEmbed;
+  int occFixDegenerated, occFixSmallEdges, occFixSmallFaces;
   int occSewFaces, occMakeSolids, occParallel, occBooleanPreserveNumbering;
   int occBoundsUseSTL, occDisableSTL, occImportLabels, occUnionUnify;
   int occThruSectionsDegree, occUseGenericClosestPoint;
@@ -110,6 +110,7 @@ struct contextGeometryOptions {
   double pointSize, curveWidth, selectedPointSize, selectedCurveWidth;
   int pointType, curveType, surfaceType, numSubEdges;
   double normals, tangents, scalingFactor;
+  int snapPoints;
   int highlightOrphans, clip, useTransform;
   int doubleClickedEntityTag;
   std::string doubleClickedPointCommand, doubleClickedCurveCommand;

@@ -20,8 +20,8 @@ Surface(1) = {1};
 // BSpline filling
 BSpline Surface(2) = {1};
 
-// Bezier filling
-BSpline Surface(3) = {1};
+// Bezier filling - can be used if all bounding curves are Bezier curves
+// Bezier Surface(3) = {1};
 
 Point(7) = {-0.7, 0.1, -0.2, 1.0};
 Point(8) = {-0.67, 0.1, -0.2, 1.0};

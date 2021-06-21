@@ -481,6 +481,13 @@ public:
   {
     return num < 4 ? _v[num] : _vs[num - 4];
   }
+  virtual void setVertex(int num, MVertex *v)
+  {
+    if(num < 4)
+      _v[num] = v;
+    else
+      _vs[num - 4] = v;
+  }
   virtual int getNumFaceVertices() const
   {
     if(getIsAssimilatedSerendipity())

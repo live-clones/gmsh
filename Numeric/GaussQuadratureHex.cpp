@@ -81,13 +81,13 @@ IntPt GQH34[34] = {
   {{-0.7398529500, -0.7398529500, 0.7398529500}, 0.21382017456},
   {{-0.7398529500, -0.7398529500, -0.7398529500}, 0.21382017456}};
 
-static IntPt *GQH[3] = {GQH1, GQH6, GQH34};
-static int GQHnPt[3] = {1, 6, 34};
+static IntPt *GQH[2] = {GQH1, GQH6};
+static int GQHnPt[2] = {1, 6};
 static std::vector<IntPt *> GQHGL(40, nullptr);
 
 IntPt *getGQHPts(int order)
 {
-  if(order <= 2) return GQH[order];
+  if(order <= 1) return GQH[order];
   int n = (order + 1) / (float)2 + 0.5;
   if(static_cast<int>(GQHGL.size()) < order + 1)
     GQHGL.resize(order + 1, nullptr);
@@ -113,7 +113,7 @@ IntPt *getGQHPts(int order)
 
 int getNGQHPts(int order)
 {
-  if(order <= 2) return GQHnPt[order];
+  if(order <= 1) return GQHnPt[order];
   int n = (order + 1) / (float)2 + 0.5;
   return n * n * n;
 }

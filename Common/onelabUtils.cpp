@@ -550,7 +550,7 @@ namespace onelabUtils {
     double val = x.getValue();
 
     // keep track of these attributes, which can be changed server-side (unless,
-    // for the range/choices, when explicitely setting these attributes as
+    // for the range/choices, when explicitly setting these attributes as
     // ReadOnly)
     if(!readOnlyRange) {
       if(x.getMin() != -onelab::parameter::maxNumber() ||

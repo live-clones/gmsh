@@ -535,7 +535,7 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
   // load default system icons (for file browser)
   Fl_File_Icon::load_system_icons();
 
-  // FLTK >= 1.3.3 allows to set a default global window icon
+  // FLTK >= 1.3.3 allows one to set a default global window icon
   Fl_RGB_Image icon(&gmsh_icon_pixmap);
   Fl_Window::default_icon(&icon);
 
@@ -1226,6 +1226,11 @@ void FlGui::copyCurrentOpenglWindowToClipboard()
 #endif
 }
 
+drawContext *FlGui::getCurrentDrawContext()
+{
+  return getCurrentOpenglWindow()->getDrawContext();
+}
+
 char FlGui::selectEntity(int type)
 {
   return getCurrentOpenglWindow()->selectEntity(
@@ -1510,4 +1515,22 @@ void FlGui::openModule(const std::string &name)
   if(!onelab) return;
   if(!onelab->isManuallyClosed("0Modules/" + name))
     onelab->openTreeItem("0Modules/" + name);
+}
+
+void FlGui::openTreeItem(const std::string &name)
+{
+  if(!onelab) return;
+  onelab->openTreeItem(name);
+}
+
+void FlGui::closeTreeItem(const std::string &name)
+{
+  if(!onelab) return;
+  onelab->closeTreeItem(name);
+}
+
+void FlGui::showOnelabContext(int dim, int tag)
+{
+  if(!onelabContext) return;
+  onelabContext->show(dim, tag);
 }

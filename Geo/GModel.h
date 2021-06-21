@@ -12,6 +12,7 @@
 #include <map>
 #include <string>
 #include <unordered_map>
+#include <functional>
 #include "GVertex.h"
 #include "GEdge.h"
 #include "GFace.h"
@@ -21,8 +22,10 @@
 #include "MFaceHash.h"
 #include "MEdgeHash.h"
 
-#define hashmapMFace std::unordered_map<MFace, std::size_t, MFaceHash, MFaceEqual>
-#define hashmapMEdge std::unordered_map<MEdge, std::size_t, MEdgeHash, MEdgeEqual>
+#define hashmapMFace                                                           \
+  std::unordered_map<MFace, std::size_t, MFaceHash, MFaceEqual>
+#define hashmapMEdge                                                           \
+  std::unordered_map<MEdge, std::size_t, MEdgeHash, MEdgeEqual>
 
 template <class scalar> class simpleFunction;
 
@@ -94,8 +97,8 @@ protected:
   // used for post-processing I/O)
   std::vector<MVertex *> _vertexVectorCache;
   std::map<int, MVertex *> _vertexMapCache;
-  std::vector<MElement *> _elementVectorCache;
-  std::map<int, MElement *> _elementMapCache;
+  std::vector<std::pair<MElement *, int> > _elementVectorCache;
+  std::map<int, std::pair<MElement *, int> > _elementMapCache;
   std::map<int, int> _elementIndexCache;
 
   // ghost cell information (stores partitions for each element acting
@@ -276,8 +279,8 @@ public:
 
   // add a mesh edge or face in the global edge or face map and number it
   // (starting at 1)
-  std::size_t addMEdge(const MEdge &edge);
-  std::size_t addMFace(const MFace &face);
+  std::size_t addMEdge(MEdge &edge);
+  std::size_t addMFace(MFace &face);
   // get the edge of face and its global number given mesh nodes (return 0 if
   // the edge or face does not exist in the edge or face map)
   std::size_t getMEdge(MVertex *v0, MVertex *v1, MEdge &edge);
@@ -527,7 +530,12 @@ public:
                                                  bool strict = true);
 
   // access a mesh element by tag, using the element cache
-  MElement *getMeshElementByTag(int n);
+  MElement *getMeshElementByTag(int n)
+  {
+    int tag;
+    return getMeshElementByTag(n, tag);
+  }
+  MElement *getMeshElementByTag(int n, int &entityTag);
 
   // access temporary mesh element index
   int getMeshElementIndex(MElement *e);
@@ -561,7 +569,7 @@ public:
   void scaleMesh(double factor);
 
   // set/get entity that is currently being meshed (for error reporting)
-  void setCurrentMeshEntity(GEntity *e) { _currentMeshEntity = e; }
+  void setCurrentMeshEntity(GEntity *e);
   GEntity *getCurrentMeshEntity() { return _currentMeshEntity; }
 
   // set/get entities/vertices linked meshing errors
@@ -587,7 +595,9 @@ public:
   void setNumPartitions(std::size_t npart) { _numPartitions = npart; }
 
   // partition the mesh
-  int partitionMesh(int num);
+  int partitionMesh(int num,
+                    std::vector<std::pair<MElement *, int> > elementPartition =
+                      std::vector<std::pair<MElement *, int> >());
   // unpartition the mesh
   int unpartitionMesh();
   // import a mesh partitionned by a tag given by element (i.e. the old way we
@@ -683,6 +693,9 @@ public:
                           const std::vector<int> &subdomain,
                           const std::vector<int> &dim);
   void computeHomology();
+
+  // mesh size callback
+  std::function<double(int, int, double, double, double)> lcCallback;
 
   // compute automatic sizing field from curvature
   void computeSizeField();

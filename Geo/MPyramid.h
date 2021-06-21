@@ -196,6 +196,11 @@ public:
     return e[face][edge];
   }
   virtual int numCommonNodesInDualGraph(const MElement *const other) const;
+  virtual MVertex *getVertexNEU(int num)
+  {
+    static const int map[5] = {0, 1, 3, 2, 4};
+    return getVertex(map[num]);
+  }
 };
 
 /*

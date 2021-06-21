@@ -157,7 +157,7 @@ PView *GMSH_BubblesPlugin::execute(PView *v)
         fprintf(fp, "BSpline(%d) = {", l++);
         for(int i = nump - 1; i >= 0; i--) fprintf(fp, "%d,", p - i - 1);
         fprintf(fp, "%d};\n", p - nump);
-        fprintf(fp, "Line Loop(%d) = {%d};\n", ll++, l - 1);
+        fprintf(fp, "Curve Loop(%d) = {%d};\n", ll++, l - 1);
         fprintf(fp, "Plane Surface(%d) = {%d};\n", s++, ll - 1);
       }
     }

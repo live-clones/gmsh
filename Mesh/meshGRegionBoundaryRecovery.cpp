@@ -871,42 +871,45 @@ namespace tetgenBR {
           face segloop;
           // Re-create the segment mesh in the corresponding GEdges.
           for(auto it = l_edges.begin(); it != l_edges.end(); ++it) {
-            // Find the GFace with tag = *it.
+            // Find the GEdge with tag = *it.
 
             int etag = *it;
-
-            const auto edge_location =
-              std::find_if(begin(e_list), end(e_list), [&](GEdge *const edge) {
-                return edge->tag() == etag;
-              });
-
-            GEdge *ge = edge_location == end(e_list) ? nullptr : *edge_location;
-            assert(ge != nullptr);
-
-            Msg::Info(" - Steiner points exist on curve %d", ge->tag());
-            // Delete the old triangles.
-            for(std::size_t i = 0; i < ge->lines.size(); i++)
-              delete ge->lines[i];
-            ge->lines.clear();
-            ge->deleteVertexArrays();
-            // Create the new triangles.
-            segloop.shver = 0;
-            subsegs->traversalinit();
-            segloop.sh = shellfacetraverse(subsegs);
-            while(segloop.sh != nullptr) {
-              if(shellmark(segloop) == etag) {
-                p[0] = sorg(segloop);
-                p[1] = sdest(segloop);
-                int idx1 = pointmark(p[0]) - in->firstnumber;
-                MVertex *v1 = idx1 >= (int)_vertices.size() ? _extras[idx1] :
-                                                              _vertices[idx1];
-                int idx2 = pointmark(p[1]) - in->firstnumber;
-                MVertex *v2 = idx2 >= (int)_vertices.size() ? _extras[idx2] :
-                                                              _vertices[idx2];
-                MLine *t = new MLine(v1, v2);
-                ge->lines.push_back(t);
+            GEdge *ge = nullptr;
+            for(auto it = e_list.begin(); it != e_list.end(); ++it) {
+              if((*it)->tag() == etag) {
+                ge = *it;
+                break;
               }
+            }
+            if(ge != nullptr) {
+              Msg::Info(" - Steiner points exist on curve %d", ge->tag());
+              // Delete the old triangles.
+              for(std::size_t i = 0; i < ge->lines.size(); i++)
+                delete ge->lines[i];
+              ge->lines.clear();
+              ge->deleteVertexArrays();
+              // Create the new triangles.
+              segloop.shver = 0;
+              subsegs->traversalinit();
               segloop.sh = shellfacetraverse(subsegs);
+              while(segloop.sh != nullptr) {
+                if(shellmark(segloop) == etag) {
+                  p[0] = sorg(segloop);
+                  p[1] = sdest(segloop);
+                  int idx1 = pointmark(p[0]) - in->firstnumber;
+                  MVertex *v1 = idx1 >= (int)_vertices.size() ? _extras[idx1] :
+                    _vertices[idx1];
+                  int idx2 = pointmark(p[1]) - in->firstnumber;
+                  MVertex *v2 = idx2 >= (int)_vertices.size() ? _extras[idx2] :
+                    _vertices[idx2];
+                  MLine *t = new MLine(v1, v2);
+                  ge->lines.push_back(t);
+                }
+                segloop.sh = shellfacetraverse(subsegs);
+              }
+            }
+            else {
+              Msg::Debug("Unknown curve %d with Steiner point(s)", etag);
             }
           } // it
         }
@@ -919,48 +922,51 @@ namespace tetgenBR {
             // Find the GFace with tag = *it.
 
             int ftag = *it;
-
-            const auto face_location =
-              std::find_if(begin(f_list), end(f_list), [&](GFace *const face) {
-                return face->tag() == ftag;
-              });
-
-            GFace *gf = face_location == end(f_list) ? nullptr : *face_location;
-            assert(gf != nullptr);
-
-            // Delete the old triangles.
-            Msg::Info(" - Steiner points exist on surface %d", gf->tag());
-            for(std::size_t i = 0; i < gf->triangles.size(); i++)
-              delete gf->triangles[i];
-            gf->triangles.clear();
-            gf->deleteVertexArrays();
-
-            if(gf->quadrangles.size()) {
-              Msg::Warning("Steiner points not handled for quad surface mesh");
-            }
-
-            // Create the new triangles.
-            subloop.shver = 0;
-            subfaces->traversalinit();
-            subloop.sh = shellfacetraverse(subfaces);
-            while(subloop.sh != nullptr) {
-              if(shellmark(subloop) == ftag) {
-                p[0] = sorg(subloop);
-                p[1] = sdest(subloop);
-                p[2] = sapex(subloop);
-                int idx1 = pointmark(p[0]) - in->firstnumber;
-                MVertex *v1 = idx1 >= (int)_vertices.size() ? _extras[idx1] :
-                                                              _vertices[idx1];
-                int idx2 = pointmark(p[1]) - in->firstnumber;
-                MVertex *v2 = idx2 >= (int)_vertices.size() ? _extras[idx2] :
-                                                              _vertices[idx2];
-                int idx3 = pointmark(p[2]) - in->firstnumber;
-                MVertex *v3 = idx3 >= (int)_vertices.size() ? _extras[idx3] :
-                                                              _vertices[idx3];
-                MTriangle *t = new MTriangle(v1, v2, v3);
-                gf->triangles.push_back(t);
+            GFace *gf = nullptr;
+            for(auto it = f_list.begin(); it != f_list.end(); ++it) {
+              if((*it)->tag() == ftag) {
+                gf = *it;
+                break;
               }
+            }
+            if(gf != nullptr) {
+              // Delete the old triangles.
+              Msg::Info(" - Steiner points exist on surface %d", gf->tag());
+              for(std::size_t i = 0; i < gf->triangles.size(); i++)
+                delete gf->triangles[i];
+              gf->triangles.clear();
+              gf->deleteVertexArrays();
+
+              if(gf->quadrangles.size()) {
+                Msg::Warning("Steiner points not handled for quad surface mesh");
+              }
+
+              // Create the new triangles.
+              subloop.shver = 0;
+              subfaces->traversalinit();
               subloop.sh = shellfacetraverse(subfaces);
+              while(subloop.sh != nullptr) {
+                if(shellmark(subloop) == ftag) {
+                  p[0] = sorg(subloop);
+                  p[1] = sdest(subloop);
+                  p[2] = sapex(subloop);
+                  int idx1 = pointmark(p[0]) - in->firstnumber;
+                  MVertex *v1 = idx1 >= (int)_vertices.size() ? _extras[idx1] :
+                    _vertices[idx1];
+                  int idx2 = pointmark(p[1]) - in->firstnumber;
+                  MVertex *v2 = idx2 >= (int)_vertices.size() ? _extras[idx2] :
+                    _vertices[idx2];
+                  int idx3 = pointmark(p[2]) - in->firstnumber;
+                  MVertex *v3 = idx3 >= (int)_vertices.size() ? _extras[idx3] :
+                    _vertices[idx3];
+                  MTriangle *t = new MTriangle(v1, v2, v3);
+                  gf->triangles.push_back(t);
+                }
+                subloop.sh = shellfacetraverse(subfaces);
+              }
+            }
+            else {
+              Msg::Debug("Unknown surface %d with Steiner point(s)", ftag);
             }
           } // it
         }

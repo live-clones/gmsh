@@ -14,6 +14,7 @@
 #include "MPrism.h"
 #include "MPyramid.h"
 #include "StringUtils.h"
+#include "GmshVersion.h"
 
 int GModel::writeVTK(const std::string &name, bool binary, bool saveAll,
                      double scalingFactor, bool bigEndian)
@@ -31,7 +32,7 @@ int GModel::writeVTK(const std::string &name, bool binary, bool saveAll,
   int numVertices = indexMeshVertices(saveAll);
 
   fprintf(fp, "# vtk DataFile Version 2.0\n");
-  fprintf(fp, "%s, Created by Gmsh\n", getName().c_str());
+  fprintf(fp, "%s, Created by Gmsh %s \n", getName().c_str(), GMSH_VERSION);
   if(binary)
     fprintf(fp, "BINARY\n");
   else

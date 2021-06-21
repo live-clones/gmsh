@@ -24,14 +24,15 @@ gmsh.model.geo.addPlaneSurface([5], 6)
 gmsh.model.geo.synchronize()
 
 gmsh.model.mesh.field.add("Distance", 1)
-gmsh.model.mesh.field.setNumbers(1, "NodesList", [5])
-gmsh.model.mesh.field.setNumber(1, "NNodesByEdge", 100)
-gmsh.model.mesh.field.setNumbers(1, "EdgesList", [2])
+gmsh.model.mesh.field.setNumbers(1, "PointsList", [5])
+gmsh.model.mesh.field.setNumbers(1, "CurvesList", [2])
+gmsh.model.mesh.field.setNumber(1, "Sampling", 100)
+
 
 gmsh.model.mesh.field.add("Threshold", 2)
-gmsh.model.mesh.field.setNumber(2, "IField", 1)
-gmsh.model.mesh.field.setNumber(2, "LcMin", lc / 30)
-gmsh.model.mesh.field.setNumber(2, "LcMax", lc)
+gmsh.model.mesh.field.setNumber(2, "InField", 1)
+gmsh.model.mesh.field.setNumber(2, "SizeMin", lc / 30)
+gmsh.model.mesh.field.setNumber(2, "SizeMax", lc)
 gmsh.model.mesh.field.setNumber(2, "DistMin", 0.15)
 gmsh.model.mesh.field.setNumber(2, "DistMax", 0.5)
 
@@ -40,7 +41,7 @@ gmsh.model.mesh.field.setString(3, "F",
                                 "Cos(4*3.14*x) * Sin(4*3.14*y) / 10 + 0.101")
 
 gmsh.model.mesh.field.add("Distance", 4)
-gmsh.model.mesh.field.setNumbers(4, "NodesList", [1])
+gmsh.model.mesh.field.setNumbers(4, "PointsList", [1])
 
 gmsh.model.mesh.field.add("MathEval", 5)
 gmsh.model.mesh.field.setString(5, "F", "F4^3 + " * string(lc / 100))

@@ -5,6 +5,9 @@ import sys
 # nodes to 0) by getting the mesh, performing a modification, and storing the
 # modified mesh in the same model.
 
+# (The approach followed here is overkill to # just change node coordinates of
+# course - if you merely want to change coordinates see `flatten2.py' instead.)
+
 if len(sys.argv) < 2:
     print("Usage: " + sys.argv[0] + " file.msh")
     exit(0)
@@ -23,8 +26,7 @@ entities = gmsh.model.getEntities()
 # get the nodes and elements
 for e in entities:
     nodeTags[e], nodeCoords[e], _ = gmsh.model.mesh.getNodes(e[0], e[1])
-    elementTypes[e], elementTags[e], elementNodeTags[
-        e] = gmsh.model.mesh.getElements(e[0], e[1])
+    elementTypes[e], elementTags[e], elementNodeTags[e] = gmsh.model.mesh.getElements(e[0], e[1])
 
 # delete the mesh
 gmsh.model.mesh.clear()
@@ -39,6 +41,7 @@ for e in entities:
 
 if '-nopopup' not in sys.argv:
     gmsh.fltk.run()
+
 #gmsh.write('flat.msh')
 
 gmsh.finalize()

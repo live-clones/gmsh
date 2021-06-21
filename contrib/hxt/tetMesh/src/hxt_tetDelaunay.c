@@ -7,9 +7,8 @@
 //   Célestin Marot
 
 #include "hxt_tetDelaunay.h"
-#include "hxt_tetPartition.h"
+#include "hxt_tetDelaunayReshape.h"
 #include "predicates.h"
-#include "hxt_tetSync.h"
 #include "hxt_tetFlag.h"
 #include "hxt_tetRepair.h"
 #include "hxt_sort.h"
@@ -22,8 +21,6 @@
 */
 
 /* compile-time parameters */
-// #define HXT_DELAUNAY_LOW_MEMORY /* doesn't use any buffer (a lot slower, except if you are at the limit of filling the RAM) */
-// #define HXT_WALK_OPTI
 
 #define SMALLEST_PASS 2048
 
@@ -36,29 +33,6 @@
       exit(_tmp_); \
     } \
   }while(0)
-
-
-typedef struct {
-  uint64_t neigh; // the tet on the other side of the boundary
-  uint32_t node[3];
-  uint16_t flag;
-} cavityBnd_t;
-
-
-typedef struct {
-#ifndef HXT_DELAUNAY_LOW_MEMORY
-  uint64_t hxtDeclareAligned Map[1024];
-#endif
-
-  struct {
-    cavityBnd_t* array;
-    uint64_t num;
-    uint64_t size;
-  } ball;
-
-  HXTDeleted deleted;
-  HXTPartition partition;
-} TetLocal;
 
 
 static int compareNodeLexicographically(uint32_t* nodes0, uint32_t* nodes1)
@@ -91,21 +65,40 @@ static inline HXTStatus hxtTetrahedraInit(HXTMesh* mesh, HXTNodeInfo* nodeInfo, 
   HXTVertex* vertices = (HXTVertex*) mesh->vertices.coord;
 
   // find non-coplanar vertices
-  double orientation = 0.0;
-
+  int orientation = 0;
   uint32_t i=0, j=1, k=2, l=3;
-  for (i=0; orientation==0.0 && i<nToInsert-3; i++)
+  for (i=0; orientation==0 && i<nToInsert-3; i++)
   {
-    for (j=i+1; orientation==0.0 && j<nToInsert-2; j++)
+    double* d = vertices[nodeInfo[i].node].coord;
+    for (j=i+1; orientation==0 && j<nToInsert-2; j++)
     {
-      for (k=j+1; orientation==0.0 && k<nToInsert-1; k++)
+      double* c = vertices[nodeInfo[j].node].coord;
+      double cdx = c[0] - d[0];
+      double cdy = c[1] - d[1];
+      double cdz = c[2] - d[2];
+      if(cdx == 0.0 && cdy == 0.0 && cdz == 0.0)
+        continue;
+      for (k=j+1; orientation==0 && k<nToInsert-1; k++)
       {
-        for (l=k+1; orientation==0.0 && l<nToInsert; l++)
+        double* b = vertices[nodeInfo[k].node].coord;
+        double bdx = b[0] - d[0];
+        double bdy = b[1] - d[1];
+        double bdz = b[2] - d[2];
+
+        double crossx = bdy * cdz - bdz * cdy;
+        double crossy = bdz * cdx - bdx * cdz;
+        double crossz = bdx * cdy - bdy * cdx;
+        // check for collinearity: cross product
+        if(crossx == 0.0 && crossy == 0.0 && crossz == 0.0)
+          continue;
+        for (l=k+1; orientation==0 && l<nToInsert; l++)
         {
-          orientation = orient3d(vertices[nodeInfo[i].node].coord,
-                                 vertices[nodeInfo[j].node].coord,
-                                 vertices[nodeInfo[k].node].coord,
-                                 vertices[nodeInfo[l].node].coord);
+          double* a = vertices[nodeInfo[l].node].coord;
+          double adx = a[0] - d[0];
+          double ady = a[1] - d[1];
+          double adz = a[2] - d[2];
+          double det = adx * crossx + ady * crossy + adz * crossz;
+          orientation = (det > o3dstaticfilter) - (det < -o3dstaticfilter);
         }
       }
     }
@@ -113,8 +106,8 @@ static inline HXTStatus hxtTetrahedraInit(HXTMesh* mesh, HXTNodeInfo* nodeInfo, 
   l--; k--; j--; i--;
 
 
-  if(orientation==0.0){
-    return HXT_ERROR_MSG(HXT_STATUS_FAILED, "all vertices are coplanar");
+  if(orientation==0){
+    return HXT_ERROR_MSG(HXT_STATUS_FAILED, "all vertices are coplanar or nearly coplanar");
   }
 
   // swap 0<->i  1<->j 2<->k 3<->l
@@ -145,7 +138,7 @@ static inline HXTStatus hxtTetrahedraInit(HXTMesh* mesh, HXTNodeInfo* nodeInfo, 
   }
 
 
-  if(orientation > 0.0){
+  if(orientation > 0){
     uint32_t tmp = i;
     i = j;
     j = tmp;
@@ -228,20 +221,11 @@ unsigned computePasses(uint32_t passes[12],
 }
 
 
-static inline HXTStatus askForBall(TetLocal* local, uint64_t needed) {
-  needed += local->ball.num;
-  if(needed>local->ball.size) {
-    HXT_CHECK( hxtAlignedRealloc(&local->ball.array, sizeof(cavityBnd_t)*2*needed) );
-    local->ball.size = 2*needed;
-  }
-  return HXT_STATUS_OK;
-}
-
 /******************************************
- * initialisation of the TetLocal structure
+ * initialization of the TetLocal structure
  ******************************************/
 static inline HXTStatus localInit(TetLocal* local){
-  local->ball.size = 1020;
+  local->ball.size = 1024;
   local->ball.num = 0;
   HXT_CHECK( hxtAlignedMalloc(&local->ball.array, sizeof(cavityBnd_t)*local->ball.size));
 
@@ -537,74 +521,6 @@ static inline HXTStatus walking2Cavity(HXTMesh* mesh, HXTPartition* partition, u
   unsigned enteringFace=4;
   uint64_t rel = partition->lengthDist;
 
-#ifdef HXT_WALK_OPTI
-  double minDist = DBL_MAX;
-
-  {
-    const uint32_t* __restrict__ curNode = mesh->tetrahedra.node + 4*nextTet;
-    double* curCoord[4] = {
-      vertices[curNode[0]].coord,
-      vertices[curNode[1]].coord,
-      vertices[curNode[2]].coord,
-      vertices[curNode[3]].coord
-    };
-
-#ifdef __GNUC__
-    #pragma GCC ivdep
-#else
-    #pragma ivdep
-#endif
-    for (int i=0; i<4; i++) {
-      double dx = vtaCoord[0] - curCoord[i][0];
-      double dy = vtaCoord[1] - curCoord[i][1];
-      double dz = vtaCoord[2] - curCoord[i][2];
-      double dist = dx*dx+dy*dy+dz*dz;
-      if(dist<minDist)
-        minDist = dist;
-    }
-  }
-
-  while(1) {
-    unsigned index = 4;
-
-    const uint64_t* __restrict__ curNeigh = mesh->tetrahedra.neigh + 4*nextTet;
-
-#ifndef NDEBUG
-    const uint32_t* __restrict__ curNode = mesh->tetrahedra.node + 4*nextTet;
-    if(curNode[3]==HXT_GHOST_VERTEX){
-      return HXT_ERROR_MSG(HXT_STATUS_FAILED, "walked outside of the domain");
-    }
-#endif
-
-    for (unsigned i=0; i<4; i++) {
-      if(i==enteringFace)
-        continue;
-
-      uint32_t node = mesh->tetrahedra.node[curNeigh[i]];
-
-      if(node==HXT_GHOST_VERTEX)
-        continue;
-      
-      const double* __restrict__ const coord = vertices[node].coord;
-
-      double dx = vtaCoord[0] - coord[0];
-      double dy = vtaCoord[1] - coord[1];
-      double dz = vtaCoord[2] - coord[2];
-      double dist = dx*dx+dy*dy+dz*dz;
-      if(dist < minDist && !vertexOutOfPartition(vertices, node, rel, partition->startDist)){
-        minDist = dist;
-        index = i;
-      }
-    }
-
-    if(index==4)
-      break;
-
-    enteringFace = curNeigh[index]&3;
-    nextTet = curNeigh[index]/4;
-  }
-#endif // ifdef HXT_WALK_OPTI
-
   uint32_t seed = 1;
   enteringFace = 4;
 
@@ -621,6 +537,7 @@ static inline HXTStatus walking2Cavity(HXTMesh* mesh, HXTPartition* partition, u
     // we should pass in orient3d mode here :p
     unsigned index = 4;
     unsigned outside = 0;
+    unsigned wantToGoInOtherPartition = 0;
     unsigned randomU = hxtReproducibleLCG(&seed);
     for (unsigned j=0; j<4; j++)
     {
@@ -646,7 +563,11 @@ static inline HXTStatus walking2Cavity(HXTMesh* mesh, HXTPartition* partition, u
             return HXT_STATUS_OK;
           }
 
-          if(!vertexOutOfPartition(vertices, node, rel, partition->startDist)){
+          if(vertexOutOfPartition(vertices, node, rel, partition->startDist)){
+            if(wantToGoInOtherPartition++ > 1000)
+              return HXT_STATUS_CONFLICT;
+          }
+          else {
             index=i;
             break;
           }
@@ -682,252 +603,6 @@ static inline HXTStatus walking2Cavity(HXTMesh* mesh, HXTPartition* partition, u
 /***********************************
  * digging cavity
  ***********************************/
-
-/* pushing cavity boundary information to local->ball */
-static inline void bndPush( TetLocal* local, uint16_t flag,
-              const uint32_t node1, const uint32_t node2,
-              const uint32_t node3, const uint64_t neigh){
-  uint64_t n = local->ball.num;
-  local->ball.array[n].node[0] = node1;
-  local->ball.array[n].node[1] = node2;
-  local->ball.array[n].node[2] = node3;
-  local->ball.array[n].flag = flag;
-  local->ball.array[n].neigh = neigh;
-  local->ball.num++;
-}
-
-/* check if the cavity is star shaped
-   This isn't usefull for pure Delaunay but when we constrain cavity with color,
-   it is usefull */
-static HXTStatus isStarShaped(TetLocal* local, HXTMesh* mesh, const uint32_t vta, uint64_t* blindFaceIndex)
-{
-  HXTVertex* vertices = (HXTVertex*) mesh->vertices.coord;
-  double *vtaCoord = vertices[vta].coord;
-
-  for (uint64_t i=0; i<local->ball.num; i++) {
-    if(local->ball.array[i].node[2]!=HXT_GHOST_VERTEX){
-      double* b = vertices[local->ball.array[i].node[0]].coord;
-      double* c = vertices[local->ball.array[i].node[1]].coord;
-      double* d = vertices[local->ball.array[i].node[2]].coord;
-      if(orient3d(vtaCoord, b, c, d)>=0.0){
-        *blindFaceIndex = i;
-        return HXT_STATUS_INTERNAL;
-      }
-    }
-  }
-  return HXT_STATUS_OK;
-}
-
-
-static HXTStatus undeleteTetrahedron(TetLocal* local, HXTMesh* mesh, uint64_t tetToUndelete) {
-  // the tetrahedra should not be deleted anymore
-  for (uint64_t i=local->deleted.num; ; i--) {
-    if(local->deleted.array[i-1]==tetToUndelete) {
-      local->deleted.num--;
-      local->deleted.array[i-1] = local->deleted.array[local->deleted.num];
-      break;
-    }
-#ifdef DEBUG
-    if(i==1)
-      return HXT_ERROR_MSG(HXT_STATUS_ERROR, "could not find the tetrahedra in the deleted array");
-#endif
-  }
-  unsetDeletedFlag(mesh, tetToUndelete);
-
-  uint64_t bndFaces[4] = {HXT_NO_ADJACENT, HXT_NO_ADJACENT, HXT_NO_ADJACENT, HXT_NO_ADJACENT};
-  int nbndFace = 0;
-
-  // we should update the boundary (that's the difficult part...)
-  // first remove all the boundary faces that come from the tetrahedron we just remove to the cavity
-  for (uint64_t i=local->ball.num; nbndFace<4 && i>0; i--) {
-    if(mesh->tetrahedra.neigh[local->ball.array[i-1].neigh]/4==tetToUndelete) {
-      bndFaces[nbndFace++] = local->ball.array[i-1].neigh;
-      local->ball.num--;
-      local->ball.array[i-1] = local->ball.array[local->ball.num];
-    }
-  }
-
-  // we must replace them by all the other faces of the tetrahedron we just removed
-  const uint64_t* __restrict__ curNeigh = mesh->tetrahedra.neigh + tetToUndelete*4;
-  const uint32_t* __restrict__ curNode = mesh->tetrahedra.node + tetToUndelete*4;
-
-#ifdef DEBUG
-  int nbndFace2 = (getDeletedFlag(mesh, curNeigh[0]/4)==0 || getFacetConstraint(mesh, tetToUndelete, 0)) +
-                  (getDeletedFlag(mesh, curNeigh[1]/4)==0 || getFacetConstraint(mesh, tetToUndelete, 1)) +
-                  (getDeletedFlag(mesh, curNeigh[2]/4)==0 || getFacetConstraint(mesh, tetToUndelete, 2)) +
-                  (getDeletedFlag(mesh, curNeigh[3]/4)==0 || getFacetConstraint(mesh, tetToUndelete, 3));
-  if(nbndFace!=nbndFace2)
-    return HXT_ERROR_MSG(HXT_STATUS_ERROR, "found %d non-deleted tet adjacent to the tet we unremove but there should be %d %lu %lu %lu %lu", nbndFace, nbndFace2, bndFaces[0], bndFaces[1], bndFaces[2], bndFaces[3]);
-#endif
-
-  HXT_CHECK( askForBall(local, 3) );
-
-  if(curNeigh[0]!=bndFaces[0] && curNeigh[0]!=bndFaces[1] && curNeigh[0]!=bndFaces[2] && curNeigh[0]!=bndFaces[3])
-    bndPush(local, (getFacetConstraint(mesh, tetToUndelete, 0)   ) |
-                   (getEdgeConstraint(mesh, tetToUndelete, 1)>>1) | // constraint on edge 1 (facet 0 2) goes on edge 0
-                   (getEdgeConstraint(mesh, tetToUndelete, 0)<<1) | // constraint on edge 0 (facet 0 1) goes on edge 1
-                   (getEdgeConstraint(mesh, tetToUndelete, 2)   ),  // constraint on edge 2 (facet 0 3) goes on edge 2
-                   curNode[2], curNode[1], curNode[3], 4*tetToUndelete+0);
-
-  if(curNeigh[1]!=bndFaces[0] && curNeigh[1]!=bndFaces[1] && curNeigh[1]!=bndFaces[2] && curNeigh[1]!=bndFaces[3])
-    bndPush(local,  (getFacetConstraint(mesh, tetToUndelete, 1)>>1) |// constraint on facet 1 goes on facet 0
-                    (getEdgeConstraint(mesh, tetToUndelete, 0)   ) | // constraint on edge 0 (facet 1 0) goes on edge 0
-                    (getEdgeConstraint(mesh, tetToUndelete, 3)>>2) | // constraint on edge 3 (facet 1 2) goes on edge 1
-                    (getEdgeConstraint(mesh, tetToUndelete, 4)>>2),  // constraint on edge 4 (facet 1 3) goes on edge 2
-                    curNode[0], curNode[2], curNode[3], 4*tetToUndelete+1);
-
-  if(curNeigh[2]!=bndFaces[0] && curNeigh[2]!=bndFaces[1] && curNeigh[2]!=bndFaces[2] && curNeigh[2]!=bndFaces[3])
-    bndPush(local,  (getFacetConstraint(mesh, tetToUndelete, 2)>>2) |// constraint on facet 2 goes on facet 0
-                    (getEdgeConstraint(mesh, tetToUndelete, 3)>>3) | // constraint on edge 3 (facet 2 1) goes on edge 0
-                    (getEdgeConstraint(mesh, tetToUndelete, 1)   ) | // constraint on edge 1 (facet 2 0) goes on edge 1
-                    (getEdgeConstraint(mesh, tetToUndelete, 5)>>3),  // constraint on edge 5 (facet 2 3) goes on edge 2
-                     curNode[1], curNode[0], curNode[3], 4*tetToUndelete+2);
-
-  if(curNeigh[3]!=bndFaces[0] && curNeigh[3]!=bndFaces[1] && curNeigh[3]!=bndFaces[2] && curNeigh[3]!=bndFaces[3])
-    bndPush(local, (getFacetConstraint(mesh, tetToUndelete, 3)>>3) |// constraint on facet 3 goes on facet 0
-                   (getEdgeConstraint(mesh, tetToUndelete, 2)>>2) | // constraint on edge 2 (facet 3 0) goes on edge 0
-                   (getEdgeConstraint(mesh, tetToUndelete, 4)>>3) | // constraint on edge 4 (facet 3 1) goes on edge 1
-                   (getEdgeConstraint(mesh, tetToUndelete, 5)>>3),  // constraint on edge 5 (facet 3 2) goes on edge 2
-                   curNode[0], curNode[1], curNode[2], 4*tetToUndelete+3);
-
-  return HXT_STATUS_OK;
-}
-
-
-static HXTStatus reshapeCavityIfNeeded(TetLocal* local, HXTMesh* mesh, const uint32_t vta) {
-  // we will remove the tetrahedra adjacent to the face that does not see the point, progressively, until the cavity is star shaped...
-  uint64_t blindFace = 0;
-  while(isStarShaped(local, mesh, vta, &blindFace)==HXT_STATUS_INTERNAL)
-  {
-    HXT_CHECK( undeleteTetrahedron(local, mesh, mesh->tetrahedra.neigh[local->ball.array[blindFace].neigh]/4) );
-  }
-  return HXT_STATUS_OK;
-}
-
-
-static HXTStatus respectEdgeConstraint(TetLocal* local, HXTMesh* mesh, const uint32_t vta, const uint32_t color, const uint64_t prevDeleted) {
-  // HXT_WARNING("a constrained edge was inside the cavity, recovering it");
-
-  // all the tetrahedron have the same color 'color', we will use that color to flag them
-  for (uint64_t i=prevDeleted; i<local->deleted.num; i++) {
-    uint64_t delTet = local->deleted.array[i];
-    mesh->tetrahedra.color[delTet] = 0;
-  }
-
-  for (uint64_t i=prevDeleted; i<local->deleted.num; i++) {
-    uint64_t delTet = local->deleted.array[i];
-    int exist = 1;
-    for (int edge=0; exist && edge<6; edge++) {
-      if(getEdgeConstraint(mesh, delTet, edge) && (mesh->tetrahedra.color[delTet] & (1U<<edge))==0) {
-        unsigned in_facet;
-        unsigned out_facet;
-
-        getFacetsFromEdge(edge, &in_facet, &out_facet);
-
-        int edgeIsSafe = 0;
-        uint64_t curTet = delTet;
-
-        // first turn
-        do
-        {
-          uint32_t newV = mesh->tetrahedra.node[4*curTet + in_facet];
-
-          // go into the neighbor through out_facet
-          uint64_t neigh = mesh->tetrahedra.neigh[4*curTet + out_facet];
-          curTet = neigh/4;
-          in_facet = neigh%4;
-
-          uint32_t* nodes = mesh->tetrahedra.node + 4*curTet;
-          for (out_facet=0; out_facet<3; out_facet++)
-            if(nodes[out_facet]==newV)
-              break;
-
-          if(getDeletedFlag(mesh, curTet)!=0) {
-            // mark that the edge as been treate
-            #ifdef DEBUG
-              if((mesh->tetrahedra.color[curTet] & (1U<<getEdgeFromFacets(in_facet, out_facet)))!=0)
-                return HXT_ERROR_MSG(HXT_STATUS_ERROR, "the flag says that the tet has already been processed for this edge...");
-            #endif
-            mesh->tetrahedra.color[curTet] |= (1U<<getEdgeFromFacets(in_facet, out_facet));
-          }
-          else {
-            edgeIsSafe=1;
-          }
-
-        } while (curTet!=delTet);
-
-        if(!edgeIsSafe) { // we must find a tetrahedron on the opposite side of vta and delete it.
-          getFacetsFromEdge(edge, &in_facet, &out_facet);
-          curTet = delTet;
-
-          uint64_t tetContainingVta = local->deleted.array[prevDeleted];
-          uint64_t tetToUndelete = HXT_NO_ADJACENT;
-          double distMax = 0.0;
-          double* vtaCoord = mesh->vertices.coord + 4*vta;
-
-        #ifdef DEBUG
-          double* a = mesh->vertices.coord + 4*mesh->tetrahedra.node[4*tetContainingVta];
-          double* b = mesh->vertices.coord + 4*mesh->tetrahedra.node[4*tetContainingVta+1];
-          double* c = mesh->vertices.coord + 4*mesh->tetrahedra.node[4*tetContainingVta+2];
-          double* d = mesh->vertices.coord + 4*mesh->tetrahedra.node[4*tetContainingVta+3];
-
-          if(orient3d(vtaCoord,b,c,d)>0.0 || orient3d(a,vtaCoord,c,d)>0.0 || orient3d(a,b,vtaCoord,d)>0.0 || orient3d(a,b,c,vtaCoord)>0.0) {
-            return HXT_ERROR_MSG(HXT_STATUS_ERROR, "an edge part of a ghost tetrahedron is constrained");
-          }
-        #endif
-
-          // second turn
-          do
-          {
-            uint32_t newV = mesh->tetrahedra.node[4*curTet + in_facet];
-
-            // go into the neighbor through out_facet
-            uint64_t neigh = mesh->tetrahedra.neigh[4*curTet + out_facet];
-            curTet = neigh/4;
-            in_facet = neigh%4;
-
-            uint32_t* nodes = mesh->tetrahedra.node + 4*curTet;
-            for (out_facet=0; out_facet<3; out_facet++)
-              if(nodes[out_facet]==newV)
-                break;
-
-            double* coord1 = mesh->vertices.coord + newV;
-            double* coord2 = mesh->vertices.coord + nodes[in_facet];
-
-            if(curTet!=tetContainingVta) {
-              double dist = 0.0;
-              for (int l=0; l<3; l++) {
-                double meanCoord = (coord1[l]+coord2[l])*0.5;
-                double diff = meanCoord-vtaCoord[l];
-                dist += diff*diff;
-              }
-
-              if(dist>distMax) {
-                dist = distMax;
-                tetToUndelete = curTet;
-              }
-            }
-          } while (curTet!=delTet);
-
-          if(tetToUndelete==delTet)
-            exist = 0;
-
-          // printf("undeleting tetrahedron %lu\n", tetToUndelete);
-          mesh->tetrahedra.color[tetToUndelete] = color;
-          HXT_CHECK( undeleteTetrahedron(local, mesh, tetToUndelete) );
-        }
-      }
-    }
-  }
-
-  for (uint64_t i=prevDeleted; i<local->deleted.num; i++) {
-    uint64_t delTet = local->deleted.array[i];
-    mesh->tetrahedra.color[delTet] = color;
-  }
-
-  return HXT_STATUS_OK;
-}
-
 
 /* this function does a Breadth-first search of the tetrahedra in the cavity
  * it add those to local->deleted
@@ -1045,10 +720,9 @@ static inline HXTStatus diggingACavity(HXTMesh* mesh, TetLocal* local, uint64_t 
 }
 
 
-/**************************************************************
- * compute adjacencies with a matrix O(1) insertion and search
- **************************************************************/
-#ifndef HXT_DELAUNAY_LOW_MEMORY
+/**********************************************************************
+ * compute adjacencies with a matrix O(1) insertion and search => O(n)
+ **********************************************************************/
 static inline HXTStatus computeAdjacenciesFast(HXTMesh* mesh, TetLocal* local, unsigned char* __restrict__ verticesID, const unsigned char blength){
   cavityBnd_t* __restrict__ bnd = local->ball.array;
 
@@ -1115,65 +789,131 @@ HXT_ASSERT(((size_t) verticesID)%SIMD_ALIGN==0);
 
   return HXT_STATUS_OK;
 }
-#endif
 
 
 /**************************************************************
- * compute adjacencies with a stack O(n) insertion and search
+ * compute adjacencies with a hash table => ~O(n)
  **************************************************************/
-static inline HXTStatus computeAdjacenciesSlow(HXTMesh* mesh, TetLocal* local, const uint64_t start, const uint64_t blength){
+// search neighbors in an already initialized hash table. `key` must be unique, and cannot be 0
+static inline uint64_t hashTableSearch(HXTGroup2* pairs, uint64_t mask, uint64_t key, uint64_t value) {
+  HXT_ASSERT(key != 0);
+  
+  uint64_t hash = hash64(key) & mask;
+  while(pairs[hash].v[0] != key && pairs[hash].v[0] != 0) {
+    hash = (hash + 1) & mask;
+  }
+  if(pairs[hash].v[0] == key) {
+    return pairs[hash].v[1];
+  }
 
-  uint64_t tlength = 0;
-  const uint64_t middle = blength*3/2; // 3N
+  pairs[hash].v[0] = key;
+  pairs[hash].v[1] = value;
+  return HXT_NO_ADJACENT;
+}
 
-  // N+2 point on the surface of the cavity
-  // 2N triangle on the surface of the cavity, x3 (4*0.5+1) data = 6N+9 uint64_t
-  // => enough place for the 3N edge x2 data = 6N uint64_t
-  uint64_t* Tmp = (uint64_t*) local->ball.array;
-  const unsigned index[4] = {2,3,1,2};
+static inline HXTStatus computeAdjacenciesSlow(HXTMesh* mesh, TetLocal* local, const uint64_t start, const uint64_t blength)
+{
+  uint64_t size = UINT64_C(1) << u64_log2(5*blength);// 3*blength/2 entries => we want a hash table of at least 3*blength for a good load factor
+  uint64_t mask = size - 1;
+
+  // recycle memory
+  if(sizeof(cavityBnd_t) * local->ball.size < sizeof(HXTGroup2) * size) {
+    uint64_t capacity = (sizeof(HXTGroup2) * size + sizeof(cavityBnd_t) - 1) / sizeof(cavityBnd_t);
+    capacity = MAX(2 * local->ball.size, capacity);
+    HXT_CHECK( hxtAlignedFree(&local->ball.array) );
+    HXT_CHECK( hxtAlignedMalloc(&local->ball.array, sizeof(cavityBnd_t) * capacity) );
+    local->ball.size = capacity;
+  }
+  HXTGroup2* pairs = (HXTGroup2*) local->ball.array;
+  memset(pairs, 0, size * sizeof(HXTGroup2));
+
+  const uint8_t index[4] = {2,3,1,2};
+
+#ifdef DEBUG
+  int found = 0;
+#endif
 
   for (uint64_t i=0; i<blength; i++)
   {
-    uint64_t curTet = local->deleted.array[start+ i];
+    uint64_t curTet = local->deleted.array[start + i];
     const uint32_t* __restrict__ Node = mesh->tetrahedra.node + 4*curTet;
-
-    // pointer to the position of Node[0] in the Tmp array
     for (unsigned j=0; j<3; j++)
     {
-      // define the edge by the minimum vertex and the other
-      uint64_t key = ((uint64_t) Node[index[j]]<<32) + Node[index[j+1]];
+      uint32_t n0 = Node[index[j]];
+      uint32_t n1 = Node[index[j+1]];
+      uint64_t key = (uint64_t) (n0 ^ n1) << 32 | MAX(n0, n1);
 
-      // linear searching/pushing into Tmp
-      uint64_t k;
-      for (k=0; k<tlength; k++) // this is the only nested loop... the one that cost it all
-      {
-        if(Tmp[k]==key)
-          break;
-      }
-
-      uint64_t curFace = 4*curTet+j+1;
-
-      // we did not found it
-      if(k==tlength){
-        Tmp[tlength] = (key>>32) + (key<<32);
-        Tmp[middle + tlength] = curFace;
-        tlength++;
-      }
-      else{// we found the neighbour !
-        uint64_t pairValue = Tmp[middle+k];
-        mesh->tetrahedra.neigh[curFace] = pairValue;
-        mesh->tetrahedra.neigh[pairValue] = curFace;
-        tlength--;
-        if(k<tlength){// put the last entry in the one we just discovered
-          Tmp[k] = Tmp[tlength];
-          Tmp[middle+k] = Tmp[middle + tlength];
-        }
+      uint64_t neigh = hashTableSearch(pairs, mask, key, 4 * curTet + j + 1);
+      if(neigh != HXT_NO_ADJACENT) {
+#ifdef DEBUG
+        found++;
+#endif
+        mesh->tetrahedra.neigh[4 * curTet + j + 1] = neigh;
+        mesh->tetrahedra.neigh[neigh] = 4 * curTet + j + 1;
       }
     }
   }
-  HXT_ASSERT_MSG(tlength==0, "Failed to compute adjacencies (s)"); // verify that all neighbor were found
+
+#ifdef DEBUG
+  if(2 * found != 3 * blength)
+    return HXT_ERROR_MSG(HXT_STATUS_ERROR, "Failed to compute adjacencies (b)");
+#endif
+
   return HXT_STATUS_OK;
 }
+
+
+/**************************************************************
+ * compute adjacencies by sorting => O(n log n)
+ **************************************************************/
+// static inline HXTStatus computeAdjacenciesSlow(HXTMesh* mesh, TetLocal* local, const uint64_t start, const uint64_t blength)
+// {
+//   HXTGroup2* edges;
+
+//   HXT_CHECK( askForBall(local, 2 * blength) );
+//   edges = (HXTGroup2*) local->ball.array; // recycle array
+
+//   const uint8_t index[4] = {2,3,1,2};
+
+//   const uint32_t n = mesh->vertices.num + 1;
+//   uint64_t maxKey = 0;
+
+//   for (uint64_t i=0; i<blength; i++)
+//   {
+//     uint64_t curTet = local->deleted.array[start+ i];
+//     const uint32_t* __restrict__ Node = mesh->tetrahedra.node + 4*curTet;
+//     for (unsigned j=0; j<3; j++)
+//     {
+//       uint32_t n0 = Node[index[j]] + 1;
+//       uint32_t n1 = Node[index[j+1]] + 1;
+
+//       if(n0 < n1)
+//         edges[3*i + j].v[0] = ((uint64_t) n0 * n) + n1;
+//       else
+//         edges[3*i + j].v[0] = ((uint64_t) n1 * n) + n0;
+
+//       if(edges[3*i + j].v[0] > maxKey)
+//         maxKey = edges[3*i + j].v[0];
+
+//       edges[3*i + j].v[1] = 4*curTet+j+1;
+//     }
+//   }
+
+//   HXT_CHECK( group2_sort_v0(edges, 3*blength, maxKey) );
+
+//   for(int i=0; i<3*blength; i+=2) {
+// #ifndef NDEBUG
+//     if(edges[i].v[0] != edges[i+1].v[0])
+//       return HXT_ERROR_MSG(HXT_STATUS_ERROR, "Failed to compute adjacencies (b)");
+// #endif
+//     uint64_t f0 = edges[i].v[1];
+//     uint64_t f1 = edges[i+1].v[1];
+
+//     mesh->tetrahedra.neigh[f0] = f1;
+//     mesh->tetrahedra.neigh[f1] = f0;
+//   }
+//   return HXT_STATUS_OK;
+// }
 
 
 /****************************************
@@ -1212,13 +952,24 @@ static inline HXTStatus fillingACavity(HXTMesh* mesh, TetLocal* local, unsigned 
 
     mesh->tetrahedra.flag[newTet] = local->ball.array[i].flag;
 
+    #ifdef DEBUG
+      if((getFacetConstraint(mesh, neigh / 4, neigh % 4)!=0) ^ (getFacetConstraint(mesh, newTet, 0)!=0))
+        return HXT_ERROR_MSG(HXT_STATUS_ERROR, "constraints are not the same on both side of the new tet");
+      if(getFacetConstraint(mesh, newTet, 1) || getFacetConstraint(mesh, newTet, 2) || getFacetConstraint(mesh, newTet, 3))
+        return HXT_ERROR_MSG(HXT_STATUS_ERROR, "new tetrahedron flag are erroneous (face constraint on new face)");
+      if(getEdgeConstraint(mesh, newTet, getEdgeFromNodes(0, 1)) ||
+         getEdgeConstraint(mesh, newTet, getEdgeFromNodes(0, 2)) ||
+         getEdgeConstraint(mesh, newTet, getEdgeFromNodes(0, 3))
+         )
+        return HXT_ERROR_MSG(HXT_STATUS_ERROR, "new tetrahedron flag are erroneous (edge constraint on new edge)");
+    #endif
+
     // update neighbor's neighbor
     mesh->tetrahedra.neigh[neigh] = 4*newTet;
 
     // we recycle neigh to contain newTet (used in computeAdjacencies)
     local->ball.array[i].neigh = 4*newTet;
   }
-#ifndef HXT_DELAUNAY_LOW_MEMORY
   if(blength<=58){ // N+2<=31 => N<=29 => 2N<=58
   #ifndef NDEBUG
     HXT_CHECK( computeAdjacenciesFast(mesh, local, verticesID, blength) );
@@ -1226,14 +977,8 @@ static inline HXTStatus fillingACavity(HXTMesh* mesh, TetLocal* local, unsigned 
     computeAdjacenciesFast(mesh, local, verticesID, blength);
   #endif
   }
-  else
-#endif
-  {
-  #ifndef NDEBUG
+  else {
     HXT_CHECK(computeAdjacenciesSlow(mesh, local, start, blength) );
-  #else
-    computeAdjacenciesSlow(mesh, local, start, blength);
-  #endif
   }
 
 
@@ -1251,6 +996,7 @@ static inline HXTStatus fillingACavity(HXTMesh* mesh, TetLocal* local, unsigned 
 static HXTStatus insertion(HXT2Sync* shared2sync,
                            TetLocal* local,
                            int perfectDelaunay,
+                           int allowOuterInsertion,
                            unsigned char* verticesID,
                            HXTNodalSizes* nodalSizes,
                            uint64_t* curTet,
@@ -1266,6 +1012,9 @@ static HXTStatus insertion(HXT2Sync* shared2sync,
   }
   else {
     color = mesh->tetrahedra.color[*curTet];
+    if(!allowOuterInsertion && color==HXT_COLOR_OUT) {
+      return HXT_STATUS_FALSE;
+    }
   }
 
   if(nodalSizes!=NULL && nodalSizes->enabled && filterTet(mesh, nodalSizes, *curTet, vta)){
@@ -1279,16 +1028,16 @@ static HXTStatus insertion(HXT2Sync* shared2sync,
     restoreDeleted(mesh, local, prevDeleted);
     return HXT_STATUS_CONFLICT;
   }
-  else{
-    HXT_CHECK(status);
-  }
+  HXT_CHECK(status);
 
   if(!perfectDelaunay) {
+    int undeleteTet;
     if(edgeConstraint) {
-      HXT_CHECK( respectEdgeConstraint(local, mesh, vta, color, prevDeleted) );
+      // printf("we have an edge constraint\n");
+      HXT_CHECK( respectEdgeConstraint(local, mesh, vta, color, prevDeleted, &undeleteTet) );
     }
     // reshape the cavity if it is not star shaped
-    HXT_CHECK( reshapeCavityIfNeeded(local, mesh, vta) );
+    HXT_CHECK( reshapeCavityIfNeeded(local, mesh, vta, prevDeleted, undeleteTet) );
   }
 
 
@@ -1448,7 +1197,7 @@ static HXTStatus parallelDelaunay3D(HXTMesh* mesh,
         Initializations and allocations
   ******************************************************/
   if(mesh->tetrahedra.num<5){
-    HXT_ASSERT_MSG(options->numVerticesInMesh==0 && mesh->tetrahedra.num==0, "no ghosts or unvalid mesh");
+    HXT_ASSERT_MSG(options->numVerticesInMesh==0 && mesh->tetrahedra.num==0, "no ghosts or invalid mesh");
     HXT_INFO_COND(options->verbosity>0,
                   "Initialization of tet. mesh");
     HXT_CHECK( hxtTetrahedraInit(mesh, nodeInfo, nToInsert, options->verbosity) );
@@ -1458,11 +1207,7 @@ static HXTStatus parallelDelaunay3D(HXTMesh* mesh,
 
 
   unsigned char*  verticesID;
-#ifdef HXT_DELAUNAY_LOW_MEMORY
-  verticesID = NULL; // we do not need it
-#else
   HXT_CHECK( hxtAlignedMalloc(&verticesID, mesh->vertices.num*sizeof(unsigned char)) );
-#endif
 
   TetLocal* Locals;
   HXT_CHECK( hxtMalloc(&Locals, maxPartitions*sizeof(TetLocal)) );
@@ -1621,7 +1366,7 @@ static HXTStatus parallelDelaunay3D(HXTMesh* mesh,
              * we will select the tet in the good partition that has the lowest lexicographic ordering of its nodes.
              * In this section, we run the maximum number of threads: max threads (=>not corresponding to partitions threads)
              * Each of the max thread look at a chunk of tetrahedra and updates its own array with his idea of what tet.
-             * will be the first for each partiton thread.
+             * will be the first for each partition thread.
              * Next (line 1659 as I'm writing this), each partition threads will check the results obtained by each maxThreads
              * threads and take the tet which appear first lexicographically. */
             uint64_t* startTetLocal = startTetGlobal + threadID * nthreads;
@@ -1748,6 +1493,7 @@ static HXTStatus parallelDelaunay3D(HXTMesh* mesh,
               HXTStatus status = insertion(&shared2sync,
                                            &Locals[threadID],
                                            options->perfectDelaunay,
+                                           options->allowOuterInsertion,
                                            verticesID,
                                            options->nodalSizes,
                                            &curTet,

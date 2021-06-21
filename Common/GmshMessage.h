@@ -9,6 +9,7 @@
 #include <map>
 #include <vector>
 #include <string>
+#include <atomic>
 #include <stdarg.h>
 
 #include "GmshConfig.h"
@@ -35,7 +36,8 @@ private:
   // 3: +direct, 4: +info, 5 (=normal): +statusbar, 99: debug)
   static int _verbosity;
   // step (in %) of the progress meter and current progress (in %)
-  static int _progressMeterStep, _progressMeterCurrent;
+  static int _progressMeterStep;
+  static std::atomic<int> _progressMeterCurrent;
   // total number of items considered in the current progress meter calculation
   static int _progressMeterTotal;
   // timers
@@ -46,6 +48,8 @@ private:
   static bool _infoMem;
   // starting time (gettimeofday at startup)
   static double _startTime;
+  // max number of threads at startup
+  static int _startMaxThreads;
   // counters
   static int _warningCount, _errorCount, _atLeastOneErrorInRun;
   static std::string _firstWarning, _firstError, _lastError;
@@ -173,6 +177,7 @@ public:
                               const std::string &exe = "");
   static void SetOnelabChanged(int value, const std::string &client = "Gmsh");
   static void ImportPhysicalGroupsInOnelab();
+  static int GetStartMaxThreads(){ return _startMaxThreads; }
 };
 
 // a class to print the progression and estimated remaining time

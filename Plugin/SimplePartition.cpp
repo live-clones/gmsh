@@ -24,14 +24,14 @@
 StringXNumber SimplePartitionOptions_Number[] = {
   {GMSH_FULLRC, "NumSlicesX", nullptr, 4.},
   {GMSH_FULLRC, "NumSlicesY", nullptr, 1.},
-  {GMSH_FULLRC, "NumSlicesZ", nullptr, 1.},
-  {GMSH_FULLRC, "CreateTopology", nullptr, 1.},
+  {GMSH_FULLRC, "NumSlicesZ", nullptr, 1.}
 };
 
 StringXString SimplePartitionOptions_String[] = {
   {GMSH_FULLRC, "MappingX", nullptr, "t"},
   {GMSH_FULLRC, "MappingY", nullptr, "t"},
-  {GMSH_FULLRC, "MappingZ", nullptr, "t"}};
+  {GMSH_FULLRC, "MappingZ", nullptr, "t"}
+};
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterSimplePartitionPlugin()
@@ -44,14 +44,10 @@ std::string GMSH_SimplePartitionPlugin::getHelp() const
 {
   return "Plugin(SimplePartition) partitions the current mesh into "
          "`NumSlicesX', `NumSlicesY' and `NumSlicesZ' slices along the X-, Y- "
-         "and Z-axis, respectively. The distribtion of these slices is "
-         "governed "
-         "by `MappingX', `MappingY' and `MappingZ', where `t' is a normalized "
-         "absissa along each direction. (Setting `MappingX' to `t' will thus "
-         "lead "
-         "to equidistant slices along the X-axis.)\n\n"
-         "The plugin creates the topology of the partitioned entities if "
-         "`CreateTopology' is set.";
+         "and Z-axis, respectively. The distribution of these slices is "
+         "governed by `MappingX', `MappingY' and `MappingZ', where `t' is a "
+         "normalized absissa along each direction. (Setting `MappingX' to "
+         "`t' will thus lead to equidistant slices along the X-axis.)";
 }
 
 int GMSH_SimplePartitionPlugin::getNbOptions() const
@@ -80,7 +76,6 @@ void GMSH_SimplePartitionPlugin::run()
   int numSlicesX = (int)SimplePartitionOptions_Number[0].def;
   int numSlicesY = (int)SimplePartitionOptions_Number[1].def;
   int numSlicesZ = (int)SimplePartitionOptions_Number[2].def;
-  int createTopology = (int)SimplePartitionOptions_Number[3].def;
   std::vector<std::string> exprX(1), exprY(1), exprZ(1);
   exprX[0] = SimplePartitionOptions_String[0].def;
   exprY[0] = SimplePartitionOptions_String[1].def;
@@ -169,10 +164,7 @@ void GMSH_SimplePartitionPlugin::run()
     }
   }
 
-  opt_mesh_partition_create_topology(0, GMSH_SET | GMSH_GUI, createTopology);
-
-  int ier = PartitionUsingThisSplit(m, numSlicesX * numSlicesY * numSlicesZ,
-                                    elmToPartition);
+  int ier = PartitionUsingThisSplit(m, elmToPartition);
   if(!ier) {
     opt_mesh_color_carousel(0, GMSH_SET | GMSH_GUI, 3.);
     CTX::instance()->mesh.changed = ENT_ALL;

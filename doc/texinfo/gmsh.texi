@@ -1402,17 +1402,17 @@ statement.
 
 @ftable @code
 @item Macro @var{string} | @var{char-expression}
-Begins the declaration of a user-defined macro named @var{string}. The
+Begin the declaration of a user-defined macro named @var{string}. The
 body of the macro starts on the line after `@code{Macro @var{string}}',
 and can contain any Gmsh command.  A synonym for @code{Macro} is
 @code{Function}.
 
 @item Return
-Ends the body of the current user-defined macro. Macro declarations
+End the body of the current user-defined macro. Macro declarations
 cannot be imbricated.
 
 @item Call @var{string} | @var{char-expression} ;
-Executes the body of a (previously defined) macro named @var{string}.
+Execute the body of a (previously defined) macro named @var{string}.
 @end ftable
 
 See @ref{t5}, for an example of a user-defined macro. A
@@ -1434,28 +1434,28 @@ Loops and conditionals are defined as follows, and can be imbricated:
 
 @ftable @code
 @item For ( @var{expression} : @var{expression} )
-Iterates from the value of the first @var{expression} to the value of the
+Iterate from the value of the first @var{expression} to the value of the
 second @var{expression}, with a unit incrementation step. At each iteration,
 the commands comprised between `@code{For ( @var{expression} :
 @var{expression} )}' and the matching @code{EndFor} are executed.
 
 @item For ( @var{expression} : @var{expression} : @var{expression} )
-Iterates from the value of the first @var{expression} to the value of the
+Iterate from the value of the first @var{expression} to the value of the
 second @var{expression}, with a positive or negative incrementation step
 equal to the third @var{expression}. At each iteration, the commands
 comprised between `@code{For ( @var{expression} : @var{expression} :
 @var{expression} )}' and the matching @code{EndFor} are executed.
 
 @item For @var{string} In @{ @var{expression} : @var{expression} @}
-Iterates from the value of the first @var{expression} to the value of the
-second @var{expression}, with a unit incrementation step. At each iteration,
-the value of the iterate is affected to an expression named @var{string},
-and the commands comprised between `@code{For @var{string} In @{
-@var{expression} : @var{expression} @}}' and the matching @code{EndFor} are
-executed.
+Iterate from the value of the first @var{expression} to the value of the
+second @var{expression}, with a unit incrementation step. At each
+iteration, the value of the iterate is affected to an expression named
+@var{string}, and the commands comprised between `@code{For @var{string}
+In @{ @var{expression} : @var{expression} @}}' and the matching
+@code{EndFor} are executed.
 
 @item For @var{string} In @{ @var{expression} : @var{expression} : @var{expression} @}
-Iterates from the value of the first @var{expression} to the value of the
+Iterate from the value of the first @var{expression} to the value of the
 second @var{expression}, with a positive or negative incrementation step
 equal to the third @var{expression}. At each iteration, the value of the
 iterate is affected to an expression named @var{string}, and the commands
@@ -1464,26 +1464,26 @@ comprised between `@code{For @var{string} In @{ @var{expression} :
 executed.
 
 @item EndFor
-Ends a matching @code{For} command.
+End a matching @code{For} command.
 
 @item If ( @var{expression} )
-The body enclosed between `@code{If ( @var{expression} )}' and the matching
-@code{ElseIf}, @code{Else} or @code{EndIf}, is evaluated if @var{expression}
-is non-zero.
+The body enclosed between `@code{If ( @var{expression} )}' and the
+matching @code{ElseIf}, @code{Else} or @code{EndIf}, is evaluated if
+@var{expression} is non-zero.
 
 @item ElseIf ( @var{expression} )
-The body enclosed between `@code{ElseIf ( @var{expression} )}' and the next
-matching @code{ElseIf}, @code{Else} or @code{EndIf}, is evaluated if
-@var{expression} is non-zero and none of the @var{expression} of the
+The body enclosed between `@code{ElseIf ( @var{expression} )}' and the
+next matching @code{ElseIf}, @code{Else} or @code{EndIf}, is evaluated
+if @var{expression} is non-zero and none of the @var{expression} of the
 previous matching codes @code{If} and @code{ElseIf} were non-zero.
 
 @item Else
-The body enclosed between @code{Else} and the matching @code{EndIf} is evaluated
-if none of the @var{expression} of the previous matching codes
+The body enclosed between @code{Else} and the matching @code{EndIf} is
+evaluated if none of the @var{expression} of the previous matching codes
 @code{If} and @code{ElseIf} were non-zero.
 
 @item EndIf
-Ends a matching @code{If} command.
+End a matching @code{If} command.
 @end ftable
 
 @c -------------------------------------------------------------------------
@@ -1509,42 +1509,42 @@ The following commands can be used anywhere in a Gmsh script:
 @ftable @code
 
 @item @var{string} = @var{expression};
-Creates a new expression identifier @var{string}, or affects
+Create a new expression identifier @var{string}, or affects
 @var{expression} to an existing expression identifier. The following
 expression identifiers are predefined (hardcoded in Gmsh's parser):
 
 @ftable @code
 @item Pi
-Returns 3.1415926535897932.
+Return 3.1415926535897932.
 
 @item GMSH_MAJOR_VERSION
-Returns Gmsh's major version number.
+Return Gmsh's major version number.
 
 @item GMSH_MINOR_VERSION
-Returns Gmsh's minor version number.
+Return Gmsh's minor version number.
 
 @item GMSH_PATCH_VERSION
-Returns Gmsh's patch version number.
+Return Gmsh's patch version number.
 
 @item MPI_Size
-Returns the number of processors on which Gmsh is running. It is always
+Return the number of processors on which Gmsh is running. It is always
 1, except if you compiled Gmsh with @code{ENABLE_MPI}
 (@pxref{Compiling the source code}).
 
 @item MPI_Rank
-Returns the rank of the current processor.
+Return the rank of the current processor.
 
 @item Cpu
-Returns the current CPU time (in seconds).
+Return the current CPU time (in seconds).
 
 @item Memory
-Returns the current memory usage (in Mb).
+Return the current memory usage (in Mb).
 
 @item TotalMemory
-Returns the total memory available (in Mb).
+Return the total memory available (in Mb).
 
 @item newp
-Returns the next available point tag. As explained in @ref{Geometry
+Return the next available point tag. As explained in @ref{Geometry
 module}, a unique tag must be associated with every geometrical point:
 @code{newp} permits to know the highest tag already attributed (plus
 one). This is mostly useful when writing user-defined macros
@@ -1552,23 +1552,23 @@ one). This is mostly useful when writing user-defined macros
 does not know @emph{a priori} which tags are already attributed, and
 which ones are still available.
 
-@item newl
-Returns the next available curve tag.
+@item newc
+Return the next available curve tag.
 
 @item news
-Returns the next available surface tag.
+Return the next available surface tag.
 
 @item newv
-Returns the next available volume tag.
+Return the next available volume tag.
 
-@item newll
-Returns the next available curve loop tag.
+@item newcl
+Return the next available curve loop tag.
 
 @item newsl
-Returns the next available surface loop tag.
+Return the next available surface loop tag.
 
 @item newreg
-Returns the next available region tag. That is, @code{newreg} returns
+Return the next available region tag. That is, @code{newreg} returns
 the maximum of @code{newp}, @code{newl}, @code{news}, @code{newv},
 @code{newll}, @code{newsl} and all physical group tags@footnote{For
 compatibility purposes, the behavior of @code{newl}, @code{news},
@@ -1577,77 +1577,78 @@ compatibility purposes, the behavior of @code{newl}, @code{news},
 @end ftable
 
 @item @var{string} = @{ @};
-Creates a new expression list identifier @code{@var{string}} with an
+Create a new expression list identifier @code{@var{string}} with an
 empty list.
 
 @item @var{string}[] = @{ @var{expression-list} @};
-Creates a new expression list identifier @code{@var{string}} with the
+Create a new expression list identifier @code{@var{string}} with the
 list @var{expression-list}, or affects @var{expression-list} to an
 existing expression list identifier. Parentheses are also allowed
 instead of square brackets; although not recommended, brackets and
 parentheses can also be completely ommitted.
 
 @item @var{string} [ @{ @var{expression-list} @} ] = @{ @var{expression-list} @};
-Affects each item in the right hand side @var{expression-list} to the
+Affect each item in the right hand side @var{expression-list} to the
 elements (indexed by the left hand side @var{expression-list}) of an
 existing expression list identifier. The two @w{@var{expression-list}s}
 must contain the same number of items. Parentheses can also be used
 instead of brackets.
 
 @item @var{string} += @var{expression};
-Adds and affects @var{expression} to an existing expression identifier.
+Add and affect @var{expression} to an existing expression identifier.
 
 @item @var{string} -= @var{expression};
-Subtracts and affects @var{expression} to an existing expression identifier.
+Subtract and affect @var{expression} to an existing expression identifier.
 
 @item @var{string} *= @var{expression};
-Multiplies and affects @var{expression} to an existing expression identifier.
+Multiply and affect @var{expression} to an existing expression identifier.
 
 @item @var{string} /= @var{expression};
-Divides and affects @var{expression} to an existing expression identifier.
+Divide and affect @var{expression} to an existing expression identifier.
 
 @item @var{string} += @{ @var{expression-list} @};
-Appends @var{expression-list} to an existing expression list or creates
-a new expression list with @var{expression-list}.
+Append @var{expression-list} to an existing expression list or creates a
+new expression list with @var{expression-list}.
 
 @item @var{string} -= @{ @var{expression-list} @};
-Removes the items in @var{expression-list} from the existing expression list.
+Remove the items in @var{expression-list} from the existing expression
+list.
 
 @item @var{string} [ @{ @var{expression-list} @} ] += @{ @var{expression-list} @};
-Adds and affects, item per item, the right hand side
-@var{expression-list} to an existing expression list
-identifier. Parentheses can also be used instead of brackets.
+Add and affect, item per item, the right hand side @var{expression-list}
+to an existing expression list identifier. Parentheses can also be used
+instead of brackets.
 
 @item @var{string} [ @{ @var{expression-list} @} ] -= @{ @var{expression-list} @};
-Subtracts and affects, item per item, the right hand side
+Subtract and affect, item per item, the right hand side
 @var{expression-list} to an existing expression list identifier.
 Parentheses can also be used instead of brackets.
 
 @item @var{string} [ @{ @var{expression-list} @} ] *= @{ @var{expression-list} @};
-Multiplies and affects, item per item, the right hand side
+Multiply and affect, item per item, the right hand side
 @var{expression-list} to an existing expression list
 identifier. Parentheses can also be used instead of brackets.
 
 @item @var{string} [ @{ @var{expression-list} @} ] /= @{ @var{expression-list} @};
-Divides and affects, item per item, the right hand side
+Divide and affect, item per item, the right hand side
 @var{expression-list} to an existing expression list
 identifier. Parentheses can also be used instead of brackets.
 
 @item @var{string} = @var{char-expression};
-Creates a new character expression identifier @code{@var{string}} with a
+Create a new character expression identifier @code{@var{string}} with a
 given @var{char-expression}.
 
 @item @var{string}[] = Str( @var{char-expression-list} ) ;
-Creates a new character expression list identifier @code{@var{string}}
+Create a new character expression list identifier @code{@var{string}}
 with a given @var{char-expression-list}. Parentheses can also be used
 instead of brackets.
 
 @item @var{string}[] += Str( @var{char-expression-list} ) ;
-Appends a character expression list to an existing list. Parentheses can
+Append a character expression list to an existing list. Parentheses can
 also be used instead of brackets.
 
 @item DefineConstant[ @var{string} = @var{expression}|@var{char-expression} <, ...>];
-Creates a new expression identifier @var{string}, with value
+Create a new expression identifier @var{string}, with value
 @var{expression}, only if has not been defined before.
 
 @item DefineConstant[ @var{string} = @{ @var{expression}|@var{char-expression}, @var{onelab-options} @} <, ...>];
@@ -1657,50 +1658,50 @@ with the ONELAB database if it has not been defined before. See the
 ONELAB tutorial wiki} for more information.
 
 @item SetNumber( @var{char-expression} , @var{expression} );
-Sets the value a numeric ONELAB variable @var{char-expression}.
+Set the value a numeric ONELAB variable @var{char-expression}.
 
 @item SetString( @var{char-expression} , @var{char-expression} );
-Sets the value a string ONELAB variable @var{char-expression}.
+Set the value a string ONELAB variable @var{char-expression}.
 
 @item @var{real-option} = @var{expression};
-Affects @var{expression} to a real option.
+Affect @var{expression} to a real option.
 
 @item @var{char-option} = @var{char-expression};
-Affects @var{char-expression} to a character option.
+Affect @var{char-expression} to a character option.
 
 @item @var{color-option} = @var{color-expression};
-Affects @var{color-expression} to a color option.
+Affect @var{color-expression} to a color option.
 
 @item @var{real-option} += @var{expression};
-Adds and affects @var{expression} to a real option.
+Add and affect @var{expression} to a real option.
 
 @item @var{real-option} -= @var{expression};
-Subtracts and affects @var{expression} to a real option.
+Subtract and affect @var{expression} to a real option.
 
 @item @var{real-option} *= @var{expression};
-Multiplies and affects @var{expression} to a real option.
+Multiply and affect @var{expression} to a real option.
 
 @item @var{real-option} /= @var{expression};
-Divides and affects @var{expression} to a real option.
+Divide and affect @var{expression} to a real option.
 
 @item Abort;
-Aborts the current script.
+Abort the current script.
 
 @item Exit;
-Exits Gmsh.
+Exit Gmsh.
 
 @item CreateDir @var{char-expression};
 Create the directory @var{char-expression}.
 
 @item Printf ( @var{char-expression} <, @var{expression-list}> );
-Prints a character expression in the information window and/or on the
+Print a character expression in the information window and/or on the
 terminal. @code{Printf} is equivalent to the @code{printf} C function:
 @var{char-expression} is a format string that can contain formatting
-characters (@code{%f}, @code{%e}, etc.). Note that all @w{@var{expression}s}
-are evaluated as floating point values in Gmsh (@pxref{Expressions}), so
-that only valid floating point formatting characters make sense in
-@var{char-expression}. See @ref{t5}, for an example of the use of
-@code{Printf}.
+characters (@code{%f}, @code{%e}, etc.). Note that all
+@w{@var{expression}s} are evaluated as floating point values in Gmsh
+(@pxref{Expressions}), so that only valid floating point formatting
+characters make sense in @var{char-expression}. See @ref{t5}, for an
+example of the use of @code{Printf}.
 
 @item Printf ( @var{char-expression} , @var{expression-list} ) > @var{char-expression};
 Same as @code{Printf} above, but output the expression in a file.
@@ -1713,27 +1714,27 @@ the file.
 Same as @code{Printf}, but raises a warning or an error.
 
 @item Merge @var{char-expression};
-Merges a file named @var{char-expression}. This command is equivalent to
+Merge a file named @var{char-expression}. This command is equivalent to
 the `File->Merge' menu in the GUI. If the path in @var{char-expression}
 is not absolute, @var{char-expression} is appended to the path of the
 current file. @value{SYNC}
 
 @item ShapeFromFile( @var{char-expression} );
-Merges a BREP, STEP or IGES file and returns the tags of the
+Merge a BREP, STEP or IGES file and returns the tags of the
 highest-dimensional entities. Only available with the OpenCASCADE
 geometry kernel.
 
 @item Draw;
-Redraws the scene.
+Redraw the scene.
 
 @item SplitCurrentWindowHorizontal @var{expression};
-Splits the current window horizontally, with the ratio given by @var{expression}.
+Split the current window horizontally, with the ratio given by @var{expression}.
 
 @item SplitCurrentWindowVertical @var{expression};
-Splits the current window vertically, with the ratio given by @var{expression}.
+Split the current window vertically, with the ratio given by @var{expression}.
 
 @item SetCurrentWindow @var{expression};
-Sets the current window by speficying its index (starting at 0) in the
+Set the current window by speficying its index (starting at 0) in the
 list of all windows. When new windows are created by splits, new windows
 are appended at the end of the list.
 
@@ -1746,7 +1747,7 @@ regenerated. Useful e.g. for creating animations with changing clipping
 planes, etc.
 
 @item BoundingBox;
-Recomputes the bounding box of the scene (which is normally computed only
+Recompute the bounding box of the scene (which is normally computed only
 after new model entities are added or after files are included or
 merged). The bounding box is computed as follows:
 @enumerate
@@ -1765,66 +1766,66 @@ the views.
 @value{SYNC}
 
 @item BoundingBox @{ @var{expression}, @var{expression}, @var{expression}, @var{expression}, @var{expression}, @var{expression} @};
-Forces the bounding box of the scene to the given @w{@var{expression}s}
+Force the bounding box of the scene to the given @w{@var{expression}s}
 (X min, X max, Y min, Y max, Z min, Z max). Beware that order of the
 coordinates is different than in the @code{BoundingBox} commands for
 model entities: see @ref{Floating point expressions}.
 
 @item Delete Model;
-Deletes the current model (all model entities and their associated
+Delete the current model (all model entities and their associated
 meshes).
 
 @item Delete Physicals;
-Deletes all physical groups.
+Delete all physical groups.
 
 @item Delete Variables;
-Deletes all the expressions.
+Delete all the expressions.
 
 @item Delete Options;
-Deletes the current options and revert to the default values.
+Delete the current options and revert to the default values.
 
 @item Delete @var{string};
-Deletes the expression @var{string}.
+Delete the expression @var{string}.
 
 @item Print @var{char-expression};
-Prints the graphic window in a file named @var{char-expression}, using
+Print the graphic window in a file named @var{char-expression}, using
 the current @code{Print.Format} (@pxref{General options list}). If the
 path in @var{char-expression} is not absolute, @var{char-expression} is
 appended to the path of the current file. @value{SYNC}
 
 @item Sleep @var{expression};
-Suspends the execution of Gmsh during @var{expression} seconds.
+Suspend the execution of Gmsh during @var{expression} seconds.
 
 @item SystemCall @var{char-expression};
 Executes a (blocking) system call.
 
 @item NonBlockingSystemCall @var{char-expression};
-Executes a (non-blocking) system call.
+Execute a (non-blocking) system call.
 
 @item OnelabRun ( @var{char-expression} <, @var{char-expression} > )
-Runs a ONELAB client (first argument is the client name, second optional
+Run a ONELAB client (first argument is the client name, second optional
 arguement is the command line).
 
 @item SetName @var{char-expression};
-Changes the name of the current model.
+Change the name of the current model.
 
 @item SetFactory(@var{char-expression});
-Changes the current geometry kernel (i.e. determines the CAD kernel that
+Change the current geometry kernel (i.e. determines the CAD kernel that
 is used for all subsequent geometrical commands). Currently available
 kernels: @code{"Built-in"} and @code{"OpenCASCADE"}.
 
 @item SyncModel;
-Forces an immediate transfer from the old geometrical database into the
+Force an immediate transfer from the old geometrical database into the
 new one (this transfer normally occurs right after a file is read).
 
 @item NewModel;
-Creates a new current model.
+Create a new current model.
 
 @item Include @var{char-expression};
-Includes the file named @var{char-expression} at the current position in the
-input file. The include command should be given on a line of its own.  If
-the path in @var{char-expression} is not absolute, @var{char-expression} is
-appended to the path of the current file.
+Include the file named @var{char-expression} at the current position in
+the input file. The include command should be given on a line of its
+own.  If the path in @var{char-expression} is not absolute,
+@var{char-expression} is appended to the path of the current file.
 @end ftable
 
 @c -------------------------------------------------------------------------
@@ -1951,7 +1952,7 @@ refers to a previously defined entity, it is enclosed between braces.''
 
 @ftable @code
 @item Point ( @var{expression} ) = @{ @var{expression}, @var{expression}, @var{expression} <, @var{expression} > @};
-Creates a point. The @var{expression} inside the parentheses is the
+Create a point. The @var{expression} inside the parentheses is the
 point's tag; the three first @w{@var{expression}s} inside the braces on
 the right hand side give the three X, Y and Z coordinates of the point
 in the three-dimensional Euclidean space; the optional last
@@ -1960,14 +1961,14 @@ point. See @ref{Specifying mesh element sizes}, for more information
 about how this value is used in the meshing process.
 
 @item Physical Point ( @var{expression} | @var{char-expression} <, @var{expression}> ) <+|->= @{ @var{expression-list} @};
-Creates a physical point. The @var{expression} inside the parentheses is
+Create a physical point. The @var{expression} inside the parentheses is
 the physical point's tag; the @var{expression-list} on the right hand
 side should contain the tags of all the elementary points that need to
 be grouped inside the physical point.  If a @var{char-expression} is
 given instead instead of @var{expression} inside the parentheses, a
 string label is associated with the physical tag, which can be either
-provided explicitly (after the comma) or not (in which case a unique
-tag is automatically created).
+provided explicitly (after the comma) or not (in which case a unique tag
+is automatically created).
 
 @end ftable
 
@@ -1986,29 +1987,29 @@ tag is automatically created).
 
 @ftable @code
 @item Line ( @var{expression} ) = @{ @var{expression}, @var{expression} @};
-Creates a straight line segment. The @var{expression} inside the
+Create a straight line segment. The @var{expression} inside the
 parentheses is the line segment's tag; the two @w{@var{expression}s}
 inside the braces on the right hand side give tags of the start and end
 points of the segment.
 @c todo: multi-lines not authorized yet
 
 @item Bezier ( @var{expression} ) = @{ @var{expression-list} @};
-Creates a Bezier curve. The @var{expression-list} contains the
+Create a Bezier curve. The @var{expression-list} contains the
 tags of the control points.
 
 @item BSpline ( @var{expression} ) = @{ @var{expression-list} @};
-Creates a cubic BSpline. The @var{expression-list} contains the tags of
+Create a cubic BSpline. The @var{expression-list} contains the tags of
 the control points. Creates a periodic curve if the first and last
 points are identical.
 
 @item Spline ( @var{expression} ) = @{ @var{expression-list} @};
-Creates a spline going through the points in @var{expression-list}. With
+Create a spline going through the points in @var{expression-list}. With
 the built-in geometry kernel this constructs a Catmull-Rom spline. With
 the OpenCASCADE kernel, this constructs a C2 BSpline. Creates a periodic
 curve if the first and last points are identical.
 
 @item Circle ( @var{expression} ) = @{ @var{expression}, @var{expression}, @var{expression} <, ...> @};
-Creates a circle arc. The three @var{expression}s on the right-hand-side
+Create a circle arc. The three @var{expression}s on the right-hand-side
 define the start point, the center and the end point of the arc. With
 the built-in geometry kernel the arc should be strictly smaller than Pi.
 With the OpenCASCADE kernel additional @var{expression}s can be provided
@@ -2017,7 +2018,7 @@ between two angles (next 2 expressions).
 @c todo: document < Plane @{ @var{expression}, @var{expression}, @var{expression} @}; >
 
 @item Ellipse ( @var{expression} ) = @{ @var{expression}, @var{expression}, @var{expression}, <, ...> @};
-Creates an ellipse arc. If four @var{expression}s are provided on the
+Create an ellipse arc. If four @var{expression}s are provided on the
 right-hand-side they define the start point, the center point, a point
 anywhere on the major axis and the end point. If the first point is a
 major axis point, the third expression can be ommitted. With the
@@ -2029,14 +2030,14 @@ creating ellipse arcs with the major radius smaller than the minor
 radius.
 
 @item Compound Spline | BSpline ( @var{expression} ) = @{ @var{expression-list} @} Using @var{expression};
-Creates a spline or a BSpline from control points sampled on the curves
+Create a spline or a BSpline from control points sampled on the curves
 in @var{expression-list}. @code{Using} @var{expression} specifies the
 number of intervals on each curve to compute the sampling
 points. Compound splines and BSplines are only available with the
 built-in geometry kernel.
 
 @item Curve Loop ( @var{expression} ) = @{ @var{expression-list} @};
-Creates an oriented loop of curves, i.e. a closed wire. The
+Create an oriented loop of curves, i.e. a closed wire. The
 @var{expression} inside the parentheses is the curve loop's tag; the
 @var{expression-list} on the right hand side should contain the tags of
 all the curves that constitute the curve loop. A curve loop must be a
@@ -2049,12 +2050,12 @@ single @code{Curve Loop} command. (Curve loops are used to create
 surfaces: see @ref{Surfaces}.)
 
 @item Wire ( @var{expression} ) = @{ @var{expression-list} @};
-Creates a path made of curves. Wires are only available with the
+Create a path made of curves. Wires are only available with the
 OpenCASCADE kernel. They are used to create @code{ThruSections} and
 extrusions along paths.
 
 @item Physical Curve ( @var{expression} | @var{char-expression} <, @var{expression}> ) <+|->= @{ @var{expression-list} @};
-Creates a physical curve. The @var{expression} inside the parentheses is
+Create a physical curve. The @var{expression} inside the parentheses is
 the physical curve's tag; the @var{expression-list} on the right hand
 side should contain the tags of all the elementary curves that need to
 be grouped inside the physical curve. If a @var{char-expression} is
@@ -2082,7 +2083,7 @@ elementary curves in the saved mesh file.
 
 @ftable @code
 @item Plane Surface ( @var{expression} ) = @{ @var{expression-list} @};
-Creates a plane surface. The @var{expression} inside the parentheses is
+Create a plane surface. The @var{expression} inside the parentheses is
 the plane surface's tag; the @var{expression-list} on the right hand
 side should contain the tags of all the curve loops defining the
 surface. The first curve loop defines the exterior boundary of the
@@ -2094,7 +2095,7 @@ have any curves in common with another curve loop defining a hole in the
 same surface (in which case the two curve loops should be combined).
 
 @item Surface ( @var{expression} ) = @{ @var{expression-list} @} < In Sphere @{ @var{expression} @}, Using Point @{ @var{expression-list} @} >;
-Creates a surface filling. With the built-in kernel, the first curve
+Create a surface filling. With the built-in kernel, the first curve
 loop should be composed of either three or four curves, the surface is
 constructed using transfinite interpolation, and the optional @code{In
 Sphere} argument forces the surface to be a spherical patch (the extra
@@ -2104,12 +2105,12 @@ to match the bounding curves, as well as the (optional) points provided
 after @code{Using Point}.
 
 @item BSpline Surface ( @var{expression} ) = @{ @var{expression-list} @};
-Creates a BSpline surface filling. Only a single curve loop made of 2, 3
+Create a BSpline surface filling. Only a single curve loop made of 2, 3
 or 4 BSpline curves can be provided. @code{BSpline Surface} is only
 available with the OpenCASCADE kernel.
 
 @item Bezier Surface ( @var{expression} ) = @{ @var{expression-list} @};
-Creates a Bezier surface filling. Only a single curve loop made of 2, 3
+Create a Bezier surface filling. Only a single curve loop made of 2, 3
 or 4 Bezier curves can be provided. @code{Bezier Surface} is only
 available with the OpenCASCADE kernel.
 
@@ -2120,13 +2121,13 @@ A fifth expression defines the radius along Y, leading to an ellipse.
 @code{Disk} is only available with the OpenCASCADE kernel.
 
 @item Rectangle ( @var{expression} ) = @{ @var{expression-list} @};
-Creates a rectangle. The 3 first expressions define the lower-left
+Create a rectangle. The 3 first expressions define the lower-left
 corner; the next 2 define the width and height. If a 6th expression is
 provided, it defines a radius to round the rectangle
 corners. @code{Rectangle} is only available with the OpenCASCADE kernel.
 
 @item Surface Loop ( @var{expression} ) = @{ @var{expression-list} @} < Using Sewing >;
-Creates a surface loop (a shell). The @var{expression} inside the
+Create a surface loop (a shell). The @var{expression} inside the
 parentheses is the surface loop's tag; the @var{expression-list} on the
 right hand side should contain the tags of all the surfaces that
 constitute the surface loop. A surface loop must always represent a
@@ -2138,7 +2139,7 @@ surfaces that share geometrically identical (but topologically
 different) curves.
 
 @item Physical Surface ( @var{expression} | @var{char-expression} <, @var{expression}> ) <+|->= @{ @var{expression-list} @};
-Creates a physical surface. The @var{expression} inside the parentheses
+Create a physical surface. The @var{expression} inside the parentheses
 is the physical surface's tag; the @var{expression-list} on the right
 hand side should contain the tags of all the elementary surfaces that
 need to be grouped inside the physical surface.  If a
@@ -2167,7 +2168,7 @@ file.
 
 @ftable @code
 @item Volume ( @var{expression} ) = @{ @var{expression-list} @};
-Creates a volume. The @var{expression} inside the parentheses is the
+Create a volume. The @var{expression} inside the parentheses is the
 volume's tag; the @var{expression-list} on the right hand
 side should contain the tags of all the surface loops
 defining the volume. The first surface loop defines the exterior boundary of
@@ -2180,7 +2181,7 @@ hole in the same volume (in which case the two surface loops should be
 combined).
 
 @item Sphere ( @var{expression} ) = @{ @var{expression-list} @};
-Creates a sphere, defined by the 3 coordinates of its center and a
+Create a sphere, defined by the 3 coordinates of its center and a
 radius. Additional expressions define 3 angle limits. The first two
 optional arguments define the polar angle opening (from -Pi/2 to
 Pi/2). The optional `angle3' argument defines the azimuthal opening
@@ -2188,35 +2189,35 @@ Pi/2). The optional `angle3' argument defines the azimuthal opening
 kernel.
 
 @item Box ( @var{expression} ) = @{ @var{expression-list} @};
-Creates a box, defined by the 3 coordinates of a point and the 3
+Create a box, defined by the 3 coordinates of a point and the 3
 extents. @code{Box} is only available with the OpenCASCADE kernel.
 
 @item Cylinder ( @var{expression} ) = @{ @var{expression-list} @};
-Creates a cylinder, defined by the 3 coordinates of the center of the
+Create a cylinder, defined by the 3 coordinates of the center of the
 first circular face, the 3 components of the vector defining its axis
 and its radius. An additional expression defines the angular
 opening. @code{Cylinder} is only available with the OpenCASCADE kernel.
 
 @item Torus ( @var{expression} ) = @{ @var{expression-list} @};
-Creates a torus, defined by the 3 coordinates of its center and 2 radii.
+Create a torus, defined by the 3 coordinates of its center and 2 radii.
 An additional expression defines the angular opening. @code{Torus} is
 only available with the OpenCASCADE kernel.
 
 @item Cone ( @var{expression} ) = @{ @var{expression-list} @};
-Creates a cone, defined by the 3 coordinates of the center of the first
+Create a cone, defined by the 3 coordinates of the center of the first
 circular face, the 3 components of the vector defining its axis and the
 two radii of the faces (these radii can be zero). An additional
 expression defines the angular opening. @code{Cone} is only available
 with the OpenCASCADE kernel.
 
 @item Wedge ( @var{expression} ) = @{ @var{expression-list} @};
-Creates a right angular wedge, defined by the 3 coordinates of the
+Create a right angular wedge, defined by the 3 coordinates of the
 right-angle point and the 3 extends. An additional parameter defines the
 top X extent (zero by default). @code{Wedge} is only available with the
 OpenCASCADE kernel.
 
 @item ThruSections ( @var{expression} ) = @{ @var{expression-list} @};
-Creates a volume defined through curve loops. @code{ThruSections} is only
+Create a volume defined through curve loops. @code{ThruSections} is only
 available with the OpenCASCADE kernel.
 
 @item Ruled ThruSections ( @var{expression} ) = @{ @var{expression-list} @};
@@ -2228,14 +2229,14 @@ the OpenCASCADE kernel.
 @c todo: @code{ThickSolid} is only available with the OpenCASCADE kernel.
 
 @item Physical Volume ( @var{expression} | @var{char-expression} <, @var{expression}> ) <+|->= @{ @var{expression-list} @};
-Creates a physical volume. The @var{expression} inside the parentheses
-is the physical volume's tag; the @var{expression-list} on the right
-hand side should contain the tags of all the elementary volumes that
-need to be grouped inside the physical volume. If a
-@var{char-expression} is given instead instead of @var{expression}
-inside the parentheses, a string label is associated with the physical
-tag, which can be either provided explicitly (after the comma) or not
-(in which case a unique tag is automatically created).
+Create a physical volume. The @var{expression} inside the parentheses is
+the physical volume's tag; the @var{expression-list} on the right hand
+side should contain the tags of all the elementary volumes that need to
+be grouped inside the physical volume. If a @var{char-expression} is
+given instead instead of @var{expression} inside the parentheses, a
+string label is associated with the physical tag, which can be either
+provided explicitly (after the comma) or not (in which case a unique tag
+is automatically created).
 
 @end ftable
 
@@ -2258,13 +2259,13 @@ can be extended in order to also extrude the mesh):
 @var{extrude}:
 @ftable @code
 @item Extrude @{ @var{expression-list} @}  @{ @var{extrude-list} @}
-Extrudes all elementary entities (points, curves or surfaces) in
+Extrude all elementary entities (points, curves or surfaces) in
 @var{extrude-list} using a translation. The @var{expression-list} should
 contain three @w{@var{expression}s} giving the X, Y and Z components of
 the translation vector.
 
 @item Extrude @{ @{ @var{expression-list} @}, @{ @var{expression-list} @}, @var{expression} @} @{ @var{extrude-list} @}
-Extrudes all elementary entities (points, curves or surfaces) in
+Extrude all elementary entities (points, curves or surfaces) in
 @var{extrude-list} using a rotation. The first @var{expression-list}
 should contain three @w{@var{expression}s} giving the X, Y and Z
 direction of the rotation axis; the second @var{expression-list} should
@@ -2274,7 +2275,7 @@ rotation angle (in radians). With the built-in geometry kernel the angle
 should be strictly smaller than Pi.
 
 @item Extrude @{ @{ @var{expression-list} @}, @{ @var{expression-list} @}, @{ @var{expression-list} @}, @var{expression} @} @{ @var{extrude-list} @}
-Extrudes all elementary entities (points, curves or surfaces) in
+Extrude all elementary entities (points, curves or surfaces) in
 @var{extrude-list} using a translation combined with a rotation (to
 produce a ``twist''). The first @var{expression-list} should contain
 three @w{@var{expression}s} giving the X, Y and Z components of the
@@ -2284,28 +2285,29 @@ rotation axis, which should match the direction of the translation; the
 third @var{expression-list} should contain three @w{@var{expression}s}
 giving the X, Y and Z components of any point on this axis; the last
 @var{expression} should contain the rotation angle (in radians). With
-the built-in geometry kernel the angle should be strictly smaller than Pi.
+the built-in geometry kernel the angle should be strictly smaller than
+Pi.
 
 @item Extrude @{ @var{extrude-list} @}
-Extrudes entities in @var{extrude-list} using a translation along their
+Extrude entities in @var{extrude-list} using a translation along their
 normal. Only available with the built-in geometry kernel.
 
 @item Extrude @{ @var{extrude-list} @} Using Wire @{ @var{expression-list} @}
-Extrudes entities in @var{extrude-list} along the give wire. Only
+Extrude entities in @var{extrude-list} along the give wire. Only
 available with the OpenCASCADE geometry kernel.
 
 @item ThruSections @{ @var{expression-list} @}
-Creates surfaces through the given curve loops or
+Create surfaces through the given curve loops or
 wires. @code{ThruSections} is only available with the OpenCASCADE
 kernel.
 
 @item Ruled ThruSections @{ @var{expression-list} @}
-Creates ruled surfaces through the given curve loops or
+Create ruled surfaces through the given curve loops or
 wires. @code{Ruled ThruSections} is only available with the OpenCASCADE
 kernel.
 
 @item Fillet @{ @var{expression-list} @} @{ @var{expression-list} @} @{ @var{expression-list} @}
-Fillets volumes (first list) on some curves (second list), using the
+Fillet volumes (first list) on some curves (second list), using the
 provided radii (third list). The radius list can either contain a single
 radius, as many radii as curves, or twice as many as curves (in which
 case different radii are provided for the begin and end points of the
@@ -2370,13 +2372,13 @@ syntax for boolean operations is as follows:
 @var{boolean}:
 @ftable @code
 @item BooleanIntersection @{ @var{boolean-list} @} @{ @var{boolean-list} @}
-Computes the intersection of the object and the tool.
+Compute the intersection of the object and the tool.
 @item BooleanUnion @{ @var{boolean-list} @} @{ @var{boolean-list} @}
-Computes the union of the object and the tool.
+Compute the union of the object and the tool.
 @item BooleanDifference @{ @var{boolean-list} @} @{ @var{boolean-list} @}
 Subtract the tool from the object.
 @item BooleanFragments @{ @var{boolean-list} @} @{ @var{boolean-list} @}
-Computes all the fragments resulting from the intersection of the
+Compute all the fragments resulting from the intersection of the
 entities in the object and in the tool, making all interfaces conformal.
 When applied to entities of different dimensions, the lower dimensional
 entities will be automatically embedded in the higher dimensional
@@ -2408,10 +2410,10 @@ when it is known beforehand that the operation will result in a single
 @var{boolean-explicit}:
 @ftable @code
 @item BooleanIntersection ( @var{expression} ) = @{ @var{boolean-list} @} @{ @var{boolean-list} @};
-Computes the intersection of the object and the tool and assign the
+Compute the intersection of the object and the tool and assign the
 result the tag @var{expression}.
 @item BooleanUnion  ( @var{expression} ) = @{ @var{boolean-list} @} @{ @var{boolean-list} @};
-Computes the union of the object and the tool and assign the result
+Compute the union of the object and the tool and assign the result
 the tag @var{expression}.
 @item BooleanDifference  ( @var{expression} ) = @{ @var{boolean-list} @} @{ @var{boolean-list} @};
 Subtract the tool from the object and assign the result the
@@ -2446,20 +2448,20 @@ below). The syntax of the transformation commands is:
 @var{transform}:
 @ftable @code
 @item Dilate @{ @{ @var{expression-list} @}, @var{expression} @} @{ @var{transform-list} @}
-Scales all elementary entities in @var{transform-list} by a factor
+Scale all elementary entities in @var{transform-list} by a factor
 @var{expression}. The @var{expression-list} should contain three
 @w{@var{expression}s} giving the X, Y, and Z coordinates of the center
 of the homothetic transformation.
 
 @item Dilate @{ @{ @var{expression-list} @}, @{ @var{expression}, @var{expression}, @var{expression} @} @} @{ @var{transform-list} @}
-Scales all elementary entities in @var{transform-list} using different
+Scale all elementary entities in @var{transform-list} using different
 factors along X, Y and Z (the three @var{expression}s). The
 @var{expression-list} should contain three @w{@var{expression}s} giving
 the X, Y, and Z coordinates of the center of the homothetic
 transformation.
 
 @item Rotate @{ @{ @var{expression-list} @}, @{ @var{expression-list} @}, @var{expression} @}  @{ @var{transform-list} @}
-Rotates all elementary entities in @var{transform-list} by an angle of
+Rotate all elementary entities in @var{transform-list} by an angle of
 @var{expression} radians. The first @var{expression-list} should contain
 three @w{@var{expression}s} giving the X, Y and Z direction of the
 rotation axis; the second @var{expression-list} should contain three
@@ -2467,45 +2469,45 @@ rotation axis; the second @var{expression-list} should contain three
 this axis.
 
 @item Symmetry @{ @var{expression-list} @} @{ @var{transform-list} @}
-Transforms all elementary entities symmetrically to a plane. The
+Transform all elementary entities symmetrically to a plane. The
 @var{expression-list} should contain four @w{@var{expression}s} giving
 the coefficients of the plane's equation.
 
 @item Affine @{ @var{expression-list} @} @{ @var{transform-list} @}
-Applies a 4 x 4 affine transformation matrix (16 entries given by row;
+Apply a 4 x 4 affine transformation matrix (16 entries given by row;
 only 12 can be provided for convenience) to all elementary
 entities. Currently only available with the OpenCASCADE kernel.
 
 @item Translate @{ @var{expression-list} @} @{ @var{transform-list} @}
-Translates all elementary entities in @var{transform-list}. The
+Translate all elementary entities in @var{transform-list}. The
 @var{expression-list} should contain three @w{@var{expression}s} giving
 the X, Y and Z components of the translation vector.
 
 @item Boundary @{ @var{transform-list} @}
-(Not a transformation per-se.) Returns the entities on the boundary of
+(Not a transformation per-se.) Return the entities on the boundary of
 the elementary entities in @var{transform-list}, with signs indicating
 their orientation in the boundary. To get unsigned tags (e.g. to reuse
 the output in other commands), apply the @code{Abs} function on the
 returned list. @value{SYNC}
 
 @item CombinedBoundary @{ @var{transform-list} @}
-(Not a transformation per-se.) Returns the boundary of the elementary
+(Not a transformation per-se.) Return the boundary of the elementary
 entities, combined as if a single entity, in
 @var{transform-list}. Useful to compute the boundary of a complex part.
 @value{SYNC}
 
 @item PointsOf @{ @var{transform-list} @}
-(Not a transformation per-se.) Returns all the geometrical points on the
+(Not a transformation per-se.) Return all the geometrical points on the
 boundary of the elementary entities. Useful to compute the boundary of a
 complex part. @value{SYNC}
 
 @item Intersect Curve @{ @var{expression-list} @} Surface @{ @var{expression} @}
-(Not a transformation per-se.) Returns the intersections of the curves
+(Not a transformation per-se.) Return the intersections of the curves
 given in @var{expression-list} with the specified surface. Currently
 only available with the built-in kernel.
 
 @item Split Curve @{ @var{expression} @} Point @{ @var{expression-list} @}
-(Not a transformation per-se.) Returns the curves created by splitting
+(Not a transformation per-se.) Return the curves created by splitting
 curve @var{expression} on the speficied points. Currently only available
 with the built-in kernel.
 @end ftable
@@ -2532,7 +2534,7 @@ Here is a list of all other geometry commands currently available:
 
 @ftable @code
 @item Coherence;
-Removes all duplicate elementary entities (e.g., points having identical
+Remove all duplicate elementary entities (e.g., points having identical
 coordinates). Note that with the built-in geometry kernel Gmsh executes
 the @code{Coherence} command automatically after each geometrical
 transformation, unless @code{Geometry.AutoCoherence} is set to zero
@@ -2541,19 +2543,21 @@ transformation, unless @code{Geometry.AutoCoherence} is set to zero
 operation on all entities.
 
 @item < Recursive > Delete @{ <Physical> Point | Curve | Surface | Volume @{ @var{expression-list-or-all} @}; @dots{} @}
-Deletes all elementary entities whose tags are given
-in @var{expression-list-or-all}. If an entity is linked to another
-entity (for example, if a point is used as a control point of a curve),
-@code{Delete} has no effect (the curve will have to be deleted before the
-point can). The @code{Recursive} variant deletes the entities as well as
-all its sub-entities of lower dimension. @value{SYNC}
+Delete all elementary entities whose tags are given in
+@var{expression-list-or-all}. If an entity is linked to another entity
+(for example, if a point is used as a control point of a curve),
+@code{Delete} has no effect (the curve will have to be deleted before
+the point can). The @code{Recursive} variant deletes the entities as
+well as all its sub-entities of lower dimension. @value{SYNC}
 
 @item Delete Embedded @{ <Physical> Point | Curve | Surface | Volume @{ @var{expression-list-or-all} @}; @dots{} @}
-Deletes all the embedded entities in the elementary entities whose tags
+Delete all the embedded entities in the elementary entities whose tags
 are given in @var{expression-list-or-all}. @value{SYNC}
 
 @item SetMaxTag Point | Curve | Surface | Volume ( @var{expression} )
-Forces the maximum tag for a category of entities to a given value, so that subsequently created entities in the same category will not have tags smaller than the given value.
+Force the maximum tag for a category of entities to a given value, so
+that subsequently created entities in the same category will not have
+tags smaller than the given value.
 
 @item < Recursive > Hide @{ <Physical> Point | Curve | Surface | Volume @{ @var{expression-list-or-all} @}; @dots{} @}
 Hide the entities listed in @var{expression-list-or-all}, if
@@ -2935,7 +2939,7 @@ Here is the list of all available fields with their associated options:
 
 @ftable @code
 @item Extrude @{ @var{expression-list} @} @{ @var{extrude-list} @var{layers} @}
-Extrudes both the geometry and the mesh using a translation
+Extrude both the geometry and the mesh using a translation
 (@pxref{Extrusions}). The @var{layers} option determines how the mesh is
 extruded and has the following syntax:
 
@@ -2980,13 +2984,13 @@ triangles any quadrangles on boundary surfaces shared with tetrahedral
 volumes. (They have no effect for 1D or 2D extrusions.)
 @code{QuadTriNoNewVerts} subdivides any of the region's quad-faced 3D
 elements that touch these boundary triangles into pyramids, prisms, or
-tetrahedra as necessary, all WITHOUT adding new
-nodes. @code{QuadTriAddVerts} works in a simular way, but subdivides
-3D elements touching the boundary triangles by adding a new node
-inside each element at the node-based centroid. Either method results
-in a structured extrusion with an outer layer of subdivided elements
-that interface the inner, unmodified elements to the triangle-meshed
-region boundaries.
+tetrahedra as necessary, all wiothout adding new
+nodes. @code{QuadTriAddVerts} works in a simular way, but subdivides 3D
+elements touching the boundary triangles by adding a new node inside
+each element at the node-based centroid. Either method results in a
+structured extrusion with an outer layer of subdivided elements that
+interface the inner, unmodified elements to the triangle-meshed region
+boundaries.
 
 In some rare cases, due to certain lateral boundary conditions, it may
 not be possible make a valid element subdivision with
@@ -3025,39 +3029,60 @@ create dedicated interface volumes around the structured geometry and
 apply a QuadTri algorithm to those volumes only.
 
 @item Extrude @{ @{ @var{expression-list} @}, @{ @var{expression-list} @}, @var{expression} @} @{ @var{extrude-list} @var{layers} @}
-Extrudes both the geometry and the mesh using a rotation
+Extrude both the geometry and the mesh using a rotation
 (@pxref{Extrusions}). The @var{layers} option is defined as above.  With
 the built-in geometry kernel the angle should be strictly smaller than
 Pi. With the OpenCASCADE kernel the angle should be strictly smaller
 than 2 Pi.
 
 @item Extrude @{ @{ @var{expression-list} @}, @{ @var{expression-list} @}, @{ @var{expression-list} @}, @var{expression} @} @{ @var{extrude-list} @var{layers} @}
-Extrudes both the geometry and the mesh using a combined translation and
+Extrude both the geometry and the mesh using a combined translation and
 rotation (@pxref{Extrusions}). The @var{layers} option is defined as
 above. With the built-in geometry kernel the angle should be strictly
 smaller than Pi. With the OpenCASCADE kernel the angle should be
 strictly smaller than 2 Pi.
 
 @item Extrude @{ Surface @{ @var{expression-list} @}; @var{layers} < Using Index[@var{expr}]; > < Using View[@var{expr}]; > < ScaleLastLayer; > @}
-Extrudes a boundary layer from the specified surfaces. If no view is
-specified, the boundary layer is created using gouraud-shaped (smoothed)
-normal field. Specifying a boundary layer index allows to extrude
-several independent boundary layers (with independent normal smoothing).
+Extrude a ``topological'' boundary layer from the specified surfaces. If
+no view is specified, the mesh of the boundary layer entities is created
+using a gouraud-shaded (smoothed) normal field. If a scalar view is
+specified, it locally prescribes the thickness of the layer. If a
+vector-valued view is specified it locally prescribes both the extrusion
+direction and the thickness. Specifying a boundary layer index allows to
+extrude several independent boundary layers (with independent normal
+smoothing). @code{ScaleLastLayer} scales the height of the last (top)
+layer of each normal's extrusion by the average length of the edges in
+all the source elements that contain the source node (actually, the
+average of the averages for each element--edges actually touching the
+source node are counted twice). This allows the height of the last layer
+to vary along with the size of the source elements in order to achieve
+better element quality. For example, in a boundary layer extruded with
+the Layers definition 'Layers@{ @{1,4,2@}, @{0.5, 0.6, 1.6@} @},' a
+source node adjacent to elements with an overall average edge length of
+5.0 will extrude to have a last layer height = (1.6-0.6) * 5.0 =
+5.0. Topological boundary layers are only available with the built-in
+kernel. See
+@url{@value{GITLAB-PREFIX}/benchmarks/extrude/sphere_boundary_layer.geo,sphere_boundary_layer.geo}
+or
+@url{@value{GITLAB-PREFIX}/benchmarks/extrude/sphere_boundary_layer_from_view.geo,sphere_boundary_layer_from_view.geo}
+for @code{.geo} file examples, and
+@url{@value{GITLAB-PREFIX}/demos/api/aneurysm.py,aneurysm.py} for an API
+example.
 
-@code{ScaleLastLayer} scales the height of the last (top) layer of each
-normal's extrusion by the average length of the edges in all the source
-elements that contain the source node (actually, the average of the
-averages for each element--edges actually touching the source node are
-counted twice). This allows the height of the last layer to vary along
-with the size of the source elements in order to achieve better element
-quality. For example, in a boundary layer extruded with the Layers
-definition 'Layers@{ @{1,4,2@}, @{0.5, 0.6, 1.6@} @},' a source node
-adjacent to elements with an overall average edge length of 5.0 will
-extrude to have a last layer height = (1.6-0.6) * 5.0 = 5.0.
-
+The advantage of this approach is that it provides a topological
+description of the boundary layer, which means that it can be connected
+to other geometrical entities. The disadvantage is that the mesh is just
+a ``simple'' extrusion: no fans, no special treatments of reentrant
+corners, etc. Another boundary layer algorithm is currently available
+through the @code{BoundaryLayer} field (@pxref{Specifying mesh element
+sizes}). It only works in 2D however, and is a meshing constraint: it
+works directly at the mesh level, without creating geometrical
+entities. See
+e.g. @url{@value{GITLAB-PREFIX}/benchmarks/2d/BL0.geo,BL0.geo} or
+@url{@value{GITLAB-PREFIX}/benchmarks/2d/naca12_2d.geo,naca12_2d.geo}.
 
 @item Transfinite Curve @{ @var{expression-list-or-all} @} = @var{expression} < Using Progression | Bump @var{expression} >;
-Selects the curves in @var{expression-list} to be meshed with the 1D
+Select the curves in @var{expression-list} to be meshed with the 1D
 transfinite algorithm. The @var{expression} on the right hand side gives
 the number of nodes that will be created on the curve (this overrides
 any other mesh element size prescription---see @ref{Specifying mesh
@@ -3070,7 +3095,7 @@ as the preceding one). The optional argument `@code{Using Bump
 nodes with a refinement at both ends of the curve. @value{SYNC}
 
 @item Transfinite Surface @{ @var{expression-list-or-all}  @}  < = @{ @var{expression-list} @} > < Left | Right | Alternate | AlternateRight | AlternateLeft > ;
-Selects surfaces to be meshed with the 2D transfinite algorithm. The
+Select surfaces to be meshed with the 2D transfinite algorithm. The
 @var{expression-list} on the right-hand-side should contain the tags of
 three or four points on the boundary of the surface that define the
 corners of the transfinite interpolation. If no tags are given, the
@@ -3080,7 +3105,7 @@ mesh is not recombined. @code{Alternate} is a synonym for
 @code{AlternateRight}. @value{SYNC}
 
 @item Transfinite Volume @{ @var{expression-list} @} < = @{ @var{expression-list} @} > ;
-Selects five- or six-face volumes to be meshed with the 3D transfinite
+Select five- or six-face volumes to be meshed with the 3D transfinite
 algorithm.  The @var{expression-list} on the right-hand-side should
 contain the tags of the six or eight points on the boundary of the
 volume that define the corners of the transfinite interpolation. If no
@@ -3088,8 +3113,7 @@ tags are given, the transfinite algorithm will try to find the corners
 automatically. @value{SYNC}
 
 @item TransfQuadTri @{ @var{expression-list} @} ;
-
-Applies the transfinite QuadTri algorithm on the @var{expression-list}
+Apply the transfinite QuadTri algorithm on the @var{expression-list}
 list of volumes.  A transfinite volume with any combination of
 recombined and un-recombined transfinite boundary surfaces is valid when
 meshed with @code{TransfQuadTri}. When applied to non-Transfinite
@@ -3114,16 +3138,16 @@ Here is a list of all other mesh commands currently available:
 
 @ftable @code
 @item Mesh @var{expression};
-Generates @var{expression}-D mesh. @value{SYNC}
+Generate @var{expression}-D mesh. @value{SYNC}
 
 @item RefineMesh;
-Refines the current mesh by splitting all elements. If
+Refine the current mesh by splitting all elements. If
 @code{Mesh.SecondOrderLinear} is set, the new nodes are inserted by
 linear interpolatinon. Otherwise they are snapped on the actual
 geometry. @value{SYNC}
 
 @item OptimizeMesh @var{char-expression};
-Optimizes the current mesh with the given algorithm (currently
+Optimize the current mesh with the given algorithm (currently
 @code{"Gmsh"} for default tetrahedral mesh optimizer, @code{"Netgen"}
 for Netgen optimizer, @code{"HighOrder"} for direct high-order mesh
 optimizer, @code{"HighOrderElastic"} for high-order elastic smoother,
@@ -3132,10 +3156,10 @@ optimizer, @code{"HighOrderElastic"} for high-order elastic smoother,
 @code{"Relocate3D"} for node relocation).
 
 @item AdaptMesh @{ @var{expression-list} @} @{ @var{expression-list} @} @{ @{ @var{expression-list} < , @dots{} >  @} @};
-Performs adaptive mesh generation. Documentation not yet available.
+Perform adaptive mesh generation. Documentation not yet available.
 
 @item RelocateMesh Point | Curve | Surface @{ @var{expression-list-or-all} @};
-Relocates the mesh nodes on the given entities using the parametric
+Relocate the mesh nodes on the given entities using the parametric
 coordinates stored in the nodes. Useful for creating perturbation of
 meshes e.g. for sensitivity analyzes. @value{SYNC}
 
@@ -3143,63 +3167,68 @@ meshes e.g. for sensitivity analyzes. @value{SYNC}
 Recombine the current mesh into quadrangles. @value{SYNC}
 
 @item SetOrder @var{expression};
-Changes the order of the elements in the current mesh.
+Change the order of the elements in the current mesh.
 
 @item PartitionMesh @var{expression};
-Partitions the mesh into @var{expression}, using current partitioning options.
+Partition the mesh into @var{expression}, using current partitioning options.
 
 @item Point | Curve @{ @var{expression-list} @} In Surface @{ @var{expression} @};
-Embed the point(s) or curve(s) in the given surface. The surface mesh
-will conform to the mesh of the point(s) or curves(s). @value{SYNC}
+Add a meshing constraint to embed the point(s) or curve(s) in the given
+surface. The surface mesh will conform to the mesh of the point(s) or
+curves(s). @value{SYNC}
 
 @item Point | Curve | Surface @{ @var{expression-list} @} In Volume @{ @var{expression} @};
-Embed the point(s), curve(s) or surface(s) in the given volume. The
-volume mesh will conform to the mesh of the corresponding point(s),
-curve(s) or surface(s). This is only supported with the 3D Delaunay
-algorithm. @value{SYNC}
+Add a meshing constraint to embed the point(s), curve(s) or surface(s)
+in the given volume. The volume mesh will conform to the mesh of the
+corresponding point(s), curve(s) or surface(s). This is only supported
+with the 3D Delaunay algorithms. @value{SYNC}
 
 @item Periodic Curve @{ @var{expression-list} @} = @{ @var{expression-list} @} ;
-Force the mesh of the curves on the left-hand side to match the mesh
-of the curves on the right-hand side (masters). If used after meshing,
-generate the periodic node correspondence information assuming the
-mesh of the curves on the left-hand side effectively matches the mesh
-of the curves on the right-hand side. @value{SYNC}
+Add a meshing constraint to force the mesh of the curves on the
+left-hand side to match the mesh of the curves on the right-hand side
+(masters). If used after meshing, generate the periodic node
+correspondence information assuming the mesh of the curves on the
+left-hand side effectively matches the mesh of the curves on the
+right-hand side. @value{SYNC}
 
 @item Periodic Surface @var{expression} @{ @var{expression-list} @} = @var{expression} @{ @var{expression-list} @} ;
-Force the mesh of the surface on the left-hand side (with boundary edges
-specified between braces) to match the mesh of the master surface on the
-right-hand side (with boundary edges specified between braces). If used
-after meshing, generate the periodic node correspondence information
-assuming the mesh of the surface on the left-hand side effectively
-matches the mesh of the master surface on the right-hand side (useful
-for structured and extruded meshes). @value{SYNC}
+Add a meshing constraint to force the mesh of the surface on the
+left-hand side (with boundary edges specified between braces) to match
+the mesh of the master surface on the right-hand side (with boundary
+edges specified between braces). If used after meshing, generate the
+periodic node correspondence information assuming the mesh of the
+surface on the left-hand side effectively matches the mesh of the master
+surface on the right-hand side (useful for structured and extruded
+meshes). @value{SYNC}
 
 @item Periodic Curve | Surface @{ @var{expression-list} @} = @{ @var{expression-list} @} Affine | Translate @{ @var{expression-list} @} ;
-Force mesh of curves or surfaces on the left-hand side to match the mesh
-of the curves or surfaces on the right-hand side (masters), using
-prescribed geometrical transformations. If used after meshing, generate
-the periodic node correspondence information assuming the mesh of the
-curves or surfaces on the left-hand side effectively matches the mesh
-of the curves or surfaces on the right-hand side (useful for structured
-and extruded meshes). @code{Affine} takes a 4 x 4 affine transformation
-matrix given by row (only 12 entries can be provided for convenience);
+Add a meshing constraint to force mesh of curves or surfaces on the
+left-hand side to match the mesh of the curves or surfaces on the
+right-hand side (masters), using prescribed geometrical
+transformations. If used after meshing, generate the periodic node
+correspondence information assuming the mesh of the curves or surfaces
+on the left-hand side effectively matches the mesh of the curves or
+surfaces on the right-hand side (useful for structured and extruded
+meshes). @code{Affine} takes a 4 x 4 affine transformation matrix given
+by row (only 12 entries can be provided for convenience);
 @code{Translate} takes the 3 components of the translation as in
 @ref{Transformations}. @value{SYNC}
 
 @item Periodic Curve | Surface @{ @var{expression-list} @} = @{ @var{expression-list} @} Rotate @{ @var{expression-list} @}, @{ @var{expression-list} @}, @var{expression} @} ;
-Force the mesh of curves or surfaces on the left-hand side to match the
-mesh of the curves on the right-hand side (masters), using a rotation
-specified as in @ref{Transformations}. If used after meshing, generate
-the periodic node correspondence information assuming the mesh of the
-curves or surfaces on the left-hand side effectively matches the mesh
-of the curves or surfaces on the right-hand side (useful for structured
-and extruded meshes). @value{SYNC}
+Add a meshing constraint to force the mesh of curves or surfaces on the
+left-hand side to match the mesh of the curves on the right-hand side
+(masters), using a rotation specified as in @ref{Transformations}. If
+used after meshing, generate the periodic node correspondence
+information assuming the mesh of the curves or surfaces on the left-hand
+side effectively matches the mesh of the curves or surfaces on the
+right-hand side (useful for structured and extruded
+meshes). @value{SYNC}
 
 @item Coherence Mesh;
-Removes all duplicate mesh nodes.
+Remove all duplicate mesh nodes in the current mesh.
 
 @item CreateTopology < @{ @var{expression} , @var{expression} @} > ;
-Creates a boundary representation from the mesh of the current model if
+Create a boundary representation from the mesh of the current model if
 the model does not have one (e.g. when imported from mesh file formats
 with no BRep representation of the underlying model). If the first
 optional argument is set (or not given), make all volumes and surfaces
@@ -3208,34 +3237,33 @@ given), clear any built-in CAD kernel entities and export the discrete
 entities in the built-in CAD kernel.
 
 @item CreateGeometry < @{ <Physical> Point | Curve | Surface | Volume @{ @var{expression-list-or-all} @}; @dots{} @} > ;
-Creates a geometry for discrete entities (represented solely by a mesh,
-without an underlying CAD description), i.e. create a parametrization
-for discrete curves and surfaces, assuming that each can be parametrized
-with a single map. If no entities are given, create a geometry for all
-discrete entities.
+Create a geometry for discrete entities (represented solely by a mesh,
+without an underlying CAD description) in the current model, i.e. create
+a parametrization for discrete curves and surfaces, assuming that each
+can be parametrized with a single map. If no entities are given, create
+a geometry for all discrete entities.
 
 @item ClassifySurfaces @{ @var{expression} , @var{expression} , @var{expression} < , @var{expression} > @};
-Classify (``color'') the surface mesh based on an angle threshold (the
-first argument, in radians), and create new discrete surfaces, curves
-and points accordingly.  If the second argument is set, also create
-discrete curves on the boundary if the surface is open. If the third
-argument is set, create edges and surfaces than can be reparametrized
-with @code{CreateGeometry}. The last optional argument sets an angle
-threshold to force splitting of the generated curves.
+Classify (``color'') the current surface mesh based on an angle
+threshold (the first argument, in radians), and create new discrete
+surfaces, curves and points accordingly.  If the second argument is set,
+also create discrete curves on the boundary if the surface is open. If
+the third argument is set, create edges and surfaces than can be
+reparametrized with @code{CreateGeometry}. The last optional argument
+sets an angle threshold to force splitting of the generated curves.
 
 @item RenumberMeshNodes;
-Renumbers the node tags in the current mesh in a contiunous sequence.
+Renumber the node tags in the current mesh in a contiunous sequence.
 
 @item RenumberMeshElements;
-Renumbers the elements tags in the current mesh in a contiunous
-sequence.
+Renumber the elements tags in the current mesh in a contiunous sequence.
 
 @item < Recursive > Color @var{color-expression} @{ <Physical> Point | Curve | Surface | Volume @{ @var{expression-list-or-all} @}; @dots{} @}
-Sets the mesh color of the entities in @var{expression-list} to
+Set the mesh color of the entities in @var{expression-list} to
 @var{color-expression}. @value{SYNC}
 
 @item < Recursive > Hide @{ <Physical> Point | Curve | Surface | Volume @{ @var{expression-list-or-all} @}; @dots{} @}
-Hides the mesh of the entities in @var{expression-list}, if
+Hide the mesh of the entities in @var{expression-list}, if
 @code{General.VisibilityMode} is set to @code{0} or
 @code{2}. @value{SYNC}
 
@@ -3244,7 +3272,7 @@ Hide the mesh of all entities, if @code{General.VisibilityMode} is set
 to @code{0} or @code{2}. @value{SYNC}
 
 @item Recombine Surface @{ @var{expression-list-or-all} @}  < = @var{expression} >;
-Recombines the triangular meshes of the surfaces listed in
+Recombine the triangular meshes of the surfaces listed in
 @var{expression-list} into mixed triangular/quadrangular meshes. The
 optional @var{expression} on the right hand side specifies the maximum
 difference (in degrees) allowed between the largest angle of a
@@ -3253,41 +3281,45 @@ with right angles; a value of 90 would allow degenerate quadrangles;
 default value is 45). @value{SYNC}
 
 @item MeshAlgorithm Surface @{ @var{expression-list} @} = @var{expression};
-Forces the meshing algorithm per surface.
+Specify the meshing algorithm for the surfaces @var{expression-list}.
 
 @item MeshSizeFromBoundary Surface @{ @var{expression-list} @} = @var{expression};
-Forces the mesh size to be extended from the boudnary, or not, per surface.
+Force the mesh size to be extended from the boundary (or not, depening
+on the value of @var{expression}) for the surfaces
+@var{expression-list}.
 
 @item Compound Curve | Surface @{ @var{expression-list-or-all} @} ;
-Treats the given entities as a single entity when meshing, i.e. perform
+Treat the given entities as a single entity when meshing, i.e. perform
 cross-patch meshing of the entities.
 
 @item ReverseMesh Curve | Surface @{ @var{expression-list-or-all} @} ;
-Reverses the mesh of the given curve(s) or surface(s). @value{SYNC}
+Add a constraint to reverse the orientation of the mesh of the given
+curve(s) or surface(s) during meshing. @value{SYNC}
 
 @item ReorientMesh Volume @{ @var{expression-list} @} ;
-Reorients the meshes of the bounding surfaces of the given volumes so
-that the normals point outward to the volumes. Currently only available
-with the OpenCASCADE kernel, as it relies on the STL
+Add a constraint to reorient the meshes (during mesh generation) of the
+bounding surfaces of the given volumes so that the normals point outward
+to the volumes; and if a mesh already exists, reorient it. Currently
+only available with the OpenCASCADE kernel, as it relies on the STL
 triangulation. @value{SYNC}
 
 @item Save @var{char-expression};
-Saves the mesh in a file named @var{char-expression}, using the current
-@code{Mesh.Format} (@pxref{Mesh options list}). If the path in
+Save the current mesh in a file named @var{char-expression}, using the
+current @code{Mesh.Format} (@pxref{Mesh options list}). If the path in
 @var{char-expression} is not absolute, @var{char-expression} is appended
 to the path of the current file. @value{SYNC}
 
 @item < Recursive > Show @{ <Physical> Point | Curve | Surface | Volume @{ @var{expression-list-or-all} @}; @dots{} @}
-Shows the mesh of the entities in @var{expression-list}, if
+Show the mesh of the entities in @var{expression-list}, if
 @code{General.VisibilityMode} is set to @code{0} or
 @code{2}. @value{SYNC}
 
 @item Show @{ : @};
-Shows the mesh of all entities, if @code{General.VisibilityMode} is set
+Show the mesh of all entities, if @code{General.VisibilityMode} is set
 to @code{0} or @code{2}. @value{SYNC}
 
 @item Smoother Surface @{ @var{expression-list} @} = @var{expression};
-Sets number of elliptic smoothing steps for the surfaces listed in
+Set the number of elliptic smoothing steps for the surfaces listed in
 @var{expression-list} (smoothing only applies to transfinite meshes at
 the moment). @value{SYNC}
 
@@ -3457,7 +3489,7 @@ scripting language. For the equivalent commands in the Gmsh API, see the
 
 @ftable @code
 @item Alias View[@var{expression}];
-Creates an alias of the @var{expression}-th post-processing view.
+Create an alias of the @var{expression}-th post-processing view.
 
 Note that @code{Alias} creates a logical duplicate of the view without
 actually duplicating the data in memory. This is very useful when you want
@@ -3467,7 +3499,7 @@ memory. If what you really want is multiple physical copies of the data,
 just merge the file containing the post-processing view multiple times.
 
 @item AliasWithOptions View[@var{expression}];
-Creates an alias of the @var{expression}-th post-processing view and copies
+Create an alias of the @var{expression}-th post-processing view and copies
 all the options of the @var{expression}-th view to the new aliased view.
 
 @item CopyOptions View[@var{expression}, @var{expression}];
@@ -3475,74 +3507,74 @@ Copy all the options from the first @var{expression}-th post-processing
 view to the second one.
 
 @item Combine ElementsByViewName;
-Combines all the post-processing views having the same name into new views.
+Combine all the post-processing views having the same name into new views.
 The combination is done ``spatially'', i.e., simply by appending the
 elements at the end of the new views.
 
 @item Combine ElementsFromAllViews | Combine Views;
-Combines all the post-processing views into a single new view.  The
+Combine all the post-processing views into a single new view.  The
 combination is done ``spatially'', i.e., simply by appending the elements at
 the end of the new view.
 
 @item Combine ElementsFromVisibleViews;
-Combines all the visible post-processing views into a single new view. The
+Combine all the visible post-processing views into a single new view. The
 combination is done ``spatially'', i.e., simply by appending the elements at
 the end of the new view.
 
 @item Combine TimeStepsByViewName | Combine TimeSteps;
-Combines the data from all the post-processing views having the same name
+Combine the data from all the post-processing views having the same name
 into new multi-time-step views. The combination is done ``temporally'',
 i.e., as if the data in each view corresponds to a different time
 instant. The combination will fail if the meshes in all the views are not
 identical.
 
 @item Combine TimeStepsFromAllViews;
-Combines the data from all the post-processing views into a new
+Combine the data from all the post-processing views into a new
 multi-time-step view. The combination is done ``temporally'', i.e., as if
 the data in each view corresponds to a different time instant. The
 combination will fail if the meshes in all the views are not identical.
 
 @item Combine TimeStepsFromVisibleViews;
-Combines the data from all the visible post-processing views into a new
+Combine the data from all the visible post-processing views into a new
 multi-time-step view. The combination is done ``temporally'', i.e., as if
 the data in each view corresponds to a different time instant. The
 combination will fail if the meshes in all the views are not identical.
 
 @item Delete View[@var{expression}];
-Deletes (removes) the @var{expression}-th post-processing view. Note that
+Delete (remove) the @var{expression}-th post-processing view. Note that
 post-processing view indices start at 0.
 
 @item Delete Empty Views;
-Deletes (removes) all the empty post-processing views.
+Delete (remove) all the empty post-processing views.
 
 @item Background Mesh View[@var{expression}];
-Applies the @var{expression}-th post-processing view as the current
+Apply the @var{expression}-th post-processing view as the current
 background mesh. Note that post-processing view indices start at 0.
 
 @item Plugin (@var{string}) . Run;
-Executes the plugin @var{string}. The list of default plugins is given in
+Execute the plugin @var{string}. The list of default plugins is given in
 @ref{Post-processing plugins}.
 
 @item Plugin (@var{string}) . @var{string} = @var{expression} | @var{char-expression};
-Sets an option for a given plugin. See @ref{Post-processing plugins}, for a
+Set an option for a given plugin. See @ref{Post-processing plugins}, for a
 list of default plugins and @ref{t9}, for some examples.
 
 @item Save View[@var{expression}] @var{char-expression};
-Saves the @var{expression}-th post-processing view in a file named
+Save the @var{expression}-th post-processing view in a file named
 @var{char-expression}. If the path in @var{char-expression} is not absolute,
 @var{char-expression} is appended to the path of the current file.
 
 @item SendToServer View[@var{expression}] @var{char-expression};
-Sends the @var{expression}-th post-processing view to the ONELAB server,
+Send the @var{expression}-th post-processing view to the ONELAB server,
 with parameter name @var{char-expression}.
 
 @item View "@var{string}" @{ @var{string} < ( @var{expression-list} ) > @{ @var{expression-list} @}; @dots{} @};
-Creates a new post-processing view, named @code{"@var{string}"}.  This
-is an easy and quite powerful way to import post-processing data: all
-the values are @var{expressions}, you can embed datasets directly into
-your geometrical descriptions (see, e.g., @ref{t4}), the data can be
-easily generated ``on-the-fly'' (there is no header containing @emph{a
-priori} information on the size of the dataset). The syntax is also very
+Create a new post-processing view, named @code{"@var{string}"}.  This is
+an easy and quite powerful way to import post-processing data: all the
+values are @var{expressions}, you can embed datasets directly into your
+geometrical descriptions (see, e.g., @ref{t4}), the data can be easily
+generated ``on-the-fly'' (there is no header containing @emph{a priori}
+information on the size of the dataset). The syntax is also very
 permissive, which makes it ideal for testing purposes.
 
 However this ``parsed format'' is read by Gmsh's script parser, which
@@ -6483,6 +6515,11 @@ done by defining physical groups (Physical Points, Physical Curves,
 Physical Surfaces and Physical Volumes). See the reference manual as
 well as the tutorials (in particular @ref{t1}) for a detailed
 description and some examples.
+
+The Gmsh API can be used to build sophisticated interactive workflows
+where the definition of boundary conditions and material properties can
+be fully tailored to your preferred solver. For an example see
+@url{@value{GITLAB-PREFIX}/demos/api/prepro.py,demos/api/prepro.py}.
 
 @item How can I display only the mesh associated with selected geometrical entities?
 

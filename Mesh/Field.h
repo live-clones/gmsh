@@ -101,9 +101,12 @@ public:
 };
 
 class Field {
+protected:
+  bool _deprecated;
 public:
-  Field() : updateNeeded(false) {}
+  Field() : _deprecated(false), updateNeeded(false) {}
   virtual ~Field();
+  bool isDeprecated() { return _deprecated; }
   virtual void update() {}
   int id;
   std::map<std::string, FieldOption *> options;

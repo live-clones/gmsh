@@ -667,13 +667,15 @@ int meshGEdgeProcessing(GEdge *ge, const double t_begin, double t_end, int &N,
     std::vector<GFace *> const &faces = ge->faces();
     if(CTX::instance()->mesh.recombineAll && faces.size()) {
       if(N % 2 == 0) N++;
-      if(CTX::instance()->mesh.algoRecombine == 2) N = increaseN(N);
+      if(CTX::instance()->mesh.algoRecombine == 2 ||
+	 CTX::instance()->mesh.algoRecombine == 4) N = increaseN(N);
     }
     else {
       for(auto it = faces.begin(); it != faces.end(); it++) {
         if((*it)->meshAttributes.recombine) {
           if(N % 2 == 0) N++;
-          if(CTX::instance()->mesh.algoRecombine == 2) N = increaseN(N);
+          if(CTX::instance()->mesh.algoRecombine == 2 ||
+	     CTX::instance()->mesh.algoRecombine == 4) N = increaseN(N);
           break;
         }
       }
@@ -809,7 +811,6 @@ void meshGEdge::operator()(GEdge *ge)
     vv.insert(vv.end(), mesh_vertices.begin(), mesh_vertices.end());
     for(std::size_t i = 0; i < _addEnd.size(); i++)
       vv.push_back(_addEnd[_addEnd.size() - 1 - i]);
-    //    vv.insert(vv.end(), _addEnd.rend(), _addEnd.rbegin());
     mesh_vertices = vv;
   }
 

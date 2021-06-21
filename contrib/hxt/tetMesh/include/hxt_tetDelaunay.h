@@ -52,6 +52,7 @@ typedef struct {
   int perfectDelaunay;        /**< set to 1 if the current mesh is perfectly Delaunay (no edge or facet constraints applied)
                                *   and if you don't want any edge or facet constraints to be applied.
                                *   This speeds up the empty mesh. */
+  int allowOuterInsertion;    /**< set to 0 to avoid insertion in the outer volume (only applies if colors are set) */
 
   int verbosity;              /**<
                                *  - if verbosity<=0: don't print information.
@@ -80,7 +81,7 @@ typedef struct {
  * if the vertex was successfully inserted or not.
  *  - nodeInfo[i].status==HXT_STATUS_TRUE  if the vertex was successfully inserted.
  *  - nodeInfo[i].status==HXT_STATUS_FALSE  if the vertex was not inserted.
- *  - nodeInfo[i].status==HXT_STATUS_TRYAGAIN  if an error occured before the vertex could be inserted
+ *  - nodeInfo[i].status==HXT_STATUS_TRYAGAIN  if an error occurred before the vertex could be inserted
  *
  * \warning
  *  - the order of nodeInfo will change

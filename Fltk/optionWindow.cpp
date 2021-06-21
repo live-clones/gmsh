@@ -2366,7 +2366,7 @@ optionWindow::optionWindow(int deltaFontSize)
       geo.butt[15]->callback(geometry_options_ok_cb);
 
       geo.butt[10] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 3 * BH, BW, BH,
-                                         "Highlight orphan entities");
+                                         "Highlight orphan and boundary entities");
       geo.butt[10]->tooltip("Geometry.HighlightOrphans");
       geo.butt[10]->type(FL_TOGGLE_BUTTON);
       geo.butt[10]->callback(geometry_options_ok_cb);
@@ -2430,6 +2430,7 @@ optionWindow::optionWindow(int deltaFontSize)
         {"Blossom", 0, nullptr, nullptr},
         {"Simple Full-Quad", 0, nullptr, nullptr},
         {"Blossom Full-Quad", 0, nullptr, nullptr},
+        {"Christos's bipartite labelling", 0, nullptr, nullptr},
         {nullptr}};
       static Fl_Menu_Item menu_subdivision_algo[] = {
         {"None", 0, nullptr, nullptr},

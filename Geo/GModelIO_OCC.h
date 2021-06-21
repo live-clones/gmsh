@@ -226,7 +226,12 @@ public:
     int &tag, int wireTag,
     const std::vector<int> &pointTags = std::vector<int>(),
     const std::vector<int> &surfaceTags = std::vector<int>(),
-    const std::vector<int> &surfaceContinuity = std::vector<int>());
+    const std::vector<int> &surfaceContinuity = std::vector<int>(),
+    const int degree = 3, const int numPointsOnCurves = 15,
+    const int numIter = 2, const bool anisotropic = false,
+    const double tol2d = 0.00001, const double tol3d = 0.0001,
+    const double tolAng = 0.01, const double tolCurv = 0.1,
+    const int maxDegree = 8, const int maxSegments = 9);
   bool addBSplineFilling(int &tag, int wireTag, const std::string &type = "");
   bool addBezierFilling(int &tag, int wireTag, const std::string &type = "");
   bool addBSplineSurface(int &tag, const std::vector<int> &pointTags,
@@ -512,7 +517,7 @@ public:
   }
   bool addCurveLoop(int &tag, const std::vector<int> &curveTags)
   {
-    return _error("add line loop");
+    return _error("add curve loop");
   }
   bool addRectangle(int &tag, double x, double y, double z, double dx,
                     double dy, double roundedRadius = 0.)
@@ -531,7 +536,12 @@ public:
     int &tag, int wireTag,
     const std::vector<int> &pointTags = std::vector<int>(),
     const std::vector<int> &surfaceTags = std::vector<int>(),
-    const std::vector<int> &surfaceContinuity = std::vector<int>())
+    const std::vector<int> &surfaceContinuity = std::vector<int>(),
+    const int degree = 3, const int numPointsOnCurves = 15,
+    const int numIter = 2, const bool anisotropic = false,
+    const double tol2d = 0.00001, const double tol3d = 0.0001,
+    const double tolAng = 0.01, const double tolCurv = 0.1,
+    const int maxDegree = 8, const int maxSegments = 9)
   {
     return _error("add surface filling");
   }

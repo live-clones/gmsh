@@ -140,20 +140,16 @@ set_target_properties(my_target hxt_core hxt_predicates hxt_tetBR hxt_tetMesh
 
 ### TODO/future work
 
-core + others:
-
- - extend HXT to 40+ bits nodes, 32 bits colors
-
 tetMesh:
 
- - compute Moore indices on the fly, only when few point to insert or few tetrahedra to optimize
- - try a mesh improvement parallelization based on Geogram point-associated locks
+ - compute Moore indices on the fly for points already in the mesh (find heuristic for when the old tactic should be employed)
+ - try a GSC parallelization based on Geogram point-associated locks
  - add edge-collapse and point insertion
  - modify surface mesh up to a certain distance allowed
  - add a pass of smoothing aimed solely at mesh size control
  - track the order of allocated blocks in reproducible Delaunay
- - simplify the check between Hxt colors and Gmsh colors
  - code the boundary recovery, to replace the tetBR module
+ - extend HXT to 40+ bits nodes
 
 ## References
 
