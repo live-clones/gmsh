@@ -31,6 +31,7 @@ static void printSizeField (const char *fn,
 int createSizeFieldFromExistingMesh (GModel *gm, bool computeCrosses) {
 
   return 0;
+#if defined(HAVE_QUADMESHINGTOOLS)
   
   std::vector<MTriangle*> triangles;
   for (auto itf = gm->firstFace() ; itf != gm->lastFace() ; ++itf){
@@ -61,7 +62,6 @@ int createSizeFieldFromExistingMesh (GModel *gm, bool computeCrosses) {
   }
 
   printSizeField ("size_field.pos", triangles,sizeField);
-#if defined(HAVE_QUADMESHINGTOOLS)
   int sows = sizeMapOneWaySmoothing( triangles, sizeField, 1.2);
   if(sows != 0) {
     Msg::Warning("failed to smooth size map");
