@@ -1539,7 +1539,7 @@ void GEO_Internals::synchronize(GModel *model, bool resetMeshAttributes)
     }
     
     std::vector<GEntity *> ents;
-    for(std::size_t i = 0; i < N; i++) {
+    for(int i = 0; i < N; i++) {
       int tag = compound[i];
       GEntity *ent = nullptr;
       switch(dim) {
