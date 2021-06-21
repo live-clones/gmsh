@@ -194,6 +194,7 @@ struct MeshHalfEdges {
 	V<HalfEdge*> hedges; // set of all Half-Edges
 	V<Face*> faces; // set of all Faces
 	V<V<Face*>> patches; // faces grouped by patch
+	set<HalfEdge*> base_complex;
 
 	// Destructor
 	~MeshHalfEdges() {
@@ -280,17 +281,16 @@ int buildMeshHalfEdgesFromGModel(GModel* gm, MeshHalfEdges& M) {
 	}
 
 	// Determine patches
-	set<HalfEdge*> base_complex;
 	int si = 0;
 	for(Vertex* vertex : M.vertices) {
 		if(vertex->valence != 4) {
 			for(HalfEdge* hes : vertex->hedges) {
 				HalfEdge* he = hes;
 				while(he->v2->valence == 4) {
-					base_complex.insert(he);
+					M.base_complex.insert(he);
 					he = he->next->oppo->next;
 				}
-				base_complex.insert(he);
+				M.base_complex.insert(he);
 				++si;
 			}
 		}
@@ -309,7 +309,7 @@ int buildMeshHalfEdgesFromGModel(GModel* gm, MeshHalfEdges& M) {
 				f->geolog(color, "base complex");
 				HalfEdge* he = f->he;
 				F(s,4) {
-					if(!base_complex.count(he) && !he->gedge && !processedFaces.count(he->oppo->face)) {
+					if(!M.base_complex.count(he) && !he->gedge && !processedFaces.count(he->oppo->face)) {
 						processedFaces.insert(he->oppo->face);
 						q.push(he->oppo->face);
 					}
@@ -2196,7 +2196,23 @@ void alignQuadMesh(GModel* gm) {
 
 		// stats_file << "#patches (initial):	" << S(M.patches) << endl;
 
+		for(HalfEdge* he : M.base_complex) {
+			he->geolog(0, "input layout (edges)");
+		}
+		F(i, S(M.patches)) {
+			int color = rand();
+			for(Face* f : M.patches[i])
+				f->geolog(color, "input layout (faces)");
+		}
 		M.geolog("M");
+		GeoLog::flush();
+		PView* input_layout_edges_view = PView::getViewByName("input layout (edges)");
+		PView* input_layout_faces_view = PView::getViewByName("input layout (faces)");
+		PView* input_layout_mesh_view = PView::getViewByName("M (edges)");
+		input_layout_edges_view->write("input_layout.pos", FORMAT_AUTO, false);
+		input_layout_faces_view->write("input_layout.pos", FORMAT_AUTO, true);
+		input_layout_mesh_view->write("input_layout.pos", FORMAT_AUTO, true);
+
 
 Msg::Info("---------------------- Building T-mesh -------------------");
 		// Build T-Mesh
@@ -2239,6 +2255,16 @@ Msg::Info("---------------------- Building T-mesh -------------------");
 Msg::Info("---------------------- Building coarse patches -------------------");
 		// Build coarse patches
 		CMesh CM(TM, q);
+
+		// Draw optimized layout
+		for(CEdge* cedge : CM.cedges) {
+			for(HalfEdge* he : cedge->path)
+				he->geolog(0, "CMesh");
+		}
+		// Write view to file
+		GeoLog::flush();
+		PView* layout_view = PView::getViewByName("CMesh");
+		layout_view->write("layout.pos", FORMAT_AUTO, false);
 
 		np.pb(S(CM.cfaces));
 
@@ -2335,11 +2361,11 @@ Msg::Info("---------------------- Smoothing ----------------------");
 			
 			// Write patches view to file
 			GeoLog::flush();
-			PView* patches_faces_view = PView::getViewByName("patches (faces)");
+			// PView* patches_faces_view = PView::getViewByName("patches (faces)");
 			PView* patches_edges_view = PView::getViewByName("patches (edges)");
 			PView* patches_mesh_view = PView::getViewByName("mlines");
-			patches_faces_view->write("patches.pos", FORMAT_AUTO, false);
-			patches_edges_view->write("patches.pos", FORMAT_AUTO, true);
+			// patches_faces_view->write("patches.pos", FORMAT_AUTO, false);
+			patches_edges_view->write("patches.pos", FORMAT_AUTO, false);
 			patches_mesh_view->write("patches.pos", FORMAT_AUTO, true);
 			// gm->writeMSH("patches.msh"); // write block-structured mesh to file
 
