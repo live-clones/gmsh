@@ -316,39 +316,6 @@ double objectiveFunction_L( double x0, double y0, double xt, double yt, double x
 
 */
 
-
-
-double C0, S0, C2, S2;
-static void precompute  (double x0, double y0, double x2, double y2, int VIEW_TAG){
-  double C0A, S0A, C2A, S2A;
-  std::vector<double> val0(9);
-  std::vector<double> val2(9);
-  gmsh::view::probe(VIEW_TAG, x0, y0, 0.0, val0);
-  gmsh::view::probe(VIEW_TAG, x2, y2, 0.0, val2);
-  double h1, h2;
-  analyze2dMetric (val0, C0A, S0A, h1, h2);
-  analyze2dMetric (val2, C2A, S2A, h1, h2);
-  double t1[2] = {0.5*(x2-x0),0.5*(y2-y0)};
-  double k1 = sqrt(t1[0]*t1[0]+t1[1]*t1[1]);
-  
-  C0 = C2 = t1[0]/k1;
-  S0 = S2 = t1[1]/k1;
-  
-  double PV0 = maxDir (C0,S0, h1, C0A, S0A,  h1, h2);
-  double PV2 = maxDir (C2,S2, h1, C2A, S2A,  h1, h2);
-				      
-  if (PV0 > PV2){
-    C2 = C2A;
-    S2 = S2A;
-    maxDir (C2,S2, h1, C0, S0,  h1, h2);
-  }
-  else{
-    C0 = C0A;
-    S0 = S0A;
-    maxDir (C0,S0, h1, C2, S2,  h1, h2);
-  }
-}
-
 double objectiveFunction ( double x0, double y0, double x1, double y1, double x2, double y2, int VIEW_TAG)
 {
   return objectiveFunction_L(x0,y0,x1,y1,x2,y2,VIEW_TAG);
@@ -477,7 +444,6 @@ static double smallestLengthParabola (int VIEW_TAG,  SPoint2 & p1, SPoint2 &p2, 
 
 static double _LIMIT = 0.7;
 static double closestPoint (int VIEW_TAG, std::vector<SPoint2> &_points, SPoint2 &p, SPoint2 &c){
-  size_t N = _points.size();
   double closest = 2*_LIMIT;
   for (size_t i=0 ; i< _points.size() ; i++){
     SPoint2 pp = _points[i];
@@ -489,70 +455,6 @@ static double closestPoint (int VIEW_TAG, std::vector<SPoint2> &_points, SPoint2
     }
   }
   return closest;
-}
-
-
-
-
-int COUNTER = 0;
-
-// -- Is this path sufficiently clors to a parabola -- 
-double distanceToParabola (std::vector<SPoint2> &path){
-  
-}
-// -- Is this path sufficiently clors to a parabola -- 
-
-
-static void computeNeighbors (int VIEW_TAG,  const SPoint2 & p ,
-			      std::vector<SPoint2> &n,
-			      std::vector<SPoint2> *mid = nullptr){
-  n.clear();
-  std::vector<double> val;
-  gmsh::view::probe(VIEW_TAG, p.x(), p.y(), 0.0, val);
-  if (val.empty())return;
-  double C, S, h1, h2;
-  analyze2dMetric (val, C, S, h1, h2);
-  double A[4] = {C,-C,S,-S};
-  double B[4] = {S,-S,-C,C};
-  double H[4] = {h1,h1,h2,h2};
-
-  //  FILE *f = fopen ("NEIGH.pos","w");
-  //  fprintf(f,"View \" \"{\n");
-
-  //  fprintf(f,"SP(%22.15E,%22.15E,0){0};\n",p.x(),p.y());
-  
-  int N = 50;
-  int M = 4;//(h1 < .2*h2) ? 2:4;
-  for (int DIR=0; DIR<M;DIR++){
-    double dx = A[DIR];
-    double dy = B[DIR];
-    double h  = H[DIR];
-    std::vector<SPoint2> path;
-    SPoint2 PP = p;
-    for (int iter = 0 ; iter < N ; iter ++){      
-      SPoint2 pp (PP.x() + dx * h / N , PP.y() + dy * h / N);
-      double Cpp, Spp, h1pp, h2pp;
-      val.clear();
-      gmsh::view::probe(VIEW_TAG, pp.x(), pp.y(), 0.0, val);
-      if (val.empty()){
-	iter = N+1;
-      }
-      else {
-	analyze2dMetric (val, Cpp, Spp, h1pp, h2pp);
-	//	fprintf(f,"SP(%22.15E,%22.15E,0){%d};\n",pp.x(),pp.y(),DIR+1);
-	//	printf("%d %g %g %g %g \n",iter, Cpp,Spp,h1pp,h2pp);
-	maxDir (dx, dy, h, Cpp, Spp, h1pp, h2pp);      
-	path.push_back(pp);
-	PP = pp;
-      }
-    }
-    if (path.size() == N){
-      n.push_back(path[N-1]);
-      if (mid)mid->push_back(path[N/2]);
-    }
-  }  
-  //  fprintf(f,"};\n");
-  //  fclose(f);
 }
 
 static bool computeNeighbor (int VIEW_TAG,  const SPoint2 & p , int DIR,
@@ -954,6 +856,7 @@ int computePointsUsingScaledCrossFieldPlanarP2 (const char *modelForMetric,
     }
     ximax += 0.3/5;
   }
+  
   iter = 0;
   while(iter++ < 3){
     int count =0;
