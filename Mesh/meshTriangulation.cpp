@@ -695,7 +695,8 @@ static void getNodeCopies(GFace *gf,
           param = e->reparamOnFace(gf, t, direction);
         }
         else {
-	  if (gf->geomType() == GEntity::DiscreteSurface){
+	  // Hmm...
+	  if (!gf->haveParametrization() && gf->geomType() == GEntity::DiscreteSurface){
 	    param = SPoint2(v->x(),v->y());
 	  }
 	  else
@@ -782,7 +783,7 @@ PolyMesh *GFaceInitialMesh(int faceTag, int recover, std::vector<double> *additi
     }
   }
 
-  //  pm->print4debug(faceTag);
+  pm->print4debug(faceTag);
   
   if(recover){
     std::vector<GEdge *> edges = gf->edges();
