@@ -260,7 +260,7 @@ int lengthPathInMetricField( double lagrangianPoints[3][2],
 {
   *lengthInMetricField = 0.0;
 
-  int n = 8;
+  size_t n = 8;
 
   static double GL_pt8[8] = {-9.602898564975363e-01, -7.966664774136268e-01,
 			     -5.255324099163290e-01, -1.834346424956498e-01,
@@ -275,7 +275,7 @@ int lengthPathInMetricField( double lagrangianPoints[3][2],
   
   //  double gaussPoints[2][2] = {{-1/sqrt(3.0),1},{1/sqrt(3.0),1}};
   
-  for (uint64_t i = 0; i < n; ++i) {
+  for (size_t i = 0; i < n; ++i) {
     double t = GL_pt8[i];
     double w = GL_wt8[i];
 
@@ -468,13 +468,13 @@ static bool computeNeighbor (int VIEW_TAG,  const SPoint2 & p , int DIR,
   double B[4] = {S,-S,-C,C};
   double H[4] = {h1,h1,h2,h2};
   
-  int N = 50;
+  size_t N = 50;
   double dx = A[DIR];
   double dy = B[DIR];
   double h  = H[DIR];
   std::vector<SPoint2> path;
   SPoint2 PP = p;
-  for (int iter = 0 ; iter < N ; iter ++){      
+  for (size_t iter = 0 ; iter < N ; iter ++){      
     SPoint2 pp (PP.x() + dx * h * adimensionalLength / N , PP.y() + dy * h * adimensionalLength / N);
     double Cpp, Spp, h1pp, h2pp;
     val.clear();
@@ -612,7 +612,6 @@ static double bestParabola( PolyMesh::HalfEdge *he, int VIEW_TAG, std::map<PolyM
   double Q1 = triangleQualityP2 (VIEW_TAG, he, &midPoints);
   double Q2 = triangleQualityP2 (VIEW_TAG, he->opposite, &midPoints);
   double QMIN = std::min(Q1,Q2);
-  double ximin = 0;
   //  printf("-----------------  iterating START %4d %4d %12.5E %12.5E  --------------------- \n",he->v->data, he->next->v->data, Q1, Q2);
   //  return;
   for (int i=0;i<N;i++){
@@ -625,8 +624,7 @@ static double bestParabola( PolyMesh::HalfEdge *he, int VIEW_TAG, std::map<PolyM
     Q2 = triangleQualityP2 (VIEW_TAG, he->opposite, &midPoints);
     if (std::min(Q1,Q2) > QMIN){
       QMIN = std::min(Q1,Q2);
-      ximin = xi;
-	CUR = X;
+      CUR = X;
     }
   }
   midPoints[he] = midPoints[he->opposite] = CUR;  
@@ -668,7 +666,6 @@ static double bestParabola( PolyMesh::HalfEdge *he, std::map<PolyMesh::HalfEdge*
   if (V2 <= 0)Q2 = 1.e22;
   
   double QSUM = Q1+Q2;
-  double ximin = 0;
   //  printf("-----------------  iterating START %4d %4d %12.5E %12.5E  --------------------- \n",he->v->data, he->next->v->data, Q1, Q2);
   //  return;
   for (int i=0;i<N;i++){
@@ -695,7 +692,6 @@ static double bestParabola( PolyMesh::HalfEdge *he, std::map<PolyMesh::HalfEdge*
     
     if (Q1+Q2 < QSUM){
       QSUM = Q1+Q2;
-      ximin = xi;
       CUR = X;
     }
   }
@@ -722,7 +718,6 @@ double bestParabola( double x0, double y0, double x1, double y1, double &xmid, d
   const int N = 11;
 
   double QMAX = -1.e22;
-  double ximin = 0;
   //  printf("-----------------  iterating START %4d %4d %12.5E %12.5E  --------------------- \n",he->v->data, he->next->v->data, Q1, Q2);
   //  return;
   for (int i=0;i<N;i++){
@@ -733,7 +728,6 @@ double bestParabola( double x0, double y0, double x1, double y1, double &xmid, d
     double Q = p2triangle_alignement_quality_measure(P0, P1, P0, PM, PM, PM, VIEW_TAG);  
     if (Q > QMAX){
       QMAX = Q;
-      ximin = xi;
       CUR = X;
     }
   }
