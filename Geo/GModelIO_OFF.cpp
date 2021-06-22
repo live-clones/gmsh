@@ -67,7 +67,8 @@ int GModel::readOFF(const std::string &name)
     }
     else{
       char buffer[4096];
-      fgets(buffer, sizeof(buffer), fp);
+      if(!fgets(buffer, sizeof(buffer), fp))
+        Msg::Error("Could not read line");
       Msg::Warning("Ignoring %d-node face", n);
       continue;
     }
