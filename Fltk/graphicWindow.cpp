@@ -2369,6 +2369,15 @@ static void mesh_optimize_quad_topo_cb(Fl_Widget *w, void *data)
   drawContext::global()->draw();
 }
 
+static void mesh_untangle_cb(Fl_Widget *w, void *data)
+{
+  CTX::instance()->lock = 1;
+  GModel::current()->optimizeMesh("UntangleMeshGeometry");
+  CTX::instance()->lock = 0;
+  drawContext::global()->draw();
+}
+
+
 static void mesh_cross_compute_cb(Fl_Widget *w, void *data)
 {
   std::vector<int> tags;
@@ -4659,6 +4668,8 @@ static menuItem static_modules[] = {
 #endif
   {"0Modules/Mesh/Experimental/Optimize quad topology",
    (Fl_Callback *)mesh_optimize_quad_topo_cb},
+  {"0Modules/Mesh/Experimental/Untangle geometry",
+   (Fl_Callback *)mesh_untangle_cb},
   {"0Modules/Mesh/Reverse/Elements", (Fl_Callback *)mesh_reverse_parts_cb,
    (void *)"elements"},
   {"0Modules/Mesh/Reverse/Curves", (Fl_Callback *)mesh_reverse_parts_cb,
