@@ -34,7 +34,7 @@ int GModel::readOFF(const std::string &name)
   add(gf);
 
   std::vector<MVertex*> vertices(numVertices);
-  for(std::size_t i = 0; i < numVertices; i++) {
+  for(int i = 0; i < numVertices; i++) {
     double x, y, z;
     if(fscanf(fp, "%lf %lf %lf", &x, &y, &z) != 3) {
       Msg::Error("Could not read vertex");
@@ -43,7 +43,7 @@ int GModel::readOFF(const std::string &name)
     vertices[i] = new MVertex(x, y, z, gf);
   }
 
-  for(std::size_t i = 0; i < numFaces; i++) {
+  for(int i = 0; i < numFaces; i++) {
     int n;
     if(fscanf(fp, "%d", &n) != 1) {
       Msg::Error("Could not read face");
