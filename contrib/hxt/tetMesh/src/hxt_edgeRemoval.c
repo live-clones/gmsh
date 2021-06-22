@@ -26,7 +26,7 @@ typedef struct { // bipyramidal cavity for the edge-removal
 
 /*
 An oriented edge {up,down} is described by its 'in' and 'out' facets :
-(hxt_tetFlag.h is of little help, because edge contraints are not oriented)
+(hxt_tetFlag.h is of little help, because edge constraints are not oriented)
 
 
        v_up
@@ -166,7 +166,7 @@ typedef struct {
    *   (- we could have use n/3 and n%3 but %4 is faster)
    *
    * if the number n is negative
-   *   - the neighbor is a old tet. a tet outisde the boundary of the cavity
+   *   - the neighbor is a old tet. a tet outside the boundary of the cavity
    *   - the index of the neighbor-number in the list of neighbor is directly -n-1
    *
    */

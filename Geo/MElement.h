@@ -22,6 +22,7 @@
 class GModel;
 class nodalBasis;
 class JacobianBasis;
+class bezierCoeff;
 template <class scalar> class fullVector;
 template <class scalar> class fullMatrix;
 
@@ -138,6 +139,9 @@ public:
 
   // get the vertex using KEY ordering
   virtual MVertex *getVertexKEY(int num) { return getVertex(num); }
+
+  // get the vertex using NEU ordering
+  virtual MVertex *getVertexNEU(int num) { return getVertex(num); }
 
   // get the number of vertices associated with edges, faces and volumes (i.e.
   // internal vertices on edges, faces and volume; nonzero only for higher order
@@ -371,7 +375,11 @@ public:
     return getJacobian(u, v, w, jac);
   }
   void getSignedJacobian(fullVector<double> &jacobian, int o = -1) const;
+
   void getNodesCoord(fullMatrix<double> &nodesXYZ) const;
+  void getNodesCoordNonSerendip(fullMatrix<double> &nodesXYZ) const;
+  bezierCoeff *getBezierVerticesCoord() const;
+
   virtual std::size_t getNumShapeFunctions() const { return getNumVertices(); }
   virtual std::size_t getNumPrimaryShapeFunctions() const
   {

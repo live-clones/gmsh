@@ -11,6 +11,7 @@ set(SRC
     meshGFaceTransfinite.cpp meshGFaceExtruded.cpp
     meshGFaceBamg.cpp meshGFaceBDS.cpp meshGFaceDelaunayInsertion.cpp
     meshGFaceOptimize.cpp
+    meshGFaceBipartiteLabelling.cpp
   meshGRegion.cpp
     meshGRegionBoundaryRecovery.cpp
     meshGRegionHxt.cpp meshGRegionNetgen.cpp

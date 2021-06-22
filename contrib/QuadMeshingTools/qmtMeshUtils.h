@@ -18,6 +18,7 @@
 class GModel;
 class GVertex;
 class GFace;
+class GRegion;
 class GEdge;
 class MTriangle;
 class MQuadrangle;
@@ -57,6 +58,10 @@ bool patchFromQuads(GFace* gf, const std::vector<MQuadrangle*>& quads, GFaceMesh
 
 void sicnQuality(const GFaceMeshPatch& patch, double& sicnMin, double& sicnAvg);
 
+void computeSICNquality(const std::vector<MElement*>& elements, double& sicnMin, double& sicnAvg);
+void computeSICNquality(GFace* gf, double& sicnMin, double& sicnAvg);
+void computeSICNquality(GRegion* gr, double& sicnMin, double& sicnAvg);
+
 bool patchIsTopologicallyValid(const GFaceMeshPatch& patch);
 
 bool getConnectedComponents(const std::vector<MElement*>& elements, 
@@ -75,8 +80,12 @@ std::vector<SPoint2> paramOnElement(GFace* gf, MElement* e);
 /* warning: triangles are allocated, should be delete by the caller */
 std::vector<MTriangle*> trianglesFromQuads(const std::vector<MQuadrangle*>& quads);
 
-bool getGFaceTriangles(GFace* gf, std::vector<MTriangle*>& triangles, bool& requireDelete);
-
+/* Find a way to get triangles associated to GFace (will look into current mesh, can split quads,
+ * will check in background mesh)
+ * If new triangles are allocated (e.g. by splitting quads), they are added to requireDelete
+ * If copyExisting: existing triangles are copied into new ones (added to requireDelete) */
+bool getGFaceTriangles(GFace* gf, std::vector<MTriangle*>& triangles, std::vector<MTriangle*>& requireDelete,
+    bool copyExisting = false);
 
 bool fillSurfaceProjector(GFace* gf, SurfaceProjector* sp);
 

@@ -54,6 +54,8 @@ int GModel::readMESH(const std::string &name)
   std::vector<MVertex *> vertexVector;
   std::map<int, std::vector<MElement *> > elements[5];
 
+  int Dimension = 3;
+
   while(!feof(fp)) {
     if(!fgets(buffer, 256, fp)) break;
     if(buffer[0] != '#') { // skip comments and empty lines
@@ -61,6 +63,9 @@ int GModel::readMESH(const std::string &name)
       sscanf(buffer, "%s", str);
       if(!strncmp(buffer, "Dimension 3", 11)) {
         // alternative single-line 'Dimension' field used by CGAL
+      }
+      else if(!strncmp(buffer, "Dimension 2", 11)) {
+	Dimension = 2;
       }
       else if(!strcmp(str, "Dimension")) {
         if(!fgets(buffer, sizeof(buffer), fp)) break;
@@ -74,8 +79,11 @@ int GModel::readMESH(const std::string &name)
         for(int i = 0; i < nbv; i++) {
           if(!fgets(buffer, sizeof(buffer), fp)) break;
           int dum;
-          double x, y, z;
-          sscanf(buffer, "%lf %lf %lf %d", &x, &y, &z, &dum);
+          double x, y, z = 0.;
+	  if (Dimension == 3)
+	    sscanf(buffer, "%lf %lf %lf %d", &x, &y, &z, &dum);
+	  else
+	    sscanf(buffer, "%lf %lf %d", &x, &y, &dum);
           vertexVector[i] = new MVertex(x, y, z);
         }
       }

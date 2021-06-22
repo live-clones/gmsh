@@ -37,6 +37,7 @@
 #include "Context.h"
 #include "boundaryLayersData.h"
 #include "filterElements.h"
+#include "meshGFaceBipartiteLabelling.h"
 
 // define this to use the old initial delaunay
 #define OLD_CODE_DELAUNAY 1
@@ -266,7 +267,9 @@ public:
     // only do it if a full recombination has to (and can) be done
     if(!CTX::instance()->mesh.recombineAll && !gf->meshAttributes.recombine)
       return;
-    if(CTX::instance()->mesh.algoRecombine < 2) return;
+    if(CTX::instance()->mesh.algoRecombine < 2 &&
+       CTX::instance()->mesh.algoRecombine != 4)
+      return;
     if(gf->compound.size()) return;
     if(periodic) {
       Msg::Error("Full-quad recombination not ready yet for periodic surfaces");
@@ -1775,11 +1778,15 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
   splitElementsInBoundaryLayerIfNeeded(gf);
 
   if((CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine) &&
-     !onlyInitialMesh && CTX::instance()->mesh.algoRecombine <= 1) {
+     (CTX::instance()->mesh.algoRecombine <= 1 ||
+      CTX::instance()->mesh.algoRecombine == 4)) {
     bool blossom = (CTX::instance()->mesh.algoRecombine == 1);
     int topo = CTX::instance()->mesh.recombineOptimizeTopology;
     bool nodeRepositioning = false;
-    recombineIntoQuads(gf, blossom, topo, nodeRepositioning, 0.1);
+    if(CTX::instance()->mesh.algoRecombine == 4)
+      meshGFaceQuadrangulateBipartiteLabelling(gf->tag());
+    else
+      recombineIntoQuads(gf, blossom, topo, nodeRepositioning, 0.1);
   }
 
   computeElementShapes(gf, gf->meshStatistics.worst_element_shape,
@@ -2829,7 +2836,8 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
   delete m;
 
   if((CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine) &&
-     CTX::instance()->mesh.algoRecombine <= 1) {
+     (CTX::instance()->mesh.algoRecombine <= 1 ||
+      CTX::instance()->mesh.algoRecombine == 4)) {
     bool blossom = (CTX::instance()->mesh.algoRecombine == 1);
     int topo = CTX::instance()->mesh.recombineOptimizeTopology;
     bool nodeRepositioning = true;
@@ -2837,7 +2845,11 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
        CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT) {
       nodeRepositioning = false;
     }
-    recombineIntoQuads(gf, blossom, topo, nodeRepositioning, 0.1);
+    if(CTX::instance()->mesh.algoRecombine == 4)
+      meshGFaceQuadrangulateBipartiteLabelling(gf->tag());
+    else {
+      recombineIntoQuads(gf, blossom, topo, nodeRepositioning, 0.1);
+    }
   }
 
   computeElementShapes(gf, gf->meshStatistics.worst_element_shape,
@@ -2997,7 +3009,8 @@ void meshGFace::operator()(GFace *gf, bool print)
   // test validity for non-Gmsh models (currently we cannot reliably evaluate
   // the normal on the boundary of surfaces with the Gmsh kernel)
   if(CTX::instance()->mesh.algoSwitchOnFailure &&
-     gf->getNativeType() != GEntity::GmshModel && algoDelaunay2D(gf) &&
+     gf->getNativeType() != GEntity::GmshModel &&
+     gf->geomType() != GEntity::Plane && algoDelaunay2D(gf) &&
      !isMeshValid(gf)) {
     Msg::Debug(
       "Delaunay-based mesher failed on surface %d -> moving to MeshAdapt",

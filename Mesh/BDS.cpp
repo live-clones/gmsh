@@ -1318,9 +1318,9 @@ static inline double getTutteEnergy(const BDS_Point *p,
                                     const std::vector<BDS_Point *> &nbg,
                                     double &RATIO)
 {
-  double E = 0;
-  double MAX, MIN = 0;
   if(nbg.empty()) return 1.e22;
+  double E = 0;
+  double MAX = 0., MIN = 0.;
   for(size_t i = 0; i < nbg.size(); ++i) {
     const double dx = p->X - nbg[i]->X;
     const double dy = p->Y - nbg[i]->Y;
@@ -1330,6 +1330,7 @@ static inline double getTutteEnergy(const BDS_Point *p,
     MIN = i ? std::min(MIN, l2) : l2;
     E += l2;
   }
+  if(!MAX) return 1.e22;
   RATIO = MIN / MAX;
   return E;
 }

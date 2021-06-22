@@ -650,7 +650,7 @@ static void writeElementsMED(med_idt &fid, char *meshName,
 int GModel::writeMED(const std::string &name, bool saveAll,
                      double scalingFactor)
 {
-#if(MED_MAJOR_NUM >= 3) && (MED_MINOR_NUM >= 3)
+#if (MED_MAJOR_NUM >= 4) || ((MED_MAJOR_NUM >= 3) && (MED_MINOR_NUM >= 3))
   // MEDfileVersionOpen actually appeared in MED 3.2.1
   med_int major = MED_MAJOR_NUM, minor = MED_MINOR_NUM,
           release = MED_RELEASE_NUM;

@@ -10,6 +10,7 @@
 #include "GModel.h"
 #include "GFace.h"
 #include "MTriangle.h"
+#include "SBoundingBox3d.h"
 #include "rtree.h"
 
 class MElementOctree;
@@ -26,6 +27,7 @@ private:
     std::vector<MTriangle> t3d;
     std::vector<SVector3> CURV;
     double umin, umax, vmin, vmax;
+    SBoundingBox3d bbox;
     param() : oct(nullptr), umin(-1), umax(1), vmin(-1), vmax(1) {}
     ~param();
     bool empty() const { return t2d.empty(); }
@@ -43,9 +45,11 @@ public:
   virtual ~discreteFace() {}
   using GFace::point;
   GPoint point(double par1, double par2) const;
-  SPoint2 parFromPoint(const SPoint3 &p, bool onSurface = true) const;
+  SPoint2 parFromPoint(const SPoint3 &p, bool onSurface = true,
+                       bool convTestXYZ = false) const;
   Range<double> parBounds(int i) const;
   bool containsParam(const SPoint2 &pt);
+  SBoundingBox3d bounds(bool fast = false);
   GPoint closestPoint(const SPoint3 &queryPoint, double maxDistance,
                       SVector3 *normal = nullptr) const;
   GPoint closestPoint(const SPoint3 &queryPoint,

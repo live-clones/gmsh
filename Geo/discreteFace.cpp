@@ -30,6 +30,7 @@ void discreteFace::param::clear()
   rtree3d.RemoveAll();
   v2d.clear();
   v3d.clear();
+  bbox = SBoundingBox3d();
   t2d.clear();
   t3d.clear();
   CURV.clear();
@@ -200,7 +201,11 @@ bool discreteFace_rtree_callback(std::pair<MTriangle *, MTriangle *> *t,
 GPoint discreteFace::closestPoint(const SPoint3 &queryPoint, double maxDistance,
                                   SVector3 *normal) const
 {
-  if(_param.empty()) return GPoint();
+  if(_param.empty()) {
+    auto pp = GPoint();
+    pp.setNoSuccess();
+    return pp;
+  }
 
   dfWrapper wrapper(queryPoint);
   do {
@@ -254,7 +259,8 @@ GPoint discreteFace::closestPoint(const SPoint3 &queryPoint,
   return closestPoint(queryPoint, 1e-1);
 }
 
-SPoint2 discreteFace::parFromPoint(const SPoint3 &p, bool onSurface) const
+SPoint2 discreteFace::parFromPoint(const SPoint3 &p, bool onSurface,
+                                   bool convTestXYZ) const
 {
   GPoint gp = closestPoint(p, 1e-6);
   return SPoint2(gp.u(), gp.v());
@@ -273,6 +279,12 @@ bool discreteFace::containsParam(const SPoint2 &pt)
   if(_param.empty()) return false;
   if(_param.oct->find(pt.x(), pt.y(), 0.0, -1, true)) return true;
   return false;
+}
+
+SBoundingBox3d discreteFace::bounds(bool fast)
+{
+  if(_param.empty()) return GFace::bounds(fast);
+  return _param.bbox;
 }
 
 SVector3 discreteFace::normal(const SPoint2 &param) const
@@ -506,6 +518,7 @@ void discreteFace::_createGeometryFromSTL()
     _param.v3d.push_back(MVertex(stl_vertices_xyz[i].x(),
                                  stl_vertices_xyz[i].y(),
                                  stl_vertices_xyz[i].z()));
+    _param.bbox += _param.v3d.back().point();
   }
 
   for(size_t i = 0; i < stl_triangles.size() / 3; i++) {

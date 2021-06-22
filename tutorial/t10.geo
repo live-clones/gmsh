@@ -28,7 +28,7 @@ Curve Loop(5) = {1,2,3,4}; Plane Surface(6) = {5};
 Field[1] = Distance;
 Field[1].PointsList = {5};
 Field[1].CurvesList = {2};
-Field[1].NumPointsPerCurve = 100;
+Field[1].Sampling = 100;
 
 
 // We then define a `Threshold' field, which uses the return value of the

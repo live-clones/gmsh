@@ -93,7 +93,7 @@ static Ng_Mesh *buildNetgenStructure(GRegion *gr, bool importVolumeMesh,
   if(importVolumeMesh) {
     for(std::size_t i = 0; i < gr->tetrahedra.size(); i++) {
       MTetrahedron *t = gr->tetrahedra[i];
-      // netgen expects tet with negative volume
+      // Netgen expects tet with negative volume
       if(t->getVolumeSign() > 0) t->reverse();
       int tmp[4];
       tmp[0] = t->getVertex(0)->getIndex();
@@ -110,32 +110,49 @@ static Ng_Mesh *buildNetgenStructure(GRegion *gr, bool importVolumeMesh,
 static void TransferVolumeMesh(GRegion *gr, Ng_Mesh *ngmesh,
                                std::vector<MVertex *> &numberedV)
 {
-  // Gets total number of vertices of Netgen's mesh
+  // get total number of vertices and elements of Netgen's mesh
   int nbv = Ng_GetNP(ngmesh);
-  if(!nbv) return;
+  int nbe = Ng_GetNE(ngmesh);
+  if(!nbv || !nbe) return;
 
   int nbpts = numberedV.size();
 
-  // Create new volume vertices
-  for(int i = nbpts; i < nbv; i++) {
-    double tmp[3];
-    Ng_GetPoint(ngmesh, i + 1, tmp);
-    MVertex *v = new MVertex(tmp[0], tmp[1], tmp[2], gr);
-    numberedV.push_back(v);
-    gr->mesh_vertices.push_back(v);
-  }
-
-  // Get total number of simplices of Netgen's mesh
-  int nbe = Ng_GetNE(ngmesh);
-
-  // Create new volume simplices
+  // record which vertices are actually used by tetrahedra (Netgen can return
+  // additional "isolated" vertices)
+  std::set<int> used;
   for(int i = 0; i < nbe; i++) {
     int tmp[4];
     Ng_GetVolumeElement(ngmesh, i + 1, tmp);
-    MTetrahedron *t =
-      new MTetrahedron(numberedV[tmp[0] - 1], numberedV[tmp[1] - 1],
-                       numberedV[tmp[2] - 1], numberedV[tmp[3] - 1]);
-    gr->tetrahedra.push_back(t);
+    for(int j = 0; j < 4; j++) {
+      if(tmp[j] > nbpts) used.insert(tmp[j]);
+    }
+  }
+
+  // create new vertices
+  for(int i = nbpts; i < nbv; i++) {
+    double tmp[3];
+    Ng_GetPoint(ngmesh, i + 1, tmp);
+    if(used.count(i + 1)) {
+      MVertex *v = new MVertex(tmp[0], tmp[1], tmp[2], gr);
+      numberedV.push_back(v);
+      gr->mesh_vertices.push_back(v);
+    }
+    else{
+      numberedV.push_back(nullptr);
+    }
+  }
+
+  // create new tets
+  for(int i = 0; i < nbe; i++) {
+    int tmp[4];
+    Ng_GetVolumeElement(ngmesh, i + 1, tmp);
+    MVertex *v[4];
+    for(int j = 0; j < 4; j++)
+      v[j] = numberedV[tmp[j] - 1];
+    if(v[0] && v[1] && v[2] && v[3])
+      gr->tetrahedra.push_back(new MTetrahedron(v[0], v[1], v[2], v[3]));
+    else
+      Msg::Error("Tetrahedron with unknown node - should never be here!");
   }
 }
 

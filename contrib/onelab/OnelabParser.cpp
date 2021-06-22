@@ -291,7 +291,7 @@ std::string localSolverClient::resolveString(const std::string &line)
     cursor = pos + olkey::getValue.length();
     int NumArg = enclosed(line.substr(cursor), arguments, pos);
     if(NumArg < 1) {
-      OLMsg::Error("Misformed %s statement: <%s>", olkey::getValue.c_str(),
+      OLMsg::Error("Malformed %s statement: <%s>", olkey::getValue.c_str(),
                    line.c_str());
       return "??";
     }
@@ -323,7 +323,7 @@ std::string localSolverClient::resolveGetVal(std::string line)
     cursor = pos + olkey::getValue.length();
     int NumArg = enclosed(line.substr(cursor), arguments, pos);
     if(NumArg < 1) {
-      OLMsg::Error("Misformed %s statement: <%s>", olkey::getValue.c_str(),
+      OLMsg::Error("Malformed %s statement: <%s>", olkey::getValue.c_str(),
                    line.c_str());
       return "??";
     }
@@ -426,7 +426,7 @@ std::string localSolverClient::resolveGetVal(std::string line)
     size_t pos0 = pos;
     cursor = pos + olkey::mathex.length();
     if(enclosed(line.substr(cursor), arguments, pos) != 1) {
-      OLMsg::Error("Misformed %s statement: <%s>", olkey::mathex.c_str(),
+      OLMsg::Error("Malformed %s statement: <%s>", olkey::mathex.c_str(),
                    line.c_str());
       return "??";
     }
@@ -936,12 +936,12 @@ void localSolverClient::parse_oneline(std::string line, std::ifstream &infile)
     else if(NumArg == 2)
       modify_tags(arguments[0], arguments[1]);
     else
-      OLMsg::Error("Misformed <%s> statement", olkey::deflabel.c_str());
+      OLMsg::Error("Malformed <%s> statement", olkey::deflabel.c_str());
   }
   else if((pos = line.find(olkey::begin)) != std::string::npos) {
     // onelab.block
     if(!parse_block(infile))
-      OLMsg::Error("Misformed <%s> block <%s>", olkey::begin.c_str(),
+      OLMsg::Error("Malformed <%s> block <%s>", olkey::begin.c_str(),
                    olkey::end.c_str());
   }
   else if((pos = line.find(olkey::iftrue)) != std::string::npos) {
@@ -949,7 +949,7 @@ void localSolverClient::parse_oneline(std::string line, std::ifstream &infile)
     cursor = pos + olkey::iftrue.length();
     bool condition = false;
     if(enclosed(line.substr(cursor), arguments, pos) < 1)
-      OLMsg::Error("Misformed <%s> statement: (%s)", olkey::iftrue.c_str(),
+      OLMsg::Error("Malformed <%s> statement: (%s)", olkey::iftrue.c_str(),
                    line.c_str());
     else {
       get(strings, longName(arguments[0]));
@@ -964,7 +964,7 @@ void localSolverClient::parse_oneline(std::string line, std::ifstream &infile)
                        arguments[0].c_str(), olkey::iftrue.c_str());
       }
       if(!parse_ifstatement(infile, condition))
-        OLMsg::Error("Misformed <%s> statement: <%s>", olkey::iftrue.c_str(),
+        OLMsg::Error("Malformed <%s> statement: <%s>", olkey::iftrue.c_str(),
                      arguments[0].c_str());
     }
   }
@@ -973,7 +973,7 @@ void localSolverClient::parse_oneline(std::string line, std::ifstream &infile)
     cursor = pos + olkey::ifntrue.length();
     bool condition = false;
     if(enclosed(line.substr(cursor), arguments, pos) < 1)
-      OLMsg::Error("Misformed <%s> statement: (%s)", olkey::ifntrue.c_str(),
+      OLMsg::Error("Malformed <%s> statement: (%s)", olkey::ifntrue.c_str(),
                    line.c_str());
     else {
       get(strings, longName(arguments[0]));
@@ -990,7 +990,7 @@ void localSolverClient::parse_oneline(std::string line, std::ifstream &infile)
         }
       }
       if(!parse_ifstatement(infile, !condition))
-        OLMsg::Error("Misformed <%s> statement: <%s>", olkey::ifntrue.c_str(),
+        OLMsg::Error("Malformed <%s> statement: <%s>", olkey::ifntrue.c_str(),
                      arguments[0].c_str());
     }
   }
@@ -1000,7 +1000,7 @@ void localSolverClient::parse_oneline(std::string line, std::ifstream &infile)
     extractLogic(line.substr(cursor), arguments);
     bool condition = resolveLogicExpr(arguments);
     if(!parse_ifstatement(infile, condition)) {
-      OLMsg::Error("Misformed %s statement: <%s>", olkey::ifcond.c_str(),
+      OLMsg::Error("Malformed %s statement: <%s>", olkey::ifcond.c_str(),
                    line.c_str());
     }
   }
@@ -1008,7 +1008,7 @@ void localSolverClient::parse_oneline(std::string line, std::ifstream &infile)
     // onelab.include
     cursor = pos + olkey::include.length();
     if(enclosed(line.substr(cursor), arguments, pos) < 1)
-      OLMsg::Error("Misformed <%s> statement: (%s)", olkey::include.c_str(),
+      OLMsg::Error("Malformed <%s> statement: (%s)", olkey::include.c_str(),
                    line.c_str());
     else {
       std::string filename = getWorkingDir() + resolveGetVal(arguments[0]);
@@ -1020,7 +1020,7 @@ void localSolverClient::parse_oneline(std::string line, std::ifstream &infile)
     // onelab.message
     cursor = pos + olkey::message.length();
     if(enclosed(line.substr(cursor), arguments, pos) < 1)
-      OLMsg::Error("Misformed <%s> statement: (%s)", olkey::message.c_str(),
+      OLMsg::Error("Malformed <%s> statement: (%s)", olkey::message.c_str(),
                    line.c_str());
     else {
       std::string msg = resolveGetVal(arguments[0]);
@@ -1031,7 +1031,7 @@ void localSolverClient::parse_oneline(std::string line, std::ifstream &infile)
     // onelab.showParam
     cursor = pos + olkey::showParam.length();
     if(enclosed(line.substr(cursor), arguments, pos) < 1)
-      OLMsg::Error("Misformed <%s> statement: (%s)", olkey::showParam.c_str(),
+      OLMsg::Error("Malformed <%s> statement: (%s)", olkey::showParam.c_str(),
                    line.c_str());
     for(unsigned int i = 0; i < arguments.size(); i++) {
       std::string lname = longName(arguments[i]);
@@ -1056,7 +1056,7 @@ void localSolverClient::parse_oneline(std::string line, std::ifstream &infile)
     // onelab.showGmsh
     cursor = pos + olkey::showGmsh.length();
     if(enclosed(line.substr(cursor), arguments, pos) < 1)
-      OLMsg::Error("Misformed <%s> statement: (%s)", olkey::showGmsh.c_str(),
+      OLMsg::Error("Malformed <%s> statement: (%s)", olkey::showGmsh.c_str(),
                    line.c_str());
     else {
       std::string fileName = resolveGetVal(arguments[0]);
@@ -1067,7 +1067,7 @@ void localSolverClient::parse_oneline(std::string line, std::ifstream &infile)
     // onelab.dump
     cursor = pos + olkey::dump.length();
     if(enclosed(line.substr(cursor), arguments, pos) < 1) {
-      OLMsg::Error("Misformed <%s> statement: (%s)", olkey::dump.c_str(),
+      OLMsg::Error("Malformed <%s> statement: (%s)", olkey::dump.c_str(),
                    line.c_str());
     }
     else {
@@ -1282,7 +1282,7 @@ void localSolverClient::convert_oneline(std::string line, std::ifstream &infile,
     else if(NumArg == 2)
       modify_tags(arguments[0], arguments[1]);
     else
-      OLMsg::Error("Misformed <%s> statement", olkey::deflabel.c_str());
+      OLMsg::Error("Malformed <%s> statement", olkey::deflabel.c_str());
   }
   else if((pos = line.find(olkey::begin)) != std::string::npos) {
     // onelab.begin
@@ -1290,7 +1290,7 @@ void localSolverClient::convert_oneline(std::string line, std::ifstream &infile,
       getline(infile, line);
       if((pos = line.find(olkey::end)) != std::string::npos) return;
     }
-    OLMsg::Error("Misformed <%s> block <%s>", olkey::begin.c_str(),
+    OLMsg::Error("Malformed <%s> block <%s>", olkey::begin.c_str(),
                  olkey::end.c_str());
   }
   else if((pos = line.find(olkey::iftrue)) != std::string::npos) {
@@ -1298,7 +1298,7 @@ void localSolverClient::convert_oneline(std::string line, std::ifstream &infile,
     cursor = pos + olkey::iftrue.length();
     bool condition = false;
     if(enclosed(line.substr(cursor), arguments, pos) < 1)
-      OLMsg::Error("Misformed <%s> statement: (%s)", olkey::iftrue.c_str(),
+      OLMsg::Error("Malformed <%s> statement: (%s)", olkey::iftrue.c_str(),
                    line.c_str());
     else {
       get(strings, longName(arguments[0]));
@@ -1314,7 +1314,7 @@ void localSolverClient::convert_oneline(std::string line, std::ifstream &infile,
         }
       }
       if(!convert_ifstatement(infile, outfile, condition))
-        OLMsg::Error("Misformed <%s> statement: %s", olkey::iftrue.c_str(),
+        OLMsg::Error("Malformed <%s> statement: %s", olkey::iftrue.c_str(),
                      arguments[0].c_str());
     }
   }
@@ -1323,7 +1323,7 @@ void localSolverClient::convert_oneline(std::string line, std::ifstream &infile,
     cursor = pos + olkey::ifntrue.length();
     bool condition = false;
     if(enclosed(line.substr(cursor), arguments, pos) < 1)
-      OLMsg::Error("Misformed <%s> statement: (%s)", olkey::ifntrue.c_str(),
+      OLMsg::Error("Malformed <%s> statement: (%s)", olkey::ifntrue.c_str(),
                    line.c_str());
     else {
       get(strings, longName(arguments[0]));
@@ -1339,7 +1339,7 @@ void localSolverClient::convert_oneline(std::string line, std::ifstream &infile,
         }
       }
       if(!convert_ifstatement(infile, outfile, !condition))
-        OLMsg::Error("Misformed <%s> statement: %s", olkey::ifntrue.c_str(),
+        OLMsg::Error("Malformed <%s> statement: %s", olkey::ifntrue.c_str(),
                      arguments[0].c_str());
     }
   }
@@ -1349,14 +1349,14 @@ void localSolverClient::convert_oneline(std::string line, std::ifstream &infile,
     extractLogic(line.substr(cursor), arguments);
     bool condition = resolveLogicExpr(arguments);
     if(!convert_ifstatement(infile, outfile, condition))
-      OLMsg::Error("Misformed %s statement: <%s>", olkey::ifcond.c_str(),
+      OLMsg::Error("Malformed %s statement: <%s>", olkey::ifcond.c_str(),
                    line.c_str());
   }
   else if((pos = line.find(olkey::include)) != std::string::npos) {
     // onelab.include
     cursor = pos + olkey::include.length();
     if(enclosed(line.substr(cursor), arguments, pos) < 1)
-      OLMsg::Error("Misformed <%s> statement: (%s)", olkey::include.c_str(),
+      OLMsg::Error("Malformed <%s> statement: (%s)", olkey::include.c_str(),
                    line.c_str());
     else {
       std::string filename = getWorkingDir() + resolveGetVal(arguments[0]);
@@ -1367,7 +1367,7 @@ void localSolverClient::convert_oneline(std::string line, std::ifstream &infile,
     // onelab.message
     cursor = pos + olkey::message.length();
     if(enclosed(line.substr(cursor), arguments, pos) < 1)
-      OLMsg::Error("Misformed <%s> statement: (%s)", olkey::message.c_str(),
+      OLMsg::Error("Malformed <%s> statement: (%s)", olkey::message.c_str(),
                    line.c_str());
     else {
       std::string msg = resolveGetVal(arguments[0]);

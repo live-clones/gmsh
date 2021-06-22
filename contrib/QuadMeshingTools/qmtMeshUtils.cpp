@@ -28,6 +28,10 @@
 #include "MLine.h"
 #include "MTriangle.h"
 #include "MQuadrangle.h"
+#include "MHexahedron.h"
+#include "MPyramid.h"
+#include "MPrism.h"
+#include "MTetrahedron.h"
 #include "robin_hood.h"
 #include "meshOctreeLibOL.h"
 #include "BackgroundMesh.h"
@@ -810,24 +814,59 @@ std::vector<MTriangle*> trianglesFromQuads(const std::vector<MQuadrangle*>& quad
   return tris;
 }
 
-bool getGFaceTriangles(GFace* gf, std::vector<MTriangle*>& triangles, bool& requireDelete) {
+bool getGFaceTriangles(GFace* gf, std::vector<MTriangle*>& triangles, std::vector<MTriangle*>& requireDelete,
+    bool copyExisting) {
   triangles.clear();
-  requireDelete = false;
+  requireDelete.clear();
 
   /* Existing pure tri or pure quad mesh on the GFace */
   if (gf->triangles.size() > 0 && gf->quadrangles.size() == 0) {
-    triangles = gf->triangles;
-    requireDelete = false;
+    if (copyExisting) {
+      triangles.resize(gf->triangles.size());
+      for (size_t i = 0; i < gf->triangles.size(); ++i) {
+        triangles[i] = new MTriangle(
+            gf->triangles[i]->getVertex(0),
+            gf->triangles[i]->getVertex(1),
+            gf->triangles[i]->getVertex(2));
+      }
+      requireDelete = triangles;
+    } else {
+      triangles = gf->triangles;
+    }
     return true;
   } else if (gf->triangles.size() == 0 && gf->quadrangles.size() > 0) {
     triangles = trianglesFromQuads(gf->quadrangles);
-    requireDelete = true;
+    requireDelete = triangles;
+    return true;
+  } else if (gf->triangles.size() > 0 && gf->quadrangles.size() > 0) {
+    /* quad-dominant mesh */
+    /* - triangles from triangles */
+    if (copyExisting) {
+      triangles.resize(gf->triangles.size());
+      for (size_t i = 0; i < gf->triangles.size(); ++i) {
+        triangles[i] = new MTriangle(
+            gf->triangles[i]->getVertex(0),
+            gf->triangles[i]->getVertex(1),
+            gf->triangles[i]->getVertex(2));
+      }
+      requireDelete = triangles;
+    } else {
+      triangles = gf->triangles;
+    }
+    /* - triangles from quads */
+    std::vector<MTriangle*> quadSplit = trianglesFromQuads(gf->quadrangles);
+    append(triangles, quadSplit);
+    append(requireDelete,quadSplit);
     return true;
   }
 
   /* Check if there is the quadqs background mesh */
   const std::string BMESH_NAME = "bmesh_quadqs";
   if (backgroudMeshExists(BMESH_NAME)) {
+    if (copyExisting) {
+      Msg::Error("copyExisting not supported here (but simple to fix)");
+      return false;
+    }
     GlobalBackgroundMesh& bmesh = getBackgroundMesh(BMESH_NAME);
     auto it = bmesh.faceBackgroundMeshes.find(gf);
     if (it != bmesh.faceBackgroundMeshes.end() && it->second.triangles.size() > 0) {
@@ -836,7 +875,6 @@ bool getGFaceTriangles(GFace* gf, std::vector<MTriangle*>& triangles, bool& requ
       for (size_t i = 0; i < it->second.triangles.size(); ++i) {
         triangles[i] = &(it->second.triangles[i]);
       }
-      requireDelete = false;
       return true;
     }
   }
@@ -845,12 +883,15 @@ bool getGFaceTriangles(GFace* gf, std::vector<MTriangle*>& triangles, bool& requ
   for (auto& bmesh: global_bmeshes) {
     auto it = bmesh->faceBackgroundMeshes.find(gf);
     if (it != bmesh->faceBackgroundMeshes.end() && it->second.triangles.size() > 0) {
+      if (copyExisting) {
+        Msg::Error("copyExisting not supported here (but simple to fix)");
+        return false;
+      }
       /* Get pointers to triangles in the background mesh */
       triangles.resize(it->second.triangles.size());
       for (size_t i = 0; i < it->second.triangles.size(); ++i) {
         triangles[i] = &(it->second.triangles[i]);
       }
-      requireDelete = false;
       return true;
     }
   }
@@ -864,14 +905,9 @@ bool fillSurfaceProjector(GFace* gf, SurfaceProjector* sp) {
     abort();
   }
 
-  if (gf->geomType() == GFace::GeomType::Sphere) {
-    bool oka = sp->setAnalyticalProjection(gf);
-    return oka;
-  }
-
-  bool deleteTheTris = false;
   std::vector<MTriangle*> triangles;
-  bool okgt = getGFaceTriangles(gf, triangles, deleteTheTris);
+  std::vector<MTriangle*> trianglesToDel;
+  bool okgt = getGFaceTriangles(gf, triangles, trianglesToDel);
   if (!okgt) {
     Msg::Error("fillSurfaceProjector: case not supported, no triangles");
     return false;
@@ -882,9 +918,7 @@ bool fillSurfaceProjector(GFace* gf, SurfaceProjector* sp) {
     Msg::Error("failed to initialize the surface projector");
   }
 
-  if (deleteTheTris) {
-    for (MTriangle* t: triangles) delete t;
-  }
+  for (MTriangle* t: trianglesToDel) delete t;
 
   return true;
 }
@@ -1013,9 +1047,9 @@ bool fillGFaceInfo(GFace* gf, GFaceInfo& info) {
   info.intSumVal3mVal5 = 0;
 
 
-  bool deleteTheTris = false;
   std::vector<MTriangle*> triangles;
-  bool okgt = getGFaceTriangles(gf, triangles, deleteTheTris);
+  std::vector<MTriangle*> trianglesToDel;
+  bool okgt = getGFaceTriangles(gf, triangles, trianglesToDel);
   if (!okgt) {
     Msg::Error("fillSurfaceProjector: case not supported, no triangles");
     return false;
@@ -1023,9 +1057,7 @@ bool fillGFaceInfo(GFace* gf, GFaceInfo& info) {
 
   bool okr = fillGFaceInfo(gf, info, triangles);
 
-  if (deleteTheTris) {
-    for (MTriangle* t: triangles) delete t;
-  }
+  for (MTriangle* t: trianglesToDel) delete t;
 
   return okr;
 }
@@ -1412,6 +1444,35 @@ void errorAndAbortIfInvalidVertexInModel(GModel* gm, const std::string& msg) {
     errorAndAbortIfInvalidVertexInElements(dynamic_cast_vector<MTriangle*,MElement*>(gf->triangles), msg);
     errorAndAbortIfInvalidVertexInElements(dynamic_cast_vector<MQuadrangle*,MElement*>(gf->quadrangles), msg);
   }
+}
+
+void computeSICNquality(const std::vector<MElement*>& elements, double& sicnMin, double& sicnAvg) {
+  sicnMin = DBL_MAX;
+  sicnAvg = 0.;
+  for (size_t i = 0; i < elements.size(); ++i)  {
+    double q = elements[i]->minSICNShapeMeasure();
+    if (std::isnan(q)) {
+      q = -1.;
+    }
+    sicnMin = std::min(sicnMin, q);
+    sicnAvg += q;
+  }
+  if (elements.size() > 0) sicnAvg /= double(elements.size());
+
+}
+
+void computeSICNquality(GFace* gf, double& sicnMin, double& sicnAvg) {
+  std::vector<MElement*> elts = CppUtils::dynamic_cast_vector<MTriangle*,MElement*>(gf->triangles);
+  CppUtils::append(elts, CppUtils::dynamic_cast_vector<MQuadrangle*,MElement*>(gf->quadrangles));
+  return computeSICNquality(elts, sicnMin, sicnAvg);
+}
+
+void computeSICNquality(GRegion* gr, double& sicnMin, double& sicnAvg) {
+  std::vector<MElement*> elts = CppUtils::dynamic_cast_vector<MTetrahedron*,MElement*>(gr->tetrahedra);
+  CppUtils::append(elts, CppUtils::dynamic_cast_vector<MHexahedron*,MElement*>(gr->hexahedra));
+  CppUtils::append(elts, CppUtils::dynamic_cast_vector<MPrism*,MElement*>(gr->prisms));
+  CppUtils::append(elts, CppUtils::dynamic_cast_vector<MPyramid*,MElement*>(gr->pyramids));
+  return computeSICNquality(elts, sicnMin, sicnAvg);
 }
 
 std::string randomIdentifier() {

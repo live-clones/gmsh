@@ -46,7 +46,7 @@ int main(int argc, char **argv)
   gmsh::model::mesh::field::add("Distance", 1);
   gmsh::model::mesh::field::setNumbers(1, "PointsList", {5});
   gmsh::model::mesh::field::setNumbers(1, "CurvesList", {2});
-  gmsh::model::mesh::field::setNumber(1, "NumPointsPerCurve", 100);
+  gmsh::model::mesh::field::setNumber(1, "Sampling", 100);
 
   // We then define a `Threshold' field, which uses the return value of the
   // `Distance' field 1 in order to define a simple change in element size

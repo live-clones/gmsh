@@ -20,14 +20,14 @@ Point(19) = {1.22,.1,-.8,1.0};
 Line(31) = {18,19};
 
 Field[1] = Distance;
-Field[1].NNodesByEdge = 100;
-Field[1].NodesList = {1,4,5,6,10,14};
-Field[1].EdgesList = {30,31};
+Field[1].PointsList = {1,4,5,6,10,14};
+Field[1].CurvesList = {30,31};
+Field[1].Sampling = 100;
 
 Field[2] = Threshold;
-Field[2].IField = 1;
-Field[2].LcMin = lc/10;
-Field[2].LcMax = lc;
+Field[2].InField = 1;
+Field[2].SizeMin = lc/10;
+Field[2].SizeMax = lc;
 Field[2].DistMin = 0.1;
 Field[2].DistMax = 0.2;
 

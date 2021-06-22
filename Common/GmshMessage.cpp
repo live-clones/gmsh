@@ -55,12 +55,13 @@ int Msg::_commRank = 0;
 int Msg::_commSize = 1;
 int Msg::_verbosity = 5;
 int Msg::_progressMeterStep = 10;
-int Msg::_progressMeterCurrent = -1;
+std::atomic<int> Msg::_progressMeterCurrent(-1);
 int Msg::_progressMeterTotal = 0;
 std::map<std::string, double> Msg::_timers;
 bool Msg::_infoCpu = false;
 bool Msg::_infoMem = false;
 double Msg::_startTime = 0.;
+int Msg::_startMaxThreads = 0;
 int Msg::_warningCount = 0;
 int Msg::_errorCount = 0;
 int Msg::_atLeastOneErrorInRun = 0;
@@ -101,7 +102,9 @@ static void addGmshPathToEnvironmentVar(const std::string &name)
 {
   std::string gmshPath = SplitFileName(CTX::instance()->exeFileName)[0];
   if(gmshPath.size()){
-    std::string path, tmp = GetEnvironmentVar(name);
+    std::string tmp = GetEnvironmentVar(name);
+    if(tmp.find(gmshPath) != std::string::npos) return; // already there
+    std::string path;
     if(tmp.empty()) {
       path = gmshPath;
     }
@@ -119,6 +122,7 @@ static void addGmshPathToEnvironmentVar(const std::string &name)
 void Msg::Initialize(int argc, char **argv)
 {
   _startTime = TimeOfDay();
+  _startMaxThreads = GetMaxThreads();
 #if defined(HAVE_MPI)
   int flag;
   MPI_Initialized(&flag);
@@ -203,6 +207,8 @@ void Msg::Finalize()
     MPI_Finalize();
 #endif
   FinalizeOnelab();
+  if(GetMaxThreads() != _startMaxThreads)
+    SetNumThreads(_startMaxThreads);
 }
 
 int Msg::GetCommRank()
@@ -595,8 +601,10 @@ void Msg::Info(const char *fmt, ...)
 
   if(CTX::instance()->terminal){
     if(_progressMeterCurrent >= 0 && _progressMeterTotal > 1 &&
-       _commSize == 1)
-      fprintf(stdout, "Info    : [%3d%%] %s\n", _progressMeterCurrent, str);
+       _commSize == 1) {
+      int p =  _progressMeterCurrent;
+      fprintf(stdout, "Info    : [%3d%%] %s\n", p, str);
+    }
     else if(_commSize > 1)
       fprintf(stdout, "Info    : [rank %3d] %s\n", GetCommRank(), str);
     else
@@ -773,24 +781,18 @@ void Msg::ProgressMeter(int n, bool log, const char *fmt, ...)
     while(p < percent) p += _progressMeterStep;
     if(p >= 100) p = 100;
 
-#if defined(_OPENMP)
-#pragma omp critical
-#endif
-    {
-      _progressMeterCurrent = p;
-    }
+    _progressMeterCurrent = p;
 
     // TODO With C++11 use std::string (contiguous layout) and avoid all these C
     // problems
     // str2 needs to have at least 5018 bytes or buffer overflow will occur
-    char str[5000], str2[5018];
+    char str[5000], str2[5100];
     va_list args;
     va_start(args, fmt);
     vsnprintf(str, sizeof(str), fmt, args);
     va_end(args);
     int l = strlen(str); if(str[l - 1] == '\n') str[l - 1] = '\0';
-
-    sprintf(str2, "Info    : [%3d%%] %s", _progressMeterCurrent, str);
+    sprintf(str2, "Info    : [%3d%%] %s", p, str);
 
     if(_client) _client->Progress(str2);
 
@@ -1362,7 +1364,7 @@ void Msg::ExchangeOnelabParameter(const std::string &key,
     else
       val = ps[0].getValues(); // use value from server
     // keep track of these attributes, which can be changed server-side (unless
-    // they are not visible or, for the range/choices, when explicitely setting
+    // they are not visible or, for the range/choices, when explicitly setting
     // these attributes as ReadOnly)
     if(ps[0].getVisible()){
       if(!(fopt.count("ReadOnlyRange") && fopt["ReadOnlyRange"][0])){

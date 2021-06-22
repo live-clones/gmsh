@@ -280,6 +280,14 @@ void MVertex::writeMESH(FILE *fp, double scalingFactor)
           _ge ? _ge->tag() : 0);
 }
 
+void MVertex::writeOFF(FILE *fp, double scalingFactor)
+{
+  if(_index < 0) return; // negative index vertices are never saved
+
+  fprintf(fp, "%g %g %g\n", x() * scalingFactor, y() * scalingFactor,
+          z() * scalingFactor);
+}
+
 void MVertex::writeNEU(FILE *fp, int dim, double scalingFactor)
 {
   if(_index < 0) return; // negative index vertices are never saved
@@ -504,7 +512,7 @@ bool reparamMeshEdgeOnFace(MVertex *v1, MVertex *v2, GFace *gf, SPoint2 &param1,
 }
 
 bool reparamMeshVertexOnFace(MVertex const *v, const GFace *gf, SPoint2 &param,
-                             bool onSurface)
+                             bool onSurface, bool failOnSeam)
 {
   if(!v->onWhat()) {
     Msg::Error("Mesh node %d is not classified: cannot reparametrize",
@@ -531,10 +539,12 @@ bool reparamMeshVertexOnFace(MVertex const *v, const GFace *gf, SPoint2 &param,
       param = gf->parFromPoint(SPoint3(v->x(), v->y(), v->z()), onSurface);
     else
       param = gv->reparamOnFace(gf, 1);
-    // shout, we could be on a seam
-    std::vector<GEdge *> const &ed = gv->edges();
-    for(auto it = ed.begin(); it != ed.end(); it++)
-      if((*it)->isSeam(gf)) return false;
+    if(failOnSeam) {
+      // shout, we could be on a seam
+      std::vector<GEdge *> const &ed = gv->edges();
+      for(auto it = ed.begin(); it != ed.end(); it++)
+        if((*it)->isSeam(gf)) return false;
+    }
   }
   else if(v->onWhat()->dim() == 1) {
     if(gf->geomType() == GEntity::DiscreteSurface) {
@@ -553,8 +563,10 @@ bool reparamMeshVertexOnFace(MVertex const *v, const GFace *gf, SPoint2 &param,
       // param = gf->parFromPoint(SPoint3(v->x(), v->y(), v->z()), onSurface);
     }
 
-    // shout, we are on a seam
-    if(ge->isSeam(gf)) return false;
+    if(failOnSeam) {
+      // shout, we are on a seam
+      if(ge->isSeam(gf)) return false;
+    }
   }
   else {
     double uu, vv;

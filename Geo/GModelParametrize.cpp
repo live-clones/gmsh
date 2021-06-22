@@ -705,6 +705,20 @@ bool computeParametrization(const std::vector<MTriangle *> &triangles,
   return true;
 }
 
+#if 0
+static void debugTriangulation(const std::vector<MTriangle *> &triangles,
+                               const std::string &label)
+{
+  FILE *fp = Fopen("debug.pos", "w");
+  if(!fp) return;
+  fprintf(fp, "View\"%s\"{\n", label.c_str());
+  for(auto t : triangles) t->writePOS(fp, false, true, false, false, false, false);
+  fprintf(fp, "};\n");
+  fclose(fp);
+  exit(1);
+}
+#endif
+
 static int isTriangulationParametrizable(const std::vector<MTriangle *> &t,
                                          int Nmax, std::ostringstream &why)
 {
@@ -736,6 +750,7 @@ static int isTriangulationParametrizable(const std::vector<MTriangle *> &t,
   }
   if(bnd.empty()) {
     why << "poincare characteristic 2 is not 0";
+    //debugTriangulation(t, why.str());
     return 2;
   }
 

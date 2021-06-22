@@ -948,10 +948,11 @@ void PrintOptionsDoc()
     }
     fprintf(file, "%s@ftable @code\n", warn);
     FieldManager &fields = *GModel::current()->getFields();
-    for(auto it =
-          fields.mapTypeName.begin(); it != fields.mapTypeName.end(); it++) {
-      fprintf(file, "@item %s\n", it->first.c_str());
+    for(auto it = fields.mapTypeName.begin(); it != fields.mapTypeName.end();
+        it++) {
       Field *f = (*it->second)();
+      if(f->isDeprecated()) continue;
+      fprintf(file, "@item %s\n", it->first.c_str());
       std::string field_description = f->getDescription();
       Sanitize_String_Texi(field_description);
       fprintf(file, "%s@*\n", field_description.c_str());
@@ -4133,6 +4134,7 @@ double opt_general_num_threads(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
     if(val > 0) Msg::SetNumThreads(val);
+    else Msg::SetNumThreads(Msg::GetStartMaxThreads());
   }
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI))
@@ -4552,6 +4554,12 @@ double opt_geometry_light_two_side(OPT_ARGS_NUM)
   return CTX::instance()->geom.lightTwoSide;
 }
 
+double opt_geometry_occ_auto_embed(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->geom.occAutoEmbed = val ? 1 : 0;
+  return CTX::instance()->geom.occAutoEmbed;
+}
+
 double opt_geometry_occ_auto_fix(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->geom.occAutoFix = val ? 1 : 0;
@@ -4729,6 +4737,12 @@ double opt_geometry_scaling_factor(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->geom.scalingFactor = val;
   return CTX::instance()->geom.scalingFactor;
+}
+
+double opt_geometry_snap_points(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->geom.snapPoints = val;
+  return CTX::instance()->geom.snapPoints;
 }
 
 double opt_geometry_snap0(OPT_ARGS_NUM)
@@ -5895,8 +5909,8 @@ double opt_mesh_algo_recombine(OPT_ARGS_NUM)
        (int)val != CTX::instance()->mesh.algoRecombine)
       Msg::SetOnelabChanged(2);
     CTX::instance()->mesh.algoRecombine = (int)val;
-    if(CTX::instance()->mesh.algoRecombine < 0 &&
-       CTX::instance()->mesh.algoRecombine > 3)
+    if(CTX::instance()->mesh.algoRecombine < 0 ||
+       CTX::instance()->mesh.algoRecombine > 4)
       CTX::instance()->mesh.algoRecombine = 0;
   }
 #if defined(HAVE_FLTK)
@@ -6578,6 +6592,12 @@ double opt_mesh_quadqs_sizemap_method(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->mesh.quadqsSizemapMethod = (int)val;
   return CTX::instance()->mesh.quadqsSizemapMethod;
+}
+
+double opt_mesh_quadqs_remeshing_boldness(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->mesh.quadqsRemeshingBoldness = (double)val;
+  return CTX::instance()->mesh.quadqsRemeshingBoldness;
 }
 
 double opt_mesh_quadqs_topo_optim_methods(OPT_ARGS_NUM) {

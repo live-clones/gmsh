@@ -12,7 +12,6 @@ int main(int argc, char **argv)
 
   gmsh::open(argv[1]);
 
-  // attempts to run a client selected when opening the file (e.g. a .pro file)
   gmsh::onelab::run();
 
   std::string json;

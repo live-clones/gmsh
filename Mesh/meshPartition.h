@@ -10,11 +10,10 @@ class GModel;
 class MElement;
 class GFace;
 
-int PartitionMesh(GModel *model);
+int PartitionMesh(GModel *model, int numPart);
 int UnpartitionMesh(GModel *model);
 
-int PartitionUsingThisSplit(
-  GModel *model, std::size_t npart,
+int PartitionUsingThisSplit(GModel *model,
   std::vector<std::pair<MElement *, int> > &elmToPartition);
 int ConvertOldPartitioningToNewOne(GModel *model);
 

@@ -31,14 +31,15 @@ Line(14) = {18,19};
 Line(15) = {19,20};
 
 Field[1] = Distance;
-Field[1].NNodesByEdge = 100;
-Field[1].EdgesList = {7,8,9,10,11,12,13,14,15};
+Field[1].CurvesList = {7,8,9,10,11,12,13,14,15};
+Field[1].Sampling = 100;
 
 Field[2] = Threshold;
-Field[2].IField = 1;
-Field[2].LcMin = lc/20;
-Field[2].LcMax = lc;
+Field[2].InField = 1;
+Field[2].SizeMin = lc/20;
+Field[2].SizeMax = lc;
 Field[2].DistMin = 0.03;
 Field[2].DistMax = 0.06;
 
 Background Field = 2;
+Mesh.Algorithm = 5;

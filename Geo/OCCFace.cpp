@@ -21,6 +21,7 @@
 #include <BRepBndLib.hxx>
 #include <BRepClass_FaceClassifier.hxx>
 #include <BRepLProp_SLProps.hxx>
+#include <BRepTools.hxx>
 #include <BRep_Builder.hxx>
 #include <Bnd_Box.hxx>
 #include <GeomAPI_ProjectPointOnSurf.hxx>
@@ -39,7 +40,6 @@
 #include <TopoDS.hxx>
 #include <gp_Pln.hxx>
 #include <gp_Sphere.hxx>
-#include <BRepTools.hxx>
 
 OCCFace::OCCFace(GModel *m, TopoDS_Face s, int num)
   : GFace(m, num), _s(s), _sf(s, Standard_True), _radius(-1)
@@ -75,14 +75,13 @@ void OCCFace::_setup()
       if(model()->getOCCInternals())
         e = model()->getOCCInternals()->getEdgeForOCCShape(model(), edge);
       if(!e) { Msg::Error("Unknown curve in surface %d", tag()); }
-      else if(edge.Orientation() == TopAbs_INTERNAL) {
+      else if(edge.Orientation() == TopAbs_INTERNAL &&
+              CTX::instance()->geom.occAutoEmbed) {
         Msg::Debug("Adding embedded curve %d in surface %d", e->tag(), tag());
         embedded_edges.push_back(e);
         /*
-        if(e->getBeginVertex())
-          embedded_vertices.insert(e->getBeginVertex());
-        if(e->getEndVertex())
-          embedded_vertices.insert(e->getEndVertex());
+        if(e->getBeginVertex()) embedded_vertices.insert(e->getBeginVertex());
+        if(e->getEndVertex()) embedded_vertices.insert(e->getEndVertex());
         */
       }
       else {
@@ -117,7 +116,8 @@ void OCCFace::_setup()
     if(model()->getOCCInternals())
       v = model()->getOCCInternals()->getVertexForOCCShape(model(), vertex);
     if(!v) { Msg::Error("Unknown point in surface %d", tag()); }
-    else if(vertex.Orientation() == TopAbs_INTERNAL) {
+    else if(vertex.Orientation() == TopAbs_INTERNAL &&
+            CTX::instance()->geom.occAutoEmbed) {
       Msg::Debug("Adding embedded point %d in surface %d", v->tag(), tag());
       embedded_vertices.insert(v);
     }
@@ -153,7 +153,8 @@ void OCCFace::_setup()
   }
   for(std::size_t i = 0; i < embedded_edges.size(); i++) {
     GEdge *e = embedded_edges[i];
-    e->addFace(this);
+    // should not addFace(), as the edge is not on the boundary
+    //e->addFace(this);
     OCCEdge *occe = dynamic_cast<OCCEdge *>(e);
     if(occe && !e->is3D()) occe->setTrimmed(this);
   }
@@ -285,16 +286,17 @@ GPoint OCCFace::closestPoint(const SPoint3 &qp,
     return GFace::closestPoint(qp, initialGuess);
 }
 
-SPoint2 OCCFace::parFromPoint(const SPoint3 &qp, bool onSurface) const
+SPoint2 OCCFace::parFromPoint(const SPoint3 &qp, bool onSurface,
+                              bool convTestXYZ) const
 {
   // less robust but can be much faster
   if(CTX::instance()->geom.occUseGenericClosestPoint)
-    return GFace::parFromPoint(qp);
+    return GFace::parFromPoint(qp, onSurface, convTestXYZ);
   double uv[2];
   if(_project(qp.data(), uv, nullptr))
     return SPoint2(uv[0], uv[1]);
-  else
-    return GFace::parFromPoint(qp, onSurface);
+  else // fallback: force convergence test in XYZ coordinates
+    return GFace::parFromPoint(qp, true, true);
 }
 
 GEntity::GeomType OCCFace::geomType() const
@@ -358,6 +360,7 @@ double OCCFace::curvatures(const SPoint2 &param, SVector3 &dirMax,
 
 bool OCCFace::containsPoint(const SPoint3 &pt) const
 {
+#if 0
   if(geomType() == Plane) {
     gp_Pln pl = Handle(Geom_Plane)::DownCast(_occface)->Pln();
     double n[3], c;
@@ -393,9 +396,17 @@ bool OCCFace::containsPoint(const SPoint3 &pt) const
     // we're inside if angle equals 2 * pi
     return std::abs(angle) > 2 * M_PI - 0.5 && std::abs(angle) < 2 * M_PI + 0.5;
   }
-  else
+  else {
     Msg::Error("Not done yet...");
+  }
   return false;
+#else
+  const Standard_Real tolerance = BRep_Tool::Tolerance(_s);
+  BRepClass_FaceClassifier faceClassifier;
+  faceClassifier.Perform(_s, gp_Pnt{pt.x(), pt.y(), pt.z()}, tolerance);
+  const TopAbs_State state = faceClassifier.State();
+  return (state == TopAbs_IN || state == TopAbs_ON);
+#endif
 }
 
 bool OCCFace::buildSTLTriangulation(bool force)
@@ -407,13 +418,8 @@ bool OCCFace::buildSTLTriangulation(bool force)
   if(!model()->getOCCInternals()->makeFaceSTL(
        _s, stl_vertices_uv, stl_vertices_xyz, stl_normals, stl_triangles)) {
     Msg::Info("OpenCASCADE triangulation of surface %d failed", tag());
-    // add a dummy triangle so that we won't try again
-    stl_vertices_uv.push_back(SPoint2(0., 0.));
-    stl_vertices_xyz.push_back(SPoint3(0., 0., 0.));
-    stl_triangles.push_back(0);
-    stl_triangles.push_back(0);
-    stl_triangles.push_back(0);
-    return false;
+    // try the default algorithm in GFace
+    return GFace::buildSTLTriangulation(force);
   }
 
   // compute the triangulation of the edges which are the boundaries of this

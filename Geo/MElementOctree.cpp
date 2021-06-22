@@ -17,10 +17,7 @@ void MElementBB(void *a, double *min, double *max)
 {
   MElement *e = static_cast<MElement *>(a);
 
-  // TODO: serendip elements (at least prisms) are not fully supported yet in
-  // bezierBasis; use the (potentially too-small) node-based bounding box for
-  // now
-  if(e->getPolynomialOrder() == 1 || e->getIsOnlySerendipity()) {
+  if(e->getPolynomialOrder() == 1) {
     MVertex *v = e->getVertex(0);
     min[0] = max[0] = v->x();
     min[1] = max[1] = v->y();
@@ -36,14 +33,12 @@ void MElementBB(void *a, double *min, double *max)
     }
   }
   else {
-    fullMatrix<double> nodesXYZ(e->getNumVertices(), 3);
-    e->getNodesCoord(nodesXYZ);
+    bezierCoeff &bezNodes = *e->getBezierVerticesCoord();
 
-    bezierCoeff bezNodes(e->getFuncSpaceData(), nodesXYZ);
     min[0] = max[0] = bezNodes(0, 0);
     min[1] = max[1] = bezNodes(0, 1);
     min[2] = max[2] = bezNodes(0, 2);
-    for(std::size_t i = 1; i < e->getNumVertices(); i++) {
+    for(int i = 1; i < bezNodes.getNumCoeff(); i++) {
       min[0] = std::min(min[0], bezNodes(i, 0));
       max[0] = std::max(max[0], bezNodes(i, 0));
       min[1] = std::min(min[1], bezNodes(i, 1));
@@ -51,6 +46,8 @@ void MElementBB(void *a, double *min, double *max)
       min[2] = std::min(min[2], bezNodes(i, 2));
       max[2] = std::max(max[2], bezNodes(i, 2));
     }
+
+    delete &bezNodes;
   }
 
   SBoundingBox3d bb(min[0], min[1], min[2], max[0], max[1], max[2]);
@@ -145,7 +142,7 @@ MElementOctree::MElementOctree(const std::vector<MElement *> &v)
 MElementOctree::~MElementOctree() { Octree_Delete(_octree); }
 
 std::vector<MElement *> MElementOctree::findAll(double x, double y, double z,
-                                                int dim, bool strict)
+                                                int dim, bool strict) const
 {
   double maxTol = 1.;
   double tolIncr = 10.;
