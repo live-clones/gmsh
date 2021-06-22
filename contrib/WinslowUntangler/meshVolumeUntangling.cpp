@@ -214,50 +214,52 @@ namespace WinslowUntanglerVolume {
 using namespace WinslowUntanglerVolume;
 
 bool untangleGRegionMeshConstrained(GRegion* gr, int iterMax, double timeMax) {
-  if (gr->getNumMeshElements() == 0) {
-    Msg::Debug("- Region %i: no elements", gr->tag());
-    return false;
-  }
+  Msg::Error("untangleGRegionMeshConstrained: not working yet");
 
-  double t0 = Cpu();
+  // if (gr->getNumMeshElements() == 0) {
+  //   Msg::Debug("- Region %i: no elements", gr->tag());
+  //   return false;
+  // }
 
-  double sicnMinB, sicnAvgB;
-  computeSICNquality(gr, sicnMinB, sicnAvgB);
+  // double t0 = Cpu();
+
+  // double sicnMinB, sicnAvgB;
+  // computeSICNquality(gr, sicnMinB, sicnAvgB);
 
 
-  TODO FROM HERE
+  // TODO FROM HERE
 
-    // There is bug somewhere, should check step by step with reference implem
-    // test on a single optimal tet !
-    // orientation of tets may be wrong
-    // orientation of hexes is probably very wrong, check this !
+  //   // There is bug somewhere, should check step by step with reference implem
+  //   // test on a single optimal tet !
+  //   // orientation of tets may be wrong
+  //   // orientation of hexes is probably very wrong, check this !
 
-  vector<MVertex*> vertices;
-  vector<vec3> points;
-  vector<bool> locked;
-  vector<std::array<uint32_t,4> > tets;
-  std::vector<std::array<std::array<double,3>,4> > tetIdealShapes;
-  buildVerticesAndTetrahedra(gr, vertices, points, locked, tets, tetIdealShapes);
-  invertTetsIfNecessary(points, tets, tetIdealShapes);
+  // vector<MVertex*> vertices;
+  // vector<vec3> points;
+  // vector<bool> locked;
+  // vector<std::array<uint32_t,4> > tets;
+  // std::vector<std::array<std::array<double,3>,4> > tetIdealShapes;
+  // buildVerticesAndTetrahedra(gr, vertices, points, locked, tets, tetIdealShapes);
+  // invertTetsIfNecessary(points, tets, tetIdealShapes);
 
-  /* Call Winslow untangler */
-  double theta = 0.5;
-  int iterMaxInner = 300;
-  int iterFailMax = 10;
-  bool converged = untangle_tetrahedra(points, locked, tets,
-      tetIdealShapes, theta, iterMaxInner, iterMax, iterFailMax, timeMax);
+  // /* Call Winslow untangler */
+  // double theta = 0.5;
+  // int iterMaxInner = 300;
+  // int iterFailMax = 10;
+  // bool converged = untangle_tetrahedra(points, locked, tets,
+  //     tetIdealShapes, theta, iterMaxInner, iterMax, iterFailMax, timeMax);
 
-  for (size_t v = 0; v < points.size(); ++v) if (!locked[v]) {
-    vertices[v]->setXYZ(points[v][0],points[v][1],points[v][2]);
-  }
+  // for (size_t v = 0; v < points.size(); ++v) if (!locked[v]) {
+  //   vertices[v]->setXYZ(points[v][0],points[v][1],points[v][2]);
+  // }
 
-  double sicnMinA, sicnAvgA;
-  computeSICNquality(gr, sicnMinA, sicnAvgA);
+  // double sicnMinA, sicnAvgA;
+  // computeSICNquality(gr, sicnMinA, sicnAvgA);
 
-  Msg::Info("- Region %i: Winslow untangling, SICN min: %.3f -> %.3f, avg: %.3f -> %.3f (%li vertices, %.3f seconds)",
-      gr->tag(), sicnMinB, sicnMinA, sicnAvgB, sicnAvgA, vertices.size(), Cpu()-t0);
+  // Msg::Info("- Region %i: Winslow untangling, SICN min: %.3f -> %.3f, avg: %.3f -> %.3f (%li vertices, %.3f seconds)",
+  //     gr->tag(), sicnMinB, sicnMinA, sicnAvgB, sicnAvgA, vertices.size(), Cpu()-t0);
 
-  return true;
+  // return true;
 }
 
 #else
