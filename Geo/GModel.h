@@ -792,6 +792,11 @@ public:
   int writeMESH(const std::string &name, int elementTagType = 1,
                 bool saveAll = false, double scalingFactor = 1.0);
 
+  // Object file format (OFF)
+  int readOFF(const std::string &name);
+  int writeOFF(const std::string &name, bool saveAll = false,
+               double scalingFactor = 1.0);
+
   // Nastran Bulk Data File format
   int readBDF(const std::string &name);
   int writeBDF(const std::string &name, int format = 0, int elementTagType = 1,

@@ -34,6 +34,9 @@ using namespace Gecode;
 #include "lp_solve_wrapper.h"
 #include "qmtMeshUtils.h"
 
+// Winslow untangler
+#include "meshSurfaceUntangling.h"
+
 // Some shortcuts
 #define P(x) {cout << x << endl;}
 #define H(x) P(#x << ": " << (x))
@@ -2334,9 +2337,32 @@ Msg::Info("---------------------- Building mesh -------------------");
 				for(MLine* mline : cedge->mlines)
 					geolog(mline, 0, "patches (before smoothing)");
 
-Msg::Info("---------------------- Smoothing ----------------------");
-			clock_t start_smoothing = clock();
-			meshWinslow2d(gm, 1000, nullptr, &faceProjector);
+      Msg::Info("---------------------- Smoothing ----------------------");
+      clock_t start_smoothing = clock();
+
+      // Per-face Winslow-regularlized smoothing
+      for (GFace* gf: gm->getFaces()) {
+        if (gf->geomType() == GFace::Plane) {
+          int iterMax = 20;
+          double tMax = 100;
+          untangleGFaceMeshConstrained(gf, iterMax, tMax);
+        }
+      }
+
+      meshWinslow2d(gm, 1000, nullptr, &faceProjector);
+
+      // Per-face Winslow-regularlized smoothing
+      for (GFace* gf: gm->getFaces()) {
+        if (gf->geomType() == GFace::Plane) {
+          int iterMax = 20;
+          double tMax = 100;
+          untangleGFaceMeshConstrained(gf, iterMax, tMax);
+        }
+      }
+
+
+      time_smoothing = double(clock() - start_smoothing) / CLOCKS_PER_SEC;
+      // stats_file << "Time (smoothing):	" << time_smoothing << endl;
 
 			// Color quads by patch
 			gm->setNumPartitions(S(CM.cfaces));

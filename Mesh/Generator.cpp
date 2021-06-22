@@ -53,6 +53,11 @@
 #include "HighOrderMeshFastCurving.h"
 #endif
 
+#if defined(HAVE_WINSLOWUNTANGLER)
+#include "meshSurfaceUntangling.h"
+#include "meshVolumeUntangling.h"
+#endif
+
 #if defined(HAVE_POST)
 #include "PView.h"
 #include "PViewData.h"
@@ -1000,7 +1005,7 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter)
      how != "HighOrderFastCurving" && how != "Laplace2D" &&
      how != "Relocate2D" && how != "Relocate3D" &&
      how != "DiskQuadrangulation" && how != "QuadCavityRemeshing" &&
-     how != "QuadQuasiStructured") {
+     how != "QuadQuasiStructured" && how != "UntangleMeshGeometry") {
     Msg::Error("Unknown mesh optimization method '%s'", how.c_str());
     return;
   }
@@ -1126,6 +1131,25 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter)
       if(gf->meshStatistics.status == GFace::PENDING) {
         gf->meshStatistics.status = GFace::DONE;
       }
+  }
+  else if(how == "UntangleMeshGeometry") {
+#if defined(HAVE_WINSLOWUNTANGLER)
+    int nIterWinslow = 10;
+    for(GFace *gf : m->getFaces()) {
+      if(CTX::instance()->mesh.meshOnlyVisible && !gf->getVisibility()) continue;
+      if(gf->geomType() == GFace::Plane) {
+        double timeMax = 999;
+        untangleGFaceMeshConstrained(gf,nIterWinslow,timeMax);
+      }
+    }
+    for(GRegion *gr : m->getRegions()) {
+      if(CTX::instance()->mesh.meshOnlyVisible && !gr->getVisibility()) continue;
+      double timeMax = 999;
+      untangleGRegionMeshConstrained(gr,nIterWinslow,timeMax);
+    }
+#else
+    Msg::Error("Untangle mesh geometry optimization requires the WinslowUntangler module");
+#endif
   }
 
   if(Msg::GetVerbosity() > 98)

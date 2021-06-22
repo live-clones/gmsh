@@ -390,7 +390,7 @@ private:
   double _vIn, _vOut;
   double _xc, _yc, _zc;
   double _xa, _ya, _za;
-  double _R;
+  double _r;
 
 public:
   std::string getDescription()
@@ -404,7 +404,7 @@ public:
   CylinderField()
   {
     _vIn = _vOut = MAX_LC;
-    _xc = _yc = _zc = _xa = _ya = _R = 0.;
+    _xc = _yc = _zc = _xa = _ya = _r = 0.;
     _za = 1.;
 
     options["VIn"] = new FieldOptionDouble(_vIn, "Value inside the cylinder");
@@ -422,7 +422,7 @@ public:
       new FieldOptionDouble(_ya, "Y component of the cylinder axis");
     options["ZAxis"] =
       new FieldOptionDouble(_za, "Z component of the cylinder axis");
-    options["Radius"] = new FieldOptionDouble(_R, "Radius");
+    options["Radius"] = new FieldOptionDouble(_r, "Radius");
   }
   const char *getName() { return "Cylinder"; }
   using Field::operator();
@@ -439,7 +439,7 @@ public:
     dy -= adx * _ya;
     dz -= adx * _za;
 
-    return ((dx * dx + dy * dy + dz * dz < _R * _R) && fabs(adx) < 1) ? _vIn :
+    return ((dx * dx + dy * dy + dz * dz < _r * _r) && fabs(adx) < 1) ? _vIn :
                                                                         _vOut;
   }
 };
@@ -448,7 +448,7 @@ class BallField : public Field {
 private:
   double _vIn, _vOut;
   double _xc, _yc, _zc;
-  double _R, _thick;
+  double _r, _thick;
 
 public:
   std::string getDescription()
@@ -463,7 +463,7 @@ public:
   BallField()
   {
     _vIn = _vOut = MAX_LC;
-    _xc = _yc = _zc = _R = _thick = 0.;
+    _xc = _yc = _zc = _r = _thick = 0.;
 
     options["VIn"] = new FieldOptionDouble(_vIn, "Value inside the ball");
     options["VOut"] = new FieldOptionDouble(_vOut, "Value outside the ball");
@@ -473,7 +473,7 @@ public:
       new FieldOptionDouble(_yc, "Y coordinate of the ball center");
     options["ZCenter"] =
       new FieldOptionDouble(_zc, "Z coordinate of the ball center");
-    options["Radius"] = new FieldOptionDouble(_R, "Radius");
+    options["Radius"] = new FieldOptionDouble(_r, "Radius");
     options["Thickness"] = new FieldOptionDouble(
       _thick, "Thickness of a transition layer outside the ball");
   }
@@ -485,10 +485,10 @@ public:
     double dy = y - _yc;
     double dz = z - _zc;
     double d = sqrt(dx * dx + dy * dy + dz * dz);
-    if(d < _R) return _vIn;
+    if(d < _r) return _vIn;
     // transition layer
     if(_thick > 0) {
-      double dist = d - _R;
+      double dist = d - _r;
       if(dist <= _thick) return _vIn + (dist / _thick) * (_vOut - _vIn);
     }
     return _vOut;
@@ -2646,7 +2646,7 @@ class DistanceField : public Field {
   std::vector<AttractorInfo> _infos;
   int _sampling;
   int _xFieldId, _yFieldId, _zFieldId; // unused
-  PointCloud _P;
+  PointCloud _p;
   nanoflann::KDTreeSingleIndexAdaptor
   <nanoflann::L2_Simple_Adaptor<double, PointCloudAdaptor<PointCloud> >,
    PointCloudAdaptor<PointCloud>, 3> *_index;
@@ -2655,7 +2655,7 @@ class DistanceField : public Field {
   double _outDistSqr;
 
 public:
-  DistanceField() : _index(nullptr), _pc2kd(_P), _outIndex(0), _outDistSqr(0)
+  DistanceField() : _index(nullptr), _pc2kd(_p), _outIndex(0), _outDistSqr(0)
   {
     _sampling = 20;
 
@@ -2690,7 +2690,7 @@ public:
       new FieldOptionInt(_sampling, "[Deprecated]", &updateNeeded, true);
   }
   DistanceField(int dim, int tag, int nbe)
-    : _sampling(nbe), _index(nullptr), _pc2kd(_P), _outIndex(0),
+    : _sampling(nbe), _index(nullptr), _pc2kd(_p), _outIndex(0),
       _outDistSqr(0)
   {
     if(dim == 0)
@@ -2716,15 +2716,15 @@ public:
   }
   std::pair<AttractorInfo, SPoint3> getAttractorInfo() const
   {
-    if(_outIndex < _infos.size() && _outIndex < _P.pts.size())
-      return std::make_pair(_infos[_outIndex], _P.pts[_outIndex]);
+    if(_outIndex < _infos.size() && _outIndex < _p.pts.size())
+      return std::make_pair(_infos[_outIndex], _p.pts[_outIndex]);
     return std::make_pair(AttractorInfo(), SPoint3());
   }
   void update()
   {
     if(updateNeeded) {
       _infos.clear();
-      std::vector<SPoint3> &points = _P.pts;
+      std::vector<SPoint3> &points = _p.pts;
       points.clear();
 
       for(auto it = _pointTags.begin(); it != _pointTags.end(); ++it) {

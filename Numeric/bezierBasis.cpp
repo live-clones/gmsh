@@ -1083,7 +1083,7 @@ void bezierCoeff::_subdivideTriangle(const bezierCoeff &coeff, int start,
   }
 }
 
-void bezierCoeff::_subdivideTet(_SubdivisionTet which, int n,
+void bezierCoeff::_subdivideTet(SubdivisionTet which, int n,
                                 bezierCoeff &coeff)
 {
   // TODO: consider precompute vector<pair<int, int>> for subdiv

@@ -915,7 +915,6 @@ class Table
               robin_hood::pair<typename std::conditional<IsFlat, Key, Key const>::type, T>>::type,
           4, 16384, IsFlat> {
 public:
-    static constexpr uint64_t hash_multiplier_constant = UINT64_C(0xc4ceb9fe1a85ec53);
     static constexpr bool is_flat = IsFlat;
     static constexpr bool is_map = !std::is_void<T>::value;
     static constexpr bool is_set = !is_map;
