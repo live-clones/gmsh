@@ -2172,6 +2172,7 @@ void alignQuadMesh(GModel* gm) {
 
 	clock_t start = clock();
 	double time_smoothing;
+	double time_ilp;
 
 	int nit = 1;
 
@@ -2242,7 +2243,10 @@ Msg::Info("---------------------- Building T-mesh -------------------");
 
 		// Quantization optimization with LpSolve
 	Msg::Info("---------------------- Quantization with lp_solve -------------------");
+
+		clock_t start_ilp = clock();
 		V<int> q = optimizeQuantizationLpSolve(TM);
+		time_ilp = double(clock() - start_ilp) / CLOCKS_PER_SEC;
 
 		if(S(q) == 0) return; // no quantization found :(
 
@@ -2333,8 +2337,6 @@ Msg::Info("---------------------- Building mesh -------------------");
 Msg::Info("---------------------- Smoothing ----------------------");
 			clock_t start_smoothing = clock();
 			meshWinslow2d(gm, 1000, nullptr, &faceProjector);
-			time_smoothing = double(clock() - start_smoothing) / CLOCKS_PER_SEC;
-			// stats_file << "Time (smoothing):	" << time_smoothing << endl;
 
 			// Color quads by patch
 			gm->setNumPartitions(S(CM.cfaces));
@@ -2368,19 +2370,21 @@ Msg::Info("---------------------- Smoothing ----------------------");
 			patches_edges_view->write("patches.pos", FORMAT_AUTO, false);
 			patches_mesh_view->write("patches.pos", FORMAT_AUTO, true);
 			// gm->writeMSH("patches.msh"); // write block-structured mesh to file
-
 	
 Msg::Info("---------------------- High-Order ----------------------");
 			int N = 5;
 			Msg::Info("Build high-order mesh ... (N = %i, %li quads)", N, CM.cfaces.size());
 			buildHighOrderQuadMeshFromBaseComplex(gm, CM, N);
+
+			time_smoothing = double(clock() - start_smoothing) / CLOCKS_PER_SEC;
+			// stats_file << "Time (smoothing):	" << time_smoothing << endl;
     	}
 	}
 
 
 	double time_total = double(clock() - start) / CLOCKS_PER_SEC;
 	// stats_file << "Time (total):	" << time_total << " (" << time_smoothing/time_total << ")" << endl;
-	stats_file << time_total << endl;
+	stats_file << time_total << ", " << time_ilp << ", " << time_smoothing << endl;
 
 	stats_file.close();
 
