@@ -201,7 +201,7 @@ public:
   inline double &operator()(int i, int j) { return _data[i + _r * j]; }
 
 private:
-  enum _SubdivisionTet {
+  enum SubdivisionTet {
     subdivU,
     subdivV,
     subdivW,
@@ -210,7 +210,7 @@ private:
     node1CrossEdge03,
     node2CrossEdge03
   };
-  static void _subdivideTet(_SubdivisionTet which, int n, bezierCoeff &coeff);
+  static void _subdivideTet(SubdivisionTet which, int n, bezierCoeff &coeff);
 
   static void _subdivide(fullMatrix<double> &coeff, int npts, int start);
   static void _subdivide(fullMatrix<double> &coeff, int npts, int start,

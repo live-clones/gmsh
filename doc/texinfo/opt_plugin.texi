@@ -1156,9 +1156,7 @@ Default value: @code{0}
 @end table
 
 @item Plugin(SimplePartition)
-Plugin(SimplePartition) partitions the current mesh into `NumSlicesX', `NumSlicesY' and `NumSlicesZ' slices along the X-, Y- and Z-axis, respectively. The distribution of these slices is governed by `MappingX', `MappingY' and `MappingZ', where `t' is a normalized absissa along each direction. (Setting `MappingX' to `t' will thus lead to equidistant slices along the X-axis.)@*
-@*
-The plugin creates the topology of the partitioned entities if `CreateTopology' is set.
+Plugin(SimplePartition) partitions the current mesh into `NumSlicesX', `NumSlicesY' and `NumSlicesZ' slices along the X-, Y- and Z-axis, respectively. The distribution of these slices is governed by `MappingX', `MappingY' and `MappingZ', where `t' is a normalized absissa along each direction. (Setting `MappingX' to `t' will thus lead to equidistant slices along the X-axis.)
 String options:
 @table @code
 @item MappingX
@@ -1175,8 +1173,6 @@ Default value: @code{4}
 @item NumSlicesY
 Default value: @code{1}
 @item NumSlicesZ
-Default value: @code{1}
-@item CreateTopology
 Default value: @code{1}
 @end table
 

@@ -1688,7 +1688,17 @@ bool OCC_Internals::addPlaneSurface(int &tag, const std::vector<int> &wireTags)
 bool OCC_Internals::addSurfaceFilling(int &tag, int wireTag,
                                       const std::vector<int> &pointTags,
                                       const std::vector<int> &surfaceTags,
-                                      const std::vector<int> &surfaceContinuity)
+                                      const std::vector<int> &surfaceContinuity,
+                                      const int degree,
+                                      const int numPointsOnCurves,
+                                      const int numIter,
+                                      const bool anisotropic,
+                                      const double tol2d,
+                                      const double tol3d,
+                                      const double tolAng,
+                                      const double tolCurv,
+                                      const int maxDegree,
+                                      const int maxSegments)
 {
   if(tag >= 0 && _tagFace.IsBound(tag)) {
     Msg::Error("OpenCASCADE surface with tag %d already exists", tag);
@@ -1697,7 +1707,9 @@ bool OCC_Internals::addSurfaceFilling(int &tag, int wireTag,
 
   TopoDS_Face result;
   try {
-    BRepOffsetAPI_MakeFilling f;
+    BRepOffsetAPI_MakeFilling f(degree, numPointsOnCurves, numIter, anisotropic,
+                                tol2d, tol3d, tolAng, tolCurv, maxDegree,
+                                maxSegments);
     // bounding edge constraints
     if(!_tagWire.IsBound(wireTag)) {
       Msg::Error("Unknown OpenCASCADE curve loop with tag %d", wireTag);

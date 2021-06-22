@@ -70,7 +70,7 @@ using unordered_set =
   robin_hood::detail::Table<true, MaxLoadFactor100, Key, void, Hash, KeyEqual>;
 
 constexpr int SizeMapDefault = 0;
-constexpr int SizeMapCrossField = 1;
+//constexpr int SizeMapCrossField = 1;
 constexpr int SizeMapCrossFieldAndSmallCad = 2;
 constexpr int SizeMapBackgroundMesh = 3;
 constexpr int SizeMapCrossFieldAndBMeshOnCurves = 4;

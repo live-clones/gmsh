@@ -137,7 +137,7 @@ public:
   std::vector<MEdge> _neighbors;
   std::vector<cross2d *> _cneighbors;
   double da[4];
-  double _C[4], _S[4];
+  double _cc[4], _ss[4];
   // euler angles
   double _a, _b, _c;
   double _atemp, _btemp, _ctemp;
@@ -174,8 +174,8 @@ public:
       for(size_t i = 0; i < 4; i++) {
         da[i] = atan2(dot(_tgt2, _cneighbors[i]->_tgt),
                       dot(_tgt, _cneighbors[i]->_tgt));
-        _C[i] = cos(4 * da[i]);
-        _S[i] = sin(4 * da[i]);
+        _cc[i] = cos(4 * da[i]);
+        _ss[i] = sin(4 * da[i]);
       }
     }
   }
@@ -244,8 +244,8 @@ public:
       _btemp = 0;
       _ctemp = 0;
       for(int i = 0; i < 4; i++) {
-        _ctemp += (_cneighbors[i]->_c * _C[i] - _cneighbors[i]->_b * _S[i]);
-        _btemp += (_cneighbors[i]->_c * _S[i] + _cneighbors[i]->_b * _C[i]);
+        _ctemp += (_cneighbors[i]->_c * _cc[i] - _cneighbors[i]->_b * _ss[i]);
+        _btemp += (_cneighbors[i]->_c * _ss[i] + _cneighbors[i]->_b * _cc[i]);
       }
       _btemp *= 0.25;
       _ctemp *= 0.25;
