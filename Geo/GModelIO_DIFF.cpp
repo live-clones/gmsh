@@ -435,10 +435,12 @@ int GModel::writeDIFF(const std::string &name, bool binary, bool saveAll,
 
   // find max dimension of mesh elements we need to save
   int dim = 0;
-  for(std::size_t i = 0; i < entities.size(); i++)
-    if(entities[i]->physicals.size() || saveAll)
-      for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++)
-        dim = std::max(dim, entities[i]->getMeshElement(j)->getDim());
+  for(std::size_t i = 0; i < entities.size(); i++) {
+    if((entities[i]->physicals.size() || saveAll) &&
+       entities[i]->getNumMeshElements()) {
+      dim = std::max(dim, entities[i]->dim());
+    }
+  }
 
   // tag the vertices according to which boundary entity they belong to (note
   // that we use a brute force approach here, so that we can deal with models
@@ -479,7 +481,8 @@ int GModel::writeDIFF(const std::string &name, bool binary, bool saveAll,
   }
 
   // loop over all elements we need to save
-  std::size_t numElements = 0, maxNumNodesPerElement = 0;
+  std::size_t numElements = 0;
+  std::size_t maxNumNodesPerElement = 0, minNumNodesPerElement = 1000;
   for(std::size_t i = 0; i < entities.size(); i++) {
     if(entities[i]->physicals.size() || saveAll) {
       for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
@@ -488,6 +491,8 @@ int GModel::writeDIFF(const std::string &name, bool binary, bool saveAll,
           numElements++;
           maxNumNodesPerElement =
             std::max(maxNumNodesPerElement, e->getNumVertices());
+          minNumNodesPerElement =
+            std::min(minNumNodesPerElement, e->getNumVertices());
         }
       }
     }
@@ -498,7 +503,8 @@ int GModel::writeDIFF(const std::string &name, bool binary, bool saveAll,
   fprintf(fp, " Number of space dim. =   3\n");
   fprintf(fp, " Number of elements   =  %lu\n", numElements);
   fprintf(fp, " Number of nodes      =  %d\n\n", numVertices);
-  fprintf(fp, " All elements are of the same type : dpTRUE\n");
+  fprintf(fp, " All elements are of the same type: %s\n",
+          (maxNumNodesPerElement != minNumNodesPerElement) ? "dpFALSE" : "dpTRUE");
   fprintf(fp, " Max number of nodes in an element: %lu \n",
           maxNumNodesPerElement);
   fprintf(fp, " Only one subdomain               : dpFALSE\n");
