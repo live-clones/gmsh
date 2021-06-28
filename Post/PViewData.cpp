@@ -276,8 +276,48 @@ bool PViewData::searchScalarWithTol(double x, double y, double z,
       _octree = new OctreePost(this);
     }
   }
-  return _octree->searchScalarWithTol(x, y, z, values, step, size, tol, qn, qx,
-                                      qy, qz, grad, dim);
+  bool ret = _octree->searchScalarWithTol(x, y, z, values, step, size, tol, qn, qx,
+                                          qy, qz, grad, dim);
+  if(!ret) {
+    // try a linear search in all elements and return the value at the closest
+    // node
+    double dist = 1e200;
+    int foundEnt = -1, foundEle = -1, foundNode = -1, foundNumComp = -1;
+    for(int ent = 0; ent < getNumEntities(step); ent++) {
+      for(int ele = 0; ele < getNumElements(step, ent); ele++) {
+        if(skipElement(step, ent, ele)) continue;
+        int numNodes = getNumNodes(step, ent, ele);
+        int numComp = getNumComponents(step, ent, ele);
+        for(int nod = 0; nod < numNodes; nod++) {
+          double xn, yn, zn;
+          getNode(step, ent, ele, nod, xn, yn, zn);
+          double d = std::sqrt((x - xn) * (x - xn) +
+                               (y - yn) * (y - yn) +
+                               (z - zn) * (z - zn));
+          if(d < dist) {
+            dist = d;
+            foundEnt = ent;
+            foundEle = ele;
+            foundNode = nod;
+            foundNumComp = numComp;
+          }
+        }
+      }
+    }
+    Msg::Info("Found closest node %d in ele %d", foundNode, foundEle);
+    if(grad) {
+      Msg::Warning("Gradient not coded yet for closest node probe");
+      return false;
+    }
+    if(foundEnt < 0 || foundEle < 0 || foundNode < 0 || foundNumComp != 1) {
+      Msg::Warning("Could not find closest node in probe");
+      return false;
+    }
+    getValue(step, foundEnt, foundEle, foundNode, 0, values[0]);
+    return true;
+  }
+
+  return ret;
 }
 
 bool PViewData::searchVector(double x, double y, double z, double *values,
