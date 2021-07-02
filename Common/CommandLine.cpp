@@ -199,6 +199,10 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
                  "name=value"));
   s.push_back(mp("-setstring name value", "Set constant or option string "
                  "name=value"));
+  s.push_back(mp("-setolnumber name value", "Set number (value) "
+                 "in ONELAB database via its name"));
+  s.push_back(mp("-setolstring name value", "Set string (value) "
+                 "in ONELAB database via its name"));
   s.push_back(mp("-nopopup", "Don't popup dialog windows in scripts "
                  "(General.NoPopup)"));
   s.push_back(mp("-noenv", "Don't modify the environment at startup"));
@@ -851,6 +855,30 @@ void GetOptions(bool readConfigFiles, bool exitOnError)
         else {
           Msg::Error(
             "Missing name and/or value for definition of list of numbers");
+          if(exitOnError) Msg::Exit(1);
+        }
+      }
+      else if(argv[i] == "-setolstring") {
+        i++;
+        if(i + 1 < argv.size()) {
+          std::string name(argv[i]);
+          std::string value(argv[i + 1]);
+          Msg::SetOnelabString(name, value, true, true);
+        }
+        else {
+          Msg::Error("Missing name and/or value for ONELAB string definition");
+          if(exitOnError) Msg::Exit(1);
+        }
+      }
+      else if(argv[i] == "-setolnumber") {
+        i++;
+        if(i + 1 < argv.size()) {
+          std::string name(argv[i]);
+          double value = atof(argv[i + 1].c_str());
+          Msg::SetOnelabNumber(name, value, true, true);
+        }
+        else {
+          Msg::Error("Missing name and/or value for ONELAB number definition");
           if(exitOnError) Msg::Exit(1);
         }
       }
