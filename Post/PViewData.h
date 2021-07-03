@@ -291,6 +291,10 @@ public:
   // get MElement (if view supports it)
   virtual MElement *getElement(int step, int entity, int element);
 
+  // find coordinates of closest node to point (xn, yn, zn); currently performs
+  // a simple linear search - we might want to use a kdtree instead
+  double findClosestNode(double &xn, double &yn, double &zn, int step);
+
   // search for the value of the View at point x, y, z. Values are interpolated
   // using standard first order shape functions in the post element. If several
   // time steps are present, they are all interpolated unless time step is set
