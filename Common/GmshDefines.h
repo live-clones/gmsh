@@ -56,6 +56,7 @@
 #define FORMAT_MATLAB       50
 #define FORMAT_KEY          51
 #define FORMAT_XMT          52
+#define FORMAT_OFF          53
 
 // Element types
 #define TYPE_PNT     1

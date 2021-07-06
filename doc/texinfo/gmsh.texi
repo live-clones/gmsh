@@ -2507,9 +2507,9 @@ given in @var{expression-list} with the specified surface. Currently
 only available with the built-in kernel.
 
 @item Split Curve @{ @var{expression} @} Point @{ @var{expression-list} @}
-(Not a transformation per-se.) Return the curves created by splitting
-curve @var{expression} on the speficied points. Currently only available
-with the built-in kernel.
+(Not a transformation per-se.) Split the curve @var{expression} on the
+specified control points. Only available with the built-in kernel, for
+lines, splines and BSplines.
 @end ftable
 
 @noindent with

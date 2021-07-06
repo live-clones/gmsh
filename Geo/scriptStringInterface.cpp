@@ -1072,7 +1072,6 @@ void scriptSplitCurve(int edge_id, List_T *vertices,
     if(lang == "geo") {
       sstream << "Split Curve {" << edge_id << "} Point "
               << list2String(vertices, lang) << ";";
-      scriptAddCommand(sstream.str(), fileName, lang);
     }
     else {
       // TODO

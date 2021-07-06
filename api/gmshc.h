@@ -1740,8 +1740,9 @@ GMSH_API void gmshModelGeoRemove(int * dimTags, size_t dimTags_n,
 GMSH_API void gmshModelGeoRemoveAllDuplicates(int * ierr);
 
 /* Split the curve of tag `tag' in the built-in CAD representation, on the
- * control points `pointTags'. Return the tags `curveTags' of the newly
- * created curves. */
+ * specified control points `pointTags'. This feature is only available for
+ * lines, splines and b-splines. Return the tag(s) `curveTags' of the newly
+ * created curve(s). */
 GMSH_API void gmshModelGeoSplitCurve(const int tag,
                                      int * pointTags, size_t pointTags_n,
                                      int ** curveTags, size_t * curveTags_n,

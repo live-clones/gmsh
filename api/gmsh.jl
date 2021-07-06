@@ -3827,8 +3827,10 @@ const remove_all_duplicates = removeAllDuplicates
 """
     gmsh.model.geo.splitCurve(tag, pointTags)
 
-Split the curve of tag `tag` in the built-in CAD representation, on the control
-points `pointTags`. Return the tags `curveTags` of the newly created curves.
+Split the curve of tag `tag` in the built-in CAD representation, on the
+specified control points `pointTags`. This feature is only available for lines,
+splines and b-splines. Return the tag(s) `curveTags` of the newly created
+curve(s).
 
 Return `curveTags`.
 """
