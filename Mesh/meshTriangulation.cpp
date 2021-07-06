@@ -788,7 +788,7 @@ PolyMesh *GFaceInitialMesh(int faceTag, int recover,
     }
   }
 
-  pm->print4debug(faceTag);
+  //pm->print4debug(faceTag);
 
   if(recover) {
     std::vector<GEdge *> edges = gf->edges();

@@ -28,11 +28,6 @@
 #include "meshGFaceOptimize.h"
 #include "BackgroundMeshTools.h"
 #include "meshGFaceBipartiteLabelling.h"
-#if 0
-// TEST
-#include "meshTriangulation.h"
-// TEST
-#endif
 #endif
 
 #if defined(HAVE_ALGLIB)
