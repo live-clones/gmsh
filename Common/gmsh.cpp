@@ -1512,7 +1512,7 @@ GMSH_API void gmsh::model::mesh::getNodesByElementType(
   int numNodesByElements = ElementType::getNumVertices(elementType);
   std::size_t numElements = 0;
   for(std::size_t i = 0; i < entities.size(); ++i) {
-    numElements = entities[i]->getNumMeshElementsByType(familyType);
+    numElements += entities[i]->getNumMeshElementsByType(familyType);
   }
   std::size_t numNodes = numElements * numNodesByElements;
 
