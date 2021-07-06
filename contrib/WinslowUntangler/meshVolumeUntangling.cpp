@@ -157,6 +157,11 @@ namespace WinslowUntanglerVolume {
         for (size_t j = 0; j < htets.size(); ++j) {
           array<uint32_t,4> tet = htets[j];
           array<array<double,3>,4> shape = shapes[j];
+
+          // warning: tet orientation in untangler is inverted compared to gmsh orientation
+          tet = invert_tet(tet);
+          shape = invert_shape(shape);
+
           tets.push_back(tet);
           tetIdealShapes.push_back(shape);
         }
@@ -223,14 +228,6 @@ bool untangleGRegionMeshConstrained(GRegion* gr, int iterMax, double timeMax) {
 
   double sicnMinB, sicnAvgB;
   computeSICNquality(gr, sicnMinB, sicnAvgB);
-
-
-  TODO FROM HERE
-
-    // There is bug somewhere, should check step by step with reference implem
-    // test on a single optimal tet !
-    // orientation of tets may be wrong
-    // orientation of hexes is probably very wrong, check this !
 
   vector<MVertex*> vertices;
   vector<vec3> points;

@@ -93,8 +93,10 @@ namespace WinslowUntangler {
       const std::vector<std::array<uint32_t,4> >& tets) {
     double sum = 0.;
     for (size_t i = 0; i < tets.size(); ++i) {
-      sum += volume(points[tets[i][0]], points[tets[i][1]], 
+      double tvol = volume(points[tets[i][0]], points[tets[i][1]], 
           points[tets[i][2]], points[tets[i][3]]);
+      // printf("- tet %li: %.3f\n", i, tvol);
+      sum += tvol;
     }
     return sum;
   }
@@ -104,8 +106,6 @@ namespace WinslowUntangler {
     double detmin = 0;
     int ninverted = 0;
     double eps = 0.;
-    // std::vector<std::array<double,2> > points;
-    // alglib::real_1d_array X; /* vertex coordinates in solver */
     std::vector<bool> locked;
     std::vector<std::array<uint32_t,3> > triangles;
     std::vector<Eigen::Matrix<double,3,2> > ref_tri;
@@ -115,7 +115,6 @@ namespace WinslowUntangler {
   };
 
   void evaluate_jacobian(UntanglerData2D& w, const alglib::real_1d_array& X) {
-    // std::cout << "########## EVALUATE JACOBIAN ##########\n";
     w.detmin = std::numeric_limits<double>::max();
     w.ninverted = 0;
     for (size_t t = 0; t < w.triangles.size(); ++t) {
@@ -128,8 +127,6 @@ namespace WinslowUntangler {
         }
       }
       w.det[t] = w.J[t].determinant();
-      // std::cout << "### tri " << t << ", J:\n" << w.J[t] << std::endl;
-      // std::cout << "# det: " << w.det[t] << std::endl;
       w.detmin = std::min(w.detmin, w.det[t]);
       w.ninverted += (w.det[t]<=0);
       // dual basis
@@ -137,9 +134,7 @@ namespace WinslowUntangler {
       w.K[t](0,1) = -w.J[t](1,0);
       w.K[t](1,0) = -w.J[t](0,1);
       w.K[t](1,1) = w.J[t](0,0);
-      // std::cout << "# K:\n" << w.K[t] << std::endl;
     }
-    // Msg::Debug("- detmin: %f, ninverted = %i", w.detmin, w.ninverted);
   }
 
 
@@ -154,7 +149,6 @@ namespace WinslowUntangler {
   }
 
   double evaluate_energy(UntanglerData2D& w, const alglib::real_1d_array& X) {
-    // std::cout << "########## EVALUATE ENERGY ##########\n";
     evaluate_jacobian(w, X);
     double E = 0;
     for (int t=0; t<w.triangles.size(); t++) {
@@ -162,13 +156,10 @@ namespace WinslowUntangler {
       double f = (w.J[t].transpose() * w.J[t]).trace()/chi_;
       double g = (1+std::pow(w.det[t],2))/chi_;
       E += (1.-w.theta)*f + w.theta*g;
-      // Msg::Debug("-- %i: f=%f g=%f chi=%f --- E += %f", t, f, g, chi_, (1.-w.theta)*f + w.theta*g);
     }
     if (std::isnan(E)) {
       E = std::numeric_limits<double>::max();
     }
-    // Msg::Debug("- energy: %f (eps: %f)", E, w.eps);
-    // std::cout << std::flush;
     return E;
   }
 
@@ -218,7 +209,7 @@ namespace WinslowUntangler {
         }
       }
     }
-    // Msg::Info("- F = %f:", func);
+    // Msg::Debug("- F = %f:", func);
     // print_array(x,"X");
     // print_array(grad,"gradient");
   }
@@ -227,7 +218,7 @@ namespace WinslowUntangler {
     double theta = 0.5;
     double detmin = 0;
     int ninverted = 0;
-    double eps = 0.;
+    double eps = 1.e-3;
     std::vector<bool> locked;
     std::vector<std::array<uint32_t,4> > tets;
     std::vector<std::array<vec3,4> > ref_tets;
@@ -286,18 +277,14 @@ namespace WinslowUntangler {
     w.ninverted = 0;
     for (size_t t = 0; t < w.tets.size(); ++t) {
       w.J[t].setZero();
-      // TODO: not sure if formula is right
       for (size_t i = 0; i < 3; ++i) {
         for (size_t j = 0; j < 3; ++j) {
           for (size_t k = 0; k < 4; ++k) {
-            // w.J[t](i,j) += w.ref_tri[t](k,j) * w.points[w.triangles[t][k]][i];
-            w.J[t](i,j) += w.ref_tets[t][k][j] * X[2*w.tets[t][k]+i];
+            w.J[t](i,j) += w.ref_tets[t][k][j] * X[3*w.tets[t][k]+i];
           }
         }
       }
       w.det[t] = w.J[t].determinant();
-      // std::cout << "### tri " << t << ", J:\n" << w.J[t] << std::endl;
-      // std::cout << "# det: " << w.det[t] << std::endl;
       w.detmin = std::min(w.detmin, w.det[t]);
       w.ninverted += (w.det[t]<=0);
       // dual basis
@@ -314,7 +301,6 @@ namespace WinslowUntangler {
       Kl(2,0) = Jl(0,1)*Jl(1,2) - Jl(0,2)*Jl(1,1);
       Kl(2,1) = Jl(0,2)*Jl(1,0) - Jl(0,0)*Jl(1,2);
       Kl(2,2) = Jl(0,0)*Jl(1,1) - Jl(0,1)*Jl(1,0);
-      // std::cout << "# K:\n" << w.K[t] << std::endl;
     }
     // Msg::Debug("- detmin: %f, ninverted = %i", w.detmin, w.ninverted);
   }
@@ -325,7 +311,7 @@ namespace WinslowUntangler {
     double E = 0;
     for (int t=0; t<w.tets.size(); t++) {
       double chi_ = chi(w.eps, w.det[t]);
-      double f = (w.J[t].transpose() * w.J[t]).trace()/chi_;
+      double f = (w.J[t].transpose() * w.J[t]).trace()/std::pow(chi_,2./3.);
       double g = (1+std::pow(w.det[t],2))/chi_;
       E += (1.-w.theta)*f + w.theta*g;
       // Msg::Debug("-- %i: f=%f g=%f chi=%f --- E += %f", t, f, g, chi_, (1.-w.theta)*f + w.theta*g);
@@ -334,7 +320,7 @@ namespace WinslowUntangler {
       E = std::numeric_limits<double>::max();
     }
     // Msg::Debug("- energy: %f (eps: %f)", E, w.eps);
-    // std::cout << std::flush;
+    std::cout << std::flush;
     return E;
   }
 
@@ -358,8 +344,9 @@ namespace WinslowUntangler {
       double c1 = chi(w.eps, w.det[t]);
       double c2 = std::pow(c1, 2./3.);
       double c3 = chi_deriv(w.eps, w.det[t]);
+      // printf("--t=%i | det=%.3f, c1=%.3f, c2=%.3f, c3=%.3f\n",t,w.det[t],c1,c2,c3);
 
-      double f = (w.J[t].transpose() * w.J[t]).trace()/c1;
+      double f = (w.J[t].transpose() * w.J[t]).trace()/c2;
       double g = (1+std::pow(w.det[t],2))/c1;
 
       for (size_t d = 0; d < DIM; ++d) {
@@ -369,9 +356,12 @@ namespace WinslowUntangler {
           uint32_t v = w.tets[t][i];
           if (!w.locked[v]) {
             Eigen::Vector3d n = {w.ref_tets[t][i][0],w.ref_tets[t][i][1],w.ref_tets[t][i][2]};
-            grad[v*DIM+d] += (dfda*(1.-w.theta) + dgda*w.theta)*n;
-            // printf("---v=%i,dim=%li | dfda=(%f %f), dgda=(%f %f),  G+=%f\n", 
-            //     v, d, dfda[0], dfda[1], dgda[0], dgda[1], dot((dfda*(1.-w.theta) + dgda*w.theta), n));
+            double contrib = (dfda*(1.-w.theta) + dgda*w.theta)*n;
+            grad[v*DIM+d] += contrib; 
+
+            // printf("---v=%i,dim=%li | dfda=(%f %f %f), dgda=(%f %f %f),  G+=%f\n", 
+            //     v, d, dfda[0], dfda[1], dfda[2], dgda[0], dgda[1], dgda[2], 
+            //     contrib);
           }
         }
       }
@@ -388,39 +378,6 @@ namespace WinslowUntangler {
 using namespace WinslowUntangler;
 
 
-bool wu_test_case() {
-  Msg::Info("wu_test_case ...");
-  size_t NV = 5;
-  size_t NT = 4;
-  std::vector<std::array<double,2> > points(NV);
-  std::vector<bool> locked(NV,true);
-  std::vector<std::array<uint32_t,3> > triangles(NT);
-  std::vector<std::array<std::array<double,3>,3> > triIdealShapes;
-  points[0] = {0.,0.};
-  points[1] = {1.,0.5};
-  points[2] = {0.,1.};
-  double a = 0.7;
-  points[3] = {a,0.5};
-  triangles[0] = {0,1,4};
-  triangles[1] = {4,1,2};
-  triangles[2] = {3,4,2};
-  triangles[3] = {0,4,3};
-
-  /* unknown */
-  points[4] = {0.,0.};
-  locked[4] = false;
-
-  int iterMaxInner = 3;
-  int iterMaxOuter = 3;
-  double theta = 1./128.;
-
-
-  untangle_triangles_2D(points, locked, triangles, triIdealShapes, theta, iterMaxInner, iterMaxOuter, 100);
-  Msg::Info("-> final position: %f %f", points[4][0],points[4][1]);
-
-  return true;
-}
-
 
 bool untangle_triangles_2D(
     std::vector<std::array<double,2> >& points, 
@@ -432,11 +389,6 @@ bool untangle_triangles_2D(
     int iterMaxOuter,
     int iterFailMax,
     double timeMax) {
-
-  // if (points.size() == 0) {
-  //   wu_test_case();
-  //   return true;
-  // }
 
   const size_t NV = points.size();
   const size_t NT = triangles.size();
@@ -627,7 +579,8 @@ bool untangle_tetrahedra(
     minlbfgscreate(N, corr, x, state);
 
     // stopping criteria
-    const double epsg = 1.e-12;
+    // TODO: these values may not be optimal / right
+    const double epsg = 0.1;
     const double epsf = 0.;
     const double epsx = 0.;
     const alglib::ae_int_t maxits = iterMaxInner;

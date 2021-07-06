@@ -1138,13 +1138,15 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter)
     for(GFace *gf : m->getFaces()) {
       if(CTX::instance()->mesh.meshOnlyVisible && !gf->getVisibility()) continue;
       if(gf->geomType() == GFace::Plane) {
-        double timeMax = 999;
+        double timeMax = 100.;
         untangleGFaceMeshConstrained(gf,nIterWinslow,timeMax);
+      } else {
+        Msg::Debug("- Face %i: not planar, do not apply Winslow untangling", gf->tag());
       }
     }
     for(GRegion *gr : m->getRegions()) {
       if(CTX::instance()->mesh.meshOnlyVisible && !gr->getVisibility()) continue;
-      double timeMax = 999;
+      double timeMax = 100.;
       untangleGRegionMeshConstrained(gr,nIterWinslow,timeMax);
     }
 #else
