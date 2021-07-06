@@ -14,6 +14,20 @@ is to have the same behavior.
 
 # State of the implementation
 
-- The 2D untangler/smoother works.
+- The 2D untangler/smoother works on planar faces (with fixed vertices on curves).
+  Quads are subdivided into four (overlapping) triangles for the smoothing.
 
-- The 3D untangler/smoother is still buggy and not usable.
+- The 3D untangler/smoother works (with fixed vertices on curves and surfaces).
+  Hexahedron are subdivided into 32 (overlapping) tetrahedra for the smoothing.
+
+# Todo
+
+- Write the decomposition of pyramids and prisms into tetrahedra to
+  smooth hybrid hex-dominant meshes.
+
+- Use the CAD parametrization for surface untangling/smoothing. Requires to change
+  the formulation a bit, but definitely possible.
+
+- Optimize all the curve/surface/volume vertices at the same time.
+
+- For better performance on large models, only smooth regions around low-quality elements.
