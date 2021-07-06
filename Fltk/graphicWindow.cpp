@@ -661,14 +661,14 @@ void file_quit_cb(Fl_Widget *w, void *data)
 {
   // save persistent info to disk
   if(CTX::instance()->sessionSave)
-    PrintOptions(0, GMSH_SESSIONRC, 0, 0,
-                 (CTX::instance()->homeDir +
-                  CTX::instance()->sessionFileName).c_str());
+    PrintOptions(
+      0, GMSH_SESSIONRC, 0, 0,
+      (CTX::instance()->homeDir + CTX::instance()->sessionFileName).c_str());
   if(CTX::instance()->optionsSave == 1)
-    PrintOptions(0, GMSH_OPTIONSRC, 1, 0,
-                 (CTX::instance()->homeDir +
-                  CTX::instance()->optionsFileName).c_str());
-  else if(CTX::instance()->optionsSave == 2){
+    PrintOptions(
+      0, GMSH_OPTIONSRC, 1, 0,
+      (CTX::instance()->homeDir + CTX::instance()->optionsFileName).c_str());
+  else if(CTX::instance()->optionsSave == 2) {
     std::string fileName = GModel::current()->getFileName() + ".opt";
     PrintOptions(0, GMSH_FULLRC, 1, 0, fileName.c_str());
   }
@@ -2383,7 +2383,6 @@ static void mesh_untangle_cb(Fl_Widget *w, void *data)
   CTX::instance()->lock = 0;
   drawContext::global()->draw();
 }
-
 
 static void mesh_cross_compute_cb(Fl_Widget *w, void *data)
 {
