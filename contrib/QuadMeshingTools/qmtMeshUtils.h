@@ -18,6 +18,7 @@
 class GModel;
 class GVertex;
 class GFace;
+class GRegion;
 class GEdge;
 class MTriangle;
 class MQuadrangle;
@@ -56,6 +57,10 @@ bool patchFromQuads(GFace* gf, const std::vector<MQuadrangle*>& quads, GFaceMesh
 
 
 void sicnQuality(const GFaceMeshPatch& patch, double& sicnMin, double& sicnAvg);
+
+void computeSICNquality(const std::vector<MElement*>& elements, double& sicnMin, double& sicnAvg);
+void computeSICNquality(GFace* gf, double& sicnMin, double& sicnAvg);
+void computeSICNquality(GRegion* gr, double& sicnMin, double& sicnAvg);
 
 bool patchIsTopologicallyValid(const GFaceMeshPatch& patch);
 
