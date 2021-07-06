@@ -1563,8 +1563,7 @@ public:
         updateNeeded = false;
       }
     }
-    //    double SIZE = v->getData()->getBoundingBox().diag();
-    
+
     double l = 0.;
     // use large tolerance (in element reference coordinates) to maximize chance
     // of finding an element

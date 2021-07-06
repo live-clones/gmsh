@@ -10,7 +10,7 @@
 #include <algorithm>
 #include <stack>
 #include <stdio.h>
-#include "../Geo/SVector3.h"
+#include "SVector3.h"
 
 class PolyMesh {
 public:
@@ -403,7 +403,7 @@ public:
     v->data = -1;
 
     vertices.push_back(v);
-    
+
     HalfEdge *he0 = f->he;
     HalfEdge *he1 = he0->next;
     HalfEdge *he2 = he1->next;

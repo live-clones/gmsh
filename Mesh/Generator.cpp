@@ -579,7 +579,7 @@ static void Mesh2D(GModel *m)
                  CTX::instance()->meshTimer[1], t2 - t1);
 
   // if two passes ...
-  //printf("%lu fiels\n",  m->getFields()->size());
+  // printf("%lu fiels\n",  m->getFields()->size());
   PrintMesh2dStatistics(m);
 }
 
@@ -1567,7 +1567,7 @@ void GenerateMesh(GModel *m, int ask)
     std::for_each(m->firstRegion(), m->lastRegion(), deMeshGRegion());
     Mesh2D(m);
     // if two passes --> juste fait le ...
-    createSizeFieldFromExistingMesh (m, false);
+    createSizeFieldFromExistingMesh(m, false);
     // Mesh2D(m);
   }
 

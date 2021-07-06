@@ -19,14 +19,12 @@
 #include "MEdge.h"
 #include "GModelParametrize.h"
 
-#ifdef HAVE_EIGEN
-#ifdef HAVE_GEOMETRYCENTRAL
+#if defined(HAVE_EIGEN) && defined(HAVE_GEOMETRYCENTRAL)
 #include <Eigen/Core>
 #include <Eigen/Dense>
 #include "geometrycentral/surface/signpost_intrinsic_triangulation.h"
 #include "geometrycentral/surface/vertex_position_geometry.h"
-#endif 
-#endif 
+#endif
 
 discreteFace::param::~param()
 {
@@ -448,62 +446,63 @@ void discreteFace::_debugParametrization(bool uv)
   }
 }
 
-void intrinsicDelaunayize(discreteFace *df) {
-#ifdef HAVE_EIGEN
-#ifdef HAVE_GEOMETRYCENTRAL
+void intrinsicDelaunayize(discreteFace *df)
+{
+#if defined(HAVE_EIGEN) && defined(HAVE_GEOMETRYCENTRAL)
 
   char name[245];
-  sprintf(name,"intrinsic%d.pos",df->tag());
-  FILE *ff = fopen(name,"w");
-  fprintf(ff,"View \"\"{\n");
-  
-  Eigen::MatrixXi triangles (df->triangles.size(), 3);
+  sprintf(name, "intrinsic%d.pos", df->tag());
+  FILE *ff = fopen(name, "w");
+  fprintf(ff, "View \"\"{\n");
+
+  Eigen::MatrixXi triangles(df->triangles.size(), 3);
   std::vector<geometrycentral::Vector3> vertexCoordinates;
-  for (auto t :  df->triangles){
+  for(auto t : df->triangles) {
     t->getVertex(0)->setIndex(-1);
     t->getVertex(1)->setIndex(-1);
     t->getVertex(2)->setIndex(-1);
   }
   int index = 0;
-  for (auto t :  df->triangles){
-    for (int i = 0;i< 3; i++){
-      if (t->getVertex(i)->getIndex() == -1){
-	geometrycentral::Vector3 p = {t->getVertex(i)->x(),t->getVertex(i)->y(),t->getVertex(i)->z()};
-	vertexCoordinates.push_back(p);
-	t->getVertex(i)->setIndex(index++);
+  for(auto t : df->triangles) {
+    for(int i = 0; i < 3; i++) {
+      if(t->getVertex(i)->getIndex() == -1) {
+        geometrycentral::Vector3 p = {
+          t->getVertex(i)->x(), t->getVertex(i)->y(), t->getVertex(i)->z()};
+        vertexCoordinates.push_back(p);
+        t->getVertex(i)->setIndex(index++);
       }
     }
   }
-  Eigen::MatrixXd positions (vertexCoordinates.size(), 3);
-  for (size_t i=0 ; i <vertexCoordinates.size() ; i++){
-    positions(i,0) = vertexCoordinates[i].x;
-    positions(i,1) = vertexCoordinates[i].y;
-    positions(i,2) = vertexCoordinates[i].z;
+  Eigen::MatrixXd positions(vertexCoordinates.size(), 3);
+  for(size_t i = 0; i < vertexCoordinates.size(); i++) {
+    positions(i, 0) = vertexCoordinates[i].x;
+    positions(i, 1) = vertexCoordinates[i].y;
+    positions(i, 2) = vertexCoordinates[i].z;
   }
-
 
   int T = 0;
-  for (auto t :  df->triangles){
-    for (int i = 0;i< 3; i++)
-      triangles(T,i) = t->getVertex(i)->getIndex();
+  for(auto t : df->triangles) {
+    for(int i = 0; i < 3; i++) triangles(T, i) = t->getVertex(i)->getIndex();
     T++;
   }
-  geometrycentral::surface::ManifoldSurfaceMesh msm (triangles);
+  geometrycentral::surface::ManifoldSurfaceMesh msm(triangles);
 
-  printf("isManifold %d\n",msm.isManifold());
-  printf("isOriented %d\n",msm.isOriented());
-  printf("nVertices %lu\n",msm.nVertices());
-  printf("nCorners %lu\n",msm.nCorners());
-  printf("nInteriorVertices %lu\n",msm.nInteriorVertices());
-  
-  geometrycentral::surface::VertexPositionGeometry vpg (msm, positions);
+  printf("isManifold %d\n", msm.isManifold());
+  printf("isOriented %d\n", msm.isOriented());
+  printf("nVertices %lu\n", msm.nVertices());
+  printf("nCorners %lu\n", msm.nCorners());
+  printf("nInteriorVertices %lu\n", msm.nInteriorVertices());
 
-  geometrycentral::surface::SignpostIntrinsicTriangulation signpostTri (msm, vpg);
+  geometrycentral::surface::VertexPositionGeometry vpg(msm, positions);
+
+  geometrycentral::surface::SignpostIntrinsicTriangulation signpostTri(msm,
+                                                                       vpg);
 
   signpostTri.flipToDelaunay();
 
   signpostTri.delaunayRefine();
-  printf("-->nVertices %lu %lu\n",signpostTri.intrinsicMesh->nVertices(),signpostTri.mesh.nVertices());
+  printf("-->nVertices %lu %lu\n", signpostTri.intrinsicMesh->nVertices(),
+         signpostTri.mesh.nVertices());
 
   signpostTri.requireVertexIndices();
 
@@ -514,9 +513,9 @@ void intrinsicDelaunayize(discreteFace *df) {
   Eigen::MatrixXi faceInds(nF, 3);
 
   size_t iF = 0;
-  for (geometrycentral::surface::Face f : signpostTri.mesh.faces()) {
+  for(geometrycentral::surface::Face f : signpostTri.mesh.faces()) {
     geometrycentral::surface::Halfedge he = f.halfedge();
-    for (int v = 0; v < 3; v++) {
+    for(int v = 0; v < 3; v++) {
       geometrycentral::surface::Vertex vA = he.vertex();
       size_t indA = signpostTri.vertexIndices[vA];
       faceInds(iF, v) = indA;
@@ -524,31 +523,32 @@ void intrinsicDelaunayize(discreteFace *df) {
     }
     iF++;
   }
-  
+
   size_t iV = 0;
-  for (geometrycentral::surface::Vertex v : signpostTri.mesh.vertices()) {
-    geometrycentral::Vector3 pos = signpostTri.vertexLocations[v].interpolate(vpg.inputVertexPositions);
-    vertexPositions(iV,0) = pos.x;
-    vertexPositions(iV,1) = pos.y;
-    vertexPositions(iV,2) = pos.z;
+  for(geometrycentral::surface::Vertex v : signpostTri.mesh.vertices()) {
+    geometrycentral::Vector3 pos =
+      signpostTri.vertexLocations[v].interpolate(vpg.inputVertexPositions);
+    vertexPositions(iV, 0) = pos.x;
+    vertexPositions(iV, 1) = pos.y;
+    vertexPositions(iV, 2) = pos.z;
     iV++;
   }
 
-  for (int i=0;i<nF;i++){
-    int id0 = faceInds(i,0);
-    int id1 = faceInds(i,1);
-    int id2 = faceInds(i,2);
-    fprintf(ff,"ST(%lg,%lg,%lg,%lg,%lg,%lg,%lg,%lg,%lg){%d,%d,%d};\n",
-	    vertexPositions(id0,0),vertexPositions(id0,1),vertexPositions(id0,2),
-	    vertexPositions(id1,0),vertexPositions(id1,1),vertexPositions(id1,2),
-	    vertexPositions(id2,0),vertexPositions(id2,1),vertexPositions(id2,2),
-	    df->tag(),df->tag(),df->tag());
+  for(int i = 0; i < nF; i++) {
+    int id0 = faceInds(i, 0);
+    int id1 = faceInds(i, 1);
+    int id2 = faceInds(i, 2);
+    fprintf(ff, "ST(%lg,%lg,%lg,%lg,%lg,%lg,%lg,%lg,%lg){%d,%d,%d};\n",
+            vertexPositions(id0, 0), vertexPositions(id0, 1),
+            vertexPositions(id0, 2), vertexPositions(id1, 0),
+            vertexPositions(id1, 1), vertexPositions(id1, 2),
+            vertexPositions(id2, 0), vertexPositions(id2, 1),
+            vertexPositions(id2, 2), df->tag(), df->tag(), df->tag());
   }
-  
-  fprintf(ff,"};\n");
-  fclose(ff);  
-  
-#endif
+
+  fprintf(ff, "};\n");
+  fclose(ff);
+
 #endif
 }
 
@@ -561,7 +561,7 @@ int discreteFace::createGeometry()
   if(triangles.empty()) return 0;
 
   //  intrinsicDelaunayize(this);
-  
+
   double minq = 1.;
   for(auto t : triangles) minq = std::min(minq, t->gammaShapeMeasure());
   if(minq < 1e-3)
@@ -901,12 +901,11 @@ bool discreteFace::readParametrization(FILE *fp, bool binary)
   return true;
 }
 
-
 void discreteFace::resetMeshAttributes()
 {
   Surface *_s = FindSurface(tag());
-  if (!_s){
-    GFace :: resetMeshAttributes();
+  if(!_s) {
+    GFace ::resetMeshAttributes();
     return;
   }
   meshAttributes.recombine = _s->Recombine;

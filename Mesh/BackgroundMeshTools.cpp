@@ -33,10 +33,10 @@ static double max_edge_curvature(const GVertex *gv)
   for(auto ite = l_edges.begin(); ite != l_edges.end(); ++ite) {
     GEdge *_myGEdge = *ite;
     Range<double> range = _myGEdge->parBounds(0);
-    double t = gv == _myGEdge->getBeginVertex() ? range.low() : range.high();    
+    double t = gv == _myGEdge->getBeginVertex() ? range.low() : range.high();
     double EC = _myGEdge->curvature(t);
-    double FC = max_surf_curvature(_myGEdge,  t);
-    val = std::max(std::max(val, EC),FC);
+    double FC = max_surf_curvature(_myGEdge, t);
+    val = std::max(std::max(val, EC), FC);
   }
   return val;
 }

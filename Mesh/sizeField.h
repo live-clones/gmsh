@@ -7,7 +7,4 @@
 
 class GModel;
 
-int createSizeFieldFromExistingMesh (GModel *gm, bool computeCrosses);
-
-
-
+int createSizeFieldFromExistingMesh(GModel *gm, bool computeCrosses);

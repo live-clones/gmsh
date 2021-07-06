@@ -12,7 +12,8 @@
 // if recover = 1 --> edges are recovered and
 // the triangulation is colored : triangles belonging
 // to the model face are colored faceTag, other have negative colors.
-PolyMesh *GFaceInitialMesh(int faceTag, int recover = 0, std::vector<double> *additional = nullptr);
+PolyMesh *GFaceInitialMesh(int faceTag, int recover = 0,
+                           std::vector<double> *additional = nullptr);
 // apply Delaunay refinement using old algorithms
 // FIXME -- not working yet
 void GFaceDelaunayRefinementOldMesher(int faceTag);
