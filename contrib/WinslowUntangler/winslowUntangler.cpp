@@ -21,6 +21,7 @@
 
 #include <math.h>
 #include <iostream> // debugging
+#include <cfloat>
 
 #include "Context.h"
 #include "GmshMessage.h"
@@ -75,6 +76,25 @@ namespace WinslowUntangler {
   inline double area(vec2 a, vec2 b, vec2 c) {
     return .5*((b[1]-a[1])*(b[0]+a[0]) + (c[1]-b[1])*(c[0]+b[0]) + (a[1]-c[1])*(a[0]+c[0]));
   }
+
+  void bbox_minmax(const std::vector<vec3>& points, vec3& bmin, vec3& bmax) {
+    bmin = {DBL_MAX,DBL_MAX,DBL_MAX};
+    bmax = {-DBL_MAX,-DBL_MAX,-DBL_MAX};
+    for (size_t i = 0; i < points.size(); ++i) for (size_t d = 0; d < 3; ++d) {
+      bmin[d] = std::min(points[i][d],bmin[d]);
+      bmax[d] = std::max(points[i][d],bmax[d]);
+    }
+  }
+
+  void bbox_minmax(const std::vector<vec2>& points, vec2& bmin, vec2& bmax) {
+    bmin = {DBL_MAX,DBL_MAX};
+    bmax = {-DBL_MAX,-DBL_MAX};
+    for (size_t i = 0; i < points.size(); ++i) for (size_t d = 0; d < 2; ++d) {
+      bmin[d] = std::min(points[i][d],bmin[d]);
+      bmax[d] = std::max(points[i][d],bmax[d]);
+    }
+  }
+
 
   double area(const std::vector<std::array<double,2> >& points, 
       const std::vector<std::array<uint32_t,3> >& triangles) {
@@ -371,7 +391,71 @@ namespace WinslowUntangler {
     // print_array(grad,"gradient");
   }
 
+  bool scaleToBoxSize(
+    std::vector<std::array<double,2> >& points,
+    vec2& bbmin,
+    vec2& bbmax,
+    double boxsize = 10.,
+    double shrink = 1.3) {
 
+    bbox_minmax(points,bbmin,bbmax);
+    const vec2 unit = {1.,1.};
+    const vec2 center = (bbmin+bbmax)*0.5;
+    double maxside = std::max(bbmax[0]-bbmin[0],bbmax[1]-bbmin[1]);
+    for (size_t v = 0; v < points.size(); ++v) {
+      points[v] = (points[v] - center)* (boxsize/(shrink*maxside)) + unit * boxsize * 0.5;
+    }
+    return true;
+  }
+
+  bool unscale(
+    std::vector<std::array<double,2> >& points,
+    vec2 bbmin,
+    vec2 bbmax,
+    double boxsize = 10.,
+    double shrink = 1.3) {
+    const vec2 unit = {1.,1.};
+    const vec2 center = (bbmin+bbmax)*0.5;
+    double maxside = std::max(bbmax[0]-bbmin[0],bbmax[1]-bbmin[1]);
+    for (size_t v = 0; v < points.size(); ++v) {
+      points[v] = (points[v] - unit*boxsize*0.5)* ((shrink*maxside)/boxsize) + center;
+    }
+    return true;
+  }
+
+  bool scaleToBoxSize(
+    std::vector<std::array<double,3> >& points,
+    vec3& bbmin,
+    vec3& bbmax,
+    double boxsize = 10.,
+    double shrink = 1.3) {
+
+    bbox_minmax(points,bbmin,bbmax);
+    const vec3 unit = {1.,1.,1.};
+    const vec3 center = (bbmin+bbmax)*0.5;
+    double maxside = std::max(bbmax[0]-bbmin[0],bbmax[1]-bbmin[1]);
+    maxside = std::max(maxside,bbmax[2]-bbmin[2]);
+    for (size_t v = 0; v < points.size(); ++v) {
+      points[v] = (points[v] - center)* (boxsize/(shrink*maxside)) + unit * boxsize * 0.5;
+    }
+    return true;
+  }
+
+  bool unscale(
+    std::vector<std::array<double,3> >& points,
+    vec3 bbmin,
+    vec3 bbmax,
+    double boxsize = 10.,
+    double shrink = 1.3) {
+    const vec3 unit = {1.,1.,1.};
+    const vec3 center = (bbmin+bbmax)*0.5;
+    double maxside = std::max(bbmax[0]-bbmin[0],bbmax[1]-bbmin[1]);
+    maxside = std::max(maxside,bbmax[2]-bbmin[2]);
+    for (size_t v = 0; v < points.size(); ++v) {
+      points[v] = (points[v] - unit*boxsize*0.5)* ((shrink*maxside)/boxsize) + center;
+    }
+    return true;
+  }
 }
 
 
@@ -397,7 +481,8 @@ bool untangle_triangles_2D(
     return false;;
   }
 
-  // TODO: scaling
+  vec2 bbmin, bbmax;
+  scaleToBoxSize(points, bbmin, bbmax);
 
   double total_area = area(points,triangles);
   double avg_area = total_area / double(triangles.size());
@@ -507,6 +592,8 @@ bool untangle_triangles_2D(
     // TODO try catch around LBFGS ?
   }
 
+  unscale(points, bbmin, bbmax);
+
   return converged;
 }
 
@@ -528,7 +615,8 @@ bool untangle_tetrahedra(
     return false;;
   }
 
-  // TODO: scaling
+  vec3 bbmin, bbmax;
+  scaleToBoxSize(points, bbmin, bbmax);
 
   double total_vol = volume(points,tets);
   double avg_vol = total_vol / double(tets.size());
@@ -626,6 +714,8 @@ bool untangle_tetrahedra(
 
     // TODO try catch around LBFGS ?
   }
+
+  unscale(points, bbmin, bbmax);
 
   return converged;
 
