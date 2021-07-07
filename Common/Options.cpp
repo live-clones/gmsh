@@ -6587,7 +6587,8 @@ double opt_mesh_reparam_max_triangles(OPT_ARGS_NUM)
 
 double opt_mesh_ignore_parametrization(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) CTX::instance()->mesh.ignoreParametrizationMsh4 = (int)val;
+  if(action & GMSH_SET)
+    CTX::instance()->mesh.ignoreParametrizationMsh4 = (int)val;
   return CTX::instance()->mesh.ignoreParametrizationMsh4;
 }
 
@@ -6599,13 +6600,23 @@ double opt_mesh_quadqs_sizemap_method(OPT_ARGS_NUM)
 
 double opt_mesh_quadqs_remeshing_boldness(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) CTX::instance()->mesh.quadqsRemeshingBoldness = (double)val;
+  if(action & GMSH_SET)
+    CTX::instance()->mesh.quadqsRemeshingBoldness = (double)val;
   return CTX::instance()->mesh.quadqsRemeshingBoldness;
 }
 
-double opt_mesh_quadqs_topo_optim_methods(OPT_ARGS_NUM) {
-  if(action & GMSH_SET) CTX::instance()->mesh.quadqsTopoOptimMethods = (int)val;
+double opt_mesh_quadqs_topo_optim_methods(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->mesh.quadqsTopoOptimMethods = (int)val;
   return CTX::instance()->mesh.quadqsTopoOptimMethods;
+}
+
+double opt_mesh_old_initial_delaunay_2d(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->mesh.oldInitialDelaunay2D = (int)val;
+  return CTX::instance()->mesh.oldInitialDelaunay2D;
 }
 
 double opt_solver_listen(OPT_ARGS_NUM)
