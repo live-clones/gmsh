@@ -299,8 +299,8 @@ public:
     HalfEdge *he03 = he0m->opposite->next;
     HalfEdge *he31 = he0m->opposite->next->next;
 
-    //    if(he03->v != he0m->v) Msg::Error("error 1");
-    //    if(he1m->v != he12->v) Msg::Error("error 2");
+    // if(he03->v != he0m->v) Msg::Error("error 1");
+    // if(he1m->v != he12->v) Msg::Error("error 2");
 
     Vertex *v0 = he03->v;
     Vertex *v1 = he12->v;

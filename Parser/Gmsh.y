@@ -4780,7 +4780,6 @@ Constraints :
             gf->meshAttributes.recombineAngle = $4;
           }
         }
-	
         List_Delete($3);
       }
     }

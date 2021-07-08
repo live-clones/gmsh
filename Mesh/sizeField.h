@@ -3,8 +3,11 @@
 // See the LICENSE.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#pragma once
+#ifndef SIZE_FIELD_H
+#define SIZE_FIELD_H
 
 class GModel;
 
 int createSizeFieldFromExistingMesh(GModel *gm, bool computeCrosses);
+
+#endif

@@ -434,9 +434,6 @@ if(ENABLE_EIGEN)
   # add_definitions(-DEIGEN_USE_BLAS)
 endif()
 
-
-
-
 if(NOT HAVE_EIGEN AND ENABLE_BLAS_LAPACK)
   if(BLAS_LAPACK_LIBRARIES)
     # use libs as specified in the BLAS_LAPACK_LIBRARIES variable
