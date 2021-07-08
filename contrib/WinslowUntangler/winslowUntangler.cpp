@@ -37,6 +37,7 @@
 #include <optimization.h>
 #endif
 
+#if defined(HAVE_EIGEN)
 namespace WinslowUntangler {
   /* Copy useful functions from contrib/QuadMeshingTools/arrayGeometry.h
    * because this functions should work without QUADMESHINGTOOLS module */
@@ -720,3 +721,36 @@ bool untangle_tetrahedra(
   return converged;
 
 }
+
+#else
+bool untangle_triangles_2D(
+    std::vector<std::array<double,2> >& points, 
+    const std::vector<bool>& locked, 
+    const std::vector<std::array<uint32_t,3> >& triangles,
+    const std::vector<std::array<std::array<double,3>,3> >& triIdealShapes,
+    double theta,
+    int iterMaxInner,
+    int iterMaxOuter,
+    int iterFailMax,
+    double timeMax) {
+
+    Msg::Error("Winslow untangler 2D: EIGEN must be used");
+    return false;
+  }
+  
+bool untangle_tetrahedra(
+    std::vector<std::array<double,3> >& points, 
+    const std::vector<bool>& locked, 
+    const std::vector<std::array<uint32_t,4> >& tets,
+    const std::vector<std::array<std::array<double,3>,4> >& tetIdealShapes,
+    double theta,
+    int iterMaxInner,
+    int iterMaxOuter,
+    int iterFailMax,
+    double timeMax) {
+
+    Msg::Error("Winslow untangler 2D: EIGEN must be used");
+    return false;
+  }
+  
+#endif //HAVE_EIGEN
