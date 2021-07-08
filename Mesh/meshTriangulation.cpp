@@ -397,7 +397,6 @@ static PolyMesh::Face *Walk(PolyMesh::Face *f, double x, double y)
                  v1->position.x(), v1->position.y(), v1->position.z(),
                  v2->position.x(), v2->position.y(), v2->position.z(),
                  s0, s1, s2);
-      he = nullptr;
     }
     if(he == nullptr) break;
   }
