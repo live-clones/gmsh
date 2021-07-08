@@ -169,9 +169,7 @@ int PolyMesh2GFace(PolyMesh *pm, int faceTag)
   }
 
   if(!hon.empty()) {
-    printf("order 2 -->\n");
     GModel::current()->setOrderN(2, 0, 0);
-    printf("order 2 done -->\n");
 #if 1
     for(auto t : gf->triangles) {
       for(int i = 0; i < 3; i++) {
@@ -214,12 +212,12 @@ int GFace2PolyMesh(int faceTag, PolyMesh **pm)
     else if(eT == 3)
       nNod = 4;
     else {
-      Msg::Error("GFace2PolyMesh only support quads (element Tag 3) and "
-                 "triangles (element Tag 2)");
+      Msg::Error("GFace2PolyMesh only support quads (element type 3) and "
+                 "triangles (element type 2)");
       return -1;
     }
     PolyMesh::Vertex *v[4] = {nullptr, nullptr, nullptr, nullptr};
-    printf("%lu elements\n", elementTags[K].size());
+
     for(size_t i = 0; i < elementTags[K].size(); i++) {
       for(int j = 0; j < nNod; j++) {
         size_t nodeTag = nodeTags[K][nNod * i + j];
@@ -283,7 +281,7 @@ int GFace2PolyMesh(int faceTag, PolyMesh **pm)
 
 static int delaunayEdgeCriterionPlaneIsotropic(PolyMesh::HalfEdge *he, void *)
 {
-  if(he->opposite == NULL) return -1;
+  if(he->opposite == nullptr) return -1;
   PolyMesh::Vertex *v0 = he->v;
   PolyMesh::Vertex *v1 = he->next->v;
   PolyMesh::Vertex *v2 = he->next->next->v;
@@ -370,13 +368,13 @@ static PolyMesh::Face *Walk(PolyMesh::Face *f, double x, double y)
     double s2 = -robustPredicates::orient2d(v2->position, v0->position, POS);
 
     if(s0 >= 0 && s1 >= 0 && s2 >= 0) {
-      /*      printf("Face %g %g %g / %g %g %g / %g %g %g \n",
-         v0->position.x(), v0->position.y(), v0->position.z(),
-         v1->position.x(), v1->position.y(), v1->position.z(),
-         v2->position.x(), v2->position.y(), v2->position.z());
-         printf("point %g %g CURRENT FACE %p %g %g %g\n", x,y,he->f,
-         s0,s1,s2);*/
-      //      getchar();
+      /* printf("Face %g %g %g / %g %g %g / %g %g %g \n",
+                v0->position.x(), v0->position.y(), v0->position.z(),
+                v1->position.x(), v1->position.y(), v1->position.z(),
+                v2->position.x(), v2->position.y(), v2->position.z());
+                printf("point %g %g CURRENT FACE %p %g %g %g\n", x,y,he->f,
+                s0,s1,s2); */
+      // getchar();
       return he->f;
     }
     else if(s0 <= 0 && s1 >= 0 && s2 >= 0)
@@ -392,18 +390,19 @@ static PolyMesh::Face *Walk(PolyMesh::Face *f, double x, double y)
     else if(s1 <= 0 && s2 <= 0)
       he = s1 > s2 ? he->next->opposite : he->next->next->opposite;
     else {
-      printf("Face %g %g %g / %g %g %g / %g %g %g \n", v0->position.x(),
-             v0->position.y(), v0->position.z(), v1->position.x(),
-             v1->position.y(), v1->position.z(), v2->position.x(),
-             v2->position.y(), v2->position.z());
-      printf("ERROR point %g %g CURRENT FACE %p %g %g %g\n", x, y, he->f, s0,
-             s1, s2);
+      Msg::Error("Could not find half-edge in walk for point %g %g on "
+                 "face %g %g %g / %g %g %g / %g %g %g "
+                 "(orientation tests %g %g %g)", x, y,
+                 v0->position.x(), v0->position.y(), v0->position.z(),
+                 v1->position.x(), v1->position.y(), v1->position.z(),
+                 v2->position.x(), v2->position.y(), v2->position.z(),
+                 s0, s1, s2);
+      he = nullptr;
     }
-    if(he == NULL) break;
+    if(he == nullptr) break;
   }
   // should only come here wether the triangulated domain is not convex
-  //  printf("NO FACE FOUND\n");
-  return NULL;
+  return nullptr;
 }
 
 // recover an edge that goes from v_start --> v_end
@@ -425,13 +424,11 @@ static int intersect(PolyMesh::Vertex *v0, PolyMesh::Vertex *v1,
   return 1;
 }
 
-int recover_edge(PolyMesh *pm, PolyMesh::Vertex *v_start,
-                 PolyMesh::Vertex *v_end)
+static int recover_edge(PolyMesh *pm, PolyMesh::Vertex *v_start,
+                        PolyMesh::Vertex *v_end)
 {
   PolyMesh::HalfEdge *he = v_start->he;
   std::list<PolyMesh::HalfEdge *> _list;
-
-  //  printf("recovering edge %d %d\n",v_start->data,v_end->data);
 
   do {
     PolyMesh::Vertex *v1 = he->next->v;
@@ -444,7 +441,7 @@ int recover_edge(PolyMesh *pm, PolyMesh::Vertex *v_start,
     }
 
     if(intersect(v_start, v_end, v1, v2)) {
-      //      printf("INTERSECTION WITH %d %d\n",v1->data,v2->data);
+      // printf("INTERSECTION WITH %d %d\n", v1->data, v2->data);
       _list.push_back(he->next);
       break;
     }
@@ -453,7 +450,6 @@ int recover_edge(PolyMesh *pm, PolyMesh::Vertex *v_start,
 
   if(_list.empty()) { return -1; }
 
-  // -)-)-)-)-)-)-)-)-)-)-)-)-)-)-)-)-)-)-)-)-)-)-)-)-)
   // find all intersections
   while(1) {
     he = _list.back();
@@ -463,11 +459,11 @@ int recover_edge(PolyMesh *pm, PolyMesh::Vertex *v_start,
     PolyMesh::Vertex *v1 = he->v;
     PolyMesh::Vertex *v2 = he->next->v;
     if(v2 == v_end) {
-      //  printf("END FOUND %d\n",v2->data);
+      // printf("END FOUND %d\n", v2->data);
       break;
     }
     if(intersect(v_start, v_end, v1, v2)) {
-      //      printf("INTESECTION %d %d\n",v1->data,v2->data);
+      // printf("INTESECTION %d %d\n", v1->data, v2->data);
       _list.push_back(he);
     }
     else {
@@ -475,11 +471,11 @@ int recover_edge(PolyMesh *pm, PolyMesh::Vertex *v_start,
       v1 = he->v;
       v2 = he->next->v;
       if(v2 == v_end) {
-        //	printf("END FOUND %d\n",v2->data);
+        // printf("END FOUND %d\n", v2->data);
         break;
       }
       if(intersect(v_start, v_end, v1, v2)) {
-        //	printf("INTESECTION %d %d\n",v1->data,v2->data);
+        // printf("INTESECTION %d %d\n", v1->data, v2->data);
         _list.push_back(he);
       }
       else {
@@ -489,8 +485,8 @@ int recover_edge(PolyMesh *pm, PolyMesh::Vertex *v_start,
   }
 
   int nbIntersection = _list.size();
-  //  printf("%d intersections\n",nbIntersection);
-  //  int K = 100;
+  // printf("%d intersections\n", nbIntersection);
+  // int K = 100;
   while(!_list.empty()) {
     he = *_list.begin();
     _list.erase(_list.begin());
@@ -500,9 +496,9 @@ int recover_edge(PolyMesh *pm, PolyMesh::Vertex *v_start,
       // ensure that swap removes one intersection
       int still_intersect = intersect(v_start, v_end, he->next->next->v,
                                       he->opposite->next->next->v);
-      //      printf("swapping %d %d\n",he->v->data,he->next->v->data);
+      // printf("swapping %d %d\n", he->v->data, he->next->v->data);
       pm->swap_edge(he);
-      //      pm->print4debug(K++);
+      // pm->print4debug(K++);
       if(still_intersect) _list.push_back(he);
     }
     else
@@ -510,7 +506,6 @@ int recover_edge(PolyMesh *pm, PolyMesh::Vertex *v_start,
   }
   return nbIntersection;
 }
-//-------------------------------------------------------------------------------------
 
 static PolyMesh::HalfEdge *Color(PolyMesh::HalfEdge *he, int color)
 {
@@ -525,11 +520,11 @@ static PolyMesh::HalfEdge *Color(PolyMesh::HalfEdge *he, int color)
     f->data = color;
     he = f->he;
     for(int i = 0; i < 3; i++) {
-      if(he->data == -1 && he->opposite != NULL &&
+      if(he->data == -1 && he->opposite != nullptr &&
          he->opposite->f->data == -1) {
         _stack.push(he->opposite->f);
       }
-      else if(he->data != -1 && he->opposite != NULL) {
+      else if(he->data != -1 && he->opposite != nullptr) {
         other_side = he->opposite;
       }
       he = he->next;
@@ -578,15 +573,15 @@ void GFaceDelaunayRefinement(size_t faceTag)
               if(std::find(_f.begin(), _f.end(), h->f) == _f.end())
                 _f.push_back(h->f);
 
-            //	    printf("step %d %lu touched : ",I,_f.size());
+            // printf("step %d %lu touched : ", I, _f.size());
             for(auto pf : _f) {
               q = faceQuality(pf->he, gf);
-              //	      printf("%12.5E ",q);
+              // printf("%12.5E ", q);
               if(q < _limit && pf->data == gf->tag()) _list.push_back(pf->he);
             }
-            //	    printf("\n");
+            // printf("\n");
           }
-          //	  pm->print4debug(100000+I++);
+          // pm->print4debug(100000 + I++);
         }
       }
     }
@@ -613,7 +608,7 @@ void GFaceDelaunayRefinementOldMesher(int faceTag)
     }
   }
   delete pm;
-  //  bowyerWatsonFrontal(gf);
+  // bowyerWatsonFrontal(gf);
 }
 
 struct nodeCopies {
@@ -650,7 +645,7 @@ struct nodeCopies {
   }
 };
 
-//// INITIAL MESH --------- colored
+// INITIAL MESH --------- colored
 
 static void getNodeCopies(GFace *gf,
                           std::unordered_map<size_t, nodeCopies> &copies)
@@ -681,8 +676,7 @@ static void getNodeCopies(GFace *gf,
         else
           direction = 1;
       }
-      //      printf("model edge %lu %lu
-      //      vertices\n",e->tag(),e_vertices.size());
+      // printf("model edge %lu %lu vertices\n", e->tag(), e_vertices.size());
       for(auto v : e_vertices) {
         SPoint2 param;
         if(direction != -1) {
@@ -747,7 +741,7 @@ void addPoints(PolyMesh *pm, std::vector<double> &pts, SBoundingBox3d &bb)
     size_t I = IND[i];
     f = Walk(f, X[I], Y[I]);
     pm->split_triangle(i, X[I], Y[I], 0, f, delaunayEdgeCriterionPlaneIsotropic,
-                       NULL);
+                       nullptr);
   }
 }
 
@@ -756,7 +750,7 @@ PolyMesh *GFaceInitialMesh(int faceTag, int recover,
 {
   GFace *gf = GModel::current()->getFaceByTag(faceTag);
 
-  if(!gf) Msg::Error("GFaceInitialMesh : no face with tag %d", faceTag);
+  if(!gf) Msg::Error("GFaceInitialMesh: no face with tag %d", faceTag);
 
   PolyMesh *pm = new PolyMesh;
 
@@ -781,7 +775,7 @@ PolyMesh *GFaceInitialMesh(int faceTag, int recover,
       f = Walk(f, x, y);
       // split f and then swap edges to recover delaunayness
       pm->split_triangle(-1, x, y, 0, f, delaunayEdgeCriterionPlaneIsotropic,
-                         NULL);
+                         nullptr);
       // remember node tags
       it->second.id[i] = pm->vertices.size() - 1;
       pm->vertices[pm->vertices.size() - 1]->data = it->first;
@@ -849,7 +843,7 @@ PolyMesh *GFaceInitialMesh(int faceTag, int recover,
       for(auto he : pm->hedges) {
         if(he->opposite && he->f->data == faceTag &&
            he->opposite->f->data == faceTag) {
-          if(delaunayEdgeCriterionPlaneIsotropic(he, NULL)) {
+          if(delaunayEdgeCriterionPlaneIsotropic(he, nullptr)) {
             if(intersect(he->v, he->next->v, he->next->next->v,
                          he->opposite->next->next->v)) {
               pm->swap_edge(he);
@@ -866,4 +860,3 @@ PolyMesh *GFaceInitialMesh(int faceTag, int recover,
 
   return pm;
 }
-//------------------------------------------------
