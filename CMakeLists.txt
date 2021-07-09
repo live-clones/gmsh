@@ -342,12 +342,12 @@ if(ENABLE_OPENMP)
     set(CMAKE_CXX_FLAGS
         "${CMAKE_CXX_FLAGS} -Xpreprocessor -fopenmp")
     list(APPEND EXTERNAL_LIBRARIES "-L/usr/local/lib -lomp")
-  elseif(${CMAKE_SYSTEM_NAME} MATCHES "Linux" AND EXISTS "/usr/local/lib64/libgomp.a")
-    # custom static openmp for official linux builds
-    set_config_option(HAVE_OPENMP "OpenMP[static]")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Xpreprocessor -fopenmp")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Xpreprocessor -fopenmp")
-    list(APPEND EXTERNAL_LIBRARIES "/usr/local/lib64/libgomp.a")
+    elseif(${CMAKE_SYSTEM_NAME} MATCHES "Linux" AND EXISTS "/usr/local/lib64/libgomp.a")
+      # custom static openmp for official linux builds
+      set_config_option(HAVE_OPENMP "OpenMP[static]")
+      set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Xpreprocessor -fopenmp")
+      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Xpreprocessor -fopenmp")
+      list(APPEND EXTERNAL_LIBRARIES "/usr/local/lib64/libgomp.a")
   endif()
 endif()
 
@@ -1619,7 +1619,9 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/doc/texinfo/version.texi.in
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/utils/pypi/gmsh/setup.py.in
                ${CMAKE_CURRENT_SOURCE_DIR}/utils/pypi/gmsh/setup.py)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/utils/pypi/gmsh-dev/setup.py.in
-               ${CMAKE_CURRENT_SOURCE_DIR}/utils/pypi/gmsh-dev/setup.py)
+               ${CMAKE_CURRENT_BINARY_DIR}/utils/pypi/gmsh-dev/setup.py)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/utils/pypi/gmsh/setup-whl.py.in
+               ${CMAKE_CURRENT_BINARY_DIR}/setup-whl.py)
 
 file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/version.txt ${GMSH_SHORT_VERSION})
 

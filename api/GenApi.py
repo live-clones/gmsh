@@ -1051,16 +1051,22 @@ from math import pi
 __version__ = {6}_API_VERSION
 
 oldsig = signal.signal(signal.SIGINT, signal.SIG_DFL)
-libdir = os.path.dirname(os.path.realpath(__file__))
+moduledir = os.path.dirname(os.path.realpath(__file__))
 if platform.system() == "Windows":
-    libpath = os.path.join(libdir, "{7}-{3}.{4}.dll")
+    libname = "{7}-{3}.{4}.dll"
+    libdir = os.path.dirname(moduledir)
 elif platform.system() == "Darwin":
-    libpath = os.path.join(libdir, "lib{7}.dylib")
+    libname = "lib{7}.{3}.{4}.dylib"
+    libdir = os.path.dirname(os.path.dirname(moduledir))
 else:
-    libpath = os.path.join(libdir, "lib{7}.so")
+    libname = "lib{7}.so.{3}.{4}"
+    libdir = os.path.dirname(os.path.dirname(moduledir))
 
+libpath = os.path.join(libdir, libname)
 if not os.path.exists(libpath):
-    libpath = find_library("{7}")
+    libpath = os.path.join(moduledir, libname)
+    if not os.path.exists(libpath):
+        libpath = find_library("{7}")
 
 lib = CDLL(libpath)
 
