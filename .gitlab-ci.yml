@@ -458,7 +458,10 @@ python_wheels:
     - GMSH_SETUP_DIR=../utils/pypi/gmsh GMSH_SDK_DIR=_CPack_Packages/CYGWIN/ZIP/gmsh-git-Windows64-sdk/ python3 setup-whl.py build bdist_wheel --plat-name win_amd64 --universal
     - cp -R _CPack_Packages/Darwin _CPack_Packages/Darwin2
     - GMSH_SETUP_DIR=../utils/pypi/gmsh GMSH_SDK_DIR=_CPack_Packages/Darwin2/TGZ/gmsh-git-MacOSX-sdk/ python3 setup-whl.py build bdist_wheel --plat-name macosx_10_9_x86_64 --universal
-    - twine upload --repository testpypi dist/*
+      #- twine upload --repository testpypi dist/*
+  artifacts:
+    paths:
+      - build/dist
   tags:
     - linux64
     - docker
