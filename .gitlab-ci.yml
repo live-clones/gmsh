@@ -398,7 +398,7 @@ linux64-sdk_wheel_tmp:
   script:
     - mkdir build
     - cd build
-    - cmake -DGMSH_HOST=gmsh.info -DENABLE_OPENMP=1 -DENABLE_PETSC=1 -DPETSC_ARCH=real_mumps_seq -DPETSC_DIR=/petsc-3.14.4 ${EXTRA_OPTION} ..
+    - cmake -DGMSH_HOST=gmsh.info -DENABLE_OPENMP=0 -DENABLE_PETSC=1 -DPETSC_ARCH=real_mumps_seq -DPETSC_DIR=/petsc-3.14.4 ${EXTRA_OPTION} ..
     - make package -j 8
   artifacts:
     paths:
