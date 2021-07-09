@@ -503,9 +503,9 @@ namespace WinslowUntangler {
   }
 } // namespace WinslowUntangler
 
-#endif
-
 using namespace WinslowUntangler;
+
+#endif
 
 bool untangle_triangles_2D(
   std::vector<std::array<double, 2> > &points, const std::vector<bool> &locked,
