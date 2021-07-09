@@ -109,6 +109,7 @@ public:
   {
     Msg::Info("Vector \'%s\':  %f  %f  %f", name.c_str(), P[0], P[1], P[2]);
   }
+
   // Needed to allow the initialization of a SPoint3 from a SPoint3, a distance
   // and a direction
   SPoint3 point() const { return P; }
@@ -240,7 +241,9 @@ inline void buildOrthoBasis_naive(SVector3 &dir, SVector3 &dir1, SVector3 &dir2)
     dir2 = SVector3(0.0, 0.0, 1.0);
   }
   else {
-    Msg::Error("Problem with computing orthoBasis");
+    dir1 = SVector3(1.0, 0.0, 0.0);
+    dir2 = SVector3(0.0, 0.0, 1.0);
+    // Msg::Error("Problem with computing orthoBasis");
   }
   // printf("XYZ =%g %g %g r=%g dir0 = %g %g %g dir1 = %g %g %g dir2 =%g %g
   // %g\n", 	  x,y,z,d, dir[0], dir[1], dir[2], dir1[0], dir1[1], dir1[2],

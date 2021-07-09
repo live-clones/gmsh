@@ -1260,7 +1260,7 @@ public:
 
   // Comment: These three functions are implemented directly in:
   //   gmsh_wrk/Mesh/meshGRegionBoundaryRecovery.cpp
-  int reconstructmesh(void *);
+  int reconstructmesh(void *, double tol);
   void outsurfacemesh(const char* mfilename);
   void outmesh2medit(const char* mfilename);
 

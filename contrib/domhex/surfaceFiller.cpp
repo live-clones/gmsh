@@ -20,6 +20,7 @@
 #include "BackgroundMesh.h"
 #include "intersectCurveSurface.h"
 #include "pointInsertionRTreeTools.h"
+#include "discreteFace.h"
 
 // Here, we aim at producing a set of points that enables to generate a nice
 // quad mesh
@@ -38,6 +39,8 @@
 //             v4
 //
 // we aim at generating a rectangle with sizes size_1 and size_2 along t1 and t2
+
+int __OK, __KO;
 
 bool compute4neighbors(
   GFace *gf, // the surface
@@ -58,8 +61,27 @@ bool compute4neighbors(
   midpoint = SPoint2(midpoint.x() + du,midpoint.y() + dv);
   
   SVector3 t1;
-  (*f)(v_center->x(), v_center->y(), v_center->z(), t1, gf);
-  double L = t1.norm()*mult;
+  double L;
+  double X=v_center->x();
+  double Y=v_center->y();
+  double Z=v_center->z();
+  int iter = 1;
+  while (1){
+    (*f)(X,Y,Z, t1, gf);
+    L = t1.norm()*mult;    
+    // HOUSTON WE HAVE A PROBLEM
+    if (L > 1.e10){
+      double DU = ((double)rand()/RAND_MAX)*1.e-3*iter;
+      double DV = ((double)rand()/RAND_MAX)*1.e-3*iter;
+      GPoint pp = gf->point(DU+midpoint.x(),DV+midpoint.y());
+      X = pp.x();
+      Y = pp.y();
+      Z = pp.z();
+      iter++;
+    }
+    else break;
+  }
+
   metricField = SMetric3(1. / (L * L));
   
   // get the unit normal at that point
@@ -155,10 +177,11 @@ bool compute4neighbors(
   SVector3 orthodirs[8] = {t2 * (-1.0), t1 * (-1.0), t2 * (1.0), t1 * (1.0),
 			   b2 * (-1.0), b1 * (-1.0), b2 * (1.0), b1 * (1.0) };
   double   LS[8]   = {L,L,L,L,LSQR,LSQR,LSQR,LSQR};
+
   
   SPoint3 ppx (v_center->x(),v_center->y(),v_center->z());
   surfaceFunctorGFace ss(gf);
-  for(int i = 0; i < 8; i++) {
+  for(int i = 0; i < 4; i++) {
     newP[i] = SPoint2(newPoint[i][0], newPoint[i][1]);    
     GPoint pp = gf->point(newP[i]);
     SPoint3 px (pp.x(),pp.y(),pp.z());
@@ -166,10 +189,22 @@ bool compute4neighbors(
     double L2 = test.norm();
     double DIFF_ANG = fabs(dot(orthodirs[i],test)) / L2;
     double DIFF_L   = fabs(L2-LS[i]);
-    if (singular || DIFF_L > .1*LS[i] || DIFF_ANG > .1){
+    if (singular || DIFF_L > .01*LS[i] || DIFF_ANG > .1){
+      // if (0 && gf->geomType() == GEntity::DiscreteSurface){
+      // 	discreteFace *df = dynamic_cast<discreteFace *>(gf);
+      // 	double uv[2] = {newPoint[i][0], newPoint[i][1]};
+      // 	GPoint qq = df->intersectionWithCircle(dirs[i], n, SVector3(v_center->x(), v_center->y(), v_center->z()),
+      // 							 LS[i],uv); 
+      // 	if (qq.succeeded()){
+      // 	  newPoint[i][0]=qq.u();
+      // 	  newPoint[i][1]=qq.v();
+      // 	}
+      // }
+      // else {
       curveFunctorCircle cf(dirs[i], n, SVector3(v_center->x(), v_center->y(), v_center->z()), LS[i]);
       double uvt[3] = {newPoint[i][0], newPoint[i][1], 0.0}; //
       if(intersectCurveSurface(cf, ss, uvt, size_1 * 1.e-6)) { 
+	__KO++;
 	pp = gf->point(SPoint2(uvt[0], uvt[1]));      
 	px = SPoint3 (pp.x(),pp.y(),pp.z());
 	test = px - ppx;
@@ -178,11 +213,11 @@ bool compute4neighbors(
 	double DIFF_L2   = fabs(L2-LS[i]);
 	newPoint[i][0]=uvt[0];
 	newPoint[i][1]=uvt[1];
-  if (DIFF_L2 <= DIFF_L && DIFF_ANG2 <= DIFF_ANG){
-  }
-  else{
-    Msg::Debug("Difficult to find a point %lu L %g vs %g (ps %12.5E) ",i,L,L2,DIFF_ANG2);
-  }
+	if (DIFF_L2 <= DIFF_L && DIFF_ANG2 <= DIFF_ANG){
+	}
+	else{
+	  Msg::Debug("Difficult to find a point %lu L %g vs %g (ps %12.5E) ",i,L,L2,DIFF_ANG2);
+	}
       }
       else{
 	SPoint3 p_test (v_center->x() + dirs[i].x() * LS[i],
@@ -194,9 +229,12 @@ bool compute4neighbors(
 	  newPoint[i][1] = pp.v();
 	}
 	else 
-	  Msg::Debug("Impossible to intersect with a circle of radius %g",L);
+	  Msg::Debug("Face %d Impossible to intersect with a circle of radius %g",gf->tag(),L);
       }
-    }    
+    }
+    else {
+      __OK++;
+    }
   }
   
   return true;
@@ -381,8 +419,8 @@ void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed,
                              std::vector<SMetric3> &metrics)
 {
 
-  printf("ALGO %d %d\n", CTX::instance()->mesh.algo2d,
-	 CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT);
+  //  printf("ALGO %d %d\n", CTX::instance()->mesh.algo2d,
+  //	 CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT);
   
   FILE *f = NULL;
   FILE *f2 = NULL;
@@ -494,6 +532,9 @@ void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed,
   }
 
   //  printf("bounds = %g %g %g %g \n",minu,maxu,minv,maxv);
+
+  __OK = 0;
+  __KO = 0;
   
   while(!fifo.empty()) {
     //    printf("%d vertices in the domain\n",vertices.size());
@@ -504,7 +545,7 @@ void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed,
       if(!close2sing (singularities,gf,parent->_p[i],cross_field)
 	 && !inExclusionZone(parent->_v, parent->_p[i], rtree) &&
 	 !outBounds(parent->_p[i],minu,maxu,minv,maxv)&&
-	gf->containsParam(parent->_p[i]))
+	 gf->containsParam(parent->_p[i]))
 	{
 	  GPoint gp = gf->point(parent->_p[i]);
 	  MFaceVertex *v =
@@ -520,6 +561,7 @@ void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed,
 	  rtree.Insert(_min, _max, sp);
 	}
       else{
+	//	printf("%d %d\n", inExclusionZone(parent->_v, parent->_p[i], rtree), outBounds(parent->_p[i],minu,maxu,minv,maxv));
 	if(Msg::GetVerbosity() == 99) {
 	  GPoint gp = gf->point(parent->_p[i]);
 	  MFaceVertex *v =
@@ -528,13 +570,15 @@ void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed,
 	  compute4neighbors(gf, v, midpoint, newp, metricField, cross_field, 0, 0 , globalMult);
 	  surfacePointWithExclusionRegion *sp =
 	    new surfacePointWithExclusionRegion(v, newp, midpoint, metricField,parent);
-	  if (!gf->containsParam(parent->_p[i]))
-	    sp->print(f2, i);	  
-	  //	 printf("AI\n");
+	  //	  if (!gf->containsParam(parent->_p[i]))
+	  sp->print(f2, i);	  
 	}
       }
     }
   }
+
+  //  printf("%d %d\n",__OK,__KO);
+  //  getchar();
   // add the vertices as additional vertices in the surface mesh
   for(unsigned int i = 0; i < vertices.size(); i++) {
     if (f)vertices[i]->print(f, i);

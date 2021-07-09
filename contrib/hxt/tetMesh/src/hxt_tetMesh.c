@@ -127,7 +127,7 @@ HXTStatus hxtTetMesh(HXTMesh* mesh,
                nbMissingLines);
 
     uint32_t oldNumVertices = mesh->vertices.num;
-    HXT_CHECK( hxt_boundary_recovery(mesh) );
+    HXT_CHECK( hxt_boundary_recovery(mesh, options->toleranceInitialDelaunay) );
 
     if(oldNumVertices < mesh->vertices.num) {
       HXT_INFO("Steiner(s) point(s) were inserted");

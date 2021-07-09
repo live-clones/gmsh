@@ -4049,8 +4049,8 @@ void tetgenmesh::report_overlapping_facets(face *f1, face *f2, REAL dihedang)
   pd = sapex(*f2);
 
   if (pc != pd) {
-    printf("Found two %s self-intersecting facets.\n",
-           dihedang > 0 ? "nearly" : "exactly");
+    printf("Found two %s self-intersecting facets (dihedral angle %12.5E).\n",
+           dihedang > 0 ? "nearly" : "exactly",dihedang);
     printf("  1st: [%d, %d, %d] #%d\n",
 	       pointmark(pa), pointmark(pb), pointmark(pc), shellmark(*f1));
     printf("  2nd: [%d, %d, %d] #%d\n",
@@ -11029,6 +11029,13 @@ void tetgenmesh::unifysegments()
               if (dot(n1, n2) > 0) {
                 report_overlapping_facets(&(f1->ss), &sface);
               } else {
+		printf("%12.5E %12.5E %12.5E\n",torg[0],torg[1],torg[2]);
+		printf("%12.5E %12.5E %12.5E\n",tdest[0],tdest[1],tdest[2]);
+		printf("%12.5E %12.5E %12.5E\n", sapex(f1->ss)[0], sapex(f1->ss)[1], sapex(f1->ss)[2]);
+		printf("%d %d %d\n",pointmark(torg), pointmark(tdest), pointmark(sapex(f1->ss)));
+		printf("%d %d %d\n",pointmark(torg), pointmark(tdest), pointmark(sapex(f2->ss)));
+		printf("%12.5E %12.5E n1(%12.5E,%12.5E,%12.5E) n2(%12.5E,%12.5E,%12.5E)\n",
+		       ori1,ori2, n1[0], n1[1], n1[2], n2[0], n2[1], n2[2]);
                 report_overlapping_facets(&(f2->ss), &sface);
               }
               break;

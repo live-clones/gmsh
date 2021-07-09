@@ -8,6 +8,7 @@
 
 #include "SVector3.h"
 #include "Numeric.h"
+#include "GmshMessage.h"
 
 template <class scalar> class fullVector;
 template <class scalar> class fullMatrix;

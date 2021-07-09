@@ -28,6 +28,10 @@
 #include "MLine.h"
 #include "MTriangle.h"
 #include "MQuadrangle.h"
+#include "MHexahedron.h"
+#include "MPyramid.h"
+#include "MPrism.h"
+#include "MTetrahedron.h"
 #include "robin_hood.h"
 #include "meshOctreeLibOL.h"
 #include "BackgroundMesh.h"
@@ -1440,6 +1444,35 @@ void errorAndAbortIfInvalidVertexInModel(GModel* gm, const std::string& msg) {
     errorAndAbortIfInvalidVertexInElements(dynamic_cast_vector<MTriangle*,MElement*>(gf->triangles), msg);
     errorAndAbortIfInvalidVertexInElements(dynamic_cast_vector<MQuadrangle*,MElement*>(gf->quadrangles), msg);
   }
+}
+
+void computeSICNquality(const std::vector<MElement*>& elements, double& sicnMin, double& sicnAvg) {
+  sicnMin = DBL_MAX;
+  sicnAvg = 0.;
+  for (size_t i = 0; i < elements.size(); ++i)  {
+    double q = elements[i]->minSICNShapeMeasure();
+    if (std::isnan(q)) {
+      q = -1.;
+    }
+    sicnMin = std::min(sicnMin, q);
+    sicnAvg += q;
+  }
+  if (elements.size() > 0) sicnAvg /= double(elements.size());
+
+}
+
+void computeSICNquality(GFace* gf, double& sicnMin, double& sicnAvg) {
+  std::vector<MElement*> elts = CppUtils::dynamic_cast_vector<MTriangle*,MElement*>(gf->triangles);
+  CppUtils::append(elts, CppUtils::dynamic_cast_vector<MQuadrangle*,MElement*>(gf->quadrangles));
+  return computeSICNquality(elts, sicnMin, sicnAvg);
+}
+
+void computeSICNquality(GRegion* gr, double& sicnMin, double& sicnAvg) {
+  std::vector<MElement*> elts = CppUtils::dynamic_cast_vector<MTetrahedron*,MElement*>(gr->tetrahedra);
+  CppUtils::append(elts, CppUtils::dynamic_cast_vector<MHexahedron*,MElement*>(gr->hexahedra));
+  CppUtils::append(elts, CppUtils::dynamic_cast_vector<MPrism*,MElement*>(gr->prisms));
+  CppUtils::append(elts, CppUtils::dynamic_cast_vector<MPyramid*,MElement*>(gr->pyramids));
+  return computeSICNquality(elts, sicnMin, sicnAvg);
 }
 
 std::string randomIdentifier() {

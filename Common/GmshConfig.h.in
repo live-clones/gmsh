@@ -20,6 +20,7 @@
 #cmakedefine HAVE_DOMHEX
 #cmakedefine HAVE_EIGEN
 #cmakedefine HAVE_FLTK
+#cmakedefine HAVE_GEOMETRYCENTRAL
 #cmakedefine HAVE_GMM
 #cmakedefine HAVE_GMP
 #cmakedefine HAVE_HXT
@@ -75,6 +76,7 @@
 #cmakedefine HAVE_TOUCHBAR
 #cmakedefine HAVE_VISUDEV
 #cmakedefine HAVE_VOROPP
+#cmakedefine HAVE_WINSLOWUNTANGLER
 #cmakedefine HAVE_ZIPPER
 
 #define GMSH_CONFIG_OPTIONS "${GMSH_CONFIG_OPTIONS}"
