@@ -286,7 +286,7 @@ void fieldWindow::saveFieldOptions()
     } break;
     }
     if((*input)->changed()) {
-      scriptAddFieldOption(f->id, it->first, sstream.str(),
+      scriptAddFieldOption(f->id, it->first, sstream.str(), option->getType(),
                            GModel::current()->getFileName());
       (*input)->clear_changed();
     }
