@@ -445,7 +445,11 @@ void scriptAddPoint(const std::string &fileName, const std::string &x,
       sstream << "};";
     }
     else {
-      // TODO
+      std::string addPointStr = "gmsh/model/" + currentFactory + "/addPoint";
+      std::ostringstream args;
+      args << x << ", " << y << ", " << z;
+      if(lc.size()) args << ", " << lc;
+      sstream << api(addPointStr, args.str(), lang);
     }
     scriptAddCommand(sstream.str(), fileName, lang);
   }
