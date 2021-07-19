@@ -11,13 +11,7 @@
 //      Foldover-free maps in 50 lines of code.
 //      Garanzha, V., Kaporin, I., Kudryavtseva, L., Protais, F., Ray, N., &
 //      Sokolov, D. (2021). arXiv preprint arXiv:2102.03069.
-//
-//  whose reference implementation is available at:
-//  https://github.com/ssloy/invertible-maps
-//
-//  The untangler is re-implemented here to avoid the dependencies of the
-//  reference implementation and to use the LBFGS solver available in Gmsh
-//  (ALGLIB). The goal is to have the same behavior.
+//      reference implementation: https://github.com/ssloy/invertible-maps
 
 #pragma once
 
