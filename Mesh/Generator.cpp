@@ -36,7 +36,7 @@
 #include "Generator.h"
 #include "meshQuadQuasiStructured.h"
 #include "meshGFaceBipartiteLabelling.h"
-#include "sizeField.h"
+//#include "sizeField.h"
 
 #if defined(_OPENMP)
 #include <omp.h>
@@ -1538,7 +1538,7 @@ void GenerateMesh(GModel *m, int ask)
     std::for_each(m->firstRegion(), m->lastRegion(), deMeshGRegion());
     Mesh2D(m);
     // if two passes --> juste fait le ...
-    createSizeFieldFromExistingMesh (m, false);
+    //    createSizeFieldFromExistingMesh (m, false);
     // Mesh2D(m);
   }
 
