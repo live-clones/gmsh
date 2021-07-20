@@ -101,6 +101,7 @@ opt(TESTS "Enable tests" ${DEFAULT})
 opt(TOUCHBAR "Enable Apple Touch bar" ${DEFAULT})
 opt(VISUDEV "Enable additional visualization capabilities for development purposes" OFF)
 opt(VOROPP "Enable voro++ (for hex meshing, experimental)" ${DEFAULT})
+opt(WINSLOWUNTANGLER "Enable WinslowUntangler extensions (requires ALGLIB)" ${DEFAULT})
 opt(WRAP_JAVA "Generate SWIG Java wrappers for private API" OFF)
 opt(WRAP_PYTHON "Generate SWIG Python wrappers for private API (not used by public API)" OFF)
 opt(ZIPPER "Enable Zip file compression/decompression" OFF)
@@ -407,15 +408,14 @@ macro(set_compile_flags LISTNAME FLAGS)
   endforeach()
 endmacro()
 
-## GEOMETRY CENTRAL 
 if(ENABLE_GEOMETRYCENTRAL)
-    find_library(GEOMETRYCENTRAL_LIB NAMES geometry-central)
-    find_path(GEOMETRYCENTRAL_INC "surface/meshio.h" PATH_SUFFIXES geometrycentral)
-    if(GEOMETRYCENTRAL_LIB AND GEOMETRYCENTRAL_INC)
-      list(APPEND EXTERNAL_LIBRARIES ${GEOMETRYCENTRAL_LIB})
-      list(APPEND EXTERNAL_INCLUDES ${GEOMETRYCENTRAL_INC})
-      set_config_option(HAVE_GEOMETRYCENTRAL "geometry-central")
-    endif()
+  find_library(GEOMETRYCENTRAL_LIB NAMES geometry-central)
+  find_path(GEOMETRYCENTRAL_INC "surface/meshio.h" PATH_SUFFIXES geometrycentral)
+  if(GEOMETRYCENTRAL_LIB AND GEOMETRYCENTRAL_INC)
+    list(APPEND EXTERNAL_LIBRARIES ${GEOMETRYCENTRAL_LIB})
+    list(APPEND EXTERNAL_INCLUDES ${GEOMETRYCENTRAL_INC})
+    set_config_option(HAVE_GEOMETRYCENTRAL "geometry-central")
+  endif()
 endif()
 
 if(ENABLE_EIGEN)
@@ -433,9 +433,6 @@ if(ENABLE_EIGEN)
   # We could also add an option to use BLAS with Eigen
   # add_definitions(-DEIGEN_USE_BLAS)
 endif()
-
-
-
 
 if(NOT HAVE_EIGEN AND ENABLE_BLAS_LAPACK)
   if(BLAS_LAPACK_LIBRARIES)
@@ -994,7 +991,7 @@ if(HAVE_MESH)
   endif()
 
   if(ENABLE_MMG)
-    find_library(MMG_LIB NAMES geometry-central)
+    find_library(MMG_LIB NAMES Mmg mmg)
     find_path(MMG_INC "libmmg.h" PATH_SUFFIXES mmg)
     if(MMG_LIB AND MMG_INC)
       list(APPEND EXTERNAL_LIBRARIES ${MMG_LIB})
@@ -1272,6 +1269,12 @@ if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadMeshingTools AND ENABLE_QUADME
   set_config_option(HAVE_QUADMESHINGTOOLS "QuadMeshingTools")
   add_subdirectory(contrib/QuadMeshingTools)
   include_directories(BEFORE contrib/QuadMeshingTools)
+endif()
+
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/WinslowUntangler AND ENABLE_WINSLOWUNTANGLER)
+  set_config_option(HAVE_WINSLOWUNTANGLER "WinslowUntangler")
+  add_subdirectory(contrib/WinslowUntangler)
+  include_directories(BEFORE contrib/WinslowUntangler)
 endif()
 
 if(ENABLE_OCC)

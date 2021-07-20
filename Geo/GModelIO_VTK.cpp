@@ -171,7 +171,7 @@ int GModel::readVTK(const std::string &name, bool bigEndian)
 
   // read mesh vertices
   int numVertices;
-  if(fscanf(fp, "%s %d %s\n", buffer, &numVertices, buffer2) != 3) return 0;
+  if(fscanf(fp, "%s %d %s", buffer, &numVertices, buffer2) != 3) return 0;
   if(strcmp(buffer, "POINTS") || !numVertices) {
     Msg::Warning("No points in dataset");
     fclose(fp);
@@ -220,7 +220,7 @@ int GModel::readVTK(const std::string &name, bool bigEndian)
 
   // read mesh elements
   int numElements, totalNumInt;
-  if(fscanf(fp, "%s %d %d\n", buffer, &numElements, &totalNumInt) != 3) {
+  if(fscanf(fp, "%s %d %d", buffer, &numElements, &totalNumInt) != 3) {
     fclose(fp);
     return 0;
   }
@@ -286,7 +286,7 @@ int GModel::readVTK(const std::string &name, bool bigEndian)
     }
 
     if(unstructured) {
-      if(fscanf(fp, "%s %d\n", buffer, &numElements) != 2) {
+      if(fscanf(fp, "%s %d", buffer, &numElements) != 2) {
         fclose(fp);
         return 0;
       }

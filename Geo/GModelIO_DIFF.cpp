@@ -418,7 +418,7 @@ int GModel::writeDIFF(const std::string &name, bool binary, bool saveAll,
     return 0;
   }
 
-  // TODO: make this an option
+  // make this an option?
   bool usePhysicalTags = true;
 
   if(noPhysicalGroups()) {
@@ -429,35 +429,45 @@ int GModel::writeDIFF(const std::string &name, bool binary, bool saveAll,
   // get the number of vertices and flag vertices to skip
   int numVertices = indexMeshVertices(saveAll, 0, false);
 
-  // tag the vertices according to which surface they belong to (Note
-  // that we use a brute force approach here, so that we can deal with
-  // models with incomplete topology. For example, when we merge 2 STL
-  // triangulations we don't have the boundary information between the
-  // faces, and the vertices would end up categorized on either one.)
+  // get all the entities in the model
+  std::vector<GEntity *> entities;
+  getEntities(entities);
+
+  // find max dimension of mesh elements we need to save
+  int dim = 0;
+  for(std::size_t i = 0; i < entities.size(); i++) {
+    if((entities[i]->physicals.size() || saveAll) &&
+       entities[i]->getNumMeshElements()) {
+      dim = std::max(dim, entities[i]->dim());
+    }
+  }
+
+  // tag the vertices according to which boundary entity they belong to (note
+  // that we use a brute force approach here, so that we can deal with models
+  // with incomplete topology)
   std::vector<std::list<int> > vertexTags(numVertices);
   std::list<int> boundaryIndicators;
-  for(auto it = firstRegion(); it != lastRegion(); it++) {
-    std::vector<GFace *> faces = (*it)->faces();
-    for(auto itf = faces.begin(); itf != faces.end(); itf++) {
-      GFace *gf = *itf;
-      if(usePhysicalTags) {
-        for(auto p : gf->physicals) boundaryIndicators.push_back(p);
-      }
-      else {
-        boundaryIndicators.push_back(gf->tag());
-      }
-      for(std::size_t i = 0; i < gf->getNumMeshElements(); i++) {
-        MElement *e = gf->getMeshElement(i);
-        for(std::size_t j = 0; j < e->getNumVertices(); j++) {
-          MVertex *v = e->getVertex(j);
-          if(v->getIndex() > 0) {
-            if(usePhysicalTags) {
-              for(auto p : gf->physicals)
-                vertexTags[v->getIndex() - 1].push_back(p);
-            }
-            else {
-              vertexTags[v->getIndex() - 1].push_back(gf->tag());
-            }
+  for(std::size_t ient = 0; ient < entities.size(); ient++) {
+    GEntity *ge = entities[ient];
+    if(ge->dim() != dim - 1) continue;
+    // we are on a "boundary"
+    if(usePhysicalTags) {
+      for(auto p : ge->physicals) boundaryIndicators.push_back(p);
+    }
+    else {
+      boundaryIndicators.push_back(ge->tag());
+    }
+    for(std::size_t i = 0; i < ge->getNumMeshElements(); i++) {
+      MElement *e = ge->getMeshElement(i);
+      for(std::size_t j = 0; j < e->getNumVertices(); j++) {
+        MVertex *v = e->getVertex(j);
+        if(v->getIndex() > 0) {
+          if(usePhysicalTags) {
+            for(auto p : ge->physicals)
+              vertexTags[v->getIndex() - 1].push_back(p);
+          }
+          else {
+            vertexTags[v->getIndex() - 1].push_back(ge->tag());
           }
         }
       }
@@ -470,19 +480,9 @@ int GModel::writeDIFF(const std::string &name, bool binary, bool saveAll,
     vertexTags[i].unique();
   }
 
-  // get all the entities in the model
-  std::vector<GEntity *> entities;
-  getEntities(entities);
-
-  // find max dimension of mesh elements we need to save
-  int dim = 0;
-  for(std::size_t i = 0; i < entities.size(); i++)
-    if(entities[i]->physicals.size() || saveAll)
-      for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++)
-        dim = std::max(dim, entities[i]->getMeshElement(j)->getDim());
-
   // loop over all elements we need to save
-  std::size_t numElements = 0, maxNumNodesPerElement = 0;
+  std::size_t numElements = 0;
+  std::size_t maxNumNodesPerElement = 0, minNumNodesPerElement = 1000;
   for(std::size_t i = 0; i < entities.size(); i++) {
     if(entities[i]->physicals.size() || saveAll) {
       for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
@@ -491,6 +491,8 @@ int GModel::writeDIFF(const std::string &name, bool binary, bool saveAll,
           numElements++;
           maxNumNodesPerElement =
             std::max(maxNumNodesPerElement, e->getNumVertices());
+          minNumNodesPerElement =
+            std::min(minNumNodesPerElement, e->getNumVertices());
         }
       }
     }
@@ -501,7 +503,8 @@ int GModel::writeDIFF(const std::string &name, bool binary, bool saveAll,
   fprintf(fp, " Number of space dim. =   3\n");
   fprintf(fp, " Number of elements   =  %lu\n", numElements);
   fprintf(fp, " Number of nodes      =  %d\n\n", numVertices);
-  fprintf(fp, " All elements are of the same type : dpTRUE\n");
+  fprintf(fp, " All elements are of the same type: %s\n",
+          (maxNumNodesPerElement != minNumNodesPerElement) ? "dpFALSE" : "dpTRUE");
   fprintf(fp, " Max number of nodes in an element: %lu \n",
           maxNumNodesPerElement);
   fprintf(fp, " Only one subdomain               : dpFALSE\n");

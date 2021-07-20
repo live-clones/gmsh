@@ -28,11 +28,6 @@
 #include "meshGFaceOptimize.h"
 #include "BackgroundMeshTools.h"
 #include "meshGFaceBipartiteLabelling.h"
-#if 0
-// TEST
-#include "meshTriangulation.h"
-// TEST
-#endif
 #endif
 
 #if defined(HAVE_ALGLIB)
@@ -41,7 +36,6 @@
 #endif
 
 #if defined(HAVE_QUADMESHINGTOOLS)
-/* QuadMeshingTools includes */
 #include "cppUtils.h"
 #include "qmtMeshUtils.h"
 #include "qmtCrossField.h"
@@ -1003,7 +997,8 @@ void GFace::XYZtoUV(double X, double Y, double Z, double &U, double &V,
   const double Precision = onSurface ? 1.e-8 : 1.e-3;
   const int MaxIter = onSurface ? 25 : 10;
   const int NumInitGuess = 9;
-  bool testXYZ = (convTestXYZ || CTX::instance()->mesh.NewtonConvergenceTestXYZ);
+  bool testXYZ =
+    (convTestXYZ || CTX::instance()->mesh.NewtonConvergenceTestXYZ);
 
   double Unew = 0., Vnew = 0., err, err2;
   int iter;
@@ -1435,7 +1430,7 @@ bool GFace::fillVertexArray(bool force)
       }
       else {
         double nn[3];
-        normal3points(x[0], y[0], z[0], x[1], y[1], z[1],x[2], y[2], z[2], nn);
+        normal3points(x[0], y[0], z[0], x[1], y[1], z[1], x[2], y[2], z[2], nn);
         SVector3 n[3] = {SVector3(nn), SVector3(nn), SVector3(nn)};
         va_geom_triangles->add(x, y, z, n, col);
       }
@@ -1497,8 +1492,8 @@ bool GFace::fillPointCloud(double maxDist, std::vector<SPoint3> *points,
         SPoint3 &p0(stl_vertices_xyz[stl_triangles[i]]);
         SPoint3 &p1(stl_vertices_xyz[stl_triangles[i + 1]]);
         SPoint3 &p2(stl_vertices_xyz[stl_triangles[i + 2]]);
-        double maxEdge = std::max(p0.distance(p1),
-                                  std::max(p1.distance(p2), p2.distance(p0)));
+        double maxEdge =
+          std::max(p0.distance(p1), std::max(p1.distance(p2), p2.distance(p0)));
         int N = std::max((int)(maxEdge / maxDist), 1);
         for(double u = 0.; u < 1.; u += 1. / N) {
           for(double v = 0.; v < 1 - u; v += 1. / N) {
@@ -1516,8 +1511,8 @@ bool GFace::fillPointCloud(double maxDist, std::vector<SPoint3> *points,
         GPoint gp0 = point(p0);
         GPoint gp1 = point(p1);
         GPoint gp2 = point(p2);
-        double maxEdge = std::max(gp0.distance(gp1),
-                                  std::max(gp1.distance(gp2), gp2.distance(gp0)));
+        double maxEdge = std::max(
+          gp0.distance(gp1), std::max(gp1.distance(gp2), gp2.distance(gp0)));
         int N = std::max((int)(maxEdge / maxDist), 1);
         for(double u = 0.; u < 1.; u += 1. / N) {
           for(double v = 0.; v < 1 - u; v += 1. / N) {
@@ -1555,87 +1550,94 @@ bool GFace::fillPointCloud(double maxDist, std::vector<SPoint3> *points,
 #if defined(HAVE_MESH)
 
 #if defined(HAVE_QUADMESHINGTOOLS)
- int buildBackgroundField(
-   GModel *gm, const std::vector<MTriangle *> &global_triangles,
-   const std::vector<std::array<double, 9> > &global_triangle_directions,
-   const std::unordered_map<MVertex *, double> &global_size_map,
-   const std::vector<std::array<double, 5> > &global_singularity_list,
-   const std::string &viewName);
-int fillSizemapFromScalarBackgroundField(GModel *gm, const std::vector<MTriangle *> &triangles,
-					 std::unordered_map<MVertex *, double> &sizeMap);
+
+int buildBackgroundField(
+  GModel *gm, const std::vector<MTriangle *> &global_triangles,
+  const std::vector<std::array<double, 9> > &global_triangle_directions,
+  const std::unordered_map<MVertex *, double> &global_size_map,
+  const std::vector<std::array<double, 5> > &global_singularity_list,
+  const std::string &viewName);
+int fillSizemapFromScalarBackgroundField(
+  GModel *gm, const std::vector<MTriangle *> &triangles,
+  std::unordered_map<MVertex *, double> &sizeMap);
+
 #endif
 
-static int meshCompoundMakeQuads(GFace *gf){
+static int meshCompoundMakeQuads(GFace *gf)
+{
   if(gf->meshAttributes.algorithm != ALGO_2D_PACK_PRLGRMS &&
-     gf->meshAttributes.algorithm != ALGO_2D_QUAD_QUASI_STRUCT)return 0;
+     gf->meshAttributes.algorithm != ALGO_2D_QUAD_QUASI_STRUCT)
+    return 0;
 
-  //recombineIntoQuads(gf, false, 2, true, .01);
-  
-    meshGFaceQuadrangulateBipartiteLabelling(gf->tag());
+  // recombineIntoQuads(gf, false, 2, true, .01);
+
+  meshGFaceQuadrangulateBipartiteLabelling(gf->tag());
   return 0;
 }
 
-
 static int meshCompoundComputeCrossFieldWithHeatEquation(GFace *gf)
 {
-   if(gf->meshAttributes.algorithm != ALGO_2D_PACK_PRLGRMS &&
-      gf->meshAttributes.algorithm != ALGO_2D_QUAD_QUASI_STRUCT)return 0;
-  
- #if defined(HAVE_QUADMESHINGTOOLS)
-     
-   std::vector<std::array<double, 3> > triEdgeTheta;
-   std::vector<MLine*> lines;
-   std::vector<GEdge*> edges = gf->edges();
-   for (auto ge : edges)lines.insert(lines.end(),ge->lines.begin(),ge->lines.end());
-    
-   int scf = computeCrossFieldWithHeatEquation(4, gf->triangles, lines, triEdgeTheta);
-  
-   if(scf != 0) {
-     Msg::Warning("- Face %i: failed to compute cross field", gf->tag());
-     return scf;
-   }
-  
-   std::vector<std::array<double, 9> > triangleDirections;
-   int sc = convertToPerTriangleCrossFieldDirections(4, gf->triangles, triEdgeTheta, triangleDirections);
-   if(sc != 0) {
-     Msg::Warning("- Face %i: failed to resample cross field at triangle corners",
- 		 gf->tag());
-   }
+  if(gf->meshAttributes.algorithm != ALGO_2D_PACK_PRLGRMS &&
+     gf->meshAttributes.algorithm != ALGO_2D_QUAD_QUASI_STRUCT)
+    return 0;
 
-   std::unordered_map<MVertex *, double> sizeMap;
+#if defined(HAVE_QUADMESHINGTOOLS)
 
-   int sts = fillSizemapFromScalarBackgroundField(gf->model(),gf->triangles, sizeMap);
-   if(sts != 0) {
-     Msg::Warning("- Face %i: failed to fill size map from background field",
-		  gf->tag());
-   }
-  
-   std::vector<std::array<double, 5> > singularityList;
+  std::vector<std::array<double, 3> > triEdgeTheta;
+  std::vector<MLine *> lines;
+  std::vector<GEdge *> edges = gf->edges();
+  for(auto ge : edges)
+    lines.insert(lines.end(), ge->lines.begin(), ge->lines.end());
 
-   FieldManager *fields = gf->model()->getFields();
-   fields->setBackgroundFieldId(0);
-   
-   int TEMP = CTX::instance()->mesh.algo2d;
-   CTX::instance()->mesh.algo2d = ALGO_2D_PACK_PRLGRMS;
+  int scf =
+    computeCrossFieldWithHeatEquation(4, gf->triangles, lines, triEdgeTheta);
 
-   int sbf =
-     buildBackgroundField(gf->model(), gf->triangles, triangleDirections,
-                          sizeMap, singularityList, "guiding_field");
+  if(scf != 0) {
+    Msg::Warning("- Face %i: failed to compute cross field", gf->tag());
+    return scf;
+  }
 
-   CTX::instance()->mesh.algo2d = TEMP;
+  std::vector<std::array<double, 9> > triangleDirections;
+  int sc = convertToPerTriangleCrossFieldDirections(
+    4, gf->triangles, triEdgeTheta, triangleDirections);
+  if(sc != 0) {
+    Msg::Warning(
+      "- Face %i: failed to resample cross field at triangle corners",
+      gf->tag());
+  }
 
+  std::unordered_map<MVertex *, double> sizeMap;
 
-   if(sbf != 0) {
-     Msg::Warning("failed to build background guiding field");
-     return -1;
-   }
-    
-   return 0;
- #else
-   return -1;
- #endif
+  int sts =
+    fillSizemapFromScalarBackgroundField(gf->model(), gf->triangles, sizeMap);
+  if(sts != 0) {
+    Msg::Warning("- Face %i: failed to fill size map from background field",
+                 gf->tag());
+  }
+
+  std::vector<std::array<double, 5> > singularityList;
+
+  FieldManager *fields = gf->model()->getFields();
+  fields->setBackgroundFieldId(0);
+
+  int TEMP = CTX::instance()->mesh.algo2d;
+  CTX::instance()->mesh.algo2d = ALGO_2D_PACK_PRLGRMS;
+
+  int sbf = buildBackgroundField(gf->model(), gf->triangles, triangleDirections,
+                                 sizeMap, singularityList, "guiding_field");
+
+  CTX::instance()->mesh.algo2d = TEMP;
+
+  if(sbf != 0) {
+    Msg::Warning("failed to build background guiding field");
+    return -1;
+  }
+
+  return 0;
+#else
+  return -1;
+#endif
 }
-
 
 static void meshCompound(GFace *gf, bool verbose)
 {
@@ -1647,7 +1649,7 @@ static void meshCompound(GFace *gf, bool verbose)
   auto *df = new discreteFace(gf->model(), gf->tag() + 100000);
 
   // set the algorithm to user's choice
-  df->meshAttributes.algorithm =  gf->meshAttributes.compoundAlgorithm;
+  df->meshAttributes.algorithm = gf->meshAttributes.compoundAlgorithm;
 
   gf->model()->add(df);
 
@@ -1679,11 +1681,11 @@ static void meshCompound(GFace *gf, bool verbose)
     std::vector<GEdge *> embe = c->getEmbeddedEdges(true);
     emb1.insert(embe.begin(), embe.end());
 
-    //    if(magic) {
-    c->triangles.clear();
-    c->quadrangles.clear();
-    c->mesh_vertices.clear();
-    //    }
+    if(magic) {
+      c->triangles.clear();
+      c->quadrangles.clear();
+      c->mesh_vertices.clear();
+    }
     c->compoundSurface = df;
     if(!magic) {
       phys.insert(phys.end(), c->physicals.begin(), c->physicals.end());
@@ -1709,8 +1711,8 @@ static void meshCompound(GFace *gf, bool verbose)
 
   FieldManager *fields = gf->model()->getFields();
   int BGTAG = fields->getBackgroundField();
-  Field * backgroundField = fields->get(BGTAG);
-  
+  Field *backgroundField = fields->get(BGTAG);
+
   if(df->createGeometry()) {
     Msg::Error("Could not create geometry of discrete face %d (check "
                "orientation of input triangulations)",
@@ -1718,11 +1720,9 @@ static void meshCompound(GFace *gf, bool verbose)
   }
   else {
     int scf = meshCompoundComputeCrossFieldWithHeatEquation(df);
-    if (scf != 0){
-      return;
-    }    
+    if(scf != 0) { return; }
   }
-  
+
   if(!magic) {
     df->triangles.clear();
     df->quadrangles.clear();
@@ -1731,13 +1731,13 @@ static void meshCompound(GFace *gf, bool verbose)
   df->mesh(verbose);
 
   meshCompoundMakeQuads(df);
-  
-  if (fields->getBackgroundField() >  0 &&
-      fields->getBackgroundField() != BGTAG ){
+
+  if(fields->getBackgroundField() > 0 &&
+     fields->getBackgroundField() != BGTAG) {
     fields->deleteField(fields->getBackgroundField());
     fields->setBackgroundField(backgroundField);
   }
-  
+
   if(!magic) {
     df->physicals = phys;
     return;
@@ -1823,7 +1823,7 @@ void GFace::mesh(bool verbose)
         ok &= (gf->meshStatistics.status == GFace::DONE);
       }
       if(!ok) { meshStatistics.status = GFace::PENDING; }
-      else {	
+      else {
         meshCompound(this, verbose);
         meshStatistics.status = GFace::DONE;
         return;

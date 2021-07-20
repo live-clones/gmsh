@@ -303,7 +303,6 @@ void OctreePost::_create(PViewData *data)
       bb *= 1.1;
     }
     else {
-      //      bb *= 1.1;
       bb.thicken(0.01); // make 1% thicker
     }
 
@@ -622,7 +621,7 @@ bool OctreePost::searchScalar(double x, double y, double z, double *values,
       return true;
   }
   else if(_theViewDataGModel) {
-    GModel *m = _theViewDataGModel->getModel((step < 0) ? 0 : step);    
+    GModel *m = _theViewDataGModel->getModel((step < 0) ? 0 : step);
     if(m) {
       MElement *e = getElement(P, m, qn, qx, qy, qz, dim);
       if(_getValue(e, 1, P, step, values, size, grad)) { return true; }

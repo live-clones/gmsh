@@ -98,7 +98,7 @@ struct F_Lc {
     else if(t == t_end && ge->getEndVertex())
       lc_here = BGM_MeshSize(ge->getEndVertex(), t, 0, p.x(), p.y(), p.z());
 
-    lc_here = std::min(lc_here,BGM_MeshSize(ge, t, 0, p.x(), p.y(), p.z()));
+    lc_here = std::min(lc_here, BGM_MeshSize(ge, t, 0, p.x(), p.y(), p.z()));
     SVector3 der = ge->firstDer(t);
     return norm(der) / lc_here;
   }
@@ -668,14 +668,16 @@ int meshGEdgeProcessing(GEdge *ge, const double t_begin, double t_end, int &N,
     if(CTX::instance()->mesh.recombineAll && faces.size()) {
       if(N % 2 == 0) N++;
       if(CTX::instance()->mesh.algoRecombine == 2 ||
-	 CTX::instance()->mesh.algoRecombine == 4) N = increaseN(N);
+         CTX::instance()->mesh.algoRecombine == 4)
+        N = increaseN(N);
     }
     else {
       for(auto it = faces.begin(); it != faces.end(); it++) {
         if((*it)->meshAttributes.recombine) {
           if(N % 2 == 0) N++;
           if(CTX::instance()->mesh.algoRecombine == 2 ||
-	     CTX::instance()->mesh.algoRecombine == 4) N = increaseN(N);
+             CTX::instance()->mesh.algoRecombine == 4)
+            N = increaseN(N);
           break;
         }
       }

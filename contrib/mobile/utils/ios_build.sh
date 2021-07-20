@@ -108,7 +108,7 @@ mkdir -p $getdp_git/build_${ios}
 cd $getdp_git/build_${ios}
 PETSC_DIR= PETSC_ARCH= SLEPC_DIR= cmake $cmake_default -DENABLE_BLAS_LAPACK=1 -DENABLE_BUILD_LIB=1 -DENABLE_GMSH=1 -DENABLE_KERNEL=1 -DENABLE_PETSC=1 -DPETSC_INC="$petsc_framework/Headers/" -DPETSC_LIBS="$petsc_framework/petsc" -DENABLE_SLEPC=1 -DSLEPC_INC="$slepc_framework/Headers/" -DSLEPC_LIB="$slepc_framework/slepc" -DGMSH_INC="$gmsh_framework/Headers/" -DGMSH_LIB="$gmsh_framework/gmsh" ..
 check
-$build_cmd OTHER_CFLAGS="${iphoneos_version_min} -fembed-bitcode" OTHER_CPLUSPLUSFLAGS="${iphoneos_version_min} -fembed-bitcode"
+$build_cmd OTHER_CFLAGS="${iphoneos_version_min} -fembed-bitcode" OTHER_CPLUSPLUSFLAGS="${iphoneos_version_min} -fembed-bitcode -std=c++11"
 check
 $headers_cmd
 mkdir -p $getdp_framework/Headers

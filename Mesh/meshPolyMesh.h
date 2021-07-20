@@ -10,7 +10,7 @@
 #include <algorithm>
 #include <stack>
 #include <stdio.h>
-#include "../Geo/SVector3.h"
+#include "SVector3.h"
 
 class PolyMesh {
 public:
@@ -299,8 +299,8 @@ public:
     HalfEdge *he03 = he0m->opposite->next;
     HalfEdge *he31 = he0m->opposite->next->next;
 
-    //    if(he03->v != he0m->v) Msg::Error("error 1");
-    //    if(he1m->v != he12->v) Msg::Error("error 2");
+    // if(he03->v != he0m->v) Msg::Error("error 1");
+    // if(he1m->v != he12->v) Msg::Error("error 2");
 
     Vertex *v0 = he03->v;
     Vertex *v1 = he12->v;
@@ -403,7 +403,7 @@ public:
     v->data = -1;
 
     vertices.push_back(v);
-    
+
     HalfEdge *he0 = f->he;
     HalfEdge *he1 = he0->next;
     HalfEdge *he2 = he1->next;

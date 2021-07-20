@@ -38,13 +38,7 @@
 #include "boundaryLayersData.h"
 #include "filterElements.h"
 #include "meshGFaceBipartiteLabelling.h"
-
-// define this to use the old initial delaunay
-//#define OLD_CODE_DELAUNAY 1
-
-#ifndef OLD_CODE_DELAUNAY
 #include "meshTriangulation.h"
-#endif
 
 bool pointInsideParametricDomain(std::vector<SPoint2> &bnd, SPoint2 &p,
                                  SPoint2 &out, int &N)
@@ -1163,7 +1157,6 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
                    bool onlyInitialMesh, bool debug,
                    std::vector<GEdge *> *replacement_edges)
 {
-
   if(CTX::instance()->debugSurface > 0 &&
      gf->tag() != CTX::instance()->debugSurface) {
     gf->meshStatistics.status = GFace::DONE;
@@ -1309,8 +1302,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
   // use a divide & conquer type algorithm to create a triangulation.
   // We add to the triangulation a box with 4 points that encloses the
   // domain.
-#ifdef OLD_CODE_DELAUNAY
-  {
+  if(CTX::instance()->mesh.oldInitialDelaunay2D){
     // compute the bounding box in parametric space
     SVector3 dd(bbox.max(), bbox.min());
     double LC2D = norm(dd);
@@ -1374,9 +1366,8 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
       m->add_triangle(p1->iD, p2->iD, p3->iD);
     }
   }
-#else
-  {
-    // New Stuff comes here --> it actually does everything
+  else {
+    // New initial 2D mesher --> it actually does everything
     // -- triangulate points
     // -- recover edges
     // -- color triangles
@@ -1386,10 +1377,8 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
       temp = gf->edges();
       gf->set(*replacement_edges);
     }
-    // TEST --> recover and color so most of the code below
-    // can go away. Works also for periodic faces
-    //    GFaceInitialMesh(gf->tag(), 1);
-
+    // recover and color so most of the code below can go away. Works also for
+    // periodic faces
     PolyMesh *pm = GFaceInitialMesh(gf->tag(), 1);
 
     if(replacement_edges) { gf->set(temp); }
@@ -1423,7 +1412,6 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
     }
     delete pm;
   }
-#endif
 
   if(debug && RECUR_ITER == 0) {
     char name[245];
@@ -1778,7 +1766,6 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
 
   splitElementsInBoundaryLayerIfNeeded(gf);
 
-  
   if((CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine) &&
      (CTX::instance()->mesh.algoRecombine <= 1 ||
       CTX::instance()->mesh.algoRecombine == 4)) {
@@ -2096,11 +2083,8 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
   }
   if(CTX::instance()->debugSurface > 0) debug = true;
 
-    // TEST !!!
-#ifndef OLD_CODE_DELAUNAY
-    //  PolyMesh * pm = GFaceInitialMesh (gf->tag(), 1);
-#endif
   // TEST !!!
+  // PolyMesh * pm = GFaceInitialMesh(gf->tag(), 1);
 
   std::map<BDS_Point *, MVertex *, PointLessThan> recoverMap;
   std::multimap<MVertex *, BDS_Point *> recoverMultiMapInv;
