@@ -1862,6 +1862,16 @@ static void geometry_elementary_boolean_cb(Fl_Widget *w, void *data)
     char ib = FlGui::instance()->selectEntity(type);
     if(!FlGui::available()) return;
     if(ib == 'l') {
+      for(std::size_t i = 0; i < FlGui::instance()->selectedVertices.size(); i++) {
+        if(FlGui::instance()->selectedVertices[i]->getSelection() != 1) {
+          FlGui::instance()->selectedVertices[i]->setSelection(1);
+          std::pair<int, int> t(0, FlGui::instance()->selectedVertices[i]->tag());
+          if(selectObject)
+            object.push_back(t);
+          else
+            tool.push_back(t);
+        }
+      }
       for(std::size_t i = 0; i < FlGui::instance()->selectedEdges.size(); i++) {
         if(FlGui::instance()->selectedEdges[i]->getSelection() != 1) {
           FlGui::instance()->selectedEdges[i]->setSelection(1);
