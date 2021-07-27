@@ -84,6 +84,7 @@ SMetric3 intersection_conserve_mostaniso_2d(const SMetric3 &m1,
                                             const SMetric3 &m2);
 // compute the largest inscribed ellipsoid...
 SMetric3 intersection(const SMetric3 &m1, const SMetric3 &m2);
+SMetric3 intersection_reductionSimultanee(const SMetric3 &m1, const SMetric3 &m2);
 SMetric3 intersection_alauzet(const SMetric3 &m1, const SMetric3 &m2);
 SMetric3 interpolation(const SMetric3 &m1, const SMetric3 &m2, const double t);
 SMetric3 interpolation(const SMetric3 &m1, const SMetric3 &m2,
@@ -109,6 +110,12 @@ public:
   STensor3(const STensor3 &other)
   {
     for(int i = 0; i < 9; i++) _val[i] = other._val[i];
+  }
+  // from a symmetric 3x3 matrix
+  STensor3(const SMetric3 &m){
+    for(int i = 0; i < 3; i++)
+      for(int j = 0; j < 3; j++)
+        _val[getIndex(i, j)] = m(i,j);
   }
   inline int getIndex(int i, int j) const
   {

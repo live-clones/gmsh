@@ -143,6 +143,45 @@ SMetric3 intersection(const SMetric3 &m1, const SMetric3 &m2)
   return iv;
 }
 
+SMetric3 intersection_reductionSimultanee(const SMetric3 &m1, const SMetric3 &m2)
+{
+  // m1.print("inputI");
+  // m2.print("inputI");
+  // The common basis (reduction simultanee) is NOT symmetric in the general case
+  STensor3 im1(m1.invert());
+  STensor3 tm2(m2);
+  im1 *= tm2;
+  // im1.print("m3");
+  fullMatrix<double> V(3, 3);
+  fullVector<double> S(3);
+  im1.eig(V, S, false); // Conserve eigenvectors ordering
+  SVector3 v0(V(0, 0), V(1, 0), V(2, 0));
+  SVector3 v1(V(0, 1), V(1, 1), V(2, 1));
+  SVector3 v2(V(0, 2), V(1, 2), V(2, 2));
+  // v0.print("v0");
+  // std::cout<<v0.norm()<<std::endl;
+  // v1.print("v1");
+  // std::cout<<v1.norm()<<std::endl;
+  // v2.print("v2");
+  double l0 = std::max(dot(v0, m1, v0), dot(v0, m2, v0));
+  double l1 = std::max(dot(v1, m1, v1), dot(v1, m2, v1));
+  double l2 = std::max(dot(v2, m1, v2), dot(v2, m2, v2));
+  im1.setMat(V);
+  im1 = im1.transpose();
+  im1 = im1.invert();
+  // im1.print("inverse");
+  v0 = SVector3(im1(0, 0), im1(1, 0), im1(2, 0));
+  v1 = SVector3(im1(0, 1), im1(1, 1), im1(2, 1));
+  v2 = SVector3(im1(0, 2), im1(1, 2), im1(2, 2));
+  // v0.print("avant");
+  // std::cout<<v0.norm()<<std::endl;
+  // v1.print("avant");
+  // std::cout<<v1.norm()<<std::endl;
+  // v2.print("v2");
+  SMetric3 iv(l0, l1, l2, v0, v1, v2);
+  return iv;
+}
+
 SMetric3 intersection_alauzet(const SMetric3 &m1, const SMetric3 &m2)
 {
   SMetric3 im1 = m1.invert();

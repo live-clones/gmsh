@@ -7,6 +7,7 @@
 #include <list>
 #include <map>
 #include <unordered_map>
+#include "Context.h"
 #include "gmsh.h"
 #include "GModel.h"
 #include "GFace.h"
@@ -88,49 +89,104 @@ int PolyMesh2GFace(PolyMesh *pm, int faceTag)
 {
   GFace *gf = GModel::current()->getFaceByTag(faceTag);
 
+  if (!gf)Msg::Error("PolyMesh2GFace cannot find face %d",faceTag);
+  
   for(auto t : gf->triangles) delete t;
   for(auto q : gf->quadrangles) delete q;
   gf->triangles.clear();
   gf->quadrangles.clear();
 
   std::unordered_map<int, MVertex *> news;
+  std::unordered_map<PolyMesh::HalfEdge*, GPoint> hon;
 
-  for(auto f : pm->faces) {
-    PolyMesh::Vertex *v[4] = {f->he->v, f->he->next->v, f->he->next->next->v,
-                              f->he->next->next->next->v};
-    MVertex *v_gmsh[4];
-    for(int i = 0; i < pm->num_sides(f->he); i++) {
-      if(v[i]->data != -1) {
-        auto it = news.find(v[i]->data);
-        if(it == news.end())
-          v_gmsh[i] = GModel::current()->getMeshVertexByTag(v[i]->data);
-        else
-          v_gmsh[i] = it->second;
-        //	if (! v_gmsh[i] ) printf("error %d\n",v[i]->data);
-      }
-      else {
-        double uv[2] = {0, 0};
-        GPoint gp = gf->closestPoint(
-          SPoint3(v[i]->position.x(), v[i]->position.y(), v[i]->position.z()),
-          uv);
-        if(gp.succeeded())
-          v_gmsh[i] =
-            new MFaceVertex(gp.x(), gp.y(), gp.z(), gf, gp.u(), gp.v());
-        else
-          v_gmsh[i] = new MFaceVertex(v[i]->position.x(), v[i]->position.y(),
-                                      v[i]->position.z(), gf,
-                                      v[i]->position.x(), v[i]->position.y());
-        gf->mesh_vertices.push_back(v_gmsh[i]);
-        v[i]->data = v_gmsh[i]->getNum();
-        news[v[i]->data] = v_gmsh[i];
+  if (!pm->high_order_nodes.empty()){
+    for (size_t i=0;i<pm->high_order_nodes.size();i++){
+      auto it = hon.find(pm->hedges[i]);
+      if (it == hon.end()){
+	double uv[2] = {0, 0};
+	SVector3 p = pm->high_order_nodes[i];
+	GPoint gp = gf->closestPoint(SPoint3(p.x(), p.y(), p.z()),uv);
+	if(!gp.succeeded()){
+	  gp.x() = p.x();
+	  gp.y() = p.y();
+	  gp.z() = p.z();
+	}
+	hon[pm->hedges[i]] = gp;     
+	if (pm->hedges[i]->opposite)hon[pm->hedges[i]] = gp;
       }
     }
-    if(pm->num_sides(f->he) == 3)
-      gf->triangles.push_back(new MTriangle(v_gmsh[0], v_gmsh[1], v_gmsh[2]));
-    else if(pm->num_sides(f->he) == 4)
-      gf->quadrangles.push_back(
-        new MQuadrangle(v_gmsh[0], v_gmsh[1], v_gmsh[2], v_gmsh[3]));
   }
+  
+  std::map<MEdge, GPoint,MEdgeLessThan> hop;
+
+  for(auto f : pm->faces) {
+    if (f->data == faceTag){
+      PolyMesh::Vertex *v[4] = {f->he->v, f->he->next->v, f->he->next->next->v,
+				f->he->next->next->next->v};
+      MVertex *v_gmsh[4];
+      
+      for(int i = 0; i < pm->num_sides(f->he); i++) {
+	if(v[i]->data != -1) {
+	  auto it = news.find(v[i]->data);
+	  if(it == news.end())
+	    v_gmsh[i] = GModel::current()->getMeshVertexByTag(v[i]->data);
+	  else
+	    v_gmsh[i] = it->second;
+	}
+	else {
+	  double uv[2] = {0, 0};
+	  GPoint gp = gf->closestPoint(
+				       SPoint3(v[i]->position.x(), v[i]->position.y(), v[i]->position.z()),
+				       uv);
+	  if(gp.succeeded())
+	    v_gmsh[i] =
+	      new MFaceVertex(gp.x(), gp.y(), gp.z(), gf, gp.u(), gp.v());
+	  else
+	    v_gmsh[i] = new MFaceVertex(v[i]->position.x(), v[i]->position.y(),
+					v[i]->position.z(), gf,
+					v[i]->position.x(), v[i]->position.y());
+	  gf->mesh_vertices.push_back(v_gmsh[i]);
+	  v[i]->data = v_gmsh[i]->getNum();
+	  news[v[i]->data] = v_gmsh[i];
+	}
+      }      
+
+      if (hon.size()){
+	MEdge l01 (v_gmsh[0], v_gmsh[1]);
+	hop[l01]  = hon[f->he];
+	MEdge l12 (v_gmsh[1], v_gmsh[2]);
+	hop[l12]  = hon[f->he->next];
+	MEdge l20 (v_gmsh[2], v_gmsh[0]);
+	hop[l20]  = hon[f->he->next->next];
+      }	
+
+      if(pm->num_sides(f->he) == 3)
+	gf->triangles.push_back(new MTriangle(v_gmsh[0], v_gmsh[1], v_gmsh[2]));
+      else if(pm->num_sides(f->he) == 4)
+	gf->quadrangles.push_back(new MQuadrangle(v_gmsh[0], v_gmsh[1], v_gmsh[2], v_gmsh[3]));
+    }
+  }
+
+  if (!hon.empty()){
+    printf("order 2 -->\n");
+    GModel::current()->setOrderN(2,0,0);  
+    printf("order 2 done -->\n");
+#if 1
+    for(auto t : gf->triangles) {
+      for (int i=0;i<3;i++){
+	MEdge li (t->getVertex(i), t->getVertex((i+1)%3));
+	GPoint gp = hop[li];
+	MVertex *vint = t->getVertex(i+3);
+	vint->x() = gp.x();
+	vint->y() = gp.y();
+	vint->z() = gp.z();
+      }
+    }
+#endif
+  }
+  
+  CTX::instance()->mesh.changed = ENT_ALL;
+
   return 0;
 }
 
@@ -170,8 +226,7 @@ int GFace2PolyMesh(int faceTag, PolyMesh **pm)
         if(it == nodeLabels.end()) {
           std::vector<double> coord(3), parametricCoord(3);
           int entityDim, entityTag;
-          gmsh::model::mesh::getNode(nodeTag, coord, parametricCoord,
-                                     entityDim, entityTag);
+          gmsh::model::mesh::getNode(nodeTag, coord, parametricCoord, entityDim, entityTag);
           v[j] = new PolyMesh::Vertex(coord[0], coord[1], coord[2], nodeTag);
           nodeLabels[nodeTag] = (*pm)->vertices.size();
           (*pm)->vertices.push_back(v[j]);
@@ -481,6 +536,8 @@ static PolyMesh::HalfEdge *Color(PolyMesh::HalfEdge *he, int color)
   return other_side;
 }
 
+
+
 void GFaceDelaunayRefinement(size_t faceTag)
 {
   GFace *gf = GModel::current()->getFaceByTag(faceTag);
@@ -508,7 +565,7 @@ void GFaceDelaunayRefinement(size_t faceTag)
         f = Walk(f, gp.u(), gp.v());
         if(f && f->data == (int)faceTag) {
           std::vector<PolyMesh::HalfEdge *> _touched;
-          pm->split_triangle(gp.u(), gp.v(), 0, f,
+          pm->split_triangle(-1, gp.u(), gp.v(), 0, f,
                              delaunayEdgeCriterionPlaneIsotropic, gf,
                              &_touched);
           if(_touched.size() == 3) {
@@ -603,6 +660,8 @@ static void getNodeCopies(GFace *gf,
   edges.insert(edges.end(), emb_edges.begin(), emb_edges.end());
   std::set<GEdge *> touched;
 
+  if (edges.empty())edges.insert(edges.end(), gf->model()->firstEdge(), gf->model()->lastEdge());
+  
   for(auto e : edges) {
     if(!e->isMeshDegenerated()) {
       std::set<MVertex *, MVertexPtrLessThan> e_vertices;
@@ -635,8 +694,12 @@ static void getNodeCopies(GFace *gf,
           param = e->reparamOnFace(gf, t, direction);
         }
         else {
-          reparamMeshVertexOnFace(v, gf, param);
-        }
+	  if (gf->geomType() == GEntity::DiscreteSurface){
+	    param = SPoint2(v->x(),v->y());
+	  }
+	  else
+	    reparamMeshVertexOnFace(v, gf, param);
+	}
         std::unordered_map<size_t, nodeCopies>::iterator it =
           copies.find(v->getNum());
         if(it == copies.end()) {
@@ -659,15 +722,41 @@ static void getNodeCopies(GFace *gf,
   }
 }
 
-PolyMesh *GFaceInitialMesh(int faceTag, int recover)
+void addPoints (PolyMesh *pm, std::vector<double> &pts,   SBoundingBox3d &bb) {
+  
+  const size_t N = pts.size()/2;
+  std::vector<double> X(N),Y(N);
+  std::vector<size_t> HC(N), IND(N);
+  PolyMesh::Face *f = pm->faces[0];
+  for (size_t i = 0; i< N ; i++){
+    X[i] = pts[2*i];
+    Y[i] = pts[2*i+1];
+    HC[i] = HilbertCoordinates(X[i], Y[i], bb.center().x(), bb.center().y(),
+			       bb.max().x() - bb.center().x(),0,
+			       0, bb.max().y() - bb.center().y());
+    IND[i] = i;
+  }
+  std::sort( IND.begin(),IND.end(), [&](size_t i,size_t j){return HC[i]<HC[j];} );
+
+  for (size_t i = 0; i< N ; i++){
+    size_t I = IND[i];
+    f = Walk (f,X[I],Y[I]);
+    pm->split_triangle(i,X[I],Y[I],0,f,delaunayEdgeCriterionPlaneIsotropic,NULL);
+  }
+}
+
+PolyMesh *GFaceInitialMesh(int faceTag, int recover, std::vector<double> *additional)
 {
   GFace *gf = GModel::current()->getFaceByTag(faceTag);
 
+  if (!gf)Msg::Error("GFaceInitialMesh : no face with tag %d",faceTag);
+  
   PolyMesh *pm = new PolyMesh;
 
   std::unordered_map<size_t, nodeCopies> copies;
   getNodeCopies(gf, copies);
 
+  
   SBoundingBox3d bb;
   for(auto c : copies) {
     for(size_t i = 0; i < c.second.nbCopies; i++)
@@ -685,102 +774,67 @@ PolyMesh *GFaceInitialMesh(int faceTag, int recover)
       // find face in which lies x,y
       f = Walk(f, x, y);
       // split f and then swap edges to recover delaunayness
-      pm->split_triangle(x, y, 0, f, delaunayEdgeCriterionPlaneIsotropic, NULL);
+      pm->split_triangle(-1, x, y, 0, f, delaunayEdgeCriterionPlaneIsotropic, NULL);
       // remember node tags
       it->second.id[i] = pm->vertices.size() - 1;
       pm->vertices[pm->vertices.size() - 1]->data = it->first;
     }
   }
 
-  if(!recover) return pm;
-
-  // recover edges ...
-
-  //  pm->print4debug(100000);
-
-  std::vector<GEdge *> edges = gf->edges();
-  std::vector<GEdge *> emb_edges = gf->getEmbeddedEdges();
-  edges.insert(edges.end(), emb_edges.begin(), emb_edges.end());
-
-  for(auto e : edges) {
-    if(!e->isMeshDegenerated()) {
-      for(auto l : e->lines) {
-        auto c0 = copies.find(l->getVertex(0)->getNum());
-        auto c1 = copies.find(l->getVertex(1)->getNum());
-        if(c0 == copies.end() || c1 == copies.end())
-          Msg::Error("unable to find %lu %lu %d %d", l->getVertex(0)->getNum(),
-                     l->getVertex(1)->getNum(), c0 == copies.end(),
-                     c1 == copies.end());
-        if(c0->second.nbCopies > c1->second.nbCopies) {
-          auto cc = c0;
-          c0 = c1;
-          c1 = cc;
-        }
-        for(size_t j = 0; j < c0->second.nbCopies; j++) {
-          PolyMesh::Vertex *v0 = pm->vertices[c0->second.id[j]];
-          PolyMesh::Vertex *v1 =
-            pm->vertices[c1->second.closest(c0->second.u[j], c0->second.v[j])];
-          int result = recover_edge(pm, v0, v1);
-          if(result < 0) {
-            Msg::Warning("Impossible to recover edge %lu %lu (error tag %d)",
-                         l->getVertex(0)->getNum(), l->getVertex(0)->getNum(),
-                         result);
-          }
-          else {
-            PolyMesh::HalfEdge *he = pm->getEdge(v0, v1);
-            if(he) {
-              if(he->opposite) he->opposite->data = e->tag();
-              he->data = e->tag();
-            }
-          }
-        }
+  if(recover){
+    std::vector<GEdge *> edges = gf->edges();
+    std::vector<GEdge *> emb_edges = gf->getEmbeddedEdges();
+    edges.insert(edges.end(), emb_edges.begin(), emb_edges.end());
+    if (edges.empty())edges.insert(edges.end(), gf->model()->firstEdge(), gf->model()->lastEdge());
+    
+    for(auto e : edges) {
+      if(!e->isMeshDegenerated()) {
+	for(auto l : e->lines) {
+	  auto c0 = copies.find(l->getVertex(0)->getNum());
+	  auto c1 = copies.find(l->getVertex(1)->getNum());
+	  if(c0 == copies.end() || c1 == copies.end())
+	    Msg::Error("unable to find %lu %lu %d %d", l->getVertex(0)->getNum(),
+		       l->getVertex(1)->getNum(), c0 == copies.end(),
+		       c1 == copies.end());
+	  if(c0->second.nbCopies > c1->second.nbCopies) {
+	    auto cc = c0;
+	    c0 = c1;
+	    c1 = cc;
+	  }
+	  for(size_t j = 0; j < c0->second.nbCopies; j++) {
+	    PolyMesh::Vertex *v0 = pm->vertices[c0->second.id[j]];
+	    PolyMesh::Vertex *v1 =
+	      pm->vertices[c1->second.closest(c0->second.u[j], c0->second.v[j])];
+	    int result = recover_edge(pm, v0, v1);
+	    if(result < 0) {
+	      Msg::Warning("Impossible to recover edge %lu %lu (error tag %d)",
+			   l->getVertex(0)->getNum(), l->getVertex(0)->getNum(),
+			   result);
+	    }
+	    else {
+	      PolyMesh::HalfEdge *he = pm->getEdge(v0, v1);
+	      if(he) {
+		if(he->opposite) he->opposite->data = e->tag();
+		he->data = e->tag();
+	      }
+	    }
+	  }
+	}
       }
     }
+    
+    // color all PolyMesh::Faces
+    // the first 4 vertices are "infinite vertices" --> color them with tag -2
+    // meaning exterior
+    PolyMesh::HalfEdge *other_side = Color(pm->vertices[0]->he, -2);
+    // other_side is inthernal to the face --> color them with tag faceTag
+    other_side = Color(other_side, faceTag);
+    // holes will be tagged -1
   }
-
-  // color all PolyMesh::Faces
-  // the first 4 vertices are "infinite vertices" --> color them with tag -2
-  // meaning exterior
-  PolyMesh::HalfEdge *other_side = Color(pm->vertices[0]->he, -2);
-  // other_side is inthernal to the face --> color them with tag faceTag
-  other_side = Color(other_side, faceTag);
-  // holes will be tagged -1
-
-  //  pm->print4debug(200000);
+  
+  if (additional)addPoints (pm, *additional, bb);
 
   return pm;
 }
 //------------------------------------------------
 
-#if 0
-  bb *= 1./1.1;
-  const size_t N = 100000;
-  std::vector<double> X(N),Y(N);
-  std::vector<size_t> HC(N), IND(N);
-  for (size_t i = 0; i< N ; i++){
-    double R = drand48();
-    X[i] = bb.min().x() + R * (bb.max().x()-bb.min().x());
-    R = drand48();
-    Y[i] = bb.min().y() + R * (bb.max().y()-bb.min().y());
-    HC[i] = HilbertCoordinates(X[i], Y[i], bb.center().x(), bb.center().y(),
-			       bb.max().x() - bb.center().x(),0,
-			       0, bb.max().y() - bb.center().y());
-    IND[i] = i;
-  }
-  std::sort( IND.begin(),IND.end(), [&](size_t i,size_t j){return HC[i]<HC[j];} );
-    double t1 = gmsh::logger::getCpuTime();
-    for (size_t i = 0; i< N ; i++){
-      size_t I = IND[i];
-      f = Walk (f,X[I],Y[I]);
-      pm->split_triangle(X[I],Y[I],0,f,delaunayEdgeCriterionPlaneIsotropic,NULL);
-    }
-    double t2 = gmsh::logger::getCpuTime();
-    //    printf("%12.5E Seconds\n",t2-t1);
-    pm->print4debug( nodeTags.size() );
-}
-#endif
-#if 0
-    PolyMesh::Vertex *v0 = pm->vertices[nodeLabels[1]];
-    PolyMesh::Vertex *v1 = pm->vertices[nodeLabels[3]];
-    int result = recover_edge (pm, v0, v1);
-#endif

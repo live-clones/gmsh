@@ -37,6 +37,7 @@ set(SRC
   automaticMeshSizeField.cpp
   meshQuadQuasiStructured.cpp
   meshOctreeLibOL.cpp
+  meshGFacePack.cpp
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h)

@@ -10,7 +10,7 @@
 #include <algorithm>
 #include <stack>
 #include <stdio.h>
-#include "SVector3.h"
+#include "../Geo/SVector3.h"
 
 class PolyMesh {
 public:
@@ -59,6 +59,7 @@ public:
   std::vector<Vertex *> vertices;
   std::vector<HalfEdge *> hedges;
   std::vector<Face *> faces;
+  std::vector<SVector3> high_order_nodes;
 
   void reset()
   {
@@ -298,8 +299,8 @@ public:
     HalfEdge *he03 = he0m->opposite->next;
     HalfEdge *he31 = he0m->opposite->next->next;
 
-    if(he03->v != he0m->v) Msg::Error("error 1");
-    if(he1m->v != he12->v) Msg::Error("error 2");
+    //    if(he03->v != he0m->v) Msg::Error("error 1");
+    //    if(he1m->v != he12->v) Msg::Error("error 2");
 
     Vertex *v0 = he03->v;
     Vertex *v1 = he12->v;
@@ -393,15 +394,16 @@ public:
     mm_MM->opposite = MM_mm;
   }
 
-  inline int split_triangle(double x, double y, double z, Face *f,
+  inline int split_triangle(int index, double x, double y, double z, Face *f,
                             int (*doSwap)(PolyMesh::HalfEdge *, void *) = NULL,
                             void *data = NULL,
                             std::vector<HalfEdge *> *_t = NULL)
   {
     Vertex *v = new PolyMesh::Vertex(x, y, z); // one more vertex
+    v->data = -1;
 
     vertices.push_back(v);
-
+    
     HalfEdge *he0 = f->he;
     HalfEdge *he1 = he0->next;
     HalfEdge *he2 = he1->next;
