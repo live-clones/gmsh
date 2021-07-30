@@ -536,6 +536,7 @@ static HXTStatus _meshGRegionHxt(std::vector<GRegion *> &regions)
     1, // int stat;
     1, // int refine;
     CTX::instance()->mesh.optimize, // int optimize;
+    CTX::instance()->mesh.toleranceInitialDelaunay,// tolerance for tetgen
     {
       // quality
       nullptr, // double (*callback)(.., userData)

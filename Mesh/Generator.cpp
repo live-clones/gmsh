@@ -36,6 +36,7 @@
 #include "Generator.h"
 #include "meshQuadQuasiStructured.h"
 #include "meshGFaceBipartiteLabelling.h"
+#include "sizeField.h"
 
 #if defined(_OPENMP)
 #include <omp.h>
@@ -51,6 +52,11 @@
 #include "HighOrderMeshOptimizer.h"
 #include "HighOrderMeshElasticAnalogy.h"
 #include "HighOrderMeshFastCurving.h"
+#endif
+
+#if defined(HAVE_WINSLOWUNTANGLER)
+#include "meshSurfaceUntangling.h"
+#include "meshVolumeUntangling.h"
 #endif
 
 #if defined(HAVE_POST)
@@ -387,7 +393,7 @@ static void Mesh1D(GModel *m)
 #if defined(_OPENMP)
 #pragma omp critical
 #endif
-	localPending = ++nPending;
+        localPending = ++nPending;
       }
       if(!nIter) Msg::ProgressMeter(localPending, false, "Meshing 1D...");
     }
@@ -530,14 +536,14 @@ static void Mesh2D(GModel *m)
 #pragma omp parallel for schedule(dynamic)
 #endif
       for(size_t K = 0; K < temp.size(); K++) {
-	int localPending = 0;
+        int localPending = 0;
         if(temp[K]->meshStatistics.status == GFace::PENDING) {
           backgroundMesh::current()->unset();
           temp[K]->mesh(true);
 #if defined(_OPENMP)
 #pragma omp critical
 #endif
-	  localPending = ++nPending;
+          localPending = ++nPending;
         }
         if(!nIter) Msg::ProgressMeter(localPending, false, "Meshing 2D...");
       }
@@ -563,7 +569,6 @@ static void Mesh2D(GModel *m)
     // bool linear = false;
     // RefineMesh(m, linear, true, false);
     RefineMeshWithBackgroundMeshProjection(m);
-
 
     OptimizeMesh(m, "QuadQuasiStructured");
   }
@@ -1000,7 +1005,7 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter)
      how != "HighOrderFastCurving" && how != "Laplace2D" &&
      how != "Relocate2D" && how != "Relocate3D" &&
      how != "DiskQuadrangulation" && how != "QuadCavityRemeshing" &&
-     how != "QuadQuasiStructured") {
+     how != "QuadQuasiStructured" && how != "UntangleMeshGeometry") {
     Msg::Error("Unknown mesh optimization method '%s'", how.c_str());
     return;
   }
@@ -1127,6 +1132,32 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter)
         gf->meshStatistics.status = GFace::DONE;
       }
   }
+  else if(how == "UntangleMeshGeometry") {
+#if defined(HAVE_WINSLOWUNTANGLER)
+    int nIterWinslow = 10;
+    for(GFace *gf : m->getFaces()) {
+      if(CTX::instance()->mesh.meshOnlyVisible && !gf->getVisibility())
+        continue;
+      if(gf->geomType() == GFace::Plane) {
+        double timeMax = 100.;
+        untangleGFaceMeshConstrained(gf, nIterWinslow, timeMax);
+      }
+      else {
+        Msg::Debug("- Face %i: not planar, do not apply Winslow untangling",
+                   gf->tag());
+      }
+    }
+    for(GRegion *gr : m->getRegions()) {
+      if(CTX::instance()->mesh.meshOnlyVisible && !gr->getVisibility())
+        continue;
+      double timeMax = 100.;
+      untangleGRegionMeshConstrained(gr, nIterWinslow, timeMax);
+    }
+#else
+    Msg::Error("Untangle mesh geometry optimization requires the "
+               "WinslowUntangler module");
+#endif
+  }
 
   if(Msg::GetVerbosity() > 98)
     std::for_each(m->firstRegion(), m->lastRegion(),
@@ -1164,7 +1195,7 @@ void RecombineMesh(GModel *m)
     bool blossom = (CTX::instance()->mesh.algoRecombine == 1 ||
                     CTX::instance()->mesh.algoRecombine == 3);
     int topo = CTX::instance()->mesh.recombineOptimizeTopology;
-    if (CTX::instance()->mesh.algoRecombine == 4)
+    if(CTX::instance()->mesh.algoRecombine == 4)
       meshGFaceQuadrangulateBipartiteLabelling(gf->tag());
     else
       recombineIntoQuads(gf, blossom, topo, true, .01);
@@ -1478,7 +1509,7 @@ void GenerateMesh(GModel *m, int ask)
     bool overwriteField = false;
     if(old == 1 && ask == 1 && exists) doIt = true;
     if(old == 1 && ask == 2 && exists) doIt = false;
-    if(old == 2 && exists && (ask == 1 || ask ==2)) {
+    if(old == 2 && exists && (ask == 1 || ask == 2)) {
       /* User has a mesh and wants a new one (all options may have changed) */
       doIt = true;
       overwriteField = true;
@@ -1490,12 +1521,11 @@ void GenerateMesh(GModel *m, int ask)
       bool deleteGModelMeshAfter =
         true; /* mesh saved in background, no longer needed */
       BuildBackgroundMeshAndGuidingField(m, overwriteGModelMesh,
-                                         deleteGModelMeshAfter,
-                                         overwriteField);
+                                         deleteGModelMeshAfter, overwriteField);
     }
 
-    if(CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT
-        && old == 2 && exists && (ask == 1 || ask == 2)) {
+    if(CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT && old == 2 &&
+       exists && (ask == 1 || ask == 2)) {
       /* transferSeamGEdgesVerticesToGFace() called by quadqs remove the 1D
        * meshes of the seam GEdge, so 2D initial meshing does not work without
        * first remeshing the seam GEdge. We delete the whole mesh by security */
@@ -1534,6 +1564,9 @@ void GenerateMesh(GModel *m, int ask)
   if(ask == 2 || (ask > 2 && old < 2)) {
     std::for_each(m->firstRegion(), m->lastRegion(), deMeshGRegion());
     Mesh2D(m);
+    // if two passes...
+    // createSizeFieldFromExistingMesh(m, false);
+    // Mesh2D(m);
   }
 
   // 3D mesh

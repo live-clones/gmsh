@@ -33,12 +33,10 @@ static double max_edge_curvature(const GVertex *gv)
   for(auto ite = l_edges.begin(); ite != l_edges.end(); ++ite) {
     GEdge *_myGEdge = *ite;
     Range<double> range = _myGEdge->parBounds(0);
-    double cc;
-    if(gv == _myGEdge->getBeginVertex())
-      cc = _myGEdge->curvature(range.low());
-    else
-      cc = _myGEdge->curvature(range.high());
-    val = std::max(val, cc);
+    double t = (gv == _myGEdge->getBeginVertex()) ? range.low() : range.high();
+    double EC = _myGEdge->curvature(t);
+    double FC = max_surf_curvature(_myGEdge, t);
+    val = std::max(std::max(val, EC), FC);
   }
   return val;
 }
@@ -63,7 +61,7 @@ static double LC_MVertex_CURV(GEntity *ge, double U, double V)
   } break;
   case 2: {
     GFace *gf = (GFace *)ge;
-    Crv = gf->curvature(SPoint2(U, V));
+    Crv = gf->curvatureMax(SPoint2(U, V));
   } break;
   }
   double ne = CTX::instance()->mesh.lcFromCurvature;

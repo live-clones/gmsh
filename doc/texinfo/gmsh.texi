@@ -2508,8 +2508,8 @@ only available with the built-in kernel.
 
 @item Split Curve @{ @var{expression} @} Point @{ @var{expression-list} @}
 (Not a transformation per-se.) Split the curve @var{expression} on the
-speficied points. Only available with the built-in kernel, for lines,
-splines and BSplines.
+specified control points. Only available with the built-in kernel, for
+lines, splines and BSplines.
 @end ftable
 
 @noindent with

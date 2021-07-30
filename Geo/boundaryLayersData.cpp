@@ -173,13 +173,15 @@ static void treat2Connections(GFace *gf, MVertex *_myVert, MEdge &e1, MEdge &e2,
       if(!fan) {
         SVector3 x = N1[SIDE] * 1.01 + N2[SIDE];
         x.normalize();
-        // BUG FIX #1054 : the size should be divided by cos (theta /2)
-        // where cos theta is dot (N1[SIDE],N2[SIDE])
-        double theta = acos(fabs(dot(N1[SIDE], N2[SIDE])));
-        double fact = 1. / cos(theta / 2);
-        //	printf("%12.5E\n",theta,fact);
-        x *= fabs(fact);
-        // END BUG FIX #1054 ...
+        // fix for #1054: the size should be divided by cos(theta/2) where
+        // cos(theta) is dot(N1[SIDE], N2[SIDE])
+        double d = fabs(dot(N1[SIDE], N2[SIDE]));
+        if(d > 1.) d = 1.; // fix for #1450
+        double ct2 = cos(acos(d) / 2);
+        if(ct2) { // fix for #1450
+          double fact = 1. / ct2;
+          x *= fabs(fact);
+        }
         _dirs.push_back(x);
       }
       else if(fan) {

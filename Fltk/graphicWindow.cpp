@@ -661,14 +661,14 @@ void file_quit_cb(Fl_Widget *w, void *data)
 {
   // save persistent info to disk
   if(CTX::instance()->sessionSave)
-    PrintOptions(0, GMSH_SESSIONRC, 0, 0,
-                 (CTX::instance()->homeDir +
-                  CTX::instance()->sessionFileName).c_str());
+    PrintOptions(
+      0, GMSH_SESSIONRC, 0, 0,
+      (CTX::instance()->homeDir + CTX::instance()->sessionFileName).c_str());
   if(CTX::instance()->optionsSave == 1)
-    PrintOptions(0, GMSH_OPTIONSRC, 1, 0,
-                 (CTX::instance()->homeDir +
-                  CTX::instance()->optionsFileName).c_str());
-  else if(CTX::instance()->optionsSave == 2){
+    PrintOptions(
+      0, GMSH_OPTIONSRC, 1, 0,
+      (CTX::instance()->homeDir + CTX::instance()->optionsFileName).c_str());
+  else if(CTX::instance()->optionsSave == 2) {
     std::string fileName = GModel::current()->getFileName() + ".opt";
     PrintOptions(0, GMSH_FULLRC, 1, 0, fileName.c_str());
   }
@@ -1862,6 +1862,16 @@ static void geometry_elementary_boolean_cb(Fl_Widget *w, void *data)
     char ib = FlGui::instance()->selectEntity(type);
     if(!FlGui::available()) return;
     if(ib == 'l') {
+      for(std::size_t i = 0; i < FlGui::instance()->selectedVertices.size(); i++) {
+        if(FlGui::instance()->selectedVertices[i]->getSelection() != 1) {
+          FlGui::instance()->selectedVertices[i]->setSelection(1);
+          std::pair<int, int> t(0, FlGui::instance()->selectedVertices[i]->tag());
+          if(selectObject)
+            object.push_back(t);
+          else
+            tool.push_back(t);
+        }
+      }
       for(std::size_t i = 0; i < FlGui::instance()->selectedEdges.size(); i++) {
         if(FlGui::instance()->selectedEdges[i]->getSelection() != 1) {
           FlGui::instance()->selectedEdges[i]->setSelection(1);
@@ -2376,6 +2386,14 @@ static void mesh_optimize_quad_topo_cb(Fl_Widget *w, void *data)
   drawContext::global()->draw();
 }
 
+static void mesh_untangle_cb(Fl_Widget *w, void *data)
+{
+  CTX::instance()->lock = 1;
+  GModel::current()->optimizeMesh("UntangleMeshGeometry");
+  CTX::instance()->lock = 0;
+  drawContext::global()->draw();
+}
+
 static void mesh_cross_compute_cb(Fl_Widget *w, void *data)
 {
   std::vector<int> tags;
@@ -2385,7 +2403,8 @@ static void mesh_cross_compute_cb(Fl_Widget *w, void *data)
 
 static void mesh_refine_cb(Fl_Widget *w, void *data)
 {
-  GModel::current()->refineMesh(CTX::instance()->mesh.secondOrderLinear);
+  GModel::current()->refineMesh(CTX::instance()->mesh.secondOrderLinear,
+                                CTX::instance()->mesh.algoSubdivide);
   drawContext::global()->draw();
 }
 
@@ -4666,6 +4685,8 @@ static menuItem static_modules[] = {
 #endif
   {"0Modules/Mesh/Experimental/Optimize quad topology",
    (Fl_Callback *)mesh_optimize_quad_topo_cb},
+  {"0Modules/Mesh/Experimental/Untangle geometry",
+   (Fl_Callback *)mesh_untangle_cb},
   {"0Modules/Mesh/Reverse/Elements", (Fl_Callback *)mesh_reverse_parts_cb,
    (void *)"elements"},
   {"0Modules/Mesh/Reverse/Curves", (Fl_Callback *)mesh_reverse_parts_cb,
