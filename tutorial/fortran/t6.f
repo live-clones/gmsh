@@ -4,52 +4,50 @@ c   Gmsh Fortran tutorial 6
 c
 c   Transfinite meshes
 c
-c --------------------------------------------------------------------------- 
+c ---------------------------------------------------------------------------
 
       include 'gmshf.h'
 
-      program main      
-      use, intrinsic :: ISO_C_BINDING
+      program main
+      use, intrinsic :: iso_c_binding
       use gmsh_fortran
 
       implicit none
-      integer (C_INT) :: ierr, argc, itmp, i, status
-      integer (C_INT) :: p1, p2, l1, l2, l3
-      real (C_DOUBLE) :: lc
+      integer(c_int) :: ierr, argc, itmp, i, status, len
+      integer(c_int) :: p1, p2, l1, l2, l3
+      real(c_double) :: lc
 
-      integer (C_INT) :: cl1(4) = (/4,1,-2,3/)
-      integer (C_INT) :: cl2(6) = (/2, -1, 0, 0, 0, -3/)
-      integer (C_INT) :: cl3(4) = (/13, 10, 11, 12/)
-      integer (C_INT) :: s1(1) = (/1/)
-      integer (C_INT) :: s2(1) = (/-2/)
-      integer (C_INT) :: s3(1) = (/14/)
+      integer(c_int) :: cl1(4) = (/4, 1, -2, 3/)
+      integer(c_int) :: cl2(6) = (/2, -1, 0, 0, 0, -3/)
+      integer(c_int) :: cl3(4) = (/13, 10, 11, 12/)
+      integer(c_int) :: s1(1) = (/1/)
+      integer(c_int) :: s2(1) = (/-2/)
+      integer(c_int) :: s3(1) = (/14/)
 
-      integer (C_INT) :: r4(4) = (/2, 1, 1, 4/)
-      integer (C_INT) :: ts(4) = (/1, 2, 3, 4/)
+      integer(c_int) :: r4(4) = (/2, 1, 1, 4/)
+      integer(c_int) :: ts(4) = (/1, 2, 3, 4/)
 
-      type (C_PTR), allocatable :: argv(:)
+      type(c_ptr), allocatable :: argv(:)
 
-      TYPE string
-        CHARACTER (LEN=:,KIND=C_CHAR), ALLOCATABLE :: item
-        END TYPE string
-      TYPE (string), ALLOCATABLE, TARGET :: tmp(:)
+      type string
+        character(len = :, kind = c_char), allocatable :: item
+      end type string
+      type(string), allocatable, target :: tmp(:)
 
-      character (80) :: buf
+      character(80) :: buf
 
-      lc=1d-2
+      lc = 1d - 2
 
-      argc = NARGS()
-      allocate(argv(argc+1))
-      if (argc > 0) then
-        allocate(tmp(argc))
-        endif
+      argc = command_argument_count()
+      allocate(argv(argc + 2))
+      allocate(tmp(argc + 1))
 
-      do i=1,argc
-        call GETARG(i-1, buf, status)
-        tmp(i)%item=TRIM(buf) // C_NULL_CHAR
-        argv(i)=C_LOC(tmp(i)%item)
-        enddo
-      argv(argc+1)=C_NULL_PTR
+      do i = 0, argc
+        call get_command_argument(i, buf, len)
+        tmp(i + 1) % item = buf(1 : len) // c_null_char
+        argv(i + 1) = c_loc(tmp(i + 1) % item)
+      enddo
+      argv(argc + 2) = c_null_ptr
 
       call gmshInitialize(argc, argv, 1, ierr)
 
@@ -65,10 +63,10 @@ c ---------------------------------------------------------------------------
       itmp = gmshModelGeoAddLine(3, 4, 3, ierr)
       itmp = gmshModelGeoAddLine(4, 1, 4, ierr)
 
-      itmp = gmshModelGeoAddCurveLoop(cl1, 4, 1, 0, ierr)
-      itmp = gmshModelGeoAddPlaneSurface(s1, 1, 1, ierr)
+      itmp = gmshModelGeoAddCurveLoop(cl1, 4_8, 1, 0, ierr)
+      itmp = gmshModelGeoAddPlaneSurface(s1, 1_8, 1, ierr)
 
-      call gmshModelGeoRemove(r4, 4, 0, ierr)
+      call gmshModelGeoRemove(r4, 4_8, 0, ierr)
 
       p1 = gmshModelGeoAddPoint(-0.05d0, 0.05d0, 0d0, lc, -1, ierr)
       p2 = gmshModelGeoAddPoint(-0.05d0, 0.1d0, 0d0, lc, -1, ierr)
@@ -80,23 +78,24 @@ c ---------------------------------------------------------------------------
       cl2(3) = l1
       cl2(4) = l2
       cl2(5) = l3
-      itmp = gmshModelGeoAddCurveLoop(cl2, 6, 2, 0, ierr)
-      itmp = gmshModelGeoAddPlaneSurface(s2, 1, 1, ierr)
+      itmp = gmshModelGeoAddCurveLoop(cl2, 6_8, 2, 0, ierr)
+      itmp = gmshModelGeoAddPlaneSurface(s2, 1_8, 1, ierr)
 
-      call gmshModelGeoMeshSetTransfiniteCurve(2, 20, "Progression", 
+      call gmshModelGeoMeshSetTransfiniteCurve(2, 20, "Progression",
      &                                         1d0, ierr)
-      call gmshModelGeoMeshSetTransfiniteCurve(l1, 6, "Progression", 
+      call gmshModelGeoMeshSetTransfiniteCurve(l1, 6, "Progression",
      &                                         1d0, ierr)
-      call gmshModelGeoMeshSetTransfiniteCurve(l2, 6, "Progression", 
+      call gmshModelGeoMeshSetTransfiniteCurve(l2, 6, "Progression",
      &                                         1d0, ierr)
-      call gmshModelGeoMeshSetTransfiniteCurve(l3, 10, "Progression", 
+      call gmshModelGeoMeshSetTransfiniteCurve(l3, 10, "Progression",
      &                                         1d0, ierr)
-      call gmshModelGeoMeshSetTransfiniteCurve(1, 30, "Progression", 
+      call gmshModelGeoMeshSetTransfiniteCurve(1, 30, "Progression",
      &                                         -1.2d0, ierr)
-      call gmshModelGeoMeshSetTransfiniteCurve(3, 30, "Progression", 
+      call gmshModelGeoMeshSetTransfiniteCurve(3, 30, "Progression",
      &                                         1.2d0, ierr)
 
-      call gmshModelGeoMeshSetTransfiniteSurface(1, "Left", ts, 4, ierr)
+      call gmshModelGeoMeshSetTransfiniteSurface(1, "Left", ts, 4_8,
+     &                                           ierr)
       call gmshModelGeoMeshSetRecombine(2, 1, 45d0, ierr)
 
       itmp = gmshModelGeoAddPoint(0.2d0, 0.2d0, 0d0, 1d0, 7, ierr)
@@ -110,26 +109,30 @@ c ---------------------------------------------------------------------------
       itmp = gmshModelGeoAddLine(10, 7, 12, ierr)
       itmp = gmshModelGeoAddLine(7, 8, 13, ierr)
 
-      itmp = gmshModelGeoAddCurveLoop(cl3, 4, 14, 0, ierr)
-      itmp = gmshModelGeoAddPlaneSurface(s3, 1, 15, ierr)
+      itmp = gmshModelGeoAddCurveLoop(cl3, 4_8, 14, 0, ierr)
+      itmp = gmshModelGeoAddPlaneSurface(s3, 1_8, 15, ierr)
 
       do i=10,13
-        call gmshModelGeoMeshSetTransfiniteCurve(i, 10, "Progression", 
+        call gmshModelGeoMeshSetTransfiniteCurve(i, 10, "Progression",
      &                                           1d0, ierr)
-        enddo 
+        enddo
 
-      call gmshModelGeoMeshSetTransfiniteSurface(15, "Left", ts, 0, 
+      call gmshModelGeoMeshSetTransfiniteSurface(15, "Left", ts, 0_8,
      &                                           ierr)
 
-      call gmshOptionSetNumber("Mesh.Smoothing", 100, ierr)
+      call gmshOptionSetNumber("Mesh.Smoothing", 100d0, ierr)
 
-      call gmshModelGeoSynchronize(ierr)                              
+      call gmshModelGeoSynchronize(ierr)
 
       call gmshModelMeshGenerate(2, ierr)
       call gmshWrite('t6.msh', ierr)
 
-c      call gmshFltkRun(ierr)
+c     call gmshFltkRun(ierr)
 
       call gmshFinalize(ierr)
+
+      deallocate(tmp)
+      deallocate(argv)
+
       stop
       end
