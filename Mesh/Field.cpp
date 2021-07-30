@@ -654,10 +654,11 @@ public:
   {
     Field *field = GModel::current()->getFields()->get(_inField);
     if(!field || _inField == id) return MAX_LC;
-    double r = ((*field)(x, y, z) - _dMin) / (_dMax - _dMin);
+    double d = (*field)(x, y, z);
+    if(_stopAtDistMax && d >= _dMax) return MAX_LC;
+    double r = (d - _dMin) / (_dMax - _dmin);
     r = std::max(std::min(r, 1.), 0.);
     double lc;
-    if(_stopAtDistMax && r >= 1.) { lc = MAX_LC; }
     else if(_sigmoid) {
       double s = exp(12. * r - 6.) / (1. + exp(12. * r - 6.));
       lc = _lcMin * (1. - s) + _lcMax * s;
