@@ -6,7 +6,7 @@ c   Transformations, extruded geometries, volumes
 c
 c ---------------------------------------------------------------------------
 
-      include 'gmshf.h'
+      include "gmshf.h"
 
       program main
       use, intrinsic :: iso_c_binding
@@ -72,9 +72,9 @@ c ---------------------------------------------------------------------------
       enddo
       argv(argc + 2) = c_null_ptr
 
-      call gmshInitialize(argc, argv, 1, ierr)
+      call gmshInitialize(argc + 1, argv, 1, ierr)
 
-      call gmshModelAdd('t2', ierr)
+      call gmshModelAdd("t2" // c_null_char, ierr)
 
       itmp = gmshModelGeoAddPoint(0d0, 0d0, 0d0, lc, 1, ierr)
       itmp = gmshModelGeoAddPoint(0.1d0, 0d0, 0d0, lc, 2, ierr)
@@ -92,7 +92,8 @@ c ---------------------------------------------------------------------------
       call gmshModelGeoSynchronize(ierr)
       itmp = gmshModelAddPhysicalGroup(1, g5, 3_8, 5, ierr)
       ps = gmshModelAddPhysicalGroup(2, g6, 1_8, -1, ierr)
-      call gmshModelSetPhysicalName(2, ps, 'My surface', ierr)
+      call gmshModelSetPhysicalName(2, ps, "My surface" // c_null_char,
+     &     ierr)
 
       itmp = gmshModelGeoAddPoint(0d0, 0.4d0, 0d0, lc, 5, ierr)
 
@@ -119,7 +120,7 @@ c ---------------------------------------------------------------------------
       call c_f_pointer(ov, pf_ov, [ov_n])
       call gmshModelGeoTranslate(pf_ov, ov_n, 0.12d0, 0d0, 0d0, ierr)
 
-      print *, 'New surfaces ', pf_ov(2), ' and ', pf_ov(4)
+      print *, "New surfaces ", pf_ov(2), " and ", pf_ov(4)
 
       itmp = gmshModelGeoAddPoint(0d0, 0.3d0, 0.12d0, lc, 100, ierr)
       itmp = gmshModelGeoAddPoint(0.1d0, 0.3d0, 0.12d0, lc, 101, ierr)
@@ -175,12 +176,13 @@ c ---------------------------------------------------------------------------
 
       itmp = gmshModelAddPhysicalGroup(3, g7, 2_8, 1, ierr)
 
-      call gmshModelSetPhysicalName(3, 1, 'The volume', ierr)
+      call gmshModelSetPhysicalName(3, 1, "The volume" // c_null_char,
+     &     ierr)
 
       call gmshModelMeshGenerate(3, ierr)
-      call gmshWrite('t2.msh', ierr)
+      call gmshWrite("t2.msh" // c_null_char, ierr)
 
-c      call gmshFltkRun(ierr)
+c     call gmshFltkRun(ierr)
 
       call gmshFinalize(ierr)
 

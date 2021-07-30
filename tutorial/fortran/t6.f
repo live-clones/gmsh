@@ -6,7 +6,7 @@ c   Transfinite meshes
 c
 c ---------------------------------------------------------------------------
 
-      include 'gmshf.h'
+      include "gmshf.h"
 
       program main
       use, intrinsic :: iso_c_binding
@@ -49,9 +49,9 @@ c ---------------------------------------------------------------------------
       enddo
       argv(argc + 2) = c_null_ptr
 
-      call gmshInitialize(argc, argv, 1, ierr)
+      call gmshInitialize(argc + 1, argv, 1, ierr)
 
-      call gmshModelAdd('t6', ierr)
+      call gmshModelAdd("t6" // c_null_char, ierr)
 
       itmp = gmshModelGeoAddPoint(0d0, 0d0, 0d0, lc, 1, ierr)
       itmp = gmshModelGeoAddPoint(0.1d0, 0d0, 0d0, lc, 2, ierr)
@@ -81,21 +81,21 @@ c ---------------------------------------------------------------------------
       itmp = gmshModelGeoAddCurveLoop(cl2, 6_8, 2, 0, ierr)
       itmp = gmshModelGeoAddPlaneSurface(s2, 1_8, 1, ierr)
 
-      call gmshModelGeoMeshSetTransfiniteCurve(2, 20, "Progression",
-     &                                         1d0, ierr)
-      call gmshModelGeoMeshSetTransfiniteCurve(l1, 6, "Progression",
-     &                                         1d0, ierr)
-      call gmshModelGeoMeshSetTransfiniteCurve(l2, 6, "Progression",
-     &                                         1d0, ierr)
-      call gmshModelGeoMeshSetTransfiniteCurve(l3, 10, "Progression",
-     &                                         1d0, ierr)
-      call gmshModelGeoMeshSetTransfiniteCurve(1, 30, "Progression",
-     &                                         -1.2d0, ierr)
-      call gmshModelGeoMeshSetTransfiniteCurve(3, 30, "Progression",
-     &                                         1.2d0, ierr)
+      call gmshModelGeoMeshSetTransfiniteCurve(2, 20,
+     &     "Progression" // c_null_char, 1d0, ierr)
+      call gmshModelGeoMeshSetTransfiniteCurve(l1, 6,
+     &     "Progression" // c_null_char, 1d0, ierr)
+      call gmshModelGeoMeshSetTransfiniteCurve(l2, 6,
+     &     "Progression" // c_null_char, 1d0, ierr)
+      call gmshModelGeoMeshSetTransfiniteCurve(l3, 10,
+     &     "Progression" // c_null_char, 1d0, ierr)
+      call gmshModelGeoMeshSetTransfiniteCurve(1, 30,
+     &     "Progression" // c_null_char, -1.2d0, ierr)
+      call gmshModelGeoMeshSetTransfiniteCurve(3, 30,
+     &     "Progression" // c_null_char, 1.2d0, ierr)
 
-      call gmshModelGeoMeshSetTransfiniteSurface(1, "Left", ts, 4_8,
-     &                                           ierr)
+      call gmshModelGeoMeshSetTransfiniteSurface(1,
+     &     "Left" // c_null_char, ts, 4_8, ierr)
       call gmshModelGeoMeshSetRecombine(2, 1, 45d0, ierr)
 
       itmp = gmshModelGeoAddPoint(0.2d0, 0.2d0, 0d0, 1d0, 7, ierr)
@@ -112,20 +112,21 @@ c ---------------------------------------------------------------------------
       itmp = gmshModelGeoAddCurveLoop(cl3, 4_8, 14, 0, ierr)
       itmp = gmshModelGeoAddPlaneSurface(s3, 1_8, 15, ierr)
 
-      do i=10,13
-        call gmshModelGeoMeshSetTransfiniteCurve(i, 10, "Progression",
-     &                                           1d0, ierr)
-        enddo
+      do i = 10, 13
+         call gmshModelGeoMeshSetTransfiniteCurve(i, 10,
+     &        "Progression" // c_null_char, 1d0, ierr)
+      enddo
 
-      call gmshModelGeoMeshSetTransfiniteSurface(15, "Left", ts, 0_8,
-     &                                           ierr)
+      call gmshModelGeoMeshSetTransfiniteSurface(15,
+     &     "Left" // c_null_char, ts, 0_8, ierr)
 
-      call gmshOptionSetNumber("Mesh.Smoothing", 100d0, ierr)
+      call gmshOptionSetNumber("Mesh.Smoothing" // c_null_char,
+     &     100d0, ierr)
 
       call gmshModelGeoSynchronize(ierr)
 
       call gmshModelMeshGenerate(2, ierr)
-      call gmshWrite('t6.msh', ierr)
+      call gmshWrite("t6.msh" // c_null_char, ierr)
 
 c     call gmshFltkRun(ierr)
 

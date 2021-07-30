@@ -6,7 +6,7 @@ c   Elementary entities (points, curves, surfaces), physical groups
 c
 c ---------------------------------------------------------------------------
 
-      include 'gmshf.h'
+      include "gmshf.h"
 
       program main
       use, intrinsic :: iso_c_binding
@@ -45,7 +45,7 @@ c ---------------------------------------------------------------------------
 
       call gmshInitialize(argc + 1, argv, 1, ierr)
 
-      call gmshModelAdd('t1', ierr)
+      call gmshModelAdd("t1" // c_null_char, ierr)
       itmp = gmshModelGeoAddPoint(0d0, 0d0, 0d0, lc, 1, ierr)
       itmp = gmshModelGeoAddPoint(0.1d0, 0d0, 0d0, lc, 2, ierr)
       itmp = gmshModelGeoAddPoint(0.1d0, 0.3d0, 0d0, lc, 3, ierr)
@@ -62,10 +62,11 @@ c ---------------------------------------------------------------------------
       call gmshModelGeoSynchronize(ierr)
       itmp = gmshModelAddPhysicalGroup(1, g5, 3_8, 5, ierr)
       ps = gmshModelAddPhysicalGroup(2, g6, 1_8, -1, ierr)
-      call gmshModelSetPhysicalName(2, ps, 'My surface', ierr)
+      call gmshModelSetPhysicalName(2, ps, "My surface" // c_null_char,
+     &     ierr)
 
       call gmshModelMeshGenerate(2, ierr)
-      call gmshWrite('t1.msh', ierr)
+      call gmshWrite("t1.msh" // c_null_char, ierr)
 
 c     call gmshFltkRun(ierr)
 
