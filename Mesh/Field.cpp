@@ -656,10 +656,10 @@ public:
     if(!field || _inField == id) return MAX_LC;
     double d = (*field)(x, y, z);
     if(_stopAtDistMax && d >= _dMax) return MAX_LC;
-    double r = (d - _dMin) / (_dMax - _dmin);
+    double r = (d - _dMin) / (_dMax - _dMin);
     r = std::max(std::min(r, 1.), 0.);
     double lc;
-    else if(_sigmoid) {
+    if(_sigmoid) {
       double s = exp(12. * r - 6.) / (1. + exp(12. * r - 6.));
       lc = _lcMin * (1. - s) + _lcMax * s;
     }
