@@ -1289,7 +1289,8 @@ void GetOptions(bool readConfigFiles, bool exitOnError)
         }
       }
       else if(argv[i] == "-version" || argv[i] == "--version") {
-        fprintf(stderr, "%s\n", GMSH_VERSION);
+        fprintf(stdout, "%s\n", GMSH_VERSION);
+        fflush(stdout);
         Msg::Exit(0);
       }
       else if(argv[i] == "-info" || argv[i] == "--info") {
