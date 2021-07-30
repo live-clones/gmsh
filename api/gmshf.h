@@ -24,10 +24,10 @@ c
 
       module gmsh_fortran
 
-        use, intrinsic :: ISO_C_BINDING
+        use, intrinsic :: iso_c_binding
 
-        character (len=5), parameter :: GMSH_API_VERSION = "4.9.0"
-        real (C_DOUBLE), parameter :: M_PI = 3.14159265358979323846d0
+        character(len = 5), parameter :: GMSH_API_VERSION = "4.9.0"
+        real(c_double), parameter::M_PI = 3.14159265358979323846d0
 
         interface
 
@@ -44,21 +44,21 @@ c
      &      argv,
      &      readConfigFiles,
      &      ierr)
-     &    bind(C,name="gmshInitialize")
-          use, intrinsic :: ISO_C_BINDING
+     &    bind(C, name = "gmshInitialize")
+          use, intrinsic :: iso_c_binding
             integer (C_INT), value :: argc
-            type (C_PTR) :: argv(*)
-            integer (C_INT), value :: readConfigFiles
-            integer (C_INT) :: ierr
+            type (C_PTR)::argv(*)
+            integer(c_int), value::readConfigFiles
+            integer(c_int)::ierr
           end subroutine gmshInitialize
 
 !  Finalize the Gmsh API. This must be called when you are done using the Gmsh
 !  API.
         subroutine gmshFinalize(
      &      ierr)
-     &    bind(C,name="gmshFinalize")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshFinalize")
+          use, intrinsic :: iso_c_binding
+            integer(c_int)::ierr
           end subroutine gmshFinalize
 
 !  Open a file. Equivalent to the `File->Open' menu in the Gmsh app. Handling
@@ -67,10 +67,10 @@ c
         subroutine gmshOpen(
      &      fileName,
      &      ierr)
-     &    bind(C,name="gmshOpen")
-          use, intrinsic :: ISO_C_BINDING
-            character (LEN=1,KIND=C_CHAR) :: fileName(*)
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshOpen")
+          use, intrinsic :: iso_c_binding
+            character(len = 1, kind = c_char)::fileName(*)
+            integer(c_int)::ierr
           end subroutine gmshOpen
 
 !  Merge a file. Equivalent to the `File->Merge' menu in the Gmsh app.
@@ -79,29 +79,29 @@ c
         subroutine gmshMerge(
      &      fileName,
      &      ierr)
-     &    bind(C,name="gmshMerge")
-          use, intrinsic :: ISO_C_BINDING
-            character (LEN=1,KIND=C_CHAR) :: fileName(*)
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshMerge")
+          use, intrinsic :: iso_c_binding
+            character(len = 1, kind = c_char)::fileName(*)
+            integer(c_int)::ierr
           end subroutine gmshMerge
 
 !  Write a file. The export format is determined by the file extension.
         subroutine gmshWrite(
      &      fileName,
      &      ierr)
-     &    bind(C,name="gmshWrite")
-          use, intrinsic :: ISO_C_BINDING
-            character (LEN=1,KIND=C_CHAR) :: fileName(*)
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshWrite")
+          use, intrinsic :: iso_c_binding
+            character(len = 1, kind = c_char)::fileName(*)
+            integer(c_int)::ierr
           end subroutine gmshWrite
 
 !  Clear all loaded models and post-processing data, and add a new empty
 !  model.
         subroutine gmshClear(
      &      ierr)
-     &    bind(C,name="gmshClear")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshClear")
+          use, intrinsic :: iso_c_binding
+            integer(c_int)::ierr
           end subroutine gmshClear
 
 !  Set a numerical option to `value'. `name' is of the form "category.option"
@@ -111,11 +111,11 @@ c
      &      name,
      &      value,
      &      ierr)
-     &    bind(C,name="gmshOptionSetNumber")
-          use, intrinsic :: ISO_C_BINDING
-            character (LEN=1,KIND=C_CHAR) :: name(*)
-            real (C_DOUBLE), value :: value
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshOptionSetNumber")
+          use, intrinsic :: iso_c_binding
+            character(len = 1, kind = c_char)::name(*)
+            real(c_double), value::value
+            integer(c_int)::ierr
           end subroutine gmshOptionSetNumber
 
 !  Get the `value' of a numerical option. `name' is of the form
@@ -125,11 +125,11 @@ c
      &      name,
      &      value,
      &      ierr)
-     &    bind(C,name="gmshOptionGetNumber")
-          use, intrinsic :: ISO_C_BINDING
-            character (LEN=1,KIND=C_CHAR) :: name(*)
-            real (C_DOUBLE) :: value
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshOptionGetNumber")
+          use, intrinsic :: iso_c_binding
+            character(len = 1, kind = c_char)::name(*)
+            real(c_double)::value
+            integer(c_int)::ierr
           end subroutine gmshOptionGetNumber
 
 !  Set a string option to `value'. `name' is of the form "category.option" or
@@ -139,11 +139,11 @@ c
      &      name,
      &      value,
      &      ierr)
-     &    bind(C,name="gmshOptionSetString")
-          use, intrinsic :: ISO_C_BINDING
-            character (LEN=1,KIND=C_CHAR) :: name(*)
-            character (LEN=1,KIND=C_CHAR) :: value(*)
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshOptionSetString")
+          use, intrinsic :: iso_c_binding
+            character(len = 1, kind = c_char)::name(*)
+            character(len = 1, kind = c_char)::value(*)
+            integer(c_int)::ierr
           end subroutine gmshOptionSetString
 
 !  Get the `value' of a string option. `name' is of the form "category.option"
@@ -153,11 +153,11 @@ c
      &      name,
      &      value,
      &      ierr)
-     &    bind(C,name="gmshOptionGetString")
-          use, intrinsic :: ISO_C_BINDING
-            character (LEN=1,KIND=C_CHAR) :: name(*)
-            type (C_PTR) :: value(*)
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshOptionGetString")
+          use, intrinsic :: iso_c_binding
+            character(len = 1, kind = c_char)::name(*)
+            type(c_ptr)::value(*)
+            integer(c_int)::ierr
           end subroutine gmshOptionGetString
 
 !  Set a color option to the RGBA value (`r', `g', `b', `a'), where where `r',
@@ -172,14 +172,14 @@ c
      &      b,
      &      a,
      &      ierr)
-     &    bind(C,name="gmshOptionSetColor")
-          use, intrinsic :: ISO_C_BINDING
-            character (LEN=1,KIND=C_CHAR) :: name(*)
-            integer (C_INT), value :: r
-            integer (C_INT), value :: g
-            integer (C_INT), value :: b
-            integer (C_INT), value :: a
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshOptionSetColor")
+          use, intrinsic :: iso_c_binding
+            character(len = 1, kind = c_char)::name(*)
+            integer(c_int), value::r
+            integer(c_int), value::g
+            integer(c_int), value::b
+            integer(c_int), value::a
+            integer(c_int)::ierr
           end subroutine gmshOptionSetColor
 
 !  Get the `r', `g', `b', `a' value of a color option. `name' is of the form
@@ -193,32 +193,32 @@ c
      &      b,
      &      a,
      &      ierr)
-     &    bind(C,name="gmshOptionGetColor")
-          use, intrinsic :: ISO_C_BINDING
-            character (LEN=1,KIND=C_CHAR) :: name(*)
-            integer (C_INT) :: r
-            integer (C_INT) :: g
-            integer (C_INT) :: b
-            integer (C_INT) :: a
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshOptionGetColor")
+          use, intrinsic :: iso_c_binding
+            character(len = 1, kind = c_char)::name(*)
+            integer(c_int)::r
+            integer(c_int)::g
+            integer(c_int)::b
+            integer(c_int)::a
+            integer(c_int)::ierr
           end subroutine gmshOptionGetColor
 
 !  Add a new model, with name `name', and set it as the current model.
         subroutine gmshModelAdd(
      &      name,
      &      ierr)
-     &    bind(C,name="gmshModelAdd")
-          use, intrinsic :: ISO_C_BINDING
-            character (LEN=1,KIND=C_CHAR) :: name(*)
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelAdd")
+          use, intrinsic :: iso_c_binding
+            character(len = 1, kind = c_char)::name(*)
+            integer(c_int)::ierr
           end subroutine gmshModelAdd
 
 !  Remove the current model.
         subroutine gmshModelRemove(
      &      ierr)
-     &    bind(C,name="gmshModelRemove")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelRemove")
+          use, intrinsic :: iso_c_binding
+            integer(c_int)::ierr
           end subroutine gmshModelRemove
 
 !  List the names of all models.
@@ -226,21 +226,21 @@ c
      &      names,
      &      names_n,
      &      ierr)
-     &    bind(C,name="gmshModelList")
-          use, intrinsic :: ISO_C_BINDING
-            type (C_PTR), intent(out) :: names
-            integer (C_SIZE_T) :: names_n
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelList")
+          use, intrinsic :: iso_c_binding
+            type(c_ptr), intent(out)::names
+            integer(c_size_t) :: names_n
+            integer(c_int)::ierr
           end subroutine gmshModelList
 
 !  Get the name of the current model.
         subroutine gmshModelGetCurrent(
      &      name,
      &      ierr)
-     &    bind(C,name="gmshModelGetCurrent")
-          use, intrinsic :: ISO_C_BINDING
-            type (C_PTR) :: name(*)
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelGetCurrent")
+          use, intrinsic :: iso_c_binding
+            type(c_ptr)::name(*)
+            integer(c_int)::ierr
           end subroutine gmshModelGetCurrent
 
 !  Set the current model to the model with name `name'. If several models have
@@ -248,10 +248,10 @@ c
         subroutine gmshModelSetCurrent(
      &      name,
      &      ierr)
-     &    bind(C,name="gmshModelSetCurrent")
-          use, intrinsic :: ISO_C_BINDING
-            character (LEN=1,KIND=C_CHAR) :: name(*)
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelSetCurrent")
+          use, intrinsic :: iso_c_binding
+            character(len = 1, kind = c_char)::name(*)
+            integer(c_int)::ierr
           end subroutine gmshModelSetCurrent
 
 !  Get the file name (if any) associated with the current model. A file name
@@ -259,20 +259,20 @@ c
         subroutine gmshModelGetFileName(
      &      fileName,
      &      ierr)
-     &    bind(C,name="gmshModelGetFileName")
-          use, intrinsic :: ISO_C_BINDING
-            type (C_PTR) :: fileName(*)
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelGetFileName")
+          use, intrinsic :: iso_c_binding
+            type(c_ptr)::fileName(*)
+            integer(c_int)::ierr
           end subroutine gmshModelGetFileName
 
 !  Set the file name associated with the current model.
         subroutine gmshModelSetFileName(
      &      fileName,
      &      ierr)
-     &    bind(C,name="gmshModelSetFileName")
-          use, intrinsic :: ISO_C_BINDING
-            character (LEN=1,KIND=C_CHAR) :: fileName(*)
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelSetFileName")
+          use, intrinsic :: iso_c_binding
+            character(len = 1, kind = c_char)::fileName(*)
+            integer(c_int)::ierr
           end subroutine gmshModelSetFileName
 
 !  Get all the entities in the current model. If `dim' is >= 0, return only
@@ -283,12 +283,12 @@ c
      &      dimTags_n,
      &      dim,
      &      ierr)
-     &    bind(C,name="gmshModelGetEntities")
-          use, intrinsic :: ISO_C_BINDING
-            type (C_PTR), intent(out) :: dimTags
-            integer (C_SIZE_T) :: dimTags_n
-            integer (C_INT), value :: dim
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelGetEntities")
+          use, intrinsic :: iso_c_binding
+            type(c_ptr), intent(out)::dimTags
+            integer(c_size_t) :: dimTags_n
+            integer(c_int), value::dim
+            integer(c_int)::ierr
           end subroutine gmshModelGetEntities
 
 !  Set the name of the entity of dimension `dim' and tag `tag'.
@@ -297,12 +297,12 @@ c
      &      tag,
      &      name,
      &      ierr)
-     &    bind(C,name="gmshModelSetEntityName")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: dim
-            integer (C_INT), value :: tag
-            character (LEN=1,KIND=C_CHAR) :: name(*)
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelSetEntityName")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::dim
+            integer(c_int), value::tag
+            character(len = 1, kind = c_char)::name(*)
+            integer(c_int)::ierr
           end subroutine gmshModelSetEntityName
 
 !  Get the name of the entity of dimension `dim' and tag `tag'.
@@ -311,12 +311,12 @@ c
      &      tag,
      &      name,
      &      ierr)
-     &    bind(C,name="gmshModelGetEntityName")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: dim
-            integer (C_INT), value :: tag
-            type (C_PTR) :: name(*)
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelGetEntityName")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::dim
+            integer(c_int), value::tag
+            type(c_ptr)::name(*)
+            integer(c_int)::ierr
           end subroutine gmshModelGetEntityName
 
 !  Get all the physical groups in the current model. If `dim' is >= 0, return
@@ -327,12 +327,12 @@ c
      &      dimTags_n,
      &      dim,
      &      ierr)
-     &    bind(C,name="gmshModelGetPhysicalGroups")
-          use, intrinsic :: ISO_C_BINDING
-            type (C_PTR), intent(out) :: dimTags
-            integer (C_SIZE_T) :: dimTags_n
-            integer (C_INT), value :: dim
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelGetPhysicalGroups")
+          use, intrinsic :: iso_c_binding
+            type(c_ptr), intent(out)::dimTags
+            integer(c_size_t) :: dimTags_n
+            integer(c_int), value::dim
+            integer(c_int)::ierr
           end subroutine gmshModelGetPhysicalGroups
 
 !  Get the tags of the model entities making up the physical group of
@@ -343,13 +343,13 @@ c
      &      tags,
      &      tags_n,
      &      ierr)
-     &    bind(C,name="gmshModelGetEntitiesForPhysicalGroup")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: dim
-            integer (C_INT), value :: tag
-            type (C_PTR), intent(out) :: tags
-            integer (C_SIZE_T) :: tags_n
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelGetEntitiesForPhysicalGroup")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::dim
+            integer(c_int), value::tag
+            type(c_ptr), intent(out)::tags
+            integer(c_size_t) :: tags_n
+            integer(c_int)::ierr
           end subroutine gmshModelGetEntitiesForPhysicalGroup
 
 !  Get the tags of the physical groups (if any) to which the model entity of
@@ -360,13 +360,13 @@ c
      &      physicalTags,
      &      physicalTags_n,
      &      ierr)
-     &    bind(C,name="gmshModelGetPhysicalGroupsForEntity")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: dim
-            integer (C_INT), value :: tag
-            type (C_PTR), intent(out) :: physicalTags
-            integer (C_SIZE_T) :: physicalTags_n
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelGetPhysicalGroupsForEntity")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::dim
+            integer(c_int), value::tag
+            type(c_ptr), intent(out)::physicalTags
+            integer(c_size_t) :: physicalTags_n
+            integer(c_int)::ierr
           end subroutine gmshModelGetPhysicalGroupsForEntity
 
 !  Add a physical group of dimension `dim', grouping the model entities with
@@ -378,14 +378,14 @@ c
      &      tags_n,
      &      tag,
      &      ierr)
-     &    bind(C,name="gmshModelAddPhysicalGroup")
-          use, intrinsic :: ISO_C_BINDING
-          integer (C_INT) :: gmshModelAddPhysicalGroup
-            integer (C_INT), value :: dim
-            integer (C_INT) :: tags(*)
-            integer (C_SIZE_T), value :: tags_n
-            integer (C_INT), value :: tag
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelAddPhysicalGroup")
+          use, intrinsic :: iso_c_binding
+          integer(c_int)::gmshModelAddPhysicalGroup
+            integer(c_int), value::dim
+            integer(c_int)::tags(*)
+            integer(c_size_t), value :: tags_n
+            integer(c_int), value::tag
+            integer(c_int)::ierr
           end function gmshModelAddPhysicalGroup
 
 !  Remove the physical groups `dimTags' from the current model. If `dimTags'
@@ -394,11 +394,11 @@ c
      &      dimTags,
      &      dimTags_n,
      &      ierr)
-     &    bind(C,name="gmshModelRemovePhysicalGroups")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT) :: dimTags(*)
-            integer (C_SIZE_T), value :: dimTags_n
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelRemovePhysicalGroups")
+          use, intrinsic :: iso_c_binding
+            integer(c_int)::dimTags(*)
+            integer(c_size_t), value :: dimTags_n
+            integer(c_int)::ierr
           end subroutine gmshModelRemovePhysicalGroups
 
 !  Set the name of the physical group of dimension `dim' and tag `tag'.
@@ -407,22 +407,22 @@ c
      &      tag,
      &      name,
      &      ierr)
-     &    bind(C,name="gmshModelSetPhysicalName")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: dim
-            integer (C_INT), value :: tag
-            character (LEN=1,KIND=C_CHAR) :: name(*)
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelSetPhysicalName")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::dim
+            integer(c_int), value::tag
+            character(len = 1, kind = c_char)::name(*)
+            integer(c_int)::ierr
           end subroutine gmshModelSetPhysicalName
 
 !  Remove the physical name `name' from the current model.
         subroutine gmshModelRemovePhysicalName(
      &      name,
      &      ierr)
-     &    bind(C,name="gmshModelRemovePhysicalName")
-          use, intrinsic :: ISO_C_BINDING
-            character (LEN=1,KIND=C_CHAR) :: name(*)
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelRemovePhysicalName")
+          use, intrinsic :: iso_c_binding
+            character(len = 1, kind = c_char)::name(*)
+            integer(c_int)::ierr
           end subroutine gmshModelRemovePhysicalName
 
 !  Get the name of the physical group of dimension `dim' and tag `tag'.
@@ -431,12 +431,12 @@ c
      &      tag,
      &      name,
      &      ierr)
-     &    bind(C,name="gmshModelGetPhysicalName")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: dim
-            integer (C_INT), value :: tag
-            type (C_PTR) :: name(*)
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelGetPhysicalName")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::dim
+            integer(c_int), value::tag
+            type(c_ptr)::name(*)
+            integer(c_int)::ierr
           end subroutine gmshModelGetPhysicalName
 
 !  Get the boundary of the model entities `dimTags'. Return in `outDimTags'
@@ -454,16 +454,16 @@ c
      &      oriented,
      &      recursive,
      &      ierr)
-     &    bind(C,name="gmshModelGetBoundary")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT) :: dimTags(*)
-            integer (C_SIZE_T), value :: dimTags_n
-            type (C_PTR), intent(out) :: outDimTags
-            integer (C_SIZE_T) :: outDimTags_n
-            integer (C_INT), value :: combined
-            integer (C_INT), value :: oriented
-            integer (C_INT), value :: recursive
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelGetBoundary")
+          use, intrinsic :: iso_c_binding
+            integer(c_int)::dimTags(*)
+            integer(c_size_t), value :: dimTags_n
+            type(c_ptr), intent(out)::outDimTags
+            integer(c_size_t) :: outDimTags_n
+            integer(c_int), value::combined
+            integer(c_int), value::oriented
+            integer(c_int), value::recursive
+            integer(c_int)::ierr
           end subroutine gmshModelGetBoundary
 
 !  Get the upward and downward adjacencies of the model entity of dimension
@@ -478,15 +478,15 @@ c
      &      downward,
      &      downward_n,
      &      ierr)
-     &    bind(C,name="gmshModelGetAdjacencies")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: dim
-            integer (C_INT), value :: tag
-            type (C_PTR), intent(out) :: upward
-            integer (C_SIZE_T) :: upward_n
-            type (C_PTR), intent(out) :: downward
-            integer (C_SIZE_T) :: downward_n
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelGetAdjacencies")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::dim
+            integer(c_int), value::tag
+            type(c_ptr), intent(out)::upward
+            integer(c_size_t) :: upward_n
+            type(c_ptr), intent(out)::downward
+            integer(c_size_t) :: downward_n
+            integer(c_int)::ierr
           end subroutine gmshModelGetAdjacencies
 
 !  Get the model entities in the bounding box defined by the two points
@@ -504,18 +504,18 @@ c
      &      tags_n,
      &      dim,
      &      ierr)
-     &    bind(C,name="gmshModelGetEntitiesInBoundingBox")
-          use, intrinsic :: ISO_C_BINDING
-            real (C_DOUBLE), value :: xmin
-            real (C_DOUBLE), value :: ymin
-            real (C_DOUBLE), value :: zmin
-            real (C_DOUBLE), value :: xmax
-            real (C_DOUBLE), value :: ymax
-            real (C_DOUBLE), value :: zmax
-            type (C_PTR), intent(out) :: tags
-            integer (C_SIZE_T) :: tags_n
-            integer (C_INT), value :: dim
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelGetEntitiesInBoundingBox")
+          use, intrinsic :: iso_c_binding
+            real(c_double), value::xmin
+            real(c_double), value::ymin
+            real(c_double), value::zmin
+            real(c_double), value::xmax
+            real(c_double), value::ymax
+            real(c_double), value::zmax
+            type(c_ptr), intent(out)::tags
+            integer(c_size_t) :: tags_n
+            integer(c_int), value::dim
+            integer(c_int)::ierr
           end subroutine gmshModelGetEntitiesInBoundingBox
 
 !  Get the bounding box (`xmin', `ymin', `zmin'), (`xmax', `ymax', `zmax') of
@@ -531,26 +531,26 @@ c
      &      ymax,
      &      zmax,
      &      ierr)
-     &    bind(C,name="gmshModelGetBoundingBox")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: dim
-            integer (C_INT), value :: tag
-            real (C_DOUBLE) :: xmin
-            real (C_DOUBLE) :: ymin
-            real (C_DOUBLE) :: zmin
-            real (C_DOUBLE) :: xmax
-            real (C_DOUBLE) :: ymax
-            real (C_DOUBLE) :: zmax
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelGetBoundingBox")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::dim
+            integer(c_int), value::tag
+            real(c_double)::xmin
+            real(c_double)::ymin
+            real(c_double)::zmin
+            real(c_double)::xmax
+            real(c_double)::ymax
+            real(c_double)::zmax
+            integer(c_int)::ierr
           end subroutine gmshModelGetBoundingBox
 
 !  Get the geometrical dimension of the current model.
         function gmshModelGetDimension(
      &      ierr)
-     &    bind(C,name="gmshModelGetDimension")
-          use, intrinsic :: ISO_C_BINDING
-          integer (C_INT) :: gmshModelGetDimension
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelGetDimension")
+          use, intrinsic :: iso_c_binding
+          integer(c_int)::gmshModelGetDimension
+            integer(c_int)::ierr
           end function gmshModelGetDimension
 
 !  Add a discrete model entity (defined by a mesh) of dimension `dim' in the
@@ -564,14 +564,14 @@ c
      &      boundary,
      &      boundary_n,
      &      ierr)
-     &    bind(C,name="gmshModelAddDiscreteEntity")
-          use, intrinsic :: ISO_C_BINDING
-          integer (C_INT) :: gmshModelAddDiscreteEntity
-            integer (C_INT), value :: dim
-            integer (C_INT), value :: tag
-            integer (C_INT) :: boundary(*)
-            integer (C_SIZE_T), value :: boundary_n
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelAddDiscreteEntity")
+          use, intrinsic :: iso_c_binding
+          integer(c_int)::gmshModelAddDiscreteEntity
+            integer(c_int), value::dim
+            integer(c_int), value::tag
+            integer(c_int)::boundary(*)
+            integer(c_size_t), value :: boundary_n
+            integer(c_int)::ierr
           end function gmshModelAddDiscreteEntity
 
 !  Remove the entities `dimTags' of the current model, provided that they are
@@ -583,22 +583,22 @@ c
      &      dimTags_n,
      &      recursive,
      &      ierr)
-     &    bind(C,name="gmshModelRemoveEntities")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT) :: dimTags(*)
-            integer (C_SIZE_T), value :: dimTags_n
-            integer (C_INT), value :: recursive
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelRemoveEntities")
+          use, intrinsic :: iso_c_binding
+            integer(c_int)::dimTags(*)
+            integer(c_size_t), value :: dimTags_n
+            integer(c_int), value::recursive
+            integer(c_int)::ierr
           end subroutine gmshModelRemoveEntities
 
 !  Remove the entity name `name' from the current model.
         subroutine gmshModelRemoveEntityName(
      &      name,
      &      ierr)
-     &    bind(C,name="gmshModelRemoveEntityName")
-          use, intrinsic :: ISO_C_BINDING
-            character (LEN=1,KIND=C_CHAR) :: name(*)
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelRemoveEntityName")
+          use, intrinsic :: iso_c_binding
+            character(len = 1, kind = c_char)::name(*)
+            integer(c_int)::ierr
           end subroutine gmshModelRemoveEntityName
 
 !  Get the type of the entity of dimension `dim' and tag `tag'.
@@ -607,12 +607,12 @@ c
      &      tag,
      &      entityType,
      &      ierr)
-     &    bind(C,name="gmshModelGetType")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: dim
-            integer (C_INT), value :: tag
-            type (C_PTR) :: entityType(*)
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelGetType")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::dim
+            integer(c_int), value::tag
+            type(c_ptr)::entityType(*)
+            integer(c_int)::ierr
           end subroutine gmshModelGetType
 
 !  In a partitioned model, get the parent of the entity of dimension `dim' and
@@ -624,13 +624,13 @@ c
      &      parentDim,
      &      parentTag,
      &      ierr)
-     &    bind(C,name="gmshModelGetParent")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: dim
-            integer (C_INT), value :: tag
-            integer (C_INT) :: parentDim
-            integer (C_INT) :: parentTag
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelGetParent")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::dim
+            integer(c_int), value::tag
+            integer(c_int)::parentDim
+            integer(c_int)::parentTag
+            integer(c_int)::ierr
           end subroutine gmshModelGetParent
 
 !  In a partitioned model, return the tags of the partition(s) to which the
@@ -641,13 +641,13 @@ c
      &      partitions,
      &      partitions_n,
      &      ierr)
-     &    bind(C,name="gmshModelGetPartitions")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: dim
-            integer (C_INT), value :: tag
-            type (C_PTR), intent(out) :: partitions
-            integer (C_SIZE_T) :: partitions_n
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelGetPartitions")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::dim
+            integer(c_int), value::tag
+            type(c_ptr), intent(out)::partitions
+            integer(c_size_t) :: partitions_n
+            integer(c_int)::ierr
           end subroutine gmshModelGetPartitions
 
 !  Evaluate the parametrization of the entity of dimension `dim' and tag `tag'
@@ -665,15 +665,15 @@ c
      &      coord,
      &      coord_n,
      &      ierr)
-     &    bind(C,name="gmshModelGetValue")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: dim
-            integer (C_INT), value :: tag
-            real (C_DOUBLE) :: parametricCoord(*)
-            integer (C_SIZE_T), value :: parametricCoord_n
-            type (C_PTR), intent(out) :: coord
-            integer (C_SIZE_T) :: coord_n
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelGetValue")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::dim
+            integer(c_int), value::tag
+            real(c_double)::parametricCoord(*)
+            integer(c_size_t), value :: parametricCoord_n
+            type(c_ptr), intent(out)::coord
+            integer(c_size_t) :: coord_n
+            integer(c_int)::ierr
           end subroutine gmshModelGetValue
 
 !  Evaluate the derivative of the parametrization of the entity of dimension
@@ -693,15 +693,15 @@ c
      &      derivatives,
      &      derivatives_n,
      &      ierr)
-     &    bind(C,name="gmshModelGetDerivative")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: dim
-            integer (C_INT), value :: tag
-            real (C_DOUBLE) :: parametricCoord(*)
-            integer (C_SIZE_T), value :: parametricCoord_n
-            type (C_PTR), intent(out) :: derivatives
-            integer (C_SIZE_T) :: derivatives_n
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelGetDerivative")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::dim
+            integer(c_int), value::tag
+            real(c_double)::parametricCoord(*)
+            integer(c_size_t), value :: parametricCoord_n
+            type(c_ptr), intent(out)::derivatives
+            integer(c_size_t) :: derivatives_n
+            integer(c_int)::ierr
           end subroutine gmshModelGetDerivative
 
 !  Evaluate the second derivative of the parametrization of the entity of
@@ -723,15 +723,15 @@ c
      &      derivatives,
      &      derivatives_n,
      &      ierr)
-     &    bind(C,name="gmshModelGetSecondDerivative")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: dim
-            integer (C_INT), value :: tag
-            real (C_DOUBLE) :: parametricCoord(*)
-            integer (C_SIZE_T), value :: parametricCoord_n
-            type (C_PTR), intent(out) :: derivatives
-            integer (C_SIZE_T) :: derivatives_n
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelGetSecondDerivative")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::dim
+            integer(c_int), value::tag
+            real(c_double)::parametricCoord(*)
+            integer(c_size_t), value :: parametricCoord_n
+            type(c_ptr), intent(out)::derivatives
+            integer(c_size_t) :: derivatives_n
+            integer(c_int)::ierr
           end subroutine gmshModelGetSecondDerivative
 
 !  Evaluate the (maximum) curvature of the entity of dimension `dim' and tag
@@ -747,15 +747,15 @@ c
      &      curvatures,
      &      curvatures_n,
      &      ierr)
-     &    bind(C,name="gmshModelGetCurvature")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: dim
-            integer (C_INT), value :: tag
-            real (C_DOUBLE) :: parametricCoord(*)
-            integer (C_SIZE_T), value :: parametricCoord_n
-            type (C_PTR), intent(out) :: curvatures
-            integer (C_SIZE_T) :: curvatures_n
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelGetCurvature")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::dim
+            integer(c_int), value::tag
+            real(c_double)::parametricCoord(*)
+            integer(c_size_t), value :: parametricCoord_n
+            type(c_ptr), intent(out)::curvatures
+            integer(c_size_t) :: curvatures_n
+            integer(c_int)::ierr
           end subroutine gmshModelGetCurvature
 
 !  Evaluate the principal curvatures of the surface with tag `tag' at the
@@ -775,20 +775,20 @@ c
      &      directionMin,
      &      directionMin_n,
      &      ierr)
-     &    bind(C,name="gmshModelGetPrincipalCurvatures")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: tag
-            real (C_DOUBLE) :: parametricCoord(*)
-            integer (C_SIZE_T), value :: parametricCoord_n
-            type (C_PTR), intent(out) :: curvatureMax
-            integer (C_SIZE_T) :: curvatureMax_n
-            type (C_PTR), intent(out) :: curvatureMin
-            integer (C_SIZE_T) :: curvatureMin_n
-            type (C_PTR), intent(out) :: directionMax
-            integer (C_SIZE_T) :: directionMax_n
-            type (C_PTR), intent(out) :: directionMin
-            integer (C_SIZE_T) :: directionMin_n
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelGetPrincipalCurvatures")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::tag
+            real(c_double)::parametricCoord(*)
+            integer(c_size_t), value :: parametricCoord_n
+            type(c_ptr), intent(out)::curvatureMax
+            integer(c_size_t) :: curvatureMax_n
+            type(c_ptr), intent(out)::curvatureMin
+            integer(c_size_t) :: curvatureMin_n
+            type(c_ptr), intent(out)::directionMax
+            integer(c_size_t) :: directionMax_n
+            type(c_ptr), intent(out)::directionMin
+            integer(c_size_t) :: directionMin_n
+            integer(c_int)::ierr
           end subroutine gmshModelGetPrincipalCurvatures
 
 !  Get the normal to the surface with tag `tag' at the parametric coordinates
@@ -802,14 +802,14 @@ c
      &      normals,
      &      normals_n,
      &      ierr)
-     &    bind(C,name="gmshModelGetNormal")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: tag
-            real (C_DOUBLE) :: parametricCoord(*)
-            integer (C_SIZE_T), value :: parametricCoord_n
-            type (C_PTR), intent(out) :: normals
-            integer (C_SIZE_T) :: normals_n
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelGetNormal")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::tag
+            real(c_double)::parametricCoord(*)
+            integer(c_size_t), value :: parametricCoord_n
+            type(c_ptr), intent(out)::normals
+            integer(c_size_t) :: normals_n
+            integer(c_int)::ierr
           end subroutine gmshModelGetNormal
 
 !  Get the parametric coordinates `parametricCoord' for the points `coord' on
@@ -826,15 +826,15 @@ c
      &      parametricCoord,
      &      parametricCoord_n,
      &      ierr)
-     &    bind(C,name="gmshModelGetParametrization")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: dim
-            integer (C_INT), value :: tag
-            real (C_DOUBLE) :: coord(*)
-            integer (C_SIZE_T), value :: coord_n
-            type (C_PTR), intent(out) :: parametricCoord
-            integer (C_SIZE_T) :: parametricCoord_n
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelGetParametrization")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::dim
+            integer(c_int), value::tag
+            real(c_double)::coord(*)
+            integer(c_size_t), value :: coord_n
+            type(c_ptr), intent(out)::parametricCoord
+            integer(c_size_t) :: parametricCoord_n
+            integer(c_int)::ierr
           end subroutine gmshModelGetParametrization
 
 !  Get the `min' and `max' bounds of the parametric coordinates for the entity
@@ -847,15 +847,15 @@ c
      &      max,
      &      max_n,
      &      ierr)
-     &    bind(C,name="gmshModelGetParametrizationBounds")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: dim
-            integer (C_INT), value :: tag
-            type (C_PTR), intent(out) :: min
-            integer (C_SIZE_T) :: min_n
-            type (C_PTR), intent(out) :: max
-            integer (C_SIZE_T) :: max_n
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelGetParametrizationBounds")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::dim
+            integer(c_int), value::tag
+            type(c_ptr), intent(out)::min
+            integer(c_size_t) :: min_n
+            type(c_ptr), intent(out)::max
+            integer(c_size_t) :: max_n
+            integer(c_int)::ierr
           end subroutine gmshModelGetParametrizationBounds
 
 !  Check if the coordinates (or the parametric coordinates if `parametric' is
@@ -870,15 +870,15 @@ c
      &      coord_n,
      &      parametric,
      &      ierr)
-     &    bind(C,name="gmshModelIsInside")
-          use, intrinsic :: ISO_C_BINDING
-          integer (C_INT) :: gmshModelIsInside
-            integer (C_INT), value :: dim
-            integer (C_INT), value :: tag
-            real (C_DOUBLE) :: coord(*)
-            integer (C_SIZE_T), value :: coord_n
-            integer (C_INT), value :: parametric
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelIsInside")
+          use, intrinsic :: iso_c_binding
+          integer(c_int)::gmshModelIsInside
+            integer(c_int), value::dim
+            integer(c_int), value::tag
+            real(c_double)::coord(*)
+            integer(c_size_t), value :: coord_n
+            integer(c_int), value::parametric
+            integer(c_int)::ierr
           end function gmshModelIsInside
 
 !  Get the points `closestCoord' on the entity of dimension `dim' and tag
@@ -898,17 +898,17 @@ c
      &      parametricCoord,
      &      parametricCoord_n,
      &      ierr)
-     &    bind(C,name="gmshModelGetClosestPoint")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: dim
-            integer (C_INT), value :: tag
-            real (C_DOUBLE) :: coord(*)
-            integer (C_SIZE_T), value :: coord_n
-            type (C_PTR), intent(out) :: closestCoord
-            integer (C_SIZE_T) :: closestCoord_n
-            type (C_PTR), intent(out) :: parametricCoord
-            integer (C_SIZE_T) :: parametricCoord_n
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelGetClosestPoint")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::dim
+            integer(c_int), value::tag
+            real(c_double)::coord(*)
+            integer(c_size_t), value :: coord_n
+            type(c_ptr), intent(out)::closestCoord
+            integer(c_size_t) :: closestCoord_n
+            type(c_ptr), intent(out)::parametricCoord
+            integer(c_size_t) :: parametricCoord_n
+            integer(c_int)::ierr
           end subroutine gmshModelGetClosestPoint
 
 !  Reparametrize the boundary entity (point or curve, i.e. with `dim' == 0 or
@@ -927,17 +927,17 @@ c
      &      surfaceParametricCoord_n,
      &      which,
      &      ierr)
-     &    bind(C,name="gmshModelReparametrizeOnSurface")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: dim
-            integer (C_INT), value :: tag
-            real (C_DOUBLE) :: parametricCoord(*)
-            integer (C_SIZE_T), value :: parametricCoord_n
-            integer (C_INT), value :: surfaceTag
-            type (C_PTR), intent(out) :: surfaceParametricCoord
-            integer (C_SIZE_T) :: surfaceParametricCoord_n
-            integer (C_INT), value :: which
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelReparametrizeOnSurface")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::dim
+            integer(c_int), value::tag
+            real(c_double)::parametricCoord(*)
+            integer(c_size_t), value :: parametricCoord_n
+            integer(c_int), value::surfaceTag
+            type(c_ptr), intent(out)::surfaceParametricCoord
+            integer(c_size_t) :: surfaceParametricCoord_n
+            integer(c_int), value::which
+            integer(c_int)::ierr
           end subroutine gmshModelReparametrizeOnSurface
 
 !  Set the visibility of the model entities `dimTags' to `value'. Apply the
@@ -948,13 +948,13 @@ c
      &      value,
      &      recursive,
      &      ierr)
-     &    bind(C,name="gmshModelSetVisibility")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT) :: dimTags(*)
-            integer (C_SIZE_T), value :: dimTags_n
-            integer (C_INT), value :: value
-            integer (C_INT), value :: recursive
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelSetVisibility")
+          use, intrinsic :: iso_c_binding
+            integer(c_int)::dimTags(*)
+            integer(c_size_t), value :: dimTags_n
+            integer(c_int), value::value
+            integer(c_int), value::recursive
+            integer(c_int)::ierr
           end subroutine gmshModelSetVisibility
 
 !  Get the visibility of the model entity of dimension `dim' and tag `tag'.
@@ -963,12 +963,12 @@ c
      &      tag,
      &      value,
      &      ierr)
-     &    bind(C,name="gmshModelGetVisibility")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: dim
-            integer (C_INT), value :: tag
-            integer (C_INT) :: value
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelGetVisibility")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::dim
+            integer(c_int), value::tag
+            integer(c_int)::value
+            integer(c_int)::ierr
           end subroutine gmshModelGetVisibility
 
 !  Set the global visibility of the model per window to `value', where
@@ -977,11 +977,11 @@ c
      &      value,
      &      windowIndex,
      &      ierr)
-     &    bind(C,name="gmshModelSetVisibilityPerWindow")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: value
-            integer (C_INT), value :: windowIndex
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelSetVisibilityPerWindow")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::value
+            integer(c_int), value::windowIndex
+            integer(c_int)::ierr
           end subroutine gmshModelSetVisibilityPerWindow
 
 !  Set the color of the model entities `dimTags' to the RGBA value (`r', `g',
@@ -996,16 +996,16 @@ c
      &      a,
      &      recursive,
      &      ierr)
-     &    bind(C,name="gmshModelSetColor")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT) :: dimTags(*)
-            integer (C_SIZE_T), value :: dimTags_n
-            integer (C_INT), value :: r
-            integer (C_INT), value :: g
-            integer (C_INT), value :: b
-            integer (C_INT), value :: a
-            integer (C_INT), value :: recursive
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelSetColor")
+          use, intrinsic :: iso_c_binding
+            integer(c_int)::dimTags(*)
+            integer(c_size_t), value :: dimTags_n
+            integer(c_int), value::r
+            integer(c_int), value::g
+            integer(c_int), value::b
+            integer(c_int), value::a
+            integer(c_int), value::recursive
+            integer(c_int)::ierr
           end subroutine gmshModelSetColor
 
 !  Get the color of the model entity of dimension `dim' and tag `tag'.
@@ -1017,15 +1017,15 @@ c
      &      b,
      &      a,
      &      ierr)
-     &    bind(C,name="gmshModelGetColor")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: dim
-            integer (C_INT), value :: tag
-            integer (C_INT) :: r
-            integer (C_INT) :: g
-            integer (C_INT) :: b
-            integer (C_INT) :: a
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelGetColor")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::dim
+            integer(c_int), value::tag
+            integer(c_int)::r
+            integer(c_int)::g
+            integer(c_int)::b
+            integer(c_int)::a
+            integer(c_int)::ierr
           end subroutine gmshModelGetColor
 
 !  Set the `x', `y', `z' coordinates of a geometrical point.
@@ -1035,23 +1035,23 @@ c
      &      y,
      &      z,
      &      ierr)
-     &    bind(C,name="gmshModelSetCoordinates")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: tag
-            real (C_DOUBLE), value :: x
-            real (C_DOUBLE), value :: y
-            real (C_DOUBLE), value :: z
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelSetCoordinates")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::tag
+            real(c_double), value::x
+            real(c_double), value::y
+            real(c_double), value::z
+            integer(c_int)::ierr
           end subroutine gmshModelSetCoordinates
 
 !  Generate a mesh of the current model, up to dimension `dim' (0, 1, 2 or 3).
         subroutine gmshModelMeshGenerate(
      &      dim,
      &      ierr)
-     &    bind(C,name="gmshModelMeshGenerate")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: dim
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshGenerate")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::dim
+            integer(c_int)::ierr
           end subroutine gmshModelMeshGenerate
 
 !  Partition the mesh of the current model into `numPart' partitions.
@@ -1064,22 +1064,22 @@ c
      &      partitions,
      &      partitions_n,
      &      ierr)
-     &    bind(C,name="gmshModelMeshPartition")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: numPart
-            integer (C_SIZE_T) :: elementTags(*)
-            integer (C_SIZE_T), value :: elementTags_n
-            integer (C_INT) :: partitions(*)
-            integer (C_SIZE_T), value :: partitions_n
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshPartition")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::numPart
+            integer(c_size_t)::elementTags(*)
+            integer(c_size_t), value :: elementTags_n
+            integer(c_int)::partitions(*)
+            integer(c_size_t), value :: partitions_n
+            integer(c_int)::ierr
           end subroutine gmshModelMeshPartition
 
 !  Unpartition the mesh of the current model.
         subroutine gmshModelMeshUnpartition(
      &      ierr)
-     &    bind(C,name="gmshModelMeshUnpartition")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshUnpartition")
+          use, intrinsic :: iso_c_binding
+            integer(c_int)::ierr
           end subroutine gmshModelMeshUnpartition
 
 !  Optimize the mesh of the current model using `method' (empty for default
@@ -1096,40 +1096,40 @@ c
      &      dimTags,
      &      dimTags_n,
      &      ierr)
-     &    bind(C,name="gmshModelMeshOptimize")
-          use, intrinsic :: ISO_C_BINDING
-            character (LEN=1,KIND=C_CHAR) :: method(*)
-            integer (C_INT), value :: force
-            integer (C_INT), value :: niter
-            integer (C_INT) :: dimTags(*)
-            integer (C_SIZE_T), value :: dimTags_n
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshOptimize")
+          use, intrinsic :: iso_c_binding
+            character(len = 1, kind = c_char)::method(*)
+            integer(c_int), value::force
+            integer(c_int), value::niter
+            integer(c_int)::dimTags(*)
+            integer(c_size_t), value :: dimTags_n
+            integer(c_int)::ierr
           end subroutine gmshModelMeshOptimize
 
 !  Recombine the mesh of the current model.
         subroutine gmshModelMeshRecombine(
      &      ierr)
-     &    bind(C,name="gmshModelMeshRecombine")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshRecombine")
+          use, intrinsic :: iso_c_binding
+            integer(c_int)::ierr
           end subroutine gmshModelMeshRecombine
 
 !  Refine the mesh of the current model by uniformly splitting the elements.
         subroutine gmshModelMeshRefine(
      &      ierr)
-     &    bind(C,name="gmshModelMeshRefine")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshRefine")
+          use, intrinsic :: iso_c_binding
+            integer(c_int)::ierr
           end subroutine gmshModelMeshRefine
 
 !  Set the order of the elements in the mesh of the current model to `order'.
         subroutine gmshModelMeshSetOrder(
      &      order,
      &      ierr)
-     &    bind(C,name="gmshModelMeshSetOrder")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: order
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshSetOrder")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::order
+            integer(c_int)::ierr
           end subroutine gmshModelMeshSetOrder
 
 !  Get the last entities (if any) where a meshing error occurred. Currently
@@ -1138,11 +1138,11 @@ c
      &      dimTags,
      &      dimTags_n,
      &      ierr)
-     &    bind(C,name="gmshModelMeshGetLastEntityError")
-          use, intrinsic :: ISO_C_BINDING
-            type (C_PTR), intent(out) :: dimTags
-            integer (C_SIZE_T) :: dimTags_n
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshGetLastEntityError")
+          use, intrinsic :: iso_c_binding
+            type(c_ptr), intent(out)::dimTags
+            integer(c_size_t) :: dimTags_n
+            integer(c_int)::ierr
           end subroutine gmshModelMeshGetLastEntityError
 
 !  Get the last nodes (if any) where a meshing error occurred. Currently only
@@ -1151,11 +1151,11 @@ c
      &      nodeTags,
      &      nodeTags_n,
      &      ierr)
-     &    bind(C,name="gmshModelMeshGetLastNodeError")
-          use, intrinsic :: ISO_C_BINDING
-            type (C_PTR), intent(out) :: nodeTags
-            integer (C_SIZE_T) :: nodeTags_n
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshGetLastNodeError")
+          use, intrinsic :: iso_c_binding
+            type(c_ptr), intent(out)::nodeTags
+            integer(c_size_t) :: nodeTags_n
+            integer(c_int)::ierr
           end subroutine gmshModelMeshGetLastNodeError
 
 !  Clear the mesh, i.e. delete all the nodes and elements, for the entities
@@ -1166,11 +1166,11 @@ c
      &      dimTags,
      &      dimTags_n,
      &      ierr)
-     &    bind(C,name="gmshModelMeshClear")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT) :: dimTags(*)
-            integer (C_SIZE_T), value :: dimTags_n
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshClear")
+          use, intrinsic :: iso_c_binding
+            integer(c_int)::dimTags(*)
+            integer(c_size_t), value :: dimTags_n
+            integer(c_int)::ierr
           end subroutine gmshModelMeshClear
 
 !  Reverse the orientation of the elements in the entities `dimTags'. If
@@ -1180,11 +1180,11 @@ c
      &      dimTags,
      &      dimTags_n,
      &      ierr)
-     &    bind(C,name="gmshModelMeshReverse")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT) :: dimTags(*)
-            integer (C_SIZE_T), value :: dimTags_n
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshReverse")
+          use, intrinsic :: iso_c_binding
+            integer(c_int)::dimTags(*)
+            integer(c_size_t), value :: dimTags_n
+            integer(c_int)::ierr
           end subroutine gmshModelMeshReverse
 
 !  Apply the affine transformation `affineTransform' (16 entries of a 4x4
@@ -1197,13 +1197,13 @@ c
      &      dimTags,
      &      dimTags_n,
      &      ierr)
-     &    bind(C,name="gmshModelMeshAffineTransform")
-          use, intrinsic :: ISO_C_BINDING
-            real (C_DOUBLE) :: affineTransform(*)
-            integer (C_SIZE_T), value :: affineTransform_n
-            integer (C_INT) :: dimTags(*)
-            integer (C_SIZE_T), value :: dimTags_n
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshAffineTransform")
+          use, intrinsic :: iso_c_binding
+            real(c_double)::affineTransform(*)
+            integer(c_size_t), value :: affineTransform_n
+            integer(c_int)::dimTags(*)
+            integer(c_size_t), value :: dimTags_n
+            integer(c_int)::ierr
           end subroutine gmshModelMeshAffineTransform
 
 !  Get the nodes classified on the entity of dimension `dim' and tag `tag'. If
@@ -1231,19 +1231,19 @@ c
      &      includeBoundary,
      &      returnParametricCoord,
      &      ierr)
-     &    bind(C,name="gmshModelMeshGetNodes")
-          use, intrinsic :: ISO_C_BINDING
-            type (C_PTR), intent(out) :: nodeTags
-            integer (C_SIZE_T) :: nodeTags_n
-            type (C_PTR), intent(out) :: coord
-            integer (C_SIZE_T) :: coord_n
-            type (C_PTR), intent(out) :: parametricCoord
-            integer (C_SIZE_T) :: parametricCoord_n
-            integer (C_INT), value :: dim
-            integer (C_INT), value :: tag
-            integer (C_INT), value :: includeBoundary
-            integer (C_INT), value :: returnParametricCoord
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshGetNodes")
+          use, intrinsic :: iso_c_binding
+            type(c_ptr), intent(out)::nodeTags
+            integer(c_size_t) :: nodeTags_n
+            type(c_ptr), intent(out)::coord
+            integer(c_size_t) :: coord_n
+            type(c_ptr), intent(out)::parametricCoord
+            integer(c_size_t) :: parametricCoord_n
+            integer(c_int), value::dim
+            integer(c_int), value::tag
+            integer(c_int), value::includeBoundary
+            integer(c_int), value::returnParametricCoord
+            integer(c_int)::ierr
           end subroutine gmshModelMeshGetNodes
 
 !  Get the nodes classified on the entity of tag `tag', for all the elements
@@ -1259,18 +1259,18 @@ c
      &      tag,
      &      returnParametricCoord,
      &      ierr)
-     &    bind(C,name="gmshModelMeshGetNodesByElementType")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: elementType
-            type (C_PTR), intent(out) :: nodeTags
-            integer (C_SIZE_T) :: nodeTags_n
-            type (C_PTR), intent(out) :: coord
-            integer (C_SIZE_T) :: coord_n
-            type (C_PTR), intent(out) :: parametricCoord
-            integer (C_SIZE_T) :: parametricCoord_n
-            integer (C_INT), value :: tag
-            integer (C_INT), value :: returnParametricCoord
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshGetNodesByElementType")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::elementType
+            type(c_ptr), intent(out)::nodeTags
+            integer(c_size_t) :: nodeTags_n
+            type(c_ptr), intent(out)::coord
+            integer(c_size_t) :: coord_n
+            type(c_ptr), intent(out)::parametricCoord
+            integer(c_size_t) :: parametricCoord_n
+            integer(c_int), value::tag
+            integer(c_int), value::returnParametricCoord
+            integer(c_int)::ierr
           end subroutine gmshModelMeshGetNodesByElementType
 
 !  Get the coordinates and the parametric coordinates (if any) of the node
@@ -1287,16 +1287,16 @@ c
      &      dim,
      &      tag,
      &      ierr)
-     &    bind(C,name="gmshModelMeshGetNode")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_SIZE_T), value :: nodeTag
-            type (C_PTR), intent(out) :: coord
-            integer (C_SIZE_T) :: coord_n
-            type (C_PTR), intent(out) :: parametricCoord
-            integer (C_SIZE_T) :: parametricCoord_n
-            integer (C_INT) :: dim
-            integer (C_INT) :: tag
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshGetNode")
+          use, intrinsic :: iso_c_binding
+            integer(c_size_t), value::nodeTag
+            type(c_ptr), intent(out)::coord
+            integer(c_size_t) :: coord_n
+            type(c_ptr), intent(out)::parametricCoord
+            integer(c_size_t) :: parametricCoord_n
+            integer(c_int)::dim
+            integer(c_int)::tag
+            integer(c_int)::ierr
           end subroutine gmshModelMeshGetNode
 
 !  Set the coordinates and the parametric coordinates (if any) of the node
@@ -1310,34 +1310,34 @@ c
      &      parametricCoord,
      &      parametricCoord_n,
      &      ierr)
-     &    bind(C,name="gmshModelMeshSetNode")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_SIZE_T), value :: nodeTag
-            real (C_DOUBLE) :: coord(*)
-            integer (C_SIZE_T), value :: coord_n
-            real (C_DOUBLE) :: parametricCoord(*)
-            integer (C_SIZE_T), value :: parametricCoord_n
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshSetNode")
+          use, intrinsic :: iso_c_binding
+            integer(c_size_t), value::nodeTag
+            real(c_double)::coord(*)
+            integer(c_size_t), value :: coord_n
+            real(c_double)::parametricCoord(*)
+            integer(c_size_t), value :: parametricCoord_n
+            integer(c_int)::ierr
           end subroutine gmshModelMeshSetNode
 
 !  Rebuild the node cache.
         subroutine gmshModelMeshRebuildNodeCache(
      &      onlyIfNecessary,
      &      ierr)
-     &    bind(C,name="gmshModelMeshRebuildNodeCache")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: onlyIfNecessary
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshRebuildNodeCache")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::onlyIfNecessary
+            integer(c_int)::ierr
           end subroutine gmshModelMeshRebuildNodeCache
 
 !  Rebuild the element cache.
         subroutine gmshModelMeshRebuildElementCache(
      &      onlyIfNecessary,
      &      ierr)
-     &    bind(C,name="gmshModelMeshRebuildElementCache")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: onlyIfNecessary
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshRebuildElementCache")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::onlyIfNecessary
+            integer(c_int)::ierr
           end subroutine gmshModelMeshRebuildElementCache
 
 !  Get the nodes from all the elements belonging to the physical group of
@@ -1352,15 +1352,15 @@ c
      &      coord,
      &      coord_n,
      &      ierr)
-     &    bind(C,name="gmshModelMeshGetNodesForPhysicalGroup")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: dim
-            integer (C_INT), value :: tag
-            type (C_PTR), intent(out) :: nodeTags
-            integer (C_SIZE_T) :: nodeTags_n
-            type (C_PTR), intent(out) :: coord
-            integer (C_SIZE_T) :: coord_n
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshGetNodesForPhysicalGroup")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::dim
+            integer(c_int), value::tag
+            type(c_ptr), intent(out)::nodeTags
+            integer(c_size_t) :: nodeTags_n
+            type(c_ptr), intent(out)::coord
+            integer(c_size_t) :: coord_n
+            integer(c_int)::ierr
           end subroutine gmshModelMeshGetNodesForPhysicalGroup
 
 !  Add nodes classified on the model entity of dimension `dim' and tag `tag'.
@@ -1382,17 +1382,17 @@ c
      &      parametricCoord,
      &      parametricCoord_n,
      &      ierr)
-     &    bind(C,name="gmshModelMeshAddNodes")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: dim
-            integer (C_INT), value :: tag
-            integer (C_SIZE_T) :: nodeTags(*)
-            integer (C_SIZE_T), value :: nodeTags_n
-            real (C_DOUBLE) :: coord(*)
-            integer (C_SIZE_T), value :: coord_n
-            real (C_DOUBLE) :: parametricCoord(*)
-            integer (C_SIZE_T), value :: parametricCoord_n
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshAddNodes")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::dim
+            integer(c_int), value::tag
+            integer(c_size_t)::nodeTags(*)
+            integer(c_size_t), value :: nodeTags_n
+            real(c_double)::coord(*)
+            integer(c_size_t), value :: coord_n
+            real(c_double)::parametricCoord(*)
+            integer(c_size_t), value :: parametricCoord_n
+            integer(c_int)::ierr
           end subroutine gmshModelMeshAddNodes
 
 !  Reclassify all nodes on their associated model entity, based on the
@@ -1401,9 +1401,9 @@ c
 !  surfaces, curves, etc. after the elements have been set.
         subroutine gmshModelMeshReclassifyNodes(
      &      ierr)
-     &    bind(C,name="gmshModelMeshReclassifyNodes")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshReclassifyNodes")
+          use, intrinsic :: iso_c_binding
+            integer(c_int)::ierr
           end subroutine gmshModelMeshReclassifyNodes
 
 !  Relocate the nodes classified on the entity of dimension `dim' and tag
@@ -1414,11 +1414,11 @@ c
      &      dim,
      &      tag,
      &      ierr)
-     &    bind(C,name="gmshModelMeshRelocateNodes")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: dim
-            integer (C_INT), value :: tag
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshRelocateNodes")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::dim
+            integer(c_int), value::tag
+            integer(c_int)::ierr
           end subroutine gmshModelMeshRelocateNodes
 
 !  Get the elements classified on the entity of dimension `dim' and tag `tag'.
@@ -1446,19 +1446,19 @@ c
      &      dim,
      &      tag,
      &      ierr)
-     &    bind(C,name="gmshModelMeshGetElements")
-          use, intrinsic :: ISO_C_BINDING
-            type (C_PTR), intent(out) :: elementTypes
-            integer (C_SIZE_T) :: elementTypes_n
-            type (C_PTR), intent(out) :: elementTags
-            type (C_PTR), intent(out) :: elementTags_n
-            integer (C_SIZE_T) :: elementTags_nn
-            type (C_PTR), intent(out) :: nodeTags
-            type (C_PTR), intent(out) :: nodeTags_n
-            integer (C_SIZE_T) :: nodeTags_nn
-            integer (C_INT), value :: dim
-            integer (C_INT), value :: tag
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshGetElements")
+          use, intrinsic :: iso_c_binding
+            type(c_ptr), intent(out)::elementTypes
+            integer(c_size_t) :: elementTypes_n
+            type (c_ptr), intent(out)::elementTags
+            type(c_ptr), intent(out) :: elementTags_n
+            integer(c_size_t) :: elementTags_nn
+            type (c_ptr), intent(out)::nodeTags
+            type(c_ptr), intent(out) :: nodeTags_n
+            integer(c_size_t) :: nodeTags_nn
+            integer(c_int), value::dim
+            integer(c_int), value::tag
+            integer(c_int)::ierr
           end subroutine gmshModelMeshGetElements
 
 !  Get the type and node tags of the element with tag `tag', as well as the
@@ -1474,15 +1474,15 @@ c
      &      dim,
      &      tag,
      &      ierr)
-     &    bind(C,name="gmshModelMeshGetElement")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_SIZE_T), value :: elementTag
-            integer (C_INT) :: elementType
-            type (C_PTR), intent(out) :: nodeTags
-            integer (C_SIZE_T) :: nodeTags_n
-            integer (C_INT) :: dim
-            integer (C_INT) :: tag
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshGetElement")
+          use, intrinsic :: iso_c_binding
+            integer(c_size_t), value::elementTag
+            integer(c_int)::elementType
+            type(c_ptr), intent(out)::nodeTags
+            integer(c_size_t) :: nodeTags_n
+            integer(c_int)::dim
+            integer(c_int)::tag
+            integer(c_int)::ierr
           end subroutine gmshModelMeshGetElement
 
 !  Search the mesh for an element located at coordinates (`x', `y', `z'). This
@@ -1505,21 +1505,21 @@ c
      &      dim,
      &      strict,
      &      ierr)
-     &    bind(C,name="gmshModelMeshGetElementByCoordinates")
-          use, intrinsic :: ISO_C_BINDING
-            real (C_DOUBLE), value :: x
-            real (C_DOUBLE), value :: y
-            real (C_DOUBLE), value :: z
-            integer (C_SIZE_T) :: elementTag
-            integer (C_INT) :: elementType
-            type (C_PTR), intent(out) :: nodeTags
-            integer (C_SIZE_T) :: nodeTags_n
-            real (C_DOUBLE) :: u
-            real (C_DOUBLE) :: v
-            real (C_DOUBLE) :: w
-            integer (C_INT), value :: dim
-            integer (C_INT), value :: strict
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshGetElementByCoordinates")
+          use, intrinsic :: iso_c_binding
+            real(c_double), value::x
+            real(c_double), value::y
+            real(c_double), value::z
+            integer(c_size_t)::elementTag
+            integer(c_int)::elementType
+            type(c_ptr), intent(out)::nodeTags
+            integer(c_size_t) :: nodeTags_n
+            real(c_double)::u
+            real(c_double)::v
+            real(c_double)::w
+            integer(c_int), value::dim
+            integer(c_int), value::strict
+            integer(c_int)::ierr
           end subroutine gmshModelMeshGetElementByCoordinates
 
 !  Search the mesh for element(s) located at coordinates (`x', `y', `z'). This
@@ -1537,16 +1537,16 @@ c
      &      dim,
      &      strict,
      &      ierr)
-     &    bind(C,name="gmshModelMeshGetElementsByCoordinates")
-          use, intrinsic :: ISO_C_BINDING
-            real (C_DOUBLE), value :: x
-            real (C_DOUBLE), value :: y
-            real (C_DOUBLE), value :: z
-            type (C_PTR), intent(out) :: elementTags
-            integer (C_SIZE_T) :: elementTags_n
-            integer (C_INT), value :: dim
-            integer (C_INT), value :: strict
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshGetElementsByCoordinates")
+          use, intrinsic :: iso_c_binding
+            real(c_double), value::x
+            real(c_double), value::y
+            real(c_double), value::z
+            type(c_ptr), intent(out)::elementTags
+            integer(c_size_t) :: elementTags_n
+            integer(c_int), value::dim
+            integer(c_int), value::strict
+            integer(c_int)::ierr
           end subroutine gmshModelMeshGetElementsByCoordinates
 
 !  Return the local coordinates (`u', `v', `w') within the element
@@ -1563,16 +1563,16 @@ c
      &      v,
      &      w,
      &      ierr)
-     &    bind(C,name="gmshModelMeshGetLocalCoordinatesInElement")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_SIZE_T), value :: elementTag
-            real (C_DOUBLE), value :: x
-            real (C_DOUBLE), value :: y
-            real (C_DOUBLE), value :: z
-            real (C_DOUBLE) :: u
-            real (C_DOUBLE) :: v
-            real (C_DOUBLE) :: w
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshGetLocalCoordinatesInElement")
+          use, intrinsic :: iso_c_binding
+            integer(c_size_t), value::elementTag
+            real(c_double), value::x
+            real(c_double), value::y
+            real(c_double), value::z
+            real(c_double)::u
+            real(c_double)::v
+            real(c_double)::w
+            integer(c_int)::ierr
           end subroutine gmshModelMeshGetLocalCoordinatesInElement
 
 !  Get the types of elements in the entity of dimension `dim' and tag `tag'.
@@ -1584,13 +1584,13 @@ c
      &      dim,
      &      tag,
      &      ierr)
-     &    bind(C,name="gmshModelMeshGetElementTypes")
-          use, intrinsic :: ISO_C_BINDING
-            type (C_PTR), intent(out) :: elementTypes
-            integer (C_SIZE_T) :: elementTypes_n
-            integer (C_INT), value :: dim
-            integer (C_INT), value :: tag
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshGetElementTypes")
+          use, intrinsic :: iso_c_binding
+            type(c_ptr), intent(out)::elementTypes
+            integer(c_size_t) :: elementTypes_n
+            integer(c_int), value::dim
+            integer(c_int), value::tag
+            integer(c_int)::ierr
           end subroutine gmshModelMeshGetElementTypes
 
 !  Return an element type given its family name `familyName' ("Point", "Line",
@@ -1602,13 +1602,13 @@ c
      &      order,
      &      serendip,
      &      ierr)
-     &    bind(C,name="gmshModelMeshGetElementType")
-          use, intrinsic :: ISO_C_BINDING
-          integer (C_INT) :: gmshModelMeshGetElementType
-            character (LEN=1,KIND=C_CHAR) :: familyName(*)
-            integer (C_INT), value :: order
-            integer (C_INT), value :: serendip
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshGetElementType")
+          use, intrinsic :: iso_c_binding
+          integer(c_int)::gmshModelMeshGetElementType
+            character(len = 1, kind = c_char)::familyName(*)
+            integer(c_int), value::order
+            integer(c_int), value::serendip
+            integer(c_int)::ierr
           end function gmshModelMeshGetElementType
 
 !  Get the properties of an element of type `elementType': its name
@@ -1626,17 +1626,17 @@ c
      &      localNodeCoord_n,
      &      numPrimaryNodes,
      &      ierr)
-     &    bind(C,name="gmshModelMeshGetElementProperties")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: elementType
-            type (C_PTR) :: elementName(*)
-            integer (C_INT) :: dim
-            integer (C_INT) :: order
-            integer (C_INT) :: numNodes
-            type (C_PTR), intent(out) :: localNodeCoord
-            integer (C_SIZE_T) :: localNodeCoord_n
-            integer (C_INT) :: numPrimaryNodes
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshGetElementProperties")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::elementType
+            type(c_ptr)::elementName(*)
+            integer(c_int)::dim
+            integer(c_int)::order
+            integer(c_int)::numNodes
+            type(c_ptr), intent(out)::localNodeCoord
+            integer(c_size_t) :: localNodeCoord_n
+            integer(c_int)::numPrimaryNodes
+            integer(c_int)::ierr
           end subroutine gmshModelMeshGetElementProperties
 
 !  Get the elements of type `elementType' classified on the entity of tag
@@ -1658,17 +1658,17 @@ c
      &      task,
      &      numTasks,
      &      ierr)
-     &    bind(C,name="gmshModelMeshGetElementsByType")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: elementType
-            type (C_PTR), intent(out) :: elementTags
-            integer (C_SIZE_T) :: elementTags_n
-            type (C_PTR), intent(out) :: nodeTags
-            integer (C_SIZE_T) :: nodeTags_n
-            integer (C_INT), value :: tag
-            integer (C_SIZE_T), value :: task
-            integer (C_SIZE_T), value :: numTasks
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshGetElementsByType")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::elementType
+            type(c_ptr), intent(out)::elementTags
+            integer(c_size_t) :: elementTags_n
+            type(c_ptr), intent(out)::nodeTags
+            integer(c_size_t) :: nodeTags_n
+            integer(c_int), value::tag
+            integer(c_size_t), value::task
+            integer(c_size_t), value::numTasks
+            integer(c_int)::ierr
           end subroutine gmshModelMeshGetElementsByType
 
 !  Preallocate data before calling `getElementsByType' with `numTasks' > 1.
@@ -1683,17 +1683,17 @@ c
      &      nodeTags_n,
      &      tag,
      &      ierr)
-     &    bind(C,name="gmshModelMeshPreallocateElementsByType")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: elementType
-            integer (C_INT), value :: elementTag
-            integer (C_INT), value :: nodeTag
-            type (C_PTR), intent(out) :: elementTags
-            integer (C_SIZE_T) :: elementTags_n
-            type (C_PTR), intent(out) :: nodeTags
-            integer (C_SIZE_T) :: nodeTags_n
-            integer (C_INT), value :: tag
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshPreallocateElementsByType")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::elementType
+            integer(c_int), value::elementTag
+            integer(c_int), value::nodeTag
+            type(c_ptr), intent(out)::elementTags
+            integer(c_size_t) :: elementTags_n
+            type(c_ptr), intent(out)::nodeTags
+            integer(c_size_t) :: nodeTags_n
+            integer(c_int), value::tag
+            integer(c_int)::ierr
           end subroutine gmshModelMeshPreallocateElementsByType
 
 !  Add elements classified on the entity of dimension `dim' and tag `tag'.
@@ -1718,19 +1718,19 @@ c
      &      nodeTags_n,
      &      nodeTags_nn,
      &      ierr)
-     &    bind(C,name="gmshModelMeshAddElements")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: dim
-            integer (C_INT), value :: tag
-            integer (C_INT) :: elementTypes(*)
-            integer (C_SIZE_T), value :: elementTypes_n
-            type (C_PTR), intent(out) :: elementTags
-            type (C_PTR), intent(out) :: elementTags_n
-            integer (C_SIZE_T) :: elementTags_nn
-            type (C_PTR), intent(out) :: nodeTags
-            type (C_PTR), intent(out) :: nodeTags_n
-            integer (C_SIZE_T) :: nodeTags_nn
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshAddElements")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::dim
+            integer(c_int), value::tag
+            integer(c_int)::elementTypes(*)
+            integer(c_size_t), value :: elementTypes_n
+            type(c_ptr), intent(out)::elementTags
+            type(c_ptr), intent(out) :: elementTags_n
+            integer(c_size_t) :: elementTags_nn
+            type(c_ptr), intent(out)::nodeTags
+            type(c_ptr), intent(out) :: nodeTags_n
+            integer(c_size_t) :: nodeTags_nn
+            integer(c_int)::ierr
           end subroutine gmshModelMeshAddElements
 
 !  Add elements of type `elementType' classified on the entity of tag `tag'.
@@ -1748,15 +1748,15 @@ c
      &      nodeTags,
      &      nodeTags_n,
      &      ierr)
-     &    bind(C,name="gmshModelMeshAddElementsByType")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: tag
-            integer (C_INT), value :: elementType
-            integer (C_SIZE_T) :: elementTags(*)
-            integer (C_SIZE_T), value :: elementTags_n
-            integer (C_SIZE_T) :: nodeTags(*)
-            integer (C_SIZE_T), value :: nodeTags_n
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshAddElementsByType")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::tag
+            integer(c_int), value::elementType
+            integer(c_size_t)::elementTags(*)
+            integer(c_size_t), value :: elementTags_n
+            integer(c_size_t)::nodeTags(*)
+            integer(c_size_t), value :: nodeTags_n
+            integer(c_int)::ierr
           end subroutine gmshModelMeshAddElementsByType
 
 !  Get the numerical quadrature information for the given element type
@@ -1773,15 +1773,15 @@ c
      &      weights,
      &      weights_n,
      &      ierr)
-     &    bind(C,name="gmshModelMeshGetIntegrationPoints")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: elementType
-            character (LEN=1,KIND=C_CHAR) :: integrationType(*)
-            type (C_PTR), intent(out) :: localCoord
-            integer (C_SIZE_T) :: localCoord_n
-            type (C_PTR), intent(out) :: weights
-            integer (C_SIZE_T) :: weights_n
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshGetIntegrationPoints")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::elementType
+            character(len = 1, kind = c_char)::integrationType(*)
+            type(c_ptr), intent(out)::localCoord
+            integer(c_size_t) :: localCoord_n
+            type(c_ptr), intent(out)::weights
+            integer(c_size_t) :: weights_n
+            integer(c_int)::ierr
           end subroutine gmshModelMeshGetIntegrationPoints
 
 !  Get the Jacobians of all the elements of type `elementType' classified on
@@ -1812,21 +1812,21 @@ c
      &      task,
      &      numTasks,
      &      ierr)
-     &    bind(C,name="gmshModelMeshGetJacobians")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: elementType
-            real (C_DOUBLE) :: localCoord(*)
-            integer (C_SIZE_T), value :: localCoord_n
-            type (C_PTR), intent(out) :: jacobians
-            integer (C_SIZE_T) :: jacobians_n
-            type (C_PTR), intent(out) :: determinants
-            integer (C_SIZE_T) :: determinants_n
-            type (C_PTR), intent(out) :: coord
-            integer (C_SIZE_T) :: coord_n
-            integer (C_INT), value :: tag
-            integer (C_SIZE_T), value :: task
-            integer (C_SIZE_T), value :: numTasks
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshGetJacobians")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::elementType
+            real(c_double)::localCoord(*)
+            integer(c_size_t), value :: localCoord_n
+            type(c_ptr), intent(out)::jacobians
+            integer(c_size_t) :: jacobians_n
+            type(c_ptr), intent(out)::determinants
+            integer(c_size_t) :: determinants_n
+            type(c_ptr), intent(out)::coord
+            integer(c_size_t) :: coord_n
+            integer(c_int), value::tag
+            integer(c_size_t), value::task
+            integer(c_size_t), value::numTasks
+            integer(c_int)::ierr
           end subroutine gmshModelMeshGetJacobians
 
 !  Preallocate data before calling `getJacobians' with `numTasks' > 1. For C
@@ -1845,21 +1845,21 @@ c
      &      coord_n,
      &      tag,
      &      ierr)
-     &    bind(C,name="gmshModelMeshPreallocateJacobians")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: elementType
-            integer (C_INT), value :: numEvaluationPoints
-            integer (C_INT), value :: allocateJacobians
-            integer (C_INT), value :: allocateDeterminants
-            integer (C_INT), value :: allocateCoord
-            type (C_PTR), intent(out) :: jacobians
-            integer (C_SIZE_T) :: jacobians_n
-            type (C_PTR), intent(out) :: determinants
-            integer (C_SIZE_T) :: determinants_n
-            type (C_PTR), intent(out) :: coord
-            integer (C_SIZE_T) :: coord_n
-            integer (C_INT), value :: tag
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshPreallocateJacobians")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::elementType
+            integer(c_int), value::numEvaluationPoints
+            integer(c_int), value::allocateJacobians
+            integer(c_int), value::allocateDeterminants
+            integer(c_int), value::allocateCoord
+            type(c_ptr), intent(out)::jacobians
+            integer(c_size_t) :: jacobians_n
+            type(c_ptr), intent(out)::determinants
+            integer(c_size_t) :: determinants_n
+            type(c_ptr), intent(out)::coord
+            integer(c_size_t) :: coord_n
+            integer(c_int), value::tag
+            integer(c_int)::ierr
           end subroutine gmshModelMeshPreallocateJacobians
 
 !  Get the Jacobian for a single element `elementTag', at the G evaluation
@@ -1884,18 +1884,18 @@ c
      &      coord,
      &      coord_n,
      &      ierr)
-     &    bind(C,name="gmshModelMeshGetJacobian")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_SIZE_T), value :: elementTag
-            real (C_DOUBLE) :: localCoord(*)
-            integer (C_SIZE_T), value :: localCoord_n
-            type (C_PTR), intent(out) :: jacobians
-            integer (C_SIZE_T) :: jacobians_n
-            type (C_PTR), intent(out) :: determinants
-            integer (C_SIZE_T) :: determinants_n
-            type (C_PTR), intent(out) :: coord
-            integer (C_SIZE_T) :: coord_n
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshGetJacobian")
+          use, intrinsic :: iso_c_binding
+            integer(c_size_t), value::elementTag
+            real(c_double)::localCoord(*)
+            integer(c_size_t), value :: localCoord_n
+            type(c_ptr), intent(out)::jacobians
+            integer(c_size_t) :: jacobians_n
+            type(c_ptr), intent(out)::determinants
+            integer(c_size_t) :: determinants_n
+            type(c_ptr), intent(out)::coord
+            integer(c_size_t) :: coord_n
+            integer(c_int)::ierr
           end subroutine gmshModelMeshGetJacobian
 
 !  Get the basis functions of the element of type `elementType' at the
@@ -1926,19 +1926,19 @@ c
      &      wantedOrientations,
      &      wantedOrientations_n,
      &      ierr)
-     &    bind(C,name="gmshModelMeshGetBasisFunctions")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: elementType
-            real (C_DOUBLE) :: localCoord(*)
-            integer (C_SIZE_T), value :: localCoord_n
-            character (LEN=1,KIND=C_CHAR) :: functionSpaceType(*)
-            integer (C_INT) :: numComponents
-            type (C_PTR), intent(out) :: basisFunctions
-            integer (C_SIZE_T) :: basisFunctions_n
-            integer (C_INT) :: numOrientations
-            integer (C_INT) :: wantedOrientations(*)
-            integer (C_SIZE_T), value :: wantedOrientations_n
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshGetBasisFunctions")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::elementType
+            real(c_double)::localCoord(*)
+            integer(c_size_t), value :: localCoord_n
+            character(len = 1, kind = c_char)::functionSpaceType(*)
+            integer(c_int)::numComponents
+            type(c_ptr), intent(out)::basisFunctions
+            integer(c_size_t) :: basisFunctions_n
+            integer(c_int)::numOrientations
+            integer(c_int)::wantedOrientations(*)
+            integer(c_size_t), value :: wantedOrientations_n
+            integer(c_int)::ierr
           end subroutine gmshModelMeshGetBasisFunctions
 
 !  Get the orientation index of the elements of type `elementType' in the
@@ -1956,12 +1956,12 @@ c
      &      elementType,
      &      functionSpaceType,
      &      ierr)
-     &    bind(C,name="gmshModelMeshGetNumberOfOrientations")
-          use, intrinsic :: ISO_C_BINDING
-          integer (C_INT) :: gmshModelMeshGetNumberOfOrientations
-            integer (C_INT), value :: elementType
-            character (LEN=1,KIND=C_CHAR) :: functionSpaceType(*)
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshGetNumberOfOrientations")
+          use, intrinsic :: iso_c_binding
+          integer(c_int)::gmshModelMeshGetNumberOfOrientations
+            integer(c_int), value::elementType
+            character(len = 1, kind = c_char)::functionSpaceType(*)
+            integer(c_int)::ierr
           end function gmshModelMeshGetNumberOfOrientations
 
 !  Preallocate data before calling `getBasisFunctionsOrientationForElements'
@@ -1978,15 +1978,15 @@ c
      &      edgeOrientations,
      &      edgeOrientations_n,
      &      ierr)
-     &    bind(C,name="gmshModelMeshGetEdges")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_SIZE_T) :: nodeTags(*)
-            integer (C_SIZE_T), value :: nodeTags_n
-            type (C_PTR), intent(out) :: edgeTags
-            integer (C_SIZE_T) :: edgeTags_n
-            type (C_PTR), intent(out) :: edgeOrientations
-            integer (C_SIZE_T) :: edgeOrientations_n
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshGetEdges")
+          use, intrinsic :: iso_c_binding
+            integer(c_size_t)::nodeTags(*)
+            integer(c_size_t), value :: nodeTags_n
+            type(c_ptr), intent(out)::edgeTags
+            integer(c_size_t) :: edgeTags_n
+            type(c_ptr), intent(out)::edgeOrientations
+            integer(c_size_t) :: edgeOrientations_n
+            integer(c_int)::ierr
           end subroutine gmshModelMeshGetEdges
 
 !  Get the global unique mesh face identifiers `faceTags' and orientations
@@ -2002,16 +2002,16 @@ c
      &      faceOrientations,
      &      faceOrientations_n,
      &      ierr)
-     &    bind(C,name="gmshModelMeshGetFaces")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: faceType
-            integer (C_SIZE_T) :: nodeTags(*)
-            integer (C_SIZE_T), value :: nodeTags_n
-            type (C_PTR), intent(out) :: faceTags
-            integer (C_SIZE_T) :: faceTags_n
-            type (C_PTR), intent(out) :: faceOrientations
-            integer (C_SIZE_T) :: faceOrientations_n
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshGetFaces")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::faceType
+            integer(c_size_t)::nodeTags(*)
+            integer(c_size_t), value :: nodeTags_n
+            type(c_ptr), intent(out)::faceTags
+            integer(c_size_t) :: faceTags_n
+            type(c_ptr), intent(out)::faceOrientations
+            integer(c_size_t) :: faceOrientations_n
+            integer(c_int)::ierr
           end subroutine gmshModelMeshGetFaces
 
 !  Create unique mesh edges for the entities `dimTags'.
@@ -2019,11 +2019,11 @@ c
      &      dimTags,
      &      dimTags_n,
      &      ierr)
-     &    bind(C,name="gmshModelMeshCreateEdges")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT) :: dimTags(*)
-            integer (C_SIZE_T), value :: dimTags_n
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshCreateEdges")
+          use, intrinsic :: iso_c_binding
+            integer(c_int)::dimTags(*)
+            integer(c_size_t), value :: dimTags_n
+            integer(c_int)::ierr
           end subroutine gmshModelMeshCreateEdges
 
 !  Create unique mesh faces for the entities `dimTags'.
@@ -2031,11 +2031,11 @@ c
      &      dimTags,
      &      dimTags_n,
      &      ierr)
-     &    bind(C,name="gmshModelMeshCreateFaces")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT) :: dimTags(*)
-            integer (C_SIZE_T), value :: dimTags_n
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshCreateFaces")
+          use, intrinsic :: iso_c_binding
+            integer(c_int)::dimTags(*)
+            integer(c_size_t), value :: dimTags_n
+            integer(c_int)::ierr
           end subroutine gmshModelMeshCreateFaces
 
 !  Generate the pair of keys for the elements of type `elementType' in the
@@ -2057,19 +2057,19 @@ c
      &      tag,
      &      returnCoord,
      &      ierr)
-     &    bind(C,name="gmshModelMeshGetKeysForElements")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: elementType
-            character (LEN=1,KIND=C_CHAR) :: functionSpaceType(*)
-            type (C_PTR), intent(out) :: typeKeys
-            integer (C_SIZE_T) :: typeKeys_n
-            type (C_PTR), intent(out) :: entityKeys
-            integer (C_SIZE_T) :: entityKeys_n
-            type (C_PTR), intent(out) :: coord
-            integer (C_SIZE_T) :: coord_n
-            integer (C_INT), value :: tag
-            integer (C_INT), value :: returnCoord
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshGetKeysForElements")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::elementType
+            character(len = 1, kind = c_char)::functionSpaceType(*)
+            type(c_ptr), intent(out)::typeKeys
+            integer(c_size_t) :: typeKeys_n
+            type(c_ptr), intent(out)::entityKeys
+            integer(c_size_t) :: entityKeys_n
+            type(c_ptr), intent(out)::coord
+            integer(c_size_t) :: coord_n
+            integer(c_int), value::tag
+            integer(c_int), value::returnCoord
+            integer(c_int)::ierr
           end subroutine gmshModelMeshGetKeysForElements
 
 !  Get the pair of keys for a single element `elementTag'.
@@ -2084,18 +2084,18 @@ c
      &      coord_n,
      &      returnCoord,
      &      ierr)
-     &    bind(C,name="gmshModelMeshGetKeysForElement")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_SIZE_T), value :: elementTag
-            character (LEN=1,KIND=C_CHAR) :: functionSpaceType(*)
-            type (C_PTR), intent(out) :: typeKeys
-            integer (C_SIZE_T) :: typeKeys_n
-            type (C_PTR), intent(out) :: entityKeys
-            integer (C_SIZE_T) :: entityKeys_n
-            type (C_PTR), intent(out) :: coord
-            integer (C_SIZE_T) :: coord_n
-            integer (C_INT), value :: returnCoord
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshGetKeysForElement")
+          use, intrinsic :: iso_c_binding
+            integer(c_size_t), value::elementTag
+            character(len = 1, kind = c_char)::functionSpaceType(*)
+            type(c_ptr), intent(out)::typeKeys
+            integer(c_size_t) :: typeKeys_n
+            type(c_ptr), intent(out)::entityKeys
+            integer(c_size_t) :: entityKeys_n
+            type(c_ptr), intent(out)::coord
+            integer(c_size_t) :: coord_n
+            integer(c_int), value::returnCoord
+            integer(c_int)::ierr
           end subroutine gmshModelMeshGetKeysForElement
 
 !  Get the number of keys by elements of type `elementType' for function space
@@ -2104,12 +2104,12 @@ c
      &      elementType,
      &      functionSpaceType,
      &      ierr)
-     &    bind(C,name="gmshModelMeshGetNumberOfKeysForElements")
-          use, intrinsic :: ISO_C_BINDING
-          integer (C_INT) :: gmshModelMeshGetNumberOfKeysForElements
-            integer (C_INT), value :: elementType
-            character (LEN=1,KIND=C_CHAR) :: functionSpaceType(*)
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshGetNumberOfKeysForElements")
+          use, intrinsic :: iso_c_binding
+          integer(c_int)::gmshModelMeshGetNumberOfKeysForElements
+            integer(c_int), value::elementType
+            character(len = 1, kind = c_char)::functionSpaceType(*)
+            integer(c_int)::ierr
           end function gmshModelMeshGetNumberOfKeysForElements
 
 !  Get information about the pair of `keys'. `infoKeys' returns information
@@ -2129,17 +2129,17 @@ c
      &      infoKeys,
      &      infoKeys_n,
      &      ierr)
-     &    bind(C,name="gmshModelMeshGetInformationForElements")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT) :: typeKeys(*)
-            integer (C_SIZE_T), value :: typeKeys_n
-            integer (C_SIZE_T) :: entityKeys(*)
-            integer (C_SIZE_T), value :: entityKeys_n
-            integer (C_INT), value :: elementType
-            character (LEN=1,KIND=C_CHAR) :: functionSpaceType(*)
-            type (C_PTR), intent(out) :: infoKeys
-            integer (C_SIZE_T) :: infoKeys_n
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshGetInformationForElements")
+          use, intrinsic :: iso_c_binding
+            integer(c_int)::typeKeys(*)
+            integer(c_size_t), value :: typeKeys_n
+            integer(c_size_t)::entityKeys(*)
+            integer(c_size_t), value :: entityKeys_n
+            integer(c_int), value::elementType
+            character(len = 1, kind = c_char)::functionSpaceType(*)
+            type(c_ptr), intent(out)::infoKeys
+            integer(c_size_t) :: infoKeys_n
+            integer(c_int)::ierr
           end subroutine gmshModelMeshGetInformationForElements
 
 !  Get the barycenters of all elements of type `elementType' classified on the
@@ -2159,17 +2159,17 @@ c
      &      task,
      &      numTasks,
      &      ierr)
-     &    bind(C,name="gmshModelMeshGetBarycenters")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: elementType
-            integer (C_INT), value :: tag
-            integer (C_INT), value :: fast
-            integer (C_INT), value :: primary
-            type (C_PTR), intent(out) :: barycenters
-            integer (C_SIZE_T) :: barycenters_n
-            integer (C_SIZE_T), value :: task
-            integer (C_SIZE_T), value :: numTasks
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshGetBarycenters")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::elementType
+            integer(c_int), value::tag
+            integer(c_int), value::fast
+            integer(c_int), value::primary
+            type(c_ptr), intent(out)::barycenters
+            integer(c_size_t) :: barycenters_n
+            integer(c_size_t), value::task
+            integer(c_size_t), value::numTasks
+            integer(c_int)::ierr
           end subroutine gmshModelMeshGetBarycenters
 
 !  Preallocate data before calling `getBarycenters' with `numTasks' > 1. For C
@@ -2180,13 +2180,13 @@ c
      &      barycenters_n,
      &      tag,
      &      ierr)
-     &    bind(C,name="gmshModelMeshPreallocateBarycenters")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: elementType
-            type (C_PTR), intent(out) :: barycenters
-            integer (C_SIZE_T) :: barycenters_n
-            integer (C_INT), value :: tag
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshPreallocateBarycenters")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::elementType
+            type(c_ptr), intent(out)::barycenters
+            integer(c_size_t) :: barycenters_n
+            integer(c_int), value::tag
+            integer(c_int)::ierr
           end subroutine gmshModelMeshPreallocateBarycenters
 
 !  Get the nodes on the edges of all elements of type `elementType' classified
@@ -2206,16 +2206,16 @@ c
      &      task,
      &      numTasks,
      &      ierr)
-     &    bind(C,name="gmshModelMeshGetElementEdgeNodes")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: elementType
-            type (C_PTR), intent(out) :: nodeTags
-            integer (C_SIZE_T) :: nodeTags_n
-            integer (C_INT), value :: tag
-            integer (C_INT), value :: primary
-            integer (C_SIZE_T), value :: task
-            integer (C_SIZE_T), value :: numTasks
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshGetElementEdgeNodes")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::elementType
+            type(c_ptr), intent(out)::nodeTags
+            integer(c_size_t) :: nodeTags_n
+            integer(c_int), value::tag
+            integer(c_int), value::primary
+            integer(c_size_t), value::task
+            integer(c_size_t), value::numTasks
+            integer(c_int)::ierr
           end subroutine gmshModelMeshGetElementEdgeNodes
 
 !  Get the nodes on the faces of type `faceType' (3 for triangular faces, 4
@@ -2237,17 +2237,17 @@ c
      &      task,
      &      numTasks,
      &      ierr)
-     &    bind(C,name="gmshModelMeshGetElementFaceNodes")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: elementType
-            integer (C_INT), value :: faceType
-            type (C_PTR), intent(out) :: nodeTags
-            integer (C_SIZE_T) :: nodeTags_n
-            integer (C_INT), value :: tag
-            integer (C_INT), value :: primary
-            integer (C_SIZE_T), value :: task
-            integer (C_SIZE_T), value :: numTasks
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshGetElementFaceNodes")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::elementType
+            integer(c_int), value::faceType
+            type(c_ptr), intent(out)::nodeTags
+            integer(c_size_t) :: nodeTags_n
+            integer(c_int), value::tag
+            integer(c_int), value::primary
+            integer(c_size_t), value::task
+            integer(c_size_t), value::numTasks
+            integer(c_int)::ierr
           end subroutine gmshModelMeshGetElementFaceNodes
 
 !  Get the ghost elements `elementTags' and their associated `partitions'
@@ -2260,15 +2260,15 @@ c
      &      partitions,
      &      partitions_n,
      &      ierr)
-     &    bind(C,name="gmshModelMeshGetGhostElements")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: dim
-            integer (C_INT), value :: tag
-            type (C_PTR), intent(out) :: elementTags
-            integer (C_SIZE_T) :: elementTags_n
-            type (C_PTR), intent(out) :: partitions
-            integer (C_SIZE_T) :: partitions_n
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshGetGhostElements")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::dim
+            integer(c_int), value::tag
+            type(c_ptr), intent(out)::elementTags
+            integer(c_size_t) :: elementTags_n
+            type(c_ptr), intent(out)::partitions
+            integer(c_size_t) :: partitions_n
+            integer(c_int)::ierr
           end subroutine gmshModelMeshGetGhostElements
 
 !  Set a mesh size constraint on the model entities `dimTags'. Currently only
@@ -2278,12 +2278,12 @@ c
      &      dimTags_n,
      &      size,
      &      ierr)
-     &    bind(C,name="gmshModelMeshSetSize")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT) :: dimTags(*)
-            integer (C_SIZE_T), value :: dimTags_n
-            real (C_DOUBLE), value :: size
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshSetSize")
+          use, intrinsic :: iso_c_binding
+            integer(c_int)::dimTags(*)
+            integer(c_size_t), value :: dimTags_n
+            real(c_double), value::size
+            integer(c_int)::ierr
           end subroutine gmshModelMeshSetSize
 
 !  Get the mesh size constraints (if any) associated with the model entities
@@ -2295,13 +2295,13 @@ c
      &      sizes,
      &      sizes_n,
      &      ierr)
-     &    bind(C,name="gmshModelMeshGetSizes")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT) :: dimTags(*)
-            integer (C_SIZE_T), value :: dimTags_n
-            type (C_PTR), intent(out) :: sizes
-            integer (C_SIZE_T) :: sizes_n
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshGetSizes")
+          use, intrinsic :: iso_c_binding
+            integer(c_int)::dimTags(*)
+            integer(c_size_t), value :: dimTags_n
+            type(c_ptr), intent(out)::sizes
+            integer(c_size_t) :: sizes_n
+            integer(c_int)::ierr
           end subroutine gmshModelMeshGetSizes
 
 !  Set mesh size constraints at the given parametric points `parametricCoord'
@@ -2315,15 +2315,15 @@ c
      &      sizes,
      &      sizes_n,
      &      ierr)
-     &    bind(C,name="gmshModelMeshSetSizeAtParametricPoints")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: dim
-            integer (C_INT), value :: tag
-            real (C_DOUBLE) :: parametricCoord(*)
-            integer (C_SIZE_T), value :: parametricCoord_n
-            real (C_DOUBLE) :: sizes(*)
-            integer (C_SIZE_T), value :: sizes_n
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshSetSizeAtParametricPoints")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::dim
+            integer(c_int), value::tag
+            real(c_double)::parametricCoord(*)
+            integer(c_size_t), value :: parametricCoord_n
+            real(c_double)::sizes(*)
+            integer(c_size_t), value :: sizes_n
+            integer(c_int)::ierr
           end subroutine gmshModelMeshSetSizeAtParametricPoints
 
 !  Set a mesh size callback for the current model. The callback should take 5
@@ -2332,18 +2332,18 @@ c
         subroutine gmshModelMeshSetSizeCallback(
      &      callback,
      &      ierr)
-     &    bind(C,name="gmshModelMeshSetSizeCallback")
-          use, intrinsic :: ISO_C_BINDING
-            type (C_FUNPTR) :: callback ! to do 
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshSetSizeCallback")
+          use, intrinsic :: iso_c_binding
+            type (C_FUNPTR)::callback ! to do 
+            integer(c_int)::ierr
           end subroutine gmshModelMeshSetSizeCallback
 
 !  Remove the mesh size callback from the current model.
         subroutine gmshModelMeshRemoveSizeCallback(
      &      ierr)
-     &    bind(C,name="gmshModelMeshRemoveSizeCallback")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshRemoveSizeCallback")
+          use, intrinsic :: iso_c_binding
+            integer(c_int)::ierr
           end subroutine gmshModelMeshRemoveSizeCallback
 
 !  Set a transfinite meshing constraint on the curve `tag', with `numNodes'
@@ -2356,13 +2356,13 @@ c
      &      meshType,
      &      coef,
      &      ierr)
-     &    bind(C,name="gmshModelMeshSetTransfiniteCurve")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: tag
-            integer (C_INT), value :: numNodes
-            character (LEN=1,KIND=C_CHAR) :: meshType(*)
-            real (C_DOUBLE), value :: coef
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshSetTransfiniteCurve")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::tag
+            integer(c_int), value::numNodes
+            character(len = 1, kind = c_char)::meshType(*)
+            real(c_double), value::coef
+            integer(c_int)::ierr
           end subroutine gmshModelMeshSetTransfiniteCurve
 
 !  Set a transfinite meshing constraint on the surface `tag'. `arrangement'
@@ -2378,13 +2378,13 @@ c
      &      cornerTags,
      &      cornerTags_n,
      &      ierr)
-     &    bind(C,name="gmshModelMeshSetTransfiniteSurface")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: tag
-            character (LEN=1,KIND=C_CHAR) :: arrangement(*)
-            integer (C_INT) :: cornerTags(*)
-            integer (C_SIZE_T), value :: cornerTags_n
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshSetTransfiniteSurface")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::tag
+            character(len = 1, kind = c_char)::arrangement(*)
+            integer(c_int)::cornerTags(*)
+            integer(c_size_t), value :: cornerTags_n
+            integer(c_int)::ierr
           end subroutine gmshModelMeshSetTransfiniteSurface
 
 !  Set a transfinite meshing constraint on the surface `tag'. `cornerTags' can
@@ -2395,12 +2395,12 @@ c
      &      cornerTags,
      &      cornerTags_n,
      &      ierr)
-     &    bind(C,name="gmshModelMeshSetTransfiniteVolume")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: tag
-            integer (C_INT) :: cornerTags(*)
-            integer (C_SIZE_T), value :: cornerTags_n
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshSetTransfiniteVolume")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::tag
+            integer(c_int)::cornerTags(*)
+            integer(c_size_t), value :: cornerTags_n
+            integer(c_int)::ierr
           end subroutine gmshModelMeshSetTransfiniteVolume
 
 !  Set transfinite meshing constraints on the model entities in `dimTag'.
@@ -2417,13 +2417,13 @@ c
      &      cornerAngle,
      &      recombine,
      &      ierr)
-     &    bind(C,name="gmshModelMeshSetTransfiniteAutomatic")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT) :: dimTags(*)
-            integer (C_SIZE_T), value :: dimTags_n
-            real (C_DOUBLE), value :: cornerAngle
-            integer (C_INT), value :: recombine
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshSetTransfiniteAutomatic")
+          use, intrinsic :: iso_c_binding
+            integer(c_int)::dimTags(*)
+            integer(c_size_t), value :: dimTags_n
+            real(c_double), value::cornerAngle
+            integer(c_int), value::recombine
+            integer(c_int)::ierr
           end subroutine gmshModelMeshSetTransfiniteAutomatic
 
 !  Set a recombination meshing constraint on the model entity of dimension
@@ -2433,11 +2433,11 @@ c
      &      dim,
      &      tag,
      &      ierr)
-     &    bind(C,name="gmshModelMeshSetRecombine")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: dim
-            integer (C_INT), value :: tag
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshSetRecombine")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::dim
+            integer(c_int), value::tag
+            integer(c_int)::ierr
           end subroutine gmshModelMeshSetRecombine
 
 !  Set a smoothing meshing constraint on the model entity of dimension `dim'
@@ -2447,12 +2447,12 @@ c
      &      tag,
      &      val,
      &      ierr)
-     &    bind(C,name="gmshModelMeshSetSmoothing")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: dim
-            integer (C_INT), value :: tag
-            integer (C_INT), value :: val
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshSetSmoothing")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::dim
+            integer(c_int), value::tag
+            integer(c_int), value::val
+            integer(c_int)::ierr
           end subroutine gmshModelMeshSetSmoothing
 
 !  Set a reverse meshing constraint on the model entity of dimension `dim' and
@@ -2465,12 +2465,12 @@ c
      &      tag,
      &      val,
      &      ierr)
-     &    bind(C,name="gmshModelMeshSetReverse")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: dim
-            integer (C_INT), value :: tag
-            integer (C_INT), value :: val
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshSetReverse")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::dim
+            integer(c_int), value::tag
+            integer(c_int), value::val
+            integer(c_int)::ierr
           end subroutine gmshModelMeshSetReverse
 
 !  Set the meshing algorithm on the model entity of dimension `dim' and tag
@@ -2480,12 +2480,12 @@ c
      &      tag,
      &      val,
      &      ierr)
-     &    bind(C,name="gmshModelMeshSetAlgorithm")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: dim
-            integer (C_INT), value :: tag
-            integer (C_INT), value :: val
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshSetAlgorithm")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::dim
+            integer(c_int), value::tag
+            integer(c_int), value::val
+            integer(c_int)::ierr
           end subroutine gmshModelMeshSetAlgorithm
 
 !  Force the mesh size to be extended from the boundary, or not, for the model
@@ -2496,12 +2496,12 @@ c
      &      tag,
      &      val,
      &      ierr)
-     &    bind(C,name="gmshModelMeshSetSizeFromBoundary")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: dim
-            integer (C_INT), value :: tag
-            integer (C_INT), value :: val
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshSetSizeFromBoundary")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::dim
+            integer(c_int), value::tag
+            integer(c_int), value::val
+            integer(c_int)::ierr
           end subroutine gmshModelMeshSetSizeFromBoundary
 
 !  Set a compound meshing constraint on the model entities of dimension `dim'
@@ -2512,12 +2512,12 @@ c
      &      tags,
      &      tags_n,
      &      ierr)
-     &    bind(C,name="gmshModelMeshSetCompound")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: dim
-            integer (C_INT) :: tags(*)
-            integer (C_SIZE_T), value :: tags_n
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshSetCompound")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::dim
+            integer(c_int)::tags(*)
+            integer(c_size_t), value :: tags_n
+            integer(c_int)::ierr
           end subroutine gmshModelMeshSetCompound
 
 !  Set meshing constraints on the bounding surfaces of the volume of tag `tag'
@@ -2527,10 +2527,10 @@ c
         subroutine gmshModelMeshSetOutwardOrientation(
      &      tag,
      &      ierr)
-     &    bind(C,name="gmshModelMeshSetOutwardOrientation")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: tag
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshSetOutwardOrientation")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::tag
+            integer(c_int)::ierr
           end subroutine gmshModelMeshSetOutwardOrientation
 
 !  Remove all meshing constraints from the model entities `dimTags'. If
@@ -2539,11 +2539,11 @@ c
      &      dimTags,
      &      dimTags_n,
      &      ierr)
-     &    bind(C,name="gmshModelMeshRemoveConstraints")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT) :: dimTags(*)
-            integer (C_SIZE_T), value :: dimTags_n
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshRemoveConstraints")
+          use, intrinsic :: iso_c_binding
+            integer(c_int)::dimTags(*)
+            integer(c_size_t), value :: dimTags_n
+            integer(c_int)::ierr
           end subroutine gmshModelMeshRemoveConstraints
 
 !  Embed the model entities of dimension `dim' and tags `tags' in the
@@ -2562,14 +2562,14 @@ c
      &      inDim,
      &      inTag,
      &      ierr)
-     &    bind(C,name="gmshModelMeshEmbed")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: dim
-            integer (C_INT) :: tags(*)
-            integer (C_SIZE_T), value :: tags_n
-            integer (C_INT), value :: inDim
-            integer (C_INT), value :: inTag
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshEmbed")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::dim
+            integer(c_int)::tags(*)
+            integer(c_size_t), value :: tags_n
+            integer(c_int), value::inDim
+            integer(c_int), value::inTag
+            integer(c_int)::ierr
           end subroutine gmshModelMeshEmbed
 
 !  Remove embedded entities from the model entities `dimTags'. if `dim' is >=
@@ -2580,12 +2580,12 @@ c
      &      dimTags_n,
      &      dim,
      &      ierr)
-     &    bind(C,name="gmshModelMeshRemoveEmbedded")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT) :: dimTags(*)
-            integer (C_SIZE_T), value :: dimTags_n
-            integer (C_INT), value :: dim
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshRemoveEmbedded")
+          use, intrinsic :: iso_c_binding
+            integer(c_int)::dimTags(*)
+            integer(c_size_t), value :: dimTags_n
+            integer(c_int), value::dim
+            integer(c_int)::ierr
           end subroutine gmshModelMeshRemoveEmbedded
 
 !  Get the entities (if any) embedded in the model entity of dimension `dim'
@@ -2596,13 +2596,13 @@ c
      &      dimTags,
      &      dimTags_n,
      &      ierr)
-     &    bind(C,name="gmshModelMeshGetEmbedded")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: dim
-            integer (C_INT), value :: tag
-            type (C_PTR), intent(out) :: dimTags
-            integer (C_SIZE_T) :: dimTags_n
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshGetEmbedded")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::dim
+            integer(c_int), value::tag
+            type(c_ptr), intent(out)::dimTags
+            integer(c_size_t) :: dimTags_n
+            integer(c_int)::ierr
           end subroutine gmshModelMeshGetEmbedded
 
 !  Reorder the elements of type `elementType' classified on the entity of tag
@@ -2613,29 +2613,29 @@ c
      &      ordering,
      &      ordering_n,
      &      ierr)
-     &    bind(C,name="gmshModelMeshReorderElements")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: elementType
-            integer (C_INT), value :: tag
-            integer (C_SIZE_T) :: ordering(*)
-            integer (C_SIZE_T), value :: ordering_n
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshReorderElements")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::elementType
+            integer(c_int), value::tag
+            integer(c_size_t)::ordering(*)
+            integer(c_size_t), value :: ordering_n
+            integer(c_int)::ierr
           end subroutine gmshModelMeshReorderElements
 
 !  Renumber the node tags in a continuous sequence.
         subroutine gmshModelMeshRenumberNodes(
      &      ierr)
-     &    bind(C,name="gmshModelMeshRenumberNodes")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshRenumberNodes")
+          use, intrinsic :: iso_c_binding
+            integer(c_int)::ierr
           end subroutine gmshModelMeshRenumberNodes
 
 !  Renumber the element tags in a continuous sequence.
         subroutine gmshModelMeshRenumberElements(
      &      ierr)
-     &    bind(C,name="gmshModelMeshRenumberElements")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshRenumberElements")
+          use, intrinsic :: iso_c_binding
+            integer(c_int)::ierr
           end subroutine gmshModelMeshRenumberElements
 
 !  Set the meshes of the entities of dimension `dim' and tag `tags' as
@@ -2655,16 +2655,16 @@ c
      &      affineTransform,
      &      affineTransform_n,
      &      ierr)
-     &    bind(C,name="gmshModelMeshSetPeriodic")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: dim
-            integer (C_INT) :: tags(*)
-            integer (C_SIZE_T), value :: tags_n
-            integer (C_INT) :: tagsMaster(*)
-            integer (C_SIZE_T), value :: tagsMaster_n
-            real (C_DOUBLE) :: affineTransform(*)
-            integer (C_SIZE_T), value :: affineTransform_n
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshSetPeriodic")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::dim
+            integer(c_int)::tags(*)
+            integer(c_size_t), value :: tags_n
+            integer(c_int)::tagsMaster(*)
+            integer(c_size_t), value :: tagsMaster_n
+            real(c_double)::affineTransform(*)
+            integer(c_size_t), value :: affineTransform_n
+            integer(c_int)::ierr
           end subroutine gmshModelMeshSetPeriodic
 
 !  Get the master entity `tagMaster', the node tags `nodeTags' and their
@@ -2684,27 +2684,27 @@ c
      &      affineTransform_n,
      &      includeHighOrderNodes,
      &      ierr)
-     &    bind(C,name="gmshModelMeshGetPeriodicNodes")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: dim
-            integer (C_INT), value :: tag
-            integer (C_INT) :: tagMaster
-            type (C_PTR), intent(out) :: nodeTags
-            integer (C_SIZE_T) :: nodeTags_n
-            type (C_PTR), intent(out) :: nodeTagsMaster
-            integer (C_SIZE_T) :: nodeTagsMaster_n
-            type (C_PTR), intent(out) :: affineTransform
-            integer (C_SIZE_T) :: affineTransform_n
-            integer (C_INT), value :: includeHighOrderNodes
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshGetPeriodicNodes")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::dim
+            integer(c_int), value::tag
+            integer(c_int)::tagMaster
+            type(c_ptr), intent(out)::nodeTags
+            integer(c_size_t) :: nodeTags_n
+            type(c_ptr), intent(out)::nodeTagsMaster
+            integer(c_size_t) :: nodeTagsMaster_n
+            type(c_ptr), intent(out)::affineTransform
+            integer(c_size_t) :: affineTransform_n
+            integer(c_int), value::includeHighOrderNodes
+            integer(c_int)::ierr
           end subroutine gmshModelMeshGetPeriodicNodes
 
 !  Remove duplicate nodes in the mesh of the current model.
         subroutine gmshModelMeshRemoveDuplicateNodes(
      &      ierr)
-     &    bind(C,name="gmshModelMeshRemoveDuplicateNodes")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshRemoveDuplicateNodes")
+          use, intrinsic :: iso_c_binding
+            integer(c_int)::ierr
           end subroutine gmshModelMeshRemoveDuplicateNodes
 
 !  Split (into two triangles) all quadrangles in surface `tag' whose quality
@@ -2713,11 +2713,11 @@ c
      &      quality,
      &      tag,
      &      ierr)
-     &    bind(C,name="gmshModelMeshSplitQuadrangles")
-          use, intrinsic :: ISO_C_BINDING
-            real (C_DOUBLE), value :: quality
-            integer (C_INT), value :: tag
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshSplitQuadrangles")
+          use, intrinsic :: iso_c_binding
+            real(c_double), value::quality
+            integer(c_int), value::tag
+            integer(c_int)::ierr
           end subroutine gmshModelMeshSplitQuadrangles
 
 !  Classify ("color") the surface mesh based on the angle threshold `angle'
@@ -2735,14 +2735,14 @@ c
      &      curveAngle,
      &      exportDiscrete,
      &      ierr)
-     &    bind(C,name="gmshModelMeshClassifySurfaces")
-          use, intrinsic :: ISO_C_BINDING
-            real (C_DOUBLE), value :: angle
-            integer (C_INT), value :: boundary
-            integer (C_INT), value :: forReparametrization
-            real (C_DOUBLE), value :: curveAngle
-            integer (C_INT), value :: exportDiscrete
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshClassifySurfaces")
+          use, intrinsic :: iso_c_binding
+            real(c_double), value::angle
+            integer(c_int), value::boundary
+            integer(c_int), value::forReparametrization
+            real(c_double), value::curveAngle
+            integer(c_int), value::exportDiscrete
+            integer(c_int)::ierr
           end subroutine gmshModelMeshClassifySurfaces
 
 !  Create a geometry for the discrete entities `dimTags' (represented solely
@@ -2754,11 +2754,11 @@ c
      &      dimTags,
      &      dimTags_n,
      &      ierr)
-     &    bind(C,name="gmshModelMeshCreateGeometry")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT) :: dimTags(*)
-            integer (C_SIZE_T), value :: dimTags_n
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshCreateGeometry")
+          use, intrinsic :: iso_c_binding
+            integer(c_int)::dimTags(*)
+            integer(c_size_t), value :: dimTags_n
+            integer(c_int)::ierr
           end subroutine gmshModelMeshCreateGeometry
 
 !  Create a boundary representation from the mesh if the model does not have
@@ -2771,11 +2771,11 @@ c
      &      makeSimplyConnected,
      &      exportDiscrete,
      &      ierr)
-     &    bind(C,name="gmshModelMeshCreateTopology")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: makeSimplyConnected
-            integer (C_INT), value :: exportDiscrete
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshCreateTopology")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::makeSimplyConnected
+            integer(c_int), value::exportDiscrete
+            integer(c_int)::ierr
           end subroutine gmshModelMeshCreateTopology
 
 !  Compute a basis representation for homology spaces after a mesh has been
@@ -2794,15 +2794,15 @@ c
      &      dims,
      &      dims_n,
      &      ierr)
-     &    bind(C,name="gmshModelMeshComputeHomology")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT) :: domainTags(*)
-            integer (C_SIZE_T), value :: domainTags_n
-            integer (C_INT) :: subdomainTags(*)
-            integer (C_SIZE_T), value :: subdomainTags_n
-            integer (C_INT) :: dims(*)
-            integer (C_SIZE_T), value :: dims_n
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshComputeHomology")
+          use, intrinsic :: iso_c_binding
+            integer(c_int)::domainTags(*)
+            integer(c_size_t), value :: domainTags_n
+            integer(c_int)::subdomainTags(*)
+            integer(c_size_t), value :: subdomainTags_n
+            integer(c_int)::dims(*)
+            integer(c_size_t), value :: dims_n
+            integer(c_int)::ierr
           end subroutine gmshModelMeshComputeHomology
 
 !  Compute a basis representation for cohomology spaces after a mesh has been
@@ -2821,15 +2821,15 @@ c
      &      dims,
      &      dims_n,
      &      ierr)
-     &    bind(C,name="gmshModelMeshComputeCohomology")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT) :: domainTags(*)
-            integer (C_SIZE_T), value :: domainTags_n
-            integer (C_INT) :: subdomainTags(*)
-            integer (C_SIZE_T), value :: subdomainTags_n
-            integer (C_INT) :: dims(*)
-            integer (C_SIZE_T), value :: dims_n
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshComputeCohomology")
+          use, intrinsic :: iso_c_binding
+            integer(c_int)::domainTags(*)
+            integer(c_size_t), value :: domainTags_n
+            integer(c_int)::subdomainTags(*)
+            integer(c_size_t), value :: subdomainTags_n
+            integer(c_int)::dims(*)
+            integer(c_size_t), value :: dims_n
+            integer(c_int)::ierr
           end subroutine gmshModelMeshComputeCohomology
 
 !  Compute a cross field for the current mesh. The function creates 3 views:
@@ -2839,11 +2839,11 @@ c
      &      viewTags,
      &      viewTags_n,
      &      ierr)
-     &    bind(C,name="gmshModelMeshComputeCrossField")
-          use, intrinsic :: ISO_C_BINDING
-            type (C_PTR), intent(out) :: viewTags
-            integer (C_SIZE_T) :: viewTags_n
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshComputeCrossField")
+          use, intrinsic :: iso_c_binding
+            type(c_ptr), intent(out)::viewTags
+            integer(c_size_t) :: viewTags_n
+            integer(c_int)::ierr
           end subroutine gmshModelMeshComputeCrossField
 
 !  Triangulate the points given in the `coord' vector as pairs of u, v
@@ -2855,13 +2855,13 @@ c
      &      tri,
      &      tri_n,
      &      ierr)
-     &    bind(C,name="gmshModelMeshTriangulate")
-          use, intrinsic :: ISO_C_BINDING
-            real (C_DOUBLE) :: coord(*)
-            integer (C_SIZE_T), value :: coord_n
-            type (C_PTR), intent(out) :: tri
-            integer (C_SIZE_T) :: tri_n
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshTriangulate")
+          use, intrinsic :: iso_c_binding
+            real(c_double)::coord(*)
+            integer(c_size_t), value :: coord_n
+            type(c_ptr), intent(out)::tri
+            integer(c_size_t) :: tri_n
+            integer(c_int)::ierr
           end subroutine gmshModelMeshTriangulate
 
 !  Tetrahedralize the points given in the `coord' vector as triplets of x, y,
@@ -2873,13 +2873,13 @@ c
      &      tetra,
      &      tetra_n,
      &      ierr)
-     &    bind(C,name="gmshModelMeshTetrahedralize")
-          use, intrinsic :: ISO_C_BINDING
-            real (C_DOUBLE) :: coord(*)
-            integer (C_SIZE_T), value :: coord_n
-            type (C_PTR), intent(out) :: tetra
-            integer (C_SIZE_T) :: tetra_n
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshTetrahedralize")
+          use, intrinsic :: iso_c_binding
+            real(c_double)::coord(*)
+            integer(c_size_t), value :: coord_n
+            type(c_ptr), intent(out)::tetra
+            integer(c_size_t) :: tetra_n
+            integer(c_int)::ierr
           end subroutine gmshModelMeshTetrahedralize
 
 !  Add a new mesh size field of type `fieldType'. If `tag' is positive, assign
@@ -2889,22 +2889,22 @@ c
      &      fieldType,
      &      tag,
      &      ierr)
-     &    bind(C,name="gmshModelMeshFieldAdd")
-          use, intrinsic :: ISO_C_BINDING
-          integer (C_INT) :: gmshModelMeshFieldAdd
-            character (LEN=1,KIND=C_CHAR) :: fieldType(*)
-            integer (C_INT), value :: tag
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshFieldAdd")
+          use, intrinsic :: iso_c_binding
+          integer(c_int)::gmshModelMeshFieldAdd
+            character(len = 1, kind = c_char)::fieldType(*)
+            integer(c_int), value::tag
+            integer(c_int)::ierr
           end function gmshModelMeshFieldAdd
 
 !  Remove the field with tag `tag'.
         subroutine gmshModelMeshFieldRemove(
      &      tag,
      &      ierr)
-     &    bind(C,name="gmshModelMeshFieldRemove")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: tag
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshFieldRemove")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::tag
+            integer(c_int)::ierr
           end subroutine gmshModelMeshFieldRemove
 
 !  Set the numerical option `option' to value `value' for field `tag'.
@@ -2913,12 +2913,12 @@ c
      &      option,
      &      value,
      &      ierr)
-     &    bind(C,name="gmshModelMeshFieldSetNumber")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: tag
-            character (LEN=1,KIND=C_CHAR) :: option(*)
-            real (C_DOUBLE), value :: value
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshFieldSetNumber")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::tag
+            character(len = 1, kind = c_char)::option(*)
+            real(c_double), value::value
+            integer(c_int)::ierr
           end subroutine gmshModelMeshFieldSetNumber
 
 !  Set the string option `option' to value `value' for field `tag'.
@@ -2927,12 +2927,12 @@ c
      &      option,
      &      value,
      &      ierr)
-     &    bind(C,name="gmshModelMeshFieldSetString")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: tag
-            character (LEN=1,KIND=C_CHAR) :: option(*)
-            character (LEN=1,KIND=C_CHAR) :: value(*)
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshFieldSetString")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::tag
+            character(len = 1, kind = c_char)::option(*)
+            character(len = 1, kind = c_char)::value(*)
+            integer(c_int)::ierr
           end subroutine gmshModelMeshFieldSetString
 
 !  Set the numerical list option `option' to value `value' for field `tag'.
@@ -2942,33 +2942,33 @@ c
      &      value,
      &      value_n,
      &      ierr)
-     &    bind(C,name="gmshModelMeshFieldSetNumbers")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: tag
-            character (LEN=1,KIND=C_CHAR) :: option(*)
-            real (C_DOUBLE) :: value(*)
-            integer (C_SIZE_T), value :: value_n
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshFieldSetNumbers")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::tag
+            character(len = 1, kind = c_char)::option(*)
+            real(c_double)::value(*)
+            integer(c_size_t), value :: value_n
+            integer(c_int)::ierr
           end subroutine gmshModelMeshFieldSetNumbers
 
 !  Set the field `tag' as the background mesh size field.
         subroutine gmshModelMeshFieldSetAsBackgroundMesh(
      &      tag,
      &      ierr)
-     &    bind(C,name="gmshModelMeshFieldSetAsBackgroundMesh")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: tag
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshFieldSetAsBackgroundMesh")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::tag
+            integer(c_int)::ierr
           end subroutine gmshModelMeshFieldSetAsBackgroundMesh
 
 !  Set the field `tag' as a boundary layer size field.
         subroutine gmshModelMeshFieldSetAsBoundaryLayer(
      &      tag,
      &      ierr)
-     &    bind(C,name="gmshModelMeshFieldSetAsBoundaryLayer")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: tag
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelMeshFieldSetAsBoundaryLayer")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::tag
+            integer(c_int)::ierr
           end subroutine gmshModelMeshFieldSetAsBoundaryLayer
 
 !  Add a geometrical point in the built-in CAD representation, at coordinates
@@ -2984,15 +2984,15 @@ c
      &      meshSize,
      &      tag,
      &      ierr)
-     &    bind(C,name="gmshModelGeoAddPoint")
-          use, intrinsic :: ISO_C_BINDING
-          integer (C_INT) :: gmshModelGeoAddPoint
-            real (C_DOUBLE), value :: x
-            real (C_DOUBLE), value :: y
-            real (C_DOUBLE), value :: z
-            real (C_DOUBLE), value :: meshSize
-            integer (C_INT), value :: tag
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelGeoAddPoint")
+          use, intrinsic :: iso_c_binding
+          integer(c_int)::gmshModelGeoAddPoint
+            real(c_double), value::x
+            real(c_double), value::y
+            real(c_double), value::z
+            real(c_double), value::meshSize
+            integer(c_int), value::tag
+            integer(c_int)::ierr
           end function gmshModelGeoAddPoint
 
 !  Add a straight line segment in the built-in CAD representation, between the
@@ -3004,13 +3004,13 @@ c
      &      endTag,
      &      tag,
      &      ierr)
-     &    bind(C,name="gmshModelGeoAddLine")
-          use, intrinsic :: ISO_C_BINDING
-          integer (C_INT) :: gmshModelGeoAddLine
-            integer (C_INT), value :: startTag
-            integer (C_INT), value :: endTag
-            integer (C_INT), value :: tag
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelGeoAddLine")
+          use, intrinsic :: iso_c_binding
+          integer(c_int)::gmshModelGeoAddLine
+            integer(c_int), value::startTag
+            integer(c_int), value::endTag
+            integer(c_int), value::tag
+            integer(c_int)::ierr
           end function gmshModelGeoAddLine
 
 !  Add a circle arc (strictly smaller than Pi) in the built-in CAD
@@ -3028,17 +3028,17 @@ c
      &      ny,
      &      nz,
      &      ierr)
-     &    bind(C,name="gmshModelGeoAddCircleArc")
-          use, intrinsic :: ISO_C_BINDING
-          integer (C_INT) :: gmshModelGeoAddCircleArc
-            integer (C_INT), value :: startTag
-            integer (C_INT), value :: centerTag
-            integer (C_INT), value :: endTag
-            integer (C_INT), value :: tag
-            real (C_DOUBLE), value :: nx
-            real (C_DOUBLE), value :: ny
-            real (C_DOUBLE), value :: nz
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelGeoAddCircleArc")
+          use, intrinsic :: iso_c_binding
+          integer(c_int)::gmshModelGeoAddCircleArc
+            integer(c_int), value::startTag
+            integer(c_int), value::centerTag
+            integer(c_int), value::endTag
+            integer(c_int), value::tag
+            real(c_double), value::nx
+            real(c_double), value::ny
+            real(c_double), value::nz
+            integer(c_int)::ierr
           end function gmshModelGeoAddCircleArc
 
 !  Add an ellipse arc (strictly smaller than Pi) in the built-in CAD
@@ -3057,18 +3057,18 @@ c
      &      ny,
      &      nz,
      &      ierr)
-     &    bind(C,name="gmshModelGeoAddEllipseArc")
-          use, intrinsic :: ISO_C_BINDING
-          integer (C_INT) :: gmshModelGeoAddEllipseArc
-            integer (C_INT), value :: startTag
-            integer (C_INT), value :: centerTag
-            integer (C_INT), value :: majorTag
-            integer (C_INT), value :: endTag
-            integer (C_INT), value :: tag
-            real (C_DOUBLE), value :: nx
-            real (C_DOUBLE), value :: ny
-            real (C_DOUBLE), value :: nz
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelGeoAddEllipseArc")
+          use, intrinsic :: iso_c_binding
+          integer(c_int)::gmshModelGeoAddEllipseArc
+            integer(c_int), value::startTag
+            integer(c_int), value::centerTag
+            integer(c_int), value::majorTag
+            integer(c_int), value::endTag
+            integer(c_int), value::tag
+            real(c_double), value::nx
+            real(c_double), value::ny
+            real(c_double), value::nz
+            integer(c_int)::ierr
           end function gmshModelGeoAddEllipseArc
 
 !  Add a spline (Catmull-Rom) curve in the built-in CAD representation, going
@@ -3081,13 +3081,13 @@ c
      &      pointTags_n,
      &      tag,
      &      ierr)
-     &    bind(C,name="gmshModelGeoAddSpline")
-          use, intrinsic :: ISO_C_BINDING
-          integer (C_INT) :: gmshModelGeoAddSpline
-            integer (C_INT) :: pointTags(*)
-            integer (C_SIZE_T), value :: pointTags_n
-            integer (C_INT), value :: tag
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelGeoAddSpline")
+          use, intrinsic :: iso_c_binding
+          integer(c_int)::gmshModelGeoAddSpline
+            integer(c_int)::pointTags(*)
+            integer(c_size_t), value :: pointTags_n
+            integer(c_int), value::tag
+            integer(c_int)::ierr
           end function gmshModelGeoAddSpline
 
 !  Add a cubic b-spline curve in the built-in CAD representation, with
@@ -3100,13 +3100,13 @@ c
      &      pointTags_n,
      &      tag,
      &      ierr)
-     &    bind(C,name="gmshModelGeoAddBSpline")
-          use, intrinsic :: ISO_C_BINDING
-          integer (C_INT) :: gmshModelGeoAddBSpline
-            integer (C_INT) :: pointTags(*)
-            integer (C_SIZE_T), value :: pointTags_n
-            integer (C_INT), value :: tag
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelGeoAddBSpline")
+          use, intrinsic :: iso_c_binding
+          integer(c_int)::gmshModelGeoAddBSpline
+            integer(c_int)::pointTags(*)
+            integer(c_size_t), value :: pointTags_n
+            integer(c_int), value::tag
+            integer(c_int)::ierr
           end function gmshModelGeoAddBSpline
 
 !  Add a Bezier curve in the built-in CAD representation, with `pointTags'
@@ -3117,13 +3117,13 @@ c
      &      pointTags_n,
      &      tag,
      &      ierr)
-     &    bind(C,name="gmshModelGeoAddBezier")
-          use, intrinsic :: ISO_C_BINDING
-          integer (C_INT) :: gmshModelGeoAddBezier
-            integer (C_INT) :: pointTags(*)
-            integer (C_SIZE_T), value :: pointTags_n
-            integer (C_INT), value :: tag
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelGeoAddBezier")
+          use, intrinsic :: iso_c_binding
+          integer(c_int)::gmshModelGeoAddBezier
+            integer(c_int)::pointTags(*)
+            integer(c_size_t), value :: pointTags_n
+            integer(c_int), value::tag
+            integer(c_int)::ierr
           end function gmshModelGeoAddBezier
 
 !  Add a polyline curve in the built-in CAD representation, going through the
@@ -3135,13 +3135,13 @@ c
      &      pointTags_n,
      &      tag,
      &      ierr)
-     &    bind(C,name="gmshModelGeoAddPolyline")
-          use, intrinsic :: ISO_C_BINDING
-          integer (C_INT) :: gmshModelGeoAddPolyline
-            integer (C_INT) :: pointTags(*)
-            integer (C_SIZE_T), value :: pointTags_n
-            integer (C_INT), value :: tag
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelGeoAddPolyline")
+          use, intrinsic :: iso_c_binding
+          integer(c_int)::gmshModelGeoAddPolyline
+            integer(c_int)::pointTags(*)
+            integer(c_size_t), value :: pointTags_n
+            integer(c_int), value::tag
+            integer(c_int)::ierr
           end function gmshModelGeoAddPolyline
 
 !  Add a spline (Catmull-Rom) curve in the built-in CAD representation, going
@@ -3155,14 +3155,14 @@ c
      &      numIntervals,
      &      tag,
      &      ierr)
-     &    bind(C,name="gmshModelGeoAddCompoundSpline")
-          use, intrinsic :: ISO_C_BINDING
-          integer (C_INT) :: gmshModelGeoAddCompoundSpline
-            integer (C_INT) :: curveTags(*)
-            integer (C_SIZE_T), value :: curveTags_n
-            integer (C_INT), value :: numIntervals
-            integer (C_INT), value :: tag
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelGeoAddCompoundSpline")
+          use, intrinsic :: iso_c_binding
+          integer(c_int)::gmshModelGeoAddCompoundSpline
+            integer(c_int)::curveTags(*)
+            integer(c_size_t), value :: curveTags_n
+            integer(c_int), value::numIntervals
+            integer(c_int), value::tag
+            integer(c_int)::ierr
           end function gmshModelGeoAddCompoundSpline
 
 !  Add a b-spline curve in the built-in CAD representation, with control
@@ -3176,14 +3176,14 @@ c
      &      numIntervals,
      &      tag,
      &      ierr)
-     &    bind(C,name="gmshModelGeoAddCompoundBSpline")
-          use, intrinsic :: ISO_C_BINDING
-          integer (C_INT) :: gmshModelGeoAddCompoundBSpline
-            integer (C_INT) :: curveTags(*)
-            integer (C_SIZE_T), value :: curveTags_n
-            integer (C_INT), value :: numIntervals
-            integer (C_INT), value :: tag
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelGeoAddCompoundBSpline")
+          use, intrinsic :: iso_c_binding
+          integer(c_int)::gmshModelGeoAddCompoundBSpline
+            integer(c_int)::curveTags(*)
+            integer(c_size_t), value :: curveTags_n
+            integer(c_int), value::numIntervals
+            integer(c_int), value::tag
+            integer(c_int)::ierr
           end function gmshModelGeoAddCompoundBSpline
 
 !  Add a curve loop (a closed wire) in the built-in CAD representation, formed
@@ -3199,14 +3199,14 @@ c
      &      tag,
      &      reorient,
      &      ierr)
-     &    bind(C,name="gmshModelGeoAddCurveLoop")
-          use, intrinsic :: ISO_C_BINDING
-          integer (C_INT) :: gmshModelGeoAddCurveLoop
-            integer (C_INT) :: curveTags(*)
-            integer (C_SIZE_T), value :: curveTags_n
-            integer (C_INT), value :: tag
-            integer (C_INT), value :: reorient
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelGeoAddCurveLoop")
+          use, intrinsic :: iso_c_binding
+          integer(c_int)::gmshModelGeoAddCurveLoop
+            integer(c_int)::curveTags(*)
+            integer(c_size_t), value :: curveTags_n
+            integer(c_int), value::tag
+            integer(c_int), value::reorient
+            integer(c_int)::ierr
           end function gmshModelGeoAddCurveLoop
 
 !  Add curve loops in the built-in CAD representation based on the curves
@@ -3217,13 +3217,13 @@ c
      &      tags,
      &      tags_n,
      &      ierr)
-     &    bind(C,name="gmshModelGeoAddCurveLoops")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT) :: curveTags(*)
-            integer (C_SIZE_T), value :: curveTags_n
-            type (C_PTR), intent(out) :: tags
-            integer (C_SIZE_T) :: tags_n
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelGeoAddCurveLoops")
+          use, intrinsic :: iso_c_binding
+            integer(c_int)::curveTags(*)
+            integer(c_size_t), value :: curveTags_n
+            type(c_ptr), intent(out)::tags
+            integer(c_size_t) :: tags_n
+            integer(c_int)::ierr
           end subroutine gmshModelGeoAddCurveLoops
 
 !  Add a plane surface in the built-in CAD representation, defined by one or
@@ -3236,13 +3236,13 @@ c
      &      wireTags_n,
      &      tag,
      &      ierr)
-     &    bind(C,name="gmshModelGeoAddPlaneSurface")
-          use, intrinsic :: ISO_C_BINDING
-          integer (C_INT) :: gmshModelGeoAddPlaneSurface
-            integer (C_INT) :: wireTags(*)
-            integer (C_SIZE_T), value :: wireTags_n
-            integer (C_INT), value :: tag
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelGeoAddPlaneSurface")
+          use, intrinsic :: iso_c_binding
+          integer(c_int)::gmshModelGeoAddPlaneSurface
+            integer(c_int)::wireTags(*)
+            integer(c_size_t), value :: wireTags_n
+            integer(c_int), value::tag
+            integer(c_int)::ierr
           end function gmshModelGeoAddPlaneSurface
 
 !  Add a surface in the built-in CAD representation, filling the curve loops
@@ -3256,14 +3256,14 @@ c
      &      tag,
      &      sphereCenterTag,
      &      ierr)
-     &    bind(C,name="gmshModelGeoAddSurfaceFilling")
-          use, intrinsic :: ISO_C_BINDING
-          integer (C_INT) :: gmshModelGeoAddSurfaceFilling
-            integer (C_INT) :: wireTags(*)
-            integer (C_SIZE_T), value :: wireTags_n
-            integer (C_INT), value :: tag
-            integer (C_INT), value :: sphereCenterTag
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelGeoAddSurfaceFilling")
+          use, intrinsic :: iso_c_binding
+          integer(c_int)::gmshModelGeoAddSurfaceFilling
+            integer(c_int)::wireTags(*)
+            integer(c_size_t), value :: wireTags_n
+            integer(c_int), value::tag
+            integer(c_int), value::sphereCenterTag
+            integer(c_int)::ierr
           end function gmshModelGeoAddSurfaceFilling
 
 !  Add a surface loop (a closed shell) formed by `surfaceTags' in the built-in
@@ -3274,13 +3274,13 @@ c
      &      surfaceTags_n,
      &      tag,
      &      ierr)
-     &    bind(C,name="gmshModelGeoAddSurfaceLoop")
-          use, intrinsic :: ISO_C_BINDING
-          integer (C_INT) :: gmshModelGeoAddSurfaceLoop
-            integer (C_INT) :: surfaceTags(*)
-            integer (C_SIZE_T), value :: surfaceTags_n
-            integer (C_INT), value :: tag
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelGeoAddSurfaceLoop")
+          use, intrinsic :: iso_c_binding
+          integer(c_int)::gmshModelGeoAddSurfaceLoop
+            integer(c_int)::surfaceTags(*)
+            integer(c_size_t), value :: surfaceTags_n
+            integer(c_int), value::tag
+            integer(c_int)::ierr
           end function gmshModelGeoAddSurfaceLoop
 
 !  Add a volume (a region) in the built-in CAD representation, defined by one
@@ -3293,13 +3293,13 @@ c
      &      shellTags_n,
      &      tag,
      &      ierr)
-     &    bind(C,name="gmshModelGeoAddVolume")
-          use, intrinsic :: ISO_C_BINDING
-          integer (C_INT) :: gmshModelGeoAddVolume
-            integer (C_INT) :: shellTags(*)
-            integer (C_SIZE_T), value :: shellTags_n
-            integer (C_INT), value :: tag
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelGeoAddVolume")
+          use, intrinsic :: iso_c_binding
+          integer(c_int)::gmshModelGeoAddVolume
+            integer(c_int)::shellTags(*)
+            integer(c_size_t), value :: shellTags_n
+            integer(c_int), value::tag
+            integer(c_int)::ierr
           end function gmshModelGeoAddVolume
 
 !  Extrude the entities `dimTags' in the built-in CAD representation, using a
@@ -3323,21 +3323,21 @@ c
      &      heights_n,
      &      recombine,
      &      ierr)
-     &    bind(C,name="gmshModelGeoExtrude")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT) :: dimTags(*)
-            integer (C_SIZE_T), value :: dimTags_n
-            real (C_DOUBLE), value :: dx
-            real (C_DOUBLE), value :: dy
-            real (C_DOUBLE), value :: dz
-            type (C_PTR), intent(out) :: outDimTags
-            integer (C_SIZE_T) :: outDimTags_n
-            integer (C_INT) :: numElements(*)
-            integer (C_SIZE_T), value :: numElements_n
-            real (C_DOUBLE) :: heights(*)
-            integer (C_SIZE_T), value :: heights_n
-            integer (C_INT), value :: recombine
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelGeoExtrude")
+          use, intrinsic :: iso_c_binding
+            integer(c_int)::dimTags(*)
+            integer(c_size_t), value :: dimTags_n
+            real(c_double), value::dx
+            real(c_double), value::dy
+            real(c_double), value::dz
+            type(c_ptr), intent(out)::outDimTags
+            integer(c_size_t) :: outDimTags_n
+            integer(c_int)::numElements(*)
+            integer(c_size_t), value :: numElements_n
+            real(c_double)::heights(*)
+            integer(c_size_t), value :: heights_n
+            integer(c_int), value::recombine
+            integer(c_int)::ierr
           end subroutine gmshModelGeoExtrude
 
 !  Extrude the entities `dimTags' in the built-in CAD representation, using a
@@ -3367,25 +3367,25 @@ c
      &      heights_n,
      &      recombine,
      &      ierr)
-     &    bind(C,name="gmshModelGeoRevolve")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT) :: dimTags(*)
-            integer (C_SIZE_T), value :: dimTags_n
-            real (C_DOUBLE), value :: x
-            real (C_DOUBLE), value :: y
-            real (C_DOUBLE), value :: z
-            real (C_DOUBLE), value :: ax
-            real (C_DOUBLE), value :: ay
-            real (C_DOUBLE), value :: az
-            real (C_DOUBLE), value :: angle
-            type (C_PTR), intent(out) :: outDimTags
-            integer (C_SIZE_T) :: outDimTags_n
-            integer (C_INT) :: numElements(*)
-            integer (C_SIZE_T), value :: numElements_n
-            real (C_DOUBLE) :: heights(*)
-            integer (C_SIZE_T), value :: heights_n
-            integer (C_INT), value :: recombine
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelGeoRevolve")
+          use, intrinsic :: iso_c_binding
+            integer(c_int)::dimTags(*)
+            integer(c_size_t), value :: dimTags_n
+            real(c_double), value::x
+            real(c_double), value::y
+            real(c_double), value::z
+            real(c_double), value::ax
+            real(c_double), value::ay
+            real(c_double), value::az
+            real(c_double), value::angle
+            type(c_ptr), intent(out)::outDimTags
+            integer(c_size_t) :: outDimTags_n
+            integer(c_int)::numElements(*)
+            integer(c_size_t), value :: numElements_n
+            real(c_double)::heights(*)
+            integer(c_size_t), value :: heights_n
+            integer(c_int), value::recombine
+            integer(c_int)::ierr
           end subroutine gmshModelGeoRevolve
 
 !  Extrude the entities `dimTags' in the built-in CAD representation, using a
@@ -3418,28 +3418,28 @@ c
      &      heights_n,
      &      recombine,
      &      ierr)
-     &    bind(C,name="gmshModelGeoTwist")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT) :: dimTags(*)
-            integer (C_SIZE_T), value :: dimTags_n
-            real (C_DOUBLE), value :: x
-            real (C_DOUBLE), value :: y
-            real (C_DOUBLE), value :: z
-            real (C_DOUBLE), value :: dx
-            real (C_DOUBLE), value :: dy
-            real (C_DOUBLE), value :: dz
-            real (C_DOUBLE), value :: ax
-            real (C_DOUBLE), value :: ay
-            real (C_DOUBLE), value :: az
-            real (C_DOUBLE), value :: angle
-            type (C_PTR), intent(out) :: outDimTags
-            integer (C_SIZE_T) :: outDimTags_n
-            integer (C_INT) :: numElements(*)
-            integer (C_SIZE_T), value :: numElements_n
-            real (C_DOUBLE) :: heights(*)
-            integer (C_SIZE_T), value :: heights_n
-            integer (C_INT), value :: recombine
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelGeoTwist")
+          use, intrinsic :: iso_c_binding
+            integer(c_int)::dimTags(*)
+            integer(c_size_t), value :: dimTags_n
+            real(c_double), value::x
+            real(c_double), value::y
+            real(c_double), value::z
+            real(c_double), value::dx
+            real(c_double), value::dy
+            real(c_double), value::dz
+            real(c_double), value::ax
+            real(c_double), value::ay
+            real(c_double), value::az
+            real(c_double), value::angle
+            type(c_ptr), intent(out)::outDimTags
+            integer(c_size_t) :: outDimTags_n
+            integer(c_int)::numElements(*)
+            integer(c_size_t), value :: numElements_n
+            real(c_double)::heights(*)
+            integer(c_size_t), value :: heights_n
+            integer(c_int), value::recombine
+            integer(c_int)::ierr
           end subroutine gmshModelGeoTwist
 
 !  Extrude the entities `dimTags' in the built-in CAD representation along the
@@ -3464,20 +3464,20 @@ c
      &      second,
      &      viewIndex,
      &      ierr)
-     &    bind(C,name="gmshModelGeoExtrudeBoundaryLayer")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT) :: dimTags(*)
-            integer (C_SIZE_T), value :: dimTags_n
-            type (C_PTR), intent(out) :: outDimTags
-            integer (C_SIZE_T) :: outDimTags_n
-            integer (C_INT) :: numElements(*)
-            integer (C_SIZE_T), value :: numElements_n
-            real (C_DOUBLE) :: heights(*)
-            integer (C_SIZE_T), value :: heights_n
-            integer (C_INT), value :: recombine
-            integer (C_INT), value :: second
-            integer (C_INT), value :: viewIndex
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelGeoExtrudeBoundaryLayer")
+          use, intrinsic :: iso_c_binding
+            integer(c_int)::dimTags(*)
+            integer(c_size_t), value :: dimTags_n
+            type(c_ptr), intent(out)::outDimTags
+            integer(c_size_t) :: outDimTags_n
+            integer(c_int)::numElements(*)
+            integer(c_size_t), value :: numElements_n
+            real(c_double)::heights(*)
+            integer(c_size_t), value :: heights_n
+            integer(c_int), value::recombine
+            integer(c_int), value::second
+            integer(c_int), value::viewIndex
+            integer(c_int)::ierr
           end subroutine gmshModelGeoExtrudeBoundaryLayer
 
 !  Translate the entities `dimTags' in the built-in CAD representation along
@@ -3489,14 +3489,14 @@ c
      &      dy,
      &      dz,
      &      ierr)
-     &    bind(C,name="gmshModelGeoTranslate")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT) :: dimTags(*)
-            integer (C_SIZE_T), value :: dimTags_n
-            real (C_DOUBLE), value :: dx
-            real (C_DOUBLE), value :: dy
-            real (C_DOUBLE), value :: dz
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelGeoTranslate")
+          use, intrinsic :: iso_c_binding
+            integer(c_int)::dimTags(*)
+            integer(c_size_t), value :: dimTags_n
+            real(c_double), value::dx
+            real(c_double), value::dy
+            real(c_double), value::dz
+            integer(c_int)::ierr
           end subroutine gmshModelGeoTranslate
 
 !  Rotate the entities `dimTags' in the built-in CAD representation by `angle'
@@ -3513,18 +3513,18 @@ c
      &      az,
      &      angle,
      &      ierr)
-     &    bind(C,name="gmshModelGeoRotate")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT) :: dimTags(*)
-            integer (C_SIZE_T), value :: dimTags_n
-            real (C_DOUBLE), value :: x
-            real (C_DOUBLE), value :: y
-            real (C_DOUBLE), value :: z
-            real (C_DOUBLE), value :: ax
-            real (C_DOUBLE), value :: ay
-            real (C_DOUBLE), value :: az
-            real (C_DOUBLE), value :: angle
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelGeoRotate")
+          use, intrinsic :: iso_c_binding
+            integer(c_int)::dimTags(*)
+            integer(c_size_t), value :: dimTags_n
+            real(c_double), value::x
+            real(c_double), value::y
+            real(c_double), value::z
+            real(c_double), value::ax
+            real(c_double), value::ay
+            real(c_double), value::az
+            real(c_double), value::angle
+            integer(c_int)::ierr
           end subroutine gmshModelGeoRotate
 
 !  Scale the entities `dimTag' in the built-in CAD representation by factors
@@ -3540,17 +3540,17 @@ c
      &      b,
      &      c,
      &      ierr)
-     &    bind(C,name="gmshModelGeoDilate")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT) :: dimTags(*)
-            integer (C_SIZE_T), value :: dimTags_n
-            real (C_DOUBLE), value :: x
-            real (C_DOUBLE), value :: y
-            real (C_DOUBLE), value :: z
-            real (C_DOUBLE), value :: a
-            real (C_DOUBLE), value :: b
-            real (C_DOUBLE), value :: c
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelGeoDilate")
+          use, intrinsic :: iso_c_binding
+            integer(c_int)::dimTags(*)
+            integer(c_size_t), value :: dimTags_n
+            real(c_double), value::x
+            real(c_double), value::y
+            real(c_double), value::z
+            real(c_double), value::a
+            real(c_double), value::b
+            real(c_double), value::c
+            integer(c_int)::ierr
           end subroutine gmshModelGeoDilate
 
 !  Mirror the entities `dimTag' in the built-in CAD representation, with
@@ -3563,15 +3563,15 @@ c
      &      c,
      &      d,
      &      ierr)
-     &    bind(C,name="gmshModelGeoMirror")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT) :: dimTags(*)
-            integer (C_SIZE_T), value :: dimTags_n
-            real (C_DOUBLE), value :: a
-            real (C_DOUBLE), value :: b
-            real (C_DOUBLE), value :: c
-            real (C_DOUBLE), value :: d
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelGeoMirror")
+          use, intrinsic :: iso_c_binding
+            integer(c_int)::dimTags(*)
+            integer(c_size_t), value :: dimTags_n
+            real(c_double), value::a
+            real(c_double), value::b
+            real(c_double), value::c
+            real(c_double), value::d
+            integer(c_int)::ierr
           end subroutine gmshModelGeoMirror
 
 !  Mirror the entities `dimTag' in the built-in CAD representation, with
@@ -3586,15 +3586,15 @@ c
      &      c,
      &      d,
      &      ierr)
-     &    bind(C,name="gmshModelGeoSymmetrize")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT) :: dimTags(*)
-            integer (C_SIZE_T), value :: dimTags_n
-            real (C_DOUBLE), value :: a
-            real (C_DOUBLE), value :: b
-            real (C_DOUBLE), value :: c
-            real (C_DOUBLE), value :: d
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelGeoSymmetrize")
+          use, intrinsic :: iso_c_binding
+            integer(c_int)::dimTags(*)
+            integer(c_size_t), value :: dimTags_n
+            real(c_double), value::a
+            real(c_double), value::b
+            real(c_double), value::c
+            real(c_double), value::d
+            integer(c_int)::ierr
           end subroutine gmshModelGeoSymmetrize
 
 !  Copy the entities `dimTags' in the built-in CAD representation; the new
@@ -3605,13 +3605,13 @@ c
      &      outDimTags,
      &      outDimTags_n,
      &      ierr)
-     &    bind(C,name="gmshModelGeoCopy")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT) :: dimTags(*)
-            integer (C_SIZE_T), value :: dimTags_n
-            type (C_PTR), intent(out) :: outDimTags
-            integer (C_SIZE_T) :: outDimTags_n
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelGeoCopy")
+          use, intrinsic :: iso_c_binding
+            integer(c_int)::dimTags(*)
+            integer(c_size_t), value :: dimTags_n
+            type(c_ptr), intent(out)::outDimTags
+            integer(c_size_t) :: outDimTags_n
+            integer(c_int)::ierr
           end subroutine gmshModelGeoCopy
 
 !  Remove the entities `dimTags' in the built-in CAD representation, provided
@@ -3623,21 +3623,21 @@ c
      &      dimTags_n,
      &      recursive,
      &      ierr)
-     &    bind(C,name="gmshModelGeoRemove")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT) :: dimTags(*)
-            integer (C_SIZE_T), value :: dimTags_n
-            integer (C_INT), value :: recursive
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelGeoRemove")
+          use, intrinsic :: iso_c_binding
+            integer(c_int)::dimTags(*)
+            integer(c_size_t), value :: dimTags_n
+            integer(c_int), value::recursive
+            integer(c_int)::ierr
           end subroutine gmshModelGeoRemove
 
 !  Remove all duplicate entities in the built-in CAD representation (different
 !  entities at the same geometrical location).
         subroutine gmshModelGeoRemoveAllDuplicates(
      &      ierr)
-     &    bind(C,name="gmshModelGeoRemoveAllDuplicates")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelGeoRemoveAllDuplicates")
+          use, intrinsic :: iso_c_binding
+            integer(c_int)::ierr
           end subroutine gmshModelGeoRemoveAllDuplicates
 
 !  Split the curve of tag `tag' in the built-in CAD representation, on the
@@ -3651,14 +3651,14 @@ c
      &      curveTags,
      &      curveTags_n,
      &      ierr)
-     &    bind(C,name="gmshModelGeoSplitCurve")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: tag
-            integer (C_INT) :: pointTags(*)
-            integer (C_SIZE_T), value :: pointTags_n
-            type (C_PTR), intent(out) :: curveTags
-            integer (C_SIZE_T) :: curveTags_n
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelGeoSplitCurve")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::tag
+            integer(c_int)::pointTags(*)
+            integer(c_size_t), value :: pointTags_n
+            type(c_ptr), intent(out)::curveTags
+            integer(c_size_t) :: curveTags_n
+            integer(c_int)::ierr
           end subroutine gmshModelGeoSplitCurve
 
 !  Get the maximum tag of entities of dimension `dim' in the built-in CAD
@@ -3666,11 +3666,11 @@ c
         function gmshModelGeoGetMaxTag(
      &      dim,
      &      ierr)
-     &    bind(C,name="gmshModelGeoGetMaxTag")
-          use, intrinsic :: ISO_C_BINDING
-          integer (C_INT) :: gmshModelGeoGetMaxTag
-            integer (C_INT), value :: dim
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelGeoGetMaxTag")
+          use, intrinsic :: iso_c_binding
+          integer(c_int)::gmshModelGeoGetMaxTag
+            integer(c_int), value::dim
+            integer(c_int)::ierr
           end function gmshModelGeoGetMaxTag
 
 !  Set the maximum tag `maxTag' for entities of dimension `dim' in the built-
@@ -3679,11 +3679,11 @@ c
      &      dim,
      &      maxTag,
      &      ierr)
-     &    bind(C,name="gmshModelGeoSetMaxTag")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: dim
-            integer (C_INT), value :: maxTag
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelGeoSetMaxTag")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::dim
+            integer(c_int), value::maxTag
+            integer(c_int)::ierr
           end subroutine gmshModelGeoSetMaxTag
 
 !  Add a physical group of dimension `dim', grouping the entities with tags
@@ -3695,14 +3695,14 @@ c
      &      tags_n,
      &      tag,
      &      ierr)
-     &    bind(C,name="gmshModelGeoAddPhysicalGroup")
-          use, intrinsic :: ISO_C_BINDING
-          integer (C_INT) :: gmshModelGeoAddPhysicalGroup
-            integer (C_INT), value :: dim
-            integer (C_INT) :: tags(*)
-            integer (C_SIZE_T), value :: tags_n
-            integer (C_INT), value :: tag
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelGeoAddPhysicalGroup")
+          use, intrinsic :: iso_c_binding
+          integer(c_int)::gmshModelGeoAddPhysicalGroup
+            integer(c_int), value::dim
+            integer(c_int)::tags(*)
+            integer(c_size_t), value :: tags_n
+            integer(c_int), value::tag
+            integer(c_int)::ierr
           end function gmshModelGeoAddPhysicalGroup
 
 !  Remove the physical groups `dimTags' from the built-in CAD representation.
@@ -3711,11 +3711,11 @@ c
      &      dimTags,
      &      dimTags_n,
      &      ierr)
-     &    bind(C,name="gmshModelGeoRemovePhysicalGroups")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT) :: dimTags(*)
-            integer (C_SIZE_T), value :: dimTags_n
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelGeoRemovePhysicalGroups")
+          use, intrinsic :: iso_c_binding
+            integer(c_int)::dimTags(*)
+            integer(c_size_t), value :: dimTags_n
+            integer(c_int)::ierr
           end subroutine gmshModelGeoRemovePhysicalGroups
 
 !  Synchronize the built-in CAD representation with the current Gmsh model.
@@ -3726,9 +3726,9 @@ c
 !  CAD kernel functions.
         subroutine gmshModelGeoSynchronize(
      &      ierr)
-     &    bind(C,name="gmshModelGeoSynchronize")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelGeoSynchronize")
+          use, intrinsic :: iso_c_binding
+            integer(c_int)::ierr
           end subroutine gmshModelGeoSynchronize
 
 !  Set a mesh size constraint on the entities `dimTags' in the built-in CAD
@@ -3739,12 +3739,12 @@ c
      &      dimTags_n,
      &      size,
      &      ierr)
-     &    bind(C,name="gmshModelGeoMeshSetSize")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT) :: dimTags(*)
-            integer (C_SIZE_T), value :: dimTags_n
-            real (C_DOUBLE), value :: size
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelGeoMeshSetSize")
+          use, intrinsic :: iso_c_binding
+            integer(c_int)::dimTags(*)
+            integer(c_size_t), value :: dimTags_n
+            real(c_double), value::size
+            integer(c_int)::ierr
           end subroutine gmshModelGeoMeshSetSize
 
 !  Set a transfinite meshing constraint on the curve `tag' in the built-in CAD
@@ -3758,13 +3758,13 @@ c
      &      meshType,
      &      coef,
      &      ierr)
-     &    bind(C,name="gmshModelGeoMeshSetTransfiniteCurve")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: tag
-            integer (C_INT), value :: nPoints
-            character (LEN=1,KIND=C_CHAR) :: meshType(*)
-            real (C_DOUBLE), value :: coef
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelGeoMeshSetTransfiniteCurve")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::tag
+            integer(c_int), value::nPoints
+            character(len = 1, kind = c_char)::meshType(*)
+            real(c_double), value::coef
+            integer(c_int)::ierr
           end subroutine gmshModelGeoMeshSetTransfiniteCurve
 
 !  Set a transfinite meshing constraint on the surface `tag' in the built-in
@@ -3780,13 +3780,13 @@ c
      &      cornerTags,
      &      cornerTags_n,
      &      ierr)
-     &    bind(C,name="gmshModelGeoMeshSetTransfiniteSurface")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: tag
-            character (LEN=1,KIND=C_CHAR) :: arrangement(*)
-            integer (C_INT) :: cornerTags(*)
-            integer (C_SIZE_T), value :: cornerTags_n
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelGeoMeshSetTransfiniteSurface")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::tag
+            character(len = 1, kind = c_char)::arrangement(*)
+            integer(c_int)::cornerTags(*)
+            integer(c_size_t), value :: cornerTags_n
+            integer(c_int)::ierr
           end subroutine gmshModelGeoMeshSetTransfiniteSurface
 
 !  Set a transfinite meshing constraint on the surface `tag' in the built-in
@@ -3797,12 +3797,12 @@ c
      &      cornerTags,
      &      cornerTags_n,
      &      ierr)
-     &    bind(C,name="gmshModelGeoMeshSetTransfiniteVolume")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: tag
-            integer (C_INT) :: cornerTags(*)
-            integer (C_SIZE_T), value :: cornerTags_n
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelGeoMeshSetTransfiniteVolume")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::tag
+            integer(c_int)::cornerTags(*)
+            integer(c_size_t), value :: cornerTags_n
+            integer(c_int)::ierr
           end subroutine gmshModelGeoMeshSetTransfiniteVolume
 
 !  Set a recombination meshing constraint on the entity of dimension `dim' and
@@ -3814,12 +3814,12 @@ c
      &      tag,
      &      angle,
      &      ierr)
-     &    bind(C,name="gmshModelGeoMeshSetRecombine")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: dim
-            integer (C_INT), value :: tag
-            real (C_DOUBLE), value :: angle
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelGeoMeshSetRecombine")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::dim
+            integer(c_int), value::tag
+            real(c_double), value::angle
+            integer(c_int)::ierr
           end subroutine gmshModelGeoMeshSetRecombine
 
 !  Set a smoothing meshing constraint on the entity of dimension `dim' and tag
@@ -3830,12 +3830,12 @@ c
      &      tag,
      &      val,
      &      ierr)
-     &    bind(C,name="gmshModelGeoMeshSetSmoothing")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: dim
-            integer (C_INT), value :: tag
-            integer (C_INT), value :: val
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelGeoMeshSetSmoothing")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::dim
+            integer(c_int), value::tag
+            integer(c_int), value::val
+            integer(c_int)::ierr
           end subroutine gmshModelGeoMeshSetSmoothing
 
 !  Set a reverse meshing constraint on the entity of dimension `dim' and tag
@@ -3848,12 +3848,12 @@ c
      &      tag,
      &      val,
      &      ierr)
-     &    bind(C,name="gmshModelGeoMeshSetReverse")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: dim
-            integer (C_INT), value :: tag
-            integer (C_INT), value :: val
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelGeoMeshSetReverse")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::dim
+            integer(c_int), value::tag
+            integer(c_int), value::val
+            integer(c_int)::ierr
           end subroutine gmshModelGeoMeshSetReverse
 
 !  Set the meshing algorithm on the entity of dimension `dim' and tag `tag' in
@@ -3864,12 +3864,12 @@ c
      &      tag,
      &      val,
      &      ierr)
-     &    bind(C,name="gmshModelGeoMeshSetAlgorithm")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: dim
-            integer (C_INT), value :: tag
-            integer (C_INT), value :: val
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelGeoMeshSetAlgorithm")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::dim
+            integer(c_int), value::tag
+            integer(c_int), value::val
+            integer(c_int)::ierr
           end subroutine gmshModelGeoMeshSetAlgorithm
 
 !  Force the mesh size to be extended from the boundary, or not, for the
@@ -3880,12 +3880,12 @@ c
      &      tag,
      &      val,
      &      ierr)
-     &    bind(C,name="gmshModelGeoMeshSetSizeFromBoundary")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: dim
-            integer (C_INT), value :: tag
-            integer (C_INT), value :: val
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelGeoMeshSetSizeFromBoundary")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::dim
+            integer(c_int), value::tag
+            integer(c_int), value::val
+            integer(c_int)::ierr
           end subroutine gmshModelGeoMeshSetSizeFromBoundary
 
 !  Add a geometrical point in the OpenCASCADE CAD representation, at
@@ -3901,15 +3901,15 @@ c
      &      meshSize,
      &      tag,
      &      ierr)
-     &    bind(C,name="gmshModelOccAddPoint")
-          use, intrinsic :: ISO_C_BINDING
-          integer (C_INT) :: gmshModelOccAddPoint
-            real (C_DOUBLE), value :: x
-            real (C_DOUBLE), value :: y
-            real (C_DOUBLE), value :: z
-            real (C_DOUBLE), value :: meshSize
-            integer (C_INT), value :: tag
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelOccAddPoint")
+          use, intrinsic :: iso_c_binding
+          integer(c_int)::gmshModelOccAddPoint
+            real(c_double), value::x
+            real(c_double), value::y
+            real(c_double), value::z
+            real(c_double), value::meshSize
+            integer(c_int), value::tag
+            integer(c_int)::ierr
           end function gmshModelOccAddPoint
 
 !  Add a straight line segment in the OpenCASCADE CAD representation, between
@@ -3921,13 +3921,13 @@ c
      &      endTag,
      &      tag,
      &      ierr)
-     &    bind(C,name="gmshModelOccAddLine")
-          use, intrinsic :: ISO_C_BINDING
-          integer (C_INT) :: gmshModelOccAddLine
-            integer (C_INT), value :: startTag
-            integer (C_INT), value :: endTag
-            integer (C_INT), value :: tag
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelOccAddLine")
+          use, intrinsic :: iso_c_binding
+          integer(c_int)::gmshModelOccAddLine
+            integer(c_int), value::startTag
+            integer(c_int), value::endTag
+            integer(c_int), value::tag
+            integer(c_int)::ierr
           end function gmshModelOccAddLine
 
 !  Add a circle arc in the OpenCASCADE CAD representation, between the two
@@ -3940,14 +3940,14 @@ c
      &      endTag,
      &      tag,
      &      ierr)
-     &    bind(C,name="gmshModelOccAddCircleArc")
-          use, intrinsic :: ISO_C_BINDING
-          integer (C_INT) :: gmshModelOccAddCircleArc
-            integer (C_INT), value :: startTag
-            integer (C_INT), value :: centerTag
-            integer (C_INT), value :: endTag
-            integer (C_INT), value :: tag
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelOccAddCircleArc")
+          use, intrinsic :: iso_c_binding
+          integer(c_int)::gmshModelOccAddCircleArc
+            integer(c_int), value::startTag
+            integer(c_int), value::centerTag
+            integer(c_int), value::endTag
+            integer(c_int), value::tag
+            integer(c_int)::ierr
           end function gmshModelOccAddCircleArc
 
 !  Add a circle of center (`x', `y', `z') and radius `r' in the OpenCASCADE
@@ -3964,17 +3964,17 @@ c
      &      angle1,
      &      angle2,
      &      ierr)
-     &    bind(C,name="gmshModelOccAddCircle")
-          use, intrinsic :: ISO_C_BINDING
-          integer (C_INT) :: gmshModelOccAddCircle
-            real (C_DOUBLE), value :: x
-            real (C_DOUBLE), value :: y
-            real (C_DOUBLE), value :: z
-            real (C_DOUBLE), value :: r
-            integer (C_INT), value :: tag
-            real (C_DOUBLE), value :: angle1
-            real (C_DOUBLE), value :: angle2
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelOccAddCircle")
+          use, intrinsic :: iso_c_binding
+          integer(c_int)::gmshModelOccAddCircle
+            real(c_double), value::x
+            real(c_double), value::y
+            real(c_double), value::z
+            real(c_double), value::r
+            integer(c_int), value::tag
+            real(c_double), value::angle1
+            real(c_double), value::angle2
+            integer(c_int)::ierr
           end function gmshModelOccAddCircle
 
 !  Add an ellipse arc in the OpenCASCADE CAD representation, between the two
@@ -3990,15 +3990,15 @@ c
      &      endTag,
      &      tag,
      &      ierr)
-     &    bind(C,name="gmshModelOccAddEllipseArc")
-          use, intrinsic :: ISO_C_BINDING
-          integer (C_INT) :: gmshModelOccAddEllipseArc
-            integer (C_INT), value :: startTag
-            integer (C_INT), value :: centerTag
-            integer (C_INT), value :: majorTag
-            integer (C_INT), value :: endTag
-            integer (C_INT), value :: tag
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelOccAddEllipseArc")
+          use, intrinsic :: iso_c_binding
+          integer(c_int)::gmshModelOccAddEllipseArc
+            integer(c_int), value::startTag
+            integer(c_int), value::centerTag
+            integer(c_int), value::majorTag
+            integer(c_int), value::endTag
+            integer(c_int), value::tag
+            integer(c_int)::ierr
           end function gmshModelOccAddEllipseArc
 
 !  Add an ellipse of center (`x', `y', `z') and radii `r1' and `r2' along the
@@ -4019,18 +4019,18 @@ c
      &      angle1,
      &      angle2,
      &      ierr)
-     &    bind(C,name="gmshModelOccAddEllipse")
-          use, intrinsic :: ISO_C_BINDING
-          integer (C_INT) :: gmshModelOccAddEllipse
-            real (C_DOUBLE), value :: x
-            real (C_DOUBLE), value :: y
-            real (C_DOUBLE), value :: z
-            real (C_DOUBLE), value :: r1
-            real (C_DOUBLE), value :: r2
-            integer (C_INT), value :: tag
-            real (C_DOUBLE), value :: angle1
-            real (C_DOUBLE), value :: angle2
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelOccAddEllipse")
+          use, intrinsic :: iso_c_binding
+          integer(c_int)::gmshModelOccAddEllipse
+            real(c_double), value::x
+            real(c_double), value::y
+            real(c_double), value::z
+            real(c_double), value::r1
+            real(c_double), value::r2
+            integer(c_int), value::tag
+            real(c_double), value::angle1
+            real(c_double), value::angle2
+            integer(c_int)::ierr
           end function gmshModelOccAddEllipse
 
 !  Add a spline (C2 b-spline) curve in the OpenCASCADE CAD representation,
@@ -4043,13 +4043,13 @@ c
      &      pointTags_n,
      &      tag,
      &      ierr)
-     &    bind(C,name="gmshModelOccAddSpline")
-          use, intrinsic :: ISO_C_BINDING
-          integer (C_INT) :: gmshModelOccAddSpline
-            integer (C_INT) :: pointTags(*)
-            integer (C_SIZE_T), value :: pointTags_n
-            integer (C_INT), value :: tag
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelOccAddSpline")
+          use, intrinsic :: iso_c_binding
+          integer(c_int)::gmshModelOccAddSpline
+            integer(c_int)::pointTags(*)
+            integer(c_size_t), value :: pointTags_n
+            integer(c_int), value::tag
+            integer(c_int)::ierr
           end function gmshModelOccAddSpline
 
 !  Add a b-spline curve of degree `degree' in the OpenCASCADE CAD
@@ -4070,20 +4070,20 @@ c
      &      multiplicities,
      &      multiplicities_n,
      &      ierr)
-     &    bind(C,name="gmshModelOccAddBSpline")
-          use, intrinsic :: ISO_C_BINDING
-          integer (C_INT) :: gmshModelOccAddBSpline
-            integer (C_INT) :: pointTags(*)
-            integer (C_SIZE_T), value :: pointTags_n
-            integer (C_INT), value :: tag
-            integer (C_INT), value :: degree
-            real (C_DOUBLE) :: weights(*)
-            integer (C_SIZE_T), value :: weights_n
-            real (C_DOUBLE) :: knots(*)
-            integer (C_SIZE_T), value :: knots_n
-            integer (C_INT) :: multiplicities(*)
-            integer (C_SIZE_T), value :: multiplicities_n
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelOccAddBSpline")
+          use, intrinsic :: iso_c_binding
+          integer(c_int)::gmshModelOccAddBSpline
+            integer(c_int)::pointTags(*)
+            integer(c_size_t), value :: pointTags_n
+            integer(c_int), value::tag
+            integer(c_int), value::degree
+            real(c_double)::weights(*)
+            integer(c_size_t), value :: weights_n
+            real(c_double)::knots(*)
+            integer(c_size_t), value :: knots_n
+            integer(c_int)::multiplicities(*)
+            integer(c_size_t), value :: multiplicities_n
+            integer(c_int)::ierr
           end function gmshModelOccAddBSpline
 
 !  Add a Bezier curve in the OpenCASCADE CAD representation, with `pointTags'
@@ -4094,13 +4094,13 @@ c
      &      pointTags_n,
      &      tag,
      &      ierr)
-     &    bind(C,name="gmshModelOccAddBezier")
-          use, intrinsic :: ISO_C_BINDING
-          integer (C_INT) :: gmshModelOccAddBezier
-            integer (C_INT) :: pointTags(*)
-            integer (C_SIZE_T), value :: pointTags_n
-            integer (C_INT), value :: tag
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelOccAddBezier")
+          use, intrinsic :: iso_c_binding
+          integer(c_int)::gmshModelOccAddBezier
+            integer(c_int)::pointTags(*)
+            integer(c_size_t), value :: pointTags_n
+            integer(c_int), value::tag
+            integer(c_int)::ierr
           end function gmshModelOccAddBezier
 
 !  Add a wire (open or closed) in the OpenCASCADE CAD representation, formed
@@ -4114,14 +4114,14 @@ c
      &      tag,
      &      checkClosed,
      &      ierr)
-     &    bind(C,name="gmshModelOccAddWire")
-          use, intrinsic :: ISO_C_BINDING
-          integer (C_INT) :: gmshModelOccAddWire
-            integer (C_INT) :: curveTags(*)
-            integer (C_SIZE_T), value :: curveTags_n
-            integer (C_INT), value :: tag
-            integer (C_INT), value :: checkClosed
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelOccAddWire")
+          use, intrinsic :: iso_c_binding
+          integer(c_int)::gmshModelOccAddWire
+            integer(c_int)::curveTags(*)
+            integer(c_size_t), value :: curveTags_n
+            integer(c_int), value::tag
+            integer(c_int), value::checkClosed
+            integer(c_int)::ierr
           end function gmshModelOccAddWire
 
 !  Add a curve loop (a closed wire) in the OpenCASCADE CAD representation,
@@ -4135,13 +4135,13 @@ c
      &      curveTags_n,
      &      tag,
      &      ierr)
-     &    bind(C,name="gmshModelOccAddCurveLoop")
-          use, intrinsic :: ISO_C_BINDING
-          integer (C_INT) :: gmshModelOccAddCurveLoop
-            integer (C_INT) :: curveTags(*)
-            integer (C_SIZE_T), value :: curveTags_n
-            integer (C_INT), value :: tag
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelOccAddCurveLoop")
+          use, intrinsic :: iso_c_binding
+          integer(c_int)::gmshModelOccAddCurveLoop
+            integer(c_int)::curveTags(*)
+            integer(c_size_t), value :: curveTags_n
+            integer(c_int), value::tag
+            integer(c_int)::ierr
           end function gmshModelOccAddCurveLoop
 
 !  Add a rectangle in the OpenCASCADE CAD representation, with lower left
@@ -4158,17 +4158,17 @@ c
      &      tag,
      &      roundedRadius,
      &      ierr)
-     &    bind(C,name="gmshModelOccAddRectangle")
-          use, intrinsic :: ISO_C_BINDING
-          integer (C_INT) :: gmshModelOccAddRectangle
-            real (C_DOUBLE), value :: x
-            real (C_DOUBLE), value :: y
-            real (C_DOUBLE), value :: z
-            real (C_DOUBLE), value :: dx
-            real (C_DOUBLE), value :: dy
-            integer (C_INT), value :: tag
-            real (C_DOUBLE), value :: roundedRadius
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelOccAddRectangle")
+          use, intrinsic :: iso_c_binding
+          integer(c_int)::gmshModelOccAddRectangle
+            real(c_double), value::x
+            real(c_double), value::y
+            real(c_double), value::z
+            real(c_double), value::dx
+            real(c_double), value::dy
+            integer(c_int), value::tag
+            real(c_double), value::roundedRadius
+            integer(c_int)::ierr
           end function gmshModelOccAddRectangle
 
 !  Add a disk in the OpenCASCADE CAD representation, with center (`xc', `yc',
@@ -4183,16 +4183,16 @@ c
      &      ry,
      &      tag,
      &      ierr)
-     &    bind(C,name="gmshModelOccAddDisk")
-          use, intrinsic :: ISO_C_BINDING
-          integer (C_INT) :: gmshModelOccAddDisk
-            real (C_DOUBLE), value :: xc
-            real (C_DOUBLE), value :: yc
-            real (C_DOUBLE), value :: zc
-            real (C_DOUBLE), value :: rx
-            real (C_DOUBLE), value :: ry
-            integer (C_INT), value :: tag
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelOccAddDisk")
+          use, intrinsic :: iso_c_binding
+          integer(c_int)::gmshModelOccAddDisk
+            real(c_double), value::xc
+            real(c_double), value::yc
+            real(c_double), value::zc
+            real(c_double), value::rx
+            real(c_double), value::ry
+            integer(c_int), value::tag
+            integer(c_int)::ierr
           end function gmshModelOccAddDisk
 
 !  Add a plane surface in the OpenCASCADE CAD representation, defined by one
@@ -4205,13 +4205,13 @@ c
      &      wireTags_n,
      &      tag,
      &      ierr)
-     &    bind(C,name="gmshModelOccAddPlaneSurface")
-          use, intrinsic :: ISO_C_BINDING
-          integer (C_INT) :: gmshModelOccAddPlaneSurface
-            integer (C_INT) :: wireTags(*)
-            integer (C_SIZE_T), value :: wireTags_n
-            integer (C_INT), value :: tag
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelOccAddPlaneSurface")
+          use, intrinsic :: iso_c_binding
+          integer(c_int)::gmshModelOccAddPlaneSurface
+            integer(c_int)::wireTags(*)
+            integer(c_size_t), value :: wireTags_n
+            integer(c_int), value::tag
+            integer(c_int)::ierr
           end function gmshModelOccAddPlaneSurface
 
 !  Add a surface in the OpenCASCADE CAD representation, filling the curve loop
@@ -4248,24 +4248,24 @@ c
      &      maxDegree,
      &      maxSegments,
      &      ierr)
-     &    bind(C,name="gmshModelOccAddSurfaceFilling")
-          use, intrinsic :: ISO_C_BINDING
-          integer (C_INT) :: gmshModelOccAddSurfaceFilling
-            integer (C_INT), value :: wireTag
-            integer (C_INT), value :: tag
-            integer (C_INT) :: pointTags(*)
-            integer (C_SIZE_T), value :: pointTags_n
-            integer (C_INT), value :: degree
-            integer (C_INT), value :: numPointsOnCurves
-            integer (C_INT), value :: numIter
-            integer (C_INT), value :: anisotropic
-            real (C_DOUBLE), value :: tol2d
-            real (C_DOUBLE), value :: tol3d
-            real (C_DOUBLE), value :: tolAng
-            real (C_DOUBLE), value :: tolCurv
-            integer (C_INT), value :: maxDegree
-            integer (C_INT), value :: maxSegments
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelOccAddSurfaceFilling")
+          use, intrinsic :: iso_c_binding
+          integer(c_int)::gmshModelOccAddSurfaceFilling
+            integer(c_int), value::wireTag
+            integer(c_int), value::tag
+            integer(c_int)::pointTags(*)
+            integer(c_size_t), value :: pointTags_n
+            integer(c_int), value::degree
+            integer(c_int), value::numPointsOnCurves
+            integer(c_int), value::numIter
+            integer(c_int), value::anisotropic
+            real(c_double), value::tol2d
+            real(c_double), value::tol3d
+            real(c_double), value::tolAng
+            real(c_double), value::tolCurv
+            integer(c_int), value::maxDegree
+            integer(c_int), value::maxSegments
+            integer(c_int)::ierr
           end function gmshModelOccAddSurfaceFilling
 
 !  Add a BSpline surface in the OpenCASCADE CAD representation, filling the
@@ -4280,13 +4280,13 @@ c
      &      tag,
      &      type,
      &      ierr)
-     &    bind(C,name="gmshModelOccAddBSplineFilling")
-          use, intrinsic :: ISO_C_BINDING
-          integer (C_INT) :: gmshModelOccAddBSplineFilling
-            integer (C_INT), value :: wireTag
-            integer (C_INT), value :: tag
-            character (LEN=1,KIND=C_CHAR) :: type(*)
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelOccAddBSplineFilling")
+          use, intrinsic :: iso_c_binding
+          integer(c_int)::gmshModelOccAddBSplineFilling
+            integer(c_int), value::wireTag
+            integer(c_int), value::tag
+            character(len = 1, kind = c_char)::type(*)
+            integer(c_int)::ierr
           end function gmshModelOccAddBSplineFilling
 
 !  Add a Bezier surface in the OpenCASCADE CAD representation, filling the
@@ -4301,13 +4301,13 @@ c
      &      tag,
      &      type,
      &      ierr)
-     &    bind(C,name="gmshModelOccAddBezierFilling")
-          use, intrinsic :: ISO_C_BINDING
-          integer (C_INT) :: gmshModelOccAddBezierFilling
-            integer (C_INT), value :: wireTag
-            integer (C_INT), value :: tag
-            character (LEN=1,KIND=C_CHAR) :: type(*)
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelOccAddBezierFilling")
+          use, intrinsic :: iso_c_binding
+          integer(c_int)::gmshModelOccAddBezierFilling
+            integer(c_int), value::wireTag
+            integer(c_int), value::tag
+            character(len = 1, kind = c_char)::type(*)
+            integer(c_int)::ierr
           end function gmshModelOccAddBezierFilling
 
 !  Add a b-spline surface of degree `degreeU' x `degreeV' in the OpenCASCADE
@@ -4342,29 +4342,29 @@ c
      &      wireTags_n,
      &      wire3D,
      &      ierr)
-     &    bind(C,name="gmshModelOccAddBSplineSurface")
-          use, intrinsic :: ISO_C_BINDING
-          integer (C_INT) :: gmshModelOccAddBSplineSurface
-            integer (C_INT) :: pointTags(*)
-            integer (C_SIZE_T), value :: pointTags_n
-            integer (C_INT), value :: numPointsU
-            integer (C_INT), value :: tag
-            integer (C_INT), value :: degreeU
-            integer (C_INT), value :: degreeV
-            real (C_DOUBLE) :: weights(*)
-            integer (C_SIZE_T), value :: weights_n
-            real (C_DOUBLE) :: knotsU(*)
-            integer (C_SIZE_T), value :: knotsU_n
-            real (C_DOUBLE) :: knotsV(*)
-            integer (C_SIZE_T), value :: knotsV_n
-            integer (C_INT) :: multiplicitiesU(*)
-            integer (C_SIZE_T), value :: multiplicitiesU_n
-            integer (C_INT) :: multiplicitiesV(*)
-            integer (C_SIZE_T), value :: multiplicitiesV_n
-            integer (C_INT) :: wireTags(*)
-            integer (C_SIZE_T), value :: wireTags_n
-            integer (C_INT), value :: wire3D
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelOccAddBSplineSurface")
+          use, intrinsic :: iso_c_binding
+          integer(c_int)::gmshModelOccAddBSplineSurface
+            integer(c_int)::pointTags(*)
+            integer(c_size_t), value :: pointTags_n
+            integer(c_int), value::numPointsU
+            integer(c_int), value::tag
+            integer(c_int), value::degreeU
+            integer(c_int), value::degreeV
+            real(c_double)::weights(*)
+            integer(c_size_t), value :: weights_n
+            real(c_double)::knotsU(*)
+            integer(c_size_t), value :: knotsU_n
+            real(c_double)::knotsV(*)
+            integer(c_size_t), value :: knotsV_n
+            integer(c_int)::multiplicitiesU(*)
+            integer(c_size_t), value :: multiplicitiesU_n
+            integer(c_int)::multiplicitiesV(*)
+            integer(c_size_t), value :: multiplicitiesV_n
+            integer(c_int)::wireTags(*)
+            integer(c_size_t), value :: wireTags_n
+            integer(c_int), value::wire3D
+            integer(c_int)::ierr
           end function gmshModelOccAddBSplineSurface
 
 !  Add a Bezier surface in the OpenCASCADE CAD representation, with
@@ -4385,17 +4385,17 @@ c
      &      wireTags_n,
      &      wire3D,
      &      ierr)
-     &    bind(C,name="gmshModelOccAddBezierSurface")
-          use, intrinsic :: ISO_C_BINDING
-          integer (C_INT) :: gmshModelOccAddBezierSurface
-            integer (C_INT) :: pointTags(*)
-            integer (C_SIZE_T), value :: pointTags_n
-            integer (C_INT), value :: numPointsU
-            integer (C_INT), value :: tag
-            integer (C_INT) :: wireTags(*)
-            integer (C_SIZE_T), value :: wireTags_n
-            integer (C_INT), value :: wire3D
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelOccAddBezierSurface")
+          use, intrinsic :: iso_c_binding
+          integer(c_int)::gmshModelOccAddBezierSurface
+            integer(c_int)::pointTags(*)
+            integer(c_size_t), value :: pointTags_n
+            integer(c_int), value::numPointsU
+            integer(c_int), value::tag
+            integer(c_int)::wireTags(*)
+            integer(c_size_t), value :: wireTags_n
+            integer(c_int), value::wire3D
+            integer(c_int)::ierr
           end function gmshModelOccAddBezierSurface
 
 !  Trim the surface `surfaceTag' with the wires `wireTags', replacing any
@@ -4412,15 +4412,15 @@ c
      &      wire3D,
      &      tag,
      &      ierr)
-     &    bind(C,name="gmshModelOccAddTrimmedSurface")
-          use, intrinsic :: ISO_C_BINDING
-          integer (C_INT) :: gmshModelOccAddTrimmedSurface
-            integer (C_INT), value :: surfaceTag
-            integer (C_INT) :: wireTags(*)
-            integer (C_SIZE_T), value :: wireTags_n
-            integer (C_INT), value :: wire3D
-            integer (C_INT), value :: tag
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelOccAddTrimmedSurface")
+          use, intrinsic :: iso_c_binding
+          integer(c_int)::gmshModelOccAddTrimmedSurface
+            integer(c_int), value::surfaceTag
+            integer(c_int)::wireTags(*)
+            integer(c_size_t), value :: wireTags_n
+            integer(c_int), value::wire3D
+            integer(c_int), value::tag
+            integer(c_int)::ierr
           end function gmshModelOccAddTrimmedSurface
 
 !  Add a surface loop (a closed shell) in the OpenCASCADE CAD representation,
@@ -4434,14 +4434,14 @@ c
      &      tag,
      &      sewing,
      &      ierr)
-     &    bind(C,name="gmshModelOccAddSurfaceLoop")
-          use, intrinsic :: ISO_C_BINDING
-          integer (C_INT) :: gmshModelOccAddSurfaceLoop
-            integer (C_INT) :: surfaceTags(*)
-            integer (C_SIZE_T), value :: surfaceTags_n
-            integer (C_INT), value :: tag
-            integer (C_INT), value :: sewing
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelOccAddSurfaceLoop")
+          use, intrinsic :: iso_c_binding
+          integer(c_int)::gmshModelOccAddSurfaceLoop
+            integer(c_int)::surfaceTags(*)
+            integer(c_size_t), value :: surfaceTags_n
+            integer(c_int), value::tag
+            integer(c_int), value::sewing
+            integer(c_int)::ierr
           end function gmshModelOccAddSurfaceLoop
 
 !  Add a volume (a region) in the OpenCASCADE CAD representation, defined by
@@ -4454,13 +4454,13 @@ c
      &      shellTags_n,
      &      tag,
      &      ierr)
-     &    bind(C,name="gmshModelOccAddVolume")
-          use, intrinsic :: ISO_C_BINDING
-          integer (C_INT) :: gmshModelOccAddVolume
-            integer (C_INT) :: shellTags(*)
-            integer (C_SIZE_T), value :: shellTags_n
-            integer (C_INT), value :: tag
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelOccAddVolume")
+          use, intrinsic :: iso_c_binding
+          integer(c_int)::gmshModelOccAddVolume
+            integer(c_int)::shellTags(*)
+            integer(c_size_t), value :: shellTags_n
+            integer(c_int), value::tag
+            integer(c_int)::ierr
           end function gmshModelOccAddVolume
 
 !  Add a sphere of center (`xc', `yc', `zc') and radius `r' in the OpenCASCADE
@@ -4479,18 +4479,18 @@ c
      &      angle2,
      &      angle3,
      &      ierr)
-     &    bind(C,name="gmshModelOccAddSphere")
-          use, intrinsic :: ISO_C_BINDING
-          integer (C_INT) :: gmshModelOccAddSphere
-            real (C_DOUBLE), value :: xc
-            real (C_DOUBLE), value :: yc
-            real (C_DOUBLE), value :: zc
-            real (C_DOUBLE), value :: radius
-            integer (C_INT), value :: tag
-            real (C_DOUBLE), value :: angle1
-            real (C_DOUBLE), value :: angle2
-            real (C_DOUBLE), value :: angle3
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelOccAddSphere")
+          use, intrinsic :: iso_c_binding
+          integer(c_int)::gmshModelOccAddSphere
+            real(c_double), value::xc
+            real(c_double), value::yc
+            real(c_double), value::zc
+            real(c_double), value::radius
+            integer(c_int), value::tag
+            real(c_double), value::angle1
+            real(c_double), value::angle2
+            real(c_double), value::angle3
+            integer(c_int)::ierr
           end function gmshModelOccAddSphere
 
 !  Add a parallelepipedic box in the OpenCASCADE CAD representation, defined
@@ -4506,17 +4506,17 @@ c
      &      dz,
      &      tag,
      &      ierr)
-     &    bind(C,name="gmshModelOccAddBox")
-          use, intrinsic :: ISO_C_BINDING
-          integer (C_INT) :: gmshModelOccAddBox
-            real (C_DOUBLE), value :: x
-            real (C_DOUBLE), value :: y
-            real (C_DOUBLE), value :: z
-            real (C_DOUBLE), value :: dx
-            real (C_DOUBLE), value :: dy
-            real (C_DOUBLE), value :: dz
-            integer (C_INT), value :: tag
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelOccAddBox")
+          use, intrinsic :: iso_c_binding
+          integer(c_int)::gmshModelOccAddBox
+            real(c_double), value::x
+            real(c_double), value::y
+            real(c_double), value::z
+            real(c_double), value::dx
+            real(c_double), value::dy
+            real(c_double), value::dz
+            integer(c_int), value::tag
+            integer(c_int)::ierr
           end function gmshModelOccAddBox
 
 !  Add a cylinder in the OpenCASCADE CAD representation, defined by the center
@@ -4536,19 +4536,19 @@ c
      &      tag,
      &      angle,
      &      ierr)
-     &    bind(C,name="gmshModelOccAddCylinder")
-          use, intrinsic :: ISO_C_BINDING
-          integer (C_INT) :: gmshModelOccAddCylinder
-            real (C_DOUBLE), value :: x
-            real (C_DOUBLE), value :: y
-            real (C_DOUBLE), value :: z
-            real (C_DOUBLE), value :: dx
-            real (C_DOUBLE), value :: dy
-            real (C_DOUBLE), value :: dz
-            real (C_DOUBLE), value :: r
-            integer (C_INT), value :: tag
-            real (C_DOUBLE), value :: angle
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelOccAddCylinder")
+          use, intrinsic :: iso_c_binding
+          integer(c_int)::gmshModelOccAddCylinder
+            real(c_double), value::x
+            real(c_double), value::y
+            real(c_double), value::z
+            real(c_double), value::dx
+            real(c_double), value::dy
+            real(c_double), value::dz
+            real(c_double), value::r
+            integer(c_int), value::tag
+            real(c_double), value::angle
+            integer(c_int)::ierr
           end function gmshModelOccAddCylinder
 
 !  Add a cone in the OpenCASCADE CAD representation, defined by the center
@@ -4569,20 +4569,20 @@ c
      &      tag,
      &      angle,
      &      ierr)
-     &    bind(C,name="gmshModelOccAddCone")
-          use, intrinsic :: ISO_C_BINDING
-          integer (C_INT) :: gmshModelOccAddCone
-            real (C_DOUBLE), value :: x
-            real (C_DOUBLE), value :: y
-            real (C_DOUBLE), value :: z
-            real (C_DOUBLE), value :: dx
-            real (C_DOUBLE), value :: dy
-            real (C_DOUBLE), value :: dz
-            real (C_DOUBLE), value :: r1
-            real (C_DOUBLE), value :: r2
-            integer (C_INT), value :: tag
-            real (C_DOUBLE), value :: angle
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelOccAddCone")
+          use, intrinsic :: iso_c_binding
+          integer(c_int)::gmshModelOccAddCone
+            real(c_double), value::x
+            real(c_double), value::y
+            real(c_double), value::z
+            real(c_double), value::dx
+            real(c_double), value::dy
+            real(c_double), value::dz
+            real(c_double), value::r1
+            real(c_double), value::r2
+            integer(c_int), value::tag
+            real(c_double), value::angle
+            integer(c_int)::ierr
           end function gmshModelOccAddCone
 
 !  Add a right angular wedge in the OpenCASCADE CAD representation, defined by
@@ -4601,18 +4601,18 @@ c
      &      tag,
      &      ltx,
      &      ierr)
-     &    bind(C,name="gmshModelOccAddWedge")
-          use, intrinsic :: ISO_C_BINDING
-          integer (C_INT) :: gmshModelOccAddWedge
-            real (C_DOUBLE), value :: x
-            real (C_DOUBLE), value :: y
-            real (C_DOUBLE), value :: z
-            real (C_DOUBLE), value :: dx
-            real (C_DOUBLE), value :: dy
-            real (C_DOUBLE), value :: dz
-            integer (C_INT), value :: tag
-            real (C_DOUBLE), value :: ltx
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelOccAddWedge")
+          use, intrinsic :: iso_c_binding
+          integer(c_int)::gmshModelOccAddWedge
+            real(c_double), value::x
+            real(c_double), value::y
+            real(c_double), value::z
+            real(c_double), value::dx
+            real(c_double), value::dy
+            real(c_double), value::dz
+            integer(c_int), value::tag
+            real(c_double), value::ltx
+            integer(c_int)::ierr
           end function gmshModelOccAddWedge
 
 !  Add a torus in the OpenCASCADE CAD representation, defined by its center
@@ -4629,17 +4629,17 @@ c
      &      tag,
      &      angle,
      &      ierr)
-     &    bind(C,name="gmshModelOccAddTorus")
-          use, intrinsic :: ISO_C_BINDING
-          integer (C_INT) :: gmshModelOccAddTorus
-            real (C_DOUBLE), value :: x
-            real (C_DOUBLE), value :: y
-            real (C_DOUBLE), value :: z
-            real (C_DOUBLE), value :: r1
-            real (C_DOUBLE), value :: r2
-            integer (C_INT), value :: tag
-            real (C_DOUBLE), value :: angle
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelOccAddTorus")
+          use, intrinsic :: iso_c_binding
+          integer(c_int)::gmshModelOccAddTorus
+            real(c_double), value::x
+            real(c_double), value::y
+            real(c_double), value::z
+            real(c_double), value::r1
+            real(c_double), value::r2
+            integer(c_int), value::tag
+            real(c_double), value::angle
+            integer(c_int)::ierr
           end function gmshModelOccAddTorus
 
 !  Add a volume (if the optional argument `makeSolid' is set) or surfaces in
@@ -4659,17 +4659,17 @@ c
      &      makeRuled,
      &      maxDegree,
      &      ierr)
-     &    bind(C,name="gmshModelOccAddThruSections")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT) :: wireTags(*)
-            integer (C_SIZE_T), value :: wireTags_n
-            type (C_PTR), intent(out) :: outDimTags
-            integer (C_SIZE_T) :: outDimTags_n
-            integer (C_INT), value :: tag
-            integer (C_INT), value :: makeSolid
-            integer (C_INT), value :: makeRuled
-            integer (C_INT), value :: maxDegree
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelOccAddThruSections")
+          use, intrinsic :: iso_c_binding
+            integer(c_int)::wireTags(*)
+            integer(c_size_t), value :: wireTags_n
+            type(c_ptr), intent(out)::outDimTags
+            integer(c_size_t) :: outDimTags_n
+            integer(c_int), value::tag
+            integer(c_int), value::makeSolid
+            integer(c_int), value::makeRuled
+            integer(c_int), value::maxDegree
+            integer(c_int)::ierr
           end subroutine gmshModelOccAddThruSections
 
 !  Add a hollowed volume in the OpenCASCADE CAD representation, built from an
@@ -4687,16 +4687,16 @@ c
      &      outDimTags_n,
      &      tag,
      &      ierr)
-     &    bind(C,name="gmshModelOccAddThickSolid")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: volumeTag
-            integer (C_INT) :: excludeSurfaceTags(*)
-            integer (C_SIZE_T), value :: excludeSurfaceTags_n
-            real (C_DOUBLE), value :: offset
-            type (C_PTR), intent(out) :: outDimTags
-            integer (C_SIZE_T) :: outDimTags_n
-            integer (C_INT), value :: tag
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelOccAddThickSolid")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::volumeTag
+            integer(c_int)::excludeSurfaceTags(*)
+            integer(c_size_t), value :: excludeSurfaceTags_n
+            real(c_double), value::offset
+            type(c_ptr), intent(out)::outDimTags
+            integer(c_size_t) :: outDimTags_n
+            integer(c_int), value::tag
+            integer(c_int)::ierr
           end subroutine gmshModelOccAddThickSolid
 
 !  Extrude the entities `dimTags' in the OpenCASCADE CAD representation, using
@@ -4720,21 +4720,21 @@ c
      &      heights_n,
      &      recombine,
      &      ierr)
-     &    bind(C,name="gmshModelOccExtrude")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT) :: dimTags(*)
-            integer (C_SIZE_T), value :: dimTags_n
-            real (C_DOUBLE), value :: dx
-            real (C_DOUBLE), value :: dy
-            real (C_DOUBLE), value :: dz
-            type (C_PTR), intent(out) :: outDimTags
-            integer (C_SIZE_T) :: outDimTags_n
-            integer (C_INT) :: numElements(*)
-            integer (C_SIZE_T), value :: numElements_n
-            real (C_DOUBLE) :: heights(*)
-            integer (C_SIZE_T), value :: heights_n
-            integer (C_INT), value :: recombine
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelOccExtrude")
+          use, intrinsic :: iso_c_binding
+            integer(c_int)::dimTags(*)
+            integer(c_size_t), value :: dimTags_n
+            real(c_double), value::dx
+            real(c_double), value::dy
+            real(c_double), value::dz
+            type(c_ptr), intent(out)::outDimTags
+            integer(c_size_t) :: outDimTags_n
+            integer(c_int)::numElements(*)
+            integer(c_size_t), value :: numElements_n
+            real(c_double)::heights(*)
+            integer(c_size_t), value :: heights_n
+            integer(c_int), value::recombine
+            integer(c_int)::ierr
           end subroutine gmshModelOccExtrude
 
 !  Extrude the entities `dimTags' in the OpenCASCADE CAD representation, using
@@ -4764,25 +4764,25 @@ c
      &      heights_n,
      &      recombine,
      &      ierr)
-     &    bind(C,name="gmshModelOccRevolve")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT) :: dimTags(*)
-            integer (C_SIZE_T), value :: dimTags_n
-            real (C_DOUBLE), value :: x
-            real (C_DOUBLE), value :: y
-            real (C_DOUBLE), value :: z
-            real (C_DOUBLE), value :: ax
-            real (C_DOUBLE), value :: ay
-            real (C_DOUBLE), value :: az
-            real (C_DOUBLE), value :: angle
-            type (C_PTR), intent(out) :: outDimTags
-            integer (C_SIZE_T) :: outDimTags_n
-            integer (C_INT) :: numElements(*)
-            integer (C_SIZE_T), value :: numElements_n
-            real (C_DOUBLE) :: heights(*)
-            integer (C_SIZE_T), value :: heights_n
-            integer (C_INT), value :: recombine
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelOccRevolve")
+          use, intrinsic :: iso_c_binding
+            integer(c_int)::dimTags(*)
+            integer(c_size_t), value :: dimTags_n
+            real(c_double), value::x
+            real(c_double), value::y
+            real(c_double), value::z
+            real(c_double), value::ax
+            real(c_double), value::ay
+            real(c_double), value::az
+            real(c_double), value::angle
+            type(c_ptr), intent(out)::outDimTags
+            integer(c_size_t) :: outDimTags_n
+            integer(c_int)::numElements(*)
+            integer(c_size_t), value :: numElements_n
+            real(c_double)::heights(*)
+            integer(c_size_t), value :: heights_n
+            integer(c_int), value::recombine
+            integer(c_int)::ierr
           end subroutine gmshModelOccRevolve
 
 !  Add a pipe in the OpenCASCADE CAD representation, by extruding the entities
@@ -4799,15 +4799,15 @@ c
      &      outDimTags_n,
      &      trihedron,
      &      ierr)
-     &    bind(C,name="gmshModelOccAddPipe")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT) :: dimTags(*)
-            integer (C_SIZE_T), value :: dimTags_n
-            integer (C_INT), value :: wireTag
-            type (C_PTR), intent(out) :: outDimTags
-            integer (C_SIZE_T) :: outDimTags_n
-            character (LEN=1,KIND=C_CHAR) :: trihedron(*)
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelOccAddPipe")
+          use, intrinsic :: iso_c_binding
+            integer(c_int)::dimTags(*)
+            integer(c_size_t), value :: dimTags_n
+            integer(c_int), value::wireTag
+            type(c_ptr), intent(out)::outDimTags
+            integer(c_size_t) :: outDimTags_n
+            character(len = 1, kind = c_char)::trihedron(*)
+            integer(c_int)::ierr
           end subroutine gmshModelOccAddPipe
 
 !  Fillet the volumes `volumeTags' on the curves `curveTags' with radii
@@ -4827,18 +4827,18 @@ c
      &      outDimTags_n,
      &      removeVolume,
      &      ierr)
-     &    bind(C,name="gmshModelOccFillet")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT) :: volumeTags(*)
-            integer (C_SIZE_T), value :: volumeTags_n
-            integer (C_INT) :: curveTags(*)
-            integer (C_SIZE_T), value :: curveTags_n
-            real (C_DOUBLE) :: radii(*)
-            integer (C_SIZE_T), value :: radii_n
-            type (C_PTR), intent(out) :: outDimTags
-            integer (C_SIZE_T) :: outDimTags_n
-            integer (C_INT), value :: removeVolume
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelOccFillet")
+          use, intrinsic :: iso_c_binding
+            integer(c_int)::volumeTags(*)
+            integer(c_size_t), value :: volumeTags_n
+            integer(c_int)::curveTags(*)
+            integer(c_size_t), value :: curveTags_n
+            real(c_double)::radii(*)
+            integer(c_size_t), value :: radii_n
+            type(c_ptr), intent(out)::outDimTags
+            integer(c_size_t) :: outDimTags_n
+            integer(c_int), value::removeVolume
+            integer(c_int)::ierr
           end subroutine gmshModelOccFillet
 
 !  Chamfer the volumes `volumeTags' on the curves `curveTags' with distances
@@ -4862,20 +4862,20 @@ c
      &      outDimTags_n,
      &      removeVolume,
      &      ierr)
-     &    bind(C,name="gmshModelOccChamfer")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT) :: volumeTags(*)
-            integer (C_SIZE_T), value :: volumeTags_n
-            integer (C_INT) :: curveTags(*)
-            integer (C_SIZE_T), value :: curveTags_n
-            integer (C_INT) :: surfaceTags(*)
-            integer (C_SIZE_T), value :: surfaceTags_n
-            real (C_DOUBLE) :: distances(*)
-            integer (C_SIZE_T), value :: distances_n
-            type (C_PTR), intent(out) :: outDimTags
-            integer (C_SIZE_T) :: outDimTags_n
-            integer (C_INT), value :: removeVolume
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelOccChamfer")
+          use, intrinsic :: iso_c_binding
+            integer(c_int)::volumeTags(*)
+            integer(c_size_t), value :: volumeTags_n
+            integer(c_int)::curveTags(*)
+            integer(c_size_t), value :: curveTags_n
+            integer(c_int)::surfaceTags(*)
+            integer(c_size_t), value :: surfaceTags_n
+            real(c_double)::distances(*)
+            integer(c_size_t), value :: distances_n
+            type(c_ptr), intent(out)::outDimTags
+            integer(c_size_t) :: outDimTags_n
+            integer(c_int), value::removeVolume
+            integer(c_int)::ierr
           end subroutine gmshModelOccChamfer
 
 !  Compute the boolean union (the fusion) of the entities `objectDimTags' and
@@ -4898,21 +4898,21 @@ c
      &      removeObject,
      &      removeTool,
      &      ierr)
-     &    bind(C,name="gmshModelOccFuse")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT) :: objectDimTags(*)
-            integer (C_SIZE_T), value :: objectDimTags_n
-            integer (C_INT) :: toolDimTags(*)
-            integer (C_SIZE_T), value :: toolDimTags_n
-            type (C_PTR), intent(out) :: outDimTags
-            integer (C_SIZE_T) :: outDimTags_n
-            type (C_PTR), intent(out) :: outDimTagsMap
-            type (C_PTR), intent(out) :: outDimTagsMap_n
-            integer (C_SIZE_T) :: outDimTagsMap_nn
-            integer (C_INT), value :: tag
-            integer (C_INT), value :: removeObject
-            integer (C_INT), value :: removeTool
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelOccFuse")
+          use, intrinsic :: iso_c_binding
+            integer(c_int)::objectDimTags(*)
+            integer(c_size_t), value :: objectDimTags_n
+            integer(c_int)::toolDimTags(*)
+            integer(c_size_t), value :: toolDimTags_n
+            type(c_ptr), intent(out)::outDimTags
+            integer(c_size_t) :: outDimTags_n
+            type (C_PTR), intent(out)::outDimTagsMap
+            type(c_ptr), intent(out) :: outDimTagsMap_n
+            integer (C_SIZE_T) ::outDimTagsMap_nn
+            integer(c_int), value::tag
+            integer(c_int), value::removeObject
+            integer(c_int), value::removeTool
+            integer(c_int)::ierr
           end subroutine gmshModelOccFuse
 
 !  Compute the boolean intersection (the common parts) of the entities
@@ -4935,21 +4935,21 @@ c
      &      removeObject,
      &      removeTool,
      &      ierr)
-     &    bind(C,name="gmshModelOccIntersect")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT) :: objectDimTags(*)
-            integer (C_SIZE_T), value :: objectDimTags_n
-            integer (C_INT) :: toolDimTags(*)
-            integer (C_SIZE_T), value :: toolDimTags_n
-            type (C_PTR), intent(out) :: outDimTags
-            integer (C_SIZE_T) :: outDimTags_n
-            type (C_PTR), intent(out) :: outDimTagsMap
-            type (C_PTR), intent(out) :: outDimTagsMap_n
-            integer (C_SIZE_T) :: outDimTagsMap_nn
-            integer (C_INT), value :: tag
-            integer (C_INT), value :: removeObject
-            integer (C_INT), value :: removeTool
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelOccIntersect")
+          use, intrinsic :: iso_c_binding
+            integer(c_int)::objectDimTags(*)
+            integer(c_size_t), value :: objectDimTags_n
+            integer(c_int)::toolDimTags(*)
+            integer(c_size_t), value :: toolDimTags_n
+            type(c_ptr), intent(out)::outDimTags
+            integer(c_size_t) :: outDimTags_n
+            type (C_PTR), intent(out)::outDimTagsMap
+            type(c_ptr), intent(out) :: outDimTagsMap_n
+            integer (C_SIZE_T) ::outDimTagsMap_nn
+            integer(c_int), value::tag
+            integer(c_int), value::removeObject
+            integer(c_int), value::removeTool
+            integer(c_int)::ierr
           end subroutine gmshModelOccIntersect
 
 !  Compute the boolean difference between the entities `objectDimTags' and
@@ -4972,21 +4972,21 @@ c
      &      removeObject,
      &      removeTool,
      &      ierr)
-     &    bind(C,name="gmshModelOccCut")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT) :: objectDimTags(*)
-            integer (C_SIZE_T), value :: objectDimTags_n
-            integer (C_INT) :: toolDimTags(*)
-            integer (C_SIZE_T), value :: toolDimTags_n
-            type (C_PTR), intent(out) :: outDimTags
-            integer (C_SIZE_T) :: outDimTags_n
-            type (C_PTR), intent(out) :: outDimTagsMap
-            type (C_PTR), intent(out) :: outDimTagsMap_n
-            integer (C_SIZE_T) :: outDimTagsMap_nn
-            integer (C_INT), value :: tag
-            integer (C_INT), value :: removeObject
-            integer (C_INT), value :: removeTool
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelOccCut")
+          use, intrinsic :: iso_c_binding
+            integer(c_int)::objectDimTags(*)
+            integer(c_size_t), value :: objectDimTags_n
+            integer(c_int)::toolDimTags(*)
+            integer(c_size_t), value :: toolDimTags_n
+            type(c_ptr), intent(out)::outDimTags
+            integer(c_size_t) :: outDimTags_n
+            type (C_PTR), intent(out)::outDimTagsMap
+            type(c_ptr), intent(out) :: outDimTagsMap_n
+            integer (C_SIZE_T) ::outDimTagsMap_nn
+            integer(c_int), value::tag
+            integer(c_int), value::removeObject
+            integer(c_int), value::removeTool
+            integer(c_int)::ierr
           end subroutine gmshModelOccCut
 
 !  Compute the boolean fragments (general fuse) resulting from the
@@ -5012,21 +5012,21 @@ c
      &      removeObject,
      &      removeTool,
      &      ierr)
-     &    bind(C,name="gmshModelOccFragment")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT) :: objectDimTags(*)
-            integer (C_SIZE_T), value :: objectDimTags_n
-            integer (C_INT) :: toolDimTags(*)
-            integer (C_SIZE_T), value :: toolDimTags_n
-            type (C_PTR), intent(out) :: outDimTags
-            integer (C_SIZE_T) :: outDimTags_n
-            type (C_PTR), intent(out) :: outDimTagsMap
-            type (C_PTR), intent(out) :: outDimTagsMap_n
-            integer (C_SIZE_T) :: outDimTagsMap_nn
-            integer (C_INT), value :: tag
-            integer (C_INT), value :: removeObject
-            integer (C_INT), value :: removeTool
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelOccFragment")
+          use, intrinsic :: iso_c_binding
+            integer(c_int)::objectDimTags(*)
+            integer(c_size_t), value :: objectDimTags_n
+            integer(c_int)::toolDimTags(*)
+            integer(c_size_t), value :: toolDimTags_n
+            type(c_ptr), intent(out)::outDimTags
+            integer(c_size_t) :: outDimTags_n
+            type (C_PTR), intent(out)::outDimTagsMap
+            type(c_ptr), intent(out) :: outDimTagsMap_n
+            integer (C_SIZE_T) ::outDimTagsMap_nn
+            integer(c_int), value::tag
+            integer(c_int), value::removeObject
+            integer(c_int), value::removeTool
+            integer(c_int)::ierr
           end subroutine gmshModelOccFragment
 
 !  Translate the entities `dimTags' in the OpenCASCADE CAD representation
@@ -5038,14 +5038,14 @@ c
      &      dy,
      &      dz,
      &      ierr)
-     &    bind(C,name="gmshModelOccTranslate")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT) :: dimTags(*)
-            integer (C_SIZE_T), value :: dimTags_n
-            real (C_DOUBLE), value :: dx
-            real (C_DOUBLE), value :: dy
-            real (C_DOUBLE), value :: dz
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelOccTranslate")
+          use, intrinsic :: iso_c_binding
+            integer(c_int)::dimTags(*)
+            integer(c_size_t), value :: dimTags_n
+            real(c_double), value::dx
+            real(c_double), value::dy
+            real(c_double), value::dz
+            integer(c_int)::ierr
           end subroutine gmshModelOccTranslate
 
 !  Rotate the entities `dimTags' in the OpenCASCADE CAD representation by
@@ -5062,18 +5062,18 @@ c
      &      az,
      &      angle,
      &      ierr)
-     &    bind(C,name="gmshModelOccRotate")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT) :: dimTags(*)
-            integer (C_SIZE_T), value :: dimTags_n
-            real (C_DOUBLE), value :: x
-            real (C_DOUBLE), value :: y
-            real (C_DOUBLE), value :: z
-            real (C_DOUBLE), value :: ax
-            real (C_DOUBLE), value :: ay
-            real (C_DOUBLE), value :: az
-            real (C_DOUBLE), value :: angle
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelOccRotate")
+          use, intrinsic :: iso_c_binding
+            integer(c_int)::dimTags(*)
+            integer(c_size_t), value :: dimTags_n
+            real(c_double), value::x
+            real(c_double), value::y
+            real(c_double), value::z
+            real(c_double), value::ax
+            real(c_double), value::ay
+            real(c_double), value::az
+            real(c_double), value::angle
+            integer(c_int)::ierr
           end subroutine gmshModelOccRotate
 
 !  Scale the entities `dimTags' in the OpenCASCADE CAD representation by
@@ -5089,17 +5089,17 @@ c
      &      b,
      &      c,
      &      ierr)
-     &    bind(C,name="gmshModelOccDilate")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT) :: dimTags(*)
-            integer (C_SIZE_T), value :: dimTags_n
-            real (C_DOUBLE), value :: x
-            real (C_DOUBLE), value :: y
-            real (C_DOUBLE), value :: z
-            real (C_DOUBLE), value :: a
-            real (C_DOUBLE), value :: b
-            real (C_DOUBLE), value :: c
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelOccDilate")
+          use, intrinsic :: iso_c_binding
+            integer(c_int)::dimTags(*)
+            integer(c_size_t), value :: dimTags_n
+            real(c_double), value::x
+            real(c_double), value::y
+            real(c_double), value::z
+            real(c_double), value::a
+            real(c_double), value::b
+            real(c_double), value::c
+            integer(c_int)::ierr
           end subroutine gmshModelOccDilate
 
 !  Mirror the entities `dimTags' in the OpenCASCADE CAD representation, with
@@ -5112,15 +5112,15 @@ c
      &      c,
      &      d,
      &      ierr)
-     &    bind(C,name="gmshModelOccMirror")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT) :: dimTags(*)
-            integer (C_SIZE_T), value :: dimTags_n
-            real (C_DOUBLE), value :: a
-            real (C_DOUBLE), value :: b
-            real (C_DOUBLE), value :: c
-            real (C_DOUBLE), value :: d
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelOccMirror")
+          use, intrinsic :: iso_c_binding
+            integer(c_int)::dimTags(*)
+            integer(c_size_t), value :: dimTags_n
+            real(c_double), value::a
+            real(c_double), value::b
+            real(c_double), value::c
+            real(c_double), value::d
+            integer(c_int)::ierr
           end subroutine gmshModelOccMirror
 
 !  Mirror the entities `dimTags' in the OpenCASCADE CAD representation, with
@@ -5134,15 +5134,15 @@ c
      &      c,
      &      d,
      &      ierr)
-     &    bind(C,name="gmshModelOccSymmetrize")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT) :: dimTags(*)
-            integer (C_SIZE_T), value :: dimTags_n
-            real (C_DOUBLE), value :: a
-            real (C_DOUBLE), value :: b
-            real (C_DOUBLE), value :: c
-            real (C_DOUBLE), value :: d
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelOccSymmetrize")
+          use, intrinsic :: iso_c_binding
+            integer(c_int)::dimTags(*)
+            integer(c_size_t), value :: dimTags_n
+            real(c_double), value::a
+            real(c_double), value::b
+            real(c_double), value::c
+            real(c_double), value::d
+            integer(c_int)::ierr
           end subroutine gmshModelOccSymmetrize
 
 !  Apply a general affine transformation matrix `affineTransform' (16 entries
@@ -5154,13 +5154,13 @@ c
      &      affineTransform,
      &      affineTransform_n,
      &      ierr)
-     &    bind(C,name="gmshModelOccAffineTransform")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT) :: dimTags(*)
-            integer (C_SIZE_T), value :: dimTags_n
-            real (C_DOUBLE) :: affineTransform(*)
-            integer (C_SIZE_T), value :: affineTransform_n
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelOccAffineTransform")
+          use, intrinsic :: iso_c_binding
+            integer(c_int)::dimTags(*)
+            integer(c_size_t), value :: dimTags_n
+            real(c_double)::affineTransform(*)
+            integer(c_size_t), value :: affineTransform_n
+            integer(c_int)::ierr
           end subroutine gmshModelOccAffineTransform
 
 !  Copy the entities `dimTags' in the OpenCASCADE CAD representation; the new
@@ -5171,13 +5171,13 @@ c
      &      outDimTags,
      &      outDimTags_n,
      &      ierr)
-     &    bind(C,name="gmshModelOccCopy")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT) :: dimTags(*)
-            integer (C_SIZE_T), value :: dimTags_n
-            type (C_PTR), intent(out) :: outDimTags
-            integer (C_SIZE_T) :: outDimTags_n
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelOccCopy")
+          use, intrinsic :: iso_c_binding
+            integer(c_int)::dimTags(*)
+            integer(c_size_t), value :: dimTags_n
+            type(c_ptr), intent(out)::outDimTags
+            integer(c_size_t) :: outDimTags_n
+            integer(c_int)::ierr
           end subroutine gmshModelOccCopy
 
 !  Remove the entities `dimTags' in the OpenCASCADE CAD representation,
@@ -5189,12 +5189,12 @@ c
      &      dimTags_n,
      &      recursive,
      &      ierr)
-     &    bind(C,name="gmshModelOccRemove")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT) :: dimTags(*)
-            integer (C_SIZE_T), value :: dimTags_n
-            integer (C_INT), value :: recursive
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelOccRemove")
+          use, intrinsic :: iso_c_binding
+            integer(c_int)::dimTags(*)
+            integer(c_size_t), value :: dimTags_n
+            integer(c_int), value::recursive
+            integer(c_int)::ierr
           end subroutine gmshModelOccRemove
 
 !  Remove all duplicate entities in the OpenCASCADE CAD representation
@@ -5202,9 +5202,9 @@ c
 !  (using boolean fragments) all highest dimensional entities.
         subroutine gmshModelOccRemoveAllDuplicates(
      &      ierr)
-     &    bind(C,name="gmshModelOccRemoveAllDuplicates")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelOccRemoveAllDuplicates")
+          use, intrinsic :: iso_c_binding
+            integer(c_int)::ierr
           end subroutine gmshModelOccRemoveAllDuplicates
 
 !  Apply various healing procedures to the entities `dimTags' (or to all the
@@ -5223,19 +5223,19 @@ c
      &      sewFaces,
      &      makeSolids,
      &      ierr)
-     &    bind(C,name="gmshModelOccHealShapes")
-          use, intrinsic :: ISO_C_BINDING
-            type (C_PTR), intent(out) :: outDimTags
-            integer (C_SIZE_T) :: outDimTags_n
-            integer (C_INT) :: dimTags(*)
-            integer (C_SIZE_T), value :: dimTags_n
-            real (C_DOUBLE), value :: tolerance
-            integer (C_INT), value :: fixDegenerated
-            integer (C_INT), value :: fixSmallEdges
-            integer (C_INT), value :: fixSmallFaces
-            integer (C_INT), value :: sewFaces
-            integer (C_INT), value :: makeSolids
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelOccHealShapes")
+          use, intrinsic :: iso_c_binding
+            type(c_ptr), intent(out)::outDimTags
+            integer(c_size_t) :: outDimTags_n
+            integer(c_int)::dimTags(*)
+            integer(c_size_t), value :: dimTags_n
+            real(c_double), value::tolerance
+            integer(c_int), value::fixDegenerated
+            integer(c_int), value::fixSmallEdges
+            integer(c_int), value::fixSmallFaces
+            integer(c_int), value::sewFaces
+            integer(c_int), value::makeSolids
+            integer(c_int)::ierr
           end subroutine gmshModelOccHealShapes
 
 !  Import BREP, STEP or IGES shapes from the file `fileName' in the
@@ -5251,14 +5251,14 @@ c
      &      highestDimOnly,
      &      format,
      &      ierr)
-     &    bind(C,name="gmshModelOccImportShapes")
-          use, intrinsic :: ISO_C_BINDING
-            character (LEN=1,KIND=C_CHAR) :: fileName(*)
-            type (C_PTR), intent(out) :: outDimTags
-            integer (C_SIZE_T) :: outDimTags_n
-            integer (C_INT), value :: highestDimOnly
-            character (LEN=1,KIND=C_CHAR) :: format(*)
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelOccImportShapes")
+          use, intrinsic :: iso_c_binding
+            character(len = 1, kind = c_char)::fileName(*)
+            type(c_ptr), intent(out)::outDimTags
+            integer(c_size_t) :: outDimTags_n
+            integer(c_int), value::highestDimOnly
+            character(len = 1, kind = c_char)::format(*)
+            integer(c_int)::ierr
           end subroutine gmshModelOccImportShapes
 
 !  Imports an OpenCASCADE `shape' by providing a pointer to a native
@@ -5273,13 +5273,13 @@ c
      &      outDimTags_n,
      &      highestDimOnly,
      &      ierr)
-     &    bind(C,name="gmshModelOccImportShapesNativePointer")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT) :: shape(*)
-            type (C_PTR), intent(out) :: outDimTags
-            integer (C_SIZE_T) :: outDimTags_n
-            integer (C_INT), value :: highestDimOnly
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelOccImportShapesNativePointer")
+          use, intrinsic :: iso_c_binding
+            integer(c_int)::shape(*)
+            type(c_ptr), intent(out)::outDimTags
+            integer(c_size_t) :: outDimTags_n
+            integer(c_int), value::highestDimOnly
+            integer(c_int)::ierr
           end subroutine gmshModelOccImportShapesNativePointer
 
 !  Get all the OpenCASCADE entities. If `dim' is >= 0, return only the
@@ -5290,12 +5290,12 @@ c
      &      dimTags_n,
      &      dim,
      &      ierr)
-     &    bind(C,name="gmshModelOccGetEntities")
-          use, intrinsic :: ISO_C_BINDING
-            type (C_PTR), intent(out) :: dimTags
-            integer (C_SIZE_T) :: dimTags_n
-            integer (C_INT), value :: dim
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelOccGetEntities")
+          use, intrinsic :: iso_c_binding
+            type(c_ptr), intent(out)::dimTags
+            integer(c_size_t) :: dimTags_n
+            integer(c_int), value::dim
+            integer(c_int)::ierr
           end subroutine gmshModelOccGetEntities
 
 !  Get the OpenCASCADE entities in the bounding box defined by the two points
@@ -5313,18 +5313,18 @@ c
      &      tags_n,
      &      dim,
      &      ierr)
-     &    bind(C,name="gmshModelOccGetEntitiesInBoundingBox")
-          use, intrinsic :: ISO_C_BINDING
-            real (C_DOUBLE), value :: xmin
-            real (C_DOUBLE), value :: ymin
-            real (C_DOUBLE), value :: zmin
-            real (C_DOUBLE), value :: xmax
-            real (C_DOUBLE), value :: ymax
-            real (C_DOUBLE), value :: zmax
-            type (C_PTR), intent(out) :: tags
-            integer (C_SIZE_T) :: tags_n
-            integer (C_INT), value :: dim
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelOccGetEntitiesInBoundingBox")
+          use, intrinsic :: iso_c_binding
+            real(c_double), value::xmin
+            real(c_double), value::ymin
+            real(c_double), value::zmin
+            real(c_double), value::xmax
+            real(c_double), value::ymax
+            real(c_double), value::zmax
+            type(c_ptr), intent(out)::tags
+            integer(c_size_t) :: tags_n
+            integer(c_int), value::dim
+            integer(c_int)::ierr
           end subroutine gmshModelOccGetEntitiesInBoundingBox
 
 !  Get the bounding box (`xmin', `ymin', `zmin'), (`xmax', `ymax', `zmax') of
@@ -5339,17 +5339,17 @@ c
      &      ymax,
      &      zmax,
      &      ierr)
-     &    bind(C,name="gmshModelOccGetBoundingBox")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: dim
-            integer (C_INT), value :: tag
-            real (C_DOUBLE) :: xmin
-            real (C_DOUBLE) :: ymin
-            real (C_DOUBLE) :: zmin
-            real (C_DOUBLE) :: xmax
-            real (C_DOUBLE) :: ymax
-            real (C_DOUBLE) :: zmax
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelOccGetBoundingBox")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::dim
+            integer(c_int), value::tag
+            real(c_double)::xmin
+            real(c_double)::ymin
+            real(c_double)::zmin
+            real(c_double)::xmax
+            real(c_double)::ymax
+            real(c_double)::zmax
+            integer(c_int)::ierr
           end subroutine gmshModelOccGetBoundingBox
 
 !  Get the mass of the OpenCASCADE entity of dimension `dim' and tag `tag'.
@@ -5358,12 +5358,12 @@ c
      &      tag,
      &      mass,
      &      ierr)
-     &    bind(C,name="gmshModelOccGetMass")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: dim
-            integer (C_INT), value :: tag
-            real (C_DOUBLE) :: mass
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelOccGetMass")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::dim
+            integer(c_int), value::tag
+            real(c_double)::mass
+            integer(c_int)::ierr
           end subroutine gmshModelOccGetMass
 
 !  Get the center of mass of the OpenCASCADE entity of dimension `dim' and tag
@@ -5375,14 +5375,14 @@ c
      &      y,
      &      z,
      &      ierr)
-     &    bind(C,name="gmshModelOccGetCenterOfMass")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: dim
-            integer (C_INT), value :: tag
-            real (C_DOUBLE) :: x
-            real (C_DOUBLE) :: y
-            real (C_DOUBLE) :: z
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelOccGetCenterOfMass")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::dim
+            integer(c_int), value::tag
+            real(c_double)::x
+            real(c_double)::y
+            real(c_double)::z
+            integer(c_int)::ierr
           end subroutine gmshModelOccGetCenterOfMass
 
 !  Get the matrix of inertia (by row) of the OpenCASCADE entity of dimension
@@ -5393,13 +5393,13 @@ c
      &      mat,
      &      mat_n,
      &      ierr)
-     &    bind(C,name="gmshModelOccGetMatrixOfInertia")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: dim
-            integer (C_INT), value :: tag
-            type (C_PTR), intent(out) :: mat
-            integer (C_SIZE_T) :: mat_n
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelOccGetMatrixOfInertia")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::dim
+            integer(c_int), value::tag
+            type(c_ptr), intent(out)::mat
+            integer(c_size_t) :: mat_n
+            integer(c_int)::ierr
           end subroutine gmshModelOccGetMatrixOfInertia
 
 !  Get the maximum tag of entities of dimension `dim' in the OpenCASCADE CAD
@@ -5407,11 +5407,11 @@ c
         function gmshModelOccGetMaxTag(
      &      dim,
      &      ierr)
-     &    bind(C,name="gmshModelOccGetMaxTag")
-          use, intrinsic :: ISO_C_BINDING
-          integer (C_INT) :: gmshModelOccGetMaxTag
-            integer (C_INT), value :: dim
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelOccGetMaxTag")
+          use, intrinsic :: iso_c_binding
+          integer(c_int)::gmshModelOccGetMaxTag
+            integer(c_int), value::dim
+            integer(c_int)::ierr
           end function gmshModelOccGetMaxTag
 
 !  Set the maximum tag `maxTag' for entities of dimension `dim' in the
@@ -5420,11 +5420,11 @@ c
      &      dim,
      &      maxTag,
      &      ierr)
-     &    bind(C,name="gmshModelOccSetMaxTag")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: dim
-            integer (C_INT), value :: maxTag
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelOccSetMaxTag")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::dim
+            integer(c_int), value::maxTag
+            integer(c_int)::ierr
           end subroutine gmshModelOccSetMaxTag
 
 !  Synchronize the OpenCASCADE CAD representation with the current Gmsh model.
@@ -5435,9 +5435,9 @@ c
 !  CAD kernel functions.
         subroutine gmshModelOccSynchronize(
      &      ierr)
-     &    bind(C,name="gmshModelOccSynchronize")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelOccSynchronize")
+          use, intrinsic :: iso_c_binding
+            integer(c_int)::ierr
           end subroutine gmshModelOccSynchronize
 
 !  Set a mesh size constraint on the entities `dimTags' in the OpenCASCADE CAD
@@ -5448,12 +5448,12 @@ c
      &      dimTags_n,
      &      size,
      &      ierr)
-     &    bind(C,name="gmshModelOccMeshSetSize")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT) :: dimTags(*)
-            integer (C_SIZE_T), value :: dimTags_n
-            real (C_DOUBLE), value :: size
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshModelOccMeshSetSize")
+          use, intrinsic :: iso_c_binding
+            integer(c_int)::dimTags(*)
+            integer(c_size_t), value :: dimTags_n
+            real(c_double), value::size
+            integer(c_int)::ierr
           end subroutine gmshModelOccMeshSetSize
 
 !  Add a new post-processing view, with name `name'. If `tag' is positive use
@@ -5463,22 +5463,22 @@ c
      &      name,
      &      tag,
      &      ierr)
-     &    bind(C,name="gmshViewAdd")
-          use, intrinsic :: ISO_C_BINDING
-          integer (C_INT) :: gmshViewAdd
-            character (LEN=1,KIND=C_CHAR) :: name(*)
-            integer (C_INT), value :: tag
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshViewAdd")
+          use, intrinsic :: iso_c_binding
+          integer(c_int)::gmshViewAdd
+            character(len = 1, kind = c_char)::name(*)
+            integer(c_int), value::tag
+            integer(c_int)::ierr
           end function gmshViewAdd
 
 !  Remove the view with tag `tag'.
         subroutine gmshViewRemove(
      &      tag,
      &      ierr)
-     &    bind(C,name="gmshViewRemove")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: tag
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshViewRemove")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::tag
+            integer(c_int)::ierr
           end subroutine gmshViewRemove
 
 !  Get the index of the view with tag `tag' in the list of currently loaded
@@ -5487,11 +5487,11 @@ c
         function gmshViewGetIndex(
      &      tag,
      &      ierr)
-     &    bind(C,name="gmshViewGetIndex")
-          use, intrinsic :: ISO_C_BINDING
-          integer (C_INT) :: gmshViewGetIndex
-            integer (C_INT), value :: tag
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshViewGetIndex")
+          use, intrinsic :: iso_c_binding
+          integer(c_int)::gmshViewGetIndex
+            integer(c_int), value::tag
+            integer(c_int)::ierr
           end function gmshViewGetIndex
 
 !  Get the tags of all views.
@@ -5499,11 +5499,11 @@ c
      &      tags,
      &      tags_n,
      &      ierr)
-     &    bind(C,name="gmshViewGetTags")
-          use, intrinsic :: ISO_C_BINDING
-            type (C_PTR), intent(out) :: tags
-            integer (C_SIZE_T) :: tags_n
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshViewGetTags")
+          use, intrinsic :: iso_c_binding
+            type(c_ptr), intent(out)::tags
+            integer(c_size_t) :: tags_n
+            integer(c_int)::ierr
           end subroutine gmshViewGetTags
 
 !  Add model-based post-processing data to the view with tag `tag'.
@@ -5532,21 +5532,21 @@ c
      &      numComponents,
      &      partition,
      &      ierr)
-     &    bind(C,name="gmshViewAddModelData")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: tag
-            integer (C_INT), value :: step
-            character (LEN=1,KIND=C_CHAR) :: modelName(*)
-            character (LEN=1,KIND=C_CHAR) :: dataType(*)
-            integer (C_SIZE_T) :: tags(*)
-            integer (C_SIZE_T), value :: tags_n
-            type (C_PTR), intent(out) :: data
-            type (C_PTR), intent(out) :: data_n
-            integer (C_SIZE_T) :: data_nn
-            real (C_DOUBLE), value :: time
-            integer (C_INT), value :: numComponents
-            integer (C_INT), value :: partition
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshViewAddModelData")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::tag
+            integer(c_int), value::step
+            character(len = 1, kind = c_char)::modelName(*)
+            character(len = 1, kind = c_char)::dataType(*)
+            integer(c_size_t)::tags(*)
+            integer(c_size_t), value :: tags_n
+            type(c_ptr), intent(out)::data
+            type(c_ptr), intent(out) :: data_n
+            integer(c_size_t) :: data_nn
+            real(c_double), value::time
+            integer(c_int), value::numComponents
+            integer(c_int), value::partition
+            integer(c_int)::ierr
           end subroutine gmshViewAddModelData
 
 !  Add homogeneous model-based post-processing data to the view with tag
@@ -5567,20 +5567,20 @@ c
      &      numComponents,
      &      partition,
      &      ierr)
-     &    bind(C,name="gmshViewAddHomogeneousModelData")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: tag
-            integer (C_INT), value :: step
-            character (LEN=1,KIND=C_CHAR) :: modelName(*)
-            character (LEN=1,KIND=C_CHAR) :: dataType(*)
-            integer (C_SIZE_T) :: tags(*)
-            integer (C_SIZE_T), value :: tags_n
-            real (C_DOUBLE) :: data(*)
-            integer (C_SIZE_T), value :: data_n
-            real (C_DOUBLE), value :: time
-            integer (C_INT), value :: numComponents
-            integer (C_INT), value :: partition
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshViewAddHomogeneousModelData")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::tag
+            integer(c_int), value::step
+            character(len = 1, kind = c_char)::modelName(*)
+            character(len = 1, kind = c_char)::dataType(*)
+            integer(c_size_t)::tags(*)
+            integer(c_size_t), value :: tags_n
+            real(c_double)::data(*)
+            integer(c_size_t), value :: data_n
+            real(c_double), value::time
+            integer(c_int), value::numComponents
+            integer(c_int), value::partition
+            integer(c_int)::ierr
           end subroutine gmshViewAddHomogeneousModelData
 
 !  Get model-based post-processing data from the view with tag `tag' at step
@@ -5599,19 +5599,19 @@ c
      &      time,
      &      numComponents,
      &      ierr)
-     &    bind(C,name="gmshViewGetModelData")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: tag
-            integer (C_INT), value :: step
-            type (C_PTR) :: dataType(*)
-            type (C_PTR), intent(out) :: tags
-            integer (C_SIZE_T) :: tags_n
-            type (C_PTR), intent(out) :: data
-            type (C_PTR), intent(out) :: data_n
-            integer (C_SIZE_T) :: data_nn
-            real (C_DOUBLE) :: time
-            integer (C_INT) :: numComponents
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshViewGetModelData")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::tag
+            integer(c_int), value::step
+            type(c_ptr)::dataType(*)
+            type(c_ptr), intent(out)::tags
+            integer(c_size_t) :: tags_n
+            type (c_ptr), intent(out)::data
+            type(c_ptr), intent(out) :: data_n
+            integer (c_size_t) :: data_nn
+            real(c_double)::time
+            integer(c_int)::numComponents
+            integer(c_int)::ierr
           end subroutine gmshViewGetModelData
 
 !  Get homogeneous model-based post-processing data from the view with tag
@@ -5629,18 +5629,18 @@ c
      &      time,
      &      numComponents,
      &      ierr)
-     &    bind(C,name="gmshViewGetHomogeneousModelData")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: tag
-            integer (C_INT), value :: step
-            type (C_PTR) :: dataType(*)
-            type (C_PTR), intent(out) :: tags
-            integer (C_SIZE_T) :: tags_n
-            type (C_PTR), intent(out) :: data
-            integer (C_SIZE_T) :: data_n
-            real (C_DOUBLE) :: time
-            integer (C_INT) :: numComponents
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshViewGetHomogeneousModelData")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::tag
+            integer(c_int), value::step
+            type(c_ptr)::dataType(*)
+            type(c_ptr), intent(out)::tags
+            integer(c_size_t) :: tags_n
+            type(c_ptr), intent(out)::data
+            integer(c_size_t) :: data_n
+            real(c_double)::time
+            integer(c_int)::numComponents
+            integer(c_int)::ierr
           end subroutine gmshViewGetHomogeneousModelData
 
 !  Add list-based post-processing data to the view with tag `tag'. List-based
@@ -5660,14 +5660,14 @@ c
      &      data,
      &      data_n,
      &      ierr)
-     &    bind(C,name="gmshViewAddListData")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: tag
-            character (LEN=1,KIND=C_CHAR) :: dataType(*)
-            integer (C_INT), value :: numEle
-            real (C_DOUBLE) :: data(*)
-            integer (C_SIZE_T), value :: data_n
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshViewAddListData")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::tag
+            character(len = 1, kind = c_char)::dataType(*)
+            integer(c_int), value::numEle
+            real(c_double)::data(*)
+            integer(c_size_t), value :: data_n
+            integer(c_int)::ierr
           end subroutine gmshViewAddListData
 
 !  Get list-based post-processing data from the view with tag `tag'. Return
@@ -5683,17 +5683,17 @@ c
      &      data_n,
      &      data_nn,
      &      ierr)
-     &    bind(C,name="gmshViewGetListData")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: tag
-            type (C_PTR), intent(out) :: dataType
-            integer (C_SIZE_T) :: dataType_n
-            type (C_PTR), intent(out) :: numElements
-            integer (C_SIZE_T) :: numElements_n
-            type (C_PTR), intent(out) :: data
-            type (C_PTR), intent(out) :: data_n
-            integer (C_SIZE_T) :: data_nn
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshViewGetListData")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::tag
+            type(c_ptr), intent(out)::dataType
+            integer(c_size_t) :: dataType_n
+            type(c_ptr), intent(out)::numElements
+            integer(c_size_t) :: numElements_n
+            type (c_ptr), intent(out)::data
+            type(c_ptr), intent(out) :: data_n
+            integer (c_size_t) :: data_nn
+            integer(c_int)::ierr
           end subroutine gmshViewGetListData
 
 !  Add a string to a list-based post-processing view with tag `tag'. If
@@ -5718,16 +5718,16 @@ c
      &      style,
      &      style_n,
      &      ierr)
-     &    bind(C,name="gmshViewAddListDataString")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: tag
-            real (C_DOUBLE) :: coord(*)
-            integer (C_SIZE_T), value :: coord_n
-            type (C_PTR) :: data(*)
-            integer (C_SIZE_T), value :: data_n
-            type (C_PTR) :: style(*)
-            integer (C_SIZE_T), value :: style_n
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshViewAddListDataString")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::tag
+            real(c_double)::coord(*)
+            integer(c_size_t), value :: coord_n
+            type(c_ptr)::data(*)
+            integer(c_size_t), value :: data_n
+            type(c_ptr)::style(*)
+            integer(c_size_t), value :: style_n
+            integer(c_int)::ierr
           end subroutine gmshViewAddListDataString
 
 !  Get list-based post-processing data strings (2D strings if `dim' = 2, 3D
@@ -5743,17 +5743,17 @@ c
      &      style,
      &      style_n,
      &      ierr)
-     &    bind(C,name="gmshViewGetListDataStrings")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: tag
-            integer (C_INT), value :: dim
-            type (C_PTR), intent(out) :: coord
-            integer (C_SIZE_T) :: coord_n
-            type (C_PTR), intent(out) :: data
-            integer (C_SIZE_T) :: data_n
-            type (C_PTR), intent(out) :: style
-            integer (C_SIZE_T) :: style_n
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshViewGetListDataStrings")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::tag
+            integer(c_int), value::dim
+            type(c_ptr), intent(out)::coord
+            integer(c_size_t) :: coord_n
+            type(c_ptr), intent(out)::data
+            integer(c_size_t) :: data_n
+            type(c_ptr), intent(out)::style
+            integer(c_size_t) :: style_n
+            integer(c_int)::ierr
           end subroutine gmshViewGetListDataStrings
 
 !  Set interpolation matrices for the element family `type' ("Line",
@@ -5781,21 +5781,21 @@ c
      &      expGeo,
      &      expGeo_n,
      &      ierr)
-     &    bind(C,name="gmshViewSetInterpolationMatrices")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: tag
-            character (LEN=1,KIND=C_CHAR) :: type(*)
-            integer (C_INT), value :: d
-            real (C_DOUBLE) :: coef(*)
-            integer (C_SIZE_T), value :: coef_n
-            real (C_DOUBLE) :: exp(*)
-            integer (C_SIZE_T), value :: exp_n
-            integer (C_INT), value :: dGeo
-            real (C_DOUBLE) :: coefGeo(*)
-            integer (C_SIZE_T), value :: coefGeo_n
-            real (C_DOUBLE) :: expGeo(*)
-            integer (C_SIZE_T), value :: expGeo_n
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshViewSetInterpolationMatrices")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::tag
+            character(len = 1, kind = c_char)::type(*)
+            integer(c_int), value::d
+            real(c_double)::coef(*)
+            integer(c_size_t), value :: coef_n
+            real(c_double)::exp(*)
+            integer(c_size_t), value :: exp_n
+            integer(c_int), value::dGeo
+            real(c_double)::coefGeo(*)
+            integer(c_size_t), value :: coefGeo_n
+            real(c_double)::expGeo(*)
+            integer(c_size_t), value :: expGeo_n
+            integer(c_int)::ierr
           end subroutine gmshViewSetInterpolationMatrices
 
 !  Add a post-processing view as an `alias' of the reference view with tag
@@ -5807,13 +5807,13 @@ c
      &      copyOptions,
      &      tag,
      &      ierr)
-     &    bind(C,name="gmshViewAddAlias")
-          use, intrinsic :: ISO_C_BINDING
-          integer (C_INT) :: gmshViewAddAlias
-            integer (C_INT), value :: refTag
-            integer (C_INT), value :: copyOptions
-            integer (C_INT), value :: tag
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshViewAddAlias")
+          use, intrinsic :: iso_c_binding
+          integer(c_int)::gmshViewAddAlias
+            integer(c_int), value::refTag
+            integer(c_int), value::copyOptions
+            integer(c_int), value::tag
+            integer(c_int)::ierr
           end function gmshViewAddAlias
 
 !  Copy the options from the view with tag `refTag' to the view with tag
@@ -5822,11 +5822,11 @@ c
      &      refTag,
      &      tag,
      &      ierr)
-     &    bind(C,name="gmshViewCopyOptions")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: refTag
-            integer (C_INT), value :: tag
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshViewCopyOptions")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::refTag
+            integer(c_int), value::tag
+            integer(c_int)::ierr
           end subroutine gmshViewCopyOptions
 
 !  Combine elements (if `what' == "elements") or steps (if `what' == "steps")
@@ -5839,13 +5839,13 @@ c
      &      remove,
      &      copyOptions,
      &      ierr)
-     &    bind(C,name="gmshViewCombine")
-          use, intrinsic :: ISO_C_BINDING
-            character (LEN=1,KIND=C_CHAR) :: what(*)
-            character (LEN=1,KIND=C_CHAR) :: how(*)
-            integer (C_INT), value :: remove
-            integer (C_INT), value :: copyOptions
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshViewCombine")
+          use, intrinsic :: iso_c_binding
+            character(len = 1, kind = c_char)::what(*)
+            character(len = 1, kind = c_char)::how(*)
+            integer(c_int), value::remove
+            integer(c_int), value::copyOptions
+            integer(c_int)::ierr
           end subroutine gmshViewCombine
 
 !  Probe the view `tag' for its `value' at point (`x', `y', `z'). Return only
@@ -5875,26 +5875,26 @@ c
      &      zElemCoord_n,
      &      dim,
      &      ierr)
-     &    bind(C,name="gmshViewProbe")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: tag
-            real (C_DOUBLE), value :: x
-            real (C_DOUBLE), value :: y
-            real (C_DOUBLE), value :: z
-            type (C_PTR), intent(out) :: value
-            integer (C_SIZE_T) :: value_n
-            integer (C_INT), value :: step
-            integer (C_INT), value :: numComp
-            integer (C_INT), value :: gradient
-            real (C_DOUBLE), value :: tolerance
-            real (C_DOUBLE) :: xElemCoord(*)
-            integer (C_SIZE_T), value :: xElemCoord_n
-            real (C_DOUBLE) :: yElemCoord(*)
-            integer (C_SIZE_T), value :: yElemCoord_n
-            real (C_DOUBLE) :: zElemCoord(*)
-            integer (C_SIZE_T), value :: zElemCoord_n
-            integer (C_INT), value :: dim
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshViewProbe")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::tag
+            real(c_double), value::x
+            real(c_double), value::y
+            real(c_double), value::z
+            type(c_ptr), intent(out)::value
+            integer(c_size_t) :: value_n
+            integer(c_int), value::step
+            integer(c_int), value::numComp
+            integer(c_int), value::gradient
+            real(c_double), value::tolerance
+            real(c_double)::xElemCoord(*)
+            integer(c_size_t), value :: xElemCoord_n
+            real(c_double)::yElemCoord(*)
+            integer(c_size_t), value :: yElemCoord_n
+            real(c_double)::zElemCoord(*)
+            integer(c_size_t), value :: zElemCoord_n
+            integer(c_int), value::dim
+            integer(c_int)::ierr
           end subroutine gmshViewProbe
 
 !  Write the view to a file `fileName'. The export format is determined by the
@@ -5904,12 +5904,12 @@ c
      &      fileName,
      &      append,
      &      ierr)
-     &    bind(C,name="gmshViewWrite")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: tag
-            character (LEN=1,KIND=C_CHAR) :: fileName(*)
-            integer (C_INT), value :: append
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshViewWrite")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::tag
+            character(len = 1, kind = c_char)::fileName(*)
+            integer(c_int), value::append
+            integer(c_int)::ierr
           end subroutine gmshViewWrite
 
 !  Set the global visibility of the view `tag' per window to `value', where
@@ -5919,12 +5919,12 @@ c
      &      value,
      &      windowIndex,
      &      ierr)
-     &    bind(C,name="gmshViewSetVisibilityPerWindow")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: tag
-            integer (C_INT), value :: value
-            integer (C_INT), value :: windowIndex
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshViewSetVisibilityPerWindow")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::tag
+            integer(c_int), value::value
+            integer(c_int), value::windowIndex
+            integer(c_int)::ierr
           end subroutine gmshViewSetVisibilityPerWindow
 
 !  Set the numerical option `option' to the value `value' for plugin `name'.
@@ -5933,12 +5933,12 @@ c
      &      option,
      &      value,
      &      ierr)
-     &    bind(C,name="gmshPluginSetNumber")
-          use, intrinsic :: ISO_C_BINDING
-            character (LEN=1,KIND=C_CHAR) :: name(*)
-            character (LEN=1,KIND=C_CHAR) :: option(*)
-            real (C_DOUBLE), value :: value
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshPluginSetNumber")
+          use, intrinsic :: iso_c_binding
+            character(len = 1, kind = c_char)::name(*)
+            character(len = 1, kind = c_char)::option(*)
+            real(c_double), value::value
+            integer(c_int)::ierr
           end subroutine gmshPluginSetNumber
 
 !  Set the string option `option' to the value `value' for plugin `name'.
@@ -5947,39 +5947,39 @@ c
      &      option,
      &      value,
      &      ierr)
-     &    bind(C,name="gmshPluginSetString")
-          use, intrinsic :: ISO_C_BINDING
-            character (LEN=1,KIND=C_CHAR) :: name(*)
-            character (LEN=1,KIND=C_CHAR) :: option(*)
-            character (LEN=1,KIND=C_CHAR) :: value(*)
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshPluginSetString")
+          use, intrinsic :: iso_c_binding
+            character(len = 1, kind = c_char)::name(*)
+            character(len = 1, kind = c_char)::option(*)
+            character(len = 1, kind = c_char)::value(*)
+            integer(c_int)::ierr
           end subroutine gmshPluginSetString
 
 !  Run the plugin `name'.
         subroutine gmshPluginRun(
      &      name,
      &      ierr)
-     &    bind(C,name="gmshPluginRun")
-          use, intrinsic :: ISO_C_BINDING
-            character (LEN=1,KIND=C_CHAR) :: name(*)
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshPluginRun")
+          use, intrinsic :: iso_c_binding
+            character(len = 1, kind = c_char)::name(*)
+            integer(c_int)::ierr
           end subroutine gmshPluginRun
 
 !  Draw all the OpenGL scenes.
         subroutine gmshGraphicsDraw(
      &      ierr)
-     &    bind(C,name="gmshGraphicsDraw")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshGraphicsDraw")
+          use, intrinsic :: iso_c_binding
+            integer(c_int)::ierr
           end subroutine gmshGraphicsDraw
 
 !  Create the FLTK graphical user interface. Can only be called in the main
 !  thread.
         subroutine gmshFltkInitialize(
      &      ierr)
-     &    bind(C,name="gmshFltkInitialize")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshFltkInitialize")
+          use, intrinsic :: iso_c_binding
+            integer(c_int)::ierr
           end subroutine gmshFltkInitialize
 
 !  Wait at most `time' seconds for user interface events and return. If `time'
@@ -5988,10 +5988,10 @@ c
         subroutine gmshFltkWait(
      &      time,
      &      ierr)
-     &    bind(C,name="gmshFltkWait")
-          use, intrinsic :: ISO_C_BINDING
-            real (C_DOUBLE), value :: time
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshFltkWait")
+          use, intrinsic :: iso_c_binding
+            real(c_double), value::time
+            integer(c_int)::ierr
           end subroutine gmshFltkWait
 
 !  Update the user interface (potentially creating new widgets and windows).
@@ -6000,9 +6000,9 @@ c
 !  to trigger an update of the user interface from another thread.
         subroutine gmshFltkUpdate(
      &      ierr)
-     &    bind(C,name="gmshFltkUpdate")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshFltkUpdate")
+          use, intrinsic :: iso_c_binding
+            integer(c_int)::ierr
           end subroutine gmshFltkUpdate
 
 !  Awake the main user interface thread and process pending events, and
@@ -6011,26 +6011,26 @@ c
         subroutine gmshFltkAwake(
      &      action,
      &      ierr)
-     &    bind(C,name="gmshFltkAwake")
-          use, intrinsic :: ISO_C_BINDING
-            character (LEN=1,KIND=C_CHAR) :: action(*)
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshFltkAwake")
+          use, intrinsic :: iso_c_binding
+            character(len = 1, kind = c_char)::action(*)
+            integer(c_int)::ierr
           end subroutine gmshFltkAwake
 
 !  Block the current thread until it can safely modify the user interface.
         subroutine gmshFltkLock(
      &      ierr)
-     &    bind(C,name="gmshFltkLock")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshFltkLock")
+          use, intrinsic :: iso_c_binding
+            integer(c_int)::ierr
           end subroutine gmshFltkLock
 
 !  Release the lock that was set using lock.
         subroutine gmshFltkUnlock(
      &      ierr)
-     &    bind(C,name="gmshFltkUnlock")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshFltkUnlock")
+          use, intrinsic :: iso_c_binding
+            integer(c_int)::ierr
           end subroutine gmshFltkUnlock
 
 !  Run the event loop of the graphical user interface, i.e. repeatedly call
@@ -6038,19 +6038,19 @@ c
 !  been initialized. Can only be called in the main thread.
         subroutine gmshFltkRun(
      &      ierr)
-     &    bind(C,name="gmshFltkRun")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshFltkRun")
+          use, intrinsic :: iso_c_binding
+            integer(c_int)::ierr
           end subroutine gmshFltkRun
 
 !  Check if the user interface is available (e.g. to detect if it has been
 !  closed).
         function gmshFltkIsAvailable(
      &      ierr)
-     &    bind(C,name="gmshFltkIsAvailable")
-          use, intrinsic :: ISO_C_BINDING
-          integer (C_INT) :: gmshFltkIsAvailable
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshFltkIsAvailable")
+          use, intrinsic :: iso_c_binding
+          integer(c_int)::gmshFltkIsAvailable
+            integer(c_int)::ierr
           end function gmshFltkIsAvailable
 
 !  Select entities in the user interface. If `dim' is >= 0, return only the
@@ -6060,13 +6060,13 @@ c
      &      dimTags_n,
      &      dim,
      &      ierr)
-     &    bind(C,name="gmshFltkSelectEntities")
-          use, intrinsic :: ISO_C_BINDING
-          integer (C_INT) :: gmshFltkSelectEntities
-            type (C_PTR), intent(out) :: dimTags
-            integer (C_SIZE_T) :: dimTags_n
-            integer (C_INT), value :: dim
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshFltkSelectEntities")
+          use, intrinsic :: iso_c_binding
+          integer(c_int)::gmshFltkSelectEntities
+            type(c_ptr), intent(out)::dimTags
+            integer(c_size_t) :: dimTags_n
+            integer(c_int), value::dim
+            integer(c_int)::ierr
           end function gmshFltkSelectEntities
 
 !  Select elements in the user interface.
@@ -6074,12 +6074,12 @@ c
      &      elementTags,
      &      elementTags_n,
      &      ierr)
-     &    bind(C,name="gmshFltkSelectElements")
-          use, intrinsic :: ISO_C_BINDING
-          integer (C_INT) :: gmshFltkSelectElements
-            type (C_PTR), intent(out) :: elementTags
-            integer (C_SIZE_T) :: elementTags_n
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshFltkSelectElements")
+          use, intrinsic :: iso_c_binding
+          integer(c_int)::gmshFltkSelectElements
+            type(c_ptr), intent(out)::elementTags
+            integer(c_size_t) :: elementTags_n
+            integer(c_int)::ierr
           end function gmshFltkSelectElements
 
 !  Select views in the user interface.
@@ -6087,12 +6087,12 @@ c
      &      viewTags,
      &      viewTags_n,
      &      ierr)
-     &    bind(C,name="gmshFltkSelectViews")
-          use, intrinsic :: ISO_C_BINDING
-          integer (C_INT) :: gmshFltkSelectViews
-            type (C_PTR), intent(out) :: viewTags
-            integer (C_SIZE_T) :: viewTags_n
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshFltkSelectViews")
+          use, intrinsic :: iso_c_binding
+          integer(c_int)::gmshFltkSelectViews
+            type(c_ptr), intent(out)::viewTags
+            integer(c_size_t) :: viewTags_n
+            integer(c_int)::ierr
           end function gmshFltkSelectViews
 
 !  Split the current window horizontally (if `how' = "h") or vertically (if
@@ -6101,11 +6101,11 @@ c
      &      how,
      &      ratio,
      &      ierr)
-     &    bind(C,name="gmshFltkSplitCurrentWindow")
-          use, intrinsic :: ISO_C_BINDING
-            character (LEN=1,KIND=C_CHAR) :: how(*)
-            real (C_DOUBLE), value :: ratio
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshFltkSplitCurrentWindow")
+          use, intrinsic :: iso_c_binding
+            character(len = 1, kind = c_char)::how(*)
+            real(c_double), value::ratio
+            integer(c_int)::ierr
           end subroutine gmshFltkSplitCurrentWindow
 
 !  Set the current window by speficying its index (starting at 0) in the list
@@ -6114,10 +6114,10 @@ c
         subroutine gmshFltkSetCurrentWindow(
      &      windowIndex,
      &      ierr)
-     &    bind(C,name="gmshFltkSetCurrentWindow")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: windowIndex
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshFltkSetCurrentWindow")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::windowIndex
+            integer(c_int)::ierr
           end subroutine gmshFltkSetCurrentWindow
 
 !  Set a status message in the current window. If `graphics' is set, display
@@ -6126,11 +6126,11 @@ c
      &      message,
      &      graphics,
      &      ierr)
-     &    bind(C,name="gmshFltkSetStatusMessage")
-          use, intrinsic :: ISO_C_BINDING
-            character (LEN=1,KIND=C_CHAR) :: message(*)
-            integer (C_INT), value :: graphics
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshFltkSetStatusMessage")
+          use, intrinsic :: iso_c_binding
+            character(len = 1, kind = c_char)::message(*)
+            integer(c_int), value::graphics
+            integer(c_int)::ierr
           end subroutine gmshFltkSetStatusMessage
 
 !  Show context window for the entity of dimension `dim' and tag `tag'.
@@ -6138,31 +6138,31 @@ c
      &      dim,
      &      tag,
      &      ierr)
-     &    bind(C,name="gmshFltkShowContextWindow")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT), value :: dim
-            integer (C_INT), value :: tag
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshFltkShowContextWindow")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::dim
+            integer(c_int), value::tag
+            integer(c_int)::ierr
           end subroutine gmshFltkShowContextWindow
 
 !  Open the `name' item in the menu tree.
         subroutine gmshFltkOpenTreeItem(
      &      name,
      &      ierr)
-     &    bind(C,name="gmshFltkOpenTreeItem")
-          use, intrinsic :: ISO_C_BINDING
-            character (LEN=1,KIND=C_CHAR) :: name(*)
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshFltkOpenTreeItem")
+          use, intrinsic :: iso_c_binding
+            character(len = 1, kind = c_char)::name(*)
+            integer(c_int)::ierr
           end subroutine gmshFltkOpenTreeItem
 
 !  Close the `name' item in the menu tree.
         subroutine gmshFltkCloseTreeItem(
      &      name,
      &      ierr)
-     &    bind(C,name="gmshFltkCloseTreeItem")
-          use, intrinsic :: ISO_C_BINDING
-            character (LEN=1,KIND=C_CHAR) :: name(*)
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshFltkCloseTreeItem")
+          use, intrinsic :: iso_c_binding
+            character(len = 1, kind = c_char)::name(*)
+            integer(c_int)::ierr
           end subroutine gmshFltkCloseTreeItem
 
 !  Set one or more parameters in the ONELAB database, encoded in `format'.
@@ -6170,11 +6170,11 @@ c
      &      data,
      &      format,
      &      ierr)
-     &    bind(C,name="gmshOnelabSet")
-          use, intrinsic :: ISO_C_BINDING
-            character (LEN=1,KIND=C_CHAR) :: data(*)
-            character (LEN=1,KIND=C_CHAR) :: format(*)
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshOnelabSet")
+          use, intrinsic :: iso_c_binding
+            character(len = 1, kind = c_char)::data(*)
+            character(len = 1, kind = c_char)::format(*)
+            integer(c_int)::ierr
           end subroutine gmshOnelabSet
 
 !  Get all the parameters (or a single one if `name' is specified) from the
@@ -6184,12 +6184,12 @@ c
      &      name,
      &      format,
      &      ierr)
-     &    bind(C,name="gmshOnelabGet")
-          use, intrinsic :: ISO_C_BINDING
-            type (C_PTR) :: data(*)
-            character (LEN=1,KIND=C_CHAR) :: name(*)
-            character (LEN=1,KIND=C_CHAR) :: format(*)
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshOnelabGet")
+          use, intrinsic :: iso_c_binding
+            type(c_ptr)::data(*)
+            character(len = 1, kind = c_char)::name(*)
+            character(len = 1, kind = c_char)::format(*)
+            integer(c_int)::ierr
           end subroutine gmshOnelabGet
 
 !  Get the names of the parameters in the ONELAB database matching the
@@ -6199,12 +6199,12 @@ c
      &      names_n,
      &      search,
      &      ierr)
-     &    bind(C,name="gmshOnelabGetNames")
-          use, intrinsic :: ISO_C_BINDING
-            type (C_PTR), intent(out) :: names
-            integer (C_SIZE_T) :: names_n
-            character (LEN=1,KIND=C_CHAR) :: search(*)
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshOnelabGetNames")
+          use, intrinsic :: iso_c_binding
+            type(c_ptr), intent(out)::names
+            integer(c_size_t) :: names_n
+            character(len = 1, kind = c_char)::search(*)
+            integer(c_int)::ierr
           end subroutine gmshOnelabGetNames
 
 !  Set the value of the number parameter `name' in the ONELAB database. Create
@@ -6215,12 +6215,12 @@ c
      &      value,
      &      value_n,
      &      ierr)
-     &    bind(C,name="gmshOnelabSetNumber")
-          use, intrinsic :: ISO_C_BINDING
-            character (LEN=1,KIND=C_CHAR) :: name(*)
-            real (C_DOUBLE) :: value(*)
-            integer (C_SIZE_T), value :: value_n
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshOnelabSetNumber")
+          use, intrinsic :: iso_c_binding
+            character(len = 1, kind = c_char)::name(*)
+            real(c_double)::value(*)
+            integer(c_size_t), value :: value_n
+            integer(c_int)::ierr
           end subroutine gmshOnelabSetNumber
 
 !  Set the value of the string parameter `name' in the ONELAB database. Create
@@ -6231,12 +6231,12 @@ c
      &      value,
      &      value_n,
      &      ierr)
-     &    bind(C,name="gmshOnelabSetString")
-          use, intrinsic :: ISO_C_BINDING
-            character (LEN=1,KIND=C_CHAR) :: name(*)
-            type (C_PTR) :: value(*)
-            integer (C_SIZE_T), value :: value_n
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshOnelabSetString")
+          use, intrinsic :: iso_c_binding
+            character(len = 1, kind = c_char)::name(*)
+            type(c_ptr)::value(*)
+            integer(c_size_t), value :: value_n
+            integer(c_int)::ierr
           end subroutine gmshOnelabSetString
 
 !  Get the value of the number parameter `name' from the ONELAB database.
@@ -6246,12 +6246,12 @@ c
      &      value,
      &      value_n,
      &      ierr)
-     &    bind(C,name="gmshOnelabGetNumber")
-          use, intrinsic :: ISO_C_BINDING
-            character (LEN=1,KIND=C_CHAR) :: name(*)
-            type (C_PTR), intent(out) :: value
-            integer (C_SIZE_T) :: value_n
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshOnelabGetNumber")
+          use, intrinsic :: iso_c_binding
+            character(len = 1, kind = c_char)::name(*)
+            type(c_ptr), intent(out)::value
+            integer(c_size_t) :: value_n
+            integer(c_int)::ierr
           end subroutine gmshOnelabGetNumber
 
 !  Get the value of the string parameter `name' from the ONELAB database.
@@ -6261,22 +6261,22 @@ c
      &      value,
      &      value_n,
      &      ierr)
-     &    bind(C,name="gmshOnelabGetString")
-          use, intrinsic :: ISO_C_BINDING
-            character (LEN=1,KIND=C_CHAR) :: name(*)
-            type (C_PTR), intent(out) :: value
-            integer (C_SIZE_T) :: value_n
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshOnelabGetString")
+          use, intrinsic :: iso_c_binding
+            character(len = 1, kind = c_char)::name(*)
+            type(c_ptr), intent(out)::value
+            integer(c_size_t) :: value_n
+            integer(c_int)::ierr
           end subroutine gmshOnelabGetString
 
 !  Clear the ONELAB database, or remove a single parameter if `name' is given.
         subroutine gmshOnelabClear(
      &      name,
      &      ierr)
-     &    bind(C,name="gmshOnelabClear")
-          use, intrinsic :: ISO_C_BINDING
-            character (LEN=1,KIND=C_CHAR) :: name(*)
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshOnelabClear")
+          use, intrinsic :: iso_c_binding
+            character(len = 1, kind = c_char)::name(*)
+            integer(c_int)::ierr
           end subroutine gmshOnelabClear
 
 !  Run a ONELAB client. If `name' is provided, create a new ONELAB client with
@@ -6286,11 +6286,11 @@ c
      &      name,
      &      command,
      &      ierr)
-     &    bind(C,name="gmshOnelabRun")
-          use, intrinsic :: ISO_C_BINDING
-            character (LEN=1,KIND=C_CHAR) :: name(*)
-            character (LEN=1,KIND=C_CHAR) :: command(*)
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshOnelabRun")
+          use, intrinsic :: iso_c_binding
+            character(len = 1, kind = c_char)::name(*)
+            character(len = 1, kind = c_char)::command(*)
+            integer(c_int)::ierr
           end subroutine gmshOnelabRun
 
 !  Write a `message'. `level' can be "info", "warning" or "error".
@@ -6298,19 +6298,19 @@ c
      &      message,
      &      level,
      &      ierr)
-     &    bind(C,name="gmshLoggerWrite")
-          use, intrinsic :: ISO_C_BINDING
-            character (LEN=1,KIND=C_CHAR) :: message(*)
-            character (LEN=1,KIND=C_CHAR) :: level(*)
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshLoggerWrite")
+          use, intrinsic :: iso_c_binding
+            character(len = 1, kind = c_char)::message(*)
+            character(len = 1, kind = c_char)::level(*)
+            integer(c_int)::ierr
           end subroutine gmshLoggerWrite
 
 !  Start logging messages.
         subroutine gmshLoggerStart(
      &      ierr)
-     &    bind(C,name="gmshLoggerStart")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshLoggerStart")
+          use, intrinsic :: iso_c_binding
+            integer(c_int)::ierr
           end subroutine gmshLoggerStart
 
 !  Get logged messages.
@@ -6318,47 +6318,47 @@ c
      &      log,
      &      log_n,
      &      ierr)
-     &    bind(C,name="gmshLoggerGet")
-          use, intrinsic :: ISO_C_BINDING
-            type (C_PTR), intent(out) :: log
-            integer (C_SIZE_T) :: log_n
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshLoggerGet")
+          use, intrinsic :: iso_c_binding
+            type(c_ptr), intent(out)::log
+            integer(c_size_t) :: log_n
+            integer(c_int)::ierr
           end subroutine gmshLoggerGet
 
 !  Stop logging messages.
         subroutine gmshLoggerStop(
      &      ierr)
-     &    bind(C,name="gmshLoggerStop")
-          use, intrinsic :: ISO_C_BINDING
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshLoggerStop")
+          use, intrinsic :: iso_c_binding
+            integer(c_int)::ierr
           end subroutine gmshLoggerStop
 
 !  Return wall clock time.
         function gmshLoggerGetWallTime(
      &      ierr)
-     &    bind(C,name="gmshLoggerGetWallTime")
-          use, intrinsic :: ISO_C_BINDING
-          real (C_DOUBLE) :: gmshLoggerGetWallTime
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshLoggerGetWallTime")
+          use, intrinsic :: iso_c_binding
+          real(c_double)::gmshLoggerGetWallTime
+            integer(c_int)::ierr
           end function gmshLoggerGetWallTime
 
 !  Return CPU time.
         function gmshLoggerGetCpuTime(
      &      ierr)
-     &    bind(C,name="gmshLoggerGetCpuTime")
-          use, intrinsic :: ISO_C_BINDING
-          real (C_DOUBLE) :: gmshLoggerGetCpuTime
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshLoggerGetCpuTime")
+          use, intrinsic :: iso_c_binding
+          real(c_double)::gmshLoggerGetCpuTime
+            integer(c_int)::ierr
           end function gmshLoggerGetCpuTime
 
 !  Return last error message, if any.
         subroutine gmshLoggerGetLastError(
      &      error,
      &      ierr)
-     &    bind(C,name="gmshLoggerGetLastError")
-          use, intrinsic :: ISO_C_BINDING
-            type (C_PTR) :: error(*)
-            integer (C_INT) :: ierr
+     &    bind(C, name = "gmshLoggerGetLastError")
+          use, intrinsic :: iso_c_binding
+            type(c_ptr)::error(*)
+            integer(c_int)::ierr
           end subroutine gmshLoggerGetLastError
 
         end interface
