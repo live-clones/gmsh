@@ -220,3 +220,16 @@ std::vector<std::string> SplitString(const std::string &msg, char separator,
   }
   return out;
 }
+
+bool IsOnelabName(const std::string &name, std::string &cleanName){
+  std::string::size_type n = name.find('/');
+  if(name.empty() || n == std::string::npos)
+    return false;
+
+  if(name.size() > 1 && name[0] == '/')
+    cleanName = name.substr(1);
+  else
+    cleanName = name;
+
+  return true;
+}

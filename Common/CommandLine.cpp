@@ -195,9 +195,9 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
                  "(General.BackgroundImageFileName)"));
   s.push_back(mp("-v int", "Set verbosity level (General.Verbosity)"));
   s.push_back(mp("-string \"string\"", "Parse command string at startup"));
-  s.push_back(mp("-setnumber name value", "Set constant or option number "
+  s.push_back(mp("-setnumber name value", "Set constant, ONELAB or option number "
                  "name=value"));
-  s.push_back(mp("-setstring name value", "Set constant or option string "
+  s.push_back(mp("-setstring name value", "Set constant, ONELAB or option string "
                  "name=value"));
   s.push_back(mp("-nopopup", "Don't popup dialog windows in scripts "
                  "(General.NoPopup)"));
@@ -787,10 +787,13 @@ void GetOptions(bool readConfigFiles, bool exitOnError)
       else if(argv[i] == "-setstring") {
         i++;
         if(i + 1 < argv.size()) {
-          std::string n(argv[i]), cat, opt, v = argv[i + 1];
+          std::string n(argv[i]), cat, opt, v = argv[i + 1], olName;
           int index = 0;
           if(SplitOptionName(n, cat, opt, index)) {
             GmshSetStringOption(cat, opt, v, index);
+          }
+          else if(IsOnelabName(n, olName)) {
+            Msg::SetOnelabString(olName, v, true, true);
           }
           else {
 #if defined(HAVE_PARSER)
@@ -808,11 +811,14 @@ void GetOptions(bool readConfigFiles, bool exitOnError)
       else if(argv[i] == "-setnumber") {
         i++;
         if(i + 1 < argv.size()) {
-          std::string n(argv[i]), cat, opt;
+          std::string n(argv[i]), cat, opt, olName;
           double v = atof(argv[i + 1].c_str());
           int index = 0;
           if(SplitOptionName(n, cat, opt, index)) {
             GmshSetNumberOption(cat, opt, v, index);
+          }
+          else if(IsOnelabName(n, olName)) {
+            Msg::SetOnelabNumber(olName, v, true, true);
           }
           else {
 #if defined(HAVE_PARSER)
