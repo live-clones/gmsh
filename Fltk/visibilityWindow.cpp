@@ -726,16 +726,19 @@ static void _recur_select(Fl_Tree_Item *n)
 
 static void _recur_set_visible(Fl_Tree_Item *n)
 {
+  bool recursive =
+    FlGui::instance()->visibility->butt[0]->value() ? true : false;
   if(n->user_data() && n->is_selected()) {
     GEntity *ge = (GEntity *)n->user_data();
-    bool recursive =
-      FlGui::instance()->visibility->butt[0]->value() ? true : false;
     ge->setVisibility(1, recursive);
     // force this: if we ask to see an entity, let's assume that we
     // don't want the whole model to be invisible
     ge->model()->setVisibility(1);
   }
-  for(int i = 0; i < n->children(); i++) _recur_set_visible(n->child(i));
+  if(recursive) {
+    for(int i = 0; i < n->children(); i++)
+      _recur_set_visible(n->child(i));
+  }
 }
 
 static void _recur_update_selected(Fl_Tree_Item *n)

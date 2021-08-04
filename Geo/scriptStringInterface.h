@@ -40,7 +40,7 @@ void scriptAddCircleArc(int p1, int p2, int p3, const std::string &fileName);
 void scriptAddEllipseArc(int p1, int p2, int p3, int p4,
                          const std::string &fileName);
 void scriptAddFieldOption(int field_id, const std::string &option_name,
-                          const std::string &option_value,
+                          const std::string &option_value, int option_type,
                           const std::string &fileName);
 void scriptAddField(int field_id, const std::string &type_name,
                     const std::string &fileName);

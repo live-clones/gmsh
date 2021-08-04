@@ -584,6 +584,7 @@ void OCC_Internals::unbindWithoutChecks(TopoDS_Shape shape)
       _solidTag.UnBind(solid);
       _tagSolid.UnBind(tag);
       _toRemove.insert(std::make_pair(3, tag));
+      _changed = true;
     }
   }
   for(exp0.Init(shape, TopAbs_SHELL); exp0.More(); exp0.Next()) {
@@ -593,6 +594,7 @@ void OCC_Internals::unbindWithoutChecks(TopoDS_Shape shape)
       _shellTag.UnBind(shell);
       _tagShell.UnBind(tag);
       _toRemove.insert(std::make_pair(-2, tag));
+      _changed = true;
     }
   }
   for(exp0.Init(shape, TopAbs_FACE); exp0.More(); exp0.Next()) {
@@ -602,6 +604,7 @@ void OCC_Internals::unbindWithoutChecks(TopoDS_Shape shape)
       _faceTag.UnBind(face);
       _tagFace.UnBind(tag);
       _toRemove.insert(std::make_pair(2, tag));
+      _changed = true;
     }
   }
   for(exp0.Init(shape, TopAbs_WIRE); exp0.More(); exp0.Next()) {
@@ -611,6 +614,7 @@ void OCC_Internals::unbindWithoutChecks(TopoDS_Shape shape)
       _wireTag.UnBind(wire);
       _tagWire.UnBind(tag);
       _toRemove.insert(std::make_pair(-1, tag));
+      _changed = true;
     }
   }
   for(exp0.Init(shape, TopAbs_EDGE); exp0.More(); exp0.Next()) {
@@ -620,6 +624,7 @@ void OCC_Internals::unbindWithoutChecks(TopoDS_Shape shape)
       _edgeTag.UnBind(edge);
       _tagEdge.UnBind(tag);
       _toRemove.insert(std::make_pair(1, tag));
+      _changed = true;
     }
   }
   for(exp0.Init(shape, TopAbs_VERTEX); exp0.More(); exp0.Next()) {
@@ -629,6 +634,7 @@ void OCC_Internals::unbindWithoutChecks(TopoDS_Shape shape)
       _vertexTag.UnBind(vertex);
       _tagVertex.UnBind(tag);
       _toRemove.insert(std::make_pair(0, tag));
+      _changed = true;
     }
   }
 }
