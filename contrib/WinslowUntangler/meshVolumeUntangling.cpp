@@ -249,8 +249,9 @@ bool untangleGRegionMeshConstrained(GRegion *gr, int iterMax, double timeMax)
   double theta = 0.5;
   int iterMaxInner = 300;
   int iterFailMax = 10;
-  bool converged =
-    untangle_tetrahedra(points, locked, tets, tetIdealShapes, theta,
+  double lambda = 0.25;
+
+  bool converged = untangle_tetrahedra(points, locked, tets, tetIdealShapes, lambda,
                         iterMaxInner, iterMax, iterFailMax, timeMax);
 
   for(size_t v = 0; v < points.size(); ++v)

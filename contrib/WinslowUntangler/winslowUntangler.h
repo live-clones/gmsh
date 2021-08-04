@@ -29,8 +29,7 @@
  * @param[in] locked Locked vertices
  * @param[in] triangles List of triangle indexes in points
  * @param[in] triIdealShapes Not supported yet, let it empty
- * @param[in] theta Tradeoff between shape and area, range: [0,1], default:
- * 1/128
+ * @param[in] lambda Tradeoff between shape and area. 0 is Winslow
  * @param[in] iterMaxInner Maximum number of iterations for each LBFGS solve
  * @param[in] iterMaxOuter Maximum number of outer steps
  * @param[in] iterFailMax Stop the solver after iterFailMax step failures
@@ -42,8 +41,8 @@
 bool untangle_triangles_2D(
   std::vector<std::array<double, 2> > &points, const std::vector<bool> &locked,
   const std::vector<std::array<uint32_t, 3> > &triangles,
-  const std::vector<std::array<std::array<double, 3>, 3> > &triIdealShapes,
-  double theta = 1. / 128., int iterMaxInner = 300, int iterMaxOuter = 100,
+  const std::vector<std::array<std::array<double, 2>, 3> > &triIdealShapes,
+  double lambda = 1., int iterMaxInner = 300, int iterMaxOuter = 100,
   int iterFailMax = 10, double timeMax = 9999.);
 
 /**
@@ -57,8 +56,7 @@ bool untangle_triangles_2D(
  * @param[in] tets List of tet indexes in points
  * @param[in] tetIdealShapes Ideal shapes for the tets. Useful for anisotropic
  * targets or for decomposition of hex/prism/pyramid into tets. Can be empty.
- * @param[in] theta Tradeoff between shape and volume, range: [0,1], default:
- * 0.5
+ * @param[in] lambda Tradeoff between shape and volume. 0 is Winslow.
  * @param[in] iterMaxInner Maximum number of iterations for each LBFGS solve
  * @param[in] iterMaxOuter Maximum number of outer steps
  * @param[in] iterFailMax Stop the solver after iterFailMax step failures
@@ -71,5 +69,5 @@ bool untangle_tetrahedra(
   std::vector<std::array<double, 3> > &points, const std::vector<bool> &locked,
   const std::vector<std::array<uint32_t, 4> > &tets,
   const std::vector<std::array<std::array<double, 3>, 4> > &tetIdealShapes,
-  double theta = 0.5, int iterMaxInner = 300, int iterMaxOuter = 100,
+  double lambda = 1., int iterMaxInner = 300, int iterMaxOuter = 100,
   int iterFailMax = 10, double timeMax = 9999.);
