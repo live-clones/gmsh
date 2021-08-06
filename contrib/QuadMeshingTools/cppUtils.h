@@ -19,6 +19,7 @@
 
 /* Debugging macro to print variable name and value in the terminal, usage: DBG(x); DBG(x,..,z); */
 #define DBG(...) fprintf(stdout, "(DBG) %s:%i: ", __FILE__,__LINE__); CppUtils::show(std::cout, #__VA_ARGS__, __VA_ARGS__); fflush(stdout)
+#define DBGC(_cond,...) if (_cond) {fprintf(stdout, "(DBG) %s:%i: ", __FILE__,__LINE__); CppUtils::show(std::cout, #__VA_ARGS__, __VA_ARGS__); fflush(stdout);}
 
 namespace CppUtils {
   using std::size_t;
