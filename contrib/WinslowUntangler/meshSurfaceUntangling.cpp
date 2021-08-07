@@ -173,12 +173,13 @@ bool untangleGFaceMeshConstrained(GFace *gf, int iterMax, double timeMax)
   invertTrianglesIfNecessary(points, triangles);
 
   /* Call Winslow untangler */
-  std::vector<std::array<std::array<double, 3>, 3> > triIdealShapes;
-  double theta = 1. / 128.;
-  int iterMaxInner = 300;
+  std::vector<std::array<std::array<double, 2>, 3> > triIdealShapes;
+  int iterMaxInner = 500;
   int iterFailMax = 10;
+  double lambda = 1. / 127.;
+
   bool converged =
-    untangle_triangles_2D(points, locked, triangles, triIdealShapes, theta,
+    untangle_triangles_2D(points, locked, triangles, triIdealShapes, lambda,
                           iterMaxInner, iterMax, iterFailMax, timeMax);
 
   /* Project back on 3D plane, then CAD */
