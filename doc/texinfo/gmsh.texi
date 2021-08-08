@@ -325,35 +325,36 @@ parts.
 @node Solver, Post-processing, Mesh, Overview
 @section Solver: external solver interface
 
-Gmsh implements a ONELAB (@uref{http://onelab.info}) server to pilot
-external solvers (called ``clients''). The ONELAB interface allows to
-call such clients and have them share parameters and modeling
-information. The implementation is based on a client-server model, with
-a server-side database and local or remote clients communicating
-in-memory or through TCP/IP sockets. Contrary to most solver interfaces,
-the ONELAB server has no a priori knowledge about any specifics (input
-file format, syntax, ...) of the clients. This is made possible by
-having any simulation preceded by an analysis phase, during which the
-clients are asked to upload their parameter set to the server. The
-issues of completeness and consistency of the parameter sets are
-completely dealt with on the client side: the role of ONELAB is limited
-to data centralization, modification and re-dispatching.
+Gmsh implements a ONELAB (@uref{http://onelab.info}) server to exchange
+data with external solvers (called ``clients''). The ONELAB interface
+allows to call such clients and have them share parameters and modeling
+information.
+
+The implementation is based on a client-server model, with a server-side
+database and local or remote clients communicating in-memory or through
+TCP/IP sockets. Contrary to most solver interfaces, the ONELAB server
+has no a priori knowledge about any specifics (input file format,
+syntax, ...) of the clients. This is made possible by having any
+simulation preceded by an analysis phase, during which the clients are
+asked to upload their parameter set to the server. The issues of
+completeness and consistency of the parameter sets are completely dealt
+with on the client side: the role of ONELAB is limited to data
+centralization, modification and re-dispatching.
 
 Examples on how to interface solvers are available in the source
 distribution (see
 @url{@value{GITLAB-PREFIX}/utils/solvers,utils/solvers}). A
 full-featured solver interfaced in this manner is GetDP
-(@uref{https://getdp.info}), a general finite elements solver using mixed
-finite elements.
+(@uref{https://getdp.info}), a general finite elements solver using
+mixed finite elements.
 
 Using the Gmsh API, Gmsh can also be embedded directly in your own
 solver, and ONELAB parameters can be used to interactively drive
 it. Examples on how to embed Gmsh in your solver, and build a custom
 graphical user interface to control it, are available in
-@url{@value{GITLAB-PREFIX}/demos/api,demos/api}.
-See in particular
-@url{@value{GITLAB-PREFIX}/demos/api/custom_gui.py,custom_gui.py}
-and
+@url{@value{GITLAB-PREFIX}/demos/api,demos/api}.  See in particular
+@url{@value{GITLAB-PREFIX}/demos/api/prepro.py,prepro.py},
+@url{@value{GITLAB-PREFIX}/demos/api/custom_gui.py,custom_gui.py} and
 @url{@value{GITLAB-PREFIX}/demos/api/custom_gui.cpp,custom_gui.cpp}.
 
 @c -------------------------------------------------------------------------
