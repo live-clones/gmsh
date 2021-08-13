@@ -87,4 +87,41 @@ protected:
   std::array<double, 10> analyticalParameters;
 };
 
+
+
+enum class libOLTypTag {  LolTypVer=1, LolTypEdg, LolTypTri, LolTypQad,
+               LolTypTet,   LolTypPyr, LolTypPri, LolTypHex, LolNmbTyp };
+
+class libOLwrapper {
+
+  public:
+    libOLwrapper(
+        const std::vector<std::array<double,3> >& points,
+        const std::vector<std::array<int32_t,2> >& edges,
+        const std::vector<std::array<int32_t,3> >& triangles,
+        const std::vector<std::array<int32_t,4> >& quads,
+        const std::vector<std::array<int32_t,4> >& tetrahedra,
+        const std::vector<std::array<int32_t,5> >& pyramids,
+        const std::vector<std::array<int32_t,6> >& prisms,
+        const std::vector<std::array<int32_t,8> >& hexahedra);
+
+    ~libOLwrapper();
+
+    int elementsInsideBoundingBox(libOLTypTag elementType, 
+        double* bboxMin, double* bboxMax,
+        std::vector<int32_t>& elements);
+
+  protected:
+    std::vector<std::array<double,3> > points;
+    std::vector<std::array<int32_t,2> > edges;
+    std::vector<std::array<int32_t,3> > triangles;
+    std::vector<std::array<int32_t,4> > quads;
+    std::vector<std::array<int32_t,4> > tetrahedra;
+    std::vector<std::array<int32_t,5> > pyramids;
+    std::vector<std::array<int32_t,6> > prisms;
+    std::vector<std::array<int32_t,8> > hexahedra;
+    int64_t OctIdx; /* pointer to libOL octree (C structure) */
+
+};
+
 #endif

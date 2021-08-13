@@ -20,9 +20,11 @@
 #cmakedefine HAVE_DOMHEX
 #cmakedefine HAVE_EIGEN
 #cmakedefine HAVE_FLTK
+#cmakedefine HAVE_GECODE
 #cmakedefine HAVE_GEOMETRYCENTRAL
 #cmakedefine HAVE_GMM
 #cmakedefine HAVE_GMP
+#cmakedefine HAVE_HEXMESHINGTOOLS
 #cmakedefine HAVE_HXT
 #cmakedefine HAVE_KBIPACK
 #cmakedefine HAVE_LAPACK

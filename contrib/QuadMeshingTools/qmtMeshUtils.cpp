@@ -29,14 +29,14 @@
 #include "MTriangle.h"
 #include "MQuadrangle.h"
 #include "MHexahedron.h"
-#include "MPyramid.h"
-#include "MPrism.h"
 #include "MTetrahedron.h"
+#include "MPrism.h"
+#include "MPyramid.h"
 #include "robin_hood.h"
 #include "meshOctreeLibOL.h"
 #include "BackgroundMesh.h"
 
-// /* QuadMeshingTools includes */
+/* QuadMeshingTools includes */
 #include "cppUtils.h"
 #include "arrayGeometry.h"
 #include "geolog.h"
@@ -80,8 +80,7 @@ std::vector<GEdge*> model_edges(const GModel* gm) {
 bool haveNiceParametrization(GFace* gf) {
   if (!gf->haveParametrization()) return false;
   if (gf->geomType() == GFace::GeomType::Sphere) return false;
-
-  // if (gf->periodic(0) || gf->periodic(1)) return false;
+  if (gf->periodic(0) || gf->periodic(1)) return false;
 
   return true;
 }
@@ -106,6 +105,27 @@ bool buildVertexToVertexMap(
   }
 
   return true;
+}
+
+bool buildVertexToVertexMap(
+    const std::vector<MElement*>& elements,
+    std::unordered_map<MVertex*,std::vector<MVertex*> >& v2v) {
+  v2v.clear();
+  v2v.rehash(4*elements.size());
+  for (size_t i = 0; i < elements.size(); ++i) {
+    size_t N = elements[i]->getNumVertices();
+    for (size_t le = 0; le < N; ++le) {
+      MVertex* v1 = elements[i]->getVertex(le);
+      MVertex* v2 = elements[i]->getVertex((le+1)%N);
+      v2v[v1].push_back(v2);
+      v2v[v2].push_back(v1);
+    }
+  }
+  for (auto& kv: v2v) {
+    sort_unique(kv.second);
+  }
+  return true;
+
 }
 
 bool buildBoundary (const std::vector<MElement*>& elements, std::vector<MVertex*>& bnd){
@@ -375,7 +395,7 @@ bool patchIsTopologicallyValid(const GFaceMeshPatch& patch) {
 bool GFaceMeshDiff::execute(bool verifyPatchTopology) {
   if (gf != before.gf || gf != after.gf) return false;
   if (after.elements.size() == 0) return false;
-  if (done) return false;
+  if (this->done) return false;
   if (verifyPatchTopology) {
     bool ok = patchIsTopologicallyValid(after);
     if (!ok) return false;
@@ -405,12 +425,16 @@ bool GFaceMeshDiff::execute(bool verifyPatchTopology) {
       /* Replace old vertex by new one, in place */
       MVertex* nv = after.intVertices.back();
       after.intVertices.pop_back();
-      *it = nv;
+
+      size_t pos = it - gf->mesh_vertices.begin();
+      gf->mesh_vertices[pos] = nv;
     } else {
+      /* Remove element from vector */
       it = gf->mesh_vertices.erase(it);
     }
     delete ov;
   }
+
   /* Append remaining vertices */
   while (after.intVertices.size() > 0) {
     MVertex* nv = after.intVertices.back();
@@ -435,7 +459,9 @@ bool GFaceMeshDiff::execute(bool verifyPatchTopology) {
         MQuadrangle* nq = dynamic_cast<MQuadrangle*>(after.elements.back());
         if (nq != nullptr) {
           after.elements.pop_back();
-          *it = nq;
+
+          size_t pos = it - gf->quadrangles.begin();
+          gf->quadrangles[pos] = nq;
         } else {
           it = gf->quadrangles.erase(it);
         }
@@ -454,7 +480,9 @@ bool GFaceMeshDiff::execute(bool verifyPatchTopology) {
         MTriangle* nt = dynamic_cast<MTriangle*>(after.elements.back());
         if (nt != nullptr) {
           after.elements.pop_back();
-          *it = nt;
+
+          size_t pos = it - gf->triangles.begin();
+          gf->triangles[pos] = nt;
         } else {
           it = gf->triangles.erase(it);
         }
@@ -474,7 +502,8 @@ bool GFaceMeshDiff::execute(bool verifyPatchTopology) {
     gf->addElement(ne->getType(), ne);
   }
 
-  done = true;
+  this->done = true;
+
   return true;
 }
 
@@ -1350,6 +1379,36 @@ void writeStatistics(const unordered_map<std::string,double>& stats, const std::
   out.close();
 }
 
+void computeSICNquality(const std::vector<MElement*>& elements, double& sicnMin, double& sicnAvg) {
+  sicnMin = DBL_MAX;
+  sicnAvg = 0.;
+  for (size_t i = 0; i < elements.size(); ++i)  {
+    double q = elements[i]->minSICNShapeMeasure();
+    if (std::isnan(q)) {
+      q = -1.;
+    }
+    sicnMin = std::min(sicnMin, q);
+    sicnAvg += q;
+  }
+  if (elements.size() > 0) sicnAvg /= double(elements.size());
+
+}
+
+void computeSICNquality(GFace* gf, double& sicnMin, double& sicnAvg) {
+  std::vector<MElement*> elts = CppUtils::dynamic_cast_vector<MTriangle*,MElement*>(gf->triangles);
+  CppUtils::append(elts, CppUtils::dynamic_cast_vector<MQuadrangle*,MElement*>(gf->quadrangles));
+  return computeSICNquality(elts, sicnMin, sicnAvg);
+}
+
+void computeSICNquality(GRegion* gr, double& sicnMin, double& sicnAvg) {
+  std::vector<MElement*> elts = CppUtils::dynamic_cast_vector<MTetrahedron*,MElement*>(gr->tetrahedra);
+  CppUtils::append(elts, CppUtils::dynamic_cast_vector<MHexahedron*,MElement*>(gr->hexahedra));
+  CppUtils::append(elts, CppUtils::dynamic_cast_vector<MPrism*,MElement*>(gr->prisms));
+  CppUtils::append(elts, CppUtils::dynamic_cast_vector<MPyramid*,MElement*>(gr->pyramids));
+  return computeSICNquality(elts, sicnMin, sicnAvg);
+}
+
+
 void errorAndAbortIfNegativeElement(GFace* gf, const std::vector<MElement*>& elts, const std::string& msg) {
   Msg::Debug("errorAndAbortIfNegativeElement ... (! SLOW !)");
   double vmin = DBL_MAX;
@@ -1430,6 +1489,44 @@ void errorAndAbortIfInvalidVertexInElements(const std::vector<MElement*>& elts, 
   }
 }
 
+void errorAndAbortIfNonManifoldElements(const std::vector<MElement*>& elts, bool checkVal1OnBdr, const std::string& msg) {
+  std::unordered_map<std::array<size_t,2>, size_t, as2Hash> edgeVal;
+  for (MElement* f: elts) {
+    size_t n = f->getNumVertices();
+    for (size_t lv = 0; lv < n; ++lv) {
+      MVertex* v = f->getVertex(lv);
+      MVertex* v2 = f->getVertex((lv+1)%n);
+      if (v->getNum() < v2->getNum()) {
+        std::array<size_t,2> vpair = {v->getNum(),v2->getNum()};
+        edgeVal[vpair] += 1;
+      } else {
+        std::array<size_t,2> vpair =  {v2->getNum(),v->getNum()};
+        edgeVal[vpair] += 1;
+      }
+    }
+  }
+
+  if (checkVal1OnBdr) {
+    GModel::current()->rebuildMeshVertexCache();
+  }
+
+  for (auto& kv: edgeVal) {
+    if (kv.second > 2) {
+      Msg::Error("non-manifold surface mesh | edge (%i,%i) has valence =  %i", kv.first[0],kv.first[1], kv.second);
+      abort();
+    } else if (kv.second == 1 && checkVal1OnBdr) {
+      MVertex* v1 = GModel::current()->getMeshVertexByTag(kv.first[0]);
+      MVertex* v2 = GModel::current()->getMeshVertexByTag(kv.first[1]);
+      if (v1->onWhat()->dim() >= 2 || v2->onWhat()->dim() >= 2) {
+        Msg::Error("surface mesh | edge (%i,%i) has valence =  %i but vertices not on bdr: v1dim = %i, v2dim=%i", 
+            kv.first[0],kv.first[1], kv.second,v1->onWhat()->dim(),v2->onWhat()->dim());
+        abort();
+      }
+    }
+    
+  }
+}
+
 void errorAndAbortIfInvalidVertexInModel(GModel* gm, const std::string& msg) {
   Msg::Debug("errorAndAbortIfInvalidVertexInModel ... (! SLOW !)");
   for (GVertex* gv: gm->getVertices()) {
@@ -1446,33 +1543,12 @@ void errorAndAbortIfInvalidVertexInModel(GModel* gm, const std::string& msg) {
   }
 }
 
-void computeSICNquality(const std::vector<MElement*>& elements, double& sicnMin, double& sicnAvg) {
-  sicnMin = DBL_MAX;
-  sicnAvg = 0.;
-  for (size_t i = 0; i < elements.size(); ++i)  {
-    double q = elements[i]->minSICNShapeMeasure();
-    if (std::isnan(q)) {
-      q = -1.;
-    }
-    sicnMin = std::min(sicnMin, q);
-    sicnAvg += q;
-  }
-  if (elements.size() > 0) sicnAvg /= double(elements.size());
-
-}
-
-void computeSICNquality(GFace* gf, double& sicnMin, double& sicnAvg) {
-  std::vector<MElement*> elts = CppUtils::dynamic_cast_vector<MTriangle*,MElement*>(gf->triangles);
-  CppUtils::append(elts, CppUtils::dynamic_cast_vector<MQuadrangle*,MElement*>(gf->quadrangles));
-  return computeSICNquality(elts, sicnMin, sicnAvg);
-}
-
-void computeSICNquality(GRegion* gr, double& sicnMin, double& sicnAvg) {
-  std::vector<MElement*> elts = CppUtils::dynamic_cast_vector<MTetrahedron*,MElement*>(gr->tetrahedra);
-  CppUtils::append(elts, CppUtils::dynamic_cast_vector<MHexahedron*,MElement*>(gr->hexahedra));
-  CppUtils::append(elts, CppUtils::dynamic_cast_vector<MPrism*,MElement*>(gr->prisms));
-  CppUtils::append(elts, CppUtils::dynamic_cast_vector<MPyramid*,MElement*>(gr->pyramids));
-  return computeSICNquality(elts, sicnMin, sicnAvg);
+void errorAndAbortIfInvalidSurfaceMesh(GFace* gf, const std::string& msg) {
+  vector<MElement*> elts;
+  append(elts,dynamic_cast_vector<MTriangle*,MElement*>(gf->triangles));
+  append(elts,dynamic_cast_vector<MQuadrangle*,MElement*>(gf->quadrangles));
+  errorAndAbortIfInvalidVertexInElements(elts,msg);
+  errorAndAbortIfNonManifoldElements(elts,true,msg);
 }
 
 std::string randomIdentifier() {

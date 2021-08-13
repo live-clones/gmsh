@@ -1221,6 +1221,8 @@ void GetOptions(bool readConfigFiles, bool exitOnError)
             opt_mesh_algo3d(0, GMSH_SET, ALGO_3D_RTREE);
           else if(argv[i] == "hxt")
             opt_mesh_algo3d(0, GMSH_SET, ALGO_3D_HXT);
+          else if(argv[i] == "hexbl")
+            opt_mesh_algo3d(0, GMSH_SET, ALGO_3D_HEXBL);
           else if(argv[i] == "initial3d")
             opt_mesh_algo3d(0, GMSH_SET, ALGO_3D_INITIAL_ONLY);
           else {

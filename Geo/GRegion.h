@@ -153,6 +153,10 @@ public:
 
   virtual double getMeshSize() const { return meshAttributes.meshSize; }
 
+  struct {
+    mutable GEntity::MeshGenerationStatus status;
+  } meshStatistics;
+
   // a array for accessing the transfinite vertices using a triplet of
   // indices
   std::vector<std::vector<std::vector<MVertex *> > > transfinite_vertices;

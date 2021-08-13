@@ -73,6 +73,7 @@ struct GeomOptimOptions {
   double qualityRangeMin = 0.5;
   double qualityRangeMax = 0.8;
   bool withBackup = true; /* save the geometry before, restore if quality decreased */
+  bool project = true; /* project with SurfaceProjector/CAD */
   bool force3DwithProjection = false;
   SmoothingKernel kernelRegular = SmoothingKernel::WinslowFDM;
   SmoothingKernel kernelIrregular = SmoothingKernel::Laplacian;
@@ -124,10 +125,11 @@ bool patchProjectOnSurface(GFaceMeshPatch& patch, SurfaceProjector* sp = nullptr
  * @param gf The face containing the quad mesh to smooth
  * @param sp Surface projector (faster than CAD projection)
  * @param timeMax Time budget for the smoothing
+ * @param withBackup Rollback if quality decreased
  *
  * @return true if success
  */
-bool optimizeGeometryQuadMesh(GFace* gf, SurfaceProjector* sp = nullptr, double timeMax = DBL_MAX);
+bool optimizeGeometryQuadMesh(GFace* gf, SurfaceProjector* sp = nullptr, double timeMax = DBL_MAX, bool withBackup = true);
 
 /**
  * @brief High-level function which try to make good parameter choices
@@ -140,3 +142,50 @@ bool optimizeGeometryQuadMesh(GFace* gf, SurfaceProjector* sp = nullptr, double 
  * @return true if success
  */
 bool optimizeGeometryQuadTriMesh(GFace* gf, SurfaceProjector* sp = nullptr, double timeMax = DBL_MAX);
+
+
+class GeometryOptimizer {
+  public:
+    enum PlanarMethod {
+      MeanPlane,
+      ParamCAD
+    };
+
+    GeometryOptimizer() {};
+    bool initialize(GFaceMeshPatch& patch, SurfaceProjector* sp = nullptr);
+
+    bool smoothWithKernel(
+        SmoothingKernel kernelRegular, 
+        SmoothingKernel kernelIrregular, 
+        double timeMax = DBL_MAX,
+        int iterMax = 1000,
+        double withBackup = false,
+        bool localLocking = false, /* Lock if small displacement, unlocked neighbors else */
+        double dxLocalMax = 1.e-5, /* lock a vertex if dx < dxLocalMax * local_size */
+        double dxGlobalMax = 1.e-5, /* stop if sum(dx) < dxGlobalMax * sum(dx_0) */
+        bool project = true, /* project with SurfaceProjector */
+        bool finalCADprojection = true, /* project with real CAD at the end */
+        bool smartVariant = false  /* compute SICN before/after each point displacement, reject quality decrease */
+        );
+
+    bool smoothWithWinslowUntangler(
+        PlanarMethod planar,
+        int iterMax = 1000,
+        double withBackup = false,
+        bool finalCADprojection = true);
+
+  public:
+    GFaceMeshPatch* patchPtr = nullptr;
+    SurfaceProjector* sp = nullptr;
+  protected:
+    std::vector<std::array<double,3> > points;
+    std::vector<std::array<double,2> > uvs;
+    std::vector<std::array<uint32_t,4> > quads;
+    std::vector<size_t> one_ring_first;
+    std::vector<uint32_t> one_ring_values;
+    std::vector<MVertex*> new2old;
+    std::unordered_map<MVertex*,uint32_t> old2new;
+    size_t nFree =0;
+};
+
+bool optimizeGeometryQuadqs(GModel* gm);

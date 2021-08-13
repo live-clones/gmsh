@@ -10,6 +10,7 @@
 #include "discreteFace.h"
 #include "MVertex.h"
 #include "MTriangle.h"
+#include "OS.h"
 
 extern "C" {
 #include "libol1.h"
@@ -552,7 +553,7 @@ GPoint SurfaceProjector::closestPoint(const double query[3], bool evalOnCAD,
 
   /* Octree query */
   double crd[3] = {query[0], query[1], query[2]};
-  double dis;
+  double dis = DBL_MAX;
   int idx = LolGetNearest(OctIdx, LolTypTri, crd, &dis, 0, NULL, NULL, 0);
   if(idx <= 0) {
     Msg::Warning("SurfaceProjector::closestPoint(): no closest triangle found "
@@ -611,4 +612,66 @@ GPoint SurfaceProjector::closestPoint(const double query[3], bool evalOnCAD,
   }
 
   return proj;
+}
+
+libOLwrapper::libOLwrapper(
+        const std::vector<std::array<double,3> >&  _points,
+        const std::vector<std::array<int32_t,2> >& _edges,
+        const std::vector<std::array<int32_t,3> >& _triangles,
+        const std::vector<std::array<int32_t,4> >& _quads,
+        const std::vector<std::array<int32_t,4> >& _tetrahedra,
+        const std::vector<std::array<int32_t,5> >& _pyramids,
+        const std::vector<std::array<int32_t,6> >& _prisms,
+        const std::vector<std::array<int32_t,8> >& _hexahedra):
+ points(_points), edges(_edges), triangles(_triangles), quads(_quads),
+  tetrahedra(_tetrahedra), pyramids(_pyramids), prisms(_prisms),
+  hexahedra(_hexahedra)
+{
+  const int BasIdx = 1; /* indices start at one in libOL */
+  for (size_t i = 0; i < edges.size(); ++i) for (size_t j = 0; j < edges[0].size(); ++j) edges[i][j] += BasIdx;
+  for (size_t i = 0; i < triangles.size(); ++i) for (size_t j = 0; j < triangles[0].size(); ++j) triangles[i][j] += BasIdx;
+  for (size_t i = 0; i < quads.size(); ++i) for (size_t j = 0; j < quads[0].size(); ++j) quads[i][j] += BasIdx;
+  for (size_t i = 0; i < tetrahedra.size(); ++i) for (size_t j = 0; j < tetrahedra[0].size(); ++j) tetrahedra[i][j] += BasIdx;
+  for (size_t i = 0; i < pyramids.size(); ++i) for (size_t j = 0; j < pyramids[0].size(); ++j) pyramids[i][j] += BasIdx;
+  for (size_t i = 0; i < prisms.size(); ++i) for (size_t j = 0; j < prisms[0].size(); ++j) prisms[i][j] += BasIdx;
+  for (size_t i = 0; i < hexahedra.size(); ++i) for (size_t j = 0; j < hexahedra[0].size(); ++j) hexahedra[i][j] += BasIdx;
+
+  // Build an octree
+  double t0 = Cpu();
+  OctIdx = LolNewOctree(
+      (int32_t)points.size(), points[0].data(), points[1].data(), 
+      (int32_t)edges.size(), edges[0].data(), edges[1].data(), 
+      (int32_t)triangles.size(), triangles[0].data(), triangles[1].data(), 
+      (int32_t)quads.size(), quads[0].data(), quads[1].data(), 
+      (int32_t)tetrahedra.size(), tetrahedra[0].data(), tetrahedra[1].data(), 
+      (int32_t)pyramids.size(), pyramids[0].data(), pyramids[1].data(), 
+      (int32_t)prisms.size(), prisms[0].data(), prisms[1].data(), 
+      (int32_t)hexahedra.size(), hexahedra[0].data(), hexahedra[1].data(), 
+      BasIdx, 1);
+
+  Msg::Debug("libOL octree created (%li vertices, %.3f sec), OctIdx: %li", points.size(), Cpu()-t0, OctIdx);
+}
+
+libOLwrapper::~libOLwrapper() {
+  if(OctIdx != 0) {
+    Msg::Debug("libOL octree freed (OctIdx: %li)", OctIdx);
+    LolFreeOctree(OctIdx);
+    OctIdx = 0;
+  }
+}
+
+int libOLwrapper::elementsInsideBoundingBox(libOLTypTag elementType, 
+    double* bboxMin, double* bboxMax,
+    std::vector<int32_t>& elements) {
+
+  const int BufSiz = 1e5;
+  int buf[BufSiz];
+
+  int NmbItm = LolGetBoundingBox(OctIdx, (int)elementType, BufSiz, buf, bboxMin, bboxMax, 0);
+  elements.resize(NmbItm);
+  for (int i = 0; i < NmbItm; ++i) {
+    elements[i] = buf[i]-1;
+  }
+
+  return NmbItm;
 }

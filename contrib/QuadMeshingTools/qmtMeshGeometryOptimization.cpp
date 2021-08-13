@@ -8,13 +8,7 @@
 #include "qmtMeshGeometryOptimization.h"
 
 /* System includes */
-// #include <vector>
-// #include <array>
-// #include <unordered_map>
-// #include <cstdint>
-// #include <cmath>
-// #include <queue>
-// #include <algorithm>
+#include <queue>
 
 /* Gmsh includes */
 #include "GmshMessage.h"
@@ -39,6 +33,12 @@
 #include "arrayGeometry.h"
 #include "geolog.h"
 
+/* WinslowUntangler includes */
+#if defined(HAVE_WINSLOWUNTANGLER)
+#include "winslowUntangler.h"
+#include "meshSurfaceUntangling.h"
+#endif
+
 #if defined(HAVE_EIGEN)
 #include<Eigen/SparseLU>
 #include<Eigen/IterativeLinearSolvers>
@@ -46,6 +46,7 @@
 
 constexpr bool DBG_VIZU_K = false;
 constexpr bool DBG_VIZU_G = false;
+constexpr bool DBG_VIZU_U = false;
 
 using namespace CppUtils;
 using namespace ArrayGeometry;
@@ -317,6 +318,54 @@ namespace QMT {
     return qmin;
   }
 
+  inline double stencilQualitySICNminGmsh(
+      const vec3& center,
+      const std::array<vec3,8>& stencil,
+      double breakIfBelowThreshold = -DBL_MAX) {
+    double qmin = DBL_MAX;
+    constexpr uint32_t N = 4;
+    for (uint32_t i = 0; i < N; ++i) {
+      const vec3& p0 = stencil[2*i+0];
+      const vec3& p1 = stencil[2*i+1];
+      const size_t i2 = (2*i+2)%(2*N);
+      const vec3& p2 = stencil[i2];
+      MVertex a(p0[0],p0[1],p0[2]);
+      MVertex b(p1[0],p1[1],p1[2]);
+      MVertex c(p2[0],p2[1],p2[2]);
+      MVertex d(center[0],center[1],center[2]);
+      MQuadrangle quad(&a,&b,&c,&d);
+      double q = quad.minSICNShapeMeasure();
+      if (std::isnan(q)) q = -1.;
+      qmin = std::min(q,qmin);
+      if (qmin < breakIfBelowThreshold) return qmin;
+    }
+    return qmin;
+  }
+
+  inline double stencilQualitySICNminGmsh(
+      const vec3& center,
+      const std::vector<vec3>& stencil,
+      double breakIfBelowThreshold = -DBL_MAX) {
+    if (stencil.size() % 2 != 0) return -DBL_MAX;
+    double qmin = DBL_MAX;
+    const uint32_t N = stencil.size() / 2;
+    for (uint32_t i = 0; i < N; ++i) {
+      const vec3& p0 = stencil[2*i+0];
+      const vec3& p1 = stencil[2*i+1];
+      const size_t i2 = (2*i+2)%(2*N);
+      const vec3& p2 = stencil[i2];
+      MVertex a(p0[0],p0[1],p0[2]);
+      MVertex b(p1[0],p1[1],p1[2]);
+      MVertex c(p2[0],p2[1],p2[2]);
+      MVertex d(center[0],center[1],center[2]);
+      MQuadrangle quad(&a,&b,&c,&d);
+      double q = quad.minSICNShapeMeasure();
+      qmin = std::min(q,qmin);
+      if (qmin < breakIfBelowThreshold) return qmin;
+    }
+    return qmin;
+  }
+
   struct OneRing {
     vec5* p_uv = NULL;
     uint32_t n = 0;
@@ -328,7 +377,7 @@ namespace QMT {
   bool buildCondensedStructure(
       const std::vector<MVertex*>& freeVertices,
       const std::vector<MElement*>& elements,
-      unordered_map<MVertex*,size_t>& old2new,
+      std::unordered_map<MVertex*,size_t>& old2new,
       std::vector<vector<size_t> >& v2v) {
     /* Build the old2new mapping */
     size_t vcount = 0;
@@ -381,7 +430,7 @@ namespace QMT {
   bool buildCondensedStructure(
       const std::vector<MElement*>& elements,
       const std::vector<MVertex*>& freeVertices,
-      unordered_map<MVertex*,uint32_t>& old2new,
+      std::unordered_map<MVertex*,uint32_t>& old2new,
       std::vector<MVertex*>& new2old,
       std::vector<std::array<uint32_t,4> >& quads,
       std::vector<std::vector<uint32_t> >& v2q,
@@ -515,7 +564,7 @@ namespace QMT {
       std::vector<uint32_t>& one_ring_values,
       std::vector<MVertex*>& new2old) {
 
-    unordered_map<MVertex*,uint32_t> old2new;
+    std::unordered_map<MVertex*,uint32_t> old2new;
     std::vector<std::array<uint32_t,4> > quads;
     std::vector<std::vector<uint32_t> > v2q;
     std::vector<std::vector<uint32_t> > oneRings;
@@ -605,6 +654,58 @@ namespace QMT {
     if (Ts[1] > 0 && gapMax[1] > 0.5 * Ts[1]) {
       Msg::Debug("getContinuousUVOnLoop: reject because gap on boundary: %f (period %f)", gapMax[1], Ts[1]);
       return false;
+    }
+
+    return true;
+  }
+
+  bool getPlanarParametrization(
+      const GFaceMeshPatch& patch,
+      std::unordered_map<MVertex*,SPoint2>& vertexParam) {
+    if (patch.intVertices.size() == 0) return false;
+    GFace* gf = patch.gf;
+    if (!gf->haveParametrization()) return false;
+    vertexParam.clear();
+
+    /* If periodic parametrization, get periods */
+    double Ts[2] = {0.,0.};
+    if (gf->periodic(0)) Ts[0] = gf->period(0);
+    if (gf->periodic(1)) Ts[1] = gf->period(1);
+
+    std::unordered_map<MVertex*,std::vector<MVertex*> > v2v;
+    buildVertexToVertexMap(patch.elements,v2v);
+    MVertex* v0 = patch.intVertices[0];
+
+    std::queue<MVertex*> Q;
+    Q.push(v0);
+    SPoint2 uv0(0.,0.);
+    v0->getParameter(0,uv0.data()[0]);
+    v0->getParameter(1,uv0.data()[1]);
+    vertexParam[v0] = uv0;
+    while (Q.size() > 0) {
+      MVertex* v = Q.front();
+      Q.pop();
+      SPoint2 uv = vertexParam[v];
+      for (MVertex* v2: v2v[v]) {
+        auto it = vertexParam.find(v2);
+        if (it != vertexParam.end()) {
+          if (Ts[0] != 0. || Ts[1] != 0.) {
+          /* Check jump */
+            SPoint2 uv2 = it->second;
+            if (Ts[0] != 0. && std::abs(uv.x() - uv2.x()) > 0.5 * Ts[0]) return false;
+            if (Ts[1] != 0. && std::abs(uv.y() - uv2.y()) > 0.5 * Ts[1]) return false;
+          }
+          continue;
+        }
+        SPoint2 uv2(0.,0.);
+        bool okr = reparamMeshVertexOnFaceWithRef(patch.gf, v2, uv, uv2);
+        if (!okr) {
+          Msg::Debug("getPlanarParametrization | failed to reparam v2");
+          return false;
+        }
+        vertexParam[v2] = uv2;
+        Q.push(v2);
+      }
     }
 
     return true;
@@ -937,7 +1038,7 @@ int patchOptimizeGeometryGlobal(
 
   double t1 = Cpu();
 
-  unordered_map<MVertex*,size_t> old2new;
+  std::unordered_map<MVertex*,size_t> old2new;
   std::vector<vector<size_t> > v2v;
   bool oks = buildCondensedStructure(patch.intVertices, patch.elements, old2new, v2v);
   if (!oks) {
@@ -1044,8 +1145,8 @@ bool kernelLoopWithParametrization(
   bool okb = buildUVSmoothingDataStructures(gf, patch.elements, patch.intVertices, point_uv,
       one_ring_first, one_ring_values, new2old);
   if (!okb) {
-    Msg::Error("optimize geometry kernel: failed to build adjacency datastructures");
-    return -1;
+    Msg::Warning("optimize geometry kernel: failed to build adjacency datastructures");
+    return false;
   }
   OneRing ring;
   std::vector<vec5> ringGeometric(10);
@@ -1157,7 +1258,8 @@ bool movePointWithKernelAndProjection(
     bool project,
     SurfaceProjector* sp,
     vec3& newPos,
-    vec2& newUv)
+    vec2& newUv,
+    bool smartVariant = false)
 {
   if (project && sp == nullptr) {
     Msg::Error("cannot project with surface projector");
@@ -1165,11 +1267,19 @@ bool movePointWithKernelAndProjection(
   }
 
   size_t n = one_ring_first[v+1] - one_ring_first[v];
+
+
   GPoint proj;
   double stDx = 0.;
+  double sicnMinB = 0.; /* only used if smartVariant */
+  double sicnMinA = 0.; /* only used if smartVariant */
   if (n == 8 && kernelRegular == SmoothingKernel::WinslowFDM) { /* Winslow for regular vertex */
     /* Extract geometric stencil */
     std::array<vec3,8> stencil = fillStencilRegular(v, points, one_ring_first, one_ring_values);
+    if (smartVariant) {
+      sicnMinB = stencilQualitySICNmin(points[v],stencil);
+      if (sicnMinB < 0.3) sicnMinB = stencilQualitySICNminGmsh(points[v],stencil);
+    }
 
     /* Smoothing (in 3D, not on surface) */
     bool ok = kernelWinslow(stencil, newPos);
@@ -1183,6 +1293,11 @@ bool movePointWithKernelAndProjection(
       }
       newPos = {proj.x(),proj.y(),proj.z()};
       newUv = {proj.u(),proj.v()};
+    }
+
+    if (smartVariant) {
+      sicnMinA = stencilQualitySICNmin(newPos,stencil);
+      if (sicnMinA < 0.3) sicnMinA = stencilQualitySICNminGmsh(newPos,stencil);
     }
   } else { /* irregular vertex */
     std::vector<vec3> stencilIrreg(8);
@@ -1199,6 +1314,15 @@ bool movePointWithKernelAndProjection(
     /* Extract geometric stencil */
     bool oneOverTwo = angleBased; /* angle-based does not use diagonals */
     fillStencilIrregular(v, points, one_ring_first, one_ring_values, stencilIrreg, oneOverTwo);
+
+    if (smartVariant) {
+      std::vector<vec3> stencilIrregFull = stencilIrreg;
+      if (oneOverTwo) {
+        fillStencilIrregular(v, points, one_ring_first, one_ring_values, stencilIrregFull, false);
+      }
+      sicnMinB = stencilQualitySICNmin(points[v],stencilIrregFull);
+      if (sicnMinB < 0.3) sicnMinB = stencilQualitySICNminGmsh(points[v],stencilIrregFull);
+    }
 
     /* Smoothing (in 3D, not on surface) */
     bool ok = false;
@@ -1218,14 +1342,25 @@ bool movePointWithKernelAndProjection(
       newPos = {proj.x(),proj.y(),proj.z()};
       newUv = {proj.u(),proj.v()};
     }
+
+    if (smartVariant) {
+      std::vector<vec3> stencilIrregFull = stencilIrreg;
+      if (oneOverTwo) {
+        fillStencilIrregular(v, points, one_ring_first, one_ring_values, stencilIrregFull, false);
+      }
+      sicnMinA = stencilQualitySICNmin(newPos,stencilIrregFull);
+      if (sicnMinA < 0.3) sicnMinA = stencilQualitySICNminGmsh(newPos,stencilIrregFull);
+    }
   }
+  if (smartVariant && sicnMinA < sicnMinB) return false;
   return true;
 }
 
 bool kernelLoopWithProjection(
     GFaceMeshPatch& patch,
     const GeomOptimOptions& opt,
-    GeomOptimStats& stats) {
+    GeomOptimStats& stats,
+    bool finalCADprojection = false) {
   GFace* gf = patch.gf;
   if (opt.sp == nullptr) {
     Msg::Error("kernel loop with projection: no surface projector");
@@ -1236,7 +1371,7 @@ bool kernelLoopWithProjection(
   std::vector<size_t> one_ring_first;
   std::vector<uint32_t> one_ring_values;
   std::vector<MVertex*> new2old;
-  unordered_map<MVertex*,uint32_t> old2new;
+  std::unordered_map<MVertex*,uint32_t> old2new;
   std::vector<std::array<double,3> > points;
   {
     std::vector<std::array<uint32_t,4> > quads;
@@ -1273,8 +1408,8 @@ bool kernelLoopWithProjection(
     localAvgSize[v] /= double(n);
   }
 
-  bool project = true;
-  if (gf->geomType() == GFace::GeomType::Plane) project = false;
+  bool project = opt.project;
+  if (opt.project && gf->geomType() == GFace::GeomType::Plane) project = false;
 
   /* Initialization: all vertices unlocked */
   std::vector<bool> locked(patch.intVertices.size(),false);
@@ -1343,12 +1478,14 @@ bool kernelLoopWithProjection(
       v->setParameter(0,point_uvs[i][0]);
       v->setParameter(1,point_uvs[i][1]);
 
-      SPoint3 query = v->point();
-      GPoint proj = gf->closestPoint(query, point_uvs[i].data());
-      if (proj.succeeded()) {
-        v->setXYZ(proj.x(),proj.y(),proj.z());
-        v->setParameter(0,proj.u());
-        v->setParameter(1,proj.v());
+      if (finalCADprojection) {
+        SPoint3 query = v->point();
+        GPoint proj = gf->closestPoint(query, point_uvs[i].data());
+        if (proj.succeeded()) {
+          v->setXYZ(proj.x(),proj.y(),proj.z());
+          v->setParameter(0,proj.u());
+          v->setParameter(1,proj.v());
+        }
       }
     }
   }
@@ -1356,6 +1493,75 @@ bool kernelLoopWithProjection(
   return true;
 }
 
+vec3 quad_opposite_right_angled_corner(vec3 pPrev, vec3 pCorner, vec3 pNext) {
+  double radius = 0.5 * length(pPrev-pNext);
+  vec3 center = 0.5 * (pPrev+pNext);
+  if (length(center-pCorner) < 1.e-10) {
+    return center;
+  }
+  vec3 dir = center-pCorner;
+  normalize(dir);
+  return center + radius * dir;
+}
+
+bool quadMeshSpecialAcuteCornerOptimization(GFace* gf, SurfaceProjector* sp = nullptr) {
+  std::unordered_map<MVertex*,int> bdrVal;
+  std::unordered_map<MVertex*,double> bdrAgl;
+  std::unordered_map<MVertex*,std::vector<MQuadrangle*> > corner2quads;
+  for (MQuadrangle* q: gf->quadrangles) {
+    for (size_t lv = 0; lv < 4; ++lv) {
+      MVertex* v = q->getVertex(lv);
+      if (v->onWhat() != nullptr && v->onWhat()->dim() < 2) {
+        bdrVal[v] += 1;
+        MVertex* vp = q->getVertex((lv-1+4)%4);
+        MVertex* vn = q->getVertex((lv+1)%4);
+        double agl = std::abs(angle3Vertices(vp,v,vn));
+        bdrAgl[v] += agl;
+        if (v->onWhat()->dim() == 0) {
+          corner2quads[v].push_back(q);
+        }
+      }
+    }
+  }
+
+  size_t nMoved = 0;
+  for (auto& kv: corner2quads) if (kv.second.size() == 1) {
+    MVertex* v = kv.first;
+    MQuadrangle* q = kv.second[0];
+    double agl = bdrAgl[v];
+    if (agl * 180. / M_PI > 30) continue; // not acute corner
+    for (size_t lv = 0; lv < 4; ++lv) {
+      MVertex* vc = q->getVertex(lv);
+      if (vc != v) continue;
+      MVertex* vp = q->getVertex((lv-1+4)%4);
+      MVertex* vn = q->getVertex((lv+1)%4);
+      MVertex* vo = q->getVertex((lv+2)%4);
+      if (vo->onWhat() != nullptr && vo->onWhat()->dim() != 2) continue;
+      double sige_before = q->minSIGEShapeMeasure();
+      SPoint3 backup = vc->point();
+      vec3 pp = vp->point();
+      vec3 pc = vc->point();
+      vec3 pn = vn->point();
+      vec3 po = quad_opposite_right_angled_corner(pp,pc,pn);
+      vo->setXYZ(po[0],po[1],po[2]);
+      if (sp) {
+        GPoint proj = sp->closestPoint(po.data(),false,false);
+        if (proj.succeeded()) {
+          vo->setXYZ(proj.x(),proj.y(),proj.z());
+        }
+      }
+      double sige_after = q->minSIGEShapeMeasure();
+      if (sige_after < sige_before) {
+        vo->setXYZ(backup.x(),backup.y(),backup.z());
+      } else {
+        nMoved += 1;
+      }
+    }
+  }
+  Msg::Debug("- acute corners, set right-angle position of %li interior vertices", nMoved);
+
+  return true;
+}
 
 size_t nbVerticesOnBoundary(const GFaceMeshPatch& patch) {
   size_t n = 0;
@@ -1507,7 +1713,7 @@ bool patchProjectOnSurface(GFaceMeshPatch& patch, SurfaceProjector* sp) {
   return true;
 }
 
-bool optimizeGeometryQuadMesh(GFace* gf, SurfaceProjector* sp, double timeMax)
+bool optimizeGeometryQuadMesh(GFace* gf, SurfaceProjector* sp, double timeMax, bool withBackup)
 {
   // TODO FIXME: replace by optimizeGeometryQuadTriMesh when it works well
 
@@ -1536,37 +1742,50 @@ bool optimizeGeometryQuadMesh(GFace* gf, SurfaceProjector* sp, double timeMax)
   }
   const int rdi = (int)(((double)rand()/RAND_MAX)*1e4); /* only to get a random name for debugging */
 
-  int countMax = 3;
-  bool running = true;
-  size_t niter = 50;
-  int count = 0;
-  if (gf->geomType() == GEntity::Plane) {
-    /* Much faster projection, we can smooth */
-    niter = 100;
-  }
+  /* Idea is to try many things (with backups each time):
+   * - if planar: Winslow untangler
+   * - else:
+   *   - if CAD: try Winslow untangler in uv
+   *   - try Winslow untangler on mean plane
+   * - kernel smoother with proj
+   */
 
-  double t0 = Cpu();
-
-  while (running && count < countMax) {
-    running = false;
-    count += 1;
-    if (Cpu() - t0 > timeMax) {
-      Msg::Debug("optimize geometry: face %i, reached time limit", gf->tag());
-      break;
+  bool backupRestore = true;
+  GeometryOptimizer optu;
+  optu.initialize(patch, sp);
+  bool oku = false;
+  if (gf->geomType() == GEntity::Plane || !gf->haveParametrization()) {
+    /* Winslow untangler on mean plane */
+    size_t iter = 10;
+    bool projectOnCad = true;
+    GeometryOptimizer::PlanarMethod method = GeometryOptimizer::PlanarMethod::MeanPlane;
+    oku = optu.smoothWithWinslowUntangler(method, iter, backupRestore, projectOnCad);
+  } else if (gf->haveParametrization()) {
+    /* Winslow untangler on uv param */
+    size_t iter = 10;
+    bool projectOnCad = true;
+    GeometryOptimizer::PlanarMethod method = GeometryOptimizer::PlanarMethod::ParamCAD;
+    // TODOMX: untangler in UV disabled for the moment
+    //         should enable it only if param has no large distortion ?
+    // oku = optu.smoothWithWinslowUntangler(method, iter, backupRestore, projectOnCad);
+    if (!oku) { /* try mean plane ... */
+      method = GeometryOptimizer::PlanarMethod::MeanPlane;
+      oku = optu.smoothWithWinslowUntangler(method, iter, backupRestore, projectOnCad);
     }
+  } 
 
-    PatchGeometryBackup backup(patch);
-
-    double minSICNb = DBL_MAX;
-    double avgSICNb = 0.;
-    computeSICN(patch.elements, minSICNb, avgSICNb);
-
-    if (debugCreateViews) {
-      std::string method = "GFace_K";
-      GeoLog::add(patch.elements, "optim_"+method+"_IN_"+std::to_string(rdi) + "_" + std::to_string(minSICNb));
+  double minSICN = DBL_MAX;
+  double avgSICN = 0.;
+  computeSICN(patch.elements, minSICN, avgSICN);
+  if (!oku || minSICN < 0.5) {
+    int countMax = 3;
+    bool running = true;
+    size_t niter = 50;
+    int count = 0;
+    if (gf->geomType() == GEntity::Plane) {
+      /* Much faster projection, we can smooth */
+      niter = 100;
     }
-
-    GeomOptimStats stats;
     GeomOptimOptions opt;
     opt.sp = sp;
     opt.outerLoopIterMax = niter;
@@ -1576,41 +1795,92 @@ bool optimizeGeometryQuadMesh(GFace* gf, SurfaceProjector* sp, double timeMax)
     opt.dxLocalMax = 1.e-5;
     opt.force3DwithProjection = true;
     opt.withBackup = false;
-    double t1 = Cpu();
-    bool okk = kernelLoopWithProjection(patch, opt, stats);
-    if (!okk) {
-      return false;
-    }
-    double etime = Cpu() - t1;
+    SmoothingKernel kernelRegular = SmoothingKernel::WinslowFDM;
 
-    double minSICNa = DBL_MAX;
-    double avgSICNa = 0.;
-    computeSICN(patch.elements, minSICNa, avgSICNa);
-
-    bool keep = true;
-    if (minSICNa < minSICNb && avgSICNa < avgSICNb) keep = false;
-    if (minSICNa < 0.1 && minSICNa < minSICNb) keep = false;
-    if (minSICNa < 0.75 * minSICNb) keep = false;
-
-    if (debugCreateViews) {
-      std::string method = "GFace_K";
-      GeoLog::add(patch.elements, "optim_"+method+"_OUT_"+std::to_string(rdi) + "_" + std::to_string(minSICNa) + "_keep=" + std::to_string(keep));
+    if (false && gf->tag() == 100170) {
+      Msg::Warning("SPECIAL SMOOTHING FOR DEBUGGING");
+      niter = 100;
+      countMax = 5;
+      opt.dxGlobalMax = 1.e-5;
+      opt.dxLocalMax = 1.e-7;
+      kernelRegular = SmoothingKernel::Laplacian;
     }
 
-    if (keep) {
-      Msg::Debug("- Face %i: kernel smoothing (Mix Winslow/Angle, explicit with projections, %li vertices, %li iter max, %.3f sec), SICN min: %f -> %f, avg: %f -> %f",
-          gf->tag(),gf->mesh_vertices.size(), niter,etime,minSICNb,minSICNa,avgSICNb,avgSICNa);
-      if (minSICNa >= minSICNb && 0.99*avgSICNa > avgSICNb && etime < 1) {
+
+    double t0 = Cpu();
+
+    bool smartVariant = false;
+    while (running && count < countMax) {
+      running = false;
+      count += 1;
+      if (Cpu() - t0 > timeMax) {
+        Msg::Debug("optimize geometry: face %i, reached time limit", gf->tag());
+        break;
+      }
+
+      PatchGeometryBackup backup(patch);
+      double minSICNb = DBL_MAX;
+      double avgSICNb = 0.;
+      computeSICN(patch.elements, minSICNb, avgSICNb);
+
+      bool finalCADprojection = false;
+      double t1 = Cpu();
+      optu.smoothWithKernel(kernelRegular, SmoothingKernel::Laplacian, timeMax, niter,
+          false, true, 1.e-5, 1.e-3, true, finalCADprojection, smartVariant);
+
+      double etime = Cpu() - t1;
+      double minSICNa = DBL_MAX;
+      double avgSICNa = 0.;
+      computeSICN(patch.elements, minSICNa, avgSICNa);
+
+      bool keep = true;
+      if (minSICNa < minSICNb && avgSICNa < avgSICNb) keep = false;
+      if (minSICNa < 0.1 && minSICNa < minSICNb) keep = false;
+      if (minSICNa < 0.75 * minSICNb) keep = false;
+
+      if (false && gf->tag() == 100170) {
+        Msg::Warning("SPECIAL SMOOTHING FOR DEBUGGING");
+        keep = true;
         niter *= 1.5;
         running = true;
       }
-    } else {
-      Msg::Debug("- Face %i: worst quality after global smoothing (Mix Winslow/Angle, explicit, %li iter max), roll back (SICN min: %f -> %f, avg: %f -> %f)",
-          gf->tag(),niter,minSICNb,minSICNa,avgSICNb,avgSICNa);
-      backup.restore();
-      break;
+
+      if (keep) {
+        Msg::Debug("- Face %i: kernel smoothing (Mix Winslow/Angle, explicit with projections, %li vertices, %li iter max, %.3f sec), SICN min: %f -> %f, avg: %f -> %f",
+            gf->tag(),gf->mesh_vertices.size(), niter,etime,minSICNb,minSICNa,avgSICNb,avgSICNa);
+        if (minSICNa >= minSICNb && 0.99*avgSICNa > avgSICNb && etime < 1) {
+          niter *= 1.5;
+          running = true;
+        }
+      } else {
+        if (smartVariant) {
+          /* Already using smart variant, time to stop .. */
+          Msg::Debug("- Face %i: worst quality after global smoothing (Mix Winslow/Angle, explicit, %li iter max), roll back (SICN min: %f -> %f, avg: %f -> %f)",
+              gf->tag(),niter,minSICNb,minSICNa,avgSICNb,avgSICNa);
+          if (withBackup) {
+            backup.restore();
+          }
+          break;
+        } else {
+          Msg::Debug("- Face %i: worst quality after global smoothing (Mix Winslow/Angle, explicit, %li iter max), roll back, try smart (SICN min: %f -> %f, avg: %f -> %f)",
+              gf->tag(),niter,minSICNb,minSICNa,avgSICNb,avgSICNa);
+          if (withBackup) {
+            backup.restore();
+          }
+          /* Try to smooth with smart variant ... */
+          running = true;
+          smartVariant = true;
+          count -= 1;
+        }
+      }
     }
   }
+
+  double minSICNf = DBL_MAX;
+  double avgSICNf = 0.;
+  computeSICN(patch.elements, minSICNf, avgSICNf);
+  Msg::Info("- Face %i: SICN min: %f -> %f, avg: %f -> %f",
+      gf->tag(),minSICN,minSICNf,avgSICN,avgSICNf);
 
   return true;
 }
@@ -1723,4 +1993,428 @@ bool optimizeGeometryQuadTriMesh(GFace* gf, SurfaceProjector* sp, double timeMax
 
   return true;
 
+}
+
+bool GeometryOptimizer::initialize(GFaceMeshPatch& patch, SurfaceProjector* _sp) {
+  std::vector<std::vector<uint32_t> > v2q;
+  std::vector<std::vector<uint32_t> > oneRings;
+  patchPtr = &patch;
+  sp = _sp;
+  bool okc = buildCondensedStructure(patch.elements,patch.intVertices,
+      old2new, new2old, quads, v2q,oneRings,points);
+  if (!okc) {
+    Msg::Warning("GeometryOptimizer initialize: failed to build condensed representation");
+    return false;
+  }
+  compress(oneRings, one_ring_first, one_ring_values);
+  nFree = patch.intVertices.size();
+  if (patch.gf->haveParametrization()) {
+    uvs.resize(points.size());
+    for (size_t v = 0; v < nFree; ++v) {
+      new2old[v]->getParameter(0,uvs[v][0]);
+      new2old[v]->getParameter(1,uvs[v][1]);
+    }
+  }
+  return true;
+}
+
+bool GeometryOptimizer::smoothWithKernel(
+    SmoothingKernel kernelRegular, 
+    SmoothingKernel kernelIrregular, 
+    double timeMax,
+    int iterMax,
+    double withBackup,
+    bool localLocking, /* Lock if small displacement, unlocked neighbors else */
+    double dxLocalMax, /* lock a vertex if dx < dxLocalMax * local_size */
+    double dxGlobalMax, /* stop if sum(dx) < dxGlobalMax * sum(dx_0) */
+    bool project, /* project with SurfaceProjector */
+    bool finalCADprojection,
+    bool smartVariant) {
+
+  /* Geometry backup */
+  PatchGeometryBackup* backup = nullptr;
+  double sicnMinBefore = -1.; /* if no element */
+  double sicnAvgBefore = -1.;
+  if (withBackup) {
+    computeSICN(patchPtr->elements, sicnMinBefore, sicnAvgBefore);
+    backup = new PatchGeometryBackup(*patchPtr);
+  }
+
+
+  /* Local sizes */
+  vector<double> localAvgSize(nFree,0.);
+  for (size_t v = 0; v < nFree; ++v) {
+    size_t n = one_ring_first[v+1] - one_ring_first[v];
+    if (n == 0) continue;
+    for (size_t lv = 0; lv < n; ++lv) {
+      uint32_t v2 = one_ring_values[one_ring_first[v]+lv];
+      localAvgSize[v] += length(points[v]-points[v2]);
+    }
+    localAvgSize[v] /= double(n);
+  }
+
+  /* Initialization: all free vertices unlocked */
+  std::vector<bool> locked(nFree,false);
+
+  /* Explicit smoothing loop */
+  double t0 = Cpu();
+  double sum_dx0 = 0;
+  std::vector<vec3> stencilIrreg(10);
+  for (size_t iter = 0; iter < iterMax; ++iter) {
+    size_t nMoved = 0;
+
+    double sum_dx = 0.;
+    /* Loop over interior vertices */
+    for (size_t v = 0; v < nFree; ++v) {
+      if (locked[v]) continue;
+
+      vec3 newPos = points[v];
+      vec2 newUv;
+      if (uvs.size()) { newUv = uvs[v]; }
+
+      bool ok = movePointWithKernelAndProjection(v, points, one_ring_first, one_ring_values,
+          kernelRegular, kernelIrregular, project, sp, newPos, newUv, smartVariant);
+      if (ok) {
+        double dx = length(newPos - points[v]);
+        sum_dx += dx;
+        /* Modify the coordinates */
+        points[v] = newPos;
+        if (uvs.size()) uvs[v] = newUv;
+        if (localLocking && dx < dxLocalMax*localAvgSize[v]) {
+          locked[v] = true;
+        } else {
+          nMoved += 1;
+        }
+      } else {
+        locked[v] = true;
+      }
+    }
+
+    if (iter == 0) {
+      sum_dx0 = sum_dx;
+    } else {
+      if (sum_dx < dxGlobalMax * sum_dx0) {
+        Msg::Debug("smoothWithKernel: stop at iter %li/%li because sum_dx = %f < %f", 
+            iter, iterMax, sum_dx, dxGlobalMax*sum_dx0);
+        break;
+      }
+      if (nMoved == 0) {
+        Msg::Debug("smoothWithKernel: stop at iter %li/%li because no point moved", 
+            iter, iterMax);
+        break;
+      }
+    }
+
+    if (Cpu() - t0 > timeMax) {
+      Msg::Debug("smoothWithKernel: stop at iter %li/%li because timeout (%f sec)", 
+          iter, iterMax, Cpu()-t0);
+      break;
+    }
+  }
+
+  /* Update the positions */
+  for (size_t i = 0; i < nFree; ++i) {
+    MVertex* v = new2old[i];
+    v->setXYZ(points[i][0],points[i][1],points[i][2]);
+    if (uvs.size()) {
+      v->setParameter(0,uvs[i][0]);
+      v->setParameter(1,uvs[i][1]);
+
+      if (finalCADprojection) {
+        SPoint3 query = v->point();
+        GPoint proj = patchPtr->gf->closestPoint(query, uvs[i].data());
+        if (proj.succeeded()) {
+          v->setXYZ(proj.x(),proj.y(),proj.z());
+          v->setParameter(0,proj.u());
+          v->setParameter(1,proj.v());
+        }
+      }
+    }
+  }
+
+  if (withBackup && backup) {
+    double sicnMinAfter;
+    double sicnAvgAfter;
+    computeSICN(patchPtr->elements, sicnMinAfter, sicnAvgAfter);
+    if (sicnMinAfter < sicnMinBefore) {
+      backup->restore();
+    }
+  }
+
+  if (backup) delete backup;
+
+  return true;
+}
+
+void returnTrianglesIfNecessary(
+  const std::vector<std::array<double,2> >& points,
+  std::vector<std::array<uint32_t,3> >& tris) {
+  double area = 0.;
+  for (size_t i = 0; i < tris.size(); ++i) {
+    area += triangleArea(points[tris[i][0]], points[tris[i][1]], points[tris[i][2]]);
+  }
+  if (area < 0.) {
+    Msg::Debug("invert 2D triangle orientations (total area was %f for %li tris)", area, tris.size());
+    for (size_t i = 0; i < tris.size(); ++i) {
+      uint32_t v1 = tris[i][1];
+      tris[i][1] = tris[i][2];
+      tris[i][2] = v1;
+    }
+  }
+}
+
+
+bool GeometryOptimizer::smoothWithWinslowUntangler(
+    PlanarMethod planar,
+    int iterMax,
+    double withBackup,
+    bool finalCADprojection) {
+  if (nFree == 0) {
+    Msg::Debug("geometry optimize: no free vertices, nothing to optimize");
+    return true;
+  }
+  if (nFree == points.size()) {
+    Msg::Debug("geometry optimize: no locked vertices, cannot optimize");
+    return false;
+  }
+  vector<bool> locked(points.size(),false);
+  for (size_t v = nFree; v < points.size(); ++v) {
+    locked[v] = true;
+  }
+  Msg::Debug("- smoothWithWinslowUntangler: method %i, %li/%li free vertices", planar, nFree, points.size());
+
+  /* Initial quality computation */
+  double sicnMin, sicnAvg;
+  computeSICN(patchPtr->elements, sicnMin, sicnAvg);
+  if (DBG_VIZU_U) {
+    GeoLog::add(patchPtr->elements, "optim_NU_IN_"+std::to_string(sicnMin));
+    GeoLog::flush();
+  }
+
+  /* Backup of current geometry */
+  PatchGeometryBackup backup(*patchPtr);
+
+  double t1 = Cpu();
+
+  /* Get planar points for the untangler */
+  std::vector<vec2> points_2D(points.size());
+  mean_plane mp;
+  SVector3 normal, tangent, binormal;
+  SPoint3 pop;
+  if (planar == PlanarMethod::MeanPlane) {
+    /* Compute the mean plane from the locked vertices */
+    std::vector<SPoint3> vInit;
+    vInit.reserve(points.size()-nFree);
+    for (size_t v = nFree; v < points.size(); ++v) {
+      vInit.push_back(SPoint3(points[v][0],points[v][1],points[v][2]));
+    }
+    computeMeanPlaneSimple(vInit, mp);
+    double denom = std::pow(mp.a,2) + std::pow(mp.b,2) + std::pow(mp.c,2) ;
+    if (denom < 1.e-16) {
+      Msg::Warning("geometry optimize: invalid mean plane");
+      return false;
+    }
+    normal = SVector3(mp.a, mp.b, mp.c);
+    buildOrthoBasis(normal, tangent, binormal);
+    pop = SPoint3(mp.x,mp.y,mp.z);
+
+    /* Projects points on mean plane, with 2D coordinates, before smoothing */
+    {
+      SPoint3 proj;
+      for (size_t v = 0; v < points.size(); ++v) {
+        SPoint3 p(points[v][0],points[v][1],points[v][2]);
+        points_2D[v] = { dot(p-pop, tangent), dot(p-pop, binormal) };
+      }
+    }
+  } else if (planar == PlanarMethod::ParamCAD) {
+    std::unordered_map<MVertex*,SPoint2> vertexParam;
+    bool okp = getPlanarParametrization(*patchPtr, vertexParam);
+    if (!okp) {
+      Msg::Debug("- Untangle: failed to get planar parametrization from CAD");
+      return false;
+    }
+    for (size_t v = 0; v < points.size(); ++v) {
+      auto it =  vertexParam.find(new2old[v]);
+      points_2D[v] = { it->second.x(), it->second.y()};
+    }
+
+    if (DBG_VIZU_U) {
+      for (size_t i = 0; i < quads.size(); ++i) {
+        std::vector<vec3> pts = {
+          {points_2D[quads[i][0]][0], points_2D[quads[i][0]][1], 0.},
+          {points_2D[quads[i][1]][0], points_2D[quads[i][1]][1], 0.},
+          {points_2D[quads[i][2]][0], points_2D[quads[i][2]][1], 0.},
+          {points_2D[quads[i][3]][0], points_2D[quads[i][3]][1], 0.}
+        };
+        GeoLog::add(pts,0.,"nancy_b"+std::to_string(sicnMin));
+      }
+    }
+  }
+
+  /* Triangles from quads */
+  std::vector<std::array<uint32_t,3> > tris;
+  tris.reserve(4*quads.size());
+  for (size_t i = 0; i < quads.size(); ++i) {
+    if (quads[i][0] == NO_U32) {
+      continue;
+    } else if (quads[i][3] == NO_U32) { /* already triangle */
+      tris.push_back({quads[i][0],quads[i][1],quads[i][2]});
+    } else {
+      tris.push_back({quads[i][0],quads[i][1],quads[i][2]});
+      tris.push_back({quads[i][0],quads[i][2],quads[i][3]});
+      tris.push_back({quads[i][1],quads[i][2],quads[i][3]});
+      tris.push_back({quads[i][1],quads[i][3],quads[i][0]});
+    }
+  }
+
+  /* Planar smoothing with Winslow untangler */
+  Msg::Debug("- Untangle/Smooth quad mesh (%li quads -> %li optim tris, %li vertices, SICN min initial: %f) ...", 
+      quads.size(), tris.size(), points_2D.size(), sicnMin);
+  returnTrianglesIfNecessary(points_2D,tris);
+  int iterMaxOuter = iterMax;
+  int iterMaxInner = 300;
+  int nFailMax = 5;
+  double lambda = 1./127.;
+  int verbosity = 0;
+  double timeMax = 1000;
+  if (Msg::GetVerbosity() >= 99) verbosity = 1;
+  std::vector<std::array<std::array<double, 2>, 3> > triIdealShapes;
+  std::string pp = "Debug   : ---- ";
+  bool oku = untangle_triangles_2D(points_2D, locked, tris, triIdealShapes,
+      lambda, iterMaxInner, iterMaxOuter, nFailMax, timeMax);
+  if (!oku) {
+    Msg::Debug("---- failed to untangle");
+  }
+  // {
+  //   for (size_t v = 0; v < points_2D.size(); ++v) {
+  //     GeoLog::add({points_2D[v][0],points_2D[v][1],0.},double(locked[v]),"2D_aftersmooth");
+  //   }
+  //   GeoLog::flush();
+  // }
+
+  /* Project back to surface */
+  if (planar == PlanarMethod::MeanPlane){
+    SPoint3 proj;
+    // {
+    //   for (size_t v = 0; v < points_2D.size(); ++v) {
+    //     SPoint3 onPlane = SPoint3(mp.x,mp.y,mp.z) 
+    //       + points_2D[v][0] * tangent 
+    //       + points_2D[v][1] * binormal;
+    //     GeoLog::add(onPlane,double(locked[v]),"reproj_plane");
+    //   }
+    //   GeoLog::flush();
+    // }
+    for (size_t v = 0; v < nFree; ++v) {
+      SPoint3 onPlane = pop
+        + points_2D[v][0] * tangent 
+        + points_2D[v][1] * binormal;
+
+      GPoint proj;
+      if (sp != nullptr) {
+        proj = sp->closestPoint(onPlane.data(),false,false);
+        if (proj.succeeded()) {
+          points[v] = {proj.x(),proj.y(),proj.z()};
+          if (uvs.size() > 0) {
+            uvs[v] = {proj.u(),proj.v()};
+          }
+        } else {
+          Msg::Warning("sp proj failed");
+        }
+      }
+      if (patchPtr->gf->haveParametrization() && (!proj.succeeded() || finalCADprojection)) {
+        double initGuess[2] = {0.,0.};
+        if (uvs.size() > 0) {
+          initGuess[0] = uvs[v][0];
+          initGuess[1] = uvs[v][1];
+        }
+        proj = patchPtr->gf->closestPoint(onPlane.data(),initGuess);
+        if (proj.succeeded()) {
+          points[v] = {proj.x(),proj.y(),proj.z()};
+          if (uvs.size() > 0) {
+            uvs[v] = {proj.u(),proj.v()};
+          }
+        } else {
+          Msg::Warning("CAD proj failed");
+        }
+      }
+    }
+    /* Update the patch */
+    for (size_t v = 0; v < nFree; ++v) {
+      new2old[v]->setXYZ(points[v][0],points[v][1],points[v][2]);
+      if (uvs.size()) {
+        new2old[v]->setParameter(0,uvs[v][0]);
+        new2old[v]->setParameter(1,uvs[v][1]);
+      }
+    }
+  } else if (planar == PlanarMethod::ParamCAD) {
+    for (size_t v = 0; v < nFree; ++v) {
+      GPoint p = patchPtr->gf->point(points_2D[v][0],points_2D[v][1]);
+      new2old[v]->setXYZ(p.x(),p.y(),p.z());
+      new2old[v]->setParameter(0,points_2D[v][0]);
+      new2old[v]->setParameter(1,points_2D[v][1]);
+    }
+  }
+
+  double t2 = Cpu();
+  double sicnMinA, sicnAvgA;
+  computeSICN(patchPtr->elements, sicnMinA, sicnAvgA);
+
+  if (DBG_VIZU_U) {
+    GeoLog::add(patchPtr->elements, "optim_NU_OUT_"+std::to_string(sicnMinA));
+    GeoLog::flush();
+    if (planar == PlanarMethod::ParamCAD) {
+      for (size_t i = 0; i < quads.size(); ++i) {
+        std::vector<vec3> pts = {
+          {points_2D[quads[i][0]][0], points_2D[quads[i][0]][1], 0.},
+          {points_2D[quads[i][1]][0], points_2D[quads[i][1]][1], 0.},
+          {points_2D[quads[i][2]][0], points_2D[quads[i][2]][1], 0.},
+          {points_2D[quads[i][3]][0], points_2D[quads[i][3]][1], 0.}
+        };
+        GeoLog::add(pts,0.,"nancy_a"+std::to_string(sicnMinA));
+      }
+      GeoLog::flush();
+    }
+  }
+
+  bool keep = true;
+  if (sicnMinA < sicnMin && sicnAvgA < 0.99 * sicnAvg) keep = false;
+  if (sicnMinA < 0. && sicnMinA < sicnMin) keep = false;
+  if (sicnMinA < 0.75 * sicnMin) keep = false;
+  if (keep) {
+    Msg::Debug("optimize with Winslow untangler (uv param: %i): %li/%li free vertices, %li elements, SICN min: %.3f -> %.3f, SICN avg: %.3f -> %.3f, time: %.3fsec",
+        planar, patchPtr->intVertices.size(), points.size(), patchPtr->elements.size(),
+        sicnMin, sicnMinA, sicnAvg, sicnAvgA, t2-t1);
+  } else {
+    backup.restore();
+    Msg::Debug("optimize with Winslow untangler (uv param: %i): %li/%li free vertices, %li elements, SICN min: %.3f -> %.3f, SICN avg: %.3f -> %.3f, time: %.3fsec, rollback",
+        planar, patchPtr->intVertices.size(), points.size(), patchPtr->elements.size(),
+        sicnMin, sicnMinA, sicnAvg, sicnAvgA, t2-t1);
+    return false;
+  }
+
+
+  return true;
+}
+
+bool optimizeGeometryQuadqs(GModel* gm) {
+  Msg::Info("Optimize geometry of quad mesh ...");
+
+  vector<GFace*> faces = model_faces(gm);
+  for(size_t f = 0; f < faces.size(); ++f) {
+    GFace *gf = faces[f];
+    if(CTX::instance()->mesh.meshOnlyVisible && !gf->getVisibility()) continue;
+    if(CTX::instance()->debugSurface > 0 &&
+       gf->tag() != CTX::instance()->debugSurface)
+      continue;
+    if(gf->triangles.size() > 0 || gf->quadrangles.size() == 0) continue;
+
+    SurfaceProjector sp;
+    fillSurfaceProjector(gf, &sp);
+    double tMax = double(gf->mesh_vertices.size())/100.;
+    bool withBackup = true;
+    optimizeGeometryQuadMesh(gf, &sp, tMax, withBackup);
+    quadMeshSpecialAcuteCornerOptimization(gf, &sp);
+  }
+
+  return true;
 }

@@ -19,7 +19,8 @@ set(SRC
     meshGRegionDelaunayInsertion.cpp meshGRegionTransfinite.cpp
     meshGRegionExtruded.cpp meshGRegionCarveHole.cpp
     meshGRegionLocalMeshMod.cpp meshGRegionMMG.cpp
-  meshGRegionBoundaryLayer.cpp
+    meshGRegionBoundaryLayer.cpp
+    meshGRegionHexbl.cpp
   meshRelocateVertex.cpp
   meshTriangulation.cpp
   meshMetric.cpp

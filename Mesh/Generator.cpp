@@ -25,6 +25,7 @@
 #include "meshGFaceBDS.h"
 #include "meshGRegion.h"
 #include "meshGRegionLocalMeshMod.h"
+#include "meshGRegionHexbl.h"
 #include "meshRelocateVertex.h"
 #include "meshRefine.h"
 #include "BackgroundMesh.h"
@@ -836,6 +837,8 @@ static void Mesh3D(GModel *m)
     Msg::SetNumThreads(CTX::instance()->mesh.maxNumThreads3D);
 
   for(auto it = m->firstRegion(); it != m->lastRegion(); ++it) {
+    (*it)->meshStatistics.status = GRegion::PENDING;
+
     // Extruded meshes are not yet fully thread-safe (not sure why!)
     if((*it)->meshAttributes.extrude &&
        (*it)->meshAttributes.extrude->mesh.ExtrudeMesh)
@@ -853,6 +856,11 @@ static void Mesh3D(GModel *m)
   // then subdivide if necessary (unfortunately the subdivision is a
   // global operation, which can require changing the surface mesh!)
   SubdivideExtrudedMesh(m);
+
+  // Hexbl is global because the input surface mesh is subdivided (midpoint subdivision)
+  if (CTX::instance()->mesh.algo3d == ALGO_3D_HEXBL) {
+    meshGModelHexbl(m);
+  }
 
   // then mesh all the non-delaunay regions (front3D with netgen)
   std::vector<GRegion *> delaunay;
@@ -975,6 +983,7 @@ static void Mesh3D(GModel *m)
     if(gr->getNumMeshElements() == 0) {
       debugInfo << gr->tag() << " ";
       emptyRegionFound = true;
+      gr->meshStatistics.status = GRegion::FAILED;
     }
   }
   if(emptyRegionFound) {
@@ -1093,7 +1102,7 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter)
         gf->meshStatistics.status = GFace::PENDING;
       }
 
-    transferSeamGEdgesVerticesToGFace(m);
+    // transferSeamGEdgesVerticesToGFace(m);
     optimizeTopologyWithDiskQuadrangulationRemeshing(m);
 
     for(GFace *gf : m->getFaces())
@@ -1107,7 +1116,7 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter)
         gf->meshStatistics.status = GFace::PENDING;
       }
 
-    transferSeamGEdgesVerticesToGFace(m);
+    // transferSeamGEdgesVerticesToGFace(m);
     optimizeTopologyWithCavityRemeshing(m);
 
     for(GFace *gf : m->getFaces())
@@ -1122,7 +1131,7 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter)
         gf->meshStatistics.status = GFace::PENDING;
       }
 
-    transferSeamGEdgesVerticesToGFace(m);
+    // transferSeamGEdgesVerticesToGFace(m);
     quadMeshingOfSimpleFacesWithPatterns(m);
     optimizeTopologyWithDiskQuadrangulationRemeshing(m);
     optimizeTopologyWithCavityRemeshing(m);
@@ -1551,6 +1560,17 @@ void GenerateMesh(GModel *m, int ask)
 
   // dimension of previous/existing mesh
   int old = m->getMeshStatus(false);
+
+  // TODOMX tmp testing
+  if (ask == 3 || CTX::instance()->mesh.algo3d == ALGO_3D_HEXBL) {
+    bool surfaceMesh = true;
+    for (GFace* gf: m->getFaces()) if (gf->getNumMeshElements() == 0){
+      surfaceMesh = false; break;
+    }
+    if (surfaceMesh) old = 2;
+  }
+
+  printf("old %i, ask %i\n", old, ask);
 
   // 1D mesh
   if(ask == 1 || (ask > 1 && old < 1)) {

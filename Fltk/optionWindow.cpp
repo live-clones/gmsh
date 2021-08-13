@@ -590,6 +590,7 @@ static void mesh_options_ok_cb(Fl_Widget *w, void *data)
                   (o->mesh.choice[3]->value() == 2) ? ALGO_3D_HXT :
                   (o->mesh.choice[3]->value() == 3) ? ALGO_3D_MMG3D :
                   (o->mesh.choice[3]->value() == 4) ? ALGO_3D_INITIAL_ONLY :
+                  (o->mesh.choice[3]->value() == 5) ? ALGO_3D_HEXBL :
                                                       ALGO_3D_DELAUNAY);
   opt_mesh_algo_recombine(0, GMSH_SET, o->mesh.choice[1]->value());
   opt_mesh_algo_subdivide(0, GMSH_SET, o->mesh.choice[5]->value());
@@ -2426,6 +2427,7 @@ optionWindow::optionWindow(int deltaFontSize)
         {"HXT (experimental)", 0, nullptr, nullptr},
         {"MMG3D (experimental, single volume only)", 0, nullptr, nullptr},
         {"Initial Mesh Only (no node insertion)", 0, nullptr, nullptr},
+        {"Hexdom with All-Hex Boundary Layer (experimental)", 0, nullptr, nullptr},
         {nullptr}};
       static Fl_Menu_Item menu_recombination_algo[] = {
         {"Simple", 0, nullptr, nullptr},
