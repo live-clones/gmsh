@@ -131,6 +131,7 @@ static const char *input_formats =
 #endif
   "Mesh - INRIA Medit\t*.mesh\n"
   "Mesh - Nastran Bulk Data File\t*.{bdf,nas}\n"
+  "Mesh - Object File Format\t*.off\n"
   "Mesh - Plot3D Structured Mesh\t*.p3d\n"
   "Mesh - STL Surface\t*.stl\n"
   "Mesh - VTK\t*.vtk\n"
@@ -348,6 +349,10 @@ static int _save_mesh(const char *name)
 {
   return genericMeshFileDialog(name, "MESH Options", FORMAT_MESH, false, true);
 }
+static int _save_off(const char *name)
+{
+  return genericMeshFileDialog(name, "OFF Options", FORMAT_OFF, false, false);
+}
 static int _save_mail(const char *name)
 {
   return genericMeshFileDialog(name, "MAIL Options", FORMAT_MAIL, false, false);
@@ -460,6 +465,7 @@ static int _save_auto(const char *name)
   case FORMAT_MED: return _save_med(name);
   case FORMAT_RMED: return _save_view_med(name);
   case FORMAT_MESH: return _save_mesh(name);
+  case FORMAT_OFF: return _save_off(name);
   case FORMAT_MAIL: return _save_mail(name);
   case FORMAT_MATLAB: return _save_matlab(name);
   case FORMAT_BDF: return _save_bdf(name);
@@ -529,6 +535,7 @@ static void file_export_cb(Fl_Widget *w, void *data)
     {"Mesh - CEA Triangulation\t*.mail", _save_mail},
     {"Mesh - Matlab\t*.m", _save_matlab},
     {"Mesh - Nastran Bulk Data File\t*.bdf", _save_bdf},
+    {"Mesh - Object File Format\t*.off", _save_off},
     {"Mesh - Plot3D Structured Mesh\t*.p3d", _save_p3d},
     {"Mesh - STL Surface\t*.stl", _save_stl},
     {"Mesh - VRML Surface\t*.wrl", _save_vrml},
@@ -654,14 +661,14 @@ void file_quit_cb(Fl_Widget *w, void *data)
 {
   // save persistent info to disk
   if(CTX::instance()->sessionSave)
-    PrintOptions(0, GMSH_SESSIONRC, 0, 0,
-                 (CTX::instance()->homeDir +
-                  CTX::instance()->sessionFileName).c_str());
+    PrintOptions(
+      0, GMSH_SESSIONRC, 0, 0,
+      (CTX::instance()->homeDir + CTX::instance()->sessionFileName).c_str());
   if(CTX::instance()->optionsSave == 1)
-    PrintOptions(0, GMSH_OPTIONSRC, 1, 0,
-                 (CTX::instance()->homeDir +
-                  CTX::instance()->optionsFileName).c_str());
-  else if(CTX::instance()->optionsSave == 2){
+    PrintOptions(
+      0, GMSH_OPTIONSRC, 1, 0,
+      (CTX::instance()->homeDir + CTX::instance()->optionsFileName).c_str());
+  else if(CTX::instance()->optionsSave == 2) {
     std::string fileName = GModel::current()->getFileName() + ".opt";
     PrintOptions(0, GMSH_FULLRC, 1, 0, fileName.c_str());
   }
@@ -1855,6 +1862,16 @@ static void geometry_elementary_boolean_cb(Fl_Widget *w, void *data)
     char ib = FlGui::instance()->selectEntity(type);
     if(!FlGui::available()) return;
     if(ib == 'l') {
+      for(std::size_t i = 0; i < FlGui::instance()->selectedVertices.size(); i++) {
+        if(FlGui::instance()->selectedVertices[i]->getSelection() != 1) {
+          FlGui::instance()->selectedVertices[i]->setSelection(1);
+          std::pair<int, int> t(0, FlGui::instance()->selectedVertices[i]->tag());
+          if(selectObject)
+            object.push_back(t);
+          else
+            tool.push_back(t);
+        }
+      }
       for(std::size_t i = 0; i < FlGui::instance()->selectedEdges.size(); i++) {
         if(FlGui::instance()->selectedEdges[i]->getSelection() != 1) {
           FlGui::instance()->selectedEdges[i]->setSelection(1);
@@ -2369,6 +2386,14 @@ static void mesh_optimize_quad_topo_cb(Fl_Widget *w, void *data)
   drawContext::global()->draw();
 }
 
+static void mesh_untangle_cb(Fl_Widget *w, void *data)
+{
+  CTX::instance()->lock = 1;
+  GModel::current()->optimizeMesh("UntangleMeshGeometry");
+  CTX::instance()->lock = 0;
+  drawContext::global()->draw();
+}
+
 static void mesh_cross_compute_cb(Fl_Widget *w, void *data)
 {
   std::vector<int> tags;
@@ -2378,7 +2403,8 @@ static void mesh_cross_compute_cb(Fl_Widget *w, void *data)
 
 static void mesh_refine_cb(Fl_Widget *w, void *data)
 {
-  GModel::current()->refineMesh(CTX::instance()->mesh.secondOrderLinear);
+  GModel::current()->refineMesh(CTX::instance()->mesh.secondOrderLinear,
+                                CTX::instance()->mesh.algoSubdivide);
   drawContext::global()->draw();
 }
 
@@ -4659,6 +4685,8 @@ static menuItem static_modules[] = {
 #endif
   {"0Modules/Mesh/Experimental/Optimize quad topology",
    (Fl_Callback *)mesh_optimize_quad_topo_cb},
+  {"0Modules/Mesh/Experimental/Untangle geometry",
+   (Fl_Callback *)mesh_untangle_cb},
   {"0Modules/Mesh/Reverse/Elements", (Fl_Callback *)mesh_reverse_parts_cb,
    (void *)"elements"},
   {"0Modules/Mesh/Reverse/Curves", (Fl_Callback *)mesh_reverse_parts_cb,

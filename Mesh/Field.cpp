@@ -390,7 +390,7 @@ private:
   double _vIn, _vOut;
   double _xc, _yc, _zc;
   double _xa, _ya, _za;
-  double _R;
+  double _r;
 
 public:
   std::string getDescription()
@@ -404,7 +404,7 @@ public:
   CylinderField()
   {
     _vIn = _vOut = MAX_LC;
-    _xc = _yc = _zc = _xa = _ya = _R = 0.;
+    _xc = _yc = _zc = _xa = _ya = _r = 0.;
     _za = 1.;
 
     options["VIn"] = new FieldOptionDouble(_vIn, "Value inside the cylinder");
@@ -422,7 +422,7 @@ public:
       new FieldOptionDouble(_ya, "Y component of the cylinder axis");
     options["ZAxis"] =
       new FieldOptionDouble(_za, "Z component of the cylinder axis");
-    options["Radius"] = new FieldOptionDouble(_R, "Radius");
+    options["Radius"] = new FieldOptionDouble(_r, "Radius");
   }
   const char *getName() { return "Cylinder"; }
   using Field::operator();
@@ -439,7 +439,7 @@ public:
     dy -= adx * _ya;
     dz -= adx * _za;
 
-    return ((dx * dx + dy * dy + dz * dz < _R * _R) && fabs(adx) < 1) ? _vIn :
+    return ((dx * dx + dy * dy + dz * dz < _r * _r) && fabs(adx) < 1) ? _vIn :
                                                                         _vOut;
   }
 };
@@ -448,7 +448,7 @@ class BallField : public Field {
 private:
   double _vIn, _vOut;
   double _xc, _yc, _zc;
-  double _R, _thick;
+  double _r, _thick;
 
 public:
   std::string getDescription()
@@ -463,7 +463,7 @@ public:
   BallField()
   {
     _vIn = _vOut = MAX_LC;
-    _xc = _yc = _zc = _R = _thick = 0.;
+    _xc = _yc = _zc = _r = _thick = 0.;
 
     options["VIn"] = new FieldOptionDouble(_vIn, "Value inside the ball");
     options["VOut"] = new FieldOptionDouble(_vOut, "Value outside the ball");
@@ -473,7 +473,7 @@ public:
       new FieldOptionDouble(_yc, "Y coordinate of the ball center");
     options["ZCenter"] =
       new FieldOptionDouble(_zc, "Z coordinate of the ball center");
-    options["Radius"] = new FieldOptionDouble(_R, "Radius");
+    options["Radius"] = new FieldOptionDouble(_r, "Radius");
     options["Thickness"] = new FieldOptionDouble(
       _thick, "Thickness of a transition layer outside the ball");
   }
@@ -485,10 +485,10 @@ public:
     double dy = y - _yc;
     double dz = z - _zc;
     double d = sqrt(dx * dx + dy * dy + dz * dz);
-    if(d < _R) return _vIn;
+    if(d < _r) return _vIn;
     // transition layer
     if(_thick > 0) {
-      double dist = d - _R;
+      double dist = d - _r;
       if(dist <= _thick) return _vIn + (dist / _thick) * (_vOut - _vIn);
     }
     return _vOut;
@@ -654,11 +654,12 @@ public:
   {
     Field *field = GModel::current()->getFields()->get(_inField);
     if(!field || _inField == id) return MAX_LC;
-    double r = ((*field)(x, y, z) - _dMin) / (_dMax - _dMin);
+    double d = (*field)(x, y, z);
+    if(_stopAtDistMax && d >= _dMax) return MAX_LC;
+    double r = (d - _dMin) / (_dMax - _dMin);
     r = std::max(std::min(r, 1.), 0.);
     double lc;
-    if(_stopAtDistMax && r >= 1.) { lc = MAX_LC; }
-    else if(_sigmoid) {
+    if(_sigmoid) {
       double s = exp(12. * r - 6.) / (1. + exp(12. * r - 6.));
       lc = _lcMin * (1. - s) + _lcMax * s;
     }
@@ -1553,9 +1554,15 @@ public:
     PView *v = getView();
     if(!v) return MAX_LC;
     if(updateNeeded) {
-      if(_octree) delete _octree;
-      _octree = new OctreePost(v);
-      updateNeeded = false;
+#if defined(_OPENMP)
+#pragma omp barrier
+#pragma omp single
+#endif
+      {
+        if(_octree) delete _octree;
+        _octree = new OctreePost(v);
+        updateNeeded = false;
+      }
     }
 
     double l = 0.;
@@ -1563,9 +1570,9 @@ public:
     // of finding an element
     if(numComponents() == 3) { // scaled cross field
       double values[3];
-      if(!_octree->searchVectorWithTol(x, y, z, values, 0, nullptr, 0.05)) {
+      if(!_octree->searchVectorWithTol(x, y, z, values, 0, nullptr, 0.0005)) {
         if(!_octree->searchVectorWithTol(x, y, z, values, 0, nullptr, .1)) {
-          Msg::Debug("Field sampling: no vector element found containing point "
+          Msg::Warning("Field sampling: no vector element found containing point "
                      "(%g,%g,%g) (for norm)",
                      x, y, z);
         }
@@ -1581,9 +1588,15 @@ public:
     }
     else if(numComponents() == 1) {
       if(!_octree->searchScalarWithTol(x, y, z, &l, 0, nullptr, 0.05)) {
-        Msg::Debug(
-          "Field sampling: no scalar element found containing point (%g,%g,%g)",
-          x, y, z);
+	if(!_octree->searchScalarWithTol(x, y, z, &l, 0, nullptr, 0.15)) {
+	  if(!_octree->searchScalarWithTol(x, y, z, &l, 0, nullptr, 0.25)) {
+	    if(!_octree->searchScalarWithTol(x, y, z, &l, 0, nullptr, 0.35)) {
+	      Msg::Debug(
+			 "Field sampling: no scalar element found containing point (%g,%g,%g)",
+			 x, y, z);
+	    }
+	  }
+	}
       }
     }
     else {
@@ -1605,9 +1618,15 @@ public:
       return;
     }
     if(updateNeeded) {
-      if(_octree) delete _octree;
-      _octree = new OctreePost(vie);
-      updateNeeded = false;
+#if defined(_OPENMP)
+#pragma omp barrier
+#pragma omp single
+#endif
+      {
+        if(_octree) delete _octree;
+        _octree = new OctreePost(vie);
+        updateNeeded = false;
+      }
     }
     if(numComponents() == 3) { // scaled cross field
       double values[3];
@@ -1636,9 +1655,15 @@ public:
     PView *v = getView();
     if(!v) return;
     if(updateNeeded) {
-      if(_octree) delete _octree;
-      _octree = new OctreePost(v);
-      updateNeeded = false;
+#if defined(_OPENMP)
+#pragma omp barrier
+#pragma omp single
+#endif
+      {
+        if(_octree) delete _octree;
+        _octree = new OctreePost(v);
+        updateNeeded = false;
+      }
     }
     double l[9] = {0., 0., 0., 0., 0., 0., 0., 0., 0.};
     // use large tolerance (in element reference coordinates) to maximize chance
@@ -2628,7 +2653,7 @@ class DistanceField : public Field {
   std::vector<AttractorInfo> _infos;
   int _sampling;
   int _xFieldId, _yFieldId, _zFieldId; // unused
-  PointCloud _P;
+  PointCloud _p;
   nanoflann::KDTreeSingleIndexAdaptor
   <nanoflann::L2_Simple_Adaptor<double, PointCloudAdaptor<PointCloud> >,
    PointCloudAdaptor<PointCloud>, 3> *_index;
@@ -2637,7 +2662,7 @@ class DistanceField : public Field {
   double _outDistSqr;
 
 public:
-  DistanceField() : _index(nullptr), _pc2kd(_P), _outIndex(0), _outDistSqr(0)
+  DistanceField() : _index(nullptr), _pc2kd(_p), _outIndex(0), _outDistSqr(0)
   {
     _sampling = 20;
 
@@ -2672,7 +2697,7 @@ public:
       new FieldOptionInt(_sampling, "[Deprecated]", &updateNeeded, true);
   }
   DistanceField(int dim, int tag, int nbe)
-    : _sampling(nbe), _index(nullptr), _pc2kd(_P), _outIndex(0),
+    : _sampling(nbe), _index(nullptr), _pc2kd(_p), _outIndex(0),
       _outDistSqr(0)
   {
     if(dim == 0)
@@ -2698,15 +2723,15 @@ public:
   }
   std::pair<AttractorInfo, SPoint3> getAttractorInfo() const
   {
-    if(_outIndex < _infos.size() && _outIndex < _P.pts.size())
-      return std::make_pair(_infos[_outIndex], _P.pts[_outIndex]);
+    if(_outIndex < _infos.size() && _outIndex < _p.pts.size())
+      return std::make_pair(_infos[_outIndex], _p.pts[_outIndex]);
     return std::make_pair(AttractorInfo(), SPoint3());
   }
   void update()
   {
     if(updateNeeded) {
       _infos.clear();
-      std::vector<SPoint3> &points = _P.pts;
+      std::vector<SPoint3> &points = _p.pts;
       points.clear();
 
       for(auto it = _pointTags.begin(); it != _pointTags.end(); ++it) {

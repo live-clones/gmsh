@@ -71,6 +71,7 @@ public:
                                 double uv[2]);
   bool writeParametrization(FILE *fp, bool binary);
   bool readParametrization(FILE *fp, bool binary);
+  virtual void resetMeshAttributes();
 };
 
 #endif

@@ -93,8 +93,8 @@ public:
               lastRefresh = start;
             }
           }
-          // wait at most waitint seconds and respond to FLTK events
-          FlGui::wait(waitint);
+          // wait at most waitint seconds and respond to FLTK events if ready
+          if(Fl::ready()) FlGui::wait(waitint);
         }
 #endif
         // return to caller (we will be back here soon again)

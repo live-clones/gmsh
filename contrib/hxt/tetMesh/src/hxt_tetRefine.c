@@ -62,14 +62,14 @@ HXTStatus hxtEmptyMesh(HXTMesh* mesh, HXTDelaunayOptions* delOptions)
 
   HXT_CHECK( hxtDelaunaySteadyVertices(mesh, delOptions, nodeInfo, numToInsert) );
 
-#ifdef DEBUG
+  //#ifdef DEBUG
   #pragma omp parallel for simd aligned(nodeInfo:SIMD_ALIGN)
   for (uint32_t i=0; i<numToInsert; i++) {
     if(nodeInfo[i].status!=HXT_STATUS_TRUE){
       HXT_WARNING("point %u of the empty mesh was not inserted\n", nodeInfo[i].node);
     }
   }
-#endif
+  //#endif
 
   HXT_CHECK( hxtAlignedFree(&nodeInfo) );
 

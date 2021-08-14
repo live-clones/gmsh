@@ -1701,6 +1701,27 @@ class model:
                 raise Exception(logger.getLastError())
 
         @staticmethod
+        def affineTransform(affineTransform, dimTags=[]):
+            """
+            gmsh.model.mesh.affineTransform(affineTransform, dimTags=[])
+
+            Apply the affine transformation `affineTransform' (16 entries of a 4x4
+            matrix, by row; only the 12 first can be provided for convenience) to the
+            coordinates of the nodes classified on the entities `dimTags'. If `dimTags'
+            is empty, transform all the nodes in the mesh.
+            """
+            api_affineTransform_, api_affineTransform_n_ = _ivectordouble(affineTransform)
+            api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
+            ierr = c_int()
+            lib.gmshModelMeshAffineTransform(
+                api_affineTransform_, api_affineTransform_n_,
+                api_dimTags_, api_dimTags_n_,
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+        affine_transform = affineTransform
+
+        @staticmethod
         def getNodes(dim=-1, tag=-1, includeBoundary=False, returnParametricCoord=True):
             """
             gmsh.model.mesh.getNodes(dim=-1, tag=-1, includeBoundary=False, returnParametricCoord=True)
@@ -1778,25 +1799,32 @@ class model:
             gmsh.model.mesh.getNode(nodeTag)
 
             Get the coordinates and the parametric coordinates (if any) of the node
-            with tag `tag'. This function relies on an internal cache (a vector in case
-            of dense node numbering, a map otherwise); for large meshes accessing nodes
-            in bulk is often preferable.
+            with tag `tag', as well as the dimension `dim' and tag `tag' of the entity
+            on which the node is classified. This function relies on an internal cache
+            (a vector in case of dense node numbering, a map otherwise); for large
+            meshes accessing nodes in bulk is often preferable.
 
-            Return `coord', `parametricCoord'.
+            Return `coord', `parametricCoord', `dim', `tag'.
             """
             api_coord_, api_coord_n_ = POINTER(c_double)(), c_size_t()
             api_parametricCoord_, api_parametricCoord_n_ = POINTER(c_double)(), c_size_t()
+            api_dim_ = c_int()
+            api_tag_ = c_int()
             ierr = c_int()
             lib.gmshModelMeshGetNode(
                 c_size_t(nodeTag),
                 byref(api_coord_), byref(api_coord_n_),
                 byref(api_parametricCoord_), byref(api_parametricCoord_n_),
+                byref(api_dim_),
+                byref(api_tag_),
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return (
                 _ovectordouble(api_coord_, api_coord_n_.value),
-                _ovectordouble(api_parametricCoord_, api_parametricCoord_n_.value))
+                _ovectordouble(api_parametricCoord_, api_parametricCoord_n_.value),
+                api_dim_.value,
+                api_tag_.value)
         get_node = getNode
 
         @staticmethod
@@ -1990,26 +2018,33 @@ class model:
             """
             gmsh.model.mesh.getElement(elementTag)
 
-            Get the type and node tags of the element with tag `tag'. This function
-            relies on an internal cache (a vector in case of dense element numbering, a
-            map otherwise); for large meshes accessing elements in bulk is often
-            preferable.
+            Get the type and node tags of the element with tag `tag', as well as the
+            dimension `dim' and tag `tag' of the entity on which the element is
+            classified. This function relies on an internal cache (a vector in case of
+            dense element numbering, a map otherwise); for large meshes accessing
+            elements in bulk is often preferable.
 
-            Return `elementType', `nodeTags'.
+            Return `elementType', `nodeTags', `dim', `tag'.
             """
             api_elementType_ = c_int()
             api_nodeTags_, api_nodeTags_n_ = POINTER(c_size_t)(), c_size_t()
+            api_dim_ = c_int()
+            api_tag_ = c_int()
             ierr = c_int()
             lib.gmshModelMeshGetElement(
                 c_size_t(elementTag),
                 byref(api_elementType_),
                 byref(api_nodeTags_), byref(api_nodeTags_n_),
+                byref(api_dim_),
+                byref(api_tag_),
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return (
                 api_elementType_.value,
-                _ovectorsize(api_nodeTags_, api_nodeTags_n_.value))
+                _ovectorsize(api_nodeTags_, api_nodeTags_n_.value),
+                api_dim_.value,
+                api_tag_.value)
         get_element = getElement
 
         @staticmethod
@@ -4430,8 +4465,9 @@ class model:
             gmsh.model.geo.splitCurve(tag, pointTags)
 
             Split the curve of tag `tag' in the built-in CAD representation, on the
-            control points `pointTags'. Return the tags `curveTags' of the newly
-            created curves.
+            specified control points `pointTags'. This feature is only available for
+            lines, splines and b-splines. Return the tag(s) `curveTags' of the newly
+            created curve(s).
 
             Return `curveTags'.
             """
@@ -5104,15 +5140,28 @@ class model:
         add_plane_surface = addPlaneSurface
 
         @staticmethod
-        def addSurfaceFilling(wireTag, tag=-1, pointTags=[]):
+        def addSurfaceFilling(wireTag, tag=-1, pointTags=[], degree=3, numPointsOnCurves=15, numIter=2, anisotropic=False, tol2d=0.00001, tol3d=0.0001, tolAng=0.01, tolCurv=0.1, maxDegree=8, maxSegments=9):
             """
-            gmsh.model.occ.addSurfaceFilling(wireTag, tag=-1, pointTags=[])
+            gmsh.model.occ.addSurfaceFilling(wireTag, tag=-1, pointTags=[], degree=3, numPointsOnCurves=15, numIter=2, anisotropic=False, tol2d=0.00001, tol3d=0.0001, tolAng=0.01, tolCurv=0.1, maxDegree=8, maxSegments=9)
 
             Add a surface in the OpenCASCADE CAD representation, filling the curve loop
             `wireTag'. If `tag' is positive, set the tag explicitly; otherwise a new
             tag is selected automatically. Return the tag of the surface. If
             `pointTags' are provided, force the surface to pass through the given
-            points.
+            points. The other optional arguments are `degree' (the degree of the energy
+            criterion to minimize for computing the deformation of the surface),
+            `numPointsOnCurves' (the average number of points for discretisation of the
+            bounding curves), `numIter' (the maximum number of iterations of the
+            optimization process), `anisotropic' (improve performance when the ratio of
+            the length along the two parametric coordinates of the surface is high),
+            `tol2d' (tolerance to the constraints in the parametric plane of the
+            surface), `tol3d' (the maximum distance allowed between the support surface
+            and the constraints), `tolAng' (the maximum angle allowed between the
+            normal of the surface and the constraints), `tolCurv' (the maximum
+            difference of curvature allowed between the surface and the constraint),
+            `maxDegree' (the highest degree which the polynomial defining the filling
+            surface can have) and, `maxSegments' (the largest number of segments which
+            the filling surface can have).
 
             Return an integer value.
             """
@@ -5122,6 +5171,16 @@ class model:
                 c_int(wireTag),
                 c_int(tag),
                 api_pointTags_, api_pointTags_n_,
+                c_int(degree),
+                c_int(numPointsOnCurves),
+                c_int(numIter),
+                c_int(bool(anisotropic)),
+                c_double(tol2d),
+                c_double(tol3d),
+                c_double(tolAng),
+                c_double(tolCurv),
+                c_int(maxDegree),
+                c_int(maxSegments),
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
@@ -5971,8 +6030,7 @@ class model:
 
             Mirror the entities `dimTags' in the OpenCASCADE CAD representation, with
             respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' = 0.
-            (This is a synonym for `mirror', which will be deprecated in a future
-            release.)
+            (This is a deprecated synonym for `mirror'.)
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             ierr = c_int()
@@ -5987,20 +6045,20 @@ class model:
                 raise Exception(logger.getLastError())
 
         @staticmethod
-        def affineTransform(dimTags, a):
+        def affineTransform(dimTags, affineTransform):
             """
-            gmsh.model.occ.affineTransform(dimTags, a)
+            gmsh.model.occ.affineTransform(dimTags, affineTransform)
 
-            Apply a general affine transformation matrix `a' (16 entries of a 4x4
-            matrix, by row; only the 12 first can be provided for convenience) to the
-            entities `dimTags' in the OpenCASCADE CAD representation.
+            Apply a general affine transformation matrix `affineTransform' (16 entries
+            of a 4x4 matrix, by row; only the 12 first can be provided for convenience)
+            to the entities `dimTags' in the OpenCASCADE CAD representation.
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
-            api_a_, api_a_n_ = _ivectordouble(a)
+            api_affineTransform_, api_affineTransform_n_ = _ivectordouble(affineTransform)
             ierr = c_int()
             lib.gmshModelOccAffineTransform(
                 api_dimTags_, api_dimTags_n_,
-                api_a_, api_a_n_,
+                api_affineTransform_, api_affineTransform_n_,
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())

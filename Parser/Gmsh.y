@@ -289,6 +289,12 @@ GeoFormatItem :
   | Affectation { return 1; }
   | tSetFactory '(' StringExprVar ')' tEND
     {
+      // synchronize with GModel before switching kernel
+      if(GModel::current()->getGEOInternals()->getChanged())
+        GModel::current()->getGEOInternals()->synchronize(GModel::current());
+      if(GModel::current()->getOCCInternals() &&
+         GModel::current()->getOCCInternals()->getChanged())
+        GModel::current()->getOCCInternals()->synchronize(GModel::current());
       gmsh_yyfactory = $3;
       if(gmsh_yyfactory == "OpenCASCADE"){
         if(!GModel::current()->getOCCInternals())
@@ -5162,6 +5168,13 @@ Constraints :
       GModel::current()->getGEOInternals()->setCompoundMesh($2, tags);
       List_Delete($3);
     }
+  | tCompound GeoEntity123 ListOfDouble tMeshAlgorithm FExpr tEND
+    {
+      std::vector<int> tags; ListOfDouble2Vector($3, tags);
+      tags.push_back(- (int) $5);
+      GModel::current()->getGEOInternals()->setCompoundMesh($2, tags);
+      List_Delete($3);
+    }
 ;
 
 //  C O H E R E N C E
@@ -6072,8 +6085,8 @@ FExpr_Multi :
           }
           else{
             char dummy[1024];
-            fscanf(File, "%s", dummy);
-            yymsg(0, "Ignoring '%s' in file '%s'", dummy, $3);
+            if(fscanf(File, "%s", dummy))
+              yymsg(0, "Ignoring '%s' in file '%s'", dummy, $3);
           }
         }
 	fclose(File);

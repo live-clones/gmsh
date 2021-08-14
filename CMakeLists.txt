@@ -50,6 +50,7 @@ opt(DINTEGRATION "Enable discrete integration (needed for levelsets)" ${DEFAULT}
 opt(DOMHEX "Enable experimental DOMHEX code" ${DEFAULT})
 opt(EIGEN "Enable Eigen for linear algebra (instead of Blas/Lapack)" ON)
 opt(FLTK "Enable FLTK graphical user interface (requires mesh/post)" ${DEFAULT})
+opt(GEOMETRYCENTRAL "Enable geometry-central library (experimental)" ${DEFAULT})
 opt(GETDP "Enable GetDP solver (linked as a library, experimental)" ${DEFAULT})
 opt(GMM "Enable GMM linear solvers (simple alternative to PETSc)" ${DEFAULT})
 opt(GMP "Enable GMP for Kbipack (advanced)" ON)
@@ -100,6 +101,7 @@ opt(TESTS "Enable tests" ${DEFAULT})
 opt(TOUCHBAR "Enable Apple Touch bar" ${DEFAULT})
 opt(VISUDEV "Enable additional visualization capabilities for development purposes" OFF)
 opt(VOROPP "Enable voro++ (for hex meshing, experimental)" ${DEFAULT})
+opt(WINSLOWUNTANGLER "Enable WinslowUntangler extensions (requires ALGLIB)" ${DEFAULT})
 opt(WRAP_JAVA "Generate SWIG Java wrappers for private API" OFF)
 opt(WRAP_PYTHON "Generate SWIG Python wrappers for private API (not used by public API)" OFF)
 opt(ZIPPER "Enable Zip file compression/decompression" OFF)
@@ -340,6 +342,12 @@ if(ENABLE_OPENMP)
     set(CMAKE_CXX_FLAGS
         "${CMAKE_CXX_FLAGS} -Xpreprocessor -fopenmp")
     list(APPEND EXTERNAL_LIBRARIES "-L/usr/local/lib -lomp")
+  elseif(${CMAKE_SYSTEM_NAME} MATCHES "Linux" AND EXISTS "/usr/local/lib64/libgomp.a")
+    # custom static openmp for official linux builds
+    set_config_option(HAVE_OPENMP "OpenMP[static]")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Xpreprocessor -fopenmp")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Xpreprocessor -fopenmp")
+    list(APPEND EXTERNAL_LIBRARIES "/usr/local/lib64/libgomp.a")
   endif()
 endif()
 
@@ -399,6 +407,16 @@ macro(set_compile_flags LISTNAME FLAGS)
     endif()
   endforeach()
 endmacro()
+
+if(ENABLE_GEOMETRYCENTRAL)
+  find_library(GEOMETRYCENTRAL_LIB NAMES geometry-central)
+  find_path(GEOMETRYCENTRAL_INC "surface/meshio.h" PATH_SUFFIXES geometrycentral)
+  if(GEOMETRYCENTRAL_LIB AND GEOMETRYCENTRAL_INC)
+    list(APPEND EXTERNAL_LIBRARIES ${GEOMETRYCENTRAL_LIB})
+    list(APPEND EXTERNAL_INCLUDES ${GEOMETRYCENTRAL_INC})
+    set_config_option(HAVE_GEOMETRYCENTRAL "geometry-central")
+  endif()
+endif()
 
 if(ENABLE_EIGEN)
   if(ENABLE_SYSTEM_CONTRIB)
@@ -1253,6 +1271,12 @@ if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadMeshingTools AND ENABLE_QUADME
   include_directories(BEFORE contrib/QuadMeshingTools)
 endif()
 
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/WinslowUntangler AND ENABLE_WINSLOWUNTANGLER)
+  set_config_option(HAVE_WINSLOWUNTANGLER "WinslowUntangler")
+  add_subdirectory(contrib/WinslowUntangler)
+  include_directories(BEFORE contrib/WinslowUntangler)
+endif()
+
 if(ENABLE_OCC)
   set(OCC_MINIMAL_VERSION "6.9.1")
   if(WIN32)
@@ -1512,9 +1536,9 @@ if(WALL AND NOT MSVC)
   endif()
   if(WIN32 OR NOT HAVE_64BIT_SIZE_T)
     # FIXME: remove printf family warnings on 32 bit systems and windows
-    check_cxx_compiler_flag("-Wformat=" WFORMAT)
+    check_cxx_compiler_flag("-Wno-format" WFORMAT)
     if(WFORMAT)
-      set(WF "${WF} -Wformat=")
+      set(WF "${WF} -Wno-format")
     endif()
   endif()
   set_compile_flags(WALL_SRC ${WF})
@@ -1527,30 +1551,37 @@ if(NOWARN)
   set_compile_flags(NOWARN_SRC "-w")
 endif()
 
-# disable compile optimization on some known problematic files
+# fine-tune optimization flags for particular files
 check_cxx_compiler_flag("-O0" NOOPT)
 if(NOOPT OR ENABLE_BUILD_IOS)
-  if(ENABLE_BUILD_IOS) # optimized iOS 10 64 bits screws somewhere in Geo
-    file(GLOB_RECURSE NOOPT_SRC Numeric/robustPredicates.cpp Geo/G*.cpp Mesh/BDS.cpp
-         Parser/Gmsh.tab.cpp contrib/blossom/* Mesh/Background*)
+  if(ENABLE_BUILD_IOS)
+    # optimized builds on iOS 10 64 bits fail spectacularly
+    file(GLOB_RECURSE NOOPT_SRC Geo/G*.cpp Mesh/BDS.cpp Parser/Gmsh.tab.cpp
+         contrib/blossom/* contrib/bamg/* Mesh/Background*)
   else()
-    file(GLOB_RECURSE NOOPT_SRC Numeric/robustPredicates.cpp Mesh/BDS.cpp
-         Parser/Gmsh.tab.cpp contrib/blossom/* contrib/bamg/* Mesh/Background*)
+    # bamg fails even with -O1
+    file(GLOB_RECURSE NOOPT_SRC contrib/bamg/*)
   endif()
   set_compile_flags(NOOPT_SRC "-O0")
 endif()
-
-# do not use arithmetic contraction in predicates.cpp
-# if("${CMAKE_C_COMPILER_ID}" STREQUAL "MSVC")
-#   set_source_files_properties(Numeric/robustPredicates.cpp PROPERTIES
-#     COMPILE_FLAGS "/fp:strict")
-# elseif(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
-#   set_source_files_properties(Numeric/robustPredicates.cpp PROPERTIES
-#     COMPILE_FLAGS "-fno-unsafe-math-optimizations -ffp-contract=off")
-# elseif(CMAKE_C_COMPILER_ID STREQUAL "Intel")
-#   set_source_files_properties(Numeric/robustPredicates.cpp PROPERTIES
-#     COMPILE_FLAGS "-fp-model strict")
-# endif()
+if(MSVC OR (CMAKE_C_COMPILER_ID STREQUAL "Intel" AND WIN32))
+  set_source_files_properties(
+    "${CMAKE_CURRENT_SOURCE_DIR}/Numeric/robustPredicates.cpp"
+    PROPERTIES COMPILE_FLAGS "/fp:strict")
+elseif(CMAKE_C_COMPILER_ID STREQUAL "Intel")
+  set_source_files_properties(
+    "${CMAKE_CURRENT_SOURCE_DIR}/Numeric/robustPredicates.cpp"
+    PROPERTIES COMPILE_FLAGS "-fp-model strict")
+elseif(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+  set_source_files_properties(
+    "${CMAKE_CURRENT_SOURCE_DIR}/Numeric/robustPredicates.cpp"
+    PROPERTIES COMPILE_FLAGS "-fno-unsafe-math-optimizations -ffp-contract=off")
+else()
+  message(WARNING "Unknown compiler: make sure compiled functions from "
+          "Numeric/robustPredicates.cpp do not use extended double precision "
+          "and follow the IEEE754 standard. It is crucial for the robustness of "
+          "geometric predicates.")
+endif()
 
 # enable Revoropt and set compile flags for the corresponding plugin
 if(ENABLE_REVOROPT)
@@ -2074,9 +2105,11 @@ if(APPLE AND ENABLE_OS_SPECIFIC_INSTALL AND HAVE_FLTK)
   file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/Info.plist "${F1}")
   set(CPACK_BUNDLE_PLIST ${CMAKE_CURRENT_BINARY_DIR}/Info.plist)
   set(CPACK_BUNDLE_ICON ${CMAKE_CURRENT_SOURCE_DIR}/Fltk/MacIcons.icns)
-  if(PACKAGER STREQUAL "geuzaine - removed: we sign on a separate machine")
-    # codesigning requires CMake >= 3.2
+  if(PACKAGER STREQUAL "geuzaine")
+    # automatic codesigning of the .app
     set(CPACK_BUNDLE_APPLE_CERT_APP "Developer ID Application: Christophe Geuzaine")
+    # enable hardened runtime (necessary for notarization and app store)
+    set(CPACK_BUNDLE_APPLE_CODESIGN_PARAMETER "--deep --force --options runtime")
   endif()
   install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/Fltk/MacIconsGeo.icns DESTINATION .
           RENAME GmshGeo.icns)
@@ -2111,12 +2144,6 @@ macro(filter_tests IN OUT)
     unset(BAD1)
     unset(BAD2)
     unset(BAD3)
-    # OS-specific
-    if(${GMSH_OS} MATCHES "Linux32")
-      # OCC STL generation crashes on our Linux32 docker
-      string(REGEX MATCH "t18" BAD1 ${FILE})
-      string(REGEX MATCH "rod_distance_field" BAD2 ${FILE})
-    endif()
     # OpenCASCADE
     if(NOT HAVE_OCC AND NOT BAD1 AND NOT BAD2 AND NOT BAD3)
       file(STRINGS ${FILE} BAD1 REGEX "^SetFactory.*OpenCASCADE.*")
@@ -2150,9 +2177,8 @@ if(ENABLE_TESTS AND NOT DISABLE_GMSH_TESTS)
     FILE(RELATIVE_PATH TEST ${CMAKE_CURRENT_BINARY_DIR} ${TESTFILE})
     add_test(${TEST} ./gmsh ${TEST} -3 -nopopup -o ./tmp.msh)
   endforeach()
-  # test c++ api tutorials with dynamic builds (except on 32 bit windows for
-  # now: our win32 setup does not currently handle exceptions)
-  if(ENABLE_BUILD_DYNAMIC AND NOT ${GMSH_OS} MATCHES "Windows32")
+  # test c++ api tutorials with dynamic builds
+  if(ENABLE_BUILD_DYNAMIC)
     file(GLOB_RECURSE ALLFILES tutorial/c++/*.cpp)
     filter_tests("${ALLFILES}" TESTFILES)
     foreach(TESTFILE ${TESTFILES})

@@ -53,6 +53,10 @@ static void copyMesh(GEdge *from, GEdge *to)
   double u_min = u_bounds.low();
   double u_max = u_bounds.high();
 
+#if 0
+  // old version, which directly uses nodes; this can lead to unexpected results
+  // if the nodes in from->mesh_vertices.size() are not sorted, which can happen
+  // e.g. if createTopology() has been called
   for(std::size_t i = 0; i < from->mesh_vertices.size(); i++) {
     int index = (direction < 0) ? (from->mesh_vertices.size() - 1 - i) : i;
     MVertex *v = from->mesh_vertices[index];
@@ -65,6 +69,22 @@ static void copyMesh(GEdge *from, GEdge *to)
     MEdgeVertex *newv = new MEdgeVertex(x, y, z, to, newu);
     to->mesh_vertices.push_back(newv);
   }
+#else
+  // so it's better to go back to the elements, which are assumed to be stored
+  // in the correct order
+  for(std::size_t i = 0; i < from->lines.size() - 1; i++) {
+    int index = (direction < 0) ? (from->lines.size() - i - 2) : i;
+    MVertex *v = from->lines[index]->getVertex(1);
+    double x = v->x(), y = v->y(), z = v->z();
+    ep->Extrude(ep->mesh.NbLayer - 1, ep->mesh.NbElmLayer[ep->mesh.NbLayer - 1],
+                x, y, z);
+    double u;
+    v->getParameter(0, u);
+    double newu = (direction > 0) ? u : (u_max - u + u_min);
+    MEdgeVertex *newv = new MEdgeVertex(x, y, z, to, newu);
+    to->mesh_vertices.push_back(newv);
+  }
+#endif
 
   createElements(to);
 }

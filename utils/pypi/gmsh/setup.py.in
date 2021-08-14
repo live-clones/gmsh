@@ -25,9 +25,7 @@ system = platform.system().lower()
 machine = platform.machine().lower()
 plat = None
 plat = 'Linux64' if 'linux' in system and 'x86_64' in machine else plat
-plat = 'Linux32' if 'linux' in system and 'i686' in machine else plat
 plat = 'Windows64' if 'windows' in system and '64' in machine else plat
-plat = 'Windows32' if 'windows' in system and '64' not in machine else plat
 plat = 'MacOSX' if 'darwin' in system and 'x86_64' in machine else plat
 if plat is None:
     raise TypeError(

@@ -124,6 +124,7 @@ public:
   void writeMATLAB(FILE *fp, int type, bool binary, double scalingFactor = 1.0);
   void writeTOCHNOG(FILE *fp, int dim, double scalingFactor = 1.0);
   void writeMESH(FILE *fp, double scalingFactor = 1.0);
+  void writeOFF(FILE *fp, double scalingFactor = 1.0);
   void writeNEU(FILE *fp, int dim, double scalingFactor = 1.0);
   void writeBDF(FILE *fp, int format = 0, double scalingFactor = 1.0);
   void writeINP(FILE *fp, double scalingFactor = 1.0);

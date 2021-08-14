@@ -101,7 +101,6 @@ SPoint2 discreteEdge::reparamOnFace(const GFace *face, double epar,
 
 double discreteEdge::curvature(double par) const
 {
-  return 1.e-12;
   double tLoc;
   int iEdge;
   if(_discretization.size() <= 3)
@@ -267,7 +266,7 @@ bool discreteEdge::readParametrization(FILE *fp, bool binary)
   }
   else {
     for(std::size_t i = 0; i < N; i++) {
-      if(fscanf(fp, "%lf %lf %lf %lf\n", &d[4 * i + 0], &d[4 * i + 1],
+      if(fscanf(fp, "%lf %lf %lf %lf", &d[4 * i + 0], &d[4 * i + 1],
                 &d[4 * i + 2], &d[4 * i + 3]) != 4) {
         return false;
       }

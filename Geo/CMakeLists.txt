@@ -28,6 +28,7 @@ set(SRC
     GModelIO_GEOM.cpp GModelIO_INP.cpp GModelIO_KEY.cpp GModelIO_MAIL.cpp GModelIO_P3D.cpp
     GModelIO_CELUM.cpp GModelIO_NEU.cpp GModelIO_ACTRAN.cpp GModelIO_SU2.cpp
     GModelIO_SAMCEF.cpp GModelIO_MATLAB.cpp GModelIO_POS.cpp GModelIO_X3D.cpp
+    GModelIO_OFF.cpp
   ExtrudeParams.cpp
   Geo.cpp GeoInterpolation.cpp
   scriptStringInterface.cpp

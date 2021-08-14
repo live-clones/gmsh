@@ -5,6 +5,7 @@
 
 #include <string.h>
 #include <sstream>
+#include "Field.h"
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "GModel.h"
@@ -444,14 +445,18 @@ void scriptAddPoint(const std::string &fileName, const std::string &x,
       sstream << "};";
     }
     else {
-      // TODO
+      std::string addPointStr = "gmsh/model/" + currentFactory + "/addPoint";
+      std::ostringstream args;
+      args << x << ", " << y << ", " << z;
+      if(lc.size()) args << ", " << lc;
+      sstream << api(addPointStr, args.str(), lang);
     }
     scriptAddCommand(sstream.str(), fileName, lang);
   }
 }
 
 void scriptAddFieldOption(int field_id, const std::string &option_name,
-                          const std::string &option_value,
+                          const std::string &option_value, int option_type,
                           const std::string &fileName)
 {
   for(auto &lang : CTX::instance()->scriptLang) {
@@ -461,7 +466,30 @@ void scriptAddFieldOption(int field_id, const std::string &option_name,
               << option_value << ";";
     }
     else {
-      // TODO
+      std::ostringstream args;
+      switch(option_type) {
+      case FIELD_OPTION_DOUBLE:
+      case FIELD_OPTION_INT:
+      case FIELD_OPTION_BOOL:
+        args << field_id << ", \"" << option_name << "\", " << option_value;
+        sstream << api("gmsh/model/mesh/field/setNumber", args.str(), lang);
+        break;
+      case FIELD_OPTION_STRING:
+      case FIELD_OPTION_PATH:
+        args << field_id << ", \"" << option_name << "\", " << option_value;
+        sstream << api("gmsh/model/mesh/field/setString", args.str(), lang);
+        break;
+      case FIELD_OPTION_LIST:
+      case FIELD_OPTION_LIST_DOUBLE:
+        std::string list_val = option_value;
+        if(lang == "py" || lang == "jl") {
+          ReplaceSubStringInPlace("{", "[", list_val);
+          ReplaceSubStringInPlace("}", "]", list_val);
+        }
+        args << field_id << ", \"" << option_name << "\", " << list_val;
+        sstream << api("gmsh/model/mesh/field/setNumbers", args.str(), lang);
+        break;
+      }
     }
     scriptAddCommand(sstream.str(), fileName, lang);
   }
@@ -476,7 +504,9 @@ void scriptAddField(int field_id, const std::string &type_name,
       sstream << "Field[" << field_id << "] = " << type_name << ";";
     }
     else {
-      // TODO
+      std::ostringstream args;
+      args << "\"" << type_name << "\"" << ", " << field_id;
+      sstream << api("gmsh/model/mesh/field/add", args.str(), lang);
     }
     scriptAddCommand(sstream.str(), fileName, lang);
   }
@@ -488,7 +518,8 @@ void scriptDeleteField(int field_id, const std::string &fileName)
     std::ostringstream sstream;
     if(lang == "geo") { sstream << "Delete Field [" << field_id << "];"; }
     else {
-      // TODO
+      sstream << api("gmsh/model/mesh/field/remove",
+                     std::to_string(field_id), lang);
     }
     scriptAddCommand(sstream.str(), fileName, lang);
   }
@@ -500,7 +531,8 @@ void scriptSetBackgroundField(int field_id, const std::string &fileName)
     std::ostringstream sstream;
     if(lang == "geo") { sstream << "Background Field = " << field_id << ";"; }
     else {
-      // TODO
+      sstream << api("gmsh/model/mesh/field/setAsBackgroundMesh",
+                     std::to_string(field_id), lang);
     }
     scriptAddCommand(sstream.str(), fileName, lang);
   }
@@ -1072,7 +1104,6 @@ void scriptSplitCurve(int edge_id, List_T *vertices,
     if(lang == "geo") {
       sstream << "Split Curve {" << edge_id << "} Point "
               << list2String(vertices, lang) << ";";
-      scriptAddCommand(sstream.str(), fileName, lang);
     }
     else {
       // TODO

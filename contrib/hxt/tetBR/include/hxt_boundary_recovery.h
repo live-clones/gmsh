@@ -7,7 +7,7 @@ extern "C" {
 
 #include "hxt_mesh.h"
 
-HXTStatus hxt_boundary_recovery(HXTMesh *mesh);
+  HXTStatus hxt_boundary_recovery(HXTMesh *mesh, double tol);
 
 #ifdef __cplusplus
 }

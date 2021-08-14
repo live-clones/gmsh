@@ -364,7 +364,7 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
     {"Optimization", 0, nullptr, nullptr},
     {"Elastic Analogy", 0, nullptr, nullptr},
     {"Fast Curving", 0, nullptr, nullptr},
-    {"Curve boundary layers (3D is experimental)", 0, nullptr, nullptr},
+    {"Boundary Layer Curving (experimental)", 0, nullptr, nullptr},
     {nullptr}};
   choice[2] = new Fl_Choice(x, y, IW, BH, "Algorithm");
   choice[2]->align(FL_ALIGN_RIGHT);

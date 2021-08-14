@@ -2507,9 +2507,9 @@ given in @var{expression-list} with the specified surface. Currently
 only available with the built-in kernel.
 
 @item Split Curve @{ @var{expression} @} Point @{ @var{expression-list} @}
-(Not a transformation per-se.) Return the curves created by splitting
-curve @var{expression} on the speficied points. Currently only available
-with the built-in kernel.
+(Not a transformation per-se.) Split the curve @var{expression} on the
+specified control points. Only available with the built-in kernel, for
+lines, splines and BSplines.
 @end ftable
 
 @noindent with
@@ -6515,6 +6515,11 @@ done by defining physical groups (Physical Points, Physical Curves,
 Physical Surfaces and Physical Volumes). See the reference manual as
 well as the tutorials (in particular @ref{t1}) for a detailed
 description and some examples.
+
+The Gmsh API can be used to build sophisticated interactive workflows
+where the definition of boundary conditions and material properties can
+be fully tailored to your preferred solver. For an example see
+@url{@value{GITLAB-PREFIX}/demos/api/prepro.py,demos/api/prepro.py}.
 
 @item How can I display only the mesh associated with selected geometrical entities?
 

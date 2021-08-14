@@ -3241,7 +3241,7 @@ bool SplitCurve(int line_id, List_T *vertices_id, List_T *curves)
 {
   Curve *c = FindCurve(line_id);
   if(!c) {
-    Msg::Error("Curve %i does not exists", line_id);
+    Msg::Error("Unknown curve %i to split", line_id);
     return false;
   }
   switch(c->Typ) {

@@ -584,6 +584,7 @@ void OCC_Internals::unbindWithoutChecks(TopoDS_Shape shape)
       _solidTag.UnBind(solid);
       _tagSolid.UnBind(tag);
       _toRemove.insert(std::make_pair(3, tag));
+      _changed = true;
     }
   }
   for(exp0.Init(shape, TopAbs_SHELL); exp0.More(); exp0.Next()) {
@@ -593,6 +594,7 @@ void OCC_Internals::unbindWithoutChecks(TopoDS_Shape shape)
       _shellTag.UnBind(shell);
       _tagShell.UnBind(tag);
       _toRemove.insert(std::make_pair(-2, tag));
+      _changed = true;
     }
   }
   for(exp0.Init(shape, TopAbs_FACE); exp0.More(); exp0.Next()) {
@@ -602,6 +604,7 @@ void OCC_Internals::unbindWithoutChecks(TopoDS_Shape shape)
       _faceTag.UnBind(face);
       _tagFace.UnBind(tag);
       _toRemove.insert(std::make_pair(2, tag));
+      _changed = true;
     }
   }
   for(exp0.Init(shape, TopAbs_WIRE); exp0.More(); exp0.Next()) {
@@ -611,6 +614,7 @@ void OCC_Internals::unbindWithoutChecks(TopoDS_Shape shape)
       _wireTag.UnBind(wire);
       _tagWire.UnBind(tag);
       _toRemove.insert(std::make_pair(-1, tag));
+      _changed = true;
     }
   }
   for(exp0.Init(shape, TopAbs_EDGE); exp0.More(); exp0.Next()) {
@@ -620,6 +624,7 @@ void OCC_Internals::unbindWithoutChecks(TopoDS_Shape shape)
       _edgeTag.UnBind(edge);
       _tagEdge.UnBind(tag);
       _toRemove.insert(std::make_pair(1, tag));
+      _changed = true;
     }
   }
   for(exp0.Init(shape, TopAbs_VERTEX); exp0.More(); exp0.Next()) {
@@ -629,6 +634,7 @@ void OCC_Internals::unbindWithoutChecks(TopoDS_Shape shape)
       _vertexTag.UnBind(vertex);
       _tagVertex.UnBind(tag);
       _toRemove.insert(std::make_pair(0, tag));
+      _changed = true;
     }
   }
 }
@@ -1688,7 +1694,17 @@ bool OCC_Internals::addPlaneSurface(int &tag, const std::vector<int> &wireTags)
 bool OCC_Internals::addSurfaceFilling(int &tag, int wireTag,
                                       const std::vector<int> &pointTags,
                                       const std::vector<int> &surfaceTags,
-                                      const std::vector<int> &surfaceContinuity)
+                                      const std::vector<int> &surfaceContinuity,
+                                      const int degree,
+                                      const int numPointsOnCurves,
+                                      const int numIter,
+                                      const bool anisotropic,
+                                      const double tol2d,
+                                      const double tol3d,
+                                      const double tolAng,
+                                      const double tolCurv,
+                                      const int maxDegree,
+                                      const int maxSegments)
 {
   if(tag >= 0 && _tagFace.IsBound(tag)) {
     Msg::Error("OpenCASCADE surface with tag %d already exists", tag);
@@ -1697,7 +1713,9 @@ bool OCC_Internals::addSurfaceFilling(int &tag, int wireTag,
 
   TopoDS_Face result;
   try {
-    BRepOffsetAPI_MakeFilling f;
+    BRepOffsetAPI_MakeFilling f(degree, numPointsOnCurves, numIter, anisotropic,
+                                tol2d, tol3d, tolAng, tolCurv, maxDegree,
+                                maxSegments);
     // bounding edge constraints
     if(!_tagWire.IsBound(wireTag)) {
       Msg::Error("Unknown OpenCASCADE curve loop with tag %d", wireTag);

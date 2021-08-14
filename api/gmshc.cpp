@@ -958,6 +958,23 @@ GMSH_API void gmshModelMeshReverse(int * dimTags, size_t dimTags_n, int * ierr)
   }
 }
 
+GMSH_API void gmshModelMeshAffineTransform(double * affineTransform, size_t affineTransform_n, int * dimTags, size_t dimTags_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<double> api_affineTransform_(affineTransform, affineTransform + affineTransform_n);
+    gmsh::vectorpair api_dimTags_(dimTags_n/2);
+    for(size_t i = 0; i < dimTags_n/2; ++i){
+      api_dimTags_[i].first = dimTags[i * 2 + 0];
+      api_dimTags_[i].second = dimTags[i * 2 + 1];
+    }
+    gmsh::model::mesh::affineTransform(api_affineTransform_, api_dimTags_);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API void gmshModelMeshGetNodes(size_t ** nodeTags, size_t * nodeTags_n, double ** coord, size_t * coord_n, double ** parametricCoord, size_t * parametricCoord_n, const int dim, const int tag, const int includeBoundary, const int returnParametricCoord, int * ierr)
 {
   if(ierr) *ierr = 0;
@@ -992,13 +1009,13 @@ GMSH_API void gmshModelMeshGetNodesByElementType(const int elementType, size_t *
   }
 }
 
-GMSH_API void gmshModelMeshGetNode(const size_t nodeTag, double ** coord, size_t * coord_n, double ** parametricCoord, size_t * parametricCoord_n, int * ierr)
+GMSH_API void gmshModelMeshGetNode(const size_t nodeTag, double ** coord, size_t * coord_n, double ** parametricCoord, size_t * parametricCoord_n, int * dim, int * tag, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
     std::vector<double> api_coord_;
     std::vector<double> api_parametricCoord_;
-    gmsh::model::mesh::getNode(nodeTag, api_coord_, api_parametricCoord_);
+    gmsh::model::mesh::getNode(nodeTag, api_coord_, api_parametricCoord_, *dim, *tag);
     vector2ptr(api_coord_, coord, coord_n);
     vector2ptr(api_parametricCoord_, parametricCoord, parametricCoord_n);
   }
@@ -1110,12 +1127,12 @@ GMSH_API void gmshModelMeshGetElements(int ** elementTypes, size_t * elementType
   }
 }
 
-GMSH_API void gmshModelMeshGetElement(const size_t elementTag, int * elementType, size_t ** nodeTags, size_t * nodeTags_n, int * ierr)
+GMSH_API void gmshModelMeshGetElement(const size_t elementTag, int * elementType, size_t ** nodeTags, size_t * nodeTags_n, int * dim, int * tag, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
     std::vector<std::size_t> api_nodeTags_;
-    gmsh::model::mesh::getElement(elementTag, *elementType, api_nodeTags_);
+    gmsh::model::mesh::getElement(elementTag, *elementType, api_nodeTags_, *dim, *tag);
     vector2ptr(api_nodeTags_, nodeTags, nodeTags_n);
   }
   catch(...){
@@ -2918,13 +2935,13 @@ GMSH_API int gmshModelOccAddPlaneSurface(int * wireTags, size_t wireTags_n, cons
   return result_api_;
 }
 
-GMSH_API int gmshModelOccAddSurfaceFilling(const int wireTag, const int tag, int * pointTags, size_t pointTags_n, int * ierr)
+GMSH_API int gmshModelOccAddSurfaceFilling(const int wireTag, const int tag, int * pointTags, size_t pointTags_n, const int degree, const int numPointsOnCurves, const int numIter, const int anisotropic, const double tol2d, const double tol3d, const double tolAng, const double tolCurv, const int maxDegree, const int maxSegments, int * ierr)
 {
   int result_api_ = 0;
   if(ierr) *ierr = 0;
   try {
     std::vector<int> api_pointTags_(pointTags, pointTags + pointTags_n);
-    result_api_ = gmsh::model::occ::addSurfaceFilling(wireTag, tag, api_pointTags_);
+    result_api_ = gmsh::model::occ::addSurfaceFilling(wireTag, tag, api_pointTags_, degree, numPointsOnCurves, numIter, anisotropic, tol2d, tol3d, tolAng, tolCurv, maxDegree, maxSegments);
   }
   catch(...){
     if(ierr) *ierr = 1;
@@ -3412,7 +3429,7 @@ GMSH_API void gmshModelOccSymmetrize(int * dimTags, size_t dimTags_n, const doub
   }
 }
 
-GMSH_API void gmshModelOccAffineTransform(int * dimTags, size_t dimTags_n, double * a, size_t a_n, int * ierr)
+GMSH_API void gmshModelOccAffineTransform(int * dimTags, size_t dimTags_n, double * affineTransform, size_t affineTransform_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
@@ -3421,8 +3438,8 @@ GMSH_API void gmshModelOccAffineTransform(int * dimTags, size_t dimTags_n, doubl
       api_dimTags_[i].first = dimTags[i * 2 + 0];
       api_dimTags_[i].second = dimTags[i * 2 + 1];
     }
-    std::vector<double> api_a_(a, a + a_n);
-    gmsh::model::occ::affineTransform(api_dimTags_, api_a_);
+    std::vector<double> api_affineTransform_(affineTransform, affineTransform + affineTransform_n);
+    gmsh::model::occ::affineTransform(api_dimTags_, api_affineTransform_);
   }
   catch(...){
     if(ierr) *ierr = 1;

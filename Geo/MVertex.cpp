@@ -280,6 +280,14 @@ void MVertex::writeMESH(FILE *fp, double scalingFactor)
           _ge ? _ge->tag() : 0);
 }
 
+void MVertex::writeOFF(FILE *fp, double scalingFactor)
+{
+  if(_index < 0) return; // negative index vertices are never saved
+
+  fprintf(fp, "%g %g %g\n", x() * scalingFactor, y() * scalingFactor,
+          z() * scalingFactor);
+}
+
 void MVertex::writeNEU(FILE *fp, int dim, double scalingFactor)
 {
   if(_index < 0) return; // negative index vertices are never saved

@@ -97,8 +97,8 @@ protected:
   // used for post-processing I/O)
   std::vector<MVertex *> _vertexVectorCache;
   std::map<int, MVertex *> _vertexMapCache;
-  std::vector<MElement *> _elementVectorCache;
-  std::map<int, MElement *> _elementMapCache;
+  std::vector<std::pair<MElement *, int> > _elementVectorCache;
+  std::map<int, std::pair<MElement *, int> > _elementMapCache;
   std::map<int, int> _elementIndexCache;
 
   // ghost cell information (stores partitions for each element acting
@@ -530,7 +530,12 @@ public:
                                                  bool strict = true);
 
   // access a mesh element by tag, using the element cache
-  MElement *getMeshElementByTag(int n);
+  MElement *getMeshElementByTag(int n)
+  {
+    int tag;
+    return getMeshElementByTag(n, tag);
+  }
+  MElement *getMeshElementByTag(int n, int &entityTag);
 
   // access temporary mesh element index
   int getMeshElementIndex(MElement *e);
@@ -786,6 +791,11 @@ public:
   int readMESH(const std::string &name);
   int writeMESH(const std::string &name, int elementTagType = 1,
                 bool saveAll = false, double scalingFactor = 1.0);
+
+  // Object file format (OFF)
+  int readOFF(const std::string &name);
+  int writeOFF(const std::string &name, bool saveAll = false,
+               double scalingFactor = 1.0);
 
   // Nastran Bulk Data File format
   int readBDF(const std::string &name);

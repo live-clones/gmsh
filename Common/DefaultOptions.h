@@ -1330,6 +1330,8 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "NumSubEdges" , opt_mesh_num_sub_edges , 2. ,
     "Number of edge subdivisions when displaying high-order elements" },
 
+  { F|O, "OldInitialDelaunay2D" , opt_mesh_old_initial_delaunay_2d , 0. ,
+    "Use old initial 2D Delaunay code" },
   { F|O, "Optimize" , opt_mesh_optimize , 1. ,
     "Optimize the mesh to improve the quality of tetrahedral elements" },
   { F|O, "OptimizeThreshold" , opt_mesh_optimize_threshold , 0.3 ,
@@ -1387,8 +1389,6 @@ StringXNumber MeshOptions_Number[] = {
     "Display mesh prisms?" },
   { F|O, "Pyramids" , opt_mesh_pyramids , 1. ,
     "Display mesh pyramids?" },
-  { F|O, "Trihedra" , opt_mesh_trihedra , 1. ,
-    "Display mesh trihedra?" },
 
   { F|O, "QuadqsSizemapMethod" , opt_mesh_quadqs_sizemap_method, 0. ,
     "Size map method in QuadQuasiStructured. 0: default, 1: cross-field,"
@@ -1408,11 +1408,8 @@ StringXNumber MeshOptions_Number[] = {
       " the quad mesh. From 0 (no quality decrease during remeshing) to 1"
       " (quality can tend to 0 during remeshing)."
   },
-
   { F|O, "Quadrangles" , opt_mesh_quadrangles , 1. ,
     "Display mesh quadrangles?" },
-
-
   { F|O, "QualityInf" , opt_mesh_quality_inf , 0.0 ,
     "Only display elements whose quality measure is greater than QualityInf" },
   { F|O, "QualitySup" , opt_mesh_quality_sup , 0.0 ,
@@ -1433,7 +1430,6 @@ StringXNumber MeshOptions_Number[] = {
     "Random factor used in the 3D meshing algorithm" },
   { F|O, "RandomSeed" , opt_mesh_random_seed , 1. ,
     "Seed of pseudo-random number generator" },
-
 
   { F|O, "ReadGroupsOfElements" , opt_mesh_read_groups_of_elements , 1. ,
     "Read groups of elements in UNV meshes (this will discard the elementary "
@@ -1532,10 +1528,12 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "ToleranceEdgeLength" , opt_mesh_tolerance_edge_length, 0.0,
     "Skip a model edge in mesh generation if its length is less than user's "
     "defined tolerance" },
-  { F|O, "ToleranceInitialDelaunay" , opt_mesh_tolerance_initial_delaunay, 1.e-8,
+  { F|O, "ToleranceInitialDelaunay" , opt_mesh_tolerance_initial_delaunay, 1.e-12,
     "Tolerance for initial 3D Delaunay mesher" },
   { F|O, "Triangles" , opt_mesh_triangles , 1. ,
     "Display mesh triangles?" },
+  { F|O, "Trihedra" , opt_mesh_trihedra , 1. ,
+    "Display mesh trihedra?" },
 
   { F|O, "UnvStrictFormat" , opt_mesh_unv_strict_format , 1 ,
     "Use strict format specification for UNV files, with 'D' for exponents (instead of "
