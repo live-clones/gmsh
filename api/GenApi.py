@@ -474,7 +474,7 @@ def ovectorint(name, value=None, python_value=None, julia_value=None):
                    " = Ref{Csize_t}()")
     a.julia_arg = api_name + ", " + api_name_n
     a.julia_post = (name + " = unsafe_wrap(Array, " + api_name + "[], " +
-                    api_name_n + "[], own=true)")
+                    api_name_n + "[], own = true)")
     a.fortran_type = "type(c_ptr), intent(out)"
     a.fortran_type_post = "\n            integer(c_size_t) :: " + name +"_n"
     a.fortran_name_post = ",\n     &      " + name + "_n"
@@ -502,7 +502,7 @@ def ovectorsize(name, value=None, python_value=None, julia_value=None):
                    " = Ref{Csize_t}()")
     a.julia_arg = api_name + ", " + api_name_n
     a.julia_post = (name + " = unsafe_wrap(Array, " + api_name + "[], " +
-                    api_name_n + "[], own=true)")
+                    api_name_n + "[], own = true)")
     a.fortran_type = "type(c_ptr), intent(out)"
     a.fortran_type_post = "\n            integer(c_size_t) :: " + name + "_n"
     a.fortran_name_post = ",\n     &      " + name + "_n"
@@ -530,7 +530,7 @@ def ovectordouble(name, value=None, python_value=None, julia_value=None):
                    " = Ref{Csize_t}()")
     a.julia_arg = api_name + ", " + api_name_n
     a.julia_post = (name + " = unsafe_wrap(Array, " + api_name + "[], " +
-                    api_name_n + "[], own=true)")
+                    api_name_n + "[], own = true)")
     a.fortran_type = "type(c_ptr), intent(out)"
     a.fortran_type_post = "\n            integer(c_size_t) :: " + name + "_n"
     a.fortran_name_post = ",\n     &      " + name + "_n"
@@ -561,7 +561,7 @@ def ovectorstring(name, value=None, python_value=None, julia_value=None):
                    " = Ref{Csize_t}()")
     a.julia_arg = api_name + ", " + api_name_n
     a.julia_post = ("tmp_" + api_name + " = unsafe_wrap(Array, " + api_name +
-                    "[], " + api_name_n + "[], own=true)\n    " + name +
+                    "[], " + api_name_n + "[], own = true)\n    " + name +
                     " = [unsafe_string(tmp_" + api_name +
                     "[i]) for i in 1:length(tmp_" + api_name + ") ]")
     a.fortran_type = "type(c_ptr), intent(out)"
@@ -594,7 +594,7 @@ def ovectorpair(name, value=None, python_value=None, julia_value=None):
                    " = Ref{Csize_t}()")
     a.julia_arg = api_name + ", " + api_name_n
     a.julia_post = ("tmp_" + api_name + " = unsafe_wrap(Array, " + api_name +
-                    "[], " + api_name_n + "[], own=true)\n    " + name +
+                    "[], " + api_name_n + "[], own = true)\n    " + name +
                     " = [ (tmp_" + api_name + "[i], tmp_" + api_name +
                     "[i+1]) " + "for i in 1:2:length(tmp_" + api_name + ") ]")
     a.fortran_type = "type(c_ptr), intent(out)"
@@ -635,11 +635,11 @@ def ovectorvectorint(name, value=None, python_value=None, julia_value=None):
                    " = Ref{Csize_t}()")
     a.julia_arg = api_name + ", " + api_name_n + ", " + api_name_nn
     a.julia_post = ("tmp_" + api_name + " = unsafe_wrap(Array, " + api_name +
-                    "[], " + api_name_nn + "[], own=true)\n    " + "tmp_" +
+                    "[], " + api_name_nn + "[], own = true)\n    " + "tmp_" +
                     api_name_n + " = unsafe_wrap(Array, " + api_name_n +
-                    "[], " + api_name_nn + "[], own=true)\n    " + name +
+                    "[], " + api_name_nn + "[], own = true)\n    " + name +
                     " = [ unsafe_wrap(Array, tmp_" + api_name + "[i], " +
-                    "tmp_" + api_name_n + "[i], own=true) for i in 1:" +
+                    "tmp_" + api_name_n + "[i], own = true) for i in 1:" +
                     api_name_nn + "[] ]")
     a.fortran_type = "type(c_ptr), intent(out)"
     a.fortran_type_post = ("\n            type(c_ptr), intent(out) :: " + name +
@@ -680,11 +680,11 @@ def ovectorvectorsize(name, value=None, python_value=None, julia_value=None):
                    " = Ref{Csize_t}()")
     a.julia_arg = api_name + ", " + api_name_n + ", " + api_name_nn
     a.julia_post = ("tmp_" + api_name + " = unsafe_wrap(Array, " + api_name +
-                    "[], " + api_name_nn + "[], own=true)\n    " + "tmp_" +
+                    "[], " + api_name_nn + "[], own = true)\n    " + "tmp_" +
                     api_name_n + " = unsafe_wrap(Array, " + api_name_n +
-                    "[], " + api_name_nn + "[], own=true)\n    " + name +
+                    "[], " + api_name_nn + "[], own = true)\n    " + name +
                     " = [ unsafe_wrap(Array, tmp_" + api_name + "[i], " +
-                    "tmp_" + api_name_n + "[i], own=true) for i in 1:" +
+                    "tmp_" + api_name_n + "[i], own = true) for i in 1:" +
                     api_name_nn + "[] ]")
     a.fortran_type = "type (c_ptr), intent(out)"
     a.fortran_type_post = ("\n            type(c_ptr), intent(out) :: " + name +
@@ -726,11 +726,11 @@ def ovectorvectordouble(name, value=None, python_value=None, julia_value=None):
                    " = Ref{Csize_t}()")
     a.julia_arg = api_name + ", " + api_name_n + ", " + api_name_nn
     a.julia_post = ("tmp_" + api_name + " = unsafe_wrap(Array, " + api_name +
-                    "[], " + api_name_nn + "[], own=true)\n    " + "tmp_" +
+                    "[], " + api_name_nn + "[], own = true)\n    " + "tmp_" +
                     api_name_n + " = unsafe_wrap(Array, " + api_name_n +
-                    "[], " + api_name_nn + "[], own=true)\n    " + name +
+                    "[], " + api_name_nn + "[], own = true)\n    " + name +
                     " = [ unsafe_wrap(Array, tmp_" + api_name + "[i], " +
-                    "tmp_" + api_name_n + "[i], own=true) for i in 1:" +
+                    "tmp_" + api_name_n + "[i], own = true) for i in 1:" +
                     api_name_nn + "[] ]")
     a.fortran_type = "type (c_ptr), intent(out)"
     a.fortran_type_post = ("\n            type(c_ptr), intent(out) :: " + name +
@@ -775,12 +775,12 @@ def ovectorvectorpair(name, value=None, python_value=None, julia_value=None):
     a.julia_arg = api_name + ", " + api_name_n + ", " + api_name_nn
     a.julia_post = (
         "tmp_" + api_name + " = unsafe_wrap(Array, " + api_name + "[], " +
-        api_name_nn + "[], own=true)\n    " + "tmp_" + api_name_n +
+        api_name_nn + "[], own = true)\n    " + "tmp_" + api_name_n +
         " = unsafe_wrap(Array, " + api_name_n + "[], " + api_name_nn +
-        "[], own=true)\n    " + name + " = Vector{Tuple{Cint,Cint}}[]\n    " +
+        "[], own = true)\n    " + name + " = Vector{Tuple{Cint,Cint}}[]\n    " +
         "resize!(" + name + ", " + api_name_nn + "[])\n    " + "for i in 1:" +
         api_name_nn + "[]\n    " + "    tmp = unsafe_wrap(Array, tmp_" +
-        api_name + "[i], tmp_" + api_name_n + "[i], own=true)\n    " + "    " +
+        api_name + "[i], tmp_" + api_name_n + "[i], own = true)\n    " + "    " +
         name + "[i] = [(tmp[i], tmp[i+1]) for i in 1:2:length(tmp)]\n    " +
         "end")
     a.fortran_type = "type (C_PTR), intent(out)"
