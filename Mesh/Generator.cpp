@@ -26,6 +26,7 @@
 #include "meshGRegion.h"
 #include "meshGRegionLocalMeshMod.h"
 #include "meshGRegionHexbl.h"
+#include "meshGRegionHxt.h"
 #include "meshRelocateVertex.h"
 #include "meshRefine.h"
 #include "BackgroundMesh.h"
@@ -563,15 +564,11 @@ static void Mesh2D(GModel *m)
   if(CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT) {
     replaceBadQuadDominantMeshes(m);
 
-    /* In the quasi-structured pipeline, the quad-dominant mesh
-     * is subdivided into a full quad mesh */
-    /* TODO: - a faster CAD projection approach (from uv)
-     *       - verify quality during projection */
-    // bool linear = false;
-    // RefineMesh(m, linear, true, false);
     RefineMeshWithBackgroundMeshProjection(m);
 
     OptimizeMesh(m, "QuadQuasiStructured");
+
+    quadqsCleanup(m);
   }
 
   double t2 = Cpu(), w2 = TimeOfDay();
@@ -1133,6 +1130,7 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter)
 
     // transferSeamGEdgesVerticesToGFace(m);
     quadMeshingOfSimpleFacesWithPatterns(m);
+    optimizeQuadMeshBoundaries(m);
     optimizeTopologyWithDiskQuadrangulationRemeshing(m);
     optimizeTopologyWithCavityRemeshing(m);
 
@@ -1509,8 +1507,8 @@ void GenerateMesh(GModel *m, int ask)
   // Some meshing algorithms require a global background mesh
   // and a guiding field (e.g. cross field + size map)
   QuadqsContextUpdater *qqs = nullptr;
-  if(CTX::instance()->mesh.algo2d == ALGO_2D_PACK_PRLGRMS ||
-     CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT) {
+  if((ask == 1 || ask == 2) && (CTX::instance()->mesh.algo2d == ALGO_2D_PACK_PRLGRMS ||
+     CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT)) {
     int old = m->getMeshStatus(false);
     bool doIt = (ask >= 1 && ask <= 3);
     bool exists = backgroundMeshAndGuidingFieldExists(m);
@@ -1561,7 +1559,8 @@ void GenerateMesh(GModel *m, int ask)
   // dimension of previous/existing mesh
   int old = m->getMeshStatus(false);
 
-  // TODOMX tmp testing
+  // If surface mesh loaded from disk, do not overwrite it
+  // when doing all-hex boundary layer meshing
   if (ask == 3 || CTX::instance()->mesh.algo3d == ALGO_3D_HEXBL) {
     bool surfaceMesh = true;
     for (GFace* gf: m->getFaces()) if (gf->getNumMeshElements() == 0){
@@ -1570,7 +1569,6 @@ void GenerateMesh(GModel *m, int ask)
     if (surfaceMesh) old = 2;
   }
 
-  printf("old %i, ask %i\n", old, ask);
 
   // 1D mesh
   if(ask == 1 || (ask > 1 && old < 1)) {
@@ -1647,7 +1645,9 @@ void GenerateMesh(GModel *m, int ask)
 
   Msg::PrintErrorCounter("Mesh generation error summary");
 
-  if(qqs != nullptr) delete qqs;
+  if(qqs != nullptr) { // clean quadqs options and fields
+    delete qqs;
+  }
 
   CTX::instance()->lock = 0;
   // ProfilerStop();

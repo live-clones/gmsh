@@ -197,6 +197,9 @@ bool buildTetrahedraFromElements(
           elementTargetShapes[e][2],
           elementTargetShapes[e][3]
         };
+        // warning: tet orientation in untangler is inverted compared to gmsh
+        // orientation
+        ishape = invert_shape(ishape);
         tetIdealShapes.push_back(ishape);
       } else {
         tetIdealShapes.push_back(tet_ideal_shape);

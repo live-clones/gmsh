@@ -49,5 +49,8 @@ namespace hbl {
 
   enum class QualityMetric {SIGE, SICN};
 
-  std::array<double,5> computeQualityStatsMinMedAvgMaxInv(const BrepMesh& M, QualityMetric m = QualityMetric::SIGE);
+  std::array<double,5> computeInputQualityStatsMinMedAvgMaxInv(const BrepMesh& M, QualityMetric m = QualityMetric::SIGE);
+  std::array<double,5> computeHexQualityStatsMinMedAvgMaxInv(const HblOutput& output, QualityMetric m = QualityMetric::SIGE);
+  std::array<double,5> computeTetQualityStatsMinMedAvgMaxInv(const HblOutput& output, QualityMetric m = QualityMetric::SIGE);
+  std::array<double,5> computeHexTetQualityStatsMinMedAvgMaxInv(const HblOutput& output, QualityMetric m = QualityMetric::SIGE);
 }

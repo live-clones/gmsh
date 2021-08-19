@@ -388,7 +388,7 @@ namespace WinslowUntangler {
     double avg_tet_vol = volume(points, tets) / double(tets.size());
     if(avg_tet_vol <= 0) {
       Msg::Warning(
-        "Winslow untangler 3D: average triangle area is negative: %.3e",
+        "Winslow untangler 3D: average tet area is negative: %.3e",
         avg_tet_vol);
     }
 
@@ -431,6 +431,12 @@ namespace WinslowUntangler {
       }
 
       double vol = tet_volume(shape[0], shape[1], shape[2], shape[3]);
+      if (std::isnan(vol)) {
+        Msg::Error("Winslow untangler 3D: volume of ideal shape for tet %li: %f", t, vol);
+        return false;
+      } else if (vol < 0.) {
+        Msg::Warning("Winslow untangler 3D: volume of ideal shape for tet %li: %f", t, vol);
+      }
 
       // Compute normals
       for(size_t lf = 0; lf < 4; ++lf) {
@@ -552,12 +558,14 @@ namespace WinslowUntangler {
     if(dim == 2) {
       auto triIdealShapesS = triIdealShapes;
       scaleToUnit(points2D, triIdealShapesS, bbmin2D, bbmax2D);
-      prepareData2D(points2D, locked, triangles, triIdealShapesS, data);
+      bool okp = prepareData2D(points2D, locked, triangles, triIdealShapesS, data);
+      if (!okp) return false;
     }
     else if(dim == 3) {
       auto tetIdealShapesS = tetIdealShapes;
       scaleToUnit(points3D, tetIdealShapesS, bbmin3D, bbmax3D);
-      prepareData3D(points3D, locked, tetrahedra, tetIdealShapesS, data);
+      bool okp = prepareData3D(points3D, locked, tetrahedra, tetIdealShapesS, data);
+      if (!okp) return false;
     }
     double *points =
       (dim == 2) ? points2D.front().data() : points3D.front().data();

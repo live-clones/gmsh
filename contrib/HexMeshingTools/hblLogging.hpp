@@ -36,8 +36,8 @@ namespace hbl {
         }
         out << *s++;
       }
-      printf("! sformat problem, input: %s\n",s);
-      throw std::runtime_error("extra arguments provided to printf");
+      printf("! sformat problem, input: %s\n, extra arguments provided to sformat",*s);
+      //throw std::runtime_error("extra arguments provided to printf");
     }
 
   template <typename... Args>

@@ -835,8 +835,16 @@ std::vector<MTriangle*> trianglesFromQuads(const std::vector<MQuadrangle*>& quad
   std::vector<MTriangle*> tris;
   tris.reserve(2*quads.size());
   for (MQuadrangle* q: quads) {
-    MTriangle *t11 = new MTriangle(q->getVertex(0), q->getVertex(1), q->getVertex(2));
-    MTriangle *t12 = new MTriangle(q->getVertex(0), q->getVertex(2), q->getVertex(3));
+    MTriangle *t11;
+    MTriangle *t12;
+    if (std::min(q->getVertex(0)->getNum(),q->getVertex(2)->getNum())
+        < std::min(q->getVertex(1)->getNum(),q->getVertex(3)->getNum())) {
+      t11 = new MTriangle(q->getVertex(0), q->getVertex(1), q->getVertex(2));
+      t12 = new MTriangle(q->getVertex(0), q->getVertex(2), q->getVertex(3));
+    } else {
+      t11 = new MTriangle(q->getVertex(0), q->getVertex(1), q->getVertex(3));
+      t12 = new MTriangle(q->getVertex(3), q->getVertex(1), q->getVertex(2));
+    }
     tris.push_back(t11);
     tris.push_back(t12);
   }

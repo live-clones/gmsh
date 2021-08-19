@@ -15,7 +15,8 @@
 namespace hbl {
 
   bool buildInteriorHexdomMesh(
-      const HblOptions& opt,
+      const HblInput& input,
+      HblOptions& opt,
       HblOutput& output);
 
 

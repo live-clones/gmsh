@@ -433,8 +433,8 @@ namespace hbl {
         Msg::Error("hexbl: failed to build all-hex boundary layer mesh for region %i", gr->tag());
         return false;
       }  else {
-        Msg::Warning("hexbl: failed to build all-hex boundary layer mesh geometry for region %i", gr->tag());
-        return false;
+        Msg::Warning("hexbl: tangled elements in all-hex boundary layer mesh geometry for region %i", gr->tag());
+        // return false;
       }
     }
 
@@ -443,6 +443,20 @@ namespace hbl {
     return true;
   }
 
+  void fillStatisticts(
+      const HblInput& input, const HblOptions& opt, const HblOutput& output,
+      HblStats& stats) {
+    stats.inNbVertices = input.Q.vertices.size();
+    stats.inNbFacets = input.Q.faces.size();
+    stats.outNbVertices = output.H.vertices.size();
+    stats.outNbHexes = output.hexahedra.size();
+    stats.outNbTets = output.tetrahedra.size();
+
+    QualityMetric m = QualityMetric::SIGE;
+    stats.qualityInputMinMedAvgMaxInv = computeInputQualityStatsMinMedAvgMaxInv(input.Q, m);
+    stats.qualityHexMinMedAvgMaxInv = computeHexQualityStatsMinMedAvgMaxInv(output, m);
+    stats.qualityTetMinMedAvgMaxInv = computeTetQualityStatsMinMedAvgMaxInv(output, m);
+  }
 
   int generateAllHexBoundaryLayerMesh(GModel* gm) {
     Msg::Info("Generate all-hex boundary layer for %li volumes ...", gm->getNumRegions());
@@ -471,13 +485,18 @@ namespace hbl {
 
     HblOptions opt;
     opt.dt = &trgls;
-    opt.extrusion_factor = 1./3.;
+    // opt.extrusion_factor = 1./3.;
+    opt.extrusion_factor = 1./2.;
     if (Msg::GetVerbosity() >= 99) {
       opt.debug = true;
       opt.viz = true;
     }
     opt.gecodeTimeMaxInit = 30e3; // 30 seconds for initial guess
     opt.gecodeTimeMaxImprove = 3e3; // 3 seconds to improve
+
+    for (GFace* gf: gm->getFaces()) {
+      if (gf->isFullyDiscrete())  opt.discreteModel = true;
+    }
 
     char* pure_extrusion = getenv("pure_extrusion");
     if (pure_extrusion) {
@@ -554,7 +573,7 @@ namespace hbl {
 
       if (hexdom) {
         Msg::Info("- Region %i: build interior hex-dominant mesh", gr->tag());
-        bool oki = buildInteriorHexdomMesh(opt, output);
+        bool oki = buildInteriorHexdomMesh(input, opt, output);
         if (!oki) {
           Msg::Warning("hexbl: failed to build interior mesh in region %i", gr->tag());
         }
@@ -568,34 +587,17 @@ namespace hbl {
 
       gr->meshStatistics.status = GRegion::DONE;
 
-      bool stats_quads = true;
-      if (stats_quads) {
-        BrepMesh Q2 = input.Q;
-        midpoint_subdivision(Q2);
-        output.stats.qualityQuadMinMedAvgMaxInv = computeQualityStatsMinMedAvgMaxInv(Q2);
-      }
+      fillStatisticts(input, opt, output, output.stats);
 
-      bool compareStatsExtrusion = false;
-      if (compareStatsExtrusion) {
-        Msg::Warning("Build a extruded boundary layer for comparison");
-        HblInput input2 = input;
-        std::fill(input2.edgeHexValIdeal.begin(),input2.edgeHexValIdeal.end(),2.);
-        HblOutput output2;
-        solveAllHexBoundaryLayerProblem(input2, opt, output2); 
-        buildAllHexBoundaryLayer(input2, opt, output2);
-
-        output.stats.qualityExtrusionMinMedAvgMaxInv = output2.stats.qualityFinalMinMedAvgMaxInv;
-        output.stats.extrusionOutNbHexes = output2.H.cells.size();
-        output.stats.extrusionOutNbVertices = output2.H.vertices.size();
-        output.stats.extrusionTimePreprocessing = output2.stats.timePreprocessing;
-        output.stats.extrusionTimeIntegerProblem = output2.stats.timeIntegerProblem;
-        output.stats.extrusionTimeMeshConstruction = output2.stats.timeMeshConstruction;
-
-      }
-      output.stats.inNbVertices = input.Q.vertices.size();
-      output.stats.inNbFacets = input.Q.faces.size();
-      output.stats.outNbVertices = output.H.vertices.size();
-      output.stats.outNbHexes = output.H.cells.size(); /* todo: assumes only hexes in H, not tet interior */
+      // bool compareStatsExtrusion = false;
+      // if (compareStatsExtrusion) {
+      //   Msg::Warning("Build a extruded boundary layer for comparison");
+      //   HblInput input2 = input;
+      //   std::fill(input2.edgeHexValIdeal.begin(),input2.edgeHexValIdeal.end(),2.);
+      //   HblOutput output2;
+      //   solveAllHexBoundaryLayerProblem(input2, opt, output2); 
+      //   buildAllHexBoundaryLayer(input2, opt, output2);
+      // }
 
       printHblStats(output.stats);
       writeHblStats(output.stats, "hexbl_statistics.json");

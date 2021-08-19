@@ -30,6 +30,7 @@ namespace hbl {
     bool noCADproj = false;
     bool debug = true;
     bool viz = false;
+    bool discreteModel = false;
 
 
     double gecodeTimeMaxInit = 100e3;
@@ -40,6 +41,7 @@ namespace hbl {
     int inNbFacets = 0;
     int inNbVertices = 0;
     int outNbHexes = 0;
+    int outNbTets = 0;
     int outNbVertices = 0;
     double timePreprocessing = 0.;
     double timeIntegerProblem = 0.;
@@ -51,8 +53,10 @@ namespace hbl {
     int topoNbSubProblemStopped = 0;
     int topoNbSubProblemFailed = 0;
     double energyFinal = 0.;
+    std::array<double,5> qualityInputMinMedAvgMaxInv = {0.,0.,0.,0.,0.};
     std::array<double,5> qualityQuadMinMedAvgMaxInv = {0.,0.,0.,0.,0.};
-    std::array<double,5> qualityFinalMinMedAvgMaxInv = {0.,0.,0.,0.,0.};
+    std::array<double,5> qualityHexMinMedAvgMaxInv = {0.,0.,0.,0.,0.};
+    std::array<double,5> qualityTetMinMedAvgMaxInv = {0.,0.,0.,0.,0.};
 
     double energyExtrusion = 0.;
     int extrusionOutNbHexes = 0;
@@ -64,10 +68,8 @@ namespace hbl {
 
     std::vector<std::array<double,6> > subproblemVarIterTimeStoppedTfirstTlast;
 
-    int nbSelfIntersectionInitial = 0;
-    int nbSelfIntersectionFixed = 0;
-    int interiorTetMeshingInitial = 0;
-    int interiorTetMeshingFixed = 0;
+    int interiorTetMesh = 0;
+    int interiorTetMeshTopoFallback = 0;
   };
 
   void printHblStats(const HblStats& stats);

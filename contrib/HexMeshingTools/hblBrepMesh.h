@@ -162,6 +162,8 @@ namespace hbl {
 
   bool subdivide_hex_boundary_layer_anistropic(BrepMesh& H, int N);
 
+  bool orient_tetrahedra_coherent(std::vector<id4>& tets);
+
   /* Use merge_vertices_hash if the mesh is big and the number of affected elements is small
    * compared to the mesh size (e.g. less than 1%).
    * Under the hood, it will use hash maps intead of global vectors */

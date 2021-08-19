@@ -966,7 +966,7 @@ inline int clamp(int val, int lower, int upper)
 }
 
 size_t idealBoundaryValence(const MVertex* v, double ideal) {
-  if (v->onWhat()->dim() == 1) { 
+  if (v->onWhat() && v->onWhat()->dim() == 1) { 
     /* Regular on curves */
     return 2;
   }
@@ -2758,7 +2758,7 @@ int insertExtrudedBoundaryLayer(
   return 0;
 }
 
-int optimizeFaceQuadMeshBoundaries(GFace *gf) {
+int optimizeFaceQuadMeshBoundaries(GFace *gf, bool ignoreAcuteCorners = false) {
   if(gf->triangles.size() > 0 || gf->quadrangles.size() == 0) return -1;
 
   /* For each bdr vertex, compute the ideal valence (based on angle viewed from
@@ -2786,6 +2786,7 @@ int optimizeFaceQuadMeshBoundaries(GFace *gf) {
   /* Check if valences are not right on a loop */
   size_t nlayer = 0;
   for (size_t i = 0; i < loops.size(); ++i) {
+    bool goodAcute = false;
     bool loopIsGood = true;
     for (MVertex* v: loops[i]) {
       auto it = adj.find(v);
@@ -2798,9 +2799,14 @@ int optimizeFaceQuadMeshBoundaries(GFace *gf) {
 
       if (val != ival) {
         loopIsGood = false;
-        break;
+      }
+
+      if (val == ival && iti->second < 0.5) {
+        goodAcute = true;
       }
     }
+
+    if (ignoreAcuteCorners && goodAcute) continue;
 
     /* Add a layer */
     if (!loopIsGood) {
@@ -2826,8 +2832,6 @@ int optimizeQuadMeshBoundaries(GModel *gm)
   Msg::Info(
     "Optimize topology of quad mesh boundaries with extrusion and remeshing ...");
 
-  initDiskQuadrangulations();
-
   std::vector<GFace *> faces = model_faces(gm);
 
 #if defined(_OPENMP)
@@ -2842,7 +2846,7 @@ int optimizeQuadMeshBoundaries(GModel *gm)
       continue;
     if(gf->triangles.size() > 0 || gf->quadrangles.size() == 0) continue;
 
-    optimizeFaceQuadMeshBoundaries(gf);
+    optimizeFaceQuadMeshBoundaries(gf, true);
   }
 
   return 0;
@@ -3397,4 +3401,25 @@ void QuadqsContextUpdater::restoreInitialOption()
 #else
   Msg::Error("Module QUADMESHINGTOOLS required to use QuadqsContextUpdater");
 #endif
+}
+
+int quadqsCleanup(GModel *gm) {
+  Msg::Info("Cleaning quadqs background mesh and field");
+  global_bmeshes.clear(); /* background meshes used in quadqs */
+  if (gm->getFields()->getBackgroundField() > 0) { /* background field */
+    gm->getFields()->reset();
+    // Field *field = gm->getFields()->get(gm->getFields()->getBackgroundField());
+    // if(field && field->numComponents() == 3) {
+    //   gm->getFields()->deleteField(field->id);
+    //   gm->getFields()->setBackgroundMesh(0);
+    // }
+  }
+#if defined(HAVE_POST)
+  PView *view = PView::getViewByName("guiding_field");
+  delete view;
+#if defined(HAVE_FLTK)
+  if(FlGui::available()) FlGui::instance()->updateViews(true, true);
+#endif
+#endif
+  return 0;
 }

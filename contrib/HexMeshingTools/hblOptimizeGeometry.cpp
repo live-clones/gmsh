@@ -40,6 +40,7 @@
 #include "gmsh.h"
 #include "MHexahedron.h"
 #include "MQuadrangle.h"
+#include "MTriangle.h"
 #include "MTetrahedron.h"
 #include "MVertex.h"
 #include "StringUtils.h"
@@ -253,6 +254,7 @@ namespace hbl {
         hex = new MHexahedron(vert[0], vert[1], vert[2], vert[3], vert[4], vert[5], vert[6], vert[7]);
         tet = new MTetrahedron(vert[0], vert[1], vert[2], vert[3]);
         quad = new MQuadrangle(vert[0], vert[1], vert[2], vert[3]);
+        tri = new MTriangle(vert[0], vert[1], vert[2]);
       }
 
       ~QualityComputer() {
@@ -260,6 +262,7 @@ namespace hbl {
         delete hex;
         delete tet;
         delete quad;
+        delete tri;
       }
 
       double minQualityTet(const std::array<vec3,4>& pts, QualityMetric m) {
@@ -274,6 +277,17 @@ namespace hbl {
         return q;
       }
 
+      double minQualityTri(const std::array<vec3,3>& pts, QualityMetric m) {
+        F(k,pts.size()) { vert[k]->setXYZ(pts[k][0],pts[k][1],pts[k][2]); }
+        double q = -1.;
+        if (m == QualityMetric::SICN) {
+          q = tri->minSICNShapeMeasure();
+        } else if (m == QualityMetric::SIGE) {
+          q = tri->minSIGEShapeMeasure();
+        }
+        if (std::isnan(q)) return -1.;
+        return q;
+      }
 
       double minQualityQuad(const std::array<vec3,4>& pts, QualityMetric m) {
         F(k,pts.size()) { vert[k]->setXYZ(pts[k][0],pts[k][1],pts[k][2]); }
@@ -316,6 +330,7 @@ namespace hbl {
       MHexahedron* hex;
       MTetrahedron* tet;
       MQuadrangle *quad;
+      MTriangle *tri;
   };
 
   QualityComputer qcomp;
@@ -346,6 +361,15 @@ namespace hbl {
       const id8& vert = hexes[c];
       quality[c] = qcomp.minQualityHex({points[vert[0]], points[vert[1]], points[vert[2]], points[vert[3]],
           points[vert[4]], points[vert[5]], points[vert[6]], points[vert[7]]},m);
+    }
+    return true;
+  }
+
+  bool computeTetQualities(const vector<vec3>& points, const vector<id4>& tets, vector<double>& quality, QualityMetric m) {
+    quality.resize(tets.size(),-1.);
+    F(c,tets.size()) {
+      const id4& vert = tets[c];
+      quality[c] = qcomp.minQualityTet({points[vert[0]], points[vert[1]], points[vert[2]], points[vert[3]]},m);
     }
     return true;
   }
@@ -386,16 +410,10 @@ namespace hbl {
   }
 
   void print_quality_stats(const std::string& text, const vector<vec3>& points, const vector<vector<id> >& eltVertices, QualityMetric m) {
-    vector<id8> hexes;
-    hexes.reserve(eltVertices.size());
-    F(i,eltVertices.size()) if (eltVertices[i].size() == 8) {
-      const id8 hex = {
-        eltVertices[i][0], eltVertices[i][1], eltVertices[i][2], eltVertices[i][3],
-        eltVertices[i][4], eltVertices[i][5], eltVertices[i][6], eltVertices[i][7] };
-      hexes.push_back(hex);
+    vector<double> quality(eltVertices.size(),-1.);
+    F(i,eltVertices.size()) {
+      quality[i] = cellQuality(points,eltVertices[i],m);
     }
-    vector<double> quality(hexes.size());
-    computeHexQualities(points, hexes, quality, m);
     print_stats(text, quality);
   }
 
@@ -446,57 +464,90 @@ namespace hbl {
     return true;
   }
 
-  std::array<double,5> computeQualityStatsMinMedAvgMaxInv(const BrepMesh& M, QualityMetric m) {
-    std::array<double,5> minMedAvgMaxInv = {-1.,-1.,-1.,-1.,-1.};
-
-    vector<vec3> points(M.vertices.size());
-    F(v,M.vertices.size()) points[v] = M.vertices[v].pt;
-
-    if (M.faces.size() > 0 && M.cells.size() == 0.) {
-      vector<id4> quads;
-      vector<id3> tris;
-      vector<id> _fvert(4);
-      F(f,M.faces.size()) {
-        face_vertices(M,f,_fvert);
-        if (_fvert.size() == 3) {
-          tris.push_back({_fvert[0],_fvert[1],_fvert[2]});
-        } else if (_fvert.size() == 4) {
-          quads.push_back({_fvert[0],_fvert[1],_fvert[2],_fvert[3]});
-        }
+  std::array<double,5> computeInputQualityStatsMinMedAvgMaxInv(const BrepMesh& M, QualityMetric m) {
+    vector<double> values(M.faces.size(),-1.);
+    vector<id> vert(4);
+    F(f,M.faces.size()) {
+      face_vertices(M,f,vert);
+      if (vert.size() == 3) {
+        std::array<vec3,3> pts = {
+          M.vertices[vert[0]].pt, M.vertices[vert[1]].pt,
+          M.vertices[vert[2]].pt};
+        values[f] = qcomp.minQualityTri(pts,m);
+      } else if (vert.size() == 4) {
+        std::array<vec3,4> pts = {
+          M.vertices[vert[0]].pt, M.vertices[vert[1]].pt,
+          M.vertices[vert[2]].pt, M.vertices[vert[3]].pt};
+        values[f] = qcomp.minQualityQuad(pts,m);
       }
-      if (tris.size()) {
-        Msg::Error("TODO: quality for triangles in hblOptimizeGeometry");
-      }
-      vector<double> values(quads.size(),-1.);
-      computeQuadQualities(points,quads,values,m);
-      vector_statistics(values, minMedAvgMaxInv[0], minMedAvgMaxInv[3], minMedAvgMaxInv[2]);
-      minMedAvgMaxInv[1] = vector_median(values);
-      minMedAvgMaxInv[4] = 0;
-      for (double v: values) if (v<0.) minMedAvgMaxInv[4] += 1;
-    } else if (M.cells.size() > 0) {
-      vector<vector<id> > eltVertices(M.cells.size());
-      debug("- compute oriented elements");
-      vector<int> ballId; /* if multiple disconnected components */
-      bool oko = compute_oriented_elements(M, eltVertices, ballId);
-      bool oki = invert_elements_if_required(points, eltVertices, ballId);
-      vector<id8> hexes;
-      hexes.reserve(eltVertices.size());
-      F(i,eltVertices.size()) if (eltVertices[i].size() == 8) {
-        const id8 hex = {
-          eltVertices[i][0], eltVertices[i][1], eltVertices[i][2], eltVertices[i][3],
-          eltVertices[i][4], eltVertices[i][5], eltVertices[i][6], eltVertices[i][7] };
-        hexes.push_back(hex);
-      }
-
-      /* Element quality, scaled jacobien of tets or sub-tets */
-      vector<double> values(hexes.size(),-1.);
-      computeHexQualities(points,hexes,values, m);
-      vector_statistics(values, minMedAvgMaxInv[0], minMedAvgMaxInv[3], minMedAvgMaxInv[2]);
-      minMedAvgMaxInv[1] = vector_median(values);
-      minMedAvgMaxInv[4] = 0;
-      for (double v: values) if (v<0.) minMedAvgMaxInv[4] += 1;
     }
+    std::array<double,5> minMedAvgMaxInv = {-1.,-1.,-1.,-1.,-1.};
+    vector_statistics(values, minMedAvgMaxInv[0], minMedAvgMaxInv[3], minMedAvgMaxInv[2]);
+    minMedAvgMaxInv[1] = vector_median(values);
+    minMedAvgMaxInv[4] = 0;
+    for (double v: values) if (v<0.) minMedAvgMaxInv[4] += 1;
+    return minMedAvgMaxInv;
+  }
 
+  std::array<double,5> computeHexQualityStatsMinMedAvgMaxInv(const HblOutput& output, QualityMetric m) {
+    std::array<double,5> minMedAvgMaxInv = {-1.,-1.,-1.,-1.,-1.};
+    vector<vec3> points;
+    points.resize(output.H.vertices.size());
+    F(v,points.size()) points[v] = output.H.vertices[v].pt;
+    vector<double> qualities;
+    F(i,output.hexahedra.size()) {
+      const id8& vert = output.hexahedra[i];
+      std::array<vec3,8> pts = {points[vert[0]], points[vert[1]], points[vert[2]], points[vert[3]],
+          points[vert[4]], points[vert[5]], points[vert[6]], points[vert[7]]};
+      qualities.push_back(qcomp.minQualityHex(pts,m));
+    }
+    vector_statistics(qualities, minMedAvgMaxInv[0], minMedAvgMaxInv[3], minMedAvgMaxInv[2]);
+    minMedAvgMaxInv[1] = vector_median(qualities);
+    minMedAvgMaxInv[4] = 0;
+    for (double v: qualities) if (v<0.) minMedAvgMaxInv[4] += 1;
+    return minMedAvgMaxInv;
+
+  }
+  std::array<double,5> computeTetQualityStatsMinMedAvgMaxInv(const HblOutput& output, QualityMetric m) {
+    std::array<double,5> minMedAvgMaxInv = {-1.,-1.,-1.,-1.,-1.};
+    vector<vec3> points;
+    points.resize(output.H.vertices.size());
+    F(v,points.size()) points[v] = output.H.vertices[v].pt;
+    vector<double> qualities;
+    F(i,output.tetrahedra.size()) {
+      const id4& vert = output.tetrahedra[i];
+      std::array<vec3,4> pts = {points[vert[0]], points[vert[1]], points[vert[2]], points[vert[3]]};
+      qualities.push_back(qcomp.minQualityTet(pts,m));
+    }
+    vector_statistics(qualities, minMedAvgMaxInv[0], minMedAvgMaxInv[3], minMedAvgMaxInv[2]);
+    minMedAvgMaxInv[1] = vector_median(qualities);
+    minMedAvgMaxInv[4] = 0;
+    for (double v: qualities) if (v<0.) minMedAvgMaxInv[4] += 1;
+    return minMedAvgMaxInv;
+
+  }
+
+  std::array<double,5> computeHexTetQualityStatsMinMedAvgMaxInv(const HblOutput& output, QualityMetric m) {
+    std::array<double,5> minMedAvgMaxInv = {-1.,-1.,-1.,-1.,-1.};
+    vector<vec3> points;
+    points.resize(output.H.vertices.size());
+    F(v,points.size()) points[v] = output.H.vertices[v].pt;
+    vector<double> qualities;
+    F(i,output.hexahedra.size()) {
+      const id8& vert = output.hexahedra[i];
+      std::array<vec3,8> pts = {points[vert[0]], points[vert[1]], points[vert[2]], points[vert[3]],
+          points[vert[4]], points[vert[5]], points[vert[6]], points[vert[7]]};
+      qualities.push_back(qcomp.minQualityHex(pts,m));
+    }
+    F(i,output.tetrahedra.size()) {
+      const id4& vert = output.tetrahedra[i];
+      std::array<vec3,4> pts = {points[vert[0]], points[vert[1]], points[vert[2]], points[vert[3]]};
+      qualities.push_back(qcomp.minQualityTet(pts,m));
+    }
+    vector_statistics(qualities, minMedAvgMaxInv[0], minMedAvgMaxInv[3], minMedAvgMaxInv[2]);
+    minMedAvgMaxInv[1] = vector_median(qualities);
+    minMedAvgMaxInv[4] = 0;
+    for (double v: qualities) if (v<0.) minMedAvgMaxInv[4] += 1;
     return minMedAvgMaxInv;
   }
 
@@ -1334,21 +1385,38 @@ namespace hbl {
 
   bool set_boundary_quad_mesh_anisotropic(
       const HblOptions& opt, BrepMesh& H, 
-      const vector<int>& edgeVal, /* edge hex-valence */
       const BrepMesh& Q,
+      const vector<int>& edgeVal, /* edge hex-valence in Q */
+      const vector<double>& edgeDihedralAngle, /* edge dihedral angle in Q */
       const HexToBoundaryMeshMatching& h2q,
       double extrusion_factor) {
 
+    /* Reset midpoint positions
+     * (necessary if function called multiple times)*/
+    F(v,H.vertices.size()) {
+      if (h2q.vertexParent[v].first == 0) {
+        H.vertices[v].pt = Q.vertices[h2q.vertexParent[v].second].pt;
+      } else if (h2q.vertexParent[v].first == 1) {
+        H.vertices[v].pt = edge_center(Q, h2q.vertexParent[v].second);
+      } else if (h2q.vertexParent[v].first == 2) {
+        H.vertices[v].pt = face_center(Q, h2q.vertexParent[v].second);
+      }
+    }
+
+    /* Flag vertices of H that will attract adjacent
+     * vertices on the surfaces */
     vector<int> attractor(H.vertices.size(),0);
     {
       vector<int> qv_attractor(Q.vertices.size(),0);
       vector<bool> qe_attractor(Q.edges.size(),false);
       FC(e,Q.edges.size(),edgeVal[e] != 2) {
 
-        // Ignore attractors outside CAD curves
-        // good when CAD model available, not good if no CAD !
-        if (Q.edges[e].entity != nullptr && Q.edges[e].entity->dim() > 1) continue;
-
+        if (!opt.discreteModel) { // Ignore attractors outside CAD curves
+          if (Q.edges[e].entity != nullptr && Q.edges[e].entity->dim() > 1) continue;
+        } else { // Use dihedral angle on discrete model
+          double agl = edgeDihedralAngle[e] * 180. / M_PI;
+          if (90 + 45 < agl && agl < 180 + 45) continue;
+        }
 
         qe_attractor[e] = true;
         qv_attractor[Q.edges[e].vertices[0]] += 1;
@@ -1668,7 +1736,7 @@ namespace hbl {
 
   /* Cavity in generic polyhedral mesh */
   bool build_cavity(
-      const BrepMesh& H,
+      const vector<vector<id> >& eltVertices,
       const vector<vector<id> >& v2c,
       const vector<double>& qualities,
       id cStart, /* Initial hex */
@@ -1683,7 +1751,6 @@ namespace hbl {
     dist[cStart] = 0;
     Q.push({0,cStart});
 
-    vector<id> _cvert;
     vector<id> _adjCells;
 
     /* Dijkstra growth */
@@ -1692,7 +1759,7 @@ namespace hbl {
       Q.pop();
 
       _adjCells.clear();
-      cell_vertices(H, c, _cvert);
+      const vector<id>& _cvert = eltVertices[c];
       F(lv,_cvert.size()) {
         id v = _cvert[lv];
         F(lc,v2c[v].size()) {
@@ -1735,7 +1802,6 @@ namespace hbl {
   }
 
   bool extract_cavity_problem(
-      const BrepMesh& H,
       const vector<id>& cavity,
       const vector<vec3>& points,
       const std::vector<bool>& locked,
@@ -1756,9 +1822,8 @@ namespace hbl {
 
     r_elts.resize(cavity.size());
     r_new2old_cell.resize(cavity.size());
-    vector<id> fvert(4);
     old2new.clear();
-    old2new.resize(H.vertices.size(),NO_ID);
+    old2new.resize(points.size(),NO_ID);
     id count = 0;
     F(lc,cavity.size()) {
       id c = cavity[lc];
@@ -1775,18 +1840,18 @@ namespace hbl {
         }
         r_elts[lc][lv] = old2new[v];
       }
-      /* Lock vertices on cavity boundary */
-      if (Msg::GetVerbosity() == 101) {
-        Msg::Warning("OPTIMIZE FOR FIGURE"); // TODOMX
-        continue;
-      }
-      for (id f: H.cells[c].faces) {
-        if (H.faceToCells[f].size() == 2) {
-          id c2 = (H.faceToCells[f][0] != c) ? H.faceToCells[f][0] : H.faceToCells[f][1];
-          if (!inVector(c2,cavity)) { /* c2 outside of cavity, f interior but on cavity boundary */
-            face_vertices(H,f,fvert);
-            for (id v: fvert) r_locked[old2new[v]] = true;
-          }
+    }
+
+    /* Lock vertices on cavity boundary by 
+     * iterating on elts outside cavity and locking
+     * their vertices */
+    vector<bool> eltInCavity(elts.size(),false);
+    for (id c: cavity) eltInCavity[c] = true;
+    FC(c,elts.size(),!eltInCavity[c]) {
+      F(lv,elts[c].size()) {
+        id v = elts[c][lv];
+        if (old2new[v] != NO_ID) {
+          r_locked[old2new[v]] = true;
         }
       }
     }
@@ -1927,28 +1992,6 @@ namespace hbl {
     vector<std::array<uint32_t,4> > tets;
     std::vector<std::array<std::array<double,3>,4> > tetIdealShapes;
 
-    F(i,pb.elementTargetShapes.size()) {
-      double q = qcomp.minQualityHex({
-          pb.elementTargetShapes[i][0],
-          pb.elementTargetShapes[i][1],
-          pb.elementTargetShapes[i][2],
-          pb.elementTargetShapes[i][3],
-          pb.elementTargetShapes[i][4],
-          pb.elementTargetShapes[i][5],
-          pb.elementTargetShapes[i][6],
-          pb.elementTargetShapes[i][7]},QualityMetric::SICN);
-      double q2 = qcomp.minQualityHex({
-          pb.elementTargetShapes[i][0],
-          pb.elementTargetShapes[i][1],
-          pb.elementTargetShapes[i][2],
-          pb.elementTargetShapes[i][3],
-          pb.elementTargetShapes[i][4],
-          pb.elementTargetShapes[i][5],
-          pb.elementTargetShapes[i][6],
-          pb.elementTargetShapes[i][7]},QualityMetric::SIGE);
-      // DBG("target hex",i,q,q2);
-    }
-
     // TODO FIXME use 32 !
     const int dcpHex = 32; // each hex becomes 32 sub-tets
     bool okb = buildTetrahedraFromElements(pb.eltVertices, pb.elementTargetShapes, tets, tetIdealShapes, dcpHex);
@@ -1969,9 +2012,8 @@ namespace hbl {
           tetIdealShapes[i][3],
           tetIdealShapes[i][2]},QualityMetric::SICN);
       if (q2 < 0.) {
-        DBG("!!!", "ideal tet", int(i/dcpHex), i, q, q2);
+        Msg::Warning("solveSmoothingProblem: ideal tet %li quality: %f", i, q2);
       }
-      // DBG("ideal tet",int(i/dcpHex),i,q,q2);
     }
 
     Msg::Debug("- Untangle/Smooth hex-tet mesh (%li elements -> %li optim tets, %li vertices) ...", 
@@ -2008,10 +2050,6 @@ namespace hbl {
   };
 
   bool setTargetShapeForAnisotropicBoundaryHexahedra(
-      const BrepMesh& H,
-      const HexToBoundaryMeshMatching& h2q, 
-      const vector<id>& r_new2old,
-      const vector<id>& r_new2old_cell,
       double extrusion_factor,
       SmoothingProblem& pb) {
     if (pb.eltVertices.size() == 0) return false;
@@ -2026,151 +2064,66 @@ namespace hbl {
     constexpr int axis_to_faces[3][2] = {{2,3},{1,4},{0,5}};
     constexpr int axis_to_edges[3][4] = {{0,5,11,8},{1,3,10,9},{2,4,6,7}};
 
-    /* Flag anisotropic directions in hexahedra */
-    robin_hood::unordered_map<id4,id,id4Hash> faceIsAnisoDir;
-    robin_hood::unordered_map<id2,id,id2Hash> edgeIsCompressed;
-    F(i,r_new2old_cell.size()) {
-      id c = r_new2old_cell[i];
-      if (pb.eltVertices[i].size() == 8) {
-        array<id,8> hVert = {
-          r_new2old[pb.eltVertices[i][0]], r_new2old[pb.eltVertices[i][1]],
-          r_new2old[pb.eltVertices[i][2]], r_new2old[pb.eltVertices[i][3]],
-          r_new2old[pb.eltVertices[i][4]], r_new2old[pb.eltVertices[i][5]],
-          r_new2old[pb.eltVertices[i][6]], r_new2old[pb.eltVertices[i][7]]
-        };
-        F(lf,6) {
-          id4 face = {hVert[hex_facet_vertex[lf][0]], hVert[hex_facet_vertex[lf][1]],
-            hVert[hex_facet_vertex[lf][2]], hVert[hex_facet_vertex[lf][3]]};
-          if (h2q.vertexParent[face[0]].first <= 2
-              && h2q.vertexParent[face[1]].first <= 2
-              && h2q.vertexParent[face[2]].first <= 2
-              && h2q.vertexParent[face[3]].first <= 2) {
-            std::sort(face.begin(),face.end());
-            faceIsAnisoDir[face] = 1;
-            id ax = face_to_axis[lf];
-            F(k,4) {
-              id le = axis_to_edges[ax][k];
-              id v1 = hVert[hex_edges[le][0]];
-              id v2 = hVert[hex_edges[le][1]];
-              id2 edg = sorted(v1,v2);
-              edgeIsCompressed[edg] = 1;
-            }
-          }
-        }
-      }
+    std::vector<vec3> equi = {
+      vec3{.5, 0, -1. / (2. * std::sqrt(2.))},
+      vec3{-.5, 0, -1. / (2. * std::sqrt(2.))},
+      vec3{0, -.5, 1. / (2. * std::sqrt(2.))},
+      vec3{0, .5, 1. / (2. * std::sqrt(2.))},
+    };
+    double reg_vol = qcomp.volume({equi[0],equi[1],equi[2],equi[3]});
+    if (reg_vol < 0.) { Msg::Error("inverted ref tet"); abort(); }
+    for(size_t lv = 0; lv < 4; ++lv) {
+      equi[lv] = equi[lv] * (1. / std::pow(reg_vol, 1. / 3.));
     }
+
 
     double avgVol = 0.;
     pb.elementTargetShapes.clear();
-    F(i,r_new2old_cell.size()) {
-      id c = r_new2old_cell[i];
+    size_t nTetSetToReg = 0;
+    F(i,pb.eltVertices.size()) {
       if (pb.eltVertices[i].size() == 4) {
         // Using current shape for tetra
         array<id,4> tVert = {
-          r_new2old[pb.eltVertices[i][0]], r_new2old[pb.eltVertices[i][1]],
-          r_new2old[pb.eltVertices[i][2]], r_new2old[pb.eltVertices[i][3]]};
-
-        std::vector<std::array<double, 3> > target = {H.vertices[tVert[0]].pt, 
-          H.vertices[tVert[1]].pt, H.vertices[tVert[2]].pt, H.vertices[tVert[3]].pt};
+          pb.eltVertices[i][0], pb.eltVertices[i][1],
+          pb.eltVertices[i][2], pb.eltVertices[i][3]};
+        std::vector<std::array<double, 3> > target = {
+          pb.points[tVert[0]],
+          pb.points[tVert[1]],
+          pb.points[tVert[2]],
+          pb.points[tVert[3]]};
+        /* regularize volume */
+        double vol = qcomp.volume(target);
+        if (std::isnan(vol) || vol <= 0) {
+          target = equi;
+          nTetSetToReg += 1;
+          vol = qcomp.volume(target);
+          // Msg::Warning("setTargetShapeForAnisotropicBoundaryHexahedra: tet %li ideal vol: %f", i, vol);
+        }
+        F(lv,target.size()) {
+          target[lv] = (1./std::pow(vol,1./3.))*target[lv];
+        }
         pb.elementTargetShapes.push_back(target);
+        avgVol += vol;
       } else if (pb.eltVertices[i].size() == 8) {
         // Check if shape should be anisotropic, and in how many directions
-        array<bool,3> axisIsAniso; axisIsAniso.fill(false);
         array<id,8> hVert = {
-          r_new2old[pb.eltVertices[i][0]], r_new2old[pb.eltVertices[i][1]],
-          r_new2old[pb.eltVertices[i][2]], r_new2old[pb.eltVertices[i][3]],
-          r_new2old[pb.eltVertices[i][4]], r_new2old[pb.eltVertices[i][5]],
-          r_new2old[pb.eltVertices[i][6]], r_new2old[pb.eltVertices[i][7]]
+          pb.eltVertices[i][0], pb.eltVertices[i][1],
+          pb.eltVertices[i][2], pb.eltVertices[i][3],
+          pb.eltVertices[i][4], pb.eltVertices[i][5],
+          pb.eltVertices[i][6], pb.eltVertices[i][7]
         };
-        F(a,3) {
-          F(ee,4) {
-            id le = axis_to_edges[a][ee];
-            id v1 = hVert[hex_edges[le][0]];
-            id v2 = hVert[hex_edges[le][1]];
-            id2 edg = sorted(v1,v2);
-            auto it = edgeIsCompressed.find(edg);
-            if (it == edgeIsCompressed.end()) continue;
-            axisIsAniso[a] = true;
-            break;
 
-            // id4 face = {
-            //   hVert[hex_facet_vertex[axis_to_faces[a][k]][0]], 
-            //   hVert[hex_facet_vertex[axis_to_faces[a][k]][1]], 
-            //   hVert[hex_facet_vertex[axis_to_faces[a][k]][2]], 
-            //   hVert[hex_facet_vertex[axis_to_faces[a][k]][3]]};
-            // std::sort(face.begin(),face.end());
-            // auto it = faceIsAnisoDir.find(face);
-            // if (it != faceIsAnisoDir.end()) {
-            //   axisIsAniso[a] = true;
-            //   break;
-            // }
+        vec3 deltaAvg = {0.,0.,0.};
+        vec3 deltamax = {0.,0.,0.};
+        F(a,3) {
+          F(le,4) {
+            id v1 = hVert[hex_edges[axis_to_edges[a][le]][0]];
+            id v2 = hVert[hex_edges[axis_to_edges[a][le]][1]];
+            double len = length(pb.points[v1]-pb.points[v2]);
+            deltaAvg[a] += 0.25 * len;
+            deltamax[a] = std::max(deltamax[a], len);
           }
         }
-
-
-
-
-        // array<bool,3> axisIsAniso; axisIsAniso.fill(false);
-        // array<id,8> hVert = {
-        //   r_new2old[pb.eltVertices[i][0]], r_new2old[pb.eltVertices[i][1]],
-        //   r_new2old[pb.eltVertices[i][2]], r_new2old[pb.eltVertices[i][3]],
-        //   r_new2old[pb.eltVertices[i][4]], r_new2old[pb.eltVertices[i][5]],
-        //   r_new2old[pb.eltVertices[i][6]], r_new2old[pb.eltVertices[i][7]]
-        // };
-        // F(a,3) {
-        //   F(k,2) {
-        //     id4 face = {
-        //       hVert[hex_facet_vertex[axis_to_faces[a][k]][0]], 
-        //       hVert[hex_facet_vertex[axis_to_faces[a][k]][1]], 
-        //       hVert[hex_facet_vertex[axis_to_faces[a][k]][2]], 
-        //       hVert[hex_facet_vertex[axis_to_faces[a][k]][3]]};
-        //     std::sort(face.begin(),face.end());
-        //     auto it = faceIsAnisoDir.find(face);
-        //     if (it != faceIsAnisoDir.end()) {
-        //       axisIsAniso[a] = true;
-        //       break;
-        //     }
-        //   }
-        // }
-
-        vec3 deltaAvg;
-        deltaAvg[0] = 0.25 * (
-            length(H.vertices[hVert[1]].pt - H.vertices[hVert[0]].pt)
-            + length(H.vertices[hVert[2]].pt - H.vertices[hVert[3]].pt)
-            + length(H.vertices[hVert[6]].pt - H.vertices[hVert[7]].pt)
-            + length(H.vertices[hVert[5]].pt - H.vertices[hVert[4]].pt));
-
-        deltaAvg[1] = 0.25 * (
-            length(H.vertices[hVert[3]].pt - H.vertices[hVert[0]].pt)
-            + length(H.vertices[hVert[2]].pt - H.vertices[hVert[1]].pt)
-            + length(H.vertices[hVert[6]].pt - H.vertices[hVert[5]].pt)
-            + length(H.vertices[hVert[7]].pt - H.vertices[hVert[4]].pt));
-
-        deltaAvg[2] = 0.25 * (
-            length(H.vertices[hVert[4]].pt - H.vertices[hVert[0]].pt)
-            + length(H.vertices[hVert[5]].pt - H.vertices[hVert[1]].pt)
-            + length(H.vertices[hVert[6]].pt - H.vertices[hVert[2]].pt)
-            + length(H.vertices[hVert[7]].pt - H.vertices[hVert[3]].pt));
-
-        vec3 deltamax;
-        deltamax[0] = max_value(
-            length(H.vertices[hVert[1]].pt - H.vertices[hVert[0]].pt),
-            length(H.vertices[hVert[2]].pt - H.vertices[hVert[3]].pt),
-            length(H.vertices[hVert[6]].pt - H.vertices[hVert[7]].pt),
-            length(H.vertices[hVert[5]].pt - H.vertices[hVert[4]].pt));
-
-        deltamax[1] = max_value(
-            length(H.vertices[hVert[3]].pt - H.vertices[hVert[0]].pt),
-            length(H.vertices[hVert[2]].pt - H.vertices[hVert[1]].pt),
-            length(H.vertices[hVert[6]].pt - H.vertices[hVert[5]].pt),
-            length(H.vertices[hVert[7]].pt - H.vertices[hVert[4]].pt));
-
-        deltamax[2] = max_value(
-            length(H.vertices[hVert[4]].pt - H.vertices[hVert[0]].pt),
-            length(H.vertices[hVert[5]].pt - H.vertices[hVert[1]].pt),
-            length(H.vertices[hVert[6]].pt - H.vertices[hVert[2]].pt),
-            length(H.vertices[hVert[7]].pt - H.vertices[hVert[3]].pt));
-
 
         // TODO INFO:
         // for the moment, not using anisotropic directions, just
@@ -2178,21 +2131,6 @@ namespace hbl {
         vec3 w = {1.,1.,1.};
         double lmax = max_value(deltamax[0],deltamax[1],deltamax[2]);
         w = {deltamax[0]/lmax,deltamax[1]/lmax,deltamax[2]/lmax};
-        // FC(k,3,axisIsAniso[k]) {
-        //   w[k] = extrusion_factor;
-        //   // w[k] = deltaAvg[k] / lmax;
-        // }
-
-        // if (true) {
-        //   FC(k,3,axisIsAniso[k]) w[k] = extrusion_factor;
-        // } else {
-        //   double avg = 1./3. * (delta[0]+delta[1]+delta[2]);
-        //   w = {avg,avg,avg};
-        //   if (nAniso > 0) {
-        //     w = {delta[0],delta[1],delta[2]};
-        //   }
-        // }
-        // w = {delta[0],delta[1],delta[2]};
 
         std::vector<std::array<double, 3> > target = {
           {0., 0., 0.}, {w[0], 0., 0.}, {w[0], w[1], 0.}, {0., w[1], 0.},
@@ -2206,14 +2144,16 @@ namespace hbl {
 
         pb.elementTargetShapes.push_back(target);
 
-
         avgVol += vol;
       } else {
         Msg::Error("set target shape: element type not supported");
         return false;
       }
     }
-    avgVol /= double(pb.eltVertices.size());
+    avgVol /= double(pb.elementTargetShapes.size());
+    if (nTetSetToReg > 0) {
+      Msg::Debug("set target shape: %li initial tets had negative volume, set to regular tet", nTetSetToReg);
+    }
 
     // Scale the target shapes
     F(i,pb.elementTargetShapes.size()) {
@@ -2231,7 +2171,6 @@ namespace hbl {
       const vector<vector<id> >& elts,
       const vector<id>& cavity, /* cavity to smooth */
       const BrepMesh& H,/* useful for faceToCells info */
-      const HexToBoundaryMeshMatching& h2q, /* useful for aniso target shapes */
       bool anisoHexTargetShapes = false,
       double extrusion_factor = 1.
       ) {
@@ -2242,7 +2181,7 @@ namespace hbl {
     vector<id> r_new2old;
     vector<id> r_new2old_cell;
     vector<id> old2new;
-    bool okr = extract_cavity_problem(H, cavity, points, locked, elts, old2new, pb.eltVertices,
+    bool okr = extract_cavity_problem(cavity, points, locked, elts, old2new, pb.eltVertices,
         pb.points, pb.locked, r_new2old, r_new2old_cell);
     RFC(!okr,"failed to extract cavity problem, cavity = {}",cavity);
     id nbf = 0;
@@ -2256,9 +2195,8 @@ namespace hbl {
     }
     pb.iterMaxInner = 1000;
     pb.iterMaxOuter = 100;
-    pb.lambda = 0.0001; // for stability ?
     pb.lambda = 0.;
-    pb.nFailMax = 10;
+    pb.nFailMax = 5;
     if (nbf < 5) {
       pb.timeMax = 1;
     } else {
@@ -2266,7 +2204,7 @@ namespace hbl {
     }
 
     if (anisoHexTargetShapes) {
-      setTargetShapeForAnisotropicBoundaryHexahedra(H, h2q, r_new2old, r_new2old_cell, extrusion_factor, pb);
+      setTargetShapeForAnisotropicBoundaryHexahedra(extrusion_factor, pb);
     }
 
     std::string text;
@@ -2607,13 +2545,9 @@ namespace hbl {
     double qMin, qMax, qAvg;
     vector_statistics(qualities, qMin, qMax, qAvg);
 
-    vector<vector<id> > v2c(H.vertices.size());
-    vector<id> _cvert(8);
-    F(c,H.cells.size()) {
-      cell_vertices(H,c,_cvert);
-      F(lv,_cvert.size()) {
-        v2c[_cvert[lv]].push_back(c);
-      }
+    vector<vector<id> > v2c(points.size());
+    F(c,eltVertices.size()) F(lv,eltVertices[c].size()) {
+      v2c[eltVertices[c][lv]].push_back(c);
     }
 
     /* Build the local cavities and smooth them */
@@ -2639,16 +2573,16 @@ namespace hbl {
       vector<bool> done(eltVertices.size(),false);
       vector<id> cavity;
       info("- pass {}: untangling/smoothing of cavities where sub-tet quality < {} ...", pass, threshold);
-      FC(seed,eltVertices.size(),!done[seed] && qualities[seed] <= threshold && eltVertices[seed].size() == 8) {
+      FC(seed,eltVertices.size(),!done[seed] && qualities[seed] <= threshold) {
         debug("-- untangling/smoothing with threshold = {}, seed = {}, quality = {}", threshold, seed, qualities[seed]);
         cavity.clear();
         double vMin, vMax, vAvg;
 
-        bool okbc = build_cavity(H, v2c, qualities, seed, threshold, DIST, cavity);
+        bool okbc = build_cavity(eltVertices, v2c, qualities, seed, threshold, DIST, cavity);
         RFC(!okbc, "failed to build hex-tet cavity around seed = {}", seed);
 
         bool oks = smoothSmallCavity(points, locked, eltVertices, cavity, H,
-            output.h2q, anisoHexTargetShapes, opt.extrusion_factor);
+             anisoHexTargetShapes, opt.extrusion_factor);
         RFC(!oks, "failed to smooth cavity around seed={}", seed);
 
         /* Update global quality */
@@ -2680,7 +2614,7 @@ namespace hbl {
 
         /* In the small cavity extraction, vertices of quad faces 
          * adjacent to boundary are also locked */
-        bool oks = smoothSmallCavity(points, locked, eltVertices, cavity, H, output.h2q);
+        bool oks = smoothSmallCavity(points, locked, eltVertices, cavity, H);
         RFC(!oks, "failed to smooth cavity around v={}", v);
       }
     }
@@ -2690,7 +2624,7 @@ namespace hbl {
       info("- smoothing full mesh (forced), {} elements", H.cells.size());
       cavity.resize(H.cells.size(),false);
       F(k,H.cells.size()) cavity[k] = k;
-      bool oks = smoothSmallCavity(points, locked, eltVertices, cavity, H, output.h2q, anisoHexTargetShapes, opt.extrusion_factor);
+      bool oks = smoothSmallCavity(points, locked, eltVertices, cavity, H, anisoHexTargetShapes, opt.extrusion_factor);
       RFC(!oks, "failed to smooth full mesh");
     }
 
@@ -2707,6 +2641,13 @@ namespace hbl {
     computeHexQualities(points, output.hexahedra, qualities, m);
     print_stats("- hex " + metricName(m) +" stats",qualities);
     vector_statistics(qualities, qMin, qMax, qAvg);
+    if (output.tetrahedra.size() > 0) {
+      computeTetQualities(points, output.tetrahedra, qualities, QualityMetric::SICN);
+      print_stats("- tet SICN stats",qualities);
+      computeTetQualities(points, output.tetrahedra, qualities, QualityMetric::SIGE);
+      print_stats("- tet SIGE stats",qualities);
+    }
+
     if (qMin <= 0.) return false;
 
     return true;
@@ -2995,7 +2936,7 @@ namespace hbl {
         double vMin, vMax, vAvg;
 
         double threshold = 0.;
-        bool okbc = build_cavity(H, v2c, qualities, seed, threshold, dist, cavity);
+        bool okbc = build_cavity(eltVertices, v2c, qualities, seed, threshold, dist, cavity);
         RFC(!okbc, "failed to build hex-tet cavity around seed = {}", seed);
 
         // Extract cavity boundary which on model boundary
@@ -3030,7 +2971,7 @@ namespace hbl {
 
           bool anisoHexTargetShapes = true;
           bool oks = smoothSmallCavity(points, locked2, eltVertices, cavity, H,
-              output.h2q, anisoHexTargetShapes, opt.extrusion_factor);
+              anisoHexTargetShapes, opt.extrusion_factor);
           RFC(!oks, "failed to smooth cavity around seed={}", seed);
 
           /* Update global quality */
@@ -3207,15 +3148,17 @@ namespace hbl {
     bool running = true;
     while (running) {
       running = false;
-      std::vector<uint32_t> quadsAtConcavities;
-      for (id f: cavity) {
+      size_t nf = cavity.size();
+      for (size_t i = 0; i < nf; ++i) {
+        id f = cavity[i];
         face_vertices(M,f,fvert);
         for (id v: fvert) {
           id fOut = NO_ID;
-          if (isConcaveCorner(M,inCavity,v,fOut)) {
+          if (isConcaveCorner(M,inCavity,v,fOut) && fOut != NO_ID) {
             inCavity[fOut] = true;
             cavity.push_back(fOut);
             running = true;
+            break;
           }
         }
       }
@@ -3331,36 +3274,38 @@ namespace hbl {
       const HblOptions& opt, 
       HblOutput& output) {
     BrepMesh& H = output.H;
-    info("Initialize geometry of hex layer ({} vertices, {} hexahedra) ...",
-        H.vertices.size(), H.cells.size());
+    double extrusion_factor = opt.extrusion_factor;
 
+    info("Initialize geometry of hex layer ({} vertices, {} hexahedra), with extrusion_factor = {} ...",
+        H.vertices.size(), H.cells.size(), extrusion_factor);
+
+    bool oks = set_boundary_quad_mesh_anisotropic(opt, H, 
+        input.Q, output.hexValence, input.edgeDihedralAngle, output.h2q, extrusion_factor);
+    RFC(!oks, "failed to boundary quad mesh anisotropic");
+
+
+    /* Project vertices on CAD */
     if (!opt.noCADproj) {
       project_midpoint_vertices_on_surface_if_available(opt, H, input.Q, output.h2q);
     }
 
-    double initial_extrusion_factor = opt.extrusion_factor;
-
-    bool oks = set_boundary_quad_mesh_anisotropic(opt, H, output.hexValence, 
-        input.Q, output.h2q,
-        initial_extrusion_factor);
-    RFC(!oks, "failed to set position on regular curve fans");
 
     // std::array<double,3> lenStats = computeMinAvgMaxSurfaceEdgeLength(H, output.h2q);
-    // double uExtrLen = 0.5 * (lenStats[0]+lenStats[1]) * initial_extrusion_factor;
+    // double uExtrLen = 0.5 * (lenStats[0]+lenStats[1]) * extrusion_factor;
     std::vector<double> vExtrusionLength; /* absolute extrusion length at vertex in H */
-    computeLocalExtrusionLength(H, output.h2q, initial_extrusion_factor, vExtrusionLength);
+    computeLocalExtrusionLength(H, output.h2q, extrusion_factor, vExtrusionLength);
 
     /* 1. Position of vertices with one adjacent edge inside (local extrusion) */
     vector<bool> bdrVertexDone(H.vertices.size(),false);
     bool okl = set_position_extruded_vertices(opt, H, output.hexValence, 
         input.Q, output.h2q, input.vertexNormals, vExtrusionLength, bdrVertexDone, DBL_MAX, 
-        initial_extrusion_factor);
+        extrusion_factor);
     RFC(!okl, "failed to set position of extruded vertices");
 
     /* 2. Fans on quad regular vertices (ie nice feature curves) */
     bool okf = set_position_regular_fan_vertices(opt, H, output.hexValence, 
         input.Q, output.h2q, input.vertexNormals, bdrVertexDone, 
-        initial_extrusion_factor);
+        extrusion_factor);
     RFC(!okf, "failed to set position on regular curve fans");
 
 
@@ -3377,30 +3322,33 @@ namespace hbl {
     size_t niterSmoothing = 10;
     laplacian_smoothing(H, bdrVertexDone, v2v, niterSmoothing, 0.1);
 
-    /* Oriented coherent elements */
-    vector<vector<id> > eltVertices(H.cells.size());
-    debug("- compute oriented elements");
-    vector<int> ballId; /* if multiple disconnected components */
-    bool oko = compute_oriented_elements(H, eltVertices, ballId);
-    RFC(!oko, "failed to compute oriented elements");
     vector<vec3> points;
-    size_t nFree = 0;
     points.resize(H.vertices.size());
     F(v,points.size()) {
       points[v] = H.vertices[v].pt;
     }
-    bool oki = invert_elements_if_required(points, eltVertices, ballId);
-    RFC(!oki, "failed to invert elements (as required)");
-    /* Export hexes */
-    vector<id8> hexes;
-    hexes.reserve(eltVertices.size()/32);
-    F(i,eltVertices.size()) if (eltVertices[i].size() == 8) {
-      const id8 hex = {
-        eltVertices[i][0], eltVertices[i][1], eltVertices[i][2], eltVertices[i][3],
-        eltVertices[i][4], eltVertices[i][5], eltVertices[i][6], eltVertices[i][7] };
-      hexes.push_back(hex);
+
+    if (output.hexahedra.size() == 0) {
+      /* Oriented coherent elements */
+      vector<vector<id> > eltVertices(H.cells.size());
+      debug("- compute oriented elements");
+      vector<int> ballId; /* if multiple disconnected components */
+      bool oko = compute_oriented_elements(H, eltVertices, ballId);
+      RFC(!oko, "failed to compute oriented elements");
+      bool oki = invert_elements_if_required(points, eltVertices, ballId);
+      RFC(!oki, "failed to invert elements (as required)");
+
+      /* Export hexes */
+      vector<id8> hexes;
+      hexes.reserve(eltVertices.size()/32);
+      F(i,eltVertices.size()) if (eltVertices[i].size() == 8) {
+        const id8 hex = {
+          eltVertices[i][0], eltVertices[i][1], eltVertices[i][2], eltVertices[i][3],
+          eltVertices[i][4], eltVertices[i][5], eltVertices[i][6], eltVertices[i][7] };
+        hexes.push_back(hex);
+      }
+      output.hexahedra = hexes;
     }
-    output.hexahedra = hexes;
 
     /* 4. Stats */
     vector<double> qualities(output.hexahedra.size(),-1.);
@@ -3408,6 +3356,12 @@ namespace hbl {
     print_stats("- hex SICN stats",qualities);
     computeHexQualities(points, output.hexahedra, qualities, QualityMetric::SIGE);
     print_stats("- hex SIGE stats",qualities);
+    if (output.tetrahedra.size() > 0) {
+      computeTetQualities(points, output.tetrahedra, qualities, QualityMetric::SICN);
+      print_stats("- tet SICN stats",qualities);
+      computeTetQualities(points, output.tetrahedra, qualities, QualityMetric::SIGE);
+      print_stats("- tet SIGE stats",qualities);
+    }
 
     return true;
   }

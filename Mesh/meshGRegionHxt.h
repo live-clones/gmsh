@@ -12,7 +12,8 @@ class GRegion;
 class MVertex;
 class MTetrahedron;
 
-int meshGRegionHxt(std::vector<GRegion *> &regions);
+int meshGRegionHxt(std::vector<GRegion *> &regions, int tetRefine = 1);
+int meshGRegionHxtOptimize(std::vector<GRegion *> &regions);
 void delaunayMeshIn3DHxt(std::vector<MVertex *> &points,
                          std::vector<MTetrahedron *> &tets);
 

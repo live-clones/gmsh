@@ -51,31 +51,42 @@ namespace hbl {
   using namespace CppUtils;
 
   void printHblStats(const HblStats& stats) {
-    info("Gecode sub-problem details:");
-    info("  subproblemVarIterTimeStoppedTfirstTlast : {}", stats.subproblemVarIterTimeStoppedTfirstTlast);
+    if (Msg::GetVerbosity() >= 99) {
+      info("Gecode sub-problem details:");
+      info("  subproblemVarIterTimeStoppedTfirstTlast : {}", stats.subproblemVarIterTimeStoppedTfirstTlast);
+      info("Hexbl stats output:");
+      info("  inNbVertices                    : {}", stats.inNbVertices);
+      info("  inNbFacets                      : {}", stats.inNbFacets);
+      info("  outNbVertices                   : {}", stats.outNbVertices);
+      info("  outNbHexes                      : {}", stats.outNbHexes);
+      info("  outNbTets                       : {}", stats.outNbTets);
+      info("  timePreprocessing               : {}", stats.timePreprocessing);
+      info("  timeIntegerProblem              : {}", stats.timeIntegerProblem);
+      info("  timeMeshConstruction            : {}", stats.timeMeshConstruction);
+      info("  timeGecode                      : {}", stats.timeGecode);
+      info("  topoNbConflicts                 : {}", stats.topoNbConflicts);
+      info("  topoNbIrregularConfigs          : {}", stats.topoNbIrregularConfigs);
+      info("  topoNbSubProblems               : {}", stats.topoNbSubProblems);
+      info("  topoNbSubProblemFailed          : {}", stats.topoNbSubProblemFailed);
+      info("  topoNbSubProblemStopped         : {}", stats.topoNbSubProblemStopped);
+      info("  energyExtrusion                 : {}", stats.energyExtrusion);
+      info("  energyFinal                     : {}", stats.energyFinal);
+      info("  qualityInputMinMedAvgMaxInv     : {}", stats.qualityInputMinMedAvgMaxInv);
+      info("  qualityQuadMinMedAvgMaxInv      : {}", stats.qualityQuadMinMedAvgMaxInv);
+      info("  qualityHexMinMedAvgMaxInv       : {}", stats.qualityHexMinMedAvgMaxInv);
+      info("  qualityTetMinMedAvgMaxInv       : {}", stats.qualityTetMinMedAvgMaxInv);
+      info("  qualityExtrusionMinMedAvgMaxInv : {}", stats.qualityExtrusionMinMedAvgMaxInv);
+      info("  interiorTetMesh                 : {}", stats.interiorTetMesh);
+      info("  interiorTetMeshTopoFallback     : {}", stats.interiorTetMeshTopoFallback);
+    } 
     info("Hexbl stats:");
-    info("  inNbVertices                    : {}", stats.inNbVertices);
-    info("  inNbFacets                      : {}", stats.inNbFacets);
-    info("  outNbVertices                   : {}", stats.outNbVertices);
-    info("  outNbHexes                      : {}", stats.outNbHexes);
-    info("  timePreprocessing               : {}", stats.timePreprocessing);
-    info("  timeIntegerProblem              : {}", stats.timeIntegerProblem);
-    info("  timeMeshConstruction            : {}", stats.timeMeshConstruction);
-    info("  timeGecode                      : {}", stats.timeGecode);
-    info("  topoNbConflicts                 : {}", stats.topoNbConflicts);
-    info("  topoNbIrregularConfigs          : {}", stats.topoNbIrregularConfigs);
-    info("  topoNbSubProblems               : {}", stats.topoNbSubProblems);
-    info("  topoNbSubProblemFailed          : {}", stats.topoNbSubProblemFailed);
-    info("  topoNbSubProblemStopped         : {}", stats.topoNbSubProblemStopped);
-    info("  energyExtrusion                 : {}", stats.energyExtrusion);
-    info("  energyFinal                     : {}", stats.energyFinal);
-    info("  qualityQuadMinMedAvgMaxInv      : {}", stats.qualityQuadMinMedAvgMaxInv);
-    info("  qualityExtrusionMinMedAvgMaxInv : {}", stats.qualityExtrusionMinMedAvgMaxInv);
-    info("  qualityFinalMinMedAvgMaxInv     : {}", stats.qualityFinalMinMedAvgMaxInv);
-    info("  nbSelfIntersectionInitial       : {}", stats.nbSelfIntersectionInitial);
-    info("  nbSelfIntersectionFixed         : {}", stats.nbSelfIntersectionFixed);
-    info("  interiorTetMeshingInitial       : {}", stats.interiorTetMeshingInitial);
-    info("  interiorTetMeshingFixed         : {}", stats.interiorTetMeshingFixed);
+    info("  input   : {} vertices, {} facets", stats.inNbVertices, stats.inNbFacets);
+    info("  output  : {} vertices, {} hexahedra, {} tetrahedra", stats.outNbVertices, stats.outNbHexes, stats.outNbTets);
+    info("  timings : {}s preprocessing, {}s integer problem, {}s mesh construction", stats.timePreprocessing, stats.timeIntegerProblem, stats.timeMeshConstruction);
+    info("  quality (min, med, avg, max, #(det<0)) :");
+    info("    input      : {}", stats.qualityInputMinMedAvgMaxInv);
+    info("    hexahedra  : {}", stats.qualityHexMinMedAvgMaxInv);
+    info("    tetrahedra : {}", stats.qualityTetMinMedAvgMaxInv);
   }
 
 
@@ -93,6 +104,7 @@ namespace hbl {
     WRITE_INFO(stats.inNbFacets);
     WRITE_INFO(stats.outNbVertices);
     WRITE_INFO(stats.outNbHexes);
+    WRITE_INFO(stats.outNbTets);
     WRITE_INFO(stats.timePreprocessing);
     WRITE_INFO(stats.timeIntegerProblem);
     WRITE_INFO(stats.timeMeshConstruction);
@@ -104,9 +116,11 @@ namespace hbl {
     WRITE_INFO(stats.topoNbSubProblemStopped);
     WRITE_INFO(stats.energyExtrusion);
     WRITE_INFO(stats.energyFinal);
+    WRITE_INFO(stats.qualityInputMinMedAvgMaxInv);
     WRITE_INFO(stats.qualityQuadMinMedAvgMaxInv);
+    WRITE_INFO(stats.qualityHexMinMedAvgMaxInv);
+    WRITE_INFO(stats.qualityTetMinMedAvgMaxInv);
     WRITE_INFO(stats.qualityExtrusionMinMedAvgMaxInv);
-    WRITE_INFO(stats.qualityFinalMinMedAvgMaxInv);
 
     WRITE_INFO(stats.extrusionOutNbHexes);
     WRITE_INFO(stats.extrusionOutNbVertices);
@@ -114,10 +128,8 @@ namespace hbl {
     WRITE_INFO(stats.extrusionTimeIntegerProblem);
     WRITE_INFO(stats.extrusionTimeMeshConstruction);
 
-    WRITE_INFO(stats.nbSelfIntersectionInitial);
-    WRITE_INFO(stats.nbSelfIntersectionFixed);
-    WRITE_INFO(stats.interiorTetMeshingInitial);
-    WRITE_INFO(stats.interiorTetMeshingFixed);
+    WRITE_INFO(stats.interiorTetMesh);
+    WRITE_INFO(stats.interiorTetMeshTopoFallback);
 
     WRITE_INFO_LAST(stats.subproblemVarIterTimeStoppedTfirstTlast);
 
@@ -335,7 +347,7 @@ namespace hbl {
     RFC(edgeValenceIdealReal.size() == 0, "no edges ?");
     valIdeal.resize(edgeValenceIdealReal.size());
     valMinMax.resize(edgeValenceIdealReal.size());
-    bool V2 = true; /* to avoid valence 1 or 3 on surfaces where dihedral
+    bool V2 = false; /* to avoid valence 1 or 3 on surfaces where dihedral
                        angles are noisy due to coarse resolution of quad
                        mesh */
     if (V2) {

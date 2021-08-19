@@ -145,4 +145,24 @@ int RefineMeshWithBackgroundMeshProjection(GModel *gm);
  */
 int replaceBadQuadDominantMeshes(GModel *gm);
 
+/**
+ * @brief Add one extruded quad layer on curves where the
+ * boundary quad valences are not ideal
+ *
+ * @param gm The model containing the surface meshes
+ *
+ * @return 0 if success
+ */
+int optimizeQuadMeshBoundaries(GModel *gm);
+
+/**
+ * @brief Delete background meshes and fields that have 
+ * been used by quadqs meshing/remeshing
+ *
+ * @param gm The model containing the surface meshes
+ *
+ * @return 0 if success
+ */
+int quadqsCleanup(GModel *gm);
+
 #endif

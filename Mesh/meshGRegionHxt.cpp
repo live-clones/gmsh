@@ -27,6 +27,10 @@ extern "C" {
 #include "hxt_omp.h"
 #include "hxt_tetMesh.h"
 #include "hxt_tetDelaunay.h"
+#include "hxt_tetOpti.h"
+#include "hxt_tetColor.h"
+#include "hxt_tetRepair.h"
+#include "hxt_tetFlag.h"
 }
 
 static HXTStatus messageCallback(HXTMessage *msg)
@@ -398,9 +402,12 @@ static HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions, HXTMesh *m,
 
 HXTStatus Gmsh2Hxt(std::vector<GRegion *> &regions, HXTMesh *m,
                    std::map<MVertex *, uint32_t> &v2c,
-                   std::vector<MVertex *> &c2v)
+                   std::vector<MVertex *> &c2v,
+                   bool includeTetrahedra = false)
 {
+  Msg::Debug("Start Gmsh2Hxt");
   std::set<MVertex *> all;
+  std::set<MVertex *> interior;
   std::vector<GFace *> surfaces;
   std::vector<GEdge *> curves;
   std::vector<GVertex *> points;
@@ -409,7 +416,7 @@ HXTStatus Gmsh2Hxt(std::vector<GRegion *> &regions, HXTMesh *m,
   HXT_CHECK(getAllSurfaces(regions, m, surfaces));
   HXT_CHECK(getAllCurves(regions, surfaces, m, curves));
 
-  uint64_t index = 0, ntri = 0, nedg = 0, npts = 0;
+  uint64_t index = 0, ntet = 0, ntri = 0, nedg = 0, npts = 0;
 
   // embedded points in volumes (all other embedded points will be in the
   // curve/surface meshes already)
@@ -445,7 +452,22 @@ HXTStatus Gmsh2Hxt(std::vector<GRegion *> &regions, HXTMesh *m,
     }
   }
 
-  m->vertices.num = m->vertices.size = all.size();
+  if (includeTetrahedra) {
+    for(size_t j = 0; j < regions.size(); j++) {
+      GRegion *gr = regions[j];
+      ntet += gr->tetrahedra.size();
+      for(size_t i = 0; i < gr->tetrahedra.size(); i++) {
+        for (size_t lv = 0; lv < 4; ++lv) {
+          MVertex* v = gr->tetrahedra[i]->getVertex(lv);
+          if (!v->onWhat() || v->onWhat()->dim() == 3) {
+            interior.insert(v);
+          }
+        }
+      }
+    }
+  }
+
+  m->vertices.num = m->vertices.size = all.size() + interior.size();
   HXT_CHECK(
     hxtAlignedMalloc(&m->vertices.coord, 4 * m->vertices.num * sizeof(double)));
 
@@ -465,6 +487,23 @@ HXTStatus Gmsh2Hxt(std::vector<GRegion *> &regions, HXTMesh *m,
     c2v[count++] = v;
   }
   all.clear();
+  if (includeTetrahedra) {
+    c2v.resize(c2v.size()+interior.size());
+    for(MVertex *v : interior) {
+      m->vertices.coord[4 * count + 0] = v->x();
+      m->vertices.coord[4 * count + 1] = v->y();
+      m->vertices.coord[4 * count + 2] = v->z();
+      m->vertices.coord[4 * count + 3] = 0;
+      if(CTX::instance()
+          ->mesh.lcFromPoints) { // size on embedded points in volume
+        auto it = vlc.find(v);
+        if(it != vlc.end()) m->vertices.coord[4 * count + 3] = it->second;
+      }
+      v2c[v] = count;
+      c2v[count++] = v;
+    }
+    interior.clear();
+  }
 
   m->points.num = m->points.size = npts;
   HXT_CHECK(
@@ -513,10 +552,46 @@ HXTStatus Gmsh2Hxt(std::vector<GRegion *> &regions, HXTMesh *m,
       index++;
     }
   }
+
+  if (includeTetrahedra) {
+    m->tetrahedra.num = m->tetrahedra.size = ntet;
+    HXT_CHECK(hxtAlignedMalloc(&m->tetrahedra.node,
+          (m->tetrahedra.num) * 4 * sizeof(uint32_t)));
+    HXT_CHECK(hxtAlignedMalloc(&m->tetrahedra.color,
+          (m->tetrahedra.num) * sizeof(uint32_t)));
+    HXT_CHECK(hxtAlignedMalloc(&m->tetrahedra.flag,
+          (m->tetrahedra.num) * sizeof(uint16_t)));
+
+    index = 0;
+    for(size_t j = 0; j < regions.size(); j++) {
+      GRegion *gr = regions[j];
+      for(size_t i = 0; i < gr->tetrahedra.size(); i++) {
+        m->tetrahedra.node[4 * index + 0] = v2c[gr->tetrahedra[i]->getVertex(0)];
+        m->tetrahedra.node[4 * index + 1] = v2c[gr->tetrahedra[i]->getVertex(1)];
+        m->tetrahedra.node[4 * index + 2] = v2c[gr->tetrahedra[i]->getVertex(2)];
+        m->tetrahedra.node[4 * index + 3] = v2c[gr->tetrahedra[i]->getVertex(3)];
+        m->tetrahedra.color[index] = gr->tag();
+        m->tetrahedra.flag[index] = 0;
+        index++;
+      }
+    }
+
+    /* Update tet flags */
+    HXT_CHECK( hxtTetAdjacencies(m) );
+    for(uint64_t i=0; i<m->tetrahedra.num; i++) {
+      m->tetrahedra.flag[i] = 0;
+      for(int j=0; j<4; j++) {
+        if(m->tetrahedra.neigh[4*i+j]==HXT_NO_ADJACENT)
+          setFacetConstraint(m, i, j);
+      }
+    }
+    HXT_CHECK( hxtTetVerify(m) );
+  }
+  Msg::Debug("End Gmsh2Hxt");
   return HXT_STATUS_OK;
 }
 
-static HXTStatus _meshGRegionHxt(std::vector<GRegion *> &regions)
+static HXTStatus _meshGRegionHxt(std::vector<GRegion *> &regions, int tetRefine = 1)
 {
   HXT_CHECK(hxtSetMessageCallback(messageCallback));
 
@@ -534,7 +609,7 @@ static HXTStatus _meshGRegionHxt(std::vector<GRegion *> &regions)
     1, // int reproducible;
     (Msg::GetVerbosity() > 5) ? 2 : 1, // int verbosity;
     1, // int stat;
-    1, // int refine;
+    tetRefine, // int refine;
     CTX::instance()->mesh.optimize, // int optimize;
     CTX::instance()->mesh.toleranceInitialDelaunay,// tolerance for tetgen
     {
@@ -560,9 +635,55 @@ static HXTStatus _meshGRegionHxt(std::vector<GRegion *> &regions)
   return HXT_STATUS_OK;
 }
 
-int meshGRegionHxt(std::vector<GRegion *> &regions)
+static HXTStatus _meshGRegionHxtOptimize(std::vector<GRegion *> &regions)
 {
-  HXTStatus status = _meshGRegionHxt(regions);
+  HXT_CHECK(hxtSetMessageCallback(messageCallback));
+
+  HXTMesh *mesh;
+  HXT_CHECK(hxtMeshCreate(&mesh));
+
+  std::map<MVertex *, uint32_t> v2c;
+  std::vector<MVertex *> c2v;
+  const bool includeTetrahedra = true;
+  Gmsh2Hxt(regions, mesh, v2c, c2v, includeTetrahedra);
+
+
+  uint32_t numVerticesConstrained = 0;
+  for (size_t i = 0; i < c2v.size(); ++i) if (c2v[i]->onWhat()->dim() == 3) {
+    numVerticesConstrained = i;
+    break;
+  }
+  if (numVerticesConstrained == 0) {
+    Msg::Warning("_meshGRegionHxtOptimize: no constrained vertices");
+  }
+
+  HXTOptimizeOptions options = {
+    nullptr, // bbox
+    nullptr, // qualityFun
+    nullptr, // qualityData
+    CTX::instance()->mesh.optimizeThreshold, // double qualityMin;
+    0, // numThreads
+    numVerticesConstrained,
+    (Msg::GetVerbosity() > 5) ? 2 : 1, // int verbosity;
+    1  // int reproducible
+  };
+
+  HXT_CHECK(hxtOptimizeTetrahedra(mesh, &options));
+
+  HXT_CHECK(Hxt2Gmsh(regions, mesh, v2c, c2v));
+  HXT_CHECK(hxtMeshDelete(&mesh));
+  return HXT_STATUS_OK;
+}
+
+int meshGRegionHxt(std::vector<GRegion *> &regions, int tetRefine)
+{
+  HXTStatus status = _meshGRegionHxt(regions, tetRefine);
+  if(status == HXT_STATUS_OK) return 0;
+  return 1;
+}
+
+int meshGRegionHxtOptimize(std::vector<GRegion *> &regions) {
+  HXTStatus status = _meshGRegionHxtOptimize(regions);
   if(status == HXT_STATUS_OK) return 0;
   return 1;
 }
@@ -637,7 +758,13 @@ void delaunayMeshIn3DHxt(std::vector<MVertex *> &v,
 
 #else
 
-int meshGRegionHxt(std::vector<GRegion *> &regions)
+int meshGRegionHxt(std::vector<GRegion *> &regions, int refine)
+{
+  Msg::Error("Gmsh should be compiled with Hxt to enable this option");
+  return -1;
+}
+
+int meshGRegionHxtOptimize(std::vector<GRegion *> &regions)
 {
   Msg::Error("Gmsh should be compiled with Hxt to enable this option");
   return -1;

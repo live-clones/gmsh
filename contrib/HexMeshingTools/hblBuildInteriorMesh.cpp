@@ -24,6 +24,10 @@
 #include "hblBrepMesh.h"
 #include "hblOptimizeGeometry.h"
 
+#if defined(HAVE_WINSLOWUNTANGLER)
+#include "winslowUntangler.h"
+#endif
+
 /* gmsh includes */
 #include "robin_hood.h"
 #include "gmsh.h"
@@ -78,8 +82,6 @@ namespace hbl {
   };
 
 
-
-
   bool decreaseBoundaryLayerThickness(
       BrepMesh& H,
       HexToBoundaryMeshMatching& h2q,
@@ -107,6 +109,42 @@ namespace hbl {
     return true;
   }
 
+  bool decreaseBoundaryLayerThickness(
+      SimpleMesh& M,
+      const BrepMesh& H,
+      const HexToBoundaryMeshMatching& h2q,
+      double thicknessFactor = 0.05) {
+
+    vector<id> h2m(H.vertices.size(),NO_ID);
+    FC(v,M.origin.size(),M.origin[v] != NO_ID) {
+      h2m[M.origin[v]] = v;
+    }
+
+    F(v,H.vertices.size()) {
+      if (h2q.vertexParent[v].first > 2) {
+        size_t nob = 0;
+        vec3 pOnBdr;
+        for (id e: H.vertToEdges[v]) {
+          id v2 = edge_opposite_vertex(H.edges[e].vertices,v);
+          if (h2q.vertexParent[v2].first <= 2) {
+            nob += 1;
+            pOnBdr = H.vertices[v2].pt;
+          }
+        }
+        if (nob == 1) {
+          vec3 p = H.vertices[v].pt;
+          vec3 newPos = pOnBdr + thicknessFactor * (p - pOnBdr);
+          id mv = h2m[v];
+          if (mv != NO_ID) {
+            M.points[mv] = newPos;
+          }
+        }
+      }
+    }
+
+    return true;
+  }
+
 
   bool initMeshTriangulation(
       const BrepMesh& H,
@@ -116,6 +154,7 @@ namespace hbl {
     M.origin.clear();
     M.triangles.clear();
     M.tets.clear();
+    M.hexahedra.clear();
 
     M.triangles.reserve(tris.size());
     M.points.reserve(tris.size());
@@ -143,13 +182,63 @@ namespace hbl {
     return true;
   }
 
+  bool initMeshTetrahedrization(
+      const std::vector<vec3>& points,
+      const std::vector<id3>& tris,
+      const std::vector<id4>& tets,
+      SimpleMesh& M) {
+    M.points.clear();
+    M.origin.clear();
+    M.triangles.clear();
+    M.tets.clear();
+    M.hexahedra.clear();
+
+    M.points.reserve(points.size());
+    M.origin.reserve(points.size());
+
+    vector<id> old2new(points.size(),NO_ID);
+    for (size_t t = 0; t < tris.size(); ++t) {
+      id3 vs;
+      for (size_t lv = 0; lv < 3; ++lv) {
+        size_t v = tris[t][lv];
+        if (old2new[v] == NO_ID) {
+          size_t nv = M.points.size();
+          vec3 p = points[v];
+          M.points.push_back(p);
+          M.origin.push_back(v);
+          old2new[v] = nv;
+          vs[lv] = nv;
+        } else {
+          vs[lv] = old2new[v];
+        }
+      }
+      M.triangles.push_back(vs);
+    }
+    for (size_t t = 0; t < tets.size(); ++t) {
+      id4 vs;
+      for (size_t lv = 0; lv < 4; ++lv) {
+        size_t v = tets[t][lv];
+        if (old2new[v] == NO_ID) {
+          size_t nv = M.points.size();
+          vec3 p = points[v];
+          M.points.push_back(p);
+          M.origin.push_back(v);
+          old2new[v] = nv;
+          vs[lv] = nv;
+        } else {
+          vs[lv] = old2new[v];
+        }
+      }
+      M.tets.push_back(vs);
+    }
+
+    return true;
+  }
+
   bool generateConstrainedTetMesh(SimpleMesh& M, bool tetRefine = true, bool tetOptimize = true) {
     if (M.points.size() == 0 || M.triangles.size() == 0) {
       Msg::Error("generateConstrainedTetMesh: no points or no boundary triangles");
       return false;
-    }
-    if (!tetRefine) {
-      Msg::Warning("tetRefine forced to true by current meshGRegionHxt API");
     }
 
     bool success = true;
@@ -183,7 +272,7 @@ namespace hbl {
     }
     std::vector<GRegion*> regions;
     regions.push_back(dr);
-    int st = meshGRegionHxt(regions);
+    int st = meshGRegionHxt(regions, (int) tetRefine);
     if (st != 0) { 
       Msg::Warning("- Region %i: HXT 3D mesh failed", dr->tag()); 
       success = false;
@@ -213,6 +302,101 @@ namespace hbl {
 
     /* Clean */
     CTX::instance()->mesh.optimize = mesh_optimize;
+    CTX::instance()->mesh.renumber = mesh_renumber;
+    // for (MVertex* v: vertices) delete v;
+    // for (MTriangle* t: df->triangles) delete t;
+    // for (MTetrahedron* t: dr->tetrahedra) delete t;
+    delete df;
+    delete dr;
+
+
+    return success;
+  }
+
+  bool optimizeTetMeshInterior(SimpleMesh& M) {
+    if (M.points.size() == 0 || M.triangles.size() == 0 || M.tets.size() == 0) {
+      Msg::Error("optimizeTetMeshInterior: no points or no boundary triangles or no tets");
+      return false;
+    }
+
+    bool success = true;
+
+    /* Mesh with HXT */
+    int mesh_renumber = CTX::instance()->mesh.renumber;
+    CTX::instance()->mesh.renumber = 0;
+
+    /* Create 'gmsh mesh' before calling tet mesher */
+    discreteRegion* dr = new discreteRegion(GModel::current());
+    discreteFace* df = new discreteFace(GModel::current());
+    dr->setFace(df,1);
+    vector<MVertex*> vertices(M.points.size(),nullptr);
+    std::unordered_map<MVertex*,id> new2old;
+    vector<int> vertexDim(M.points.size(),4);
+    for (size_t t = 0; t < M.tets.size(); ++t) {
+      for (size_t lv = 0; lv < 4; ++lv) vertexDim[M.tets[t][lv]] = 3;
+    }
+    for (size_t t = 0; t < M.triangles.size(); ++t) {
+      for (size_t lv = 0; lv < 3; ++lv) vertexDim[M.triangles[t][lv]] = 2;
+    }
+    for (size_t v = 0; v < M.points.size(); ++v) {
+      if (vertexDim[v] == 2) {
+        vertices[v] = new MVertex(M.points[v][0],M.points[v][1],M.points[v][2],df);
+        df->addMeshVertex(vertices[v]);
+      } else if (vertexDim[v] == 3) {
+        vertices[v] = new MVertex(M.points[v][0],M.points[v][1],M.points[v][2],dr);
+        dr->addMeshVertex(vertices[v]);
+      }
+      new2old[vertices[v]] = v;
+    }
+    df->triangles.resize(M.triangles.size(),nullptr);
+    for (size_t t = 0; t < M.triangles.size(); ++t) {
+      df->triangles[t] = new MTriangle(
+          vertices[M.triangles[t][0]],
+          vertices[M.triangles[t][1]],
+          vertices[M.triangles[t][2]]);
+    }
+    dr->tetrahedra.resize(M.tets.size(),nullptr);
+    for (size_t t = 0; t < M.tets.size(); ++t) {
+      dr->tetrahedra[t] = new MTetrahedron(
+          vertices[M.tets[t][0]],
+          vertices[M.tets[t][1]],
+          vertices[M.tets[t][2]],
+          vertices[M.tets[t][3]]);
+    }
+
+    std::vector<GRegion*> regions;
+    regions.push_back(dr);
+    int st = meshGRegionHxtOptimize(regions);
+    if (st != 0) { 
+      Msg::Warning("- Region %i: HXT 3D mesh optimize failed", dr->tag()); 
+      success = false;
+    }
+
+    if (success) {
+      M.tets.clear();
+      M.tets.reserve(dr->tetrahedra.size());
+      for (MTetrahedron* tet: dr->tetrahedra) {
+        id4 vs;
+        for (size_t lv = 0; lv < 4; ++lv) {
+          MVertex* v = tet->getVertex(lv);
+          auto it = new2old.find(v);
+          if (it == new2old.end()) { // new vertex
+            new2old[v] = M.points.size();
+            vs[lv] = M.points.size();
+            vec3 p = v->point();
+            M.points.push_back(p);
+            M.origin.push_back(NO_ID);
+            vertices.push_back(v);
+          } else {
+            vs[lv] = it->second;
+            M.points[vs[lv]] = v->point();
+          }
+        }
+        M.tets.push_back(vs);
+      }
+    }
+
+    /* Clean */
     CTX::instance()->mesh.renumber = mesh_renumber;
     // for (MVertex* v: vertices) delete v;
     // for (MTriangle* t: df->triangles) delete t;
@@ -337,25 +521,6 @@ namespace hbl {
       const std::vector<std::array<int32_t,3> >& triangles,
       std::vector<id2>& intersections,
       bool earlyStop) {
-
-    // if (false) {
-    //   Msg::Warning("==== checking intersections for %li triangles ===", triangles.size());
-
-    //   intersections.clear();
-    //   double t0 = Cpu();
-    //   checkTriangleIntersectionsAllPairs(points, triangles, intersections, false);
-    //   double t1 = Cpu();
-    //   Msg::Warning("--- allPairs: %li intersections %.5f seconds", intersections.size(), t1 - t0);
-
-    //   intersections.clear();
-    //   double t2 = Cpu();
-    //   checkTriangleIntersectionsWithOctree(points, triangles, intersections, false);
-    //   double t3 = Cpu();
-    //   Msg::Warning("--- octree:   %li intersections %.5f seconds", intersections.size(), t3 - t2);
-
-    //   Msg::Warning("=====");
-    // }
-
     if (triangles.size() < 100) {
       return checkTriangleIntersectionsAllPairs(points, triangles, intersections, earlyStop);
     } else {
@@ -367,7 +532,7 @@ namespace hbl {
   bool checkBoundarySelfIntersections(SimpleMesh& M, std::vector<id2>& intersections)
   {
     intersections.clear();
-    Msg::Info("Checking boundary self-intersections ...");
+    Msg::Debug("Checking boundary self-intersections ...");
     vector<std::array<int32_t,3> > tris(M.triangles.size());
     for (size_t t = 0; t < M.triangles.size(); ++t) {
       tris[t][0] = M.triangles[t][0];
@@ -376,95 +541,10 @@ namespace hbl {
     }
     checkTriangleIntersections(M.points, tris, intersections);
     if (intersections.size() > 0) {
-      Msg::Warning("- %li self-intersections", intersections.size());
+      Msg::Debug("- %li self-intersections", intersections.size());
       return false;
     }
-    Msg::Info("- no self-intersection");
-    return true;
-  }
-
-  // grow cavity by adding all vertex-adjacent triangles
-  bool grow(const SimpleMesh& M, 
-      const std::vector<std::vector<id> >& v2t, 
-      std::vector<id>& cavity) {
-    const size_t nt = cavity.size();
-    for (size_t lt = 0; lt < nt; ++lt) {
-      size_t t = cavity[lt];
-      for (size_t lv = 0; lv < 3; ++lv) {
-        size_t v = M.triangles[t][lv];
-        for (size_t t2: v2t[v]) {
-          auto it = std::find(cavity.begin(),cavity.end(),t2);
-          if (it == cavity.end()) {
-            cavity.push_back(t2);
-          }
-        }
-      }
-    }
-    return true;
-  }
-
-  int computeEulerCharacteristic(const std::vector<id3>& triangles) {
-    vector<id> vertices;
-    vector<id2> edges;
-    vertices.reserve(triangles.size());
-    edges.reserve(triangles.size());
-    for (size_t t = 0; t < triangles.size(); ++t) {
-      for (size_t lv = 0; lv < 3; ++lv) {
-        vertices.push_back(triangles[t][lv]);
-        edges.push_back(sorted(triangles[t][lv],triangles[t][(lv+1)%3]));
-      }
-    }
-    sort_unique(vertices);
-    sort_unique(edges);
-    int X = int(vertices.size()) - int(edges.size()) + int(triangles.size());
-    return X;
-  }
-
-  bool buildCavity(
-      const SimpleMesh& M, 
-      const std::vector<std::vector<id> >& v2t, 
-      id2 trianglePair,
-      std::vector<id>& cavity) {
-    // Init cavity with the two intersecting triangles
-    cavity.clear();
-    cavity.push_back(trianglePair[0]);
-    cavity.push_back(trianglePair[1]);
-
-    // Grow until cavity is single component
-    bool ok = false;
-    size_t GMAX = 5;
-    for (size_t iter = 0; iter < GMAX; ++iter) {
-      grow(M, v2t, cavity);
-      vector<id3> cavity_tris(cavity.size());
-      for (size_t t = 0; t < cavity.size(); ++t) {
-        cavity_tris[t] = M.triangles[cavity[t]];
-      }
-      int X = computeEulerCharacteristic(cavity_tris);
-      DBG(iter,cavity_tris.size(),X);
-      if (X == 1) {
-        ok = true;
-        break;
-      }
-    }
-
-    return ok;
-  }
-
-  bool fixCavity(
-      SimpleMesh& M, 
-      const std::vector<std::vector<id> >& v2t, 
-      std::vector<id>& cavity) {
-    for (size_t t = 0; t < cavity.size(); ++t) {
-      vec3 p1 = M.points[M.triangles[cavity[t]][0]];
-      vec3 p2 = M.points[M.triangles[cavity[t]][1]];
-      vec3 p3 = M.points[M.triangles[cavity[t]][2]];
-      double col = 0.;
-      if (t <= 1) {
-        col = 1.;
-      }
-      GeoLog::add({p1,p2,p3},col,"cavity");
-    }
-    GeoLog::flush();
+    Msg::Debug("- no self-intersection");
     return true;
   }
 
@@ -572,11 +652,19 @@ namespace hbl {
     }
 
     bool ok = false;
-    double lambda = 0.1;
-    size_t iterMax = std::max((size_t)100,cavity.size());
+
+    /* Taubin coefficients */
+    bool taubin = false;
+    double lambda = 0.33;
+    double mu = -0.34;
+    if (!taubin) {
+      lambda = 0.1;
+    }
+
+    size_t iterMax = std::max((size_t)50,cavity.size());
     double dx0max = 0.;
     for (size_t iter = 0; iter < iterMax; ++iter) {
-      // Laplacian smoothing step
+      // Taubin / Laplacian smoothing step
       double dxmax = 0.;
       for (size_t v = 0; v < v2v.size(); ++v) if (v2v[v].size() > 0) {
         vec3 avg = {0.,0.,0.};
@@ -584,12 +672,18 @@ namespace hbl {
           avg = avg + M.points[v2];
         }
         avg = avg * (1./double(v2v[v].size()));
-        vec3 newPos = (1.-lambda) * M.points[v] + lambda * avg;
+        vec3 delta = avg - M.points[v];
+        vec3 newPos;
+        if (taubin) {
+          newPos = (iter % 2 == 0) ? M.points[v] + lambda * delta : M.points[v] + mu * delta;
+        } else {
+          newPos = M.points[v] + lambda * delta;
+        }
         double dx = length(newPos - M.points[v]);
         if (dx > dxmax) dxmax = dx;
         M.points[v] = newPos;
       }
-      Msg::Debug("- smoothing: iter %i, dxmax = %.3e (dx0max = %.3e)", iter, dxmax, dx0max);
+      // Msg::Debug("- smoothing: iter %i, dxmax = %.3e (dx0max = %.3e)", iter, dxmax, dx0max);
 
       // Check surface auto-intersections
       bool earlyStop = true;
@@ -603,7 +697,7 @@ namespace hbl {
       if (iter == 0) {
         dx0max = dxmax;
       } else if (dxmax < 1.e-3 * dx0max) { // vertices no longer moving much, stop
-        Msg::Debug("- smoothing: break at iter %i (vertices no longer moving much)", iter);
+        // Msg::Debug("- smoothing: break at iter %i (vertices no longer moving much)", iter);
         break;
       }
     }
@@ -628,7 +722,7 @@ namespace hbl {
     /* Create domains around self-intersections and fix them by local smoothing */
     /* Loop over cavity size (dist_threshold applied to distance to self-intersection) */
     id dist_threshold_min = 1;
-    id dist_threshold_max = 5;
+    id dist_threshold_max = 4;
     for (id dist_threshold = dist_threshold_min; dist_threshold < dist_threshold_max; ++dist_threshold) {
       if (dist_threshold > dist_threshold_min) { // Update intersections
         intersections.clear();
@@ -640,7 +734,7 @@ namespace hbl {
       bool okb = buildCavityWithDistanceToIntersections(M, v2t, intersections, cavities, dist_threshold);
       RFC(!okb, "failed to build cavities");
 
-      Msg::Info("Threshold %i, built %li domains around self-intersections", dist_threshold, cavities.size());
+      Msg::Debug("Fix self-intersections: threshold %i, built %li domains around self-intersections", dist_threshold, cavities.size());
 
       if (Msg::GetVerbosity() >= 99) {
         for (size_t i = 0; i < cavities.size(); ++i) {
@@ -656,10 +750,10 @@ namespace hbl {
 
       bool remaining = false;
       for (size_t i = 0; i < cavities.size(); ++i) {
-        Msg::Info("- fixing domain %i ... (%li triangles)", i, cavities[i].size());
+        Msg::Debug("- fixing domain %i ... (%li triangles)", i, cavities[i].size());
         bool fixed = smoothCavityUntilNoIntersection(M, cavities[i]);
         if (fixed) {
-          Msg::Info(" -> Yeah !");
+          Msg::Debug(" -> fixed !");
 
           if (Msg::GetVerbosity() >= 99) {
             for (size_t j = 0; j < cavities[i].size(); ++j) {
@@ -671,7 +765,7 @@ namespace hbl {
           }
         } else {
           remaining = true;
-          Msg::Warning(" -> still some intersections ...");
+          Msg::Debug(" -> still some intersections ...");
 
           if (Msg::GetVerbosity() >= 99) {
             for (size_t j = 0; j < cavities[i].size(); ++j) {
@@ -690,93 +784,12 @@ namespace hbl {
       if (!remaining) break;
     }
 
-    // for (size_t i = 0; i < intersections.size(); ++i) {
-    //   std::vector<id> cavity;
-    //   buildCavity(M, v2t, intersections[i], cavity);
-    //   DBG(i, intersections[i],cavity);
-    //   fixCavity(M, v2t, cavity);
-    // }
-    // gmsh::fltk::run();
-    // abort();
-
-    return true;
+    return intersections.size() == 0;
   }
 
-  bool transferSimpleMeshToBrepMesh(
-      SimpleMesh& M,
-      const std::vector<std::vector<id> >& quadMeshFaces,
-      HblOutput& output) {
-
-    if (M.tets.size() == 0 && M.hexahedra.size() == 0) {
-      Msg::Error("no tets and no hexes");
-      return false;
-    }
-
-    BrepMesh& H = output.H;
-
-    /* Add the tetrahedra to the BrepMesh mesh */
-    robin_hood::unordered_map<id2,id,id2Hash> pair2he;
-    robin_hood::unordered_map<id3,id,id3Hash> tri2hf;
-
-    /* - mark existing quad edges */
-    for (size_t i = 0; i < quadMeshFaces.size(); ++i) {
-      for (size_t j = 0; j < quadMeshFaces[i].size(); ++j) {
-        size_t q = quadMeshFaces[i][j];
-        for (size_t le = 0; le < 4; ++le) {
-          size_t e = H.faces[q].edges[le];
-          id2 vPair = H.edges[e].vertices;
-          vPair = sorted(vPair[0],vPair[1]);
-          pair2he[vPair] = e;
-        }
-      }
-    }
-
-    /* Transfer vertices */
-    for (size_t i = 0; i < M.origin.size(); ++i) if (M.origin[i] == NO_ID) {
-      id v = add_vertex(H, M.points[i], nullptr, nullptr, false);
-      M.origin[i] = v;
-    }
-
-    const size_t TET_EDGES[6][2] = {{0, 1}, {1, 2}, {2, 0}, {3, 0}, {3, 2}, {3, 1}};
-    const size_t TET_FACETS[4][3] = {{0,2,1},{0,1,3}, {0,3,2}, {3,1,2}};
-    const size_t TET_FACE_EDGES[4][3] = {{2,1,0}, {0,5,3}, {3,4,2}, {5,1,4}};
-
-    vector<id> tfaces(4);
-    for (size_t c = 0; c < M.tets.size(); ++c) {
-      for (size_t lf = 0; lf < 4; ++lf) {
-        id3 faceEdges;
-        for (size_t lfe = 0; lfe < 3; ++lfe) {
-          size_t le = TET_FACE_EDGES[lf][lfe];
-          size_t lvs[2] = {TET_EDGES[le][0], TET_EDGES[le][1]};
-          id2 edge = {M.origin[M.tets[c][lvs[0]]], M.origin[M.tets[c][lvs[1]]]};
-          edge = sorted(edge[0],edge[1]);
-          id e = NO_ID;
-          auto ite = pair2he.find(edge);
-          if (ite == pair2he.end()) { /* add edge to H */
-            e = add_edge(H, edge, nullptr, nullptr, false);
-            pair2he[edge] = e;
-          } else {
-            e = ite->second;
-          }
-          faceEdges[lfe] = e;
-        }
-        id f = NO_ID;
-        faceEdges = sorted(faceEdges[0],faceEdges[1],faceEdges[2]);
-        auto itf = tri2hf.find(faceEdges);
-        if (itf == tri2hf.end()) { /* add face to H */
-          const std::vector<id> fedges = {faceEdges[0],faceEdges[1],faceEdges[2]};
-          f = add_face(H, fedges, nullptr, nullptr, false);
-          tri2hf[faceEdges] = f;
-        } else {
-          f = itf->second;
-        }
-        tfaces[lf] = f;
-      }
-      add_cell(H, tfaces, nullptr, nullptr, false); /* add tet to H */
-    }
-
-    return true;
-  }
+  constexpr size_t TET_EDGES[6][2] = {{0, 1}, {1, 2}, {2, 0}, {3, 0}, {3, 2}, {3, 1}};
+  constexpr size_t TET_FACETS[4][3] = {{0,2,1},{0,1,3}, {0,3,2}, {3,1,2}};
+  constexpr size_t TET_FACE_EDGES[4][3] = {{2,1,0}, {0,5,3}, {3,4,2}, {5,1,4}};
 
   bool transferSimpleMeshToOutput(
       SimpleMesh& M,
@@ -808,418 +821,725 @@ namespace hbl {
     return true;
   }
 
-  bool exportQuadAndTetMeshToFile(
-      /* topology of the quad mesh */
-      const BrepMesh& M,  
-      const std::vector<id>& quadFaces,
-      /* new geometry after self-intersection repair */
-      const SimpleMesh& G, 
-      const std::string& filename,
-      bool withTets = true) {
 
-    GModel* gm = new GModel();
-    discreteFace* df = new discreteFace(gm);
-    discreteRegion* dr = new discreteRegion(gm);
-    gm->add(df);
-    gm->add(dr);
-    dr->setFace(df,1);
+  constexpr int hex_facet_vertex[6][4] = {
+    {0, 3, 2, 1}, {0, 1, 5, 4}, {0, 4, 7, 3}, 
+    {1, 2, 6, 5}, {2, 3, 7, 6}, {4, 5, 6, 7}};
 
-    vector<id> vert_M2G(M.vertices.size(),NO_ID);
-    for (size_t i = 0; i < G.origin.size(); ++i) if (G.origin[i] != NO_ID) {
-      vert_M2G[G.origin[i]] = i;
-    }
+  /* tetrahedra (id4) added to output.tetrahedra
+   * cell center vertices added to H */
+  bool appendHexSubTetrahedraMidpoint(HblOutput& output, BrepMesh& H, const id8& hex,
+      const array<bool,6>& localHexFaceOnBdr,
+      vector<id3>& boundaryTris,
+      const array<bool,6>& localHexFaceOnInt,
+      vector<id3>& interiorTris) {
 
-    vector<id> fvert;
-    vector<MVertex*> new_vertices(M.vertices.size(),nullptr);
-    df->quadrangles.reserve(quadFaces.size());
-    for (id f: quadFaces) {
-      face_vertices(M, f, fvert);;
+    vec3 center = {0.,0.,0.};
+    F(lv,8) center = center + H.vertices[hex[lv]].pt;
+    center = center * (1./8.);
+    id nc = add_vertex(H, center);
 
-      MVertex* nvs[4];
-      for (size_t lv = 0; lv < fvert.size(); ++lv) {
-        id _v = fvert[lv]; /* vertex id in M */
-        id gv = vert_M2G[_v]; /* vertex id in G */
-        vec3 pt = G.points[gv]; /* position in G */
-
-        if (new_vertices[gv] == nullptr) {
-          new_vertices[gv] = new MVertex(pt[0],pt[1],pt[2],df);
-          df->addMeshVertex(new_vertices[gv]);
+    vector<id4> tets;
+    F(lf,6) {
+      id4 fvert = {
+        hex[hex_facet_vertex[lf][0]],
+        hex[hex_facet_vertex[lf][1]],
+        hex[hex_facet_vertex[lf][2]],
+        hex[hex_facet_vertex[lf][3]]};
+      if (std::min(fvert[0],fvert[2]) < std::min(fvert[1],fvert[3])) {
+        tets.push_back({fvert[0],fvert[1],fvert[2],nc});
+        tets.push_back({fvert[0],fvert[2],fvert[3],nc});
+        if (localHexFaceOnBdr[lf]) {
+          boundaryTris.push_back({fvert[0],fvert[1],fvert[2]});
+          boundaryTris.push_back({fvert[0],fvert[2],fvert[3]});
         }
-        nvs[lv] = new_vertices[gv];
-      }
-      df->quadrangles.push_back(new MQuadrangle(nvs[0], nvs[1], nvs[2], nvs[3]));
-    }
-
-    if (withTets) {
-      for (size_t i = 0; i < G.tets.size(); ++i) {
-        MVertex* nvs[4];
-        for (size_t lv = 0; lv < 4; ++lv) {
-          id gv = G.tets[i][lv];
-          vec3 pt = G.points[gv]; /* position in G */
-          if (new_vertices[gv] == nullptr) {
-            new_vertices[gv] = new MVertex(pt[0],pt[1],pt[2],df);
-            dr->addMeshVertex(new_vertices[gv]);
-          }
-          nvs[lv] = new_vertices[gv];
+        if (localHexFaceOnInt[lf]) {
+          interiorTris.push_back({fvert[0],fvert[1],fvert[2]});
+          interiorTris.push_back({fvert[0],fvert[2],fvert[3]});
         }
-        dr->tetrahedra.push_back(new MTetrahedron(nvs[0], nvs[1], nvs[2], nvs[3]));
+      } else {
+        tets.push_back({fvert[0],fvert[1],fvert[3],nc});
+        tets.push_back({fvert[3],fvert[1],fvert[2],nc});
+        if (localHexFaceOnBdr[lf]) {
+          boundaryTris.push_back({fvert[0],fvert[1],fvert[3]});
+          boundaryTris.push_back({fvert[3],fvert[1],fvert[2]});
+        }
+        if (localHexFaceOnInt[lf]) {
+          interiorTris.push_back({fvert[0],fvert[1],fvert[3]});
+          interiorTris.push_back({fvert[3],fvert[1],fvert[2]});
+        }
       }
     }
 
-    gm->writeMSH(filename);
-
-    delete gm;
+    F(lc,tets.size()) {
+      output.tetrahedra.push_back(tets[lc]);
+    }
 
     return true;
   }
 
-  bool exportTetMeshToFile(
-      const BrepMesh& M,  
-      /* new geometry after self-intersection repair */
-      const SimpleMesh& G, 
-      const std::string& filename) {
+  /* See the paper 'How to subdivide pyramids, prisms and hexahedra into tetrahedra' */
+  /* if (VI1,VI5) < (VI2,VI4) */
+  constexpr int prism_to_tets_1[3][4] = { {0,1,2,5}, {0,1,5,4}, {0,4,5,3} };
+  /* if (VI2,VI4) < (VI1,VI5) */
+  constexpr int prism_to_tets_2[3][4] = { {0,1,2,4}, {0,4,2,5}, {0,4,5,3} };
 
-    GModel* gm = new GModel();
-    discreteFace* df = new discreteFace(gm);
-    discreteRegion* dr = new discreteRegion(gm);
-    gm->add(df);
-    gm->add(dr);
-    dr->setFace(df,1);
+  /* Each row i corresponds to i being the lowest vertex in the prism */
+  constexpr int prism_reindexing[6][6] = {
+    {0, 1, 2, 3, 4, 5},
+    {1, 2, 0, 4, 5, 3},
+    {2, 0, 1, 5, 3, 4},
+    {3, 5, 4, 0, 2, 1},
+    {4, 3, 5, 1, 0, 2},
+    {5, 4, 3, 2, 1, 0}
+  };
 
-    vector<id> vert_M2G(M.vertices.size(),NO_ID);
-    for (size_t i = 0; i < G.origin.size(); ++i) if (G.origin[i] != NO_ID) {
-      vert_M2G[G.origin[i]] = i;
+  std::array<id4,3> tetsFromPrism(id6 prism) {
+    id lvMin = NO_ID;
+    id vMin = INT32_MAX;
+    FC(lv,6,prism[lv] < vMin) {
+      lvMin = lv;
+      vMin = prism[lv];
     }
-
-    vector<MVertex*> new_vertices(M.vertices.size(),nullptr);
-    df->triangles.reserve(G.triangles.size());
-    for (size_t i = 0; i < G.triangles.size(); ++i) {
-      MVertex* nvs[3];
-      for (size_t lv = 0; lv < 3; ++lv) {
-        id gv = G.triangles[i][lv]; /* vertex id in G */
-        vec3 pt = G.points[gv]; /* position in G */
-
-        if (new_vertices[gv] == nullptr) {
-          new_vertices[gv] = new MVertex(pt[0],pt[1],pt[2],df);
-          df->addMeshVertex(new_vertices[gv]);
-        }
-        nvs[lv] = new_vertices[gv];
+    id6 pr2 = {
+      prism[prism_reindexing[lvMin][0]],
+      prism[prism_reindexing[lvMin][1]],
+      prism[prism_reindexing[lvMin][2]],
+      prism[prism_reindexing[lvMin][3]],
+      prism[prism_reindexing[lvMin][4]],
+      prism[prism_reindexing[lvMin][5]]
+    };
+    std::array<id4,3> tets;
+    if (std::min(pr2[1],pr2[5]) < std::min(pr2[2],pr2[4])) {
+      F(lt,3) {
+        tets[lt][0] = pr2[prism_to_tets_1[lt][0]];
+        tets[lt][1] = pr2[prism_to_tets_1[lt][1]];
+        tets[lt][2] = pr2[prism_to_tets_1[lt][2]];
+        tets[lt][3] = pr2[prism_to_tets_1[lt][3]];
       }
-      df->triangles.push_back(new MTriangle(nvs[0], nvs[1], nvs[2]));
-    }
-
-    for (size_t i = 0; i < G.tets.size(); ++i) {
-      MVertex* nvs[4];
-      for (size_t lv = 0; lv < 4; ++lv) {
-        id gv = G.tets[i][lv];
-        vec3 pt = G.points[gv]; /* position in G */
-        if (new_vertices[gv] == nullptr) {
-          new_vertices[gv] = new MVertex(pt[0],pt[1],pt[2],df);
-          dr->addMeshVertex(new_vertices[gv]);
-        }
-        nvs[lv] = new_vertices[gv];
+    } else {
+      F(lt,3) {
+        tets[lt][0] = pr2[prism_to_tets_2[lt][0]];
+        tets[lt][1] = pr2[prism_to_tets_2[lt][1]];
+        tets[lt][2] = pr2[prism_to_tets_2[lt][2]];
+        tets[lt][3] = pr2[prism_to_tets_2[lt][3]];
       }
-      dr->tetrahedra.push_back(new MTetrahedron(nvs[0], nvs[1], nvs[2], nvs[3]));
+    }
+    return tets;
+  }
+
+  constexpr int hex_reindexing[8][8] = {
+    {0,1,2,3,4,5,6,7}, 
+    {1,0,4,5,2,3,7,6},
+    {2,1,5,6,3,0,4,7},
+    {3,0,1,2,7,4,5,6},
+    {4,0,3,7,5,1,2,6},
+    {5,1,0,4,6,2,3,7},
+    {6,2,1,5,7,3,0,4},
+    {7,3,2,6,4,0,1,5}};
+
+  const std::vector<id4> hex_to_tets_0 = { id4{0,1,2,5}, id4{0,2,7,5}, id4{0,2,3,7}, id4{0,5,7,4}, id4{2,7,5,6} };
+  const std::vector<id4> hex_to_tets_1 = { id4{0,5,7,4}, id4{0,1,7,5}, id4{1,6,7,5}, id4{0,7,2,3}, id4{0,7,1,2}, id4{1,7,6,2} };
+  const std::vector<id4> hex_to_tets_2 = { id4{0,4,5,6}, id4{0,3,7,6}, id4{0,7,4,6}, id4{0,1,2,5}, id4{0,3,6,2}, id4{0,6,5,2} };
+  const std::vector<id4> hex_to_tets_3 = { id4{0,2,3,6}, id4{0,3,7,6}, id4{0,7,4,6}, id4{0,5,6,4}, id4{1,5,6,0}, id4{1,6,2,0} };
+
+  id8 apply_120deg_rot(id8 hex) {
+    id tmp = hex[1];
+    hex[1] = hex[4];
+    hex[4] = hex[3];
+    hex[3] = tmp;
+    tmp = hex[5];
+    hex[5] = hex[7];
+    hex[7] = hex[2];
+    hex[2] = tmp;
+    return hex;
+  }
+
+  id8 apply_240deg_rot(id8 hex) {
+    id tmp = hex[1];
+    hex[1] = hex[3];
+    hex[3] = hex[4];
+    hex[4] = tmp;
+    tmp = hex[5];
+    hex[5] = hex[2];
+    hex[2] = hex[7];
+    hex[7] = tmp;
+    return hex;
+  }
+
+  std::vector<id4> tetsFromHex(id8 hex) {
+    id lvMin = NO_ID;
+    id vMin = INT32_MAX;
+    FC(lv,8,hex[lv] < vMin) {
+      lvMin = lv;
+      vMin = hex[lv];
+    }
+    id8 hexr = {
+      hex[hex_reindexing[lvMin][0]],
+      hex[hex_reindexing[lvMin][1]],
+      hex[hex_reindexing[lvMin][2]],
+      hex[hex_reindexing[lvMin][3]],
+      hex[hex_reindexing[lvMin][4]],
+      hex[hex_reindexing[lvMin][5]],
+      hex[hex_reindexing[lvMin][6]],
+      hex[hex_reindexing[lvMin][7]] };
+    /* face 1,2,6,5 */
+    bool b1 = (std::min(hexr[1],hexr[6]) < std::min(hexr[2],hexr[5]));
+    /* face 2,3,7,6 */
+    bool b2 = (std::min(hexr[3],hexr[6]) < std::min(hexr[2],hexr[7]));
+    /* face 4,5,6,7 */
+    bool b3 = (std::min(hexr[4],hexr[6]) < std::min(hexr[5],hexr[7]));
+    int n = int(b1) + int(b2) + int(b3); /* number of diagonals through vertex 6 */
+
+    if (!b1 && !b2 &&  b3) {
+      hexr = apply_120deg_rot(hexr);
+    } else if (!b1 &&  b2 && !b3) {
+      hexr = apply_240deg_rot(hexr);
+    } else if ( b1 && !b2 &&  b3) {
+      hexr = apply_240deg_rot(hexr);
+    } else if ( b1 &&  b2 && !b3) {
+      hexr = apply_120deg_rot(hexr);
     }
 
-    gm->writeMSH(filename);
+    std::vector<id4> tets;
+    if (n == 0) {
+      F(lt,hex_to_tets_0.size()) {
+        tets.push_back({
+            hexr[hex_to_tets_0[lt][0]],
+            hexr[hex_to_tets_0[lt][1]],
+            hexr[hex_to_tets_0[lt][2]],
+            hexr[hex_to_tets_0[lt][3]]});
+      }
+    } else if (n == 1) {
+      F(lt,hex_to_tets_1.size()) {
+        tets.push_back({
+            hexr[hex_to_tets_1[lt][0]],
+            hexr[hex_to_tets_1[lt][1]],
+            hexr[hex_to_tets_1[lt][2]],
+            hexr[hex_to_tets_1[lt][3]]});
+      }
+    } else if (n == 2) {
+      F(lt,hex_to_tets_2.size()) {
+        tets.push_back({
+            hexr[hex_to_tets_2[lt][0]],
+            hexr[hex_to_tets_2[lt][1]],
+            hexr[hex_to_tets_2[lt][2]],
+            hexr[hex_to_tets_2[lt][3]]});
+      }
+    } else if (n == 3) {
+      F(lt,hex_to_tets_3.size()) {
+        tets.push_back({
+            hexr[hex_to_tets_3[lt][0]],
+            hexr[hex_to_tets_3[lt][1]],
+            hexr[hex_to_tets_3[lt][2]],
+            hexr[hex_to_tets_3[lt][3]]});
+      }
+    }
 
-    delete gm;
+    return tets;
+  }
+
+  bool appendHexSubTetrahedra(HblOutput& output, BrepMesh& H, const id8& hex,
+      const array<bool,6>& localHexFaceOnBdr,
+      vector<id3>& boundaryTris,
+      const array<bool,6>& localHexFaceOnInt,
+      vector<id3>& interiorTris) {
+    std::vector<id4> tets = tetsFromHex(hex);
+
+    {
+      std::unordered_set<id2,id2Hash> edges;
+      F(i,tets.size()) F(j,6) {
+        id v1 = tets[i][TET_EDGES[j][0]];
+        id v2 = tets[i][TET_EDGES[j][1]];
+        edges.insert(sorted(v1,v2));
+      }
+      bool good = true;
+      F(lf,6) {
+        id4 fvert = {
+          hex[hex_facet_vertex[lf][0]],
+          hex[hex_facet_vertex[lf][1]],
+          hex[hex_facet_vertex[lf][2]],
+          hex[hex_facet_vertex[lf][3]]};
+        id3 tri1, tri2;
+        id2 good_diag, bad_diag;
+        if (std::min(fvert[0],fvert[2]) < std::min(fvert[1],fvert[3])) {
+          tri1 = {fvert[0],fvert[1],fvert[2]};
+          tri2 = {fvert[0],fvert[2],fvert[3]};
+          good_diag = sorted(fvert[0],fvert[2]);
+          bad_diag = sorted(fvert[1],fvert[3]);
+        } else {
+          tri1 = {fvert[0],fvert[1],fvert[3]};
+          tri2 = {fvert[3],fvert[1],fvert[2]};
+          good_diag = sorted(fvert[1],fvert[3]);
+          bad_diag = sorted(fvert[0],fvert[2]);
+        }
+        // TODO FIXME remove this check when sure
+        auto it1 = edges.find(good_diag);
+        auto it2 = edges.find(bad_diag);
+        if (it1 == edges.end()) {
+          Msg::Error("good diag should be in tet edges but is not !");
+          DBG(hex,lf,fvert,good_diag);
+          good = false;
+        }
+        if (it2 != edges.end()) {
+          Msg::Error("diag should NOT be in tet edges but is !");
+          DBG(hex,lf,fvert,bad_diag);
+          good = false;
+        }
+      }
+      if (!good) abort();
+    }
+
+    F(lc,tets.size()) {
+      output.tetrahedra.push_back(invert_tet(tets[lc]));
+    }
+    F(lf,6) {
+      id4 fvert = {
+        hex[hex_facet_vertex[lf][0]],
+        hex[hex_facet_vertex[lf][1]],
+        hex[hex_facet_vertex[lf][2]],
+        hex[hex_facet_vertex[lf][3]]};
+      id3 tri1, tri2;
+      if (std::min(fvert[0],fvert[2]) < std::min(fvert[1],fvert[3])) {
+        tri1 = {fvert[0],fvert[1],fvert[2]};
+        tri2 = {fvert[0],fvert[2],fvert[3]};
+      } else {
+        tri1 = {fvert[0],fvert[1],fvert[3]};
+        tri2 = {fvert[3],fvert[1],fvert[2]};
+      }
+      if (localHexFaceOnBdr[lf]) {
+        boundaryTris.push_back(tri1);
+        boundaryTris.push_back(tri2);
+      }
+      if (localHexFaceOnInt[lf]) {
+        interiorTris.push_back(tri1);
+        interiorTris.push_back(tri2);
+      }
+    }
+    return true;
+  }
+
+  bool buildTopologicalTetMesh(
+      const HblInput& input,
+      HblOptions& opt,
+      HblOutput& output) {
+    Msg::Info("Build interior tet mesh with topological tet padding ...");
+
+    if (output.tetrahedra.size() > 0) {
+      Msg::Warning("- already %li tets in output ??", output.tetrahedra.size());
+    }
+
+    BrepMesh& H = output.H;
+    HexToBoundaryMeshMatching& h2q = output.h2q;
+
+    bool resetMidpoint = true;
+    vector<vec3> initialPos(H.vertices.size(),NO_VEC3);
+    if (resetMidpoint) {
+      /* Reset midpoint positions to be sure tet meshing will works */
+      const BrepMesh& Q = input.Q;
+      F(v,H.vertices.size()) {
+        if (h2q.vertexParent[v].first == 0) {
+          initialPos[v] = H.vertices[v].pt;
+          H.vertices[v].pt = Q.vertices[h2q.vertexParent[v].second].pt;
+        } else if (h2q.vertexParent[v].first == 1) {
+          initialPos[v] = H.vertices[v].pt;
+          H.vertices[v].pt = edge_center(Q, h2q.vertexParent[v].second);
+        } else if (h2q.vertexParent[v].first == 2) {
+          initialPos[v] = H.vertices[v].pt;
+          H.vertices[v].pt = face_center(Q, h2q.vertexParent[v].second);
+        }
+      }
+    }
+    
+
+    /* Duplicate hex and split it into tetrahedra, in coherent ways */
+    vector<id3> bdrTris;
+    vector<id3> intTris;
+    vector<id> v_old2new(H.vertices.size(),NO_ID);
+    size_t nVert = H.vertices.size();
+    size_t nHexes = output.hexahedra.size();
+    F(c,nHexes) {
+      id8 hex = output.hexahedra[c];
+      /* Check if local hex face on boundary */
+      array<bool,6> localHexFaceOnBdr;
+      array<bool,6> localHexFaceOnInt;
+      F(lf,6) {
+        id4 fvert = {
+          hex[hex_facet_vertex[lf][0]],
+          hex[hex_facet_vertex[lf][1]],
+          hex[hex_facet_vertex[lf][2]],
+          hex[hex_facet_vertex[lf][3]]};
+        bool onBdr = true;
+        FC(lv,4,h2q.vertexParent[fvert[lv]].first > 2) onBdr = false;
+        localHexFaceOnBdr[lf] = onBdr;
+        bool onInt = true;
+        FC(lv,4,h2q.vertexParent[fvert[lv]].first <= 2) onInt = false;
+        localHexFaceOnInt[lf] = onInt;
+      }
+
+      id8 nhex = hex;
+      size_t nVertOnBdr = 0;
+      F(lv,8) {
+        id v = hex[lv];
+        if (h2q.vertexParent[v].first <= 2) { 
+          nVertOnBdr += 1;
+          /* vertex on initial surface becomes duplicated (mirrored) inside */
+          if (v_old2new[v] == NO_ID) {
+            id nv = H.vertices.size();
+            v_old2new[v] = nv;
+            H.vertices.push_back(H.vertices[v]);
+            H.vertices[nv].entity = nullptr;
+            H.vertices[nv].origin = nullptr;
+          }
+          nhex[lv] = v_old2new[v];
+        }
+      }
+
+      vector<id3> bdrTrisL;
+      vector<id3> intTrisL;
+      if (nVertOnBdr >= 4) {
+        appendHexSubTetrahedra(output, H, nhex, localHexFaceOnBdr, bdrTrisL, localHexFaceOnInt, intTrisL);
+      } else {
+        appendHexSubTetrahedraMidpoint(output, H, nhex, localHexFaceOnBdr, bdrTrisL, localHexFaceOnInt, intTrisL);
+      }
+      append(bdrTris, bdrTrisL);
+      append(intTris, intTrisL);
+    }
+    Msg::Info("- added padding layer of %li tets from decomposing %li hexes", output.tetrahedra.size(), output.hexahedra.size());
+    bool oko1 = orient_tetrahedra_coherent(output.tetrahedra);
+    RFC(!oko1, "failed to orient tetrahedra coherently");
+
+    /* Add extruded tetrahedra on top of tetrahedra obtained by hex subdivision.
+     * Required to avoid duplicated tets after constrained tet mesh (because of
+     * "inverted" geometry) */
+    vector<id3> extrudedTris(bdrTris.size());
+    vector<id> bdr2ext(H.vertices.size(),NO_ID);
+    size_t nTetExt = 0;
+    F(i,bdrTris.size()) {
+      F(lv,bdrTris[i].size()) {
+        id v = bdrTris[i][lv];
+        if (bdr2ext[v] == NO_ID) {
+          id nv = add_vertex(H, H.vertices[v].pt);
+          bdr2ext[v] = nv;
+        }
+        extrudedTris[i][lv] = bdr2ext[v];
+      }
+      id6 prism = {bdrTris[i][0], bdrTris[i][1], bdrTris[i][2],
+        extrudedTris[i][0], extrudedTris[i][1], extrudedTris[i][2]};
+
+      std::array<id4,3> tets = tetsFromPrism(prism);
+      F(lt,3) {
+        output.tetrahedra.push_back(invert_tet(tets[lt]));
+        nTetExt += 1;
+      }
+    }
+    Msg::Info("- added padding layer of %li extruded tets", nTetExt);
+
+    h2q.vertexParent.resize(H.vertices.size(),NO_PARENT);
+    h2q.edgeParent.resize(H.edges.size(),NO_PARENT);
+    h2q.faceParent.resize(H.faces.size(),NO_PARENT);
+
+    bool oko = orient_tetrahedra_coherent(output.tetrahedra);
+    RFC(!oko, "failed to orient tetrahedra coherently");
+
+    SimpleMesh M;
+    initMeshTriangulation(H, extrudedTris, M);
+    bool tetRefine = false;
+    bool tetOptimize = false;
+    Msg::Info(" - constrained tet meshing ...");
+    bool okg = generateConstrainedTetMesh(M, tetRefine, tetOptimize);
+    if (!okg) {
+      Msg::Error("failed to generate tet mesh of midpoint-subdivided input !");
+      return false;
+    }
+    if (resetMidpoint) { /* Set anisotropic quads again */
+      FC(v,initialPos.size(),initialPos[v] != NO_VEC3) {
+        H.vertices[v].pt = initialPos[v];
+      }
+    }
+
+    F(i,M.tets.size()) {
+      id4 tet = M.tets[i];
+      id4 htet;
+      F(lv,tet.size()) {
+        id v = tet[lv];
+        if (M.origin[v] == NO_ID) {
+          id nv = add_vertex(H, M.points[v]);
+          M.origin[v] = nv;
+        }
+        htet[lv] = M.origin[v];
+      }
+      output.tetrahedra.push_back(htet);
+    }
+
+    h2q.vertexParent.resize(H.vertices.size(),NO_PARENT);
+    h2q.edgeParent.resize(H.edges.size(),NO_PARENT);
+    h2q.faceParent.resize(H.faces.size(),NO_PARENT);
+
+    { // Laplacian smoothing
+      Msg::Info("- laplacian smoothing of interior tets (explicit loop) ...");
+      vector<vector<id> > v2v(H.vertices.size());
+      F(c,output.tetrahedra.size()) {
+        F(le,6) {
+          id v1 = output.tetrahedra[c][TET_EDGES[le][0]];
+          id v2 = output.tetrahedra[c][TET_EDGES[le][1]];
+          v2v[v1].push_back(v2);
+          v2v[v2].push_back(v1);
+        }
+      }
+      F(v,v2v.size()) {
+        if (v < nVert || h2q.vertexParent[v].first <= 2) {
+          v2v[v].clear();
+        }
+      }
+      size_t nIter = 10;
+      double lambda = 1.;
+      F(iter,nIter) {
+        FC(v,v2v.size(),v2v[v].size() > 0)  {
+          vec3 avg = {0.,0.,0.};
+          for (id v2: v2v[v]) {
+            avg = avg + H.vertices[v2].pt;
+          }
+          avg = avg * double(1./v2v[v].size());
+          H.vertices[v].pt = (1.-lambda) * H.vertices[v].pt + lambda * avg;
+        }
+      }
+    }
+    size_t nNeg = 0;
+    F(c,output.tetrahedra.size()) {
+      std::array<std::array<double,3>,4> shape = {
+        H.vertices[output.tetrahedra[c][0]].pt,
+        H.vertices[output.tetrahedra[c][1]].pt,
+        H.vertices[output.tetrahedra[c][2]].pt,
+        H.vertices[output.tetrahedra[c][3]].pt
+      };
+      double tvol = 1./6. * basicOrient3d(shape[0],shape[1],shape[2],shape[3]);
+      if (tvol <= 0) nNeg += 1;
+    }
+    if (nNeg > 0) {
+      Msg::Warning("- interior tet mesh contains %li/%li inverted tetrahedra (normal because of topological padding)",
+          nNeg, output.tetrahedra.size());
+    }
+
+    bool winslow = false;
+    if (winslow) {
+      // Winslow untangler on tets
+      vector<vec3> points(H.vertices.size());
+      F(v,H.vertices.size()) points[v] = H.vertices[v].pt;
+      vector<bool> locked(points.size(),false);
+      F(v,points.size()) {
+        if (v < nVert || h2q.vertexParent[v].first <= 2) {
+          locked[v] = true;
+        }
+      }
+
+      std::array<vec3,4> equi = {vec3{.5, 0, -1. / (2. * std::sqrt(2.))},
+        vec3{-.5, 0, -1. / (2. * std::sqrt(2.))},
+        vec3{0, .5, 1. / (2. * std::sqrt(2.))},
+        vec3{0, -.5, 1. / (2. * std::sqrt(2.))}};
+      double reg_vol = -1./6. * basicOrient3d(equi[0], equi[1], equi[2], equi[3]);
+      for(size_t lv = 0; lv < 4; ++lv) {
+        equi[lv] = equi[lv] * (1. / std::pow(reg_vol, 1. / 3.));
+      }
+
+      std::vector<std::array<std::array<double,3>,4> > tetIdealShapes(output.tetrahedra.size());
+      vector<std::array<uint32_t,4> > tets(output.tetrahedra.size());
+      double avgVol = 0.;
+      F(c,output.tetrahedra.size()) {
+        id4 tet = output.tetrahedra[c];
+        tet = invert_tet(tet); // invert tet for winslow untangler
+        tets[c] = { uint32_t(tet[0]), uint32_t(tet[1]), uint32_t(tet[2]), uint32_t(tet[3])};
+        std::array<std::array<double,3>,4> shape;
+        shape = equi;
+
+        // std::array<std::array<double,3>,4> shape = {
+        //   points[tet[0]],
+        //   points[tet[1]],
+        //   points[tet[2]],
+        //   points[tet[3]]
+        // };
+        // double tvol = -1./6. * basicOrient3d(shape[0],shape[1],shape[2],shape[3]);
+        // if (!std::isnan(tvol) && tvol > 0.) {
+        //   F(lv,4) shape[lv] = (1./std::pow(tvol,1./3.))*shape[lv];
+        // } else {
+        //   DBG(tvol,"-> use equi", reg_vol);
+        //   shape = equi;
+        // }
+
+        // double targetvol = -1./6. * basicOrient3d(shape[0],shape[1],shape[2],shape[3]);
+        // DBG(c,tvol,targetvol);
+
+        tetIdealShapes[c] = shape;
+        double vol = -1./6. * basicOrient3d(shape[0], shape[1], shape[2], shape[3]);
+        avgVol += vol;
+      }
+      avgVol /= double(tetIdealShapes.size());
+      // Scale the target shapes
+      F(i,tetIdealShapes.size()) {
+        F(lv,tetIdealShapes[i].size()) {
+          tetIdealShapes[i][lv] = (1./std::pow(avgVol,1./3.))*tetIdealShapes[i][lv];
+        }
+      }
+
+      int iterMaxOuter = 10;
+      int iterMaxInner = 500;
+      int nFailMax = 3;
+      double timeMax = 30;
+      double lambda = 1./127.;
+
+      Msg::Info("Winslow untangler on tets ...");
+#if defined(HAVE_WINSLOWUNTANGLER)
+      bool oku = untangle_tetrahedra(points, locked, tets, tetIdealShapes,
+          lambda, iterMaxInner, iterMaxOuter, nFailMax, timeMax);
+#else
+      Msg::Error("WinslowUntangler module missing");
+#endif
+      FC(v,points.size(),!locked[v]) {
+        H.vertices[v].pt = points[v];
+      }
+
+
+    }
+
+    if (false) {
+      Msg::Info("HXT optimize tets ...");
+      Msg::Error("do not work, I don't know why");
+      vector<vec3> points(H.vertices.size());
+      F(v,H.vertices.size()) points[v] = H.vertices[v].pt;
+      SimpleMesh T;
+      vector<id4> tetsInv = output.tetrahedra;
+      // F(i,tetsInv.size()) tetsInv[i] = invert_tet(tetsInv[i]);
+      initMeshTetrahedrization(points, intTris, tetsInv, T);
+      optimizeTetMeshInterior(T);
+    }
+
+    std::array<double,5> qMinMinMedAvgNeg = computeHexTetQualityStatsMinMedAvgMaxInv(output, QualityMetric::SIGE);
+    DBG(qMinMinMedAvgNeg);
 
     return true;
   }
 
-
-  double quadMeshAverageEdgeSize(const BrepMesh& M, const std::vector<id>& quadFaces) {
-    double avg = 0.;
-    double sum = 0.;
-    vector<id> fvert;
-    for (id f: quadFaces) {
-      face_vertices(M, f, fvert);
-      F(le,4) {
-        avg += length(M.vertices[fvert[(le+1)%4]].pt - M.vertices[fvert[le]].pt);
-        sum += 1.;
-      }
-    }
-    if (sum == 0.) return DBL_MAX;
-    return avg/sum;
-  }
-
-  bool fillInteriorWithExternalHxt(
-      /* All-hex boundary layer */
-      const BrepMesh& M,  
-      const std::vector<id>& quadFaces,
-      /* Tet mesh after self-intersection repair */
-      SimpleMesh& G) {
-
-    const std::string& path = "/tmp/iquads.msh";
-    Msg::Warning("Export interior quad mesh (%li elements) to '%s'",quadFaces.size(), path.c_str());
-    exportQuadAndTetMeshToFile(M, quadFaces, G, path, false);
-
-    const std::string& path_simplex = "/tmp/itristets.msh";
-    Msg::Warning("Export interior tri/tet mesh (%li/%li elements) to '%s'",G.triangles.size(), G.tets.size(), path_simplex.c_str());
-    exportTetMeshToFile(M, G, path_simplex);
-
-    const std::string trianglesAndPts = "finalmesh.msh";
-    const std::string ffa_tets = "/tmp/tets.msh";
-    const std::string hextet = "/tmp/hextet.msh";
-
-    double target_size = quadMeshAverageEdgeSize(M, quadFaces);
-
-    { // Tet mesh -> frame field -> volume point generation
-      if(!StatFile(trianglesAndPts.c_str())) {
-        std::string rmfile = "rm " + trianglesAndPts;
-        Msg::Warning("system call: %s", rmfile.c_str());
-        system(rmfile.c_str());
-      }
-      std::string cmd = "/home/maxence/dev/hxt/build/bin/hxtPointGenerationClean";
-      cmd += " --lines 0 --surfaces 0 -3 -d 1";
-      cmd += " -s " + std::to_string(target_size);
-      cmd += " -q 0";
-      cmd += " -Q " + path;
-      cmd += " -v 2";
-      cmd += " " + path_simplex;
-      Msg::Warning("system call: %s", cmd.c_str());
-      system(cmd.c_str());
-
-      if(StatFile(trianglesAndPts.c_str())) {
-        Msg::Error("file not found: %s", trianglesAndPts.c_str());
-        return false;
-      }
-    }
-
-    { // Frame-field aligned tet meshing
-      std::string cmd = "/home/maxence/dev/hxt/build/bin/hxtMesh3d";
-      // cmd += " -n -N"; // no-refinement and no-improvement
-      cmd += " --no-refinement --aspect-ratio-min=0.1"; 
-      cmd += " " + trianglesAndPts;
-      cmd += " " + ffa_tets;
-      Msg::Warning("system call: %s", cmd.c_str());
-      system(cmd.c_str());
-      if(StatFile(ffa_tets.c_str())) {
-        Msg::Error("file not found: %s", ffa_tets.c_str());
-        return false;
-      }
-    }
-
-    bool useBin = false;
-    if (useBin) { // Bipartite labelling of vertices (from quad mesh)
-      std::string cmd = "/home/maxence/dev/hxt/build/bin/hxtSurfaceQuadInfo";
-      cmd += " " + path;
-      cmd += " -B";
-      cmd += " -X " + ffa_tets;
-      Msg::Warning("system call: %s", cmd.c_str());
-      system(cmd.c_str());
-
-      std::string binInput = "binInput.txt";
-      if(StatFile(binInput.c_str())) {
-        Msg::Warning("file not found: %s", binInput.c_str());
-        useBin = false;
-      }
-    }
-
-    { // Combine
-      std::string cmd = "/home/maxence/dev/hxt/build/bin/combine_tetrahedra";
-      cmd += " --no-prism --no-pyramid";
-      cmd += " " + ffa_tets;
-      cmd += " " + hextet;
-      if (useBin) {
-        cmd += " -b binInput.txt";
-      }
-      Msg::Warning("system call: %s", cmd.c_str());
-      system(cmd.c_str());
-      if(StatFile(hextet.c_str())) {
-        Msg::Error("file not found: %s", ffa_tets.c_str());
-        return false;
-      }
-    }
-
-    // TODO FIXME losing conformity at boundary layer interface !!
-    SimpleMesh& Hd = G;
-    Hd.points.clear();
-    Hd.origin.clear();
-    Hd.triangles.clear();
-    Hd.tets.clear();
-    Hd.hexahedra.clear();
-
-    { // Load hextet mesh
-      GModel* gm = new GModel();
-      gm->readMSH(hextet.c_str());
-      unordered_map<MVertex*,id> v2id;
-      for (GRegion* gr: gm->getRegions()) {
-        for (MTetrahedron* elt: gr->tetrahedra) {
-          id4 tet;
-          for (size_t lv = 0; lv < elt->getNumVertices(); ++lv) {
-            MVertex* v = elt->getVertex(lv);
-            auto it = v2id.find(v);
-            if (it == v2id.end()) {
-              vec3 p = v->point();
-              v2id[v] = Hd.points.size();
-              tet[lv] = Hd.points.size();
-              Hd.points.push_back(p);
-              Hd.origin.push_back(NO_ID);
-            } else {
-              tet[lv] = it->second;
-            }
-          }
-          Hd.tets.push_back(tet);
-        }
-        for (MHexahedron* elt: gr->hexahedra) {
-          id8 hex;
-          for (size_t lv = 0; lv < elt->getNumVertices(); ++lv) {
-            MVertex* v = elt->getVertex(lv);
-            auto it = v2id.find(v);
-            if (it == v2id.end()) {
-              vec3 p = v->point();
-              v2id[v] = Hd.points.size();
-              hex[lv] = Hd.points.size();
-              Hd.points.push_back(p);
-              Hd.origin.push_back(NO_ID);
-            } else {
-              hex[lv] = it->second;
-            }
-          }
-          Hd.hexahedra.push_back(hex);
-        }
-      }
-
-      delete gm;
-    }
-
-    return true;
-  }
 
   double random_double(double fMin, double fMax) {
     double f = (double)rand() / RAND_MAX;
     return fMin + f * (fMax - fMin);
   }
 
-  bool buildInteriorHexdomMesh(
-      const HblOptions& opt,
-      HblOutput& output) {
+  bool buildTetMeshFromQuadMesh(
+      HblOutput& output,
+      const std::vector<id>& quadFaces,
+      size_t& nbSelfIntersections) {
+    if (output.tetrahedra.size() > 0) {
+      Msg::Warning("buildTetMeshFromQuadMesh: already tets in output, weird");
+    }
 
+    /* Triangulation of the interior surface */
+    std::vector<id3> tris;
+    bool okt = explicit_triangles_from_quad_faces(output.H, quadFaces, tris);
+    RFC(!okt, "failed to get triangles from quads");
+    SimpleMesh M;
+    initMeshTriangulation(output.H, tris, M);
+
+    /* Constrained tet meshing */
+    bool tetRefine = false;
+    bool tetOptimize = false;
+    bool okg = generateConstrainedTetMesh(M, tetRefine, tetOptimize);
+    if (okg) {
+      nbSelfIntersections = 0;
+      bool oktr = transferSimpleMeshToOutput(M, output);
+      RFC(!oktr, "failed to transfer tets/hexes to output");
+      return true;
+    }
+
+    /* Failed to tet mesh, check self-intersections */
+    std::vector<id2> triIntersections;
+    checkBoundarySelfIntersections(M, triIntersections);
+    nbSelfIntersections = triIntersections.size();
+    Msg::Debug("failed to generate constrained tet mesh: %li self-intersections (%li tris)",
+        nbSelfIntersections, tris.size());
+    double prop = double(nbSelfIntersections) / double(tris.size());
+    if (prop > 0.01) {
+      return false;
+    }
+
+    /* Few self-intersections, try to smooth them out */
+    Msg::Debug("Try to fix self-intersections by smoothing ...");
+    fixSelfIntersections(M, triIntersections);
+    if (triIntersections.size() > 0) {
+      Msg::Debug("still %li self-intersections -> no tet mesh", triIntersections.size());
+      return false;
+    }
+
+    okg = generateConstrainedTetMesh(M, tetRefine, tetOptimize);
+    if (okg) {
+      nbSelfIntersections = 0;
+      bool oktr = transferSimpleMeshToOutput(M, output);
+      RFC(!oktr, "failed to transfer tets/hexes to output");
+      return true;
+    }
+
+    return okg;
+  }
+
+  bool buildInteriorHexdomMesh(
+      const HblInput& input,
+      HblOptions& opt,
+      HblOutput& output) {
+    /* Extract interior quad mesh */
     std::vector<std::vector<id> > quadMeshFaces;
     bool okq = extract_interior_quad_meshes(output.H, output.h2q, quadMeshFaces);
     RFC(!okq, "failed to extract interior quad meshes");
-
+    if (quadMeshFaces.size() != 1) {
+      Msg::Error("buildInteriorHexdomMesh: expects one interior quad mesh, not %li", quadMeshFaces.size());
+      return false;
+    }
+    vector<id> quadFaces = quadMeshFaces[0];
     if (opt.debug && opt.viz) {
-      for (auto& a: quadMeshFaces) visualization_show_faces(output.H, a, "int_quads_init");
+      for (auto& a: quadMeshFaces) visualization_show_faces(output.H, quadFaces, "int_quads_init");
     }
 
-    bool tetRefine = true;
-    bool tetOptimize = true;
-
-    for (size_t i = 0; i < quadMeshFaces.size(); ++i) {
-      std::vector<id3> tris;
-      bool okt = explicit_triangles_from_quad_faces(output.H, quadMeshFaces[i], tris);
-      RFC(!okt, "failed to get triangles from quads");
-
-      SimpleMesh M;
-      bool oki = initMeshTriangulation(output.H, tris, M);
-      RFC(!oki, "failed to initialize simplex mesh");
-
-      // Warning / note:
-      // sometime perturbation is required or tet meshing boundary recovery is going in infinite loop ...
-      const bool perturbation = false;
-      if (perturbation) {
-        Msg::Warning("TetGen boundary recovery stuck, special perturbation ...");
-        double eps = 1.e-4 * bboxDiag(M.points);
-        F(v,M.points.size()) {
-          M.points[v][0] += random_double(-eps,eps);
-          M.points[v][1] += random_double(-eps,eps);
-          M.points[v][2] += random_double(-eps,eps);
-        }
-      }
-
-      bool okg = generateConstrainedTetMesh(M, tetRefine, tetOptimize);
-      if (!okg) {
-        Msg::Warning("failed to generate constrained tet mesh ... self-intersections ?");
-      }
-      if (okg) {
-        output.stats.nbSelfIntersectionInitial = 0;
-        output.stats.nbSelfIntersectionFixed = 0;
-        output.stats.interiorTetMeshingInitial = 1;
-        output.stats.interiorTetMeshingFixed = 1;
-      }
-
-      if (!okg) { // Probably self-intersections on the boundary, check and fix it
-        std::vector<id2> triIntersections;
-        bool noInter = checkBoundarySelfIntersections(M, triIntersections);
-
-        size_t nbInterInit = triIntersections.size();
-        output.stats.nbSelfIntersectionInitial = triIntersections.size();
-
-        if (!noInter) {
-          // Try to decrease boundary layer thickness, check if less intersections
-          BrepMesh H_backup = output.H;
-
-          double factor = 0.25; // TODOMX testing
-
-          Msg::Info("Decrease boundary thickness by a factor %.3f", factor);
-          decreaseBoundaryLayerThickness(output.H, output.h2q, factor);
-
-          oki = initMeshTriangulation(output.H, tris, M);
-          RFC(!oki, "failed to initialize simplex mesh");
-
-          std::vector<id2> triIntersections2;
-          noInter = checkBoundarySelfIntersections(M, triIntersections2);
-          size_t nbInterAfter = triIntersections2.size();
-
-          if (nbInterAfter > nbInterInit) {
-            Msg::Info("Decreasing boundary layer thickness increased number of self-intersections, recover initial geometry");
-            output.H = H_backup;
-            oki = initMeshTriangulation(output.H, tris, M);
-            RFC(!oki, "failed to initialize simplex mesh");
-          } else {
-            triIntersections = triIntersections2;
-          }
-
-
-          // Fix self-intersections by local surface smoothing
-          if (triIntersections.size() > 0) {
-            fixSelfIntersections(M, triIntersections);
-            triIntersections.clear();
-            noInter = checkBoundarySelfIntersections(M, triIntersections);
-            if (triIntersections.size() > 0) {
-              Msg::Warning("still %li self-intersections after fix, cannot tet mesh ...", triIntersections.size());
-            }
-          }
-
-          output.stats.nbSelfIntersectionFixed = triIntersections.size();
-
-          if (true || noInter) {
-            okg = generateConstrainedTetMesh(M, tetRefine, tetOptimize);
-            if (!okg) {
-              Msg::Warning("failed to generate constrained tet mesh after self-intersections, bad bad ...");
-            }
-            if (okg) {
-              output.stats.interiorTetMeshingFixed = 1;
-            }
-          }
-        }
-      }
-
-      const bool USE_EXTERNAL_HXT = false;
-      if (okg && USE_EXTERNAL_HXT) {
-        const std::string& path = "interior_quad_bdr.msh";
-        Msg::Warning("Export interior quad mesh (%li elements) to '%s'",quadMeshFaces[i].size(), path.c_str());
-        exportQuadAndTetMeshToFile(output.H, quadMeshFaces[i], M, path);
-
-        const std::string& path_simplex = "interior_tris_tets.msh";
-        Msg::Warning("Export interior tri/tet mesh (%li/%li elements) to '%s'",M.triangles.size(), M.tets.size(), path_simplex.c_str());
-        exportTetMeshToFile(output.H, M, path_simplex);
-
-        fillInteriorWithExternalHxt(output.H, quadMeshFaces[i], M);
-      }
-
-      if (okg) {
-        Msg::Info("Transfer %i tets and %li hexes to output", M.tets.size(), M.hexahedra.size());
-        bool oktr = transferSimpleMeshToOutput(M, output);
-        RFC(!oktr, "failed to transfer tets/hexes to output");
-      }
+    /* Try tet meshing of the quad mesh */
+    Msg::Info("Try tet meshing of the interior quad mesh (%li quads) ...", quadFaces.size());
+    size_t nbSelfIntersections = 0;
+    bool okt = buildTetMeshFromQuadMesh(output, quadFaces, nbSelfIntersections);
+    if (okt) {
+      Msg::Info("interior successfully meshed with %li tetrahedra", output.tetrahedra.size());
+      return true;
     }
 
-    return true;
+    /* Try to reduce thickness, untangle hex layer, then tet mesh */
+    double propSI = double(nbSelfIntersections) / double(2*quadFaces.size());
+    if (propSI > 0.001) {
+      vector<double> factors = {opt.extrusion_factor, 0.3 * opt.extrusion_factor, 0.1 * opt.extrusion_factor, 0.03 * opt.extrusion_factor};
+      vector<size_t> nSI(factors.size(),quadFaces.size());
+      nSI[0] = nbSelfIntersections;
+      for (size_t t = 1; t < factors.size(); ++t) {
+        opt.extrusion_factor = factors[t];
+        Msg::Info("Reduce all-hex layer thickness to factor %f and try to tet mesh",opt.extrusion_factor);
+        initializeHexLayerGeometry(input, opt, output);
+        optimizeHexLayerGeometry(input, opt, output);
+        bool okt = buildTetMeshFromQuadMesh(output, quadFaces, nSI[t]);
+        if (okt) {
+          Msg::Info("interior successfully meshed with %li tetrahedra", output.tetrahedra.size());
+          return true;
+        }
+        if (nSI[t] > 1.1*nSI[t-1]) break; /* # self-intersections increased, stop */
+      }
+      /* Keep hex-layer with less number of self-intersections */
+      size_t nMin = INT32_MAX;
+      size_t kBest = 0;
+      FC(k,nSI.size(),nSI[k] < nMin) {
+        nMin = nSI[k];
+        kBest = k;
+      }
+      opt.extrusion_factor = factors[kBest];
+      Msg::Info("Set all-hex layer thickness to factor %f",opt.extrusion_factor);
+      initializeHexLayerGeometry(input, opt, output);
+      optimizeHexLayerGeometry(input, opt, output);
+    }
+
+    Msg::Info("Fallback to topological tet mesh construction");
+    return buildTopologicalTetMesh(input, opt, output);
   }
 }
 

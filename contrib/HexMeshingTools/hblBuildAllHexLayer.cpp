@@ -653,7 +653,6 @@ namespace hbl {
 
     /* Stats */
     output.stats.timeMeshConstruction = Cpu() - t0;
-    output.stats.qualityFinalMinMedAvgMaxInv = computeQualityStatsMinMedAvgMaxInv(H);
 
     return okgeom;
   }

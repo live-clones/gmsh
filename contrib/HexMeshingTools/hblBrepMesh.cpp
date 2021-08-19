@@ -2161,6 +2161,110 @@ namespace hbl {
 
   }
 
+  bool orient_tetrahedra_coherent(vector<id4>& tets) {
+    vector<id4> base_tets = tets;
+    vector<vector<id> > tets_neighbors(base_tets.size());
+    {
+      /* collect faces to determine adjacencies */
+      vector<id3> faces(4*base_tets.size(),{NO_ID,NO_ID,NO_ID});
+      F(c,base_tets.size()) {
+        F(lf,4) {
+          id3 tri = sorted(
+              base_tets[c][TET_FACETS[lf][0]],
+              base_tets[c][TET_FACETS[lf][1]],
+              base_tets[c][TET_FACETS[lf][2]]);
+          faces[4*c+lf] = tri;
+        }
+      }
+      vector<id3> uFaces;
+      vector<id> tf2f;
+      size_t nf = sort_unique_with_perm(faces, uFaces, tf2f);
+      /* invert the mapping to get unique face to hex faces */
+      vector<id2> f2tf(nf,{NO_ID,NO_ID});
+      F(i,4*base_tets.size()) {
+        if (faces[i][0] == NO_ID) continue;
+        id f = tf2f[i];
+        if (f2tf[f][0] == NO_ID) {
+          f2tf[f][0] = i;
+        } else if (f2tf[f][1] == NO_ID) {
+          f2tf[f][1] = i;
+        } else {
+          DBG(i, faces[i], f2tf[f]);
+          RF("face adjacent to more than 2 tets !");
+        }
+      }
+      /* extract adjacencies */
+      F(f,nf) {
+        if (f2tf[f][0] != NO_ID && f2tf[f][1] != NO_ID) {
+          tets_neighbors[f2tf[f][0]/4].push_back(f2tf[f][1]/4);
+          tets_neighbors[f2tf[f][1]/4].push_back(f2tf[f][0]/4);
+        }
+      }
+    }
+
+    vector<bool> visited(tets.size(),false);
+    int ball = 0;
+    size_t nbi = 0;
+    FC(cInit,tets.size(),!visited[cInit]) {
+      ball += 1;
+      std::queue<id> qq;
+      qq.push(cInit);
+      visited[cInit] = true;
+      while (qq.size() > 0) {
+        id c = qq.front();
+        qq.pop();
+
+        /* Check if orientation compatible with neighbors */
+        F(i,tets_neighbors[c].size()) {
+          id c2 = tets_neighbors[c][i];
+          if (visited[c2]) continue;
+          /* Find the common face */
+          id lf1 = NO_ID;
+          id lf2 = NO_ID;
+          F(j1,4) {
+            id3 tri1 = tet_face_smallest(tets[c], j1, false);
+            tri1 = sorted(tri1[0],tri1[1],tri1[2]);
+
+            F(j2,4) {
+              id3 tri2 = tet_face_smallest(tets[c2], j2, false);
+              tri2 = sorted(tri2[0],tri2[1],tri2[2]);
+
+              if (tri1 == tri2) {
+                lf1 = j1;
+                lf2 = j2;
+                break;
+              }
+            }
+            if (lf1 != NO_ID) break;
+          }
+          if (lf1 == NO_ID || lf2 == NO_ID) {
+            RF("common face not found ? c={}, c2={}", c, c2);
+          }
+          id3 tri1 = tet_face_smallest(tets[c],lf1,false);
+          id3 tri2 = tet_face_smallest(tets[c2],lf2,true);
+          if (tri1 == tri2) {
+            /* good */
+            qq.push(c2);
+            visited[c2] = true;
+          } else {
+            tri2 = tet_face_smallest(tets[c2],lf2,false);
+            if (tri1 == tri2) { /* need to invert c2 */
+              tets[c2] = invert_tet(tets[c2]);
+              qq.push(c2);
+              visited[c2] = true;
+              nbi += 1;
+            } else {
+              RF("should not happen ? tri1 = {}, tri2 = {}", tri1, tri2);
+            }
+          }
+        }
+      }
+    }
+    debug("compute oriented tetrahedra: {}/{} tets inverted, {} disconnected components", nbi, tets.size(), ball);
+
+    return true;
+  }
+
 
   bool compute_oriented_tetrahedra(const BrepMesh& H, std::vector<std::vector<id> >& eltVertices, std::vector<int>& ballId) {
     RFC(H.cells.size() == 0, "no cells to orient");
@@ -2168,6 +2272,7 @@ namespace hbl {
     vector<id4> base_tets(H.cells.size());
     vector<vector<id> > tets_neighbors(base_tets.size());
     {
+      size_t ntet = 0;
       /* collect faces to determine adjacencies */
       vector<id3> faces(4*H.cells.size(),{NO_ID,NO_ID,NO_ID});
       vector<id> vert(4);
@@ -2181,7 +2286,9 @@ namespace hbl {
           id3 tri = sorted(fvert[0],fvert[1],fvert[2]);
           faces[4*c+lf] = tri;
         }
+        ntet += 1;
       }
+      if (ntet == 0) return true;
       vector<id3> uFaces;
       vector<id> tf2f;
       size_t nf = sort_unique_with_perm(faces, uFaces, tf2f);
@@ -2212,8 +2319,6 @@ namespace hbl {
     int ballMax = *std::max_element(ballId.begin(),ballId.end());
     int ball = ballMax;
     size_t nbi = 0;
-    vector<id> _fvert1(4);
-    vector<id> _fvert2(4);
     FC(cInit,H.cells.size(),!visited[cInit] && H.cells[cInit].faces.size() == 4) {
       ball += 1;
       std::queue<id> qq;
@@ -2270,7 +2375,7 @@ namespace hbl {
         }
       }
     }
-    debug("compute oriented hexahedra: {}/{} tets inverted, {} disconnected components", nbi, tets.size(), ball);
+    debug("compute oriented tetrahedra: {}/{} tets inverted, {} disconnected components", nbi, tets.size(), ball);
     eltVertices.resize(H.cells.size());
     FC(c,H.cells.size(),H.cells[c].faces.size() == 4) {
       eltVertices[c].resize(4);
