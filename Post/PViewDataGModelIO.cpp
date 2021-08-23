@@ -693,7 +693,7 @@ bool PViewDataGModel::readMED(const std::string &fileName, int fileIndex)
         med_int n = MEDnPasdetemps(fid, name, entType[i], eleType[j]);
 #endif
         if(n > 0) {
-          pairs.push_back(std::pair<int, int>(i, j));
+          pairs.push_back(std::make_pair(i, j));
           numSteps = std::max(numSteps, n);
         }
         if(!i && !j) break; // MED_NOEUD does not care about eleType

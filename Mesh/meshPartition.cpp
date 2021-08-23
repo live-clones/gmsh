@@ -1358,19 +1358,19 @@ static void fillElementToEntity(GModel *model, hashmapelement &elmToEntity,
     for(auto it = model->firstRegion(); it != model->lastRegion(); ++it) {
       for(auto itElm = (*it)->tetrahedra.begin();
           itElm != (*it)->tetrahedra.end(); ++itElm)
-        elmToEntity.insert(std::pair<MElement *, GEntity *>(*itElm, *it));
+        elmToEntity.insert(std::make_pair(*itElm, *it));
       for(auto itElm = (*it)->hexahedra.begin();
           itElm != (*it)->hexahedra.end(); ++itElm)
-        elmToEntity.insert(std::pair<MElement *, GEntity *>(*itElm, *it));
+        elmToEntity.insert(std::make_pair(*itElm, *it));
       for(auto itElm = (*it)->prisms.begin(); itElm != (*it)->prisms.end();
           ++itElm)
-        elmToEntity.insert(std::pair<MElement *, GEntity *>(*itElm, *it));
+        elmToEntity.insert(std::make_pair(*itElm, *it));
       for(auto itElm = (*it)->pyramids.begin(); itElm != (*it)->pyramids.end();
           ++itElm)
-        elmToEntity.insert(std::pair<MElement *, GEntity *>(*itElm, *it));
+        elmToEntity.insert(std::make_pair(*itElm, *it));
       for(auto itElm = (*it)->trihedra.begin(); itElm != (*it)->trihedra.end();
           ++itElm)
-        elmToEntity.insert(std::pair<MElement *, GEntity *>(*itElm, *it));
+        elmToEntity.insert(std::make_pair(*itElm, *it));
     }
   }
 
@@ -1379,10 +1379,10 @@ static void fillElementToEntity(GModel *model, hashmapelement &elmToEntity,
     for(auto it = model->firstFace(); it != model->lastFace(); ++it) {
       for(auto itElm = (*it)->triangles.begin();
           itElm != (*it)->triangles.end(); ++itElm)
-        elmToEntity.insert(std::pair<MElement *, GEntity *>(*itElm, *it));
+        elmToEntity.insert(std::make_pair(*itElm, *it));
       for(auto itElm = (*it)->quadrangles.begin();
           itElm != (*it)->quadrangles.end(); ++itElm)
-        elmToEntity.insert(std::pair<MElement *, GEntity *>(*itElm, *it));
+        elmToEntity.insert(std::make_pair(*itElm, *it));
     }
   }
 
@@ -1391,7 +1391,7 @@ static void fillElementToEntity(GModel *model, hashmapelement &elmToEntity,
     for(auto it = model->firstEdge(); it != model->lastEdge(); ++it) {
       for(auto itElm = (*it)->lines.begin(); itElm != (*it)->lines.end();
           ++itElm)
-        elmToEntity.insert(std::pair<MElement *, GEntity *>(*itElm, *it));
+        elmToEntity.insert(std::make_pair(*itElm, *it));
     }
   }
 
@@ -1400,7 +1400,7 @@ static void fillElementToEntity(GModel *model, hashmapelement &elmToEntity,
     for(auto it = model->firstVertex(); it != model->lastVertex(); ++it) {
       for(auto itElm = (*it)->points.begin(); itElm != (*it)->points.end();
           ++itElm)
-        elmToEntity.insert(std::pair<MElement *, GEntity *>(*itElm, *it));
+        elmToEntity.insert(std::make_pair(*itElm, *it));
     }
   }
 }
@@ -1495,7 +1495,7 @@ static PART_ENTITY *createPartitionEntity(
     // Create new entity and add them to the model
     ppe = new PART_ENTITY(model, ++numEntity, partitions);
     ppe->setParentEntity(referenceEntity->getParentEntity());
-    pentities.insert(std::pair<PART_ENTITY *, GEntity *>(ppe, referenceEntity));
+    pentities.insert(std::make_pair(ppe, referenceEntity));
     model->add(ppe);
     *newEntity = ppe;
   }
@@ -1507,8 +1507,7 @@ static PART_ENTITY *createPartitionEntity(
       // Create new entity and add them to the model
       ppe = new PART_ENTITY(model, ++numEntity, partitions);
       ppe->setParentEntity(referenceEntity->getParentEntity());
-      pentities.insert(
-        std::pair<PART_ENTITY *, GEntity *>(ppe, referenceEntity));
+      pentities.insert(std::make_pair(ppe, referenceEntity));
       model->add(ppe);
       *newEntity = ppe;
     }
@@ -1756,8 +1755,8 @@ static void assignNewEntityBRep(Graph &graph, hashmapelement &elementToEntity)
            brepWithoutOri.end()) {
           const int ori =
             computeOrientation(current, graph.element(graph.adjncy(j)));
-          brepWithoutOri.insert(std::pair<GEntity *, GEntity *>(g1, g2));
-          brep[g1].insert(std::pair<int, GEntity *>(ori, g2));
+          brepWithoutOri.insert(std::make_pair(g1, g2));
+          brep[g1].insert(std::make_pair(ori, g2));
         }
       }
     }
@@ -1828,8 +1827,7 @@ static void createPartitionTopology(
           it != boundaryElements[i].end(); ++it) {
         for(int j = 0; j < (*it)->getNumFaces(); j++) {
           faceToElement[(*it)->getFace(j)].push_back(
-            std::pair<MElement *, std::vector<int> >(
-              *it, std::vector<int>(1, i + 1)));
+            std::make_pair(*it, std::vector<int>(1, i + 1)));
         }
       }
     }
@@ -1851,7 +1849,7 @@ static void createPartitionTopology(
         std::map<GEntity *, MElement *, GEntityPtrFullLessThan>
           boundaryEntityAndRefElement;
         for(std::size_t i = 0; i < it->second.size(); i++)
-          boundaryEntityAndRefElement.insert(std::pair<GEntity *, MElement *>(
+          boundaryEntityAndRefElement.insert(std::make_pair(
             elementToEntity[it->second[i].first], it->second[i].first));
 
         assignBrep(model, boundaryEntityAndRefElement, pf);
@@ -1874,8 +1872,7 @@ static void createPartitionTopology(
             it != boundaryElements[i].end(); ++it) {
           for(int j = 0; j < (*it)->getNumEdges(); j++) {
             edgeToElement[(*it)->getEdge(j)].push_back(
-              std::pair<MElement *, std::vector<int> >(
-                *it, std::vector<int>(1, i + 1)));
+              std::make_pair(*it, std::vector<int>(1, i + 1)));
           }
         }
       }
@@ -1893,8 +1890,7 @@ static void createPartitionTopology(
         if((*it)->geomType() == GEntity::PartitionSurface) {
           std::vector<int> partitions =
             static_cast<partitionFace *>(*it)->getPartitions();
-          mapOfPartitions.insert(std::pair<idx_t, std::vector<int> >(
-            mapOfPartitionsTag, partitions));
+          mapOfPartitions.insert(std::make_pair(mapOfPartitionsTag, partitions));
           // Must absolutely be in the same order as in the makeGraph function
           for(auto itElm = (*it)->triangles.begin();
               itElm != (*it)->triangles.end(); ++itElm)
@@ -1915,8 +1911,7 @@ static void createPartitionTopology(
             it != subBoundaryElements[i].end(); ++it) {
           for(int j = 0; j < (*it)->getNumEdges(); j++) {
             edgeToElement[(*it)->getEdge(j)].push_back(
-              std::pair<MElement *, std::vector<int> >(*it,
-                                                       mapOfPartitions[i]));
+              std::make_pair(*it, mapOfPartitions[i]));
           }
         }
       }
@@ -1940,7 +1935,7 @@ static void createPartitionTopology(
         std::map<GEntity *, MElement *, GEntityPtrFullLessThan>
           boundaryEntityAndRefElement;
         for(std::size_t i = 0; i < it->second.size(); i++) {
-          boundaryEntityAndRefElement.insert(std::pair<GEntity *, MElement *>(
+          boundaryEntityAndRefElement.insert(std::make_pair(
             elementToEntity[it->second[i].first], it->second[i].first));
         }
 
@@ -1963,8 +1958,7 @@ static void createPartitionTopology(
             it != boundaryElements[i].end(); ++it) {
           for(std::size_t j = 0; j < (*it)->getNumPrimaryVertices(); j++) {
             vertexToElement[(*it)->getVertex(j)].push_back(
-              std::pair<MElement *, std::vector<int> >(
-                *it, std::vector<int>(1, i + 1)));
+              std::make_pair(*it, std::vector<int>(1, i + 1)));
           }
         }
       }
@@ -1982,8 +1976,7 @@ static void createPartitionTopology(
         if((*it)->geomType() == GEntity::PartitionCurve) {
           std::vector<int> partitions =
             static_cast<partitionEdge *>(*it)->getPartitions();
-          mapOfPartitions.insert(std::pair<idx_t, std::vector<int> >(
-            mapOfPartitionsTag, partitions));
+          mapOfPartitions.insert(std::make_pair(mapOfPartitionsTag, partitions));
           // Must absolutely be in the same order as in the makeGraph function
           for(auto itElm = (*it)->lines.begin(); itElm != (*it)->lines.end();
               ++itElm)
@@ -2001,8 +1994,7 @@ static void createPartitionTopology(
             it != subBoundaryElements[i].end(); ++it) {
           for(std::size_t j = 0; j < (*it)->getNumPrimaryVertices(); j++) {
             vertexToElement[(*it)->getVertex(j)].push_back(
-              std::pair<MElement *, std::vector<int> >(*it,
-                                                       mapOfPartitions[i]));
+              std::make_pair(*it, mapOfPartitions[i]));
           }
         }
       }
@@ -2025,7 +2017,7 @@ static void createPartitionTopology(
         std::map<GEntity *, MElement *, GEntityPtrFullLessThan>
           boundaryEntityAndRefElement;
         for(std::size_t i = 0; i < it->second.size(); i++)
-          boundaryEntityAndRefElement.insert(std::pair<GEntity *, MElement *>(
+          boundaryEntityAndRefElement.insert(std::make_pair(
             elementToEntity[it->second[i].first], it->second[i].first));
 
         assignBrep(model, boundaryEntityAndRefElement, pv);
@@ -2098,7 +2090,7 @@ static void addPhysical(GModel *model, GEntity *entity,
       number = ++numPhysical;
       iterators[entity->dim()] = model->setPhysicalName(
         iterators[entity->dim()], name, entity->dim(), number);
-      nameToNumber.insert(std::pair<std::string, int>(name, number));
+      nameToNumber.insert(std::make_pair(name, number));
     }
     else {
       number = it->second;
@@ -2135,7 +2127,7 @@ static void addPhysical(GModel *model, GEntity *entity,
       number = ++numPhysical;
       iterators[entity->dim()] = model->setPhysicalName(
         iterators[entity->dim()], name, entity->dim(), number);
-      nameToNumber.insert(std::pair<std::string, int>(name, number));
+      nameToNumber.insert(std::make_pair(name, number));
     }
     else {
       number = it->second;
@@ -2271,15 +2263,14 @@ int PartitionMesh(GModel *model, int numPart)
   for(std::size_t i = 0; i < graph.ne(); i++) {
     if(graph.element(i)) {
       if(graph.nparts() > 1) {
-        elmToPartition.insert(std::pair<MElement *, idx_t>(
+        elmToPartition.insert(std::make_pair(
           graph.element(i), graph.partition(i) + 1));
         elmCount[graph.element(i)->getType()][graph.partition(i)]++;
         // Should be removed
         graph.element(i)->setPartition(graph.partition(i) + 1);
       }
       else {
-        elmToPartition.insert(
-          std::pair<MElement *, idx_t>(graph.element(i), 1));
+        elmToPartition.insert(std::make_pair(graph.element(i), 1));
         // Should be removed
         graph.element(i)->setPartition(1);
       }
@@ -2636,7 +2627,7 @@ int ConvertOldPartitioningToNewOne(GModel *model)
       idx_t part = e->getPartition();
       if(part < 0) part = -part;
       if(!part) part = 1;
-      elmToPartition.push_back(std::pair<MElement *, idx_t>(e, part));
+      elmToPartition.push_back(std::make_pair(e, part));
       partitions.insert(part);
     }
   }

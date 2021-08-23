@@ -491,10 +491,10 @@ public:
 
   // get the name (if any) of a given elementary entity of dimension
   // "dim" and id number "num"
-  std::string getElementaryName(int dim, int num);
+  std::string getElementaryName(int dim, int tag);
   void setElementaryName(int dim, int tag, const std::string &name)
   {
-    _elementaryNames[std::pair<int, int>(dim, tag)] = name;
+    _elementaryNames[std::make_pair(dim, tag)] = name;
   }
 
   // remove elememtary name(s)
@@ -613,7 +613,7 @@ public:
   std::multimap<MElement *, short> &getGhostCells() { return _ghostCells; }
   void addGhostCells(MElement *elm, short partition)
   {
-    _ghostCells.insert(std::pair<MElement *, short>(elm, partition));
+    _ghostCells.insert(std::make_pair(elm, partition));
   }
 
   // perform various coherence tests on the mesh
