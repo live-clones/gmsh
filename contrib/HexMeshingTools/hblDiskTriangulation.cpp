@@ -21,10 +21,11 @@
 /* HexMeshingTools includes */
 #include "hblLogging.hpp"
 #include "hblUtils.h"
-#include "dataDiskTriangulations.hpp" // raw data in a std::string
+#include "dataDiskTriangulationsSplit.hpp"
 
 /* Gmsh includes */
 #include "robin_hood.h"
+#include "StringUtils.h"
 
 using std::vector;
 using std::map;
@@ -210,19 +211,22 @@ namespace hbl {
   bool load_disk_triangulations(DiskTriangulations& data) {
     debug("loading disk triangulations from raw data ...");
 
-    std::stringstream input(dataDiskTriangulationList);
+    std::string data_str;
+    diskTriangulationConcat(data_str);
     std::string nb_trgl_str;
-    std::getline(input, nb_trgl_str, '\n');
-    size_t nbTriangulations = std::stoi(nb_trgl_str);
+    size_t nbTriangulations = size_t(data_dtrgl_N);
     info("loading {} triangulations from disk ...", nbTriangulations);
+    vector<std::string> lines = SplitString(data_str,'\n');
+    vector<std::string> numbers;
     id nbmax = 0;
-    F(i,nbTriangulations) {
-      std::string str_line;
-      std::getline(input, str_line, '\n');
-      std::vector<std::string> str_vertices = split_string(str_line, ' ');
-      RFC(str_vertices.size() % 3 != 0, "load_disk_triangulations | trgl {}: vertices are not a multiple of 3", i);
-      std::vector<id> tri_vertices(str_vertices.size());
-      F(j,tri_vertices.size()) tri_vertices[j] = std::stoi(str_vertices[j]);
+    F(i,lines.size()) {
+      numbers = SplitString(lines[i],' ');
+      if (i == nbTriangulations && numbers.size() == 1) break; /* end of list */
+      if (numbers.size() % 3 != 0) {
+        Msg::Error("load_disk_triangulations | trgl %i: vertices are not a multiple of 3, but %li", i, numbers.size());
+      }
+      std::vector<id> tri_vertices(numbers.size());
+      F(j,tri_vertices.size()) tri_vertices[j] = std::stoi(numbers[j]);
       std::unique_ptr<DTriangulation> uptr(new DTriangulation);
       bool okl = uptr->load_triangulation(tri_vertices);
       RFC(!okl,"failed to load triangulation with vertices: {}", tri_vertices);
