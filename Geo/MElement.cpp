@@ -2654,10 +2654,9 @@ MElement *MElementFactory::create(int num, int type,
 
   MElement *element = create(type, vertices, num, part, false, parent);
 
-  for(std::size_t j = 0; j < ghosts.size(); j++) {
-    // model->getGhostCells().insert(std::pair<MElement*, short>
-    //                               (element, ghosts[j]));
-  }
+  //for(std::size_t j = 0; j < ghosts.size(); j++) {
+    // model->getGhostCells().insert(std::make_pair(element, ghosts[j]));
+  //}
   if(part > model->getNumPartitions()) model->setNumPartitions(part);
 
   return element;

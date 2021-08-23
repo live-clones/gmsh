@@ -871,7 +871,7 @@ static void visibility_save_cb(Fl_Widget *w, void *data)
   for(int i = 0; i < 4; i++) {
     if(state[i][mode].size()) {
       for(std::size_t j = 0; j < state[i][mode].size(); j++) {
-        entities.push_back(std::pair<int, int>(i, state[i][mode][j]));
+        entities.push_back(std::make_pair(i, state[i][mode][j]));
       }
     }
   }

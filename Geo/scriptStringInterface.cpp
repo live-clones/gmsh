@@ -290,7 +290,7 @@ void scriptSetMeshSize(const std::string &fileName, const std::vector<int> &l,
     }
     else {
       std::vector<std::pair<int, int> > dimTags;
-      for(auto t : l) dimTags.push_back(std::pair<int, int>(0, t));
+      for(auto t : l) dimTags.push_back(std::make_pair(0, t));
       sstream << api("gmsh/model/mesh/setSize",
                      dimTags2String(dimTags, lang) + ", " + lc, lang);
     }
