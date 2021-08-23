@@ -474,7 +474,7 @@ public:
       for(int j = 0; j < _c; j++) (*this)(i, j) += m(i, j);
 #endif
   }
-  inline void add(const fullMatrix<scalar> &m, const double &a)
+  inline void add(const fullMatrix<scalar> &m, const scalar &a)
   {
 #if defined(HAVE_EIGEN)
     EigenMat ma(_data, _r, _c), mm(m._data, m._r, m._c);
