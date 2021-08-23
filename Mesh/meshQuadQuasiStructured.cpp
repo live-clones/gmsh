@@ -2878,31 +2878,6 @@ int optimizeFaceQuadMeshBoundaries(GFace *gf, bool ignoreAcuteCorners = false) {
   return 0;
 }
 
-int optimizeQuadMeshBoundaries(GModel *gm) 
-{
-  Msg::Info(
-    "Optimize topology of quad mesh boundaries with extrusion and remeshing ...");
-
-  std::vector<GFace *> faces = model_faces(gm);
-
-#if defined(_OPENMP)
-#pragma omp parallel for schedule(dynamic)
-#endif
-  for(size_t f = 0; f < faces.size(); ++f) {
-    GFace *gf = faces[f];
-    if(gf->meshStatistics.status != GFace::PENDING) continue;
-    if(CTX::instance()->mesh.meshOnlyVisible && !gf->getVisibility()) continue;
-    if(CTX::instance()->debugSurface > 0 &&
-       gf->tag() != CTX::instance()->debugSurface)
-      continue;
-    if(gf->triangles.size() > 0 || gf->quadrangles.size() == 0) continue;
-
-    optimizeFaceQuadMeshBoundaries(gf, true);
-  }
-
-  return 0;
-}
-
 int ensureEvenNumberOfEdgesOnCurvesAfterInitialSurfaceMesh(GModel *gm) 
 {
 
@@ -3562,5 +3537,30 @@ int optimize1DMeshAtAcuteCorners(GModel *gm) {
   if (n > 0) {
     Msg::Debug("optimize mesh 1D at acute corners: moved %li curve vertices", n);
   }
+  return 0;
+}
+
+int optimizeQuadMeshBoundaries(GModel *gm) 
+{
+  Msg::Info(
+    "Optimize topology of quad mesh boundaries with extrusion and remeshing ...");
+
+  std::vector<GFace *> faces = model_faces(gm);
+
+#if defined(_OPENMP)
+#pragma omp parallel for schedule(dynamic)
+#endif
+  for(size_t f = 0; f < faces.size(); ++f) {
+    GFace *gf = faces[f];
+    if(gf->meshStatistics.status != GFace::PENDING) continue;
+    if(CTX::instance()->mesh.meshOnlyVisible && !gf->getVisibility()) continue;
+    if(CTX::instance()->debugSurface > 0 &&
+       gf->tag() != CTX::instance()->debugSurface)
+      continue;
+    if(gf->triangles.size() > 0 || gf->quadrangles.size() == 0) continue;
+
+    optimizeFaceQuadMeshBoundaries(gf, true);
+  }
+
   return 0;
 }

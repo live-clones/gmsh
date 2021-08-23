@@ -1470,6 +1470,48 @@ namespace hbl {
     return okg;
   }
 
+  bool decreaseHexLayerThicknessAroundSelfIntersections(
+      const HblInput& input,
+      HblOutput& output,
+      const std::vector<id>& quadFaces) {
+
+    /* Triangulation of the interior surface */
+    std::vector<id3> tris;
+    bool okt = explicit_triangles_from_quad_faces(output.H, quadFaces, tris);
+    RFC(!okt, "failed to get triangles from quads");
+    SimpleMesh M;
+    initMeshTriangulation(output.H, tris, M);
+
+    /* Check self-intersections */
+    std::vector<id2> triIntersections;
+    checkBoundarySelfIntersections(M, triIntersections);
+    if (triIntersections.size() == 0) return true;
+
+    /* Create domains around self-intersections */
+    std::vector<std::vector<id> > v2t(M.points.size());
+    for (size_t t = 0; t < M.triangles.size(); ++t) for (size_t lv = 0; lv < 3; ++lv) {
+      v2t[M.triangles[t][lv]].push_back(t);
+    }
+    id dist_threshold = 2;
+    std::vector<std::vector<id> > cavities;
+    bool okb = buildCavityWithDistanceToIntersections(M, v2t, triIntersections, cavities, dist_threshold);
+    if (!okb) return false;
+
+    /* TODO FROM HERE: IN PROGRESS */
+
+    F(i,cavities.size()) {
+      /* From surface domain to hex cavities */
+
+      /* use decreaseBoundaryLayerThickness on cavity vertices */
+
+      /* call anisotropic winslow smoothing */
+
+      /* check new self-intersections */
+    }
+
+    return false;
+  }
+
   bool buildInteriorHexdomMesh(
       const HblInput& input,
       HblOptions& opt,
