@@ -415,6 +415,8 @@ static void findPhysicalGroupsForSingularities(GFace *gf,
 }
 
 
+
+
 void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed,
                              std::vector<SMetric3> &metrics)
 {

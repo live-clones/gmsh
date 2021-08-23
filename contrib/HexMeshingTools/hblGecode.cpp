@@ -15,12 +15,12 @@
 #include "geolog.h"
 #include "OS.h"
 
-// TODOMX / FIXME: ifdef around Gecode
-//
 /* Gecode includes */
-#include <gecode/int.hh>
-#include <gecode/search.hh>
-#include <gecode/minimodel.hh>
+#if defined(HAVE_GECODE)
+  #include <gecode/int.hh>
+  #include <gecode/search.hh>
+  #include <gecode/minimodel.hh>
+#endif
 
 
 /* - Loops */
@@ -30,6 +30,9 @@
 #define RFC(_COND,...) do { if (_COND) {Logging::error(__VA_ARGS__); return false;} } while(0)
 
 namespace hbl {
+
+  #if defined(HAVE_GECODE)
+
   using namespace Gecode;
   using std::vector;
   using std::pair;
@@ -470,5 +473,36 @@ namespace hbl {
 
     return true;
   }
+
+#else
+
+  bool solve_with_gecode(
+      size_t N,
+      const std::vector<std::vector<id>>& polygons,
+      const std::vector<double>& x_ideal,
+      const std::vector<id2>& n_min_max,
+      const std::vector<id>& n_priority,
+      std::vector<id>& solution,
+      bool& stopped,
+      std::vector<double>& iterTime,
+      double timeMaxInit,
+      double timeMaxImprove)
+  {
+    Msg::Error("solve_with_gecode() requires the GECODE module");
+    return false;
+  }
+
+  bool solve_with_gecode_many_solutions(
+      size_t N,
+      const std::vector<std::vector<id>>& polygons,
+      const std::vector<double>& x_ideal,
+      const std::vector<id2>& n_min_max,
+      size_t nb_slt_max,
+      std::vector<std::vector<id>>& solutions) {
+    Msg::Error("solve_with_gecode_many_solutions() requires the GECODE module");
+    return false;
+  }
+
+#endif
 
 }

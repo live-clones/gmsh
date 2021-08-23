@@ -219,8 +219,7 @@ namespace hbl {
     GRegion* grCurve = nullptr;
     GRegion* grInt = nullptr;
     if (differentGRegions) {
-      /* TODOMX
-       * temporary stuff for vizu */
+      /* temporary stuff for vizu */
       int tag = gr->tag()*1000; 
       // grReg = new GRegion(gr->model(),tag);
       grIrreg = new GRegion(gr->model(),tag+1);

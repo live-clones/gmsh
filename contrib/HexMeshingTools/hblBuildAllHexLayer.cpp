@@ -301,11 +301,6 @@ namespace hbl {
         RFC(e == NO_ID, "wrong matching");
         vec3 p = edge_center(Q,e);
 
-        if (Msg::GetVerbosity() == 101) { // TODOMX
-          double fig = 0.75;
-          p = fig * p + (1.-fig) * po;
-        }
-
         id nv = add_vertex(H, p, Q.edges[e].entity, nullptr, updateMappings);
         h2q.vertexParent.push_back(std::make_pair(1,e));
 
@@ -319,9 +314,6 @@ namespace hbl {
           normalize(dir);
         }
         vec3 p = Q.vertices[v].pt + 0.5 * opt.extrusion_factor * elen * dir;
-        if (Msg::GetVerbosity() == 101) { // TODOMX
-          p = Q.vertices[v].pt + 0.25 * opt.extrusion_factor * elen * dir;
-        }
 
         id nv = add_vertex(H, p, nullptr, nullptr, updateMappings);
         h2q.vertexParent.push_back(NO_PARENT);
@@ -354,10 +346,6 @@ namespace hbl {
         parent = {2,f};
         entity = Q.faces[f].entity;
         p3 = face_center(Q,f);
-        if (Msg::GetVerbosity() == 101) { // TODOMX
-          double fig = 0.75;
-          p3 = fig*p3+(1.-fig)*po;
-        }
 
         /* should_invert_quad is used to keep orientation consistent with Q
          * that is, boundary quads are oriented to normals point to the interior */

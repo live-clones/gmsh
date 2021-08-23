@@ -406,6 +406,10 @@ static void Mesh1D(GModel *m)
 
   Msg::StopProgressMeter();
 
+  if (CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT) {
+    optimize1DMeshAtAcuteCorners(m);
+  }
+
   Msg::SetNumThreads(prevNumThreads);
 
   double t2 = Cpu(), w2 = TimeOfDay();
@@ -1507,8 +1511,11 @@ void GenerateMesh(GModel *m, int ask)
   // Some meshing algorithms require a global background mesh
   // and a guiding field (e.g. cross field + size map)
   QuadqsContextUpdater *qqs = nullptr;
-  if((ask == 1 || ask == 2) && (CTX::instance()->mesh.algo2d == ALGO_2D_PACK_PRLGRMS ||
-     CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT)) {
+  if((ask == 1 || ask == 2) 
+      && CTX::instance()->mesh.quadqsSizemapMethod != 5 
+      && (CTX::instance()->mesh.algo2d == ALGO_2D_PACK_PRLGRMS ||
+        CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT)) {
+
     int old = m->getMeshStatus(false);
     bool doIt = (ask >= 1 && ask <= 3);
     bool exists = backgroundMeshAndGuidingFieldExists(m);

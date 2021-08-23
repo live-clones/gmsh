@@ -307,7 +307,8 @@ namespace WinslowUntangler {
     double avg_ideal_vol = 1.;
     if (triIdealShapes.size() > 0.) {
       for (size_t t = 0; t < triIdealShapes.size(); ++t) {
-        avg_ideal_vol += tri_area(triIdealShapes[t][0], triIdealShapes[t][1], triIdealShapes[t][2]);
+        double area = tri_area(triIdealShapes[t][0], triIdealShapes[t][1], triIdealShapes[t][2]);
+        avg_ideal_vol += area;
       }
       avg_ideal_vol /= double(triIdealShapes.size());
     }
@@ -327,10 +328,18 @@ namespace WinslowUntangler {
         shape[lv] = shape[lv] * (1./std::sqrt(avg_ideal_vol) * std::sqrt(avg_tri_area));
       }
 
+      double area = tri_area(shape[0], shape[1], shape[2]);
+      if (std::isnan(area)) {
+        Msg::Warning("Winslow untangler 2D: area of ideal shape for tri %li: %f, cancel smoothing", t, area);
+        return false;
+      } else if (area <= 0.) {
+        Msg::Warning("Winslow untangler 2D: area of ideal shape for tri %li: %f", t, area);
+      }
+
       // Compute normals
       for(size_t le = 0; le < 3; ++le) {
         vec2 td = (shape[(le + 1) % 3] - shape[le]);
-        vec3 n = 0.5*cross(std::array<double, 3>{td[0], td[1], 0.}, N) * (1./(2.*avg_tri_area));
+        vec3 n = cross(std::array<double, 3>{td[0], td[1], 0.}, N) * (1./(2.*avg_tri_area));
 
         data.tri_normals[t](le, 0) = n[0];
         data.tri_normals[t](le, 1) = n[1];
@@ -432,7 +441,7 @@ namespace WinslowUntangler {
 
       double vol = tet_volume(shape[0], shape[1], shape[2], shape[3]);
       if (std::isnan(vol)) {
-        Msg::Error("Winslow untangler 3D: volume of ideal shape for tet %li: %f", t, vol);
+        Msg::Warning("Winslow untangler 3D: volume of ideal shape for tet %li: %f, cancel smoothing", t, vol);
         return false;
       } else if (vol < 0.) {
         Msg::Warning("Winslow untangler 3D: volume of ideal shape for tet %li: %f", t, vol);

@@ -326,9 +326,12 @@ namespace hbl {
     CTX::instance()->mesh.renumber = 0;
 
     /* Create 'gmsh mesh' before calling tet mesher */
-    discreteRegion* dr = new discreteRegion(GModel::current());
-    discreteFace* df = new discreteFace(GModel::current());
+    GModel* gm2 = new GModel();
+    discreteRegion* dr = new discreteRegion(gm2);
+    discreteFace* df = new discreteFace(gm2);
     dr->setFace(df,1);
+    gm2->add(df);
+    gm2->add(dr);
     vector<MVertex*> vertices(M.points.size(),nullptr);
     std::unordered_map<MVertex*,id> new2old;
     vector<int> vertexDim(M.points.size(),4);
@@ -363,6 +366,10 @@ namespace hbl {
           vertices[M.tets[t][2]],
           vertices[M.tets[t][3]]);
     }
+    gm2->rebuildMeshVertexCache();
+    gm2->rebuildMeshElementCache();
+    // gm2->writeMSH("interior_tets.msh");
+    // gm2->writeMESH("interior_tets.mesh");
 
     std::vector<GRegion*> regions;
     regions.push_back(dr);
@@ -401,9 +408,9 @@ namespace hbl {
     // for (MVertex* v: vertices) delete v;
     // for (MTriangle* t: df->triangles) delete t;
     // for (MTetrahedron* t: dr->tetrahedra) delete t;
-    delete df;
-    delete dr;
-
+    // delete df;
+    // delete dr;
+    delete gm2;
 
     return success;
   }
@@ -1073,19 +1080,19 @@ namespace hbl {
           good_diag = sorted(fvert[1],fvert[3]);
           bad_diag = sorted(fvert[0],fvert[2]);
         }
-        // TODO FIXME remove this check when sure
-        auto it1 = edges.find(good_diag);
-        auto it2 = edges.find(bad_diag);
-        if (it1 == edges.end()) {
-          Msg::Error("good diag should be in tet edges but is not !");
-          DBG(hex,lf,fvert,good_diag);
-          good = false;
-        }
-        if (it2 != edges.end()) {
-          Msg::Error("diag should NOT be in tet edges but is !");
-          DBG(hex,lf,fvert,bad_diag);
-          good = false;
-        }
+        // // TODO FIXME remove this check when sure
+        // auto it1 = edges.find(good_diag);
+        // auto it2 = edges.find(bad_diag);
+        // if (it1 == edges.end()) {
+        //   Msg::Error("good diag should be in tet edges but is not !");
+        //   DBG(hex,lf,fvert,good_diag);
+        //   good = false;
+        // }
+        // if (it2 != edges.end()) {
+        //   Msg::Error("diag should NOT be in tet edges but is !");
+        //   DBG(hex,lf,fvert,bad_diag);
+        //   good = false;
+        // }
       }
       if (!good) abort();
     }
@@ -1352,23 +1359,6 @@ namespace hbl {
         std::array<std::array<double,3>,4> shape;
         shape = equi;
 
-        // std::array<std::array<double,3>,4> shape = {
-        //   points[tet[0]],
-        //   points[tet[1]],
-        //   points[tet[2]],
-        //   points[tet[3]]
-        // };
-        // double tvol = -1./6. * basicOrient3d(shape[0],shape[1],shape[2],shape[3]);
-        // if (!std::isnan(tvol) && tvol > 0.) {
-        //   F(lv,4) shape[lv] = (1./std::pow(tvol,1./3.))*shape[lv];
-        // } else {
-        //   DBG(tvol,"-> use equi", reg_vol);
-        //   shape = equi;
-        // }
-
-        // double targetvol = -1./6. * basicOrient3d(shape[0],shape[1],shape[2],shape[3]);
-        // DBG(c,tvol,targetvol);
-
         tetIdealShapes[c] = shape;
         double vol = -1./6. * basicOrient3d(shape[0], shape[1], shape[2], shape[3]);
         avgVol += vol;
@@ -1403,7 +1393,7 @@ namespace hbl {
 
     if (false) {
       Msg::Info("HXT optimize tets ...");
-      Msg::Error("do not work, I don't know why");
+      Msg::Warning("do not work, I don't know why");
       vector<vec3> points(H.vertices.size());
       F(v,H.vertices.size()) points[v] = H.vertices[v].pt;
       SimpleMesh T;
@@ -1413,8 +1403,7 @@ namespace hbl {
       optimizeTetMeshInterior(T);
     }
 
-    std::array<double,5> qMinMinMedAvgNeg = computeHexTetQualityStatsMinMedAvgMaxInv(output, QualityMetric::SIGE);
-    DBG(qMinMinMedAvgNeg);
+    output.stats.interiorTetMeshTopoFallback = 1;
 
     return true;
   }
@@ -1504,38 +1493,42 @@ namespace hbl {
     bool okt = buildTetMeshFromQuadMesh(output, quadFaces, nbSelfIntersections);
     if (okt) {
       Msg::Info("interior successfully meshed with %li tetrahedra", output.tetrahedra.size());
+      output.stats.interiorTetMesh = 1;
       return true;
     }
 
     /* Try to reduce thickness, untangle hex layer, then tet mesh */
-    double propSI = double(nbSelfIntersections) / double(2*quadFaces.size());
-    if (propSI > 0.001) {
-      vector<double> factors = {opt.extrusion_factor, 0.3 * opt.extrusion_factor, 0.1 * opt.extrusion_factor, 0.03 * opt.extrusion_factor};
-      vector<size_t> nSI(factors.size(),quadFaces.size());
-      nSI[0] = nbSelfIntersections;
-      for (size_t t = 1; t < factors.size(); ++t) {
-        opt.extrusion_factor = factors[t];
-        Msg::Info("Reduce all-hex layer thickness to factor %f and try to tet mesh",opt.extrusion_factor);
+    if (false) {
+      double propSI = double(nbSelfIntersections) / double(2*quadFaces.size());
+      if (propSI > 0.001) {
+        vector<double> factors = {opt.extrusion_factor, 0.3 * opt.extrusion_factor, 0.1 * opt.extrusion_factor, 0.03 * opt.extrusion_factor};
+        vector<size_t> nSI(factors.size(),quadFaces.size());
+        nSI[0] = nbSelfIntersections;
+        for (size_t t = 1; t < factors.size(); ++t) {
+          opt.extrusion_factor = factors[t];
+          Msg::Info("Reduce all-hex layer thickness to factor %f and try to tet mesh",opt.extrusion_factor);
+          initializeHexLayerGeometry(input, opt, output);
+          optimizeHexLayerGeometry(input, opt, output);
+          bool okt = buildTetMeshFromQuadMesh(output, quadFaces, nSI[t]);
+          if (okt) {
+            Msg::Info("interior successfully meshed with %li tetrahedra", output.tetrahedra.size());
+            output.stats.interiorTetMesh = 1;
+            return true;
+          }
+          if (nSI[t] > 1.1*nSI[t-1]) break; /* # self-intersections increased, stop */
+        }
+        /* Keep hex-layer with less number of self-intersections */
+        size_t nMin = INT32_MAX;
+        size_t kBest = 0;
+        FC(k,nSI.size(),nSI[k] < nMin) {
+          nMin = nSI[k];
+          kBest = k;
+        }
+        opt.extrusion_factor = factors[kBest];
+        Msg::Info("Set all-hex layer thickness to factor %f",opt.extrusion_factor);
         initializeHexLayerGeometry(input, opt, output);
         optimizeHexLayerGeometry(input, opt, output);
-        bool okt = buildTetMeshFromQuadMesh(output, quadFaces, nSI[t]);
-        if (okt) {
-          Msg::Info("interior successfully meshed with %li tetrahedra", output.tetrahedra.size());
-          return true;
-        }
-        if (nSI[t] > 1.1*nSI[t-1]) break; /* # self-intersections increased, stop */
       }
-      /* Keep hex-layer with less number of self-intersections */
-      size_t nMin = INT32_MAX;
-      size_t kBest = 0;
-      FC(k,nSI.size(),nSI[k] < nMin) {
-        nMin = nSI[k];
-        kBest = k;
-      }
-      opt.extrusion_factor = factors[kBest];
-      Msg::Info("Set all-hex layer thickness to factor %f",opt.extrusion_factor);
-      initializeHexLayerGeometry(input, opt, output);
-      optimizeHexLayerGeometry(input, opt, output);
     }
 
     Msg::Info("Fallback to topological tet mesh construction");

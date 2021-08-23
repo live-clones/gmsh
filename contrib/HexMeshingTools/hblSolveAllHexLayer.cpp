@@ -358,7 +358,6 @@ namespace hbl {
     if (opt.imposed_edge_valence.size() == 0) {
       F(e,edgeValenceIdealReal.size()) {
         double val = edgeValenceIdealReal[e];
-        // TODOMX: range too small ?
         if (V2) {
           if (val < 0) {
             RF("edgeValenceIdealReal[{}] = {} ?!", e, val);

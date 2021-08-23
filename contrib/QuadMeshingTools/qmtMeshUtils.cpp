@@ -308,6 +308,13 @@ bool patchFromElements(GFace* gf, const std::vector<MElement*>& elements, GFaceM
       for (MElement* e: elements)  {
         for (size_t lv = 0; lv < e->getNumVertices(); ++lv) {
           MVertex* v = e->getVertex(lv);
+          if (v == nullptr) {
+            Msg::Warning("patchFromElements: quad vertex is null");
+            return false;
+          } else if (v->onWhat() == nullptr) {
+            Msg::Warning("patchFromElements: vertex %li not on GEntity", v->getNum());
+            return false;
+          }
           if (v->onWhat() != gf) {
             patch.bdrVertices[0].push_back(v);
           }
@@ -942,6 +949,9 @@ bool fillSurfaceProjector(GFace* gf, SurfaceProjector* sp) {
     abort();
   }
 
+  bool okstl = sp->initialize(gf, {}, true);
+  if (okstl) return true;
+
   std::vector<MTriangle*> triangles;
   std::vector<MTriangle*> trianglesToDel;
   bool okgt = getGFaceTriangles(gf, triangles, trianglesToDel);
@@ -1301,15 +1311,19 @@ bool appendQuadMeshStatistics(GModel* gm, std::unordered_map<std::string,double>
   /* Quality stats */
   if (all_quads.size() > 0){
     std::vector<double> quality(all_quads.size());
+    std::vector<double> qualitySIGE(all_quads.size());
     std::vector<double> edgeLen(4*all_quads.size());
     double edge_len_min = DBL_MAX;
     double edge_len_avg = 0.;
     double edge_len_max = 0.;
     double edge_n = 0.;
     double avg = 0.;
+    double avgSIGE = 0.;
     for (size_t f = 0; f < all_quads.size(); ++f) {
       quality[f] = all_quads[f]->minSICNShapeMeasure();
+      qualitySIGE[f] = all_quads[f]->minSIGEShapeMeasure();
       avg += quality[f];
+      avgSIGE += qualitySIGE[f];
       for (size_t le = 0; le < 4; ++le) {
         SPoint3 p1 = all_quads[f]->getVertex(le)->point();
         SPoint3 p2 = all_quads[f]->getVertex((le+1)%4)->point();
@@ -1322,13 +1336,19 @@ bool appendQuadMeshStatistics(GModel* gm, std::unordered_map<std::string,double>
       }
     }
     avg /= quality.size();
+    avgSIGE /= qualitySIGE.size();
     edge_len_avg /= edge_n;
     std::sort(quality.begin(),quality.end());
+    std::sort(qualitySIGE.begin(),qualitySIGE.end());
     std::sort(edgeLen.begin(),edgeLen.end());
     stats[prefix+"SICN_min"] = quality[0];
     stats[prefix+"SICN_avg"] = avg;
     stats[prefix+"SICN_max"] = quality.back();
     stats[prefix+"SICN_med"] = quality[size_t(0.50*double(quality.size()))];
+    stats[prefix+"SIGE_min"] = qualitySIGE[0];
+    stats[prefix+"SIGE_avg"] = avgSIGE;
+    stats[prefix+"SIGE_max"] = qualitySIGE.back();
+    stats[prefix+"SIGE_med"] = qualitySIGE[size_t(0.50*double(qualitySIGE.size()))];
     // stats[prefix+"SICN_01% <"] = quality[size_t(0.01*double(quality.size()))];
     // stats[prefix+"SICN_10% <"] = quality[size_t(0.10*double(quality.size()))];
     // stats[prefix+"SICN_25% <"] = quality[size_t(0.25*double(quality.size()))];
@@ -1347,18 +1367,62 @@ bool appendQuadMeshStatistics(GModel* gm, std::unordered_map<std::string,double>
   return true;
 }
 
-void printStatistics(const unordered_map<std::string,double>& stats, const std::string& title) {
-  std::vector<std::string> keys;
-  for (auto& kv: stats) keys.push_back(kv.first);
-  std::sort(keys.begin(),keys.end());
-  Msg::Info("%s", title.c_str());;
+
+inline bool keyInMap(const std::string& key, const unordered_map<std::string,double>& stats) {
+  auto it = stats.find(key);
+  return it != stats.end();
+}
+
+inline bool keysInMap(const std::vector<std::string>& keys, const unordered_map<std::string,double>& stats) {
   for (std::string key: keys) {
-    double val = stats.at(key);
-    if (std::trunc(val) == val) {
-      Msg::Info("- %s: %i", key.c_str(),int(val));
-    } else {
-      Msg::Info("- %s: %f", key.c_str(),val);
+    if (!keyInMap(key, stats)) return false;
+  }
+  return true;
+}
+
+void printStatistics(const unordered_map<std::string,double>& stats, const std::string& title) {
+  if (Msg::GetVerbosity() >= 99) {
+    std::vector<std::string> keys;
+    for (auto& kv: stats) keys.push_back(kv.first);
+    std::sort(keys.begin(),keys.end());
+    Msg::Info("%s", title.c_str());;
+    for (std::string key: keys) {
+      double val = stats.at(key);
+      if (std::trunc(val) == val) {
+        Msg::Info("- %s: %i", key.c_str(),int(val));
+      } else {
+        Msg::Info("- %s: %f", key.c_str(),val);
+      }
     }
+  }
+  Msg::Info("%s", title.c_str());;
+  if (keysInMap({"Mesh_n_vertices","Mesh_n_quads"},stats)) {
+    Msg::Info("- %i vertices, %li quads", int(stats.at("Mesh_n_vertices")),int(stats.at("Mesh_n_quads")));
+  }
+  if (keysInMap({"Mesh_n_regular","Mesh_n_val3","Mesh_n_val5","Mesh_n_very_irregular"},stats)) {
+    Msg::Info("- vertex topology: %i regular, %i valence 3, %i valence 5, %i very irregular", 
+        int(stats.at("Mesh_n_regular")),
+        int(stats.at("Mesh_n_val3")),
+        int(stats.at("Mesh_n_val5")),
+        int(stats.at("Mesh_n_very_irregular")));
+  }
+  if (keysInMap({"Mesh_edge_min","Mesh_edge_avg","Mesh_edge_max"},stats)) {
+    Msg::Info("- quad edge length: min=%.3f, avg=%.3f, max=%.3f", 
+        double(stats.at("Mesh_edge_min")),
+        double(stats.at("Mesh_edge_avg")),
+        double(stats.at("Mesh_edge_max")));
+  }
+  if (keysInMap({"Mesh_SICN_min","Mesh_SICN_avg","Mesh_SICN_max"},stats)) {
+    Msg::Info("- quad SICN quality: min=%.3f, avg=%.3f, max=%.3f", 
+        double(stats.at("Mesh_SICN_min")),
+        double(stats.at("Mesh_SICN_avg")),
+        double(stats.at("Mesh_SICN_max")));
+  }
+  if (keysInMap({"Mesh_SIGE_min","Mesh_SIGE_avg","Mesh_SIGE_max"},stats)) {
+    Msg::Info("- quad SIGE quality: min=%.3f, avg=%.3f, max=%.3f", 
+        double(stats.at("Mesh_SIGE_min")),
+        double(stats.at("Mesh_SIGE_avg")),
+        double(stats.at("Mesh_SIGE_max")));
   }
 }
 

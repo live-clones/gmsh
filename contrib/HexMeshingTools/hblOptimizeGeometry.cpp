@@ -927,7 +927,7 @@ namespace hbl {
         H.vertices[v].pt = 1. / new_pos_sum[v] * new_pos[v];
       }
       bdrVertexDone[v] = true;
-      GeoLog::add(H.vertices[v].pt,new_pos_sum[v],"regular_extruded");
+      // GeoLog::add(H.vertices[v].pt,new_pos_sum[v],"regular_extruded");
       nb_set += 1;
     }
 

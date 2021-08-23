@@ -449,6 +449,13 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm,
     return -1;
   }
 
+  const int qqsSizemapMethod = CTX::instance()->mesh.quadqsSizemapMethod;
+  if (qqsSizemapMethod == 5) {
+    Msg::Warning("Quadqs method: no background mesh");
+    return 0;
+  }
+
+
   bool midpointSubdivisionAfter = true;
   if (CTX::instance()->mesh.algoRecombine == 4) {
     midpointSubdivisionAfter = false;
@@ -458,7 +465,6 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm,
 
   Msg::Info("Build background mesh and guiding field ...");
   bool externalSizemap = false;
-  const int qqsSizemapMethod = CTX::instance()->mesh.quadqsSizemapMethod;
   {
     FieldManager *fields = gm->getFields();
     if(fields->getBackgroundField() > 0) {
@@ -2120,7 +2126,9 @@ int RefineMeshWithBackgroundMeshProjectionSimple(GModel *gm)
 
     /* Projections */
     SurfaceProjector* sp = nullptr;
-    if(bmesh) {
+    sp = new SurfaceProjector();
+    bool oki = sp->initialize(gf, {}, true);
+    if(!oki && bmesh) {
       auto it2 = bmesh->faceBackgroundMeshes.find(gf);
       if(it2 == bmesh->faceBackgroundMeshes.end()) {
         Msg::Error("background mesh not found for face %i", gf->tag());
@@ -2130,14 +2138,16 @@ int RefineMeshWithBackgroundMeshProjectionSimple(GModel *gm)
         for(size_t i = 0; i < it2->second.triangles.size(); ++i) {
           triangles[i] = &(it2->second.triangles[i]);
         }
-        sp = new SurfaceProjector();
-        bool oki = sp->initialize(gf, triangles);
+        oki = sp->initialize(gf, triangles);
         if(!oki) {
           Msg::Warning("failed to initialize surface projector");
           delete sp;
           sp = nullptr;
         }
       }
+    }
+    if (!oki && sp) {
+      delete sp; sp = nullptr;
     }
 
     bool evalOnCAD = false;
@@ -2761,13 +2771,26 @@ int insertExtrudedBoundaryLayer(
 int optimizeFaceQuadMeshBoundaries(GFace *gf, bool ignoreAcuteCorners = false) {
   if(gf->triangles.size() > 0 || gf->quadrangles.size() == 0) return -1;
 
+  size_t nv = gf->mesh_vertices.size();
+  size_t nq = gf->quadrangles.size();
+
+  double minSICNb = DBL_MAX;
+  double avgSICNb = 0.;
+  std::vector<MElement*> elts = dynamic_cast_vector<MQuadrangle*,MElement*>(gf->quadrangles);
+  computeSICN(elts, minSICNb, avgSICNb);
+  std::vector<std::array<MVertex*,4> > quadsInit(gf->quadrangles.size());
+  for (size_t i = 0; i < gf->quadrangles.size(); ++i) for (size_t lv = 0; lv < 4; ++lv) {
+    quadsInit[i][lv] = gf->quadrangles[i]->getVertex(lv);
+  }
+  std::vector<SPoint3> positionsInit(gf->mesh_vertices.size());
+  for (size_t i = 0; i < gf->mesh_vertices.size(); ++i) positionsInit[i] = gf->mesh_vertices[i]->point();
+
   /* For each bdr vertex, compute the ideal valence (based on angle viewed from
    * the face) */
   unordered_map<MVertex *, double> qValIdeal;
   computeBdrVertexIdealValence(gf->quadrangles, qValIdeal);
 
   /* Face boundary loops */
-  std::vector<MElement*> elts = dynamic_cast_vector<MQuadrangle*,MElement*>(gf->quadrangles);
   std::vector<std::vector<MVertex*> > loops;
   bool okb = buildBoundaries(elts, loops);
   if (!okb) {
@@ -2821,6 +2844,34 @@ int optimizeFaceQuadMeshBoundaries(GFace *gf, bool ignoreAcuteCorners = false) {
     fillSurfaceProjector(gf, &sp);
     optimizeGeometryQuadMesh(gf, &sp, timeMax);
 
+    double minSICNa = DBL_MAX;
+    double avgSICNa = 0.;
+    std::vector<MElement*> eltsa = dynamic_cast_vector<MQuadrangle*,MElement*>(gf->quadrangles);
+    computeSICN(eltsa, minSICNa, avgSICNa);
+
+    if (minSICNa <= 0. && minSICNa <= minSICNb) {
+      Msg::Warning("- Face %i: worst quality (%.3f -> %.3f) after adding %li extruded boundary layers, restore",
+          gf->tag(), minSICNb, minSICNa, nlayer);
+      /* Delete added vertices */
+      for (size_t v = nv; v < gf->mesh_vertices.size(); ++v) {
+        delete gf->mesh_vertices[v];
+      }
+      gf->mesh_vertices.resize(nv);
+      /* Restore positions */
+      for (size_t i = 0; i < gf->mesh_vertices.size(); ++i) {
+        gf->mesh_vertices[i]->setXYZ(positionsInit[i]);
+      }
+      /* Delete added quads */
+      for (size_t f = nq; f < gf->quadrangles.size(); ++f) {
+        delete gf->quadrangles[f];
+      }
+      gf->quadrangles.resize(nq);
+      /* Restore quad vertices */
+      for (size_t i = 0; i < gf->quadrangles.size(); ++i) for (size_t lv = 0; lv < 4; ++lv) {
+        gf->quadrangles[i]->setVertex(lv,quadsInit[i][lv]);
+      }
+      return 1;
+    }
     Msg::Info("- Face %i: added %li extruded boundary layers", gf->tag(), nlayer);
   }
 
@@ -3421,5 +3472,95 @@ int quadqsCleanup(GModel *gm) {
   if(FlGui::available()) FlGui::instance()->updateViews(true, true);
 #endif
 #endif
+  return 0;
+}
+
+void getAcuteCorners(GFace* gf, 
+    std::unordered_map<MVertex*,std::vector<MVertex*> >& acuteCorners,
+    double angle_threshold_rad) {
+  std::unordered_map<MVertex*,std::vector<MVertex*> > corner2vertices;
+  for (GEdge* ge: gf->edges()) {
+    for (MLine* line: ge->lines) {
+      MVertex* v1 = line->getVertex(0);
+      MVertex* v2 = line->getVertex(1);
+      if (v1->onWhat() && v1->onWhat()->dim() == 0) {
+        corner2vertices[v1].push_back(v2);
+      }
+      if (v2->onWhat() && v2->onWhat()->dim() == 0) {
+        corner2vertices[v2].push_back(v1);
+      }
+    }
+  }
+  for (auto& kv: corner2vertices) {
+    if (kv.second.size() == 2) {
+      MVertex* v = kv.first;
+      MVertex* v2 = kv.second[0];
+      MVertex* v3 = kv.second[1];
+      double agl = angle3Vertices(v2,v,v3);
+      if (agl < angle_threshold_rad) {
+        acuteCorners[v].push_back(v2);
+        acuteCorners[v].push_back(v3);
+      }
+    }
+  }
+}
+
+int optimize1DMeshAtAcuteCorners(GModel *gm) {
+  /* Collect acute corners */
+  std::unordered_map<MVertex*,std::vector<MVertex*> > acuteCorners;
+  double threshold = 30. * M_PI / 180.;
+  for (GFace* gf: gm->getFaces()) {
+    for (GEdge* ge: gf->edges()) if (ge->lines.size() == 0) {
+      Msg::Warning("Optimize 1D mesh at acute corners: no lines in curve %i", ge->tag());
+    }
+    if (gf->triangles.size() > 0 || gf->quadrangles.size() > 0) {
+      Msg::Warning("Optimize 1D mesh at acute corners: elements in face %i", gf->tag());
+    }
+    getAcuteCorners(gf, acuteCorners, threshold);
+  }
+
+  /* Move vertices */
+  size_t n = 0;
+  for (auto& kv: acuteCorners) {
+    MVertex* v = kv.first;
+    /* Compute averaged distance */
+    double avgLen = 0.;
+    double avgN = 0.;
+    double forcedLen = 0.;
+    double forcedLenN = 0.;
+    for (MVertex* v2: kv.second) {
+      double len = v->distance(v2);
+      avgLen += len;
+      avgN += 1.;
+      if (v2->onWhat() && v2->onWhat()->dim() == 0) {
+        forcedLen += len;
+        forcedLenN += 1.;
+      }
+    }
+    if (avgN > 0.) avgLen /= avgN;
+    if (forcedLenN > 0.) forcedLen /= forcedLenN;
+
+    /* Move vertices */
+    for (MVertex* v2: kv.second) if (v2->onWhat() && v2->onWhat()->dim() == 1){
+      SVector3 dir  = v2->point() - v->point();
+      if (dir.normSq() > 0.) {
+        dir.normalize();
+      }
+      double len = (forcedLen > 0.) ? forcedLen : avgLen;
+      SPoint3 newPos = v->point() + len * dir;
+      GEdge* ge = dynamic_cast<GEdge*>(v2->onWhat());
+      double t = 0.;
+      v2->getParameter(0,t);
+      GPoint proj = ge->closestPoint(newPos,t);
+      if (proj.succeeded()) {
+        v2->setXYZ(proj.x(),proj.y(),proj.z());
+        v2->setParameter(0, proj.u());
+        n += 1;
+      }
+    }
+  }
+  if (n > 0) {
+    Msg::Debug("optimize mesh 1D at acute corners: moved %li curve vertices", n);
+  }
   return 0;
 }

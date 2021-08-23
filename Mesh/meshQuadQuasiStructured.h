@@ -156,6 +156,16 @@ int replaceBadQuadDominantMeshes(GModel *gm);
 int optimizeQuadMeshBoundaries(GModel *gm);
 
 /**
+ * @brief Identify face acute corners and set the first
+ * curve mesh vertices at same length from corner
+ *
+ * @param gm The model containing the curve meshes
+ *
+ * @return 0 if success
+ */
+int optimize1DMeshAtAcuteCorners(GModel *gm);
+
+/**
  * @brief Delete background meshes and fields that have 
  * been used by quadqs meshing/remeshing
  *

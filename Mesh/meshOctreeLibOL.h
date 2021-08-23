@@ -36,10 +36,11 @@ public:
    * @param gf The CAD face containing the triangles
    * @param triangles The triangles used to build the triangulated geometry
    * support
+   * @param useCADStl If true, build and use the STL of the CAD face
    *
    * @return true if success
    */
-  bool initialize(GFace *gf, const std::vector<MTriangle *> &triangles);
+  bool initialize(GFace *gf, const std::vector<MTriangle *> &triangles, bool useCADStl = false);
 
   /**
    * @brief Clear the triangulation and delete the octree

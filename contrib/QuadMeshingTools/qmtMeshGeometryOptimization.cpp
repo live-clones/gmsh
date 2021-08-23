@@ -496,7 +496,7 @@ namespace QMT {
       std::vector<MVertex*> bnd;
       bool okb = buildBoundary(adjElts, bnd);
       if (!okb) {
-        Msg::Error("buildCondensedStructure: failed to build boundary for stencil");
+        Msg::Warning("buildCondensedStructure: failed to build boundary for stencil");
         return false;
       }
       if (bnd.back() == bnd.front()) bnd.pop_back();
@@ -1508,7 +1508,9 @@ bool quadMeshSpecialAcuteCornerOptimization(GFace* gf, SurfaceProjector* sp = nu
   std::unordered_map<MVertex*,int> bdrVal;
   std::unordered_map<MVertex*,double> bdrAgl;
   std::unordered_map<MVertex*,std::vector<MQuadrangle*> > corner2quads;
+  std::unordered_map<MVertex*,std::vector<MQuadrangle*> > v2quads;
   for (MQuadrangle* q: gf->quadrangles) {
+    bool keep = false;
     for (size_t lv = 0; lv < 4; ++lv) {
       MVertex* v = q->getVertex(lv);
       if (v->onWhat() != nullptr && v->onWhat()->dim() < 2) {
@@ -1519,7 +1521,14 @@ bool quadMeshSpecialAcuteCornerOptimization(GFace* gf, SurfaceProjector* sp = nu
         bdrAgl[v] += agl;
         if (v->onWhat()->dim() == 0) {
           corner2quads[v].push_back(q);
+          keep = true;
         }
+      }
+    }
+    if (keep) {
+      for (size_t lv = 0; lv < 4; ++lv) {
+        MVertex* v = q->getVertex(lv);
+        v2quads[v].push_back(q);
       }
     }
   }
@@ -1537,24 +1546,42 @@ bool quadMeshSpecialAcuteCornerOptimization(GFace* gf, SurfaceProjector* sp = nu
       MVertex* vn = q->getVertex((lv+1)%4);
       MVertex* vo = q->getVertex((lv+2)%4);
       if (vo->onWhat() != nullptr && vo->onWhat()->dim() != 2) continue;
-      double sige_before = q->minSIGEShapeMeasure();
-      SPoint3 backup = vc->point();
-      vec3 pp = vp->point();
-      vec3 pc = vc->point();
-      vec3 pn = vn->point();
-      vec3 po = quad_opposite_right_angled_corner(pp,pc,pn);
-      vo->setXYZ(po[0],po[1],po[2]);
-      if (sp) {
-        GPoint proj = sp->closestPoint(po.data(),false,false);
-        if (proj.succeeded()) {
-          vo->setXYZ(proj.x(),proj.y(),proj.z());
-        }
+
+      const bool BY_OPTIM = true;
+      bool oku = false;
+      if (BY_OPTIM) {
+        GFaceMeshPatch patch;
+        bool okp = patchFromQuads(gf, v2quads[vo], patch);
+        if (!okp) continue;
+        bool backupRestore = true;
+        GeometryOptimizer optu;
+        optu.initialize(patch);
+        bool projectOnCad = true;
+        size_t iter = 10;
+        GeometryOptimizer::PlanarMethod method = GeometryOptimizer::PlanarMethod::MeanPlane;
+        oku = optu.smoothWithWinslowUntangler(method, iter, backupRestore, projectOnCad);
       }
-      double sige_after = q->minSIGEShapeMeasure();
-      if (sige_after < sige_before) {
-        vo->setXYZ(backup.x(),backup.y(),backup.z());
-      } else {
-        nMoved += 1;
+
+      if (!oku) {
+        double sige_before = q->minSIGEShapeMeasure();
+        SPoint3 backup = vc->point();
+        vec3 pp = vp->point();
+        vec3 pc = vc->point();
+        vec3 pn = vn->point();
+        vec3 po = quad_opposite_right_angled_corner(pp,pc,pn);
+        vo->setXYZ(po[0],po[1],po[2]);
+        if (sp) {
+          GPoint proj = sp->closestPoint(po.data(),false,false);
+          if (proj.succeeded()) {
+            vo->setXYZ(proj.x(),proj.y(),proj.z());
+          }
+        }
+        double sige_after = q->minSIGEShapeMeasure();
+        if (sige_after < sige_before) {
+          vo->setXYZ(backup.x(),backup.y(),backup.z());
+        } else {
+          nMoved += 1;
+        }
       }
     }
   }
@@ -2146,7 +2173,7 @@ bool GeometryOptimizer::smoothWithKernel(
   return true;
 }
 
-void returnTrianglesIfNecessary(
+void invertTrianglesIfNecessary(
   const std::vector<std::array<double,2> >& points,
   std::vector<std::array<uint32_t,3> >& tris) {
   double area = 0.;
@@ -2162,7 +2189,6 @@ void returnTrianglesIfNecessary(
     }
   }
 }
-
 
 bool GeometryOptimizer::smoothWithWinslowUntangler(
     PlanarMethod planar,
@@ -2252,35 +2278,24 @@ bool GeometryOptimizer::smoothWithWinslowUntangler(
   }
 
   /* Triangles from quads */
-  std::vector<std::array<uint32_t,3> > tris;
-  tris.reserve(4*quads.size());
-  for (size_t i = 0; i < quads.size(); ++i) {
-    if (quads[i][0] == NO_U32) {
-      continue;
-    } else if (quads[i][3] == NO_U32) { /* already triangle */
-      tris.push_back({quads[i][0],quads[i][1],quads[i][2]});
-    } else {
-      tris.push_back({quads[i][0],quads[i][1],quads[i][2]});
-      tris.push_back({quads[i][0],quads[i][2],quads[i][3]});
-      tris.push_back({quads[i][1],quads[i][2],quads[i][3]});
-      tris.push_back({quads[i][1],quads[i][3],quads[i][0]});
-    }
-  }
+  std::vector<std::array<vec2, 3> > triIdealShapes;
+  std::vector<std::array<uint32_t, 3> > triangles;
+  bool preserveQuadAnisotropy = false;
+  buildTrianglesAndTargetsFromElements(points_2D, quads, triangles, triIdealShapes, preserveQuadAnisotropy);
 
   /* Planar smoothing with Winslow untangler */
   Msg::Debug("- Untangle/Smooth quad mesh (%li quads -> %li optim tris, %li vertices, SICN min initial: %f) ...", 
-      quads.size(), tris.size(), points_2D.size(), sicnMin);
-  returnTrianglesIfNecessary(points_2D,tris);
+      quads.size(), triangles.size(), points_2D.size(), sicnMin);
+  invertTrianglesIfNecessary(points_2D,triangles);
   int iterMaxOuter = iterMax;
-  int iterMaxInner = 300;
+  int iterMaxInner = 500;
   int nFailMax = 5;
   double lambda = 1./127.;
   int verbosity = 0;
   double timeMax = 1000;
   if (Msg::GetVerbosity() >= 99) verbosity = 1;
-  std::vector<std::array<std::array<double, 2>, 3> > triIdealShapes;
   std::string pp = "Debug   : ---- ";
-  bool oku = untangle_triangles_2D(points_2D, locked, tris, triIdealShapes,
+  bool oku = untangle_triangles_2D(points_2D, locked, triangles, triIdealShapes,
       lambda, iterMaxInner, iterMaxOuter, nFailMax, timeMax);
   if (!oku) {
     Msg::Debug("---- failed to untangle");
