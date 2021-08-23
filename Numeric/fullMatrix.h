@@ -183,6 +183,7 @@ public:
 #if defined(HAVE_EIGEN)
     EigenVec vv(_data, _r), vother(other._data, other._r);
     scalar s = vv.dot(vother);
+    return s;
 #else
     scalar s = 0.;
     for(int i = 0; i < _r; ++i) s += _data[i] * other._data[i];
