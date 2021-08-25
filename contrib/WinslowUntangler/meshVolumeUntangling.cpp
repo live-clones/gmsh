@@ -79,13 +79,13 @@ namespace WinslowUntanglerVolume {
     array<double, 3>{0, -.5, 1. / (2. * std::sqrt(2.))},
   };
 
-  std::vector<std::array<std::array<double, 3>, 4> >
-    tetsFromHexTargetShape(
-        HexDcp dcp = TO_32TETS, 
-        const std::vector<std::array<double, 3> >& target = unit_cube)
+  std::vector<std::array<std::array<double, 3>, 4> > tetsFromHexTargetShape(
+    HexDcp dcp = TO_32TETS,
+    const std::vector<std::array<double, 3> > &target = unit_cube)
   {
-    if (target.size() != 8) {
-      Msg::Error("target shape, wrong size, expects 8 and not %li", target.size());
+    if(target.size() != 8) {
+      Msg::Error("target shape, wrong size, expects 8 and not %li",
+                 target.size());
       return {};
     }
     std::vector<std::array<std::array<double, 3>, 4> > shapes;
@@ -98,9 +98,8 @@ namespace WinslowUntanglerVolume {
     }
     if(dcp == TO_24TETS || dcp == TO_32TETS) {
       for(size_t i = 0; i < 24; ++i) {
-        shapes.push_back(
-          {target[hex2tet_24[i][0]], target[hex2tet_24[i][1]],
-           target[hex2tet_24[i][2]], target[hex2tet_24[i][3]]});
+        shapes.push_back({target[hex2tet_24[i][0]], target[hex2tet_24[i][1]],
+                          target[hex2tet_24[i][2]], target[hex2tet_24[i][3]]});
       }
     }
     return shapes;
@@ -116,8 +115,6 @@ namespace WinslowUntanglerVolume {
   {
     return {shape[0], shape[1], shape[3], shape[2]};
   }
-
-
 
   inline double volume(vec3 a, vec3 b, vec3 c, vec3 d)
   {
@@ -158,30 +155,31 @@ namespace WinslowUntanglerVolume {
 using namespace WinslowUntanglerVolume;
 
 bool buildTetrahedraFromElements(
-    const std::vector<std::vector<uint32_t> > &elements,
-    const std::vector<std::vector<std::array<double,3> > > &elementTargetShapes,
-    std::vector<std::array<uint32_t, 4> > &tets,
-    std::vector<std::array<std::array<double, 3>, 4> > &tetIdealShapes,
-    int dcpHex)
+  const std::vector<std::vector<uint32_t> > &elements,
+  const std::vector<std::vector<std::array<double, 3> > > &elementTargetShapes,
+  std::vector<std::array<uint32_t, 4> > &tets,
+  std::vector<std::array<std::array<double, 3>, 4> > &tetIdealShapes,
+  int dcpHex)
 {
   tetIdealShapes.clear();
   tets.clear();
 
   HexDcp dcp = HexDcp::TO_32TETS;
-  if (dcpHex == 32) {
-    dcp = HexDcp::TO_32TETS;
-  } else if (dcpHex == 8) {
+  if(dcpHex == 32) { dcp = HexDcp::TO_32TETS; }
+  else if(dcpHex == 8) {
     dcp = HexDcp::TO_8TETS;
-  } else if (dcpHex == 24) {
+  }
+  else if(dcpHex == 24) {
     dcp = HexDcp::TO_24TETS;
-  } else {
+  }
+  else {
     Msg::Error("decomposition not supported");
     return false;
   }
 
   std::unordered_map<MVertex *, uint32_t> old2new;
   for(size_t e = 0; e < elements.size(); ++e) {
-    const vector<uint32_t>& vert = elements[e];
+    const vector<uint32_t> &vert = elements[e];
     if(vert.size() == 4) {
       array<uint32_t, 4> tet = {vert[0], vert[1], vert[2], vert[3]};
 
@@ -190,29 +188,28 @@ bool buildTetrahedraFromElements(
       tet = invert_tet(tet);
 
       tets.push_back(tet);
-      if (e < elementTargetShapes.size()) {
+      if(e < elementTargetShapes.size()) {
         std::array<std::array<double, 3>, 4> ishape = {
-          elementTargetShapes[e][0],
-          elementTargetShapes[e][1],
-          elementTargetShapes[e][2],
-          elementTargetShapes[e][3]
-        };
+          elementTargetShapes[e][0], elementTargetShapes[e][1],
+          elementTargetShapes[e][2], elementTargetShapes[e][3]};
         // warning: tet orientation in untangler is inverted compared to gmsh
         // orientation
         ishape = invert_shape(ishape);
         tetIdealShapes.push_back(ishape);
-      } else {
+      }
+      else {
         tetIdealShapes.push_back(tet_ideal_shape);
       }
     }
     else if(vert.size() == 8) {
       const array<uint32_t, 8> hex = {vert[0], vert[1], vert[2], vert[3],
-        vert[4], vert[5], vert[6], vert[7]};
+                                      vert[4], vert[5], vert[6], vert[7]};
       vector<array<uint32_t, 4> > htets = tetsFromHex(hex, dcp);
       vector<array<array<double, 3>, 4> > shapes;
-      if (e < elementTargetShapes.size()) {
+      if(e < elementTargetShapes.size()) {
         shapes = tetsFromHexTargetShape(dcp, elementTargetShapes[e]);
-      } else {
+      }
+      else {
         shapes = tetsFromHexTargetShape(dcp, unit_cube);
       }
 
@@ -236,7 +233,8 @@ bool buildTetrahedraFromElements(
     else if(vert.size() == 6) {
       Msg::Error("prism not supported yet, abort");
       return false;
-    } else {
+    }
+    else {
       Msg::Error("case not supported, abort");
       return false;
     }
@@ -246,10 +244,9 @@ bool buildTetrahedraFromElements(
 }
 
 bool buildVerticesAndTetrahedra(
-    GRegion *gr, vector<MVertex *> &vertices,
-    vector<vec3> &points,
-    vector<bool> &locked, vector<std::array<uint32_t, 4> > &tets,
-    std::vector<std::array<std::array<double, 3>, 4> > &tetIdealShapes)
+  GRegion *gr, vector<MVertex *> &vertices, vector<vec3> &points,
+  vector<bool> &locked, vector<std::array<uint32_t, 4> > &tets,
+  std::vector<std::array<std::array<double, 3>, 4> > &tetIdealShapes)
 {
   vertices.clear();
   points.clear();
@@ -262,7 +259,7 @@ bool buildVerticesAndTetrahedra(
   for(size_t e = 0; e < gr->getNumMeshElements(); ++e) {
     MElement *elt = gr->getMeshElement(e);
     size_t n = elt->getNumVertices();
-    vector<uint32_t>& vert = elements[e];
+    vector<uint32_t> &vert = elements[e];
     vert.resize(n);
     for(size_t lv = 0; lv < n; ++lv) {
       MVertex *v = elt->getVertex(lv);
@@ -287,9 +284,10 @@ bool buildVerticesAndTetrahedra(
   }
 
   const int dcpHex = 32;
-  std::vector<std::vector<std::array<double,3> > > elementTargetShapes;
-  bool okb = buildTetrahedraFromElements(elements, elementTargetShapes, tets, tetIdealShapes, dcpHex);
-  if (!okb) {
+  std::vector<std::vector<std::array<double, 3> > > elementTargetShapes;
+  bool okb = buildTetrahedraFromElements(elements, elementTargetShapes, tets,
+                                         tetIdealShapes, dcpHex);
+  if(!okb) {
     Msg::Error("Failed to build tets from elements");
     return false;
   }
@@ -315,7 +313,7 @@ bool untangleGRegionMeshConstrained(GRegion *gr, int iterMax, double timeMax)
   vector<std::array<uint32_t, 4> > tets;
   std::vector<std::array<std::array<double, 3>, 4> > tetIdealShapes;
   buildVerticesAndTetrahedra(gr, vertices, points, locked, tets,
-      tetIdealShapes);
+                             tetIdealShapes);
   invertTetsIfNecessary(points, tets, tetIdealShapes);
 
   /* Call Winslow untangler */
@@ -325,7 +323,7 @@ bool untangleGRegionMeshConstrained(GRegion *gr, int iterMax, double timeMax)
 
   bool converged =
     untangle_tetrahedra(points, locked, tets, tetIdealShapes, lambda,
-        iterMaxInner, iterMax, iterFailMax, timeMax);
+                        iterMaxInner, iterMax, iterFailMax, timeMax);
 
   for(size_t v = 0; v < points.size(); ++v)
     if(!locked[v]) {
@@ -336,9 +334,9 @@ bool untangleGRegionMeshConstrained(GRegion *gr, int iterMax, double timeMax)
   computeSICNquality(gr, sicnMinA, sicnAvgA);
 
   Msg::Info("- Region %i: Winslow untangling, SICN min: %.3f -> %.3f, avg: "
-      "%.3f -> %.3f (%li vertices, %.3f seconds)",
-      gr->tag(), sicnMinB, sicnMinA, sicnAvgB, sicnAvgA, vertices.size(),
-      Cpu() - t0);
+            "%.3f -> %.3f (%li vertices, %.3f seconds)",
+            gr->tag(), sicnMinB, sicnMinA, sicnAvgB, sicnAvgA, vertices.size(),
+            Cpu() - t0);
 
   return true;
 }
@@ -347,7 +345,7 @@ bool untangleGRegionMeshConstrained(GRegion *gr, int iterMax, double timeMax)
 bool untangleGRegionMeshConstrained(GFace *gf, int iterMax, double timeMax)
 {
   Msg::Error(
-      "Module QuadMeshingTools required for untangleGRegionMeshConstrained");
+    "Module QuadMeshingTools required for untangleGRegionMeshConstrained");
   return false;
 }
 #endif

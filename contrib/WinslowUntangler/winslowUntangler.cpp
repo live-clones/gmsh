@@ -305,14 +305,14 @@ namespace WinslowUntangler {
     }
 
     double avg_ideal_vol = 1.;
-    if (triIdealShapes.size() > 0.) {
-      for (size_t t = 0; t < triIdealShapes.size(); ++t) {
-        double area = tri_area(triIdealShapes[t][0], triIdealShapes[t][1], triIdealShapes[t][2]);
+    if(triIdealShapes.size() > 0.) {
+      for(size_t t = 0; t < triIdealShapes.size(); ++t) {
+        double area = tri_area(triIdealShapes[t][0], triIdealShapes[t][1],
+                               triIdealShapes[t][2]);
         avg_ideal_vol += area;
       }
       avg_ideal_vol /= double(triIdealShapes.size());
     }
-
 
     // Build ideal triangle normals
     const vec3 N = {0, 0, 1};
@@ -325,21 +325,27 @@ namespace WinslowUntangler {
       }
 
       for(size_t lv = 0; lv < 3; ++lv) {
-        shape[lv] = shape[lv] * (1./std::sqrt(avg_ideal_vol) * std::sqrt(avg_tri_area));
+        shape[lv] =
+          shape[lv] * (1. / std::sqrt(avg_ideal_vol) * std::sqrt(avg_tri_area));
       }
 
       double area = tri_area(shape[0], shape[1], shape[2]);
-      if (std::isnan(area)) {
-        Msg::Warning("Winslow untangler 2D: area of ideal shape for tri %li: %f, cancel smoothing", t, area);
+      if(std::isnan(area)) {
+        Msg::Warning("Winslow untangler 2D: area of ideal shape for tri %li: "
+                     "%f, cancel smoothing",
+                     t, area);
         return false;
-      } else if (area <= 0.) {
-        Msg::Warning("Winslow untangler 2D: area of ideal shape for tri %li: %f", t, area);
+      }
+      else if(area <= 0.) {
+        Msg::Warning(
+          "Winslow untangler 2D: area of ideal shape for tri %li: %f", t, area);
       }
 
       // Compute normals
       for(size_t le = 0; le < 3; ++le) {
         vec2 td = (shape[(le + 1) % 3] - shape[le]);
-        vec3 n = cross(std::array<double, 3>{td[0], td[1], 0.}, N) * (1./(2.*avg_tri_area));
+        vec3 n = cross(std::array<double, 3>{td[0], td[1], 0.}, N) *
+                 (1. / (2. * avg_tri_area));
 
         data.tri_normals[t](le, 0) = n[0];
         data.tri_normals[t](le, 1) = n[1];
@@ -396,9 +402,8 @@ namespace WinslowUntangler {
     data.tet_normals.resize(tets.size());
     double avg_tet_vol = volume(points, tets) / double(tets.size());
     if(avg_tet_vol <= 0) {
-      Msg::Warning(
-        "Winslow untangler 3D: average tet area is negative: %.3e",
-        avg_tet_vol);
+      Msg::Warning("Winslow untangler 3D: average tet area is negative: %.3e",
+                   avg_tet_vol);
     }
 
     // Build regular tet centered in origin
@@ -416,11 +421,10 @@ namespace WinslowUntangler {
       {1, 3, 2}, {0, 2, 3}, {3, 1, 0}, {0, 1, 2}};
 
     double avg_ideal_vol = 1.;
-    if (tetIdealShapes.size() > 0.) {
-      for (size_t t = 0; t < tetIdealShapes.size(); ++t) {
-        avg_ideal_vol += tet_volume(
-            tetIdealShapes[t][0], tetIdealShapes[t][1],
-            tetIdealShapes[t][2], tetIdealShapes[t][3]);
+    if(tetIdealShapes.size() > 0.) {
+      for(size_t t = 0; t < tetIdealShapes.size(); ++t) {
+        avg_ideal_vol += tet_volume(tetIdealShapes[t][0], tetIdealShapes[t][1],
+                                    tetIdealShapes[t][2], tetIdealShapes[t][3]);
       }
       avg_ideal_vol /= double(tetIdealShapes.size());
     }
@@ -436,22 +440,28 @@ namespace WinslowUntangler {
       }
 
       for(size_t lv = 0; lv < 4; ++lv) {
-        shape[lv] = shape[lv] * (1./std::pow(avg_ideal_vol,1./3.) * std::pow(avg_tet_vol,1./3.));
+        shape[lv] = shape[lv] * (1. / std::pow(avg_ideal_vol, 1. / 3.) *
+                                 std::pow(avg_tet_vol, 1. / 3.));
       }
 
       double vol = tet_volume(shape[0], shape[1], shape[2], shape[3]);
-      if (std::isnan(vol)) {
-        Msg::Warning("Winslow untangler 3D: volume of ideal shape for tet %li: %f, cancel smoothing", t, vol);
+      if(std::isnan(vol)) {
+        Msg::Warning("Winslow untangler 3D: volume of ideal shape for tet %li: "
+                     "%f, cancel smoothing",
+                     t, vol);
         return false;
-      } else if (vol < 0.) {
-        Msg::Warning("Winslow untangler 3D: volume of ideal shape for tet %li: %f", t, vol);
+      }
+      else if(vol < 0.) {
+        Msg::Warning(
+          "Winslow untangler 3D: volume of ideal shape for tet %li: %f", t,
+          vol);
       }
 
       // Compute normals
       for(size_t lf = 0; lf < 4; ++lf) {
         vec3 e0 = shape[facet_vertex[lf][1]] - shape[facet_vertex[lf][0]];
         vec3 e1 = shape[facet_vertex[lf][2]] - shape[facet_vertex[lf][0]];
-        vec3 n = 0.5 * cross(e1, e0) * (1. / (3.*avg_tet_vol));
+        vec3 n = 0.5 * cross(e1, e0) * (1. / (3. * avg_tet_vol));
 
         data.tet_normals[t](lf, 0) = n[0];
         data.tet_normals[t](lf, 1) = n[1];
@@ -490,9 +500,10 @@ namespace WinslowUntangler {
   }
 
   template <size_t D>
-  bool scaleToUnit(std::vector<std::array<double, D> > &points,
-      std::vector<std::array<std::array<double, D>, D+1> > & idealShapes,
-      std::array<double, D> &bbmin, std::array<double, D> &bbmax)
+  bool scaleToUnit(
+    std::vector<std::array<double, D> > &points,
+    std::vector<std::array<std::array<double, D>, D + 1> > &idealShapes,
+    std::array<double, D> &bbmin, std::array<double, D> &bbmax)
   {
     bbox_minmax(points, bbmin, bbmax);
     std::array<double, D> center = (bbmin + bbmax) * 0.5;
@@ -502,8 +513,8 @@ namespace WinslowUntangler {
     for(size_t v = 0; v < points.size(); ++v) {
       points[v] = (points[v] - center) * (1. / L);
     }
-    for (size_t e = 0; e < idealShapes.size(); ++e) {
-      for (size_t lv = 0; lv < idealShapes[e].size(); ++lv) {
+    for(size_t e = 0; e < idealShapes.size(); ++e) {
+      for(size_t lv = 0; lv < idealShapes[e].size(); ++lv) {
         idealShapes[e][lv] = (idealShapes[e][lv] - center) * (1. / L);
       }
     }
@@ -511,8 +522,8 @@ namespace WinslowUntangler {
   }
 
   template <size_t D>
-    bool scaleToInitial(std::vector<std::array<double, D> > &points,
-        std::array<double, D> bbmin, std::array<double, D> bbmax)
+  bool scaleToInitial(std::vector<std::array<double, D> > &points,
+                      std::array<double, D> bbmin, std::array<double, D> bbmax)
   {
     std::array<double, D> center = (bbmin + bbmax) * 0.5;
     double L = std::max(bbmax[0] - bbmin[0], bbmax[1] - bbmin[1]);
@@ -567,14 +578,16 @@ namespace WinslowUntangler {
     if(dim == 2) {
       auto triIdealShapesS = triIdealShapes;
       scaleToUnit(points2D, triIdealShapesS, bbmin2D, bbmax2D);
-      bool okp = prepareData2D(points2D, locked, triangles, triIdealShapesS, data);
-      if (!okp) return false;
+      bool okp =
+        prepareData2D(points2D, locked, triangles, triIdealShapesS, data);
+      if(!okp) return false;
     }
     else if(dim == 3) {
       auto tetIdealShapesS = tetIdealShapes;
       scaleToUnit(points3D, tetIdealShapesS, bbmin3D, bbmax3D);
-      bool okp = prepareData3D(points3D, locked, tetrahedra, tetIdealShapesS, data);
-      if (!okp) return false;
+      bool okp =
+        prepareData3D(points3D, locked, tetrahedra, tetIdealShapesS, data);
+      if(!okp) return false;
     }
     double *points =
       (dim == 2) ? points2D.front().data() : points3D.front().data();
@@ -606,7 +619,8 @@ namespace WinslowUntangler {
         const double epsg = 0.1;
         const double epsf = 1.e-12;
         const double epsx = 1.e-12;
-        minlbfgssetcond(state, epsg, epsf, epsx, (alglib::ae_int_t)iterMaxInner);
+        minlbfgssetcond(state, epsg, epsf, epsx,
+                        (alglib::ae_int_t)iterMaxInner);
 
         // Run LBFGS
         minlbfgsoptimize(state, lbfgs_callback, nullptr, &data);
@@ -622,15 +636,17 @@ namespace WinslowUntangler {
         if(rep.terminationtype != 4 && rep.terminationtype != 5) { nFail += 1; }
         lbfgsIter = rep.iterationscount;
       } catch(alglib::ap_error e) {
-        Msg::Warning("Winslow untangler, iter %i: Alglib exception thrown in LBFGS step, error: %s", 
-            iter, e.msg.c_str());
+        Msg::Warning("Winslow untangler, iter %i: Alglib exception thrown in "
+                     "LBFGS step, error: %s",
+                     iter, e.msg.c_str());
         restore = true;
         converged = false;
         nFail += 1;
         break;
       } catch(...) {
-        Msg::Warning("Winslow untangler, iter %i: Alglib exception thrown in LBFGS step", 
-            iter);
+        Msg::Warning(
+          "Winslow untangler, iter %i: Alglib exception thrown in LBFGS step",
+          iter);
         restore = true;
         converged = false;
         nFail += 1;
@@ -670,7 +686,7 @@ namespace WinslowUntangler {
       scaleToInitial(points3D, bbmin3D, bbmax3D);
     }
 
-    if (restore) {
+    if(restore) {
       points2D = backup2D;
       points3D = backup3D;
     }
