@@ -17,14 +17,16 @@
 
 namespace ArrayGeometry {
 
-  double bboxDiag(const std::vector<vec3>& points) {
-    vec3 mi = {DBL_MAX,DBL_MAX,DBL_MAX};
-    vec3 ma = {-DBL_MAX,-DBL_MAX,-DBL_MAX};
-    for (size_t i = 0; i < points.size(); ++i) for (size_t d = 0; d < 3; ++d) {
-      mi[d] = std::min(points[i][d],mi[d]);
-      ma[d] = std::max(points[i][d],ma[d]);
-    }
-    return length(ma-mi);
+  double bboxDiag(const std::vector<vec3> &points)
+  {
+    vec3 mi = {DBL_MAX, DBL_MAX, DBL_MAX};
+    vec3 ma = {-DBL_MAX, -DBL_MAX, -DBL_MAX};
+    for(size_t i = 0; i < points.size(); ++i)
+      for(size_t d = 0; d < 3; ++d) {
+        mi[d] = std::min(points[i][d], mi[d]);
+        ma[d] = std::max(points[i][d], ma[d]);
+      }
+    return length(ma - mi);
   }
 
-}
+} // namespace ArrayGeometry
