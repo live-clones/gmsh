@@ -2050,7 +2050,6 @@ namespace hbl {
   };
 
   bool setTargetShapeForAnisotropicBoundaryHexahedra(
-      double extrusion_factor,
       SmoothingProblem& pb) {
     if (pb.eltVertices.size() == 0) return false;
 
@@ -2171,9 +2170,8 @@ namespace hbl {
       const vector<vector<id> >& elts,
       const vector<id>& cavity, /* cavity to smooth */
       const BrepMesh& H,/* useful for faceToCells info */
-      bool anisoHexTargetShapes = false,
-      double extrusion_factor = 1.
-      ) {
+      bool anisoHexTargetShapes) 
+  {
 
     SmoothingProblem pb;
 
@@ -2204,7 +2202,7 @@ namespace hbl {
     }
 
     if (anisoHexTargetShapes) {
-      setTargetShapeForAnisotropicBoundaryHexahedra(extrusion_factor, pb);
+      setTargetShapeForAnisotropicBoundaryHexahedra(pb);
     }
 
     std::string text;
@@ -2582,7 +2580,7 @@ namespace hbl {
         RFC(!okbc, "failed to build hex-tet cavity around seed = {}", seed);
 
         bool oks = smoothSmallCavity(points, locked, eltVertices, cavity, H,
-             anisoHexTargetShapes, opt.extrusion_factor);
+             anisoHexTargetShapes);
         RFC(!oks, "failed to smooth cavity around seed={}", seed);
 
         /* Update global quality */
@@ -2624,7 +2622,7 @@ namespace hbl {
       info("- smoothing full mesh (forced), {} elements", H.cells.size());
       cavity.resize(H.cells.size(),false);
       F(k,H.cells.size()) cavity[k] = k;
-      bool oks = smoothSmallCavity(points, locked, eltVertices, cavity, H, anisoHexTargetShapes, opt.extrusion_factor);
+      bool oks = smoothSmallCavity(points, locked, eltVertices, cavity, H, anisoHexTargetShapes);
       RFC(!oks, "failed to smooth full mesh");
     }
 
@@ -2971,7 +2969,7 @@ namespace hbl {
 
           bool anisoHexTargetShapes = true;
           bool oks = smoothSmallCavity(points, locked2, eltVertices, cavity, H,
-              anisoHexTargetShapes, opt.extrusion_factor);
+              anisoHexTargetShapes);
           RFC(!oks, "failed to smooth cavity around seed={}", seed);
 
           /* Update global quality */

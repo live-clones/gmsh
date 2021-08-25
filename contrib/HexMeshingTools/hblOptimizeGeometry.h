@@ -41,6 +41,17 @@ namespace hbl {
     );
 
 
+  bool smoothSmallCavity(
+      std::vector<ArrayGeometry::vec3>& points, /* all mesh points */
+      const std::vector<bool>& locked,
+      const std::vector<std::vector<id> >& elts,
+      const std::vector<id>& cavity, /* cavity to smooth */
+      const BrepMesh& H,/* useful for faceToCells info */
+      bool anisoHexTargetShapes = false); /* preserve current aspect ratio */
+
+
+
+
   /* Smooth quad mesh without respecting CAD entities.
    * WARNING: will change the positions of vertices in the GModel !
    * vertices may no longer be on CAD entities !! */

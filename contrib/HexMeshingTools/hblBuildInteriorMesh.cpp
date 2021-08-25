@@ -84,10 +84,11 @@ namespace hbl {
 
   bool decreaseBoundaryLayerThickness(
       BrepMesh& H,
+      const std::vector<id>& candidateVertices,
       HexToBoundaryMeshMatching& h2q,
       double thicknessFactor = 0.05) {
 
-    F(v,H.vertices.size()) {
+    for (id v: candidateVertices) {
       if (h2q.vertexParent[v].first > 2) {
         size_t nob = 0;
         vec3 pOnBdr;
@@ -1470,10 +1471,37 @@ namespace hbl {
     return okg;
   }
 
+  bool hexCavityFromTriangles(
+      const SimpleMesh& M,
+      const std::vector<id>& triangles,
+      const BrepMesh& H,
+      std::vector<id>& cavity) {
+    vector<id> vertices;
+    F(i,triangles.size()) F(lv,3) {
+      id t = triangles[i];
+      id tv = M.triangles[t][lv];
+      id v = M.origin[tv];
+      RFC(v == NO_ID, "hexCavityFromTriangles: v is NO_ID");
+      vertices.push_back(v);
+    }
+    sort_unique(vertices);
+    cavity.clear();
+    vector<id> acells;
+    for (id v: vertices) {
+      vertex_adjacent_cells(H, v, acells);
+      append(cavity, acells);
+    }
+    sort_unique(cavity);
+    return true;
+  }
+
   bool decreaseHexLayerThicknessAroundSelfIntersections(
       const HblInput& input,
       HblOutput& output,
       const std::vector<id>& quadFaces) {
+    Msg::Info("Decrease hex layer thickness around self-intersections ...");
+    BrepMesh& H = output.H;
+    HexToBoundaryMeshMatching& h2q = output.h2q;
 
     /* Triangulation of the interior surface */
     std::vector<id3> tris;
@@ -1481,11 +1509,31 @@ namespace hbl {
     RFC(!okt, "failed to get triangles from quads");
     SimpleMesh M;
     initMeshTriangulation(output.H, tris, M);
+    vector<id> h2m(H.vertices.size(),NO_ID);
+    FC(v,M.origin.size(),M.origin[v] != NO_ID) {
+      h2m[M.origin[v]] = v;
+    }
 
     /* Check self-intersections */
     std::vector<id2> triIntersections;
     checkBoundarySelfIntersections(M, triIntersections);
     if (triIntersections.size() == 0) return true;
+
+    /* Prepare datastructures for smoothing */
+    std::vector<bool> locked(H.vertices.size(),false);
+    vector<vec3> points(H.vertices.size());
+    F(v,H.vertices.size()) {
+      points[v] = H.vertices[v].pt;
+      if (h2q.vertexParent[v].first >= 0 && h2q.vertexParent[v].first <= 2) {
+        locked[v] = true;
+      }
+    }
+    vector<vector<id> > eltVertices;
+    eltVertices.reserve(output.hexahedra.size()+output.tetrahedra.size());
+    F(i,output.hexahedra.size()) {
+      const id8& e = output.hexahedra[i];
+      eltVertices.push_back({e[0],e[1],e[2],e[3],e[4],e[5],e[6],e[7]});
+    }
 
     /* Create domains around self-intersections */
     std::vector<std::vector<id> > v2t(M.points.size());
@@ -1497,17 +1545,45 @@ namespace hbl {
     bool okb = buildCavityWithDistanceToIntersections(M, v2t, triIntersections, cavities, dist_threshold);
     if (!okb) return false;
 
-    /* TODO FROM HERE: IN PROGRESS */
+    double FACTOR = 0.1;
+    Msg::Info("- built %li cavities around self-intersections", cavities.size());
 
     F(i,cavities.size()) {
       /* From surface domain to hex cavities */
+      vector<id> hexCavity;
+      hexCavityFromTriangles(M, cavities[i], output.H, hexCavity);
+      if (hexCavity.size() == 0) {
+        Msg::Warning("decrease thickness: no hex in cavity");
+        continue;
+      }
 
       /* use decreaseBoundaryLayerThickness on cavity vertices */
+      vector<id> candidates;
+      vector<id> cvert;
+      for (id c: hexCavity) {
+        cell_vertices(output.H, c, cvert);
+        append(candidates,cvert);
+      }
+      sort_unique(candidates);
+      decreaseBoundaryLayerThickness(output.H, candidates, output.h2q, FACTOR);
 
       /* call anisotropic winslow smoothing */
-
-      /* check new self-intersections */
+      bool anisoHexTargetShapes = true;
+      bool oks = smoothSmallCavity(points, locked, eltVertices, hexCavity, H,
+          anisoHexTargetShapes);
+      RFC(!oks, "decrease thickness: failed to smooth cavity");
+      for (id v: candidates) if (!locked[v]) {
+        H.vertices[v].pt = points[v];
+        if (h2m[v] != NO_ID) M.points[h2m[v]] = points[v];
+      }
     }
+    /* check new self-intersections */
+    size_t nb = triIntersections.size();
+    checkBoundarySelfIntersections(M, triIntersections);
+    size_t na = triIntersections.size();
+    Msg::Info("- %li -> %li self-intersections", nb, na);
+
+    if (na == 0) return true;
 
     return false;
   }
@@ -1540,7 +1616,10 @@ namespace hbl {
     }
 
     /* Try to reduce thickness, untangle hex layer, then tet mesh */
-    if (false) {
+    bool local = true;
+    if (local) {
+      // decreaseHexLayerThicknessAroundSelfIntersections(input, output, quadFaces);
+    } else {
       double propSI = double(nbSelfIntersections) / double(2*quadFaces.size());
       if (propSI > 0.001) {
         vector<double> factors = {opt.extrusion_factor, 0.3 * opt.extrusion_factor, 0.1 * opt.extrusion_factor, 0.03 * opt.extrusion_factor};
