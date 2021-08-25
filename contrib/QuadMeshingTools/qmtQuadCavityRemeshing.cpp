@@ -38,6 +38,7 @@
 
 /* QuadMeshingTools includes */
 #include "cppUtils.h"
+#include "arrayGeometry.h"
 #include "qmtMeshUtils.h"
 #include "qmtMeshGeometryOptimization.h"
 #include "row_echelon_integer.hpp"
@@ -86,6 +87,7 @@ size_t patternNumberOfCorners(size_t pId) {
 namespace QMT {
   using std::vector;
   using std::array;
+  using namespace ArrayGeometry;
 
 
   /* robin_hood hash sets and maps are much faster than the STL version */
@@ -99,14 +101,6 @@ namespace QMT {
   template <typename Key, typename Hash = robin_hood::hash<Key>, typename KeyEqual = std::equal_to<Key>,
            size_t MaxLoadFactor100 = 80>
              using unordered_set = robin_hood::detail::Table<true, MaxLoadFactor100, Key, void, Hash, KeyEqual>;
-
-  /* hash_combine from boost */
-  template <class T>
-    inline void hash_combine(std::size_t& seed, const T& v)
-    {
-      std::hash<T> hasher;
-      seed ^= hasher(v) + 0x9e3779b9 + (seed<<6) + (seed>>2);
-    }
 
 
   using id = uint32_t;
@@ -1149,8 +1143,12 @@ namespace QMT {
         }
 
         /* Embedded edges in faces */
-        for (GEdge* ge: gf->embeddedEdges()) {
-          unordered_set<id2,id2hash> embLines;
+        std::vector<GEdge*> embEdges;
+        for (GEdge* ge: gf->embeddedEdges()) embEdges.push_back(ge);
+        for (GEdge* ge: gf->edges()) if (ge->isSeam(gf)) embEdges.push_back(ge);
+
+        unordered_set<id2,id2hash> embLines;
+        for (GEdge* ge: embEdges) {
           for (MLine* line: ge->lines) {
             MVertex* v1 = line->getVertex(0);
             MVertex* v2 = line->getVertex(1);
@@ -1163,18 +1161,19 @@ namespace QMT {
             id2 vpair = sorted(it1->second,it2->second);
             embLines.insert(vpair);
           }
-          if (embLines.size() == 0) continue;
-          if (quadEdgeForbidden.size() == 0) {
-            quadEdgeForbidden.resize(4*quads.size(),false);
-            for (uint32_t f = 0; f < quads.size(); ++f) {
-              for (uint32_t le = 0; le < 4; ++le) {
-                const uint32_t v1 = quads[f][le];
-                const uint32_t v2 = quads[f][(le+1)%4];
-                id2 vpair = sorted(v1,v2);
-                auto it = embLines.find(vpair);
-                if (it != embLines.end()) {
-                  quadEdgeForbidden[4*f+le] = true;
-                }
+        }
+        if (quadEdgeForbidden.size() == 0) {
+          quadEdgeForbidden.resize(4*quads.size(),false);
+        }
+        if (embLines.size() != 0) {
+          for (uint32_t f = 0; f < quads.size(); ++f) {
+            for (uint32_t le = 0; le < 4; ++le) {
+              const uint32_t v1 = quads[f][le];
+              const uint32_t v2 = quads[f][(le+1)%4];
+              id2 vpair = sorted(v1,v2);
+              auto it = embLines.find(vpair);
+              if (it != embLines.end()) {
+                quadEdgeForbidden[4*f+le] = true;
               }
             }
           }
@@ -1452,7 +1451,12 @@ namespace QMT {
             }
           }
           if (edgeFound == 0) {
-            Msg::Error("cavity sides: cavity bdr edge not found around vertex %i, shoud NOT happen", v);
+            Msg::Warning("cavity sides: cavity bdr edge not found around vertex %i, shoud NOT happen", v);
+            // debug_show_cavity("cav_bdr_edge_not_found_around_v",false);
+            // gmsh::initialize();
+            // GeoLog::flush();
+            // gmsh::fltk::run();
+            // abort();
             return false;
           } else if (edgeFound >= 2) {
             Msg::Debug("cavity sides: found %i cavity bdr edge, bdr loop is not manifold", edgeFound);
@@ -1489,6 +1493,16 @@ namespace QMT {
           }
 
           uint32_t pos = _vertex2pos[v];
+          if (pos >= isCorner.size()) {
+            Msg::Warning("cavity farmer, get sides: iter %i, pos = %li > _vertex2pos.size()=%li, weird",
+                iter, pos, _vertex2pos.size());
+            // debug_show_cavity("bad_vertex2pos",false);
+            // gmsh::initialize();
+            // GeoLog::flush();
+            // gmsh::fltk::run();
+            // abort();
+            return false;
+          }
           if (isCorner[pos]) {
             nCornerVisited += 1;
             sides.resize(sides.size()+1);
@@ -1867,25 +1881,124 @@ namespace QMT {
     return false;
   }
 
+  struct PatchQualityStats {
+    double sicnMin = DBL_MAX;
+    double sicnAvg = 0.;
+    double sigeMin = DBL_MAX;
+    double sigeAvg = 0.;
+    double skewMax = -DBL_MAX;
+    double skewAvg = 0.;
+  };
+
+  /* Quad skew metric according to Verdict quality library definition:
+   * - skew = |cos(A)| with A angle between the two principal axis
+   * - range: from 0 (good) to 1 (bad) */
+  double quadSkew(MElement* elt) {
+    MQuadrangle* q = dynamic_cast<MQuadrangle*>(elt);
+    if (q == nullptr) return 0.;
+    const vec3 p0 = q->getVertex(0)->point();
+    const vec3 p1 = q->getVertex(1)->point();
+    const vec3 p2 = q->getVertex(2)->point();
+    const vec3 p3 = q->getVertex(3)->point();
+    vec3 x1 = p1-p0+p2-p3;
+    vec3 x2 = p2-p1+p3-p0;
+    double n1 = length2(x1);
+    double n2 = length2(x2);
+    if (n1 == 0 || n2 == 0) return 0.;
+    normalize(x1);
+    normalize(x2);
+    return std::abs(dot(x1,x2));
+  }
+
+  PatchQualityStats computePatchQualityStats(const std::vector<MElement*>& elements) {
+    PatchQualityStats s;
+    s.sicnMin = DBL_MAX;
+    s.sicnAvg = 0.;
+    s.sigeMin = DBL_MAX;
+    s.sigeAvg = 0.;
+    s.skewMax = -DBL_MAX;
+    s.skewAvg = 0.;
+    if (elements.size() == 0) return s;
+    for (MElement* e: elements) {
+      const double sicn = e->minSICNShapeMeasure();
+      const double sige = e->minSIGEShapeMeasure();
+      const double skew = quadSkew(e);
+      if (sicn < s.sicnMin) s.sicnMin = sicn;
+      if (sige < s.sigeMin) s.sigeMin = sige;
+      if (skew > s.skewMax) s.skewMax = skew;
+      s.sicnAvg += sicn;
+      s.sigeAvg += sige;
+      s.skewAvg += skew;
+    }
+    s.sicnAvg /= double(elements.size());
+    s.sigeAvg /= double(elements.size());
+    s.skewAvg /= double(elements.size());
+    return s;
+  }
+
+  bool patchPassesQualityConstraints(
+      const std::vector<MElement*>& elements,
+      const QualityConstraints& qualityConstraints) {
+    PatchQualityStats s = computePatchQualityStats(elements);
+    if (s.sicnMin <= qualityConstraints.SICNmin) return false;
+    if (s.sigeMin <= qualityConstraints.SIGEmin) return false;
+    if (s.skewMax >= qualityConstraints.skewMax) return false;
+    return true;
+  }
+
+  // bool keepCavityRemeshing(
+  //     double sicnMinBefore, 
+  //     double sicnAvgBefore,
+  //     double sicnMinAfter, 
+  //     double sicnAvgAfter) {
+  //   double boldness = CTX::instance()->mesh.quadqsRemeshingBoldness;
+  //   if (boldness < 0.) boldness = 0.;
+  //   if (boldness > 1.) boldness = 1.;
+  //   if (boldness == 1. && sicnMinAfter > 0.) {
+  //     return true;
+  //   } else if (boldness == 0. && sicnMinAfter < sicnMinBefore) {
+  //     return false;
+  //   }
+  //   if (boldness == 0.501) { /* backward compatibility */
+  //     return ((sicnMinAfter > 0.3 && sicnAvgAfter > 0.5) || sicnMinAfter > sicnMinBefore);
+  //   }
+  //   double acceptMin = (1.-boldness) * sicnMinBefore;
+  //   double acceptAvg = (1.-boldness) * sicnAvgBefore * 0.5;
+  //   if (sicnMinAfter > acceptMin && sicnAvgAfter > acceptAvg) return true;
+
+  //   return false;
+  // }
+
   bool keepCavityRemeshing(
-      double sicnMinBefore, 
-      double sicnAvgBefore,
-      double sicnMinAfter, 
-      double sicnAvgAfter) {
+      const PatchQualityStats& before,
+      const PatchQualityStats& after) {
     double boldness = CTX::instance()->mesh.quadqsRemeshingBoldness;
     if (boldness < 0.) boldness = 0.;
     if (boldness > 1.) boldness = 1.;
-    if (boldness == 1. && sicnMinAfter > 0.) {
+    if (boldness == 1. && before.sigeMin > 0.) {
       return true;
-    } else if (boldness == 0. && sicnMinAfter < sicnMinBefore) {
+    } else if (boldness == 0. && after.sigeMin < before.sigeMin) {
       return false;
     }
     if (boldness == 0.501) { /* backward compatibility */
-      return ((sicnMinAfter > 0.3 && sicnAvgAfter > 0.5) || sicnMinAfter > sicnMinBefore);
+      return ((after.sicnMin > 0.3 && after.sicnAvg > 0.5) || after.sicnMin > before.sicnMin);
     }
-    double acceptMin = (1.-boldness) * sicnMinBefore;
-    double acceptAvg = (1.-boldness) * sicnAvgBefore * 0.5;
-    if (sicnMinAfter > acceptMin && sicnAvgAfter > acceptAvg) return true;
+    bool newVersion = true;
+    if (newVersion) {
+      double acceptMin = (1.-boldness) * before.sigeMin;
+      double acceptAvg = (1.-boldness) * before.sigeAvg * 0.5;
+      double acceptSkewAvg = before.skewAvg + (1. - before.skewAvg)  * boldness;
+      double acceptSkewMax = before.skewMax + (1. - before.skewMax)  * boldness;
+      if (after.sigeMin > acceptMin 
+          && after.sigeAvg > acceptAvg
+          && after.skewAvg < acceptSkewAvg
+          && after.skewMax < acceptSkewMax
+          ) return true;
+    } else {
+      double acceptMin = (1.-boldness) * before.sicnMin;
+      double acceptAvg = (1.-boldness) * before.sicnAvg * 0.5;
+      if (after.sicnMin > acceptMin && after.sicnAvg > acceptAvg) return true;
+    }
 
     return false;
   }
@@ -1903,21 +2016,28 @@ namespace QMT {
 
     /* Call the remeshing code */
     const double minSICNafer = 0.;
+    QualityConstraints qConstraints;
+    qConstraints.SICNmin = 0.;
+    qConstraints.SIGEmin = 0.;
+    qConstraints.skewMax = DBL_MAX;
     GFaceMeshDiff diff;
     int st = remeshPatchWithQuadPattern(gf, cav.patternNoAndRot, cav.sides, cav.elements,
-        cav.intVertices, minSICNafer, ctx.invertNormalsForQuality, ctx.sp, diff);
+        cav.intVertices, qConstraints, ctx.invertNormalsForQuality, ctx.sp, diff);
     if (st != 0) {
       if (DBG_VERBOSE) {Msg::Debug("remesh cavity: %li quads, failed to remesh path with quad pattern",
           cav.elements.size());}
       return false;
     }
 
-    /* Check the geometry quality before / after*/
-    double sicnMin, sicnAvg;
-    computeSICN(diff.before.elements, sicnMin, sicnAvg);
-    double sicnMinAfter, sicnAvgAfter;
-    computeSICN(diff.after.elements, sicnMinAfter, sicnAvgAfter);
-    if (keepCavityRemeshing(sicnMin, sicnAvg, sicnMinAfter, sicnAvgAfter)) {
+    /* Check the geometry quality before / after */
+    // double sicnMin, sicnAvg;
+    // computeSICN(diff.before.elements, sicnMin, sicnAvg);
+    // double sicnMinAfter, sicnAvgAfter;
+    // computeSICN(diff.after.elements, sicnMinAfter, sicnAvgAfter);
+    // if (keepCavityRemeshing(sicnMin, sicnAvg, sicnMinAfter, sicnAvgAfter)) {
+    PatchQualityStats sBefore = computePatchQualityStats(diff.before.elements);
+    PatchQualityStats sAfter = computePatchQualityStats(diff.after.elements);
+    if (keepCavityRemeshing(sBefore, sAfter)) {
       constexpr bool verifyTopology = true;
       size_t neb = diff.before.elements.size();
       size_t nea = diff.after.elements.size();
@@ -1961,7 +2081,7 @@ namespace QMT {
       }
 
       Msg::Debug("----V remeshed a cavity, %li -> %li quads, %li -> %li int. vertices, SICN min: %.3f -> %.3f",
-          neb, nea, nvb, nva, sicnMin, sicnMinAfter);
+          neb, nea, nvb, nva, sBefore.sicnMin, sAfter.sicnMin);
 
       /* Boundary vertex smoothing, to get a smooth transition with the
        * rest of the mesh after cavity remeshing */
@@ -1987,8 +2107,16 @@ namespace QMT {
       Msg::Debug("---->");
       return true;
     } else {
-      Msg::Debug("----X reject cavity new geometry, SICN min: %.3f -> %.3f, avg: %.3f -> %.3f",
-          sicnMin, sicnMinAfter, sicnAvg, sicnAvgAfter);
+      Msg::Debug("----X reject cavity new geometry, SICN min: %.2f -> %.2f, avg: %.2f -> %.2f",
+          sBefore.sicnMin, sAfter.sicnMin, 
+          sBefore.sicnAvg, sAfter.sicnAvg,
+          sBefore.skewAvg, sAfter.skewAvg);
+      Msg::Debug("------- [SICN] min: %.3f -> %.3f, avg: %.3f -> %.3f",
+          sBefore.sicnMin, sAfter.sicnMin, sBefore.sicnAvg, sAfter.sicnAvg);
+      Msg::Debug("------- [SIGE] min: %.3f -> %.3f, avg: %.3f -> %.3f",
+          sBefore.sigeMin, sAfter.sigeMin, sBefore.sigeAvg, sAfter.sigeAvg);
+      Msg::Debug("------- [skew] max: %.3f -> %.3f, avg: %.3f -> %.3f",
+          sBefore.skewMax, sAfter.skewMax, sBefore.skewAvg, sAfter.skewAvg);
       if (SHOW_REMESH_CAV) {
         std::string name = "cav" + std::to_string(ccount);
         GeoLog::add(diff.after.elements,name+"_REJQ");
@@ -2154,26 +2282,39 @@ namespace QMT {
     unordered_set<MVertex*> allowedIrregularVertices;
     unordered_set<MVertex*> forbiddenIrregularVertices;
     std::vector<MVertex*> singularVertices; /* to be preserved */
+    std::vector<MVertex*> seamExtremities;
     std::vector<SPoint3> repulsion; /* to distribute the cavities, add repulsion after remeshing */
 
     size_t nbCavityRemeshed = 0;
+
+    /* for PASS_FROM_CORNERS
+     * The queue contains the CAD corners which are not concave */
+    std::deque<GVertex*> gcorners;
+    for (GVertex* gv: gf->vertices()) {
+      gcorners.push_back(gv);
+    }
 
     /* for PASS_ALONG_GEDGES
      * The queue contains the curves which are not loop */
     std::queue<GEdge*> gedges;
     for (GEdge* ge: gf->edges()) {
+      if (ge->faces().size() == 1 && ge->isSeam(ge->faces()[0])) {
+        for (auto& gv: ge->vertices()) {
+          auto it = std::find(gcorners.begin(),gcorners.end(),gv);
+          if (it != gcorners.end()) {
+            gcorners.erase(it);
+          }
+          for (auto& mv: gv->mesh_vertices){
+            seamExtremities.push_back(mv);
+          }
+        }
+        continue;
+      }
       /* Ignore periodic curves */
       if (ge->vertices().size() != 2) continue;
       if (ge->periodic(0)) continue;
       if (ge->vertices().front() == ge->vertices().back()) continue;
       gedges.push(ge);
-    }
-
-    /* for PASS_FROM_CORNERS
-     * The queue contains the CAD corners which are not concave */
-    std::queue<GVertex*> gcorners;
-    for (GVertex* gv: gf->vertices()) {
-      gcorners.push(gv);
     }
 
     /* for PASS_FROM_IRREGULAR
@@ -2208,6 +2349,7 @@ namespace QMT {
           assignSingularitiesToIrregularVertices(gf, farmer, singularities, singularVertices);
           forbiddenIrregularVertices.clear();
           for (MVertex* v: singularVertices) forbiddenIrregularVertices.insert(v);
+          for (MVertex* v: seamExtremities) forbiddenIrregularVertices.insert(v);
 
           if (pass == PASS_FROM_IRREGULAR) {
             /* Update the queue */
@@ -2235,6 +2377,10 @@ namespace QMT {
           updateRequired = false;
         }
 
+        if (ctx.elapsedCpuTime() > ctx.timeoutQuadqsPerGFaceCavity) {
+          break;
+        }
+
         /* Initialize a remeshing cavity */
         std::vector<MQuadrangle*> quadsInit;
         size_t nTryMax = 3;
@@ -2246,7 +2392,7 @@ namespace QMT {
           nTryMax = 1;
           allowedIrregularVertices.clear();
           GVertex* gv = gcorners.front();
-          gcorners.pop();
+          gcorners.pop_front();
           for (MVertex* v: gv->mesh_vertices) {
             std::vector<MQuadrangle*> adjQuads;
             bool oka = farmer.vertexAdjacentQuads(v, adjQuads);
@@ -2395,6 +2541,10 @@ namespace QMT {
         updateRequired = false;
       }
 
+      if (ctx.elapsedCpuTime() > ctx.timeoutQuadqsPerGFaceCavity) {
+        break;
+      }
+
       /* Initialize a remeshing cavity */
       if (Q.empty()) continue;
       GrowthPolicy policy = GROW_MINIMAL;
@@ -2528,7 +2678,7 @@ int remeshPatchWithQuadPattern(
     const std::vector<std::vector<MVertex*> > & sides,
     const std::vector<MElement*> & elements,
     const std::vector<MVertex*>& intVertices,
-    double minSICNrequired,
+    const QualityConstraints& qualityConstraints,
     bool invertNormalsForQuality,
     SurfaceProjector* sp,
     GFaceMeshDiff& diff) {
@@ -2610,14 +2760,18 @@ int remeshPatchWithQuadPattern(
   /* Determine the new patch geometry by smoothing on the surface */
   GeomOptimStats stats;
   int stGeoGlobal = -1;
+  bool statsOk = false;
   if (gf->haveParametrization()) {
     stGeoGlobal = patchOptimizeGeometryGlobal(diff.after, stats);
-    if (stGeoGlobal != 0) {
+    if (stGeoGlobal == 0) {
+      statsOk = patchPassesQualityConstraints(diff.after.elements,qualityConstraints);
+    } else {
       Msg::Debug("failed to optimize geometry with global UV smoothing");
     }
   }
 
-  if (!gf->haveParametrization() || stGeoGlobal != 0 || stats.sicnMinAfter < minSICNrequired) {
+
+  if (!gf->haveParametrization() || stGeoGlobal != 0 || !statsOk) {
     /* Project */
     bool okp = patchProjectOnSurface(diff.after, sp);
     if (!okp) {
@@ -2638,10 +2792,11 @@ int remeshPatchWithQuadPattern(
     opt.dxLocalMax = 1.e-5;
     opt.withBackup = false;
     patchOptimizeGeometryWithKernel(diff.after, opt, stats);
+    statsOk = patchPassesQualityConstraints(diff.after.elements,qualityConstraints);
   }
 
-  if (stats.sicnMinAfter < minSICNrequired) {
-    Msg::Debug("remesh patch with quad pattern: rejected because SICN min is %.3f", stats.sicnMinAfter);
+  if (!statsOk) {
+    Msg::Debug("remesh patch with quad pattern: rejected because of quality constraints (SICN min is %.3f)", stats.sicnMinAfter);
     return -1;
   }
 
@@ -2660,6 +2815,11 @@ int improveQuadMeshTopologyWithCavityRemeshing(GFace* gf,
 
 
   QuadqsContext qqs;
+
+  // Msg::Warning("- timeout set to 100s (debugging)");
+  // qqs.timeoutQuadqsPerGFace = 100;
+  // qqs.timeoutQuadqsPerGFaceCavity = 100;
+
   QuadqsGFaceContext ctx(qqs);
   ctx.invertNormalsForQuality = invertNormalsForQuality;
 
@@ -2744,6 +2904,11 @@ int improveQuadMeshTopologyWithCavityRemeshing(GFace* gf,
 
     if (ctx.finished) {
       Msg::Debug("quad mesh remeshing is finised (minimal number of irregular vertices)");
+      break;
+    }
+
+    if (ctx.elapsedCpuTime() > ctx.timeoutQuadqsPerGFaceCavity) {
+      Msg::Debug("quad mesh remeshing has reached timeout, break");
       break;
     }
   }
@@ -2946,10 +3111,14 @@ int meshFaceWithGlobalPattern(GFace* gf, bool invertNormalsForQuality, double mi
     sp = nullptr;
   }
 
-  const double minSICNafer = -DBL_MAX; /* do not filter based on quality */
+  /* do not filter based on quality */
+  QualityConstraints qConstraints;
+  qConstraints.SICNmin = -DBL_MAX;
+  qConstraints.SIGEmin = -DBL_MAX;
+  qConstraints.skewMax =  DBL_MAX;
   GFaceMeshDiff diff;
   int st = remeshPatchWithQuadPattern(gf, patternNoAndRot, sideVertices, oldElements,
-      oldVertices, minSICNafer, invertNormalsForQuality, sp, diff);
+      oldVertices, qConstraints, invertNormalsForQuality, sp, diff);
   if (st != 0) {
     if (DBG_VERBOSE) {Msg::Debug("remesh cavity: %li quads, failed to remesh path with quad pattern",
         oldElements.size());}

@@ -80,6 +80,7 @@ namespace QMT {
     Quadrangulation qdrl;
     vector<std::string> numbers;
     vector<id> bdrValLoop;
+    size_t lastB = 0;
     for (size_t i = 0; i < lines.size(); ++i) {
       numbers = SplitString(lines[i],' ');
       if (numbers.size() < 7) continue;
@@ -91,6 +92,7 @@ namespace QMT {
             B, I, Q, numbers.size());
         continue;
       }
+      lastB = B;
       qdrl.resize(Q);
       for (size_t j = 0; j < Q; ++j) {
         for (size_t lv = 0; lv < 4; ++lv) {
@@ -120,6 +122,41 @@ namespace QMT {
       B_BVL_ids[B][bdrValLoop].push_back(qId);
     }
     Msg::Info("%li disk quadrangulations loaded", lines.size());
+
+    /* Add basic quadrangulations of the disk with no interior vertices
+     * for very high valences cases (due to "bugs" in quad meshers, but
+     * this happens frequently) */
+    for (size_t B = lastB + 1; B < 200; ++B) {
+      if (B % 2 != 0) continue;
+      size_t I = 0;
+      size_t Q = B / 2 - 1;
+
+      qdrl.resize(Q);
+      for (size_t j = 0; j < Q; ++j) {
+        id v0 = j;
+        id v1 = j+1;
+        id v2 = B-1-j-1;
+        id v3 = B-1-j;
+        qdrl[j] = {v0,v1,v2,v3};
+      }
+
+      if (B >= B_disk_quadrangulations.size()) {
+        B_disk_quadrangulations.resize(B+1);
+        B_BVL_ids.resize(B+1);
+      }
+
+      id qId = B_disk_quadrangulations[B].size();
+      B_disk_quadrangulations[B].push_back(qdrl);
+
+      bdrValLoop.clear();
+      bdrValLoop.resize(B,0);
+      for (size_t j = 0; j < Q; ++j) for (size_t lv = 0; lv < 4; ++lv){
+        id v = qdrl[j][lv];
+        if (v < B) bdrValLoop[v] += 1;
+      }
+      B_BVL_ids[B][bdrValLoop].push_back(qId);
+    }
+
     return true;
   }
 
@@ -134,22 +171,59 @@ namespace QMT {
     return true;
   }
 
+  double computeInputIrregularity(
+    const std::vector<MElement*>& elements,
+    const std::vector<MVertex*>& intVertices,
+    const std::vector<MVertex*>& bdrVertices,
+    const std::vector<int>& bndIdealValence,
+    const std::vector<std::pair<int,int> >& bndAllowedValenceRange)
+  {
+    /* Warning: the two way to compute irregularity must be the same than
+     * computeIrregularity(), because the values are compared */
+    double irregularity = 0.;
+    std::unordered_map<MVertex*,int> valence;
+    for (MElement* e: elements) for (size_t lv = 0; lv < 4; ++lv) {
+      valence[e->getVertex(lv)] += 1;
+    }
+    /* Boundary vertices */
+    for (size_t bv = 0; bv < bdrVertices.size(); ++bv) {
+      MVertex* v = bdrVertices[bv];
+      if (valence[v] < bndAllowedValenceRange[bv].first) return DBL_MAX;
+      if (valence[v] > bndAllowedValenceRange[bv].second) return DBL_MAX;
+      irregularity += std::pow(bndIdealValence[bv]-valence[v],2);
+      // if (bndIdealValence[bv] <= 1 && valence[v] >= 2) { /* probably making a 6+ ... */
+      //   irregularity += 1000;
+      // } else {
+      //   irregularity += 10*std::pow(bndIdealValence[bv]-valence[v],2);
+      // }
+    }
+    /* Interior vertices */
+    for (size_t iv = 0; iv < intVertices.size(); ++iv) {
+      irregularity += std::pow(4-valence[intVertices[iv]],2);
+    }
+    return irregularity;
+  }
+
   double computeIrregularity(
       const vector<id4>& quads,
       const vector<int>& valence,
       const std::vector<int>& bndIdealValence,
       const std::vector<std::pair<int,int> >& bndAllowedValenceRange)
   {
+    /* Warning: the two way to compute irregularity must be the same than
+     * computeInputIrregularity(), because the values are compared */
+
     double irregularity = 0.;
     /* Boundary vertices */
     for (size_t bv = 0; bv < bndIdealValence.size(); ++bv) {
       if (valence[bv] < bndAllowedValenceRange[bv].first) return DBL_MAX;
       if (valence[bv] > bndAllowedValenceRange[bv].second) return DBL_MAX;
-      if (bndIdealValence[bv] <= 1 && valence[bv] >= 2) { /* probably making a 6+ ... */
-        irregularity += 1000;
-      } else {
-        irregularity += 10*std::pow(bndIdealValence[bv]-valence[bv],2);
-      }
+      irregularity += std::pow(bndIdealValence[bv]-valence[bv],2);
+      // if (bndIdealValence[bv] <= 1 && valence[bv] >= 2) { /* probably making a 6+ ... */
+      //   irregularity += 1000;
+      // } else {
+      //   irregularity += 10*std::pow(bndIdealValence[bv]-valence[bv],2);
+      // }
     }
     /* Interior vertices */
     for (size_t iv = bndIdealValence.size(); iv < valence.size(); ++iv) {
@@ -293,6 +367,10 @@ namespace QMT {
     /* Ensure coherent orientation between the new mesh and the boundary */
     bool oko = orientElementsAccordingToBoundarySegment(bnd[0],bnd[1], newElements);
     if (!oko) {
+      for (MVertex* v: newVertices) delete v;
+      for (MElement* e: newElements)  delete e;
+      newVertices.clear();
+      newElements.clear();
       Msg::Error("getDiskQuadrangulationRemeshing: bdr quad edge not found, weird");
       return false;
     }
@@ -309,36 +387,54 @@ namespace QMT {
       return true;
     }
 
+    computeSICN(patch.elements, stats.sicnMinBefore, stats.sicnAvgBefore);
 
-    bool cadInitOk = false;
-    if (haveNiceParametrization(patch.gf)) {
-      PatchGeometryBackup backup(patch);
-      /* Try pure UV smoothing in parameter space */
-      int s0 = patchOptimizeGeometryGlobal(patch, stats);
-      if (stats.sicnMinAfter > 0.) {
-        cadInitOk = true;
-      } else {
-        backup.restore();
-      }
-    }
+    GeometryOptimizer optu;
+    optu.initialize(patch, sp);
 
-    /* Kernel smoothing (in parameter space or in 3D space with proj.) */
-    GeomOptimOptions opt;
-    opt.invertCADNormals = invertNormalsForQuality;
-    opt.localLocking = true;
-    opt.dxLocalMax = 1.e-5;
-    opt.outerLoopIterMax = 100;
-    opt.timeMax = 0.25 * double(patch.intVertices.size());
-    if (cadInitOk) {
-      opt.force3DwithProjection = false;
-      opt.useDmoIfSICNbelow = 0.5;
-    } else {
-      opt.sp = sp;
-      opt.force3DwithProjection = true;
-    }
+    /* initialize geometry with laplacian smoothing (without surface projection) */
+    optu.smoothWithKernel(SmoothingKernel::Laplacian, SmoothingKernel::Laplacian, 0.1, 10,
+        false, false, 1.e-5, 1.e-5, false, false);
 
-    bool okk = patchOptimizeGeometryWithKernel(patch, opt, stats);
-    return okk;
+    /*  advanced untangling/smoothing on mean plane */
+    size_t iter = 5;
+    bool projectOnCad = true;
+    bool withBackup = false;
+    GeometryOptimizer::PlanarMethod me = GeometryOptimizer::PlanarMethod::MeanPlane;
+    bool oku = optu.smoothWithWinslowUntangler(me, iter, withBackup, projectOnCad);
+    computeSICN(patch.elements, stats.sicnMinAfter, stats.sicnAvgAfter);
+
+    return oku;
+
+    // bool cadInitOk = false;
+    // if (haveNiceParametrization(patch.gf)) {
+    //   PatchGeometryBackup backup(patch);
+    //   /* Try pure UV smoothing in parameter space */
+    //   int s0 = patchOptimizeGeometryGlobal(patch, stats);
+    //   if (stats.sicnMinAfter > 0.) {
+    //     cadInitOk = true;
+    //   } else {
+    //     backup.restore();
+    //   }
+    // }
+
+    // /* Kernel smoothing (in parameter space or in 3D space with proj.) */
+    // GeomOptimOptions opt;
+    // opt.invertCADNormals = invertNormalsForQuality;
+    // opt.localLocking = true;
+    // opt.dxLocalMax = 1.e-5;
+    // opt.outerLoopIterMax = 100;
+    // opt.timeMax = 0.25 * double(patch.intVertices.size());
+    // if (cadInitOk) {
+    //   opt.force3DwithProjection = false;
+    //   opt.useDmoIfSICNbelow = 0.5;
+    // } else {
+    //   opt.sp = sp;
+    //   opt.force3DwithProjection = true;
+    // }
+
+    // bool okk = patchOptimizeGeometryWithKernel(patch, opt, stats);
+    // return okk;
   }
 
 }
@@ -385,6 +481,8 @@ int remeshLocalWithDiskQuadrangulation(
   }
   const vector<vector<id4> >& qmeshes = *small_patterns;
 
+  double irregInput = computeInputIrregularity(elements, intVertices, 
+      bdrVertices, bndIdealValence, bndAllowedValenceRange);
 
   /* For each disk quadrangulation, compute vertex valence and
    * check matching with input patch, considering all rotations.
@@ -397,7 +495,7 @@ int remeshLocalWithDiskQuadrangulation(
     double irregularity = DBL_MAX;
     int rotation = 0;
     bool found = computeBestMatchingConfiguration(quads, valence, bndIdealValence, bndAllowedValenceRange, rotation, irregularity);
-    if (found) {
+    if (found && irregularity < irregInput) {
       irregularity_pattern_rotation.push_back({irregularity,{i,rotation}});
     }
   }

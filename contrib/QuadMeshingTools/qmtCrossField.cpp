@@ -315,7 +315,7 @@ namespace QMT {
       // N = {0,0,1};
       vec3 e_y = cross(N,e_x);
       if (maxAbs(e_y) == 0.) {
-        Msg::Error("length(e_y) = {}", length(e_y));
+        Msg::Error("length(e_y) = %f", length(e_y));
         return false;
       }
       normalize(e_y);
@@ -1286,6 +1286,7 @@ int computeCrossFieldConformalScaling(
       scaling[v] = 1.;
     }
     delete _lsys;
+    delete myAssembler;
     return 0;
   }
 
@@ -1316,6 +1317,7 @@ int computeCrossFieldConformalScaling(
   }
 
   delete _lsys;
+  delete myAssembler;
 
   if (false) {
     std::vector<MElement*> elts = dynamic_cast_vector<MTriangle*,MElement*>(triangles);

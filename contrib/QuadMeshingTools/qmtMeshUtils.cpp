@@ -29,14 +29,14 @@
 #include "MTriangle.h"
 #include "MQuadrangle.h"
 #include "MHexahedron.h"
-#include "MPyramid.h"
-#include "MPrism.h"
 #include "MTetrahedron.h"
+#include "MPrism.h"
+#include "MPyramid.h"
 #include "robin_hood.h"
 #include "meshOctreeLibOL.h"
 #include "BackgroundMesh.h"
 
-// /* QuadMeshingTools includes */
+/* QuadMeshingTools includes */
 #include "cppUtils.h"
 #include "arrayGeometry.h"
 #include "geolog.h"
@@ -80,8 +80,7 @@ std::vector<GEdge*> model_edges(const GModel* gm) {
 bool haveNiceParametrization(GFace* gf) {
   if (!gf->haveParametrization()) return false;
   if (gf->geomType() == GFace::GeomType::Sphere) return false;
-
-  // if (gf->periodic(0) || gf->periodic(1)) return false;
+  if (gf->periodic(0) || gf->periodic(1)) return false;
 
   return true;
 }
@@ -106,6 +105,27 @@ bool buildVertexToVertexMap(
   }
 
   return true;
+}
+
+bool buildVertexToVertexMap(
+    const std::vector<MElement*>& elements,
+    std::unordered_map<MVertex*,std::vector<MVertex*> >& v2v) {
+  v2v.clear();
+  v2v.rehash(4*elements.size());
+  for (size_t i = 0; i < elements.size(); ++i) {
+    size_t N = elements[i]->getNumVertices();
+    for (size_t le = 0; le < N; ++le) {
+      MVertex* v1 = elements[i]->getVertex(le);
+      MVertex* v2 = elements[i]->getVertex((le+1)%N);
+      v2v[v1].push_back(v2);
+      v2v[v2].push_back(v1);
+    }
+  }
+  for (auto& kv: v2v) {
+    sort_unique(kv.second);
+  }
+  return true;
+
 }
 
 bool buildBoundary (const std::vector<MElement*>& elements, std::vector<MVertex*>& bnd){
@@ -288,6 +308,13 @@ bool patchFromElements(GFace* gf, const std::vector<MElement*>& elements, GFaceM
       for (MElement* e: elements)  {
         for (size_t lv = 0; lv < e->getNumVertices(); ++lv) {
           MVertex* v = e->getVertex(lv);
+          if (v == nullptr) {
+            Msg::Warning("patchFromElements: quad vertex is null");
+            return false;
+          } else if (v->onWhat() == nullptr) {
+            Msg::Warning("patchFromElements: vertex %li not on GEntity", v->getNum());
+            return false;
+          }
           if (v->onWhat() != gf) {
             patch.bdrVertices[0].push_back(v);
           }
@@ -375,7 +402,7 @@ bool patchIsTopologicallyValid(const GFaceMeshPatch& patch) {
 bool GFaceMeshDiff::execute(bool verifyPatchTopology) {
   if (gf != before.gf || gf != after.gf) return false;
   if (after.elements.size() == 0) return false;
-  if (done) return false;
+  if (this->done) return false;
   if (verifyPatchTopology) {
     bool ok = patchIsTopologicallyValid(after);
     if (!ok) return false;
@@ -405,12 +432,16 @@ bool GFaceMeshDiff::execute(bool verifyPatchTopology) {
       /* Replace old vertex by new one, in place */
       MVertex* nv = after.intVertices.back();
       after.intVertices.pop_back();
-      *it = nv;
+
+      size_t pos = it - gf->mesh_vertices.begin();
+      gf->mesh_vertices[pos] = nv;
     } else {
+      /* Remove element from vector */
       it = gf->mesh_vertices.erase(it);
     }
     delete ov;
   }
+
   /* Append remaining vertices */
   while (after.intVertices.size() > 0) {
     MVertex* nv = after.intVertices.back();
@@ -435,7 +466,9 @@ bool GFaceMeshDiff::execute(bool verifyPatchTopology) {
         MQuadrangle* nq = dynamic_cast<MQuadrangle*>(after.elements.back());
         if (nq != nullptr) {
           after.elements.pop_back();
-          *it = nq;
+
+          size_t pos = it - gf->quadrangles.begin();
+          gf->quadrangles[pos] = nq;
         } else {
           it = gf->quadrangles.erase(it);
         }
@@ -454,7 +487,9 @@ bool GFaceMeshDiff::execute(bool verifyPatchTopology) {
         MTriangle* nt = dynamic_cast<MTriangle*>(after.elements.back());
         if (nt != nullptr) {
           after.elements.pop_back();
-          *it = nt;
+
+          size_t pos = it - gf->triangles.begin();
+          gf->triangles[pos] = nt;
         } else {
           it = gf->triangles.erase(it);
         }
@@ -474,7 +509,8 @@ bool GFaceMeshDiff::execute(bool verifyPatchTopology) {
     gf->addElement(ne->getType(), ne);
   }
 
-  done = true;
+  this->done = true;
+
   return true;
 }
 
@@ -806,8 +842,16 @@ std::vector<MTriangle*> trianglesFromQuads(const std::vector<MQuadrangle*>& quad
   std::vector<MTriangle*> tris;
   tris.reserve(2*quads.size());
   for (MQuadrangle* q: quads) {
-    MTriangle *t11 = new MTriangle(q->getVertex(0), q->getVertex(1), q->getVertex(2));
-    MTriangle *t12 = new MTriangle(q->getVertex(0), q->getVertex(2), q->getVertex(3));
+    MTriangle *t11;
+    MTriangle *t12;
+    if (std::min(q->getVertex(0)->getNum(),q->getVertex(2)->getNum())
+        < std::min(q->getVertex(1)->getNum(),q->getVertex(3)->getNum())) {
+      t11 = new MTriangle(q->getVertex(0), q->getVertex(1), q->getVertex(2));
+      t12 = new MTriangle(q->getVertex(0), q->getVertex(2), q->getVertex(3));
+    } else {
+      t11 = new MTriangle(q->getVertex(0), q->getVertex(1), q->getVertex(3));
+      t12 = new MTriangle(q->getVertex(3), q->getVertex(1), q->getVertex(2));
+    }
     tris.push_back(t11);
     tris.push_back(t12);
   }
@@ -904,6 +948,9 @@ bool fillSurfaceProjector(GFace* gf, SurfaceProjector* sp) {
     Msg::Error("fillSurfaceProjector: given SurfaceProjector* is null !");
     abort();
   }
+
+  bool okstl = sp->initialize(gf, {}, true);
+  if (okstl) return true;
 
   std::vector<MTriangle*> triangles;
   std::vector<MTriangle*> trianglesToDel;
@@ -1264,15 +1311,19 @@ bool appendQuadMeshStatistics(GModel* gm, std::unordered_map<std::string,double>
   /* Quality stats */
   if (all_quads.size() > 0){
     std::vector<double> quality(all_quads.size());
+    std::vector<double> qualitySIGE(all_quads.size());
     std::vector<double> edgeLen(4*all_quads.size());
     double edge_len_min = DBL_MAX;
     double edge_len_avg = 0.;
     double edge_len_max = 0.;
     double edge_n = 0.;
     double avg = 0.;
+    double avgSIGE = 0.;
     for (size_t f = 0; f < all_quads.size(); ++f) {
       quality[f] = all_quads[f]->minSICNShapeMeasure();
+      qualitySIGE[f] = all_quads[f]->minSIGEShapeMeasure();
       avg += quality[f];
+      avgSIGE += qualitySIGE[f];
       for (size_t le = 0; le < 4; ++le) {
         SPoint3 p1 = all_quads[f]->getVertex(le)->point();
         SPoint3 p2 = all_quads[f]->getVertex((le+1)%4)->point();
@@ -1285,13 +1336,19 @@ bool appendQuadMeshStatistics(GModel* gm, std::unordered_map<std::string,double>
       }
     }
     avg /= quality.size();
+    avgSIGE /= qualitySIGE.size();
     edge_len_avg /= edge_n;
     std::sort(quality.begin(),quality.end());
+    std::sort(qualitySIGE.begin(),qualitySIGE.end());
     std::sort(edgeLen.begin(),edgeLen.end());
     stats[prefix+"SICN_min"] = quality[0];
     stats[prefix+"SICN_avg"] = avg;
     stats[prefix+"SICN_max"] = quality.back();
     stats[prefix+"SICN_med"] = quality[size_t(0.50*double(quality.size()))];
+    stats[prefix+"SIGE_min"] = qualitySIGE[0];
+    stats[prefix+"SIGE_avg"] = avgSIGE;
+    stats[prefix+"SIGE_max"] = qualitySIGE.back();
+    stats[prefix+"SIGE_med"] = qualitySIGE[size_t(0.50*double(qualitySIGE.size()))];
     // stats[prefix+"SICN_01% <"] = quality[size_t(0.01*double(quality.size()))];
     // stats[prefix+"SICN_10% <"] = quality[size_t(0.10*double(quality.size()))];
     // stats[prefix+"SICN_25% <"] = quality[size_t(0.25*double(quality.size()))];
@@ -1310,18 +1367,62 @@ bool appendQuadMeshStatistics(GModel* gm, std::unordered_map<std::string,double>
   return true;
 }
 
-void printStatistics(const unordered_map<std::string,double>& stats, const std::string& title) {
-  std::vector<std::string> keys;
-  for (auto& kv: stats) keys.push_back(kv.first);
-  std::sort(keys.begin(),keys.end());
-  Msg::Info("%s", title.c_str());;
+
+inline bool keyInMap(const std::string& key, const unordered_map<std::string,double>& stats) {
+  auto it = stats.find(key);
+  return it != stats.end();
+}
+
+inline bool keysInMap(const std::vector<std::string>& keys, const unordered_map<std::string,double>& stats) {
   for (std::string key: keys) {
-    double val = stats.at(key);
-    if (std::trunc(val) == val) {
-      Msg::Info("- %s: %i", key.c_str(),int(val));
-    } else {
-      Msg::Info("- %s: %f", key.c_str(),val);
+    if (!keyInMap(key, stats)) return false;
+  }
+  return true;
+}
+
+void printStatistics(const unordered_map<std::string,double>& stats, const std::string& title) {
+  if (Msg::GetVerbosity() >= 99) {
+    std::vector<std::string> keys;
+    for (auto& kv: stats) keys.push_back(kv.first);
+    std::sort(keys.begin(),keys.end());
+    Msg::Info("%s", title.c_str());;
+    for (std::string key: keys) {
+      double val = stats.at(key);
+      if (std::trunc(val) == val) {
+        Msg::Info("- %s: %i", key.c_str(),int(val));
+      } else {
+        Msg::Info("- %s: %f", key.c_str(),val);
+      }
     }
+  }
+  Msg::Info("%s", title.c_str());;
+  if (keysInMap({"Mesh_n_vertices","Mesh_n_quads"},stats)) {
+    Msg::Info("- %i vertices, %li quads", int(stats.at("Mesh_n_vertices")),int(stats.at("Mesh_n_quads")));
+  }
+  if (keysInMap({"Mesh_n_regular","Mesh_n_val3","Mesh_n_val5","Mesh_n_very_irregular"},stats)) {
+    Msg::Info("- vertex topology: %i regular, %i valence 3, %i valence 5, %i very irregular", 
+        int(stats.at("Mesh_n_regular")),
+        int(stats.at("Mesh_n_val3")),
+        int(stats.at("Mesh_n_val5")),
+        int(stats.at("Mesh_n_very_irregular")));
+  }
+  if (keysInMap({"Mesh_edge_min","Mesh_edge_avg","Mesh_edge_max"},stats)) {
+    Msg::Info("- quad edge length: min=%.3f, avg=%.3f, max=%.3f", 
+        double(stats.at("Mesh_edge_min")),
+        double(stats.at("Mesh_edge_avg")),
+        double(stats.at("Mesh_edge_max")));
+  }
+  if (keysInMap({"Mesh_SICN_min","Mesh_SICN_avg","Mesh_SICN_max"},stats)) {
+    Msg::Info("- quad SICN quality: min=%.3f, avg=%.3f, max=%.3f", 
+        double(stats.at("Mesh_SICN_min")),
+        double(stats.at("Mesh_SICN_avg")),
+        double(stats.at("Mesh_SICN_max")));
+  }
+  if (keysInMap({"Mesh_SIGE_min","Mesh_SIGE_avg","Mesh_SIGE_max"},stats)) {
+    Msg::Info("- quad SIGE quality: min=%.3f, avg=%.3f, max=%.3f", 
+        double(stats.at("Mesh_SIGE_min")),
+        double(stats.at("Mesh_SIGE_avg")),
+        double(stats.at("Mesh_SIGE_max")));
   }
 }
 
@@ -1349,6 +1450,36 @@ void writeStatistics(const unordered_map<std::string,double>& stats, const std::
   out << "}\n";
   out.close();
 }
+
+void computeSICNquality(const std::vector<MElement*>& elements, double& sicnMin, double& sicnAvg) {
+  sicnMin = DBL_MAX;
+  sicnAvg = 0.;
+  for (size_t i = 0; i < elements.size(); ++i)  {
+    double q = elements[i]->minSICNShapeMeasure();
+    if (std::isnan(q)) {
+      q = -1.;
+    }
+    sicnMin = std::min(sicnMin, q);
+    sicnAvg += q;
+  }
+  if (elements.size() > 0) sicnAvg /= double(elements.size());
+
+}
+
+void computeSICNquality(GFace* gf, double& sicnMin, double& sicnAvg) {
+  std::vector<MElement*> elts = CppUtils::dynamic_cast_vector<MTriangle*,MElement*>(gf->triangles);
+  CppUtils::append(elts, CppUtils::dynamic_cast_vector<MQuadrangle*,MElement*>(gf->quadrangles));
+  return computeSICNquality(elts, sicnMin, sicnAvg);
+}
+
+void computeSICNquality(GRegion* gr, double& sicnMin, double& sicnAvg) {
+  std::vector<MElement*> elts = CppUtils::dynamic_cast_vector<MTetrahedron*,MElement*>(gr->tetrahedra);
+  CppUtils::append(elts, CppUtils::dynamic_cast_vector<MHexahedron*,MElement*>(gr->hexahedra));
+  CppUtils::append(elts, CppUtils::dynamic_cast_vector<MPrism*,MElement*>(gr->prisms));
+  CppUtils::append(elts, CppUtils::dynamic_cast_vector<MPyramid*,MElement*>(gr->pyramids));
+  return computeSICNquality(elts, sicnMin, sicnAvg);
+}
+
 
 void errorAndAbortIfNegativeElement(GFace* gf, const std::vector<MElement*>& elts, const std::string& msg) {
   Msg::Debug("errorAndAbortIfNegativeElement ... (! SLOW !)");
@@ -1430,6 +1561,44 @@ void errorAndAbortIfInvalidVertexInElements(const std::vector<MElement*>& elts, 
   }
 }
 
+void errorAndAbortIfNonManifoldElements(const std::vector<MElement*>& elts, bool checkVal1OnBdr, const std::string& msg) {
+  std::unordered_map<std::array<size_t,2>, size_t, as2Hash> edgeVal;
+  for (MElement* f: elts) {
+    size_t n = f->getNumVertices();
+    for (size_t lv = 0; lv < n; ++lv) {
+      MVertex* v = f->getVertex(lv);
+      MVertex* v2 = f->getVertex((lv+1)%n);
+      if (v->getNum() < v2->getNum()) {
+        std::array<size_t,2> vpair = {v->getNum(),v2->getNum()};
+        edgeVal[vpair] += 1;
+      } else {
+        std::array<size_t,2> vpair =  {v2->getNum(),v->getNum()};
+        edgeVal[vpair] += 1;
+      }
+    }
+  }
+
+  if (checkVal1OnBdr) {
+    GModel::current()->rebuildMeshVertexCache();
+  }
+
+  for (auto& kv: edgeVal) {
+    if (kv.second > 2) {
+      Msg::Error("non-manifold surface mesh | edge (%i,%i) has valence =  %i", kv.first[0],kv.first[1], kv.second);
+      abort();
+    } else if (kv.second == 1 && checkVal1OnBdr) {
+      MVertex* v1 = GModel::current()->getMeshVertexByTag(kv.first[0]);
+      MVertex* v2 = GModel::current()->getMeshVertexByTag(kv.first[1]);
+      if (v1->onWhat()->dim() >= 2 || v2->onWhat()->dim() >= 2) {
+        Msg::Error("surface mesh | edge (%i,%i) has valence =  %i but vertices not on bdr: v1dim = %i, v2dim=%i", 
+            kv.first[0],kv.first[1], kv.second,v1->onWhat()->dim(),v2->onWhat()->dim());
+        abort();
+      }
+    }
+    
+  }
+}
+
 void errorAndAbortIfInvalidVertexInModel(GModel* gm, const std::string& msg) {
   Msg::Debug("errorAndAbortIfInvalidVertexInModel ... (! SLOW !)");
   for (GVertex* gv: gm->getVertices()) {
@@ -1446,33 +1615,12 @@ void errorAndAbortIfInvalidVertexInModel(GModel* gm, const std::string& msg) {
   }
 }
 
-void computeSICNquality(const std::vector<MElement*>& elements, double& sicnMin, double& sicnAvg) {
-  sicnMin = DBL_MAX;
-  sicnAvg = 0.;
-  for (size_t i = 0; i < elements.size(); ++i)  {
-    double q = elements[i]->minSICNShapeMeasure();
-    if (std::isnan(q)) {
-      q = -1.;
-    }
-    sicnMin = std::min(sicnMin, q);
-    sicnAvg += q;
-  }
-  if (elements.size() > 0) sicnAvg /= double(elements.size());
-
-}
-
-void computeSICNquality(GFace* gf, double& sicnMin, double& sicnAvg) {
-  std::vector<MElement*> elts = CppUtils::dynamic_cast_vector<MTriangle*,MElement*>(gf->triangles);
-  CppUtils::append(elts, CppUtils::dynamic_cast_vector<MQuadrangle*,MElement*>(gf->quadrangles));
-  return computeSICNquality(elts, sicnMin, sicnAvg);
-}
-
-void computeSICNquality(GRegion* gr, double& sicnMin, double& sicnAvg) {
-  std::vector<MElement*> elts = CppUtils::dynamic_cast_vector<MTetrahedron*,MElement*>(gr->tetrahedra);
-  CppUtils::append(elts, CppUtils::dynamic_cast_vector<MHexahedron*,MElement*>(gr->hexahedra));
-  CppUtils::append(elts, CppUtils::dynamic_cast_vector<MPrism*,MElement*>(gr->prisms));
-  CppUtils::append(elts, CppUtils::dynamic_cast_vector<MPyramid*,MElement*>(gr->pyramids));
-  return computeSICNquality(elts, sicnMin, sicnAvg);
+void errorAndAbortIfInvalidSurfaceMesh(GFace* gf, const std::string& msg) {
+  vector<MElement*> elts;
+  append(elts,dynamic_cast_vector<MTriangle*,MElement*>(gf->triangles));
+  append(elts,dynamic_cast_vector<MQuadrangle*,MElement*>(gf->quadrangles));
+  errorAndAbortIfInvalidVertexInElements(elts,msg);
+  errorAndAbortIfNonManifoldElements(elts,true,msg);
 }
 
 std::string randomIdentifier() {
