@@ -3191,16 +3191,10 @@ int optimizeTopologyWithCavityRemeshing(GModel *gm)
     std::vector<std::pair<SPoint3, int> > singularities;
     bool okg = getSingularitiesFromBackgroundField(gf, singularities);
     if(!okg) {
-      if(true) {
-        Msg::Warning("TODOMX DISABLED DEBUGGING "
-                     "getSingularitiesFromNewCrossFieldComputation");
-      }
-      else {
-        okg = getSingularitiesFromNewCrossFieldComputation(bmesh, gf,
-                                                           singularities);
-        if(!okg) {
+      okg = getSingularitiesFromNewCrossFieldComputation(bmesh, gf,
+              singularities);
+      if(!okg) {
           Msg::Warning("- Face %i: failed to get singularities", gf->tag());
-        }
       }
     }
 
