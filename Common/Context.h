@@ -49,7 +49,7 @@ struct contextMeshOptions {
   int nLayersPerGap;
   double gradation;
   int quadqsSizemapMethod, quadqsTopoOptimMethods;
-  double quadqsRemeshingBoldness;
+  double quadqsRemeshingBoldness, quadqsScalingOnTriangulation;
   int oldInitialDelaunay2D;
   // mesh IO
   int fileFormat, firstElementTag, firstNodeTag;

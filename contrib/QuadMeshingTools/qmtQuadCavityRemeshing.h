@@ -97,6 +97,12 @@ bool patchIsRemeshableWithQuadPattern(
     double& irregularityMeasure);
 
 
+struct QualityConstraints {
+  double SICNmin = -1.;
+  double SIGEmin = -1.;
+  double skewMax = 1.;
+};
+
 /**
  * @brief Look for the best topological disk quadrangulation remeshing 
  *        which match the allowed valence ranges.
@@ -110,8 +116,8 @@ bool patchIsRemeshableWithQuadPattern(
  *                  patchIsRemeshableWithQuadPattern()
  * @param[in] elements The old elements in the patch, may be empty
  * @param[in] intVertices The old interior vertices in the patch, may empty
- * @param[in] minSICNrequired Minimum SICN quality required in the remeshed patch. 
- *                        Compared after geometry untangling/smoothing.
+ * @param[in] qualityConstraints Constraints on the quality required in the remeshed patch. 
+ *                        Checked after geometry untangling/smoothing.
  * @param[in] invertNormalsForQuality The CAD normals are used to compute signed quality.
  *                                    This flag invert invert the CAD normals in the measure.
  * @param[in] sp If not nullptr, the surface projector is used instead of the CAD parametrization
@@ -126,7 +132,7 @@ int remeshPatchWithQuadPattern(
     const std::vector<std::vector<MVertex*> > & sides,
     const std::vector<MElement*> & elements,
     const std::vector<MVertex*>& intVertices,
-    double minSICNrequired,
+    const QualityConstraints& qualityConstraints,
     bool invertNormalsForQuality,
     SurfaceProjector* sp,
     GFaceMeshDiff& diff);

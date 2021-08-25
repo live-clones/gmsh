@@ -10,6 +10,10 @@
 #include "OctreePost.h"
 #include "fullMatrix.h"
 
+#if defined(_OPENMP)
+#include <omp.h>
+#endif
+
 std::map<std::string, interpolationMatrices> PViewData::_interpolationSchemes;
 
 PViewData::PViewData()
@@ -251,7 +255,9 @@ double PViewData::findClosestNode(double &xn, double &yn, double &zn, int step)
   // neighbor lookups; moreover iterations on view data is currently not
   // thread-safe (it uses a cache for the current element/node), which further
   // motivates a better solution
+#if defined(_OPENMP)
 #pragma omp critical
+#endif
   {
     double x = xn, y = yn, z = zn;
     if(step < 0) step = getFirstNonEmptyTimeStep();

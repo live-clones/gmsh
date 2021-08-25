@@ -8,6 +8,8 @@
 #pragma once
 
 #include <cstdint>
+#include <vector>
+#include <array>
 
 class GRegion;
 
@@ -31,3 +33,30 @@ class GRegion;
  */
 bool untangleGRegionMeshConstrained(GRegion *gr, int iterMax = 100,
                                     double timeMax = 9999.);
+
+
+
+/*********************/
+/* Utility functions */
+/*********************/
+
+/**
+ * @brief Transform linear elements into (overlapping) tetrahedra
+ * suitable for WinslowUntangler
+ *
+ * @param[in] elements Vertices of each element. 4 for tet, 8 for hex, 5 for pyr, 6 for prism
+ * @param[in] elementTargetShapes To control the shape of the optimized elements.
+ * If empty, tetIdealShapes are built to match regular elements (unit cube, regular tet, etc)
+ * @param[out] tets The list of tetrahedra obtained by subdividing the elements
+ * @param[out] tetIdealShapes The ideal shapes of the tetrahedra to match elementTargetShapes
+ * @param[in] dcpHex Decomposition used for hex to tets. Can be 8 (corners), 24
+ * (diagonals) or 32 (corners + diagonals)
+ *
+ * @return True if successful
+ */
+bool buildTetrahedraFromElements(
+    const std::vector<std::vector<uint32_t> > &elements,
+    const std::vector<std::vector<std::array<double,3> > > &elementTargetShapes,
+    std::vector<std::array<uint32_t, 4> > &tets,
+    std::vector<std::array<std::array<double, 3>, 4> > &tetIdealShapes,
+    int dcpHex = 32);

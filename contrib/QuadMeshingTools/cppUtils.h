@@ -12,6 +12,7 @@
 #include <algorithm>
 #include <unordered_map>
 #include <unordered_set>
+#include <functional>
 
 #include <ostream>
 #include <stdio.h>
@@ -19,7 +20,6 @@
 
 /* Debugging macro to print variable name and value in the terminal, usage: DBG(x); DBG(x,..,z); */
 #define DBG(...) fprintf(stdout, "(DBG) %s:%i: ", __FILE__,__LINE__); CppUtils::show(std::cout, #__VA_ARGS__, __VA_ARGS__); fflush(stdout)
-#define DBGC(_cond,...) if (_cond) {fprintf(stdout, "(DBG) %s:%i: ", __FILE__,__LINE__); CppUtils::show(std::cout, #__VA_ARGS__, __VA_ARGS__); fflush(stdout);}
 
 namespace CppUtils {
   using std::size_t;
@@ -36,6 +36,36 @@ namespace CppUtils {
       if (v2 > v3) std::swap(v2,v3);
       return std::array<T,3>{v1,v2,v3};
     }
+
+  template<class T> 
+    inline T min_value(T v1, T v2, T v3) { 
+      return std::min(v1,std::min(v2,v3));
+    }
+
+  template<class T> 
+    inline T min_value(T v1, T v2, T v3, T v4) { 
+      return std::min(std::min(v1,v2),std::min(v3,v4));
+    }
+
+  template<class T> 
+    inline T max_value(T v1, T v2, T v3) { 
+      return std::max(v1,std::max(v2,v3));
+    }
+
+  template<class T> 
+    inline T max_value(T v1, T v2, T v3, T v4) { 
+      return std::max(std::max(v1,v2),std::max(v3,v4));
+    }
+
+
+  /* hash_combine from boost */
+  template <class T>
+    inline void hash_combine(std::size_t& seed, const T& v)
+    {
+      std::hash<T> hasher;
+      seed ^= hasher(v) + 0x9e3779b9 + (seed<<6) + (seed>>2);
+    }
+
 
   template<class T> 
   void sort_unique(std::vector<T>& vec) {
@@ -136,7 +166,7 @@ namespace CppUtils {
     inline std::vector<T2> dynamic_cast_vector(const std::vector<T1>& pointers) { 
       std::vector<T2> output(pointers.size(),NULL);
       for (size_t i = 0; i < pointers.size(); ++i) {
-        output[i] = dynamic_cast<T2>(pointers[i]);
+        output[i] = dynamic_cast<T2>((T1)pointers[i]);
       }
       return output;
     }
@@ -159,6 +189,27 @@ namespace CppUtils {
       auto it = std::find(vec.begin(), vec.end(), value);
       return (it != vec.end()) ? true : false;
     }
+
+  template <typename T>
+    bool contains(const std::unordered_set<T>& values, const T& value) {
+      auto it = values.find(value);
+      return (it != values.end());
+    }
+
+  template <typename T>
+    bool contains(const std::vector<T>& vec, const T& value) {
+      if (vec.size() == 0) return false;
+      auto it = std::find(vec.begin(), vec.end(), value);
+      return (it != vec.end()) ? true : false;
+    }
+
+  template <typename T, size_t N>
+    bool contains(const std::array<T,N> &vec, const T& value) {
+      if (vec.size() == 0) return false;
+      auto it = std::find(vec.begin(), vec.end(), value);
+      return (it != vec.end()) ? true : false;
+    }
+
 
   template<class T1,class T2>
     std::ostream& operator<<(std::ostream& os, const std::pair<T1,T2>& val) { 

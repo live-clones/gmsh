@@ -7,6 +7,10 @@
 
 #pragma once
 
+#include <vector>
+#include <array>
+#include <cstdint>
+
 class GFace;
 
 /**
@@ -29,3 +33,32 @@ class GFace;
  */
 bool untangleGFaceMeshConstrained(GFace *gf, int iterMax = 1000,
                                   double timeMax = 9999.);
+
+
+
+/*********************/
+/* Utility functions */
+/*********************/
+
+/**
+ * @brief Winslow untangler applies to triangles with target shapes. This
+ * utility function create the necessary inputs from triangles and quads.
+ *
+ * @param[in] points Point coordinates
+ * @param[in] elements Triangles and quads. 
+ * Triangles are detected with elements[i][3] = (uint32_t) -1
+ * @param[out] triangles The triangles to optimize, without overlapping when
+ * quad subdivided into four corner triangles.
+ * @param[out] triIdealShapes The target shapes, equilateral tri for triangles
+ * and right-angled triangles for quad.
+ * @param[in] preserveQuadAnisotropy If true, the triangles built from quads will
+ * preserve the anisotropy of the input quads. Very experimental, does not work well.
+ *
+ * @return True if success
+ */
+bool buildTrianglesAndTargetsFromElements(
+    const std::vector<std::array<double,2> >& points,
+    const std::vector<std::array<uint32_t,4> >& elements,
+    std::vector<std::array<uint32_t, 3> >& triangles,
+    std::vector<std::array<std::array<double,2>, 3> >& triIdealShapes,
+    bool preserveQuadAnisotropy = false);
