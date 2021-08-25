@@ -21,7 +21,7 @@ public:
   double operator()(double x, double y, double z) const
   {
     PyObject *pyargs = Py_BuildValue("(ddd)", x, y, z);
-    PyObject *result = PyEval_CallObject(_pycallback, pyargs);
+    PyObject *result = PyObject_CallObject(_pycallback, pyargs);
     double r = 0;
     if(result) {
       int ok = PyArg_Parse(result, "d", &r);
