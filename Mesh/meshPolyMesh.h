@@ -10,7 +10,7 @@
 #include <algorithm>
 #include <stack>
 #include <stdio.h>
-#include "SVector3.h"
+#include "../Geo/SVector3.h"
 
 class PolyMesh {
 public:

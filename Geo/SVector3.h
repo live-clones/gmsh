@@ -10,7 +10,7 @@
 #include <string>
 #include <stdio.h>
 #include <array>
-#include "GmshMessage.h"
+//#include "GmshMessage.h"
 
 // concrete class for vector of size 3
 class SVector3 {
@@ -107,7 +107,7 @@ public:
   operator double *() { return P; }
   void print(const std::string &name = "") const
   {
-    Msg::Info("Vector \'%s\':  %f  %f  %f", name.c_str(), P[0], P[1], P[2]);
+    //    Msg::Info("Vector \'%s\':  %f  %f  %f", name.c_str(), P[0], P[1], P[2]);
   }
 
   // Needed to allow the initialization of a SPoint3 from a SPoint3, a distance
