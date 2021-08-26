@@ -323,7 +323,7 @@ GMSH_API void gmsh::model::getEntities(vectorpair &dimTags, const int dim)
   GModel::current()->getEntities(entities, dim);
   for(std::size_t i = 0; i < entities.size(); i++)
     dimTags.push_back(
-      std::pair<int, int>(entities[i]->dim(), entities[i]->tag()));
+      std::make_pair(entities[i]->dim(), entities[i]->tag()));
 }
 
 GMSH_API void gmsh::model::setEntityName(const int dim, const int tag,
@@ -349,7 +349,7 @@ GMSH_API void gmsh::model::getPhysicalGroups(vectorpair &dimTags, const int dim)
   for(int d = 0; d < 4; d++) {
     if(dim < 0 || d == dim) {
       for(auto it = groups[d].begin(); it != groups[d].end(); it++)
-        dimTags.push_back(std::pair<int, int>(d, it->first));
+        dimTags.push_back(std::make_pair(d, it->first));
     }
   }
 }
@@ -526,7 +526,7 @@ GMSH_API void gmsh::model::getEntitiesInBoundingBox(
   GModel::current()->getEntitiesInBox(entities, box, dim);
   for(std::size_t i = 0; i < entities.size(); i++)
     dimTags.push_back(
-      std::pair<int, int>(entities[i]->dim(), entities[i]->tag()));
+      std::make_pair(entities[i]->dim(), entities[i]->tag()));
 }
 
 GMSH_API void gmsh::model::getBoundingBox(const int dim, const int tag,
@@ -1294,7 +1294,7 @@ GMSH_API void gmsh::model::mesh::getLastEntityError(vectorpair &dimTags)
   std::vector<GEntity *> e = GModel::current()->getLastMeshEntityError();
   dimTags.clear();
   for(std::size_t i = 0; i < e.size(); i++)
-    dimTags.push_back(std::pair<int, int>(e[i]->dim(), e[i]->tag()));
+    dimTags.push_back(std::make_pair(e[i]->dim(), e[i]->tag()));
 }
 
 GMSH_API void
@@ -4063,10 +4063,10 @@ GMSH_API void gmsh::model::mesh::getInformationForElements(
     infoKeys.reserve(typeKeys.size());
     for(size_t i = 0; i < typeKeys.size() / numberOfKeys; ++i) {
       for(size_t j = 0; j < numberOfKeys - numberOfBubble; ++j) {
-        infoKeys.push_back(std::pair<int, int>(0, basisOrder));
+        infoKeys.push_back(std::make_pair(0, basisOrder));
       }
       for(size_t j = 0; j < numberOfBubble; ++j) {
-        infoKeys.push_back(std::pair<int, int>(dim, basisOrder));
+        infoKeys.push_back(std::make_pair(dim, basisOrder));
       }
     }
     return;
@@ -4093,7 +4093,7 @@ GMSH_API void gmsh::model::mesh::getInformationForElements(
     size_t const1 = i * numDofsPerElement;
     for(int j = 0; j < numDofsPerElement; j++) {
       infoKeys[const1 + j] =
-        std::pair<int, int>(functionTypeInfo[j], orderInfo[j]);
+        std::make_pair(functionTypeInfo[j], orderInfo[j]);
     }
   }
 }
@@ -4851,9 +4851,9 @@ GMSH_API void gmsh::model::mesh::getEmbedded(const int dim, const int tag,
       return;
     }
     for(auto v : gf->embeddedVertices())
-      dimTags.push_back(std::pair<int, int>(v->dim(), v->tag()));
+      dimTags.push_back(std::make_pair(v->dim(), v->tag()));
     for(auto e : gf->embeddedEdges())
-      dimTags.push_back(std::pair<int, int>(e->dim(), e->tag()));
+      dimTags.push_back(std::make_pair(e->dim(), e->tag()));
   }
   else if(dim == 3) {
     GRegion *gr = GModel::current()->getRegionByTag(tag);
@@ -4862,11 +4862,11 @@ GMSH_API void gmsh::model::mesh::getEmbedded(const int dim, const int tag,
       return;
     }
     for(auto v : gr->embeddedVertices())
-      dimTags.push_back(std::pair<int, int>(v->dim(), v->tag()));
+      dimTags.push_back(std::make_pair(v->dim(), v->tag()));
     for(auto e : gr->embeddedEdges())
-      dimTags.push_back(std::pair<int, int>(e->dim(), e->tag()));
+      dimTags.push_back(std::make_pair(e->dim(), e->tag()));
     for(auto f : gr->embeddedFaces())
-      dimTags.push_back(std::pair<int, int>(f->dim(), f->tag()));
+      dimTags.push_back(std::make_pair(f->dim(), f->tag()));
   }
 }
 
@@ -7438,16 +7438,16 @@ GMSH_API int gmsh::fltk::selectEntities(vectorpair &dimTags, const int dim)
   if(!FlGui::available()) return 0; // GUI closed during selection
   for(std::size_t i = 0; i < FlGui::instance()->selectedVertices.size(); i++)
     dimTags.push_back(
-      std::pair<int, int>(0, FlGui::instance()->selectedVertices[i]->tag()));
+      std::make_pair(0, FlGui::instance()->selectedVertices[i]->tag()));
   for(std::size_t i = 0; i < FlGui::instance()->selectedEdges.size(); i++)
     dimTags.push_back(
-      std::pair<int, int>(1, FlGui::instance()->selectedEdges[i]->tag()));
+      std::make_pair(1, FlGui::instance()->selectedEdges[i]->tag()));
   for(std::size_t i = 0; i < FlGui::instance()->selectedFaces.size(); i++)
     dimTags.push_back(
-      std::pair<int, int>(2, FlGui::instance()->selectedFaces[i]->tag()));
+      std::make_pair(2, FlGui::instance()->selectedFaces[i]->tag()));
   for(std::size_t i = 0; i < FlGui::instance()->selectedRegions.size(); i++)
     dimTags.push_back(
-      std::pair<int, int>(3, FlGui::instance()->selectedRegions[i]->tag()));
+      std::make_pair(3, FlGui::instance()->selectedRegions[i]->tag()));
   return selectionCode(ret);
 #else
   return 0;

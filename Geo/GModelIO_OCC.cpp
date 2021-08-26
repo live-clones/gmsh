@@ -584,6 +584,7 @@ void OCC_Internals::unbindWithoutChecks(TopoDS_Shape shape)
       _solidTag.UnBind(solid);
       _tagSolid.UnBind(tag);
       _toRemove.insert(std::make_pair(3, tag));
+      _changed = true;
     }
   }
   for(exp0.Init(shape, TopAbs_SHELL); exp0.More(); exp0.Next()) {
@@ -593,6 +594,7 @@ void OCC_Internals::unbindWithoutChecks(TopoDS_Shape shape)
       _shellTag.UnBind(shell);
       _tagShell.UnBind(tag);
       _toRemove.insert(std::make_pair(-2, tag));
+      _changed = true;
     }
   }
   for(exp0.Init(shape, TopAbs_FACE); exp0.More(); exp0.Next()) {
@@ -602,6 +604,7 @@ void OCC_Internals::unbindWithoutChecks(TopoDS_Shape shape)
       _faceTag.UnBind(face);
       _tagFace.UnBind(tag);
       _toRemove.insert(std::make_pair(2, tag));
+      _changed = true;
     }
   }
   for(exp0.Init(shape, TopAbs_WIRE); exp0.More(); exp0.Next()) {
@@ -611,6 +614,7 @@ void OCC_Internals::unbindWithoutChecks(TopoDS_Shape shape)
       _wireTag.UnBind(wire);
       _tagWire.UnBind(tag);
       _toRemove.insert(std::make_pair(-1, tag));
+      _changed = true;
     }
   }
   for(exp0.Init(shape, TopAbs_EDGE); exp0.More(); exp0.Next()) {
@@ -620,6 +624,7 @@ void OCC_Internals::unbindWithoutChecks(TopoDS_Shape shape)
       _edgeTag.UnBind(edge);
       _tagEdge.UnBind(tag);
       _toRemove.insert(std::make_pair(1, tag));
+      _changed = true;
     }
   }
   for(exp0.Init(shape, TopAbs_VERTEX); exp0.More(); exp0.Next()) {
@@ -629,6 +634,7 @@ void OCC_Internals::unbindWithoutChecks(TopoDS_Shape shape)
       _vertexTag.UnBind(vertex);
       _tagVertex.UnBind(tag);
       _toRemove.insert(std::make_pair(0, tag));
+      _changed = true;
     }
   }
 }
@@ -640,22 +646,22 @@ void OCC_Internals::unbind()
   TopTools_DataMapIteratorOfDataMapOfIntegerShape exp;
   exp.Initialize(_tagVertex);
   for(; exp.More(); exp.Next())
-    _toRemove.insert(std::pair<int, int>(0, exp.Key()));
+    _toRemove.insert(std::make_pair(0, exp.Key()));
   exp.Initialize(_tagEdge);
   for(; exp.More(); exp.Next())
-    _toRemove.insert(std::pair<int, int>(1, exp.Key()));
+    _toRemove.insert(std::make_pair(1, exp.Key()));
   exp.Initialize(_tagFace);
   for(; exp.More(); exp.Next())
-    _toRemove.insert(std::pair<int, int>(2, exp.Key()));
+    _toRemove.insert(std::make_pair(2, exp.Key()));
   exp.Initialize(_tagSolid);
   for(; exp.More(); exp.Next())
-    _toRemove.insert(std::pair<int, int>(3, exp.Key()));
+    _toRemove.insert(std::make_pair(3, exp.Key()));
   exp.Initialize(_tagWire);
   for(; exp.More(); exp.Next())
-    _toRemove.insert(std::pair<int, int>(-1, exp.Key()));
+    _toRemove.insert(std::make_pair(-1, exp.Key()));
   exp.Initialize(_tagShell);
   for(; exp.More(); exp.Next())
-    _toRemove.insert(std::pair<int, int>(-2, exp.Key()));
+    _toRemove.insert(std::make_pair(-2, exp.Key()));
 
   _tagVertex.Clear();
   _tagEdge.Clear();
@@ -699,7 +705,7 @@ void OCC_Internals::_multiBind(const TopoDS_Shape &shape, int tag,
     }
     if(!exists) bind(solid, t, recursive);
     if(!exists || !returnNewOnly)
-      outDimTags.push_back(std::pair<int, int>(3, t));
+      outDimTags.push_back(std::make_pair(3, t));
     count++;
   }
   if(highestDimOnly && count) return;
@@ -721,7 +727,7 @@ void OCC_Internals::_multiBind(const TopoDS_Shape &shape, int tag,
     }
     if(!exists) bind(face, t, recursive);
     if(!exists || !returnNewOnly)
-      outDimTags.push_back(std::pair<int, int>(2, t));
+      outDimTags.push_back(std::make_pair(2, t));
     count++;
   }
   if(highestDimOnly && count) return;
@@ -743,7 +749,7 @@ void OCC_Internals::_multiBind(const TopoDS_Shape &shape, int tag,
     }
     if(!exists) bind(edge, t, recursive);
     if(!exists || !returnNewOnly)
-      outDimTags.push_back(std::pair<int, int>(1, t));
+      outDimTags.push_back(std::make_pair(1, t));
     count++;
   }
   if(highestDimOnly && count) return;
@@ -765,7 +771,7 @@ void OCC_Internals::_multiBind(const TopoDS_Shape &shape, int tag,
     }
     if(!exists) bind(vertex, t, recursive);
     if(!exists || !returnNewOnly)
-      outDimTags.push_back(std::pair<int, int>(0, t));
+      outDimTags.push_back(std::make_pair(0, t));
     count++;
   }
 }
@@ -3081,15 +3087,15 @@ bool OCC_Internals::_extrudePerDim(
     for(std::size_t i = 0; i < top.size(); i++) {
       if(_isBound(dim - 1, top[i]))
         outDimTags.push_back(
-          std::pair<int, int>(dim - 1, _find(dim - 1, top[i])));
+          std::make_pair(dim - 1, _find(dim - 1, top[i])));
       if(_isBound(dim, body[i]))
-        outDimTags.push_back(std::pair<int, int>(dim, _find(dim, body[i])));
+        outDimTags.push_back(std::make_pair(dim, _find(dim, body[i])));
       if(CTX::instance()->geom.extrudeReturnLateral &&
          top.size() == lateral.size()) {
         for(std::size_t j = 0; j < lateral[i].size(); j++) {
           if(_isBound(dim - 1, lateral[i][j]))
             outDimTags.push_back(
-              std::pair<int, int>(dim - 1, _find(dim - 1, lateral[i][j])));
+              std::make_pair(dim - 1, _find(dim - 1, lateral[i][j])));
         }
       }
     }
@@ -3497,9 +3503,9 @@ bool OCC_Internals::booleanOperator(
         Msg::Debug("BOOL (%d,%d) deleted", dim, tag);
       }
       else if(mapModified[i].Extent() == 0) { // not modified
-        auto ins = _toPreserve.insert(std::pair<int, int>(dim, tag));
+        auto ins = _toPreserve.insert(std::make_pair(dim, tag));
         if(ins.second) // it's not yet in outDimTags
-          outDimTags.push_back(std::pair<int, int>(dim, tag));
+          outDimTags.push_back(std::make_pair(dim, tag));
         Msg::Debug("BOOL (%d,%d) not modified", dim, tag);
       }
       else if(mapModified[i].Extent() == 1) { // replaced by single one
@@ -3510,9 +3516,9 @@ bool OCC_Internals::booleanOperator(
           if(tag != t)
             Msg::Info("Could not preserve tag of %dD object %d (->%d)", dim,
                       tag, t);
-          auto ins = _toPreserve.insert(std::pair<int, int>(dim, t));
+          auto ins = _toPreserve.insert(std::make_pair(dim, t));
           if(ins.second) // it's not yet in outDimTags
-            outDimTags.push_back(std::pair<int, int>(dim, t));
+            outDimTags.push_back(std::make_pair(dim, t));
         }
         Msg::Debug("BOOL (%d,%d) replaced by 1", dim, tag);
       }
@@ -3544,14 +3550,14 @@ bool OCC_Internals::booleanOperator(
       for(; it.More(); it.Next()) {
         if(_isBound(dim, it.Value())) {
           int t = _find(dim, it.Value());
-          dimTags.push_back(std::pair<int, int>(dim, t));
+          dimTags.push_back(std::make_pair(dim, t));
         }
       }
       TopTools_ListIteratorOfListOfShape it2(mapGenerated[i]);
       for(; it2.More(); it2.Next()) {
         if(_isBound(dim, it2.Value())) {
           int t = _find(dim, it2.Value());
-          dimTags.push_back(std::pair<int, int>(dim, t));
+          dimTags.push_back(std::make_pair(dim, t));
         }
       }
     }
@@ -3883,7 +3889,7 @@ bool OCC_Internals::copy(const std::vector<std::pair<int, int> > &inDimTags,
     TopoDS_Shape result = BRepBuilderAPI_Copy(_find(dim, tag)).Shape();
     int newtag = getMaxTag(dim) + 1;
     bind(result, dim, newtag, true);
-    outDimTags.push_back(std::pair<int, int>(dim, newtag));
+    outDimTags.push_back(std::make_pair(dim, newtag));
   }
   return ret;
 }
@@ -4236,7 +4242,7 @@ bool OCC_Internals::getEntities(std::vector<std::pair<int, int> > &dimTags,
     case 3: exp.Initialize(_tagSolid); break;
     }
     for(; exp.More(); exp.Next())
-      dimTags.push_back(std::pair<int, int>(d, exp.Key()));
+      dimTags.push_back(std::make_pair(d, exp.Key()));
   }
   return true;
 }
@@ -4308,7 +4314,7 @@ bool OCC_Internals::getEntitiesInBoundingBox(
       _getBoundingBox(exp.Value(), xmin2, ymin2, zmin2, xmax2, ymax2, zmax2);
       if(xmin2 >= xmin && xmax2 <= xmax && ymin2 >= ymin && ymax2 <= ymax &&
          zmin2 >= zmin && zmax2 <= zmax)
-        dimTags.push_back(std::pair<int, int>(d, exp.Key()));
+        dimTags.push_back(std::make_pair(d, exp.Key()));
     }
   }
   return true;

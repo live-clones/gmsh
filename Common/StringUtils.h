@@ -29,5 +29,6 @@ bool SplitOptionName(const std::string &fullName, std::string &category,
 std::vector<std::string> SplitString(const std::string &msg, char separator,
                                      bool removeWhiteSpace = false);
 std::string RemoveWhiteSpace(const std::string &s);
+bool IsOnelabName(const std::string &name, std::string &cleanName);
 
 #endif

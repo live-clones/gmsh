@@ -599,10 +599,9 @@ void createTopologyFromMesh3D(GModel *gm, int &num)
     if(r1 != r2) {
       std::pair<GRegion *, GRegion *> gRegionPair;
       if(r1 && r2)
-        gRegionPair =
-          std::pair<GRegion *, GRegion *>(std::min(r1, r2), std::max(r1, r2));
+        gRegionPair = std::make_pair(std::min(r1, r2), std::max(r1, r2));
       else // r1 null
-        gRegionPair = std::pair<GRegion *, GRegion *>(r1, r2);
+        gRegionPair = std::make_pair(r1, r2);
       auto iter = gRegionPairToGFace.find(gRegionPair);
       if(iter == gRegionPairToGFace.end()) {
         discreteFace *df =

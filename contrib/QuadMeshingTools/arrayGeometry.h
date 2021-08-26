@@ -50,8 +50,12 @@ namespace ArrayGeometry {
 
   double bboxDiag(const std::vector<vec3>& points);
   inline vec3 triangleNormal(const vec3& p0, const vec3& p1, const vec3& p2); /* normalized */
+  inline double triangleArea(const vec2& a, const vec2& b, const vec2& c);
   inline double triangleArea(const vec3& p0, const vec3& p1, const vec3& p2);
-
+  inline vec3 tetrahedronFaceNormal(const std::array<vec3,4>& pts, size_t lf);
+  inline double tetrahedronDihedralAngle(const std::array<vec3,4>& pts, size_t le);
+  inline double tetrahedronSolidAngle(const std::array<vec3,4>& pts, size_t lv);
+  inline double basicOrient3d(const vec3& p1, const vec3& p2, const vec3& p3, const vec3& p4);
 
 
   /**********************/
@@ -76,9 +80,51 @@ namespace ArrayGeometry {
     return N;
   }
 
+  double triangleArea(const vec2& a, const vec2& b, const vec2& c) {
+    return .5*((b[1]-a[1])*(b[0]+a[0]) + (c[1]-b[1])*(c[0]+b[0]) + (a[1]-c[1])*(a[0]+c[0]));
+  }
+
   double triangleArea(const vec3& p0, const vec3& p1, const vec3& p2) {
     vec3 N = cross(p2-p0,p1-p0);
     return length(N)/2.;
+  }
+
+  vec3 tetrahedronFaceNormal(const std::array<vec3,4>& pts, size_t lf) {
+    constexpr size_t f[4][3] = {{0, 2, 1}, {0, 1, 3}, {0, 3, 2}, {3, 1, 2}};
+    const vec3 p0 = pts[f[lf][0]];
+    const vec3 p1 = pts[f[lf][1]];
+    const vec3 p2 = pts[f[lf][2]];
+    vec3 tfn = cross(p2-p0,p1-p0);
+    normalize(tfn);
+    return tfn;
+  }
+
+  double tetrahedronDihedralAngle(const std::array<vec3,4>& pts, size_t le) {
+    constexpr size_t e2f[6][2] = {{0,1},{0,3},{0,2},{1,2},{2,3},{1,3}};
+    const vec3 n1 = tetrahedronFaceNormal(pts,e2f[le][0]);
+    const vec3 n2 = tetrahedronFaceNormal(pts,e2f[le][1]);
+    return acos(clamp(dot(-1.*n1,n2),-1.,1.));
+  }
+
+  double tetrahedronSolidAngle(const std::array<vec3,4>& pts, size_t lv) {
+    const vec3 pa = pts[(lv+1)%4]-pts[lv];
+    const vec3 pb = pts[(lv+2)%4]-pts[lv];
+    const vec3 pc = pts[(lv+3)%4]-pts[lv];
+    const double top = std::abs(dot(pa,cross(pb,pc)));
+    const double bot = length(pa)*length(pb)*length(pc) 
+      + dot(pa,pb) * length(pc) 
+      + dot(pb,pc) * length(pb) 
+      + dot(pb,pc) * length(pa);
+    if (std::abs(bot) < 1.e-14) return 0.;
+    double sagl = atan(top/bot);
+    if (sagl < 0.) sagl = sagl + M_PI;
+    sagl = 2. * sagl;
+    return sagl;
+  }
+
+  double basicOrient3d(const vec3& p1, const vec3& p2, const vec3& p3, const vec3& p4) {
+    const double det =  dot(p2 - p1, cross(p3 - p1, p4 - p1));
+    return det;
   }
 
 }

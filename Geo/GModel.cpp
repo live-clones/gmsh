@@ -638,7 +638,7 @@ bool GModel::getBoundaryTags(const std::vector<std::pair<int, int> > &inDimTags,
         if(recursive) {
           std::vector<GVertex *> const &vert = gr->vertices();
           for(auto it = vert.begin(); it != vert.end(); it++)
-            outDimTags.push_back(std::pair<int, int>(0, (*it)->tag()));
+            outDimTags.push_back(std::make_pair(0, (*it)->tag()));
         }
         else {
           std::vector<GFace *> faces(gr->faces());
@@ -650,7 +650,7 @@ bool GModel::getBoundaryTags(const std::vector<std::pair<int, int> > &inDimTags,
               t *= *ito;
               ito++;
             }
-            outDimTags.push_back(std::pair<int, int>(2, t));
+            outDimTags.push_back(std::make_pair(2, t));
           }
         }
       }
@@ -665,7 +665,7 @@ bool GModel::getBoundaryTags(const std::vector<std::pair<int, int> > &inDimTags,
         if(recursive) {
           std::vector<GVertex *> const &vert = gf->vertices();
           for(auto it = vert.begin(); it != vert.end(); it++)
-            outDimTags.push_back(std::pair<int, int>(0, (*it)->tag()));
+            outDimTags.push_back(std::make_pair(0, (*it)->tag()));
         }
         else {
           std::vector<GEdge *> const &edges = gf->edges();
@@ -677,7 +677,7 @@ bool GModel::getBoundaryTags(const std::vector<std::pair<int, int> > &inDimTags,
               t *= *ito;
               ito++;
             }
-            outDimTags.push_back(std::pair<int, int>(1, t));
+            outDimTags.push_back(std::make_pair(1, t));
           }
         }
       }
@@ -692,18 +692,18 @@ bool GModel::getBoundaryTags(const std::vector<std::pair<int, int> > &inDimTags,
         if(reverse) { // for backward compatibility
           if(ge->getEndVertex())
             outDimTags.push_back(
-              std::pair<int, int>(0, ge->getEndVertex()->tag()));
+              std::make_pair(0, ge->getEndVertex()->tag()));
           if(ge->getBeginVertex())
             outDimTags.push_back(
-              std::pair<int, int>(0, ge->getBeginVertex()->tag()));
+              std::make_pair(0, ge->getBeginVertex()->tag()));
         }
         else {
           if(ge->getBeginVertex())
             outDimTags.push_back(
-              std::pair<int, int>(0, ge->getBeginVertex()->tag()));
+              std::make_pair(0, ge->getBeginVertex()->tag()));
           if(ge->getEndVertex())
             outDimTags.push_back(
-              std::pair<int, int>(0, ge->getEndVertex()->tag()));
+              std::make_pair(0, ge->getEndVertex()->tag()));
         }
       }
       else {
@@ -714,7 +714,7 @@ bool GModel::getBoundaryTags(const std::vector<std::pair<int, int> > &inDimTags,
     else if(dim == 0) {
       GVertex *gv = getVertexByTag(tag);
       if(gv && recursive) {
-        outDimTags.push_back(std::pair<int, int>(0, gv->tag()));
+        outDimTags.push_back(std::make_pair(0, gv->tag()));
       }
     }
   }
@@ -737,7 +737,7 @@ bool GModel::getBoundaryTags(const std::vector<std::pair<int, int> > &inDimTags,
     outDimTags.clear();
     for(int dim = 0; dim < 3; dim++) {
       for(auto it = c[dim].begin(); it != c[dim].end(); it++)
-        outDimTags.push_back(std::pair<int, int>(dim, *it));
+        outDimTags.push_back(std::make_pair(dim, *it));
     }
   }
   return ret;
@@ -840,7 +840,7 @@ void GModel::removePhysicalGroup(int dim, int tag)
         p.push_back(entities[i]->physicals[j]);
     entities[i]->physicals = p;
   }
-  _physicalNames.erase(std::pair<int, int>(dim, tag));
+  _physicalNames.erase(std::make_pair(dim, tag));
 }
 
 int GModel::getMaxPhysicalNumber(int dim)
@@ -871,8 +871,7 @@ int GModel::setPhysicalName(const std::string &name, int dim, int number)
 
   // if no number is given, find the next available one
   if(!number) number = getMaxPhysicalNumber(dim) + 1;
-  _physicalNames.insert(std::pair<std::pair<int, int>, std::string>(
-    std::pair<int, int>(dim, number), name));
+  _physicalNames.insert(std::make_pair(std::make_pair(dim, number), name));
   return number;
 }
 
@@ -884,13 +883,13 @@ GModel::piter GModel::setPhysicalName(piter pos, const std::string &name,
   // Insertion complexity in O(1) if position points to the element that will
   // FOLLOW the inserted element.
   if(pos != lastPhysicalName()) ++pos;
-  return _physicalNames.insert(pos, std::pair<std::pair<int, int>, std::string>(
-                                      std::pair<int, int>(dim, number), name));
+  return _physicalNames.insert(pos, std::make_pair(std::make_pair(dim, number),
+                                                   name));
 }
 
 std::string GModel::getPhysicalName(int dim, int number) const
 {
-  auto it = _physicalNames.find(std::pair<int, int>(dim, number));
+  auto it = _physicalNames.find(std::make_pair(dim, number));
   if(it != _physicalNames.end()) return it->second;
   return "";
 }
@@ -934,9 +933,9 @@ int GModel::getMeshDim() const
   return -1;
 }
 
-std::string GModel::getElementaryName(int dim, int number)
+std::string GModel::getElementaryName(int dim, int tag)
 {
-  auto it = _elementaryNames.find(std::pair<int, int>(dim, number));
+  auto it = _elementaryNames.find(std::make_pair(dim, tag));
   if(it != _elementaryNames.end()) return it->second;
   return "";
 }
@@ -1027,10 +1026,10 @@ addToMap(std::multimap<MFace, MElement *, MFaceLessThan> &faceToElement,
 {
   auto fit = faceToElement.find(face);
   if(fit == faceToElement.end()) {
-    faceToElement.insert(std::pair<MFace, MElement *>(face, el));
+    faceToElement.insert(std::make_pair(face, el));
   }
   else { // We found the neighbor face outFace
-    faceToElement.insert(std::pair<MFace, MElement *>(face, el));
+    faceToElement.insert(std::make_pair(face, el));
     if(faceToElement.count(face) > 2) {
       Msg::Error(
         "Topological fault: Face sharing two other faces. Element %i. "
@@ -1858,8 +1857,7 @@ void GModel::rebuildMeshElementCache(bool onlyIfNecessary)
     getEntities(entities);
     if(dense) {
       // numbering starts at 1
-      _elementVectorCache.resize(_maxElementNum + 1,
-                                 std::pair<MElement*, int>(nullptr, 0));
+      _elementVectorCache.resize(_maxElementNum + 1, std::make_pair(nullptr, 0));
       for(std::size_t i = 0; i < entities.size(); i++)
         for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
           MElement *e = entities[i]->getMeshElement(j);
@@ -1894,6 +1892,25 @@ MVertex *GModel::getMeshVertexByTag(int n)
     return _vertexVectorCache[n];
   else
     return _vertexMapCache[n];
+}
+
+void GModel::addMVertexToVertexCache(MVertex* v)
+{
+  if(_vertexVectorCache.empty() && _vertexMapCache.empty()) {
+    Msg::Debug("Rebuilding mesh node cache");
+    rebuildMeshVertexCache();
+  }
+  if (_vertexVectorCache.size() > 0) {
+    #if defined(_OPENMP)
+    #pragma omp critical
+    #endif
+    if (v->getNum() >= _vertexVectorCache.size()) {
+      _vertexVectorCache.resize(v->getNum()+1, nullptr);
+    }
+    _vertexVectorCache[v->getNum()] = v;
+  } else {
+    _vertexMapCache[v->getNum()] = v;
+  }
 }
 
 void GModel::getMeshVerticesForPhysicalGroup(int dim, int num,
@@ -3360,7 +3377,7 @@ void GModel::addHomologyRequest(const std::string &type,
   typedef std::pair<const std::string, const std::vector<int> > tpair;
   dpair p(domain, subdomain);
   tpair p2(type, dim);
-  _homologyRequests.insert(std::pair<dpair, tpair>(p, p2));
+  _homologyRequests.insert(std::make_pair(p, p2));
 }
 
 void GModel::computeHomology()

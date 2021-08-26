@@ -213,10 +213,23 @@ std::vector<std::string> SplitString(const std::string &msg, char separator,
   std::string::size_type first = 0;
   while(first != std::string::npos) {
     if(removeWhiteSpace)
-      out.push_back(RemoveWhiteSpace
-                    (getNextTokenInString(msg, first, separator)));
+      out.push_back(
+        RemoveWhiteSpace(getNextTokenInString(msg, first, separator)));
     else
       out.push_back(getNextTokenInString(msg, first, separator));
   }
   return out;
+}
+
+bool IsOnelabName(const std::string &name, std::string &cleanName)
+{
+  std::string::size_type n = name.find('/');
+  if(name.empty() || n == std::string::npos) return false;
+
+  if(name.size() > 1 && name[0] == '/')
+    cleanName = name.substr(1);
+  else
+    cleanName = name;
+
+  return true;
 }

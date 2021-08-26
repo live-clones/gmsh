@@ -763,7 +763,7 @@ bool GEO_Internals::_extrude(int mode,
     List_Read(out, i, &s);
     int dim = s.Type / 100 - 1;
     if(dim >= 0 && dim <= 3)
-      outDimTags.push_back(std::pair<int, int>(dim, s.Num));
+      outDimTags.push_back(std::make_pair(dim, s.Num));
   }
   List_Delete(in);
   List_Delete(out);
@@ -925,7 +925,7 @@ bool GEO_Internals::copy(const std::vector<std::pair<int, int> > &inDimTags,
       }
       else {
         Vertex *newv = DuplicateVertex(v);
-        outDimTags.push_back(std::pair<int, int>(0, newv->Num));
+        outDimTags.push_back(std::make_pair(0, newv->Num));
       }
     }
     else if(dim == 1) {
@@ -936,7 +936,7 @@ bool GEO_Internals::copy(const std::vector<std::pair<int, int> > &inDimTags,
       }
       else {
         Curve *newc = DuplicateCurve(c);
-        outDimTags.push_back(std::pair<int, int>(1, newc->Num));
+        outDimTags.push_back(std::make_pair(1, newc->Num));
       }
     }
     else if(dim == 2) {
@@ -947,7 +947,7 @@ bool GEO_Internals::copy(const std::vector<std::pair<int, int> > &inDimTags,
       }
       else {
         Surface *news = DuplicateSurface(s);
-        outDimTags.push_back(std::pair<int, int>(2, news->Num));
+        outDimTags.push_back(std::make_pair(2, news->Num));
       }
     }
     else if(dim == 3) {
@@ -958,7 +958,7 @@ bool GEO_Internals::copy(const std::vector<std::pair<int, int> > &inDimTags,
       }
       else {
         Volume *newv = DuplicateVolume(v);
-        outDimTags.push_back(std::pair<int, int>(3, newv->Num));
+        outDimTags.push_back(std::make_pair(3, newv->Num));
       }
     }
   }
@@ -1374,7 +1374,7 @@ void GEO_Internals::synchronize(GModel *model, bool resetMeshAttributes)
     if(gv->getNativeType() == GEntity::GmshModel ||
        gv->getNativeType() == GEntity::UnknownModel) {
       if(!FindPoint(gv->tag()))
-        toRemove.push_back(std::pair<int, int>(0, gv->tag()));
+        toRemove.push_back(std::make_pair(0, gv->tag()));
     }
   }
   for(auto it = model->firstEdge(); it != model->lastEdge(); ++it) {
@@ -1382,7 +1382,7 @@ void GEO_Internals::synchronize(GModel *model, bool resetMeshAttributes)
     if(ge->getNativeType() == GEntity::GmshModel ||
        ge->getNativeType() == GEntity::UnknownModel) {
       if(!FindCurve(ge->tag()))
-        toRemove.push_back(std::pair<int, int>(1, ge->tag()));
+        toRemove.push_back(std::make_pair(1, ge->tag()));
     }
   }
   for(auto it = model->firstFace(); it != model->lastFace(); ++it) {
@@ -1390,7 +1390,7 @@ void GEO_Internals::synchronize(GModel *model, bool resetMeshAttributes)
     if(gf->getNativeType() == GEntity::GmshModel ||
        gf->getNativeType() == GEntity::UnknownModel) {
       if(!FindSurface(gf->tag()))
-        toRemove.push_back(std::pair<int, int>(2, gf->tag()));
+        toRemove.push_back(std::make_pair(2, gf->tag()));
     }
   }
   for(auto it = model->firstRegion(); it != model->lastRegion(); ++it) {
@@ -1398,7 +1398,7 @@ void GEO_Internals::synchronize(GModel *model, bool resetMeshAttributes)
     if(gr->getNativeType() == GEntity::GmshModel ||
        gr->getNativeType() == GEntity::UnknownModel) {
       if(!FindVolume(gr->tag()))
-        toRemove.push_back(std::pair<int, int>(3, gr->tag()));
+        toRemove.push_back(std::make_pair(3, gr->tag()));
     }
   }
   Msg::Debug("Sync is removing %d model entities", toRemove.size());
@@ -1687,8 +1687,8 @@ public:
   {
     std::string oldName, newName;
     if(printLabels) {
-      if(newLabels.count(std::pair<int, int>(dim, g.first))) {
-        newName = newLabels[std::pair<int, int>(dim, g.first)];
+      if(newLabels.count(std::make_pair(dim, g.first))) {
+        newName = newLabels[std::make_pair(dim, g.first)];
       }
       else if(oldLabels.count(g.first)) {
         oldName = oldLabels[g.first];

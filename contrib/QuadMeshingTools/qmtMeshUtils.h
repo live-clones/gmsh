@@ -16,9 +16,9 @@
 
 
 class GModel;
+class GRegion;
 class GVertex;
 class GFace;
-class GRegion;
 class GEdge;
 class MTriangle;
 class MQuadrangle;
@@ -34,6 +34,10 @@ bool haveNiceParametrization(GFace* gf);
 
 bool buildVertexToVertexMap(
     const std::vector<MTriangle*>& triangles,
+    std::unordered_map<MVertex*,std::vector<MVertex*> >& v2v);
+
+bool buildVertexToVertexMap(
+    const std::vector<MElement*>& elements,
     std::unordered_map<MVertex*,std::vector<MVertex*> >& v2v);
 
 
@@ -57,10 +61,6 @@ bool patchFromQuads(GFace* gf, const std::vector<MQuadrangle*>& quads, GFaceMesh
 
 
 void sicnQuality(const GFaceMeshPatch& patch, double& sicnMin, double& sicnAvg);
-
-void computeSICNquality(const std::vector<MElement*>& elements, double& sicnMin, double& sicnAvg);
-void computeSICNquality(GFace* gf, double& sicnMin, double& sicnAvg);
-void computeSICNquality(GRegion* gr, double& sicnMin, double& sicnAvg);
 
 bool patchIsTopologicallyValid(const GFaceMeshPatch& patch);
 
@@ -113,9 +113,14 @@ bool appendQuadMeshStatistics(GModel* gm, std::unordered_map<std::string,double>
 void printStatistics(const std::unordered_map<std::string,double>& stats, const std::string& title = "Statistics:");
 void writeStatistics(const std::unordered_map<std::string,double>& stats, const std::string& path); /* json format */
 
+void computeSICNquality(const std::vector<MElement*>& elements, double& sicnMin, double& sicnAvg);
+void computeSICNquality(GFace* gf, double& sicnMin, double& sicnAvg);
+void computeSICNquality(GRegion* gr, double& sicnMin, double& sicnAvg);
+
 void errorAndAbortIfNegativeElement(GFace* gf, const std::vector<MElement*>& elts, const std::string& msg = "");
 void errorAndAbortIfInvalidVertexInElements(const std::vector<MElement*>& elts, const std::string& msg = "");
 void errorAndAbortIfInvalidVertexInModel(GModel* gm, const std::string& msg = "");
+void errorAndAbortIfInvalidSurfaceMesh(GFace* gf, const std::string& msg = "");
 
 std::string randomIdentifier();
 
