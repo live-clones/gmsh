@@ -125,6 +125,11 @@ linux64-sdk_official_snapshot:
   <<: *linux_official
   except:
     - tags
+  artifacts:
+    paths:
+      - build/_CPack_Packages/
+      - build/setup-wheel.py
+    expire_in: 1day
 
 linux64-sdk_official_release:
   image: onelab/debian.stretch.64bit
@@ -137,6 +142,11 @@ linux64-sdk_official_release:
     - ssh geuzaine@gmsh.info "cd .wwwgmsh/bin/Linux && rm -f gmsh-stable-Linux64-sdk.tgz && ln -s gmsh-${VERSION}-Linux64-sdk.tgz gmsh-stable-Linux64-sdk.tgz"
   only:
     - /^gmsh_.*$/
+  artifacts:
+    paths:
+      - build/_CPack_Packages/
+      - build/setup-wheel.py
+    expire_in: 1day
 
 linux64-nox-sdk_official_snapshot:
   image: onelab/debian.stretch.64bit
@@ -145,6 +155,11 @@ linux64-nox-sdk_official_snapshot:
   <<: *linux_official
   except:
     - tags
+  artifacts:
+    paths:
+      - build/_CPack_Packages/
+      - build/setup-wheel.py
+    expire_in: 1day
 
 # --------------------------------------------
 # Official Windows builds (master branch only)
@@ -191,6 +206,11 @@ windows64-sdk_official_snapshot:
     - official
   except:
     - tags
+  artifacts:
+    paths:
+      - build/_CPack_Packages/
+      - build/setup-wheel.py
+    expire_in: 1day
 
 windows64-sdk_official_release:
   variables:
@@ -204,6 +224,11 @@ windows64-sdk_official_release:
     - official
   only:
     - /^gmsh_.*$/
+  artifacts:
+    paths:
+      - build/_CPack_Packages/
+      - build/setup-wheel.py
+    expire_in: 1day
 
 # ------------------------------------------
 # Official MacOS builds (master branch only)
@@ -247,6 +272,11 @@ macos64-sdk_official_snapshot:
   <<: *macos_official
   except:
     - tags
+  artifacts:
+    paths:
+      - build/_CPack_Packages/
+      - build/setup-wheel.py
+    expire_in: 1day
 
 macos64-sdk_official_release:
   variables:
@@ -258,6 +288,11 @@ macos64-sdk_official_release:
     - ssh geuzaine@gmsh.info "cd .wwwgmsh/bin/MacOSX && rm -f gmsh-stable-MacOSX-sdk.tgz && ln -s gmsh-${VERSION}-MacOSX-sdk.tgz gmsh-stable-MacOSX-sdk.tgz"
   only:
     - /^gmsh_.*$/
+  artifacts:
+    paths:
+      - build/_CPack_Packages/
+      - build/setup-wheel.py
+    expire_in: 1day
 
 # ----------------------------------------------
 # Official source snapshots (master branch only)
@@ -359,11 +394,43 @@ doc_cookbook:
 # PyPi package
 # ----------------------------------------------
 
-pypi_official_release:
+pypi_official_snapshot:
+  stage: .post
+  image: onelab/ubuntu20.04
+#  only:
+#    - master@gmsh/gmsh
+  dependencies:
+    - linux64-sdk_official_snapshot
+    - windows64-sdk_official_snapshot
+    - macos64-sdk_official_snapshot
+  before_script:
+    - echo "[distutils]" > ~/.pypirc
+    - echo "index-servers = testpypi" >> ~/.pypirc
+    - echo "[testpypi]" >> ~/.pypirc
+    - echo "username = __token__" >> ~/.pypirc
+    - echo "password = $PYPI_TOKEN" >> ~/.pypirc
+  script:
+    - cd build
+    - GMSH_SETUP_DIR=../utils/pypi/gmsh-dev GMSH_SDK_DIR=_CPack_Packages/Linux/TGZ/gmsh-git-Linux64-sdk/ python3 setup-wheel.py build bdist_wheel --plat-name manylinux1_x86_64 --universal
+    - GMSH_SETUP_DIR=../utils/pypi/gmsh-nox-dev GMSH_SDK_DIR=_CPack_Packages/Linux/TGZ/gmsh-nox-git-Linux64-sdk/ python3 setup-wheel.py build bdist_wheel --plat-name manylinux1_x86_64 --universal
+    - GMSH_SETUP_DIR=../utils/pypi/gmsh-dev GMSH_SDK_DIR=_CPack_Packages/CYGWIN/ZIP/gmsh-git-Windows64-sdk/ python3 setup-whl.py build bdist_wheel --plat-name win_amd64 --universal
+    - GMSH_SETUP_DIR=../utils/pypi/gmsh-dev GMSH_SDK_DIR=_CPack_Packages/Darwin/TGZ/gmsh-git-MacOSX-sdk/ python3 setup-whl.py build bdist_wheel --plat-name macosx_10_15_x86_64 --universal
+#    - twine upload --repository testpypi dist/*
+  tags:
+    - linux64
+    - docker
+  except:
+    - tags
+
+.pypi_official_release:
   stage: .post
   image: onelab/ubuntu20.04
   only:
     - master@gmsh/gmsh
+  dependencies:
+    - linux64-sdk_official_release
+    - windows64-sdk_official_release
+    - macos64-sdk_official_release
   before_script:
     - echo "[distutils]" > ~/.pypirc
     - echo "index-servers = pypi" >> ~/.pypirc
@@ -371,99 +438,14 @@ pypi_official_release:
     - echo "username = __token__" >> ~/.pypirc
     - echo "password = $PYPI_TOKEN" >> ~/.pypirc
   script:
-    - mkdir build_pypi
-    - cd build_pypi
-    - cmake -DGMSH_RELEASE=1 ..
-    - cd ../utils/pypi/gmsh
-    - python3 setup.py sdist
-    - twine upload dist/*
-    - cd ../gmsh-dev
-    - python3 setup.py sdist
+    - cd build
+    - VERSION=`cat version.txt`
+    - GMSH_SETUP_DIR=../utils/pypi/gmsh GMSH_SDK_DIR=_CPack_Packages/Linux/TGZ/gmsh-${VERSION}-Linux64-sdk/ python3 setup-wheel.py build bdist_wheel --plat-name manylinux1_x86_64 --universal
+    - GMSH_SETUP_DIR=../utils/pypi/gmsh GMSH_SDK_DIR=_CPack_Packages/CYGWIN/ZIP/gmsh-${VERSION}-Windows64-sdk/ python3 setup-whl.py build bdist_wheel --plat-name win_amd64 --universal
+    - GMSH_SETUP_DIR=../utils/pypi/gmsh GMSH_SDK_DIR=_CPack_Packages/Darwin/TGZ/gmsh-${VERSION}-MacOSX-sdk/ python3 setup-whl.py build bdist_wheel --plat-name macosx_10_15_x86_64 --universal
     - twine upload dist/*
   tags:
     - linux64
     - docker
   only:
     - /^gmsh_.*$/
-
-
-# 
-# JON WIP
-#
-
-linux64-sdk_wheel_tmp:
-  image: onelab/debian.stretch.64bit
-  variables:
-    EXTRA_OPTION: "-DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1 -DCMAKE_EXE_LINKER_FLAGS=-static-libstdc++"
-  script:
-    - mkdir build
-    - cd build
-    - cmake -DGMSH_HOST=gmsh.info -DENABLE_OPENMP=0 -DENABLE_PETSC=1 -DPETSC_ARCH=real_mumps_seq -DPETSC_DIR=/petsc-3.14.4 ${EXTRA_OPTION} ..
-    - make package -j 8
-  artifacts:
-    paths:
-      - build/_CPack_Packages/Linux/TGZ/gmsh-git-Linux64-sdk/
-      - build/setup-whl.py
-    expire_in: 1day
-  tags:
-    - linux64
-    - docker
-
-windows64-sdk_wheel_tmp:
-  variables:
-    EXTRA_OPTION: "-DENABLE_OS_SPECIFIC_INSTALL=0 -DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1"
-  script:
-    - md build
-    - cd build
-    - c:\cygwin64\bin\bash -c "/usr/bin/cmake -DGMSH_HOST=gmsh.info -DENABLE_OPENMP=1 -DCMAKE_PREFIX_PATH='/usr/local;/usr/x86_64-w64-mingw32/sys-root/mingw' -DCMAKE_C_COMPILER=/usr/bin/x86_64-w64-mingw32-gcc.exe -DCMAKE_CXX_COMPILER=/usr/bin/x86_64-w64-mingw32-g++.exe -DCMAKE_Fortran_COMPILER=/usr/bin/x86_64-w64-mingw32-gfortran.exe -DCMAKE_RC_COMPILER=/usr/bin/x86_64-w64-mingw32-windres.exe -DENABLE_OS_SPECIFIC_INSTALL=1 -DENABLE_PETSC=1 -DPETSC_ARCH=real_mumps_seq -DPETSC_DIR=/home/geuzaine/src/petsc ${EXTRA_OPTION} .."
-    - c:\cygwin64\bin\bash -c "/usr/bin/make package -j 4"
-  artifacts:
-    paths:
-      - build/_CPack_Packages/CYGWIN/ZIP/gmsh-git-Windows64-sdk/
-    expire_in: 1day
-  tags:
-    - windows64
-
-macos64-sdk_wheel_tmp:
-  variables:
-    EXTRA_OPTION: "-DENABLE_OS_SPECIFIC_INSTALL=0 -DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1"
-  script:
-    - mkdir build
-    - cd build
-    - /usr/local/bin/cmake -DGMSH_HOST=gmsh.info -DENABLE_OPENMP=1 -DENABLE_CAIRO=0 -DENABLE_OS_SPECIFIC_INSTALL=1 -DENABLE_PETSC=1 -DPETSC_ARCH=real_mumps_seq -DPETSC_DIR=/Users/geuzaine/src/petsc ${EXTRA_OPTION} ..
-    - make package -j 4
-  tags:
-    - macos64
-  artifacts:
-    paths:
-      - build/_CPack_Packages/Darwin/TGZ/gmsh-git-MacOSX-sdk/
-    expire_in: 1day
-
-python_wheels: 
-  stage: .post
-  image : immc/seamsh-build:v0.9
-  dependencies:
-    - linux64-sdk_wheel_tmp
-    - windows64-sdk_wheel_tmp
-    - macos64-sdk_wheel_tmp
-  before_script:
-    - echo "[distutils]" > ~/.pypirc
-    - echo "index-servers = testpypi" >> ~/.pypirc
-    - echo "[testpypi]" >> ~/.pypirc
-    - echo "username = __token__" >> ~/.pypirc
-    - echo "password = $TEST_PYPI_TOKEN" >> ~/.pypirc
-  script:
-    - cd build
-    - GMSH_SETUP_DIR=../utils/pypi/gmsh GMSH_SDK_DIR=_CPack_Packages/Linux/TGZ/gmsh-git-Linux64-sdk/ python3 setup-whl.py build bdist_wheel --plat-name manylinux1_x86_64 --universal
-      #- GMSH_SETUP_DIR=../utils/pypi/gmsh GMSH_SDK_DIR=_CPack_Packages/CYGWIN/ZIP/gmsh-git-Windows64-sdk/ python3 setup-whl.py build bdist_wheel --plat-name win_amd64 --universal
-      #- cp -R _CPack_Packages/Darwin _CPack_Packages/Darwin2
-      #- GMSH_SETUP_DIR=../utils/pypi/gmsh GMSH_SDK_DIR=_CPack_Packages/Darwin2/TGZ/gmsh-git-MacOSX-sdk/ python3 setup-whl.py build bdist_wheel --plat-name macosx_10_9_x86_64 --universal
-      #- twine upload --repository testpypi dist/*
-  artifacts:
-    paths:
-      - build/dist
-    expire_in: 1day
-  tags:
-    - linux64
-    - docker
-
