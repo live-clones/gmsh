@@ -8,6 +8,7 @@ set(HMT_SRC
     hblSolveAllHexLayer.cpp
     hblOptimizeGeometry.cpp
     hblBuildInteriorMesh.cpp
+    hblTetOptimize.cpp
     hblGecode.cpp
     TetGenPredicates.cpp
   )

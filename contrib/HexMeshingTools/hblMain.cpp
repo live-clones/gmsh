@@ -484,8 +484,7 @@ namespace hbl {
 
     HblOptions opt;
     opt.dt = &trgls;
-    // opt.extrusion_factor = 1./3.;
-    opt.extrusion_factor = 1./2.;
+    opt.extrusion_factor = CTX::instance()->mesh.hexblAnisotropyFactor;
     if (Msg::GetVerbosity() >= 99) {
       opt.debug = true;
       opt.viz = true;

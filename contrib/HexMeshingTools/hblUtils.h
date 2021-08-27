@@ -17,6 +17,8 @@ class BrepMesh;
 namespace hbl {
   bool getOrderedVerticesFromEdges(id vStart, const std::vector<id2>& edge_pairs, std::vector<id>& orderedVertices);
   bool getOrderedVerticesFromEdges(const std::vector<id2>& edge_pairs, std::vector<id>& orderedVertices);
+  id3 get_smallest_rotation(const id3& vec);
+  id4 get_smallest_rotation(const id4& vec);
   bool system_reduction_using_graph(id n, const std::vector<id2>& equality_constraints, std::vector<id>& old2new, id& nbIndep);
   bool system_reduction_using_graph(id n, const std::vector<id2>& equality_constraints, const std::vector<bool>& toDel, std::vector<id>& old2new, id& nbIndep);
   bool extract_dual_polygon(const BrepMesh& Q, id v, std::vector<id>& adjacentEdgesOrdered);

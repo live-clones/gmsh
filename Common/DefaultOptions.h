@@ -1151,8 +1151,11 @@ StringXNumber MeshOptions_Number[] = {
     "Mesh output format (1: msh, 2: unv, 10: auto, 16: vtk, 19: vrml, 21: mail, "
     "26: pos stat, 27: stl, 28: p3d, 30: mesh, 31: bdf, 32: cgns, 33: med, 34: diff, "
     "38: ir3, 39: inp, 40: ply2, 41: celum, 42: su2, 47: tochnog, 49: neu, 50: matlab)" },
+
   { F|O, "Hexahedra" , opt_mesh_hexahedra , 1. ,
     "Display mesh hexahedra?" },
+  { F|O, "hexblAnisotropyFactor" , opt_mesh_hexbl_anisotropy_factor, 0.66 ,
+    "Anisotropy of the boundary all-hex layer, in range [0,1]. 1 for isotropic hexahedra." },
 
   { F|O, "HighOrderDistCAD", opt_mesh_ho_dist_cad, 0,
     "Try to optimize distance to CAD in high-order optimizer?"},

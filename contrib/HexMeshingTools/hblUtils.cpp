@@ -240,4 +240,25 @@ namespace hbl {
     }
   }
 
+
+  id3 get_smallest_rotation(const id3& vec) {
+    id3 smallest = vec;
+    id3 rot_l = vec;
+    F(i,vec.size()) {
+      std::rotate(rot_l.begin(),rot_l.begin()+1,rot_l.end());
+      if (rot_l < smallest) smallest = rot_l;
+    }
+    return smallest;
+  }
+
+  id4 get_smallest_rotation(const id4& vec) {
+    id4 smallest = vec;
+    id4 rot_l = vec;
+    F(i,vec.size()) {
+      std::rotate(rot_l.begin(),rot_l.begin()+1,rot_l.end());
+      if (rot_l < smallest) smallest = rot_l;
+    }
+    return smallest;
+  }
+
 }

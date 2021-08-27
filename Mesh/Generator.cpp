@@ -1511,7 +1511,7 @@ void GenerateMesh(GModel *m, int ask)
   // Some meshing algorithms require a global background mesh
   // and a guiding field (e.g. cross field + size map)
   QuadqsContextUpdater *qqs = nullptr;
-  if((ask == 1 || ask == 2) 
+  if((ask == 1 || ask == 2 || (ask == 3 && m->getMeshStatus(false) < 2))
       && CTX::instance()->mesh.quadqsSizemapMethod != 5 
       && (CTX::instance()->mesh.algo2d == ALGO_2D_PACK_PRLGRMS ||
         CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT)) {

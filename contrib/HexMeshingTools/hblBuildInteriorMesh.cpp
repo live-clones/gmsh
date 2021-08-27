@@ -23,6 +23,7 @@
 #include "hblUtils.h"
 #include "hblBrepMesh.h"
 #include "hblOptimizeGeometry.h"
+#include "hblTetOptimize.h"
 
 #if defined(HAVE_WINSLOWUNTANGLER)
 #include "winslowUntangler.h"
@@ -1127,6 +1128,40 @@ namespace hbl {
     return true;
   }
 
+  bool buildTetMeshWithSwaps(
+      HblOutput& output,
+      const std::vector<id>& quadFaces) {
+    /* based on Coupez technique, work in progress, not working yet */
+
+    Msg::Info("Build interior tet mesh with swaps ...");
+
+    /* Triangulation of the interior surface */
+    std::vector<id3> tris;
+    bool okt = explicit_triangles_from_quad_faces(output.H, quadFaces, tris);
+    RFC(!okt, "failed to get triangles from quads");
+
+    /* Build a initial tet mesh by connecting all triangles to a initial vertex */
+    id v0 = tris[0][0];
+    vector<id4> tets;
+    F(i,tris.size()) {
+      id a = tris[i][0];
+      id b = tris[i][2];
+      id c = tris[i][1];
+      if (a == v0 || b == v0 || c == v0) continue;
+      tets.push_back({a,b,c,v0});
+    }
+
+    /* Minimize sum(|vol|) to get a valid tet mesh */
+    vector<vec3> points(output.H.vertices.size());
+    F(v,output.H.vertices.size()) points[v] = output.H.vertices[v].pt;
+    bool ok = optimizeTetMeshVolumeWithSwaps(points, tets);
+    if (ok) {
+      output.tetrahedra = tets;
+    }
+
+    return ok;
+  }
+
   bool buildTopologicalTetMesh(
       const HblInput& input,
       HblOptions& opt,
@@ -1404,6 +1439,12 @@ namespace hbl {
       optimizeTetMeshInterior(T);
     }
 
+    if (false) {
+      vector<vec3> points(H.vertices.size());
+      F(v,H.vertices.size()) points[v] = H.vertices[v].pt;
+      optimizeTetMeshVolumeWithSwaps(points, output.tetrahedra);
+    }
+
     output.stats.interiorTetMeshTopoFallback = 1;
 
     return true;
@@ -1606,18 +1647,23 @@ namespace hbl {
     }
 
     /* Try tet meshing of the quad mesh */
-    Msg::Info("Try tet meshing of the interior quad mesh (%li quads) ...", quadFaces.size());
     size_t nbSelfIntersections = 0;
-    bool okt = buildTetMeshFromQuadMesh(output, quadFaces, nbSelfIntersections);
-    if (okt) {
-      Msg::Info("interior successfully meshed with %li tetrahedra", output.tetrahedra.size());
-      output.stats.interiorTetMesh = 1;
-      return true;
+    if (true) {
+      Msg::Info("Try tet meshing of the interior quad mesh (%li quads) ...", quadFaces.size());
+      bool okt = buildTetMeshFromQuadMesh(output, quadFaces, nbSelfIntersections);
+      if (okt) {
+        Msg::Info("interior successfully meshed with %li tetrahedra", output.tetrahedra.size());
+        output.stats.interiorTetMesh = 1;
+        return true;
+      }
+    } else {
+      Msg::Warning("TODOMX: forcing topological tet meshing for dev");
     }
 
     /* Try to reduce thickness, untangle hex layer, then tet mesh */
-    bool local = true;
+    bool local = false;
     if (local) {
+      // not working well yet
       // decreaseHexLayerThicknessAroundSelfIntersections(input, output, quadFaces);
     } else {
       double propSI = double(nbSelfIntersections) / double(2*quadFaces.size());

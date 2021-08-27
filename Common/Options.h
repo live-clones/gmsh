@@ -467,6 +467,7 @@ double opt_mesh_triangles(OPT_ARGS_NUM);
 double opt_mesh_quadrangles(OPT_ARGS_NUM);
 double opt_mesh_tetrahedra(OPT_ARGS_NUM);
 double opt_mesh_hexahedra(OPT_ARGS_NUM);
+double opt_mesh_hexbl_anisotropy_factor(OPT_ARGS_NUM);
 double opt_mesh_prisms(OPT_ARGS_NUM);
 double opt_mesh_pyramids(OPT_ARGS_NUM);
 double opt_mesh_trihedra(OPT_ARGS_NUM);

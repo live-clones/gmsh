@@ -1894,26 +1894,6 @@ namespace hbl {
     {0, 3, 2},
     {3, 1, 2} };
 
-  inline id3 get_smallest_rotation(const id3& vec) {
-    id3 smallest = vec;
-    id3 rot_l = vec;
-    F(i,vec.size()) {
-      std::rotate(rot_l.begin(),rot_l.begin()+1,rot_l.end());
-      if (rot_l < smallest) smallest = rot_l;
-    }
-    return smallest;
-  }
-
-  inline id4 get_smallest_rotation(const id4& vec) {
-    id4 smallest = vec;
-    id4 rot_l = vec;
-    F(i,vec.size()) {
-      std::rotate(rot_l.begin(),rot_l.begin()+1,rot_l.end());
-      if (rot_l < smallest) smallest = rot_l;
-    }
-    return smallest;
-  }
-
   inline id4 hex_face_smallest(const id8& hex, id lf, bool invert) {
     id4 vert = {hex[HEX_FACETS[lf][0]], hex[HEX_FACETS[lf][1]], hex[HEX_FACETS[lf][2]], hex[HEX_FACETS[lf][3]]};
     if (invert) std::reverse(vert.begin(),vert.end());

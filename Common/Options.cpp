@@ -5346,6 +5346,12 @@ double opt_mesh_hexahedra(OPT_ARGS_NUM)
   return CTX::instance()->mesh.hexahedra;
 }
 
+double opt_mesh_hexbl_anisotropy_factor(OPT_ARGS_NUM) {
+  if(action & GMSH_SET)
+    CTX::instance()->mesh.hexblAnisotropyFactor = (double)val;
+  return CTX::instance()->mesh.hexblAnisotropyFactor;
+}
+
 double opt_mesh_prisms(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
