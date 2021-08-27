@@ -32,7 +32,13 @@ Links: [PDF](https://raw.githubusercontent.com/mxncr/mxncr.github.io/master/pdf/
 
         ./gmsh model.step -algo quadqs -algo hexbl -3
 
+The anisotropy of the boundary all-hexahedral layer is controlled by the option:
+
+    Mesh.hexblAnisotropyFactor (0.66 by default, 1 for cube-shaped hexahedra)
+
+
 The mesh size is mainly controlled by the -clscale option.
+
 
 ## Dependencies
 
