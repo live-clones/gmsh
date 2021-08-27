@@ -83,8 +83,8 @@ windows64_msvc_ci:
 # ------------------------------------------
 
 .linux_official: &linux_official
-  only:
-    - master@gmsh/gmsh
+#  only:
+#    - master@gmsh/gmsh
   <<: *ssh_config
   script:
     - mkdir build
@@ -166,8 +166,8 @@ linux64-nox-sdk_official_snapshot:
 # --------------------------------------------
 
 .windows_official: &windows_official
-  only:
-    - master@gmsh/gmsh
+#  only:
+#    - master@gmsh/gmsh
   script:
     - md build
     - cd build
@@ -235,8 +235,8 @@ windows64-sdk_official_release:
 # ------------------------------------------
 
 .macos_official: &macos_official
-  only:
-    - master@gmsh/gmsh
+#  only:
+#    - master@gmsh/gmsh
   script:
     - mkdir build
     - cd build
