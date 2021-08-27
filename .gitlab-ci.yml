@@ -413,8 +413,8 @@ pypi_official_snapshot:
     - cd build
     - GMSH_SETUP_DIR=../utils/pypi/gmsh-dev GMSH_SDK_DIR=_CPack_Packages/Linux/TGZ/gmsh-git-Linux64-sdk/ python3 setup-wheel.py build bdist_wheel --plat-name manylinux1_x86_64 --universal
     - GMSH_SETUP_DIR=../utils/pypi/gmsh-nox-dev GMSH_SDK_DIR=_CPack_Packages/Linux/TGZ/gmsh-nox-git-Linux64-sdk/ python3 setup-wheel.py build bdist_wheel --plat-name manylinux1_x86_64 --universal
-    - GMSH_SETUP_DIR=../utils/pypi/gmsh-dev GMSH_SDK_DIR=_CPack_Packages/CYGWIN/ZIP/gmsh-git-Windows64-sdk/ python3 setup-whl.py build bdist_wheel --plat-name win_amd64 --universal
-    - GMSH_SETUP_DIR=../utils/pypi/gmsh-dev GMSH_SDK_DIR=_CPack_Packages/Darwin/TGZ/gmsh-git-MacOSX-sdk/ python3 setup-whl.py build bdist_wheel --plat-name macosx_10_15_x86_64 --universal
+    - GMSH_SETUP_DIR=../utils/pypi/gmsh-dev GMSH_SDK_DIR=_CPack_Packages/CYGWIN/ZIP/gmsh-git-Windows64-sdk/ python3 setup-wheel.py build bdist_wheel --plat-name win_amd64 --universal
+    - GMSH_SETUP_DIR=../utils/pypi/gmsh-dev GMSH_SDK_DIR=_CPack_Packages/Darwin/TGZ/gmsh-git-MacOSX-sdk/ python3 setup-wheel.py build bdist_wheel --plat-name macosx_10_15_x86_64 --universal
 #    - twine upload --repository testpypi dist/*
   tags:
     - linux64
@@ -441,8 +441,8 @@ pypi_official_snapshot:
     - cd build
     - VERSION=`cat version.txt`
     - GMSH_SETUP_DIR=../utils/pypi/gmsh GMSH_SDK_DIR=_CPack_Packages/Linux/TGZ/gmsh-${VERSION}-Linux64-sdk/ python3 setup-wheel.py build bdist_wheel --plat-name manylinux1_x86_64 --universal
-    - GMSH_SETUP_DIR=../utils/pypi/gmsh GMSH_SDK_DIR=_CPack_Packages/CYGWIN/ZIP/gmsh-${VERSION}-Windows64-sdk/ python3 setup-whl.py build bdist_wheel --plat-name win_amd64 --universal
-    - GMSH_SETUP_DIR=../utils/pypi/gmsh GMSH_SDK_DIR=_CPack_Packages/Darwin/TGZ/gmsh-${VERSION}-MacOSX-sdk/ python3 setup-whl.py build bdist_wheel --plat-name macosx_10_15_x86_64 --universal
+    - GMSH_SETUP_DIR=../utils/pypi/gmsh GMSH_SDK_DIR=_CPack_Packages/CYGWIN/ZIP/gmsh-${VERSION}-Windows64-sdk/ python3 setup-wheel.py build bdist_wheel --plat-name win_amd64 --universal
+    - GMSH_SETUP_DIR=../utils/pypi/gmsh GMSH_SDK_DIR=_CPack_Packages/Darwin/TGZ/gmsh-${VERSION}-MacOSX-sdk/ python3 setup-wheel.py build bdist_wheel --plat-name macosx_10_15_x86_64 --universal
     - twine upload dist/*
   tags:
     - linux64
