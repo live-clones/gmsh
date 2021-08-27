@@ -1045,7 +1045,7 @@ static void elementCutMesh(
         }
         MElement *dom = (match == 3) ? p1 : p2;
         tb->setDomain(dom, (tb->getDomain(0) == copy) ? 0 : 1);
-        bords.push_back(std::pair<MElement *, MElement *>(dom, tb));
+        bords.push_back(std::make_pair(dom, tb));
       }
       borders[1].erase(itr.first, itr.second);
       for(std::size_t i = 0; i < bords.size(); i++) borders[1].insert(bords[i]);
@@ -1129,8 +1129,7 @@ static void elementCutMesh(
       if(physTag) assignLsPhysical(GM, reg, 2, physicals, physTag, lsTag);
       for(int i = 0; i < 2; i++)
         if(tri->getDomain(i))
-          borders[1].insert(
-            std::pair<MElement *, MElement *>(tri->getDomain(i), tri));
+          borders[1].insert(std::make_pair(tri->getDomain(i), tri));
     }
   } break;
   case TYPE_TRI:
@@ -1257,8 +1256,7 @@ static void elementCutMesh(
         assignPhysicals(GM, gePhysicals, reg, 2, physicals, newPhysTags[2], -1);
         for(int i = 0; i < 2; i++)
           if(p1->getDomain(i))
-            borders[1].insert(
-              std::pair<MElement *, MElement *>(p1->getDomain(i), p1));
+            borders[1].insert(std::make_pair(p1->getDomain(i), p1));
       }
       if(poly[1].size()) {
         int n =
@@ -1274,8 +1272,7 @@ static void elementCutMesh(
                         newPhysTags[2], 1);
         for(int i = 0; i < 2; i++)
           if(p2->getDomain(i))
-            borders[1].insert(
-              std::pair<MElement *, MElement *>(p2->getDomain(i), p2));
+            borders[1].insert(std::make_pair(p2->getDomain(i), p2));
       }
       // check for border lines cut earlier along the polygons
       auto itr = borders[0].equal_range(copy);
@@ -1291,7 +1288,7 @@ static void elementCutMesh(
         }
         MElement *dom = (match == 2) ? p1 : p2;
         lb->setDomain(dom, (lb->getDomain(0) == copy) ? 0 : 1);
-        bords.push_back(std::pair<MElement *, MElement *>(dom, lb));
+        bords.push_back(std::make_pair(dom, lb));
       }
       borders[0].erase(itr.first, itr.second);
       for(std::size_t i = 0; i < bords.size(); i++) borders[0].insert(bords[i]);
@@ -1318,8 +1315,7 @@ static void elementCutMesh(
                       lsTag);
       for(int i = 0; i < 2; i++)
         if(copy->getDomain(i))
-          borders[1].insert(
-            std::pair<MElement *, MElement *>(copy->getDomain(i), copy));
+          borders[1].insert(std::make_pair(copy->getDomain(i), copy));
     }
 
     for(std::size_t i = nbL; i < lines.size(); i++) {
@@ -1372,8 +1368,7 @@ static void elementCutMesh(
       if(physTag) assignLsPhysical(GM, reg, 1, physicals, physTag, lsTag);
       for(int i = 0; i < 2; i++)
         if(lin->getDomain(i))
-          borders[0].insert(
-            std::pair<MElement *, MElement *>(lin->getDomain(i), lin));
+          borders[0].insert(std::make_pair(lin->getDomain(i), lin));
     }
   } break;
   case TYPE_LIN: {
@@ -1425,8 +1420,7 @@ static void elementCutMesh(
                         lsTag);
         for(int i = 0; i < 2; i++)
           if(ml->getDomain(i))
-            borders[0].insert(
-              std::pair<MElement *, MElement *>(ml->getDomain(i), ml));
+            borders[0].insert(std::make_pair(ml->getDomain(i), ml));
       }
       if(eParent) {
         copy->setParent(nullptr, false);
@@ -1442,8 +1436,7 @@ static void elementCutMesh(
                       lsTag);
       for(int i = 0; i < 2; i++)
         if(copy->getDomain(i))
-          borders[0].insert(
-            std::pair<MElement *, MElement *>(copy->getDomain(i), copy));
+          borders[0].insert(std::make_pair(copy->getDomain(i), copy));
     }
   } break;
   case TYPE_PNT: {

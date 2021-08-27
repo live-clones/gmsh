@@ -29,7 +29,7 @@ public:
   {
     PyObject *pyge = SWIG_NewPointerObj((void *)ge, SWIGTYPE_p_GEntity, 0);
     PyObject *args = Py_BuildValue("(dddO)", x, y, z, pyge);
-    PyObject *result = PyEval_CallObject(_callback, args);
+    PyObject *result = PyObject_CallObject(_callback, args);
     Py_DECREF(args);
     if(result) {
       double r = PyFloat_AsDouble(result);

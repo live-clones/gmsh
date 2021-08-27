@@ -3,8 +3,8 @@ FROM amd64/debian:stretch
 ENV DEBIAN_FRONTEND noninteractive
 
 # in preparation for when stretch will not be supported anymore...
-# RUN echo "deb http://archive.debian.org/debian buster main" > /etc/apt/sources.list
-# RUN echo "deb http://archive.debian.org/debian-security buster/updates main" >> /etc/apt/sources.list
+# RUN echo "deb http://archive.debian.org/debian stretch main" > /etc/apt/sources.list
+# RUN echo "deb http://archive.debian.org/debian-security stretch/updates main" >> /etc/apt/sources.list
 
 RUN apt-get -o Acquire::Check-Valid-Until=false update && apt-get install -y git make autoconf python curl wget bzip2 gcc g++ texlive texinfo valgrind libgl1-mesa-dev libxi-dev libxmu-dev libxft-dev libxinerama-dev libxcursor-dev libxfixes-dev mesa-common-dev libglu1-mesa-dev zlib1g-dev cmake emacs-nox && apt-get clean
 
@@ -123,7 +123,9 @@ RUN git clone https://github.com/MmgTools/mmg.git && cd mmg && mkdir build && cd
 
 RUN mv /usr/local/lib64/libgfortran.so /usr/local/lib64/libgfortran_DISABLED_FOR_GMSH_STATIC_LINKING.so
 RUN mv /usr/local/lib64/libquadmath.so /usr/local/lib64/libquadmath_DISABLED_FOR_GMSH_STATIC_LINKING.so
-RUN mv /usr/local/lib64/libgomp.so /usr/local/lib64/libgomp_DISABLED_FOR_GMSH_STATIC_LINKING.so
+
+# don't statically link with libgomp - see #1467
+# RUN mv /usr/local/lib64/libgomp.so /usr/local/lib64/libgomp_DISABLED_FOR_GMSH_STATIC_LINKING.so
 
 # -----------------------
 # Minimal Gmsh library

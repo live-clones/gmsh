@@ -7,10 +7,7 @@
 
 #include "cppUtils.h"
 
-
 namespace CppUtils {
   /* Useless function, necessary for legacy compilers ? */
-  void dummy() {
-    return;
-  }
-}
+  void dummy() { return; }
+} // namespace CppUtils

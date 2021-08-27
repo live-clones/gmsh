@@ -11,13 +11,7 @@
 //      Foldover-free maps in 50 lines of code.
 //      Garanzha, V., Kaporin, I., Kudryavtseva, L., Protais, F., Ray, N., &
 //      Sokolov, D. (2021). arXiv preprint arXiv:2102.03069.
-//
-//  whose reference implementation is available at:
-//  https://github.com/ssloy/invertible-maps
-//
-//  The untangler is re-implemented here to avoid the dependencies of the
-//  reference implementation and to use the LBFGS solver available in Gmsh
-//  (ALGLIB). The goal is to have the same behavior.
+//      reference implementation: https://github.com/ssloy/invertible-maps
 
 #include "winslowUntangler.h"
 
@@ -39,104 +33,36 @@
 #include <optimization.h>
 #endif
 
-#if defined(HAVE_EIGEN) && defined(HAVE_ALGLIB)
+#if defined(HAVE_QUADMESHINGTOOLS)
+#include "arrayGeometry.h"
+#include "cppUtils.h"
+#endif
+
+#if defined(HAVE_EIGEN) && defined(HAVE_ALGLIB) &&                             \
+  defined(HAVE_QUADMESHINGTOOLS)
+
+using namespace ArrayGeometry;
 
 namespace WinslowUntangler {
-  /* Copy useful functions from contrib/QuadMeshingTools/arrayGeometry.h
-   * because this functions should work without QUADMESHINGTOOLS module */
 
-  using vec3 = std::array<double, 3>;
-  inline vec3 operator-(const vec3 &a, const vec3 &b)
+  template <size_t D>
+  void bbox_minmax(const std::vector<std::array<double, D> > &points,
+                   std::array<double, D> &bmin, std::array<double, D> &bmax)
   {
-    return {{a[0] - b[0], a[1] - b[1], a[2] - b[2]}};
-  }
-  inline vec3 operator+(const vec3 &a, const vec3 &b)
-  {
-    return {{a[0] + b[0], a[1] + b[1], a[2] + b[2]}};
-  }
-  inline vec3 operator*(const double &a, const vec3 &b)
-  {
-    return {{a * b[0], a * b[1], a * b[2]}};
-  }
-  inline vec3 operator*(const vec3 &a, const double &b)
-  {
-    return {{a[0] * b, a[1] * b, a[2] * b}};
-  }
-  inline double dot(const vec3 &a, const vec3 &b)
-  {
-    return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
-  }
-  inline vec3 cross(const vec3 &a, const vec3 &b)
-  {
-    return {{a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2],
-             a[0] * b[1] - a[1] * b[0]}};
-  }
-  inline double length2(const vec3 &a) { return dot(a, a); }
-  inline double maxAbs(double x, double y, double z)
-  {
-    return std::max(std::abs(x), std::max(std::abs(y), std::abs(z)));
-  }
-  inline double maxAbs(const vec3 &a) { return maxAbs(a[0], a[1], a[2]); }
-  inline void normalizeFast(vec3 &a)
-  {
-    a = 1. / std::sqrt(length2(a)) * a;
-  } /* no check, not safe, not accurate */
-  inline void normalize(vec3 &a)
-  {
-    double amp = maxAbs(a);
-    if(amp == 0.) { return; }
-    a = amp * a;
-    normalizeFast(a);
+    bmin.fill(DBL_MAX);
+    bmax.fill(-DBL_MAX);
+    for(size_t i = 0; i < points.size(); ++i) {
+      for(size_t d = 0; d < D; ++d) {
+        bmin[d] = std::min(points[i][d], bmin[d]);
+        bmax[d] = std::max(points[i][d], bmax[d]);
+      }
+    }
   }
 
-  using vec2 = std::array<double, 2>;
-  inline vec2 operator-(const vec2 &a, const vec2 &b)
-  {
-    return {{a[0] - b[0], a[1] - b[1]}};
-  }
-  inline vec2 operator+(const vec2 &a, const vec2 &b)
-  {
-    return {{a[0] + b[0], a[1] + b[1]}};
-  }
-  inline vec2 operator*(const double &a, const vec2 &b)
-  {
-    return {{a * b[0], a * b[1]}};
-  }
-  inline vec2 operator*(const vec2 &a, const double &b)
-  {
-    return {{a[0] * b, a[1] * b}};
-  }
-  inline double dot(const vec2 &a, const vec2 &b)
-  {
-    return a[0] * b[0] + a[1] * b[1];
-  }
-
-  inline double area(vec2 a, vec2 b, vec2 c)
+  inline double tri_area(vec2 a, vec2 b, vec2 c)
   {
     return .5 * ((b[1] - a[1]) * (b[0] + a[0]) + (c[1] - b[1]) * (c[0] + b[0]) +
                  (a[1] - c[1]) * (a[0] + c[0]));
-  }
-
-  void bbox_minmax(const std::vector<vec3> &points, vec3 &bmin, vec3 &bmax)
-  {
-    bmin = {DBL_MAX, DBL_MAX, DBL_MAX};
-    bmax = {-DBL_MAX, -DBL_MAX, -DBL_MAX};
-    for(size_t i = 0; i < points.size(); ++i)
-      for(size_t d = 0; d < 3; ++d) {
-        bmin[d] = std::min(points[i][d], bmin[d]);
-        bmax[d] = std::max(points[i][d], bmax[d]);
-      }
-  }
-
-  void bbox_minmax(const std::vector<vec2> &points, vec2 &bmin, vec2 &bmax)
-  {
-    bmin = {DBL_MAX, DBL_MAX};
-    bmax = {-DBL_MAX, -DBL_MAX};
-    for(size_t i = 0; i < points.size(); ++i)
-      for(size_t d = 0; d < 2; ++d) {
-        bmin[d] = std::min(points[i][d], bmin[d]);
-        bmax[d] = std::max(points[i][d], bmax[d]);
-      }
   }
 
   double area(const std::vector<std::array<double, 2> > &points,
@@ -144,13 +70,13 @@ namespace WinslowUntangler {
   {
     double sum = 0.;
     for(size_t i = 0; i < triangles.size(); ++i) {
-      sum += area(points[triangles[i][0]], points[triangles[i][1]],
-                  points[triangles[i][2]]);
+      sum += tri_area(points[triangles[i][0]], points[triangles[i][1]],
+                      points[triangles[i][2]]);
     }
     return sum;
   }
 
-  inline double volume(vec3 a, vec3 b, vec3 c, vec3 d)
+  inline double tet_volume(vec3 a, vec3 b, vec3 c, vec3 d)
   {
     return dot((a - d), cross(b - d, c - d)) / 6.;
   }
@@ -160,495 +86,638 @@ namespace WinslowUntangler {
   {
     double sum = 0.;
     for(size_t i = 0; i < tets.size(); ++i) {
-      double tvol = volume(points[tets[i][0]], points[tets[i][1]],
-                           points[tets[i][2]], points[tets[i][3]]);
-      // printf("- tet %li: %.3f\n", i, tvol);
+      double tvol = tet_volume(points[tets[i][0]], points[tets[i][1]],
+                               points[tets[i][2]], points[tets[i][3]]);
       sum += tvol;
     }
     return sum;
   }
 
-  struct UntanglerData2D {
-    double theta = 0.5;
-    double detmin = 0;
-    int ninverted = 0;
+  inline double coef_chi(double D, double eps)
+  {
+    return 0.5 * (D + std::sqrt(eps * eps + D * D));
+  }
+
+  inline double coef_chip(double D, double eps)
+  {
+    return 0.5 + D / (2. * std::sqrt(eps * eps + D * D));
+  }
+
+  // Data of the problem, which are passed to
+  // and updated by the callback in the solver
+  struct UntanglerData {
+    // Parameters
+    size_t dim = 2;
     double eps = 0.;
+    double lambda = 1.;
     std::vector<bool> locked;
+
+    // Data for 2D planar
     std::vector<std::array<uint32_t, 3> > triangles;
-    std::vector<Eigen::Matrix<double, 3, 2> > ref_tri;
-    std::vector<Eigen::Matrix<double, 2, 2> > J;
-    std::vector<Eigen::Matrix<double, 2, 2> > K;
-    std::vector<double> det;
+    std::vector<Eigen::Matrix<double, 3, 2> > tri_normals;
+
+    // Data for 3D volume
+    std::vector<std::array<uint32_t, 4> > tetrahedra;
+    std::vector<Eigen::Matrix<double, 4, 3> > tet_normals;
+
+    // Data updated during computations
+    std::vector<Eigen::Matrix<double, 2, 2> > J_mat_2D;
+    std::vector<Eigen::Matrix<double, 3, 3> > J_mat_3D;
+    std::vector<double> J_det;
+
+    // Stats
+    double J_det_min = 0;
+    int nb_invalid = 0;
+    double energy = 0.;
   };
 
-  void evaluate_jacobian(UntanglerData2D &w, const alglib::real_1d_array &X)
+  double update_jacobian_matrix(size_t t, UntanglerData &w,
+                                const alglib::real_1d_array &X)
   {
-    w.detmin = std::numeric_limits<double>::max();
-    w.ninverted = 0;
-    for(size_t t = 0; t < w.triangles.size(); ++t) {
-      w.J[t].setZero();
-      for(size_t i = 0; i < 2; ++i) {
-        for(size_t j = 0; j < 2; ++j) {
-          for(size_t k = 0; k < 3; ++k) {
-            w.J[t](i, j) += w.ref_tri[t](k, j) * X[2 * w.triangles[t][k] + i];
-          }
-        }
+    if(w.dim == 2) {
+      Eigen::Matrix<double, 2, 3> coords;
+      for(size_t k = 0; k < 3; ++k) {
+        coords(0, k) = X[2 * w.triangles[t][k] + 0];
+        coords(1, k) = X[2 * w.triangles[t][k] + 1];
       }
-      w.det[t] = w.J[t].determinant();
-      w.detmin = std::min(w.detmin, w.det[t]);
-      w.ninverted += (w.det[t] <= 0);
-      // dual basis
-      w.K[t](0, 0) = w.J[t](1, 1);
-      w.K[t](0, 1) = -w.J[t](1, 0);
-      w.K[t](1, 0) = -w.J[t](0, 1);
-      w.K[t](1, 1) = w.J[t](0, 0);
+      w.J_mat_2D[t] = (coords * w.tri_normals[t]).transpose();
+      const double det = w.J_mat_2D[t].determinant();
+      w.J_det[t] = det;
+      return det;
     }
-  }
-
-  inline double chi(double eps, double det)
-  {
-    if(det > 0) return (det + std::sqrt(eps * eps + det * det)) * .5;
-    return .5 * eps * eps / (std::sqrt(eps * eps + det * det) - det);
-  }
-
-  inline double chi_deriv(double eps, double det)
-  {
-    return .5 + det / (2. * std::sqrt(eps * eps + det * det));
-  }
-
-  double evaluate_energy(UntanglerData2D &w, const alglib::real_1d_array &X)
-  {
-    evaluate_jacobian(w, X);
-    double E = 0;
-    for(int t = 0; t < w.triangles.size(); t++) {
-      double chi_ = chi(w.eps, w.det[t]);
-      double f = (w.J[t].transpose() * w.J[t]).trace() / chi_;
-      double g = (1 + std::pow(w.det[t], 2)) / chi_;
-      E += (1. - w.theta) * f + w.theta * g;
+    else if(w.dim == 3) {
+      Eigen::Matrix<double, 3, 4> coords;
+      for(size_t k = 0; k < 4; ++k) {
+        coords(0, k) = X[3 * w.tetrahedra[t][k] + 0];
+        coords(1, k) = X[3 * w.tetrahedra[t][k] + 1];
+        coords(2, k) = X[3 * w.tetrahedra[t][k] + 2];
+      }
+      w.J_mat_3D[t] = (coords * w.tet_normals[t]).transpose();
+      const double det = w.J_mat_3D[t].determinant();
+      w.J_det[t] = det;
+      // if (det < 0.) {
+      //   DBG(t, det);
+      //   std::cout << "tet_normals" << std::endl;
+      //   std::cout << w.tet_normals[t] << std::endl;
+      //   std::cout << "J" << std::endl;
+      //   std::cout << w.J_mat_3D[t] << std::endl;
+      //   abort();
+      // }
+      return det;
     }
-    if(std::isnan(E)) { E = std::numeric_limits<double>::max(); }
-    return E;
+    return -DBL_MAX;
   }
 
-  void print_array(const alglib::real_1d_array &x, const std::string &name = "")
+  inline void print_array(const alglib::real_1d_array &x,
+                          const std::string &name = "")
   {
     std::cout << name << ": ";
     for(size_t i = 0; i < x.length(); ++i) { std::cout << " " << x[i]; }
     std::cout << std::endl;
   }
 
-  void lbfgs_callback_2D(const alglib::real_1d_array &x, double &func,
-                         alglib::real_1d_array &grad, void *ptr)
+  double compute_energy_and_gradient(UntanglerData &w,
+                                     const alglib::real_1d_array &X,
+                                     alglib::real_1d_array &grad)
   {
-    const size_t DIM = 2;
-    UntanglerData2D *wp = static_cast<UntanglerData2D *>(ptr);
-    UntanglerData2D &w = *wp;
-    for(size_t i = 0; i < grad.length(); ++i) { grad[i] = 0; }
+    // Initial values
+    w.J_det_min = DBL_MAX;
+    w.nb_invalid = 0;
+    double energy = 0.;
+    for(size_t i = 0; i < grad.length(); ++i) grad[i] = 0.;
 
-    func = evaluate_energy(w, x);
+    // Loop over triangle/tet contributions
+    const size_t nElements =
+      (w.dim == 2) ? w.triangles.size() : w.tetrahedra.size();
+    for(size_t t = 0; t < nElements; t++) {
+      // Update jacobian with current triangle coordinates
+      const double det = update_jacobian_matrix(t, w, X);
+      if(det < w.J_det_min) w.J_det_min = det;
+      if(det <= 0.) w.nb_invalid += 1;
 
-    // gradient
-    for(int t = 0; t < w.triangles.size(); t++) {
-      double c1 = chi(w.eps, w.det[t]);
-      double c2 = chi_deriv(w.eps, w.det[t]);
+      // Compute energy contribution from triangle
+      const double chi = coef_chi(det, w.eps);
+      const double chip = coef_chip(det, w.eps);
+      const double f_eps =
+        (w.dim == 2) ?
+          (w.J_mat_2D[t].transpose() * w.J_mat_2D[t]).trace() / chi :
+          (w.J_mat_3D[t].transpose() * w.J_mat_3D[t]).trace() /
+            std::pow(chi, 2. / 3.);
+      const double g_eps = (det * det + 1.) / chi;
+      const double Ec = f_eps + w.lambda * g_eps;
+      energy += Ec;
 
-      double f = (w.J[t].transpose() * w.J[t]).trace() / c1;
-      double g = (1 + std::pow(w.det[t], 2)) / c1;
+      // Compute contribution to global gradient
+      for(size_t i = 0; i < w.dim; ++i) {
+        if(w.dim == 2) { // Planar case
+          Eigen::Vector2d a_i = w.J_mat_2D[t].col(i);
+          Eigen::Vector2d b_i;
+          if(i == 0) {
+            b_i(0) = w.J_mat_2D[t](1, 1);
+            b_i(1) = -w.J_mat_2D[t](0, 1);
+          }
+          else {
+            b_i(0) = -w.J_mat_2D[t](1, 0);
+            b_i(1) = w.J_mat_2D[t](0, 0);
+          };
 
-      for(size_t d = 0; d < DIM; ++d) {
-        vec2 a = {w.J[t](d, 0), w.J[t](d, 1)}; // tangent basis
-        vec2 b = {w.K[t](d, 0), w.K[t](d, 1)}; // dual basis
-        // printf("a=%f %f | b=%f %f | c1=%f c2=%f | f=%f g=%f det=%f\n",
-        //     a[0], a[1], b[0], b[1], c1, c2, f, g, w.det[t]);
-        vec2 dfda = (a * 2. - b * f * c2) * (1. / c1);
-        vec2 dgda = b * (2 * w.det[t] - g * c2) * (1. / c1);
-        for(int i = 0; i < 3; i++) {
-          uint32_t v = w.triangles[t][i];
-          if(!w.locked[v]) {
-            vec2 n = {w.ref_tri[t](i, 0), w.ref_tri[t](i, 1)};
-            grad[v * DIM + d] +=
-              dot((dfda * (1. - w.theta) + dgda * w.theta), n);
-            // printf("---v=%i,dim=%li | dfda=(%f %f), dgda=(%f %f),  G+=%f\n",
-            //     v, d, dfda[0], dfda[1], dgda[0], dgda[1],
-            //     dot((dfda*(1.-w.theta) + dgda*w.theta), n));
+          Eigen::Vector2d dphi_da =
+            2. / chi * a_i -
+            1. / chi *
+              (f_eps * chip - 2. * w.lambda * det + w.lambda * g_eps * chip) *
+              b_i;
+
+          for(size_t k = 0; k < 3; ++k) {
+            uint32_t v = w.triangles[t][k];
+            if(w.locked[v]) continue;
+            double gc = dphi_da.dot(w.tri_normals[t].row(k));
+            grad[2 * v + i] += gc;
+          }
+        }
+        else if(w.dim == 3) { // Volume case
+          Eigen::Vector3d a_i = w.J_mat_3D[t].col(i);
+          Eigen::Vector3d b_i = w.J_mat_3D[t]
+                                  .col((i + 1) % 3)
+                                  .cross(w.J_mat_3D[t].col((i + 2) % 3));
+          Eigen::Vector3d dphi_da =
+            2. / std::pow(chi, 2. / 3.) * a_i -
+            1. / chi *
+              (2. / 3. * f_eps * chip - 2. * w.lambda * det +
+               w.lambda * g_eps * chip) *
+              b_i;
+          for(size_t k = 0; k < 4; ++k) {
+            uint32_t v = w.tetrahedra[t][k];
+            if(w.locked[v]) continue;
+            double gc = dphi_da.dot(w.tet_normals[t].row(k));
+            grad[3 * v + i] += gc;
           }
         }
       }
     }
-    // Msg::Debug("- F = %f:", func);
-    // print_array(x,"X");
-    // print_array(grad,"gradient");
+
+    if(std::isnan(energy)) energy = std::numeric_limits<double>::max();
+    w.energy = energy;
+    return energy;
   }
 
-  struct UntanglerData3D {
-    double theta = 0.5;
-    double detmin = 0;
-    int ninverted = 0;
-    double eps = 1.e-3;
-    std::vector<bool> locked;
-    std::vector<std::array<uint32_t, 4> > tets;
-    std::vector<std::array<vec3, 4> > ref_tets;
-    std::vector<Eigen::Matrix<double, 3, 3> > J;
-    std::vector<Eigen::Matrix<double, 3, 3> > K;
-    std::vector<double> det;
-  };
+  void lbfgs_callback(const alglib::real_1d_array &x, double &f,
+                      alglib::real_1d_array &grad, void *ptr)
+  {
+    UntanglerData *wp = static_cast<UntanglerData *>(ptr);
+    UntanglerData &w = *wp;
+    f = compute_energy_and_gradient(w, x, grad);
+  }
 
-  bool prepareReferenceTets(
+  bool prepareData2D(
+    const std::vector<std::array<double, 2> > &points,
+    const std::vector<bool> &locked,
+    const std::vector<std::array<uint32_t, 3> > &tris,
+    const std::vector<std::array<std::array<double, 2>, 3> > &triIdealShapes,
+    UntanglerData &data)
+  {
+    if(triIdealShapes.size() != 0 &&
+       triIdealShapes.size() != (size_t)tris.size()) {
+      Msg::Error(
+        "Winslow untangler 2D: incoherent sizes in triangles / triIdealShapes");
+      return false;
+    }
+    data.dim = 2;
+    data.triangles = tris;
+    data.locked = locked;
+    data.J_mat_2D.resize(tris.size());
+    data.J_det.resize(tris.size(), 0.);
+    data.tri_normals.resize(tris.size());
+    double avg_tri_area = area(points, tris) / double(tris.size());
+    if(avg_tri_area <= 0) {
+      Msg::Warning(
+        "Winslow untangler 2D: average triangle area is negative: %.3e",
+        avg_tri_area);
+    }
+
+    // Build equilateral triangle centered in origin
+    // with unit area
+    vec2 equi[3] = {{1., 0.},
+                    {cos(2. * M_PI / 3.), sin(2 * M_PI / 3.)},
+                    {cos(4. * M_PI / 3.), sin(4 * M_PI / 3.)}};
+    double equi_area = tri_area(equi[0], equi[1], equi[2]);
+    for(size_t lv = 0; lv < 3; ++lv) {
+      equi[lv] = equi[lv] * (1. / std::sqrt(equi_area));
+    }
+
+    double avg_ideal_vol = 1.;
+    if(triIdealShapes.size() > 0.) {
+      for(size_t t = 0; t < triIdealShapes.size(); ++t) {
+        double area = tri_area(triIdealShapes[t][0], triIdealShapes[t][1],
+                               triIdealShapes[t][2]);
+        avg_ideal_vol += area;
+      }
+      avg_ideal_vol /= double(triIdealShapes.size());
+    }
+
+    // Build ideal triangle normals
+    const vec3 N = {0, 0, 1};
+    for(size_t t = 0; t < tris.size(); ++t) {
+      vec2 shape[3] = {equi[0], equi[1], equi[2]};
+      if(triIdealShapes.size() > 0.) {
+        shape[0] = triIdealShapes[t][0];
+        shape[1] = triIdealShapes[t][1];
+        shape[2] = triIdealShapes[t][2];
+      }
+
+      for(size_t lv = 0; lv < 3; ++lv) {
+        shape[lv] =
+          shape[lv] * (1. / std::sqrt(avg_ideal_vol) * std::sqrt(avg_tri_area));
+      }
+
+      double area = tri_area(shape[0], shape[1], shape[2]);
+      if(std::isnan(area)) {
+        Msg::Warning("Winslow untangler 2D: area of ideal shape for tri %li: "
+                     "%f, cancel smoothing",
+                     t, area);
+        return false;
+      }
+      else if(area <= 0.) {
+        Msg::Warning(
+          "Winslow untangler 2D: area of ideal shape for tri %li: %f", t, area);
+      }
+
+      // Compute normals
+      for(size_t le = 0; le < 3; ++le) {
+        vec2 td = (shape[(le + 1) % 3] - shape[le]);
+        vec3 n = cross(std::array<double, 3>{td[0], td[1], 0.}, N) *
+                 (1. / (2. * avg_tri_area));
+
+        data.tri_normals[t](le, 0) = n[0];
+        data.tri_normals[t](le, 1) = n[1];
+      }
+    }
+
+    // Update jacobian matrices with current triangle coordinates
+    alglib::real_1d_array x0;
+    x0.setcontent(2 * points.size(), points.front().data());
+    data.J_det_min = DBL_MAX;
+    data.nb_invalid = 0;
+    data.energy = 0.;
+    for(size_t t = 0; t < data.triangles.size(); t++) {
+      const double det = update_jacobian_matrix(t, data, x0);
+      if(det < data.J_det_min) data.J_det_min = det;
+      if(det <= 0.) data.nb_invalid += 1;
+    }
+    data.eps =
+      std::sqrt(1.e-12 + 0.04 * std::pow(std::min(data.J_det_min, 0.), 2));
+
+    // Compute initial energy
+    for(size_t t = 0; t < data.triangles.size(); t++) {
+      const double det = data.J_det[t];
+      const double chi = coef_chi(det, data.eps);
+      const double chip = coef_chip(det, data.eps);
+      const double f_eps =
+        (data.J_mat_2D[t].transpose() * data.J_mat_2D[t]).trace() / chi;
+      const double g_eps = (det * det + 1.) / chi;
+      const double Ec = f_eps + data.lambda * g_eps;
+      data.energy += Ec;
+    }
+
+    return true;
+  }
+
+  bool prepareData3D(
     const std::vector<std::array<double, 3> > &points,
+    const std::vector<bool> &locked,
     const std::vector<std::array<uint32_t, 4> > &tets,
     const std::vector<std::array<std::array<double, 3>, 4> > &tetIdealShapes,
-    UntanglerData3D &w)
-  { // prepare the reference tetrahedron
-    constexpr int facet_vertex[4][3] = {
-      {1, 3, 2}, {0, 2, 3}, {3, 1, 0}, {0, 1, 2}};
-    w.ref_tets.resize(tetIdealShapes.size());
+    UntanglerData &data)
+  {
     if(tetIdealShapes.size() != 0 &&
        tetIdealShapes.size() != (size_t)tets.size()) {
       Msg::Error(
-        "Winslow untangler 3D: incoherent sizes in prepareReferenceTets");
+        "Winslow untangler 3D: incoherent sizes in tets / tetIdealShapes");
+      return false;
+    }
+    data.dim = 3;
+    data.tetrahedra = tets;
+    data.locked = locked;
+    data.J_mat_3D.resize(tets.size());
+    data.J_det.resize(tets.size(), 0.);
+    data.tet_normals.resize(tets.size());
+    double avg_tet_vol = volume(points, tets) / double(tets.size());
+    if(avg_tet_vol <= 0) {
+      Msg::Warning("Winslow untangler 3D: average tet area is negative: %.3e",
+                   avg_tet_vol);
+    }
+
+    // Build regular tet centered in origin
+    // with unit volume
+    vec3 equi[4] = {{.5, 0, -1. / (2. * std::sqrt(2.))},
+                    {-.5, 0, -1. / (2. * std::sqrt(2.))},
+                    {0, .5, 1. / (2. * std::sqrt(2.))},
+                    {0, -.5, 1. / (2. * std::sqrt(2.))}};
+    double reg_vol = tet_volume(equi[0], equi[1], equi[2], equi[3]);
+    for(size_t lv = 0; lv < 4; ++lv) {
+      equi[lv] = equi[lv] * (1. / std::pow(reg_vol, 1. / 3.));
+    }
+
+    constexpr int facet_vertex[4][3] = {
+      {1, 3, 2}, {0, 2, 3}, {3, 1, 0}, {0, 1, 2}};
+
+    double avg_ideal_vol = 1.;
+    if(tetIdealShapes.size() > 0.) {
+      for(size_t t = 0; t < tetIdealShapes.size(); ++t) {
+        avg_ideal_vol += tet_volume(tetIdealShapes[t][0], tetIdealShapes[t][1],
+                                    tetIdealShapes[t][2], tetIdealShapes[t][3]);
+      }
+      avg_ideal_vol /= double(tetIdealShapes.size());
+    }
+
+    // Build ideal tet normals
+    for(size_t t = 0; t < tets.size(); ++t) {
+      vec3 shape[4] = {equi[0], equi[1], equi[2], equi[3]};
+      if(tetIdealShapes.size() > 0.) {
+        shape[0] = tetIdealShapes[t][0];
+        shape[1] = tetIdealShapes[t][1];
+        shape[2] = tetIdealShapes[t][2];
+        shape[3] = tetIdealShapes[t][3];
+      }
+
+      for(size_t lv = 0; lv < 4; ++lv) {
+        shape[lv] = shape[lv] * (1. / std::pow(avg_ideal_vol, 1. / 3.) *
+                                 std::pow(avg_tet_vol, 1. / 3.));
+      }
+
+      double vol = tet_volume(shape[0], shape[1], shape[2], shape[3]);
+      if(std::isnan(vol)) {
+        Msg::Warning("Winslow untangler 3D: volume of ideal shape for tet %li: "
+                     "%f, cancel smoothing",
+                     t, vol);
+        return false;
+      }
+      else if(vol < 0.) {
+        Msg::Warning(
+          "Winslow untangler 3D: volume of ideal shape for tet %li: %f", t,
+          vol);
+      }
+
+      // Compute normals
+      for(size_t lf = 0; lf < 4; ++lf) {
+        vec3 e0 = shape[facet_vertex[lf][1]] - shape[facet_vertex[lf][0]];
+        vec3 e1 = shape[facet_vertex[lf][2]] - shape[facet_vertex[lf][0]];
+        vec3 n = 0.5 * cross(e1, e0) * (1. / (3. * avg_tet_vol));
+
+        data.tet_normals[t](lf, 0) = n[0];
+        data.tet_normals[t](lf, 1) = n[1];
+        data.tet_normals[t](lf, 2) = n[2];
+      }
+    }
+
+    // Update jacobian matrices with current triangle coordinates
+    alglib::real_1d_array x0;
+    x0.setcontent(3 * points.size(), points.front().data());
+    data.J_det_min = DBL_MAX;
+    data.nb_invalid = 0;
+    data.energy = 0.;
+    for(size_t t = 0; t < data.tetrahedra.size(); t++) {
+      const double det = update_jacobian_matrix(t, data, x0);
+      if(det < data.J_det_min) data.J_det_min = det;
+      if(det <= 0.) data.nb_invalid += 1;
+    }
+    data.eps =
+      std::sqrt(1.e-12 + 0.04 * std::pow(std::min(data.J_det_min, 0.), 2));
+
+    // Compute initial energy
+    for(size_t t = 0; t < data.tetrahedra.size(); t++) {
+      const double det = data.J_det[t];
+      const double chi = coef_chi(det, data.eps);
+      const double chip = coef_chip(det, data.eps);
+      const double f_eps =
+        (data.J_mat_3D[t].transpose() * data.J_mat_3D[t]).trace() /
+        std::pow(chi, 2. / 3.);
+      const double g_eps = (det * det + 1.) / chi;
+      const double Ec = f_eps + data.lambda * g_eps;
+      data.energy += Ec;
+    }
+
+    return true;
+  }
+
+  template <size_t D>
+  bool scaleToUnit(
+    std::vector<std::array<double, D> > &points,
+    std::vector<std::array<std::array<double, D>, D + 1> > &idealShapes,
+    std::array<double, D> &bbmin, std::array<double, D> &bbmax)
+  {
+    bbox_minmax(points, bbmin, bbmax);
+    std::array<double, D> center = (bbmin + bbmax) * 0.5;
+    double L = std::max(bbmax[0] - bbmin[0], bbmax[1] - bbmin[1]);
+    if(D == 3) L = std::max(L, bbmax[2] - bbmin[2]);
+
+    for(size_t v = 0; v < points.size(); ++v) {
+      points[v] = (points[v] - center) * (1. / L);
+    }
+    for(size_t e = 0; e < idealShapes.size(); ++e) {
+      for(size_t lv = 0; lv < idealShapes[e].size(); ++lv) {
+        idealShapes[e][lv] = (idealShapes[e][lv] - center) * (1. / L);
+      }
+    }
+    return true;
+  }
+
+  template <size_t D>
+  bool scaleToInitial(std::vector<std::array<double, D> > &points,
+                      std::array<double, D> bbmin, std::array<double, D> bbmax)
+  {
+    std::array<double, D> center = (bbmin + bbmax) * 0.5;
+    double L = std::max(bbmax[0] - bbmin[0], bbmax[1] - bbmin[1]);
+    if(D == 3) L = std::max(L, bbmax[2] - bbmin[2]);
+
+    for(size_t v = 0; v < points.size(); ++v) {
+      points[v] = points[v] * L + center;
+    }
+    return true;
+  }
+
+  // same function for 2D and 3D to avoid redundant code
+  // only the structs of the appropriate dimension are used
+  bool untangle_simplex_elements(
+    size_t dim, std::vector<std::array<double, 2> > &points2D,
+    std::vector<std::array<double, 3> > &points3D,
+    const std::vector<bool> &locked,
+    const std::vector<std::array<uint32_t, 3> > &triangles,
+    const std::vector<std::array<std::array<double, 2>, 3> > &triIdealShapes,
+    const std::vector<std::array<uint32_t, 4> > &tetrahedra,
+    const std::vector<std::array<std::array<double, 3>, 4> > &tetIdealShapes,
+    double lambda, int iterMaxInner, int iterMaxOuter, int iterFailMax,
+    double timeMax)
+  {
+    if(dim != 2 && dim != 3) return false;
+    if(dim == 2 && (points2D.size() == 0 || triangles.size() == 0)) {
+      Msg::Error(
+        "Winslow untangler 2D: wrong input sizes: %li vertices, %li triangles",
+        points2D.size(), triangles.size());
+      return false;
+    }
+    if(dim == 3 && (points3D.size() == 0 || tetrahedra.size() == 0)) {
+      Msg::Error(
+        "Winslow untangler 3D: wrong input sizes: %li vertices, %li tetrahedra",
+        points2D.size(), triangles.size());
       return false;
     }
 
-    double total_vol = volume(points, tets);
-    double volume = total_vol / double(w.tets.size());
+    // Save initial positions, in case they need to be restored
+    bool restore = false;
+    std::vector<std::array<double, 2> > backup2D = points2D;
+    std::vector<std::array<double, 3> > backup3D = points3D;
 
-    for(size_t t = 0; t < tets.size(); ++t) {
-      vec3 tet[4] = {{.5, 0, -1. / (2. * std::sqrt(2.))},
-                     {-.5, 0, -1. / (2. * std::sqrt(2.))},
-                     {0, .5, 1. / (2. * std::sqrt(2.))},
-                     {0, -.5, 1. / (2. * std::sqrt(2.))}};
-      if(tetIdealShapes.size() > 0) {
-        tet[0] = {tetIdealShapes[t][0][0], tetIdealShapes[t][0][1],
-                  tetIdealShapes[t][0][2]};
-        tet[1] = {tetIdealShapes[t][1][0], tetIdealShapes[t][1][1],
-                  tetIdealShapes[t][1][2]};
-        tet[2] = {tetIdealShapes[t][2][0], tetIdealShapes[t][2][1],
-                  tetIdealShapes[t][2][2]};
-        tet[3] = {tetIdealShapes[t][3][0], tetIdealShapes[t][3][1],
-                  tetIdealShapes[t][3][2]};
-      }
-      // scale the tet
-      double a = std::cbrt(volume * 6. * std::sqrt(2.));
-      for(size_t lv = 0; lv < 4; ++lv) { tet[lv] = tet[lv] * a; }
-      // prepare the data for gradient processing: compute the normal vectors
-      for(size_t lf = 0; lf < 4; ++lf) {
-        vec3 e0 = tet[facet_vertex[lf][1]] - tet[facet_vertex[lf][0]];
-        vec3 e1 = tet[facet_vertex[lf][2]] - tet[facet_vertex[lf][0]];
-        w.ref_tets[t][lf] = -1. * (cross(e0, e1) * 0.5) * (1. / (3. * volume));
-      }
+    UntanglerData data;
+    data.lambda = lambda;
+
+    /* Scale the mesh to unit box,
+       Transfer/preprocess data */
+    size_t NV = (dim == 2) ? points2D.size() : points3D.size();
+    vec2 bbmin2D, bbmax2D;
+    vec3 bbmin3D, bbmax3D;
+    if(dim == 2) {
+      auto triIdealShapesS = triIdealShapes;
+      scaleToUnit(points2D, triIdealShapesS, bbmin2D, bbmax2D);
+      bool okp =
+        prepareData2D(points2D, locked, triangles, triIdealShapesS, data);
+      if(!okp) return false;
     }
-    return true;
-  }
+    else if(dim == 3) {
+      auto tetIdealShapesS = tetIdealShapes;
+      scaleToUnit(points3D, tetIdealShapesS, bbmin3D, bbmax3D);
+      bool okp =
+        prepareData3D(points3D, locked, tetrahedra, tetIdealShapesS, data);
+      if(!okp) return false;
+    }
+    double *points =
+      (dim == 2) ? points2D.front().data() : points3D.front().data();
 
-  void evaluate_jacobian(UntanglerData3D &w, const alglib::real_1d_array &X)
-  {
-    // std::cout << "########## EVALUATE JACOBIAN ##########\n";
-    w.detmin = std::numeric_limits<double>::max();
-    w.ninverted = 0;
-    for(size_t t = 0; t < w.tets.size(); ++t) {
-      w.J[t].setZero();
-      for(size_t i = 0; i < 3; ++i) {
-        for(size_t j = 0; j < 3; ++j) {
-          for(size_t k = 0; k < 4; ++k) {
-            w.J[t](i, j) += w.ref_tets[t][k][j] * X[3 * w.tets[t][k] + i];
+    /* Optimization loop */
+    bool converged = false;
+    int nFail = 0;
+    double t0 = Cpu();
+    double E_prev = data.energy;
+    for(int iter = 0; iter < iterMaxOuter; iter++) {
+      // Update regularized epsilon parameter
+      data.eps =
+        std::sqrt(1.e-12 + 0.04 * std::pow(std::min(data.J_det_min, 0.), 2));
+
+      // LBFGS from ALGLIB
+      int lbfgsIter = 0;
+      try {
+        // Copy positions in solver array
+        alglib::real_1d_array x;
+        x.setcontent(dim * NV, points);
+
+        // Setup of the LBFGS solver
+        alglib::ae_int_t N = dim * NV;
+        alglib::ae_int_t corr = 3; // Num of corrections in the scheme in [3,7]
+        alglib::minlbfgsstate state;
+        alglib::minlbfgsreport rep;
+        minlbfgscreate(N, corr, x, state);
+        // LBFGS stopping criteria
+        const double epsg = 0.1;
+        const double epsf = 1.e-12;
+        const double epsx = 1.e-12;
+        minlbfgssetcond(state, epsg, epsf, epsx,
+                        (alglib::ae_int_t)iterMaxInner);
+
+        // Run LBFGS
+        minlbfgsoptimize(state, lbfgs_callback, nullptr, &data);
+
+        // Extract coordinates
+        minlbfgsresults(state, x, rep);
+        for(size_t v = 0; v < NV; ++v) {
+          for(size_t d = 0; d < dim; ++d) {
+            points[dim * v + d] = x[dim * v + d];
           }
         }
+
+        if(rep.terminationtype != 4 && rep.terminationtype != 5) { nFail += 1; }
+        lbfgsIter = rep.iterationscount;
+      } catch(alglib::ap_error e) {
+        Msg::Warning("Winslow untangler, iter %i: Alglib exception thrown in "
+                     "LBFGS step, error: %s",
+                     iter, e.msg.c_str());
+        restore = true;
+        converged = false;
+        nFail += 1;
+        break;
+      } catch(...) {
+        Msg::Warning(
+          "Winslow untangler, iter %i: Alglib exception thrown in LBFGS step",
+          iter);
+        restore = true;
+        converged = false;
+        nFail += 1;
+        break;
       }
-      w.det[t] = w.J[t].determinant();
-      w.detmin = std::min(w.detmin, w.det[t]);
-      w.ninverted += (w.det[t] <= 0);
-      // dual basis
-      auto &Jl = w.J[t];
-      auto &Kl = w.K[t];
-      Kl(0, 0) = Jl(1, 1) * Jl(2, 2) - Jl(1, 2) * Jl(2, 1);
-      Kl(0, 1) = Jl(1, 2) * Jl(2, 0) - Jl(1, 0) * Jl(2, 2);
-      Kl(0, 2) = Jl(1, 0) * Jl(2, 1) - Jl(1, 1) * Jl(2, 0);
 
-      Kl(1, 0) = Jl(0, 2) * Jl(2, 1) - Jl(0, 1) * Jl(2, 2);
-      Kl(1, 1) = Jl(0, 0) * Jl(2, 2) - Jl(0, 2) * Jl(2, 0);
-      Kl(1, 2) = Jl(0, 1) * Jl(2, 0) - Jl(0, 0) * Jl(2, 1);
+      // Check outer loop stopping criteria
+      double dErel =
+        data.energy > 0 ? std::abs(data.energy - E_prev) / data.energy : 0.;
 
-      Kl(2, 0) = Jl(0, 1) * Jl(1, 2) - Jl(0, 2) * Jl(1, 1);
-      Kl(2, 1) = Jl(0, 2) * Jl(1, 0) - Jl(0, 0) * Jl(1, 2);
-      Kl(2, 2) = Jl(0, 0) * Jl(1, 1) - Jl(0, 1) * Jl(1, 0);
-    }
-    // Msg::Debug("- detmin: %f, ninverted = %i", w.detmin, w.ninverted);
-  }
+      Msg::Debug("- iter %i: eps = %f, E: %.3e, dE/E=%.3e, min(detJ)=%f, "
+                 "#(det<0)=%i (LBFGS: %i iters)",
+                 iter, data.eps, data.energy, dErel, data.J_det_min,
+                 data.nb_invalid, lbfgsIter);
 
-  double evaluate_energy(UntanglerData3D &w, const alglib::real_1d_array &X)
-  {
-    // std::cout << "########## EVALUATE ENERGY ##########\n";
-    evaluate_jacobian(w, X);
-    double E = 0;
-    for(int t = 0; t < w.tets.size(); t++) {
-      double chi_ = chi(w.eps, w.det[t]);
-      double f =
-        (w.J[t].transpose() * w.J[t]).trace() / std::pow(chi_, 2. / 3.);
-      double g = (1 + std::pow(w.det[t], 2)) / chi_;
-      E += (1. - w.theta) * f + w.theta * g;
-      // Msg::Debug("-- %i: f=%f g=%f chi=%f --- E += %f", t, f, g, chi_,
-      // (1.-w.theta)*f + w.theta*g);
-    }
-    if(std::isnan(E)) { E = std::numeric_limits<double>::max(); }
-    // Msg::Debug("- energy: %f (eps: %f)", E, w.eps);
-    std::cout << std::flush;
-    return E;
-  }
-
-  void lbfgs_callback_3D(const alglib::real_1d_array &x, double &func,
-                         alglib::real_1d_array &grad, void *ptr)
-  {
-    const size_t DIM = 3;
-    UntanglerData3D *wp = static_cast<UntanglerData3D *>(ptr);
-    UntanglerData3D &w = *wp;
-    for(size_t i = 0; i < grad.length(); ++i) { grad[i] = 0; }
-
-    func = evaluate_energy(w, x);
-
-    // gradient
-    for(int t = 0; t < w.tets.size(); t++) {
-      auto &a = w.J[t];
-      auto &b = w.K[t];
-
-      double c1 = chi(w.eps, w.det[t]);
-      double c2 = std::pow(c1, 2. / 3.);
-      double c3 = chi_deriv(w.eps, w.det[t]);
-      // printf("--t=%i | det=%.3f, c1=%.3f, c2=%.3f,
-      // c3=%.3f\n",t,w.det[t],c1,c2,c3);
-
-      double f = (w.J[t].transpose() * w.J[t]).trace() / c2;
-      double g = (1 + std::pow(w.det[t], 2)) / c1;
-
-      for(size_t d = 0; d < DIM; ++d) {
-        auto dfda =
-          a.row(d) * (2. / c2) - b.row(d) * ((2. * f * c3) / (3. * c1));
-        auto dgda = b.row(d) * ((2 * w.det[t] - g * c3) / c1);
-        for(int i = 0; i < 4; i++) {
-          uint32_t v = w.tets[t][i];
-          if(!w.locked[v]) {
-            Eigen::Vector3d n = {w.ref_tets[t][i][0], w.ref_tets[t][i][1],
-                                 w.ref_tets[t][i][2]};
-            double contrib = (dfda * (1. - w.theta) + dgda * w.theta) * n;
-            grad[v * DIM + d] += contrib;
-
-            // printf("---v=%i,dim=%li | dfda=(%f %f %f), dgda=(%f %f %f),
-            // G+=%f\n",
-            //     v, d, dfda[0], dfda[1], dfda[2], dgda[0], dgda[1], dgda[2],
-            //     contrib);
-          }
-        }
+      if(data.J_det_min > 0 && dErel < 1e-5) {
+        converged = true;
+        Msg::Debug("- iter %i: converged |E-E_prev|/E = %.3e < 1.e-5", iter,
+                   dErel);
+        break;
       }
+      if(nFail > iterFailMax) {
+        Msg::Debug("- iter %i: reached maximum number of failures (%i)", iter,
+                   nFail);
+        break;
+      }
+      if(Cpu() - t0 > timeMax) {
+        Msg::Debug("- iter %i: reached time max (%f sec)", iter, Cpu() - t0);
+        break;
+      }
+      E_prev = data.energy;
     }
-    // Msg::Info("- F = %f:", func);
-    // print_array(x,"X");
-    // print_array(grad,"gradient");
-  }
 
-  bool scaleToBoxSize(std::vector<std::array<double, 2> > &points, vec2 &bbmin,
-                      vec2 &bbmax, double boxsize = 10., double shrink = 1.3)
-  {
-    bbox_minmax(points, bbmin, bbmax);
-    const vec2 unit = {1., 1.};
-    const vec2 center = (bbmin + bbmax) * 0.5;
-    double maxside = std::max(bbmax[0] - bbmin[0], bbmax[1] - bbmin[1]);
-    for(size_t v = 0; v < points.size(); ++v) {
-      points[v] = (points[v] - center) * (boxsize / (shrink * maxside)) +
-                  unit * boxsize * 0.5;
+    /* Scale the mesh to initial size */
+    if(dim == 2) { scaleToInitial(points2D, bbmin2D, bbmax2D); }
+    else if(dim == 3) {
+      scaleToInitial(points3D, bbmin3D, bbmax3D);
     }
-    return true;
-  }
 
-  bool unscale(std::vector<std::array<double, 2> > &points, vec2 bbmin,
-               vec2 bbmax, double boxsize = 10., double shrink = 1.3)
-  {
-    const vec2 unit = {1., 1.};
-    const vec2 center = (bbmin + bbmax) * 0.5;
-    double maxside = std::max(bbmax[0] - bbmin[0], bbmax[1] - bbmin[1]);
-    for(size_t v = 0; v < points.size(); ++v) {
-      points[v] =
-        (points[v] - unit * boxsize * 0.5) * ((shrink * maxside) / boxsize) +
-        center;
+    if(restore) {
+      points2D = backup2D;
+      points3D = backup3D;
     }
-    return true;
-  }
 
-  bool scaleToBoxSize(std::vector<std::array<double, 3> > &points, vec3 &bbmin,
-                      vec3 &bbmax, double boxsize = 10., double shrink = 1.3)
-  {
-    bbox_minmax(points, bbmin, bbmax);
-    const vec3 unit = {1., 1., 1.};
-    const vec3 center = (bbmin + bbmax) * 0.5;
-    double maxside = std::max(bbmax[0] - bbmin[0], bbmax[1] - bbmin[1]);
-    maxside = std::max(maxside, bbmax[2] - bbmin[2]);
-    for(size_t v = 0; v < points.size(); ++v) {
-      points[v] = (points[v] - center) * (boxsize / (shrink * maxside)) +
-                  unit * boxsize * 0.5;
-    }
-    return true;
-  }
-
-  bool unscale(std::vector<std::array<double, 3> > &points, vec3 bbmin,
-               vec3 bbmax, double boxsize = 10., double shrink = 1.3)
-  {
-    const vec3 unit = {1., 1., 1.};
-    const vec3 center = (bbmin + bbmax) * 0.5;
-    double maxside = std::max(bbmax[0] - bbmin[0], bbmax[1] - bbmin[1]);
-    maxside = std::max(maxside, bbmax[2] - bbmin[2]);
-    for(size_t v = 0; v < points.size(); ++v) {
-      points[v] =
-        (points[v] - unit * boxsize * 0.5) * ((shrink * maxside) / boxsize) +
-        center;
-    }
-    return true;
+    return converged;
   }
 } // namespace WinslowUntangler
 
-#endif
-
 using namespace WinslowUntangler;
+
+#endif
 
 bool untangle_triangles_2D(
   std::vector<std::array<double, 2> > &points, const std::vector<bool> &locked,
   const std::vector<std::array<uint32_t, 3> > &triangles,
-  const std::vector<std::array<std::array<double, 3>, 3> > &triIdealShapes,
-  double theta, int iterMaxInner, int iterMaxOuter, int iterFailMax,
+  const std::vector<std::array<std::array<double, 2>, 3> > &triIdealShapes,
+  double lambda, int iterMaxInner, int iterMaxOuter, int iterFailMax,
   double timeMax)
 {
-#if defined(HAVE_EIGEN) && defined(HAVE_ALGLIB)
-
-  const size_t NV = points.size();
-  const size_t NT = triangles.size();
-  if(NV == 0 || NT == 0) {
-    Msg::Error(
-      "Winslow untangler 2D: wrong input sizes: %li vertices, %li triangles",
-      NV, NT);
-    return false;
-    ;
-  }
-
-  vec2 bbmin, bbmax;
-  scaleToBoxSize(points, bbmin, bbmax);
-
-  double total_area = area(points, triangles);
-  double avg_area = total_area / double(triangles.size());
-  Msg::Debug(
-    "Winslow untangler 2D: %li points, %li triangles, total area: %.3f",
-    points.size(), triangles.size(), total_area);
-
-  if(triIdealShapes.size() > 0) {
-    Msg::Warning(
-      "Winslow untangler 2D: ideal triangle shapes not supported yet");
-  }
-
-  // Initialization
-  const size_t DIM = 2;
-  UntanglerData2D w;
-  w.theta = theta;
-  w.locked = locked;
-  w.triangles = triangles;
-  w.ref_tri.resize(NT);
-  w.J.resize(NT);
-  w.K.resize(NT);
-  w.det.resize(NT);
-
-  for(size_t t = 0; t < NT; ++t) {
-    double a = std::sqrt(4 * avg_area / std::sqrt(3.));
-    // equilateral triangle with unit side length (sqrt(3)/4 area): three
-    // non-unit normal vectors
-    double c = a / (-2. * avg_area);
-    w.ref_tri[t] << c * 0., -c * 1., c * std::sqrt(3.) / 2., c * .5,
-      -c * std::sqrt(3.) / 2., c * .5;
-  }
-
-  /* Initialize jacobian computations */
-  alglib::real_1d_array x0;
-  x0.setcontent(DIM * points.size(), points.front().data());
-  double E_prev = evaluate_energy(w, x0);
-
-  /* Optimization loop */
-  double detmin_prev = 0.;
-  int ninverted_prev = 0;
-  int nFail = 0;
-  w.eps = 0;
-  double t0 = Cpu();
-  bool converged = false;
-
-  double e0 = 1.e-3;
-  for(int iter = 0; iter < iterMaxOuter; iter++) {
-    if(iter && iter % 10 == 0 && e0 > 1e-10) e0 /= 2.;
-    w.eps =
-      w.detmin > 0 ? e0 : std::sqrt(e0 * e0 + 0.04 * (w.detmin * w.detmin));
-
-    // Copy positions in solver array
-    alglib::real_1d_array x;
-    x.setcontent(DIM * points.size(), points.front().data());
-
-    // Setup of the LBFGS solver
-    alglib::ae_int_t dim = 2 * NV;
-    alglib::ae_int_t corr = 3; // Num of corrections in the scheme in [3,7]
-    alglib::minlbfgsstate state;
-    alglib::minlbfgsreport rep;
-
-    minlbfgscreate(dim, corr, x, state);
-
-    // stopping criteria
-    const double epsg = 1.e-12;
-    const double epsf = 0.;
-    const double epsx = 0.;
-    const alglib::ae_int_t maxits = iterMaxInner;
-    minlbfgssetcond(state, epsg, epsf, epsx, maxits);
-
-    // run
-    minlbfgsoptimize(state, lbfgs_callback_2D, nullptr, &w);
-
-    // Get results
-    minlbfgsresults(state, x, rep);
-    for(size_t v = 0; v < NV; ++v) {
-      points[v][0] = x[2 * v + 0];
-      points[v][1] = x[2 * v + 1];
-    }
-    if(rep.terminationtype != 4) { nFail += 1; }
-
-    double E = evaluate_energy(w, x);
-    double dErel = std::abs(E - E_prev) / E;
-    Msg::Debug(
-      "- iter %i: eps = %f, E: %.3e, dE/E=%.3e, detmin=%f, ninverted=%i", iter,
-      w.eps, E, dErel, w.detmin, w.ninverted);
-
-    if(w.detmin > 0 && dErel < 1e-5) {
-      converged = true;
-      Msg::Debug("- iter %i: converged |E-E_prev|/E = %.3e < 1.e-5", iter,
-                 dErel);
-      break;
-    }
-
-    if(nFail > iterFailMax) {
-      Msg::Debug("- iter %i: reached maximum number of failures (%i)", iter,
-                 nFail);
-      break;
-    }
-
-    if(Cpu() - t0 > timeMax) {
-      Msg::Debug("- iter %i: reached time max (%f sec)", iter, Cpu() - t0);
-      break;
-    }
-
-    detmin_prev = w.detmin;
-    ninverted_prev = w.ninverted;
-    E_prev = E;
-
-    // TODO try catch around LBFGS ?
-  }
-
-  unscale(points, bbmin, bbmax);
-
-  return converged;
-
+#if defined(HAVE_EIGEN) && defined(HAVE_ALGLIB) &&                             \
+  defined(HAVE_QUADMESHINGTOOLS)
+  std::vector<std::array<double, 3> > points3D;
+  const std::vector<std::array<uint32_t, 4> > tetrahedra;
+  const std::vector<std::array<std::array<double, 3>, 4> > tetIdealShapes;
+  return untangle_simplex_elements(
+    2, points, points3D, locked, triangles, triIdealShapes, tetrahedra,
+    tetIdealShapes, lambda, iterMaxInner, iterMaxOuter, iterFailMax, timeMax);
 #else
-
-  Msg::Error("Winslow untangler requires Eigen and Alglib");
+  Msg::Error(
+    "Winslow untangler requires modules Eigen, Alglib and QuadMeshingTools");
   return false;
-
 #endif
 }
 
@@ -656,131 +725,20 @@ bool untangle_tetrahedra(
   std::vector<std::array<double, 3> > &points, const std::vector<bool> &locked,
   const std::vector<std::array<uint32_t, 4> > &tets,
   const std::vector<std::array<std::array<double, 3>, 4> > &tetIdealShapes,
-  double theta, int iterMaxInner, int iterMaxOuter, int iterFailMax,
+  double lambda, int iterMaxInner, int iterMaxOuter, int iterFailMax,
   double timeMax)
 {
-#if defined(HAVE_EIGEN) && defined(HAVE_ALGLIB)
-
-  const size_t NV = points.size();
-  const size_t NT = tets.size();
-  if(NV == 0 || NT == 0) {
-    Msg::Error(
-      "Winslow untangler 3D: wrong input sizes: %li vertices, %li tets", NV,
-      NT);
-    return false;
-    ;
-  }
-
-  vec3 bbmin, bbmax;
-  scaleToBoxSize(points, bbmin, bbmax);
-
-  double total_vol = volume(points, tets);
-  double avg_vol = total_vol / double(tets.size());
-  Msg::Debug("Winslow untangler 3D: %li points, %li tets, total volume: %.3f",
-             points.size(), tets.size(), total_vol);
-
-  // Initialization
-  const size_t DIM = 3;
-  UntanglerData3D w;
-  w.theta = theta;
-  w.locked = locked;
-  w.tets = tets;
-  w.ref_tets.resize(NT);
-  w.J.resize(NT);
-  w.K.resize(NT);
-  w.det.resize(NT);
-  prepareReferenceTets(points, tets, tetIdealShapes, w);
-
-  /* Initialize jacobian computations */
-  alglib::real_1d_array x0;
-  x0.setcontent(DIM * points.size(), points.front().data());
-  double E_prev = evaluate_energy(w, x0);
-
-  /* Optimization loop */
-  double detmin_prev = 0.;
-  int ninverted_prev = 0;
-  int nFail = 0;
-  w.eps = 0;
-  double t0 = Cpu();
-  bool converged = false;
-
-  double e0 = 1.e-3;
-  for(int iter = 0; iter < iterMaxOuter; iter++) {
-    if(iter && iter % 10 == 0 && e0 > 1e-10) e0 /= 2.;
-    w.eps =
-      w.detmin > 0 ? e0 : std::sqrt(e0 * e0 + 0.04 * (w.detmin * w.detmin));
-
-    // Copy positions in solver array
-    alglib::real_1d_array x;
-    x.setcontent(DIM * points.size(), points.front().data());
-
-    // Setup of the LBFGS solver
-    alglib::ae_int_t N = 3 * NV;
-    alglib::ae_int_t corr = 3; // Num of corrections in the scheme in [3,7]
-    alglib::minlbfgsstate state;
-    alglib::minlbfgsreport rep;
-
-    minlbfgscreate(N, corr, x, state);
-
-    // stopping criteria
-    // TODO: these values may not be optimal / right
-    const double epsg = 0.1;
-    const double epsf = 0.;
-    const double epsx = 0.;
-    const alglib::ae_int_t maxits = iterMaxInner;
-    minlbfgssetcond(state, epsg, epsf, epsx, maxits);
-
-    // run
-    minlbfgsoptimize(state, lbfgs_callback_3D, nullptr, &w);
-
-    // Get results
-    minlbfgsresults(state, x, rep);
-    for(size_t v = 0; v < NV; ++v) {
-      points[v][0] = x[DIM * v + 0];
-      points[v][1] = x[DIM * v + 1];
-      points[v][2] = x[DIM * v + 2];
-    }
-    if(rep.terminationtype != 4) { nFail += 1; }
-
-    double E = evaluate_energy(w, x);
-    double dErel = std::abs(E - E_prev) / E;
-    Msg::Debug(
-      "- iter %i: eps = %f, E: %.3e, dE/E=%.3e, detmin=%f, ninverted=%i", iter,
-      w.eps, E, dErel, w.detmin, w.ninverted);
-
-    if(w.detmin > 0 && dErel < 1e-5) {
-      converged = true;
-      Msg::Debug("- iter %i: converged |E-E_prev|/E = %.3e < 1.e-5", iter,
-                 dErel);
-      break;
-    }
-
-    if(nFail > iterFailMax) {
-      Msg::Debug("- iter %i: reached maximum number of failures (%i)", iter,
-                 nFail);
-      break;
-    }
-
-    if(Cpu() - t0 > timeMax) {
-      Msg::Debug("- iter %i: reached time max (%f sec)", iter, Cpu() - t0);
-      break;
-    }
-
-    detmin_prev = w.detmin;
-    ninverted_prev = w.ninverted;
-    E_prev = E;
-
-    // TODO try catch around LBFGS ?
-  }
-
-  unscale(points, bbmin, bbmax);
-
-  return converged;
-
+#if defined(HAVE_EIGEN) && defined(HAVE_ALGLIB) &&                             \
+  defined(HAVE_QUADMESHINGTOOLS)
+  std::vector<std::array<double, 2> > points2D;
+  const std::vector<std::array<uint32_t, 3> > tris;
+  const std::vector<std::array<std::array<double, 2>, 3> > triIdealShapes;
+  return untangle_simplex_elements(
+    3, points2D, points, locked, tris, triIdealShapes, tets, tetIdealShapes,
+    lambda, iterMaxInner, iterMaxOuter, iterFailMax, timeMax);
 #else
-
-  Msg::Error("Winslow untangler requires Eigen and Alglib");
+  Msg::Error(
+    "Winslow untangler requires modules Eigen, Alglib and QuadMeshingTools");
   return false;
-
 #endif
 }

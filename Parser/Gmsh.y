@@ -6957,7 +6957,7 @@ void ListOfShapes2VectorOfPairs(List_T *list, std::vector<std::pair<int, int> > 
     Shape s;
     List_Read(list, i, &s);
     int dim = s.Type / 100 - 1;
-    if(dim >= 0 && dim <= 3) v.push_back(std::pair<int, int>(dim, s.Num));
+    if(dim >= 0 && dim <= 3) v.push_back(std::make_pair(dim, s.Num));
   }
 }
 
