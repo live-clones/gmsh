@@ -146,6 +146,7 @@ linux64-sdk_official_release:
     paths:
       - build/_CPack_Packages/
       - build/setup-wheel.py
+      - build/version.txt
     expire_in: 1day
 
 linux64-nox-sdk_official_snapshot:
@@ -158,7 +159,6 @@ linux64-nox-sdk_official_snapshot:
   artifacts:
     paths:
       - build/_CPack_Packages/
-      - build/setup-wheel.py
     expire_in: 1day
 
 # --------------------------------------------
@@ -209,7 +209,6 @@ windows64-sdk_official_snapshot:
   artifacts:
     paths:
       - build/_CPack_Packages/
-      - build/setup-wheel.py
     expire_in: 1day
 
 windows64-sdk_official_release:
@@ -227,7 +226,6 @@ windows64-sdk_official_release:
   artifacts:
     paths:
       - build/_CPack_Packages/
-      - build/setup-wheel.py
     expire_in: 1day
 
 # ------------------------------------------
@@ -275,7 +273,6 @@ macos64-sdk_official_snapshot:
   artifacts:
     paths:
       - build/_CPack_Packages/
-      - build/setup-wheel.py
     expire_in: 1day
 
 macos64-sdk_official_release:
@@ -291,7 +288,6 @@ macos64-sdk_official_release:
   artifacts:
     paths:
       - build/_CPack_Packages/
-      - build/setup-wheel.py
     expire_in: 1day
 
 # ----------------------------------------------
@@ -425,6 +421,7 @@ pypi_official_snapshot:
   image: onelab/ubuntu20.04
   only:
     - master@gmsh/gmsh
+  <<: *ssh_config
   dependencies:
     - linux64-sdk_official_release
     - windows64-sdk_official_release
@@ -442,6 +439,7 @@ pypi_official_snapshot:
     - GMSH_SETUP_DIR=../utils/pypi/gmsh GMSH_SDK_DIR=_CPack_Packages/CYGWIN/ZIP/gmsh-${VERSION}-Windows64-sdk/ python3 setup-wheel.py build bdist_wheel --plat-name win_amd64 --universal
     - cp -R _CPack_Packages/Darwin _CPack_Packages/Darwin2
     - GMSH_SETUP_DIR=../utils/pypi/gmsh GMSH_SDK_DIR=_CPack_Packages/Darwin2/TGZ/gmsh-${VERSION}-MacOSX-sdk/ python3 setup-wheel.py build bdist_wheel --plat-name macosx_10_15_x86_64 --universal
+    - scp dist/gmsh*.whl geuzaine@gmsh.info:.wwwgmsh/pypi/gmsh/
     - twine upload dist/*
   tags:
     - linux64
