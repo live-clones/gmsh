@@ -397,9 +397,8 @@ doc_cookbook:
 pypi_official_snapshot:
   stage: .post
   image: onelab/ubuntu20.04
-  only:
+#  only:
 #    - master@gmsh/gmsh
-    - gmsh/gmsh
   <<: *ssh_config
   dependencies:
     - linux64-sdk_official_snapshot
