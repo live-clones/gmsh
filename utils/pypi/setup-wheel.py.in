@@ -49,8 +49,8 @@ else :
     print("library not found")
     exit(1)
 
-data_files = [('lib', list(os.path.join(sdkdir + '/lib', lib) for lib in libs)),
-              ('bin', [os.path.join(sdkdir + '/bin', exe)])]
+data_files = [('lib', list(os.path.join(sdkdir + '/lib', lib) for lib in libs) +
+               [os.path.join(sdkdir + '/bin', exe)])]
 gen_install_list(sdkdir + '/share')
 gen_install_list(sdkdir + '/include')
 
