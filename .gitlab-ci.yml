@@ -397,19 +397,15 @@ doc_cookbook:
 pypi_official_snapshot:
   stage: .post
   image: onelab/ubuntu20.04
-#  only:
+  only:
 #    - master@gmsh/gmsh
+    - gmsh/gmsh
+  <<: *ssh_config
   dependencies:
     - linux64-sdk_official_snapshot
     - linux64-nox-sdk_official_snapshot
     - windows64-sdk_official_snapshot
     - macos64-sdk_official_snapshot
-  before_script:
-    - echo "[distutils]" > ~/.pypirc
-    - echo "index-servers = testpypi" >> ~/.pypirc
-    - echo "[testpypi]" >> ~/.pypirc
-    - echo "username = __token__" >> ~/.pypirc
-    - echo "password = $PYPI_TOKEN" >> ~/.pypirc
   script:
     - cd build
     - GMSH_SETUP_DIR=../utils/pypi/gmsh-dev GMSH_SDK_DIR=_CPack_Packages/Linux/TGZ/gmsh-git-Linux64-sdk/ python3 setup-wheel.py build bdist_wheel --plat-name manylinux1_x86_64 --universal
@@ -417,7 +413,8 @@ pypi_official_snapshot:
     - GMSH_SETUP_DIR=../utils/pypi/gmsh-dev GMSH_SDK_DIR=_CPack_Packages/CYGWIN/ZIP/gmsh-git-Windows64-sdk/ python3 setup-wheel.py build bdist_wheel --plat-name win_amd64 --universal
     - cp -R _CPack_Packages/Darwin _CPack_Packages/Darwin2
     - GMSH_SETUP_DIR=../utils/pypi/gmsh-dev GMSH_SDK_DIR=_CPack_Packages/Darwin2/TGZ/gmsh-git-MacOSX-sdk/ python3 setup-wheel.py build bdist_wheel --plat-name macosx_10_15_x86_64 --universal
-#    - twine upload --repository testpypi dist/*
+    - scp dist/gmsh_dev*.whl geuzaine@gmsh.info:.wwwgmsh/pypi/gmsh-dev/
+    - scp dist/gmsh_nox_dev*.whl geuzaine@gmsh.info:.wwwgmsh/pypi/gmsh-nox-dev/
   tags:
     - linux64
     - docker
