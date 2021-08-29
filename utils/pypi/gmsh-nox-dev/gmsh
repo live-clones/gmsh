@@ -16,9 +16,6 @@ envvar = 'PATH' if 'win' in sys.platform else 'LD_LIBRARY_PATH'
 envval = os.environ[envvar] if envvar in os.environ.keys() else ''
 os.environ[envvar] = libdirname + os.pathsep + envval
 
-# the name of the gmsh exe
-exe = 'gmsh.exe' if 'win' in sys.platform else 'gmsh'
-
 # run the exe
-command = os.path.join(libdirname, exe)
+command = os.path.join(libdirname, 'gmsh')
 subprocess.call([command] + sys.argv[1:])
