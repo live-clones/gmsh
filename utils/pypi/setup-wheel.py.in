@@ -33,24 +33,27 @@ def gen_install_list(subdir):
 libversion = ".".join(version.split(".")[:2])
 
 if os.path.isfile(sdkdir + '/lib/gmsh-' + libversion + '.dll'):
+    libs = [os.path.join(sdkdir, 'lib', 'gmsh.lib'),
+            os.path.join(sdkdir, 'lib', 'gmsh-' + libversion + '.dll'),
+            os.path.join(sdkdir, 'lib', 'gmsh.jl')]
+    exes = [os.path.join(sdkdir, 'bin', 'gmsh.exe')]
     scripts = [os.path.join(setupdir, 'gmsh'),
                os.path.join(setupdir, 'gmsh.bat')]
-    libs = ['gmsh.lib', 'gmsh-' + libversion + '.dll', 'gmsh.jl']
-    exe = 'gmsh.exe'
 elif os.path.isfile(sdkdir + '/lib/libgmsh.so.' + libversion):
+    libs = [os.path.join(sdkdir, 'lib', 'libgmsh.so.' + libversion),
+            os.path.join(sdkdir, 'lib', 'gmsh.jl']
+    exes = [os.path.join(sdkdir, 'bin', 'gmsh')]
     scripts = [os.path.join(setupdir, 'gmsh')]
-    libs = ['libgmsh.so.' + libversion, 'gmsh.jl']
-    exe = 'gmsh'
 elif os.path.isfile(sdkdir + '/lib/libgmsh.' + libversion + '.dylib'):
+    libs = [os.path.join(sdkdir + 'lib', 'libgmsh.' + libversion + '.dylib'),
+            os.path.join(sdkdir + 'lib', 'gmsh.jl')]
+    exes = [os.path.join(sdkdir, 'bin', 'gmsh')]
     scripts = [os.path.join(setupdir, 'gmsh')]
-    libs = ['libgmsh.' + libversion + '.dylib', 'gmsh.jl']
-    exe = 'gmsh'
 else :
     print("library not found")
     exit(1)
 
-data_files = [('lib', list(os.path.join(sdkdir + '/lib', lib) for lib in libs) +
-               [os.path.join(sdkdir + '/bin', exe)])]
+data_files = [('lib', libs + exes), ('bin', scripts)]
 gen_install_list(sdkdir + '/share')
 gen_install_list(sdkdir + '/include')
 
@@ -80,7 +83,6 @@ setuptools.setup(
                    'Programming Language :: C++',
                    'Programming Language :: Python',
                    'Topic :: Scientific/Engineering'],
-    scripts = scripts,
     packages = [''],
-    package_dir = {'': os.path.join(sdkdir + '/lib')},
+    package_dir = {'' : os.path.join(sdkdir + '/lib')},
     data_files = data_files)
