@@ -11,6 +11,7 @@
 #include "hxt_qmbSeparatrice.h"
 #include "hxt_qmbSepGroup.h"
 #include "hxt_qmbMultiBlock.h"
+#include "hxt_qmbFeatureLine.h"
 
 extern "C"{
 #include "hxt_mesh.h"
@@ -25,6 +26,7 @@ class QuadGenerator
   ~QuadGenerator();
   static HXTStatus trianglebasis(HXTMesh *m, uint32_t *vtri, double *U, double *V, double *n);
   HXTStatus hxtWriteSingularities(const char *fileName);
+  HXTStatus hxtWriteFeatureSingularities(const char *fileName);
   HXTStatus hxtWritePatches(const char *fileName);
   HXTStatus hxtWriteCorners(const char *fileName);
   HXTStatus hxtWriteCornerPatches(const char *fileName);
@@ -41,6 +43,7 @@ class QuadGenerator
   HXTStatus computeSeparatrices(double *directionsCR);
   HXTStatus hxtWriteSeparatricesPos(const char *fileName);
   HXTStatus hxtWriteLimitCycleCandidates(std::vector<uint64_t> *limitCycleIDs, const char *fileName);
+  HXTStatus hxtWriteCutters(std::vector<int> *sepCuttersIDs, const char *fileName);
   HXTStatus hxtWriteSavedSeparatrices(const char *fileName);
   HXTStatus hxtWriteEverything(const char *fileName);
   //Split mesh stuff
@@ -65,7 +68,9 @@ class QuadGenerator
   std::vector<Separatrice> m_vectSep;
   std::vector<SepGroup> m_vectGroups;
   std::vector<uint64_t> m_totalElemPatches;
-  std::vector<std::vector<std::array<int, 2>>> m_flaggedTri; 
+  std::vector<std::vector<std::array<int, 2>>> m_flaggedTri;
+  std::vector<FeatureLine> m_vectFeatureLines;
+  uint64_t m_totalNumFlAsSep;
 
   //Methods
   //1. prepareGeoFile stuff
@@ -74,7 +79,10 @@ class QuadGenerator
   HXTStatus loadDirectionFieldLag(HXTEdges *edges, const char *fileName, int nbTurns, double *crossfield);
   int listSingularElements(uint64_t *masterElement, uint64_t *elemFlagged, int *sizeSingularEdges, int *elemOcc);
   int locateSingularity(uint64_t *elemFlagged, uint64_t *singularEdges, int *sizeSingularEdges, int *elemOcc);
-  int getMiddleEdgeCoord(uint64_t globalEdgeNum, std::array<double,3> *coord);
+  int getMiddleEdgeCoord(uint64_t globalEdgeNum, std::array<double,3> *coord); //for planar singularities
+  int getVertexEdgeCoord(uint64_t globalEdgeNum, std::array<double,3> *coord); //for surface singularities
+  bool checkIfPlanar(std::string myGeoFile);
+  // HXTStatus findSingularitiesAndCreatePatches(bool isPlanar);
   HXTStatus findSingularitiesAndCreatePatches();
   int getCornerGlobalVertexInd(std::vector<std::vector<uint64_t>> *boundaryVert2Edg, std::vector<uint64_t> *cornerIndices); 
   int cornerTri(std::vector<uint64_t> cornerIndices,  std::vector<uint64_t> *corner2Tri, int *sizeCorner2Tri);
@@ -90,6 +98,16 @@ class QuadGenerator
   int getCornerIDFromGlobalVert(uint64_t  vertexID);
   HXTStatus createBoundaryLines();
   HXTStatus buildBoundary();
+  HXTStatus initiationFromFeatureSingularity(int ID);
+  HXTStatus getFeatureLineCornerPatch(uint32_t featureCornerNode, std::vector<uint64_t> *patchEnd);
+  int isFeatureNodeExistingSingularity(uint32_t featureNode, int *singularityID);
+  HXTStatus buildFeatureLines();
+  HXTStatus setSingularitiesNormals();
+  int isFeatureLineBoundaryCondition(int flID);
+  HXTStatus saveFeatureLinesAsSeparatrices();
+  HXTStatus hxtWriteFeatureLines(const char *fileName);
+  int seedingFeatureNodeSingularity(int sizeSeed, uint64_t edgToSeed, uint64_t triNum, double *x, int *sizeP, int featureNodeID);
+  int isToCloseToFLineDir(int singularityFeatureNodeID, double *dirInit);
   int closestBranchInTri(uint64_t triNum, uint64_t edgNum, double *coordP, double enteringAngle, double *closestAngle);
   int isToCloseToBndryDir(int cornerID, double *dirInit);
   int seedingCorner(int sizeSeed, uint64_t edgToSeed, uint64_t triNum, double *x, int *sizeP, int cornerID);
@@ -106,7 +124,7 @@ class QuadGenerator
   HXTStatus disableCornerSepDuplicates(int singID);
   HXTStatus saveBdryLinesAsSeparatrices();
   int optimizeSizeofRadius(double *radius);
-  int getCornerIndex(int cornerID, int *index);
+  int getCornerIndex(int cornerID, int *index); 
   int getSingIndex(int singID, int *index);
 
   //2. Generate separatrices
@@ -137,6 +155,8 @@ class QuadGenerator
   HXTStatus removeBouncingSepData();
   HXTStatus buildIntersectionTriValues();
   int findPatchID(uint64_t triNum, uint64_t *patchID);
+  int isSameSepDirection(int sepID1, int sepID2, int mutualPatchID);
+  int isLoopingToItself(int sepID);
   int groupingSep();
   void buildTotalPatches();
   int intersectionNodeForGraph(uint64_t triNum, double *point1, double *point2, double *point3, double *point4, double *newPoint, int *flag);
@@ -147,7 +167,12 @@ class QuadGenerator
   int addInUnsignedintVectIfNotPresent(std::vector<uint64_t> *vect, uint64_t value);
   int isSepEndingOrthogonallyOntheBoundary(int sepID);
   int detectLimitCycleCandidates(std::vector<uint64_t> *limitCycleIDs);
+  int detectLimitCycleCandidatesManifold(std::vector<uint64_t> *limitCycleIDs);
   int cutLimitCycleCandidates(std::vector<uint64_t> *limitCycleIDs);
+  int grabFeatureLinesIDsWhichAreSeparatrices(std::vector<int> *genuineFLSeparatricesIDs);
+  int getLimitCycleCutters(std::vector<uint64_t> *limitCycleIDs, std::vector<int> *sepCuttersIDs, std::vector<std::array<int,3>> *data);
+  int getLimitCycleFirstIntersection(std::vector<uint64_t> *limitCycleIDs, std::vector<int> *sepCuttersIDs,std::vector<std::array<int,3>> *data, std::vector<std::array<int,3>> *dataNew);
+  int cutLimitCycleCandidatesOnManifold(std::vector<uint64_t> *limitCycleIDs, std::vector<int> *sepCuttersIDs, std::vector<std::array<int,3>> *data);
   int solveTangentialCrossingsLimitCycles(std::vector<uint64_t> *limitCycleIDs);
   int solveTangentialCrossings();
   int detectDefectSepAndRepropagate();

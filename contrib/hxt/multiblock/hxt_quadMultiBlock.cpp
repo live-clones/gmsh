@@ -21,6 +21,7 @@ extern "C"
 #include "hxt_qmbSepGroup.h"
 #include "hxt_qmbQuadGenerator.h"
 #include "hxt_qmbMultiBlock.h"
+#include "hxt_qmbFeatureLine.h"
 //gmsh stuff
 #include "gmsh.h"
 
@@ -79,15 +80,26 @@ HXTStatus hxtQuadMultiBlockGetSingInfo(HXTMesh *mesh, int tagCrossField, std::st
     int nAverage=0;
     double sign=1.0;
     for(int t=0; t<2; t++){// for each triangle
-      uint64_t numTri = edges->edg2tri[2*i+t];  
+      uint64_t numTri = edges->edg2tri[2*i+t];
       if (numTri != (uint64_t)-1){
+	int locEdgNum=0;
+	for(int j=0; j<3; j++){
+	  uint32_t edgJ=edges->tri2edg[3*numTri+j];
+	  if(edgJ==i)
+	    locEdgNum=j;
+	}
 	double U[3]={0.}, V[3]={0.}, n[3]={0.};
-	uint32_t vtri[3] = {mesh->triangles.node[3*numTri+0],mesh->triangles.node[3*numTri+1],mesh->triangles.node[3*numTri+2]};
+	uint32_t vtri[3] = {mesh->triangles.node[3*numTri+locEdgNum],mesh->triangles.node[3*numTri+(locEdgNum+1)%3],mesh->triangles.node[3*numTri+(locEdgNum+2)%3]};
 	HXT_CHECK(QuadGenerator::trianglebasis(mesh,vtri,U,V,n));
-	if(n[2]>0)
-	  sign=1.0;
-	else
-	  sign=-1.0;
+	// uint64_t numTri = edges->edg2tri[2*i+t];  
+	// if (numTri != (uint64_t)-1){
+	// 	double U[3]={0.}, V[3]={0.}, n[3]={0.};
+	// 	uint32_t vtri[3] = {mesh->triangles.node[3*numTri+0],mesh->triangles.node[3*numTri+1],mesh->triangles.node[3*numTri+2]};
+	// 	HXT_CHECK(QuadGenerator::trianglebasis(mesh,vtri,U,V,n));
+	// if(n[2]>0)
+	//   sign=1.0;
+	// else
+	//   sign=-1.0;
 	for(int j=0; j<3; j++){
 	  uint32_t edgJ=edges->tri2edg[3*numTri+j];
 	  if(edgJ!=i){
@@ -96,11 +108,18 @@ HXTStatus hxtQuadMultiBlockGetSingInfo(HXTMesh *mesh, int tagCrossField, std::st
 	    double eJ[3] = {v1J[0]-v0J[0],v1J[1]-v0J[1],v1J[2]-v0J[2]};
 	    double normJ = sqrt(eJ[0]*eJ[0]+eJ[1]*eJ[1]+eJ[2]*eJ[2]);
 	    eJ[0] /= normJ; eJ[1] /= normJ; eJ[2] /= normJ;
-	    double alpha = sign*atan2(eJ[1],eJ[0]);
+	    double cosEdgJ=eJ[0]*U[0]+eJ[1]*U[1]+eJ[2]*U[2];
+	    double sinEdgJ=eJ[0]*V[0]+eJ[1]*V[1]+eJ[2]*V[2];
+	    double alpha=atan2(sinEdgJ,cosEdgJ);
 	    double cosEJglob=crossfield[2*edgJ+0]*cos(4.0*alpha)-crossfield[2*edgJ+1]*sin(4.0*alpha);
 	    double sinEJglob=crossfield[2*edgJ+0]*sin(4.0*alpha)+crossfield[2*edgJ+1]*cos(4*alpha);
 	    sumCos+=cosEJglob;
 	    sumSin+=sinEJglob;
+	    // double alpha = sign*atan2(eJ[1],eJ[0]);
+	    // double cosEJglob=crossfield[2*edgJ+0]*cos(4.0*alpha)-crossfield[2*edgJ+1]*sin(4.0*alpha);
+	    // double sinEJglob=crossfield[2*edgJ+0]*sin(4.0*alpha)+crossfield[2*edgJ+1]*cos(4*alpha);
+	    // sumCos+=cosEJglob;
+	    // sumSin+=sinEJglob;
 	    nAverage++;
 	  }
 	}
@@ -155,7 +174,7 @@ HXTStatus hxtQuadMultiBlockGetSingInfo(HXTMesh *mesh, int tagCrossField, std::st
   fclose(myfile);
 
   int nbTurns=4;
-  // double critNorm=0.8; //to be optional from user?
+  //double critNorm=0.8; //to be optional from user?
   double critNorm=0.7;
   int flagTypePos=1;
   const char *fileName="myCrosses.pos";
@@ -342,17 +361,153 @@ HXTStatus hxtQuadMultiBlockSplitWithPrescribedSing(HXTMesh *mesh, int tagCrossFi
   double time;
   int numComponents;
   gmsh::view::getModelData(tagCrossField, 0, dataType, tags, data, time, numComponents);
+  std::vector<std::size_t> allNodesTags;
+  std::vector<double> allCoord;
+  std::vector<double> parametricCoord;
+  gmsh::model::mesh::getNodes(allNodesTags, allCoord, parametricCoord, -1, -1, false, false);
+  
   if (dataType == "ElementData" && tags.size() == mesh->triangles.num){
-    for(uint64_t i=0; i<tags.size(); i++){
+    for(int l=0;l<mesh->triangles.num;l++){
+      int i = l;
+    // for(uint64_t i=0; i<tags.size(); i++){
       if(data[i].size() != 3) {
 	std::cout<<"data size should be 3"<<std::endl;
 	// return false;
       }
+      // std::cout << "------------------------------------" << std::endl;
+      // std::cout << "hxt element: " << l << "/ " << tags.size() << std::endl;
+      // std::cout << "gmsh element: " << i << "/ " << tags.size() << std::endl
+	;
+      int elementType;
+      std::vector<std::size_t> elementNodeTags;
+      gmsh::model::mesh::getElement(tags[i], elementType, elementNodeTags);
+      double coordElemHxt[3]={0.0};
+      double coordElemGmsh[3]={0.0};
+      for(int k=0;k<3;k++){
+	double *coordHxtNodeK=mesh->vertices.coord + 4*mesh->triangles.node[3*l+k];
+	for(int n=0;n<3;n++){
+	  coordElemHxt[n] += coordHxtNodeK[n];
+	}
+      }
+      for(int n=0;n<3;n++){
+	coordElemHxt[n] = coordElemHxt[n]/3.;
+      }
+      // std::cout << "nodes Gmsh:" << std::endl;
+      for(int m=0;m<3;m++){
+	int locIndGmsh=-1;
+	for(int n=0;n<allNodesTags.size();n++){
+	  if(allNodesTags[n]==elementNodeTags[m]){
+	    locIndGmsh=n;
+	    break;
+	  }
+	}
+	if(locIndGmsh==-1){
+	  std::cout << "error finding node in Gmsh msh" << std::endl;
+	  exit(0);
+	}
+	// std::cout << "locIndGmsh: " << locIndGmsh << std::endl;
+	double coordGmshVert[3] = {allCoord[3*locIndGmsh+0],allCoord[3*locIndGmsh+1],allCoord[3*locIndGmsh+2]};
+	// std::cout << coordGmshVert[0] << " / " << coordGmshVert[1] << " / " << coordGmshVert[2] << std::endl;
+
+	for(int n=0;n<3;n++){
+	  coordElemGmsh[n] += allCoord[3*locIndGmsh+n];
+	}
+      }
+      for(int n=0;n<3;n++){
+	coordElemGmsh[n] = coordElemGmsh[n]/3.;
+      }
+      double norm=0.0;
+      for(int n=0;n<3;n++){
+	norm += (coordElemGmsh[n]-coordElemHxt[n])*(coordElemGmsh[n]-coordElemHxt[n]);
+      }
+      norm=sqrt(norm);
+      // std::cout << "norm: " << norm << std::endl;
+      // std::cout << "coorHxt: " << coordElemHxt[0] << " / " << coordElemHxt[1] << " / " << coordElemHxt[2] << std::endl;
+      // std::cout << "coorGmsh: " << coordElemGmsh[0] << " / " << coordElemGmsh[1] << " / " << coordElemGmsh[2] << std::endl;
+      // std::cout << "nodes Hxt:" << std::endl;
+      // std::cout << mesh->vertices.coord[4*mesh->triangles.node[3*l+0]+0] << " / " << mesh->vertices.coord[4*mesh->triangles.node[3*l+0]+1] << " / " << mesh->vertices.coord[4*mesh->triangles.node[3*l+0]+2] << std::endl;
+      // std::cout << mesh->vertices.coord[4*mesh->triangles.node[3*l+1]+0] << " / " << mesh->vertices.coord[4*mesh->triangles.node[3*l+1]+1] << " / " << mesh->vertices.coord[4*mesh->triangles.node[3*l+1]+2] << std::endl;
+      // std::cout << mesh->vertices.coord[4*mesh->triangles.node[3*l+2]+0] << " / " << mesh->vertices.coord[4*mesh->triangles.node[3*l+2]+1] << " / " << mesh->vertices.coord[4*mesh->triangles.node[3*l+2]+2] << std::endl;
+
+      if(norm>1e-8){
+	// std::size_t gmshElementTag;
+	std::vector<std::size_t> gmshElementTags;
+	std::vector<std::size_t> nodeTagsTemp;
+	double u,v,w;
+	int elementTypeTemp;
+	// gmsh::model::mesh::getElementByCoordinates(coordElemHxt[0], coordElemHxt[1], coordElemHxt[2],
+	// 						 gmshElementTag, elementTypeTemp,
+	// 						 nodeTagsTemp, u, v, w, 2, true);
+	gmsh::model::mesh::getElementsByCoordinates(coordElemHxt[0], coordElemHxt[1], coordElemHxt[2],
+						    gmshElementTags, 2, true);
+      
+	// std::cout << "n potential elements: " << gmshElementTags.size() << std::endl;
+	for(size_t nn=0;nn<gmshElementTags.size();nn++){
+	  gmsh::model::mesh::getElement(gmshElementTags[nn], elementType, elementNodeTags);
+	  for(int n=0;n<3;n++){
+	    coordElemGmsh[n] = 0.0;
+	  }
+	  for(int m=0;m<3;m++){
+	    int locIndGmsh=-1;
+	    for(int n=0;n<allNodesTags.size();n++){
+	      if(allNodesTags[n]==elementNodeTags[m]){
+		locIndGmsh=n;
+		break;
+	      }
+	    }
+	    if(locIndGmsh==-1){
+	      std::cout << "error finding node in Gmsh msh" << std::endl;
+	      exit(0);
+	    }
+	    // std::cout << "locIndGmsh: " << locIndGmsh << std::endl;
+	    double coordGmshVert[3] = {allCoord[3*locIndGmsh+0],allCoord[3*locIndGmsh+1],allCoord[3*locIndGmsh+2]};
+	    // std::cout << coordGmshVert[0] << " / " << coordGmshVert[1] << " / " << coordGmshVert[2] << std::endl;
+	    for(int n=0;n<3;n++){
+	      coordElemGmsh[n] += allCoord[3*locIndGmsh+n];
+	    }
+	  }
+	  for(int n=0;n<3;n++){
+	    coordElemGmsh[n] = coordElemGmsh[n]/3.;
+	  }
+	  norm=0.0;
+	  for(int n=0;n<3;n++){
+	    norm += (coordElemGmsh[n]-coordElemHxt[n])*(coordElemGmsh[n]-coordElemHxt[n]);
+	  }
+	  norm=sqrt(norm);
+	  // std::cout << "**** coorGmsh: " << coordElemGmsh[0] << " / " << coordElemGmsh[1] << " / " << coordElemGmsh[2] << std::endl;
+	  // std::cout << "newNorm: " << norm << std::endl;
+	  // std::cout << "current: " << tags[i] << " / found: " << gmshElementTags[nn] << std::endl;
+	  if(norm<1e-12){
+	    for(size_t nnn=0;nnn<tags.size();nnn++){
+	      if(tags[nnn]==gmshElementTags[nn]){
+		i=nnn;
+		break;
+	      }
+	    }
+	    break;
+	  }
+	}
+	// std::cout << "current: " << tags[i] << " / found: " << gmshElementTag << std::endl;
+	// if(tags[i] != gmshElementTags[0]){
+	//   std::cout << "gmsh element not matching" << std::endl;
+	//   exit(0);
+	// }
+
+      }
+      // if(i!=l){
+      // 	std::cout << "we switched element" << std::endl;
+      // 	std::cout << "newGmsh tag is: " << tags[i] << std::endl;
+      // 	// exit(0);
+      // }
+      if(norm>1e-8){
+	std::cout << "problem reading theta from view" << std::endl;
+	exit(0);
+      }
       for(int j=0; j<3; j++){
 	double theta = -(data[i])[j];
-	uint64_t globalEdg = edges->tri2edg[3*i+j];
-	uint32_t v1=mesh->triangles.node[3*i+(j)];
-	uint32_t v2=mesh->triangles.node[3*i+(j+1)%3];
+	uint64_t globalEdg = edges->tri2edg[3*l+j];
+	uint32_t v1=mesh->triangles.node[3*l+(j)];
+	uint32_t v2=mesh->triangles.node[3*l+(j+1)%3];
 	crossfield[2*globalEdg+0] = cos(4.0*theta);
 	crossfield[2*globalEdg+1] = sin(4.0*theta);
       }

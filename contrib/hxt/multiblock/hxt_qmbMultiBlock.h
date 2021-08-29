@@ -100,6 +100,7 @@ class MultiBlock
   int orientateTriNodes(uint64_t triNum, std::vector<std::array<double,3>> *cutPoints, std::vector<uint64_t> cutEdg,std::vector<std::array<double,3>> *orientedPoints);
   int getIndice(std::array<double,3> point, std::vector<std::array<double,3>> vectPoints);
   int computeAlpha(double *u, double *v, double *d, double *alpha);
+  int getTriSingNormal(uint64_t triNum, double *normal);
   int reorderingConnectivityNodes(int *connectedNodes, uint64_t *connectedTri, double *connectedDir, int *offset, int *numOffsets, int *newConnectedNodes,
 				  std::vector<std::vector<int>> *graphConnectedNodes);
   int getConnectivity(uint64_t triNum, int flag, std::vector<std::array<double,3>> cutPoints, std::vector<int> cutSep, std::vector<std::array<double,3>> *orientedPoints,

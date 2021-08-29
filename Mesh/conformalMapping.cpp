@@ -700,7 +700,12 @@ void MyMesh::_computeGaussCurv(){
 		   v2->y() - v->y(),
 		   v2->z() - v->z());
       v02.normalize();
-      double angle = acos(dot(v01,v02));
+      //start commenting
+      double valDot = std::max(-1.0,dot(v01,v02));
+      valDot = std::min(1.0,valDot);
+      // double angle = acos(dot(v01,v02));
+      double angle = acos(valDot);
+      //end commenting
       gaussCurv[v]+=angle;
       patchArea[v]+=t->getVolume();
       cotanL[v]+=t->getEdge((k+1)%3).length()*t->getEdge((k+1)%3).length()/tan(angle);
@@ -873,6 +878,10 @@ bool MyMesh::_isEulerEqualSumSing(const std::set<MVertex *, MVertexPtrLessThan> 
   for(const auto &kv: singIndices){
     sumSing+=((double)kv.second)/4.;
   }
+  std::cout << "intGauss: " << intGauss << std::endl;
+  std::cout << "intGeodesic: " << intGeodesic << std::endl;
+  std::cout << "sumSing: " << sumSing << std::endl;
+  std::cout << "/2PI: " << (intGauss+intGeodesic)/(2*M_PI) << std::endl;
   double checkSum=(intGauss+intGeodesic)/(2*M_PI)-sumSing;
   if(fabs(checkSum)<1e-7){
     return true;
@@ -977,6 +986,7 @@ void MyMesh::computeManifoldBasis(){
       SVector3 dirXplan(0.0);
       SVector3 dirYplan(0.0);
       bool isPlanar=_checkIfPatchPlanar(kP,dirXplan,dirYplan);
+      // if(0){
       if(isPlanar){
 	std::cout << "Patch " << kP << " is planar, generating manifold basis." << std::endl;
 	std::set<MTriangle*, MElementPtrLessThan> tri = trianglesPatchs[kP];
@@ -1602,6 +1612,7 @@ void ConformalMapping::_computeH(){
 	}
       }
     }
+    std::cout << "n sing: " << _currentMesh->singIndices.size() << std::endl;
     //Check if everything matches (geometry characteristics and singularities)
     bool canBeComputed=_currentMesh->_isEulerEqualSumSing(vertices,patchSingIndices);
     if(canBeComputed){
