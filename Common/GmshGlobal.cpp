@@ -29,7 +29,6 @@ typedef unsigned long intptr_t;
 #include "fastScaledCrossField.h"
 #include "meshGFaceHxt.h"
 #include "conformalMapping.h"
-#include "meshQuadAlignIrregularVertices.h"
 
 #if defined(HAVE_PARSER)
 #include "Parser.h"
@@ -407,10 +406,6 @@ int GmshBatch()
       CTX::instance()->batch =0;
       // still a bug in allocation somewhere
       //      exit(result);
-    }
-    else if(CTX::instance()->batch == 70) {
-        // align irregular vertices
-        alignQuadMesh(GModel::current());
     }
 #endif
   }

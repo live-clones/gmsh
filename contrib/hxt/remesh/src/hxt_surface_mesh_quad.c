@@ -1348,7 +1348,8 @@ HXTStatus hxtPointGenQuadRemoveInvalidBoundary_Jacobian(HXTPointGenOptions *opt,
 
     if (t1 == UINT64_MAX) continue;
     if (mesh->triangles.color[t0] != mesh->triangles.color[t1]) continue;
-    if (edges2lines[i] != UINT64_MAX) continue;
+    if (isBoundary[ov0] == 1 && isBoundary[ov1] == 1) continue;
+    //if (edges2lines[i] != UINT64_MAX) continue;
 
     uint32_t newEdge = UINT32_MAX;
     HXT_CHECK(hxtSplitEdgeIndex(mesh,edges,NULL,NULL,i,&newEdge));
@@ -1424,7 +1425,8 @@ HXTStatus hxtPointGenQuadRemoveInvalidBoundary_Jacobian(HXTPointGenOptions *opt,
 
       if (t1 == UINT64_MAX) continue;
       if (mesh->triangles.color[t0] != mesh->triangles.color[t1]) continue;
-      if (edges2lines[ce] != UINT64_MAX) continue;
+      if (isBoundary[v0] == 1 && isBoundary[v1] == 1) continue;
+      //if (edges2lines[ce] != UINT64_MAX) continue;
 
       //uint64_t ot = t0 == i ? t1:t0;
       //if (flagTris[ot] == 0) continue;
@@ -1699,7 +1701,8 @@ HXTStatus hxtPointGenQuadRemoveInvalidBoundary(HXTPointGenOptions *opt,
 
     if (t1 == UINT64_MAX) continue;
     if (mesh->triangles.color[t0] != mesh->triangles.color[t1]) continue;
-    if (edges2lines[i] != UINT64_MAX) continue;
+    if (isBoundary[ov0] == 1 && isBoundary[ov1] == 1) continue;
+    //if (edges2lines[i] != UINT64_MAX) continue;
 
     uint32_t newEdge = UINT32_MAX;
     HXT_CHECK(hxtSplitEdgeIndex(mesh,edges,NULL,NULL,i,&newEdge));
@@ -1775,7 +1778,8 @@ HXTStatus hxtPointGenQuadRemoveInvalidBoundary(HXTPointGenOptions *opt,
 
       if (t1 == UINT64_MAX) continue;
       if (mesh->triangles.color[t0] != mesh->triangles.color[t1]) continue;
-      if (edges2lines[ce] != UINT64_MAX) continue;
+      if (isBoundary[v0] == 1 && isBoundary[v1] == 1) continue;
+      //if (edges2lines[ce] != UINT64_MAX) continue;
 
       //uint64_t ot = t0 == i ? t1:t0;
       //if (flagTris[ot] == 0) continue;
@@ -1844,6 +1848,14 @@ HXTStatus hxtPointGenQuadRemoveInvalidBoundary(HXTPointGenOptions *opt,
   }
 
   // Check for remaining topologically invalid triangle (3 indices same)
+  int countA = 0;
+  for (uint32_t i=0; i<mesh->triangles.num;i++){
+    uint32_t *v = mesh->triangles.node + 3*i;
+    if (bin[v[0]] == bin[v[1]] && bin[v[1]] == bin[v[2]] && bin[v[0]] == bin[v[2]])
+      countA++;
+  }
+  HXT_INFO_COND(opt->verbosity>=1,"    C. %lu topologically invalid triangles remaining",countA);
+
   for (uint32_t i=0; i<mesh->triangles.num;i++){
     uint32_t *v = mesh->triangles.node + 3*i;
     if (bin[v[0]] == bin[v[1]] && bin[v[1]] == bin[v[2]] && bin[v[0]] == bin[v[2]]){

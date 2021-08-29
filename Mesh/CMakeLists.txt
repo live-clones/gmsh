@@ -40,7 +40,6 @@ set(SRC
   meshQuadPatterns.cpp
   meshQuadGeometry.cpp
   meshSurfaceProjection.cpp
-  meshQuadAlignIrregularVertices.cpp
   meshQuadUtils.cpp
 )
 
