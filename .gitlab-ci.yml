@@ -83,8 +83,8 @@ windows64_msvc_ci:
 # ------------------------------------------
 
 .linux_official: &linux_official
-#  only:
-#    - master@gmsh/gmsh
+  only:
+    - master@gmsh/gmsh
   <<: *ssh_config
   script:
     - mkdir build
@@ -166,8 +166,8 @@ linux64-nox-sdk_official_snapshot:
 # --------------------------------------------
 
 .windows_official: &windows_official
-#  only:
-#    - master@gmsh/gmsh
+  only:
+    - master@gmsh/gmsh
   script:
     - md build
     - cd build
@@ -233,8 +233,8 @@ windows64-sdk_official_release:
 # ------------------------------------------
 
 .macos_official: &macos_official
-#  only:
-#    - master@gmsh/gmsh
+  only:
+    - master@gmsh/gmsh
   script:
     - mkdir build
     - cd build
@@ -393,8 +393,8 @@ doc_cookbook:
 pypi_official_snapshot:
   stage: .post
   image: onelab/ubuntu20.04
-#  only:
-#    - master@gmsh/gmsh
+  only:
+    - master@gmsh/gmsh
   <<: *ssh_config
   dependencies:
     - linux64-sdk_official_snapshot
@@ -408,15 +408,15 @@ pypi_official_snapshot:
     - GMSH_SETUP_DIR=../utils/pypi/gmsh-dev GMSH_SDK_DIR=_CPack_Packages/CYGWIN/ZIP/gmsh-git-Windows64-sdk/ python3 setup-wheel.py build bdist_wheel --plat-name win_amd64 --universal
     - cp -R _CPack_Packages/Darwin _CPack_Packages/Darwin2
     - GMSH_SETUP_DIR=../utils/pypi/gmsh-dev GMSH_SDK_DIR=_CPack_Packages/Darwin2/TGZ/gmsh-git-MacOSX-sdk/ python3 setup-wheel.py build bdist_wheel --plat-name macosx_10_15_x86_64 --universal
-    - scp dist/gmsh_dev*.whl geuzaine@gmsh.info:.wwwgmsh/pypi/gmsh-dev/
-    - scp dist/gmsh_nox_dev*.whl geuzaine@gmsh.info:.wwwgmsh/pypi/gmsh-nox-dev/
+    - scp dist/gmsh_dev*.whl geuzaine@gmsh.info:.wwwgmsh/python-packages/gmsh-dev/
+    - scp dist/gmsh_nox_dev*.whl geuzaine@gmsh.info:.wwwgmsh/python-packages/gmsh-nox-dev/
   tags:
     - linux64
     - docker
   except:
     - tags
 
-.pypi_official_release:
+pypi_official_release:
   stage: .post
   image: onelab/ubuntu20.04
   only:
@@ -439,7 +439,7 @@ pypi_official_snapshot:
     - GMSH_SETUP_DIR=../utils/pypi/gmsh GMSH_SDK_DIR=_CPack_Packages/CYGWIN/ZIP/gmsh-${VERSION}-Windows64-sdk/ python3 setup-wheel.py build bdist_wheel --plat-name win_amd64 --universal
     - cp -R _CPack_Packages/Darwin _CPack_Packages/Darwin2
     - GMSH_SETUP_DIR=../utils/pypi/gmsh GMSH_SDK_DIR=_CPack_Packages/Darwin2/TGZ/gmsh-${VERSION}-MacOSX-sdk/ python3 setup-wheel.py build bdist_wheel --plat-name macosx_10_15_x86_64 --universal
-    - scp dist/gmsh*.whl geuzaine@gmsh.info:.wwwgmsh/pypi/gmsh/
+    - scp dist/gmsh*.whl geuzaine@gmsh.info:.wwwgmsh/python-packages/gmsh/
     - twine upload dist/*
   tags:
     - linux64
