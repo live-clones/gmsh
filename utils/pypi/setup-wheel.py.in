@@ -6,7 +6,6 @@
 
 import os
 import setuptools
-import sys
 
 setupdir = os.environ["GMSH_SETUP_DIR"]
 sdkdir = os.environ["GMSH_SDK_DIR"]
@@ -22,13 +21,6 @@ elif '-dev' in setupdir :
 else :
     name = 'gmsh'
     iversion = version
-
-def gen_install_list(subdir):
-    for dirpath, dirs, files in os.walk(subdir):
-        if len(files) != 0:
-            filepaths = [os.path.join(dirpath, f) for f in files]
-            relpath = os.path.relpath(dirpath, sdkdir)
-            data_files.append((relpath, filepaths))
 
 libversion = ".".join(version.split(".")[:2])
 
@@ -53,6 +45,13 @@ else :
     print("library not found")
     exit(1)
 
+def gen_install_list(subdir):
+    for dirpath, dirs, files in os.walk(subdir):
+        if len(files) != 0:
+            filepaths = [os.path.join(dirpath, f) for f in files]
+            relpath = os.path.relpath(dirpath, sdkdir)
+            data_files.append((relpath, filepaths))
+
 data_files = [('lib', libs + exes), ('bin', scripts)]
 gen_install_list(sdkdir + '/share')
 gen_install_list(sdkdir + '/include')
@@ -69,9 +68,10 @@ setuptools.setup(
     maintainer_email = 'cgeuzaine@uliege.be',
     keywords = ['fem', 'mesh', 'finite element method', 'cad'],
     url = 'https://gmsh.info',
-    license = 'GPL-2',
-    platforms='Posix, Windows',
+    license = 'GPLv2+',
+    platforms = 'Posix, Windows',
     classifiers = ['Development Status :: 5 - Production/Stable',
+                   'OSI Approved :: GNU General Public License v2 or later (GPLv2+)',
                    'Intended Audience :: Education',
                    'Intended Audience :: Science/Research',
                    'License :: OSI Approved :: '

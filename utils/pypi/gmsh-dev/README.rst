@@ -16,7 +16,7 @@ or ``gmsh-sdk-git`` packages are uninstalled.
 
 To install ``gmsh-dev``::
 
-    $ pip install -i https://gmsh.info/pypi --force-reinstall --no-cache-dir gmsh-dev
+    $ pip install -i https://gmsh.info/python-packages --force-reinstall --no-cache-dir gmsh-dev
 
 This will download and install the latest development snapshot from
 https://gmsh.info, bypassing the cache. On Linux systems without X windows, use
