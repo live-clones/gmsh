@@ -1613,13 +1613,11 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Common/GmshVersion.h.in
 # the texi and pypi version files are modified in the source directory (not
 # ideal for version.texi, but since git tracks the contents of the file this is
 # acceptable as it will only change when the actual version is changed - not for
-# each git hash; setup.py is not under version control)
+# each git hash)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/doc/texinfo/version.texi.in
                ${CMAKE_CURRENT_SOURCE_DIR}/doc/texinfo/version.texi)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/utils/pypi/gmsh/setup.py.in
-               ${CMAKE_CURRENT_SOURCE_DIR}/utils/pypi/gmsh/setup.py)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/utils/pypi/gmsh-dev/setup.py.in
-               ${CMAKE_CURRENT_SOURCE_DIR}/utils/pypi/gmsh-dev/setup.py)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/utils/pypi/setup-wheel.py.in
+               ${CMAKE_CURRENT_BINARY_DIR}/setup-wheel.py)
 
 file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/version.txt ${GMSH_SHORT_VERSION})
 
