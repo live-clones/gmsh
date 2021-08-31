@@ -1141,9 +1141,9 @@ StringXNumber MeshOptions_Number[] = {
     "Element shrinking factor (between 0 and 1)" },
 
   { F|O, "FirstElementTag" , opt_mesh_first_element_tag , 1. ,
-    "First tag (>= 1) of mesh elements" },
+    "First tag (>= 1) of mesh elements when generating or renumbering a mesh" },
   { F|O, "FirstNodeTag" , opt_mesh_first_node_tag , 1. ,
-    "First tag (>= 1) of mesh nodes" },
+    "First tag (>= 1) of mesh nodes when generating or renumbering a mesh" },
   { F|O, "FlexibleTransfinite" , opt_mesh_flexible_transfinite , 0 ,
     "Allow transfinite constraints to be modified for recombination (e.g. Blossom) or "
     "by global mesh size factor" },

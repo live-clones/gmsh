@@ -71,7 +71,6 @@ setuptools.setup(
     license = 'GPLv2+',
     platforms = 'Posix, Windows',
     classifiers = ['Development Status :: 5 - Production/Stable',
-                   'OSI Approved :: GNU General Public License v2 or later (GPLv2+)',
                    'Intended Audience :: Education',
                    'Intended Audience :: Science/Research',
                    'License :: OSI Approved :: '
@@ -82,6 +81,7 @@ setuptools.setup(
                    'Programming Language :: C',
                    'Programming Language :: C++',
                    'Programming Language :: Python',
+                   'Programming Language :: Julia',
                    'Topic :: Scientific/Engineering'],
     packages = [''],
     package_dir = {'' : os.path.join(sdkdir + '/lib')},
