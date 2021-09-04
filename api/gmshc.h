@@ -1121,10 +1121,16 @@ GMSH_API void gmshModelMeshSetSizeAtParametricPoints(const int dim,
                                                      double * sizes, size_t sizes_n,
                                                      int * ierr);
 
-/* Set a mesh size callback for the current model. The callback should take 5
- * arguments (`dim', `tag', `x', `y' and `z') and return the value of the mesh
- * size at coordinates (`x', `y', `z'). */
-GMSH_API void gmshModelMeshSetSizeCallback(double (*callback)(int dim, int tag, double x, double y, double z, void * data), void * callback_data,
+/* Set a mesh size callback for the current model. The callback function
+ * should take six arguments as input (`dim', `tag', `x', `y', `z' and `lc').
+ * The first two integer arguments correspond to the dimension `dim' and tag
+ * `tag' of the entity being meshed. The next four double precision arguments
+ * correspond to the coordinates `x', `y' and `z' around which to prescribe
+ * the mesh size and to the mesh size `lc' that would be prescribed if the
+ * callback had not been called. The callback function should return a double
+ * precision number specifying the desired mesh size; returning `lc' is
+ * equivalent to a no-op. */
+GMSH_API void gmshModelMeshSetSizeCallback(double (*callback)(int dim, int tag, double x, double y, double z, double lc, void * data), void * callback_data,
                                            int * ierr);
 
 /* Remove the mesh size callback from the current model. */

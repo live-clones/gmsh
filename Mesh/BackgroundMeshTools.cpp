@@ -238,17 +238,15 @@ double BGM_MeshSizeWithoutScaling(GEntity *ge, double U, double V, double X,
                 ((GEdge *)ge)->prescribedMeshSizeAtParam(U) :
                 MAX_LC;
 
+  // take the minimum
+  double lc = std::min(std::min(std::min(std::min(l1, l2), l3), l4), l5);
+
   // lc from callback
-  double l6 = MAX_LC;
   if(GModel::current()->lcCallback) {
     int dim = (ge ? ge->dim() : -1);
     int tag = (ge ? ge->tag() : -1);
-    l6 = GModel::current()->lcCallback(dim, tag, X, Y, Z);
+    lc = GModel::current()->lcCallback(dim, tag, X, Y, Z, lc);
   }
-
-  // take the minimum
-  double lc =
-    std::min(std::min(std::min(std::min(std::min(l1, l2), l3), l4), l5), l6);
 
   return lc;
 }

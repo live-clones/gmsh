@@ -698,7 +698,7 @@ public:
   void computeHomology();
 
   // mesh size callback
-  std::function<double(int, int, double, double, double)> lcCallback;
+  std::function<double(int, int, double, double, double, double)> lcCallback;
 
   // compute automatic sizing field from curvature
   void computeSizeField();

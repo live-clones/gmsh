@@ -4426,7 +4426,7 @@ GMSH_API void gmsh::model::mesh::setSizeAtParametricPoints(
 }
 
 GMSH_API void gmsh::model::mesh::setSizeCallback(
-  std::function<double(int, int, double, double, double)> callback)
+  std::function<double(int, int, double, double, double, double)> callback)
 {
   if(!_checkInit()) return;
   GModel::current()->lcCallback = callback;

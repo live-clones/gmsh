@@ -2874,17 +2874,16 @@ computed using other fields.
 @end itemize
 The list of available fields with their options is given below. An
 example is available in @ref{t10}.
-@item
-Finally, using the Gmsh API you can also specify a global mesh size
-callback in C++, C, Python or Julia using
-@code{gmsh/model/mesh/setSizeCallback} (@pxref{Namespace
-gmsh/model/mesh}).
 @end enumerate
 
 All the aforementioned methods can be used simultaneously, in which case
-the smallest element size is selected at any given point. In addition,
-boundary mesh sizes (on curves or surfaces) are interpolated inside the
-enclosed entity (surface or volume, respectively) if the option
+the smallest element size is selected at any given point.  Using the
+Gmsh API, the resulting value can be further modified using a C++, C,
+Python or Julia mesh size callback function provided via
+@code{gmsh/model/mesh/setSizeCallback} (@pxref{Namespace
+gmsh/model/mesh}). In addition, boundary mesh sizes (on curves or
+surfaces) are interpolated inside the enclosed entity (surface or
+volume, respectively) if the option
 @code{Mesh.MeshSizeExtendFromBoundary} is set (it is by default).
 
 All element sizes are further constrained in the interval [

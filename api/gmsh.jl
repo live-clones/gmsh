@@ -2497,13 +2497,18 @@ const set_size_at_parametric_points = setSizeAtParametricPoints
 """
     gmsh.model.mesh.setSizeCallback(callback)
 
-Set a mesh size callback for the current model. The callback should take 5
-arguments (`dim`, `tag`, `x`, `y` and `z`) and return the value of the mesh size
-at coordinates (`x`, `y`, `z`).
+Set a mesh size callback for the current model. The callback function should
+take six arguments as input (`dim`, `tag`, `x`, `y`, `z` and `lc`). The first
+two integer arguments correspond to the dimension `dim` and tag `tag` of the
+entity being meshed. The next four double precision arguments correspond to the
+coordinates `x`, `y` and `z` around which to prescribe the mesh size and to the
+mesh size `lc` that would be prescribed if the callback had not been called. The
+callback function should return a double precision number specifying the desired
+mesh size; returning `lc` is equivalent to a no-op.
 """
 function setSizeCallback(callback)
-    api_callback__(dim, tag, x, y, z, data) = callback(dim, tag, x, y, z)
-    api_callback_ = @cfunction($api_callback__, Cdouble, (Cint, Cint, Cdouble, Cdouble, Cdouble, Ptr{Cvoid}))
+    api_callback__(dim, tag, x, y, z, lc, data) = callback(dim, tag, x, y, z, lc)
+    api_callback_ = @cfunction($api_callback__, Cdouble, (Cint, Cint, Cdouble, Cdouble, Cdouble, Cdouble, Ptr{Cvoid}))
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshSetSizeCallback, gmsh.lib), Cvoid,
           (Ptr{Cvoid}, Ptr{Cvoid}, Ptr{Cint}),
