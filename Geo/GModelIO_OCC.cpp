@@ -116,6 +116,10 @@
 #include <BRepMesh_FastDiscret.hxx>
 #endif
 
+#if OCC_VERSION_HEX < 0x070400
+#include <ShapeUpgrade_UnifySameDomain.hxx>
+#endif
+
 #if defined(HAVE_OCC_CAF)
 #include <IGESCAFControl_Reader.hxx>
 #include <Quantity_Color.hxx>
@@ -3377,11 +3381,21 @@ bool OCC_Internals::booleanOperator(
       if(CTX::instance()->geom.occUnionUnify) {
         // try to unify faces and edges of the shape (remove internal seams)
         // which lie on the same geometry
+#if OCC_VERSION_HEX < 0x070400
+        result = fuse.Shape();
+        ShapeUpgrade_UnifySameDomain unify(result);
+        unify.Build();
+        result = unify.Shape();
+#else
+        // better, as it preserves the history; TODO: maybe we should also make
+        // this available for the other boolean operations
         fuse.SimplifyResult();
-        // TODO: maybe we should also make this available for the other
-        // operations
+        result = fuse.Shape();
+#endif
       }
-      result = fuse.Shape();
+      else {
+        result = fuse.Shape();
+      }
       TopTools_ListIteratorOfListOfShape it(objectShapes);
       for(; it.More(); it.Next()) {
         mapOriginal.push_back(it.Value());
