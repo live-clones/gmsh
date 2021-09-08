@@ -359,10 +359,10 @@ mesh.add('getNumberOfOrientations', doc, oint, iint('elementType'), istring('fun
 doc = '''Preallocate data before calling `getBasisFunctionsOrientationForElements' with `numTasks' > 1. For C and C++ only.'''
 mesh.add_special('preallocateBasisFunctionsOrientationForElements', doc, ['onlycc++'], None, iint('elementType'), ovectorint('basisFunctionsOrientation'), iint('tag', '-1'))
 
-doc = '''Get the global unique mesh edge identifiers `edgeTags' and orientations `edgeOrientation' for an input list of node tag pairs defining these edges, concatenated in the vector `nodeTags'.'''
+doc = '''Get the global unique mesh edge identifiers `edgeTags' and orientations `edgeOrientation' for an input list of node tag pairs defining these edges, concatenated in the vector `nodeTags'. Mesh edges are created e.g. by `createEdges()' or `getKeysForElements()'.'''
 mesh.add('getEdges', doc, None, ivectorsize('nodeTags'), ovectorsize('edgeTags'), ovectorint('edgeOrientations'))
 
-doc = '''Get the global unique mesh face identifiers `faceTags' and orientations `faceOrientations' for an input list of node tag triplets (if `faceType' == 3) or quadruplets (if `faceType' == 4) defining these faces, concatenated in the vector `nodeTags'.'''
+doc = '''Get the global unique mesh face identifiers `faceTags' and orientations `faceOrientations' for an input list of node tag triplets (if `faceType' == 3) or quadruplets (if `faceType' == 4) defining these faces, concatenated in the vector `nodeTags'. Mesh faces are created e.g. by `createFaces()' or `getKeysForElements()'.'''
 mesh.add('getFaces', doc, None, iint('faceType'), ivectorsize('nodeTags'), ovectorsize('faceTags'), ovectorint('faceOrientations'))
 
 doc = '''Create unique mesh edges for the entities `dimTags'.'''

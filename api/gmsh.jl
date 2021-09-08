@@ -2151,7 +2151,8 @@ const get_number_of_orientations = getNumberOfOrientations
 
 Get the global unique mesh edge identifiers `edgeTags` and orientations
 `edgeOrientation` for an input list of node tag pairs defining these edges,
-concatenated in the vector `nodeTags`.
+concatenated in the vector `nodeTags`. Mesh edges are created e.g. by
+`createEdges()` or `getKeysForElements()`.
 
 Return `edgeTags`, `edgeOrientations`.
 """
@@ -2177,7 +2178,8 @@ const get_edges = getEdges
 Get the global unique mesh face identifiers `faceTags` and orientations
 `faceOrientations` for an input list of node tag triplets (if `faceType` == 3)
 or quadruplets (if `faceType` == 4) defining these faces, concatenated in the
-vector `nodeTags`.
+vector `nodeTags`. Mesh faces are created e.g. by `createFaces()` or
+`getKeysForElements()`.
 
 Return `faceTags`, `faceOrientations`.
 """
