@@ -1291,13 +1291,18 @@ bool GFace::buildRepresentationCross(bool force)
 
   bool tri = (geomType() == RuledSurface && edges().size() == 3);
   if(CTX::instance()->geom.oldRuledSurface) tri = false;
-  double c = tri ? 0.75 : 0.5;
-  double uav = c * (ubounds.high() + ubounds.low());
-  double vav = (1 - c) * (vbounds.high() + vbounds.low());
-  double u2 = 0.5 * (ubounds.high() + ubounds.low());
-  double v2 = 0.5 * (vbounds.high() + vbounds.low());
   double ud = (ubounds.high() - ubounds.low());
   double vd = (vbounds.high() - vbounds.low());
+  double u2 = 0.5 * (ubounds.high() + ubounds.low());
+  double v2 = 0.5 * (vbounds.high() + vbounds.low());
+#if 0 // this works, but it's ugly :-)
+  // slight offset so that we minimize the chance to have fully overlapping
+  // crosses (e.g. when drawing a hole centered in a surface)
+  if(geomType() == Plane) {
+    u2 -= 0.02 * ud;
+    v2 -= 0.02 * vd;
+  }
+#endif
   const int N = 100;
   for(int dir = 0; dir < 2; dir++) {
     cross[dir].push_back(std::vector<SPoint3>());
@@ -1308,13 +1313,13 @@ bool GFace::buildRepresentationCross(bool force)
         if(tri)
           uv.setPosition(u2 + u2 * t, vbounds.low() + v2 * t);
         else
-          uv.setPosition(ubounds.low() + ud * t, vav);
+          uv.setPosition(ubounds.low() + ud * t, v2);
       }
       else {
         if(tri)
           uv.setPosition(u2 + u2 * t, v2 - v2 * t);
         else
-          uv.setPosition(uav, vbounds.low() + vd * t);
+          uv.setPosition(u2, vbounds.low() + vd * t);
       }
       GPoint p = point(uv);
       SPoint3 pt(p.x(), p.y(), p.z());
