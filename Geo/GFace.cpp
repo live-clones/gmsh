@@ -1338,20 +1338,21 @@ bool GFace::buildRepresentationCross(bool force)
        cross[1].size() > 0 && cross[1][0].size() > 1) {
       SVector3 v0(cross[0][0][0], cross[0][0][1]);
       SVector3 v1(cross[1][0][0], cross[1][0][1]);
-      double l = v0.normalize();
-      v1.normalize();
+      double l0 = v0.normalize();
+      double l1 = v1.normalize();
       SPoint3 p[4] = {cross[0].front().front(),
                       cross[0].back().back(),
                       cross[1].front().front(),
                       cross[1].back().back()};
       SVector3 vt[4] = {v0, -v0, v1, -v1};
       SVector3 vp[4] = {v1, -v1, v0, -v0};
+      double l[4] = {l0, l0, l1, l1};
       for(int s = 0; s < 4; s++) {
         SPoint3 p0 = p[s];
-        SPoint3 p1 = p0 + l * vt[s];
-        SPoint3 p2 = p1 + l * vt[s] + l * vp[s];
-        SPoint3 p3 = p1 + 2 * l * vt[s];
-        SPoint3 p4 = p1 + l * vt[s] - l * vp[s];
+        SPoint3 p1 = p0 + l[s] * vt[s];
+        SPoint3 p2 = p1 + l[s] * vt[s] + l[s] * vp[s];
+        SPoint3 p3 = p1 + 2 * l[s] * vt[s];
+        SPoint3 p4 = p1 + l[s] * vt[s] - l[s] * vp[s];
         if(containsPoint(p1) && containsPoint(p3)) {
           if(containsPoint(p2)) {
             std::vector<SPoint3> c1 = {p1, p2};
