@@ -901,12 +901,12 @@ Python (@url{@value{GITLAB-PREFIX}/tutorial/python/x5.py#L82,x5.py}, @url{@value
 Check if the coordinates (or the parametric coordinates if @code{parametric} is
 set) provided in @code{coord} correspond to points inside the entity of
 dimension @code{dim} and tag @code{tag}, and return the number of points inside.
-This feature is only available for a subset of curves and surfaces, depending on
-the underyling geometrical representation.
+This feature is only available for a subset of entities, depending on the
+underyling geometrical representation.
 
 @table @asis
 @item Input:
-@code{dim}, @code{tag}, @code{coord}, @code{parametric = True}
+@code{dim}, @code{tag}, @code{coord}, @code{parametric = False}
 @item Output:
 -
 @item Return:

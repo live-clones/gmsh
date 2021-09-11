@@ -199,8 +199,8 @@ model.add('getParametrization', doc, None, iint('dim'), iint('tag'), ivectordoub
 doc = '''Get the `min' and `max' bounds of the parametric coordinates for the entity of dimension `dim' and tag `tag'.'''
 model.add('getParametrizationBounds', doc, None, iint('dim'), iint('tag'), ovectordouble('min'), ovectordouble('max'))
 
-doc = '''Check if the coordinates (or the parametric coordinates if `parametric' is set) provided in `coord' correspond to points inside the entity of dimension `dim' and tag `tag', and return the number of points inside. This feature is only available for a subset of curves and surfaces, depending on the underyling geometrical representation.'''
-model.add('isInside', doc, oint, iint('dim'), iint('tag'), ivectordouble('coord'), ibool('parametric', 'true', 'True'))
+doc = '''Check if the coordinates (or the parametric coordinates if `parametric' is set) provided in `coord' correspond to points inside the entity of dimension `dim' and tag `tag', and return the number of points inside. This feature is only available for a subset of entities, depending on the underyling geometrical representation.'''
+model.add('isInside', doc, oint, iint('dim'), iint('tag'), ivectordouble('coord'), ibool('parametric', 'false', 'False'))
 
 doc = '''Get the points `closestCoord' on the entity of dimension `dim' and tag `tag' to the points `coord', by orthogonal projection. `coord' and `closestCoord' are given as triplets of x, y, z coordinates, concatenated: [p1x, p1y, p1z, p2x, ...]. `parametricCoord' returns the parametric coordinates t on the curve (if `dim' = 1) or pairs of u and v coordinates concatenated on the surface (if `dim' = 2), i.e. [p1t, p2t, ...] or [p1u, p1v, p2u, ...].'''
 model.add('getClosestPoint', doc, None, iint('dim'), iint('tag'), ivectordouble('coord'), ovectordouble('closestCoord'), ovectordouble('parametricCoord'))

@@ -44,6 +44,7 @@ public:
   virtual SPoint2 reparamOnFace(const GFace *face, double epar, int dir) const;
   virtual GPoint closestPoint(const SPoint3 &queryPoint, double &param) const;
   virtual double parFromPoint(const SPoint3 &P) const;
+  virtual bool containsPoint(const SPoint3 &pt) const;
   virtual ModelType getNativeType() const { return OpenCascadeModel; }
   virtual void *getNativePtr() const { return (void *)&_c; }
   virtual int minimumMeshSegments() const;

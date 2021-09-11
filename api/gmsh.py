@@ -1296,15 +1296,15 @@ class model:
     get_parametrization_bounds = getParametrizationBounds
 
     @staticmethod
-    def isInside(dim, tag, coord, parametric=True):
+    def isInside(dim, tag, coord, parametric=False):
         """
-        gmsh.model.isInside(dim, tag, coord, parametric=True)
+        gmsh.model.isInside(dim, tag, coord, parametric=False)
 
         Check if the coordinates (or the parametric coordinates if `parametric' is
         set) provided in `coord' correspond to points inside the entity of
         dimension `dim' and tag `tag', and return the number of points inside. This
-        feature is only available for a subset of curves and surfaces, depending on
-        the underyling geometrical representation.
+        feature is only available for a subset of entities, depending on the
+        underyling geometrical representation.
 
         Return an integer value.
         """

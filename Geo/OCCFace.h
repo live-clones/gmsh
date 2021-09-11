@@ -38,6 +38,7 @@ public:
   virtual GPoint closestPoint(const SPoint3 &queryPoint,
                               const double initialGuess[2]) const;
   virtual bool containsPoint(const SPoint3 &pt) const;
+  virtual bool containsParam(const SPoint2 &pt);
   virtual SVector3 normal(const SPoint2 &param) const;
   virtual Pair<SVector3, SVector3> firstDer(const SPoint2 &param) const;
   virtual void secondDer(const SPoint2 &, SVector3 &, SVector3 &,
@@ -55,9 +56,6 @@ public:
   virtual bool isSphere(double &radius, SPoint3 &center) const;
   virtual bool periodic(int dim) const { return _periodic[dim]; }
   virtual double period(int dim) const { return _period[dim]; }
-  // true if the parameter value is interior to the face (taking into account
-  // boundaries)
-  virtual bool containsParam(const SPoint2 &pt);
   // save itself in BREP format (for debug e.g.)
   void writeBREP(const char *filename);
   bool buildSTLTriangulation(bool force = false);

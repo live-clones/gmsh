@@ -861,8 +861,8 @@ c
 !  Check if the coordinates (or the parametric coordinates if `parametric' is
 !  set) provided in `coord' correspond to points inside the entity of
 !  dimension `dim' and tag `tag', and return the number of points inside. This
-!  feature is only available for a subset of curves and surfaces, depending on
-!  the underyling geometrical representation.
+!  feature is only available for a subset of entities, depending on the
+!  underyling geometrical representation.
         function gmshModelIsInside(
      &      dim,
      &      tag,

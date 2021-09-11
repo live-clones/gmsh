@@ -241,6 +241,17 @@ double OCCEdge::parFromPoint(const SPoint3 &qp) const
     return GEdge::parFromPoint(qp);
 }
 
+bool OCCEdge::containsPoint(const SPoint3 &pt) const
+{
+  double u;
+  SPoint3 xyz;
+  if(_project(pt.data(), u, xyz.data())) {
+    const Standard_Real tolerance = BRep_Tool::Tolerance(_c);
+    if(pt.distance(xyz) <= tolerance) return true;
+  }
+  return false;
+}
+
 bool OCCEdge::isSeam(const GFace *face) const
 {
   if(face->getNativeType() != GEntity::OpenCascadeModel) return false;

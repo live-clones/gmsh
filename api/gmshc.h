@@ -419,8 +419,8 @@ GMSH_API void gmshModelGetParametrizationBounds(const int dim,
 /* Check if the coordinates (or the parametric coordinates if `parametric' is
  * set) provided in `coord' correspond to points inside the entity of
  * dimension `dim' and tag `tag', and return the number of points inside. This
- * feature is only available for a subset of curves and surfaces, depending on
- * the underyling geometrical representation. */
+ * feature is only available for a subset of entities, depending on the
+ * underyling geometrical representation. */
 GMSH_API int gmshModelIsInside(const int dim,
                                const int tag,
                                double * coord, size_t coord_n,
