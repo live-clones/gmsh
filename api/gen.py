@@ -513,14 +513,29 @@ field.add('add', doc, oint, istring('fieldType'), iint('tag', '-1'))
 doc = '''Remove the field with tag `tag'.'''
 field.add('remove', doc, None, iint('tag'))
 
+doc = '''Get the list of all fields.'''
+field.add('list', doc, None, ovectorint('tags'))
+
+doc = '''Get the type `fieldType' of the field with tag `tag'.'''
+field.add('getType', doc, None, iint('tag'), ostring('fileType'))
+
 doc = '''Set the numerical option `option' to value `value' for field `tag'.'''
 field.add('setNumber', doc, None, iint('tag'), istring('option'), idouble('value'))
+
+doc = '''Get the value of the numerical option `option' for field `tag'.'''
+field.add('getNumber', doc, None, iint('tag'), istring('option'), odouble('value'))
 
 doc = '''Set the string option `option' to value `value' for field `tag'.'''
 field.add('setString', doc, None, iint('tag'), istring('option'), istring('value'))
 
+doc = '''Get the value of the string option `option' for field `tag'.'''
+field.add('getString', doc, None, iint('tag'), istring('option'), ostring('value'))
+
 doc = '''Set the numerical list option `option' to value `value' for field `tag'.'''
 field.add('setNumbers', doc, None, iint('tag'), istring('option'), ivectordouble('value'))
+
+doc = '''Get the value of the numerical list option `option' for field `tag'.'''
+field.add('getNumbers', doc, None, iint('tag'), istring('option'), ovectordouble('value'))
 
 doc = '''Set the field `tag' as the background mesh size field.'''
 field.add('setAsBackgroundMesh', doc, None, iint('tag'))

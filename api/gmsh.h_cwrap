@@ -2444,6 +2444,27 @@ namespace gmsh { // Top-level functions
           if(ierr) throwLastError();
         }
 
+        // Get the list of all fields.
+        inline void list(std::vector<int> & tags)
+        {
+          int ierr = 0;
+          int *api_tags_; size_t api_tags_n_;
+          gmshModelMeshFieldList(&api_tags_, &api_tags_n_, &ierr);
+          if(ierr) throwLastError();
+          tags.assign(api_tags_, api_tags_ + api_tags_n_); gmshFree(api_tags_);
+        }
+
+        // Get the type `fieldType' of the field with tag `tag'.
+        inline void getType(const int tag,
+                            std::string & fileType)
+        {
+          int ierr = 0;
+          char *api_fileType_;
+          gmshModelMeshFieldGetType(tag, &api_fileType_, &ierr);
+          if(ierr) throwLastError();
+          fileType = std::string(api_fileType_); gmshFree(api_fileType_);
+        }
+
         // Set the numerical option `option' to value `value' for field `tag'.
         inline void setNumber(const int tag,
                               const std::string & option,
@@ -2451,6 +2472,16 @@ namespace gmsh { // Top-level functions
         {
           int ierr = 0;
           gmshModelMeshFieldSetNumber(tag, option.c_str(), value, &ierr);
+          if(ierr) throwLastError();
+        }
+
+        // Get the value of the numerical option `option' for field `tag'.
+        inline void getNumber(const int tag,
+                              const std::string & option,
+                              double & value)
+        {
+          int ierr = 0;
+          gmshModelMeshFieldGetNumber(tag, option.c_str(), &value, &ierr);
           if(ierr) throwLastError();
         }
 
@@ -2464,6 +2495,18 @@ namespace gmsh { // Top-level functions
           if(ierr) throwLastError();
         }
 
+        // Get the value of the string option `option' for field `tag'.
+        inline void getString(const int tag,
+                              const std::string & option,
+                              std::string & value)
+        {
+          int ierr = 0;
+          char *api_value_;
+          gmshModelMeshFieldGetString(tag, option.c_str(), &api_value_, &ierr);
+          if(ierr) throwLastError();
+          value = std::string(api_value_); gmshFree(api_value_);
+        }
+
         // Set the numerical list option `option' to value `value' for field `tag'.
         inline void setNumbers(const int tag,
                                const std::string & option,
@@ -2474,6 +2517,18 @@ namespace gmsh { // Top-level functions
           gmshModelMeshFieldSetNumbers(tag, option.c_str(), api_value_, api_value_n_, &ierr);
           if(ierr) throwLastError();
           gmshFree(api_value_);
+        }
+
+        // Get the value of the numerical list option `option' for field `tag'.
+        inline void getNumbers(const int tag,
+                               const std::string & option,
+                               std::vector<double> & value)
+        {
+          int ierr = 0;
+          double *api_value_; size_t api_value_n_;
+          gmshModelMeshFieldGetNumbers(tag, option.c_str(), &api_value_, &api_value_n_, &ierr);
+          if(ierr) throwLastError();
+          value.assign(api_value_, api_value_ + api_value_n_); gmshFree(api_value_);
         }
 
         // Set the field `tag' as the background mesh size field.

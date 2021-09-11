@@ -3674,6 +3674,44 @@ class model:
                     raise Exception(logger.getLastError())
 
             @staticmethod
+            def list():
+                """
+                gmsh.model.mesh.field.list()
+
+                Get the list of all fields.
+
+                Return `tags'.
+                """
+                api_tags_, api_tags_n_ = POINTER(c_int)(), c_size_t()
+                ierr = c_int()
+                lib.gmshModelMeshFieldList(
+                    byref(api_tags_), byref(api_tags_n_),
+                    byref(ierr))
+                if ierr.value != 0:
+                    raise Exception(logger.getLastError())
+                return _ovectorint(api_tags_, api_tags_n_.value)
+
+            @staticmethod
+            def getType(tag):
+                """
+                gmsh.model.mesh.field.getType(tag)
+
+                Get the type `fieldType' of the field with tag `tag'.
+
+                Return `fileType'.
+                """
+                api_fileType_ = c_char_p()
+                ierr = c_int()
+                lib.gmshModelMeshFieldGetType(
+                    c_int(tag),
+                    byref(api_fileType_),
+                    byref(ierr))
+                if ierr.value != 0:
+                    raise Exception(logger.getLastError())
+                return _ostring(api_fileType_)
+            get_type = getType
+
+            @staticmethod
             def setNumber(tag, option, value):
                 """
                 gmsh.model.mesh.field.setNumber(tag, option, value)
@@ -3689,6 +3727,27 @@ class model:
                 if ierr.value != 0:
                     raise Exception(logger.getLastError())
             set_number = setNumber
+
+            @staticmethod
+            def getNumber(tag, option):
+                """
+                gmsh.model.mesh.field.getNumber(tag, option)
+
+                Get the value of the numerical option `option' for field `tag'.
+
+                Return `value'.
+                """
+                api_value_ = c_double()
+                ierr = c_int()
+                lib.gmshModelMeshFieldGetNumber(
+                    c_int(tag),
+                    c_char_p(option.encode()),
+                    byref(api_value_),
+                    byref(ierr))
+                if ierr.value != 0:
+                    raise Exception(logger.getLastError())
+                return api_value_.value
+            get_number = getNumber
 
             @staticmethod
             def setString(tag, option, value):
@@ -3708,6 +3767,27 @@ class model:
             set_string = setString
 
             @staticmethod
+            def getString(tag, option):
+                """
+                gmsh.model.mesh.field.getString(tag, option)
+
+                Get the value of the string option `option' for field `tag'.
+
+                Return `value'.
+                """
+                api_value_ = c_char_p()
+                ierr = c_int()
+                lib.gmshModelMeshFieldGetString(
+                    c_int(tag),
+                    c_char_p(option.encode()),
+                    byref(api_value_),
+                    byref(ierr))
+                if ierr.value != 0:
+                    raise Exception(logger.getLastError())
+                return _ostring(api_value_)
+            get_string = getString
+
+            @staticmethod
             def setNumbers(tag, option, value):
                 """
                 gmsh.model.mesh.field.setNumbers(tag, option, value)
@@ -3724,6 +3804,27 @@ class model:
                 if ierr.value != 0:
                     raise Exception(logger.getLastError())
             set_numbers = setNumbers
+
+            @staticmethod
+            def getNumbers(tag, option):
+                """
+                gmsh.model.mesh.field.getNumbers(tag, option)
+
+                Get the value of the numerical list option `option' for field `tag'.
+
+                Return `value'.
+                """
+                api_value_, api_value_n_ = POINTER(c_double)(), c_size_t()
+                ierr = c_int()
+                lib.gmshModelMeshFieldGetNumbers(
+                    c_int(tag),
+                    c_char_p(option.encode()),
+                    byref(api_value_), byref(api_value_n_),
+                    byref(ierr))
+                if ierr.value != 0:
+                    raise Exception(logger.getLastError())
+                return _ovectordouble(api_value_, api_value_n_.value)
+            get_numbers = getNumbers
 
             @staticmethod
             def setAsBackgroundMesh(tag):

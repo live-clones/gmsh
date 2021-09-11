@@ -1407,10 +1407,25 @@ GMSH_API int gmshModelMeshFieldAdd(const char * fieldType,
 GMSH_API void gmshModelMeshFieldRemove(const int tag,
                                        int * ierr);
 
+/* Get the list of all fields. */
+GMSH_API void gmshModelMeshFieldList(int ** tags, size_t * tags_n,
+                                     int * ierr);
+
+/* Get the type `fieldType' of the field with tag `tag'. */
+GMSH_API void gmshModelMeshFieldGetType(const int tag,
+                                        char ** fileType,
+                                        int * ierr);
+
 /* Set the numerical option `option' to value `value' for field `tag'. */
 GMSH_API void gmshModelMeshFieldSetNumber(const int tag,
                                           const char * option,
                                           const double value,
+                                          int * ierr);
+
+/* Get the value of the numerical option `option' for field `tag'. */
+GMSH_API void gmshModelMeshFieldGetNumber(const int tag,
+                                          const char * option,
+                                          double * value,
                                           int * ierr);
 
 /* Set the string option `option' to value `value' for field `tag'. */
@@ -1419,10 +1434,22 @@ GMSH_API void gmshModelMeshFieldSetString(const int tag,
                                           const char * value,
                                           int * ierr);
 
+/* Get the value of the string option `option' for field `tag'. */
+GMSH_API void gmshModelMeshFieldGetString(const int tag,
+                                          const char * option,
+                                          char ** value,
+                                          int * ierr);
+
 /* Set the numerical list option `option' to value `value' for field `tag'. */
 GMSH_API void gmshModelMeshFieldSetNumbers(const int tag,
                                            const char * option,
                                            double * value, size_t value_n,
+                                           int * ierr);
+
+/* Get the value of the numerical list option `option' for field `tag'. */
+GMSH_API void gmshModelMeshFieldGetNumbers(const int tag,
+                                           const char * option,
+                                           double ** value, size_t * value_n,
                                            int * ierr);
 
 /* Set the field `tag' as the background mesh size field. */

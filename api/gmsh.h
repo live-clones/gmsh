@@ -1598,12 +1598,30 @@ namespace gmsh { // Top-level functions
         // Remove the field with tag `tag'.
         GMSH_API void remove(const int tag);
 
+        // gmsh::model::mesh::field::list
+        //
+        // Get the list of all fields.
+        GMSH_API void list(std::vector<int> & tags);
+
+        // gmsh::model::mesh::field::getType
+        //
+        // Get the type `fieldType' of the field with tag `tag'.
+        GMSH_API void getType(const int tag,
+                              std::string & fileType);
+
         // gmsh::model::mesh::field::setNumber
         //
         // Set the numerical option `option' to value `value' for field `tag'.
         GMSH_API void setNumber(const int tag,
                                 const std::string & option,
                                 const double value);
+
+        // gmsh::model::mesh::field::getNumber
+        //
+        // Get the value of the numerical option `option' for field `tag'.
+        GMSH_API void getNumber(const int tag,
+                                const std::string & option,
+                                double & value);
 
         // gmsh::model::mesh::field::setString
         //
@@ -1612,12 +1630,26 @@ namespace gmsh { // Top-level functions
                                 const std::string & option,
                                 const std::string & value);
 
+        // gmsh::model::mesh::field::getString
+        //
+        // Get the value of the string option `option' for field `tag'.
+        GMSH_API void getString(const int tag,
+                                const std::string & option,
+                                std::string & value);
+
         // gmsh::model::mesh::field::setNumbers
         //
         // Set the numerical list option `option' to value `value' for field `tag'.
         GMSH_API void setNumbers(const int tag,
                                  const std::string & option,
                                  const std::vector<double> & value);
+
+        // gmsh::model::mesh::field::getNumbers
+        //
+        // Get the value of the numerical list option `option' for field `tag'.
+        GMSH_API void getNumbers(const int tag,
+                                 const std::string & option,
+                                 std::vector<double> & value);
 
         // gmsh::model::mesh::field::setAsBackgroundMesh
         //
