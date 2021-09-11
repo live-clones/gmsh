@@ -14,12 +14,12 @@
 #include "Context.h"
 
 #if defined(HAVE_MESH)
-#include "DivideAndConquer.h"
 #include "meshGFaceDelaunayInsertion.h"
 #endif
 
 StringXNumber TriangulateOptions_Number[] = {
-  {GMSH_FULLRC, "Algorithm", nullptr, 1.}, {GMSH_FULLRC, "View", nullptr, -1.}};
+  {GMSH_FULLRC, "View", nullptr, -1.}
+};
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterTriangulatePlugin()
@@ -33,8 +33,7 @@ std::string GMSH_TriangulatePlugin::getHelp() const
   return "Plugin(Triangulate) triangulates the points in the "
          "view `View', assuming that all the points belong "
          "to a surface that can be projected one-to-one "
-         "onto a plane. Algorithm selects the old (0) or new (1) "
-         "meshing algorithm.\n\n"
+         "onto a plane. \n\n"
          "If `View' < 0, the plugin is run on the current view.\n\n"
          "Plugin(Triangulate) creates one new list-based view.";
 }
@@ -67,8 +66,7 @@ namespace {
 
 PView *GMSH_TriangulatePlugin::execute(PView *v)
 {
-  int algo = (int)TriangulateOptions_Number[0].def;
-  int iView = (int)TriangulateOptions_Number[1].def;
+  int iView = (int)TriangulateOptions_Number[0].def;
 
   PView *v1 = getView(iView, v);
   if(!v1) return v;
@@ -129,123 +127,51 @@ PView *GMSH_TriangulatePlugin::execute(PView *v)
   PView *v2;
   PViewDataList *data2;
 
-  if(algo == 0) { // using old code
-
-    // build a point record structure for the divide and conquer algorithm
-    DocRecord doc(points.size());
-    for(std::size_t i = 0; i < points.size(); i++) {
-      double XX = CTX::instance()->mesh.randFactor * lc * (double)rand() /
-                  (double)RAND_MAX;
-      double YY = CTX::instance()->mesh.randFactor * lc * (double)rand() /
-                  (double)RAND_MAX;
-      doc.points[i].where.h = points[i]->x() + XX;
-      doc.points[i].where.v = points[i]->y() + YY;
-      doc.points[i].adjacent = nullptr;
-      doc.points[i].data = (void *)points[i];
-    }
-
-    // triangulate
-    try {
-      doc.MakeMeshWithPoints();
-    } catch(const char *err) {
-      Msg::Error("%s", err);
-    }
-
-    // create output (using unperturbed data)
-    v2 = new PView();
-    data2 = getDataList(v2);
-    for(int i = 0; i < doc.numTriangles; i++) {
-      int a = doc.triangles[i].a;
-      int b = doc.triangles[i].b;
-      int c = doc.triangles[i].c;
-      int n = doc.numPoints;
-      if(a < 0 || a >= n || b < 0 || b >= n || c < 0 || c >= n) {
-        Msg::Warning("Skipping bad triangle %d", i);
-        continue;
-      }
-      PointData *p[3];
-      p[0] = (PointData *)doc.points[doc.triangles[i].a].data;
-      p[1] = (PointData *)doc.points[doc.triangles[i].b].data;
-      p[2] = (PointData *)doc.points[doc.triangles[i].c].data;
-      int numComp = 0;
-      std::vector<double> *vec = nullptr;
-      if((int)p[0]->v.size() == 3 + 9 * numSteps &&
-         (int)p[1]->v.size() == 3 + 9 * numSteps &&
-         (int)p[2]->v.size() == 3 + 9 * numSteps) {
-        numComp = 9;
-        data2->NbTT++;
-        vec = &data2->TT;
-      }
-      else if((int)p[0]->v.size() == 3 + 3 * numSteps &&
-              (int)p[1]->v.size() == 3 + 3 * numSteps &&
-              (int)p[2]->v.size() == 3 + 3 * numSteps) {
-        numComp = 3;
-        data2->NbVT++;
-        vec = &data2->VT;
-      }
-      else {
-        numComp = 1;
-        data2->NbST++;
-        vec = &data2->ST;
-      }
-      for(int nod = 0; nod < 3; nod++) vec->push_back(p[nod]->v[0]);
-      for(int nod = 0; nod < 3; nod++) vec->push_back(p[nod]->v[1]);
-      for(int nod = 0; nod < 3; nod++) vec->push_back(p[nod]->v[2]);
-      for(int step = 0; step < numSteps; step++)
-        for(int nod = 0; nod < 3; nod++)
-          for(int comp = 0; comp < numComp; comp++)
-            vec->push_back(p[nod]->v[3 + numComp * step + comp]);
-    }
+  std::vector<MTriangle *> tris;
+  for(std::size_t i = 0; i < points.size(); i++) {
+    double XX = 1.e-12 * lc * (double)rand() / (double)RAND_MAX;
+    double YY = 1.e-12 * lc * (double)rand() / (double)RAND_MAX;
+    points[i]->x() += XX;
+    points[i]->y() += YY;
   }
-  else { // new code
+  delaunayMeshIn2D(points, tris);
 
-    Msg::Info("Using new triangulation code");
-    std::vector<MTriangle *> tris;
-    for(std::size_t i = 0; i < points.size(); i++) {
-      double XX = 1.e-12 * lc * (double)rand() / (double)RAND_MAX;
-      double YY = 1.e-12 * lc * (double)rand() / (double)RAND_MAX;
-      points[i]->x() += XX;
-      points[i]->y() += YY;
+  v2 = new PView();
+  data2 = getDataList(v2);
+  for(std::size_t i = 0; i < tris.size(); i++) {
+    PointData *p[3];
+    p[0] = (PointData *)tris[i]->getVertex(0);
+    p[1] = (PointData *)tris[i]->getVertex(1);
+    p[2] = (PointData *)tris[i]->getVertex(2);
+    int numComp = 0;
+    std::vector<double> *vec = nullptr;
+    if((int)p[0]->v.size() == 3 + 9 * numSteps &&
+       (int)p[1]->v.size() == 3 + 9 * numSteps &&
+       (int)p[2]->v.size() == 3 + 9 * numSteps) {
+      numComp = 9;
+      data2->NbTT++;
+      vec = &data2->TT;
     }
-    delaunayMeshIn2D(points, tris);
-
-    v2 = new PView();
-    data2 = getDataList(v2);
-    for(std::size_t i = 0; i < tris.size(); i++) {
-      PointData *p[3];
-      p[0] = (PointData *)tris[i]->getVertex(0);
-      p[1] = (PointData *)tris[i]->getVertex(1);
-      p[2] = (PointData *)tris[i]->getVertex(2);
-      int numComp = 0;
-      std::vector<double> *vec = nullptr;
-      if((int)p[0]->v.size() == 3 + 9 * numSteps &&
-         (int)p[1]->v.size() == 3 + 9 * numSteps &&
-         (int)p[2]->v.size() == 3 + 9 * numSteps) {
-        numComp = 9;
-        data2->NbTT++;
-        vec = &data2->TT;
-      }
-      else if((int)p[0]->v.size() == 3 + 3 * numSteps &&
-              (int)p[1]->v.size() == 3 + 3 * numSteps &&
-              (int)p[2]->v.size() == 3 + 3 * numSteps) {
-        numComp = 3;
-        data2->NbVT++;
-        vec = &data2->VT;
-      }
-      else {
-        numComp = 1;
-        data2->NbST++;
-        vec = &data2->ST;
-      }
-      for(int nod = 0; nod < 3; nod++) vec->push_back(p[nod]->v[0]);
-      for(int nod = 0; nod < 3; nod++) vec->push_back(p[nod]->v[1]);
-      for(int nod = 0; nod < 3; nod++) vec->push_back(p[nod]->v[2]);
-      for(int step = 0; step < numSteps; step++)
-        for(int nod = 0; nod < 3; nod++)
-          for(int comp = 0; comp < numComp; comp++)
-            vec->push_back(p[nod]->v[3 + numComp * step + comp]);
-      delete tris[i];
+    else if((int)p[0]->v.size() == 3 + 3 * numSteps &&
+            (int)p[1]->v.size() == 3 + 3 * numSteps &&
+            (int)p[2]->v.size() == 3 + 3 * numSteps) {
+      numComp = 3;
+      data2->NbVT++;
+      vec = &data2->VT;
     }
+    else {
+      numComp = 1;
+      data2->NbST++;
+      vec = &data2->ST;
+    }
+    for(int nod = 0; nod < 3; nod++) vec->push_back(p[nod]->v[0]);
+    for(int nod = 0; nod < 3; nod++) vec->push_back(p[nod]->v[1]);
+    for(int nod = 0; nod < 3; nod++) vec->push_back(p[nod]->v[2]);
+    for(int step = 0; step < numSteps; step++)
+      for(int nod = 0; nod < 3; nod++)
+        for(int comp = 0; comp < numComp; comp++)
+          vec->push_back(p[nod]->v[3 + numComp * step + comp]);
+    delete tris[i];
   }
 
   for(std::size_t i = 0; i < points.size(); i++) delete points[i];
