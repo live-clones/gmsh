@@ -2313,7 +2313,8 @@ void invertTrianglesIfNecessary(
 bool GeometryOptimizer::smoothWithWinslowUntangler(PlanarMethod planar,
                                                    int iterMax,
                                                    double withBackup,
-                                                   bool finalCADprojection)
+                                                   bool finalCADprojection,
+                                                   double nonPlanarRatioMax)
 {
   if(nFree == 0) {
     Msg::Debug("geometry optimize: no free vertices, nothing to optimize");
@@ -2365,10 +2366,31 @@ bool GeometryOptimizer::smoothWithWinslowUntangler(PlanarMethod planar,
 
     /* Projects points on mean plane, with 2D coordinates, before smoothing */
     {
-      SPoint3 proj;
+      double omax = 0.;
+      double du[2] = {DBL_MAX,-DBL_MAX};
+      double dv[2] = {DBL_MAX,-DBL_MAX};
       for(size_t v = 0; v < points.size(); ++v) {
         SPoint3 p(points[v][0], points[v][1], points[v][2]);
         points_2D[v] = {dot(p - pop, tangent), dot(p - pop, binormal)};
+        omax = std::max(omax,std::abs(dot(p - pop, normal)));
+        du[0] = std::min(du[0],points_2D[v][0]);
+        du[1] = std::max(du[1],points_2D[v][0]);
+        dv[0] = std::min(dv[0],points_2D[v][1]);
+        dv[1] = std::max(dv[1],points_2D[v][1]);
+      }
+      double denom = std::max(du[1]-du[0],dv[1]-dv[0]);
+      if (denom < 1.e-14) return false;
+      double ratio = omax / denom;
+      if (ratio > nonPlanarRatioMax) {
+        if (this->patchPtr && this->patchPtr->gf) {
+          Msg::Debug("- Face %i: cancel mean plane winslow untangling because non planar ratio = %.3f > %.3f",
+              this->patchPtr->gf->tag(),
+              ratio, nonPlanarRatioMax);
+        } else {
+          Msg::Debug("- Untangling: cancel mean plane winslow untangling because non planar ratio = %.3f > %.3f",
+              ratio, nonPlanarRatioMax);
+        }
+        return false;
       }
     }
   }
