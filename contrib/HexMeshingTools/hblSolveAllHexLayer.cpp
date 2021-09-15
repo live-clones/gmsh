@@ -347,7 +347,7 @@ namespace hbl {
     RFC(edgeValenceIdealReal.size() == 0, "no edges ?");
     valIdeal.resize(edgeValenceIdealReal.size());
     valMinMax.resize(edgeValenceIdealReal.size());
-    bool V2 = false; /* to avoid valence 1 or 3 on surfaces where dihedral
+    bool V2 = true; /* to avoid valence 1 or 3 on surfaces where dihedral
                        angles are noisy due to coarse resolution of quad
                        mesh */
     if (V2) {

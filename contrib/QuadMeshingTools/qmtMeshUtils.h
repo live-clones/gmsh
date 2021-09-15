@@ -78,7 +78,7 @@ bool reparamMeshVertexOnFaceWithRef(GFace* gf, MVertex* v, const SPoint2& ref, S
 std::vector<SPoint2> paramOnElement(GFace* gf, MElement* e);
 
 /* warning: triangles are allocated, should be delete by the caller */
-std::vector<MTriangle*> trianglesFromQuads(const std::vector<MQuadrangle*>& quads);
+std::vector<MTriangle*> trianglesFromQuads(const std::vector<MQuadrangle*>& quads, bool indexCoherent = false);
 
 /* Find a way to get triangles associated to GFace (will look into current mesh, can split quads,
  * will check in background mesh)

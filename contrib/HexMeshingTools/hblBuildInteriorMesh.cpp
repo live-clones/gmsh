@@ -1289,6 +1289,11 @@ namespace hbl {
     initMeshTriangulation(H, extrudedTris, M);
     bool tetRefine = false;
     bool tetOptimize = false;
+    const bool NICE_TET_MESH = true;
+    if (NICE_TET_MESH) {
+      tetRefine = true;
+      tetOptimize = true;
+    }
     Msg::Info(" - constrained tet meshing ...");
     bool okg = generateConstrainedTetMesh(M, tetRefine, tetOptimize);
     if (!okg) {
@@ -1474,6 +1479,11 @@ namespace hbl {
     /* Constrained tet meshing */
     bool tetRefine = false;
     bool tetOptimize = false;
+    const bool NICE_TET_MESH = true;
+    if (NICE_TET_MESH) {
+      tetRefine = true;
+      tetOptimize = true;
+    }
     bool okg = generateConstrainedTetMesh(M, tetRefine, tetOptimize);
     if (okg) {
       nbSelfIntersections = 0;
