@@ -1289,16 +1289,14 @@ bool GFace::buildRepresentationCross(bool force)
     }
   }
 
-  bool tri = (geomType() == RuledSurface && edges().size() == 3);
-  if(CTX::instance()->geom.oldRuledSurface) tri = false;
-  double c = tri ? 0.75 : 0.5;
-  double uav = c * (ubounds.high() + ubounds.low());
-  double vav = (1 - c) * (vbounds.high() + vbounds.low());
+  bool tri = (geomType() == RuledSurface && getNativeType() == GmshModel &&
+              edges().size() == 3 && !CTX::instance()->geom.oldRuledSurface);
+  double tol = 1e-8;
+  double ud = (ubounds.high() - ubounds.low()) - 2 * tol;
+  double vd = (vbounds.high() - vbounds.low()) - 2 * tol;
   double u2 = 0.5 * (ubounds.high() + ubounds.low());
   double v2 = 0.5 * (vbounds.high() + vbounds.low());
-  double ud = (ubounds.high() - ubounds.low());
-  double vd = (vbounds.high() - vbounds.low());
-  const int N = 100;
+  int N = 100;
   for(int dir = 0; dir < 2; dir++) {
     cross[dir].push_back(std::vector<SPoint3>());
     for(int i = 0; i < N; i++) {
@@ -1306,15 +1304,15 @@ bool GFace::buildRepresentationCross(bool force)
       SPoint2 uv;
       if(!dir) {
         if(tri)
-          uv.setPosition(u2 + u2 * t, vbounds.low() + v2 * t);
+          uv.setPosition(u2 + u2 * t, vbounds.low() + tol + v2 * t);
         else
-          uv.setPosition(ubounds.low() + ud * t, vav);
+          uv.setPosition(ubounds.low() + tol + ud * t, v2);
       }
       else {
         if(tri)
           uv.setPosition(u2 + u2 * t, v2 - v2 * t);
         else
-          uv.setPosition(uav, vbounds.low() + vd * t);
+          uv.setPosition(u2, vbounds.low() + tol + vd * t);
       }
       GPoint p = point(uv);
       SPoint3 pt(p.x(), p.y(), p.z());
@@ -1324,6 +1322,51 @@ bool GFace::buildRepresentationCross(bool force)
       else {
         if(cross[dir].back().size())
           cross[dir].push_back(std::vector<SPoint3>());
+      }
+    }
+    while(cross[dir].back().empty())
+      cross[dir].pop_back();
+  }
+
+
+  // draw additional small diamonds for plane surfaces, to make it easier to
+  // select overlapping surfaces placed such that their crosses fully overlap
+  // (e.g. when creating a hole centered in the middle of a surface, something
+  // that happens quite often in practice)
+  if(geomType() == Plane) {
+    if(cross[0].size() > 0 && cross[0][0].size() > 1 &&
+       cross[1].size() > 0 && cross[1][0].size() > 1) {
+      SVector3 v0(cross[0][0][0], cross[0][0][1]);
+      SVector3 v1(cross[1][0][0], cross[1][0][1]);
+      double l0 = v0.normalize();
+      double l1 = v1.normalize();
+      SPoint3 p[4] = {cross[0].front().front(),
+                      cross[0].back().back(),
+                      cross[1].front().front(),
+                      cross[1].back().back()};
+      SVector3 vt[4] = {v0, -v0, v1, -v1};
+      SVector3 vp[4] = {v1, -v1, v0, -v0};
+      double l[4] = {l0, l0, l1, l1};
+      for(int s = 0; s < 4; s++) {
+        SPoint3 p0 = p[s];
+        SPoint3 p1 = p0 + l[s] * vt[s];
+        SPoint3 p2 = p1 + l[s] * vt[s] + l[s] * vp[s];
+        SPoint3 p3 = p1 + 2 * l[s] * vt[s];
+        SPoint3 p4 = p1 + l[s] * vt[s] - l[s] * vp[s];
+        if(containsPoint(p1) && containsPoint(p3)) {
+          if(containsPoint(p2)) {
+            std::vector<SPoint3> c1 = {p1, p2};
+            std::vector<SPoint3> c2 = {p2, p3};
+            cross[0].push_back(c1);
+            cross[0].push_back(c2);
+          }
+          if(containsPoint(p4)) {
+            std::vector<SPoint3> c1 = {p1, p4};
+            std::vector<SPoint3> c2 = {p4, p3};
+            cross[0].push_back(c1);
+            cross[0].push_back(c2);
+          }
+        }
       }
     }
   }

@@ -172,7 +172,9 @@ class GeometryOptimizer {
         PlanarMethod planar,
         int iterMax = 1000,
         double withBackup = false,
-        bool finalCADprojection = true);
+        bool finalCADprojection = true,
+        double nonPlanarRatioMax = 0.1 /* if using mean plane, check the orthogonal deviation is less than the ratio */
+        );
 
   public:
     GFaceMeshPatch* patchPtr = nullptr;

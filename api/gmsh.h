@@ -1101,7 +1101,8 @@ namespace gmsh { // Top-level functions
       //
       // Get the global unique mesh edge identifiers `edgeTags' and orientations
       // `edgeOrientation' for an input list of node tag pairs defining these
-      // edges, concatenated in the vector `nodeTags'.
+      // edges, concatenated in the vector `nodeTags'. Mesh edges are created e.g.
+      // by `createEdges()' or `getKeysForElements()'.
       GMSH_API void getEdges(const std::vector<std::size_t> & nodeTags,
                              std::vector<std::size_t> & edgeTags,
                              std::vector<int> & edgeOrientations);
@@ -1111,7 +1112,8 @@ namespace gmsh { // Top-level functions
       // Get the global unique mesh face identifiers `faceTags' and orientations
       // `faceOrientations' for an input list of node tag triplets (if `faceType'
       // == 3) or quadruplets (if `faceType' == 4) defining these faces,
-      // concatenated in the vector `nodeTags'.
+      // concatenated in the vector `nodeTags'. Mesh faces are created e.g. by
+      // `createFaces()' or `getKeysForElements()'.
       GMSH_API void getFaces(const int faceType,
                              const std::vector<std::size_t> & nodeTags,
                              std::vector<std::size_t> & faceTags,
@@ -1273,10 +1275,16 @@ namespace gmsh { // Top-level functions
 
       // gmsh::model::mesh::setSizeCallback
       //
-      // Set a mesh size callback for the current model. The callback should take 5
-      // arguments (`dim', `tag', `x', `y' and `z') and return the value of the
-      // mesh size at coordinates (`x', `y', `z').
-      GMSH_API void setSizeCallback(std::function<double(int, int, double, double, double)> callback);
+      // Set a mesh size callback for the current model. The callback function
+      // should take six arguments as input (`dim', `tag', `x', `y', `z' and `lc').
+      // The first two integer arguments correspond to the dimension `dim' and tag
+      // `tag' of the entity being meshed. The next four double precision arguments
+      // correspond to the coordinates `x', `y' and `z' around which to prescribe
+      // the mesh size and to the mesh size `lc' that would be prescribed if the
+      // callback had not been called. The callback function should return a double
+      // precision number specifying the desired mesh size; returning `lc' is
+      // equivalent to a no-op.
+      GMSH_API void setSizeCallback(std::function<double(int, int, double, double, double, double)> callback);
 
       // gmsh::model::mesh::removeSizeCallback
       //
@@ -1590,12 +1598,30 @@ namespace gmsh { // Top-level functions
         // Remove the field with tag `tag'.
         GMSH_API void remove(const int tag);
 
+        // gmsh::model::mesh::field::list
+        //
+        // Get the list of all fields.
+        GMSH_API void list(std::vector<int> & tags);
+
+        // gmsh::model::mesh::field::getType
+        //
+        // Get the type `fieldType' of the field with tag `tag'.
+        GMSH_API void getType(const int tag,
+                              std::string & fileType);
+
         // gmsh::model::mesh::field::setNumber
         //
         // Set the numerical option `option' to value `value' for field `tag'.
         GMSH_API void setNumber(const int tag,
                                 const std::string & option,
                                 const double value);
+
+        // gmsh::model::mesh::field::getNumber
+        //
+        // Get the value of the numerical option `option' for field `tag'.
+        GMSH_API void getNumber(const int tag,
+                                const std::string & option,
+                                double & value);
 
         // gmsh::model::mesh::field::setString
         //
@@ -1604,12 +1630,26 @@ namespace gmsh { // Top-level functions
                                 const std::string & option,
                                 const std::string & value);
 
+        // gmsh::model::mesh::field::getString
+        //
+        // Get the value of the string option `option' for field `tag'.
+        GMSH_API void getString(const int tag,
+                                const std::string & option,
+                                std::string & value);
+
         // gmsh::model::mesh::field::setNumbers
         //
         // Set the numerical list option `option' to value `value' for field `tag'.
         GMSH_API void setNumbers(const int tag,
                                  const std::string & option,
                                  const std::vector<double> & value);
+
+        // gmsh::model::mesh::field::getNumbers
+        //
+        // Get the value of the numerical list option `option' for field `tag'.
+        GMSH_API void getNumbers(const int tag,
+                                 const std::string & option,
+                                 std::vector<double> & value);
 
         // gmsh::model::mesh::field::setAsBackgroundMesh
         //

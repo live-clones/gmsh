@@ -107,7 +107,6 @@ namespace ArrayGeometry {
   }
 
   double tetrahedronSolidAngle(const std::array<vec3,4>& pts, size_t lv) {
-    // TODOMX verify results, not sure the computation is correct
     const vec3 pa = pts[(lv+1)%4]-pts[lv];
     const vec3 pb = pts[(lv+2)%4]-pts[lv];
     const vec3 pc = pts[(lv+3)%4]-pts[lv];

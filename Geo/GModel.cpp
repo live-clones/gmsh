@@ -1501,8 +1501,7 @@ std::size_t GModel::getMEdge(MVertex *v0, MVertex *v1, MEdge &edge)
     return it->second;
   }
   else {
-    Msg::Error("Unknown edge %d %d", edge.getVertex(0)->getNum(),
-               edge.getVertex(1)->getNum());
+    Msg::Error("Unknown edge %d %d", v0->getNum(), v1->getNum());
     return 0;
   }
 }
@@ -1524,8 +1523,7 @@ std::size_t GModel::getMFace(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3,
     return it->second;
   }
   else {
-    Msg::Error("Unknown face %d %d %d", face.getVertex(0)->getNum(),
-               face.getVertex(1)->getNum(), face.getVertex(2)->getNum());
+    Msg::Error("Unknown face %d %d %d", v0->getNum(), v1->getNum(), v2->getNum());
     return 0;
   }
 }

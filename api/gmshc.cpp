@@ -1652,11 +1652,11 @@ GMSH_API void gmshModelMeshSetSizeAtParametricPoints(const int dim, const int ta
   }
 }
 
-GMSH_API void gmshModelMeshSetSizeCallback(double (*callback)(int dim, int tag, double x, double y, double z, void * data), void * callback_data, int * ierr)
+GMSH_API void gmshModelMeshSetSizeCallback(double (*callback)(int dim, int tag, double x, double y, double z, double lc, void * data), void * callback_data, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    gmsh::model::mesh::setSizeCallback(std::bind(callback, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, callback_data));
+    gmsh::model::mesh::setSizeCallback(std::bind(callback, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, callback_data));
   }
   catch(...){
     if(ierr) *ierr = 1;
@@ -2078,11 +2078,48 @@ GMSH_API void gmshModelMeshFieldRemove(const int tag, int * ierr)
   }
 }
 
+GMSH_API void gmshModelMeshFieldList(int ** tags, size_t * tags_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<int> api_tags_;
+    gmsh::model::mesh::field::list(api_tags_);
+    vector2ptr(api_tags_, tags, tags_n);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelMeshFieldGetType(const int tag, char ** fileType, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::string api_fileType_;
+    gmsh::model::mesh::field::getType(tag, api_fileType_);
+    *fileType = strdup(api_fileType_.c_str());
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API void gmshModelMeshFieldSetNumber(const int tag, const char * option, const double value, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
     gmsh::model::mesh::field::setNumber(tag, option, value);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelMeshFieldGetNumber(const int tag, const char * option, double * value, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::mesh::field::getNumber(tag, option, *value);
   }
   catch(...){
     if(ierr) *ierr = 1;
@@ -2100,12 +2137,38 @@ GMSH_API void gmshModelMeshFieldSetString(const int tag, const char * option, co
   }
 }
 
+GMSH_API void gmshModelMeshFieldGetString(const int tag, const char * option, char ** value, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::string api_value_;
+    gmsh::model::mesh::field::getString(tag, option, api_value_);
+    *value = strdup(api_value_.c_str());
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API void gmshModelMeshFieldSetNumbers(const int tag, const char * option, double * value, size_t value_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
     std::vector<double> api_value_(value, value + value_n);
     gmsh::model::mesh::field::setNumbers(tag, option, api_value_);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelMeshFieldGetNumbers(const int tag, const char * option, double ** value, size_t * value_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<double> api_value_;
+    gmsh::model::mesh::field::getNumbers(tag, option, api_value_);
+    vector2ptr(api_value_, value, value_n);
   }
   catch(...){
     if(ierr) *ierr = 1;

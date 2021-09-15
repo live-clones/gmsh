@@ -26,16 +26,22 @@ GMSH_API_VERSION_PATCH = 0
 __version__ = GMSH_API_VERSION
 
 oldsig = signal.signal(signal.SIGINT, signal.SIG_DFL)
-libdir = os.path.dirname(os.path.realpath(__file__))
+moduledir = os.path.dirname(os.path.realpath(__file__))
 if platform.system() == "Windows":
-    libpath = os.path.join(libdir, "gmsh-4.9.dll")
+    libname = "gmsh-4.9.dll"
+    libdir = os.path.dirname(moduledir)
 elif platform.system() == "Darwin":
-    libpath = os.path.join(libdir, "libgmsh.dylib")
+    libname = "libgmsh.4.9.dylib"
+    libdir = os.path.dirname(os.path.dirname(moduledir))
 else:
-    libpath = os.path.join(libdir, "libgmsh.so")
+    libname = "libgmsh.so.4.9"
+    libdir = os.path.dirname(os.path.dirname(moduledir))
 
+libpath = os.path.join(libdir, libname)
 if not os.path.exists(libpath):
-    libpath = find_library("gmsh")
+    libpath = os.path.join(moduledir, libname)
+    if not os.path.exists(libpath):
+        libpath = find_library("gmsh")
 
 lib = CDLL(libpath)
 
@@ -2571,7 +2577,8 @@ class model:
 
             Get the global unique mesh edge identifiers `edgeTags' and orientations
             `edgeOrientation' for an input list of node tag pairs defining these edges,
-            concatenated in the vector `nodeTags'.
+            concatenated in the vector `nodeTags'. Mesh edges are created e.g. by
+            `createEdges()' or `getKeysForElements()'.
 
             Return `edgeTags', `edgeOrientations'.
             """
@@ -2599,7 +2606,8 @@ class model:
             Get the global unique mesh face identifiers `faceTags' and orientations
             `faceOrientations' for an input list of node tag triplets (if `faceType' ==
             3) or quadruplets (if `faceType' == 4) defining these faces, concatenated
-            in the vector `nodeTags'.
+            in the vector `nodeTags'. Mesh faces are created e.g. by `createFaces()' or
+            `getKeysForElements()'.
 
             Return `faceTags', `faceOrientations'.
             """
@@ -2957,14 +2965,20 @@ class model:
             """
             gmsh.model.mesh.setSizeCallback(callback)
 
-            Set a mesh size callback for the current model. The callback should take 5
-            arguments (`dim', `tag', `x', `y' and `z') and return the value of the mesh
-            size at coordinates (`x', `y', `z').
+            Set a mesh size callback for the current model. The callback function
+            should take six arguments as input (`dim', `tag', `x', `y', `z' and `lc').
+            The first two integer arguments correspond to the dimension `dim' and tag
+            `tag' of the entity being meshed. The next four double precision arguments
+            correspond to the coordinates `x', `y' and `z' around which to prescribe
+            the mesh size and to the mesh size `lc' that would be prescribed if the
+            callback had not been called. The callback function should return a double
+            precision number specifying the desired mesh size; returning `lc' is
+            equivalent to a no-op.
             """
             global api_callback_type_
-            api_callback_type_ = CFUNCTYPE(c_double, c_int, c_int, c_double, c_double, c_double, c_void_p)
+            api_callback_type_ = CFUNCTYPE(c_double, c_int, c_int, c_double, c_double, c_double, c_double, c_void_p)
             global api_callback_
-            api_callback_ = api_callback_type_(lambda dim, tag, x, y, z, _ : callback(dim, tag, x, y, z))
+            api_callback_ = api_callback_type_(lambda dim, tag, x, y, z, lc, _ : callback(dim, tag, x, y, z, lc))
             ierr = c_int()
             lib.gmshModelMeshSetSizeCallback(
                 api_callback_, None,
@@ -3660,6 +3674,44 @@ class model:
                     raise Exception(logger.getLastError())
 
             @staticmethod
+            def list():
+                """
+                gmsh.model.mesh.field.list()
+
+                Get the list of all fields.
+
+                Return `tags'.
+                """
+                api_tags_, api_tags_n_ = POINTER(c_int)(), c_size_t()
+                ierr = c_int()
+                lib.gmshModelMeshFieldList(
+                    byref(api_tags_), byref(api_tags_n_),
+                    byref(ierr))
+                if ierr.value != 0:
+                    raise Exception(logger.getLastError())
+                return _ovectorint(api_tags_, api_tags_n_.value)
+
+            @staticmethod
+            def getType(tag):
+                """
+                gmsh.model.mesh.field.getType(tag)
+
+                Get the type `fieldType' of the field with tag `tag'.
+
+                Return `fileType'.
+                """
+                api_fileType_ = c_char_p()
+                ierr = c_int()
+                lib.gmshModelMeshFieldGetType(
+                    c_int(tag),
+                    byref(api_fileType_),
+                    byref(ierr))
+                if ierr.value != 0:
+                    raise Exception(logger.getLastError())
+                return _ostring(api_fileType_)
+            get_type = getType
+
+            @staticmethod
             def setNumber(tag, option, value):
                 """
                 gmsh.model.mesh.field.setNumber(tag, option, value)
@@ -3675,6 +3727,27 @@ class model:
                 if ierr.value != 0:
                     raise Exception(logger.getLastError())
             set_number = setNumber
+
+            @staticmethod
+            def getNumber(tag, option):
+                """
+                gmsh.model.mesh.field.getNumber(tag, option)
+
+                Get the value of the numerical option `option' for field `tag'.
+
+                Return `value'.
+                """
+                api_value_ = c_double()
+                ierr = c_int()
+                lib.gmshModelMeshFieldGetNumber(
+                    c_int(tag),
+                    c_char_p(option.encode()),
+                    byref(api_value_),
+                    byref(ierr))
+                if ierr.value != 0:
+                    raise Exception(logger.getLastError())
+                return api_value_.value
+            get_number = getNumber
 
             @staticmethod
             def setString(tag, option, value):
@@ -3694,6 +3767,27 @@ class model:
             set_string = setString
 
             @staticmethod
+            def getString(tag, option):
+                """
+                gmsh.model.mesh.field.getString(tag, option)
+
+                Get the value of the string option `option' for field `tag'.
+
+                Return `value'.
+                """
+                api_value_ = c_char_p()
+                ierr = c_int()
+                lib.gmshModelMeshFieldGetString(
+                    c_int(tag),
+                    c_char_p(option.encode()),
+                    byref(api_value_),
+                    byref(ierr))
+                if ierr.value != 0:
+                    raise Exception(logger.getLastError())
+                return _ostring(api_value_)
+            get_string = getString
+
+            @staticmethod
             def setNumbers(tag, option, value):
                 """
                 gmsh.model.mesh.field.setNumbers(tag, option, value)
@@ -3710,6 +3804,27 @@ class model:
                 if ierr.value != 0:
                     raise Exception(logger.getLastError())
             set_numbers = setNumbers
+
+            @staticmethod
+            def getNumbers(tag, option):
+                """
+                gmsh.model.mesh.field.getNumbers(tag, option)
+
+                Get the value of the numerical list option `option' for field `tag'.
+
+                Return `value'.
+                """
+                api_value_, api_value_n_ = POINTER(c_double)(), c_size_t()
+                ierr = c_int()
+                lib.gmshModelMeshFieldGetNumbers(
+                    c_int(tag),
+                    c_char_p(option.encode()),
+                    byref(api_value_), byref(api_value_n_),
+                    byref(ierr))
+                if ierr.value != 0:
+                    raise Exception(logger.getLastError())
+                return _ovectordouble(api_value_, api_value_n_.value)
+            get_numbers = getNumbers
 
             @staticmethod
             def setAsBackgroundMesh(tag):

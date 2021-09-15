@@ -1451,9 +1451,15 @@ void GetOptions(bool readConfigFiles, bool exitOnError)
       }
 #endif
       else {
+#if defined(HAVE_PETSC) || defined(HAVE_MPI)
+        // unknown options might be used by PETSc or MPI
+        Msg::Warning("Skipping unknown option '%s'", argv[i].c_str());
+        i++;
+#else
         Msg::Error("Unknown option '%s'", argv[i].c_str());
         PrintUsage(argv[0]);
         Msg::Exit(1);
+#endif
       }
     }
     else {

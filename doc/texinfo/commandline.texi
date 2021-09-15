@@ -161,9 +161,9 @@ Set verbosity level (General.Verbosity)
 @item -string "string"
 Parse command string at startup
 @item -setnumber name value
-Set constant or option number name=value
+Set constant, ONELAB or option number name=value
 @item -setstring name value
-Set constant or option string name=value
+Set constant, ONELAB or option string name=value
 @item -nopopup
 Don't popup dialog windows in scripts (General.NoPopup)
 @item -noenv

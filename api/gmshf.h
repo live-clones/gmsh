@@ -1969,7 +1969,8 @@ c
 
 !  Get the global unique mesh edge identifiers `edgeTags' and orientations
 !  `edgeOrientation' for an input list of node tag pairs defining these edges,
-!  concatenated in the vector `nodeTags'.
+!  concatenated in the vector `nodeTags'. Mesh edges are created e.g. by
+!  `createEdges()' or `getKeysForElements()'.
         subroutine gmshModelMeshGetEdges(
      &      nodeTags,
      &      nodeTags_n,
@@ -1992,7 +1993,8 @@ c
 !  Get the global unique mesh face identifiers `faceTags' and orientations
 !  `faceOrientations' for an input list of node tag triplets (if `faceType' ==
 !  3) or quadruplets (if `faceType' == 4) defining these faces, concatenated
-!  in the vector `nodeTags'.
+!  in the vector `nodeTags'. Mesh faces are created e.g. by `createFaces()' or
+!  `getKeysForElements()'.
         subroutine gmshModelMeshGetFaces(
      &      faceType,
      &      nodeTags,
@@ -2326,9 +2328,15 @@ c
             integer(c_int)::ierr
           end subroutine gmshModelMeshSetSizeAtParametricPoints
 
-!  Set a mesh size callback for the current model. The callback should take 5
-!  arguments (`dim', `tag', `x', `y' and `z') and return the value of the mesh
-!  size at coordinates (`x', `y', `z').
+!  Set a mesh size callback for the current model. The callback function
+!  should take six arguments as input (`dim', `tag', `x', `y', `z' and `lc').
+!  The first two integer arguments correspond to the dimension `dim' and tag
+!  `tag' of the entity being meshed. The next four double precision arguments
+!  correspond to the coordinates `x', `y' and `z' around which to prescribe
+!  the mesh size and to the mesh size `lc' that would be prescribed if the
+!  callback had not been called. The callback function should return a double
+!  precision number specifying the desired mesh size; returning `lc' is
+!  equivalent to a no-op.
         subroutine gmshModelMeshSetSizeCallback(
      &      callback,
      &      ierr)
@@ -2907,6 +2915,30 @@ c
             integer(c_int)::ierr
           end subroutine gmshModelMeshFieldRemove
 
+!  Get the list of all fields.
+        subroutine gmshModelMeshFieldList(
+     &      tags,
+     &      tags_n,
+     &      ierr)
+     &    bind(C, name = "gmshModelMeshFieldList")
+          use, intrinsic :: iso_c_binding
+            type(c_ptr), intent(out)::tags
+            integer(c_size_t) :: tags_n
+            integer(c_int)::ierr
+          end subroutine gmshModelMeshFieldList
+
+!  Get the type `fieldType' of the field with tag `tag'.
+        subroutine gmshModelMeshFieldGetType(
+     &      tag,
+     &      fileType,
+     &      ierr)
+     &    bind(C, name = "gmshModelMeshFieldGetType")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::tag
+            type(c_ptr)::fileType(*)
+            integer(c_int)::ierr
+          end subroutine gmshModelMeshFieldGetType
+
 !  Set the numerical option `option' to value `value' for field `tag'.
         subroutine gmshModelMeshFieldSetNumber(
      &      tag,
@@ -2921,6 +2953,20 @@ c
             integer(c_int)::ierr
           end subroutine gmshModelMeshFieldSetNumber
 
+!  Get the value of the numerical option `option' for field `tag'.
+        subroutine gmshModelMeshFieldGetNumber(
+     &      tag,
+     &      option,
+     &      value,
+     &      ierr)
+     &    bind(C, name = "gmshModelMeshFieldGetNumber")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::tag
+            character(len = 1, kind = c_char)::option(*)
+            real(c_double)::value
+            integer(c_int)::ierr
+          end subroutine gmshModelMeshFieldGetNumber
+
 !  Set the string option `option' to value `value' for field `tag'.
         subroutine gmshModelMeshFieldSetString(
      &      tag,
@@ -2934,6 +2980,20 @@ c
             character(len = 1, kind = c_char)::value(*)
             integer(c_int)::ierr
           end subroutine gmshModelMeshFieldSetString
+
+!  Get the value of the string option `option' for field `tag'.
+        subroutine gmshModelMeshFieldGetString(
+     &      tag,
+     &      option,
+     &      value,
+     &      ierr)
+     &    bind(C, name = "gmshModelMeshFieldGetString")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::tag
+            character(len = 1, kind = c_char)::option(*)
+            type(c_ptr)::value(*)
+            integer(c_int)::ierr
+          end subroutine gmshModelMeshFieldGetString
 
 !  Set the numerical list option `option' to value `value' for field `tag'.
         subroutine gmshModelMeshFieldSetNumbers(
@@ -2950,6 +3010,22 @@ c
             integer(c_size_t), value :: value_n
             integer(c_int)::ierr
           end subroutine gmshModelMeshFieldSetNumbers
+
+!  Get the value of the numerical list option `option' for field `tag'.
+        subroutine gmshModelMeshFieldGetNumbers(
+     &      tag,
+     &      option,
+     &      value,
+     &      value_n,
+     &      ierr)
+     &    bind(C, name = "gmshModelMeshFieldGetNumbers")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::tag
+            character(len = 1, kind = c_char)::option(*)
+            type(c_ptr), intent(out)::value
+            integer(c_size_t) :: value_n
+            integer(c_int)::ierr
+          end subroutine gmshModelMeshFieldGetNumbers
 
 !  Set the field `tag' as the background mesh size field.
         subroutine gmshModelMeshFieldSetAsBackgroundMesh(

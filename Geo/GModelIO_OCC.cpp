@@ -84,7 +84,6 @@
 #include <ShapeFix_FixSmallFace.hxx>
 #include <ShapeFix_Shape.hxx>
 #include <ShapeFix_Wireframe.hxx>
-#include <ShapeUpgrade_UnifySameDomain.hxx>
 #include <Standard_Version.hxx>
 #include <TColStd_Array1OfInteger.hxx>
 #include <TColStd_Array1OfReal.hxx>
@@ -115,6 +114,10 @@
 #include <BRepMesh_IncrementalMesh.hxx>
 #else
 #include <BRepMesh_FastDiscret.hxx>
+#endif
+
+#if OCC_VERSION_HEX < 0x070400
+#include <ShapeUpgrade_UnifySameDomain.hxx>
 #endif
 
 #if defined(HAVE_OCC_CAF)
@@ -3356,18 +3359,42 @@ bool OCC_Internals::booleanOperator(
       fuse.SetArguments(objectShapes);
       fuse.SetTools(toolShapes);
       if(tolerance > 0.0) fuse.SetFuzzyValue(tolerance);
+
+      // TODO: add gluing option to speed-up operations when no "real"
+      // intersections are present
+      // * default:
+      // fuse.SetGlue(BOPAlgo_GlueOff);
+      // * speed up if no real intersection but partial or full overlapping
+      //   faces/edges:
+      // fuse.SetGlue(BOPAlgo_Shift);
+      // * speed up if no real intersection and no partial overlaps:
+      // fuse.SetGlue(BOPAlgo_GlueFull);
+
+      // TODO: add option to prevent reuse of existing shapes:
+      // fuse.SetNonDestructive(true);
+
       fuse.Build();
       if(!fuse.IsDone()) {
         Msg::Error("Fuse operation cannot be performed");
         return false;
       }
-      result = fuse.Shape();
-      // try to unify faces and edges of the shape (remove internal seams) which
-      // lie on the same geometry
       if(CTX::instance()->geom.occUnionUnify) {
+        // try to unify faces and edges of the shape (remove internal seams)
+        // which lie on the same geometry
+#if OCC_VERSION_HEX < 0x070400
+        result = fuse.Shape();
         ShapeUpgrade_UnifySameDomain unify(result);
         unify.Build();
         result = unify.Shape();
+#else
+        // better, as it preserves the history; TODO: maybe we should also make
+        // this available for the other boolean operations
+        fuse.SimplifyResult();
+        result = fuse.Shape();
+#endif
+      }
+      else {
+        result = fuse.Shape();
       }
       TopTools_ListIteratorOfListOfShape it(objectShapes);
       for(; it.More(); it.Next()) {

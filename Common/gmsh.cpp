@@ -4426,7 +4426,7 @@ GMSH_API void gmsh::model::mesh::setSizeAtParametricPoints(
 }
 
 GMSH_API void gmsh::model::mesh::setSizeCallback(
-  std::function<double(int, int, double, double, double)> callback)
+  std::function<double(int, int, double, double, double, double)> callback)
 {
   if(!_checkInit()) return;
   GModel::current()->lcCallback = callback;
@@ -5155,12 +5155,42 @@ GMSH_API void gmsh::model::mesh::field::remove(const int tag)
 #endif
 }
 
+GMSH_API void gmsh::model::mesh::field::list(std::vector<int> &tags)
+{
+  if(!_checkInit()) return;
+  tags.clear();
+#if defined(HAVE_MESH)
+  FieldManager &fields = *GModel::current()->getFields();
+  for(auto it = fields.begin(); it != fields.end(); it++) {
+    tags.push_back(it->first);
+  }
+#else
+  Msg::Error("Fields require the mesh module");
+#endif
+}
+
+GMSH_API void gmsh::model::mesh::field::getType(const int tag,
+                                                std::string &fieldType)
+{
+  if(!_checkInit()) return;
+#if defined(HAVE_MESH)
+  Field *field = GModel::current()->getFields()->get(tag);
+  if(!field) {
+    Msg::Error("Unknown field %i", tag);
+    return;
+  }
+  fieldType = field->getName();
+#else
+  Msg::Error("Fields require the mesh module");
+#endif
+}
+
 #if defined(HAVE_MESH)
 static FieldOption *_getFieldOption(const int tag, const std::string &option)
 {
   Field *field = GModel::current()->getFields()->get(tag);
   if(!field) {
-    Msg::Error("No field with id %i", tag);
+    Msg::Error("Unknown field %i", tag);
     return nullptr;
   }
   FieldOption *o = field->options[option];
@@ -5180,14 +5210,22 @@ GMSH_API void gmsh::model::mesh::field::setNumber(const int tag,
   if(!_checkInit()) return;
 #if defined(HAVE_MESH)
   FieldOption *o = _getFieldOption(tag, option);
+  if(!o) return;
+  o->numericalValue(value);
+#else
+  Msg::Error("Fields require the mesh module");
+#endif
+}
+
+GMSH_API void gmsh::model::mesh::field::getNumber(const int tag,
+                                                  const std::string &option,
+                                                  double &value)
+{
+  if(!_checkInit()) return;
+#if defined(HAVE_MESH)
+  FieldOption *o = _getFieldOption(tag, option);
   if(!o) { return; }
-  try {
-    o->numericalValue(value);
-  } catch(...) {
-    Msg::Error("Cannot set numerical value to option '%s' in field %i",
-               option.c_str(), tag);
-    return;
-  }
+  value = o->numericalValue();
 #else
   Msg::Error("Fields require the mesh module");
 #endif
@@ -5200,14 +5238,22 @@ GMSH_API void gmsh::model::mesh::field::setString(const int tag,
   if(!_checkInit()) return;
 #if defined(HAVE_MESH)
   FieldOption *o = _getFieldOption(tag, option);
+  if(!o) return;
+  o->string(value);
+#else
+  Msg::Error("Fields require the mesh module");
+#endif
+}
+
+GMSH_API void gmsh::model::mesh::field::getString(const int tag,
+                                                  const std::string &option,
+                                                  std::string &value)
+{
+  if(!_checkInit()) return;
+#if defined(HAVE_MESH)
+  FieldOption *o = _getFieldOption(tag, option);
   if(!o) { return; }
-  try {
-    o->string(value);
-  } catch(...) {
-    Msg::Error("Cannot set string value to option '%s' in field %i",
-               option.c_str(), tag);
-    return;
-  }
+  value = o->string();
 #else
   Msg::Error("Fields require the mesh module");
 #endif
@@ -5220,22 +5266,37 @@ gmsh::model::mesh::field::setNumbers(const int tag, const std::string &option,
   if(!_checkInit()) return;
 #if defined(HAVE_MESH)
   FieldOption *o = _getFieldOption(tag, option);
+  if(!o) return;
+  if(o->getType() == FIELD_OPTION_LIST) {
+    std::list<int> vl;
+    for(std::size_t i = 0; i < value.size(); i++) vl.push_back((int)value[i]);
+    o->list(vl);
+  }
+  else {
+    std::list<double> vl;
+    for(std::size_t i = 0; i < value.size(); i++) vl.push_back(value[i]);
+    o->listdouble(vl);
+  }
+#else
+  Msg::Error("Fields require the mesh module");
+#endif
+}
+
+GMSH_API void
+gmsh::model::mesh::field::getNumbers(const int tag, const std::string &option,
+                                     std::vector<double> &value)
+{
+  if(!_checkInit()) return;
+#if defined(HAVE_MESH)
+  FieldOption *o = _getFieldOption(tag, option);
   if(!o) { return; }
-  try {
-    if(o->getType() == FIELD_OPTION_LIST) {
-      std::list<int> vl;
-      for(std::size_t i = 0; i < value.size(); i++) vl.push_back((int)value[i]);
-      o->list(vl);
-    }
-    else {
-      std::list<double> vl;
-      for(std::size_t i = 0; i < value.size(); i++) vl.push_back(value[i]);
-      o->listdouble(vl);
-    }
-  } catch(...) {
-    Msg::Error("Cannot set numeric values to option '%s' in field %i",
-               option.c_str(), tag);
-    return;
+  if(o->getType() == FIELD_OPTION_LIST) {
+    std::list<int> vl = o->list();
+    for(auto i : vl) value.push_back(i);
+  }
+  else {
+    std::list<double> vl = o->listdouble();
+    for(auto d : vl) value.push_back(d);
   }
 #else
   Msg::Error("Fields require the mesh module");

@@ -2151,7 +2151,8 @@ const get_number_of_orientations = getNumberOfOrientations
 
 Get the global unique mesh edge identifiers `edgeTags` and orientations
 `edgeOrientation` for an input list of node tag pairs defining these edges,
-concatenated in the vector `nodeTags`.
+concatenated in the vector `nodeTags`. Mesh edges are created e.g. by
+`createEdges()` or `getKeysForElements()`.
 
 Return `edgeTags`, `edgeOrientations`.
 """
@@ -2177,7 +2178,8 @@ const get_edges = getEdges
 Get the global unique mesh face identifiers `faceTags` and orientations
 `faceOrientations` for an input list of node tag triplets (if `faceType` == 3)
 or quadruplets (if `faceType` == 4) defining these faces, concatenated in the
-vector `nodeTags`.
+vector `nodeTags`. Mesh faces are created e.g. by `createFaces()` or
+`getKeysForElements()`.
 
 Return `faceTags`, `faceOrientations`.
 """
@@ -2497,13 +2499,18 @@ const set_size_at_parametric_points = setSizeAtParametricPoints
 """
     gmsh.model.mesh.setSizeCallback(callback)
 
-Set a mesh size callback for the current model. The callback should take 5
-arguments (`dim`, `tag`, `x`, `y` and `z`) and return the value of the mesh size
-at coordinates (`x`, `y`, `z`).
+Set a mesh size callback for the current model. The callback function should
+take six arguments as input (`dim`, `tag`, `x`, `y`, `z` and `lc`). The first
+two integer arguments correspond to the dimension `dim` and tag `tag` of the
+entity being meshed. The next four double precision arguments correspond to the
+coordinates `x`, `y` and `z` around which to prescribe the mesh size and to the
+mesh size `lc` that would be prescribed if the callback had not been called. The
+callback function should return a double precision number specifying the desired
+mesh size; returning `lc` is equivalent to a no-op.
 """
 function setSizeCallback(callback)
-    api_callback__(dim, tag, x, y, z, data) = callback(dim, tag, x, y, z)
-    api_callback_ = @cfunction($api_callback__, Cdouble, (Cint, Cint, Cdouble, Cdouble, Cdouble, Ptr{Cvoid}))
+    api_callback__(dim, tag, x, y, z, lc, data) = callback(dim, tag, x, y, z, lc)
+    api_callback_ = @cfunction($api_callback__, Cdouble, (Cint, Cint, Cdouble, Cdouble, Cdouble, Cdouble, Ptr{Cvoid}))
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshSetSizeCallback, gmsh.lib), Cvoid,
           (Ptr{Cvoid}, Ptr{Cvoid}, Ptr{Cint}),
@@ -3144,6 +3151,44 @@ function remove(tag)
 end
 
 """
+    gmsh.model.mesh.field.list()
+
+Get the list of all fields.
+
+Return `tags`.
+"""
+function list()
+    api_tags_ = Ref{Ptr{Cint}}()
+    api_tags_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshFieldList, gmsh.lib), Cvoid,
+          (Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
+          api_tags_, api_tags_n_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    tags = unsafe_wrap(Array, api_tags_[], api_tags_n_[], own = true)
+    return tags
+end
+
+"""
+    gmsh.model.mesh.field.getType(tag)
+
+Get the type `fieldType` of the field with tag `tag`.
+
+Return `fileType`.
+"""
+function getType(tag)
+    api_fileType_ = Ref{Ptr{Cchar}}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshFieldGetType, gmsh.lib), Cvoid,
+          (Cint, Ptr{Ptr{Cchar}}, Ptr{Cint}),
+          tag, api_fileType_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    fileType = unsafe_string(api_fileType_[])
+    return fileType
+end
+const get_type = getType
+
+"""
     gmsh.model.mesh.field.setNumber(tag, option, value)
 
 Set the numerical option `option` to value `value` for field `tag`.
@@ -3157,6 +3202,24 @@ function setNumber(tag, option, value)
     return nothing
 end
 const set_number = setNumber
+
+"""
+    gmsh.model.mesh.field.getNumber(tag, option)
+
+Get the value of the numerical option `option` for field `tag`.
+
+Return `value`.
+"""
+function getNumber(tag, option)
+    api_value_ = Ref{Cdouble}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshFieldGetNumber, gmsh.lib), Cvoid,
+          (Cint, Ptr{Cchar}, Ptr{Cdouble}, Ptr{Cint}),
+          tag, option, api_value_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return api_value_[]
+end
+const get_number = getNumber
 
 """
     gmsh.model.mesh.field.setString(tag, option, value)
@@ -3174,6 +3237,25 @@ end
 const set_string = setString
 
 """
+    gmsh.model.mesh.field.getString(tag, option)
+
+Get the value of the string option `option` for field `tag`.
+
+Return `value`.
+"""
+function getString(tag, option)
+    api_value_ = Ref{Ptr{Cchar}}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshFieldGetString, gmsh.lib), Cvoid,
+          (Cint, Ptr{Cchar}, Ptr{Ptr{Cchar}}, Ptr{Cint}),
+          tag, option, api_value_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    value = unsafe_string(api_value_[])
+    return value
+end
+const get_string = getString
+
+"""
     gmsh.model.mesh.field.setNumbers(tag, option, value)
 
 Set the numerical list option `option` to value `value` for field `tag`.
@@ -3187,6 +3269,26 @@ function setNumbers(tag, option, value)
     return nothing
 end
 const set_numbers = setNumbers
+
+"""
+    gmsh.model.mesh.field.getNumbers(tag, option)
+
+Get the value of the numerical list option `option` for field `tag`.
+
+Return `value`.
+"""
+function getNumbers(tag, option)
+    api_value_ = Ref{Ptr{Cdouble}}()
+    api_value_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshFieldGetNumbers, gmsh.lib), Cvoid,
+          (Cint, Ptr{Cchar}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
+          tag, option, api_value_, api_value_n_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    value = unsafe_wrap(Array, api_value_[], api_value_n_[], own = true)
+    return value
+end
+const get_numbers = getNumbers
 
 """
     gmsh.model.mesh.field.setAsBackgroundMesh(tag)
