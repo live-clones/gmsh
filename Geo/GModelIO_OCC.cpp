@@ -34,6 +34,7 @@
 #include <BRepBuilderAPI_MakeWire.hxx>
 #include <BRepBuilderAPI_Transform.hxx>
 #include <BRepCheck_Analyzer.hxx>
+#include <BRepExtrema_DistShapeShape.hxx>
 #include <BRepFill_CurveConstraint.hxx>
 #include <BRepFilletAPI_MakeChamfer.hxx>
 #include <BRepFilletAPI_MakeFillet.hxx>
@@ -4407,6 +4408,51 @@ bool OCC_Internals::getMatrixOfInertia(int dim, int tag,
   for(int i = 1; i <= 3; i++)
     for(int j = 1; j <= 3; j++) mat.push_back(m.Value(i, j));
   return true;
+}
+
+double OCC_Internals::getDistance(int dim1, int tag1,
+                                  int dim2, int tag2,
+                                  double &x1, double &y1, double &z1,
+                                  double &x2, double &y2, double &z2)
+{
+  if(!_isBound(dim1, tag1)) {
+    Msg::Error("Unknown OpenCASCADE entity of dimension %d with tag %d",
+               dim1, tag1);
+    return false;
+  }
+  TopoDS_Shape shape1 = _find(dim1, tag1);
+
+  if(!_isBound(dim2, tag2)) {
+    Msg::Error("Unknown OpenCASCADE entity of dimension %d with tag %d",
+               dim2, tag2);
+    return false;
+  }
+  TopoDS_Shape shape2 = _find(dim2, tag2);
+
+  BRepExtrema_DistShapeShape dist(shape1, shape2);
+  if(dist.IsDone()) {
+    double dmin = 1.e200;
+    gp_Pnt pmin1, pmin2;
+    for(int i = 1; i <= dist.NbSolution(); i++) {
+      gp_Pnt p1 = dist.PointOnShape1(i);
+      gp_Pnt p2 = dist.PointOnShape2(i);
+      double d = p1.Distance(p2);
+      if(d < dmin) {
+        dmin = d;
+        pmin1 = p1;
+        pmin2 = p2;
+      }
+    }
+    x1 = pmin1.X();
+    y1 = pmin1.Y();
+    z1 = pmin1.Z();
+    x2 = pmin2.X();
+    y2 = pmin2.Y();
+    z2 = pmin2.Z();
+    return dmin;
+  }
+
+  return -1.;
 }
 
 bool const sortByInvDim(std::pair<int, int> const &lhs,
