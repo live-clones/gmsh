@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2016 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// bugs and problems to the public mailing list <gmsh@onelab.info>.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 //
 // Contributor(s):
 //   Algiane Froehly
