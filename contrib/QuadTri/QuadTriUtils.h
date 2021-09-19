@@ -10,7 +10,7 @@ other mesh elements.
 
 Trevor S. Strickler hereby transfers copyright of QuadTri files to Christophe
 Geuzaine and J.-F. Remacle with the understanding that his contribution shall be
-cited appropriately. See the LICENSE.txt file for license information.
+cited appropriately. See the README.txt file for license information.
 ********************************************************************************/
 
 #ifndef QUADTRIUTILS_H
