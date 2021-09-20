@@ -1,7 +1,7 @@
 # Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 #
 # See the LICENSE.txt file in the Gmsh root directory for license information.
-# Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+# issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 # This file defines the Gmsh Julia API (v4.9.0).
 #
@@ -2056,12 +2056,13 @@ const get_jacobian = getJacobian
 Get the basis functions of the element of type `elementType` at the evaluation
 points `localCoord` (given as concatenated triplets of coordinates in the
 reference element [g1u, g1v, g1w, ..., gGu, gGv, gGw]), for the function space
-`functionSpaceType` (e.g. "Lagrange" or "GradLagrange" for Lagrange basis
-functions or their gradient, in the u, v, w coordinates of the reference
-element; or "H1Legendre3" or "GradH1Legendre3" for 3rd order hierarchical H1
-Legendre functions). `numComponents` returns the number C of components of a
-basis function. `basisFunctions` returns the value of the N basis functions at
-the evaluation points, i.e. [g1f1, g1f2, ..., g1fN, g2f1, ...] when C == 1 or
+`functionSpaceType` (e.g. "Lagrange" or "GradLagrange" for isoparametric
+Lagrange basis functions or their gradient, in the u, v, w coordinates of the
+reference element; "Lagrange3" for 3rd order Lagrange basis functions, or
+"H1Legendre3" or "GradH1Legendre3" for 3rd order hierarchical H1 Legendre
+functions). `numComponents` returns the number C of components of a basis
+function. `basisFunctions` returns the value of the N basis functions at the
+evaluation points, i.e. [g1f1, g1f2, ..., g1fN, g2f1, ...] when C == 1 or
 [g1f1u, g1f1v, g1f1w, g1f2u, ..., g1fNw, g2f1u, ...] when C == 3. For basis
 functions that depend on the orientation of the elements, all values for the
 first orientation are returned first, followed by values for the second, etc.
