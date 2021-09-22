@@ -2152,6 +2152,18 @@ static bool _getFunctionSpaceInfo(const std::string &fsType,
     fsComp = 0;
     return true;
   }
+  if (fsType.size() > 8 && fsType.substr(0,8) == "Lagrange") {
+    fsName = "Lagrange";
+    fsOrder = atoi(fsType.substr(8).c_str());
+    fsComp = 1;
+    return true;
+  }
+  if (fsType.size() > 12 && fsType.substr(0,12) == "GradLagrange") {
+    fsName = "GradLagrange";
+    fsOrder = atoi(fsType.substr(12).c_str());
+    fsComp = 3;
+    return true;
+  }
   if(fsType == "IsoParametric" || fsType == "Lagrange") {
     fsName = "Lagrange";
     fsOrder = -1;
