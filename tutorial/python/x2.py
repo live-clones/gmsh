@@ -163,8 +163,9 @@ elif transfiniteAuto:
 else:
     gmsh.option.setNumber('Mesh.MeshSizeMin', 0.05)
     gmsh.option.setNumber('Mesh.MeshSizeMax', 0.05)
-
+gmsh.option.set_number("Mesh.MshFileVersion",2)
 gmsh.model.mesh.generate(3)
+
 gmsh.write('x2.msh')
 
 # Launch the GUI to see the results:
