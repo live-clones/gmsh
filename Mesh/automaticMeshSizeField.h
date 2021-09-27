@@ -21,7 +21,8 @@
 #include "rtree.h"
 
 #if defined(HAVE_P4EST)
-#include <p4est_to_p8est.h>
+// #include <p4est_to_p8est.h>
+#include <p4est_extended.h>
 #include <p8est_extended.h>
 #endif
 
@@ -76,6 +77,7 @@ typedef struct ForestOptions {
   double *directionsW;
 
   std::vector<SMetric3> *metrics;
+  std::vector<double> *minSizeFromAuxiliaryMetricField;
 
   FILE *user_file1;
   FILE *user_file2;
@@ -87,30 +89,48 @@ typedef struct ForestOptions {
 typedef struct Forest {
 #ifdef HAVE_P4EST
   p4est_t *p4est;
+  p8est_t *p8est;
 #endif
   ForestOptions *forestOptions;
 } Forest;
 
 // Data available on each tree cell
-typedef struct size_data_t {
-  double size[3]; // Isotropic mesh size or anisotropic sizes hc1, hc2 and hn
-  double dir[9]; // Principal directions for anisotropic size field : [u1 u2 u3
-                 // (v1 v2 v3 w1 w2 w3)]
-  double dirCorner[36];
-  // std::map<p4est_quadrant_t*, int*> closestDirArray;
-  std::map<int, int> testMap;
+typedef struct size_data2d_t {
+  double size[2]; // Isotropic mesh size or anisotropic sizes
+  double dir[4];  // Principal directions for anisotropic size field
+  double dirCorner[16];
   SMetric3 M; // Metric tensor
+  SMetric3 MC1;
+  SMetric3 MC2;
+  SMetric3 MC3;
+  SMetric3 MC4;
+  /* Size gradient : ds[0,1] is the gradient of the isotropic size if isotropic
+   size field. If anisotropic, ds[0,1] is grad(h1), ds[2,3] is grad(hc2) */
+  double ds[4];
+  double h; // Length of an quadrant's edge
+  double c[3]; // Coordinates of center
+  bool hasIntersection; // Has an intersection with the boundary mesh
+  bool isPlanar;
+  bool isStillSmoothed[4];
+} size_data2d_t;
+
+// Data available on each tree cell
+typedef struct size_data3d_t {
+  double size[3]; // Isotropic mesh size or anisotropic sizes hc1, hc2 and hn
+  double dir[9]; // Principal directions for anisotropic size field : [u1 u2 u3 (v1 v2 v3 w1 w2 w3)]
+  double dirCorner[36];
+  SMetric3 M;
   // Size gradient : ds[0->2] is the gradient of the isotropic size if isotropic
   // size field If anisotropic, ds[0->2] is grad(hc1), ds[3->5] is grad(hc2) and
   // ds[6->8] is grad(hn) hc1 and hc2 are the curvature sizes and hn is the
   // normal (feature) size.
   double ds[9];
-  double h; // Length of an octant's edge
-  double c[3]; // Coordinates of center
-  bool hasIntersection; // Has an intersection with the boundary mesh
+  double h;
+  double c[3];
+  bool hasIntersection;
   bool isPlanar;
   bool isStillSmoothed;
-} size_data_t;
+} size_data3d_t;
 
 // A node to search in the tree
 typedef struct size_point {
@@ -142,7 +162,6 @@ HXTStatus forestDelete(Forest **forest);
 HXTStatus forestSave(Forest *forest, const char *forestFile,
                      const char *dataFile);
 HXTStatus forestExport(Forest *forest, const char *forestFile);
-HXTStatus forestExport2D(Forest *forest, const char *forestFile);
 HXTStatus forestLoad(Forest **forest, const char *forestFile,
                      const char *dataFile, ForestOptions *forestOptions);
 
@@ -164,6 +183,7 @@ class automaticMeshSizeField : public Field {
   double _hbulk;
   double _gradation;
   bool _smoothing, _gaps;
+  bool _aniso;
 
 public:
   ~automaticMeshSizeField();
@@ -171,7 +191,9 @@ public:
     std::string fFile = CTX::instance()->bgmFileName,
     int minElementsPerTwoPi = CTX::instance()->mesh.lcFromCurvature,
     int nLayersPerGap = CTX::instance()->mesh.nLayersPerGap,
-    double gradation = CTX::instance()->mesh.gradation, double hmin = -1.0,
+    double gradation = CTX::instance()->mesh.gradation, 
+    bool anisotropic = CTX::instance()->mesh.anisotropicSizeField,
+    double hmin = -1.0,
     double hmax = -1.0, double hbulk = -1.0, int smoothing = true,
     int gaps = true)
 #if defined(HAVE_HXT) && defined(HAVE_P4EST)
@@ -185,6 +207,7 @@ public:
     _hmax = hmax;
     _hbulk = hbulk;
     _gradation = (int) gradation ? gradation : 1.1;
+    _aniso = anisotropic;
     _smoothing = smoothing;
     _gaps = gaps;
 
