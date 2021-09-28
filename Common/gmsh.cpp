@@ -129,21 +129,26 @@ GMSH_API void gmsh::initialize(int argc, char **argv, bool readConfigFiles,
   if(run) new GModel();
 
   if(GmshInitialize(argc, argv, readConfigFiles, false)) {
-    // throw an exception as soon as an error occurs, unless the GUI is running
-    // (by default the Gmsh app - and thus also when "run" is set - always keeps
-    // going after errors)
-    if(!run) CTX::instance()->abortOnError = 2;
-    // show messages on the terminal
-    CTX::instance()->terminal = 1;
     _initialized = 1;
     _argc = argc;
     _argv = new char *[_argc + 1];
     for(int i = 0; i < argc; i++) _argv[i] = argv[i];
     if(run) {
-      if(CTX::instance()->batch)
+      if(CTX::instance()->batch) {
+        if(!Msg::GetGmshClient()) CTX::instance()->terminal = 1;
         GmshBatch();
-      else
+      }
+      else {
         GmshFLTK(argc, argv);
+      }
+    }
+    else {
+      // throw an exception as soon as an error occurs, unless the GUI is
+      // running (by default the Gmsh app - and thus also when "run" is set -
+      // always keeps going after errors)
+      CTX::instance()->abortOnError = 2;
+      // show messages on the terminal
+      CTX::instance()->terminal = 1;
     }
     return;
   }
