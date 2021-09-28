@@ -875,8 +875,8 @@ class Module:
 
 cpp_header = """// {0}
 //
-// See the LICENSE.txt file in the Gmsh root directory for license information.
-// issues on {1}
+// See the LICENSE.txt file in the {3} root directory for license information.
+// Please report all issues on {1}
 
 #ifndef {2}_H
 #define {2}_H
@@ -933,8 +933,8 @@ cpp_footer = """#endif
 c_header = """/*
  * {0}
  *
- * See the LICENSE.txt file in the Gmsh root directory for license information.
- * issues on {1}
+ * See the LICENSE.txt file in the {3} root directory for license information.
+ * Please report all issues on {1}
  */
 
 #ifndef {2}C_H
@@ -976,8 +976,8 @@ c_footer = """
 
 c_cpp_header = """// {0}
 //
-// See the LICENSE.txt file in the Gmsh root directory for license information.
-// issues on {1}
+// See the LICENSE.txt file in the {4} root directory for license information.
+// Please report all issues on {1}
 
 #include <string.h>
 #include <stdlib.h>
@@ -1011,8 +1011,8 @@ void vectorvectorpair2intptrptr(const std::vector<{0}::vectorpair > &v, int ***p
 
 cwrap_header = """// {0}
 //
-// See the LICENSE.txt file in the Gmsh root directory for license information.
-// issues on {1}
+// See the LICENSE.txt file in the {3} root directory for license information.
+// Please report all issues on {1}
 
 #ifndef {2}_H
 #define {2}_H
@@ -1107,8 +1107,8 @@ cwrap_footer = """#endif
 
 python_header = """# {0}
 #
-# See the LICENSE.txt file in the Gmsh root directory for license information.
-# issues on {1}
+# See the LICENSE.txt file in the {2} root directory for license information.
+# Please report all issues on {1}
 
 # This file defines the {2} Python API (v{3}.{4}.{5}).
 #
@@ -1324,8 +1324,8 @@ def _iargcargv(o):
 
 julia_header = """# {0}
 #
-# See the LICENSE.txt file in the Gmsh root directory for license information.
-# issues on {1}
+# See the LICENSE.txt file in the {2} root directory for license information.
+# Please report all issues on {1}
 
 # This file defines the {2} Julia API (v{3}.{4}.{5}).
 #
@@ -1339,8 +1339,8 @@ julia_header = """# {0}
 fortran_header = """c
 c  {0}
 c
-c  See the LICENSE.txt file in the Gmsh root directory for license information.
-c  issues on {1}
+c  See the LICENSE.txt file in the {3} root directory for license information.
+c  Please report all issues on {1}
 c
 
 !DEC$ IF DEFINED ({2}F_H)
@@ -1388,10 +1388,10 @@ class API:
         version_major,
         version_minor,
         version_patch,
-        namespace="gmsh",
-        code="Gmsh",
-        copyright="Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle",
-        issues="https://gitlab.onelab.info/gmsh/gmsh/issues."):
+        namespace = "gmsh",
+        code = "Gmsh",
+        copyright = "Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle",
+        issues = "https://gitlab.onelab.info/gmsh/gmsh/issues."):
         self.version_major = version_major
         self.version_minor = version_minor
         self.version_patch = version_patch
@@ -1557,7 +1557,7 @@ class API:
                                         self.version_patch, ns))
                     fc.write(
                         c_cpp_header.format(self.copyright, self.issues, ns,
-                                            ns.upper()))
+                                            ns.upper(), self.code))
                     fc.write(cwrap_utils.format(ns, ""))
                     fc.write(c_cpp_utils.format(ns))
                     fc.write("\n")
@@ -1592,7 +1592,7 @@ class API:
 
     def write_python(self):
         def parg(a):
-            return a.name + (("=" + a.python_value) if a.python_value else "")
+            return a.name + ((" = " + a.python_value) if a.python_value else "")
 
         def write_function(f, fun, c_mpath, py_mpath, indent):
             (rtype, name, args, doc, special) = fun

@@ -2,7 +2,7 @@
  * Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
  *
  * See the LICENSE.txt file in the Gmsh root directory for license information.
- * issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+ * Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
  */
 
 #ifndef GMSHC_H
