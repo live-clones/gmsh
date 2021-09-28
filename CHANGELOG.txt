@@ -12,10 +12,10 @@ Fortran API; small bug fixes.
 
 * Incompatible API changes: new arguments to mesh/getNode and mesh/getElement;
   additional argument to the mesh size callback function provided to
-  mesh/setSizeCallback; new optional arguments to model/isInside, mesh/partition
-  and occ/addSurfaceFilling; modified arguments to mesh/getKeysForElements,
-  mesh/getKeysForElement and mesh/getInformationForElements; removed
-  mesh/getLocalMultipliersForHcurl0.
+  mesh/setSizeCallback; new optional arguments to gmsh/initialize,
+  model/isInside, mesh/partition and occ/addSurfaceFilling; modified arguments
+  to mesh/getKeysForElements, mesh/getKeysForElement and
+  mesh/getInformationForElements; removed mesh/getLocalMultipliersForHcurl0.
 
 4.8.4 (April 28, 2021): set current model in gmsh/model/add; small bug fixes.
 

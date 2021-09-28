@@ -214,24 +214,27 @@ def _iargcargv(o):
 
 # Gmsh Python API begins here
 
-def initialize(argv=[], readConfigFiles=True):
+def initialize(argv=[], readConfigFiles=True, run=False):
     """
-    gmsh.initialize(argv=[], readConfigFiles=True)
+    gmsh.initialize(argv=[], readConfigFiles=True, run=False)
 
     Initialize the Gmsh API. This must be called before any call to the other
     functions in the API. If `argc' and `argv' (or just `argv' in Python or
     Julia) are provided, they will be handled in the same way as the command
     line arguments in the Gmsh app. If `readConfigFiles' is set, read system
-    Gmsh configuration files (gmshrc and gmsh-options). Initializing the API
-    sets the options "General.Terminal" to 1 and "General.AbortOnError" to 2.
-    If compiled with OpenMP support, it also sets the number of threads to
-    "General.NumThreads".
+    Gmsh configuration files (gmshrc and gmsh-options). If `run' is set, run in
+    the same way as the Gmsh app, either interactively or in batch mode
+    depending on the command line arguments. Initializing the API sets the
+    options "General.AbortOnError" to 2 (if `run' is not set) and
+    "General.Terminal" to 1. If compiled with OpenMP support, it also sets the
+    number of threads to "General.NumThreads".
     """
     api_argc_, api_argv_ = _iargcargv(argv)
     ierr = c_int()
     lib.gmshInitialize(
         api_argc_, api_argv_,
         c_int(bool(readConfigFiles)),
+        c_int(bool(run)),
         byref(ierr))
     if ierr.value != 0:
         raise Exception(logger.getLastError())

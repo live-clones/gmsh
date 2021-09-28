@@ -71,11 +71,11 @@ void vectorvectorpair2intptrptr(const std::vector<gmsh::vectorpair > &v, int ***
   *sizeSize = v.size();
 }
 
-GMSH_API void gmshInitialize(int argc, char ** argv, const int readConfigFiles, int * ierr)
+GMSH_API void gmshInitialize(int argc, char ** argv, const int readConfigFiles, const int run, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    gmsh::initialize(argc, argv, readConfigFiles);
+    gmsh::initialize(argc, argv, readConfigFiles, run);
   }
   catch(...){
     if(ierr) *ierr = 1;

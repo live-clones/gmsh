@@ -116,24 +116,35 @@ static bool _checkInit()
 
 // gmsh
 
-GMSH_API void gmsh::initialize(int argc, char **argv, bool readConfigFiles)
+GMSH_API void gmsh::initialize(int argc, char **argv, bool readConfigFiles,
+                               bool run)
 {
   if(_initialized) {
     Msg::Warning("Gmsh has aleady been initialized");
     return;
   }
+
+  // when running the app, create a model (that will be used in GmshInitialize
+  // to e.g. set the project name)
+  if(run) new GModel();
+
   if(GmshInitialize(argc, argv, readConfigFiles, false)) {
     // throw an exception as soon as an error occurs, unless the GUI is running
-    // (to always keep going after errors like in the Gmsh app, set
-    // "General.AbortOnError" to 0)
-    CTX::instance()->abortOnError = 2;
-    // show messages on the terminal (to disable this set "General.Terminal" to
-    // 0)
+    // (by default the Gmsh app - and thus also when "run" is set - always keeps
+    // going after errors)
+    if(!run) CTX::instance()->abortOnError = 2;
+    // show messages on the terminal
     CTX::instance()->terminal = 1;
     _initialized = 1;
     _argc = argc;
     _argv = new char *[_argc + 1];
     for(int i = 0; i < argc; i++) _argv[i] = argv[i];
+    if(run) {
+      if(CTX::instance()->batch)
+        GmshBatch();
+      else
+        GmshFLTK(argc, argv);
+    }
     return;
   }
   Msg::Error("Something went wrong when initializing Gmsh");

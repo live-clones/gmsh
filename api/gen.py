@@ -44,8 +44,8 @@ api = API(version_major, version_minor, version_patch)
 
 gmsh = api.add_module('gmsh', 'top-level functions')
 
-doc = '''Initialize the Gmsh API. This must be called before any call to the other functions in the API. If `argc' and `argv' (or just `argv' in Python or Julia) are provided, they will be handled in the same way as the command line arguments in the Gmsh app. If `readConfigFiles' is set, read system Gmsh configuration files (gmshrc and gmsh-options). Initializing the API sets the options "General.Terminal" to 1 and "General.AbortOnError" to 2. If compiled with OpenMP support, it also sets the number of threads to "General.NumThreads".'''
-gmsh.add('initialize', doc, None, iargcargv(), ibool('readConfigFiles', 'true', 'True', 'true'))
+doc = '''Initialize the Gmsh API. This must be called before any call to the other functions in the API. If `argc' and `argv' (or just `argv' in Python or Julia) are provided, they will be handled in the same way as the command line arguments in the Gmsh app. If `readConfigFiles' is set, read system Gmsh configuration files (gmshrc and gmsh-options). If `run' is set, run in the same way as the Gmsh app, either interactively or in batch mode depending on the command line arguments. Initializing the API sets the options "General.AbortOnError" to 2 (if `run' is not set) and "General.Terminal" to 1. If compiled with OpenMP support, it also sets the number of threads to "General.NumThreads".'''
+gmsh.add('initialize', doc, None, iargcargv(), ibool('readConfigFiles', 'true', 'True', 'true'), ibool('run', 'false', 'False'))
 
 doc = '''Finalize the Gmsh API. This must be called when you are done using the Gmsh API.'''
 gmsh.add('finalize', doc, None)

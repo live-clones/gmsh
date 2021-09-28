@@ -27,21 +27,23 @@ import Libdl
 const lib = Libdl.find_library([libname], [libdir])
 
 """
-    gmsh.initialize(argv = Vector{String}(), readConfigFiles = true)
+    gmsh.initialize(argv = Vector{String}(), readConfigFiles = true, run = false)
 
 Initialize the Gmsh API. This must be called before any call to the other
 functions in the API. If `argc` and `argv` (or just `argv` in Python or Julia)
 are provided, they will be handled in the same way as the command line arguments
 in the Gmsh app. If `readConfigFiles` is set, read system Gmsh configuration
-files (gmshrc and gmsh-options). Initializing the API sets the options
-"General.Terminal" to 1 and "General.AbortOnError" to 2. If compiled with OpenMP
-support, it also sets the number of threads to "General.NumThreads".
+files (gmshrc and gmsh-options). If `run` is set, run in the same way as the
+Gmsh app, either interactively or in batch mode depending on the command line
+arguments. Initializing the API sets the options "General.AbortOnError" to 2 (if
+`run` is not set) and "General.Terminal" to 1. If compiled with OpenMP support,
+it also sets the number of threads to "General.NumThreads".
 """
-function initialize(argv = Vector{String}(), readConfigFiles = true)
+function initialize(argv = Vector{String}(), readConfigFiles = true, run = false)
     ierr = Ref{Cint}()
     ccall((:gmshInitialize, lib), Cvoid,
-          (Cint, Ptr{Ptr{Cchar}}, Cint, Ptr{Cint}),
-          length(argv), argv, readConfigFiles, ierr)
+          (Cint, Ptr{Ptr{Cchar}}, Cint, Cint, Ptr{Cint}),
+          length(argv), argv, readConfigFiles, run, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
