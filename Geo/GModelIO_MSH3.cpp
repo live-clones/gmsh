@@ -701,7 +701,7 @@ void writeMSHPeriodicNodes(FILE *fp, std::vector<GEntity *> &entities,
         fprintf(fp, "\n");
       }
 
-      std::map<MVertex *, MVertex *> corrVert = g_slave->correspondingVertices;
+      std::map<MVertex *, MVertex *, MVertexPtrLessThan> corrVert = g_slave->correspondingVertices;
       if(CTX::instance()->mesh.hoSavePeriodic)
         corrVert.insert(g_slave->correspondingHighOrderVertices.begin(),
                         g_slave->correspondingHighOrderVertices.end());

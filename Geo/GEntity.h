@@ -398,10 +398,10 @@ public:
   std::vector<double> affineTransform;
 
   // corresponding mesh vertices
-  std::map<MVertex *, MVertex *> correspondingVertices;
+  std::map<MVertex *, MVertex *, MVertexPtrLessThan> correspondingVertices;
 
   // corresponding high order vertices
-  std::map<MVertex *, MVertex *> correspondingHighOrderVertices;
+  std::map<MVertex *, MVertex *, MVertexPtrLessThan> correspondingHighOrderVertices;
 
   // reorder the mesh elements of the given type, according to ordering
   virtual bool reorder(const int elementType,

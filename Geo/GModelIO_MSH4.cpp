@@ -2552,7 +2552,7 @@ static void writeMSH4PeriodicNodes(GModel *const model, FILE *fp,
     GEntity *g_master = g_slave->getMeshMaster();
 
     if(g_slave != g_master) {
-      std::map<MVertex *, MVertex *> corrVert = g_slave->correspondingVertices;
+      std::map<MVertex *, MVertex *, MVertexPtrLessThan> corrVert = g_slave->correspondingVertices;
       if(CTX::instance()->mesh.hoSavePeriodic)
         corrVert.insert(g_slave->correspondingHighOrderVertices.begin(),
                         g_slave->correspondingHighOrderVertices.end());
