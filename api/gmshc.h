@@ -1316,7 +1316,7 @@ GMSH_API void gmshModelMeshGetPeriodicNodes(const int dim,
  * `entityKeyMaster') corresponding to the entity `tag' and the key pairs
  * (`typeKey', `entityKey') for the elements of type `elementType' and
  * function space type `functionSpaceType'. If `returnCoord' is set, the
- * `coord' and `coordMaster` vectors contain the x, y, z coordinates locating
+ * `coord' and `coordMaster' vectors contain the x, y, z coordinates locating
  * basis functions for sorting purposes. */
 GMSH_API void gmshModelMeshGetPeriodicKeysForElements(const int elementType,
                                                       const char * functionSpaceType,

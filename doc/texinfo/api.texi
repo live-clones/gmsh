@@ -2565,8 +2565,8 @@ Get the master entity @code{tagMaster} and the key pairs (@code{typeKeyMaster},
 @code{entityKeyMaster}) corresponding to the entity @code{tag} and the key pairs
 (@code{typeKey}, @code{entityKey}) for the elements of type @code{elementType}
 and function space type @code{functionSpaceType}. If @code{returnCoord} is set,
-the @code{coord} and @code{coordMaster@code{ vectors contain the x, y, z
-coordinates locating basis functions for sorting purposes.
+the @code{coord} and @code{coordMaster} vectors contain the x, y, z coordinates
+locating basis functions for sorting purposes.
 
 @table @asis
 @item Input:
