@@ -1925,7 +1925,7 @@ GMSH_API void gmshModelMeshGetPeriodicNodes(const int dim, const int tag, int * 
   }
 }
 
-GMSH_API void gmshModelMeshGetPeriodicKeysForElements(const int elementType, const char * functionSpaceType, const int tag, int * tagMaster, int ** typeKeys, size_t * typeKeys_n, int ** typeKeysMaster, size_t * typeKeysMaster_n, size_t ** entityKeys, size_t * entityKeys_n, size_t ** entityKeysMaster, size_t * entityKeysMaster_n, int * ierr)
+GMSH_API void gmshModelMeshGetPeriodicKeysForElements(const int elementType, const char * functionSpaceType, const int tag, int * tagMaster, int ** typeKeys, size_t * typeKeys_n, int ** typeKeysMaster, size_t * typeKeysMaster_n, size_t ** entityKeys, size_t * entityKeys_n, size_t ** entityKeysMaster, size_t * entityKeysMaster_n, double ** coord, size_t * coord_n, double ** coordMaster, size_t * coordMaster_n, const int returnCoord, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
@@ -1933,11 +1933,15 @@ GMSH_API void gmshModelMeshGetPeriodicKeysForElements(const int elementType, con
     std::vector<int> api_typeKeysMaster_;
     std::vector<std::size_t> api_entityKeys_;
     std::vector<std::size_t> api_entityKeysMaster_;
-    gmsh::model::mesh::getPeriodicKeysForElements(elementType, functionSpaceType, tag, *tagMaster, api_typeKeys_, api_typeKeysMaster_, api_entityKeys_, api_entityKeysMaster_);
+    std::vector<double> api_coord_;
+    std::vector<double> api_coordMaster_;
+    gmsh::model::mesh::getPeriodicKeysForElements(elementType, functionSpaceType, tag, *tagMaster, api_typeKeys_, api_typeKeysMaster_, api_entityKeys_, api_entityKeysMaster_, api_coord_, api_coordMaster_, returnCoord);
     vector2ptr(api_typeKeys_, typeKeys, typeKeys_n);
     vector2ptr(api_typeKeysMaster_, typeKeysMaster, typeKeysMaster_n);
     vector2ptr(api_entityKeys_, entityKeys, entityKeys_n);
     vector2ptr(api_entityKeysMaster_, entityKeysMaster, entityKeysMaster_n);
+    vector2ptr(api_coord_, coord, coord_n);
+    vector2ptr(api_coordMaster_, coordMaster, coordMaster_n);
   }
   catch(...){
     if(ierr) *ierr = 1;

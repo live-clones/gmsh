@@ -1501,7 +1501,10 @@ namespace gmsh { // Top-level functions
                                                std::vector<int> & typeKeys,
                                                std::vector<int> & typeKeysMaster,
                                                std::vector<std::size_t> & entityKeys,
-                                               std::vector<std::size_t> & entityKeysMaster);
+                                               std::vector<std::size_t> & entityKeysMaster,
+                                               std::vector<double> & coord,
+                                               std::vector<double> & coordMaster,
+                                               const bool returnCoord = true);
 
       // gmsh::model::mesh::removeDuplicateNodes
       //

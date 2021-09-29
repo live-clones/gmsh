@@ -5017,7 +5017,9 @@ GMSH_API void gmsh::model::mesh::getPeriodicKeysForElements(
   const int elementType, const std::string &functionSpaceType,
   const int tag, int &tagMaster,
   std::vector<int> &typeKeys, std::vector<int> &typeKeysMaster,
-  std::vector<std::size_t> &entityKeys, std::vector<std::size_t> &entityKeysMaster)
+  std::vector<std::size_t> &entityKeys, std::vector<std::size_t> &entityKeysMaster,
+  std::vector<double> &coord, std::vector<double> &coordMaster,
+  const bool generateCoord)
 {
   if(!_checkInit()) return;
   int dim = ElementType::getDimension(elementType);
@@ -5036,24 +5038,35 @@ GMSH_API void gmsh::model::mesh::getPeriodicKeysForElements(
   }
 
   tagMaster = ge->getMeshMaster()->tag();
-  std::vector<double> coord;
   getKeysForElements(elementType, functionSpaceType,
-                     typeKeys, entityKeys, coord, tag, false);
+                     typeKeys, entityKeys, coord, tag, generateCoord);
   typeKeysMaster = typeKeys;
   entityKeysMaster = entityKeys;
+  coordMaster = coord;
 
   if(functionSpaceType == "IsoParametric" ||
      functionSpaceType == "Lagrange") {
+#pragma omp parallel for
     for(std::size_t i = 0; i < entityKeys.size(); i++) {
       MVertex v(0., 0., 0., nullptr, entityKeys[i]);
       auto mv = ge->correspondingVertices.find(&v);
       if(mv != ge->correspondingVertices.end()) {
         entityKeysMaster[i] = mv->second->getNum();
+        if(generateCoord) {
+          coord[3*i] = mv->second->x();
+          coord[3*i+1] = mv->second->y();
+          coord[3*i+2] = mv->second->z();
+        }
       }
       else {
         auto mv2 = ge->correspondingHighOrderVertices.find(&v);
         if(mv2 != ge->correspondingHighOrderVertices.end()) {
           entityKeysMaster[i] = mv2->second->getNum();
+          if(generateCoord) {
+            coord[3*i] = mv2->second->x();
+            coord[3*i+1] = mv2->second->y();
+            coord[3*i+2] = mv2->second->z();
+          }
         }
         else{
           Msg::Warning("Unknown master node corresponding to node %d",

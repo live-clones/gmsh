@@ -2913,16 +2913,16 @@ end
 const get_periodic_nodes = getPeriodicNodes
 
 """
-    gmsh.model.mesh.getPeriodicKeysForElements(elementType, functionSpaceType, tag)
+    gmsh.model.mesh.getPeriodicKeysForElements(elementType, functionSpaceType, tag, returnCoord = true)
 
 Get the master entity `tagMaster` and the key pairs (`typeKeyMaster`,
 `entityKeyMaster`) corresponding to the entity `tag` and the key pairs
 (`typeKey`, `entityKey`) for the elements of type `elementType` and function
 space type `functionSapeType`.
 
-Return `tagMaster`, `typeKeys`, `typeKeysMaster`, `entityKeys`, `entityKeysMaster`.
+Return `tagMaster`, `typeKeys`, `typeKeysMaster`, `entityKeys`, `entityKeysMaster`, `coord`, `coordMaster`.
 """
-function getPeriodicKeysForElements(elementType, functionSpaceType, tag)
+function getPeriodicKeysForElements(elementType, functionSpaceType, tag, returnCoord = true)
     api_tagMaster_ = Ref{Cint}()
     api_typeKeys_ = Ref{Ptr{Cint}}()
     api_typeKeys_n_ = Ref{Csize_t}()
@@ -2932,16 +2932,22 @@ function getPeriodicKeysForElements(elementType, functionSpaceType, tag)
     api_entityKeys_n_ = Ref{Csize_t}()
     api_entityKeysMaster_ = Ref{Ptr{Csize_t}}()
     api_entityKeysMaster_n_ = Ref{Csize_t}()
+    api_coord_ = Ref{Ptr{Cdouble}}()
+    api_coord_n_ = Ref{Csize_t}()
+    api_coordMaster_ = Ref{Ptr{Cdouble}}()
+    api_coordMaster_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetPeriodicKeysForElements, gmsh.lib), Cvoid,
-          (Cint, Ptr{Cchar}, Cint, Ptr{Cint}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cint}),
-          elementType, functionSpaceType, tag, api_tagMaster_, api_typeKeys_, api_typeKeys_n_, api_typeKeysMaster_, api_typeKeysMaster_n_, api_entityKeys_, api_entityKeys_n_, api_entityKeysMaster_, api_entityKeysMaster_n_, ierr)
+          (Cint, Ptr{Cchar}, Cint, Ptr{Cint}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
+          elementType, functionSpaceType, tag, api_tagMaster_, api_typeKeys_, api_typeKeys_n_, api_typeKeysMaster_, api_typeKeysMaster_n_, api_entityKeys_, api_entityKeys_n_, api_entityKeysMaster_, api_entityKeysMaster_n_, api_coord_, api_coord_n_, api_coordMaster_, api_coordMaster_n_, returnCoord, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     typeKeys = unsafe_wrap(Array, api_typeKeys_[], api_typeKeys_n_[], own = true)
     typeKeysMaster = unsafe_wrap(Array, api_typeKeysMaster_[], api_typeKeysMaster_n_[], own = true)
     entityKeys = unsafe_wrap(Array, api_entityKeys_[], api_entityKeys_n_[], own = true)
     entityKeysMaster = unsafe_wrap(Array, api_entityKeysMaster_[], api_entityKeysMaster_n_[], own = true)
-    return api_tagMaster_[], typeKeys, typeKeysMaster, entityKeys, entityKeysMaster
+    coord = unsafe_wrap(Array, api_coord_[], api_coord_n_[], own = true)
+    coordMaster = unsafe_wrap(Array, api_coordMaster_[], api_coordMaster_n_[], own = true)
+    return api_tagMaster_[], typeKeys, typeKeysMaster, entityKeys, entityKeysMaster, coord, coordMaster
 end
 const get_periodic_keys_for_elements = getPeriodicKeysForElements
 

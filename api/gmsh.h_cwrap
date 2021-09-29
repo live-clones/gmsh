@@ -2284,19 +2284,26 @@ namespace gmsh { // Top-level functions
                                              std::vector<int> & typeKeys,
                                              std::vector<int> & typeKeysMaster,
                                              std::vector<std::size_t> & entityKeys,
-                                             std::vector<std::size_t> & entityKeysMaster)
+                                             std::vector<std::size_t> & entityKeysMaster,
+                                             std::vector<double> & coord,
+                                             std::vector<double> & coordMaster,
+                                             const bool returnCoord = true)
       {
         int ierr = 0;
         int *api_typeKeys_; size_t api_typeKeys_n_;
         int *api_typeKeysMaster_; size_t api_typeKeysMaster_n_;
         size_t *api_entityKeys_; size_t api_entityKeys_n_;
         size_t *api_entityKeysMaster_; size_t api_entityKeysMaster_n_;
-        gmshModelMeshGetPeriodicKeysForElements(elementType, functionSpaceType.c_str(), tag, &tagMaster, &api_typeKeys_, &api_typeKeys_n_, &api_typeKeysMaster_, &api_typeKeysMaster_n_, &api_entityKeys_, &api_entityKeys_n_, &api_entityKeysMaster_, &api_entityKeysMaster_n_, &ierr);
+        double *api_coord_; size_t api_coord_n_;
+        double *api_coordMaster_; size_t api_coordMaster_n_;
+        gmshModelMeshGetPeriodicKeysForElements(elementType, functionSpaceType.c_str(), tag, &tagMaster, &api_typeKeys_, &api_typeKeys_n_, &api_typeKeysMaster_, &api_typeKeysMaster_n_, &api_entityKeys_, &api_entityKeys_n_, &api_entityKeysMaster_, &api_entityKeysMaster_n_, &api_coord_, &api_coord_n_, &api_coordMaster_, &api_coordMaster_n_, (int)returnCoord, &ierr);
         if(ierr) throwLastError();
         typeKeys.assign(api_typeKeys_, api_typeKeys_ + api_typeKeys_n_); gmshFree(api_typeKeys_);
         typeKeysMaster.assign(api_typeKeysMaster_, api_typeKeysMaster_ + api_typeKeysMaster_n_); gmshFree(api_typeKeysMaster_);
         entityKeys.assign(api_entityKeys_, api_entityKeys_ + api_entityKeys_n_); gmshFree(api_entityKeys_);
         entityKeysMaster.assign(api_entityKeysMaster_, api_entityKeysMaster_ + api_entityKeysMaster_n_); gmshFree(api_entityKeysMaster_);
+        coord.assign(api_coord_, api_coord_ + api_coord_n_); gmshFree(api_coord_);
+        coordMaster.assign(api_coordMaster_, api_coordMaster_ + api_coordMaster_n_); gmshFree(api_coordMaster_);
       }
 
       // Remove duplicate nodes in the mesh of the current model.

@@ -3421,22 +3421,24 @@ class model:
         get_periodic_nodes = getPeriodicNodes
 
         @staticmethod
-        def getPeriodicKeysForElements(elementType, functionSpaceType, tag):
+        def getPeriodicKeysForElements(elementType, functionSpaceType, tag, returnCoord = True):
             """
-            gmsh.model.mesh.getPeriodicKeysForElements(elementType, functionSpaceType, tag)
+            gmsh.model.mesh.getPeriodicKeysForElements(elementType, functionSpaceType, tag, returnCoord = True)
 
             Get the master entity `tagMaster' and the key pairs (`typeKeyMaster',
             `entityKeyMaster') corresponding to the entity `tag' and the key pairs
             (`typeKey', `entityKey') for the elements of type `elementType' and
             function space type `functionSapeType'.
 
-            Return `tagMaster', `typeKeys', `typeKeysMaster', `entityKeys', `entityKeysMaster'.
+            Return `tagMaster', `typeKeys', `typeKeysMaster', `entityKeys', `entityKeysMaster', `coord', `coordMaster'.
             """
             api_tagMaster_ = c_int()
             api_typeKeys_, api_typeKeys_n_ = POINTER(c_int)(), c_size_t()
             api_typeKeysMaster_, api_typeKeysMaster_n_ = POINTER(c_int)(), c_size_t()
             api_entityKeys_, api_entityKeys_n_ = POINTER(c_size_t)(), c_size_t()
             api_entityKeysMaster_, api_entityKeysMaster_n_ = POINTER(c_size_t)(), c_size_t()
+            api_coord_, api_coord_n_ = POINTER(c_double)(), c_size_t()
+            api_coordMaster_, api_coordMaster_n_ = POINTER(c_double)(), c_size_t()
             ierr = c_int()
             lib.gmshModelMeshGetPeriodicKeysForElements(
                 c_int(elementType),
@@ -3447,6 +3449,9 @@ class model:
                 byref(api_typeKeysMaster_), byref(api_typeKeysMaster_n_),
                 byref(api_entityKeys_), byref(api_entityKeys_n_),
                 byref(api_entityKeysMaster_), byref(api_entityKeysMaster_n_),
+                byref(api_coord_), byref(api_coord_n_),
+                byref(api_coordMaster_), byref(api_coordMaster_n_),
+                c_int(bool(returnCoord)),
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
@@ -3455,7 +3460,9 @@ class model:
                 _ovectorint(api_typeKeys_, api_typeKeys_n_.value),
                 _ovectorint(api_typeKeysMaster_, api_typeKeysMaster_n_.value),
                 _ovectorsize(api_entityKeys_, api_entityKeys_n_.value),
-                _ovectorsize(api_entityKeysMaster_, api_entityKeysMaster_n_.value))
+                _ovectorsize(api_entityKeysMaster_, api_entityKeysMaster_n_.value),
+                _ovectordouble(api_coord_, api_coord_n_.value),
+                _ovectordouble(api_coordMaster_, api_coordMaster_n_.value))
         get_periodic_keys_for_elements = getPeriodicKeysForElements
 
         @staticmethod

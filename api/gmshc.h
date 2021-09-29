@@ -1324,6 +1324,9 @@ GMSH_API void gmshModelMeshGetPeriodicKeysForElements(const int elementType,
                                                       int ** typeKeysMaster, size_t * typeKeysMaster_n,
                                                       size_t ** entityKeys, size_t * entityKeys_n,
                                                       size_t ** entityKeysMaster, size_t * entityKeysMaster_n,
+                                                      double ** coord, size_t * coord_n,
+                                                      double ** coordMaster, size_t * coordMaster_n,
+                                                      const int returnCoord,
                                                       int * ierr);
 
 /* Remove duplicate nodes in the mesh of the current model. */

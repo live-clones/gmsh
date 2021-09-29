@@ -2729,6 +2729,11 @@ c
      &      entityKeys_n,
      &      entityKeysMaster,
      &      entityKeysMaster_n,
+     &      coord,
+     &      coord_n,
+     &      coordMaster,
+     &      coordMaster_n,
+     &      returnCoord,
      &      ierr)
      &    bind(C, name = "gmshModelMeshGetPeriodicKeysForElements")
           use, intrinsic :: iso_c_binding
@@ -2744,6 +2749,11 @@ c
             integer(c_size_t) :: entityKeys_n
             type(c_ptr), intent(out)::entityKeysMaster
             integer(c_size_t) :: entityKeysMaster_n
+            type(c_ptr), intent(out)::coord
+            integer(c_size_t) :: coord_n
+            type(c_ptr), intent(out)::coordMaster
+            integer(c_size_t) :: coordMaster_n
+            integer(c_int), value::returnCoord
             integer(c_int)::ierr
           end subroutine gmshModelMeshGetPeriodicKeysForElements
 
