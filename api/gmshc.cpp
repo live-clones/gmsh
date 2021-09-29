@@ -1925,6 +1925,25 @@ GMSH_API void gmshModelMeshGetPeriodicNodes(const int dim, const int tag, int * 
   }
 }
 
+GMSH_API void gmshModelMeshGetPeriodicKeysForElements(const int elementType, const char * functionSpaceType, const int tag, int * tagMaster, int ** typeKeys, size_t * typeKeys_n, int ** typeKeysMaster, size_t * typeKeysMaster_n, size_t ** entityKeys, size_t * entityKeys_n, size_t ** entityKeysMaster, size_t * entityKeysMaster_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<int> api_typeKeys_;
+    std::vector<int> api_typeKeysMaster_;
+    std::vector<std::size_t> api_entityKeys_;
+    std::vector<std::size_t> api_entityKeysMaster_;
+    gmsh::model::mesh::getPeriodicKeysForElements(elementType, functionSpaceType, tag, *tagMaster, api_typeKeys_, api_typeKeysMaster_, api_entityKeys_, api_entityKeysMaster_);
+    vector2ptr(api_typeKeys_, typeKeys, typeKeys_n);
+    vector2ptr(api_typeKeysMaster_, typeKeysMaster, typeKeysMaster_n);
+    vector2ptr(api_entityKeys_, entityKeys, entityKeys_n);
+    vector2ptr(api_entityKeysMaster_, entityKeysMaster, entityKeysMaster_n);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API void gmshModelMeshRemoveDuplicateNodes(int * ierr)
 {
   if(ierr) *ierr = 0;

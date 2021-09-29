@@ -2913,6 +2913,39 @@ end
 const get_periodic_nodes = getPeriodicNodes
 
 """
+    gmsh.model.mesh.getPeriodicKeysForElements(elementType, functionSpaceType, tag)
+
+Get the master entity `tagMaster` and the key pairs (`typeKeyMaster`,
+`entityKeyMaster`) corresponding to the entity `tag` and the key pairs
+(`typeKey`, `entityKey`) for the elements of type `elementType` and function
+space type `functionSapeType`.
+
+Return `tagMaster`, `typeKeys`, `typeKeysMaster`, `entityKeys`, `entityKeysMaster`.
+"""
+function getPeriodicKeysForElements(elementType, functionSpaceType, tag)
+    api_tagMaster_ = Ref{Cint}()
+    api_typeKeys_ = Ref{Ptr{Cint}}()
+    api_typeKeys_n_ = Ref{Csize_t}()
+    api_typeKeysMaster_ = Ref{Ptr{Cint}}()
+    api_typeKeysMaster_n_ = Ref{Csize_t}()
+    api_entityKeys_ = Ref{Ptr{Csize_t}}()
+    api_entityKeys_n_ = Ref{Csize_t}()
+    api_entityKeysMaster_ = Ref{Ptr{Csize_t}}()
+    api_entityKeysMaster_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshGetPeriodicKeysForElements, gmsh.lib), Cvoid,
+          (Cint, Ptr{Cchar}, Cint, Ptr{Cint}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cint}),
+          elementType, functionSpaceType, tag, api_tagMaster_, api_typeKeys_, api_typeKeys_n_, api_typeKeysMaster_, api_typeKeysMaster_n_, api_entityKeys_, api_entityKeys_n_, api_entityKeysMaster_, api_entityKeysMaster_n_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    typeKeys = unsafe_wrap(Array, api_typeKeys_[], api_typeKeys_n_[], own = true)
+    typeKeysMaster = unsafe_wrap(Array, api_typeKeysMaster_[], api_typeKeysMaster_n_[], own = true)
+    entityKeys = unsafe_wrap(Array, api_entityKeys_[], api_entityKeys_n_[], own = true)
+    entityKeysMaster = unsafe_wrap(Array, api_entityKeysMaster_[], api_entityKeysMaster_n_[], own = true)
+    return api_tagMaster_[], typeKeys, typeKeysMaster, entityKeys, entityKeysMaster
+end
+const get_periodic_keys_for_elements = getPeriodicKeysForElements
+
+"""
     gmsh.model.mesh.removeDuplicateNodes()
 
 Remove duplicate nodes in the mesh of the current model.

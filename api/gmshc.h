@@ -1312,6 +1312,20 @@ GMSH_API void gmshModelMeshGetPeriodicNodes(const int dim,
                                             const int includeHighOrderNodes,
                                             int * ierr);
 
+/* Get the master entity `tagMaster' and the key pairs (`typeKeyMaster',
+ * `entityKeyMaster') corresponding to the entity `tag' and the key pairs
+ * (`typeKey', `entityKey') for the elements of type `elementType' and
+ * function space type `functionSapeType'. */
+GMSH_API void gmshModelMeshGetPeriodicKeysForElements(const int elementType,
+                                                      const char * functionSpaceType,
+                                                      const int tag,
+                                                      int * tagMaster,
+                                                      int ** typeKeys, size_t * typeKeys_n,
+                                                      int ** typeKeysMaster, size_t * typeKeysMaster_n,
+                                                      size_t ** entityKeys, size_t * entityKeys_n,
+                                                      size_t ** entityKeysMaster, size_t * entityKeysMaster_n,
+                                                      int * ierr);
+
 /* Remove duplicate nodes in the mesh of the current model. */
 GMSH_API void gmshModelMeshRemoveDuplicateNodes(int * ierr);
 

@@ -2712,6 +2712,41 @@ c
             integer(c_int)::ierr
           end subroutine gmshModelMeshGetPeriodicNodes
 
+!  Get the master entity `tagMaster' and the key pairs (`typeKeyMaster',
+!  `entityKeyMaster') corresponding to the entity `tag' and the key pairs
+!  (`typeKey', `entityKey') for the elements of type `elementType' and
+!  function space type `functionSapeType'.
+        subroutine gmshModelMeshGetPeriodicKeysForElements(
+     &      elementType,
+     &      functionSpaceType,
+     &      tag,
+     &      tagMaster,
+     &      typeKeys,
+     &      typeKeys_n,
+     &      typeKeysMaster,
+     &      typeKeysMaster_n,
+     &      entityKeys,
+     &      entityKeys_n,
+     &      entityKeysMaster,
+     &      entityKeysMaster_n,
+     &      ierr)
+     &    bind(C, name = "gmshModelMeshGetPeriodicKeysForElements")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::elementType
+            character(len = 1, kind = c_char)::functionSpaceType(*)
+            integer(c_int), value::tag
+            integer(c_int)::tagMaster
+            type(c_ptr), intent(out)::typeKeys
+            integer(c_size_t) :: typeKeys_n
+            type(c_ptr), intent(out)::typeKeysMaster
+            integer(c_size_t) :: typeKeysMaster_n
+            type(c_ptr), intent(out)::entityKeys
+            integer(c_size_t) :: entityKeys_n
+            type(c_ptr), intent(out)::entityKeysMaster
+            integer(c_size_t) :: entityKeysMaster_n
+            integer(c_int)::ierr
+          end subroutine gmshModelMeshGetPeriodicKeysForElements
+
 !  Remove duplicate nodes in the mesh of the current model.
         subroutine gmshModelMeshRemoveDuplicateNodes(
      &      ierr)

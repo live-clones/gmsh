@@ -2273,6 +2273,32 @@ namespace gmsh { // Top-level functions
         affineTransform.assign(api_affineTransform_, api_affineTransform_ + api_affineTransform_n_); gmshFree(api_affineTransform_);
       }
 
+      // Get the master entity `tagMaster' and the key pairs (`typeKeyMaster',
+      // `entityKeyMaster') corresponding to the entity `tag' and the key pairs
+      // (`typeKey', `entityKey') for the elements of type `elementType' and
+      // function space type `functionSapeType'.
+      inline void getPeriodicKeysForElements(const int elementType,
+                                             const std::string & functionSpaceType,
+                                             const int tag,
+                                             int & tagMaster,
+                                             std::vector<int> & typeKeys,
+                                             std::vector<int> & typeKeysMaster,
+                                             std::vector<std::size_t> & entityKeys,
+                                             std::vector<std::size_t> & entityKeysMaster)
+      {
+        int ierr = 0;
+        int *api_typeKeys_; size_t api_typeKeys_n_;
+        int *api_typeKeysMaster_; size_t api_typeKeysMaster_n_;
+        size_t *api_entityKeys_; size_t api_entityKeys_n_;
+        size_t *api_entityKeysMaster_; size_t api_entityKeysMaster_n_;
+        gmshModelMeshGetPeriodicKeysForElements(elementType, functionSpaceType.c_str(), tag, &tagMaster, &api_typeKeys_, &api_typeKeys_n_, &api_typeKeysMaster_, &api_typeKeysMaster_n_, &api_entityKeys_, &api_entityKeys_n_, &api_entityKeysMaster_, &api_entityKeysMaster_n_, &ierr);
+        if(ierr) throwLastError();
+        typeKeys.assign(api_typeKeys_, api_typeKeys_ + api_typeKeys_n_); gmshFree(api_typeKeys_);
+        typeKeysMaster.assign(api_typeKeysMaster_, api_typeKeysMaster_ + api_typeKeysMaster_n_); gmshFree(api_typeKeysMaster_);
+        entityKeys.assign(api_entityKeys_, api_entityKeys_ + api_entityKeys_n_); gmshFree(api_entityKeys_);
+        entityKeysMaster.assign(api_entityKeysMaster_, api_entityKeysMaster_ + api_entityKeysMaster_n_); gmshFree(api_entityKeysMaster_);
+      }
+
       // Remove duplicate nodes in the mesh of the current model.
       inline void removeDuplicateNodes()
       {

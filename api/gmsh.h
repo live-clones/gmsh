@@ -1488,6 +1488,21 @@ namespace gmsh { // Top-level functions
                                      std::vector<double> & affineTransform,
                                      const bool includeHighOrderNodes = false);
 
+      // gmsh::model::mesh::getPeriodicKeysForElements
+      //
+      // Get the master entity `tagMaster' and the key pairs (`typeKeyMaster',
+      // `entityKeyMaster') corresponding to the entity `tag' and the key pairs
+      // (`typeKey', `entityKey') for the elements of type `elementType' and
+      // function space type `functionSapeType'.
+      GMSH_API void getPeriodicKeysForElements(const int elementType,
+                                               const std::string & functionSpaceType,
+                                               const int tag,
+                                               int & tagMaster,
+                                               std::vector<int> & typeKeys,
+                                               std::vector<int> & typeKeysMaster,
+                                               std::vector<std::size_t> & entityKeys,
+                                               std::vector<std::size_t> & entityKeysMaster);
+
       // gmsh::model::mesh::removeDuplicateNodes
       //
       // Remove duplicate nodes in the mesh of the current model.

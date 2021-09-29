@@ -2168,13 +2168,13 @@ static bool _getFunctionSpaceInfo(const std::string &fsType,
     fsComp = 0;
     return true;
   }
-  if (fsType.size() > 8 && fsType.substr(0,8) == "Lagrange") {
+  if(fsType.size() > 8 && fsType.substr(0,8) == "Lagrange") {
     fsName = "Lagrange";
     fsOrder = atoi(fsType.substr(8).c_str());
     fsComp = 1;
     return true;
   }
-  if (fsType.size() > 12 && fsType.substr(0,12) == "GradLagrange") {
+  if(fsType.size() > 12 && fsType.substr(0,12) == "GradLagrange") {
     fsName = "GradLagrange";
     fsOrder = atoi(fsType.substr(12).c_str());
     fsComp = 3;
@@ -5010,6 +5010,61 @@ GMSH_API void gmsh::model::mesh::getPeriodicNodes(
     nodeTags.clear();
     nodeTagsMaster.clear();
     affineTransform.clear();
+  }
+}
+
+GMSH_API void gmsh::model::mesh::getPeriodicKeysForElements(
+  const int elementType, const std::string &functionSpaceType,
+  const int tag, int &tagMaster,
+  std::vector<int> &typeKeys, std::vector<int> &typeKeysMaster,
+  std::vector<std::size_t> &entityKeys, std::vector<std::size_t> &entityKeysMaster)
+{
+  if(!_checkInit()) return;
+  int dim = ElementType::getDimension(elementType);
+  GEntity *ge = GModel::current()->getEntityByTag(dim, tag);
+  if(!ge) {
+    Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
+    return;
+  }
+  if(ge->getMeshMaster() == ge) { // not periodic
+    tagMaster = tag;
+    typeKeys.clear();
+    typeKeysMaster.clear();
+    entityKeys.clear();
+    entityKeysMaster.clear();
+    return;
+  }
+
+  tagMaster = ge->getMeshMaster()->tag();
+  std::vector<double> coord;
+  getKeysForElements(elementType, functionSpaceType,
+                     typeKeys, entityKeys, coord, tag, false);
+  typeKeysMaster = typeKeys;
+  entityKeysMaster = entityKeys;
+
+  if(functionSpaceType == "IsoParametric" ||
+     functionSpaceType == "Lagrange") {
+    for(std::size_t i = 0; i < entityKeys.size(); i++) {
+      MVertex v(0., 0., 0., nullptr, entityKeys[i]);
+      auto mv = ge->correspondingVertices.find(&v);
+      if(mv != ge->correspondingVertices.end()) {
+        entityKeysMaster[i] = mv->second->getNum();
+      }
+      else {
+        auto mv2 = ge->correspondingHighOrderVertices.find(&v);
+        if(mv2 != ge->correspondingHighOrderVertices.end()) {
+          entityKeysMaster[i] = mv2->second->getNum();
+        }
+        else{
+          Msg::Warning("Unknown master node corresponding to node %d",
+                       entityKeys[i]);
+        }
+      }
+    }
+  }
+  else{
+    Msg::Error("Periodic key generation currently only available for "
+               "\"IsoParametric\" and \"Lagrange\" function spaces");
   }
 }
 
