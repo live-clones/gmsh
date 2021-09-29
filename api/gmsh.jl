@@ -2918,7 +2918,9 @@ const get_periodic_nodes = getPeriodicNodes
 Get the master entity `tagMaster` and the key pairs (`typeKeyMaster`,
 `entityKeyMaster`) corresponding to the entity `tag` and the key pairs
 (`typeKey`, `entityKey`) for the elements of type `elementType` and function
-space type `functionSapeType`.
+space type `functionSpaceType`. If `returnCoord` is set, the `coord` and
+`coordMaster` vectors contain the x, y, z coordinates locating basis functions
+for sorting purposes.
 
 Return `tagMaster`, `typeKeys`, `typeKeysMaster`, `entityKeys`, `entityKeysMaster`, `coord`, `coordMaster`.
 """

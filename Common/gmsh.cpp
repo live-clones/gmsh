@@ -3402,7 +3402,7 @@ GMSH_API void gmsh::model::mesh::createFaces(const vectorpair &dimTags)
 GMSH_API void gmsh::model::mesh::getKeysForElements(
   const int elementType, const std::string &functionSpaceType,
   std::vector<int> &typeKeys, std::vector<std::size_t> &entityKeys,
-  std::vector<double> &coord, const int tag, const bool generateCoord)
+  std::vector<double> &coord, const int tag, const bool returnCoord)
 {
   if(!_checkInit()) return;
   coord.clear();
@@ -3493,7 +3493,7 @@ GMSH_API void gmsh::model::mesh::getKeysForElements(
       GEntity *ge = entities[i];
       std::size_t numElementsInEntitie =
         ge->getNumMeshElementsByType(familyType);
-      if(generateCoord) {
+      if(returnCoord) {
         coord.reserve(coord.size() + numElementsInEntitie *
                                        nodalB->getNumShapeFunctions() * 3);
       }
@@ -3507,7 +3507,7 @@ GMSH_API void gmsh::model::mesh::getKeysForElements(
         for(size_t k = 0; k < e->getNumVertices(); ++k) {
           typeKeys.push_back(0);
           entityKeys.push_back(e->getVertex(k)->getNum());
-          if(generateCoord) {
+          if(returnCoord) {
             coord.push_back(e->getVertex(k)->x());
             coord.push_back(e->getVertex(k)->y());
             coord.push_back(e->getVertex(k)->z());
@@ -3557,7 +3557,7 @@ GMSH_API void gmsh::model::mesh::getKeysForElements(
   for(std::size_t i = 0; i < entities.size(); i++) {
     GEntity *ge = entities[i];
     std::size_t numElementsInEntitie = ge->getNumMeshElementsByType(familyType);
-    if(generateCoord) {
+    if(returnCoord) {
       coord.reserve(coord.size() +
                     numElementsInEntitie * numDofsPerElement * 3);
     }
@@ -3572,7 +3572,7 @@ GMSH_API void gmsh::model::mesh::getKeysForElements(
       for(int k = 0; k < vSize; k++) {
         typeKeys.push_back(0);
         entityKeys.push_back(e->getVertex(k)->getNum());
-        if(generateCoord) {
+        if(returnCoord) {
           coord.push_back(e->getVertex(k)->x());
           coord.push_back(e->getVertex(k)->y());
           coord.push_back(e->getVertex(k)->z());
@@ -3583,7 +3583,7 @@ GMSH_API void gmsh::model::mesh::getKeysForElements(
         for(int jj = 0; jj < e->getNumEdges(); jj++) {
           MEdge edge = e->getEdge(jj);
           double coordEdge[3];
-          if(generateCoord) {
+          if(returnCoord) {
             MVertex *v1 = edge.getVertex(0);
             MVertex *v2 = edge.getVertex(1);
 
@@ -3595,7 +3595,7 @@ GMSH_API void gmsh::model::mesh::getKeysForElements(
           for(int k = 1; k < const1; k++) {
             typeKeys.push_back(k);
             entityKeys.push_back(edgeGlobalIndice);
-            if(generateCoord) {
+            if(returnCoord) {
               coord.push_back(coordEdge[0]);
               coord.push_back(coordEdge[1]);
               coord.push_back(coordEdge[2]);
@@ -3609,7 +3609,7 @@ GMSH_API void gmsh::model::mesh::getKeysForElements(
           // Number the faces
           MFace face = e->getFaceSolin(jj);
           double coordFace[3] = {0., 0., 0.};
-          if(generateCoord) {
+          if(returnCoord) {
             for(std::size_t indexV = 0; indexV < face.getNumVertices();
                 ++indexV) {
               coordFace[0] += face.getVertex(indexV)->x();
@@ -3626,7 +3626,7 @@ GMSH_API void gmsh::model::mesh::getKeysForElements(
           for(int k = const1; k < it2; k++) {
             typeKeys.push_back(k);
             entityKeys.push_back(faceGlobalIndice);
-            if(generateCoord) {
+            if(returnCoord) {
               coord.push_back(coordFace[0]);
               coord.push_back(coordFace[1]);
               coord.push_back(coordFace[2]);
@@ -3637,7 +3637,7 @@ GMSH_API void gmsh::model::mesh::getKeysForElements(
       // volumes
       if(bSize > 0) {
         double bubbleCenterCoord[3] = {0., 0., 0.};
-        if(generateCoord) {
+        if(returnCoord) {
           for(unsigned int indexV = 0; indexV < e->getNumVertices(); ++indexV) {
             bubbleCenterCoord[0] += e->getVertex(indexV)->x();
             bubbleCenterCoord[1] += e->getVertex(indexV)->y();
@@ -3650,7 +3650,7 @@ GMSH_API void gmsh::model::mesh::getKeysForElements(
         for(int k = std::max(const3, const2); k < const4; k++) {
           typeKeys.push_back(k);
           entityKeys.push_back(e->getNum());
-          if(generateCoord) {
+          if(returnCoord) {
             coord.push_back(bubbleCenterCoord[0]);
             coord.push_back(bubbleCenterCoord[1]);
             coord.push_back(bubbleCenterCoord[2]);
@@ -3664,7 +3664,7 @@ GMSH_API void gmsh::model::mesh::getKeysForElements(
 GMSH_API void gmsh::model::mesh::getKeysForElement(
   const std::size_t elementTag, const std::string &functionSpaceType,
   std::vector<int> &typeKeys, std::vector<std::size_t> &entityKeys,
-  std::vector<double> &coord, const bool generateCoord)
+  std::vector<double> &coord, const bool returnCoord)
 {
   if(!_checkInit()) return;
   coord.clear();
@@ -3741,11 +3741,11 @@ GMSH_API void gmsh::model::mesh::getKeysForElement(
           fsName == "GradIsoParametric" || fsName == "GradLagrange") {
     typeKeys.reserve(e->getNumVertices());
     entityKeys.reserve(e->getNumVertices());
-    if(generateCoord) { coord.reserve(3 * e->getNumVertices()); }
+    if(returnCoord) { coord.reserve(3 * e->getNumVertices()); }
     for(size_t k = 0; k < e->getNumVertices(); ++k) {
       typeKeys.push_back(0);
       entityKeys.push_back(e->getVertex(k)->getNum());
-      if(generateCoord) {
+      if(returnCoord) {
         coord.push_back(e->getVertex(k)->x());
         coord.push_back(e->getVertex(k)->y());
         coord.push_back(e->getVertex(k)->z());
@@ -3792,13 +3792,13 @@ GMSH_API void gmsh::model::mesh::getKeysForElement(
 
   typeKeys.reserve(numDofsPerElement);
   entityKeys.reserve(numDofsPerElement);
-  if(generateCoord) { coord.reserve(3 * numDofsPerElement); }
+  if(returnCoord) { coord.reserve(3 * numDofsPerElement); }
 
   // vertices
   for(int k = 0; k < vSize; k++) {
     typeKeys.push_back(0);
     entityKeys.push_back(e->getVertex(k)->getNum());
-    if(generateCoord) {
+    if(returnCoord) {
       coord.push_back(e->getVertex(k)->x());
       coord.push_back(e->getVertex(k)->y());
       coord.push_back(e->getVertex(k)->z());
@@ -3809,7 +3809,7 @@ GMSH_API void gmsh::model::mesh::getKeysForElement(
     for(int jj = 0; jj < e->getNumEdges(); jj++) {
       MEdge edge = e->getEdge(jj);
       double coordEdge[3];
-      if(generateCoord) {
+      if(returnCoord) {
         MVertex *v1 = edge.getVertex(0);
         MVertex *v2 = edge.getVertex(1);
 
@@ -3821,7 +3821,7 @@ GMSH_API void gmsh::model::mesh::getKeysForElement(
       for(int k = 1; k < const1; k++) {
         typeKeys.push_back(k);
         entityKeys.push_back(edgeGlobalIndice);
-        if(generateCoord) {
+        if(returnCoord) {
           coord.push_back(coordEdge[0]);
           coord.push_back(coordEdge[1]);
           coord.push_back(coordEdge[2]);
@@ -3835,7 +3835,7 @@ GMSH_API void gmsh::model::mesh::getKeysForElement(
       // Number the faces
       MFace face = e->getFaceSolin(jj);
       double coordFace[3] = {0., 0., 0.};
-      if(generateCoord) {
+      if(returnCoord) {
         for(std::size_t indexV = 0; indexV < face.getNumVertices(); ++indexV) {
           coordFace[0] += face.getVertex(indexV)->x();
           coordFace[1] += face.getVertex(indexV)->y();
@@ -3851,7 +3851,7 @@ GMSH_API void gmsh::model::mesh::getKeysForElement(
       for(int k = const1; k < it2; k++) {
         typeKeys.push_back(k);
         entityKeys.push_back(faceGlobalIndice);
-        if(generateCoord) {
+        if(returnCoord) {
           coord.push_back(coordFace[0]);
           coord.push_back(coordFace[1]);
           coord.push_back(coordFace[2]);
@@ -3862,7 +3862,7 @@ GMSH_API void gmsh::model::mesh::getKeysForElement(
   // volumes
   if(bSize > 0) {
     double bubbleCenterCoord[3] = {0., 0., 0.};
-    if(generateCoord) {
+    if(returnCoord) {
       for(unsigned int indexV = 0; indexV < e->getNumVertices(); ++indexV) {
         bubbleCenterCoord[0] += e->getVertex(indexV)->x();
         bubbleCenterCoord[1] += e->getVertex(indexV)->y();
@@ -3875,7 +3875,7 @@ GMSH_API void gmsh::model::mesh::getKeysForElement(
     for(int k = std::max(const3, const2); k < const4; k++) {
       typeKeys.push_back(k);
       entityKeys.push_back(e->getNum());
-      if(generateCoord) {
+      if(returnCoord) {
         coord.push_back(bubbleCenterCoord[0]);
         coord.push_back(bubbleCenterCoord[1]);
         coord.push_back(bubbleCenterCoord[2]);
@@ -5019,7 +5019,7 @@ GMSH_API void gmsh::model::mesh::getPeriodicKeysForElements(
   std::vector<int> &typeKeys, std::vector<int> &typeKeysMaster,
   std::vector<std::size_t> &entityKeys, std::vector<std::size_t> &entityKeysMaster,
   std::vector<double> &coord, std::vector<double> &coordMaster,
-  const bool generateCoord)
+  const bool returnCoord)
 {
   if(!_checkInit()) return;
   int dim = ElementType::getDimension(elementType);
@@ -5039,7 +5039,7 @@ GMSH_API void gmsh::model::mesh::getPeriodicKeysForElements(
 
   tagMaster = ge->getMeshMaster()->tag();
   getKeysForElements(elementType, functionSpaceType,
-                     typeKeys, entityKeys, coord, tag, generateCoord);
+                     typeKeys, entityKeys, coord, tag, returnCoord);
   typeKeysMaster = typeKeys;
   entityKeysMaster = entityKeys;
   coordMaster = coord;
@@ -5052,20 +5052,20 @@ GMSH_API void gmsh::model::mesh::getPeriodicKeysForElements(
       auto mv = ge->correspondingVertices.find(&v);
       if(mv != ge->correspondingVertices.end()) {
         entityKeysMaster[i] = mv->second->getNum();
-        if(generateCoord) {
-          coord[3*i] = mv->second->x();
-          coord[3*i+1] = mv->second->y();
-          coord[3*i+2] = mv->second->z();
+        if(returnCoord) {
+          coord[3 * i] = mv->second->x();
+          coord[3 * i + 1] = mv->second->y();
+          coord[3 * i + 2] = mv->second->z();
         }
       }
       else {
         auto mv2 = ge->correspondingHighOrderVertices.find(&v);
         if(mv2 != ge->correspondingHighOrderVertices.end()) {
           entityKeysMaster[i] = mv2->second->getNum();
-          if(generateCoord) {
-            coord[3*i] = mv2->second->x();
-            coord[3*i+1] = mv2->second->y();
-            coord[3*i+2] = mv2->second->z();
+          if(returnCoord) {
+            coord[3 * i] = mv2->second->x();
+            coord[3 * i + 1] = mv2->second->y();
+            coord[3 * i + 2] = mv2->second->z();
           }
         }
         else{
