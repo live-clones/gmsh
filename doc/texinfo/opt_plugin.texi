@@ -1398,15 +1398,13 @@ Default value: @code{-1}
 @end table
 
 @item Plugin(Triangulate)
-Plugin(Triangulate) triangulates the points in the view `View', assuming that all the points belong to a surface that can be projected one-to-one onto a plane. Algorithm selects the old (0) or new (1) meshing algorithm.@*
+Plugin(Triangulate) triangulates the points in the view `View', assuming that all the points belong to a surface that can be projected one-to-one onto a plane. @*
 @*
 If `View' < 0, the plugin is run on the current view.@*
 @*
 Plugin(Triangulate) creates one new list-based view.
 Numeric options:
 @table @code
-@item Algorithm
-Default value: @code{1}
 @item View
 Default value: @code{-1}
 @end table
