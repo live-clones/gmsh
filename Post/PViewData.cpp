@@ -317,7 +317,9 @@ bool PViewData::searchScalarWithTol(double x, double y, double z,
     ret = _octree->searchScalarWithTol(xn, yn, zn, values, step, size, tol, qn, qx,
                                        qy, qz, grad, dim);
     if(ret && d > tol)
-      Msg::Info("Returning value at closest node (distance = %g)", d);
+      Msg::Info("Returning scalar value at closest node (distance = %g, tol %g, pt %g %g %g)", d,tol,x,y,z);
+    else if (ret && d <= tol)
+      Msg::Info("Returning scalar value at closest node (distance = %g, tol %g, pt %g %g %g)", d,tol,x,y,z);
   }
   return ret;
 }
@@ -363,7 +365,7 @@ bool PViewData::searchVectorWithTol(double x, double y, double z,
     ret = _octree->searchVectorWithTol(xn, yn, zn, values, step, size, tol, qn, qx,
                                        qy, qz, grad, dim);
     if(ret && d > tol)
-      Msg::Info("Returning value at closest node (distance = %g)", d);
+      Msg::Info("Returning vector value at closest node (distance = %g, tol %g, pt %g %g %g)", d,tol,x,y,z);
   }
   return ret;
 }
@@ -409,7 +411,7 @@ bool PViewData::searchTensorWithTol(double x, double y, double z,
     ret = _octree->searchTensorWithTol(xn, yn, zn, values, step, size, tol, qn, qx,
                                        qy, qz, grad, dim);
     if(ret && d > tol)
-      Msg::Info("Returning value at closest node (distance = %g)", d);
+      Msg::Info("Returning tensor value at closest node (distance = %g, tol %g, pt %g %g %g)", d,tol,x,y,z);
   }
   return ret;
 }

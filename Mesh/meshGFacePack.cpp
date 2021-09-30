@@ -216,7 +216,7 @@ static double p2triangle_alignement_quality_measure(double *xa, double *xb,
                                     xbc[1], xca[1]);
 
     std::vector<double> val(9);
-    gmsh::view::probe(VIEW_TAG, x[j][0], x[j][1], 0.0, val);
+    gmsh::view::probe(VIEW_TAG, x[j][0], x[j][1], 0, val, 0, 9);
     double dxdu = Js[j][0];
     double dydu = Js[j][2];
 
@@ -252,7 +252,7 @@ static double p1triangle_quality_metric(int VIEW_TAG, PolyMesh::Vertex *v0,
 
   std::vector<double> val(9);
   gmsh::view::probe(VIEW_TAG, (xa[0] + xb[0] + xc[0]) / 3,
-                    (xa[1] + xb[1] + xc[1]) / 3, 0.0, val);
+                    (xa[1] + xb[1] + xc[1]) / 3, 0, val, 0, 9);
   double M[3] = {val[0], val[4], val[1]};
   val.clear();
 
@@ -315,7 +315,7 @@ int lengthPathInMetricField(double lagrangianPoints[3][2],
                 0.5 * (1 + 2 * t) * lagrangianPoints[2][1];
 
     std::vector<double> val(9);
-    gmsh::view::probe(VIEW_TAG, x[0], x[1], 0.0, val);
+    gmsh::view::probe(VIEW_TAG, x[0], x[1], 0.0, val, 0, 9);
     if(val.empty()) { *lengthInMetricField = 1.e22; }
     else {
       double M[3] = {val[0], val[4], val[1]};
@@ -489,11 +489,13 @@ static double closestPoint(int VIEW_TAG, std::vector<SPoint2> &_points,
 }
 
 static bool computeNeighbor(int VIEW_TAG, const SPoint2 &p, int DIR,
-                            double adimensionalLength, SPoint2 &n)
+                            double adimensionalLength, SPoint2 &n,
+			    bool inside (double*))
 {
   std::vector<double> val;
-  gmsh::view::probe(VIEW_TAG, p.x(), p.y(), 0.0, val);
+  gmsh::view::probe(VIEW_TAG, p.x(), p.y(), 0.0, val, 0, 9);
   if(val.empty()) return false;
+  //  printf("%g %g %g \n",val[0],val[1],val[4]);
   double C, S, h1, h2;
   analyze2dMetric(val, C, S, h1, h2);
   double A[4] = {C, -C, S, -S};
@@ -511,13 +513,18 @@ static bool computeNeighbor(int VIEW_TAG, const SPoint2 &p, int DIR,
                PP.y() + dy * h * adimensionalLength / N);
     double Cpp, Spp, h1pp, h2pp;
     val.clear();
-    gmsh::view::probe(VIEW_TAG, pp.x(), pp.y(), 0.0, val);
-    if(val.empty()) { iter = N + 1; }
+    if (inside(pp)){
+      gmsh::view::probe(VIEW_TAG, pp.x(), pp.y(), 0.0, val, 0, 9);
+      if(val.empty()) { iter = N + 1; }
+      else {
+	analyze2dMetric(val, Cpp, Spp, h1pp, h2pp);
+	maxDir(dx, dy, h, Cpp, Spp, h1pp, h2pp);
+	path.push_back(pp);
+	PP = pp;
+      }
+    }
     else {
-      analyze2dMetric(val, Cpp, Spp, h1pp, h2pp);
-      maxDir(dx, dy, h, Cpp, Spp, h1pp, h2pp);
-      path.push_back(pp);
-      PP = pp;
+      iter = N + 1;
     }
   }
   if(path.size() == N) {
@@ -597,14 +604,14 @@ triangleQualityP2(int VIEW_TAG, PolyMesh::HalfEdge *hea,
   if(FF) {
     std::vector<double> val0(9), val1(9), val2(9), val3(9), val4(9), val5(9);
     gmsh::view::probe(VIEW_TAG, hea->v->position.x(), hea->v->position.y(), 0.0,
-                      val0);
+                      val0, 0, 9);
     gmsh::view::probe(VIEW_TAG, heb->v->position.x(), heb->v->position.y(), 0.0,
-                      val1);
+                      val1, 0, 9);
     gmsh::view::probe(VIEW_TAG, hec->v->position.x(), hec->v->position.y(), 0.0,
-                      val2);
-    gmsh::view::probe(VIEW_TAG, ab.x(), ab.y(), 0.0, val3);
-    gmsh::view::probe(VIEW_TAG, bc.x(), bc.y(), 0.0, val4);
-    gmsh::view::probe(VIEW_TAG, ca.x(), ca.y(), 0.0, val5);
+                      val2, 0, 9);
+    gmsh::view::probe(VIEW_TAG, ab.x(), ab.y(), 0.0, val3, 0, 9);
+    gmsh::view::probe(VIEW_TAG, bc.x(), bc.y(), 0.0, val4, 0, 9);
+    gmsh::view::probe(VIEW_TAG, ca.x(), ca.y(), 0.0, val5, 0, 9);
 
     fprintf(FF,
             "ST2(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,0,%g,%g,0,%g,%g,0){%g,%g,%g,%"
@@ -645,7 +652,7 @@ double LENGTH(PolyMesh::HalfEdge *he,
 
 static double bestParabola(PolyMesh::HalfEdge *he, int VIEW_TAG,
                            std::map<PolyMesh::HalfEdge *, SPoint2> &midPoints,
-                           double ximax = .2)
+                           double ximax , bool inside(double*))
 {
   double XI_MIN = -ximax;
   double XI_MAX = ximax;
@@ -672,12 +679,14 @@ static double bestParabola(PolyMesh::HalfEdge *he, int VIEW_TAG,
     double t = (double)i / (N - 1);
     double xi = XI_MIN + (XI_MAX - XI_MIN) * t;
     SPoint2 X(xmid - xi * direction[0], ymid - xi * direction[1]);
-    midPoints[he] = midPoints[he->opposite] = X;
-    Q1 = triangleQualityP2(VIEW_TAG, he, &midPoints);
-    Q2 = triangleQualityP2(VIEW_TAG, he->opposite, &midPoints);
-    if(std::min(Q1, Q2) > QMIN) {
-      QMIN = std::min(Q1, Q2);
-      CUR = X;
+    if (inside(X)){
+      midPoints[he] = midPoints[he->opposite] = X;
+      Q1 = triangleQualityP2(VIEW_TAG, he, &midPoints);
+      Q2 = triangleQualityP2(VIEW_TAG, he->opposite, &midPoints);
+      if(std::min(Q1, Q2) > QMIN) {
+	QMIN = std::min(Q1, Q2);
+	CUR = X;
+      }
     }
   }
   midPoints[he] = midPoints[he->opposite] = CUR;
@@ -798,7 +807,8 @@ double bestParabola(double x0, double y0, double x1, double y1, double &xmid,
 int computePointsUsingScaledCrossFieldPlanarP2(
   const char *modelForMetric, const char *modelForMesh, int VIEW_TAG,
   int faceTag, std::vector<double> &pts,
-  double er(double *, double *, double *, double *, double *, double *))
+  double er(double *, double *, double *, double *, double *, double *),
+  bool inside(double *))
 {
   PolyMesh *pm;
 
@@ -808,6 +818,7 @@ int computePointsUsingScaledCrossFieldPlanarP2(
   gmsh::model::setCurrent(modelForMesh);
   int result = GFace2PolyMesh(faceTag, &pm);
   if(result) return result;
+  pm->print4debug(50);
 
   //  std::queue<SPoint2> _q;
   std::stack<SPoint2> _q;
@@ -824,6 +835,8 @@ int computePointsUsingScaledCrossFieldPlanarP2(
 
   std::vector<double> additional;
 
+  printf("enter something 1\n");
+
   while(!_q.empty()) {
     //    SPoint2 p = _q.front();
     SPoint2 p = _q.top();
@@ -832,33 +845,37 @@ int computePointsUsingScaledCrossFieldPlanarP2(
     //    computeNeighbors (VIEW_TAG,  p , n);
     for(int DIR = 0; DIR < 4; DIR++) {
       SPoint2 pp;
-      if(computeNeighbor(VIEW_TAG, p, DIR, sqrt(_LIMIT), pp)) {
-        //      printf("%12.5E %12.5E\n",pp.x(), pp.y());
-        SPoint2 close;
-        double dist = closestPoint(VIEW_TAG, _points, pp, close);
-        if(dist > _LIMIT) {
-          additional.push_back(pp.x());
-          additional.push_back(pp.y());
-          _q.push(pp);
-          fprintf(f, "SL(%22.15E,%22.15E,0,%22.15E,%22.15E,0){%g,%g};\n",
-                  pp.x(), pp.y(), p.x(), p.y(), dist, dist);
-          _points.push_back(pp);
-          fprintf(f, "SP(%22.15E,%22.15E,0){%lu};\n", pp.x(), pp.y(),
-                  _points.size());
-        }
-        else {
-          //	  fprintf(f,"SL(%22.15E,%22.15E,0,%22.15E,%22.15E,0){%g,%g};\n",close.x(),close.y(),pp.x(),pp.y(),dist,
-          //dist);
-        }
+      if(computeNeighbor(VIEW_TAG, p, DIR, sqrt(_LIMIT), pp, inside)) {
+	if (inside (pp)){
+	  //      printf("%12.5E %12.5E\n",pp.x(), pp.y());
+	  SPoint2 close;
+	  double dist = closestPoint(VIEW_TAG, _points, pp, close);
+	  if(dist > _LIMIT) {
+	    additional.push_back(pp.x());
+	    additional.push_back(pp.y());
+	    _q.push(pp);
+	    fprintf(f, "SL(%22.15E,%22.15E,0,%22.15E,%22.15E,0){%g,%g};\n",
+		    pp.x(), pp.y(), p.x(), p.y(), dist, dist);
+	    _points.push_back(pp);
+	    fprintf(f, "SP(%22.15E,%22.15E,0){%lu};\n", pp.x(), pp.y(),
+		    _points.size());
+	  }
+	  else {
+	    //	  fprintf(f,"SL(%22.15E,%22.15E,0,%22.15E,%22.15E,0){%g,%g};\n",close.x(),close.y(),pp.x(),pp.y(),dist,
+	    //dist);
+	  }
+	}
       }
-      //    if (_points.size() > 1900)break;
-      if(_points.size() % 100 == 0)
+      if (_points.size() > 1900)break;
+      if(_points.size() % 10 == 0)
         printf("q size %lu p size %lu\n", _q.size(), _points.size());
     }
   }
   fprintf(f, "};\n");
   fclose(f);
 
+
+  
   gmsh::model::setCurrent(modelForMesh);
   PolyMesh *newMesh = GFaceInitialMesh(faceTag, 1, &additional);
   newMesh->print4debug(100);
@@ -897,7 +914,7 @@ int computePointsUsingScaledCrossFieldPlanarP2(
         if(er && iter > 14)
           bestParabola(he, midPoints, er, ximax);
         else
-          bestParabola(he, VIEW_TAG, midPoints, ximax);
+          bestParabola(he, VIEW_TAG, midPoints, ximax, inside);
         double L = LENGTH(he, midPoints, VIEW_TAG);
         LS[he] = L;
         LS[he->opposite] = L;
@@ -906,7 +923,7 @@ int computePointsUsingScaledCrossFieldPlanarP2(
     ximax += 0.3 / 5;
   }
 
-  iter = 0;
+  iter = 3;
   while(iter++ < 3) {
     int count = 0;
     for(auto he : newMesh->hedges) {
@@ -917,10 +934,10 @@ int computePointsUsingScaledCrossFieldPlanarP2(
       SPoint2 old = midPoints[he];
       if(LA > 1) {
         double A = er ? bestParabola(he, midPoints, er) :
-                        bestParabola(he, VIEW_TAG, midPoints);
+	  bestParabola(he, VIEW_TAG, midPoints, ximax, inside);
         newMesh->swap_edge(he);
         double B = er ? bestParabola(he, midPoints, er) :
-                        bestParabola(he, VIEW_TAG, midPoints);
+	  bestParabola(he, VIEW_TAG, midPoints, ximax, inside);
 
         double LB = LENGTH(he, midPoints, VIEW_TAG);
         bool invalid = false;
@@ -928,7 +945,7 @@ int computePointsUsingScaledCrossFieldPlanarP2(
         if(er && B > 1.e10) invalid = true;
         if(er && B > A) better = true;
         if(!er && B < 0) invalid = true;
-        if(!er && B < A) better = true;
+        if(!er && LA < LB) better = true;
         if(invalid) {
           newMesh->swap_edge(he);
           midPoints[he] = midPoints[he->opposite] = old;
@@ -938,11 +955,11 @@ int computePointsUsingScaledCrossFieldPlanarP2(
           if(er)
             bestParabola(he, midPoints, er);
           else
-            bestParabola(he, VIEW_TAG, midPoints);
+            bestParabola(he, VIEW_TAG, midPoints, ximax, inside);
         }
         else {
           count++;
-          printf("%12.5E %12.5E %12.5E %12.5E %12.5E \n", A, LA, B, LB,
+	  printf("%12.5E %12.5E %12.5E %12.5E %12.5E \n", A, LA, B, LB,
                  LENGTH(he, midPoints, VIEW_TAG));
         }
       }
