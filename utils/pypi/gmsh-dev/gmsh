@@ -3,5 +3,5 @@
 import sys
 import gmsh
 
-gmsh.initialize(sys.argv, run = True)
+gmsh.initialize(sys.argv, run=True)
 gmsh.finalize()

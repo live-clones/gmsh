@@ -1592,7 +1592,7 @@ class API:
 
     def write_python(self):
         def parg(a):
-            return a.name + ((" = " + a.python_value) if a.python_value else "")
+            return a.name + (("=" + a.python_value) if a.python_value else "")
 
         def write_function(f, fun, c_mpath, py_mpath, indent):
             (rtype, name, args, doc, special) = fun

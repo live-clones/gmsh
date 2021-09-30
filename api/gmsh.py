@@ -214,9 +214,9 @@ def _iargcargv(o):
 
 # Gmsh Python API begins here
 
-def initialize(argv = [], readConfigFiles = True, run = False):
+def initialize(argv=[], readConfigFiles=True, run=False):
     """
-    gmsh.initialize(argv = [], readConfigFiles = True, run = False)
+    gmsh.initialize(argv=[], readConfigFiles=True, run=False)
 
     Initialize the Gmsh API. This must be called before any call to the other
     functions in the API. If `argc' and `argv' (or just `argv' in Python or
@@ -397,9 +397,9 @@ class option:
     get_string = getString
 
     @staticmethod
-    def setColor(name, r, g, b, a = 255):
+    def setColor(name, r, g, b, a=255):
         """
-        gmsh.option.setColor(name, r, g, b, a = 255)
+        gmsh.option.setColor(name, r, g, b, a=255)
 
         Set a color option to the RGBA value (`r', `g', `b', `a'), where where `r',
         `g', `b' and `a' should be integers between 0 and 255. `name' is of the
@@ -574,9 +574,9 @@ class model:
     set_file_name = setFileName
 
     @staticmethod
-    def getEntities(dim = -1):
+    def getEntities(dim=-1):
         """
-        gmsh.model.getEntities(dim = -1)
+        gmsh.model.getEntities(dim=-1)
 
         Get all the entities in the current model. If `dim' is >= 0, return only
         the entities of the specified dimension (e.g. points if `dim' == 0). The
@@ -634,9 +634,9 @@ class model:
     get_entity_name = getEntityName
 
     @staticmethod
-    def getPhysicalGroups(dim = -1):
+    def getPhysicalGroups(dim=-1):
         """
-        gmsh.model.getPhysicalGroups(dim = -1)
+        gmsh.model.getPhysicalGroups(dim=-1)
 
         Get all the physical groups in the current model. If `dim' is >= 0, return
         only the entities of the specified dimension (e.g. physical points if `dim'
@@ -700,9 +700,9 @@ class model:
     get_physical_groups_for_entity = getPhysicalGroupsForEntity
 
     @staticmethod
-    def addPhysicalGroup(dim, tags, tag = -1):
+    def addPhysicalGroup(dim, tags, tag=-1):
         """
-        gmsh.model.addPhysicalGroup(dim, tags, tag = -1)
+        gmsh.model.addPhysicalGroup(dim, tags, tag=-1)
 
         Add a physical group of dimension `dim', grouping the model entities with
         tags `tags'. Return the tag of the physical group, equal to `tag' if `tag'
@@ -723,9 +723,9 @@ class model:
     add_physical_group = addPhysicalGroup
 
     @staticmethod
-    def removePhysicalGroups(dimTags = []):
+    def removePhysicalGroups(dimTags=[]):
         """
-        gmsh.model.removePhysicalGroups(dimTags = [])
+        gmsh.model.removePhysicalGroups(dimTags=[])
 
         Remove the physical groups `dimTags' from the current model. If `dimTags'
         is empty, remove all groups.
@@ -793,9 +793,9 @@ class model:
     get_physical_name = getPhysicalName
 
     @staticmethod
-    def getBoundary(dimTags, combined = True, oriented = True, recursive = False):
+    def getBoundary(dimTags, combined=True, oriented=True, recursive=False):
         """
-        gmsh.model.getBoundary(dimTags, combined = True, oriented = True, recursive = False)
+        gmsh.model.getBoundary(dimTags, combined=True, oriented=True, recursive=False)
 
         Get the boundary of the model entities `dimTags'. Return in `outDimTags'
         the boundary of the individual entities (if `combined' is false) or the
@@ -850,9 +850,9 @@ class model:
     get_adjacencies = getAdjacencies
 
     @staticmethod
-    def getEntitiesInBoundingBox(xmin, ymin, zmin, xmax, ymax, zmax, dim = -1):
+    def getEntitiesInBoundingBox(xmin, ymin, zmin, xmax, ymax, zmax, dim=-1):
         """
-        gmsh.model.getEntitiesInBoundingBox(xmin, ymin, zmin, xmax, ymax, zmax, dim = -1)
+        gmsh.model.getEntitiesInBoundingBox(xmin, ymin, zmin, xmax, ymax, zmax, dim=-1)
 
         Get the model entities in the bounding box defined by the two points
         (`xmin', `ymin', `zmin') and (`xmax', `ymax', `zmax'). If `dim' is >= 0,
@@ -935,9 +935,9 @@ class model:
     get_dimension = getDimension
 
     @staticmethod
-    def addDiscreteEntity(dim, tag = -1, boundary = []):
+    def addDiscreteEntity(dim, tag=-1, boundary=[]):
         """
-        gmsh.model.addDiscreteEntity(dim, tag = -1, boundary = [])
+        gmsh.model.addDiscreteEntity(dim, tag=-1, boundary=[])
 
         Add a discrete model entity (defined by a mesh) of dimension `dim' in the
         current model. Return the tag of the new discrete entity, equal to `tag' if
@@ -960,9 +960,9 @@ class model:
     add_discrete_entity = addDiscreteEntity
 
     @staticmethod
-    def removeEntities(dimTags, recursive = False):
+    def removeEntities(dimTags, recursive=False):
         """
-        gmsh.model.removeEntities(dimTags, recursive = False)
+        gmsh.model.removeEntities(dimTags, recursive=False)
 
         Remove the entities `dimTags' of the current model, provided that they are
         not on the boundary of (or embedded in) higher-dimensional entities. If
@@ -1299,9 +1299,9 @@ class model:
     get_parametrization_bounds = getParametrizationBounds
 
     @staticmethod
-    def isInside(dim, tag, coord, parametric = False):
+    def isInside(dim, tag, coord, parametric=False):
         """
-        gmsh.model.isInside(dim, tag, coord, parametric = False)
+        gmsh.model.isInside(dim, tag, coord, parametric=False)
 
         Check if the coordinates (or the parametric coordinates if `parametric' is
         set) provided in `coord' correspond to points inside the entity of
@@ -1358,9 +1358,9 @@ class model:
     get_closest_point = getClosestPoint
 
     @staticmethod
-    def reparametrizeOnSurface(dim, tag, parametricCoord, surfaceTag, which = 0):
+    def reparametrizeOnSurface(dim, tag, parametricCoord, surfaceTag, which=0):
         """
-        gmsh.model.reparametrizeOnSurface(dim, tag, parametricCoord, surfaceTag, which = 0)
+        gmsh.model.reparametrizeOnSurface(dim, tag, parametricCoord, surfaceTag, which=0)
 
         Reparametrize the boundary entity (point or curve, i.e. with `dim' == 0 or
         `dim' == 1) of tag `tag' on the surface `surfaceTag'. If `dim' == 1,
@@ -1388,9 +1388,9 @@ class model:
     reparametrize_on_surface = reparametrizeOnSurface
 
     @staticmethod
-    def setVisibility(dimTags, value, recursive = False):
+    def setVisibility(dimTags, value, recursive=False):
         """
-        gmsh.model.setVisibility(dimTags, value, recursive = False)
+        gmsh.model.setVisibility(dimTags, value, recursive=False)
 
         Set the visibility of the model entities `dimTags' to `value'. Apply the
         visibility setting recursively if `recursive' is true.
@@ -1428,9 +1428,9 @@ class model:
     get_visibility = getVisibility
 
     @staticmethod
-    def setVisibilityPerWindow(value, windowIndex = 0):
+    def setVisibilityPerWindow(value, windowIndex=0):
         """
-        gmsh.model.setVisibilityPerWindow(value, windowIndex = 0)
+        gmsh.model.setVisibilityPerWindow(value, windowIndex=0)
 
         Set the global visibility of the model per window to `value', where
         `windowIndex' identifies the window in the window list.
@@ -1445,9 +1445,9 @@ class model:
     set_visibility_per_window = setVisibilityPerWindow
 
     @staticmethod
-    def setColor(dimTags, r, g, b, a = 255, recursive = False):
+    def setColor(dimTags, r, g, b, a=255, recursive=False):
         """
-        gmsh.model.setColor(dimTags, r, g, b, a = 255, recursive = False)
+        gmsh.model.setColor(dimTags, r, g, b, a=255, recursive=False)
 
         Set the color of the model entities `dimTags' to the RGBA value (`r', `g',
         `b', `a'), where `r', `g', `b' and `a' should be integers between 0 and
@@ -1523,9 +1523,9 @@ class model:
         """
 
         @staticmethod
-        def generate(dim = 3):
+        def generate(dim=3):
             """
-            gmsh.model.mesh.generate(dim = 3)
+            gmsh.model.mesh.generate(dim=3)
 
             Generate a mesh of the current model, up to dimension `dim' (0, 1, 2 or 3).
             """
@@ -1537,9 +1537,9 @@ class model:
                 raise Exception(logger.getLastError())
 
         @staticmethod
-        def partition(numPart, elementTags = [], partitions = []):
+        def partition(numPart, elementTags=[], partitions=[]):
             """
-            gmsh.model.mesh.partition(numPart, elementTags = [], partitions = [])
+            gmsh.model.mesh.partition(numPart, elementTags=[], partitions=[])
 
             Partition the mesh of the current model into `numPart' partitions.
             Optionally, `elementTags' and `partitions' can be provided to specify the
@@ -1570,9 +1570,9 @@ class model:
                 raise Exception(logger.getLastError())
 
         @staticmethod
-        def optimize(method, force = False, niter = 1, dimTags = []):
+        def optimize(method, force=False, niter=1, dimTags=[]):
             """
-            gmsh.model.mesh.optimize(method, force = False, niter = 1, dimTags = [])
+            gmsh.model.mesh.optimize(method, force=False, niter=1, dimTags=[])
 
             Optimize the mesh of the current model using `method' (empty for default
             tetrahedral mesh optimizer, "Netgen" for Netgen optimizer, "HighOrder" for
@@ -1675,9 +1675,9 @@ class model:
         get_last_node_error = getLastNodeError
 
         @staticmethod
-        def clear(dimTags = []):
+        def clear(dimTags=[]):
             """
-            gmsh.model.mesh.clear(dimTags = [])
+            gmsh.model.mesh.clear(dimTags=[])
 
             Clear the mesh, i.e. delete all the nodes and elements, for the entities
             `dimTags'. If `dimTags' is empty, clear the whole mesh. Note that the mesh
@@ -1693,9 +1693,9 @@ class model:
                 raise Exception(logger.getLastError())
 
         @staticmethod
-        def reverse(dimTags = []):
+        def reverse(dimTags=[]):
             """
-            gmsh.model.mesh.reverse(dimTags = [])
+            gmsh.model.mesh.reverse(dimTags=[])
 
             Reverse the orientation of the elements in the entities `dimTags'. If
             `dimTags' is empty, reverse the orientation of the elements in the whole
@@ -1710,9 +1710,9 @@ class model:
                 raise Exception(logger.getLastError())
 
         @staticmethod
-        def affineTransform(affineTransform, dimTags = []):
+        def affineTransform(affineTransform, dimTags=[]):
             """
-            gmsh.model.mesh.affineTransform(affineTransform, dimTags = [])
+            gmsh.model.mesh.affineTransform(affineTransform, dimTags=[])
 
             Apply the affine transformation `affineTransform' (16 entries of a 4x4
             matrix, by row; only the 12 first can be provided for convenience) to the
@@ -1731,9 +1731,9 @@ class model:
         affine_transform = affineTransform
 
         @staticmethod
-        def getNodes(dim = -1, tag = -1, includeBoundary = False, returnParametricCoord = True):
+        def getNodes(dim=-1, tag=-1, includeBoundary=False, returnParametricCoord=True):
             """
-            gmsh.model.mesh.getNodes(dim = -1, tag = -1, includeBoundary = False, returnParametricCoord = True)
+            gmsh.model.mesh.getNodes(dim=-1, tag=-1, includeBoundary=False, returnParametricCoord=True)
 
             Get the nodes classified on the entity of dimension `dim' and tag `tag'. If
             `tag' < 0, get the nodes for all entities of dimension `dim'. If `dim' and
@@ -1773,9 +1773,9 @@ class model:
         get_nodes = getNodes
 
         @staticmethod
-        def getNodesByElementType(elementType, tag = -1, returnParametricCoord = True):
+        def getNodesByElementType(elementType, tag=-1, returnParametricCoord=True):
             """
-            gmsh.model.mesh.getNodesByElementType(elementType, tag = -1, returnParametricCoord = True)
+            gmsh.model.mesh.getNodesByElementType(elementType, tag=-1, returnParametricCoord=True)
 
             Get the nodes classified on the entity of tag `tag', for all the elements
             of type `elementType'. The other arguments are treated as in `getNodes'.
@@ -1859,9 +1859,9 @@ class model:
         set_node = setNode
 
         @staticmethod
-        def rebuildNodeCache(onlyIfNecessary = True):
+        def rebuildNodeCache(onlyIfNecessary=True):
             """
-            gmsh.model.mesh.rebuildNodeCache(onlyIfNecessary = True)
+            gmsh.model.mesh.rebuildNodeCache(onlyIfNecessary=True)
 
             Rebuild the node cache.
             """
@@ -1874,9 +1874,9 @@ class model:
         rebuild_node_cache = rebuildNodeCache
 
         @staticmethod
-        def rebuildElementCache(onlyIfNecessary = True):
+        def rebuildElementCache(onlyIfNecessary=True):
             """
-            gmsh.model.mesh.rebuildElementCache(onlyIfNecessary = True)
+            gmsh.model.mesh.rebuildElementCache(onlyIfNecessary=True)
 
             Rebuild the element cache.
             """
@@ -1917,9 +1917,9 @@ class model:
         get_nodes_for_physical_group = getNodesForPhysicalGroup
 
         @staticmethod
-        def addNodes(dim, tag, nodeTags, coord, parametricCoord = []):
+        def addNodes(dim, tag, nodeTags, coord, parametricCoord=[]):
             """
-            gmsh.model.mesh.addNodes(dim, tag, nodeTags, coord, parametricCoord = [])
+            gmsh.model.mesh.addNodes(dim, tag, nodeTags, coord, parametricCoord=[])
 
             Add nodes classified on the model entity of dimension `dim' and tag `tag'.
             `nodeTags' contains the node tags (their unique, strictly positive
@@ -1964,9 +1964,9 @@ class model:
         reclassify_nodes = reclassifyNodes
 
         @staticmethod
-        def relocateNodes(dim = -1, tag = -1):
+        def relocateNodes(dim=-1, tag=-1):
             """
-            gmsh.model.mesh.relocateNodes(dim = -1, tag = -1)
+            gmsh.model.mesh.relocateNodes(dim=-1, tag=-1)
 
             Relocate the nodes classified on the entity of dimension `dim' and tag
             `tag' using their parametric coordinates. If `tag' < 0, relocate the nodes
@@ -1983,9 +1983,9 @@ class model:
         relocate_nodes = relocateNodes
 
         @staticmethod
-        def getElements(dim = -1, tag = -1):
+        def getElements(dim=-1, tag=-1):
             """
-            gmsh.model.mesh.getElements(dim = -1, tag = -1)
+            gmsh.model.mesh.getElements(dim=-1, tag=-1)
 
             Get the elements classified on the entity of dimension `dim' and tag `tag'.
             If `tag' < 0, get the elements for all entities of dimension `dim'. If
@@ -2057,9 +2057,9 @@ class model:
         get_element = getElement
 
         @staticmethod
-        def getElementByCoordinates(x, y, z, dim = -1, strict = False):
+        def getElementByCoordinates(x, y, z, dim=-1, strict=False):
             """
-            gmsh.model.mesh.getElementByCoordinates(x, y, z, dim = -1, strict = False)
+            gmsh.model.mesh.getElementByCoordinates(x, y, z, dim=-1, strict=False)
 
             Search the mesh for an element located at coordinates (`x', `y', `z'). This
             function performs a search in a spatial octree. If an element is found,
@@ -2102,9 +2102,9 @@ class model:
         get_element_by_coordinates = getElementByCoordinates
 
         @staticmethod
-        def getElementsByCoordinates(x, y, z, dim = -1, strict = False):
+        def getElementsByCoordinates(x, y, z, dim=-1, strict=False):
             """
-            gmsh.model.mesh.getElementsByCoordinates(x, y, z, dim = -1, strict = False)
+            gmsh.model.mesh.getElementsByCoordinates(x, y, z, dim=-1, strict=False)
 
             Search the mesh for element(s) located at coordinates (`x', `y', `z'). This
             function performs a search in a spatial octree. Return the tags of all
@@ -2165,9 +2165,9 @@ class model:
         get_local_coordinates_in_element = getLocalCoordinatesInElement
 
         @staticmethod
-        def getElementTypes(dim = -1, tag = -1):
+        def getElementTypes(dim=-1, tag=-1):
             """
-            gmsh.model.mesh.getElementTypes(dim = -1, tag = -1)
+            gmsh.model.mesh.getElementTypes(dim=-1, tag=-1)
 
             Get the types of elements in the entity of dimension `dim' and tag `tag'.
             If `tag' < 0, get the types for all entities of dimension `dim'. If `dim'
@@ -2188,9 +2188,9 @@ class model:
         get_element_types = getElementTypes
 
         @staticmethod
-        def getElementType(familyName, order, serendip = False):
+        def getElementType(familyName, order, serendip=False):
             """
-            gmsh.model.mesh.getElementType(familyName, order, serendip = False)
+            gmsh.model.mesh.getElementType(familyName, order, serendip=False)
 
             Return an element type given its family name `familyName' ("Point", "Line",
             "Triangle", "Quadrangle", "Tetrahedron", "Pyramid", "Prism", "Hexahedron")
@@ -2251,9 +2251,9 @@ class model:
         get_element_properties = getElementProperties
 
         @staticmethod
-        def getElementsByType(elementType, tag = -1, task = 0, numTasks = 1):
+        def getElementsByType(elementType, tag=-1, task=0, numTasks=1):
             """
-            gmsh.model.mesh.getElementsByType(elementType, tag = -1, task = 0, numTasks = 1)
+            gmsh.model.mesh.getElementsByType(elementType, tag=-1, task=0, numTasks=1)
 
             Get the elements of type `elementType' classified on the entity of tag
             `tag'. If `tag' < 0, get the elements for all entities. `elementTags' is a
@@ -2373,9 +2373,9 @@ class model:
         get_integration_points = getIntegrationPoints
 
         @staticmethod
-        def getJacobians(elementType, localCoord, tag = -1, task = 0, numTasks = 1):
+        def getJacobians(elementType, localCoord, tag=-1, task=0, numTasks=1):
             """
-            gmsh.model.mesh.getJacobians(elementType, localCoord, tag = -1, task = 0, numTasks = 1)
+            gmsh.model.mesh.getJacobians(elementType, localCoord, tag=-1, task=0, numTasks=1)
 
             Get the Jacobians of all the elements of type `elementType' classified on
             the entity of tag `tag', at the G evaluation points `localCoord' given as
@@ -2457,9 +2457,9 @@ class model:
         get_jacobian = getJacobian
 
         @staticmethod
-        def getBasisFunctions(elementType, localCoord, functionSpaceType, wantedOrientations = []):
+        def getBasisFunctions(elementType, localCoord, functionSpaceType, wantedOrientations=[]):
             """
-            gmsh.model.mesh.getBasisFunctions(elementType, localCoord, functionSpaceType, wantedOrientations = [])
+            gmsh.model.mesh.getBasisFunctions(elementType, localCoord, functionSpaceType, wantedOrientations=[])
 
             Get the basis functions of the element of type `elementType' at the
             evaluation points `localCoord' (given as concatenated triplets of
@@ -2505,9 +2505,9 @@ class model:
         get_basis_functions = getBasisFunctions
 
         @staticmethod
-        def getBasisFunctionsOrientationForElements(elementType, functionSpaceType, tag = -1, task = 0, numTasks = 1):
+        def getBasisFunctionsOrientationForElements(elementType, functionSpaceType, tag=-1, task=0, numTasks=1):
             """
-            gmsh.model.mesh.getBasisFunctionsOrientationForElements(elementType, functionSpaceType, tag = -1, task = 0, numTasks = 1)
+            gmsh.model.mesh.getBasisFunctionsOrientationForElements(elementType, functionSpaceType, tag=-1, task=0, numTasks=1)
 
             Get the orientation index of the elements of type `elementType' in the
             entity of tag `tag'. The arguments have the same meaning as in
@@ -2633,9 +2633,9 @@ class model:
         get_faces = getFaces
 
         @staticmethod
-        def createEdges(dimTags = []):
+        def createEdges(dimTags=[]):
             """
-            gmsh.model.mesh.createEdges(dimTags = [])
+            gmsh.model.mesh.createEdges(dimTags=[])
 
             Create unique mesh edges for the entities `dimTags'.
             """
@@ -2649,9 +2649,9 @@ class model:
         create_edges = createEdges
 
         @staticmethod
-        def createFaces(dimTags = []):
+        def createFaces(dimTags=[]):
             """
-            gmsh.model.mesh.createFaces(dimTags = [])
+            gmsh.model.mesh.createFaces(dimTags=[])
 
             Create unique mesh faces for the entities `dimTags'.
             """
@@ -2665,9 +2665,9 @@ class model:
         create_faces = createFaces
 
         @staticmethod
-        def getKeysForElements(elementType, functionSpaceType, tag = -1, returnCoord = True):
+        def getKeysForElements(elementType, functionSpaceType, tag=-1, returnCoord=True):
             """
-            gmsh.model.mesh.getKeysForElements(elementType, functionSpaceType, tag = -1, returnCoord = True)
+            gmsh.model.mesh.getKeysForElements(elementType, functionSpaceType, tag=-1, returnCoord=True)
 
             Generate the pair of keys for the elements of type `elementType' in the
             entity of tag `tag', for the `functionSpaceType' function space. Each pair
@@ -2701,9 +2701,9 @@ class model:
         get_keys_for_elements = getKeysForElements
 
         @staticmethod
-        def getKeysForElement(elementTag, functionSpaceType, returnCoord = True):
+        def getKeysForElement(elementTag, functionSpaceType, returnCoord=True):
             """
-            gmsh.model.mesh.getKeysForElement(elementTag, functionSpaceType, returnCoord = True)
+            gmsh.model.mesh.getKeysForElement(elementTag, functionSpaceType, returnCoord=True)
 
             Get the pair of keys for a single element `elementTag'.
 
@@ -2781,9 +2781,9 @@ class model:
         get_information_for_elements = getInformationForElements
 
         @staticmethod
-        def getBarycenters(elementType, tag, fast, primary, task = 0, numTasks = 1):
+        def getBarycenters(elementType, tag, fast, primary, task=0, numTasks=1):
             """
-            gmsh.model.mesh.getBarycenters(elementType, tag, fast, primary, task = 0, numTasks = 1)
+            gmsh.model.mesh.getBarycenters(elementType, tag, fast, primary, task=0, numTasks=1)
 
             Get the barycenters of all elements of type `elementType' classified on the
             entity of tag `tag'. If `primary' is set, only the primary nodes of the
@@ -2812,9 +2812,9 @@ class model:
         get_barycenters = getBarycenters
 
         @staticmethod
-        def getElementEdgeNodes(elementType, tag = -1, primary = False, task = 0, numTasks = 1):
+        def getElementEdgeNodes(elementType, tag=-1, primary=False, task=0, numTasks=1):
             """
-            gmsh.model.mesh.getElementEdgeNodes(elementType, tag = -1, primary = False, task = 0, numTasks = 1)
+            gmsh.model.mesh.getElementEdgeNodes(elementType, tag=-1, primary=False, task=0, numTasks=1)
 
             Get the nodes on the edges of all elements of type `elementType' classified
             on the entity of tag `tag'. `nodeTags' contains the node tags of the edges
@@ -2843,9 +2843,9 @@ class model:
         get_element_edge_nodes = getElementEdgeNodes
 
         @staticmethod
-        def getElementFaceNodes(elementType, faceType, tag = -1, primary = False, task = 0, numTasks = 1):
+        def getElementFaceNodes(elementType, faceType, tag=-1, primary=False, task=0, numTasks=1):
             """
-            gmsh.model.mesh.getElementFaceNodes(elementType, faceType, tag = -1, primary = False, task = 0, numTasks = 1)
+            gmsh.model.mesh.getElementFaceNodes(elementType, faceType, tag=-1, primary=False, task=0, numTasks=1)
 
             Get the nodes on the faces of type `faceType' (3 for triangular faces, 4
             for quadrangular faces) of all elements of type `elementType' classified on
@@ -3006,9 +3006,9 @@ class model:
         remove_size_callback = removeSizeCallback
 
         @staticmethod
-        def setTransfiniteCurve(tag, numNodes, meshType = "Progression", coef = 1.):
+        def setTransfiniteCurve(tag, numNodes, meshType="Progression", coef=1.):
             """
-            gmsh.model.mesh.setTransfiniteCurve(tag, numNodes, meshType = "Progression", coef = 1.)
+            gmsh.model.mesh.setTransfiniteCurve(tag, numNodes, meshType="Progression", coef=1.)
 
             Set a transfinite meshing constraint on the curve `tag', with `numNodes'
             nodes distributed according to `meshType' and `coef'. Currently supported
@@ -3027,9 +3027,9 @@ class model:
         set_transfinite_curve = setTransfiniteCurve
 
         @staticmethod
-        def setTransfiniteSurface(tag, arrangement = "Left", cornerTags = []):
+        def setTransfiniteSurface(tag, arrangement="Left", cornerTags=[]):
             """
-            gmsh.model.mesh.setTransfiniteSurface(tag, arrangement = "Left", cornerTags = [])
+            gmsh.model.mesh.setTransfiniteSurface(tag, arrangement="Left", cornerTags=[])
 
             Set a transfinite meshing constraint on the surface `tag'. `arrangement'
             describes the arrangement of the triangles when the surface is not flagged
@@ -3051,9 +3051,9 @@ class model:
         set_transfinite_surface = setTransfiniteSurface
 
         @staticmethod
-        def setTransfiniteVolume(tag, cornerTags = []):
+        def setTransfiniteVolume(tag, cornerTags=[]):
             """
-            gmsh.model.mesh.setTransfiniteVolume(tag, cornerTags = [])
+            gmsh.model.mesh.setTransfiniteVolume(tag, cornerTags=[])
 
             Set a transfinite meshing constraint on the surface `tag'. `cornerTags' can
             be used to specify the (6 or 8) corners of the transfinite interpolation
@@ -3070,9 +3070,9 @@ class model:
         set_transfinite_volume = setTransfiniteVolume
 
         @staticmethod
-        def setTransfiniteAutomatic(dimTags = [], cornerAngle = 2.35, recombine = True):
+        def setTransfiniteAutomatic(dimTags=[], cornerAngle=2.35, recombine=True):
             """
-            gmsh.model.mesh.setTransfiniteAutomatic(dimTags = [], cornerAngle = 2.35, recombine = True)
+            gmsh.model.mesh.setTransfiniteAutomatic(dimTags=[], cornerAngle=2.35, recombine=True)
 
             Set transfinite meshing constraints on the model entities in `dimTag'.
             Transfinite meshing constraints are added to the curves of the quadrangular
@@ -3131,9 +3131,9 @@ class model:
         set_smoothing = setSmoothing
 
         @staticmethod
-        def setReverse(dim, tag, val = True):
+        def setReverse(dim, tag, val=True):
             """
-            gmsh.model.mesh.setReverse(dim, tag, val = True)
+            gmsh.model.mesh.setReverse(dim, tag, val=True)
 
             Set a reverse meshing constraint on the model entity of dimension `dim' and
             tag `tag'. If `val' is true, the mesh orientation will be reversed with
@@ -3226,9 +3226,9 @@ class model:
         set_outward_orientation = setOutwardOrientation
 
         @staticmethod
-        def removeConstraints(dimTags = []):
+        def removeConstraints(dimTags=[]):
             """
-            gmsh.model.mesh.removeConstraints(dimTags = [])
+            gmsh.model.mesh.removeConstraints(dimTags=[])
 
             Remove all meshing constraints from the model entities `dimTags'. If
             `dimTags' is empty, remove all constraings.
@@ -3269,9 +3269,9 @@ class model:
                 raise Exception(logger.getLastError())
 
         @staticmethod
-        def removeEmbedded(dimTags, dim = -1):
+        def removeEmbedded(dimTags, dim=-1):
             """
-            gmsh.model.mesh.removeEmbedded(dimTags, dim = -1)
+            gmsh.model.mesh.removeEmbedded(dimTags, dim=-1)
 
             Remove embedded entities from the model entities `dimTags'. if `dim' is >=
             0, only remove embedded entities of the given dimension (e.g. embedded
@@ -3385,9 +3385,9 @@ class model:
         set_periodic = setPeriodic
 
         @staticmethod
-        def getPeriodicNodes(dim, tag, includeHighOrderNodes = False):
+        def getPeriodicNodes(dim, tag, includeHighOrderNodes=False):
             """
-            gmsh.model.mesh.getPeriodicNodes(dim, tag, includeHighOrderNodes = False)
+            gmsh.model.mesh.getPeriodicNodes(dim, tag, includeHighOrderNodes=False)
 
             Get the master entity `tagMaster', the node tags `nodeTags' and their
             corresponding master node tags `nodeTagsMaster', and the affine transform
@@ -3421,9 +3421,9 @@ class model:
         get_periodic_nodes = getPeriodicNodes
 
         @staticmethod
-        def getPeriodicKeysForElements(elementType, functionSpaceType, tag, returnCoord = True):
+        def getPeriodicKeysForElements(elementType, functionSpaceType, tag, returnCoord=True):
             """
-            gmsh.model.mesh.getPeriodicKeysForElements(elementType, functionSpaceType, tag, returnCoord = True)
+            gmsh.model.mesh.getPeriodicKeysForElements(elementType, functionSpaceType, tag, returnCoord=True)
 
             Get the master entity `tagMaster' and the key pairs (`typeKeyMaster',
             `entityKeyMaster') corresponding to the entity `tag' and the key pairs
@@ -3482,9 +3482,9 @@ class model:
         remove_duplicate_nodes = removeDuplicateNodes
 
         @staticmethod
-        def splitQuadrangles(quality = 1., tag = -1):
+        def splitQuadrangles(quality=1., tag=-1):
             """
-            gmsh.model.mesh.splitQuadrangles(quality = 1., tag = -1)
+            gmsh.model.mesh.splitQuadrangles(quality=1., tag=-1)
 
             Split (into two triangles) all quadrangles in surface `tag' whose quality
             is lower than `quality'. If `tag' < 0, split quadrangles in all surfaces.
@@ -3499,9 +3499,9 @@ class model:
         split_quadrangles = splitQuadrangles
 
         @staticmethod
-        def classifySurfaces(angle, boundary = True, forReparametrization = False, curveAngle = pi, exportDiscrete = True):
+        def classifySurfaces(angle, boundary=True, forReparametrization=False, curveAngle=pi, exportDiscrete=True):
             """
-            gmsh.model.mesh.classifySurfaces(angle, boundary = True, forReparametrization = False, curveAngle = pi, exportDiscrete = True)
+            gmsh.model.mesh.classifySurfaces(angle, boundary=True, forReparametrization=False, curveAngle=pi, exportDiscrete=True)
 
             Classify ("color") the surface mesh based on the angle threshold `angle'
             (in radians), and create new discrete surfaces, curves and points
@@ -3525,9 +3525,9 @@ class model:
         classify_surfaces = classifySurfaces
 
         @staticmethod
-        def createGeometry(dimTags = []):
+        def createGeometry(dimTags=[]):
             """
-            gmsh.model.mesh.createGeometry(dimTags = [])
+            gmsh.model.mesh.createGeometry(dimTags=[])
 
             Create a geometry for the discrete entities `dimTags' (represented solely
             by a mesh, without an underlying CAD description), i.e. create a
@@ -3545,9 +3545,9 @@ class model:
         create_geometry = createGeometry
 
         @staticmethod
-        def createTopology(makeSimplyConnected = True, exportDiscrete = True):
+        def createTopology(makeSimplyConnected=True, exportDiscrete=True):
             """
-            gmsh.model.mesh.createTopology(makeSimplyConnected = True, exportDiscrete = True)
+            gmsh.model.mesh.createTopology(makeSimplyConnected=True, exportDiscrete=True)
 
             Create a boundary representation from the mesh if the model does not have
             one (e.g. when imported from mesh file formats with no BRep representation
@@ -3566,9 +3566,9 @@ class model:
         create_topology = createTopology
 
         @staticmethod
-        def computeHomology(domainTags = [], subdomainTags = [], dims = []):
+        def computeHomology(domainTags=[], subdomainTags=[], dims=[]):
             """
-            gmsh.model.mesh.computeHomology(domainTags = [], subdomainTags = [], dims = [])
+            gmsh.model.mesh.computeHomology(domainTags=[], subdomainTags=[], dims=[])
 
             Compute a basis representation for homology spaces after a mesh has been
             generated. The computation domain is given in a list of physical group tags
@@ -3593,9 +3593,9 @@ class model:
         compute_homology = computeHomology
 
         @staticmethod
-        def computeCohomology(domainTags = [], subdomainTags = [], dims = []):
+        def computeCohomology(domainTags=[], subdomainTags=[], dims=[]):
             """
-            gmsh.model.mesh.computeCohomology(domainTags = [], subdomainTags = [], dims = [])
+            gmsh.model.mesh.computeCohomology(domainTags=[], subdomainTags=[], dims=[])
 
             Compute a basis representation for cohomology spaces after a mesh has been
             generated. The computation domain is given in a list of physical group tags
@@ -3691,9 +3691,9 @@ class model:
             """
 
             @staticmethod
-            def add(fieldType, tag = -1):
+            def add(fieldType, tag=-1):
                 """
-                gmsh.model.mesh.field.add(fieldType, tag = -1)
+                gmsh.model.mesh.field.add(fieldType, tag=-1)
 
                 Add a new mesh size field of type `fieldType'. If `tag' is positive, assign
                 the tag explicitly; otherwise a new tag is assigned automatically. Return
@@ -3914,9 +3914,9 @@ class model:
         """
 
         @staticmethod
-        def addPoint(x, y, z, meshSize = 0., tag = -1):
+        def addPoint(x, y, z, meshSize=0., tag=-1):
             """
-            gmsh.model.geo.addPoint(x, y, z, meshSize = 0., tag = -1)
+            gmsh.model.geo.addPoint(x, y, z, meshSize=0., tag=-1)
 
             Add a geometrical point in the built-in CAD representation, at coordinates
             (`x', `y', `z'). If `meshSize' is > 0, add a meshing constraint at that
@@ -3941,9 +3941,9 @@ class model:
         add_point = addPoint
 
         @staticmethod
-        def addLine(startTag, endTag, tag = -1):
+        def addLine(startTag, endTag, tag=-1):
             """
-            gmsh.model.geo.addLine(startTag, endTag, tag = -1)
+            gmsh.model.geo.addLine(startTag, endTag, tag=-1)
 
             Add a straight line segment in the built-in CAD representation, between the
             two points with tags `startTag' and `endTag'. If `tag' is positive, set the
@@ -3964,9 +3964,9 @@ class model:
         add_line = addLine
 
         @staticmethod
-        def addCircleArc(startTag, centerTag, endTag, tag = -1, nx = 0., ny = 0., nz = 0.):
+        def addCircleArc(startTag, centerTag, endTag, tag=-1, nx=0., ny=0., nz=0.):
             """
-            gmsh.model.geo.addCircleArc(startTag, centerTag, endTag, tag = -1, nx = 0., ny = 0., nz = 0.)
+            gmsh.model.geo.addCircleArc(startTag, centerTag, endTag, tag=-1, nx=0., ny=0., nz=0.)
 
             Add a circle arc (strictly smaller than Pi) in the built-in CAD
             representation, between the two points with tags `startTag' and `endTag',
@@ -3993,9 +3993,9 @@ class model:
         add_circle_arc = addCircleArc
 
         @staticmethod
-        def addEllipseArc(startTag, centerTag, majorTag, endTag, tag = -1, nx = 0., ny = 0., nz = 0.):
+        def addEllipseArc(startTag, centerTag, majorTag, endTag, tag=-1, nx=0., ny=0., nz=0.):
             """
-            gmsh.model.geo.addEllipseArc(startTag, centerTag, majorTag, endTag, tag = -1, nx = 0., ny = 0., nz = 0.)
+            gmsh.model.geo.addEllipseArc(startTag, centerTag, majorTag, endTag, tag=-1, nx=0., ny=0., nz=0.)
 
             Add an ellipse arc (strictly smaller than Pi) in the built-in CAD
             representation, between the two points `startTag' and `endTag', and with
@@ -4023,9 +4023,9 @@ class model:
         add_ellipse_arc = addEllipseArc
 
         @staticmethod
-        def addSpline(pointTags, tag = -1):
+        def addSpline(pointTags, tag=-1):
             """
-            gmsh.model.geo.addSpline(pointTags, tag = -1)
+            gmsh.model.geo.addSpline(pointTags, tag=-1)
 
             Add a spline (Catmull-Rom) curve in the built-in CAD representation, going
             through the points `pointTags'. If `tag' is positive, set the tag
@@ -4047,9 +4047,9 @@ class model:
         add_spline = addSpline
 
         @staticmethod
-        def addBSpline(pointTags, tag = -1):
+        def addBSpline(pointTags, tag=-1):
             """
-            gmsh.model.geo.addBSpline(pointTags, tag = -1)
+            gmsh.model.geo.addBSpline(pointTags, tag=-1)
 
             Add a cubic b-spline curve in the built-in CAD representation, with
             `pointTags' control points. If `tag' is positive, set the tag explicitly;
@@ -4071,9 +4071,9 @@ class model:
         add_bspline = addBSpline
 
         @staticmethod
-        def addBezier(pointTags, tag = -1):
+        def addBezier(pointTags, tag=-1):
             """
-            gmsh.model.geo.addBezier(pointTags, tag = -1)
+            gmsh.model.geo.addBezier(pointTags, tag=-1)
 
             Add a Bezier curve in the built-in CAD representation, with `pointTags'
             control points. If `tag' is positive, set the tag explicitly; otherwise a
@@ -4093,9 +4093,9 @@ class model:
         add_bezier = addBezier
 
         @staticmethod
-        def addPolyline(pointTags, tag = -1):
+        def addPolyline(pointTags, tag=-1):
             """
-            gmsh.model.geo.addPolyline(pointTags, tag = -1)
+            gmsh.model.geo.addPolyline(pointTags, tag=-1)
 
             Add a polyline curve in the built-in CAD representation, going through the
             points `pointTags'. If `tag' is positive, set the tag explicitly; otherwise
@@ -4116,9 +4116,9 @@ class model:
         add_polyline = addPolyline
 
         @staticmethod
-        def addCompoundSpline(curveTags, numIntervals = 5, tag = -1):
+        def addCompoundSpline(curveTags, numIntervals=5, tag=-1):
             """
-            gmsh.model.geo.addCompoundSpline(curveTags, numIntervals = 5, tag = -1)
+            gmsh.model.geo.addCompoundSpline(curveTags, numIntervals=5, tag=-1)
 
             Add a spline (Catmull-Rom) curve in the built-in CAD representation, going
             through points sampling the curves in `curveTags'. The density of sampling
@@ -4141,9 +4141,9 @@ class model:
         add_compound_spline = addCompoundSpline
 
         @staticmethod
-        def addCompoundBSpline(curveTags, numIntervals = 20, tag = -1):
+        def addCompoundBSpline(curveTags, numIntervals=20, tag=-1):
             """
-            gmsh.model.geo.addCompoundBSpline(curveTags, numIntervals = 20, tag = -1)
+            gmsh.model.geo.addCompoundBSpline(curveTags, numIntervals=20, tag=-1)
 
             Add a b-spline curve in the built-in CAD representation, with control
             points sampling the curves in `curveTags'. The density of sampling points
@@ -4166,9 +4166,9 @@ class model:
         add_compound_bspline = addCompoundBSpline
 
         @staticmethod
-        def addCurveLoop(curveTags, tag = -1, reorient = False):
+        def addCurveLoop(curveTags, tag=-1, reorient=False):
             """
-            gmsh.model.geo.addCurveLoop(curveTags, tag = -1, reorient = False)
+            gmsh.model.geo.addCurveLoop(curveTags, tag=-1, reorient=False)
 
             Add a curve loop (a closed wire) in the built-in CAD representation, formed
             by the curves `curveTags'. `curveTags' should contain (signed) tags of
@@ -4215,9 +4215,9 @@ class model:
         add_curve_loops = addCurveLoops
 
         @staticmethod
-        def addPlaneSurface(wireTags, tag = -1):
+        def addPlaneSurface(wireTags, tag=-1):
             """
-            gmsh.model.geo.addPlaneSurface(wireTags, tag = -1)
+            gmsh.model.geo.addPlaneSurface(wireTags, tag=-1)
 
             Add a plane surface in the built-in CAD representation, defined by one or
             more curve loops `wireTags'. The first curve loop defines the exterior
@@ -4239,9 +4239,9 @@ class model:
         add_plane_surface = addPlaneSurface
 
         @staticmethod
-        def addSurfaceFilling(wireTags, tag = -1, sphereCenterTag = -1):
+        def addSurfaceFilling(wireTags, tag=-1, sphereCenterTag=-1):
             """
-            gmsh.model.geo.addSurfaceFilling(wireTags, tag = -1, sphereCenterTag = -1)
+            gmsh.model.geo.addSurfaceFilling(wireTags, tag=-1, sphereCenterTag=-1)
 
             Add a surface in the built-in CAD representation, filling the curve loops
             in `wireTags' using transfinite interpolation. Currently only a single
@@ -4264,9 +4264,9 @@ class model:
         add_surface_filling = addSurfaceFilling
 
         @staticmethod
-        def addSurfaceLoop(surfaceTags, tag = -1):
+        def addSurfaceLoop(surfaceTags, tag=-1):
             """
-            gmsh.model.geo.addSurfaceLoop(surfaceTags, tag = -1)
+            gmsh.model.geo.addSurfaceLoop(surfaceTags, tag=-1)
 
             Add a surface loop (a closed shell) formed by `surfaceTags' in the built-in
             CAD representation.  If `tag' is positive, set the tag explicitly;
@@ -4286,9 +4286,9 @@ class model:
         add_surface_loop = addSurfaceLoop
 
         @staticmethod
-        def addVolume(shellTags, tag = -1):
+        def addVolume(shellTags, tag=-1):
             """
-            gmsh.model.geo.addVolume(shellTags, tag = -1)
+            gmsh.model.geo.addVolume(shellTags, tag=-1)
 
             Add a volume (a region) in the built-in CAD representation, defined by one
             or more shells `shellTags'. The first surface loop defines the exterior
@@ -4310,9 +4310,9 @@ class model:
         add_volume = addVolume
 
         @staticmethod
-        def extrude(dimTags, dx, dy, dz, numElements = [], heights = [], recombine = False):
+        def extrude(dimTags, dx, dy, dz, numElements=[], heights=[], recombine=False):
             """
-            gmsh.model.geo.extrude(dimTags, dx, dy, dz, numElements = [], heights = [], recombine = False)
+            gmsh.model.geo.extrude(dimTags, dx, dy, dz, numElements=[], heights=[], recombine=False)
 
             Extrude the entities `dimTags' in the built-in CAD representation, using a
             translation along (`dx', `dy', `dz'). Return extruded entities in
@@ -4344,9 +4344,9 @@ class model:
             return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
 
         @staticmethod
-        def revolve(dimTags, x, y, z, ax, ay, az, angle, numElements = [], heights = [], recombine = False):
+        def revolve(dimTags, x, y, z, ax, ay, az, angle, numElements=[], heights=[], recombine=False):
             """
-            gmsh.model.geo.revolve(dimTags, x, y, z, ax, ay, az, angle, numElements = [], heights = [], recombine = False)
+            gmsh.model.geo.revolve(dimTags, x, y, z, ax, ay, az, angle, numElements=[], heights=[], recombine=False)
 
             Extrude the entities `dimTags' in the built-in CAD representation, using a
             rotation of `angle' radians around the axis of revolution defined by the
@@ -4384,9 +4384,9 @@ class model:
             return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
 
         @staticmethod
-        def twist(dimTags, x, y, z, dx, dy, dz, ax, ay, az, angle, numElements = [], heights = [], recombine = False):
+        def twist(dimTags, x, y, z, dx, dy, dz, ax, ay, az, angle, numElements=[], heights=[], recombine=False):
             """
-            gmsh.model.geo.twist(dimTags, x, y, z, dx, dy, dz, ax, ay, az, angle, numElements = [], heights = [], recombine = False)
+            gmsh.model.geo.twist(dimTags, x, y, z, dx, dy, dz, ax, ay, az, angle, numElements=[], heights=[], recombine=False)
 
             Extrude the entities `dimTags' in the built-in CAD representation, using a
             combined translation and rotation of `angle' radians, along (`dx', `dy',
@@ -4427,9 +4427,9 @@ class model:
             return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
 
         @staticmethod
-        def extrudeBoundaryLayer(dimTags, numElements = [1], heights = [], recombine = False, second = False, viewIndex = -1):
+        def extrudeBoundaryLayer(dimTags, numElements=[1], heights=[], recombine=False, second=False, viewIndex=-1):
             """
-            gmsh.model.geo.extrudeBoundaryLayer(dimTags, numElements = [1], heights = [], recombine = False, second = False, viewIndex = -1)
+            gmsh.model.geo.extrudeBoundaryLayer(dimTags, numElements=[1], heights=[], recombine=False, second=False, viewIndex=-1)
 
             Extrude the entities `dimTags' in the built-in CAD representation along the
             normals of the mesh, creating discrete boundary layer entities. Return
@@ -4592,9 +4592,9 @@ class model:
             return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
 
         @staticmethod
-        def remove(dimTags, recursive = False):
+        def remove(dimTags, recursive=False):
             """
-            gmsh.model.geo.remove(dimTags, recursive = False)
+            gmsh.model.geo.remove(dimTags, recursive=False)
 
             Remove the entities `dimTags' in the built-in CAD representation, provided
             that they are not on the boundary of higher-dimensional entities. If
@@ -4687,9 +4687,9 @@ class model:
         set_max_tag = setMaxTag
 
         @staticmethod
-        def addPhysicalGroup(dim, tags, tag = -1):
+        def addPhysicalGroup(dim, tags, tag=-1):
             """
-            gmsh.model.geo.addPhysicalGroup(dim, tags, tag = -1)
+            gmsh.model.geo.addPhysicalGroup(dim, tags, tag=-1)
 
             Add a physical group of dimension `dim', grouping the entities with tags
             `tags' in the built-in CAD representation. Return the tag of the physical
@@ -4710,9 +4710,9 @@ class model:
         add_physical_group = addPhysicalGroup
 
         @staticmethod
-        def removePhysicalGroups(dimTags = []):
+        def removePhysicalGroups(dimTags=[]):
             """
-            gmsh.model.geo.removePhysicalGroups(dimTags = [])
+            gmsh.model.geo.removePhysicalGroups(dimTags=[])
 
             Remove the physical groups `dimTags' from the built-in CAD representation.
             If `dimTags' is empty, remove all groups.
@@ -4770,9 +4770,9 @@ class model:
             set_size = setSize
 
             @staticmethod
-            def setTransfiniteCurve(tag, nPoints, meshType = "Progression", coef = 1.):
+            def setTransfiniteCurve(tag, nPoints, meshType="Progression", coef=1.):
                 """
-                gmsh.model.geo.mesh.setTransfiniteCurve(tag, nPoints, meshType = "Progression", coef = 1.)
+                gmsh.model.geo.mesh.setTransfiniteCurve(tag, nPoints, meshType="Progression", coef=1.)
 
                 Set a transfinite meshing constraint on the curve `tag' in the built-in CAD
                 kernel representation, with `numNodes' nodes distributed according to
@@ -4792,9 +4792,9 @@ class model:
             set_transfinite_curve = setTransfiniteCurve
 
             @staticmethod
-            def setTransfiniteSurface(tag, arrangement = "Left", cornerTags = []):
+            def setTransfiniteSurface(tag, arrangement="Left", cornerTags=[]):
                 """
-                gmsh.model.geo.mesh.setTransfiniteSurface(tag, arrangement = "Left", cornerTags = [])
+                gmsh.model.geo.mesh.setTransfiniteSurface(tag, arrangement="Left", cornerTags=[])
 
                 Set a transfinite meshing constraint on the surface `tag' in the built-in
                 CAD kernel representation. `arrangement' describes the arrangement of the
@@ -4816,9 +4816,9 @@ class model:
             set_transfinite_surface = setTransfiniteSurface
 
             @staticmethod
-            def setTransfiniteVolume(tag, cornerTags = []):
+            def setTransfiniteVolume(tag, cornerTags=[]):
                 """
-                gmsh.model.geo.mesh.setTransfiniteVolume(tag, cornerTags = [])
+                gmsh.model.geo.mesh.setTransfiniteVolume(tag, cornerTags=[])
 
                 Set a transfinite meshing constraint on the surface `tag' in the built-in
                 CAD kernel representation. `cornerTags' can be used to specify the (6 or 8)
@@ -4835,9 +4835,9 @@ class model:
             set_transfinite_volume = setTransfiniteVolume
 
             @staticmethod
-            def setRecombine(dim, tag, angle = 45.):
+            def setRecombine(dim, tag, angle=45.):
                 """
-                gmsh.model.geo.mesh.setRecombine(dim, tag, angle = 45.)
+                gmsh.model.geo.mesh.setRecombine(dim, tag, angle=45.)
 
                 Set a recombination meshing constraint on the entity of dimension `dim' and
                 tag `tag' in the built-in CAD kernel representation. Currently only
@@ -4874,9 +4874,9 @@ class model:
             set_smoothing = setSmoothing
 
             @staticmethod
-            def setReverse(dim, tag, val = True):
+            def setReverse(dim, tag, val=True):
                 """
-                gmsh.model.geo.mesh.setReverse(dim, tag, val = True)
+                gmsh.model.geo.mesh.setReverse(dim, tag, val=True)
 
                 Set a reverse meshing constraint on the entity of dimension `dim' and tag
                 `tag' in the built-in CAD kernel representation. If `val' is true, the mesh
@@ -4939,9 +4939,9 @@ class model:
         """
 
         @staticmethod
-        def addPoint(x, y, z, meshSize = 0., tag = -1):
+        def addPoint(x, y, z, meshSize=0., tag=-1):
             """
-            gmsh.model.occ.addPoint(x, y, z, meshSize = 0., tag = -1)
+            gmsh.model.occ.addPoint(x, y, z, meshSize=0., tag=-1)
 
             Add a geometrical point in the OpenCASCADE CAD representation, at
             coordinates (`x', `y', `z'). If `meshSize' is > 0, add a meshing constraint
@@ -4966,9 +4966,9 @@ class model:
         add_point = addPoint
 
         @staticmethod
-        def addLine(startTag, endTag, tag = -1):
+        def addLine(startTag, endTag, tag=-1):
             """
-            gmsh.model.occ.addLine(startTag, endTag, tag = -1)
+            gmsh.model.occ.addLine(startTag, endTag, tag=-1)
 
             Add a straight line segment in the OpenCASCADE CAD representation, between
             the two points with tags `startTag' and `endTag'. If `tag' is positive, set
@@ -4989,9 +4989,9 @@ class model:
         add_line = addLine
 
         @staticmethod
-        def addCircleArc(startTag, centerTag, endTag, tag = -1):
+        def addCircleArc(startTag, centerTag, endTag, tag=-1):
             """
-            gmsh.model.occ.addCircleArc(startTag, centerTag, endTag, tag = -1)
+            gmsh.model.occ.addCircleArc(startTag, centerTag, endTag, tag=-1)
 
             Add a circle arc in the OpenCASCADE CAD representation, between the two
             points with tags `startTag' and `endTag', with center `centerTag'. If `tag'
@@ -5013,9 +5013,9 @@ class model:
         add_circle_arc = addCircleArc
 
         @staticmethod
-        def addCircle(x, y, z, r, tag = -1, angle1 = 0., angle2 = 2*pi):
+        def addCircle(x, y, z, r, tag=-1, angle1=0., angle2=2*pi):
             """
-            gmsh.model.occ.addCircle(x, y, z, r, tag = -1, angle1 = 0., angle2 = 2*pi)
+            gmsh.model.occ.addCircle(x, y, z, r, tag=-1, angle1=0., angle2=2*pi)
 
             Add a circle of center (`x', `y', `z') and radius `r' in the OpenCASCADE
             CAD representation. If `tag' is positive, set the tag explicitly; otherwise
@@ -5041,9 +5041,9 @@ class model:
         add_circle = addCircle
 
         @staticmethod
-        def addEllipseArc(startTag, centerTag, majorTag, endTag, tag = -1):
+        def addEllipseArc(startTag, centerTag, majorTag, endTag, tag=-1):
             """
-            gmsh.model.occ.addEllipseArc(startTag, centerTag, majorTag, endTag, tag = -1)
+            gmsh.model.occ.addEllipseArc(startTag, centerTag, majorTag, endTag, tag=-1)
 
             Add an ellipse arc in the OpenCASCADE CAD representation, between the two
             points `startTag' and `endTag', and with center `centerTag' and major axis
@@ -5068,9 +5068,9 @@ class model:
         add_ellipse_arc = addEllipseArc
 
         @staticmethod
-        def addEllipse(x, y, z, r1, r2, tag = -1, angle1 = 0., angle2 = 2*pi):
+        def addEllipse(x, y, z, r1, r2, tag=-1, angle1=0., angle2=2*pi):
             """
-            gmsh.model.occ.addEllipse(x, y, z, r1, r2, tag = -1, angle1 = 0., angle2 = 2*pi)
+            gmsh.model.occ.addEllipse(x, y, z, r1, r2, tag=-1, angle1=0., angle2=2*pi)
 
             Add an ellipse of center (`x', `y', `z') and radii `r1' and `r2' along the
             x- and y-axes, respectively, in the OpenCASCADE CAD representation. If
@@ -5100,9 +5100,9 @@ class model:
         add_ellipse = addEllipse
 
         @staticmethod
-        def addSpline(pointTags, tag = -1):
+        def addSpline(pointTags, tag=-1):
             """
-            gmsh.model.occ.addSpline(pointTags, tag = -1)
+            gmsh.model.occ.addSpline(pointTags, tag=-1)
 
             Add a spline (C2 b-spline) curve in the OpenCASCADE CAD representation,
             going through the points `pointTags'. If `tag' is positive, set the tag
@@ -5124,9 +5124,9 @@ class model:
         add_spline = addSpline
 
         @staticmethod
-        def addBSpline(pointTags, tag = -1, degree = 3, weights = [], knots = [], multiplicities = []):
+        def addBSpline(pointTags, tag=-1, degree=3, weights=[], knots=[], multiplicities=[]):
             """
-            gmsh.model.occ.addBSpline(pointTags, tag = -1, degree = 3, weights = [], knots = [], multiplicities = [])
+            gmsh.model.occ.addBSpline(pointTags, tag=-1, degree=3, weights=[], knots=[], multiplicities=[])
 
             Add a b-spline curve of degree `degree' in the OpenCASCADE CAD
             representation, with `pointTags' control points. If `weights', `knots' or
@@ -5156,9 +5156,9 @@ class model:
         add_bspline = addBSpline
 
         @staticmethod
-        def addBezier(pointTags, tag = -1):
+        def addBezier(pointTags, tag=-1):
             """
-            gmsh.model.occ.addBezier(pointTags, tag = -1)
+            gmsh.model.occ.addBezier(pointTags, tag=-1)
 
             Add a Bezier curve in the OpenCASCADE CAD representation, with `pointTags'
             control points. If `tag' is positive, set the tag explicitly; otherwise a
@@ -5178,9 +5178,9 @@ class model:
         add_bezier = addBezier
 
         @staticmethod
-        def addWire(curveTags, tag = -1, checkClosed = False):
+        def addWire(curveTags, tag=-1, checkClosed=False):
             """
-            gmsh.model.occ.addWire(curveTags, tag = -1, checkClosed = False)
+            gmsh.model.occ.addWire(curveTags, tag=-1, checkClosed=False)
 
             Add a wire (open or closed) in the OpenCASCADE CAD representation, formed
             by the curves `curveTags'. Note that an OpenCASCADE wire can be made of
@@ -5203,9 +5203,9 @@ class model:
         add_wire = addWire
 
         @staticmethod
-        def addCurveLoop(curveTags, tag = -1):
+        def addCurveLoop(curveTags, tag=-1):
             """
-            gmsh.model.occ.addCurveLoop(curveTags, tag = -1)
+            gmsh.model.occ.addCurveLoop(curveTags, tag=-1)
 
             Add a curve loop (a closed wire) in the OpenCASCADE CAD representation,
             formed by the curves `curveTags'. `curveTags' should contain tags of curves
@@ -5228,9 +5228,9 @@ class model:
         add_curve_loop = addCurveLoop
 
         @staticmethod
-        def addRectangle(x, y, z, dx, dy, tag = -1, roundedRadius = 0.):
+        def addRectangle(x, y, z, dx, dy, tag=-1, roundedRadius=0.):
             """
-            gmsh.model.occ.addRectangle(x, y, z, dx, dy, tag = -1, roundedRadius = 0.)
+            gmsh.model.occ.addRectangle(x, y, z, dx, dy, tag=-1, roundedRadius=0.)
 
             Add a rectangle in the OpenCASCADE CAD representation, with lower left
             corner at (`x', `y', `z') and upper right corner at (`x' + `dx', `y' +
@@ -5256,9 +5256,9 @@ class model:
         add_rectangle = addRectangle
 
         @staticmethod
-        def addDisk(xc, yc, zc, rx, ry, tag = -1):
+        def addDisk(xc, yc, zc, rx, ry, tag=-1):
             """
-            gmsh.model.occ.addDisk(xc, yc, zc, rx, ry, tag = -1)
+            gmsh.model.occ.addDisk(xc, yc, zc, rx, ry, tag=-1)
 
             Add a disk in the OpenCASCADE CAD representation, with center (`xc', `yc',
             `zc') and radius `rx' along the x-axis and `ry' along the y-axis. If `tag'
@@ -5282,9 +5282,9 @@ class model:
         add_disk = addDisk
 
         @staticmethod
-        def addPlaneSurface(wireTags, tag = -1):
+        def addPlaneSurface(wireTags, tag=-1):
             """
-            gmsh.model.occ.addPlaneSurface(wireTags, tag = -1)
+            gmsh.model.occ.addPlaneSurface(wireTags, tag=-1)
 
             Add a plane surface in the OpenCASCADE CAD representation, defined by one
             or more curve loops (or closed wires) `wireTags'. The first curve loop
@@ -5306,9 +5306,9 @@ class model:
         add_plane_surface = addPlaneSurface
 
         @staticmethod
-        def addSurfaceFilling(wireTag, tag = -1, pointTags = [], degree = 3, numPointsOnCurves = 15, numIter = 2, anisotropic = False, tol2d = 0.00001, tol3d = 0.0001, tolAng = 0.01, tolCurv = 0.1, maxDegree = 8, maxSegments = 9):
+        def addSurfaceFilling(wireTag, tag=-1, pointTags=[], degree=3, numPointsOnCurves=15, numIter=2, anisotropic=False, tol2d=0.00001, tol3d=0.0001, tolAng=0.01, tolCurv=0.1, maxDegree=8, maxSegments=9):
             """
-            gmsh.model.occ.addSurfaceFilling(wireTag, tag = -1, pointTags = [], degree = 3, numPointsOnCurves = 15, numIter = 2, anisotropic = False, tol2d = 0.00001, tol3d = 0.0001, tolAng = 0.01, tolCurv = 0.1, maxDegree = 8, maxSegments = 9)
+            gmsh.model.occ.addSurfaceFilling(wireTag, tag=-1, pointTags=[], degree=3, numPointsOnCurves=15, numIter=2, anisotropic=False, tol2d=0.00001, tol3d=0.0001, tolAng=0.01, tolCurv=0.1, maxDegree=8, maxSegments=9)
 
             Add a surface in the OpenCASCADE CAD representation, filling the curve loop
             `wireTag'. If `tag' is positive, set the tag explicitly; otherwise a new
@@ -5354,9 +5354,9 @@ class model:
         add_surface_filling = addSurfaceFilling
 
         @staticmethod
-        def addBSplineFilling(wireTag, tag = -1, type = ""):
+        def addBSplineFilling(wireTag, tag=-1, type=""):
             """
-            gmsh.model.occ.addBSplineFilling(wireTag, tag = -1, type = "")
+            gmsh.model.occ.addBSplineFilling(wireTag, tag=-1, type="")
 
             Add a BSpline surface in the OpenCASCADE CAD representation, filling the
             curve loop `wireTag'. The curve loop should be made of 2, 3 or 4 BSpline
@@ -5380,9 +5380,9 @@ class model:
         add_bspline_filling = addBSplineFilling
 
         @staticmethod
-        def addBezierFilling(wireTag, tag = -1, type = ""):
+        def addBezierFilling(wireTag, tag=-1, type=""):
             """
-            gmsh.model.occ.addBezierFilling(wireTag, tag = -1, type = "")
+            gmsh.model.occ.addBezierFilling(wireTag, tag=-1, type="")
 
             Add a Bezier surface in the OpenCASCADE CAD representation, filling the
             curve loop `wireTag'. The curve loop should be made of 2, 3 or 4 Bezier
@@ -5406,9 +5406,9 @@ class model:
         add_bezier_filling = addBezierFilling
 
         @staticmethod
-        def addBSplineSurface(pointTags, numPointsU, tag = -1, degreeU = 3, degreeV = 3, weights = [], knotsU = [], knotsV = [], multiplicitiesU = [], multiplicitiesV = [], wireTags = [], wire3D = False):
+        def addBSplineSurface(pointTags, numPointsU, tag=-1, degreeU=3, degreeV=3, weights=[], knotsU=[], knotsV=[], multiplicitiesU=[], multiplicitiesV=[], wireTags=[], wire3D=False):
             """
-            gmsh.model.occ.addBSplineSurface(pointTags, numPointsU, tag = -1, degreeU = 3, degreeV = 3, weights = [], knotsU = [], knotsV = [], multiplicitiesU = [], multiplicitiesV = [], wireTags = [], wire3D = False)
+            gmsh.model.occ.addBSplineSurface(pointTags, numPointsU, tag=-1, degreeU=3, degreeV=3, weights=[], knotsU=[], knotsV=[], multiplicitiesU=[], multiplicitiesV=[], wireTags=[], wire3D=False)
 
             Add a b-spline surface of degree `degreeU' x `degreeV' in the OpenCASCADE
             CAD representation, with `pointTags' control points given as a single
@@ -5452,9 +5452,9 @@ class model:
         add_bspline_surface = addBSplineSurface
 
         @staticmethod
-        def addBezierSurface(pointTags, numPointsU, tag = -1, wireTags = [], wire3D = False):
+        def addBezierSurface(pointTags, numPointsU, tag=-1, wireTags=[], wire3D=False):
             """
-            gmsh.model.occ.addBezierSurface(pointTags, numPointsU, tag = -1, wireTags = [], wire3D = False)
+            gmsh.model.occ.addBezierSurface(pointTags, numPointsU, tag=-1, wireTags=[], wire3D=False)
 
             Add a Bezier surface in the OpenCASCADE CAD representation, with
             `pointTags' control points given as a single vector [Pu1v1, ...
@@ -5484,9 +5484,9 @@ class model:
         add_bezier_surface = addBezierSurface
 
         @staticmethod
-        def addTrimmedSurface(surfaceTag, wireTags = [], wire3D = False, tag = -1):
+        def addTrimmedSurface(surfaceTag, wireTags=[], wire3D=False, tag=-1):
             """
-            gmsh.model.occ.addTrimmedSurface(surfaceTag, wireTags = [], wire3D = False, tag = -1)
+            gmsh.model.occ.addTrimmedSurface(surfaceTag, wireTags=[], wire3D=False, tag=-1)
 
             Trim the surface `surfaceTag' with the wires `wireTags', replacing any
             existing trimming curves. The first wire defines the external contour, the
@@ -5512,9 +5512,9 @@ class model:
         add_trimmed_surface = addTrimmedSurface
 
         @staticmethod
-        def addSurfaceLoop(surfaceTags, tag = -1, sewing = False):
+        def addSurfaceLoop(surfaceTags, tag=-1, sewing=False):
             """
-            gmsh.model.occ.addSurfaceLoop(surfaceTags, tag = -1, sewing = False)
+            gmsh.model.occ.addSurfaceLoop(surfaceTags, tag=-1, sewing=False)
 
             Add a surface loop (a closed shell) in the OpenCASCADE CAD representation,
             formed by `surfaceTags'.  If `tag' is positive, set the tag explicitly;
@@ -5537,9 +5537,9 @@ class model:
         add_surface_loop = addSurfaceLoop
 
         @staticmethod
-        def addVolume(shellTags, tag = -1):
+        def addVolume(shellTags, tag=-1):
             """
-            gmsh.model.occ.addVolume(shellTags, tag = -1)
+            gmsh.model.occ.addVolume(shellTags, tag=-1)
 
             Add a volume (a region) in the OpenCASCADE CAD representation, defined by
             one or more surface loops `shellTags'. The first surface loop defines the
@@ -5561,9 +5561,9 @@ class model:
         add_volume = addVolume
 
         @staticmethod
-        def addSphere(xc, yc, zc, radius, tag = -1, angle1 = -pi/2, angle2 = pi/2, angle3 = 2*pi):
+        def addSphere(xc, yc, zc, radius, tag=-1, angle1=-pi/2, angle2=pi/2, angle3=2*pi):
             """
-            gmsh.model.occ.addSphere(xc, yc, zc, radius, tag = -1, angle1 = -pi/2, angle2 = pi/2, angle3 = 2*pi)
+            gmsh.model.occ.addSphere(xc, yc, zc, radius, tag=-1, angle1=-pi/2, angle2=pi/2, angle3=2*pi)
 
             Add a sphere of center (`xc', `yc', `zc') and radius `r' in the OpenCASCADE
             CAD representation. The optional `angle1' and `angle2' arguments define the
@@ -5591,9 +5591,9 @@ class model:
         add_sphere = addSphere
 
         @staticmethod
-        def addBox(x, y, z, dx, dy, dz, tag = -1):
+        def addBox(x, y, z, dx, dy, dz, tag=-1):
             """
-            gmsh.model.occ.addBox(x, y, z, dx, dy, dz, tag = -1)
+            gmsh.model.occ.addBox(x, y, z, dx, dy, dz, tag=-1)
 
             Add a parallelepipedic box in the OpenCASCADE CAD representation, defined
             by a point (`x', `y', `z') and the extents along the x-, y- and z-axes. If
@@ -5618,9 +5618,9 @@ class model:
         add_box = addBox
 
         @staticmethod
-        def addCylinder(x, y, z, dx, dy, dz, r, tag = -1, angle = 2*pi):
+        def addCylinder(x, y, z, dx, dy, dz, r, tag=-1, angle=2*pi):
             """
-            gmsh.model.occ.addCylinder(x, y, z, dx, dy, dz, r, tag = -1, angle = 2*pi)
+            gmsh.model.occ.addCylinder(x, y, z, dx, dy, dz, r, tag=-1, angle=2*pi)
 
             Add a cylinder in the OpenCASCADE CAD representation, defined by the center
             (`x', `y', `z') of its first circular face, the 3 components (`dx', `dy',
@@ -5649,9 +5649,9 @@ class model:
         add_cylinder = addCylinder
 
         @staticmethod
-        def addCone(x, y, z, dx, dy, dz, r1, r2, tag = -1, angle = 2*pi):
+        def addCone(x, y, z, dx, dy, dz, r1, r2, tag=-1, angle=2*pi):
             """
-            gmsh.model.occ.addCone(x, y, z, dx, dy, dz, r1, r2, tag = -1, angle = 2*pi)
+            gmsh.model.occ.addCone(x, y, z, dx, dy, dz, r1, r2, tag=-1, angle=2*pi)
 
             Add a cone in the OpenCASCADE CAD representation, defined by the center
             (`x', `y', `z') of its first circular face, the 3 components of the vector
@@ -5681,9 +5681,9 @@ class model:
         add_cone = addCone
 
         @staticmethod
-        def addWedge(x, y, z, dx, dy, dz, tag = -1, ltx = 0.):
+        def addWedge(x, y, z, dx, dy, dz, tag=-1, ltx=0.):
             """
-            gmsh.model.occ.addWedge(x, y, z, dx, dy, dz, tag = -1, ltx = 0.)
+            gmsh.model.occ.addWedge(x, y, z, dx, dy, dz, tag=-1, ltx=0.)
 
             Add a right angular wedge in the OpenCASCADE CAD representation, defined by
             the right-angle point (`x', `y', `z') and the 3 extends along the x-, y-
@@ -5711,9 +5711,9 @@ class model:
         add_wedge = addWedge
 
         @staticmethod
-        def addTorus(x, y, z, r1, r2, tag = -1, angle = 2*pi):
+        def addTorus(x, y, z, r1, r2, tag=-1, angle=2*pi):
             """
-            gmsh.model.occ.addTorus(x, y, z, r1, r2, tag = -1, angle = 2*pi)
+            gmsh.model.occ.addTorus(x, y, z, r1, r2, tag=-1, angle=2*pi)
 
             Add a torus in the OpenCASCADE CAD representation, defined by its center
             (`x', `y', `z') and its 2 radii `r' and `r2'. If `tag' is positive, set the
@@ -5739,9 +5739,9 @@ class model:
         add_torus = addTorus
 
         @staticmethod
-        def addThruSections(wireTags, tag = -1, makeSolid = True, makeRuled = False, maxDegree = -1):
+        def addThruSections(wireTags, tag=-1, makeSolid=True, makeRuled=False, maxDegree=-1):
             """
-            gmsh.model.occ.addThruSections(wireTags, tag = -1, makeSolid = True, makeRuled = False, maxDegree = -1)
+            gmsh.model.occ.addThruSections(wireTags, tag=-1, makeSolid=True, makeRuled=False, maxDegree=-1)
 
             Add a volume (if the optional argument `makeSolid' is set) or surfaces in
             the OpenCASCADE CAD representation, defined through the open or closed
@@ -5770,9 +5770,9 @@ class model:
         add_thru_sections = addThruSections
 
         @staticmethod
-        def addThickSolid(volumeTag, excludeSurfaceTags, offset, tag = -1):
+        def addThickSolid(volumeTag, excludeSurfaceTags, offset, tag=-1):
             """
-            gmsh.model.occ.addThickSolid(volumeTag, excludeSurfaceTags, offset, tag = -1)
+            gmsh.model.occ.addThickSolid(volumeTag, excludeSurfaceTags, offset, tag=-1)
 
             Add a hollowed volume in the OpenCASCADE CAD representation, built from an
             initial volume `volumeTag' and a set of faces from this volume
@@ -5799,9 +5799,9 @@ class model:
         add_thick_solid = addThickSolid
 
         @staticmethod
-        def extrude(dimTags, dx, dy, dz, numElements = [], heights = [], recombine = False):
+        def extrude(dimTags, dx, dy, dz, numElements=[], heights=[], recombine=False):
             """
-            gmsh.model.occ.extrude(dimTags, dx, dy, dz, numElements = [], heights = [], recombine = False)
+            gmsh.model.occ.extrude(dimTags, dx, dy, dz, numElements=[], heights=[], recombine=False)
 
             Extrude the entities `dimTags' in the OpenCASCADE CAD representation, using
             a translation along (`dx', `dy', `dz'). Return extruded entities in
@@ -5833,9 +5833,9 @@ class model:
             return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
 
         @staticmethod
-        def revolve(dimTags, x, y, z, ax, ay, az, angle, numElements = [], heights = [], recombine = False):
+        def revolve(dimTags, x, y, z, ax, ay, az, angle, numElements=[], heights=[], recombine=False):
             """
-            gmsh.model.occ.revolve(dimTags, x, y, z, ax, ay, az, angle, numElements = [], heights = [], recombine = False)
+            gmsh.model.occ.revolve(dimTags, x, y, z, ax, ay, az, angle, numElements=[], heights=[], recombine=False)
 
             Extrude the entities `dimTags' in the OpenCASCADE CAD representation, using
             a rotation of `angle' radians around the axis of revolution defined by the
@@ -5873,9 +5873,9 @@ class model:
             return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
 
         @staticmethod
-        def addPipe(dimTags, wireTag, trihedron = ""):
+        def addPipe(dimTags, wireTag, trihedron=""):
             """
-            gmsh.model.occ.addPipe(dimTags, wireTag, trihedron = "")
+            gmsh.model.occ.addPipe(dimTags, wireTag, trihedron="")
 
             Add a pipe in the OpenCASCADE CAD representation, by extruding the entities
             `dimTags' along the wire `wireTag'. The type of sweep can be specified with
@@ -5901,9 +5901,9 @@ class model:
         add_pipe = addPipe
 
         @staticmethod
-        def fillet(volumeTags, curveTags, radii, removeVolume = True):
+        def fillet(volumeTags, curveTags, radii, removeVolume=True):
             """
-            gmsh.model.occ.fillet(volumeTags, curveTags, radii, removeVolume = True)
+            gmsh.model.occ.fillet(volumeTags, curveTags, radii, removeVolume=True)
 
             Fillet the volumes `volumeTags' on the curves `curveTags' with radii
             `radii'. The `radii' vector can either contain a single radius, as many
@@ -5931,9 +5931,9 @@ class model:
             return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
 
         @staticmethod
-        def chamfer(volumeTags, curveTags, surfaceTags, distances, removeVolume = True):
+        def chamfer(volumeTags, curveTags, surfaceTags, distances, removeVolume=True):
             """
-            gmsh.model.occ.chamfer(volumeTags, curveTags, surfaceTags, distances, removeVolume = True)
+            gmsh.model.occ.chamfer(volumeTags, curveTags, surfaceTags, distances, removeVolume=True)
 
             Chamfer the volumes `volumeTags' on the curves `curveTags' with distances
             `distances' measured on surfaces `surfaceTags'. The `distances' vector can
@@ -5965,9 +5965,9 @@ class model:
             return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
 
         @staticmethod
-        def fuse(objectDimTags, toolDimTags, tag = -1, removeObject = True, removeTool = True):
+        def fuse(objectDimTags, toolDimTags, tag=-1, removeObject=True, removeTool=True):
             """
-            gmsh.model.occ.fuse(objectDimTags, toolDimTags, tag = -1, removeObject = True, removeTool = True)
+            gmsh.model.occ.fuse(objectDimTags, toolDimTags, tag=-1, removeObject=True, removeTool=True)
 
             Compute the boolean union (the fusion) of the entities `objectDimTags' and
             `toolDimTags' in the OpenCASCADE CAD representation. Return the resulting
@@ -5999,9 +5999,9 @@ class model:
                 _ovectorvectorpair(api_outDimTagsMap_, api_outDimTagsMap_n_, api_outDimTagsMap_nn_))
 
         @staticmethod
-        def intersect(objectDimTags, toolDimTags, tag = -1, removeObject = True, removeTool = True):
+        def intersect(objectDimTags, toolDimTags, tag=-1, removeObject=True, removeTool=True):
             """
-            gmsh.model.occ.intersect(objectDimTags, toolDimTags, tag = -1, removeObject = True, removeTool = True)
+            gmsh.model.occ.intersect(objectDimTags, toolDimTags, tag=-1, removeObject=True, removeTool=True)
 
             Compute the boolean intersection (the common parts) of the entities
             `objectDimTags' and `toolDimTags' in the OpenCASCADE CAD representation.
@@ -6033,9 +6033,9 @@ class model:
                 _ovectorvectorpair(api_outDimTagsMap_, api_outDimTagsMap_n_, api_outDimTagsMap_nn_))
 
         @staticmethod
-        def cut(objectDimTags, toolDimTags, tag = -1, removeObject = True, removeTool = True):
+        def cut(objectDimTags, toolDimTags, tag=-1, removeObject=True, removeTool=True):
             """
-            gmsh.model.occ.cut(objectDimTags, toolDimTags, tag = -1, removeObject = True, removeTool = True)
+            gmsh.model.occ.cut(objectDimTags, toolDimTags, tag=-1, removeObject=True, removeTool=True)
 
             Compute the boolean difference between the entities `objectDimTags' and
             `toolDimTags' in the OpenCASCADE CAD representation. Return the resulting
@@ -6067,9 +6067,9 @@ class model:
                 _ovectorvectorpair(api_outDimTagsMap_, api_outDimTagsMap_n_, api_outDimTagsMap_nn_))
 
         @staticmethod
-        def fragment(objectDimTags, toolDimTags, tag = -1, removeObject = True, removeTool = True):
+        def fragment(objectDimTags, toolDimTags, tag=-1, removeObject=True, removeTool=True):
             """
-            gmsh.model.occ.fragment(objectDimTags, toolDimTags, tag = -1, removeObject = True, removeTool = True)
+            gmsh.model.occ.fragment(objectDimTags, toolDimTags, tag=-1, removeObject=True, removeTool=True)
 
             Compute the boolean fragments (general fuse) resulting from the
             intersection of the entities `objectDimTags' and `toolDimTags' in the
@@ -6252,9 +6252,9 @@ class model:
             return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
 
         @staticmethod
-        def remove(dimTags, recursive = False):
+        def remove(dimTags, recursive=False):
             """
-            gmsh.model.occ.remove(dimTags, recursive = False)
+            gmsh.model.occ.remove(dimTags, recursive=False)
 
             Remove the entities `dimTags' in the OpenCASCADE CAD representation,
             provided that they are not on the boundary of higher-dimensional entities.
@@ -6287,9 +6287,9 @@ class model:
         remove_all_duplicates = removeAllDuplicates
 
         @staticmethod
-        def healShapes(dimTags = [], tolerance = 1e-8, fixDegenerated = True, fixSmallEdges = True, fixSmallFaces = True, sewFaces = True, makeSolids = True):
+        def healShapes(dimTags=[], tolerance=1e-8, fixDegenerated=True, fixSmallEdges=True, fixSmallFaces=True, sewFaces=True, makeSolids=True):
             """
-            gmsh.model.occ.healShapes(dimTags = [], tolerance = 1e-8, fixDegenerated = True, fixSmallEdges = True, fixSmallFaces = True, sewFaces = True, makeSolids = True)
+            gmsh.model.occ.healShapes(dimTags=[], tolerance=1e-8, fixDegenerated=True, fixSmallEdges=True, fixSmallFaces=True, sewFaces=True, makeSolids=True)
 
             Apply various healing procedures to the entities `dimTags' (or to all the
             entities in the model if `dimTags' is empty) in the OpenCASCADE CAD
@@ -6317,9 +6317,9 @@ class model:
         heal_shapes = healShapes
 
         @staticmethod
-        def importShapes(fileName, highestDimOnly = True, format = ""):
+        def importShapes(fileName, highestDimOnly=True, format=""):
             """
-            gmsh.model.occ.importShapes(fileName, highestDimOnly = True, format = "")
+            gmsh.model.occ.importShapes(fileName, highestDimOnly=True, format="")
 
             Import BREP, STEP or IGES shapes from the file `fileName' in the
             OpenCASCADE CAD representation. The imported entities are returned in
@@ -6344,9 +6344,9 @@ class model:
         import_shapes = importShapes
 
         @staticmethod
-        def getEntities(dim = -1):
+        def getEntities(dim=-1):
             """
-            gmsh.model.occ.getEntities(dim = -1)
+            gmsh.model.occ.getEntities(dim=-1)
 
             Get all the OpenCASCADE entities. If `dim' is >= 0, return only the
             entities of the specified dimension (e.g. points if `dim' == 0). The
@@ -6366,9 +6366,9 @@ class model:
         get_entities = getEntities
 
         @staticmethod
-        def getEntitiesInBoundingBox(xmin, ymin, zmin, xmax, ymax, zmax, dim = -1):
+        def getEntitiesInBoundingBox(xmin, ymin, zmin, xmax, ymax, zmax, dim=-1):
             """
-            gmsh.model.occ.getEntitiesInBoundingBox(xmin, ymin, zmin, xmax, ymax, zmax, dim = -1)
+            gmsh.model.occ.getEntitiesInBoundingBox(xmin, ymin, zmin, xmax, ymax, zmax, dim=-1)
 
             Get the OpenCASCADE entities in the bounding box defined by the two points
             (`xmin', `ymin', `zmin') and (`xmax', `ymax', `zmax'). If `dim' is >= 0,
@@ -6590,9 +6590,9 @@ class view:
     """
 
     @staticmethod
-    def add(name, tag = -1):
+    def add(name, tag=-1):
         """
-        gmsh.view.add(name, tag = -1)
+        gmsh.view.add(name, tag=-1)
 
         Add a new post-processing view, with name `name'. If `tag' is positive use
         it (and remove the view with that tag if it already exists), otherwise
@@ -6663,9 +6663,9 @@ class view:
     get_tags = getTags
 
     @staticmethod
-    def addModelData(tag, step, modelName, dataType, tags, data, time = 0., numComponents = -1, partition = 0):
+    def addModelData(tag, step, modelName, dataType, tags, data, time=0., numComponents=-1, partition=0):
         """
-        gmsh.view.addModelData(tag, step, modelName, dataType, tags, data, time = 0., numComponents = -1, partition = 0)
+        gmsh.view.addModelData(tag, step, modelName, dataType, tags, data, time=0., numComponents=-1, partition=0)
 
         Add model-based post-processing data to the view with tag `tag'.
         `modelName' identifies the model the data is attached to. `dataType'
@@ -6699,9 +6699,9 @@ class view:
     add_model_data = addModelData
 
     @staticmethod
-    def addHomogeneousModelData(tag, step, modelName, dataType, tags, data, time = 0., numComponents = -1, partition = 0):
+    def addHomogeneousModelData(tag, step, modelName, dataType, tags, data, time=0., numComponents=-1, partition=0):
         """
-        gmsh.view.addHomogeneousModelData(tag, step, modelName, dataType, tags, data, time = 0., numComponents = -1, partition = 0)
+        gmsh.view.addHomogeneousModelData(tag, step, modelName, dataType, tags, data, time=0., numComponents=-1, partition=0)
 
         Add homogeneous model-based post-processing data to the view with tag
         `tag'. The arguments have the same meaning as in `addModelData', except
@@ -6859,9 +6859,9 @@ class view:
     get_list_data = getListData
 
     @staticmethod
-    def addListDataString(tag, coord, data, style = []):
+    def addListDataString(tag, coord, data, style=[]):
         """
-        gmsh.view.addListDataString(tag, coord, data, style = [])
+        gmsh.view.addListDataString(tag, coord, data, style=[])
 
         Add a string to a list-based post-processing view with tag `tag'. If
         `coord' contains 3 coordinates the string is positioned in the 3D model
@@ -6922,9 +6922,9 @@ class view:
     get_list_data_strings = getListDataStrings
 
     @staticmethod
-    def setInterpolationMatrices(tag, type, d, coef, exp, dGeo = 0, coefGeo = [], expGeo = []):
+    def setInterpolationMatrices(tag, type, d, coef, exp, dGeo=0, coefGeo=[], expGeo=[]):
         """
-        gmsh.view.setInterpolationMatrices(tag, type, d, coef, exp, dGeo = 0, coefGeo = [], expGeo = [])
+        gmsh.view.setInterpolationMatrices(tag, type, d, coef, exp, dGeo=0, coefGeo=[], expGeo=[])
 
         Set interpolation matrices for the element family `type' ("Line",
         "Triangle", "Quadrangle", "Tetrahedron", "Hexahedron", "Prism", "Pyramid")
@@ -6958,9 +6958,9 @@ class view:
     set_interpolation_matrices = setInterpolationMatrices
 
     @staticmethod
-    def addAlias(refTag, copyOptions = False, tag = -1):
+    def addAlias(refTag, copyOptions=False, tag=-1):
         """
-        gmsh.view.addAlias(refTag, copyOptions = False, tag = -1)
+        gmsh.view.addAlias(refTag, copyOptions=False, tag=-1)
 
         Add a post-processing view as an `alias' of the reference view with tag
         `refTag'. If `copyOptions' is set, copy the options of the reference view.
@@ -6998,9 +6998,9 @@ class view:
     copy_options = copyOptions
 
     @staticmethod
-    def combine(what, how, remove = True, copyOptions = True):
+    def combine(what, how, remove=True, copyOptions=True):
         """
-        gmsh.view.combine(what, how, remove = True, copyOptions = True)
+        gmsh.view.combine(what, how, remove=True, copyOptions=True)
 
         Combine elements (if `what' == "elements") or steps (if `what' == "steps")
         of all views (`how' == "all"), all visible views (`how' == "visible") or
@@ -7018,9 +7018,9 @@ class view:
             raise Exception(logger.getLastError())
 
     @staticmethod
-    def probe(tag, x, y, z, step = -1, numComp = -1, gradient = False, tolerance = 0., xElemCoord = [], yElemCoord = [], zElemCoord = [], dim = -1):
+    def probe(tag, x, y, z, step=-1, numComp=-1, gradient=False, tolerance=0., xElemCoord=[], yElemCoord=[], zElemCoord=[], dim=-1):
         """
-        gmsh.view.probe(tag, x, y, z, step = -1, numComp = -1, gradient = False, tolerance = 0., xElemCoord = [], yElemCoord = [], zElemCoord = [], dim = -1)
+        gmsh.view.probe(tag, x, y, z, step=-1, numComp=-1, gradient=False, tolerance=0., xElemCoord=[], yElemCoord=[], zElemCoord=[], dim=-1)
 
         Probe the view `tag' for its `value' at point (`x', `y', `z'). Return only
         the value at step `step' is `step' is positive. Return only values with
@@ -7058,9 +7058,9 @@ class view:
         return _ovectordouble(api_value_, api_value_n_.value)
 
     @staticmethod
-    def write(tag, fileName, append = False):
+    def write(tag, fileName, append=False):
         """
-        gmsh.view.write(tag, fileName, append = False)
+        gmsh.view.write(tag, fileName, append=False)
 
         Write the view to a file `fileName'. The export format is determined by the
         file extension. Append to the file if `append' is set.
@@ -7075,9 +7075,9 @@ class view:
             raise Exception(logger.getLastError())
 
     @staticmethod
-    def setVisibilityPerWindow(tag, value, windowIndex = 0):
+    def setVisibilityPerWindow(tag, value, windowIndex=0):
         """
-        gmsh.view.setVisibilityPerWindow(tag, value, windowIndex = 0)
+        gmsh.view.setVisibilityPerWindow(tag, value, windowIndex=0)
 
         Set the global visibility of the view `tag' per window to `value', where
         `windowIndex' identifies the window in the window list.
@@ -7186,9 +7186,9 @@ class fltk:
             raise Exception(logger.getLastError())
 
     @staticmethod
-    def wait(time = -1.):
+    def wait(time=-1.):
         """
-        gmsh.fltk.wait(time = -1.)
+        gmsh.fltk.wait(time=-1.)
 
         Wait at most `time' seconds for user interface events and return. If `time'
         < 0, wait indefinitely. First automatically create the user interface if it
@@ -7218,9 +7218,9 @@ class fltk:
             raise Exception(logger.getLastError())
 
     @staticmethod
-    def awake(action = ""):
+    def awake(action=""):
         """
-        gmsh.fltk.awake(action = "")
+        gmsh.fltk.awake(action="")
 
         Awake the main user interface thread and process pending events, and
         optionally perform an action (currently the only `action' allowed is
@@ -7293,9 +7293,9 @@ class fltk:
     is_available = isAvailable
 
     @staticmethod
-    def selectEntities(dim = -1):
+    def selectEntities(dim=-1):
         """
-        gmsh.fltk.selectEntities(dim = -1)
+        gmsh.fltk.selectEntities(dim=-1)
 
         Select entities in the user interface. If `dim' is >= 0, return only the
         entities of the specified dimension (e.g. points if `dim' == 0).
@@ -7358,9 +7358,9 @@ class fltk:
     select_views = selectViews
 
     @staticmethod
-    def splitCurrentWindow(how = "v", ratio = 0.5):
+    def splitCurrentWindow(how="v", ratio=0.5):
         """
-        gmsh.fltk.splitCurrentWindow(how = "v", ratio = 0.5)
+        gmsh.fltk.splitCurrentWindow(how="v", ratio=0.5)
 
         Split the current window horizontally (if `how' = "h") or vertically (if
         `how' = "v"), using ratio `ratio'. If `how' = "u", restore a single window.
@@ -7375,9 +7375,9 @@ class fltk:
     split_current_window = splitCurrentWindow
 
     @staticmethod
-    def setCurrentWindow(windowIndex = 0):
+    def setCurrentWindow(windowIndex=0):
         """
-        gmsh.fltk.setCurrentWindow(windowIndex = 0)
+        gmsh.fltk.setCurrentWindow(windowIndex=0)
 
         Set the current window by speficying its index (starting at 0) in the list
         of all windows. When new windows are created by splits, new windows are
@@ -7392,9 +7392,9 @@ class fltk:
     set_current_window = setCurrentWindow
 
     @staticmethod
-    def setStatusMessage(message, graphics = False):
+    def setStatusMessage(message, graphics=False):
         """
-        gmsh.fltk.setStatusMessage(message, graphics = False)
+        gmsh.fltk.setStatusMessage(message, graphics=False)
 
         Set a status message in the current window. If `graphics' is set, display
         the message inside the graphic window instead of the status bar.
@@ -7461,9 +7461,9 @@ class onelab:
     """
 
     @staticmethod
-    def set(data, format = "json"):
+    def set(data, format="json"):
         """
-        gmsh.onelab.set(data, format = "json")
+        gmsh.onelab.set(data, format="json")
 
         Set one or more parameters in the ONELAB database, encoded in `format'.
         """
@@ -7476,9 +7476,9 @@ class onelab:
             raise Exception(logger.getLastError())
 
     @staticmethod
-    def get(name = "", format = "json"):
+    def get(name="", format="json"):
         """
-        gmsh.onelab.get(name = "", format = "json")
+        gmsh.onelab.get(name="", format="json")
 
         Get all the parameters (or a single one if `name' is specified) from the
         ONELAB database, encoded in `format'.
@@ -7497,9 +7497,9 @@ class onelab:
         return _ostring(api_data_)
 
     @staticmethod
-    def getNames(search = ""):
+    def getNames(search=""):
         """
-        gmsh.onelab.getNames(search = "")
+        gmsh.onelab.getNames(search="")
 
         Get the names of the parameters in the ONELAB database matching the
         `search' regular expression. If `search' is empty, return all the names.
@@ -7598,9 +7598,9 @@ class onelab:
     get_string = getString
 
     @staticmethod
-    def clear(name = ""):
+    def clear(name=""):
         """
-        gmsh.onelab.clear(name = "")
+        gmsh.onelab.clear(name="")
 
         Clear the ONELAB database, or remove a single parameter if `name' is given.
         """
@@ -7612,9 +7612,9 @@ class onelab:
             raise Exception(logger.getLastError())
 
     @staticmethod
-    def run(name = "", command = ""):
+    def run(name="", command=""):
         """
-        gmsh.onelab.run(name = "", command = "")
+        gmsh.onelab.run(name="", command="")
 
         Run a ONELAB client. If `name' is provided, create a new ONELAB client with
         name `name' and executes `command'. If not, try to run a client that might
@@ -7635,9 +7635,9 @@ class logger:
     """
 
     @staticmethod
-    def write(message, level = "info"):
+    def write(message, level="info"):
         """
-        gmsh.logger.write(message, level = "info")
+        gmsh.logger.write(message, level="info")
 
         Write a `message'. `level' can be "info", "warning" or "error".
         """
