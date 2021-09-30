@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2014 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 //
 // Contributor(s):
 //   Tristan Carrier Baudoin
@@ -51,15 +51,15 @@ bool compute4neighbors(
   Field *f,
   double du,
   double dv,
-  double mult) 
+  double mult)
 {
   // we assume that v is on surface gf
 
   // get the parameter of the point on the surface
   reparamMeshVertexOnFace(v_center, gf, midpoint);
-  
+
   midpoint = SPoint2(midpoint.x() + du,midpoint.y() + dv);
-  
+
   SVector3 t1;
   double L;
   double X=v_center->x();
@@ -68,7 +68,7 @@ bool compute4neighbors(
   int iter = 1;
   while (1){
     (*f)(X,Y,Z, t1, gf);
-    L = t1.norm()*mult;    
+    L = t1.norm()*mult;
     // HOUSTON WE HAVE A PROBLEM
     if (L > 1.e10){
       double DU = ((double)rand()/RAND_MAX)*1.e-3*iter;
@@ -83,7 +83,7 @@ bool compute4neighbors(
   }
 
   metricField = SMetric3(1. / (L * L));
-  
+
   // get the unit normal at that point
   Pair<SVector3, SVector3> der =
     gf->firstDer(SPoint2(midpoint[0], midpoint[1]));
@@ -93,20 +93,20 @@ bool compute4neighbors(
   n.normalize();
   t1 -= n*dot(t1,n);
   t1.normalize();
-  
+
   double M = dot(s1, s1);
   double N = dot(s2, s2);
   double E = dot(s1, s2);
-  
+
   // compute the first fundamental form i.e. the metric tensor at the point
   // M_{ij} = s_i \cdot s_j
   double metric[2][2] = {{M, E}, {E, N}};
-  
+
   // compute the second direction t2 and normalize (t1,t2,n) is the tangent
   // frame
   SVector3 t2 = crossprod(n, t1);
   t2.normalize();
-  
+
   // compute covariant coordinates of t1 and t2
   // t1 = a s1 + b s2 -->
   // t1 . s1 = a M + b E
@@ -129,7 +129,7 @@ bool compute4neighbors(
     covar2[1] = 0.0;
     singular = true;
   }
-  
+
   // compute the corners of the box as well
   double LSQR = L ;
   SVector3 b1 = t1+t2;
@@ -149,12 +149,12 @@ bool compute4neighbors(
     covar4[1] = 0.0;
     singular = true;
   }
-  
-  
+
+
   double size_1 = sqrt (covar1[0]*covar1[0]+covar1[1]*covar1[1]);
   double size_2 = sqrt (covar2[0]*covar2[0]+covar2[1]*covar2[1]);
-  
-  
+
+
   double newPoint[8][2] = {{midpoint[0] - covar1[0],
 			    midpoint[1] - covar1[1]},
 			   {midpoint[0] - covar2[0],
@@ -171,18 +171,18 @@ bool compute4neighbors(
 			    midpoint[1] + covar3[1]},
 			   {midpoint[0] + covar4[0],
 			    midpoint[1] + covar4[1]}};
-  
+
   SVector3 dirs[8]      = {t1 * (-1.0), t2 * (-1.0), t1 * (1.0), t2 * (1.0),
 			   b1 * (-1.0), b2 * (-1.0), b1 * (1.0), b2 * (1.0) };
   SVector3 orthodirs[8] = {t2 * (-1.0), t1 * (-1.0), t2 * (1.0), t1 * (1.0),
 			   b2 * (-1.0), b1 * (-1.0), b2 * (1.0), b1 * (1.0) };
   double   LS[8]   = {L,L,L,L,LSQR,LSQR,LSQR,LSQR};
 
-  
+
   SPoint3 ppx (v_center->x(),v_center->y(),v_center->z());
   surfaceFunctorGFace ss(gf);
   for(int i = 0; i < 4; i++) {
-    newP[i] = SPoint2(newPoint[i][0], newPoint[i][1]);    
+    newP[i] = SPoint2(newPoint[i][0], newPoint[i][1]);
     GPoint pp = gf->point(newP[i]);
     SPoint3 px (pp.x(),pp.y(),pp.z());
     SVector3 test = px - ppx;
@@ -194,7 +194,7 @@ bool compute4neighbors(
       // 	discreteFace *df = dynamic_cast<discreteFace *>(gf);
       // 	double uv[2] = {newPoint[i][0], newPoint[i][1]};
       // 	GPoint qq = df->intersectionWithCircle(dirs[i], n, SVector3(v_center->x(), v_center->y(), v_center->z()),
-      // 							 LS[i],uv); 
+      // 							 LS[i],uv);
       // 	if (qq.succeeded()){
       // 	  newPoint[i][0]=qq.u();
       // 	  newPoint[i][1]=qq.v();
@@ -203,9 +203,9 @@ bool compute4neighbors(
       // else {
       curveFunctorCircle cf(dirs[i], n, SVector3(v_center->x(), v_center->y(), v_center->z()), LS[i]);
       double uvt[3] = {newPoint[i][0], newPoint[i][1], 0.0}; //
-      if(intersectCurveSurface(cf, ss, uvt, size_1 * 1.e-6)) { 
+      if(intersectCurveSurface(cf, ss, uvt, size_1 * 1.e-6)) {
 	__KO++;
-	pp = gf->point(SPoint2(uvt[0], uvt[1]));      
+	pp = gf->point(SPoint2(uvt[0], uvt[1]));
 	px = SPoint3 (pp.x(),pp.y(),pp.z());
 	test = px - ppx;
 	L2 = test.norm();
@@ -222,13 +222,13 @@ bool compute4neighbors(
       else{
 	SPoint3 p_test (v_center->x() + dirs[i].x() * LS[i],
 			v_center->y() + dirs[i].y() * LS[i],
-			v_center->z() + dirs[i].z() * LS[i]);      		
+			v_center->z() + dirs[i].z() * LS[i]);
 	pp = gf->closestPoint(p_test ,uvt);
 	if (pp.succeeded()){
 	  newPoint[i][0] = pp.u();
 	  newPoint[i][1] = pp.v();
 	}
-	else 
+	else
 	  Msg::Debug("Face %d Impossible to intersect with a circle of radius %g",gf->tag(),L);
       }
     }
@@ -236,7 +236,7 @@ bool compute4neighbors(
       __OK++;
     }
   }
-  
+
   return true;
 }
 
@@ -250,11 +250,11 @@ bool compute4neighbors(
 //     SPoint2 midpoint;
 //     SPoint2 newP[8];
 //     SMetric3 metricField;
-//     compute4neighbors(gf, it->first, midpoint, newP, metricField, f, 0, 0, it->second == 5 ? .25 : 1); 
+//     compute4neighbors(gf, it->first, midpoint, newP, metricField, f, 0, 0, it->second == 5 ? .25 : 1);
 //     //the 8 points (I know, it's strange ...)
-//     //                 2  
+//     //                 2
 //     //             7       6
-//     //          1             3  
+//     //          1             3
 //     //             4       5
 //     //                 0
 
@@ -265,7 +265,7 @@ bool compute4neighbors(
 //     SVector3 s2 = der.second();
 //     SVector3 n = crossprod(s1, s2);
 //     n.normalize();
-    
+
 //     int loop [8] = {0,4,1,7,2,6,3,5};
 //     SVector3 t0[8],t1[8];
 //     GPoint p0[8];
@@ -273,9 +273,9 @@ bool compute4neighbors(
 //     std::vector<SPoint3> pts;
 //     for (int i=0;i<8;i++){
 //       p0[i] = gf->point(newP[loop[i]]);
-//       (*f)(p0[i].x(), p0[i].y(),p0[i].z(),t0[i], gf);      
+//       (*f)(p0[i].x(), p0[i].y(),p0[i].z(),t0[i], gf);
 //       t0[i] -= n*dot(t0[i],n);
-//       t0[i].normalize();  
+//       t0[i].normalize();
 //       t1[i] = crossprod(n, t0[i]);
 //       t1[i].normalize();
 //     }
@@ -289,7 +289,7 @@ bool compute4neighbors(
 //       if (fabs(dot(t0i,t0n)) < fabs(dot(t0i,t1n))){
 // 	SVector3 temp_ = t0n;
 // 	t0n = t1n;
-// 	t1n = temp_;	
+// 	t1n = temp_;
 //       }
 //       if (dot(t0i,t0n) < 0)t0n = t0n * (-1.0);
 //       if (dot(t1i,t1n) < 0)t1n = t1n * (-1.0);
@@ -318,7 +318,7 @@ bool compute4neighbors(
 // 		pij.x(),pij.y(),pij.z(),
 // 		dot1*v1.x(),dot1*v1.y(),dot1*v1.z());
 //       }
-//     }           
+//     }
 
 //     int nbMax = 0;
 //     for (size_t i=0;i<pts.size();i++){
@@ -339,10 +339,10 @@ bool compute4neighbors(
 //       printf("singularity %lu has a bad set of %d vs %d sampling points\n",it->first->getNum(),nbMax,it->second);
 //     }
 //   }
-			
+
 //   fprintf(_f,"};\n");
 //   fclose(_f);
-  
+
 // }
 
 
@@ -363,7 +363,7 @@ static bool close2sing(std::vector<MVertex*> &s, GFace *gf, SPoint2 p, Field *f)
   SVector3 t1;
   (*f)(gp.x(), gp.y(), gp.z(), t1, gf);
   double L = t1.norm();
-  
+
   for (size_t i=0;i<s.size();i++){
     MVertex *v = s[i];
     double d = sqrt ((v->x()-gp.x())*(v->x()-gp.x())+
@@ -378,7 +378,7 @@ static bool close2sing(std::vector<MVertex*> &s, GFace *gf, SPoint2 p, Field *f)
 static void findPhysicalGroupsForSingularities(GFace *gf,
                                                std::map<MVertex *, int> &temp)
 {
- 
+
   std::set<GVertex *, GEntityPtrLessThan> emb = gf->embeddedVertices();
   if (emb.empty())return;
 
@@ -421,7 +421,7 @@ void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed,
 
   //  printf("ALGO %d %d\n", CTX::instance()->mesh.algo2d,
   //	 CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT);
-  
+
   FILE *f = NULL;
   FILE *f2 = NULL;
   if(Msg::GetVerbosity() == 99) {
@@ -433,12 +433,12 @@ void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed,
     if(f) fprintf(f, "View \"\"{\n");
     if(f2) fprintf(f2, "View \"\"{\n");
   }
-  
+
   FieldManager *fields = gf->model()->getFields();
   Field *cross_field = NULL;
   SVector3 t1;
   double L;
-  if(fields->getBackgroundField() > 0) {        
+  if(fields->getBackgroundField() > 0) {
     cross_field = fields->get(fields->getBackgroundField());
     if(cross_field->numComponents() != 3) {// we hae a true scaled cross fields !!
       Msg::Error ("Packing of Parallelograms require a scaled cross field");
@@ -454,9 +454,9 @@ void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed,
     return;
   }
 
-  
+
   const bool goNonLinear = true;
-  
+
   // get all the boundary vertices
   std::set<MVertex *, MVertexPtrLessThan> bnd_vertices;
   for(unsigned int i = 0; i < gf->getNumMeshElements(); i++) {
@@ -481,18 +481,18 @@ void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed,
 
   double maxu = -1.e22,minu = 1.e22;
   double maxv = -1.e22,minv = 1.e22;
-  
-  std::vector<MVertex*> singularities;  
+
+  std::vector<MVertex*> singularities;
   for(; it != bnd_vertices.end(); ++it) {
 
     int NP = 1;
     SPoint2 midpoint;
     double du[4] = {0,0,0,0}, dv[4]= {0,0,0,0};
-    
+
     for (int i=0;i<2;i++){
       if (gf->periodic(i)){
 	reparamMeshVertexOnFace(*it, gf, midpoint);
-	Range<double> bnds = gf->parBounds(i);      
+	Range<double> bnds = gf->parBounds(i);
 	//	if (1 || midpoint[i] == bnds.low()){
 	  if (i == 0)
 	    du[NP] =  bnds.high() -  bnds.low();
@@ -535,7 +535,7 @@ void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed,
 
   __OK = 0;
   __KO = 0;
-  
+
   while(!fifo.empty()) {
     //    printf("%d vertices in the domain\n",vertices.size());
     //    if (vertices.size() > 5000)break;
@@ -571,7 +571,7 @@ void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed,
 	  surfacePointWithExclusionRegion *sp =
 	    new surfacePointWithExclusionRegion(v, newp, midpoint, metricField,parent);
 	  //	  if (!gf->containsParam(parent->_p[i]))
-	  sp->print(f2, i);	  
+	  sp->print(f2, i);
 	}
       }
     }
@@ -598,7 +598,7 @@ void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed,
   }
 }
 
-/* OLD STUFF 
+/* OLD STUFF
 
    double uvt[3] = {newPoint[0], newPoint[1], 0.0};
   curveFunctorCircle cc(n2, n1, middle, d);
@@ -612,12 +612,12 @@ void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed,
     // }
   }
 
-  
+
   surfaceFunctorGFace ss(gf); //
   SVector3 dirs[4] = {t1 * (-1.0), t2 * (-1.0), t1 * (1.0), t2 * (1.0)}; //
   for(int i = 0; i < 4; i++) { //
     double uvt[3] = {newPoint[i][0], newPoint[i][1], 0.0}; //
-    
+
     curveFunctorCircle cf(
 			  dirs[i], n, SVector3(v_center->x(), v_center->y(), v_center->z()),
 			  L);
@@ -635,12 +635,12 @@ void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed,
 	newPoint[i][0] = uvt[0];
 	newPoint[i][1] = uvt[1];
       }
-      else {      
+      else {
 	SPoint3 test (v_center->x() + dirs[i].x() * L,
 		      v_center->y() + dirs[i].y() * L,
-		      v_center->z() + dirs[i].z() * L);      
-	
-	
+		      v_center->z() + dirs[i].z() * L);
+
+
 	GPoint pp = gf->closestPoint(test,uvt);
 	if (pp.succeeded()){
 	  newPoint[i][0] = pp.u();
@@ -649,12 +649,12 @@ void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed,
 	else return false;
       }
     }
-    else {      
+    else {
       SPoint3 test (v_center->x() + dirs[i].x() * L,
 		    v_center->y() + dirs[i].y() * L,
-		    v_center->z() + dirs[i].z() * L);      
-      
-      
+		    v_center->z() + dirs[i].z() * L);
+
+
       GPoint pp = gf->closestPoint(test,uvt);
       if (pp.succeeded()){
 	newPoint[i][0] = pp.u();
@@ -664,7 +664,7 @@ void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed,
     }
   }
 
-  
+
   // return the four new vertices
   for(int i = 0; i < 4; i++) {
     newP[i] = SPoint2(newPoint[i][0], newPoint[i][1]);

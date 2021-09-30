@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 //
 // Author: Maxence Reberol
 
@@ -675,14 +675,14 @@ libOLwrapper::libOLwrapper(
   // Build an octree
   double t0 = Cpu();
   OctIdx = LolNewOctree(
-      (int32_t)points.size(), points[0].data(), points[1].data(), 
-      (int32_t)edges.size(), edges[0].data(), edges[1].data(), 
-      (int32_t)triangles.size(), triangles[0].data(), triangles[1].data(), 
-      (int32_t)quads.size(), quads[0].data(), quads[1].data(), 
-      (int32_t)tetrahedra.size(), tetrahedra[0].data(), tetrahedra[1].data(), 
-      (int32_t)pyramids.size(), pyramids[0].data(), pyramids[1].data(), 
-      (int32_t)prisms.size(), prisms[0].data(), prisms[1].data(), 
-      (int32_t)hexahedra.size(), hexahedra[0].data(), hexahedra[1].data(), 
+      (int32_t)points.size(), points[0].data(), points[1].data(),
+      (int32_t)edges.size(), edges[0].data(), edges[1].data(),
+      (int32_t)triangles.size(), triangles[0].data(), triangles[1].data(),
+      (int32_t)quads.size(), quads[0].data(), quads[1].data(),
+      (int32_t)tetrahedra.size(), tetrahedra[0].data(), tetrahedra[1].data(),
+      (int32_t)pyramids.size(), pyramids[0].data(), pyramids[1].data(),
+      (int32_t)prisms.size(), prisms[0].data(), prisms[1].data(),
+      (int32_t)hexahedra.size(), hexahedra[0].data(), hexahedra[1].data(),
       BasIdx, 1);
 
   Msg::Debug("libOL octree created (%li vertices, %.3f sec), OctIdx: %li", points.size(), Cpu()-t0, OctIdx);
@@ -696,7 +696,7 @@ libOLwrapper::~libOLwrapper() {
   }
 }
 
-int libOLwrapper::elementsInsideBoundingBox(libOLTypTag elementType, 
+int libOLwrapper::elementsInsideBoundingBox(libOLTypTag elementType,
     double* bboxMin, double* bboxMax,
     std::vector<int32_t>& elements) {
 

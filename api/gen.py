@@ -1,7 +1,7 @@
 # Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 #
-# See the LICENSE.txt file for license information. Please report all
-# issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+# See the LICENSE.txt file in the Gmsh root directory for license information.
+# Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 # This is the master definition file for the Gmsh API.
 #
@@ -44,8 +44,8 @@ api = API(version_major, version_minor, version_patch)
 
 gmsh = api.add_module('gmsh', 'top-level functions')
 
-doc = '''Initialize the Gmsh API. This must be called before any call to the other functions in the API. If `argc' and `argv' (or just `argv' in Python or Julia) are provided, they will be handled in the same way as the command line arguments in the Gmsh app. If `readConfigFiles' is set, read system Gmsh configuration files (gmshrc and gmsh-options). Initializing the API sets the options "General.Terminal" to 1 and "General.AbortOnError" to 2. If compiled with OpenMP support, it also sets the number of threads to "General.NumThreads".'''
-gmsh.add('initialize', doc, None, iargcargv(), ibool('readConfigFiles', 'true', 'True', 'true'))
+doc = '''Initialize the Gmsh API. This must be called before any call to the other functions in the API. If `argc' and `argv' (or just `argv' in Python or Julia) are provided, they will be handled in the same way as the command line arguments in the Gmsh app. If `readConfigFiles' is set, read system Gmsh configuration files (gmshrc and gmsh-options). If `run' is set, run in the same way as the Gmsh app, either interactively or in batch mode depending on the command line arguments. Initializing the API sets the options "General.AbortOnError" to 2 (if `run' is not set) and "General.Terminal" to 1. If compiled with OpenMP support, it also sets the number of threads to "General.NumThreads".'''
+gmsh.add('initialize', doc, None, iargcargv(), ibool('readConfigFiles', 'true', 'True', 'true'), ibool('run', 'false', 'False'))
 
 doc = '''Finalize the Gmsh API. This must be called when you are done using the Gmsh API.'''
 gmsh.add('finalize', doc, None)
@@ -199,8 +199,8 @@ model.add('getParametrization', doc, None, iint('dim'), iint('tag'), ivectordoub
 doc = '''Get the `min' and `max' bounds of the parametric coordinates for the entity of dimension `dim' and tag `tag'.'''
 model.add('getParametrizationBounds', doc, None, iint('dim'), iint('tag'), ovectordouble('min'), ovectordouble('max'))
 
-doc = '''Check if the coordinates (or the parametric coordinates if `parametric' is set) provided in `coord' correspond to points inside the entity of dimension `dim' and tag `tag', and return the number of points inside. This feature is only available for a subset of curves and surfaces, depending on the underyling geometrical representation.'''
-model.add('isInside', doc, oint, iint('dim'), iint('tag'), ivectordouble('coord'), ibool('parametric', 'true', 'True'))
+doc = '''Check if the coordinates (or the parametric coordinates if `parametric' is set) provided in `coord' correspond to points inside the entity of dimension `dim' and tag `tag', and return the number of points inside. This feature is only available for a subset of entities, depending on the underyling geometrical representation.'''
+model.add('isInside', doc, oint, iint('dim'), iint('tag'), ivectordouble('coord'), ibool('parametric', 'false', 'False'))
 
 doc = '''Get the points `closestCoord' on the entity of dimension `dim' and tag `tag' to the points `coord', by orthogonal projection. `coord' and `closestCoord' are given as triplets of x, y, z coordinates, concatenated: [p1x, p1y, p1z, p2x, ...]. `parametricCoord' returns the parametric coordinates t on the curve (if `dim' = 1) or pairs of u and v coordinates concatenated on the surface (if `dim' = 2), i.e. [p1t, p2t, ...] or [p1u, p1v, p2u, ...].'''
 model.add('getClosestPoint', doc, None, iint('dim'), iint('tag'), ivectordouble('coord'), ovectordouble('closestCoord'), ovectordouble('parametricCoord'))
@@ -344,7 +344,7 @@ mesh.add_special('preallocateJacobians', doc, ['onlycc++'], None, iint('elementT
 doc = '''Get the Jacobian for a single element `elementTag', at the G evaluation points `localCoord' given as concatenated triplets of coordinates in the reference element [g1u, g1v, g1w, ..., gGu, gGv, gGw]. `jacobians' contains the 9 entries of the 3x3 Jacobian matrix at each evaluation point. The matrix is returned by column: [e1g1Jxu, e1g1Jyu, e1g1Jzu, e1g1Jxv, ..., e1g1Jzw, e1g2Jxu, ..., e1gGJzw, e2g1Jxu, ...], with Jxu=dx/du, Jyu=dy/du, etc. `determinants' contains the determinant of the Jacobian matrix at each evaluation point. `coord' contains the x, y, z coordinates of the evaluation points. This function relies on an internal cache (a vector in case of dense element numbering, a map otherwise); for large meshes accessing Jacobians in bulk is often preferable.'''
 mesh.add('getJacobian', doc, None, isize('elementTag'), ivectordouble('localCoord'), ovectordouble('jacobians'), ovectordouble('determinants'), ovectordouble('coord'))
 
-doc = '''Get the basis functions of the element of type `elementType' at the evaluation points `localCoord' (given as concatenated triplets of coordinates in the reference element [g1u, g1v, g1w, ..., gGu, gGv, gGw]), for the function space `functionSpaceType' (e.g. "Lagrange" or "GradLagrange" for Lagrange basis functions or their gradient, in the u, v, w coordinates of the reference element; or "H1Legendre3" or "GradH1Legendre3" for 3rd order hierarchical H1 Legendre functions). `numComponents' returns the number C of components of a basis function. `basisFunctions' returns the value of the N basis functions at the evaluation points, i.e. [g1f1, g1f2, ..., g1fN, g2f1, ...] when C == 1 or [g1f1u, g1f1v, g1f1w, g1f2u, ..., g1fNw, g2f1u, ...] when C == 3. For basis functions that depend on the orientation of the elements, all values for the first orientation are returned first, followed by values for the second, etc. `numOrientations' returns the overall number of orientations. If `wantedOrientations' is not empty, only return the values for the desired orientation indices.'''
+doc = '''Get the basis functions of the element of type `elementType' at the evaluation points `localCoord' (given as concatenated triplets of coordinates in the reference element [g1u, g1v, g1w, ..., gGu, gGv, gGw]), for the function space `functionSpaceType' (e.g. "Lagrange" or "GradLagrange" for isoparametric Lagrange basis functions or their gradient, in the u, v, w coordinates of the reference element; "Lagrange3" for 3rd order Lagrange basis functions, or "H1Legendre3" or "GradH1Legendre3" for 3rd order hierarchical H1 Legendre functions). `numComponents' returns the number C of components of a basis function. `basisFunctions' returns the value of the N basis functions at the evaluation points, i.e. [g1f1, g1f2, ..., g1fN, g2f1, ...] when C == 1 or [g1f1u, g1f1v, g1f1w, g1f2u, ..., g1fNw, g2f1u, ...] when C == 3. For basis functions that depend on the orientation of the elements, all values for the first orientation are returned first, followed by values for the second, etc. `numOrientations' returns the overall number of orientations. If `wantedOrientations' is not empty, only return the values for the desired orientation indices.'''
 mesh.add('getBasisFunctions', doc, None, iint('elementType'), ivectordouble('localCoord'), istring('functionSpaceType'), oint('numComponents'), ovectordouble('basisFunctions'), oint('numOrientations'), ivectorint('wantedOrientations', 'std::vector<int>()', "[]", "[]"))
 
 doc = '''Get the orientation index of the elements of type `elementType' in the entity of tag `tag'. The arguments have the same meaning as in `getBasisFunctions'. `basisFunctionsOrientation' is a vector giving for each element the orientation index in the values returned by `getBasisFunctions'. For Lagrange basis functions the call is superfluous as it will return a vector of zeros.'''
@@ -359,10 +359,10 @@ mesh.add('getNumberOfOrientations', doc, oint, iint('elementType'), istring('fun
 doc = '''Preallocate data before calling `getBasisFunctionsOrientationForElements' with `numTasks' > 1. For C and C++ only.'''
 mesh.add_special('preallocateBasisFunctionsOrientationForElements', doc, ['onlycc++'], None, iint('elementType'), ovectorint('basisFunctionsOrientation'), iint('tag', '-1'))
 
-doc = '''Get the global unique mesh edge identifiers `edgeTags' and orientations `edgeOrientation' for an input list of node tag pairs defining these edges, concatenated in the vector `nodeTags'.'''
+doc = '''Get the global unique mesh edge identifiers `edgeTags' and orientations `edgeOrientation' for an input list of node tag pairs defining these edges, concatenated in the vector `nodeTags'. Mesh edges are created e.g. by `createEdges()' or `getKeysForElements()'.'''
 mesh.add('getEdges', doc, None, ivectorsize('nodeTags'), ovectorsize('edgeTags'), ovectorint('edgeOrientations'))
 
-doc = '''Get the global unique mesh face identifiers `faceTags' and orientations `faceOrientations' for an input list of node tag triplets (if `faceType' == 3) or quadruplets (if `faceType' == 4) defining these faces, concatenated in the vector `nodeTags'.'''
+doc = '''Get the global unique mesh face identifiers `faceTags' and orientations `faceOrientations' for an input list of node tag triplets (if `faceType' == 3) or quadruplets (if `faceType' == 4) defining these faces, concatenated in the vector `nodeTags'. Mesh faces are created e.g. by `createFaces()' or `getKeysForElements()'.'''
 mesh.add('getFaces', doc, None, iint('faceType'), ivectorsize('nodeTags'), ovectorsize('faceTags'), ovectorint('faceOrientations'))
 
 doc = '''Create unique mesh edges for the entities `dimTags'.'''
@@ -407,7 +407,7 @@ mesh.add('getSizes', doc, None, ivectorpair('dimTags'), ovectordouble('sizes'))
 doc = '''Set mesh size constraints at the given parametric points `parametricCoord' on the model entity of dimension `dim' and tag `tag'. Currently only entities of dimension 1 (lines) are handled.'''
 mesh.add('setSizeAtParametricPoints', doc, None, iint('dim'), iint('tag'), ivectordouble('parametricCoord'), ivectordouble('sizes'))
 
-doc = '''Set a mesh size callback for the current model. The callback should take 5 arguments (`dim', `tag', `x', `y' and `z') and return the value of the mesh size at coordinates (`x', `y', `z').'''
+doc = '''Set a mesh size callback for the current model. The callback function should take six arguments as input (`dim', `tag', `x', `y', `z' and `lc'). The first two integer arguments correspond to the dimension `dim' and tag `tag' of the entity being meshed. The next four double precision arguments correspond to the coordinates `x', `y' and `z' around which to prescribe the mesh size and to the mesh size `lc' that would be prescribed if the callback had not been called. The callback function should return a double precision number specifying the desired mesh size; returning `lc' is equivalent to a no-op.'''
 mesh.add('setSizeCallback', doc, None, isizefun('callback'))
 
 doc = '''Remove the mesh size callback from the current model.'''
@@ -473,6 +473,9 @@ mesh.add('setPeriodic', doc, None, iint('dim'), ivectorint('tags'), ivectorint('
 doc = '''Get the master entity `tagMaster', the node tags `nodeTags' and their corresponding master node tags `nodeTagsMaster', and the affine transform `affineTransform' for the entity of dimension `dim' and tag `tag'. If `includeHighOrderNodes' is set, include high-order nodes in the returned data.'''
 mesh.add('getPeriodicNodes', doc, None, iint('dim'), iint('tag'), oint('tagMaster'), ovectorsize('nodeTags'), ovectorsize('nodeTagsMaster'), ovectordouble('affineTransform'), ibool('includeHighOrderNodes', 'false', 'False'))
 
+doc = '''Get the master entity `tagMaster' and the key pairs (`typeKeyMaster', `entityKeyMaster') corresponding to the entity `tag' and the key pairs (`typeKey', `entityKey') for the elements of type `elementType' and function space type `functionSpaceType'. If `returnCoord' is set, the `coord' and `coordMaster' vectors contain the x, y, z coordinates locating basis functions for sorting purposes.'''
+mesh.add('getPeriodicKeysForElements', doc, None, iint('elementType'), istring('functionSpaceType'), iint('tag'), oint('tagMaster'), ovectorint('typeKeys'), ovectorint('typeKeysMaster'), ovectorsize('entityKeys'), ovectorsize('entityKeysMaster'), ovectordouble('coord'), ovectordouble('coordMaster'), ibool('returnCoord', 'true', 'True'))
+
 doc = '''Remove duplicate nodes in the mesh of the current model.'''
 mesh.add('removeDuplicateNodes', doc, None)
 
@@ -513,14 +516,29 @@ field.add('add', doc, oint, istring('fieldType'), iint('tag', '-1'))
 doc = '''Remove the field with tag `tag'.'''
 field.add('remove', doc, None, iint('tag'))
 
+doc = '''Get the list of all fields.'''
+field.add('list', doc, None, ovectorint('tags'))
+
+doc = '''Get the type `fieldType' of the field with tag `tag'.'''
+field.add('getType', doc, None, iint('tag'), ostring('fileType'))
+
 doc = '''Set the numerical option `option' to value `value' for field `tag'.'''
 field.add('setNumber', doc, None, iint('tag'), istring('option'), idouble('value'))
+
+doc = '''Get the value of the numerical option `option' for field `tag'.'''
+field.add('getNumber', doc, None, iint('tag'), istring('option'), odouble('value'))
 
 doc = '''Set the string option `option' to value `value' for field `tag'.'''
 field.add('setString', doc, None, iint('tag'), istring('option'), istring('value'))
 
+doc = '''Get the value of the string option `option' for field `tag'.'''
+field.add('getString', doc, None, iint('tag'), istring('option'), ostring('value'))
+
 doc = '''Set the numerical list option `option' to value `value' for field `tag'.'''
 field.add('setNumbers', doc, None, iint('tag'), istring('option'), ivectordouble('value'))
+
+doc = '''Get the value of the numerical list option `option' for field `tag'.'''
+field.add('getNumbers', doc, None, iint('tag'), istring('option'), ovectordouble('value'))
 
 doc = '''Set the field `tag' as the background mesh size field.'''
 field.add('setAsBackgroundMesh', doc, None, iint('tag'))

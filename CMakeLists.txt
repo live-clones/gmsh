@@ -1,7 +1,7 @@
 # Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 #
-# See the LICENSE.txt file for license information. Please report all
-# issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+# See the LICENSE.txt file in the Gmsh root directory for license information.
+# Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 cmake_minimum_required(VERSION 3.3 FATAL_ERROR)
 
@@ -142,7 +142,7 @@ else()
   set(GMSH_GITLAB_PREFIX "${GMSH_GITLAB_PREFIX}/blob/master")
 endif()
 
-set(GMSH_API api/gmsh.h api/gmshc.h api/gmsh.h_cwrap)
+set(GMSH_API api/gmsh.h api/gmshc.h api/gmsh.h_cwrap api/gmshf.h)
 
 if(ENABLE_PRIVATE_API)
   message(WARNING "The private API is unsupported and undocumented. It is meant "
@@ -1613,13 +1613,11 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Common/GmshVersion.h.in
 # the texi and pypi version files are modified in the source directory (not
 # ideal for version.texi, but since git tracks the contents of the file this is
 # acceptable as it will only change when the actual version is changed - not for
-# each git hash; setup.py is not under version control)
+# each git hash)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/doc/texinfo/version.texi.in
                ${CMAKE_CURRENT_SOURCE_DIR}/doc/texinfo/version.texi)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/utils/pypi/gmsh/setup.py.in
-               ${CMAKE_CURRENT_SOURCE_DIR}/utils/pypi/gmsh/setup.py)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/utils/pypi/gmsh-dev/setup.py.in
-               ${CMAKE_CURRENT_SOURCE_DIR}/utils/pypi/gmsh-dev/setup.py)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/utils/pypi/setup-wheel.py.in
+               ${CMAKE_CURRENT_BINARY_DIR}/setup-wheel.py)
 
 file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/version.txt ${GMSH_SHORT_VERSION})
 
@@ -2179,10 +2177,10 @@ if(ENABLE_TESTS AND NOT DISABLE_GMSH_TESTS)
   endforeach()
   # test c++ api tutorials with dynamic builds
   if(ENABLE_BUILD_DYNAMIC)
-    file(GLOB_RECURSE ALLFILES tutorial/c++/*.cpp)
+    file(GLOB_RECURSE ALLFILES tutorial/c++/*.cpp tutorial/c/*.c)
     filter_tests("${ALLFILES}" TESTFILES)
     foreach(TESTFILE ${TESTFILES})
-      get_filename_component(TEST ${TESTFILE} NAME_WE)
+      get_filename_component(TEST ${TESTFILE} NAME)
       add_executable(${TEST} WIN32 ${TESTFILE})
       target_link_libraries(${TEST} shared)
       if(WIN32 AND NOT MSVC)
@@ -2194,7 +2192,7 @@ if(ENABLE_TESTS AND NOT DISABLE_GMSH_TESTS)
         endif()
         set_target_properties(${TEST} PROPERTIES LINK_FLAGS "${FLAGS}")
       endif()
-      add_test(${TEST}_cpp ${TEST} -nopopup)
+      add_test(${TEST} ${TEST} -nopopup)
     endforeach()
   endif()
   # enable this once we have worked out the path issues on the build machines
@@ -2204,11 +2202,11 @@ if(ENABLE_TESTS AND NOT DISABLE_GMSH_TESTS)
       file(GLOB_RECURSE ALLFILES tutorial/python/*.py demos/api/*.py)
       filter_tests("${ALLFILES}" TESTFILES)
       foreach(TESTFILE ${TESTFILES})
-        get_filename_component(TEST ${TESTFILE} NAME_WE)
-        add_test(NAME ${TEST}_py COMMAND ${PYTHON_EXECUTABLE} ${TESTFILE} -nopopup)
-        set_property(TEST ${TEST}_py APPEND PROPERTY ENVIRONMENT
+        get_filename_component(TEST ${TESTFILE} NAME)
+        add_test(NAME ${TEST} COMMAND ${PYTHON_EXECUTABLE} ${TESTFILE} -nopopup)
+        set_property(TEST ${TEST} APPEND PROPERTY ENVIRONMENT
                      "PYTHONPATH=${CMAKE_SOURCE_DIR}/api")
-        set_property(TEST ${TEST}_py APPEND PROPERTY ENVIRONMENT
+        set_property(TEST ${TEST} APPEND PROPERTY ENVIRONMENT
                      "LD_LIBRARY_PATH=${CMAKE_CURRENT_BINARY_DIR}")
         endforeach()
     endif()

@@ -1,8 +1,8 @@
 %{
 // Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <sstream>
 #include <map>
@@ -1165,13 +1165,8 @@ Affectation :
       Field *field = GModel::current()->getFields()->get((int)$3);
       if(field){
 	FieldOption *option = field->options[$6];
-	if(option){
-	  try { option->numericalValue($8); }
-	  catch(...){
-	    yymsg(0, "Cannot assign a numerical value to option '%s' "
-		  "in field %i of type '%s'", $6, (int)$3, field->getName());
-	  }
-	}
+	if(option)
+	  option->numericalValue($8);
 	else
 	  yymsg(0, "Unknown option '%s' in field %i of type '%s'",
 		$6, (int)$3, field->getName());
@@ -1187,13 +1182,8 @@ Affectation :
       Field *field = GModel::current()->getFields()->get((int)$3);
       if(field){
 	FieldOption *option = field->options[$6];
-	if(option){
-	  try { option->string($8); }
-	  catch (...){
-	    yymsg(0, "Cannot assign a string value to  option '%s' "
-		  "in field %i of type '%s'", $6, (int)$3, field->getName());
-	  }
-	}
+	if(option)
+	  option->string($8);
 	else
 	  yymsg(0, "Unknown option '%s' in field %i of type '%s'",
 		$6, (int)$3, field->getName());

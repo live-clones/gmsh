@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 //
 // Contributed by Tristan Carrier and Paul-Emile Bernard
 
@@ -85,7 +85,7 @@ void surfacePointWithExclusionRegion::print(FILE *f, int i)
   fprintf(f, "SQ(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){%d,%d,%d,%d};\n",
 	  _q[0].x(), _q[0].y(), 0.0, _q[1].x(), _q[1].y(), 0.0, _q[2].x(),
           _q[2].y(), 0.0, _q[3].x(), _q[3].y(), 0.0, i, i, i, i);
-  
+
 }
 
 bool rtree_callback(surfacePointWithExclusionRegion *neighbour, void *point)

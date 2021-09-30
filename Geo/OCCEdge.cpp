@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <limits>
 #include "GmshConfig.h"
@@ -239,6 +239,17 @@ double OCCEdge::parFromPoint(const SPoint3 &qp) const
     return u;
   else
     return GEdge::parFromPoint(qp);
+}
+
+bool OCCEdge::containsPoint(const SPoint3 &pt) const
+{
+  double u;
+  SPoint3 xyz;
+  if(_project(pt.data(), u, xyz.data())) {
+    const Standard_Real tolerance = BRep_Tool::Tolerance(_c);
+    if(pt.distance(xyz) <= tolerance) return true;
+  }
+  return false;
 }
 
 bool OCCEdge::isSeam(const GFace *face) const

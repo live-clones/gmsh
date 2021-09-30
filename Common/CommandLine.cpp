@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <string>
 #include <string.h>
@@ -1449,9 +1449,15 @@ void GetOptions(bool readConfigFiles, bool exitOnError)
       }
 #endif
       else {
+#if defined(HAVE_PETSC) || defined(HAVE_MPI)
+        // unknown options might be used by PETSc or MPI
+        Msg::Warning("Skipping unknown option '%s'", argv[i].c_str());
+        i++;
+#else
         Msg::Error("Unknown option '%s'", argv[i].c_str());
         PrintUsage(argv[0]);
         Msg::Exit(1);
+#endif
       }
     }
     else {

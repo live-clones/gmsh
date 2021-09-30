@@ -1,7 +1,7 @@
 # Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 #
-# See the LICENSE.txt file for license information. Please report all
-# issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+# See the LICENSE.txt file in the Gmsh root directory for license information.
+# Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 # Contributor(s):
 #   Jonathan Lambrechts
@@ -817,36 +817,36 @@ def iargcargv():
 
 def isizefun(name):
     a = arg(name, None, None, None, "", "", False)
-    a.cpp = "std::function<double(int, int, double, double, double)> " + name
+    a.cpp = "std::function<double(int, int, double, double, double, double)> " + name
     a.c_arg = ("std::bind(" + name + ", std::placeholders::_1, " +
                "std::placeholders::_2, std::placeholders::_3, " +
-               "std::placeholders::_4, std::placeholders::_5, " + name +
-               "_data)")
+               "std::placeholders::_4, std::placeholders::_5, " +
+               "std::placeholders::_6, " + name + "_data)")
     a.c = ("double (*" + name + ")" +
-           "(int dim, int tag, double x, double y, double z, void * data), " +
+           "(int dim, int tag, double x, double y, double z, double lc, void * data), " +
            "void * " + name + "_data")
     a.cwrap_pre = "struct " + name + """_caller_  {
-          static double call(int dim, int tag, double x, double y, double z, void * callbackp_) {
-            return (*static_cast<std::function<double(int, int, double, double, double)>*> (callbackp_))(dim, tag, x, y, z);
+          static double call(int dim, int tag, double x, double y, double z, double lc, void * callbackp_) {
+            return (*static_cast<std::function<double(int, int, double, double, double, double)>*> (callbackp_))(dim, tag, x, y, z, lc);
           }
         };
         // FIXME memory leak
-        auto *""" + name + "_ptr_ = new std::function<double(int,int,double,double,double)>(" + name + """);
+        auto *""" + name + "_ptr_ = new std::function<double(int, int, double, double, double, double)>(" + name + """);
 """
     a.cwrap_arg = "&" + name + "_caller_::call, " + name + "_ptr_"
     a.python_pre = (
         "global api_" + name + "_type_\n" + "            api_" + name +
         "_type_ = " +
-        "CFUNCTYPE(c_double, c_int, c_int, c_double, c_double, c_double, c_void_p)\n"
+        "CFUNCTYPE(c_double, c_int, c_int, c_double, c_double, c_double, c_double, c_void_p)\n"
         + "            global api_" + name + "_\n" + "            api_" +
-        name + "_ = api_" + name + "_type_(lambda dim, tag, x, y, z, _ : " +
-        name + "(dim, tag, x, y, z))")
+        name + "_ = api_" + name + "_type_(lambda dim, tag, x, y, z, lc, _ : " +
+        name + "(dim, tag, x, y, z, lc))")
     a.python_arg = "api_" + name + "_, None"
     a.julia_pre = (
-        "api_" + name + "__(dim, tag, x, y, z, data) = " + name +
-        "(dim, tag, x, y, z)\n    " + "api_" + name + "_ = @cfunction($api_" +
+        "api_" + name + "__(dim, tag, x, y, z, lc, data) = " + name +
+        "(dim, tag, x, y, z, lc)\n    " + "api_" + name + "_ = @cfunction($api_" +
         name + "__" +
-        ", Cdouble, (Cint, Cint, Cdouble, Cdouble, Cdouble, Ptr{Cvoid}))")
+        ", Cdouble, (Cint, Cint, Cdouble, Cdouble, Cdouble, Cdouble, Ptr{Cvoid}))")
     a.julia_arg = "api_" + name + "_, C_NULL"
     a.julia_ctype = "Ptr{Cvoid}, Ptr{Cvoid}"
     a.fortran_type = "type (C_FUNPTR)"
@@ -875,8 +875,8 @@ class Module:
 
 cpp_header = """// {0}
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on {1}
+// See the LICENSE.txt file in the {3} root directory for license information.
+// Please report all issues on {1}
 
 #ifndef {2}_H
 #define {2}_H
@@ -933,8 +933,8 @@ cpp_footer = """#endif
 c_header = """/*
  * {0}
  *
- * See the LICENSE.txt file for license information. Please report all
- * issues on {1}
+ * See the LICENSE.txt file in the {3} root directory for license information.
+ * Please report all issues on {1}
  */
 
 #ifndef {2}C_H
@@ -976,8 +976,8 @@ c_footer = """
 
 c_cpp_header = """// {0}
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on {1}
+// See the LICENSE.txt file in the {4} root directory for license information.
+// Please report all issues on {1}
 
 #include <string.h>
 #include <stdlib.h>
@@ -1011,8 +1011,8 @@ void vectorvectorpair2intptrptr(const std::vector<{0}::vectorpair > &v, int ***p
 
 cwrap_header = """// {0}
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on {1}
+// See the LICENSE.txt file in the {3} root directory for license information.
+// Please report all issues on {1}
 
 #ifndef {2}_H
 #define {2}_H
@@ -1107,8 +1107,8 @@ cwrap_footer = """#endif
 
 python_header = """# {0}
 #
-# See the LICENSE.txt file for license information. Please report all
-# issues on {1}
+# See the LICENSE.txt file in the {2} root directory for license information.
+# Please report all issues on {1}
 
 # This file defines the {2} Python API (v{3}.{4}.{5}).
 #
@@ -1133,16 +1133,22 @@ from math import pi
 __version__ = {6}_API_VERSION
 
 oldsig = signal.signal(signal.SIGINT, signal.SIG_DFL)
-libdir = os.path.dirname(os.path.realpath(__file__))
+moduledir = os.path.dirname(os.path.realpath(__file__))
 if platform.system() == "Windows":
-    libpath = os.path.join(libdir, "{7}-{3}.{4}.dll")
+    libname = "{7}-{3}.{4}.dll"
+    libdir = os.path.dirname(moduledir)
 elif platform.system() == "Darwin":
-    libpath = os.path.join(libdir, "lib{7}.dylib")
+    libname = "lib{7}.{3}.{4}.dylib"
+    libdir = os.path.dirname(os.path.dirname(moduledir))
 else:
-    libpath = os.path.join(libdir, "lib{7}.so")
+    libname = "lib{7}.so.{3}.{4}"
+    libdir = os.path.dirname(os.path.dirname(moduledir))
 
+libpath = os.path.join(libdir, libname)
 if not os.path.exists(libpath):
-    libpath = find_library("{7}")
+    libpath = os.path.join(moduledir, libname)
+    if not os.path.exists(libpath):
+        libpath = find_library("{7}")
 
 lib = CDLL(libpath)
 
@@ -1318,8 +1324,8 @@ def _iargcargv(o):
 
 julia_header = """# {0}
 #
-# See the LICENSE.txt file for license information. Please report all
-# issues on {1}
+# See the LICENSE.txt file in the {2} root directory for license information.
+# Please report all issues on {1}
 
 # This file defines the {2} Julia API (v{3}.{4}.{5}).
 #
@@ -1333,8 +1339,8 @@ julia_header = """# {0}
 fortran_header = """c
 c  {0}
 c
-c  See the LICENSE.txt file for license information. Please report all
-c  issues on {1}
+c  See the LICENSE.txt file in the {3} root directory for license information.
+c  Please report all issues on {1}
 c
 
 !DEC$ IF DEFINED ({2}F_H)
@@ -1382,10 +1388,10 @@ class API:
         version_major,
         version_minor,
         version_patch,
-        namespace="gmsh",
-        code="Gmsh",
-        copyright="Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle",
-        issues="https://gitlab.onelab.info/gmsh/gmsh/issues."):
+        namespace = "gmsh",
+        code = "Gmsh",
+        copyright = "Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle",
+        issues = "https://gitlab.onelab.info/gmsh/gmsh/issues."):
         self.version_major = version_major
         self.version_minor = version_minor
         self.version_patch = version_patch
@@ -1551,7 +1557,7 @@ class API:
                                         self.version_patch, ns))
                     fc.write(
                         c_cpp_header.format(self.copyright, self.issues, ns,
-                                            ns.upper()))
+                                            ns.upper(), self.code))
                     fc.write(cwrap_utils.format(ns, ""))
                     fc.write(c_cpp_utils.format(ns))
                     fc.write("\n")
@@ -1586,7 +1592,7 @@ class API:
 
     def write_python(self):
         def parg(a):
-            return a.name + (("=" + a.python_value) if a.python_value else "")
+            return a.name + ((" = " + a.python_value) if a.python_value else "")
 
         def write_function(f, fun, c_mpath, py_mpath, indent):
             (rtype, name, args, doc, special) = fun

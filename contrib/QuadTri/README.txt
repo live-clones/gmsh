@@ -41,7 +41,8 @@ meshing code Gmsh, which is copyrighted by C. Geuzaine and J.-F.
 Remacle and distributed under the GNU Public License version 2 with
 an exception. QuadTri is released under the GNU Public License
 Version 2 with the SAME exceptions as for the current release of Gmsh
-as of August 23, 2013.  See LICENSE.txt for more information.
+as of August 23, 2013.  See the LICENSE.txt file in the Gmsh root
+directory for more information.
 
 Trevor S. Strickler hereby transfers copyright of QuadTri files to
 Christophe Geuzaine and J.-F. Remacle with the understanding that

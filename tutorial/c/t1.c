@@ -19,7 +19,7 @@ int main(int argc, char **argv)
 
   /* Before using any functions in the C API, Gmsh must be initialized. In the C
      API the last argument of all functions returns the error code, if any. */
-  gmshInitialize(argc, argv, 1, &ierr);
+  gmshInitialize(argc, argv, 1, 0, &ierr);
 
   /* We now add a new model, named "t1". If gmsh::model::add() is not called, a
      new default (unnamed) model will be created on the fly, if necessary. */

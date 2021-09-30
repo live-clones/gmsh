@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 //
 // Contributor(s):
 //   Jonathan Lambrechts
@@ -191,7 +191,10 @@ public:
           input.open(_fileName.c_str());
         else
           input.open(_fileName.c_str(), std::ios::binary);
-        if(!input.is_open()) throw(1);
+        if(!input.is_open()) {
+          Msg::Error("Could not open file '%s'", _fileName.c_str());
+          return MAX_LC;
+        }
         input.exceptions(std::ifstream::eofbit | std::ifstream::failbit |
                          std::ifstream::badbit);
         if(!_textFormat) {
@@ -2713,7 +2716,7 @@ public:
   {
     if(_index) delete _index;
   }
-  const char *getName() { return "DistanceField"; }
+  const char *getName() { return "Distance"; }
   std::string getDescription()
   {
     return "Compute the distance to the given points, curves or surfaces. "

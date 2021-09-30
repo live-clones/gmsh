@@ -1,3 +1,8 @@
+// ONELAB - Copyright (C) 2010-2012 C. Geuzaine, F. Henrotte
+//
+// See the README.txt file for license information. Please report all
+// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+
 #include "OnelabMessage.h"
 #include "OnelabClients.h"
 #include "StringUtils.h"

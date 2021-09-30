@@ -1,7 +1,7 @@
 # Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 #
-# See the LICENSE.txt file for license information. Please report all
-# issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+# See the LICENSE.txt file in the Gmsh root directory for license information.
+# Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 # This file defines the Gmsh Julia API (v4.9.0).
 #
@@ -27,21 +27,23 @@ import Libdl
 const lib = Libdl.find_library([libname], [libdir])
 
 """
-    gmsh.initialize(argv = Vector{String}(), readConfigFiles = true)
+    gmsh.initialize(argv = Vector{String}(), readConfigFiles = true, run = false)
 
 Initialize the Gmsh API. This must be called before any call to the other
 functions in the API. If `argc` and `argv` (or just `argv` in Python or Julia)
 are provided, they will be handled in the same way as the command line arguments
 in the Gmsh app. If `readConfigFiles` is set, read system Gmsh configuration
-files (gmshrc and gmsh-options). Initializing the API sets the options
-"General.Terminal" to 1 and "General.AbortOnError" to 2. If compiled with OpenMP
-support, it also sets the number of threads to "General.NumThreads".
+files (gmshrc and gmsh-options). If `run` is set, run in the same way as the
+Gmsh app, either interactively or in batch mode depending on the command line
+arguments. Initializing the API sets the options "General.AbortOnError" to 2 (if
+`run` is not set) and "General.Terminal" to 1. If compiled with OpenMP support,
+it also sets the number of threads to "General.NumThreads".
 """
-function initialize(argv = Vector{String}(), readConfigFiles = true)
+function initialize(argv = Vector{String}(), readConfigFiles = true, run = false)
     ierr = Ref{Cint}()
     ccall((:gmshInitialize, lib), Cvoid,
-          (Cint, Ptr{Ptr{Cchar}}, Cint, Ptr{Cint}),
-          length(argv), argv, readConfigFiles, ierr)
+          (Cint, Ptr{Ptr{Cchar}}, Cint, Cint, Ptr{Cint}),
+          length(argv), argv, readConfigFiles, run, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
@@ -1031,17 +1033,17 @@ end
 const get_parametrization_bounds = getParametrizationBounds
 
 """
-    gmsh.model.isInside(dim, tag, coord, parametric = true)
+    gmsh.model.isInside(dim, tag, coord, parametric = false)
 
 Check if the coordinates (or the parametric coordinates if `parametric` is set)
 provided in `coord` correspond to points inside the entity of dimension `dim`
 and tag `tag`, and return the number of points inside. This feature is only
-available for a subset of curves and surfaces, depending on the underyling
-geometrical representation.
+available for a subset of entities, depending on the underyling geometrical
+representation.
 
 Return an integer value.
 """
-function isInside(dim, tag, coord, parametric = true)
+function isInside(dim, tag, coord, parametric = false)
     ierr = Ref{Cint}()
     api_result_ = ccall((:gmshModelIsInside, gmsh.lib), Cint,
           (Cint, Cint, Ptr{Cdouble}, Csize_t, Cint, Ptr{Cint}),
@@ -2056,12 +2058,13 @@ const get_jacobian = getJacobian
 Get the basis functions of the element of type `elementType` at the evaluation
 points `localCoord` (given as concatenated triplets of coordinates in the
 reference element [g1u, g1v, g1w, ..., gGu, gGv, gGw]), for the function space
-`functionSpaceType` (e.g. "Lagrange" or "GradLagrange" for Lagrange basis
-functions or their gradient, in the u, v, w coordinates of the reference
-element; or "H1Legendre3" or "GradH1Legendre3" for 3rd order hierarchical H1
-Legendre functions). `numComponents` returns the number C of components of a
-basis function. `basisFunctions` returns the value of the N basis functions at
-the evaluation points, i.e. [g1f1, g1f2, ..., g1fN, g2f1, ...] when C == 1 or
+`functionSpaceType` (e.g. "Lagrange" or "GradLagrange" for isoparametric
+Lagrange basis functions or their gradient, in the u, v, w coordinates of the
+reference element; "Lagrange3" for 3rd order Lagrange basis functions, or
+"H1Legendre3" or "GradH1Legendre3" for 3rd order hierarchical H1 Legendre
+functions). `numComponents` returns the number C of components of a basis
+function. `basisFunctions` returns the value of the N basis functions at the
+evaluation points, i.e. [g1f1, g1f2, ..., g1fN, g2f1, ...] when C == 1 or
 [g1f1u, g1f1v, g1f1w, g1f2u, ..., g1fNw, g2f1u, ...] when C == 3. For basis
 functions that depend on the orientation of the elements, all values for the
 first orientation are returned first, followed by values for the second, etc.
@@ -2151,7 +2154,8 @@ const get_number_of_orientations = getNumberOfOrientations
 
 Get the global unique mesh edge identifiers `edgeTags` and orientations
 `edgeOrientation` for an input list of node tag pairs defining these edges,
-concatenated in the vector `nodeTags`.
+concatenated in the vector `nodeTags`. Mesh edges are created e.g. by
+`createEdges()` or `getKeysForElements()`.
 
 Return `edgeTags`, `edgeOrientations`.
 """
@@ -2177,7 +2181,8 @@ const get_edges = getEdges
 Get the global unique mesh face identifiers `faceTags` and orientations
 `faceOrientations` for an input list of node tag triplets (if `faceType` == 3)
 or quadruplets (if `faceType` == 4) defining these faces, concatenated in the
-vector `nodeTags`.
+vector `nodeTags`. Mesh faces are created e.g. by `createFaces()` or
+`getKeysForElements()`.
 
 Return `faceTags`, `faceOrientations`.
 """
@@ -2497,13 +2502,18 @@ const set_size_at_parametric_points = setSizeAtParametricPoints
 """
     gmsh.model.mesh.setSizeCallback(callback)
 
-Set a mesh size callback for the current model. The callback should take 5
-arguments (`dim`, `tag`, `x`, `y` and `z`) and return the value of the mesh size
-at coordinates (`x`, `y`, `z`).
+Set a mesh size callback for the current model. The callback function should
+take six arguments as input (`dim`, `tag`, `x`, `y`, `z` and `lc`). The first
+two integer arguments correspond to the dimension `dim` and tag `tag` of the
+entity being meshed. The next four double precision arguments correspond to the
+coordinates `x`, `y` and `z` around which to prescribe the mesh size and to the
+mesh size `lc` that would be prescribed if the callback had not been called. The
+callback function should return a double precision number specifying the desired
+mesh size; returning `lc` is equivalent to a no-op.
 """
 function setSizeCallback(callback)
-    api_callback__(dim, tag, x, y, z, data) = callback(dim, tag, x, y, z)
-    api_callback_ = @cfunction($api_callback__, Cdouble, (Cint, Cint, Cdouble, Cdouble, Cdouble, Ptr{Cvoid}))
+    api_callback__(dim, tag, x, y, z, lc, data) = callback(dim, tag, x, y, z, lc)
+    api_callback_ = @cfunction($api_callback__, Cdouble, (Cint, Cint, Cdouble, Cdouble, Cdouble, Cdouble, Ptr{Cvoid}))
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshSetSizeCallback, gmsh.lib), Cvoid,
           (Ptr{Cvoid}, Ptr{Cvoid}, Ptr{Cint}),
@@ -2903,6 +2913,47 @@ end
 const get_periodic_nodes = getPeriodicNodes
 
 """
+    gmsh.model.mesh.getPeriodicKeysForElements(elementType, functionSpaceType, tag, returnCoord = true)
+
+Get the master entity `tagMaster` and the key pairs (`typeKeyMaster`,
+`entityKeyMaster`) corresponding to the entity `tag` and the key pairs
+(`typeKey`, `entityKey`) for the elements of type `elementType` and function
+space type `functionSpaceType`. If `returnCoord` is set, the `coord` and
+`coordMaster` vectors contain the x, y, z coordinates locating basis functions
+for sorting purposes.
+
+Return `tagMaster`, `typeKeys`, `typeKeysMaster`, `entityKeys`, `entityKeysMaster`, `coord`, `coordMaster`.
+"""
+function getPeriodicKeysForElements(elementType, functionSpaceType, tag, returnCoord = true)
+    api_tagMaster_ = Ref{Cint}()
+    api_typeKeys_ = Ref{Ptr{Cint}}()
+    api_typeKeys_n_ = Ref{Csize_t}()
+    api_typeKeysMaster_ = Ref{Ptr{Cint}}()
+    api_typeKeysMaster_n_ = Ref{Csize_t}()
+    api_entityKeys_ = Ref{Ptr{Csize_t}}()
+    api_entityKeys_n_ = Ref{Csize_t}()
+    api_entityKeysMaster_ = Ref{Ptr{Csize_t}}()
+    api_entityKeysMaster_n_ = Ref{Csize_t}()
+    api_coord_ = Ref{Ptr{Cdouble}}()
+    api_coord_n_ = Ref{Csize_t}()
+    api_coordMaster_ = Ref{Ptr{Cdouble}}()
+    api_coordMaster_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshGetPeriodicKeysForElements, gmsh.lib), Cvoid,
+          (Cint, Ptr{Cchar}, Cint, Ptr{Cint}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
+          elementType, functionSpaceType, tag, api_tagMaster_, api_typeKeys_, api_typeKeys_n_, api_typeKeysMaster_, api_typeKeysMaster_n_, api_entityKeys_, api_entityKeys_n_, api_entityKeysMaster_, api_entityKeysMaster_n_, api_coord_, api_coord_n_, api_coordMaster_, api_coordMaster_n_, returnCoord, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    typeKeys = unsafe_wrap(Array, api_typeKeys_[], api_typeKeys_n_[], own = true)
+    typeKeysMaster = unsafe_wrap(Array, api_typeKeysMaster_[], api_typeKeysMaster_n_[], own = true)
+    entityKeys = unsafe_wrap(Array, api_entityKeys_[], api_entityKeys_n_[], own = true)
+    entityKeysMaster = unsafe_wrap(Array, api_entityKeysMaster_[], api_entityKeysMaster_n_[], own = true)
+    coord = unsafe_wrap(Array, api_coord_[], api_coord_n_[], own = true)
+    coordMaster = unsafe_wrap(Array, api_coordMaster_[], api_coordMaster_n_[], own = true)
+    return api_tagMaster_[], typeKeys, typeKeysMaster, entityKeys, entityKeysMaster, coord, coordMaster
+end
+const get_periodic_keys_for_elements = getPeriodicKeysForElements
+
+"""
     gmsh.model.mesh.removeDuplicateNodes()
 
 Remove duplicate nodes in the mesh of the current model.
@@ -3144,6 +3195,44 @@ function remove(tag)
 end
 
 """
+    gmsh.model.mesh.field.list()
+
+Get the list of all fields.
+
+Return `tags`.
+"""
+function list()
+    api_tags_ = Ref{Ptr{Cint}}()
+    api_tags_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshFieldList, gmsh.lib), Cvoid,
+          (Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
+          api_tags_, api_tags_n_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    tags = unsafe_wrap(Array, api_tags_[], api_tags_n_[], own = true)
+    return tags
+end
+
+"""
+    gmsh.model.mesh.field.getType(tag)
+
+Get the type `fieldType` of the field with tag `tag`.
+
+Return `fileType`.
+"""
+function getType(tag)
+    api_fileType_ = Ref{Ptr{Cchar}}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshFieldGetType, gmsh.lib), Cvoid,
+          (Cint, Ptr{Ptr{Cchar}}, Ptr{Cint}),
+          tag, api_fileType_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    fileType = unsafe_string(api_fileType_[])
+    return fileType
+end
+const get_type = getType
+
+"""
     gmsh.model.mesh.field.setNumber(tag, option, value)
 
 Set the numerical option `option` to value `value` for field `tag`.
@@ -3157,6 +3246,24 @@ function setNumber(tag, option, value)
     return nothing
 end
 const set_number = setNumber
+
+"""
+    gmsh.model.mesh.field.getNumber(tag, option)
+
+Get the value of the numerical option `option` for field `tag`.
+
+Return `value`.
+"""
+function getNumber(tag, option)
+    api_value_ = Ref{Cdouble}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshFieldGetNumber, gmsh.lib), Cvoid,
+          (Cint, Ptr{Cchar}, Ptr{Cdouble}, Ptr{Cint}),
+          tag, option, api_value_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return api_value_[]
+end
+const get_number = getNumber
 
 """
     gmsh.model.mesh.field.setString(tag, option, value)
@@ -3174,6 +3281,25 @@ end
 const set_string = setString
 
 """
+    gmsh.model.mesh.field.getString(tag, option)
+
+Get the value of the string option `option` for field `tag`.
+
+Return `value`.
+"""
+function getString(tag, option)
+    api_value_ = Ref{Ptr{Cchar}}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshFieldGetString, gmsh.lib), Cvoid,
+          (Cint, Ptr{Cchar}, Ptr{Ptr{Cchar}}, Ptr{Cint}),
+          tag, option, api_value_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    value = unsafe_string(api_value_[])
+    return value
+end
+const get_string = getString
+
+"""
     gmsh.model.mesh.field.setNumbers(tag, option, value)
 
 Set the numerical list option `option` to value `value` for field `tag`.
@@ -3187,6 +3313,26 @@ function setNumbers(tag, option, value)
     return nothing
 end
 const set_numbers = setNumbers
+
+"""
+    gmsh.model.mesh.field.getNumbers(tag, option)
+
+Get the value of the numerical list option `option` for field `tag`.
+
+Return `value`.
+"""
+function getNumbers(tag, option)
+    api_value_ = Ref{Ptr{Cdouble}}()
+    api_value_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshFieldGetNumbers, gmsh.lib), Cvoid,
+          (Cint, Ptr{Cchar}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
+          tag, option, api_value_, api_value_n_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    value = unsafe_wrap(Array, api_value_[], api_value_n_[], own = true)
+    return value
+end
+const get_numbers = getNumbers
 
 """
     gmsh.model.mesh.field.setAsBackgroundMesh(tag)

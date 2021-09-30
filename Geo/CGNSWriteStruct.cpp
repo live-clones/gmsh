@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 //
 
 #include <math.h>
@@ -104,7 +104,7 @@ static std::string getInterfaceName(GEntity *ge, GEntity *ge1, GEntity *ge2)
 
 static void computeTransform2D(const std::vector<cgsize_t> &pointRange,
                                const std::vector<cgsize_t> &pointDonorRange,
-                               int transform[2])
+                               int type, int typeDonor, int transform[2])
 {
   if(pointRange.size() != 4 || pointDonorRange.size() != 4) {
     Msg::Error("Invalid point ranges to compute transform - using default");
@@ -121,8 +121,15 @@ static void computeTransform2D(const std::vector<cgsize_t> &pointRange,
   for(int i = 0; i < 2; i++) {
     transform[i] = 0;
     for(int j = 0; j < 2; j++) {
-      if(std::abs(r[i]) == std::abs(d[j])) { // == 0 on the interface
-        transform[i] = (j + 1) * (r[i] * d[j] < 0 ? -1 : 1);
+      if(std::abs(r[i]) == std::abs(d[j])) { // == 0 on an interface
+        transform[i] = j + 1;
+        if(!r[i] && !d[j]) { // on an interface
+          // both interfaces correspond to a min index or to a max index
+          if(type == typeDonor) transform[i] *= -1;
+        }
+        else {
+          if(r[i] * d[j] < 0) transform[i] *= -1;
+        }
       }
     }
     if(!transform[i]) Msg::Warning("Could not identify transform[%d]", i);
@@ -130,7 +137,7 @@ static void computeTransform2D(const std::vector<cgsize_t> &pointRange,
 }
 
 static bool findRange2D(GFace *gf, GEdge *ge, int &ibeg, int &jbeg, int &iend,
-                        int &jend)
+                        int &jend, int &type)
 {
   GVertex *gv1 = ge->getBeginVertex(), *gv2 = ge->getEndVertex();
   if(!gv1 || !gv1->getNumMeshVertices() || !gv2 || !gv2->getNumMeshVertices())
@@ -138,7 +145,7 @@ static bool findRange2D(GFace *gf, GEdge *ge, int &ibeg, int &jbeg, int &iend,
   MVertex *v1 = gv1->getMeshVertex(0), *v2 = gv2->getMeshVertex(0);
   std::vector<std::vector<MVertex *> > &v = gf->transfinite_vertices;
   int imax = v.size(), jmax = v[0].size();
-  ibeg = iend = jbeg = jend = -1;
+  ibeg = iend = jbeg = jend = type = -1;
   for(int i = 0; i < imax; i++) {
     for(int j = 0; j < jmax; j++) {
       if(i == 0 || j == 0 || i == imax - 1 || j == jmax - 1) {
@@ -153,7 +160,13 @@ static bool findRange2D(GFace *gf, GEdge *ge, int &ibeg, int &jbeg, int &iend,
       }
     }
   }
-  if(ibeg > 0 && iend > 0 && jbeg > 0 && jend > 0) return true;
+  if(ibeg > 0 && iend > 0 && jbeg > 0 && jend > 0) {
+    if(ibeg == iend && ibeg == 1) type = 1; // imin interface
+    else if(ibeg == iend && ibeg == imax) type = 2; // imax interface
+    else if(jbeg == jend && jbeg == 1) type = 1; // jmin interface
+    else if(jbeg == jend && jbeg == jmax) type = 2; // jmax interface
+    return true;
+  }
   return false;
 }
 
@@ -161,14 +174,14 @@ static int writeInterface2D(int cgIndexFile, int cgIndexBase, int cgIndexZone,
                             GFace *gf, GEdge *ge, GFace *gf2)
 {
   std::vector<cgsize_t> pointRange, pointDonorRange;
-  int ibeg, iend, jbeg, jend;
-  if(findRange2D(gf, ge, ibeg, jbeg, iend, jend))
+  int ibeg, iend, jbeg, jend, type, typeDonor;
+  if(findRange2D(gf, ge, ibeg, jbeg, iend, jend, type))
     pointRange = {ibeg, jbeg, iend, jend};
-  if(findRange2D(gf2, ge, ibeg, jbeg, iend, jend))
+  if(findRange2D(gf2, ge, ibeg, jbeg, iend, jend, typeDonor))
     pointDonorRange = {ibeg, jbeg, iend, jend};
   if(pointRange.size() && pointDonorRange.size()) {
     int transform[2];
-    computeTransform2D(pointRange, pointDonorRange, transform);
+    computeTransform2D(pointRange, pointDonorRange, type, typeDonor, transform);
     int cgIndexConn;
     if(cg_1to1_write(cgIndexFile, cgIndexBase, cgIndexZone,
                      getInterfaceName(ge, gf, gf2).c_str(),
@@ -188,8 +201,8 @@ static int writeInterface2D(int cgIndexFile, int cgIndexBase, int cgIndexZone,
 static int writeBC2D(int cgIndexFile, int cgIndexBase, int cgIndexZone,
                      GFace *gf, GEdge *ge)
 {
-  int ibeg, iend, jbeg, jend;
-  if(findRange2D(gf, ge, ibeg, jbeg, iend, jend)) {
+  int ibeg, iend, jbeg, jend, type;
+  if(findRange2D(gf, ge, ibeg, jbeg, iend, jend, type)) {
     std::vector<cgsize_t> pointRange = {ibeg, jbeg, iend, jend};
     int cgIndexBoco = 0;
     if(cg_boco_write(cgIndexFile, cgIndexBase, cgIndexZone,
@@ -290,6 +303,7 @@ static int writeZonesStruct2D(int cgIndexFile, int cgIndexBase,
 
 static void computeTransform3D(const std::vector<cgsize_t> &pointRange,
                                const std::vector<cgsize_t> &pointDonorRange,
+                               int type, int typeDonor,
                                int transform[3])
 {
   if(pointRange.size() != 6 || pointDonorRange.size() != 6) {
@@ -311,8 +325,15 @@ static void computeTransform3D(const std::vector<cgsize_t> &pointRange,
   for(int i = 0; i < 3; i++) {
     transform[i] = 0;
     for(int j = 0; j < 3; j++) {
-      if(std::abs(r[i]) == std::abs(d[j])) { // == 0 on the interface
-        transform[i] = (j + 1) * (r[i] * d[j] < 0 ? -1 : 1);
+      if(std::abs(r[i]) == std::abs(d[j])) { // == 0 on an interface
+        transform[i] = j + 1;
+        if(!r[i] && !d[j]) { // on an interface
+          // both interfaces correspond to a min index or to a max index
+          if(type == typeDonor) transform[i] *= -1;
+        }
+        else {
+          if(r[i] * d[j] < 0) transform[i] *= -1;
+        }
       }
     }
     if(!transform[i]) Msg::Warning("Could not identify transform[%d]", i);
@@ -320,7 +341,7 @@ static void computeTransform3D(const std::vector<cgsize_t> &pointRange,
 }
 
 static bool findRange3D(GRegion *gr, GFace *gf, int &ibeg, int &jbeg, int &kbeg,
-                        int &iend, int &jend, int &kend)
+                        int &iend, int &jend, int &kend, int &type)
 {
   if(gf->transfinite_vertices.empty() || gf->transfinite_vertices[0].empty())
     return false;
@@ -330,7 +351,7 @@ static bool findRange3D(GRegion *gr, GFace *gf, int &ibeg, int &jbeg, int &kbeg,
   std::vector<std::vector<std::vector<MVertex *> > > &v =
     gr->transfinite_vertices;
   int imax = v.size(), jmax = v[0].size(), kmax = v[0][0].size();
-  ibeg = iend = jbeg = jend = kbeg = kend = -1;
+  ibeg = iend = jbeg = jend = kbeg = kend = type = -1;
   for(int i = 0; i < imax; i++) {
     for(int j = 0; j < jmax; j++) {
       for(int k = 0; k < kmax; k++) {
@@ -350,8 +371,15 @@ static bool findRange3D(GRegion *gr, GFace *gf, int &ibeg, int &jbeg, int &kbeg,
       }
     }
   }
-  if(ibeg > 0 && iend > 0 && jbeg > 0 && jend > 0 && kbeg > 0 && kend > 0)
+  if(ibeg > 0 && iend > 0 && jbeg > 0 && jend > 0 && kbeg > 0 && kend > 0) {
+    if(ibeg == iend && ibeg == 1) type = 1; // imin interface
+    else if(ibeg == iend && ibeg == imax) type = 2; // imax interface
+    else if(jbeg == jend && jbeg == 1) type = 1; // jmin interface
+    else if(jbeg == jend && jbeg == jmax) type = 2; // jmax interface
+    else if(kbeg == kend && kbeg == 1) type = 1; // kmin interface
+    else if(kbeg == kend && kbeg == kmax) type = 2; // kmax interface
     return true;
+  }
   return false;
 }
 
@@ -359,14 +387,14 @@ static int writeInterface3D(int cgIndexFile, int cgIndexBase, int cgIndexZone,
                             GRegion *gr, GFace *gf, GRegion *gr2)
 {
   std::vector<cgsize_t> pointRange, pointDonorRange;
-  int ibeg, iend, jbeg, jend, kbeg, kend;
-  if(findRange3D(gr, gf, ibeg, jbeg, kbeg, iend, jend, kend))
+  int ibeg, iend, jbeg, jend, kbeg, kend, type, typeDonor;
+  if(findRange3D(gr, gf, ibeg, jbeg, kbeg, iend, jend, kend, type))
     pointRange = {ibeg, jbeg, kbeg, iend, jend, kend};
-  if(findRange3D(gr2, gf, ibeg, jbeg, kbeg, iend, jend, kend))
+  if(findRange3D(gr2, gf, ibeg, jbeg, kbeg, iend, jend, kend, typeDonor))
     pointDonorRange = {ibeg, jbeg, kbeg, iend, jend, kend};
   if(pointRange.size() && pointDonorRange.size()) {
     int transform[3];
-    computeTransform3D(pointRange, pointDonorRange, transform);
+    computeTransform3D(pointRange, pointDonorRange, type, typeDonor, transform);
     int cgIndexConn;
     if(cg_1to1_write(cgIndexFile, cgIndexBase, cgIndexZone,
                      getInterfaceName(gf, gr, gr2).c_str(),
@@ -386,8 +414,8 @@ static int writeInterface3D(int cgIndexFile, int cgIndexBase, int cgIndexZone,
 static int writeBC3D(int cgIndexFile, int cgIndexBase, int cgIndexZone,
                      GRegion *gr, GFace *gf)
 {
-  int ibeg, iend, jbeg, jend, kbeg, kend;
-  if(findRange3D(gr, gf, ibeg, jbeg, kbeg, iend, jend, kend)) {
+  int ibeg, iend, jbeg, jend, kbeg, kend, type;
+  if(findRange3D(gr, gf, ibeg, jbeg, kbeg, iend, jend, kend, type)) {
     std::vector<cgsize_t> pointRange = {ibeg, jbeg, kbeg, iend, jend, kend};
     int cgIndexBoco = 0;
     if(cg_boco_write(cgIndexFile, cgIndexBase, cgIndexZone,

@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #ifndef DEFAULT_OPTIONS_H
 #define DEFAULT_OPTIONS_H
@@ -1141,9 +1141,9 @@ StringXNumber MeshOptions_Number[] = {
     "Element shrinking factor (between 0 and 1)" },
 
   { F|O, "FirstElementTag" , opt_mesh_first_element_tag , 1. ,
-    "First tag (>= 1) of mesh elements" },
+    "First tag (>= 1) of mesh elements when generating or renumbering a mesh" },
   { F|O, "FirstNodeTag" , opt_mesh_first_node_tag , 1. ,
-    "First tag (>= 1) of mesh nodes" },
+    "First tag (>= 1) of mesh nodes when generating or renumbering a mesh" },
   { F|O, "FlexibleTransfinite" , opt_mesh_flexible_transfinite , 0 ,
     "Allow transfinite constraints to be modified for recombination (e.g. Blossom) or "
     "by global mesh size factor" },

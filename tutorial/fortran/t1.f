@@ -43,7 +43,7 @@ c ---------------------------------------------------------------------------
       enddo
       argv(argc + 2) = c_null_ptr
 
-      call gmshInitialize(argc + 1, argv, 1, ierr)
+      call gmshInitialize(argc + 1, argv, 1, 0, ierr)
 
       call gmshModelAdd("t1" // c_null_char, ierr)
       itmp = gmshModelGeoAddPoint(0d0, 0d0, 0d0, lc, 1, ierr)

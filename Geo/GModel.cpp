@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <limits>
 #include <stdlib.h>
@@ -1501,8 +1501,7 @@ std::size_t GModel::getMEdge(MVertex *v0, MVertex *v1, MEdge &edge)
     return it->second;
   }
   else {
-    Msg::Error("Unknown edge %d %d", edge.getVertex(0)->getNum(),
-               edge.getVertex(1)->getNum());
+    Msg::Error("Unknown edge %d %d", v0->getNum(), v1->getNum());
     return 0;
   }
 }
@@ -1524,8 +1523,7 @@ std::size_t GModel::getMFace(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3,
     return it->second;
   }
   else {
-    Msg::Error("Unknown face %d %d %d", face.getVertex(0)->getNum(),
-               face.getVertex(1)->getNum(), face.getVertex(2)->getNum());
+    Msg::Error("Unknown face %d %d %d", v0->getNum(), v1->getNum(), v2->getNum());
     return 0;
   }
 }
@@ -2673,7 +2671,7 @@ int GModel::removeDuplicateMeshVertices(double tolerance)
       }
     }
     // replace vertices in periodic copies
-    std::map<MVertex *, MVertex *> &corrVtcs = ge->correspondingVertices;
+    std::map<MVertex *, MVertex *, MVertexPtrLessThan> &corrVtcs = ge->correspondingVertices;
     if(corrVtcs.size()) {
       std::map<MVertex *, MVertex *>::iterator cIter;
       for(cIter = duplicates.begin(); cIter != duplicates.end(); ++cIter) {
@@ -2760,8 +2758,8 @@ void GModel::alignPeriodicBoundaries()
         for(int iVtx = 0; iVtx < 2; iVtx++) {
           MVertex *tgtVtx = tgtLine->getVertex(iVtx);
           GEntity *ge = tgtVtx->onWhat();
-          std::map<MVertex *, MVertex *> &geV2v = ge->correspondingVertices;
-          std::map<MVertex *, MVertex *> &v2v = tgt->correspondingVertices;
+          std::map<MVertex *, MVertex *, MVertexPtrLessThan> &geV2v = ge->correspondingVertices;
+          std::map<MVertex *, MVertex *, MVertexPtrLessThan> &v2v = tgt->correspondingVertices;
           auto srcIter = v2v.find(tgtVtx);
           if(srcIter == v2v.end() || !srcIter->second) {
             srcIter = geV2v.find(tgtVtx);
@@ -2835,8 +2833,8 @@ void GModel::alignPeriodicBoundaries()
           MVertex *vtx = tgtElmt->getVertex(iVtx);
           GEntity *ge = vtx->onWhat();
 
-          std::map<MVertex *, MVertex *> &geV2v = ge->correspondingVertices;
-          std::map<MVertex *, MVertex *> &v2v = tgt->correspondingVertices;
+          std::map<MVertex *, MVertex *, MVertexPtrLessThan> &geV2v = ge->correspondingVertices;
+          std::map<MVertex *, MVertex *, MVertexPtrLessThan> &v2v = tgt->correspondingVertices;
 
           auto vIter = v2v.find(vtx);
           if(vIter == v2v.end() || !vIter->second) {

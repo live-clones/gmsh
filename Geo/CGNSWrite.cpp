@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 //
 // Contributor(s):
 //   Thomas Toulorge
@@ -26,9 +26,6 @@
 #if defined(HAVE_LIBCGNS)
 
 namespace {
-
-  // Type for periodic node correpondence (global indices)
-  typedef std::map<MVertex *, MVertex *> VertVertMap;
 
   // Types for periodic and interface connectivities
   typedef std::pair<unsigned int, unsigned int> PartitionInterface;
@@ -169,7 +166,7 @@ void initInterfVertex2LocalData(const std::vector<GEntity *> &entitiesPer,
 {
   // Periodic entities
   for(std::size_t i = 0; i < entitiesPer.size(); i++) {
-    VertVertMap &vv = entitiesPer[i]->correspondingVertices;
+    auto &vv = entitiesPer[i]->correspondingVertices;
     for(auto itV = vv.begin(); itV != vv.end(); itV++) {
       interfVert2Local[itV->first] = std::vector<LocalData>();
       interfVert2Local[itV->second] = std::vector<LocalData>();
@@ -386,11 +383,10 @@ int writePeriodic(const std::vector<GEntity *> &entitiesPer, int cgIndexFile,
   Msg::Info("Constructing connectivities for %i periodic entities",
             entitiesPer.size());
   PeriodicConnection connect;
-  typedef std::map<MVertex *, MVertex *> VertVertMap;
   for(std::size_t iEnt = 0; iEnt < entitiesPer.size(); iEnt++) {
     GEntity *slaveEnt = entitiesPer[iEnt];
     GEntity *masterEnt = slaveEnt->getMeshMaster();
-    VertVertMap &vv = slaveEnt->correspondingVertices;
+    auto &vv = slaveEnt->correspondingVertices;
     for(auto itV = vv.begin(); itV != vv.end(); itV++) {
       const std::vector<LocalData> &allSlaveData = interfVert2Local[itV->first];
       const std::vector<LocalData> &allMasterData =

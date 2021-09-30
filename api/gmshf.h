@@ -1,8 +1,8 @@
 c
 c  Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 c
-c  See the LICENSE.txt file for license information. Please report all
-c  issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+c  See the LICENSE.txt file in the Gmsh root directory for license information.
+c  Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 c
 
 !DEC$ IF DEFINED (GMSHF_H)
@@ -35,20 +35,24 @@ c
 !  functions in the API. If `argc' and `argv' (or just `argv' in Python or
 !  Julia) are provided, they will be handled in the same way as the command
 !  line arguments in the Gmsh app. If `readConfigFiles' is set, read system
-!  Gmsh configuration files (gmshrc and gmsh-options). Initializing the API
-!  sets the options "General.Terminal" to 1 and "General.AbortOnError" to 2.
-!  If compiled with OpenMP support, it also sets the number of threads to
-!  "General.NumThreads".
+!  Gmsh configuration files (gmshrc and gmsh-options). If `run' is set, run in
+!  the same way as the Gmsh app, either interactively or in batch mode
+!  depending on the command line arguments. Initializing the API sets the
+!  options "General.AbortOnError" to 2 (if `run' is not set) and
+!  "General.Terminal" to 1. If compiled with OpenMP support, it also sets the
+!  number of threads to "General.NumThreads".
         subroutine gmshInitialize(
      &      argc,
      &      argv,
      &      readConfigFiles,
+     &      run,
      &      ierr)
      &    bind(C, name = "gmshInitialize")
           use, intrinsic :: iso_c_binding
             integer (C_INT), value :: argc
             type (C_PTR)::argv(*)
             integer(c_int), value::readConfigFiles
+            integer(c_int), value::run
             integer(c_int)::ierr
           end subroutine gmshInitialize
 
@@ -861,8 +865,8 @@ c
 !  Check if the coordinates (or the parametric coordinates if `parametric' is
 !  set) provided in `coord' correspond to points inside the entity of
 !  dimension `dim' and tag `tag', and return the number of points inside. This
-!  feature is only available for a subset of curves and surfaces, depending on
-!  the underyling geometrical representation.
+!  feature is only available for a subset of entities, depending on the
+!  underyling geometrical representation.
         function gmshModelIsInside(
      &      dim,
      &      tag,
@@ -1902,8 +1906,9 @@ c
 !  evaluation points `localCoord' (given as concatenated triplets of
 !  coordinates in the reference element [g1u, g1v, g1w, ..., gGu, gGv, gGw]),
 !  for the function space `functionSpaceType' (e.g. "Lagrange" or
-!  "GradLagrange" for Lagrange basis functions or their gradient, in the u, v,
-!  w coordinates of the reference element; or "H1Legendre3" or
+!  "GradLagrange" for isoparametric Lagrange basis functions or their
+!  gradient, in the u, v, w coordinates of the reference element; "Lagrange3"
+!  for 3rd order Lagrange basis functions, or "H1Legendre3" or
 !  "GradH1Legendre3" for 3rd order hierarchical H1 Legendre functions).
 !  `numComponents' returns the number C of components of a basis function.
 !  `basisFunctions' returns the value of the N basis functions at the
@@ -1969,7 +1974,8 @@ c
 
 !  Get the global unique mesh edge identifiers `edgeTags' and orientations
 !  `edgeOrientation' for an input list of node tag pairs defining these edges,
-!  concatenated in the vector `nodeTags'.
+!  concatenated in the vector `nodeTags'. Mesh edges are created e.g. by
+!  `createEdges()' or `getKeysForElements()'.
         subroutine gmshModelMeshGetEdges(
      &      nodeTags,
      &      nodeTags_n,
@@ -1992,7 +1998,8 @@ c
 !  Get the global unique mesh face identifiers `faceTags' and orientations
 !  `faceOrientations' for an input list of node tag triplets (if `faceType' ==
 !  3) or quadruplets (if `faceType' == 4) defining these faces, concatenated
-!  in the vector `nodeTags'.
+!  in the vector `nodeTags'. Mesh faces are created e.g. by `createFaces()' or
+!  `getKeysForElements()'.
         subroutine gmshModelMeshGetFaces(
      &      faceType,
      &      nodeTags,
@@ -2326,9 +2333,15 @@ c
             integer(c_int)::ierr
           end subroutine gmshModelMeshSetSizeAtParametricPoints
 
-!  Set a mesh size callback for the current model. The callback should take 5
-!  arguments (`dim', `tag', `x', `y' and `z') and return the value of the mesh
-!  size at coordinates (`x', `y', `z').
+!  Set a mesh size callback for the current model. The callback function
+!  should take six arguments as input (`dim', `tag', `x', `y', `z' and `lc').
+!  The first two integer arguments correspond to the dimension `dim' and tag
+!  `tag' of the entity being meshed. The next four double precision arguments
+!  correspond to the coordinates `x', `y' and `z' around which to prescribe
+!  the mesh size and to the mesh size `lc' that would be prescribed if the
+!  callback had not been called. The callback function should return a double
+!  precision number specifying the desired mesh size; returning `lc' is
+!  equivalent to a no-op.
         subroutine gmshModelMeshSetSizeCallback(
      &      callback,
      &      ierr)
@@ -2699,6 +2712,53 @@ c
             integer(c_int)::ierr
           end subroutine gmshModelMeshGetPeriodicNodes
 
+!  Get the master entity `tagMaster' and the key pairs (`typeKeyMaster',
+!  `entityKeyMaster') corresponding to the entity `tag' and the key pairs
+!  (`typeKey', `entityKey') for the elements of type `elementType' and
+!  function space type `functionSpaceType'. If `returnCoord' is set, the
+!  `coord' and `coordMaster' vectors contain the x, y, z coordinates locating
+!  basis functions for sorting purposes.
+        subroutine gmshModelMeshGetPeriodicKeysForElements(
+     &      elementType,
+     &      functionSpaceType,
+     &      tag,
+     &      tagMaster,
+     &      typeKeys,
+     &      typeKeys_n,
+     &      typeKeysMaster,
+     &      typeKeysMaster_n,
+     &      entityKeys,
+     &      entityKeys_n,
+     &      entityKeysMaster,
+     &      entityKeysMaster_n,
+     &      coord,
+     &      coord_n,
+     &      coordMaster,
+     &      coordMaster_n,
+     &      returnCoord,
+     &      ierr)
+     &    bind(C, name = "gmshModelMeshGetPeriodicKeysForElements")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::elementType
+            character(len = 1, kind = c_char)::functionSpaceType(*)
+            integer(c_int), value::tag
+            integer(c_int)::tagMaster
+            type(c_ptr), intent(out)::typeKeys
+            integer(c_size_t) :: typeKeys_n
+            type(c_ptr), intent(out)::typeKeysMaster
+            integer(c_size_t) :: typeKeysMaster_n
+            type(c_ptr), intent(out)::entityKeys
+            integer(c_size_t) :: entityKeys_n
+            type(c_ptr), intent(out)::entityKeysMaster
+            integer(c_size_t) :: entityKeysMaster_n
+            type(c_ptr), intent(out)::coord
+            integer(c_size_t) :: coord_n
+            type(c_ptr), intent(out)::coordMaster
+            integer(c_size_t) :: coordMaster_n
+            integer(c_int), value::returnCoord
+            integer(c_int)::ierr
+          end subroutine gmshModelMeshGetPeriodicKeysForElements
+
 !  Remove duplicate nodes in the mesh of the current model.
         subroutine gmshModelMeshRemoveDuplicateNodes(
      &      ierr)
@@ -2907,6 +2967,30 @@ c
             integer(c_int)::ierr
           end subroutine gmshModelMeshFieldRemove
 
+!  Get the list of all fields.
+        subroutine gmshModelMeshFieldList(
+     &      tags,
+     &      tags_n,
+     &      ierr)
+     &    bind(C, name = "gmshModelMeshFieldList")
+          use, intrinsic :: iso_c_binding
+            type(c_ptr), intent(out)::tags
+            integer(c_size_t) :: tags_n
+            integer(c_int)::ierr
+          end subroutine gmshModelMeshFieldList
+
+!  Get the type `fieldType' of the field with tag `tag'.
+        subroutine gmshModelMeshFieldGetType(
+     &      tag,
+     &      fileType,
+     &      ierr)
+     &    bind(C, name = "gmshModelMeshFieldGetType")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::tag
+            type(c_ptr)::fileType(*)
+            integer(c_int)::ierr
+          end subroutine gmshModelMeshFieldGetType
+
 !  Set the numerical option `option' to value `value' for field `tag'.
         subroutine gmshModelMeshFieldSetNumber(
      &      tag,
@@ -2921,6 +3005,20 @@ c
             integer(c_int)::ierr
           end subroutine gmshModelMeshFieldSetNumber
 
+!  Get the value of the numerical option `option' for field `tag'.
+        subroutine gmshModelMeshFieldGetNumber(
+     &      tag,
+     &      option,
+     &      value,
+     &      ierr)
+     &    bind(C, name = "gmshModelMeshFieldGetNumber")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::tag
+            character(len = 1, kind = c_char)::option(*)
+            real(c_double)::value
+            integer(c_int)::ierr
+          end subroutine gmshModelMeshFieldGetNumber
+
 !  Set the string option `option' to value `value' for field `tag'.
         subroutine gmshModelMeshFieldSetString(
      &      tag,
@@ -2934,6 +3032,20 @@ c
             character(len = 1, kind = c_char)::value(*)
             integer(c_int)::ierr
           end subroutine gmshModelMeshFieldSetString
+
+!  Get the value of the string option `option' for field `tag'.
+        subroutine gmshModelMeshFieldGetString(
+     &      tag,
+     &      option,
+     &      value,
+     &      ierr)
+     &    bind(C, name = "gmshModelMeshFieldGetString")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::tag
+            character(len = 1, kind = c_char)::option(*)
+            type(c_ptr)::value(*)
+            integer(c_int)::ierr
+          end subroutine gmshModelMeshFieldGetString
 
 !  Set the numerical list option `option' to value `value' for field `tag'.
         subroutine gmshModelMeshFieldSetNumbers(
@@ -2950,6 +3062,22 @@ c
             integer(c_size_t), value :: value_n
             integer(c_int)::ierr
           end subroutine gmshModelMeshFieldSetNumbers
+
+!  Get the value of the numerical list option `option' for field `tag'.
+        subroutine gmshModelMeshFieldGetNumbers(
+     &      tag,
+     &      option,
+     &      value,
+     &      value_n,
+     &      ierr)
+     &    bind(C, name = "gmshModelMeshFieldGetNumbers")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::tag
+            character(len = 1, kind = c_char)::option(*)
+            type(c_ptr), intent(out)::value
+            integer(c_size_t) :: value_n
+            integer(c_int)::ierr
+          end subroutine gmshModelMeshFieldGetNumbers
 
 !  Set the field `tag' as the background mesh size field.
         subroutine gmshModelMeshFieldSetAsBackgroundMesh(

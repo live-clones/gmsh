@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #ifndef OCC_EDGE_H
 #define OCC_EDGE_H
@@ -44,6 +44,7 @@ public:
   virtual SPoint2 reparamOnFace(const GFace *face, double epar, int dir) const;
   virtual GPoint closestPoint(const SPoint3 &queryPoint, double &param) const;
   virtual double parFromPoint(const SPoint3 &P) const;
+  virtual bool containsPoint(const SPoint3 &pt) const;
   virtual ModelType getNativeType() const { return OpenCascadeModel; }
   virtual void *getNativePtr() const { return (void *)&_c; }
   virtual int minimumMeshSegments() const;

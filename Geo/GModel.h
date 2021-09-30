@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #ifndef GMODEL_H
 #define GMODEL_H
@@ -698,7 +698,7 @@ public:
   void computeHomology();
 
   // mesh size callback
-  std::function<double(int, int, double, double, double)> lcCallback;
+  std::function<double(int, int, double, double, double, double)> lcCallback;
 
   // compute automatic sizing field from curvature
   void computeSizeField();

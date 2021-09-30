@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include "GmshConfig.h"
 #include "GmshMessage.h"
@@ -34,6 +34,7 @@
 #include <BRepBuilderAPI_MakeWire.hxx>
 #include <BRepBuilderAPI_Transform.hxx>
 #include <BRepCheck_Analyzer.hxx>
+#include <BRepExtrema_DistShapeShape.hxx>
 #include <BRepFill_CurveConstraint.hxx>
 #include <BRepFilletAPI_MakeChamfer.hxx>
 #include <BRepFilletAPI_MakeFillet.hxx>
@@ -84,7 +85,6 @@
 #include <ShapeFix_FixSmallFace.hxx>
 #include <ShapeFix_Shape.hxx>
 #include <ShapeFix_Wireframe.hxx>
-#include <ShapeUpgrade_UnifySameDomain.hxx>
 #include <Standard_Version.hxx>
 #include <TColStd_Array1OfInteger.hxx>
 #include <TColStd_Array1OfReal.hxx>
@@ -115,6 +115,10 @@
 #include <BRepMesh_IncrementalMesh.hxx>
 #else
 #include <BRepMesh_FastDiscret.hxx>
+#endif
+
+#if OCC_VERSION_HEX < 0x070400
+#include <ShapeUpgrade_UnifySameDomain.hxx>
 #endif
 
 #if defined(HAVE_OCC_CAF)
@@ -3356,18 +3360,42 @@ bool OCC_Internals::booleanOperator(
       fuse.SetArguments(objectShapes);
       fuse.SetTools(toolShapes);
       if(tolerance > 0.0) fuse.SetFuzzyValue(tolerance);
+
+      // TODO: add gluing option to speed-up operations when no "real"
+      // intersections are present
+      // * default:
+      // fuse.SetGlue(BOPAlgo_GlueOff);
+      // * speed up if no real intersection but partial or full overlapping
+      //   faces/edges:
+      // fuse.SetGlue(BOPAlgo_Shift);
+      // * speed up if no real intersection and no partial overlaps:
+      // fuse.SetGlue(BOPAlgo_GlueFull);
+
+      // TODO: add option to prevent reuse of existing shapes:
+      // fuse.SetNonDestructive(true);
+
       fuse.Build();
       if(!fuse.IsDone()) {
         Msg::Error("Fuse operation cannot be performed");
         return false;
       }
-      result = fuse.Shape();
-      // try to unify faces and edges of the shape (remove internal seams) which
-      // lie on the same geometry
       if(CTX::instance()->geom.occUnionUnify) {
+        // try to unify faces and edges of the shape (remove internal seams)
+        // which lie on the same geometry
+#if OCC_VERSION_HEX < 0x070400
+        result = fuse.Shape();
         ShapeUpgrade_UnifySameDomain unify(result);
         unify.Build();
         result = unify.Shape();
+#else
+        // better, as it preserves the history; TODO: maybe we should also make
+        // this available for the other boolean operations
+        fuse.SimplifyResult();
+        result = fuse.Shape();
+#endif
+      }
+      else {
+        result = fuse.Shape();
       }
       TopTools_ListIteratorOfListOfShape it(objectShapes);
       for(; it.More(); it.Next()) {
@@ -4380,6 +4408,51 @@ bool OCC_Internals::getMatrixOfInertia(int dim, int tag,
   for(int i = 1; i <= 3; i++)
     for(int j = 1; j <= 3; j++) mat.push_back(m.Value(i, j));
   return true;
+}
+
+double OCC_Internals::getDistance(int dim1, int tag1,
+                                  int dim2, int tag2,
+                                  double &x1, double &y1, double &z1,
+                                  double &x2, double &y2, double &z2)
+{
+  if(!_isBound(dim1, tag1)) {
+    Msg::Error("Unknown OpenCASCADE entity of dimension %d with tag %d",
+               dim1, tag1);
+    return false;
+  }
+  TopoDS_Shape shape1 = _find(dim1, tag1);
+
+  if(!_isBound(dim2, tag2)) {
+    Msg::Error("Unknown OpenCASCADE entity of dimension %d with tag %d",
+               dim2, tag2);
+    return false;
+  }
+  TopoDS_Shape shape2 = _find(dim2, tag2);
+
+  BRepExtrema_DistShapeShape dist(shape1, shape2);
+  if(dist.IsDone()) {
+    double dmin = 1.e200;
+    gp_Pnt pmin1, pmin2;
+    for(int i = 1; i <= dist.NbSolution(); i++) {
+      gp_Pnt p1 = dist.PointOnShape1(i);
+      gp_Pnt p2 = dist.PointOnShape2(i);
+      double d = p1.Distance(p2);
+      if(d < dmin) {
+        dmin = d;
+        pmin1 = p1;
+        pmin2 = p2;
+      }
+    }
+    x1 = pmin1.X();
+    y1 = pmin1.Y();
+    z1 = pmin1.Z();
+    x2 = pmin2.X();
+    y2 = pmin2.Y();
+    z2 = pmin2.Z();
+    return dmin;
+  }
+
+  return -1.;
 }
 
 bool const sortByInvDim(std::pair<int, int> const &lhs,

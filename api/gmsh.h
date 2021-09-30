@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #ifndef GMSH_H
 #define GMSH_H
@@ -58,12 +58,15 @@ namespace gmsh { // Top-level functions
   // functions in the API. If `argc' and `argv' (or just `argv' in Python or Julia)
   // are provided, they will be handled in the same way as the command line
   // arguments in the Gmsh app. If `readConfigFiles' is set, read system Gmsh
-  // configuration files (gmshrc and gmsh-options). Initializing the API sets the
-  // options "General.Terminal" to 1 and "General.AbortOnError" to 2. If compiled
-  // with OpenMP support, it also sets the number of threads to
+  // configuration files (gmshrc and gmsh-options). If `run' is set, run in the
+  // same way as the Gmsh app, either interactively or in batch mode depending on
+  // the command line arguments. Initializing the API sets the options
+  // "General.AbortOnError" to 2 (if `run' is not set) and "General.Terminal" to 1.
+  // If compiled with OpenMP support, it also sets the number of threads to
   // "General.NumThreads".
   GMSH_API void initialize(int argc = 0, char ** argv = 0,
-                           const bool readConfigFiles = true);
+                           const bool readConfigFiles = true,
+                           const bool run = false);
 
   // gmsh::finalize
   //
@@ -494,12 +497,12 @@ namespace gmsh { // Top-level functions
     // Check if the coordinates (or the parametric coordinates if `parametric' is
     // set) provided in `coord' correspond to points inside the entity of dimension
     // `dim' and tag `tag', and return the number of points inside. This feature is
-    // only available for a subset of curves and surfaces, depending on the
-    // underyling geometrical representation.
+    // only available for a subset of entities, depending on the underyling
+    // geometrical representation.
     GMSH_API int isInside(const int dim,
                           const int tag,
                           const std::vector<double> & coord,
-                          const bool parametric = true);
+                          const bool parametric = false);
 
     // gmsh::model::getClosestPoint
     //
@@ -1040,8 +1043,9 @@ namespace gmsh { // Top-level functions
       // evaluation points `localCoord' (given as concatenated triplets of
       // coordinates in the reference element [g1u, g1v, g1w, ..., gGu, gGv, gGw]),
       // for the function space `functionSpaceType' (e.g. "Lagrange" or
-      // "GradLagrange" for Lagrange basis functions or their gradient, in the u,
-      // v, w coordinates of the reference element; or "H1Legendre3" or
+      // "GradLagrange" for isoparametric Lagrange basis functions or their
+      // gradient, in the u, v, w coordinates of the reference element; "Lagrange3"
+      // for 3rd order Lagrange basis functions, or "H1Legendre3" or
       // "GradH1Legendre3" for 3rd order hierarchical H1 Legendre functions).
       // `numComponents' returns the number C of components of a basis function.
       // `basisFunctions' returns the value of the N basis functions at the
@@ -1101,7 +1105,8 @@ namespace gmsh { // Top-level functions
       //
       // Get the global unique mesh edge identifiers `edgeTags' and orientations
       // `edgeOrientation' for an input list of node tag pairs defining these
-      // edges, concatenated in the vector `nodeTags'.
+      // edges, concatenated in the vector `nodeTags'. Mesh edges are created e.g.
+      // by `createEdges()' or `getKeysForElements()'.
       GMSH_API void getEdges(const std::vector<std::size_t> & nodeTags,
                              std::vector<std::size_t> & edgeTags,
                              std::vector<int> & edgeOrientations);
@@ -1111,7 +1116,8 @@ namespace gmsh { // Top-level functions
       // Get the global unique mesh face identifiers `faceTags' and orientations
       // `faceOrientations' for an input list of node tag triplets (if `faceType'
       // == 3) or quadruplets (if `faceType' == 4) defining these faces,
-      // concatenated in the vector `nodeTags'.
+      // concatenated in the vector `nodeTags'. Mesh faces are created e.g. by
+      // `createFaces()' or `getKeysForElements()'.
       GMSH_API void getFaces(const int faceType,
                              const std::vector<std::size_t> & nodeTags,
                              std::vector<std::size_t> & faceTags,
@@ -1273,10 +1279,16 @@ namespace gmsh { // Top-level functions
 
       // gmsh::model::mesh::setSizeCallback
       //
-      // Set a mesh size callback for the current model. The callback should take 5
-      // arguments (`dim', `tag', `x', `y' and `z') and return the value of the
-      // mesh size at coordinates (`x', `y', `z').
-      GMSH_API void setSizeCallback(std::function<double(int, int, double, double, double)> callback);
+      // Set a mesh size callback for the current model. The callback function
+      // should take six arguments as input (`dim', `tag', `x', `y', `z' and `lc').
+      // The first two integer arguments correspond to the dimension `dim' and tag
+      // `tag' of the entity being meshed. The next four double precision arguments
+      // correspond to the coordinates `x', `y' and `z' around which to prescribe
+      // the mesh size and to the mesh size `lc' that would be prescribed if the
+      // callback had not been called. The callback function should return a double
+      // precision number specifying the desired mesh size; returning `lc' is
+      // equivalent to a no-op.
+      GMSH_API void setSizeCallback(std::function<double(int, int, double, double, double, double)> callback);
 
       // gmsh::model::mesh::removeSizeCallback
       //
@@ -1476,6 +1488,26 @@ namespace gmsh { // Top-level functions
                                      std::vector<double> & affineTransform,
                                      const bool includeHighOrderNodes = false);
 
+      // gmsh::model::mesh::getPeriodicKeysForElements
+      //
+      // Get the master entity `tagMaster' and the key pairs (`typeKeyMaster',
+      // `entityKeyMaster') corresponding to the entity `tag' and the key pairs
+      // (`typeKey', `entityKey') for the elements of type `elementType' and
+      // function space type `functionSpaceType'. If `returnCoord' is set, the
+      // `coord' and `coordMaster' vectors contain the x, y, z coordinates locating
+      // basis functions for sorting purposes.
+      GMSH_API void getPeriodicKeysForElements(const int elementType,
+                                               const std::string & functionSpaceType,
+                                               const int tag,
+                                               int & tagMaster,
+                                               std::vector<int> & typeKeys,
+                                               std::vector<int> & typeKeysMaster,
+                                               std::vector<std::size_t> & entityKeys,
+                                               std::vector<std::size_t> & entityKeysMaster,
+                                               std::vector<double> & coord,
+                                               std::vector<double> & coordMaster,
+                                               const bool returnCoord = true);
+
       // gmsh::model::mesh::removeDuplicateNodes
       //
       // Remove duplicate nodes in the mesh of the current model.
@@ -1590,12 +1622,30 @@ namespace gmsh { // Top-level functions
         // Remove the field with tag `tag'.
         GMSH_API void remove(const int tag);
 
+        // gmsh::model::mesh::field::list
+        //
+        // Get the list of all fields.
+        GMSH_API void list(std::vector<int> & tags);
+
+        // gmsh::model::mesh::field::getType
+        //
+        // Get the type `fieldType' of the field with tag `tag'.
+        GMSH_API void getType(const int tag,
+                              std::string & fileType);
+
         // gmsh::model::mesh::field::setNumber
         //
         // Set the numerical option `option' to value `value' for field `tag'.
         GMSH_API void setNumber(const int tag,
                                 const std::string & option,
                                 const double value);
+
+        // gmsh::model::mesh::field::getNumber
+        //
+        // Get the value of the numerical option `option' for field `tag'.
+        GMSH_API void getNumber(const int tag,
+                                const std::string & option,
+                                double & value);
 
         // gmsh::model::mesh::field::setString
         //
@@ -1604,12 +1654,26 @@ namespace gmsh { // Top-level functions
                                 const std::string & option,
                                 const std::string & value);
 
+        // gmsh::model::mesh::field::getString
+        //
+        // Get the value of the string option `option' for field `tag'.
+        GMSH_API void getString(const int tag,
+                                const std::string & option,
+                                std::string & value);
+
         // gmsh::model::mesh::field::setNumbers
         //
         // Set the numerical list option `option' to value `value' for field `tag'.
         GMSH_API void setNumbers(const int tag,
                                  const std::string & option,
                                  const std::vector<double> & value);
+
+        // gmsh::model::mesh::field::getNumbers
+        //
+        // Get the value of the numerical list option `option' for field `tag'.
+        GMSH_API void getNumbers(const int tag,
+                                 const std::string & option,
+                                 std::vector<double> & value);
 
         // gmsh::model::mesh::field::setAsBackgroundMesh
         //

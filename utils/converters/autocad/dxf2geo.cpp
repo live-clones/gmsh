@@ -1,21 +1,22 @@
-// Gmsh - Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
+// dxf2geo Copyright (C) 1997-2008 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 //
 // Contributor(s):
 //   David Colignon
 //
 
 // This is a simple AutoCAD DXF to Gmsh GEO Data File Converter
-//   
+//
 // It was created from the AutoCAD DXF file to DKB data file converter
 // written and placed in the public domain 8/13/90 by Aaron
 // A. Collins (http://www.sdsc.edu/~mjb/mae152/dxf.spec.txt).
-//   
+//
 // It parses a limited, but useful, subset of the AutoCAD DXF file
 // format. No effort has been made to handle the complete range of
 // possible DXF opcodes and commands.
+//
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -125,7 +126,7 @@ int checkdegen(int a, int b, int c)
       ycoords[b] == ycoords[c] &&
       zcoords[b] == zcoords[c]) ||
      (xcoords[a] == xcoords[c] &&
-      ycoords[a] == ycoords[c] && 
+      ycoords[a] == ycoords[c] &&
       zcoords[a] == zcoords[c]))
     return (1);
   return (0);

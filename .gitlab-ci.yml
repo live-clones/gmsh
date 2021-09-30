@@ -1,7 +1,7 @@
 # Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 #
-# See the LICENSE.txt file for license information. Please report all
-# issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+# See the LICENSE.txt file in the Gmsh root directory for license information.
+# Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 variables:
   EXTRA_OPTION: ""
@@ -125,6 +125,11 @@ linux64-sdk_official_snapshot:
   <<: *linux_official
   except:
     - tags
+  artifacts:
+    paths:
+      - build/_CPack_Packages/
+      - build/setup-wheel.py
+    expire_in: 1day
 
 linux64-sdk_official_release:
   image: onelab/debian.stretch.64bit
@@ -137,6 +142,12 @@ linux64-sdk_official_release:
     - ssh geuzaine@gmsh.info "cd .wwwgmsh/bin/Linux && rm -f gmsh-stable-Linux64-sdk.tgz && ln -s gmsh-${VERSION}-Linux64-sdk.tgz gmsh-stable-Linux64-sdk.tgz"
   only:
     - /^gmsh_.*$/
+  artifacts:
+    paths:
+      - build/_CPack_Packages/
+      - build/setup-wheel.py
+      - build/version.txt
+    expire_in: 1day
 
 linux64-nox-sdk_official_snapshot:
   image: onelab/debian.stretch.64bit
@@ -145,6 +156,10 @@ linux64-nox-sdk_official_snapshot:
   <<: *linux_official
   except:
     - tags
+  artifacts:
+    paths:
+      - build/_CPack_Packages/
+    expire_in: 1day
 
 # --------------------------------------------
 # Official Windows builds (master branch only)
@@ -191,6 +206,10 @@ windows64-sdk_official_snapshot:
     - official
   except:
     - tags
+  artifacts:
+    paths:
+      - build/_CPack_Packages/
+    expire_in: 1day
 
 windows64-sdk_official_release:
   variables:
@@ -204,6 +223,10 @@ windows64-sdk_official_release:
     - official
   only:
     - /^gmsh_.*$/
+  artifacts:
+    paths:
+      - build/_CPack_Packages/
+    expire_in: 1day
 
 # ------------------------------------------
 # Official MacOS builds (master branch only)
@@ -247,6 +270,10 @@ macos64-sdk_official_snapshot:
   <<: *macos_official
   except:
     - tags
+  artifacts:
+    paths:
+      - build/_CPack_Packages/
+    expire_in: 1day
 
 macos64-sdk_official_release:
   variables:
@@ -258,6 +285,10 @@ macos64-sdk_official_release:
     - ssh geuzaine@gmsh.info "cd .wwwgmsh/bin/MacOSX && rm -f gmsh-stable-MacOSX-sdk.tgz && ln -s gmsh-${VERSION}-MacOSX-sdk.tgz gmsh-stable-MacOSX-sdk.tgz"
   only:
     - /^gmsh_.*$/
+  artifacts:
+    paths:
+      - build/_CPack_Packages/
+    expire_in: 1day
 
 # ----------------------------------------------
 # Official source snapshots (master branch only)
@@ -359,11 +390,42 @@ doc_cookbook:
 # PyPi package
 # ----------------------------------------------
 
+pypi_official_snapshot:
+  stage: .post
+  image: onelab/ubuntu20.04
+  only:
+    - master@gmsh/gmsh
+  <<: *ssh_config
+  dependencies:
+    - linux64-sdk_official_snapshot
+    - linux64-nox-sdk_official_snapshot
+    - windows64-sdk_official_snapshot
+    - macos64-sdk_official_snapshot
+  script:
+    - cd build
+    - GMSH_SETUP_DIR=../utils/pypi/gmsh-dev GMSH_SDK_DIR=_CPack_Packages/Linux/TGZ/gmsh-git-Linux64-sdk/ python3 setup-wheel.py build bdist_wheel --plat-name manylinux1_x86_64 --universal
+    - GMSH_SETUP_DIR=../utils/pypi/gmsh-nox-dev GMSH_SDK_DIR=_CPack_Packages/Linux/TGZ/gmsh-nox-git-Linux64-sdk/ python3 setup-wheel.py build bdist_wheel --plat-name manylinux1_x86_64 --universal
+    - GMSH_SETUP_DIR=../utils/pypi/gmsh-dev GMSH_SDK_DIR=_CPack_Packages/CYGWIN/ZIP/gmsh-git-Windows64-sdk/ python3 setup-wheel.py build bdist_wheel --plat-name win_amd64 --universal
+    - cp -R _CPack_Packages/Darwin _CPack_Packages/Darwin2
+    - GMSH_SETUP_DIR=../utils/pypi/gmsh-dev GMSH_SDK_DIR=_CPack_Packages/Darwin2/TGZ/gmsh-git-MacOSX-sdk/ python3 setup-wheel.py build bdist_wheel --plat-name macosx_10_15_x86_64 --universal
+    - scp dist/gmsh_dev*.whl geuzaine@gmsh.info:.wwwgmsh/python-packages/gmsh-dev/
+    - scp dist/gmsh_nox_dev*.whl geuzaine@gmsh.info:.wwwgmsh/python-packages/gmsh-nox-dev/
+  tags:
+    - linux64
+    - docker
+  except:
+    - tags
+
 pypi_official_release:
   stage: .post
   image: onelab/ubuntu20.04
   only:
     - master@gmsh/gmsh
+  <<: *ssh_config
+  dependencies:
+    - linux64-sdk_official_release
+    - windows64-sdk_official_release
+    - macos64-sdk_official_release
   before_script:
     - echo "[distutils]" > ~/.pypirc
     - echo "index-servers = pypi" >> ~/.pypirc
@@ -371,14 +433,13 @@ pypi_official_release:
     - echo "username = __token__" >> ~/.pypirc
     - echo "password = $PYPI_TOKEN" >> ~/.pypirc
   script:
-    - mkdir build_pypi
-    - cd build_pypi
-    - cmake -DGMSH_RELEASE=1 ..
-    - cd ../utils/pypi/gmsh
-    - python3 setup.py sdist
-    - twine upload dist/*
-    - cd ../gmsh-dev
-    - python3 setup.py sdist
+    - cd build
+    - VERSION=`cat version.txt`
+    - GMSH_SETUP_DIR=../utils/pypi/gmsh GMSH_SDK_DIR=_CPack_Packages/Linux/TGZ/gmsh-${VERSION}-Linux64-sdk/ python3 setup-wheel.py build bdist_wheel --plat-name manylinux1_x86_64 --universal
+    - GMSH_SETUP_DIR=../utils/pypi/gmsh GMSH_SDK_DIR=_CPack_Packages/CYGWIN/ZIP/gmsh-${VERSION}-Windows64-sdk/ python3 setup-wheel.py build bdist_wheel --plat-name win_amd64 --universal
+    - cp -R _CPack_Packages/Darwin _CPack_Packages/Darwin2
+    - GMSH_SETUP_DIR=../utils/pypi/gmsh GMSH_SDK_DIR=_CPack_Packages/Darwin2/TGZ/gmsh-${VERSION}-MacOSX-sdk/ python3 setup-wheel.py build bdist_wheel --plat-name macosx_10_15_x86_64 --universal
+    - scp dist/gmsh*.whl geuzaine@gmsh.info:.wwwgmsh/python-packages/gmsh/
     - twine upload dist/*
   tags:
     - linux64

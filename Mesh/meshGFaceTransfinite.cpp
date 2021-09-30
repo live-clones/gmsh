@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <map>
 #include <queue>
@@ -31,14 +31,14 @@
 // f(u,v) = (1-u) c4(v) + u c2(v) + (1-v) c1(u) + v c3(u)
 //          - [ (1-u)(1-v) s1 + u(1-v) s2 + uv s3 + (1-u)v s4 ]
 #define TRAN_QUA(c1, c2, c3, c4, s1, s2, s3, s4, u, v)                         \
-  (1. - u) * c4 + u *c2 + (1. - v) * c1 + v *c3 -                              \
+  (1. - u) * c4 + u * c2 + (1. - v) * c1 + v * c3 -                            \
     ((1. - u) * (1. - v) * s1 + u * (1. - v) * s2 + u * v * s3 +               \
      (1. - u) * v * s4)
 
 // s1=s4=c4
 // f(u,v) = u c2 (v) + (1-v) c1(u) + v c3(u) - u(1-v) s2 - uv s3
 #define TRAN_TRI(c1, c2, c3, s1, s2, s3, u, v)                                 \
-  u *c2 + (1. - v) * c1 + v *c3 - (u * (1. - v) * s2 + u * v * s3)
+  u * c2 + (1. - v) * c1 + v * c3 - (u * (1. - v) * s2 + u * v * s3)
 
 void findTransfiniteCorners(GFace *gf, std::vector<MVertex *> &corners)
 {
@@ -256,44 +256,59 @@ int MeshTransfiniteSurface(GFace *gf)
     }
   }
 
-  std::vector<double> lengths_i;
-  lengths_i.reserve(L);
-
-  lengths_i.push_back(0.0);
-
-  double L_i = 0.0;
-
-  for(int i = 0; i < L; i++) {
-    MVertex *v1 = m_vertices[i];
-    MVertex *v2 = m_vertices[i + 1];
-
-    L_i += v1->distance(v2);
-    lengths_i.push_back(L_i);
-  }
-
-  std::vector<double> lengths_j;
-  lengths_j.reserve(L + H);
-
-  lengths_j.push_back(0.0);
-
-  double L_j = 0.0;
-
-  for(int i = L; i < L + H; i++) {
-    MVertex *v1 = m_vertices[i];
-    MVertex *v2 = m_vertices[i + 1];
-
-    L_j += v1->distance(v2);
-    lengths_j.push_back(L_j);
-  }
   /*
       2L+H +------------+ L+H
            |            |
            |            |
            |            |
            |            |
-   2L+2H+2 +------------+
+     2L+2H +------------+
            0            L
   */
+
+  // use the average of the node spacing on the two opposing sides, so that we
+  // generate the same u, v coordinates whatever the ordering of the sides
+  bool symmetric = true;
+
+  std::vector<double> lengths_i;
+  lengths_i.reserve(L);
+  lengths_i.push_back(0.0);
+  double L_i = 0.0;
+  for(int i = 0; i < L; i++) {
+    MVertex *v1 = m_vertices[i];
+    MVertex *v2 = m_vertices[i + 1];
+    double d1 = v1->distance(v2);
+    if(symmetric) {
+      MVertex *v3 = m_vertices[(corners.size() == 3 && !i) ? 0 : (2 * L + H - i)];
+      MVertex *v4 = m_vertices[2 * L + H - i - 1];
+      double d2 = v3->distance(v4);
+      L_i += 0.5 * (d1 + d2);
+    }
+    else {
+      L_i += d1;
+    }
+    lengths_i.push_back(L_i);
+  }
+
+  std::vector<double> lengths_j;
+  lengths_j.reserve(H);
+  lengths_j.push_back(0.0);
+  double L_j = 0.0;
+  for(int i = 0; i < H; i++) {
+    MVertex *v1 = m_vertices[L + i];
+    MVertex *v2 = m_vertices[L + i + 1];
+    double d1 = v1->distance(v2);
+    if(symmetric && corners.size() == 4) {
+      MVertex *v3 = m_vertices[(!i) ? 0 : (2 * L + 2 * H - i)];
+      MVertex *v4 = m_vertices[2 * L + 2 * H - i - 1];
+      double d2 = v3->distance(v4);
+      L_j += 0.5 * (d1 + d2);
+    }
+    else{
+      L_j += d1;
+    }
+    lengths_j.push_back(L_j);
+  }
 
   std::vector<std::vector<MVertex *> > &tab(gf->transfinite_vertices);
   tab.resize(L + 1);

@@ -63,7 +63,9 @@ Special thanks to Bill Spitzak, Michael Sweet, Matthias Melcher, Greg Ercolano
 and others for the Fast Light Tool Kit on which Gmsh's GUI is based. See
 http://www.fltk.org for more info on this excellent object-oriented,
 cross-platform toolkit. Special thanks also to EDF for funding the original
-OpenCASCADE and MED integration in 2006-2007.
+OpenCASCADE and MED integration in 2006-2007. Gmsh development was also
+financially supported by the PRACE project funded in part by the EU's Horizon
+2020 Research and Innovation programme (2014-2020) under grant agreement 823767.
 
 The TetGen/BR code (Mesh/tetgenBR.{cpp,h}) is copyright (c) 2016 Hang Si,
 Weierstrass Institute for Applied Analysis and Stochatics. It is relicensed

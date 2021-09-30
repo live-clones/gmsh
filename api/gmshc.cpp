@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <string.h>
 #include <stdlib.h>
@@ -71,11 +71,11 @@ void vectorvectorpair2intptrptr(const std::vector<gmsh::vectorpair > &v, int ***
   *sizeSize = v.size();
 }
 
-GMSH_API void gmshInitialize(int argc, char ** argv, const int readConfigFiles, int * ierr)
+GMSH_API void gmshInitialize(int argc, char ** argv, const int readConfigFiles, const int run, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    gmsh::initialize(argc, argv, readConfigFiles);
+    gmsh::initialize(argc, argv, readConfigFiles, run);
   }
   catch(...){
     if(ierr) *ierr = 1;
@@ -1652,11 +1652,11 @@ GMSH_API void gmshModelMeshSetSizeAtParametricPoints(const int dim, const int ta
   }
 }
 
-GMSH_API void gmshModelMeshSetSizeCallback(double (*callback)(int dim, int tag, double x, double y, double z, void * data), void * callback_data, int * ierr)
+GMSH_API void gmshModelMeshSetSizeCallback(double (*callback)(int dim, int tag, double x, double y, double z, double lc, void * data), void * callback_data, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    gmsh::model::mesh::setSizeCallback(std::bind(callback, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, callback_data));
+    gmsh::model::mesh::setSizeCallback(std::bind(callback, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, callback_data));
   }
   catch(...){
     if(ierr) *ierr = 1;
@@ -1925,6 +1925,29 @@ GMSH_API void gmshModelMeshGetPeriodicNodes(const int dim, const int tag, int * 
   }
 }
 
+GMSH_API void gmshModelMeshGetPeriodicKeysForElements(const int elementType, const char * functionSpaceType, const int tag, int * tagMaster, int ** typeKeys, size_t * typeKeys_n, int ** typeKeysMaster, size_t * typeKeysMaster_n, size_t ** entityKeys, size_t * entityKeys_n, size_t ** entityKeysMaster, size_t * entityKeysMaster_n, double ** coord, size_t * coord_n, double ** coordMaster, size_t * coordMaster_n, const int returnCoord, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<int> api_typeKeys_;
+    std::vector<int> api_typeKeysMaster_;
+    std::vector<std::size_t> api_entityKeys_;
+    std::vector<std::size_t> api_entityKeysMaster_;
+    std::vector<double> api_coord_;
+    std::vector<double> api_coordMaster_;
+    gmsh::model::mesh::getPeriodicKeysForElements(elementType, functionSpaceType, tag, *tagMaster, api_typeKeys_, api_typeKeysMaster_, api_entityKeys_, api_entityKeysMaster_, api_coord_, api_coordMaster_, returnCoord);
+    vector2ptr(api_typeKeys_, typeKeys, typeKeys_n);
+    vector2ptr(api_typeKeysMaster_, typeKeysMaster, typeKeysMaster_n);
+    vector2ptr(api_entityKeys_, entityKeys, entityKeys_n);
+    vector2ptr(api_entityKeysMaster_, entityKeysMaster, entityKeysMaster_n);
+    vector2ptr(api_coord_, coord, coord_n);
+    vector2ptr(api_coordMaster_, coordMaster, coordMaster_n);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API void gmshModelMeshRemoveDuplicateNodes(int * ierr)
 {
   if(ierr) *ierr = 0;
@@ -2078,11 +2101,48 @@ GMSH_API void gmshModelMeshFieldRemove(const int tag, int * ierr)
   }
 }
 
+GMSH_API void gmshModelMeshFieldList(int ** tags, size_t * tags_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<int> api_tags_;
+    gmsh::model::mesh::field::list(api_tags_);
+    vector2ptr(api_tags_, tags, tags_n);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelMeshFieldGetType(const int tag, char ** fileType, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::string api_fileType_;
+    gmsh::model::mesh::field::getType(tag, api_fileType_);
+    *fileType = strdup(api_fileType_.c_str());
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API void gmshModelMeshFieldSetNumber(const int tag, const char * option, const double value, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
     gmsh::model::mesh::field::setNumber(tag, option, value);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelMeshFieldGetNumber(const int tag, const char * option, double * value, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::mesh::field::getNumber(tag, option, *value);
   }
   catch(...){
     if(ierr) *ierr = 1;
@@ -2100,12 +2160,38 @@ GMSH_API void gmshModelMeshFieldSetString(const int tag, const char * option, co
   }
 }
 
+GMSH_API void gmshModelMeshFieldGetString(const int tag, const char * option, char ** value, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::string api_value_;
+    gmsh::model::mesh::field::getString(tag, option, api_value_);
+    *value = strdup(api_value_.c_str());
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API void gmshModelMeshFieldSetNumbers(const int tag, const char * option, double * value, size_t value_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
     std::vector<double> api_value_(value, value + value_n);
     gmsh::model::mesh::field::setNumbers(tag, option, api_value_);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelMeshFieldGetNumbers(const int tag, const char * option, double ** value, size_t * value_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<double> api_value_;
+    gmsh::model::mesh::field::getNumbers(tag, option, api_value_);
+    vector2ptr(api_value_, value, value_n);
   }
   catch(...){
     if(ierr) *ierr = 1;
