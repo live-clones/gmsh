@@ -1,20 +1,7 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
-import os
 import sys
-import subprocess
+import gmsh
 
-# this script's directory
-dirname, _ = os.path.split(__file__)
-
-# the directory where the shared lib and the exe are located
-libdirname = os.path.join(dirname, '..', 'lib')
-
-# set environment
-envvar = 'PATH' if 'win' in sys.platform else 'LD_LIBRARY_PATH'
-envval = os.environ[envvar] if envvar in os.environ.keys() else ''
-os.environ[envvar] = libdirname + os.pathsep + envval
-
-# run the exe
-command = os.path.join(libdirname, 'gmsh')
-subprocess.call([command] + sys.argv[1:])
+gmsh.initialize(sys.argv, run = True)
+gmsh.finalize()

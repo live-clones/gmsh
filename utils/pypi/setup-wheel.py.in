@@ -28,18 +28,15 @@ if os.path.isfile(sdkdir + '/lib/gmsh-' + libversion + '.dll'):
     libs = [os.path.join(sdkdir, 'lib', 'gmsh.lib'),
             os.path.join(sdkdir, 'lib', 'gmsh-' + libversion + '.dll'),
             os.path.join(sdkdir, 'lib', 'gmsh.jl')]
-    exes = [os.path.join(sdkdir, 'bin', 'gmsh.exe')]
     scripts = [os.path.join(setupdir, 'gmsh'),
                os.path.join(setupdir, 'gmsh.bat')]
 elif os.path.isfile(sdkdir + '/lib/libgmsh.so.' + libversion):
     libs = [os.path.join(sdkdir, 'lib', 'libgmsh.so.' + libversion),
             os.path.join(sdkdir, 'lib', 'gmsh.jl')]
-    exes = [os.path.join(sdkdir, 'bin', 'gmsh')]
     scripts = [os.path.join(setupdir, 'gmsh')]
 elif os.path.isfile(sdkdir + '/lib/libgmsh.' + libversion + '.dylib'):
     libs = [os.path.join(sdkdir + 'lib', 'libgmsh.' + libversion + '.dylib'),
             os.path.join(sdkdir + 'lib', 'gmsh.jl')]
-    exes = [os.path.join(sdkdir, 'bin', 'gmsh')]
     scripts = [os.path.join(setupdir, 'gmsh')]
 else :
     print("library not found")
@@ -52,16 +49,15 @@ def gen_install_list(subdir):
             relpath = os.path.relpath(dirpath, sdkdir)
             data_files.append((relpath, filepaths))
 
-data_files = [('lib', libs + exes), ('bin', scripts)]
+data_files = [('lib', libs)]
 gen_install_list(sdkdir + '/share')
 gen_install_list(sdkdir + '/include')
 
 setuptools.setup(
     name = name,
     version = iversion,
-    description = 'Gmsh app and SDK installer. Gmsh is a three-dimensional '
-                  'finite element mesh generator with built-in pre- and '
-                  'post-processing facilities.',
+    description = 'Gmsh is a three-dimensional finite element mesh generator '
+                  'with built-in pre- and post-processing facilities.',
     long_description = open(os.path.join(setupdir, 'README.rst'), 'r').read(),
     long_description_content_type = 'text/x-rst',
     maintainer = 'Christophe Geuzaine',
@@ -83,6 +79,7 @@ setuptools.setup(
                    'Programming Language :: Python',
                    'Programming Language :: Julia',
                    'Topic :: Scientific/Engineering'],
+    scripts = scripts,
     packages = [''],
     package_dir = {'' : os.path.join(sdkdir + '/lib')},
     data_files = data_files)
