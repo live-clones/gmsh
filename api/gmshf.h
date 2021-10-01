@@ -1952,6 +1952,26 @@ c
 !  each element the orientation index in the values returned by
 !  `getBasisFunctions'. For Lagrange basis functions the call is superfluous
 !  as it will return a vector of zeros.
+        subroutine gmshModelMeshGetBasisFunctionsOrientation(
+     &      elementType,
+     &      functionSpaceType,
+     &      basisFunctionsOrientation,
+     &      basisFunctionsOrientation_n,
+     &      tag,
+     &      task,
+     &      numTasks,
+     &      ierr)
+     &    bind(C, name = "gmshModelMeshGetBasisFunctionsOrientation")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::elementType
+            character(len = 1, kind = c_char)::functionSpaceType(*)
+            type(c_ptr), intent(out)::basisFunctionsOrientation
+            integer(c_size_t) :: basisFunctionsOrientation_n
+            integer(c_int), value::tag
+            integer(c_size_t), value::task
+            integer(c_size_t), value::numTasks
+            integer(c_int)::ierr
+          end subroutine gmshModelMeshGetBasisFunctionsOrientation
 
 !  Get the orientation of a single element `elementTag'.
 
@@ -1969,13 +1989,13 @@ c
             integer(c_int)::ierr
           end function gmshModelMeshGetNumberOfOrientations
 
-!  Preallocate data before calling `getBasisFunctionsOrientationForElements'
-!  with `numTasks' > 1. For C and C++ only.
+!  Preallocate data before calling `getBasisFunctionsOrientation' with
+!  `numTasks' > 1. For C and C++ only.
 
 !  Get the global unique mesh edge identifiers `edgeTags' and orientations
 !  `edgeOrientation' for an input list of node tag pairs defining these edges,
 !  concatenated in the vector `nodeTags'. Mesh edges are created e.g. by
-!  `createEdges()' or `getKeysForElements()'.
+!  `createEdges()' or `getKeys()'.
         subroutine gmshModelMeshGetEdges(
      &      nodeTags,
      &      nodeTags_n,
@@ -1999,7 +2019,7 @@ c
 !  `faceOrientations' for an input list of node tag triplets (if `faceType' ==
 !  3) or quadruplets (if `faceType' == 4) defining these faces, concatenated
 !  in the vector `nodeTags'. Mesh faces are created e.g. by `createFaces()' or
-!  `getKeysForElements()'.
+!  `getKeys()'.
         subroutine gmshModelMeshGetFaces(
      &      faceType,
      &      nodeTags,
@@ -2052,7 +2072,7 @@ c
 !  y, z coordinates locating basis functions for sorting purposes. Warning:
 !  this is an experimental feature and will probably change in a future
 !  release.
-        subroutine gmshModelMeshGetKeysForElements(
+        subroutine gmshModelMeshGetKeys(
      &      elementType,
      &      functionSpaceType,
      &      typeKeys,
@@ -2064,7 +2084,7 @@ c
      &      tag,
      &      returnCoord,
      &      ierr)
-     &    bind(C, name = "gmshModelMeshGetKeysForElements")
+     &    bind(C, name = "gmshModelMeshGetKeys")
           use, intrinsic :: iso_c_binding
             integer(c_int), value::elementType
             character(len = 1, kind = c_char)::functionSpaceType(*)
@@ -2077,7 +2097,7 @@ c
             integer(c_int), value::tag
             integer(c_int), value::returnCoord
             integer(c_int)::ierr
-          end subroutine gmshModelMeshGetKeysForElements
+          end subroutine gmshModelMeshGetKeys
 
 !  Get the pair of keys for a single element `elementTag'.
         subroutine gmshModelMeshGetKeysForElement(
@@ -2107,17 +2127,17 @@ c
 
 !  Get the number of keys by elements of type `elementType' for function space
 !  named `functionSpaceType'.
-        function gmshModelMeshGetNumberOfKeysForElements(
+        function gmshModelMeshGetNumberOfKeys(
      &      elementType,
      &      functionSpaceType,
      &      ierr)
-     &    bind(C, name = "gmshModelMeshGetNumberOfKeysForElements")
+     &    bind(C, name = "gmshModelMeshGetNumberOfKeys")
           use, intrinsic :: iso_c_binding
-          integer(c_int)::gmshModelMeshGetNumberOfKeysForElements
+          integer(c_int)::gmshModelMeshGetNumberOfKeys
             integer(c_int), value::elementType
             character(len = 1, kind = c_char)::functionSpaceType(*)
             integer(c_int)::ierr
-          end function gmshModelMeshGetNumberOfKeysForElements
+          end function gmshModelMeshGetNumberOfKeys
 
 !  Get information about the pair of `keys'. `infoKeys' returns information
 !  about the functions associated with the pairs (`typeKeys', `entityKey').
@@ -2126,7 +2146,7 @@ c
 !  `infoKeys[0].second' gives the order of the function associated with the
 !  key. Warning: this is an experimental feature and will probably change in a
 !  future release.
-        subroutine gmshModelMeshGetInformationForElements(
+        subroutine gmshModelMeshGetKeysInformation(
      &      typeKeys,
      &      typeKeys_n,
      &      entityKeys,
@@ -2136,7 +2156,7 @@ c
      &      infoKeys,
      &      infoKeys_n,
      &      ierr)
-     &    bind(C, name = "gmshModelMeshGetInformationForElements")
+     &    bind(C, name = "gmshModelMeshGetKeysInformation")
           use, intrinsic :: iso_c_binding
             integer(c_int)::typeKeys(*)
             integer(c_size_t), value :: typeKeys_n
@@ -2147,7 +2167,7 @@ c
             type(c_ptr), intent(out)::infoKeys
             integer(c_size_t) :: infoKeys_n
             integer(c_int)::ierr
-          end subroutine gmshModelMeshGetInformationForElements
+          end subroutine gmshModelMeshGetKeysInformation
 
 !  Get the barycenters of all elements of type `elementType' classified on the
 !  entity of tag `tag'. If `primary' is set, only the primary nodes of the
@@ -2680,6 +2700,25 @@ c
             integer(c_int)::ierr
           end subroutine gmshModelMeshSetPeriodic
 
+!  Get master entities `tagsMaster' for the entities of dimension `dim' and
+!  tags `tags'.
+        subroutine gmshModelMeshGetPeriodic(
+     &      dim,
+     &      tags,
+     &      tags_n,
+     &      tagMaster,
+     &      tagMaster_n,
+     &      ierr)
+     &    bind(C, name = "gmshModelMeshGetPeriodic")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::dim
+            integer(c_int)::tags(*)
+            integer(c_size_t), value :: tags_n
+            type(c_ptr), intent(out)::tagMaster
+            integer(c_size_t) :: tagMaster_n
+            integer(c_int)::ierr
+          end subroutine gmshModelMeshGetPeriodic
+
 !  Get the master entity `tagMaster', the node tags `nodeTags' and their
 !  corresponding master node tags `nodeTagsMaster', and the affine transform
 !  `affineTransform' for the entity of dimension `dim' and tag `tag'. If
@@ -2718,7 +2757,7 @@ c
 !  function space type `functionSpaceType'. If `returnCoord' is set, the
 !  `coord' and `coordMaster' vectors contain the x, y, z coordinates locating
 !  basis functions for sorting purposes.
-        subroutine gmshModelMeshGetPeriodicKeysForElements(
+        subroutine gmshModelMeshGetPeriodicKeys(
      &      elementType,
      &      functionSpaceType,
      &      tag,
@@ -2737,7 +2776,7 @@ c
      &      coordMaster_n,
      &      returnCoord,
      &      ierr)
-     &    bind(C, name = "gmshModelMeshGetPeriodicKeysForElements")
+     &    bind(C, name = "gmshModelMeshGetPeriodicKeys")
           use, intrinsic :: iso_c_binding
             integer(c_int), value::elementType
             character(len = 1, kind = c_char)::functionSpaceType(*)
@@ -2757,7 +2796,7 @@ c
             integer(c_size_t) :: coordMaster_n
             integer(c_int), value::returnCoord
             integer(c_int)::ierr
-          end subroutine gmshModelMeshGetPeriodicKeysForElements
+          end subroutine gmshModelMeshGetPeriodicKeys
 
 !  Remove duplicate nodes in the mesh of the current model.
         subroutine gmshModelMeshRemoveDuplicateNodes(

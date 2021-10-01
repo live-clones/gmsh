@@ -20,7 +20,7 @@ masterTag, nodeTags, nodeMasterTags, tfo = gmsh.model.mesh.getPeriodicNodes(
     2, 2, includeHighOrderNodes=False)
 print(masterTag, nodeTags, nodeMasterTags, tfo)
 
-print(gmsh.model.mesh.getPeriodicKeysForElements(2, "Lagrange", 2))
+print(gmsh.model.mesh.getPeriodicKeys(2, "Lagrange", 2))
 
 gmsh.write("periodic.msh")
 gmsh.finalize()
