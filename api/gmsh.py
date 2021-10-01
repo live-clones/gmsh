@@ -2505,9 +2505,9 @@ class model:
         get_basis_functions = getBasisFunctions
 
         @staticmethod
-        def getBasisFunctionsOrientationForElements(elementType, functionSpaceType, tag=-1, task=0, numTasks=1):
+        def getBasisFunctionsOrientation(elementType, functionSpaceType, tag=-1, task=0, numTasks=1):
             """
-            gmsh.model.mesh.getBasisFunctionsOrientationForElements(elementType, functionSpaceType, tag=-1, task=0, numTasks=1)
+            gmsh.model.mesh.getBasisFunctionsOrientation(elementType, functionSpaceType, tag=-1, task=0, numTasks=1)
 
             Get the orientation index of the elements of type `elementType' in the
             entity of tag `tag'. The arguments have the same meaning as in
@@ -2520,7 +2520,7 @@ class model:
             """
             api_basisFunctionsOrientation_, api_basisFunctionsOrientation_n_ = POINTER(c_int)(), c_size_t()
             ierr = c_int()
-            lib.gmshModelMeshGetBasisFunctionsOrientationForElements(
+            lib.gmshModelMeshGetBasisFunctionsOrientation(
                 c_int(elementType),
                 c_char_p(functionSpaceType.encode()),
                 byref(api_basisFunctionsOrientation_), byref(api_basisFunctionsOrientation_n_),
@@ -2531,7 +2531,7 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return _ovectorint(api_basisFunctionsOrientation_, api_basisFunctionsOrientation_n_.value)
-        get_basis_functions_orientation_for_elements = getBasisFunctionsOrientationForElements
+        get_basis_functions_orientation = getBasisFunctionsOrientation
 
         @staticmethod
         def getBasisFunctionsOrientationForElement(elementTag, functionSpaceType):
@@ -2582,7 +2582,7 @@ class model:
             Get the global unique mesh edge identifiers `edgeTags' and orientations
             `edgeOrientation' for an input list of node tag pairs defining these edges,
             concatenated in the vector `nodeTags'. Mesh edges are created e.g. by
-            `createEdges()' or `getKeysForElements()'.
+            `createEdges()' or `getKeys()'.
 
             Return `edgeTags', `edgeOrientations'.
             """
@@ -2611,7 +2611,7 @@ class model:
             `faceOrientations' for an input list of node tag triplets (if `faceType' ==
             3) or quadruplets (if `faceType' == 4) defining these faces, concatenated
             in the vector `nodeTags'. Mesh faces are created e.g. by `createFaces()' or
-            `getKeysForElements()'.
+            `getKeys()'.
 
             Return `faceTags', `faceOrientations'.
             """
@@ -2665,9 +2665,9 @@ class model:
         create_faces = createFaces
 
         @staticmethod
-        def getKeysForElements(elementType, functionSpaceType, tag=-1, returnCoord=True):
+        def getKeys(elementType, functionSpaceType, tag=-1, returnCoord=True):
             """
-            gmsh.model.mesh.getKeysForElements(elementType, functionSpaceType, tag=-1, returnCoord=True)
+            gmsh.model.mesh.getKeys(elementType, functionSpaceType, tag=-1, returnCoord=True)
 
             Generate the pair of keys for the elements of type `elementType' in the
             entity of tag `tag', for the `functionSpaceType' function space. Each pair
@@ -2683,7 +2683,7 @@ class model:
             api_entityKeys_, api_entityKeys_n_ = POINTER(c_size_t)(), c_size_t()
             api_coord_, api_coord_n_ = POINTER(c_double)(), c_size_t()
             ierr = c_int()
-            lib.gmshModelMeshGetKeysForElements(
+            lib.gmshModelMeshGetKeys(
                 c_int(elementType),
                 c_char_p(functionSpaceType.encode()),
                 byref(api_typeKeys_), byref(api_typeKeys_n_),
@@ -2698,7 +2698,7 @@ class model:
                 _ovectorint(api_typeKeys_, api_typeKeys_n_.value),
                 _ovectorsize(api_entityKeys_, api_entityKeys_n_.value),
                 _ovectordouble(api_coord_, api_coord_n_.value))
-        get_keys_for_elements = getKeysForElements
+        get_keys = getKeys
 
         @staticmethod
         def getKeysForElement(elementTag, functionSpaceType, returnCoord=True):
@@ -2730,9 +2730,9 @@ class model:
         get_keys_for_element = getKeysForElement
 
         @staticmethod
-        def getNumberOfKeysForElements(elementType, functionSpaceType):
+        def getNumberOfKeys(elementType, functionSpaceType):
             """
-            gmsh.model.mesh.getNumberOfKeysForElements(elementType, functionSpaceType)
+            gmsh.model.mesh.getNumberOfKeys(elementType, functionSpaceType)
 
             Get the number of keys by elements of type `elementType' for function space
             named `functionSpaceType'.
@@ -2740,19 +2740,19 @@ class model:
             Return an integer value.
             """
             ierr = c_int()
-            api_result_ = lib.gmshModelMeshGetNumberOfKeysForElements(
+            api_result_ = lib.gmshModelMeshGetNumberOfKeys(
                 c_int(elementType),
                 c_char_p(functionSpaceType.encode()),
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return api_result_
-        get_number_of_keys_for_elements = getNumberOfKeysForElements
+        get_number_of_keys = getNumberOfKeys
 
         @staticmethod
-        def getInformationForElements(typeKeys, entityKeys, elementType, functionSpaceType):
+        def getKeysInformation(typeKeys, entityKeys, elementType, functionSpaceType):
             """
-            gmsh.model.mesh.getInformationForElements(typeKeys, entityKeys, elementType, functionSpaceType)
+            gmsh.model.mesh.getKeysInformation(typeKeys, entityKeys, elementType, functionSpaceType)
 
             Get information about the pair of `keys'. `infoKeys' returns information
             about the functions associated with the pairs (`typeKeys', `entityKey').
@@ -2768,7 +2768,7 @@ class model:
             api_entityKeys_, api_entityKeys_n_ = _ivectorsize(entityKeys)
             api_infoKeys_, api_infoKeys_n_ = POINTER(c_int)(), c_size_t()
             ierr = c_int()
-            lib.gmshModelMeshGetInformationForElements(
+            lib.gmshModelMeshGetKeysInformation(
                 api_typeKeys_, api_typeKeys_n_,
                 api_entityKeys_, api_entityKeys_n_,
                 c_int(elementType),
@@ -2778,7 +2778,7 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return _ovectorpair(api_infoKeys_, api_infoKeys_n_.value)
-        get_information_for_elements = getInformationForElements
+        get_keys_information = getKeysInformation
 
         @staticmethod
         def getBarycenters(elementType, tag, fast, primary, task=0, numTasks=1):
@@ -3385,6 +3385,29 @@ class model:
         set_periodic = setPeriodic
 
         @staticmethod
+        def getPeriodic(dim, tags):
+            """
+            gmsh.model.mesh.getPeriodic(dim, tags)
+
+            Get master entities `tagsMaster' for the entities of dimension `dim' and
+            tags `tags'.
+
+            Return `tagMaster'.
+            """
+            api_tags_, api_tags_n_ = _ivectorint(tags)
+            api_tagMaster_, api_tagMaster_n_ = POINTER(c_int)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshGetPeriodic(
+                c_int(dim),
+                api_tags_, api_tags_n_,
+                byref(api_tagMaster_), byref(api_tagMaster_n_),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return _ovectorint(api_tagMaster_, api_tagMaster_n_.value)
+        get_periodic = getPeriodic
+
+        @staticmethod
         def getPeriodicNodes(dim, tag, includeHighOrderNodes=False):
             """
             gmsh.model.mesh.getPeriodicNodes(dim, tag, includeHighOrderNodes=False)
@@ -3421,9 +3444,9 @@ class model:
         get_periodic_nodes = getPeriodicNodes
 
         @staticmethod
-        def getPeriodicKeysForElements(elementType, functionSpaceType, tag, returnCoord=True):
+        def getPeriodicKeys(elementType, functionSpaceType, tag, returnCoord=True):
             """
-            gmsh.model.mesh.getPeriodicKeysForElements(elementType, functionSpaceType, tag, returnCoord=True)
+            gmsh.model.mesh.getPeriodicKeys(elementType, functionSpaceType, tag, returnCoord=True)
 
             Get the master entity `tagMaster' and the key pairs (`typeKeyMaster',
             `entityKeyMaster') corresponding to the entity `tag' and the key pairs
@@ -3442,7 +3465,7 @@ class model:
             api_coord_, api_coord_n_ = POINTER(c_double)(), c_size_t()
             api_coordMaster_, api_coordMaster_n_ = POINTER(c_double)(), c_size_t()
             ierr = c_int()
-            lib.gmshModelMeshGetPeriodicKeysForElements(
+            lib.gmshModelMeshGetPeriodicKeys(
                 c_int(elementType),
                 c_char_p(functionSpaceType.encode()),
                 c_int(tag),
@@ -3465,7 +3488,7 @@ class model:
                 _ovectorsize(api_entityKeysMaster_, api_entityKeysMaster_n_.value),
                 _ovectordouble(api_coord_, api_coord_n_.value),
                 _ovectordouble(api_coordMaster_, api_coordMaster_n_.value))
-        get_periodic_keys_for_elements = getPeriodicKeysForElements
+        get_periodic_keys = getPeriodicKeys
 
         @staticmethod
         def removeDuplicateNodes():

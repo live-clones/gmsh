@@ -940,13 +940,13 @@ GMSH_API void gmshModelMeshGetBasisFunctions(const int elementType,
  * each element the orientation index in the values returned by
  * `getBasisFunctions'. For Lagrange basis functions the call is superfluous
  * as it will return a vector of zeros. */
-GMSH_API void gmshModelMeshGetBasisFunctionsOrientationForElements(const int elementType,
-                                                                   const char * functionSpaceType,
-                                                                   int ** basisFunctionsOrientation, size_t * basisFunctionsOrientation_n,
-                                                                   const int tag,
-                                                                   const size_t task,
-                                                                   const size_t numTasks,
-                                                                   int * ierr);
+GMSH_API void gmshModelMeshGetBasisFunctionsOrientation(const int elementType,
+                                                        const char * functionSpaceType,
+                                                        int ** basisFunctionsOrientation, size_t * basisFunctionsOrientation_n,
+                                                        const int tag,
+                                                        const size_t task,
+                                                        const size_t numTasks,
+                                                        int * ierr);
 
 /* Get the orientation of a single element `elementTag'. */
 GMSH_API void gmshModelMeshGetBasisFunctionsOrientationForElement(const size_t elementTag,
@@ -960,17 +960,17 @@ GMSH_API int gmshModelMeshGetNumberOfOrientations(const int elementType,
                                                   const char * functionSpaceType,
                                                   int * ierr);
 
-/* Preallocate data before calling `getBasisFunctionsOrientationForElements'
- * with `numTasks' > 1. For C and C++ only. */
-GMSH_API void gmshModelMeshPreallocateBasisFunctionsOrientationForElements(const int elementType,
-                                                                           int ** basisFunctionsOrientation, size_t * basisFunctionsOrientation_n,
-                                                                           const int tag,
-                                                                           int * ierr);
+/* Preallocate data before calling `getBasisFunctionsOrientation' with
+ * `numTasks' > 1. For C and C++ only. */
+GMSH_API void gmshModelMeshPreallocateBasisFunctionsOrientation(const int elementType,
+                                                                int ** basisFunctionsOrientation, size_t * basisFunctionsOrientation_n,
+                                                                const int tag,
+                                                                int * ierr);
 
 /* Get the global unique mesh edge identifiers `edgeTags' and orientations
  * `edgeOrientation' for an input list of node tag pairs defining these edges,
  * concatenated in the vector `nodeTags'. Mesh edges are created e.g. by
- * `createEdges()' or `getKeysForElements()'. */
+ * `createEdges()' or `getKeys()'. */
 GMSH_API void gmshModelMeshGetEdges(size_t * nodeTags, size_t nodeTags_n,
                                     size_t ** edgeTags, size_t * edgeTags_n,
                                     int ** edgeOrientations, size_t * edgeOrientations_n,
@@ -980,7 +980,7 @@ GMSH_API void gmshModelMeshGetEdges(size_t * nodeTags, size_t nodeTags_n,
  * `faceOrientations' for an input list of node tag triplets (if `faceType' ==
  * 3) or quadruplets (if `faceType' == 4) defining these faces, concatenated
  * in the vector `nodeTags'. Mesh faces are created e.g. by `createFaces()' or
- * `getKeysForElements()'. */
+ * `getKeys()'. */
 GMSH_API void gmshModelMeshGetFaces(const int faceType,
                                     size_t * nodeTags, size_t nodeTags_n,
                                     size_t ** faceTags, size_t * faceTags_n,
@@ -1002,14 +1002,14 @@ GMSH_API void gmshModelMeshCreateFaces(int * dimTags, size_t dimTags_n,
  * y, z coordinates locating basis functions for sorting purposes. Warning:
  * this is an experimental feature and will probably change in a future
  * release. */
-GMSH_API void gmshModelMeshGetKeysForElements(const int elementType,
-                                              const char * functionSpaceType,
-                                              int ** typeKeys, size_t * typeKeys_n,
-                                              size_t ** entityKeys, size_t * entityKeys_n,
-                                              double ** coord, size_t * coord_n,
-                                              const int tag,
-                                              const int returnCoord,
-                                              int * ierr);
+GMSH_API void gmshModelMeshGetKeys(const int elementType,
+                                   const char * functionSpaceType,
+                                   int ** typeKeys, size_t * typeKeys_n,
+                                   size_t ** entityKeys, size_t * entityKeys_n,
+                                   double ** coord, size_t * coord_n,
+                                   const int tag,
+                                   const int returnCoord,
+                                   int * ierr);
 
 /* Get the pair of keys for a single element `elementTag'. */
 GMSH_API void gmshModelMeshGetKeysForElement(const size_t elementTag,
@@ -1022,9 +1022,9 @@ GMSH_API void gmshModelMeshGetKeysForElement(const size_t elementTag,
 
 /* Get the number of keys by elements of type `elementType' for function space
  * named `functionSpaceType'. */
-GMSH_API int gmshModelMeshGetNumberOfKeysForElements(const int elementType,
-                                                     const char * functionSpaceType,
-                                                     int * ierr);
+GMSH_API int gmshModelMeshGetNumberOfKeys(const int elementType,
+                                          const char * functionSpaceType,
+                                          int * ierr);
 
 /* Get information about the pair of `keys'. `infoKeys' returns information
  * about the functions associated with the pairs (`typeKeys', `entityKey').
@@ -1033,12 +1033,12 @@ GMSH_API int gmshModelMeshGetNumberOfKeysForElements(const int elementType,
  * `infoKeys[0].second' gives the order of the function associated with the
  * key. Warning: this is an experimental feature and will probably change in a
  * future release. */
-GMSH_API void gmshModelMeshGetInformationForElements(int * typeKeys, size_t typeKeys_n,
-                                                     size_t * entityKeys, size_t entityKeys_n,
-                                                     const int elementType,
-                                                     const char * functionSpaceType,
-                                                     int ** infoKeys, size_t * infoKeys_n,
-                                                     int * ierr);
+GMSH_API void gmshModelMeshGetKeysInformation(int * typeKeys, size_t typeKeys_n,
+                                              size_t * entityKeys, size_t entityKeys_n,
+                                              const int elementType,
+                                              const char * functionSpaceType,
+                                              int ** infoKeys, size_t * infoKeys_n,
+                                              int * ierr);
 
 /* Get the barycenters of all elements of type `elementType' classified on the
  * entity of tag `tag'. If `primary' is set, only the primary nodes of the
@@ -1298,6 +1298,13 @@ GMSH_API void gmshModelMeshSetPeriodic(const int dim,
                                        double * affineTransform, size_t affineTransform_n,
                                        int * ierr);
 
+/* Get master entities `tagsMaster' for the entities of dimension `dim' and
+ * tags `tags'. */
+GMSH_API void gmshModelMeshGetPeriodic(const int dim,
+                                       int * tags, size_t tags_n,
+                                       int ** tagMaster, size_t * tagMaster_n,
+                                       int * ierr);
+
 /* Get the master entity `tagMaster', the node tags `nodeTags' and their
  * corresponding master node tags `nodeTagsMaster', and the affine transform
  * `affineTransform' for the entity of dimension `dim' and tag `tag'. If
@@ -1318,18 +1325,18 @@ GMSH_API void gmshModelMeshGetPeriodicNodes(const int dim,
  * function space type `functionSpaceType'. If `returnCoord' is set, the
  * `coord' and `coordMaster' vectors contain the x, y, z coordinates locating
  * basis functions for sorting purposes. */
-GMSH_API void gmshModelMeshGetPeriodicKeysForElements(const int elementType,
-                                                      const char * functionSpaceType,
-                                                      const int tag,
-                                                      int * tagMaster,
-                                                      int ** typeKeys, size_t * typeKeys_n,
-                                                      int ** typeKeysMaster, size_t * typeKeysMaster_n,
-                                                      size_t ** entityKeys, size_t * entityKeys_n,
-                                                      size_t ** entityKeysMaster, size_t * entityKeysMaster_n,
-                                                      double ** coord, size_t * coord_n,
-                                                      double ** coordMaster, size_t * coordMaster_n,
-                                                      const int returnCoord,
-                                                      int * ierr);
+GMSH_API void gmshModelMeshGetPeriodicKeys(const int elementType,
+                                           const char * functionSpaceType,
+                                           const int tag,
+                                           int * tagMaster,
+                                           int ** typeKeys, size_t * typeKeys_n,
+                                           int ** typeKeysMaster, size_t * typeKeysMaster_n,
+                                           size_t ** entityKeys, size_t * entityKeys_n,
+                                           size_t ** entityKeysMaster, size_t * entityKeysMaster_n,
+                                           double ** coord, size_t * coord_n,
+                                           double ** coordMaster, size_t * coordMaster_n,
+                                           const int returnCoord,
+                                           int * ierr);
 
 /* Remove duplicate nodes in the mesh of the current model. */
 GMSH_API void gmshModelMeshRemoveDuplicateNodes(int * ierr);
