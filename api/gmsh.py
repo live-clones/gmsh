@@ -2750,9 +2750,9 @@ class model:
         get_number_of_keys = getNumberOfKeys
 
         @staticmethod
-        def getInformation(typeKeys, entityKeys, elementType, functionSpaceType):
+        def getKeysInformation(typeKeys, entityKeys, elementType, functionSpaceType):
             """
-            gmsh.model.mesh.getInformation(typeKeys, entityKeys, elementType, functionSpaceType)
+            gmsh.model.mesh.getKeysInformation(typeKeys, entityKeys, elementType, functionSpaceType)
 
             Get information about the pair of `keys'. `infoKeys' returns information
             about the functions associated with the pairs (`typeKeys', `entityKey').
@@ -2768,7 +2768,7 @@ class model:
             api_entityKeys_, api_entityKeys_n_ = _ivectorsize(entityKeys)
             api_infoKeys_, api_infoKeys_n_ = POINTER(c_int)(), c_size_t()
             ierr = c_int()
-            lib.gmshModelMeshGetInformation(
+            lib.gmshModelMeshGetKeysInformation(
                 api_typeKeys_, api_typeKeys_n_,
                 api_entityKeys_, api_entityKeys_n_,
                 c_int(elementType),
@@ -2778,7 +2778,7 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return _ovectorpair(api_infoKeys_, api_infoKeys_n_.value)
-        get_information = getInformation
+        get_keys_information = getKeysInformation
 
         @staticmethod
         def getBarycenters(elementType, tag, fast, primary, task=0, numTasks=1):

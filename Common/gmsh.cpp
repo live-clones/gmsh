@@ -3989,7 +3989,7 @@ GMSH_API int gmsh::model::mesh::getNumberOfKeys(
   return numberOfKeys;
 }
 
-GMSH_API void gmsh::model::mesh::getInformation(
+GMSH_API void gmsh::model::mesh::getKeysInformation(
   const std::vector<int> &typeKeys, const std::vector<std::size_t> &entityKeys,
   const int elementType, const std::string &functionSpaceType,
   gmsh::vectorpair &infoKeys)

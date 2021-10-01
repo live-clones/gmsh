@@ -2312,7 +2312,7 @@ end
 const get_number_of_keys = getNumberOfKeys
 
 """
-    gmsh.model.mesh.getInformation(typeKeys, entityKeys, elementType, functionSpaceType)
+    gmsh.model.mesh.getKeysInformation(typeKeys, entityKeys, elementType, functionSpaceType)
 
 Get information about the pair of `keys`. `infoKeys` returns information about
 the functions associated with the pairs (`typeKeys`, `entityKey`).
@@ -2324,11 +2324,11 @@ release.
 
 Return `infoKeys`.
 """
-function getInformation(typeKeys, entityKeys, elementType, functionSpaceType)
+function getKeysInformation(typeKeys, entityKeys, elementType, functionSpaceType)
     api_infoKeys_ = Ref{Ptr{Cint}}()
     api_infoKeys_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
-    ccall((:gmshModelMeshGetInformation, gmsh.lib), Cvoid,
+    ccall((:gmshModelMeshGetKeysInformation, gmsh.lib), Cvoid,
           (Ptr{Cint}, Csize_t, Ptr{Csize_t}, Csize_t, Cint, Ptr{Cchar}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
           convert(Vector{Cint}, typeKeys), length(typeKeys), convert(Vector{Csize_t}, entityKeys), length(entityKeys), elementType, functionSpaceType, api_infoKeys_, api_infoKeys_n_, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
@@ -2336,7 +2336,7 @@ function getInformation(typeKeys, entityKeys, elementType, functionSpaceType)
     infoKeys = [ (tmp_api_infoKeys_[i], tmp_api_infoKeys_[i+1]) for i in 1:2:length(tmp_api_infoKeys_) ]
     return infoKeys
 end
-const get_information = getInformation
+const get_keys_information = getKeysInformation
 
 """
     gmsh.model.mesh.getBarycenters(elementType, tag, fast, primary, task = 0, numTasks = 1)

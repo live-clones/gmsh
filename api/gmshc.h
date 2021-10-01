@@ -1033,12 +1033,12 @@ GMSH_API int gmshModelMeshGetNumberOfKeys(const int elementType,
  * `infoKeys[0].second' gives the order of the function associated with the
  * key. Warning: this is an experimental feature and will probably change in a
  * future release. */
-GMSH_API void gmshModelMeshGetInformation(int * typeKeys, size_t typeKeys_n,
-                                          size_t * entityKeys, size_t entityKeys_n,
-                                          const int elementType,
-                                          const char * functionSpaceType,
-                                          int ** infoKeys, size_t * infoKeys_n,
-                                          int * ierr);
+GMSH_API void gmshModelMeshGetKeysInformation(int * typeKeys, size_t typeKeys_n,
+                                              size_t * entityKeys, size_t entityKeys_n,
+                                              const int elementType,
+                                              const char * functionSpaceType,
+                                              int ** infoKeys, size_t * infoKeys_n,
+                                              int * ierr);
 
 /* Get the barycenters of all elements of type `elementType' classified on the
  * entity of tag `tag'. If `primary' is set, only the primary nodes of the

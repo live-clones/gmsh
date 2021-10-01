@@ -1167,7 +1167,7 @@ namespace gmsh { // Top-level functions
       GMSH_API int getNumberOfKeys(const int elementType,
                                    const std::string & functionSpaceType);
 
-      // gmsh::model::mesh::getInformation
+      // gmsh::model::mesh::getKeysInformation
       //
       // Get information about the pair of `keys'. `infoKeys' returns information
       // about the functions associated with the pairs (`typeKeys', `entityKey').
@@ -1176,11 +1176,11 @@ namespace gmsh { // Top-level functions
       // function). `infoKeys[0].second' gives the order of the function associated
       // with the key. Warning: this is an experimental feature and will probably
       // change in a future release.
-      GMSH_API void getInformation(const std::vector<int> & typeKeys,
-                                   const std::vector<std::size_t> & entityKeys,
-                                   const int elementType,
-                                   const std::string & functionSpaceType,
-                                   gmsh::vectorpair & infoKeys);
+      GMSH_API void getKeysInformation(const std::vector<int> & typeKeys,
+                                       const std::vector<std::size_t> & entityKeys,
+                                       const int elementType,
+                                       const std::string & functionSpaceType,
+                                       gmsh::vectorpair & infoKeys);
 
       // gmsh::model::mesh::getBarycenters
       //

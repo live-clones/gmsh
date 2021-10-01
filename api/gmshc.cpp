@@ -1523,14 +1523,14 @@ GMSH_API int gmshModelMeshGetNumberOfKeys(const int elementType, const char * fu
   return result_api_;
 }
 
-GMSH_API void gmshModelMeshGetInformation(int * typeKeys, size_t typeKeys_n, size_t * entityKeys, size_t entityKeys_n, const int elementType, const char * functionSpaceType, int ** infoKeys, size_t * infoKeys_n, int * ierr)
+GMSH_API void gmshModelMeshGetKeysInformation(int * typeKeys, size_t typeKeys_n, size_t * entityKeys, size_t entityKeys_n, const int elementType, const char * functionSpaceType, int ** infoKeys, size_t * infoKeys_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
     std::vector<int> api_typeKeys_(typeKeys, typeKeys + typeKeys_n);
     std::vector<std::size_t> api_entityKeys_(entityKeys, entityKeys + entityKeys_n);
     gmsh::vectorpair api_infoKeys_;
-    gmsh::model::mesh::getInformation(api_typeKeys_, api_entityKeys_, elementType, functionSpaceType, api_infoKeys_);
+    gmsh::model::mesh::getKeysInformation(api_typeKeys_, api_entityKeys_, elementType, functionSpaceType, api_infoKeys_);
     vectorpair2intptr(api_infoKeys_, infoKeys, infoKeys_n);
   }
   catch(...){

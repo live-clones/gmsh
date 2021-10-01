@@ -1801,17 +1801,17 @@ namespace gmsh { // Top-level functions
       // function). `infoKeys[0].second' gives the order of the function associated
       // with the key. Warning: this is an experimental feature and will probably
       // change in a future release.
-      inline void getInformation(const std::vector<int> & typeKeys,
-                                 const std::vector<std::size_t> & entityKeys,
-                                 const int elementType,
-                                 const std::string & functionSpaceType,
-                                 gmsh::vectorpair & infoKeys)
+      inline void getKeysInformation(const std::vector<int> & typeKeys,
+                                     const std::vector<std::size_t> & entityKeys,
+                                     const int elementType,
+                                     const std::string & functionSpaceType,
+                                     gmsh::vectorpair & infoKeys)
       {
         int ierr = 0;
         int *api_typeKeys_; size_t api_typeKeys_n_; vector2ptr(typeKeys, &api_typeKeys_, &api_typeKeys_n_);
         size_t *api_entityKeys_; size_t api_entityKeys_n_; vector2ptr(entityKeys, &api_entityKeys_, &api_entityKeys_n_);
         int *api_infoKeys_; size_t api_infoKeys_n_;
-        gmshModelMeshGetInformation(api_typeKeys_, api_typeKeys_n_, api_entityKeys_, api_entityKeys_n_, elementType, functionSpaceType.c_str(), &api_infoKeys_, &api_infoKeys_n_, &ierr);
+        gmshModelMeshGetKeysInformation(api_typeKeys_, api_typeKeys_n_, api_entityKeys_, api_entityKeys_n_, elementType, functionSpaceType.c_str(), &api_infoKeys_, &api_infoKeys_n_, &ierr);
         if(ierr) throwLastError();
         gmshFree(api_typeKeys_);
         gmshFree(api_entityKeys_);

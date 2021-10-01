@@ -2146,7 +2146,7 @@ c
 !  `infoKeys[0].second' gives the order of the function associated with the
 !  key. Warning: this is an experimental feature and will probably change in a
 !  future release.
-        subroutine gmshModelMeshGetInformation(
+        subroutine gmshModelMeshGetKeysInformation(
      &      typeKeys,
      &      typeKeys_n,
      &      entityKeys,
@@ -2156,7 +2156,7 @@ c
      &      infoKeys,
      &      infoKeys_n,
      &      ierr)
-     &    bind(C, name = "gmshModelMeshGetInformation")
+     &    bind(C, name = "gmshModelMeshGetKeysInformation")
           use, intrinsic :: iso_c_binding
             integer(c_int)::typeKeys(*)
             integer(c_size_t), value :: typeKeys_n
@@ -2167,7 +2167,7 @@ c
             type(c_ptr), intent(out)::infoKeys
             integer(c_size_t) :: infoKeys_n
             integer(c_int)::ierr
-          end subroutine gmshModelMeshGetInformation
+          end subroutine gmshModelMeshGetKeysInformation
 
 !  Get the barycenters of all elements of type `elementType' classified on the
 !  entity of tag `tag'. If `primary' is set, only the primary nodes of the
