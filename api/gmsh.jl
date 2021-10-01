@@ -2090,7 +2090,7 @@ end
 const get_basis_functions = getBasisFunctions
 
 """
-    gmsh.model.mesh.getBasisFunctionsOrientationForElements(elementType, functionSpaceType, tag = -1, task = 0, numTasks = 1)
+    gmsh.model.mesh.getBasisFunctionsOrientation(elementType, functionSpaceType, tag = -1, task = 0, numTasks = 1)
 
 Get the orientation index of the elements of type `elementType` in the entity of
 tag `tag`. The arguments have the same meaning as in `getBasisFunctions`.
@@ -2100,18 +2100,18 @@ functions the call is superfluous as it will return a vector of zeros.
 
 Return `basisFunctionsOrientation`.
 """
-function getBasisFunctionsOrientationForElements(elementType, functionSpaceType, tag = -1, task = 0, numTasks = 1)
+function getBasisFunctionsOrientation(elementType, functionSpaceType, tag = -1, task = 0, numTasks = 1)
     api_basisFunctionsOrientation_ = Ref{Ptr{Cint}}()
     api_basisFunctionsOrientation_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
-    ccall((:gmshModelMeshGetBasisFunctionsOrientationForElements, gmsh.lib), Cvoid,
+    ccall((:gmshModelMeshGetBasisFunctionsOrientation, gmsh.lib), Cvoid,
           (Cint, Ptr{Cchar}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Csize_t, Csize_t, Ptr{Cint}),
           elementType, functionSpaceType, api_basisFunctionsOrientation_, api_basisFunctionsOrientation_n_, tag, task, numTasks, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     basisFunctionsOrientation = unsafe_wrap(Array, api_basisFunctionsOrientation_[], api_basisFunctionsOrientation_n_[], own = true)
     return basisFunctionsOrientation
 end
-const get_basis_functions_orientation_for_elements = getBasisFunctionsOrientationForElements
+const get_basis_functions_orientation = getBasisFunctionsOrientation
 
 """
     gmsh.model.mesh.getBasisFunctionsOrientationForElement(elementTag, functionSpaceType)
@@ -2155,7 +2155,7 @@ const get_number_of_orientations = getNumberOfOrientations
 Get the global unique mesh edge identifiers `edgeTags` and orientations
 `edgeOrientation` for an input list of node tag pairs defining these edges,
 concatenated in the vector `nodeTags`. Mesh edges are created e.g. by
-`createEdges()` or `getKeysForElements()`.
+`createEdges()` or `getKeys()`.
 
 Return `edgeTags`, `edgeOrientations`.
 """
@@ -2182,7 +2182,7 @@ Get the global unique mesh face identifiers `faceTags` and orientations
 `faceOrientations` for an input list of node tag triplets (if `faceType` == 3)
 or quadruplets (if `faceType` == 4) defining these faces, concatenated in the
 vector `nodeTags`. Mesh faces are created e.g. by `createFaces()` or
-`getKeysForElements()`.
+`getKeys()`.
 
 Return `faceTags`, `faceOrientations`.
 """
@@ -2237,7 +2237,7 @@ end
 const create_faces = createFaces
 
 """
-    gmsh.model.mesh.getKeysForElements(elementType, functionSpaceType, tag = -1, returnCoord = true)
+    gmsh.model.mesh.getKeys(elementType, functionSpaceType, tag = -1, returnCoord = true)
 
 Generate the pair of keys for the elements of type `elementType` in the entity
 of tag `tag`, for the `functionSpaceType` function space. Each pair (`typeKey`,
@@ -2248,7 +2248,7 @@ feature and will probably change in a future release.
 
 Return `typeKeys`, `entityKeys`, `coord`.
 """
-function getKeysForElements(elementType, functionSpaceType, tag = -1, returnCoord = true)
+function getKeys(elementType, functionSpaceType, tag = -1, returnCoord = true)
     api_typeKeys_ = Ref{Ptr{Cint}}()
     api_typeKeys_n_ = Ref{Csize_t}()
     api_entityKeys_ = Ref{Ptr{Csize_t}}()
@@ -2256,7 +2256,7 @@ function getKeysForElements(elementType, functionSpaceType, tag = -1, returnCoor
     api_coord_ = Ref{Ptr{Cdouble}}()
     api_coord_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
-    ccall((:gmshModelMeshGetKeysForElements, gmsh.lib), Cvoid,
+    ccall((:gmshModelMeshGetKeys, gmsh.lib), Cvoid,
           (Cint, Ptr{Cchar}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Cint, Ptr{Cint}),
           elementType, functionSpaceType, api_typeKeys_, api_typeKeys_n_, api_entityKeys_, api_entityKeys_n_, api_coord_, api_coord_n_, tag, returnCoord, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
@@ -2265,7 +2265,7 @@ function getKeysForElements(elementType, functionSpaceType, tag = -1, returnCoor
     coord = unsafe_wrap(Array, api_coord_[], api_coord_n_[], own = true)
     return typeKeys, entityKeys, coord
 end
-const get_keys_for_elements = getKeysForElements
+const get_keys = getKeys
 
 """
     gmsh.model.mesh.getKeysForElement(elementTag, functionSpaceType, returnCoord = true)
@@ -2294,25 +2294,25 @@ end
 const get_keys_for_element = getKeysForElement
 
 """
-    gmsh.model.mesh.getNumberOfKeysForElements(elementType, functionSpaceType)
+    gmsh.model.mesh.getNumberOfKeys(elementType, functionSpaceType)
 
 Get the number of keys by elements of type `elementType` for function space
 named `functionSpaceType`.
 
 Return an integer value.
 """
-function getNumberOfKeysForElements(elementType, functionSpaceType)
+function getNumberOfKeys(elementType, functionSpaceType)
     ierr = Ref{Cint}()
-    api_result_ = ccall((:gmshModelMeshGetNumberOfKeysForElements, gmsh.lib), Cint,
+    api_result_ = ccall((:gmshModelMeshGetNumberOfKeys, gmsh.lib), Cint,
           (Cint, Ptr{Cchar}, Ptr{Cint}),
           elementType, functionSpaceType, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_result_
 end
-const get_number_of_keys_for_elements = getNumberOfKeysForElements
+const get_number_of_keys = getNumberOfKeys
 
 """
-    gmsh.model.mesh.getInformationForElements(typeKeys, entityKeys, elementType, functionSpaceType)
+    gmsh.model.mesh.getInformation(typeKeys, entityKeys, elementType, functionSpaceType)
 
 Get information about the pair of `keys`. `infoKeys` returns information about
 the functions associated with the pairs (`typeKeys`, `entityKey`).
@@ -2324,11 +2324,11 @@ release.
 
 Return `infoKeys`.
 """
-function getInformationForElements(typeKeys, entityKeys, elementType, functionSpaceType)
+function getInformation(typeKeys, entityKeys, elementType, functionSpaceType)
     api_infoKeys_ = Ref{Ptr{Cint}}()
     api_infoKeys_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
-    ccall((:gmshModelMeshGetInformationForElements, gmsh.lib), Cvoid,
+    ccall((:gmshModelMeshGetInformation, gmsh.lib), Cvoid,
           (Ptr{Cint}, Csize_t, Ptr{Csize_t}, Csize_t, Cint, Ptr{Cchar}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
           convert(Vector{Cint}, typeKeys), length(typeKeys), convert(Vector{Csize_t}, entityKeys), length(entityKeys), elementType, functionSpaceType, api_infoKeys_, api_infoKeys_n_, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
@@ -2336,7 +2336,7 @@ function getInformationForElements(typeKeys, entityKeys, elementType, functionSp
     infoKeys = [ (tmp_api_infoKeys_[i], tmp_api_infoKeys_[i+1]) for i in 1:2:length(tmp_api_infoKeys_) ]
     return infoKeys
 end
-const get_information_for_elements = getInformationForElements
+const get_information = getInformation
 
 """
     gmsh.model.mesh.getBarycenters(elementType, tag, fast, primary, task = 0, numTasks = 1)
@@ -2883,6 +2883,27 @@ end
 const set_periodic = setPeriodic
 
 """
+    gmsh.model.mesh.getPeriodic(dim, tags)
+
+Get master entities `tagsMaster` for the entities of dimension `dim` and tags
+`tags`.
+
+Return `tagMaster`.
+"""
+function getPeriodic(dim, tags)
+    api_tagMaster_ = Ref{Ptr{Cint}}()
+    api_tagMaster_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshGetPeriodic, gmsh.lib), Cvoid,
+          (Cint, Ptr{Cint}, Csize_t, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
+          dim, convert(Vector{Cint}, tags), length(tags), api_tagMaster_, api_tagMaster_n_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    tagMaster = unsafe_wrap(Array, api_tagMaster_[], api_tagMaster_n_[], own = true)
+    return tagMaster
+end
+const get_periodic = getPeriodic
+
+"""
     gmsh.model.mesh.getPeriodicNodes(dim, tag, includeHighOrderNodes = false)
 
 Get the master entity `tagMaster`, the node tags `nodeTags` and their
@@ -2913,7 +2934,7 @@ end
 const get_periodic_nodes = getPeriodicNodes
 
 """
-    gmsh.model.mesh.getPeriodicKeysForElements(elementType, functionSpaceType, tag, returnCoord = true)
+    gmsh.model.mesh.getPeriodicKeys(elementType, functionSpaceType, tag, returnCoord = true)
 
 Get the master entity `tagMaster` and the key pairs (`typeKeyMaster`,
 `entityKeyMaster`) corresponding to the entity `tag` and the key pairs
@@ -2924,7 +2945,7 @@ for sorting purposes.
 
 Return `tagMaster`, `typeKeys`, `typeKeysMaster`, `entityKeys`, `entityKeysMaster`, `coord`, `coordMaster`.
 """
-function getPeriodicKeysForElements(elementType, functionSpaceType, tag, returnCoord = true)
+function getPeriodicKeys(elementType, functionSpaceType, tag, returnCoord = true)
     api_tagMaster_ = Ref{Cint}()
     api_typeKeys_ = Ref{Ptr{Cint}}()
     api_typeKeys_n_ = Ref{Csize_t}()
@@ -2939,7 +2960,7 @@ function getPeriodicKeysForElements(elementType, functionSpaceType, tag, returnC
     api_coordMaster_ = Ref{Ptr{Cdouble}}()
     api_coordMaster_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
-    ccall((:gmshModelMeshGetPeriodicKeysForElements, gmsh.lib), Cvoid,
+    ccall((:gmshModelMeshGetPeriodicKeys, gmsh.lib), Cvoid,
           (Cint, Ptr{Cchar}, Cint, Ptr{Cint}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
           elementType, functionSpaceType, tag, api_tagMaster_, api_typeKeys_, api_typeKeys_n_, api_typeKeysMaster_, api_typeKeysMaster_n_, api_entityKeys_, api_entityKeys_n_, api_entityKeysMaster_, api_entityKeysMaster_n_, api_coord_, api_coord_n_, api_coordMaster_, api_coordMaster_n_, returnCoord, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
@@ -2951,7 +2972,7 @@ function getPeriodicKeysForElements(elementType, functionSpaceType, tag, returnC
     coordMaster = unsafe_wrap(Array, api_coordMaster_[], api_coordMaster_n_[], own = true)
     return api_tagMaster_[], typeKeys, typeKeysMaster, entityKeys, entityKeysMaster, coord, coordMaster
 end
-const get_periodic_keys_for_elements = getPeriodicKeysForElements
+const get_periodic_keys = getPeriodicKeys
 
 """
     gmsh.model.mesh.removeDuplicateNodes()

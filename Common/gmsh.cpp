@@ -3078,7 +3078,7 @@ GMSH_API void gmsh::model::mesh::getBasisFunctions(
   return;
 }
 
-GMSH_API void gmsh::model::mesh::getBasisFunctionsOrientationForElements(
+GMSH_API void gmsh::model::mesh::getBasisFunctionsOrientation(
   const int elementType, const std::string &functionSpaceType,
   std::vector<int> &basisFunctionsOrientation, const int tag,
   const std::size_t task, const std::size_t numTasks)
@@ -3090,7 +3090,7 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsOrientationForElements(
       Msg::Warning(
         "basisFunctionsOrientation should be preallocated if numTasks > 1");
     }
-    preallocateBasisFunctionsOrientationForElements(
+    preallocateBasisFunctionsOrientation(
       elementType, basisFunctionsOrientation, tag);
   }
 
@@ -3277,7 +3277,7 @@ gmsh::model::mesh::getNumberOfOrientations(const int elementType,
 }
 
 GMSH_API void
-gmsh::model::mesh::preallocateBasisFunctionsOrientationForElements(
+gmsh::model::mesh::preallocateBasisFunctionsOrientation(
   const int elementType, std::vector<int> &basisFunctionsOrientation,
   const int tag)
 {
@@ -3399,7 +3399,7 @@ GMSH_API void gmsh::model::mesh::createFaces(const vectorpair &dimTags)
   }
 }
 
-GMSH_API void gmsh::model::mesh::getKeysForElements(
+GMSH_API void gmsh::model::mesh::getKeys(
   const int elementType, const std::string &functionSpaceType,
   std::vector<int> &typeKeys, std::vector<std::size_t> &entityKeys,
   std::vector<double> &coord, const int tag, const bool returnCoord)
@@ -3884,7 +3884,7 @@ GMSH_API void gmsh::model::mesh::getKeysForElement(
   }
 }
 
-GMSH_API int gmsh::model::mesh::getNumberOfKeysForElements(
+GMSH_API int gmsh::model::mesh::getNumberOfKeys(
   const int elementType, const std::string &functionSpaceType)
 {
   int numberOfKeys = 0;
@@ -3989,7 +3989,7 @@ GMSH_API int gmsh::model::mesh::getNumberOfKeysForElements(
   return numberOfKeys;
 }
 
-GMSH_API void gmsh::model::mesh::getInformationForElements(
+GMSH_API void gmsh::model::mesh::getInformation(
   const std::vector<int> &typeKeys, const std::vector<std::size_t> &entityKeys,
   const int elementType, const std::string &functionSpaceType,
   gmsh::vectorpair &infoKeys)
@@ -4978,6 +4978,23 @@ gmsh::model::mesh::setPeriodic(const int dim, const std::vector<int> &tags,
   }
 }
 
+GMSH_API void
+gmsh::model::mesh::getPeriodic(const int dim, const std::vector<int> &tags,
+                               std::vector<int> &tagsMaster)
+{
+  if(!_checkInit()) return;
+  tagsMaster.clear();
+  tagsMaster.reserve(tags.size());
+  for(auto i : tags) {
+    GEntity *ge = GModel::current()->getEntityByTag(dim, i);
+    if(!ge) {
+      Msg::Error("%s does not exist", _getEntityName(dim, i).c_str());
+      return;
+    }
+    tagsMaster.push_back(ge->getMeshMaster()->tag());
+  }
+}
+
 GMSH_API void gmsh::model::mesh::getPeriodicNodes(
   const int dim, const int tag, int &tagMaster,
   std::vector<std::size_t> &nodeTags, std::vector<std::size_t> &nodeTagsMaster,
@@ -5013,7 +5030,7 @@ GMSH_API void gmsh::model::mesh::getPeriodicNodes(
   }
 }
 
-GMSH_API void gmsh::model::mesh::getPeriodicKeysForElements(
+GMSH_API void gmsh::model::mesh::getPeriodicKeys(
   const int elementType, const std::string &functionSpaceType,
   const int tag, int &tagMaster,
   std::vector<int> &typeKeys, std::vector<int> &typeKeysMaster,
@@ -5038,7 +5055,7 @@ GMSH_API void gmsh::model::mesh::getPeriodicKeysForElements(
   }
 
   tagMaster = ge->getMeshMaster()->tag();
-  getKeysForElements(elementType, functionSpaceType,
+  getKeys(elementType, functionSpaceType,
                      typeKeys, entityKeys, coord, tag, returnCoord);
   typeKeysMaster = typeKeys;
   entityKeysMaster = entityKeys;
