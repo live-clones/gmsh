@@ -29,8 +29,8 @@ Python or Julia) are provided, they will be handled in the same way as the
 command line arguments in the Gmsh app. If @code{readConfigFiles} is set, read
 system Gmsh configuration files (gmshrc and gmsh-options). If @code{run} is set,
 run in the same way as the Gmsh app, either interactively or in batch mode
-depending on the command line arguments. Initializing the API sets the options
-"General.AbortOnError" to 2 (if @code{run} is not set) and "General.Terminal" to
+depending on the command line arguments. If @code{run} is not set, initializing
+the API sets the options "General.AbortOnError" to 2 and "General.Terminal" to
 1. If compiled with OpenMP support, it also sets the number of threads to
 "General.NumThreads".
 
