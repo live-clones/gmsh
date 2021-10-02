@@ -23,6 +23,7 @@ RUN apt-get update && apt-get install -y ftp && apt-get clean
 # "docker build --build-arg REBUILD_GMSH=somethingnew"
 ARG REBUILD_GMSH=
 
+RUN apt-get update && apt-get install --reinstall ca-certificates
 RUN git clone https://gitlab.onelab.info/gmsh/gmsh.git && cd gmsh && mkdir build && cd build && cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_BUILD_SHARED=1 -DENABLE_PRIVATE_API=1 .. && make -j8 shared && make install/fast && cd .. && rm -rf gmsh
 
 VOLUME ["/etc/gitlab-runner"]
