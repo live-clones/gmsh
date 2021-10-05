@@ -1408,7 +1408,8 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
       BDS_Point *p1 = aaa[a];
       BDS_Point *p2 = aaa[b];
       BDS_Point *p3 = aaa[c];
-      m->add_triangle(p1->iD, p2->iD, p3->iD);
+      if(p1 && p2 && p3)
+        m->add_triangle(p1->iD, p2->iD, p3->iD);
     }
     delete pm;
   }
