@@ -204,6 +204,9 @@ static int writeBC2D(int cgIndexFile, int cgIndexBase, int cgIndexZone,
   int ibeg, iend, jbeg, jend, type;
   if(findRange2D(gf, ge, ibeg, jbeg, iend, jend, type)) {
     std::vector<cgsize_t> pointRange = {ibeg, jbeg, iend, jend};
+    // make sure, as in ICEM, that for BCs iend >= ibeg and jend >= jbeg
+    if(iend < ibeg) { pointRange[0] = iend; pointRange[2] = ibeg; }
+    if(jend < jbeg) { pointRange[1] = jend; pointRange[3] = jbeg; }
     int cgIndexBoco = 0;
     if(cg_boco_write(cgIndexFile, cgIndexBase, cgIndexZone,
                      getZoneName(ge).c_str(), CGNS_ENUMV(BCTypeNull),
@@ -417,6 +420,11 @@ static int writeBC3D(int cgIndexFile, int cgIndexBase, int cgIndexZone,
   int ibeg, iend, jbeg, jend, kbeg, kend, type;
   if(findRange3D(gr, gf, ibeg, jbeg, kbeg, iend, jend, kend, type)) {
     std::vector<cgsize_t> pointRange = {ibeg, jbeg, kbeg, iend, jend, kend};
+    // make sure, as in ICEM, that for BCs iend >= ibeg, jend >= jbeg and kend
+    // >= kbeg
+    if(iend < ibeg) { pointRange[0] = iend; pointRange[3] = ibeg; }
+    if(jend < jbeg) { pointRange[1] = jend; pointRange[4] = jbeg; }
+    if(kend < kbeg) { pointRange[2] = kend; pointRange[5] = kbeg; }
     int cgIndexBoco = 0;
     if(cg_boco_write(cgIndexFile, cgIndexBase, cgIndexZone,
                      getZoneName(gf).c_str(), CGNS_ENUMV(BCTypeNull),
