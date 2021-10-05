@@ -587,6 +587,22 @@ end
 const get_physical_name = getPhysicalName
 
 """
+    gmsh.model.setTag(dim, tag, newTag)
+
+Set the tag of the entity of dimension `dim` and tag `tag` to the new value
+`newTag`.
+"""
+function setTag(dim, tag, newTag)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelSetTag, gmsh.lib), Cvoid,
+          (Cint, Cint, Cint, Ptr{Cint}),
+          dim, tag, newTag, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+const set_tag = setTag
+
+"""
     gmsh.model.getBoundary(dimTags, combined = true, oriented = true, recursive = false)
 
 Get the boundary of the model entities `dimTags`. Return in `outDimTags` the

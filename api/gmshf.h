@@ -443,6 +443,21 @@ c
             integer(c_int)::ierr
           end subroutine gmshModelGetPhysicalName
 
+!  Set the tag of the entity of dimension `dim' and tag `tag' to the new value
+!  `newTag'.
+        subroutine gmshModelSetTag(
+     &      dim,
+     &      tag,
+     &      newTag,
+     &      ierr)
+     &    bind(C, name = "gmshModelSetTag")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::dim
+            integer(c_int), value::tag
+            integer(c_int), value::newTag
+            integer(c_int)::ierr
+          end subroutine gmshModelSetTag
+
 !  Get the boundary of the model entities `dimTags'. Return in `outDimTags'
 !  the boundary of the individual entities (if `combined' is false) or the
 !  boundary of the combined geometrical shape formed by all input entities (if

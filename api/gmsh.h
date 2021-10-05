@@ -278,6 +278,14 @@ namespace gmsh { // Top-level functions
                                   const int tag,
                                   std::string & name);
 
+    // gmsh::model::setTag
+    //
+    // Set the tag of the entity of dimension `dim' and tag `tag' to the new value
+    // `newTag'.
+    GMSH_API void setTag(const int dim,
+                         const int tag,
+                         const int newTag);
+
     // gmsh::model::getBoundary
     //
     // Get the boundary of the model entities `dimTags'. Return in `outDimTags' the

@@ -445,6 +445,17 @@ namespace gmsh { // Top-level functions
       name = std::string(api_name_); gmshFree(api_name_);
     }
 
+    // Set the tag of the entity of dimension `dim' and tag `tag' to the new value
+    // `newTag'.
+    inline void setTag(const int dim,
+                       const int tag,
+                       const int newTag)
+    {
+      int ierr = 0;
+      gmshModelSetTag(dim, tag, newTag, &ierr);
+      if(ierr) throwLastError();
+    }
+
     // Get the boundary of the model entities `dimTags'. Return in `outDimTags' the
     // boundary of the individual entities (if `combined' is false) or the boundary
     // of the combined geometrical shape formed by all input entities (if

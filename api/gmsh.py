@@ -793,6 +793,24 @@ class model:
     get_physical_name = getPhysicalName
 
     @staticmethod
+    def setTag(dim, tag, newTag):
+        """
+        gmsh.model.setTag(dim, tag, newTag)
+
+        Set the tag of the entity of dimension `dim' and tag `tag' to the new value
+        `newTag'.
+        """
+        ierr = c_int()
+        lib.gmshModelSetTag(
+            c_int(dim),
+            c_int(tag),
+            c_int(newTag),
+            byref(ierr))
+        if ierr.value != 0:
+            raise Exception(logger.getLastError())
+    set_tag = setTag
+
+    @staticmethod
     def getBoundary(dimTags, combined=True, oriented=True, recursive=False):
         """
         gmsh.model.getBoundary(dimTags, combined=True, oriented=True, recursive=False)

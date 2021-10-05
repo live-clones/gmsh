@@ -225,6 +225,13 @@ GMSH_API void gmshModelGetPhysicalName(const int dim,
                                        char ** name,
                                        int * ierr);
 
+/* Set the tag of the entity of dimension `dim' and tag `tag' to the new value
+ * `newTag'. */
+GMSH_API void gmshModelSetTag(const int dim,
+                              const int tag,
+                              const int newTag,
+                              int * ierr);
+
 /* Get the boundary of the model entities `dimTags'. Return in `outDimTags'
  * the boundary of the individual entities (if `combined' is false) or the
  * boundary of the combined geometrical shape formed by all input entities (if

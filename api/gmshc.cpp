@@ -429,6 +429,17 @@ GMSH_API void gmshModelGetPhysicalName(const int dim, const int tag, char ** nam
   }
 }
 
+GMSH_API void gmshModelSetTag(const int dim, const int tag, const int newTag, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::setTag(dim, tag, newTag);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API void gmshModelGetBoundary(int * dimTags, size_t dimTags_n, int ** outDimTags, size_t * outDimTags_n, const int combined, const int oriented, const int recursive, int * ierr)
 {
   if(ierr) *ierr = 0;

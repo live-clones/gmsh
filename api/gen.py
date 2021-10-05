@@ -142,6 +142,9 @@ model.add('removePhysicalName', doc, None, istring('name'))
 doc = '''Get the name of the physical group of dimension `dim' and tag `tag'.'''
 model.add('getPhysicalName', doc, None, iint('dim'), iint('tag'), ostring('name'))
 
+doc = '''Set the tag of the entity of dimension `dim' and tag `tag' to the new value `newTag'.'''
+model.add('setTag', doc, None, iint('dim'), iint('tag'), iint('newTag'))
+
 doc = '''Get the boundary of the model entities `dimTags'. Return in `outDimTags' the boundary of the individual entities (if `combined' is false) or the boundary of the combined geometrical shape formed by all input entities (if `combined' is true). Return tags multiplied by the sign of the boundary entity if `oriented' is true. Apply the boundary operator recursively down to dimension 0 (i.e. to points) if `recursive' is true.'''
 model.add('getBoundary', doc, None, ivectorpair('dimTags'), ovectorpair('outDimTags'), ibool('combined', 'true', 'True'), ibool('oriented', 'true', 'True'), ibool('recursive', 'false', 'False'))
 
