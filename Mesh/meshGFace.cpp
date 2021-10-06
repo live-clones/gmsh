@@ -85,8 +85,8 @@ static void trueBoundary(GFace *gf, std::vector<SPoint2> &bnd, int debug)
         p[k] = ge->reparamOnFace(gf, xi, i);
         if(k > 0) {
           if(view_t) {
-            fprintf(view_t, "SL(%g,%g,%g,%g,%g,%g){1,1};\n", p[k - 1].x(),
-                    p[k - 1].y(), 0.0, p[k].x(), p[k].y(), 0.0);
+            fprintf(view_t, "SL(%g,%g,%g,%g,%g,%g){%d,%d};\n", p[k - 1].x(),
+                    p[k - 1].y(), 0.0, p[k].x(), p[k].y(), 0.0,ge->tag(),ge->tag());
           }
           bnd.push_back(p[k - 1]);
           bnd.push_back(p[k]);
@@ -1835,11 +1835,30 @@ static bool buildConsecutiveListOfVertices(
   count = 0;
 
   auto it = gel.begin();
-
+  
   if(MYDEBUG)
     printf("face %d with %d edges case %d\n", gf->tag(),
            (int)gf->edges().size(), seam_the_first);
 
+  //---------------------------------------------------------------------------
+  // Look for seams that appear only once in the loop (baaaad boy)
+  std::set<GEdge*> lonelySeams;
+  while(it != gel.end()) {
+    GEdgeSigned ges = *it;
+    bool seam = ges.ge->isSeam(gf);
+    if (seam){
+      std::set<GEdge*>::iterator its = lonelySeams.find(ges.ge);
+      if (its == lonelySeams.end())lonelySeams.insert(ges.ge);
+      else lonelySeams.erase(its);
+    }
+    ++it;
+  }
+  if (lonelySeams.size())
+    Msg::Info("Face %lu has %lu isolated seams",gf->tag(),lonelySeams.size());
+  //---------------------------------------------------------------------------
+  
+  it = gel.begin();
+  
   while(it != gel.end()) {
     GEdgeSigned ges = *it;
     std::vector<SPoint2> mesh1d;
@@ -1847,6 +1866,7 @@ static bool buildConsecutiveListOfVertices(
 
     bool seam = ges.ge->isSeam(gf);
     Range<double> range = ges.ge->parBoundsOnFace(gf);
+
 
     mesh1d.push_back(ges.ge->reparamOnFace(gf, range.low(), 1));
     if(seam) mesh1d_seam.push_back(ges.ge->reparamOnFace(gf, range.low(), -1));
@@ -1903,23 +1923,23 @@ static bool buildConsecutiveListOfVertices(
           coords = ((*it)._sign == 1) ? mesh1d : mesh1d_reversed;
           found = (*it);
         }
-        if(MYDEBUG)
-          printf("Starting with edge = %d seam %d\n", (*it).ge->tag(), seam);
+	//	if(MYDEBUG)
+	//	  printf("Starting with edge = %d seam %d\n", (*it).ge->tag(), seam);
         unordered.erase(it);
         break;
       }
       else {
-        if(MYDEBUG) printf("Followed by edge = %d\n", (*it).ge->tag());
+	//        if(MYDEBUG) printf("Followed by edge = %d\n", (*it).ge->tag());
         SPoint2 first_coord = mesh1d[0];
         double d = -1, d_reversed = -1, d_seam = -1, d_seam_reversed = -1;
         d = dist2(last_coord, first_coord);
-        if(MYDEBUG)
-          printf("%g %g dist = %12.5E\n", first_coord.x(), first_coord.y(), d);
+	//        if(MYDEBUG)
+	//          printf("%g %g dist = %12.5E\n", first_coord.x(), first_coord.y(), d);
         SPoint2 first_coord_reversed = mesh1d_reversed[0];
         d_reversed = dist2(last_coord, first_coord_reversed);
-        if(MYDEBUG)
-          printf("%g %g dist_reversed = %12.5E\n", first_coord_reversed.x(),
-                 first_coord_reversed.y(), d_reversed);
+	//        if(MYDEBUG)
+	//          printf("%g %g dist_reversed = %12.5E\n", first_coord_reversed.x(),
+	//                 first_coord_reversed.y(), d_reversed);
         if(d < tol && d < d_reversed) {
           coords.clear();
           coords = mesh1d;
@@ -1938,7 +1958,7 @@ static bool buildConsecutiveListOfVertices(
           SPoint2 first_coord_seam = mesh1d_seam[0];
           SPoint2 first_coord_seam_reversed = mesh1d_seam_reversed[0];
           d_seam = dist2(last_coord, first_coord_seam);
-          if(MYDEBUG) printf("dist_seam = %12.5E\n", d_seam);
+	  //          if(MYDEBUG) printf("dist_seam = %12.5E\n", d_seam);
           if(d_seam < tol) {
             coords.clear();
             coords = mesh1d_seam;
@@ -1947,21 +1967,21 @@ static bool buildConsecutiveListOfVertices(
             goto Finalize;
           }
           d_seam_reversed = dist2(last_coord, first_coord_seam_reversed);
-          if(MYDEBUG) printf("dist_seam_reversed = %12.5E\n", d_seam_reversed);
+	  //          if(MYDEBUG) printf("dist_seam_reversed = %12.5E\n", d_seam_reversed);
           if(d_seam_reversed < tol) {
             coords.clear();
             coords = mesh1d_seam_reversed;
             found = GEdgeSigned(-1, ge);
             unordered.erase(it);
             break;
-            goto Finalize;
+	    //            goto Finalize;
           }
         }
       }
       ++it;
     }
   Finalize:
-    if(MYDEBUG) printf("Finalize, found %d points\n", (int)coords.size());
+    //    if(MYDEBUG) printf("Finalize, found %d points\n", (int)coords.size());
     if(coords.size() == 0) {
       // It has not worked : either tolerance is wrong or the first seam edge
       // has to be taken with the other parametric coordinates (because it is
@@ -2053,6 +2073,7 @@ static bool buildConsecutiveListOfVertices(
   }
 
   // It has worked, so we add all the points to the recover map
+
   recoverMap.insert(recoverMapLocal.begin(), recoverMapLocal.end());
 
   return true;
@@ -2111,9 +2132,9 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
     for(auto it = gf->edgeLoops.begin(); it != gf->edgeLoops.end(); it++) {
       std::vector<BDS_Point *> edgeLoop_BDS;
       int nbPointsLocal;
-      const double fact[4] = {1.e-12, 1.e-7, 1.e-5, 1.e-3};
+      const double fact[5] = {1.e-12, 1.e-8, 1.e-7, 1.e-5, 1.e-3};
       bool ok = false;
-      for(int i = 0; i < 4; i++) {
+      for(int i = 0; i < 5; i++) {
         if(buildConsecutiveListOfVertices(gf, *it, edgeLoop_BDS, bbox, m,
                                           recoverMap, nbPointsLocal,
                                           nbPointsTotal, fact[i] * LC2D)) {
