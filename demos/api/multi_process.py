@@ -8,7 +8,7 @@ def f(i):
     gmsh.initialize()
     s = gmsh.model.occ.addRectangle(i,0,0, 1,1)
     gmsh.model.occ.synchronize()
-    gmsh.option.setNumber('Mesh.MeshSizeMax', 0.02)
+    gmsh.option.setNumber('Mesh.MeshSizeMax', 0.005)
     gmsh.model.mesh.generate(2)
     gmsh.finalize()
 

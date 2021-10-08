@@ -10,7 +10,8 @@ for i in range(5):
     s = gmsh.model.occ.addRectangle(i,0,0, 1,1)
 
 gmsh.model.occ.synchronize()
-gmsh.option.setNumber('Mesh.MeshSizeMax', 0.02)
+gmsh.option.setNumber('Mesh.MeshSizeMax', 0.005)
 gmsh.option.setNumber('General.NumThreads', 5)
 gmsh.model.mesh.generate(2)
 gmsh.finalize()
+print("All done")
