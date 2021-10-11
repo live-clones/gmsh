@@ -11,6 +11,7 @@
 #include <map>
 #include <set>
 #include "SBoundingBox3d.h"
+#include "SPoint3KDTree.h"
 
 #define VAL_INF 1.e200
 
@@ -38,6 +39,10 @@ private:
   int _fileIndex;
   // octree for rapid search
   OctreePost *_octree;
+  // kdtree for rapid search of neighrest neighbor
+  SPoint3Cloud _pc;
+  SPoint3CloudAdaptor<SPoint3Cloud> _pc2kdtree;
+  SPoint3KDTree *_kdtree;
 
 protected:
   // adaptive visualization data

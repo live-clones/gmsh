@@ -17,7 +17,8 @@
 std::map<std::string, interpolationMatrices> PViewData::_interpolationSchemes;
 
 PViewData::PViewData()
-  : _dirty(true), _fileIndex(0), _octree(nullptr), _adaptive(nullptr)
+  : _dirty(true), _fileIndex(0), _octree(nullptr), _pc2kdtree(_pc),
+    _kdtree(nullptr), _adaptive(nullptr)
 {
 }
 
@@ -27,6 +28,7 @@ PViewData::~PViewData()
   for(auto it = _interpolation.begin(); it != _interpolation.end(); it++)
     for(std::size_t i = 0; i < it->second.size(); i++) delete it->second[i];
   if(_octree) delete _octree;
+  if(_kdtree) delete _kdtree;
 }
 
 bool PViewData::finalize(bool computeMinMax,
@@ -249,17 +251,17 @@ bool PViewData::combineSpace(nameData &nd)
 
 double PViewData::findClosestNode(double &xn, double &yn, double &zn, int step)
 {
-  double dist2 = 1e200;
+  double x = xn, y = yn, z = zn;
 
-  // if this gets used a lot we should create a kdtree to make efficient nearest
-  // neighbor lookups; moreover iterations on view data is currently not
-  // thread-safe (it uses a cache for the current element/node), which further
-  // motivates a better solution
+#if 0
+
+  // slow, naive implementation; beware that iterations on view data is
+  // currently not thread-safe (it uses a cache for the current element/node)
+  double dist2 = 1e200;
 #if defined(_OPENMP)
 #pragma omp critical
 #endif
   {
-    double x = xn, y = yn, z = zn;
     if(step < 0) step = getFirstNonEmptyTimeStep();
     for(int ent = 0; ent < getNumEntities(step); ent++) {
       for(int ele = 0; ele < getNumElements(step, ent); ele++) {
@@ -280,6 +282,47 @@ double PViewData::findClosestNode(double &xn, double &yn, double &zn, int step)
     }
   }
   return sqrt(dist2);
+
+#else
+
+  if(!_kdtree) {
+#if defined(_OPENMP)
+#pragma omp barrier
+#pragma omp single
+#endif
+    {
+      Msg::Debug("Rebuilding kdtree for view data '%s'", _name.c_str());
+      _pc.pts.clear();
+      // FIXME: should directly iterate on mesh nodes for model-based views
+      if(step < 0) step = getFirstNonEmptyTimeStep();
+      for(int ent = 0; ent < getNumEntities(step); ent++) {
+        for(int ele = 0; ele < getNumElements(step, ent); ele++) {
+          int numNodes = getNumNodes(step, ent, ele);
+          for(int nod = 0; nod < numNodes; nod++) {
+            double xx, yy, zz;
+            getNode(step, ent, ele, nod, xx, yy, zz);
+            _pc.pts.push_back(SPoint3(xx, yy, zz));
+          }
+        }
+      }
+      _kdtree = new SPoint3KDTree(3, _pc2kdtree,
+                                  nanoflann::KDTreeSingleIndexAdaptorParams(10));
+      _kdtree->buildIndex();
+    }
+  }
+
+  double query_pt[3] = {x, y, z};
+  std::size_t idx;
+  double squ_dist;
+  nanoflann::KNNResultSet<double> resultSet(1);
+  resultSet.init(&idx, &squ_dist);
+  _kdtree->findNeighbors(resultSet, &query_pt[0], nanoflann::SearchParams(10));
+  xn = _pc.pts[idx].x();
+  yn = _pc.pts[idx].y();
+  zn = _pc.pts[idx].z();
+  return sqrt(squ_dist);
+
+#endif
 }
 
 bool PViewData::searchScalar(double x, double y, double z, double *values,

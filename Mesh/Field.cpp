@@ -29,7 +29,7 @@
 #include "ExtrudeParams.h"
 #include "automaticMeshSizeField.h"
 #include "fullMatrix.h"
-#include "nanoflann.hpp"
+#include "SPoint3KDTree.h"
 
 #if defined(HAVE_POST)
 #include "PView.h"
@@ -2656,16 +2656,15 @@ class DistanceField : public Field {
   std::vector<AttractorInfo> _infos;
   int _sampling;
   int _xFieldId, _yFieldId, _zFieldId; // unused
-  PointCloud _p;
-  nanoflann::KDTreeSingleIndexAdaptor
-  <nanoflann::L2_Simple_Adaptor<double, PointCloudAdaptor<PointCloud> >,
-   PointCloudAdaptor<PointCloud>, 3> *_index;
-  PointCloudAdaptor<PointCloud> _pc2kd;
+  SPoint3Cloud _pc;
+  SPoint3CloudAdaptor<SPoint3Cloud> _pc2kdtree;
+  SPoint3KDTree *_kdtree;
   std::size_t _outIndex;
   double _outDistSqr;
 
 public:
-  DistanceField() : _index(nullptr), _pc2kd(_p), _outIndex(0), _outDistSqr(0)
+  DistanceField() : _pc2kdtree(_pc), _kdtree(nullptr), _outIndex(0),
+                    _outDistSqr(0.)
   {
     _sampling = 20;
 
@@ -2700,7 +2699,7 @@ public:
       new FieldOptionInt(_sampling, "[Deprecated]", &updateNeeded, true);
   }
   DistanceField(int dim, int tag, int nbe)
-    : _sampling(nbe), _index(nullptr), _pc2kd(_p), _outIndex(0),
+    : _sampling(nbe), _pc2kdtree(_pc), _kdtree(nullptr), _outIndex(0),
       _outDistSqr(0)
   {
     if(dim == 0)
@@ -2714,7 +2713,7 @@ public:
   }
   ~DistanceField()
   {
-    if(_index) delete _index;
+    if(_kdtree) delete _kdtree;
   }
   const char *getName() { return "Distance"; }
   std::string getDescription()
@@ -2726,15 +2725,15 @@ public:
   }
   std::pair<AttractorInfo, SPoint3> getAttractorInfo() const
   {
-    if(_outIndex < _infos.size() && _outIndex < _p.pts.size())
-      return std::make_pair(_infos[_outIndex], _p.pts[_outIndex]);
+    if(_outIndex < _infos.size() && _outIndex < _pc.pts.size())
+      return std::make_pair(_infos[_outIndex], _pc.pts[_outIndex]);
     return std::make_pair(AttractorInfo(), SPoint3());
   }
   void update()
   {
     if(updateNeeded) {
       _infos.clear();
-      std::vector<SPoint3> &points = _p.pts;
+      std::vector<SPoint3> &points = _pc.pts;
       points.clear();
 
       for(auto it = _pointTags.begin(); it != _pointTags.end(); ++it) {
@@ -2783,23 +2782,21 @@ public:
       }
 
       // construct a kd-tree index:
-      _index = new nanoflann::KDTreeSingleIndexAdaptor
-        <nanoflann::L2_Simple_Adaptor<double, PointCloudAdaptor<PointCloud> >,
-         PointCloudAdaptor<PointCloud>, 3>
-        (3, _pc2kd, nanoflann::KDTreeSingleIndexAdaptorParams(10));
-      _index->buildIndex();
+      _kdtree = new SPoint3KDTree(3, _pc2kdtree,
+                                 nanoflann::KDTreeSingleIndexAdaptorParams(10));
+      _kdtree->buildIndex();
       updateNeeded = false;
     }
   }
   using Field::operator();
   virtual double operator()(double X, double Y, double Z, GEntity *ge = nullptr)
   {
-    if(!_index) return MAX_LC;
+    if(!_kdtree) return MAX_LC;
     double query_pt[3] = {X, Y, Z};
     const size_t num_results = 1;
     nanoflann::KNNResultSet<double> resultSet(num_results);
     resultSet.init(&_outIndex, &_outDistSqr);
-    _index->findNeighbors(resultSet, &query_pt[0], nanoflann::SearchParams(10));
+    _kdtree->findNeighbors(resultSet, &query_pt[0], nanoflann::SearchParams(10));
     return sqrt(_outDistSqr);
   }
 };
