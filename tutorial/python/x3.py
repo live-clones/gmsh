@@ -86,7 +86,7 @@ print(v1 + " with tag " + str(t1) + " has " + str(ns) + " time steps")
 
 # Views can be queried and modified in various ways using plugins (see `t9.py'),
 # or probed directly using `gmsh.view.probe()' - here at point (0.9, 0.1, 0):
-print("Value at (0.9, 0.1, 0)", gmsh.view.probe(t1, 1.001, 0, 0, 0))
+print("Value at (0.9, 0.1, 0)", gmsh.view.probe(t1, 0.9, 0.1, 0))
 
 # Views can be saved to disk using `gmsh.view.write()':
 gmsh.view.write(t1, "x3.pos")
