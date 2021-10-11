@@ -317,9 +317,11 @@ double PViewData::findClosestNode(double &xn, double &yn, double &zn, int step)
   nanoflann::KNNResultSet<double> resultSet(1);
   resultSet.init(&idx, &squ_dist);
   _kdtree->findNeighbors(resultSet, &query_pt[0], nanoflann::SearchParams(10));
-  xn = _pc.pts[idx].x();
-  yn = _pc.pts[idx].y();
-  zn = _pc.pts[idx].z();
+  if(idx < _pc.pts.size()) {
+    xn = _pc.pts[idx].x();
+    yn = _pc.pts[idx].y();
+    zn = _pc.pts[idx].z();
+  }
   return sqrt(squ_dist);
 
 #endif
