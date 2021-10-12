@@ -602,6 +602,8 @@ double opt_mesh_max_num_threads_1d(OPT_ARGS_NUM);
 double opt_mesh_max_num_threads_2d(OPT_ARGS_NUM);
 double opt_mesh_max_num_threads_3d(OPT_ARGS_NUM);
 double opt_mesh_angle_tolerance_facet_overlap(OPT_ARGS_NUM);
+double opt_mesh_tolerance_reference_element(OPT_ARGS_NUM);
+double opt_mesh_tolerance_reference_element(OPT_ARGS_NUM);
 double opt_mesh_renumber(OPT_ARGS_NUM);
 double opt_mesh_unv_strict_format(OPT_ARGS_NUM);
 double opt_mesh_reparam_max_triangles(OPT_ARGS_NUM);

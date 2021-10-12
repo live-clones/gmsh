@@ -10,8 +10,8 @@ binary builds now support OpenMP parallelization and are 64 bit only (build OS
 upgraded to Windows 10, macOS 10.15 and Linux glibc 2.24); new experimental
 Fortran API; small bug fixes.
 
-* Incompatible API changes: new arguments to mesh/getNode and mesh/getElement;
-  additional argument to the mesh size callback function provided to
+* Incompatible API changes: new arguments to mesh/getNode, mesh/getElement and
+  view/probe; additional argument to the mesh size callback function provided to
   mesh/setSizeCallback; new optional arguments to gmsh/initialize,
   model/isInside, mesh/partition and occ/addSurfaceFilling; renamed
   mesh/preallocateBasisFunctionsOrientationForElements as

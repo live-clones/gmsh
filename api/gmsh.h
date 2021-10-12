@@ -977,11 +977,17 @@ namespace gmsh { // Top-level functions
       // gmsh::model::mesh::getIntegrationPoints
       //
       // Get the numerical quadrature information for the given element type
-      // `elementType' and integration rule `integrationType' (e.g. "Gauss4" for a
-      // Gauss quadrature suited for integrating 4th order polynomials).
-      // `localCoord' contains the u, v, w coordinates of the G integration points
-      // in the reference element: [g1u, g1v, g1w, ..., gGu, gGv, gGw]. `weights'
-      // contains the associated weights: [g1q, ..., gGq].
+      // `elementType' and integration rule `integrationType', where
+      // `integrationType' concatenates the integration rule family name with the
+      // desired order (e.g. "Gauss4" for a quadrature suited for integrating 4th
+      // order polynomials). The "GaussLegendre" family uses tensor-product rules
+      // based on 1D Gauss-Legendre points; the "Gauss" family uses the minimal
+      // number of points when available, and falls back to "GaussLegendre"
+      // otherwise. Note that integration points for the "Gauss" family can fall
+      // outside of the reference element for high-order rules. `localCoord'
+      // contains the u, v, w coordinates of the G integration points in the
+      // reference element: [g1u, g1v, g1w, ..., gGu, gGv, gGw]. `weights' contains
+      // the associated weights: [g1q, ..., gGq].
       GMSH_API void getIntegrationPoints(const int elementType,
                                          const std::string & integrationType,
                                          std::vector<double> & localCoord,
@@ -3232,23 +3238,29 @@ namespace gmsh { // Top-level functions
 
     // gmsh::view::probe
     //
-    // Probe the view `tag' for its `value' at point (`x', `y', `z'). Return only
-    // the value at step `step' is `step' is positive. Return only values with
-    // `numComp' if `numComp' is positive. Return the gradient of the `value' if
-    // `gradient' is set. Probes with a geometrical tolerance (in the reference
-    // unit cube) of `tolerance' if `tolerance' is not zero. Return the result from
-    // the element described by its coordinates if `xElementCoord', `yElementCoord'
-    // and `zElementCoord' are provided. If `dim' is >= 0, return only elements of
-    // the specified dimension.
+    // Probe the view `tag' for its `value' at point (`x', `y', `z'). If no match
+    // is found, `value' is returned empty. Return only the value at step `step' is
+    // `step' is positive. Return only values with `numComp' if `numComp' is
+    // positive. Return the gradient of the `value' if `gradient' is set. If
+    // `distanceMax' is zero, only return a result if an exact match inside an
+    // element in the view is found; if `distanceMax' is positive and an exact
+    // match is not found, return the value at the closest node if it is closer
+    // than `distanceMax'; if `distanceMax' is negative and an exact match is not
+    // found, always return the value at the closest node. The distance to the
+    // match is returned in `distance'. Return the result from the element
+    // described by its coordinates if `xElementCoord', `yElementCoord' and
+    // `zElementCoord' are provided. If `dim' is >= 0, return only matches from
+    // elements of the specified dimension.
     GMSH_API void probe(const int tag,
                         const double x,
                         const double y,
                         const double z,
                         std::vector<double> & value,
+                        double & distance,
                         const int step = -1,
                         const int numComp = -1,
                         const bool gradient = false,
-                        const double tolerance = 0.,
+                        const double distanceMax = 0.,
                         const std::vector<double> & xElemCoord = std::vector<double>(),
                         const std::vector<double> & yElemCoord = std::vector<double>(),
                         const std::vector<double> & zElemCoord = std::vector<double>(),

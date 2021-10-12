@@ -2366,11 +2366,17 @@ class model:
             gmsh.model.mesh.getIntegrationPoints(elementType, integrationType)
 
             Get the numerical quadrature information for the given element type
-            `elementType' and integration rule `integrationType' (e.g. "Gauss4" for a
-            Gauss quadrature suited for integrating 4th order polynomials).
-            `localCoord' contains the u, v, w coordinates of the G integration points
-            in the reference element: [g1u, g1v, g1w, ..., gGu, gGv, gGw]. `weights'
-            contains the associated weights: [g1q, ..., gGq].
+            `elementType' and integration rule `integrationType', where
+            `integrationType' concatenates the integration rule family name with the
+            desired order (e.g. "Gauss4" for a quadrature suited for integrating 4th
+            order polynomials). The "GaussLegendre" family uses tensor-product rules
+            based on 1D Gauss-Legendre points; the "Gauss" family uses the minimal
+            number of points when available, and falls back to "GaussLegendre"
+            otherwise. Note that integration points for the "Gauss" family can fall
+            outside of the reference element for high-order rules. `localCoord'
+            contains the u, v, w coordinates of the G integration points in the
+            reference element: [g1u, g1v, g1w, ..., gGu, gGv, gGw]. `weights' contains
+            the associated weights: [g1q, ..., gGq].
 
             Return `localCoord', `weights'.
             """
@@ -7059,22 +7065,28 @@ class view:
             raise Exception(logger.getLastError())
 
     @staticmethod
-    def probe(tag, x, y, z, step=-1, numComp=-1, gradient=False, tolerance=0., xElemCoord=[], yElemCoord=[], zElemCoord=[], dim=-1):
+    def probe(tag, x, y, z, step=-1, numComp=-1, gradient=False, distanceMax=0., xElemCoord=[], yElemCoord=[], zElemCoord=[], dim=-1):
         """
-        gmsh.view.probe(tag, x, y, z, step=-1, numComp=-1, gradient=False, tolerance=0., xElemCoord=[], yElemCoord=[], zElemCoord=[], dim=-1)
+        gmsh.view.probe(tag, x, y, z, step=-1, numComp=-1, gradient=False, distanceMax=0., xElemCoord=[], yElemCoord=[], zElemCoord=[], dim=-1)
 
-        Probe the view `tag' for its `value' at point (`x', `y', `z'). Return only
-        the value at step `step' is `step' is positive. Return only values with
-        `numComp' if `numComp' is positive. Return the gradient of the `value' if
-        `gradient' is set. Probes with a geometrical tolerance (in the reference
-        unit cube) of `tolerance' if `tolerance' is not zero. Return the result
-        from the element described by its coordinates if `xElementCoord',
-        `yElementCoord' and `zElementCoord' are provided. If `dim' is >= 0, return
-        only elements of the specified dimension.
+        Probe the view `tag' for its `value' at point (`x', `y', `z'). If no match
+        is found, `value' is returned empty. Return only the value at step `step'
+        is `step' is positive. Return only values with `numComp' if `numComp' is
+        positive. Return the gradient of the `value' if `gradient' is set. If
+        `distanceMax' is zero, only return a result if an exact match inside an
+        element in the view is found; if `distanceMax' is positive and an exact
+        match is not found, return the value at the closest node if it is closer
+        than `distanceMax'; if `distanceMax' is negative and an exact match is not
+        found, always return the value at the closest node. The distance to the
+        match is returned in `distance'. Return the result from the element
+        described by its coordinates if `xElementCoord', `yElementCoord' and
+        `zElementCoord' are provided. If `dim' is >= 0, return only matches from
+        elements of the specified dimension.
 
-        Return `value'.
+        Return `value', `distance'.
         """
         api_value_, api_value_n_ = POINTER(c_double)(), c_size_t()
+        api_distance_ = c_double()
         api_xElemCoord_, api_xElemCoord_n_ = _ivectordouble(xElemCoord)
         api_yElemCoord_, api_yElemCoord_n_ = _ivectordouble(yElemCoord)
         api_zElemCoord_, api_zElemCoord_n_ = _ivectordouble(zElemCoord)
@@ -7085,10 +7097,11 @@ class view:
             c_double(y),
             c_double(z),
             byref(api_value_), byref(api_value_n_),
+            byref(api_distance_),
             c_int(step),
             c_int(numComp),
             c_int(bool(gradient)),
-            c_double(tolerance),
+            c_double(distanceMax),
             api_xElemCoord_, api_xElemCoord_n_,
             api_yElemCoord_, api_yElemCoord_n_,
             api_zElemCoord_, api_zElemCoord_n_,
@@ -7096,7 +7109,9 @@ class view:
             byref(ierr))
         if ierr.value != 0:
             raise Exception(logger.getLastError())
-        return _ovectordouble(api_value_, api_value_n_.value)
+        return (
+            _ovectordouble(api_value_, api_value_n_.value),
+            api_distance_.value)
 
     @staticmethod
     def write(tag, fileName, append=False):

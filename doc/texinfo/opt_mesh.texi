@@ -871,6 +871,11 @@ Tolerance for initial 3D Delaunay mesher@*
 Default value: @code{1e-12}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.ToleranceReferenceElement
+Tolerance for classifying a point inside a reference element (of size 1)@*
+Default value: @code{1e-06}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.Triangles
 Display mesh triangles?@*
 Default value: @code{1}@*

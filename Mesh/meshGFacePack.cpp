@@ -216,7 +216,8 @@ static double p2triangle_alignement_quality_measure(double *xa, double *xb,
                                     xbc[1], xca[1]);
 
     std::vector<double> val(9);
-    gmsh::view::probe(VIEW_TAG, x[j][0], x[j][1], 0.0, val);
+    double dist;
+    gmsh::view::probe(VIEW_TAG, x[j][0], x[j][1], 0.0, val, dist);
     double dxdu = Js[j][0];
     double dydu = Js[j][2];
 
@@ -251,8 +252,9 @@ static double p1triangle_quality_metric(int VIEW_TAG, PolyMesh::Vertex *v0,
   double *xc = v2->position;
 
   std::vector<double> val(9);
+  double dist;
   gmsh::view::probe(VIEW_TAG, (xa[0] + xb[0] + xc[0]) / 3,
-                    (xa[1] + xb[1] + xc[1]) / 3, 0.0, val);
+                    (xa[1] + xb[1] + xc[1]) / 3, 0.0, val, dist);
   double M[3] = {val[0], val[4], val[1]};
   val.clear();
 
@@ -315,7 +317,8 @@ int lengthPathInMetricField(double lagrangianPoints[3][2],
                 0.5 * (1 + 2 * t) * lagrangianPoints[2][1];
 
     std::vector<double> val(9);
-    gmsh::view::probe(VIEW_TAG, x[0], x[1], 0.0, val);
+    double dist;
+    gmsh::view::probe(VIEW_TAG, x[0], x[1], 0.0, val, dist);
     if(val.empty()) { *lengthInMetricField = 1.e22; }
     else {
       double M[3] = {val[0], val[4], val[1]};
@@ -492,7 +495,8 @@ static bool computeNeighbor(int VIEW_TAG, const SPoint2 &p, int DIR,
                             double adimensionalLength, SPoint2 &n)
 {
   std::vector<double> val;
-  gmsh::view::probe(VIEW_TAG, p.x(), p.y(), 0.0, val);
+  double dist;
+  gmsh::view::probe(VIEW_TAG, p.x(), p.y(), 0.0, val, dist);
   if(val.empty()) return false;
   double C, S, h1, h2;
   analyze2dMetric(val, C, S, h1, h2);
@@ -511,7 +515,7 @@ static bool computeNeighbor(int VIEW_TAG, const SPoint2 &p, int DIR,
                PP.y() + dy * h * adimensionalLength / N);
     double Cpp, Spp, h1pp, h2pp;
     val.clear();
-    gmsh::view::probe(VIEW_TAG, pp.x(), pp.y(), 0.0, val);
+    gmsh::view::probe(VIEW_TAG, pp.x(), pp.y(), 0.0, val, dist);
     if(val.empty()) { iter = N + 1; }
     else {
       analyze2dMetric(val, Cpp, Spp, h1pp, h2pp);
@@ -596,15 +600,16 @@ triangleQualityP2(int VIEW_TAG, PolyMesh::HalfEdge *hea,
 
   if(FF) {
     std::vector<double> val0(9), val1(9), val2(9), val3(9), val4(9), val5(9);
+    double dist;
     gmsh::view::probe(VIEW_TAG, hea->v->position.x(), hea->v->position.y(), 0.0,
-                      val0);
+                      val0, dist);
     gmsh::view::probe(VIEW_TAG, heb->v->position.x(), heb->v->position.y(), 0.0,
-                      val1);
+                      val1, dist);
     gmsh::view::probe(VIEW_TAG, hec->v->position.x(), hec->v->position.y(), 0.0,
-                      val2);
-    gmsh::view::probe(VIEW_TAG, ab.x(), ab.y(), 0.0, val3);
-    gmsh::view::probe(VIEW_TAG, bc.x(), bc.y(), 0.0, val4);
-    gmsh::view::probe(VIEW_TAG, ca.x(), ca.y(), 0.0, val5);
+                      val2, dist);
+    gmsh::view::probe(VIEW_TAG, ab.x(), ab.y(), 0.0, val3, dist);
+    gmsh::view::probe(VIEW_TAG, bc.x(), bc.y(), 0.0, val4, dist);
+    gmsh::view::probe(VIEW_TAG, ca.x(), ca.y(), 0.0, val5, dist);
 
     fprintf(FF,
             "ST2(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,0,%g,%g,0,%g,%g,0){%g,%g,%g,%"

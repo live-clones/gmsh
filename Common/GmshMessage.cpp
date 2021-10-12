@@ -51,6 +51,10 @@
 #include "extraDialogs.h"
 #endif
 
+#if defined(_OPENMP)
+#include <omp.h>
+#endif
+
 int Msg::_commRank = 0;
 int Msg::_commSize = 1;
 int Msg::_verbosity = 5;
@@ -183,6 +187,11 @@ void Msg::Initialize(int argc, char **argv)
   }
 
   InitializeOnelab("Gmsh");
+
+#if defined(_OPENMP)
+  // this is deprecated
+  //omp_set_nested(true);
+#endif
 }
 
 void Msg::Finalize()
@@ -1611,8 +1620,6 @@ void Msg::Barrier()
 }
 
 #if defined(_OPENMP)
-
-#include <omp.h>
 
 int Msg::GetNumThreads(){ return omp_get_num_threads(); }
 void Msg::SetNumThreads(int num){ omp_set_num_threads(num); }
