@@ -11,10 +11,11 @@ static std::vector<IntPt *> GQL(40, nullptr);
 
 IntPt *getGQLPts(int order)
 {
-  // Number of Gauss Point: (order + 1) / 2 *ROUNDED UP*
-  int n = (order + 1) / (double)2 + 0.5;
-  if(static_cast<int>(GQL.size()) < order + 1) GQL.resize(order + 1, nullptr);
+  if(static_cast<int>(GQL.size()) < order + 1)
+    GQL.resize(order + 1, nullptr);
   if(!GQL[order]) {
+    // number of Gauss Point: (order + 1) / 2 *ROUNDED UP*
+    int n = (order + 1) / (double)2 + 0.5;
     double *pt, *wt;
     gmshGaussLegendre1D(n, &pt, &wt);
     IntPt *intpt = new IntPt[n];
@@ -29,4 +30,7 @@ IntPt *getGQLPts(int order)
   return GQL[order];
 }
 
-int getNGQLPts(int order) { return (order + 1) / (double)2 + 0.5; }
+int getNGQLPts(int order)
+{
+  return (order + 1) / (double)2 + 0.5;
+}
