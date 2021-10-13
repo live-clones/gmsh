@@ -814,7 +814,7 @@ Affectation :
       Msg::SetOnelabNumber($3, $5);
       Free($3);
     }
-  | tSetString LP String__Index ',' StringExpr RP tEND
+  | tSetString LP StringExpr ',' StringExpr RP tEND
     {
       Msg::SetOnelabString($3, $5);
       Free($3);
