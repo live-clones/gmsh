@@ -4210,7 +4210,7 @@ static bool _getIntegrationInfo(const std::string &intType,
 {
   if(intType.substr(0, 14) == "CompositeGauss") {
     intName = "CompositeGauss";
-    intOrder = atoi(intType.substr(13).c_str());
+    intOrder = atoi(intType.substr(14).c_str());
     return true;
   }
   else if(intType.substr(0, 5) == "Gauss") {
