@@ -314,8 +314,6 @@ public:
     double meshSize, meshSizeFactor;
     // do we force the meshing algorithm (if != 0)
     int algorithm;
-    // in case of a compound, do we force the compound meshing algorithm (if != 0)
-    int compoundAlgorithm;
     // do we force calculation of mesh size from boundary (if >= 0)
     int meshSizeFromBoundary;
   } meshAttributes;
