@@ -279,28 +279,25 @@ double PViewData::findClosestNode(double &xn, double &yn, double &zn, int step)
 
 #else
 
+#pragma omp critical
   if(!_kdtree) {
-#pragma omp barrier
-#pragma omp single
-    {
-      Msg::Debug("Rebuilding kdtree for view data '%s'", _name.c_str());
-      _pc.pts.clear();
-      // FIXME: should directly iterate on mesh nodes for model-based views
-      if(step < 0) step = getFirstNonEmptyTimeStep();
-      for(int ent = 0; ent < getNumEntities(step); ent++) {
-        for(int ele = 0; ele < getNumElements(step, ent); ele++) {
-          int numNodes = getNumNodes(step, ent, ele);
-          for(int nod = 0; nod < numNodes; nod++) {
-            double xx, yy, zz;
-            getNode(step, ent, ele, nod, xx, yy, zz);
-            _pc.pts.push_back(SPoint3(xx, yy, zz));
-          }
+    Msg::Debug("Rebuilding kdtree for view data '%s'", _name.c_str());
+    _pc.pts.clear();
+    // FIXME: should directly iterate on mesh nodes for model-based views
+    if(step < 0) step = getFirstNonEmptyTimeStep();
+    for(int ent = 0; ent < getNumEntities(step); ent++) {
+      for(int ele = 0; ele < getNumElements(step, ent); ele++) {
+        int numNodes = getNumNodes(step, ent, ele);
+        for(int nod = 0; nod < numNodes; nod++) {
+          double xx, yy, zz;
+          getNode(step, ent, ele, nod, xx, yy, zz);
+          _pc.pts.push_back(SPoint3(xx, yy, zz));
         }
       }
-      _kdtree = new SPoint3KDTree(3, _pc2kdtree,
-                                  nanoflann::KDTreeSingleIndexAdaptorParams(10));
-      _kdtree->buildIndex();
     }
+    _kdtree = new SPoint3KDTree(3, _pc2kdtree,
+                                nanoflann::KDTreeSingleIndexAdaptorParams(10));
+    _kdtree->buildIndex();
   }
 
   double query_pt[3] = {x, y, z};
