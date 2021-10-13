@@ -85,13 +85,14 @@ static IntPt *GQH[2] = {GQH1, GQH6};
 static int GQHnPt[2] = {1, 6};
 static std::vector<IntPt *> GQHGL(40, nullptr);
 
-IntPt *getGQHPts(int order)
+IntPt *getGQHPts(int order, bool forceTensorRule)
 {
-  if(order <= 1) return GQH[order];
-  int n = (order + 1) / (float)2 + 0.5;
+  if(!forceTensorRule && order <= 1) return GQH[order];
+
   if(static_cast<int>(GQHGL.size()) < order + 1)
     GQHGL.resize(order + 1, nullptr);
   if(!GQHGL[order]) {
+    int n = (order + 1) / (float)2 + 0.5;
     double *pt, *wt;
     gmshGaussLegendre1D(n, &pt, &wt);
     IntPt *intpt = new IntPt[n * n * n];
@@ -111,9 +112,9 @@ IntPt *getGQHPts(int order)
   return GQHGL[order];
 }
 
-int getNGQHPts(int order)
+int getNGQHPts(int order, bool forceTensorRule)
 {
-  if(order <= 1) return GQHnPt[order];
+  if(!forceTensorRule && order <= 1) return GQHnPt[order];
   int n = (order + 1) / (float)2 + 0.5;
   return n * n * n;
 }

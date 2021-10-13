@@ -4208,7 +4208,12 @@ GMSH_API void gmsh::model::mesh::getBarycenters(
 static bool _getIntegrationInfo(const std::string &intType,
                                 std::string &intName, int &intOrder)
 {
-  if(intType.substr(0, 5) == "Gauss") {
+  if(intType.substr(0, 13) == "GaussLegendre") {
+    intName = "GaussLegendre";
+    intOrder = atoi(intType.substr(13).c_str());
+    return true;
+  }
+  else if(intType.substr(0, 5) == "Gauss") {
     intName = "Gauss";
     intOrder = atoi(intType.substr(5).c_str());
     return true;
@@ -4233,7 +4238,8 @@ GMSH_API void gmsh::model::mesh::getIntegrationPoints(
   int familyType = ElementType::getParentType(elementType);
   fullMatrix<double> pts;
   fullVector<double> wgs;
-  gaussIntegration::get(familyType, intOrder, pts, wgs);
+  gaussIntegration::get(familyType, intOrder, pts, wgs,
+                        intName == "Gauss" ? false : true);
   if(pts.size1() != wgs.size() || pts.size2() != 3) {
     Msg::Error("Wrong integration point format");
     return;
@@ -7317,8 +7323,9 @@ GMSH_API void gmsh::view::combine(const std::string &what,
 
 GMSH_API void gmsh::view::probe(const int tag, const double x, const double y,
                                 const double z, std::vector<double> &value,
-                                const int step, const int numComp,
-                                const bool gradient, const double tolerance,
+                                double &distance, const int step,
+                                const int numComp, const bool gradient,
+                                const double distanceMax,
                                 const std::vector<double> &xElemCoord,
                                 const std::vector<double> &yElemCoord,
                                 const std::vector<double> &zElemCoord,
@@ -7351,37 +7358,38 @@ GMSH_API void gmsh::view::probe(const int tag, const double x, const double y,
   int numSteps = (step < 0) ? data->getNumTimeSteps() : 1;
   int mult = gradient ? 3 : 1;
   int numVal = 0;
+  distance = distanceMax;
   switch(numComp) {
   case 1:
-    if(data->searchScalarWithTol(x, y, z, &val[0], step, nullptr, tolerance, qn,
-                                 qx, qy, qz, gradient, dim)) {
+    if(data->searchScalarClosest(x, y, z, distance, &val[0], step, nullptr,
+                                 qn, qx, qy, qz, gradient, dim)) {
       numVal = numSteps * mult * 1;
     }
     break;
   case 3:
-    if(data->searchVectorWithTol(x, y, z, &val[0], step, nullptr, tolerance, qn,
-                                 qx, qy, qz, gradient, dim)) {
+    if(data->searchVectorClosest(x, y, z, distance, &val[0], step, nullptr,
+                                 qn, qx, qy, qz, gradient, dim)) {
       numVal = numSteps * mult * 3;
     }
     break;
   case 9:
-    if(data->searchTensorWithTol(x, y, z, &val[0], step, nullptr, tolerance, qn,
-                                 qx, qy, qz, gradient, dim)) {
+    if(data->searchTensorClosest(x, y, z, distance, &val[0], step, nullptr,
+                                 qn, qx, qy, qz, gradient, dim)) {
       numVal = numSteps * mult * 9;
     }
     break;
   default:
-    if(data->searchScalarWithTol(x, y, z, &val[0], step, nullptr, tolerance, qn,
-                                 qx, qy, qz, gradient, dim)) {
+    if(data->searchScalarClosest(x, y, z, distance, &val[0], step, nullptr,
+                                 qn, qx, qy, qz, gradient, dim)) {
       numVal = numSteps * mult * 1;
     }
-    else if(data->searchVectorWithTol(x, y, z, &val[0], step, nullptr,
-                                      tolerance, qn, qx, qy, qz, gradient,
+    else if(data->searchVectorClosest(x, y, z, distance, &val[0], step, nullptr,
+                                      qn, qx, qy, qz, gradient,
                                       dim)) {
       numVal = numSteps * mult * 3;
     }
-    else if(data->searchTensorWithTol(x, y, z, &val[0], step, nullptr,
-                                      tolerance, qn, qx, qy, qz, gradient,
+    else if(data->searchTensorClosest(x, y, z, distance, &val[0], step, nullptr,
+                                      qn, qx, qy, qz, gradient,
                                       dim)) {
       numVal = numSteps * mult * 9;
     }

@@ -45,9 +45,7 @@ static HXTStatus nodalSizesCallBack(double *pts, uint32_t *volume,
 
   HXT_INFO("Computing %smesh sizes...", useInterpolatedSize ? "interpolated " : "");
 
-#if defined(_OPENMP)
 #pragma omp parallel for schedule(dynamic)
-#endif
   for(size_t i = 0; i < numPts; i++) {
     if(volume[i] < 0 || volume[i] >= allGR->size()) {
       Msg::Error("Invalid volume tag %d in mesh size calculation", volume[i]);

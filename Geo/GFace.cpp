@@ -237,7 +237,6 @@ void GFace::resetMeshAttributes()
   meshAttributes.meshSize = MAX_LC;
   meshAttributes.meshSizeFactor = 1.;
   meshAttributes.algorithm = 0;
-  meshAttributes.compoundAlgorithm = 0;
   meshAttributes.meshSizeFromBoundary = -1;
 }
 
@@ -1690,11 +1689,17 @@ static void meshCompound(GFace *gf, bool verbose)
   bool magic = (CTX::instance()->mesh.compoundClassify == 1);
 
   auto *df = new discreteFace(gf->model(), gf->tag() + 100000);
-
-  // set the algorithm to user's choice
-  df->meshAttributes.algorithm = gf->meshAttributes.compoundAlgorithm;
-
   gf->model()->add(df);
+
+  if(CTX::instance()->geom.copyMeshingMethod) {
+    df->meshAttributes.method = gf->meshAttributes.method;
+    df->meshAttributes.transfiniteArrangement =
+      gf->meshAttributes.transfiniteArrangement;
+    df->meshAttributes.transfiniteSmoothing =
+      gf->meshAttributes.transfiniteSmoothing;
+    df->meshAttributes.algorithm = gf->meshAttributes.algorithm;
+  }
+
 
   std::vector<GFace *> triangles_tag;
 

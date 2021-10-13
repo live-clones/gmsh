@@ -1535,6 +1535,8 @@ StringXNumber MeshOptions_Number[] = {
     "defined tolerance" },
   { F|O, "ToleranceInitialDelaunay" , opt_mesh_tolerance_initial_delaunay, 1.e-12,
     "Tolerance for initial 3D Delaunay mesher" },
+  { F|O, "ToleranceReferenceElement" , opt_mesh_tolerance_reference_element , 1e-6,
+    "Tolerance for classifying a point inside a reference element (of size 1)" },
   { F|O, "Triangles" , opt_mesh_triangles , 1. ,
     "Display mesh triangles?" },
   { F|O, "Trihedra" , opt_mesh_trihedra , 1. ,

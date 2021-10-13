@@ -217,9 +217,7 @@ void GModel::destroy(bool keepName)
 void GModel::destroyMeshCaches()
 {
   // this is called in GEntity::deleteMesh()
-#if defined(_OPENMP)
 #pragma omp critical
-#endif
   {
     _vertexVectorCache.clear();
     std::vector<MVertex *>().swap(_vertexVectorCache);
@@ -1762,10 +1760,8 @@ MElement *GModel::getMeshElementByCoord(SPoint3 &p, SPoint3 &param, int dim,
                                         bool strict)
 {
   if(!_elementOctree) {
-#if defined(_OPENMP)
 #pragma omp barrier
 #pragma omp single
-#endif
     {
       Msg::Debug("Rebuilding mesh element octree");
       _elementOctree = new MElementOctree(this);
@@ -1787,10 +1783,8 @@ std::vector<MElement *> GModel::getMeshElementsByCoord(SPoint3 &p, int dim,
                                                        bool strict)
 {
   if(!_elementOctree) {
-#if defined(_OPENMP)
 #pragma omp barrier
 #pragma omp single
-#endif
     {
       Msg::Debug("Rebuilding mesh element octree");
       _elementOctree = new MElementOctree(this);
@@ -1876,10 +1870,8 @@ void GModel::rebuildMeshElementCache(bool onlyIfNecessary)
 MVertex *GModel::getMeshVertexByTag(int n)
 {
   if(_vertexVectorCache.empty() && _vertexMapCache.empty()) {
-#if defined(_OPENMP)
 #pragma omp barrier
 #pragma omp single
-#endif
     {
       Msg::Debug("Rebuilding mesh node cache");
       rebuildMeshVertexCache();
@@ -1899,9 +1891,7 @@ void GModel::addMVertexToVertexCache(MVertex* v)
     rebuildMeshVertexCache();
   }
   if (_vertexVectorCache.size() > 0) {
-    #if defined(_OPENMP)
-    #pragma omp critical
-    #endif
+#pragma omp critical
     if (v->getNum() >= _vertexVectorCache.size()) {
       _vertexVectorCache.resize(v->getNum()+1, nullptr);
     }
@@ -1934,10 +1924,8 @@ void GModel::getMeshVerticesForPhysicalGroup(int dim, int num,
 MElement *GModel::getMeshElementByTag(int n, int &entityTag)
 {
   if(_elementVectorCache.empty() && _elementMapCache.empty()) {
-#if defined(_OPENMP)
 #pragma omp barrier
 #pragma omp single
-#endif
     {
       Msg::Debug("Rebuilding mesh element cache");
       rebuildMeshElementCache();
@@ -2130,9 +2118,7 @@ void GModel::scaleMesh(double factor)
 
 void GModel::setCurrentMeshEntity(GEntity *e)
 {
-#if defined(_OPENMP)
-#pragma omp critical
-#endif
+#pragma omp atomic write
   _currentMeshEntity = e;
 }
 

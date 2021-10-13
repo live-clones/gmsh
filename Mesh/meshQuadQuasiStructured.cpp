@@ -570,9 +570,7 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
     global_triangles.reserve(ntris);
     global_size_map.reserve(3 * ntris);
 
-#if defined(_OPENMP)
 #pragma omp parallel for schedule(dynamic)
-#endif
     for(size_t f = 0; f < faces.size(); ++f) {
       GFace *gf = faces[f];
 
@@ -724,9 +722,7 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
         }
       }
 
-#if defined(_OPENMP)
 #pragma omp critical
-#endif
       {
         append(global_triangles, triangles);
         append(global_triangle_directions, triangleDirections);
@@ -2059,9 +2055,7 @@ int RefineMeshWithBackgroundMeshProjectionSimple(GModel *gm)
   /* old2new use to update mesh elements after */
   unordered_map<MVertex *, MVertex *> old2new;
 
-#if defined(_OPENMP)
 #pragma omp parallel for schedule(dynamic)
-#endif
   for(size_t e = 0; e < edges.size(); ++e) {
     GEdge *ge = edges[e];
     if(CTX::instance()->mesh.meshOnlyVisible && !ge->getVisibility()) continue;
@@ -2117,9 +2111,7 @@ int RefineMeshWithBackgroundMeshProjectionSimple(GModel *gm)
                  "using CAD projection (slow)");
   }
 
-#if defined(_OPENMP)
 #pragma omp parallel for schedule(dynamic)
-#endif
   for(size_t f = 0; f < faces.size(); ++f) {
     GFace *gf = faces[f];
     if(CTX::instance()->mesh.meshOnlyVisible && !gf->getVisibility()) continue;
@@ -2213,9 +2205,7 @@ int RefineMeshWithBackgroundMeshProjectionSimple(GModel *gm)
   }
 
 /* Update elements */
-#if defined(_OPENMP)
 #pragma omp parallel for schedule(dynamic)
-#endif
   for(size_t e = 0; e < edges.size(); ++e) {
     GEdge *ge = edges[e];
     for(MLine *l : ge->lines) {
@@ -2227,9 +2217,7 @@ int RefineMeshWithBackgroundMeshProjectionSimple(GModel *gm)
     }
   }
 
-#if defined(_OPENMP)
 #pragma omp parallel for schedule(dynamic)
-#endif
   for(size_t f = 0; f < faces.size(); ++f) {
     GFace *gf = faces[f];
     for(size_t i = 0; i < gf->getNumMeshElements(); ++i) {
@@ -2319,9 +2307,7 @@ int RefineMeshWithBackgroundMeshProjection(GModel *gm)
     for(GEdge *ge : fedges) edgeToFaces[ge].insert(gf);
   }
 
-#if defined(_OPENMP)
 #pragma omp parallel for schedule(dynamic)
-#endif
   for(size_t e = 0; e < edges.size(); ++e) {
     GEdge *ge = edges[e];
     if(CTX::instance()->mesh.meshOnlyVisible && !ge->getVisibility()) continue;
@@ -2362,9 +2348,7 @@ int RefineMeshWithBackgroundMeshProjection(GModel *gm)
     }
   }
 
-#if defined(_OPENMP)
 #pragma omp parallel for schedule(dynamic)
-#endif
   for(size_t f = 0; f < faces.size(); ++f) {
     GFace *gf = faces[f];
     if(CTX::instance()->mesh.meshOnlyVisible && !gf->getVisibility()) continue;
@@ -2407,9 +2391,7 @@ int RefineMeshWithBackgroundMeshProjection(GModel *gm)
 /* Geometric projection on model */
 
 /* - projections on curves */
-#if defined(_OPENMP)
 #pragma omp parallel for schedule(dynamic)
-#endif
   for(size_t e = 0; e < edges.size(); ++e) {
     GEdge *ge = edges[e];
     auto it = toProjectOnCurve.find(ge);
@@ -2444,9 +2426,7 @@ int RefineMeshWithBackgroundMeshProjection(GModel *gm)
   }
 
 /* - projections on faces */
-#if defined(_OPENMP)
 #pragma omp parallel for schedule(dynamic)
-#endif
   for(size_t f = 0; f < faces.size(); ++f) {
     GFace *gf = faces[f];
 
@@ -2593,9 +2573,7 @@ int replaceBadQuadDominantMeshes(GModel *gm)
 {
   std::vector<GFace *> faces = model_faces(gm);
 
-#if defined(_OPENMP)
 #pragma omp parallel for schedule(dynamic)
-#endif
   for(size_t f = 0; f < faces.size(); ++f) {
     GFace *gf = faces[f];
     if(CTX::instance()->mesh.meshOnlyVisible && !gf->getVisibility()) continue;
@@ -3047,9 +3025,7 @@ int quadMeshingOfSimpleFacesWithPatterns(GModel *gm,
 
   initQuadPatterns();
 
-#if defined(_OPENMP)
 #pragma omp parallel for schedule(dynamic)
-#endif
   for(size_t f = 0; f < faces.size(); ++f) {
     GFace *gf = faces[f];
     if(gf->meshStatistics.status != GFace::PENDING) continue;
@@ -3104,9 +3080,7 @@ int optimizeTopologyWithDiskQuadrangulationRemeshing(GModel *gm)
 
   std::vector<GFace *> faces = model_faces(gm);
 
-#if defined(_OPENMP)
 #pragma omp parallel for schedule(dynamic)
-#endif
   for(size_t f = 0; f < faces.size(); ++f) {
     GFace *gf = faces[f];
     if(gf->meshStatistics.status != GFace::PENDING) continue;
@@ -3174,9 +3148,7 @@ int optimizeTopologyWithCavityRemeshing(GModel *gm)
 
   GlobalBackgroundMesh &bmesh = getBackgroundMesh(BMESH_NAME);
 
-#if defined(_OPENMP)
 #pragma omp parallel for schedule(dynamic)
-#endif
   for(size_t f = 0; f < faces.size(); ++f) {
     GFace *gf = faces[f];
     if(gf->meshStatistics.status != GFace::PENDING) continue;
@@ -3232,9 +3204,7 @@ int optimizeQuadMeshBoundaries(GModel *gm)
 
   std::vector<GFace *> faces = model_faces(gm);
 
-#if defined(_OPENMP)
 #pragma omp parallel for schedule(dynamic)
-#endif
   for(size_t f = 0; f < faces.size(); ++f) {
     GFace *gf = faces[f];
     if(gf->meshStatistics.status != GFace::PENDING) continue;

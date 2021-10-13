@@ -3343,13 +3343,14 @@ static int GQTetnPtSolin[22] = {1,   1,   4,   5,   11,   14,  24,  31,
                                 495, 495, 715, 715, 1001, 1001};
 static std::vector<IntPt *> GQTetGL(40, nullptr);
 
-IntPt *getGQTetPts(int order)
+IntPt *getGQTetPts(int order, bool forceTensorRule)
 {
-  if(order < 22) return GQTetSolin[order];
-  int n = (order + 4) / 2;
+  if(!forceTensorRule && order < 22) return GQTetSolin[order];
+
   if(static_cast<int>(GQTetGL.size()) < order + 1)
     GQTetGL.resize(order + 1, nullptr);
   if(!GQTetGL[order]) {
+    int n = (order + 4) / 2;
     int npts = n * n * n;
     IntPt *intpt = new IntPt[npts];
     GaussLegendreTet(n, n, n, intpt);
@@ -3358,9 +3359,10 @@ IntPt *getGQTetPts(int order)
   return GQTetGL[order];
 }
 
-int getNGQTetPts(int order)
+int getNGQTetPts(int order, bool forceTensorRule)
 {
-  if(order < 22) return GQTetnPtSolin[order];
+  if(!forceTensorRule && order < 22) return GQTetnPtSolin[order];
+
   int n = (order + 4) / 2;
   return n * n * n;
 }

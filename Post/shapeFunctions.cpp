@@ -4,5 +4,9 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include "shapeFunctions.h"
+#include "Context.h"
 
-double element::TOL = 1.e-6;
+double element::getTolerance() const
+{
+  return CTX::instance()->mesh.toleranceReferenceElement;
+}

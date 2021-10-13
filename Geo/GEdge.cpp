@@ -796,6 +796,14 @@ static void meshCompound(GEdge *ge)
 {
   auto *de = new discreteEdge(ge->model(), ge->tag() + 100000);
   ge->model()->add(de);
+
+  if(CTX::instance()->geom.copyMeshingMethod) {
+    de->meshAttributes.method = ge->meshAttributes.method;
+    de->meshAttributes.coeffTransfinite = ge->meshAttributes.coeffTransfinite;
+    de->meshAttributes.nbPointsTransfinite = ge->meshAttributes.nbPointsTransfinite;
+    de->meshAttributes.typeTransfinite = ge->meshAttributes.typeTransfinite;
+  }
+
   std::vector<int> phys;
   for(std::size_t i = 0; i < ge->compound.size(); i++) {
     auto *c = (GEdge *)ge->compound[i];

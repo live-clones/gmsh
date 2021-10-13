@@ -29,13 +29,12 @@
 #include "ExtrudeParams.h"
 #include "automaticMeshSizeField.h"
 #include "fullMatrix.h"
-#include "nanoflann.hpp"
+#include "SPoint3KDTree.h"
+#include "MVertex.h"
 
 #if defined(HAVE_POST)
 #include "PView.h"
-#include "OctreePost.h"
-#include "PViewDataList.h"
-#include "MVertex.h"
+#include "PViewData.h"
 #endif
 
 #if defined(WIN32) && !defined(__CYGWIN__)
@@ -1085,9 +1084,7 @@ public:
   double operator()(double x, double y, double z, GEntity *ge = nullptr)
   {
     double ret = 0;
-#if defined(_OPENMP)
 #pragma omp critical
-#endif
     {
       if(updateNeeded) {
         if(!_expr.set_function(_f))
@@ -1154,9 +1151,7 @@ public:
   void operator()(double x, double y, double z, SMetric3 &metr,
                   GEntity *ge = nullptr)
   {
-#if defined(_OPENMP)
 #pragma omp critical
-#endif
     {
       if(updateNeeded) {
         for(int i = 0; i < 6; i++) {
@@ -1172,9 +1167,7 @@ public:
   double operator()(double x, double y, double z, GEntity *ge = nullptr)
   {
     SMetric3 metr;
-#if defined(_OPENMP)
 #pragma omp critical
-#endif
     {
       if(updateNeeded) {
         for(int i = 0; i < 6; i++) {
@@ -1487,35 +1480,35 @@ public:
 
 class PostViewField : public Field {
 private:
-  OctreePost *_octree;
   int _viewIndex, _viewTag;
-  bool _cropNegativeValues;
+  bool _cropNegativeValues, _useClosest;
 
 public:
   PostViewField()
   {
-    _octree = nullptr;
     _viewIndex = 0;
     _viewTag = -1;
     _cropNegativeValues = true;
-    updateNeeded = true; // in case we don't set ViewIndex or ViewTag explicitly
+    _useClosest = true;
 
-    options["ViewIndex"] = new FieldOptionInt(
-      _viewIndex, "Post-processing view index", &updateNeeded);
+    options["ViewIndex"] =
+      new FieldOptionInt(_viewIndex, "Post-processing view index");
     options["ViewTag"] =
-      new FieldOptionInt(_viewTag, "Post-processing view tag", &updateNeeded);
+      new FieldOptionInt(_viewTag, "Post-processing view tag");
     options["CropNegativeValues"] = new FieldOptionBool(
       _cropNegativeValues, "return MAX_LC instead of a negative value (this "
                            "option is needed for backward compatibility with "
                            "the BackgroundMesh option");
+    options["UseClosest"] =
+      new FieldOptionBool(_useClosest, "Use value at closest node if "
+                          "no exact match is found");
 
     // deprecated names
     options["IView"] =
-      new FieldOptionInt(_viewIndex, "[Deprecated]", &updateNeeded, true);
+      new FieldOptionInt(_viewIndex, "[Deprecated]", nullptr, true);
   }
   ~PostViewField()
   {
-    if(_octree) delete _octree;
   }
   PView *getView() const
   {
@@ -1536,14 +1529,12 @@ public:
     }
     return v;
   }
-
   virtual bool isotropic() const
   {
     PView *v = getView();
     if(v && v->getData()->getNumTensors()) return false;
     return true;
   }
-
   virtual int numComponents() const
   {
     PView *v = getView();
@@ -1551,38 +1542,17 @@ public:
     if(v && v->getData()->getNumVectors()) return 3;
     return 1;
   }
-
   double operator()(double x, double y, double z, GEntity *ge = nullptr)
   {
+    double l = MAX_LC;
     PView *v = getView();
-    if(!v) return MAX_LC;
-    if(updateNeeded) {
-#if defined(_OPENMP)
-#pragma omp barrier
-#pragma omp single
-#endif
-      {
-        if(_octree) delete _octree;
-        _octree = new OctreePost(v);
-        updateNeeded = false;
-      }
-    }
-
-    double l = 0.;
-    // use large tolerance (in element reference coordinates) to maximize chance
-    // of finding an element
-    if(numComponents() == 3) { // scaled cross field
+    if(!v) return l;
+    double dist = _useClosest ? -1. : 0.;
+    if(numComponents() == 3) {
       double values[3];
-      if(!_octree->searchVectorWithTol(x, y, z, values, 0, nullptr, 0.0005)) {
-        if(!_octree->searchVectorWithTol(x, y, z, values, 0, nullptr, .1)) {
-          Msg::Warning("Field sampling: no vector element found containing point "
-                     "(%g,%g,%g) (for norm)",
-                     x, y, z);
-        }
-        else {
-          l = sqrt(values[0] * values[0] + values[1] * values[1] +
-                   values[2] * values[2]);
-        }
+      if(!v->getData()->searchVectorClosest(x, y, z, dist, values, 0)) {
+        Msg::Warning("No vector element found containing point "
+                     "(%g,%g,%g) in PostView field (for norm)", x, y, z);
       }
       else {
         l = sqrt(values[0] * values[0] + values[1] * values[1] +
@@ -1590,111 +1560,64 @@ public:
       }
     }
     else if(numComponents() == 1) {
-      if(!_octree->searchScalarWithTol(x, y, z, &l, 0, nullptr, 0.05)) {
-	if(!_octree->searchScalarWithTol(x, y, z, &l, 0, nullptr, 0.15)) {
-	  if(!_octree->searchScalarWithTol(x, y, z, &l, 0, nullptr, 0.25)) {
-	    if(!_octree->searchScalarWithTol(x, y, z, &l, 0, nullptr, 0.35)) {
-	      Msg::Debug(
-			 "Field sampling: no scalar element found containing point (%g,%g,%g)",
-			 x, y, z);
-	    }
-	  }
-	}
+      if(!v->getData()->searchScalarClosest(x, y, z, dist, &l, 0)) {
+        Msg::Warning("No scalar element found containing point "
+                     "(%g,%g,%g) in PostView field", x, y, z);
       }
     }
     else {
-      Msg::Error("Field sampling: no view with the right dimension", x, y, z);
+      Msg::Warning("No vector or scalar value found in PostView field");
     }
 
     if(l <= 0 && _cropNegativeValues) return MAX_LC;
     return l;
   }
-
   void operator()(double x, double y, double z, SVector3 &v, GEntity *ge = 0)
   {
     PView *vie = getView();
     if(!vie) {
-      Msg::Error("PostViewField: no view");
       v.data()[0] = MAX_LC;
       v.data()[1] = MAX_LC;
       v.data()[2] = MAX_LC;
       return;
     }
-    if(updateNeeded) {
-#if defined(_OPENMP)
-#pragma omp barrier
-#pragma omp single
-#endif
-      {
-        if(_octree) delete _octree;
-        _octree = new OctreePost(vie);
-        updateNeeded = false;
-      }
-    }
-    if(numComponents() == 3) { // scaled cross field
+    double dist = _useClosest ? -1. : 0.;
+    if(numComponents() == 3) {
       double values[3];
-      if(!_octree->searchVectorWithTol(x, y, z, values, 0, nullptr, .05)) {
-        if(!_octree->searchVectorWithTol(x, y, z, values, 0, nullptr, .1)) {
-          Msg::Debug("Field sampling: no vector element found containing point "
-                     "(%g,%g,%g)",
-                     x, y, z);
-        }
-        else {
-          v = SVector3(values[0], values[1], values[2]);
-        }
+      if(!vie->getData()->searchVectorClosest(x, y, z, dist, values, 0)) {
+        Msg::Warning("No vector element found containing point "
+                     "(%g,%g,%g) in PostView field", x, y, z);
       }
       else {
         v = SVector3(values[0], values[1], values[2]);
       }
     }
     else {
-      Msg::Error("Field sampling: no vector element");
+      Msg::Warning("No vector value found in PostView field");
     }
   }
-
   void operator()(double x, double y, double z, SMetric3 &metr,
                   GEntity *ge = nullptr)
   {
     PView *v = getView();
     if(!v) return;
-    if(updateNeeded) {
-#if defined(_OPENMP)
-#pragma omp barrier
-#pragma omp single
-#endif
-      {
-        if(_octree) delete _octree;
-        _octree = new OctreePost(v);
-        updateNeeded = false;
-      }
-    }
+    double dist = _useClosest ? -1. : 0.;
     double l[9] = {0., 0., 0., 0., 0., 0., 0., 0., 0.};
-    // use large tolerance (in element reference coordinates) to maximize chance
-    // of finding an element
-    if(!_octree->searchTensorWithTol(x, y, z, l, 0, nullptr, 0.05))
-      Msg::Debug(
-        "Field sampling: no tensor element found containing point (%g,%g,%g)",
-        x, y, z);
-    if(0 && _cropNegativeValues) {
-      if(l[0] <= 0 && l[1] <= 0 && l[2] <= 0 && l[3] <= 0 && l[4] <= 0 &&
-         l[5] <= 0 && l[6] <= 0 && l[7] <= 0 && l[8] <= 0) {
-        for(int i = 0; i < 9; i++) l[i] = MAX_LC;
-      }
-      else {
-        for(int i = 0; i < 9; i++) {
-          if(l[i] <= 0) l[i] = 0;
-        }
-      }
+    if(!v->getData()->searchTensorClosest(x, y, z, dist, l)) {
+      Msg::Warning("No tensor element found containing point "
+                   "(%g,%g,%g) in PostView field", x, y, z);
     }
-    metr(0, 0) = l[0];
-    metr(0, 1) = l[1];
-    metr(0, 2) = l[2];
-    metr(1, 0) = l[3];
-    metr(1, 1) = l[4];
-    metr(1, 2) = l[5];
-    metr(2, 0) = l[6];
-    metr(2, 1) = l[7];
-    metr(2, 2) = l[8];
+    else {
+      metr(0, 0) = l[0];
+      metr(0, 1) = l[1];
+      metr(0, 2) = l[2];
+      metr(1, 0) = l[3];
+      metr(1, 1) = l[4];
+      metr(1, 2) = l[5];
+      metr(2, 0) = l[6];
+      metr(2, 1) = l[7];
+      metr(2, 2) = l[8];
+    }
   }
   const char *getName() { return "PostView"; }
   std::string getDescription()
@@ -1851,9 +1774,7 @@ public:
   using Field::operator();
   double operator()(double x, double y, double z, GEntity *ge = nullptr)
   {
-#if defined(_OPENMP)
 #pragma omp critical
-#endif
     {
       if(updateNeeded) {
         _fields.clear();
@@ -1901,9 +1822,7 @@ public:
   using Field::operator();
   double operator()(double x, double y, double z, GEntity *ge = nullptr)
   {
-#if defined(_OPENMP)
 #pragma omp critical
-#endif
     {
       if(updateNeeded) {
         _fields.clear();
@@ -2216,9 +2135,7 @@ public:
   {
     if(updateNeeded) update();
     double xyz[3] = {x, y, z};
-#if defined(_OPENMP)
 #pragma omp critical // avoid crash (still incorrect) - use Distance instead
-#endif
     _kdTree->annkSearch(xyz, 1, _index, _dist);
     double d = sqrt(_dist[0]);
     double lTg = d < _dMin ? _lMinTangent :
@@ -2239,9 +2156,7 @@ public:
   {
     if(updateNeeded) update();
     double xyz[3] = {X, Y, Z};
-#if defined(_OPENMP)
 #pragma omp critical // avoid crash (still incorrect) - use Distance instead
-#endif
     _kdTree->annkSearch(xyz, 1, _index, _dist);
     double d = sqrt(_dist[0]);
     return std::max(d, 0.05);
@@ -2443,17 +2358,13 @@ public:
   using Field::operator();
   virtual double operator()(double X, double Y, double Z, GEntity *ge = nullptr)
   {
-#if defined(_OPENMP)
 #pragma omp critical
-#endif
     {
       update();
     }
     double xyz[3];
     getCoord(X, Y, Z, xyz[0], xyz[1], xyz[2], ge);
-#if defined(_OPENMP)
 #pragma omp critical // avoid crash (still incorrect) - use Distance instead
-#endif
     _kdTree->annkSearch(xyz, 1, _index, _dist);
     double d = _dist[0];
     return sqrt(d);
@@ -2656,16 +2567,15 @@ class DistanceField : public Field {
   std::vector<AttractorInfo> _infos;
   int _sampling;
   int _xFieldId, _yFieldId, _zFieldId; // unused
-  PointCloud _p;
-  nanoflann::KDTreeSingleIndexAdaptor
-  <nanoflann::L2_Simple_Adaptor<double, PointCloudAdaptor<PointCloud> >,
-   PointCloudAdaptor<PointCloud>, 3> *_index;
-  PointCloudAdaptor<PointCloud> _pc2kd;
+  SPoint3Cloud _pc;
+  SPoint3CloudAdaptor<SPoint3Cloud> _pc2kdtree;
+  SPoint3KDTree *_kdtree;
   std::size_t _outIndex;
   double _outDistSqr;
 
 public:
-  DistanceField() : _index(nullptr), _pc2kd(_p), _outIndex(0), _outDistSqr(0)
+  DistanceField() : _pc2kdtree(_pc), _kdtree(nullptr), _outIndex(0),
+                    _outDistSqr(0.)
   {
     _sampling = 20;
 
@@ -2700,7 +2610,7 @@ public:
       new FieldOptionInt(_sampling, "[Deprecated]", &updateNeeded, true);
   }
   DistanceField(int dim, int tag, int nbe)
-    : _sampling(nbe), _index(nullptr), _pc2kd(_p), _outIndex(0),
+    : _sampling(nbe), _pc2kdtree(_pc), _kdtree(nullptr), _outIndex(0),
       _outDistSqr(0)
   {
     if(dim == 0)
@@ -2714,7 +2624,7 @@ public:
   }
   ~DistanceField()
   {
-    if(_index) delete _index;
+    if(_kdtree) delete _kdtree;
   }
   const char *getName() { return "Distance"; }
   std::string getDescription()
@@ -2726,15 +2636,15 @@ public:
   }
   std::pair<AttractorInfo, SPoint3> getAttractorInfo() const
   {
-    if(_outIndex < _infos.size() && _outIndex < _p.pts.size())
-      return std::make_pair(_infos[_outIndex], _p.pts[_outIndex]);
+    if(_outIndex < _infos.size() && _outIndex < _pc.pts.size())
+      return std::make_pair(_infos[_outIndex], _pc.pts[_outIndex]);
     return std::make_pair(AttractorInfo(), SPoint3());
   }
   void update()
   {
     if(updateNeeded) {
       _infos.clear();
-      std::vector<SPoint3> &points = _p.pts;
+      std::vector<SPoint3> &points = _pc.pts;
       points.clear();
 
       for(auto it = _pointTags.begin(); it != _pointTags.end(); ++it) {
@@ -2783,23 +2693,21 @@ public:
       }
 
       // construct a kd-tree index:
-      _index = new nanoflann::KDTreeSingleIndexAdaptor
-        <nanoflann::L2_Simple_Adaptor<double, PointCloudAdaptor<PointCloud> >,
-         PointCloudAdaptor<PointCloud>, 3>
-        (3, _pc2kd, nanoflann::KDTreeSingleIndexAdaptorParams(10));
-      _index->buildIndex();
+      _kdtree = new SPoint3KDTree(3, _pc2kdtree,
+                                 nanoflann::KDTreeSingleIndexAdaptorParams(10));
+      _kdtree->buildIndex();
       updateNeeded = false;
     }
   }
   using Field::operator();
   virtual double operator()(double X, double Y, double Z, GEntity *ge = nullptr)
   {
-    if(!_index) return MAX_LC;
+    if(!_kdtree) return MAX_LC;
     double query_pt[3] = {X, Y, Z};
     const size_t num_results = 1;
     nanoflann::KNNResultSet<double> resultSet(num_results);
     resultSet.init(&_outIndex, &_outDistSqr);
-    _index->findNeighbors(resultSet, &query_pt[0], nanoflann::SearchParams(10));
+    _kdtree->findNeighbors(resultSet, &query_pt[0], nanoflann::SearchParams(10));
     return sqrt(_outDistSqr);
   }
 };

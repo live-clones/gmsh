@@ -11,6 +11,7 @@
 #include <map>
 #include <set>
 #include "SBoundingBox3d.h"
+#include "SPoint3KDTree.h"
 
 #define VAL_INF 1.e200
 
@@ -38,6 +39,10 @@ private:
   int _fileIndex;
   // octree for rapid search
   OctreePost *_octree;
+  // kdtree for rapid search of neighrest neighbor
+  SPoint3Cloud _pc;
+  SPoint3CloudAdaptor<SPoint3Cloud> _pc2kdtree;
+  SPoint3KDTree *_kdtree;
 
 protected:
   // adaptive visualization data
@@ -303,27 +308,33 @@ public:
                     double *size = nullptr, int qn = 0, double *qx = nullptr,
                     double *qy = nullptr, double *qz = nullptr,
                     bool grad = false, int dim = -1);
-  bool searchScalarWithTol(double x, double y, double z, double *values,
-                           int step = -1, double *size = nullptr,
-                           double tol = 1.e-2, int qn = 0, double *qx = nullptr,
-                           double *qy = nullptr, double *qz = nullptr,
-                           bool grad = false, int dim = -1);
   bool searchVector(double x, double y, double z, double *values, int step = -1,
                     double *size = nullptr, int qn = 0, double *qx = nullptr,
                     double *qy = nullptr, double *qz = nullptr,
                     bool grad = false, int dim = -1);
-  bool searchVectorWithTol(double x, double y, double z, double *values,
-                           int step = -1, double *size = nullptr,
-                           double tol = 1.e-2, int qn = 0, double *qx = nullptr,
-                           double *qy = nullptr, double *qz = nullptr,
-                           bool grad = false, int dim = -1);
   bool searchTensor(double x, double y, double z, double *values, int step = -1,
                     double *size = nullptr, int qn = 0, double *qx = nullptr,
                     double *qy = nullptr, double *qz = nullptr,
                     bool grad = false, int dim = -1);
-  bool searchTensorWithTol(double x, double y, double z, double *values,
-                           int step = -1, double *size = nullptr,
-                           double tol = 1.e-2, int qn = 0, double *qx = nullptr,
+
+  // same as above (when distance == 0), except that if no exact match is found:
+  // - if distance is > 0, return value at closest node if closer than distance
+  // - if distance is < 0, return value at closest node
+  // upon return, distance contains the distance of the match, or -1 if no
+  // match was found
+  bool searchScalarClosest(double x, double y, double z, double &distance,
+                           double *values, int step = -1,
+                           double *size = nullptr, int qn = 0, double *qx = nullptr,
+                           double *qy = nullptr, double *qz = nullptr,
+                           bool grad = false, int dim = -1);
+  bool searchVectorClosest(double x, double y, double z, double &distance,
+                           double *values, int step = -1,
+                           double *size = nullptr, int qn = 0, double *qx = nullptr,
+                           double *qy = nullptr, double *qz = nullptr,
+                           bool grad = false, int dim = -1);
+  bool searchTensorClosest(double x, double y, double z, double &distance,
+                           double *values, int step = -1,
+                           double *size = nullptr, int qn = 0, double *qx = nullptr,
                            double *qy = nullptr, double *qz = nullptr,
                            bool grad = false, int dim = -1);
 

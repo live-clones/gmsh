@@ -97,7 +97,8 @@ int main(int argc, char **argv)
   // `t9.py'), or probed directly using `gmsh::view::probe()' - here at point
   // (0.9, 0.1, 0):
   std::vector<double> val;
-  gmsh::view::probe(t1, 0.9, 0.1, 0, val);
+  double distance;
+  gmsh::view::probe(t1, 0.9, 0.1, 0, val, distance);
   std::cout << "Value at (0.9, 0.1, 0):";
   for(auto v : val) std::cout << " " << v;
   std::cout << "\n";

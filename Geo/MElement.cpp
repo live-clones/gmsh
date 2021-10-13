@@ -37,8 +37,6 @@
 
 #define SQU(a) ((a) * (a))
 
-double MElement::_isInsideTolerance = 1.e-6;
-
 MElement::MElement(std::size_t num, int part) : _visible(1)
 {
   // we should make GModel a mandatory argument to the constructor
@@ -60,9 +58,10 @@ void MElement::forceNum(std::size_t num)
   m->setMaxElementNumber(_num);
 }
 
-void MElement::setTolerance(const double tol) { _isInsideTolerance = tol; }
-
-double MElement::getTolerance() { return _isInsideTolerance; }
+double MElement::getTolerance() const
+{
+  return CTX::instance()->mesh.toleranceReferenceElement;
+}
 
 bool MElement::_getFaceInfo(const MFace &face, const MFace &other, int &sign,
                             int &rot)

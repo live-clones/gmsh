@@ -20,28 +20,28 @@ int GaussLegendreTet(int n1, int n2, int n3, IntPt *pts);
 int getNGQLPts(int order);
 IntPt *getGQLPts(int order);
 
-int getNGQTPts(int order);
-IntPt *getGQTPts(int order);
+int getNGQTPts(int order, bool forceTensorRule = false);
+IntPt *getGQTPts(int order, bool forceTensorRule = false);
 
-int getNGQQPts(int order);
-IntPt *getGQQPts(int order);
+int getNGQQPts(int order, bool forceTensorRule = false);
+IntPt *getGQQPts(int order, bool forceTensorRule = false);
 
-int getNGQTetPts(int order);
-IntPt *getGQTetPts(int order);
+int getNGQTetPts(int order, bool forceTensorRule = false);
+IntPt *getGQTetPts(int order, bool forceTensorRule = false);
 
-int getNGQPriPts(int order);
-IntPt *getGQPriPts(int order);
+int getNGQPriPts(int order, bool forceTensorRule = false);
+IntPt *getGQPriPts(int order, bool forceTensorRule = false);
 
 int getNGQPyrPts(int order);
 IntPt *getGQPyrPts(int order);
 
-int getNGQHPts(int order);
-IntPt *getGQHPts(int order);
+int getNGQHPts(int order, bool forceTensorRule = false);
+IntPt *getGQHPts(int order, bool forceTensorRule = false);
 
 class gaussIntegration {
 public:
   static void get(int elementType, int order, fullMatrix<double> &pts,
-                  fullVector<double> &weights);
+                  fullVector<double> &weights, bool forceTensorRule = false);
   static void getTriangle(int order, fullMatrix<double> &pts,
                           fullVector<double> &weights);
   static void getLine(int order, fullMatrix<double> &pts,

@@ -12,6 +12,7 @@
 #include "bezierBasis.h"
 #include "BasisFactory.h"
 #include "SBoundingBox3d.h"
+#include "Context.h"
 
 void MElementBB(void *a, double *min, double *max)
 {
@@ -156,11 +157,11 @@ std::vector<MElement *> MElementOctree::findAll(double x, double y, double z,
     if(dim == -1 || el->getDim() == dim) e.push_back(el);
   }
   if(e.empty() && !strict && _gm) {
-    double initialTol = MElement::getTolerance();
+    double initialTol = CTX::instance()->mesh.toleranceReferenceElement;
     double tol = initialTol;
     while(tol < maxTol) {
       tol *= tolIncr;
-      MElement::setTolerance(tol);
+      CTX::instance()->mesh.toleranceReferenceElement = tol;
       std::vector<GEntity *> entities;
       _gm->getEntities(entities);
       for(std::size_t i = 0; i < entities.size(); i++) {
@@ -172,18 +173,18 @@ std::vector<MElement *> MElementOctree::findAll(double x, double y, double z,
         }
       }
       if(!e.empty()) {
-        MElement::setTolerance(initialTol);
+        CTX::instance()->mesh.toleranceReferenceElement = initialTol;
         return e;
       }
     }
-    MElement::setTolerance(initialTol);
+    CTX::instance()->mesh.toleranceReferenceElement = initialTol;
   }
   else if(e.empty() && !strict && !_gm) {
-    double initialTol = MElement::getTolerance();
+    double initialTol = CTX::instance()->mesh.toleranceReferenceElement;
     double tol = initialTol;
     while(tol < maxTol) {
       tol *= tolIncr;
-      MElement::setTolerance(tol);
+      CTX::instance()->mesh.toleranceReferenceElement = tol;
       for(std::size_t i = 0; i < _elems.size(); i++) {
         MElement *el = _elems[i];
         if(dim == -1 || el->getDim() == dim) {
@@ -191,11 +192,11 @@ std::vector<MElement *> MElementOctree::findAll(double x, double y, double z,
         }
       }
       if(!e.empty()) {
-        MElement::setTolerance(initialTol);
+        CTX::instance()->mesh.toleranceReferenceElement = initialTol;
         return e;
       }
     }
-    MElement::setTolerance(initialTol);
+    CTX::instance()->mesh.toleranceReferenceElement = initialTol;
     // Msg::Warning("Point %g %g %g not found",x,y,z);
   }
   return e;
@@ -216,11 +217,11 @@ MElement *MElementOctree::find(double x, double y, double z, int dim,
     }
   }
   if(!strict && _gm) {
-    double initialTol = MElement::getTolerance();
+    double initialTol = CTX::instance()->mesh.toleranceReferenceElement;
     double tol = initialTol;
     while(tol < 1.) {
       tol *= 10;
-      MElement::setTolerance(tol);
+      CTX::instance()->mesh.toleranceReferenceElement = tol;
       std::vector<GEntity *> entities;
       _gm->getEntities(entities);
       for(std::size_t i = 0; i < entities.size(); i++) {
@@ -228,33 +229,33 @@ MElement *MElementOctree::find(double x, double y, double z, int dim,
           e = entities[i]->getMeshElement(j);
           if(dim == -1 || e->getDim() == dim) {
             if(MElementInEle(e, P)) {
-              MElement::setTolerance(initialTol);
+              CTX::instance()->mesh.toleranceReferenceElement = initialTol;
               return e;
             }
           }
         }
       }
     }
-    MElement::setTolerance(initialTol);
+    CTX::instance()->mesh.toleranceReferenceElement = initialTol;
     // Msg::Warning("Point %g %g %g not found",x,y,z);
   }
   else if(!strict && !_gm) {
-    double initialTol = MElement::getTolerance();
+    double initialTol = CTX::instance()->mesh.toleranceReferenceElement;
     double tol = initialTol;
     while(tol < 0.1) {
       tol *= 10.0;
-      MElement::setTolerance(tol);
+      CTX::instance()->mesh.toleranceReferenceElement = tol;
       for(std::size_t i = 0; i < _elems.size(); i++) {
         e = _elems[i];
         if(dim == -1 || e->getDim() == dim) {
           if(MElementInEle(e, P)) {
-            MElement::setTolerance(initialTol);
+            CTX::instance()->mesh.toleranceReferenceElement = initialTol;
             return e;
           }
         }
       }
     }
-    MElement::setTolerance(initialTol);
+    CTX::instance()->mesh.toleranceReferenceElement = initialTol;
     // Msg::Warning("Point %g %g %g not found",x,y,z);
   }
   return nullptr;

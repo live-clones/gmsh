@@ -886,13 +886,13 @@ static int GQTnPtSolin[21] = {1,  1,  3,  4,  6,  7,  12, 13, 16, 19, 25,
                               27, 33, 37, 42, 48, 52, 61, 70, 73, 79};
 static std::vector<IntPt *> GQTGL(40, nullptr);
 
-IntPt *getGQTPts(int order)
+IntPt *getGQTPts(int order, bool forceTensorRule)
 {
-  if(order < 21) return GQTSolin[order];
-  int n = (order + 3) / 2;
+  if(!forceTensorRule && order < 21) return GQTSolin[order];
   if(static_cast<int>(GQTGL.size()) < order + 1)
     GQTGL.resize(order + 1, nullptr);
   if(!GQTGL[order]) {
+    int n = (order + 3) / 2;
     int npts = n * n;
     IntPt *intpt = new IntPt[npts];
     GaussLegendreTri(n, n, intpt);
@@ -901,8 +901,8 @@ IntPt *getGQTPts(int order)
   return GQTGL[order];
 }
 
-int getNGQTPts(int order)
+int getNGQTPts(int order, bool forceTensorRule)
 {
-  if(order < 21) return GQTnPtSolin[order];
+  if(!forceTensorRule && order < 21) return GQTnPtSolin[order];
   return ((order + 3) / 2) * ((order + 3) / 2);
 }
