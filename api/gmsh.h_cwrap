@@ -1494,14 +1494,14 @@ namespace gmsh { // Top-level functions
       // `elementType' and integration rule `integrationType', where
       // `integrationType' concatenates the integration rule family name with the
       // desired order (e.g. "Gauss4" for a quadrature suited for integrating 4th
-      // order polynomials). The "GaussLegendre" family uses tensor-product rules
-      // based on 1D Gauss-Legendre points; the "Gauss" family uses the minimal
-      // number of points when available, and falls back to "GaussLegendre"
-      // otherwise. Note that integration points for the "Gauss" family can fall
-      // outside of the reference element for high-order rules. `localCoord'
-      // contains the u, v, w coordinates of the G integration points in the
-      // reference element: [g1u, g1v, g1w, ..., gGu, gGv, gGw]. `weights' contains
-      // the associated weights: [g1q, ..., gGq].
+      // order polynomials). The "CompositeGauss" family uses tensor-product rules
+      // based the 1D Gauss-Legendre rule; the "Gauss" family uses an economic
+      // scheme when available (i.e. with a minimal number of points), and falls
+      // back to "CompositeGauss" otherwise. Note that integration points for the
+      // "Gauss" family can fall outside of the reference element for high-order
+      // rules. `localCoord' contains the u, v, w coordinates of the G integration
+      // points in the reference element: [g1u, g1v, g1w, ..., gGu, gGv, gGw].
+      // `weights' contains the associated weights: [g1q, ..., gGq].
       inline void getIntegrationPoints(const int elementType,
                                        const std::string & integrationType,
                                        std::vector<double> & localCoord,

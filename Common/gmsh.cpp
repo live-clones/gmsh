@@ -4208,8 +4208,8 @@ GMSH_API void gmsh::model::mesh::getBarycenters(
 static bool _getIntegrationInfo(const std::string &intType,
                                 std::string &intName, int &intOrder)
 {
-  if(intType.substr(0, 13) == "GaussLegendre") {
-    intName = "GaussLegendre";
+  if(intType.substr(0, 14) == "CompositeGauss") {
+    intName = "CompositeGauss";
     intOrder = atoi(intType.substr(13).c_str());
     return true;
   }
