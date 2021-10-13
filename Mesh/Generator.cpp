@@ -38,10 +38,6 @@
 #include "meshGFaceBipartiteLabelling.h"
 #include "sizeField.h"
 
-#if defined(_OPENMP)
-#include <omp.h>
-#endif
-
 #if defined(HAVE_DOMHEX)
 #include "simple3D.h"
 #include "yamakawa.h"
@@ -382,18 +378,17 @@ static void Mesh1D(GModel *m)
 
     int nPending = 0;
     const size_t sss = temp.size();
-#if defined(_OPENMP)
 #pragma omp parallel for schedule(dynamic)
-#endif
     for(size_t K = 0; K < sss; K++) {
       int localPending = 0;
       GEdge *ed = temp[K];
       if(ed->meshStatistics.status == GEdge::PENDING) {
         ed->mesh(true);
-#if defined(_OPENMP)
-#pragma omp critical
-#endif
-        localPending = ++nPending;
+#pragma omp atomic capture
+        {
+          ++nPending;
+          localPending = nPending;
+        }
       }
       if(!nIter) Msg::ProgressMeter(localPending, false, "Meshing 1D...");
     }
@@ -532,18 +527,17 @@ static void Mesh2D(GModel *m)
       int nPending = 0;
       std::vector<GFace *> temp;
       temp.insert(temp.begin(), f.begin(), f.end());
-#if defined(_OPENMP)
 #pragma omp parallel for schedule(dynamic)
-#endif
       for(size_t K = 0; K < temp.size(); K++) {
         int localPending = 0;
         if(temp[K]->meshStatistics.status == GFace::PENDING) {
           backgroundMesh::current()->unset();
           temp[K]->mesh(true);
-#if defined(_OPENMP)
-#pragma omp critical
-#endif
-          localPending = ++nPending;
+#pragma omp atomic capture
+          {
+            ++nPending;
+            localPending = nPending;
+          }
         }
         if(!nIter) Msg::ProgressMeter(localPending, false, "Meshing 2D...");
       }

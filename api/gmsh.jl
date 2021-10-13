@@ -1971,11 +1971,16 @@ const add_elements_by_type = addElementsByType
     gmsh.model.mesh.getIntegrationPoints(elementType, integrationType)
 
 Get the numerical quadrature information for the given element type
-`elementType` and integration rule `integrationType` (e.g. "Gauss4" for a Gauss
-quadrature suited for integrating 4th order polynomials). `localCoord` contains
-the u, v, w coordinates of the G integration points in the reference element:
-[g1u, g1v, g1w, ..., gGu, gGv, gGw]. `weights` contains the associated weights:
-[g1q, ..., gGq].
+`elementType` and integration rule `integrationType`, where `integrationType`
+concatenates the integration rule family name with the desired order (e.g.
+"Gauss4" for a quadrature suited for integrating 4th order polynomials). The
+"GaussLegendre" family uses tensor-product rules based on 1D Gauss-Legendre
+points; the "Gauss" family uses the minimal number of points when available, and
+falls back to "GaussLegendre" otherwise. Note that integration points for the
+"Gauss" family can fall outside of the reference element for high-order rules.
+`localCoord` contains the u, v, w coordinates of the G integration points in the
+reference element: [g1u, g1v, g1w, ..., gGu, gGv, gGw]. `weights` contains the
+associated weights: [g1q, ..., gGq].
 
 Return `localCoord`, `weights`.
 """
@@ -6072,28 +6077,34 @@ function combine(what, how, remove = true, copyOptions = true)
 end
 
 """
-    gmsh.view.probe(tag, x, y, z, step = -1, numComp = -1, gradient = false, tolerance = 0., xElemCoord = Cdouble[], yElemCoord = Cdouble[], zElemCoord = Cdouble[], dim = -1)
+    gmsh.view.probe(tag, x, y, z, step = -1, numComp = -1, gradient = false, distanceMax = 0., xElemCoord = Cdouble[], yElemCoord = Cdouble[], zElemCoord = Cdouble[], dim = -1)
 
-Probe the view `tag` for its `value` at point (`x`, `y`, `z`). Return only the
-value at step `step` is `step` is positive. Return only values with `numComp` if
-`numComp` is positive. Return the gradient of the `value` if `gradient` is set.
-Probes with a geometrical tolerance (in the reference unit cube) of `tolerance`
-if `tolerance` is not zero. Return the result from the element described by its
-coordinates if `xElementCoord`, `yElementCoord` and `zElementCoord` are
-provided. If `dim` is >= 0, return only elements of the specified dimension.
+Probe the view `tag` for its `value` at point (`x`, `y`, `z`). If no match is
+found, `value` is returned empty. Return only the value at step `step` is `step`
+is positive. Return only values with `numComp` if `numComp` is positive. Return
+the gradient of the `value` if `gradient` is set. If `distanceMax` is zero, only
+return a result if an exact match inside an element in the view is found; if
+`distanceMax` is positive and an exact match is not found, return the value at
+the closest node if it is closer than `distanceMax`; if `distanceMax` is
+negative and an exact match is not found, always return the value at the closest
+node. The distance to the match is returned in `distance`. Return the result
+from the element described by its coordinates if `xElementCoord`,
+`yElementCoord` and `zElementCoord` are provided. If `dim` is >= 0, return only
+matches from elements of the specified dimension.
 
-Return `value`.
+Return `value`, `distance`.
 """
-function probe(tag, x, y, z, step = -1, numComp = -1, gradient = false, tolerance = 0., xElemCoord = Cdouble[], yElemCoord = Cdouble[], zElemCoord = Cdouble[], dim = -1)
+function probe(tag, x, y, z, step = -1, numComp = -1, gradient = false, distanceMax = 0., xElemCoord = Cdouble[], yElemCoord = Cdouble[], zElemCoord = Cdouble[], dim = -1)
     api_value_ = Ref{Ptr{Cdouble}}()
     api_value_n_ = Ref{Csize_t}()
+    api_distance_ = Ref{Cdouble}()
     ierr = Ref{Cint}()
     ccall((:gmshViewProbe, gmsh.lib), Cvoid,
-          (Cint, Cdouble, Cdouble, Cdouble, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Cint, Cint, Cdouble, Ptr{Cdouble}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Cdouble}, Csize_t, Cint, Ptr{Cint}),
-          tag, x, y, z, api_value_, api_value_n_, step, numComp, gradient, tolerance, convert(Vector{Cdouble}, xElemCoord), length(xElemCoord), convert(Vector{Cdouble}, yElemCoord), length(yElemCoord), convert(Vector{Cdouble}, zElemCoord), length(zElemCoord), dim, ierr)
+          (Cint, Cdouble, Cdouble, Cdouble, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cdouble}, Cint, Cint, Cint, Cdouble, Ptr{Cdouble}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Cdouble}, Csize_t, Cint, Ptr{Cint}),
+          tag, x, y, z, api_value_, api_value_n_, api_distance_, step, numComp, gradient, distanceMax, convert(Vector{Cdouble}, xElemCoord), length(xElemCoord), convert(Vector{Cdouble}, yElemCoord), length(yElemCoord), convert(Vector{Cdouble}, zElemCoord), length(zElemCoord), dim, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     value = unsafe_wrap(Array, api_value_[], api_value_n_[], own = true)
-    return value
+    return value, api_distance_[]
 end
 
 """

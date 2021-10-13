@@ -189,9 +189,7 @@ template <class T>
 static void addElementsInArrays(GEntity *e, std::vector<T *> &elements,
                                 bool edges, bool faces)
 {
-#if defined(_OPENMP)
 #pragma omp parallel for schedule(dynamic)
-#endif
   for(std::size_t i = 0; i < elements.size(); i++) {
     MElement *ele = elements[i];
 
@@ -224,9 +222,7 @@ static void addElementsInArrays(GEntity *e, std::vector<T *> &elements,
           for(int k = 0; k < 2; k++)
             e->model()->normals->get(x[k], y[k], z[k], n[k][0], n[k][1],
                                      n[k][2]);
-#if defined(_OPENMP)
 #pragma omp critical
-#endif
         {
           e->va_lines->add(x, y, z, n, col, ele, unique);
         }
@@ -251,9 +247,7 @@ static void addElementsInArrays(GEntity *e, std::vector<T *> &elements,
           for(int k = 0; k < 3; k++)
             e->model()->normals->get(x[k], y[k], z[k], n[k][0], n[k][1],
                                      n[k][2]);
-#if defined(_OPENMP)
 #pragma omp critical
-#endif
         {
           e->va_triangles->add(x, y, z, n, col, ele, unique, skin);
         }

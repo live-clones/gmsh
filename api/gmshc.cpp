@@ -3974,7 +3974,7 @@ GMSH_API void gmshViewCombine(const char * what, const char * how, const int rem
   }
 }
 
-GMSH_API void gmshViewProbe(const int tag, const double x, const double y, const double z, double ** value, size_t * value_n, const int step, const int numComp, const int gradient, const double tolerance, double * xElemCoord, size_t xElemCoord_n, double * yElemCoord, size_t yElemCoord_n, double * zElemCoord, size_t zElemCoord_n, const int dim, int * ierr)
+GMSH_API void gmshViewProbe(const int tag, const double x, const double y, const double z, double ** value, size_t * value_n, double * distance, const int step, const int numComp, const int gradient, const double distanceMax, double * xElemCoord, size_t xElemCoord_n, double * yElemCoord, size_t yElemCoord_n, double * zElemCoord, size_t zElemCoord_n, const int dim, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
@@ -3982,7 +3982,7 @@ GMSH_API void gmshViewProbe(const int tag, const double x, const double y, const
     std::vector<double> api_xElemCoord_(xElemCoord, xElemCoord + xElemCoord_n);
     std::vector<double> api_yElemCoord_(yElemCoord, yElemCoord + yElemCoord_n);
     std::vector<double> api_zElemCoord_(zElemCoord, zElemCoord + zElemCoord_n);
-    gmsh::view::probe(tag, x, y, z, api_value_, step, numComp, gradient, tolerance, api_xElemCoord_, api_yElemCoord_, api_zElemCoord_, dim);
+    gmsh::view::probe(tag, x, y, z, api_value_, *distance, step, numComp, gradient, distanceMax, api_xElemCoord_, api_yElemCoord_, api_zElemCoord_, dim);
     vector2ptr(api_value_, value, value_n);
   }
   catch(...){

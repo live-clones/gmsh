@@ -4399,9 +4399,7 @@ void graphicWindow::addMessage(const char *msg)
     // this routine can be called from multiple threads, e.g. via Msg::Info
     // calls in meshGFace(). We should use FlGui::lock/unlock, but currently
     // this does not seem to work (17/02/2017)
-#if defined(_OPENMP)
 #pragma omp critical
-#endif
   {
     _messages.push_back(msg);
     _browser->add(msg);
