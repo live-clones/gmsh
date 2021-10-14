@@ -148,7 +148,7 @@ if(ENABLE_PRIVATE_API)
   message(WARNING "The private API is unsupported and undocumented. It is meant "
           "for expert Gmsh developers, not for regular Gmsh users, who should rely "
           "on the stable public API (gmsh/api) instead.")
-  file(GLOB_RECURSE HEADERS Common/*.h Numeric/*.h Geo/*.h Mesh/*.h Solver/*.h
+  file(GLOB_RECURSE HEADERS Common/*.h Numeric/*.h Numeric/*.hpp Geo/*.h Mesh/*.h Solver/*.h
     Post/*.h Plugin/*.h Graphics/*.h contrib/kbipack/*.h
     contrib/DiscreteIntegration/*.h contrib/HighOrderMeshOptimizer/*.h
     contrib/MeshOptimizer/*.h contrib/MeshQualityOptimizer/*.h)
