@@ -45,16 +45,20 @@ if not os.path.exists(libpath):
 
 lib = CDLL(libpath)
 
+
+try_numpy = True # set this to False to never use numpy
+
 use_numpy = False
-try:
-    import numpy
+if try_numpy:
     try:
-        from weakref import finalize as weakreffinalize
+        import numpy
+        try:
+            from weakref import finalize as weakreffinalize
+        except:
+            from backports.weakref import finalize as weakreffinalize
+        use_numpy = True
     except:
-        from backports.weakref import finalize as weakreffinalize
-    use_numpy = True
-except:
-    pass
+        pass
 
 # Utility functions, not part of the Gmsh Python API
 
