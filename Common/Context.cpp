@@ -82,6 +82,7 @@ void CTX::init()
   gamepad = nullptr;
   mesh.switchElementTags = 0;
   terminal = 0;
+  detachedProcess = 1;
 
   // need to initialize these too, since the corresponding opt_XXX routines use
   // the current value to detect changes
