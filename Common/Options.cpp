@@ -2373,6 +2373,11 @@ double opt_general_detached_menu(OPT_ARGS_NUM)
   return CTX::instance()->detachedMenu;
 }
 
+double opt_general_detached_process(OPT_ARGS_NUM){
+  if(action & GMSH_SET) CTX::instance()->detachedProcess = (int)val;
+  return CTX::instance()->detachedProcess;
+}
+
 double opt_general_menu_size0(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
