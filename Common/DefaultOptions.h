@@ -518,7 +518,7 @@ StringXNumber GeneralOptions_Number[] = {
   { F|S, "DetachedMenu" , opt_general_detached_menu , 0. ,
     "Should the menu window be detached from the graphic window?" },
   { F|O, "DetachedProcess", opt_general_detached_process, 1. ,
-    "Should the processes created by Gmsh be detached (on MS-Windows only)?" },
+    "On Windows, should processes created by Gmsh be detached?" },
   { F|O, "DisplayBorderFactor" , opt_general_display_border_factor , 0.2 ,
     "Border factor for model display (0: model fits window size exactly)" },
   { F|O, "DoubleBuffer" , opt_general_double_buffer , 1. ,
