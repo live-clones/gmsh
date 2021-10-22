@@ -60,3 +60,4 @@ Extended tutorials (API only):
 * x3: Post-processing data import: list-based
 * x4: Post-processing data import: model-based
 * x5: Additional geometrical data: parametrizations, normals, curvatures
+* x6: Additional mesh data: integration points, Jacobians and basis functions
