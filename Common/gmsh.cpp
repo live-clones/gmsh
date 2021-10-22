@@ -4286,7 +4286,7 @@ GMSH_API void gmsh::model::mesh::getElementEdgeNodes(
     GEntity *ge = entities[i];
     int n = ge->getNumMeshElementsByType(familyType);
     if(n && !numNodesPerEdge) {
-      MElement *e = ge->getMeshElementByType(familyType, i);
+      MElement *e = ge->getMeshElementByType(familyType, 0);
       numEdgesPerEle = e->getNumEdges();
       if(primary) { numNodesPerEdge = 2; }
       else {
@@ -4350,7 +4350,7 @@ GMSH_API void gmsh::model::mesh::getElementFaceNodes(
     GEntity *ge = entities[i];
     int n = ge->getNumMeshElementsByType(familyType);
     if(n && !numNodesPerFace) {
-      MElement *e = ge->getMeshElementByType(familyType, i);
+      MElement *e = ge->getMeshElementByType(familyType, 0);
       int nf = e->getNumFaces();
       numFacesPerEle = 0;
       for(int j = 0; j < nf; j++) {
