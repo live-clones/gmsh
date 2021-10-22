@@ -7,6 +7,7 @@
 // -----------------------------------------------------------------------------
 
 #include <set>
+#include <algorithm>
 #include <gmsh.h>
 
 int main(int argc, char **argv)
