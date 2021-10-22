@@ -1382,6 +1382,16 @@ c
             integer(c_int)::ierr
           end subroutine gmshModelMeshGetNodesForPhysicalGroup
 
+!  Get the maximum tag `maxTag' of a node in the mesh.
+        subroutine gmshModelMeshGetMaxNodeTag(
+     &      maxTag,
+     &      ierr)
+     &    bind(C, name = "gmshModelMeshGetMaxNodeTag")
+          use, intrinsic :: iso_c_binding
+            integer(c_size_t)::maxTag
+            integer(c_int)::ierr
+          end subroutine gmshModelMeshGetMaxNodeTag
+
 !  Add nodes classified on the model entity of dimension `dim' and tag `tag'.
 !  `nodeTags' contains the node tags (their unique, strictly positive
 !  identification numbers). `coord' is a vector of length 3 times the length
@@ -1689,6 +1699,16 @@ c
             integer(c_size_t), value::numTasks
             integer(c_int)::ierr
           end subroutine gmshModelMeshGetElementsByType
+
+!  Get the maximum tag `maxTag' of an element in the mesh.
+        subroutine gmshModelMeshGetMaxElementTag(
+     &      maxTag,
+     &      ierr)
+     &    bind(C, name = "gmshModelMeshGetMaxElementTag")
+          use, intrinsic :: iso_c_binding
+            integer(c_size_t)::maxTag
+            integer(c_int)::ierr
+          end subroutine gmshModelMeshGetMaxElementTag
 
 !  Preallocate data before calling `getElementsByType' with `numTasks' > 1.
 !  For C and C++ only.

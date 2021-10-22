@@ -1187,6 +1187,14 @@ namespace gmsh { // Top-level functions
         coord.assign(api_coord_, api_coord_ + api_coord_n_); gmshFree(api_coord_);
       }
 
+      // Get the maximum tag `maxTag' of a node in the mesh.
+      inline void getMaxNodeTag(std::size_t & maxTag)
+      {
+        int ierr = 0;
+        gmshModelMeshGetMaxNodeTag(&maxTag, &ierr);
+        if(ierr) throwLastError();
+      }
+
       // Add nodes classified on the model entity of dimension `dim' and tag `tag'.
       // `nodeTags' contains the node tags (their unique, strictly positive
       // identification numbers). `coord' is a vector of length 3 times the length
@@ -1422,6 +1430,14 @@ namespace gmsh { // Top-level functions
         if(ierr) throwLastError();
         elementTags.assign(api_elementTags_, api_elementTags_ + api_elementTags_n_); gmshFree(api_elementTags_);
         nodeTags.assign(api_nodeTags_, api_nodeTags_ + api_nodeTags_n_); gmshFree(api_nodeTags_);
+      }
+
+      // Get the maximum tag `maxTag' of an element in the mesh.
+      inline void getMaxElementTag(std::size_t & maxTag)
+      {
+        int ierr = 0;
+        gmshModelMeshGetMaxElementTag(&maxTag, &ierr);
+        if(ierr) throwLastError();
       }
 
       // Preallocate data before calling `getElementsByType' with `numTasks' > 1.

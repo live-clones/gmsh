@@ -651,6 +651,10 @@ GMSH_API void gmshModelMeshGetNodesForPhysicalGroup(const int dim,
                                                     double ** coord, size_t * coord_n,
                                                     int * ierr);
 
+/* Get the maximum tag `maxTag' of a node in the mesh. */
+GMSH_API void gmshModelMeshGetMaxNodeTag(size_t * maxTag,
+                                         int * ierr);
+
 /* Add nodes classified on the model entity of dimension `dim' and tag `tag'.
  * `nodeTags' contains the node tags (their unique, strictly positive
  * identification numbers). `coord' is a vector of length 3 times the length
@@ -807,6 +811,10 @@ GMSH_API void gmshModelMeshGetElementsByType(const int elementType,
                                              const size_t task,
                                              const size_t numTasks,
                                              int * ierr);
+
+/* Get the maximum tag `maxTag' of an element in the mesh. */
+GMSH_API void gmshModelMeshGetMaxElementTag(size_t * maxTag,
+                                            int * ierr);
 
 /* Preallocate data before calling `getElementsByType' with `numTasks' > 1.
  * For C and C++ only. */

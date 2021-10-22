@@ -1614,6 +1614,24 @@ end
 const get_nodes_for_physical_group = getNodesForPhysicalGroup
 
 """
+    gmsh.model.mesh.getMaxNodeTag()
+
+Get the maximum tag `maxTag` of a node in the mesh.
+
+Return `maxTag`.
+"""
+function getMaxNodeTag()
+    api_maxTag_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshGetMaxNodeTag, gmsh.lib), Cvoid,
+          (Ptr{Csize_t}, Ptr{Cint}),
+          api_maxTag_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return api_maxTag_[]
+end
+const get_max_node_tag = getMaxNodeTag
+
+"""
     gmsh.model.mesh.addNodes(dim, tag, nodeTags, coord, parametricCoord = Cdouble[])
 
 Add nodes classified on the model entity of dimension `dim` and tag `tag`.
@@ -1920,6 +1938,24 @@ function getElementsByType(elementType, tag = -1, task = 0, numTasks = 1)
     return elementTags, nodeTags
 end
 const get_elements_by_type = getElementsByType
+
+"""
+    gmsh.model.mesh.getMaxElementTag()
+
+Get the maximum tag `maxTag` of an element in the mesh.
+
+Return `maxTag`.
+"""
+function getMaxElementTag()
+    api_maxTag_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshGetMaxElementTag, gmsh.lib), Cvoid,
+          (Ptr{Csize_t}, Ptr{Cint}),
+          api_maxTag_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return api_maxTag_[]
+end
+const get_max_element_tag = getMaxElementTag
 
 """
     gmsh.model.mesh.addElements(dim, tag, elementTypes, elementTags, nodeTags)

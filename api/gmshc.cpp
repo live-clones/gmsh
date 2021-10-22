@@ -1085,6 +1085,17 @@ GMSH_API void gmshModelMeshGetNodesForPhysicalGroup(const int dim, const int tag
   }
 }
 
+GMSH_API void gmshModelMeshGetMaxNodeTag(size_t * maxTag, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::mesh::getMaxNodeTag(*maxTag);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API void gmshModelMeshAddNodes(const int dim, const int tag, size_t * nodeTags, size_t nodeTags_n, double * coord, size_t coord_n, double * parametricCoord, size_t parametricCoord_n, int * ierr)
 {
   if(ierr) *ierr = 0;
@@ -1238,6 +1249,17 @@ GMSH_API void gmshModelMeshGetElementsByType(const int elementType, size_t ** el
     gmsh::model::mesh::getElementsByType(elementType, api_elementTags_, api_nodeTags_, tag, task, numTasks);
     vector2ptr(api_elementTags_, elementTags, elementTags_n);
     vector2ptr(api_nodeTags_, nodeTags, nodeTags_n);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelMeshGetMaxElementTag(size_t * maxTag, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::mesh::getMaxElementTag(*maxTag);
   }
   catch(...){
     if(ierr) *ierr = 1;

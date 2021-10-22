@@ -290,6 +290,9 @@ mesh.add('rebuildElementCache', doc, None, ibool('onlyIfNecessary', 'true', 'Tru
 doc = '''Get the nodes from all the elements belonging to the physical group of dimension `dim' and tag `tag'. `nodeTags' contains the node tags; `coord' is a vector of length 3 times the length of `nodeTags' that contains the x, y, z coordinates of the nodes, concatenated: [n1x, n1y, n1z, n2x, ...].'''
 mesh.add('getNodesForPhysicalGroup', doc, None, iint('dim'), iint('tag'), ovectorsize('nodeTags'), ovectordouble('coord'))
 
+doc = '''Get the maximum tag `maxTag' of a node in the mesh.'''
+mesh.add('getMaxNodeTag', doc, None, osize('maxTag'))
+
 doc = '''Add nodes classified on the model entity of dimension `dim' and tag `tag'. `nodeTags' contains the node tags (their unique, strictly positive identification numbers). `coord' is a vector of length 3 times the length of `nodeTags' that contains the x, y, z coordinates of the nodes, concatenated: [n1x, n1y, n1z, n2x, ...]. The optional `parametricCoord' vector contains the parametric coordinates of the nodes, if any. The length of `parametricCoord' can be 0 or `dim' times the length of `nodeTags'. If the `nodeTags' vector is empty, new tags are automatically assigned to the nodes.'''
 mesh.add('addNodes', doc, None, iint('dim'), iint('tag'), ivectorsize('nodeTags'), ivectordouble('coord'), ivectordouble('parametricCoord', 'std::vector<double>()', "[]", "[]"))
 
@@ -325,6 +328,9 @@ mesh.add('getElementProperties', doc, None, iint('elementType'), ostring('elemen
 
 doc = '''Get the elements of type `elementType' classified on the entity of tag `tag'. If `tag' < 0, get the elements for all entities. `elementTags' is a vector containing the tags (unique, strictly positive identifiers) of the elements of the corresponding type. `nodeTags' is a vector of length equal to the number of elements of the given type times the number N of nodes for this type of element, that contains the node tags of all the elements of the given type, concatenated: [e1n1, e1n2, ..., e1nN, e2n1, ...]. If `numTasks' > 1, only compute and return the part of the data indexed by `task'.'''
 mesh.add('getElementsByType', doc, None, iint('elementType'), ovectorsize('elementTags'), ovectorsize('nodeTags'), iint('tag', '-1'), isize('task', '0'), isize('numTasks', '1'))
+
+doc = '''Get the maximum tag `maxTag' of an element in the mesh.'''
+mesh.add('getMaxElementTag', doc, None, osize('maxTag'))
 
 doc = '''Preallocate data before calling `getElementsByType' with `numTasks' > 1. For C and C++ only.'''
 mesh.add_special('preallocateElementsByType', doc, ['onlycc++'], None, iint('elementType'), ibool('elementTag'), ibool('nodeTag'), ovectorsize('elementTags'), ovectorsize('nodeTags'), iint('tag', '-1'))

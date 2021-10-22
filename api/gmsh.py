@@ -1939,6 +1939,25 @@ class model:
         get_nodes_for_physical_group = getNodesForPhysicalGroup
 
         @staticmethod
+        def getMaxNodeTag():
+            """
+            gmsh.model.mesh.getMaxNodeTag()
+
+            Get the maximum tag `maxTag' of a node in the mesh.
+
+            Return `maxTag'.
+            """
+            api_maxTag_ = c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshGetMaxNodeTag(
+                byref(api_maxTag_),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return api_maxTag_.value
+        get_max_node_tag = getMaxNodeTag
+
+        @staticmethod
         def addNodes(dim, tag, nodeTags, coord, parametricCoord=[]):
             """
             gmsh.model.mesh.addNodes(dim, tag, nodeTags, coord, parametricCoord=[])
@@ -2306,6 +2325,25 @@ class model:
                 _ovectorsize(api_elementTags_, api_elementTags_n_.value),
                 _ovectorsize(api_nodeTags_, api_nodeTags_n_.value))
         get_elements_by_type = getElementsByType
+
+        @staticmethod
+        def getMaxElementTag():
+            """
+            gmsh.model.mesh.getMaxElementTag()
+
+            Get the maximum tag `maxTag' of an element in the mesh.
+
+            Return `maxTag'.
+            """
+            api_maxTag_ = c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshGetMaxElementTag(
+                byref(api_maxTag_),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return api_maxTag_.value
+        get_max_element_tag = getMaxElementTag
 
         @staticmethod
         def addElements(dim, tag, elementTypes, elementTags, nodeTags):

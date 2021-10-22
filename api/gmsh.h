@@ -759,6 +759,11 @@ namespace gmsh { // Top-level functions
                                              std::vector<std::size_t> & nodeTags,
                                              std::vector<double> & coord);
 
+      // gmsh::model::mesh::getMaxNodeTag
+      //
+      // Get the maximum tag `maxTag' of a node in the mesh.
+      GMSH_API void getMaxNodeTag(std::size_t & maxTag);
+
       // gmsh::model::mesh::addNodes
       //
       // Add nodes classified on the model entity of dimension `dim' and tag `tag'.
@@ -930,6 +935,11 @@ namespace gmsh { // Top-level functions
                                       const int tag = -1,
                                       const std::size_t task = 0,
                                       const std::size_t numTasks = 1);
+
+      // gmsh::model::mesh::getMaxElementTag
+      //
+      // Get the maximum tag `maxTag' of an element in the mesh.
+      GMSH_API void getMaxElementTag(std::size_t & maxTag);
 
       // gmsh::model::mesh::preallocateElementsByType
       //
