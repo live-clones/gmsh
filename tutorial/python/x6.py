@@ -13,7 +13,7 @@ gmsh.initialize(sys.argv)
 
 gmsh.model.add("x6")
 
-#/ The API provides access to all the elementary building blocks required to
+# The API provides access to all the elementary building blocks required to
 # implement finite-element-type numerical methods. Let's create a simple 2D
 # model and mesh it:
 gmsh.model.occ.addRectangle(0, 0, 0, 1, 0.1)

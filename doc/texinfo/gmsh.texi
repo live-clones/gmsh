@@ -5238,6 +5238,7 @@ Python and Julia API examples, see the respective subdirectories in
 * x4::  Post-processing data import: model-based
 * x5::  Additional geometrical data: parametrizations, normals, curvatures
 * x6::  Additional mesh data: integration points, Jacobians and basis functions
+* x7::  Additional mesh data: internal edges and faces
 @end menu
 
 @c -------------------------------------------------------------------------
@@ -5716,7 +5717,7 @@ Also available in C++
 @c x6
 @c -------------------------------------------------------------------------
 
-@node x6,  , x5, Tutorial
+@node x6, x7, x5, Tutorial
 @section @code{x6}: Additional mesh data: integration points, Jacobians and basis functions
 
 See
@@ -5726,6 +5727,22 @@ Also available in C++
 
 @smallformat
 @verbatiminclude ../../tutorial/python/x6.py
+@end smallformat
+
+@c -------------------------------------------------------------------------
+@c x7
+@c -------------------------------------------------------------------------
+
+@node x7,  , x6, Tutorial
+@section @code{x7}: Additional mesh data: internal edges and faces
+
+See
+@url{@value{GITLAB-PREFIX}/tutorial/python/x7.py,x7.py}.
+Also available in C++
+(@url{@value{GITLAB-PREFIX}/tutorial/c++/x7.cpp,x7.cpp}).
+
+@smallformat
+@verbatiminclude ../../tutorial/python/x7.py
 @end smallformat
 
 @c =========================================================================

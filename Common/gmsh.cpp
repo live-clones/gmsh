@@ -1657,6 +1657,12 @@ gmsh::model::mesh::getNodesForPhysicalGroup(const int dim, const int tag,
   }
 }
 
+GMSH_API void gmsh::model::mesh::getMaxNodeTag(std::size_t &maxTag)
+{
+  if(!_checkInit()) return;
+  maxTag = GModel::current()->getMaxVertexNumber();
+}
+
 GMSH_API void gmsh::model::mesh::addNodes(
   const int dim, const int tag, const std::vector<std::size_t> &nodeTags,
   const std::vector<double> &coord, const std::vector<double> &parametricCoord)
@@ -1982,6 +1988,12 @@ static void _addElements(int dim, int tag, GEntity *ge, int type,
   if(!ok)
     Msg::Error("Wrong type of element for %s",
                _getEntityName(dim, tag).c_str());
+}
+
+GMSH_API void gmsh::model::mesh::getMaxElementTag(std::size_t &maxTag)
+{
+  if(!_checkInit()) return;
+  maxTag = GModel::current()->getMaxElementNumber();
 }
 
 GMSH_API void gmsh::model::mesh::addElements(
