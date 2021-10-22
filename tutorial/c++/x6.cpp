@@ -26,7 +26,7 @@ int main(int argc, char **argv)
   int elementOrder = 1, interpolationOrder = 2;
   gmsh::model::mesh::setOrder(elementOrder);
 
-  auto pinfo = [](const std::string &label, const std::vector<double> &v, int mult)
+  auto pp = [](const std::string &label, const std::vector<double> &v, int mult)
   {
     std::cout << " * " << v.size() / mult << " " << label << ": ";
     for(auto c : v) std::cout << c << " ";
@@ -52,8 +52,8 @@ int main(int argc, char **argv)
     std::vector<double> localCoords, weights;
     gmsh::model::mesh::getIntegrationPoints
       (t, "Gauss" + std::to_string(interpolationOrder), localCoords, weights);
-    pinfo("integration points to integrate order " +
-          std::to_string(interpolationOrder) + " polynomials", localCoords, 3);
+    pp("integration points to integrate order " +
+       std::to_string(interpolationOrder) + " polynomials", localCoords, 3);
 
     // Return the basis functions evaluated at the integration points. Selecting
     // "Lagrange" and "GradLagrange" return the isoparamtric basis functions and
@@ -66,11 +66,11 @@ int main(int argc, char **argv)
     gmsh::model::mesh::getBasisFunctions
       (t, localCoords, "Lagrange", numComponents, basisFunctions,
        numOrientations);
-    pinfo("basis functions at integration points", basisFunctions, 1);
+    pp("basis functions at integration points", basisFunctions, 1);
     gmsh::model::mesh::getBasisFunctions
       (t, localCoords, "GradLagrange", numComponents, basisFunctions,
        numOrientations);
-    pinfo("basis function gradients at integration points", basisFunctions, 3);
+    pp("basis function gradients at integration points", basisFunctions, 3);
 
     // Compute the Jacobians (and their determinants) at the integration points
     // for all the elements of the given type in the mesh. Beware that the
@@ -79,7 +79,7 @@ int main(int argc, char **argv)
     std::vector<double> jacobians, determinants, coords;
     gmsh::model::mesh::getJacobians
       (t, localCoords, jacobians, determinants, coords);
-    pinfo("Jacobian determinants at integration points", determinants, 1);
+    pp("Jacobian determinants at integration points", determinants, 1);
   }
 
   gmsh::finalize();
