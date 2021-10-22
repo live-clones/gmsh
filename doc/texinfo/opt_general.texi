@@ -536,6 +536,11 @@ Should the menu window be detached from the graphic window?@*
 Default value: @code{0}@*
 Saved in: @code{General.SessionFileName}
 
+@item General.DetachedProcess
+On Windows, should processes created by Gmsh be detached?@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
 @item General.DisplayBorderFactor
 Border factor for model display (0: model fits window size exactly)@*
 Default value: @code{0.2}@*
