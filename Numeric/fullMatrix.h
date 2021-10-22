@@ -444,7 +444,7 @@ public:
   }
 #endif
   ;
-  void scale(const double s)
+  void scale(const scalar s)
 #if defined(HAVE_EIGEN)
   {
     EigenMat ma(_data, _r, _c);
