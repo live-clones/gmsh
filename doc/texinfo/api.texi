@@ -666,7 +666,7 @@ integer value
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L355,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L293,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L960,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L735,Julia}
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/x2.cpp#L78,x2.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/x4.cpp#L24,x4.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/x7.cpp#L70,x7.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/discrete.cpp#L10,discrete.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/edges.cpp#L60,edges.cpp}, ...), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/x2.py#L74,x2.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/x4.py#L22,x4.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/x7.py#L70,x7.py}, @url{@value{GITLAB-PREFIX}/demos/api/copy_mesh.py#L27,copy_mesh.py}, @url{@value{GITLAB-PREFIX}/demos/api/discrete.py#L9,discrete.py}, ...)
+C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/x2.cpp#L78,x2.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/x4.cpp#L24,x4.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/x7.cpp#L71,x7.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/discrete.cpp#L10,discrete.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/edges.cpp#L60,edges.cpp}, ...), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/x2.py#L74,x2.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/x4.py#L22,x4.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/x7.py#L70,x7.py}, @url{@value{GITLAB-PREFIX}/demos/api/copy_mesh.py#L27,copy_mesh.py}, @url{@value{GITLAB-PREFIX}/demos/api/discrete.py#L9,discrete.py}, ...)
 @end table
 
 @item gmsh/model/removeEntities
@@ -1661,7 +1661,7 @@ indexed by @code{task}.
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L932,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L807,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L2295,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L1926,Julia}
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/x7.cpp#L57,x7.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/edges.cpp#L51,edges.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/faces.cpp#L51,faces.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/x7.py#L50,x7.py}, @url{@value{GITLAB-PREFIX}/demos/api/adapt_mesh.py#L18,adapt_mesh.py}, @url{@value{GITLAB-PREFIX}/demos/api/neighbors.py#L15,neighbors.py}, @url{@value{GITLAB-PREFIX}/demos/api/poisson.py#L95,poisson.py})
+C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/x7.cpp#L58,x7.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/edges.cpp#L51,edges.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/faces.cpp#L51,faces.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/x7.py#L50,x7.py}, @url{@value{GITLAB-PREFIX}/demos/api/adapt_mesh.py#L18,adapt_mesh.py}, @url{@value{GITLAB-PREFIX}/demos/api/neighbors.py#L15,neighbors.py}, @url{@value{GITLAB-PREFIX}/demos/api/poisson.py#L95,poisson.py})
 @end table
 
 @item gmsh/model/mesh/getMaxElementTag
@@ -1677,7 +1677,7 @@ Get the maximum tag @code{maxTag} of an element in the mesh.
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L942,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L816,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L2330,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L1949,Julia}
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/x7.cpp#L77,x7.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/x7.py#L74,x7.py})
+C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/x7.cpp#L78,x7.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/x7.py#L74,x7.py})
 @end table
 
 @item gmsh/model/mesh/preallocateElementsByType
@@ -1739,7 +1739,7 @@ are automatically assigned to the elements.
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L982,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L853,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L2380,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L1996,Julia}
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/x2.cpp#L98,x2.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/x4.cpp#L29,x4.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/x7.cpp#L88,x7.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/edges.cpp#L64,edges.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/faces.cpp#L64,faces.cpp}, ...), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/x2.py#L94,x2.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/x4.py#L27,x4.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/x7.py#L86,x7.py}, @url{@value{GITLAB-PREFIX}/demos/api/import_perf.py#L70,import_perf.py}, @url{@value{GITLAB-PREFIX}/demos/api/raw_tetrahedralization.py#L20,raw_tetrahedralization.py}, ...)
+C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/x2.cpp#L98,x2.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/x4.cpp#L29,x4.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/x7.cpp#L89,x7.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/edges.cpp#L64,edges.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/faces.cpp#L64,faces.cpp}, ...), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/x2.py#L94,x2.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/x4.py#L27,x4.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/x7.py#L86,x7.py}, @url{@value{GITLAB-PREFIX}/demos/api/import_perf.py#L70,import_perf.py}, @url{@value{GITLAB-PREFIX}/demos/api/raw_tetrahedralization.py#L20,raw_tetrahedralization.py}, ...)
 @end table
 
 @item gmsh/model/mesh/getIntegrationPoints
@@ -1795,7 +1795,7 @@ points. If @code{tag} < 0, get the Jacobian data for all entities. If
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L1022,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L891,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L2442,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L2058,Julia}
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/demos/api/adapt_mesh.cpp#L93,adapt_mesh.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/edges.cpp#L97,edges.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/faces.cpp#L97,faces.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/x6.py#L68,x6.py}, @url{@value{GITLAB-PREFIX}/demos/api/adapt_mesh.py#L31,adapt_mesh.py}, @url{@value{GITLAB-PREFIX}/demos/api/poisson.py#L131,poisson.py})
+C++ (@url{@value{GITLAB-PREFIX}/demos/api/adapt_mesh.cpp#L93,adapt_mesh.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/edges.cpp#L97,edges.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/faces.cpp#L97,faces.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/x6.py#L67,x6.py}, @url{@value{GITLAB-PREFIX}/demos/api/adapt_mesh.py#L31,adapt_mesh.py}, @url{@value{GITLAB-PREFIX}/demos/api/poisson.py#L131,poisson.py})
 @end table
 
 @item gmsh/model/mesh/preallocateJacobians
@@ -1950,7 +1950,7 @@ concatenated in the vector @code{nodeTags}. Mesh edges are created e.g. by
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L1137,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L997,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L2646,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L2221,Julia}
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/x7.cpp#L50,x7.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/x7.py#L44,x7.py})
+C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/x7.cpp#L51,x7.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/x7.py#L44,x7.py})
 @end table
 
 @item gmsh/model/mesh/getFaces
@@ -1970,7 +1970,7 @@ by @code{createFaces()} or @code{getKeys()}.
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L1148,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1007,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L2674,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L2248,Julia}
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/x7.cpp#L51,x7.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/x7.py#L45,x7.py})
+C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/x7.cpp#L52,x7.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/x7.py#L45,x7.py})
 @end table
 
 @item gmsh/model/mesh/createEdges
@@ -1986,7 +1986,7 @@ Create unique mesh edges for the entities @code{dimTags}.
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L1156,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1014,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L2704,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L2269,Julia}
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/x7.cpp#L44,x7.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/x7.py#L40,x7.py})
+C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/x7.cpp#L45,x7.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/x7.py#L40,x7.py})
 @end table
 
 @item gmsh/model/mesh/createFaces
@@ -2002,7 +2002,7 @@ Create unique mesh faces for the entities @code{dimTags}.
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L1161,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1018,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L2720,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L2286,Julia}
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/x7.cpp#L45,x7.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/x7.py#L41,x7.py})
+C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/x7.cpp#L46,x7.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/x7.py#L41,x7.py})
 @end table
 
 @item gmsh/model/mesh/getKeys

@@ -14,7 +14,7 @@ gmsh.initialize(sys.argv)
 gmsh.model.add("x7")
 
 # Meshes are fully described in Gmsh by nodes and elements, both associated to
-# model entities. The API can be used to generate and handle the other mesh
+# model entities. The API can be used to generate and handle other mesh
 # entities, i.e. mesh edges and faces, which are not stored by default.
 
 # Let's create a simple model and mesh it:
@@ -31,7 +31,7 @@ edgeNodes = gmsh.model.mesh.getElementEdgeNodes(elementType)
 faceNodes = gmsh.model.mesh.getElementFaceNodes(elementType, 3)
 
 # Edges and faces are returned for each element as a list of nodes corresponding
-# to the canonical orientation of the edge/face on the element.
+# to the canonical orientation of the edges and faces for a given element type.
 
 # Gmsh can also identify unique edges and faces (a single edge or face whatever
 # the ordering of their nodes) and assign them a unique tag. This identification
@@ -62,7 +62,7 @@ for i in range(len(faceTags)): # 4 faces per tetrahedron
         faces2Elements[faceTags[i]].append(elementTags[i // 4])
 
 # New unique lower dimensional elements can also be easily created given the
-# edge or face nodes. This is especially useful for numerical method that
+# edge or face nodes. This is especially useful for numerical methods that
 # require integrating or interpolating on internal edges or faces (like
 # e.g. Discontinuous Galerkin techniques), since creating elements for the
 # internal entities will make this additional mesh data readily available (see

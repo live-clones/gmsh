@@ -17,8 +17,8 @@ int main(int argc, char **argv)
   gmsh::model::add("x7");
 
   // Meshes are fully described in Gmsh by nodes and elements, both associated
-  // to model entities. The API can be used to generate and handle the other
-  // mesh entities, i.e. mesh edges and faces, which are not stored by default.
+  // to model entities. The API can be used to generate and handle other mesh
+  // entities, i.e. mesh edges and faces, which are not stored by default.
 
   // Let's create a simple model and mesh it:
   gmsh::model::occ::addBox(0, 0, 0, 1, 1, 1);
@@ -35,7 +35,8 @@ int main(int argc, char **argv)
   gmsh::model::mesh::getElementFaceNodes(elementType, 3, faceNodes);
 
   // Edges and faces are returned for each element as a list of nodes
-  // corresponding to the canonical orientation of the edge/face on the element.
+  // corresponding to the canonical orientation of the edges and faces for a
+  // given element type.
 
   // Gmsh can also identify unique edges and faces (a single edge or face
   // whatever the ordering of their nodes) and assign them a unique tag. This
@@ -62,7 +63,7 @@ int main(int argc, char **argv)
     faces2Elements[faceTags[i]].push_back(elementTags[i / 4]);
 
   // New unique lower dimensional elements can also be easily created given the
-  // edge or face nodes. This is especially useful for numerical method that
+  // edge or face nodes. This is especially useful for numerical methods that
   // require integrating or interpolating on internal edges or faces (like
   // e.g. Discontinuous Galerkin techniques), since creating elements for the
   // internal entities will make this additional mesh data readily available

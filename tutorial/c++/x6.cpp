@@ -48,7 +48,7 @@ int main(int argc, char **argv)
     // Retrieve integration points for that element type, enabling exact
     // integration of polynomials of order "interpolationOrder". The "Gauss"
     // integration family returns the "economical" Gauss points if available,
-    // and defaults to the "CompositeGauss" (tensor product rule) if not.
+    // and defaults to the "CompositeGauss" (tensor product) rule if not.
     std::vector<double> localCoords, weights;
     gmsh::model::mesh::getIntegrationPoints
       (t, "Gauss" + std::to_string(interpolationOrder), localCoords, weights);
@@ -56,11 +56,12 @@ int main(int argc, char **argv)
        std::to_string(interpolationOrder) + " polynomials", localCoords, 3);
 
     // Return the basis functions evaluated at the integration points. Selecting
-    // "Lagrange" and "GradLagrange" return the isoparamtric basis functions and
-    // their gradient for the elements in the mesh. A specific interpolation
-    // order can be requested using "LagrangeN" and "GradLagrangeN" with N = 1,
-    // 2, ... Other supported function spaces include "H1LegendreN",
-    // "GradH1LegendreN", "HcurlLegendreN", "CurlHcurlLegendreN".
+    // "Lagrange" and "GradLagrange" returns the isoparamtric basis functions
+    // and their gradient (in the reference space of the given element type). A
+    // specific interpolation order can be requested using "LagrangeN" and
+    // "GradLagrangeN" with N = 1, 2, ... Other supported function spaces
+    // include "H1LegendreN", "GradH1LegendreN", "HcurlLegendreN",
+    // "CurlHcurlLegendreN".
     int numComponents, numOrientations;
     std::vector<double> basisFunctions;
     gmsh::model::mesh::getBasisFunctions
@@ -74,7 +75,7 @@ int main(int argc, char **argv)
 
     // Compute the Jacobians (and their determinants) at the integration points
     // for all the elements of the given type in the mesh. Beware that the
-    // Jacobians are returned "by columns" - see the API documentation for
+    // Jacobians are returned "by column": see the API documentation for
     // details.
     std::vector<double> jacobians, determinants, coords;
     gmsh::model::mesh::getJacobians
