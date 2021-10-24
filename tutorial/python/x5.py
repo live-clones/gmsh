@@ -83,7 +83,7 @@ uv = gmsh.model.reparametrizeOnSurface(1, 5, t, 1)
 xyz2 = gmsh.model.getValue(2, 1, uv)
 
 # Hopefully we get the same x, y, z coordinates!
-if max(xyz1 - xyz2) < 1e-12:
+if max([abs(a - b) for (a, b) in zip(xyz1, xyz2)]) < 1e-12:
     gmsh.logger.write('Evaluation on curve and surface match!')
 else:
     gmsh.logger.write('Evaluation on curve and surface do not match!', 'error')
