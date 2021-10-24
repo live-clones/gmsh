@@ -100,7 +100,7 @@ int main(int argc, char **argv)
   // Hopefully we get the same x, y, z coordinates!
   std::vector<double> diff(xyz1.size());
   std::transform(xyz1.begin(), xyz1.end(), xyz2.begin(), diff.begin(),
-                 std::minus<double>());
+                 [](double a, double b){ return std::abs(a - b); });
   if(*std::max_element(diff.begin(), diff.end()) < 1e-12)
     gmsh::logger::write("Evaluation on curve and surface match!");
   else
