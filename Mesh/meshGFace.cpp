@@ -1798,13 +1798,6 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
 // periodicty, some curves are present 2 times in the wire (seams). Those must
 // be meshed separately
 
-static inline double dist2(const SPoint2 &p1, const SPoint2 &p2)
-{
-  const double dx = p1.x() - p2.x();
-  const double dy = p1.y() - p2.y();
-  return dx * dx + dy * dy;
-}
-
 static bool buildConsecutiveListOfVertices(
   GFace *gf, GEdgeLoop &gel, std::vector<BDS_Point *> &result,
   SBoundingBox3d &bbox, BDS_Mesh *m,
@@ -1819,7 +1812,10 @@ static bool buildConsecutiveListOfVertices(
   // 1) both reparametrizations of the seams must be tested, as the topological
   //    representation does not know which one to use
   // 2) both orientations of curves must be tested, as the topological
-  //    representation of periodic curves does not distinguish them
+  //    representation of periodic curves cannot distinguish them
+  // 3) reparametrization of curves on surfaces can lead to slightly different
+  //    parametric coordinates, especially with OpenCASCADE - so a tolerance is
+  //    needed
   std::vector<GEdgeSigned> signedEdges(gel.begin(), gel.end());
   std::vector<SPoint2> coords;
   std::vector<MVertex*> verts;
@@ -1828,8 +1824,6 @@ static bool buildConsecutiveListOfVertices(
 
     if(coords.size()) break; // we succeeded with initial_dir == 0
 
-    if(initial_dir == 1) printf("AAAAAAAAAAAAAAAAAAAAAAAA\n");
-
     for(std::size_t i = 0; i < signedEdges.size(); i++) {
       std::vector<SPoint2> p, p_alt, p_rev, p_alt_rev;
       std::vector<MVertex*> v, v_rev;
@@ -1837,7 +1831,7 @@ static bool buildConsecutiveListOfVertices(
       bool seam = ge->isSeam(gf);
       Range<double> range = ge->parBoundsOnFace(gf);
 
-      // get parametric coordinates of curve nodes in the surface, with both
+      // get parametric coordinates of curve nodes on the surface, with both
       // possible values for seams
       if(ge->getBeginVertex()) {
         p.push_back(ge->reparamOnFace(gf, range.low(), 1));
@@ -1857,7 +1851,7 @@ static bool buildConsecutiveListOfVertices(
         v.push_back(ge->getEndVertex()->mesh_vertices[0]);
       }
 
-      // get reverse
+      // get the reverse mesh
       p_rev = p;
       std::reverse(p_rev.begin(), p_rev.end());
       if(seam) {
@@ -1868,6 +1862,7 @@ static bool buildConsecutiveListOfVertices(
       std::reverse(v_rev.begin(), v_rev.end());
 
       if(i == 0) {
+        // choose which mesh to consider for the first curve in the loop
         if(initial_dir == 0) {
           if(seam && seam_the_first)
             coords = p_alt;
@@ -1884,67 +1879,82 @@ static bool buildConsecutiveListOfVertices(
         }
       }
       else{
-        double dist = dist2(coords.back(), p.front());
-        if(dist < tol) {
-          coords.pop_back();
-          coords.insert(coords.end(), p.begin(), p.end());
-          verts.pop_back();
-          verts.insert(verts.end(), v.begin(), v.end());
-        }
-        else {
-          dist = dist2(coords.back(), p_rev.front());
-          if(dist < tol) {
+        // detect which mesh variant to use for the next curve by selecting the
+        // mesh that starts with the node at the smallest distance, within the
+        // prescribed tolerance
+        double dist1 = coords.back().distance(p.front());
+        double dist2 = coords.back().distance(p_rev.front());
+        if(!seam) {
+          if(dist1 < dist2 && dist1 < tol) {
+            coords.pop_back();
+            coords.insert(coords.end(), p.begin(), p.end());
+            verts.pop_back();
+            verts.insert(verts.end(), v.begin(), v.end());
+          }
+          else if(dist2 < dist1 && dist2 < tol) {
             coords.pop_back();
             coords.insert(coords.end(), p_rev.begin(), p_rev.end());
             verts.pop_back();
             verts.insert(verts.end(), v_rev.begin(), v_rev.end());
           }
           else{
-            if(!seam) {
-              if(!initial_dir) {
-                coords.clear();
-                verts.clear();
-                break;
-              }
-              else {
-                Msg::Debug("Distance (%g) in parametric space larger than "
-                           "tolerance (%g) between end of curve %d and "
-                           "beginning of curve %d", dist, tol,
-                           signedEdges[i - 1].getEdge()->tag(), ge->tag());
-                return false;
-              }
+            Msg::Debug("Distances (%g, %g) in parametric space larger than "
+                       "tolerance (%g) between end of curve %d and "
+                       "begining of curve %d...", dist1, dist2, tol,
+                       signedEdges[i - 1].getEdge()->tag(), ge->tag());
+            if(initial_dir == 0){
+              Msg::Debug("... will try with alternate initial orientation");
+              coords.clear();
+              verts.clear();
+              break;
             }
-            else {
-              dist = dist2(coords.back(), p_alt.front());
-              if(dist < tol) {
-                coords.pop_back();
-                coords.insert(coords.end(), p_alt.begin(), p_alt.end());
-                verts.pop_back();
-                verts.insert(verts.end(), v.begin(), v.end());
-              }
-              else {
-                dist = dist2(coords.back(), p_alt_rev.front());
-                if(dist < tol) {
-                  coords.pop_back();
-                  coords.insert(coords.end(), p_alt_rev.begin(), p_alt_rev.end());
-                  verts.pop_back();
-                  verts.insert(verts.end(), v_rev.begin(), v_rev.end());
-                }
-                else {
-                  if(!initial_dir) {
-                    coords.clear();
-                    verts.clear();
-                    break;
-                  }
-                  else {
-                    Msg::Debug("Distance (%g) in parametric space larger than "
-                               "tolerance (%g) between end of curve %d and "
-                               "beginning of seam curve %d", dist, tol,
-                               signedEdges[i - 1].getEdge()->tag(), ge->tag());
-                    return false;
-                  }
-                }
-              }
+            else{
+              Msg::Debug("... will try with larger tolerance");
+              return false;
+            }
+          }
+        }
+        else {
+          double dist3 = coords.back().distance(p_alt.front());
+          double dist4 = coords.back().distance(p_alt_rev.front());
+          if(dist1 < dist2 && dist1 < dist3 && dist1 < dist4 && dist1 < tol) {
+            coords.pop_back();
+            coords.insert(coords.end(), p.begin(), p.end());
+            verts.pop_back();
+            verts.insert(verts.end(), v.begin(), v.end());
+          }
+          else if(dist2 < dist1 && dist2 < dist3 && dist2 < dist4 && dist2 < tol) {
+            coords.pop_back();
+            coords.insert(coords.end(), p_rev.begin(), p_rev.end());
+            verts.pop_back();
+            verts.insert(verts.end(), v_rev.begin(), v_rev.end());
+          }
+          else if(dist3 < dist1 && dist3 < dist2 && dist3 < dist4 && dist3 < tol) {
+            coords.pop_back();
+            coords.insert(coords.end(), p_alt.begin(), p_alt.end());
+            verts.pop_back();
+            verts.insert(verts.end(), v.begin(), v.end());
+          }
+          else if(dist4 < dist1 && dist4 < dist2 && dist4 < dist3 && dist4 < tol) {
+            coords.pop_back();
+            coords.insert(coords.end(), p_alt_rev.begin(), p_alt_rev.end());
+            verts.pop_back();
+            verts.insert(verts.end(), v_rev.begin(), v_rev.end());
+          }
+          else {
+            Msg::Debug("Distances (%g, %g, %g, %g) in parametric space larger "
+                       "than tolerance (%g) between end of curve %d and "
+                       "begining of seam curve %d...", dist1, dist2, dist3, dist4,
+                       tol, signedEdges[i - 1].getEdge()->tag(), ge->tag());
+            if(initial_dir == 0){
+              Msg::Debug("... will try with alternate initial orientation");
+              coords.clear();
+              verts.clear();
+              break;
+            }
+            else{
+              Msg::Debug("... will try with larger tolerance");
+              return false;
             }
           }
         }
@@ -1961,14 +1971,14 @@ static bool buildConsecutiveListOfVertices(
     Msg::Debug("No nodes in 1D mesh on surface %d", gf->tag());
     return true;
   }
-  double dist = dist2(coords.back(), coords.front());
+  double dist = coords.back().distance(coords.front());
   if(dist < tol) {
     coords.pop_back();
     verts.pop_back();
   }
   else {
-    Msg::Error("1D mesh on surface %d does not seem to form a closed loop",
-               gf->tag());
+    Msg::Debug("Distance %g between first and last node in 1D mesh of surface "
+               "%d exceeds tolerance %g", dist, gf->tag(), tol);
     return false;
   }
 
@@ -1983,7 +1993,7 @@ static bool buildConsecutiveListOfVertices(
       for(auto it = recoverMap.begin(); it != recoverMap.end(); ++it) {
         if(it->second == here) {
           SPoint2 param(it->first->u, it->first->v);
-          double dist = dist2(coords[i], param);
+          double dist = coords[i].distance(param);
           if(dist < tol) {
             pp = it->first;
             break;
@@ -2014,12 +2024,13 @@ static bool buildConsecutiveListOfVertices(
       pp->g = g;
       bbox += SPoint3(U, V, 0);
     }
-    // printf("node %d coord %g %g\n", here->getNum(), pp->u, pp->v);
+    //printf("node %d coord %g %g\n", here->getNum(), pp->u, pp->v);
     result.push_back(pp);
     recoverMapLocal[pp] = here;
     count++;
   }
 
+  // we're all set!
   recoverMap.insert(recoverMapLocal.begin(), recoverMapLocal.end());
 
   return true;
