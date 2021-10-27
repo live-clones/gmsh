@@ -8,6 +8,8 @@
 #include <queue>
 #include <map>
 #include <vector>
+#include "GModel.h"
+#include "GFace.h"
 #include "gmsh.h"
 #include "SPoint2.h"
 #include "SVector3.h"
@@ -194,7 +196,7 @@ static double p2triangle_alignement_quality_measure(double *xa, double *xb,
                                                     double *xbc, double *xca,
                                                     int VIEW_TAG)
 {
-  double xis[6] = {0, .2, .4, .6, .8, 1};
+  double xis[6] = {0, .1, .2, .8, .9, 1};
   double etas[6] = {0, 0, 0, 0., 0., 0.};
   double J[6];
   double Js[6][4];
@@ -613,16 +615,39 @@ triangleQualityP2(int VIEW_TAG, PolyMesh::HalfEdge *hea,
     gmsh::view::probe(VIEW_TAG, bc.x(), bc.y(), 0.0, val4, 0, 9);
     gmsh::view::probe(VIEW_TAG, ca.x(), ca.y(), 0.0, val5, 0, 9);
 
-    fprintf(FF,
-            "ST2(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,0,%g,%g,0,%g,%g,0){%g,%g,%g,%"
-            "g,%g,%g};\n",
-            hea->v->position.x(), hea->v->position.y(), hea->v->position.z(),
-            heb->v->position.x(), heb->v->position.y(), heb->v->position.z(),
-            hec->v->position.x(), hec->v->position.y(), hec->v->position.z(),
-            ab.x(), ab.y(), bc.x(), bc.y(), ca.x(), ca.y(), val0[8], val1[8],
-            val2[8], val3[8], val4[8], val5[8]);
-  }
+    double C0, C1, C2;
+    double S0, S1, S2;
+    double h10, h11, h12;
+    double h20, h21, h22;
+    analyze2dMetric(val0, C0, S0, h10, h20);
+    analyze2dMetric(val1, C1, S1, h11, h21);
+    analyze2dMetric(val2, C2, S2, h12, h22);
+    double Cab, Cbc, Cca;
+    double Sab, Sbc, Sca;
+    double h1ab, h1bc, h1ca;
+    double h2ab, h2bc, h2ca;
+    analyze2dMetric(val3, Cab, Sab, h1ab, h2ab);
+    analyze2dMetric(val4, Cbc, Sbc, h1bc, h2bc);
+    analyze2dMetric(val5, Cca, Sca, h1ca, h2ca);
 
+    fprintf(FF,
+            "VT2(%g,%g,0,%g,%g,0,%g,%g,0,%g,%g,0,%g,%g,0,%g,%g,0){%g,%g,0,%"
+            "g,%g,0,%g,%g,0,%g,%g,0,%g,%g,0,%g,%g,0};\n",
+            hea->v->position.x(), hea->v->position.y(), 
+            heb->v->position.x(), heb->v->position.y(), 
+            hec->v->position.x(), hec->v->position.y(),
+	    ab.x(),ab.y(),bc.x(), bc.y(),ca.x(), ca.y(),
+            C0,S0,C1,S1,C2,S2,Cab,Sab,Cbc,Sbc,Cca, Sca);
+    fprintf(FF,
+            "VT2(%g,%g,0,%g,%g,0,%g,%g,0,%g,%g,0,%g,%g,0,%g,%g,0){%g,%g,0,%"
+            "g,%g,0,%g,%g,0,%g,%g,0,%g,%g,0,%g,%g,0};\n",
+            hea->v->position.x(), hea->v->position.y(), 
+            heb->v->position.x(), heb->v->position.y(), 
+            hec->v->position.x(), hec->v->position.y(),
+	    ab.x(),ab.y(),bc.x(), bc.y(),ca.x(), ca.y(),
+            S0,-C0,S1,-C1,S2,-C2,Sab,-Cab,Sbc,-Cbc,Sca, -Cca);
+  }
+  
   double validity = triangleValidityP2(hea, midPoints);
   if(validity < 0) return validity;
   return p2triangle_alignement_quality_measure(
@@ -679,7 +704,7 @@ static double bestParabola(PolyMesh::HalfEdge *he, int VIEW_TAG,
     double t = (double)i / (N - 1);
     double xi = XI_MIN + (XI_MAX - XI_MIN) * t;
     SPoint2 X(xmid - xi * direction[0], ymid - xi * direction[1]);
-    if (inside(X)){
+    if (!inside || inside(X)){
       midPoints[he] = midPoints[he->opposite] = X;
       Q1 = triangleQualityP2(VIEW_TAG, he, &midPoints);
       Q2 = triangleQualityP2(VIEW_TAG, he->opposite, &midPoints);
@@ -804,6 +829,89 @@ double bestParabola(double x0, double y0, double x1, double y1, double &xmid,
   //  &midPoints));
 }
 
+int curveCurrentMeshP2(int VIEW_TAG){
+  GModel *gm = GModel::current(); 
+  for (GModel::fiter fit = gm->firstFace(); fit != gm->lastFace() ; ++fit){
+    PolyMesh *pm;
+    if (GFace2PolyMesh((*fit)->tag(), &pm)<0)continue;
+    printf("curving face %d %lu faces\n",(*fit)->tag(), pm->hedges.size());
+    std::map<PolyMesh::HalfEdge *, SPoint2> midPoints;
+    std::map<PolyMesh::HalfEdge *, double> LS;
+    for(auto he : pm->hedges) {
+      SPoint2 p_0(he->v->position.x(), he->v->position.y());
+      SPoint2 p_1(he->next->v->position.x(), he->next->v->position.y());
+      SPoint2 p_m = (p_0 + p_1) * .5;
+      midPoints[he] = p_m;
+    }
+    int iter = 0;
+    double ximax = 0.3 / 5;
+    int count = 0;
+    while(iter++ < 6) {
+      for(auto he : pm->hedges) {
+	SPoint2 p_0(he->v->position.x(), he->v->position.y());
+	SPoint2 p_1(he->next->v->position.x(), he->next->v->position.y());
+	SPoint2 p_m = (p_0 + p_1) * .5;
+	if(he->opposite) {
+	  count ++;
+	  bestParabola(he, VIEW_TAG, midPoints, ximax, nullptr);
+	  double L = LENGTH(he, midPoints, VIEW_TAG);
+	  LS[he] = L;
+	  LS[he->opposite] = L;
+	}
+      }
+      ximax += 0.3 / 5;
+
+      {
+	char name[256];
+	sprintf(name, "polyMeshCurved%d.pos", iter);
+	FILE *f = fopen(name, "w");
+	sprintf(name, "polyMeshCurved%d.pos", iter+100);
+	FILE *f2 = fopen(name, "w");
+	fprintf(f, "View \" %s \"{\n", name);
+	fprintf(f2, "View \" %s \"{\n", name);
+	for(auto he : pm->hedges) {
+	  SPoint2 p = midPoints[he];
+	  pm->high_order_nodes.push_back(SVector3(p.x(), p.y(), 0.0));
+	  double Lhe = 1;//LENGTH(he, midPoints, VIEW_TAG);
+	  double Lhe2 = 1;//LENGTH(he, midPoints, VIEW_TAG, true);
+	  fprintf(f, "SL2(%g,%g,0,%g,%g,0,%g,%g,0){%g,%g,%g};\n",
+		  he->v->position.x(), he->v->position.y(),
+		  he->next->v->position.x(), he->next->v->position.y(), p.x(),
+		  p.y(), Lhe, Lhe, Lhe);
+	  fprintf(f2, "SL(%g,%g,0,%g,%g,0){%g,%g};\n", he->v->position.x(),
+		  he->v->position.y(), he->next->v->position.x(),
+		  he->next->v->position.y(), Lhe2, Lhe2);
+	}
+	fprintf(f, "};\n");
+	fclose(f);
+	fprintf(f2, "};\n");
+	fclose(f2);
+      }
+    }
+
+    {
+      FILE *FFF = fopen("meshMetric.pos", "w");
+      fprintf(FFF, "View \" metric \"{\n");
+      
+      for(auto he : pm->hedges) {
+	if(he->opposite) {
+	  FF = FFF;
+	  triangleQualityP2(VIEW_TAG, he, &midPoints);
+	  FF = NULL;
+	}
+      }
+      fprintf(FFF, "};\n");
+      fclose(FFF);
+    }
+
+    printf("curving %d edges done\n", count);
+    PolyMesh2GFace(pm, (*fit)->tag());
+  }
+  
+  return 0;
+}
+
+
 int computePointsUsingScaledCrossFieldPlanarP2(
   const char *modelForMetric, const char *modelForMesh, int VIEW_TAG,
   int faceTag, std::vector<double> &pts,
@@ -905,7 +1013,7 @@ int computePointsUsingScaledCrossFieldPlanarP2(
 
   int iter = 0;
   double ximax = 0.3 / 5;
-  while(iter++ < 6) {
+  while(iter++ < 3) {
     for(auto he : newMesh->hedges) {
       SPoint2 p_0(he->v->position.x(), he->v->position.y());
       SPoint2 p_1(he->next->v->position.x(), he->next->v->position.y());
@@ -923,7 +1031,7 @@ int computePointsUsingScaledCrossFieldPlanarP2(
     ximax += 0.3 / 5;
   }
 
-  iter = 3;
+  iter = 100;
   while(iter++ < 3) {
     int count = 0;
     for(auto he : newMesh->hedges) {
@@ -959,8 +1067,8 @@ int computePointsUsingScaledCrossFieldPlanarP2(
         }
         else {
           count++;
-	  printf("%12.5E %12.5E %12.5E %12.5E %12.5E \n", A, LA, B, LB,
-                 LENGTH(he, midPoints, VIEW_TAG));
+	  //	  printf("%12.5E %12.5E %12.5E %12.5E %12.5E \n", A, LA, B, LB,
+	  //                 LENGTH(he, midPoints, VIEW_TAG));
         }
       }
     }

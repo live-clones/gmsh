@@ -119,6 +119,8 @@ int PolyMesh2GFace(PolyMesh *pm, int faceTag)
 
   std::map<MEdge, GPoint, MEdgeLessThan> hop;
 
+  printf("coucou2\n");
+  
   for(auto f : pm->faces) {
     if(f->data == faceTag) {
       PolyMesh::Vertex *v[4] = {f->he->v, f->he->next->v, f->he->next->next->v,
@@ -204,6 +206,8 @@ int GFace2PolyMesh(int faceTag, PolyMesh **pm)
   gmsh::model::mesh::getElements(elementTypes, elementTags, nodeTags, 2,
                                  faceTag);
 
+  if (elementTypes.empty())return -1;
+  
   for(size_t K = 0; K < elementTypes.size(); K++) {
     int eT = elementTypes[K];
     int nNod = 0;
