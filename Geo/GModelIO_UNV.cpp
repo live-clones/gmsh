@@ -466,8 +466,8 @@ int GModel::writeUNV(const std::string &name, bool saveAll,
                 0, 0, (int)nodes.size() + nele);
         fprintf(fp, "%s\n", physicalName(this, dim, it->first).c_str());
 
+        int row = 0;
         if(saveGroupsOfNodes) {
-          int row = 0;
           for(auto it2 = nodes.begin(); it2 != nodes.end(); it2++) {
             if(row == 2) {
               fprintf(fp, "\n");
@@ -476,10 +476,17 @@ int GModel::writeUNV(const std::string &name, bool saveAll,
             fprintf(fp, "%10d%10ld%10d%10d", 7, (*it2)->getIndex(), 0, 0);
             row++;
           }
-          fprintf(fp, "\n");
         }
+        
+        // this output will be consumed by legacy codes that rely on
+        // full lines, each having two entities even if the first is
+        // a node and the second is an element
+        if(row == 2) {
+          fprintf(fp, "\n");
+          row = 0;
+        }
+        
         if(saveGroupsOfElements) {
-          int row = 0;
           for(std::size_t i = 0; i < entities.size(); i++) {
             for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
               MElement *e = entities[i]->getMeshElement(j);
@@ -492,7 +499,13 @@ int GModel::writeUNV(const std::string &name, bool saveAll,
             }
           }
           fprintf(fp, "\n");
-        }
+        } else {
+          // print a final newline only if the count is odd
+          if(row == 1) {
+            fprintf(fp, "\n");
+          }   
+        }    
+        
       }
     }
     fprintf(fp, "%6d\n", -1);
