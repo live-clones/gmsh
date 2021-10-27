@@ -1793,10 +1793,9 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
   return true;
 }
 
-// this function buils a list of vertices (BDS) that are consecutive in one
-// given edge loop. We take care of periodic surfaces. In the case of
-// periodicty, some curves are present 2 times in the wire (seams). Those must
-// be meshed separately
+// this function buils a list of BDS points that are consecutive in one given
+// edge loop, taking care of periodic surfaces with seams; it also fills the
+// recoverMap to link BDS points with mesh nodes
 
 static bool buildConsecutiveListOfVertices(
   GFace *gf, GEdgeLoop &gel, std::vector<BDS_Point *> &result,
