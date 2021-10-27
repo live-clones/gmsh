@@ -242,8 +242,7 @@ int GModel::readUNV(const std::string &name, bool readGroupsOfElements)
                              vertices[9], vertices[11], vertices[13],
                              vertices[1], vertices[5], vertices[6],
                              vertices[3], vertices[7], vertices[8],
-                             vertices[10], vertices[14], vertices[12],
-                             num);
+                             vertices[10], vertices[14], vertices[12], num);
             elements[5][elementary].push_back(e);
             dim = 3;
             break;
@@ -331,8 +330,12 @@ int GModel::readUNV(const std::string &name, bool readGroupsOfElements)
         else
           elementaryNew = ent->second;
         int t = e->getType();
-        int k = (t == TYPE_LIN) ? 0 : (t == TYPE_TRI) ? 1 : (t == TYPE_QUA) ? 2 :
-          (t == TYPE_TET) ? 3 : (t == TYPE_HEX) ? 4 : (t == TYPE_PRI) ? 5 : -1;
+        int k = (t == TYPE_LIN) ? 0 :
+                (t == TYPE_TRI) ? 1 :
+                (t == TYPE_QUA) ? 2 :
+                (t == TYPE_TET) ? 3 :
+                (t == TYPE_HEX) ? 4 :
+                (t == TYPE_PRI) ? 5 : -1;
         int dim = e->getDim();
         if(k >= 0) {
           elementsNew[k][elementaryNew].push_back(e);
@@ -346,7 +349,7 @@ int GModel::readUNV(const std::string &name, bool readGroupsOfElements)
                   groupNames[physicalNew];
             }
           }
-          else if(it.second.size() > 1){
+          else if(it.second.size() > 1) {
             int physicalNew = CTX::instance()->mesh.switchElementTags ?
               it.second[0] : it.second[1];
             // if the group num exists, add an offset (we could also simply not
@@ -435,7 +438,6 @@ int GModel::writeUNV(const std::string &name, bool saveAll,
   // save groups of elements and/or groups of nodes, if requested, for each
   // physical group
   if(saveGroupsOfNodes || saveGroupsOfElements) {
-
     std::map<int, std::vector<GEntity *> > groups[4];
     getPhysicalGroups(groups);
 
@@ -477,15 +479,15 @@ int GModel::writeUNV(const std::string &name, bool saveAll,
             row++;
           }
         }
-        
-        // this output will be consumed by legacy codes that rely on
-        // full lines, each having two entities even if the first is
-        // a node and the second is an element
+
+        // this output will be consumed by legacy codes that rely on full lines,
+        // each having two entities even if the first is a node and the second
+        // is an element
         if(row == 2) {
           fprintf(fp, "\n");
           row = 0;
         }
-        
+
         if(saveGroupsOfElements) {
           for(std::size_t i = 0; i < entities.size(); i++) {
             for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
@@ -499,13 +501,11 @@ int GModel::writeUNV(const std::string &name, bool saveAll,
             }
           }
           fprintf(fp, "\n");
-        } else {
+        }
+        else {
           // print a final newline only if the count is odd
-          if(row == 1) {
-            fprintf(fp, "\n");
-          }   
-        }    
-        
+          if(row == 1) { fprintf(fp, "\n"); }
+        }
       }
     }
     fprintf(fp, "%6d\n", -1);
