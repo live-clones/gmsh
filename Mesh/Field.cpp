@@ -141,10 +141,13 @@ public:
   StructuredField()
   {
     _data = nullptr;
+    _errorStatus = false;
+    _textFormat = false;
+    _outsideValueSet = false;
+    _outsideValue = MAX_LC;
 
     options["FileName"] =
       new FieldOptionPath(_fileName, "Name of the input file", &updateNeeded);
-    _textFormat = false;
     options["TextFormat"] = new FieldOptionBool(
       _textFormat,
       "True for ASCII input files, false for binary files (4 bite "
@@ -523,7 +526,7 @@ public:
   FrustumField()
   {
     _x1 = _y1 = _z1 = 0.;
-    _x2 = _y2 = 0.;
+    _x2 = _y2 = _z2 = 0.;
     _z1 = 1.;
     _r1i = _r2i = 0.;
     _r1o = _r2o = 1.;
@@ -685,11 +688,11 @@ public:
            "  F = (Field[InField](X + Delta/2) - "
            "       Field[InField](X - Delta/2)) / Delta";
   }
-  GradientField() : _inField(0), _kind(3), _delta(CTX::instance()->lc / 1e4)
+  GradientField()
   {
     _inField = 1;
-    _kind = 0;
-    _delta = 0.;
+    _kind = 3;
+    _delta = CTX::instance()->lc / 1e4;
 
     options["InField"] = new FieldOptionInt(_inField, "Input field tag");
     options["Kind"] = new FieldOptionInt(
@@ -745,10 +748,10 @@ public:
     return "Compute the curvature of Field[InField]:\n\n"
            "  F = div(norm(grad(Field[InField])))";
   }
-  CurvatureField() : _inField(0), _delta(CTX::instance()->lc / 1e4)
+  CurvatureField()
   {
     _inField = 1;
-    _delta = 0.;
+    _delta = CTX::instance()->lc / 1e4;
 
     options["InField"] = new FieldOptionInt(_inField, "Input field tag");
     options["Delta"] =
@@ -800,10 +803,10 @@ public:
            "differences:\n\n"
            "  F = max(eig(grad(grad(Field[InField]))))";
   }
-  MaxEigenHessianField() : _inField(0), _delta(CTX::instance()->lc / 1e4)
+  MaxEigenHessianField()
   {
     _inField = 1;
-    _delta = 0.;
+    _delta = CTX::instance()->lc / 1e4;
 
     options["InField"] = new FieldOptionInt(_inField, "Input field tag");
     options["Delta"] =
@@ -855,10 +858,10 @@ public:
            "      G(x,y,z+d) + G(x,y,z-d) - 6 * G(x,y,z),\n\n"
            "where G = Field[InField] and d = Delta.";
   }
-  LaplacianField() : _inField(0), _delta(CTX::instance()->lc / 1e4)
+  LaplacianField()
   {
     _inField = 1;
-    _delta = 0.1;
+    _delta = CTX::instance()->lc / 1e4;
 
     options["InField"] = new FieldOptionInt(_inField, "Input field tag");
     options["Delta"] = new FieldOptionDouble(_delta, "Finite difference step");
@@ -896,8 +899,11 @@ public:
            "       G(x, y, z)) / 7,\n\n"
            "where G = Field[InField].";
   }
-  MeanField() : _inField(0), _delta(CTX::instance()->lc / 1e4)
+  MeanField()
   {
+    _inField = 1;
+    _delta = CTX::instance()->lc / 1e4;
+
     options["InField"] = new FieldOptionInt(_inField, "Input field tag");
     options["Delta"] =
       new FieldOptionDouble(_delta, "Distance used to compute the mean value");
@@ -2486,6 +2492,8 @@ private:
   OctreeField()
   {
     _root = nullptr;
+    _inFieldId = 1;
+
     options["InField"] = new FieldOptionInt
       (_inFieldId, "Id of the field to represent on the octree", &updateNeeded);
   }
