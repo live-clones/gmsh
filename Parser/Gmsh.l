@@ -334,6 +334,7 @@ ThruSections            return tThruSections;
 Today                   return tToday;
 Torus                   return tTorus;
 TotalMemory             return tTotalMemory;
+TransformMesh           return tTransformMesh;
 Transf[qQ]uad[tT]ri     return tTransfQuadTri;
 Transfinite             return tTransfinite;
 Translate               return tTranslate;
