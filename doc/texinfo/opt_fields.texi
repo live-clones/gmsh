@@ -281,7 +281,7 @@ Options:@*
 @item Delta
 Step of the finite differences@*
 type: float@*
-default value: @code{0}
+default value: @code{0.0003464101615137755}
 @item InField
 Input field tag@*
 type: integer@*
@@ -504,7 +504,7 @@ Options:@*
 @item Delta
 Finite difference step@*
 type: float@*
-default value: @code{0}
+default value: @code{0.0003464101615137755}
 @item InField
 Input field tag@*
 type: integer@*
@@ -512,7 +512,7 @@ default value: @code{1}
 @item Kind
 Component of the gradient to evaluate: 0 for X, 1 for Y, 2 for Z, 3 for the norm@*
 type: integer@*
-default value: @code{0}
+default value: @code{3}
 @end table
 
 @item IntersectAniso
@@ -538,7 +538,7 @@ Options:@*
 @item Delta
 Finite difference step@*
 type: float@*
-default value: @code{0.1}
+default value: @code{0.0003464101615137755}
 @item InField
 Input field tag@*
 type: integer@*
@@ -624,7 +624,7 @@ Options:@*
 @item Delta
 Step used for the finite differences@*
 type: float@*
-default value: @code{0}
+default value: @code{0.0003464101615137755}
 @item InField
 Input field tag@*
 type: integer@*
@@ -649,7 +649,7 @@ default value: @code{0.0003464101615137755}
 @item InField
 Input field tag@*
 type: integer@*
-default value: @code{0}
+default value: @code{1}
 @end table
 
 @item Min
@@ -679,7 +679,7 @@ Options:@*
 @item InField
 Id of the field to represent on the octree@*
 type: integer@*
-default value: @code{0}
+default value: @code{1}
 @end table
 
 @item Param
@@ -784,7 +784,7 @@ default value: @code{""}
 @item OutsideValue
 Value of the field outside the grid (only used if the "SetOutsideValue" option is true).@*
 type: float@*
-default value: @code{0}
+default value: @code{1e+22}
 @item SetOutsideValue
 True to use the "OutsideValue" option. If False, the last values of the grid are used.@*
 type: boolean@*

@@ -3140,6 +3140,16 @@ Here is a list of all other mesh commands currently available:
 @item Mesh @var{expression};
 Generate @var{expression}-D mesh. @value{SYNC}
 
+@item TransformMesh @{ @var{expression-list} @};
+Transform all the node coordinates in the current mesh using the 4x4
+affine transformation matrix given by row (only 12 entries can be
+provided for convenience).
+
+@item TransformMesh @{ @var{expression-list} @} @{ @var{transform-list} @};
+Transform the node coordinates in the current mesh of all the elementary
+entities in @var{transform-list} using the 4x4 affine transformation
+matrix given by row (only 12 entries can be provided for convenience).
+
 @item RefineMesh;
 Refine the current mesh by splitting all elements. If
 @code{Mesh.SecondOrderLinear} is set, the new nodes are inserted by

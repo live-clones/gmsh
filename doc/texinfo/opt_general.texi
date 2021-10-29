@@ -38,7 +38,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item General.BuildInfo
 Gmsh build information (read-only)@*
-Default value: @code{"Version: 4.9.0-git-83a5baf93; License: GNU General Public License; Build OS: MacOSX-sdk; Build date: 20211022; Build host: MBP-Christophe; Build options: 64Bit ALGLIB ANN Bamg Blossom Cairo Cgns DIntegration Dlopen DomHex Eigen Fltk GMP Gmm Hxt Jpeg Kbipack MathEx Med Mesh Metis Mmg Mpeg Netgen ONELAB ONELABMetamodel OpenCASCADE OpenCASCADE-CAF OpenGL OpenMP OptHom Parasolid ParasolidSTEP Parser Plugins Png Post QuadMeshingTools QuadTri Solver TetGen/BR TouchBar Voro++ WinslowUntangler Zlib; FLTK version: 1.4.0; OCC version: 7.6.0; MED version: 4.1.0; Packaged by: geuzaine; Web site: https://gmsh.info; Issue tracker: https://gitlab.onelab.info/gmsh/gmsh/issues"}@*
+Default value: @code{"Version: 4.9.0-git-72ef318de; License: GNU General Public License; Build OS: MacOSX-sdk; Build date: 20211027; Build host: MBP-Christophe; Build options: 64Bit ALGLIB ANN Bamg Blossom Cairo Cgns DIntegration Dlopen DomHex Eigen Fltk GMP Gmm Hxt Jpeg Kbipack MathEx Med Mesh Metis Mmg Mpeg Netgen ONELAB ONELABMetamodel OpenCASCADE OpenCASCADE-CAF OpenGL OpenMP OptHom Parasolid ParasolidSTEP Parser Plugins Png Post QuadMeshingTools QuadTri Solver TetGen/BR TouchBar Voro++ WinslowUntangler Zlib; FLTK version: 1.4.0; OCC version: 7.6.0; MED version: 4.1.0; Packaged by: geuzaine; Web site: https://gmsh.info; Issue tracker: https://gitlab.onelab.info/gmsh/gmsh/issues"}@*
 Saved in: @code{-}
 
 @item General.BuildOptions
@@ -168,7 +168,7 @@ Saved in: @code{General.SessionFileName}
 
 @item General.Version
 Gmsh version (read-only)@*
-Default value: @code{"4.9.0-git-83a5baf93"}@*
+Default value: @code{"4.9.0-git-72ef318de"}@*
 Saved in: @code{-}
 
 @item General.WatchFilePattern
