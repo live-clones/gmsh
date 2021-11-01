@@ -1819,6 +1819,30 @@ static bool buildConsecutiveListOfVertices(
   std::vector<SPoint2> coords;
   std::vector<MVertex*> verts;
 
+#if 0 // for debugging - don't remove
+  printf("curve loop for surface %d\n", gf->tag());
+  for(std::size_t i = 0; i < signedEdges.size(); i++) {
+    GEdge *ge = signedEdges[i].getEdge();
+    bool seam = ge->isSeam(gf);
+    Range<double> range = ge->parBoundsOnFace(gf);
+    printf("  curve %d: ", ge->tag());
+    SPoint2 p;
+    p = ge->reparamOnFace(gf, range.low(), 1);
+    printf("beg (%g,%g) ", p.x(), p.y());
+    if(seam) {
+      p = ge->reparamOnFace(gf, range.low(), -1);
+      printf("beg_alt (%g,%g) ", p.x(), p.y());
+    }
+    p = ge->reparamOnFace(gf, range.high(), 1);
+    printf("end (%g,%g) ", p.x(), p.y());
+    if(seam) {
+      p = ge->reparamOnFace(gf, range.high(), -1);
+      printf("end_alt (%g,%g) ", p.x(), p.y());
+    }
+    printf("\n");
+  }
+#endif
+
   for(int initial_dir = 0; initial_dir < 2; initial_dir++) {
 
     if(coords.size()) break; // we succeeded with initial_dir == 0
