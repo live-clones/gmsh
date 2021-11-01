@@ -125,7 +125,7 @@ static void loopTheLoop(std::list<GEdge *> &wire, std::list<GEdgeSigned> &loop,
     else
       ges = nextOne(prevOne, wire);
     if(!ges.getEdge()) { // oops
-      Msg::Warning("Could not find next curve in loop, aborting");
+      Msg::Debug("Could not find next curve in loop, aborting");
       break;
     }
     prevOne = &ges;
