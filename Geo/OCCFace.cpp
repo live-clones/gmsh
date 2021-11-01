@@ -86,21 +86,11 @@ void OCCFace::_setup()
         */
       }
       else {
-        TopExp_Explorer exp0;
-        exp0.Init(edge, TopAbs_VERTEX);
-        TopoDS_Vertex vertex = TopoDS::Vertex(exp0.Current());
-        GVertex *v = nullptr;
-        if(model()->getOCCInternals())
-          v = model()->getOCCInternals()->getVertexForOCCShape(model(), vertex);
-        if(!v) { Msg::Error("Unknown point in surface %d", tag()); }
-        else {
-          int ori = edge.Orientation() ? -1 : 1;
-          if(e->getBeginVertex() != v) ori *= -1;
-          Msg::Debug("Curve %d (%d --> %d) ori %d", e->tag(),
-                     e->getBeginVertex() ? e->getBeginVertex()->tag() : -1,
-                     e->getEndVertex() ? e->getEndVertex()->tag() : -1, ori);
-          el.add(ori, e);
-        }
+        int ori = edge.Orientation() ? -1 : 1;
+        Msg::Debug("Curve %d (%d --> %d) ori %d", e->tag(),
+                   e->getBeginVertex() ? e->getBeginVertex()->tag() : -1,
+                   e->getEndVertex() ? e->getEndVertex()->tag() : -1, ori);
+        el.add(ori, e);
       }
     }
 
