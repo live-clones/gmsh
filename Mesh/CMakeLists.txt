@@ -4,6 +4,7 @@
 # issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 set(SRC
+  alphaShapes.cpp
   Generator.cpp
   meshGEdge.cpp
     meshGEdgeExtruded.cpp
