@@ -5,6 +5,7 @@
 
 #include "GmshConfig.h"
 #include "GmshDefines.h"
+#include "GmshVersion.h"
 #if !defined(HAVE_NO_STDINT_H)
 #include <stdint.h>
 #elif defined(HAVE_NO_INTPTR_T)
@@ -732,7 +733,10 @@ void file_watch_cb(Fl_Widget *w, void *data)
 
 static void help_online_cb(Fl_Widget *w, void *data)
 {
-  fl_open_uri("https://gmsh.info/doc/texinfo/");
+  if(std::string(GMSH_EXTRA_VERSION) == "")
+    fl_open_uri("https://gmsh.info/doc/texinfo/gmsh.html");
+  else
+    fl_open_uri("https://gmsh.info/dev/doc/texinfo/gmsh.html");
 }
 
 static void help_basic_cb(Fl_Widget *w, void *data)

@@ -36,7 +36,8 @@
 #include "Generator.h"
 #include "meshQuadQuasiStructured.h"
 #include "meshGFaceBipartiteLabelling.h"
-//#include "sizeField.h"
+#include "sizeField.h"
+
 
 #if defined(HAVE_DOMHEX)
 #include "simple3D.h"
