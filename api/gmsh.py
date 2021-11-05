@@ -6439,6 +6439,35 @@ class model:
         import_shapes = importShapes
 
         @staticmethod
+        def importShapesNativePointer(shape, highestDimOnly=True):
+            """
+            gmsh.model.occ.importShapesNativePointer(shape, highestDimOnly=True)
+
+            Imports an OpenCASCADE `shape' by providing a pointer to a native
+            OpenCASCADE `TopoDS_Shape' object (passed as a pointer to void). The
+            imported entities are returned in `outDimTags'. If the optional argument
+            `highestDimOnly' is set, only import the highest dimensional entities in
+            `shape'. In Python, this function can be used for integration with
+            pythonocc, in which the SwigPyObject pointer of `TopoDS_Shape' must be
+            passed as an int to `shape' to right call the function, doing: `shape =
+            int(pythonocc_shape.this)'. Warning: this function is unsafe, as providing
+            an invalid pointer will lead to undefined behavior.
+
+            Return `outDimTags'.
+            """
+            api_outDimTags_, api_outDimTags_n_ = POINTER(c_int)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelOccImportShapesNativePointer(
+                c_void_p(shape),
+                byref(api_outDimTags_), byref(api_outDimTags_n_),
+                c_int(bool(highestDimOnly)),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
+        import_shapes_native_pointer = importShapesNativePointer
+
+        @staticmethod
         def getEntities(dim=-1):
             """
             gmsh.model.occ.getEntities(dim=-1)
