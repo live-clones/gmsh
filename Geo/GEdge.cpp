@@ -93,27 +93,16 @@ void GEdge::setMeshMaster(GEdge *ge, const std::vector<double> &tfo)
 
   SPoint3 oriXYZ0 = ge->getBeginVertex()->xyz();
   SPoint3 oriXYZ1 = ge->getEndVertex()->xyz();
-
-  SPoint3 tfoXYZ0(0, 0, 0);
-  SPoint3 tfoXYZ1(0, 0, 0);
-
-  int idx = 0;
-  for(int i = 0; i < 3; i++, idx++) {
-    for(int j = 0; j < 3; j++, idx++) {
-      tfoXYZ0[i] += tfo[idx] * oriXYZ0[j];
-      tfoXYZ1[i] += tfo[idx] * oriXYZ1[j];
-    }
-    tfoXYZ0[i] += tfo[idx];
-    tfoXYZ1[i] += tfo[idx];
-  }
+  oriXYZ0.transform(tfo);
+  oriXYZ1.transform(tfo);
 
   SPoint3 locXYZ0 = getBeginVertex()->xyz();
   SPoint3 locXYZ1 = getEndVertex()->xyz();
 
-  SVector3 d00 = locXYZ0 - tfoXYZ0;
-  SVector3 d10 = locXYZ1 - tfoXYZ0;
-  SVector3 d01 = locXYZ0 - tfoXYZ1;
-  SVector3 d11 = locXYZ1 - tfoXYZ1;
+  SVector3 d00 = locXYZ0 - oriXYZ0;
+  SVector3 d10 = locXYZ1 - oriXYZ0;
+  SVector3 d01 = locXYZ0 - oriXYZ1;
+  SVector3 d11 = locXYZ1 - oriXYZ1;
 
   double tol = CTX::instance()->geom.tolerance * CTX::instance()->lc;
 
@@ -807,6 +796,14 @@ static void meshCompound(GEdge *ge)
 {
   auto *de = new discreteEdge(ge->model(), ge->tag() + 100000);
   ge->model()->add(de);
+
+  if(CTX::instance()->geom.copyMeshingMethod) {
+    de->meshAttributes.method = ge->meshAttributes.method;
+    de->meshAttributes.coeffTransfinite = ge->meshAttributes.coeffTransfinite;
+    de->meshAttributes.nbPointsTransfinite = ge->meshAttributes.nbPointsTransfinite;
+    de->meshAttributes.typeTransfinite = ge->meshAttributes.typeTransfinite;
+  }
+
   std::vector<int> phys;
   for(std::size_t i = 0; i < ge->compound.size(); i++) {
     auto *c = (GEdge *)ge->compound[i];

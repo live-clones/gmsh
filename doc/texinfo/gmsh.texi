@@ -3140,6 +3140,16 @@ Here is a list of all other mesh commands currently available:
 @item Mesh @var{expression};
 Generate @var{expression}-D mesh. @value{SYNC}
 
+@item TransformMesh @{ @var{expression-list} @};
+Transform all the node coordinates in the current mesh using the 4x4
+affine transformation matrix given by row (only 12 entries can be
+provided for convenience).
+
+@item TransformMesh @{ @var{expression-list} @} @{ @var{transform-list} @};
+Transform the node coordinates in the current mesh of all the elementary
+entities in @var{transform-list} using the 4x4 affine transformation
+matrix given by row (only 12 entries can be provided for convenience).
+
 @item RefineMesh;
 Refine the current mesh by splitting all elements. If
 @code{Mesh.SecondOrderLinear} is set, the new nodes are inserted by
@@ -5236,6 +5246,9 @@ Python and Julia API examples, see the respective subdirectories in
 * x2::  Mesh import, discrete entities, hybrid models, terrain meshing
 * x3::  Post-processing data import: list-based
 * x4::  Post-processing data import: model-based
+* x5::  Additional geometrical data: parametrizations, normals, curvatures
+* x6::  Additional mesh data: integration points, Jacobians and basis functions
+* x7::  Additional mesh data: internal edges and faces
 @end menu
 
 @c -------------------------------------------------------------------------
@@ -5682,7 +5695,7 @@ Also available in C++
 @c x4
 @c -------------------------------------------------------------------------
 
-@node x4,  , x3, Tutorial
+@node x4, x5, x3, Tutorial
 @section @code{x4}: Post-processing data import: model-based
 
 See
@@ -5692,6 +5705,54 @@ Also available in C++
 
 @smallformat
 @verbatiminclude ../../tutorial/python/x4.py
+@end smallformat
+
+@c -------------------------------------------------------------------------
+@c x5
+@c -------------------------------------------------------------------------
+
+@node x5, x6, x4, Tutorial
+@section @code{x5}: Additional geometrical data: parametrizations, normals, curvatures
+
+See
+@url{@value{GITLAB-PREFIX}/tutorial/python/x5.py,x5.py}.
+Also available in C++
+(@url{@value{GITLAB-PREFIX}/tutorial/c++/x5.cpp,x5.cpp}).
+
+@smallformat
+@verbatiminclude ../../tutorial/python/x5.py
+@end smallformat
+
+@c -------------------------------------------------------------------------
+@c x6
+@c -------------------------------------------------------------------------
+
+@node x6, x7, x5, Tutorial
+@section @code{x6}: Additional mesh data: integration points, Jacobians and basis functions
+
+See
+@url{@value{GITLAB-PREFIX}/tutorial/python/x6.py,x6.py}.
+Also available in C++
+(@url{@value{GITLAB-PREFIX}/tutorial/c++/x6.cpp,x6.cpp}).
+
+@smallformat
+@verbatiminclude ../../tutorial/python/x6.py
+@end smallformat
+
+@c -------------------------------------------------------------------------
+@c x7
+@c -------------------------------------------------------------------------
+
+@node x7,  , x6, Tutorial
+@section @code{x7}: Additional mesh data: internal edges and faces
+
+See
+@url{@value{GITLAB-PREFIX}/tutorial/python/x7.py,x7.py}.
+Also available in C++
+(@url{@value{GITLAB-PREFIX}/tutorial/c++/x7.cpp,x7.cpp}).
+
+@smallformat
+@verbatiminclude ../../tutorial/python/x7.py
 @end smallformat
 
 @c =========================================================================
@@ -6582,14 +6643,15 @@ lower dimension (boundaries) or not, go across geometrical entities or
 mesh partitions or not, etc. Given the number of possibilities,
 generating the appropriate information is thus best performed in the
 numerical solver itself. The Gmsh API makes these computations easy: see
-for example
+tutorial @ref{x7} and
 @url{@value{GITLAB-PREFIX}/demos/api/neighbors.py,demos/api/neighbors.py}.
 
 @item Could mesh edges/faces be stored in the MSH file?
 
 Edge/faces can be easily generated from the information already
 available in the file (i.e. nodes and elements), or through the Gmsh
-API: see for example
+API: see tutorial @ref{x7},
+@url{@value{GITLAB-PREFIX}/demos/api/edges.cpp,demos/api/edges.cpp} and
 @url{@value{GITLAB-PREFIX}/demos/api/faces.cpp,demos/api/faces.cpp}.
 
 @end enumerate

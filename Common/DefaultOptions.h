@@ -517,6 +517,8 @@ StringXNumber GeneralOptions_Number[] = {
 
   { F|S, "DetachedMenu" , opt_general_detached_menu , 0. ,
     "Should the menu window be detached from the graphic window?" },
+  { F|O, "DetachedProcess", opt_general_detached_process, 1. ,
+    "On Windows, should processes created by Gmsh be detached?" },
   { F|O, "DisplayBorderFactor" , opt_general_display_border_factor , 0.2 ,
     "Border factor for model display (0: model fits window size exactly)" },
   { F|O, "DoubleBuffer" , opt_general_double_buffer , 1. ,
@@ -1535,6 +1537,8 @@ StringXNumber MeshOptions_Number[] = {
     "defined tolerance" },
   { F|O, "ToleranceInitialDelaunay" , opt_mesh_tolerance_initial_delaunay, 1.e-12,
     "Tolerance for initial 3D Delaunay mesher" },
+  { F|O, "ToleranceReferenceElement" , opt_mesh_tolerance_reference_element , 1e-6,
+    "Tolerance for classifying a point inside a reference element (of size 1)" },
   { F|O, "Triangles" , opt_mesh_triangles , 1. ,
     "Display mesh triangles?" },
   { F|O, "Trihedra" , opt_mesh_trihedra , 1. ,

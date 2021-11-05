@@ -25,9 +25,13 @@ if remesh_surface:
     # discrete surfaces
     gmsh.model.mesh.createGeometry()
 
-# add a volume
+# get all surfaces
 s = gmsh.model.getEntities(2)
-l = gmsh.model.geo.addSurfaceLoop([s[i][1] for i in range(len(s))])
+
+# create a surface loop from all the surfaces
+l = gmsh.model.geo.addSurfaceLoop([e[1] for e in s])
+
+# add a volume bounded by that surface loop
 gmsh.model.geo.addVolume([l])
 
 gmsh.model.geo.synchronize()

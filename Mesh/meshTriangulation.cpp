@@ -89,7 +89,10 @@ int PolyMesh2GFace(PolyMesh *pm, int faceTag)
 {
   GFace *gf = GModel::current()->getFaceByTag(faceTag);
 
-  if(!gf) Msg::Error("PolyMesh2GFace cannot find face %d", faceTag);
+  if(!gf){
+    Msg::Error("PolyMesh2GFace cannot find surface %d", faceTag);
+    return 0;
+  }
 
   for(auto t : gf->triangles) delete t;
   for(auto q : gf->quadrangles) delete q;
@@ -191,6 +194,8 @@ int PolyMesh2GFace(PolyMesh *pm, int faceTag)
 
 int GFace2PolyMesh(int faceTag, PolyMesh **pm)
 {
+  // FIXME should probably not use the public API here (and certainly not
+  // initialize it!)
   gmsh::initialize();
   *pm = new PolyMesh;
 
@@ -198,6 +203,7 @@ int GFace2PolyMesh(int faceTag, PolyMesh **pm)
   std::unordered_map<std::pair<size_t, size_t>, PolyMesh::HalfEdge *, pair_hash>
     opposites;
 
+  // FIXME should probably not use the public API here
   std::vector<int> elementTypes;
   std::vector<std::vector<std::size_t> > elementTags;
   std::vector<std::vector<std::size_t> > nodeTags;
@@ -223,6 +229,7 @@ int GFace2PolyMesh(int faceTag, PolyMesh **pm)
         size_t nodeTag = nodeTags[K][nNod * i + j];
         auto it = nodeLabels.find(nodeTag);
         if(it == nodeLabels.end()) {
+          // FIXME should probably not use the public API here
           std::vector<double> coord(3), parametricCoord(3);
           int entityDim, entityTag;
           gmsh::model::mesh::getNode(nodeTag, coord, parametricCoord, entityDim,

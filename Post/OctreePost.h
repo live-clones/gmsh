@@ -48,29 +48,14 @@ public:
                     double *size = nullptr, int qn = 0, double *qx = nullptr,
                     double *qy = nullptr, double *qz = nullptr,
                     bool grad = false, int dim = -1);
-  bool searchScalarWithTol(double x, double y, double z, double *values,
-                           int step = -1, double *size = nullptr,
-                           double tol = 1.e-2, int qn = 0, double *qx = nullptr,
-                           double *qy = nullptr, double *qz = nullptr,
-                           bool grad = false, int dim = -1);
   bool searchVector(double x, double y, double z, double *values, int step = -1,
                     double *size = nullptr, int qn = 0, double *qx = nullptr,
                     double *qy = nullptr, double *qz = nullptr,
                     bool grad = false, int dim = -1);
-  bool searchVectorWithTol(double x, double y, double z, double *values,
-                           int step = -1, double *size = nullptr,
-                           double tol = 1.e-2, int qn = 0, double *qx = nullptr,
-                           double *qy = nullptr, double *qz = nullptr,
-                           bool grad = false, int dim = -1);
   bool searchTensor(double x, double y, double z, double *values, int step = -1,
                     double *size = nullptr, int qn = 0, double *qx = nullptr,
                     double *qy = nullptr, double *qz = nullptr,
                     bool grad = false, int dim = -1);
-  bool searchTensorWithTol(double x, double y, double z, double *values,
-                           int step = -1, double *size = nullptr,
-                           double tol = 1.e-2, int qn = 0, double *qx = nullptr,
-                           double *qy = nullptr, double *qz = nullptr,
-                           bool grad = false, int dim = -1);
 };
 
 #endif

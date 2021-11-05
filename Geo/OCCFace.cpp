@@ -68,7 +68,8 @@ void OCCFace::_setup()
       exp2.Next()) {
     TopoDS_Wire wire = TopoDS::Wire(exp2.Current());
     Msg::Debug("OCC surface %d - new wire", tag());
-    std::vector<GEdge *> l_wire;
+    GEdgeLoop el;
+
     for(exp3.Init(wire, TopAbs_EDGE); exp3.More(); exp3.Next()) {
       TopoDS_Edge edge = TopoDS::Edge(exp3.Current());
       GEdge *e = nullptr;
@@ -85,25 +86,34 @@ void OCCFace::_setup()
         */
       }
       else {
+        int ori = edge.Orientation() ? -1 : 1;
         Msg::Debug("Curve %d (%d --> %d) ori %d", e->tag(),
                    e->getBeginVertex() ? e->getBeginVertex()->tag() : -1,
-                   e->getEndVertex() ? e->getEndVertex()->tag() : -1,
-                   edge.Orientation());
-        l_wire.push_back(e);
+                   e->getEndVertex() ? e->getEndVertex()->tag() : -1, ori);
+        el.add(ori, e);
       }
     }
 
-    GEdgeLoop el(l_wire);
+    if(!el.check()) {
+      el.reverse(); // check other orientation
+      if(!el.check()) {
+        Msg::Info("Recomputing incorrect OpenCASCADE wire in surface %d", tag());
+        std::vector<GEdge*> edges;
+        el.getEdges(edges);
+        el.recompute(edges);
+      }
+    }
+
     for(GEdgeLoop::citer it = el.begin(); it != el.end(); ++it) {
-      l_edges.push_back(it->ge);
-      l_dirs.push_back(it->_sign);
+      l_edges.push_back(it->getEdge());
+      l_dirs.push_back(it->getSign());
       if(el.count() == 2) {
-        it->ge->meshAttributes.minimumMeshSegments =
-          std::max(it->ge->meshAttributes.minimumMeshSegments, 2);
+        it->getEdge()->meshAttributes.minimumMeshSegments =
+          std::max(it->getEdge()->meshAttributes.minimumMeshSegments, 2);
       }
       if(el.count() == 1) {
-        it->ge->meshAttributes.minimumMeshSegments =
-          std::max(it->ge->meshAttributes.minimumMeshSegments, 3);
+        it->getEdge()->meshAttributes.minimumMeshSegments =
+          std::max(it->getEdge()->meshAttributes.minimumMeshSegments, 3);
       }
     }
     edgeLoops.push_back(el);

@@ -483,6 +483,22 @@ GMSH_API void gmsh::model::getPhysicalName(const int dim, const int tag,
   name = GModel::current()->getPhysicalName(dim, tag);
 }
 
+GMSH_API void gmsh::model::setTag(const int dim, const int tag, const int newTag)
+{
+  if(!_checkInit()) return;
+  GEntity *ge = GModel::current()->getEntityByTag(dim, tag);
+  if(!ge) {
+    Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
+    return;
+  }
+  GEntity *ge2 = GModel::current()->getEntityByTag(dim, newTag);
+  if(ge2) {
+    Msg::Error("%s already exists", _getEntityName(dim, newTag).c_str());
+    return;
+  }
+  ge->setTag(newTag);
+}
+
 GMSH_API void gmsh::model::getBoundary(const vectorpair &dimTags,
                                        vectorpair &outDimTags,
                                        const bool combined, const bool oriented,
@@ -1641,6 +1657,12 @@ gmsh::model::mesh::getNodesForPhysicalGroup(const int dim, const int tag,
   }
 }
 
+GMSH_API void gmsh::model::mesh::getMaxNodeTag(std::size_t &maxTag)
+{
+  if(!_checkInit()) return;
+  maxTag = GModel::current()->getMaxVertexNumber();
+}
+
 GMSH_API void gmsh::model::mesh::addNodes(
   const int dim, const int tag, const std::vector<std::size_t> &nodeTags,
   const std::vector<double> &coord, const std::vector<double> &parametricCoord)
@@ -1966,6 +1988,12 @@ static void _addElements(int dim, int tag, GEntity *ge, int type,
   if(!ok)
     Msg::Error("Wrong type of element for %s",
                _getEntityName(dim, tag).c_str());
+}
+
+GMSH_API void gmsh::model::mesh::getMaxElementTag(std::size_t &maxTag)
+{
+  if(!_checkInit()) return;
+  maxTag = GModel::current()->getMaxElementNumber();
 }
 
 GMSH_API void gmsh::model::mesh::addElements(
@@ -3078,7 +3106,7 @@ GMSH_API void gmsh::model::mesh::getBasisFunctions(
   return;
 }
 
-GMSH_API void gmsh::model::mesh::getBasisFunctionsOrientationForElements(
+GMSH_API void gmsh::model::mesh::getBasisFunctionsOrientation(
   const int elementType, const std::string &functionSpaceType,
   std::vector<int> &basisFunctionsOrientation, const int tag,
   const std::size_t task, const std::size_t numTasks)
@@ -3090,7 +3118,7 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsOrientationForElements(
       Msg::Warning(
         "basisFunctionsOrientation should be preallocated if numTasks > 1");
     }
-    preallocateBasisFunctionsOrientationForElements(
+    preallocateBasisFunctionsOrientation(
       elementType, basisFunctionsOrientation, tag);
   }
 
@@ -3277,7 +3305,7 @@ gmsh::model::mesh::getNumberOfOrientations(const int elementType,
 }
 
 GMSH_API void
-gmsh::model::mesh::preallocateBasisFunctionsOrientationForElements(
+gmsh::model::mesh::preallocateBasisFunctionsOrientation(
   const int elementType, std::vector<int> &basisFunctionsOrientation,
   const int tag)
 {
@@ -3399,7 +3427,7 @@ GMSH_API void gmsh::model::mesh::createFaces(const vectorpair &dimTags)
   }
 }
 
-GMSH_API void gmsh::model::mesh::getKeysForElements(
+GMSH_API void gmsh::model::mesh::getKeys(
   const int elementType, const std::string &functionSpaceType,
   std::vector<int> &typeKeys, std::vector<std::size_t> &entityKeys,
   std::vector<double> &coord, const int tag, const bool returnCoord)
@@ -3884,7 +3912,7 @@ GMSH_API void gmsh::model::mesh::getKeysForElement(
   }
 }
 
-GMSH_API int gmsh::model::mesh::getNumberOfKeysForElements(
+GMSH_API int gmsh::model::mesh::getNumberOfKeys(
   const int elementType, const std::string &functionSpaceType)
 {
   int numberOfKeys = 0;
@@ -3989,7 +4017,7 @@ GMSH_API int gmsh::model::mesh::getNumberOfKeysForElements(
   return numberOfKeys;
 }
 
-GMSH_API void gmsh::model::mesh::getInformationForElements(
+GMSH_API void gmsh::model::mesh::getKeysInformation(
   const std::vector<int> &typeKeys, const std::vector<std::size_t> &entityKeys,
   const int elementType, const std::string &functionSpaceType,
   gmsh::vectorpair &infoKeys)
@@ -4192,7 +4220,12 @@ GMSH_API void gmsh::model::mesh::getBarycenters(
 static bool _getIntegrationInfo(const std::string &intType,
                                 std::string &intName, int &intOrder)
 {
-  if(intType.substr(0, 5) == "Gauss") {
+  if(intType.substr(0, 14) == "CompositeGauss") {
+    intName = "CompositeGauss";
+    intOrder = atoi(intType.substr(14).c_str());
+    return true;
+  }
+  else if(intType.substr(0, 5) == "Gauss") {
     intName = "Gauss";
     intOrder = atoi(intType.substr(5).c_str());
     return true;
@@ -4217,7 +4250,8 @@ GMSH_API void gmsh::model::mesh::getIntegrationPoints(
   int familyType = ElementType::getParentType(elementType);
   fullMatrix<double> pts;
   fullVector<double> wgs;
-  gaussIntegration::get(familyType, intOrder, pts, wgs);
+  gaussIntegration::get(familyType, intOrder, pts, wgs,
+                        intName == "Gauss" ? false : true);
   if(pts.size1() != wgs.size() || pts.size2() != 3) {
     Msg::Error("Wrong integration point format");
     return;
@@ -4264,7 +4298,7 @@ GMSH_API void gmsh::model::mesh::getElementEdgeNodes(
     GEntity *ge = entities[i];
     int n = ge->getNumMeshElementsByType(familyType);
     if(n && !numNodesPerEdge) {
-      MElement *e = ge->getMeshElementByType(familyType, i);
+      MElement *e = ge->getMeshElementByType(familyType, 0);
       numEdgesPerEle = e->getNumEdges();
       if(primary) { numNodesPerEdge = 2; }
       else {
@@ -4328,7 +4362,7 @@ GMSH_API void gmsh::model::mesh::getElementFaceNodes(
     GEntity *ge = entities[i];
     int n = ge->getNumMeshElementsByType(familyType);
     if(n && !numNodesPerFace) {
-      MElement *e = ge->getMeshElementByType(familyType, i);
+      MElement *e = ge->getMeshElementByType(familyType, 0);
       int nf = e->getNumFaces();
       numFacesPerEle = 0;
       for(int j = 0; j < nf; j++) {
@@ -4978,6 +5012,23 @@ gmsh::model::mesh::setPeriodic(const int dim, const std::vector<int> &tags,
   }
 }
 
+GMSH_API void
+gmsh::model::mesh::getPeriodic(const int dim, const std::vector<int> &tags,
+                               std::vector<int> &tagsMaster)
+{
+  if(!_checkInit()) return;
+  tagsMaster.clear();
+  tagsMaster.reserve(tags.size());
+  for(auto i : tags) {
+    GEntity *ge = GModel::current()->getEntityByTag(dim, i);
+    if(!ge) {
+      Msg::Error("%s does not exist", _getEntityName(dim, i).c_str());
+      return;
+    }
+    tagsMaster.push_back(ge->getMeshMaster()->tag());
+  }
+}
+
 GMSH_API void gmsh::model::mesh::getPeriodicNodes(
   const int dim, const int tag, int &tagMaster,
   std::vector<std::size_t> &nodeTags, std::vector<std::size_t> &nodeTagsMaster,
@@ -5013,7 +5064,7 @@ GMSH_API void gmsh::model::mesh::getPeriodicNodes(
   }
 }
 
-GMSH_API void gmsh::model::mesh::getPeriodicKeysForElements(
+GMSH_API void gmsh::model::mesh::getPeriodicKeys(
   const int elementType, const std::string &functionSpaceType,
   const int tag, int &tagMaster,
   std::vector<int> &typeKeys, std::vector<int> &typeKeysMaster,
@@ -5038,7 +5089,7 @@ GMSH_API void gmsh::model::mesh::getPeriodicKeysForElements(
   }
 
   tagMaster = ge->getMeshMaster()->tag();
-  getKeysForElements(elementType, functionSpaceType,
+  getKeys(elementType, functionSpaceType,
                      typeKeys, entityKeys, coord, tag, returnCoord);
   typeKeysMaster = typeKeys;
   entityKeysMaster = entityKeys;
@@ -5971,6 +6022,7 @@ GMSH_API int gmsh::model::occ::addBSpline(
   const std::vector<int> &multiplicities)
 {
   if(!_checkInit()) return -1;
+  _createOcc();
   int outTag = tag;
   GModel::current()->getOCCInternals()->addBSpline(
     outTag, pointTags, degree, weights, knots, multiplicities);
@@ -6091,6 +6143,7 @@ GMSH_API int gmsh::model::occ::addBSplineSurface(
   const bool wire3D)
 {
   if(!_checkInit()) return -1;
+  _createOcc();
   int outTag = tag;
   GModel::current()->getOCCInternals()->addBSplineSurface(
     outTag, pointTags, numPointsU, degreeU, degreeV, weights, knotsU, knotsV,
@@ -6103,6 +6156,7 @@ GMSH_API int gmsh::model::occ::addBezierSurface(
   const std::vector<int> &wireTags, const bool wire3D)
 {
   if(!_checkInit()) return -1;
+  _createOcc();
   int outTag = tag;
   GModel::current()->getOCCInternals()->addBezierSurface(
     outTag, pointTags, numPointsU, wireTags, wire3D);
@@ -6115,6 +6169,7 @@ gmsh::model::occ::addTrimmedSurface(const int surfaceTag,
                                     const bool wire3D, const int tag)
 {
   if(!_checkInit()) return -1;
+  _createOcc();
   int outTag = tag;
   GModel::current()->getOCCInternals()->addTrimmedSurface(outTag, surfaceTag,
                                                           wireTags, wire3D);
@@ -6506,6 +6561,7 @@ GMSH_API void gmsh::model::occ::getEntitiesInBoundingBox(
   const double ymax, const double zmax, vectorpair &dimTags, const int dim)
 {
   if(!_checkInit()) return;
+  _createOcc();
   dimTags.clear();
   GModel::current()->getOCCInternals()->getEntitiesInBoundingBox(
     xmin, ymin, zmin, xmax, ymax, zmax, dimTags, dim);
@@ -6549,12 +6605,14 @@ GMSH_API void gmsh::model::occ::getMatrixOfInertia(const int dim, const int tag,
 GMSH_API int gmsh::model::occ::getMaxTag(const int dim)
 {
   if(!_checkInit()) return -1;
+  _createOcc();
   return GModel::current()->getOCCInternals()->getMaxTag(dim);
 }
 
 GMSH_API void gmsh::model::occ::setMaxTag(const int dim, const int maxTag)
 {
   if(!_checkInit()) return;
+  _createOcc();
   GModel::current()->getOCCInternals()->setMaxTag(dim, maxTag);
 }
 
@@ -7284,8 +7342,9 @@ GMSH_API void gmsh::view::combine(const std::string &what,
 
 GMSH_API void gmsh::view::probe(const int tag, const double x, const double y,
                                 const double z, std::vector<double> &value,
-                                const int step, const int numComp,
-                                const bool gradient, const double tolerance,
+                                double &distance, const int step,
+                                const int numComp, const bool gradient,
+                                const double distanceMax,
                                 const std::vector<double> &xElemCoord,
                                 const std::vector<double> &yElemCoord,
                                 const std::vector<double> &zElemCoord,
@@ -7318,37 +7377,38 @@ GMSH_API void gmsh::view::probe(const int tag, const double x, const double y,
   int numSteps = (step < 0) ? data->getNumTimeSteps() : 1;
   int mult = gradient ? 3 : 1;
   int numVal = 0;
+  distance = distanceMax;
   switch(numComp) {
   case 1:
-    if(data->searchScalarWithTol(x, y, z, &val[0], step, nullptr, tolerance, qn,
-                                 qx, qy, qz, gradient, dim)) {
+    if(data->searchScalarClosest(x, y, z, distance, &val[0], step, nullptr,
+                                 qn, qx, qy, qz, gradient, dim)) {
       numVal = numSteps * mult * 1;
     }
     break;
   case 3:
-    if(data->searchVectorWithTol(x, y, z, &val[0], step, nullptr, tolerance, qn,
-                                 qx, qy, qz, gradient, dim)) {
+    if(data->searchVectorClosest(x, y, z, distance, &val[0], step, nullptr,
+                                 qn, qx, qy, qz, gradient, dim)) {
       numVal = numSteps * mult * 3;
     }
     break;
   case 9:
-    if(data->searchTensorWithTol(x, y, z, &val[0], step, nullptr, tolerance, qn,
-                                 qx, qy, qz, gradient, dim)) {
+    if(data->searchTensorClosest(x, y, z, distance, &val[0], step, nullptr,
+                                 qn, qx, qy, qz, gradient, dim)) {
       numVal = numSteps * mult * 9;
     }
     break;
   default:
-    if(data->searchScalarWithTol(x, y, z, &val[0], step, nullptr, tolerance, qn,
-                                 qx, qy, qz, gradient, dim)) {
+    if(data->searchScalarClosest(x, y, z, distance, &val[0], step, nullptr,
+                                 qn, qx, qy, qz, gradient, dim)) {
       numVal = numSteps * mult * 1;
     }
-    else if(data->searchVectorWithTol(x, y, z, &val[0], step, nullptr,
-                                      tolerance, qn, qx, qy, qz, gradient,
+    else if(data->searchVectorClosest(x, y, z, distance, &val[0], step, nullptr,
+                                      qn, qx, qy, qz, gradient,
                                       dim)) {
       numVal = numSteps * mult * 3;
     }
-    else if(data->searchTensorWithTol(x, y, z, &val[0], step, nullptr,
-                                      tolerance, qn, qx, qy, qz, gradient,
+    else if(data->searchTensorClosest(x, y, z, distance, &val[0], step, nullptr,
+                                      qn, qx, qy, qz, gradient,
                                       dim)) {
       numVal = numSteps * mult * 9;
     }

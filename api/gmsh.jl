@@ -35,9 +35,9 @@ are provided, they will be handled in the same way as the command line arguments
 in the Gmsh app. If `readConfigFiles` is set, read system Gmsh configuration
 files (gmshrc and gmsh-options). If `run` is set, run in the same way as the
 Gmsh app, either interactively or in batch mode depending on the command line
-arguments. Initializing the API sets the options "General.AbortOnError" to 2 (if
-`run` is not set) and "General.Terminal" to 1. If compiled with OpenMP support,
-it also sets the number of threads to "General.NumThreads".
+arguments. If `run` is not set, initializing the API sets the options
+"General.AbortOnError" to 2 and "General.Terminal" to 1. If compiled with OpenMP
+support, it also sets the number of threads to "General.NumThreads".
 """
 function initialize(argv = Vector{String}(), readConfigFiles = true, run = false)
     ierr = Ref{Cint}()
@@ -585,6 +585,22 @@ function getPhysicalName(dim, tag)
     return name
 end
 const get_physical_name = getPhysicalName
+
+"""
+    gmsh.model.setTag(dim, tag, newTag)
+
+Set the tag of the entity of dimension `dim` and tag `tag` to the new value
+`newTag`.
+"""
+function setTag(dim, tag, newTag)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelSetTag, gmsh.lib), Cvoid,
+          (Cint, Cint, Cint, Ptr{Cint}),
+          dim, tag, newTag, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+const set_tag = setTag
 
 """
     gmsh.model.getBoundary(dimTags, combined = true, oriented = true, recursive = false)
@@ -1598,6 +1614,24 @@ end
 const get_nodes_for_physical_group = getNodesForPhysicalGroup
 
 """
+    gmsh.model.mesh.getMaxNodeTag()
+
+Get the maximum tag `maxTag` of a node in the mesh.
+
+Return `maxTag`.
+"""
+function getMaxNodeTag()
+    api_maxTag_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshGetMaxNodeTag, gmsh.lib), Cvoid,
+          (Ptr{Csize_t}, Ptr{Cint}),
+          api_maxTag_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return api_maxTag_[]
+end
+const get_max_node_tag = getMaxNodeTag
+
+"""
     gmsh.model.mesh.addNodes(dim, tag, nodeTags, coord, parametricCoord = Cdouble[])
 
 Add nodes classified on the model entity of dimension `dim` and tag `tag`.
@@ -1906,6 +1940,24 @@ end
 const get_elements_by_type = getElementsByType
 
 """
+    gmsh.model.mesh.getMaxElementTag()
+
+Get the maximum tag `maxTag` of an element in the mesh.
+
+Return `maxTag`.
+"""
+function getMaxElementTag()
+    api_maxTag_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshGetMaxElementTag, gmsh.lib), Cvoid,
+          (Ptr{Csize_t}, Ptr{Cint}),
+          api_maxTag_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return api_maxTag_[]
+end
+const get_max_element_tag = getMaxElementTag
+
+"""
     gmsh.model.mesh.addElements(dim, tag, elementTypes, elementTags, nodeTags)
 
 Add elements classified on the entity of dimension `dim` and tag `tag`. `types`
@@ -1955,11 +2007,16 @@ const add_elements_by_type = addElementsByType
     gmsh.model.mesh.getIntegrationPoints(elementType, integrationType)
 
 Get the numerical quadrature information for the given element type
-`elementType` and integration rule `integrationType` (e.g. "Gauss4" for a Gauss
-quadrature suited for integrating 4th order polynomials). `localCoord` contains
-the u, v, w coordinates of the G integration points in the reference element:
-[g1u, g1v, g1w, ..., gGu, gGv, gGw]. `weights` contains the associated weights:
-[g1q, ..., gGq].
+`elementType` and integration rule `integrationType`, where `integrationType`
+concatenates the integration rule family name with the desired order (e.g.
+"Gauss4" for a quadrature suited for integrating 4th order polynomials). The
+"CompositeGauss" family uses tensor-product rules based the 1D Gauss-Legendre
+rule; the "Gauss" family uses an economic scheme when available (i.e. with a
+minimal number of points), and falls back to "CompositeGauss" otherwise. Note
+that integration points for the "Gauss" family can fall outside of the reference
+element for high-order rules. `localCoord` contains the u, v, w coordinates of
+the G integration points in the reference element: [g1u, g1v, g1w, ..., gGu,
+gGv, gGw]. `weights` contains the associated weights: [g1q, ..., gGq].
 
 Return `localCoord`, `weights`.
 """
@@ -2058,19 +2115,22 @@ const get_jacobian = getJacobian
 Get the basis functions of the element of type `elementType` at the evaluation
 points `localCoord` (given as concatenated triplets of coordinates in the
 reference element [g1u, g1v, g1w, ..., gGu, gGv, gGw]), for the function space
-`functionSpaceType` (e.g. "Lagrange" or "GradLagrange" for isoparametric
-Lagrange basis functions or their gradient, in the u, v, w coordinates of the
-reference element; "Lagrange3" for 3rd order Lagrange basis functions, or
-"H1Legendre3" or "GradH1Legendre3" for 3rd order hierarchical H1 Legendre
-functions). `numComponents` returns the number C of components of a basis
-function. `basisFunctions` returns the value of the N basis functions at the
-evaluation points, i.e. [g1f1, g1f2, ..., g1fN, g2f1, ...] when C == 1 or
-[g1f1u, g1f1v, g1f1w, g1f2u, ..., g1fNw, g2f1u, ...] when C == 3. For basis
-functions that depend on the orientation of the elements, all values for the
-first orientation are returned first, followed by values for the second, etc.
-`numOrientations` returns the overall number of orientations. If
-`wantedOrientations` is not empty, only return the values for the desired
-orientation indices.
+`functionSpaceType`. Currently supported function spaces include "Lagrange" and
+"GradLagrange" for isoparametric Lagrange basis functions and their gradient in
+the u, v, w coordinates of the reference element; "LagrangeN" and
+"GradLagrangeN", with N = 1, 2, ..., for N-th order Lagrange basis functions;
+"H1LegendreN" and "GradH1LegendreN", with N = 1, 2, ..., for N-th order
+hierarchical H1 Legendre functions; "HcurlLegendreN" and "CurlHcurlLegendreN",
+with N = 1, 2, ..., for N-th order curl-conforming basis functions.
+`numComponents` returns the number C of components of a basis function (e.g. 1
+for scalar functions and 3 for vector functions). `basisFunctions` returns the
+value of the N basis functions at the evaluation points, i.e. [g1f1, g1f2, ...,
+g1fN, g2f1, ...] when C == 1 or [g1f1u, g1f1v, g1f1w, g1f2u, ..., g1fNw, g2f1u,
+...] when C == 3. For basis functions that depend on the orientation of the
+elements, all values for the first orientation are returned first, followed by
+values for the second, etc. `numOrientations` returns the overall number of
+orientations. If `wantedOrientations` is not empty, only return the values for
+the desired orientation indices.
 
 Return `numComponents`, `basisFunctions`, `numOrientations`.
 """
@@ -2090,7 +2150,7 @@ end
 const get_basis_functions = getBasisFunctions
 
 """
-    gmsh.model.mesh.getBasisFunctionsOrientationForElements(elementType, functionSpaceType, tag = -1, task = 0, numTasks = 1)
+    gmsh.model.mesh.getBasisFunctionsOrientation(elementType, functionSpaceType, tag = -1, task = 0, numTasks = 1)
 
 Get the orientation index of the elements of type `elementType` in the entity of
 tag `tag`. The arguments have the same meaning as in `getBasisFunctions`.
@@ -2100,18 +2160,18 @@ functions the call is superfluous as it will return a vector of zeros.
 
 Return `basisFunctionsOrientation`.
 """
-function getBasisFunctionsOrientationForElements(elementType, functionSpaceType, tag = -1, task = 0, numTasks = 1)
+function getBasisFunctionsOrientation(elementType, functionSpaceType, tag = -1, task = 0, numTasks = 1)
     api_basisFunctionsOrientation_ = Ref{Ptr{Cint}}()
     api_basisFunctionsOrientation_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
-    ccall((:gmshModelMeshGetBasisFunctionsOrientationForElements, gmsh.lib), Cvoid,
+    ccall((:gmshModelMeshGetBasisFunctionsOrientation, gmsh.lib), Cvoid,
           (Cint, Ptr{Cchar}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Csize_t, Csize_t, Ptr{Cint}),
           elementType, functionSpaceType, api_basisFunctionsOrientation_, api_basisFunctionsOrientation_n_, tag, task, numTasks, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     basisFunctionsOrientation = unsafe_wrap(Array, api_basisFunctionsOrientation_[], api_basisFunctionsOrientation_n_[], own = true)
     return basisFunctionsOrientation
 end
-const get_basis_functions_orientation_for_elements = getBasisFunctionsOrientationForElements
+const get_basis_functions_orientation = getBasisFunctionsOrientation
 
 """
     gmsh.model.mesh.getBasisFunctionsOrientationForElement(elementTag, functionSpaceType)
@@ -2155,7 +2215,7 @@ const get_number_of_orientations = getNumberOfOrientations
 Get the global unique mesh edge identifiers `edgeTags` and orientations
 `edgeOrientation` for an input list of node tag pairs defining these edges,
 concatenated in the vector `nodeTags`. Mesh edges are created e.g. by
-`createEdges()` or `getKeysForElements()`.
+`createEdges()` or `getKeys()`.
 
 Return `edgeTags`, `edgeOrientations`.
 """
@@ -2182,7 +2242,7 @@ Get the global unique mesh face identifiers `faceTags` and orientations
 `faceOrientations` for an input list of node tag triplets (if `faceType` == 3)
 or quadruplets (if `faceType` == 4) defining these faces, concatenated in the
 vector `nodeTags`. Mesh faces are created e.g. by `createFaces()` or
-`getKeysForElements()`.
+`getKeys()`.
 
 Return `faceTags`, `faceOrientations`.
 """
@@ -2237,7 +2297,7 @@ end
 const create_faces = createFaces
 
 """
-    gmsh.model.mesh.getKeysForElements(elementType, functionSpaceType, tag = -1, returnCoord = true)
+    gmsh.model.mesh.getKeys(elementType, functionSpaceType, tag = -1, returnCoord = true)
 
 Generate the pair of keys for the elements of type `elementType` in the entity
 of tag `tag`, for the `functionSpaceType` function space. Each pair (`typeKey`,
@@ -2248,7 +2308,7 @@ feature and will probably change in a future release.
 
 Return `typeKeys`, `entityKeys`, `coord`.
 """
-function getKeysForElements(elementType, functionSpaceType, tag = -1, returnCoord = true)
+function getKeys(elementType, functionSpaceType, tag = -1, returnCoord = true)
     api_typeKeys_ = Ref{Ptr{Cint}}()
     api_typeKeys_n_ = Ref{Csize_t}()
     api_entityKeys_ = Ref{Ptr{Csize_t}}()
@@ -2256,7 +2316,7 @@ function getKeysForElements(elementType, functionSpaceType, tag = -1, returnCoor
     api_coord_ = Ref{Ptr{Cdouble}}()
     api_coord_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
-    ccall((:gmshModelMeshGetKeysForElements, gmsh.lib), Cvoid,
+    ccall((:gmshModelMeshGetKeys, gmsh.lib), Cvoid,
           (Cint, Ptr{Cchar}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Cint, Ptr{Cint}),
           elementType, functionSpaceType, api_typeKeys_, api_typeKeys_n_, api_entityKeys_, api_entityKeys_n_, api_coord_, api_coord_n_, tag, returnCoord, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
@@ -2265,7 +2325,7 @@ function getKeysForElements(elementType, functionSpaceType, tag = -1, returnCoor
     coord = unsafe_wrap(Array, api_coord_[], api_coord_n_[], own = true)
     return typeKeys, entityKeys, coord
 end
-const get_keys_for_elements = getKeysForElements
+const get_keys = getKeys
 
 """
     gmsh.model.mesh.getKeysForElement(elementTag, functionSpaceType, returnCoord = true)
@@ -2294,25 +2354,25 @@ end
 const get_keys_for_element = getKeysForElement
 
 """
-    gmsh.model.mesh.getNumberOfKeysForElements(elementType, functionSpaceType)
+    gmsh.model.mesh.getNumberOfKeys(elementType, functionSpaceType)
 
 Get the number of keys by elements of type `elementType` for function space
 named `functionSpaceType`.
 
 Return an integer value.
 """
-function getNumberOfKeysForElements(elementType, functionSpaceType)
+function getNumberOfKeys(elementType, functionSpaceType)
     ierr = Ref{Cint}()
-    api_result_ = ccall((:gmshModelMeshGetNumberOfKeysForElements, gmsh.lib), Cint,
+    api_result_ = ccall((:gmshModelMeshGetNumberOfKeys, gmsh.lib), Cint,
           (Cint, Ptr{Cchar}, Ptr{Cint}),
           elementType, functionSpaceType, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_result_
 end
-const get_number_of_keys_for_elements = getNumberOfKeysForElements
+const get_number_of_keys = getNumberOfKeys
 
 """
-    gmsh.model.mesh.getInformationForElements(typeKeys, entityKeys, elementType, functionSpaceType)
+    gmsh.model.mesh.getKeysInformation(typeKeys, entityKeys, elementType, functionSpaceType)
 
 Get information about the pair of `keys`. `infoKeys` returns information about
 the functions associated with the pairs (`typeKeys`, `entityKey`).
@@ -2324,11 +2384,11 @@ release.
 
 Return `infoKeys`.
 """
-function getInformationForElements(typeKeys, entityKeys, elementType, functionSpaceType)
+function getKeysInformation(typeKeys, entityKeys, elementType, functionSpaceType)
     api_infoKeys_ = Ref{Ptr{Cint}}()
     api_infoKeys_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
-    ccall((:gmshModelMeshGetInformationForElements, gmsh.lib), Cvoid,
+    ccall((:gmshModelMeshGetKeysInformation, gmsh.lib), Cvoid,
           (Ptr{Cint}, Csize_t, Ptr{Csize_t}, Csize_t, Cint, Ptr{Cchar}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
           convert(Vector{Cint}, typeKeys), length(typeKeys), convert(Vector{Csize_t}, entityKeys), length(entityKeys), elementType, functionSpaceType, api_infoKeys_, api_infoKeys_n_, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
@@ -2336,7 +2396,7 @@ function getInformationForElements(typeKeys, entityKeys, elementType, functionSp
     infoKeys = [ (tmp_api_infoKeys_[i], tmp_api_infoKeys_[i+1]) for i in 1:2:length(tmp_api_infoKeys_) ]
     return infoKeys
 end
-const get_information_for_elements = getInformationForElements
+const get_keys_information = getKeysInformation
 
 """
     gmsh.model.mesh.getBarycenters(elementType, tag, fast, primary, task = 0, numTasks = 1)
@@ -2883,6 +2943,27 @@ end
 const set_periodic = setPeriodic
 
 """
+    gmsh.model.mesh.getPeriodic(dim, tags)
+
+Get master entities `tagsMaster` for the entities of dimension `dim` and tags
+`tags`.
+
+Return `tagMaster`.
+"""
+function getPeriodic(dim, tags)
+    api_tagMaster_ = Ref{Ptr{Cint}}()
+    api_tagMaster_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshGetPeriodic, gmsh.lib), Cvoid,
+          (Cint, Ptr{Cint}, Csize_t, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
+          dim, convert(Vector{Cint}, tags), length(tags), api_tagMaster_, api_tagMaster_n_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    tagMaster = unsafe_wrap(Array, api_tagMaster_[], api_tagMaster_n_[], own = true)
+    return tagMaster
+end
+const get_periodic = getPeriodic
+
+"""
     gmsh.model.mesh.getPeriodicNodes(dim, tag, includeHighOrderNodes = false)
 
 Get the master entity `tagMaster`, the node tags `nodeTags` and their
@@ -2913,7 +2994,7 @@ end
 const get_periodic_nodes = getPeriodicNodes
 
 """
-    gmsh.model.mesh.getPeriodicKeysForElements(elementType, functionSpaceType, tag, returnCoord = true)
+    gmsh.model.mesh.getPeriodicKeys(elementType, functionSpaceType, tag, returnCoord = true)
 
 Get the master entity `tagMaster` and the key pairs (`typeKeyMaster`,
 `entityKeyMaster`) corresponding to the entity `tag` and the key pairs
@@ -2924,7 +3005,7 @@ for sorting purposes.
 
 Return `tagMaster`, `typeKeys`, `typeKeysMaster`, `entityKeys`, `entityKeysMaster`, `coord`, `coordMaster`.
 """
-function getPeriodicKeysForElements(elementType, functionSpaceType, tag, returnCoord = true)
+function getPeriodicKeys(elementType, functionSpaceType, tag, returnCoord = true)
     api_tagMaster_ = Ref{Cint}()
     api_typeKeys_ = Ref{Ptr{Cint}}()
     api_typeKeys_n_ = Ref{Csize_t}()
@@ -2939,7 +3020,7 @@ function getPeriodicKeysForElements(elementType, functionSpaceType, tag, returnC
     api_coordMaster_ = Ref{Ptr{Cdouble}}()
     api_coordMaster_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
-    ccall((:gmshModelMeshGetPeriodicKeysForElements, gmsh.lib), Cvoid,
+    ccall((:gmshModelMeshGetPeriodicKeys, gmsh.lib), Cvoid,
           (Cint, Ptr{Cchar}, Cint, Ptr{Cint}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
           elementType, functionSpaceType, tag, api_tagMaster_, api_typeKeys_, api_typeKeys_n_, api_typeKeysMaster_, api_typeKeysMaster_n_, api_entityKeys_, api_entityKeys_n_, api_entityKeysMaster_, api_entityKeysMaster_n_, api_coord_, api_coord_n_, api_coordMaster_, api_coordMaster_n_, returnCoord, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
@@ -2951,7 +3032,7 @@ function getPeriodicKeysForElements(elementType, functionSpaceType, tag, returnC
     coordMaster = unsafe_wrap(Array, api_coordMaster_[], api_coordMaster_n_[], own = true)
     return api_tagMaster_[], typeKeys, typeKeysMaster, entityKeys, entityKeysMaster, coord, coordMaster
 end
-const get_periodic_keys_for_elements = getPeriodicKeysForElements
+const get_periodic_keys = getPeriodicKeys
 
 """
     gmsh.model.mesh.removeDuplicateNodes()
@@ -4479,10 +4560,12 @@ const add_wire = addWire
 
 Add a curve loop (a closed wire) in the OpenCASCADE CAD representation, formed
 by the curves `curveTags`. `curveTags` should contain tags of curves forming a
-closed loop. Note that an OpenCASCADE curve loop can be made of curves that
-share geometrically identical (but topologically different) points. If `tag` is
-positive, set the tag explicitly; otherwise a new tag is selected automatically.
-Return the tag of the curve loop.
+closed loop. Negative tags can be specified for compatibility with the built-in
+kernel, but are simply ignored: the wire is oriented according to the
+orientation of its first curve. Note that an OpenCASCADE curve loop can be made
+of curves that share geometrically identical (but topologically different)
+points. If `tag` is positive, set the tag explicitly; otherwise a new tag is
+selected automatically. Return the tag of the curve loop.
 
 Return an integer value.
 """
@@ -6035,28 +6118,34 @@ function combine(what, how, remove = true, copyOptions = true)
 end
 
 """
-    gmsh.view.probe(tag, x, y, z, step = -1, numComp = -1, gradient = false, tolerance = 0., xElemCoord = Cdouble[], yElemCoord = Cdouble[], zElemCoord = Cdouble[], dim = -1)
+    gmsh.view.probe(tag, x, y, z, step = -1, numComp = -1, gradient = false, distanceMax = 0., xElemCoord = Cdouble[], yElemCoord = Cdouble[], zElemCoord = Cdouble[], dim = -1)
 
-Probe the view `tag` for its `value` at point (`x`, `y`, `z`). Return only the
-value at step `step` is `step` is positive. Return only values with `numComp` if
-`numComp` is positive. Return the gradient of the `value` if `gradient` is set.
-Probes with a geometrical tolerance (in the reference unit cube) of `tolerance`
-if `tolerance` is not zero. Return the result from the element described by its
-coordinates if `xElementCoord`, `yElementCoord` and `zElementCoord` are
-provided. If `dim` is >= 0, return only elements of the specified dimension.
+Probe the view `tag` for its `value` at point (`x`, `y`, `z`). If no match is
+found, `value` is returned empty. Return only the value at step `step` is `step`
+is positive. Return only values with `numComp` if `numComp` is positive. Return
+the gradient of the `value` if `gradient` is set. If `distanceMax` is zero, only
+return a result if an exact match inside an element in the view is found; if
+`distanceMax` is positive and an exact match is not found, return the value at
+the closest node if it is closer than `distanceMax`; if `distanceMax` is
+negative and an exact match is not found, always return the value at the closest
+node. The distance to the match is returned in `distance`. Return the result
+from the element described by its coordinates if `xElementCoord`,
+`yElementCoord` and `zElementCoord` are provided. If `dim` is >= 0, return only
+matches from elements of the specified dimension.
 
-Return `value`.
+Return `value`, `distance`.
 """
-function probe(tag, x, y, z, step = -1, numComp = -1, gradient = false, tolerance = 0., xElemCoord = Cdouble[], yElemCoord = Cdouble[], zElemCoord = Cdouble[], dim = -1)
+function probe(tag, x, y, z, step = -1, numComp = -1, gradient = false, distanceMax = 0., xElemCoord = Cdouble[], yElemCoord = Cdouble[], zElemCoord = Cdouble[], dim = -1)
     api_value_ = Ref{Ptr{Cdouble}}()
     api_value_n_ = Ref{Csize_t}()
+    api_distance_ = Ref{Cdouble}()
     ierr = Ref{Cint}()
     ccall((:gmshViewProbe, gmsh.lib), Cvoid,
-          (Cint, Cdouble, Cdouble, Cdouble, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Cint, Cint, Cdouble, Ptr{Cdouble}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Cdouble}, Csize_t, Cint, Ptr{Cint}),
-          tag, x, y, z, api_value_, api_value_n_, step, numComp, gradient, tolerance, convert(Vector{Cdouble}, xElemCoord), length(xElemCoord), convert(Vector{Cdouble}, yElemCoord), length(yElemCoord), convert(Vector{Cdouble}, zElemCoord), length(zElemCoord), dim, ierr)
+          (Cint, Cdouble, Cdouble, Cdouble, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cdouble}, Cint, Cint, Cint, Cdouble, Ptr{Cdouble}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Cdouble}, Csize_t, Cint, Ptr{Cint}),
+          tag, x, y, z, api_value_, api_value_n_, api_distance_, step, numComp, gradient, distanceMax, convert(Vector{Cdouble}, xElemCoord), length(xElemCoord), convert(Vector{Cdouble}, yElemCoord), length(yElemCoord), convert(Vector{Cdouble}, zElemCoord), length(zElemCoord), dim, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     value = unsafe_wrap(Array, api_value_[], api_value_n_[], own = true)
-    return value
+    return value, api_distance_[]
 end
 
 """

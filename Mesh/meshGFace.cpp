@@ -1408,7 +1408,8 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
       BDS_Point *p1 = aaa[a];
       BDS_Point *p2 = aaa[b];
       BDS_Point *p3 = aaa[c];
-      m->add_triangle(p1->iD, p2->iD, p3->iD);
+      if(p1 && p2 && p3)
+        m->add_triangle(p1->iD, p2->iD, p3->iD);
     }
     delete pm;
   }
@@ -1792,27 +1793,9 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
   return true;
 }
 
-// this function buils a list of vertices (BDS) that are consecutive in one
-// given edge loop. We take care of periodic surfaces. In the case of
-// periodicty, some curves are present 2 times in the wire (seams). Those must
-// be meshed separately
-
-static inline double dist2(const SPoint2 &p1, const SPoint2 &p2)
-{
-  const double dx = p1.x() - p2.x();
-  const double dy = p1.y() - p2.y();
-  return dx * dx + dy * dy;
-}
-
-/*
-static void printMesh1d(int iEdge, int seam, std::vector<SPoint2> &m)
-{
-  printf("Mesh1D for edge %d seam %d\n", iEdge, seam);
-  for(std::size_t i = 0; i < m.size(); i++){
-    printf("%12.5E %12.5E\n", m[i].x(), m[i].y());
-  }
-}
-*/
+// this function buils a list of BDS points that are consecutive in one given
+// edge loop, taking care of periodic surfaces with seams; it also fills the
+// recoverMap to link BDS points with mesh nodes
 
 static bool buildConsecutiveListOfVertices(
   GFace *gf, GEdgeLoop &gel, std::vector<BDS_Point *> &result,
@@ -1820,260 +1803,257 @@ static bool buildConsecutiveListOfVertices(
   std::map<BDS_Point *, MVertex *, PointLessThan> &recoverMap, int &count,
   int countTot, double tol, bool seam_the_first = false)
 {
-  // for each edge, we build a list of points that are the mapping of the edge
-  // points on the face for seams, we build the list for every side for closed
-  // loops, we build it on both senses
-
-  std::map<GEntity *, std::vector<SPoint2> > meshes;
-  std::map<GEntity *, std::vector<SPoint2> > meshes_seam;
-
-  const int MYDEBUG = false;
-
-  std::map<BDS_Point *, MVertex *, PointLessThan> recoverMapLocal;
-
   result.clear();
   count = 0;
 
-  auto it = gel.begin();
-  
-  if(MYDEBUG)
-    printf("face %d with %d edges case %d\n", gf->tag(),
-           (int)gf->edges().size(), seam_the_first);
+  // building the list of nodes in the parametric space for periodic surfaces is
+  // tricky:
+  // 1) both reparametrizations of the seams must be tested, as the topological
+  //    representation does not know which one to use
+  // 2) both orientations of curves must be tested, as the topological
+  //    representation of periodic curves cannot distinguish them
+  // 3) reparametrization of curves on surfaces can lead to slightly different
+  //    parametric coordinates, especially with OpenCASCADE - so a tolerance is
+  //    needed
+  std::vector<GEdgeSigned> signedEdges(gel.begin(), gel.end());
+  std::vector<SPoint2> coords;
+  std::vector<MVertex*> verts;
 
-  //---------------------------------------------------------------------------
-  // Look for seams that appear only once in the loop (baaaad boy)
-  std::set<GEdge*> lonelySeams;
-  while(it != gel.end()) {
-    GEdgeSigned ges = *it;
-    bool seam = ges.ge->isSeam(gf);
-    if (seam){
-      std::set<GEdge*>::iterator its = lonelySeams.find(ges.ge);
-      if (its == lonelySeams.end())lonelySeams.insert(ges.ge);
-      else lonelySeams.erase(its);
+#if 0 // for debugging - don't remove
+  printf("curve loop for surface %d\n", gf->tag());
+  for(std::size_t i = 0; i < signedEdges.size(); i++) {
+    GEdge *ge = signedEdges[i].getEdge();
+    bool seam = ge->isSeam(gf);
+    Range<double> range = ge->parBoundsOnFace(gf);
+    printf("  curve %d: ", ge->tag());
+    SPoint2 p;
+    p = ge->reparamOnFace(gf, range.low(), 1);
+    printf("beg (%g,%g) ", p.x(), p.y());
+    if(seam) {
+      p = ge->reparamOnFace(gf, range.low(), -1);
+      printf("beg_alt (%g,%g) ", p.x(), p.y());
     }
-    ++it;
-  }
-  if (lonelySeams.size())
-    Msg::Info("Face %lu has %lu isolated seams",gf->tag(),lonelySeams.size());
-  //---------------------------------------------------------------------------
-  
-  it = gel.begin();
-  
-  while(it != gel.end()) {
-    GEdgeSigned ges = *it;
-    std::vector<SPoint2> mesh1d;
-    std::vector<SPoint2> mesh1d_seam;
-
-    bool seam = ges.ge->isSeam(gf);
-    Range<double> range = ges.ge->parBoundsOnFace(gf);
-
-
-    mesh1d.push_back(ges.ge->reparamOnFace(gf, range.low(), 1));
-    if(seam) mesh1d_seam.push_back(ges.ge->reparamOnFace(gf, range.low(), -1));
-    for(std::size_t i = 0; i < ges.ge->mesh_vertices.size(); i++) {
-      MVertex *here = ges.ge->mesh_vertices[i];
-      double u;
-      here->getParameter(0, u);
-      mesh1d.push_back(ges.ge->reparamOnFace(gf, u, 1));
-      if(seam) mesh1d_seam.push_back(ges.ge->reparamOnFace(gf, u, -1));
+    p = ge->reparamOnFace(gf, range.high(), 1);
+    printf("end (%g,%g) ", p.x(), p.y());
+    if(seam) {
+      p = ge->reparamOnFace(gf, range.high(), -1);
+      printf("end_alt (%g,%g) ", p.x(), p.y());
     }
-    mesh1d.push_back(ges.ge->reparamOnFace(gf, range.high(), 1));
-    if(seam) mesh1d_seam.push_back(ges.ge->reparamOnFace(gf, range.high(), -1));
-    meshes.insert(std::pair<GEntity *, std::vector<SPoint2> >(ges.ge, mesh1d));
-    if(seam)
-      meshes_seam.insert(
-        std::pair<GEntity *, std::vector<SPoint2> >(ges.ge, mesh1d_seam));
-    // printMesh1d(ges.ge->tag(), seam, mesh1d);
-    // if(seam) printMesh1d(ges.ge->tag(), seam, mesh1d_seam);
-    it++;
+    printf("\n");
   }
+#endif
 
-  std::list<GEdgeSigned> unordered(gel.begin(), gel.end());
+  for(int initial_dir = 0; initial_dir < 2; initial_dir++) {
 
-  GEdgeSigned found(0, nullptr);
-  SPoint2 last_coord(0, 0);
-  int counter = 0;
+    if(coords.size()) break; // we succeeded with initial_dir == 0
 
-  while(unordered.size()) {
-    if(MYDEBUG) printf("unordered.size() = %d\n", (int)unordered.size());
-    auto it = unordered.begin();
-    std::vector<SPoint2> coords;
-
-    while(it != unordered.end()) {
-      std::vector<SPoint2> mesh1d;
-      std::vector<SPoint2> mesh1d_seam;
-      std::vector<SPoint2> mesh1d_reversed;
-      std::vector<SPoint2> mesh1d_seam_reversed;
-      GEdge *ge = (*it).ge;
+    for(std::size_t i = 0; i < signedEdges.size(); i++) {
+      std::vector<SPoint2> p, p_alt, p_rev, p_alt_rev;
+      std::vector<MVertex*> v, v_rev;
+      GEdge *ge = signedEdges[i].getEdge();
       bool seam = ge->isSeam(gf);
-      mesh1d = meshes[ge];
-      if(seam) { mesh1d_seam = meshes_seam[ge]; }
-      mesh1d_reversed.insert(mesh1d_reversed.begin(), mesh1d.rbegin(),
-                             mesh1d.rend());
-      if(seam)
-        mesh1d_seam_reversed.insert(mesh1d_seam_reversed.begin(),
-                                    mesh1d_seam.rbegin(), mesh1d_seam.rend());
-      if(!counter) {
-        counter++;
-        if(seam && seam_the_first) {
-          coords = ((*it)._sign == 1) ? mesh1d_seam : mesh1d_seam_reversed;
-          found = (*it);
+      Range<double> range = ge->parBoundsOnFace(gf);
+
+      // get parametric coordinates of curve nodes on the surface, with both
+      // possible values for seams
+      if(ge->getBeginVertex()) {
+        p.push_back(ge->reparamOnFace(gf, range.low(), 1));
+        if(seam) p_alt.push_back(ge->reparamOnFace(gf, range.low(), -1));
+        v.push_back(ge->getBeginVertex()->mesh_vertices[0]);
+      }
+      for(std::size_t j = 0; j < ge->mesh_vertices.size(); j++) {
+        double u;
+        ge->mesh_vertices[j]->getParameter(0, u);
+        p.push_back(ge->reparamOnFace(gf, u, 1));
+        if(seam) p_alt.push_back(ge->reparamOnFace(gf, u, -1));
+        v.push_back(ge->mesh_vertices[j]);
+      }
+      if(ge->getEndVertex()) {
+        p.push_back(ge->reparamOnFace(gf, range.high(), 1));
+        if(seam) p_alt.push_back(ge->reparamOnFace(gf, range.high(), -1));
+        v.push_back(ge->getEndVertex()->mesh_vertices[0]);
+      }
+
+      // get the reverse mesh
+      p_rev = p;
+      std::reverse(p_rev.begin(), p_rev.end());
+      if(seam) {
+        p_alt_rev = p_alt;
+        std::reverse(p_alt_rev.begin(), p_alt_rev.end());
+      }
+      v_rev = v;
+      std::reverse(v_rev.begin(), v_rev.end());
+
+      if(i == 0) {
+        // choose which mesh to consider for the first curve in the loop
+        if(initial_dir == 0) {
+          if(seam && seam_the_first)
+            coords = p_alt;
+          else
+            coords = p;
+          verts = v;
         }
         else {
-          coords = ((*it)._sign == 1) ? mesh1d : mesh1d_reversed;
-          found = (*it);
+          if(seam && seam_the_first)
+            coords = p_alt_rev;
+          else
+            coords = p_rev;
+          verts = v_rev;
         }
-	//	if(MYDEBUG)
-	//	  printf("Starting with edge = %d seam %d\n", (*it).ge->tag(), seam);
-        unordered.erase(it);
-        break;
       }
-      else {
-	//        if(MYDEBUG) printf("Followed by edge = %d\n", (*it).ge->tag());
-        SPoint2 first_coord = mesh1d[0];
-        double d = -1, d_reversed = -1, d_seam = -1, d_seam_reversed = -1;
-        d = dist2(last_coord, first_coord);
-	//        if(MYDEBUG)
-	//          printf("%g %g dist = %12.5E\n", first_coord.x(), first_coord.y(), d);
-        SPoint2 first_coord_reversed = mesh1d_reversed[0];
-        d_reversed = dist2(last_coord, first_coord_reversed);
-	//        if(MYDEBUG)
-	//          printf("%g %g dist_reversed = %12.5E\n", first_coord_reversed.x(),
-	//                 first_coord_reversed.y(), d_reversed);
-        if(d < tol && d < d_reversed) {
-          coords.clear();
-          coords = mesh1d;
-          found = GEdgeSigned(1, ge);
-          unordered.erase(it);
-          goto Finalize;
-        }
-        if(d_reversed < tol) {
-          coords.clear();
-          coords = mesh1d_reversed;
-          found = (GEdgeSigned(-1, ge));
-          unordered.erase(it);
-          goto Finalize;
-        }
-        if(seam) {
-          SPoint2 first_coord_seam = mesh1d_seam[0];
-          SPoint2 first_coord_seam_reversed = mesh1d_seam_reversed[0];
-          d_seam = dist2(last_coord, first_coord_seam);
-	  //          if(MYDEBUG) printf("dist_seam = %12.5E\n", d_seam);
-          if(d_seam < tol) {
-            coords.clear();
-            coords = mesh1d_seam;
-            found = (GEdgeSigned(1, ge));
-            unordered.erase(it);
-            goto Finalize;
+      else{
+        // detect which mesh variant to use for the next curve by selecting the
+        // mesh that starts with the node at the smallest distance, within the
+        // prescribed tolerance
+        double dist1 = coords.back().distance(p.front());
+        double dist2 = coords.back().distance(p_rev.front());
+        if(!seam) {
+          if(dist1 < dist2 && dist1 < tol) {
+            coords.pop_back();
+            coords.insert(coords.end(), p.begin(), p.end());
+            verts.pop_back();
+            verts.insert(verts.end(), v.begin(), v.end());
           }
-          d_seam_reversed = dist2(last_coord, first_coord_seam_reversed);
-	  //          if(MYDEBUG) printf("dist_seam_reversed = %12.5E\n", d_seam_reversed);
-          if(d_seam_reversed < tol) {
-            coords.clear();
-            coords = mesh1d_seam_reversed;
-            found = GEdgeSigned(-1, ge);
-            unordered.erase(it);
-            break;
-	    //            goto Finalize;
+          else if(dist2 < dist1 && dist2 < tol) {
+            coords.pop_back();
+            coords.insert(coords.end(), p_rev.begin(), p_rev.end());
+            verts.pop_back();
+            verts.insert(verts.end(), v_rev.begin(), v_rev.end());
+          }
+          else{
+            Msg::Debug("Distances (%g, %g) in parametric space larger than "
+                       "tolerance (%g) between end of curve %d and "
+                       "begining of curve %d...", dist1, dist2, tol,
+                       signedEdges[i - 1].getEdge()->tag(), ge->tag());
+            if(initial_dir == 0){
+              Msg::Debug("... will try with alternate initial orientation");
+              coords.clear();
+              verts.clear();
+              break;
+            }
+            else{
+              Msg::Debug("... will try with larger tolerance");
+              return false;
+            }
           }
         }
-      }
-      ++it;
-    }
-  Finalize:
-    //    if(MYDEBUG) printf("Finalize, found %d points\n", (int)coords.size());
-    if(coords.size() == 0) {
-      // It has not worked : either tolerance is wrong or the first seam edge
-      // has to be taken with the other parametric coordinates (because it is
-      // only present once in the closure of the domain).
-      for(auto it = recoverMapLocal.begin(); it != recoverMapLocal.end();
-          ++it) {
-        m->del_point(it->first);
-      }
-      return false;
-    }
-
-    std::vector<MVertex *> edgeLoop;
-    if(found._sign == 1) {
-      if(found.ge->getBeginVertex()) {
-        edgeLoop.push_back(found.ge->getBeginVertex()->mesh_vertices[0]);
-        for(std::size_t i = 0; i < found.ge->mesh_vertices.size(); i++)
-          edgeLoop.push_back(found.ge->mesh_vertices[i]);
-      }
-    }
-    else {
-      if(found.ge->getEndVertex()) {
-        edgeLoop.push_back(found.ge->getEndVertex()->mesh_vertices[0]);
-        for(int i = found.ge->mesh_vertices.size() - 1; i >= 0; i--)
-          edgeLoop.push_back(found.ge->mesh_vertices[i]);
-      }
-    }
-
-    if(MYDEBUG)
-      printf("edge %d size %d size %d\n", found.ge->tag(), (int)edgeLoop.size(),
-             (int)coords.size());
-
-    std::vector<BDS_Point *> edgeLoop_BDS;
-    for(std::size_t i = 0; i < edgeLoop.size(); i++) {
-      MVertex *here = edgeLoop[i];
-      GEntity *ge = here->onWhat();
-
-      BDS_Point *pp = nullptr;
-      if(ge->dim() == 0) {
-        // Point might already be part of other loop
-        double smallestDistance = std::numeric_limits<double>::infinity();
-        for(auto it = recoverMap.begin(); it != recoverMap.end(); ++it) {
-          if(it->second == here) {
-            // Also check on 2D coordinates as the point might lie on the seam
-            SPoint2 param = coords[i];
-            SPoint2 paramPoint(it->first->u, it->first->v);
-            const double distance = param.distance(paramPoint);
-            if(distance < smallestDistance) {
-              smallestDistance = distance;
-              pp = it->first;
-              if(distance < tol) break;
+        else {
+          double dist3 = coords.back().distance(p_alt.front());
+          double dist4 = coords.back().distance(p_alt_rev.front());
+          if(dist1 < dist2 && dist1 < dist3 && dist1 < dist4 && dist1 < tol) {
+            coords.pop_back();
+            coords.insert(coords.end(), p.begin(), p.end());
+            verts.pop_back();
+            verts.insert(verts.end(), v.begin(), v.end());
+          }
+          else if(dist2 < dist1 && dist2 < dist3 && dist2 < dist4 && dist2 < tol) {
+            coords.pop_back();
+            coords.insert(coords.end(), p_rev.begin(), p_rev.end());
+            verts.pop_back();
+            verts.insert(verts.end(), v_rev.begin(), v_rev.end());
+          }
+          else if(dist3 < dist1 && dist3 < dist2 && dist3 < dist4 && dist3 < tol) {
+            coords.pop_back();
+            coords.insert(coords.end(), p_alt.begin(), p_alt.end());
+            verts.pop_back();
+            verts.insert(verts.end(), v.begin(), v.end());
+          }
+          else if(dist4 < dist1 && dist4 < dist2 && dist4 < dist3 && dist4 < tol) {
+            coords.pop_back();
+            coords.insert(coords.end(), p_alt_rev.begin(), p_alt_rev.end());
+            verts.pop_back();
+            verts.insert(verts.end(), v_rev.begin(), v_rev.end());
+          }
+          else {
+            Msg::Debug("Distances (%g, %g, %g, %g) in parametric space larger "
+                       "than tolerance (%g) between end of curve %d and "
+                       "begining of seam curve %d...", dist1, dist2, dist3, dist4,
+                       tol, signedEdges[i - 1].getEdge()->tag(), ge->tag());
+            if(initial_dir == 0){
+              Msg::Debug("... will try with alternate initial orientation");
+              coords.clear();
+              verts.clear();
+              break;
+            }
+            else{
+              Msg::Debug("... will try with larger tolerance");
+              return false;
             }
           }
         }
       }
-      if(pp == nullptr) {
-        double U, V;
-        SPoint2 param = coords[i];
-        U = param.x();
-        V = param.y();
-        pp = m->add_point(count + countTot, U, V, gf);
-        if(ge->dim() == 0) {
-          pp->lcBGM() = BGM_MeshSize(ge, 0, 0, here->x(), here->y(), here->z());
-        }
-        else if(ge->dim() == 1) {
-          double u;
-          here->getParameter(0, u);
-          pp->lcBGM() = BGM_MeshSize(ge, u, 0, here->x(), here->y(), here->z());
-        }
-        else
-          pp->lcBGM() = MAX_LC;
-
-        pp->lc() = pp->lcBGM();
-        m->add_geom(ge->tag(), ge->dim());
-        BDS_GeomEntity *g = m->get_geom(ge->tag(), ge->dim());
-        pp->g = g;
-        if(MYDEBUG)
-          printf("point %3d (%8.5f %8.5f : %8.5f %8.5f) (%2d,%2d)\n", count,
-                 pp->u, pp->v, param.x(), param.y(), pp->g->classif_tag,
-                 pp->g->classif_degree);
-        bbox += SPoint3(U, V, 0);
-      }
-      edgeLoop_BDS.push_back(pp);
-      recoverMapLocal[pp] = here;
-      count++;
     }
-    last_coord = coords[coords.size() - 1];
-    if(MYDEBUG) printf("last coord %g %g\n", last_coord.x(), last_coord.y());
-    result.insert(result.end(), edgeLoop_BDS.begin(), edgeLoop_BDS.end());
   }
 
-  // It has worked, so we add all the points to the recover map
+  if(verts.size() != coords.size()) {
+    Msg::Error("Wrong number of parametric coordinates for boundary nodes "
+               "on surface %d", gf->tag());
+    return false;
+  }
+  if(verts.empty()) {
+    Msg::Debug("No nodes in 1D mesh on surface %d", gf->tag());
+    return true;
+  }
+  double dist = coords.back().distance(coords.front());
+  if(dist < tol) {
+    coords.pop_back();
+    verts.pop_back();
+  }
+  else {
+    Msg::Debug("Distance %g between first and last node in 1D mesh of surface "
+               "%d exceeds tolerance %g", dist, gf->tag(), tol);
+    return false;
+  }
 
+  std::map<BDS_Point *, MVertex *, PointLessThan> recoverMapLocal;
+
+  for(std::size_t i = 0; i < verts.size(); i++) {
+    MVertex *here = verts[i];
+    GEntity *ge = here->onWhat();
+    BDS_Point *pp = nullptr;
+    if(ge->dim() == 0) {
+      // point might already be part of another loop in the same surface
+      for(auto it = recoverMap.begin(); it != recoverMap.end(); ++it) {
+        if(it->second == here) {
+          SPoint2 param(it->first->u, it->first->v);
+          double dist = coords[i].distance(param);
+          if(dist < tol) {
+            pp = it->first;
+            break;
+          }
+        }
+      }
+    }
+    if(pp == nullptr) {
+      double U, V;
+      SPoint2 param = coords[i];
+      U = param.x();
+      V = param.y();
+      pp = m->add_point(count + countTot, U, V, gf);
+      if(ge->dim() == 0) {
+        pp->lcBGM() = BGM_MeshSize(ge, 0, 0, here->x(), here->y(), here->z());
+      }
+      else if(ge->dim() == 1) {
+        double u;
+        here->getParameter(0, u);
+        pp->lcBGM() = BGM_MeshSize(ge, u, 0, here->x(), here->y(), here->z());
+      }
+      else {
+        pp->lcBGM() = MAX_LC;
+      }
+      pp->lc() = pp->lcBGM();
+      m->add_geom(ge->tag(), ge->dim());
+      BDS_GeomEntity *g = m->get_geom(ge->tag(), ge->dim());
+      pp->g = g;
+      bbox += SPoint3(U, V, 0);
+    }
+    //printf("node %d coord %g %g\n", here->getNum(), pp->u, pp->v);
+    result.push_back(pp);
+    recoverMapLocal[pp] = here;
+    count++;
+  }
+
+  // we're all set!
   recoverMap.insert(recoverMapLocal.begin(), recoverMapLocal.end());
 
   return true;

@@ -631,24 +631,6 @@ bool OctreePost::searchScalar(double x, double y, double z, double *values,
   return false;
 }
 
-bool OctreePost::searchScalarWithTol(double x, double y, double z,
-                                     double *values, int step, double *size,
-                                     double tol, int qn, double *qx, double *qy,
-                                     double *qz, bool grad, int dim)
-{
-  bool a = searchScalar(x, y, z, values, step, size, qn, qx, qy, qz, grad, dim);
-  if(!a && tol != 0.) {
-    double oldtol1 = element::getTolerance();
-    double oldtol2 = MElement::getTolerance();
-    element::setTolerance(tol);
-    MElement::setTolerance(tol);
-    a = searchScalar(x, y, z, values, step, size, qn, qx, qy, qz, grad, dim);
-    element::setTolerance(oldtol1);
-    MElement::setTolerance(oldtol2);
-  }
-  return a;
-}
-
 bool OctreePost::searchVector(double x, double y, double z, double *values,
                               int step, double *size, int qn, double *qx,
                               double *qy, double *qz, bool grad, int dim)
@@ -705,24 +687,6 @@ bool OctreePost::searchVector(double x, double y, double z, double *values,
   return false;
 }
 
-bool OctreePost::searchVectorWithTol(double x, double y, double z,
-                                     double *values, int step, double *size,
-                                     double tol, int qn, double *qx, double *qy,
-                                     double *qz, bool grad, int dim)
-{
-  bool a = searchVector(x, y, z, values, step, size, qn, qx, qy, qz, grad, dim);
-  if(!a && tol != 0.) {
-    double oldtol1 = element::getTolerance();
-    double oldtol2 = MElement::getTolerance();
-    element::setTolerance(tol);
-    MElement::setTolerance(tol);
-    a = searchVector(x, y, z, values, step, size, qn, qx, qy, qz, grad, dim);
-    element::setTolerance(oldtol1);
-    MElement::setTolerance(oldtol2);
-  }
-  return a;
-}
-
 bool OctreePost::searchTensor(double x, double y, double z, double *values,
                               int step, double *size, int qn, double *qx,
                               double *qy, double *qz, bool grad, int dim)
@@ -777,22 +741,4 @@ bool OctreePost::searchTensor(double x, double y, double z, double *values,
   }
 
   return false;
-}
-
-bool OctreePost::searchTensorWithTol(double x, double y, double z,
-                                     double *values, int step, double *size,
-                                     double tol, int qn, double *qx, double *qy,
-                                     double *qz, bool grad, int dim)
-{
-  bool a = searchTensor(x, y, z, values, step, size, qn, qx, qy, qz, grad, dim);
-  if(!a && tol != 0.) {
-    double oldtol1 = element::getTolerance();
-    double oldtol2 = MElement::getTolerance();
-    element::setTolerance(tol);
-    MElement::setTolerance(tol);
-    a = searchTensor(x, y, z, values, step, size, qn, qx, qy, qz, grad, dim);
-    element::setTolerance(oldtol1);
-    MElement::setTolerance(oldtol2);
-  }
-  return a;
 }

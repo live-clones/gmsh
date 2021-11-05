@@ -218,16 +218,12 @@ public:
   std::size_t getMaxElementNumber() const { return _maxElementNum; }
   void setMaxVertexNumber(std::size_t num)
   {
-#if defined(_OPENMP)
 #pragma omp atomic write
-#endif
     _maxVertexNum = _maxVertexNum > num ? _maxVertexNum : num;
   }
   void setMaxElementNumber(std::size_t num)
   {
-#if defined(_OPENMP)
 #pragma omp atomic write
-#endif
     _maxElementNum = _maxElementNum > num ? _maxElementNum : num;
   }
 
@@ -235,9 +231,7 @@ public:
   std::size_t incrementAndGetMaxVertexNumber()
   {
     std::size_t _myVertexNum;
-#if defined(_OPENMP)
 #pragma omp atomic capture
-#endif
     {
       ++_maxVertexNum;
       _myVertexNum = _maxVertexNum;
@@ -247,9 +241,7 @@ public:
   std::size_t incrementAndGetMaxElementNumber()
   {
     std::size_t _myElementNum;
-#if defined(_OPENMP)
 #pragma omp atomic capture
-#endif
     {
       ++_maxElementNum;
       _myElementNum = _maxElementNum;
@@ -260,9 +252,7 @@ public:
   // decrement global vertex num
   void decrementMaxVertexNumber()
   {
-#if defined(_OPENMP)
 #pragma omp atomic update
-#endif
     --_maxVertexNum;
   }
 

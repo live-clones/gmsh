@@ -62,7 +62,7 @@ def createGeometryAndMesh():
 
     # Create a volume from all the surfaces
     s = gmsh.model.getEntities(2)
-    l = gmsh.model.geo.addSurfaceLoop([s[i][1] for i in range(len(s))])
+    l = gmsh.model.geo.addSurfaceLoop([e[1] for e in s])
     gmsh.model.geo.addVolume([l])
 
     gmsh.model.geo.synchronize()

@@ -110,9 +110,9 @@ namespace gmsh { // Top-level functions
   // arguments in the Gmsh app. If `readConfigFiles' is set, read system Gmsh
   // configuration files (gmshrc and gmsh-options). If `run' is set, run in the
   // same way as the Gmsh app, either interactively or in batch mode depending on
-  // the command line arguments. Initializing the API sets the options
-  // "General.AbortOnError" to 2 (if `run' is not set) and "General.Terminal" to 1.
-  // If compiled with OpenMP support, it also sets the number of threads to
+  // the command line arguments. If `run' is not set, initializing the API sets the
+  // options "General.AbortOnError" to 2 and "General.Terminal" to 1. If compiled
+  // with OpenMP support, it also sets the number of threads to
   // "General.NumThreads".
   inline void initialize(int argc = 0, char ** argv = 0,
                          const bool readConfigFiles = true,
@@ -443,6 +443,17 @@ namespace gmsh { // Top-level functions
       gmshModelGetPhysicalName(dim, tag, &api_name_, &ierr);
       if(ierr) throwLastError();
       name = std::string(api_name_); gmshFree(api_name_);
+    }
+
+    // Set the tag of the entity of dimension `dim' and tag `tag' to the new value
+    // `newTag'.
+    inline void setTag(const int dim,
+                       const int tag,
+                       const int newTag)
+    {
+      int ierr = 0;
+      gmshModelSetTag(dim, tag, newTag, &ierr);
+      if(ierr) throwLastError();
     }
 
     // Get the boundary of the model entities `dimTags'. Return in `outDimTags' the
@@ -1176,6 +1187,14 @@ namespace gmsh { // Top-level functions
         coord.assign(api_coord_, api_coord_ + api_coord_n_); gmshFree(api_coord_);
       }
 
+      // Get the maximum tag `maxTag' of a node in the mesh.
+      inline void getMaxNodeTag(std::size_t & maxTag)
+      {
+        int ierr = 0;
+        gmshModelMeshGetMaxNodeTag(&maxTag, &ierr);
+        if(ierr) throwLastError();
+      }
+
       // Add nodes classified on the model entity of dimension `dim' and tag `tag'.
       // `nodeTags' contains the node tags (their unique, strictly positive
       // identification numbers). `coord' is a vector of length 3 times the length
@@ -1413,6 +1432,14 @@ namespace gmsh { // Top-level functions
         nodeTags.assign(api_nodeTags_, api_nodeTags_ + api_nodeTags_n_); gmshFree(api_nodeTags_);
       }
 
+      // Get the maximum tag `maxTag' of an element in the mesh.
+      inline void getMaxElementTag(std::size_t & maxTag)
+      {
+        int ierr = 0;
+        gmshModelMeshGetMaxElementTag(&maxTag, &ierr);
+        if(ierr) throwLastError();
+      }
+
       // Preallocate data before calling `getElementsByType' with `numTasks' > 1.
       // For C and C++ only.
       inline void preallocateElementsByType(const int elementType,
@@ -1480,11 +1507,17 @@ namespace gmsh { // Top-level functions
       }
 
       // Get the numerical quadrature information for the given element type
-      // `elementType' and integration rule `integrationType' (e.g. "Gauss4" for a
-      // Gauss quadrature suited for integrating 4th order polynomials).
-      // `localCoord' contains the u, v, w coordinates of the G integration points
-      // in the reference element: [g1u, g1v, g1w, ..., gGu, gGv, gGw]. `weights'
-      // contains the associated weights: [g1q, ..., gGq].
+      // `elementType' and integration rule `integrationType', where
+      // `integrationType' concatenates the integration rule family name with the
+      // desired order (e.g. "Gauss4" for a quadrature suited for integrating 4th
+      // order polynomials). The "CompositeGauss" family uses tensor-product rules
+      // based the 1D Gauss-Legendre rule; the "Gauss" family uses an economic
+      // scheme when available (i.e. with a minimal number of points), and falls
+      // back to "CompositeGauss" otherwise. Note that integration points for the
+      // "Gauss" family can fall outside of the reference element for high-order
+      // rules. `localCoord' contains the u, v, w coordinates of the G integration
+      // points in the reference element: [g1u, g1v, g1w, ..., gGu, gGv, gGw].
+      // `weights' contains the associated weights: [g1q, ..., gGq].
       inline void getIntegrationPoints(const int elementType,
                                        const std::string & integrationType,
                                        std::vector<double> & localCoord,
@@ -1591,20 +1624,23 @@ namespace gmsh { // Top-level functions
       // Get the basis functions of the element of type `elementType' at the
       // evaluation points `localCoord' (given as concatenated triplets of
       // coordinates in the reference element [g1u, g1v, g1w, ..., gGu, gGv, gGw]),
-      // for the function space `functionSpaceType' (e.g. "Lagrange" or
-      // "GradLagrange" for isoparametric Lagrange basis functions or their
-      // gradient, in the u, v, w coordinates of the reference element; "Lagrange3"
-      // for 3rd order Lagrange basis functions, or "H1Legendre3" or
-      // "GradH1Legendre3" for 3rd order hierarchical H1 Legendre functions).
-      // `numComponents' returns the number C of components of a basis function.
-      // `basisFunctions' returns the value of the N basis functions at the
-      // evaluation points, i.e. [g1f1, g1f2, ..., g1fN, g2f1, ...] when C == 1 or
-      // [g1f1u, g1f1v, g1f1w, g1f2u, ..., g1fNw, g2f1u, ...] when C == 3. For
-      // basis functions that depend on the orientation of the elements, all values
-      // for the first orientation are returned first, followed by values for the
-      // second, etc. `numOrientations' returns the overall number of orientations.
-      // If `wantedOrientations' is not empty, only return the values for the
-      // desired orientation indices.
+      // for the function space `functionSpaceType'. Currently supported function
+      // spaces include "Lagrange" and "GradLagrange" for isoparametric Lagrange
+      // basis functions and their gradient in the u, v, w coordinates of the
+      // reference element; "LagrangeN" and "GradLagrangeN", with N = 1, 2, ...,
+      // for N-th order Lagrange basis functions; "H1LegendreN" and
+      // "GradH1LegendreN", with N = 1, 2, ..., for N-th order hierarchical H1
+      // Legendre functions; "HcurlLegendreN" and "CurlHcurlLegendreN", with N = 1,
+      // 2, ..., for N-th order curl-conforming basis functions. `numComponents'
+      // returns the number C of components of a basis function (e.g. 1 for scalar
+      // functions and 3 for vector functions). `basisFunctions' returns the value
+      // of the N basis functions at the evaluation points, i.e. [g1f1, g1f2, ...,
+      // g1fN, g2f1, ...] when C == 1 or [g1f1u, g1f1v, g1f1w, g1f2u, ..., g1fNw,
+      // g2f1u, ...] when C == 3. For basis functions that depend on the
+      // orientation of the elements, all values for the first orientation are
+      // returned first, followed by values for the second, etc. `numOrientations'
+      // returns the overall number of orientations. If `wantedOrientations' is not
+      // empty, only return the values for the desired orientation indices.
       inline void getBasisFunctions(const int elementType,
                                     const std::vector<double> & localCoord,
                                     const std::string & functionSpaceType,
@@ -1630,16 +1666,16 @@ namespace gmsh { // Top-level functions
       // each element the orientation index in the values returned by
       // `getBasisFunctions'. For Lagrange basis functions the call is superfluous
       // as it will return a vector of zeros.
-      inline void getBasisFunctionsOrientationForElements(const int elementType,
-                                                          const std::string & functionSpaceType,
-                                                          std::vector<int> & basisFunctionsOrientation,
-                                                          const int tag = -1,
-                                                          const std::size_t task = 0,
-                                                          const std::size_t numTasks = 1)
+      inline void getBasisFunctionsOrientation(const int elementType,
+                                               const std::string & functionSpaceType,
+                                               std::vector<int> & basisFunctionsOrientation,
+                                               const int tag = -1,
+                                               const std::size_t task = 0,
+                                               const std::size_t numTasks = 1)
       {
         int ierr = 0;
         int *api_basisFunctionsOrientation_; size_t api_basisFunctionsOrientation_n_;
-        gmshModelMeshGetBasisFunctionsOrientationForElements(elementType, functionSpaceType.c_str(), &api_basisFunctionsOrientation_, &api_basisFunctionsOrientation_n_, tag, task, numTasks, &ierr);
+        gmshModelMeshGetBasisFunctionsOrientation(elementType, functionSpaceType.c_str(), &api_basisFunctionsOrientation_, &api_basisFunctionsOrientation_n_, tag, task, numTasks, &ierr);
         if(ierr) throwLastError();
         basisFunctionsOrientation.assign(api_basisFunctionsOrientation_, api_basisFunctionsOrientation_ + api_basisFunctionsOrientation_n_); gmshFree(api_basisFunctionsOrientation_);
       }
@@ -1665,15 +1701,15 @@ namespace gmsh { // Top-level functions
         return result_api_;
       }
 
-      // Preallocate data before calling `getBasisFunctionsOrientationForElements'
-      // with `numTasks' > 1. For C and C++ only.
-      inline void preallocateBasisFunctionsOrientationForElements(const int elementType,
-                                                                  std::vector<int> & basisFunctionsOrientation,
-                                                                  const int tag = -1)
+      // Preallocate data before calling `getBasisFunctionsOrientation' with
+      // `numTasks' > 1. For C and C++ only.
+      inline void preallocateBasisFunctionsOrientation(const int elementType,
+                                                       std::vector<int> & basisFunctionsOrientation,
+                                                       const int tag = -1)
       {
         int ierr = 0;
         int *api_basisFunctionsOrientation_; size_t api_basisFunctionsOrientation_n_;
-        gmshModelMeshPreallocateBasisFunctionsOrientationForElements(elementType, &api_basisFunctionsOrientation_, &api_basisFunctionsOrientation_n_, tag, &ierr);
+        gmshModelMeshPreallocateBasisFunctionsOrientation(elementType, &api_basisFunctionsOrientation_, &api_basisFunctionsOrientation_n_, tag, &ierr);
         if(ierr) throwLastError();
         basisFunctionsOrientation.assign(api_basisFunctionsOrientation_, api_basisFunctionsOrientation_ + api_basisFunctionsOrientation_n_); gmshFree(api_basisFunctionsOrientation_);
       }
@@ -1681,7 +1717,7 @@ namespace gmsh { // Top-level functions
       // Get the global unique mesh edge identifiers `edgeTags' and orientations
       // `edgeOrientation' for an input list of node tag pairs defining these
       // edges, concatenated in the vector `nodeTags'. Mesh edges are created e.g.
-      // by `createEdges()' or `getKeysForElements()'.
+      // by `createEdges()' or `getKeys()'.
       inline void getEdges(const std::vector<std::size_t> & nodeTags,
                            std::vector<std::size_t> & edgeTags,
                            std::vector<int> & edgeOrientations)
@@ -1701,7 +1737,7 @@ namespace gmsh { // Top-level functions
       // `faceOrientations' for an input list of node tag triplets (if `faceType'
       // == 3) or quadruplets (if `faceType' == 4) defining these faces,
       // concatenated in the vector `nodeTags'. Mesh faces are created e.g. by
-      // `createFaces()' or `getKeysForElements()'.
+      // `createFaces()' or `getKeys()'.
       inline void getFaces(const int faceType,
                            const std::vector<std::size_t> & nodeTags,
                            std::vector<std::size_t> & faceTags,
@@ -1745,19 +1781,19 @@ namespace gmsh { // Top-level functions
       // x, y, z coordinates locating basis functions for sorting purposes.
       // Warning: this is an experimental feature and will probably change in a
       // future release.
-      inline void getKeysForElements(const int elementType,
-                                     const std::string & functionSpaceType,
-                                     std::vector<int> & typeKeys,
-                                     std::vector<std::size_t> & entityKeys,
-                                     std::vector<double> & coord,
-                                     const int tag = -1,
-                                     const bool returnCoord = true)
+      inline void getKeys(const int elementType,
+                          const std::string & functionSpaceType,
+                          std::vector<int> & typeKeys,
+                          std::vector<std::size_t> & entityKeys,
+                          std::vector<double> & coord,
+                          const int tag = -1,
+                          const bool returnCoord = true)
       {
         int ierr = 0;
         int *api_typeKeys_; size_t api_typeKeys_n_;
         size_t *api_entityKeys_; size_t api_entityKeys_n_;
         double *api_coord_; size_t api_coord_n_;
-        gmshModelMeshGetKeysForElements(elementType, functionSpaceType.c_str(), &api_typeKeys_, &api_typeKeys_n_, &api_entityKeys_, &api_entityKeys_n_, &api_coord_, &api_coord_n_, tag, (int)returnCoord, &ierr);
+        gmshModelMeshGetKeys(elementType, functionSpaceType.c_str(), &api_typeKeys_, &api_typeKeys_n_, &api_entityKeys_, &api_entityKeys_n_, &api_coord_, &api_coord_n_, tag, (int)returnCoord, &ierr);
         if(ierr) throwLastError();
         typeKeys.assign(api_typeKeys_, api_typeKeys_ + api_typeKeys_n_); gmshFree(api_typeKeys_);
         entityKeys.assign(api_entityKeys_, api_entityKeys_ + api_entityKeys_n_); gmshFree(api_entityKeys_);
@@ -1785,11 +1821,11 @@ namespace gmsh { // Top-level functions
 
       // Get the number of keys by elements of type `elementType' for function
       // space named `functionSpaceType'.
-      inline int getNumberOfKeysForElements(const int elementType,
-                                            const std::string & functionSpaceType)
+      inline int getNumberOfKeys(const int elementType,
+                                 const std::string & functionSpaceType)
       {
         int ierr = 0;
-        int result_api_ = gmshModelMeshGetNumberOfKeysForElements(elementType, functionSpaceType.c_str(), &ierr);
+        int result_api_ = gmshModelMeshGetNumberOfKeys(elementType, functionSpaceType.c_str(), &ierr);
         if(ierr) throwLastError();
         return result_api_;
       }
@@ -1801,17 +1837,17 @@ namespace gmsh { // Top-level functions
       // function). `infoKeys[0].second' gives the order of the function associated
       // with the key. Warning: this is an experimental feature and will probably
       // change in a future release.
-      inline void getInformationForElements(const std::vector<int> & typeKeys,
-                                            const std::vector<std::size_t> & entityKeys,
-                                            const int elementType,
-                                            const std::string & functionSpaceType,
-                                            gmsh::vectorpair & infoKeys)
+      inline void getKeysInformation(const std::vector<int> & typeKeys,
+                                     const std::vector<std::size_t> & entityKeys,
+                                     const int elementType,
+                                     const std::string & functionSpaceType,
+                                     gmsh::vectorpair & infoKeys)
       {
         int ierr = 0;
         int *api_typeKeys_; size_t api_typeKeys_n_; vector2ptr(typeKeys, &api_typeKeys_, &api_typeKeys_n_);
         size_t *api_entityKeys_; size_t api_entityKeys_n_; vector2ptr(entityKeys, &api_entityKeys_, &api_entityKeys_n_);
         int *api_infoKeys_; size_t api_infoKeys_n_;
-        gmshModelMeshGetInformationForElements(api_typeKeys_, api_typeKeys_n_, api_entityKeys_, api_entityKeys_n_, elementType, functionSpaceType.c_str(), &api_infoKeys_, &api_infoKeys_n_, &ierr);
+        gmshModelMeshGetKeysInformation(api_typeKeys_, api_typeKeys_n_, api_entityKeys_, api_entityKeys_n_, elementType, functionSpaceType.c_str(), &api_infoKeys_, &api_infoKeys_n_, &ierr);
         if(ierr) throwLastError();
         gmshFree(api_typeKeys_);
         gmshFree(api_entityKeys_);
@@ -2249,6 +2285,21 @@ namespace gmsh { // Top-level functions
         gmshFree(api_affineTransform_);
       }
 
+      // Get master entities `tagsMaster' for the entities of dimension `dim' and
+      // tags `tags'.
+      inline void getPeriodic(const int dim,
+                              const std::vector<int> & tags,
+                              std::vector<int> & tagMaster)
+      {
+        int ierr = 0;
+        int *api_tags_; size_t api_tags_n_; vector2ptr(tags, &api_tags_, &api_tags_n_);
+        int *api_tagMaster_; size_t api_tagMaster_n_;
+        gmshModelMeshGetPeriodic(dim, api_tags_, api_tags_n_, &api_tagMaster_, &api_tagMaster_n_, &ierr);
+        if(ierr) throwLastError();
+        gmshFree(api_tags_);
+        tagMaster.assign(api_tagMaster_, api_tagMaster_ + api_tagMaster_n_); gmshFree(api_tagMaster_);
+      }
+
       // Get the master entity `tagMaster', the node tags `nodeTags' and their
       // corresponding master node tags `nodeTagsMaster', and the affine transform
       // `affineTransform' for the entity of dimension `dim' and tag `tag'. If
@@ -2279,17 +2330,17 @@ namespace gmsh { // Top-level functions
       // function space type `functionSpaceType'. If `returnCoord' is set, the
       // `coord' and `coordMaster' vectors contain the x, y, z coordinates locating
       // basis functions for sorting purposes.
-      inline void getPeriodicKeysForElements(const int elementType,
-                                             const std::string & functionSpaceType,
-                                             const int tag,
-                                             int & tagMaster,
-                                             std::vector<int> & typeKeys,
-                                             std::vector<int> & typeKeysMaster,
-                                             std::vector<std::size_t> & entityKeys,
-                                             std::vector<std::size_t> & entityKeysMaster,
-                                             std::vector<double> & coord,
-                                             std::vector<double> & coordMaster,
-                                             const bool returnCoord = true)
+      inline void getPeriodicKeys(const int elementType,
+                                  const std::string & functionSpaceType,
+                                  const int tag,
+                                  int & tagMaster,
+                                  std::vector<int> & typeKeys,
+                                  std::vector<int> & typeKeysMaster,
+                                  std::vector<std::size_t> & entityKeys,
+                                  std::vector<std::size_t> & entityKeysMaster,
+                                  std::vector<double> & coord,
+                                  std::vector<double> & coordMaster,
+                                  const bool returnCoord = true)
       {
         int ierr = 0;
         int *api_typeKeys_; size_t api_typeKeys_n_;
@@ -2298,7 +2349,7 @@ namespace gmsh { // Top-level functions
         size_t *api_entityKeysMaster_; size_t api_entityKeysMaster_n_;
         double *api_coord_; size_t api_coord_n_;
         double *api_coordMaster_; size_t api_coordMaster_n_;
-        gmshModelMeshGetPeriodicKeysForElements(elementType, functionSpaceType.c_str(), tag, &tagMaster, &api_typeKeys_, &api_typeKeys_n_, &api_typeKeysMaster_, &api_typeKeysMaster_n_, &api_entityKeys_, &api_entityKeys_n_, &api_entityKeysMaster_, &api_entityKeysMaster_n_, &api_coord_, &api_coord_n_, &api_coordMaster_, &api_coordMaster_n_, (int)returnCoord, &ierr);
+        gmshModelMeshGetPeriodicKeys(elementType, functionSpaceType.c_str(), tag, &tagMaster, &api_typeKeys_, &api_typeKeys_n_, &api_typeKeysMaster_, &api_typeKeysMaster_n_, &api_entityKeys_, &api_entityKeys_n_, &api_entityKeysMaster_, &api_entityKeysMaster_n_, &api_coord_, &api_coord_n_, &api_coordMaster_, &api_coordMaster_n_, (int)returnCoord, &ierr);
         if(ierr) throwLastError();
         typeKeys.assign(api_typeKeys_, api_typeKeys_ + api_typeKeys_n_); gmshFree(api_typeKeys_);
         typeKeysMaster.assign(api_typeKeysMaster_, api_typeKeysMaster_ + api_typeKeysMaster_n_); gmshFree(api_typeKeysMaster_);
@@ -3501,10 +3552,13 @@ namespace gmsh { // Top-level functions
 
       // Add a curve loop (a closed wire) in the OpenCASCADE CAD representation,
       // formed by the curves `curveTags'. `curveTags' should contain tags of
-      // curves forming a closed loop. Note that an OpenCASCADE curve loop can be
-      // made of curves that share geometrically identical (but topologically
-      // different) points. If `tag' is positive, set the tag explicitly; otherwise
-      // a new tag is selected automatically. Return the tag of the curve loop.
+      // curves forming a closed loop. Negative tags can be specified for
+      // compatibility with the built-in kernel, but are simply ignored: the wire
+      // is oriented according to the orientation of its first curve. Note that an
+      // OpenCASCADE curve loop can be made of curves that share geometrically
+      // identical (but topologically different) points. If `tag' is positive, set
+      // the tag explicitly; otherwise a new tag is selected automatically. Return
+      // the tag of the curve loop.
       inline int addCurveLoop(const std::vector<int> & curveTags,
                               const int tag = -1)
       {
@@ -4820,23 +4874,29 @@ namespace gmsh { // Top-level functions
       if(ierr) throwLastError();
     }
 
-    // Probe the view `tag' for its `value' at point (`x', `y', `z'). Return only
-    // the value at step `step' is `step' is positive. Return only values with
-    // `numComp' if `numComp' is positive. Return the gradient of the `value' if
-    // `gradient' is set. Probes with a geometrical tolerance (in the reference
-    // unit cube) of `tolerance' if `tolerance' is not zero. Return the result from
-    // the element described by its coordinates if `xElementCoord', `yElementCoord'
-    // and `zElementCoord' are provided. If `dim' is >= 0, return only elements of
-    // the specified dimension.
+    // Probe the view `tag' for its `value' at point (`x', `y', `z'). If no match
+    // is found, `value' is returned empty. Return only the value at step `step' is
+    // `step' is positive. Return only values with `numComp' if `numComp' is
+    // positive. Return the gradient of the `value' if `gradient' is set. If
+    // `distanceMax' is zero, only return a result if an exact match inside an
+    // element in the view is found; if `distanceMax' is positive and an exact
+    // match is not found, return the value at the closest node if it is closer
+    // than `distanceMax'; if `distanceMax' is negative and an exact match is not
+    // found, always return the value at the closest node. The distance to the
+    // match is returned in `distance'. Return the result from the element
+    // described by its coordinates if `xElementCoord', `yElementCoord' and
+    // `zElementCoord' are provided. If `dim' is >= 0, return only matches from
+    // elements of the specified dimension.
     inline void probe(const int tag,
                       const double x,
                       const double y,
                       const double z,
                       std::vector<double> & value,
+                      double & distance,
                       const int step = -1,
                       const int numComp = -1,
                       const bool gradient = false,
-                      const double tolerance = 0.,
+                      const double distanceMax = 0.,
                       const std::vector<double> & xElemCoord = std::vector<double>(),
                       const std::vector<double> & yElemCoord = std::vector<double>(),
                       const std::vector<double> & zElemCoord = std::vector<double>(),
@@ -4847,7 +4907,7 @@ namespace gmsh { // Top-level functions
       double *api_xElemCoord_; size_t api_xElemCoord_n_; vector2ptr(xElemCoord, &api_xElemCoord_, &api_xElemCoord_n_);
       double *api_yElemCoord_; size_t api_yElemCoord_n_; vector2ptr(yElemCoord, &api_yElemCoord_, &api_yElemCoord_n_);
       double *api_zElemCoord_; size_t api_zElemCoord_n_; vector2ptr(zElemCoord, &api_zElemCoord_, &api_zElemCoord_n_);
-      gmshViewProbe(tag, x, y, z, &api_value_, &api_value_n_, step, numComp, (int)gradient, tolerance, api_xElemCoord_, api_xElemCoord_n_, api_yElemCoord_, api_yElemCoord_n_, api_zElemCoord_, api_zElemCoord_n_, dim, &ierr);
+      gmshViewProbe(tag, x, y, z, &api_value_, &api_value_n_, &distance, step, numComp, (int)gradient, distanceMax, api_xElemCoord_, api_xElemCoord_n_, api_yElemCoord_, api_yElemCoord_n_, api_zElemCoord_, api_zElemCoord_n_, dim, &ierr);
       if(ierr) throwLastError();
       value.assign(api_value_, api_value_ + api_value_n_); gmshFree(api_value_);
       gmshFree(api_xElemCoord_);

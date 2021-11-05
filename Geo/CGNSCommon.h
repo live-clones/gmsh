@@ -18,8 +18,8 @@
 typedef int cgsize_t
 #endif
 
-  template <class scalar>
-  class fullMatrix;
+template <class scalar>
+class fullMatrix;
 
 int cgnsError(const char *file, const int line, const int fileIndex = -1);
 

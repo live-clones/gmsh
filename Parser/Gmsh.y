@@ -202,7 +202,7 @@ struct doubleXstring{
 %token tBox tCylinder tCone tTorus tEllipsoid tQuadric tShapeFromFile
 %token tRectangle tDisk tWire tGeoEntity
 %token tCharacteristic tLength tParametric tElliptic
-%token tRefineMesh tRecombineMesh tAdaptMesh
+%token tRefineMesh tRecombineMesh tAdaptMesh tTransformMesh
 %token tRelocateMesh tReorientMesh tSetFactory tThruSections tWedge tFillet tChamfer
 %token tPlane tRuled tTransfinite tPhysical tCompound tPeriodic tParent
 %token tUsing tPlugin tDegenerated tRecursive tSewing
@@ -814,7 +814,7 @@ Affectation :
       Msg::SetOnelabNumber($3, $5);
       Free($3);
     }
-  | tSetString LP String__Index ',' StringExpr RP tEND
+  | tSetString LP StringExpr ',' StringExpr RP tEND
     {
       Msg::SetOnelabString($3, $5);
       Free($3);
@@ -3760,6 +3760,47 @@ Command :
         List_Delete(*(List_T**)List_Pointer($9, i));
       List_Delete($9);
       CTX::instance()->lock = lock;
+    }
+  | tTransformMesh '{' RecursiveListOfDouble '}' tEND
+    {
+      std::vector<double> affineTransform;
+      ListOfDouble2Vector($3, affineTransform);
+      if(affineTransform.size() >= 12) {
+        std::vector<GEntity *> entities;
+        GModel::current()->getEntities(entities);
+        for(auto e : entities) {
+          for(std::size_t j = 0; j < e->getNumMeshVertices(); j++) {
+            MVertex *v = e->getMeshVertex(j);
+            SPoint3 pt = v->point();
+            pt.transform(affineTransform);
+            v->setXYZ(pt);
+          }
+        }
+      }
+      else
+        yymsg(0, "Affine transform matrix requires at least 12 entries");
+      List_Delete($3);
+    }
+  | tTransformMesh '{' RecursiveListOfDouble '}' '{' MultipleShape '}' tEND
+    {
+      std::vector<double> affineTransform;
+      ListOfDouble2Vector($3, affineTransform);
+      std::vector<std::pair<int, int> > dimTags;
+      ListOfShapes2VectorOfPairs($6, dimTags);
+      for(std::size_t i = 0; i < dimTags.size(); i++) {
+        GEntity *e = GModel::current()->getEntityByTag
+          (dimTags[i].first, dimTags[i].second);
+        if(e){
+          for(std::size_t j = 0; j < e->getNumMeshVertices(); j++) {
+            MVertex *v = e->getMeshVertex(j);
+            SPoint3 pt = v->point();
+            pt.transform(affineTransform);
+            v->setXYZ(pt);
+          }
+        }
+      }
+      List_Delete($3);
+      List_Delete($6);
     }
 ;
 

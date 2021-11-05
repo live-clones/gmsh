@@ -26,10 +26,6 @@
 #include "PViewDataGModel.h"
 #endif
 
-#if defined(_OPENMP)
-#include <omp.h>
-#endif
-
 #if defined(HAVE_SOLVER) && defined(HAVE_POST)
 
 #include "dofManager.h"

@@ -18,6 +18,7 @@
 #include "MHexahedron.h"
 #include "MPrism.h"
 #include "MPyramid.h"
+#include "GmshVersion.h"
 
 namespace {
   // static const unsigned GAMBIT_TYPE_EDGE = 1;
@@ -280,7 +281,7 @@ int GModel::writeNEU(const std::string &name, bool saveAll,
   fprintf(fp, "        CONTROL INFO 2.0.0\n");
   fprintf(fp, "** GAMBIT NEUTRAL FILE\n");
   fprintf(fp, "Gmsh mesh in GAMBIT neutral file format\n");
-  fprintf(fp, "PROGRAM:                Gambit     VERSION:  2.0.0\n");
+  fprintf(fp, "PROGRAM:                  Gmsh     VERSION:  %s\n", GMSH_VERSION);
 
   time_t rawtime;
   time(&rawtime);

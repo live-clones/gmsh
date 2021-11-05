@@ -7,23 +7,30 @@
 #define GEDGE_LOOP_H
 
 #include "GEdge.h"
+#include "GmshMessage.h"
 
 class GEdgeSigned {
-public:
+private:
   int _sign;
-  GEdge *ge;
-  GEdgeSigned(int i, GEdge *g) : _sign(i), ge(g) {}
+  GEdge *_ge;
+public:
+  GEdgeSigned(int sign, GEdge *ge) : _sign(sign), _ge(ge)
+  {
+    if(_sign != 1 && _sign != -1)
+      Msg::Error("Edge sign should be 1 or -1");
+  }
   GVertex *getBeginVertex() const
   {
-    return (_sign == 1) ? ge->getBeginVertex() : ge->getEndVertex();
+    return (_sign == 1) ? _ge->getBeginVertex() : _ge->getEndVertex();
   }
   GVertex *getEndVertex() const
   {
-    return (_sign != 1) ? ge->getBeginVertex() : ge->getEndVertex();
+    return (_sign == 1) ? _ge->getEndVertex() : _ge->getBeginVertex();
   }
   void print() const;
   int getSign() const { return _sign; }
-  GEdge *getEdge() const { return ge; }
+  GEdge *getEdge() const { return _ge; }
+  void changeSign() { _sign *= -1; }
 };
 
 class GEdgeLoop {
@@ -33,7 +40,11 @@ private:
 public:
   typedef std::list<GEdgeSigned>::iterator iter;
   typedef std::list<GEdgeSigned>::const_iterator citer;
-  GEdgeLoop(const std::vector<GEdge *> &);
+  GEdgeLoop() {}
+  GEdgeLoop(const std::vector<GEdge *> &wire);
+  bool check();
+  void add(int ori, GEdge *ge) { loop.push_back(GEdgeSigned(ori, ge)); }
+  void recompute(const std::vector<GEdge *> &wire);
   inline iter begin() { return loop.begin(); }
   inline iter end() { return loop.end(); }
   inline citer begin() const { return loop.begin(); }
@@ -44,6 +55,7 @@ public:
   void print() const;
   void getEdges(std::vector<GEdge *> &edges) const;
   void getSigns(std::vector<int> &signs) const;
+  void reverse();
 };
 
 #endif

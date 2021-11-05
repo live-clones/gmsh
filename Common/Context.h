@@ -42,7 +42,7 @@ struct contextMeshOptions {
   int NewtonConvergenceTestXYZ, maxIterDelaunay3D;
   int ignorePeriodicityMsh2, ignoreParametrizationMsh4, boundaryLayerFanElements;
   int maxNumThreads1D, maxNumThreads2D, maxNumThreads3D;
-  double angleToleranceFacetOverlap;
+  double angleToleranceFacetOverlap, toleranceReferenceElement;
   int renumber, compoundClassify, reparamMaxTriangles;
   double compoundLcFactor;
   unsigned int randomSeed;
@@ -160,6 +160,8 @@ public:
   int guiColorScheme, guiRefreshRate;
   // print messages on to the terminal?
   int terminal;
+  // detached processes (WIN32)?
+  int detachedProcess;
   // number of graphical windows/tiles
   int numWindows, numTiles;
   // text editor command (with included '%s')

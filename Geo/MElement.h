@@ -59,9 +59,10 @@ protected:
 public:
   MElement(std::size_t num = 0, int part = 0);
   virtual ~MElement() {}
-  // set/get the tolerance for isInside() test
-  static void setTolerance(const double tol);
-  static double getTolerance();
+
+  // tolerance in reference coordinates to determine if a point is inside an
+  // element
+  double getTolerance() const;
 
   // return the tag of the element
   virtual std::size_t getNum() const { return _num; }

@@ -2373,6 +2373,12 @@ double opt_general_detached_menu(OPT_ARGS_NUM)
   return CTX::instance()->detachedMenu;
 }
 
+double opt_general_detached_process(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->detachedProcess = (int)val;
+  return CTX::instance()->detachedProcess;
+}
+
 double opt_general_menu_size0(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
@@ -6571,6 +6577,12 @@ double opt_mesh_angle_tolerance_facet_overlap(OPT_ARGS_NUM)
     CTX::instance()->mesh.angleToleranceFacetOverlap = val;
   }
   return CTX::instance()->mesh.angleToleranceFacetOverlap;
+}
+
+double opt_mesh_tolerance_reference_element(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->mesh.toleranceReferenceElement = val;
+  return CTX::instance()->mesh.toleranceReferenceElement;
 }
 
 double opt_mesh_unv_strict_format(OPT_ARGS_NUM)
