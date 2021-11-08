@@ -70,7 +70,7 @@ std::vector<GModel *> GModel::list;
 int GModel::_current = -1;
 
 GModel::GModel(const std::string &name)
-  : _destroying(false), _name(name), _visible(1), _elementOctree(nullptr),
+  : _name(name), _visible(1), _elementOctree(nullptr),
     _geo_internals(nullptr), _occ_internals(nullptr), _acis_internals(nullptr),
     _parasolid_internals(nullptr), _fields(nullptr),
     _currentMeshEntity(nullptr), _numPartitions(0), normals(nullptr),
@@ -168,7 +168,6 @@ GModel *GModel::findByName(const std::string &name, const std::string &fileName)
 void GModel::destroy(bool keepName)
 {
   Msg::Debug("Destroying model %s", getName().c_str());
-  _destroying = true;
 
   if(!keepName) {
     _name.clear();
@@ -210,8 +209,6 @@ void GModel::destroy(bool keepName)
   _fields->reset();
 #endif
   gmshSurface::reset();
-
-  _destroying = false;
 }
 
 void GModel::destroyMeshCaches()
@@ -382,52 +379,71 @@ std::vector<int> GModel::getTagsForPhysicalName(int dim,
   return tags;
 }
 
-void GModel::remove(GRegion *r)
+bool GModel::remove(GRegion *r)
 {
   auto it = std::find(firstRegion(), lastRegion(), r);
   if(it != (riter)regions.end()) {
     regions.erase(it);
     std::vector<GFace *> f = r->faces();
     for(auto it = f.begin(); it != f.end(); it++) (*it)->delRegion(r);
+    return true;
+  }
+  else {
+    return false;
   }
 }
 
-void GModel::remove(GFace *f)
+bool GModel::remove(GFace *f)
 {
   auto it = std::find(firstFace(), lastFace(), f);
   if(it != faces.end()) {
     faces.erase(it);
     std::vector<GEdge *> const &e = f->edges();
     for(auto it = e.begin(); it != e.end(); it++) (*it)->delFace(f);
+    return true;
+  }
+  else {
+    return false;
   }
 }
 
-void GModel::remove(GEdge *e)
+bool GModel::remove(GEdge *e)
 {
   auto it = std::find(firstEdge(), lastEdge(), e);
   if(it != edges.end()) {
     edges.erase(it);
     if(e->getBeginVertex()) e->getBeginVertex()->delEdge(e);
     if(e->getEndVertex()) e->getEndVertex()->delEdge(e);
+    return true;
+  }
+  else {
+    return false;
   }
 }
 
-void GModel::remove(GVertex *v)
+bool GModel::remove(GVertex *v)
 {
   auto it = std::find(firstVertex(), lastVertex(), v);
-  if(it != vertices.end()) vertices.erase(it);
+  if(it != vertices.end()) {
+    vertices.erase(it);
+    return true;
+  }
+  else {
+    return false;
+  }
 }
 
-void GModel::remove(int dim, int tag, bool recursive)
+void GModel::remove(int dim, int tag, std::vector<GEntity*> &removed,
+                    bool recursive)
 {
   if(dim == 3) {
     GRegion *gr = getRegionByTag(tag);
     if(gr) {
-      remove(gr);
+      if(remove(gr)) removed.push_back(gr);
       if(recursive) {
         std::vector<GFace *> f = gr->faces();
         for(auto it = f.begin(); it != f.end(); it++)
-          remove(2, (*it)->tag(), recursive);
+          remove(2, (*it)->tag(), removed, recursive);
       }
     }
   }
@@ -448,11 +464,11 @@ void GModel::remove(int dim, int tag, bool recursive)
         }
       }
       if(!skip) {
-        remove(gf);
+        if(remove(gf)) removed.push_back(gf);
         if(recursive) {
           std::vector<GEdge *> const &e = gf->edges();
           for(auto it = e.begin(); it != e.end(); it++)
-            remove(1, (*it)->tag(), recursive);
+            remove(1, (*it)->tag(), removed, recursive);
         }
       }
     }
@@ -483,10 +499,12 @@ void GModel::remove(int dim, int tag, bool recursive)
         }
       }
       if(!skip) {
-        remove(ge);
+        if(remove(ge)) removed.push_back(ge);
         if(recursive) {
-          if(ge->getBeginVertex()) remove(0, ge->getBeginVertex()->tag());
-          if(ge->getEndVertex()) remove(0, ge->getEndVertex()->tag());
+          if(ge->getBeginVertex())
+            remove(0, ge->getBeginVertex()->tag(), removed);
+          if(ge->getEndVertex())
+            remove(0, ge->getEndVertex()->tag(), removed);
         }
       }
     }
@@ -520,16 +538,18 @@ void GModel::remove(int dim, int tag, bool recursive)
           }
         }
       }
-      if(!skip) { remove(gv); }
+      if(!skip) {
+        if(remove(gv)) removed.push_back(gv);
+      }
     }
   }
 }
 
 void GModel::remove(const std::vector<std::pair<int, int> > &dimTags,
-                    bool recursive)
+                    std::vector<GEntity*> &removed, bool recursive)
 {
   for(std::size_t i = 0; i < dimTags.size(); i++)
-    remove(dimTags[i].first, dimTags[i].second, recursive);
+    remove(dimTags[i].first, dimTags[i].second, removed, recursive);
 }
 
 void GModel::remove()

@@ -1402,7 +1402,10 @@ void GEO_Internals::synchronize(GModel *model, bool resetMeshAttributes)
     }
   }
   Msg::Debug("Sync is removing %d model entities", toRemove.size());
-  model->remove(toRemove);
+  std::vector<GEntity*> removed;
+  model->remove(toRemove, removed);
+  Msg::Debug("Destroying %lu entities in model", removed.size());
+  for(std::size_t i = 0; i < removed.size(); i++) delete removed[i];
 
   if(Tree_Nbr(Points)) {
     List_T *points = Tree2List(Points);

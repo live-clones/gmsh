@@ -55,8 +55,6 @@ private:
   // the maximum vertex and element id number in the mesh
   std::size_t _maxVertexNum, _maxElementNum;
   std::size_t _checkPointedMaxVertexNum, _checkPointedMaxElementNum;
-  // flag set to true when the model is being destroyed
-  bool _destroying;
 
 private:
   int _readMSH2(const std::string &name);
@@ -211,7 +209,6 @@ public:
 
   // delete everything in a GModel (optionally keep name and fileName)
   void destroy(bool keepName = false);
-  bool isBeingDestroyed() const { return _destroying; }
 
   // get/set global vertex/element num
   std::size_t getMaxVertexNumber() const { return _maxVertexNum; }
@@ -378,16 +375,18 @@ public:
   GEntity *getEntityByTag(int dim, int n) const;
 
   // add/remove an entity in the model
-  void add(GRegion *r) { regions.insert(r); }
-  void add(GFace *f) { faces.insert(f); }
-  void add(GEdge *e) { edges.insert(e); }
-  void add(GVertex *v) { vertices.insert(v); }
-  void remove(GRegion *r);
-  void remove(GFace *f);
-  void remove(GEdge *e);
-  void remove(GVertex *v);
-  void remove(int dim, int tag, bool recursive = false);
+  bool add(GRegion *r) { return regions.insert(r).second; }
+  bool add(GFace *f) { return faces.insert(f).second; }
+  bool add(GEdge *e) { return edges.insert(e).second; }
+  bool add(GVertex *v) { return vertices.insert(v).second; }
+  bool remove(GRegion *r);
+  bool remove(GFace *f);
+  bool remove(GEdge *e);
+  bool remove(GVertex *v);
+  void remove(int dim, int tag, std::vector<GEntity*> &removed,
+              bool recursive = false);
   void remove(const std::vector<std::pair<int, int> > &dimTags,
+              std::vector<GEntity*> &removed,
               bool recursive = false);
   void remove();
 

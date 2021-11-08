@@ -20,7 +20,7 @@ private:
 
 public:
   OCCRegion(GModel *m, TopoDS_Solid s, int num);
-  virtual ~OCCRegion();
+  virtual ~OCCRegion() {}
   virtual SBoundingBox3d bounds(bool fast = false);
   virtual GeomType geomType() const;
   virtual ModelType getNativeType() const { return OpenCascadeModel; }

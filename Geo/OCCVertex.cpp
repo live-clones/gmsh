@@ -25,12 +25,6 @@ OCCVertex::OCCVertex(GModel *m, TopoDS_Vertex v, int num, double lc)
   _z = pnt.Z();
 }
 
-OCCVertex::~OCCVertex()
-{
-  if(model()->getOCCInternals() && !model()->isBeingDestroyed())
-    model()->getOCCInternals()->unbind(_v, tag()); // potentially slow
-}
-
 void OCCVertex::setPosition(GPoint &p)
 {
   _x = p.x();

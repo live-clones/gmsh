@@ -51,12 +51,6 @@ OCCEdge::OCCEdge(GModel *m, TopoDS_Edge c, int num, GVertex *v1, GVertex *v2)
   _c_rev.Reverse();
 }
 
-OCCEdge::~OCCEdge()
-{
-  if(model()->getOCCInternals() && !model()->isBeingDestroyed())
-    model()->getOCCInternals()->unbind(_c, tag()); // potentially slow
-}
-
 SBoundingBox3d OCCEdge::bounds(bool fast)
 {
   Bnd_Box b;

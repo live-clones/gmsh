@@ -661,7 +661,10 @@ GMSH_API void gmsh::model::removeEntities(const vectorpair &dimTags,
                                           const bool recursive)
 {
   if(!_checkInit()) return;
-  GModel::current()->remove(dimTags, recursive);
+  std::vector<GEntity*> removed;
+  GModel::current()->remove(dimTags, removed, recursive);
+  Msg::Debug("Destroying %lu entities in model", removed.size());
+  for(std::size_t i = 0; i < removed.size(); i++) delete removed[i];
 }
 
 GMSH_API void gmsh::model::removeEntityName(const std::string &name)

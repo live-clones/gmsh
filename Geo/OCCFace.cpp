@@ -51,12 +51,6 @@ OCCFace::OCCFace(GModel *m, TopoDS_Face s, int num)
     writeBREP("debugSurface.brep");
 }
 
-OCCFace::~OCCFace()
-{
-  if(model()->getOCCInternals() && !model()->isBeingDestroyed())
-    model()->getOCCInternals()->unbind(_s, tag()); // potentially slow
-}
-
 void OCCFace::_setup()
 {
   edgeLoops.clear();

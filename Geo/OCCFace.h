@@ -31,7 +31,7 @@ private:
 
 public:
   OCCFace(GModel *m, TopoDS_Face s, int num);
-  virtual ~OCCFace();
+  virtual ~OCCFace() {}
   virtual SBoundingBox3d bounds(bool fast = false);
   virtual Range<double> parBounds(int i) const;
   virtual GPoint point(double par1, double par2) const;
