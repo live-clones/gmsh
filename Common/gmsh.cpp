@@ -5286,6 +5286,7 @@ gmsh::model::mesh::alphaShapes(const double threshold,
 
 }
 
+// gmsh::model::mesh::tetNeighbors
 
 GMSH_API void
 gmsh::model::mesh::tetNeighbors(const std::vector<std::size_t> &tetra,
