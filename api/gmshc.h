@@ -1450,6 +1450,19 @@ GMSH_API void gmshModelMeshTetrahedralize(double * coord, size_t coord_n,
                                           size_t ** tetra, size_t * tetra_n,
                                           int * ierr);
 
+/* Take a alpha shape threshold, points given in the `coord' vector as
+ * triplets of x, y, z coordinates, and return the tetrahedra (like in
+ * tetrahedralize), domains as vectors of vectors of tetrahedron indices,
+ * boundaries as vectors of vectos of pairs tet/face and a vector of size 4
+ * times the number of tetrahedra giving neighboring ids of tetrahedra. */
+GMSH_API void gmshModelMeshAlphaShapes(const double threshold,
+                                       double * coord, size_t coord_n,
+                                       size_t ** tetra, size_t * tetra_n,
+                                       size_t *** domains, size_t ** domains_n, size_t *domains_nn,
+                                       size_t *** boundaries, size_t ** boundaries_n, size_t *boundaries_nn,
+                                       size_t ** neighbors, size_t * neighbors_n,
+                                       int * ierr);
+
 /* Add a new mesh size field of type `fieldType'. If `tag' is positive, assign
  * the tag explicitly; otherwise a new tag is assigned automatically. Return
  * the field tag. */

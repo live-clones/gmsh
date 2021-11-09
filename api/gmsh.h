@@ -1642,6 +1642,20 @@ namespace gmsh { // Top-level functions
       GMSH_API void tetrahedralize(const std::vector<double> & coord,
                                    std::vector<std::size_t> & tetra);
 
+      // gmsh::model::mesh::alphaShapes
+      //
+      // Take a alpha shape threshold, points given in the `coord' vector as
+      // triplets of x, y, z coordinates, and return the tetrahedra (like in
+      // tetrahedralize), domains as vectors of vectors of tetrahedron indices,
+      // boundaries as vectors of vectos of pairs tet/face and a vector of size 4
+      // times the number of tetrahedra giving neighboring ids of tetrahedra.
+      GMSH_API void alphaShapes(const double threshold,
+                                const std::vector<double> & coord,
+                                std::vector<std::size_t> & tetra,
+                                std::vector<std::vector<std::size_t> > & domains,
+                                std::vector<std::vector<std::size_t> > & boundaries,
+                                std::vector<std::size_t> & neighbors);
+
       namespace field { // Mesh size field functions
 
         // gmsh::model::mesh::field::add

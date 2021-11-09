@@ -64,6 +64,7 @@
 #include "meshGRegionDelaunayInsertion.h"
 #include "meshGRegionHxt.h"
 #include "gmshCrossFields.h"
+#include "alphaShapes.h"
 #endif
 
 #if defined(HAVE_POST)
@@ -5265,6 +5266,24 @@ gmsh::model::mesh::tetrahedralize(const std::vector<double> &coord,
 #else
   Msg::Error("tetrahedralize requires the mesh module");
 #endif
+}
+
+// gmsh::model::mesh::alphaShapes
+
+
+GMSH_API void
+gmsh::model::mesh::alphaShapes(const double threshold, 
+			       const std::vector<double> &coord,
+			       std::vector<std::size_t> &tetra,
+			       std::vector<std::vector<std::size_t> > &domains,
+			       std::vector<std::vector<std::size_t> > &boundaries,
+			       std::vector<std::size_t> &neigh){
+#if defined(HAVE_MESH)
+  alphaShapes_ (threshold, coord, tetra, domains, boundaries, neigh);
+#else
+  Msg::Error("alphaShapes requires the mesh module");
+#endif
+
 }
 
 // gmsh::model::mesh::field

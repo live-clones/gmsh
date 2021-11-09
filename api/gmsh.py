@@ -3776,6 +3776,42 @@ class model:
                 raise Exception(logger.getLastError())
             return _ovectorsize(api_tetra_, api_tetra_n_.value)
 
+        @staticmethod
+        def alphaShapes(threshold, coord):
+            """
+            gmsh.model.mesh.alphaShapes(threshold, coord)
+
+            Take a alpha shape threshold, points given in the `coord' vector as
+            triplets of x, y, z coordinates, and return the tetrahedra (like in
+            tetrahedralize), domains as vectors of vectors of tetrahedron indices,
+            boundaries as vectors of vectos of pairs tet/face and a vector of size 4
+            times the number of tetrahedra giving neighboring ids of tetrahedra.
+
+            Return `tetra', `domains', `boundaries', `neighbors'.
+            """
+            api_coord_, api_coord_n_ = _ivectordouble(coord)
+            api_tetra_, api_tetra_n_ = POINTER(c_size_t)(), c_size_t()
+            api_domains_, api_domains_n_, api_domains_nn_ = POINTER(POINTER(c_size_t))(), POINTER(c_size_t)(), c_size_t()
+            api_boundaries_, api_boundaries_n_, api_boundaries_nn_ = POINTER(POINTER(c_size_t))(), POINTER(c_size_t)(), c_size_t()
+            api_neighbors_, api_neighbors_n_ = POINTER(c_size_t)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshAlphaShapes(
+                c_double(threshold),
+                api_coord_, api_coord_n_,
+                byref(api_tetra_), byref(api_tetra_n_),
+                byref(api_domains_), byref(api_domains_n_), byref(api_domains_nn_),
+                byref(api_boundaries_), byref(api_boundaries_n_), byref(api_boundaries_nn_),
+                byref(api_neighbors_), byref(api_neighbors_n_),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return (
+                _ovectorsize(api_tetra_, api_tetra_n_.value),
+                _ovectorvectorsize(api_domains_, api_domains_n_, api_domains_nn_),
+                _ovectorvectorsize(api_boundaries_, api_boundaries_n_, api_boundaries_nn_),
+                _ovectorsize(api_neighbors_, api_neighbors_n_.value))
+        alpha_shapes = alphaShapes
+
 
         class field:
             """

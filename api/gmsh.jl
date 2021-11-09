@@ -3235,6 +3235,45 @@ function tetrahedralize(coord)
 end
 
 """
+    gmsh.model.mesh.alphaShapes(threshold, coord)
+
+Take a alpha shape threshold, points given in the `coord` vector as triplets of
+x, y, z coordinates, and return the tetrahedra (like in tetrahedralize), domains
+as vectors of vectors of tetrahedron indices, boundaries as vectors of vectos of
+pairs tet/face and a vector of size 4 times the number of tetrahedra giving
+neighboring ids of tetrahedra.
+
+Return `tetra`, `domains`, `boundaries`, `neighbors`.
+"""
+function alphaShapes(threshold, coord)
+    api_tetra_ = Ref{Ptr{Csize_t}}()
+    api_tetra_n_ = Ref{Csize_t}()
+    api_domains_ = Ref{Ptr{Ptr{Csize_t}}}()
+    api_domains_n_ = Ref{Ptr{Csize_t}}()
+    api_domains_nn_ = Ref{Csize_t}()
+    api_boundaries_ = Ref{Ptr{Ptr{Csize_t}}}()
+    api_boundaries_n_ = Ref{Ptr{Csize_t}}()
+    api_boundaries_nn_ = Ref{Csize_t}()
+    api_neighbors_ = Ref{Ptr{Csize_t}}()
+    api_neighbors_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshAlphaShapes, gmsh.lib), Cvoid,
+          (Cdouble, Ptr{Cdouble}, Csize_t, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Csize_t}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Csize_t}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cint}),
+          threshold, convert(Vector{Cdouble}, coord), length(coord), api_tetra_, api_tetra_n_, api_domains_, api_domains_n_, api_domains_nn_, api_boundaries_, api_boundaries_n_, api_boundaries_nn_, api_neighbors_, api_neighbors_n_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    tetra = unsafe_wrap(Array, api_tetra_[], api_tetra_n_[], own = true)
+    tmp_api_domains_ = unsafe_wrap(Array, api_domains_[], api_domains_nn_[], own = true)
+    tmp_api_domains_n_ = unsafe_wrap(Array, api_domains_n_[], api_domains_nn_[], own = true)
+    domains = [ unsafe_wrap(Array, tmp_api_domains_[i], tmp_api_domains_n_[i], own = true) for i in 1:api_domains_nn_[] ]
+    tmp_api_boundaries_ = unsafe_wrap(Array, api_boundaries_[], api_boundaries_nn_[], own = true)
+    tmp_api_boundaries_n_ = unsafe_wrap(Array, api_boundaries_n_[], api_boundaries_nn_[], own = true)
+    boundaries = [ unsafe_wrap(Array, tmp_api_boundaries_[i], tmp_api_boundaries_n_[i], own = true) for i in 1:api_boundaries_nn_[] ]
+    neighbors = unsafe_wrap(Array, api_neighbors_[], api_neighbors_n_[], own = true)
+    return tetra, domains, boundaries, neighbors
+end
+const alpha_shapes = alphaShapes
+
+"""
     module gmsh.model.mesh.field
 
 Mesh size field functions

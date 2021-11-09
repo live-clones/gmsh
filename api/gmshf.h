@@ -3025,6 +3025,44 @@ c
             integer(c_int)::ierr
           end subroutine gmshModelMeshTetrahedralize
 
+!  Take a alpha shape threshold, points given in the `coord' vector as
+!  triplets of x, y, z coordinates, and return the tetrahedra (like in
+!  tetrahedralize), domains as vectors of vectors of tetrahedron indices,
+!  boundaries as vectors of vectos of pairs tet/face and a vector of size 4
+!  times the number of tetrahedra giving neighboring ids of tetrahedra.
+        subroutine gmshModelMeshAlphaShapes(
+     &      threshold,
+     &      coord,
+     &      coord_n,
+     &      tetra,
+     &      tetra_n,
+     &      domains,
+     &      domains_n,
+     &      domains_nn,
+     &      boundaries,
+     &      boundaries_n,
+     &      boundaries_nn,
+     &      neighbors,
+     &      neighbors_n,
+     &      ierr)
+     &    bind(C, name = "gmshModelMeshAlphaShapes")
+          use, intrinsic :: iso_c_binding
+            real(c_double), value::threshold
+            real(c_double)::coord(*)
+            integer(c_size_t), value :: coord_n
+            type(c_ptr), intent(out)::tetra
+            integer(c_size_t) :: tetra_n
+            type (c_ptr), intent(out)::domains
+            type(c_ptr), intent(out) :: domains_n
+            integer(c_size_t) :: domains_nn
+            type (c_ptr), intent(out)::boundaries
+            type(c_ptr), intent(out) :: boundaries_n
+            integer(c_size_t) :: boundaries_nn
+            type(c_ptr), intent(out)::neighbors
+            integer(c_size_t) :: neighbors_n
+            integer(c_int)::ierr
+          end subroutine gmshModelMeshAlphaShapes
+
 !  Add a new mesh size field of type `fieldType'. If `tag' is positive, assign
 !  the tag explicitly; otherwise a new tag is assigned automatically. Return
 !  the field tag.

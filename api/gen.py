@@ -518,6 +518,9 @@ mesh.add('triangulate', doc, None, ivectordouble('coord'), ovectorsize('tri'))
 doc = '''Tetrahedralize the points given in the `coord' vector as triplets of x, y, z coordinates, and return the node tags (with numbering starting at 1) of the resulting tetrahedra in `tetra'.'''
 mesh.add('tetrahedralize', doc, None, ivectordouble('coord'), ovectorsize('tetra'))
 
+doc = '''Take a alpha shape threshold, points given in the `coord' vector as triplets of x, y, z coordinates, and return the tetrahedra (like in tetrahedralize), domains as vectors of vectors of tetrahedron indices, boundaries as vectors of vectos of pairs tet/face and a vector of size 4 times the number of tetrahedra giving neighboring ids of tetrahedra.'''
+mesh.add('alphaShapes', doc, None, idouble('threshold'), ivectordouble('coord'), ovectorsize('tetra'), ovectorvectorsize('domains'), ovectorvectorsize('boundaries'), ovectorsize('neighbors'))
+
 ################################################################################
 
 field = mesh.add_module('field', 'mesh size field functions')

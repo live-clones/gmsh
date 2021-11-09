@@ -1,76 +1,149 @@
-#include <set>
-#include <map>
-#include <unordered_map>
-#include <unordered_set>
+#include <math.h>
+#include <vector>
 #include <stack>
-#include "GRegion.h"
-#include "MTetrahedron.h"
-#include "MFace.h"
+#include "alphaShapes.h"
+#include "gmsh.h"
 
-struct neighborContainer
-{
-  MTetrahedron *neigh[4];
-  neighborContainer (){
-    neigh[0] = neigh[1] = neigh[2] = neigh[3] = nullptr;
-  }
-};
-
-double alphaShape (MTetrahedron *t){
-  return t->gammaShapeMeasure();
+double alphaShape (const size_t *t, const std::vector<double> &p ){
+  double tetcircumcenter(double a[3], double b[3], double c[3], double d[3],
+			 double circumcenter[3], double *xi, double *eta,
+			 double *zeta);
+  double C[3], xi, eta, zeta;
+  const double *x = &p[3*t[0]];
+  const double *y = &p[3*t[1]];
+  const double *z = &p[3*t[2]];
+  const double *w = &p[3*t[3]];
+  double a[3] = {x[0], x[1], x[2]};
+  double b[3] = {y[0], y[1], y[2]};
+  double c[3] = {z[0], z[1], z[2]};
+  double d[3] = {w[0], w[1], w[2]};
+  tetcircumcenter(a,b,c,d,C, &xi, &eta, &zeta);
+  double R = sqrt ((x[0]-C[0])*(x[0]-C[0])+(x[1]-C[1])*(x[1]-C[1])+(x[2]-C[2])*(x[2]-C[2]));
+  return R;
 }
 
-int alphaShapes (GRegion *gr, double threshold,
-		 std::vector<std::vector<MTetrahedron*> > &domains,
-		 std::vector<std::vector<MFace> > &boundaries) {
 
-  std::unordered_map<MTetrahedron*, neighborContainer> t2a;
-  for (auto t : gr->tetrahedra)t2a[t] = neighborContainer();
+static int _faces [4][3] = {{0,1,2}, {0,1,3}, {0,2,3}, {1,2,3}};
 
-  std::map< MFace, MTetrahedron *, MFaceLessThan> f2t;
-  for (auto t : gr->tetrahedra){
-    std::unordered_map<MTetrahedron*, neighborContainer>::iterator it1 = t2a.find(t);
-    for (int i=0;i<4;i++){
-      MFace f = t->getFace(i);
-      std::map< MFace, MTetrahedron *, MFaceLessThan>::iterator it = f2t.find(f);
-      if (it == f2t.end()){
-	f2t[f] = t;
-      }
-      else {
-	std::unordered_map<MTetrahedron*, neighborContainer>::iterator it2 = t2a.find(it->second);
-	it1->second.neigh[i] = it2->first;
-	for (int k=0;k<4;k++){
-	  if (f == it2->first->getFace(k))
-	    it2->second.neigh[k] = it1->first;
-	}
-	f2t.erase(it);
-      }
-    }    
-  }
-
-  std::unordered_set<MTetrahedron*> _touched;
+void getOrderedFace (const size_t *t, int i, size_t *f){
+  size_t no1 = t[_faces[i][0]];
+  size_t no2 = t[_faces[i][1]];
+  size_t no3 = t[_faces[i][2]];
+  size_t lo, hi, sto;
   
-  for (std::unordered_map<MTetrahedron*, neighborContainer>::iterator it = t2a.begin() ; it != t2a.end() ; ++it){
-    if (alphaShape(it->first) > threshold && _touched.find(it->first) == _touched.end()){
-      std::stack<MTetrahedron*> _s;
-      std::vector<MTetrahedron*> _domain;
-      std::vector<MFace> _boundary;
-      _s.push(it->first);
-      _touched.insert(it->first);
-      _domain.push_back(it->first);
+  if (no1>no2) {   
+      sto=no1;    
+      lo=no2;   
+   } else {
+      sto=no2;  
+      lo=no1;  
+   } 
+   if (sto>no3) { 
+      hi=sto;    
+      if(lo>no3){         
+	sto=lo;                
+	lo=no3;
+      }else {
+	sto=no3;      
+      }         
+   }else hi=no3; 
+   
+   f[0] = lo;
+   f[1] = sto;
+   f[2] = hi;
+}
+
+int compareFourInt (const void *a , const void *b){
+  const size_t *f0 = (size_t*)a;
+  const size_t *f1 = (size_t*)b;
+  if (f0[0] < f1[0])return 1; 
+  if (f0[0] > f1[0])return -1; 
+  if (f0[1] < f1[1])return 1; 
+  if (f0[1] > f1[1])return -1; 
+  if (f0[2] < f1[2])return 1; 
+  if (f0[2] > f1[2])return -1;
+  return 0;
+}
+
+int alphaShapes_ (const double threshold,
+		 const std::vector<double> &pts,
+		 std::vector<size_t> &tetrahedra, 
+		 std::vector<std::vector<size_t> > &domains,
+		 std::vector<std::vector<size_t> > &boundaries,
+		 std::vector<size_t> &neigh) {
+
+  gmsh::model::mesh::tetrahedralize(pts, tetrahedra);
+  for (size_t i = 0; i < 4*tetrahedra.size(); i++)tetrahedra[i]--;
+
+    neigh.resize(4*tetrahedra.size());
+  // -1 is max_unsigned_int 
+  for (size_t i=0;i<neigh.size();i++)neigh[i] = -1;
+  
+  size_t *temp = new size_t [20*tetrahedra.size()];
+  size_t counter = 0;
+  for (size_t i = 0; i < tetrahedra.size(); i+=4){
+    size_t *t = &tetrahedra[i];
+    for (int j=0;j<4;j++){
+      size_t f[3];
+      getOrderedFace ( t, j, f);
+      temp[counter++] = f[0];
+      temp[counter++] = f[1];
+      temp[counter++] = f[2];
+      temp[counter++] = i;      
+      temp[counter++] = j;      
+    }
+  }  
+
+  qsort(temp, 4*tetrahedra.size(), 5*sizeof(size_t),compareFourInt);
+
+  // loop over faces
+  counter  = 0;
+  while (1){
+    if (counter == 4*tetrahedra.size())break;
+    size_t *ft0 = &temp[5*(counter++)];
+    if (counter == 4*tetrahedra.size())break;
+    size_t *ft1 = &temp[5*counter];
+
+    if (compareFourInt(ft0,ft1) == 0){
+      neigh[4*ft0[3]+ft0[4]] = ft1[3];
+      neigh[4*ft1[3]+ft1[4]] = ft0[3];
+      counter++;
+    }
+  }
+  
+  delete [] temp;  
+
+  std::vector<bool> _touched;
+  _touched.resize(tetrahedra.size());
+  for (size_t i=0;i<_touched.size();i++)_touched[i] = false;
+
+  for (size_t i = 0; i < tetrahedra.size(); i+=4){
+    size_t *t = &tetrahedra[i];
+    if (alphaShape(t, pts) > threshold && _touched[i] == false){
+      std::stack<size_t> _s;
+      std::vector<size_t> _domain;
+      std::vector<size_t> _boundary;
+      _s.push(i);
+      _touched[i] = true;
+      _domain.push_back(i);
       while(!_s.empty()){
-	MTetrahedron *t = _s.top();
-	std::unordered_map<MTetrahedron*, neighborContainer>::iterator itx = t2a.find(t);
+	size_t t = _s.top();
 	_s.pop();
-	for (int i=0;i<4;i++){
-	  if (!itx->second.neigh[i])_boundary.push_back(itx->first->getFace(i));
-	  else if (_touched.find(itx->second.neigh[i]) == _touched.end()){
-	    if (alphaShape(itx->second.neigh[i]) > threshold){
-	      _s.push(itx->second.neigh[i]);
-	      _touched.insert(itx->second.neigh[i]);
-	      _domain.push_back(itx->second.neigh[i]);	    
+	for (int j=0;j<4;j++){
+	  size_t tj = neigh[4*t+j];
+	  if (tj == -1){
+	    _boundary.push_back(t);
+	    _boundary.push_back(j);
+	  }
+	  else if (!_touched[tj]){
+	    if (alphaShape(&tetrahedra[tj], pts) > threshold){
+	      _s.push(tj);
+	      _touched[tj] = true;
+	      _domain.push_back(tj);	    
 	    }	    
 	    else {
-	      _boundary.push_back(itx->first->getFace(i));
+	      _boundary.push_back(t);
+	      _boundary.push_back(j);	      
 	    }
 	  }
 	}	  
@@ -79,5 +152,7 @@ int alphaShapes (GRegion *gr, double threshold,
       domains.push_back(_domain);
     }
   }
+  for (size_t i = 0; i < 4*tetrahedra.size(); i++)tetrahedra[i]++;
   return 0;
 }
+

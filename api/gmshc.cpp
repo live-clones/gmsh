@@ -2124,6 +2124,26 @@ GMSH_API void gmshModelMeshTetrahedralize(double * coord, size_t coord_n, size_t
   }
 }
 
+GMSH_API void gmshModelMeshAlphaShapes(const double threshold, double * coord, size_t coord_n, size_t ** tetra, size_t * tetra_n, size_t *** domains, size_t ** domains_n, size_t *domains_nn, size_t *** boundaries, size_t ** boundaries_n, size_t *boundaries_nn, size_t ** neighbors, size_t * neighbors_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<double> api_coord_(coord, coord + coord_n);
+    std::vector<std::size_t> api_tetra_;
+    std::vector<std::vector<std::size_t> > api_domains_;
+    std::vector<std::vector<std::size_t> > api_boundaries_;
+    std::vector<std::size_t> api_neighbors_;
+    gmsh::model::mesh::alphaShapes(threshold, api_coord_, api_tetra_, api_domains_, api_boundaries_, api_neighbors_);
+    vector2ptr(api_tetra_, tetra, tetra_n);
+    vectorvector2ptrptr(api_domains_, domains, domains_n, domains_nn);
+    vectorvector2ptrptr(api_boundaries_, boundaries, boundaries_n, boundaries_nn);
+    vector2ptr(api_neighbors_, neighbors, neighbors_n);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API int gmshModelMeshFieldAdd(const char * fieldType, const int tag, int * ierr)
 {
   int result_api_ = 0;

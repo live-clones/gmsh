@@ -2512,6 +2512,33 @@ namespace gmsh { // Top-level functions
         tetra.assign(api_tetra_, api_tetra_ + api_tetra_n_); gmshFree(api_tetra_);
       }
 
+      // Take a alpha shape threshold, points given in the `coord' vector as
+      // triplets of x, y, z coordinates, and return the tetrahedra (like in
+      // tetrahedralize), domains as vectors of vectors of tetrahedron indices,
+      // boundaries as vectors of vectos of pairs tet/face and a vector of size 4
+      // times the number of tetrahedra giving neighboring ids of tetrahedra.
+      inline void alphaShapes(const double threshold,
+                              const std::vector<double> & coord,
+                              std::vector<std::size_t> & tetra,
+                              std::vector<std::vector<std::size_t> > & domains,
+                              std::vector<std::vector<std::size_t> > & boundaries,
+                              std::vector<std::size_t> & neighbors)
+      {
+        int ierr = 0;
+        double *api_coord_; size_t api_coord_n_; vector2ptr(coord, &api_coord_, &api_coord_n_);
+        size_t *api_tetra_; size_t api_tetra_n_;
+        size_t **api_domains_; size_t *api_domains_n_, api_domains_nn_;
+        size_t **api_boundaries_; size_t *api_boundaries_n_, api_boundaries_nn_;
+        size_t *api_neighbors_; size_t api_neighbors_n_;
+        gmshModelMeshAlphaShapes(threshold, api_coord_, api_coord_n_, &api_tetra_, &api_tetra_n_, &api_domains_, &api_domains_n_, &api_domains_nn_, &api_boundaries_, &api_boundaries_n_, &api_boundaries_nn_, &api_neighbors_, &api_neighbors_n_, &ierr);
+        if(ierr) throwLastError();
+        gmshFree(api_coord_);
+        tetra.assign(api_tetra_, api_tetra_ + api_tetra_n_); gmshFree(api_tetra_);
+        domains.resize(api_domains_nn_); for(size_t i = 0; i < api_domains_nn_; ++i){ domains[i].assign(api_domains_[i], api_domains_[i] + api_domains_n_[i]); gmshFree(api_domains_[i]); } gmshFree(api_domains_); gmshFree(api_domains_n_);
+        boundaries.resize(api_boundaries_nn_); for(size_t i = 0; i < api_boundaries_nn_; ++i){ boundaries[i].assign(api_boundaries_[i], api_boundaries_[i] + api_boundaries_n_[i]); gmshFree(api_boundaries_[i]); } gmshFree(api_boundaries_); gmshFree(api_boundaries_n_);
+        neighbors.assign(api_neighbors_, api_neighbors_ + api_neighbors_n_); gmshFree(api_neighbors_);
+      }
+
       namespace field { // Mesh size field functions
 
         // Add a new mesh size field of type `fieldType'. If `tag' is positive,
