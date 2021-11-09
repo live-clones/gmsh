@@ -21,6 +21,7 @@ private:
   public:
     MElementOctree *oct;
     mutable RTree<std::pair<MTriangle *, MTriangle *> *, double, 3> rtree3d;
+    std::vector<std::pair<MTriangle *, MTriangle *> *> rtree3dData;
     std::vector<MVertex> v2d;
     std::vector<MVertex> v3d;
     std::vector<MTriangle> t2d;
