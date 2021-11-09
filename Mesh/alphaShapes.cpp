@@ -65,24 +65,16 @@ int compareFourInt (const void *a , const void *b){
   return 0;
 }
 
-int alphaShapes_ (const double threshold,
-		 const std::vector<double> &pts,
-		 std::vector<size_t> &tetrahedra, 
-		 std::vector<std::vector<size_t> > &domains,
-		 std::vector<std::vector<size_t> > &boundaries,
-		 std::vector<size_t> &neigh) {
-
-  gmsh::model::mesh::tetrahedralize(pts, tetrahedra);
-  for (size_t i = 0; i < 4*tetrahedra.size(); i++)tetrahedra[i]--;
-
-    neigh.resize(4*tetrahedra.size());
+int computeTetNeighbors_ (const std::vector<size_t> &tetrahedra, std::vector<size_t> &neigh){
+  
+  neigh.resize(4*tetrahedra.size());
   // -1 is max_unsigned_int 
   for (size_t i=0;i<neigh.size();i++)neigh[i] = -1;
   
   size_t *temp = new size_t [20*tetrahedra.size()];
   size_t counter = 0;
   for (size_t i = 0; i < tetrahedra.size(); i+=4){
-    size_t *t = &tetrahedra[i];
+    const size_t *t = &tetrahedra[i];
     for (int j=0;j<4;j++){
       size_t f[3];
       getOrderedFace ( t, j, f);
@@ -112,6 +104,20 @@ int alphaShapes_ (const double threshold,
   }
   
   delete [] temp;  
+  return 0;
+}
+
+int alphaShapes_ (const double threshold,
+		 const std::vector<double> &pts,
+		 std::vector<size_t> &tetrahedra, 
+		 std::vector<std::vector<size_t> > &domains,
+		 std::vector<std::vector<size_t> > &boundaries,
+		 std::vector<size_t> &neigh) {
+
+  gmsh::model::mesh::tetrahedralize(pts, tetrahedra);
+  for (size_t i = 0; i < 4*tetrahedra.size(); i++)tetrahedra[i]--;
+
+  computeTetNeighbors_ (tetrahedra, neigh);
 
   std::vector<bool> _touched;
   _touched.resize(tetrahedra.size());

@@ -3781,11 +3781,14 @@ class model:
             """
             gmsh.model.mesh.alphaShapes(threshold, coord)
 
-            Take a alpha shape threshold, points given in the `coord' vector as
+            Give a alpha shape 'threshold', points given in the `coord' vector as
             triplets of x, y, z coordinates, and return the tetrahedra (like in
-            tetrahedralize), domains as vectors of vectors of tetrahedron indices,
-            boundaries as vectors of vectos of pairs tet/face and a vector of size 4
-            times the number of tetrahedra giving neighboring ids of tetrahedra.
+            tetrahedralize), 'domains' as vectors of vectors of tetrahedron indices,
+            'boundaries' as vectors of vectos of pairs tet/face and 'neighbors' as a
+            vector of size 4 times the number of tetrahedra giving neighboring ids of
+            tetrahedra of a given tetrahedra. When a tetrahedra has no neighbor for its
+            ith face, the value is (size_t)-1. For a tet with vertices (0,1,2,3), node
+            ids of the faces are respectively (0,1,2), (0,1,3), (0,2,3) and (1,2,3)
 
             Return `tetra', `domains', `boundaries', `neighbors'.
             """
@@ -3811,6 +3814,32 @@ class model:
                 _ovectorvectorsize(api_boundaries_, api_boundaries_n_, api_boundaries_nn_),
                 _ovectorsize(api_neighbors_, api_neighbors_n_.value))
         alpha_shapes = alphaShapes
+
+        @staticmethod
+        def tetNeighbors(tetra):
+            """
+            gmsh.model.mesh.tetNeighbors(tetra)
+
+            Take  the node tags (with numbering starting at 1) of the tetrahedra in
+            `tetra' and returns 'neighbors' as a vector of size 4 times the number of
+            tetrahedra giving neighboring ids of tetrahedra of a given tetrahedra. When
+            a tetrahedra has no neighbor for its ith face, the value is (size_t)-1. For
+            a tet with vertices (0,1,2,3), node ids of the faces are respectively
+            (0,1,2), (0,1,3), (0,2,3) and (1,2,3)
+
+            Return `neighbors'.
+            """
+            api_tetra_, api_tetra_n_ = _ivectorsize(tetra)
+            api_neighbors_, api_neighbors_n_ = POINTER(c_size_t)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshTetNeighbors(
+                api_tetra_, api_tetra_n_,
+                byref(api_neighbors_), byref(api_neighbors_n_),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return _ovectorsize(api_neighbors_, api_neighbors_n_.value)
+        tet_neighbors = tetNeighbors
 
 
         class field:

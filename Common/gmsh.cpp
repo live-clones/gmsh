@@ -5286,6 +5286,17 @@ gmsh::model::mesh::alphaShapes(const double threshold,
 
 }
 
+
+GMSH_API void
+gmsh::model::mesh::tetNeighbors(const std::vector<std::size_t> &tetra,
+				std::vector<std::size_t> &neigh){
+#if defined(HAVE_MESH)
+  computeTetNeighbors_ (tetra, neigh);
+#else
+  Msg::Error("alphaShapes requires the mesh module");
+#endif  
+}
+
 // gmsh::model::mesh::field
 
 GMSH_API int gmsh::model::mesh::field::add(const std::string &fieldType,

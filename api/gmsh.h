@@ -1644,17 +1644,32 @@ namespace gmsh { // Top-level functions
 
       // gmsh::model::mesh::alphaShapes
       //
-      // Take a alpha shape threshold, points given in the `coord' vector as
+      // Give a alpha shape 'threshold', points given in the `coord' vector as
       // triplets of x, y, z coordinates, and return the tetrahedra (like in
-      // tetrahedralize), domains as vectors of vectors of tetrahedron indices,
-      // boundaries as vectors of vectos of pairs tet/face and a vector of size 4
-      // times the number of tetrahedra giving neighboring ids of tetrahedra.
+      // tetrahedralize), 'domains' as vectors of vectors of tetrahedron indices,
+      // 'boundaries' as vectors of vectos of pairs tet/face and 'neighbors' as a
+      // vector of size 4 times the number of tetrahedra giving neighboring ids of
+      // tetrahedra of a given tetrahedra. When a tetrahedra has no neighbor for
+      // its ith face, the value is (size_t)-1. For a tet with vertices (0,1,2,3),
+      // node ids of the faces are respectively (0,1,2), (0,1,3), (0,2,3) and
+      // (1,2,3)
       GMSH_API void alphaShapes(const double threshold,
                                 const std::vector<double> & coord,
                                 std::vector<std::size_t> & tetra,
                                 std::vector<std::vector<std::size_t> > & domains,
                                 std::vector<std::vector<std::size_t> > & boundaries,
                                 std::vector<std::size_t> & neighbors);
+
+      // gmsh::model::mesh::tetNeighbors
+      //
+      // Take  the node tags (with numbering starting at 1) of the tetrahedra in
+      // `tetra' and returns 'neighbors' as a vector of size 4 times the number of
+      // tetrahedra giving neighboring ids of tetrahedra of a given tetrahedra.
+      // When a tetrahedra has no neighbor for its ith face, the value is
+      // (size_t)-1. For a tet with vertices (0,1,2,3), node ids of the faces are
+      // respectively (0,1,2), (0,1,3), (0,2,3) and (1,2,3)
+      GMSH_API void tetNeighbors(const std::vector<std::size_t> & tetra,
+                                 std::vector<std::size_t> & neighbors);
 
       namespace field { // Mesh size field functions
 

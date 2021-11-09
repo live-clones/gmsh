@@ -2144,6 +2144,20 @@ GMSH_API void gmshModelMeshAlphaShapes(const double threshold, double * coord, s
   }
 }
 
+GMSH_API void gmshModelMeshTetNeighbors(size_t * tetra, size_t tetra_n, size_t ** neighbors, size_t * neighbors_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<std::size_t> api_tetra_(tetra, tetra + tetra_n);
+    std::vector<std::size_t> api_neighbors_;
+    gmsh::model::mesh::tetNeighbors(api_tetra_, api_neighbors_);
+    vector2ptr(api_neighbors_, neighbors, neighbors_n);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API int gmshModelMeshFieldAdd(const char * fieldType, const int tag, int * ierr)
 {
   int result_api_ = 0;

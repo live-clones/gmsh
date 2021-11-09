@@ -3237,11 +3237,14 @@ end
 """
     gmsh.model.mesh.alphaShapes(threshold, coord)
 
-Take a alpha shape threshold, points given in the `coord` vector as triplets of
-x, y, z coordinates, and return the tetrahedra (like in tetrahedralize), domains
-as vectors of vectors of tetrahedron indices, boundaries as vectors of vectos of
-pairs tet/face and a vector of size 4 times the number of tetrahedra giving
-neighboring ids of tetrahedra.
+Give a alpha shape `threshold`, points given in the `coord` vector as triplets
+of x, y, z coordinates, and return the tetrahedra (like in tetrahedralize),
+`domains` as vectors of vectors of tetrahedron indices, `boundaries` as vectors
+of vectos of pairs tet/face and `neighbors` as a vector of size 4 times the
+number of tetrahedra giving neighboring ids of tetrahedra of a given tetrahedra.
+When a tetrahedra has no neighbor for its ith face, the value is (size_t)-1. For
+a tet with vertices (0,1,2,3), node ids of the faces are respectively (0,1,2),
+(0,1,3), (0,2,3) and (1,2,3)
 
 Return `tetra`, `domains`, `boundaries`, `neighbors`.
 """
@@ -3272,6 +3275,31 @@ function alphaShapes(threshold, coord)
     return tetra, domains, boundaries, neighbors
 end
 const alpha_shapes = alphaShapes
+
+"""
+    gmsh.model.mesh.tetNeighbors(tetra)
+
+Take  the node tags (with numbering starting at 1) of the tetrahedra in `tetra`
+and returns `neighbors` as a vector of size 4 times the number of tetrahedra
+giving neighboring ids of tetrahedra of a given tetrahedra. When a tetrahedra
+has no neighbor for its ith face, the value is (size_t)-1. For a tet with
+vertices (0,1,2,3), node ids of the faces are respectively (0,1,2), (0,1,3),
+(0,2,3) and (1,2,3)
+
+Return `neighbors`.
+"""
+function tetNeighbors(tetra)
+    api_neighbors_ = Ref{Ptr{Csize_t}}()
+    api_neighbors_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshTetNeighbors, gmsh.lib), Cvoid,
+          (Ptr{Csize_t}, Csize_t, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cint}),
+          convert(Vector{Csize_t}, tetra), length(tetra), api_neighbors_, api_neighbors_n_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    neighbors = unsafe_wrap(Array, api_neighbors_[], api_neighbors_n_[], own = true)
+    return neighbors
+end
+const tet_neighbors = tetNeighbors
 
 """
     module gmsh.model.mesh.field
