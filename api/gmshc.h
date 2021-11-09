@@ -1456,8 +1456,9 @@ GMSH_API void gmshModelMeshTetrahedralize(double * coord, size_t coord_n,
  * 'boundaries' as vectors of vectos of pairs tet/face and 'neighbors' as a
  * vector of size 4 times the number of tetrahedra giving neighboring ids of
  * tetrahedra of a given tetrahedra. When a tetrahedra has no neighbor for its
- * ith face, the value is (size_t)-1. For a tet with vertices (0,1,2,3), node
- * ids of the faces are respectively (0,1,2), (0,1,3), (0,2,3) and (1,2,3) */
+ * ith face, the value is tetrahedra.size. For a tet with vertices (0,1,2,3),
+ * node ids of the faces are respectively (0,1,2), (0,1,3), (0,2,3) and
+ * (1,2,3) */
 GMSH_API void gmshModelMeshAlphaShapes(const double threshold,
                                        double * coord, size_t coord_n,
                                        size_t ** tetra, size_t * tetra_n,
@@ -1469,9 +1470,9 @@ GMSH_API void gmshModelMeshAlphaShapes(const double threshold,
 /* Take  the node tags (with numbering starting at 1) of the tetrahedra in
  * `tetra' and returns 'neighbors' as a vector of size 4 times the number of
  * tetrahedra giving neighboring ids of tetrahedra of a given tetrahedra. When
- * a tetrahedra has no neighbor for its ith face, the value is (size_t)-1. For
- * a tet with vertices (0,1,2,3), node ids of the faces are respectively
- * (0,1,2), (0,1,3), (0,2,3) and (1,2,3) */
+ * a tetrahedra has no neighbor for its ith face, the value is
+ * tetrahedra.size. For a tet with vertices (0,1,2,3), node ids of the faces
+ * are respectively (0,1,2), (0,1,3), (0,2,3) and (1,2,3) */
 GMSH_API void gmshModelMeshTetNeighbors(size_t * tetra, size_t tetra_n,
                                         size_t ** neighbors, size_t * neighbors_n,
                                         int * ierr);

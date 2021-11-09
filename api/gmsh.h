@@ -1650,9 +1650,9 @@ namespace gmsh { // Top-level functions
       // 'boundaries' as vectors of vectos of pairs tet/face and 'neighbors' as a
       // vector of size 4 times the number of tetrahedra giving neighboring ids of
       // tetrahedra of a given tetrahedra. When a tetrahedra has no neighbor for
-      // its ith face, the value is (size_t)-1. For a tet with vertices (0,1,2,3),
-      // node ids of the faces are respectively (0,1,2), (0,1,3), (0,2,3) and
-      // (1,2,3)
+      // its ith face, the value is tetrahedra.size. For a tet with vertices
+      // (0,1,2,3), node ids of the faces are respectively (0,1,2), (0,1,3),
+      // (0,2,3) and (1,2,3)
       GMSH_API void alphaShapes(const double threshold,
                                 const std::vector<double> & coord,
                                 std::vector<std::size_t> & tetra,
@@ -1666,8 +1666,8 @@ namespace gmsh { // Top-level functions
       // `tetra' and returns 'neighbors' as a vector of size 4 times the number of
       // tetrahedra giving neighboring ids of tetrahedra of a given tetrahedra.
       // When a tetrahedra has no neighbor for its ith face, the value is
-      // (size_t)-1. For a tet with vertices (0,1,2,3), node ids of the faces are
-      // respectively (0,1,2), (0,1,3), (0,2,3) and (1,2,3)
+      // tetrahedra.size. For a tet with vertices (0,1,2,3), node ids of the faces
+      // are respectively (0,1,2), (0,1,3), (0,2,3) and (1,2,3)
       GMSH_API void tetNeighbors(const std::vector<std::size_t> & tetra,
                                  std::vector<std::size_t> & neighbors);
 

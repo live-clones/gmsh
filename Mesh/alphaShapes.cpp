@@ -68,8 +68,7 @@ int compareFourInt (const void *a , const void *b){
 int computeTetNeighbors_ (const std::vector<size_t> &tetrahedra, std::vector<size_t> &neigh){
   
   neigh.resize(4*tetrahedra.size());
-  // -1 is max_unsigned_int 
-  for (size_t i=0;i<neigh.size();i++)neigh[i] = -1;
+  for (size_t i=0;i<neigh.size();i++)neigh[i] = tetrahedra.size();
   
   size_t *temp = new size_t [20*tetrahedra.size()];
   size_t counter = 0;
@@ -137,7 +136,7 @@ int alphaShapes_ (const double threshold,
 	_s.pop();
 	for (int j=0;j<4;j++){
 	  size_t tj = neigh[4*t+j];
-	  if (tj == -1){
+	  if (tj == tetrahedra.size()){
 	    _boundary.push_back(t);
 	    _boundary.push_back(j);
 	  }
