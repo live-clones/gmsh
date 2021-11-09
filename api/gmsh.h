@@ -1644,10 +1644,10 @@ namespace gmsh { // Top-level functions
 
       // gmsh::model::mesh::alphaShapes
       //
-      // Give a alpha shape 'threshold', points given in the `coord' vector as
+      // Give an alpha shape `threshold', points given in the `coord' vector as
       // triplets of x, y, z coordinates, and return the tetrahedra (like in
-      // tetrahedralize), 'domains' as vectors of vectors of tetrahedron indices,
-      // 'boundaries' as vectors of vectos of pairs tet/face and 'neighbors' as a
+      // tetrahedralize), `domains' as vectors of vectors of tetrahedron indices,
+      // `boundaries' as vectors of vectos of pairs tet/face and `neighbors' as a
       // vector of size 4 times the number of tetrahedra giving neighboring ids of
       // tetrahedra of a given tetrahedra. When a tetrahedra has no neighbor for
       // its ith face, the value is tetrahedra.size. For a tet with vertices
@@ -1663,7 +1663,7 @@ namespace gmsh { // Top-level functions
       // gmsh::model::mesh::tetNeighbors
       //
       // Take  the node tags (with numbering starting at 1) of the tetrahedra in
-      // `tetra' and returns 'neighbors' as a vector of size 4 times the number of
+      // `tetra' and returns `neighbors' as a vector of size 4 times the number of
       // tetrahedra giving neighboring ids of tetrahedra of a given tetrahedra.
       // When a tetrahedra has no neighbor for its ith face, the value is
       // tetrahedra.size. For a tet with vertices (0,1,2,3), node ids of the faces

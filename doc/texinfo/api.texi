@@ -2853,14 +2853,14 @@ Python (@url{@value{GITLAB-PREFIX}/demos/api/raw_tetrahedralization.py#L15,raw_t
 @end table
 
 @item gmsh/model/mesh/alphaShapes
-Give a alpha shape }threshold}, points given in the @code{coord} vector as
+Give an alpha shape @code{threshold}, points given in the @code{coord} vector as
 triplets of x, y, z coordinates, and return the tetrahedra (like in
-tetrahedralize), }domains} as vectors of vectors of tetrahedron indices,
-}boundaries} as vectors of vectos of pairs tet/face and }neighbors} as a vector
-of size 4 times the number of tetrahedra giving neighboring ids of tetrahedra of
-a given tetrahedra. When a tetrahedra has no neighbor for its ith face, the
-value is tetrahedra.size. For a tet with vertices (0,1,2,3), node ids of the
-faces are respectively (0,1,2), (0,1,3), (0,2,3) and (1,2,3)
+tetrahedralize), @code{domains} as vectors of vectors of tetrahedron indices,
+@code{boundaries} as vectors of vectos of pairs tet/face and @code{neighbors} as
+a vector of size 4 times the number of tetrahedra giving neighboring ids of
+tetrahedra of a given tetrahedra. When a tetrahedra has no neighbor for its ith
+face, the value is tetrahedra.size. For a tet with vertices (0,1,2,3), node ids
+of the faces are respectively (0,1,2), (0,1,3), (0,2,3) and (1,2,3)
 
 @table @asis
 @item Input:
@@ -2875,8 +2875,8 @@ faces are respectively (0,1,2), (0,1,3), (0,2,3) and (1,2,3)
 
 @item gmsh/model/mesh/tetNeighbors
 Take  the node tags (with numbering starting at 1) of the tetrahedra in
-@code{tetra} and returns }neighbors} as a vector of size 4 times the number of
-tetrahedra giving neighboring ids of tetrahedra of a given tetrahedra. When a
+@code{tetra} and returns @code{neighbors} as a vector of size 4 times the number
+of tetrahedra giving neighboring ids of tetrahedra of a given tetrahedra. When a
 tetrahedra has no neighbor for its ith face, the value is tetrahedra.size. For a
 tet with vertices (0,1,2,3), node ids of the faces are respectively (0,1,2),
 (0,1,3), (0,2,3) and (1,2,3)

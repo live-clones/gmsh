@@ -3237,7 +3237,7 @@ end
 """
     gmsh.model.mesh.alphaShapes(threshold, coord)
 
-Give a alpha shape `threshold`, points given in the `coord` vector as triplets
+Give an alpha shape `threshold`, points given in the `coord` vector as triplets
 of x, y, z coordinates, and return the tetrahedra (like in tetrahedralize),
 `domains` as vectors of vectors of tetrahedron indices, `boundaries` as vectors
 of vectos of pairs tet/face and `neighbors` as a vector of size 4 times the
