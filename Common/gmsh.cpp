@@ -5277,9 +5277,10 @@ gmsh::model::mesh::alphaShapes(const double threshold,
 			       std::vector<std::size_t> &tetra,
 			       std::vector<std::vector<std::size_t> > &domains,
 			       std::vector<std::vector<std::size_t> > &boundaries,
-			       std::vector<std::size_t> &neigh){
+			       std::vector<std::size_t> &neigh, 
+             const double meanValue){
 #if defined(HAVE_MESH)
-  alphaShapes_ (threshold, coord, tetra, domains, boundaries, neigh);
+  alphaShapes_ (threshold, coord, tetra, domains, boundaries, neigh, meanValue);
 #else
   Msg::Error("alphaShapes requires the mesh module");
 #endif

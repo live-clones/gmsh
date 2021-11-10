@@ -78,7 +78,7 @@ model data will create a new model.
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L82,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L62,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L261,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L72,Julia}
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/x1.cpp#L30,x1.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/curvemesh.cpp#L10,curvemesh.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/explore.cpp#L13,explore.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/onelab_run_auto.cpp#L13,onelab_run_auto.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/open.cpp#L12,open.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/x1.py#L28,x1.py}, @url{@value{GITLAB-PREFIX}/demos/api/explore.py#L9,explore.py}, @url{@value{GITLAB-PREFIX}/demos/api/flatten2.py#L13,flatten2.py}, @url{@value{GITLAB-PREFIX}/demos/api/flatten.py#L16,flatten.py}, @url{@value{GITLAB-PREFIX}/demos/api/heal.py#L6,heal.py}, ...)
+C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/x1.cpp#L30,x1.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/explore.cpp#L13,explore.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/onelab_run_auto.cpp#L13,onelab_run_auto.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/open.cpp#L12,open.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/x1.py#L28,x1.py}, @url{@value{GITLAB-PREFIX}/demos/api/explore.py#L9,explore.py}, @url{@value{GITLAB-PREFIX}/demos/api/flatten2.py#L13,flatten2.py}, @url{@value{GITLAB-PREFIX}/demos/api/flatten.py#L16,flatten.py}, @url{@value{GITLAB-PREFIX}/demos/api/heal.py#L6,heal.py}, ...)
 @end table
 
 @item gmsh/merge

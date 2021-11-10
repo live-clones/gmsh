@@ -9,6 +9,7 @@ int alphaShapes_ (const double threshold,
 		  std::vector<size_t> &tetrahedra, 
 		  std::vector<std::vector<size_t> > &domains,
 		  std::vector<std::vector<size_t> > &boundaries,
-		  std::vector<size_t> &neigh);
+		  std::vector<size_t> &neigh,
+		  const double meanValue);
 
 #endif

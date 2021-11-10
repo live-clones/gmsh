@@ -3,7 +3,6 @@
 #include <stack>
 #include "alphaShapes.h"
 #include "gmsh.h"
-#include <iostream>
 
 double alphaShape (const size_t *t, const std::vector<double> &p, const double hMean){
   double tetcircumcenter(double a[3], double b[3], double c[3], double d[3],
@@ -136,12 +135,15 @@ int alphaShapes_ (const double threshold,
 		 std::vector<size_t> &tetrahedra, 
 		 std::vector<std::vector<size_t> > &domains,
 		 std::vector<std::vector<size_t> > &boundaries,
-		 std::vector<size_t> &neigh) {
+		 std::vector<size_t> &neigh, 
+     const double meanValue) {
 
   gmsh::model::mesh::tetrahedralize(pts, tetrahedra);
   for (size_t i = 0; i < tetrahedra.size(); i++)tetrahedra[i]--;
+  double hMean;
+  if (meanValue < 0) hMean = meanEdgeLength(pts,tetrahedra);
+  else hMean = meanValue;
   
-  double hMean = meanEdgeLength(pts,tetrahedra);
   computeTetNeighbors_ (tetrahedra, neigh);
 
   std::vector<bool> _touched;
