@@ -3235,20 +3235,23 @@ function tetrahedralize(coord)
 end
 
 """
-    gmsh.model.mesh.alphaShapes(threshold, coord)
+    gmsh.model.mesh.alphaShapes(threshold, coord, meanValue = -1.)
 
 Give an alpha shape `threshold`, points given in the `coord` vector as triplets
-of x, y, z coordinates, and return the tetrahedra (like in tetrahedralize),
+of x, y, z coordinates, and return the tetrahedra (like intetrahedralize),
 `domains` as vectors of vectors of tetrahedron indices, `boundaries` as vectors
-of vectos of pairs tet/face and `neighbors` as a vector of size 4 times the
+of vectors of pairs tet/face and `neighbors` as a vector of size 4 times the
 number of tetrahedra giving neighboring ids of tetrahedra of a given tetrahedra.
 When a tetrahedra has no neighbor for its ith face, the value is
 tetrahedra.size. For a tet with vertices (0,1,2,3), node ids of the faces are
-respectively (0,1,2), (0,1,3), (0,2,3) and (1,2,3)
+respectively (0,1,2), (0,1,3), (0,2,3) and (1,2,3). `meanValue` is a parameter
+used in the alpha shape  criterion test : R_circumsribed / meanValue < alpha. if
+meanValue < 0,  meanValue is computed as the average minimum edge length of each
+element.
 
 Return `tetra`, `domains`, `boundaries`, `neighbors`.
 """
-function alphaShapes(threshold, coord)
+function alphaShapes(threshold, coord, meanValue = -1.)
     api_tetra_ = Ref{Ptr{Csize_t}}()
     api_tetra_n_ = Ref{Csize_t}()
     api_domains_ = Ref{Ptr{Ptr{Csize_t}}}()
@@ -3261,8 +3264,8 @@ function alphaShapes(threshold, coord)
     api_neighbors_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshAlphaShapes, gmsh.lib), Cvoid,
-          (Cdouble, Ptr{Cdouble}, Csize_t, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Csize_t}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Csize_t}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cint}),
-          threshold, convert(Vector{Cdouble}, coord), length(coord), api_tetra_, api_tetra_n_, api_domains_, api_domains_n_, api_domains_nn_, api_boundaries_, api_boundaries_n_, api_boundaries_nn_, api_neighbors_, api_neighbors_n_, ierr)
+          (Cdouble, Ptr{Cdouble}, Csize_t, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Csize_t}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Csize_t}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Cdouble, Ptr{Cint}),
+          threshold, convert(Vector{Cdouble}, coord), length(coord), api_tetra_, api_tetra_n_, api_domains_, api_domains_n_, api_domains_nn_, api_boundaries_, api_boundaries_n_, api_boundaries_nn_, api_neighbors_, api_neighbors_n_, meanValue, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     tetra = unsafe_wrap(Array, api_tetra_[], api_tetra_n_[], own = true)
     tmp_api_domains_ = unsafe_wrap(Array, api_domains_[], api_domains_nn_[], own = true)

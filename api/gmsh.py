@@ -3777,19 +3777,21 @@ class model:
             return _ovectorsize(api_tetra_, api_tetra_n_.value)
 
         @staticmethod
-        def alphaShapes(threshold, coord):
+        def alphaShapes(threshold, coord, meanValue=-1.):
             """
-            gmsh.model.mesh.alphaShapes(threshold, coord)
+            gmsh.model.mesh.alphaShapes(threshold, coord, meanValue=-1.)
 
             Give an alpha shape `threshold', points given in the `coord' vector as
-            triplets of x, y, z coordinates, and return the tetrahedra (like in
-            tetrahedralize), `domains' as vectors of vectors of tetrahedron indices,
-            `boundaries' as vectors of vectos of pairs tet/face and `neighbors' as a
+            triplets of x, y, z coordinates, and return the tetrahedra (like
+            intetrahedralize), `domains' as vectors of vectors of tetrahedron indices,
+            `boundaries' as vectors of vectors of pairs tet/face and `neighbors' as a
             vector of size 4 times the number of tetrahedra giving neighboring ids of
             tetrahedra of a given tetrahedra. When a tetrahedra has no neighbor for its
             ith face, the value is tetrahedra.size. For a tet with vertices (0,1,2,3),
             node ids of the faces are respectively (0,1,2), (0,1,3), (0,2,3) and
-            (1,2,3)
+            (1,2,3). 'meanValue' is a parameter used in the alpha shape  criterion test
+            : R_circumsribed / meanValue < alpha. if meanValue < 0,  meanValue is
+            computed as the average minimum edge length of each element.
 
             Return `tetra', `domains', `boundaries', `neighbors'.
             """
@@ -3806,6 +3808,7 @@ class model:
                 byref(api_domains_), byref(api_domains_n_), byref(api_domains_nn_),
                 byref(api_boundaries_), byref(api_boundaries_n_), byref(api_boundaries_nn_),
                 byref(api_neighbors_), byref(api_neighbors_n_),
+                c_double(meanValue),
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())

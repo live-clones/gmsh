@@ -1645,15 +1645,15 @@ namespace gmsh { // Top-level functions
       // gmsh::model::mesh::alphaShapes
       //
       // Give an alpha shape `threshold', points given in the `coord' vector as
-      // triplets of x, y, z coordinates, and return the tetrahedra (like in
-      // tetrahedralize), `domains' as vectors of vectors of tetrahedron indices,
-      // `boundaries' as vectors of vectos of pairs tet/face and `neighbors' as a
+      // triplets of x, y, z coordinates, and return the tetrahedra (like
+      // intetrahedralize), `domains' as vectors of vectors of tetrahedron indices,
+      // `boundaries' as vectors of vectors of pairs tet/face and `neighbors' as a
       // vector of size 4 times the number of tetrahedra giving neighboring ids of
       // tetrahedra of a given tetrahedra. When a tetrahedra has no neighbor for
       // its ith face, the value is tetrahedra.size. For a tet with vertices
       // (0,1,2,3), node ids of the faces are respectively (0,1,2), (0,1,3),
-      // (0,2,3) and (1,2,3). 'meanValue' is a parameter used in the alpha shape 
-      // criterion test : R_circumsribed / meanValue < alpha. if meanValue < 0, 
+      // (0,2,3) and (1,2,3). 'meanValue' is a parameter used in the alpha shape
+      // criterion test : R_circumsribed / meanValue < alpha. if meanValue < 0,
       // meanValue is computed as the average minimum edge length of each element.
       GMSH_API void alphaShapes(const double threshold,
                                 const std::vector<double> & coord,
