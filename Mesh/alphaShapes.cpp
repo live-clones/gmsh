@@ -35,12 +35,18 @@ double meanEdgeLength (const std::vector<double> &p, const std::vector<size_t> &
     const double *p2 = &p[3*tetrahedra[i+2]];
     const double *p3 = &p[3*tetrahedra[i+3]];
     double d0 = twoPointsDistance(p0, p1);
+    double hMin = d0;
     double d1 = twoPointsDistance(p0, p2);
+    hMin = std::min(hMin, d1);
     double d2 = twoPointsDistance(p0, p3);
+    hMin = std::min(hMin, d2);
     double d3 = twoPointsDistance(p1, p2);
+    hMin = std::min(hMin, d3);
     double d4 = twoPointsDistance(p1, p3);
+    hMin = std::min(hMin, d4);
     double d5 = twoPointsDistance(p2, p3);
-    hMean += std::min({d0,d1,d2,d3,d4,d5});
+    hMin = std::min(hMin, d5);
+    hMean += hMin;
   }
   hMean = hMean / (tetrahedra.size()/4);
   return hMean;
