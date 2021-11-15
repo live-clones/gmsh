@@ -1,6 +1,7 @@
 #include <math.h>
 #include <vector>
 #include <stack>
+#include <algorithm>
 #include "alphaShapes.h"
 #include "gmsh.h"
 
