@@ -3154,7 +3154,10 @@ Delete :
           GModel::current()->getGEOInternals()->synchronize(GModel::current());
       }
       if(!changed){
-        GModel::current()->remove(dimTags);
+        std::vector<GEntity*> removed;
+        GModel::current()->remove(dimTags, removed);
+        Msg::Debug("Destroying %lu entities in model", removed.size());
+        for(std::size_t i = 0; i < removed.size(); i++) delete removed[i];
       }
       List_Delete($3);
     }
@@ -3176,7 +3179,10 @@ Delete :
           GModel::current()->getGEOInternals()->synchronize(GModel::current());
       }
       if(!changed){
-        GModel::current()->remove(dimTags, true);
+        std::vector<GEntity*> removed;
+        GModel::current()->remove(dimTags, removed, true);
+        Msg::Debug("Destroying %lu entities in model", removed.size());
+        for(std::size_t i = 0; i < removed.size(); i++) delete removed[i];
       }
       List_Delete($4);
     }

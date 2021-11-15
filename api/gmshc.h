@@ -1458,7 +1458,7 @@ GMSH_API void gmshModelMeshTetrahedralize(double * coord, size_t coord_n,
  * tetrahedra of a given tetrahedra. When a tetrahedra has no neighbor for its
  * ith face, the value is tetrahedra.size. For a tet with vertices (0,1,2,3),
  * node ids of the faces are respectively (0,1,2), (0,1,3), (0,2,3) and
- * (1,2,3). 'meanValue' is a parameter used in the alpha shape  criterion test
+ * (1,2,3). `meanValue' is a parameter used in the alpha shape  criterion test
  * : R_circumsribed / meanValue < alpha. if meanValue < 0,  meanValue is
  * computed as the average minimum edge length of each element. */
 GMSH_API void gmshModelMeshAlphaShapes(const double threshold,
@@ -2648,8 +2648,11 @@ GMSH_API void gmshModelOccImportShapes(const char * fileName,
  * OpenCASCADE `TopoDS_Shape' object (passed as a pointer to void). The
  * imported entities are returned in `outDimTags'. If the optional argument
  * `highestDimOnly' is set, only import the highest dimensional entities in
- * `shape'. For C and C++ only. Warning: this function is unsafe, as providing
- * an invalid pointer will lead to undefined behavior. */
+ * `shape'. In Python, this function can be used for integration with
+ * PythonOCC, in which the SwigPyObject pointer of `TopoDS_Shape' must be
+ * passed as an int to `shape', i.e., `shape = int(pythonocc_shape.this)'.
+ * Warning: this function is unsafe, as providing an invalid pointer will lead
+ * to undefined behavior. */
 GMSH_API void gmshModelOccImportShapesNativePointer(const void * shape,
                                                     int ** outDimTags, size_t * outDimTags_n,
                                                     const int highestDimOnly,

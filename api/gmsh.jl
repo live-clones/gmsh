@@ -5597,6 +5597,34 @@ end
 const import_shapes = importShapes
 
 """
+    gmsh.model.occ.importShapesNativePointer(shape, highestDimOnly = true)
+
+Imports an OpenCASCADE `shape` by providing a pointer to a native OpenCASCADE
+`TopoDS_Shape` object (passed as a pointer to void). The imported entities are
+returned in `outDimTags`. If the optional argument `highestDimOnly` is set, only
+import the highest dimensional entities in `shape`. In Python, this function can
+be used for integration with PythonOCC, in which the SwigPyObject pointer of
+`TopoDS_Shape` must be passed as an int to `shape`, i.e., `shape =
+int(pythonocc_shape.this)`. Warning: this function is unsafe, as providing an
+invalid pointer will lead to undefined behavior.
+
+Return `outDimTags`.
+"""
+function importShapesNativePointer(shape, highestDimOnly = true)
+    api_outDimTags_ = Ref{Ptr{Cint}}()
+    api_outDimTags_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelOccImportShapesNativePointer, gmsh.lib), Cvoid,
+          (Ptr{Cvoid}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
+          shape, api_outDimTags_, api_outDimTags_n_, highestDimOnly, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own = true)
+    outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
+    return outDimTags
+end
+const import_shapes_native_pointer = importShapesNativePointer
+
+"""
     gmsh.model.occ.getEntities(dim = -1)
 
 Get all the OpenCASCADE entities. If `dim` is >= 0, return only the entities of

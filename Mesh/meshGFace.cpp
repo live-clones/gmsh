@@ -2744,7 +2744,6 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
       }
       ++it;
     }
-    // recoverMap.insert(new_relations.begin(), new_relations.end());
   }
 
   // Msg::Info("%d points that are duplicated for Delaunay meshing",
@@ -2820,6 +2819,9 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
     outputScalarField(m->triangles, name, 1, gf);
   }
 
+  // remove fake duplicate nodes on seams
+  for(auto eq : equivalence) delete eq.first;
+
   // delete the mesh
   delete m;
 
@@ -2847,7 +2849,7 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
                        gf->meshStatistics.nbGoodQuality);
   gf->meshStatistics.status = GFace::DONE;
 
-  // remove unused vertices, generated e.g. during background mesh
+  // Remove unused vertices, generated e.g. during background mesh
   _deleteUnusedVertices(gf);
 
   return true;
