@@ -1302,6 +1302,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
   // use a divide & conquer type algorithm to create a triangulation.
   // We add to the triangulation a box with 4 points that encloses the
   // domain.
+  
   if(CTX::instance()->mesh.oldInitialDelaunay2D){
     // compute the bounding box in parametric space
     SVector3 dd(bbox.max(), bbox.min());

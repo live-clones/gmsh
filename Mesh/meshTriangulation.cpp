@@ -664,7 +664,7 @@ static void getNodeCopies(GFace *gf,
   if(edges.empty())
     edges.insert(edges.end(), gf->model()->firstEdge(),
                  gf->model()->lastEdge());
-
+  
   for(auto e : edges) {
     if(!e->isMeshDegenerated()) {
       std::set<MVertex *, MVertexPtrLessThan> e_vertices;
@@ -674,6 +674,7 @@ static void getNodeCopies(GFace *gf,
         e_vertices.insert(v1);
         e_vertices.insert(v2);
       }
+
       int direction = -1;
       if(e->isSeam(gf)) {
         direction = 0;
