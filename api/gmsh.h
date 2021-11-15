@@ -2944,8 +2944,11 @@ namespace gmsh { // Top-level functions
       // OpenCASCADE `TopoDS_Shape' object (passed as a pointer to void). The
       // imported entities are returned in `outDimTags'. If the optional argument
       // `highestDimOnly' is set, only import the highest dimensional entities in
-      // `shape'. For C and C++ only. Warning: this function is unsafe, as
-      // providing an invalid pointer will lead to undefined behavior.
+      // `shape'. In Python, this function can be used for integration with
+      // PythonOCC, in which the SwigPyObject pointer of `TopoDS_Shape' must be
+      // passed as an int to `shape', i.e., `shape = int(pythonocc_shape.this)'.
+      // Warning: this function is unsafe, as providing an invalid pointer will
+      // lead to undefined behavior.
       GMSH_API void importShapesNativePointer(const void * shape,
                                               gmsh::vectorpair & outDimTags,
                                               const bool highestDimOnly = true);

@@ -31,12 +31,6 @@ OCCRegion::OCCRegion(GModel *m, TopoDS_Solid s, int num)
   // if(tag() == 1) writeBREP("v1.brep");
 }
 
-OCCRegion::~OCCRegion()
-{
-  if(model()->getOCCInternals() && !model()->isBeingDestroyed())
-    model()->getOCCInternals()->unbind(_s, tag()); // potentially slow
-}
-
 void OCCRegion::_setup()
 {
   l_faces.clear();

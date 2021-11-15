@@ -1,17 +1,16 @@
 SetFactory("OpenCASCADE");
 
-Mesh.MeshSizeMin = 3e-3;
-Mesh.MeshSizeMax = 3e-3;
-Geometry.OCCTargetUnit = "M";
+Mesh.MeshSizeMin = 3;
+Mesh.MeshSizeMax = 3;
 
 DefineConstant[
   angle = {90, Name "Parameters/wedge angle"}
-  extrude = {0.01, Name "Parameters/extrusion length (with mesh)"}
+  extrude = {10, Name "Parameters/extrusion length (with mesh)"}
 ];
 
 a() = ShapeFromFile("component8.step");
 
-Cylinder(2) = {0,0.15,0, 0,0.2,0, 0.04, angle*2*Pi/360};
+Cylinder(2) = {0,150,0, 0,200,0, 40, angle*2*Pi/360};
 
 BooleanIntersection{ Volume{a(0)}; Delete; }{ Volume{2}; Delete; }
 

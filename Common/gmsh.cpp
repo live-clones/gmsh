@@ -661,7 +661,10 @@ GMSH_API void gmsh::model::removeEntities(const vectorpair &dimTags,
                                           const bool recursive)
 {
   if(!_checkInit()) return;
-  GModel::current()->remove(dimTags, recursive);
+  std::vector<GEntity*> removed;
+  GModel::current()->remove(dimTags, removed, recursive);
+  Msg::Debug("Destroying %lu entities in model", removed.size());
+  for(std::size_t i = 0; i < removed.size(); i++) delete removed[i];
 }
 
 GMSH_API void gmsh::model::removeEntityName(const std::string &name)
@@ -5666,9 +5669,10 @@ GMSH_API void gmsh::model::geo::extrude(const vectorpair &dimTags,
 {
   if(!_checkInit()) return;
   outDimTags.clear();
+  ExtrudeParams *e = _getExtrudeParams(numElements, heights, recombine);
   GModel::current()->getGEOInternals()->extrude(
-    dimTags, dx, dy, dz, outDimTags,
-    _getExtrudeParams(numElements, heights, recombine));
+    dimTags, dx, dy, dz, outDimTags, e);
+  if(e) delete e;
 }
 
 GMSH_API void gmsh::model::geo::revolve(
@@ -5679,9 +5683,10 @@ GMSH_API void gmsh::model::geo::revolve(
 {
   if(!_checkInit()) return;
   outDimTags.clear();
+  ExtrudeParams *e = _getExtrudeParams(numElements, heights, recombine);
   GModel::current()->getGEOInternals()->revolve(
-    dimTags, x, y, z, ax, ay, az, angle, outDimTags,
-    _getExtrudeParams(numElements, heights, recombine));
+    dimTags, x, y, z, ax, ay, az, angle, outDimTags, e);
+  if(e) delete e;
 }
 
 GMSH_API void gmsh::model::geo::twist(
@@ -5693,9 +5698,10 @@ GMSH_API void gmsh::model::geo::twist(
 {
   _checkInit();
   outDimTags.clear();
+  ExtrudeParams *e = _getExtrudeParams(numElements, heights, recombine);
   GModel::current()->getGEOInternals()->twist(
-    dimTags, x, y, z, dx, dy, dz, ax, ay, az, angle, outDimTags,
-    _getExtrudeParams(numElements, heights, recombine));
+    dimTags, x, y, z, dx, dy, dz, ax, ay, az, angle, outDimTags, e);
+  if(e) delete e;
 }
 
 GMSH_API void gmsh::model::geo::extrudeBoundaryLayer(
@@ -5713,6 +5719,7 @@ GMSH_API void gmsh::model::geo::extrudeBoundaryLayer(
   e->mesh.BoundaryLayerIndex = second ? 1 : 0;
   e->mesh.ViewIndex = viewIndex;
   GModel::current()->getGEOInternals()->boundaryLayer(dimTags, outDimTags, e);
+  delete e;
 }
 
 GMSH_API void gmsh::model::geo::translate(const vectorpair &dimTags,
@@ -6310,9 +6317,10 @@ GMSH_API void gmsh::model::occ::extrude(const vectorpair &dimTags,
   if(!_checkInit()) return;
   _createOcc();
   outDimTags.clear();
+  ExtrudeParams *e = _getExtrudeParams(numElements, heights, recombine);
   GModel::current()->getOCCInternals()->extrude(
-    dimTags, dx, dy, dz, outDimTags,
-    _getExtrudeParams(numElements, heights, recombine));
+    dimTags, dx, dy, dz, outDimTags, e);
+  if(e) delete e;
 }
 
 GMSH_API void gmsh::model::occ::revolve(
@@ -6324,9 +6332,10 @@ GMSH_API void gmsh::model::occ::revolve(
   if(!_checkInit()) return;
   _createOcc();
   outDimTags.clear();
+  ExtrudeParams *e = _getExtrudeParams(numElements, heights, recombine);
   GModel::current()->getOCCInternals()->revolve(
-    dimTags, x, y, z, ax, ay, az, angle, outDimTags,
-    _getExtrudeParams(numElements, heights, recombine));
+    dimTags, x, y, z, ax, ay, az, angle, outDimTags, e);
+  if(e) delete e;
 }
 
 GMSH_API void gmsh::model::occ::addPipe(const vectorpair &dimTags,

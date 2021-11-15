@@ -28,13 +28,15 @@
 
 discreteFace::param::~param()
 {
-  if(oct) delete oct;
+  clear();
 }
 
 void discreteFace::param::clear()
 {
   if(oct) delete oct;
   rtree3d.RemoveAll();
+  for(auto p : rtree3dData) delete p;
+  rtree3dData.clear();
   v2d.clear();
   v3d.clear();
   bbox = SBoundingBox3d();
@@ -674,9 +676,9 @@ void discreteFace::_createGeometryFromSTL()
       MAX[2] = std::max(MAX[2], _param.t3d[j].getVertex(k)->z());
       MIN[2] = std::min(MIN[2], _param.t3d[j].getVertex(k)->z());
     }
-    std::pair<MTriangle *, MTriangle *> *tt =
-      new std::pair<MTriangle *, MTriangle *>(&_param.t3d[j], &_param.t2d[j]);
-    _param.rtree3d.Insert(MIN, MAX, tt);
+    _param.rtree3dData.push_back
+      (new std::pair<MTriangle *, MTriangle *>(&_param.t3d[j], &_param.t2d[j]));
+    _param.rtree3d.Insert(MIN, MAX, _param.rtree3dData.back());
   }
   _param.oct = new MElementOctree(temp);
 }
