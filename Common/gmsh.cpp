@@ -3349,9 +3349,9 @@ gmsh::model::mesh::getEdges(const std::vector<std::size_t> &nodeTags,
     if(v0 && v1) {
       MEdge edge;
       edgeTags[i] = GModel::current()->getMEdge(v0, v1, edge);
-      if(edge.getVertex(0) == v0 && edge.getVertex(1) == v1)
+      if(edge.getMinVertex() == v0 && edge.getMaxVertex() == v1)
         edgeOrientations[i] = 1;
-      else if(edge.getVertex(1) == v0 && edge.getVertex(0) == v1)
+      else if(edge.getMaxVertex() == v0 && edge.getMinVertex() == v1)
         edgeOrientations[i] = -1;
       else
         edgeOrientations[i] = 0;
