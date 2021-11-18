@@ -372,7 +372,8 @@ void CreateOutputFile(const std::string &fileName, int format,
 
   case FORMAT_TOCHNOG:
     GModel::current()->writeTOCHNOG
-      (name, CTX::instance()->mesh.saveAll, CTX::instance()->mesh.scalingFactor);
+      (name, CTX::instance()->mesh.saveAll, CTX::instance()->mesh.saveGroupsOfNodes,
+       CTX::instance()->mesh.scalingFactor);
     break;
 
   case FORMAT_VTK:

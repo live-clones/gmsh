@@ -32,8 +32,7 @@ GRegion::GRegion(GModel *model, int tag) : GEntity(model, tag)
 
 GRegion::~GRegion()
 {
-  for(auto it = l_faces.begin(); it != l_faces.end(); ++it)
-    (*it)->delRegion(this);
+  for(auto gf : l_faces) gf->delRegion(this);
   GRegion::deleteMesh();
 }
 
@@ -181,8 +180,8 @@ SBoundingBox3d GRegion::bounds(bool fast)
 {
   SBoundingBox3d res;
   if(geomType() != DiscreteVolume && geomType() != PartitionVolume) {
-    for(auto it = l_faces.begin(); it != l_faces.end(); it++)
-      res += (*it)->bounds(fast);
+    for(auto gf : l_faces)
+      res += gf->bounds(fast);
   }
   else {
     for(std::size_t i = 0; i < getNumMeshElements(); i++)
@@ -584,8 +583,7 @@ std::vector<MVertex *> GRegion::getEmbeddedMeshVertices() const
 std::vector<GVertex *> GRegion::vertices() const
 {
   std::set<GVertex *> v;
-  for(auto it = l_faces.begin(); it != l_faces.end(); ++it) {
-    GFace const *const gf = *it;
+  for(auto gf : l_faces) {
     std::vector<GVertex *> const &vs = gf->vertices();
     v.insert(vs.begin(), vs.end());
   }

@@ -776,7 +776,7 @@ public:
   // I-deas universal mesh format
   int readUNV(const std::string &name, bool readGroupsOfElements = true);
   int writeUNV(const std::string &name, bool saveAll = false,
-               bool saveGroupsOfElements = true, bool saveGroupsOfNodes = false,
+               int saveGroupsOfElements = 0, int saveGroupsOfNodes = 0,
                double scalingFactor = 1.0);
 
   // Medit (INRIA) mesh format
@@ -831,8 +831,8 @@ public:
                   int filetype = 1);
 
   // Tochnog format
-  int writeTOCHNOG(const std::string &name, bool saveGroupsOfNodes = false,
-                   bool saveAll = false, double scalingFactor = 1.0);
+  int writeTOCHNOG(const std::string &name, bool saveAll = false,
+                   int saveGroupsOfNodes = 0, double scalingFactor = 1.0);
 
   // DIFFPACK format
   int readDIFF(const std::string &name);
@@ -841,7 +841,7 @@ public:
 
   // Abaqus
   int writeINP(const std::string &name, bool saveAll = false,
-               int saveGroupsOfElements = 1, int saveGroupsOfNodes = 0,
+               int saveGroupsOfElements = 0, int saveGroupsOfNodes = 0,
                double scalingFactor = 1.0);
 
   // LSDYNA

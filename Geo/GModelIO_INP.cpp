@@ -50,24 +50,6 @@ static std::string physicalName(GModel *m, int dim, int num)
   return name;
 }
 
-static std::string elementaryName(GModel *m, int dim, int num)
-{
-  std::string name = m->getElementaryName(dim, num);
-  if(name.empty()) {
-    char tmp[256];
-    sprintf(tmp, "%s%d",
-            (dim == 3) ? "Volume" :
-            (dim == 2) ? "Surface" :
-            (dim == 1) ? "Line" :
-                         "Point",
-            num);
-    name = tmp;
-  }
-  for(std::size_t i = 0; i < name.size(); i++)
-    if(name[i] == ' ') name[i] = '_';
-  return name;
-}
-
 int GModel::writeINP(const std::string &name, bool saveAll,
                      int saveGroupsOfElements, int saveGroupsOfNodes,
                      double scalingFactor)
@@ -115,8 +97,11 @@ int GModel::writeINP(const std::string &name, bool saveAll,
 
   if(saveGroupsOfElements) {
     // save elements sets for each physical group (currently we don't save point
-    // elements: is there this concept in Abaqus?)
+    // elements: is there this concept in Abaqus?)  if saveGroupsOfElements is
+    // positive; if saveGroupsOfElements is negative, only save groups if the
+    // dimension of the physical group is equal to -saveGroupsOfElements.
     for(int dim = 1; dim <= 3; dim++) {
+      if(saveGroupsOfNodes < 0 && dim != -saveGroupsOfElements) continue;
       for(auto it = groups[dim].begin(); it != groups[dim].end(); it++) {
         std::vector<GEntity *> &entities = it->second;
         fprintf(fp, "*ELSET,ELSET=%s\n",
@@ -135,10 +120,13 @@ int GModel::writeINP(const std::string &name, bool saveAll,
     }
   }
 
-  if(saveGroupsOfNodes > 0) {
+  if(saveGroupsOfNodes) {
     // save a node set for each physical group (here we include node sets on
-    // physical points)
+    // physical points) if saveGroupsOfNodes is positive; if saveGroupsOfNodes
+    // is negative, only save groups if the dimension of the physical group is
+    // equal to -saveGroupsOfNodes.
     for(int dim = 0; dim <= 3; dim++) {
+      if(saveGroupsOfNodes < 0 && dim != -saveGroupsOfNodes) continue;
       for(auto it = groups[dim].begin(); it != groups[dim].end(); it++) {
         std::set<MVertex *, MVertexPtrLessThan> nodes;
         std::vector<GEntity *> &entities = it->second;
@@ -159,29 +147,6 @@ int GModel::writeINP(const std::string &name, bool saveAll,
         }
         fprintf(fp, "\n");
       }
-    }
-  }
-  else if(saveGroupsOfNodes < 0) {
-    // save a node set for each entity of dimension == (-saveGroupsOfNodes)
-    std::vector<GEntity *> entities;
-    getEntities(entities, -saveGroupsOfNodes);
-    for(std::size_t i = 0; i < entities.size(); i++) {
-      std::set<MVertex *, MVertexPtrLessThan> nodes;
-      for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
-        MElement *e = entities[i]->getMeshElement(j);
-        for(std::size_t k = 0; k < e->getNumVertices(); k++)
-          nodes.insert(e->getVertex(k));
-      }
-      fprintf(
-        fp, "*NSET,NSET=%s\n",
-        elementaryName(this, entities[i]->dim(), entities[i]->tag()).c_str());
-      int n = 0;
-      for(auto it2 = nodes.begin(); it2 != nodes.end(); it2++) {
-        if(n && !(n % 10)) fprintf(fp, "\n");
-        fprintf(fp, "%ld, ", (*it2)->getIndex());
-        n++;
-      }
-      fprintf(fp, "\n");
     }
   }
 
