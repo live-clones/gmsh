@@ -396,7 +396,7 @@ static std::string physicalName(GModel *m, int dim, int num)
 }
 
 int GModel::writeUNV(const std::string &name, bool saveAll,
-                     bool saveGroupsOfElements, bool saveGroupsOfNodes,
+                     int saveGroupsOfElements, int saveGroupsOfNodes,
                      double scalingFactor)
 {
   FILE *fp = Fopen(name.c_str(), "w");
@@ -435,8 +435,9 @@ int GModel::writeUNV(const std::string &name, bool saveAll,
   }
   fprintf(fp, "%6d\n", -1);
 
-  // save groups of elements and/or groups of nodes, if requested, for each
-  // physical group
+  // save groups of elements and/or groups of nodes for each physical group if
+  // saveGroupsOfNodes/saveGroupsOfElements is positive; if negative, only save
+  // groups if their dimension == -saveGroupsOfNodes/saveGroupsOfElements
   if(saveGroupsOfNodes || saveGroupsOfElements) {
     std::map<int, std::vector<GEntity *> > groups[4];
     getPhysicalGroups(groups);
@@ -444,11 +445,17 @@ int GModel::writeUNV(const std::string &name, bool saveAll,
     fprintf(fp, "%6d\n", -1);
     fprintf(fp, "%6d\n", 2477);
     for(int dim = 0; dim <= 3; dim++) {
+      bool saveNodes =
+        (saveGroupsOfNodes > 0 ||
+         (saveGroupsOfNodes < 0 && dim == -saveGroupsOfNodes));
+      bool saveElements =
+        (saveGroupsOfElements > 0 ||
+         (saveGroupsOfElements < 0 && dim == -saveGroupsOfElements));
       for(auto it = groups[dim].begin(); it != groups[dim].end(); it++) {
         std::vector<GEntity *> &entities = it->second;
 
         std::set<MVertex *, MVertexPtrLessThan> nodes;
-        if(saveGroupsOfNodes) {
+        if(saveNodes) {
           for(std::size_t i = 0; i < entities.size(); i++) {
             for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
               MElement *e = entities[i]->getMeshElement(j);
@@ -459,7 +466,7 @@ int GModel::writeUNV(const std::string &name, bool saveAll,
         }
 
         int nele = 0;
-        if(saveGroupsOfElements) {
+        if(saveElements) {
           for(std::size_t i = 0; i < entities.size(); i++)
             nele += entities[i]->getNumMeshElements();
         }
@@ -469,7 +476,7 @@ int GModel::writeUNV(const std::string &name, bool saveAll,
         fprintf(fp, "%s\n", physicalName(this, dim, it->first).c_str());
 
         int row = 0;
-        if(saveGroupsOfNodes) {
+        if(saveNodes) {
           for(auto it2 = nodes.begin(); it2 != nodes.end(); it2++) {
             if(row == 2) {
               fprintf(fp, "\n");
@@ -488,7 +495,7 @@ int GModel::writeUNV(const std::string &name, bool saveAll,
           row = 0;
         }
 
-        if(saveGroupsOfElements) {
+        if(saveElements) {
           for(std::size_t i = 0; i < entities.size(); i++) {
             for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
               MElement *e = entities[i]->getMeshElement(j);
