@@ -109,8 +109,9 @@ int main(int argc, char **argv)
 
   // The API also allows to set a global mesh size callback, which is called
   // each time the mesh size is queried
-  auto meshSizeCallback = [](int dim, int tag, double x, double y, double z) {
-    return 0.02 * x + 0.01;
+  auto meshSizeCallback = [](int dim, int tag, double x, double y, double z,
+                             double lc) {
+    return std::min(lc, 0.02 * x + 0.01);
   };
   gmsh::model::mesh::setSizeCallback(meshSizeCallback);
 
@@ -124,10 +125,10 @@ int main(int argc, char **argv)
   //    curvature (the value specifying the number of elements per 2 * pi rad);
   // 4) the background mesh field;
   // 5) any per-entity mesh size constraint;
-  // 6) the mesh size returned by the mesh size callback, if any.
   //
-  // This value is then constrained in the interval [`Mesh.MeshSizeMin',
-  // `MeshMeshSizeMax'] and multiplied by `Mesh.MeshSizeFactor'.  In addition,
+  // The value can then be further modified by the mesh size callback, if any,
+  // before being constrained in the interval [`Mesh.MeshSizeMin',
+  // `Mesh.MeshSizeMax'] and multiplied by `Mesh.MeshSizeFactor'. In addition,
   // boundary mesh sizes (on curves or surfaces) are interpolated inside the
   // enclosed entity (surface or volume, respectively) if the option
   // `Mesh.MeshSizeExtendFromBoundary' is set (which is the case by default).

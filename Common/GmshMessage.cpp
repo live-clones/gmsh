@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include "GmshConfig.h"
 
@@ -49,6 +49,10 @@
 #include <FL/fl_ask.H>
 #include "FlGui.h"
 #include "extraDialogs.h"
+#endif
+
+#if defined(_OPENMP)
+#include <omp.h>
 #endif
 
 int Msg::_commRank = 0;
@@ -183,6 +187,11 @@ void Msg::Initialize(int argc, char **argv)
   }
 
   InitializeOnelab("Gmsh");
+
+#if defined(_OPENMP)
+  // this is deprecated
+  //omp_set_nested(true);
+#endif
 }
 
 void Msg::Finalize()
@@ -1611,8 +1620,6 @@ void Msg::Barrier()
 }
 
 #if defined(_OPENMP)
-
-#include <omp.h>
 
 int Msg::GetNumThreads(){ return omp_get_num_threads(); }
 void Msg::SetNumThreads(int num){ omp_set_num_threads(num); }

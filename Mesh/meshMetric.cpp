@@ -1,8 +1,9 @@
 // Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+#include <algorithm>
 #include "meshMetric.h"
 #include "meshGFaceOptimize.h"
 #include "Context.h"
@@ -11,7 +12,7 @@
 #include "gmshLevelset.h"
 #include "MElementOctree.h"
 #include "OS.h"
-#include <algorithm>
+#include "Context.h"
 
 meshMetric::meshMetric(GModel *gm)
 {
@@ -796,10 +797,10 @@ double meshMetric::operator()(double x, double y, double z, GEntity *ge)
     return 0.;
   }
   SPoint3 xyz(x, y, z), uvw;
-  double initialTol = MElement::getTolerance();
-  MElement::setTolerance(1.e-4);
+  double initialTol =  CTX::instance()->mesh.toleranceReferenceElement;
+  CTX::instance()->mesh.toleranceReferenceElement = 1.e-4;
   MElement *e = _octree->find(x, y, z, _dim);
-  MElement::setTolerance(initialTol);
+  CTX::instance()->mesh.toleranceReferenceElement = initialTol;
   double value = 0.;
   if(e) {
     e->xyz2uvw(xyz, uvw);
@@ -870,10 +871,10 @@ void meshMetric::operator()(double x, double y, double z, SMetric3 &metr,
         // find other metrics here
         SMetric3 metric;
         SPoint3 xyz(x, y, z), uvw;
-        double initialTol = MElement::getTolerance();
-        MElement::setTolerance(1.e-4);
+        double initialTol =  CTX::instance()->mesh.toleranceReferenceElement;
+        CTX::instance()->mesh.toleranceReferenceElement = 1.e-4;
         MElement *e = _octree->find(x, y, z, _dim);
-        MElement::setTolerance(initialTol);
+        CTX::instance()->mesh.toleranceReferenceElement = initialTol;
         if(e) {
           e->xyz2uvw(xyz, uvw);
           SMetric3 m1 = setOfMetrics[iMetric][e->getVertex(0)];
@@ -901,10 +902,10 @@ void meshMetric::operator()(double x, double y, double z, SMetric3 &metr,
   // INTERPOLATE DISCRETE MESH METRIC
   else {
     SPoint3 xyz(x, y, z), uvw;
-    double initialTol = MElement::getTolerance();
-    MElement::setTolerance(1.e-4);
+    double initialTol =  CTX::instance()->mesh.toleranceReferenceElement;
+    CTX::instance()->mesh.toleranceReferenceElement = 1.e-4;
     MElement *e = _octree->find(x, y, z, _dim);
-    MElement::setTolerance(initialTol);
+    CTX::instance()->mesh.toleranceReferenceElement = initialTol;
 
     if(e) {
       e->xyz2uvw(xyz, uvw);

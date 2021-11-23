@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #ifndef GMODEL_H
 #define GMODEL_H
@@ -55,8 +55,6 @@ private:
   // the maximum vertex and element id number in the mesh
   std::size_t _maxVertexNum, _maxElementNum;
   std::size_t _checkPointedMaxVertexNum, _checkPointedMaxElementNum;
-  // flag set to true when the model is being destroyed
-  bool _destroying;
 
 private:
   int _readMSH2(const std::string &name);
@@ -211,23 +209,18 @@ public:
 
   // delete everything in a GModel (optionally keep name and fileName)
   void destroy(bool keepName = false);
-  bool isBeingDestroyed() const { return _destroying; }
 
   // get/set global vertex/element num
   std::size_t getMaxVertexNumber() const { return _maxVertexNum; }
   std::size_t getMaxElementNumber() const { return _maxElementNum; }
   void setMaxVertexNumber(std::size_t num)
   {
-#if defined(_OPENMP)
 #pragma omp atomic write
-#endif
     _maxVertexNum = _maxVertexNum > num ? _maxVertexNum : num;
   }
   void setMaxElementNumber(std::size_t num)
   {
-#if defined(_OPENMP)
 #pragma omp atomic write
-#endif
     _maxElementNum = _maxElementNum > num ? _maxElementNum : num;
   }
 
@@ -235,9 +228,7 @@ public:
   std::size_t incrementAndGetMaxVertexNumber()
   {
     std::size_t _myVertexNum;
-#if defined(_OPENMP)
 #pragma omp atomic capture
-#endif
     {
       ++_maxVertexNum;
       _myVertexNum = _maxVertexNum;
@@ -247,9 +238,7 @@ public:
   std::size_t incrementAndGetMaxElementNumber()
   {
     std::size_t _myElementNum;
-#if defined(_OPENMP)
 #pragma omp atomic capture
-#endif
     {
       ++_maxElementNum;
       _myElementNum = _maxElementNum;
@@ -260,9 +249,7 @@ public:
   // decrement global vertex num
   void decrementMaxVertexNumber()
   {
-#if defined(_OPENMP)
 #pragma omp atomic update
-#endif
     --_maxVertexNum;
   }
 
@@ -388,16 +375,18 @@ public:
   GEntity *getEntityByTag(int dim, int n) const;
 
   // add/remove an entity in the model
-  void add(GRegion *r) { regions.insert(r); }
-  void add(GFace *f) { faces.insert(f); }
-  void add(GEdge *e) { edges.insert(e); }
-  void add(GVertex *v) { vertices.insert(v); }
-  void remove(GRegion *r);
-  void remove(GFace *f);
-  void remove(GEdge *e);
-  void remove(GVertex *v);
-  void remove(int dim, int tag, bool recursive = false);
+  bool add(GRegion *r) { return regions.insert(r).second; }
+  bool add(GFace *f) { return faces.insert(f).second; }
+  bool add(GEdge *e) { return edges.insert(e).second; }
+  bool add(GVertex *v) { return vertices.insert(v).second; }
+  bool remove(GRegion *r);
+  bool remove(GFace *f);
+  bool remove(GEdge *e);
+  bool remove(GVertex *v);
+  void remove(int dim, int tag, std::vector<GEntity*> &removed,
+              bool recursive = false);
   void remove(const std::vector<std::pair<int, int> > &dimTags,
+              std::vector<GEntity*> &removed,
               bool recursive = false);
   void remove();
 
@@ -491,10 +480,10 @@ public:
 
   // get the name (if any) of a given elementary entity of dimension
   // "dim" and id number "num"
-  std::string getElementaryName(int dim, int num);
+  std::string getElementaryName(int dim, int tag);
   void setElementaryName(int dim, int tag, const std::string &name)
   {
-    _elementaryNames[std::pair<int, int>(dim, tag)] = name;
+    _elementaryNames[std::make_pair(dim, tag)] = name;
   }
 
   // remove elememtary name(s)
@@ -555,6 +544,9 @@ public:
   // access a mesh vertex by tag, using the vertex cache
   MVertex *getMeshVertexByTag(int n);
 
+  // add a mesh vertex to the global mesh vertex cache
+  void addMVertexToVertexCache(MVertex* v);
+
   // get all the mesh vertices associated with the physical group
   // of dimension "dim" and id number "num"
   void getMeshVerticesForPhysicalGroup(int dim, int num,
@@ -610,7 +602,7 @@ public:
   std::multimap<MElement *, short> &getGhostCells() { return _ghostCells; }
   void addGhostCells(MElement *elm, short partition)
   {
-    _ghostCells.insert(std::pair<MElement *, short>(elm, partition));
+    _ghostCells.insert(std::make_pair(elm, partition));
   }
 
   // perform various coherence tests on the mesh
@@ -695,7 +687,7 @@ public:
   void computeHomology();
 
   // mesh size callback
-  std::function<double(int, int, double, double, double)> lcCallback;
+  std::function<double(int, int, double, double, double, double)> lcCallback;
 
   // compute automatic sizing field from curvature
   void computeSizeField();

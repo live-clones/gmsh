@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include "GmshConfig.h"
 #include "GmshMessage.h"
@@ -51,12 +51,6 @@ OCCFace::OCCFace(GModel *m, TopoDS_Face s, int num)
     writeBREP("debugSurface.brep");
 }
 
-OCCFace::~OCCFace()
-{
-  if(model()->getOCCInternals() && !model()->isBeingDestroyed())
-    model()->getOCCInternals()->unbind(_s, tag()); // potentially slow
-}
-
 void OCCFace::_setup()
 {
   edgeLoops.clear();
@@ -68,7 +62,8 @@ void OCCFace::_setup()
       exp2.Next()) {
     TopoDS_Wire wire = TopoDS::Wire(exp2.Current());
     Msg::Debug("OCC surface %d - new wire", tag());
-    std::vector<GEdge *> l_wire;
+    GEdgeLoop el;
+
     for(exp3.Init(wire, TopAbs_EDGE); exp3.More(); exp3.Next()) {
       TopoDS_Edge edge = TopoDS::Edge(exp3.Current());
       GEdge *e = nullptr;
@@ -85,25 +80,34 @@ void OCCFace::_setup()
         */
       }
       else {
+        int ori = edge.Orientation() ? -1 : 1;
         Msg::Debug("Curve %d (%d --> %d) ori %d", e->tag(),
                    e->getBeginVertex() ? e->getBeginVertex()->tag() : -1,
-                   e->getEndVertex() ? e->getEndVertex()->tag() : -1,
-                   edge.Orientation());
-        l_wire.push_back(e);
+                   e->getEndVertex() ? e->getEndVertex()->tag() : -1, ori);
+        el.add(ori, e);
       }
     }
 
-    GEdgeLoop el(l_wire);
+    if(!el.check()) {
+      el.reverse(); // check other orientation
+      if(!el.check()) {
+        Msg::Info("Recomputing incorrect OpenCASCADE wire in surface %d", tag());
+        std::vector<GEdge*> edges;
+        el.getEdges(edges);
+        el.recompute(edges);
+      }
+    }
+
     for(GEdgeLoop::citer it = el.begin(); it != el.end(); ++it) {
-      l_edges.push_back(it->ge);
-      l_dirs.push_back(it->_sign);
+      l_edges.push_back(it->getEdge());
+      l_dirs.push_back(it->getSign());
       if(el.count() == 2) {
-        it->ge->meshAttributes.minimumMeshSegments =
-          std::max(it->ge->meshAttributes.minimumMeshSegments, 2);
+        it->getEdge()->meshAttributes.minimumMeshSegments =
+          std::max(it->getEdge()->meshAttributes.minimumMeshSegments, 2);
       }
       if(el.count() == 1) {
-        it->ge->meshAttributes.minimumMeshSegments =
-          std::max(it->ge->meshAttributes.minimumMeshSegments, 3);
+        it->getEdge()->meshAttributes.minimumMeshSegments =
+          std::max(it->getEdge()->meshAttributes.minimumMeshSegments, 3);
       }
     }
     edgeLoops.push_back(el);
@@ -360,53 +364,20 @@ double OCCFace::curvatures(const SPoint2 &param, SVector3 &dirMax,
 
 bool OCCFace::containsPoint(const SPoint3 &pt) const
 {
-#if 0
-  if(geomType() == Plane) {
-    gp_Pln pl = Handle(Geom_Plane)::DownCast(_occface)->Pln();
-    double n[3], c;
-    pl.Coefficients(n[0], n[1], n[2], c);
-    norme(n);
-    double angle = 0.;
-    double v[3] = {pt.x(), pt.y(), pt.z()};
-
-    auto ito = l_dirs.begin();
-    for(auto it = l_edges.begin(); it != l_edges.end(); it++) {
-      GEdge *c = *it;
-      int ori = 1;
-      if(ito != l_dirs.end()) {
-        ori = *ito;
-        ++ito;
-      }
-      int N = 10;
-      Range<double> range = c->parBounds(0);
-      for(int j = 0; j < N; j++) {
-        double u1 = (double)j / (double)N;
-        double u2 = (double)(j + 1) / (double)N;
-        if(ori < 0) {
-          u1 = 1. - u1;
-          u2 = 1. - u2;
-        }
-        GPoint pp1 = c->point(range.low() + u1 * (range.high() - range.low()));
-        GPoint pp2 = c->point(range.low() + u2 * (range.high() - range.low()));
-        double v1[3] = {pp1.x(), pp1.y(), pp1.z()};
-        double v2[3] = {pp2.x(), pp2.y(), pp2.z()};
-        angle += angle_plan(v, v1, v2, n);
-      }
-    }
-    // we're inside if angle equals 2 * pi
-    return std::abs(angle) > 2 * M_PI - 0.5 && std::abs(angle) < 2 * M_PI + 0.5;
-  }
-  else {
-    Msg::Error("Not done yet...");
-  }
-  return false;
-#else
   const Standard_Real tolerance = BRep_Tool::Tolerance(_s);
   BRepClass_FaceClassifier faceClassifier;
   faceClassifier.Perform(_s, gp_Pnt{pt.x(), pt.y(), pt.z()}, tolerance);
   const TopAbs_State state = faceClassifier.State();
   return (state == TopAbs_IN || state == TopAbs_ON);
-#endif
+}
+
+bool OCCFace::containsParam(const SPoint2 &pt)
+{
+  const Standard_Real tolerance = BRep_Tool::Tolerance(_s);
+  BRepClass_FaceClassifier faceClassifier;
+  faceClassifier.Perform(_s, gp_Pnt2d{pt.x(), pt.y()}, tolerance);
+  const TopAbs_State state = faceClassifier.State();
+  return (state == TopAbs_IN || state == TopAbs_ON);
 }
 
 bool OCCFace::buildSTLTriangulation(bool force)
@@ -445,36 +416,6 @@ bool OCCFace::isSphere(double &radius, SPoint3 &center) const
     return true;
   default: return false;
   }
-}
-
-bool OCCFace::containsParam(const SPoint2 &pt)
-{
-#if 0
-  if(!buildSTLTriangulation(false)){
-    Msg::Info("Inacurate computation in OCCFace::containsParam");
-    return GFace::containsParam(pt);
-  }
-  SPoint2 mine = pt;
-  for(std::size_t i = 0; i < stl_triangles.size(); i += 3){
-    SPoint2 gp1 = stl_vertices_uv[stl_triangles[i]];
-    SPoint2 gp2 = stl_vertices_uv[stl_triangles[i + 1]];
-    SPoint2 gp3 = stl_vertices_uv[stl_triangles[i + 2]];
-    double s1 = robustPredicates::orient2d(gp1, gp2, mine);
-    double s2 = robustPredicates::orient2d(gp2, gp3, mine);
-    double s3 = robustPredicates::orient2d(gp3, gp1, mine);
-    if (s1>=0 && s2>=0 && s3>=0)
-      return true;
-    if (s1<=0 && s2<=0 && s3<=0)
-      return true;
-  }
-  return false;
-#else
-  const Standard_Real tolerance = BRep_Tool::Tolerance(_s);
-  BRepClass_FaceClassifier faceClassifier;
-  faceClassifier.Perform(_s, gp_Pnt2d{pt.x(), pt.y()}, tolerance);
-  const TopAbs_State state = faceClassifier.State();
-  return (state == TopAbs_IN || state == TopAbs_ON);
-#endif
 }
 
 void OCCFace::writeBREP(const char *filename)

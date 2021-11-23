@@ -3,8 +3,8 @@ FROM amd64/debian:stretch
 ENV DEBIAN_FRONTEND noninteractive
 
 # in preparation for when stretch will not be supported anymore...
-# RUN echo "deb http://archive.debian.org/debian buster main" > /etc/apt/sources.list
-# RUN echo "deb http://archive.debian.org/debian-security buster/updates main" >> /etc/apt/sources.list
+# RUN echo "deb http://archive.debian.org/debian stretch main" > /etc/apt/sources.list
+# RUN echo "deb http://archive.debian.org/debian-security stretch/updates main" >> /etc/apt/sources.list
 
 RUN apt-get -o Acquire::Check-Valid-Until=false update && apt-get install -y git make autoconf python curl wget bzip2 gcc g++ texlive texinfo valgrind libgl1-mesa-dev libxi-dev libxmu-dev libxft-dev libxinerama-dev libxcursor-dev libxfixes-dev mesa-common-dev libglu1-mesa-dev zlib1g-dev cmake emacs-nox && apt-get clean
 
@@ -36,15 +36,6 @@ RUN git clone https://github.com/xianyi/OpenBLAS.git && cd OpenBLAS && git check
 # -----------------------
 
 RUN curl -L -O http://download.savannah.gnu.org/releases/freetype/freetype-2.10.4.tar.gz && tar zxf freetype-2.10.4.tar.gz && cd freetype-2.10.4 && ./configure --disable-shared && make && make install && cd .. && rm -rf freetype-2.10.4.tar.gz freetype-2.10.4
-
-# -----------------------
-# OpenCASCADE
-# -----------------------
-
-# RUN curl -L -o occt.tgz "http://git.dev.opencascade.org/gitweb/?p=occt.git;a=snapshot;h=refs/tags/V7_5_1;sf=tgz" && tar xf occt.tgz && cd occt-* && mkdir build && cd build && CXXFLAGS="-fPIC -DIGNORE_NO_ATOMICS" cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_LIBRARY_TYPE=Static -DBUILD_MODULE_Draw=0 -DBUILD_MODULE_Visualization=0 -DBUILD_MODULE_ApplicationFramework=0 .. && make -j 4 && make install && cd ../.. && rm -rf occt.tgz occt-*
-
-# OCC 7.5.1 still has the annoying bounding box bug - this is OCCT master from Feb 4 2021
-RUN curl -L -o occt.tgz "http://git.dev.opencascade.org/gitweb/?p=occt.git;a=snapshot;h=4ad4054;sf=tgz" && tar xf occt.tgz && cd occt-* && mkdir build && cd build && CXXFLAGS="-fPIC -DIGNORE_NO_ATOMICS" cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_LIBRARY_TYPE=Static -DBUILD_MODULE_Draw=0 -DBUILD_MODULE_Visualization=0 -DBUILD_MODULE_ApplicationFramework=0 .. && make -j 4 && make install && cd ../.. && rm -rf occt.tgz occt-*
 
 # -----------------------
 # HDF5
@@ -101,11 +92,15 @@ RUN cd ${SLEPC_DIR} && ./configure && make
 RUN curl -L -O http://files.salome-platform.org/Salome/other/med-4.1.0.tar.gz && tar zxf med-4.1.0.tar.gz && cd med-4.1.0 && LIBS=-ldl ./configure --with-hdf5=/usr/local --enable-build-static --disable-shared --disable-python --disable-fortran --disable-tests --with-med_int=long && make -i install && cd .. && rm -rf med-4.1.0.tar.gz med-4.1.0
 
 # -----------------------
+# OpenCASCADE
+# -----------------------
+
+RUN curl -L -o occt.tgz "http://git.dev.opencascade.org/gitweb/?p=occt.git;a=snapshot;h=refs/tags/V7_6_0;sf=tgz" && tar xf occt.tgz && cd occt-* && mkdir build && cd build && CXXFLAGS="-fPIC -DIGNORE_NO_ATOMICS" cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_LIBRARY_TYPE=Static -DBUILD_MODULE_Draw=0 -DBUILD_MODULE_Visualization=0 -DBUILD_MODULE_ApplicationFramework=0 .. && make -j 4 && make install && cd ../.. && rm -rf occt.tgz occt-*
+
+# -----------------------
 # FLTK
 # -----------------------
 
-# "docker build --build-arg REBUILD_FLTK=somethingnew"
-ARG REBUILD_FLTK=dummy
 RUN git clone https://github.com/fltk/fltk.git && cd fltk && make makeinclude && ./configure --enable-localzlib && make -j 4 && make install && cd ../.. && rm -rf fltk
 
 # -----------------------

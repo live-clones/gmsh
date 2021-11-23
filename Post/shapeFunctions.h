@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #ifndef SHAPE_FUNCTIONS_H
 #define SHAPE_FUNCTIONS_H
@@ -13,7 +13,6 @@ class element {
 protected:
   bool _ownData;
   double *_x, *_y, *_z;
-  static double TOL;
 
 public:
   element(double *x, double *y, double *z, int numNodes = 0)
@@ -51,8 +50,7 @@ public:
     y = _y[num];
     z = _z[num];
   }
-  static void setTolerance(const double tol) { TOL = tol; }
-  static double getTolerance() { return TOL; }
+  double getTolerance() const;
   virtual int getDimension() = 0;
   virtual int getNumNodes() = 0;
   virtual void getNode(int num, double &u, double &v, double &w) = 0;
@@ -335,6 +333,7 @@ public:
   void xyz2uvw(double xyz[3], double uvw[3]) { uvw[0] = uvw[1] = uvw[2] = 0.; }
   int isInside(double u, double v, double w)
   {
+    double TOL = getTolerance();
     if(std::abs(u) > TOL || std::abs(v) > TOL || std::abs(w) > TOL) return 0;
     return 1;
   }
@@ -404,6 +403,7 @@ public:
   }
   int isInside(double u, double v, double w)
   {
+    double TOL = getTolerance();
     if(u < -(1. + TOL) || u > (1. + TOL) || std::abs(v) > TOL ||
        std::abs(w) > TOL)
       return 0;
@@ -544,6 +544,7 @@ public:
   }
   int isInside(double u, double v, double w)
   {
+    double TOL = getTolerance();
     if(u < -TOL || v < -TOL || u > ((1. + TOL) - v) || std::abs(w) > TOL)
       return 0;
     return 1;
@@ -670,6 +671,7 @@ public:
   }
   int isInside(double u, double v, double w)
   {
+    double TOL = getTolerance();
     if(u < -(1. + TOL) || v < -(1. + TOL) || u > (1. + TOL) || v > (1. + TOL) ||
        std::abs(w) > TOL)
       return 0;
@@ -819,6 +821,7 @@ public:
   }
   int isInside(double u, double v, double w)
   {
+    double TOL = getTolerance();
     if(u < (-TOL) || v < (-TOL) || w < (-TOL) || u > ((1. + TOL) - v - w))
       return 0;
     return 1;
@@ -1017,6 +1020,7 @@ public:
   }
   int isInside(double u, double v, double w)
   {
+    double TOL = getTolerance();
     if(u < -(1. + TOL) || v < -(1. + TOL) || w < -(1. + TOL) ||
        u > (1. + TOL) || v > (1. + TOL) || w > (1. + TOL))
       return 0;
@@ -1186,6 +1190,7 @@ public:
   }
   int isInside(double u, double v, double w)
   {
+    double TOL = getTolerance();
     if(w > (1. + TOL) || w < -(1. + TOL) || u < (-TOL) || v < (-TOL) ||
        u > ((1. + TOL) - v))
       return 0;
@@ -1386,6 +1391,7 @@ public:
   }
   int isInside(double u, double v, double w)
   {
+    double TOL = getTolerance();
     if(u < (w - (1. + TOL)) || u > ((1. + TOL) - w) || v < (w - (1. + TOL)) ||
        v > ((1. + TOL) - w) || w < (-TOL) || w > (1. + TOL))
       return 0;

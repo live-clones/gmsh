@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #ifndef CONTEXT_H
 #define CONTEXT_H
@@ -42,14 +42,14 @@ struct contextMeshOptions {
   int NewtonConvergenceTestXYZ, maxIterDelaunay3D;
   int ignorePeriodicityMsh2, ignoreParametrizationMsh4, boundaryLayerFanElements;
   int maxNumThreads1D, maxNumThreads2D, maxNumThreads3D;
-  double angleToleranceFacetOverlap;
+  double angleToleranceFacetOverlap, toleranceReferenceElement;
   int renumber, compoundClassify, reparamMaxTriangles;
   double compoundLcFactor;
   unsigned int randomSeed;
   int nLayersPerGap;
   double gradation;
   int quadqsSizemapMethod, quadqsTopoOptimMethods;
-  double quadqsRemeshingBoldness;
+  double quadqsRemeshingBoldness, quadqsScalingOnTriangulation;
   int oldInitialDelaunay2D;
   // mesh IO
   int fileFormat, firstElementTag, firstNodeTag;
@@ -160,6 +160,8 @@ public:
   int guiColorScheme, guiRefreshRate;
   // print messages on to the terminal?
   int terminal;
+  // detached processes (WIN32)?
+  int detachedProcess;
   // number of graphical windows/tiles
   int numWindows, numTiles;
   // text editor command (with included '%s')

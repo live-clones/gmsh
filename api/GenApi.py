@@ -1,7 +1,7 @@
 # Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 #
-# See the LICENSE.txt file for license information. Please report all
-# issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+# See the LICENSE.txt file in the Gmsh root directory for license information.
+# Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 # Contributor(s):
 #   Jonathan Lambrechts
@@ -36,6 +36,9 @@ class arg:
         self.julia_pre = ""
         self.julia_post = ""
         self.julia_return = name
+        self.fortran_type_post = ""
+        self.fortran_name_pre  = ""
+        self.fortran_name_post = ""
         self.texi = name + (
             (" = " + self.python_value) if self.python_value else "")
 
@@ -49,6 +52,7 @@ def ibool(name, value=None, python_value=None, julia_value=None):
     a.python_arg = "c_int(bool(" + name + "))"
     a.cwrap_arg = "(int)" + name
     a.julia_ctype = "Cint"
+    a.fortran_type = "integer(c_int), value"
     return a
 
 
@@ -57,6 +61,7 @@ def iint(name, value=None, python_value=None, julia_value=None):
             False)
     a.python_arg = "c_int(" + name + ")"
     a.julia_ctype = "Cint"
+    a.fortran_type = "integer(c_int), value"
     return a
 
 
@@ -65,6 +70,7 @@ def isize(name, value=None, python_value=None, julia_value=None):
             "const size_t", False)
     a.python_arg = "c_size_t(" + name + ")"
     a.julia_ctype = "Csize_t"
+    a.fortran_type = "integer(c_size_t), value"
     return a
 
 
@@ -73,6 +79,7 @@ def idouble(name, value=None, python_value=None, julia_value=None):
             "const double", False)
     a.python_arg = "c_double(" + name + ")"
     a.julia_ctype = "Cdouble"
+    a.fortran_type = "real(c_double), value"
     return a
 
 
@@ -82,6 +89,8 @@ def istring(name, value=None, python_value=None, julia_value=None):
     a.python_arg = "c_char_p(" + name + ".encode())"
     a.cwrap_arg = name + ".c_str()"
     a.julia_ctype = "Ptr{Cchar}"
+    a.fortran_type = "character(len = 1, kind = c_char)"
+    a.fortran_type_post = "(*)"
     return a
 
 
@@ -90,6 +99,8 @@ def ivoidstar(name, value=None, python_value=None, julia_value=None):
             "const void *", False)
     a.python_arg = "c_void_p(" + name + ")"
     a.julia_ctype = "Ptr{Cvoid}"
+    a.fortran_type = "integer(c_int)"
+    a.fortran_type_post = "(*)"
     return a
 
 
@@ -113,6 +124,9 @@ def ivectorint(name, value=None, python_value=None, julia_value=None):
     a.python_arg = api_name + ", " + api_name_n
     a.julia_ctype = "Ptr{Cint}, Csize_t"
     a.julia_arg = "convert(Vector{Cint}, " + name + "), length(" + name + ")"
+    a.fortran_type = "integer(c_int)"
+    a.fortran_type_post = "(*)\n            integer(c_size_t), value :: " + name + "_n"
+    a.fortran_name_post = ",\n     &      " + name + "_n"
     return a
 
 
@@ -136,6 +150,9 @@ def ivectorsize(name, value=None, python_value=None, julia_value=None):
     a.python_arg = api_name + ", " + api_name_n
     a.julia_ctype = "Ptr{Csize_t}, Csize_t"
     a.julia_arg = "convert(Vector{Csize_t}, " + name + "), length(" + name + ")"
+    a.fortran_type = "integer(c_size_t)"
+    a.fortran_type_post = "(*)\n            integer(c_size_t), value :: " + name + "_n"
+    a.fortran_name_post = ",\n     &      " + name + "_n"
     return a
 
 
@@ -159,6 +176,9 @@ def ivectordouble(name, value=None, python_value=None, julia_value=None):
     a.python_arg = api_name + ", " + api_name_n
     a.julia_ctype = "Ptr{Cdouble}, Csize_t"
     a.julia_arg = "convert(Vector{Cdouble}, " + name + "), length(" + name + ")"
+    a.fortran_type = "real(c_double)"
+    a.fortran_type_post = "(*)\n            integer(c_size_t), value :: " + name + "_n"
+    a.fortran_name_post = ",\n     &      " + name + "_n"
     return a
 
 
@@ -182,6 +202,9 @@ def ivectorstring(name, value=None, python_value=None, julia_value=None):
     a.python_arg = api_name + ", " + api_name_n
     a.julia_ctype = "Ptr{Ptr{Cchar}}, Csize_t"
     a.julia_arg = name + ", length(" + name + ")"
+    a.fortran_type = "type(c_ptr)"
+    a.fortran_type_post = "(*)\n            integer(c_size_t), value :: " + name + "_n"
+    a.fortran_name_post = ",\n     &      " + name + "_n"
     return a
 
 
@@ -210,6 +233,9 @@ def ivectorpair(name, value=None, python_value=None, julia_value=None):
     a.julia_pre = (api_name + " = collect(Cint, Iterators.flatten(" + name +
                    "))\n    " + api_name_n + " = length(" + api_name + ")")
     a.julia_arg = (api_name + ", " + api_name_n)
+    a.fortran_type = "integer(c_int)"
+    a.fortran_type_post = "(*)\n            integer(c_size_t), value :: " + name + "_n"
+    a.fortran_name_post = ",\n     &      " + name + "_n"
     return a
 
 
@@ -245,6 +271,10 @@ def ivectorvectorint(name, value=None, python_value=None, julia_value=None):
                    "[i]) for i in 1:length(" + name + ") ]")
     a.julia_arg = ("convert(Vector{Vector{Cint}}," + name + "), " +
                    api_name_n + ", length(" + name + ")")
+    a.fortran_type = "type(c_ptr), intent(out)"
+    a.fortran_type_post = ("\n            type(c_ptr), intent(out) :: " + name +
+                           "_n\n            integer(c_size_t) :: " + name + "_nn")
+    a.fortran_name_post = ",\n     &      " + name + "_n,\n     &      "  + name + "_nn"
     return a
 
 
@@ -281,6 +311,10 @@ def ivectorvectorsize(name, value=None, python_value=None, julia_value=None):
                    "[i]) for i in 1:length(" + name + ") ]")
     a.julia_arg = ("convert(Vector{Vector{Csize_t}}," + name + "), " +
                    api_name_n + ", length(" + name + ")")
+    a.fortran_type = "type(c_ptr), intent(out)"
+    a.fortran_type_post = ("\n            type(c_ptr), intent(out) :: " + name +
+                           "_n\n            integer(c_size_t) :: " + name + "_nn")
+    a.fortran_name_post = ",\n     &      " + name + "_n,\n     &      "  + name + "_nn"
     return a
 
 
@@ -317,6 +351,10 @@ def ivectorvectordouble(name, value=None, python_value=None, julia_value=None):
                    "[i]) for i in 1:length(" + name + ") ]")
     a.julia_arg = ("convert(Vector{Vector{Cdouble}}," + name + "), " +
                    api_name_n + ", length(" + name + ")")
+    a.fortran_type = "type(c_ptr), intent(out)"
+    a.fortran_type_post = ("\n            type(c_ptr), intent(out) :: " +
+                           name + "_n\n            integer(c_size_t) :: " + name + "_nn")
+    a.fortran_name_post = ",\n     &      " + name + "_n,\n     &      "  + name + "_nn"
     return a
 
 
@@ -328,6 +366,8 @@ class oint(arg):
     rc_type = "int"
     rtexi_type = "integer value"
     rjulia_type = "Cint"
+    fortran_type = "integer(c_int)"
+    fortran_type_post = ""
 
     def __init__(self, name, value=None, python_value=None, julia_value=None):
         arg.__init__(self, name, value, python_value, julia_value, "int &",
@@ -349,6 +389,8 @@ class osize(arg):
     rc_type = "size_t"
     rtexi_type = "size value"
     rjulia_type = "Csize_t"
+    fortran_type = "integer(c_size_t)"
+    fortran_type_post = ""
 
     def __init__(self, name, value=None, python_value=None, julia_value=None):
         arg.__init__(self, name, value, python_value, julia_value,
@@ -370,6 +412,8 @@ class odouble(arg):
     rc_type = "double"
     rtexi_type = "floating point value"
     rjulia_type = "Cdouble"
+    fortran_type = "real(c_double)"
+    fortran_type_post = ""
 
     def __init__(self, name, value=None, python_value=None, julia_value=None):
         arg.__init__(self, name, value, python_value, julia_value, "double &",
@@ -404,6 +448,8 @@ def ostring(name, value=None, python_value=None, julia_value=None):
     a.julia_pre = api_name + " = Ref{Ptr{Cchar}}()"
     a.julia_arg = api_name
     a.julia_post = name + " = unsafe_string(" + api_name + "[])"
+    a.fortran_type = "type(c_ptr)"
+    a.fortran_type_post = "(*)"
     return a
 
 
@@ -428,7 +474,10 @@ def ovectorint(name, value=None, python_value=None, julia_value=None):
                    " = Ref{Csize_t}()")
     a.julia_arg = api_name + ", " + api_name_n
     a.julia_post = (name + " = unsafe_wrap(Array, " + api_name + "[], " +
-                    api_name_n + "[], own=true)")
+                    api_name_n + "[], own = true)")
+    a.fortran_type = "type(c_ptr), intent(out)"
+    a.fortran_type_post = "\n            integer(c_size_t) :: " + name +"_n"
+    a.fortran_name_post = ",\n     &      " + name + "_n"
     return a
 
 
@@ -453,7 +502,10 @@ def ovectorsize(name, value=None, python_value=None, julia_value=None):
                    " = Ref{Csize_t}()")
     a.julia_arg = api_name + ", " + api_name_n
     a.julia_post = (name + " = unsafe_wrap(Array, " + api_name + "[], " +
-                    api_name_n + "[], own=true)")
+                    api_name_n + "[], own = true)")
+    a.fortran_type = "type(c_ptr), intent(out)"
+    a.fortran_type_post = "\n            integer(c_size_t) :: " + name + "_n"
+    a.fortran_name_post = ",\n     &      " + name + "_n"
     return a
 
 
@@ -478,7 +530,10 @@ def ovectordouble(name, value=None, python_value=None, julia_value=None):
                    " = Ref{Csize_t}()")
     a.julia_arg = api_name + ", " + api_name_n
     a.julia_post = (name + " = unsafe_wrap(Array, " + api_name + "[], " +
-                    api_name_n + "[], own=true)")
+                    api_name_n + "[], own = true)")
+    a.fortran_type = "type(c_ptr), intent(out)"
+    a.fortran_type_post = "\n            integer(c_size_t) :: " + name + "_n"
+    a.fortran_name_post = ",\n     &      " + name + "_n"
     return a
 
 
@@ -506,9 +561,12 @@ def ovectorstring(name, value=None, python_value=None, julia_value=None):
                    " = Ref{Csize_t}()")
     a.julia_arg = api_name + ", " + api_name_n
     a.julia_post = ("tmp_" + api_name + " = unsafe_wrap(Array, " + api_name +
-                    "[], " + api_name_n + "[], own=true)\n    " + name +
+                    "[], " + api_name_n + "[], own = true)\n    " + name +
                     " = [unsafe_string(tmp_" + api_name +
                     "[i]) for i in 1:length(tmp_" + api_name + ") ]")
+    a.fortran_type = "type(c_ptr), intent(out)"
+    a.fortran_type_post = "\n            integer(c_size_t) :: " + name + "_n"
+    a.fortran_name_post = ",\n     &      " + name + "_n"
     return a
 
 
@@ -536,9 +594,12 @@ def ovectorpair(name, value=None, python_value=None, julia_value=None):
                    " = Ref{Csize_t}()")
     a.julia_arg = api_name + ", " + api_name_n
     a.julia_post = ("tmp_" + api_name + " = unsafe_wrap(Array, " + api_name +
-                    "[], " + api_name_n + "[], own=true)\n    " + name +
+                    "[], " + api_name_n + "[], own = true)\n    " + name +
                     " = [ (tmp_" + api_name + "[i], tmp_" + api_name +
                     "[i+1]) " + "for i in 1:2:length(tmp_" + api_name + ") ]")
+    a.fortran_type = "type(c_ptr), intent(out)"
+    a.fortran_type_post = "\n            integer(c_size_t) :: " + name + "_n"
+    a.fortran_name_post = ",\n     &      " + name + "_n"
     return a
 
 
@@ -574,12 +635,16 @@ def ovectorvectorint(name, value=None, python_value=None, julia_value=None):
                    " = Ref{Csize_t}()")
     a.julia_arg = api_name + ", " + api_name_n + ", " + api_name_nn
     a.julia_post = ("tmp_" + api_name + " = unsafe_wrap(Array, " + api_name +
-                    "[], " + api_name_nn + "[], own=true)\n    " + "tmp_" +
+                    "[], " + api_name_nn + "[], own = true)\n    " + "tmp_" +
                     api_name_n + " = unsafe_wrap(Array, " + api_name_n +
-                    "[], " + api_name_nn + "[], own=true)\n    " + name +
+                    "[], " + api_name_nn + "[], own = true)\n    " + name +
                     " = [ unsafe_wrap(Array, tmp_" + api_name + "[i], " +
-                    "tmp_" + api_name_n + "[i], own=true) for i in 1:" +
+                    "tmp_" + api_name_n + "[i], own = true) for i in 1:" +
                     api_name_nn + "[] ]")
+    a.fortran_type = "type(c_ptr), intent(out)"
+    a.fortran_type_post = ("\n            type(c_ptr), intent(out) :: " + name +
+                           "_n\n            integer(c_size_t) :: " + name +"_nn")
+    a.fortran_name_post = ",\n     &      " + name + "_n,\n     &      "  + name + "_nn"
     return a
 
 
@@ -615,12 +680,16 @@ def ovectorvectorsize(name, value=None, python_value=None, julia_value=None):
                    " = Ref{Csize_t}()")
     a.julia_arg = api_name + ", " + api_name_n + ", " + api_name_nn
     a.julia_post = ("tmp_" + api_name + " = unsafe_wrap(Array, " + api_name +
-                    "[], " + api_name_nn + "[], own=true)\n    " + "tmp_" +
+                    "[], " + api_name_nn + "[], own = true)\n    " + "tmp_" +
                     api_name_n + " = unsafe_wrap(Array, " + api_name_n +
-                    "[], " + api_name_nn + "[], own=true)\n    " + name +
+                    "[], " + api_name_nn + "[], own = true)\n    " + name +
                     " = [ unsafe_wrap(Array, tmp_" + api_name + "[i], " +
-                    "tmp_" + api_name_n + "[i], own=true) for i in 1:" +
+                    "tmp_" + api_name_n + "[i], own = true) for i in 1:" +
                     api_name_nn + "[] ]")
+    a.fortran_type = "type (c_ptr), intent(out)"
+    a.fortran_type_post = ("\n            type(c_ptr), intent(out) :: " + name +
+                           "_n\n            integer(c_size_t) :: " + name +"_nn")
+    a.fortran_name_post = ",\n     &      " + name + "_n,\n     &      "  + name + "_nn"
     return a
 
 
@@ -657,12 +726,16 @@ def ovectorvectordouble(name, value=None, python_value=None, julia_value=None):
                    " = Ref{Csize_t}()")
     a.julia_arg = api_name + ", " + api_name_n + ", " + api_name_nn
     a.julia_post = ("tmp_" + api_name + " = unsafe_wrap(Array, " + api_name +
-                    "[], " + api_name_nn + "[], own=true)\n    " + "tmp_" +
+                    "[], " + api_name_nn + "[], own = true)\n    " + "tmp_" +
                     api_name_n + " = unsafe_wrap(Array, " + api_name_n +
-                    "[], " + api_name_nn + "[], own=true)\n    " + name +
+                    "[], " + api_name_nn + "[], own = true)\n    " + name +
                     " = [ unsafe_wrap(Array, tmp_" + api_name + "[i], " +
-                    "tmp_" + api_name_n + "[i], own=true) for i in 1:" +
+                    "tmp_" + api_name_n + "[i], own = true) for i in 1:" +
                     api_name_nn + "[] ]")
+    a.fortran_type = "type (c_ptr), intent(out)"
+    a.fortran_type_post = ("\n            type(c_ptr), intent(out) :: " + name +
+                           "_n\n            integer (c_size_t) :: " + name + "_nn")
+    a.fortran_name_post = ",\n     &      " + name + "_n,\n     &      "  + name + "_nn"
     return a
 
 
@@ -702,14 +775,18 @@ def ovectorvectorpair(name, value=None, python_value=None, julia_value=None):
     a.julia_arg = api_name + ", " + api_name_n + ", " + api_name_nn
     a.julia_post = (
         "tmp_" + api_name + " = unsafe_wrap(Array, " + api_name + "[], " +
-        api_name_nn + "[], own=true)\n    " + "tmp_" + api_name_n +
+        api_name_nn + "[], own = true)\n    " + "tmp_" + api_name_n +
         " = unsafe_wrap(Array, " + api_name_n + "[], " + api_name_nn +
-        "[], own=true)\n    " + name + " = Vector{Tuple{Cint,Cint}}[]\n    " +
+        "[], own = true)\n    " + name + " = Vector{Tuple{Cint,Cint}}[]\n    " +
         "resize!(" + name + ", " + api_name_nn + "[])\n    " + "for i in 1:" +
         api_name_nn + "[]\n    " + "    tmp = unsafe_wrap(Array, tmp_" +
-        api_name + "[i], tmp_" + api_name_n + "[i], own=true)\n    " + "    " +
+        api_name + "[i], tmp_" + api_name_n + "[i], own = true)\n    " + "    " +
         name + "[i] = [(tmp[i], tmp[i+1]) for i in 1:2:length(tmp)]\n    " +
         "end")
+    a.fortran_type = "type (C_PTR), intent(out)"
+    a.fortran_type_post = ("\n            type(c_ptr), intent(out) :: " + name +
+                           "_n\n            integer (C_SIZE_T) ::" + name +"_nn")
+    a.fortran_name_post = ",\n     &      " + name + "_n,\n     &      "  + name + "_nn"
     return a
 
 
@@ -732,43 +809,48 @@ def iargcargv():
     a.julia_ctype = "Cint, Ptr{Ptr{Cchar}}"
     a.julia_arg = "length(argv), argv"
     a.texi = "(argc = 0)}, @code{argv = []"
+    a.fortran_name_pre = "argc,\n     &      "
+    a.fortran_type = "integer (C_INT), value :: argc\n            type (C_PTR)"
+    a.fortran_type_post = "(*)"
     return a
 
 
 def isizefun(name):
     a = arg(name, None, None, None, "", "", False)
-    a.cpp = "std::function<double(int, int, double, double, double)> " + name
+    a.cpp = "std::function<double(int, int, double, double, double, double)> " + name
     a.c_arg = ("std::bind(" + name + ", std::placeholders::_1, " +
                "std::placeholders::_2, std::placeholders::_3, " +
-               "std::placeholders::_4, std::placeholders::_5, " + name +
-               "_data)")
+               "std::placeholders::_4, std::placeholders::_5, " +
+               "std::placeholders::_6, " + name + "_data)")
     a.c = ("double (*" + name + ")" +
-           "(int dim, int tag, double x, double y, double z, void * data), " +
+           "(int dim, int tag, double x, double y, double z, double lc, void * data), " +
            "void * " + name + "_data")
     a.cwrap_pre = "struct " + name + """_caller_  {
-          static double call(int dim, int tag, double x, double y, double z, void * callbackp_) {
-            return (*static_cast<std::function<double(int, int, double, double, double)>*> (callbackp_))(dim, tag, x, y, z);
+          static double call(int dim, int tag, double x, double y, double z, double lc, void * callbackp_) {
+            return (*static_cast<std::function<double(int, int, double, double, double, double)>*> (callbackp_))(dim, tag, x, y, z, lc);
           }
         };
         // FIXME memory leak
-        auto *""" + name + "_ptr_ = new std::function<double(int,int,double,double,double)>(" + name + """);
+        auto *""" + name + "_ptr_ = new std::function<double(int, int, double, double, double, double)>(" + name + """);
 """
     a.cwrap_arg = "&" + name + "_caller_::call, " + name + "_ptr_"
     a.python_pre = (
         "global api_" + name + "_type_\n" + "            api_" + name +
         "_type_ = " +
-        "CFUNCTYPE(c_double, c_int, c_int, c_double, c_double, c_double, c_void_p)\n"
+        "CFUNCTYPE(c_double, c_int, c_int, c_double, c_double, c_double, c_double, c_void_p)\n"
         + "            global api_" + name + "_\n" + "            api_" +
-        name + "_ = api_" + name + "_type_(lambda dim, tag, x, y, z, _ : " +
-        name + "(dim, tag, x, y, z))")
+        name + "_ = api_" + name + "_type_(lambda dim, tag, x, y, z, lc, _ : " +
+        name + "(dim, tag, x, y, z, lc))")
     a.python_arg = "api_" + name + "_, None"
     a.julia_pre = (
-        "api_" + name + "__(dim, tag, x, y, z, data) = " + name +
-        "(dim, tag, x, y, z)\n    " + "api_" + name + "_ = @cfunction($api_" +
+        "api_" + name + "__(dim, tag, x, y, z, lc, data) = " + name +
+        "(dim, tag, x, y, z, lc)\n    " + "api_" + name + "_ = @cfunction($api_" +
         name + "__" +
-        ", Cdouble, (Cint, Cint, Cdouble, Cdouble, Cdouble, Ptr{Cvoid}))")
+        ", Cdouble, (Cint, Cint, Cdouble, Cdouble, Cdouble, Cdouble, Ptr{Cvoid}))")
     a.julia_arg = "api_" + name + "_, C_NULL"
     a.julia_ctype = "Ptr{Cvoid}, Ptr{Cvoid}"
+    a.fortran_type = "type (C_FUNPTR)"
+    a.fortran_type_post = " ! to do "
     return a
 
 
@@ -793,8 +875,8 @@ class Module:
 
 cpp_header = """// {0}
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on {1}
+// See the LICENSE.txt file in the {3} root directory for license information.
+// Please report all issues on {1}
 
 #ifndef {2}_H
 #define {2}_H
@@ -851,8 +933,8 @@ cpp_footer = """#endif
 c_header = """/*
  * {0}
  *
- * See the LICENSE.txt file for license information. Please report all
- * issues on {1}
+ * See the LICENSE.txt file in the {3} root directory for license information.
+ * Please report all issues on {1}
  */
 
 #ifndef {2}C_H
@@ -894,8 +976,8 @@ c_footer = """
 
 c_cpp_header = """// {0}
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on {1}
+// See the LICENSE.txt file in the {4} root directory for license information.
+// Please report all issues on {1}
 
 #include <string.h>
 #include <stdlib.h>
@@ -929,8 +1011,8 @@ void vectorvectorpair2intptrptr(const std::vector<{0}::vectorpair > &v, int ***p
 
 cwrap_header = """// {0}
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on {1}
+// See the LICENSE.txt file in the {3} root directory for license information.
+// Please report all issues on {1}
 
 #ifndef {2}_H
 #define {2}_H
@@ -1025,8 +1107,8 @@ cwrap_footer = """#endif
 
 python_header = """# {0}
 #
-# See the LICENSE.txt file for license information. Please report all
-# issues on {1}
+# See the LICENSE.txt file in the {2} root directory for license information.
+# Please report all issues on {1}
 
 # This file defines the {2} Python API (v{3}.{4}.{5}).
 #
@@ -1051,29 +1133,39 @@ from math import pi
 __version__ = {6}_API_VERSION
 
 oldsig = signal.signal(signal.SIGINT, signal.SIG_DFL)
-libdir = os.path.dirname(os.path.realpath(__file__))
+moduledir = os.path.dirname(os.path.realpath(__file__))
 if platform.system() == "Windows":
-    libpath = os.path.join(libdir, "{7}-{3}.{4}.dll")
+    libname = "{7}-{3}.{4}.dll"
+    libdir = os.path.dirname(moduledir)
 elif platform.system() == "Darwin":
-    libpath = os.path.join(libdir, "lib{7}.dylib")
+    libname = "lib{7}.{3}.{4}.dylib"
+    libdir = os.path.dirname(os.path.dirname(moduledir))
 else:
-    libpath = os.path.join(libdir, "lib{7}.so")
+    libname = "lib{7}.so.{3}.{4}"
+    libdir = os.path.dirname(os.path.dirname(moduledir))
 
+libpath = os.path.join(libdir, libname)
 if not os.path.exists(libpath):
-    libpath = find_library("{7}")
+    libpath = os.path.join(moduledir, libname)
+    if not os.path.exists(libpath):
+        libpath = find_library("{7}")
 
 lib = CDLL(libpath)
 
+
+try_numpy = True # set this to False to never use numpy
+
 use_numpy = False
-try:
-    import numpy
+if try_numpy:
     try:
-        from weakref import finalize as weakreffinalize
+        import numpy
+        try:
+            from weakref import finalize as weakreffinalize
+        except:
+            from backports.weakref import finalize as weakreffinalize
+        use_numpy = True
     except:
-        from backports.weakref import finalize as weakreffinalize
-    use_numpy = True
-except:
-    pass
+        pass
 
 # Utility functions, not part of the Gmsh Python API
 
@@ -1236,8 +1328,8 @@ def _iargcargv(o):
 
 julia_header = """# {0}
 #
-# See the LICENSE.txt file for license information. Please report all
-# issues on {1}
+# See the LICENSE.txt file in the {2} root directory for license information.
+# Please report all issues on {1}
 
 # This file defines the {2} Julia API (v{3}.{4}.{5}).
 #
@@ -1245,6 +1337,48 @@ julia_header = """# {0}
 #
 # By design, the {2} Julia API is purely functional, and only uses elementary
 # Julia types. See `tutorial/julia' and `demos/api' for examples.
+"""
+
+
+fortran_header = """c
+c  {0}
+c
+c  See the LICENSE.txt file in the {3} root directory for license information.
+c  Please report all issues on {1}
+c
+
+!DEC$ IF DEFINED ({2}F_H)
+!DEC$ ELSE
+!DEC$ DEFINE {2}F_H
+
+c
+c  This file defines the {3} Fortran API (v{4}.{5}.{6}).
+c
+c  Do not edit it directly: it is automatically generated by `api/gen.py'.
+c
+c  By design, the {3} Fortran API is purely functional, and only uses elementary
+c  Fortran types. See `tutorial/fortran' and `demos/api' for examples.
+c
+
+!DEC$ DEFINE {2}_API_VERSION_MAJOR = {4}
+!DEC$ DEFINE {2}_API_VERSION_MINOR = {5}
+!DEC$ DEFINE {2}_API_VERSION_PATCH = {6}
+
+      module gmsh_fortran
+
+        use, intrinsic :: iso_c_binding
+
+        character(len = 5), parameter :: {2}_API_VERSION = "{4}.{5}.{6}"
+        real(c_double), parameter::M_PI = 3.14159265358979323846d0
+
+        interface
+"""
+
+fortran_footer = """
+        end interface
+      end module gmsh_fortran
+
+!DEC$ ENDIF
 """
 
 
@@ -1258,10 +1392,10 @@ class API:
         version_major,
         version_minor,
         version_patch,
-        namespace="gmsh",
-        code="Gmsh",
-        copyright="Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle",
-        issues="https://gitlab.onelab.info/gmsh/gmsh/issues."):
+        namespace = "gmsh",
+        code = "Gmsh",
+        copyright = "Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle",
+        issues = "https://gitlab.onelab.info/gmsh/gmsh/issues."):
         self.version_major = version_major
         self.version_minor = version_minor
         self.version_patch = version_patch
@@ -1271,7 +1405,7 @@ class API:
         self.copyright = copyright
         self.issues = issues
         self.modules = []
-        self.api_lineno = {'cpp': {}, 'c': {}, 'py': {}, 'jl': {}}
+        self.api_lineno = {'cpp': {}, 'c': {}, 'py': {}, 'jl': {}, 'f': {}}
 
     def add_module(self, name, doc):
         module = Module(name, doc)
@@ -1427,7 +1561,7 @@ class API:
                                         self.version_patch, ns))
                     fc.write(
                         c_cpp_header.format(self.copyright, self.issues, ns,
-                                            ns.upper()))
+                                            ns.upper(), self.code))
                     fc.write(cwrap_utils.format(ns, ""))
                     fc.write(c_cpp_utils.format(ns))
                     fc.write("\n")
@@ -1681,6 +1815,77 @@ class API:
                                     self.version_patch))
             for module in self.modules:
                 write_module(f, module, "", "", 1)
+
+
+    def write_fortran(self):
+        def write_module(module, c_namespace, cpp_namespace, indent):
+            cpp_namespace += module.name + "::"
+            if c_namespace:
+                c_namespace += module.name[0].upper() + module.name[1:]
+            else:
+                c_namespace = module.name
+
+            indent += "  "
+            for rtype, name, args, doc, special in module.fs:
+                # *f.h
+                fname = c_namespace + name[0].upper() + name[1:]
+
+# output doc
+                self.fwrite(
+                    f,
+                    "\n!  " + "\n!  ".join(textwrap.wrap(doc, 75)) + "\n")
+                fnameapi = "!  " + ns.upper() + "_API " + (rtype.rc_type if rtype else
+                                                   "void") + " " + fname + "("
+                self.flog('f', cpp_namespace.replace('::', '/') + name)
+
+                if (len(fname) < 45) :
+
+# output fortran header
+                        fnamef = ' '*8 + ("function" if rtype else "subroutine") + ' ' + fname + "("
+                        self.fwrite(
+                            f, fnamef + "\n     &      " + (",\n     &      ").join(
+                                list((a.fortran_name_pre + a.name + a.fortran_name_post for a in args + (oint("ierr"), )))) + ")\n")
+
+                        left = "          "
+                        self.fwrite(
+                            f,
+                            "     &    bind(C, name = \"" + fname + "\")" + "\n")
+                        self.fwrite(
+                            f,
+                            left + "use, intrinsic :: iso_c_binding" + "\n")
+                        if rtype :
+                            self.fwrite(
+                                f,
+                                left + (rtype.fortran_type) + "::" + fname + "\n")
+
+                        self.fwrite(
+                            f, ("").join(
+                            list(( left + "  " + a.fortran_type + "::"
+                                   + a.name + a.fortran_type_post
+                                   + "\n" for a in args + (oint("ierr"), ) ))
+                                        )
+                                   )
+
+                        self.fwrite(
+                            f,
+                            left + "end " + ("function" if rtype else "subroutine")
+                            + " " + fname + "\n")
+
+            for m in module.submodules:
+                write_module(m, c_namespace, cpp_namespace, indent)
+
+        self.current_lineno = 1
+        with open(ns + "f.h", "w") as f:
+                    self.fwrite(
+                        f,
+                        fortran_header.format(self.copyright, self.issues,
+                                        ns.upper(), self.code,
+                                        self.version_major, self.version_minor,
+                                        self.version_patch, ns))
+                    for module in self.modules:
+                        write_module(module, "", "", "")
+                    self.fwrite(f, fortran_footer)
+
 
     def write_texi(self):
         def tryint(s):

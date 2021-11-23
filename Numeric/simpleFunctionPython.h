@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #ifndef SIMPLE_FUNCTION_PYTHON_H
 #define SIMPLE_FUNCTION_PYTHON_H
@@ -21,7 +21,7 @@ public:
   double operator()(double x, double y, double z) const
   {
     PyObject *pyargs = Py_BuildValue("(ddd)", x, y, z);
-    PyObject *result = PyEval_CallObject(_pycallback, pyargs);
+    PyObject *result = PyObject_CallObject(_pycallback, pyargs);
     double r = 0;
     if(result) {
       int ok = PyArg_Parse(result, "d", &r);

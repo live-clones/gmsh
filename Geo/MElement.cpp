@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <stdlib.h>
 #include <cmath>
@@ -37,8 +37,6 @@
 
 #define SQU(a) ((a) * (a))
 
-double MElement::_isInsideTolerance = 1.e-6;
-
 MElement::MElement(std::size_t num, int part) : _visible(1)
 {
   // we should make GModel a mandatory argument to the constructor
@@ -60,9 +58,10 @@ void MElement::forceNum(std::size_t num)
   m->setMaxElementNumber(_num);
 }
 
-void MElement::setTolerance(const double tol) { _isInsideTolerance = tol; }
-
-double MElement::getTolerance() { return _isInsideTolerance; }
+double MElement::getTolerance() const
+{
+  return CTX::instance()->mesh.toleranceReferenceElement;
+}
 
 bool MElement::_getFaceInfo(const MFace &face, const MFace &other, int &sign,
                             int &rot)
@@ -2654,10 +2653,9 @@ MElement *MElementFactory::create(int num, int type,
 
   MElement *element = create(type, vertices, num, part, false, parent);
 
-  for(std::size_t j = 0; j < ghosts.size(); j++) {
-    // model->getGhostCells().insert(std::pair<MElement*, short>
-    //                               (element, ghosts[j]));
-  }
+  //for(std::size_t j = 0; j < ghosts.size(); j++) {
+    // model->getGhostCells().insert(std::make_pair(element, ghosts[j]));
+  //}
   if(part > model->getNumPartitions()) model->setNumPartitions(part);
 
   return element;

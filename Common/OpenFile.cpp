@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <sstream>
 #include <string.h>
@@ -737,8 +737,8 @@ void OpenProject(const std::string &fileName, bool errorIfMissing)
     GModel::current(GModel::list.size() - 1);
   }
 
-    // clear parser variables, but keep -setnumber/-setstrings command line
-    // definitions
+  // clear parser variables, but keep -setnumber/-setstrings command line
+  // definitions
 #if defined(HAVE_PARSER)
   gmsh_yysymbols.clear();
   gmsh_yystringsymbols.clear();
@@ -794,14 +794,21 @@ void OpenProject(const std::string &fileName, bool errorIfMissing)
 
 void OpenProjectMacFinder(const char *fileName)
 {
+  if(!fileName) return;
+  std::string name(fileName);
+  if(name == Msg::GetExecutableName()) {
+    Msg::Debug("Ignoring macOS file open callback, as the given file name "
+               "is the executable name '%s'", name.c_str());
+    return;
+  }
 #if defined(HAVE_FLTK)
   if(!FlGui::available() || !FlGui::getFinishedProcessingCommandLine()) {
     // Gmsh is not ready: will open the file later
-    FlGui::setOpenedThroughMacFinder(fileName);
+    FlGui::setOpenedThroughMacFinder(name);
   }
   else {
     // Gmsh is running
-    OpenProject(fileName);
+    OpenProject(name);
     drawContext::global()->draw();
     if(CTX::instance()->launchSolverAtStartup >= 0)
       solver_cb(nullptr, (void *)(intptr_t)CTX::instance()->launchSolverAtStartup);

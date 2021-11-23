@@ -1,7 +1,7 @@
 # Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 #
-# See the LICENSE.txt file for license information. Please report all
-# issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+# See the LICENSE.txt file in the Gmsh root directory for license information.
+# Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 # This file defines the Gmsh Julia API (v4.9.0).
 #
@@ -27,21 +27,23 @@ import Libdl
 const lib = Libdl.find_library([libname], [libdir])
 
 """
-    gmsh.initialize(argv = Vector{String}(), readConfigFiles = true)
+    gmsh.initialize(argv = Vector{String}(), readConfigFiles = true, run = false)
 
 Initialize the Gmsh API. This must be called before any call to the other
 functions in the API. If `argc` and `argv` (or just `argv` in Python or Julia)
 are provided, they will be handled in the same way as the command line arguments
 in the Gmsh app. If `readConfigFiles` is set, read system Gmsh configuration
-files (gmshrc and gmsh-options). Initializing the API sets the options
-"General.Terminal" to 1 and "General.AbortOnError" to 2. If compiled with OpenMP
+files (gmshrc and gmsh-options). If `run` is set, run in the same way as the
+Gmsh app, either interactively or in batch mode depending on the command line
+arguments. If `run` is not set, initializing the API sets the options
+"General.AbortOnError" to 2 and "General.Terminal" to 1. If compiled with OpenMP
 support, it also sets the number of threads to "General.NumThreads".
 """
-function initialize(argv = Vector{String}(), readConfigFiles = true)
+function initialize(argv = Vector{String}(), readConfigFiles = true, run = false)
     ierr = Ref{Cint}()
     ccall((:gmshInitialize, lib), Cvoid,
-          (Cint, Ptr{Ptr{Cchar}}, Cint, Ptr{Cint}),
-          length(argv), argv, readConfigFiles, ierr)
+          (Cint, Ptr{Ptr{Cchar}}, Cint, Cint, Ptr{Cint}),
+          length(argv), argv, readConfigFiles, run, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
@@ -301,7 +303,7 @@ function list()
           (Ptr{Ptr{Ptr{Cchar}}}, Ptr{Csize_t}, Ptr{Cint}),
           api_names_, api_names_n_, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    tmp_api_names_ = unsafe_wrap(Array, api_names_[], api_names_n_[], own=true)
+    tmp_api_names_ = unsafe_wrap(Array, api_names_[], api_names_n_[], own = true)
     names = [unsafe_string(tmp_api_names_[i]) for i in 1:length(tmp_api_names_) ]
     return names
 end
@@ -393,7 +395,7 @@ function getEntities(dim = -1)
           (Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
           api_dimTags_, api_dimTags_n_, dim, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    tmp_api_dimTags_ = unsafe_wrap(Array, api_dimTags_[], api_dimTags_n_[], own=true)
+    tmp_api_dimTags_ = unsafe_wrap(Array, api_dimTags_[], api_dimTags_n_[], own = true)
     dimTags = [ (tmp_api_dimTags_[i], tmp_api_dimTags_[i+1]) for i in 1:2:length(tmp_api_dimTags_) ]
     return dimTags
 end
@@ -450,7 +452,7 @@ function getPhysicalGroups(dim = -1)
           (Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
           api_dimTags_, api_dimTags_n_, dim, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    tmp_api_dimTags_ = unsafe_wrap(Array, api_dimTags_[], api_dimTags_n_[], own=true)
+    tmp_api_dimTags_ = unsafe_wrap(Array, api_dimTags_[], api_dimTags_n_[], own = true)
     dimTags = [ (tmp_api_dimTags_[i], tmp_api_dimTags_[i+1]) for i in 1:2:length(tmp_api_dimTags_) ]
     return dimTags
 end
@@ -472,7 +474,7 @@ function getEntitiesForPhysicalGroup(dim, tag)
           (Cint, Cint, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
           dim, tag, api_tags_, api_tags_n_, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    tags = unsafe_wrap(Array, api_tags_[], api_tags_n_[], own=true)
+    tags = unsafe_wrap(Array, api_tags_[], api_tags_n_[], own = true)
     return tags
 end
 const get_entities_for_physical_group = getEntitiesForPhysicalGroup
@@ -493,7 +495,7 @@ function getPhysicalGroupsForEntity(dim, tag)
           (Cint, Cint, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
           dim, tag, api_physicalTags_, api_physicalTags_n_, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    physicalTags = unsafe_wrap(Array, api_physicalTags_[], api_physicalTags_n_[], own=true)
+    physicalTags = unsafe_wrap(Array, api_physicalTags_[], api_physicalTags_n_[], own = true)
     return physicalTags
 end
 const get_physical_groups_for_entity = getPhysicalGroupsForEntity
@@ -585,6 +587,22 @@ end
 const get_physical_name = getPhysicalName
 
 """
+    gmsh.model.setTag(dim, tag, newTag)
+
+Set the tag of the entity of dimension `dim` and tag `tag` to the new value
+`newTag`.
+"""
+function setTag(dim, tag, newTag)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelSetTag, gmsh.lib), Cvoid,
+          (Cint, Cint, Cint, Ptr{Cint}),
+          dim, tag, newTag, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+const set_tag = setTag
+
+"""
     gmsh.model.getBoundary(dimTags, combined = true, oriented = true, recursive = false)
 
 Get the boundary of the model entities `dimTags`. Return in `outDimTags` the
@@ -606,7 +624,7 @@ function getBoundary(dimTags, combined = true, oriented = true, recursive = fals
           (Ptr{Cint}, Csize_t, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Cint, Cint, Ptr{Cint}),
           api_dimTags_, api_dimTags_n_, api_outDimTags_, api_outDimTags_n_, combined, oriented, recursive, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own=true)
+    tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own = true)
     outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
     return outDimTags
 end
@@ -632,8 +650,8 @@ function getAdjacencies(dim, tag)
           (Cint, Cint, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
           dim, tag, api_upward_, api_upward_n_, api_downward_, api_downward_n_, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    upward = unsafe_wrap(Array, api_upward_[], api_upward_n_[], own=true)
-    downward = unsafe_wrap(Array, api_downward_[], api_downward_n_[], own=true)
+    upward = unsafe_wrap(Array, api_upward_[], api_upward_n_[], own = true)
+    downward = unsafe_wrap(Array, api_downward_[], api_downward_n_[], own = true)
     return upward, downward
 end
 const get_adjacencies = getAdjacencies
@@ -655,7 +673,7 @@ function getEntitiesInBoundingBox(xmin, ymin, zmin, xmax, ymax, zmax, dim = -1)
           (Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
           xmin, ymin, zmin, xmax, ymax, zmax, api_tags_, api_tags_n_, dim, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    tmp_api_tags_ = unsafe_wrap(Array, api_tags_[], api_tags_n_[], own=true)
+    tmp_api_tags_ = unsafe_wrap(Array, api_tags_[], api_tags_n_[], own = true)
     tags = [ (tmp_api_tags_[i], tmp_api_tags_[i+1]) for i in 1:2:length(tmp_api_tags_) ]
     return tags
 end
@@ -814,7 +832,7 @@ function getPartitions(dim, tag)
           (Cint, Cint, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
           dim, tag, api_partitions_, api_partitions_n_, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    partitions = unsafe_wrap(Array, api_partitions_[], api_partitions_n_[], own=true)
+    partitions = unsafe_wrap(Array, api_partitions_[], api_partitions_n_[], own = true)
     return partitions
 end
 const get_partitions = getPartitions
@@ -840,7 +858,7 @@ function getValue(dim, tag, parametricCoord)
           (Cint, Cint, Ptr{Cdouble}, Csize_t, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
           dim, tag, convert(Vector{Cdouble}, parametricCoord), length(parametricCoord), api_coord_, api_coord_n_, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    coord = unsafe_wrap(Array, api_coord_[], api_coord_n_[], own=true)
+    coord = unsafe_wrap(Array, api_coord_[], api_coord_n_[], own = true)
     return coord
 end
 const get_value = getValue
@@ -868,7 +886,7 @@ function getDerivative(dim, tag, parametricCoord)
           (Cint, Cint, Ptr{Cdouble}, Csize_t, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
           dim, tag, convert(Vector{Cdouble}, parametricCoord), length(parametricCoord), api_derivatives_, api_derivatives_n_, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    derivatives = unsafe_wrap(Array, api_derivatives_[], api_derivatives_n_[], own=true)
+    derivatives = unsafe_wrap(Array, api_derivatives_[], api_derivatives_n_[], own = true)
     return derivatives
 end
 const get_derivative = getDerivative
@@ -897,7 +915,7 @@ function getSecondDerivative(dim, tag, parametricCoord)
           (Cint, Cint, Ptr{Cdouble}, Csize_t, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
           dim, tag, convert(Vector{Cdouble}, parametricCoord), length(parametricCoord), api_derivatives_, api_derivatives_n_, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    derivatives = unsafe_wrap(Array, api_derivatives_[], api_derivatives_n_[], own=true)
+    derivatives = unsafe_wrap(Array, api_derivatives_[], api_derivatives_n_[], own = true)
     return derivatives
 end
 const get_second_derivative = getSecondDerivative
@@ -921,7 +939,7 @@ function getCurvature(dim, tag, parametricCoord)
           (Cint, Cint, Ptr{Cdouble}, Csize_t, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
           dim, tag, convert(Vector{Cdouble}, parametricCoord), length(parametricCoord), api_curvatures_, api_curvatures_n_, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    curvatures = unsafe_wrap(Array, api_curvatures_[], api_curvatures_n_[], own=true)
+    curvatures = unsafe_wrap(Array, api_curvatures_[], api_curvatures_n_[], own = true)
     return curvatures
 end
 const get_curvature = getCurvature
@@ -950,10 +968,10 @@ function getPrincipalCurvatures(tag, parametricCoord)
           (Cint, Ptr{Cdouble}, Csize_t, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
           tag, convert(Vector{Cdouble}, parametricCoord), length(parametricCoord), api_curvatureMax_, api_curvatureMax_n_, api_curvatureMin_, api_curvatureMin_n_, api_directionMax_, api_directionMax_n_, api_directionMin_, api_directionMin_n_, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    curvatureMax = unsafe_wrap(Array, api_curvatureMax_[], api_curvatureMax_n_[], own=true)
-    curvatureMin = unsafe_wrap(Array, api_curvatureMin_[], api_curvatureMin_n_[], own=true)
-    directionMax = unsafe_wrap(Array, api_directionMax_[], api_directionMax_n_[], own=true)
-    directionMin = unsafe_wrap(Array, api_directionMin_[], api_directionMin_n_[], own=true)
+    curvatureMax = unsafe_wrap(Array, api_curvatureMax_[], api_curvatureMax_n_[], own = true)
+    curvatureMin = unsafe_wrap(Array, api_curvatureMin_[], api_curvatureMin_n_[], own = true)
+    directionMax = unsafe_wrap(Array, api_directionMax_[], api_directionMax_n_[], own = true)
+    directionMin = unsafe_wrap(Array, api_directionMin_[], api_directionMin_n_[], own = true)
     return curvatureMax, curvatureMin, directionMax, directionMin
 end
 const get_principal_curvatures = getPrincipalCurvatures
@@ -976,7 +994,7 @@ function getNormal(tag, parametricCoord)
           (Cint, Ptr{Cdouble}, Csize_t, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
           tag, convert(Vector{Cdouble}, parametricCoord), length(parametricCoord), api_normals_, api_normals_n_, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    normals = unsafe_wrap(Array, api_normals_[], api_normals_n_[], own=true)
+    normals = unsafe_wrap(Array, api_normals_[], api_normals_n_[], own = true)
     return normals
 end
 const get_normal = getNormal
@@ -1001,7 +1019,7 @@ function getParametrization(dim, tag, coord)
           (Cint, Cint, Ptr{Cdouble}, Csize_t, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
           dim, tag, convert(Vector{Cdouble}, coord), length(coord), api_parametricCoord_, api_parametricCoord_n_, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    parametricCoord = unsafe_wrap(Array, api_parametricCoord_[], api_parametricCoord_n_[], own=true)
+    parametricCoord = unsafe_wrap(Array, api_parametricCoord_[], api_parametricCoord_n_[], own = true)
     return parametricCoord
 end
 const get_parametrization = getParametrization
@@ -1024,24 +1042,24 @@ function getParametrizationBounds(dim, tag)
           (Cint, Cint, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
           dim, tag, api_min_, api_min_n_, api_max_, api_max_n_, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    min = unsafe_wrap(Array, api_min_[], api_min_n_[], own=true)
-    max = unsafe_wrap(Array, api_max_[], api_max_n_[], own=true)
+    min = unsafe_wrap(Array, api_min_[], api_min_n_[], own = true)
+    max = unsafe_wrap(Array, api_max_[], api_max_n_[], own = true)
     return min, max
 end
 const get_parametrization_bounds = getParametrizationBounds
 
 """
-    gmsh.model.isInside(dim, tag, coord, parametric = true)
+    gmsh.model.isInside(dim, tag, coord, parametric = false)
 
 Check if the coordinates (or the parametric coordinates if `parametric` is set)
 provided in `coord` correspond to points inside the entity of dimension `dim`
 and tag `tag`, and return the number of points inside. This feature is only
-available for a subset of curves and surfaces, depending on the underyling
-geometrical representation.
+available for a subset of entities, depending on the underyling geometrical
+representation.
 
 Return an integer value.
 """
-function isInside(dim, tag, coord, parametric = true)
+function isInside(dim, tag, coord, parametric = false)
     ierr = Ref{Cint}()
     api_result_ = ccall((:gmshModelIsInside, gmsh.lib), Cint,
           (Cint, Cint, Ptr{Cdouble}, Csize_t, Cint, Ptr{Cint}),
@@ -1073,8 +1091,8 @@ function getClosestPoint(dim, tag, coord)
           (Cint, Cint, Ptr{Cdouble}, Csize_t, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
           dim, tag, convert(Vector{Cdouble}, coord), length(coord), api_closestCoord_, api_closestCoord_n_, api_parametricCoord_, api_parametricCoord_n_, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    closestCoord = unsafe_wrap(Array, api_closestCoord_[], api_closestCoord_n_[], own=true)
-    parametricCoord = unsafe_wrap(Array, api_parametricCoord_[], api_parametricCoord_n_[], own=true)
+    closestCoord = unsafe_wrap(Array, api_closestCoord_[], api_closestCoord_n_[], own = true)
+    parametricCoord = unsafe_wrap(Array, api_parametricCoord_[], api_parametricCoord_n_[], own = true)
     return closestCoord, parametricCoord
 end
 const get_closest_point = getClosestPoint
@@ -1099,7 +1117,7 @@ function reparametrizeOnSurface(dim, tag, parametricCoord, surfaceTag, which = 0
           (Cint, Cint, Ptr{Cdouble}, Csize_t, Cint, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
           dim, tag, convert(Vector{Cdouble}, parametricCoord), length(parametricCoord), surfaceTag, api_surfaceParametricCoord_, api_surfaceParametricCoord_n_, which, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    surfaceParametricCoord = unsafe_wrap(Array, api_surfaceParametricCoord_[], api_surfaceParametricCoord_n_[], own=true)
+    surfaceParametricCoord = unsafe_wrap(Array, api_surfaceParametricCoord_[], api_surfaceParametricCoord_n_[], own = true)
     return surfaceParametricCoord
 end
 const reparametrize_on_surface = reparametrizeOnSurface
@@ -1345,7 +1363,7 @@ function getLastEntityError()
           (Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
           api_dimTags_, api_dimTags_n_, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    tmp_api_dimTags_ = unsafe_wrap(Array, api_dimTags_[], api_dimTags_n_[], own=true)
+    tmp_api_dimTags_ = unsafe_wrap(Array, api_dimTags_[], api_dimTags_n_[], own = true)
     dimTags = [ (tmp_api_dimTags_[i], tmp_api_dimTags_[i+1]) for i in 1:2:length(tmp_api_dimTags_) ]
     return dimTags
 end
@@ -1367,7 +1385,7 @@ function getLastNodeError()
           (Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cint}),
           api_nodeTags_, api_nodeTags_n_, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    nodeTags = unsafe_wrap(Array, api_nodeTags_[], api_nodeTags_n_[], own=true)
+    nodeTags = unsafe_wrap(Array, api_nodeTags_[], api_nodeTags_n_[], own = true)
     return nodeTags
 end
 const get_last_node_error = getLastNodeError
@@ -1458,9 +1476,9 @@ function getNodes(dim = -1, tag = -1, includeBoundary = false, returnParametricC
           (Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Cint, Cint, Cint, Ptr{Cint}),
           api_nodeTags_, api_nodeTags_n_, api_coord_, api_coord_n_, api_parametricCoord_, api_parametricCoord_n_, dim, tag, includeBoundary, returnParametricCoord, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    nodeTags = unsafe_wrap(Array, api_nodeTags_[], api_nodeTags_n_[], own=true)
-    coord = unsafe_wrap(Array, api_coord_[], api_coord_n_[], own=true)
-    parametricCoord = unsafe_wrap(Array, api_parametricCoord_[], api_parametricCoord_n_[], own=true)
+    nodeTags = unsafe_wrap(Array, api_nodeTags_[], api_nodeTags_n_[], own = true)
+    coord = unsafe_wrap(Array, api_coord_[], api_coord_n_[], own = true)
+    parametricCoord = unsafe_wrap(Array, api_parametricCoord_[], api_parametricCoord_n_[], own = true)
     return nodeTags, coord, parametricCoord
 end
 const get_nodes = getNodes
@@ -1485,9 +1503,9 @@ function getNodesByElementType(elementType, tag = -1, returnParametricCoord = tr
           (Cint, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Cint, Ptr{Cint}),
           elementType, api_nodeTags_, api_nodeTags_n_, api_coord_, api_coord_n_, api_parametricCoord_, api_parametricCoord_n_, tag, returnParametricCoord, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    nodeTags = unsafe_wrap(Array, api_nodeTags_[], api_nodeTags_n_[], own=true)
-    coord = unsafe_wrap(Array, api_coord_[], api_coord_n_[], own=true)
-    parametricCoord = unsafe_wrap(Array, api_parametricCoord_[], api_parametricCoord_n_[], own=true)
+    nodeTags = unsafe_wrap(Array, api_nodeTags_[], api_nodeTags_n_[], own = true)
+    coord = unsafe_wrap(Array, api_coord_[], api_coord_n_[], own = true)
+    parametricCoord = unsafe_wrap(Array, api_parametricCoord_[], api_parametricCoord_n_[], own = true)
     return nodeTags, coord, parametricCoord
 end
 const get_nodes_by_element_type = getNodesByElementType
@@ -1515,8 +1533,8 @@ function getNode(nodeTag)
           (Csize_t, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}, Ptr{Cint}, Ptr{Cint}),
           nodeTag, api_coord_, api_coord_n_, api_parametricCoord_, api_parametricCoord_n_, api_dim_, api_tag_, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    coord = unsafe_wrap(Array, api_coord_[], api_coord_n_[], own=true)
-    parametricCoord = unsafe_wrap(Array, api_parametricCoord_[], api_parametricCoord_n_[], own=true)
+    coord = unsafe_wrap(Array, api_coord_[], api_coord_n_[], own = true)
+    parametricCoord = unsafe_wrap(Array, api_parametricCoord_[], api_parametricCoord_n_[], own = true)
     return coord, parametricCoord, api_dim_[], api_tag_[]
 end
 const get_node = getNode
@@ -1589,11 +1607,29 @@ function getNodesForPhysicalGroup(dim, tag)
           (Cint, Cint, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
           dim, tag, api_nodeTags_, api_nodeTags_n_, api_coord_, api_coord_n_, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    nodeTags = unsafe_wrap(Array, api_nodeTags_[], api_nodeTags_n_[], own=true)
-    coord = unsafe_wrap(Array, api_coord_[], api_coord_n_[], own=true)
+    nodeTags = unsafe_wrap(Array, api_nodeTags_[], api_nodeTags_n_[], own = true)
+    coord = unsafe_wrap(Array, api_coord_[], api_coord_n_[], own = true)
     return nodeTags, coord
 end
 const get_nodes_for_physical_group = getNodesForPhysicalGroup
+
+"""
+    gmsh.model.mesh.getMaxNodeTag()
+
+Get the maximum tag `maxTag` of a node in the mesh.
+
+Return `maxTag`.
+"""
+function getMaxNodeTag()
+    api_maxTag_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshGetMaxNodeTag, gmsh.lib), Cvoid,
+          (Ptr{Csize_t}, Ptr{Cint}),
+          api_maxTag_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return api_maxTag_[]
+end
+const get_max_node_tag = getMaxNodeTag
 
 """
     gmsh.model.mesh.addNodes(dim, tag, nodeTags, coord, parametricCoord = Cdouble[])
@@ -1685,13 +1721,13 @@ function getElements(dim = -1, tag = -1)
           (Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Csize_t}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Csize_t}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Cint, Cint, Ptr{Cint}),
           api_elementTypes_, api_elementTypes_n_, api_elementTags_, api_elementTags_n_, api_elementTags_nn_, api_nodeTags_, api_nodeTags_n_, api_nodeTags_nn_, dim, tag, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    elementTypes = unsafe_wrap(Array, api_elementTypes_[], api_elementTypes_n_[], own=true)
-    tmp_api_elementTags_ = unsafe_wrap(Array, api_elementTags_[], api_elementTags_nn_[], own=true)
-    tmp_api_elementTags_n_ = unsafe_wrap(Array, api_elementTags_n_[], api_elementTags_nn_[], own=true)
-    elementTags = [ unsafe_wrap(Array, tmp_api_elementTags_[i], tmp_api_elementTags_n_[i], own=true) for i in 1:api_elementTags_nn_[] ]
-    tmp_api_nodeTags_ = unsafe_wrap(Array, api_nodeTags_[], api_nodeTags_nn_[], own=true)
-    tmp_api_nodeTags_n_ = unsafe_wrap(Array, api_nodeTags_n_[], api_nodeTags_nn_[], own=true)
-    nodeTags = [ unsafe_wrap(Array, tmp_api_nodeTags_[i], tmp_api_nodeTags_n_[i], own=true) for i in 1:api_nodeTags_nn_[] ]
+    elementTypes = unsafe_wrap(Array, api_elementTypes_[], api_elementTypes_n_[], own = true)
+    tmp_api_elementTags_ = unsafe_wrap(Array, api_elementTags_[], api_elementTags_nn_[], own = true)
+    tmp_api_elementTags_n_ = unsafe_wrap(Array, api_elementTags_n_[], api_elementTags_nn_[], own = true)
+    elementTags = [ unsafe_wrap(Array, tmp_api_elementTags_[i], tmp_api_elementTags_n_[i], own = true) for i in 1:api_elementTags_nn_[] ]
+    tmp_api_nodeTags_ = unsafe_wrap(Array, api_nodeTags_[], api_nodeTags_nn_[], own = true)
+    tmp_api_nodeTags_n_ = unsafe_wrap(Array, api_nodeTags_n_[], api_nodeTags_nn_[], own = true)
+    nodeTags = [ unsafe_wrap(Array, tmp_api_nodeTags_[i], tmp_api_nodeTags_n_[i], own = true) for i in 1:api_nodeTags_nn_[] ]
     return elementTypes, elementTags, nodeTags
 end
 const get_elements = getElements
@@ -1718,7 +1754,7 @@ function getElement(elementTag)
           (Csize_t, Ptr{Cint}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cint}, Ptr{Cint}, Ptr{Cint}),
           elementTag, api_elementType_, api_nodeTags_, api_nodeTags_n_, api_dim_, api_tag_, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    nodeTags = unsafe_wrap(Array, api_nodeTags_[], api_nodeTags_n_[], own=true)
+    nodeTags = unsafe_wrap(Array, api_nodeTags_[], api_nodeTags_n_[], own = true)
     return api_elementType_[], nodeTags, api_dim_[], api_tag_[]
 end
 const get_element = getElement
@@ -1748,7 +1784,7 @@ function getElementByCoordinates(x, y, z, dim = -1, strict = false)
           (Cdouble, Cdouble, Cdouble, Ptr{Csize_t}, Ptr{Cint}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cdouble}, Ptr{Cdouble}, Ptr{Cdouble}, Cint, Cint, Ptr{Cint}),
           x, y, z, api_elementTag_, api_elementType_, api_nodeTags_, api_nodeTags_n_, api_u_, api_v_, api_w_, dim, strict, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    nodeTags = unsafe_wrap(Array, api_nodeTags_[], api_nodeTags_n_[], own=true)
+    nodeTags = unsafe_wrap(Array, api_nodeTags_[], api_nodeTags_n_[], own = true)
     return api_elementTag_[], api_elementType_[], nodeTags, api_u_[], api_v_[], api_w_[]
 end
 const get_element_by_coordinates = getElementByCoordinates
@@ -1773,7 +1809,7 @@ function getElementsByCoordinates(x, y, z, dim = -1, strict = false)
           (Cdouble, Cdouble, Cdouble, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Cint, Cint, Ptr{Cint}),
           x, y, z, api_elementTags_, api_elementTags_n_, dim, strict, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    elementTags = unsafe_wrap(Array, api_elementTags_[], api_elementTags_n_[], own=true)
+    elementTags = unsafe_wrap(Array, api_elementTags_[], api_elementTags_n_[], own = true)
     return elementTags
 end
 const get_elements_by_coordinates = getElementsByCoordinates
@@ -1818,7 +1854,7 @@ function getElementTypes(dim = -1, tag = -1)
           (Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Cint, Ptr{Cint}),
           api_elementTypes_, api_elementTypes_n_, dim, tag, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    elementTypes = unsafe_wrap(Array, api_elementTypes_[], api_elementTypes_n_[], own=true)
+    elementTypes = unsafe_wrap(Array, api_elementTypes_[], api_elementTypes_n_[], own = true)
     return elementTypes
 end
 const get_element_types = getElementTypes
@@ -1868,7 +1904,7 @@ function getElementProperties(elementType)
           elementType, api_elementName_, api_dim_, api_order_, api_numNodes_, api_localNodeCoord_, api_localNodeCoord_n_, api_numPrimaryNodes_, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     elementName = unsafe_string(api_elementName_[])
-    localNodeCoord = unsafe_wrap(Array, api_localNodeCoord_[], api_localNodeCoord_n_[], own=true)
+    localNodeCoord = unsafe_wrap(Array, api_localNodeCoord_[], api_localNodeCoord_n_[], own = true)
     return elementName, api_dim_[], api_order_[], api_numNodes_[], localNodeCoord, api_numPrimaryNodes_[]
 end
 const get_element_properties = getElementProperties
@@ -1897,11 +1933,29 @@ function getElementsByType(elementType, tag = -1, task = 0, numTasks = 1)
           (Cint, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Cint, Csize_t, Csize_t, Ptr{Cint}),
           elementType, api_elementTags_, api_elementTags_n_, api_nodeTags_, api_nodeTags_n_, tag, task, numTasks, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    elementTags = unsafe_wrap(Array, api_elementTags_[], api_elementTags_n_[], own=true)
-    nodeTags = unsafe_wrap(Array, api_nodeTags_[], api_nodeTags_n_[], own=true)
+    elementTags = unsafe_wrap(Array, api_elementTags_[], api_elementTags_n_[], own = true)
+    nodeTags = unsafe_wrap(Array, api_nodeTags_[], api_nodeTags_n_[], own = true)
     return elementTags, nodeTags
 end
 const get_elements_by_type = getElementsByType
+
+"""
+    gmsh.model.mesh.getMaxElementTag()
+
+Get the maximum tag `maxTag` of an element in the mesh.
+
+Return `maxTag`.
+"""
+function getMaxElementTag()
+    api_maxTag_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshGetMaxElementTag, gmsh.lib), Cvoid,
+          (Ptr{Csize_t}, Ptr{Cint}),
+          api_maxTag_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return api_maxTag_[]
+end
+const get_max_element_tag = getMaxElementTag
 
 """
     gmsh.model.mesh.addElements(dim, tag, elementTypes, elementTags, nodeTags)
@@ -1953,11 +2007,16 @@ const add_elements_by_type = addElementsByType
     gmsh.model.mesh.getIntegrationPoints(elementType, integrationType)
 
 Get the numerical quadrature information for the given element type
-`elementType` and integration rule `integrationType` (e.g. "Gauss4" for a Gauss
-quadrature suited for integrating 4th order polynomials). `localCoord` contains
-the u, v, w coordinates of the G integration points in the reference element:
-[g1u, g1v, g1w, ..., gGu, gGv, gGw]. `weights` contains the associated weights:
-[g1q, ..., gGq].
+`elementType` and integration rule `integrationType`, where `integrationType`
+concatenates the integration rule family name with the desired order (e.g.
+"Gauss4" for a quadrature suited for integrating 4th order polynomials). The
+"CompositeGauss" family uses tensor-product rules based the 1D Gauss-Legendre
+rule; the "Gauss" family uses an economic scheme when available (i.e. with a
+minimal number of points), and falls back to "CompositeGauss" otherwise. Note
+that integration points for the "Gauss" family can fall outside of the reference
+element for high-order rules. `localCoord` contains the u, v, w coordinates of
+the G integration points in the reference element: [g1u, g1v, g1w, ..., gGu,
+gGv, gGw]. `weights` contains the associated weights: [g1q, ..., gGq].
 
 Return `localCoord`, `weights`.
 """
@@ -1971,8 +2030,8 @@ function getIntegrationPoints(elementType, integrationType)
           (Cint, Ptr{Cchar}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
           elementType, integrationType, api_localCoord_, api_localCoord_n_, api_weights_, api_weights_n_, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    localCoord = unsafe_wrap(Array, api_localCoord_[], api_localCoord_n_[], own=true)
-    weights = unsafe_wrap(Array, api_weights_[], api_weights_n_[], own=true)
+    localCoord = unsafe_wrap(Array, api_localCoord_[], api_localCoord_n_[], own = true)
+    weights = unsafe_wrap(Array, api_weights_[], api_weights_n_[], own = true)
     return localCoord, weights
 end
 const get_integration_points = getIntegrationPoints
@@ -2008,9 +2067,9 @@ function getJacobians(elementType, localCoord, tag = -1, task = 0, numTasks = 1)
           (Cint, Ptr{Cdouble}, Csize_t, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Csize_t, Csize_t, Ptr{Cint}),
           elementType, convert(Vector{Cdouble}, localCoord), length(localCoord), api_jacobians_, api_jacobians_n_, api_determinants_, api_determinants_n_, api_coord_, api_coord_n_, tag, task, numTasks, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    jacobians = unsafe_wrap(Array, api_jacobians_[], api_jacobians_n_[], own=true)
-    determinants = unsafe_wrap(Array, api_determinants_[], api_determinants_n_[], own=true)
-    coord = unsafe_wrap(Array, api_coord_[], api_coord_n_[], own=true)
+    jacobians = unsafe_wrap(Array, api_jacobians_[], api_jacobians_n_[], own = true)
+    determinants = unsafe_wrap(Array, api_determinants_[], api_determinants_n_[], own = true)
+    coord = unsafe_wrap(Array, api_coord_[], api_coord_n_[], own = true)
     return jacobians, determinants, coord
 end
 const get_jacobians = getJacobians
@@ -2043,9 +2102,9 @@ function getJacobian(elementTag, localCoord)
           (Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
           elementTag, convert(Vector{Cdouble}, localCoord), length(localCoord), api_jacobians_, api_jacobians_n_, api_determinants_, api_determinants_n_, api_coord_, api_coord_n_, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    jacobians = unsafe_wrap(Array, api_jacobians_[], api_jacobians_n_[], own=true)
-    determinants = unsafe_wrap(Array, api_determinants_[], api_determinants_n_[], own=true)
-    coord = unsafe_wrap(Array, api_coord_[], api_coord_n_[], own=true)
+    jacobians = unsafe_wrap(Array, api_jacobians_[], api_jacobians_n_[], own = true)
+    determinants = unsafe_wrap(Array, api_determinants_[], api_determinants_n_[], own = true)
+    coord = unsafe_wrap(Array, api_coord_[], api_coord_n_[], own = true)
     return jacobians, determinants, coord
 end
 const get_jacobian = getJacobian
@@ -2056,18 +2115,22 @@ const get_jacobian = getJacobian
 Get the basis functions of the element of type `elementType` at the evaluation
 points `localCoord` (given as concatenated triplets of coordinates in the
 reference element [g1u, g1v, g1w, ..., gGu, gGv, gGw]), for the function space
-`functionSpaceType` (e.g. "Lagrange" or "GradLagrange" for Lagrange basis
-functions or their gradient, in the u, v, w coordinates of the reference
-element; or "H1Legendre3" or "GradH1Legendre3" for 3rd order hierarchical H1
-Legendre functions). `numComponents` returns the number C of components of a
-basis function. `basisFunctions` returns the value of the N basis functions at
-the evaluation points, i.e. [g1f1, g1f2, ..., g1fN, g2f1, ...] when C == 1 or
-[g1f1u, g1f1v, g1f1w, g1f2u, ..., g1fNw, g2f1u, ...] when C == 3. For basis
-functions that depend on the orientation of the elements, all values for the
-first orientation are returned first, followed by values for the second, etc.
-`numOrientations` returns the overall number of orientations. If
-`wantedOrientations` is not empty, only return the values for the desired
-orientation indices.
+`functionSpaceType`. Currently supported function spaces include "Lagrange" and
+"GradLagrange" for isoparametric Lagrange basis functions and their gradient in
+the u, v, w coordinates of the reference element; "LagrangeN" and
+"GradLagrangeN", with N = 1, 2, ..., for N-th order Lagrange basis functions;
+"H1LegendreN" and "GradH1LegendreN", with N = 1, 2, ..., for N-th order
+hierarchical H1 Legendre functions; "HcurlLegendreN" and "CurlHcurlLegendreN",
+with N = 1, 2, ..., for N-th order curl-conforming basis functions.
+`numComponents` returns the number C of components of a basis function (e.g. 1
+for scalar functions and 3 for vector functions). `basisFunctions` returns the
+value of the N basis functions at the evaluation points, i.e. [g1f1, g1f2, ...,
+g1fN, g2f1, ...] when C == 1 or [g1f1u, g1f1v, g1f1w, g1f2u, ..., g1fNw, g2f1u,
+...] when C == 3. For basis functions that depend on the orientation of the
+elements, all values for the first orientation are returned first, followed by
+values for the second, etc. `numOrientations` returns the overall number of
+orientations. If `wantedOrientations` is not empty, only return the values for
+the desired orientation indices.
 
 Return `numComponents`, `basisFunctions`, `numOrientations`.
 """
@@ -2081,13 +2144,13 @@ function getBasisFunctions(elementType, localCoord, functionSpaceType, wantedOri
           (Cint, Ptr{Cdouble}, Csize_t, Ptr{Cchar}, Ptr{Cint}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}, Ptr{Cint}, Csize_t, Ptr{Cint}),
           elementType, convert(Vector{Cdouble}, localCoord), length(localCoord), functionSpaceType, api_numComponents_, api_basisFunctions_, api_basisFunctions_n_, api_numOrientations_, convert(Vector{Cint}, wantedOrientations), length(wantedOrientations), ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    basisFunctions = unsafe_wrap(Array, api_basisFunctions_[], api_basisFunctions_n_[], own=true)
+    basisFunctions = unsafe_wrap(Array, api_basisFunctions_[], api_basisFunctions_n_[], own = true)
     return api_numComponents_[], basisFunctions, api_numOrientations_[]
 end
 const get_basis_functions = getBasisFunctions
 
 """
-    gmsh.model.mesh.getBasisFunctionsOrientationForElements(elementType, functionSpaceType, tag = -1, task = 0, numTasks = 1)
+    gmsh.model.mesh.getBasisFunctionsOrientation(elementType, functionSpaceType, tag = -1, task = 0, numTasks = 1)
 
 Get the orientation index of the elements of type `elementType` in the entity of
 tag `tag`. The arguments have the same meaning as in `getBasisFunctions`.
@@ -2097,18 +2160,18 @@ functions the call is superfluous as it will return a vector of zeros.
 
 Return `basisFunctionsOrientation`.
 """
-function getBasisFunctionsOrientationForElements(elementType, functionSpaceType, tag = -1, task = 0, numTasks = 1)
+function getBasisFunctionsOrientation(elementType, functionSpaceType, tag = -1, task = 0, numTasks = 1)
     api_basisFunctionsOrientation_ = Ref{Ptr{Cint}}()
     api_basisFunctionsOrientation_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
-    ccall((:gmshModelMeshGetBasisFunctionsOrientationForElements, gmsh.lib), Cvoid,
+    ccall((:gmshModelMeshGetBasisFunctionsOrientation, gmsh.lib), Cvoid,
           (Cint, Ptr{Cchar}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Csize_t, Csize_t, Ptr{Cint}),
           elementType, functionSpaceType, api_basisFunctionsOrientation_, api_basisFunctionsOrientation_n_, tag, task, numTasks, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    basisFunctionsOrientation = unsafe_wrap(Array, api_basisFunctionsOrientation_[], api_basisFunctionsOrientation_n_[], own=true)
+    basisFunctionsOrientation = unsafe_wrap(Array, api_basisFunctionsOrientation_[], api_basisFunctionsOrientation_n_[], own = true)
     return basisFunctionsOrientation
 end
-const get_basis_functions_orientation_for_elements = getBasisFunctionsOrientationForElements
+const get_basis_functions_orientation = getBasisFunctionsOrientation
 
 """
     gmsh.model.mesh.getBasisFunctionsOrientationForElement(elementTag, functionSpaceType)
@@ -2151,7 +2214,8 @@ const get_number_of_orientations = getNumberOfOrientations
 
 Get the global unique mesh edge identifiers `edgeTags` and orientations
 `edgeOrientation` for an input list of node tag pairs defining these edges,
-concatenated in the vector `nodeTags`.
+concatenated in the vector `nodeTags`. Mesh edges are created e.g. by
+`createEdges()` or `getKeys()`.
 
 Return `edgeTags`, `edgeOrientations`.
 """
@@ -2165,8 +2229,8 @@ function getEdges(nodeTags)
           (Ptr{Csize_t}, Csize_t, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
           convert(Vector{Csize_t}, nodeTags), length(nodeTags), api_edgeTags_, api_edgeTags_n_, api_edgeOrientations_, api_edgeOrientations_n_, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    edgeTags = unsafe_wrap(Array, api_edgeTags_[], api_edgeTags_n_[], own=true)
-    edgeOrientations = unsafe_wrap(Array, api_edgeOrientations_[], api_edgeOrientations_n_[], own=true)
+    edgeTags = unsafe_wrap(Array, api_edgeTags_[], api_edgeTags_n_[], own = true)
+    edgeOrientations = unsafe_wrap(Array, api_edgeOrientations_[], api_edgeOrientations_n_[], own = true)
     return edgeTags, edgeOrientations
 end
 const get_edges = getEdges
@@ -2177,7 +2241,8 @@ const get_edges = getEdges
 Get the global unique mesh face identifiers `faceTags` and orientations
 `faceOrientations` for an input list of node tag triplets (if `faceType` == 3)
 or quadruplets (if `faceType` == 4) defining these faces, concatenated in the
-vector `nodeTags`.
+vector `nodeTags`. Mesh faces are created e.g. by `createFaces()` or
+`getKeys()`.
 
 Return `faceTags`, `faceOrientations`.
 """
@@ -2191,8 +2256,8 @@ function getFaces(faceType, nodeTags)
           (Cint, Ptr{Csize_t}, Csize_t, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
           faceType, convert(Vector{Csize_t}, nodeTags), length(nodeTags), api_faceTags_, api_faceTags_n_, api_faceOrientations_, api_faceOrientations_n_, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    faceTags = unsafe_wrap(Array, api_faceTags_[], api_faceTags_n_[], own=true)
-    faceOrientations = unsafe_wrap(Array, api_faceOrientations_[], api_faceOrientations_n_[], own=true)
+    faceTags = unsafe_wrap(Array, api_faceTags_[], api_faceTags_n_[], own = true)
+    faceOrientations = unsafe_wrap(Array, api_faceOrientations_[], api_faceOrientations_n_[], own = true)
     return faceTags, faceOrientations
 end
 const get_faces = getFaces
@@ -2232,7 +2297,7 @@ end
 const create_faces = createFaces
 
 """
-    gmsh.model.mesh.getKeysForElements(elementType, functionSpaceType, tag = -1, returnCoord = true)
+    gmsh.model.mesh.getKeys(elementType, functionSpaceType, tag = -1, returnCoord = true)
 
 Generate the pair of keys for the elements of type `elementType` in the entity
 of tag `tag`, for the `functionSpaceType` function space. Each pair (`typeKey`,
@@ -2243,7 +2308,7 @@ feature and will probably change in a future release.
 
 Return `typeKeys`, `entityKeys`, `coord`.
 """
-function getKeysForElements(elementType, functionSpaceType, tag = -1, returnCoord = true)
+function getKeys(elementType, functionSpaceType, tag = -1, returnCoord = true)
     api_typeKeys_ = Ref{Ptr{Cint}}()
     api_typeKeys_n_ = Ref{Csize_t}()
     api_entityKeys_ = Ref{Ptr{Csize_t}}()
@@ -2251,16 +2316,16 @@ function getKeysForElements(elementType, functionSpaceType, tag = -1, returnCoor
     api_coord_ = Ref{Ptr{Cdouble}}()
     api_coord_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
-    ccall((:gmshModelMeshGetKeysForElements, gmsh.lib), Cvoid,
+    ccall((:gmshModelMeshGetKeys, gmsh.lib), Cvoid,
           (Cint, Ptr{Cchar}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Cint, Ptr{Cint}),
           elementType, functionSpaceType, api_typeKeys_, api_typeKeys_n_, api_entityKeys_, api_entityKeys_n_, api_coord_, api_coord_n_, tag, returnCoord, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    typeKeys = unsafe_wrap(Array, api_typeKeys_[], api_typeKeys_n_[], own=true)
-    entityKeys = unsafe_wrap(Array, api_entityKeys_[], api_entityKeys_n_[], own=true)
-    coord = unsafe_wrap(Array, api_coord_[], api_coord_n_[], own=true)
+    typeKeys = unsafe_wrap(Array, api_typeKeys_[], api_typeKeys_n_[], own = true)
+    entityKeys = unsafe_wrap(Array, api_entityKeys_[], api_entityKeys_n_[], own = true)
+    coord = unsafe_wrap(Array, api_coord_[], api_coord_n_[], own = true)
     return typeKeys, entityKeys, coord
 end
-const get_keys_for_elements = getKeysForElements
+const get_keys = getKeys
 
 """
     gmsh.model.mesh.getKeysForElement(elementTag, functionSpaceType, returnCoord = true)
@@ -2281,33 +2346,33 @@ function getKeysForElement(elementTag, functionSpaceType, returnCoord = true)
           (Csize_t, Ptr{Cchar}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
           elementTag, functionSpaceType, api_typeKeys_, api_typeKeys_n_, api_entityKeys_, api_entityKeys_n_, api_coord_, api_coord_n_, returnCoord, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    typeKeys = unsafe_wrap(Array, api_typeKeys_[], api_typeKeys_n_[], own=true)
-    entityKeys = unsafe_wrap(Array, api_entityKeys_[], api_entityKeys_n_[], own=true)
-    coord = unsafe_wrap(Array, api_coord_[], api_coord_n_[], own=true)
+    typeKeys = unsafe_wrap(Array, api_typeKeys_[], api_typeKeys_n_[], own = true)
+    entityKeys = unsafe_wrap(Array, api_entityKeys_[], api_entityKeys_n_[], own = true)
+    coord = unsafe_wrap(Array, api_coord_[], api_coord_n_[], own = true)
     return typeKeys, entityKeys, coord
 end
 const get_keys_for_element = getKeysForElement
 
 """
-    gmsh.model.mesh.getNumberOfKeysForElements(elementType, functionSpaceType)
+    gmsh.model.mesh.getNumberOfKeys(elementType, functionSpaceType)
 
 Get the number of keys by elements of type `elementType` for function space
 named `functionSpaceType`.
 
 Return an integer value.
 """
-function getNumberOfKeysForElements(elementType, functionSpaceType)
+function getNumberOfKeys(elementType, functionSpaceType)
     ierr = Ref{Cint}()
-    api_result_ = ccall((:gmshModelMeshGetNumberOfKeysForElements, gmsh.lib), Cint,
+    api_result_ = ccall((:gmshModelMeshGetNumberOfKeys, gmsh.lib), Cint,
           (Cint, Ptr{Cchar}, Ptr{Cint}),
           elementType, functionSpaceType, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_result_
 end
-const get_number_of_keys_for_elements = getNumberOfKeysForElements
+const get_number_of_keys = getNumberOfKeys
 
 """
-    gmsh.model.mesh.getInformationForElements(typeKeys, entityKeys, elementType, functionSpaceType)
+    gmsh.model.mesh.getKeysInformation(typeKeys, entityKeys, elementType, functionSpaceType)
 
 Get information about the pair of `keys`. `infoKeys` returns information about
 the functions associated with the pairs (`typeKeys`, `entityKey`).
@@ -2319,19 +2384,19 @@ release.
 
 Return `infoKeys`.
 """
-function getInformationForElements(typeKeys, entityKeys, elementType, functionSpaceType)
+function getKeysInformation(typeKeys, entityKeys, elementType, functionSpaceType)
     api_infoKeys_ = Ref{Ptr{Cint}}()
     api_infoKeys_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
-    ccall((:gmshModelMeshGetInformationForElements, gmsh.lib), Cvoid,
+    ccall((:gmshModelMeshGetKeysInformation, gmsh.lib), Cvoid,
           (Ptr{Cint}, Csize_t, Ptr{Csize_t}, Csize_t, Cint, Ptr{Cchar}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
           convert(Vector{Cint}, typeKeys), length(typeKeys), convert(Vector{Csize_t}, entityKeys), length(entityKeys), elementType, functionSpaceType, api_infoKeys_, api_infoKeys_n_, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    tmp_api_infoKeys_ = unsafe_wrap(Array, api_infoKeys_[], api_infoKeys_n_[], own=true)
+    tmp_api_infoKeys_ = unsafe_wrap(Array, api_infoKeys_[], api_infoKeys_n_[], own = true)
     infoKeys = [ (tmp_api_infoKeys_[i], tmp_api_infoKeys_[i+1]) for i in 1:2:length(tmp_api_infoKeys_) ]
     return infoKeys
 end
-const get_information_for_elements = getInformationForElements
+const get_keys_information = getKeysInformation
 
 """
     gmsh.model.mesh.getBarycenters(elementType, tag, fast, primary, task = 0, numTasks = 1)
@@ -2353,7 +2418,7 @@ function getBarycenters(elementType, tag, fast, primary, task = 0, numTasks = 1)
           (Cint, Cint, Cint, Cint, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Csize_t, Csize_t, Ptr{Cint}),
           elementType, tag, fast, primary, api_barycenters_, api_barycenters_n_, task, numTasks, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    barycenters = unsafe_wrap(Array, api_barycenters_[], api_barycenters_n_[], own=true)
+    barycenters = unsafe_wrap(Array, api_barycenters_[], api_barycenters_n_[], own = true)
     return barycenters
 end
 const get_barycenters = getBarycenters
@@ -2379,7 +2444,7 @@ function getElementEdgeNodes(elementType, tag = -1, primary = false, task = 0, n
           (Cint, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Cint, Cint, Csize_t, Csize_t, Ptr{Cint}),
           elementType, api_nodeTags_, api_nodeTags_n_, tag, primary, task, numTasks, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    nodeTags = unsafe_wrap(Array, api_nodeTags_[], api_nodeTags_n_[], own=true)
+    nodeTags = unsafe_wrap(Array, api_nodeTags_[], api_nodeTags_n_[], own = true)
     return nodeTags
 end
 const get_element_edge_nodes = getElementEdgeNodes
@@ -2406,7 +2471,7 @@ function getElementFaceNodes(elementType, faceType, tag = -1, primary = false, t
           (Cint, Cint, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Cint, Cint, Csize_t, Csize_t, Ptr{Cint}),
           elementType, faceType, api_nodeTags_, api_nodeTags_n_, tag, primary, task, numTasks, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    nodeTags = unsafe_wrap(Array, api_nodeTags_[], api_nodeTags_n_[], own=true)
+    nodeTags = unsafe_wrap(Array, api_nodeTags_[], api_nodeTags_n_[], own = true)
     return nodeTags
 end
 const get_element_face_nodes = getElementFaceNodes
@@ -2429,8 +2494,8 @@ function getGhostElements(dim, tag)
           (Cint, Cint, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
           dim, tag, api_elementTags_, api_elementTags_n_, api_partitions_, api_partitions_n_, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    elementTags = unsafe_wrap(Array, api_elementTags_[], api_elementTags_n_[], own=true)
-    partitions = unsafe_wrap(Array, api_partitions_[], api_partitions_n_[], own=true)
+    elementTags = unsafe_wrap(Array, api_elementTags_[], api_elementTags_n_[], own = true)
+    partitions = unsafe_wrap(Array, api_partitions_[], api_partitions_n_[], own = true)
     return elementTags, partitions
 end
 const get_ghost_elements = getGhostElements
@@ -2472,7 +2537,7 @@ function getSizes(dimTags)
           (Ptr{Cint}, Csize_t, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
           api_dimTags_, api_dimTags_n_, api_sizes_, api_sizes_n_, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    sizes = unsafe_wrap(Array, api_sizes_[], api_sizes_n_[], own=true)
+    sizes = unsafe_wrap(Array, api_sizes_[], api_sizes_n_[], own = true)
     return sizes
 end
 const get_sizes = getSizes
@@ -2497,13 +2562,18 @@ const set_size_at_parametric_points = setSizeAtParametricPoints
 """
     gmsh.model.mesh.setSizeCallback(callback)
 
-Set a mesh size callback for the current model. The callback should take 5
-arguments (`dim`, `tag`, `x`, `y` and `z`) and return the value of the mesh size
-at coordinates (`x`, `y`, `z`).
+Set a mesh size callback for the current model. The callback function should
+take six arguments as input (`dim`, `tag`, `x`, `y`, `z` and `lc`). The first
+two integer arguments correspond to the dimension `dim` and tag `tag` of the
+entity being meshed. The next four double precision arguments correspond to the
+coordinates `x`, `y` and `z` around which to prescribe the mesh size and to the
+mesh size `lc` that would be prescribed if the callback had not been called. The
+callback function should return a double precision number specifying the desired
+mesh size; returning `lc` is equivalent to a no-op.
 """
 function setSizeCallback(callback)
-    api_callback__(dim, tag, x, y, z, data) = callback(dim, tag, x, y, z)
-    api_callback_ = @cfunction($api_callback__, Cdouble, (Cint, Cint, Cdouble, Cdouble, Cdouble, Ptr{Cvoid}))
+    api_callback__(dim, tag, x, y, z, lc, data) = callback(dim, tag, x, y, z, lc)
+    api_callback_ = @cfunction($api_callback__, Cdouble, (Cint, Cint, Cdouble, Cdouble, Cdouble, Cdouble, Ptr{Cvoid}))
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshSetSizeCallback, gmsh.lib), Cvoid,
           (Ptr{Cvoid}, Ptr{Cvoid}, Ptr{Cint}),
@@ -2799,7 +2869,7 @@ function getEmbedded(dim, tag)
           (Cint, Cint, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
           dim, tag, api_dimTags_, api_dimTags_n_, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    tmp_api_dimTags_ = unsafe_wrap(Array, api_dimTags_[], api_dimTags_n_[], own=true)
+    tmp_api_dimTags_ = unsafe_wrap(Array, api_dimTags_[], api_dimTags_n_[], own = true)
     dimTags = [ (tmp_api_dimTags_[i], tmp_api_dimTags_[i+1]) for i in 1:2:length(tmp_api_dimTags_) ]
     return dimTags
 end
@@ -2873,6 +2943,27 @@ end
 const set_periodic = setPeriodic
 
 """
+    gmsh.model.mesh.getPeriodic(dim, tags)
+
+Get master entities `tagsMaster` for the entities of dimension `dim` and tags
+`tags`.
+
+Return `tagMaster`.
+"""
+function getPeriodic(dim, tags)
+    api_tagMaster_ = Ref{Ptr{Cint}}()
+    api_tagMaster_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshGetPeriodic, gmsh.lib), Cvoid,
+          (Cint, Ptr{Cint}, Csize_t, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
+          dim, convert(Vector{Cint}, tags), length(tags), api_tagMaster_, api_tagMaster_n_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    tagMaster = unsafe_wrap(Array, api_tagMaster_[], api_tagMaster_n_[], own = true)
+    return tagMaster
+end
+const get_periodic = getPeriodic
+
+"""
     gmsh.model.mesh.getPeriodicNodes(dim, tag, includeHighOrderNodes = false)
 
 Get the master entity `tagMaster`, the node tags `nodeTags` and their
@@ -2895,12 +2986,53 @@ function getPeriodicNodes(dim, tag, includeHighOrderNodes = false)
           (Cint, Cint, Ptr{Cint}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
           dim, tag, api_tagMaster_, api_nodeTags_, api_nodeTags_n_, api_nodeTagsMaster_, api_nodeTagsMaster_n_, api_affineTransform_, api_affineTransform_n_, includeHighOrderNodes, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    nodeTags = unsafe_wrap(Array, api_nodeTags_[], api_nodeTags_n_[], own=true)
-    nodeTagsMaster = unsafe_wrap(Array, api_nodeTagsMaster_[], api_nodeTagsMaster_n_[], own=true)
-    affineTransform = unsafe_wrap(Array, api_affineTransform_[], api_affineTransform_n_[], own=true)
+    nodeTags = unsafe_wrap(Array, api_nodeTags_[], api_nodeTags_n_[], own = true)
+    nodeTagsMaster = unsafe_wrap(Array, api_nodeTagsMaster_[], api_nodeTagsMaster_n_[], own = true)
+    affineTransform = unsafe_wrap(Array, api_affineTransform_[], api_affineTransform_n_[], own = true)
     return api_tagMaster_[], nodeTags, nodeTagsMaster, affineTransform
 end
 const get_periodic_nodes = getPeriodicNodes
+
+"""
+    gmsh.model.mesh.getPeriodicKeys(elementType, functionSpaceType, tag, returnCoord = true)
+
+Get the master entity `tagMaster` and the key pairs (`typeKeyMaster`,
+`entityKeyMaster`) corresponding to the entity `tag` and the key pairs
+(`typeKey`, `entityKey`) for the elements of type `elementType` and function
+space type `functionSpaceType`. If `returnCoord` is set, the `coord` and
+`coordMaster` vectors contain the x, y, z coordinates locating basis functions
+for sorting purposes.
+
+Return `tagMaster`, `typeKeys`, `typeKeysMaster`, `entityKeys`, `entityKeysMaster`, `coord`, `coordMaster`.
+"""
+function getPeriodicKeys(elementType, functionSpaceType, tag, returnCoord = true)
+    api_tagMaster_ = Ref{Cint}()
+    api_typeKeys_ = Ref{Ptr{Cint}}()
+    api_typeKeys_n_ = Ref{Csize_t}()
+    api_typeKeysMaster_ = Ref{Ptr{Cint}}()
+    api_typeKeysMaster_n_ = Ref{Csize_t}()
+    api_entityKeys_ = Ref{Ptr{Csize_t}}()
+    api_entityKeys_n_ = Ref{Csize_t}()
+    api_entityKeysMaster_ = Ref{Ptr{Csize_t}}()
+    api_entityKeysMaster_n_ = Ref{Csize_t}()
+    api_coord_ = Ref{Ptr{Cdouble}}()
+    api_coord_n_ = Ref{Csize_t}()
+    api_coordMaster_ = Ref{Ptr{Cdouble}}()
+    api_coordMaster_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshGetPeriodicKeys, gmsh.lib), Cvoid,
+          (Cint, Ptr{Cchar}, Cint, Ptr{Cint}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
+          elementType, functionSpaceType, tag, api_tagMaster_, api_typeKeys_, api_typeKeys_n_, api_typeKeysMaster_, api_typeKeysMaster_n_, api_entityKeys_, api_entityKeys_n_, api_entityKeysMaster_, api_entityKeysMaster_n_, api_coord_, api_coord_n_, api_coordMaster_, api_coordMaster_n_, returnCoord, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    typeKeys = unsafe_wrap(Array, api_typeKeys_[], api_typeKeys_n_[], own = true)
+    typeKeysMaster = unsafe_wrap(Array, api_typeKeysMaster_[], api_typeKeysMaster_n_[], own = true)
+    entityKeys = unsafe_wrap(Array, api_entityKeys_[], api_entityKeys_n_[], own = true)
+    entityKeysMaster = unsafe_wrap(Array, api_entityKeysMaster_[], api_entityKeysMaster_n_[], own = true)
+    coord = unsafe_wrap(Array, api_coord_[], api_coord_n_[], own = true)
+    coordMaster = unsafe_wrap(Array, api_coordMaster_[], api_coordMaster_n_[], own = true)
+    return api_tagMaster_[], typeKeys, typeKeysMaster, entityKeys, entityKeysMaster, coord, coordMaster
+end
+const get_periodic_keys = getPeriodicKeys
 
 """
     gmsh.model.mesh.removeDuplicateNodes()
@@ -3055,7 +3187,7 @@ function computeCrossField()
           (Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
           api_viewTags_, api_viewTags_n_, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    viewTags = unsafe_wrap(Array, api_viewTags_[], api_viewTags_n_[], own=true)
+    viewTags = unsafe_wrap(Array, api_viewTags_[], api_viewTags_n_[], own = true)
     return viewTags
 end
 const compute_cross_field = computeCrossField
@@ -3077,7 +3209,7 @@ function triangulate(coord)
           (Ptr{Cdouble}, Csize_t, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cint}),
           convert(Vector{Cdouble}, coord), length(coord), api_tri_, api_tri_n_, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    tri = unsafe_wrap(Array, api_tri_[], api_tri_n_[], own=true)
+    tri = unsafe_wrap(Array, api_tri_[], api_tri_n_[], own = true)
     return tri
 end
 
@@ -3098,7 +3230,7 @@ function tetrahedralize(coord)
           (Ptr{Cdouble}, Csize_t, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cint}),
           convert(Vector{Cdouble}, coord), length(coord), api_tetra_, api_tetra_n_, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    tetra = unsafe_wrap(Array, api_tetra_[], api_tetra_n_[], own=true)
+    tetra = unsafe_wrap(Array, api_tetra_[], api_tetra_n_[], own = true)
     return tetra
 end
 
@@ -3144,6 +3276,44 @@ function remove(tag)
 end
 
 """
+    gmsh.model.mesh.field.list()
+
+Get the list of all fields.
+
+Return `tags`.
+"""
+function list()
+    api_tags_ = Ref{Ptr{Cint}}()
+    api_tags_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshFieldList, gmsh.lib), Cvoid,
+          (Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
+          api_tags_, api_tags_n_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    tags = unsafe_wrap(Array, api_tags_[], api_tags_n_[], own = true)
+    return tags
+end
+
+"""
+    gmsh.model.mesh.field.getType(tag)
+
+Get the type `fieldType` of the field with tag `tag`.
+
+Return `fileType`.
+"""
+function getType(tag)
+    api_fileType_ = Ref{Ptr{Cchar}}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshFieldGetType, gmsh.lib), Cvoid,
+          (Cint, Ptr{Ptr{Cchar}}, Ptr{Cint}),
+          tag, api_fileType_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    fileType = unsafe_string(api_fileType_[])
+    return fileType
+end
+const get_type = getType
+
+"""
     gmsh.model.mesh.field.setNumber(tag, option, value)
 
 Set the numerical option `option` to value `value` for field `tag`.
@@ -3157,6 +3327,24 @@ function setNumber(tag, option, value)
     return nothing
 end
 const set_number = setNumber
+
+"""
+    gmsh.model.mesh.field.getNumber(tag, option)
+
+Get the value of the numerical option `option` for field `tag`.
+
+Return `value`.
+"""
+function getNumber(tag, option)
+    api_value_ = Ref{Cdouble}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshFieldGetNumber, gmsh.lib), Cvoid,
+          (Cint, Ptr{Cchar}, Ptr{Cdouble}, Ptr{Cint}),
+          tag, option, api_value_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return api_value_[]
+end
+const get_number = getNumber
 
 """
     gmsh.model.mesh.field.setString(tag, option, value)
@@ -3174,6 +3362,25 @@ end
 const set_string = setString
 
 """
+    gmsh.model.mesh.field.getString(tag, option)
+
+Get the value of the string option `option` for field `tag`.
+
+Return `value`.
+"""
+function getString(tag, option)
+    api_value_ = Ref{Ptr{Cchar}}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshFieldGetString, gmsh.lib), Cvoid,
+          (Cint, Ptr{Cchar}, Ptr{Ptr{Cchar}}, Ptr{Cint}),
+          tag, option, api_value_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    value = unsafe_string(api_value_[])
+    return value
+end
+const get_string = getString
+
+"""
     gmsh.model.mesh.field.setNumbers(tag, option, value)
 
 Set the numerical list option `option` to value `value` for field `tag`.
@@ -3187,6 +3394,26 @@ function setNumbers(tag, option, value)
     return nothing
 end
 const set_numbers = setNumbers
+
+"""
+    gmsh.model.mesh.field.getNumbers(tag, option)
+
+Get the value of the numerical list option `option` for field `tag`.
+
+Return `value`.
+"""
+function getNumbers(tag, option)
+    api_value_ = Ref{Ptr{Cdouble}}()
+    api_value_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshFieldGetNumbers, gmsh.lib), Cvoid,
+          (Cint, Ptr{Cchar}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
+          tag, option, api_value_, api_value_n_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    value = unsafe_wrap(Array, api_value_[], api_value_n_[], own = true)
+    return value
+end
+const get_numbers = getNumbers
 
 """
     gmsh.model.mesh.field.setAsBackgroundMesh(tag)
@@ -3475,7 +3702,7 @@ function addCurveLoops(curveTags)
           (Ptr{Cint}, Csize_t, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
           convert(Vector{Cint}, curveTags), length(curveTags), api_tags_, api_tags_n_, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    tags = unsafe_wrap(Array, api_tags_[], api_tags_n_[], own=true)
+    tags = unsafe_wrap(Array, api_tags_[], api_tags_n_[], own = true)
     return tags
 end
 const add_curve_loops = addCurveLoops
@@ -3584,7 +3811,7 @@ function extrude(dimTags, dx, dy, dz, numElements = Cint[], heights = Cdouble[],
           (Ptr{Cint}, Csize_t, Cdouble, Cdouble, Cdouble, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}, Csize_t, Ptr{Cdouble}, Csize_t, Cint, Ptr{Cint}),
           api_dimTags_, api_dimTags_n_, dx, dy, dz, api_outDimTags_, api_outDimTags_n_, convert(Vector{Cint}, numElements), length(numElements), convert(Vector{Cdouble}, heights), length(heights), recombine, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own=true)
+    tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own = true)
     outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
     return outDimTags
 end
@@ -3613,7 +3840,7 @@ function revolve(dimTags, x, y, z, ax, ay, az, angle, numElements = Cint[], heig
           (Ptr{Cint}, Csize_t, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}, Csize_t, Ptr{Cdouble}, Csize_t, Cint, Ptr{Cint}),
           api_dimTags_, api_dimTags_n_, x, y, z, ax, ay, az, angle, api_outDimTags_, api_outDimTags_n_, convert(Vector{Cint}, numElements), length(numElements), convert(Vector{Cdouble}, heights), length(heights), recombine, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own=true)
+    tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own = true)
     outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
     return outDimTags
 end
@@ -3643,7 +3870,7 @@ function twist(dimTags, x, y, z, dx, dy, dz, ax, ay, az, angle, numElements = Ci
           (Ptr{Cint}, Csize_t, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}, Csize_t, Ptr{Cdouble}, Csize_t, Cint, Ptr{Cint}),
           api_dimTags_, api_dimTags_n_, x, y, z, dx, dy, dz, ax, ay, az, angle, api_outDimTags_, api_outDimTags_n_, convert(Vector{Cint}, numElements), length(numElements), convert(Vector{Cdouble}, heights), length(heights), recombine, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own=true)
+    tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own = true)
     outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
     return outDimTags
 end
@@ -3673,7 +3900,7 @@ function extrudeBoundaryLayer(dimTags, numElements = [1], heights = Cdouble[], r
           (Ptr{Cint}, Csize_t, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}, Csize_t, Ptr{Cdouble}, Csize_t, Cint, Cint, Cint, Ptr{Cint}),
           api_dimTags_, api_dimTags_n_, api_outDimTags_, api_outDimTags_n_, convert(Vector{Cint}, numElements), length(numElements), convert(Vector{Cdouble}, heights), length(heights), recombine, second, viewIndex, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own=true)
+    tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own = true)
     outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
     return outDimTags
 end
@@ -3785,7 +4012,7 @@ function copy(dimTags)
           (Ptr{Cint}, Csize_t, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
           api_dimTags_, api_dimTags_n_, api_outDimTags_, api_outDimTags_n_, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own=true)
+    tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own = true)
     outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
     return outDimTags
 end
@@ -3842,7 +4069,7 @@ function splitCurve(tag, pointTags)
           (Cint, Ptr{Cint}, Csize_t, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
           tag, convert(Vector{Cint}, pointTags), length(pointTags), api_curveTags_, api_curveTags_n_, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    curveTags = unsafe_wrap(Array, api_curveTags_[], api_curveTags_n_[], own=true)
+    curveTags = unsafe_wrap(Array, api_curveTags_[], api_curveTags_n_[], own = true)
     return curveTags
 end
 const split_curve = splitCurve
@@ -4333,10 +4560,12 @@ const add_wire = addWire
 
 Add a curve loop (a closed wire) in the OpenCASCADE CAD representation, formed
 by the curves `curveTags`. `curveTags` should contain tags of curves forming a
-closed loop. Note that an OpenCASCADE curve loop can be made of curves that
-share geometrically identical (but topologically different) points. If `tag` is
-positive, set the tag explicitly; otherwise a new tag is selected automatically.
-Return the tag of the curve loop.
+closed loop. Negative tags can be specified for compatibility with the built-in
+kernel, but are simply ignored: the wire is oriented according to the
+orientation of its first curve. Note that an OpenCASCADE curve loop can be made
+of curves that share geometrically identical (but topologically different)
+points. If `tag` is positive, set the tag explicitly; otherwise a new tag is
+selected automatically. Return the tag of the curve loop.
 
 Return an integer value.
 """
@@ -4755,7 +4984,7 @@ function addThruSections(wireTags, tag = -1, makeSolid = true, makeRuled = false
           (Ptr{Cint}, Csize_t, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Cint, Cint, Cint, Ptr{Cint}),
           convert(Vector{Cint}, wireTags), length(wireTags), api_outDimTags_, api_outDimTags_n_, tag, makeSolid, makeRuled, maxDegree, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own=true)
+    tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own = true)
     outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
     return outDimTags
 end
@@ -4780,7 +5009,7 @@ function addThickSolid(volumeTag, excludeSurfaceTags, offset, tag = -1)
           (Cint, Ptr{Cint}, Csize_t, Cdouble, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
           volumeTag, convert(Vector{Cint}, excludeSurfaceTags), length(excludeSurfaceTags), offset, api_outDimTags_, api_outDimTags_n_, tag, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own=true)
+    tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own = true)
     outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
     return outDimTags
 end
@@ -4808,7 +5037,7 @@ function extrude(dimTags, dx, dy, dz, numElements = Cint[], heights = Cdouble[],
           (Ptr{Cint}, Csize_t, Cdouble, Cdouble, Cdouble, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}, Csize_t, Ptr{Cdouble}, Csize_t, Cint, Ptr{Cint}),
           api_dimTags_, api_dimTags_n_, dx, dy, dz, api_outDimTags_, api_outDimTags_n_, convert(Vector{Cint}, numElements), length(numElements), convert(Vector{Cdouble}, heights), length(heights), recombine, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own=true)
+    tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own = true)
     outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
     return outDimTags
 end
@@ -4837,7 +5066,7 @@ function revolve(dimTags, x, y, z, ax, ay, az, angle, numElements = Cint[], heig
           (Ptr{Cint}, Csize_t, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}, Csize_t, Ptr{Cdouble}, Csize_t, Cint, Ptr{Cint}),
           api_dimTags_, api_dimTags_n_, x, y, z, ax, ay, az, angle, api_outDimTags_, api_outDimTags_n_, convert(Vector{Cint}, numElements), length(numElements), convert(Vector{Cdouble}, heights), length(heights), recombine, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own=true)
+    tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own = true)
     outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
     return outDimTags
 end
@@ -4864,7 +5093,7 @@ function addPipe(dimTags, wireTag, trihedron = "")
           (Ptr{Cint}, Csize_t, Cint, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cchar}, Ptr{Cint}),
           api_dimTags_, api_dimTags_n_, wireTag, api_outDimTags_, api_outDimTags_n_, trihedron, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own=true)
+    tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own = true)
     outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
     return outDimTags
 end
@@ -4889,7 +5118,7 @@ function fillet(volumeTags, curveTags, radii, removeVolume = true)
           (Ptr{Cint}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
           convert(Vector{Cint}, volumeTags), length(volumeTags), convert(Vector{Cint}, curveTags), length(curveTags), convert(Vector{Cdouble}, radii), length(radii), api_outDimTags_, api_outDimTags_n_, removeVolume, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own=true)
+    tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own = true)
     outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
     return outDimTags
 end
@@ -4915,7 +5144,7 @@ function chamfer(volumeTags, curveTags, surfaceTags, distances, removeVolume = t
           (Ptr{Cint}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
           convert(Vector{Cint}, volumeTags), length(volumeTags), convert(Vector{Cint}, curveTags), length(curveTags), convert(Vector{Cint}, surfaceTags), length(surfaceTags), convert(Vector{Cdouble}, distances), length(distances), api_outDimTags_, api_outDimTags_n_, removeVolume, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own=true)
+    tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own = true)
     outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
     return outDimTags
 end
@@ -4946,14 +5175,14 @@ function fuse(objectDimTags, toolDimTags, tag = -1, removeObject = true, removeT
           (Ptr{Cint}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Cint}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Cint, Cint, Cint, Ptr{Cint}),
           api_objectDimTags_, api_objectDimTags_n_, api_toolDimTags_, api_toolDimTags_n_, api_outDimTags_, api_outDimTags_n_, api_outDimTagsMap_, api_outDimTagsMap_n_, api_outDimTagsMap_nn_, tag, removeObject, removeTool, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own=true)
+    tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own = true)
     outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
-    tmp_api_outDimTagsMap_ = unsafe_wrap(Array, api_outDimTagsMap_[], api_outDimTagsMap_nn_[], own=true)
-    tmp_api_outDimTagsMap_n_ = unsafe_wrap(Array, api_outDimTagsMap_n_[], api_outDimTagsMap_nn_[], own=true)
+    tmp_api_outDimTagsMap_ = unsafe_wrap(Array, api_outDimTagsMap_[], api_outDimTagsMap_nn_[], own = true)
+    tmp_api_outDimTagsMap_n_ = unsafe_wrap(Array, api_outDimTagsMap_n_[], api_outDimTagsMap_nn_[], own = true)
     outDimTagsMap = Vector{Tuple{Cint,Cint}}[]
     resize!(outDimTagsMap, api_outDimTagsMap_nn_[])
     for i in 1:api_outDimTagsMap_nn_[]
-        tmp = unsafe_wrap(Array, tmp_api_outDimTagsMap_[i], tmp_api_outDimTagsMap_n_[i], own=true)
+        tmp = unsafe_wrap(Array, tmp_api_outDimTagsMap_[i], tmp_api_outDimTagsMap_n_[i], own = true)
         outDimTagsMap[i] = [(tmp[i], tmp[i+1]) for i in 1:2:length(tmp)]
     end
     return outDimTags, outDimTagsMap
@@ -4986,14 +5215,14 @@ function intersect(objectDimTags, toolDimTags, tag = -1, removeObject = true, re
           (Ptr{Cint}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Cint}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Cint, Cint, Cint, Ptr{Cint}),
           api_objectDimTags_, api_objectDimTags_n_, api_toolDimTags_, api_toolDimTags_n_, api_outDimTags_, api_outDimTags_n_, api_outDimTagsMap_, api_outDimTagsMap_n_, api_outDimTagsMap_nn_, tag, removeObject, removeTool, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own=true)
+    tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own = true)
     outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
-    tmp_api_outDimTagsMap_ = unsafe_wrap(Array, api_outDimTagsMap_[], api_outDimTagsMap_nn_[], own=true)
-    tmp_api_outDimTagsMap_n_ = unsafe_wrap(Array, api_outDimTagsMap_n_[], api_outDimTagsMap_nn_[], own=true)
+    tmp_api_outDimTagsMap_ = unsafe_wrap(Array, api_outDimTagsMap_[], api_outDimTagsMap_nn_[], own = true)
+    tmp_api_outDimTagsMap_n_ = unsafe_wrap(Array, api_outDimTagsMap_n_[], api_outDimTagsMap_nn_[], own = true)
     outDimTagsMap = Vector{Tuple{Cint,Cint}}[]
     resize!(outDimTagsMap, api_outDimTagsMap_nn_[])
     for i in 1:api_outDimTagsMap_nn_[]
-        tmp = unsafe_wrap(Array, tmp_api_outDimTagsMap_[i], tmp_api_outDimTagsMap_n_[i], own=true)
+        tmp = unsafe_wrap(Array, tmp_api_outDimTagsMap_[i], tmp_api_outDimTagsMap_n_[i], own = true)
         outDimTagsMap[i] = [(tmp[i], tmp[i+1]) for i in 1:2:length(tmp)]
     end
     return outDimTags, outDimTagsMap
@@ -5025,14 +5254,14 @@ function cut(objectDimTags, toolDimTags, tag = -1, removeObject = true, removeTo
           (Ptr{Cint}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Cint}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Cint, Cint, Cint, Ptr{Cint}),
           api_objectDimTags_, api_objectDimTags_n_, api_toolDimTags_, api_toolDimTags_n_, api_outDimTags_, api_outDimTags_n_, api_outDimTagsMap_, api_outDimTagsMap_n_, api_outDimTagsMap_nn_, tag, removeObject, removeTool, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own=true)
+    tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own = true)
     outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
-    tmp_api_outDimTagsMap_ = unsafe_wrap(Array, api_outDimTagsMap_[], api_outDimTagsMap_nn_[], own=true)
-    tmp_api_outDimTagsMap_n_ = unsafe_wrap(Array, api_outDimTagsMap_n_[], api_outDimTagsMap_nn_[], own=true)
+    tmp_api_outDimTagsMap_ = unsafe_wrap(Array, api_outDimTagsMap_[], api_outDimTagsMap_nn_[], own = true)
+    tmp_api_outDimTagsMap_n_ = unsafe_wrap(Array, api_outDimTagsMap_n_[], api_outDimTagsMap_nn_[], own = true)
     outDimTagsMap = Vector{Tuple{Cint,Cint}}[]
     resize!(outDimTagsMap, api_outDimTagsMap_nn_[])
     for i in 1:api_outDimTagsMap_nn_[]
-        tmp = unsafe_wrap(Array, tmp_api_outDimTagsMap_[i], tmp_api_outDimTagsMap_n_[i], own=true)
+        tmp = unsafe_wrap(Array, tmp_api_outDimTagsMap_[i], tmp_api_outDimTagsMap_n_[i], own = true)
         outDimTagsMap[i] = [(tmp[i], tmp[i+1]) for i in 1:2:length(tmp)]
     end
     return outDimTags, outDimTagsMap
@@ -5068,14 +5297,14 @@ function fragment(objectDimTags, toolDimTags, tag = -1, removeObject = true, rem
           (Ptr{Cint}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Cint}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Cint, Cint, Cint, Ptr{Cint}),
           api_objectDimTags_, api_objectDimTags_n_, api_toolDimTags_, api_toolDimTags_n_, api_outDimTags_, api_outDimTags_n_, api_outDimTagsMap_, api_outDimTagsMap_n_, api_outDimTagsMap_nn_, tag, removeObject, removeTool, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own=true)
+    tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own = true)
     outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
-    tmp_api_outDimTagsMap_ = unsafe_wrap(Array, api_outDimTagsMap_[], api_outDimTagsMap_nn_[], own=true)
-    tmp_api_outDimTagsMap_n_ = unsafe_wrap(Array, api_outDimTagsMap_n_[], api_outDimTagsMap_nn_[], own=true)
+    tmp_api_outDimTagsMap_ = unsafe_wrap(Array, api_outDimTagsMap_[], api_outDimTagsMap_nn_[], own = true)
+    tmp_api_outDimTagsMap_n_ = unsafe_wrap(Array, api_outDimTagsMap_n_[], api_outDimTagsMap_nn_[], own = true)
     outDimTagsMap = Vector{Tuple{Cint,Cint}}[]
     resize!(outDimTagsMap, api_outDimTagsMap_nn_[])
     for i in 1:api_outDimTagsMap_nn_[]
-        tmp = unsafe_wrap(Array, tmp_api_outDimTagsMap_[i], tmp_api_outDimTagsMap_n_[i], own=true)
+        tmp = unsafe_wrap(Array, tmp_api_outDimTagsMap_[i], tmp_api_outDimTagsMap_n_[i], own = true)
         outDimTagsMap[i] = [(tmp[i], tmp[i+1]) for i in 1:2:length(tmp)]
     end
     return outDimTags, outDimTagsMap
@@ -5206,7 +5435,7 @@ function copy(dimTags)
           (Ptr{Cint}, Csize_t, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
           api_dimTags_, api_dimTags_n_, api_outDimTags_, api_outDimTags_n_, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own=true)
+    tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own = true)
     outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
     return outDimTags
 end
@@ -5266,7 +5495,7 @@ function healShapes(dimTags = Tuple{Cint,Cint}[], tolerance = 1e-8, fixDegenerat
           (Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}, Csize_t, Cdouble, Cint, Cint, Cint, Cint, Cint, Ptr{Cint}),
           api_outDimTags_, api_outDimTags_n_, api_dimTags_, api_dimTags_n_, tolerance, fixDegenerated, fixSmallEdges, fixSmallFaces, sewFaces, makeSolids, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own=true)
+    tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own = true)
     outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
     return outDimTags
 end
@@ -5291,11 +5520,39 @@ function importShapes(fileName, highestDimOnly = true, format = "")
           (Ptr{Cchar}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Ptr{Cchar}, Ptr{Cint}),
           fileName, api_outDimTags_, api_outDimTags_n_, highestDimOnly, format, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own=true)
+    tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own = true)
     outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
     return outDimTags
 end
 const import_shapes = importShapes
+
+"""
+    gmsh.model.occ.importShapesNativePointer(shape, highestDimOnly = true)
+
+Imports an OpenCASCADE `shape` by providing a pointer to a native OpenCASCADE
+`TopoDS_Shape` object (passed as a pointer to void). The imported entities are
+returned in `outDimTags`. If the optional argument `highestDimOnly` is set, only
+import the highest dimensional entities in `shape`. In Python, this function can
+be used for integration with PythonOCC, in which the SwigPyObject pointer of
+`TopoDS_Shape` must be passed as an int to `shape`, i.e., `shape =
+int(pythonocc_shape.this)`. Warning: this function is unsafe, as providing an
+invalid pointer will lead to undefined behavior.
+
+Return `outDimTags`.
+"""
+function importShapesNativePointer(shape, highestDimOnly = true)
+    api_outDimTags_ = Ref{Ptr{Cint}}()
+    api_outDimTags_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelOccImportShapesNativePointer, gmsh.lib), Cvoid,
+          (Ptr{Cvoid}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
+          shape, api_outDimTags_, api_outDimTags_n_, highestDimOnly, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own = true)
+    outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
+    return outDimTags
+end
+const import_shapes_native_pointer = importShapesNativePointer
 
 """
     gmsh.model.occ.getEntities(dim = -1)
@@ -5314,7 +5571,7 @@ function getEntities(dim = -1)
           (Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
           api_dimTags_, api_dimTags_n_, dim, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    tmp_api_dimTags_ = unsafe_wrap(Array, api_dimTags_[], api_dimTags_n_[], own=true)
+    tmp_api_dimTags_ = unsafe_wrap(Array, api_dimTags_[], api_dimTags_n_[], own = true)
     dimTags = [ (tmp_api_dimTags_[i], tmp_api_dimTags_[i+1]) for i in 1:2:length(tmp_api_dimTags_) ]
     return dimTags
 end
@@ -5337,7 +5594,7 @@ function getEntitiesInBoundingBox(xmin, ymin, zmin, xmax, ymax, zmax, dim = -1)
           (Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
           xmin, ymin, zmin, xmax, ymax, zmax, api_tags_, api_tags_n_, dim, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    tmp_api_tags_ = unsafe_wrap(Array, api_tags_[], api_tags_n_[], own=true)
+    tmp_api_tags_ = unsafe_wrap(Array, api_tags_[], api_tags_n_[], own = true)
     tags = [ (tmp_api_tags_[i], tmp_api_tags_[i+1]) for i in 1:2:length(tmp_api_tags_) ]
     return tags
 end
@@ -5422,7 +5679,7 @@ function getMatrixOfInertia(dim, tag)
           (Cint, Cint, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
           dim, tag, api_mat_, api_mat_n_, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    mat = unsafe_wrap(Array, api_mat_[], api_mat_n_[], own=true)
+    mat = unsafe_wrap(Array, api_mat_[], api_mat_n_[], own = true)
     return mat
 end
 const get_matrix_of_inertia = getMatrixOfInertia
@@ -5587,7 +5844,7 @@ function getTags()
           (Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
           api_tags_, api_tags_n_, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    tags = unsafe_wrap(Array, api_tags_[], api_tags_n_[], own=true)
+    tags = unsafe_wrap(Array, api_tags_[], api_tags_n_[], own = true)
     return tags
 end
 const get_tags = getTags
@@ -5662,10 +5919,10 @@ function getModelData(tag, step)
           tag, step, api_dataType_, api_tags_, api_tags_n_, api_data_, api_data_n_, api_data_nn_, api_time_, api_numComponents_, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     dataType = unsafe_string(api_dataType_[])
-    tags = unsafe_wrap(Array, api_tags_[], api_tags_n_[], own=true)
-    tmp_api_data_ = unsafe_wrap(Array, api_data_[], api_data_nn_[], own=true)
-    tmp_api_data_n_ = unsafe_wrap(Array, api_data_n_[], api_data_nn_[], own=true)
-    data = [ unsafe_wrap(Array, tmp_api_data_[i], tmp_api_data_n_[i], own=true) for i in 1:api_data_nn_[] ]
+    tags = unsafe_wrap(Array, api_tags_[], api_tags_n_[], own = true)
+    tmp_api_data_ = unsafe_wrap(Array, api_data_[], api_data_nn_[], own = true)
+    tmp_api_data_n_ = unsafe_wrap(Array, api_data_n_[], api_data_nn_[], own = true)
+    data = [ unsafe_wrap(Array, tmp_api_data_[i], tmp_api_data_n_[i], own = true) for i in 1:api_data_nn_[] ]
     return dataType, tags, data, api_time_[], api_numComponents_[]
 end
 const get_model_data = getModelData
@@ -5694,8 +5951,8 @@ function getHomogeneousModelData(tag, step)
           tag, step, api_dataType_, api_tags_, api_tags_n_, api_data_, api_data_n_, api_time_, api_numComponents_, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     dataType = unsafe_string(api_dataType_[])
-    tags = unsafe_wrap(Array, api_tags_[], api_tags_n_[], own=true)
-    data = unsafe_wrap(Array, api_data_[], api_data_n_[], own=true)
+    tags = unsafe_wrap(Array, api_tags_[], api_tags_n_[], own = true)
+    data = unsafe_wrap(Array, api_data_[], api_data_n_[], own = true)
     return dataType, tags, data, api_time_[], api_numComponents_[]
 end
 const get_homogeneous_model_data = getHomogeneousModelData
@@ -5746,12 +6003,12 @@ function getListData(tag)
           (Cint, Ptr{Ptr{Ptr{Cchar}}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Cdouble}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cint}),
           tag, api_dataType_, api_dataType_n_, api_numElements_, api_numElements_n_, api_data_, api_data_n_, api_data_nn_, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    tmp_api_dataType_ = unsafe_wrap(Array, api_dataType_[], api_dataType_n_[], own=true)
+    tmp_api_dataType_ = unsafe_wrap(Array, api_dataType_[], api_dataType_n_[], own = true)
     dataType = [unsafe_string(tmp_api_dataType_[i]) for i in 1:length(tmp_api_dataType_) ]
-    numElements = unsafe_wrap(Array, api_numElements_[], api_numElements_n_[], own=true)
-    tmp_api_data_ = unsafe_wrap(Array, api_data_[], api_data_nn_[], own=true)
-    tmp_api_data_n_ = unsafe_wrap(Array, api_data_n_[], api_data_nn_[], own=true)
-    data = [ unsafe_wrap(Array, tmp_api_data_[i], tmp_api_data_n_[i], own=true) for i in 1:api_data_nn_[] ]
+    numElements = unsafe_wrap(Array, api_numElements_[], api_numElements_n_[], own = true)
+    tmp_api_data_ = unsafe_wrap(Array, api_data_[], api_data_nn_[], own = true)
+    tmp_api_data_n_ = unsafe_wrap(Array, api_data_n_[], api_data_nn_[], own = true)
+    data = [ unsafe_wrap(Array, tmp_api_data_[i], tmp_api_data_n_[i], own = true) for i in 1:api_data_nn_[] ]
     return dataType, numElements, data
 end
 const get_list_data = getListData
@@ -5803,10 +6060,10 @@ function getListDataStrings(tag, dim)
           (Cint, Cint, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Cchar}}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Cchar}}}, Ptr{Csize_t}, Ptr{Cint}),
           tag, dim, api_coord_, api_coord_n_, api_data_, api_data_n_, api_style_, api_style_n_, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    coord = unsafe_wrap(Array, api_coord_[], api_coord_n_[], own=true)
-    tmp_api_data_ = unsafe_wrap(Array, api_data_[], api_data_n_[], own=true)
+    coord = unsafe_wrap(Array, api_coord_[], api_coord_n_[], own = true)
+    tmp_api_data_ = unsafe_wrap(Array, api_data_[], api_data_n_[], own = true)
     data = [unsafe_string(tmp_api_data_[i]) for i in 1:length(tmp_api_data_) ]
-    tmp_api_style_ = unsafe_wrap(Array, api_style_[], api_style_n_[], own=true)
+    tmp_api_style_ = unsafe_wrap(Array, api_style_[], api_style_n_[], own = true)
     style = [unsafe_string(tmp_api_style_[i]) for i in 1:length(tmp_api_style_) ]
     return coord, data, style
 end
@@ -5889,28 +6146,34 @@ function combine(what, how, remove = true, copyOptions = true)
 end
 
 """
-    gmsh.view.probe(tag, x, y, z, step = -1, numComp = -1, gradient = false, tolerance = 0., xElemCoord = Cdouble[], yElemCoord = Cdouble[], zElemCoord = Cdouble[], dim = -1)
+    gmsh.view.probe(tag, x, y, z, step = -1, numComp = -1, gradient = false, distanceMax = 0., xElemCoord = Cdouble[], yElemCoord = Cdouble[], zElemCoord = Cdouble[], dim = -1)
 
-Probe the view `tag` for its `value` at point (`x`, `y`, `z`). Return only the
-value at step `step` is `step` is positive. Return only values with `numComp` if
-`numComp` is positive. Return the gradient of the `value` if `gradient` is set.
-Probes with a geometrical tolerance (in the reference unit cube) of `tolerance`
-if `tolerance` is not zero. Return the result from the element described by its
-coordinates if `xElementCoord`, `yElementCoord` and `zElementCoord` are
-provided. If `dim` is >= 0, return only elements of the specified dimension.
+Probe the view `tag` for its `value` at point (`x`, `y`, `z`). If no match is
+found, `value` is returned empty. Return only the value at step `step` is `step`
+is positive. Return only values with `numComp` if `numComp` is positive. Return
+the gradient of the `value` if `gradient` is set. If `distanceMax` is zero, only
+return a result if an exact match inside an element in the view is found; if
+`distanceMax` is positive and an exact match is not found, return the value at
+the closest node if it is closer than `distanceMax`; if `distanceMax` is
+negative and an exact match is not found, always return the value at the closest
+node. The distance to the match is returned in `distance`. Return the result
+from the element described by its coordinates if `xElementCoord`,
+`yElementCoord` and `zElementCoord` are provided. If `dim` is >= 0, return only
+matches from elements of the specified dimension.
 
-Return `value`.
+Return `value`, `distance`.
 """
-function probe(tag, x, y, z, step = -1, numComp = -1, gradient = false, tolerance = 0., xElemCoord = Cdouble[], yElemCoord = Cdouble[], zElemCoord = Cdouble[], dim = -1)
+function probe(tag, x, y, z, step = -1, numComp = -1, gradient = false, distanceMax = 0., xElemCoord = Cdouble[], yElemCoord = Cdouble[], zElemCoord = Cdouble[], dim = -1)
     api_value_ = Ref{Ptr{Cdouble}}()
     api_value_n_ = Ref{Csize_t}()
+    api_distance_ = Ref{Cdouble}()
     ierr = Ref{Cint}()
     ccall((:gmshViewProbe, gmsh.lib), Cvoid,
-          (Cint, Cdouble, Cdouble, Cdouble, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Cint, Cint, Cdouble, Ptr{Cdouble}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Cdouble}, Csize_t, Cint, Ptr{Cint}),
-          tag, x, y, z, api_value_, api_value_n_, step, numComp, gradient, tolerance, convert(Vector{Cdouble}, xElemCoord), length(xElemCoord), convert(Vector{Cdouble}, yElemCoord), length(yElemCoord), convert(Vector{Cdouble}, zElemCoord), length(zElemCoord), dim, ierr)
+          (Cint, Cdouble, Cdouble, Cdouble, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cdouble}, Cint, Cint, Cint, Cdouble, Ptr{Cdouble}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Cdouble}, Csize_t, Cint, Ptr{Cint}),
+          tag, x, y, z, api_value_, api_value_n_, api_distance_, step, numComp, gradient, distanceMax, convert(Vector{Cdouble}, xElemCoord), length(xElemCoord), convert(Vector{Cdouble}, yElemCoord), length(yElemCoord), convert(Vector{Cdouble}, zElemCoord), length(zElemCoord), dim, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    value = unsafe_wrap(Array, api_value_[], api_value_n_[], own=true)
-    return value
+    value = unsafe_wrap(Array, api_value_[], api_value_n_[], own = true)
+    return value, api_distance_[]
 end
 
 """
@@ -6174,7 +6437,7 @@ function selectEntities(dim = -1)
           (Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
           api_dimTags_, api_dimTags_n_, dim, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    tmp_api_dimTags_ = unsafe_wrap(Array, api_dimTags_[], api_dimTags_n_[], own=true)
+    tmp_api_dimTags_ = unsafe_wrap(Array, api_dimTags_[], api_dimTags_n_[], own = true)
     dimTags = [ (tmp_api_dimTags_[i], tmp_api_dimTags_[i+1]) for i in 1:2:length(tmp_api_dimTags_) ]
     return api_result_, dimTags
 end
@@ -6195,7 +6458,7 @@ function selectElements()
           (Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cint}),
           api_elementTags_, api_elementTags_n_, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    elementTags = unsafe_wrap(Array, api_elementTags_[], api_elementTags_n_[], own=true)
+    elementTags = unsafe_wrap(Array, api_elementTags_[], api_elementTags_n_[], own = true)
     return api_result_, elementTags
 end
 const select_elements = selectElements
@@ -6215,7 +6478,7 @@ function selectViews()
           (Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
           api_viewTags_, api_viewTags_n_, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    viewTags = unsafe_wrap(Array, api_viewTags_[], api_viewTags_n_[], own=true)
+    viewTags = unsafe_wrap(Array, api_viewTags_[], api_viewTags_n_[], own = true)
     return api_result_, viewTags
 end
 const select_views = selectViews
@@ -6374,7 +6637,7 @@ function getNames(search = "")
           (Ptr{Ptr{Ptr{Cchar}}}, Ptr{Csize_t}, Ptr{Cchar}, Ptr{Cint}),
           api_names_, api_names_n_, search, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    tmp_api_names_ = unsafe_wrap(Array, api_names_[], api_names_n_[], own=true)
+    tmp_api_names_ = unsafe_wrap(Array, api_names_[], api_names_n_[], own = true)
     names = [unsafe_string(tmp_api_names_[i]) for i in 1:length(tmp_api_names_) ]
     return names
 end
@@ -6428,7 +6691,7 @@ function getNumber(name)
           (Ptr{Cchar}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
           name, api_value_, api_value_n_, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    value = unsafe_wrap(Array, api_value_[], api_value_n_[], own=true)
+    value = unsafe_wrap(Array, api_value_[], api_value_n_[], own = true)
     return value
 end
 const get_number = getNumber
@@ -6449,7 +6712,7 @@ function getString(name)
           (Ptr{Cchar}, Ptr{Ptr{Ptr{Cchar}}}, Ptr{Csize_t}, Ptr{Cint}),
           name, api_value_, api_value_n_, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    tmp_api_value_ = unsafe_wrap(Array, api_value_[], api_value_n_[], own=true)
+    tmp_api_value_ = unsafe_wrap(Array, api_value_[], api_value_n_[], own = true)
     value = [unsafe_string(tmp_api_value_[i]) for i in 1:length(tmp_api_value_) ]
     return value
 end
@@ -6539,7 +6802,7 @@ function get()
           (Ptr{Ptr{Ptr{Cchar}}}, Ptr{Csize_t}, Ptr{Cint}),
           api_log_, api_log_n_, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    tmp_api_log_ = unsafe_wrap(Array, api_log_[], api_log_n_[], own=true)
+    tmp_api_log_ = unsafe_wrap(Array, api_log_[], api_log_n_[], own = true)
     log = [unsafe_string(tmp_api_log_[i]) for i in 1:length(tmp_api_log_) ]
     return log
 end

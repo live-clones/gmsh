@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #ifndef GENTITY_H
 #define GENTITY_H
@@ -398,10 +398,10 @@ public:
   std::vector<double> affineTransform;
 
   // corresponding mesh vertices
-  std::map<MVertex *, MVertex *> correspondingVertices;
+  std::map<MVertex *, MVertex *, MVertexPtrLessThan> correspondingVertices;
 
   // corresponding high order vertices
-  std::map<MVertex *, MVertex *> correspondingHighOrderVertices;
+  std::map<MVertex *, MVertex *, MVertexPtrLessThan> correspondingHighOrderVertices;
 
   // reorder the mesh elements of the given type, according to ordering
   virtual bool reorder(const int elementType,

@@ -34,7 +34,7 @@ void create_mesh(size_t N, double *coords, size_t *nodes, size_t *tris)
 int main()
 {
   int ierr = 0;
-  gmshInitialize(0, NULL, 0, &ierr);
+  gmshInitialize(0, NULL, 0, 0, &ierr);
 
   size_t N = 2500;
 

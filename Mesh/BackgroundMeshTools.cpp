@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include "BackgroundMeshTools.h"
 #include "GFace.h"
@@ -238,17 +238,15 @@ double BGM_MeshSizeWithoutScaling(GEntity *ge, double U, double V, double X,
                 ((GEdge *)ge)->prescribedMeshSizeAtParam(U) :
                 MAX_LC;
 
+  // take the minimum
+  double lc = std::min(std::min(std::min(std::min(l1, l2), l3), l4), l5);
+
   // lc from callback
-  double l6 = MAX_LC;
   if(GModel::current()->lcCallback) {
     int dim = (ge ? ge->dim() : -1);
     int tag = (ge ? ge->tag() : -1);
-    l6 = GModel::current()->lcCallback(dim, tag, X, Y, Z);
+    lc = GModel::current()->lcCallback(dim, tag, X, Y, Z, lc);
   }
-
-  // take the minimum
-  double lc =
-    std::min(std::min(std::min(std::min(std::min(l1, l2), l3), l4), l5), l6);
 
   return lc;
 }

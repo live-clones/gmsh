@@ -3,7 +3,7 @@
 int main(int argc, char **argv)
 {
   int ierr;
-  gmshInitialize(argc, argv, 1, &ierr);
+  gmshInitialize(argc, argv, 1, 0, &ierr);
   gmshModelAdd("square", &ierr);
   gmshModelGeoAddPoint(0, 0, 0, 0.1, 1, &ierr);
   gmshModelGeoAddPoint(1, 0, 0, 0.1, 2, &ierr);

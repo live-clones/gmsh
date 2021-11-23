@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include "PViewData.h"
 #include "adaptiveData.h"
@@ -13,7 +13,8 @@
 std::map<std::string, interpolationMatrices> PViewData::_interpolationSchemes;
 
 PViewData::PViewData()
-  : _dirty(true), _fileIndex(0), _octree(nullptr), _adaptive(nullptr)
+  : _dirty(true), _fileIndex(0), _octree(nullptr), _pc2kdtree(_pc),
+    _kdtree(nullptr), _adaptive(nullptr)
 {
 }
 
@@ -23,6 +24,7 @@ PViewData::~PViewData()
   for(auto it = _interpolation.begin(); it != _interpolation.end(); it++)
     for(std::size_t i = 0; i < it->second.size(); i++) delete it->second[i];
   if(_octree) delete _octree;
+  if(_kdtree) delete _kdtree;
 }
 
 bool PViewData::finalize(bool computeMinMax,
@@ -245,15 +247,15 @@ bool PViewData::combineSpace(nameData &nd)
 
 double PViewData::findClosestNode(double &xn, double &yn, double &zn, int step)
 {
-  double dist2 = 1e200;
+  double x = xn, y = yn, z = zn;
 
-  // if this gets used a lot we should create a kdtree to make efficient nearest
-  // neighbor lookups; moreover iterations on view data is currently not
-  // thread-safe (it uses a cache for the current element/node), which further
-  // motivates a better solution
+#if 0
+
+  // slow, naive implementation; beware that iterations on view data is
+  // currently not thread-safe (it uses a cache for the current element/node)
+  double dist2 = 1e200;
 #pragma omp critical
   {
-    double x = xn, y = yn, z = zn;
     if(step < 0) step = getFirstNonEmptyTimeStep();
     for(int ent = 0; ent < getNumEntities(step); ent++) {
       for(int ele = 0; ele < getNumElements(step, ent); ele++) {
@@ -274,6 +276,44 @@ double PViewData::findClosestNode(double &xn, double &yn, double &zn, int step)
     }
   }
   return sqrt(dist2);
+
+#else
+
+#pragma omp critical
+  if(!_kdtree) {
+    Msg::Debug("Rebuilding kdtree for view data '%s'", _name.c_str());
+    _pc.pts.clear();
+    // FIXME: should directly iterate on mesh nodes for model-based views
+    if(step < 0) step = getFirstNonEmptyTimeStep();
+    for(int ent = 0; ent < getNumEntities(step); ent++) {
+      for(int ele = 0; ele < getNumElements(step, ent); ele++) {
+        int numNodes = getNumNodes(step, ent, ele);
+        for(int nod = 0; nod < numNodes; nod++) {
+          double xx, yy, zz;
+          getNode(step, ent, ele, nod, xx, yy, zz);
+          _pc.pts.push_back(SPoint3(xx, yy, zz));
+        }
+      }
+    }
+    _kdtree = new SPoint3KDTree(3, _pc2kdtree,
+                                nanoflann::KDTreeSingleIndexAdaptorParams(10));
+    _kdtree->buildIndex();
+  }
+
+  double query_pt[3] = {x, y, z};
+  std::size_t idx;
+  double squ_dist;
+  nanoflann::KNNResultSet<double> resultSet(1);
+  resultSet.init(&idx, &squ_dist);
+  _kdtree->findNeighbors(resultSet, &query_pt[0], nanoflann::SearchParams(10));
+  if(idx < _pc.pts.size()) {
+    xn = _pc.pts[idx].x();
+    yn = _pc.pts[idx].y();
+    zn = _pc.pts[idx].z();
+  }
+  return sqrt(squ_dist);
+
+#endif
 }
 
 bool PViewData::searchScalar(double x, double y, double z, double *values,
@@ -281,10 +321,8 @@ bool PViewData::searchScalar(double x, double y, double z, double *values,
                              double *qy, double *qz, bool grad, int dim)
 {
   if(!_octree) {
-#if defined(_OPENMP)
 #pragma omp barrier
 #pragma omp single
-#endif
     {
       Msg::Debug("Rebuilding octree for view data '%s'", _name.c_str());
       _octree = new OctreePost(this);
@@ -294,32 +332,26 @@ bool PViewData::searchScalar(double x, double y, double z, double *values,
                                grad, dim);
 }
 
-bool PViewData::searchScalarWithTol(double x, double y, double z,
-                                    double *values, int step, double *size,
-                                    double tol, int qn, double *qx, double *qy,
+bool PViewData::searchScalarClosest(double x, double y, double z,
+                                    double &distance, double *values,
+                                    int step, double *size,
+                                    int qn, double *qx, double *qy,
                                     double *qz, bool grad, int dim)
 {
-  if(!_octree) {
-#if defined(_OPENMP)
-#pragma omp barrier
-#pragma omp single
-#endif
-    {
-      Msg::Debug("Rebuilding octree for view data '%s'", _name.c_str());
-      _octree = new OctreePost(this);
-    }
+  bool ret = searchScalar(x, y, z, values, step, size, qn, qx, qy, qz, grad,
+                          dim);
+  if(ret) {
+    distance = 0.;
   }
-  bool ret = _octree->searchScalarWithTol(x, y, z, values, step, size, tol, qn, qx,
-                                          qy, qz, grad, dim);
-  if(!ret) {
-    double xn = x, yn = y, zn = z;
-    double d = findClosestNode(xn, yn, zn, step);
-    ret = _octree->searchScalarWithTol(xn, yn, zn, values, step, size, tol, qn, qx,
-                                       qy, qz, grad, dim);
-    if(ret && d > tol)
-      Msg::Info("Returning scalar value at closest node (distance = %g, tol %g, pt %g %g %g)", d,tol,x,y,z);
-    else if (ret && d <= tol)
-      Msg::Info("Returning scalar value at closest node (distance = %g, tol %g, pt %g %g %g)", d,tol,x,y,z);
+  else if(distance) {
+    double xn = x, yn = y, zn = z, distanceMax = distance;
+    distance = findClosestNode(xn, yn, zn, step);
+    if(distanceMax < 0. || distance <= distanceMax)
+      ret = searchScalar(xn, yn, zn, values, step, size, qn, qx, qy, qz, grad,
+                         dim);
+  }
+  else {
+    distance = -1.;
   }
   return ret;
 }
@@ -329,10 +361,8 @@ bool PViewData::searchVector(double x, double y, double z, double *values,
                              double *qy, double *qz, bool grad, int dim)
 {
   if(!_octree) {
-#if defined(_OPENMP)
 #pragma omp barrier
 #pragma omp single
-#endif
     {
       Msg::Debug("Rebuilding octree for view data '%s'", _name.c_str());
       _octree = new OctreePost(this);
@@ -342,30 +372,26 @@ bool PViewData::searchVector(double x, double y, double z, double *values,
                                grad, dim);
 }
 
-bool PViewData::searchVectorWithTol(double x, double y, double z,
-                                    double *values, int step, double *size,
-                                    double tol, int qn, double *qx, double *qy,
+bool PViewData::searchVectorClosest(double x, double y, double z,
+                                    double &distance, double *values,
+                                    int step, double *size,
+                                    int qn, double *qx, double *qy,
                                     double *qz, bool grad, int dim)
 {
-  if(!_octree) {
-#if defined(_OPENMP)
-#pragma omp barrier
-#pragma omp single
-#endif
-    {
-      Msg::Debug("Rebuilding octree for view data '%s'", _name.c_str());
-      _octree = new OctreePost(this);
-    }
+  bool ret = searchVector(x, y, z, values, step, size, qn, qx, qy, qz, grad,
+                          dim);
+  if(ret) {
+    distance = 0.;
   }
-  bool ret = _octree->searchVectorWithTol(x, y, z, values, step, size, tol, qn, qx,
-                                          qy, qz, grad, dim);
-  if(!ret) {
-    double xn = x, yn = y, zn = z;
-    double d = findClosestNode(xn, yn, zn, step);
-    ret = _octree->searchVectorWithTol(xn, yn, zn, values, step, size, tol, qn, qx,
-                                       qy, qz, grad, dim);
-    if(ret && d > tol)
-      Msg::Info("Returning vector value at closest node (distance = %g, tol %g, pt %g %g %g)", d,tol,x,y,z);
+  else if(distance) {
+    double xn = x, yn = y, zn = z, distanceMax = distance;
+    distance = findClosestNode(xn, yn, zn, step);
+    if(distanceMax < 0. || distance <= distanceMax)
+      ret = searchVector(xn, yn, zn, values, step, size, qn, qx, qy, qz, grad,
+                         dim);
+  }
+  else {
+    distance = -1.;
   }
   return ret;
 }
@@ -375,10 +401,8 @@ bool PViewData::searchTensor(double x, double y, double z, double *values,
                              double *qy, double *qz, bool grad, int dim)
 {
   if(!_octree) {
-#if defined(_OPENMP)
 #pragma omp barrier
 #pragma omp single
-#endif
     {
       Msg::Debug("Rebuilding octree for view data '%s'", _name.c_str());
       _octree = new OctreePost(this);
@@ -388,30 +412,26 @@ bool PViewData::searchTensor(double x, double y, double z, double *values,
                                grad, dim);
 }
 
-bool PViewData::searchTensorWithTol(double x, double y, double z,
-                                    double *values, int step, double *size,
-                                    double tol, int qn, double *qx, double *qy,
+bool PViewData::searchTensorClosest(double x, double y, double z,
+                                    double &distance, double *values,
+                                    int step, double *size,
+                                    int qn, double *qx, double *qy,
                                     double *qz, bool grad, int dim)
 {
-  if(!_octree) {
-#if defined(_OPENMP)
-#pragma omp barrier
-#pragma omp single
-#endif
-    {
-      Msg::Debug("Rebuilding octree for view data '%s'", _name.c_str());
-      _octree = new OctreePost(this);
-    }
+  bool ret = searchTensor(x, y, z, values, step, size, qn, qx, qy, qz, grad,
+                          dim);
+  if(ret) {
+    distance = 0.;
   }
-  bool ret = _octree->searchTensorWithTol(x, y, z, values, step, size, tol, qn, qx,
-                                          qy, qz, grad, dim);
-  if(!ret) {
-    double xn = x, yn = y, zn = z;
-    double d = findClosestNode(xn, yn, zn, step);
-    ret = _octree->searchTensorWithTol(xn, yn, zn, values, step, size, tol, qn, qx,
-                                       qy, qz, grad, dim);
-    if(ret && d > tol)
-      Msg::Info("Returning tensor value at closest node (distance = %g, tol %g, pt %g %g %g)", d,tol,x,y,z);
+  else if(distance) {
+    double xn = x, yn = y, zn = z, distanceMax = distance;
+    distance = findClosestNode(xn, yn, zn, step);
+    if(distanceMax < 0 || distance <= distanceMax)
+      ret = searchTensor(xn, yn, zn, values, step, size, qn, qx, qy, qz, grad,
+                         dim);
+  }
+  else {
+    distance = -1.;
   }
   return ret;
 }

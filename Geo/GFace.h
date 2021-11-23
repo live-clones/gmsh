@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #ifndef GFACE_H
 #define GFACE_H
@@ -314,8 +314,6 @@ public:
     double meshSize, meshSizeFactor;
     // do we force the meshing algorithm (if != 0)
     int algorithm;
-    // in case of a compound, do we force the compound meshing algorithm (if != 0)
-    int compoundAlgorithm;
     // do we force calculation of mesh size from boundary (if >= 0)
     int meshSizeFromBoundary;
   } meshAttributes;

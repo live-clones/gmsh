@@ -39,8 +39,106 @@ struct TransfoPlanar {
   mean_plane mp;
 };
 
-bool buildVerticesAndTriangles(GFace *gf, vector<MVertex *> &vertices,
-                               vector<std::array<uint32_t, 3> > &triangles)
+inline std::array<vec2, 4>
+quadAnisotropicTargetShape(const std::vector<vec2> &points,
+                           const std::array<uint32_t, 4> &quad)
+{
+  const double L01 = length(points[quad[0]] - points[quad[1]]);
+  const double L12 = length(points[quad[1]] - points[quad[2]]);
+  const double L23 = length(points[quad[2]] - points[quad[3]]);
+  const double L30 = length(points[quad[3]] - points[quad[0]]);
+  const vec2 deltamax = {std::max(L01, L23), std::max(L12, L30)};
+  const vec2 deltaavg = {0.5 * (L01 + L23), 0.5 * (L12 + L30)};
+  const double lmax = std::max(deltamax[0], deltamax[1]);
+  const vec2 w = {deltaavg[0] / lmax, deltaavg[1] / lmax};
+
+  std::array<vec2, 4> target = {vec2{0., 0.}, vec2{w[0], 0.}, vec2{w[0], w[1]},
+                                vec2{0., w[1]}};
+  double area = w[0] * w[1];
+  for(size_t lv = 0; lv < 4; ++lv) {
+    target[lv] = (1. / std::pow(area, 1. / 2.)) * target[lv];
+  }
+  return target;
+}
+
+bool normalizeTargetArea(std::array<vec2, 3> &target)
+{
+  double area = triangleArea(target[0], target[1], target[2]);
+  if(area <= 0.) { Msg::Warning("target triangle area: %f", area); }
+  for(size_t lv = 0; lv < 3; ++lv) {
+    target[lv] = (1. / std::pow(area, 1. / 2.)) * target[lv];
+  }
+  return true;
+}
+
+bool buildTrianglesAndTargetsFromElements(
+  const std::vector<std::array<double, 2> > &points,
+  const std::vector<std::array<uint32_t, 4> > &elements,
+  std::vector<std::array<uint32_t, 3> > &triangles,
+  std::vector<std::array<std::array<double, 2>, 3> > &triIdealShapes,
+  bool preserveQuadAnisotropy)
+{
+  const uint32_t NO_U32 = (uint32_t)-1;
+
+  // Equilateral triangle centered in origin with unit area
+  std::array<vec2, 3> equi = {vec2{1., 0.},
+                              vec2{cos(2. * M_PI / 3.), sin(2 * M_PI / 3.)},
+                              vec2{cos(4. * M_PI / 3.), sin(4 * M_PI / 3.)}};
+  normalizeTargetArea(equi);
+
+  const int quad_dcp[4][3] = {{0, 1, 2}, {0, 2, 3}, {1, 2, 3}, {1, 3, 0}};
+
+  triIdealShapes.clear();
+  triangles.clear();
+  double areaAvg = 0.;
+  double areaN = 0.;
+  for(size_t i = 0; i < elements.size(); ++i) {
+    if(elements[i][0] == NO_U32) { continue; }
+    else if(elements[i][3] == NO_U32) { /* already triangle */
+      triangles.push_back({elements[i][0], elements[i][1], elements[i][2]});
+      /* equilateral triangle target shape */
+      triIdealShapes.push_back(equi);
+      areaAvg += 1.;
+      areaN += 1.;
+    }
+    else {
+      std::array<vec2, 4> qtarget = {vec2{0., 0.}, vec2{1., 0.}, vec2{1., 1.},
+                                     vec2{0., 1.}};
+      if(preserveQuadAnisotropy) { /* does not work well, need better approach
+                                    */
+        qtarget = quadAnisotropicTargetShape(points, elements[i]);
+      }
+      for(size_t k = 0; k < 4; ++k) {
+        triangles.push_back({elements[i][quad_dcp[k][0]],
+                             elements[i][quad_dcp[k][1]],
+                             elements[i][quad_dcp[k][2]]});
+        std::array<vec2, 3> target = {qtarget[quad_dcp[k][0]],
+                                      qtarget[quad_dcp[k][1]],
+                                      qtarget[quad_dcp[k][2]]};
+        normalizeTargetArea(target);
+
+        // Warning: better behavior with equilateral tris instead of tri adapted
+        // to unit quad. Quite weird... maybe a bug ?
+        // triIdealShapes.push_back(target);
+        triIdealShapes.push_back(equi);
+
+        areaAvg += 1.;
+        areaN += 1.;
+      }
+    }
+  }
+  if(areaN > 0) areaAvg /= areaN;
+  for(size_t i = 0; i < triIdealShapes.size(); ++i)
+    for(size_t lv = 0; lv < 3; ++lv) {
+      triIdealShapes[i][lv] =
+        triIdealShapes[i][lv] * (1. / std::pow(areaAvg, 1. / 2.));
+    }
+
+  return true;
+}
+
+bool buildVerticesAndElements(GFace *gf, vector<MVertex *> &vertices,
+                              vector<std::array<uint32_t, 4> > &elements)
 {
   std::unordered_map<MVertex *, uint32_t> old2new;
   vector<uint32_t> fvert;
@@ -60,25 +158,25 @@ bool buildVerticesAndTriangles(GFace *gf, vector<MVertex *> &vertices,
         fvert[lv] = it->second;
       }
     }
-    if(n == 3) { triangles.push_back({fvert[0], fvert[1], fvert[2]}); }
-    else if(n == 4) {
-      /* one triangle per corner */
-      triangles.push_back({fvert[0], fvert[1], fvert[2]});
-      triangles.push_back({fvert[0], fvert[2], fvert[3]});
-      triangles.push_back({fvert[1], fvert[2], fvert[3]});
-      triangles.push_back({fvert[1], fvert[3], fvert[0]});
+    if(n == 3) {
+      elements.push_back({fvert[0], fvert[1], fvert[2], uint32_t(-1)});
+    }
+    else {
+      elements.push_back({fvert[0], fvert[1], fvert[2], fvert[3]});
     }
   }
 
   return true;
 }
 
-bool buildPlanarTriProblem(GFace *gf, vector<MVertex *> &vertices,
-                           vector<vec2> &points, vector<bool> &locked,
-                           vector<std::array<uint32_t, 3> > &triangles,
-                           TransfoPlanar &transfo)
+bool buildPlanarTriProblem(
+  GFace *gf, vector<MVertex *> &vertices, vector<vec2> &points,
+  vector<bool> &locked, std::vector<std::array<uint32_t, 3> > &triangles,
+  std::vector<std::array<std::array<double, 2>, 3> > &triIdealShapes,
+  TransfoPlanar &transfo)
 {
-  buildVerticesAndTriangles(gf, vertices, triangles);
+  std::vector<std::array<uint32_t, 4> > elements;
+  buildVerticesAndElements(gf, vertices, elements);
 
   // Compute mean plane
   std::vector<SPoint3> positions;
@@ -107,7 +205,9 @@ bool buildPlanarTriProblem(GFace *gf, vector<MVertex *> &vertices,
     if(vertices[v]->onWhat()->dim() < 2) { locked[v] = true; }
   }
 
-  return true;
+  bool preserveQuadAnisotropy = true;
+  return buildTrianglesAndTargetsFromElements(
+    points, elements, triangles, triIdealShapes, preserveQuadAnisotropy);
 }
 
 double triangle_area_2d(vec2 a, vec2 b, vec2 c)
@@ -116,7 +216,7 @@ double triangle_area_2d(vec2 a, vec2 b, vec2 c)
                (a[1] - c[1]) * (a[0] + c[0]));
 }
 
-void invertTrianglesIfNecessary(
+void _invertTrianglesIfNecessary(
   const std::vector<std::array<double, 2> > &points,
   std::vector<std::array<uint32_t, 3> > &tris)
 {
@@ -161,24 +261,25 @@ bool untangleGFaceMeshConstrained(GFace *gf, int iterMax, double timeMax)
   vector<vec2> points;
   vector<bool> locked;
   vector<std::array<uint32_t, 3> > triangles;
+  std::vector<std::array<std::array<double, 2>, 3> > triIdealShapes;
   TransfoPlanar transfo;
-  bool okb =
-    buildPlanarTriProblem(gf, vertices, points, locked, triangles, transfo);
+  bool okb = buildPlanarTriProblem(gf, vertices, points, locked, triangles,
+                                   triIdealShapes, transfo);
   if(!okb) {
     Msg::Error(
       "- Face %i: untangleGFaceMeshConstrained, failed to build planar problem",
       gf->tag());
     return false;
   }
-  invertTrianglesIfNecessary(points, triangles);
+  _invertTrianglesIfNecessary(points, triangles);
 
   /* Call Winslow untangler */
-  std::vector<std::array<std::array<double, 3>, 3> > triIdealShapes;
-  double theta = 1. / 128.;
-  int iterMaxInner = 300;
+  int iterMaxInner = 1000;
   int iterFailMax = 10;
+  double lambda = 1. / 127.;
+
   bool converged =
-    untangle_triangles_2D(points, locked, triangles, triIdealShapes, theta,
+    untangle_triangles_2D(points, locked, triangles, triIdealShapes, lambda,
                           iterMaxInner, iterMax, iterFailMax, timeMax);
 
   /* Project back on 3D plane, then CAD */

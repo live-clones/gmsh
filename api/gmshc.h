@@ -1,8 +1,8 @@
 /*
  * Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
  *
- * See the LICENSE.txt file for license information. Please report all
- * issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+ * See the LICENSE.txt file in the Gmsh root directory for license information.
+ * Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
  */
 
 #ifndef GMSHC_H
@@ -41,12 +41,15 @@ GMSH_API void *gmshMalloc(size_t n);
  * functions in the API. If `argc' and `argv' (or just `argv' in Python or
  * Julia) are provided, they will be handled in the same way as the command
  * line arguments in the Gmsh app. If `readConfigFiles' is set, read system
- * Gmsh configuration files (gmshrc and gmsh-options). Initializing the API
- * sets the options "General.Terminal" to 1 and "General.AbortOnError" to 2.
- * If compiled with OpenMP support, it also sets the number of threads to
- * "General.NumThreads". */
+ * Gmsh configuration files (gmshrc and gmsh-options). If `run' is set, run in
+ * the same way as the Gmsh app, either interactively or in batch mode
+ * depending on the command line arguments. If `run' is not set, initializing
+ * the API sets the options "General.AbortOnError" to 2 and "General.Terminal"
+ * to 1. If compiled with OpenMP support, it also sets the number of threads
+ * to "General.NumThreads". */
 GMSH_API void gmshInitialize(int argc, char ** argv,
                              const int readConfigFiles,
+                             const int run,
                              int * ierr);
 
 /* Finalize the Gmsh API. This must be called when you are done using the Gmsh
@@ -221,6 +224,13 @@ GMSH_API void gmshModelGetPhysicalName(const int dim,
                                        const int tag,
                                        char ** name,
                                        int * ierr);
+
+/* Set the tag of the entity of dimension `dim' and tag `tag' to the new value
+ * `newTag'. */
+GMSH_API void gmshModelSetTag(const int dim,
+                              const int tag,
+                              const int newTag,
+                              int * ierr);
 
 /* Get the boundary of the model entities `dimTags'. Return in `outDimTags'
  * the boundary of the individual entities (if `combined' is false) or the
@@ -419,8 +429,8 @@ GMSH_API void gmshModelGetParametrizationBounds(const int dim,
 /* Check if the coordinates (or the parametric coordinates if `parametric' is
  * set) provided in `coord' correspond to points inside the entity of
  * dimension `dim' and tag `tag', and return the number of points inside. This
- * feature is only available for a subset of curves and surfaces, depending on
- * the underyling geometrical representation. */
+ * feature is only available for a subset of entities, depending on the
+ * underyling geometrical representation. */
 GMSH_API int gmshModelIsInside(const int dim,
                                const int tag,
                                double * coord, size_t coord_n,
@@ -641,6 +651,10 @@ GMSH_API void gmshModelMeshGetNodesForPhysicalGroup(const int dim,
                                                     double ** coord, size_t * coord_n,
                                                     int * ierr);
 
+/* Get the maximum tag `maxTag' of a node in the mesh. */
+GMSH_API void gmshModelMeshGetMaxNodeTag(size_t * maxTag,
+                                         int * ierr);
+
 /* Add nodes classified on the model entity of dimension `dim' and tag `tag'.
  * `nodeTags' contains the node tags (their unique, strictly positive
  * identification numbers). `coord' is a vector of length 3 times the length
@@ -798,6 +812,10 @@ GMSH_API void gmshModelMeshGetElementsByType(const int elementType,
                                              const size_t numTasks,
                                              int * ierr);
 
+/* Get the maximum tag `maxTag' of an element in the mesh. */
+GMSH_API void gmshModelMeshGetMaxElementTag(size_t * maxTag,
+                                            int * ierr);
+
 /* Preallocate data before calling `getElementsByType' with `numTasks' > 1.
  * For C and C++ only. */
 GMSH_API void gmshModelMeshPreallocateElementsByType(const int elementType,
@@ -839,11 +857,17 @@ GMSH_API void gmshModelMeshAddElementsByType(const int tag,
                                              int * ierr);
 
 /* Get the numerical quadrature information for the given element type
- * `elementType' and integration rule `integrationType' (e.g. "Gauss4" for a
- * Gauss quadrature suited for integrating 4th order polynomials).
- * `localCoord' contains the u, v, w coordinates of the G integration points
- * in the reference element: [g1u, g1v, g1w, ..., gGu, gGv, gGw]. `weights'
- * contains the associated weights: [g1q, ..., gGq]. */
+ * `elementType' and integration rule `integrationType', where
+ * `integrationType' concatenates the integration rule family name with the
+ * desired order (e.g. "Gauss4" for a quadrature suited for integrating 4th
+ * order polynomials). The "CompositeGauss" family uses tensor-product rules
+ * based the 1D Gauss-Legendre rule; the "Gauss" family uses an economic
+ * scheme when available (i.e. with a minimal number of points), and falls
+ * back to "CompositeGauss" otherwise. Note that integration points for the
+ * "Gauss" family can fall outside of the reference element for high-order
+ * rules. `localCoord' contains the u, v, w coordinates of the G integration
+ * points in the reference element: [g1u, g1v, g1w, ..., gGu, gGv, gGw].
+ * `weights' contains the associated weights: [g1q, ..., gGq]. */
 GMSH_API void gmshModelMeshGetIntegrationPoints(const int elementType,
                                                 const char * integrationType,
                                                 double ** localCoord, size_t * localCoord_n,
@@ -908,19 +932,23 @@ GMSH_API void gmshModelMeshGetJacobian(const size_t elementTag,
 /* Get the basis functions of the element of type `elementType' at the
  * evaluation points `localCoord' (given as concatenated triplets of
  * coordinates in the reference element [g1u, g1v, g1w, ..., gGu, gGv, gGw]),
- * for the function space `functionSpaceType' (e.g. "Lagrange" or
- * "GradLagrange" for Lagrange basis functions or their gradient, in the u, v,
- * w coordinates of the reference element; or "H1Legendre3" or
- * "GradH1Legendre3" for 3rd order hierarchical H1 Legendre functions).
- * `numComponents' returns the number C of components of a basis function.
- * `basisFunctions' returns the value of the N basis functions at the
- * evaluation points, i.e. [g1f1, g1f2, ..., g1fN, g2f1, ...] when C == 1 or
- * [g1f1u, g1f1v, g1f1w, g1f2u, ..., g1fNw, g2f1u, ...] when C == 3. For basis
- * functions that depend on the orientation of the elements, all values for
- * the first orientation are returned first, followed by values for the
- * second, etc. `numOrientations' returns the overall number of orientations.
- * If `wantedOrientations' is not empty, only return the values for the
- * desired orientation indices. */
+ * for the function space `functionSpaceType'. Currently supported function
+ * spaces include "Lagrange" and "GradLagrange" for isoparametric Lagrange
+ * basis functions and their gradient in the u, v, w coordinates of the
+ * reference element; "LagrangeN" and "GradLagrangeN", with N = 1, 2, ..., for
+ * N-th order Lagrange basis functions; "H1LegendreN" and "GradH1LegendreN",
+ * with N = 1, 2, ..., for N-th order hierarchical H1 Legendre functions;
+ * "HcurlLegendreN" and "CurlHcurlLegendreN", with N = 1, 2, ..., for N-th
+ * order curl-conforming basis functions. `numComponents' returns the number C
+ * of components of a basis function (e.g. 1 for scalar functions and 3 for
+ * vector functions). `basisFunctions' returns the value of the N basis
+ * functions at the evaluation points, i.e. [g1f1, g1f2, ..., g1fN, g2f1, ...]
+ * when C == 1 or [g1f1u, g1f1v, g1f1w, g1f2u, ..., g1fNw, g2f1u, ...] when C
+ * == 3. For basis functions that depend on the orientation of the elements,
+ * all values for the first orientation are returned first, followed by values
+ * for the second, etc. `numOrientations' returns the overall number of
+ * orientations. If `wantedOrientations' is not empty, only return the values
+ * for the desired orientation indices. */
 GMSH_API void gmshModelMeshGetBasisFunctions(const int elementType,
                                              double * localCoord, size_t localCoord_n,
                                              const char * functionSpaceType,
@@ -936,13 +964,13 @@ GMSH_API void gmshModelMeshGetBasisFunctions(const int elementType,
  * each element the orientation index in the values returned by
  * `getBasisFunctions'. For Lagrange basis functions the call is superfluous
  * as it will return a vector of zeros. */
-GMSH_API void gmshModelMeshGetBasisFunctionsOrientationForElements(const int elementType,
-                                                                   const char * functionSpaceType,
-                                                                   int ** basisFunctionsOrientation, size_t * basisFunctionsOrientation_n,
-                                                                   const int tag,
-                                                                   const size_t task,
-                                                                   const size_t numTasks,
-                                                                   int * ierr);
+GMSH_API void gmshModelMeshGetBasisFunctionsOrientation(const int elementType,
+                                                        const char * functionSpaceType,
+                                                        int ** basisFunctionsOrientation, size_t * basisFunctionsOrientation_n,
+                                                        const int tag,
+                                                        const size_t task,
+                                                        const size_t numTasks,
+                                                        int * ierr);
 
 /* Get the orientation of a single element `elementTag'. */
 GMSH_API void gmshModelMeshGetBasisFunctionsOrientationForElement(const size_t elementTag,
@@ -956,16 +984,17 @@ GMSH_API int gmshModelMeshGetNumberOfOrientations(const int elementType,
                                                   const char * functionSpaceType,
                                                   int * ierr);
 
-/* Preallocate data before calling `getBasisFunctionsOrientationForElements'
- * with `numTasks' > 1. For C and C++ only. */
-GMSH_API void gmshModelMeshPreallocateBasisFunctionsOrientationForElements(const int elementType,
-                                                                           int ** basisFunctionsOrientation, size_t * basisFunctionsOrientation_n,
-                                                                           const int tag,
-                                                                           int * ierr);
+/* Preallocate data before calling `getBasisFunctionsOrientation' with
+ * `numTasks' > 1. For C and C++ only. */
+GMSH_API void gmshModelMeshPreallocateBasisFunctionsOrientation(const int elementType,
+                                                                int ** basisFunctionsOrientation, size_t * basisFunctionsOrientation_n,
+                                                                const int tag,
+                                                                int * ierr);
 
 /* Get the global unique mesh edge identifiers `edgeTags' and orientations
  * `edgeOrientation' for an input list of node tag pairs defining these edges,
- * concatenated in the vector `nodeTags'. */
+ * concatenated in the vector `nodeTags'. Mesh edges are created e.g. by
+ * `createEdges()' or `getKeys()'. */
 GMSH_API void gmshModelMeshGetEdges(size_t * nodeTags, size_t nodeTags_n,
                                     size_t ** edgeTags, size_t * edgeTags_n,
                                     int ** edgeOrientations, size_t * edgeOrientations_n,
@@ -974,7 +1003,8 @@ GMSH_API void gmshModelMeshGetEdges(size_t * nodeTags, size_t nodeTags_n,
 /* Get the global unique mesh face identifiers `faceTags' and orientations
  * `faceOrientations' for an input list of node tag triplets (if `faceType' ==
  * 3) or quadruplets (if `faceType' == 4) defining these faces, concatenated
- * in the vector `nodeTags'. */
+ * in the vector `nodeTags'. Mesh faces are created e.g. by `createFaces()' or
+ * `getKeys()'. */
 GMSH_API void gmshModelMeshGetFaces(const int faceType,
                                     size_t * nodeTags, size_t nodeTags_n,
                                     size_t ** faceTags, size_t * faceTags_n,
@@ -996,14 +1026,14 @@ GMSH_API void gmshModelMeshCreateFaces(int * dimTags, size_t dimTags_n,
  * y, z coordinates locating basis functions for sorting purposes. Warning:
  * this is an experimental feature and will probably change in a future
  * release. */
-GMSH_API void gmshModelMeshGetKeysForElements(const int elementType,
-                                              const char * functionSpaceType,
-                                              int ** typeKeys, size_t * typeKeys_n,
-                                              size_t ** entityKeys, size_t * entityKeys_n,
-                                              double ** coord, size_t * coord_n,
-                                              const int tag,
-                                              const int returnCoord,
-                                              int * ierr);
+GMSH_API void gmshModelMeshGetKeys(const int elementType,
+                                   const char * functionSpaceType,
+                                   int ** typeKeys, size_t * typeKeys_n,
+                                   size_t ** entityKeys, size_t * entityKeys_n,
+                                   double ** coord, size_t * coord_n,
+                                   const int tag,
+                                   const int returnCoord,
+                                   int * ierr);
 
 /* Get the pair of keys for a single element `elementTag'. */
 GMSH_API void gmshModelMeshGetKeysForElement(const size_t elementTag,
@@ -1016,9 +1046,9 @@ GMSH_API void gmshModelMeshGetKeysForElement(const size_t elementTag,
 
 /* Get the number of keys by elements of type `elementType' for function space
  * named `functionSpaceType'. */
-GMSH_API int gmshModelMeshGetNumberOfKeysForElements(const int elementType,
-                                                     const char * functionSpaceType,
-                                                     int * ierr);
+GMSH_API int gmshModelMeshGetNumberOfKeys(const int elementType,
+                                          const char * functionSpaceType,
+                                          int * ierr);
 
 /* Get information about the pair of `keys'. `infoKeys' returns information
  * about the functions associated with the pairs (`typeKeys', `entityKey').
@@ -1027,12 +1057,12 @@ GMSH_API int gmshModelMeshGetNumberOfKeysForElements(const int elementType,
  * `infoKeys[0].second' gives the order of the function associated with the
  * key. Warning: this is an experimental feature and will probably change in a
  * future release. */
-GMSH_API void gmshModelMeshGetInformationForElements(int * typeKeys, size_t typeKeys_n,
-                                                     size_t * entityKeys, size_t entityKeys_n,
-                                                     const int elementType,
-                                                     const char * functionSpaceType,
-                                                     int ** infoKeys, size_t * infoKeys_n,
-                                                     int * ierr);
+GMSH_API void gmshModelMeshGetKeysInformation(int * typeKeys, size_t typeKeys_n,
+                                              size_t * entityKeys, size_t entityKeys_n,
+                                              const int elementType,
+                                              const char * functionSpaceType,
+                                              int ** infoKeys, size_t * infoKeys_n,
+                                              int * ierr);
 
 /* Get the barycenters of all elements of type `elementType' classified on the
  * entity of tag `tag'. If `primary' is set, only the primary nodes of the
@@ -1121,10 +1151,16 @@ GMSH_API void gmshModelMeshSetSizeAtParametricPoints(const int dim,
                                                      double * sizes, size_t sizes_n,
                                                      int * ierr);
 
-/* Set a mesh size callback for the current model. The callback should take 5
- * arguments (`dim', `tag', `x', `y' and `z') and return the value of the mesh
- * size at coordinates (`x', `y', `z'). */
-GMSH_API void gmshModelMeshSetSizeCallback(double (*callback)(int dim, int tag, double x, double y, double z, void * data), void * callback_data,
+/* Set a mesh size callback for the current model. The callback function
+ * should take six arguments as input (`dim', `tag', `x', `y', `z' and `lc').
+ * The first two integer arguments correspond to the dimension `dim' and tag
+ * `tag' of the entity being meshed. The next four double precision arguments
+ * correspond to the coordinates `x', `y' and `z' around which to prescribe
+ * the mesh size and to the mesh size `lc' that would be prescribed if the
+ * callback had not been called. The callback function should return a double
+ * precision number specifying the desired mesh size; returning `lc' is
+ * equivalent to a no-op. */
+GMSH_API void gmshModelMeshSetSizeCallback(double (*callback)(int dim, int tag, double x, double y, double z, double lc, void * data), void * callback_data,
                                            int * ierr);
 
 /* Remove the mesh size callback from the current model. */
@@ -1286,6 +1322,13 @@ GMSH_API void gmshModelMeshSetPeriodic(const int dim,
                                        double * affineTransform, size_t affineTransform_n,
                                        int * ierr);
 
+/* Get master entities `tagsMaster' for the entities of dimension `dim' and
+ * tags `tags'. */
+GMSH_API void gmshModelMeshGetPeriodic(const int dim,
+                                       int * tags, size_t tags_n,
+                                       int ** tagMaster, size_t * tagMaster_n,
+                                       int * ierr);
+
 /* Get the master entity `tagMaster', the node tags `nodeTags' and their
  * corresponding master node tags `nodeTagsMaster', and the affine transform
  * `affineTransform' for the entity of dimension `dim' and tag `tag'. If
@@ -1299,6 +1342,25 @@ GMSH_API void gmshModelMeshGetPeriodicNodes(const int dim,
                                             double ** affineTransform, size_t * affineTransform_n,
                                             const int includeHighOrderNodes,
                                             int * ierr);
+
+/* Get the master entity `tagMaster' and the key pairs (`typeKeyMaster',
+ * `entityKeyMaster') corresponding to the entity `tag' and the key pairs
+ * (`typeKey', `entityKey') for the elements of type `elementType' and
+ * function space type `functionSpaceType'. If `returnCoord' is set, the
+ * `coord' and `coordMaster' vectors contain the x, y, z coordinates locating
+ * basis functions for sorting purposes. */
+GMSH_API void gmshModelMeshGetPeriodicKeys(const int elementType,
+                                           const char * functionSpaceType,
+                                           const int tag,
+                                           int * tagMaster,
+                                           int ** typeKeys, size_t * typeKeys_n,
+                                           int ** typeKeysMaster, size_t * typeKeysMaster_n,
+                                           size_t ** entityKeys, size_t * entityKeys_n,
+                                           size_t ** entityKeysMaster, size_t * entityKeysMaster_n,
+                                           double ** coord, size_t * coord_n,
+                                           double ** coordMaster, size_t * coordMaster_n,
+                                           const int returnCoord,
+                                           int * ierr);
 
 /* Remove duplicate nodes in the mesh of the current model. */
 GMSH_API void gmshModelMeshRemoveDuplicateNodes(int * ierr);
@@ -1399,10 +1461,25 @@ GMSH_API int gmshModelMeshFieldAdd(const char * fieldType,
 GMSH_API void gmshModelMeshFieldRemove(const int tag,
                                        int * ierr);
 
+/* Get the list of all fields. */
+GMSH_API void gmshModelMeshFieldList(int ** tags, size_t * tags_n,
+                                     int * ierr);
+
+/* Get the type `fieldType' of the field with tag `tag'. */
+GMSH_API void gmshModelMeshFieldGetType(const int tag,
+                                        char ** fileType,
+                                        int * ierr);
+
 /* Set the numerical option `option' to value `value' for field `tag'. */
 GMSH_API void gmshModelMeshFieldSetNumber(const int tag,
                                           const char * option,
                                           const double value,
+                                          int * ierr);
+
+/* Get the value of the numerical option `option' for field `tag'. */
+GMSH_API void gmshModelMeshFieldGetNumber(const int tag,
+                                          const char * option,
+                                          double * value,
                                           int * ierr);
 
 /* Set the string option `option' to value `value' for field `tag'. */
@@ -1411,10 +1488,22 @@ GMSH_API void gmshModelMeshFieldSetString(const int tag,
                                           const char * value,
                                           int * ierr);
 
+/* Get the value of the string option `option' for field `tag'. */
+GMSH_API void gmshModelMeshFieldGetString(const int tag,
+                                          const char * option,
+                                          char ** value,
+                                          int * ierr);
+
 /* Set the numerical list option `option' to value `value' for field `tag'. */
 GMSH_API void gmshModelMeshFieldSetNumbers(const int tag,
                                            const char * option,
                                            double * value, size_t value_n,
+                                           int * ierr);
+
+/* Get the value of the numerical list option `option' for field `tag'. */
+GMSH_API void gmshModelMeshFieldGetNumbers(const int tag,
+                                           const char * option,
+                                           double ** value, size_t * value_n,
                                            int * ierr);
 
 /* Set the field `tag' as the background mesh size field. */
@@ -1979,10 +2068,13 @@ GMSH_API int gmshModelOccAddWire(int * curveTags, size_t curveTags_n,
 
 /* Add a curve loop (a closed wire) in the OpenCASCADE CAD representation,
  * formed by the curves `curveTags'. `curveTags' should contain tags of curves
- * forming a closed loop. Note that an OpenCASCADE curve loop can be made of
- * curves that share geometrically identical (but topologically different)
- * points. If `tag' is positive, set the tag explicitly; otherwise a new tag
- * is selected automatically. Return the tag of the curve loop. */
+ * forming a closed loop. Negative tags can be specified for compatibility
+ * with the built-in kernel, but are simply ignored: the wire is oriented
+ * according to the orientation of its first curve. Note that an OpenCASCADE
+ * curve loop can be made of curves that share geometrically identical (but
+ * topologically different) points. If `tag' is positive, set the tag
+ * explicitly; otherwise a new tag is selected automatically. Return the tag
+ * of the curve loop. */
 GMSH_API int gmshModelOccAddCurveLoop(int * curveTags, size_t curveTags_n,
                                       const int tag,
                                       int * ierr);
@@ -2526,8 +2618,11 @@ GMSH_API void gmshModelOccImportShapes(const char * fileName,
  * OpenCASCADE `TopoDS_Shape' object (passed as a pointer to void). The
  * imported entities are returned in `outDimTags'. If the optional argument
  * `highestDimOnly' is set, only import the highest dimensional entities in
- * `shape'. For C and C++ only. Warning: this function is unsafe, as providing
- * an invalid pointer will lead to undefined behavior. */
+ * `shape'. In Python, this function can be used for integration with
+ * PythonOCC, in which the SwigPyObject pointer of `TopoDS_Shape' must be
+ * passed as an int to `shape', i.e., `shape = int(pythonocc_shape.this)'.
+ * Warning: this function is unsafe, as providing an invalid pointer will lead
+ * to undefined behavior. */
 GMSH_API void gmshModelOccImportShapesNativePointer(const void * shape,
                                                     int ** outDimTags, size_t * outDimTags_n,
                                                     const int highestDimOnly,
@@ -2800,23 +2895,29 @@ GMSH_API void gmshViewCombine(const char * what,
                               const int copyOptions,
                               int * ierr);
 
-/* Probe the view `tag' for its `value' at point (`x', `y', `z'). Return only
- * the value at step `step' is `step' is positive. Return only values with
- * `numComp' if `numComp' is positive. Return the gradient of the `value' if
- * `gradient' is set. Probes with a geometrical tolerance (in the reference
- * unit cube) of `tolerance' if `tolerance' is not zero. Return the result
- * from the element described by its coordinates if `xElementCoord',
- * `yElementCoord' and `zElementCoord' are provided. If `dim' is >= 0, return
- * only elements of the specified dimension. */
+/* Probe the view `tag' for its `value' at point (`x', `y', `z'). If no match
+ * is found, `value' is returned empty. Return only the value at step `step'
+ * is `step' is positive. Return only values with `numComp' if `numComp' is
+ * positive. Return the gradient of the `value' if `gradient' is set. If
+ * `distanceMax' is zero, only return a result if an exact match inside an
+ * element in the view is found; if `distanceMax' is positive and an exact
+ * match is not found, return the value at the closest node if it is closer
+ * than `distanceMax'; if `distanceMax' is negative and an exact match is not
+ * found, always return the value at the closest node. The distance to the
+ * match is returned in `distance'. Return the result from the element
+ * described by its coordinates if `xElementCoord', `yElementCoord' and
+ * `zElementCoord' are provided. If `dim' is >= 0, return only matches from
+ * elements of the specified dimension. */
 GMSH_API void gmshViewProbe(const int tag,
                             const double x,
                             const double y,
                             const double z,
                             double ** value, size_t * value_n,
+                            double * distance,
                             const int step,
                             const int numComp,
                             const int gradient,
-                            const double tolerance,
+                            const double distanceMax,
                             double * xElemCoord, size_t xElemCoord_n,
                             double * yElemCoord, size_t yElemCoord_n,
                             double * zElemCoord, size_t zElemCoord_n,

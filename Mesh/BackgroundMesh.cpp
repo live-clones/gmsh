@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include "GmshMessage.h"
 #include "BackgroundMesh.h"
@@ -578,10 +578,7 @@ double backgroundMesh::operator()(double u, double v, double w) const
 #if defined(HAVE_ANN)
     if(uv_kdtree->nPoints() < 2) return -1000.;
     double pt[3] = {u, v, 0.0};
-#if defined(_OPENMP)
-#pragma omp                                                                    \
-  critical // just to avoid crash (still incorrect) - should use nanoflann
-#endif
+#pragma omp critical // just to avoid crash (still incorrect) - should use nanoflann
     uv_kdtree->annkSearch(pt, 2, index, dist);
     SPoint3 p1(nodes[index[0]][0], nodes[index[0]][1], nodes[index[0]][2]);
     SPoint3 p2(nodes[index[1]][0], nodes[index[1]][1], nodes[index[1]][2]);
@@ -612,10 +609,7 @@ double backgroundMesh::getAngle(double u, double v, double w) const
     double angle = 0.;
     if(angle_kdtree->nPoints() >= NBANN) {
       double pt[3] = {u, v, 0.0};
-#if defined(_OPENMP)
-#pragma omp                                                                    \
-  critical // just to avoid crash (still incorrect) - should use nanoflann
-#endif
+#pragma omp critical // just to avoid crash (still incorrect) - should use nanoflann
       angle_kdtree->annkSearch(pt, NBANN, index, dist);
       double SINE = 0.0, COSINE = 0.0;
       for(int i = 0; i < NBANN; i++) {
@@ -646,10 +640,7 @@ double backgroundMesh::getAngle(double u, double v, double w) const
 #if defined(HAVE_ANN)
     if(uv_kdtree->nPoints() < 2) return -1000.0;
     double pt[3] = {u, v, 0.0};
-#if defined(_OPENMP)
-#pragma omp                                                                    \
-  critical // just to avoid crash (still incorrect) - should use nanoflann
-#endif
+#pragma omp critical // just to avoid crash (still incorrect) - should use nanoflann
     uv_kdtree->annkSearch(pt, 2, index, dist);
     SPoint3 p1(nodes[index[0]][0], nodes[index[0]][1], nodes[index[0]][2]);
     SPoint3 p2(nodes[index[1]][0], nodes[index[1]][1], nodes[index[1]][2]);

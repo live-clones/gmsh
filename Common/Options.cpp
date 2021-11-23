@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <string.h>
 #include <stdlib.h>
@@ -2371,6 +2371,12 @@ double opt_general_detached_menu(OPT_ARGS_NUM)
   }
 #endif
   return CTX::instance()->detachedMenu;
+}
+
+double opt_general_detached_process(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->detachedProcess = (int)val;
+  return CTX::instance()->detachedProcess;
 }
 
 double opt_general_menu_size0(OPT_ARGS_NUM)
@@ -6573,6 +6579,12 @@ double opt_mesh_angle_tolerance_facet_overlap(OPT_ARGS_NUM)
   return CTX::instance()->mesh.angleToleranceFacetOverlap;
 }
 
+double opt_mesh_tolerance_reference_element(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->mesh.toleranceReferenceElement = val;
+  return CTX::instance()->mesh.toleranceReferenceElement;
+}
+
 double opt_mesh_unv_strict_format(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->mesh.unvStrictFormat = (int)val;
@@ -6610,6 +6622,11 @@ double opt_mesh_quadqs_topo_optim_methods(OPT_ARGS_NUM)
   if(action & GMSH_SET)
     CTX::instance()->mesh.quadqsTopoOptimMethods = (int)val;
   return CTX::instance()->mesh.quadqsTopoOptimMethods;
+}
+
+double opt_mesh_quadqs_scaling_on_triangulation(OPT_ARGS_NUM) {
+  if(action & GMSH_SET) CTX::instance()->mesh.quadqsScalingOnTriangulation = (double)val;
+  return CTX::instance()->mesh.quadqsScalingOnTriangulation;
 }
 
 double opt_mesh_old_initial_delaunay_2d(OPT_ARGS_NUM)

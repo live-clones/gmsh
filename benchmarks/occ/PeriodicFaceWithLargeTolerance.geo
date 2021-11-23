@@ -3,6 +3,7 @@ SetFactory("OpenCASCADE");
 a() = ShapeFromFile("PeriodicFaceWithLargeTolerance.brep");
 
 Mesh.Algorithm = 6;
+Mesh.MeshSizeFromCurvature = 10;
 
 Mesh 2;
 

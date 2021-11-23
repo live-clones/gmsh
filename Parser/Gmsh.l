@@ -1,8 +1,8 @@
 %{
 // Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <algorithm>
 #include <stdio.h>
@@ -334,6 +334,7 @@ ThruSections            return tThruSections;
 Today                   return tToday;
 Torus                   return tTorus;
 TotalMemory             return tTotalMemory;
+TransformMesh           return tTransformMesh;
 Transf[qQ]uad[tT]ri     return tTransfQuadTri;
 Transfinite             return tTransfinite;
 Translate               return tTranslate;

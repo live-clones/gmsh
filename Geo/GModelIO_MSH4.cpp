@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 //
 // Contributor(s):
 //   Anthony Royer
@@ -614,7 +614,7 @@ readMSH4Nodes(GModel *const model, FILE *fp, bool binary, bool &dense,
         mv->setEntity(entity);
         minNodeNum = std::min(minNodeNum, tagNode);
         maxNodeNum = std::max(maxNodeNum, tagNode);
-        vertexCache[nodeRead] = std::pair<std::size_t, MVertex *>(tagNode, mv);
+        vertexCache[nodeRead] = std::make_pair(tagNode, mv);
         nodeRead++;
         if(totalNumNodes > 100000)
           Msg::ProgressMeter(nodeRead, true, "Reading nodes");
@@ -675,7 +675,7 @@ readMSH4Nodes(GModel *const model, FILE *fp, bool binary, bool &dense,
         mv->setEntity(entity);
         minNodeNum = std::min(minNodeNum, tagNode);
         maxNodeNum = std::max(maxNodeNum, tagNode);
-        vertexCache[nodeRead] = std::pair<std::size_t, MVertex *>(tagNode, mv);
+        vertexCache[nodeRead] = std::make_pair(tagNode, mv);
         nodeRead++;
         if(totalNumNodes > 100000)
           Msg::ProgressMeter(nodeRead, true, "Reading nodes");
@@ -1147,8 +1147,8 @@ static bool readMSH4GhostElements(GModel *const model, FILE *fp, bool binary,
         }
       }
 
-      ghostCells.insert(std::pair<std::pair<MElement *, int>, int>(
-        std::pair<MElement *, int>(elm, partNum), ghostPartition));
+      ghostCells.insert(std::make_pair(std::make_pair(elm, partNum),
+                                       ghostPartition));
     }
   }
 
@@ -1404,8 +1404,7 @@ int GModel::_readMSH4(const std::string &name)
         return 0;
       }
       if(dense) {
-        _elementVectorCache.resize(maxElementNum + 1,
-                                   std::pair<MElement*, int>(nullptr, 0));
+        _elementVectorCache.resize(maxElementNum + 1, std::make_pair(nullptr, 0));
         for(std::size_t i = 0; i < totalNumElements; i++) {
           if(!_elementVectorCache[elementCache[i].first].first) {
             _elementVectorCache[elementCache[i].first] = elementCache[i].second;
@@ -2553,7 +2552,7 @@ static void writeMSH4PeriodicNodes(GModel *const model, FILE *fp,
     GEntity *g_master = g_slave->getMeshMaster();
 
     if(g_slave != g_master) {
-      std::map<MVertex *, MVertex *> corrVert = g_slave->correspondingVertices;
+      std::map<MVertex *, MVertex *, MVertexPtrLessThan> corrVert = g_slave->correspondingVertices;
       if(CTX::instance()->mesh.hoSavePeriodic)
         corrVert.insert(g_slave->correspondingHighOrderVertices.begin(),
                         g_slave->correspondingHighOrderVertices.end());
@@ -3116,10 +3115,9 @@ int GModel::writePartitionedTopology(std::string &name)
       int parentPhysicalTag;
       std::vector<int> partitions;
       if(getPhyscialNameInfo(phyName, parentPhysicalTag, partitions)) {
-        allParts[entities[i]->dim()].insert(
-          std::pair<int, std::pair<int, std::vector<int> > >(
-            physicals[j],
-            std::pair<int, std::vector<int> >(parentPhysicalTag, partitions)));
+        allParts[entities[i]->dim()].insert
+          (std::make_pair(physicals[j],
+                          std::make_pair(parentPhysicalTag, partitions)));
       }
     }
   }
@@ -3143,8 +3141,7 @@ int GModel::writePartitionedTopology(std::string &name)
         partName += "~{" + std::to_string(it->second.second[j]) + "}";
         fprintf(fp, "~{%d}", it->second.second[j]);
       }
-      tagToString[i - 1].insert(
-        std::pair<int, std::string>(it->first, partName));
+      tagToString[i - 1].insert(std::make_pair(it->first, partName));
       fprintf(fp, " = Region[{%d}];\n", it->first);
     }
     fprintf(fp, "\n");
@@ -3188,11 +3185,11 @@ int GModel::writePartitionedTopology(std::string &name)
     for(auto it = allParts[omegaDim - 1].begin();
         it != allParts[omegaDim - 1].end(); ++it) {
       if(it->second.second.size() == 2) {
-        sigmasij[std::pair<int, int>(it->second.second[0],
-                                     it->second.second[1])]
+        sigmasij[std::make_pair(it->second.second[0],
+                                it->second.second[1])]
           .push_back(it->first);
-        sigmasij[std::pair<int, int>(it->second.second[1],
-                                     it->second.second[0])]
+        sigmasij[std::make_pair(it->second.second[1],
+                                it->second.second[0])]
           .push_back(it->first);
         sigmas[it->second.second[0]].push_back(it->first);
         sigmas[it->second.second[1]].push_back(it->first);

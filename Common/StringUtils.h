@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #ifndef STRING_UTILS_H
 #define STRING_UTILS_H
@@ -29,5 +29,6 @@ bool SplitOptionName(const std::string &fullName, std::string &category,
 std::vector<std::string> SplitString(const std::string &msg, char separator,
                                      bool removeWhiteSpace = false);
 std::string RemoveWhiteSpace(const std::string &s);
+bool IsOnelabName(const std::string &name, std::string &cleanName);
 
 #endif

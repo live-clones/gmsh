@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 // This file contains a bunch of functions that depend on OS-dependent
 // features and/or system calls
@@ -587,9 +587,14 @@ int SystemCallExe(const std::string &exe, const std::string &argsOrCommand,
     else {
       // DETACHED_PROCESS removes the console (useful if the program to launch
       // is a console-mode exe)
+      DWORD dwCreationFlags;
+      if(CTX::instance()->detachedProcess)
+        dwCreationFlags = NORMAL_PRIORITY_CLASS | DETACHED_PROCESS;
+      else
+        dwCreationFlags = NORMAL_PRIORITY_CLASS;
+
       CreateProcessW(nullptr, wbuf[0], nullptr, nullptr, FALSE,
-                     NORMAL_PRIORITY_CLASS | DETACHED_PROCESS, nullptr, nullptr,
-                     &suInfo, &prInfo);
+                     dwCreationFlags, nullptr, nullptr, &suInfo, &prInfo);
     }
   }
 #elif(BUILD_IOS)

@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #ifndef OPTIONS_H
 #define OPTIONS_H
@@ -171,6 +171,7 @@ double opt_general_show_module_menu(OPT_ARGS_NUM);
 double opt_general_message_size(OPT_ARGS_NUM);
 double opt_general_message_fontsize(OPT_ARGS_NUM);
 double opt_general_detached_menu(OPT_ARGS_NUM);
+double opt_general_detached_process(OPT_ARGS_NUM);
 double opt_general_menu_size0(OPT_ARGS_NUM);
 double opt_general_menu_size1(OPT_ARGS_NUM);
 double opt_general_menu_position0(OPT_ARGS_NUM);
@@ -602,6 +603,7 @@ double opt_mesh_max_num_threads_1d(OPT_ARGS_NUM);
 double opt_mesh_max_num_threads_2d(OPT_ARGS_NUM);
 double opt_mesh_max_num_threads_3d(OPT_ARGS_NUM);
 double opt_mesh_angle_tolerance_facet_overlap(OPT_ARGS_NUM);
+double opt_mesh_tolerance_reference_element(OPT_ARGS_NUM);
 double opt_mesh_renumber(OPT_ARGS_NUM);
 double opt_mesh_unv_strict_format(OPT_ARGS_NUM);
 double opt_mesh_reparam_max_triangles(OPT_ARGS_NUM);
@@ -609,6 +611,7 @@ double opt_mesh_ignore_parametrization(OPT_ARGS_NUM);
 double opt_mesh_quadqs_sizemap_method(OPT_ARGS_NUM);
 double opt_mesh_quadqs_topo_optim_methods(OPT_ARGS_NUM);
 double opt_mesh_quadqs_remeshing_boldness(OPT_ARGS_NUM);
+double opt_mesh_quadqs_scaling_on_triangulation(OPT_ARGS_NUM);
 double opt_mesh_old_initial_delaunay_2d(OPT_ARGS_NUM);
 double opt_solver_listen(OPT_ARGS_NUM);
 double opt_solver_timeout(OPT_ARGS_NUM);

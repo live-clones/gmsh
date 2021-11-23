@@ -1,8 +1,8 @@
 %{
 // Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <sstream>
 #include <map>
@@ -202,7 +202,7 @@ struct doubleXstring{
 %token tBox tCylinder tCone tTorus tEllipsoid tQuadric tShapeFromFile
 %token tRectangle tDisk tWire tGeoEntity
 %token tCharacteristic tLength tParametric tElliptic
-%token tRefineMesh tRecombineMesh tAdaptMesh
+%token tRefineMesh tRecombineMesh tAdaptMesh tTransformMesh
 %token tRelocateMesh tReorientMesh tSetFactory tThruSections tWedge tFillet tChamfer
 %token tPlane tRuled tTransfinite tPhysical tCompound tPeriodic tParent
 %token tUsing tPlugin tDegenerated tRecursive tSewing
@@ -814,7 +814,7 @@ Affectation :
       Msg::SetOnelabNumber($3, $5);
       Free($3);
     }
-  | tSetString LP String__Index ',' StringExpr RP tEND
+  | tSetString LP StringExpr ',' StringExpr RP tEND
     {
       Msg::SetOnelabString($3, $5);
       Free($3);
@@ -1165,13 +1165,8 @@ Affectation :
       Field *field = GModel::current()->getFields()->get((int)$3);
       if(field){
 	FieldOption *option = field->options[$6];
-	if(option){
-	  try { option->numericalValue($8); }
-	  catch(...){
-	    yymsg(0, "Cannot assign a numerical value to option '%s' "
-		  "in field %i of type '%s'", $6, (int)$3, field->getName());
-	  }
-	}
+	if(option)
+	  option->numericalValue($8);
 	else
 	  yymsg(0, "Unknown option '%s' in field %i of type '%s'",
 		$6, (int)$3, field->getName());
@@ -1187,13 +1182,8 @@ Affectation :
       Field *field = GModel::current()->getFields()->get((int)$3);
       if(field){
 	FieldOption *option = field->options[$6];
-	if(option){
-	  try { option->string($8); }
-	  catch (...){
-	    yymsg(0, "Cannot assign a string value to  option '%s' "
-		  "in field %i of type '%s'", $6, (int)$3, field->getName());
-	  }
-	}
+	if(option)
+	  option->string($8);
 	else
 	  yymsg(0, "Unknown option '%s' in field %i of type '%s'",
 		$6, (int)$3, field->getName());
@@ -3164,7 +3154,10 @@ Delete :
           GModel::current()->getGEOInternals()->synchronize(GModel::current());
       }
       if(!changed){
-        GModel::current()->remove(dimTags);
+        std::vector<GEntity*> removed;
+        GModel::current()->remove(dimTags, removed);
+        Msg::Debug("Destroying %lu entities in model", removed.size());
+        for(std::size_t i = 0; i < removed.size(); i++) delete removed[i];
       }
       List_Delete($3);
     }
@@ -3186,7 +3179,10 @@ Delete :
           GModel::current()->getGEOInternals()->synchronize(GModel::current());
       }
       if(!changed){
-        GModel::current()->remove(dimTags, true);
+        std::vector<GEntity*> removed;
+        GModel::current()->remove(dimTags, removed, true);
+        Msg::Debug("Destroying %lu entities in model", removed.size());
+        for(std::size_t i = 0; i < removed.size(); i++) delete removed[i];
       }
       List_Delete($4);
     }
@@ -3770,6 +3766,47 @@ Command :
         List_Delete(*(List_T**)List_Pointer($9, i));
       List_Delete($9);
       CTX::instance()->lock = lock;
+    }
+  | tTransformMesh '{' RecursiveListOfDouble '}' tEND
+    {
+      std::vector<double> affineTransform;
+      ListOfDouble2Vector($3, affineTransform);
+      if(affineTransform.size() >= 12) {
+        std::vector<GEntity *> entities;
+        GModel::current()->getEntities(entities);
+        for(auto e : entities) {
+          for(std::size_t j = 0; j < e->getNumMeshVertices(); j++) {
+            MVertex *v = e->getMeshVertex(j);
+            SPoint3 pt = v->point();
+            pt.transform(affineTransform);
+            v->setXYZ(pt);
+          }
+        }
+      }
+      else
+        yymsg(0, "Affine transform matrix requires at least 12 entries");
+      List_Delete($3);
+    }
+  | tTransformMesh '{' RecursiveListOfDouble '}' '{' MultipleShape '}' tEND
+    {
+      std::vector<double> affineTransform;
+      ListOfDouble2Vector($3, affineTransform);
+      std::vector<std::pair<int, int> > dimTags;
+      ListOfShapes2VectorOfPairs($6, dimTags);
+      for(std::size_t i = 0; i < dimTags.size(); i++) {
+        GEntity *e = GModel::current()->getEntityByTag
+          (dimTags[i].first, dimTags[i].second);
+        if(e){
+          for(std::size_t j = 0; j < e->getNumMeshVertices(); j++) {
+            MVertex *v = e->getMeshVertex(j);
+            SPoint3 pt = v->point();
+            pt.transform(affineTransform);
+            v->setXYZ(pt);
+          }
+        }
+      }
+      List_Delete($3);
+      List_Delete($6);
     }
 ;
 
@@ -6957,7 +6994,7 @@ void ListOfShapes2VectorOfPairs(List_T *list, std::vector<std::pair<int, int> > 
     Shape s;
     List_Read(list, i, &s);
     int dim = s.Type / 100 - 1;
-    if(dim >= 0 && dim <= 3) v.push_back(std::pair<int, int>(dim, s.Num));
+    if(dim >= 0 && dim <= 3) v.push_back(std::make_pair(dim, s.Num));
   }
 }
 

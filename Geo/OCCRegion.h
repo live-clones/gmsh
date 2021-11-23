@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #ifndef OCC_REGION_H
 #define OCC_REGION_H
@@ -20,7 +20,7 @@ private:
 
 public:
   OCCRegion(GModel *m, TopoDS_Solid s, int num);
-  virtual ~OCCRegion();
+  virtual ~OCCRegion() {}
   virtual SBoundingBox3d bounds(bool fast = false);
   virtual GeomType geomType() const;
   virtual ModelType getNativeType() const { return OpenCascadeModel; }

@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #ifndef MESH_TRIANGULATION_H
 #define MESH_TRIANGULATION_H
@@ -20,5 +20,7 @@ void GFaceDelaunayRefinementOldMesher(int faceTag);
 void GFaceDelaunayRefinement(int faceTag);
 int GFace2PolyMesh(int faceTag, PolyMesh **pm);
 int PolyMesh2GFace(PolyMesh *pm, int faceTag);
+int meshTriangulate2d (const std::vector<double> &coord,
+		       std::vector<std::size_t> &tri);
 
 #endif

@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <stdlib.h>
 #include <string.h>
@@ -82,6 +82,7 @@ void CTX::init()
   gamepad = nullptr;
   mesh.switchElementTags = 0;
   terminal = 0;
+  detachedProcess = 1;
 
   // need to initialize these too, since the corresponding opt_XXX routines use
   // the current value to detect changes

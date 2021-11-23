@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <vector>
 #include "GmshMessage.h"
@@ -94,13 +94,14 @@ static IntPt *GQQ[3] = {GQQ1, GQQ3, GQQ7};
 static int GQQnPt[3] = {1, 3, 7};
 static std::vector<IntPt *> GQQGL(40, nullptr);
 
-IntPt *getGQQPts(int order)
+IntPt *getGQQPts(int order, bool forceTensorRule)
 {
-  if(order <= 2) return GQQ[order];
-  int n = (order + 1) / (float)2 + 0.5;
+  if(!forceTensorRule && order <= 2) return GQQ[order];
+
   if(static_cast<int>(GQQGL.size()) < order + 1)
     GQQGL.resize(order + 1, nullptr);
   if(!GQQGL[order]) {
+    int n = (order + 1) / (float)2 + 0.5;
     double *pt, *wt;
     gmshGaussLegendre1D(n, &pt, &wt);
     IntPt *intpt = new IntPt[n * n];
@@ -118,9 +119,10 @@ IntPt *getGQQPts(int order)
   return GQQGL[order];
 }
 
-int getNGQQPts(int order)
+int getNGQQPts(int order, bool forceTensorRule)
 {
-  if(order <= 2) return GQQnPt[order];
+  if(!forceTensorRule && order <= 2) return GQQnPt[order];
+
   int n = (order + 1) / (float)2 + 0.5;
   return n * n;
 }

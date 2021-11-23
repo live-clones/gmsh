@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #ifndef OCC_FACE_H
 #define OCC_FACE_H
@@ -31,13 +31,14 @@ private:
 
 public:
   OCCFace(GModel *m, TopoDS_Face s, int num);
-  virtual ~OCCFace();
+  virtual ~OCCFace() {}
   virtual SBoundingBox3d bounds(bool fast = false);
   virtual Range<double> parBounds(int i) const;
   virtual GPoint point(double par1, double par2) const;
   virtual GPoint closestPoint(const SPoint3 &queryPoint,
                               const double initialGuess[2]) const;
   virtual bool containsPoint(const SPoint3 &pt) const;
+  virtual bool containsParam(const SPoint2 &pt);
   virtual SVector3 normal(const SPoint2 &param) const;
   virtual Pair<SVector3, SVector3> firstDer(const SPoint2 &param) const;
   virtual void secondDer(const SPoint2 &, SVector3 &, SVector3 &,
@@ -55,9 +56,6 @@ public:
   virtual bool isSphere(double &radius, SPoint3 &center) const;
   virtual bool periodic(int dim) const { return _periodic[dim]; }
   virtual double period(int dim) const { return _period[dim]; }
-  // true if the parameter value is interior to the face (taking into account
-  // boundaries)
-  virtual bool containsParam(const SPoint2 &pt);
   // save itself in BREP format (for debug e.g.)
   void writeBREP(const char *filename);
   bool buildSTLTriangulation(bool force = false);

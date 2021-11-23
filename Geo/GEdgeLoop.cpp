@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <algorithm>
 #include <functional>
@@ -11,10 +11,10 @@
 void GEdgeSigned::print() const
 {
   if(getBeginVertex() && getEndVertex())
-    Msg::Info("Curve %d sign %d, begin point %d, end point %d", ge->tag(),
+    Msg::Info("Curve %d sign %d, begin point %d, end point %d", _ge->tag(),
               _sign, getBeginVertex()->tag(), getEndVertex()->tag());
   else
-    Msg::Info("Curve %d sign %d, no begin or end points", ge->tag(), _sign);
+    Msg::Info("Curve %d sign %d, no begin or end points", _ge->tag(), _sign);
 }
 
 int countInList(std::list<GEdge *> &wire, GEdge *ge)
@@ -65,7 +65,7 @@ GEdgeSigned nextOne(GEdgeSigned *thisOne, std::list<GEdge *> &wire)
   ite = possibleChoices.end();
   while(it != ite) {
     GEdge *ge = *it;
-    if(ge != thisOne->ge) {
+    if(ge != thisOne->getEdge()) {
       wire.erase(std::remove_if(wire.begin(), wire.end(),
                                 std::bind2nd(std::equal_to<GEdge *>(), ge)),
                  wire.end());
@@ -80,14 +80,14 @@ GEdgeSigned nextOne(GEdgeSigned *thisOne, std::list<GEdge *> &wire)
   }
 
   // should never end up here
-  return GEdgeSigned(0, nullptr);
+  return GEdgeSigned(1, nullptr);
 }
 
 int GEdgeLoop::count(GEdge *ge) const
 {
   int count = 0;
   for(auto it = begin(); it != end(); ++it) {
-    if(it->ge == ge) count++;
+    if(it->getEdge() == ge) count++;
   }
   return count;
 }
@@ -113,7 +113,7 @@ static void loopTheLoop(std::list<GEdge *> &wire, std::list<GEdgeSigned> &loop,
                         GEdge **degeneratedToInsert)
 {
   GEdgeSigned *prevOne = nullptr;
-  GEdgeSigned ges(0, nullptr);
+  GEdgeSigned ges(1, nullptr);
 
   while(wire.size()) {
     if(prevOne && (*degeneratedToInsert) &&
@@ -124,8 +124,8 @@ static void loopTheLoop(std::list<GEdge *> &wire, std::list<GEdgeSigned> &loop,
     }
     else
       ges = nextOne(prevOne, wire);
-    if(ges.getSign() == 0) { // oops
-      Msg::Debug("no sign in wire of size=%d: aborting loop construction");
+    if(!ges.getEdge()) { // oops
+      Msg::Debug("Could not find next curve in loop, aborting");
       break;
     }
     prevOne = &ges;
@@ -134,11 +134,12 @@ static void loopTheLoop(std::list<GEdge *> &wire, std::list<GEdgeSigned> &loop,
   }
 }
 
-GEdgeLoop::GEdgeLoop(const std::vector<GEdge *> &cwire)
+void GEdgeLoop::recompute(const std::vector<GEdge *> &cwire)
 {
-  // Sometimes OCC puts a nasty degenerated edge in the middle of the
-  // wire ...  pushing it to front fixes the problem as it concerns
-  // gmsh
+  loop.clear();
+#if 0
+  // Sometimes OCC puts a degenerated edge in the middle of the wire: this
+  // pushes it to front. This "fix" should not be necessary anymore.
   std::list<GEdge *> wire;
   std::vector<GEdge *> degenerated;
   GEdge *degeneratedToInsert = nullptr;
@@ -159,6 +160,34 @@ GEdgeLoop::GEdgeLoop(const std::vector<GEdge *> &cwire)
     Msg::Warning(
       "More than two degenerated edges in one model face of an OCC model");
   }
+#else
+  std::list<GEdge *> wire(cwire.begin(), cwire.end());
+  GEdge *degeneratedToInsert = nullptr;
+#endif
 
   while(!wire.empty()) { loopTheLoop(wire, loop, &degeneratedToInsert); }
+}
+
+GEdgeLoop::GEdgeLoop(const std::vector<GEdge *> &wire)
+{
+  recompute(wire);
+}
+
+bool GEdgeLoop::check()
+{
+  if(loop.empty()) return true;
+  std::vector<GEdgeSigned> all(begin(), end());
+  for(std::size_t i = 1; i < all.size(); i++) {
+    if(all[i - 1].getEndVertex() != all[i].getBeginVertex())
+      return false;
+  }
+  if(all.back().getEndVertex() != all.front().getBeginVertex())
+    return false;
+  return true;
+}
+
+void GEdgeLoop::reverse()
+{
+  std::reverse(loop.begin(), loop.end());
+  for(auto es : loop) es.changeSign();
 }

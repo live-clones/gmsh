@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include "GmshConfig.h"
 #include "GmshMessage.h"
@@ -29,12 +29,6 @@ OCCRegion::OCCRegion(GModel *m, TopoDS_Solid s, int num)
   _setup();
 
   // if(tag() == 1) writeBREP("v1.brep");
-}
-
-OCCRegion::~OCCRegion()
-{
-  if(model()->getOCCInternals() && !model()->isBeingDestroyed())
-    model()->getOCCInternals()->unbind(_s, tag()); // potentially slow
 }
 
 void OCCRegion::_setup()

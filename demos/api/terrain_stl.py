@@ -29,8 +29,8 @@ z = -1000
 
 p = []
 xyz = []
-for i in range(len(c)):
-    pt = gmsh.model.getBoundary([c[i]], combined=False)
+for e in c:
+    pt = gmsh.model.getBoundary([e], combined=False)
     p.extend([pt[0][1]])
     xyz.extend(gmsh.model.getValue(0, pt[0][1], []))
 

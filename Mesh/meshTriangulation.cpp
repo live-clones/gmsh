@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <utility>
 #include <list>
@@ -89,7 +89,10 @@ int PolyMesh2GFace(PolyMesh *pm, int faceTag)
 {
   GFace *gf = GModel::current()->getFaceByTag(faceTag);
 
-  if(!gf) Msg::Error("PolyMesh2GFace cannot find face %d", faceTag);
+  if(!gf){
+    Msg::Error("PolyMesh2GFace cannot find surface %d", faceTag);
+    return 0;
+  }
 
   for(auto t : gf->triangles) delete t;
   for(auto q : gf->quadrangles) delete q;
@@ -193,6 +196,8 @@ int PolyMesh2GFace(PolyMesh *pm, int faceTag)
 
 int GFace2PolyMesh(int faceTag, PolyMesh **pm)
 {
+  // FIXME should probably not use the public API here (and certainly not
+  // initialize it!)
   gmsh::initialize();
   *pm = new PolyMesh;
 
@@ -200,6 +205,7 @@ int GFace2PolyMesh(int faceTag, PolyMesh **pm)
   std::unordered_map<std::pair<size_t, size_t>, PolyMesh::HalfEdge *, pair_hash>
     opposites;
 
+  // FIXME should probably not use the public API here
   std::vector<int> elementTypes;
   std::vector<std::vector<std::size_t> > elementTags;
   std::vector<std::vector<std::size_t> > nodeTags;
@@ -227,6 +233,7 @@ int GFace2PolyMesh(int faceTag, PolyMesh **pm)
         size_t nodeTag = nodeTags[K][nNod * i + j];
         auto it = nodeLabels.find(nodeTag);
         if(it == nodeLabels.end()) {
+          // FIXME should probably not use the public API here
           std::vector<double> coord(3), parametricCoord(3);
           int entityDim, entityTag;
           gmsh::model::mesh::getNode(nodeTag, coord, parametricCoord, entityDim,
@@ -862,4 +869,55 @@ PolyMesh *GFaceInitialMesh(int faceTag, int recover,
   if(additional) addPoints(pm, *additional, bb);
 
   return pm;
+}
+
+int meshTriangulate2d (const std::vector<double> &coord,
+		      std::vector<std::size_t> &tri){
+
+  PolyMesh *pm = new PolyMesh;
+
+  SBoundingBox3d bb;
+  for(size_t i=0; i< coord.size() ; i+=2) {
+    bb += SPoint3(coord[i],coord[i+1],0);
+  }
+  bb *= 1.1;
+  pm->initialize_rectangle(bb.min().x(), bb.max().x(), bb.min().y(),
+                           bb.max().y());
+  
+  PolyMesh::Face *f = pm->faces[0];
+  for(size_t i=0; i< coord.size() ; i+=2) {
+    double x = coord[i];
+    double y = coord[i+1];
+    // find face in which lies x,y
+    f = Walk(f, x, y);
+    // split f and then swap edges to recover delaunayness
+    pm->split_triangle(-1, x, y, 0, f, delaunayEdgeCriterionPlaneIsotropic,
+		       nullptr);
+    pm->vertices[pm->vertices.size() - 1]->data = i/2 + 1;
+  }
+ 
+  for (auto he : pm->hedges){
+    if (he->opposite && (he->v->data == -1 || he->opposite->v->data == -1)){
+      if(intersect(he->v, he->next->v, he->next->next->v,
+		   he->opposite->next->next->v)) {
+	pm->swap_edge(he);
+      }
+    }    
+  }
+
+  for (auto t : pm->faces){
+    int i0 = t->he->v->data;
+    int i1 = t->he->next->v->data;
+    int i2 = t->he->next->next->v->data;
+    if (i0 > 0 && i1 > 0 && i2 > 0){
+      tri.push_back(i0);
+      tri.push_back(i1);
+      tri.push_back(i2);
+    }
+  }
+
+  
+  delete pm;
+  
+  return 0;  
 }

@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #ifndef GMODELIO_OCC_H
 #define GMODELIO_OCC_H
@@ -75,6 +75,24 @@ private:
 
   // iterate on all bound entities and recompute the maximum tag
   void _recomputeMaxTag(int dim);
+
+  // bind and unbind OpenCASCADE shapes to tags
+  void _bind(const TopoDS_Vertex &vertex, int tag, bool recursive = false);
+  void _bind(const TopoDS_Edge &edge, int tag, bool recursive = false);
+  void _bind(const TopoDS_Wire &wire, int tag, bool recursive = false);
+  void _bind(const TopoDS_Face &face, int tag, bool recursive = false);
+  void _bind(const TopoDS_Shell &shell, int tag, bool recursive = false);
+  void _bind(const TopoDS_Solid &solid, int tag, bool recursive = false);
+  void _bind(TopoDS_Shape shape, int dim, int tag, bool recursive = false);
+  void _unbind(const TopoDS_Vertex &vertex, int tag, bool recursive = false);
+  void _unbind(const TopoDS_Edge &edge, int tag, bool recursive = false);
+  void _unbind(const TopoDS_Wire &wire, int tag, bool recursive = false);
+  void _unbind(const TopoDS_Face &face, int tag, bool recursive = false);
+  void _unbind(const TopoDS_Shell &shell, int tag, bool recursive = false);
+  void _unbind(const TopoDS_Solid &solid, int tag, bool recursive = false);
+  void _unbind(TopoDS_Shape shape, int dim, int tag, bool recursive = false);
+  void _unbindWithoutChecks(TopoDS_Shape shape);
+  void _unbind();
 
   // bind (potentially) mutliple entities in shape and return the tags in
   // outTags. If tag > 0 and a single entity if found, use that; if
@@ -172,25 +190,6 @@ public:
 
   // reset all maps
   void reset();
-
-  // bind and unbind OpenCASCADE shapes to tags (these methods will become
-  // private)
-  void bind(const TopoDS_Vertex &vertex, int tag, bool recursive = false);
-  void bind(const TopoDS_Edge &edge, int tag, bool recursive = false);
-  void bind(const TopoDS_Wire &wire, int tag, bool recursive = false);
-  void bind(const TopoDS_Face &face, int tag, bool recursive = false);
-  void bind(const TopoDS_Shell &shell, int tag, bool recursive = false);
-  void bind(const TopoDS_Solid &solid, int tag, bool recursive = false);
-  void bind(TopoDS_Shape shape, int dim, int tag, bool recursive = false);
-  void unbind(const TopoDS_Vertex &vertex, int tag, bool recursive = false);
-  void unbind(const TopoDS_Edge &edge, int tag, bool recursive = false);
-  void unbind(const TopoDS_Wire &wire, int tag, bool recursive = false);
-  void unbind(const TopoDS_Face &face, int tag, bool recursive = false);
-  void unbind(const TopoDS_Shell &shell, int tag, bool recursive = false);
-  void unbind(const TopoDS_Solid &solid, int tag, bool recursive = false);
-  void unbind(TopoDS_Shape shape, int dim, int tag, bool recursive = false);
-  void unbindWithoutChecks(TopoDS_Shape shape);
-  void unbind();
 
   // set/get max tag of entity for each dimension (0, 1, 2, 3), as well as
   // -2 for shells and -1 for wires
@@ -395,6 +394,10 @@ public:
   bool getMass(int dim, int tag, double &mass);
   bool getCenterOfMass(int dim, int tag, double &x, double &y, double &z);
   bool getMatrixOfInertia(int dim, int tag, std::vector<double> &mat);
+  double getDistance(int dim1, int tag1,
+                     int dim2, int tag2,
+                     double &x1, double &y1, double &z1,
+                     double &x2, double &y2, double &z2);
   GVertex *getVertexForOCCShape(GModel *model, const TopoDS_Vertex &toFind);
   GEdge *getEdgeForOCCShape(GModel *model, const TopoDS_Edge &toFind);
   GFace *getFaceForOCCShape(GModel *model, const TopoDS_Face &toFind);
@@ -797,6 +800,13 @@ public:
   bool getMatrixOfInertia(int dim, int tag, std::vector<double> &mat)
   {
     return false;
+  }
+  double getDistance(int dim1, int tag1,
+                     int dim2, int tag2,
+                     double &x1, double &y1, double &z1,
+                     double &x2, double &y2, double &z2)
+  {
+    return -1;
   }
   bool makeRectangleSTL(double x, double y, double z, double dx, double dy,
                         double roundedRadius, std::vector<SPoint3> &vertices,

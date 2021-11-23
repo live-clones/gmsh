@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <stdio.h>
 #include <string.h>
@@ -25,6 +25,7 @@
 #include "Context.h"
 #include "Trackball.h"
 #include "GamePad.h"
+#include "StringUtils.h"
 
 // Navigator handler (read gamepad event if gamepad exists or question presence
 // of gamepad)
@@ -752,6 +753,7 @@ int openglWindow::handle(int event)
         }
         if(cmd.size()) {
           if(multiline) text += "\n\n";
+          else text += " ";
           if(cmd == "ONELAB") {
             text += std::string("Double-click to edit parameters");
           }
@@ -765,6 +767,8 @@ int openglWindow::handle(int event)
           drawTooltip(text);
         else
           Msg::StatusBar(false, text.c_str());
+        if(Msg::GetVerbosity() == 99)
+          Msg::Debug(ReplaceSubString("\n", " ", text).c_str());
       }
     }
     _prev.set(_ctx, Fl::event_x(), Fl::event_y());

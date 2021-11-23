@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <string.h>
 #include <stdlib.h>
@@ -71,11 +71,11 @@ void vectorvectorpair2intptrptr(const std::vector<gmsh::vectorpair > &v, int ***
   *sizeSize = v.size();
 }
 
-GMSH_API void gmshInitialize(int argc, char ** argv, const int readConfigFiles, int * ierr)
+GMSH_API void gmshInitialize(int argc, char ** argv, const int readConfigFiles, const int run, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    gmsh::initialize(argc, argv, readConfigFiles);
+    gmsh::initialize(argc, argv, readConfigFiles, run);
   }
   catch(...){
     if(ierr) *ierr = 1;
@@ -423,6 +423,17 @@ GMSH_API void gmshModelGetPhysicalName(const int dim, const int tag, char ** nam
     std::string api_name_;
     gmsh::model::getPhysicalName(dim, tag, api_name_);
     *name = strdup(api_name_.c_str());
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelSetTag(const int dim, const int tag, const int newTag, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::setTag(dim, tag, newTag);
   }
   catch(...){
     if(ierr) *ierr = 1;
@@ -1074,6 +1085,17 @@ GMSH_API void gmshModelMeshGetNodesForPhysicalGroup(const int dim, const int tag
   }
 }
 
+GMSH_API void gmshModelMeshGetMaxNodeTag(size_t * maxTag, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::mesh::getMaxNodeTag(*maxTag);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API void gmshModelMeshAddNodes(const int dim, const int tag, size_t * nodeTags, size_t nodeTags_n, double * coord, size_t coord_n, double * parametricCoord, size_t parametricCoord_n, int * ierr)
 {
   if(ierr) *ierr = 0;
@@ -1233,6 +1255,17 @@ GMSH_API void gmshModelMeshGetElementsByType(const int elementType, size_t ** el
   }
 }
 
+GMSH_API void gmshModelMeshGetMaxElementTag(size_t * maxTag, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::mesh::getMaxElementTag(*maxTag);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API void gmshModelMeshPreallocateElementsByType(const int elementType, const int elementTag, const int nodeTag, size_t ** elementTags, size_t * elementTags_n, size_t ** nodeTags, size_t * nodeTags_n, const int tag, int * ierr)
 {
   if(ierr) *ierr = 0;
@@ -1362,12 +1395,12 @@ GMSH_API void gmshModelMeshGetBasisFunctions(const int elementType, double * loc
   }
 }
 
-GMSH_API void gmshModelMeshGetBasisFunctionsOrientationForElements(const int elementType, const char * functionSpaceType, int ** basisFunctionsOrientation, size_t * basisFunctionsOrientation_n, const int tag, const size_t task, const size_t numTasks, int * ierr)
+GMSH_API void gmshModelMeshGetBasisFunctionsOrientation(const int elementType, const char * functionSpaceType, int ** basisFunctionsOrientation, size_t * basisFunctionsOrientation_n, const int tag, const size_t task, const size_t numTasks, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
     std::vector<int> api_basisFunctionsOrientation_;
-    gmsh::model::mesh::getBasisFunctionsOrientationForElements(elementType, functionSpaceType, api_basisFunctionsOrientation_, tag, task, numTasks);
+    gmsh::model::mesh::getBasisFunctionsOrientation(elementType, functionSpaceType, api_basisFunctionsOrientation_, tag, task, numTasks);
     vector2ptr(api_basisFunctionsOrientation_, basisFunctionsOrientation, basisFunctionsOrientation_n);
   }
   catch(...){
@@ -1399,12 +1432,12 @@ GMSH_API int gmshModelMeshGetNumberOfOrientations(const int elementType, const c
   return result_api_;
 }
 
-GMSH_API void gmshModelMeshPreallocateBasisFunctionsOrientationForElements(const int elementType, int ** basisFunctionsOrientation, size_t * basisFunctionsOrientation_n, const int tag, int * ierr)
+GMSH_API void gmshModelMeshPreallocateBasisFunctionsOrientation(const int elementType, int ** basisFunctionsOrientation, size_t * basisFunctionsOrientation_n, const int tag, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
     std::vector<int> api_basisFunctionsOrientation_;
-    gmsh::model::mesh::preallocateBasisFunctionsOrientationForElements(elementType, api_basisFunctionsOrientation_, tag);
+    gmsh::model::mesh::preallocateBasisFunctionsOrientation(elementType, api_basisFunctionsOrientation_, tag);
     vector2ptr(api_basisFunctionsOrientation_, basisFunctionsOrientation, basisFunctionsOrientation_n);
   }
   catch(...){
@@ -1476,14 +1509,14 @@ GMSH_API void gmshModelMeshCreateFaces(int * dimTags, size_t dimTags_n, int * ie
   }
 }
 
-GMSH_API void gmshModelMeshGetKeysForElements(const int elementType, const char * functionSpaceType, int ** typeKeys, size_t * typeKeys_n, size_t ** entityKeys, size_t * entityKeys_n, double ** coord, size_t * coord_n, const int tag, const int returnCoord, int * ierr)
+GMSH_API void gmshModelMeshGetKeys(const int elementType, const char * functionSpaceType, int ** typeKeys, size_t * typeKeys_n, size_t ** entityKeys, size_t * entityKeys_n, double ** coord, size_t * coord_n, const int tag, const int returnCoord, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
     std::vector<int> api_typeKeys_;
     std::vector<std::size_t> api_entityKeys_;
     std::vector<double> api_coord_;
-    gmsh::model::mesh::getKeysForElements(elementType, functionSpaceType, api_typeKeys_, api_entityKeys_, api_coord_, tag, returnCoord);
+    gmsh::model::mesh::getKeys(elementType, functionSpaceType, api_typeKeys_, api_entityKeys_, api_coord_, tag, returnCoord);
     vector2ptr(api_typeKeys_, typeKeys, typeKeys_n);
     vector2ptr(api_entityKeys_, entityKeys, entityKeys_n);
     vector2ptr(api_coord_, coord, coord_n);
@@ -1510,12 +1543,12 @@ GMSH_API void gmshModelMeshGetKeysForElement(const size_t elementTag, const char
   }
 }
 
-GMSH_API int gmshModelMeshGetNumberOfKeysForElements(const int elementType, const char * functionSpaceType, int * ierr)
+GMSH_API int gmshModelMeshGetNumberOfKeys(const int elementType, const char * functionSpaceType, int * ierr)
 {
   int result_api_ = 0;
   if(ierr) *ierr = 0;
   try {
-    result_api_ = gmsh::model::mesh::getNumberOfKeysForElements(elementType, functionSpaceType);
+    result_api_ = gmsh::model::mesh::getNumberOfKeys(elementType, functionSpaceType);
   }
   catch(...){
     if(ierr) *ierr = 1;
@@ -1523,14 +1556,14 @@ GMSH_API int gmshModelMeshGetNumberOfKeysForElements(const int elementType, cons
   return result_api_;
 }
 
-GMSH_API void gmshModelMeshGetInformationForElements(int * typeKeys, size_t typeKeys_n, size_t * entityKeys, size_t entityKeys_n, const int elementType, const char * functionSpaceType, int ** infoKeys, size_t * infoKeys_n, int * ierr)
+GMSH_API void gmshModelMeshGetKeysInformation(int * typeKeys, size_t typeKeys_n, size_t * entityKeys, size_t entityKeys_n, const int elementType, const char * functionSpaceType, int ** infoKeys, size_t * infoKeys_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
     std::vector<int> api_typeKeys_(typeKeys, typeKeys + typeKeys_n);
     std::vector<std::size_t> api_entityKeys_(entityKeys, entityKeys + entityKeys_n);
     gmsh::vectorpair api_infoKeys_;
-    gmsh::model::mesh::getInformationForElements(api_typeKeys_, api_entityKeys_, elementType, functionSpaceType, api_infoKeys_);
+    gmsh::model::mesh::getKeysInformation(api_typeKeys_, api_entityKeys_, elementType, functionSpaceType, api_infoKeys_);
     vectorpair2intptr(api_infoKeys_, infoKeys, infoKeys_n);
   }
   catch(...){
@@ -1652,11 +1685,11 @@ GMSH_API void gmshModelMeshSetSizeAtParametricPoints(const int dim, const int ta
   }
 }
 
-GMSH_API void gmshModelMeshSetSizeCallback(double (*callback)(int dim, int tag, double x, double y, double z, void * data), void * callback_data, int * ierr)
+GMSH_API void gmshModelMeshSetSizeCallback(double (*callback)(int dim, int tag, double x, double y, double z, double lc, void * data), void * callback_data, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    gmsh::model::mesh::setSizeCallback(std::bind(callback, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, callback_data));
+    gmsh::model::mesh::setSizeCallback(std::bind(callback, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, callback_data));
   }
   catch(...){
     if(ierr) *ierr = 1;
@@ -1908,6 +1941,20 @@ GMSH_API void gmshModelMeshSetPeriodic(const int dim, int * tags, size_t tags_n,
   }
 }
 
+GMSH_API void gmshModelMeshGetPeriodic(const int dim, int * tags, size_t tags_n, int ** tagMaster, size_t * tagMaster_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<int> api_tags_(tags, tags + tags_n);
+    std::vector<int> api_tagMaster_;
+    gmsh::model::mesh::getPeriodic(dim, api_tags_, api_tagMaster_);
+    vector2ptr(api_tagMaster_, tagMaster, tagMaster_n);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API void gmshModelMeshGetPeriodicNodes(const int dim, const int tag, int * tagMaster, size_t ** nodeTags, size_t * nodeTags_n, size_t ** nodeTagsMaster, size_t * nodeTagsMaster_n, double ** affineTransform, size_t * affineTransform_n, const int includeHighOrderNodes, int * ierr)
 {
   if(ierr) *ierr = 0;
@@ -1919,6 +1966,29 @@ GMSH_API void gmshModelMeshGetPeriodicNodes(const int dim, const int tag, int * 
     vector2ptr(api_nodeTags_, nodeTags, nodeTags_n);
     vector2ptr(api_nodeTagsMaster_, nodeTagsMaster, nodeTagsMaster_n);
     vector2ptr(api_affineTransform_, affineTransform, affineTransform_n);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelMeshGetPeriodicKeys(const int elementType, const char * functionSpaceType, const int tag, int * tagMaster, int ** typeKeys, size_t * typeKeys_n, int ** typeKeysMaster, size_t * typeKeysMaster_n, size_t ** entityKeys, size_t * entityKeys_n, size_t ** entityKeysMaster, size_t * entityKeysMaster_n, double ** coord, size_t * coord_n, double ** coordMaster, size_t * coordMaster_n, const int returnCoord, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<int> api_typeKeys_;
+    std::vector<int> api_typeKeysMaster_;
+    std::vector<std::size_t> api_entityKeys_;
+    std::vector<std::size_t> api_entityKeysMaster_;
+    std::vector<double> api_coord_;
+    std::vector<double> api_coordMaster_;
+    gmsh::model::mesh::getPeriodicKeys(elementType, functionSpaceType, tag, *tagMaster, api_typeKeys_, api_typeKeysMaster_, api_entityKeys_, api_entityKeysMaster_, api_coord_, api_coordMaster_, returnCoord);
+    vector2ptr(api_typeKeys_, typeKeys, typeKeys_n);
+    vector2ptr(api_typeKeysMaster_, typeKeysMaster, typeKeysMaster_n);
+    vector2ptr(api_entityKeys_, entityKeys, entityKeys_n);
+    vector2ptr(api_entityKeysMaster_, entityKeysMaster, entityKeysMaster_n);
+    vector2ptr(api_coord_, coord, coord_n);
+    vector2ptr(api_coordMaster_, coordMaster, coordMaster_n);
   }
   catch(...){
     if(ierr) *ierr = 1;
@@ -2078,11 +2148,48 @@ GMSH_API void gmshModelMeshFieldRemove(const int tag, int * ierr)
   }
 }
 
+GMSH_API void gmshModelMeshFieldList(int ** tags, size_t * tags_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<int> api_tags_;
+    gmsh::model::mesh::field::list(api_tags_);
+    vector2ptr(api_tags_, tags, tags_n);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelMeshFieldGetType(const int tag, char ** fileType, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::string api_fileType_;
+    gmsh::model::mesh::field::getType(tag, api_fileType_);
+    *fileType = strdup(api_fileType_.c_str());
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API void gmshModelMeshFieldSetNumber(const int tag, const char * option, const double value, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
     gmsh::model::mesh::field::setNumber(tag, option, value);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelMeshFieldGetNumber(const int tag, const char * option, double * value, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::mesh::field::getNumber(tag, option, *value);
   }
   catch(...){
     if(ierr) *ierr = 1;
@@ -2100,12 +2207,38 @@ GMSH_API void gmshModelMeshFieldSetString(const int tag, const char * option, co
   }
 }
 
+GMSH_API void gmshModelMeshFieldGetString(const int tag, const char * option, char ** value, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::string api_value_;
+    gmsh::model::mesh::field::getString(tag, option, api_value_);
+    *value = strdup(api_value_.c_str());
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API void gmshModelMeshFieldSetNumbers(const int tag, const char * option, double * value, size_t value_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
     std::vector<double> api_value_(value, value + value_n);
     gmsh::model::mesh::field::setNumbers(tag, option, api_value_);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelMeshFieldGetNumbers(const int tag, const char * option, double ** value, size_t * value_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<double> api_value_;
+    gmsh::model::mesh::field::getNumbers(tag, option, api_value_);
+    vector2ptr(api_value_, value, value_n);
   }
   catch(...){
     if(ierr) *ierr = 1;
@@ -3863,7 +3996,7 @@ GMSH_API void gmshViewCombine(const char * what, const char * how, const int rem
   }
 }
 
-GMSH_API void gmshViewProbe(const int tag, const double x, const double y, const double z, double ** value, size_t * value_n, const int step, const int numComp, const int gradient, const double tolerance, double * xElemCoord, size_t xElemCoord_n, double * yElemCoord, size_t yElemCoord_n, double * zElemCoord, size_t zElemCoord_n, const int dim, int * ierr)
+GMSH_API void gmshViewProbe(const int tag, const double x, const double y, const double z, double ** value, size_t * value_n, double * distance, const int step, const int numComp, const int gradient, const double distanceMax, double * xElemCoord, size_t xElemCoord_n, double * yElemCoord, size_t yElemCoord_n, double * zElemCoord, size_t zElemCoord_n, const int dim, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
@@ -3871,7 +4004,7 @@ GMSH_API void gmshViewProbe(const int tag, const double x, const double y, const
     std::vector<double> api_xElemCoord_(xElemCoord, xElemCoord + xElemCoord_n);
     std::vector<double> api_yElemCoord_(yElemCoord, yElemCoord + yElemCoord_n);
     std::vector<double> api_zElemCoord_(zElemCoord, zElemCoord + zElemCoord_n);
-    gmsh::view::probe(tag, x, y, z, api_value_, step, numComp, gradient, tolerance, api_xElemCoord_, api_yElemCoord_, api_zElemCoord_, dim);
+    gmsh::view::probe(tag, x, y, z, api_value_, *distance, step, numComp, gradient, distanceMax, api_xElemCoord_, api_yElemCoord_, api_zElemCoord_, dim);
     vector2ptr(api_value_, value, value_n);
   }
   catch(...){

@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #ifndef DISCRETE_FACE_H
 #define DISCRETE_FACE_H
@@ -21,6 +21,7 @@ private:
   public:
     MElementOctree *oct;
     mutable RTree<std::pair<MTriangle *, MTriangle *> *, double, 3> rtree3d;
+    std::vector<std::pair<MTriangle *, MTriangle *> *> rtree3dData;
     std::vector<MVertex> v2d;
     std::vector<MVertex> v3d;
     std::vector<MTriangle> t2d;

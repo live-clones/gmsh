@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #ifndef SCRIPT_STRING_INTERFACE_H
 #define SCRIPT_STRING_INTERFACE_H
@@ -40,7 +40,7 @@ void scriptAddCircleArc(int p1, int p2, int p3, const std::string &fileName);
 void scriptAddEllipseArc(int p1, int p2, int p3, int p4,
                          const std::string &fileName);
 void scriptAddFieldOption(int field_id, const std::string &option_name,
-                          const std::string &option_value,
+                          const std::string &option_value, int option_type,
                           const std::string &fileName);
 void scriptAddField(int field_id, const std::string &type_name,
                     const std::string &fileName);

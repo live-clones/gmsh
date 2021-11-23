@@ -1,19 +1,21 @@
 // Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 //
 // Contributors: Anthony Royer
 
 #define GL_SILENCE_DEPRECATION
+
+#include <Foundation/Foundation.h>
+#include <AppKit/AppKit.h>
 
 #include "touchBar.h"
 #include "graphicWindow.h"
 #include "drawContext.h"
 #include "Options.h"
 #include "PView.h"
-#include <Foundation/Foundation.h>
-#include <AppKit/AppKit.h>
+#include "FlGui.h"
 
 static NSString *touchBarCustomizationId = @"com.something.customization_id";
 
@@ -173,7 +175,6 @@ static NSString *touchBarItemViewSlider = @"com.something.item_viewSlider";
 
     slider.target = self;
     slider.action = @selector(sliderGeoNormalTangent:);
-    slider.label = @"Normal";
     slider.slider.minValue = 0;
     slider.slider.maxValue = 500;
     slider.slider.doubleValue = 0;
@@ -262,7 +263,6 @@ static NSString *touchBarItemViewSlider = @"com.something.item_viewSlider";
 
     slider.target = self;
     slider.action = @selector(sliderMeshNormalTangent:);
-    slider.label = @"Normal";
     slider.slider.minValue = 0;
     slider.slider.maxValue = 500;
     slider.slider.doubleValue = 0;
@@ -351,6 +351,7 @@ static NSString *touchBarItemViewSlider = @"com.something.item_viewSlider";
   case 2: mesh_3d_cb(0, 0); break;
   default: break;
   }
+  FlGui::check(); // to see meshing messages in the fltk gui
 }
 
 - (void)buttonGeo:(id)sender
@@ -574,11 +575,9 @@ static NSString *touchBarItemViewSlider = @"com.something.item_viewSlider";
 {
   NSInteger segment = _geoButtonsNormalTangent.selectedSegment;
   if(segment == 0) { // Normal
-    _geoSliderNormalTangent.label = @"Normal";
     _geoSliderNormalTangent.slider.doubleValue = opt_geometry_normals(0, GMSH_GET, 0);
   }
   else { // Tangent
-    _geoSliderNormalTangent.label = @"Tangent";
     _geoSliderNormalTangent.slider.doubleValue = opt_geometry_tangents(0, GMSH_GET, 0);
   }
 }
@@ -632,11 +631,9 @@ static NSString *touchBarItemViewSlider = @"com.something.item_viewSlider";
 {
   NSInteger segment = _meshButtonsNormalTangent.selectedSegment;
   if(segment == 0) { // Normal
-    _meshSliderNormalTangent.label = @"Normal";
     _meshSliderNormalTangent.slider.doubleValue = opt_mesh_normals(0, GMSH_GET, 0);
   }
   else { // Tangent
-    _meshSliderNormalTangent.label = @"Tangent";
     _meshSliderNormalTangent.slider.doubleValue = opt_mesh_tangents(0, GMSH_GET, 0);
   }
 }

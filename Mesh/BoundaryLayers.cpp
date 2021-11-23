@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include "GModel.h"
 #include "MLine.h"
@@ -132,7 +132,7 @@ static void addExtrudeNormals(std::set<T *> &entities,
                               std::map<int, bool> &skipScaleCalcMap)
 {
   bool normalize = true, special3dbox = false, extrudeField = false;
-  std::vector<OctreePost *> octrees;
+  std::vector<PViewData *> datas;
 
   for(auto it = entities.begin(); it != entities.end(); it++) {
     T *ge = *it;
@@ -148,7 +148,7 @@ static void addExtrudeNormals(std::set<T *> &entities,
         if(view >= 0 && view < (int)PView::list.size()) {
           octree = new OctreePost(PView::list[view]);
           if(PView::list[view]->getData()->getNumVectors()) gouraud = false;
-          octrees.push_back(octree);
+          datas.push_back(PView::list[view]->getData());
         }
         else if(view == -3) {
           // Force extrusion normals along x,y,z axes for single normals or at
@@ -221,12 +221,12 @@ static void addExtrudeNormals(std::set<T *> &entities,
         }
       }
 #if defined(HAVE_POST)
-      if(octrees.size()) { // scale normals by scalar views
+      if(datas.size()) { // scale normals by scalar views
         for(auto it = ExtrudeParams::normals[i]->begin();
             it != ExtrudeParams::normals[i]->end(); it++) {
-          for(std::size_t j = 0; j < octrees.size(); j++) {
-            double d;
-            if(octrees[j]->searchScalarWithTol(it->x, it->y, it->z, &d, 0)) {
+          for(std::size_t j = 0; j < datas.size(); j++) {
+            double d, dist = -1.;
+            if(datas[j]->searchScalarClosest(it->x, it->y, it->z, dist, &d, 0)) {
               for(int k = 0; k < 3; k++) it->vals[k] *= d;
               break;
             }
@@ -236,8 +236,6 @@ static void addExtrudeNormals(std::set<T *> &entities,
 #endif
     }
   }
-
-  for(std::size_t i = 0; i < octrees.size(); i++) delete octrees[i];
 }
 
 static void checkDepends(GModel *m, GFace *f, std::set<GFace *> &dep)

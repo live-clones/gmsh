@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 //
 // Author: Maxence Reberol
 
@@ -70,7 +70,7 @@ using unordered_set =
   robin_hood::detail::Table<true, MaxLoadFactor100, Key, void, Hash, KeyEqual>;
 
 constexpr int SizeMapDefault = 0;
-//constexpr int SizeMapCrossField = 1;
+constexpr int SizeMapCrossField = 1;
 constexpr int SizeMapCrossFieldAndSmallCad = 2;
 constexpr int SizeMapBackgroundMesh = 3;
 constexpr int SizeMapCrossFieldAndBMeshOnCurves = 4;
@@ -79,7 +79,8 @@ const std::string BMESH_NAME = "bmesh_quadqs";
 
 constexpr bool PARANO_QUALITY = false;
 constexpr bool PARANO_VALIDITY = false;
-constexpr bool DBG_EXPORT = false;
+constexpr bool DBG_EXPORT = true;
+constexpr bool SHOW_DQR = false;
 
 /* scaling applied on integer values stored in view (background field),
  * so the visualization is not broken by the integers */
@@ -173,7 +174,8 @@ int buildBackgroundField(
 
   gm->getFields()->setBackgroundMesh(view->getTag());
 
-  if(Msg::GetVerbosity() >= 99) {
+  const bool exportBGM = true;
+  if(exportBGM || Msg::GetVerbosity() >= 99) {
     std::string name = gm->getName() + "_bgm.pos";
     Msg::Warning("export background field to '%s' ", name.c_str());
     view->write(name, 0);
@@ -267,6 +269,7 @@ void printSizeMapStats(const std::vector<MTriangle *> &triangles,
 int fillSizemapFromTriangleSizes(const std::vector<MTriangle *> &triangles,
                                  std::unordered_map<MVertex *, double> &sizeMap)
 {
+  const double tol = CTX::instance()->geom.tolerance;
   std::unordered_map<MVertex *, std::vector<MVertex *> > v2v;
   buildVertexToVertexMap(triangles, v2v);
   for(auto &kv : v2v) {
@@ -274,12 +277,35 @@ int fillSizemapFromTriangleSizes(const std::vector<MTriangle *> &triangles,
     double sum = 0.;
     double avg = 0.;
     for(MVertex *v2 : kv.second) {
-      avg += v->distance(v2);
-      sum += 1.;
+      double dist = v->distance(v2);
+      if(dist > tol) {
+        avg += dist;
+        sum += 1.;
+      }
     }
     if(sum == 0.) continue;
     sizeMap[v] = avg / sum;
   }
+
+  /* Laplacian smoothing of the size map */
+  size_t iterMax = 3;
+  for(size_t iter = 0; iter < iterMax; ++iter) {
+    for(auto &kv : v2v) {
+      MVertex *v = kv.first;
+      // if (v->onWhat()->dim() < 2) continue;
+      double sum = 0.;
+      double avg = 0.;
+      for(MVertex *v2 : kv.second) {
+        avg += sizeMap[v2];
+        sum += 1.;
+      }
+      if(sum == 0.) continue;
+      auto it = sizeMap.find(v);
+      if(it == sizeMap.end()) continue;
+      it->second = 0.5 * it->second + 0.5 * avg / sum;
+    }
+  }
+
   return 0;
 }
 
@@ -330,7 +356,7 @@ std::string nameOfSizeMapMethod(int method)
 }
 
 bool generateMeshWithSpecialParameters(GModel *gm,
-                                       double &scalingOnTriangulation)
+                                       double scalingOnTriangulation)
 {
   Msg::Debug("build background triangulation ...");
 
@@ -344,7 +370,6 @@ bool generateMeshWithSpecialParameters(GModel *gm,
   /* Change meshing parameters to build a good triangulation
    * for cross field */
   /* - the triangulation must be a bit more refined than the quad mesh */
-  scalingOnTriangulation = 0.75;
   int minCurveNodes = CTX::instance()->mesh.minCurveNodes;
   int minCircleNodes = CTX::instance()->mesh.minCircleNodes;
   double lcFactor = CTX::instance()->mesh.lcFactor;
@@ -427,14 +452,21 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
     return -1;
   }
 
-  const bool midpointSubdivisionAfter = true;
+  const int qqsSizemapMethod = CTX::instance()->mesh.quadqsSizemapMethod;
+  if(qqsSizemapMethod == 5) {
+    Msg::Warning("Quadqs method: no background mesh");
+    return 0;
+  }
+
+  bool midpointSubdivisionAfter = true;
+  if(CTX::instance()->mesh.algoRecombine == 4) {
+    midpointSubdivisionAfter = false;
+  }
 
   const bool SHOW_INTERMEDIATE_VIEWS = (Msg::GetVerbosity() >= 99);
 
   Msg::Info("Build background mesh and guiding field ...");
   bool externalSizemap = false;
-  const int qqsSizemapMethod = CTX::instance()->mesh.quadqsSizemapMethod;
-
   {
     FieldManager *fields = gm->getFields();
     if(fields->getBackgroundField() > 0) {
@@ -482,13 +514,11 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
   }
 
   /* Generate triangulation */
-  /* - scalingOnTriangulation: updated by generateMeshWithSpecialParameters
-   *   this factor is used to get a triangulation a bit more finer than the
-   *   target quadrangulation, to get a more accurate cross field */
-  double scalingOnTriangulation = 1;
-  if(!surfaceMeshed) {
-    generateMeshWithSpecialParameters(gm, scalingOnTriangulation);
-  }
+  /* - scalingOnTriangulation: this factor is used to get a triangulation a bit
+   * more finer than the target quadrangulation, to get a more accurate cross
+   * field */
+  double edgeScaling = CTX::instance()->mesh.quadqsScalingOnTriangulation;
+  if(!surfaceMeshed) { generateMeshWithSpecialParameters(gm, edgeScaling); }
 
   GlobalBackgroundMesh &bmesh = getBackgroundMesh(BMESH_NAME);
   bool overwrite = true;
@@ -522,8 +552,11 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
   /* Per GFace computations, in parallel */
   {
     Msg::Info(
-      "- quadqs sizemap method: %s",
-      nameOfSizeMapMethod(CTX::instance()->mesh.quadqsSizemapMethod).c_str());
+      "- quadqs sizemap method: %s (%i), expect midpoint subdivision: %i, "
+      "scaling on edge length: %f",
+      nameOfSizeMapMethod(CTX::instance()->mesh.quadqsSizemapMethod).c_str(),
+      CTX::instance()->mesh.quadqsSizemapMethod, midpointSubdivisionAfter,
+      edgeScaling);
 
     std::vector<GFace *> faces = model_faces(gm);
     size_t ntris = 0;
@@ -537,9 +570,7 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
     global_triangles.reserve(ntris);
     global_size_map.reserve(3 * ntris);
 
-#if defined(_OPENMP)
 #pragma omp parallel for schedule(dynamic)
-#endif
     for(size_t f = 0; f < faces.size(); ++f) {
       GFace *gf = faces[f];
 
@@ -633,10 +664,13 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
           Msg::Warning("- Face %i: failed to fill size map from triangle sizes",
                        gf->tag());
         }
-        else if(sts == 0 && scalingOnTriangulation > 0.) {
+        else if(sts == 0 && edgeScaling > 0.) {
           /* re-adjust the target edge size as if the triangulation was
            * not finer for more accurate cross field */
-          for(auto &kv : localSizemap) { kv.second /= scalingOnTriangulation; }
+          for(auto &kv : localSizemap) {
+            kv.second /= edgeScaling;
+            if(midpointSubdivisionAfter) { kv.second *= 2; }
+          }
         }
       }
       else {
@@ -670,7 +704,7 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
           }
           else {
             targetNumberOfQuads = 0.5 * it->second.triangles.size();
-            targetNumberOfQuads *= std::pow(scalingOnTriangulation, 2);
+            targetNumberOfQuads *= std::pow(edgeScaling, 2);
           }
         }
 
@@ -688,9 +722,7 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
         }
       }
 
-#if defined(_OPENMP)
 #pragma omp critical
-#endif
       {
         append(global_triangles, triangles);
         append(global_triangle_directions, triangleDirections);
@@ -698,6 +730,8 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
         for(auto &kv : localSizemap) {
           global_size_map.push_back({kv.first, kv.second});
         }
+        // GeoLog::add(dynamic_cast_vector<MTriangle*,MElement*>(triangles),
+        //    localSizemap, "sizemap_f"+std::to_string(gf->tag()));
       }
     }
   }
@@ -759,11 +793,15 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
   }
 
   /* One-way propagation of values */
-  const double gradientMax =
-    1.2; /* this param should be a global gmsh option */
-  Msg::Info("Sizemap smoothing (progression ratio: %.2f)", gradientMax);
-  int sop = sizeMapOneWaySmoothing(global_triangles, sizeMap, gradientMax);
-  if(sop != 0) { Msg::Warning("failed to compute one-way size map smoothing"); }
+  if(qqsSizemapMethod != SizeMapBackgroundMesh) {
+    const double gradientMax =
+      1.2; /* this param should be a global gmsh option */
+    Msg::Info("Sizemap smoothing (progression ratio: %.2f)", gradientMax);
+    int sop = sizeMapOneWaySmoothing(global_triangles, sizeMap, gradientMax);
+    if(sop != 0) {
+      Msg::Warning("failed to compute one-way size map smoothing");
+    }
+  }
 
   /* Clamp with global minimum/maximum mesh size */
   {
@@ -786,7 +824,20 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
       dynamic_cast_vector<MTriangle *, MElement *>(global_triangles);
     GeoLog::add(elements, sizeMap, "size_map");
     GeoLog::flush();
-    showUVParametrization(bmesh);
+    // showUVParametrization(bmesh);
+    std::unordered_map<MVertex *, double> sizemap_init;
+    for(auto &kv : global_size_map) {
+      MVertex *v = kv.first;
+      auto it = sizemap_init.find(v);
+      if(it == sizemap_init.end()) {
+        sizemap_init[kv.first] = kv.second; /* "natural" size */
+      }
+      else {
+        it->second = std::min(it->second, kv.second);
+      }
+    }
+    GeoLog::add(elements, sizemap_init, "size_map_init");
+    GeoLog::flush();
   }
 
   printSizeMapStats(global_triangles, sizeMap);
@@ -932,6 +983,22 @@ inline int clamp(int val, int lower, int upper)
   return std::min(upper, std::max(val, lower));
 }
 
+size_t idealBoundaryValence(const MVertex *v, double ideal)
+{
+  if(v->onWhat() && v->onWhat()->dim() == 1) {
+    /* Regular on curves */
+    return 2;
+  }
+  if(ideal <= 1.25) { return 1; }
+  else if(ideal <= 2.75) {
+    return 2;
+  }
+  else if(ideal <= 3.5) {
+    return 3;
+  }
+  return 4;
+}
+
 bool getBoundaryIdealAndAllowedValences(
   int fixingDim, /* 0 when fixing corners, 1 when fixing curves, 2 when fixing
                     surfaces */
@@ -959,7 +1026,7 @@ bool getBoundaryIdealAndAllowedValences(
                    bv->getNum());
         return false;
       }
-      idealTot = (int)clamp(std::round(it->second), 1., 4.);
+      idealTot = idealBoundaryValence(it->first, it->second);
     }
     auto it = adj.find(bv);
     if(it == adj.end()) {
@@ -986,8 +1053,12 @@ bool getBoundaryIdealAndAllowedValences(
       bndAllowedValenceRange[i] = {idealIn, idealIn};
     }
     else if(ge != nullptr) { /* Current bdr vertex is on curve */
-      if(fixingDim == 0) { /* When fixing corners, can degrade curves */
-        bndAllowedValenceRange[i] = {1, 2};
+      if(fixingDim == 0) {
+        /* When fixing corners, can degrade curves */
+        // bndAllowedValenceRange[i] = {1, 2};
+
+        // No: do not degrade curves
+        bndAllowedValenceRange[i] = {idealIn, idealIn};
       }
       else {
         bndAllowedValenceRange[i] = {idealIn, idealIn};
@@ -1072,10 +1143,12 @@ void updateAdjacencies(const GFaceMeshPatch &before,
     if(it != adj.end()) { adj.erase(it); }
   }
   /* Remove old elements from adjacency values */
-  for(MVertex *bv : before.bdrVertices.front()) {
-    auto it = adj.find(bv);
-    if(it != adj.end()) {
-      it->second = difference(it->second, before.elements);
+  for(auto &loop : before.bdrVertices) {
+    for(MVertex *bv : loop) {
+      auto it = adj.find(bv);
+      if(it != adj.end()) {
+        it->second = difference(it->second, before.elements);
+      }
     }
   }
   /* Add new keys and values */
@@ -1097,7 +1170,7 @@ getNeighbors(const std::vector<MElement *> &elements,
       MVertex *v = e->getVertex(lv);
       auto it = adj.find(v);
       if(it != adj.end()) {
-        for(MElement *e : it->second) { neighbors.push_back(e); }
+        for(MElement *e2 : it->second) { neighbors.push_back(e2); }
       }
     }
   }
@@ -1118,9 +1191,20 @@ bool smoothThePool(
     elements.reserve(unq.size());
     for(MVertex *v : unq) {
       auto it = adj.find(v);
-      if(it != adj.end()) { append(elements, it->second); }
+      if(it != adj.end()) {
+        auto it2 =
+          std::find(gf->mesh_vertices.begin(), gf->mesh_vertices.end(), v);
+        if(it2 != gf->mesh_vertices.end()) { append(elements, it->second); }
+      }
     }
   }
+  sort_unique(elements);
+
+  // ensures all the elements are in the GFace. Should not be different,
+  // but there are some bugs in the smoothing pool
+  std::vector<MElement *> faceElements =
+    dynamic_cast_vector<MQuadrangle *, MElement *>(gf->quadrangles);
+  elements = intersection(elements, faceElements);
 
   /* Build the disconnected patches and smooth them independently */
   std::vector<std::vector<MElement *> > components;
@@ -1229,11 +1313,14 @@ int improveCornerValences(
 
   int SMALL_PATCH = 0; /* just the quads adjacent to corner */
   int LARGER_PATCH = 1; /* add the neighbors */
+  int CORNER_PATCH =
+    2; /* add the neighbors of neighbors of the extruded vertex if valence 2 */
+  int CORNER_PATCH_2 = 3; /* CORNER_PATCH + one layer */
   /* We try larger cavities first because the result is usually better
    * when it works (less new defects on adjacent curves). But it does
    * not work when the larger cavity is too constrained by CAD curves,
    * so we try the small cavity after */
-  for(int pass : {LARGER_PATCH, SMALL_PATCH}) {
+  for(int pass : {CORNER_PATCH, CORNER_PATCH_2, LARGER_PATCH, SMALL_PATCH}) {
     for(const auto &kv : cornerAndIdeal) {
       MVertex *v = kv.first;
       GVertex *gv = dynamic_cast<GVertex *>(v->onWhat());
@@ -1242,8 +1329,8 @@ int improveCornerValences(
       auto it = adj.find(v);
       if(it == adj.end()) continue;
       const std::vector<MElement *> &quads = it->second;
-      double ideal = kv.second;
-      size_t ival = (size_t)clamp(std::round(ideal), 1., 4.);
+      double ival_float = kv.second;
+      size_t ival = idealBoundaryValence(kv.first, ival_float);
       if(ival == quads.size()) continue;
       size_t num = v->getNum();
 
@@ -1254,14 +1341,44 @@ int improveCornerValences(
 
       /* Init patch with quads adjacent to corner */
       GFaceMeshPatch patch;
-      if(pass == LARGER_PATCH) {
+      if((pass == CORNER_PATCH || pass == CORNER_PATCH_2) &&
+         quads.size() == 2) {
+        /* The corner is valence and has been extruded
+         * take all the quads around the extruded vertex */
+        std::vector<MVertex *> vert1 = {
+          quads[0]->getVertex(0), quads[0]->getVertex(1),
+          quads[0]->getVertex(2), quads[0]->getVertex(3)};
+        std::vector<MVertex *> vert2 = {
+          quads[1]->getVertex(0), quads[1]->getVertex(1),
+          quads[1]->getVertex(2), quads[1]->getVertex(3)};
+        std::vector<MVertex *> shared = intersection(vert1, vert2);
+        if(shared.size() != 2) continue;
+        MVertex *ext = nullptr;
+        if(shared[0] == v) { ext = shared[1]; }
+        else if(shared[1] == v) {
+          ext = shared[0];
+        }
+        else {
+          continue;
+        }
+        auto it2 = adj.find(ext);
+        if(it2 == adj.end()) continue;
+        std::vector<MElement *> quadsPlus = it2->second;
+        append(quadsPlus, getNeighbors(quadsPlus, adj));
+        if(pass == CORNER_PATCH_2) {
+          append(quadsPlus, getNeighbors(quadsPlus, adj));
+        }
+        bool okp = patchFromElements(gf, quadsPlus, patch);
+        if(!okp) continue;
+      }
+      else if(pass == LARGER_PATCH) {
         /* and the neighbors */
         std::vector<MElement *> quadsPlus = quads;
         append(quadsPlus, getNeighbors(quads, adj));
         bool okp = patchFromElements(gf, quadsPlus, patch);
         if(!okp) continue;
       }
-      else {
+      else if(pass == SMALL_PATCH) {
         bool okp = patchFromElements(gf, quads, patch);
         if(!okp) continue;
       }
@@ -1287,6 +1404,7 @@ int improveCornerValences(
       std::vector<MElement *> neighborsForGeometry =
         getNeighbors(patch.elements, adj);
       double minSICNafer = 0.1;
+      if(ival_float <= 0.5) minSICNafer = 0.001; /* acute corner */
       int sdq = remeshLocalWithDiskQuadrangulation(
         gf, patch.elements, patch.intVertices, patch.bdrVertices.front(),
         bndIdealValence, bndAllowedValenceRange, neighborsForGeometry,
@@ -1296,12 +1414,24 @@ int improveCornerValences(
         GFaceMeshPatch patchBefore = diff.before;
         GFaceMeshPatch patchAfter = diff.after;
 
+        if(SHOW_DQR) {
+          gmsh::initialize();
+          GeoLog::add(patchBefore.elements, "fixCornerB");
+          GeoLog::add(patchAfter.elements, "fixCornerA");
+          gmsh::view::add("---");
+          GeoLog::flush();
+        }
+
         /* Execute the diff on the mesh */
         bool ok = diff.execute(true); /* warning: GFace mesh changes here */
+        if(PARANO_VALIDITY) {
+          errorAndAbortIfInvalidSurfaceMesh(
+            gf, "improveCornerValences | after execute");
+        }
         if(ok) {
           updateAdjacencies(patchBefore, patchAfter, adj);
-          append(smoothingPool, patchBefore.intVertices);
-          append(smoothingPool, patchBefore.bdrVertices.front());
+          append(smoothingPool, patchAfter.intVertices);
+          append(smoothingPool, patchAfter.bdrVertices.front());
           stats.nCornerValFixed += 1;
         }
         else {
@@ -1312,6 +1442,12 @@ int improveCornerValences(
       }
       else {
         Msg::Debug("-- failed to fix corner %li", num);
+        if(SHOW_DQR) {
+          gmsh::initialize();
+          GeoLog::add(patch.elements, "fixCornerFAILED");
+          gmsh::view::add("---");
+          GeoLog::flush();
+        }
       }
     }
   }
@@ -1327,8 +1463,7 @@ int improveCornerValences(
     auto it = adj.find(v);
     if(it == adj.end()) continue;
     const std::vector<MElement *> &quads = it->second;
-    double ideal = kv.second;
-    size_t ival = (size_t)clamp(std::round(ideal), 1., 4.);
+    size_t ival = idealBoundaryValence(kv.first, kv.second);
     if(ival == quads.size()) continue;
     stats.nCornerValRemaining += 1;
   }
@@ -1372,8 +1507,7 @@ int improveCurveValences(
     auto it = adj.find(v);
     if(it == adj.end()) continue;
     const std::vector<MElement *> &quads = it->second;
-    double ideal = kv.second;
-    size_t ival = (size_t)clamp(std::round(ideal), 1., 4.);
+    size_t ival = idealBoundaryValence(kv.first, kv.second);
     if(ival == quads.size()) continue;
     size_t num = v->getNum();
 
@@ -1415,12 +1549,24 @@ int improveCurveValences(
       GFaceMeshPatch patchBefore = diff.before;
       GFaceMeshPatch patchAfter = diff.after;
 
+      if(SHOW_DQR) {
+        gmsh::initialize();
+        GeoLog::add(patchBefore.elements, "fixCurveB");
+        GeoLog::add(patchAfter.elements, "fixCurveA");
+        gmsh::view::add("---");
+        GeoLog::flush();
+      }
+
       /* Execute the diff on the mesh */
       bool ok = diff.execute(true); /* warning: GFace mesh changes here */
+      if(PARANO_VALIDITY) {
+        errorAndAbortIfInvalidSurfaceMesh(
+          gf, "improveCurveValences | after execute");
+      }
       if(ok) {
         updateAdjacencies(patchBefore, patchAfter, adj);
-        append(smoothingPool, patchBefore.intVertices);
-        append(smoothingPool, patchBefore.bdrVertices.front());
+        append(smoothingPool, patchAfter.intVertices);
+        append(smoothingPool, patchAfter.bdrVertices.front());
         stats.nCurveValFixed += 1;
 
         if(PARANO_QUALITY) {
@@ -1469,8 +1615,7 @@ int improveCurveValences(
     auto it = adj.find(v);
     if(it == adj.end()) continue;
     const std::vector<MElement *> &quads = it->second;
-    double ideal = kv.second;
-    size_t ival = (size_t)clamp(std::round(ideal), 1., 4.);
+    size_t ival = idealBoundaryValence(kv.first, kv.second);
     if(ival == quads.size()) continue;
     stats.nCurveValRemaining += 1;
   }
@@ -1601,15 +1746,24 @@ int improveInteriorValences(
       GFaceMeshPatch patchBefore = diff.before;
       GFaceMeshPatch patchAfter = diff.after;
 
-      // GeoLog::add(patchBefore.elements, "-I_v"+std::to_string(v->getNum()));
-      // GeoLog::add(patchAfter.elements, "+I_v"+std::to_string(v->getNum()));
+      if(SHOW_DQR) {
+        gmsh::initialize();
+        GeoLog::add(patchBefore.elements, "fixIntB");
+        GeoLog::add(patchAfter.elements, "fixIntA");
+        gmsh::view::add("---");
+        GeoLog::flush();
+      }
 
       /* Execute the diff on the mesh */
       bool ok = diff.execute(true); /* warning: GFace mesh changes here */
+      if(PARANO_VALIDITY) {
+        errorAndAbortIfInvalidSurfaceMesh(
+          gf, "improveInteriorValences | after execute");
+      }
       if(ok) {
         updateAdjacencies(patchBefore, patchAfter, adj);
-        append(smoothingPool, patchBefore.intVertices);
-        append(smoothingPool, patchBefore.bdrVertices.front());
+        append(smoothingPool, patchAfter.intVertices);
+        append(smoothingPool, patchAfter.bdrVertices.front());
         stats.nSurfaceValFixed += 1;
 
         /* If new very irregular vertices have been created,
@@ -1656,8 +1810,461 @@ int improveInteriorValences(
   return 0;
 }
 
+bool patchIsValidForDiskRequadrangulation(
+  const GFaceMeshPatch &patch,
+  const unordered_map<MVertex *, std::vector<MElement *> > &adj)
+{
+  if(patch.bdrVertices.size() != 1) return false;
+  for(MVertex *v : patch.intVertices) {
+    auto it = adj.find(v);
+    if(it == adj.end()) return false;
+  }
+  for(MVertex *v : patch.bdrVertices[0]) {
+    auto it = adj.find(v);
+    if(it == adj.end()) return false;
+  }
+  for(MElement *e : patch.elements) {
+    auto it =
+      std::find(patch.gf->quadrangles.begin(), patch.gf->quadrangles.end(), e);
+    if(it == patch.gf->quadrangles.end()) return false;
+  }
+  std::vector<MVertex *> bndt;
+  bool okbb = buildBoundary(patch.elements, bndt);
+  if(!okbb) return false;
+
+  return true;
+}
+
+bool getIrregularPatchesAroundVertices(
+  const std::vector<MVertex *> &vert,
+  const unordered_map<MVertex *, std::vector<MElement *> > &adj,
+  const unordered_map<MVertex *, double> &qValIdeal,
+  std::vector<std::pair<double, GFaceMeshPatch> > &patches)
+{
+  for(MVertex *v : vert) {
+    GFace *gf = dynamic_cast<GFace *>(v->onWhat());
+    if(gf == nullptr) continue;
+    auto it = adj.find(v);
+    if(it == adj.end()) continue;
+    const std::vector<MElement *> &quads = it->second;
+    const size_t val = quads.size();
+    if(val == 4) continue;
+    if(val > 5) {
+      /* Take adjacent quads around very irregular vertex */
+      GFaceMeshPatch patch;
+      bool okp = patchFromElements(gf, quads, patch);
+      if(!okp || patch.bdrVertices.size() != 1) continue;
+      if(patch.embVertices.size() > 0) { continue; }
+      double Ir = irregularityEnergy(gf, quads, qValIdeal, adj);
+      if(Ir > 0.) patches.push_back({Ir, patch});
+    }
+    else {
+      /* Loop on edges around v */
+      for(MElement *q : quads)
+        for(size_t le = 0; le < 4; ++le) {
+          MVertex *v1 = q->getVertex(le);
+          MVertex *v2 = q->getVertex((le + 1) % 4);
+          if(v1 != v && v2 != v) continue;
+          if(v1->getNum() > v2->getNum()) continue;
+          auto it2 = (v1 == v) ? adj.find(v2) : adj.find(v1);
+          if(it2 == adj.end()) continue;
+          if(it2->second.size() != 4) {
+            /* v1 and v2 are irregular, build cavity around them */
+            std::vector<MElement *> elts = quads;
+            append(elts, it2->second);
+            GFaceMeshPatch patch;
+            bool okp = patchFromElements(gf, elts, patch);
+            if(!okp || patch.bdrVertices.size() != 1) continue;
+            if(patch.embVertices.size() > 0) continue;
+            double Ir = irregularityEnergy(gf, elts, qValIdeal, adj);
+            if(Ir > 0.) patches.push_back({Ir, patch});
+          }
+        }
+      /* Check for irreg quads */
+      for(MElement *q : quads) {
+        auto it0 = adj.find(q->getVertex(0));
+        auto it1 = adj.find(q->getVertex(1));
+        auto it2 = adj.find(q->getVertex(2));
+        auto it3 = adj.find(q->getVertex(3));
+        if(it0 == adj.end() || it1 == adj.end() || it2 == adj.end() ||
+           it3 == adj.end())
+          continue;
+        std::array<size_t, 4> vals = {it0->second.size(), it1->second.size(),
+                                      it2->second.size(), it3->second.size()};
+        for(size_t k = 0; k < 2; ++k) {
+          if(vals[k] != 4 && vals[k + 2] != 4) {
+            /* Opposite vertices are irregular */
+            std::vector<MElement *> elts = {q};
+            append(elts, getNeighbors(elts, adj));
+            GFaceMeshPatch patch;
+            bool okp = patchFromElements(gf, elts, patch);
+            if(!okp || patch.bdrVertices.size() != 1) continue;
+            if(patch.embVertices.size() > 0) continue;
+            double Ir = irregularityEnergy(gf, elts, qValIdeal, adj);
+            if(Ir > 0.) patches.push_back({Ir, patch});
+            break;
+          }
+        }
+      }
+    }
+  }
+  return true;
+}
+
+int improveInteriorValencesV2(
+  GFace *gf,
+  const unordered_map<MVertex *, double>
+    &qValIdeal, /* valence on bdr vertices */
+  unordered_map<MVertex *, std::vector<MElement *> > &adj, DQOptions &opt,
+  DQStats &stats)
+{
+  Msg::Debug("- Face %i: improve interior valences", gf->tag());
+
+  std::vector<MVertex *>
+    smoothingPool; /* for smoothing after topological changes */
+  smoothingPool.reserve(gf->mesh_vertices.size());
+
+  /* Priority queue */
+  typedef std::pair<double, GFaceMeshPatch> Ir_and_Patch;
+  auto comp = [](const Ir_and_Patch &a, const Ir_and_Patch &b) {
+    return a.first > b.first ||
+           (a.first == b.first &&
+            a.second.elements.size() < b.second.elements.size());
+  };
+  std::priority_queue<Ir_and_Patch, std::vector<Ir_and_Patch>, decltype(comp)>
+    Q(comp);
+
+  /* Initialize with patches around irregular vertices of the face */
+  for(const auto &kv : adj) {
+    MVertex *v = kv.first;
+    GFace *gf = dynamic_cast<GFace *>(v->onWhat());
+    if(gf == nullptr) continue;
+    auto it = adj.find(v);
+    if(it == adj.end()) continue;
+    const std::vector<MElement *> &quads = it->second;
+    const size_t val = quads.size();
+    if(val == 4) continue;
+
+    std::vector<std::pair<double, GFaceMeshPatch> > patches;
+    getIrregularPatchesAroundVertices({v}, adj, qValIdeal, patches);
+    for(size_t k = 0; k < patches.size(); ++k) { Q.push(patches[k]); }
+  }
+
+  /* Topological replacement loop */
+  while(Q.size() > 0) {
+    GFaceMeshPatch patch = Q.top().second;
+    Q.pop();
+
+    if(!patchIsValidForDiskRequadrangulation(patch, adj)) continue;
+
+    /* Get ideal and allowed ranges on the patch boundary */
+    std::vector<int> bndIdealValence;
+    std::vector<std::pair<int, int> > bndAllowedValenceRange;
+    const int dimCurve = 2;
+    bool okb = getBoundaryIdealAndAllowedValences(
+      dimCurve, patch, adj, qValIdeal, bndIdealValence, bndAllowedValenceRange);
+    if(!okb) continue;
+
+    /* Check if there is a valid disk remeshing */
+    GFaceMeshDiff diff;
+    std::vector<MElement *> neighborsForGeometry =
+      getNeighbors(patch.elements, adj);
+    double minSICNafer = 0.1;
+    int sdq = remeshLocalWithDiskQuadrangulation(
+      gf, patch.elements, patch.intVertices, patch.bdrVertices.front(),
+      bndIdealValence, bndAllowedValenceRange, neighborsForGeometry,
+      minSICNafer, opt.invertNormalsForQuality, opt.sp, diff);
+    if(sdq == 0) {
+      /* Copy the pointers to update the adjacencies in case success */
+      GFaceMeshPatch patchBefore = diff.before;
+      GFaceMeshPatch patchAfter = diff.after;
+
+      if(SHOW_DQR) {
+        gmsh::initialize();
+        GeoLog::add(patchBefore.elements, "fixIntB");
+        GeoLog::add(patchAfter.elements, "fixIntA");
+        gmsh::view::add("---");
+        GeoLog::flush();
+      }
+
+      /* Execute the diff on the mesh */
+      bool ok = diff.execute(true); /* warning: GFace mesh changes here */
+      if(PARANO_VALIDITY) {
+        errorAndAbortIfInvalidSurfaceMesh(
+          gf, "improveInteriorValencesV2 | after execute");
+      }
+      if(ok) {
+        updateAdjacencies(patchBefore, patchAfter, adj);
+        append(smoothingPool, patchAfter.intVertices);
+        append(smoothingPool, patchAfter.bdrVertices.front());
+        stats.nSurfaceValFixed += 1;
+
+        /* If new irregular patches have been created,
+         * add them to the queue */
+        std::vector<std::pair<double, GFaceMeshPatch> > patches;
+        getIrregularPatchesAroundVertices(patchAfter.bdrVertices.front(), adj,
+                                          qValIdeal, patches);
+        for(size_t k = 0; k < patches.size(); ++k) { Q.push(patches[k]); }
+      }
+      else {
+        Msg::Error("failed to apply diff, abort");
+        abort();
+      }
+      Msg::Debug("-- interior patch fixed");
+    }
+    else {
+      Msg::Debug("-- failed to fix interior patch");
+      // GeoLog::add(quads, "!I_v"+std::to_string(v->getNum()));
+    }
+  }
+  // GeoLog::flush();
+
+  if(smoothingPool.size() > 0)
+    smoothThePool(gf, smoothingPool, adj, opt.invertNormalsForQuality, opt.sp);
+
+  /* Remaining cases, just for stats */
+  for(const auto &kv : adj) {
+    MVertex *v = kv.first;
+    GFace *gf = dynamic_cast<GFace *>(v->onWhat());
+    if(gf == nullptr) continue;
+    auto it = adj.find(v);
+    if(it == adj.end()) continue;
+    const std::vector<MElement *> &quads = it->second;
+    const size_t val = quads.size();
+    if(3 <= val && val <= 5) continue;
+    stats.nSurfaceValRemaining += 1;
+  }
+
+  return 0;
+}
+
+int RefineMeshWithBackgroundMeshProjectionSimple(GModel *gm)
+{
+  Msg::Info(
+    "Refine mesh (midpoint subdivision, with background projection) ...");
+
+  bool linear = true;
+  RefineMesh(gm, linear, true, false);
+
+  /* Convert vertex types:
+   * - MVertex on curve -> MEdgeVertex
+   * - MVertex on face  -> MFaceVertex */
+  std::vector<GEdge *> edges = model_edges(gm);
+  std::vector<GFace *> faces = model_faces(gm);
+
+  /* old2new use to update mesh elements after */
+  unordered_map<MVertex *, MVertex *> old2new;
+
+#pragma omp parallel for schedule(dynamic)
+  for(size_t e = 0; e < edges.size(); ++e) {
+    GEdge *ge = edges[e];
+    if(CTX::instance()->mesh.meshOnlyVisible && !ge->getVisibility()) continue;
+    if(ge->mesh_vertices.size() == 0) continue;
+    std::vector<MVertex *> toProj;
+    toProj.reserve(ge->mesh_vertices.size() / 2);
+
+    /* Replace MVertex by MEdgeVertex */
+    for(size_t i = 0; i < ge->mesh_vertices.size(); ++i) {
+      MVertex *v = ge->mesh_vertices[i];
+      if(v->onWhat() != ge) {
+        Msg::Error("- Edge %i: vertex %li is associated to entity (%i,%i)",
+                   ge->tag(), v->getNum(), v->onWhat()->dim(),
+                   v->onWhat()->tag());
+        continue;
+      }
+      MEdgeVertex *mev = dynamic_cast<MEdgeVertex *>(v);
+      if(mev == nullptr) {
+        MVertex *v2 = new MEdgeVertex(v->point().x(), v->point().y(),
+                                      v->point().z(), ge, 0.);
+        ge->mesh_vertices[i] = v2;
+        old2new[v] = v2;
+        toProj.push_back(v2);
+        delete v;
+      }
+    }
+
+    /* Projections */
+    double tMin = ge->parBounds(0).low();
+    double tMax = ge->parBounds(0).high();
+    for(size_t i = 0; i < toProj.size(); ++i) {
+      MVertex *v = toProj[i];
+      double tGuess =
+        tMin + (tMax - tMin) * double(i + 1) / double(toProj.size());
+      GPoint proj = ge->closestPoint(v->point(), tGuess);
+      if(proj.succeeded()) {
+        v->setXYZ(proj.x(), proj.y(), proj.z());
+        v->setParameter(0, proj.u());
+      }
+      else {
+        Msg::Warning("- Edge %i, vertex %li: curve projection failed",
+                     ge->tag(), v->getNum());
+      }
+    }
+  }
+
+  GlobalBackgroundMesh *bmesh = nullptr;
+  if(backgroudMeshExists(BMESH_NAME)) {
+    bmesh = &(getBackgroundMesh(BMESH_NAME));
+  }
+  else {
+    Msg::Warning("refine mesh with background projection: no background mesh, "
+                 "using CAD projection (slow)");
+  }
+
+#pragma omp parallel for schedule(dynamic)
+  for(size_t f = 0; f < faces.size(); ++f) {
+    GFace *gf = faces[f];
+    if(CTX::instance()->mesh.meshOnlyVisible && !gf->getVisibility()) continue;
+    if(CTX::instance()->debugSurface > 0 &&
+       gf->tag() != CTX::instance()->debugSurface)
+      continue;
+    if(gf->triangles.size() == 0 && gf->quadrangles.size() == 0) continue;
+    std::vector<MVertex *> toProj;
+    toProj.reserve(gf->mesh_vertices.size() / 2);
+    for(size_t i = 0; i < gf->mesh_vertices.size(); ++i) {
+      MVertex *v = gf->mesh_vertices[i];
+      if(v->onWhat() != gf) {
+        Msg::Error("- Face %i: vertex %li is associated to entity (%i,%i)",
+                   gf->tag(), v->getNum(), v->onWhat()->dim(),
+                   v->onWhat()->tag());
+        continue;
+      }
+
+      /* Replace MVertex by MFaceVertex */
+      MFaceVertex *mfv = dynamic_cast<MFaceVertex *>(v);
+      if(mfv == nullptr) {
+        MVertex *v2 = new MFaceVertex(v->point().x(), v->point().y(),
+                                      v->point().z(), gf, 0., 0.);
+        gf->mesh_vertices[i] = v2;
+        old2new[v] = v2;
+        toProj.push_back(v2);
+        delete v;
+      }
+    }
+
+    /* Projections */
+    SurfaceProjector *sp = nullptr;
+    sp = new SurfaceProjector();
+    bool oki = sp->initialize(gf, {}, true);
+    if(!oki && bmesh) {
+      auto it2 = bmesh->faceBackgroundMeshes.find(gf);
+      if(it2 == bmesh->faceBackgroundMeshes.end()) {
+        Msg::Error("background mesh not found for face %i", gf->tag());
+      }
+      else {
+        /* Get pointers to triangles in the background mesh */
+        std::vector<MTriangle *> triangles(it2->second.triangles.size());
+        for(size_t i = 0; i < it2->second.triangles.size(); ++i) {
+          triangles[i] = &(it2->second.triangles[i]);
+        }
+        oki = sp->initialize(gf, triangles);
+        if(!oki) {
+          Msg::Warning("failed to initialize surface projector");
+          delete sp;
+          sp = nullptr;
+        }
+      }
+    }
+    if(!oki && sp) {
+      delete sp;
+      sp = nullptr;
+    }
+
+    bool evalOnCAD = false;
+    bool projOnCad = false;
+    // if (gf->haveParametrization() && !gf->periodic(0)  && !gf->periodic(1))
+    // evalOnCAD = true;
+
+    for(size_t i = 0; i < toProj.size(); ++i) {
+      MVertex *v = toProj[i];
+      GPoint proj;
+      if(sp != nullptr) {
+        proj = sp->closestPoint(v->point().data(), evalOnCAD, projOnCad);
+        if(!proj.succeeded() && gf->haveParametrization()) {
+          double uvg[2] = {0., 0.};
+          proj = gf->closestPoint(v->point(), uvg);
+        }
+      }
+      else {
+        double uvg[2] = {0., 0.};
+        proj = gf->closestPoint(v->point(), uvg);
+      }
+      if(proj.succeeded()) {
+        v->setXYZ(proj.x(), proj.y(), proj.z());
+        v->setParameter(0, proj.u());
+        v->setParameter(1, proj.v());
+      }
+      else {
+        Msg::Warning("- Face %i, vertex %li: surface projection failed",
+                     gf->tag(), v->getNum());
+      }
+    }
+
+    /* Delete the surface */
+    if(sp) delete sp;
+  }
+
+/* Update elements */
+#pragma omp parallel for schedule(dynamic)
+  for(size_t e = 0; e < edges.size(); ++e) {
+    GEdge *ge = edges[e];
+    for(MLine *l : ge->lines) {
+      for(size_t lv = 0; lv < 2; ++lv) {
+        MVertex *v = l->getVertex(lv);
+        auto it = old2new.find(v);
+        if(it != old2new.end()) { l->setVertex(lv, it->second); }
+      }
+    }
+  }
+
+#pragma omp parallel for schedule(dynamic)
+  for(size_t f = 0; f < faces.size(); ++f) {
+    GFace *gf = faces[f];
+    for(size_t i = 0; i < gf->getNumMeshElements(); ++i) {
+      MElement *e = gf->getMeshElement(i);
+      for(size_t lv = 0; lv < e->getNumVertices(); ++lv) {
+        MVertex *v = e->getVertex(lv);
+        auto it2 = old2new.find(v);
+        if(it2 != old2new.end()) { e->setVertex(lv, it2->second); }
+      }
+    }
+  }
+
+  if(PARANO_VALIDITY) {
+    errorAndAbortIfInvalidVertexInModel(gm, "after refine + proj");
+  }
+
+  if(DBG_EXPORT) { gm->writeMSH("qqs_subdiv.msh", 4.1); }
+
+  optimizeGeometryQuadqs(gm);
+
+  if(true || Msg::GetVerbosity() >= 99) {
+    std::unordered_map<std::string, double> stats;
+    appendQuadMeshStatistics(gm, stats, "Mesh_");
+    printStatistics(
+      stats, "Quad mesh after subdivision, projection and small smoothing:");
+  }
+
+  return 0;
+}
 int RefineMeshWithBackgroundMeshProjection(GModel *gm)
 {
+  return RefineMeshWithBackgroundMeshProjectionSimple(gm);
+
+  const bool USE_CAD_PROJECTION = false;
+  if(USE_CAD_PROJECTION) {
+    // Problem: it is slow and buggy on periodic CAD
+    Msg::Info("Refine mesh (midpoint subdivision, with CAD projection) ...");
+    bool linear = false;
+    RefineMesh(gm, linear, true, false);
+
+    std::unordered_map<std::string, double> stats;
+    appendQuadMeshStatistics(gm, stats, "Mesh_");
+    printStatistics(stats, "Quad mesh after subdivision with CAD projection:");
+
+    return 0;
+  }
+
   const bool SHOW_INTERMEDIATE_VIEWS = (Msg::GetVerbosity() >= 99);
   if(SHOW_INTERMEDIATE_VIEWS) {
     std::vector<MElement *> elements;
@@ -1678,7 +2285,7 @@ int RefineMeshWithBackgroundMeshProjection(GModel *gm)
   bool linear = true;
   RefineMesh(gm, linear, true, false);
 
-  if(true || Msg::GetVerbosity() >= 99) {
+  if(Msg::GetVerbosity() >= 99) {
     std::unordered_map<std::string, double> stats;
     appendQuadMeshStatistics(gm, stats, "MPS_");
     printStatistics(stats, "Quad mesh after subdivision, before projection:");
@@ -1700,9 +2307,7 @@ int RefineMeshWithBackgroundMeshProjection(GModel *gm)
     for(GEdge *ge : fedges) edgeToFaces[ge].insert(gf);
   }
 
-#if defined(_OPENMP)
 #pragma omp parallel for schedule(dynamic)
-#endif
   for(size_t e = 0; e < edges.size(); ++e) {
     GEdge *ge = edges[e];
     if(CTX::instance()->mesh.meshOnlyVisible && !ge->getVisibility()) continue;
@@ -1743,9 +2348,7 @@ int RefineMeshWithBackgroundMeshProjection(GModel *gm)
     }
   }
 
-#if defined(_OPENMP)
 #pragma omp parallel for schedule(dynamic)
-#endif
   for(size_t f = 0; f < faces.size(); ++f) {
     GFace *gf = faces[f];
     if(CTX::instance()->mesh.meshOnlyVisible && !gf->getVisibility()) continue;
@@ -1788,9 +2391,7 @@ int RefineMeshWithBackgroundMeshProjection(GModel *gm)
 /* Geometric projection on model */
 
 /* - projections on curves */
-#if defined(_OPENMP)
 #pragma omp parallel for schedule(dynamic)
-#endif
   for(size_t e = 0; e < edges.size(); ++e) {
     GEdge *ge = edges[e];
     auto it = toProjectOnCurve.find(ge);
@@ -1825,9 +2426,7 @@ int RefineMeshWithBackgroundMeshProjection(GModel *gm)
   }
 
 /* - projections on faces */
-#if defined(_OPENMP)
 #pragma omp parallel for schedule(dynamic)
-#endif
   for(size_t f = 0; f < faces.size(); ++f) {
     GFace *gf = faces[f];
 
@@ -1974,9 +2573,7 @@ int replaceBadQuadDominantMeshes(GModel *gm)
 {
   std::vector<GFace *> faces = model_faces(gm);
 
-#if defined(_OPENMP)
 #pragma omp parallel for schedule(dynamic)
-#endif
   for(size_t f = 0; f < faces.size(); ++f) {
     GFace *gf = faces[f];
     if(CTX::instance()->mesh.meshOnlyVisible && !gf->getVisibility()) continue;
@@ -2029,29 +2626,44 @@ int optimizeQuadMeshWithDiskQuadrangulationRemeshing(GFace *gf)
     }
   }
 
+  if(SHOW_DQR) {
+    for(auto &kv : qValIdeal) {
+      GeoLog::add(kv.first->point(), std::round(kv.second),
+                  "f_" + std::to_string(gf->tag()) + "_val_ideal");
+    }
+    GeoLog::flush();
+  }
+
   double t1 = Cpu();
 
-  int sc = improveCornerValences(gf, qValIdeal, adj, opt, stats);
-  if(sc != 0) {
-    Msg::Warning("optimize quad topology: failed to improve corner valences");
-  }
-  if(PARANO_QUALITY) {
-    errorAndAbortIfNegativeElement(
-      gf, dynamic_cast_vector<MQuadrangle *, MElement *>(gf->quadrangles),
-      "after corner");
+  const bool ENABLE_CORNER = true;
+  const bool ENABLE_CURVE = true;
+
+  if(ENABLE_CORNER) {
+    int sc = improveCornerValences(gf, qValIdeal, adj, opt, stats);
+    if(sc != 0) {
+      Msg::Warning("optimize quad topology: failed to improve corner valences");
+    }
+    if(PARANO_QUALITY) {
+      errorAndAbortIfNegativeElement(
+        gf, dynamic_cast_vector<MQuadrangle *, MElement *>(gf->quadrangles),
+        "after corner");
+    }
   }
 
-  int scu = improveCurveValences(gf, qValIdeal, adj, opt, stats);
-  if(scu != 0) {
-    Msg::Warning("optimize quad topology: failed to improve curve valences");
-  }
-  if(PARANO_QUALITY) {
-    errorAndAbortIfNegativeElement(
-      gf, dynamic_cast_vector<MQuadrangle *, MElement *>(gf->quadrangles),
-      "after curve");
+  if(ENABLE_CURVE) {
+    int scu = improveCurveValences(gf, qValIdeal, adj, opt, stats);
+    if(scu != 0) {
+      Msg::Warning("optimize quad topology: failed to improve curve valences");
+    }
+    if(PARANO_QUALITY) {
+      errorAndAbortIfNegativeElement(
+        gf, dynamic_cast_vector<MQuadrangle *, MElement *>(gf->quadrangles),
+        "after curve");
+    }
   }
 
-  int sci = improveInteriorValences(gf, qValIdeal, adj, opt, stats);
+  int sci = improveInteriorValencesV2(gf, qValIdeal, adj, opt, stats);
   if(sci != 0) {
     Msg::Warning("optimize quad topology: failed to improve interior valences");
   }
@@ -2088,6 +2700,312 @@ int optimizeQuadMeshWithDiskQuadrangulationRemeshing(GFace *gf)
   return 0;
 }
 
+int insertExtrudedBoundaryLayer(
+  GFace *gf, const std::vector<MVertex *> &loop,
+  const unordered_map<MVertex *, std::vector<MElement *> > &adj)
+{
+  if(loop.size() < 2) return -1;
+  unordered_map<MVertex *, MVertex *> extrusion;
+  for(size_t i = 0; i < loop.size(); ++i) {
+    if(i > 0 && i == loop.size() - 1 && loop[i] == loop[0]) continue;
+    MVertex *v = loop[i];
+    auto it = adj.find(v);
+    if(it == adj.end()) {
+      Msg::Error("insert extruded layer: vertex not found in adj");
+      return -1;
+    }
+
+    /* Create extruded vertex */
+    SPoint3 pos = v->point();
+    double sum = 1.;
+    SPoint2 uv(0., 0.);
+    double sumuv = 0.;
+    for(auto &q : it->second) {
+      for(size_t lv = 0; lv < 4; ++lv) {
+        MVertex *qv = q->getVertex(lv);
+        MFaceVertex *mfv = dynamic_cast<MFaceVertex *>(qv);
+        if(mfv) {
+          double u, v;
+          mfv->getParameter(0, u);
+          mfv->getParameter(1, v);
+          uv = uv + SPoint2(u, v);
+          sumuv += 1.;
+        }
+      }
+      pos = pos + q->barycenter();
+      sum += 1.;
+    }
+    if(sum > 0.) pos = pos * double(1. / sum);
+    if(sumuv > 0.) uv = uv * double(1. / sumuv);
+
+    MVertex *v2 =
+      new MFaceVertex(pos.x(), pos.y(), pos.z(), gf, uv.x(), uv.y());
+    gf->mesh_vertices.push_back(v2);
+    gf->model()->addMVertexToVertexCache(v2);
+    extrusion[v] = v2;
+
+    /* Update adjacent quads */
+    for(auto &q : it->second) {
+      for(size_t lv = 0; lv < 4; ++lv) {
+        MVertex *qv = q->getVertex(lv);
+        if(qv == v) { q->setVertex(lv, v2); }
+      }
+    }
+  }
+
+  /* Create new quads */
+  for(size_t i = 0; i < loop.size(); ++i) {
+    MVertex *v0 = loop[i];
+    MVertex *v1 = loop[(i + 1) % loop.size()];
+    if(v0 == v1) continue;
+    MVertex *v2 = extrusion[v1];
+    MVertex *v3 = extrusion[v0];
+    MQuadrangle *nq = new MQuadrangle(v0, v1, v2, v3);
+    gf->quadrangles.push_back(nq);
+  }
+
+  return 0;
+}
+
+int optimizeFaceQuadMeshBoundaries(GFace *gf, bool ignoreAcuteCorners = false)
+{
+  if(gf->triangles.size() > 0 || gf->quadrangles.size() == 0) return -1;
+
+  size_t nv = gf->mesh_vertices.size();
+  size_t nq = gf->quadrangles.size();
+
+  double minSICNb = DBL_MAX;
+  double avgSICNb = 0.;
+  std::vector<MElement *> elts =
+    dynamic_cast_vector<MQuadrangle *, MElement *>(gf->quadrangles);
+  computeSICN(elts, minSICNb, avgSICNb);
+  std::vector<std::array<MVertex *, 4> > quadsInit(gf->quadrangles.size());
+  for(size_t i = 0; i < gf->quadrangles.size(); ++i)
+    for(size_t lv = 0; lv < 4; ++lv) {
+      quadsInit[i][lv] = gf->quadrangles[i]->getVertex(lv);
+    }
+  std::vector<SPoint3> positionsInit(gf->mesh_vertices.size());
+  for(size_t i = 0; i < gf->mesh_vertices.size(); ++i)
+    positionsInit[i] = gf->mesh_vertices[i]->point();
+
+  /* For each bdr vertex, compute the ideal valence (based on angle viewed from
+   * the face) */
+  unordered_map<MVertex *, double> qValIdeal;
+  computeBdrVertexIdealValence(gf->quadrangles, qValIdeal);
+
+  /* Face boundary loops */
+  std::vector<std::vector<MVertex *> > loops;
+  bool okb = buildBoundaries(elts, loops);
+  if(!okb) {
+    Msg::Warning("failed to build boundary loops on face %i", gf->tag());
+    return -1;
+  }
+
+  /* Vertex to quads */
+  unordered_map<MVertex *, std::vector<MElement *> > adj;
+  for(MQuadrangle *f : gf->quadrangles)
+    for(size_t lv = 0; lv < 4; ++lv) {
+      MVertex *v = f->getVertex(lv);
+      adj[v].push_back(f);
+    }
+
+  /* Check if valences are not right on a loop */
+  size_t nlayer = 0;
+  for(size_t i = 0; i < loops.size(); ++i) {
+    bool goodAcute = false;
+    bool loopIsGood = true;
+    for(MVertex *v : loops[i]) {
+      auto it = adj.find(v);
+      if(it == adj.end()) continue;
+      size_t val = it->second.size();
+
+      auto iti = qValIdeal.find(v);
+      if(iti == qValIdeal.end()) continue;
+      size_t ival = idealBoundaryValence(iti->first, iti->second);
+
+      if(val != ival) { loopIsGood = false; }
+
+      if(val == ival && iti->second < 0.5) { goodAcute = true; }
+    }
+
+    if(ignoreAcuteCorners && goodAcute) continue;
+
+    /* Add a layer */
+    if(!loopIsGood) {
+      insertExtrudedBoundaryLayer(gf, loops[i], adj);
+      nlayer += 1;
+    }
+  }
+
+  if(nlayer > 0) {
+    double timeMax = 1;
+    SurfaceProjector sp;
+    fillSurfaceProjector(gf, &sp);
+    optimizeGeometryQuadMesh(gf, &sp, timeMax);
+
+    double minSICNa = DBL_MAX;
+    double avgSICNa = 0.;
+    std::vector<MElement *> eltsa =
+      dynamic_cast_vector<MQuadrangle *, MElement *>(gf->quadrangles);
+    computeSICN(eltsa, minSICNa, avgSICNa);
+
+    if(minSICNa <= 0. && minSICNa <= minSICNb) {
+      Msg::Warning("- Face %i: worst quality (%.3f -> %.3f) after adding %li "
+                   "extruded boundary layers, restore",
+                   gf->tag(), minSICNb, minSICNa, nlayer);
+      /* Delete added vertices */
+      for(size_t v = nv; v < gf->mesh_vertices.size(); ++v) {
+        delete gf->mesh_vertices[v];
+      }
+      gf->mesh_vertices.resize(nv);
+      /* Restore positions */
+      for(size_t i = 0; i < gf->mesh_vertices.size(); ++i) {
+        gf->mesh_vertices[i]->setXYZ(positionsInit[i]);
+      }
+      /* Delete added quads */
+      for(size_t f = nq; f < gf->quadrangles.size(); ++f) {
+        delete gf->quadrangles[f];
+      }
+      gf->quadrangles.resize(nq);
+      /* Restore quad vertices */
+      for(size_t i = 0; i < gf->quadrangles.size(); ++i)
+        for(size_t lv = 0; lv < 4; ++lv) {
+          gf->quadrangles[i]->setVertex(lv, quadsInit[i][lv]);
+        }
+      return 1;
+    }
+    Msg::Info("- Face %i: added %li extruded boundary layers", gf->tag(),
+              nlayer);
+  }
+
+  return 0;
+}
+
+int ensureEvenNumberOfEdgesOnCurvesAfterInitialSurfaceMesh(GModel *gm)
+{
+  Msg::Info("Generating empty surface meshes ...");
+
+  int algo2d = CTX::instance()->mesh.algo2d;
+  CTX::instance()->mesh.algo2d = ALGO_2D_INITIAL_ONLY;
+
+  std::vector<GFace *> faces = model_faces(gm);
+  int nIter = 0;
+  while(1) {
+    int nPending = 0;
+    for(size_t f = 0; f < faces.size(); ++f) {
+      GFace *gf = faces[f];
+      if(gf->meshStatistics.status != GFace::PENDING) continue;
+      if(CTX::instance()->mesh.meshOnlyVisible && !gf->getVisibility())
+        continue;
+      if(CTX::instance()->debugSurface > 0 &&
+         gf->tag() != CTX::instance()->debugSurface)
+        continue;
+      nPending += 1;
+      backgroundMesh::current()->unset();
+
+      /* Initial mesh only */
+      char method = gf->meshAttributes.method;
+      int algo = gf->meshAttributes.algorithm;
+      if(method == 1) { /* remove transfinite property */
+        gf->meshAttributes.method = MESH_UNSTRUCTURED;
+      }
+      gf->meshAttributes.algorithm = ALGO_2D_INITIAL_ONLY;
+      gf->mesh(true);
+      gf->meshAttributes.algorithm = algo;
+      gf->meshAttributes.method = method;
+    }
+    if(!nPending) break;
+    if(nIter++ > CTX::instance()->mesh.maxRetries) break;
+  }
+  CTX::instance()->mesh.algo2d = algo2d;
+
+  /* Remove the meshes */
+  std::vector<GEdge *> edges;
+
+  Msg::Info("Deleting empty surface meshes ...");
+  for(size_t f = 0; f < faces.size(); ++f) {
+    GFace *gf = faces[f];
+    if(CTX::instance()->mesh.meshOnlyVisible && !gf->getVisibility()) continue;
+    if(CTX::instance()->debugSurface > 0 &&
+       gf->tag() != CTX::instance()->debugSurface)
+      continue;
+    if(gf->meshStatistics.status == GFace::PENDING) {
+      Msg::Warning("- Face %i not meshed !", gf->tag());
+    }
+    deMeshGFace killer;
+    killer(gf);
+
+    append(edges, gf->edges()); /* face edges saved to verify nb of edges */
+  }
+  Msg::Info("done.");
+
+  /* Verify the curves */
+  sort_unique(edges);
+  for(size_t e = 0; e < edges.size(); ++e) {
+    GEdge *ge = edges[e];
+    if(ge->lines.size() % 2 != 0) {
+      Msg::Warning(
+        "- Curve %i has %li lines (due to boundary recovery), splitting one",
+        ge->tag(), ge->lines.size());
+      size_t i = ge->lines.size() / 2;
+      MLine *l = ge->lines[i];
+      MVertex *v1 = l->getVertex(0);
+      MVertex *v2 = l->getVertex(1);
+      double t1, t2;
+      v1->getParameter(0, t1);
+      v2->getParameter(0, t2);
+      double t = 0.5 * (t1 + t2);
+      SPoint3 mid = (v1->point() + v2->point()) * 0.5;
+      GPoint proj = ge->closestPoint(mid, t);
+      if(!proj.succeeded()) { /* force values */
+        proj.x() = mid.x();
+        proj.y() = mid.y();
+        proj.z() = mid.z();
+        t = 0.5 * (t1 + t2);
+      }
+      MEdgeVertex *mev1 = dynamic_cast<MEdgeVertex *>(v1);
+      MEdgeVertex *mev2 = dynamic_cast<MEdgeVertex *>(v2);
+      double lc = -1.;
+      if(mev1 && mev2) { lc = 0.5 * (mev1->getLc() + mev2->getLc()); }
+      else if(mev1) {
+        lc = mev1->getLc();
+      }
+      else if(mev2) {
+        lc = mev2->getLc();
+      }
+      MEdgeVertex *newv =
+        new MEdgeVertex(proj.x(), proj.y(), proj.z(), ge, t, 0, lc);
+      ge->mesh_vertices.push_back(newv);
+      ge->lines[i] = new MLine(v1, newv);
+      ge->lines.push_back(new MLine(newv, v2));
+      delete l;
+    }
+  }
+
+  /* Undo transfinite which are no longer possibles */
+  for(size_t f = 0; f < faces.size(); ++f) {
+    GFace *gf = faces[f];
+    if(CTX::instance()->mesh.meshOnlyVisible && !gf->getVisibility()) continue;
+    if(CTX::instance()->debugSurface > 0 &&
+       gf->tag() != CTX::instance()->debugSurface)
+      continue;
+    if(gf->meshAttributes.method == MESH_TRANSFINITE &&
+       gf->edges().size() == 4) {
+      std::vector<size_t> sizes;
+      for(GEdge *ge : gf->edges()) { sizes.push_back(ge->lines.size()); }
+      std::sort(sizes.begin(), sizes.end());
+      if(sizes.size() != 4 || sizes[0] != sizes[1] || sizes[2] != sizes[3]) {
+        Msg::Warning(
+          "- Face %i: transfinite no longer possible, remove the attribute",
+          gf->tag());
+        gf->meshAttributes.method = MESH_UNSTRUCTURED;
+      }
+    }
+  }
+
+  return 0;
+}
+
 int quadMeshingOfSimpleFacesWithPatterns(GModel *gm,
                                          double minimumQualityRequired)
 {
@@ -2107,9 +3025,7 @@ int quadMeshingOfSimpleFacesWithPatterns(GModel *gm,
 
   initQuadPatterns();
 
-#if defined(_OPENMP)
 #pragma omp parallel for schedule(dynamic)
-#endif
   for(size_t f = 0; f < faces.size(); ++f) {
     GFace *gf = faces[f];
     if(gf->meshStatistics.status != GFace::PENDING) continue;
@@ -2125,9 +3041,7 @@ int quadMeshingOfSimpleFacesWithPatterns(GModel *gm,
     meshFaceWithGlobalPattern(gf, invertNormals, minimumQualityRequired);
 
     if(PARANO_VALIDITY) {
-      errorAndAbortIfInvalidVertexInElements(
-        dynamic_cast_vector<MQuadrangle *, MElement *>(gf->quadrangles),
-        "after face pattern meshing");
+      errorAndAbortIfInvalidSurfaceMesh(gf, "after mesh with global pattern");
     }
   }
 
@@ -2166,9 +3080,7 @@ int optimizeTopologyWithDiskQuadrangulationRemeshing(GModel *gm)
 
   std::vector<GFace *> faces = model_faces(gm);
 
-#if defined(_OPENMP)
 #pragma omp parallel for schedule(dynamic)
-#endif
   for(size_t f = 0; f < faces.size(); ++f) {
     GFace *gf = faces[f];
     if(gf->meshStatistics.status != GFace::PENDING) continue;
@@ -2181,9 +3093,8 @@ int optimizeTopologyWithDiskQuadrangulationRemeshing(GModel *gm)
     optimizeQuadMeshWithDiskQuadrangulationRemeshing(gf);
 
     if(PARANO_VALIDITY) {
-      errorAndAbortIfInvalidVertexInElements(
-        dynamic_cast_vector<MQuadrangle *, MElement *>(gf->quadrangles),
-        "after disk quadrangulation remeshing");
+      errorAndAbortIfInvalidSurfaceMesh(gf,
+                                        "after disk quadrangulation remeshing");
     }
   }
 
@@ -2237,9 +3148,7 @@ int optimizeTopologyWithCavityRemeshing(GModel *gm)
 
   GlobalBackgroundMesh &bmesh = getBackgroundMesh(BMESH_NAME);
 
-#if defined(_OPENMP)
 #pragma omp parallel for schedule(dynamic)
-#endif
   for(size_t f = 0; f < faces.size(); ++f) {
     GFace *gf = faces[f];
     if(gf->meshStatistics.status != GFace::PENDING) continue;
@@ -2254,10 +3163,10 @@ int optimizeTopologyWithCavityRemeshing(GModel *gm)
     std::vector<std::pair<SPoint3, int> > singularities;
     bool okg = getSingularitiesFromBackgroundField(gf, singularities);
     if(!okg) {
-      okg =
-        getSingularitiesFromNewCrossFieldComputation(bmesh, gf, singularities);
+      okg = getSingularitiesFromNewCrossFieldComputation(bmesh, gf,
+              singularities);
       if(!okg) {
-        Msg::Warning("- Face %i: failed to get singularities", gf->tag());
+          Msg::Warning("- Face %i: failed to get singularities", gf->tag());
       }
     }
 
@@ -2266,9 +3175,7 @@ int optimizeTopologyWithCavityRemeshing(GModel *gm)
                                                invertNormals);
 
     if(PARANO_VALIDITY) {
-      errorAndAbortIfInvalidVertexInElements(
-        dynamic_cast_vector<MQuadrangle *, MElement *>(gf->quadrangles),
-        "after cavity remeshing");
+      errorAndAbortIfInvalidSurfaceMesh(gf, "after cavity remeshing");
     }
   }
 
@@ -2286,6 +3193,29 @@ int optimizeTopologyWithCavityRemeshing(GModel *gm)
   GeoLog::flush();
 
   if(DBG_EXPORT) { gm->writeMSH("qqs_cavrmsh.msh", 4.1); }
+
+  return 0;
+}
+
+int optimizeQuadMeshBoundaries(GModel *gm)
+{
+  Msg::Info("Optimize topology of quad mesh boundaries with extrusion and "
+            "remeshing ...");
+
+  std::vector<GFace *> faces = model_faces(gm);
+
+#pragma omp parallel for schedule(dynamic)
+  for(size_t f = 0; f < faces.size(); ++f) {
+    GFace *gf = faces[f];
+    if(gf->meshStatistics.status != GFace::PENDING) continue;
+    if(CTX::instance()->mesh.meshOnlyVisible && !gf->getVisibility()) continue;
+    if(CTX::instance()->debugSurface > 0 &&
+       gf->tag() != CTX::instance()->debugSurface)
+      continue;
+    if(gf->triangles.size() > 0 || gf->quadrangles.size() == 0) continue;
+
+    optimizeFaceQuadMeshBoundaries(gf, true);
+  }
 
   return 0;
 }
@@ -2336,6 +3266,12 @@ int replaceBadQuadDominantMeshes(GModel *gm)
 {
   Msg::Error("Module QUADMESHINGTOOLS required for function "
              "replaceBadQuadDominantMeshes");
+  return -10;
+}
+int optimizeQuadMeshBoundaries(GModel *gm)
+{
+  Msg::Error("Module QUADMESHINGTOOLS required for function "
+             "optimizeQuadMeshBoundaries");
   return -10;
 }
 
@@ -2452,6 +3388,10 @@ QuadqsContextUpdater::QuadqsContextUpdater()
   backups_int.push_back(
     new RestoreValueAtEndOfLife<int>(&CTX::instance()->mesh.minCircleNodes));
 
+  // TODOMX: should restore abortOnError, but testing stuff
+  backups_int.push_back(
+    new RestoreValueAtEndOfLife<int>(&CTX::instance()->abortOnError));
+
   // Backup GEdge meshing attributes
   for(GEdge *ge : model_edges(GModel::current())) {
     backups_char.push_back(
@@ -2508,15 +3448,19 @@ void QuadqsContextUpdater::setQuadqsOptions()
 {
   Msg::Debug("set special quadqs options in the global context");
 
-  CTX::instance()->mesh.algo2d = ALGO_2D_QUAD_QUASI_STRUCT;
+  // CTX::instance()->mesh.algo2d = ALGO_2D_QUAD_QUASI_STRUCT;
   CTX::instance()->mesh.recombineAll = 1;
-  CTX::instance()->mesh.algoRecombine = 0;
+  // CTX::instance()->mesh.algoRecombine = 4; /* bipartite labelling */
+  if(CTX::instance()->mesh.algoRecombine != 4) {
+    CTX::instance()->mesh.algoRecombine = 0; /* midpoint subdivision */
+  }
   CTX::instance()->mesh.recombineOptimizeTopology = 0;
   CTX::instance()->mesh.lcFactor = 1.;
   CTX::instance()->mesh.lcMin = 0.;
   CTX::instance()->mesh.lcMax = 1.e22;
   CTX::instance()->mesh.lcFromPoints = 0;
-  CTX::instance()->mesh.minCurveNodes = 0;
+  CTX::instance()->abortOnError = 0;
+  CTX::instance()->mesh.minCurveNodes = 2;
   CTX::instance()->mesh.minCircleNodes = 0;
 }
 
@@ -2533,4 +3477,123 @@ void QuadqsContextUpdater::restoreInitialOption()
 #else
   Msg::Error("Module QUADMESHINGTOOLS required to use QuadqsContextUpdater");
 #endif
+}
+
+int quadqsCleanup(GModel *gm)
+{
+  Msg::Info("Cleaning quadqs background mesh and field");
+  global_bmeshes.clear(); /* background meshes used in quadqs */
+  if(gm->getFields()->getBackgroundField() > 0) { /* background field */
+    gm->getFields()->reset();
+    // Field *field =
+    // gm->getFields()->get(gm->getFields()->getBackgroundField()); if(field &&
+    // field->numComponents() == 3) {
+    //   gm->getFields()->deleteField(field->id);
+    //   gm->getFields()->setBackgroundMesh(0);
+    // }
+  }
+#if defined(HAVE_POST)
+  PView *view = PView::getViewByName("guiding_field");
+  delete view;
+#if defined(HAVE_FLTK)
+  if(FlGui::available()) FlGui::instance()->updateViews(true, true);
+#endif
+#endif
+  return 0;
+}
+
+void getAcuteCorners(
+  GFace *gf,
+  std::unordered_map<MVertex *, std::vector<MVertex *> > &acuteCorners,
+  double angle_threshold_rad)
+{
+  std::unordered_map<MVertex *, std::vector<MVertex *> > corner2vertices;
+  for(GEdge *ge : gf->edges()) {
+    for(MLine *line : ge->lines) {
+      MVertex *v1 = line->getVertex(0);
+      MVertex *v2 = line->getVertex(1);
+      if(v1->onWhat() && v1->onWhat()->dim() == 0) {
+        corner2vertices[v1].push_back(v2);
+      }
+      if(v2->onWhat() && v2->onWhat()->dim() == 0) {
+        corner2vertices[v2].push_back(v1);
+      }
+    }
+  }
+  for(auto &kv : corner2vertices) {
+    if(kv.second.size() == 2) {
+      MVertex *v = kv.first;
+      MVertex *v2 = kv.second[0];
+      MVertex *v3 = kv.second[1];
+      double agl = angle3Vertices(v2, v, v3);
+      if(agl < angle_threshold_rad) {
+        acuteCorners[v].push_back(v2);
+        acuteCorners[v].push_back(v3);
+      }
+    }
+  }
+}
+
+int optimize1DMeshAtAcuteCorners(GModel *gm)
+{
+  /* Collect acute corners */
+  std::unordered_map<MVertex *, std::vector<MVertex *> > acuteCorners;
+  double threshold = 30. * M_PI / 180.;
+  for(GFace *gf : gm->getFaces()) {
+    for(GEdge *ge : gf->edges())
+      if(ge->lines.size() == 0) {
+        Msg::Warning("Optimize 1D mesh at acute corners: no lines in curve %i",
+                     ge->tag());
+      }
+    if(gf->triangles.size() > 0 || gf->quadrangles.size() > 0) {
+      Msg::Warning("Optimize 1D mesh at acute corners: elements in face %i",
+                   gf->tag());
+    }
+    getAcuteCorners(gf, acuteCorners, threshold);
+  }
+
+  /* Move vertices */
+  size_t n = 0;
+  for(auto &kv : acuteCorners) {
+    MVertex *v = kv.first;
+    /* Compute averaged distance */
+    double avgLen = 0.;
+    double avgN = 0.;
+    double forcedLen = 0.;
+    double forcedLenN = 0.;
+    for(MVertex *v2 : kv.second) {
+      double len = v->distance(v2);
+      avgLen += len;
+      avgN += 1.;
+      if(v2->onWhat() && v2->onWhat()->dim() == 0) {
+        forcedLen += len;
+        forcedLenN += 1.;
+      }
+    }
+    if(avgN > 0.) avgLen /= avgN;
+    if(forcedLenN > 0.) forcedLen /= forcedLenN;
+
+    /* Move vertices */
+    for(MVertex *v2 : kv.second)
+      if(v2->onWhat() && v2->onWhat()->dim() == 1) {
+        SVector3 dir = v2->point() - v->point();
+        if(dir.normSq() > 0.) { dir.normalize(); }
+        double len = (forcedLen > 0.) ? forcedLen : avgLen;
+        SPoint3 newPos = v->point() + len * dir;
+        GEdge *ge = dynamic_cast<GEdge *>(v2->onWhat());
+        double t = 0.;
+        v2->getParameter(0, t);
+        GPoint proj = ge->closestPoint(newPos, t);
+        if(proj.succeeded()) {
+          v2->setXYZ(proj.x(), proj.y(), proj.z());
+          v2->setParameter(0, proj.u());
+          n += 1;
+        }
+      }
+  }
+  if(n > 0) {
+    Msg::Debug("optimize mesh 1D at acute corners: moved %li curve vertices",
+               n);
+  }
+  return 0;
 }

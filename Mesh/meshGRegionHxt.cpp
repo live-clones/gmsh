@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <map>
 #include <set>
@@ -45,9 +45,7 @@ static HXTStatus nodalSizesCallBack(double *pts, uint32_t *volume,
 
   HXT_INFO("Computing %smesh sizes...", useInterpolatedSize ? "interpolated " : "");
 
-#if defined(_OPENMP)
 #pragma omp parallel for schedule(dynamic)
-#endif
   for(size_t i = 0; i < numPts; i++) {
     if(volume[i] < 0 || volume[i] >= allGR->size()) {
       Msg::Error("Invalid volume tag %d in mesh size calculation", volume[i]);

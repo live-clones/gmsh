@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 // Contributor(s):
 //   Tristan Carrier
 //   Maxime Melchior
@@ -205,7 +205,7 @@ void voroMetal3D::execute(std::vector<SPoint3> &vertices,
       *pointer = cell;
       pointers.push_back(pointer);
       generators.push_back(SPoint3(x, y, z));
-      table.insert(std::pair<int, int>(loopA.pid(), number));
+      table.insert(std::make_pair(loopA.pid(), number));
       number++;
     } while(loopA.inc());
   }
@@ -218,7 +218,7 @@ void voroMetal3D::execute(std::vector<SPoint3> &vertices,
       *pointer = cell;
       pointers.push_back(pointer);
       generators.push_back(SPoint3(x, y, z));
-      table.insert(std::pair<int, int>(loopB.pid(), number));
+      table.insert(std::make_pair(loopB.pid(), number));
       number++;
     } while(loopB.inc());
   }
@@ -296,9 +296,9 @@ void voroMetal3D::execute(std::vector<SPoint3> &vertices,
         z2 = voronoi_vertices[3 * index2 + 2];
         print_segment(SPoint3(x1, y1, z1), SPoint3(x2, y2, z2), file);
 
-        val = obj.search_line(std::pair<int, int>(index1, index2));
+        val = obj.search_line(std::make_pair(index1, index2));
         if(val == -1) {
-          obj.lines.push_back(std::pair<int, int>(index1, index2));
+          obj.lines.push_back(std::make_pair(index1, index2));
           obj.line_loops[face_number].push_back(obj.lines.size() - 1);
           val = obj.lines.size() - 1;
         }
@@ -542,11 +542,11 @@ void voroMetal3D::correspondance(double e, double xMax, double yMax,
     x = x / vertices.size();
     y = y / vertices.size();
     z = z / vertices.size();
-    centers.insert(std::pair<GFace *, SPoint3>(faces[i], SPoint3(x, y, z)));
+    centers.insert(std::make_pair(faces[i], SPoint3(x, y, z)));
   }
 
   for(i = 0; i < faces.size(); i++) {
-    markings.insert(std::pair<GFace *, bool>(faces[i], false));
+    markings.insert(std::make_pair(faces[i], false));
   }
 
   count = 0;
@@ -580,7 +580,7 @@ void voroMetal3D::correspondance(double e, double xMax, double yMax,
         if(it5->second == 0 && it6->second == 0) {
           it5->second = 1;
           it6->second = 1;
-          pairs.push_back(std::pair<GFace *, GFace *>(faces[i], faces[j]));
+          pairs.push_back(std::make_pair(faces[i], faces[j]));
           categories.push_back(val);
           print_segment(p1, p2, file);
           if(std::abs((p2.x() - p1.x() - 1.0)) < 0.0001) {

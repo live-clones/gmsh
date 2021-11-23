@@ -1,0 +1,85 @@
+# -*- coding: utf-8 -*-
+# Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
+#
+# See the LICENSE.txt file in the Gmsh root directory for license information.
+# Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+
+import os
+import setuptools
+
+setupdir = os.environ["GMSH_SETUP_DIR"]
+sdkdir = os.environ["GMSH_SDK_DIR"]
+
+version = '${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION}.${GMSH_PATCH_VERSION}'
+
+if '-nox-dev' in setupdir :
+    name = 'gmsh-nox-dev'
+    iversion = version + '.dev1'
+elif '-dev' in setupdir :
+    name = 'gmsh-dev'
+    iversion = version + '.dev1'
+else :
+    name = 'gmsh'
+    iversion = version
+
+libversion = ".".join(version.split(".")[:2])
+
+if os.path.isfile(sdkdir + '/lib/gmsh-' + libversion + '.dll'):
+    libs = [os.path.join(sdkdir, 'lib', 'gmsh.lib'),
+            os.path.join(sdkdir, 'lib', 'gmsh-' + libversion + '.dll'),
+            os.path.join(sdkdir, 'lib', 'gmsh.jl')]
+    scripts = [os.path.join(setupdir, 'gmsh'),
+               os.path.join(setupdir, 'gmsh.bat')]
+elif os.path.isfile(sdkdir + '/lib/libgmsh.so.' + libversion):
+    libs = [os.path.join(sdkdir, 'lib', 'libgmsh.so.' + libversion),
+            os.path.join(sdkdir, 'lib', 'gmsh.jl')]
+    scripts = [os.path.join(setupdir, 'gmsh')]
+elif os.path.isfile(sdkdir + '/lib/libgmsh.' + libversion + '.dylib'):
+    libs = [os.path.join(sdkdir + 'lib', 'libgmsh.' + libversion + '.dylib'),
+            os.path.join(sdkdir + 'lib', 'gmsh.jl')]
+    scripts = [os.path.join(setupdir, 'gmsh')]
+else :
+    print("library not found")
+    exit(1)
+
+def gen_install_list(subdir):
+    for dirpath, dirs, files in os.walk(subdir):
+        if len(files) != 0:
+            filepaths = [os.path.join(dirpath, f) for f in files]
+            relpath = os.path.relpath(dirpath, sdkdir)
+            data_files.append((relpath, filepaths))
+
+data_files = [('lib', libs)]
+gen_install_list(sdkdir + '/share')
+gen_install_list(sdkdir + '/include')
+
+setuptools.setup(
+    name = name,
+    version = iversion,
+    description = 'Gmsh is a three-dimensional finite element mesh generator '
+                  'with built-in pre- and post-processing facilities.',
+    long_description = open(os.path.join(setupdir, 'README.rst'), 'r').read(),
+    long_description_content_type = 'text/x-rst',
+    maintainer = 'Christophe Geuzaine',
+    maintainer_email = 'cgeuzaine@uliege.be',
+    keywords = ['fem', 'mesh', 'finite element method', 'cad'],
+    url = 'https://gmsh.info',
+    license = 'GPLv2+',
+    platforms = 'Posix, Windows',
+    classifiers = ['Development Status :: 5 - Production/Stable',
+                   'Intended Audience :: Education',
+                   'Intended Audience :: Science/Research',
+                   'License :: OSI Approved :: '
+                   'GNU General Public License v2 or later (GPLv2+)',
+                   'Operating System :: POSIX :: Linux',
+                   'Operating System :: Microsoft :: Windows',
+                   'Operating System :: MacOS :: MacOS X',
+                   'Programming Language :: C',
+                   'Programming Language :: C++',
+                   'Programming Language :: Python',
+                   'Programming Language :: Julia',
+                   'Topic :: Scientific/Engineering'],
+    scripts = scripts,
+    packages = [''],
+    package_dir = {'' : os.path.join(sdkdir + '/lib')},
+    data_files = data_files)

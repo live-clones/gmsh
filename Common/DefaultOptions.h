@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #ifndef DEFAULT_OPTIONS_H
 #define DEFAULT_OPTIONS_H
@@ -517,6 +517,8 @@ StringXNumber GeneralOptions_Number[] = {
 
   { F|S, "DetachedMenu" , opt_general_detached_menu , 0. ,
     "Should the menu window be detached from the graphic window?" },
+  { F|O, "DetachedProcess", opt_general_detached_process, 1. ,
+    "On Windows, should processes created by Gmsh be detached?" },
   { F|O, "DisplayBorderFactor" , opt_general_display_border_factor , 0.2 ,
     "Border factor for model display (0: model fits window size exactly)" },
   { F|O, "DoubleBuffer" , opt_general_double_buffer , 1. ,
@@ -1141,9 +1143,9 @@ StringXNumber MeshOptions_Number[] = {
     "Element shrinking factor (between 0 and 1)" },
 
   { F|O, "FirstElementTag" , opt_mesh_first_element_tag , 1. ,
-    "First tag (>= 1) of mesh elements" },
+    "First tag (>= 1) of mesh elements when generating or renumbering a mesh" },
   { F|O, "FirstNodeTag" , opt_mesh_first_node_tag , 1. ,
-    "First tag (>= 1) of mesh nodes" },
+    "First tag (>= 1) of mesh nodes when generating or renumbering a mesh" },
   { F|O, "FlexibleTransfinite" , opt_mesh_flexible_transfinite , 0 ,
     "Allow transfinite constraints to be modified for recombination (e.g. Blossom) or "
     "by global mesh size factor" },
@@ -1390,7 +1392,7 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "Pyramids" , opt_mesh_pyramids , 1. ,
     "Display mesh pyramids?" },
 
-  { F|O, "QuadqsSizemapMethod" , opt_mesh_quadqs_sizemap_method, 0. ,
+  { F|O, "QuadqsSizemapMethod" , opt_mesh_quadqs_sizemap_method, 3 ,
     "Size map method in QuadQuasiStructured. 0: default, 1: cross-field,"
       "2: cross-field + CAD small features adaptation,"
       "3: from background mesh (e.g. sizes in current triangulation),"
@@ -1403,10 +1405,15 @@ StringXNumber MeshOptions_Number[] = {
       "001: cavity remeshing,"
       "xxx: combination of multiple methods (e.g. 111 for all)"
   },
-  { F|O, "QuadqsRemeshingBoldness" , opt_mesh_quadqs_remeshing_boldness, 0.501 ,
+  { F|O, "QuadqsRemeshingBoldness" , opt_mesh_quadqs_remeshing_boldness, 0.66 ,
     "Controls how much cavity remeshing is allowed to distort"
       " the quad mesh. From 0 (no quality decrease during remeshing) to 1"
       " (quality can tend to 0 during remeshing)."
+  },
+  { F|O, "QuadqsScalingOnTriangulation" , opt_mesh_quadqs_scaling_on_triangulation, 0.75,
+    "Ratio on the edge length between the triangulation and the quadrangulation."
+      " Use a small ratio (e.g. 0.5) to get a background triangulation finer"
+      " than the quad mesh. Useful to get a more accurate cross-field."
   },
   { F|O, "Quadrangles" , opt_mesh_quadrangles , 1. ,
     "Display mesh quadrangles?" },
@@ -1530,6 +1537,8 @@ StringXNumber MeshOptions_Number[] = {
     "defined tolerance" },
   { F|O, "ToleranceInitialDelaunay" , opt_mesh_tolerance_initial_delaunay, 1.e-12,
     "Tolerance for initial 3D Delaunay mesher" },
+  { F|O, "ToleranceReferenceElement" , opt_mesh_tolerance_reference_element , 1e-6,
+    "Tolerance for classifying a point inside a reference element (of size 1)" },
   { F|O, "Triangles" , opt_mesh_triangles , 1. ,
     "Display mesh triangles?" },
   { F|O, "Trihedra" , opt_mesh_trihedra , 1. ,

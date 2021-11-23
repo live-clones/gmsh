@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -15,6 +15,7 @@
 #include "SVector3.h"
 #include "meshTriangulation.h"
 #include "robustPredicates.h"
+#include "meshGFacePack.h"
 
 static void analyze2dMetric(std::vector<double> &val, double &C, double &S,
                             double &h1, double &h2)
@@ -218,7 +219,8 @@ static double p2triangle_alignement_quality_measure(double *xa, double *xb,
                                     xbc[1], xca[1]);
 
     std::vector<double> val(9);
-    gmsh::view::probe(VIEW_TAG, x[j][0], x[j][1], 0, val, 0, 9);
+    double dist;
+    gmsh::view::probe(VIEW_TAG, x[j][0], x[j][1], 0.0, val, dist);
     double dxdu = Js[j][0];
     double dydu = Js[j][2];
 
@@ -253,8 +255,9 @@ static double p1triangle_quality_metric(int VIEW_TAG, PolyMesh::Vertex *v0,
   double *xc = v2->position;
 
   std::vector<double> val(9);
+  double dist;
   gmsh::view::probe(VIEW_TAG, (xa[0] + xb[0] + xc[0]) / 3,
-                    (xa[1] + xb[1] + xc[1]) / 3, 0, val, 0, 9);
+                    (xa[1] + xb[1] + xc[1]) / 3, 0.0, val, dist);
   double M[3] = {val[0], val[4], val[1]};
   val.clear();
 
@@ -317,7 +320,8 @@ int lengthPathInMetricField(double lagrangianPoints[3][2],
                 0.5 * (1 + 2 * t) * lagrangianPoints[2][1];
 
     std::vector<double> val(9);
-    gmsh::view::probe(VIEW_TAG, x[0], x[1], 0.0, val, 0, 9);
+    double dist;
+    gmsh::view::probe(VIEW_TAG, x[0], x[1], 0.0, val, dist);
     if(val.empty()) { *lengthInMetricField = 1.e22; }
     else {
       double M[3] = {val[0], val[4], val[1]};
@@ -495,7 +499,8 @@ static bool computeNeighbor(int VIEW_TAG, const SPoint2 &p, int DIR,
 			    bool inside (double*))
 {
   std::vector<double> val;
-  gmsh::view::probe(VIEW_TAG, p.x(), p.y(), 0.0, val, 0, 9);
+  double dist;
+  gmsh::view::probe(VIEW_TAG, p.x(), p.y(), 0.0, val, dist, 0, 9);
   if(val.empty()) return false;
   //  printf("%g %g %g \n",val[0],val[1],val[4]);
   double C, S, h1, h2;
@@ -516,7 +521,7 @@ static bool computeNeighbor(int VIEW_TAG, const SPoint2 &p, int DIR,
     double Cpp, Spp, h1pp, h2pp;
     val.clear();
     if (inside(pp)){
-      gmsh::view::probe(VIEW_TAG, pp.x(), pp.y(), 0.0, val, 0, 9);
+      gmsh::view::probe(VIEW_TAG, pp.x(), pp.y(), 0.0, val, dist, 0, 9);
       if(val.empty()) { iter = N + 1; }
       else {
 	analyze2dMetric(val, Cpp, Spp, h1pp, h2pp);
@@ -605,15 +610,16 @@ triangleQualityP2(int VIEW_TAG, PolyMesh::HalfEdge *hea,
 
   if(FF) {
     std::vector<double> val0(9), val1(9), val2(9), val3(9), val4(9), val5(9);
+    double dist;
     gmsh::view::probe(VIEW_TAG, hea->v->position.x(), hea->v->position.y(), 0.0,
-                      val0, 0, 9);
+                      val0, dist, 0, 9);
     gmsh::view::probe(VIEW_TAG, heb->v->position.x(), heb->v->position.y(), 0.0,
-                      val1, 0, 9);
+                      val1, dist, 0, 9);
     gmsh::view::probe(VIEW_TAG, hec->v->position.x(), hec->v->position.y(), 0.0,
-                      val2, 0, 9);
-    gmsh::view::probe(VIEW_TAG, ab.x(), ab.y(), 0.0, val3, 0, 9);
-    gmsh::view::probe(VIEW_TAG, bc.x(), bc.y(), 0.0, val4, 0, 9);
-    gmsh::view::probe(VIEW_TAG, ca.x(), ca.y(), 0.0, val5, 0, 9);
+                      val2, dist, 0, 9);
+    gmsh::view::probe(VIEW_TAG, ab.x(), ab.y(), 0.0, val3, dist, 0, 9);
+    gmsh::view::probe(VIEW_TAG, bc.x(), bc.y(), 0.0, val4, dist, 0, 9);
+    gmsh::view::probe(VIEW_TAG, ca.x(), ca.y(), 0.0, val5, dist, 0, 9);
 
     double C0, C1, C2;
     double S0, S1, S2;
@@ -928,6 +934,8 @@ int computePointsUsingScaledCrossFieldPlanarP2(
   if(result) return result;
   pm->print4debug(50);
 
+  planarSearchTool pst;
+
   //  std::queue<SPoint2> _q;
   std::stack<SPoint2> _q;
   std::vector<SPoint2> _points;
@@ -936,6 +944,12 @@ int computePointsUsingScaledCrossFieldPlanarP2(
       SPoint2 pp(v->position.x(), v->position.y());
       _q.push(pp);
       _points.push_back(pp);
+      
+      SPoint2 pn[4];
+      for(int DIR = 0; DIR < 4; DIR++) {
+	computeNeighbor(VIEW_TAG, pp, DIR, sqrt(_LIMIT), pn[DIR], NULL); 
+      }
+      pst.insert(pp, pn);
     }
   }
 
@@ -943,8 +957,9 @@ int computePointsUsingScaledCrossFieldPlanarP2(
 
   std::vector<double> additional;
 
-  printf("enter something 1\n");
+  //  printf("enter something 1\n");
 
+  
   while(!_q.empty()) {
     //    SPoint2 p = _q.front();
     SPoint2 p = _q.top();
@@ -974,7 +989,7 @@ int computePointsUsingScaledCrossFieldPlanarP2(
 	  }
 	}
       }
-      if (_points.size() > 1900)break;
+      //      if (_points.size() > 1900)break;
       if(_points.size() % 10 == 0)
         printf("q size %lu p size %lu\n", _q.size(), _points.size());
     }

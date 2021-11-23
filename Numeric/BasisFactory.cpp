@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2012 C. Geuzaine, J.-B-> Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include "BasisFactory.h"
 #include "GmshDefines.h"
@@ -50,9 +50,7 @@ const nodalBasis *BasisFactory::getNodalBasis(int tag)
   }
 
   std::pair<std::map<int, nodalBasis *>::const_iterator, bool> inserted;
-#if defined(_OPENMP)
 #pragma omp critical
-#endif
   {
     inserted = fs.insert(std::make_pair(tag, F));
     if(!inserted.second) delete F;

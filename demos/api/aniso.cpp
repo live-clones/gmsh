@@ -123,7 +123,8 @@ int CASE_ = 0;
 
 static void PROBE (int TAG, double x, double y, double z, std::vector<double> &val, const int step = -1, const int numComp = -1){
   val.clear();
-  gmsh::view::probe(TAG,x,y,z,val);//, -1, -1, 0, 1.e-5);
+  double dist;
+  gmsh::view::probe(TAG,x,y,z,val,dist);//, -1, -1, 0, 1.e-5);
   //  printf("%g %g %g %d %g\n",x,y,z,TAG,val[0]);
   if(val.empty()){
     val.push_back(0);printf("argh\n");
@@ -1554,8 +1555,8 @@ int main(int argc, char **argv)
   case 2 :  f = fopen ("conv2.txt","w"); break;
   case 3 :  f = fopen ("conv3.txt","w"); break;
   }
-  double eps = .1;
-  for (int i=0;i< 8; i++){
+  double eps = .01;
+  for (int i=0;i< 1; i++){
     double err;
     int nelem = main2(eps,err,METR);
     fprintf(f,"%d %12.5E\n",nelem,err);

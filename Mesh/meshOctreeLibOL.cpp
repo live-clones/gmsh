@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 //
 // Author: Maxence Reberol
 
@@ -10,6 +10,7 @@
 #include "discreteFace.h"
 #include "MVertex.h"
 #include "MTriangle.h"
+#include "OS.h"
 
 extern "C" {
 #include "libol1.h"
@@ -356,131 +357,167 @@ bool SurfaceProjector::setAnalyticalProjection(GFace *gf)
   }
 
   Msg::Error(
-    "Surface projecor: analytical formula for given shape not supported");
+    "Surface projector: analytical formula for given shape not supported");
   return false;
 }
 
 bool SurfaceProjector::initialize(GFace *gf_,
-                                  const std::vector<MTriangle *> &gfTriangles)
+    const std::vector<MTriangle *> &gfTriangles,
+    bool useCADStl)
 {
   clear();
   gf = gf_;
   bool paramAvailable = gf->haveParametrization();
-
   const int BasIdx = 1; /* indices start at one in libOL */
 
-  /* If periodic parametrization, get periods */
-  bool disableParamPer = false;
-  if(paramAvailable && (gf->periodic(0) || gf->periodic(1))) {
-    disableParamPer = true;
-  }
-
-  /* Collect coordinates and triangle-continuous uv param */
-  robin_hood::unordered_map<MVertex *, int32_t> old2new;
-  int32_t count = 0;
-  triangles.reserve(gfTriangles.size());
-  points.reserve(gfTriangles.size());
-  if(paramAvailable) {
-    triangle_uvs.reserve(gfTriangles.size());
-    if(disableParamPer) triangle_no_uv_eval.reserve(gfTriangles.size());
-  }
-  for(MTriangle *f : gfTriangles) {
-    std::array<int32_t, 3> tri_pts;
-    std::array<vec2, 3> tri_uvs;
-    bool check_periodicity = false;
-    bool no_eval = false;
-    for(size_t lv = 0; lv < f->getNumVertices(); ++lv) {
-      MVertex *v = f->getVertex(lv);
-      auto it = old2new.find(v);
-      if(it == old2new.end()) {
-        old2new[v] = count;
-        tri_pts[lv] = count + BasIdx;
-        points.push_back(v->point());
-        count += 1;
-      }
-      else {
-        tri_pts[lv] = it->second + BasIdx;
+  if (useCADStl) {
+    if (gf->buildSTLTriangulation()) {
+      this->points.resize(gf->stl_vertices_xyz.size());
+      for (size_t i = 0; i < this->points.size(); ++i) {
+        this->points[i] = {
+          gf->stl_vertices_xyz[i].x(),
+          gf->stl_vertices_xyz[i].y(),
+          gf->stl_vertices_xyz[i].z()};
       }
 
-      if(paramAvailable) { /* Get the uv in GFace */
-        bool onGf = (dynamic_cast<GFace *>(v->onWhat()) == gf);
-        if(onGf) {
-          v->getParameter(0, tri_uvs[lv][0]);
-          v->getParameter(1, tri_uvs[lv][1]);
-        }
-        else {
-          check_periodicity = true;
+      this->triangles.resize(gf->stl_triangles.size()/3);
+      for (size_t i = 0; i < this->triangles.size(); ++i) {
+        this->triangles[i] = {gf->stl_triangles[3*i+0]+BasIdx,
+          gf->stl_triangles[3*i+1]+BasIdx, gf->stl_triangles[3*i+2]+BasIdx};
+      }
+
+      if (paramAvailable && gf->stl_vertices_uv.size()) {
+        this->triangle_uvs.resize(gf->stl_triangles.size()/3);
+        for (size_t i = 0; i < this->triangle_uvs.size(); ++i) {
+          this->triangle_uvs[i][0] = {
+            gf->stl_vertices_uv[gf->stl_triangles[3*i+0]].x(),
+            gf->stl_vertices_uv[gf->stl_triangles[3*i+0]].y()};
+          this->triangle_uvs[i][1] = {
+            gf->stl_vertices_uv[gf->stl_triangles[3*i+1]].x(),
+            gf->stl_vertices_uv[gf->stl_triangles[3*i+1]].y()};
+          this->triangle_uvs[i][2] = {
+            gf->stl_vertices_uv[gf->stl_triangles[3*i+2]].x(),
+            gf->stl_vertices_uv[gf->stl_triangles[3*i+2]].y()};
         }
       }
+    } else {
+      Msg::Warning("SurfaceProjector initialize: failed to build STL triangulation");
+      return false;
+    }
+  } else {
+    /* If periodic parametrization, get periods */
+    bool disableParamPer = false;
+    if(paramAvailable && (gf->periodic(0) || gf->periodic(1))) {
+      disableParamPer = true;
     }
 
-    if(check_periodicity) {
-      bool found = false;
-      for(size_t lv = 0; lv < 3; ++lv) {
-        MVertex *v1 = f->getVertex(lv);
-        bool onGf = (dynamic_cast<GFace *>(v1->onWhat()) == gf);
-        if(onGf) { /* If neither of the 3 are on surface, takes random ... */
-          MVertex *v2 = f->getVertex((lv + 1) % 3);
-          MVertex *v3 = f->getVertex((lv + 2) % 3);
-          SPoint2 param1;
-          SPoint2 param2;
-          SPoint2 param3;
-          reparamMeshEdgeOnFace(v1, v2, gf, param1, param2);
-          reparamMeshEdgeOnFace(v1, v3, gf, param1, param3);
-          tri_uvs[(lv + 0) % 3] = {{param1.x(), param1.y()}};
-          tri_uvs[(lv + 1) % 3] = {{param2.x(), param2.y()}};
-          tri_uvs[(lv + 2) % 3] = {{param3.x(), param3.y()}};
-          found = true;
-          break;
-        }
-      }
-      if(!found) {
-        /* Triangle with no vertex inside the GFace, difficult to get
-         * good UV parametrization, we use center projection to get
-         * a initial guess */
-        SPoint3 center = f->barycenter();
-        double initialGuess[2] = {0., 0.};
-        GPoint proj = gf->closestPoint(center, initialGuess);
-        if(proj.succeeded()) {
-          MFaceVertex cv(proj.x(), proj.y(), proj.z(), gf, proj.u(), proj.v());
-          MVertex *v1 = f->getVertex(0);
-          MVertex *v2 = f->getVertex(1);
-          MVertex *v3 = f->getVertex(2);
-          SPoint2 paramc;
-          SPoint2 param1;
-          SPoint2 param2;
-          SPoint2 param3;
-          reparamMeshEdgeOnFace(&cv, v1, gf, paramc, param1);
-          reparamMeshEdgeOnFace(&cv, v2, gf, paramc, param2);
-          reparamMeshEdgeOnFace(&cv, v3, gf, paramc, param3);
-          tri_uvs[0] = {{param1.x(), param1.y()}};
-          tri_uvs[1] = {{param2.x(), param2.y()}};
-          tri_uvs[2] = {{param3.x(), param3.y()}};
+    /* Collect coordinates and triangle-continuous uv param */
+    robin_hood::unordered_map<MVertex *, int32_t> old2new;
+    int32_t count = 0;
+    triangles.reserve(gfTriangles.size());
+    points.reserve(gfTriangles.size());
+    if(paramAvailable) {
+      triangle_uvs.reserve(gfTriangles.size());
+      if(disableParamPer) triangle_no_uv_eval.reserve(gfTriangles.size());
+    }
+    for(MTriangle *f : gfTriangles) {
+      std::array<int32_t, 3> tri_pts;
+      std::array<vec2, 3> tri_uvs;
+      bool check_periodicity = false;
+      bool no_eval = false;
+      for(size_t lv = 0; lv < f->getNumVertices(); ++lv) {
+        MVertex *v = f->getVertex(lv);
+        auto it = old2new.find(v);
+        if(it == old2new.end()) {
+          old2new[v] = count;
+          tri_pts[lv] = count + BasIdx;
+          points.push_back(v->point());
+          count += 1;
         }
         else {
-          no_eval = true;
-          tri_uvs[0] = {{0., 0.}};
-          tri_uvs[1] = {{0., 0.}};
-          tri_uvs[2] = {{0., 0.}};
+          tri_pts[lv] = it->second + BasIdx;
+        }
+
+        if(paramAvailable) { /* Get the uv in GFace */
+          bool onGf = (dynamic_cast<GFace *>(v->onWhat()) == gf);
+          if(onGf) {
+            v->getParameter(0, tri_uvs[lv][0]);
+            v->getParameter(1, tri_uvs[lv][1]);
+          }
+          else {
+            check_periodicity = true;
+          }
         }
       }
-    }
 
-    triangles.push_back(tri_pts);
-    if(paramAvailable) triangle_uvs.push_back(tri_uvs);
-    if(paramAvailable && disableParamPer)
-      triangle_no_uv_eval.push_back(no_eval);
-    // Debug to visualize param
-    // {
-    //   GeoLog::add({points[tri_pts[0]-1], points[tri_pts[1]-1],
-    //   points[tri_pts[2]-1]},
-    //       std::vector<double>{tri_uvs[0][0],tri_uvs[1][0],tri_uvs[2][0]},
-    //       "sp_u");
-    //   GeoLog::add({points[tri_pts[0]-1], points[tri_pts[1]-1],
-    //   points[tri_pts[2]-1]},
-    //       std::vector<double>{tri_uvs[0][1],tri_uvs[1][1],tri_uvs[2][1]},
-    //       "sp_v");
-    // }
+      if(check_periodicity) {
+        bool found = false;
+        for(size_t lv = 0; lv < 3; ++lv) {
+          MVertex *v1 = f->getVertex(lv);
+          bool onGf = (dynamic_cast<GFace *>(v1->onWhat()) == gf);
+          if(onGf) { /* If neither of the 3 are on surface, takes random ... */
+            MVertex *v2 = f->getVertex((lv + 1) % 3);
+            MVertex *v3 = f->getVertex((lv + 2) % 3);
+            SPoint2 param1;
+            SPoint2 param2;
+            SPoint2 param3;
+            reparamMeshEdgeOnFace(v1, v2, gf, param1, param2);
+            reparamMeshEdgeOnFace(v1, v3, gf, param1, param3);
+            tri_uvs[(lv + 0) % 3] = {{param1.x(), param1.y()}};
+            tri_uvs[(lv + 1) % 3] = {{param2.x(), param2.y()}};
+            tri_uvs[(lv + 2) % 3] = {{param3.x(), param3.y()}};
+            found = true;
+            break;
+          }
+        }
+        if(!found) {
+          /* Triangle with no vertex inside the GFace, difficult to get
+           * good UV parametrization, we use center projection to get
+           * a initial guess */
+          SPoint3 center = f->barycenter();
+          double initialGuess[2] = {0., 0.};
+          GPoint proj = gf->closestPoint(center, initialGuess);
+          if(proj.succeeded()) {
+            MFaceVertex cv(proj.x(), proj.y(), proj.z(), gf, proj.u(), proj.v());
+            MVertex *v1 = f->getVertex(0);
+            MVertex *v2 = f->getVertex(1);
+            MVertex *v3 = f->getVertex(2);
+            SPoint2 paramc;
+            SPoint2 param1;
+            SPoint2 param2;
+            SPoint2 param3;
+            reparamMeshEdgeOnFace(&cv, v1, gf, paramc, param1);
+            reparamMeshEdgeOnFace(&cv, v2, gf, paramc, param2);
+            reparamMeshEdgeOnFace(&cv, v3, gf, paramc, param3);
+            tri_uvs[0] = {{param1.x(), param1.y()}};
+            tri_uvs[1] = {{param2.x(), param2.y()}};
+            tri_uvs[2] = {{param3.x(), param3.y()}};
+          }
+          else {
+            no_eval = true;
+            tri_uvs[0] = {{0., 0.}};
+            tri_uvs[1] = {{0., 0.}};
+            tri_uvs[2] = {{0., 0.}};
+          }
+        }
+      }
+
+      triangles.push_back(tri_pts);
+      if(paramAvailable) triangle_uvs.push_back(tri_uvs);
+      if(paramAvailable && disableParamPer)
+        triangle_no_uv_eval.push_back(no_eval);
+      // Debug to visualize param
+      // {
+      //   GeoLog::add({points[tri_pts[0]-1], points[tri_pts[1]-1],
+      //   points[tri_pts[2]-1]},
+      //       std::vector<double>{tri_uvs[0][0],tri_uvs[1][0],tri_uvs[2][0]},
+      //       "sp_u");
+      //   GeoLog::add({points[tri_pts[0]-1], points[tri_pts[1]-1],
+      //   points[tri_pts[2]-1]},
+      //       std::vector<double>{tri_uvs[0][1],tri_uvs[1][1],tri_uvs[2][1]},
+      //       "sp_v");
+      // }
+    }
   }
 
   points.shrink_to_fit();
@@ -552,7 +589,7 @@ GPoint SurfaceProjector::closestPoint(const double query[3], bool evalOnCAD,
 
   /* Octree query */
   double crd[3] = {query[0], query[1], query[2]};
-  double dis;
+  double dis = DBL_MAX;
   int idx = LolGetNearest(OctIdx, LolTypTri, crd, &dis, 0, NULL, NULL, 0);
   if(idx <= 0) {
     Msg::Warning("SurfaceProjector::closestPoint(): no closest triangle found "
@@ -611,4 +648,66 @@ GPoint SurfaceProjector::closestPoint(const double query[3], bool evalOnCAD,
   }
 
   return proj;
+}
+
+libOLwrapper::libOLwrapper(
+        const std::vector<std::array<double,3> >&  _points,
+        const std::vector<std::array<int32_t,2> >& _edges,
+        const std::vector<std::array<int32_t,3> >& _triangles,
+        const std::vector<std::array<int32_t,4> >& _quads,
+        const std::vector<std::array<int32_t,4> >& _tetrahedra,
+        const std::vector<std::array<int32_t,5> >& _pyramids,
+        const std::vector<std::array<int32_t,6> >& _prisms,
+        const std::vector<std::array<int32_t,8> >& _hexahedra):
+ points(_points), edges(_edges), triangles(_triangles), quads(_quads),
+  tetrahedra(_tetrahedra), pyramids(_pyramids), prisms(_prisms),
+  hexahedra(_hexahedra)
+{
+  const int BasIdx = 1; /* indices start at one in libOL */
+  for (size_t i = 0; i < edges.size(); ++i) for (size_t j = 0; j < edges[0].size(); ++j) edges[i][j] += BasIdx;
+  for (size_t i = 0; i < triangles.size(); ++i) for (size_t j = 0; j < triangles[0].size(); ++j) triangles[i][j] += BasIdx;
+  for (size_t i = 0; i < quads.size(); ++i) for (size_t j = 0; j < quads[0].size(); ++j) quads[i][j] += BasIdx;
+  for (size_t i = 0; i < tetrahedra.size(); ++i) for (size_t j = 0; j < tetrahedra[0].size(); ++j) tetrahedra[i][j] += BasIdx;
+  for (size_t i = 0; i < pyramids.size(); ++i) for (size_t j = 0; j < pyramids[0].size(); ++j) pyramids[i][j] += BasIdx;
+  for (size_t i = 0; i < prisms.size(); ++i) for (size_t j = 0; j < prisms[0].size(); ++j) prisms[i][j] += BasIdx;
+  for (size_t i = 0; i < hexahedra.size(); ++i) for (size_t j = 0; j < hexahedra[0].size(); ++j) hexahedra[i][j] += BasIdx;
+
+  // Build an octree
+  double t0 = Cpu();
+  OctIdx = LolNewOctree(
+      (int32_t)points.size(), points[0].data(), points[1].data(),
+      (int32_t)edges.size(), edges[0].data(), edges[1].data(),
+      (int32_t)triangles.size(), triangles[0].data(), triangles[1].data(),
+      (int32_t)quads.size(), quads[0].data(), quads[1].data(),
+      (int32_t)tetrahedra.size(), tetrahedra[0].data(), tetrahedra[1].data(),
+      (int32_t)pyramids.size(), pyramids[0].data(), pyramids[1].data(),
+      (int32_t)prisms.size(), prisms[0].data(), prisms[1].data(),
+      (int32_t)hexahedra.size(), hexahedra[0].data(), hexahedra[1].data(),
+      BasIdx, 1);
+
+  Msg::Debug("libOL octree created (%li vertices, %.3f sec), OctIdx: %li", points.size(), Cpu()-t0, OctIdx);
+}
+
+libOLwrapper::~libOLwrapper() {
+  if(OctIdx != 0) {
+    Msg::Debug("libOL octree freed (OctIdx: %li)", OctIdx);
+    LolFreeOctree(OctIdx);
+    OctIdx = 0;
+  }
+}
+
+int libOLwrapper::elementsInsideBoundingBox(libOLTypTag elementType,
+    double* bboxMin, double* bboxMax,
+    std::vector<int32_t>& elements) {
+
+  const int BufSiz = 1e5;
+  int buf[BufSiz];
+
+  int NmbItm = LolGetBoundingBox(OctIdx, (int)elementType, BufSiz, buf, bboxMin, bboxMax, 0);
+  elements.resize(NmbItm);
+  for (int i = 0; i < NmbItm; ++i) {
+    elements[i] = buf[i]-1;
+  }
+
+  return NmbItm;
 }

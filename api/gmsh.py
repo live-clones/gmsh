@@ -1,7 +1,7 @@
 # Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 #
-# See the LICENSE.txt file for license information. Please report all
-# issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+# See the LICENSE.txt file in the Gmsh root directory for license information.
+# Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 # This file defines the Gmsh Python API (v4.9.0).
 #
@@ -26,29 +26,39 @@ GMSH_API_VERSION_PATCH = 0
 __version__ = GMSH_API_VERSION
 
 oldsig = signal.signal(signal.SIGINT, signal.SIG_DFL)
-libdir = os.path.dirname(os.path.realpath(__file__))
+moduledir = os.path.dirname(os.path.realpath(__file__))
 if platform.system() == "Windows":
-    libpath = os.path.join(libdir, "gmsh-4.9.dll")
+    libname = "gmsh-4.9.dll"
+    libdir = os.path.dirname(moduledir)
 elif platform.system() == "Darwin":
-    libpath = os.path.join(libdir, "libgmsh.dylib")
+    libname = "libgmsh.4.9.dylib"
+    libdir = os.path.dirname(os.path.dirname(moduledir))
 else:
-    libpath = os.path.join(libdir, "libgmsh.so")
+    libname = "libgmsh.so.4.9"
+    libdir = os.path.dirname(os.path.dirname(moduledir))
 
+libpath = os.path.join(libdir, libname)
 if not os.path.exists(libpath):
-    libpath = find_library("gmsh")
+    libpath = os.path.join(moduledir, libname)
+    if not os.path.exists(libpath):
+        libpath = find_library("gmsh")
 
 lib = CDLL(libpath)
 
+
+try_numpy = True # set this to False to never use numpy
+
 use_numpy = False
-try:
-    import numpy
+if try_numpy:
     try:
-        from weakref import finalize as weakreffinalize
+        import numpy
+        try:
+            from weakref import finalize as weakreffinalize
+        except:
+            from backports.weakref import finalize as weakreffinalize
+        use_numpy = True
     except:
-        from backports.weakref import finalize as weakreffinalize
-    use_numpy = True
-except:
-    pass
+        pass
 
 # Utility functions, not part of the Gmsh Python API
 
@@ -208,24 +218,27 @@ def _iargcargv(o):
 
 # Gmsh Python API begins here
 
-def initialize(argv=[], readConfigFiles=True):
+def initialize(argv=[], readConfigFiles=True, run=False):
     """
-    gmsh.initialize(argv=[], readConfigFiles=True)
+    gmsh.initialize(argv=[], readConfigFiles=True, run=False)
 
     Initialize the Gmsh API. This must be called before any call to the other
     functions in the API. If `argc' and `argv' (or just `argv' in Python or
     Julia) are provided, they will be handled in the same way as the command
     line arguments in the Gmsh app. If `readConfigFiles' is set, read system
-    Gmsh configuration files (gmshrc and gmsh-options). Initializing the API
-    sets the options "General.Terminal" to 1 and "General.AbortOnError" to 2.
-    If compiled with OpenMP support, it also sets the number of threads to
-    "General.NumThreads".
+    Gmsh configuration files (gmshrc and gmsh-options). If `run' is set, run in
+    the same way as the Gmsh app, either interactively or in batch mode
+    depending on the command line arguments. If `run' is not set, initializing
+    the API sets the options "General.AbortOnError" to 2 and "General.Terminal"
+    to 1. If compiled with OpenMP support, it also sets the number of threads
+    to "General.NumThreads".
     """
     api_argc_, api_argv_ = _iargcargv(argv)
     ierr = c_int()
     lib.gmshInitialize(
         api_argc_, api_argv_,
         c_int(bool(readConfigFiles)),
+        c_int(bool(run)),
         byref(ierr))
     if ierr.value != 0:
         raise Exception(logger.getLastError())
@@ -784,6 +797,24 @@ class model:
     get_physical_name = getPhysicalName
 
     @staticmethod
+    def setTag(dim, tag, newTag):
+        """
+        gmsh.model.setTag(dim, tag, newTag)
+
+        Set the tag of the entity of dimension `dim' and tag `tag' to the new value
+        `newTag'.
+        """
+        ierr = c_int()
+        lib.gmshModelSetTag(
+            c_int(dim),
+            c_int(tag),
+            c_int(newTag),
+            byref(ierr))
+        if ierr.value != 0:
+            raise Exception(logger.getLastError())
+    set_tag = setTag
+
+    @staticmethod
     def getBoundary(dimTags, combined=True, oriented=True, recursive=False):
         """
         gmsh.model.getBoundary(dimTags, combined=True, oriented=True, recursive=False)
@@ -1290,15 +1321,15 @@ class model:
     get_parametrization_bounds = getParametrizationBounds
 
     @staticmethod
-    def isInside(dim, tag, coord, parametric=True):
+    def isInside(dim, tag, coord, parametric=False):
         """
-        gmsh.model.isInside(dim, tag, coord, parametric=True)
+        gmsh.model.isInside(dim, tag, coord, parametric=False)
 
         Check if the coordinates (or the parametric coordinates if `parametric' is
         set) provided in `coord' correspond to points inside the entity of
         dimension `dim' and tag `tag', and return the number of points inside. This
-        feature is only available for a subset of curves and surfaces, depending on
-        the underyling geometrical representation.
+        feature is only available for a subset of entities, depending on the
+        underyling geometrical representation.
 
         Return an integer value.
         """
@@ -1908,6 +1939,25 @@ class model:
         get_nodes_for_physical_group = getNodesForPhysicalGroup
 
         @staticmethod
+        def getMaxNodeTag():
+            """
+            gmsh.model.mesh.getMaxNodeTag()
+
+            Get the maximum tag `maxTag' of a node in the mesh.
+
+            Return `maxTag'.
+            """
+            api_maxTag_ = c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshGetMaxNodeTag(
+                byref(api_maxTag_),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return api_maxTag_.value
+        get_max_node_tag = getMaxNodeTag
+
+        @staticmethod
         def addNodes(dim, tag, nodeTags, coord, parametricCoord=[]):
             """
             gmsh.model.mesh.addNodes(dim, tag, nodeTags, coord, parametricCoord=[])
@@ -2277,6 +2327,25 @@ class model:
         get_elements_by_type = getElementsByType
 
         @staticmethod
+        def getMaxElementTag():
+            """
+            gmsh.model.mesh.getMaxElementTag()
+
+            Get the maximum tag `maxTag' of an element in the mesh.
+
+            Return `maxTag'.
+            """
+            api_maxTag_ = c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshGetMaxElementTag(
+                byref(api_maxTag_),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return api_maxTag_.value
+        get_max_element_tag = getMaxElementTag
+
+        @staticmethod
         def addElements(dim, tag, elementTypes, elementTags, nodeTags):
             """
             gmsh.model.mesh.addElements(dim, tag, elementTypes, elementTags, nodeTags)
@@ -2339,11 +2408,17 @@ class model:
             gmsh.model.mesh.getIntegrationPoints(elementType, integrationType)
 
             Get the numerical quadrature information for the given element type
-            `elementType' and integration rule `integrationType' (e.g. "Gauss4" for a
-            Gauss quadrature suited for integrating 4th order polynomials).
-            `localCoord' contains the u, v, w coordinates of the G integration points
-            in the reference element: [g1u, g1v, g1w, ..., gGu, gGv, gGw]. `weights'
-            contains the associated weights: [g1q, ..., gGq].
+            `elementType' and integration rule `integrationType', where
+            `integrationType' concatenates the integration rule family name with the
+            desired order (e.g. "Gauss4" for a quadrature suited for integrating 4th
+            order polynomials). The "CompositeGauss" family uses tensor-product rules
+            based the 1D Gauss-Legendre rule; the "Gauss" family uses an economic
+            scheme when available (i.e. with a minimal number of points), and falls
+            back to "CompositeGauss" otherwise. Note that integration points for the
+            "Gauss" family can fall outside of the reference element for high-order
+            rules. `localCoord' contains the u, v, w coordinates of the G integration
+            points in the reference element: [g1u, g1v, g1w, ..., gGu, gGv, gGw].
+            `weights' contains the associated weights: [g1q, ..., gGq].
 
             Return `localCoord', `weights'.
             """
@@ -2455,19 +2530,23 @@ class model:
             Get the basis functions of the element of type `elementType' at the
             evaluation points `localCoord' (given as concatenated triplets of
             coordinates in the reference element [g1u, g1v, g1w, ..., gGu, gGv, gGw]),
-            for the function space `functionSpaceType' (e.g. "Lagrange" or
-            "GradLagrange" for Lagrange basis functions or their gradient, in the u, v,
-            w coordinates of the reference element; or "H1Legendre3" or
-            "GradH1Legendre3" for 3rd order hierarchical H1 Legendre functions).
-            `numComponents' returns the number C of components of a basis function.
-            `basisFunctions' returns the value of the N basis functions at the
-            evaluation points, i.e. [g1f1, g1f2, ..., g1fN, g2f1, ...] when C == 1 or
-            [g1f1u, g1f1v, g1f1w, g1f2u, ..., g1fNw, g2f1u, ...] when C == 3. For basis
-            functions that depend on the orientation of the elements, all values for
-            the first orientation are returned first, followed by values for the
-            second, etc. `numOrientations' returns the overall number of orientations.
-            If `wantedOrientations' is not empty, only return the values for the
-            desired orientation indices.
+            for the function space `functionSpaceType'. Currently supported function
+            spaces include "Lagrange" and "GradLagrange" for isoparametric Lagrange
+            basis functions and their gradient in the u, v, w coordinates of the
+            reference element; "LagrangeN" and "GradLagrangeN", with N = 1, 2, ..., for
+            N-th order Lagrange basis functions; "H1LegendreN" and "GradH1LegendreN",
+            with N = 1, 2, ..., for N-th order hierarchical H1 Legendre functions;
+            "HcurlLegendreN" and "CurlHcurlLegendreN", with N = 1, 2, ..., for N-th
+            order curl-conforming basis functions. `numComponents' returns the number C
+            of components of a basis function (e.g. 1 for scalar functions and 3 for
+            vector functions). `basisFunctions' returns the value of the N basis
+            functions at the evaluation points, i.e. [g1f1, g1f2, ..., g1fN, g2f1, ...]
+            when C == 1 or [g1f1u, g1f1v, g1f1w, g1f2u, ..., g1fNw, g2f1u, ...] when C
+            == 3. For basis functions that depend on the orientation of the elements,
+            all values for the first orientation are returned first, followed by values
+            for the second, etc. `numOrientations' returns the overall number of
+            orientations. If `wantedOrientations' is not empty, only return the values
+            for the desired orientation indices.
 
             Return `numComponents', `basisFunctions', `numOrientations'.
             """
@@ -2495,9 +2574,9 @@ class model:
         get_basis_functions = getBasisFunctions
 
         @staticmethod
-        def getBasisFunctionsOrientationForElements(elementType, functionSpaceType, tag=-1, task=0, numTasks=1):
+        def getBasisFunctionsOrientation(elementType, functionSpaceType, tag=-1, task=0, numTasks=1):
             """
-            gmsh.model.mesh.getBasisFunctionsOrientationForElements(elementType, functionSpaceType, tag=-1, task=0, numTasks=1)
+            gmsh.model.mesh.getBasisFunctionsOrientation(elementType, functionSpaceType, tag=-1, task=0, numTasks=1)
 
             Get the orientation index of the elements of type `elementType' in the
             entity of tag `tag'. The arguments have the same meaning as in
@@ -2510,7 +2589,7 @@ class model:
             """
             api_basisFunctionsOrientation_, api_basisFunctionsOrientation_n_ = POINTER(c_int)(), c_size_t()
             ierr = c_int()
-            lib.gmshModelMeshGetBasisFunctionsOrientationForElements(
+            lib.gmshModelMeshGetBasisFunctionsOrientation(
                 c_int(elementType),
                 c_char_p(functionSpaceType.encode()),
                 byref(api_basisFunctionsOrientation_), byref(api_basisFunctionsOrientation_n_),
@@ -2521,7 +2600,7 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return _ovectorint(api_basisFunctionsOrientation_, api_basisFunctionsOrientation_n_.value)
-        get_basis_functions_orientation_for_elements = getBasisFunctionsOrientationForElements
+        get_basis_functions_orientation = getBasisFunctionsOrientation
 
         @staticmethod
         def getBasisFunctionsOrientationForElement(elementTag, functionSpaceType):
@@ -2571,7 +2650,8 @@ class model:
 
             Get the global unique mesh edge identifiers `edgeTags' and orientations
             `edgeOrientation' for an input list of node tag pairs defining these edges,
-            concatenated in the vector `nodeTags'.
+            concatenated in the vector `nodeTags'. Mesh edges are created e.g. by
+            `createEdges()' or `getKeys()'.
 
             Return `edgeTags', `edgeOrientations'.
             """
@@ -2599,7 +2679,8 @@ class model:
             Get the global unique mesh face identifiers `faceTags' and orientations
             `faceOrientations' for an input list of node tag triplets (if `faceType' ==
             3) or quadruplets (if `faceType' == 4) defining these faces, concatenated
-            in the vector `nodeTags'.
+            in the vector `nodeTags'. Mesh faces are created e.g. by `createFaces()' or
+            `getKeys()'.
 
             Return `faceTags', `faceOrientations'.
             """
@@ -2653,9 +2734,9 @@ class model:
         create_faces = createFaces
 
         @staticmethod
-        def getKeysForElements(elementType, functionSpaceType, tag=-1, returnCoord=True):
+        def getKeys(elementType, functionSpaceType, tag=-1, returnCoord=True):
             """
-            gmsh.model.mesh.getKeysForElements(elementType, functionSpaceType, tag=-1, returnCoord=True)
+            gmsh.model.mesh.getKeys(elementType, functionSpaceType, tag=-1, returnCoord=True)
 
             Generate the pair of keys for the elements of type `elementType' in the
             entity of tag `tag', for the `functionSpaceType' function space. Each pair
@@ -2671,7 +2752,7 @@ class model:
             api_entityKeys_, api_entityKeys_n_ = POINTER(c_size_t)(), c_size_t()
             api_coord_, api_coord_n_ = POINTER(c_double)(), c_size_t()
             ierr = c_int()
-            lib.gmshModelMeshGetKeysForElements(
+            lib.gmshModelMeshGetKeys(
                 c_int(elementType),
                 c_char_p(functionSpaceType.encode()),
                 byref(api_typeKeys_), byref(api_typeKeys_n_),
@@ -2686,7 +2767,7 @@ class model:
                 _ovectorint(api_typeKeys_, api_typeKeys_n_.value),
                 _ovectorsize(api_entityKeys_, api_entityKeys_n_.value),
                 _ovectordouble(api_coord_, api_coord_n_.value))
-        get_keys_for_elements = getKeysForElements
+        get_keys = getKeys
 
         @staticmethod
         def getKeysForElement(elementTag, functionSpaceType, returnCoord=True):
@@ -2718,9 +2799,9 @@ class model:
         get_keys_for_element = getKeysForElement
 
         @staticmethod
-        def getNumberOfKeysForElements(elementType, functionSpaceType):
+        def getNumberOfKeys(elementType, functionSpaceType):
             """
-            gmsh.model.mesh.getNumberOfKeysForElements(elementType, functionSpaceType)
+            gmsh.model.mesh.getNumberOfKeys(elementType, functionSpaceType)
 
             Get the number of keys by elements of type `elementType' for function space
             named `functionSpaceType'.
@@ -2728,19 +2809,19 @@ class model:
             Return an integer value.
             """
             ierr = c_int()
-            api_result_ = lib.gmshModelMeshGetNumberOfKeysForElements(
+            api_result_ = lib.gmshModelMeshGetNumberOfKeys(
                 c_int(elementType),
                 c_char_p(functionSpaceType.encode()),
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return api_result_
-        get_number_of_keys_for_elements = getNumberOfKeysForElements
+        get_number_of_keys = getNumberOfKeys
 
         @staticmethod
-        def getInformationForElements(typeKeys, entityKeys, elementType, functionSpaceType):
+        def getKeysInformation(typeKeys, entityKeys, elementType, functionSpaceType):
             """
-            gmsh.model.mesh.getInformationForElements(typeKeys, entityKeys, elementType, functionSpaceType)
+            gmsh.model.mesh.getKeysInformation(typeKeys, entityKeys, elementType, functionSpaceType)
 
             Get information about the pair of `keys'. `infoKeys' returns information
             about the functions associated with the pairs (`typeKeys', `entityKey').
@@ -2756,7 +2837,7 @@ class model:
             api_entityKeys_, api_entityKeys_n_ = _ivectorsize(entityKeys)
             api_infoKeys_, api_infoKeys_n_ = POINTER(c_int)(), c_size_t()
             ierr = c_int()
-            lib.gmshModelMeshGetInformationForElements(
+            lib.gmshModelMeshGetKeysInformation(
                 api_typeKeys_, api_typeKeys_n_,
                 api_entityKeys_, api_entityKeys_n_,
                 c_int(elementType),
@@ -2766,7 +2847,7 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return _ovectorpair(api_infoKeys_, api_infoKeys_n_.value)
-        get_information_for_elements = getInformationForElements
+        get_keys_information = getKeysInformation
 
         @staticmethod
         def getBarycenters(elementType, tag, fast, primary, task=0, numTasks=1):
@@ -2957,14 +3038,20 @@ class model:
             """
             gmsh.model.mesh.setSizeCallback(callback)
 
-            Set a mesh size callback for the current model. The callback should take 5
-            arguments (`dim', `tag', `x', `y' and `z') and return the value of the mesh
-            size at coordinates (`x', `y', `z').
+            Set a mesh size callback for the current model. The callback function
+            should take six arguments as input (`dim', `tag', `x', `y', `z' and `lc').
+            The first two integer arguments correspond to the dimension `dim' and tag
+            `tag' of the entity being meshed. The next four double precision arguments
+            correspond to the coordinates `x', `y' and `z' around which to prescribe
+            the mesh size and to the mesh size `lc' that would be prescribed if the
+            callback had not been called. The callback function should return a double
+            precision number specifying the desired mesh size; returning `lc' is
+            equivalent to a no-op.
             """
             global api_callback_type_
-            api_callback_type_ = CFUNCTYPE(c_double, c_int, c_int, c_double, c_double, c_double, c_void_p)
+            api_callback_type_ = CFUNCTYPE(c_double, c_int, c_int, c_double, c_double, c_double, c_double, c_void_p)
             global api_callback_
-            api_callback_ = api_callback_type_(lambda dim, tag, x, y, z, _ : callback(dim, tag, x, y, z))
+            api_callback_ = api_callback_type_(lambda dim, tag, x, y, z, lc, _ : callback(dim, tag, x, y, z, lc))
             ierr = c_int()
             lib.gmshModelMeshSetSizeCallback(
                 api_callback_, None,
@@ -3367,6 +3454,29 @@ class model:
         set_periodic = setPeriodic
 
         @staticmethod
+        def getPeriodic(dim, tags):
+            """
+            gmsh.model.mesh.getPeriodic(dim, tags)
+
+            Get master entities `tagsMaster' for the entities of dimension `dim' and
+            tags `tags'.
+
+            Return `tagMaster'.
+            """
+            api_tags_, api_tags_n_ = _ivectorint(tags)
+            api_tagMaster_, api_tagMaster_n_ = POINTER(c_int)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshGetPeriodic(
+                c_int(dim),
+                api_tags_, api_tags_n_,
+                byref(api_tagMaster_), byref(api_tagMaster_n_),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return _ovectorint(api_tagMaster_, api_tagMaster_n_.value)
+        get_periodic = getPeriodic
+
+        @staticmethod
         def getPeriodicNodes(dim, tag, includeHighOrderNodes=False):
             """
             gmsh.model.mesh.getPeriodicNodes(dim, tag, includeHighOrderNodes=False)
@@ -3401,6 +3511,53 @@ class model:
                 _ovectorsize(api_nodeTagsMaster_, api_nodeTagsMaster_n_.value),
                 _ovectordouble(api_affineTransform_, api_affineTransform_n_.value))
         get_periodic_nodes = getPeriodicNodes
+
+        @staticmethod
+        def getPeriodicKeys(elementType, functionSpaceType, tag, returnCoord=True):
+            """
+            gmsh.model.mesh.getPeriodicKeys(elementType, functionSpaceType, tag, returnCoord=True)
+
+            Get the master entity `tagMaster' and the key pairs (`typeKeyMaster',
+            `entityKeyMaster') corresponding to the entity `tag' and the key pairs
+            (`typeKey', `entityKey') for the elements of type `elementType' and
+            function space type `functionSpaceType'. If `returnCoord' is set, the
+            `coord' and `coordMaster' vectors contain the x, y, z coordinates locating
+            basis functions for sorting purposes.
+
+            Return `tagMaster', `typeKeys', `typeKeysMaster', `entityKeys', `entityKeysMaster', `coord', `coordMaster'.
+            """
+            api_tagMaster_ = c_int()
+            api_typeKeys_, api_typeKeys_n_ = POINTER(c_int)(), c_size_t()
+            api_typeKeysMaster_, api_typeKeysMaster_n_ = POINTER(c_int)(), c_size_t()
+            api_entityKeys_, api_entityKeys_n_ = POINTER(c_size_t)(), c_size_t()
+            api_entityKeysMaster_, api_entityKeysMaster_n_ = POINTER(c_size_t)(), c_size_t()
+            api_coord_, api_coord_n_ = POINTER(c_double)(), c_size_t()
+            api_coordMaster_, api_coordMaster_n_ = POINTER(c_double)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshGetPeriodicKeys(
+                c_int(elementType),
+                c_char_p(functionSpaceType.encode()),
+                c_int(tag),
+                byref(api_tagMaster_),
+                byref(api_typeKeys_), byref(api_typeKeys_n_),
+                byref(api_typeKeysMaster_), byref(api_typeKeysMaster_n_),
+                byref(api_entityKeys_), byref(api_entityKeys_n_),
+                byref(api_entityKeysMaster_), byref(api_entityKeysMaster_n_),
+                byref(api_coord_), byref(api_coord_n_),
+                byref(api_coordMaster_), byref(api_coordMaster_n_),
+                c_int(bool(returnCoord)),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return (
+                api_tagMaster_.value,
+                _ovectorint(api_typeKeys_, api_typeKeys_n_.value),
+                _ovectorint(api_typeKeysMaster_, api_typeKeysMaster_n_.value),
+                _ovectorsize(api_entityKeys_, api_entityKeys_n_.value),
+                _ovectorsize(api_entityKeysMaster_, api_entityKeysMaster_n_.value),
+                _ovectordouble(api_coord_, api_coord_n_.value),
+                _ovectordouble(api_coordMaster_, api_coordMaster_n_.value))
+        get_periodic_keys = getPeriodicKeys
 
         @staticmethod
         def removeDuplicateNodes():
@@ -3660,6 +3817,44 @@ class model:
                     raise Exception(logger.getLastError())
 
             @staticmethod
+            def list():
+                """
+                gmsh.model.mesh.field.list()
+
+                Get the list of all fields.
+
+                Return `tags'.
+                """
+                api_tags_, api_tags_n_ = POINTER(c_int)(), c_size_t()
+                ierr = c_int()
+                lib.gmshModelMeshFieldList(
+                    byref(api_tags_), byref(api_tags_n_),
+                    byref(ierr))
+                if ierr.value != 0:
+                    raise Exception(logger.getLastError())
+                return _ovectorint(api_tags_, api_tags_n_.value)
+
+            @staticmethod
+            def getType(tag):
+                """
+                gmsh.model.mesh.field.getType(tag)
+
+                Get the type `fieldType' of the field with tag `tag'.
+
+                Return `fileType'.
+                """
+                api_fileType_ = c_char_p()
+                ierr = c_int()
+                lib.gmshModelMeshFieldGetType(
+                    c_int(tag),
+                    byref(api_fileType_),
+                    byref(ierr))
+                if ierr.value != 0:
+                    raise Exception(logger.getLastError())
+                return _ostring(api_fileType_)
+            get_type = getType
+
+            @staticmethod
             def setNumber(tag, option, value):
                 """
                 gmsh.model.mesh.field.setNumber(tag, option, value)
@@ -3675,6 +3870,27 @@ class model:
                 if ierr.value != 0:
                     raise Exception(logger.getLastError())
             set_number = setNumber
+
+            @staticmethod
+            def getNumber(tag, option):
+                """
+                gmsh.model.mesh.field.getNumber(tag, option)
+
+                Get the value of the numerical option `option' for field `tag'.
+
+                Return `value'.
+                """
+                api_value_ = c_double()
+                ierr = c_int()
+                lib.gmshModelMeshFieldGetNumber(
+                    c_int(tag),
+                    c_char_p(option.encode()),
+                    byref(api_value_),
+                    byref(ierr))
+                if ierr.value != 0:
+                    raise Exception(logger.getLastError())
+                return api_value_.value
+            get_number = getNumber
 
             @staticmethod
             def setString(tag, option, value):
@@ -3694,6 +3910,27 @@ class model:
             set_string = setString
 
             @staticmethod
+            def getString(tag, option):
+                """
+                gmsh.model.mesh.field.getString(tag, option)
+
+                Get the value of the string option `option' for field `tag'.
+
+                Return `value'.
+                """
+                api_value_ = c_char_p()
+                ierr = c_int()
+                lib.gmshModelMeshFieldGetString(
+                    c_int(tag),
+                    c_char_p(option.encode()),
+                    byref(api_value_),
+                    byref(ierr))
+                if ierr.value != 0:
+                    raise Exception(logger.getLastError())
+                return _ostring(api_value_)
+            get_string = getString
+
+            @staticmethod
             def setNumbers(tag, option, value):
                 """
                 gmsh.model.mesh.field.setNumbers(tag, option, value)
@@ -3710,6 +3947,27 @@ class model:
                 if ierr.value != 0:
                     raise Exception(logger.getLastError())
             set_numbers = setNumbers
+
+            @staticmethod
+            def getNumbers(tag, option):
+                """
+                gmsh.model.mesh.field.getNumbers(tag, option)
+
+                Get the value of the numerical list option `option' for field `tag'.
+
+                Return `value'.
+                """
+                api_value_, api_value_n_ = POINTER(c_double)(), c_size_t()
+                ierr = c_int()
+                lib.gmshModelMeshFieldGetNumbers(
+                    c_int(tag),
+                    c_char_p(option.encode()),
+                    byref(api_value_), byref(api_value_n_),
+                    byref(ierr))
+                if ierr.value != 0:
+                    raise Exception(logger.getLastError())
+                return _ovectordouble(api_value_, api_value_n_.value)
+            get_numbers = getNumbers
 
             @staticmethod
             def setAsBackgroundMesh(tag):
@@ -5043,10 +5301,13 @@ class model:
 
             Add a curve loop (a closed wire) in the OpenCASCADE CAD representation,
             formed by the curves `curveTags'. `curveTags' should contain tags of curves
-            forming a closed loop. Note that an OpenCASCADE curve loop can be made of
-            curves that share geometrically identical (but topologically different)
-            points. If `tag' is positive, set the tag explicitly; otherwise a new tag
-            is selected automatically. Return the tag of the curve loop.
+            forming a closed loop. Negative tags can be specified for compatibility
+            with the built-in kernel, but are simply ignored: the wire is oriented
+            according to the orientation of its first curve. Note that an OpenCASCADE
+            curve loop can be made of curves that share geometrically identical (but
+            topologically different) points. If `tag' is positive, set the tag
+            explicitly; otherwise a new tag is selected automatically. Return the tag
+            of the curve loop.
 
             Return an integer value.
             """
@@ -6178,6 +6439,35 @@ class model:
         import_shapes = importShapes
 
         @staticmethod
+        def importShapesNativePointer(shape, highestDimOnly=True):
+            """
+            gmsh.model.occ.importShapesNativePointer(shape, highestDimOnly=True)
+
+            Imports an OpenCASCADE `shape' by providing a pointer to a native
+            OpenCASCADE `TopoDS_Shape' object (passed as a pointer to void). The
+            imported entities are returned in `outDimTags'. If the optional argument
+            `highestDimOnly' is set, only import the highest dimensional entities in
+            `shape'. In Python, this function can be used for integration with
+            PythonOCC, in which the SwigPyObject pointer of `TopoDS_Shape' must be
+            passed as an int to `shape', i.e., `shape = int(pythonocc_shape.this)'.
+            Warning: this function is unsafe, as providing an invalid pointer will lead
+            to undefined behavior.
+
+            Return `outDimTags'.
+            """
+            api_outDimTags_, api_outDimTags_n_ = POINTER(c_int)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelOccImportShapesNativePointer(
+                c_void_p(shape),
+                byref(api_outDimTags_), byref(api_outDimTags_n_),
+                c_int(bool(highestDimOnly)),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
+        import_shapes_native_pointer = importShapesNativePointer
+
+        @staticmethod
         def getEntities(dim=-1):
             """
             gmsh.model.occ.getEntities(dim=-1)
@@ -6852,22 +7142,28 @@ class view:
             raise Exception(logger.getLastError())
 
     @staticmethod
-    def probe(tag, x, y, z, step=-1, numComp=-1, gradient=False, tolerance=0., xElemCoord=[], yElemCoord=[], zElemCoord=[], dim=-1):
+    def probe(tag, x, y, z, step=-1, numComp=-1, gradient=False, distanceMax=0., xElemCoord=[], yElemCoord=[], zElemCoord=[], dim=-1):
         """
-        gmsh.view.probe(tag, x, y, z, step=-1, numComp=-1, gradient=False, tolerance=0., xElemCoord=[], yElemCoord=[], zElemCoord=[], dim=-1)
+        gmsh.view.probe(tag, x, y, z, step=-1, numComp=-1, gradient=False, distanceMax=0., xElemCoord=[], yElemCoord=[], zElemCoord=[], dim=-1)
 
-        Probe the view `tag' for its `value' at point (`x', `y', `z'). Return only
-        the value at step `step' is `step' is positive. Return only values with
-        `numComp' if `numComp' is positive. Return the gradient of the `value' if
-        `gradient' is set. Probes with a geometrical tolerance (in the reference
-        unit cube) of `tolerance' if `tolerance' is not zero. Return the result
-        from the element described by its coordinates if `xElementCoord',
-        `yElementCoord' and `zElementCoord' are provided. If `dim' is >= 0, return
-        only elements of the specified dimension.
+        Probe the view `tag' for its `value' at point (`x', `y', `z'). If no match
+        is found, `value' is returned empty. Return only the value at step `step'
+        is `step' is positive. Return only values with `numComp' if `numComp' is
+        positive. Return the gradient of the `value' if `gradient' is set. If
+        `distanceMax' is zero, only return a result if an exact match inside an
+        element in the view is found; if `distanceMax' is positive and an exact
+        match is not found, return the value at the closest node if it is closer
+        than `distanceMax'; if `distanceMax' is negative and an exact match is not
+        found, always return the value at the closest node. The distance to the
+        match is returned in `distance'. Return the result from the element
+        described by its coordinates if `xElementCoord', `yElementCoord' and
+        `zElementCoord' are provided. If `dim' is >= 0, return only matches from
+        elements of the specified dimension.
 
-        Return `value'.
+        Return `value', `distance'.
         """
         api_value_, api_value_n_ = POINTER(c_double)(), c_size_t()
+        api_distance_ = c_double()
         api_xElemCoord_, api_xElemCoord_n_ = _ivectordouble(xElemCoord)
         api_yElemCoord_, api_yElemCoord_n_ = _ivectordouble(yElemCoord)
         api_zElemCoord_, api_zElemCoord_n_ = _ivectordouble(zElemCoord)
@@ -6878,10 +7174,11 @@ class view:
             c_double(y),
             c_double(z),
             byref(api_value_), byref(api_value_n_),
+            byref(api_distance_),
             c_int(step),
             c_int(numComp),
             c_int(bool(gradient)),
-            c_double(tolerance),
+            c_double(distanceMax),
             api_xElemCoord_, api_xElemCoord_n_,
             api_yElemCoord_, api_yElemCoord_n_,
             api_zElemCoord_, api_zElemCoord_n_,
@@ -6889,7 +7186,9 @@ class view:
             byref(ierr))
         if ierr.value != 0:
             raise Exception(logger.getLastError())
-        return _ovectordouble(api_value_, api_value_n_.value)
+        return (
+            _ovectordouble(api_value_, api_value_n_.value),
+            api_distance_.value)
 
     @staticmethod
     def write(tag, fileName, append=False):

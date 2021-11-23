@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 //
 // Contributor(s):
 //   Frederic Duboeuf
@@ -158,7 +158,7 @@ bool MSubTetrahedron::isInside(double u, double v, double w) const
     getBaseElement()->xyz2uvw(xyz, uvwE);
     SPoint3 pE;
     getBaseElement()->pnt(uvwE[0], uvwE[1], uvwE[2], pE);
-    double tol = _isInsideTolerance;
+    double tol = getTolerance();
     if(fabs(p.x() - pE.x()) > tol) return false;
     if(fabs(p.y() - pE.y()) > tol) return false;
     if(fabs(p.z() - pE.z()) > tol) return false;
@@ -417,7 +417,7 @@ bool MSubTriangle::isInside(double u, double v, double w) const
     getBaseElement()->xyz2uvw(xyz, uvwE);
     SPoint3 pE;
     getBaseElement()->pnt(uvwE[0], uvwE[1], uvwE[2], pE);
-    double tol = _isInsideTolerance;
+    double tol = getTolerance();
     if(fabs(p.x() - pE.x()) > tol) return false;
     if(fabs(p.y() - pE.y()) > tol) return false;
     if(fabs(p.z() - pE.z()) > tol) return false;
@@ -664,7 +664,7 @@ bool MSubLine::isInside(double u, double v, double w) const
     getBaseElement()->xyz2uvw(xyz, uvwE);
     SPoint3 pE;
     getBaseElement()->pnt(uvwE[0], uvwE[1], uvwE[2], pE);
-    double tol = _isInsideTolerance;
+    double tol = getTolerance();
     if(fabs(p.x() - pE.x()) > tol) return false;
     if(fabs(p.y() - pE.y()) > tol) return false;
     if(fabs(p.z() - pE.z()) > tol) return false;
@@ -870,7 +870,7 @@ bool MSubPoint::isInside(double u, double v, double w) const
     getBaseElement()->xyz2uvw(xyz, uvwE);
     SPoint3 pE;
     getBaseElement()->pnt(uvwE[0], uvwE[1], uvwE[2], pE);
-    double tol = _isInsideTolerance;
+    double tol = getTolerance();
     if(fabs(p.x() - pE.x()) > tol) return false;
     if(fabs(p.y() - pE.y()) > tol) return false;
     if(fabs(p.z() - pE.z()) > tol) return false;

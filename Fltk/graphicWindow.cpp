@@ -1,10 +1,11 @@
 // Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include "GmshConfig.h"
 #include "GmshDefines.h"
+#include "GmshVersion.h"
 #if !defined(HAVE_NO_STDINT_H)
 #include <stdint.h>
 #elif defined(HAVE_NO_INTPTR_T)
@@ -732,7 +733,10 @@ void file_watch_cb(Fl_Widget *w, void *data)
 
 static void help_online_cb(Fl_Widget *w, void *data)
 {
-  fl_open_uri("https://gmsh.info/doc/texinfo/");
+  if(std::string(GMSH_EXTRA_VERSION) == "")
+    fl_open_uri("https://gmsh.info/doc/texinfo/gmsh.html");
+  else
+    fl_open_uri("https://gmsh.info/dev/doc/texinfo/gmsh.html");
 }
 
 static void help_basic_cb(Fl_Widget *w, void *data)
@@ -1862,6 +1866,16 @@ static void geometry_elementary_boolean_cb(Fl_Widget *w, void *data)
     char ib = FlGui::instance()->selectEntity(type);
     if(!FlGui::available()) return;
     if(ib == 'l') {
+      for(std::size_t i = 0; i < FlGui::instance()->selectedVertices.size(); i++) {
+        if(FlGui::instance()->selectedVertices[i]->getSelection() != 1) {
+          FlGui::instance()->selectedVertices[i]->setSelection(1);
+          std::pair<int, int> t(0, FlGui::instance()->selectedVertices[i]->tag());
+          if(selectObject)
+            object.push_back(t);
+          else
+            tool.push_back(t);
+        }
+      }
       for(std::size_t i = 0; i < FlGui::instance()->selectedEdges.size(); i++) {
         if(FlGui::instance()->selectedEdges[i]->getSelection() != 1) {
           FlGui::instance()->selectedEdges[i]->setSelection(1);
@@ -4389,9 +4403,7 @@ void graphicWindow::addMessage(const char *msg)
     // this routine can be called from multiple threads, e.g. via Msg::Info
     // calls in meshGFace(). We should use FlGui::lock/unlock, but currently
     // this does not seem to work (17/02/2017)
-#if defined(_OPENMP)
 #pragma omp critical
-#endif
   {
     _messages.push_back(msg);
     _browser->add(msg);

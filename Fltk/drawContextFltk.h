@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #ifndef DRAW_CONTEXT_FLTK_H
 #define DRAW_CONTEXT_FLTK_H
@@ -15,6 +15,7 @@ typedef unsigned long intptr_t;
 #endif
 #include <FL/x.H>
 #include <FL/gl.h>
+#include "GmshMessage.h"
 #include "FlGui.h"
 #include "GmshMessage.h"
 #include "drawContext.h"

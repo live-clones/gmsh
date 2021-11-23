@@ -1,22 +1,24 @@
 /* Author: John Burkardt
- * Link: https://people.sc.fsu.edu/~jburkardt/cpp_src/row_echelon_integer/row_echelon_integer.html 
- * License: The computer code and data files made available on this web page are distributed under the GNU LGPL license.
+ * Link:
+ * https://people.sc.fsu.edu/~jburkardt/cpp_src/row_echelon_integer/row_echelon_integer.html
+ * License: The computer code and data files made available on this web page are
+ * distributed under the GNU LGPL license.
  *          https://www.gnu.org/licenses/lgpl-3.0.en.html */
 
-# include <cmath>
-# include <cstdlib>
-# include <cstring>
-# include <ctime>
-# include <iomanip>
-# include <iostream>
+#include <cmath>
+#include <cstdlib>
+#include <cstring>
+#include <ctime>
+#include <iomanip>
+#include <iostream>
 
 using namespace std;
 
-# include "row_echelon_integer.hpp"
+#include "row_echelon_integer.hpp"
 
 //****************************************************************************80
 
-int i4_gcd ( int i, int j )
+int i4_gcd(int i, int j)
 
 //****************************************************************************80
 //
@@ -58,36 +60,30 @@ int i4_gcd ( int i, int j )
   int p;
   int q;
   int r;
-//
-//  Return immediately if either I or J is zero.
-//
-  if ( i == 0 )
-  {
-    q = i4_max ( 1, abs ( j ) );
+  //
+  //  Return immediately if either I or J is zero.
+  //
+  if(i == 0) {
+    q = i4_max(1, abs(j));
     return q;
   }
-  else if ( j == 0 )
-  {
-    q = i4_max ( 1, abs ( i ) );
+  else if(j == 0) {
+    q = i4_max(1, abs(i));
     return q;
   }
-//
-//  Set IP to the larger of I and J, IQ to the smaller.
-//  This way, we can alter IP and IQ as we go.
-//
-  p = i4_max ( abs ( i ), abs ( j ) );
-  q = i4_min ( abs ( i ), abs ( j ) );
-//
-//  Carry out the Euclidean algorithm.
-//
-  for ( ; ; )
-  {
+  //
+  //  Set IP to the larger of I and J, IQ to the smaller.
+  //  This way, we can alter IP and IQ as we go.
+  //
+  p = i4_max(abs(i), abs(j));
+  q = i4_min(abs(i), abs(j));
+  //
+  //  Carry out the Euclidean algorithm.
+  //
+  for(;;) {
     r = p % q;
 
-    if ( r == 0 )
-    {
-      break;
-    }
+    if(r == 0) { break; }
     p = q;
     q = r;
   }
@@ -96,7 +92,7 @@ int i4_gcd ( int i, int j )
 }
 //****************************************************************************80
 
-int i4_max ( int i1, int i2 )
+int i4_max(int i1, int i2)
 
 //****************************************************************************80
 //
@@ -125,19 +121,15 @@ int i4_max ( int i1, int i2 )
 {
   int value;
 
-  if ( i2 < i1 )
-  {
-    value = i1;
-  }
-  else
-  {
+  if(i2 < i1) { value = i1; }
+  else {
     value = i2;
   }
   return value;
 }
 //****************************************************************************80
 
-int i4_min ( int i1, int i2 )
+int i4_min(int i1, int i2)
 
 //****************************************************************************80
 //
@@ -166,19 +158,15 @@ int i4_min ( int i1, int i2 )
 {
   int value;
 
-  if ( i1 < i2 )
-  {
-    value = i1;
-  }
-  else
-  {
+  if(i1 < i2) { value = i1; }
+  else {
     value = i2;
   }
   return value;
 }
 //****************************************************************************80
 
-void i4mat_print ( int m, int n, int a[], string title )
+void i4mat_print(int m, int n, int a[], string title)
 
 //****************************************************************************80
 //
@@ -213,14 +201,14 @@ void i4mat_print ( int m, int n, int a[], string title )
 //    Input, string TITLE, a title.
 //
 {
-  i4mat_print_some ( m, n, a, 1, 1, m, n, title );
+  i4mat_print_some(m, n, a, 1, 1, m, n, title);
 
   return;
 }
 //****************************************************************************80
 
-void i4mat_print_some ( int m, int n, int a[], int ilo, int jlo, int ihi,
-  int jhi, string title )
+void i4mat_print_some(int m, int n, int a[], int ilo, int jlo, int ihi, int jhi,
+                      string title)
 
 //****************************************************************************80
 //
@@ -260,7 +248,7 @@ void i4mat_print_some ( int m, int n, int a[], int ilo, int jlo, int ihi,
 //    Input, string TITLE, a title.
 //
 {
-# define INCX 10
+#define INCX 10
 
   int i;
   int i2hi;
@@ -272,82 +260,61 @@ void i4mat_print_some ( int m, int n, int a[], int ilo, int jlo, int ihi,
   cout << "\n";
   cout << title << "\n";
 
-  if ( m <= 0 || n <= 0 )
-  {
+  if(m <= 0 || n <= 0) {
     cout << "\n";
     cout << "  (None)\n";
     return;
   }
-//
-//  Print the columns of the matrix, in strips of INCX.
-//
-  for ( j2lo = jlo; j2lo <= jhi; j2lo = j2lo + INCX )
-  {
+  //
+  //  Print the columns of the matrix, in strips of INCX.
+  //
+  for(j2lo = jlo; j2lo <= jhi; j2lo = j2lo + INCX) {
     j2hi = j2lo + INCX - 1;
-    if ( n < j2hi )
-    {
-      j2hi = n;
-    }
-    if ( jhi < j2hi )
-    {
-      j2hi = jhi;
-    }
+    if(n < j2hi) { j2hi = n; }
+    if(jhi < j2hi) { j2hi = jhi; }
 
     cout << "\n";
-//
-//  For each column J in the current range...
-//
-//  Write the header.
-//
+    //
+    //  For each column J in the current range...
+    //
+    //  Write the header.
+    //
     cout << "  Col:";
-    for ( j = j2lo; j <= j2hi; j++ )
-    {
-      cout << "  " << setw(6) << j - 1;
-    }
+    for(j = j2lo; j <= j2hi; j++) { cout << "  " << setw(6) << j - 1; }
     cout << "\n";
     cout << "  Row\n";
     cout << "\n";
-//
-//  Determine the range of the rows in this strip.
-//
-    if ( 1 < ilo )
-    {
-      i2lo = ilo;
-    }
-    else
-    {
+    //
+    //  Determine the range of the rows in this strip.
+    //
+    if(1 < ilo) { i2lo = ilo; }
+    else {
       i2lo = 1;
     }
-    if ( ihi < m )
-    {
-      i2hi = ihi;
-    }
-    else
-    {
+    if(ihi < m) { i2hi = ihi; }
+    else {
       i2hi = m;
     }
 
-
-    for ( i = i2lo; i <= i2hi; i++ )
-    {
-//
-//  Print out (up to INCX) entries in row I, that lie in the current strip.
-//
+    for(i = i2lo; i <= i2hi; i++) {
+      //
+      //  Print out (up to INCX) entries in row I, that lie in the current
+      //  strip.
+      //
       cout << setw(5) << i - 1 << ":";
-      for ( j = j2lo; j <= j2hi; j++ )
-      {
-        cout << "  " << setw(6) << a[i-1+(j-1)*m];
+      for(j = j2lo; j <= j2hi; j++) {
+        cout << "  " << setw(6) << a[i - 1 + (j - 1) * m];
       }
       cout << "\n";
     }
   }
 
   return;
-# undef INCX
+#undef INCX
 }
 //****************************************************************************80
 
-int i4mat_ref ( int m, int n, int a[] )
+int i4mat_ref(int m, int n, int a[])
 
 //****************************************************************************80
 //
@@ -371,7 +338,7 @@ int i4mat_ref ( int m, int n, int a[] )
 //    matrix, we can guarantee that tiny roundoff errors will not cause
 //    such problems.  On the other hand, as the elimination process proceeds,
 //    we may instead calculate integer matrix entries of increasingly
-//    large, and then ultimately meaningless magnitude.  I imagine this is 
+//    large, and then ultimately meaningless magnitude.  I imagine this is
 //    likely to happen for moderate size matrices of order 50x50, say, but
 //    this is a huge improvement over the unreliability of the real
 //    arithmetic case.
@@ -437,118 +404,88 @@ int i4mat_ref ( int m, int n, int a[] )
   int r;
   int *row;
   int t;
- 
+
   det = 1;
   lead = 0;
 
   row = new int[n];
 
-  for ( r = 0; r < m; r++ )
-  {
-    if ( n - 1 < lead )
-    {
-      break;
-    }
-//
-//  Start I at row R, and search for nonzero pivot entry A(I,LEAD).
-//
+  for(r = 0; r < m; r++) {
+    if(n - 1 < lead) { break; }
+    //
+    //  Start I at row R, and search for nonzero pivot entry A(I,LEAD).
+    //
     i = r;
 
-    while ( a[i+lead*m] == 0 )
-    {
+    while(a[i + lead * m] == 0) {
       i = i + 1;
-//
-//  If reach last row, reset I to R, and increment LEAD.
-//
-      if ( m - 1 < i )
-      {
+      //
+      //  If reach last row, reset I to R, and increment LEAD.
+      //
+      if(m - 1 < i) {
         i = r;
         lead = lead + 1;
-//
-//  If reach last column, we can find no more pivots.
-//
-        if ( n - 1 < lead )
-        {
+        //
+        //  If reach last column, we can find no more pivots.
+        //
+        if(n - 1 < lead) {
           lead = -1;
           break;
-         }
+        }
       }
     }
 
-    if ( lead < 0 )
-    {
-      break;
-    }
-//
-//  Move pivot I into row R.
-//
-    if ( i != r )
-    {
-      for ( j = 0; j < n; j++ )
-      {
-        t        = a[i+j*m];
-        a[i+j*m] = a[r+j*m];
-        a[r+j*m] = t;
+    if(lead < 0) { break; }
+    //
+    //  Move pivot I into row R.
+    //
+    if(i != r) {
+      for(j = 0; j < n; j++) {
+        t = a[i + j * m];
+        a[i + j * m] = a[r + j * m];
+        a[r + j * m] = t;
       }
     }
-//
-//  Ensure pivot is positive.
-//
-    if ( a[r+lead*m] < 0 )
-    {
-      for ( j = 0; j < n; j++ )
-      {
-        a[r+j*m] = - a[r+j*m];
-      }
-      det = - det;
+    //
+    //  Ensure pivot is positive.
+    //
+    if(a[r + lead * m] < 0) {
+      for(j = 0; j < n; j++) { a[r + j * m] = -a[r + j * m]; }
+      det = -det;
     }
-//
-//  Update the pseudo-determinant.
-//
-    det = det * a[r+lead*m];
-//
-//  Remove any common factor from row R.
-//
-    for ( j = 0; j < n; j++ )
-    {
-      row[j] = a[r+j*m];
-    }
-    i4vec_red ( n, row );
-    for ( j = 0; j < n; j++ )
-    {
-      a[r+j*m] = row[j];
-    }
-//
-//  Use a multiple of A(R,LEAD) to eliminate A(R+1:M,LEAD).
-//
-    for ( i = r + 1; i < m; i++ )
-    {
-      t = a[i+lead*m];
-      for ( j = 0; j < n; j++ )
-      {
-        a[i+j*m] = a[r+lead*m] * a[i+j*m] - t * a[r+j*m];
+    //
+    //  Update the pseudo-determinant.
+    //
+    det = det * a[r + lead * m];
+    //
+    //  Remove any common factor from row R.
+    //
+    for(j = 0; j < n; j++) { row[j] = a[r + j * m]; }
+    i4vec_red(n, row);
+    for(j = 0; j < n; j++) { a[r + j * m] = row[j]; }
+    //
+    //  Use a multiple of A(R,LEAD) to eliminate A(R+1:M,LEAD).
+    //
+    for(i = r + 1; i < m; i++) {
+      t = a[i + lead * m];
+      for(j = 0; j < n; j++) {
+        a[i + j * m] = a[r + lead * m] * a[i + j * m] - t * a[r + j * m];
       }
 
-      for ( j = 0; j < n; j++ )
-      {
-        row[j] = a[i+j*m];
-      }
-      i4vec_red ( n, row );
-      for ( j = 0; j < n; j++ )
-      {
-        a[i+j*m] = row[j];
-      }
+      for(j = 0; j < n; j++) { row[j] = a[i + j * m]; }
+      i4vec_red(n, row);
+      for(j = 0; j < n; j++) { a[i + j * m] = row[j]; }
     }
     lead = lead + 1;
   }
 
-  delete [] row;
+  delete[] row;
 
   return det;
 }
 //****************************************************************************80
 
-void i4mat_row_reduce ( int m, int n, int i, int a[] )
+void i4mat_row_reduce(int m, int n, int i, int a[])
 
 //****************************************************************************80
 //
@@ -586,30 +523,24 @@ void i4mat_row_reduce ( int m, int n, int i, int a[] )
 {
   int j;
   int *row;
-//
-//  Remove factors common to a row.
-//
+  //
+  //  Remove factors common to a row.
+  //
   row = new int[n];
 
-  for ( j = 0; j < n; j++ )
-  {
-    row[j] = a[i+j*m];
-  }
+  for(j = 0; j < n; j++) { row[j] = a[i + j * m]; }
 
-  i4vec_red ( n, row );
+  i4vec_red(n, row);
 
-  for ( j = 0; j < n; j++ )
-  {
-    a[i+j*m] = row[j];
-  }
+  for(j = 0; j < n; j++) { a[i + j * m] = row[j]; }
 
-  delete [] row;
+  delete[] row;
 
   return;
 }
 //****************************************************************************80
 
-void i4mat_row_swap ( int m, int n, int a[], int i1, int i2 )
+void i4mat_row_swap(int m, int n, int a[], int i1, int i2)
 
 //****************************************************************************80
 //
@@ -635,7 +566,7 @@ void i4mat_row_swap ( int m, int n, int a[], int i1, int i2 )
 //
 //    Input/output, int A[M*N].
 //    On input, the matrix to be modified.
-//    On output, two rows have been swapped. 
+//    On output, two rows have been swapped.
 //
 //    Input, int I1, I2, the indices of the rows.
 //    0 <= I1, I2 < M.
@@ -644,39 +575,33 @@ void i4mat_row_swap ( int m, int n, int a[], int i1, int i2 )
   int j;
   int t;
 
-  if ( i1 == i2 )
-  {
-    return;
-  }
+  if(i1 == i2) { return; }
 
-  if ( i1 < 0 || m <= i1 )
-  {
+  if(i1 < 0 || m <= i1) {
     cout << "\n";
     cout << "I4MAT_ROW_SWAP - Fatal error!\n";
-    cout <<"  Row index 0 <= I1 < M required.\n";
-    exit ( 1 );
+    cout << "  Row index 0 <= I1 < M required.\n";
+    exit(1);
   }
 
-  if ( i2 < 0 || m <= i2 )
-  {
+  if(i2 < 0 || m <= i2) {
     cout << "\n";
     cout << "I4MAT_ROW_SWAP - Fatal error!\n";
     cout << "  Row index 0 <= I2 < M required.\n";
-    exit ( 1 );
+    exit(1);
   }
 
-  for ( j = 0; j < n; j++ )
-  {
-    t         = a[i1+j*m];
-    a[i1+j*m] = a[i2+j*m];
-    a[i2+j*m] = t;
+  for(j = 0; j < n; j++) {
+    t = a[i1 + j * m];
+    a[i1 + j * m] = a[i2 + j * m];
+    a[i2 + j * m] = t;
   }
 
   return;
 }
 //****************************************************************************80
 
-int i4mat_rref ( int m, int n, int a[] )
+int i4mat_rref(int m, int n, int a[])
 
 //****************************************************************************80
 //
@@ -700,7 +625,7 @@ int i4mat_rref ( int m, int n, int a[] )
 //    matrix, we can guarantee that tiny roundoff errors will not cause
 //    such problems.  On the other hand, as the elimination process proceeds,
 //    we may instead calculate integer matrix entries of increasingly
-//    large, and then ultimately meaningless magnitude.  I imagine this is 
+//    large, and then ultimately meaningless magnitude.  I imagine this is
 //    likely to happen for moderate size matrices of order 50x50, say, but
 //    this is a huge improvement over the unreliability of the real
 //    arithmetic case.
@@ -769,121 +694,90 @@ int i4mat_rref ( int m, int n, int a[] )
   int r;
   int *row;
   int t;
- 
+
   det = 1;
   lead = 0;
 
   row = new int[n];
 
-  for ( r = 0; r < m; r++ )
-  {
-    if ( n - 1 < lead )
-    {
-      break;
-    }
-//
-//  Start I at row R, and search for nonzero pivot entry A(I,LEAD).
-//
+  for(r = 0; r < m; r++) {
+    if(n - 1 < lead) { break; }
+    //
+    //  Start I at row R, and search for nonzero pivot entry A(I,LEAD).
+    //
     i = r;
 
-    while ( a[i+lead*m] == 0 )
-    {
+    while(a[i + lead * m] == 0) {
       i = i + 1;
-//
-//  If reach last row, reset I to R, and increment LEAD.
-//
-      if ( m - 1 < i )
-      {
+      //
+      //  If reach last row, reset I to R, and increment LEAD.
+      //
+      if(m - 1 < i) {
         i = r;
         lead = lead + 1;
-//
-//  If reach last column, we can find no more pivots.
-//
-        if ( n - 1 < lead )
-        {
+        //
+        //  If reach last column, we can find no more pivots.
+        //
+        if(n - 1 < lead) {
           lead = -1;
           break;
-         }
+        }
       }
     }
 
-    if ( lead < 0 )
-    {
-      break;
-    }
-//
-//  Move pivot I into row R.
-//
-    if ( i != r )
-    {
-      for ( j = 0; j < n; j++ )
-      {
-        t        = a[i+j*m];
-        a[i+j*m] = a[r+j*m];
-        a[r+j*m] = t;
+    if(lead < 0) { break; }
+    //
+    //  Move pivot I into row R.
+    //
+    if(i != r) {
+      for(j = 0; j < n; j++) {
+        t = a[i + j * m];
+        a[i + j * m] = a[r + j * m];
+        a[r + j * m] = t;
       }
     }
-//
-//  Ensure pivot is positive.
-//
-    if ( a[r+lead*m] < 0 )
-    {
-      for ( j = 0; j < n; j++ )
-      {
-        a[r+j*m] = - a[r+j*m];
-      }
-      det = - det;
+    //
+    //  Ensure pivot is positive.
+    //
+    if(a[r + lead * m] < 0) {
+      for(j = 0; j < n; j++) { a[r + j * m] = -a[r + j * m]; }
+      det = -det;
     }
-//
-//  Update the pseudo-determinant.
-//
-    det = det * a[r+lead*m];
-//
-//  Remove any common factor from row R.
-//
-    for ( j = 0; j < n; j++ )
-    {
-      row[j] = a[r+j*m];
-    }
-    i4vec_red ( n, row );
-    for ( j = 0; j < n; j++ )
-    {
-      a[r+j*m] = row[j];
-    }
-//
-//  Use a multiple of A(R,LEAD) to eliminate A(1:M,LEAD).
-//
-    for ( i = 0; i < m; i++ )
-    {
-      if ( i != r )
-      {
-        t = a[i+lead*m];
-        for ( j = 0; j < n; j++ )
-        {
-          a[i+j*m] = a[r+lead*m] * a[i+j*m] - t * a[r+j*m];
+    //
+    //  Update the pseudo-determinant.
+    //
+    det = det * a[r + lead * m];
+    //
+    //  Remove any common factor from row R.
+    //
+    for(j = 0; j < n; j++) { row[j] = a[r + j * m]; }
+    i4vec_red(n, row);
+    for(j = 0; j < n; j++) { a[r + j * m] = row[j]; }
+    //
+    //  Use a multiple of A(R,LEAD) to eliminate A(1:M,LEAD).
+    //
+    for(i = 0; i < m; i++) {
+      if(i != r) {
+        t = a[i + lead * m];
+        for(j = 0; j < n; j++) {
+          a[i + j * m] = a[r + lead * m] * a[i + j * m] - t * a[r + j * m];
         }
 
-        for ( j = 0; j < n; j++ )
-        {
-          row[j] = a[i+j*m];
-        }
-        i4vec_red ( n, row );
-        for ( j = 0; j < n; j++ )
-        {
-          a[i+j*m] = row[j];
-        }
+        for(j = 0; j < n; j++) { row[j] = a[i + j * m]; }
+        i4vec_red(n, row);
+        for(j = 0; j < n; j++) { a[i + j * m] = row[j]; }
       }
     }
     lead = lead + 1;
   }
 
-  delete [] row;
+  delete[] row;
 
   return det;
 }
 //****************************************************************************80
 
-double *i4mat_u_solve ( int n, int a[], int b[] )
+double *i4mat_u_solve(int n, int a[], int b[])
 
 //****************************************************************************80
 //
@@ -924,26 +818,22 @@ double *i4mat_u_solve ( int n, int a[], int b[] )
   int i;
   int j;
   double *x;
-//
-//  Solve U * x = b.
-//
+  //
+  //  Solve U * x = b.
+  //
   x = new double[n];
 
-  for ( i = n - 1; 0 <= i; i-- )
-  {
-    x[i] = ( double ) b[i];
-    for ( j = i + 1; j < n; j++ )
-    {
-      x[i] = x[i] - ( double ) a[i+j*n] * x[j];
-    }
-    x[i] = x[i] / ( double ) a[i+i*n];
+  for(i = n - 1; 0 <= i; i--) {
+    x[i] = (double)b[i];
+    for(j = i + 1; j < n; j++) { x[i] = x[i] - (double)a[i + j * n] * x[j]; }
+    x[i] = x[i] / (double)a[i + i * n];
   }
 
   return x;
 }
 //****************************************************************************80
 
-void i4vec_binary_next ( int n, int bvec[] )
+void i4vec_binary_next(int n, int bvec[])
 
 //****************************************************************************80
 //
@@ -1001,10 +891,8 @@ void i4vec_binary_next ( int n, int bvec[] )
 {
   int i;
 
-  for ( i = n - 1; 0 <= i; i-- )
-  {
-    if ( bvec[i] == 0 )
-    {
+  for(i = n - 1; 0 <= i; i--) {
+    if(bvec[i] == 0) {
       bvec[i] = 1;
       return;
     }
@@ -1015,7 +903,7 @@ void i4vec_binary_next ( int n, int bvec[] )
 }
 //****************************************************************************80
 
-bool i4vec_is_binary ( int n, int x[] )
+bool i4vec_is_binary(int n, int x[])
 
 //****************************************************************************80
 //
@@ -1054,10 +942,8 @@ bool i4vec_is_binary ( int n, int x[] )
 
   value = true;
 
-  for ( i = 0; i < n; i++ )
-  {
-    if ( x[i] != 0 && x[i] != 1 )
-    {
+  for(i = 0; i < n; i++) {
+    if(x[i] != 0 && x[i] != 1) {
       value = false;
       break;
     }
@@ -1067,7 +953,7 @@ bool i4vec_is_binary ( int n, int x[] )
 }
 //****************************************************************************80
 
-bool i4vec_is_one ( int n, int x[] )
+bool i4vec_is_one(int n, int x[])
 
 //****************************************************************************80
 //
@@ -1106,10 +992,8 @@ bool i4vec_is_one ( int n, int x[] )
 
   value = true;
 
-  for ( i = 0; i < n; i++ )
-  {
-    if ( x[i] != 1 )
-    {
+  for(i = 0; i < n; i++) {
+    if(x[i] != 1) {
       value = false;
       break;
     }
@@ -1119,7 +1003,7 @@ bool i4vec_is_one ( int n, int x[] )
 }
 //****************************************************************************80
 
-void i4vec_print ( int n, int a[], string title )
+void i4vec_print(int n, int a[], string title)
 
 //****************************************************************************80
 //
@@ -1157,16 +1041,14 @@ void i4vec_print ( int n, int a[], string title )
   cout << "\n";
   cout << title << "\n";
   cout << "\n";
-  for ( i = 0; i < n; i++ )
-  {
-    cout << "  " << setw(8) << i
-         << ": " << setw(8) << a[i]  << "\n";
+  for(i = 0; i < n; i++) {
+    cout << "  " << setw(8) << i << ": " << setw(8) << a[i] << "\n";
   }
   return;
 }
 //****************************************************************************80
 
-int i4vec_red ( int n, int a[] )
+int i4vec_red(int n, int a[])
 
 //****************************************************************************80
 //
@@ -1203,55 +1085,37 @@ int i4vec_red ( int n, int a[] )
 {
   int factor;
   int i;
-//
-//  Find the smallest nonzero value.
-//
+  //
+  //  Find the smallest nonzero value.
+  //
   factor = 0;
 
-  for ( i = 0; i < n; i++ )
-  {
-    if ( a[i] != 0 )
-    {
-      if ( factor == 0 )
-      {
-        factor = abs ( a[i] );
-      }
-      else if ( abs ( a[i] ) < factor )
-      {
-        factor = abs ( a[i] );
+  for(i = 0; i < n; i++) {
+    if(a[i] != 0) {
+      if(factor == 0) { factor = abs(a[i]); }
+      else if(abs(a[i]) < factor) {
+        factor = abs(a[i]);
       }
     }
   }
 
-  if ( factor == 0 )
-  {
-    return factor;
-  }
-//
-//  Find the greatest common factor of the entire vector.
-//
-  for ( i = 0; i < n; i++ )
-  {
-    factor = i4_gcd ( a[i], factor );
-  }
+  if(factor == 0) { return factor; }
+  //
+  //  Find the greatest common factor of the entire vector.
+  //
+  for(i = 0; i < n; i++) { factor = i4_gcd(a[i], factor); }
 
-  if ( factor == 1 )
-  {
-    return factor;
-  }
-//
-//  Divide out the common factor.
-//
-  for ( i = 0; i < n; i++ )
-  {
-    a[i] = a[i] / factor;
-  }
+  if(factor == 1) { return factor; }
+  //
+  //  Divide out the common factor.
+  //
+  for(i = 0; i < n; i++) { a[i] = a[i] / factor; }
 
   return factor;
 }
 //****************************************************************************80
 
-void i4vec_transpose_print ( int n, int a[], string title )
+void i4vec_transpose_print(int n, int a[], string title)
 
 //****************************************************************************80
 //
@@ -1298,32 +1162,22 @@ void i4vec_transpose_print ( int n, int a[], string title )
   int ilo;
   int title_len;
 
-  title_len = title.length ( );
+  title_len = title.length();
 
-  if ( 0 < title_len )
-  {
+  if(0 < title_len) {
     cout << "\n";
     cout << title << "\n";
   }
 
-  if ( 0 < n )
-  {
-    for ( ilo = 1; ilo <= n; ilo = ilo + 5 )
-    {
+  if(0 < n) {
+    for(ilo = 1; ilo <= n; ilo = ilo + 5) {
       ihi = ilo + 5 - 1;
-      if ( n < ihi )
-      {
-        ihi = n;
-      }
-      for ( i = ilo; i <= ihi; i++ )
-      {
-        cout << setw(12) << a[i-1];
-      }
+      if(n < ihi) { ihi = n; }
+      for(i = ilo; i <= ihi; i++) { cout << setw(12) << a[i - 1]; }
       cout << "\n";
     }
   }
-  else
-  {
+  else {
     cout << "  (empty vector)\n";
   }
 
@@ -1331,7 +1185,7 @@ void i4vec_transpose_print ( int n, int a[], string title )
 }
 //****************************************************************************80
 
-void ksub_next4 ( int n, int k, int a[], bool &done )
+void ksub_next4(int n, int k, int a[], bool &done)
 
 //****************************************************************************80
 //
@@ -1352,7 +1206,7 @@ void ksub_next4 ( int n, int k, int a[], bool &done )
 //
 //  Licensing:
 //
-//    This code is distributed under the GNU LGPL license. 
+//    This code is distributed under the GNU LGPL license.
 //
 //  Modified:
 //
@@ -1401,74 +1255,60 @@ void ksub_next4 ( int n, int k, int a[], bool &done )
   int j;
   int jsave;
 
-  if ( k < 0 )
-  {
+  if(k < 0) {
     cerr << "\n";
     cerr << "KSUB_NEXT4 - Fatal error!\n";
     cerr << "  K = " << k << "\n";
     cerr << "  but 0 <= K is required!\n";
-    exit ( 1 );
+    exit(1);
   }
 
-  if ( n < k )
-  {
+  if(n < k) {
     cerr << "\n";
     cerr << "KSUB_NEXT4 - Fatal error!\n";
     cerr << "  N = " << n << "\n";
     cerr << "  K = " << k << "\n";
     cerr << "  but K <= N is required!\n";
-    exit ( 1 );
+    exit(1);
   }
 
-//
-//  First call:
-//
-  if ( done )
-  {
-    for ( j = 0; j < k; j++ )
-    {
-      a[j] = j + 1;
-    }
+  //
+  //  First call:
+  //
+  if(done) {
+    for(j = 0; j < k; j++) { a[j] = j + 1; }
     done = false;
   }
-//
-//  Empty set returned on previous call.
-//
-  else if ( n == 0 || k == 0 )
-  {
+  //
+  //  Empty set returned on previous call.
+  //
+  else if(n == 0 || k == 0) {
     done = true;
   }
-//
-//  Next call.
-//
-  else if ( a[0] < n - k + 1 )
-  {
+  //
+  //  Next call.
+  //
+  else if(a[0] < n - k + 1) {
     jsave = k - 1;
 
-    for ( j = 0; j < k - 1; j++ )
-    {
-      if ( a[j] + 1 < a[j+1] )
-      {
+    for(j = 0; j < k - 1; j++) {
+      if(a[j] + 1 < a[j + 1]) {
         jsave = j;
         break;
       }
     }
-    for ( j = 0; j < jsave; j++ )
-    {
-      a[j] = j + 1;
-    }
+    for(j = 0; j < jsave; j++) { a[j] = j + 1; }
     a[jsave] = a[jsave] + 1;
     done = false;
   }
-  else
-  {
+  else {
     done = true;
   }
   return;
 }
 //****************************************************************************80
 
-bool r8vec_is_integer ( int n, double a[] )
+bool r8vec_is_integer(int n, double a[])
 
 //****************************************************************************80
 //
@@ -1506,10 +1346,8 @@ bool r8vec_is_integer ( int n, double a[] )
 
   value = true;
 
-  for ( i = 0; i < n; i++ )
-  {
-    if ( a[i] != ( double ) ( int ) a[i] )
-    {
+  for(i = 0; i < n; i++) {
+    if(a[i] != (double)(int)a[i]) {
       value = false;
       break;
     }
@@ -1518,7 +1356,7 @@ bool r8vec_is_integer ( int n, double a[] )
 }
 //****************************************************************************80
 
-void r8vec_print ( int n, double a[], string title )
+void r8vec_print(int n, double a[], string title)
 
 //****************************************************************************80
 //
@@ -1556,17 +1394,15 @@ void r8vec_print ( int n, double a[], string title )
   cout << "\n";
   cout << title << "\n";
   cout << "\n";
-  for ( i = 0; i < n; i++ )
-  {
-    cout << "  " << setw(8)  << i
-         << ": " << setw(14) << a[i]  << "\n";
+  for(i = 0; i < n; i++) {
+    cout << "  " << setw(8) << i << ": " << setw(14) << a[i] << "\n";
   }
 
   return;
 }
 //****************************************************************************80
 
-void r8vec_transpose_print ( int n, double a[], string title )
+void r8vec_transpose_print(int n, double a[], string title)
 
 //****************************************************************************80
 //
@@ -1613,27 +1449,16 @@ void r8vec_transpose_print ( int n, double a[], string title )
   int ilo;
   int title_length;
 
-  title_length = s_len_trim ( title );
+  title_length = s_len_trim(title);
 
-  for ( ilo = 0; ilo < n; ilo = ilo + 5 )
-  {
-    if ( ilo == 0 )
-    {
-      cout << title;
-    }
-    else
-    {
-      for ( i = 0; i < title_length; i++ )
-      {
-        cout << " ";
-      }
+  for(ilo = 0; ilo < n; ilo = ilo + 5) {
+    if(ilo == 0) { cout << title; }
+    else {
+      for(i = 0; i < title_length; i++) { cout << " "; }
     }
     cout << "  ";
-    ihi = i4_min ( ilo + 5, n );
-    for ( i = ilo; i < ihi; i++ )
-    {
-      cout << "  " << setw(12) << a[i];
-    }
+    ihi = i4_min(ilo + 5, n);
+    for(i = ilo; i < ihi; i++) { cout << "  " << setw(12) << a[i]; }
     cout << "\n";
   }
 
@@ -1641,7 +1466,7 @@ void r8vec_transpose_print ( int n, double a[], string title )
 }
 //****************************************************************************80
 
-int s_len_trim ( string s )
+int s_len_trim(string s)
 
 //****************************************************************************80
 //
@@ -1671,14 +1496,10 @@ int s_len_trim ( string s )
 {
   int n;
 
-  n = s.length ( );
+  n = s.length();
 
-  while ( 0 < n )
-  {
-    if ( s[n-1] != ' ' )
-    {
-      return n;
-    }
+  while(0 < n) {
+    if(s[n - 1] != ' ') { return n; }
     n = n - 1;
   }
 
@@ -1686,7 +1507,7 @@ int s_len_trim ( string s )
 }
 //****************************************************************************80
 
-void timestamp ( )
+void timestamp()
 
 //****************************************************************************80
 //
@@ -1715,20 +1536,19 @@ void timestamp ( )
 //    None
 //
 {
-# define TIME_SIZE 40
+#define TIME_SIZE 40
 
   static char time_buffer[TIME_SIZE];
   const struct std::tm *tm_ptr;
   std::time_t now;
 
-  now = std::time ( NULL );
-  tm_ptr = std::localtime ( &now );
+  now = std::time(NULL);
+  tm_ptr = std::localtime(&now);
 
-  std::strftime ( time_buffer, TIME_SIZE, "%d %B %Y %I:%M:%S %p", tm_ptr );
+  std::strftime(time_buffer, TIME_SIZE, "%d %B %Y %I:%M:%S %p", tm_ptr);
 
   std::cout << time_buffer << "\n";
 
   return;
-# undef TIME_SIZE
+#undef TIME_SIZE
 }
-

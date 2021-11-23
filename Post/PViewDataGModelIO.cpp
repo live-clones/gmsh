@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include "GmshConfig.h"
 #include "GmshMessage.h"
@@ -693,7 +693,7 @@ bool PViewDataGModel::readMED(const std::string &fileName, int fileIndex)
         med_int n = MEDnPasdetemps(fid, name, entType[i], eleType[j]);
 #endif
         if(n > 0) {
-          pairs.push_back(std::pair<int, int>(i, j));
+          pairs.push_back(std::make_pair(i, j));
           numSteps = std::max(numSteps, n);
         }
         if(!i && !j) break; // MED_NOEUD does not care about eleType

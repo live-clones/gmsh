@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <vector>
 #include <stack>
@@ -24,10 +24,6 @@
 #if defined(HAVE_POST)
 #include "PView.h"
 #include "PViewDataGModel.h"
-#endif
-
-#if defined(_OPENMP)
-#include <omp.h>
 #endif
 
 #if defined(HAVE_SOLVER) && defined(HAVE_POST)

@@ -111,7 +111,7 @@ Default value: @code{0}
 @end table
 
 @item Plugin(Crack)
-Plugin(Crack) creates a crack around the physical group `PhysicalGroup' of dimension `Dimension' (1 or 2), embedded in a mesh of dimension `Dimension' + 1. The plugin duplicates the nodes and the elements on the crack and stores them in a new discrete curve (`Dimension' = 1) or surface (`Dimension' = 2). The elements touching the crack on the ``negative'' side are modified to use the newly generated nodes.If `OpenBoundaryPhysicalGroup' is given (> 0), its nodes are duplicated and the crack will be left open on that (part of the) boundary. Otherwise, the lips of the crack are sealed, i.e., its nodes are not duplicated. For 1D cracks, `NormalX', `NormalY' and `NormalZ' provide the reference normal of the surface in which the crack is supposed to be embedded.
+Plugin(Crack) creates a crack around the physical group `PhysicalGroup' of dimension `Dimension' (1 or 2), embedded in a mesh of dimension `Dimension' + 1. The plugin duplicates the nodes and the elements on the crack and stores them in a new discrete curve (`Dimension' = 1) or surface (`Dimension' = 2). The elements touching the crack on the ``negative'' side are modified to use the newly generated nodes.If `OpenBoundaryPhysicalGroup' is given (> 0), its nodes are duplicated and the crack will be left open on that (part of the) boundary. Otherwise, the lips of the crack are sealed, i.e., its nodes are not duplicated. For 1D cracks, `NormalX', `NormalY' and `NormalZ' provide the reference normal of the surface in which the crack is supposed to be embedded. If `NewPhysicalGroup' is positive, use it as the tag of the newly created curve or surface; oterwise use `PhysicalGroup'.
 Numeric options:
 @table @code
 @item Dimension
@@ -126,6 +126,8 @@ Default value: @code{0}
 Default value: @code{0}
 @item NormalZ
 Default value: @code{1}
+@item NewPhysicalGroup
+Default value: @code{0}
 @end table
 
 @item Plugin(Curl)
@@ -1398,15 +1400,13 @@ Default value: @code{-1}
 @end table
 
 @item Plugin(Triangulate)
-Plugin(Triangulate) triangulates the points in the view `View', assuming that all the points belong to a surface that can be projected one-to-one onto a plane. Algorithm selects the old (0) or new (1) meshing algorithm.@*
+Plugin(Triangulate) triangulates the points in the view `View', assuming that all the points belong to a surface that can be projected one-to-one onto a plane. @*
 @*
 If `View' < 0, the plugin is run on the current view.@*
 @*
 Plugin(Triangulate) creates one new list-based view.
 Numeric options:
 @table @code
-@item Algorithm
-Default value: @code{1}
 @item View
 Default value: @code{-1}
 @end table

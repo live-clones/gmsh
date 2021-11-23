@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #ifndef MESH_QUAD_QUASI_STRUCTURED_H
 #define MESH_QUAD_QUASI_STRUCTURED_H
@@ -144,5 +144,35 @@ int RefineMeshWithBackgroundMeshProjection(GModel *gm);
  * @return 0 if success
  */
 int replaceBadQuadDominantMeshes(GModel *gm);
+
+/**
+ * @brief Identify face acute corners and set the first
+ * curve mesh vertices at same length from corner
+ *
+ * @param gm The model containing the curve meshes
+ *
+ * @return 0 if success
+ */
+int optimize1DMeshAtAcuteCorners(GModel *gm);
+
+/**
+ * @brief Add one extruded quad layer on curves where the
+ * boundary quad valences are not ideal
+ *
+ * @param gm The model containing the surface meshes
+ *
+ * @return 0 if success
+ */
+int optimizeQuadMeshBoundaries(GModel *gm);
+
+/**
+ * @brief Delete background meshes and fields that have
+ * been used by quadqs meshing/remeshing
+ *
+ * @param gm The model containing the surface meshes
+ *
+ * @return 0 if success
+ */
+int quadqsCleanup(GModel *gm);
 
 #endif

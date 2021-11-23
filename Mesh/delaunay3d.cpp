@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #if defined(_OPENMP)
 #include <omp.h>
@@ -984,9 +984,7 @@ void delaunayTrgl(const std::size_t numThreads, const std::size_t NPTS_AT_ONCE,
     maxLocSizeK = std::max(maxLocSizeK, s);
   }
 
-#if defined(_OPENMP)
 #pragma omp parallel num_threads(numThreads)
-#endif
   {
 #if defined(_OPENMP)
     int myThread = omp_get_thread_num();
@@ -1016,15 +1014,11 @@ void delaunayTrgl(const std::size_t numThreads, const std::size_t NPTS_AT_ONCE,
 
     std::vector<Vert *> vToAdd(NPTS_AT_ONCE);
 
-#if defined(_OPENMP)
 #pragma omp barrier
-#endif
 
     // Main loop
     for(std::size_t iPGlob = 0; iPGlob < maxLocSizeK; iPGlob++) {
-#if defined(_OPENMP)
 #pragma omp barrier
-#endif
       std::vector<Tet *> t(NPTS_AT_ONCE);
 
       // FIND SEEDS
@@ -1067,9 +1061,7 @@ void delaunayTrgl(const std::size_t numThreads, const std::size_t NPTS_AT_ONCE,
         }
       }
 
-#if defined(_OPENMP)
 #pragma omp barrier
-#endif
       for(std::size_t K = 0; K < NPTS_AT_ONCE; K++) {
         if(!vToAdd[K])
           ok[K] = false;
@@ -1121,17 +1113,13 @@ void delaunayTrgl(const std::size_t numThreads, const std::size_t NPTS_AT_ONCE,
       }
     }
 #if defined(VERBOSE)
-#if defined(_OPENMP)
 #pragma omp critical
-#endif
     {
       totCavityGlob += totCavity;
       totSearchGlob += totSearch;
     }
 #endif
-#if defined(_OPENMP)
 #pragma omp barrier
-#endif
     // clear last cavity
     for(std::size_t K = 0; K < NPTS_AT_ONCE; K++) {
       for(std::size_t i = 0; i < cavity[K].size(); i++)

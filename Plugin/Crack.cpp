@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include "Crack.h"
 #include "GModel.h"
@@ -20,7 +20,9 @@ StringXNumber CrackOptions_Number[] = {
   {GMSH_FULLRC, "OpenBoundaryPhysicalGroup", nullptr, 0.},
   {GMSH_FULLRC, "NormalX", nullptr, 0.},
   {GMSH_FULLRC, "NormalY", nullptr, 0.},
-  {GMSH_FULLRC, "NormalZ", nullptr, 1.}};
+  {GMSH_FULLRC, "NormalZ", nullptr, 1.},
+  {GMSH_FULLRC, "NewPhysicalGroup", nullptr, 0}
+};
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterCrackPlugin() { return new GMSH_CrackPlugin(); }
@@ -42,7 +44,10 @@ std::string GMSH_CrackPlugin::getHelp() const
          "lips of the crack are sealed, i.e., its nodes are "
          "not duplicated. For 1D cracks, `NormalX', `NormalY' and "
          "`NormalZ' provide the reference normal of the surface "
-         "in which the crack is supposed to be embedded.";
+         "in which the crack is supposed to be embedded. If "
+         "`NewPhysicalGroup' is positive, use it as the tag of "
+         "the newly created curve or surface; oterwise use "
+         "`PhysicalGroup'.";
 }
 
 int GMSH_CrackPlugin::getNbOptions() const
@@ -80,6 +85,7 @@ PView *GMSH_CrackPlugin::execute(PView *view)
   int open = (int)CrackOptions_Number[2].def;
   SVector3 normal1d(CrackOptions_Number[3].def, CrackOptions_Number[4].def,
                     CrackOptions_Number[5].def);
+  int newPhysical = (int)CrackOptions_Number[6].def;
 
   if(dim != 1 && dim != 2) {
     Msg::Error("Crack dimension should be 1 or 2");
@@ -247,7 +253,7 @@ PView *GMSH_CrackPlugin::execute(PView *view)
   //      entity on the boundary, and correctly classify the nodes on it...
   //      and we also need to create boundary elements
   //   c) If we crack a group made of multiple elementary entities we might
-  //      want to create multiple crackes entities, and do the same as (b)
+  //      want to create multiple cracked entities, and do the same as (b)
   //      for all internal seams
   //
   // In practice, c) is not crucial - the current approach simply creates a
@@ -267,7 +273,7 @@ PView *GMSH_CrackPlugin::execute(PView *view)
   }
   GEntity *crackEntity =
     crackEdge ? (GEntity *)crackEdge : (GEntity *)crackFace;
-  crackEntity->physicals.push_back(physical);
+  crackEntity->physicals.push_back(newPhysical ? newPhysical : physical);
 
   // duplicate internal crack nodes
   std::map<MVertex *, MVertex *> vxv;
@@ -303,6 +309,8 @@ PView *GMSH_CrackPlugin::execute(PView *view)
       if(vxv.count(e->getVertex(i))) e->setVertex(i, vxv[e->getVertex(i)]);
     }
   }
+
+  // m->pruneMeshVertexAssociations();
 
   CTX::instance()->mesh.changed = ENT_ALL;
 

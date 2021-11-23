@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <limits>
 #include <stdlib.h>
@@ -70,7 +70,7 @@ std::vector<GModel *> GModel::list;
 int GModel::_current = -1;
 
 GModel::GModel(const std::string &name)
-  : _destroying(false), _name(name), _visible(1), _elementOctree(nullptr),
+  : _name(name), _visible(1), _elementOctree(nullptr),
     _geo_internals(nullptr), _occ_internals(nullptr), _acis_internals(nullptr),
     _parasolid_internals(nullptr), _fields(nullptr),
     _currentMeshEntity(nullptr), _numPartitions(0), normals(nullptr),
@@ -168,7 +168,6 @@ GModel *GModel::findByName(const std::string &name, const std::string &fileName)
 void GModel::destroy(bool keepName)
 {
   Msg::Debug("Destroying model %s", getName().c_str());
-  _destroying = true;
 
   if(!keepName) {
     _name.clear();
@@ -210,16 +209,12 @@ void GModel::destroy(bool keepName)
   _fields->reset();
 #endif
   gmshSurface::reset();
-
-  _destroying = false;
 }
 
 void GModel::destroyMeshCaches()
 {
   // this is called in GEntity::deleteMesh()
-#if defined(_OPENMP)
 #pragma omp critical
-#endif
   {
     _vertexVectorCache.clear();
     std::vector<MVertex *>().swap(_vertexVectorCache);
@@ -384,52 +379,71 @@ std::vector<int> GModel::getTagsForPhysicalName(int dim,
   return tags;
 }
 
-void GModel::remove(GRegion *r)
+bool GModel::remove(GRegion *r)
 {
   auto it = std::find(firstRegion(), lastRegion(), r);
   if(it != (riter)regions.end()) {
     regions.erase(it);
     std::vector<GFace *> f = r->faces();
     for(auto it = f.begin(); it != f.end(); it++) (*it)->delRegion(r);
+    return true;
+  }
+  else {
+    return false;
   }
 }
 
-void GModel::remove(GFace *f)
+bool GModel::remove(GFace *f)
 {
   auto it = std::find(firstFace(), lastFace(), f);
   if(it != faces.end()) {
     faces.erase(it);
     std::vector<GEdge *> const &e = f->edges();
     for(auto it = e.begin(); it != e.end(); it++) (*it)->delFace(f);
+    return true;
+  }
+  else {
+    return false;
   }
 }
 
-void GModel::remove(GEdge *e)
+bool GModel::remove(GEdge *e)
 {
   auto it = std::find(firstEdge(), lastEdge(), e);
   if(it != edges.end()) {
     edges.erase(it);
     if(e->getBeginVertex()) e->getBeginVertex()->delEdge(e);
     if(e->getEndVertex()) e->getEndVertex()->delEdge(e);
+    return true;
+  }
+  else {
+    return false;
   }
 }
 
-void GModel::remove(GVertex *v)
+bool GModel::remove(GVertex *v)
 {
   auto it = std::find(firstVertex(), lastVertex(), v);
-  if(it != vertices.end()) vertices.erase(it);
+  if(it != vertices.end()) {
+    vertices.erase(it);
+    return true;
+  }
+  else {
+    return false;
+  }
 }
 
-void GModel::remove(int dim, int tag, bool recursive)
+void GModel::remove(int dim, int tag, std::vector<GEntity*> &removed,
+                    bool recursive)
 {
   if(dim == 3) {
     GRegion *gr = getRegionByTag(tag);
     if(gr) {
-      remove(gr);
+      if(remove(gr)) removed.push_back(gr);
       if(recursive) {
         std::vector<GFace *> f = gr->faces();
         for(auto it = f.begin(); it != f.end(); it++)
-          remove(2, (*it)->tag(), recursive);
+          remove(2, (*it)->tag(), removed, recursive);
       }
     }
   }
@@ -450,11 +464,11 @@ void GModel::remove(int dim, int tag, bool recursive)
         }
       }
       if(!skip) {
-        remove(gf);
+        if(remove(gf)) removed.push_back(gf);
         if(recursive) {
           std::vector<GEdge *> const &e = gf->edges();
           for(auto it = e.begin(); it != e.end(); it++)
-            remove(1, (*it)->tag(), recursive);
+            remove(1, (*it)->tag(), removed, recursive);
         }
       }
     }
@@ -485,10 +499,12 @@ void GModel::remove(int dim, int tag, bool recursive)
         }
       }
       if(!skip) {
-        remove(ge);
+        if(remove(ge)) removed.push_back(ge);
         if(recursive) {
-          if(ge->getBeginVertex()) remove(0, ge->getBeginVertex()->tag());
-          if(ge->getEndVertex()) remove(0, ge->getEndVertex()->tag());
+          if(ge->getBeginVertex())
+            remove(0, ge->getBeginVertex()->tag(), removed);
+          if(ge->getEndVertex())
+            remove(0, ge->getEndVertex()->tag(), removed);
         }
       }
     }
@@ -522,16 +538,18 @@ void GModel::remove(int dim, int tag, bool recursive)
           }
         }
       }
-      if(!skip) { remove(gv); }
+      if(!skip) {
+        if(remove(gv)) removed.push_back(gv);
+      }
     }
   }
 }
 
 void GModel::remove(const std::vector<std::pair<int, int> > &dimTags,
-                    bool recursive)
+                    std::vector<GEntity*> &removed, bool recursive)
 {
   for(std::size_t i = 0; i < dimTags.size(); i++)
-    remove(dimTags[i].first, dimTags[i].second, recursive);
+    remove(dimTags[i].first, dimTags[i].second, removed, recursive);
 }
 
 void GModel::remove()
@@ -638,7 +656,7 @@ bool GModel::getBoundaryTags(const std::vector<std::pair<int, int> > &inDimTags,
         if(recursive) {
           std::vector<GVertex *> const &vert = gr->vertices();
           for(auto it = vert.begin(); it != vert.end(); it++)
-            outDimTags.push_back(std::pair<int, int>(0, (*it)->tag()));
+            outDimTags.push_back(std::make_pair(0, (*it)->tag()));
         }
         else {
           std::vector<GFace *> faces(gr->faces());
@@ -650,7 +668,7 @@ bool GModel::getBoundaryTags(const std::vector<std::pair<int, int> > &inDimTags,
               t *= *ito;
               ito++;
             }
-            outDimTags.push_back(std::pair<int, int>(2, t));
+            outDimTags.push_back(std::make_pair(2, t));
           }
         }
       }
@@ -665,7 +683,7 @@ bool GModel::getBoundaryTags(const std::vector<std::pair<int, int> > &inDimTags,
         if(recursive) {
           std::vector<GVertex *> const &vert = gf->vertices();
           for(auto it = vert.begin(); it != vert.end(); it++)
-            outDimTags.push_back(std::pair<int, int>(0, (*it)->tag()));
+            outDimTags.push_back(std::make_pair(0, (*it)->tag()));
         }
         else {
           std::vector<GEdge *> const &edges = gf->edges();
@@ -677,7 +695,7 @@ bool GModel::getBoundaryTags(const std::vector<std::pair<int, int> > &inDimTags,
               t *= *ito;
               ito++;
             }
-            outDimTags.push_back(std::pair<int, int>(1, t));
+            outDimTags.push_back(std::make_pair(1, t));
           }
         }
       }
@@ -692,18 +710,18 @@ bool GModel::getBoundaryTags(const std::vector<std::pair<int, int> > &inDimTags,
         if(reverse) { // for backward compatibility
           if(ge->getEndVertex())
             outDimTags.push_back(
-              std::pair<int, int>(0, ge->getEndVertex()->tag()));
+              std::make_pair(0, ge->getEndVertex()->tag()));
           if(ge->getBeginVertex())
             outDimTags.push_back(
-              std::pair<int, int>(0, ge->getBeginVertex()->tag()));
+              std::make_pair(0, ge->getBeginVertex()->tag()));
         }
         else {
           if(ge->getBeginVertex())
             outDimTags.push_back(
-              std::pair<int, int>(0, ge->getBeginVertex()->tag()));
+              std::make_pair(0, ge->getBeginVertex()->tag()));
           if(ge->getEndVertex())
             outDimTags.push_back(
-              std::pair<int, int>(0, ge->getEndVertex()->tag()));
+              std::make_pair(0, ge->getEndVertex()->tag()));
         }
       }
       else {
@@ -714,7 +732,7 @@ bool GModel::getBoundaryTags(const std::vector<std::pair<int, int> > &inDimTags,
     else if(dim == 0) {
       GVertex *gv = getVertexByTag(tag);
       if(gv && recursive) {
-        outDimTags.push_back(std::pair<int, int>(0, gv->tag()));
+        outDimTags.push_back(std::make_pair(0, gv->tag()));
       }
     }
   }
@@ -737,7 +755,7 @@ bool GModel::getBoundaryTags(const std::vector<std::pair<int, int> > &inDimTags,
     outDimTags.clear();
     for(int dim = 0; dim < 3; dim++) {
       for(auto it = c[dim].begin(); it != c[dim].end(); it++)
-        outDimTags.push_back(std::pair<int, int>(dim, *it));
+        outDimTags.push_back(std::make_pair(dim, *it));
     }
   }
   return ret;
@@ -840,7 +858,7 @@ void GModel::removePhysicalGroup(int dim, int tag)
         p.push_back(entities[i]->physicals[j]);
     entities[i]->physicals = p;
   }
-  _physicalNames.erase(std::pair<int, int>(dim, tag));
+  _physicalNames.erase(std::make_pair(dim, tag));
 }
 
 int GModel::getMaxPhysicalNumber(int dim)
@@ -871,8 +889,7 @@ int GModel::setPhysicalName(const std::string &name, int dim, int number)
 
   // if no number is given, find the next available one
   if(!number) number = getMaxPhysicalNumber(dim) + 1;
-  _physicalNames.insert(std::pair<std::pair<int, int>, std::string>(
-    std::pair<int, int>(dim, number), name));
+  _physicalNames.insert(std::make_pair(std::make_pair(dim, number), name));
   return number;
 }
 
@@ -884,13 +901,13 @@ GModel::piter GModel::setPhysicalName(piter pos, const std::string &name,
   // Insertion complexity in O(1) if position points to the element that will
   // FOLLOW the inserted element.
   if(pos != lastPhysicalName()) ++pos;
-  return _physicalNames.insert(pos, std::pair<std::pair<int, int>, std::string>(
-                                      std::pair<int, int>(dim, number), name));
+  return _physicalNames.insert(pos, std::make_pair(std::make_pair(dim, number),
+                                                   name));
 }
 
 std::string GModel::getPhysicalName(int dim, int number) const
 {
-  auto it = _physicalNames.find(std::pair<int, int>(dim, number));
+  auto it = _physicalNames.find(std::make_pair(dim, number));
   if(it != _physicalNames.end()) return it->second;
   return "";
 }
@@ -934,9 +951,9 @@ int GModel::getMeshDim() const
   return -1;
 }
 
-std::string GModel::getElementaryName(int dim, int number)
+std::string GModel::getElementaryName(int dim, int tag)
 {
-  auto it = _elementaryNames.find(std::pair<int, int>(dim, number));
+  auto it = _elementaryNames.find(std::make_pair(dim, tag));
   if(it != _elementaryNames.end()) return it->second;
   return "";
 }
@@ -1027,10 +1044,10 @@ addToMap(std::multimap<MFace, MElement *, MFaceLessThan> &faceToElement,
 {
   auto fit = faceToElement.find(face);
   if(fit == faceToElement.end()) {
-    faceToElement.insert(std::pair<MFace, MElement *>(face, el));
+    faceToElement.insert(std::make_pair(face, el));
   }
   else { // We found the neighbor face outFace
-    faceToElement.insert(std::pair<MFace, MElement *>(face, el));
+    faceToElement.insert(std::make_pair(face, el));
     if(faceToElement.count(face) > 2) {
       Msg::Error(
         "Topological fault: Face sharing two other faces. Element %i. "
@@ -1502,8 +1519,7 @@ std::size_t GModel::getMEdge(MVertex *v0, MVertex *v1, MEdge &edge)
     return it->second;
   }
   else {
-    Msg::Error("Unknown edge %d %d", edge.getVertex(0)->getNum(),
-               edge.getVertex(1)->getNum());
+    Msg::Error("Unknown edge %d %d", v0->getNum(), v1->getNum());
     return 0;
   }
 }
@@ -1525,8 +1541,7 @@ std::size_t GModel::getMFace(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3,
     return it->second;
   }
   else {
-    Msg::Error("Unknown face %d %d %d", face.getVertex(0)->getNum(),
-               face.getVertex(1)->getNum(), face.getVertex(2)->getNum());
+    Msg::Error("Unknown face %d %d %d", v0->getNum(), v1->getNum(), v2->getNum());
     return 0;
   }
 }
@@ -1765,10 +1780,8 @@ MElement *GModel::getMeshElementByCoord(SPoint3 &p, SPoint3 &param, int dim,
                                         bool strict)
 {
   if(!_elementOctree) {
-#if defined(_OPENMP)
 #pragma omp barrier
 #pragma omp single
-#endif
     {
       Msg::Debug("Rebuilding mesh element octree");
       _elementOctree = new MElementOctree(this);
@@ -1790,10 +1803,8 @@ std::vector<MElement *> GModel::getMeshElementsByCoord(SPoint3 &p, int dim,
                                                        bool strict)
 {
   if(!_elementOctree) {
-#if defined(_OPENMP)
 #pragma omp barrier
 #pragma omp single
-#endif
     {
       Msg::Debug("Rebuilding mesh element octree");
       _elementOctree = new MElementOctree(this);
@@ -1858,8 +1869,7 @@ void GModel::rebuildMeshElementCache(bool onlyIfNecessary)
     getEntities(entities);
     if(dense) {
       // numbering starts at 1
-      _elementVectorCache.resize(_maxElementNum + 1,
-                                 std::pair<MElement*, int>(nullptr, 0));
+      _elementVectorCache.resize(_maxElementNum + 1, std::make_pair(nullptr, 0));
       for(std::size_t i = 0; i < entities.size(); i++)
         for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
           MElement *e = entities[i]->getMeshElement(j);
@@ -1880,10 +1890,8 @@ void GModel::rebuildMeshElementCache(bool onlyIfNecessary)
 MVertex *GModel::getMeshVertexByTag(int n)
 {
   if(_vertexVectorCache.empty() && _vertexMapCache.empty()) {
-#if defined(_OPENMP)
 #pragma omp barrier
 #pragma omp single
-#endif
     {
       Msg::Debug("Rebuilding mesh node cache");
       rebuildMeshVertexCache();
@@ -1894,6 +1902,23 @@ MVertex *GModel::getMeshVertexByTag(int n)
     return _vertexVectorCache[n];
   else
     return _vertexMapCache[n];
+}
+
+void GModel::addMVertexToVertexCache(MVertex* v)
+{
+  if(_vertexVectorCache.empty() && _vertexMapCache.empty()) {
+    Msg::Debug("Rebuilding mesh node cache");
+    rebuildMeshVertexCache();
+  }
+  if (_vertexVectorCache.size() > 0) {
+#pragma omp critical
+    if (v->getNum() >= _vertexVectorCache.size()) {
+      _vertexVectorCache.resize(v->getNum()+1, nullptr);
+    }
+    _vertexVectorCache[v->getNum()] = v;
+  } else {
+    _vertexMapCache[v->getNum()] = v;
+  }
 }
 
 void GModel::getMeshVerticesForPhysicalGroup(int dim, int num,
@@ -1919,10 +1944,8 @@ void GModel::getMeshVerticesForPhysicalGroup(int dim, int num,
 MElement *GModel::getMeshElementByTag(int n, int &entityTag)
 {
   if(_elementVectorCache.empty() && _elementMapCache.empty()) {
-#if defined(_OPENMP)
 #pragma omp barrier
 #pragma omp single
-#endif
     {
       Msg::Debug("Rebuilding mesh element cache");
       rebuildMeshElementCache();
@@ -2115,9 +2138,7 @@ void GModel::scaleMesh(double factor)
 
 void GModel::setCurrentMeshEntity(GEntity *e)
 {
-#if defined(_OPENMP)
-#pragma omp critical
-#endif
+#pragma omp atomic write
   _currentMeshEntity = e;
 }
 
@@ -2656,7 +2677,7 @@ int GModel::removeDuplicateMeshVertices(double tolerance)
       }
     }
     // replace vertices in periodic copies
-    std::map<MVertex *, MVertex *> &corrVtcs = ge->correspondingVertices;
+    std::map<MVertex *, MVertex *, MVertexPtrLessThan> &corrVtcs = ge->correspondingVertices;
     if(corrVtcs.size()) {
       std::map<MVertex *, MVertex *>::iterator cIter;
       for(cIter = duplicates.begin(); cIter != duplicates.end(); ++cIter) {
@@ -2743,8 +2764,8 @@ void GModel::alignPeriodicBoundaries()
         for(int iVtx = 0; iVtx < 2; iVtx++) {
           MVertex *tgtVtx = tgtLine->getVertex(iVtx);
           GEntity *ge = tgtVtx->onWhat();
-          std::map<MVertex *, MVertex *> &geV2v = ge->correspondingVertices;
-          std::map<MVertex *, MVertex *> &v2v = tgt->correspondingVertices;
+          std::map<MVertex *, MVertex *, MVertexPtrLessThan> &geV2v = ge->correspondingVertices;
+          std::map<MVertex *, MVertex *, MVertexPtrLessThan> &v2v = tgt->correspondingVertices;
           auto srcIter = v2v.find(tgtVtx);
           if(srcIter == v2v.end() || !srcIter->second) {
             srcIter = geV2v.find(tgtVtx);
@@ -2818,8 +2839,8 @@ void GModel::alignPeriodicBoundaries()
           MVertex *vtx = tgtElmt->getVertex(iVtx);
           GEntity *ge = vtx->onWhat();
 
-          std::map<MVertex *, MVertex *> &geV2v = ge->correspondingVertices;
-          std::map<MVertex *, MVertex *> &v2v = tgt->correspondingVertices;
+          std::map<MVertex *, MVertex *, MVertexPtrLessThan> &geV2v = ge->correspondingVertices;
+          std::map<MVertex *, MVertex *, MVertexPtrLessThan> &v2v = tgt->correspondingVertices;
 
           auto vIter = v2v.find(vtx);
           if(vIter == v2v.end() || !vIter->second) {
@@ -3360,7 +3381,7 @@ void GModel::addHomologyRequest(const std::string &type,
   typedef std::pair<const std::string, const std::vector<int> > tpair;
   dpair p(domain, subdomain);
   tpair p2(type, dim);
-  _homologyRequests.insert(std::pair<dpair, tpair>(p, p2));
+  _homologyRequests.insert(std::make_pair(p, p2));
 }
 
 void GModel::computeHomology()

@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <stdlib.h>
 #include <stack>
@@ -36,11 +36,8 @@
 #include "Generator.h"
 #include "meshQuadQuasiStructured.h"
 #include "meshGFaceBipartiteLabelling.h"
-//#include "sizeField.h"
+#include "sizeField.h"
 
-#if defined(_OPENMP)
-#include <omp.h>
-#endif
 
 #if defined(HAVE_DOMHEX)
 #include "simple3D.h"
@@ -382,18 +379,17 @@ static void Mesh1D(GModel *m)
 
     int nPending = 0;
     const size_t sss = temp.size();
-#if defined(_OPENMP)
 #pragma omp parallel for schedule(dynamic)
-#endif
     for(size_t K = 0; K < sss; K++) {
       int localPending = 0;
       GEdge *ed = temp[K];
       if(ed->meshStatistics.status == GEdge::PENDING) {
         ed->mesh(true);
-#if defined(_OPENMP)
-#pragma omp critical
-#endif
-        localPending = ++nPending;
+#pragma omp atomic capture
+        {
+          ++nPending;
+          localPending = nPending;
+        }
       }
       if(!nIter) Msg::ProgressMeter(localPending, false, "Meshing 1D...");
     }
@@ -532,18 +528,17 @@ static void Mesh2D(GModel *m)
       int nPending = 0;
       std::vector<GFace *> temp;
       temp.insert(temp.begin(), f.begin(), f.end());
-#if defined(_OPENMP)
 #pragma omp parallel for schedule(dynamic)
-#endif
       for(size_t K = 0; K < temp.size(); K++) {
         int localPending = 0;
         if(temp[K]->meshStatistics.status == GFace::PENDING) {
           backgroundMesh::current()->unset();
           temp[K]->mesh(true);
-#if defined(_OPENMP)
-#pragma omp critical
-#endif
-          localPending = ++nPending;
+#pragma omp atomic capture
+          {
+            ++nPending;
+            localPending = nPending;
+          }
         }
         if(!nIter) Msg::ProgressMeter(localPending, false, "Meshing 2D...");
       }
@@ -1218,7 +1213,7 @@ static SPoint3 transform(MVertex *vsource, const std::vector<double> &tfo)
 }
 
 static void relocateSlaveVertices(GFace *slave,
-                                  std::map<MVertex *, MVertex *> &vertS2M,
+                                  std::map<MVertex *, MVertex *, MVertexPtrLessThan> &vertS2M,
                                   bool useClosestPoint)
 {
   for(auto vit = vertS2M.begin(); vit != vertS2M.end(); ++vit) {
@@ -1245,7 +1240,7 @@ static void relocateSlaveVertices(GFace *slave,
 }
 
 static void relocateSlaveVertices(GEdge *slave,
-                                  std::map<MVertex *, MVertex *> &vertS2M,
+                                  std::map<MVertex *, MVertex *, MVertexPtrLessThan> &vertS2M,
                                   bool useClosestPoint)
 {
   for(auto vit = vertS2M.begin(); vit != vertS2M.end(); ++vit) {
@@ -1321,8 +1316,8 @@ void FixPeriodicMesh(GModel *m)
     GEdge *src = dynamic_cast<GEdge *>(tgt->getMeshMaster());
 
     if(src != nullptr && src != tgt) {
-      std::map<MVertex *, MVertex *> &v2v = tgt->correspondingVertices;
-      std::map<MVertex *, MVertex *> &p2p = tgt->correspondingHighOrderVertices;
+      std::map<MVertex *, MVertex *, MVertexPtrLessThan> &v2v = tgt->correspondingVertices;
+      std::map<MVertex *, MVertex *, MVertexPtrLessThan> &p2p = tgt->correspondingHighOrderVertices;
       p2p.clear();
 
       Msg::Info("Reconstructing periodicity for curve connection %d - %d",
@@ -1394,8 +1389,8 @@ void FixPeriodicMesh(GModel *m)
       Msg::Info("Reconstructing periodicity for surface connection %d - %d",
                 tgt->tag(), src->tag());
 
-      std::map<MVertex *, MVertex *> &v2v = tgt->correspondingVertices;
-      std::map<MVertex *, MVertex *> &p2p = tgt->correspondingHighOrderVertices;
+      std::map<MVertex *, MVertex *, MVertexPtrLessThan> &v2v = tgt->correspondingVertices;
+      std::map<MVertex *, MVertex *, MVertexPtrLessThan> &p2p = tgt->correspondingHighOrderVertices;
       p2p.clear();
 
       if(tgt->getNumMeshElements() && v2v.empty()) {

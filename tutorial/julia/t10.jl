@@ -59,8 +59,8 @@ gmsh.model.mesh.field.setNumbers(7, "FieldsList", [2, 3, 5, 6])
 
 gmsh.model.mesh.field.setAsBackgroundMesh(7)
 
-function meshSizeCallback(dim, tag, x, y, z)
-    return 0.02 * x + 0.01
+function meshSizeCallback(dim, tag, x, y, z, lc)
+    return min(lc, 0.02 * x + 0.01)
 end
 gmsh.model.mesh.setSizeCallback(meshSizeCallback)
 

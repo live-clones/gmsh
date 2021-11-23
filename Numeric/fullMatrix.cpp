@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <complex>
 #include <string.h>
@@ -119,15 +119,15 @@ template <> void fullMatrix<double>::scale(const double s)
   F77NAME(dscal)(&N, &ss, _data, &stride);
 }
 
-template <> void fullMatrix<std::complex<double> >::scale(const double s)
+template <> void fullMatrix<std::complex<double> >::scale(const std::complex<double> s)
 {
   int N = _r * _c;
   int stride = 1;
-  std::complex<double> ss(s, 0.);
+  std::complex<double> ss(s);
   F77NAME(zscal)(&N, &ss, _data, &stride);
 }
 
-template <> void fullMatrix<int>::scale(const double s)
+template <> void fullMatrix<int>::scale(const int s)
 {
   for(int i = 0; i < _r * _c; ++i) _data[i] *= s;
 }

@@ -132,12 +132,12 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.FirstElementTag
-First tag (>= 1) of mesh elements@*
+First tag (>= 1) of mesh elements when generating or renumbering a mesh@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.FirstNodeTag
-First tag (>= 1) of mesh nodes@*
+First tag (>= 1) of mesh nodes when generating or renumbering a mesh@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -511,6 +511,11 @@ Number of edge subdivisions when displaying high-order elements@*
 Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.OldInitialDelaunay2D
+Use old initial 2D Delaunay code@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.Optimize
 Optimize the mesh to improve the quality of tetrahedral elements@*
 Default value: @code{1}@*
@@ -616,14 +621,9 @@ Display mesh pyramids?@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.Trihedra
-Display mesh trihedra?@*
-Default value: @code{1}@*
-Saved in: @code{General.OptionsFileName}
-
 @item Mesh.QuadqsSizemapMethod
 Size map method in QuadQuasiStructured. 0: default, 1: cross-field,2: cross-field + CAD small features adaptation,3: from background mesh (e.g. sizes in current triangulation),4: cross-field + CAD small features adaptation (clamped by background mesh)@*
-Default value: @code{0}@*
+Default value: @code{3}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.QuadqsTopologyOptimizationMethods
@@ -633,7 +633,12 @@ Saved in: @code{General.OptionsFileName}
 
 @item Mesh.QuadqsRemeshingBoldness
 Controls how much cavity remeshing is allowed to distort the quad mesh. From 0 (no quality decrease during remeshing) to 1 (quality can tend to 0 during remeshing).@*
-Default value: @code{0.501}@*
+Default value: @code{0.66}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.QuadqsScalingOnTriangulation
+Ratio on the edge length between the triangulation and the quadrangulation. Use a small ratio (e.g. 0.5) to get a background triangulation finer than the quad mesh. Useful to get a more accurate cross-field.@*
+Default value: @code{0.75}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Quadrangles
@@ -866,8 +871,18 @@ Tolerance for initial 3D Delaunay mesher@*
 Default value: @code{1e-12}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.ToleranceReferenceElement
+Tolerance for classifying a point inside a reference element (of size 1)@*
+Default value: @code{1e-06}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.Triangles
 Display mesh triangles?@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.Trihedra
+Display mesh trihedra?@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 

@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 //
 // Contributor(s):
 //   Jonathan Lambrechts
@@ -286,7 +286,7 @@ void fieldWindow::saveFieldOptions()
     } break;
     }
     if((*input)->changed()) {
-      scriptAddFieldOption(f->id, it->first, sstream.str(),
+      scriptAddFieldOption(f->id, it->first, sstream.str(), option->getType(),
                            GModel::current()->getFileName());
       (*input)->clear_changed();
     }
