@@ -15,7 +15,8 @@ small bug fixes.
 
 * New API functions: model/setTag, mesh/reverse, mesh/affineTransform,
   mesh/getMaxNodeTag, mesh/getMaxElementTag, mesh/getSizes, mesh/getPeriodic,
-  field/list, field/getType, field/getNumber, field/getNumbers, field/getString.
+  mesh/getAllEdges, mesh/getAllFaces, mesh/addEdge, mesh/addFace, field/list,
+  field/getType, field/getNumber, field/getNumbers, field/getString.
 
 * Incompatible API changes: new arguments to mesh/getNode, mesh/getElement and
   view/probe; additional argument to the mesh size callback function provided to

@@ -1509,6 +1509,62 @@ GMSH_API void gmshModelMeshCreateFaces(int * dimTags, size_t dimTags_n, int * ie
   }
 }
 
+GMSH_API void gmshModelMeshGetAllEdges(size_t ** edgeTags, size_t * edgeTags_n, size_t ** edgeNodes, size_t * edgeNodes_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<std::size_t> api_edgeTags_;
+    std::vector<std::size_t> api_edgeNodes_;
+    gmsh::model::mesh::getAllEdges(api_edgeTags_, api_edgeNodes_);
+    vector2ptr(api_edgeTags_, edgeTags, edgeTags_n);
+    vector2ptr(api_edgeNodes_, edgeNodes, edgeNodes_n);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelMeshGetAllFaces(const int faceType, size_t ** faceTags, size_t * faceTags_n, size_t ** faceNodes, size_t * faceNodes_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<std::size_t> api_faceTags_;
+    std::vector<std::size_t> api_faceNodes_;
+    gmsh::model::mesh::getAllFaces(faceType, api_faceTags_, api_faceNodes_);
+    vector2ptr(api_faceTags_, faceTags, faceTags_n);
+    vector2ptr(api_faceNodes_, faceNodes, faceNodes_n);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelMeshAddEdges(size_t * edgeTags, size_t edgeTags_n, size_t * edgeNodes, size_t edgeNodes_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<std::size_t> api_edgeTags_(edgeTags, edgeTags + edgeTags_n);
+    std::vector<std::size_t> api_edgeNodes_(edgeNodes, edgeNodes + edgeNodes_n);
+    gmsh::model::mesh::addEdges(api_edgeTags_, api_edgeNodes_);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelMeshAddFaces(const int faceType, size_t * faceTags, size_t faceTags_n, size_t * faceNodes, size_t faceNodes_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<std::size_t> api_faceTags_(faceTags, faceTags + faceTags_n);
+    std::vector<std::size_t> api_faceNodes_(faceNodes, faceNodes + faceNodes_n);
+    gmsh::model::mesh::addFaces(faceType, api_faceTags_, api_faceNodes_);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API void gmshModelMeshGetKeys(const int elementType, const char * functionSpaceType, int ** typeKeys, size_t * typeKeys_n, size_t ** entityKeys, size_t * entityKeys_n, double ** coord, size_t * coord_n, const int tag, const int returnCoord, int * ierr)
 {
   if(ierr) *ierr = 0;

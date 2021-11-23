@@ -3430,6 +3430,92 @@ GMSH_API void gmsh::model::mesh::createFaces(const vectorpair &dimTags)
   }
 }
 
+GMSH_API void gmsh::model::mesh::getAllEdges(std::vector<std::size_t> &edgeTags,
+                                             std::vector<std::size_t> &edgeNodes)
+{
+  if(!_checkInit()) return;
+  edgeTags.clear();
+  edgeNodes.clear();
+  GModel *m = GModel::current();
+  for(auto it = m->firstMEdge(); it != m->lastMEdge(); ++it) {
+    edgeTags.push_back(it->second);
+    edgeNodes.push_back(it->first.getVertex(0)->getNum());
+    edgeNodes.push_back(it->first.getVertex(1)->getNum());
+  }
+}
+
+GMSH_API void gmsh::model::mesh::getAllFaces(const int faceType,
+                                             std::vector<std::size_t> &faceTags,
+                                             std::vector<std::size_t> &faceNodes)
+{
+  if(!_checkInit()) return;
+  if(faceType != 3 && faceType != 4) {
+    Msg::Error("Unknown face type (should be 3 or 4)");
+    return;
+  }
+  faceTags.clear();
+  faceNodes.clear();
+  GModel *m = GModel::current();
+  for(auto it = m->firstMFace(); it != m->lastMFace(); ++it) {
+    if(it->first.getNumVertices() == faceType) {
+      faceTags.push_back(it->second);
+      for(int j = 0; j < faceType; j++)
+        faceNodes.push_back(it->first.getVertex(j)->getNum());
+    }
+  }
+}
+
+GMSH_API void gmsh::model::mesh::addEdges(const std::vector<std::size_t> &edgeTags,
+                                          const std::vector<std::size_t> &edgeNodes)
+{
+  if(!_checkInit()) return;
+  if(edgeTags.size() * 2 != edgeNodes.size()) {
+    Msg::Error("Wrong number of edge nodes");
+    return;
+  }
+  GModel *m = GModel::current();
+  for(std::size_t i = 0; i < edgeTags.size(); i++) {
+    MVertex *v[2];
+    for(int j = 0; j < 2; j++) {
+      v[j] = m->getMeshVertexByTag(edgeNodes[2 * i + j]);
+      if(!v[j]) {
+        Msg::Error("Unknown mesh node %lu", edgeNodes[2 * i + j]);
+        return;
+      }
+    }
+    MEdge e(v[0], v[1]);
+    m->addMEdge(e, edgeTags[i]);
+  }
+}
+
+GMSH_API void gmsh::model::mesh::addFaces(const int faceType,
+                                          const std::vector<std::size_t> &faceTags,
+                                          const std::vector<std::size_t> &faceNodes)
+{
+  if(!_checkInit()) return;
+  if(faceType != 3 && faceType != 4) {
+    Msg::Error("Unknown face type (should be 3 or 4)");
+    return;
+  }
+  if(faceTags.size() * faceType != faceNodes.size()) {
+    Msg::Error("Wrong number of face nodes");
+    return;
+  }
+  GModel *m = GModel::current();
+  for(std::size_t i = 0; i < faceTags.size(); i++) {
+    MVertex *v[4] = {nullptr, nullptr, nullptr, nullptr};
+    for(int j = 0; j < faceType; j++) {
+      v[j] = m->getMeshVertexByTag(faceNodes[faceType * i + j]);
+      if(!v[j]) {
+        Msg::Error("Unknown mesh node %lu", faceNodes[faceType * i + j]);
+        return;
+      }
+    }
+    MFace f(v[0], v[1], v[2], v[3]);
+    m->addMFace(f, faceTags[i]);
+  }
+}
+
 GMSH_API void gmsh::model::mesh::getKeys(
   const int elementType, const std::string &functionSpaceType,
   std::vector<int> &typeKeys, std::vector<std::size_t> &entityKeys,

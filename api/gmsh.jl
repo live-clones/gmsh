@@ -2215,9 +2215,9 @@ const get_number_of_orientations = getNumberOfOrientations
 Get the global unique mesh edge identifiers `edgeTags` and orientations
 `edgeOrientation` for an input list of node tag pairs defining these edges,
 concatenated in the vector `nodeTags`. Mesh edges are created e.g. by
-`createEdges()` or `getKeys()`. The reference positive orientation is n1 < n2,
-where n1 and n2 are the tags of the two edge nodes, which corresponds to the
-local orientation of edge-based basis functions as well.
+`createEdges()`, `getKeys()` or `addEdges()`. The reference positive orientation
+is n1 < n2, where n1 and n2 are the tags of the two edge nodes, which
+corresponds to the local orientation of edge-based basis functions as well.
 
 Return `edgeTags`, `edgeOrientations`.
 """
@@ -2243,8 +2243,8 @@ const get_edges = getEdges
 Get the global unique mesh face identifiers `faceTags` and orientations
 `faceOrientations` for an input list of node tag triplets (if `faceType` == 3)
 or quadruplets (if `faceType` == 4) defining these faces, concatenated in the
-vector `nodeTags`. Mesh faces are created e.g. by `createFaces()` or
-`getKeys()`.
+vector `nodeTags`. Mesh faces are created e.g. by `createFaces()`, `getKeys()`
+or `addFaces()`.
 
 Return `faceTags`, `faceOrientations`.
 """
@@ -2297,6 +2297,88 @@ function createFaces(dimTags = Tuple{Cint,Cint}[])
     return nothing
 end
 const create_faces = createFaces
+
+"""
+    gmsh.model.mesh.getAllEdges()
+
+Get the global unique identifiers `edgeTags` and the nodes `edgeNodes` of the
+edges in the mesh. Mesh edges are created e.g. by `createEdges()`, `getKeys()`
+or addEdges().
+
+Return `edgeTags`, `edgeNodes`.
+"""
+function getAllEdges()
+    api_edgeTags_ = Ref{Ptr{Csize_t}}()
+    api_edgeTags_n_ = Ref{Csize_t}()
+    api_edgeNodes_ = Ref{Ptr{Csize_t}}()
+    api_edgeNodes_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshGetAllEdges, gmsh.lib), Cvoid,
+          (Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cint}),
+          api_edgeTags_, api_edgeTags_n_, api_edgeNodes_, api_edgeNodes_n_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    edgeTags = unsafe_wrap(Array, api_edgeTags_[], api_edgeTags_n_[], own = true)
+    edgeNodes = unsafe_wrap(Array, api_edgeNodes_[], api_edgeNodes_n_[], own = true)
+    return edgeTags, edgeNodes
+end
+const get_all_edges = getAllEdges
+
+"""
+    gmsh.model.mesh.getAllFaces(faceType)
+
+Get the global unique identifiers `faceTags` and the nodes `faceNodes` of the
+faces of type `faceType` in the mesh. Mesh faces are created e.g. by
+`createFaces()`, `getKeys()` or addFaces().
+
+Return `faceTags`, `faceNodes`.
+"""
+function getAllFaces(faceType)
+    api_faceTags_ = Ref{Ptr{Csize_t}}()
+    api_faceTags_n_ = Ref{Csize_t}()
+    api_faceNodes_ = Ref{Ptr{Csize_t}}()
+    api_faceNodes_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshGetAllFaces, gmsh.lib), Cvoid,
+          (Cint, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cint}),
+          faceType, api_faceTags_, api_faceTags_n_, api_faceNodes_, api_faceNodes_n_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    faceTags = unsafe_wrap(Array, api_faceTags_[], api_faceTags_n_[], own = true)
+    faceNodes = unsafe_wrap(Array, api_faceNodes_[], api_faceNodes_n_[], own = true)
+    return faceTags, faceNodes
+end
+const get_all_faces = getAllFaces
+
+"""
+    gmsh.model.mesh.addEdges(edgeTags, edgeNodes)
+
+Add mesh edges defined by their global unique identifiers `edgeTags` and their
+nodes `edgeNodes`.
+"""
+function addEdges(edgeTags, edgeNodes)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshAddEdges, gmsh.lib), Cvoid,
+          (Ptr{Csize_t}, Csize_t, Ptr{Csize_t}, Csize_t, Ptr{Cint}),
+          convert(Vector{Csize_t}, edgeTags), length(edgeTags), convert(Vector{Csize_t}, edgeNodes), length(edgeNodes), ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+const add_edges = addEdges
+
+"""
+    gmsh.model.mesh.addFaces(faceType, faceTags, faceNodes)
+
+Add mesh faces of type `faceType` defined by their global unique identifiers
+`faceTags` and their nodes `faceNodes`.
+"""
+function addFaces(faceType, faceTags, faceNodes)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshAddFaces, gmsh.lib), Cvoid,
+          (Cint, Ptr{Csize_t}, Csize_t, Ptr{Csize_t}, Csize_t, Ptr{Cint}),
+          faceType, convert(Vector{Csize_t}, faceTags), length(faceTags), convert(Vector{Csize_t}, faceNodes), length(faceNodes), ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+const add_faces = addFaces
 
 """
     gmsh.model.mesh.getKeys(elementType, functionSpaceType, tag = -1, returnCoord = true)

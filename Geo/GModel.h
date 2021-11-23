@@ -264,15 +264,20 @@ public:
     maxe = _checkPointedMaxElementNum;
   }
 
-  // add a mesh edge or face in the global edge or face map and number it
-  // (starting at 1)
-  std::size_t addMEdge(MEdge &edge);
-  std::size_t addMFace(MFace &face);
+  // add a mesh edge or face in the global edge or face map with number "num",
+  // or number it (starting at 1) if num == 0
+  std::size_t addMEdge(MEdge &edge, std::size_t num = 0);
+  std::size_t addMFace(MFace &face, std::size_t num = 0);
   // get the edge of face and its global number given mesh nodes (return 0 if
   // the edge or face does not exist in the edge or face map)
   std::size_t getMEdge(MVertex *v0, MVertex *v1, MEdge &edge);
   std::size_t getMFace(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3,
                        MFace &face);
+  // iterate on edges and faces
+  hashmapMEdge::const_iterator firstMEdge() { return _mapEdgeNum.begin(); }
+  hashmapMEdge::const_iterator lastMEdge() { return _mapEdgeNum.end(); }
+  hashmapMFace::const_iterator firstMFace() { return _mapFaceNum.begin(); }
+  hashmapMFace::const_iterator lastMFace() { return _mapFaceNum.end(); }
 
   // renumber mesh vertices and elements in a continuous sequence (this
   // invalidates the mesh caches)

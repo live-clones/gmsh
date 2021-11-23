@@ -2651,9 +2651,10 @@ class model:
             Get the global unique mesh edge identifiers `edgeTags' and orientations
             `edgeOrientation' for an input list of node tag pairs defining these edges,
             concatenated in the vector `nodeTags'. Mesh edges are created e.g. by
-            `createEdges()' or `getKeys()'. The reference positive orientation is n1 <
-            n2, where n1 and n2 are the tags of the two edge nodes, which corresponds
-            to the local orientation of edge-based basis functions as well.
+            `createEdges()', `getKeys()' or `addEdges()'. The reference positive
+            orientation is n1 < n2, where n1 and n2 are the tags of the two edge nodes,
+            which corresponds to the local orientation of edge-based basis functions as
+            well.
 
             Return `edgeTags', `edgeOrientations'.
             """
@@ -2681,8 +2682,8 @@ class model:
             Get the global unique mesh face identifiers `faceTags' and orientations
             `faceOrientations' for an input list of node tag triplets (if `faceType' ==
             3) or quadruplets (if `faceType' == 4) defining these faces, concatenated
-            in the vector `nodeTags'. Mesh faces are created e.g. by `createFaces()' or
-            `getKeys()'.
+            in the vector `nodeTags'. Mesh faces are created e.g. by `createFaces()',
+            `getKeys()' or `addFaces()'.
 
             Return `faceTags', `faceOrientations'.
             """
@@ -2734,6 +2735,96 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
         create_faces = createFaces
+
+        @staticmethod
+        def getAllEdges():
+            """
+            gmsh.model.mesh.getAllEdges()
+
+            Get the global unique identifiers `edgeTags' and the nodes `edgeNodes` of
+            the edges in the mesh. Mesh edges are created e.g. by `createEdges()',
+            `getKeys()' or addEdges().
+
+            Return `edgeTags', `edgeNodes'.
+            """
+            api_edgeTags_, api_edgeTags_n_ = POINTER(c_size_t)(), c_size_t()
+            api_edgeNodes_, api_edgeNodes_n_ = POINTER(c_size_t)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshGetAllEdges(
+                byref(api_edgeTags_), byref(api_edgeTags_n_),
+                byref(api_edgeNodes_), byref(api_edgeNodes_n_),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return (
+                _ovectorsize(api_edgeTags_, api_edgeTags_n_.value),
+                _ovectorsize(api_edgeNodes_, api_edgeNodes_n_.value))
+        get_all_edges = getAllEdges
+
+        @staticmethod
+        def getAllFaces(faceType):
+            """
+            gmsh.model.mesh.getAllFaces(faceType)
+
+            Get the global unique identifiers `faceTags' and the nodes `faceNodes` of
+            the faces of type `faceType' in the mesh. Mesh faces are created e.g. by
+            `createFaces()', `getKeys()' or addFaces().
+
+            Return `faceTags', `faceNodes'.
+            """
+            api_faceTags_, api_faceTags_n_ = POINTER(c_size_t)(), c_size_t()
+            api_faceNodes_, api_faceNodes_n_ = POINTER(c_size_t)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshGetAllFaces(
+                c_int(faceType),
+                byref(api_faceTags_), byref(api_faceTags_n_),
+                byref(api_faceNodes_), byref(api_faceNodes_n_),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return (
+                _ovectorsize(api_faceTags_, api_faceTags_n_.value),
+                _ovectorsize(api_faceNodes_, api_faceNodes_n_.value))
+        get_all_faces = getAllFaces
+
+        @staticmethod
+        def addEdges(edgeTags, edgeNodes):
+            """
+            gmsh.model.mesh.addEdges(edgeTags, edgeNodes)
+
+            Add mesh edges defined by their global unique identifiers `edgeTags' and
+            their nodes `edgeNodes`.
+            """
+            api_edgeTags_, api_edgeTags_n_ = _ivectorsize(edgeTags)
+            api_edgeNodes_, api_edgeNodes_n_ = _ivectorsize(edgeNodes)
+            ierr = c_int()
+            lib.gmshModelMeshAddEdges(
+                api_edgeTags_, api_edgeTags_n_,
+                api_edgeNodes_, api_edgeNodes_n_,
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+        add_edges = addEdges
+
+        @staticmethod
+        def addFaces(faceType, faceTags, faceNodes):
+            """
+            gmsh.model.mesh.addFaces(faceType, faceTags, faceNodes)
+
+            Add mesh faces of type `faceType' defined by their global unique
+            identifiers `faceTags' and their nodes `faceNodes`.
+            """
+            api_faceTags_, api_faceTags_n_ = _ivectorsize(faceTags)
+            api_faceNodes_, api_faceNodes_n_ = _ivectorsize(faceNodes)
+            ierr = c_int()
+            lib.gmshModelMeshAddFaces(
+                c_int(faceType),
+                api_faceTags_, api_faceTags_n_,
+                api_faceNodes_, api_faceNodes_n_,
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+        add_faces = addFaces
 
         @staticmethod
         def getKeys(elementType, functionSpaceType, tag=-1, returnCoord=True):
