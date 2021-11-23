@@ -65,6 +65,7 @@
 #include "meshGRegionHxt.h"
 #include "gmshCrossFields.h"
 #include "alphaShapes.h"
+#include "meshTriangulation.h"
 #endif
 
 #if defined(HAVE_POST)
@@ -5208,6 +5209,8 @@ GMSH_API void gmsh::model::mesh::triangulate(const std::vector<double> &coord,
     return;
   }
 #if defined(HAVE_MESH)
+  meshTriangulate2d(coord,tri);
+  return;
   SBoundingBox3d bbox;
   for(std::size_t i = 0; i < coord.size(); i += 2)
     bbox += SPoint3(coord[i], coord[i + 1], 0.);

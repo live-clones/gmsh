@@ -867,3 +867,62 @@ PolyMesh *GFaceInitialMesh(int faceTag, int recover,
 
   return pm;
 }
+
+
+int meshTriangulate2d (const std::vector<double> &coord,
+		      std::vector<std::size_t> &tri){
+
+  PolyMesh *pm = new PolyMesh;
+
+  SBoundingBox3d bb;
+  for(size_t i=0; i< coord.size() ; i+=2) {
+    bb += SPoint3(coord[i],coord[i+1],0);
+  }
+  bb *= 1.1;
+  pm->initialize_rectangle(bb.min().x(), bb.max().x(), bb.min().y(),
+                           bb.max().y());
+  
+  PolyMesh::Face *f = pm->faces[0];
+  for(size_t i=0; i< coord.size() ; i+=2) {
+    double x = coord[i];
+    double y = coord[i+1];
+    // find face in which lies x,y
+    f = Walk(f, x, y);
+    // split f and then swap edges to recover delaunayness
+    pm->split_triangle(-1, x, y, 0, f, delaunayEdgeCriterionPlaneIsotropic,
+		       nullptr);
+    pm->vertices[pm->vertices.size() - 1]->data = i/2 + 1;
+  }
+
+  int iter=0;
+  while(1){
+    int nbs =0;
+    for (auto he : pm->hedges){
+      if (he->opposite && (he->v->data == -1 || he->opposite->v->data == -1)){
+	if(intersect(he->v, he->next->v, he->next->next->v,
+		     he->opposite->next->next->v)) {
+	  pm->swap_edge(he);
+	  nbs++;
+	}
+      }    
+    }
+    if (nbs == 0)break;
+    if (iter++ > 10)break;
+  }
+
+  for (auto t : pm->faces){
+    int i0 = t->he->v->data;
+    int i1 = t->he->next->v->data;
+    int i2 = t->he->next->next->v->data;
+    if (i0 > 0 && i1 > 0 && i2 > 0){
+      tri.push_back(i0);
+      tri.push_back(i1);
+      tri.push_back(i2);
+    }
+  }
+
+  
+  delete pm;
+  
+  return 0;  
+}
