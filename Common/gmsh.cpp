@@ -3351,9 +3351,9 @@ gmsh::model::mesh::getEdges(const std::vector<std::size_t> &nodeTags,
     if(v0 && v1) {
       MEdge edge;
       edgeTags[i] = GModel::current()->getMEdge(v0, v1, edge);
-      if(edge.getVertex(0) == v0 && edge.getVertex(1) == v1)
+      if(edge.getMinVertex() == v0 && edge.getMaxVertex() == v1)
         edgeOrientations[i] = 1;
-      else if(edge.getVertex(1) == v0 && edge.getVertex(0) == v1)
+      else if(edge.getMaxVertex() == v0 && edge.getMinVertex() == v1)
         edgeOrientations[i] = -1;
       else
         edgeOrientations[i] = 0;
@@ -5279,6 +5279,7 @@ gmsh::model::mesh::tetrahedralize(const std::vector<double> &coord,
 
 GMSH_API void
 gmsh::model::mesh::alphaShapes(const double threshold, 
+             const int dim,
 			       const std::vector<double> &coord,
 			       std::vector<std::size_t> &tetra,
 			       std::vector<std::vector<std::size_t> > &domains,
@@ -5286,7 +5287,7 @@ gmsh::model::mesh::alphaShapes(const double threshold,
 			       std::vector<std::size_t> &neigh, 
              const double meanValue){
 #if defined(HAVE_MESH)
-  alphaShapes_ (threshold, coord, tetra, domains, boundaries, neigh, meanValue);
+  alphaShapes_ (threshold, dim, coord, tetra, domains, boundaries, neigh, meanValue);
 #else
   Msg::Error("alphaShapes requires the mesh module");
 #endif

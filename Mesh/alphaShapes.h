@@ -5,6 +5,7 @@
 int computeTetNeighbors_ (const std::vector<size_t> &tetrahedra, std::vector<size_t> &neigh);
 
 int alphaShapes_ (const double threshold,
+		  const int dim,
 		  const std::vector<double> &pts,
 		  std::vector<size_t> &tetrahedra, 
 		  std::vector<std::vector<size_t> > &domains,

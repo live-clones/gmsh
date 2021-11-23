@@ -2651,7 +2651,9 @@ class model:
             Get the global unique mesh edge identifiers `edgeTags' and orientations
             `edgeOrientation' for an input list of node tag pairs defining these edges,
             concatenated in the vector `nodeTags'. Mesh edges are created e.g. by
-            `createEdges()' or `getKeys()'.
+            `createEdges()' or `getKeys()'. The reference positive orientation is n1 <
+            n2, where n1 and n2 are the tags of the two edge nodes, which corresponds
+            to the local orientation of edge-based basis functions as well.
 
             Return `edgeTags', `edgeOrientations'.
             """
@@ -3777,9 +3779,9 @@ class model:
             return _ovectorsize(api_tetra_, api_tetra_n_.value)
 
         @staticmethod
-        def alphaShapes(threshold, coord, meanValue=-1.):
+        def alphaShapes(threshold, dim, coord, meanValue=-1.):
             """
-            gmsh.model.mesh.alphaShapes(threshold, coord, meanValue=-1.)
+            gmsh.model.mesh.alphaShapes(threshold, dim, coord, meanValue=-1.)
 
             Give an alpha shape `threshold', points given in the `coord' vector as
             triplets of x, y, z coordinates, and return the tetrahedra (like
@@ -3803,6 +3805,7 @@ class model:
             ierr = c_int()
             lib.gmshModelMeshAlphaShapes(
                 c_double(threshold),
+                c_int(dim),
                 api_coord_, api_coord_n_,
                 byref(api_tetra_), byref(api_tetra_n_),
                 byref(api_domains_), byref(api_domains_n_), byref(api_domains_nn_),

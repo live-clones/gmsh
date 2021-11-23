@@ -52,7 +52,7 @@ static std::string physicalName(GModel *m, int dim, int num)
 }
 
 int GModel::writeTOCHNOG(const std::string &name, bool saveAll,
-                         bool saveGroupsOfNodes, double scalingFactor)
+                         int saveGroupsOfNodes, double scalingFactor)
 {
   FILE *fp = Fopen(name.c_str(), "w");
   if(!fp) {
@@ -172,6 +172,7 @@ int GModel::writeTOCHNOG(const std::string &name, bool saveAll,
   // physical points)
   if(saveGroupsOfNodes) {
     for(int dim = 0; dim <= 3; dim++) {
+      if(saveGroupsOfNodes < 0 && dim != -saveGroupsOfNodes) continue;
       for(auto it = groups[dim].begin(); it != groups[dim].end(); it++) {
         std::set<MVertex *, MVertexPtrLessThan> nodes;
         std::vector<GEntity *> &entities = it->second;

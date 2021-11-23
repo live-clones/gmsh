@@ -52,8 +52,7 @@ GFace::GFace(GModel *model, int tag)
 
 GFace::~GFace()
 {
-  for(auto it = l_edges.begin(); it != l_edges.end(); ++it)
-    (*it)->delFace(this);
+  for(auto ge : l_edges) ge->delFace(this);
 
   if(va_geom_triangles) delete va_geom_triangles;
 
@@ -244,8 +243,8 @@ SBoundingBox3d GFace::bounds(bool fast)
 {
   SBoundingBox3d res;
   if(geomType() != DiscreteSurface && geomType() != PartitionSurface) {
-    for(auto it = l_edges.begin(); it != l_edges.end(); ++it) {
-      res += (*it)->bounds(fast);
+    for(auto ge : l_edges) {
+      res += ge->bounds(fast);
     }
   }
   else {
@@ -348,11 +347,11 @@ std::vector<MVertex *> GFace::getEmbeddedMeshVertices(bool force) const
 std::vector<GVertex *> GFace::vertices() const
 {
   std::set<GVertex *> v;
-  for(auto it = l_edges.begin(); it != l_edges.end(); ++it) {
-    GVertex *const v1 = (*it)->getBeginVertex();
+  for(auto ge : l_edges) {
+    GVertex *const v1 = ge->getBeginVertex();
     if(v1) v.insert(v1);
 
-    GVertex *const v2 = (*it)->getEndVertex();
+    GVertex *const v2 = ge->getEndVertex();
     if(v2) v.insert(v2);
   }
   return std::vector<GVertex *>(v.begin(), v.end());
@@ -526,8 +525,7 @@ void GFace::computeMeanPlane()
     // want a parametrization of the surface that is "close" to the original
     // one. If this fails, we fallback to the classical (SVD-based) algorithm.
     std::vector<GEdge *> const &edg = edges();
-    for(auto ite = edg.begin(); ite != edg.end(); ite++) {
-      const GEdge *e = *ite;
+    for(auto e : edg) {
       if(e->geomType() == GEntity::DiscreteCurve ||
          e->geomType() == GEntity::BoundaryLayerCurve) {
         pts.clear();
@@ -597,8 +595,7 @@ void GFace::computeMeanPlane()
     Msg::Debug("Adding curve points (%d) to compute mean plane of surface %d",
                pts.size(), tag());
     std::vector<GEdge *> const &edg = edges();
-    for(auto ite = edg.begin(); ite != edg.end(); ite++) {
-      const GEdge *e = *ite;
+    for(auto e : edg) {
       if(e->mesh_vertices.size() > 1) {
         for(std::size_t i = 0; i < e->mesh_vertices.size(); i++)
           pts.push_back(e->mesh_vertices[i]->point());
@@ -1683,23 +1680,20 @@ static int meshCompoundComputeCrossFieldWithHeatEquation(GFace *gf)
 
 static void meshCompound(GFace *gf, bool verbose)
 {
-
+  discreteFace *df = dynamic_cast<discreteFace*>
+    (gf->model()->getFaceByTag(gf->tag() + 100000));
+  if(df) {
+    df->deleteMesh();
+  }
+  else{
+    df = new discreteFace(gf->model(), gf->tag() + 100000);
+    gf->model()->add(df);
+  }
 
   // reclassify the elements on the original surfaces? (This is nice but it will
   // perturb algorithms that depend on the parametrization after the mesh is
   // done)
   bool magic = (CTX::instance()->mesh.compoundClassify == 1);
-
-  // should forget about that face
-  GFace *_df = gf->model()->getFaceByTag(gf->tag() + 100000);
-  if (_df){
-    gf->model()->remove(_df);
-    delete _df;
-  }
-
-  
-  auto *df = new discreteFace(gf->model(), gf->tag() + 100000);
-  gf->model()->add(df);
 
   if(CTX::instance()->geom.copyMeshingMethod) {
     df->meshAttributes.method = gf->meshAttributes.method;
@@ -1709,7 +1703,6 @@ static void meshCompound(GFace *gf, bool verbose)
       gf->meshAttributes.transfiniteSmoothing;
     df->meshAttributes.algorithm = gf->meshAttributes.algorithm;
   }
-
 
   std::vector<GFace *> triangles_tag;
 

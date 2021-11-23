@@ -4,6 +4,7 @@
 #include <algorithm>
 #include "alphaShapes.h"
 #include "gmsh.h"
+#include "GmshMessage.h"
 
 double alphaShape (const size_t *t, const std::vector<double> &p, const double hMean){
   double tetcircumcenter(double a[3], double b[3], double c[3], double d[3],
@@ -23,6 +24,23 @@ double alphaShape (const size_t *t, const std::vector<double> &p, const double h
   return R/hMean;
 }
 
+double twoPointsDistance2D(const double *p0, const double *p1){
+  return sqrt( (p0[0]-p1[0])*(p0[0]-p1[0]) + (p0[1]-p1[1])*(p0[1]-p1[1]));
+}
+
+double alphaShape2D(const size_t *t, const std::vector<double> &p, const double hMean){
+  const double *p0 = &p[2*t[0]];
+  const double *p1 = &p[2*t[1]];
+  const double *p2 = &p[2*t[2]];
+  const double a = twoPointsDistance2D(p0,p1);
+  const double b = twoPointsDistance2D(p0,p2);
+  const double c = twoPointsDistance2D(p1,p2);
+  double s = (a+b+c)/2;
+  double den = 4*sqrt(s*(s-a)*(s-b)*(s-c));
+  double R = a*b*c / den;
+  return R/hMean;
+}
+
 double twoPointsDistance(const double *p0, const double *p1){
   return sqrt( (p0[0]-p1[0])*(p0[0]-p1[0]) + (p0[1]-p1[1])*(p0[1]-p1[1]) + (p0[2]-p1[2])*(p0[2]-p1[2]));
 }
@@ -36,9 +54,8 @@ double meanEdgeLength (const std::vector<double> &p, const std::vector<size_t> &
     const double *p2 = &p[3*tetrahedra[i+2]];
     const double *p3 = &p[3*tetrahedra[i+3]];
     double d0 = twoPointsDistance(p0, p1);
-    double hMin = d0;
     double d1 = twoPointsDistance(p0, p2);
-    hMin = std::min(hMin, d1);
+    double hMin = std::min(d0, d1);
     double d2 = twoPointsDistance(p0, p3);
     hMin = std::min(hMin, d2);
     double d3 = twoPointsDistance(p1, p2);
@@ -53,8 +70,25 @@ double meanEdgeLength (const std::vector<double> &p, const std::vector<size_t> &
   return hMean;
 }
 
+double meanEdgeLength2D (const std::vector<double> &p, const std::vector<size_t> &triangles){
+  double hMean = 0;
+  for (size_t i=0; i<triangles.size(); i+=3){
+    const double *p0 = &p[2*triangles[i+0]];
+    const double *p1 = &p[2*triangles[i+1]];
+    const double *p2 = &p[2*triangles[i+2]];
+    double d0 = twoPointsDistance2D(p0, p1);
+    double d1 = twoPointsDistance2D(p0, p2);
+    double hMin = std::min(d0, d1);
+    double d2 = twoPointsDistance2D(p1, p2);
+    hMin = std::min(hMin, d2);
+    hMean += hMin;
+  }
+  hMean = hMean / (triangles.size()/3);
+  return hMean;
+}
 
 static int _faces [4][3] = {{0,1,2}, {0,1,3}, {0,2,3}, {1,2,3}};
+static int _edges [3][2] = {{0,1}, {0,2}, {1,2}};
 
 void getOrderedFace (const size_t *t, int i, size_t *f){
   size_t no1 = t[_faces[i][0]];
@@ -84,6 +118,19 @@ void getOrderedFace (const size_t *t, int i, size_t *f){
    f[2] = hi;
 }
 
+void getOrderedEdge (const size_t *t, int i, size_t *e){
+  size_t no1 = t[_edges[i][0]];
+  size_t no2 = t[_edges[i][1]];
+  if (no1 < no2){
+    e[0] = no1;
+    e[1] = no2;
+  }
+  else {
+    e[0] = no2;
+    e[1] = no1;
+  }
+}
+
 int compareFourInt (const void *a , const void *b){
   const size_t *f0 = (size_t*)a;
   const size_t *f1 = (size_t*)b;
@@ -93,6 +140,17 @@ int compareFourInt (const void *a , const void *b){
   if (f0[1] > f1[1])return -1; 
   if (f0[2] < f1[2])return 1; 
   if (f0[2] > f1[2])return -1;
+  return 0;
+}
+
+
+int compareTwoInt (const void *a , const void *b){
+  const size_t *e0 = (size_t*)a;
+  const size_t *e1 = (size_t*)b;
+  if (e0[0] < e1[0])return 1; 
+  if (e0[0] > e1[0])return -1; 
+  if (e0[1] < e1[1])return 1; 
+  if (e0[1] > e1[1])return -1; 
   return 0;
 }
 
@@ -137,7 +195,111 @@ int computeTetNeighbors_ (const std::vector<size_t> &tetrahedra, std::vector<siz
   return 0;
 }
 
-int alphaShapes_ (const double threshold,
+int computeTriNeighbors_ (const std::vector<size_t> &triangles, std::vector<size_t> &neigh){
+  neigh.resize(triangles.size());
+  for (size_t i=0;i<neigh.size();i++)neigh[i] = triangles.size();
+  
+  size_t *temp = new size_t [4*triangles.size()];
+  size_t counter = 0;
+  for (size_t i = 0; i < triangles.size(); i+=3){
+    const size_t *t = &triangles[i];
+    for (int j=0;j<3;j++){
+      size_t e[2];
+      getOrderedEdge (t, j, e);
+      temp[counter++] = e[0];
+      temp[counter++] = e[1];
+      temp[counter++] = i/3;      
+      temp[counter++] = j;
+    }
+  }
+  qsort(temp, triangles.size(), 4*sizeof(size_t),compareTwoInt);
+
+  // loop over edges
+  counter  = 0;
+  while (1){
+    if (counter == triangles.size())break;
+    size_t *et0 = &temp[4*(counter++)];
+    if (counter == triangles.size())break;
+    size_t *et1 = &temp[4*counter];
+
+    if (compareTwoInt(et0,et1) == 0){
+      neigh[3*et0[2]+et0[3]] = et1[3];
+      neigh[3*et1[2]+et1[3]] = et0[3];
+      counter++;
+    }
+  }
+
+  delete [] temp;  
+  return 0;  
+}
+
+int alphaShapes2D_(const double threshold,
+		 const std::vector<double> &pts,
+		 std::vector<size_t> &triangles, 
+		 std::vector<std::vector<size_t> > &domains,
+		 std::vector<std::vector<size_t> > &boundaries,
+		 std::vector<size_t> &neigh, 
+     const double meanValue){
+  
+  
+  gmsh::model::mesh::triangulate(pts, triangles);
+
+  
+
+  for (size_t i = 0; i < triangles.size(); i++) triangles[i]--;
+  double hMean; 
+  if(meanValue < 0) hMean = meanEdgeLength2D(pts, triangles);
+  else hMean = meanValue;
+
+  computeTriNeighbors_ (triangles, neigh);
+
+  
+
+  std::vector<bool> _touched;
+  _touched.resize(triangles.size()/3);
+  for (size_t i=0;i<_touched.size();i++)_touched[i] = false;
+
+  for (size_t i = 0; i < triangles.size(); i+=3){
+    size_t *t = &triangles[i];
+    if (alphaShape2D(t, pts, hMean) < threshold && _touched[i/3] == false){
+      std::stack<size_t> _s;
+      std::vector<size_t> _domain;
+      std::vector<size_t> _boundary;
+      _s.push(i/3);
+      _touched[i/3] = true;
+      _domain.push_back(i/3);
+      while(!_s.empty()){
+        size_t t = _s.top();
+        _s.pop();
+        for (int j=0;j<3;j++){
+          size_t tj = neigh[3*t+j];
+          if (tj == triangles.size()){
+            _boundary.push_back(t);
+            _boundary.push_back(j);
+          }
+          else if (!_touched[tj]){
+            if (alphaShape2D(&triangles[3*tj], pts, hMean) < threshold){
+              _s.push(tj);
+              _touched[tj] = true;
+              _domain.push_back(tj);	    
+            }	    
+            else {
+              _boundary.push_back(t);
+              _boundary.push_back(j);	      
+            }
+          }
+        }	  
+      }
+      boundaries.push_back(_boundary);
+      domains.push_back(_domain); 
+    }
+  }
+
+  for (size_t i = 0; i < triangles.size(); i++)triangles[i]++;
+  return 0;
+}
+
+int alphaShapes3D_ (const double threshold,
 		 const std::vector<double> &pts,
 		 std::vector<size_t> &tetrahedra, 
 		 std::vector<std::vector<size_t> > &domains,
@@ -164,7 +326,7 @@ int alphaShapes_ (const double threshold,
         std::vector<size_t> _domain;
         std::vector<size_t> _boundary;
         _s.push(i/4);
-        _touched[i] = true;
+        _touched[i/4] = true;
         _domain.push_back(i/4);
         while(!_s.empty()){
           size_t t = _s.top();
@@ -196,3 +358,23 @@ int alphaShapes_ (const double threshold,
   return 0;
 }
 
+int alphaShapes_ (const double threshold,
+     const int dim,
+		 const std::vector<double> &pts,
+		 std::vector<size_t> &elements, 
+		 std::vector<std::vector<size_t> > &domains,
+		 std::vector<std::vector<size_t> > &boundaries,
+		 std::vector<size_t> &neigh, 
+     const double meanValue){
+  
+  if (dim == 2){
+    return alphaShapes2D_(threshold, pts, elements, domains, boundaries, neigh, meanValue);
+  }
+  else if (dim == 3){
+    return alphaShapes3D_(threshold, pts, elements, domains, boundaries, neigh, meanValue);
+  }
+  else {
+    Msg::Error("Invalid dimension");
+  }
+  return 0;
+}

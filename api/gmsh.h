@@ -1133,7 +1133,10 @@ namespace gmsh { // Top-level functions
       // Get the global unique mesh edge identifiers `edgeTags' and orientations
       // `edgeOrientation' for an input list of node tag pairs defining these
       // edges, concatenated in the vector `nodeTags'. Mesh edges are created e.g.
-      // by `createEdges()' or `getKeys()'.
+      // by `createEdges()' or `getKeys()'. The reference positive orientation is
+      // n1 < n2, where n1 and n2 are the tags of the two edge nodes, which
+      // corresponds to the local orientation of edge-based basis functions as
+      // well.
       GMSH_API void getEdges(const std::vector<std::size_t> & nodeTags,
                              std::vector<std::size_t> & edgeTags,
                              std::vector<int> & edgeOrientations);
@@ -1656,6 +1659,7 @@ namespace gmsh { // Top-level functions
       // criterion test : R_circumsribed / meanValue < alpha. if meanValue < 0,
       // meanValue is computed as the average minimum edge length of each element.
       GMSH_API void alphaShapes(const double threshold,
+                                const int dim,
                                 const std::vector<double> & coord,
                                 std::vector<std::size_t> & tetra,
                                 std::vector<std::vector<std::size_t> > & domains,

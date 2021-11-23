@@ -368,7 +368,7 @@ mesh.add('getNumberOfOrientations', doc, oint, iint('elementType'), istring('fun
 doc = '''Preallocate data before calling `getBasisFunctionsOrientation' with `numTasks' > 1. For C and C++ only.'''
 mesh.add_special('preallocateBasisFunctionsOrientation', doc, ['onlycc++'], None, iint('elementType'), ovectorint('basisFunctionsOrientation'), iint('tag', '-1'))
 
-doc = '''Get the global unique mesh edge identifiers `edgeTags' and orientations `edgeOrientation' for an input list of node tag pairs defining these edges, concatenated in the vector `nodeTags'. Mesh edges are created e.g. by `createEdges()' or `getKeys()'.'''
+doc = '''Get the global unique mesh edge identifiers `edgeTags' and orientations `edgeOrientation' for an input list of node tag pairs defining these edges, concatenated in the vector `nodeTags'. Mesh edges are created e.g. by `createEdges()' or `getKeys()'. The reference positive orientation is n1 < n2, where n1 and n2 are the tags of the two edge nodes, which corresponds to the local orientation of edge-based basis functions as well.'''
 mesh.add('getEdges', doc, None, ivectorsize('nodeTags'), ovectorsize('edgeTags'), ovectorint('edgeOrientations'))
 
 doc = '''Get the global unique mesh face identifiers `faceTags' and orientations `faceOrientations' for an input list of node tag triplets (if `faceType' == 3) or quadruplets (if `faceType' == 4) defining these faces, concatenated in the vector `nodeTags'. Mesh faces are created e.g. by `createFaces()' or `getKeys()'.'''
@@ -519,7 +519,7 @@ doc = '''Tetrahedralize the points given in the `coord' vector as triplets of x,
 mesh.add('tetrahedralize', doc, None, ivectordouble('coord'), ovectorsize('tetra'))
 
 doc = '''Give an alpha shape `threshold', points given in the `coord' vector as triplets of x, y, z coordinates, and return the tetrahedra (like intetrahedralize), `domains' as vectors of vectors of tetrahedron indices, `boundaries' as vectors of vectors of pairs tet/face and `neighbors' as a vector of size 4 times the number of tetrahedra giving neighboring ids of tetrahedra of a given tetrahedra. When a tetrahedra has no neighbor for its ith face, the value is tetrahedra.size. For a tet with vertices (0,1,2,3), node ids of the faces are respectively (0,1,2), (0,1,3), (0,2,3) and (1,2,3). `meanValue' is a parameter used in the alpha shape  criterion test : R_circumsribed / meanValue < alpha. if meanValue < 0,  meanValue is computed as the average minimum edge length of each element.'''
-mesh.add('alphaShapes', doc, None, idouble('threshold'), ivectordouble('coord'), ovectorsize('tetra'), ovectorvectorsize('domains'), ovectorvectorsize('boundaries'), ovectorsize('neighbors'), idouble('meanValue','-1.'))
+mesh.add('alphaShapes', doc, None, idouble('threshold'), iint('dim'), ivectordouble('coord'), ovectorsize('tetra'), ovectorvectorsize('domains'), ovectorvectorsize('boundaries'), ovectorsize('neighbors'), idouble('meanValue','-1.'))
 
 doc = '''Take  the node tags (with numbering starting at 1) of the tetrahedra in `tetra' and returns `neighbors' as a vector of size 4 times the number of tetrahedra giving neighboring ids of tetrahedra of a given tetrahedra. When a tetrahedra has no neighbor for its ith face, the value is tetrahedra.size. For a tet with vertices (0,1,2,3), node ids of the faces are respectively (0,1,2), (0,1,3), (0,2,3) and (1,2,3)'''
 mesh.add('tetNeighbors', doc, None, ivectorsize('tetra'), ovectorsize('neighbors'))

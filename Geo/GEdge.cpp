@@ -45,6 +45,7 @@ GEdge::~GEdge()
 {
   if(_v0) _v0->delEdge(this);
   if(_v1 && _v1 != _v0) _v1->delEdge(this);
+
   if(_cp) delete _cp;
   GEdge::deleteMesh();
 }
@@ -141,7 +142,7 @@ void GEdge::reverse()
   GVertex *tmp = _v0;
   _v0 = _v1;
   _v1 = tmp;
-  for(auto it = lines.begin(); it != lines.end(); it++) (*it)->reverse();
+  for(auto l : lines) l->reverse();
 }
 
 std::size_t GEdge::getNumMeshElementsByType(const int familyType) const
@@ -794,8 +795,15 @@ static bool recreateConsecutiveElements(GEdge *ge)
 
 static void meshCompound(GEdge *ge)
 {
-  auto *de = new discreteEdge(ge->model(), ge->tag() + 100000);
-  ge->model()->add(de);
+  discreteEdge *de = dynamic_cast<discreteEdge*>
+    (ge->model()->getEdgeByTag(ge->tag() + 100000));
+  if(de) {
+    de->deleteMesh();
+  }
+  else {
+    de = new discreteEdge(ge->model(), ge->tag() + 100000);
+    ge->model()->add(de);
+  }
 
   if(CTX::instance()->geom.copyMeshingMethod) {
     de->meshAttributes.method = ge->meshAttributes.method;
