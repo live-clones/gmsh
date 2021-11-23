@@ -6,8 +6,6 @@
 #include "gmsh.h"
 #include "GmshMessage.h"
 
-#include <iostream>
-
 double alphaShape (const size_t *t, const std::vector<double> &p, const double hMean){
   double tetcircumcenter(double a[3], double b[3], double c[3], double d[3],
 			 double circumcenter[3], double *xi, double *eta,
