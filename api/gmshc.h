@@ -1464,6 +1464,7 @@ GMSH_API void gmshModelMeshTetrahedralize(double * coord, size_t coord_n,
  * : R_circumsribed / meanValue < alpha. if meanValue < 0,  meanValue is
  * computed as the average minimum edge length of each element. */
 GMSH_API void gmshModelMeshAlphaShapes(const double threshold,
+                                       const int dim,
                                        double * coord, size_t coord_n,
                                        size_t ** tetra, size_t * tetra_n,
                                        size_t *** domains, size_t ** domains_n, size_t *domains_nn,

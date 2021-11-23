@@ -1659,6 +1659,7 @@ namespace gmsh { // Top-level functions
       // criterion test : R_circumsribed / meanValue < alpha. if meanValue < 0,
       // meanValue is computed as the average minimum edge length of each element.
       GMSH_API void alphaShapes(const double threshold,
+                                const int dim,
                                 const std::vector<double> & coord,
                                 std::vector<std::size_t> & tetra,
                                 std::vector<std::vector<std::size_t> > & domains,

@@ -3237,7 +3237,7 @@ function tetrahedralize(coord)
 end
 
 """
-    gmsh.model.mesh.alphaShapes(threshold, coord, meanValue = -1.)
+    gmsh.model.mesh.alphaShapes(threshold, dim, coord, meanValue = -1.)
 
 Give an alpha shape `threshold`, points given in the `coord` vector as triplets
 of x, y, z coordinates, and return the tetrahedra (like intetrahedralize),
@@ -3253,7 +3253,7 @@ element.
 
 Return `tetra`, `domains`, `boundaries`, `neighbors`.
 """
-function alphaShapes(threshold, coord, meanValue = -1.)
+function alphaShapes(threshold, dim, coord, meanValue = -1.)
     api_tetra_ = Ref{Ptr{Csize_t}}()
     api_tetra_n_ = Ref{Csize_t}()
     api_domains_ = Ref{Ptr{Ptr{Csize_t}}}()
@@ -3266,8 +3266,8 @@ function alphaShapes(threshold, coord, meanValue = -1.)
     api_neighbors_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshAlphaShapes, gmsh.lib), Cvoid,
-          (Cdouble, Ptr{Cdouble}, Csize_t, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Csize_t}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Csize_t}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Cdouble, Ptr{Cint}),
-          threshold, convert(Vector{Cdouble}, coord), length(coord), api_tetra_, api_tetra_n_, api_domains_, api_domains_n_, api_domains_nn_, api_boundaries_, api_boundaries_n_, api_boundaries_nn_, api_neighbors_, api_neighbors_n_, meanValue, ierr)
+          (Cdouble, Cint, Ptr{Cdouble}, Csize_t, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Csize_t}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Csize_t}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Cdouble, Ptr{Cint}),
+          threshold, dim, convert(Vector{Cdouble}, coord), length(coord), api_tetra_, api_tetra_n_, api_domains_, api_domains_n_, api_domains_nn_, api_boundaries_, api_boundaries_n_, api_boundaries_nn_, api_neighbors_, api_neighbors_n_, meanValue, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     tetra = unsafe_wrap(Array, api_tetra_[], api_tetra_n_[], own = true)
     tmp_api_domains_ = unsafe_wrap(Array, api_domains_[], api_domains_nn_[], own = true)

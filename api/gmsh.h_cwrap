@@ -2527,6 +2527,7 @@ namespace gmsh { // Top-level functions
       // criterion test : R_circumsribed / meanValue < alpha. if meanValue < 0,
       // meanValue is computed as the average minimum edge length of each element.
       inline void alphaShapes(const double threshold,
+                              const int dim,
                               const std::vector<double> & coord,
                               std::vector<std::size_t> & tetra,
                               std::vector<std::vector<std::size_t> > & domains,
@@ -2540,7 +2541,7 @@ namespace gmsh { // Top-level functions
         size_t **api_domains_; size_t *api_domains_n_, api_domains_nn_;
         size_t **api_boundaries_; size_t *api_boundaries_n_, api_boundaries_nn_;
         size_t *api_neighbors_; size_t api_neighbors_n_;
-        gmshModelMeshAlphaShapes(threshold, api_coord_, api_coord_n_, &api_tetra_, &api_tetra_n_, &api_domains_, &api_domains_n_, &api_domains_nn_, &api_boundaries_, &api_boundaries_n_, &api_boundaries_nn_, &api_neighbors_, &api_neighbors_n_, meanValue, &ierr);
+        gmshModelMeshAlphaShapes(threshold, dim, api_coord_, api_coord_n_, &api_tetra_, &api_tetra_n_, &api_domains_, &api_domains_n_, &api_domains_nn_, &api_boundaries_, &api_boundaries_n_, &api_boundaries_nn_, &api_neighbors_, &api_neighbors_n_, meanValue, &ierr);
         if(ierr) throwLastError();
         gmshFree(api_coord_);
         tetra.assign(api_tetra_, api_tetra_ + api_tetra_n_); gmshFree(api_tetra_);

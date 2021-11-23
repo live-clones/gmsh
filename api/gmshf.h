@@ -3040,6 +3040,7 @@ c
 !  computed as the average minimum edge length of each element.
         subroutine gmshModelMeshAlphaShapes(
      &      threshold,
+     &      dim,
      &      coord,
      &      coord_n,
      &      tetra,
@@ -3057,6 +3058,7 @@ c
      &    bind(C, name = "gmshModelMeshAlphaShapes")
           use, intrinsic :: iso_c_binding
             real(c_double), value::threshold
+            integer(c_int), value::dim
             real(c_double)::coord(*)
             integer(c_size_t), value :: coord_n
             type(c_ptr), intent(out)::tetra

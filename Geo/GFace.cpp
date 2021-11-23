@@ -1680,9 +1680,6 @@ static int meshCompoundComputeCrossFieldWithHeatEquation(GFace *gf)
 
 static void meshCompound(GFace *gf, bool verbose)
 {
-<<<<<<< HEAD
-
-=======
   discreteFace *df = dynamic_cast<discreteFace*>
     (gf->model()->getFaceByTag(gf->tag() + 100000));
   if(df) {
@@ -1692,27 +1689,12 @@ static void meshCompound(GFace *gf, bool verbose)
     df = new discreteFace(gf->model(), gf->tag() + 100000);
     gf->model()->add(df);
   }
->>>>>>> master
 
   // reclassify the elements on the original surfaces? (This is nice but it will
   // perturb algorithms that depend on the parametrization after the mesh is
   // done)
   bool magic = (CTX::instance()->mesh.compoundClassify == 1);
 
-<<<<<<< HEAD
-  // should forget about that face
-  GFace *_df = gf->model()->getFaceByTag(gf->tag() + 100000);
-  if (_df){
-    gf->model()->remove(_df);
-    delete _df;
-  }
-
-  
-  auto *df = new discreteFace(gf->model(), gf->tag() + 100000);
-  gf->model()->add(df);
-
-=======
->>>>>>> master
   if(CTX::instance()->geom.copyMeshingMethod) {
     df->meshAttributes.method = gf->meshAttributes.method;
     df->meshAttributes.transfiniteArrangement =

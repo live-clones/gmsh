@@ -5276,6 +5276,7 @@ gmsh::model::mesh::tetrahedralize(const std::vector<double> &coord,
 
 GMSH_API void
 gmsh::model::mesh::alphaShapes(const double threshold, 
+             const int dim,
 			       const std::vector<double> &coord,
 			       std::vector<std::size_t> &tetra,
 			       std::vector<std::vector<std::size_t> > &domains,
@@ -5283,7 +5284,7 @@ gmsh::model::mesh::alphaShapes(const double threshold,
 			       std::vector<std::size_t> &neigh, 
              const double meanValue){
 #if defined(HAVE_MESH)
-  alphaShapes_ (threshold, coord, tetra, domains, boundaries, neigh, meanValue);
+  alphaShapes_ (threshold, dim, coord, tetra, domains, boundaries, neigh, meanValue);
 #else
   Msg::Error("alphaShapes requires the mesh module");
 #endif

@@ -3779,9 +3779,9 @@ class model:
             return _ovectorsize(api_tetra_, api_tetra_n_.value)
 
         @staticmethod
-        def alphaShapes(threshold, coord, meanValue=-1.):
+        def alphaShapes(threshold, dim, coord, meanValue=-1.):
             """
-            gmsh.model.mesh.alphaShapes(threshold, coord, meanValue=-1.)
+            gmsh.model.mesh.alphaShapes(threshold, dim, coord, meanValue=-1.)
 
             Give an alpha shape `threshold', points given in the `coord' vector as
             triplets of x, y, z coordinates, and return the tetrahedra (like
@@ -3805,6 +3805,7 @@ class model:
             ierr = c_int()
             lib.gmshModelMeshAlphaShapes(
                 c_double(threshold),
+                c_int(dim),
                 api_coord_, api_coord_n_,
                 byref(api_tetra_), byref(api_tetra_n_),
                 byref(api_domains_), byref(api_domains_n_), byref(api_domains_nn_),
