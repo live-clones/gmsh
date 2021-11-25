@@ -138,6 +138,30 @@ list(APPEND HXT_INC_DIRS
      contrib/hxt/tetMesh/src
      contrib/hxt/tetMesh/include)
 
+#################################################################################
+# HXT Combine
+#################################################################################
+set (SRC
+  cell_types.cpp
+  candidate_cell.cpp
+  compute_candidate_cells.cpp
+  tet_mesh.cpp
+  algorithms.cpp
+  hxt_combine_c_api.cpp
+  hxt_combine_cpp_api.cpp
+  hxt_tet_combination_api.cpp
+  )
+ 
+set(INC
+   hxt_tet_combination_api.h
+   )	
+
+append_gmsh_src(contrib/hxt/Combine/src "${SRC}")
+append_gmsh_src(contrib/hxt/Combine/include "${INC}")
+list(APPEND HXT_INC_DIRS
+     contrib/hxt/Combine/src
+     contrib/hxt/Combine/include)
+
 
 #################################################################################
 # propagate HXT_INC_DIRS to parent CMakeLists
