@@ -223,8 +223,8 @@ int computeTriNeighbors_ (const std::vector<size_t> &triangles, std::vector<size
     size_t *et1 = &temp[4*counter];
 
     if (compareTwoInt(et0,et1) == 0){
-      neigh[3*et0[2]+et0[3]] = et1[3];
-      neigh[3*et1[2]+et1[3]] = et0[3];
+      neigh[3*et0[2]+et0[3]] = et1[2];
+      neigh[3*et1[2]+et1[3]] = et0[2];
       counter++;
     }
   }
@@ -244,16 +244,12 @@ int alphaShapes2D_(const double threshold,
   
   gmsh::model::mesh::triangulate(pts, triangles);
 
-  
-
   for (size_t i = 0; i < triangles.size(); i++) triangles[i]--;
   double hMean; 
   if(meanValue < 0) hMean = meanEdgeLength2D(pts, triangles);
   else hMean = meanValue;
 
   computeTriNeighbors_ (triangles, neigh);
-
-  
 
   std::vector<bool> _touched;
   _touched.resize(triangles.size()/3);
