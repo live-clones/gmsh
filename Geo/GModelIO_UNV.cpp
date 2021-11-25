@@ -435,9 +435,10 @@ int GModel::writeUNV(const std::string &name, bool saveAll,
   }
   fprintf(fp, "%6d\n", -1);
 
-  // save groups of elements and/or groups of nodes for each physical group if
-  // saveGroupsOfNodes/saveGroupsOfElements is positive; if negative, only save
-  // groups if their dimension == -saveGroupsOfNodes/saveGroupsOfElements
+  // save groups of nodes (resp. elements) for each physical group if
+  // saveGroupsOfNodes (resp. saveGroupsOfElements) is positive; if negative,
+  // only save groups if the (dim+1)^th least significant digit of
+  // -saveGroupsOfNodes (resp. -saveGroupsOfElements) is non-zero.
   if(saveGroupsOfNodes || saveGroupsOfElements) {
     std::map<int, std::vector<GEntity *> > groups[4];
     getPhysicalGroups(groups);
@@ -447,10 +448,13 @@ int GModel::writeUNV(const std::string &name, bool saveAll,
     for(int dim = 0; dim <= 3; dim++) {
       bool saveNodes =
         (saveGroupsOfNodes > 0 ||
-         (saveGroupsOfNodes < 0 && dim == -saveGroupsOfNodes));
+         (saveGroupsOfNodes < 0 &&
+          (-saveGroupsOfNodes / (int)std::pow(10, dim)) % 10));
       bool saveElements =
         (saveGroupsOfElements > 0 ||
-         (saveGroupsOfElements < 0 && dim == -saveGroupsOfElements));
+         (saveGroupsOfElements < 0 &&
+          (-saveGroupsOfElements / (int)std::pow(10, dim)) % 10));
+
       for(auto it = groups[dim].begin(); it != groups[dim].end(); it++) {
         std::vector<GEntity *> &entities = it->second;
 
