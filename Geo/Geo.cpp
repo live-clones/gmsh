@@ -2835,27 +2835,32 @@ int ExtrudeSurface(int type, int is, double T0, double T1, double T2, double A0,
                    double A1, double A2, double X0, double X1, double X2,
                    double alpha, Volume **pv, ExtrudeParams *e)
 {
-  double matrix[4][4], T[3], Ax[3];
-  Curve *c, *c2;
-  int i;
-  Surface *s, *ps, *chapeau;
-
   *pv = nullptr;
 
-  // 'is' can be negative, to signify that the surface orientation
-  // should be reversed. This orientation information is only used at
-  // the moment when creating boundary layers
-  if(!(ps = FindSurface(std::abs(is)))) return 0;
+  // 'is' can be negative, to signify that the surface orientation should be
+  // reversed. This orientation information is only used at the moment when
+  // creating boundary layers
+  Surface *ps = FindSurface(std::abs(is));
+
+  if(!ps) {
+    if(type == BOUNDARY_LAYER) {
+      Msg::Warning("Placeholder for when we will allow geometrical boundary "
+                   "layers of non-built-in entities");
+      return 0;
+    }
+    return 0;
+  }
 
   Msg::Debug("Extrude Surface %d", is);
 
-  chapeau = DuplicateSurface(ps);
+  Surface *chapeau = DuplicateSurface(ps);
   chapeau->Extrude = new ExtrudeParams(COPIED_ENTITY);
   chapeau->Extrude->fill(type, T0, T1, T2, A0, A1, A2, X0, X1, X2, alpha);
   chapeau->Extrude->geo.Source = is; // not ps->Num: we need the sign info
   if(e) chapeau->Extrude->mesh = e->mesh;
 
-  for(i = 0; i < List_Nbr(chapeau->Generatrices); i++) {
+  for(int i = 0; i < List_Nbr(chapeau->Generatrices); i++) {
+    Curve *c, *c2;
     List_Read(ps->Generatrices, i, &c2);
     List_Read(chapeau->Generatrices, i, &c);
     c->Extrude = new ExtrudeParams(COPIED_ENTITY);
@@ -2900,8 +2905,10 @@ int ExtrudeSurface(int type, int is, double T0, double T1, double T2, double A0,
   List_Add(v->Surfaces, &chapeau);
   List_Add(v->SurfacesOrientations, &ori);
 
-  for(i = 0; i < List_Nbr(ps->Generatrices); i++) {
+  for(int i = 0; i < List_Nbr(ps->Generatrices); i++) {
+    Curve *c;
     List_Read(ps->Generatrices, i, &c);
+    Surface *s;
     ExtrudeCurve(type, c->Num, T0, T1, T2, A0, A1, A2, X0, X1, X2, alpha, &s, 0,
                  e);
     if(s) {
@@ -2913,6 +2920,8 @@ int ExtrudeSurface(int type, int is, double T0, double T1, double T2, double A0,
       List_Add(v->SurfacesOrientations, &ori);
     }
   }
+
+  double matrix[4][4], T[3], Ax[3];
 
   switch(type) {
   case TRANSLATE:
@@ -2926,6 +2935,7 @@ int ExtrudeSurface(int type, int is, double T0, double T1, double T2, double A0,
   case BOUNDARY_LAYER:
     chapeau->Typ = MSH_SURF_BND_LAYER;
     for(int i = 0; i < List_Nbr(chapeau->Generatrices); i++) {
+      Curve *c;
       List_Read(chapeau->Generatrices, i, &c);
       c->Typ = MSH_SEGM_BND_LAYER;
       c = FindCurve(-c->Num);
