@@ -2758,7 +2758,7 @@ class model:
             """
             gmsh.model.mesh.getAllEdges()
 
-            Get the global unique identifiers `edgeTags' and the nodes `edgeNodes` of
+            Get the global unique identifiers `edgeTags' and the nodes `edgeNodes' of
             the edges in the mesh. Mesh edges are created e.g. by `createEdges()',
             `getKeys()' or addEdges().
 
@@ -2783,7 +2783,7 @@ class model:
             """
             gmsh.model.mesh.getAllFaces(faceType)
 
-            Get the global unique identifiers `faceTags' and the nodes `faceNodes` of
+            Get the global unique identifiers `faceTags' and the nodes `faceNodes' of
             the faces of type `faceType' in the mesh. Mesh faces are created e.g. by
             `createFaces()', `getKeys()' or addFaces().
 
@@ -2810,7 +2810,7 @@ class model:
             gmsh.model.mesh.addEdges(edgeTags, edgeNodes)
 
             Add mesh edges defined by their global unique identifiers `edgeTags' and
-            their nodes `edgeNodes`.
+            their nodes `edgeNodes'.
             """
             api_edgeTags_, api_edgeTags_n_ = _ivectorsize(edgeTags)
             api_edgeNodes_, api_edgeNodes_n_ = _ivectorsize(edgeNodes)
@@ -2829,7 +2829,7 @@ class model:
             gmsh.model.mesh.addFaces(faceType, faceTags, faceNodes)
 
             Add mesh faces of type `faceType' defined by their global unique
-            identifiers `faceTags' and their nodes `faceNodes`.
+            identifiers `faceTags' and their nodes `faceNodes'.
             """
             api_faceTags_, api_faceTags_n_ = _ivectorsize(faceTags)
             api_faceNodes_, api_faceNodes_n_ = _ivectorsize(faceNodes)

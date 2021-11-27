@@ -2024,9 +2024,9 @@ C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/x7.cpp#L46,x7.cpp}), Python (@url{@
 @end table
 
 @item gmsh/model/mesh/getAllEdges
-Get the global unique identifiers @code{edgeTags} and the nodes
-@code{edgeNodes@code{ of the edges in the mesh. Mesh edges are created e.g. by
-@code{createEdges()}, @code{getKeys()} or addEdges().
+Get the global unique identifiers @code{edgeTags} and the nodes @code{edgeNodes}
+of the edges in the mesh. Mesh edges are created e.g. by @code{createEdges()},
+@code{getKeys()} or addEdges().
 
 @table @asis
 @item Input:
@@ -2040,9 +2040,9 @@ Get the global unique identifiers @code{edgeTags} and the nodes
 @end table
 
 @item gmsh/model/mesh/getAllFaces
-Get the global unique identifiers @code{faceTags} and the nodes
-@code{faceNodes@code{ of the faces of type @code{faceType} in the mesh. Mesh
-faces are created e.g. by @code{createFaces()}, @code{getKeys()} or addFaces().
+Get the global unique identifiers @code{faceTags} and the nodes @code{faceNodes}
+of the faces of type @code{faceType} in the mesh. Mesh faces are created e.g. by
+@code{createFaces()}, @code{getKeys()} or addFaces().
 
 @table @asis
 @item Input:
@@ -2057,7 +2057,7 @@ faces are created e.g. by @code{createFaces()}, @code{getKeys()} or addFaces().
 
 @item gmsh/model/mesh/addEdges
 Add mesh edges defined by their global unique identifiers @code{edgeTags} and
-their nodes @code{edgeNodes@code{.
+their nodes @code{edgeNodes}.
 
 @table @asis
 @item Input:
@@ -2072,7 +2072,7 @@ their nodes @code{edgeNodes@code{.
 
 @item gmsh/model/mesh/addFaces
 Add mesh faces of type @code{faceType} defined by their global unique
-identifiers @code{faceTags} and their nodes @code{faceNodes@code{.
+identifiers @code{faceTags} and their nodes @code{faceNodes}.
 
 @table @asis
 @item Input:

@@ -2121,7 +2121,7 @@ c
             integer(c_int)::ierr
           end subroutine gmshModelMeshCreateFaces
 
-!  Get the global unique identifiers `edgeTags' and the nodes `edgeNodes` of
+!  Get the global unique identifiers `edgeTags' and the nodes `edgeNodes' of
 !  the edges in the mesh. Mesh edges are created e.g. by `createEdges()',
 !  `getKeys()' or addEdges().
         subroutine gmshModelMeshGetAllEdges(
@@ -2139,7 +2139,7 @@ c
             integer(c_int)::ierr
           end subroutine gmshModelMeshGetAllEdges
 
-!  Get the global unique identifiers `faceTags' and the nodes `faceNodes` of
+!  Get the global unique identifiers `faceTags' and the nodes `faceNodes' of
 !  the faces of type `faceType' in the mesh. Mesh faces are created e.g. by
 !  `createFaces()', `getKeys()' or addFaces().
         subroutine gmshModelMeshGetAllFaces(
@@ -2160,7 +2160,7 @@ c
           end subroutine gmshModelMeshGetAllFaces
 
 !  Add mesh edges defined by their global unique identifiers `edgeTags' and
-!  their nodes `edgeNodes`.
+!  their nodes `edgeNodes'.
         subroutine gmshModelMeshAddEdges(
      &      edgeTags,
      &      edgeTags_n,
@@ -2177,7 +2177,7 @@ c
           end subroutine gmshModelMeshAddEdges
 
 !  Add mesh faces of type `faceType' defined by their global unique
-!  identifiers `faceTags' and their nodes `faceNodes`.
+!  identifiers `faceTags' and their nodes `faceNodes'.
         subroutine gmshModelMeshAddFaces(
      &      faceType,
      &      faceTags,

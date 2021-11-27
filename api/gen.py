@@ -383,16 +383,16 @@ mesh.add('createEdges', doc, None, ivectorpair('dimTags', 'gmsh::vectorpair()', 
 doc = '''Create unique mesh faces for the entities `dimTags'.'''
 mesh.add('createFaces', doc, None, ivectorpair('dimTags', 'gmsh::vectorpair()', "[]", "[]"))
 
-doc = '''Get the global unique identifiers `edgeTags' and the nodes `edgeNodes` of the edges in the mesh. Mesh edges are created e.g. by `createEdges()', `getKeys()' or addEdges().'''
+doc = '''Get the global unique identifiers `edgeTags' and the nodes `edgeNodes' of the edges in the mesh. Mesh edges are created e.g. by `createEdges()', `getKeys()' or addEdges().'''
 mesh.add('getAllEdges', doc, None, ovectorsize('edgeTags'), ovectorsize('edgeNodes'))
 
-doc = '''Get the global unique identifiers `faceTags' and the nodes `faceNodes` of the faces of type `faceType' in the mesh. Mesh faces are created e.g. by `createFaces()', `getKeys()' or addFaces().'''
+doc = '''Get the global unique identifiers `faceTags' and the nodes `faceNodes' of the faces of type `faceType' in the mesh. Mesh faces are created e.g. by `createFaces()', `getKeys()' or addFaces().'''
 mesh.add('getAllFaces', doc, None, iint('faceType'), ovectorsize('faceTags'), ovectorsize('faceNodes'))
 
-doc = '''Add mesh edges defined by their global unique identifiers `edgeTags' and their nodes `edgeNodes`.'''
+doc = '''Add mesh edges defined by their global unique identifiers `edgeTags' and their nodes `edgeNodes'.'''
 mesh.add('addEdges', doc, None, ivectorsize('edgeTags'), ivectorsize('edgeNodes'))
 
-doc = '''Add mesh faces of type `faceType' defined by their global unique identifiers `faceTags' and their nodes `faceNodes`.'''
+doc = '''Add mesh faces of type `faceType' defined by their global unique identifiers `faceTags' and their nodes `faceNodes'.'''
 mesh.add('addFaces', doc, None, iint('faceType'), ivectorsize('faceTags'), ivectorsize('faceNodes'))
 
 doc = '''Generate the pair of keys for the elements of type `elementType' in the entity of tag `tag', for the `functionSpaceType' function space. Each pair (`typeKey', `entityKey') uniquely identifies a basis function in the function space. If `returnCoord' is set, the `coord' vector contains the x, y, z coordinates locating basis functions for sorting purposes. Warning: this is an experimental feature and will probably change in a future release.'''

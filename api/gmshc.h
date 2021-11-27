@@ -1025,14 +1025,14 @@ GMSH_API void gmshModelMeshCreateEdges(int * dimTags, size_t dimTags_n,
 GMSH_API void gmshModelMeshCreateFaces(int * dimTags, size_t dimTags_n,
                                        int * ierr);
 
-/* Get the global unique identifiers `edgeTags' and the nodes `edgeNodes` of
+/* Get the global unique identifiers `edgeTags' and the nodes `edgeNodes' of
  * the edges in the mesh. Mesh edges are created e.g. by `createEdges()',
  * `getKeys()' or addEdges(). */
 GMSH_API void gmshModelMeshGetAllEdges(size_t ** edgeTags, size_t * edgeTags_n,
                                        size_t ** edgeNodes, size_t * edgeNodes_n,
                                        int * ierr);
 
-/* Get the global unique identifiers `faceTags' and the nodes `faceNodes` of
+/* Get the global unique identifiers `faceTags' and the nodes `faceNodes' of
  * the faces of type `faceType' in the mesh. Mesh faces are created e.g. by
  * `createFaces()', `getKeys()' or addFaces(). */
 GMSH_API void gmshModelMeshGetAllFaces(const int faceType,
@@ -1041,13 +1041,13 @@ GMSH_API void gmshModelMeshGetAllFaces(const int faceType,
                                        int * ierr);
 
 /* Add mesh edges defined by their global unique identifiers `edgeTags' and
- * their nodes `edgeNodes`. */
+ * their nodes `edgeNodes'. */
 GMSH_API void gmshModelMeshAddEdges(size_t * edgeTags, size_t edgeTags_n,
                                     size_t * edgeNodes, size_t edgeNodes_n,
                                     int * ierr);
 
 /* Add mesh faces of type `faceType' defined by their global unique
- * identifiers `faceTags' and their nodes `faceNodes`. */
+ * identifiers `faceTags' and their nodes `faceNodes'. */
 GMSH_API void gmshModelMeshAddFaces(const int faceType,
                                     size_t * faceTags, size_t faceTags_n,
                                     size_t * faceNodes, size_t faceNodes_n,
