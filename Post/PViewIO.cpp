@@ -399,7 +399,8 @@ bool PView::write(const std::string &fileName, int format, bool append)
   case 10: {
     std::string ext = SplitFileName(fileName)[2];
     if(ext == ".pos")
-      ret = _data->writePOS(fileName, false, true, append);
+      ret = _data->writePOS(fileName, CTX::instance()->post.binary,
+                            !CTX::instance()->post.binary, append);
     else if(ext == ".stl")
       ret = _data->writeSTL(fileName);
     else if(ext == ".msh")

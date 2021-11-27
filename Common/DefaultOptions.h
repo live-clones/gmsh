@@ -1614,6 +1614,9 @@ StringXNumber PostProcessingOptions_Number[] = {
   { F|O, "AnimationStep" , opt_post_anim_step , 1. ,
     "Step increment for animations" },
 
+  { F|O, "Binary" , opt_post_binary , 0. ,
+    "Write post-processing files in binary format (if possible)" },
+
   { F|O, "CombineRemoveOriginal" , opt_post_combine_remove_orig , 1. ,
     "Remove original views after a Combine operation" },
   { F|O, "CombineCopyOptions" , opt_post_combine_copy_options , 1. ,
