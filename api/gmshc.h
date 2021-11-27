@@ -282,7 +282,7 @@ GMSH_API void gmshModelGetBoundingBox(const int dim,
                                       double * zmax,
                                       int * ierr);
 
-/* Get the geometrical dimension of the current model. */
+/* Return the geometrical dimension of the current model. */
 GMSH_API int gmshModelGetDimension(int * ierr);
 
 /* Add a discrete model entity (defined by a mesh) of dimension `dim' in the
@@ -321,6 +321,9 @@ GMSH_API void gmshModelGetParent(const int dim,
                                  int * parentDim,
                                  int * parentTag,
                                  int * ierr);
+
+/* Return the number of partitions in the model. */
+GMSH_API int gmshModelGetNumberOfPartitions(int * ierr);
 
 /* In a partitioned model, return the tags of the partition(s) to which the
  * entity belongs. */
@@ -2981,9 +2984,9 @@ GMSH_API void gmshPluginSetString(const char * name,
                                   const char * value,
                                   int * ierr);
 
-/* Run the plugin `name'. */
-GMSH_API void gmshPluginRun(const char * name,
-                            int * ierr);
+/* Run the plugin `name'. Return the tag of the created view (if any). */
+GMSH_API int gmshPluginRun(const char * name,
+                           int * ierr);
 
 /* Draw all the OpenGL scenes. */
 GMSH_API void gmshGraphicsDraw(int * ierr);

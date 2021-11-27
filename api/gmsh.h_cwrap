@@ -532,7 +532,7 @@ namespace gmsh { // Top-level functions
       if(ierr) throwLastError();
     }
 
-    // Get the geometrical dimension of the current model.
+    // Return the geometrical dimension of the current model.
     inline int getDimension()
     {
       int ierr = 0;
@@ -603,6 +603,15 @@ namespace gmsh { // Top-level functions
       int ierr = 0;
       gmshModelGetParent(dim, tag, &parentDim, &parentTag, &ierr);
       if(ierr) throwLastError();
+    }
+
+    // Return the number of partitions in the model.
+    inline int getNumberOfPartitions()
+    {
+      int ierr = 0;
+      int result_api_ = gmshModelGetNumberOfPartitions(&ierr);
+      if(ierr) throwLastError();
+      return result_api_;
     }
 
     // In a partitioned model, return the tags of the partition(s) to which the
@@ -5027,12 +5036,13 @@ namespace gmsh { // Top-level functions
       if(ierr) throwLastError();
     }
 
-    // Run the plugin `name'.
-    inline void run(const std::string & name)
+    // Run the plugin `name'. Return the tag of the created view (if any).
+    inline int run(const std::string & name)
     {
       int ierr = 0;
-      gmshPluginRun(name.c_str(), &ierr);
+      int result_api_ = gmshPluginRun(name.c_str(), &ierr);
       if(ierr) throwLastError();
+      return result_api_;
     }
 
   } // namespace plugin

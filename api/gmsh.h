@@ -342,7 +342,7 @@ namespace gmsh { // Top-level functions
 
     // gmsh::model::getDimension
     //
-    // Get the geometrical dimension of the current model.
+    // Return the geometrical dimension of the current model.
     GMSH_API int getDimension();
 
     // gmsh::model::addDiscreteEntity
@@ -386,6 +386,11 @@ namespace gmsh { // Top-level functions
                             const int tag,
                             int & parentDim,
                             int & parentTag);
+
+    // gmsh::model::getNumberOfPartitions
+    //
+    // Return the number of partitions in the model.
+    GMSH_API int getNumberOfPartitions();
 
     // gmsh::model::getPartitions
     //
@@ -3356,8 +3361,8 @@ namespace gmsh { // Top-level functions
 
     // gmsh::plugin::run
     //
-    // Run the plugin `name'.
-    GMSH_API void run(const std::string & name);
+    // Run the plugin `name'. Return the tag of the created view (if any).
+    GMSH_API int run(const std::string & name);
 
   } // namespace plugin
 

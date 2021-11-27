@@ -563,7 +563,7 @@ c
             integer(c_int)::ierr
           end subroutine gmshModelGetBoundingBox
 
-!  Get the geometrical dimension of the current model.
+!  Return the geometrical dimension of the current model.
         function gmshModelGetDimension(
      &      ierr)
      &    bind(C, name = "gmshModelGetDimension")
@@ -651,6 +651,15 @@ c
             integer(c_int)::parentTag
             integer(c_int)::ierr
           end subroutine gmshModelGetParent
+
+!  Return the number of partitions in the model.
+        function gmshModelGetNumberOfPartitions(
+     &      ierr)
+     &    bind(C, name = "gmshModelGetNumberOfPartitions")
+          use, intrinsic :: iso_c_binding
+          integer(c_int)::gmshModelGetNumberOfPartitions
+            integer(c_int)::ierr
+          end function gmshModelGetNumberOfPartitions
 
 !  In a partitioned model, return the tags of the partition(s) to which the
 !  entity belongs.
@@ -6256,15 +6265,16 @@ c
             integer(c_int)::ierr
           end subroutine gmshPluginSetString
 
-!  Run the plugin `name'.
-        subroutine gmshPluginRun(
+!  Run the plugin `name'. Return the tag of the created view (if any).
+        function gmshPluginRun(
      &      name,
      &      ierr)
      &    bind(C, name = "gmshPluginRun")
           use, intrinsic :: iso_c_binding
+          integer(c_int)::gmshPluginRun
             character(len = 1, kind = c_char)::name(*)
             integer(c_int)::ierr
-          end subroutine gmshPluginRun
+          end function gmshPluginRun
 
 !  Draw all the OpenGL scenes.
         subroutine gmshGraphicsDraw(

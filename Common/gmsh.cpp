@@ -732,6 +732,12 @@ GMSH_API void gmsh::model::getPartitions(const int dim, const int tag,
   for(std::size_t i = 0; i < p.size(); i++) partitions.push_back(p[i]);
 }
 
+GMSH_API int gmsh::model::getNumberOfPartitions()
+{
+  if(!_checkInit()) return 0;
+  return GModel::current()->getNumPartitions();
+}
+
 GMSH_API void gmsh::model::getValue(const int dim, const int tag,
                                     const std::vector<double> &parametricCoord,
                                     std::vector<double> &coord)
@@ -7588,17 +7594,19 @@ GMSH_API void gmsh::plugin::setString(const std::string &name,
 #endif
 }
 
-GMSH_API void gmsh::plugin::run(const std::string &name)
+GMSH_API int gmsh::plugin::run(const std::string &name)
 {
-  if(!_checkInit()) return;
+  if(!_checkInit()) return 0;
 #if defined(HAVE_PLUGINS)
   try {
-    PluginManager::instance()->action(name, "Run", nullptr);
+    return PluginManager::instance()->action(name, "Run", nullptr);
   } catch(...) {
     Msg::Error("Unknown plugin or plugin action");
+    return 0;
   }
 #else
   Msg::Error("Views require the post-processing and plugin modules");
+  return 0;
 #endif
 }
 

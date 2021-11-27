@@ -157,7 +157,7 @@ model.add('getEntitiesInBoundingBox', doc, None, idouble('xmin'), idouble('ymin'
 doc = '''Get the bounding box (`xmin', `ymin', `zmin'), (`xmax', `ymax', `zmax') of the model entity of dimension `dim' and tag `tag'. If `dim' and `tag' are negative, get the bounding box of the whole model.'''
 model.add('getBoundingBox', doc, None, iint('dim'), iint('tag'), odouble('xmin'), odouble('ymin'), odouble('zmin'), odouble('xmax'), odouble('ymax'), odouble('zmax'))
 
-doc = '''Get the geometrical dimension of the current model.'''
+doc = '''Return the geometrical dimension of the current model.'''
 model.add('getDimension', doc, oint)
 
 doc = '''Add a discrete model entity (defined by a mesh) of dimension `dim' in the current model. Return the tag of the new discrete entity, equal to `tag' if `tag' is positive, or a new tag if `tag' < 0. `boundary' specifies the tags of the entities on the boundary of the discrete entity, if any. Specifying `boundary' allows Gmsh to construct the topology of the overall model.'''
@@ -174,6 +174,9 @@ model.add('getType', doc, None, iint('dim'), iint('tag'), ostring('entityType'))
 
 doc = '''In a partitioned model, get the parent of the entity of dimension `dim' and tag `tag', i.e. from which the entity is a part of, if any. `parentDim' and `parentTag' are set to -1 if the entity has no parent.'''
 model.add('getParent', doc, None, iint('dim'), iint('tag'), oint('parentDim'), oint('parentTag'))
+
+doc = '''Return the number of partitions in the model.'''
+model.add('getNumberOfPartitions', doc, oint)
 
 doc = '''In a partitioned model, return the tags of the partition(s) to which the entity belongs.'''
 model.add('getPartitions', doc, None, iint('dim'), iint('tag'), ovectorint('partitions'))
@@ -967,8 +970,8 @@ plugin.add('setNumber', doc, None, istring('name'), istring('option'), idouble('
 doc = '''Set the string option `option' to the value `value' for plugin `name'.'''
 plugin.add('setString', doc, None, istring('name'), istring('option'), istring('value'))
 
-doc = '''Run the plugin `name'.'''
-plugin.add('run', doc, None, istring('name'))
+doc = '''Run the plugin `name'. Return the tag of the created view (if any).'''
+plugin.add('run', doc, oint, istring('name'))
 
 ################################################################################
 

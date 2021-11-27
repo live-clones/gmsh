@@ -575,6 +575,19 @@ GMSH_API void gmshModelGetParent(const int dim, const int tag, int * parentDim, 
   }
 }
 
+GMSH_API int gmshModelGetNumberOfPartitions(int * ierr)
+{
+  int result_api_ = 0;
+  if(ierr) *ierr = 0;
+  try {
+    result_api_ = gmsh::model::getNumberOfPartitions();
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+  return result_api_;
+}
+
 GMSH_API void gmshModelGetPartitions(const int dim, const int tag, int ** partitions, size_t * partitions_n, int * ierr)
 {
   if(ierr) *ierr = 0;
@@ -4112,15 +4125,17 @@ GMSH_API void gmshPluginSetString(const char * name, const char * option, const 
   }
 }
 
-GMSH_API void gmshPluginRun(const char * name, int * ierr)
+GMSH_API int gmshPluginRun(const char * name, int * ierr)
 {
+  int result_api_ = 0;
   if(ierr) *ierr = 0;
   try {
-    gmsh::plugin::run(name);
+    result_api_ = gmsh::plugin::run(name);
   }
   catch(...){
     if(ierr) *ierr = 1;
   }
+  return result_api_;
 }
 
 GMSH_API void gmshGraphicsDraw(int * ierr)

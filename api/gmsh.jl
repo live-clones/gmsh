@@ -707,7 +707,7 @@ const get_bounding_box = getBoundingBox
 """
     gmsh.model.getDimension()
 
-Get the geometrical dimension of the current model.
+Return the geometrical dimension of the current model.
 
 Return an integer value.
 """
@@ -815,6 +815,23 @@ function getParent(dim, tag)
     return api_parentDim_[], api_parentTag_[]
 end
 const get_parent = getParent
+
+"""
+    gmsh.model.getNumberOfPartitions()
+
+Return the number of partitions in the model.
+
+Return an integer value.
+"""
+function getNumberOfPartitions()
+    ierr = Ref{Cint}()
+    api_result_ = ccall((:gmshModelGetNumberOfPartitions, gmsh.lib), Cint,
+          (Ptr{Cint},),
+          ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return api_result_
+end
+const get_number_of_partitions = getNumberOfPartitions
 
 """
     gmsh.model.getPartitions(dim, tag)
@@ -6335,15 +6352,17 @@ const set_string = setString
 """
     gmsh.plugin.run(name)
 
-Run the plugin `name`.
+Run the plugin `name`. Return the tag of the created view (if any).
+
+Return an integer value.
 """
 function run(name)
     ierr = Ref{Cint}()
-    ccall((:gmshPluginRun, gmsh.lib), Cvoid,
+    api_result_ = ccall((:gmshPluginRun, gmsh.lib), Cint,
           (Ptr{Cchar}, Ptr{Cint}),
           name, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    return nothing
+    return api_result_
 end
 
 end # end of module plugin

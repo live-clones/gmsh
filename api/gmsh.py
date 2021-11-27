@@ -944,7 +944,7 @@ class model:
         """
         gmsh.model.getDimension()
 
-        Get the geometrical dimension of the current model.
+        Return the geometrical dimension of the current model.
 
         Return an integer value.
         """
@@ -1063,6 +1063,23 @@ class model:
             api_parentDim_.value,
             api_parentTag_.value)
     get_parent = getParent
+
+    @staticmethod
+    def getNumberOfPartitions():
+        """
+        gmsh.model.getNumberOfPartitions()
+
+        Return the number of partitions in the model.
+
+        Return an integer value.
+        """
+        ierr = c_int()
+        api_result_ = lib.gmshModelGetNumberOfPartitions(
+            byref(ierr))
+        if ierr.value != 0:
+            raise Exception(logger.getLastError())
+        return api_result_
+    get_number_of_partitions = getNumberOfPartitions
 
     @staticmethod
     def getPartitions(dim, tag):
@@ -7363,14 +7380,17 @@ class plugin:
         """
         gmsh.plugin.run(name)
 
-        Run the plugin `name'.
+        Run the plugin `name'. Return the tag of the created view (if any).
+
+        Return an integer value.
         """
         ierr = c_int()
-        lib.gmshPluginRun(
+        api_result_ = lib.gmshPluginRun(
             c_char_p(name.encode()),
             byref(ierr))
         if ierr.value != 0:
             raise Exception(logger.getLastError())
+        return api_result_
 
 
 class graphics:
