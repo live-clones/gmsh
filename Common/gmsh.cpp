@@ -3463,7 +3463,7 @@ GMSH_API void gmsh::model::mesh::getAllFaces(const int faceType,
   faceNodes.clear();
   GModel *m = GModel::current();
   for(auto it = m->firstMFace(); it != m->lastMFace(); ++it) {
-    if(it->first.getNumVertices() == faceType) {
+    if(faceType == (int)it->first.getNumVertices()) {
       faceTags.push_back(it->second);
       for(int j = 0; j < faceType; j++)
         faceNodes.push_back(it->first.getVertex(j)->getNum());
