@@ -526,7 +526,7 @@ void GMSH_LevelsetPlugin::_cutAndAddElements(
 
   }
 
-  if(vstep < 0 && out->Time.size() < stepmax - stepmin) {
+  if(vstep < 0 && (stepmax - stepmin) > (int)out->Time.size()) {
     out->Time.clear();
     for(int i = stepmin; i < stepmax; i++) {
       out->Time.push_back(vdata->getTime(i));
