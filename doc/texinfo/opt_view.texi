@@ -668,7 +668,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item View.TargetError
 Target representation error for adaptive views@*
-Default value: @code{0.01}@*
+Default value: @code{0.0001}@*
 Saved in: @code{General.OptionsFileName}
 
 @item View.TensorType
