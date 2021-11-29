@@ -2037,6 +2037,8 @@ of the edges in the mesh. Mesh edges are created e.g. by @code{createEdges()},
 -
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L1176,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1031,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L2757,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L2327,Julia}
+@item Examples:
+C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/x7.cpp#L103,x7.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/x7.py#L98,x7.py})
 @end table
 
 @item gmsh/model/mesh/getAllFaces
@@ -2053,6 +2055,8 @@ of the faces of type @code{faceType} in the mesh. Mesh faces are created e.g. by
 -
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L1184,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1038,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L2782,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L2352,Julia}
+@item Examples:
+C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/x7.cpp#L104,x7.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/x7.py#L99,x7.py})
 @end table
 
 @item gmsh/model/mesh/addEdges
