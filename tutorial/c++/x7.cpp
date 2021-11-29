@@ -98,6 +98,11 @@ int main(int argc, char **argv)
     std::cout << "\n";
   }
 
+  // If all you need is the list of all edges or faces in terms of their nodes, you
+  // can also directly call:
+  gmsh::model::mesh::getAllEdges(edgeTags, edgeNodes);
+  gmsh::model::mesh::getAllFaces(3, faceTags, faceNodes);
+
   // Launch the GUI to see the results:
   std::set<std::string> args(argv, argv + argc);
   if(!args.count("-nopopup")) gmsh::fltk::run();
