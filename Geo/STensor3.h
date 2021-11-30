@@ -19,7 +19,7 @@ protected:
   // lower diagonal storage
   // 00 10 11 20 21 22
   double _val[6];
- 
+
 public:
   // default constructor, identity
   SMetric3(const double v = 1.0)
