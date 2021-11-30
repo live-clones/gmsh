@@ -5,7 +5,7 @@
 #include <map>
 
 #include <hxt_combine_cell.h>
-#include <hxt_api.h>
+#include <hxt_message.h>
 #include <algorithms.h>
 #include <tet_mesh.h>
 

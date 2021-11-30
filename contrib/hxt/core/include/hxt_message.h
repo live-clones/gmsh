@@ -16,7 +16,8 @@ extern "C" {
 #include <stdlib.h>
 #include <stdarg.h>
 
-
+typedef uint32_t HXTIndex;
+  
 /* HEXTREME FUNCTIONS ONLY RETURN A STATUS (except hxtGetMessageString)*/
 typedef enum
 {

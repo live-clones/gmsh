@@ -26,11 +26,46 @@ typedef struct {
   struct {
     uint32_t* node;  // aligned (size = tetrahedra.size*4*sizeof(uint32_t))
     uint64_t* neigh; // aligned (size = tetrahedra.size*4*sizeof(uint64_t))
-    uint32_t* color;
+    //    uint8_t* neighType;
+    uint16_t* color;
     uint16_t* flag;
     uint64_t num;    // number of tetrahedra
     uint64_t size;   // reserved number of tetrahedra (size of the vector)
   } tetrahedra;
+
+  // hexahedra
+  struct {
+    uint32_t* node;  // aligned (size = hexahedra.size*8*sizeof(uint32_t))
+    uint64_t* neigh; // aligned (size = hexahedra.size*6*sizeof(uint64_t))
+    uint8_t* neighType;
+    uint16_t* color;
+    uint16_t* flag;
+    uint64_t num;    // number of tetrahedra
+    uint64_t size;   // reserved number of hexahedra (size of the vector)
+  } hexahedra;
+
+  // prisms
+  struct {
+    uint32_t* node;  // aligned (size = prisms.size*6*sizeof(uint32_t))
+    uint64_t* neigh; // aligned (size = prisms.size*5*sizeof(uint64_t))
+    uint8_t* neighType;
+    uint16_t* color;
+    uint16_t* flag;
+    uint64_t num;    // number of tetrahedra
+    uint64_t size;   // reserved number of prisms (size of the vector)
+  } prisms;
+  
+  // pyramids
+  struct {
+    uint32_t* node;  // aligned (size = pyramids.size*5*sizeof(uint32_t))
+    uint64_t* neigh; // aligned (size = pyramids.size*5*sizeof(uint64_t))
+    uint8_t* neighType;
+    uint16_t* color;
+    uint16_t* flag;
+    uint64_t num;    // number of tetrahedra
+    uint64_t size;   // reserved number of pyramids (size of the vector)
+  } pyramids;
+
   
   // triangles
   struct {
@@ -40,6 +75,22 @@ typedef struct {
     uint64_t size;
   } triangles;
 
+  struct {
+    uint32_t* node;
+    uint64_t* neigh; 
+    uint16_t* color;
+    uint64_t num;
+    uint64_t size;
+  } triangles2;
+
+  // quads
+  struct {
+    uint32_t* node;
+    uint16_t* color;
+    uint64_t num;
+    uint64_t size;
+  } quads;
+  
   // lines
   struct {
     uint32_t* node;

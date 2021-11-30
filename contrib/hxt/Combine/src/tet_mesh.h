@@ -11,7 +11,7 @@
 #include <cell_types.h>
 #include <combine_quality.h>
 
-#include <hxt_api.h>
+#include <hxt_message.h>
 #include <hxt_mesh.h>
 
 /**
@@ -91,9 +91,9 @@ namespace HXTCombine {
       points_(hxtmesh->vertices.coord),
       tetCorners_(hxtmesh->tetrahedra.node),
       adjacentTets_(hxtmesh->tetrahedra.neigh),
-      tetColors_(hxtmesh->tetrahedra.colors),
-      triangleCorners_(hxtmesh->triangles.node),
-      triangleColors_(hxtmesh->triangles.colors)
+	//      tetColors_(hxtmesh->tetrahedra.color),
+	triangleCorners_(hxtmesh->triangles.node)//,
+	//      triangleColors_(hxtmesh->triangles.color)
     {}
 
     virtual ~TetMeshWrapper() {};

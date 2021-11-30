@@ -459,7 +459,8 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
   }
 
   bool midpointSubdivisionAfter = true;
-  if(CTX::instance()->mesh.algoRecombine == 4) {
+  if(CTX::instance()->mesh.recombineAll ||
+     CTX::instance()->mesh.algoRecombine == 4) {
     midpointSubdivisionAfter = false;
   }
 

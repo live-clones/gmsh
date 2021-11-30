@@ -1,7 +1,7 @@
 #ifndef HXT_COMBINE_CELL_STRUCTURE_
 #define HXT_COMBINE_CELL_STRUCTURE_
 
-#include <hxt_api.h>
+#include <hxt_message.h>
 
 #include <basic_types.h>
 #include <cell_types.h>

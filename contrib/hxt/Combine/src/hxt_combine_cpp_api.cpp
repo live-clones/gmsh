@@ -413,7 +413,7 @@ namespace HXTCombine {
       if (!tetsToSave[t]) continue;
       else {
         elemCounter++;
-        out << elemCounter << " " <<  4 << " 0 "
+        out << elemCounter << " " <<  4 << " 2 0 0 "
           << tets.vertex(t, 0)+1 << " "
           << tets.vertex(t, 1)+1 << " "
           << tets.vertex(t, 2)+1 << " "
@@ -423,6 +423,33 @@ namespace HXTCombine {
     }
   }
 
+  static void saveTets(const TetMeshWrapper& tets, const vector<bool>& tetsToSave, std::vector<unsigned int> & tets_out)
+  {
+    for (unsigned int t = 0; t < tets.nbTets(); ++t) {
+      if (!tetsToSave[t]) continue;
+      else {
+	tets_out.push_back( tets.vertex(t, 0)+1);
+	tets_out.push_back( tets.vertex(t, 1)+1);
+	tets_out.push_back( tets.vertex(t, 2)+1);
+	tets_out.push_back( tets.vertex(t, 3)+1);
+      }
+    }
+  }
+  
+  
+  // void HXTCombineCellStore::save( std::vector<unsigned int> & tets_out ,
+  // 				  std::vector<unsigned int> & hex_out ,
+  // 				  std::vector<unsigned int> & prism_out ,
+  // 				  std::vector<unsigned int> & pyramids_out ,
+  // 				  std::array<bool, nbCellTypes> cellType){
+  //   if (cellType[TET]) saveTets(mesh_, selectedTets(), tets_out);
+    
+  //   unsigned int nbHexes = cellType[HEX] ? nbTrueValues(selectedHexes()) : 0;
+  //   unsigned int nbPrisms = cellType[PRISM] ? nbTrueValues(selectedPrisms()) : 0;
+  //   unsigned int nbPyramids = cellType[PYRAMID] ? nbTrueValues(selectedPyramids()) : 0;
+  //   unsigned int nbTets = cellType[TET] ? nbTrueValues(selectedTets()) : 0;
+
+  // }
 
   void HXTCombineCellStore::saveMESH(
     const std::string& filename, std::array<bool, nbCellTypes> cellType)
@@ -508,7 +535,7 @@ namespace HXTCombine {
           else if (cells[i].isPyramid()) out << 7;
           else out << "ERROR";
 
-          out << " 0 " << cells[i] << std::endl;
+          out << " 2 0 0 " << cells[i] << std::endl;
         }
       }
     }

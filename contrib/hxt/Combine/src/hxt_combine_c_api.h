@@ -6,7 +6,8 @@
 extern "C" {
 #endif
 
-#include <hxt_api.h>
+#include <hxt_message.h>
+#include <hxt_mesh.h>
 
 /**
 * \file hxt_combine_c_api.h C interface of the Combine module

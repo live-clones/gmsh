@@ -1,24 +1,24 @@
-#include <hxt_tet_combination.h>
+#include <hxt_tet_combination_api.h>
 #include <tet_mesh.h>
 #include <hxt_combine_cpp_api.h>
 #include <hxt_combine_cell.h>
 
 int hxt_tet_combination (const std::vector<double> & coord,
-			 const std::vector<size_t> & tets_in,
-			 const std::vector<size_t> & triangles_in,
-			 const std::vector<size_t> & tets_colors_in,
-			 const std::vector<size_t> & triangles_colors_in,
+			 const std::vector<unsigned int> & tets_in,
+			 const std::vector<unsigned int> & triangles_in,
+			 const std::vector<uint16_t> & tets_colors_in,
+			 const std::vector<uint16_t> & triangles_colors_in,
 			 const double & minQuality,
 			 const int & doPrisms,
 			 const int & doPyramids,
-			 std::vector<size_t> & tets_out,
-			 std::vector<size_t> & hexes_out,
-			 std::vector<size_t> & prisms_out,
-			 std::vector<size_t> & pyramids_out,
-			 std::vector<size_t> & tets_colors_out,
-			 std::vector<size_t> & hexes_colors_out,
-			 std::vector<size_t> & prisms_colors_out,
-			 std::vector<size_t> & pyramids_colors_out){
+			 std::vector<unsigned int> & tets_out,
+			 std::vector<unsigned int> & hexes_out,
+			 std::vector<unsigned int> & prisms_out,
+			 std::vector<unsigned int> & pyramids_out,
+			 std::vector<uint16_t> & tets_colors_out,
+			 std::vector<uint16_t> & hexes_colors_out,
+			 std::vector<uint16_t> & prisms_colors_out,
+			 std::vector<uint16_t> & pyramids_colors_out){
   
   using namespace HXTCombine;
 
@@ -29,8 +29,8 @@ int hxt_tet_combination (const std::vector<double> & coord,
   ioMesh.vertices = hxtcoord;
   ioMesh.tetCorners = tets_in;
   ioMesh.triangleCorners = triangles_in;
-  ioMesh.tetColors = tets_colors;
-  ioMesh.triangleCoolors = triangles_colors;
+  ioMesh.tetColors = tets_colors_in;
+  ioMesh.triangleColors = triangles_colors_in;
   computeTetAdjacencies(ioMesh);  
 
   TetMeshForCombining tets(&ioMesh);

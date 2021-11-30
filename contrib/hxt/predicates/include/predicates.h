@@ -50,6 +50,40 @@ double orient2d(
   const double* const __restrict__ pc);
 
 
+int grow_expansion(int elen,
+                  const double* const __restrict__ e,
+                  double b,
+                  double* const __restrict__ h);
+
+int grow_expansion_zeroelim(int elen,
+                            const double* const __restrict__ e,
+                            double b,
+                            double* const __restrict__ h);
+
+int fast_expansion_sum(int elen,
+                       const double* const __restrict__ e,
+                       int flen,
+                       const double* const __restrict__ f,
+                       double* const __restrict__ h);
+
+int fast_expansion_sum_zeroelim(const int elen,
+                                const double* const __restrict__ e,
+                                const int flen,
+                                const double* const __restrict__ f,
+                                double* const __restrict__ h);
+
+int scale_expansion(int elen,
+                    const double* const __restrict__ e,
+                    double b,
+                    double* const __restrict__ h);
+
+int scale_expansion_zeroelim(const int elen,
+                             const double* const __restrict__ e,
+                             const double b,
+                             double* const __restrict__ h);
+
+
+  
 /* if you want a rough idea of the volume of one tet, but you don't need
  * exact sign computation */
 static inline double orient3d_inexact(const double* __restrict__  pa,

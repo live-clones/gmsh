@@ -150,6 +150,8 @@ set (SRC
   hxt_combine_c_api.cpp
   hxt_combine_cpp_api.cpp
   hxt_tet_combination_api.cpp
+  hxt_meshRepair.cpp
+  hxt_quality.cpp
   )
  
 set(INC
