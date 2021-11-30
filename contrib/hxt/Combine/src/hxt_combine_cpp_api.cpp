@@ -428,29 +428,46 @@ namespace HXTCombine {
     for (unsigned int t = 0; t < tets.nbTets(); ++t) {
       if (!tetsToSave[t]) continue;
       else {
-	tets_out.push_back( tets.vertex(t, 0)+1);
-	tets_out.push_back( tets.vertex(t, 1)+1);
-	tets_out.push_back( tets.vertex(t, 2)+1);
-	tets_out.push_back( tets.vertex(t, 3)+1);
+	tets_out.push_back( tets.vertex(t, 0));
+	tets_out.push_back( tets.vertex(t, 1));
+	tets_out.push_back( tets.vertex(t, 2));
+	tets_out.push_back( tets.vertex(t, 3));
       }
     }
   }
   
   
-  // void HXTCombineCellStore::save( std::vector<unsigned int> & tets_out ,
-  // 				  std::vector<unsigned int> & hex_out ,
-  // 				  std::vector<unsigned int> & prism_out ,
-  // 				  std::vector<unsigned int> & pyramids_out ,
-  // 				  std::array<bool, nbCellTypes> cellType){
-  //   if (cellType[TET]) saveTets(mesh_, selectedTets(), tets_out);
+  void HXTCombineCellStore::save( std::vector<unsigned int> & tets_out ,
+   				  std::vector<unsigned int> & hex_out ,
+   				  std::vector<unsigned int> & prism_out ,
+   				  std::vector<unsigned int> & pyramids_out ,
+   				  std::array<bool, nbCellTypes> cellType){
+    if (cellType[TET]) saveTets(mesh_, selectedTets(), tets_out);
     
-  //   unsigned int nbHexes = cellType[HEX] ? nbTrueValues(selectedHexes()) : 0;
-  //   unsigned int nbPrisms = cellType[PRISM] ? nbTrueValues(selectedPrisms()) : 0;
-  //   unsigned int nbPyramids = cellType[PYRAMID] ? nbTrueValues(selectedPyramids()) : 0;
-  //   unsigned int nbTets = cellType[TET] ? nbTrueValues(selectedTets()) : 0;
+     unsigned int nbHexes = cellType[HEX] ? nbTrueValues(selectedHexes()) : 0;
+     unsigned int nbPrisms = cellType[PRISM] ? nbTrueValues(selectedPrisms()) : 0;
+     unsigned int nbPyramids = cellType[PYRAMID] ? nbTrueValues(selectedPyramids()) : 0;
+     unsigned int nbTets = cellType[TET] ? nbTrueValues(selectedTets()) : 0;
 
-  // }
+    // OTHER CELLS
+    for (unsigned int type = 0; type+1 < nbCellTypes; ++type) {
+      if (!cellType[type]) continue;
+      const std::vector<HXTCombineCell>& cells = cells_[type];
+      const std::vector<bool>& selected = selectedCells_[type];
 
+      for (unsigned int i = 0; i < cells.size(); ++i) {
+        if (selected[i]) {
+          if (cells[i].isPrism())
+	    for (int j=0;j<6;j++)prism_out.push_back(cells[i].vertex(j));
+          else if (cells[i].isHex())
+	    for (int j=0;j<8;j++)hex_out.push_back(cells[i].vertex(j));
+          else if (cells[i].isPyramid())
+	    for (int j=0;j<5;j++)pyramids_out.push_back(cells[i].vertex(j));
+        }
+      }
+    }
+  }
+  
   void HXTCombineCellStore::saveMESH(
     const std::string& filename, std::array<bool, nbCellTypes> cellType)
   {

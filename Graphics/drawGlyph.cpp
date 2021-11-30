@@ -403,6 +403,12 @@ void drawContext::drawEllipse(double x, double y, double z, float v0[3],
 {
   if(light) glEnable(GL_LIGHTING);
   glPushMatrix();
+
+  /*double x0 = sqrt(v0[0]*v0[0]+v0[1]*v0[1]);
+  double x1 = sqrt(v1[0]*v1[0]+v1[1]*v1[1]);
+  printf("%12.5E %12.5E %12.5E \n",v0[0]/x0,v0[1]/x0,v0[2]);
+  printf("%12.5E %12.5E %12.5E \n",v1[0]/x1,v1[1]/x1,v1[2]);*/
+  
   GLfloat m[16] = {v0[0],
                    v0[1],
                    v0[2],

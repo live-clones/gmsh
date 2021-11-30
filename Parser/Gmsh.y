@@ -638,9 +638,11 @@ Element :
 #if defined(HAVE_POST)
       if(ViewValueList){
 	for(int i = 0; i < 3; i++)
-	  for(std::size_t j = 0; j < ViewCoord.size() / 3; j++)
+	  for(std::size_t j = 0; j < ViewCoord.size() / 3; j++){
 	    ViewValueList->push_back(ViewCoord[3 * j + i]);
+	  }
       }
+      
 #endif
     }
     '{' ElementValues '}' tEND

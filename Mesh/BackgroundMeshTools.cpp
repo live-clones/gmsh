@@ -314,12 +314,12 @@ SMetric3 BGM_MeshMetric(GEntity *ge, double U, double V, double X, double Y,
     Field *f = fields->get(fields->getBackgroundField());
     if(f) {
       SMetric3 l4;
-      if(!f->isotropic()) { (*f)(X, Y, Z, l4, ge); }
+      if(!f->isotropic()) { (*f)(X, Y, Z, l4, ge); /*return l4;*/}
       else {
         const double L = (*f)(X, Y, Z, ge);
         l4 = SMetric3(1 / (L * L));
       }
-      m1 = intersection(l4, m0);
+      m1 = intersection_conserveM1(l4,m0);
     }
   }
 

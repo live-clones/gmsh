@@ -21,6 +21,7 @@ set(SRC
     meshGRegionExtruded.cpp meshGRegionCarveHole.cpp
     meshGRegionLocalMeshMod.cpp meshGRegionMMG.cpp
   meshGRegionBoundaryLayer.cpp
+  meshGRegionHexDom.cpp
   meshRelocateVertex.cpp
   meshTriangulation.cpp
   meshMetric.cpp

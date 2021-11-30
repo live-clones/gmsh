@@ -50,9 +50,14 @@ public:
   unsigned int nbSelectedPyramids() const;
   unsigned int nbSelectedTets() const;
 
+  void save( std::vector<unsigned int> & tets_out ,
+	     std::vector<unsigned int> & hex_out ,
+	     std::vector<unsigned int> & prism_out ,
+	     std::vector<unsigned int> & pyramids_out ,
+	     std::array<bool, nbCellTypes> cellType);
   void saveMSH (const std::string& filename, std::array<bool,nbCellTypes> cellType);
   void saveMESH(const std::string& filename, std::array<bool,nbCellTypes> cellType);
-
+  
 public:
   std::vector<HXTCombineCell>& hexes() { return cells_[HEX]; }
   std::vector<HXTCombineCell>& prisms() { return cells_[PRISM]; }
