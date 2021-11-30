@@ -282,7 +282,7 @@ GMSH_API void gmshModelGetBoundingBox(const int dim,
                                       double * zmax,
                                       int * ierr);
 
-/* Get the geometrical dimension of the current model. */
+/* Return the geometrical dimension of the current model. */
 GMSH_API int gmshModelGetDimension(int * ierr);
 
 /* Add a discrete model entity (defined by a mesh) of dimension `dim' in the
@@ -321,6 +321,9 @@ GMSH_API void gmshModelGetParent(const int dim,
                                  int * parentDim,
                                  int * parentTag,
                                  int * ierr);
+
+/* Return the number of partitions in the model. */
+GMSH_API int gmshModelGetNumberOfPartitions(int * ierr);
 
 /* In a partitioned model, return the tags of the partition(s) to which the
  * entity belongs. */
@@ -994,9 +997,10 @@ GMSH_API void gmshModelMeshPreallocateBasisFunctionsOrientation(const int elemen
 /* Get the global unique mesh edge identifiers `edgeTags' and orientations
  * `edgeOrientation' for an input list of node tag pairs defining these edges,
  * concatenated in the vector `nodeTags'. Mesh edges are created e.g. by
- * `createEdges()' or `getKeys()'. The reference positive orientation is n1 <
- * n2, where n1 and n2 are the tags of the two edge nodes, which corresponds
- * to the local orientation of edge-based basis functions as well. */
+ * `createEdges()', `getKeys()' or `addEdges()'. The reference positive
+ * orientation is n1 < n2, where n1 and n2 are the tags of the two edge nodes,
+ * which corresponds to the local orientation of edge-based basis functions as
+ * well. */
 GMSH_API void gmshModelMeshGetEdges(size_t * nodeTags, size_t nodeTags_n,
                                     size_t ** edgeTags, size_t * edgeTags_n,
                                     int ** edgeOrientations, size_t * edgeOrientations_n,
@@ -1005,8 +1009,8 @@ GMSH_API void gmshModelMeshGetEdges(size_t * nodeTags, size_t nodeTags_n,
 /* Get the global unique mesh face identifiers `faceTags' and orientations
  * `faceOrientations' for an input list of node tag triplets (if `faceType' ==
  * 3) or quadruplets (if `faceType' == 4) defining these faces, concatenated
- * in the vector `nodeTags'. Mesh faces are created e.g. by `createFaces()' or
- * `getKeys()'. */
+ * in the vector `nodeTags'. Mesh faces are created e.g. by `createFaces()',
+ * `getKeys()' or `addFaces()'. */
 GMSH_API void gmshModelMeshGetFaces(const int faceType,
                                     size_t * nodeTags, size_t nodeTags_n,
                                     size_t ** faceTags, size_t * faceTags_n,
@@ -1020,6 +1024,34 @@ GMSH_API void gmshModelMeshCreateEdges(int * dimTags, size_t dimTags_n,
 /* Create unique mesh faces for the entities `dimTags'. */
 GMSH_API void gmshModelMeshCreateFaces(int * dimTags, size_t dimTags_n,
                                        int * ierr);
+
+/* Get the global unique identifiers `edgeTags' and the nodes `edgeNodes' of
+ * the edges in the mesh. Mesh edges are created e.g. by `createEdges()',
+ * `getKeys()' or addEdges(). */
+GMSH_API void gmshModelMeshGetAllEdges(size_t ** edgeTags, size_t * edgeTags_n,
+                                       size_t ** edgeNodes, size_t * edgeNodes_n,
+                                       int * ierr);
+
+/* Get the global unique identifiers `faceTags' and the nodes `faceNodes' of
+ * the faces of type `faceType' in the mesh. Mesh faces are created e.g. by
+ * `createFaces()', `getKeys()' or addFaces(). */
+GMSH_API void gmshModelMeshGetAllFaces(const int faceType,
+                                       size_t ** faceTags, size_t * faceTags_n,
+                                       size_t ** faceNodes, size_t * faceNodes_n,
+                                       int * ierr);
+
+/* Add mesh edges defined by their global unique identifiers `edgeTags' and
+ * their nodes `edgeNodes'. */
+GMSH_API void gmshModelMeshAddEdges(size_t * edgeTags, size_t edgeTags_n,
+                                    size_t * edgeNodes, size_t edgeNodes_n,
+                                    int * ierr);
+
+/* Add mesh faces of type `faceType' defined by their global unique
+ * identifiers `faceTags' and their nodes `faceNodes'. */
+GMSH_API void gmshModelMeshAddFaces(const int faceType,
+                                    size_t * faceTags, size_t faceTags_n,
+                                    size_t * faceNodes, size_t faceNodes_n,
+                                    int * ierr);
 
 /* Generate the pair of keys for the elements of type `elementType' in the
  * entity of tag `tag', for the `functionSpaceType' function space. Each pair
@@ -2952,9 +2984,9 @@ GMSH_API void gmshPluginSetString(const char * name,
                                   const char * value,
                                   int * ierr);
 
-/* Run the plugin `name'. */
-GMSH_API void gmshPluginRun(const char * name,
-                            int * ierr);
+/* Run the plugin `name'. Return the tag of the created view (if any). */
+GMSH_API int gmshPluginRun(const char * name,
+                           int * ierr);
 
 /* Draw all the OpenGL scenes. */
 GMSH_API void gmshGraphicsDraw(int * ierr);

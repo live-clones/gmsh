@@ -319,11 +319,17 @@ bool PViewDataGModel::writeMSH(const std::string &fileName, double version,
       fprintf(fp, "$NodeData\n");
       fprintf(fp, "1\n\"%s\"\n", getName().c_str());
       fprintf(fp, "1\n%.16g\n", _steps[step]->getTime());
-      if(partitionNum)
+      if(partitionNum > 0) {
         fprintf(fp, "4\n%lu\n%d\n%d\n%d\n", step, numComp, numEnt,
                 partitionNum);
-      else
+      }
+      else if(_steps[step]->getPartitions().size() == 1) {
+        int p = *_steps[step]->getPartitions().begin();
+        fprintf(fp, "4\n%lu\n%d\n%d\n%d\n", step, numComp, numEnt, p);
+      }
+      else {
         fprintf(fp, "3\n%lu\n%d\n%d\n", step, numComp, numEnt);
+      }
       for(std::size_t i = 0; i < _steps[step]->getNumData(); i++) {
         if(_steps[step]->getData(i)) {
           MVertex *v = _steps[step]->getModel()->getMeshVertexByTag(i);
@@ -359,11 +365,17 @@ bool PViewDataGModel::writeMSH(const std::string &fileName, double version,
         fprintf(fp, "1\n\"%s\"\n", getName().c_str());
 
       fprintf(fp, "1\n%.16g\n", _steps[step]->getTime());
-      if(partitionNum)
+      if(partitionNum > 0) {
         fprintf(fp, "4\n%lu\n%d\n%d\n%d\n", step, numComp, numEnt,
                 partitionNum);
-      else
+      }
+      else if(_steps[step]->getPartitions().size() == 1) {
+        int p = *_steps[step]->getPartitions().begin();
+        fprintf(fp, "4\n%lu\n%d\n%d\n%d\n", step, numComp, numEnt, p);
+      }
+      else {
         fprintf(fp, "3\n%lu\n%d\n%d\n", step, numComp, numEnt);
+      }
       for(std::size_t i = 0; i < _steps[step]->getNumData(); i++) {
         if(_steps[step]->getData(i)) {
           MElement *e = _steps[step]->getModel()->getMeshElementByTag(i);

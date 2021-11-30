@@ -142,7 +142,7 @@ public:
                 bool parsed = true, bool append = false);
   virtual bool writeMSH(const std::string &fileName, double version = 2.2,
                         bool binary = false, bool savemesh = true,
-                        bool multipleView = false, int partitionNum = 0,
+                        bool multipleView = false, int partitionNum = -1,
                         bool saveInterpolationMatrices = true,
                         bool forceNodeData = false,
                         bool forceElementData = false);

@@ -38,7 +38,7 @@ StringXNumber *GMSH_CutMeshPlugin::getOption(int iopt)
   return &CutMeshOptions_Number[iopt];
 }
 
-void GMSH_CutMeshPlugin::run()
+int GMSH_CutMeshPlugin::run()
 {
   int iView = (int)CutMeshOptions_Number[0].def;
   if(iView < 0) iView = PView::list.size() - 1;
@@ -50,4 +50,5 @@ void GMSH_CutMeshPlugin::run()
   GModel *gm = GModel::current();
   GModel *cgm = gm->buildCutGModel(gLs, !split, saveTri);
   cgm->setVisibility(1);
+  return 0;
 }

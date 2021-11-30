@@ -157,7 +157,7 @@ model.add('getEntitiesInBoundingBox', doc, None, idouble('xmin'), idouble('ymin'
 doc = '''Get the bounding box (`xmin', `ymin', `zmin'), (`xmax', `ymax', `zmax') of the model entity of dimension `dim' and tag `tag'. If `dim' and `tag' are negative, get the bounding box of the whole model.'''
 model.add('getBoundingBox', doc, None, iint('dim'), iint('tag'), odouble('xmin'), odouble('ymin'), odouble('zmin'), odouble('xmax'), odouble('ymax'), odouble('zmax'))
 
-doc = '''Get the geometrical dimension of the current model.'''
+doc = '''Return the geometrical dimension of the current model.'''
 model.add('getDimension', doc, oint)
 
 doc = '''Add a discrete model entity (defined by a mesh) of dimension `dim' in the current model. Return the tag of the new discrete entity, equal to `tag' if `tag' is positive, or a new tag if `tag' < 0. `boundary' specifies the tags of the entities on the boundary of the discrete entity, if any. Specifying `boundary' allows Gmsh to construct the topology of the overall model.'''
@@ -174,6 +174,9 @@ model.add('getType', doc, None, iint('dim'), iint('tag'), ostring('entityType'))
 
 doc = '''In a partitioned model, get the parent of the entity of dimension `dim' and tag `tag', i.e. from which the entity is a part of, if any. `parentDim' and `parentTag' are set to -1 if the entity has no parent.'''
 model.add('getParent', doc, None, iint('dim'), iint('tag'), oint('parentDim'), oint('parentTag'))
+
+doc = '''Return the number of partitions in the model.'''
+model.add('getNumberOfPartitions', doc, oint)
 
 doc = '''In a partitioned model, return the tags of the partition(s) to which the entity belongs.'''
 model.add('getPartitions', doc, None, iint('dim'), iint('tag'), ovectorint('partitions'))
@@ -368,10 +371,10 @@ mesh.add('getNumberOfOrientations', doc, oint, iint('elementType'), istring('fun
 doc = '''Preallocate data before calling `getBasisFunctionsOrientation' with `numTasks' > 1. For C and C++ only.'''
 mesh.add_special('preallocateBasisFunctionsOrientation', doc, ['onlycc++'], None, iint('elementType'), ovectorint('basisFunctionsOrientation'), iint('tag', '-1'))
 
-doc = '''Get the global unique mesh edge identifiers `edgeTags' and orientations `edgeOrientation' for an input list of node tag pairs defining these edges, concatenated in the vector `nodeTags'. Mesh edges are created e.g. by `createEdges()' or `getKeys()'. The reference positive orientation is n1 < n2, where n1 and n2 are the tags of the two edge nodes, which corresponds to the local orientation of edge-based basis functions as well.'''
+doc = '''Get the global unique mesh edge identifiers `edgeTags' and orientations `edgeOrientation' for an input list of node tag pairs defining these edges, concatenated in the vector `nodeTags'. Mesh edges are created e.g. by `createEdges()', `getKeys()' or `addEdges()'. The reference positive orientation is n1 < n2, where n1 and n2 are the tags of the two edge nodes, which corresponds to the local orientation of edge-based basis functions as well.'''
 mesh.add('getEdges', doc, None, ivectorsize('nodeTags'), ovectorsize('edgeTags'), ovectorint('edgeOrientations'))
 
-doc = '''Get the global unique mesh face identifiers `faceTags' and orientations `faceOrientations' for an input list of node tag triplets (if `faceType' == 3) or quadruplets (if `faceType' == 4) defining these faces, concatenated in the vector `nodeTags'. Mesh faces are created e.g. by `createFaces()' or `getKeys()'.'''
+doc = '''Get the global unique mesh face identifiers `faceTags' and orientations `faceOrientations' for an input list of node tag triplets (if `faceType' == 3) or quadruplets (if `faceType' == 4) defining these faces, concatenated in the vector `nodeTags'. Mesh faces are created e.g. by `createFaces()', `getKeys()' or `addFaces()'.'''
 mesh.add('getFaces', doc, None, iint('faceType'), ivectorsize('nodeTags'), ovectorsize('faceTags'), ovectorint('faceOrientations'))
 
 doc = '''Create unique mesh edges for the entities `dimTags'.'''
@@ -379,6 +382,18 @@ mesh.add('createEdges', doc, None, ivectorpair('dimTags', 'gmsh::vectorpair()', 
 
 doc = '''Create unique mesh faces for the entities `dimTags'.'''
 mesh.add('createFaces', doc, None, ivectorpair('dimTags', 'gmsh::vectorpair()', "[]", "[]"))
+
+doc = '''Get the global unique identifiers `edgeTags' and the nodes `edgeNodes' of the edges in the mesh. Mesh edges are created e.g. by `createEdges()', `getKeys()' or addEdges().'''
+mesh.add('getAllEdges', doc, None, ovectorsize('edgeTags'), ovectorsize('edgeNodes'))
+
+doc = '''Get the global unique identifiers `faceTags' and the nodes `faceNodes' of the faces of type `faceType' in the mesh. Mesh faces are created e.g. by `createFaces()', `getKeys()' or addFaces().'''
+mesh.add('getAllFaces', doc, None, iint('faceType'), ovectorsize('faceTags'), ovectorsize('faceNodes'))
+
+doc = '''Add mesh edges defined by their global unique identifiers `edgeTags' and their nodes `edgeNodes'.'''
+mesh.add('addEdges', doc, None, ivectorsize('edgeTags'), ivectorsize('edgeNodes'))
+
+doc = '''Add mesh faces of type `faceType' defined by their global unique identifiers `faceTags' and their nodes `faceNodes'.'''
+mesh.add('addFaces', doc, None, iint('faceType'), ivectorsize('faceTags'), ivectorsize('faceNodes'))
 
 doc = '''Generate the pair of keys for the elements of type `elementType' in the entity of tag `tag', for the `functionSpaceType' function space. Each pair (`typeKey', `entityKey') uniquely identifies a basis function in the function space. If `returnCoord' is set, the `coord' vector contains the x, y, z coordinates locating basis functions for sorting purposes. Warning: this is an experimental feature and will probably change in a future release.'''
 mesh.add('getKeys', doc, None, iint('elementType'), istring('functionSpaceType'), ovectorint('typeKeys'), ovectorsize('entityKeys'), ovectordouble('coord'), iint('tag', '-1'), ibool('returnCoord', 'true', 'True'))
@@ -955,8 +970,8 @@ plugin.add('setNumber', doc, None, istring('name'), istring('option'), idouble('
 doc = '''Set the string option `option' to the value `value' for plugin `name'.'''
 plugin.add('setString', doc, None, istring('name'), istring('option'), istring('value'))
 
-doc = '''Run the plugin `name'.'''
-plugin.add('run', doc, None, istring('name'))
+doc = '''Run the plugin `name'. Return the tag of the created view (if any).'''
+plugin.add('run', doc, oint, istring('name'))
 
 ################################################################################
 

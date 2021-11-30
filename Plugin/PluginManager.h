@@ -58,8 +58,8 @@ public:
 
   // Perform an action on the plugin. Default action are Run and
   // Save. Other plugins may perform other actions.
-  void action(const std::string &pluginName, const std::string &action,
-              void *data);
+  int action(const std::string &pluginName, const std::string &action,
+             void *data);
 };
 
 #endif

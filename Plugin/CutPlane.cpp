@@ -20,8 +20,8 @@ StringXNumber CutPlaneOptions_Number[] = {
   {GMSH_FULLRC, "C", GMSH_CutPlanePlugin::callbackC, 0.},
   {GMSH_FULLRC, "D", GMSH_CutPlanePlugin::callbackD, -0.01},
   {GMSH_FULLRC, "ExtractVolume", GMSH_CutPlanePlugin::callbackVol, 0},
-  {GMSH_FULLRC, "RecurLevel", GMSH_CutPlanePlugin::callbackRecur, 4},
-  {GMSH_FULLRC, "TargetError", GMSH_CutPlanePlugin::callbackTarget, 0.},
+  {GMSH_FULLRC, "RecurLevel", GMSH_CutPlanePlugin::callbackRecur, 3},
+  {GMSH_FULLRC, "TargetError", GMSH_CutPlanePlugin::callbackTarget, 1e-4},
   {GMSH_FULLRC, "View", nullptr, -1.}};
 
 extern "C" {

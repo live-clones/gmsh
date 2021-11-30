@@ -342,7 +342,7 @@ namespace gmsh { // Top-level functions
 
     // gmsh::model::getDimension
     //
-    // Get the geometrical dimension of the current model.
+    // Return the geometrical dimension of the current model.
     GMSH_API int getDimension();
 
     // gmsh::model::addDiscreteEntity
@@ -386,6 +386,11 @@ namespace gmsh { // Top-level functions
                             const int tag,
                             int & parentDim,
                             int & parentTag);
+
+    // gmsh::model::getNumberOfPartitions
+    //
+    // Return the number of partitions in the model.
+    GMSH_API int getNumberOfPartitions();
 
     // gmsh::model::getPartitions
     //
@@ -1133,10 +1138,10 @@ namespace gmsh { // Top-level functions
       // Get the global unique mesh edge identifiers `edgeTags' and orientations
       // `edgeOrientation' for an input list of node tag pairs defining these
       // edges, concatenated in the vector `nodeTags'. Mesh edges are created e.g.
-      // by `createEdges()' or `getKeys()'. The reference positive orientation is
-      // n1 < n2, where n1 and n2 are the tags of the two edge nodes, which
-      // corresponds to the local orientation of edge-based basis functions as
-      // well.
+      // by `createEdges()', `getKeys()' or `addEdges()'. The reference positive
+      // orientation is n1 < n2, where n1 and n2 are the tags of the two edge
+      // nodes, which corresponds to the local orientation of edge-based basis
+      // functions as well.
       GMSH_API void getEdges(const std::vector<std::size_t> & nodeTags,
                              std::vector<std::size_t> & edgeTags,
                              std::vector<int> & edgeOrientations);
@@ -1147,7 +1152,7 @@ namespace gmsh { // Top-level functions
       // `faceOrientations' for an input list of node tag triplets (if `faceType'
       // == 3) or quadruplets (if `faceType' == 4) defining these faces,
       // concatenated in the vector `nodeTags'. Mesh faces are created e.g. by
-      // `createFaces()' or `getKeys()'.
+      // `createFaces()', `getKeys()' or `addFaces()'.
       GMSH_API void getFaces(const int faceType,
                              const std::vector<std::size_t> & nodeTags,
                              std::vector<std::size_t> & faceTags,
@@ -1162,6 +1167,38 @@ namespace gmsh { // Top-level functions
       //
       // Create unique mesh faces for the entities `dimTags'.
       GMSH_API void createFaces(const gmsh::vectorpair & dimTags = gmsh::vectorpair());
+
+      // gmsh::model::mesh::getAllEdges
+      //
+      // Get the global unique identifiers `edgeTags' and the nodes `edgeNodes' of
+      // the edges in the mesh. Mesh edges are created e.g. by `createEdges()',
+      // `getKeys()' or addEdges().
+      GMSH_API void getAllEdges(std::vector<std::size_t> & edgeTags,
+                                std::vector<std::size_t> & edgeNodes);
+
+      // gmsh::model::mesh::getAllFaces
+      //
+      // Get the global unique identifiers `faceTags' and the nodes `faceNodes' of
+      // the faces of type `faceType' in the mesh. Mesh faces are created e.g. by
+      // `createFaces()', `getKeys()' or addFaces().
+      GMSH_API void getAllFaces(const int faceType,
+                                std::vector<std::size_t> & faceTags,
+                                std::vector<std::size_t> & faceNodes);
+
+      // gmsh::model::mesh::addEdges
+      //
+      // Add mesh edges defined by their global unique identifiers `edgeTags' and
+      // their nodes `edgeNodes'.
+      GMSH_API void addEdges(const std::vector<std::size_t> & edgeTags,
+                             const std::vector<std::size_t> & edgeNodes);
+
+      // gmsh::model::mesh::addFaces
+      //
+      // Add mesh faces of type `faceType' defined by their global unique
+      // identifiers `faceTags' and their nodes `faceNodes'.
+      GMSH_API void addFaces(const int faceType,
+                             const std::vector<std::size_t> & faceTags,
+                             const std::vector<std::size_t> & faceNodes);
 
       // gmsh::model::mesh::getKeys
       //
@@ -3324,8 +3361,8 @@ namespace gmsh { // Top-level functions
 
     // gmsh::plugin::run
     //
-    // Run the plugin `name'.
-    GMSH_API void run(const std::string & name);
+    // Run the plugin `name'. Return the tag of the created view (if any).
+    GMSH_API int run(const std::string & name);
 
   } // namespace plugin
 

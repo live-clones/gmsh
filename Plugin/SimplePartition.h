@@ -22,7 +22,7 @@ public:
   StringXNumber *getOption(int iopt);
   int getNbOptionsStr() const;
   StringXString *getOptionStr(int iopt);
-  void run();
+  int run();
 };
 
 #endif
