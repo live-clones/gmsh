@@ -15,6 +15,7 @@ typedef unsigned long intptr_t;
 #endif
 #include <FL/x.H>
 #include <FL/gl.h>
+#include "GmshMessage.h"
 #include "FlGui.h"
 #include "drawContext.h"
 #include "graphicWindow.h"

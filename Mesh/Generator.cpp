@@ -38,6 +38,7 @@
 #include "meshGFaceBipartiteLabelling.h"
 #include "sizeField.h"
 
+
 #if defined(HAVE_DOMHEX)
 #include "simple3D.h"
 #include "yamakawa.h"
@@ -1558,8 +1559,8 @@ void GenerateMesh(GModel *m, int ask)
   if(ask == 2 || (ask > 2 && old < 2)) {
     std::for_each(m->firstRegion(), m->lastRegion(), deMeshGRegion());
     Mesh2D(m);
-    // if two passes...
-    // createSizeFieldFromExistingMesh(m, false);
+    // if two passes --> juste fait le ...
+    //    createSizeFieldFromExistingMesh (m, false);
     // Mesh2D(m);
   }
 

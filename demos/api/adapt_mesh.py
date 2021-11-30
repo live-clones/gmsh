@@ -38,7 +38,6 @@ def compute_interpolation_error(nodes, triangles, f):
     err_tri = np.sum((f_fem - f(qx))**2 * det * weights, 1)
     return f_vert, np.sqrt(err_tri)
 
-
 def compute_size_field(nodes, triangles, err, N):
     x = nodes[triangles]
     a = 2.

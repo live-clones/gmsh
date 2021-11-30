@@ -85,8 +85,8 @@ static void trueBoundary(GFace *gf, std::vector<SPoint2> &bnd, int debug)
         p[k] = ge->reparamOnFace(gf, xi, i);
         if(k > 0) {
           if(view_t) {
-            fprintf(view_t, "SL(%g,%g,%g,%g,%g,%g){1,1};\n", p[k - 1].x(),
-                    p[k - 1].y(), 0.0, p[k].x(), p[k].y(), 0.0);
+            fprintf(view_t, "SL(%g,%g,%g,%g,%g,%g){%d,%d};\n", p[k - 1].x(),
+                    p[k - 1].y(), 0.0, p[k].x(), p[k].y(), 0.0,ge->tag(),ge->tag());
           }
           bnd.push_back(p[k - 1]);
           bnd.push_back(p[k]);
@@ -2112,9 +2112,9 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
     for(auto it = gf->edgeLoops.begin(); it != gf->edgeLoops.end(); it++) {
       std::vector<BDS_Point *> edgeLoop_BDS;
       int nbPointsLocal;
-      const double fact[4] = {1.e-12, 1.e-7, 1.e-5, 1.e-3};
+      const double fact[5] = {1.e-12, 1.e-8, 1.e-7, 1.e-5, 1.e-3};
       bool ok = false;
-      for(int i = 0; i < 4; i++) {
+      for(int i = 0; i < 5; i++) {
         if(buildConsecutiveListOfVertices(gf, *it, edgeLoop_BDS, bbox, m,
                                           recoverMap, nbPointsLocal,
                                           nbPointsTotal, fact[i] * LC2D)) {

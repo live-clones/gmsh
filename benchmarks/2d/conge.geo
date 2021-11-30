@@ -1,3 +1,4 @@
+SetFactory("OpenCASCADE");
 unit = 1.0e0 ;
 
 e1 =  4.5 * unit ;
@@ -80,3 +81,10 @@ Physical Line(27) = {10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 14, 13, 12, 11};
 Physical Line(28) = {17, 16, 20, 19, 18, 15};
 //Recombine Surface {24, 22};
 //Mesh.Algorithm=8;
+//+
+Field[1] = MathEval;
+//+
+Field[1].F = ".5";
+//+
+Background Field = 1;
+//+

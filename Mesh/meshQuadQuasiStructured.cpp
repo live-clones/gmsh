@@ -172,13 +172,14 @@ int buildBackgroundField(
 
   d->finalize();
 
-  gm->getFields()->setBackgroundMesh(view->getTag());
+  gm->getFields()->setBackgroundMesh(view->getIndex());
 
   const bool exportBGM = true;
   if(exportBGM || Msg::GetVerbosity() >= 99) {
     std::string name = gm->getName() + "_bgm.pos";
-    Msg::Warning("export background field to '%s' ", name.c_str());
+    Msg::Warning("export background field to '%s' tag %d", name.c_str(), view->getTag() );
     view->write(name, 0);
+    //    exit(1);
   }
 
   return 0;
@@ -459,7 +460,8 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
   }
 
   bool midpointSubdivisionAfter = true;
-  if(CTX::instance()->mesh.algoRecombine == 4) {
+  if(!CTX::instance()->mesh.recombineAll ||
+     CTX::instance()->mesh.algoRecombine == 4) {
     midpointSubdivisionAfter = false;
   }
 
