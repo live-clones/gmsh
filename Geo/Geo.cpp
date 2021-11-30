@@ -868,10 +868,10 @@ Surface *DuplicateSurface(GFace *gf)
   Surface *ps = CreateSurface(NEWSURFACE(), MSH_SURF_PLAN); // dummy
   Tree_Insert(GModel::current()->getGEOInternals()->Surfaces, &ps);
   std::vector<GEdge *> edges = gf->edges();
-  for(auto ge : edges) {
+  //for(auto ge : edges) {
     //Curve *newc = DuplicateCurve(ge);
     //List_Add(ps->Generatrices, &newc);
-  }
+  // }
   return ps;
 }
 
@@ -2948,7 +2948,7 @@ int ExtrudeSurface(int type, int is, double T0, double T1, double T2, double A0,
     else {
       cnum = gf->edges()[i]->tag();
       std::vector<int> ori = gf->edgeOrientations();
-      if(i < ori.size() && ori[i] < 0) cnum *= -1;
+      if(i < (int)ori.size() && ori[i] < 0) cnum *= -1;
     }
     Surface *s;
     ExtrudeCurve(type, cnum, T0, T1, T2, A0, A1, A2, X0, X1, X2, alpha, &s, 0,
