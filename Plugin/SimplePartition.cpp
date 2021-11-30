@@ -70,7 +70,7 @@ StringXString *GMSH_SimplePartitionPlugin::getOptionStr(int iopt)
   return &SimplePartitionOptions_String[iopt];
 }
 
-void GMSH_SimplePartitionPlugin::run()
+int GMSH_SimplePartitionPlugin::run()
 {
 #if defined(HAVE_MESH)
   int numSlicesX = (int)SimplePartitionOptions_Number[0].def;
@@ -85,12 +85,12 @@ void GMSH_SimplePartitionPlugin::run()
 
   if(!m->getNumMeshElements()) {
     Msg::Error("Plugin(SimplePartition) requires a mesh");
-    return;
+    return 0;
   }
 
   if(numSlicesX < 1 || numSlicesY < 1 || numSlicesZ < 1) {
     Msg::Error("Number of slices should be strictly positive");
-    return;
+    return 0;
   }
   m->unpartitionMesh();
 
@@ -173,4 +173,6 @@ void GMSH_SimplePartitionPlugin::run()
 #else
   Msg::Error("Gmsh must be compiled with Mesh support to partition meshes");
 #endif
+
+  return 0;
 }

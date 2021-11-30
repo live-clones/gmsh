@@ -1614,6 +1614,9 @@ StringXNumber PostProcessingOptions_Number[] = {
   { F|O, "AnimationStep" , opt_post_anim_step , 1. ,
     "Step increment for animations" },
 
+  { F|O, "Binary" , opt_post_binary , 0. ,
+    "Write post-processing files in binary format (if possible)" },
+
   { F|O, "CombineRemoveOriginal" , opt_post_combine_remove_orig , 1. ,
     "Remove original views after a Combine operation" },
   { F|O, "CombineCopyOptions" , opt_post_combine_copy_options , 1. ,
@@ -1909,7 +1912,7 @@ StringXNumber ViewOptions_Number[] = {
 
   { F|O, "Tangents" , opt_view_tangents , 0. ,
     "Display size of tangent vectors (in pixels)" },
-  { F|O, "TargetError" , opt_view_target_error , 0.01 ,
+  { F|O, "TargetError" , opt_view_target_error , 1e-4 ,
     "Target representation error for adaptive views" },
   { F|O, "TensorType" , opt_view_tensor_type , 1. ,
     "Tensor display type (1: Von-Mises, 2: maximum eigenvalue, 3: minimum eigenvalue, "

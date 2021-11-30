@@ -69,7 +69,7 @@ public:
   std::string serialize();
 
   // run the plugin
-  virtual void run() = 0;
+  virtual int run() = 0;
 
   // dynamic pointer to a drawing function
   static void setDrawFunction(void (*fct)(void *));
@@ -87,7 +87,12 @@ public:
     return GMSH_Plugin::GMSH_POST_PLUGIN;
   }
   // run the plugin
-  virtual void run() { execute(nullptr); }
+  virtual int run()
+  {
+    PView *v = execute(nullptr);
+    if(v) return v->getTag();
+    return 0;
+  }
   // if the returned pointer is the same as the argument, then the
   // view is simply modified, else, a new view is added in the view
   // list
@@ -117,7 +122,7 @@ public:
   {
     return GMSH_Plugin::GMSH_SOLVER_PLUGIN;
   }
-  virtual void run() {}
+  virtual int run() { return 0; }
   // popup dialog box
   virtual void popupPropertiesForPhysicalEntity(int dim) = 0;
   // add the given group to the solver data
@@ -140,7 +145,7 @@ class GMSH_MeshPlugin : public GMSH_Plugin {
   {
     return GMSH_Plugin::GMSH_MESH_PLUGIN;
   }
-  virtual void run() {}
+  virtual int run() { return 0; }
 };
 
 #endif

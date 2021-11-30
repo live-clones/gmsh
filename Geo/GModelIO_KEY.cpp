@@ -59,6 +59,10 @@ int GModel::writeKEY(const std::string &name, int saveAll,
     return 0;
   }
 
+  // FIXME: we should probably use the same conventions here as in the UNV, INP
+  // and TOCHNOG writer, i.e. not mess around with saveAll, and use negative
+  // saveGroupsOfNodes to selectively save groups of different dimensions.
+
   if(noPhysicalGroups()) saveAll = 0x51;
 
   indexMeshVertices(saveAll & 0x51, 0, false);

@@ -313,9 +313,9 @@ Default value: @code{-0.01}
 @item ExtractVolume
 Default value: @code{0}
 @item RecurLevel
-Default value: @code{4}
+Default value: @code{3}
 @item TargetError
-Default value: @code{0}
+Default value: @code{0.0001}
 @item View
 Default value: @code{-1}
 @end table
@@ -341,9 +341,9 @@ Default value: @code{0.25}
 @item ExtractVolume
 Default value: @code{0}
 @item RecurLevel
-Default value: @code{4}
+Default value: @code{3}
 @item TargetError
-Default value: @code{0}
+Default value: @code{0.0001}
 @item View
 Default value: @code{-1}
 @end table
@@ -662,9 +662,9 @@ Default value: @code{0}
 @item ExtractVolume
 Default value: @code{0}
 @item RecurLevel
-Default value: @code{4}
+Default value: @code{3}
 @item TargetError
-Default value: @code{0}
+Default value: @code{0.0001}
 @item View
 Default value: @code{-1}
 @item OtherTimeStep

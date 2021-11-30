@@ -11,7 +11,7 @@
 #include "Plugin.h"
 
 extern "C" {
-GMSH_Plugin *GMSH_RegisterSpanningTreePlugin(void);
+GMSH_Plugin *GMSH_RegisterSpanningTreePlugin();
 }
 
 class GMSH_SpanningTreePlugin : public GMSH_MeshPlugin {
@@ -26,12 +26,12 @@ private:
 
   public:
     DSU(size_t n);
-    ~DSU(void);
+    ~DSU();
 
     int find(int a);
     void join(int a, int b);
 
-    std::string toString(void);
+    std::string toString();
   };
 
   struct Sort {
@@ -44,20 +44,20 @@ private:
   typedef std::list<std::pair<int, int> > Tree;
 
 public:
-  GMSH_SpanningTreePlugin(void);
+  GMSH_SpanningTreePlugin();
 
-  std::string getName(void) const;
-  std::string getShortHelp(void) const;
-  std::string getHelp(void) const;
-  std::string getAuthor(void) const;
+  std::string getName() const;
+  std::string getShortHelp() const;
+  std::string getHelp() const;
+  std::string getAuthor() const;
 
-  int getNbOptions(void) const;
+  int getNbOptions() const;
   StringXNumber *getOption(int iopt);
 
   int getNbOptionsStr() const;
   StringXString *getOptionStr(int iopt);
 
-  void run(void);
+  int run();
 
 private:
   static void spanningTree(EdgeSet &edge, DSU &vertex, Tree &tree);

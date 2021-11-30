@@ -306,7 +306,7 @@ public:
   contextMeshOptions mesh;
   // post processing options
   struct {
-    int draw, link, horizontalScales;
+    int draw, link, horizontalScales, binary;
     int smooth, animCycle, animStep;
     int combineTime, combineRemoveOrig, combineCopyOptions;
     int fileFormat, plugins, forceNodeData, forceElementData;

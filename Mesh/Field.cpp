@@ -1566,7 +1566,7 @@ public:
     if(_viewTag >= 0) v = PView::getViewByTag(_viewTag);
     if(!v) {
       if(_viewIndex < 0 || _viewIndex >= (int)PView::list.size()) {
-        Msg::Error("View[%d] does not exist", _viewIndex);
+        Msg::Error("View[%d] does not exist (viewtag %d)", _viewIndex,_viewTag);
         return nullptr;
       }
       v = PView::list[_viewIndex];

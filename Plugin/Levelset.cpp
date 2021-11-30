@@ -524,10 +524,12 @@ void GMSH_LevelsetPlugin::_cutAndAddElements(
                   step == stepmin);
     }
 
-    if(vstep < 0) {
-      for(int i = stepmin; i < stepmax; i++) {
-        out->Time.push_back(vdata->getTime(i));
-      }
+  }
+
+  if(vstep < 0 && (stepmax - stepmin) > (int)out->Time.size()) {
+    out->Time.clear();
+    for(int i = stepmin; i < stepmax; i++) {
+      out->Time.push_back(vdata->getTime(i));
     }
   }
 }
@@ -570,10 +572,12 @@ PView *GMSH_LevelsetPlugin::execute(PView *v)
   double x[8], y[8], z[8], levels[8];
   double scalarValues[8] = {0., 0., 0., 0., 0., 0., 0., 0.};
 
+  PView *v2 = nullptr;
   if(_valueIndependent) {
     // create a single output view containing the (possibly multi-step) levelset
     int firstNonEmptyStep = vdata->getFirstNonEmptyTimeStep();
-    PViewDataList *out = getDataList(new PView());
+    v2 = new PView();
+    PViewDataList *out = getDataList(v2);
     for(int ent = 0; ent < vdata->getNumEntities(firstNonEmptyStep); ent++) {
       for(int ele = 0; ele < vdata->getNumElements(firstNonEmptyStep, ent);
           ele++) {
@@ -596,7 +600,8 @@ PView *GMSH_LevelsetPlugin::execute(PView *v)
     // create one view per timestep
     for(int step = 0; step < vdata->getNumTimeSteps(); step++) {
       if(!vdata->hasTimeStep(step)) continue;
-      PViewDataList *out = getDataList(new PView());
+      v2 = new PView();
+      PViewDataList *out = getDataList(v2);
       for(int ent = 0; ent < vdata->getNumEntities(step); ent++) {
         for(int ele = 0; ele < vdata->getNumElements(step, ent); ele++) {
           if(vdata->skipElement(step, ent, ele)) continue;
@@ -618,7 +623,7 @@ PView *GMSH_LevelsetPlugin::execute(PView *v)
     }
   }
 
-  return nullptr;
+  return v2;
 }
 
 // On high order maps, we draw only the elements that have a cut with
