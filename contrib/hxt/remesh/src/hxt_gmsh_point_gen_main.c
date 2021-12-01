@@ -5,6 +5,7 @@
 #include "hxt_point_gen_numerics.h"
 #include "hxt_point_gen_utils.h"
 #include "hxt_point_gen.h"
+#include "hxt_point_gen_3d.h"
 
 #include "hxt_tetRepair.h"
 
@@ -112,6 +113,42 @@ HXTStatus hxtGmshPointGenMain(HXTMesh *mesh,
   HXT_CHECK(hxtFree(&directions));
   HXT_CHECK(hxtFree(&h_function));
   HXT_CHECK(hxtFree(&sizemap));
+
+  return HXT_STATUS_OK;
+}
+
+HXTStatus hxtGmshVolumePointGen(HXTMesh *mesh, 
+                                int verbosity,
+                                double *sizemap,
+                                double *directions,
+                                size_t *npts,
+                                double **pts,
+                                uint32_t **binaryIndices)
+{
+
+  HXT_INFO_COND(verbosity>=1,"");
+  HXT_INFO_COND(verbosity>=1,"=============================================================");
+  HXT_INFO_COND(verbosity>=1,"           VOLUME POINT GENERATION MAIN"); 
+
+
+
+
+  HXT_CHECK(hxtGeneratePointsOnVolumesGmsh(mesh, verbosity, sizemap, directions, npts, pts, NULL));
+
+
+
+  //************************************
+  // Output
+  //************************************
+
+  const char *output = NULL;
+  output = "points.pos";
+  /*if (output) HXT_CHECK(hxtPointGenExportPointsToPos(fmesh, output));*/
+  if (output) HXT_CHECK(hxtPointGenExportPointsToPos_2(pts,npts,output));
+
+
+
+
 
   return HXT_STATUS_OK;
 }

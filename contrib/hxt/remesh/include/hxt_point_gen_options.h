@@ -51,6 +51,8 @@ typedef struct {
 
   uint16_t skipColor;         /**< Skip this color in pointGen (used in mixed quad-tri input) */
 
+  int doNotBuildTriToTet;     /**< 1 to NOT build tri to tet structure, only used for volume point generation */
+
 
 }HXTPointGenOptions;
 

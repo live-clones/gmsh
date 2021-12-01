@@ -10,6 +10,8 @@
 
 #include "hxt_point_gen_numerics.h"
 
+#include "hxt_point_gen_realloc.h"
+
 #include "hxt_post_debugging.h"
 
 static double sign(double a){
@@ -885,11 +887,12 @@ HXTStatus hxtGeneratePointsOnVolumes(HXTMesh *mesh,
   uint64_t *lines2tet;
   HXT_CHECK(hxtMalloc(&lines2tet,mesh->lines.num*sizeof(uint64_t)));
   for (uint64_t i=0; i < mesh->lines.num; i++) lines2tet[i] = UINT64_MAX;
-  HXT_CHECK(hxtGetTrianglesToTetrahedra(mesh,tri2tet,lines2tet));
 
+  if (opt->doNotBuildTriToTet!=1)
+    HXT_CHECK(hxtGetTrianglesToTetrahedra(mesh,tri2tet,lines2tet));
   clock_t time01 = clock();
   double time_estimate = (double)(time01-time00) / CLOCKS_PER_SEC;
-  HXT_INFO_COND(opt->verbosity>=1,"Time to create tri2tet  %f", time_estimate); 
+  HXT_INFO_COND(opt->verbosity>=1,"Time to create tri2tet        %f", time_estimate); 
 
   
 
@@ -933,12 +936,14 @@ HXTStatus hxtGeneratePointsOnVolumes(HXTMesh *mesh,
   tol = 10e-16; // TODO 
   void *dataTri;
   HXT_CHECK(hxtRTreeCreate64(&dataTri));
-  if (opt->generateSurfaces == 0){
-    for (uint64_t i=0; i<mesh->triangles.num; i++){
-      double *p0 = mesh->vertices.coord + 4*mesh->triangles.node[3*i+0];
-      double *p1 = mesh->vertices.coord + 4*mesh->triangles.node[3*i+1];
-      double *p2 = mesh->vertices.coord + 4*mesh->triangles.node[3*i+2];
-      HXT_CHECK(hxtAddTriangleInRTree64(p0,p1,p2,tol,i,dataTri));
+  if(1){
+    if (opt->generateSurfaces == 0){
+      for (uint64_t i=0; i<mesh->triangles.num; i++){
+        double *p0 = mesh->vertices.coord + 4*mesh->triangles.node[3*i+0];
+        double *p1 = mesh->vertices.coord + 4*mesh->triangles.node[3*i+1];
+        double *p2 = mesh->vertices.coord + 4*mesh->triangles.node[3*i+2];
+        HXT_CHECK(hxtAddTriangleInRTree64(p0,p1,p2,tol,i,dataTri));
+      }
     }
   }
 
@@ -1113,8 +1118,6 @@ HXTStatus hxtGeneratePointsOnVolumes(HXTMesh *mesh,
         if (bin[i] == 0) bin[numGenPoints] = 1;
         if (bin[i] == 1) bin[numGenPoints] = 0;
         if (bin[i] == UINT32_MAX) return HXT_ERROR_MSG(HXT_STATUS_ERROR,"Problem in binary index");
-
-
         fmesh->vertices.num++;
         numGenPoints++;
       }
@@ -1141,5 +1144,179 @@ HXTStatus hxtGeneratePointsOnVolumes(HXTMesh *mesh,
 
   return HXT_STATUS_OK;
 }
+
+//*****************************************************************************************
+//*****************************************************************************************
+//
+// FUNCTION to generate points on volumes TO BE USED as gmsh api  
+//
+//*****************************************************************************************
+//*****************************************************************************************
+HXTStatus hxtGeneratePointsOnVolumesGmsh
+(
+  HXTMesh *mesh, // in
+  int verbosity,
+  const double *sizemap,  // in
+  const double *directions, // in
+  size_t *npts, // out
+  double **pts, // out
+  uint32_t **binaryIndices // out
+) 
+{
+
+  // Declare new options 
+  // Not necessary to have them as input 
+  HXTPointGenOptions options = {.verbosity          = verbosity, 
+                                .generateLines      = 0,
+                                .generateSurfaces   = 0,
+                                .generateVolumes    = 1,
+                                .remeshSurfaces     = 0,
+                                .quadSurfaces       = 0,
+                                .walkMethod2D       = 0,
+                                .walkMethod3D       = 0,
+                                .dirType            = 0, 
+                                .uniformSize        = 0.1,
+                                .areaThreshold      = 10e-9,
+                                .tolerance          = 10e-9,
+                                .numTris            = 0,
+                                .doNotBuildTriToTet = 1 };
+
+
+  // Sizemap and directions 
+  //
+  // Sizemap is of size 3*nVertices (one size per direction)
+  //
+  // Directions is of size 9*nVertices (one vector per direction)
+  
+
+  // Temporary array to store parent tetraheron for all vertices
+  uint64_t *tempParent;
+  HXT_CHECK(hxtMalloc(&tempParent,mesh->vertices.num*sizeof(uint64_t)));
+  for (uint32_t i=0; i<mesh->vertices.num; i++) tempParent[i] = UINT64_MAX;
+  
+  for (uint32_t i=0; i<mesh->tetrahedra.num; i++){
+    uint32_t *v = mesh->tetrahedra.node + 4*i;
+
+    tempParent[v[0]] = i;
+    tempParent[v[1]] = i;
+    tempParent[v[2]] = i;
+    tempParent[v[3]] = i;
+  }
+
+
+  // Temporary array to store if vertex is on boundary (these will be the seed points)
+  uint32_t *isPointOnSurface;
+  HXT_CHECK(hxtMalloc(&isPointOnSurface,mesh->vertices.num*sizeof(uint32_t)));
+  for (uint32_t i=0; i<mesh->vertices.num; i++) isPointOnSurface[i] = UINT32_MAX;
+
+  for (uint32_t i=0; i<mesh->triangles.num; i++){
+    uint32_t v0 = mesh->triangles.node[3*i+0];
+    uint32_t v1 = mesh->triangles.node[3*i+1];
+    uint32_t v2 = mesh->triangles.node[3*i+2];
+
+    isPointOnSurface[v0] = 1;
+    isPointOnSurface[v1] = 1;
+    isPointOnSurface[v2] = 1;
+  }
+
+  // TODO estimate better based on bounding box and size 
+  uint32_t estNumVertices = 10000000;
+
+
+  // Create fmesh 
+  HXTMesh *fmesh;
+  HXT_CHECK(hxtMeshCreate(&fmesh));
+
+  HXT_CHECK(hxtVerticesReserve(fmesh, estNumVertices));
+
+
+  // Create structure for parent elements of generated points 
+  HXTPointGenParent *parent;
+  HXT_CHECK(hxtMalloc(&parent, estNumVertices*sizeof(HXTPointGenParent)));
+  for (uint32_t i=0; i<estNumVertices; i++) parent[i].type = UINT8_MAX;
+  for (uint32_t i=0; i<estNumVertices; i++) parent[i].id = UINT64_MAX;
+
+
+  // Transfer boundary points of input mesh to fmesh
+  // and build parent structure with tetrahedra
+  uint32_t countBoundaryPoints=0;
+  for (uint32_t i=0; i<mesh->vertices.num; i++){
+    if (isPointOnSurface[i] == 1){
+
+      fmesh->vertices.coord[4*countBoundaryPoints+0] = mesh->vertices.coord[4*i+0];
+      fmesh->vertices.coord[4*countBoundaryPoints+1] = mesh->vertices.coord[4*i+1];
+      fmesh->vertices.coord[4*countBoundaryPoints+2] = mesh->vertices.coord[4*i+2];
+      fmesh->vertices.coord[4*countBoundaryPoints+3] = mesh->vertices.coord[4*i+3];
+
+      parent[countBoundaryPoints].type = 4;
+      parent[countBoundaryPoints].id = tempParent[i];
+
+      countBoundaryPoints++;
+    }
+
+  }
+
+  fmesh->vertices.num = countBoundaryPoints;
+
+  HXT_CHECK(hxtFree(&isPointOnSurface));
+  HXT_CHECK(hxtFree(&tempParent));
+
+
+  // Create and fill bin structure 
+  // TODO not given at input for now 
+  
+  uint32_t *bin;
+  if (binaryIndices == NULL){
+    HXT_INFO_COND(options.verbosity>=0,"Input binary = NULL");
+    HXT_CHECK(hxtMalloc(&bin,estNumVertices*sizeof(uint32_t)));
+    for (uint32_t i=0; i<estNumVertices; i++) bin[i] =0;
+  }
+
+
+  // Generate points on volumes
+  HXT_CHECK(hxtGeneratePointsOnVolumes(mesh,&options,sizemap,directions,parent,fmesh,bin));
+
+  uint32_t numGeneratePointsOnVolume = fmesh->vertices.num - countBoundaryPoints;
+  HXT_INFO_COND(options.verbosity>=0,"");
+  HXT_INFO_COND(options.verbosity>=0,"Boundary points  = %d", countBoundaryPoints);
+  HXT_INFO_COND(options.verbosity>=0,"Generate points  = %d", numGeneratePointsOnVolume);
+  HXT_INFO_COND(options.verbosity>=0,"Total points     = %d", fmesh->vertices.num);
+
+
+
+  // Allocate pts array and copy fmesh points
+  //
+  // At this points the first countBoundaryPoints of fmesh will be the ones from the surface of the input
+  // the rest will be the pts output 
+  //
+  // and thus npts = fmesh->vertices.num - countBoundaryPoints
+  
+  HXT_CHECK(hxtMalloc(pts,3*numGeneratePointsOnVolume*sizeof(double)));
+
+  uint32_t j=0;
+  for (uint32_t i=countBoundaryPoints; i<fmesh->vertices.num; i++){
+    (*pts)[3*j+0] = fmesh->vertices.coord[4*i+0];
+    (*pts)[3*j+1] = fmesh->vertices.coord[4*i+1];
+    (*pts)[3*j+2] = fmesh->vertices.coord[4*i+2];
+    j++;
+
+  }
+
+  *npts = numGeneratePointsOnVolume;
+
+
+
+  // Delete things 
+  
+  HXT_CHECK(hxtFree(&bin));
+  HXT_CHECK(hxtFree(&parent));
+
+  HXT_CHECK(hxtMeshDelete(&fmesh));
+ 
+
+
+  return HXT_STATUS_OK;
+}
+
 
 

@@ -28,6 +28,27 @@ HXTStatus hxtPointGenExportPointsToPos(HXTMesh* m,
   return HXT_STATUS_OK;
 }
 
+HXTStatus hxtPointGenExportPointsToPos_2(double* pts,
+                                         size_t npts,
+                                         const char* posFile) 
+{
+  if (posFile == NULL) return HXT_STATUS_WRITE_ERROR;
+  HXT_INFO("Writing %u points to \"%s\"\n",npts,posFile);
+  //printf("\nWriting %u points to \"%s\"\n", m->vertices.num, posFile);
+  FILE* fp = fopen(posFile, "w");
+  if (fp == NULL) return HXT_STATUS_WRITE_ERROR;
+  fprintf(fp, "View \"%s\" {\n", "points");
+  for (uint32_t v = 0; v < npts; ++v) {
+    const double* p = &(pts[3*v]);
+    if (fprintf(fp, "  SP(%.6f,%.6f,%.6f){%i};\n", p[0], p[1], p[2], 0) < 0) {
+      return HXT_STATUS_WRITE_ERROR;
+    };
+  }
+  fprintf(fp, "};\n\n");
+  fclose(fp);
+  return HXT_STATUS_OK;
+}
+
 
 HXTStatus hxtPointGenWriteScalarPoints(HXTMesh *mesh, 
                                        const double *values,

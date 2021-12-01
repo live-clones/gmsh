@@ -15,6 +15,10 @@ HXTStatus hxtPrintVec(const double *vec);
 HXTStatus hxtPointGenExportPointsToPos(HXTMesh* m, 
                                        const char* posFile);
 
+HXTStatus hxtPointGenExportPointsToPos_2(double* pts,
+                                         size_t npts,
+                                         const char* posFile); 
+
 HXTStatus hxtPointGenWriteScalarPoints(HXTMesh *mesh, 
                                        const double *values,
                                        const char *filename);
