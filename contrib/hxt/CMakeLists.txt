@@ -220,6 +220,7 @@ set(SRC
   ../reparam/src/hxt_linear_system_lu.h
   ../reparam/src/hxt_linear_system_petsc.c
   ../reparam/src/hxt_linear_system_petsc.h
+  hxt_qmbFeatureLine.cpp
   hxt_quadMultiBlock.cpp
   hxt_qmbSingularity.cpp
   hxt_qmbCorner.cpp
