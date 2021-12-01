@@ -139,7 +139,7 @@ C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t3.cpp#L20,t3.cpp}, @url{@value{GIT
 @ftable @code
 @item gmsh/option/setNumber
 Set a numerical option to @code{value}. @code{name} is of the form
-"category.option" or "category[num].option". Available categories and options
+"Category.Option" or "Category[num].Option". Available categories and options
 are listed in the Gmsh reference manual.
 
 @table @asis
@@ -157,7 +157,7 @@ C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t3.cpp#L91,t3.cpp}, @url{@value{GIT
 
 @item gmsh/option/getNumber
 Get the @code{value} of a numerical option. @code{name} is of the form
-"category.option" or "category[num].option". Available categories and options
+"Category.Option" or "Category[num].Option". Available categories and options
 are listed in the Gmsh reference manual.
 
 @table @asis
@@ -175,7 +175,7 @@ C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t8.cpp#L118,t8.cpp}, @url{@value{GI
 
 @item gmsh/option/setString
 Set a string option to @code{value}. @code{name} is of the form
-"category.option" or "category[num].option". Available categories and options
+"Category.Option" or "Category[num].Option". Available categories and options
 are listed in the Gmsh reference manual.
 
 @table @asis
@@ -193,7 +193,7 @@ C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t4.cpp#L151,t4.cpp}, @url{@value{GI
 
 @item gmsh/option/getString
 Get the @code{value} of a string option. @code{name} is of the form
-"category.option" or "category[num].option". Available categories and options
+"Category.Option" or "Category[num].Option". Available categories and options
 are listed in the Gmsh reference manual.
 
 @table @asis
@@ -212,9 +212,9 @@ Python (@url{@value{GITLAB-PREFIX}/demos/api/test.py#L29,test.py})
 @item gmsh/option/setColor
 Set a color option to the RGBA value (@code{r}, @code{g}, @code{b}, @code{a}),
 where where @code{r}, @code{g}, @code{b} and @code{a} should be integers between
-0 and 255. @code{name} is of the form "category.option" or
-"category[num].option". Available categories and options are listed in the Gmsh
-reference manual, with the "Color." middle string removed.
+0 and 255. @code{name} is of the form "Category.Color.Option" or
+"Category[num].Color.Option". Available categories and options are listed in the
+Gmsh reference manual. For conciseness "Color." can be ommitted in @code{name}.
 
 @table @asis
 @item Input:
@@ -231,9 +231,9 @@ C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t3.cpp#L92,t3.cpp}, @url{@value{GIT
 
 @item gmsh/option/getColor
 Get the @code{r}, @code{g}, @code{b}, @code{a} value of a color option.
-@code{name} is of the form "category.option" or "category[num].option".
-Available categories and options are listed in the Gmsh reference manual, with
-the "Color." middle string removed.
+@code{name} is of the form "Category.Color.Option" or
+"Category[num].Color.Option". Available categories and options are listed in the
+Gmsh reference manual. For conciseness "Color." can be ommitted in @code{name}.
 
 @table @asis
 @item Input:
@@ -2269,7 +2269,7 @@ entities of dimension 0 (points) are handled.
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L1326,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1168,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L3084,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L2610,Julia}
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t16.cpp#L115,t16.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t18.cpp#L32,t18.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t21.cpp#L47,t21.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/adapt_mesh.cpp#L234,adapt_mesh.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t16.py#L97,t16.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t18.py#L29,t18.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t21.py#L35,t21.py}, @url{@value{GITLAB-PREFIX}/demos/api/adapt_mesh.py#L81,adapt_mesh.py}, @url{@value{GITLAB-PREFIX}/demos/api/mirror_mesh.py#L12,mirror_mesh.py}, ...)
+C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t16.cpp#L115,t16.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t18.cpp#L32,t18.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t21.cpp#L47,t21.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/adapt_mesh.cpp#L234,adapt_mesh.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t16.py#L97,t16.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t18.py#L29,t18.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t21.py#L35,t21.py}, @url{@value{GITLAB-PREFIX}/demos/api/adapt_mesh.py#L80,adapt_mesh.py}, @url{@value{GITLAB-PREFIX}/demos/api/mirror_mesh.py#L12,mirror_mesh.py}, ...)
 @end table
 
 @item gmsh/model/mesh/getSizes
@@ -2956,7 +2956,7 @@ integer value
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L1692,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1490,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L3896,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L3356,Julia}
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t7.cpp#L50,t7.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t10.cpp#L46,t10.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t11.cpp#L38,t11.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t13.cpp#L83,t13.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t17.cpp#L41,t17.cpp}, ...), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t7.py#L43,t7.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t10.py#L43,t10.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t13.py#L71,t13.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t17.py#L35,t17.py}, @url{@value{GITLAB-PREFIX}/demos/api/adapt_mesh.py#L112,adapt_mesh.py}, ...)
+C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t7.cpp#L50,t7.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t10.cpp#L46,t10.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t11.cpp#L38,t11.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t13.cpp#L83,t13.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t17.cpp#L41,t17.cpp}, ...), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t7.py#L43,t7.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t10.py#L43,t10.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t13.py#L71,t13.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t17.py#L35,t17.py}, @url{@value{GITLAB-PREFIX}/demos/api/adapt_mesh.py#L111,adapt_mesh.py}, ...)
 @end table
 
 @item gmsh/model/mesh/field/remove
@@ -3015,7 +3015,7 @@ Set the numerical option @code{option} to value @code{value} for field
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L1714,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1508,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L3968,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L3422,Julia}
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t7.cpp#L51,t7.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t10.cpp#L49,t10.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t17.cpp#L42,t17.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/adapt_mesh.cpp#L270,adapt_mesh.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t7.py#L44,t7.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t10.py#L46,t10.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t17.py#L36,t17.py}, @url{@value{GITLAB-PREFIX}/demos/api/adapt_mesh.py#L113,adapt_mesh.py}, @url{@value{GITLAB-PREFIX}/demos/api/copy_mesh.py#L46,copy_mesh.py})
+C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t7.cpp#L51,t7.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t10.cpp#L49,t10.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t17.cpp#L42,t17.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/adapt_mesh.cpp#L270,adapt_mesh.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t7.py#L44,t7.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t10.py#L46,t10.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t17.py#L36,t17.py}, @url{@value{GITLAB-PREFIX}/demos/api/adapt_mesh.py#L112,adapt_mesh.py}, @url{@value{GITLAB-PREFIX}/demos/api/copy_mesh.py#L46,copy_mesh.py})
 @end table
 
 @item gmsh/model/mesh/field/getNumber
@@ -3106,7 +3106,7 @@ Set the field @code{tag} as the background mesh size field.
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L1756,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1544,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4083,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L3524,Julia}
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t7.cpp#L54,t7.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t10.cpp#L108,t10.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t11.cpp#L41,t11.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t13.cpp#L89,t13.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t17.cpp#L43,t17.cpp}, ...), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t7.py#L47,t7.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t10.py#L102,t10.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t13.py#L76,t13.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t17.py#L37,t17.py}, @url{@value{GITLAB-PREFIX}/demos/api/adapt_mesh.py#L114,adapt_mesh.py}, ...)
+C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t7.cpp#L54,t7.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t10.cpp#L108,t10.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t11.cpp#L41,t11.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t13.cpp#L89,t13.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t17.cpp#L43,t17.cpp}, ...), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t7.py#L47,t7.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t10.py#L102,t10.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t13.py#L76,t13.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t17.py#L37,t17.py}, @url{@value{GITLAB-PREFIX}/demos/api/adapt_mesh.py#L113,adapt_mesh.py}, ...)
 @end table
 
 @item gmsh/model/mesh/field/setAsBoundaryLayer
@@ -4175,7 +4175,7 @@ integer value
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L2409,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2121,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L5436,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4694,Julia}
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t17.cpp#L28,t17.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t20.cpp#L62,t20.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t21.cpp#L39,t21.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/x6.cpp#L20,x6.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/adapt_mesh.cpp#L228,adapt_mesh.cpp}, ...), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t17.py#L27,t17.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t20.py#L52,t20.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t21.py#L31,t21.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/x6.py#L19,x6.py}, @url{@value{GITLAB-PREFIX}/demos/api/adapt_mesh.py#L76,adapt_mesh.py}, ...)
+C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t17.cpp#L28,t17.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t20.cpp#L62,t20.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t21.cpp#L39,t21.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/x6.cpp#L20,x6.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/adapt_mesh.cpp#L228,adapt_mesh.cpp}, ...), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t17.py#L27,t17.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t20.py#L52,t20.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t21.py#L31,t21.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/x6.py#L19,x6.py}, @url{@value{GITLAB-PREFIX}/demos/api/adapt_mesh.py#L75,adapt_mesh.py}, ...)
 @end table
 
 @item gmsh/model/occ/addDisk
@@ -5157,7 +5157,7 @@ integer value
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L3103,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2749,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L6827,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5891,Julia}
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t4.cpp#L111,t4.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/x3.cpp#L28,x3.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/x4.cpp#L33,x4.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/x5.cpp#L80,x5.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/adapt_mesh.cpp#L245,adapt_mesh.cpp}, ...), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t4.py#L118,t4.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/x3.py#L25,x3.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/x4.py#L31,x4.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/x5.py#L68,x5.py}, @url{@value{GITLAB-PREFIX}/demos/api/adapt_mesh.py#L89,adapt_mesh.py}, ...)
+C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t4.cpp#L111,t4.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/x3.cpp#L28,x3.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/x4.cpp#L33,x4.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/x5.cpp#L80,x5.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/adapt_mesh.cpp#L245,adapt_mesh.cpp}, ...), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t4.py#L118,t4.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/x3.py#L25,x3.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/x4.py#L31,x4.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/x5.py#L68,x5.py}, @url{@value{GITLAB-PREFIX}/demos/api/adapt_mesh.py#L88,adapt_mesh.py}, ...)
 @end table
 
 @item gmsh/view/remove
@@ -5234,7 +5234,7 @@ data. @code{partition} allows one to specify data in several sub-sets.
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L3137,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2779,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L6900,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5969,Julia}
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/demos/api/adapt_mesh.cpp#L247,adapt_mesh.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/plugin.cpp#L18,plugin.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/view.cpp#L20,view.cpp}), Python (@url{@value{GITLAB-PREFIX}/demos/api/adapt_mesh.py#L90,adapt_mesh.py}, @url{@value{GITLAB-PREFIX}/demos/api/plugin.py#L16,plugin.py}, @url{@value{GITLAB-PREFIX}/demos/api/poisson.py#L229,poisson.py}, @url{@value{GITLAB-PREFIX}/demos/api/view.py#L19,view.py})
+C++ (@url{@value{GITLAB-PREFIX}/demos/api/adapt_mesh.cpp#L247,adapt_mesh.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/plugin.cpp#L18,plugin.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/view.cpp#L20,view.cpp}), Python (@url{@value{GITLAB-PREFIX}/demos/api/adapt_mesh.py#L89,adapt_mesh.py}, @url{@value{GITLAB-PREFIX}/demos/api/plugin.py#L16,plugin.py}, @url{@value{GITLAB-PREFIX}/demos/api/poisson.py#L229,poisson.py}, @url{@value{GITLAB-PREFIX}/demos/api/view.py#L19,view.py})
 @end table
 
 @item gmsh/view/addHomogeneousModelData
@@ -5505,7 +5505,7 @@ file extension. Append to the file if @code{append} is set.
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L3332,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2963,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7304,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6286,Julia}
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/x3.cpp#L107,x3.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/x4.cpp#L88,x4.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/adapt_mesh.cpp#L248,adapt_mesh.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/plugin.cpp#L43,plugin.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/view.cpp#L24,view.cpp}, ...), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/x3.py#L92,x3.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/x4.py#L81,x4.py}, @url{@value{GITLAB-PREFIX}/demos/api/adapt_mesh.py#L92,adapt_mesh.py}, @url{@value{GITLAB-PREFIX}/demos/api/normals.py#L43,normals.py}, @url{@value{GITLAB-PREFIX}/demos/api/plugin.py#L33,plugin.py}, ...)
+C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/x3.cpp#L107,x3.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/x4.cpp#L88,x4.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/adapt_mesh.cpp#L248,adapt_mesh.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/plugin.cpp#L43,plugin.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/view.cpp#L24,view.cpp}, ...), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/x3.py#L92,x3.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/x4.py#L81,x4.py}, @url{@value{GITLAB-PREFIX}/demos/api/adapt_mesh.py#L91,adapt_mesh.py}, @url{@value{GITLAB-PREFIX}/demos/api/normals.py#L43,normals.py}, @url{@value{GITLAB-PREFIX}/demos/api/plugin.py#L33,plugin.py}, ...)
 @end table
 
 @item gmsh/view/setVisibilityPerWindow

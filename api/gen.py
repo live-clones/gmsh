@@ -66,22 +66,22 @@ gmsh.add('clear', doc, None)
 
 option = gmsh.add_module('option', 'option handling functions')
 
-doc = '''Set a numerical option to `value'. `name' is of the form "category.option" or "category[num].option". Available categories and options are listed in the Gmsh reference manual.'''
+doc = '''Set a numerical option to `value'. `name' is of the form "Category.Option" or "Category[num].Option". Available categories and options are listed in the Gmsh reference manual.'''
 option.add('setNumber', doc, None, istring('name'), idouble('value'))
 
-doc = '''Get the `value' of a numerical option. `name' is of the form "category.option" or "category[num].option". Available categories and options are listed in the Gmsh reference manual.'''
+doc = '''Get the `value' of a numerical option. `name' is of the form "Category.Option" or "Category[num].Option". Available categories and options are listed in the Gmsh reference manual.'''
 option.add('getNumber', doc, None, istring('name'), odouble('value'))
 
-doc = '''Set a string option to `value'. `name' is of the form "category.option" or "category[num].option". Available categories and options are listed in the Gmsh reference manual.'''
+doc = '''Set a string option to `value'. `name' is of the form "Category.Option" or "Category[num].Option". Available categories and options are listed in the Gmsh reference manual.'''
 option.add('setString', doc, None, istring('name'), istring('value'))
 
-doc = '''Get the `value' of a string option. `name' is of the form "category.option" or "category[num].option". Available categories and options are listed in the Gmsh reference manual.'''
+doc = '''Get the `value' of a string option. `name' is of the form "Category.Option" or "Category[num].Option". Available categories and options are listed in the Gmsh reference manual.'''
 option.add('getString', doc, None, istring('name'), ostring('value'))
 
-doc = '''Set a color option to the RGBA value (`r', `g', `b', `a'), where where `r', `g', `b' and `a' should be integers between 0 and 255. `name' is of the form "category.option" or "category[num].option". Available categories and options are listed in the Gmsh reference manual, with the "Color." middle string removed.'''
+doc = '''Set a color option to the RGBA value (`r', `g', `b', `a'), where where `r', `g', `b' and `a' should be integers between 0 and 255. `name' is of the form "Category.Color.Option" or "Category[num].Color.Option". Available categories and options are listed in the Gmsh reference manual. For conciseness "Color." can be ommitted in `name'.'''
 option.add('setColor', doc, None, istring('name'), iint('r'), iint('g'), iint('b'), iint('a', '255'))
 
-doc = '''Get the `r', `g', `b', `a' value of a color option. `name' is of the form "category.option" or "category[num].option". Available categories and options are listed in the Gmsh reference manual, with the "Color." middle string removed.'''
+doc = '''Get the `r', `g', `b', `a' value of a color option. `name' is of the form "Category.Color.Option" or "Category[num].Color.Option". Available categories and options are listed in the Gmsh reference manual. For conciseness "Color." can be ommitted in `name'.'''
 option.add('getColor', doc, None, istring('name'), oint('r'), oint('g'), oint('b'), oint('a'))
 
 ################################################################################

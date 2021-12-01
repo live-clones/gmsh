@@ -108,8 +108,8 @@ c
             integer(c_int)::ierr
           end subroutine gmshClear
 
-!  Set a numerical option to `value'. `name' is of the form "category.option"
-!  or "category[num].option". Available categories and options are listed in
+!  Set a numerical option to `value'. `name' is of the form "Category.Option"
+!  or "Category[num].Option". Available categories and options are listed in
 !  the Gmsh reference manual.
         subroutine gmshOptionSetNumber(
      &      name,
@@ -123,7 +123,7 @@ c
           end subroutine gmshOptionSetNumber
 
 !  Get the `value' of a numerical option. `name' is of the form
-!  "category.option" or "category[num].option". Available categories and
+!  "Category.Option" or "Category[num].Option". Available categories and
 !  options are listed in the Gmsh reference manual.
         subroutine gmshOptionGetNumber(
      &      name,
@@ -136,8 +136,8 @@ c
             integer(c_int)::ierr
           end subroutine gmshOptionGetNumber
 
-!  Set a string option to `value'. `name' is of the form "category.option" or
-!  "category[num].option". Available categories and options are listed in the
+!  Set a string option to `value'. `name' is of the form "Category.Option" or
+!  "Category[num].Option". Available categories and options are listed in the
 !  Gmsh reference manual.
         subroutine gmshOptionSetString(
      &      name,
@@ -150,8 +150,8 @@ c
             integer(c_int)::ierr
           end subroutine gmshOptionSetString
 
-!  Get the `value' of a string option. `name' is of the form "category.option"
-!  or "category[num].option". Available categories and options are listed in
+!  Get the `value' of a string option. `name' is of the form "Category.Option"
+!  or "Category[num].Option". Available categories and options are listed in
 !  the Gmsh reference manual.
         subroutine gmshOptionGetString(
      &      name,
@@ -166,9 +166,9 @@ c
 
 !  Set a color option to the RGBA value (`r', `g', `b', `a'), where where `r',
 !  `g', `b' and `a' should be integers between 0 and 255. `name' is of the
-!  form "category.option" or "category[num].option". Available categories and
-!  options are listed in the Gmsh reference manual, with the "Color." middle
-!  string removed.
+!  form "Category.Color.Option" or "Category[num].Color.Option". Available
+!  categories and options are listed in the Gmsh reference manual. For
+!  conciseness "Color." can be ommitted in `name'.
         subroutine gmshOptionSetColor(
      &      name,
      &      r,
@@ -187,9 +187,9 @@ c
           end subroutine gmshOptionSetColor
 
 !  Get the `r', `g', `b', `a' value of a color option. `name' is of the form
-!  "category.option" or "category[num].option". Available categories and
-!  options are listed in the Gmsh reference manual, with the "Color." middle
-!  string removed.
+!  "Category.Color.Option" or "Category[num].Color.Option". Available
+!  categories and options are listed in the Gmsh reference manual. For
+!  conciseness "Color." can be ommitted in `name'.
         subroutine gmshOptionGetColor(
      &      name,
      &      r,

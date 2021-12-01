@@ -102,8 +102,8 @@ namespace gmsh { // Top-level functions
 
     // gmsh::option::setNumber
     //
-    // Set a numerical option to `value'. `name' is of the form "category.option"
-    // or "category[num].option". Available categories and options are listed in
+    // Set a numerical option to `value'. `name' is of the form "Category.Option"
+    // or "Category[num].Option". Available categories and options are listed in
     // the Gmsh reference manual.
     GMSH_API void setNumber(const std::string & name,
                             const double value);
@@ -111,23 +111,23 @@ namespace gmsh { // Top-level functions
     // gmsh::option::getNumber
     //
     // Get the `value' of a numerical option. `name' is of the form
-    // "category.option" or "category[num].option". Available categories and
+    // "Category.Option" or "Category[num].Option". Available categories and
     // options are listed in the Gmsh reference manual.
     GMSH_API void getNumber(const std::string & name,
                             double & value);
 
     // gmsh::option::setString
     //
-    // Set a string option to `value'. `name' is of the form "category.option" or
-    // "category[num].option". Available categories and options are listed in the
+    // Set a string option to `value'. `name' is of the form "Category.Option" or
+    // "Category[num].Option". Available categories and options are listed in the
     // Gmsh reference manual.
     GMSH_API void setString(const std::string & name,
                             const std::string & value);
 
     // gmsh::option::getString
     //
-    // Get the `value' of a string option. `name' is of the form "category.option"
-    // or "category[num].option". Available categories and options are listed in
+    // Get the `value' of a string option. `name' is of the form "Category.Option"
+    // or "Category[num].Option". Available categories and options are listed in
     // the Gmsh reference manual.
     GMSH_API void getString(const std::string & name,
                             std::string & value);
@@ -136,9 +136,9 @@ namespace gmsh { // Top-level functions
     //
     // Set a color option to the RGBA value (`r', `g', `b', `a'), where where `r',
     // `g', `b' and `a' should be integers between 0 and 255. `name' is of the form
-    // "category.option" or "category[num].option". Available categories and
-    // options are listed in the Gmsh reference manual, with the "Color." middle
-    // string removed.
+    // "Category.Color.Option" or "Category[num].Color.Option". Available
+    // categories and options are listed in the Gmsh reference manual. For
+    // conciseness "Color." can be ommitted in `name'.
     GMSH_API void setColor(const std::string & name,
                            const int r,
                            const int g,
@@ -148,9 +148,9 @@ namespace gmsh { // Top-level functions
     // gmsh::option::getColor
     //
     // Get the `r', `g', `b', `a' value of a color option. `name' is of the form
-    // "category.option" or "category[num].option". Available categories and
-    // options are listed in the Gmsh reference manual, with the "Color." middle
-    // string removed.
+    // "Category.Color.Option" or "Category[num].Color.Option". Available
+    // categories and options are listed in the Gmsh reference manual. For
+    // conciseness "Color." can be ommitted in `name'.
     GMSH_API void getColor(const std::string & name,
                            int & r,
                            int & g,

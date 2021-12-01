@@ -247,6 +247,8 @@ GMSH_API void gmsh::option::setColor(const std::string &name, const int r,
   std::string c, n;
   int i;
   SplitOptionName(name, c, n, i);
+  // allow "Category.Color.Option" name for compatibility with .geo parser
+  n = ReplaceSubString("Color.", "", n);
   unsigned int value = CTX::instance()->packColor(r, g, b, a);
   if(!GmshSetOption(c, n, value, i))
     Msg::Error("Could not set option '%s'", name.c_str());
@@ -259,6 +261,8 @@ GMSH_API void gmsh::option::getColor(const std::string &name, int &r, int &g,
   std::string c, n;
   int i;
   SplitOptionName(name, c, n, i);
+  // allow "Category.Color.Option" name for compatibility with .geo parser
+  n = ReplaceSubString("Color.", "", n);
   unsigned int value;
   if(GmshGetOption(c, n, value, i)) {
     r = CTX::instance()->unpackRed(value);

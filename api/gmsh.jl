@@ -134,8 +134,8 @@ import ..gmsh
 """
     gmsh.option.setNumber(name, value)
 
-Set a numerical option to `value`. `name` is of the form "category.option" or
-"category[num].option". Available categories and options are listed in the Gmsh
+Set a numerical option to `value`. `name` is of the form "Category.Option" or
+"Category[num].Option". Available categories and options are listed in the Gmsh
 reference manual.
 """
 function setNumber(name, value)
@@ -151,8 +151,8 @@ const set_number = setNumber
 """
     gmsh.option.getNumber(name)
 
-Get the `value` of a numerical option. `name` is of the form "category.option"
-or "category[num].option". Available categories and options are listed in the
+Get the `value` of a numerical option. `name` is of the form "Category.Option"
+or "Category[num].Option". Available categories and options are listed in the
 Gmsh reference manual.
 
 Return `value`.
@@ -171,8 +171,8 @@ const get_number = getNumber
 """
     gmsh.option.setString(name, value)
 
-Set a string option to `value`. `name` is of the form "category.option" or
-"category[num].option". Available categories and options are listed in the Gmsh
+Set a string option to `value`. `name` is of the form "Category.Option" or
+"Category[num].Option". Available categories and options are listed in the Gmsh
 reference manual.
 """
 function setString(name, value)
@@ -188,8 +188,8 @@ const set_string = setString
 """
     gmsh.option.getString(name)
 
-Get the `value` of a string option. `name` is of the form "category.option" or
-"category[num].option". Available categories and options are listed in the Gmsh
+Get the `value` of a string option. `name` is of the form "Category.Option" or
+"Category[num].Option". Available categories and options are listed in the Gmsh
 reference manual.
 
 Return `value`.
@@ -211,9 +211,9 @@ const get_string = getString
 
 Set a color option to the RGBA value (`r`, `g`, `b`, `a`), where where `r`, `g`,
 `b` and `a` should be integers between 0 and 255. `name` is of the form
-"category.option" or "category[num].option". Available categories and options
-are listed in the Gmsh reference manual, with the "Color." middle string
-removed.
+"Category.Color.Option" or "Category[num].Color.Option". Available categories
+and options are listed in the Gmsh reference manual. For conciseness "Color."
+can be ommitted in `name`.
 """
 function setColor(name, r, g, b, a = 255)
     ierr = Ref{Cint}()
@@ -229,9 +229,9 @@ const set_color = setColor
     gmsh.option.getColor(name)
 
 Get the `r`, `g`, `b`, `a` value of a color option. `name` is of the form
-"category.option" or "category[num].option". Available categories and options
-are listed in the Gmsh reference manual, with the "Color." middle string
-removed.
+"Category.Color.Option" or "Category[num].Color.Option". Available categories
+and options are listed in the Gmsh reference manual. For conciseness "Color."
+can be ommitted in `name`.
 
 Return `r`, `g`, `b`, `a`.
 """
