@@ -70,7 +70,7 @@ using unordered_set =
   robin_hood::detail::Table<true, MaxLoadFactor100, Key, void, Hash, KeyEqual>;
 
 constexpr int SizeMapDefault = 0;
-constexpr int SizeMapCrossField = 1;
+//constexpr int SizeMapCrossField = 1;
 constexpr int SizeMapCrossFieldAndSmallCad = 2;
 constexpr int SizeMapBackgroundMesh = 3;
 constexpr int SizeMapCrossFieldAndBMeshOnCurves = 4;
@@ -172,19 +172,18 @@ int buildBackgroundField(
 
   d->finalize();
 
-  gm->getFields()->setBackgroundMesh(view->getTag());
+  gm->getFields()->setBackgroundMesh(view->getIndex());
 
-  const bool exportBGM = true;
+  const bool exportBGM = false;
   if(exportBGM || Msg::GetVerbosity() >= 99) {
     std::string name = gm->getName() + "_bgm.pos";
-    Msg::Warning("export background field to '%s' ", name.c_str());
+    Msg::Warning("Exporting background field to '%s'", name.c_str());
     view->write(name, 0);
   }
 
   return 0;
 #else
-  Msg::Error(
-    "Module POST (post-processing) required to create background field view");
+  Msg::Error("Post-processing module required to create background field view");
   return -1;
 #endif
 }
@@ -459,7 +458,8 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
   }
 
   bool midpointSubdivisionAfter = true;
-  if(CTX::instance()->mesh.algoRecombine == 4) {
+  if(!CTX::instance()->mesh.recombineAll ||
+     CTX::instance()->mesh.algoRecombine == 4) {
     midpointSubdivisionAfter = false;
   }
 

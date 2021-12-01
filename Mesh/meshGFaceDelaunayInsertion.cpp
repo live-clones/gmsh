@@ -899,7 +899,7 @@ static MTri3 *search4Triangle(MTri3 *t, double pt[2], bidimMeshData &data,
       if(inside) { return *itx; }
     }
   }
-  printf("argh %g %g!!!!\n", pt[0], pt[1]);
+  //  printf("argh %g %g!!!!\n", pt[0], pt[1]);
   return nullptr;
 }
 

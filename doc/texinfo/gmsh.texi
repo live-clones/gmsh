@@ -2042,13 +2042,17 @@ Create an oriented loop of curves, i.e. a closed wire. The
 @var{expression} inside the parentheses is the curve loop's tag; the
 @var{expression-list} on the right hand side should contain the tags of
 all the curves that constitute the curve loop. A curve loop must be a
-closed loop, and the curves should be ordered and oriented (using
-negative tags to specify reverse orientation). If the orientation is
-correct, but the ordering is wrong, Gmsh will actually reorder the list
-internally to create a consistent loop. Although Gmsh supports it, it is
-not recommended to specify multiple curve loops (or subloops) in a
-single @code{Curve Loop} command. (Curve loops are used to create
-surfaces: see @ref{Surfaces}.)
+closed loop. With the built-in geometry kernel, the curves should be
+ordered and oriented, using negative tags to specify reverse
+orientation. (If the orientation is correct, but the ordering is wrong,
+Gmsh will actually reorder the list internally to create a consistent
+loop; the built-in kernel also supports multiple curve loops (or
+subloops) in a single @code{Curve Loop} command, but this is not
+recommended). With the OpenCASCADE kernel the curve loop is always
+oriented according to the orientation of its first curve; negative tags
+can be specified for compatibility with the built-in kernel, but are
+simply ignored. Curve loops are used to create surfaces: see
+@ref{Surfaces}.
 
 @item Wire ( @var{expression} ) = @{ @var{expression-list} @};
 Create a path made of curves. Wires are only available with the

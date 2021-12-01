@@ -25,22 +25,22 @@ StringXString SpanningTreeOptions_String[] = {
 };
 
 extern "C" {
-GMSH_Plugin *GMSH_RegisterSpanningTreePlugin(void)
+GMSH_Plugin *GMSH_RegisterSpanningTreePlugin()
 {
   return new GMSH_SpanningTreePlugin();
 }
 }
 
-GMSH_SpanningTreePlugin::GMSH_SpanningTreePlugin(void) {}
+GMSH_SpanningTreePlugin::GMSH_SpanningTreePlugin() {}
 
-string GMSH_SpanningTreePlugin::getName(void) const { return "SpanningTree"; }
+string GMSH_SpanningTreePlugin::getName() const { return "SpanningTree"; }
 
-string GMSH_SpanningTreePlugin::getShortHelp(void) const
+string GMSH_SpanningTreePlugin::getShortHelp() const
 {
   return "Builds a tree spanning every vertex of a mesh";
 }
 
-string GMSH_SpanningTreePlugin::getHelp(void) const
+string GMSH_SpanningTreePlugin::getHelp() const
 {
   return "Plugin(SpanningTree) builds a tree spanning every vertex of a mesh "
          "and stores it directly in the model.\n"
@@ -64,9 +64,9 @@ string GMSH_SpanningTreePlugin::getHelp(void) const
          "the edges of the tree will be /added/ to the specified group.";
 }
 
-string GMSH_SpanningTreePlugin::getAuthor(void) const { return "N. Marsic"; }
+string GMSH_SpanningTreePlugin::getAuthor() const { return "N. Marsic"; }
 
-int GMSH_SpanningTreePlugin::getNbOptions(void) const
+int GMSH_SpanningTreePlugin::getNbOptions() const
 {
   return sizeof(SpanningTreeOptions_Number) / sizeof(StringXNumber);
 }
@@ -86,7 +86,7 @@ StringXString *GMSH_SpanningTreePlugin::getOptionStr(int iopt)
   return &SpanningTreeOptions_String[iopt];
 }
 
-void GMSH_SpanningTreePlugin::run(void)
+int GMSH_SpanningTreePlugin::run()
 {
   // Get data
   double time = Cpu(), w = TimeOfDay();
@@ -116,7 +116,7 @@ void GMSH_SpanningTreePlugin::run(void)
   // Check if we have something
   if(element[0].empty() && element[1].empty() && element[2].empty()) {
     Msg::Warning("No elements found in the given physcials: abording!");
-    return;
+    return 0;
   }
 
   // Display physicals (as [poorly] parsed)
@@ -139,6 +139,7 @@ void GMSH_SpanningTreePlugin::run(void)
   // Done
   Msg::Info("Spanning tree built (Wall %gs, CPU %gs)", TimeOfDay() - w,
             Cpu() - time);
+  return 0;
 }
 
 void GMSH_SpanningTreePlugin::spanningTree(EdgeSet &edge, DSU &vertex,
@@ -279,7 +280,7 @@ GMSH_SpanningTreePlugin::DSU::DSU(size_t n)
   for(size_t i = 0; i < n; i++) parent[i] = i;
 }
 
-GMSH_SpanningTreePlugin::DSU::~DSU(void)
+GMSH_SpanningTreePlugin::DSU::~DSU()
 {
   parent.clear();
   rank.clear();
@@ -311,7 +312,7 @@ void GMSH_SpanningTreePlugin::DSU::join(int a, int b)
   }
 }
 
-string GMSH_SpanningTreePlugin::DSU::toString(void)
+string GMSH_SpanningTreePlugin::DSU::toString()
 {
   // Show (node, parent) [using Gmsh's 1-base index]
   stringstream str;

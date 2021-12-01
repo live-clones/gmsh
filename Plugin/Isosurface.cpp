@@ -9,8 +9,8 @@
 StringXNumber IsosurfaceOptions_Number[] = {
   {GMSH_FULLRC, "Value", GMSH_IsosurfacePlugin::callbackValue, 0.},
   {GMSH_FULLRC, "ExtractVolume", GMSH_IsosurfacePlugin::callbackVol, 0.},
-  {GMSH_FULLRC, "RecurLevel", GMSH_IsosurfacePlugin::callbackRecur, 4},
-  {GMSH_FULLRC, "TargetError", GMSH_IsosurfacePlugin::callbackTarget, 0},
+  {GMSH_FULLRC, "RecurLevel", GMSH_IsosurfacePlugin::callbackRecur, 3},
+  {GMSH_FULLRC, "TargetError", GMSH_IsosurfacePlugin::callbackTarget, 1e-4},
   {GMSH_FULLRC, "View", nullptr, -1.},
   {GMSH_FULLRC, "OtherTimeStep", nullptr, -1.},
   {GMSH_FULLRC, "OtherView", nullptr, -1.}};

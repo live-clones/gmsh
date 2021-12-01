@@ -103,10 +103,10 @@ SMetric3 SMetric3::transform(fullMatrix<double> &V)
 
 void SMetric3::eig(fullMatrix<double> &V, fullVector<double> &S, bool s) const
 {
-  fullMatrix<double> me(3, 3), right(3, 3);
+  fullMatrix<double> me(3, 3), left(3, 3);
   fullVector<double> im(3);
   getMat(me);
-  me.eig(S, im, V, right, s);
+  me.eig(S, im, left, V, s);
 }
 
 void SMetric3::print(const char *s) const
@@ -153,10 +153,6 @@ SMetric3 intersection_alauzet(const SMetric3 &m1, const SMetric3 &m2)
   SVector3 v0(V(0, 0), V(1, 0), V(2, 0));
   SVector3 v1(V(0, 1), V(1, 1), V(2, 1));
   SVector3 v2(V(0, 2), V(1, 2), V(2, 2));
-  // is this required??
-  v0.normalize();
-  v1.normalize();
-  v2.normalize();
   double l0 = std::max(dot(v0, m1, v0), dot(v0, m2, v0));
   double l1 = std::max(dot(v1, m1, v1), dot(v1, m2, v1));
   double l2 = std::max(dot(v2, m1, v2), dot(v2, m2, v2));
@@ -171,7 +167,7 @@ SMetric3 intersection_conserveM1(const SMetric3 &m1, const SMetric3 &m2)
   // return intersection (m1,m2);
   fullMatrix<double> V(3, 3);
   fullVector<double> S(3);
-  m1.eig(V, S, true);
+  m1.eig(V, S, false);
   SVector3 v0(V(0, 0), V(1, 0), V(2, 0));
   SVector3 v1(V(0, 1), V(1, 1), V(2, 1));
   SVector3 v2(V(0, 2), V(1, 2), V(2, 2));

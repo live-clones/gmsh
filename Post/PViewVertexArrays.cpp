@@ -1130,8 +1130,7 @@ static void addTensorElement(PView *p, int iEnt, int iEle, int numNodes,
   PViewOptions *opt = p->getOptions();
   fullMatrix<double> tensor(3, 3);
   fullVector<double> S(3), imS(3);
-  fullMatrix<double> V(3, 3);
-  fullMatrix<double> rightV(3, 3);
+  fullMatrix<double> leftV(3, 3), rightV(3, 3);
 
   if(opt->tensorType == PViewOptions::VonMises) {
     for(int i = 0; i < numNodes; i++) val[i][0] = ComputeVonMises(val[i]);
@@ -1200,10 +1199,10 @@ static void addTensorElement(PView *p, int iEnt, int iEle, int numNodes,
           tensor(j, 1) = val[i][1 + j * 3];
           tensor(j, 2) = val[i][2 + j * 3];
         }
-        tensor.eig(S, imS, V, rightV, false);
+        tensor.eig(S, imS, leftV, rightV, false);
         for(int k = 0; k < 3; k++) {
           vval[k][0] = xyz[i][k];
-          for(int j = 0; j < 3; j++) { vval[k][j + 1] = V(k, j) * S(j); }
+          for(int j = 0; j < 3; j++) { vval[k][j + 1] = rightV(k, j) * S(j); }
         }
         double lmax = std::max(S(0), std::max(S(1), S(2)));
         unsigned int color = opt->getColor(
@@ -1222,11 +1221,11 @@ static void addTensorElement(PView *p, int iEnt, int iEle, int numNodes,
           tensor(j, 1) = val[i][1 + j * 3];
           tensor(j, 2) = val[i][2 + j * 3];
         }
-        tensor.eig(S, imS, V, rightV, false);
+        tensor.eig(S, imS, leftV, rightV, false);
         for(int j = 0; j < 3; j++) {
-          vval[0][j + 1] += V(0, j) * S(j) / numNodes;
-          vval[1][j + 1] += V(1, j) * S(j) / numNodes;
-          vval[2][j + 1] += V(2, j) * S(j) / numNodes;
+          vval[0][j + 1] += rightV(0, j) * S(j) / numNodes;
+          vval[1][j + 1] += rightV(1, j) * S(j) / numNodes;
+          vval[2][j + 1] += rightV(2, j) * S(j) / numNodes;
         }
         vval[0][0] += xyz[i][0] / numNodes;
         vval[1][0] += xyz[i][1] / numNodes;
@@ -1252,7 +1251,7 @@ static void addTensorElement(PView *p, int iEnt, int iEle, int numNodes,
         tensor(j, 1) = val[i][1 + j * 3];
         tensor(j, 2) = val[i][2 + j * 3];
       }
-      tensor.eig(S, imS, V, rightV,
+      tensor.eig(S, imS, leftV, rightV,
                  opt->tensorType != PViewOptions::EigenVectors);
       if(PViewOptions::MinEigenValue == opt->tensorType)
         val[i][0] = S(0);
@@ -1260,9 +1259,9 @@ static void addTensorElement(PView *p, int iEnt, int iEle, int numNodes,
         val[i][0] = S(2);
       else if(PViewOptions::EigenVectors == opt->tensorType) {
         for(int j = 0; j < 3; j++) {
-          vval[0][i][j] = V(j, 0) * S(0);
-          vval[1][i][j] = V(j, 1) * S(1);
-          vval[2][i][j] = V(j, 2) * S(2);
+          vval[0][i][j] = rightV(j, 0) * S(0);
+          vval[1][i][j] = rightV(j, 1) * S(1);
+          vval[2][i][j] = rightV(j, 2) * S(2);
         }
       }
     }

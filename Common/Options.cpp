@@ -6731,6 +6731,12 @@ double opt_post_horizontal_scales(OPT_ARGS_NUM)
   return CTX::instance()->post.horizontalScales;
 }
 
+double opt_post_binary(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->post.binary = (int)val;
+  return CTX::instance()->post.binary;
+}
+
 double opt_post_link(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) { CTX::instance()->post.link = (int)val; }

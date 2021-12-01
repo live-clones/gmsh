@@ -575,6 +575,19 @@ GMSH_API void gmshModelGetParent(const int dim, const int tag, int * parentDim, 
   }
 }
 
+GMSH_API int gmshModelGetNumberOfPartitions(int * ierr)
+{
+  int result_api_ = 0;
+  if(ierr) *ierr = 0;
+  try {
+    result_api_ = gmsh::model::getNumberOfPartitions();
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+  return result_api_;
+}
+
 GMSH_API void gmshModelGetPartitions(const int dim, const int tag, int ** partitions, size_t * partitions_n, int * ierr)
 {
   if(ierr) *ierr = 0;
@@ -1503,6 +1516,62 @@ GMSH_API void gmshModelMeshCreateFaces(int * dimTags, size_t dimTags_n, int * ie
       api_dimTags_[i].second = dimTags[i * 2 + 1];
     }
     gmsh::model::mesh::createFaces(api_dimTags_);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelMeshGetAllEdges(size_t ** edgeTags, size_t * edgeTags_n, size_t ** edgeNodes, size_t * edgeNodes_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<std::size_t> api_edgeTags_;
+    std::vector<std::size_t> api_edgeNodes_;
+    gmsh::model::mesh::getAllEdges(api_edgeTags_, api_edgeNodes_);
+    vector2ptr(api_edgeTags_, edgeTags, edgeTags_n);
+    vector2ptr(api_edgeNodes_, edgeNodes, edgeNodes_n);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelMeshGetAllFaces(const int faceType, size_t ** faceTags, size_t * faceTags_n, size_t ** faceNodes, size_t * faceNodes_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<std::size_t> api_faceTags_;
+    std::vector<std::size_t> api_faceNodes_;
+    gmsh::model::mesh::getAllFaces(faceType, api_faceTags_, api_faceNodes_);
+    vector2ptr(api_faceTags_, faceTags, faceTags_n);
+    vector2ptr(api_faceNodes_, faceNodes, faceNodes_n);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelMeshAddEdges(size_t * edgeTags, size_t edgeTags_n, size_t * edgeNodes, size_t edgeNodes_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<std::size_t> api_edgeTags_(edgeTags, edgeTags + edgeTags_n);
+    std::vector<std::size_t> api_edgeNodes_(edgeNodes, edgeNodes + edgeNodes_n);
+    gmsh::model::mesh::addEdges(api_edgeTags_, api_edgeNodes_);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelMeshAddFaces(const int faceType, size_t * faceTags, size_t faceTags_n, size_t * faceNodes, size_t faceNodes_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<std::size_t> api_faceTags_(faceTags, faceTags + faceTags_n);
+    std::vector<std::size_t> api_faceNodes_(faceNodes, faceNodes + faceNodes_n);
+    gmsh::model::mesh::addFaces(faceType, api_faceTags_, api_faceNodes_);
   }
   catch(...){
     if(ierr) *ierr = 1;
@@ -4090,15 +4159,17 @@ GMSH_API void gmshPluginSetString(const char * name, const char * option, const 
   }
 }
 
-GMSH_API void gmshPluginRun(const char * name, int * ierr)
+GMSH_API int gmshPluginRun(const char * name, int * ierr)
 {
+  int result_api_ = 0;
   if(ierr) *ierr = 0;
   try {
-    gmsh::plugin::run(name);
+    result_api_ = gmsh::plugin::run(name);
   }
   catch(...){
     if(ierr) *ierr = 1;
   }
+  return result_api_;
 }
 
 GMSH_API void gmshGraphicsDraw(int * ierr)

@@ -93,6 +93,11 @@ for t in tagsForTriangles:
     print("triangle " + str(int(t)) + " is connected to tetrahedra " +
           str(faces2Elements[t - maxElementTag]))
 
+# If all you need is the list of all edges or faces in terms of their nodes, you
+# can also directly call:
+edgeTags, edgeNodes = gmsh.model.mesh.getAllEdges()
+faceTags, faceNodes = gmsh.model.mesh.getAllFaces(3)
+
 # Launch the GUI to see the results:
 if '-nopopup' not in sys.argv:
     gmsh.fltk.run()

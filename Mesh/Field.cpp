@@ -286,8 +286,12 @@ public:
   using Field::operator();
   double operator()(double x, double y, double z, GEntity *ge = nullptr)
   {
+    if(_inField == id) return MAX_LC;
     Field *field = GModel::current()->getFields()->get(_inField);
-    if(!field || _inField == id) return MAX_LC;
+    if(!field) {
+      Msg::Warning("Unknown Field %i", _inField);
+      return MAX_LC;
+    }
     if(_fromStereo == 1) {
       double xi = x;
       double eta = y;
@@ -657,8 +661,12 @@ public:
   using Field::operator();
   double operator()(double x, double y, double z, GEntity *ge = nullptr)
   {
+    if(_inField == id) return MAX_LC;
     Field *field = GModel::current()->getFields()->get(_inField);
-    if(!field || _inField == id) return MAX_LC;
+    if(!field) {
+      Msg::Warning("Unknown Field %i", _inField);
+      return MAX_LC;
+    }
     double d = (*field)(x, y, z);
     if(_stopAtDistMax && d >= _dMax) return MAX_LC;
     double r = (d - _dMin) / (_dMax - _dMin);
@@ -708,8 +716,12 @@ public:
   using Field::operator();
   double operator()(double x, double y, double z, GEntity *ge = nullptr)
   {
+    if(_inField == id) return MAX_LC;
     Field *field = GModel::current()->getFields()->get(_inField);
-    if(!field || _inField == id) return MAX_LC;
+    if(!field) {
+      Msg::Warning("Unknown Field %i", _inField);
+      return MAX_LC;
+    }
     double gx, gy, gz;
     switch(_kind) {
     case 0: /* x */
@@ -774,8 +786,12 @@ public:
   using Field::operator();
   double operator()(double x, double y, double z, GEntity *ge = nullptr)
   {
+    if(_inField == id) return MAX_LC;
     Field *field = GModel::current()->getFields()->get(_inField);
-    if(!field || _inField == id) return MAX_LC;
+    if(!field) {
+      Msg::Warning("Unknown Field %i", _inField);
+      return MAX_LC;
+    }
     double grad[6][3];
     grad_norm(*field, x + _delta / 2, y, z, grad[0]);
     grad_norm(*field, x - _delta / 2, y, z, grad[1]);
@@ -819,8 +835,12 @@ public:
   using Field::operator();
   double operator()(double x, double y, double z, GEntity *ge = nullptr)
   {
+    if(_inField == id) return MAX_LC;
     Field *field = GModel::current()->getFields()->get(_inField);
-    if(!field || _inField == id) return MAX_LC;
+    if(!field) {
+      Msg::Warning("Unknown Field %i", _inField);
+      return MAX_LC;
+    }
     double mat[3][3], eig[3];
     mat[1][0] = mat[0][1] = (*field)(x + _delta / 2, y + _delta / 2, z) +
                             (*field)(x - _delta / 2, y - _delta / 2, z) -
@@ -873,8 +893,12 @@ public:
   using Field::operator();
   double operator()(double x, double y, double z, GEntity *ge = nullptr)
   {
+    if(_inField == id) return MAX_LC;
     Field *field = GModel::current()->getFields()->get(_inField);
-    if(!field || _inField == id) return MAX_LC;
+    if(!field) {
+      Msg::Warning("Unknown Field %i", _inField);
+      return MAX_LC;
+    }
     return ((*field)(x + _delta, y, z) + (*field)(x - _delta, y, z) +
             (*field)(x, y + _delta, z) + (*field)(x, y - _delta, z) +
             (*field)(x, y, z + _delta) + (*field)(x, y, z - _delta) -
@@ -915,8 +939,12 @@ public:
   using Field::operator();
   double operator()(double x, double y, double z, GEntity *ge = nullptr)
   {
+    if(_inField == id) return MAX_LC;
     Field *field = GModel::current()->getFields()->get(_inField);
-    if(!field || _inField == id) return MAX_LC;
+    if(!field) {
+      Msg::Warning("Unknown Field %i", _inField);
+      return MAX_LC;
+    }
     return ((*field)(x + _delta, y, z) + (*field)(x - _delta, y, z) +
             (*field)(x, y + _delta, z) + (*field)(x, y - _delta, z) +
             (*field)(x, y, z + _delta) + (*field)(x, y, z - _delta) +
@@ -984,7 +1012,13 @@ public:
     int i = 3;
     for(auto it = _fields.begin(); it != _fields.end(); it++) {
       Field *field = GModel::current()->getFields()->get(*it);
-      values[i++] = field ? (*field)(x, y, z) : MAX_LC;
+      if(field) {
+        values[i++] = (*field)(x, y, z);
+      }
+      else {
+        Msg::Warning("Unknown Field %i", *it);
+        values[i++] = MAX_LC;
+      }
     }
     if(_f->eval(values, res))
       return res[0];
@@ -1063,7 +1097,13 @@ public:
         for(auto it = _fields[iFunction].begin();
             it != _fields[iFunction].end(); it++) {
           Field *field = GModel::current()->getFields()->get(*it);
-          values[i++] = field ? (*field)(x, y, z) : MAX_LC;
+          if(field) {
+            values[i++] = (*field)(x, y, z);
+          }
+          else {
+            Msg::Warning("Unknown Field %i", *it);
+            values[i++] = MAX_LC;
+          }
         }
         if(_f[iFunction]->eval(values, res))
           metr(index[iFunction][0], index[iFunction][1]) = res[0];
@@ -1474,8 +1514,12 @@ public:
       }
       updateNeeded = false;
     }
+    if(_inField == id) return MAX_LC;
     Field *field = GModel::current()->getFields()->get(_inField);
-    if(!field || _inField == id) return MAX_LC;
+    if(!field) {
+      Msg::Warning("Unknown Field %i", _inField);
+      return MAX_LC;
+    }
     return (*field)(_expr[0].evaluate(x, y, z), _expr[1].evaluate(x, y, z),
                     _expr[2].evaluate(x, y, z));
   }
@@ -1519,10 +1563,15 @@ public:
   PView *getView() const
   {
     PView *v = nullptr;
-    if(_viewTag >= 0) v = PView::getViewByTag(_viewTag);
+    if(_viewTag >= 0) {
+      v = PView::getViewByTag(_viewTag);
+      if(!v) {
+        Msg::Error("View with tag %d does not exist", _viewTag);
+      }
+    }
     if(!v) {
       if(_viewIndex < 0 || _viewIndex >= (int)PView::list.size()) {
-        Msg::Error("View[%d] does not exist", _viewIndex);
+        Msg::Error("View with index %d does not exist", _viewIndex);
         return nullptr;
       }
       v = PView::list[_viewIndex];
@@ -1656,6 +1705,7 @@ public:
     SMetric3 v(1. / MAX_LC);
     for(auto it = _fieldIds.begin(); it != _fieldIds.end(); it++) {
       Field *f = (GModel::current()->getFields()->get(*it));
+      if(!f) Msg::Warning("Unknown Field %i", *it);
       SMetric3 ff;
       if(f && *it != id) {
         if(f->isotropic()) {
@@ -1676,6 +1726,7 @@ public:
     double v = MAX_LC;
     for(auto it = _fieldIds.begin(); it != _fieldIds.end(); it++) {
       Field *f = (GModel::current()->getFields()->get(*it));
+      if(!f) Msg::Warning("Unknown Field %i", *it);
       SMetric3 m;
       if(f && *it != id) {
         if(!f->isotropic()) { (*f)(x, y, z, m, ge); }
@@ -1718,6 +1769,7 @@ public:
     SMetric3 v;
     for(auto it = _fieldIds.begin(); it != _fieldIds.end(); it++) {
       Field *f = (GModel::current()->getFields()->get(*it));
+      if(!f) Msg::Warning("Unknown Field %i", *it);
       SMetric3 ff;
       if(f && *it != id) {
         if(f->isotropic()) {
@@ -1741,6 +1793,7 @@ public:
     SMetric3 metr;
     for(auto it = _fieldIds.begin(); it != _fieldIds.end(); it++) {
       Field *f = (GModel::current()->getFields()->get(*it));
+      if(!f) Msg::Warning("Unknown Field %i", *it);
       SMetric3 m;
       if(f && *it != id) {
         if(!f->isotropic()) { (*f)(x, y, z, m, ge); }
@@ -1786,6 +1839,7 @@ public:
         _fields.clear();
         for(auto it = _fieldIds.begin(); it != _fieldIds.end(); it++) {
           Field *f = (GModel::current()->getFields()->get(*it));
+          if(!f) Msg::Warning("Unknown Field %i", *it);
           if(f && *it != id) _fields.push_back(f);
         }
         updateNeeded = false;
@@ -1834,6 +1888,7 @@ public:
         _fields.clear();
         for(auto it = _fieldIds.begin(); it != _fieldIds.end(); it++) {
           Field *f = (GModel::current()->getFields()->get(*it));
+          if(!f) Msg::Warning("Unknown Field %i", *it);
           if(f && *it != id) _fields.push_back(f);
         }
         updateNeeded = false;
@@ -1899,8 +1954,12 @@ public:
   using Field::operator();
   double operator()(double x, double y, double z, GEntity *ge = nullptr)
   {
-    Field *f = (GModel::current()->getFields()->get(_inField));
-    if(!f || _inField == id) return MAX_LC;
+    if(_inField == id) return MAX_LC;
+    Field *f = GModel::current()->getFields()->get(_inField);
+    if(!f) {
+      Msg::Warning("Unknown Field %i", _inField);
+      return MAX_LC;
+    }
     if(!ge) return (*f)(x, y, z);
     if((ge->dim() == 0 && std::find(_pointTags.begin(), _pointTags.end(),
                                     ge->tag()) != _pointTags.end()) ||
@@ -2132,6 +2191,9 @@ public:
           k++;
         }
       }
+      else {
+        Msg::Warning("Unknown curve %d", *it);
+      }
     }
     _kdTree = new ANNkd_tree(_zeroNodes, totpoints, 3);
     updateNeeded = false;
@@ -2293,6 +2355,9 @@ public:
           pz.push_back(z);
           _infos.push_back(AttractorInfo(*it, 0, 0, 0));
         }
+        else {
+          Msg::Warning("Unknown point %d", *it);
+        }
       }
 
       for(auto it = _curveTags.begin(); it != _curveTags.end(); ++it) {
@@ -2323,6 +2388,9 @@ public:
             _infos.push_back(AttractorInfo(*it, 1, t, 0));
           }
         }
+        else {
+          Msg::Warning("Unknown curve %d", *it);
+        }
       }
 
       for(auto it = _surfaceTags.begin(); it != _surfaceTags.end(); ++it) {
@@ -2339,6 +2407,9 @@ public:
           for(std::size_t i = 0; i < uvpoints.size(); i++)
             _infos.push_back
               (AttractorInfo(*it, 2, uvpoints[i].x(), uvpoints[i].y()));
+        }
+        else {
+          Msg::Warning("Unknown surface %d", *it);
         }
       }
 
@@ -2661,6 +2732,9 @@ public:
           points.push_back(SPoint3(gv->x(), gv->y(), gv->z()));
           _infos.push_back(AttractorInfo(*it, 0, 0, 0));
         }
+        else {
+          Msg::Warning("Unknown point %d", *it);
+        }
       }
 
       for(auto it = _curveTags.begin(); it != _curveTags.end(); ++it) {
@@ -2686,6 +2760,9 @@ public:
             _infos.push_back(AttractorInfo(*it, 1, t, 0));
           }
         }
+        else {
+          Msg::Warning("Unknown curve %d", *it);
+        }
       }
 
       for(auto it = _surfaceTags.begin(); it != _surfaceTags.end(); ++it) {
@@ -2697,6 +2774,9 @@ public:
           for(std::size_t i = 0; i < uvpoints.size(); i++)
             _infos.push_back
               (AttractorInfo(*it, 2, uvpoints[i].x(), uvpoints[i].y()));
+        }
+        else {
+          Msg::Warning("Unknown surface %d", *it);
         }
       }
 
@@ -2847,6 +2927,9 @@ void BoundaryLayerField::setupFor1d(int iE)
         if(found) _pointTags.push_back(gv1->tag());
       }
     }
+    else {
+      Msg::Warning("Unknown curve %d", iE);
+    }
   }
   removeAttractors();
 }
@@ -2872,7 +2955,10 @@ bool BoundaryLayerField::setupFor2d(int iF)
   // OR (better) CHANGE THE PHILOSOPHY
 
   GFace *gf = GModel::current()->getFaceByTag(iF);
-  if(!gf) return false;
+  if(!gf) {
+    Msg::Warning("Unknown surface %d", iF);
+    return false;
+  }
   std::vector<GEdge *> ed = gf->edges();
   std::vector<GEdge *> const &embedded_edges = gf->embeddedEdges();
   ed.insert(ed.begin(), embedded_edges.begin(), embedded_edges.end());
@@ -2972,6 +3058,9 @@ void BoundaryLayerField::computeFor1dMesh(double x, double y, double z,
         zpk = zp;
       }
     }
+    else {
+      Msg::Warning("Unknown point %d", *it);
+    }
   }
 
   const double ll1 = (distk * (ratio - 1) + hWallN) / (1. + 0.5 * (ratio - 1));
@@ -3023,7 +3112,10 @@ void BoundaryLayerField::operator()(DistanceField *cc, double dist, double x,
   }
   else if(pp.first.dim == 1) {
     GEdge *e = GModel::current()->getEdgeByTag(pp.first.ent);
-    if(!e) return;
+    if(!e) {
+      Msg::Warning("Unknown curve %d", pp.first.ent);
+      return;
+    }
     if(dist < thickness) {
       SVector3 t1 = e->firstDer(pp.first.u);
       double crv = e->curvature(pp.first.u);
@@ -3045,7 +3137,10 @@ void BoundaryLayerField::operator()(DistanceField *cc, double dist, double x,
   }
   else {
     GFace *gf = GModel::current()->getFaceByTag(pp.first.ent);
-    if(!gf) return;
+    if(!gf) {
+      Msg::Warning("Unknown surface %d", pp.first.ent);
+      return;
+    }
     if(dist < thickness) {
       double cmin, cmax;
       SVector3 dirMax, dirMin;
@@ -3248,14 +3343,14 @@ double GenericField::operator()(double x, double y, double z, GEntity *ge)
   for(auto itcbs = cbs_with_data.begin(); itcbs != cbs_with_data.end();
       itcbs++, it++) {
     bool ok = (itcbs->first)(x, y, z, itcbs->second, (*it));
-    if(!ok) { Msg::Warning("GenericField::ERROR from callback "); }
+    if(!ok) { Msg::Warning("GenericField error from callback"); }
   }
 
   // Go over all extended callback functions
   for(auto itcbs = cbs_extended_with_data.begin();
       itcbs != cbs_extended_with_data.end(); itcbs++, it++) {
     bool ok = (itcbs->first)(x, y, z, ge, itcbs->second, (*it));
-    if(!ok) { Msg::Warning("GenericField::ERROR from callback "); }
+    if(!ok) { Msg::Warning("GenericField error from callback"); }
   }
 
   // Take minimum value

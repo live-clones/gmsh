@@ -20,11 +20,13 @@ std::vector<PView *> PView::list;
 void PView::_init(int tag)
 {
   if(tag >= 0) {
+    if(tag == 0)
+      Msg::Warning("Using tag == 0 in view is discouraged; view tags should be >= 1");
     _tag = tag;
     _globalTag = std::max(_globalTag, _tag) + 1;
   }
   else {
-    _tag = _globalTag++;
+    _tag = ++_globalTag;
   }
 
   _changed = true;

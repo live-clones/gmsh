@@ -172,7 +172,10 @@ int GModel::writeTOCHNOG(const std::string &name, bool saveAll,
   // physical points)
   if(saveGroupsOfNodes) {
     for(int dim = 0; dim <= 3; dim++) {
-      if(saveGroupsOfNodes < 0 && dim != -saveGroupsOfNodes) continue;
+      if(saveGroupsOfNodes < 0 &&
+         !((-saveGroupsOfNodes / (int)std::pow(10, dim)) % 10)) {
+        continue;
+      }
       for(auto it = groups[dim].begin(); it != groups[dim].end(); it++) {
         std::set<MVertex *, MVertexPtrLessThan> nodes;
         std::vector<GEntity *> &entities = it->second;

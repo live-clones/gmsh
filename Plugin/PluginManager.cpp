@@ -115,16 +115,17 @@ GMSH_SolverPlugin *PluginManager::findSolverPlugin()
   return nullptr;
 }
 
-void PluginManager::action(const std::string &pluginName,
-                           const std::string &action, void *data)
+int PluginManager::action(const std::string &pluginName,
+                          const std::string &action, void *data)
 {
   GMSH_Plugin *plugin = find(pluginName);
   if(!plugin) throw "Unknown plugin name";
 
   if(action == "Run") {
     Msg::Info("Running Plugin(%s)...", pluginName.c_str());
-    plugin->run();
+    int tag = plugin->run();
     Msg::Info("Done running Plugin(%s)", pluginName.c_str());
+    return tag;
   }
   else
     throw "Unknown plugin action";

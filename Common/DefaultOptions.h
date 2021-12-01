@@ -1482,12 +1482,16 @@ StringXNumber MeshOptions_Number[] = {
     "Save parametric coordinates of nodes" },
   { F|O, "SaveGroupsOfElements" , opt_mesh_save_groups_of_elements , 1. ,
     "Save groups of elements for each physical group (for UNV and INP mesh format) "
-    "if value is positive; if negative, save groups of elements only for entities "
-    "of dimension = (-Mesh.SaveGroupsOfElements)" },
+    "if value is positive; if negative, save groups of elements "
+    "for entities of dimension dim if the (dim+1)^th least significant digit of "
+    "-Mesh.SaveGroupsOfElements is non-zero (for example: -100 will only save "
+    "surfaces, while -1010 will save volumes and curves)"},
   { F|O, "SaveGroupsOfNodes" , opt_mesh_save_groups_of_nodes , 0. ,
     "Save groups of nodes for each physical group (for UNV, INP and Tochnog "
-    "mesh formats) if value is positive; if nagative, save groups of nodes"
-    "only for entities of dimension = (-Mesh.SaveGroupsOfNodes)"},
+    "mesh formats) if value is positive; if negative, save groups of nodes "
+    "for entities of dimension dim if the (dim+1)^th least significant digit of "
+    "-Mesh.SaveGroupsOfNodes is non-zero (for example: -100 will only save "
+    "surfaces, while -1010 will save volumes and curves)"},
   { F|O, "ScalingFactor" , opt_mesh_scaling_factor , 1.0 ,
     "Global scaling factor applied to the saved mesh" },
   { F|O, "SecondOrderIncomplete" , opt_mesh_second_order_incomplete , 0. ,
@@ -1609,6 +1613,9 @@ StringXNumber PostProcessingOptions_Number[] = {
     "Cycle through time steps (0) or views (1) for animations" },
   { F|O, "AnimationStep" , opt_post_anim_step , 1. ,
     "Step increment for animations" },
+
+  { F|O, "Binary" , opt_post_binary , 0. ,
+    "Write post-processing files in binary format (if possible)" },
 
   { F|O, "CombineRemoveOriginal" , opt_post_combine_remove_orig , 1. ,
     "Remove original views after a Combine operation" },
@@ -1905,7 +1912,7 @@ StringXNumber ViewOptions_Number[] = {
 
   { F|O, "Tangents" , opt_view_tangents , 0. ,
     "Display size of tangent vectors (in pixels)" },
-  { F|O, "TargetError" , opt_view_target_error , 0.01 ,
+  { F|O, "TargetError" , opt_view_target_error , 1e-4 ,
     "Target representation error for adaptive views" },
   { F|O, "TensorType" , opt_view_tensor_type , 1. ,
     "Tensor display type (1: Von-Mises, 2: maximum eigenvalue, 3: minimum eigenvalue, "

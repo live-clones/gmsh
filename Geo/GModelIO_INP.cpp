@@ -97,11 +97,16 @@ int GModel::writeINP(const std::string &name, bool saveAll,
 
   if(saveGroupsOfElements) {
     // save elements sets for each physical group (currently we don't save point
-    // elements: is there this concept in Abaqus?)  if saveGroupsOfElements is
-    // positive; if saveGroupsOfElements is negative, only save groups if the
-    // dimension of the physical group is equal to -saveGroupsOfElements.
+    // elements: is there this concept in Abaqus?) if saveGroupsOfElements is
+    // positive; if saveGroupsOfElements is negative, only save groups of
+    // dimension dim if the (dim+1)^th least significant digit of
+    // -saveGroupsOfElements is non-zero (for example: -100 will only save
+    // surfaces, while -1010 will save volumes and curves).
     for(int dim = 1; dim <= 3; dim++) {
-      if(saveGroupsOfNodes < 0 && dim != -saveGroupsOfElements) continue;
+      if(saveGroupsOfElements < 0 &&
+         !((-saveGroupsOfElements / (int)std::pow(10, dim)) % 10)) {
+        continue;
+      }
       for(auto it = groups[dim].begin(); it != groups[dim].end(); it++) {
         std::vector<GEntity *> &entities = it->second;
         fprintf(fp, "*ELSET,ELSET=%s\n",
@@ -123,10 +128,13 @@ int GModel::writeINP(const std::string &name, bool saveAll,
   if(saveGroupsOfNodes) {
     // save a node set for each physical group (here we include node sets on
     // physical points) if saveGroupsOfNodes is positive; if saveGroupsOfNodes
-    // is negative, only save groups if the dimension of the physical group is
-    // equal to -saveGroupsOfNodes.
+    // is negative, only save groups of dimension dim if the (dim+1)^th least
+    // significant digit of -saveGroupsOfNodes is non-zero.
     for(int dim = 0; dim <= 3; dim++) {
-      if(saveGroupsOfNodes < 0 && dim != -saveGroupsOfNodes) continue;
+      if(saveGroupsOfNodes < 0 &&
+         !((-saveGroupsOfNodes / (int)std::pow(10, dim)) % 10)) {
+        continue;
+      }
       for(auto it = groups[dim].begin(); it != groups[dim].end(); it++) {
         std::set<MVertex *, MVertexPtrLessThan> nodes;
         std::vector<GEntity *> &entities = it->second;

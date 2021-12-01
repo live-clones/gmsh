@@ -741,7 +741,7 @@ bool PViewDataList::writeMSH(const std::string &fileName, double version,
       fprintf(fp, "1\n\"%s\"\n", getName().c_str());
     fprintf(fp, "1\n%.16g\n", getTime(ts));
     int size = forceNodeData ? (int)unique.size() : (int)elements.size();
-    if(partitionNum)
+    if(partitionNum > 0)
       fprintf(fp, "4\n%d\n%d\n%d\n%d\n", ts, numComponents, size, partitionNum);
     else
       fprintf(fp, "3\n%d\n%d\n%d\n", ts, numComponents, size);

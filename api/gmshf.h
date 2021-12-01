@@ -563,7 +563,7 @@ c
             integer(c_int)::ierr
           end subroutine gmshModelGetBoundingBox
 
-!  Get the geometrical dimension of the current model.
+!  Return the geometrical dimension of the current model.
         function gmshModelGetDimension(
      &      ierr)
      &    bind(C, name = "gmshModelGetDimension")
@@ -651,6 +651,15 @@ c
             integer(c_int)::parentTag
             integer(c_int)::ierr
           end subroutine gmshModelGetParent
+
+!  Return the number of partitions in the model.
+        function gmshModelGetNumberOfPartitions(
+     &      ierr)
+     &    bind(C, name = "gmshModelGetNumberOfPartitions")
+          use, intrinsic :: iso_c_binding
+          integer(c_int)::gmshModelGetNumberOfPartitions
+            integer(c_int)::ierr
+          end function gmshModelGetNumberOfPartitions
 
 !  In a partitioned model, return the tags of the partition(s) to which the
 !  entity belongs.
@@ -2039,9 +2048,10 @@ c
 !  Get the global unique mesh edge identifiers `edgeTags' and orientations
 !  `edgeOrientation' for an input list of node tag pairs defining these edges,
 !  concatenated in the vector `nodeTags'. Mesh edges are created e.g. by
-!  `createEdges()' or `getKeys()'. The reference positive orientation is n1 <
-!  n2, where n1 and n2 are the tags of the two edge nodes, which corresponds
-!  to the local orientation of edge-based basis functions as well.
+!  `createEdges()', `getKeys()' or `addEdges()'. The reference positive
+!  orientation is n1 < n2, where n1 and n2 are the tags of the two edge nodes,
+!  which corresponds to the local orientation of edge-based basis functions as
+!  well.
         subroutine gmshModelMeshGetEdges(
      &      nodeTags,
      &      nodeTags_n,
@@ -2064,8 +2074,8 @@ c
 !  Get the global unique mesh face identifiers `faceTags' and orientations
 !  `faceOrientations' for an input list of node tag triplets (if `faceType' ==
 !  3) or quadruplets (if `faceType' == 4) defining these faces, concatenated
-!  in the vector `nodeTags'. Mesh faces are created e.g. by `createFaces()' or
-!  `getKeys()'.
+!  in the vector `nodeTags'. Mesh faces are created e.g. by `createFaces()',
+!  `getKeys()' or `addFaces()'.
         subroutine gmshModelMeshGetFaces(
      &      faceType,
      &      nodeTags,
@@ -2110,6 +2120,80 @@ c
             integer(c_size_t), value :: dimTags_n
             integer(c_int)::ierr
           end subroutine gmshModelMeshCreateFaces
+
+!  Get the global unique identifiers `edgeTags' and the nodes `edgeNodes' of
+!  the edges in the mesh. Mesh edges are created e.g. by `createEdges()',
+!  `getKeys()' or addEdges().
+        subroutine gmshModelMeshGetAllEdges(
+     &      edgeTags,
+     &      edgeTags_n,
+     &      edgeNodes,
+     &      edgeNodes_n,
+     &      ierr)
+     &    bind(C, name = "gmshModelMeshGetAllEdges")
+          use, intrinsic :: iso_c_binding
+            type(c_ptr), intent(out)::edgeTags
+            integer(c_size_t) :: edgeTags_n
+            type(c_ptr), intent(out)::edgeNodes
+            integer(c_size_t) :: edgeNodes_n
+            integer(c_int)::ierr
+          end subroutine gmshModelMeshGetAllEdges
+
+!  Get the global unique identifiers `faceTags' and the nodes `faceNodes' of
+!  the faces of type `faceType' in the mesh. Mesh faces are created e.g. by
+!  `createFaces()', `getKeys()' or addFaces().
+        subroutine gmshModelMeshGetAllFaces(
+     &      faceType,
+     &      faceTags,
+     &      faceTags_n,
+     &      faceNodes,
+     &      faceNodes_n,
+     &      ierr)
+     &    bind(C, name = "gmshModelMeshGetAllFaces")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::faceType
+            type(c_ptr), intent(out)::faceTags
+            integer(c_size_t) :: faceTags_n
+            type(c_ptr), intent(out)::faceNodes
+            integer(c_size_t) :: faceNodes_n
+            integer(c_int)::ierr
+          end subroutine gmshModelMeshGetAllFaces
+
+!  Add mesh edges defined by their global unique identifiers `edgeTags' and
+!  their nodes `edgeNodes'.
+        subroutine gmshModelMeshAddEdges(
+     &      edgeTags,
+     &      edgeTags_n,
+     &      edgeNodes,
+     &      edgeNodes_n,
+     &      ierr)
+     &    bind(C, name = "gmshModelMeshAddEdges")
+          use, intrinsic :: iso_c_binding
+            integer(c_size_t)::edgeTags(*)
+            integer(c_size_t), value :: edgeTags_n
+            integer(c_size_t)::edgeNodes(*)
+            integer(c_size_t), value :: edgeNodes_n
+            integer(c_int)::ierr
+          end subroutine gmshModelMeshAddEdges
+
+!  Add mesh faces of type `faceType' defined by their global unique
+!  identifiers `faceTags' and their nodes `faceNodes'.
+        subroutine gmshModelMeshAddFaces(
+     &      faceType,
+     &      faceTags,
+     &      faceTags_n,
+     &      faceNodes,
+     &      faceNodes_n,
+     &      ierr)
+     &    bind(C, name = "gmshModelMeshAddFaces")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::faceType
+            integer(c_size_t)::faceTags(*)
+            integer(c_size_t), value :: faceTags_n
+            integer(c_size_t)::faceNodes(*)
+            integer(c_size_t), value :: faceNodes_n
+            integer(c_int)::ierr
+          end subroutine gmshModelMeshAddFaces
 
 !  Generate the pair of keys for the elements of type `elementType' in the
 !  entity of tag `tag', for the `functionSpaceType' function space. Each pair
@@ -6250,15 +6334,16 @@ c
             integer(c_int)::ierr
           end subroutine gmshPluginSetString
 
-!  Run the plugin `name'.
-        subroutine gmshPluginRun(
+!  Run the plugin `name'. Return the tag of the created view (if any).
+        function gmshPluginRun(
      &      name,
      &      ierr)
      &    bind(C, name = "gmshPluginRun")
           use, intrinsic :: iso_c_binding
+          integer(c_int)::gmshPluginRun
             character(len = 1, kind = c_char)::name(*)
             integer(c_int)::ierr
-          end subroutine gmshPluginRun
+          end function gmshPluginRun
 
 !  Draw all the OpenGL scenes.
         subroutine gmshGraphicsDraw(

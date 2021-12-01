@@ -18,8 +18,8 @@ StringXNumber CutSphereOptions_Number[] = {
   {GMSH_FULLRC, "Zc", GMSH_CutSpherePlugin::callbackZ, 0.},
   {GMSH_FULLRC, "R", GMSH_CutSpherePlugin::callbackR, 0.25},
   {GMSH_FULLRC, "ExtractVolume", GMSH_CutSpherePlugin::callbackVol, 0.},
-  {GMSH_FULLRC, "RecurLevel", GMSH_CutSpherePlugin::callbackRecur, 4},
-  {GMSH_FULLRC, "TargetError", GMSH_CutSpherePlugin::callbackTarget, 0.},
+  {GMSH_FULLRC, "RecurLevel", GMSH_CutSpherePlugin::callbackRecur, 3},
+  {GMSH_FULLRC, "TargetError", GMSH_CutSpherePlugin::callbackTarget, 1e-4},
   {GMSH_FULLRC, "View", nullptr, -1.}};
 
 extern "C" {

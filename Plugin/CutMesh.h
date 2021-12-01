@@ -21,7 +21,7 @@ public:
   std::string getAuthor() const { return "G. Bricteux"; }
   int getNbOptions() const;
   StringXNumber *getOption(int iopt);
-  void run();
+  int run();
 };
 
 #endif

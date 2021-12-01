@@ -8,14 +8,18 @@ would be prescribed in the absence of the callback, which allows to perform any
 desired modification (the old behavior can be achieved by returning min(lc,
 value)); OCC STL representation is now generated using relative deflection
 tolerance; new TransformMesh command in .geo files; new behavior of
-Mesh.SaveGroupsOf{Nodes,Elements} in UNV and INP exports; official binary builds
-now support OpenMP parallelization and are 64 bit only (build OS upgraded to
-Windows 10, macOS 10.15 and Linux glibc 2.24); new experimental Fortran API;
+Mesh.SaveGroupsOf{Nodes,Elements} in UNV and INP exports; partitioned MSH4 files
+now contain the full partition topology (i.e. all partition entities); fixed
+metric intersection calculation for anisotropic mesh generation; official binary
+builds now support OpenMP parallelization and are 64 bit only (build OS upgraded
+to Windows 10, macOS 10.15 and Linux glibc 2.24); new experimental Fortran API;
 small bug fixes.
 
 * New API functions: model/setTag, mesh/reverse, mesh/affineTransform,
   mesh/getMaxNodeTag, mesh/getMaxElementTag, mesh/getSizes, mesh/getPeriodic,
-  field/list, field/getType, field/getNumber, field/getNumbers, field/getString.
+  mesh/getAllEdges, mesh/getAllFaces, mesh/addEdge, mesh/addFace,
+  mesh/getNumberOfPartitions, field/list, field/getType, field/getNumber,
+  field/getNumbers, field/getString.
 
 * Incompatible API changes: new arguments to mesh/getNode, mesh/getElement and
   view/probe; additional argument to the mesh size callback function provided to
