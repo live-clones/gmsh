@@ -945,9 +945,6 @@ view.add('setInterpolationMatrices', doc, None, iint('tag'), istring('type'), ii
 doc = '''Add a post-processing view as an `alias' of the reference view with tag `refTag'. If `copyOptions' is set, copy the options of the reference view. If `tag' is positive use it (and remove the view with that tag if it already exists), otherwise associate a new tag. Return the view tag.'''
 view.add('addAlias', doc, oint, iint('refTag'), ibool('copyOptions', 'false', 'False'), iint('tag', '-1'))
 
-doc = '''Copy the options from the view with tag `refTag' to the view with tag `tag'.'''
-view.add('copyOptions', doc, None, iint('refTag'), iint('tag'))
-
 doc = '''Combine elements (if `what' == "elements") or steps (if `what' == "steps") of all views (`how' == "all"), all visible views (`how' == "visible") or all views having the same name (`how' == "name"). Remove original views if `remove' is set.'''
 view.add('combine', doc, None, istring('what'), istring('how'), ibool('remove', 'true', 'True'), ibool('copyOptions', 'true', 'True'))
 
@@ -959,6 +956,31 @@ view.add('write', doc, None, iint('tag'), istring('fileName'), ibool('append', '
 
 doc = '''Set the global visibility of the view `tag' per window to `value', where `windowIndex' identifies the window in the window list.'''
 view.add('setVisibilityPerWindow', doc, None, iint('tag'), iint('value'), iint('windowIndex', '0'))
+
+################################################################################
+
+option = view.add_module('option', 'view option handling functions')
+
+doc = '''Set the numerical option `name' to value `value' for the view with tag `tag'.'''
+option.add('setNumber', doc, None, iint('tag'), istring('name'), idouble('value'))
+
+doc = '''Get the `value' of the numerical option `name' for the view with tag `tag'.'''
+option.add('getNumber', doc, None, iint('tag'), istring('name'), odouble('value'))
+
+doc = '''Set the string option `name' to value `value' for the view with tag `tag'.'''
+option.add('setString', doc, None, iint('tag'), istring('name'), istring('value'))
+
+doc = '''Get the `value' of the string option `name' for the view with tag `tag'.'''
+option.add('getString', doc, None, iint('tag'), istring('name'), ostring('value'))
+
+doc = '''Set the color option `name' to the RGBA value (`r', `g', `b', `a') for the view with tag `tag', where where `r', `g', `b' and `a' should be integers between 0 and 255.'''
+option.add('setColor', doc, None, iint('tag'), istring('name'), iint('r'), iint('g'), iint('b'), iint('a', '255'))
+
+doc = '''Get the `r', `g', `b', `a' value of the color option `name' for the view with tag `tag'.'''
+option.add('getColor', doc, None, iint('tag'), istring('name'), oint('r'), oint('g'), oint('b'), oint('a'))
+
+doc = '''Copy the options from the view with tag `refTag' to the view with tag `tag'.'''
+option.add('copy', doc, None, iint('refTag'), iint('tag'))
 
 ################################################################################
 

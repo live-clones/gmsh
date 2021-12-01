@@ -7404,30 +7404,6 @@ GMSH_API int gmsh::view::addAlias(const int refTag, const bool copyOptions,
 #endif
 }
 
-GMSH_API void gmsh::view::copyOptions(const int refTag, const int tag)
-{
-  if(!_checkInit()) return;
-#if defined(HAVE_POST)
-  PView *ref = PView::getViewByTag(refTag);
-  if(!ref) {
-    Msg::Error("Unknown view with tag %d", refTag);
-    return;
-  }
-  PView *view = PView::getViewByTag(tag);
-  if(!view) {
-    Msg::Error("Unknown view with tag %d", tag);
-    return;
-  }
-  view->setOptions(ref->getOptions());
-  view->setChanged(true);
-#if defined(HAVE_FLTK)
-  if(FlGui::available()) FlGui::instance()->updateViews(true, true);
-#endif
-#else
-  Msg::Error("Views require the post-processing module");
-#endif
-}
-
 GMSH_API void gmsh::view::combine(const std::string &what,
                                   const std::string &how, const bool remove,
                                   const bool copyOptions)
@@ -7558,6 +7534,156 @@ GMSH_API void gmsh::view::setVisibilityPerWindow(const int tag, const int value,
     ctx->show(view);
   else
     ctx->hide(view);
+#endif
+#else
+  Msg::Error("Views require the post-processing module");
+#endif
+}
+
+// gmsh::view::option
+
+GMSH_API void gmsh::view::option::setNumber(int tag, const std::string &name,
+                                            const double value)
+{
+  if(!_checkInit()) return;
+#if defined(HAVE_POST)
+  PView *view = PView::getViewByTag(tag);
+  if(view) {
+    if(!GmshSetOption("View", name, value, view->getIndex()))
+      Msg::Error("Could not set option '%s' in view with tag %d",
+                 name.c_str(), tag);
+  }
+  else {
+    Msg::Error("Unknown view with tag %d", tag);
+  }
+#else
+  Msg::Error("Views require the post-processing module");
+#endif
+}
+
+GMSH_API void gmsh::view::option::getNumber(int tag, const std::string &name,
+                                            double &value)
+{
+  if(!_checkInit()) return;
+#if defined(HAVE_POST)
+  PView *view = PView::getViewByTag(tag);
+  if(view) {
+    if(!GmshGetOption("View", name, value, view->getIndex()))
+      Msg::Error("Could not get option '%s' in view with tag %d",
+                 name.c_str(), tag);
+  }
+  else {
+    Msg::Error("Unknown view with tag %d", tag);
+  }
+#else
+  Msg::Error("Views require the post-processing module");
+#endif
+}
+
+GMSH_API void gmsh::view::option::setString(int tag, const std::string &name,
+                                            const std::string &value)
+{
+  if(!_checkInit()) return;
+#if defined(HAVE_POST)
+  PView *view = PView::getViewByTag(tag);
+  if(view) {
+    if(!GmshSetOption("View", name, value, view->getIndex()))
+      Msg::Error("Could not set option '%s' in view with tag %d",
+                 name.c_str(), tag);
+  }
+  else {
+    Msg::Error("Unknown view with tag %d", tag);
+  }
+#else
+  Msg::Error("Views require the post-processing module");
+#endif
+}
+
+GMSH_API void gmsh::view::option::getString(int tag, const std::string &name,
+                                            std::string &value)
+{
+  if(!_checkInit()) return;
+#if defined(HAVE_POST)
+  PView *view = PView::getViewByTag(tag);
+  if(view) {
+    if(!GmshGetOption("View", name, value, view->getIndex()))
+      Msg::Error("Could not get option '%s' in view with tag %d",
+                 name.c_str(), tag);
+  }
+  else {
+    Msg::Error("Unknown view with tag %d", tag);
+  }
+#else
+  Msg::Error("Views require the post-processing module");
+#endif
+}
+
+GMSH_API void gmsh::view::option::setColor(int tag, const std::string &name,
+                                           const int r, const int g,
+                                           const int b, const int a)
+{
+  if(!_checkInit()) return;
+#if defined(HAVE_POST)
+  PView *view = PView::getViewByTag(tag);
+  if(view) {
+    unsigned int value = CTX::instance()->packColor(r, g, b, a);
+    if(!GmshSetOption("View", name, value, view->getIndex()))
+      Msg::Error("Could not set option '%s' in view with tag %d",
+                 name.c_str(), tag);
+  }
+  else {
+    Msg::Error("Unknown view with tag %d", tag);
+  }
+#else
+  Msg::Error("Views require the post-processing module");
+#endif
+}
+
+GMSH_API void gmsh::view::option::getColor(int tag, const std::string &name,
+                                           int &r, int &g, int &b, int &a)
+{
+  if(!_checkInit()) return;
+#if defined(HAVE_POST)
+  PView *view = PView::getViewByTag(tag);
+  if(view) {
+    unsigned int value;
+    if(GmshGetOption("View", name, value, view->getIndex())) {
+      r = CTX::instance()->unpackRed(value);
+      g = CTX::instance()->unpackGreen(value);
+      b = CTX::instance()->unpackBlue(value);
+      a = CTX::instance()->unpackAlpha(value);
+    }
+    else {
+      Msg::Error("Could not get option '%s' in view with tag %d",
+                 name.c_str(), tag);
+    }
+  }
+  else {
+    Msg::Error("Unknown view with tag %d", tag);
+  }
+#else
+  Msg::Error("Views require the post-processing module");
+#endif
+}
+
+GMSH_API void gmsh::view::option::copy(const int refTag, const int tag)
+{
+  if(!_checkInit()) return;
+#if defined(HAVE_POST)
+  PView *ref = PView::getViewByTag(refTag);
+  if(!ref) {
+    Msg::Error("Unknown view with tag %d", refTag);
+    return;
+  }
+  PView *view = PView::getViewByTag(tag);
+  if(!view) {
+    Msg::Error("Unknown view with tag %d", tag);
+    return;
+  }
+  view->setOptions(ref->getOptions());
+  view->setChanged(true);
+#if defined(HAVE_FLTK)
+  if(FlGui::available()) FlGui::instance()->updateViews(true, true);
 #endif
 #else
   Msg::Error("Views require the post-processing module");

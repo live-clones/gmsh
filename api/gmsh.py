@@ -7215,23 +7215,6 @@ class view:
     add_alias = addAlias
 
     @staticmethod
-    def copyOptions(refTag, tag):
-        """
-        gmsh.view.copyOptions(refTag, tag)
-
-        Copy the options from the view with tag `refTag' to the view with tag
-        `tag'.
-        """
-        ierr = c_int()
-        lib.gmshViewCopyOptions(
-            c_int(refTag),
-            c_int(tag),
-            byref(ierr))
-        if ierr.value != 0:
-            raise Exception(logger.getLastError())
-    copy_options = copyOptions
-
-    @staticmethod
     def combine(what, how, remove=True, copyOptions=True):
         """
         gmsh.view.combine(what, how, remove=True, copyOptions=True)
@@ -7334,6 +7317,159 @@ class view:
         if ierr.value != 0:
             raise Exception(logger.getLastError())
     set_visibility_per_window = setVisibilityPerWindow
+
+
+    class option:
+        """
+        View option handling functions
+        """
+
+        @staticmethod
+        def setNumber(tag, name, value):
+            """
+            gmsh.view.option.setNumber(tag, name, value)
+
+            Set the numerical option `name' to value `value' for the view with tag
+            `tag'.
+            """
+            ierr = c_int()
+            lib.gmshViewOptionSetNumber(
+                c_int(tag),
+                c_char_p(name.encode()),
+                c_double(value),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+        set_number = setNumber
+
+        @staticmethod
+        def getNumber(tag, name):
+            """
+            gmsh.view.option.getNumber(tag, name)
+
+            Get the `value' of the numerical option `name' for the view with tag `tag'.
+
+            Return `value'.
+            """
+            api_value_ = c_double()
+            ierr = c_int()
+            lib.gmshViewOptionGetNumber(
+                c_int(tag),
+                c_char_p(name.encode()),
+                byref(api_value_),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return api_value_.value
+        get_number = getNumber
+
+        @staticmethod
+        def setString(tag, name, value):
+            """
+            gmsh.view.option.setString(tag, name, value)
+
+            Set the string option `name' to value `value' for the view with tag `tag'.
+            """
+            ierr = c_int()
+            lib.gmshViewOptionSetString(
+                c_int(tag),
+                c_char_p(name.encode()),
+                c_char_p(value.encode()),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+        set_string = setString
+
+        @staticmethod
+        def getString(tag, name):
+            """
+            gmsh.view.option.getString(tag, name)
+
+            Get the `value' of the string option `name' for the view with tag `tag'.
+
+            Return `value'.
+            """
+            api_value_ = c_char_p()
+            ierr = c_int()
+            lib.gmshViewOptionGetString(
+                c_int(tag),
+                c_char_p(name.encode()),
+                byref(api_value_),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return _ostring(api_value_)
+        get_string = getString
+
+        @staticmethod
+        def setColor(tag, name, r, g, b, a=255):
+            """
+            gmsh.view.option.setColor(tag, name, r, g, b, a=255)
+
+            Set the color option `name' to the RGBA value (`r', `g', `b', `a') for the
+            view with tag `tag', where where `r', `g', `b' and `a' should be integers
+            between 0 and 255.
+            """
+            ierr = c_int()
+            lib.gmshViewOptionSetColor(
+                c_int(tag),
+                c_char_p(name.encode()),
+                c_int(r),
+                c_int(g),
+                c_int(b),
+                c_int(a),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+        set_color = setColor
+
+        @staticmethod
+        def getColor(tag, name):
+            """
+            gmsh.view.option.getColor(tag, name)
+
+            Get the `r', `g', `b', `a' value of the color option `name' for the view
+            with tag `tag'.
+
+            Return `r', `g', `b', `a'.
+            """
+            api_r_ = c_int()
+            api_g_ = c_int()
+            api_b_ = c_int()
+            api_a_ = c_int()
+            ierr = c_int()
+            lib.gmshViewOptionGetColor(
+                c_int(tag),
+                c_char_p(name.encode()),
+                byref(api_r_),
+                byref(api_g_),
+                byref(api_b_),
+                byref(api_a_),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return (
+                api_r_.value,
+                api_g_.value,
+                api_b_.value,
+                api_a_.value)
+        get_color = getColor
+
+        @staticmethod
+        def copy(refTag, tag):
+            """
+            gmsh.view.option.copy(refTag, tag)
+
+            Copy the options from the view with tag `refTag' to the view with tag
+            `tag'.
+            """
+            ierr = c_int()
+            lib.gmshViewOptionCopy(
+                c_int(refTag),
+                c_int(tag),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
 
 
 class plugin:

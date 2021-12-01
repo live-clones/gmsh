@@ -4926,15 +4926,6 @@ namespace gmsh { // Top-level functions
       return result_api_;
     }
 
-    // Copy the options from the view with tag `refTag' to the view with tag `tag'.
-    inline void copyOptions(const int refTag,
-                            const int tag)
-    {
-      int ierr = 0;
-      gmshViewCopyOptions(refTag, tag, &ierr);
-      if(ierr) throwLastError();
-    }
-
     // Combine elements (if `what' == "elements") or steps (if `what' == "steps")
     // of all views (`how' == "all"), all visible views (`how' == "visible") or all
     // views having the same name (`how' == "name"). Remove original views if
@@ -5011,6 +5002,93 @@ namespace gmsh { // Top-level functions
       gmshViewSetVisibilityPerWindow(tag, value, windowIndex, &ierr);
       if(ierr) throwLastError();
     }
+
+    namespace option { // View option handling functions
+
+      // Set the numerical option `name' to value `value' for the view with tag
+      // `tag'.
+      inline void setNumber(const int tag,
+                            const std::string & name,
+                            const double value)
+      {
+        int ierr = 0;
+        gmshViewOptionSetNumber(tag, name.c_str(), value, &ierr);
+        if(ierr) throwLastError();
+      }
+
+      // Get the `value' of the numerical option `name' for the view with tag
+      // `tag'.
+      inline void getNumber(const int tag,
+                            const std::string & name,
+                            double & value)
+      {
+        int ierr = 0;
+        gmshViewOptionGetNumber(tag, name.c_str(), &value, &ierr);
+        if(ierr) throwLastError();
+      }
+
+      // Set the string option `name' to value `value' for the view with tag `tag'.
+      inline void setString(const int tag,
+                            const std::string & name,
+                            const std::string & value)
+      {
+        int ierr = 0;
+        gmshViewOptionSetString(tag, name.c_str(), value.c_str(), &ierr);
+        if(ierr) throwLastError();
+      }
+
+      // Get the `value' of the string option `name' for the view with tag `tag'.
+      inline void getString(const int tag,
+                            const std::string & name,
+                            std::string & value)
+      {
+        int ierr = 0;
+        char *api_value_;
+        gmshViewOptionGetString(tag, name.c_str(), &api_value_, &ierr);
+        if(ierr) throwLastError();
+        value = std::string(api_value_); gmshFree(api_value_);
+      }
+
+      // Set the color option `name' to the RGBA value (`r', `g', `b', `a') for the
+      // view with tag `tag', where where `r', `g', `b' and `a' should be integers
+      // between 0 and 255.
+      inline void setColor(const int tag,
+                           const std::string & name,
+                           const int r,
+                           const int g,
+                           const int b,
+                           const int a = 255)
+      {
+        int ierr = 0;
+        gmshViewOptionSetColor(tag, name.c_str(), r, g, b, a, &ierr);
+        if(ierr) throwLastError();
+      }
+
+      // Get the `r', `g', `b', `a' value of the color option `name' for the view
+      // with tag `tag'.
+      inline void getColor(const int tag,
+                           const std::string & name,
+                           int & r,
+                           int & g,
+                           int & b,
+                           int & a)
+      {
+        int ierr = 0;
+        gmshViewOptionGetColor(tag, name.c_str(), &r, &g, &b, &a, &ierr);
+        if(ierr) throwLastError();
+      }
+
+      // Copy the options from the view with tag `refTag' to the view with tag
+      // `tag'.
+      inline void copy(const int refTag,
+                       const int tag)
+      {
+        int ierr = 0;
+        gmshViewOptionCopy(refTag, tag, &ierr);
+        if(ierr) throwLastError();
+      }
+
+    } // namespace option
 
   } // namespace view
 

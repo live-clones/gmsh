@@ -3278,12 +3278,6 @@ namespace gmsh { // Top-level functions
                           const bool copyOptions = false,
                           const int tag = -1);
 
-    // gmsh::view::copyOptions
-    //
-    // Copy the options from the view with tag `refTag' to the view with tag `tag'.
-    GMSH_API void copyOptions(const int refTag,
-                              const int tag);
-
     // gmsh::view::combine
     //
     // Combine elements (if `what' == "elements") or steps (if `what' == "steps")
@@ -3340,6 +3334,70 @@ namespace gmsh { // Top-level functions
     GMSH_API void setVisibilityPerWindow(const int tag,
                                          const int value,
                                          const int windowIndex = 0);
+
+    namespace option { // View option handling functions
+
+      // gmsh::view::option::setNumber
+      //
+      // Set the numerical option `name' to value `value' for the view with tag
+      // `tag'.
+      GMSH_API void setNumber(const int tag,
+                              const std::string & name,
+                              const double value);
+
+      // gmsh::view::option::getNumber
+      //
+      // Get the `value' of the numerical option `name' for the view with tag
+      // `tag'.
+      GMSH_API void getNumber(const int tag,
+                              const std::string & name,
+                              double & value);
+
+      // gmsh::view::option::setString
+      //
+      // Set the string option `name' to value `value' for the view with tag `tag'.
+      GMSH_API void setString(const int tag,
+                              const std::string & name,
+                              const std::string & value);
+
+      // gmsh::view::option::getString
+      //
+      // Get the `value' of the string option `name' for the view with tag `tag'.
+      GMSH_API void getString(const int tag,
+                              const std::string & name,
+                              std::string & value);
+
+      // gmsh::view::option::setColor
+      //
+      // Set the color option `name' to the RGBA value (`r', `g', `b', `a') for the
+      // view with tag `tag', where where `r', `g', `b' and `a' should be integers
+      // between 0 and 255.
+      GMSH_API void setColor(const int tag,
+                             const std::string & name,
+                             const int r,
+                             const int g,
+                             const int b,
+                             const int a = 255);
+
+      // gmsh::view::option::getColor
+      //
+      // Get the `r', `g', `b', `a' value of the color option `name' for the view
+      // with tag `tag'.
+      GMSH_API void getColor(const int tag,
+                             const std::string & name,
+                             int & r,
+                             int & g,
+                             int & b,
+                             int & a);
+
+      // gmsh::view::option::copy
+      //
+      // Copy the options from the view with tag `refTag' to the view with tag
+      // `tag'.
+      GMSH_API void copy(const int refTag,
+                         const int tag);
+
+    } // namespace option
 
   } // namespace view
 

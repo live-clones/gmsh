@@ -2913,12 +2913,6 @@ GMSH_API int gmshViewAddAlias(const int refTag,
                               const int tag,
                               int * ierr);
 
-/* Copy the options from the view with tag `refTag' to the view with tag
- * `tag'. */
-GMSH_API void gmshViewCopyOptions(const int refTag,
-                                  const int tag,
-                                  int * ierr);
-
 /* Combine elements (if `what' == "elements") or steps (if `what' == "steps")
  * of all views (`how' == "all"), all visible views (`how' == "visible") or
  * all views having the same name (`how' == "name"). Remove original views if
@@ -2971,6 +2965,58 @@ GMSH_API void gmshViewSetVisibilityPerWindow(const int tag,
                                              const int value,
                                              const int windowIndex,
                                              int * ierr);
+
+/* Set the numerical option `name' to value `value' for the view with tag
+ * `tag'. */
+GMSH_API void gmshViewOptionSetNumber(const int tag,
+                                      const char * name,
+                                      const double value,
+                                      int * ierr);
+
+/* Get the `value' of the numerical option `name' for the view with tag `tag'. */
+GMSH_API void gmshViewOptionGetNumber(const int tag,
+                                      const char * name,
+                                      double * value,
+                                      int * ierr);
+
+/* Set the string option `name' to value `value' for the view with tag `tag'. */
+GMSH_API void gmshViewOptionSetString(const int tag,
+                                      const char * name,
+                                      const char * value,
+                                      int * ierr);
+
+/* Get the `value' of the string option `name' for the view with tag `tag'. */
+GMSH_API void gmshViewOptionGetString(const int tag,
+                                      const char * name,
+                                      char ** value,
+                                      int * ierr);
+
+/* Set the color option `name' to the RGBA value (`r', `g', `b', `a') for the
+ * view with tag `tag', where where `r', `g', `b' and `a' should be integers
+ * between 0 and 255. */
+GMSH_API void gmshViewOptionSetColor(const int tag,
+                                     const char * name,
+                                     const int r,
+                                     const int g,
+                                     const int b,
+                                     const int a,
+                                     int * ierr);
+
+/* Get the `r', `g', `b', `a' value of the color option `name' for the view
+ * with tag `tag'. */
+GMSH_API void gmshViewOptionGetColor(const int tag,
+                                     const char * name,
+                                     int * r,
+                                     int * g,
+                                     int * b,
+                                     int * a,
+                                     int * ierr);
+
+/* Copy the options from the view with tag `refTag' to the view with tag
+ * `tag'. */
+GMSH_API void gmshViewOptionCopy(const int refTag,
+                                 const int tag,
+                                 int * ierr);
 
 /* Set the numerical option `option' to the value `value' for plugin `name'. */
 GMSH_API void gmshPluginSetNumber(const char * name,

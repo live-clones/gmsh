@@ -6119,19 +6119,6 @@ c
             integer(c_int)::ierr
           end function gmshViewAddAlias
 
-!  Copy the options from the view with tag `refTag' to the view with tag
-!  `tag'.
-        subroutine gmshViewCopyOptions(
-     &      refTag,
-     &      tag,
-     &      ierr)
-     &    bind(C, name = "gmshViewCopyOptions")
-          use, intrinsic :: iso_c_binding
-            integer(c_int), value::refTag
-            integer(c_int), value::tag
-            integer(c_int)::ierr
-          end subroutine gmshViewCopyOptions
-
 !  Combine elements (if `what' == "elements") or steps (if `what' == "steps")
 !  of all views (`how' == "all"), all visible views (`how' == "visible") or
 !  all views having the same name (`how' == "name"). Remove original views if
@@ -6236,6 +6223,119 @@ c
             integer(c_int), value::windowIndex
             integer(c_int)::ierr
           end subroutine gmshViewSetVisibilityPerWindow
+
+!  Set the numerical option `name' to value `value' for the view with tag
+!  `tag'.
+        subroutine gmshViewOptionSetNumber(
+     &      tag,
+     &      name,
+     &      value,
+     &      ierr)
+     &    bind(C, name = "gmshViewOptionSetNumber")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::tag
+            character(len = 1, kind = c_char)::name(*)
+            real(c_double), value::value
+            integer(c_int)::ierr
+          end subroutine gmshViewOptionSetNumber
+
+!  Get the `value' of the numerical option `name' for the view with tag `tag'.
+        subroutine gmshViewOptionGetNumber(
+     &      tag,
+     &      name,
+     &      value,
+     &      ierr)
+     &    bind(C, name = "gmshViewOptionGetNumber")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::tag
+            character(len = 1, kind = c_char)::name(*)
+            real(c_double)::value
+            integer(c_int)::ierr
+          end subroutine gmshViewOptionGetNumber
+
+!  Set the string option `name' to value `value' for the view with tag `tag'.
+        subroutine gmshViewOptionSetString(
+     &      tag,
+     &      name,
+     &      value,
+     &      ierr)
+     &    bind(C, name = "gmshViewOptionSetString")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::tag
+            character(len = 1, kind = c_char)::name(*)
+            character(len = 1, kind = c_char)::value(*)
+            integer(c_int)::ierr
+          end subroutine gmshViewOptionSetString
+
+!  Get the `value' of the string option `name' for the view with tag `tag'.
+        subroutine gmshViewOptionGetString(
+     &      tag,
+     &      name,
+     &      value,
+     &      ierr)
+     &    bind(C, name = "gmshViewOptionGetString")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::tag
+            character(len = 1, kind = c_char)::name(*)
+            type(c_ptr)::value(*)
+            integer(c_int)::ierr
+          end subroutine gmshViewOptionGetString
+
+!  Set the color option `name' to the RGBA value (`r', `g', `b', `a') for the
+!  view with tag `tag', where where `r', `g', `b' and `a' should be integers
+!  between 0 and 255.
+        subroutine gmshViewOptionSetColor(
+     &      tag,
+     &      name,
+     &      r,
+     &      g,
+     &      b,
+     &      a,
+     &      ierr)
+     &    bind(C, name = "gmshViewOptionSetColor")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::tag
+            character(len = 1, kind = c_char)::name(*)
+            integer(c_int), value::r
+            integer(c_int), value::g
+            integer(c_int), value::b
+            integer(c_int), value::a
+            integer(c_int)::ierr
+          end subroutine gmshViewOptionSetColor
+
+!  Get the `r', `g', `b', `a' value of the color option `name' for the view
+!  with tag `tag'.
+        subroutine gmshViewOptionGetColor(
+     &      tag,
+     &      name,
+     &      r,
+     &      g,
+     &      b,
+     &      a,
+     &      ierr)
+     &    bind(C, name = "gmshViewOptionGetColor")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::tag
+            character(len = 1, kind = c_char)::name(*)
+            integer(c_int)::r
+            integer(c_int)::g
+            integer(c_int)::b
+            integer(c_int)::a
+            integer(c_int)::ierr
+          end subroutine gmshViewOptionGetColor
+
+!  Copy the options from the view with tag `refTag' to the view with tag
+!  `tag'.
+        subroutine gmshViewOptionCopy(
+     &      refTag,
+     &      tag,
+     &      ierr)
+     &    bind(C, name = "gmshViewOptionCopy")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::refTag
+            integer(c_int), value::tag
+            integer(c_int)::ierr
+          end subroutine gmshViewOptionCopy
 
 !  Set the numerical option `option' to the value `value' for plugin `name'.
         subroutine gmshPluginSetNumber(

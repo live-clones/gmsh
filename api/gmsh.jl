@@ -6215,21 +6215,6 @@ end
 const add_alias = addAlias
 
 """
-    gmsh.view.copyOptions(refTag, tag)
-
-Copy the options from the view with tag `refTag` to the view with tag `tag`.
-"""
-function copyOptions(refTag, tag)
-    ierr = Ref{Cint}()
-    ccall((:gmshViewCopyOptions, gmsh.lib), Cvoid,
-          (Cint, Cint, Ptr{Cint}),
-          refTag, tag, ierr)
-    ierr[] != 0 && error(gmsh.logger.getLastError())
-    return nothing
-end
-const copy_options = copyOptions
-
-"""
     gmsh.view.combine(what, how, remove = true, copyOptions = true)
 
 Combine elements (if `what` == "elements") or steps (if `what` == "steps") of
@@ -6307,6 +6292,137 @@ function setVisibilityPerWindow(tag, value, windowIndex = 0)
     return nothing
 end
 const set_visibility_per_window = setVisibilityPerWindow
+
+"""
+    module gmsh.view.option
+
+View option handling functions
+"""
+module option
+
+import ...gmsh
+
+"""
+    gmsh.view.option.setNumber(tag, name, value)
+
+Set the numerical option `name` to value `value` for the view with tag `tag`.
+"""
+function setNumber(tag, name, value)
+    ierr = Ref{Cint}()
+    ccall((:gmshViewOptionSetNumber, gmsh.lib), Cvoid,
+          (Cint, Ptr{Cchar}, Cdouble, Ptr{Cint}),
+          tag, name, value, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+const set_number = setNumber
+
+"""
+    gmsh.view.option.getNumber(tag, name)
+
+Get the `value` of the numerical option `name` for the view with tag `tag`.
+
+Return `value`.
+"""
+function getNumber(tag, name)
+    api_value_ = Ref{Cdouble}()
+    ierr = Ref{Cint}()
+    ccall((:gmshViewOptionGetNumber, gmsh.lib), Cvoid,
+          (Cint, Ptr{Cchar}, Ptr{Cdouble}, Ptr{Cint}),
+          tag, name, api_value_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return api_value_[]
+end
+const get_number = getNumber
+
+"""
+    gmsh.view.option.setString(tag, name, value)
+
+Set the string option `name` to value `value` for the view with tag `tag`.
+"""
+function setString(tag, name, value)
+    ierr = Ref{Cint}()
+    ccall((:gmshViewOptionSetString, gmsh.lib), Cvoid,
+          (Cint, Ptr{Cchar}, Ptr{Cchar}, Ptr{Cint}),
+          tag, name, value, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+const set_string = setString
+
+"""
+    gmsh.view.option.getString(tag, name)
+
+Get the `value` of the string option `name` for the view with tag `tag`.
+
+Return `value`.
+"""
+function getString(tag, name)
+    api_value_ = Ref{Ptr{Cchar}}()
+    ierr = Ref{Cint}()
+    ccall((:gmshViewOptionGetString, gmsh.lib), Cvoid,
+          (Cint, Ptr{Cchar}, Ptr{Ptr{Cchar}}, Ptr{Cint}),
+          tag, name, api_value_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    value = unsafe_string(api_value_[])
+    return value
+end
+const get_string = getString
+
+"""
+    gmsh.view.option.setColor(tag, name, r, g, b, a = 255)
+
+Set the color option `name` to the RGBA value (`r`, `g`, `b`, `a`) for the view
+with tag `tag`, where where `r`, `g`, `b` and `a` should be integers between 0
+and 255.
+"""
+function setColor(tag, name, r, g, b, a = 255)
+    ierr = Ref{Cint}()
+    ccall((:gmshViewOptionSetColor, gmsh.lib), Cvoid,
+          (Cint, Ptr{Cchar}, Cint, Cint, Cint, Cint, Ptr{Cint}),
+          tag, name, r, g, b, a, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+const set_color = setColor
+
+"""
+    gmsh.view.option.getColor(tag, name)
+
+Get the `r`, `g`, `b`, `a` value of the color option `name` for the view with
+tag `tag`.
+
+Return `r`, `g`, `b`, `a`.
+"""
+function getColor(tag, name)
+    api_r_ = Ref{Cint}()
+    api_g_ = Ref{Cint}()
+    api_b_ = Ref{Cint}()
+    api_a_ = Ref{Cint}()
+    ierr = Ref{Cint}()
+    ccall((:gmshViewOptionGetColor, gmsh.lib), Cvoid,
+          (Cint, Ptr{Cchar}, Ptr{Cint}, Ptr{Cint}, Ptr{Cint}, Ptr{Cint}, Ptr{Cint}),
+          tag, name, api_r_, api_g_, api_b_, api_a_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return api_r_[], api_g_[], api_b_[], api_a_[]
+end
+const get_color = getColor
+
+"""
+    gmsh.view.option.copy(refTag, tag)
+
+Copy the options from the view with tag `refTag` to the view with tag `tag`.
+"""
+function copy(refTag, tag)
+    ierr = Ref{Cint}()
+    ccall((:gmshViewOptionCopy, gmsh.lib), Cvoid,
+          (Cint, Cint, Ptr{Cint}),
+          refTag, tag, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+
+end # end of module option
 
 end # end of module view
 
