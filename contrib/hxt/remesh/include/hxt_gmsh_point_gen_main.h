@@ -21,5 +21,11 @@ HXTStatus hxtGmshPointGenMain(HXTMesh *mesh,
                               double *data,
                               HXTMesh *fmesh);
 
-
+HXTStatus hxtGmshVolumePointGen(HXTMesh *mesh, 
+                                int verbosity,
+                                double *sizemap,
+                                double *directions,
+                                size_t *npts,
+                                double **pts,
+                                uint32_t **binaryIndices);
 #endif
