@@ -25,7 +25,7 @@ int main(int argc, char **argv)
   gmsh::model::add("t17");
 
   // Create a square
-  gmsh::model::occ::addRectangle(-1, -1, 0, 2, 2);
+  gmsh::model::occ::addRectangle(-2, -2, 0, 4, 4);
   gmsh::model::occ::synchronize();
 
   // Merge a post-processing view containing the target anisotropic mesh sizes
