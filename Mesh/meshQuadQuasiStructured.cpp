@@ -887,7 +887,7 @@ bool getSingularitiesFromBackgroundField(
 
   int viewIndex = int(field->options["IView"]->numericalValue());
   PView *view = nullptr;
-  if(viewIndex >= 0 && viewIndex < PView::list.size()) {
+  if(viewIndex >= 0 && viewIndex < (int)PView::list.size()) {
     view = PView::list[viewIndex];
   }
   else {
