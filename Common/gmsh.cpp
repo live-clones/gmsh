@@ -4713,8 +4713,8 @@ GMSH_API void gmsh::model::mesh::setTransfiniteAutomatic(
   }
   else {
     for(std::size_t i = 0; i < dimTags.size(); ++i) {
-      if(dimTags[i].second == 2) {
-        int tag = dimTags[i].first;
+      if(dimTags[i].first == 2) {
+        int tag = dimTags[i].second;
         GFace *gf = GModel::current()->getFaceByTag(tag);
         if(!gf) {
           Msg::Error("%s does not exist", _getEntityName(2, tag).c_str());
@@ -4722,8 +4722,8 @@ GMSH_API void gmsh::model::mesh::setTransfiniteAutomatic(
         }
         if(gf->edges().size() == 4) { faces.insert(gf); }
       }
-      else if(dimTags[i].second == 3) {
-        int tag = dimTags[i].first;
+      else if(dimTags[i].first == 3) {
+        int tag = dimTags[i].second;
         GRegion *gr = GModel::current()->getRegionByTag(tag);
         if(!gr) {
           Msg::Error("%s does not exist", _getEntityName(3, tag).c_str());
@@ -4758,8 +4758,8 @@ GMSH_API void gmsh::model::mesh::setTransfiniteAutomatic(
   }
   else {
     for(std::size_t i = 0; i < dimTags.size(); ++i) {
-      if(dimTags[i].second == 3) {
-        int tag = dimTags[i].first;
+      if(dimTags[i].first == 3) {
+        int tag = dimTags[i].second;
         GRegion *gr = GModel::current()->getRegionByTag(tag);
         if(!gr) {
           Msg::Error("%s does not exist", _getEntityName(3, tag).c_str());
