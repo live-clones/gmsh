@@ -174,18 +174,16 @@ int buildBackgroundField(
 
   gm->getFields()->setBackgroundMesh(view->getIndex());
 
-  const bool exportBGM = true;
+  const bool exportBGM = false;
   if(exportBGM || Msg::GetVerbosity() >= 99) {
     std::string name = gm->getName() + "_bgm.pos";
-    Msg::Warning("export background field to '%s' tag %d", name.c_str(), view->getTag() );
+    Msg::Warning("Exporting background field to '%s'", name.c_str());
     view->write(name, 0);
-    //    exit(1);
   }
 
   return 0;
 #else
-  Msg::Error(
-    "Module POST (post-processing) required to create background field view");
+  Msg::Error("Post-processing module required to create background field view");
   return -1;
 #endif
 }

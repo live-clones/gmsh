@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <iostream>
 #include <string>
+#include <nanoflann.hpp>
 #include "simple3D.h"
 #include "GModel.h"
 #include "MElement.h"
@@ -288,7 +289,262 @@ void Filler::treat_model()
   }
 }
 
+
+struct PointCloud
+{
+  std::vector<SPoint3>  pts;
+  std::vector<SVector3>  t1;
+  std::vector<SVector3>  t2;  
+}; 
+
+template <typename Derived>
+struct PointCloudAdaptor
+{
+  
+  const Derived &obj; //!< A const ref to the data set origin
+  
+  /// The constructor that sets the data set source
+  PointCloudAdaptor(const Derived &obj_) : obj(obj_) { }
+  
+  /// CRTP helper method
+  inline const Derived& derived() const { return obj; }
+  
+  // Must return the number of data points
+  inline size_t kdtree_get_point_count() const { return derived().pts.size(); }
+  
+  // Returns the distance between the vector "p1[0:size-1]" and the data point with index "idx_p2" stored in the class:
+  inline double kdtree_distance(const double *p1, const size_t idx_p2,size_t /*size*/) const
+  {
+    const double d0=p1[0]-derived().pts[idx_p2].x();
+    const double d1=p1[1]-derived().pts[idx_p2].y();
+    const double d2=p1[2]-derived().pts[idx_p2].z();
+    return d0*d0+d1*d1+d2*d2;
+  }
+
+  // Returns the dim'th component of the idx'th point in the class:
+  // Since this is inlined and the "dim" argument is typically an immediate value, the
+  //  "if/else's" are actually solved at compile time.
+  inline double kdtree_get_pt(const size_t idx, int dim) const
+  {
+    if (dim==0) return derived().pts[idx].x();
+    else if (dim==1) return derived().pts[idx].y();
+    else return derived().pts[idx].z();
+  }
+  
+  // Optional bounding-box computation: return false to default to a standard bbox computation loop.
+  //   Return true if the BBOX was already computed by the class and returned in "bb" so it can be avoided to redo it again.
+  //   Look at bb.size() to find out the expected dimensionality (e.g. 2 or 3 for point clouds)
+  template <class BBOX>
+  bool kdtree_get_bbox(BBOX& /*bb*/) const { return false; }
+}; // end of PointCloudAdaptor
+
+typedef PointCloudAdaptor<PointCloud> PC2KD;
+typedef nanoflann::KDTreeSingleIndexAdaptor<
+  nanoflann::L2_Simple_Adaptor<double, PC2KD > ,
+  PC2KD, 3 > my_kd_tree_t;
+
 void Filler::treat_region(GRegion *gr)
+{
+  FieldManager *fields = gr->model()->getFields();
+  Field *cross_field = NULL;
+  SVector3 t1;
+  double L;
+  if(fields->getBackgroundField() > 0) {
+    cross_field = fields->get(fields->getBackgroundField());
+    if(cross_field->numComponents() != 3) {// we hae a true scaled cross fields !!
+      Msg::Error ("Packing of Parallelograms require a scaled cross field");
+      Msg::Error ("Do first gmsh yourmeshname.msh -crossfield to create yourmeshname_scaled_crossfield.pos");
+      Msg::Error ("Then do yourmeshname.geo -bgm yourmeshname_scaled_crossfield.pos");
+      return;
+    }
+  }
+  else {
+    Msg::Error ("Packing of Parallelograms require a scaled cross field");
+    Msg::Error ("Do first gmsh yourmeshname.msh -crossfield to create yourmeshname_scaled_crossfield.pos");
+    Msg::Error ("Then do yourmeshname.geo -bgm yourmeshname_scaled_crossfield.pos");
+    return;
+  }
+
+  
+  Node *node, *individual, *parent;
+  deMeshGRegion deleter;
+  Wrapper wrapper;
+  GFace *gf;
+  std::vector<Node *> garbage;
+  std::vector<MVertex *> boundary_vertices;
+  std::set<MVertex *>::iterator it;
+  std::vector<GFace *>::iterator it2;
+  std::map<MVertex *, int>::iterator it3;
+  RTree<Node *, double, 3, double> rtree;
+  MElementOctree *octree = new MElementOctree(gr->model());
+
+  std::vector<GFace *> faces = gr->faces();
+  std::map<MVertex *, int> limits;
+
+  std::set<MVertex *> temp;
+
+  for(it2 = faces.begin(); it2 != faces.end(); it2++) {
+    gf = *it2;
+    int limit = code(gf->tag());
+    for(std::size_t i = 0; i < gf->getNumMeshElements(); i++) {
+      MElement *element = gf->getMeshElement(i);
+      for(std::size_t j = 0; j < element->getNumVertices(); j++) {
+        MVertex *vertex = element->getVertex(j);
+        temp.insert(vertex);
+        limits.insert(std::pair<MVertex *, int>(vertex, limit));
+      }
+    }
+  }
+
+  for(it = temp.begin(); it != temp.end(); it++) {
+    if((*it)->onWhat()->dim() == 0) {
+      boundary_vertices.push_back(*it);
+    }
+  }
+
+  for(it = temp.begin(); it != temp.end(); it++) {
+    if((*it)->onWhat()->dim() == 1) {
+      boundary_vertices.push_back(*it);
+    }
+  }
+
+  for(it = temp.begin(); it != temp.end(); it++) {
+    if((*it)->onWhat()->dim() == 2) {
+      boundary_vertices.push_back(*it);
+    }
+  }
+
+  PointCloud P;
+  for (auto gf : faces){
+    std::vector<SPoint3> points;
+    std::vector<SPoint2> uvpoints;
+    std::vector<SVector3> normals;
+    SBoundingBox3d bb = gf->bounds();
+    SVector3 dd = bb.max() - bb.min();
+    double maxDist = dd.norm() / 20 ;
+    gf->fillPointCloud(maxDist, &points, &uvpoints, &normals);
+    for (size_t i=0;i<points.size();i++){
+      SVector3 t1,t2;
+      (*cross_field)(points[i].x(),points[i].y(),points[i].z(), t1, gf);
+      t2 = crossprod(normals[i],t1);
+      P.pts.push_back(points[i]);
+    }    
+  }
+  const PC2KD  pc2kd(P); // The adaptor
+  my_kd_tree_t   *index;
+  index = new my_kd_tree_t(3 , pc2kd, nanoflann::KDTreeSingleIndexAdaptorParams(10) );
+  index->buildIndex();
+  bool update_needed=false;
+
+  std::map<MTetrahedron*,STensor3> sizeMap;
+  for (auto t : gr->tetrahedra){
+    SPoint3 pp = t->barycenter();
+    double query_pt[3] = {pp.x(),pp.y(),pp.z()};
+    const size_t num_results = 1;
+    size_t ret_index;
+    double out_dist_sqr;
+    nanoflann::KNNResultSet<double> resultSet(num_results);
+    resultSet.init(&ret_index, &out_dist_sqr );
+    index->findNeighbors(resultSet, &query_pt[0], nanoflann::SearchParams(10));
+    
+  }
+  
+  std::queue<Node *> fifo;
+
+  for(std::size_t i = 0; i < boundary_vertices.size(); i++) {
+    double x = boundary_vertices[i]->x();
+    double y = boundary_vertices[i]->y();
+    double z = boundary_vertices[i]->z();
+
+    node = new Node(SPoint3(x, y, z));
+    compute_parameters(node, gr);
+    node->set_layer(0);
+
+    it3 = limits.find(boundary_vertices[i]);
+    node->set_limit(it3->second);
+
+    rtree.Insert(node->min, node->max, node);
+    fifo.push(node);
+  }
+
+  int count = 1;
+  while(!fifo.empty()) {
+    parent = fifo.front();
+    fifo.pop();
+    garbage.push_back(parent);
+
+    if(parent->get_limit() != -1 &&
+       parent->get_layer() >= parent->get_limit()) {
+      continue;
+    }
+
+    std::vector<Node *> spawns(6);
+    for(int i = 0; i < 6; i++) {
+      spawns[i] = new Node();
+    }
+
+    create_spawns(gr, octree, parent, spawns);
+
+    for(int i = 0; i < 6; i++) {
+      bool ok2 = 0;
+      individual = spawns[i];
+      SPoint3 point = individual->get_point();
+      double x = point.x();
+      double y = point.y();
+      double z = point.z();
+
+      if(inside_domain(octree, x, y, z)) {
+        compute_parameters(individual, gr);
+        individual->set_layer(parent->get_layer() + 1);
+        individual->set_limit(parent->get_limit());
+
+        if(far_from_boundary(octree, individual)) {
+          wrapper.set_ok(1);
+          wrapper.set_individual(individual);
+          wrapper.set_parent(parent);
+          rtree.Search(individual->min, individual->max, rtree_callback,
+                       &wrapper);
+
+          if(wrapper.get_ok()) {
+            fifo.push(individual);
+            rtree.Insert(individual->min, individual->max, individual);
+            new_vertices.push_back(new MVertex(x, y, z, gr, 0));
+            ok2 = 1;
+            // print_segment(individual->get_point(),parent->get_point(),file);
+          }
+        }
+      }
+
+      if(!ok2) delete individual;
+    }
+
+    //    if(count % 100 == 0) {
+      //      printf("%d\n", count);
+    //    }
+    count++;
+  }
+
+  int option = CTX::instance()->mesh.algo3d;
+  CTX::instance()->mesh.algo3d = ALGO_3D_DELAUNAY;
+
+  deleter(gr);
+  printf("%d vertices to add\n", (int)new_vertices.size());
+  std::vector<GRegion *> regions;
+  regions.push_back(gr);
+  meshGRegion mesher(regions); //?
+  mesher(gr); //?
+  MeshDelaunayVolume(regions);
+
+  CTX::instance()->mesh.algo3d = option;
+
+  for(std::size_t i = 0; i < garbage.size(); i++) delete garbage[i];
+  for(std::size_t i = 0; i < new_vertices.size(); i++) delete new_vertices[i];
+
+  delete index;
+}
+
+
+void Filler::treat_region_old(GRegion *gr)
 {
   int NumSmooth = CTX::instance()->mesh.smoothCrossField;
   std::cout << "NumSmooth = " << NumSmooth << std::endl;
@@ -433,9 +689,9 @@ void Filler::treat_region(GRegion *gr)
       if(!ok2) delete individual;
     }
 
-    if(count % 100 == 0) {
-      printf("%d\n", count);
-    }
+    //    if(count % 100 == 0) {
+      //      printf("%d\n", count);
+    //    }
     count++;
   }
 

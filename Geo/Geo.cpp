@@ -863,6 +863,18 @@ Surface *DuplicateSurface(Surface *s)
   return ps;
 }
 
+Surface *DuplicateSurface(GFace *gf)
+{
+  Surface *ps = CreateSurface(NEWSURFACE(), MSH_SURF_PLAN); // dummy
+  Tree_Insert(GModel::current()->getGEOInternals()->Surfaces, &ps);
+  std::vector<GEdge *> edges = gf->edges();
+  //for(auto ge : edges) {
+    //Curve *newc = DuplicateCurve(ge);
+    //List_Add(ps->Generatrices, &newc);
+  // }
+  return ps;
+}
+
 static void CopyVolume(Volume *v, Volume *vv)
 {
   vv->Typ = v->Typ;
@@ -2842,18 +2854,21 @@ int ExtrudeSurface(int type, int is, double T0, double T1, double T2, double A0,
   // creating boundary layers
   Surface *ps = FindSurface(std::abs(is));
 
-  if(!ps) {
-    if(type == BOUNDARY_LAYER) {
-      Msg::Warning("Placeholder for when we will allow geometrical boundary "
-                   "layers of non-built-in entities");
-      return 0;
-    }
-    return 0;
+  GFace *gf = nullptr;
+  if(!ps && type == BOUNDARY_LAYER) {
+    // we allow boundary layers from generic surfaces
+    gf = GModel::current()->getFaceByTag(std::abs(is));
   }
+
+  if(!ps && !gf) return 0;
 
   Msg::Debug("Extrude Surface %d", is);
 
-  Surface *chapeau = DuplicateSurface(ps);
+  Surface *chapeau = nullptr;
+  if(ps)
+    chapeau = DuplicateSurface(ps);
+  else
+    chapeau = DuplicateSurface(gf);
   chapeau->Extrude = new ExtrudeParams(COPIED_ENTITY);
   chapeau->Extrude->fill(type, T0, T1, T2, A0, A1, A2, X0, X1, X2, alpha);
   chapeau->Extrude->geo.Source = is; // not ps->Num: we need the sign info
@@ -2861,23 +2876,31 @@ int ExtrudeSurface(int type, int is, double T0, double T1, double T2, double A0,
 
   for(int i = 0; i < List_Nbr(chapeau->Generatrices); i++) {
     Curve *c, *c2;
-    List_Read(ps->Generatrices, i, &c2);
     List_Read(chapeau->Generatrices, i, &c);
     c->Extrude = new ExtrudeParams(COPIED_ENTITY);
     c->Extrude->fill(type, T0, T1, T2, A0, A1, A2, X0, X1, X2, alpha);
-    // don't take the abs(): the sign of c2->Num is important (used when copying
-    // the mesh in the extrusion routine)
-    c->Extrude->geo.Source = c2->Num;
+
+    int c2num = 0;
+    if(ps) {
+      List_Read(ps->Generatrices, i, &c2);
+      // don't take the abs(): the sign of c2->Num is important (used when copying
+      // the mesh in the extrusion routine)
+      c2num = c2->Num;
+    }
+    else {
+      c2num = gf->edges()[i]->tag();
+    }
+    c->Extrude->geo.Source = c2num;
     if(e) c->Extrude->mesh = e->mesh;
 
     Curve *revc = FindCurve(-c->Num);
     if(!revc) {
       Msg::Error("Unknown GEO curve with tag %d", -c->Num);
-      return ps->Num;
+      return ps ? ps->Num : gf->tag();
     }
     revc->Extrude = new ExtrudeParams(COPIED_ENTITY);
     revc->Extrude->fill(type, T0, T1, T2, A0, A1, A2, X0, X1, X2, alpha);
-    revc->Extrude->geo.Source = c2->Num;
+    revc->Extrude->geo.Source = c2num;
     if(e) c->Extrude->mesh = e->mesh;
   }
 
@@ -2899,20 +2922,39 @@ int ExtrudeSurface(int type, int is, double T0, double T1, double T2, double A0,
   v->Extrude->geo.Source = is;
   if(e) v->Extrude->mesh = e->mesh;
   int ori = -1;
-  List_Add(v->Surfaces, &ps);
+  if(ps) {
+    List_Add(v->Surfaces, &ps);
+  }
+  else {
+    int tag = gf->tag();
+    List_Add(v->SurfacesByTag, &tag);
+  }
   List_Add(v->SurfacesOrientations, &ori);
   ori = 1;
   List_Add(v->Surfaces, &chapeau);
   List_Add(v->SurfacesOrientations, &ori);
 
-  for(int i = 0; i < List_Nbr(ps->Generatrices); i++) {
-    Curve *c;
-    List_Read(ps->Generatrices, i, &c);
+  int numg = 0;
+  if(ps) numg = List_Nbr(ps->Generatrices);
+  else numg = gf->edges().size();
+
+  for(int i = 0; i < numg; i++) {
+    int cnum = 0;
+    if(ps) {
+      Curve *c;
+      List_Read(ps->Generatrices, i, &c);
+      cnum = c->Num;
+    }
+    else {
+      cnum = gf->edges()[i]->tag();
+      std::vector<int> ori = gf->edgeOrientations();
+      if(i < (int)ori.size() && ori[i] < 0) cnum *= -1;
+    }
     Surface *s;
-    ExtrudeCurve(type, c->Num, T0, T1, T2, A0, A1, A2, X0, X1, X2, alpha, &s, 0,
+    ExtrudeCurve(type, cnum, T0, T1, T2, A0, A1, A2, X0, X1, X2, alpha, &s, 0,
                  e);
     if(s) {
-      if(c->Num < 0)
+      if(cnum < 0)
         ori = -1;
       else
         ori = 1;

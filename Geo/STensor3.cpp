@@ -106,7 +106,7 @@ void SMetric3::eig(fullMatrix<double> &V, fullVector<double> &S, bool s) const
   fullMatrix<double> me(3, 3), left(3, 3);
   fullVector<double> im(3);
   getMat(me);
-  me.eig(S, im,  left, V, s);
+  me.eig(S, im, left, V, s);
 }
 
 void SMetric3::print(const char *s) const
@@ -167,7 +167,7 @@ SMetric3 intersection_conserveM1(const SMetric3 &m1, const SMetric3 &m2)
   // return intersection (m1,m2);
   fullMatrix<double> V(3, 3);
   fullVector<double> S(3);
-  m1.eig(V, S,false);
+  m1.eig(V, S, false);
   SVector3 v0(V(0, 0), V(1, 0), V(2, 0));
   SVector3 v1(V(0, 1), V(1, 1), V(2, 1));
   SVector3 v2(V(0, 2), V(1, 2), V(2, 2));

@@ -1346,18 +1346,23 @@ static inline void getCentroidUV(const BDS_Point *p, GFace *gf,
     GPoint gp = gf->point(kernel[i]);
     double du = p->u - gp.u();
     double dv = p->v - gp.v();
-    double dx = p->X - gp.x();
-    double dy = p->Y - gp.y();
-    double dz = p->Z - gp.z();
-    double fact = sqrt((dx * dx + dy * dy + dz * dz) / (du * du + dv * dv));
-    factSum += fact;
-    U += kernel[i].x() * fact;
-    V += kernel[i].y() * fact;
-    LC += lc[i] * fact;
+    double denom = (du * du + dv * dv);
+    if(denom) {
+      double dx = p->X - gp.x();
+      double dy = p->Y - gp.y();
+      double dz = p->Z - gp.z();
+      double fact = sqrt((dx * dx + dy * dy + dz * dz) / denom);
+      factSum += fact;
+      U += kernel[i].x() * fact;
+      V += kernel[i].y() * fact;
+      LC += lc[i] * fact;
+    }
   }
-  U /= factSum;
-  V /= factSum;
-  LC /= factSum;
+  if(factSum) {
+    U /= factSum;
+    V /= factSum;
+    LC /= factSum;
+  }
 }
 
 static inline void getCentroidUV(const std::vector<SPoint2> &kernel,

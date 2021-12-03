@@ -1563,10 +1563,15 @@ public:
   PView *getView() const
   {
     PView *v = nullptr;
-    if(_viewTag >= 0) v = PView::getViewByTag(_viewTag);
+    if(_viewTag >= 0) {
+      v = PView::getViewByTag(_viewTag);
+      if(!v) {
+        Msg::Error("View with tag %d does not exist", _viewTag);
+      }
+    }
     if(!v) {
       if(_viewIndex < 0 || _viewIndex >= (int)PView::list.size()) {
-        Msg::Error("View[%d] does not exist (viewtag %d)", _viewIndex,_viewTag);
+        Msg::Error("View with index %d does not exist", _viewIndex);
         return nullptr;
       }
       v = PView::list[_viewIndex];

@@ -742,15 +742,8 @@ public:
     EigenMat mr(rightEigenVect._data, rightEigenVect._r, rightEigenVect._c);
     mr = es.eigenvectors().real();
     EigenMat ml(leftEigenVect._data, leftEigenVect._r, leftEigenVect._c);
-    // FIXME: compute the true left eigenvectors!
-    ml = mr.transpose();
-
-    for (int i = 0; i < mr.cols(); i++)
-      mr.col(i).normalize();
-    for (int i = 0; i < ml.cols(); i++)
-      ml.col(i).normalize();
-
-    
+    // FIXME: only true for symmetric matrices - compute the true left eigenvectors!
+    ml = mr;
     if(sortRealPart)
       eigSort(_r, eigenValReal._data, eigenValImag._data,
               leftEigenVect._data, rightEigenVect._data);

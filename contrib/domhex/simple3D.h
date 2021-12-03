@@ -34,6 +34,7 @@ private:
   int code(int);
   void print_segment(const SPoint3 &, const SPoint3 &, std::ofstream &);
   void print_node(Node *, std::ofstream &);
+  void treat_region_old(GRegion *);
 
 public:
   Filler();

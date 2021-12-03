@@ -17,7 +17,7 @@
 SetFactory("OpenCASCADE");
 
 // Create a square
-Rectangle(1) = {-1, -1, 0, 2, 2};
+Rectangle(1) = {-2, -2, 0, 4, 4};
 
 // Merge a post-processing view containing the target anisotropic mesh sizes
 Merge "t17_bgmesh.pos";

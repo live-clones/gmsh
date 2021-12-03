@@ -61,10 +61,10 @@ static void computeMeshMetricsForBamg(GFace *gf, int numV,
     m.getMat(M);
     J.mult(M, W);
     W.mult(JT, R);
-    
-    mm11[i] = R(0,0);
-    mm12[i] = R(1,0);
-    mm22[i] = R(1,1);
+
+    mm11[i] = R(0, 0);
+    mm12[i] = R(1, 0);
+    mm22[i] = R(1, 1);
   }
 }
 
