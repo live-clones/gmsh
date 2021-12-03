@@ -77,7 +77,6 @@ setuptools.setup(
                    'Programming Language :: C',
                    'Programming Language :: C++',
                    'Programming Language :: Python',
-                   'Programming Language :: Julia',
                    'Topic :: Scientific/Engineering'],
     scripts = scripts,
     packages = [''],
