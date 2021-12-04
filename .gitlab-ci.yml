@@ -426,13 +426,12 @@ pypi_official_release:
     - linux64-sdk_official_release
     - windows64-sdk_official_release
     - macos64-sdk_official_release
-  before_script:
+  script:
     - echo "[distutils]" > ~/.pypirc
     - echo "index-servers = pypi" >> ~/.pypirc
     - echo "[pypi]" >> ~/.pypirc
     - echo "username = __token__" >> ~/.pypirc
     - echo "password = $PYPI_TOKEN" >> ~/.pypirc
-  script:
     - cd build
     - VERSION=`cat version.txt`
     - GMSH_SETUP_DIR=../utils/pypi/gmsh GMSH_SDK_DIR=_CPack_Packages/Linux/TGZ/gmsh-${VERSION}-Linux64-sdk/ python3 setup-wheel.py build bdist_wheel --plat-name manylinux1_x86_64 --universal
