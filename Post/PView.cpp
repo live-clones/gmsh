@@ -14,7 +14,7 @@
 #include "adaptiveData.h"
 #include "GmshMessage.h"
 
-int PView::_globalTag = 0;
+int PView::_globalTag = 1;
 std::vector<PView *> PView::list;
 
 void PView::_init(int tag)
@@ -26,7 +26,7 @@ void PView::_init(int tag)
     _globalTag = std::max(_globalTag, _tag) + 1;
   }
   else {
-    _tag = ++_globalTag;
+    _tag = _globalTag++;
   }
 
   _changed = true;
