@@ -1,3 +1,5 @@
+4.9.1 (Work-in-progress): small bug fixes (view tag generation with zero tag).
+
 4.9.0 (December 3, 2021): new initial 2D meshing algorithm; new quasi-structured
 quad algorithm; improved handling of imperfect curve reparametrization on
 surfaces in 2D periodic meshing algorithm; mesh renumbering now also renumbers
