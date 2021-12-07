@@ -2112,7 +2112,7 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
     for(auto it = gf->edgeLoops.begin(); it != gf->edgeLoops.end(); it++) {
       std::vector<BDS_Point *> edgeLoop_BDS;
       int nbPointsLocal;
-      const double fact[5] = {1.e-12, 1.e-8, 1.e-7, 1.e-5, 1.e-3};
+      const double fact[5] = {1.e-12, 1.e-9, 1.e-6, 1.e-3, 1.e-1};
       bool ok = false;
       for(int i = 0; i < 5; i++) {
         if(buildConsecutiveListOfVertices(gf, *it, edgeLoop_BDS, bbox, m,
