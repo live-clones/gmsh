@@ -4116,6 +4116,7 @@ bool OCC_Internals::importShapes(const std::string &fileName,
       STEPControl_Reader reader;
       setTargetUnit(CTX::instance()->geom.occTargetUnit);
 #if defined(HAVE_OCC_CAF)
+      //Interface_Static::SetIVal("read.stepcaf.subshapes.name", 1);
       STEPCAFControl_Reader cafreader;
       if(cafreader.ReadFile(occfile.ToCString()) != IFSelect_RetDone) {
         Msg::Error("Could not read file '%s'", fileName.c_str());
