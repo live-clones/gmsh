@@ -39,6 +39,7 @@
 #include "filterElements.h"
 #include "meshGFaceBipartiteLabelling.h"
 #include "meshTriangulation.h"
+#include "meshStructuredBlock.h"
 
 bool pointInsideParametricDomain(std::vector<SPoint2> &bnd, SPoint2 &p,
                                  SPoint2 &out, int &N)
@@ -845,12 +846,17 @@ static void modifyInitialMeshForBoundaryLayers(
   if(ff2) fprintf(ff2, "View \" \"{\n");
 
   std::vector<MLine *> _lines;
+  std::map<MVertex*, int> indices_j;
+  std::map<MVertex*, MVertex*> indices_i;
 
   while(ite != edges.end()) {
     for(std::size_t i = 0; i < (*ite)->lines.size(); i++) {
       _lines.push_back((*ite)->lines[i]);
       MVertex *v1 = (*ite)->lines[i]->getVertex(0);
       MVertex *v2 = (*ite)->lines[i]->getVertex(1);
+      indices_j[v1] = indices_j[v2] = 0;
+      indices_i[v1] = v1;
+      indices_i[v2] = v2;
       MEdge dv(v1, v2);
       addOrRemove(v1, v2, bedges, removed);
       for(std::size_t SIDE = 0; SIDE < _columns->_normals.count(dv); SIDE++) {
@@ -864,6 +870,9 @@ static void modifyInitialMeshForBoundaryLayers(
           MVertex *v11, *v12, *v21, *v22;
           v21 = c1._column[l];
           v22 = c2._column[l];
+	  indices_j[v21] = indices_j[v22] = l+1;
+	  indices_i[v21] = v1;
+	  indices_i[v22] = v2;
           if(l == 0) {
             v11 = v1;
             v12 = v2;
@@ -964,6 +973,16 @@ static void modifyInitialMeshForBoundaryLayers(
     fclose(ff2);
   }
 
+  // ------------------------------------------------------------------------------
+  // ----------------------- structured smoother ---------------------------------- 
+  // ------------------------------------------------------------------------------
+  std::vector<structured_block_2D> blocks;
+  computeStructuredBlocks (blQuads, indices_i, indices_j, blocks);
+  
+  // ------------------------------------------------------------------------------
+  // ------------------------------------------------------------------------------
+
+  
   filterOverlappingElements(_lines, blTris, blQuads, _columns->_elemColumns,
                             _columns->_toFirst);
   for(std::size_t i = 0; i < blQuads.size(); i++) blQuads[i]->setPartition(0);
