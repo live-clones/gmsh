@@ -6,8 +6,10 @@ class MVertex;
 class MQuadrangle;
 class structured_block_2D {
  public:
+  enum BoundaryType {FIXED, FREE, PERIODIC};
   int ni,nj;
   std::vector<MVertex*> block;
+  BoundaryType boundaries [4];
   structured_block_2D() : ni(0), nj(0) {}
   void winslow_smooth ();
   void hyperbolic_smooth();

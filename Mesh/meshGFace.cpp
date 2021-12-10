@@ -929,6 +929,8 @@ static void modifyInitialMeshForBoundaryLayers(
         MVertex *v11, *v12, *v21, *v22;
         v21 = c1._column[l];
         v22 = c2._column[l];
+	indices_i[v21] = v;
+	indices_i[v22] = v;
         if(l == 0) {
           v11 = v;
           v12 = v;

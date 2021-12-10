@@ -36,7 +36,8 @@ static void numberAll (MQuadrangle *q, std::map<MVertex*,int> & indices_j,
 }
 
 void number (MQuadrangle *q, std::map<MVertex*,std::pair<int,int>> &indices,
-	     int &minIndexi, int &maxIndexi, int &minIndexj, int &maxIndexj){
+	     int &minIndexi, int &maxIndexi, int &minIndexj, int &maxIndexj,
+	     std::map<MVertex*,std::pair<int,int>> &symmetrical_indices){
   int i=0;
   for ( ; i<4 ; i++){
     MVertex *v0 = q->getVertex(i);
@@ -46,6 +47,8 @@ void number (MQuadrangle *q, std::map<MVertex*,std::pair<int,int>> &indices,
     //    printf("Quad %lu %lu %lu %lu\n",v0->getNum(),v1->getNum(),v2->getNum(),v3->getNum());
     std::map<MVertex*,std::pair<int,int>>::iterator it0 = indices.find(v0);
     std::map<MVertex*,std::pair<int,int>>::iterator it1 = indices.find(v1);
+    std::map<MVertex*,std::pair<int,int>>::iterator it2 = indices.find(v2);
+    std::map<MVertex*,std::pair<int,int>>::iterator it3 = indices.find(v3);
     if (it0 != indices.end() && it1 != indices.end()){
       int i00 = it0->second.first;
       int i01 = it0->second.second;
@@ -59,6 +62,8 @@ void number (MQuadrangle *q, std::map<MVertex*,std::pair<int,int>> &indices,
 	  std::pair<int,int> p3 = std::make_pair(i10-1,i01);
 	  minIndexi = std::min(i10-1,minIndexi);
 	  //	  printf("up %d %d %d %d\n", i10-1,i11, i10-1,i01);
+	  if (it2 != indices.end() && p2 != it2->second)symmetrical_indices[v2] = it2->second;
+	  if (it3 != indices.end() && p3 != it3->second)symmetrical_indices[v3] = it3->second;
 	  indices [v2] = p2;
 	  indices [v3] = p3;	  
 	}
@@ -68,6 +73,8 @@ void number (MQuadrangle *q, std::map<MVertex*,std::pair<int,int>> &indices,
 	  std::pair<int,int> p3 = std::make_pair(i10+1,i01);
 	  //	  printf("down %d %d %d %d\n", i10+1,i11, i10+1,i01);
 	  maxIndexi = std::max(i10+1,maxIndexi);
+	  if (it2 != indices.end() && p2 != it2->second)symmetrical_indices[v2] = it2->second;
+	  if (it3 != indices.end() && p3 != it3->second)symmetrical_indices[v3] = it3->second;
 	  indices [v2] = p2;
 	  indices [v3] = p3;	  
 	}
@@ -80,6 +87,8 @@ void number (MQuadrangle *q, std::map<MVertex*,std::pair<int,int>> &indices,
 	  std::pair<int,int> p3 = std::make_pair(i00,i11-1);
 	  minIndexj = std::min(i11-1,minIndexj);
 	  //	  printf("right %d %d %d %d\n", i10,i11-1, i00,i11-1);
+	  if (it2 != indices.end() && p2 != it2->second)symmetrical_indices[v2] = it2->second;
+	  if (it3 != indices.end() && p3 != it3->second)symmetrical_indices[v3] = it3->second;
 	  indices [v2] = p2;
 	  indices [v3] = p3;	  
 	}
@@ -89,6 +98,8 @@ void number (MQuadrangle *q, std::map<MVertex*,std::pair<int,int>> &indices,
 	  std::pair<int,int> p3 = std::make_pair(i00,i11+1);
 	  maxIndexj = std::max(i11+1,maxIndexj);
 	  //	  printf("left %d %d %d %d\n", i10,i11+1, i00,i11+1);
+	  if (it2 != indices.end() && p2 != it2->second)symmetrical_indices[v2] = it2->second;
+	  if (it3 != indices.end() && p3 != it3->second)symmetrical_indices[v3] = it3->second;
 	  indices [v2] = p2;
 	  indices [v3] = p3;	  
 	}
@@ -122,14 +133,16 @@ void computeStructuredBlocks (std::vector<MQuadrangle *> &blquads,
 			      std::vector<structured_block_2D> &blocks){
   std::map<MEdge, edgeNeigh, MEdgeLessThan> ens;
   for (auto q : blquads){
-    for (size_t i = 0 ; i<4 ; i++){
-      MEdge e = q->getEdge(i);
-      std::map<MEdge, edgeNeigh, MEdgeLessThan> :: iterator it = ens.find(e);
-      if (it == ens.end()){
-	edgeNeigh en (q);
-	ens[e] = en;
+    if (!fanQuad(q,indices_i)){
+      for (size_t i = 0 ; i<4 ; i++){
+	MEdge e = q->getEdge(i);
+	std::map<MEdge, edgeNeigh, MEdgeLessThan> :: iterator it = ens.find(e);
+	if (it == ens.end()){
+	  edgeNeigh en (q);
+	  ens[e] = en;
+	}
+	else it->second._q2 = q;
       }
-      else it->second._q2 = q;
     }
   }
 
@@ -149,10 +162,11 @@ void computeStructuredBlocks (std::vector<MQuadrangle *> &blquads,
   // ---------------------------------------
   
   std::set<MQuadrangle*> touched;
-  std::map<MVertex*,std::pair<int,int>> indices;
 
   for (auto q : blquads){
     if (touched.find(q) == touched.end() && !fanQuad(q,indices_i)){
+      std::map<MVertex*,std::pair<int,int>> indices;
+      std::map<MVertex*,std::pair<int,int>> symmetrical_indices;
       int minIndexi, maxIndexi, minIndexj, maxIndexj;
       std::stack<MQuadrangle*> _s;
       _s.push(q);
@@ -176,12 +190,14 @@ void computeStructuredBlocks (std::vector<MQuadrangle *> &blquads,
 		}
 	      }
 	    }
-	    number (_neigh, indices, minIndexi, maxIndexi, minIndexj, maxIndexj);	    
+	    number (_neigh, indices, minIndexi, maxIndexi, minIndexj, maxIndexj, symmetrical_indices);	    
 	  }
 	}
       }
       std::map<std::pair<int,int>, MVertex*> inv;
       for (std::map<MVertex*,std::pair<int,int>>::iterator it = indices.begin() ; it != indices.end() ; ++it)
+	inv [it->second] = it->first;
+      for (std::map<MVertex*,std::pair<int,int>>::iterator it = symmetrical_indices.begin() ; it != symmetrical_indices.end() ; ++it)
 	inv [it->second] = it->first;
       structured_block_2D b;
       b.ni = maxIndexi - minIndexi;
@@ -189,7 +205,17 @@ void computeStructuredBlocks (std::vector<MQuadrangle *> &blquads,
       Msg::Info("Block %d x %d found\n",b.ni,b.nj);
       for (std::map<std::pair<int,int>, MVertex*>::iterator it = inv.begin() ; it != inv.end() ; ++it)
 	b.block.push_back(it->second);
+
+      char name[256];
+      //      if (b.block[0] == b.block[0]
       blocks.push_back(b);
+      sprintf(name,"block%lu.pos",blocks.size());
+      FILE *f = fopen(name,"w");
+      fprintf(f,"View \"%s\" {\n",name);
+      for (size_t i=0;i<b.block.size();i++)fprintf(f,"SP(%g,%g,%g){%lu};\n",b.block[i]->x(),
+						   b.block[i]->y(),b.block[i]->z(),i);
+      fprintf(f,"};\n");
+      fclose(f);
     }    
   }
 }
