@@ -980,7 +980,7 @@ static void modifyInitialMeshForBoundaryLayers(
   // ------------------------------------------------------------------------------
   std::vector<structured_block_2D> blocks;
   computeStructuredBlocks (blQuads, indices_i, indices_j, blocks);
-  
+  for (auto b : blocks)b.hyperbolic_smooth();
   // ------------------------------------------------------------------------------
   // ------------------------------------------------------------------------------
 
