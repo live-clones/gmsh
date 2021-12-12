@@ -474,6 +474,8 @@ Curve *CreateCurve(int Num, int Typ, int Order, List_T *Liste, List_T *Knots,
   pC->ReverseMesh = 0;
   pC->beg = nullptr;
   pC->end = nullptr;
+  pC->begByTag = 0;
+  pC->endByTag = 0;
   pC->Control_Points = nullptr;
   pC->degenerated = false;
 
@@ -774,6 +776,16 @@ Vertex *DuplicateVertex(Vertex *v)
   return pv;
 }
 
+Vertex *DuplicateVertex(GVertex *gv)
+{
+  // dummy version to handle generic GModel entities for boundary layers
+  if(!gv) return nullptr;
+  Vertex *pv = CreateVertex(NEWPOINT(), gv->x(), gv->y(), gv->z(),
+                            gv->prescribedMeshSizeAtVertex(), 0);
+  Tree_Insert(GModel::current()->getGEOInternals()->Points, &pv);
+  return pv;
+}
+
 static int CompareAbsCurve(const void *a, const void *b)
 {
   Curve *q = *(Curve **)a;
@@ -796,6 +808,8 @@ static void CopyCurve(Curve *c, Curve *cc)
     for(int j = 0; j < 4; j++) cc->mat[i][j] = c->mat[i][j];
   cc->beg = c->beg;
   cc->end = c->end;
+  cc->begByTag = c->begByTag;
+  cc->endByTag = c->endByTag;
   cc->ubeg = c->ubeg;
   cc->uend = c->uend;
   cc->Control_Points =
@@ -819,6 +833,22 @@ Curve *DuplicateCurve(Curve *c)
   }
   pc->beg = DuplicateVertex(c->beg);
   pc->end = DuplicateVertex(c->end);
+  CreateReversedCurve(pc);
+  return pc;
+}
+
+Curve *DuplicateCurve(GEdge *ge)
+{
+  // dummy version to handle generic GModel entities for boundary layers
+  bool ok = true;
+  Curve *pc =
+    CreateCurve(NEWCURVE(), MSH_SEGM_BND_LAYER , 1, nullptr, nullptr, -1, -1, 0., 1., ok);
+  Tree_Insert(GModel::current()->getGEOInternals()->Curves, &pc);
+  pc->Control_Points = List_Create(2, 1, sizeof(Vertex *));
+  pc->beg = DuplicateVertex(ge->getBeginVertex());
+  pc->end = DuplicateVertex(ge->getEndVertex());
+  List_Add(pc->Control_Points, &pc->beg);
+  List_Add(pc->Control_Points, &pc->end);
   CreateReversedCurve(pc);
   return pc;
 }
@@ -865,13 +895,14 @@ Surface *DuplicateSurface(Surface *s)
 
 Surface *DuplicateSurface(GFace *gf)
 {
+  // dummy version to handle generic GModel entities for boundary layers
   Surface *ps = CreateSurface(NEWSURFACE(), MSH_SURF_PLAN); // dummy
   Tree_Insert(GModel::current()->getGEOInternals()->Surfaces, &ps);
   std::vector<GEdge *> edges = gf->edges();
-  //for(auto ge : edges) {
-    //Curve *newc = DuplicateCurve(ge);
-    //List_Add(ps->Generatrices, &newc);
-  // }
+  for(auto ge : edges) {
+    Curve *newc = DuplicateCurve(ge);
+    List_Add(ps->Generatrices, &newc);
+  }
   return ps;
 }
 
@@ -2492,19 +2523,31 @@ int ExtrudePoint(int type, int ip, double T0, double T1, double T2, double A0,
                  ExtrudeParams *e)
 {
   double matrix[4][4], T[3], Ax[3], d;
-  Vertex V, *newp = nullptr;
-  Curve *c = nullptr;
-  int i;
-  bool ok = true;
 
+  *pc = *prc = nullptr;
+
+  Vertex V;
   Vertex *pv = &V;
   pv->Num = ip;
-  *pc = *prc = nullptr;
-  if(!Tree_Query(GModel::current()->getGEOInternals()->Points, &pv)) return 0;
+  int found = Tree_Query(GModel::current()->getGEOInternals()->Points, &pv);
+
+  GVertex *gv = nullptr;
+  if(!found && type == BOUNDARY_LAYER) {
+    // we allow boundary layers from generic points
+    gv = GModel::current()->getVertexByTag(ip);
+    if(gv)
+      pv = DuplicateVertex(gv);
+  }
+
+  if(!found && !gv) return 0;
 
   Msg::Debug("Extrude Point %d", ip);
 
   Vertex *chapeau = DuplicateVertex(pv);
+
+  bool ok = true;
+  Vertex *newp = nullptr;
+  Curve *c = nullptr;
 
   switch(type) {
   case TRANSLATE:
@@ -2538,6 +2581,7 @@ int ExtrudePoint(int type, int ip, double T0, double T1, double T2, double A0,
     List_Add(c->Control_Points, &pv);
     List_Add(c->Control_Points, &chapeau);
     c->beg = pv;
+    if(gv) c->begByTag = gv->tag();
     c->end = chapeau;
     break;
   case ROTATE:
@@ -2597,7 +2641,7 @@ int ExtrudePoint(int type, int ip, double T0, double T1, double T2, double A0,
     if(e) c->Extrude->mesh = e->mesh;
     List_Add(c->Control_Points, &pv);
     c->beg = pv;
-    for(i = 0; i < CTX::instance()->geom.extrudeSplinePoints; i++) {
+    for(int i = 0; i < CTX::instance()->geom.extrudeSplinePoints; i++) {
       if(i) chapeau = DuplicateVertex(chapeau);
       T[0] = -X0;
       T[1] = -X1;
@@ -2661,34 +2705,49 @@ int ExtrudeCurve(int type, int ic, double T0, double T1, double T2, double A0,
                  double alpha, Surface **ps, int final, ExtrudeParams *e)
 {
   double matrix[4][4], T[3], Ax[3];
-  Curve *CurveBeg, *CurveEnd;
-  Curve *ReverseChapeau, *ReverseBeg, *ReverseEnd;
-  Curve *pc, *revpc, *chapeau;
-  Surface *s;
 
-  pc = FindCurve(ic);
-  revpc = FindCurve(-ic);
   *ps = nullptr;
 
-  if(!pc || !revpc) { return 0; }
+  Curve *pc = FindCurve(ic);
+  Curve *revpc = FindCurve(-ic);
+  GEdge *ge = nullptr;
 
-  if(!pc->beg || !pc->end) {
-    Msg::Error("Cannot extrude curve with no begin/end points");
-    return 0;
+  if(!pc && !revpc && type == BOUNDARY_LAYER) {
+    // we allow boundary layers from generic curves
+    ge = GModel::current()->getEdgeByTag(std::abs(ic));
   }
 
-  if(pc->beg == pc->end && type != BOUNDARY_LAYER) {
-    Msg::Warning("Extrusion of periodic curves is not supported with the "
-                 "built-in kernel");
+  if((!pc || !revpc) && !ge) { return 0; }
+
+  if(pc) {
+    if(!pc->beg || !pc->end) {
+      Msg::Error("Cannot extrude curve with no begin or end point");
+      return 0;
+    }
+    if(pc->beg == pc->end && type != BOUNDARY_LAYER) {
+      Msg::Warning("Extrusion of periodic curves is not supported with the "
+                   "built-in kernel");
+    }
+  }
+
+  if(ge) {
+    if(!ge->getBeginVertex() || !ge->getEndVertex()) {
+      Msg::Error("Cannot extrude curve with no begin or end point");
+      return 0;
+    }
   }
 
   Msg::Debug("Extrude Curve %d", ic);
 
-  chapeau = DuplicateCurve(pc);
+  Curve *chapeau = nullptr;
+  if(pc)
+    chapeau = DuplicateCurve(pc);
+  else
+    chapeau = DuplicateCurve(ge);
 
   chapeau->Extrude = new ExtrudeParams(COPIED_ENTITY);
   chapeau->Extrude->fill(type, T0, T1, T2, A0, A1, A2, X0, X1, X2, alpha);
-  chapeau->Extrude->geo.Source = pc->Num;
+  chapeau->Extrude->geo.Source = ic;
   if(e) chapeau->Extrude->mesh = e->mesh;
 
   switch(type) {
@@ -2770,21 +2829,34 @@ int ExtrudeCurve(int type, int ic, double T0, double T1, double T2, double A0,
     List_Reset(ListOfTransformedPoints);
     ApplyTransformationToCurve(matrix, chapeau);
     break;
-  default: Msg::Error("Unknown extrusion type"); return pc->Num;
+  default:
+    Msg::Error("Unknown extrusion type");
+    return ic;
   }
 
-  ExtrudePoint(type, pc->beg->Num, T0, T1, T2, A0, A1, A2, X0, X1, X2, alpha,
+  int ibeg, iend;
+  if(pc) {
+    ibeg = pc->beg->Num;
+    iend = pc->end->Num;
+  }
+  else {
+    ibeg = ge->getBeginVertex()->tag();
+    iend = ge->getEndVertex()->tag();
+  }
+  Curve *CurveBeg, *CurveEnd, *ReverseBeg, *ReverseEnd;
+  ExtrudePoint(type, ibeg, T0, T1, T2, A0, A1, A2, X0, X1, X2, alpha,
                &CurveBeg, &ReverseBeg, 0, e);
-  ExtrudePoint(type, pc->end->Num, T0, T1, T2, A0, A1, A2, X0, X1, X2, alpha,
+  ExtrudePoint(type, iend, T0, T1, T2, A0, A1, A2, X0, X1, X2, alpha,
                &CurveEnd, &ReverseEnd, 0, e);
 
-  if(!CurveBeg && !CurveEnd) { return pc->Num; }
+  if(!CurveBeg && !CurveEnd) { return ic; }
 
   // FIXME: if we extrude by rotation a (non-straight) curve defined by 2 end
   // points, with a rotation axis going through the end points, the resulting
   // surface would have 2 bounding edges (the axis and the curve). We cannot
   // handle this case.
 
+  Surface *s;
   if(type == BOUNDARY_LAYER)
     s = CreateSurface(NEWSURFACE(), MSH_SURF_BND_LAYER);
   else if(!CurveBeg || !CurveEnd)
@@ -2795,26 +2867,34 @@ int ExtrudeCurve(int type, int ic, double T0, double T1, double T2, double A0,
   s->Generatrices = List_Create(4, 1, sizeof(Curve *));
   s->Extrude = new ExtrudeParams;
   s->Extrude->fill(type, T0, T1, T2, A0, A1, A2, X0, X1, X2, alpha);
-  s->Extrude->geo.Source = pc->Num;
+  s->Extrude->geo.Source = ic;
   if(e) s->Extrude->mesh = e->mesh;
 
-  ReverseChapeau = FindCurve(-chapeau->Num);
+  Curve *ReverseChapeau = FindCurve(-chapeau->Num);
 
-  if(!CurveBeg) {
-    List_Add(s->Generatrices, &pc);
-    List_Add(s->Generatrices, &CurveEnd);
-    List_Add(s->Generatrices, &ReverseChapeau);
-  }
-  else if(!CurveEnd) {
-    List_Add(s->Generatrices, &ReverseChapeau);
-    List_Add(s->Generatrices, &ReverseBeg);
-    List_Add(s->Generatrices, &pc);
+  if(pc) {
+    if(!CurveBeg) {
+      List_Add(s->Generatrices, &pc);
+      List_Add(s->Generatrices, &CurveEnd);
+      List_Add(s->Generatrices, &ReverseChapeau);
+    }
+    else if(!CurveEnd) {
+      List_Add(s->Generatrices, &ReverseChapeau);
+      List_Add(s->Generatrices, &ReverseBeg);
+      List_Add(s->Generatrices, &pc);
+    }
+    else {
+      List_Add(s->Generatrices, &pc);
+      List_Add(s->Generatrices, &CurveEnd);
+      List_Add(s->Generatrices, &ReverseChapeau);
+      List_Add(s->Generatrices, &ReverseBeg);
+    }
   }
   else {
-    List_Add(s->Generatrices, &pc);
-    List_Add(s->Generatrices, &CurveEnd);
-    List_Add(s->Generatrices, &ReverseChapeau);
-    List_Add(s->Generatrices, &ReverseBeg);
+    List_Add(s->GeneratricesByTag, ic);
+    List_Add(s->GeneratricesByTag, &CurveEnd->Num);
+    List_Add(s->GeneratricesByTag, &ReverseChapeau->Num);
+    List_Add(s->GeneratricesByTag, &ReverseBeg->Num);
   }
 
   EndSurface(s);
