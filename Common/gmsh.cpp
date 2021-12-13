@@ -490,17 +490,7 @@ GMSH_API void gmsh::model::getPhysicalName(const int dim, const int tag,
 GMSH_API void gmsh::model::setTag(const int dim, const int tag, const int newTag)
 {
   if(!_checkInit()) return;
-  GEntity *ge = GModel::current()->getEntityByTag(dim, tag);
-  if(!ge) {
-    Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
-    return;
-  }
-  GEntity *ge2 = GModel::current()->getEntityByTag(dim, newTag);
-  if(ge2) {
-    Msg::Error("%s already exists", _getEntityName(dim, newTag).c_str());
-    return;
-  }
-  ge->setTag(newTag);
+  GModel::current()->changeEntityTag(dim, tag, newTag);
 }
 
 GMSH_API void gmsh::model::getBoundary(const vectorpair &dimTags,

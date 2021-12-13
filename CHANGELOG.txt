@@ -1,5 +1,6 @@
 4.9.1 (Work-in-progress): relax tolerance on curve parametrization match for
-periodic meshing; small bug fixes (view tag generation with zero tag).
+periodic meshing; small bug fixes (view tag generation with zero tag,
+model/setTag).
 
 4.9.0 (December 3, 2021): new initial 2D meshing algorithm; new quasi-structured
 quad algorithm; improved handling of imperfect curve reparametrization on

@@ -4736,14 +4736,8 @@ Constraints :
     {
       int dim = (int)$2;
       int tag = (int)$4;
-      GEntity *ge = GModel::current()->getEntityByTag(dim, tag);
-      if(ge){
-	int new_tag = (int)$6;
-	ge->setTag(new_tag);
-      }
-      else{
-	yymsg(0, "Unknown model entity of dimension %d and tag %d", dim, tag);
-      }
+      int new_tag = (int)$6;
+      GModel::current()->changeEntityTag(dim, tag, new_tag);
     }
   | tSetMaxTag GeoEntity '(' FExpr ')' tEND
     {
