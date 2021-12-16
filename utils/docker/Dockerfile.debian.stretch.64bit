@@ -17,7 +17,7 @@ ENV CFLAGS=-fPIC
 ENV CXXFLAGS=-fPIC
 ENV FFLAGS=-fPIC
 
-RUN curl -L -O https://ftpmirror.gnu.org/gcc/gcc-10.3.0/gcc-10.3.0.tar.gz && tar xf gcc-10.3.0.tar.gz && cd gcc-10.3.0 && ./contrib/download_prerequisites && cd .. && mkdir gccbuild && cd gccbuild && ../gcc-10.3.0/configure -v --build=x86_64-linux-gnu --host=x86_64-linux-gnu --target=x86_64-linux-gnu --prefix=/usr/local --enable-checking=release --enable-languages=c,c++,fortran --disable-multilib --with-pic && make -j 4 > ./build_log.txt && make install && cd .. && rm -rf gcc-10.3.0.tar.gz gcc-10.3.0 gccbuild
+RUN curl -L -O https://ftpmirror.gnu.org/gcc/gcc-6.5.0/gcc-6.5.0.tar.gz && tar xf gcc-6.5.0.tar.gz && cd gcc-6.5.0 && ./contrib/download_prerequisites && cd .. && mkdir gccbuild && cd gccbuild && ../gcc-6.5.0/configure -v --build=x86_64-linux-gnu --host=x86_64-linux-gnu --target=x86_64-linux-gnu --prefix=/usr/local --enable-checking=release --enable-languages=c,c++,fortran --disable-multilib --with-pic && make -j 4 > ./build_log.txt && make install && cd .. && rm -rf gcc-6.5.0.tar.gz gcc-6.5.0 gccbuild
 
 ENV PATH=/usr/local/bin:${PATH}
 ENV LD_LIBRARY_PATH=/usr/local/lib64:${LD_LIBRARY_PATH}
