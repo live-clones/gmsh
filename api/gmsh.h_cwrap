@@ -2655,7 +2655,8 @@ namespace gmsh { // Top-level functions
         tets.assign(api_tets_, api_tets_ + api_tets_n_); gmshFree(api_tets_);
       }
 
-      // hxt meshing test.
+      // Generate a mesh of the array of points `coord', constrained to the surface
+      // mesh of the current model. Currently only supported for 3D.
       inline void alphaShapesConstrained(const int dim,
                                          const std::vector<double> & coord)
       {

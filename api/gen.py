@@ -542,7 +542,7 @@ mesh.add('tetNeighbors', doc, None, ivectorsize('tetra'), ovectorsize('neighbors
 doc = '''hxt meshing test.'''
 mesh.add('createHxtMesh', doc, None, istring('inputMesh'), ivectordouble('coord'), istring('outputMesh'), ovectordouble('pts'), ovectorsize('tets'))
 
-doc = '''hxt meshing test.'''
+doc = '''Generate a mesh of the array of points `coord', constrained to the surface mesh of the current model. Currently only supported for 3D.'''
 mesh.add('alphaShapesConstrained', doc, None, iint('dim'), ivectordouble('coord'))
 
 ################################################################################

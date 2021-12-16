@@ -1726,7 +1726,8 @@ namespace gmsh { // Top-level functions
 
       // gmsh::model::mesh::alphaShapesConstrained
       //
-      // hxt meshing test.
+      // Generate a mesh of the array of points `coord', constrained to the surface
+      // mesh of the current model. Currently only supported for 3D.
       GMSH_API void alphaShapesConstrained(const int dim,
                                            const std::vector<double> & coord);
 

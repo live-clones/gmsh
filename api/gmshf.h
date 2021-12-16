@@ -3204,7 +3204,8 @@ c
             integer(c_int)::ierr
           end subroutine gmshModelMeshCreateHxtMesh
 
-!  hxt meshing test.
+!  Generate a mesh of the array of points `coord', constrained to the surface
+!  mesh of the current model. Currently only supported for 3D.
         subroutine gmshModelMeshAlphaShapesConstrained(
      &      dim,
      &      coord,

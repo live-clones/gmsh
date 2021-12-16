@@ -3431,7 +3431,8 @@ const create_hxt_mesh = createHxtMesh
 """
     gmsh.model.mesh.alphaShapesConstrained(dim, coord)
 
-hxt meshing test.
+Generate a mesh of the array of points `coord`, constrained to the surface mesh
+of the current model. Currently only supported for 3D.
 """
 function alphaShapesConstrained(dim, coord)
     ierr = Ref{Cint}()

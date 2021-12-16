@@ -3988,7 +3988,8 @@ class model:
             """
             gmsh.model.mesh.alphaShapesConstrained(dim, coord)
 
-            hxt meshing test.
+            Generate a mesh of the array of points `coord', constrained to the surface
+            mesh of the current model. Currently only supported for 3D.
             """
             api_coord_, api_coord_n_ = _ivectordouble(coord)
             ierr = c_int()
