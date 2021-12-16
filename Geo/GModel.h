@@ -379,6 +379,9 @@ public:
   GVertex *getVertexByTag(int n) const;
   GEntity *getEntityByTag(int dim, int n) const;
 
+  // change entity tag (modifies the model entity sets)
+  bool changeEntityTag(int dim, int tag, int newTag);
+
   // add/remove an entity in the model
   bool add(GRegion *r) { return regions.insert(r).second; }
   bool add(GFace *f) { return faces.insert(f).second; }

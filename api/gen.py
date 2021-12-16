@@ -66,22 +66,22 @@ gmsh.add('clear', doc, None)
 
 option = gmsh.add_module('option', 'option handling functions')
 
-doc = '''Set a numerical option to `value'. `name' is of the form "category.option" or "category[num].option". Available categories and options are listed in the Gmsh reference manual.'''
+doc = '''Set a numerical option to `value'. `name' is of the form "Category.Option" or "Category[num].Option". Available categories and options are listed in the Gmsh reference manual.'''
 option.add('setNumber', doc, None, istring('name'), idouble('value'))
 
-doc = '''Get the `value' of a numerical option. `name' is of the form "category.option" or "category[num].option". Available categories and options are listed in the Gmsh reference manual.'''
+doc = '''Get the `value' of a numerical option. `name' is of the form "Category.Option" or "Category[num].Option". Available categories and options are listed in the Gmsh reference manual.'''
 option.add('getNumber', doc, None, istring('name'), odouble('value'))
 
-doc = '''Set a string option to `value'. `name' is of the form "category.option" or "category[num].option". Available categories and options are listed in the Gmsh reference manual.'''
+doc = '''Set a string option to `value'. `name' is of the form "Category.Option" or "Category[num].Option". Available categories and options are listed in the Gmsh reference manual.'''
 option.add('setString', doc, None, istring('name'), istring('value'))
 
-doc = '''Get the `value' of a string option. `name' is of the form "category.option" or "category[num].option". Available categories and options are listed in the Gmsh reference manual.'''
+doc = '''Get the `value' of a string option. `name' is of the form "Category.Option" or "Category[num].Option". Available categories and options are listed in the Gmsh reference manual.'''
 option.add('getString', doc, None, istring('name'), ostring('value'))
 
-doc = '''Set a color option to the RGBA value (`r', `g', `b', `a'), where where `r', `g', `b' and `a' should be integers between 0 and 255. `name' is of the form "category.option" or "category[num].option". Available categories and options are listed in the Gmsh reference manual, with the "Color." middle string removed.'''
+doc = '''Set a color option to the RGBA value (`r', `g', `b', `a'), where where `r', `g', `b' and `a' should be integers between 0 and 255. `name' is of the form "Category.Color.Option" or "Category[num].Color.Option". Available categories and options are listed in the Gmsh reference manual. For conciseness "Color." can be ommitted in `name'.'''
 option.add('setColor', doc, None, istring('name'), iint('r'), iint('g'), iint('b'), iint('a', '255'))
 
-doc = '''Get the `r', `g', `b', `a' value of a color option. `name' is of the form "category.option" or "category[num].option". Available categories and options are listed in the Gmsh reference manual, with the "Color." middle string removed.'''
+doc = '''Get the `r', `g', `b', `a' value of a color option. `name' is of the form "Category.Color.Option" or "Category[num].Color.Option". Available categories and options are listed in the Gmsh reference manual. For conciseness "Color." can be ommitted in `name'.'''
 option.add('getColor', doc, None, istring('name'), oint('r'), oint('g'), oint('b'), oint('a'))
 
 ################################################################################
@@ -539,6 +539,12 @@ mesh.add('alphaShapes', doc, None, idouble('threshold'), iint('dim'), ivectordou
 doc = '''Take  the node tags (with numbering starting at 1) of the tetrahedra in `tetra' and returns `neighbors' as a vector of size 4 times the number of tetrahedra giving neighboring ids of tetrahedra of a given tetrahedra. When a tetrahedra has no neighbor for its ith face, the value is tetrahedra.size. For a tet with vertices (0,1,2,3), node ids of the faces are respectively (0,1,2), (0,1,3), (0,2,3) and (1,2,3)'''
 mesh.add('tetNeighbors', doc, None, ivectorsize('tetra'), ovectorsize('neighbors'))
 
+doc = '''hxt meshing test.'''
+mesh.add('createHxtMesh', doc, None, istring('inputMesh'), ivectordouble('coord'), istring('outputMesh'), ovectordouble('pts'), ovectorsize('tets'))
+
+doc = '''hxt meshing test.'''
+mesh.add('alphaShapesConstrained', doc, None, iint('dim'), ivectordouble('coord'))
+
 ################################################################################
 
 field = mesh.add_module('field', 'mesh size field functions')
@@ -951,9 +957,6 @@ view.add('setInterpolationMatrices', doc, None, iint('tag'), istring('type'), ii
 doc = '''Add a post-processing view as an `alias' of the reference view with tag `refTag'. If `copyOptions' is set, copy the options of the reference view. If `tag' is positive use it (and remove the view with that tag if it already exists), otherwise associate a new tag. Return the view tag.'''
 view.add('addAlias', doc, oint, iint('refTag'), ibool('copyOptions', 'false', 'False'), iint('tag', '-1'))
 
-doc = '''Copy the options from the view with tag `refTag' to the view with tag `tag'.'''
-view.add('copyOptions', doc, None, iint('refTag'), iint('tag'))
-
 doc = '''Combine elements (if `what' == "elements") or steps (if `what' == "steps") of all views (`how' == "all"), all visible views (`how' == "visible") or all views having the same name (`how' == "name"). Remove original views if `remove' is set.'''
 view.add('combine', doc, None, istring('what'), istring('how'), ibool('remove', 'true', 'True'), ibool('copyOptions', 'true', 'True'))
 
@@ -965,6 +968,31 @@ view.add('write', doc, None, iint('tag'), istring('fileName'), ibool('append', '
 
 doc = '''Set the global visibility of the view `tag' per window to `value', where `windowIndex' identifies the window in the window list.'''
 view.add('setVisibilityPerWindow', doc, None, iint('tag'), iint('value'), iint('windowIndex', '0'))
+
+################################################################################
+
+option = view.add_module('option', 'view option handling functions')
+
+doc = '''Set the numerical option `name' to value `value' for the view with tag `tag'.'''
+option.add('setNumber', doc, None, iint('tag'), istring('name'), idouble('value'))
+
+doc = '''Get the `value' of the numerical option `name' for the view with tag `tag'.'''
+option.add('getNumber', doc, None, iint('tag'), istring('name'), odouble('value'))
+
+doc = '''Set the string option `name' to value `value' for the view with tag `tag'.'''
+option.add('setString', doc, None, iint('tag'), istring('name'), istring('value'))
+
+doc = '''Get the `value' of the string option `name' for the view with tag `tag'.'''
+option.add('getString', doc, None, iint('tag'), istring('name'), ostring('value'))
+
+doc = '''Set the color option `name' to the RGBA value (`r', `g', `b', `a') for the view with tag `tag', where where `r', `g', `b' and `a' should be integers between 0 and 255.'''
+option.add('setColor', doc, None, iint('tag'), istring('name'), iint('r'), iint('g'), iint('b'), iint('a', '255'))
+
+doc = '''Get the `r', `g', `b', `a' value of the color option `name' for the view with tag `tag'.'''
+option.add('getColor', doc, None, iint('tag'), istring('name'), oint('r'), oint('g'), oint('b'), oint('a'))
+
+doc = '''Copy the options from the view with tag `refTag' to the view with tag `tag'.'''
+option.add('copy', doc, None, iint('refTag'), iint('tag'))
 
 ################################################################################
 

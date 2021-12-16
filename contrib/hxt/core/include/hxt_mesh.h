@@ -77,6 +77,8 @@ HXTStatus  hxtMeshDelete          ( HXTMesh** meshPtr);
 HXTStatus  hxtMeshReadGmsh       ( HXTMesh* mesh, const char* filename);
 HXTStatus  hxtMeshWriteGmsh      ( HXTMesh* mesh, const char* filename);
 
+// adding nodes in mesh
+HXTStatus hxtAddNodes            (HXTMesh* mesh, double* pts, size_t numPts);
 
 #ifdef __cplusplus
 }

@@ -1433,9 +1433,13 @@ void GEO_Internals::synchronize(GModel *model, bool resetMeshAttributes)
       List_Read(curves, i, &c);
       if(c->Num >= 0) {
         GEdge *e = model->getEdgeByTag(c->Num);
-        if(!e && c->beg && c->end) {
-          e = new gmshEdge(model, c, model->getVertexByTag(c->beg->Num),
-                           model->getVertexByTag(c->end->Num));
+        GVertex *beg = nullptr, *end = nullptr;
+        if(c->begByTag) beg = model->getVertexByTag(c->begByTag);
+        if(!beg && c->beg) beg = model->getVertexByTag(c->beg->Num);
+        if(c->endByTag) end = model->getVertexByTag(c->endByTag);
+        if(!end && c->end) end = model->getVertexByTag(c->end->Num);
+        if(!e && beg && end) {
+          e = new gmshEdge(model, c, beg, end);
           model->add(e);
         }
         else if(!e) {
@@ -1444,10 +1448,8 @@ void GEO_Internals::synchronize(GModel *model, bool resetMeshAttributes)
         }
         else {
           if(e->getNativeType() == GEntity::GmshModel) {
-            if(c->beg && c->end)
-              ((gmshEdge *)e)
-                ->resetNativePtr(c, model->getVertexByTag(c->beg->Num),
-                                 model->getVertexByTag(c->end->Num));
+            if(beg && end)
+              ((gmshEdge *)e)->resetNativePtr(c, beg, end);
             else
               ((gmshEdge *)e)->resetNativePtr(c, nullptr, nullptr);
           }

@@ -1,25 +1,33 @@
-Work-in-progress: new initial 2D meshing algorithm; new quasi-structured quad
-algorithm; improved handling of imperfect curve reparametrization on surfaces in
-2D periodic meshing algorithm; mesh renumbering now also renumbers dependent
-post-processing views; the mesh size callback is now per-model and its returned
-value is not gathered with the other size constraints in a global min reduction
-anymore: instead the callback takes as additional argument the mesh size lc that
-would be prescribed in the absence of the callback, which allows to perform any
-desired modification (the old behavior can be achieved by returning min(lc,
-value)); OCC STL representation is now generated using relative deflection
-tolerance; new TransformMesh command in .geo files; new behavior of
+4.9.1 (Work-in-progress): relax tolerance on curve parametrization match for
+periodic meshing; small bug fixes (view tag generation with zero tag,
+model/setTag).
+
+4.9.0 (December 3, 2021): new initial 2D meshing algorithm; new quasi-structured
+quad algorithm; improved handling of imperfect curve reparametrization on
+surfaces in 2D periodic meshing algorithm; mesh renumbering now also renumbers
+dependent post-processing views; the mesh size callback is now per-model and its
+returned value is not gathered with the other size constraints in a global min
+reduction anymore: instead the callback takes as additional argument the mesh
+size lc that would be prescribed in the absence of the callback, which allows to
+perform any desired modification (the old behavior can be achieved by returning
+min(lc, value)); OCC STL representation is now generated using relative
+deflection tolerance; new TransformMesh command in .geo files; new behavior of
 Mesh.SaveGroupsOf{Nodes,Elements} in UNV and INP exports; partitioned MSH4 files
 now contain the full partition topology (i.e. all partition entities); fixed
-metric intersection calculation for anisotropic mesh generation; official binary
+metric calculation with Eigen (for anisotropic mesh generation); official binary
 builds now support OpenMP parallelization and are 64 bit only (build OS upgraded
 to Windows 10, macOS 10.15 and Linux glibc 2.24); new experimental Fortran API;
-small bug fixes.
+new API functions to handle view options by tag instead of by index; color
+options in the API can now be specified as in .geo files, in the form
+"Category.Color.Option"; small bug fixes.
 
 * New API functions: model/setTag, mesh/reverse, mesh/affineTransform,
   mesh/getMaxNodeTag, mesh/getMaxElementTag, mesh/getSizes, mesh/getPeriodic,
   mesh/getAllEdges, mesh/getAllFaces, mesh/addEdge, mesh/addFace,
   mesh/getNumberOfPartitions, field/list, field/getType, field/getNumber,
-  field/getNumbers, field/getString.
+  field/getNumbers, field/getString, view/option/setNumber,
+  view/option/getNumber, view/option/setString, view/option/getString,
+  view/option/setColor, view/option/getColor, view/option/copy.
 
 * Incompatible API changes: new arguments to mesh/getNode, mesh/getElement and
   view/probe; additional argument to the mesh size callback function provided to
@@ -31,7 +39,8 @@ small bug fixes.
   mesh/getBasisFunctionsOrientation; renamed mesh/getKeysForElements as
   mesh/getKeys and mesh/getInformationForElements as mesh/getKeysInformation,
   and modified their arguments; modified arguments to mesh/getKeysForElement;
-  removed mesh/getLocalMultipliersForHcurl0.
+  removed mesh/getLocalMultipliersForHcurl0; renamed view/copyOptions as
+  view/option/copy.
 
 4.8.4 (April 28, 2021): set current model in gmsh/model/add; small bug fixes.
 

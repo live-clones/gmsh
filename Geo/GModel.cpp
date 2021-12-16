@@ -364,6 +364,59 @@ GEntity *GModel::getEntityByTag(int dim, int n) const
   return nullptr;
 }
 
+bool GModel::changeEntityTag(int dim, int tag, int newTag)
+{
+  if(dim == 0) {
+    GVertex *gv = getVertexByTag(tag);
+    if(gv) {
+      vertices.erase(gv);
+      gv->setTag(newTag);
+      vertices.insert(gv);
+    }
+    else {
+      Msg::Error("Unknown model point %d", tag);
+      return false;
+    }
+  }
+  else if(dim == 1) {
+    GEdge *ge = getEdgeByTag(tag);
+    if(ge) {
+      edges.erase(ge);
+      ge->setTag(newTag);
+      edges.insert(ge);
+    }
+    else {
+      Msg::Error("Unknown model curve %d", tag);
+      return false;
+    }
+  }
+  else if(dim == 2) {
+    GFace *gf = getFaceByTag(tag);
+    if(gf) {
+      faces.erase(gf);
+      gf->setTag(newTag);
+      faces.insert(gf);
+    }
+    else {
+      Msg::Error("Unknown model surface %d", tag);
+      return false;
+    }
+  }
+  else if(dim == 3) {
+    GRegion *gr = getRegionByTag(tag);
+    if(gr) {
+      regions.erase(gr);
+      gr->setTag(newTag);
+      regions.insert(gr);
+    }
+    else {
+      Msg::Error("Unknown model volume %d", tag);
+      return false;
+    }
+  }
+  return true;
+}
+
 std::vector<int> GModel::getTagsForPhysicalName(int dim,
                                                 const std::string &name)
 {

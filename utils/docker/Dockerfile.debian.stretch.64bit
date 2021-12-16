@@ -32,10 +32,22 @@ ENV FC=/usr/local/bin/gfortran
 RUN git clone https://github.com/xianyi/OpenBLAS.git && cd OpenBLAS && git checkout v0.3.15 && make NUM_THREADS=8 TARGET=CORE2 && cp libopenblas_core2p-r0.3.15.a /usr/local/lib/libopenblas.a && cd .. && rm -rf OpenBLAS
 
 # -----------------------
+# JPEG
+# -----------------------
+
+RUN curl -L -O http://www.ijg.org/files/jpegsrc.v9d.tar.gz && tar zxf jpegsrc.v9d.tar.gz && cd jpeg-9d && ./configure --enable-static --disable-shared && make && make install && cd .. && rm -rf jpeg-9d jpegsrc.v9d.tar.gz
+
+# -----------------------
+# PNG
+# -----------------------
+
+RUN curl -L -O https://download.sourceforge.net/libpng/libpng-1.6.37.tar.gz && tar zxf libpng-1.6.37.tar.gz && cd libpng-1.6.37 && ./configure --enable-static --disable-shared && make && make install && cd .. && rm -rf libpng-1.6.37 libpng-1.6.37.tar.gz
+
+# -----------------------
 # Freetype
 # -----------------------
 
-RUN curl -L -O http://download.savannah.gnu.org/releases/freetype/freetype-2.10.4.tar.gz && tar zxf freetype-2.10.4.tar.gz && cd freetype-2.10.4 && ./configure --disable-shared && make && make install && cd .. && rm -rf freetype-2.10.4.tar.gz freetype-2.10.4
+RUN curl -L -O http://download.savannah.gnu.org/releases/freetype/freetype-2.10.4.tar.gz && tar zxf freetype-2.10.4.tar.gz && cd freetype-2.10.4 && ./configure --disable-shared --with-png=no --with-zlib=no --with-bzip2=no && make && make install && cd .. && rm -rf freetype-2.10.4.tar.gz freetype-2.10.4
 
 # -----------------------
 # HDF5
@@ -101,7 +113,7 @@ RUN curl -L -o occt.tgz "http://git.dev.opencascade.org/gitweb/?p=occt.git;a=sna
 # FLTK
 # -----------------------
 
-RUN git clone https://github.com/fltk/fltk.git && cd fltk && make makeinclude && ./configure --enable-localpng=no --enable-localzlib=no --enable-localjpeg=no && make -j 4 && make install && cd ../.. && rm -rf fltk
+RUN git clone https://github.com/fltk/fltk.git && cd fltk && git checkout 1ce3a84 && make makeinclude && ./configure --enable-localpng=no --enable-localzlib=no --enable-localjpeg=no && make -j 4 && make install && cd ../.. && rm -rf fltk
 
 # -----------------------
 # MMG

@@ -249,6 +249,8 @@ GMSH_API void gmsh::option::setColor(const std::string &name, const int r,
   std::string c, n;
   int i;
   SplitOptionName(name, c, n, i);
+  // allow "Category.Color.Option" name for compatibility with .geo parser
+  n = ReplaceSubString("Color.", "", n);
   unsigned int value = CTX::instance()->packColor(r, g, b, a);
   if(!GmshSetOption(c, n, value, i))
     Msg::Error("Could not set option '%s'", name.c_str());
@@ -261,6 +263,8 @@ GMSH_API void gmsh::option::getColor(const std::string &name, int &r, int &g,
   std::string c, n;
   int i;
   SplitOptionName(name, c, n, i);
+  // allow "Category.Color.Option" name for compatibility with .geo parser
+  n = ReplaceSubString("Color.", "", n);
   unsigned int value;
   if(GmshGetOption(c, n, value, i)) {
     r = CTX::instance()->unpackRed(value);
@@ -488,17 +492,7 @@ GMSH_API void gmsh::model::getPhysicalName(const int dim, const int tag,
 GMSH_API void gmsh::model::setTag(const int dim, const int tag, const int newTag)
 {
   if(!_checkInit()) return;
-  GEntity *ge = GModel::current()->getEntityByTag(dim, tag);
-  if(!ge) {
-    Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
-    return;
-  }
-  GEntity *ge2 = GModel::current()->getEntityByTag(dim, newTag);
-  if(ge2) {
-    Msg::Error("%s already exists", _getEntityName(dim, newTag).c_str());
-    return;
-  }
-  ge->setTag(newTag);
+  GModel::current()->changeEntityTag(dim, tag, newTag);
 }
 
 GMSH_API void gmsh::model::getBoundary(const vectorpair &dimTags,
@@ -4711,8 +4705,8 @@ GMSH_API void gmsh::model::mesh::setTransfiniteAutomatic(
   }
   else {
     for(std::size_t i = 0; i < dimTags.size(); ++i) {
-      if(dimTags[i].second == 2) {
-        int tag = dimTags[i].first;
+      if(dimTags[i].first == 2) {
+        int tag = dimTags[i].second;
         GFace *gf = GModel::current()->getFaceByTag(tag);
         if(!gf) {
           Msg::Error("%s does not exist", _getEntityName(2, tag).c_str());
@@ -4720,8 +4714,8 @@ GMSH_API void gmsh::model::mesh::setTransfiniteAutomatic(
         }
         if(gf->edges().size() == 4) { faces.insert(gf); }
       }
-      else if(dimTags[i].second == 3) {
-        int tag = dimTags[i].first;
+      else if(dimTags[i].first == 3) {
+        int tag = dimTags[i].second;
         GRegion *gr = GModel::current()->getRegionByTag(tag);
         if(!gr) {
           Msg::Error("%s does not exist", _getEntityName(3, tag).c_str());
@@ -4756,8 +4750,8 @@ GMSH_API void gmsh::model::mesh::setTransfiniteAutomatic(
   }
   else {
     for(std::size_t i = 0; i < dimTags.size(); ++i) {
-      if(dimTags[i].second == 3) {
-        int tag = dimTags[i].first;
+      if(dimTags[i].first == 3) {
+        int tag = dimTags[i].second;
         GRegion *gr = GModel::current()->getRegionByTag(tag);
         if(!gr) {
           Msg::Error("%s does not exist", _getEntityName(3, tag).c_str());
@@ -5370,16 +5364,16 @@ gmsh::model::mesh::tetrahedralize(const std::vector<double> &coord,
 
 
 GMSH_API void
-gmsh::model::mesh::alphaShapes(const double threshold, 
-             const int dim,
-			       const std::vector<double> &coord,
-			       std::vector<std::size_t> &tetra,
-			       std::vector<std::vector<std::size_t> > &domains,
-			       std::vector<std::vector<std::size_t> > &boundaries,
-			       std::vector<std::size_t> &neigh, 
-             const double meanValue){
+gmsh::model::mesh::alphaShapes( const double threshold,
+                                const int dim,
+                                const std::vector<double> & coord,
+                                std::vector<std::size_t> & tetra,
+                                std::vector<std::vector<std::size_t> > & domains,
+                                std::vector<std::vector<std::size_t> > & boundaries,
+                                std::vector<std::size_t> & neighbors,
+                                const double meanValue){
 #if defined(HAVE_MESH)
-  alphaShapes_ (threshold, dim, coord, tetra, domains, boundaries, neigh, meanValue);
+  alphaShapes_ (threshold, dim, coord, tetra, domains, boundaries, neighbors, meanValue);
 #else
   Msg::Error("alphaShapes requires the mesh module");
 #endif
@@ -5395,6 +5389,27 @@ gmsh::model::mesh::tetNeighbors(const std::vector<std::size_t> &tetra,
   computeTetNeighbors_ (tetra, neigh);
 #else
   Msg::Error("alphaShapes requires the mesh module");
+#endif  
+}
+
+// gmsh::model::mesh::createHxtMesh
+
+GMSH_API void
+gmsh::model::mesh::createHxtMesh(const std::string &inputMesh, const std::vector<double> & coord, const std::string &outputMesh, std::vector<double> & pts,
+                                  std::vector<std::size_t> & tets){
+#if defined(HAVE_MESH)
+  createHxtMesh_(inputMesh, coord, outputMesh, pts, tets);
+#else
+  Msg::Error("createHxtMesh requires the mesh module");
+#endif  
+}
+
+GMSH_API void
+gmsh::model::mesh::alphaShapesConstrained(const int dim, const std::vector<double>& coord){
+#if defined(HAVE_MESH)
+  constrainedAlphaShapes_(GModel::current(), dim, coord);
+#else
+  Msg::Error("createHxtMesh requires the mesh module");
 #endif  
 }
 
@@ -7436,30 +7451,6 @@ GMSH_API int gmsh::view::addAlias(const int refTag, const bool copyOptions,
 #endif
 }
 
-GMSH_API void gmsh::view::copyOptions(const int refTag, const int tag)
-{
-  if(!_checkInit()) return;
-#if defined(HAVE_POST)
-  PView *ref = PView::getViewByTag(refTag);
-  if(!ref) {
-    Msg::Error("Unknown view with tag %d", refTag);
-    return;
-  }
-  PView *view = PView::getViewByTag(tag);
-  if(!view) {
-    Msg::Error("Unknown view with tag %d", tag);
-    return;
-  }
-  view->setOptions(ref->getOptions());
-  view->setChanged(true);
-#if defined(HAVE_FLTK)
-  if(FlGui::available()) FlGui::instance()->updateViews(true, true);
-#endif
-#else
-  Msg::Error("Views require the post-processing module");
-#endif
-}
-
 GMSH_API void gmsh::view::combine(const std::string &what,
                                   const std::string &how, const bool remove,
                                   const bool copyOptions)
@@ -7590,6 +7581,156 @@ GMSH_API void gmsh::view::setVisibilityPerWindow(const int tag, const int value,
     ctx->show(view);
   else
     ctx->hide(view);
+#endif
+#else
+  Msg::Error("Views require the post-processing module");
+#endif
+}
+
+// gmsh::view::option
+
+GMSH_API void gmsh::view::option::setNumber(int tag, const std::string &name,
+                                            const double value)
+{
+  if(!_checkInit()) return;
+#if defined(HAVE_POST)
+  PView *view = PView::getViewByTag(tag);
+  if(view) {
+    if(!GmshSetOption("View", name, value, view->getIndex()))
+      Msg::Error("Could not set option '%s' in view with tag %d",
+                 name.c_str(), tag);
+  }
+  else {
+    Msg::Error("Unknown view with tag %d", tag);
+  }
+#else
+  Msg::Error("Views require the post-processing module");
+#endif
+}
+
+GMSH_API void gmsh::view::option::getNumber(int tag, const std::string &name,
+                                            double &value)
+{
+  if(!_checkInit()) return;
+#if defined(HAVE_POST)
+  PView *view = PView::getViewByTag(tag);
+  if(view) {
+    if(!GmshGetOption("View", name, value, view->getIndex()))
+      Msg::Error("Could not get option '%s' in view with tag %d",
+                 name.c_str(), tag);
+  }
+  else {
+    Msg::Error("Unknown view with tag %d", tag);
+  }
+#else
+  Msg::Error("Views require the post-processing module");
+#endif
+}
+
+GMSH_API void gmsh::view::option::setString(int tag, const std::string &name,
+                                            const std::string &value)
+{
+  if(!_checkInit()) return;
+#if defined(HAVE_POST)
+  PView *view = PView::getViewByTag(tag);
+  if(view) {
+    if(!GmshSetOption("View", name, value, view->getIndex()))
+      Msg::Error("Could not set option '%s' in view with tag %d",
+                 name.c_str(), tag);
+  }
+  else {
+    Msg::Error("Unknown view with tag %d", tag);
+  }
+#else
+  Msg::Error("Views require the post-processing module");
+#endif
+}
+
+GMSH_API void gmsh::view::option::getString(int tag, const std::string &name,
+                                            std::string &value)
+{
+  if(!_checkInit()) return;
+#if defined(HAVE_POST)
+  PView *view = PView::getViewByTag(tag);
+  if(view) {
+    if(!GmshGetOption("View", name, value, view->getIndex()))
+      Msg::Error("Could not get option '%s' in view with tag %d",
+                 name.c_str(), tag);
+  }
+  else {
+    Msg::Error("Unknown view with tag %d", tag);
+  }
+#else
+  Msg::Error("Views require the post-processing module");
+#endif
+}
+
+GMSH_API void gmsh::view::option::setColor(int tag, const std::string &name,
+                                           const int r, const int g,
+                                           const int b, const int a)
+{
+  if(!_checkInit()) return;
+#if defined(HAVE_POST)
+  PView *view = PView::getViewByTag(tag);
+  if(view) {
+    unsigned int value = CTX::instance()->packColor(r, g, b, a);
+    if(!GmshSetOption("View", name, value, view->getIndex()))
+      Msg::Error("Could not set option '%s' in view with tag %d",
+                 name.c_str(), tag);
+  }
+  else {
+    Msg::Error("Unknown view with tag %d", tag);
+  }
+#else
+  Msg::Error("Views require the post-processing module");
+#endif
+}
+
+GMSH_API void gmsh::view::option::getColor(int tag, const std::string &name,
+                                           int &r, int &g, int &b, int &a)
+{
+  if(!_checkInit()) return;
+#if defined(HAVE_POST)
+  PView *view = PView::getViewByTag(tag);
+  if(view) {
+    unsigned int value;
+    if(GmshGetOption("View", name, value, view->getIndex())) {
+      r = CTX::instance()->unpackRed(value);
+      g = CTX::instance()->unpackGreen(value);
+      b = CTX::instance()->unpackBlue(value);
+      a = CTX::instance()->unpackAlpha(value);
+    }
+    else {
+      Msg::Error("Could not get option '%s' in view with tag %d",
+                 name.c_str(), tag);
+    }
+  }
+  else {
+    Msg::Error("Unknown view with tag %d", tag);
+  }
+#else
+  Msg::Error("Views require the post-processing module");
+#endif
+}
+
+GMSH_API void gmsh::view::option::copy(const int refTag, const int tag)
+{
+  if(!_checkInit()) return;
+#if defined(HAVE_POST)
+  PView *ref = PView::getViewByTag(refTag);
+  if(!ref) {
+    Msg::Error("Unknown view with tag %d", refTag);
+    return;
+  }
+  PView *view = PView::getViewByTag(tag);
+  if(!view) {
+    Msg::Error("Unknown view with tag %d", tag);
+    return;
+  }
+  view->setOptions(ref->getOptions());
+  view->setChanged(true);
+#if defined(HAVE_FLTK)
+  if(FlGui::available()) FlGui::instance()->updateViews(true, true);
 #endif
 #else
   Msg::Error("Views require the post-processing module");

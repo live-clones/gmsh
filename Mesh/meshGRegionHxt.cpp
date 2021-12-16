@@ -394,6 +394,13 @@ static HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions, HXTMesh *m,
   return HXT_STATUS_OK;
 }
 
+void Hxt2GmshAlpha(std::vector<GRegion *> &regions, HXTMesh *m,
+                          std::map<MVertex *, uint32_t> &v2c,
+                          std::vector<MVertex *> &c2v)
+{
+  Hxt2Gmsh(regions, m, v2c, c2v);
+}
+
 HXTStatus Gmsh2Hxt(std::vector<GRegion *> &regions, HXTMesh *m,
                    std::map<MVertex *, uint32_t> &v2c,
                    std::vector<MVertex *> &c2v)
@@ -512,6 +519,13 @@ HXTStatus Gmsh2Hxt(std::vector<GRegion *> &regions, HXTMesh *m,
     }
   }
   return HXT_STATUS_OK;
+}
+
+void Gmsh2HxtAlpha(std::vector<GRegion *> &regions, HXTMesh *m,
+                   std::map<MVertex *, uint32_t> &v2c,
+                   std::vector<MVertex *> &c2v)
+{
+  Gmsh2Hxt(regions, m, v2c, c2v);
 }
 
 static HXTStatus _meshGRegionHxt(std::vector<GRegion *> &regions)

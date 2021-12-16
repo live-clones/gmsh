@@ -44,9 +44,9 @@ function createGeometryAndMesh()
 end
 
 gmsh.option.setNumber("Geometry.PointNumbers", 1)
-gmsh.option.setColor("Geometry.Points", 255, 165, 0)
-gmsh.option.setColor("General.Text", 255, 255, 255)
-gmsh.option.setColor("Mesh.Points", 255, 0, 0)
+gmsh.option.setColor("Geometry.Color.Points", 255, 165, 0)
+gmsh.option.setColor("General.Color.Text", 255, 255, 255)
+gmsh.option.setColor("Mesh.Color.Points", 255, 0, 0)
 
 r, g, b, a = gmsh.option.getColor("Geometry.Points")
 gmsh.option.setColor("Geometry.Surfaces", r, g, b, a)

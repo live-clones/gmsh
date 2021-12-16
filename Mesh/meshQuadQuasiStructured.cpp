@@ -885,10 +885,13 @@ bool getSingularitiesFromBackgroundField(
     return false;
   }
 
-  int viewTag = int(field->options["IView"]->numericalValue());
-  PView *view = PView::getViewByTag(viewTag);
-  if(view == nullptr) {
-    Msg::Error("failed to get view for tag = %i", viewTag);
+  int viewIndex = int(field->options["IView"]->numericalValue());
+  PView *view = nullptr;
+  if(viewIndex >= 0 && viewIndex < (int)PView::list.size()) {
+    view = PView::list[viewIndex];
+  }
+  else {
+    Msg::Error("failed to get view for index = %i", viewIndex);
     return false;
   }
   PViewDataList *d = dynamic_cast<PViewDataList *>(view->getData());

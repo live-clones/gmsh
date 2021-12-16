@@ -2227,6 +2227,34 @@ GMSH_API void gmshModelMeshTetNeighbors(size_t * tetra, size_t tetra_n, size_t *
   }
 }
 
+GMSH_API void gmshModelMeshCreateHxtMesh(const char * inputMesh, double * coord, size_t coord_n, const char * outputMesh, double ** pts, size_t * pts_n, size_t ** tets, size_t * tets_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<double> api_coord_(coord, coord + coord_n);
+    std::vector<double> api_pts_;
+    std::vector<std::size_t> api_tets_;
+    gmsh::model::mesh::createHxtMesh(inputMesh, api_coord_, outputMesh, api_pts_, api_tets_);
+    vector2ptr(api_pts_, pts, pts_n);
+    vector2ptr(api_tets_, tets, tets_n);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelMeshAlphaShapesConstrained(const int dim, double * coord, size_t coord_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<double> api_coord_(coord, coord + coord_n);
+    gmsh::model::mesh::alphaShapesConstrained(dim, api_coord_);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API int gmshModelMeshFieldAdd(const char * fieldType, const int tag, int * ierr)
 {
   int result_api_ = 0;
@@ -4077,17 +4105,6 @@ GMSH_API int gmshViewAddAlias(const int refTag, const int copyOptions, const int
   return result_api_;
 }
 
-GMSH_API void gmshViewCopyOptions(const int refTag, const int tag, int * ierr)
-{
-  if(ierr) *ierr = 0;
-  try {
-    gmsh::view::copyOptions(refTag, tag);
-  }
-  catch(...){
-    if(ierr) *ierr = 1;
-  }
-}
-
 GMSH_API void gmshViewCombine(const char * what, const char * how, const int remove, const int copyOptions, int * ierr)
 {
   if(ierr) *ierr = 0;
@@ -4131,6 +4148,85 @@ GMSH_API void gmshViewSetVisibilityPerWindow(const int tag, const int value, con
   if(ierr) *ierr = 0;
   try {
     gmsh::view::setVisibilityPerWindow(tag, value, windowIndex);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshViewOptionSetNumber(const int tag, const char * name, const double value, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::view::option::setNumber(tag, name, value);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshViewOptionGetNumber(const int tag, const char * name, double * value, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::view::option::getNumber(tag, name, *value);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshViewOptionSetString(const int tag, const char * name, const char * value, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::view::option::setString(tag, name, value);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshViewOptionGetString(const int tag, const char * name, char ** value, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::string api_value_;
+    gmsh::view::option::getString(tag, name, api_value_);
+    *value = strdup(api_value_.c_str());
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshViewOptionSetColor(const int tag, const char * name, const int r, const int g, const int b, const int a, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::view::option::setColor(tag, name, r, g, b, a);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshViewOptionGetColor(const int tag, const char * name, int * r, int * g, int * b, int * a, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::view::option::getColor(tag, name, *r, *g, *b, *a);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshViewOptionCopy(const int refTag, const int tag, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::view::option::copy(refTag, tag);
   }
   catch(...){
     if(ierr) *ierr = 1;

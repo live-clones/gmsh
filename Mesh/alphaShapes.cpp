@@ -6,6 +6,21 @@
 #include "gmsh.h"
 #include "GmshMessage.h"
 
+#include <iostream>
+
+
+
+/* compute distance between 2 points -- 3D */
+double twoPointsDistance(const double *p0, const double *p1){
+  return sqrt( (p0[0]-p1[0])*(p0[0]-p1[0]) + (p0[1]-p1[1])*(p0[1]-p1[1]) + (p0[2]-p1[2])*(p0[2]-p1[2]));
+}
+
+/* compute distance between 2 points -- 2D */
+double twoPointsDistance2D(const double *p0, const double *p1){
+  return sqrt( (p0[0]-p1[0])*(p0[0]-p1[0]) + (p0[1]-p1[1])*(p0[1]-p1[1]));
+}
+
+/* verify if circumscribed radius is smaller than alpha threshold -- 3D */
 double alphaShape (const size_t *t, const std::vector<double> &p, const double hMean){
   double tetcircumcenter(double a[3], double b[3], double c[3], double d[3],
 			 double circumcenter[3], double *xi, double *eta,
@@ -24,10 +39,7 @@ double alphaShape (const size_t *t, const std::vector<double> &p, const double h
   return R/hMean;
 }
 
-double twoPointsDistance2D(const double *p0, const double *p1){
-  return sqrt( (p0[0]-p1[0])*(p0[0]-p1[0]) + (p0[1]-p1[1])*(p0[1]-p1[1]));
-}
-
+/* verify if circumscribed radius is smaller than alpha threshold -- 2D */
 double alphaShape2D(const size_t *t, const std::vector<double> &p, const double hMean){
   const double *p0 = &p[2*t[0]];
   const double *p1 = &p[2*t[1]];
@@ -41,11 +53,7 @@ double alphaShape2D(const size_t *t, const std::vector<double> &p, const double 
   return R/hMean;
 }
 
-double twoPointsDistance(const double *p0, const double *p1){
-  return sqrt( (p0[0]-p1[0])*(p0[0]-p1[0]) + (p0[1]-p1[1])*(p0[1]-p1[1]) + (p0[2]-p1[2])*(p0[2]-p1[2]));
-}
-
-
+/* commpute the mean minimum edge length of all elements -- 3D */
 double meanEdgeLength (const std::vector<double> &p, const std::vector<size_t> &tetrahedra){
   double hMean = 0;
   for (size_t i=0; i<tetrahedra.size(); i+=4){
@@ -70,6 +78,7 @@ double meanEdgeLength (const std::vector<double> &p, const std::vector<size_t> &
   return hMean;
 }
 
+/* commpute the mean minimum edge length of all elements -- 2D */
 double meanEdgeLength2D (const std::vector<double> &p, const std::vector<size_t> &triangles){
   double hMean = 0;
   for (size_t i=0; i<triangles.size(); i+=3){
@@ -87,9 +96,10 @@ double meanEdgeLength2D (const std::vector<double> &p, const std::vector<size_t>
   return hMean;
 }
 
+/* face ordering convention */
 static int _faces [4][3] = {{0,1,2}, {0,1,3}, {0,2,3}, {1,2,3}};
-static int _edges [3][2] = {{0,1}, {0,2}, {1,2}};
 
+/* order the tet faces according to convention */
 void getOrderedFace (const size_t *t, int i, size_t *f){
   size_t no1 = t[_faces[i][0]];
   size_t no2 = t[_faces[i][1]];
@@ -118,6 +128,10 @@ void getOrderedFace (const size_t *t, int i, size_t *f){
    f[2] = hi;
 }
 
+/* edge ordereing convetion */
+static int _edges [3][2] = {{0,1}, {0,2}, {1,2}};
+
+/* order the element edges according to convention */
 void getOrderedEdge (const size_t *t, int i, size_t *e){
   size_t no1 = t[_edges[i][0]];
   size_t no2 = t[_edges[i][1]];
@@ -154,6 +168,9 @@ int compareTwoInt (const void *a , const void *b){
   return 0;
 }
 
+/* compute the neighbors of all tets, returned as a list of neighbors for each tet 
+ * if a face is a boundary face, the value there is tetrahedra.size()
+ */
 int computeTetNeighbors_ (const std::vector<size_t> &tetrahedra, std::vector<size_t> &neigh){
   
   neigh.resize(tetrahedra.size());
@@ -195,6 +212,9 @@ int computeTetNeighbors_ (const std::vector<size_t> &tetrahedra, std::vector<siz
   return 0;
 }
 
+/* compute the neighbors of all triangles, returned as a list of neighbors for each triangle
+ * if a face is a boundary face, the value there is triangles.size()
+ */
 int computeTriNeighbors_ (const std::vector<size_t> &triangles, std::vector<size_t> &neigh){
   neigh.resize(triangles.size());
   for (size_t i=0;i<neigh.size();i++)neigh[i] = triangles.size();
@@ -233,6 +253,7 @@ int computeTriNeighbors_ (const std::vector<size_t> &triangles, std::vector<size
   return 0;  
 }
 
+/* return the alphashape of the delaunay triangulation of a cloud of points, with alpha = threshold. -- 2D */ 
 int alphaShapes2D_(const double threshold,
 		 const std::vector<double> &pts,
 		 std::vector<size_t> &triangles, 
@@ -295,6 +316,7 @@ int alphaShapes2D_(const double threshold,
   return 0;
 }
 
+/* return the alphashape of the delaunay triangulation of a cloud of points, with alpha = threshold. -- 3D */
 int alphaShapes3D_ (const double threshold,
 		 const std::vector<double> &pts,
 		 std::vector<size_t> &tetrahedra, 
@@ -302,8 +324,10 @@ int alphaShapes3D_ (const double threshold,
 		 std::vector<std::vector<size_t> > &boundaries,
 		 std::vector<size_t> &neigh, 
      const double meanValue) {
-
+  
   gmsh::model::mesh::tetrahedralize(pts, tetrahedra);
+  
+
   for (size_t i = 0; i < tetrahedra.size(); i++)tetrahedra[i]--;
   double hMean;
   if (meanValue < 0) hMean = meanEdgeLength(pts,tetrahedra);
@@ -373,4 +397,119 @@ int alphaShapes_ (const double threshold,
     Msg::Error("Invalid dimension");
   }
   return 0;
+}
+
+void constrainedAlphaShapes_(GModel* m, const int dim, const std::vector<double>& coord){
+  
+  int old = m->getMeshStatus(false); 
+  if (old < dim-1){ // if no 1D boundary mesh for a 2D domain, if no 2D boundary mesh for a 3D domain --> so generate one
+    GenerateMesh(m, dim-1);
+  }
+  
+  /* initialize hxt mesh */
+  HXTMesh *mesh;
+  hxtMeshCreate(&mesh);
+
+  /* set the gmsh surface mesh to hxt format */
+  std::map<MVertex *, uint32_t> v2c;
+  std::vector<MVertex *> c2v;
+  std::set<GRegion *, GEntityPtrLessThan> rs;
+  rs = m->getRegions();
+  std::vector<GRegion *> regions(rs.begin(), rs.end());
+  Gmsh2HxtAlpha(regions, mesh, v2c, c2v);
+
+  // all other fields of the options will be 0 or NULL (standard C behavior)
+	HXTTetMeshOptions options = {
+		.stat=1,
+		.verbosity=2
+	};
+	// create the empty mesh
+	hxtTetMesh(mesh, &options);
+
+  std::cout << mesh->vertices.size << " is the number of vertices \n";
+
+  uint32_t nBndPts = mesh->vertices.num;
+
+  // create the bounding box of the mesh
+	HXTBbox bbox;
+	hxtBboxInit(&bbox);
+	hxtBboxAdd(&bbox, mesh->vertices.coord, mesh->vertices.num);
+
+  uint32_t numNewPts = coord.size()/3;
+  std::cout << numNewPts << " is number of points to be inserted \n";
+  HXTNodeInfo nodeInfo[numNewPts];
+
+  /* add the internal nodes to the mesh */
+  mesh->vertices.num += numNewPts;
+	if (mesh->vertices.num > mesh->vertices.size) {
+		hxtAlignedRealloc(&mesh->vertices.coord, sizeof(double) * mesh->vertices.num * 4);
+		mesh->vertices.size = mesh->vertices.num;
+	}
+  for (int p = 0; p < numNewPts; p++) {
+    uint32_t nodeIndex = p + nBndPts;
+    for (int dim = 0; dim < 3; dim++) {
+      mesh->vertices.coord[4 * nodeIndex + dim] = coord[3*p+dim];
+    }
+    nodeInfo[p].node = nodeIndex;
+    nodeInfo[p].status = HXT_STATUS_TRYAGAIN; // state that we want to insert this point
+  }
+
+  HXTDelaunayOptions delOptions = {
+    .bbox = &bbox,
+    .numVerticesInMesh = nBndPts,
+    .insertionFirst = nBndPts,
+    .verbosity = 1,
+    .allowOuterInsertion = 0, // if you set this to one, even vertices that are outside will be inserted
+  };
+
+  /* Generate the tet mesh */
+  //HXTTetMeshOptions options = {.refine=0, .optimize=0, .verbosity=2, .quality.min=0.35, .nodalSizes.factor=1.0};
+  //hxtTetMesh(mesh, &options);
+  hxtDelaunaySteadyVertices(mesh, &delOptions, nodeInfo, numNewPts);
+
+  /* write back to gmsh format */
+  Hxt2GmshAlpha(regions, mesh, v2c, c2v);
+  hxtMeshDelete(&mesh);
+}
+
+/*
+ * filename : the 2D boundary mesh
+ * coord : vector of 3D coords of the nodes
+ */
+void createHxtMesh_(const std::string &inputMesh, const std::vector<double>& coord, const std::string& outputMesh, std::vector<double> &pts, std::vector<std::size_t> &tets){
+  /* NB : filename should be a 2D surface mesh */
+  
+  /* create the hxt mesh data struct */
+  const char *cstr = &inputMesh[0];
+  HXTMesh* mesh;
+  hxtMeshCreate(&mesh);
+  
+  /* read the gmsh 2D surface mesh */
+  hxtMeshReadGmsh(mesh, cstr); // faire une autre avec géométrie deja loadée (gmsh2hxt) --> GModel::current() if (pas de triangles) : générer maillage 2D
+
+  /* add the internal nodes from vector coord */
+  double arr[coord.size()];
+  std::copy(coord.begin(),coord.end(),arr);
+  hxtAddNodes(mesh, arr, coord.size()/3);
+
+  /* generate and write the tet mesh */
+  HXTTetMeshOptions options = {.refine=0, .optimize=0, .verbosity=2, .quality.min=0.35, .nodalSizes.factor=1.0};
+  hxtTetMesh(mesh, &options);
+  hxtMeshWriteGmsh( mesh, &outputMesh[0]); // enlever
+
+  // hxt2gmsh
+
+  for (size_t i=0; i<mesh->vertices.num; i++){
+    for (size_t j=0; j<3; j++){
+      pts.push_back(mesh->vertices.coord[4*i+j]);
+    }
+  }
+
+  for (size_t i=0; i<mesh->tetrahedra.num; i++){
+    for (size_t j=0; j<4; j++){
+      tets.push_back(mesh->tetrahedra.node[4*i+j]);
+    }
+  }
+
+
 }

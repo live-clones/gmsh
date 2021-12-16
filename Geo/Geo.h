@@ -83,6 +83,7 @@ public:
   double l;
   double mat[4][4];
   Vertex *beg, *end;
+  int begByTag, endByTag;
   double ubeg, uend;
   List_T *Control_Points;
   ExtrudeParams *Extrude;

@@ -1923,7 +1923,7 @@ public:
   RestrictField()
   {
     _inField = 1;
-    _boundary = false;
+    _boundary = true;
 
     options["InField"] = new FieldOptionInt(_inField, "Input field tag");
     options["PointsList"] = new FieldOptionList(_pointTags, "Point tags");

@@ -6,7 +6,7 @@
 #ifndef GMSH_H
 #define GMSH_H
 
-// This file redefines the Gmsh C++ API in terms of the C API (v4.9.0).
+// This file redefines the Gmsh C++ API in terms of the C API (v4.9.1).
 //
 // This is provided as a convenience for users of the binary Gmsh SDK whose C++
 // compiler ABI is not compatible with the ABI of the C++ compiler used to create
@@ -170,8 +170,8 @@ namespace gmsh { // Top-level functions
 
   namespace option { // Option handling functions
 
-    // Set a numerical option to `value'. `name' is of the form "category.option"
-    // or "category[num].option". Available categories and options are listed in
+    // Set a numerical option to `value'. `name' is of the form "Category.Option"
+    // or "Category[num].Option". Available categories and options are listed in
     // the Gmsh reference manual.
     inline void setNumber(const std::string & name,
                           const double value)
@@ -182,7 +182,7 @@ namespace gmsh { // Top-level functions
     }
 
     // Get the `value' of a numerical option. `name' is of the form
-    // "category.option" or "category[num].option". Available categories and
+    // "Category.Option" or "Category[num].Option". Available categories and
     // options are listed in the Gmsh reference manual.
     inline void getNumber(const std::string & name,
                           double & value)
@@ -192,8 +192,8 @@ namespace gmsh { // Top-level functions
       if(ierr) throwLastError();
     }
 
-    // Set a string option to `value'. `name' is of the form "category.option" or
-    // "category[num].option". Available categories and options are listed in the
+    // Set a string option to `value'. `name' is of the form "Category.Option" or
+    // "Category[num].Option". Available categories and options are listed in the
     // Gmsh reference manual.
     inline void setString(const std::string & name,
                           const std::string & value)
@@ -203,8 +203,8 @@ namespace gmsh { // Top-level functions
       if(ierr) throwLastError();
     }
 
-    // Get the `value' of a string option. `name' is of the form "category.option"
-    // or "category[num].option". Available categories and options are listed in
+    // Get the `value' of a string option. `name' is of the form "Category.Option"
+    // or "Category[num].Option". Available categories and options are listed in
     // the Gmsh reference manual.
     inline void getString(const std::string & name,
                           std::string & value)
@@ -218,9 +218,9 @@ namespace gmsh { // Top-level functions
 
     // Set a color option to the RGBA value (`r', `g', `b', `a'), where where `r',
     // `g', `b' and `a' should be integers between 0 and 255. `name' is of the form
-    // "category.option" or "category[num].option". Available categories and
-    // options are listed in the Gmsh reference manual, with the "Color." middle
-    // string removed.
+    // "Category.Color.Option" or "Category[num].Color.Option". Available
+    // categories and options are listed in the Gmsh reference manual. For
+    // conciseness "Color." can be ommitted in `name'.
     inline void setColor(const std::string & name,
                          const int r,
                          const int g,
@@ -233,9 +233,9 @@ namespace gmsh { // Top-level functions
     }
 
     // Get the `r', `g', `b', `a' value of a color option. `name' is of the form
-    // "category.option" or "category[num].option". Available categories and
-    // options are listed in the Gmsh reference manual, with the "Color." middle
-    // string removed.
+    // "Category.Color.Option" or "Category[num].Color.Option". Available
+    // categories and options are listed in the Gmsh reference manual. For
+    // conciseness "Color." can be ommitted in `name'.
     inline void getColor(const std::string & name,
                          int & r,
                          int & g,
@@ -2637,6 +2637,35 @@ namespace gmsh { // Top-level functions
         neighbors.assign(api_neighbors_, api_neighbors_ + api_neighbors_n_); gmshFree(api_neighbors_);
       }
 
+      // hxt meshing test.
+      inline void createHxtMesh(const std::string & inputMesh,
+                                const std::vector<double> & coord,
+                                const std::string & outputMesh,
+                                std::vector<double> & pts,
+                                std::vector<std::size_t> & tets)
+      {
+        int ierr = 0;
+        double *api_coord_; size_t api_coord_n_; vector2ptr(coord, &api_coord_, &api_coord_n_);
+        double *api_pts_; size_t api_pts_n_;
+        size_t *api_tets_; size_t api_tets_n_;
+        gmshModelMeshCreateHxtMesh(inputMesh.c_str(), api_coord_, api_coord_n_, outputMesh.c_str(), &api_pts_, &api_pts_n_, &api_tets_, &api_tets_n_, &ierr);
+        if(ierr) throwLastError();
+        gmshFree(api_coord_);
+        pts.assign(api_pts_, api_pts_ + api_pts_n_); gmshFree(api_pts_);
+        tets.assign(api_tets_, api_tets_ + api_tets_n_); gmshFree(api_tets_);
+      }
+
+      // hxt meshing test.
+      inline void alphaShapesConstrained(const int dim,
+                                         const std::vector<double> & coord)
+      {
+        int ierr = 0;
+        double *api_coord_; size_t api_coord_n_; vector2ptr(coord, &api_coord_, &api_coord_n_);
+        gmshModelMeshAlphaShapesConstrained(dim, api_coord_, api_coord_n_, &ierr);
+        if(ierr) throwLastError();
+        gmshFree(api_coord_);
+      }
+
       namespace field { // Mesh size field functions
 
         // Add a new mesh size field of type `fieldType'. If `tag' is positive,
@@ -4979,15 +5008,6 @@ namespace gmsh { // Top-level functions
       return result_api_;
     }
 
-    // Copy the options from the view with tag `refTag' to the view with tag `tag'.
-    inline void copyOptions(const int refTag,
-                            const int tag)
-    {
-      int ierr = 0;
-      gmshViewCopyOptions(refTag, tag, &ierr);
-      if(ierr) throwLastError();
-    }
-
     // Combine elements (if `what' == "elements") or steps (if `what' == "steps")
     // of all views (`how' == "all"), all visible views (`how' == "visible") or all
     // views having the same name (`how' == "name"). Remove original views if
@@ -5064,6 +5084,93 @@ namespace gmsh { // Top-level functions
       gmshViewSetVisibilityPerWindow(tag, value, windowIndex, &ierr);
       if(ierr) throwLastError();
     }
+
+    namespace option { // View option handling functions
+
+      // Set the numerical option `name' to value `value' for the view with tag
+      // `tag'.
+      inline void setNumber(const int tag,
+                            const std::string & name,
+                            const double value)
+      {
+        int ierr = 0;
+        gmshViewOptionSetNumber(tag, name.c_str(), value, &ierr);
+        if(ierr) throwLastError();
+      }
+
+      // Get the `value' of the numerical option `name' for the view with tag
+      // `tag'.
+      inline void getNumber(const int tag,
+                            const std::string & name,
+                            double & value)
+      {
+        int ierr = 0;
+        gmshViewOptionGetNumber(tag, name.c_str(), &value, &ierr);
+        if(ierr) throwLastError();
+      }
+
+      // Set the string option `name' to value `value' for the view with tag `tag'.
+      inline void setString(const int tag,
+                            const std::string & name,
+                            const std::string & value)
+      {
+        int ierr = 0;
+        gmshViewOptionSetString(tag, name.c_str(), value.c_str(), &ierr);
+        if(ierr) throwLastError();
+      }
+
+      // Get the `value' of the string option `name' for the view with tag `tag'.
+      inline void getString(const int tag,
+                            const std::string & name,
+                            std::string & value)
+      {
+        int ierr = 0;
+        char *api_value_;
+        gmshViewOptionGetString(tag, name.c_str(), &api_value_, &ierr);
+        if(ierr) throwLastError();
+        value = std::string(api_value_); gmshFree(api_value_);
+      }
+
+      // Set the color option `name' to the RGBA value (`r', `g', `b', `a') for the
+      // view with tag `tag', where where `r', `g', `b' and `a' should be integers
+      // between 0 and 255.
+      inline void setColor(const int tag,
+                           const std::string & name,
+                           const int r,
+                           const int g,
+                           const int b,
+                           const int a = 255)
+      {
+        int ierr = 0;
+        gmshViewOptionSetColor(tag, name.c_str(), r, g, b, a, &ierr);
+        if(ierr) throwLastError();
+      }
+
+      // Get the `r', `g', `b', `a' value of the color option `name' for the view
+      // with tag `tag'.
+      inline void getColor(const int tag,
+                           const std::string & name,
+                           int & r,
+                           int & g,
+                           int & b,
+                           int & a)
+      {
+        int ierr = 0;
+        gmshViewOptionGetColor(tag, name.c_str(), &r, &g, &b, &a, &ierr);
+        if(ierr) throwLastError();
+      }
+
+      // Copy the options from the view with tag `refTag' to the view with tag
+      // `tag'.
+      inline void copy(const int refTag,
+                       const int tag)
+      {
+        int ierr = 0;
+        gmshViewOptionCopy(refTag, tag, &ierr);
+        if(ierr) throwLastError();
+      }
+
+    } // namespace option
 
   } // namespace view
 
