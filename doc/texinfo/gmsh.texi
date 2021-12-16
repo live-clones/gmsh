@@ -2545,7 +2545,8 @@ the @code{Coherence} command automatically after each geometrical
 transformation, unless @code{Geometry.AutoCoherence} is set to zero
 (@pxref{Geometry options list}). With the OpenCASCADE geoemtry kernel,
 @code{Coherence} is simply a shortcut for a @code{BooleanFragments}
-operation on all entities.
+operation on all entities, with the @code{Delete} operator applied to
+all operands.
 
 @item < Recursive > Delete @{ <Physical> Point | Curve | Surface | Volume @{ @var{expression-list-or-all} @}; @dots{} @}
 Delete all elementary entities whose tags are given in
