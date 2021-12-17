@@ -44,7 +44,7 @@ typedef unsigned long intptr_t;
 #if defined(HAVE_MESH)
 #include "Field.h"
 #include "meshPartition.h"
-#include "gmshCrossFields.h"
+#include "meshGRegionHexDom.h"
 #include "automaticMeshSizeField.h"
 #endif
 
@@ -350,12 +350,13 @@ int GmshBatch()
       GModel::current()->computeSizeField();
     }
     else if(CTX::instance()->batch == 69) {
-      std::vector<int> tags;
-      computeCrossField(GModel::current(), tags);
-      GoodbyeMessage();
+      //      std::vector<int> tags;
+      //      computeCrossField(GModel::current(), tags);
+      //      GoodbyeMessage();
+      compute3DScaledCrossesFast();
       CTX::instance()->batch = 0;
       // still a bug in allocation somewhere
-      exit(0);
+      //      exit(0);
     }
 #endif
   }

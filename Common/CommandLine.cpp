@@ -550,7 +550,7 @@ void GetOptions(bool readConfigFiles, bool exitOnError)
           if(exitOnError) Msg::Exit(1);
         }
       }
-      else if(argv[i] == "-quadlayout") {
+      else if(argv[i] == "-cross") {
         CTX::instance()->batch = 69;
         i++;
       }

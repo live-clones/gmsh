@@ -1171,7 +1171,7 @@ static void addTensorElement(PView *p, int iEnt, int iEle, int numNodes,
                         z - d0[2] - d1[2] - d2[2]};
         double x7[3] = {x + d0[0] - d1[0] - d2[0], y + d0[1] - d1[1] - d2[1],
                         z + d0[2] - d1[2] - d2[2]};
-
+	
         if((nrm > opt->tmpMin && opt->tmpMax) || opt->saturateValues) {
           addTriangle(p, opt, x0, x1, x2, xx, nrm);
           addTriangle(p, opt, x2, x3, x0, xx, nrm);

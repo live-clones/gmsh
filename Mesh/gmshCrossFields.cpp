@@ -20,6 +20,7 @@
 #include "discreteEdge.h"
 #include "Numeric.h"
 #include "GModelParametrize.h"
+#include "meshGRegionHexDom.h"
 
 #if defined(HAVE_POST)
 #include "PView.h"
@@ -3930,7 +3931,7 @@ int computeCrossField(GModel *gm, std::vector<int> &tags)
   getFacesOfTheModel(gm, f);
 
 #if defined(HAVE_SOLVER) && defined(HAVE_POST)
-  return computeCrossFieldAndH(gm, f, tags, true);
+  int res = computeCrossFieldAndH(gm, f, tags, true);
   // return computeQuadLayout(gm, f);
 #else
   Msg::Error("Cross field computation requires solver and post-pro module");

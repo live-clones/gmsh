@@ -1531,6 +1531,11 @@ bool GFace::fillPointCloud(double maxDist, std::vector<SPoint3> *points,
         SPoint3 &p0(stl_vertices_xyz[stl_triangles[i]]);
         SPoint3 &p1(stl_vertices_xyz[stl_triangles[i + 1]]);
         SPoint3 &p2(stl_vertices_xyz[stl_triangles[i + 2]]);
+	SVector3 v1 = p2-p0;
+	SVector3 v2 = p1-p0;
+	SVector3 v3 = crossprod(v1,v2);
+	v3.normalize();
+	
         double maxEdge =
           std::max(p0.distance(p1), std::max(p1.distance(p2), p2.distance(p0)));
         int N = std::max((int)(maxEdge / maxDist), 1);
@@ -1538,6 +1543,8 @@ bool GFace::fillPointCloud(double maxDist, std::vector<SPoint3> *points,
           for(double v = 0.; v < 1 - u; v += 1. / N) {
             SPoint3 p = p0 * (1. - u - v) + p1 * u + p2 * v;
             points->push_back(p);
+            if(uvpoints) uvpoints->push_back(SPoint2(u,v));
+            if(normals) normals->push_back(v3);
           }
         }
       }
