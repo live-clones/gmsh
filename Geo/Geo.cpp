@@ -1699,7 +1699,12 @@ static int CompareTwoSurfaces(const void *a, const void *b)
 
   // if both surfaces have no generatrices, stay on the safe side and
   // assume they are different
-  if(!List_Nbr(s1->Generatrices) && !List_Nbr(s2->Generatrices)) return 1;
+  if(!List_Nbr(s1->Generatrices) && !List_Nbr(s2->Generatrices) &&
+     !List_Nbr(s1->GeneratricesByTag) && !List_Nbr(s2->GeneratricesByTag))
+    return 1;
+
+  if(List_Nbr(s1->GeneratricesByTag) && List_Nbr(s2->GeneratricesByTag))
+    return Compare2Lists(s1->GeneratricesByTag, s2->GeneratricesByTag, fcmp_absint);
 
   return Compare2Lists(s1->Generatrices, s2->Generatrices, CompareAbsCurve);
 }
