@@ -39,12 +39,14 @@ else:
 
 libpath = os.path.join(libdir, libname)
 if not os.path.exists(libpath):
+    libpath = os.path.join(libdir, "Lib", libname)
+if not os.path.exists(libpath):
     libpath = os.path.join(moduledir, libname)
-    if not os.path.exists(libpath):
-        if platform.system() == "Windows":
-            libpath = find_library("gmsh-4.9")
-        else:
-            libpath = find_library("gmsh")
+if not os.path.exists(libpath):
+    if platform.system() == "Windows":
+        libpath = find_library("gmsh-4.9")
+    else:
+        libpath = find_library("gmsh")
 
 lib = CDLL(libpath)
 
