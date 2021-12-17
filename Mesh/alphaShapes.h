@@ -26,6 +26,14 @@ int alphaShapes_ (const double threshold,
 
 void createHxtMesh_(const std::string &inputMesh, const std::vector<double>& coord, const std::string &outputMesh, std::vector<double> &pts, std::vector<size_t> &tets);
 
-void constrainedAlphaShapes_(GModel* m, const int dim, const std::vector<double>& coord);
-
+void constrainedAlphaShapes_(GModel* m, 
+                            const int dim, 
+                            const std::vector<double>& coord, 
+                            const double alpha, 
+                            const double meanValue,
+                            std::vector<size_t> &tetrahedra, 
+                            std::vector<std::vector<size_t> > &domains,
+                            std::vector<std::vector<size_t> > &boundaries,
+                            std::vector<size_t> &neigh,
+							std::vector<double> &allMeshPoints);
 #endif

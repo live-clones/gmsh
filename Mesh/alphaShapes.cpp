@@ -399,10 +399,19 @@ int alphaShapes_ (const double threshold,
   return 0;
 }
 
-void constrainedAlphaShapes_(GModel* m, const int dim, const std::vector<double>& coord){
-  
-  int old = m->getMeshStatus(false); 
-  if (old < dim-1){ // if no 1D boundary mesh for a 2D domain, if no 2D boundary mesh for a 3D domain --> so generate one
+void constrainedAlphaShapes_(GModel* m, 
+                            const int dim, 
+                            const std::vector<double>& coord, 
+                            const double alpha, 
+                            const double meanValue,
+                            std::vector<size_t> &tetrahedra, 
+                            std::vector<std::vector<size_t> > &domains,
+                            std::vector<std::vector<size_t> > &boundaries,
+                            std::vector<size_t> &neigh,
+                            std::vector<double> &allMeshPoints)
+{  
+  int meshDim = m->getMeshStatus(false); 
+  if (meshDim < dim-1){ // if no 1D boundary mesh for a 2D domain, if no 2D boundary mesh for a 3D domain --> so generate one
     GenerateMesh(m, dim-1);
   }
   
@@ -463,9 +472,83 @@ void constrainedAlphaShapes_(GModel* m, const int dim, const std::vector<double>
   };
 
   /* Generate the tet mesh */
-  //HXTTetMeshOptions options = {.refine=0, .optimize=0, .verbosity=2, .quality.min=0.35, .nodalSizes.factor=1.0};
-  //hxtTetMesh(mesh, &options);
   hxtDelaunaySteadyVertices(mesh, &delOptions, nodeInfo, numNewPts);
+
+ /* ------------------------alpha shapes of the newly generated mesh -----------------------------*/
+  for (size_t i=0; i<mesh->tetrahedra.num; i++){
+    std::cout << mesh->tetrahedra.flag[i] << "\n";
+    if (mesh->tetrahedra.color[i] < UINT32_MAX)
+    {
+      for (size_t j = 0; j < 4; j++)
+      {
+        tetrahedra.push_back(mesh->tetrahedra.node[4*i+j]);
+      }
+    }
+  }
+  computeTetNeighbors_ (tetrahedra, neigh);
+  double hMean;
+  for (size_t i=0; i<mesh->vertices.num; i++){
+    for (size_t dim=0; dim<3; dim++){
+      allMeshPoints.push_back(mesh->vertices.coord[4*i+dim]);
+    }
+  }
+  
+  if (meanValue < 0) hMean = meanEdgeLength(allMeshPoints,tetrahedra);
+  else hMean = meanValue;
+  std::cout << hMean << "is hmean \n";
+  std::vector<bool> _touched;
+  _touched.resize(tetrahedra.size()/4);
+  for (size_t i=0;i<_touched.size();i++)_touched[i] = false;
+  
+  for (size_t i = 0; i < tetrahedra.size(); i+=4){
+      size_t *t = &tetrahedra[i];
+      if (alphaShape(t, allMeshPoints, hMean) < alpha && _touched[i/4] == false){
+        std::stack<size_t> _s;
+        std::vector<size_t> _domain;
+        std::vector<size_t> _boundary;
+        _s.push(i/4);
+        _touched[i/4] = true;
+        _domain.push_back(i/4);
+        while(!_s.empty()){
+          size_t t = _s.top();
+          _s.pop();
+          for (int j=0;j<4;j++){
+            size_t tj = neigh[4*t+j];
+            if (tj == tetrahedra.size()){
+              _boundary.push_back(t);
+              _boundary.push_back(j);
+            }
+            else if (!_touched[tj]){
+              if (alphaShape(&tetrahedra[4*tj], allMeshPoints, hMean) < alpha){
+                _s.push(tj);
+                _touched[tj] = true;
+                _domain.push_back(tj);	    
+              }	    
+              else {
+                _boundary.push_back(t);
+                _boundary.push_back(j);	      
+              }
+            }
+          }	  
+        }
+        boundaries.push_back(_boundary);
+        domains.push_back(_domain);
+      }
+  }
+  for (size_t i = 0; i < tetrahedra.size(); i++)tetrahedra[i]++;
+  
+  for (size_t i = 0; i < domains.size(); i++)
+  {
+    for (size_t j = 0; j < domains[i].size(); j++)
+    {
+      std::cout << domains[i][j] << "\n";
+    }
+    
+  }
+  
+  /* ------------------------------------------------------------------ */
+
+
 
   /* write back to gmsh format */
   Hxt2GmshAlpha(regions, mesh, v2c, c2v);

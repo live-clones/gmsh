@@ -3984,21 +3984,41 @@ class model:
         create_hxt_mesh = createHxtMesh
 
         @staticmethod
-        def alphaShapesConstrained(dim, coord):
+        def alphaShapesConstrained(dim, coord, alpha, meanValue):
             """
-            gmsh.model.mesh.alphaShapesConstrained(dim, coord)
+            gmsh.model.mesh.alphaShapesConstrained(dim, coord, alpha, meanValue)
 
             Generate a mesh of the array of points `coord', constrained to the surface
             mesh of the current model. Currently only supported for 3D.
+
+            Return `tetrahedra', `domains', `boundaries', `neighbors', `allMeshPoints'.
             """
             api_coord_, api_coord_n_ = _ivectordouble(coord)
+            api_tetrahedra_, api_tetrahedra_n_ = POINTER(c_size_t)(), c_size_t()
+            api_domains_, api_domains_n_, api_domains_nn_ = POINTER(POINTER(c_size_t))(), POINTER(c_size_t)(), c_size_t()
+            api_boundaries_, api_boundaries_n_, api_boundaries_nn_ = POINTER(POINTER(c_size_t))(), POINTER(c_size_t)(), c_size_t()
+            api_neighbors_, api_neighbors_n_ = POINTER(c_size_t)(), c_size_t()
+            api_allMeshPoints_, api_allMeshPoints_n_ = POINTER(c_double)(), c_size_t()
             ierr = c_int()
             lib.gmshModelMeshAlphaShapesConstrained(
                 c_int(dim),
                 api_coord_, api_coord_n_,
+                c_double(alpha),
+                c_double(meanValue),
+                byref(api_tetrahedra_), byref(api_tetrahedra_n_),
+                byref(api_domains_), byref(api_domains_n_), byref(api_domains_nn_),
+                byref(api_boundaries_), byref(api_boundaries_n_), byref(api_boundaries_nn_),
+                byref(api_neighbors_), byref(api_neighbors_n_),
+                byref(api_allMeshPoints_), byref(api_allMeshPoints_n_),
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
+            return (
+                _ovectorsize(api_tetrahedra_, api_tetrahedra_n_.value),
+                _ovectorvectorsize(api_domains_, api_domains_n_, api_domains_nn_),
+                _ovectorvectorsize(api_boundaries_, api_boundaries_n_, api_boundaries_nn_),
+                _ovectorsize(api_neighbors_, api_neighbors_n_.value),
+                _ovectordouble(api_allMeshPoints_, api_allMeshPoints_n_.value))
         alpha_shapes_constrained = alphaShapesConstrained
 
 

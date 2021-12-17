@@ -2658,13 +2658,30 @@ namespace gmsh { // Top-level functions
       // Generate a mesh of the array of points `coord', constrained to the surface
       // mesh of the current model. Currently only supported for 3D.
       inline void alphaShapesConstrained(const int dim,
-                                         const std::vector<double> & coord)
+                                         const std::vector<double> & coord,
+                                         const double alpha,
+                                         const double meanValue,
+                                         std::vector<std::size_t> & tetrahedra,
+                                         std::vector<std::vector<std::size_t> > & domains,
+                                         std::vector<std::vector<std::size_t> > & boundaries,
+                                         std::vector<std::size_t> & neighbors,
+                                         std::vector<double> & allMeshPoints)
       {
         int ierr = 0;
         double *api_coord_; size_t api_coord_n_; vector2ptr(coord, &api_coord_, &api_coord_n_);
-        gmshModelMeshAlphaShapesConstrained(dim, api_coord_, api_coord_n_, &ierr);
+        size_t *api_tetrahedra_; size_t api_tetrahedra_n_;
+        size_t **api_domains_; size_t *api_domains_n_, api_domains_nn_;
+        size_t **api_boundaries_; size_t *api_boundaries_n_, api_boundaries_nn_;
+        size_t *api_neighbors_; size_t api_neighbors_n_;
+        double *api_allMeshPoints_; size_t api_allMeshPoints_n_;
+        gmshModelMeshAlphaShapesConstrained(dim, api_coord_, api_coord_n_, alpha, meanValue, &api_tetrahedra_, &api_tetrahedra_n_, &api_domains_, &api_domains_n_, &api_domains_nn_, &api_boundaries_, &api_boundaries_n_, &api_boundaries_nn_, &api_neighbors_, &api_neighbors_n_, &api_allMeshPoints_, &api_allMeshPoints_n_, &ierr);
         if(ierr) throwLastError();
         gmshFree(api_coord_);
+        tetrahedra.assign(api_tetrahedra_, api_tetrahedra_ + api_tetrahedra_n_); gmshFree(api_tetrahedra_);
+        domains.resize(api_domains_nn_); for(size_t i = 0; i < api_domains_nn_; ++i){ domains[i].assign(api_domains_[i], api_domains_[i] + api_domains_n_[i]); gmshFree(api_domains_[i]); } gmshFree(api_domains_); gmshFree(api_domains_n_);
+        boundaries.resize(api_boundaries_nn_); for(size_t i = 0; i < api_boundaries_nn_; ++i){ boundaries[i].assign(api_boundaries_[i], api_boundaries_[i] + api_boundaries_n_[i]); gmshFree(api_boundaries_[i]); } gmshFree(api_boundaries_); gmshFree(api_boundaries_n_);
+        neighbors.assign(api_neighbors_, api_neighbors_ + api_neighbors_n_); gmshFree(api_neighbors_);
+        allMeshPoints.assign(api_allMeshPoints_, api_allMeshPoints_ + api_allMeshPoints_n_); gmshFree(api_allMeshPoints_);
       }
 
       namespace field { // Mesh size field functions

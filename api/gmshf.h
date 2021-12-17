@@ -3210,12 +3210,40 @@ c
      &      dim,
      &      coord,
      &      coord_n,
+     &      alpha,
+     &      meanValue,
+     &      tetrahedra,
+     &      tetrahedra_n,
+     &      domains,
+     &      domains_n,
+     &      domains_nn,
+     &      boundaries,
+     &      boundaries_n,
+     &      boundaries_nn,
+     &      neighbors,
+     &      neighbors_n,
+     &      allMeshPoints,
+     &      allMeshPoints_n,
      &      ierr)
      &    bind(C, name = "gmshModelMeshAlphaShapesConstrained")
           use, intrinsic :: iso_c_binding
             integer(c_int), value::dim
             real(c_double)::coord(*)
             integer(c_size_t), value :: coord_n
+            real(c_double), value::alpha
+            real(c_double), value::meanValue
+            type(c_ptr), intent(out)::tetrahedra
+            integer(c_size_t) :: tetrahedra_n
+            type (c_ptr), intent(out)::domains
+            type(c_ptr), intent(out) :: domains_n
+            integer(c_size_t) :: domains_nn
+            type (c_ptr), intent(out)::boundaries
+            type(c_ptr), intent(out) :: boundaries_n
+            integer(c_size_t) :: boundaries_nn
+            type(c_ptr), intent(out)::neighbors
+            integer(c_size_t) :: neighbors_n
+            type(c_ptr), intent(out)::allMeshPoints
+            integer(c_size_t) :: allMeshPoints_n
             integer(c_int)::ierr
           end subroutine gmshModelMeshAlphaShapesConstrained
 

@@ -3429,18 +3429,41 @@ end
 const create_hxt_mesh = createHxtMesh
 
 """
-    gmsh.model.mesh.alphaShapesConstrained(dim, coord)
+    gmsh.model.mesh.alphaShapesConstrained(dim, coord, alpha, meanValue)
 
 Generate a mesh of the array of points `coord`, constrained to the surface mesh
 of the current model. Currently only supported for 3D.
+
+Return `tetrahedra`, `domains`, `boundaries`, `neighbors`, `allMeshPoints`.
 """
-function alphaShapesConstrained(dim, coord)
+function alphaShapesConstrained(dim, coord, alpha, meanValue)
+    api_tetrahedra_ = Ref{Ptr{Csize_t}}()
+    api_tetrahedra_n_ = Ref{Csize_t}()
+    api_domains_ = Ref{Ptr{Ptr{Csize_t}}}()
+    api_domains_n_ = Ref{Ptr{Csize_t}}()
+    api_domains_nn_ = Ref{Csize_t}()
+    api_boundaries_ = Ref{Ptr{Ptr{Csize_t}}}()
+    api_boundaries_n_ = Ref{Ptr{Csize_t}}()
+    api_boundaries_nn_ = Ref{Csize_t}()
+    api_neighbors_ = Ref{Ptr{Csize_t}}()
+    api_neighbors_n_ = Ref{Csize_t}()
+    api_allMeshPoints_ = Ref{Ptr{Cdouble}}()
+    api_allMeshPoints_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshAlphaShapesConstrained, gmsh.lib), Cvoid,
-          (Cint, Ptr{Cdouble}, Csize_t, Ptr{Cint}),
-          dim, convert(Vector{Cdouble}, coord), length(coord), ierr)
+          (Cint, Ptr{Cdouble}, Csize_t, Cdouble, Cdouble, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Csize_t}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Csize_t}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
+          dim, convert(Vector{Cdouble}, coord), length(coord), alpha, meanValue, api_tetrahedra_, api_tetrahedra_n_, api_domains_, api_domains_n_, api_domains_nn_, api_boundaries_, api_boundaries_n_, api_boundaries_nn_, api_neighbors_, api_neighbors_n_, api_allMeshPoints_, api_allMeshPoints_n_, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    return nothing
+    tetrahedra = unsafe_wrap(Array, api_tetrahedra_[], api_tetrahedra_n_[], own = true)
+    tmp_api_domains_ = unsafe_wrap(Array, api_domains_[], api_domains_nn_[], own = true)
+    tmp_api_domains_n_ = unsafe_wrap(Array, api_domains_n_[], api_domains_nn_[], own = true)
+    domains = [ unsafe_wrap(Array, tmp_api_domains_[i], tmp_api_domains_n_[i], own = true) for i in 1:api_domains_nn_[] ]
+    tmp_api_boundaries_ = unsafe_wrap(Array, api_boundaries_[], api_boundaries_nn_[], own = true)
+    tmp_api_boundaries_n_ = unsafe_wrap(Array, api_boundaries_n_[], api_boundaries_nn_[], own = true)
+    boundaries = [ unsafe_wrap(Array, tmp_api_boundaries_[i], tmp_api_boundaries_n_[i], own = true) for i in 1:api_boundaries_nn_[] ]
+    neighbors = unsafe_wrap(Array, api_neighbors_[], api_neighbors_n_[], own = true)
+    allMeshPoints = unsafe_wrap(Array, api_allMeshPoints_[], api_allMeshPoints_n_[], own = true)
+    return tetrahedra, domains, boundaries, neighbors, allMeshPoints
 end
 const alpha_shapes_constrained = alphaShapesConstrained
 

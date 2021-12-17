@@ -5405,11 +5405,19 @@ gmsh::model::mesh::createHxtMesh(const std::string &inputMesh, const std::vector
 }
 
 GMSH_API void
-gmsh::model::mesh::alphaShapesConstrained(const int dim, const std::vector<double>& coord){
+gmsh::model::mesh::alphaShapesConstrained(const int dim, 
+                                          const std::vector<double>& coord, 
+                                          const double alpha, 
+                                          const double meanValue, 
+                                          std::vector<size_t> &tetrahedra, 
+                                          std::vector<std::vector<size_t> > &domains,
+                                          std::vector<std::vector<size_t> > &boundaries,
+                                          std::vector<size_t> &neigh,
+                                          std::vector<double> &allMeshPoints){
 #if defined(HAVE_MESH)
-  constrainedAlphaShapes_(GModel::current(), dim, coord);
+  constrainedAlphaShapes_(GModel::current(), dim, coord, alpha, meanValue, tetrahedra, domains, boundaries, neigh, allMeshPoints);
 #else
-  Msg::Error("createHxtMesh requires the mesh module");
+  Msg::Error("alphaShapesConstrained requires the mesh module");
 #endif  
 }
 

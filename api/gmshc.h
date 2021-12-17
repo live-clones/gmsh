@@ -1527,6 +1527,13 @@ GMSH_API void gmshModelMeshCreateHxtMesh(const char * inputMesh,
  * mesh of the current model. Currently only supported for 3D. */
 GMSH_API void gmshModelMeshAlphaShapesConstrained(const int dim,
                                                   double * coord, size_t coord_n,
+                                                  const double alpha,
+                                                  const double meanValue,
+                                                  size_t ** tetrahedra, size_t * tetrahedra_n,
+                                                  size_t *** domains, size_t ** domains_n, size_t *domains_nn,
+                                                  size_t *** boundaries, size_t ** boundaries_n, size_t *boundaries_nn,
+                                                  size_t ** neighbors, size_t * neighbors_n,
+                                                  double ** allMeshPoints, size_t * allMeshPoints_n,
                                                   int * ierr);
 
 /* Add a new mesh size field of type `fieldType'. If `tag' is positive, assign
