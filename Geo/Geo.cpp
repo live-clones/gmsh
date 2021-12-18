@@ -1703,6 +1703,8 @@ static int CompareTwoSurfaces(const void *a, const void *b)
      !List_Nbr(s1->GeneratricesByTag) && !List_Nbr(s2->GeneratricesByTag))
     return 1;
 
+  // if generatrices are given bby tag (e.g. for boundary layers on generic
+  // GModel entities), compare those
   if(List_Nbr(s1->GeneratricesByTag) && List_Nbr(s2->GeneratricesByTag))
     return Compare2Lists(s1->GeneratricesByTag, s2->GeneratricesByTag, fcmp_absint);
 
@@ -2431,6 +2433,17 @@ static void ReplaceDuplicateSurfaces(std::map<int, int> *s_report = nullptr)
         Msg::Error("Could not replace surface %d in Coherence", (*ps)->Num);
       else
         List_Write(vol->Surfaces, j, ps2);
+    }
+    for(int j = 0; j < List_Nbr(vol->SurfacesByTag); j++) {
+      int num;
+      List_Read(vol->SurfacesByTag, j, &num);
+      s2 = FindSurface(std::abs(vol->Extrude->geo.Source), surfaces2delete);
+      if(s2) {
+        if(!(ps2 = (Surface **)Tree_PQuery(allNonDuplicatedSurfaces, &s2)))
+          Msg::Error("Could not replace surface %d in Coherence", s2->Num);
+        else
+          List_Write(vol->SurfacesByTag, j, &(*ps2)->Num);
+      }
     }
     // replace extrusion sources
     if(vol->Extrude && vol->Extrude->geo.Mode == EXTRUDED_ENTITY) {
