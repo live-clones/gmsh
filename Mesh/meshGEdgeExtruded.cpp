@@ -72,7 +72,7 @@ static void copyMesh(GEdge *from, GEdge *to)
 #else
   // so it's better to go back to the elements, which are assumed to be stored
   // in the correct order
-  for(std::size_t i = 0; i < from->lines.size() - 1; i++) {
+  for(int i = 0; i < (int)from->lines.size() - 1; i++) {
     int index = (direction < 0) ? (from->lines.size() - i - 2) : i;
     MVertex *v = from->lines[index]->getVertex(1);
     double x = v->x(), y = v->y(), z = v->z();
