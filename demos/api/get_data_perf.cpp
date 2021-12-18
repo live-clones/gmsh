@@ -15,7 +15,7 @@ int main(int argc, char **argv)
 
   // create a post-processing dataset
   gmsh::plugin::setNumber("NewView", "Value", 1.234);
-  gmsh::plugin::run("NewView");
+  int t = gmsh::plugin::run("NewView");
 
   // retrieve the dataset as a vector of vectors (one per tag)
   std::string type;
@@ -24,13 +24,13 @@ int main(int argc, char **argv)
   double time;
   int numComp;
   std::cout << "before get" << std::endl;
-  gmsh::view::getModelData(0, 0, type, tags, data, time, numComp);
+  gmsh::view::getModelData(t, 0, type, tags, data, time, numComp);
   std::cout << "after get" << std::endl;
 
   // retrieve the dataset as a single vector
   std::vector<double> data2;
   std::cout << "before getHomogeneous" << std::endl;
-  gmsh::view::getHomogeneousModelData(0, 0, type, tags, data2, time, numComp);
+  gmsh::view::getHomogeneousModelData(t, 0, type, tags, data2, time, numComp);
   std::cout << "after getHomogeneous" << std::endl;
 
   gmsh::finalize();
