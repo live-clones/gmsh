@@ -15,10 +15,11 @@ class OCCFace;
 
 #if defined(HAVE_OCC)
 
-#include <TopoDS_Edge.hxx>
-#include <Geom_Curve.hxx>
-#include <Geom2d_Curve.hxx>
 #include <BRep_Tool.hxx>
+#include <Geom2d_Curve.hxx>
+#include <GeomAPI_ProjectPointOnCurve.hxx>
+#include <Geom_Curve.hxx>
+#include <TopoDS_Edge.hxx>
 
 class OCCEdge : public GEdge {
 private:
@@ -28,6 +29,7 @@ private:
   Handle(Geom_Curve) _curve;
   mutable Handle(Geom2d_Curve) _curve2d;
   mutable GFace *_trimmed;
+  mutable GeomAPI_ProjectPointOnCurve _projector;
   bool _project(const double p[3], double &u, double xyz[3]) const;
 
 public:
