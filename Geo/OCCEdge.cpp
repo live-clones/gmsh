@@ -27,7 +27,6 @@
 #include <Geom_Line.hxx>
 #include <Geom_Conic.hxx>
 #include <Geom_BSplineCurve.hxx>
-#include <GeomAPI_ProjectPointOnCurve.hxx>
 #include <Bnd_Box.hxx>
 #include <BRepLProp_CLProps.hxx>
 #include <BRepBndLib.hxx>
@@ -49,6 +48,18 @@ OCCEdge::OCCEdge(GModel *m, TopoDS_Edge c, int num, GVertex *v1, GVertex *v2)
   // build the reverse curve
   _c_rev = _c;
   _c_rev.Reverse();
+
+  // initialize projector, with a little tolerance to converge on the boundary
+  // points
+  double umin = _s0;
+  double umax = _s1;
+  if(_v0 != _v1) {
+    const double du = umax - umin;
+    const double utol = std::max(fabs(du) * 1e-8, 1e-12);
+    umin -= utol;
+    umax += utol;
+  }
+  _projector.Init(_curve, umin, umax);
 }
 
 SBoundingBox3d OCCEdge::bounds(bool fast)
@@ -178,32 +189,22 @@ bool OCCEdge::_project(const double p[3], double &u, double xyz[3]) const
     return false;
   }
 
-  // little tolerance to converge on the boundary points
-  double umin = _s0;
-  double umax = _s1;
-  if(!periodic(0)) {
-    const double du = umax - umin;
-    const double utol = std::max(fabs(du) * 1e-8, 1e-12);
-    umin -= utol;
-    umax += utol;
-  }
-
   gp_Pnt pnt(p[0], p[1], p[2]);
-  GeomAPI_ProjectPointOnCurve proj(pnt, _curve, umin, umax);
+  _projector.Perform(pnt);
 
-  if(!proj.NbPoints()) {
+  if(!_projector.NbPoints()) {
     Msg::Debug("Projection of point (%g, %g, %g) on curve %d failed", p[0],
-                 p[1], p[2], tag());
+               p[1], p[2], tag());
     return false;
   }
 
-  u = proj.LowerDistanceParameter();
+  u = _projector.LowerDistanceParameter();
 
-  if(u < umin || u > umax)
-    Msg::Warning("Point projection is out of curve parameter bounds");
+  if(u < _s0 || u > _s1)
+    Msg::Debug("Point projection is out of curve parameter bounds");
 
   if(xyz) {
-    pnt = proj.NearestPoint();
+    pnt = _projector.NearestPoint();
     xyz[0] = pnt.X();
     xyz[1] = pnt.Y();
     xyz[2] = pnt.Z();

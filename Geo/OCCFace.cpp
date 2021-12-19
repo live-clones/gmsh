@@ -257,7 +257,7 @@ GPoint OCCFace::point(double par1, double par2) const
 bool OCCFace::_project(const double p[3], double uv[2], double xyz[3]) const
 {
   gp_Pnt pnt(p[0], p[1], p[2]);
-  const_cast<OCCFace*>(this)->_projector.Perform(pnt);
+  _projector.Perform(pnt);
   if(!_projector.NbPoints()) {
     Msg::Debug("Projection of point (%g, %g, %g) on surface %d failed", p[0],
                p[1], p[2], tag());

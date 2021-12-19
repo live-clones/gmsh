@@ -13,9 +13,9 @@
 
 #if defined(HAVE_OCC)
 
-#include <TopoDS_Face.hxx>
 #include <BRepLProp_SLProps.hxx>
 #include <GeomAPI_ProjectPointOnSurf.hxx>
+#include <TopoDS_Face.hxx>
 
 class OCCFace : public GFace {
 private:
@@ -28,7 +28,7 @@ private:
   double _radius;
   SPoint3 _center;
   void _setup();
-  GeomAPI_ProjectPointOnSurf _projector;
+  mutable GeomAPI_ProjectPointOnSurf _projector;
   bool _project(const double p[3], double uv[2], double xyz[3]) const;
 
 public:
