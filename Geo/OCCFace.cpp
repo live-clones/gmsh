@@ -24,7 +24,6 @@
 #include <BRepTools.hxx>
 #include <BRep_Builder.hxx>
 #include <Bnd_Box.hxx>
-#include <GeomAPI_ProjectPointOnSurf.hxx>
 #include <Geom_BSplineSurface.hxx>
 #include <Geom_BezierSurface.hxx>
 #include <Geom_ConicalSurface.hxx>
@@ -139,6 +138,26 @@ void OCCFace::_setup()
 
   _occface = BRep_Tool::Surface(_s);
 
+  // init projector, with little tolerance to converge on the borders of the
+  // surface
+  double umin = _umin;
+  double vmin = _vmin;
+  double umax = _umax;
+  double vmax = _vmax;
+  if(!_periodic[0]) {
+    const double du = _umax - _umin;
+    const double utol = std::max(fabs(du) * 1e-8, 1e-12);
+    umin -= utol;
+    umax += utol;
+  }
+  if(!_periodic[1]) {
+    const double dv = _vmax - _vmin;
+    const double vtol = std::max(fabs(dv) * 1e-8, 1e-12);
+    vmin -= vtol;
+    vmax += vtol;
+  }
+  _projector.Init(_occface, umin, umax, vmin, vmax);
+
   if(OCCFace::geomType() == GEntity::Sphere) {
     BRepAdaptor_Surface surface(_s);
     gp_Sphere sphere = surface.Sphere();
@@ -237,37 +256,20 @@ GPoint OCCFace::point(double par1, double par2) const
 
 bool OCCFace::_project(const double p[3], double uv[2], double xyz[3]) const
 {
-  // little tolerance to converge on the borders of the surface
-  double umin = _umin;
-  double vmin = _vmin;
-  double umax = _umax;
-  double vmax = _vmax;
-  if(!_periodic[0]) {
-    const double du = _umax - _umin;
-    const double utol = std::max(fabs(du) * 1e-8, 1e-12);
-    umin -= utol;
-    umax += utol;
-  }
-  if(!_periodic[1]) {
-    const double dv = _vmax - _vmin;
-    const double vtol = std::max(fabs(dv) * 1e-8, 1e-12);
-    vmin -= vtol;
-    vmax += vtol;
-  }
   gp_Pnt pnt(p[0], p[1], p[2]);
-  GeomAPI_ProjectPointOnSurf proj(pnt, _occface, umin, umax, vmin, vmax);
-  if(!proj.NbPoints()) {
+  const_cast<OCCFace*>(this)->_projector.Perform(pnt);
+  if(!_projector.NbPoints()) {
     Msg::Debug("Projection of point (%g, %g, %g) on surface %d failed", p[0],
                p[1], p[2], tag());
     return false;
   }
-  proj.LowerDistanceParameters(uv[0], uv[1]);
+  _projector.LowerDistanceParameters(uv[0], uv[1]);
 
-  if(uv[0] < umin || uv[0] > umax || uv[1] < vmin || uv[1] > vmax)
+  if(uv[0] < _umin || uv[0] > _umax || uv[1] < _vmin || uv[1] > _vmax)
     Msg::Debug("Point projection is out of surface parameter bounds");
 
   if(xyz) {
-    pnt = proj.NearestPoint();
+    pnt = _projector.NearestPoint();
     xyz[0] = pnt.X();
     xyz[1] = pnt.Y();
     xyz[2] = pnt.Z();
