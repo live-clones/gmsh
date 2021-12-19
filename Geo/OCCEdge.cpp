@@ -49,17 +49,19 @@ OCCEdge::OCCEdge(GModel *m, TopoDS_Edge c, int num, GVertex *v1, GVertex *v2)
   _c_rev = _c;
   _c_rev.Reverse();
 
-  // initialize projector, with a little tolerance to converge on the boundary
-  // points
-  double umin = _s0;
-  double umax = _s1;
-  if(_v0 != _v1) {
-    const double du = umax - umin;
-    const double utol = std::max(fabs(du) * 1e-8, 1e-12);
-    umin -= utol;
-    umax += utol;
+  if(!_curve.IsNull()) {
+    // initialize projector, with a little tolerance to converge on the boundary
+    // points
+    double umin = _s0;
+    double umax = _s1;
+    if(_v0 != _v1) {
+      const double du = umax - umin;
+      const double utol = std::max(fabs(du) * 1e-8, 1e-12);
+      umin -= utol;
+      umax += utol;
+    }
+    _projector.Init(_curve, umin, umax);
   }
-  _projector.Init(_curve, umin, umax);
 }
 
 SBoundingBox3d OCCEdge::bounds(bool fast)
