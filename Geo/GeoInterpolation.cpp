@@ -1030,7 +1030,8 @@ Vertex InterpolateSurface(Surface *s, double u, double v, int derivee, int u_v)
   // extrusion: in that case set the exactExtrusion option to 0 to use the
   // normal code path
   if(CTX::instance()->geom.exactExtrusion && s->Extrude &&
-     s->Extrude->geo.Mode == EXTRUDED_ENTITY && s->Typ != MSH_SURF_PLAN)
+     s->Extrude->geo.Mode == EXTRUDED_ENTITY && s->Typ != MSH_SURF_PLAN
+     && s->Typ != MSH_SURF_BND_LAYER)
     return InterpolateExtrudedSurface(s, u, v);
 
   switch(s->Typ) {
