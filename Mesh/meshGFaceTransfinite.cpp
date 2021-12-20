@@ -230,9 +230,15 @@ int MeshTransfiniteSurface(GFace *gf)
       N[iCorner++] = i;
     }
     SPoint2 param;
-    reparamMeshVertexOnFace(v, gf, param);
-    U.push_back(param[0]);
-    V.push_back(param[1]);
+    if(reparamMeshVertexOnFace(v, gf, param)) {
+      U.push_back(param[0]);
+      V.push_back(param[1]);
+    }
+    else {
+      Msg::Error("Surface %d cannot be meshed with the transfinite algorithm "
+                 "(node %d on a periodic seam)", gf->tag(), v->getNum());
+      return 0;
+    }
   }
 
   int N1 = N[0], N2 = N[1], N3 = N[2], N4 = N[3];
