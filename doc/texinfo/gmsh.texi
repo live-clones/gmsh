@@ -2566,20 +2566,16 @@ that subsequently created entities in the same category will not have
 tags smaller than the given value.
 
 @item < Recursive > Hide @{ <Physical> Point | Curve | Surface | Volume @{ @var{expression-list-or-all} @}; @dots{} @}
-Hide the entities listed in @var{expression-list-or-all}, if
-@code{General.VisibilityMode} is set to @code{0} or @code{1}.
+Hide the entities listed in @var{expression-list-or-all}.
 
 @item Hide @{ : @}
-Hide all entities, if @code{General.VisibilityMode} is set to @code{0}
-or @code{1}.
+Hide all entities.
 
 @item < Recursive > Show @{ <Physical> Point | Curve | Surface | Volume @{ @var{expression-list-or-all} @}; @dots{} @}
-Show the entities listed in @var{expression-list-or-all}, if
-@code{General.VisibilityMode} is set to @code{0} or @code{1}.
+Show the entities listed in @var{expression-list-or-all}.
 
 @item Show @{ : @}
-Show all entities, if @code{General.VisibilityMode} is set to @code{0}
-or @code{1}.
+Show all entities.
 
 @end ftable
 
@@ -3277,15 +3273,6 @@ Renumber the elements tags in the current mesh in a contiunous sequence.
 Set the mesh color of the entities in @var{expression-list} to
 @var{color-expression}. @value{SYNC}
 
-@item < Recursive > Hide @{ <Physical> Point | Curve | Surface | Volume @{ @var{expression-list-or-all} @}; @dots{} @}
-Hide the mesh of the entities in @var{expression-list}, if
-@code{General.VisibilityMode} is set to @code{0} or
-@code{2}. @value{SYNC}
-
-@item Hide @{ : @}
-Hide the mesh of all entities, if @code{General.VisibilityMode} is set
-to @code{0} or @code{2}. @value{SYNC}
-
 @item Recombine Surface @{ @var{expression-list-or-all} @}  < = @var{expression} >;
 Recombine the triangular meshes of the surfaces listed in
 @var{expression-list} into mixed triangular/quadrangular meshes. The
@@ -3323,15 +3310,6 @@ Save the current mesh in a file named @var{char-expression}, using the
 current @code{Mesh.Format} (@pxref{Mesh options list}). If the path in
 @var{char-expression} is not absolute, @var{char-expression} is appended
 to the path of the current file. @value{SYNC}
-
-@item < Recursive > Show @{ <Physical> Point | Curve | Surface | Volume @{ @var{expression-list-or-all} @}; @dots{} @}
-Show the mesh of the entities in @var{expression-list}, if
-@code{General.VisibilityMode} is set to @code{0} or
-@code{2}. @value{SYNC}
-
-@item Show @{ : @};
-Show the mesh of all entities, if @code{General.VisibilityMode} is set
-to @code{0} or @code{2}. @value{SYNC}
 
 @item Smoother Surface @{ @var{expression-list} @} = @var{expression};
 Set the number of elliptic smoothing steps for the surfaces listed in
