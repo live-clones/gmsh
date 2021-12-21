@@ -512,7 +512,7 @@ bool reparamMeshEdgeOnFace(MVertex *v1, MVertex *v2, GFace *gf, SPoint2 &param1,
 }
 
 bool reparamMeshVertexOnFace(MVertex const *v, const GFace *gf, SPoint2 &param,
-                             bool onSurface, bool failOnSeam)
+                             bool onSurface, bool failOnSeam, int dir)
 {
   if(!v->onWhat()) {
     Msg::Error("Mesh node %d is not classified: cannot reparametrize",
@@ -538,7 +538,7 @@ bool reparamMeshVertexOnFace(MVertex const *v, const GFace *gf, SPoint2 &param,
        gf->geomType() == GEntity::Plane)
       param = gf->parFromPoint(SPoint3(v->x(), v->y(), v->z()), onSurface);
     else
-      param = gv->reparamOnFace(gf, 1);
+      param = gv->reparamOnFace(gf, dir);
     if(failOnSeam) {
       // shout, we could be on a seam
       std::vector<GEdge *> const &ed = gv->edges();
@@ -555,7 +555,7 @@ bool reparamMeshVertexOnFace(MVertex const *v, const GFace *gf, SPoint2 &param,
     GEdge *ge = (GEdge *)v->onWhat();
     double t;
     v->getParameter(0, t);
-    param = ge->reparamOnFace(gf, t, 1);
+    param = ge->reparamOnFace(gf, t, dir);
     if(!v->getParameter(0, t)) {
       Msg::Warning("No parametric coordinate on node %d classified on curve %d",
                    v->getNum(), ge->tag());
