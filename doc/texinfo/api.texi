@@ -3001,7 +3001,7 @@ mesh of the current model. Currently only supported for 3D.
 @item Input:
 @code{dim}, @code{coord}, @code{alpha}, @code{meanValue}
 @item Output:
-@code{tetrahedra}, @code{domains}, @code{boundaries}, @code{neighbors}, @code{allMeshPoints}
+@code{tetrahedra}, @code{domains}, @code{boundaries}, @code{neighbors}
 @item Return:
 -
 @item Language-specific definition:
@@ -3027,7 +3027,7 @@ the field tag.
 @item Return:
 integer value
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L1748,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1542,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4031,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L3488,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L1747,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1541,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4028,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L3485,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t7.cpp#L50,t7.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t10.cpp#L46,t10.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t11.cpp#L38,t11.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t13.cpp#L83,t13.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t17.cpp#L41,t17.cpp}, ...), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t7.py#L43,t7.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t10.py#L43,t10.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t13.py#L71,t13.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t17.py#L35,t17.py}, @url{@value{GITLAB-PREFIX}/demos/api/adapt_mesh.py#L111,adapt_mesh.py}, ...)
 @end table
@@ -3043,7 +3043,7 @@ Remove the field with tag @code{tag}.
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L1754,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1547,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4051,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L3502,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L1753,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1546,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4048,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L3499,Julia}
 @end table
 
 @item gmsh/model/mesh/field/list
@@ -3057,7 +3057,7 @@ Get the list of all fields.
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L1759,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1551,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4065,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L3518,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L1758,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1550,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4062,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L3515,Julia}
 @end table
 
 @item gmsh/model/mesh/field/getType
@@ -3071,7 +3071,7 @@ Get the type @code{fieldType} of the field with tag @code{tag}.
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L1764,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1555,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4083,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L3537,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L1763,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1554,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4080,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L3534,Julia}
 @end table
 
 @item gmsh/model/mesh/field/setNumber
@@ -3086,7 +3086,7 @@ Set the numerical option @code{option} to value @code{value} for field
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L1770,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1560,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4103,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L3554,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L1769,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1559,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4100,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L3551,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t7.cpp#L51,t7.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t10.cpp#L49,t10.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t17.cpp#L42,t17.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/adapt_mesh.cpp#L270,adapt_mesh.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t7.py#L44,t7.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t10.py#L46,t10.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t17.py#L36,t17.py}, @url{@value{GITLAB-PREFIX}/demos/api/adapt_mesh.py#L112,adapt_mesh.py}, @url{@value{GITLAB-PREFIX}/demos/api/copy_mesh.py#L46,copy_mesh.py})
 @end table
@@ -3102,7 +3102,7 @@ Get the value of the numerical option @code{option} for field @code{tag}.
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L1777,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1566,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4120,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L3571,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L1776,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1565,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4117,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L3568,Julia}
 @end table
 
 @item gmsh/model/mesh/field/setString
@@ -3116,7 +3116,7 @@ Set the string option @code{option} to value @code{value} for field @code{tag}.
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L1784,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1572,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4141,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L3587,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L1783,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1571,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4138,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L3584,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t10.cpp#L73,t10.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t11.cpp#L39,t11.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t13.cpp#L86,t13.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t10.py#L69,t10.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t13.py#L73,t13.py})
 @end table
@@ -3132,7 +3132,7 @@ Get the value of the string option @code{option} for field @code{tag}.
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L1791,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1578,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4158,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L3604,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L1790,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1577,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4155,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L3601,Julia}
 @end table
 
 @item gmsh/model/mesh/field/setNumbers
@@ -3147,7 +3147,7 @@ Set the numerical list option @code{option} to value @code{value} for field
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L1798,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1584,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4179,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L3621,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L1797,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1583,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4176,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L3618,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t10.cpp#L47,t10.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t10.py#L44,t10.py})
 @end table
@@ -3163,7 +3163,7 @@ Get the value of the numerical list option @code{option} for field @code{tag}.
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L1805,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1590,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4197,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L3638,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L1804,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1589,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4194,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L3635,Julia}
 @end table
 
 @item gmsh/model/mesh/field/setAsBackgroundMesh
@@ -3177,7 +3177,7 @@ Set the field @code{tag} as the background mesh size field.
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L1812,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1596,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4218,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L3656,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L1811,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1595,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4215,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L3653,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t7.cpp#L54,t7.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t10.cpp#L108,t10.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t11.cpp#L41,t11.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t13.cpp#L89,t13.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t17.cpp#L43,t17.cpp}, ...), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t7.py#L47,t7.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t10.py#L102,t10.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t13.py#L76,t13.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t17.py#L37,t17.py}, @url{@value{GITLAB-PREFIX}/demos/api/adapt_mesh.py#L113,adapt_mesh.py}, ...)
 @end table
@@ -3193,7 +3193,7 @@ Set the field @code{tag} as a boundary layer size field.
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L1817,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1600,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4233,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L3671,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L1816,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1599,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4230,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L3668,Julia}
 @end table
 
 @end ftable
@@ -3219,7 +3219,7 @@ the geo module.)
 @item Return:
 integer value
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L1833,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1609,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4254,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L3706,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L1832,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1608,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4251,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L3703,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t1.cpp#L36,t1.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t2.cpp#L23,t2.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t3.cpp#L25,t3.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t5.cpp#L19,t5.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t6.cpp#L20,t6.cpp}, ...), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t1.py#L33,t1.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t2.py#L21,t2.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t3.py#L22,t3.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t5.py#L45,t5.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t6.py#L19,t6.py}, ...)
 @end table
@@ -3238,7 +3238,7 @@ the tag of the line.
 @item Return:
 integer value
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L1845,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1620,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4281,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L3726,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L1844,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1619,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4278,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L3723,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t1.cpp#L67,t1.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t2.cpp#L27,t2.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t3.cpp#L29,t3.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t5.cpp#L125,t5.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t6.cpp#L24,t6.cpp}, ...), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t1.py#L69,t1.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t2.py#L25,t2.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t3.py#L26,t3.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t5.py#L60,t5.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t6.py#L23,t6.py}, ...)
 @end table
@@ -3259,7 +3259,7 @@ tag of the circle arc.
 @item Return:
 integer value
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L1857,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1631,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4304,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L3747,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L1856,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1630,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4301,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L3744,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t5.cpp#L27,t5.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t5.py#L119,t5.py})
 @end table
@@ -3280,7 +3280,7 @@ the plane of the circle arc. Return the tag of the ellipse arc.
 @item Return:
 integer value
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L1873,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1646,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4333,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L3769,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L1872,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1645,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4330,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L3766,Julia}
 @end table
 
 @item gmsh/model/geo/addSpline
@@ -3298,7 +3298,7 @@ curve.
 @item Return:
 integer value
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L1889,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1661,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4363,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L3789,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L1888,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1660,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4360,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L3786,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t12.cpp#L67,t12.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t12.py#L63,t12.py})
 @end table
@@ -3318,7 +3318,7 @@ curve.
 @item Return:
 integer value
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L1899,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1670,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4387,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L3809,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L1898,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1669,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4384,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L3806,Julia}
 @end table
 
 @item gmsh/model/geo/addBezier
@@ -3334,7 +3334,7 @@ new tag is selected automatically.  Return the tag of the Bezier curve.
 @item Return:
 integer value
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L1907,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1677,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4411,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L3828,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L1906,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1676,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4408,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L3825,Julia}
 @end table
 
 @item gmsh/model/geo/addPolyline
@@ -3351,7 +3351,7 @@ first and last points are the same. Return the tag of the polyline curve.
 @item Return:
 integer value
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L1917,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1685,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4433,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L3848,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L1916,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1684,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4430,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L3845,Julia}
 @end table
 
 @item gmsh/model/geo/addCompoundSpline
@@ -3369,7 +3369,7 @@ Return the tag of the spline.
 @item Return:
 integer value
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L1927,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1694,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4456,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L3869,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L1926,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1693,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4453,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L3866,Julia}
 @end table
 
 @item gmsh/model/geo/addCompoundBSpline
@@ -3387,7 +3387,7 @@ b-spline.
 @item Return:
 integer value
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L1938,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1704,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4481,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L3889,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L1937,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1703,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4478,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L3886,Julia}
 @end table
 
 @item gmsh/model/geo/addCurveLoop
@@ -3407,7 +3407,7 @@ necessary. Return the tag of the curve loop.
 @item Return:
 integer value
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L1951,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1716,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4506,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L3912,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L1950,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1715,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4503,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L3909,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t1.cpp#L80,t1.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t2.cpp#L31,t2.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t3.cpp#L33,t3.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t5.cpp#L40,t5.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t6.cpp#L28,t6.cpp}, ...), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t1.py#L81,t1.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t2.py#L29,t2.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t3.py#L30,t3.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t5.py#L82,t5.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t6.py#L27,t6.py}, ...)
 @end table
@@ -3424,7 +3424,7 @@ Add curve loops in the built-in CAD representation based on the curves
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L1959,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1723,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4533,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L3930,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L1958,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1722,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4530,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L3927,Julia}
 @item Examples:
 Python (@url{@value{GITLAB-PREFIX}/demos/api/aneurysm.py#L34,aneurysm.py})
 @end table
@@ -3444,7 +3444,7 @@ surface.
 @item Return:
 integer value
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L1969,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1732,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4555,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L3954,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L1968,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1731,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4552,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L3951,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t1.cpp#L85,t1.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t2.cpp#L32,t2.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t3.cpp#L34,t3.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t5.cpp#L148,t5.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t6.cpp#L29,t6.cpp}, ...), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t1.py#L86,t1.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t2.py#L30,t2.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t3.py#L31,t3.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t5.py#L83,t5.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t6.py#L28,t6.py}, ...)
 @end table
@@ -3464,7 +3464,7 @@ automatically. Return the tag of the surface.
 @item Return:
 integer value
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L1979,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1741,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4579,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L3975,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L1978,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1740,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4576,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L3972,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t5.cpp#L61,t5.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t12.cpp#L71,t12.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t5.py#L153,t5.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t12.py#L67,t12.py})
 @end table
@@ -3482,7 +3482,7 @@ otherwise a new tag is selected automatically. Return the tag of the shell.
 @item Return:
 integer value
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L1989,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1749,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4604,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L3994,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L1988,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1748,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4601,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L3991,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t2.cpp#L114,t2.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t5.cpp#L70,t5.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t13.cpp#L77,t13.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/x2.cpp#L143,x2.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t2.py#L109,t2.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t5.py#L103,t5.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t13.py#L65,t13.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/x2.py#L139,x2.py}, @url{@value{GITLAB-PREFIX}/demos/api/aneurysm.py#L39,aneurysm.py}, ...)
 @end table
@@ -3502,7 +3502,7 @@ tag of the volume.
 @item Return:
 integer value
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L1999,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1758,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4626,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4015,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L1998,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1757,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4623,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4012,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t2.cpp#L115,t2.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t5.cpp#L71,t5.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t13.cpp#L78,t13.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/x2.cpp#L144,x2.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t2.py#L110,t2.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t5.py#L163,t5.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t13.py#L66,t13.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/x2.py#L140,x2.py}, @url{@value{GITLAB-PREFIX}/demos/api/aneurysm.py#L39,aneurysm.py}, ...)
 @end table
@@ -3524,7 +3524,7 @@ layers.
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2011,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1769,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4650,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4037,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2010,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1768,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4647,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4034,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t2.cpp#L125,t2.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t3.cpp#L49,t3.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t14.cpp#L65,t14.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t15.cpp#L63,t15.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t2.py#L119,t2.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t3.py#L45,t3.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t14.py#L59,t14.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t15.py#L59,t15.py}, @url{@value{GITLAB-PREFIX}/demos/api/hex.py#L8,hex.py})
 @end table
@@ -3548,7 +3548,7 @@ mesh in the layers.
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2031,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1788,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4684,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4066,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2030,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1787,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4681,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4063,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t3.cpp#L56,t3.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t3.py#L52,t3.py})
 @end table
@@ -3573,7 +3573,7 @@ mesh in the layers.
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2055,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1811,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4724,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4096,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2054,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1810,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4721,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4093,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t3.cpp#L71,t3.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t3.py#L66,t3.py})
 @end table
@@ -3597,7 +3597,7 @@ normals (if the view is scalar).
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2082,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1837,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4767,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4126,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2081,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1836,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4764,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4123,Julia}
 @item Examples:
 Python (@url{@value{GITLAB-PREFIX}/demos/api/aneurysm.py#L17,aneurysm.py})
 @end table
@@ -3614,7 +3614,7 @@ Translate the entities @code{dimTags} in the built-in CAD representation along
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2094,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1848,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4803,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4148,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2093,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1847,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4800,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4145,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t2.cpp#L49,t2.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t2.py#L46,t2.py})
 @end table
@@ -3633,7 +3633,7 @@ Rotate the entities @code{dimTags} in the built-in CAD representation by
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2104,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1857,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4822,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4166,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2103,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1856,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4819,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4163,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t2.cpp#L53,t2.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t2.py#L50,t2.py})
 @end table
@@ -3651,7 +3651,7 @@ Scale the entities @code{dimTag} in the built-in CAD representation by factors
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2118,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1870,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4846,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4184,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2117,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1869,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4843,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4181,Julia}
 @end table
 
 @item gmsh/model/geo/mirror
@@ -3667,7 +3667,7 @@ respect to the plane of equation @code{a} * x + @code{b} * y + @code{c} * z +
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2130,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1881,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4869,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4201,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2129,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1880,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4866,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4198,Julia}
 @end table
 
 @item gmsh/model/geo/symmetrize
@@ -3684,7 +3684,7 @@ a future release.)
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2142,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1892,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4889,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4219,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2141,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1891,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4886,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4216,Julia}
 @end table
 
 @item gmsh/model/geo/copy
@@ -3699,7 +3699,7 @@ entities are returned in @code{outDimTags}.
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2152,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1901,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4911,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4238,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2151,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1900,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4908,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4235,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t2.cpp#L62,t2.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t2.py#L58,t2.py})
 @end table
@@ -3718,7 +3718,7 @@ dimension 0.
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2161,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1909,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4932,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4260,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2160,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1908,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4929,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4257,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t6.cpp#L32,t6.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t6.py#L31,t6.py})
 @end table
@@ -3735,7 +3735,7 @@ entities at the same geometrical location).
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2168,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1915,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4951,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4277,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2167,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1914,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4948,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4274,Julia}
 @end table
 
 @item gmsh/model/geo/splitCurve
@@ -3752,7 +3752,7 @@ created curve(s).
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2176,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1921,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4966,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4297,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2175,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1920,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4963,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4294,Julia}
 @end table
 
 @item gmsh/model/geo/getMaxTag
@@ -3767,7 +3767,7 @@ representation.
 @item Return:
 integer value
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2184,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1928,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4991,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4318,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2183,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1927,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4988,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4315,Julia}
 @end table
 
 @item gmsh/model/geo/setMaxTag
@@ -3782,7 +3782,7 @@ built-in CAD representation.
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2190,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1933,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L5010,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4334,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2189,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1932,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L5007,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4331,Julia}
 @end table
 
 @item gmsh/model/geo/addPhysicalGroup
@@ -3799,7 +3799,7 @@ group, equal to @code{tag} if @code{tag} is positive, or a new tag if @code{tag}
 @item Return:
 integer value
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2198,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1940,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L5027,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4353,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2197,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1939,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L5024,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4350,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t5.cpp#L178,t5.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t5.py#L177,t5.py})
 @end table
@@ -3816,7 +3816,7 @@ If @code{dimTags} is empty, remove all groups.
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2206,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1947,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L5050,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4369,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2205,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1946,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L5047,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4366,Julia}
 @end table
 
 @item gmsh/model/geo/synchronize
@@ -3834,7 +3834,7 @@ available to any function outside of the built-in CAD kernel functions.
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2216,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1956,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L5067,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4390,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2215,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1955,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L5064,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4387,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t1.cpp#L96,t1.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t2.cpp#L33,t2.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t3.cpp#L35,t3.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t5.cpp#L188,t5.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t6.cpp#L99,t6.cpp}, ...), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t1.py#L96,t1.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t2.py#L31,t2.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t3.py#L32,t3.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t5.py#L184,t5.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t6.py#L94,t6.py}, ...)
 @end table
@@ -3858,7 +3858,7 @@ handled.
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2225,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1961,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L5091,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4414,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2224,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1960,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L5088,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4411,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t2.cpp#L129,t2.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t15.cpp#L41,t15.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t2.py#L123,t2.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t15.py#L37,t15.py})
 @end table
@@ -3878,7 +3878,7 @@ both extremities of the curve).
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2235,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1970,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L5110,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4434,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2234,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1969,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L5107,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4431,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t6.cpp#L48,t6.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t6.py#L47,t6.py})
 @end table
@@ -3900,7 +3900,7 @@ surface has more that 3 or 4 points on its boundary.
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2250,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1983,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L5132,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4455,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2249,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1982,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L5129,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4452,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t6.cpp#L67,t6.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t6.py#L66,t6.py})
 @end table
@@ -3918,7 +3918,7 @@ corners of the transfinite interpolation explicitly.
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2259,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1991,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L5156,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4472,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2258,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1990,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L5153,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4469,Julia}
 @end table
 
 @item gmsh/model/geo/mesh/setRecombine
@@ -3934,7 +3934,7 @@ entities of dimension 2 (to recombine triangles into quadrangles) are supported.
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2268,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1999,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L5175,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4489,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2267,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1998,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L5172,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4486,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t6.cpp#L71,t6.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t6.py#L70,t6.py})
 @end table
@@ -3952,7 +3952,7 @@ Laplace smoother are applied.
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2277,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2007,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L5195,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4506,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2276,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2006,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L5192,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4503,Julia}
 @end table
 
 @item gmsh/model/geo/mesh/setReverse
@@ -3970,7 +3970,7 @@ mesh orientation will be reversed with respect to the natural mesh orientation
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2288,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2017,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L5214,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4525,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2287,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2016,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L5211,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4522,Julia}
 @end table
 
 @item gmsh/model/geo/mesh/setAlgorithm
@@ -3986,7 +3986,7 @@ for @code{dim} == 2.
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2297,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2025,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L5235,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4541,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2296,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2024,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L5232,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4538,Julia}
 @end table
 
 @item gmsh/model/geo/mesh/setSizeFromBoundary
@@ -4002,7 +4002,7 @@ representation. Currently only supported for @code{dim} == 2.
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2306,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2033,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L5254,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4558,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2305,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2032,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L5251,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4555,Julia}
 @end table
 
 @end ftable
@@ -4028,7 +4028,7 @@ the occ module.)
 @item Return:
 integer value
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2325,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2044,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L5279,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4593,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2324,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2043,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L5276,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4590,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t19.cpp#L67,t19.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/spline.cpp#L10,spline.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t19.py#L59,t19.py}, @url{@value{GITLAB-PREFIX}/demos/api/bspline_bezier_patches.py#L6,bspline_bezier_patches.py}, @url{@value{GITLAB-PREFIX}/demos/api/bspline_bezier_trimmed.py#L6,bspline_bezier_trimmed.py}, @url{@value{GITLAB-PREFIX}/demos/api/bspline_filling.py#L14,bspline_filling.py}, @url{@value{GITLAB-PREFIX}/demos/api/closest_point.py#L14,closest_point.py}, ...)
 @end table
@@ -4047,7 +4047,7 @@ Return the tag of the line.
 @item Return:
 integer value
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2337,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2055,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L5306,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4613,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2336,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2054,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L5303,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4610,Julia}
 @item Examples:
 Python (@url{@value{GITLAB-PREFIX}/demos/api/crack.py#L13,crack.py})
 @end table
@@ -4066,7 +4066,7 @@ automatically. Return the tag of the circle arc.
 @item Return:
 integer value
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2347,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2064,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L5329,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4633,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2346,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2063,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L5326,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4630,Julia}
 @end table
 
 @item gmsh/model/occ/addCircle
@@ -4084,7 +4084,7 @@ the tag of the circle.
 @item Return:
 integer value
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2359,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2075,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L5353,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4653,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2358,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2074,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L5350,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4650,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t19.cpp#L25,t19.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t19.py#L23,t19.py}, @url{@value{GITLAB-PREFIX}/demos/api/bspline_bezier_trimmed.py#L30,bspline_bezier_trimmed.py}, @url{@value{GITLAB-PREFIX}/demos/api/closest_point.py#L7,closest_point.py}, @url{@value{GITLAB-PREFIX}/demos/api/trimmed.py#L9,trimmed.py})
 @end table
@@ -4105,7 +4105,7 @@ radius smaller than the minor radius.
 @item Return:
 integer value
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2375,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2090,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L5381,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4675,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2374,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2089,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L5378,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4672,Julia}
 @end table
 
 @item gmsh/model/occ/addEllipse
@@ -4126,7 +4126,7 @@ y-axis): rotate the shape or use @code{addCircle} in such cases.
 @item Return:
 integer value
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2391,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2105,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L5408,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4699,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2390,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2104,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L5405,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4696,Julia}
 @end table
 
 @item gmsh/model/occ/addSpline
@@ -4144,7 +4144,7 @@ curve.
 @item Return:
 integer value
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2407,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2120,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L5440,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4719,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2406,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2119,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L5437,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4716,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t19.cpp#L71,t19.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/spline.cpp#L12,spline.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t19.py#L62,t19.py}, @url{@value{GITLAB-PREFIX}/demos/api/pipe.py#L20,pipe.py}, @url{@value{GITLAB-PREFIX}/demos/api/spline.py#L12,spline.py}, @url{@value{GITLAB-PREFIX}/demos/api/surface_filling.py#L12,surface_filling.py})
 @end table
@@ -4165,7 +4165,7 @@ first and last points are the same. Return the tag of the b-spline curve.
 @item Return:
 integer value
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2418,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2130,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L5464,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4741,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2417,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2129,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L5461,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4738,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/demos/api/spline.cpp#L13,spline.cpp}), Python (@url{@value{GITLAB-PREFIX}/demos/api/bspline_filling.py#L18,bspline_filling.py}, @url{@value{GITLAB-PREFIX}/demos/api/spline.py#L13,spline.py})
 @end table
@@ -4183,7 +4183,7 @@ new tag is selected automatically. Return the tag of the Bezier curve.
 @item Return:
 integer value
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2430,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2141,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L5496,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4760,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2429,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2140,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L5493,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4757,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/demos/api/spline.cpp#L14,spline.cpp}), Python (@url{@value{GITLAB-PREFIX}/demos/api/spline.py#L14,spline.py})
 @end table
@@ -4203,7 +4203,7 @@ automatically. Return the tag of the wire.
 @item Return:
 integer value
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2440,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2150,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L5518,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4781,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2439,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2149,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L5515,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4778,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t19.cpp#L74,t19.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t19.py#L65,t19.py}, @url{@value{GITLAB-PREFIX}/demos/api/bspline_bezier_trimmed.py#L31,bspline_bezier_trimmed.py}, @url{@value{GITLAB-PREFIX}/demos/api/bspline_filling.py#L36,bspline_filling.py}, @url{@value{GITLAB-PREFIX}/demos/api/pipe.py#L21,pipe.py}, @url{@value{GITLAB-PREFIX}/demos/api/trimmed.py#L10,trimmed.py})
 @end table
@@ -4226,7 +4226,7 @@ is selected automatically. Return the tag of the curve loop.
 @item Return:
 integer value
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2455,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2164,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L5543,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4805,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2454,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2163,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L5540,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4802,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t19.cpp#L26,t19.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t19.py#L24,t19.py}, @url{@value{GITLAB-PREFIX}/demos/api/surface_filling.py#L15,surface_filling.py})
 @end table
@@ -4246,7 +4246,7 @@ explicitly; otherwise a new tag is selected automatically. Round the corners if
 @item Return:
 integer value
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2465,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2173,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L5571,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4826,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2464,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2172,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L5568,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4823,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t17.cpp#L28,t17.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t20.cpp#L62,t20.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t21.cpp#L39,t21.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/x6.cpp#L20,x6.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/adapt_mesh.cpp#L228,adapt_mesh.cpp}, ...), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t17.py#L27,t17.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t20.py#L52,t20.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t21.py#L31,t21.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/x6.py#L19,x6.py}, @url{@value{GITLAB-PREFIX}/demos/api/adapt_mesh.py#L75,adapt_mesh.py}, ...)
 @end table
@@ -4265,7 +4265,7 @@ tag is selected automatically. Return the tag of the disk.
 @item Return:
 integer value
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2479,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2186,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L5599,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4846,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2478,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2185,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L5596,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4843,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t19.cpp#L77,t19.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/edges.cpp#L15,edges.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t19.py#L68,t19.py}, @url{@value{GITLAB-PREFIX}/demos/api/pipe.py#L23,pipe.py}, @url{@value{GITLAB-PREFIX}/demos/api/poisson.py#L37,poisson.py})
 @end table
@@ -4285,7 +4285,7 @@ Return the tag of the surface.
 @item Return:
 integer value
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2493,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2199,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L5625,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4867,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2492,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2198,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L5622,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4864,Julia}
 @end table
 
 @item gmsh/model/occ/addSurfaceFilling
@@ -4316,7 +4316,7 @@ the filling surface can have).
 @item Return:
 integer value
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2517,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2221,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L5649,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4900,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2516,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2220,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L5646,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4897,Julia}
 @item Examples:
 Python (@url{@value{GITLAB-PREFIX}/demos/api/surface_filling.py#L18,surface_filling.py})
 @end table
@@ -4338,7 +4338,7 @@ automatically. Return the tag of the surface.
 @item Return:
 integer value
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2540,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2243,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L5697,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4923,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2539,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2242,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L5694,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4920,Julia}
 @item Examples:
 Python (@url{@value{GITLAB-PREFIX}/demos/api/bspline_filling.py#L39,bspline_filling.py}, @url{@value{GITLAB-PREFIX}/demos/api/surface_filling.py#L21,surface_filling.py})
 @end table
@@ -4360,7 +4360,7 @@ automatically. Return the tag of the surface.
 @item Return:
 integer value
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2553,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2255,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L5723,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4946,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2552,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2254,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L5720,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4943,Julia}
 @end table
 
 @item gmsh/model/occ/addBSplineSurface
@@ -4384,7 +4384,7 @@ the parametric space of the surface. Return the tag of the b-spline surface.
 @item Return:
 integer value
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2570,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2271,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L5749,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4973,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2569,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2270,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L5746,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4970,Julia}
 @item Examples:
 Python (@url{@value{GITLAB-PREFIX}/demos/api/bspline_bezier_patches.py#L55,bspline_bezier_patches.py}, @url{@value{GITLAB-PREFIX}/demos/api/bspline_bezier_trimmed.py#L41,bspline_bezier_trimmed.py}, @url{@value{GITLAB-PREFIX}/demos/api/terrain_bspline.py#L19,terrain_bspline.py})
 @end table
@@ -4408,7 +4408,7 @@ Return the tag of the Bezier surface.
 @item Return:
 integer value
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2594,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2294,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L5795,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4997,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2593,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2293,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L5792,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4994,Julia}
 @item Examples:
 Python (@url{@value{GITLAB-PREFIX}/demos/api/bspline_bezier_patches.py#L52,bspline_bezier_patches.py})
 @end table
@@ -4430,7 +4430,7 @@ trimmed surface.
 @item Return:
 integer value
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2609,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2308,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L5827,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5019,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2608,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2307,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L5824,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5016,Julia}
 @item Examples:
 Python (@url{@value{GITLAB-PREFIX}/demos/api/trimmed.py#L24,trimmed.py})
 @end table
@@ -4450,7 +4450,7 @@ that share geometrically identical (but topologically different) curves.
 @item Return:
 integer value
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2622,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2319,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L5855,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5040,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2621,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2318,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L5852,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5037,Julia}
 @end table
 
 @item gmsh/model/occ/addVolume
@@ -4468,7 +4468,7 @@ tag of the volume.
 @item Return:
 integer value
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2633,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2329,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L5880,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5061,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2632,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2328,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L5877,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5058,Julia}
 @end table
 
 @item gmsh/model/occ/addSphere
@@ -4487,7 +4487,7 @@ automatically. Return the tag of the sphere.
 @item Return:
 integer value
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2644,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2339,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L5904,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5083,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2643,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2338,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L5901,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5080,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t16.cpp#L53,t16.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t18.cpp#L61,t18.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/x5.cpp#L23,x5.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/boolean.cpp#L22,boolean.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/faces.cpp#L15,faces.cpp}, ...), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t16.py#L47,t16.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t18.py#L59,t18.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/x5.py#L20,x5.py}, @url{@value{GITLAB-PREFIX}/demos/api/boolean.py#L21,boolean.py}, @url{@value{GITLAB-PREFIX}/demos/api/gui.py#L20,gui.py}, ...)
 @end table
@@ -4506,7 +4506,7 @@ is selected automatically. Return the tag of the box.
 @item Return:
 integer value
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2659,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2353,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L5934,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5103,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2658,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2352,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L5931,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5100,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t16.cpp#L31,t16.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t18.cpp#L27,t18.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/x4.cpp#L58,x4.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/x5.cpp#L24,x5.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/x7.cpp#L24,x7.cpp}, ...), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t16.py#L28,t16.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t18.py#L26,t18.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/x4.py#L56,x4.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/x5.py#L21,x5.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/x7.py#L21,x7.py}, ...)
 @end table
@@ -4527,7 +4527,7 @@ is selected automatically. Return the tag of the cylinder.
 @item Return:
 integer value
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2675,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2368,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L5961,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5125,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2674,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2367,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L5958,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5122,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/demos/api/boolean.cpp#L24,boolean.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/gui.cpp#L23,gui.cpp}), Python (@url{@value{GITLAB-PREFIX}/demos/api/boolean.py#L23,boolean.py}, @url{@value{GITLAB-PREFIX}/demos/api/gui.py#L22,gui.py})
 @end table
@@ -4549,7 +4549,7 @@ tag of the cone.
 @item Return:
 integer value
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2693,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2385,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L5992,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5147,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2692,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2384,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L5989,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5144,Julia}
 @end table
 
 @item gmsh/model/occ/addWedge
@@ -4568,7 +4568,7 @@ the wedge.
 @item Return:
 integer value
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2712,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2403,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L6024,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5168,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2711,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2402,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L6021,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5165,Julia}
 @end table
 
 @item gmsh/model/occ/addTorus
@@ -4586,7 +4586,7 @@ automatically. The optional argument @code{angle} defines the angular opening
 @item Return:
 integer value
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2728,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2418,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L6054,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5189,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2727,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2417,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L6051,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5186,Julia}
 @end table
 
 @item gmsh/model/occ/addThruSections
@@ -4606,7 +4606,7 @@ surfaces created on the boundary are forced to be ruled surfaces. If
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2745,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2434,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L6082,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5212,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2744,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2433,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L6079,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5209,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t19.cpp#L32,t19.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t19.py#L29,t19.py})
 @end table
@@ -4627,7 +4627,7 @@ automatically.
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2760,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2448,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L6113,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5237,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2759,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2447,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L6110,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5234,Julia}
 @end table
 
 @item gmsh/model/occ/extrude
@@ -4647,7 +4647,7 @@ layers.
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2775,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2462,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L6142,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5263,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2774,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2461,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L6139,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5260,Julia}
 @end table
 
 @item gmsh/model/occ/revolve
@@ -4669,7 +4669,7 @@ set, recombine the mesh in the layers.
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2795,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2481,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L6176,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5292,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2794,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2480,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L6173,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5289,Julia}
 @end table
 
 @item gmsh/model/occ/addPipe
@@ -4688,7 +4688,7 @@ provided, "DiscreteTrihedron" is assumed. Return the pipe in @code{outDimTags}.
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2817,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2501,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L6216,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5319,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2816,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2500,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L6213,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5316,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t19.cpp#L82,t19.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t19.py#L73,t19.py}, @url{@value{GITLAB-PREFIX}/demos/api/pipe.py#L29,pipe.py})
 @end table
@@ -4709,7 +4709,7 @@ Return the filleted entities in @code{outDimTags}. Remove the original volume if
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2830,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2513,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L6244,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5346,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2829,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2512,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L6241,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5343,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t19.cpp#L55,t19.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t19.py#L47,t19.py})
 @end table
@@ -4732,7 +4732,7 @@ original volume if @code{removeVolume} is set.
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2846,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2528,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L6274,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5372,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2845,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2527,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L6271,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5369,Julia}
 @end table
 
 @item gmsh/model/occ/fuse
@@ -4751,7 +4751,7 @@ Remove the object if @code{removeObject} is set. Remove the tool if
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2861,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2542,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L6308,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5396,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2860,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2541,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L6305,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5393,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/x5.cpp#L27,x5.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/boolean.cpp#L27,boolean.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/gui.cpp#L26,gui.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/x5.py#L22,x5.py}, @url{@value{GITLAB-PREFIX}/demos/api/boolean.py#L26,boolean.py}, @url{@value{GITLAB-PREFIX}/demos/api/gui.py#L25,gui.py})
 @end table
@@ -4772,7 +4772,7 @@ is set. Remove the tool if @code{removeTool} is set.
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2877,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2557,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L6342,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5436,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2876,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2556,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L6339,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5433,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/demos/api/boolean.cpp#L23,boolean.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/gui.cpp#L22,gui.cpp}), Python (@url{@value{GITLAB-PREFIX}/demos/api/boolean.py#L22,boolean.py}, @url{@value{GITLAB-PREFIX}/demos/api/gui.py#L21,gui.py})
 @end table
@@ -4793,7 +4793,7 @@ Remove the object if @code{removeObject} is set. Remove the tool if
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2893,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2572,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L6376,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5475,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2892,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2571,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L6373,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5472,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t16.cpp#L41,t16.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/boolean.cpp#L28,boolean.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/gui.cpp#L27,gui.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t16.py#L32,t16.py}, @url{@value{GITLAB-PREFIX}/demos/api/boolean.py#L27,boolean.py}, @url{@value{GITLAB-PREFIX}/demos/api/gui.py#L26,gui.py}, @url{@value{GITLAB-PREFIX}/demos/api/spherical_surf.py#L13,spherical_surf.py})
 @end table
@@ -4817,7 +4817,7 @@ if @code{removeTool} is set.
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2912,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2590,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L6410,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5518,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2911,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2589,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L6407,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5515,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t16.cpp#L61,t16.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t18.cpp#L75,t18.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t20.cpp#L85,t20.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t21.cpp#L43,t21.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/edges.cpp#L20,edges.cpp}, ...), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t16.py#L54,t16.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t18.py#L70,t18.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t20.py#L68,t20.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t21.py#L33,t21.py}, @url{@value{GITLAB-PREFIX}/demos/api/bspline_bezier_patches.py#L70,bspline_bezier_patches.py}, ...)
 @end table
@@ -4834,7 +4834,7 @@ along (@code{dx}, @code{dy}, @code{dz}).
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2924,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2601,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L6447,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5552,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2923,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2600,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L6444,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5549,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t19.cpp#L47,t19.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t20.cpp#L72,t20.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t19.py#L44,t19.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t20.py#L60,t20.py})
 @end table
@@ -4853,7 +4853,7 @@ Rotate the entities @code{dimTags} in the OpenCASCADE CAD representation by
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2934,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2610,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L6466,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5570,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2933,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2609,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L6463,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5567,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t19.cpp#L78,t19.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t20.cpp#L64,t20.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/fragment_surfaces.cpp#L8,fragment_surfaces.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t19.py#L69,t19.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t20.py#L54,t20.py}, @url{@value{GITLAB-PREFIX}/demos/api/pipe.py#L26,pipe.py})
 @end table
@@ -4871,7 +4871,7 @@ factors @code{a}, @code{b} and @code{c} along the three coordinate axes; use
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2948,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2623,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L6490,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5588,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2947,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2622,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L6487,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5585,Julia}
 @end table
 
 @item gmsh/model/occ/mirror
@@ -4887,7 +4887,7 @@ respect to the plane of equation @code{a} * x + @code{b} * y + @code{c} * z +
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2960,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2634,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L6513,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5605,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2959,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2633,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L6510,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5602,Julia}
 @end table
 
 @item gmsh/model/occ/symmetrize
@@ -4903,7 +4903,7 @@ respect to the plane of equation @code{a} * x + @code{b} * y + @code{c} * z +
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2971,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2644,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L6533,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5623,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2970,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2643,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L6530,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5620,Julia}
 @end table
 
 @item gmsh/model/occ/affineTransform
@@ -4919,7 +4919,7 @@ the entities @code{dimTags} in the OpenCASCADE CAD representation.
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2983,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2654,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L6554,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5641,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2982,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2653,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L6551,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5638,Julia}
 @end table
 
 @item gmsh/model/occ/copy
@@ -4934,7 +4934,7 @@ entities are returned in @code{outDimTags}.
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2990,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2660,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L6574,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5661,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2989,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2659,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L6571,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5658,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t19.cpp#L46,t19.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t20.cpp#L77,t20.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t19.py#L43,t19.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t20.py#L64,t20.py})
 @end table
@@ -4953,7 +4953,7 @@ dimension 0.
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2999,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2668,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L6595,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5683,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L2998,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2667,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L6592,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5680,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t19.cpp#L86,t19.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t20.cpp#L91,t20.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t19.py#L77,t19.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t20.py#L73,t20.py}, @url{@value{GITLAB-PREFIX}/demos/api/pipe.py#L31,pipe.py}, @url{@value{GITLAB-PREFIX}/demos/api/trimmed.py#L28,trimmed.py})
 @end table
@@ -4971,7 +4971,7 @@ fragments) all highest dimensional entities.
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3007,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2675,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L6614,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5701,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3006,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2674,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L6611,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5698,Julia}
 @item Examples:
 Python (@url{@value{GITLAB-PREFIX}/demos/api/bspline_bezier_patches.py#L75,bspline_bezier_patches.py})
 @end table
@@ -4990,7 +4990,7 @@ healing options are listed in the Gmsh reference manual.
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3015,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2681,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L6630,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5721,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3014,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2680,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L6627,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5718,Julia}
 @item Examples:
 Python (@url{@value{GITLAB-PREFIX}/demos/api/bspline_bezier_patches.py#L65,bspline_bezier_patches.py}, @url{@value{GITLAB-PREFIX}/demos/api/heal.py#L11,heal.py})
 @end table
@@ -5011,7 +5011,7 @@ import the highest dimensional entities in the file. The optional argument
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3032,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2697,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L6660,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5748,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3031,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2696,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L6657,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5745,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t20.cpp#L28,t20.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t20.py#L24,t20.py})
 @end table
@@ -5035,7 +5035,7 @@ invalid pointer will lead to undefined behavior.
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3048,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2712,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L6687,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5776,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3047,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2711,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L6684,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5773,Julia}
 @end table
 
 @item gmsh/model/occ/getEntities
@@ -5051,7 +5051,7 @@ entities are returned as a vector of (dim, tag) integer pairs.
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3057,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2720,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L6716,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5799,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3056,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2719,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L6713,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5796,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t20.cpp#L90,t20.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t20.py#L73,t20.py}, @url{@value{GITLAB-PREFIX}/demos/api/bspline_bezier_patches.py#L70,bspline_bezier_patches.py})
 @end table
@@ -5070,7 +5070,7 @@ dimension (e.g. points if @code{dim} == 0).
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3066,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2728,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L6738,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5822,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3065,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2727,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L6735,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5819,Julia}
 @end table
 
 @item gmsh/model/occ/getBoundingBox
@@ -5086,7 +5086,7 @@ tag @code{tag}.
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3079,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2740,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L6767,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5844,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3078,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2739,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L6764,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5841,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t20.cpp#L44,t20.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t20.py#L34,t20.py})
 @end table
@@ -5103,7 +5103,7 @@ Get the mass of the OpenCASCADE entity of dimension @code{dim} and tag
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3091,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2751,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L6805,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5867,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3090,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2750,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L6802,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5864,Julia}
 @item Examples:
 Python (@url{@value{GITLAB-PREFIX}/demos/api/step_assembly.py#L26,step_assembly.py}, @url{@value{GITLAB-PREFIX}/demos/api/volume.py#L9,volume.py})
 @end table
@@ -5120,7 +5120,7 @@ Get the center of mass of the OpenCASCADE entity of dimension @code{dim} and tag
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3099,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2758,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L6826,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5886,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3098,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2757,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L6823,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5883,Julia}
 @end table
 
 @item gmsh/model/occ/getMatrixOfInertia
@@ -5135,7 +5135,7 @@ Get the matrix of inertia (by row) of the OpenCASCADE entity of dimension
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3109,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2767,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L6855,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5907,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3108,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2766,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L6852,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5904,Julia}
 @end table
 
 @item gmsh/model/occ/getMaxTag
@@ -5150,7 +5150,7 @@ representation.
 @item Return:
 integer value
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3117,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2774,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L6877,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5928,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3116,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2773,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L6874,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5925,Julia}
 @end table
 
 @item gmsh/model/occ/setMaxTag
@@ -5165,7 +5165,7 @@ OpenCASCADE CAD representation.
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3123,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2779,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L6896,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5944,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3122,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2778,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L6893,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5941,Julia}
 @end table
 
 @item gmsh/model/occ/synchronize
@@ -5183,7 +5183,7 @@ not available to any function outside of the OpenCASCADE CAD kernel functions.
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3134,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2789,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L6913,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5963,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3133,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2788,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L6910,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5960,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t16.cpp#L84,t16.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t17.cpp#L29,t17.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t18.cpp#L28,t18.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t19.cpp#L33,t19.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t20.cpp#L93,t20.cpp}, ...), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t16.py#L67,t16.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t17.py#L28,t17.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t18.py#L27,t18.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t19.py#L30,t19.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t20.py#L75,t20.py}, ...)
 @end table
@@ -5206,7 +5206,7 @@ representation. Currently only entities of dimension 0 (points) are handled.
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3143,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2794,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L6937,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5987,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3142,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2793,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L6934,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5984,Julia}
 @end table
 
 @end ftable
@@ -5228,7 +5228,7 @@ associate a new tag. Return the view tag.
 @item Return:
 integer value
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3159,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2801,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L6962,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6023,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3158,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2800,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L6959,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6020,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t4.cpp#L111,t4.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/x3.cpp#L28,x3.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/x4.cpp#L33,x4.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/x5.cpp#L80,x5.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/adapt_mesh.cpp#L245,adapt_mesh.cpp}, ...), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t4.py#L118,t4.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/x3.py#L25,x3.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/x4.py#L31,x4.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/x5.py#L68,x5.py}, @url{@value{GITLAB-PREFIX}/demos/api/adapt_mesh.py#L88,adapt_mesh.py}, ...)
 @end table
@@ -5244,7 +5244,7 @@ Remove the view with tag @code{tag}.
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3165,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2806,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L6982,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6037,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3164,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2805,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L6979,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6034,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/demos/api/plugin.cpp#L37,plugin.cpp}), Python (@url{@value{GITLAB-PREFIX}/demos/api/plugin.py#L28,plugin.py})
 @end table
@@ -5262,7 +5262,7 @@ access view options.
 @item Return:
 integer value
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3172,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2812,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L6996,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6055,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3171,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2811,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L6993,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6052,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/x3.cpp#L89,x3.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t8.py#L81,t8.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/x3.py#L81,x3.py})
 @end table
@@ -5278,7 +5278,7 @@ Get the tags of all views.
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3177,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2816,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7016,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6072,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3176,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2815,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7013,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6069,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/demos/api/plugin.cpp#L41,plugin.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t8.py#L78,t8.py}, @url{@value{GITLAB-PREFIX}/demos/api/plugin.py#L31,plugin.py})
 @end table
@@ -5305,7 +5305,7 @@ data. @code{partition} allows one to specify data in several sub-sets.
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3193,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2831,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7035,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6101,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3192,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2830,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7032,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6098,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/demos/api/adapt_mesh.cpp#L247,adapt_mesh.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/plugin.cpp#L18,plugin.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/view.cpp#L20,view.cpp}), Python (@url{@value{GITLAB-PREFIX}/demos/api/adapt_mesh.py#L89,adapt_mesh.py}, @url{@value{GITLAB-PREFIX}/demos/api/plugin.py#L16,plugin.py}, @url{@value{GITLAB-PREFIX}/demos/api/poisson.py#L229,poisson.py}, @url{@value{GITLAB-PREFIX}/demos/api/view.py#L19,view.py})
 @end table
@@ -5325,7 +5325,7 @@ single vector. For data types that can lead to different data sizes per tag
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3210,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2847,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7071,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6121,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3209,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2846,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7068,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6118,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/x4.cpp#L35,x4.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/x4.py#L33,x4.py}, @url{@value{GITLAB-PREFIX}/demos/api/copy_mesh.py#L40,copy_mesh.py}, @url{@value{GITLAB-PREFIX}/demos/api/view_renumbering.py#L18,view_renumbering.py})
 @end table
@@ -5344,7 +5344,7 @@ tags @code{tags}, as well as the @code{dataType} and the number of components
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3226,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2862,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7100,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6140,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3225,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2861,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7097,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6137,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/demos/api/get_data_perf.cpp#L27,get_data_perf.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/plugin.cpp#L27,plugin.cpp}), Python (@url{@value{GITLAB-PREFIX}/demos/api/get_data_perf.py#L20,get_data_perf.py}, @url{@value{GITLAB-PREFIX}/demos/api/mesh_quality.py#L14,mesh_quality.py}, @url{@value{GITLAB-PREFIX}/demos/api/plugin.py#L20,plugin.py})
 @end table
@@ -5363,7 +5363,7 @@ vector, with the appropriate padding if necessary.
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3240,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2875,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7137,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6173,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3239,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2874,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7134,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6170,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/demos/api/get_data_perf.cpp#L33,get_data_perf.cpp}), Python (@url{@value{GITLAB-PREFIX}/demos/api/get_data_perf.py#L25,get_data_perf.py})
 @end table
@@ -5388,7 +5388,7 @@ followed by values per node, repeated for each step: [e1x1, ..., e1xn, e1y1,
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3260,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2894,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7174,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6207,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3259,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2893,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7171,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6204,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/x3.cpp#L56,x3.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/x5.cpp#L81,x5.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/viewlist.cpp#L24,viewlist.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/x3.py#L47,x3.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/x5.py#L69,x5.py}, @url{@value{GITLAB-PREFIX}/demos/api/normals.py#L42,normals.py}, @url{@value{GITLAB-PREFIX}/demos/api/view_combine.py#L18,view_combine.py}, @url{@value{GITLAB-PREFIX}/demos/api/viewlist.py#L19,viewlist.py})
 @end table
@@ -5406,7 +5406,7 @@ data type and the @code{data} for each data type.
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3270,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2903,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7202,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6226,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3269,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2902,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7199,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6223,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/demos/api/plugin.cpp#L47,plugin.cpp}), Python (@url{@value{GITLAB-PREFIX}/demos/api/plugin.py#L35,plugin.py}, @url{@value{GITLAB-PREFIX}/demos/api/volume.py#L19,volume.py})
 @end table
@@ -5433,7 +5433,7 @@ Bold", "Times-Italic", "Times-BoldItalic", "Helvetica", "Helvetica-Bold",
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3289,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2922,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7231,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6265,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3288,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2921,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7228,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6262,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t4.cpp#L115,t4.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/x3.cpp#L80,x3.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t4.py#L122,t4.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/x3.py#L72,x3.py})
 @end table
@@ -5452,7 +5452,7 @@ coordinates in @code{coord}, the strings in @code{data} and the styles in
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3299,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2931,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7264,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6284,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3298,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2930,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7261,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6281,Julia}
 @end table
 
 @item gmsh/view/setInterpolationMatrices
@@ -5477,7 +5477,7 @@ matrices.
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3318,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2949,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7294,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6319,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3317,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2948,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7291,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6316,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/x3.cpp#L129,x3.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/x3.py#L113,x3.py})
 @end table
@@ -5496,7 +5496,7 @@ already exists), otherwise associate a new tag. Return the view tag.
 @item Return:
 integer value
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3333,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2963,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7330,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6339,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3332,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2962,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7327,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6336,Julia}
 @item Examples:
 Python (@url{@value{GITLAB-PREFIX}/demos/api/view_combine.py#L27,view_combine.py})
 @end table
@@ -5515,7 +5515,7 @@ original views if @code{remove} is set.
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3343,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2972,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7353,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6357,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3342,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2971,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7350,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6354,Julia}
 @item Examples:
 Python (@url{@value{GITLAB-PREFIX}/demos/api/view_combine.py#L23,view_combine.py})
 @end table
@@ -5544,7 +5544,7 @@ specified dimension.
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3363,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2991,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7373,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6384,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3362,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2990,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7370,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6381,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/x3.cpp#L101,x3.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/x3.py#L89,x3.py})
 @end table
@@ -5561,7 +5561,7 @@ file extension. Append to the file if @code{append} is set.
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3382,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3009,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7422,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6403,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3381,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3008,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7419,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6400,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/x3.cpp#L107,x3.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/x4.cpp#L88,x4.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/adapt_mesh.cpp#L248,adapt_mesh.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/plugin.cpp#L43,plugin.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/view.cpp#L24,view.cpp}, ...), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/x3.py#L92,x3.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/x4.py#L81,x4.py}, @url{@value{GITLAB-PREFIX}/demos/api/adapt_mesh.py#L91,adapt_mesh.py}, @url{@value{GITLAB-PREFIX}/demos/api/normals.py#L43,normals.py}, @url{@value{GITLAB-PREFIX}/demos/api/plugin.py#L33,plugin.py}, ...)
 @end table
@@ -5578,7 +5578,7 @@ where @code{windowIndex} identifies the window in the window list.
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3390,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3016,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7439,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6418,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3389,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3015,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7436,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6415,Julia}
 @end table
 
 @end ftable
@@ -5599,7 +5599,7 @@ Set the numerical option @code{name} to value @code{value} for the view with tag
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3400,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3023,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7463,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6442,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3399,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3022,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7460,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6439,Julia}
 @end table
 
 @item gmsh/view/option/getNumber
@@ -5614,7 +5614,7 @@ Get the @code{value} of the numerical option @code{name} for the view with tag
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3408,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3029,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7481,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6459,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3407,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3028,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7478,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6456,Julia}
 @end table
 
 @item gmsh/view/option/setString
@@ -5629,7 +5629,7 @@ Set the string option @code{name} to value @code{value} for the view with tag
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3415,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3035,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7502,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6475,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3414,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3034,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7499,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6472,Julia}
 @end table
 
 @item gmsh/view/option/getString
@@ -5644,7 +5644,7 @@ Get the @code{value} of the string option @code{name} for the view with tag
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3422,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3041,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7519,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6492,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3421,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3040,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7516,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6489,Julia}
 @end table
 
 @item gmsh/view/option/setColor
@@ -5660,7 +5660,7 @@ Set the color option @code{name} to the RGBA value (@code{r}, @code{g},
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3431,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3049,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7540,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6511,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3430,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3048,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7537,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6508,Julia}
 @end table
 
 @item gmsh/view/option/getColor
@@ -5675,7 +5675,7 @@ Get the @code{r}, @code{g}, @code{b}, @code{a} value of the color option
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3442,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3059,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7562,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6529,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3441,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3058,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7559,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6526,Julia}
 @end table
 
 @item gmsh/view/option/copy
@@ -5690,7 +5690,7 @@ Copy the options from the view with tag @code{refTag} to the view with tag
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3453,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3069,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7594,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6548,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3452,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3068,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7591,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6545,Julia}
 @end table
 
 @end ftable
@@ -5711,7 +5711,7 @@ Set the numerical option @code{option} to the value @code{value} for plugin
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3465,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3074,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7616,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6575,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3464,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3073,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7613,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6572,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t9.cpp#L38,t9.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t21.cpp#L146,t21.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/get_data_perf.cpp#L17,get_data_perf.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/partition.cpp#L30,partition.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/plugin.cpp#L33,plugin.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t9.py#L30,t9.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t21.py#L133,t21.py}, @url{@value{GITLAB-PREFIX}/demos/api/crack3d.py#L29,crack3d.py}, @url{@value{GITLAB-PREFIX}/demos/api/crack.py#L33,crack.py}, @url{@value{GITLAB-PREFIX}/demos/api/get_data_perf.py#L15,get_data_perf.py}, ...)
 @end table
@@ -5728,7 +5728,7 @@ Set the string option @code{option} to the value @code{value} for plugin
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3472,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3080,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7633,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6590,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3471,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3079,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7630,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6587,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t9.cpp#L54,t9.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t9.py#L46,t9.py})
 @end table
@@ -5744,7 +5744,7 @@ Run the plugin @code{name}. Return the tag of the created view (if any).
 @item Return:
 integer value
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3479,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3086,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7650,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6607,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3478,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3085,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7647,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6604,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t9.cpp#L40,t9.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t21.cpp#L149,t21.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/get_data_perf.cpp#L18,get_data_perf.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/partition.cpp#L31,partition.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/plugin.cpp#L34,plugin.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t9.py#L32,t9.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t21.py#L136,t21.py}, @url{@value{GITLAB-PREFIX}/demos/api/crack3d.py#L31,crack3d.py}, @url{@value{GITLAB-PREFIX}/demos/api/crack.py#L34,crack.py}, @url{@value{GITLAB-PREFIX}/demos/api/get_data_perf.py#L16,get_data_perf.py}, ...)
 @end table
@@ -5766,7 +5766,7 @@ Draw all the OpenGL scenes.
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3488,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3090,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7673,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6632,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3487,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3089,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7670,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6629,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t3.cpp#L130,t3.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t8.cpp#L150,t8.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t13.cpp#L129,t13.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t21.cpp#L194,t21.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t3.py#L121,t3.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t8.py#L178,t8.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t13.py#L115,t13.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t21.py#L164,t21.py}, @url{@value{GITLAB-PREFIX}/demos/api/split_window.py#L41,split_window.py})
 @end table
@@ -5788,7 +5788,7 @@ Create the FLTK graphical user interface. Can only be called in the main thread.
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3498,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3094,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7692,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6657,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3497,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3093,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7689,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6654,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t3.cpp#L137,t3.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t8.cpp#L76,t8.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t13.cpp#L136,t13.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t21.cpp#L201,t21.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/custom_gui.cpp#L118,custom_gui.cpp}, ...), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t3.py#L125,t3.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t8.py#L71,t8.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t13.py#L119,t13.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t21.py#L168,t21.py}, @url{@value{GITLAB-PREFIX}/demos/api/custom_gui.py#L112,custom_gui.py}, ...)
 @end table
@@ -5807,7 +5807,7 @@ thread.
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3505,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3099,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7706,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6673,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3504,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3098,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7703,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6670,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t3.cpp#L139,t3.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t13.cpp#L138,t13.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t21.cpp#L203,t21.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/custom_gui.cpp#L121,custom_gui.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t3.py#L127,t3.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t13.py#L121,t13.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t21.py#L170,t21.py}, @url{@value{GITLAB-PREFIX}/demos/api/custom_gui.py#L115,custom_gui.py}, @url{@value{GITLAB-PREFIX}/demos/api/prepro.py#L218,prepro.py}, ...)
 @end table
@@ -5826,7 +5826,7 @@ update of the user interface from another thread.
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3513,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3106,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7722,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6690,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3512,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3105,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7719,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6687,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/demos/api/custom_gui.cpp#L59,custom_gui.cpp}), Python (@url{@value{GITLAB-PREFIX}/demos/api/custom_gui.py#L84,custom_gui.py}, @url{@value{GITLAB-PREFIX}/demos/api/prepro.py#L188,prepro.py})
 @end table
@@ -5843,7 +5843,7 @@ perform an action (currently the only @code{action} allowed is "update").
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3520,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3111,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7738,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6705,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3519,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3110,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7735,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6702,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/demos/api/custom_gui.cpp#L40,custom_gui.cpp}), Python (@url{@value{GITLAB-PREFIX}/demos/api/custom_gui.py#L66,custom_gui.py})
 @end table
@@ -5859,7 +5859,7 @@ Block the current thread until it can safely modify the user interface.
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3525,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3115,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7754,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6719,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3524,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3114,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7751,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6716,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/demos/api/custom_gui.cpp#L33,custom_gui.cpp}), Python (@url{@value{GITLAB-PREFIX}/demos/api/custom_gui.py#L59,custom_gui.py})
 @end table
@@ -5875,7 +5875,7 @@ Release the lock that was set using lock.
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3530,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3118,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7767,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6733,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3529,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3117,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7764,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6730,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/demos/api/custom_gui.cpp#L35,custom_gui.cpp}), Python (@url{@value{GITLAB-PREFIX}/demos/api/custom_gui.py#L61,custom_gui.py})
 @end table
@@ -5893,7 +5893,7 @@ been initialized. Can only be called in the main thread.
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3537,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3123,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7780,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6749,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3536,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3122,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7777,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6746,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t1.cpp#L151,t1.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t2.cpp#L170,t2.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t4.cpp#L171,t4.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t5.cpp#L229,t5.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t6.cpp#L105,t6.cpp}, ...), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t1.py#L150,t1.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t2.py#L163,t2.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t4.py#L178,t4.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t5.py#L223,t5.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t6.py#L105,t6.py}, ...)
 @end table
@@ -5909,7 +5909,7 @@ Check if the user interface is available (e.g. to detect if it has been closed).
 @item Return:
 integer value
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3543,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3127,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7795,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6765,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3542,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3126,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7792,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6762,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t3.cpp#L138,t3.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t13.cpp#L137,t13.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t21.cpp#L202,t21.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/custom_gui.cpp#L120,custom_gui.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t3.py#L126,t3.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t13.py#L120,t13.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t21.py#L169,t21.py}, @url{@value{GITLAB-PREFIX}/demos/api/custom_gui.py#L114,custom_gui.py}, @url{@value{GITLAB-PREFIX}/demos/api/prepro.py#L204,prepro.py}, ...)
 @end table
@@ -5926,7 +5926,7 @@ entities of the specified dimension (e.g. points if @code{dim} == 0).
 @item Return:
 integer value
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3549,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3131,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7813,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6783,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3548,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3130,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7810,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6780,Julia}
 @item Examples:
 Python (@url{@value{GITLAB-PREFIX}/demos/api/prepro.py#L203,prepro.py})
 @end table
@@ -5942,7 +5942,7 @@ Select elements in the user interface.
 @item Return:
 integer value
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3555,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3136,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7836,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6804,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3554,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3135,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7833,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6801,Julia}
 @end table
 
 @item gmsh/fltk/selectViews
@@ -5956,7 +5956,7 @@ Select views in the user interface.
 @item Return:
 integer value
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3560,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3140,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7857,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6824,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3559,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3139,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7854,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6821,Julia}
 @end table
 
 @item gmsh/fltk/splitCurrentWindow
@@ -5972,7 +5972,7 @@ single window.
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3566,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3145,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7878,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6843,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3565,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3144,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7875,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6840,Julia}
 @item Examples:
 Python (@url{@value{GITLAB-PREFIX}/demos/api/split_window.py#L18,split_window.py})
 @end table
@@ -5990,7 +5990,7 @@ the end of the list.
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3574,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3152,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7895,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6860,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3573,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3151,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7892,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6857,Julia}
 @item Examples:
 Python (@url{@value{GITLAB-PREFIX}/demos/api/split_window.py#L33,split_window.py})
 @end table
@@ -6007,7 +6007,7 @@ the message inside the graphic window instead of the status bar.
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3580,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3157,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7912,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6876,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3579,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3156,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7909,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6873,Julia}
 @item Examples:
 Python (@url{@value{GITLAB-PREFIX}/demos/api/prepro.py#L201,prepro.py})
 @end table
@@ -6023,7 +6023,7 @@ Show context window for the entity of dimension @code{dim} and tag @code{tag}.
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3586,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3162,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7929,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6891,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3585,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3161,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7926,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6888,Julia}
 @item Examples:
 Python (@url{@value{GITLAB-PREFIX}/demos/api/prepro.py#L206,prepro.py})
 @end table
@@ -6039,7 +6039,7 @@ Open the @code{name} item in the menu tree.
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3592,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3167,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7945,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6906,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3591,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3166,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7942,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6903,Julia}
 @item Examples:
 Python (@url{@value{GITLAB-PREFIX}/demos/api/prepro.py#L216,prepro.py})
 @end table
@@ -6055,7 +6055,7 @@ Close the @code{name} item in the menu tree.
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3597,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3171,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7960,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6921,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3596,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3170,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7957,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6918,Julia}
 @end table
 
 @end ftable
@@ -6075,7 +6075,7 @@ Set one or more parameters in the ONELAB database, encoded in @code{format}.
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3606,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3175,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7981,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6947,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3605,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3174,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7978,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6944,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t3.cpp#L107,t3.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t13.cpp#L95,t13.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t21.cpp#L59,t21.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/custom_gui.cpp#L82,custom_gui.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t3.py#L100,t3.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t13.py#L82,t13.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t21.py#L47,t21.py}, @url{@value{GITLAB-PREFIX}/demos/api/custom_gui.py#L33,custom_gui.py}, @url{@value{GITLAB-PREFIX}/demos/api/onelab_test.py#L10,onelab_test.py}, ...)
 @end table
@@ -6092,7 +6092,7 @@ ONELAB database, encoded in @code{format}.
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3613,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3181,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7996,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6964,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3612,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3180,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7993,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6961,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/demos/api/onelab_run_auto.cpp#L18,onelab_run_auto.cpp}), Python (@url{@value{GITLAB-PREFIX}/demos/api/onelab_run_auto.py#L28,onelab_run_auto.py}, @url{@value{GITLAB-PREFIX}/demos/api/onelab_test.py#L36,onelab_test.py}, @url{@value{GITLAB-PREFIX}/demos/api/prepro.py#L170,prepro.py})
 @end table
@@ -6110,7 +6110,7 @@ names.
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3621,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3188,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L8017,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6983,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3620,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3187,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L8014,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6980,Julia}
 @item Examples:
 Python (@url{@value{GITLAB-PREFIX}/demos/api/prepro.py#L172,prepro.py})
 @end table
@@ -6127,7 +6127,7 @@ the parameter if it does not exist; update the value if the parameter exists.
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3629,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3195,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L8038,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L7003,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3628,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3194,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L8035,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L7000,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/demos/api/custom_gui.cpp#L44,custom_gui.cpp}), Python (@url{@value{GITLAB-PREFIX}/demos/api/custom_gui.py#L67,custom_gui.py}, @url{@value{GITLAB-PREFIX}/demos/api/onelab_run.py#L18,onelab_run.py}, @url{@value{GITLAB-PREFIX}/demos/api/onelab_test.py#L41,onelab_test.py})
 @end table
@@ -6144,7 +6144,7 @@ the parameter if it does not exist; update the value if the parameter exists.
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3637,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3202,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L8057,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L7019,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3636,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3201,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L8054,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L7016,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t3.cpp#L128,t3.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t13.cpp#L127,t13.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t21.cpp#L192,t21.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/custom_gui.cpp#L30,custom_gui.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t3.py#L119,t3.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t13.py#L113,t13.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t21.py#L162,t21.py}, @url{@value{GITLAB-PREFIX}/demos/api/custom_gui.py#L56,custom_gui.py}, @url{@value{GITLAB-PREFIX}/demos/api/onelab_test.py#L42,onelab_test.py}, ...)
 @end table
@@ -6161,7 +6161,7 @@ Return an empty vector if the parameter does not exist.
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3644,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3208,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L8076,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L7037,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3643,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3207,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L8073,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L7034,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t3.cpp#L70,t3.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t13.cpp#L37,t13.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t21.cpp#L111,t21.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/custom_gui.cpp#L17,custom_gui.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t3.py#L65,t3.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t13.py#L29,t13.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t21.py#L97,t21.py}, @url{@value{GITLAB-PREFIX}/demos/api/custom_gui.py#L41,custom_gui.py}, @url{@value{GITLAB-PREFIX}/demos/api/prepro.py#L174,prepro.py}, ...)
 @end table
@@ -6178,7 +6178,7 @@ Return an empty vector if the parameter does not exist.
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3651,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3214,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L8097,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L7058,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3650,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3213,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L8094,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L7055,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t3.cpp#L126,t3.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t13.cpp#L125,t13.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t21.cpp#L190,t21.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/custom_gui.cpp#L52,custom_gui.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t3.py#L117,t3.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t13.py#L111,t13.py}, @url{@value{GITLAB-PREFIX}/tutorial/python/t21.py#L160,t21.py}, @url{@value{GITLAB-PREFIX}/demos/api/custom_gui.py#L75,custom_gui.py}, @url{@value{GITLAB-PREFIX}/demos/api/prepro.py#L178,prepro.py}, ...)
 @end table
@@ -6194,7 +6194,7 @@ Clear the ONELAB database, or remove a single parameter if @code{name} is given.
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3657,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3219,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L8118,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L7077,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3656,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3218,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L8115,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L7074,Julia}
 @item Examples:
 Python (@url{@value{GITLAB-PREFIX}/demos/api/onelab_test.py#L45,onelab_test.py})
 @end table
@@ -6212,7 +6212,7 @@ might be linked to the processed input files.
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3664,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3225,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L8132,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L7093,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3663,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3224,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L8129,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L7090,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/demos/api/onelab_run_auto.cpp#L15,onelab_run_auto.cpp}), Python (@url{@value{GITLAB-PREFIX}/demos/api/onelab_run.py#L24,onelab_run.py}, @url{@value{GITLAB-PREFIX}/demos/api/onelab_run_auto.py#L26,onelab_run_auto.py})
 @end table
@@ -6234,7 +6234,7 @@ Write a @code{message}. @code{level} can be "info", "warning" or "error".
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3674,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3230,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L8155,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L7118,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3673,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3229,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L8152,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L7115,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t7.cpp#L23,t7.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t8.cpp#L41,t8.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t9.cpp#L31,t9.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t13.cpp#L26,t13.cpp}, @url{@value{GITLAB-PREFIX}/tutorial/c++/t16.cpp#L34,t16.cpp}, ...), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/x5.py#L87,x5.py}, @url{@value{GITLAB-PREFIX}/demos/api/custom_gui.py#L60,custom_gui.py}, @url{@value{GITLAB-PREFIX}/demos/api/terrain_stl.py#L26,terrain_stl.py})
 @end table
@@ -6250,7 +6250,7 @@ Start logging messages.
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3680,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3235,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L8170,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L7132,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3679,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3234,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L8167,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L7129,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t16.cpp#L27,t16.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t16.py#L25,t16.py})
 @end table
@@ -6266,7 +6266,7 @@ Get logged messages.
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3685,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3238,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L8183,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L7148,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3684,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3237,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L8180,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L7145,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t16.cpp#L137,t16.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t16.py#L117,t16.py})
 @end table
@@ -6282,7 +6282,7 @@ Stop logging messages.
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3690,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3242,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L8201,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L7166,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3689,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3241,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L8198,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L7163,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/tutorial/c++/t16.cpp#L139,t16.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorial/python/t16.py#L119,t16.py})
 @end table
@@ -6298,7 +6298,7 @@ Return wall clock time.
 @item Return:
 floating point value
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3695,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3245,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L8214,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L7182,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3694,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3244,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L8211,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L7179,Julia}
 @item Examples:
 C++ (@url{@value{GITLAB-PREFIX}/demos/api/custom_gui.cpp#L38,custom_gui.cpp}, @url{@value{GITLAB-PREFIX}/demos/api/import_perf.cpp#L38,import_perf.cpp}), Python (@url{@value{GITLAB-PREFIX}/demos/api/import_perf.py#L8,import_perf.py})
 @end table
@@ -6314,7 +6314,7 @@ Return CPU time.
 @item Return:
 floating point value
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3700,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3248,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L8232,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L7199,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3699,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3247,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L8229,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L7196,Julia}
 @end table
 
 @item gmsh/logger/getLastError
@@ -6328,7 +6328,7 @@ Return last error message, if any.
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3705,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3251,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L8250,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L7216,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3704,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3250,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L8247,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L7213,Julia}
 @end table
 
 @end ftable

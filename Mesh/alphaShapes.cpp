@@ -399,6 +399,14 @@ int alphaShapes_ (const double threshold,
   return 0;
 }
 
+bool onlyBnd(std::vector<std::size_t> tet, size_t nBndPts){
+  for (size_t i = 0; i < 4; i++)
+  {
+    if (tet[i] >= nBndPts) {return false;}
+  }
+  return true;
+}
+
 void constrainedAlphaShapes_(GModel* m, 
                             const int dim, 
                             const std::vector<double>& coord, 
@@ -407,13 +415,17 @@ void constrainedAlphaShapes_(GModel* m,
                             std::vector<size_t> &tetrahedra, 
                             std::vector<std::vector<size_t> > &domains,
                             std::vector<std::vector<size_t> > &boundaries,
-                            std::vector<size_t> &neigh,
-                            std::vector<double> &allMeshPoints)
+                            std::vector<size_t> &neigh)
 {  
   int meshDim = m->getMeshStatus(false); 
   if (meshDim < dim-1){ // if no 1D boundary mesh for a 2D domain, if no 2D boundary mesh for a 3D domain --> so generate one
     GenerateMesh(m, dim-1);
   }
+  else if (meshDim == dim)
+  {
+    GenerateMesh(m, dim-1);
+  }
+  
   
   /* initialize hxt mesh */
   HXTMesh *mesh;
@@ -435,8 +447,6 @@ void constrainedAlphaShapes_(GModel* m,
 	// create the empty mesh
 	hxtTetMesh(mesh, &options);
 
-  std::cout << mesh->vertices.size << " is the number of vertices \n";
-
   uint32_t nBndPts = mesh->vertices.num;
 
   // create the bounding box of the mesh
@@ -445,7 +455,6 @@ void constrainedAlphaShapes_(GModel* m,
 	hxtBboxAdd(&bbox, mesh->vertices.coord, mesh->vertices.num);
 
   uint32_t numNewPts = coord.size()/3;
-  std::cout << numNewPts << " is number of points to be inserted \n";
   HXTNodeInfo nodeInfo[numNewPts];
 
   /* add the internal nodes to the mesh */
@@ -476,17 +485,21 @@ void constrainedAlphaShapes_(GModel* m,
 
  /* ------------------------alpha shapes of the newly generated mesh -----------------------------*/
   for (size_t i=0; i<mesh->tetrahedra.num; i++){
-    std::cout << mesh->tetrahedra.flag[i] << "\n";
     if (mesh->tetrahedra.color[i] < UINT32_MAX)
     {
+      std::vector<size_t> tet;
       for (size_t j = 0; j < 4; j++)
       {
-        tetrahedra.push_back(mesh->tetrahedra.node[4*i+j]);
+        tet.push_back(mesh->tetrahedra.node[4*i+j]);
       }
+      //if(!onlyBnd(tet, nBndPts)){
+      tetrahedra.insert(tetrahedra.end(), tet.begin(), tet.end());
+      //}
     }
   }
   computeTetNeighbors_ (tetrahedra, neigh);
   double hMean;
+  std::vector<double> allMeshPoints;
   for (size_t i=0; i<mesh->vertices.num; i++){
     for (size_t dim=0; dim<3; dim++){
       allMeshPoints.push_back(mesh->vertices.coord[4*i+dim]);
@@ -495,7 +508,6 @@ void constrainedAlphaShapes_(GModel* m,
   
   if (meanValue < 0) hMean = meanEdgeLength(allMeshPoints,tetrahedra);
   else hMean = meanValue;
-  std::cout << hMean << "is hmean \n";
   std::vector<bool> _touched;
   _touched.resize(tetrahedra.size()/4);
   for (size_t i=0;i<_touched.size();i++)_touched[i] = false;
@@ -535,23 +547,17 @@ void constrainedAlphaShapes_(GModel* m,
         domains.push_back(_domain);
       }
   }
-  for (size_t i = 0; i < tetrahedra.size(); i++)tetrahedra[i]++;
-  
-  for (size_t i = 0; i < domains.size(); i++)
-  {
-    for (size_t j = 0; j < domains[i].size(); j++)
-    {
-      std::cout << domains[i][j] << "\n";
-    }
-    
-  }
-  
   /* ------------------------------------------------------------------ */
-
-
 
   /* write back to gmsh format */
   Hxt2GmshAlpha(regions, mesh, v2c, c2v);
+
+  /* convert tetrahedra points to gmsh global identifier */
+  for (size_t i = 0; i < tetrahedra.size(); i++)
+  { 
+    tetrahedra[i] = c2v[tetrahedra[i]]->getNum();
+  }
+
   hxtMeshDelete(&mesh);
 }
 

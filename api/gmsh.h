@@ -1735,8 +1735,7 @@ namespace gmsh { // Top-level functions
                                            std::vector<std::size_t> & tetrahedra,
                                            std::vector<std::vector<std::size_t> > & domains,
                                            std::vector<std::vector<std::size_t> > & boundaries,
-                                           std::vector<std::size_t> & neighbors,
-                                           std::vector<double> & allMeshPoints);
+                                           std::vector<std::size_t> & neighbors);
 
       namespace field { // Mesh size field functions
 

@@ -3222,8 +3222,6 @@ c
      &      boundaries_nn,
      &      neighbors,
      &      neighbors_n,
-     &      allMeshPoints,
-     &      allMeshPoints_n,
      &      ierr)
      &    bind(C, name = "gmshModelMeshAlphaShapesConstrained")
           use, intrinsic :: iso_c_binding
@@ -3242,8 +3240,6 @@ c
             integer(c_size_t) :: boundaries_nn
             type(c_ptr), intent(out)::neighbors
             integer(c_size_t) :: neighbors_n
-            type(c_ptr), intent(out)::allMeshPoints
-            integer(c_size_t) :: allMeshPoints_n
             integer(c_int)::ierr
           end subroutine gmshModelMeshAlphaShapesConstrained
 

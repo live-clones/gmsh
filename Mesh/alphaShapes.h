@@ -34,6 +34,5 @@ void constrainedAlphaShapes_(GModel* m,
                             std::vector<size_t> &tetrahedra, 
                             std::vector<std::vector<size_t> > &domains,
                             std::vector<std::vector<size_t> > &boundaries,
-                            std::vector<size_t> &neigh,
-							std::vector<double> &allMeshPoints);
+                            std::vector<size_t> &neigh);
 #endif

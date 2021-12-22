@@ -5412,10 +5412,9 @@ gmsh::model::mesh::alphaShapesConstrained(const int dim,
                                           std::vector<size_t> &tetrahedra, 
                                           std::vector<std::vector<size_t> > &domains,
                                           std::vector<std::vector<size_t> > &boundaries,
-                                          std::vector<size_t> &neigh,
-                                          std::vector<double> &allMeshPoints){
+                                          std::vector<size_t> &neigh){
 #if defined(HAVE_MESH)
-  constrainedAlphaShapes_(GModel::current(), dim, coord, alpha, meanValue, tetrahedra, domains, boundaries, neigh, allMeshPoints);
+  constrainedAlphaShapes_(GModel::current(), dim, coord, alpha, meanValue, tetrahedra, domains, boundaries, neigh);
 #else
   Msg::Error("alphaShapesConstrained requires the mesh module");
 #endif  

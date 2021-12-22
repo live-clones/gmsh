@@ -1533,7 +1533,6 @@ GMSH_API void gmshModelMeshAlphaShapesConstrained(const int dim,
                                                   size_t *** domains, size_t ** domains_n, size_t *domains_nn,
                                                   size_t *** boundaries, size_t ** boundaries_n, size_t *boundaries_nn,
                                                   size_t ** neighbors, size_t * neighbors_n,
-                                                  double ** allMeshPoints, size_t * allMeshPoints_n,
                                                   int * ierr);
 
 /* Add a new mesh size field of type `fieldType'. If `tag' is positive, assign
