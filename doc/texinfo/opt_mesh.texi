@@ -757,12 +757,12 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.SaveGroupsOfElements
-Save groups of elements for each physical group (for UNV and INP mesh format) if value is positive; if negative, save groups of elements for entities of dimension dim if the (dim+1)^th least significant digit of -Mesh.SaveGroupsOfElements is non-zero (for example: -100 will only save surfaces, while -1010 will save volumes and curves)@*
+Save groups of elements for each physical group (for UNV and INP mesh format) if value is positive; if negative, save groups of elements for physical groups of dimension dim if the (dim+1)^th least significant digit of -Mesh.SaveGroupsOfElements is non-zero (for example: -100 will only save surfaces, while -1010 will save volumes and curves)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.SaveGroupsOfNodes
-Save groups of nodes for each physical group (for UNV, INP and Tochnog mesh formats) if value is positive; if negative, save groups of nodes for entities of dimension dim if the (dim+1)^th least significant digit of -Mesh.SaveGroupsOfNodes is non-zero (for example: -100 will only save surfaces, while -1010 will save volumes and curves)@*
+Save groups of nodes for each physical group (for UNV, INP and Tochnog mesh formats) if value is positive; if negative, save groups of nodes for physical groups of dimension dim if the (dim+1)^th least significant digit of Mesh.SaveGroupsOfNodes is non-zero (for example: -100 will only save surfaces, while -1010 will save volumes and curves). For INP, if the value is negative and no physical groups exist for the requested dimension, save groups of nodes for all the entities of that dimension@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 

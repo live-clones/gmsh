@@ -1482,16 +1482,18 @@ StringXNumber MeshOptions_Number[] = {
     "Save parametric coordinates of nodes" },
   { F|O, "SaveGroupsOfElements" , opt_mesh_save_groups_of_elements , 1. ,
     "Save groups of elements for each physical group (for UNV and INP mesh format) "
-    "if value is positive; if negative, save groups of elements "
-    "for entities of dimension dim if the (dim+1)^th least significant digit of "
+    "if value is positive; if negative, save groups of elements for physical "
+    "groups of dimension dim if the (dim+1)^th least significant digit of "
     "-Mesh.SaveGroupsOfElements is non-zero (for example: -100 will only save "
     "surfaces, while -1010 will save volumes and curves)"},
   { F|O, "SaveGroupsOfNodes" , opt_mesh_save_groups_of_nodes , 0. ,
     "Save groups of nodes for each physical group (for UNV, INP and Tochnog "
     "mesh formats) if value is positive; if negative, save groups of nodes "
-    "for entities of dimension dim if the (dim+1)^th least significant digit of "
-    "-Mesh.SaveGroupsOfNodes is non-zero (for example: -100 will only save "
-    "surfaces, while -1010 will save volumes and curves)"},
+    "for physical groups of dimension dim if the (dim+1)^th least significant "
+    "digit of Mesh.SaveGroupsOfNodes is non-zero (for example: -100 will only "
+    "save surfaces, while -1010 will save volumes and curves). For INP, if the "
+    "value is negative and no physical groups exist for the requested dimension, "
+    "save groups of nodes for all the entities of that dimension"},
   { F|O, "ScalingFactor" , opt_mesh_scaling_factor , 1.0 ,
     "Global scaling factor applied to the saved mesh" },
   { F|O, "SecondOrderIncomplete" , opt_mesh_second_order_incomplete , 0. ,

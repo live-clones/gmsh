@@ -108,13 +108,13 @@ int GModel::writeINP(const std::string &name, bool saveAll,
         continue;
       }
       for(auto it = groups[dim].begin(); it != groups[dim].end(); it++) {
-        std::vector<GEntity *> &entities = it->second;
+        std::vector<GEntity *> &ent = it->second;
         fprintf(fp, "*ELSET,ELSET=%s\n",
                 physicalName(this, dim, it->first).c_str());
         int n = 0;
-        for(std::size_t i = 0; i < entities.size(); i++) {
-          for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
-            MElement *e = entities[i]->getMeshElement(j);
+        for(std::size_t i = 0; i < ent.size(); i++) {
+          for(std::size_t j = 0; j < ent[i]->getNumMeshElements(); j++) {
+            MElement *e = ent[i]->getMeshElement(j);
             if(n && !(n % 10)) fprintf(fp, "\n");
             fprintf(fp, "%lu, ", e->getNum());
             n++;
@@ -135,25 +135,55 @@ int GModel::writeINP(const std::string &name, bool saveAll,
          !((-saveGroupsOfNodes / (int)std::pow(10, dim)) % 10)) {
         continue;
       }
-      for(auto it = groups[dim].begin(); it != groups[dim].end(); it++) {
+      if(groups[dim].size()) {
+        for(auto it = groups[dim].begin(); it != groups[dim].end(); it++) {
+          std::set<MVertex *, MVertexPtrLessThan> nodes;
+          std::vector<GEntity *> &ent = it->second;
+          for(std::size_t i = 0; i < ent.size(); i++) {
+            for(std::size_t j = 0; j < ent[i]->getNumMeshElements(); j++) {
+              MElement *e = ent[i]->getMeshElement(j);
+              for(std::size_t k = 0; k < e->getNumVertices(); k++)
+                nodes.insert(e->getVertex(k));
+            }
+          }
+          fprintf(fp, "*NSET,NSET=%s\n",
+                  physicalName(this, dim, it->first).c_str());
+          int n = 0;
+          for(auto it2 = nodes.begin(); it2 != nodes.end(); it2++) {
+            if(n && !(n % 10)) fprintf(fp, "\n");
+            fprintf(fp, "%ld, ", (*it2)->getIndex());
+            n++;
+          }
+          fprintf(fp, "\n");
+        }
+      }
+      else if(saveGroupsOfNodes < 0) {
+        // if there are no physical groups for this dimension, save the nodes
+        // for all the entities of that dimension; this allows e.g. to save
+        // groups of nodes on surfaces without saving surface elements. This is
+        // dangerous (the nodes in the group could reference nodes whose
+        // coordinates are not saved in the file), but this is useful for some
+        // workflows (cf. #1664)
         std::set<MVertex *, MVertexPtrLessThan> nodes;
-        std::vector<GEntity *> &entities = it->second;
-        for(std::size_t i = 0; i < entities.size(); i++) {
-          for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
-            MElement *e = entities[i]->getMeshElement(j);
+        std::vector<GEntity *> ent;
+        getEntities(ent, dim);
+        for(std::size_t i = 0; i < ent.size(); i++) {
+          for(std::size_t j = 0; j < ent[i]->getNumMeshElements(); j++) {
+            MElement *e = ent[i]->getMeshElement(j);
             for(std::size_t k = 0; k < e->getNumVertices(); k++)
               nodes.insert(e->getVertex(k));
           }
+          fprintf(fp, "*NSET,NSET=%s%d\n",
+                  (dim == 3) ? "Volume" : (dim == 2) ? "Surface" :
+                  (dim == 1) ? "Line" : "Point", ent[i]->tag());
+          int n = 0;
+          for(auto it2 = nodes.begin(); it2 != nodes.end(); it2++) {
+            if(n && !(n % 10)) fprintf(fp, "\n");
+            fprintf(fp, "%ld, ", (*it2)->getIndex());
+            n++;
+          }
+          fprintf(fp, "\n");
         }
-        fprintf(fp, "*NSET,NSET=%s\n",
-                physicalName(this, dim, it->first).c_str());
-        int n = 0;
-        for(auto it2 = nodes.begin(); it2 != nodes.end(); it2++) {
-          if(n && !(n % 10)) fprintf(fp, "\n");
-          fprintf(fp, "%ld, ", (*it2)->getIndex());
-          n++;
-        }
-        fprintf(fp, "\n");
       }
     }
   }

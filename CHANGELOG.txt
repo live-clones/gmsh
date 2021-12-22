@@ -1,4 +1,5 @@
-4.9.2 (Work-in-progress): faster projection on OCC entities.
+4.9.2 (Work-in-progress): faster projection on OCC entities; extend
+Mesh.SaveGroupsOfNodes capabilities for INP export.
 
 4.9.1 (December 18, 2021): relax tolerance on curve parametrization match for
 periodic meshing; enable extruded boundary layers on generic model entities;
