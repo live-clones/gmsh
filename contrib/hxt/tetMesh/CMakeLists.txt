@@ -62,8 +62,6 @@ else()
     add_library(hxt_tetMesh ${HXT_TETMESH_SRC})
 endif()
 
-add_subdirectory(../core "${CMAKE_CURRENT_BINARY_DIR}/core")
-add_subdirectory(../predicates "${CMAKE_CURRENT_BINARY_DIR}/predicates")
 add_subdirectory(../tetBR "${CMAKE_CURRENT_BINARY_DIR}/tetBR")
 
 target_include_directories(hxt_tetMesh
@@ -71,7 +69,7 @@ target_include_directories(hxt_tetMesh
                            PRIVATE src)
 target_link_libraries(hxt_tetMesh
                       PUBLIC hxt_core
-                      PRIVATE hxt_predicates hxt_tetBR m)
+                      PRIVATE hxt_predicates hxt_tetBR hxt_surfMod m)
 target_compile_features(hxt_tetMesh PRIVATE c_std_99)
 
 

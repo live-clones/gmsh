@@ -99,6 +99,8 @@ HXTStatus hxtTetMesh(HXTMesh* mesh,
 
   t[1] = omp_get_wtime();
 
+  // TODO: map the whole section below into the boundary recovery
+
   uint64_t nbMissingTriangles, nbLinesNotInTriangles, nbMissingLines=0;
   uint64_t* tri2TetMap = NULL;
   uint64_t* lines2TriMap = NULL;
@@ -129,7 +131,8 @@ HXTStatus hxtTetMesh(HXTMesh* mesh,
                nbMissingLines);
 
     uint32_t oldNumVertices = mesh->vertices.num;
-    HXT_CHECK( hxt_boundary_recovery(mesh, options->toleranceInitialDelaunay) );
+    HXTSurfMod * surfMod = NULL;
+    HXT_CHECK( hxt_boundary_recovery(mesh, options->toleranceInitialDelaunay, &surfMod) );
 
     if(oldNumVertices < mesh->vertices.num) {
       HXT_INFO("Steiner(s) point(s) were inserted");
@@ -171,6 +174,7 @@ HXTStatus hxtTetMesh(HXTMesh* mesh,
   t[4] = omp_get_wtime();
 
   if(options->refine){
+    // TODO: move set flags to the function and add option
     HXT_CHECK( setFlagsToProcessOnlyVolumesInBrep(mesh) );
 
     nodalSizes.enabled = 1; // activate the filtering...
@@ -188,6 +192,7 @@ HXTStatus hxtTetMesh(HXTMesh* mesh,
   // aspect_ratio_graph(mesh);
 
   if(options->optimize) {
+    // TODO: move set flags to the function and add option
     HXT_CHECK( setFlagsToProcessOnlyVolumesInBrep(mesh) );
 
     HXT_CHECK( hxtOptimizeTetrahedra(mesh,

@@ -1725,14 +1725,15 @@ static HXTStatus DelaunayOptionsInit(HXTMesh* mesh,
                                      HXTDelaunayOptions* options,
                                      HXTBbox* bbox){
 HXT_ASSERT(mesh!=NULL);
+HXT_ASSERT(options!=NULL);
 HXT_ASSERT_MSG((options->numVerticesInMesh==0 && mesh->tetrahedra.num==0) ||
                (options->numVerticesInMesh>=4 && mesh->tetrahedra.num>0),
                "Number of vertices in the mesh and number of tetrahedra cannot match");
-  
-  const uint32_t nVert = mesh->vertices.num;
+HXT_ASSERT(options->numVerticesInMesh<=mesh->vertices.num);
+HXT_ASSERT(options->insertionFirst<=mesh->vertices.num);
+HXT_ASSERT(options->insertionFirst>=options->numVerticesInMesh);
 
-HXT_ASSERT(options->numVerticesInMesh <= nVert);
-HXT_ASSERT(options->insertionFirst <= nVert);
+  const uint32_t nVert = mesh->vertices.num;
 
   if(options->bbox==NULL){
     options->bbox = bbox;
@@ -1804,7 +1805,7 @@ HXT_ASSERT(nodeInfo!=NULL);
   // don't create more threads than necessary
   options->delaunayThreads = computeNumberOfThreads(0.0, options->delaunayThreads, nToInsert, SMALLEST_PASS);
 
-  HXT_ASSERT(options->insertionFirst+nToInsert <= mesh->vertices.num);
+  HXT_ASSERT(options->insertionFirst + nToInsert <= mesh->vertices.num);
 
   HXT_CHECK( parallelDelaunay3D(mesh, options, nodeInfo, nToInsert, 1) );
 

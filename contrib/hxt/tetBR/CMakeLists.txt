@@ -28,15 +28,16 @@ else()
 	add_library(hxt_tetBR ${HXT_TETBR_SRC})
 endif()
 
-add_subdirectory(../core "${CMAKE_CURRENT_BINARY_DIR}/hxt_boundaryRecovery_core")
+add_subdirectory(../surfMod "${CMAKE_CURRENT_BINARY_DIR}/surfMod")
 add_subdirectory(../predicates "${CMAKE_CURRENT_BINARY_DIR}/predicates")
+
 
 target_include_directories(hxt_tetBR
                            PUBLIC include
                            PRIVATE src)
 target_link_libraries(hxt_tetBR
                       PUBLIC hxt_core
-                      PRIVATE hxt_predicates m)
+                      PRIVATE hxt_predicates hxt_surfMod m)
 
 if(HXT_ENABLE_OPENMP)
   find_package(OpenMP 4)

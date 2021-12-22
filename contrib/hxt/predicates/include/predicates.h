@@ -17,6 +17,8 @@ extern "C" {
 #endif
 #endif
 
+// TODO: make all the function thread-safe and reentrant
+
 extern double splitter;
 extern double o3dstaticfilter;
 extern double o3derrboundA;

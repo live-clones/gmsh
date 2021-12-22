@@ -1,5 +1,5 @@
 extern "C" {
-#include "hxt_mesh.h"
+#include "hxt_boundary_recovery.h"
 #include "hxt_tools.h"
 #include "hxt_omp.h"
 #include "predicates.h"
@@ -592,7 +592,7 @@ int tetgenmesh::reconstructmesh(void *p, double tol){
 }
 
 extern "C" {
-  HXTStatus hxt_boundary_recovery(HXTMesh *mesh, double tol)
+  HXTStatus hxt_boundary_recovery(HXTMesh *mesh, double tol, HXTSurfMod **surfChange)
   {
     HXTStatus status;
     try{
