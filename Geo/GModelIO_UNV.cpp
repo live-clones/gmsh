@@ -449,11 +449,11 @@ int GModel::writeUNV(const std::string &name, bool saveAll,
       bool saveNodes =
         (saveGroupsOfNodes > 0 ||
          (saveGroupsOfNodes < 0 &&
-          (-saveGroupsOfNodes / (int)std::pow(10, dim)) % 10));
+          ((-saveGroupsOfNodes / (int)std::pow(10, dim)) % 10) == 1));
       bool saveElements =
         (saveGroupsOfElements > 0 ||
          (saveGroupsOfElements < 0 &&
-          (-saveGroupsOfElements / (int)std::pow(10, dim)) % 10));
+          ((-saveGroupsOfElements / (int)std::pow(10, dim)) % 10) == 1));
 
       for(auto it = groups[dim].begin(); it != groups[dim].end(); it++) {
         std::vector<GEntity *> &entities = it->second;

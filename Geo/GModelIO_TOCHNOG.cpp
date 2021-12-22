@@ -172,33 +172,32 @@ int GModel::writeTOCHNOG(const std::string &name, bool saveAll,
   // physical points)
   if(saveGroupsOfNodes) {
     for(int dim = 0; dim <= 3; dim++) {
-      if(saveGroupsOfNodes < 0 &&
-         !((-saveGroupsOfNodes / (int)std::pow(10, dim)) % 10)) {
-        continue;
-      }
-      for(auto it = groups[dim].begin(); it != groups[dim].end(); it++) {
-        std::set<MVertex *, MVertexPtrLessThan> nodes;
-        std::vector<GEntity *> &entities = it->second;
-        for(std::size_t i = 0; i < entities.size(); i++) {
-          for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
-            MElement *e = entities[i]->getMeshElement(j);
-            for(std::size_t k = 0; k < e->getNumVertices(); k++)
-              nodes.insert(e->getVertex(k));
+      if(saveGroupsOfNodes > 0 ||
+         (saveGroupsOfNodes < 0 &&
+          ((-saveGroupsOfNodes / (int)std::pow(10, dim)) % 10) == 1)) {
+        for(auto it = groups[dim].begin(); it != groups[dim].end(); it++) {
+          std::set<MVertex *, MVertexPtrLessThan> nodes;
+          std::vector<GEntity *> &entities = it->second;
+          for(std::size_t i = 0; i < entities.size(); i++) {
+            for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
+              MElement *e = entities[i]->getMeshElement(j);
+              for(std::size_t k = 0; k < e->getNumVertices(); k++)
+                nodes.insert(e->getVertex(k));
+            }
           }
+          fprintf(fp, "\n");
+          fprintf(fp,
+                  "(Node sets ===> Used to set BOUNDARY CONDITIONS in Tochnog =%s)\n",
+                  physicalName(this, dim, it->first).c_str());
+          fprintf(fp, "\n");
+          int n = 0;
+          for(auto it2 = nodes.begin(); it2 != nodes.end(); it2++) {
+            if(n && !(n % 10)) fprintf(fp, "\n");
+            fprintf(fp, "%ld ", (*it2)->getIndex());
+            n++;
+          }
+          fprintf(fp, "\n");
         }
-        fprintf(fp, "\n");
-        fprintf(
-          fp,
-          "(Node sets ===> Used to set BOUNDARY CONDITIONS in Tochnog =%s)\n",
-          physicalName(this, dim, it->first).c_str());
-        fprintf(fp, "\n");
-        int n = 0;
-        for(auto it2 = nodes.begin(); it2 != nodes.end(); it2++) {
-          if(n && !(n % 10)) fprintf(fp, "\n");
-          fprintf(fp, "%ld ", (*it2)->getIndex());
-          n++;
-        }
-        fprintf(fp, "\n");
       }
     }
   }

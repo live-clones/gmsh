@@ -126,16 +126,14 @@ int GModel::writeINP(const std::string &name, bool saveAll,
   }
 
   if(saveGroupsOfNodes) {
-    // save a node set for each physical group (here we include node sets on
-    // physical points) if saveGroupsOfNodes is positive; if saveGroupsOfNodes
-    // is negative, only save groups of dimension dim if the (dim+1)^th least
-    // significant digit of -saveGroupsOfNodes is non-zero.
     for(int dim = 0; dim <= 3; dim++) {
-      if(saveGroupsOfNodes < 0 &&
-         !((-saveGroupsOfNodes / (int)std::pow(10, dim)) % 10)) {
-        continue;
-      }
-      if(groups[dim].size()) {
+      // save a node set for each physical group (here we include node sets on
+      // physical points) if saveGroupsOfNodes is positive; if saveGroupsOfNodes
+      // is negative and the (dim+1)^th least significant digit of
+      // -saveGroupsOfNodes is equal to 1, save groups of dimension dim
+      if(saveGroupsOfNodes > 0 ||
+         (saveGroupsOfNodes < 0 &&
+          ((-saveGroupsOfNodes / (int)std::pow(10, dim)) % 10) == 1)) {
         for(auto it = groups[dim].begin(); it != groups[dim].end(); it++) {
           std::set<MVertex *, MVertexPtrLessThan> nodes;
           std::vector<GEntity *> &ent = it->second;
@@ -157,13 +155,14 @@ int GModel::writeINP(const std::string &name, bool saveAll,
           fprintf(fp, "\n");
         }
       }
-      else if(saveGroupsOfNodes < 0) {
-        // if there are no physical groups for this dimension, save the nodes
-        // for all the entities of that dimension; this allows e.g. to save
-        // groups of nodes on surfaces without saving surface elements. This is
-        // dangerous (the nodes in the group could reference nodes whose
-        // coordinates are not saved in the file), but this is useful for some
-        // workflows (cf. #1664)
+
+      // if saveGroupsOfNodes is negative and the (dim+1)^th least significant
+      // digit of -saveGroupsOfNodes is equal to 2, save node sets for each
+      // entity of dimension dim. This is dangerous (the nodes in the group
+      // could reference nodes whose coordinates are not saved in the file), but
+      // useful for some workflows (cf. #1664)
+      if(saveGroupsOfNodes < 0  &&
+         ((-saveGroupsOfNodes / (int)std::pow(10, dim)) % 10) == 2) {
         std::set<MVertex *, MVertexPtrLessThan> nodes;
         std::vector<GEntity *> ent;
         getEntities(ent, dim);
