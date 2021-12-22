@@ -230,7 +230,9 @@ int MeshTransfiniteSurface(GFace *gf)
       N[iCorner++] = i;
     }
     SPoint2 param;
-    reparamMeshVertexOnFace(v, gf, param);
+    if(!reparamMeshVertexOnFace(v, gf, param))
+      Msg::Warning("Transfinite mesh of surface %d might be invalid "
+                   "(node %d on a periodic seam)", gf->tag(), v->getNum());
     U.push_back(param[0]);
     V.push_back(param[1]);
   }

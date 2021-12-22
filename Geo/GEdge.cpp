@@ -353,7 +353,8 @@ std::string GEdge::getAdditionalInfoString(bool multline)
 
 void GEdge::writeGEO(FILE *fp)
 {
-  if(!getBeginVertex() || !getEndVertex() || geomType() == DiscreteCurve)
+  if(!getBeginVertex() || !getEndVertex() || geomType() == DiscreteCurve ||
+     geomType() == BoundaryLayerCurve)
     return;
 
   if(geomType() == Line) {
@@ -403,17 +404,21 @@ void GEdge::writeGEO(FILE *fp)
 
 bool GEdge::containsPoint(const SPoint3 &pt) const
 {
+  if(geomType() == BoundaryLayerCurve) return false;
   return containsParam(parFromPoint(pt));
 }
 
 bool GEdge::containsParam(double pt) const
 {
+  if(geomType() == BoundaryLayerCurve) return false;
   Range<double> rg = parBounds(0);
   return (pt >= rg.low() && pt <= rg.high());
 }
 
 SVector3 GEdge::secondDer(double par) const
 {
+  if(geomType() == BoundaryLayerCurve) return SVector3();
+
   // use central differences
   const double eps = 1.e-3;
   Range<double> rg = parBounds(0);
@@ -434,6 +439,8 @@ SVector3 GEdge::secondDer(double par) const
 
 SPoint2 GEdge::reparamOnFace(const GFace *face, double epar, int dir) const
 {
+  if(geomType() == BoundaryLayerCurve) return SPoint2();
+
   // reparametrize the point onto the given face.
   const GPoint p3 = point(epar);
   SPoint3 sp3(p3.x(), p3.y(), p3.z());
@@ -442,12 +449,16 @@ SPoint2 GEdge::reparamOnFace(const GFace *face, double epar, int dir) const
 
 double GEdge::curvature(double par) const
 {
+  if(geomType() == Line || geomType() == BoundaryLayerCurve) return 0.;
+
   SVector3 const d1 = firstDer(par);
   return norm(crossprod(d1, secondDer(par))) * std::pow(1.0 / norm(d1), 3);
 }
 
 double GEdge::length(const double &u0, const double &u1, const int nbQuadPoints)
 {
+  if(geomType() == BoundaryLayerCurve) return 0.;
+
   double *t = nullptr, *w = nullptr;
   gmshGaussLegendre1D(nbQuadPoints, &t, &w);
   if(!t) {
@@ -498,6 +509,8 @@ double goldenSectionSearch(const GEdge *ge, const SPoint3 &q, double x1,
 
 GPoint GEdge::closestPoint(const SPoint3 &q, double &t) const
 {
+  if(geomType() == BoundaryLayerCurve) return GPoint();
+
   // printf("looking for closest point in curve %d to point %g
   // %g\n",tag(),q.x(),q.y());
 
@@ -539,6 +552,8 @@ GPoint GEdge::closestPoint(const SPoint3 &q, double &t) const
 
 double GEdge::parFromPoint(const SPoint3 &P) const
 {
+  if(geomType() == BoundaryLayerCurve) return 0.;
+
   double t;
   XYZToU(P.x(), P.y(), P.z(), t);
   return t;
@@ -547,6 +562,8 @@ double GEdge::parFromPoint(const SPoint3 &P) const
 bool GEdge::refineProjection(const SVector3 &Q, double &u, int MaxIter,
                              double relax, double tol, double &err) const
 {
+  if(geomType() == BoundaryLayerCurve) return false;
+
   double maxDist = tol * CTX::instance()->lc;
 
   SVector3 P = position(u);
@@ -581,6 +598,8 @@ bool GEdge::refineProjection(const SVector3 &Q, double &u, int MaxIter,
 bool GEdge::XYZToU(const double X, const double Y, const double Z, double &u,
                    const double relax, bool first) const
 {
+  if(geomType() == BoundaryLayerCurve) return false;
+
   const int MaxIter = 25;
   const int NumInitGuess = 21;
 

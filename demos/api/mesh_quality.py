@@ -9,9 +9,9 @@ gmsh.model.mesh.generate(3)
 
 gmsh.plugin.setNumber("AnalyseMeshQuality", "ICNMeasure", 1.)
 gmsh.plugin.setNumber("AnalyseMeshQuality", "CreateView", 1.)
-gmsh.plugin.run("AnalyseMeshQuality")
+t = gmsh.plugin.run("AnalyseMeshQuality")
 
-dataType, tags, data, time, numComp = gmsh.view.getModelData(0, 0)
+dataType, tags, data, time, numComp = gmsh.view.getModelData(t, 0)
 
 print('ICN for element {0} = {1}'.format(tags[0], data[0]))
 

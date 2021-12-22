@@ -899,6 +899,7 @@ Surface *DuplicateSurface(GFace *gf)
   Surface *ps = CreateSurface(NEWSURFACE(), MSH_SURF_PLAN); // dummy
   Tree_Insert(GModel::current()->getGEOInternals()->Surfaces, &ps);
   std::vector<GEdge *> edges = gf->edges();
+  ps->Generatrices = List_Create(edges.size() + 1, 1, sizeof(Curve *));
   for(auto ge : edges) {
     Curve *newc = DuplicateCurve(ge);
     List_Add(ps->Generatrices, &newc);
@@ -1164,6 +1165,8 @@ Curve *CreateReversedCurve(Curve *c)
 
   newc->beg = c->end;
   newc->end = c->beg;
+  newc->begByTag = c->endByTag;
+  newc->endByTag = c->begByTag;
   newc->Method = c->Method;
   newc->nbPointsTransfinite = c->nbPointsTransfinite;
   newc->typeTransfinite = -c->typeTransfinite;
@@ -1696,7 +1699,14 @@ static int CompareTwoSurfaces(const void *a, const void *b)
 
   // if both surfaces have no generatrices, stay on the safe side and
   // assume they are different
-  if(!List_Nbr(s1->Generatrices) && !List_Nbr(s2->Generatrices)) return 1;
+  if(!List_Nbr(s1->Generatrices) && !List_Nbr(s2->Generatrices) &&
+     !List_Nbr(s1->GeneratricesByTag) && !List_Nbr(s2->GeneratricesByTag))
+    return 1;
+
+  // if generatrices are given bby tag (e.g. for boundary layers on generic
+  // GModel entities), compare those
+  if(List_Nbr(s1->GeneratricesByTag) && List_Nbr(s2->GeneratricesByTag))
+    return Compare2Lists(s1->GeneratricesByTag, s2->GeneratricesByTag, fcmp_absint);
 
   return Compare2Lists(s1->Generatrices, s2->Generatrices, CompareAbsCurve);
 }
@@ -2119,6 +2129,18 @@ static void ReplaceDuplicateCurves(std::map<int, int> *c_report = nullptr)
         EndCurve(*pc2);
       }
     }
+    for(int j = 0; j < List_Nbr(s->GeneratricesByTag); j++) {
+      int num;
+      List_Read(s->GeneratricesByTag, j, &num);
+      c2 = FindCurve(std::abs(num), curves2delete);
+      if(c2) {
+        if(!(pc2 = (Curve **)Tree_PQuery(allNonDuplicatedCurves, &c2)))
+          Msg::Error("Could not replace GEO curve with tag %d in Coherence",
+                     c2->Num);
+        else
+          List_Write(s->GeneratricesByTag, j, &(*pc2)->Num);
+      }
+    }
     // replace extrusion sources
     if(s->Extrude && s->Extrude->geo.Mode == EXTRUDED_ENTITY) {
       c2 = FindCurve(std::abs(s->Extrude->geo.Source), curves2delete);
@@ -2411,6 +2433,17 @@ static void ReplaceDuplicateSurfaces(std::map<int, int> *s_report = nullptr)
         Msg::Error("Could not replace surface %d in Coherence", (*ps)->Num);
       else
         List_Write(vol->Surfaces, j, ps2);
+    }
+    for(int j = 0; j < List_Nbr(vol->SurfacesByTag); j++) {
+      int num;
+      List_Read(vol->SurfacesByTag, j, &num);
+      s2 = FindSurface(std::abs(vol->Extrude->geo.Source), surfaces2delete);
+      if(s2) {
+        if(!(ps2 = (Surface **)Tree_PQuery(allNonDuplicatedSurfaces, &s2)))
+          Msg::Error("Could not replace surface %d in Coherence", s2->Num);
+        else
+          List_Write(vol->SurfacesByTag, j, &(*ps2)->Num);
+      }
     }
     // replace extrusion sources
     if(vol->Extrude && vol->Extrude->geo.Mode == EXTRUDED_ENTITY) {
@@ -2865,6 +2898,7 @@ int ExtrudeCurve(int type, int ic, double T0, double T1, double T2, double A0,
     s = CreateSurface(NEWSURFACE(), MSH_SURF_REGL);
 
   s->Generatrices = List_Create(4, 1, sizeof(Curve *));
+  s->GeneratricesByTag = List_Create(4, 1, sizeof(int));
   s->Extrude = new ExtrudeParams;
   s->Extrude->fill(type, T0, T1, T2, A0, A1, A2, X0, X1, X2, alpha);
   s->Extrude->geo.Source = ic;

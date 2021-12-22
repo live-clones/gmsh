@@ -33,32 +33,32 @@ a=8.976-8.916436 ;
 b=(9.006-8.976) ;
 c = 0.139564 -a-b ;
 
-Extrude Line {1308,{0,0,a}}{Recombine;Layers{{3},{1}};};
+Extrude {0,0,a}{ Curve {1308}; Recombine;Layers{{3},{1}};}
 
-Extrude Line {1309,{0,0,h}}{Recombine;Layers{{3,4,4},{a/h,(a+b)/h,1}};};
+Extrude {0,0,h}{ Curve {1309}; Recombine;Layers{{3,4,4},{a/h,(a+b)/h,1}};}
 
-Extrude Line {1310,{0,0,a}}{Recombine;Layers{{3},{1}};};
+Extrude {0,0,a}{ Curve {1310}; Recombine;Layers{{3},{1}};}
 
-Extrude Line {1311,{0,0,h}}{Recombine;Layers{{3,4,4},{a/h,(a+b)/h,1}};};
+Extrude {0,0,h}{ Curve {1311}; Recombine;Layers{{3,4,4},{a/h,(a+b)/h,1}};}
 
-Extrude Line {1312,{0,0,a}}{Recombine;Layers{{3},{1}};};
+Extrude {0,0,a}{ Curve {1312}; Recombine;Layers{{3},{1}};}
 
-Extrude Line {1313,{0,0,h}}{Recombine;Layers{{3,4,4},{a/h,(a+b)/h,1}};};
+Extrude {0,0,h}{ Curve {1313}; Recombine;Layers{{3,4,4},{a/h,(a+b)/h,1}};}
 
-Extrude Line {1314,{0,0,a}}{Recombine;Layers{{3},{1}};};
+Extrude {0,0,a}{ Curve {1314}; Recombine;Layers{{3},{1}};}
 
-Extrude Line {1315,{0,0,h}}{Recombine;Layers{{3,4,4},{a/h,(a+b)/h,1}};};
+Extrude {0,0,h}{ Curve {1315}; Recombine;Layers{{3,4,4},{a/h,(a+b)/h,1}};}
 
 
-Extrude Line {1316,{0,0,b}}{Recombine;Layers{{4},{1}};};
-Extrude Line {1324,{0,0,b}}{Recombine;Layers{{4},{1}};};
-Extrude Line {1332,{0,0,b}}{Recombine;Layers{{4},{1}};};
-Extrude Line {1340,{0,0,b}}{Recombine;Layers{{4},{1}};};
+Extrude {0,0,b}{ Curve {1316}; Recombine;Layers{{4},{1}};}
+Extrude {0,0,b}{ Curve {1324}; Recombine;Layers{{4},{1}};}
+Extrude {0,0,b}{ Curve {1332}; Recombine;Layers{{4},{1}};}
+Extrude {0,0,b}{ Curve {1340}; Recombine;Layers{{4},{1}};}
 
-Extrude Line {1348,{0,0,c}}{Recombine;Layers{{4},{1}};};
-Extrude Line {1352,{0,0,c}}{Recombine;Layers{{4},{1}};};
-Extrude Line {1356,{0,0,c}}{Recombine;Layers{{4},{1}};};
-Extrude Line {1360,{0,0,c}}{Recombine;Layers{{4},{1}};};
+Extrude {0,0,c}{ Curve {1348}; Recombine;Layers{{4},{1}};}
+Extrude {0,0,c}{ Curve {1352}; Recombine;Layers{{4},{1}};}
+Extrude {0,0,c}{ Curve {1356}; Recombine;Layers{{4},{1}};}
+Extrude {0,0,c}{ Curve {1360}; Recombine;Layers{{4},{1}};}
 
 
 
@@ -91,32 +91,32 @@ a=9.006-9.056 ;
 b=(8.976-9.006) ;
 c = -0.139564 -a-b ;
 
-Extrude Line {1408,{0,0,a}}{Recombine;Layers{{3},{1}};};
+Extrude {0,0,a} {Curve {1408}; Recombine;Layers{{3},{1}};}
 
-Extrude Line {1409,{0,0,-h}}{Recombine;Layers{{3,4,4},{-a/h,-(a+b)/h,1}};};
+Extrude {0,0,-h}{Curve {1409}; Recombine;Layers{{3,4,4},{-a/h,-(a+b)/h,1}};}
 
-Extrude Line {1410,{0,0,a}}{Recombine;Layers{{3},{1}};};
+Extrude {0,0,a} {Curve {1410}; Recombine;Layers{{3},{1}};}
 
-Extrude Line {1411,{0,0,-h}}{Recombine;Layers{{3,4,4},{-a/h,-(a+b)/h,1}};};
+Extrude {0,0,-h}{Curve {1411}; Recombine;Layers{{3,4,4},{-a/h,-(a+b)/h,1}};}
 
-Extrude Line {1412,{0,0,a}}{Recombine;Layers{{3},{1}};};
+Extrude {0,0,a} {Curve {1412}; Recombine;Layers{{3},{1}};}
 
-Extrude Line {1413,{0,0,-h}}{Recombine;Layers{{3,4,4},{-a/h,-(a+b)/h,1}};};
+Extrude {0,0,-h}{Curve {1413}; Recombine;Layers{{3,4,4},{-a/h,-(a+b)/h,1}};}
 
-Extrude Line {1414,{0,0,a}}{Recombine;Layers{{3},{1}};};
+Extrude {0,0,a} {Curve {1414}; Recombine;Layers{{3},{1}};}
 
-Extrude Line {1415,{0,0,-h}}{Recombine;Layers{{3,4,4},{-a/h,-(a+b)/h,1}};};
+Extrude {0,0,-h}{Curve {1415}; Recombine;Layers{{3,4,4},{-a/h,-(a+b)/h,1}};}
 
 
-Extrude Line {1416,{0,0,b}}{Recombine;Layers{{4},{1}};};
-Extrude Line {1424,{0,0,b}}{Recombine;Layers{{4},{1}};};
-Extrude Line {1432,{0,0,b}}{Recombine;Layers{{4},{1}};};
-Extrude Line {1440,{0,0,b}}{Recombine;Layers{{4},{1}};};
+Extrude {0,0,b} {Curve {1416}; Recombine;Layers{{4},{1}};}
+Extrude {0,0,b} {Curve {1424}; Recombine;Layers{{4},{1}};}
+Extrude {0,0,b} {Curve {1432}; Recombine;Layers{{4},{1}};}
+Extrude {0,0,b} {Curve {1440}; Recombine;Layers{{4},{1}};}
 
-Extrude Line {1448,{0,0,c}}{Recombine;Layers{{4},{1}};};
-Extrude Line {1452,{0,0,c}}{Recombine;Layers{{4},{1}};};
-Extrude Line {1456,{0,0,c}}{Recombine;Layers{{4},{1}};};
-Extrude Line {1460,{0,0,c}}{Recombine;Layers{{4},{1}};};
+Extrude {0,0,c} {Curve {1448}; Recombine;Layers{{4},{1}};}
+Extrude {0,0,c} {Curve {1452}; Recombine;Layers{{4},{1}};}
+Extrude {0,0,c} {Curve {1456}; Recombine;Layers{{4},{1}};}
+Extrude {0,0,c} {Curve {1460}; Recombine;Layers{{4},{1}};}
 
 
 
@@ -155,4 +155,3 @@ Physical Surface (1911) = {1455} ;
 Physical Surface (1912) = {1459} ;
 //définition surface4 de contact avec PE
 Physical Surface (1913) = {1463} ;
-

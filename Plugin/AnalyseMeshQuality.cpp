@@ -177,6 +177,7 @@ PView *GMSH_AnalyseMeshQualityPlugin::execute(PView *v)
 #endif
 
   // Create PView
+  PView *view = nullptr;
   if(createView) {
     for(int dim = 1; dim <= 3; ++dim) {
       if((askedDim == 4 && dim > 1) || dim == askedDim) {
@@ -197,7 +198,7 @@ PView *GMSH_AnalyseMeshQualityPlugin::execute(PView *v)
           if(dataPV.size()) {
             std::stringstream name;
             name << "minJ/maxJ " << dim << "D";
-            new PView(name.str().c_str(), "ElementData", _m, dataPV);
+            view = new PView(name.str().c_str(), "ElementData", _m, dataPV);
           }
         }
         if(!_pviewIGE[dim - 1] && computeIGE) {
@@ -211,7 +212,7 @@ PView *GMSH_AnalyseMeshQualityPlugin::execute(PView *v)
           if(dataPV.size()) {
             std::stringstream name;
             name << "IGE " << dim << "D";
-            new PView(name.str().c_str(), "ElementData", _m, dataPV);
+            view = new PView(name.str().c_str(), "ElementData", _m, dataPV);
           }
         }
         if(!_pviewICN[dim - 1] && computeICN) {
@@ -225,7 +226,7 @@ PView *GMSH_AnalyseMeshQualityPlugin::execute(PView *v)
           if(dataPV.size()) {
             std::stringstream name;
             name << "ICN " << dim << "D";
-            new PView(name.str().c_str(), "ElementData", _m, dataPV);
+            view = new PView(name.str().c_str(), "ElementData", _m, dataPV);
           }
         }
       }
@@ -242,7 +243,7 @@ PView *GMSH_AnalyseMeshQualityPlugin::execute(PView *v)
 #endif
   }
 
-  return nullptr;
+  return view;
 }
 
 void GMSH_AnalyseMeshQualityPlugin::_computeMinMaxJandValidity(int dim)

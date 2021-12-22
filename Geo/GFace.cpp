@@ -242,7 +242,8 @@ void GFace::resetMeshAttributes()
 SBoundingBox3d GFace::bounds(bool fast)
 {
   SBoundingBox3d res;
-  if(geomType() != DiscreteSurface && geomType() != PartitionSurface) {
+  if(geomType() != DiscreteSurface && geomType() != BoundaryLayerSurface &&
+     geomType() != PartitionSurface) {
     for(auto ge : l_edges) {
       res += ge->bounds(fast);
     }
@@ -460,7 +461,7 @@ std::string GFace::getAdditionalInfoString(bool multline)
 
 void GFace::writeGEO(FILE *fp)
 {
-  if(geomType() == DiscreteSurface) return;
+  if(geomType() == DiscreteSurface || geomType() == BoundaryLayerSurface) return;
 
   std::vector<GEdge *> const &edg = edges();
   std::vector<int> const &dir = orientations();
@@ -674,7 +675,8 @@ void GFace::computeMeanPlane(const std::vector<SPoint3> &points)
   double ex[3], t1[3], t2[3];
 
   // check coherence of results for non-plane surfaces
-  if(geomType() != Plane && geomType() != DiscreteSurface) {
+  if(geomType() != Plane && geomType() != DiscreteSurface &&
+     geomType() != BoundaryLayerSurface) {
     double res2[3], c[3], sinc, angplan;
     double eps = 1.e-3;
 
@@ -814,7 +816,7 @@ void GFace::computeMeshSizeFieldAccuracy(double &avg, double &max_e,
 
 double GFace::curvatureDiv(const SPoint2 &param) const
 {
-  if(geomType() == Plane) return 0;
+  if(geomType() == Plane || geomType() == BoundaryLayerSurface) return 0;
 
   // X=X(u,v) Y=Y(u,v) Z=Z(u,v)
   // curv = div n = dnx/dx + dny/dy + dnz/dz
@@ -867,11 +869,7 @@ double GFace::curvatureDiv(const SPoint2 &param) const
 
 double GFace::curvatureMax(const SPoint2 &param) const
 {
-  if(geomType() == Plane) return 0.;
-
-  // TODO: should handle this better, e.g. by creating actual discreteFace
-  // instead of gmshFace
-  if(geomType() == BoundaryLayerSurface) return 0.;
+  if(geomType() == Plane || geomType() == BoundaryLayerSurface) return 0.;
 
   double eigVal[2], eigVec[8];
   getMetricEigenVectors(param, eigVal, eigVec);
@@ -885,7 +883,7 @@ double GFace::curvatures(const SPoint2 &param, SVector3 &dirMax,
 {
   Pair<SVector3, SVector3> D1 = firstDer(param);
 
-  if(geomType() == Plane) {
+  if(geomType() == Plane || geomType() == BoundaryLayerSurface) {
     dirMax = D1.first();
     dirMin = D1.second();
     curvMax = 0.;
@@ -990,6 +988,8 @@ void GFace::getMetricEigenVectors(const SPoint2 &param, double eigVal[2],
 void GFace::XYZtoUV(double X, double Y, double Z, double &U, double &V,
                     double relax, bool onSurface, bool convTestXYZ) const
 {
+  if(geomType() == BoundaryLayerSurface) return;
+
   const double Precision = onSurface ? 1.e-8 : 1.e-3;
   const int MaxIter = onSurface ? 25 : 10;
   const int NumInitGuess = 9;
@@ -1094,6 +1094,8 @@ void GFace::XYZtoUV(double X, double Y, double Z, double &U, double &V,
 SPoint2 GFace::parFromPoint(const SPoint3 &p, bool onSurface,
                             bool convTestXYZ) const
 {
+  if(geomType() == BoundaryLayerSurface) return SPoint2();
+
   double U = 0., V = 0.;
   XYZtoUV(p.x(), p.y(), p.z(), U, V, 1.0, onSurface, convTestXYZ);
   return SPoint2(U, V);
@@ -1150,6 +1152,8 @@ void bfgs_callback(const alglib::real_1d_array &x, double &func,
 GPoint GFace::closestPoint(const SPoint3 &queryPoint,
                            const double initialGuess[2]) const
 {
+  if(geomType() == BoundaryLayerSurface) return GPoint();
+
 #if defined(HAVE_ALGLIB)
   // Test initial guess
   double min_u = initialGuess[0];
@@ -1221,6 +1225,8 @@ GPoint GFace::closestPoint(const SPoint3 &queryPoint,
 
 bool GFace::containsParam(const SPoint2 &pt)
 {
+  if(geomType() == BoundaryLayerSurface) return false;
+
   Range<double> uu = parBounds(0);
   Range<double> vv = parBounds(1);
   if((pt.x() >= uu.low() && pt.x() <= uu.high()) &&
@@ -1232,6 +1238,8 @@ bool GFace::containsParam(const SPoint2 &pt)
 
 SVector3 GFace::normal(const SPoint2 &param) const
 {
+  if(geomType() == BoundaryLayerSurface) return SVector3();
+
   Pair<SVector3, SVector3> der = firstDer(param);
   SVector3 n = crossprod(der.first(), der.second());
   n.normalize();
@@ -1249,7 +1257,7 @@ bool GFace::buildRepresentationCross(bool force)
       return true;
   }
 
-  if(geomType() == DiscreteSurface) {
+  if(geomType() == DiscreteSurface || geomType() == BoundaryLayerSurface) {
     // TODO if the surface has been reparametrized
     if(cross[0].empty()) {
       cross[0].push_back(std::vector<SPoint3>());

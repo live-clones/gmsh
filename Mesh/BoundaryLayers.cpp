@@ -305,8 +305,8 @@ int Mesh2DWithBoundaryLayers(GModel *m)
   std::set<GEdge *> sourceEdges, otherEdges;
   std::map<int, infoset> sourceFaceInfo, sourceEdgeInfo;
   std::map<int, bool> faceSkipScaleCalc, edgeSkipScaleCalc; // Trevor Strickler
-  ExtrudeParams::calcLayerScaleFactor[0] = 0; // Trevor Strickler
-  ExtrudeParams::calcLayerScaleFactor[1] = 0; // Trevor Strickler
+  ExtrudeParams::calcLayerScaleFactor[0] = false; // Trevor Strickler
+  ExtrudeParams::calcLayerScaleFactor[1] = false; // Trevor Strickler
 
   // 2D boundary layers
   for(auto it = m->firstEdge(); it != m->lastEdge(); it++) {

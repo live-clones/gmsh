@@ -1146,12 +1146,16 @@ else:
 
 libpath = os.path.join(libdir, libname)
 if not os.path.exists(libpath):
+    libpath = os.path.join(libdir, "Lib", libname)
+if not os.path.exists(libpath):
     libpath = os.path.join(moduledir, libname)
-    if not os.path.exists(libpath):
+if not os.path.exists(libpath):
+    if platform.system() == "Windows":
+        libpath = find_library("{7}-{3}.{4}")
+    else:
         libpath = find_library("{7}")
 
 lib = CDLL(libpath)
-
 
 try_numpy = True # set this to False to never use numpy
 
