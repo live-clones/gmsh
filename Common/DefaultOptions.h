@@ -1490,7 +1490,7 @@ StringXNumber MeshOptions_Number[] = {
     "Save groups of nodes for each physical group (for UNV, INP and Tochnog "
     "mesh formats) if value is positive; if negative, save groups of nodes "
     "for physical groups of dimension dim if the (dim+1)^th least significant "
-    "digit of -Mesh.SaveGroupsOfNodes is 1 (for example: -100 will only"
+    "digit of -Mesh.SaveGroupsOfNodes is 1 (for example: -100 will only "
     "save surfaces, while -1010 will save volumes and curves); for INP, save "
     "groups of nodes for all entities of dimension dim if the (dim+1)^th least "
     "significant digit of -Mesh.SaveGroupsOfNodes is 2"},
