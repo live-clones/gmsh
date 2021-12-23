@@ -6,7 +6,6 @@
 
 # This CMakeList is only part of Gmsh
 # To compile hxt separately, use the CMakeLists in the module you would like to use
-# except for sizeField, which can only be compiled with Gmsh
 
 # Fixme: HXT should rather be included using simple target_link_library calls,
 # as for external libraries
@@ -39,34 +38,21 @@ list(APPEND HXT_INC_DIRS
 
 
 #################################################################################
-# HXT reparam
+# HXT surfMod
 #################################################################################
 set(SRC
-    hxt_class_macro.h
-    hxt_curvature.c
-    hxt_edge.c
-    hxt_linear_system.c
-    hxt_linear_system_lu.c
-    hxt_linear_system_lu.h
-    hxt_linear_system_petsc.c
-    hxt_linear_system_petsc.h
-    hxt_mean_values.c
-    hxt_non_linear_solver.c
-    hxt_non_linear_solver.h
+    hxt_surfaceModifications.c
    )
 
 set(INC
-    hxt_curvature.h
-    hxt_edge.h
-    hxt_linear_system.h
-    hxt_mean_values.h
+    hxt_surfaceModifications.h
    )
 
-append_gmsh_src(contrib/hxt/reparam/src "${SRC}")
-append_gmsh_src(contrib/hxt/reparam/include "${INC}")
+append_gmsh_src(contrib/hxt/surfMod/src "${SRC}")
+append_gmsh_src(contrib/hxt/surfMod/include "${INC}")
 list(APPEND HXT_INC_DIRS
-     contrib/hxt/reparam/src
-     contrib/hxt/reparam/include)
+     contrib/hxt/surfMod/src
+     contrib/hxt/surfMod/include)
 
 #################################################################################
 # HXT predicates
