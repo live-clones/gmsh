@@ -151,7 +151,7 @@ static void computeEdgeLoops(const GFace *gf,
 
 double maxDistParam(const std::vector<double> &U, const std::vector<double> &V)
 {
-  if(U.size() != V.size()) return 1e22;
+  if(U.size() < 2 || (U.size() != V.size())) return 1e22;
   double d = sqrt(std::pow(U.back() - U.front(), 2) +
                   std::pow(V.back() - V.front(), 2));
   for(std::size_t i = 1; i < U.size(); i++)

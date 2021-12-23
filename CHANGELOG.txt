@@ -1,4 +1,4 @@
-4.9.2 (Work-in-progress): faster projection on OCC entities; extend
+4.9.2 (December 23, 2021): faster projection on OCC entities; extended
 Mesh.SaveGroupsOfNodes capabilities for INP export; improved transfinite meshing
 of surfaces with boundary on periodic seam.
 
