@@ -149,6 +149,17 @@ static void computeEdgeLoops(const GFace *gf,
   }
 }
 
+double maxDistParam(const std::vector<double> &U, const std::vector<double> &V)
+{
+  if(U.size() != V.size()) return 1e22;
+  double d = sqrt(std::pow(U.back() - U.front(), 2) +
+                  std::pow(V.back() - V.front(), 2));
+  for(std::size_t i = 1; i < U.size(); i++)
+    d = std::max(d,  sqrt(std::pow(U[i] - U[i - 1], 2) +
+                          std::pow(V[i] - V[i - 1], 2)));
+  return d;
+}
+
 int MeshTransfiniteSurface(GFace *gf)
 {
   if(gf->meshAttributes.method != MESH_TRANSFINITE) return 0;
@@ -217,7 +228,7 @@ int MeshTransfiniteSurface(GFace *gf)
   // get the indices of the interpolation corners as well as the u,v
   // coordinates of all the boundary vertices
   int iCorner = 0, N[4] = {0, 0, 0, 0};
-  std::vector<double> U, V;
+  std::vector<double> U, V, U2, V2;
   for(std::size_t i = 0; i < m_vertices.size(); i++) {
     MVertex *v = m_vertices[i];
     if(v == corners[0] || v == corners[1] || v == corners[2] ||
@@ -230,11 +241,23 @@ int MeshTransfiniteSurface(GFace *gf)
       N[iCorner++] = i;
     }
     SPoint2 param;
-    if(!reparamMeshVertexOnFace(v, gf, param))
-      Msg::Warning("Transfinite mesh of surface %d might be invalid "
-                   "(node %d on a periodic seam)", gf->tag(), v->getNum());
+    bool onSeam = !reparamMeshVertexOnFace(v, gf, param);
     U.push_back(param[0]);
     V.push_back(param[1]);
+    // if v is on a periodic seam, get the other parametric coordinates
+    if(onSeam) reparamMeshVertexOnFace(v, gf, param, true, true, -1);
+    U2.push_back(param[0]);
+    V2.push_back(param[1]);
+  }
+
+  // quick fix for surfaces with a single seam: choose the trajectory in the
+  // parametric plane that leads to the smallest maximum distance between two
+  // nodes; this should be generalized if we want to handle cases with more than
+  // one seam
+  if(maxDistParam(U2, V2) < maxDistParam(U, V)) {
+    Msg::Debug("Choosing alternate parametrization on surface %d", gf->tag());
+    U = U2;
+    V = V2;
   }
 
   int N1 = N[0], N2 = N[1], N3 = N[2], N4 = N[3];
