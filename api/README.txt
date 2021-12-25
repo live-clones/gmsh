@@ -21,6 +21,6 @@ the Gmsh API.
 
 To add a new function in the Gmsh API:
 
-  - add the C++ implementation of the function in 'Common/gmsh.cpp'
+  - add the C++ implementation of the function in 'src/common/gmsh.cpp'
   - add the generic function prototype in 'gen.py'
   - run 'python gen.py'

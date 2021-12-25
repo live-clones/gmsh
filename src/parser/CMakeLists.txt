@@ -9,5 +9,5 @@ set(SRC
   FunctionManager.cpp
 )
 
-file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h) 
-append_gmsh_src(Parser "${SRC};${HDR}")
+file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h)
+append_gmsh_src(src/parser "${SRC};${HDR}")

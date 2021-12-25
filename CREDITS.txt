@@ -67,16 +67,16 @@ OpenCASCADE and MED integration in 2006-2007. Gmsh development was also
 financially supported by the PRACE project funded in part by the EU's Horizon
 2020 Research and Innovation programme (2014-2020) under grant agreement 823767.
 
-The TetGen/BR code (Mesh/tetgenBR.{cpp,h}) is copyright (c) 2016 Hang Si,
+The TetGen/BR code (src/mesh/tetgenBR.{cpp,h}) is copyright (c) 2016 Hang Si,
 Weierstrass Institute for Applied Analysis and Stochatics. It is relicensed
 under the terms of LICENSE.txt for use in Gmsh thanks to a Software License
 Agreement between Weierstrass Institute for Applied Analysis and Stochastics and
 GMESH SPRL.
 
-The AVL tree code (Common/avl.{cpp,h}) and the YUV image code
-(Graphics/gl2yuv.{cpp,h}) are copyright (C) 1988-1993, 1995 The Regents of the
-University of California. Permission to use, copy, modify, and distribute this
-software and its documentation for any purpose and without fee is hereby
+The AVL tree code (src/common/avl.{cpp,h}) and the YUV image code
+(src/graphics/gl2yuv.{cpp,h}) are copyright (C) 1988-1993, 1995 The Regents of
+the University of California. Permission to use, copy, modify, and distribute
+this software and its documentation for any purpose and without fee is hereby
 granted, provided that the above copyright notice appear in all copies and that
 both that copyright notice and this permission notice appear in supporting
 documentation, and that the name of the University of California not be used in
@@ -85,13 +85,13 @@ specific, written prior permission. The University of California makes no
 representations about the suitability of this software for any purpose. It is
 provided "as is" without express or implied warranty.
 
-The picojson code (Common/picojson.h) is Copyright 2009-2010 Cybozu Labs, Inc.,
-Copyright 2011-2014 Kazuho Oku, All rights reserved. Redistribution and use in
-source and binary forms, with or without modification, are permitted provided
-that the following conditions are met: 1. Redistributions of source code must
-retain the above copyright notice, this list of conditions and the following
-disclaimer. 2. Redistributions in binary form must reproduce the above copyright
-notice, this list of conditions and the following disclaimer in the
+The picojson code (src/common/picojson.h) is Copyright 2009-2010 Cybozu Labs,
+Inc., Copyright 2011-2014 Kazuho Oku, All rights reserved. Redistribution and
+use in source and binary forms, with or without modification, are permitted
+provided that the following conditions are met: 1. Redistributions of source
+code must retain the above copyright notice, this list of conditions and the
+following disclaimer. 2. Redistributions in binary form must reproduce the above
+copyright notice, this list of conditions and the following disclaimer in the
 documentation and/or other materials provided with the distribution. THIS
 SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY
 EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -104,14 +104,14 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-The nanoflann code (Numeric/nanoflann.hpp) is Copyright 2008-2009 Marius Muja,
-2008-2009 David G. Lowe, 2011-2016 Jose Luis Blanco. Redistribution and use in
-source and binary forms, with or without modification, are permitted provided
-that the following conditions are met: 1. Redistributions of source code must
-retain the above copyright notice, this list of conditions and the following
-disclaimer.  2. Redistributions in binary form must reproduce the above
-copyright notice, this list of conditions and the following disclaimer in the
-documentation and/or other materials provided with the distribution.  THIS
+The nanoflann code (src/numeric/nanoflann.hpp) is Copyright 2008-2009 Marius
+Muja, 2008-2009 David G. Lowe, 2011-2016 Jose Luis Blanco. Redistribution and
+use in source and binary forms, with or without modification, are permitted
+provided that the following conditions are met: 1. Redistributions of source
+code must retain the above copyright notice, this list of conditions and the
+following disclaimer.  2. Redistributions in binary form must reproduce the
+above copyright notice, this list of conditions and the following disclaimer in
+the documentation and/or other materials provided with the distribution.  THIS
 SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED
 WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
 MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT
@@ -123,7 +123,7 @@ CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
 IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
 OF SUCH DAMAGE.
 
-The trackball code (Graphics/Trackball.{cpp.h}) is copyright (C) 1993, 1994,
+The trackball code (src/graphics/Trackball.{cpp.h}) is copyright (C) 1993, 1994,
 Silicon Graphics, Inc. ALL RIGHTS RESERVED. Permission to use, copy, modify, and
 distribute this software for any purpose and without fee is hereby granted,
 provided that the above copyright notice appear in all copies and that both the
@@ -132,25 +132,26 @@ and that the name of Silicon Graphics, Inc. not be used in advertising or
 publicity pertaining to distribution of the software without specific, written
 prior permission.
 
-The GIF and PPM routines (Graphics/gl2gif.cpp) are based on code copyright (C)
-1989, 1991, Jef Poskanzer. Permission to use, copy, modify, and distribute this
-software and its documentation for any purpose and without fee is hereby
+The GIF and PPM routines (src/graphics/gl2gif.cpp) are based on code copyright
+(C) 1989, 1991, Jef Poskanzer. Permission to use, copy, modify, and distribute
+this software and its documentation for any purpose and without fee is hereby
 granted, provided that the above copyright notice appear in all copies and that
 both that copyright notice and this permission notice appear in supporting
 documentation.  This software is provided "as is" without express or implied
 warranty.
 
-The colorbar widget (Fltk/colorbarWindow.cpp) was inspired by code from the
+The colorbar widget (src/fltk/colorbarWindow.cpp) was inspired by code from the
 Vis5d program for visualizing five dimensional gridded data sets, copyright (C)
 1990-1995, Bill Hibbard, Brian Paul, Dave Santek, and Andre Battaiola.
 
-The libOL code (Common/libol1.{c,h}) is Copyright 2012-2018 - by Loïc Maréchal /
-INRIA. This program is a free software. You can redistribute it and/or modify it
-under the terms of the MIT License as published by the Open Source Initiative.
+The libOL code (src/common/libol1.{c,h}) is Copyright 2012-2018 - by Loïc
+Maréchal / INRIA. This program is a free software. You can redistribute it
+and/or modify it under the terms of the MIT License as published by the Open
+Source Initiative.
 
 The Fast & memory efficient hashtable based on robin hood hashing
-(Common/robin_hood.h) is Copyright (c) 2018-2020 Martin Ankerl and is licensed
-under the MIT License.
+(src/common/robin_hood.h) is Copyright (c) 2018-2020 Martin Ankerl and is
+licensed under the MIT License.
 
 In addition, this version of Gmsh may contain the following contributed,
 optional codes in the contrib/ directory, each governed by their own license:

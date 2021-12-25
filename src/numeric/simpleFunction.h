@@ -8,7 +8,7 @@
 
 #include <map>
 
-// FIXME: Numeric/ should not depend on Geo/
+// FIXME: src/numeric/ should not depend on src/geo/
 class MElement;
 
 template <class scalar> class simpleFunction {

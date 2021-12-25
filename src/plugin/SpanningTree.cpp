@@ -225,7 +225,7 @@ void GMSH_SpanningTreePlugin::addToModel(GModel &model, Tree &tree, int tag)
     line[i] = new MLine(model.getMeshVertexByTag(it->first + 1),
                         model.getMeshVertexByTag(it->second + 1));
 
-  // Add Elements as a Chain in GModel (see Chain::addToModel in Geo/Chain.h)
+  // Add Elements as a Chain in GModel (see Chain::addToModel in src/geo/Chain.h)
 
   std::string name = "";
   int entityNum;

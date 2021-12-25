@@ -1161,7 +1161,7 @@ Colors expressions are hybrids between fixed-length braced
 @noindent The first case permits to use the X Windows names to refer to colors,
 e.g., @code{Red}, @code{SpringGreen}, @code{LavenderBlush3}, @dots{}
 (see
-@url{@value{GITLAB-PREFIX}/Common/Colors.h,Common/Colors.h}
+@url{@value{GITLAB-PREFIX}/src/common/Colors.h,src/common/Colors.h}
 in the source code for a complete list). The second case permits to
 define colors by using three expressions to specify their red, green and
 blue components (with values comprised between 0 and 255). The third
@@ -4153,7 +4153,7 @@ with the edges, 54 with the faces, 27 in the volume)
 @item ...
 @end table
 All the currently supported elements in the format are defined in
-@url{https://gitlab.onelab.info/gmsh/gmsh/blob/master/Common/GmshDefines.h,GmshDefines.h}. See
+@url{https://gitlab.onelab.info/gmsh/gmsh/blob/master/src/common/GmshDefines.h,GmshDefines.h}. See
 @ref{Node ordering} for the ordering of the nodes.
 
 The post-processing sections (@code{$NodeData}, @code{$ElementData},
@@ -6064,70 +6064,70 @@ requests.
 
 Gmsh's code is structured in several subdirectories, roughly separated
 between the four core modules
-(@url{@value{GITLAB-PREFIX}/Geo,Geo},
-@url{@value{GITLAB-PREFIX}/Mesh,Mesh},
-@url{@value{GITLAB-PREFIX}/Solver,Solver},
-@url{@value{GITLAB-PREFIX}/Post,Post}) and
+(@url{@value{GITLAB-PREFIX}/src/geo,src/geo},
+@url{@value{GITLAB-PREFIX}/src/mesh,src/mesh},
+@url{@value{GITLAB-PREFIX}/src/solver,src/solver},
+@url{@value{GITLAB-PREFIX}/src/post,src/post}) and
 associated utilities
-(@url{@value{GITLAB-PREFIX}/Common,Common},
-@url{@value{GITLAB-PREFIX}/Numeric,Numeric})
+(@url{@value{GITLAB-PREFIX}/src/common,src/common},
+@url{@value{GITLAB-PREFIX}/src/numeric,src/numeric})
 on one hand, and the graphics
-(@url{@value{GITLAB-PREFIX}/Graphics,Graphics})
+(@url{@value{GITLAB-PREFIX}/src/graphics,src/graphics})
 and interface
-(@url{@value{GITLAB-PREFIX}/Fltk,Fltk},
-@url{@value{GITLAB-PREFIX}/Parser,Parser},
+(@url{@value{GITLAB-PREFIX}/src/fltk,src/fltk},
+@url{@value{GITLAB-PREFIX}/src/parser,src/parser},
 @url{@value{GITLAB-PREFIX}/api,api}) code on
 the other.
 
 The geometry module is based on a model class
-(@url{@value{GITLAB-PREFIX}/Geo/GModel.h,Geo/GModel.h}),
+(@url{@value{GITLAB-PREFIX}/src/geo/GModel.h,src/geo/GModel.h}),
 and abstract entity classes for geometrical points
-(@url{@value{GITLAB-PREFIX}/Geo/GVertex.h,Geo/GVertex.h}),
+(@url{@value{GITLAB-PREFIX}/src/geo/GVertex.h,src/geo/GVertex.h}),
 curves
-(@url{@value{GITLAB-PREFIX}/Geo/GEdge.h,Geo/GEdge.h}),
+(@url{@value{GITLAB-PREFIX}/src/geo/GEdge.h,src/geo/GEdge.h}),
 surfaces
-(@url{@value{GITLAB-PREFIX}/Geo/GFace.h,Geo/GFace.h})
+(@url{@value{GITLAB-PREFIX}/src/geo/GFace.h,src/geo/GFace.h})
 and volumes
-(@url{@value{GITLAB-PREFIX}/Geo/GRegion.h,Geo/GRegion.h}).
+(@url{@value{GITLAB-PREFIX}/src/geo/GRegion.h,src/geo/GRegion.h}).
 Concrete implementations of these classes are provided for each
 supported CAD kernel
-(e.g. @url{@value{GITLAB-PREFIX}/Geo/gmshVertex.h,Geo/gmshVertex.h}
+(e.g. @url{@value{GITLAB-PREFIX}/src/geo/gmshVertex.h,src/geo/gmshVertex.h}
 for points in Gmsh's built-in CAD kernel, or
-@url{@value{GITLAB-PREFIX}/Geo/OCCVertex.h,Geo/OCCVertex.h}
+@url{@value{GITLAB-PREFIX}/src/geo/OCCVertex.h,src/geo/OCCVertex.h}
 for points from OpenCASCADE). All these elementary model entities derive
 from
-@url{@value{GITLAB-PREFIX}/Geo/GEntity.h,Geo/GEntity.h}.
+@url{@value{GITLAB-PREFIX}/src/geo/GEntity.h,src/geo/GEntity.h}.
 Physical groups are simply stored as integer tags in the entities.
 
 A mesh is composed of elements: mesh points
-(@url{@value{GITLAB-PREFIX}/Geo/MPoint.h,Geo/MPoint.h}),
+(@url{@value{GITLAB-PREFIX}/src/geo/MPoint.h,src/geo/MPoint.h}),
 lines
-(@url{@value{GITLAB-PREFIX}/Geo/MLine.h,Geo/MLine.h}),
+(@url{@value{GITLAB-PREFIX}/src/geo/MLine.h,src/geo/MLine.h}),
 triangles
-(@url{@value{GITLAB-PREFIX}/Geo/MTriangle.h,Geo/MTriangle.h}),
+(@url{@value{GITLAB-PREFIX}/src/geo/MTriangle.h,src/geo/MTriangle.h}),
 quadrangles
-(@url{@value{GITLAB-PREFIX}/Geo/MQuadrangle.h,Geo/MQuadrangle.h}),
+(@url{@value{GITLAB-PREFIX}/src/geo/MQuadrangle.h,src/geo/MQuadrangle.h}),
 tetrahedra
-(@url{@value{GITLAB-PREFIX}/Geo/MTetrahedron.h,Geo/MTetrahedron.h}),
+(@url{@value{GITLAB-PREFIX}/src/geo/MTetrahedron.h,src/geo/MTetrahedron.h}),
 etc. All the mesh elements are derived from
-@url{@value{GITLAB-PREFIX}/Geo/MElement.h,Geo/MElement.h},
+@url{@value{GITLAB-PREFIX}/geo/MElement.h,src/geo/MElement.h},
 and are stored in the corresponding model entities: one mesh point per
 geometrical point, mesh lines in geometrical curves, triangles and
 quadrangles in surfaces, etc. The elements are defined in terms of their
 nodes
-(@url{@value{GITLAB-PREFIX}/Geo/MVertex.h,Geo/MVertex.h}).
+(@url{@value{GITLAB-PREFIX}/src/geo/MVertex.h,src/geo/MVertex.h}).
 Each model entity stores only its internal nodes: nodes on boundaries or
 on embedded entities are stored in the associated bounding/embedded
 entity.
 
 The post-processing module is based on the concept of views
-(@url{@value{GITLAB-PREFIX}/Post/PView.h,Post/PView.h})
+(@url{@value{GITLAB-PREFIX}/src/post/PView.h,src/post/PView.h})
 and abstract data containers (derived from
-@url{@value{GITLAB-PREFIX}/Post/PViewData.h,Post/PViewData.h}).
+@url{@value{GITLAB-PREFIX}/src/post/PViewData.h,src/post/PViewData.h}).
 Data can be either mesh-based
-(@url{@value{GITLAB-PREFIX}/Post/PViewDataGModel.h,Post/PViewDataGModel.h}),
+(@url{@value{GITLAB-PREFIX}/src/post/PViewDataGModel.h,src/post/PViewDataGModel.h}),
 in which case the view is linked to one or more models, or list-based
-(@url{@value{GITLAB-PREFIX}/Post/PViewDataList.h,Post/PViewDataLis.h}),
+(@url{@value{GITLAB-PREFIX}/src/post/PViewDataList.h,src/post/PViewDataLis.h}),
 in which case all the relevant geometrical information is self-contained
 in the view.
 
@@ -6180,24 +6180,24 @@ To add a new option in Gmsh:
 @enumerate
 @item
 create the option in the @code{CTX} class
-(@url{@value{GITLAB-PREFIX}/Common/Context.h,Common/Context.h}
+(@url{@value{GITLAB-PREFIX}/src/common/Context.h,src/common/Context.h}
 if it's a classical option, or in the @code{PViewOptions} class
-(@url{@value{GITLAB-PREFIX}/Post/PViewOptions.h,Post/PViewOptions.h})
+(@url{@value{GITLAB-PREFIX}/src/post/PViewOptions.h,src/post/PViewOptions.h})
 if it's a post-processing view-dependent option;
 @item
 in
-@url{@value{GITLAB-PREFIX}/Common/DefaultOptions.h,Common/DefaultOptions.h},
+@url{@value{GITLAB-PREFIX}/src/common/DefaultOptions.h,src/common/DefaultOptions.h},
 give a name (for the parser to be able to access it), a reference to a
 handling routine (i.e. @code{opt_XXX}) and a default value for this
 option;
 @item
 create the handling routine @code{opt_XXX} in
-@url{@value{GITLAB-PREFIX}/Common/Options.cpp,Common/Options.cpp}
+@url{@value{GITLAB-PREFIX}/src/common/Options.cpp,src/common/Options.cpp}
 (and add the prototype in
-@url{@value{GITLAB-PREFIX}/Common/Options.h,Common/Options.h});
+@url{@value{GITLAB-PREFIX}/src/common/Options.h,src/common/Options.h});
 @item
 optional: create the associated widget in
-@url{@value{GITLAB-PREFIX}/Fltk/optionWindow.cpp,Fltk/optionWindow.h};
+@url{@value{GITLAB-PREFIX}/src/fltk/optionWindow.cpp,src/fltk/optionWindow.h};
 @end enumerate
 
 @c =========================================================================
@@ -6593,7 +6593,7 @@ SIGE: signed inverse error on the gradient of FE solution
 @end itemize
 
 For the exact definitions, see
-@url{@value{GITLAB-PREFIX}/Geo/MElement.cpp,Geo/MElement.cpp}. The
+@url{@value{GITLAB-PREFIX}/src/geo/MElement.cpp,src/geo/MElement.cpp}. The
 graphs plot the the number of elements vs. the quality measure.
 
 @item How can I save a mesh file with a given (e.g. older) MSH file format version?

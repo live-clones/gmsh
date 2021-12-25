@@ -1322,7 +1322,7 @@ public:
   void carveholes();
 
   // Comment: These three functions are implemented directly in:
-  //   gmsh_wrk/Mesh/meshGRegionBoundaryRecovery.cpp
+  // src/mesh/meshGRegionBoundaryRecovery.cpp
   bool reconstructmesh(void *);
   void outsurfacemesh(const char *mfilename);
   void outmesh2medit(const char *mfilename);

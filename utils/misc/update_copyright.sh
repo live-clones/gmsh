@@ -10,8 +10,8 @@ done
 # Need to manually change:
 #   CREDITS.txt
 #   doc/texinfo/gmsh.texi
-#   Fltk/helpWindow.cpp
-#   Common/onelab.h
+#   src/fltk/helpWindow.cpp
+#   src/common/onelab.h
 #   doc/gmsh.html
 #   contrib/mobile/README.txt
 #   contrib/mobile/androidUtils.cpp

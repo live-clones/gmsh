@@ -156,8 +156,8 @@ int GModel::writeMATLAB(const std::string &name, bool binary, bool saveAll,
   return 1;
 }
 
-// This should be updated whenever a new element is available in GMSH
-// See Common/GmshDefines.h
+// This should be updated whenever a new element is available in GMSH; see
+// src/common/GmshDefines.h
 std::string getMATLABName(int type)
 {
   switch(type) {

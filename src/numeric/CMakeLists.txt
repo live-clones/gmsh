@@ -60,4 +60,4 @@ set(SRC
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h)
-append_gmsh_src(Numeric "${SRC};${HDR}")
+append_gmsh_src(src/numeric "${SRC};${HDR}")
