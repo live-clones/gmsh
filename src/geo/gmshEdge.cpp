@@ -56,12 +56,7 @@ void gmshEdge::resetNativePtr(Curve *c, GVertex *v1, GVertex *v2)
 
 bool gmshEdge::degenerate(int dim) const
 {
-  if(_c->beg == _c->end && _c->Typ == MSH_SEGM_LINE &&
-     List_Nbr(_c->Control_Points) == 0) {
-    Msg::Info("Curve %d is degenerate", tag());
-    return true;
-  }
-  return false;
+  return _c->degenerate();
 }
 
 void gmshEdge::resetMeshAttributes()

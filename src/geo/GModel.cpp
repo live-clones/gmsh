@@ -2634,9 +2634,11 @@ void GModel::checkMeshCoherence(double tolerance)
         MElement *e = entities[i]->getMeshElement(j);
         double vol = e->getVolume();
         if(vol < 0)
-          Msg::Warning("Element %d has negative volume", e->getNum());
+          Msg::Warning("Element %d of dimension %d on entity %d has negative "
+                       "volume", e->getNum(), e->getDim(), entities[i]->tag());
         else if(vol < eps * eps * eps)
-          Msg::Warning("Element %d has zero volume", e->getNum());
+          Msg::Warning("Element %d of dimension %d on entity %d has zero volume",
+                       e->getNum(), e->getDim(), entities[i]->tag());
         SPoint3 p = e->barycenter();
         vertices.push_back(new MVertex(p.x(), p.y(), p.z()));
       }

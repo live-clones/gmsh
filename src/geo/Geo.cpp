@@ -241,7 +241,6 @@ bool EndCurve(Curve *c)
       }
     }
   }
-  c->degenerated = false;
 
   if((c->Typ == MSH_SEGM_CIRC || c->Typ == MSH_SEGM_CIRC_INV ||
       c->Typ == MSH_SEGM_ELLI || c->Typ == MSH_SEGM_ELLI_INV) &&
@@ -812,6 +811,7 @@ static void CopyCurve(Curve *c, Curve *cc)
   cc->endByTag = c->endByTag;
   cc->ubeg = c->ubeg;
   cc->uend = c->uend;
+  cc->degenerated = c->degenerated;
   cc->Control_Points =
     List_Create(List_Nbr(c->Control_Points), 1, sizeof(Vertex *));
   List_Copy(c->Control_Points, cc->Control_Points);
@@ -846,9 +846,13 @@ Curve *DuplicateCurve(GEdge *ge)
   Tree_Insert(GModel::current()->getGEOInternals()->Curves, &pc);
   pc->Control_Points = List_Create(2, 1, sizeof(Vertex *));
   pc->beg = DuplicateVertex(ge->getBeginVertex());
-  pc->end = DuplicateVertex(ge->getEndVertex());
+  if(ge->getBeginVertex() != ge->getEndVertex())
+    pc->end = DuplicateVertex(ge->getEndVertex());
+  else
+    pc->end = pc->beg;
   List_Add(pc->Control_Points, &pc->beg);
   List_Add(pc->Control_Points, &pc->end);
+  if(ge->degenerate(0)) pc->degenerated = true;
   CreateReversedCurve(pc);
   return pc;
 }
@@ -893,16 +897,19 @@ Surface *DuplicateSurface(Surface *s)
   return ps;
 }
 
-Surface *DuplicateSurface(GFace *gf)
+Surface *DuplicateSurface(GFace *gf, std::map<int, int> &source)
 {
   // dummy version to handle generic GModel entities for boundary layers
   Surface *ps = CreateSurface(NEWSURFACE(), MSH_SURF_PLAN); // dummy
   Tree_Insert(GModel::current()->getGEOInternals()->Surfaces, &ps);
   std::vector<GEdge *> edges = gf->edges();
   ps->Generatrices = List_Create(edges.size() + 1, 1, sizeof(Curve *));
-  for(auto ge : edges) {
-    Curve *newc = DuplicateCurve(ge);
-    List_Add(ps->Generatrices, &newc);
+  for(std::size_t i = 0; i < edges.size(); i++) {
+    if(!edges[i]->degenerate(0)) {
+      Curve *newc = DuplicateCurve(edges[i]);
+      List_Add(ps->Generatrices, &newc);
+      source[newc->Num] = edges[i]->tag();
+    }
   }
   return ps;
 }
@@ -1174,6 +1181,7 @@ Curve *CreateReversedCurve(Curve *c)
   newc->degre = c->degre;
   newc->ubeg = 1. - c->uend;
   newc->uend = 1. - c->ubeg;
+  newc->degenerated = c->degenerated;
 
   if(c->Extrude) {
     newc->Extrude = new ExtrudeParams;
@@ -2216,7 +2224,7 @@ static void RemoveDegenerateCurves()
         }
       }
       if(List_Nbr(ll) != List_Nbr(s->Generatrices))
-        Msg::Info("Coherence: surface %d goes from %d to %d boundary edges",
+        Msg::Info("Coherence: surface %d goes from %d to %d bounding curves",
                   s->Num, List_Nbr(ll), List_Nbr(s->Generatrices));
       List_Delete(ll);
     }
@@ -2315,7 +2323,7 @@ static void RemoveDegenerateSurfaces()
     List_Delete(ll);
 
     if(s->degenerate()) {
-      Msg::Info("Coherence: surfface %d is removed (degenerated)", s->Num);
+      Msg::Info("Coherence: surface %d is removed (degenerated)", s->Num);
       List_T *Vols = Tree2List(GModel::current()->getGEOInternals()->Volumes);
       for(int k = 0; k < List_Nbr(Vols); k++) {
         Volume *v;
@@ -2347,7 +2355,7 @@ bool Surface::degenerate() const
     List_Read(Generatrices, i, &c);
     if(!c->degenerate()) Nd++;
   }
-  return Nd == 0;
+  return Nd <= 1;
 }
 
 static void ReplaceDuplicateSurfaces(std::map<int, int> *s_report = nullptr)
@@ -2764,6 +2772,12 @@ int ExtrudeCurve(int type, int ic, double T0, double T1, double T2, double A0,
   }
 
   if(ge) {
+    if(ge->degenerate(0)) {
+      Msg::Info("Skipping boundary layer extrusion of degenerate curve %d",
+                ge->tag());
+      return 0;
+    }
+
     if(!ge->getBeginVertex() || !ge->getEndVertex()) {
       Msg::Error("Cannot extrude curve with no begin or end point");
       return 0;
@@ -2979,10 +2993,11 @@ int ExtrudeSurface(int type, int is, double T0, double T1, double T2, double A0,
   Msg::Debug("Extrude Surface %d", is);
 
   Surface *chapeau = nullptr;
+  std::map<int, int> source;
   if(ps)
     chapeau = DuplicateSurface(ps);
   else
-    chapeau = DuplicateSurface(gf);
+    chapeau = DuplicateSurface(gf, source);
   chapeau->Extrude = new ExtrudeParams(COPIED_ENTITY);
   chapeau->Extrude->fill(type, T0, T1, T2, A0, A1, A2, X0, X1, X2, alpha);
   chapeau->Extrude->geo.Source = is; // not ps->Num: we need the sign info
@@ -3002,7 +3017,7 @@ int ExtrudeSurface(int type, int is, double T0, double T1, double T2, double A0,
       c2num = c2->Num;
     }
     else {
-      c2num = gf->edges()[i]->tag();
+      c2num = source[c->Num];
     }
     c->Extrude->geo.Source = c2num;
     if(e) c->Extrude->mesh = e->mesh;

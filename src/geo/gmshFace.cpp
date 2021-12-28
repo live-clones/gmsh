@@ -30,13 +30,8 @@ bool gmshFace::degenerate(int dim) const
 {
   std::vector<GEdge *> const &eds = edges();
   int numNonDegenerate = 0;
-  std::set<GEdge *> t;
-  for(auto it = eds.begin(); it != eds.end(); ++it) {
-    GEdge *e = *it;
-    GVertex *start = e->getBeginVertex();
-    GVertex *next = e->getEndVertex();
-    if(start != next && t.find(e) == t.end()) { numNonDegenerate++; }
-    t.insert(e);
+  for(auto ge : eds) {
+    if(!ge->degenerate(0)) numNonDegenerate++;
   }
   return numNonDegenerate <= 1;
 }

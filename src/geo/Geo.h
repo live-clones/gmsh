@@ -96,8 +96,9 @@ public:
   std::list<double> affineTransformation;
   bool degenerate() const
   {
-    if(beg == end && Typ == MSH_SEGM_LINE) return true;
-    return false;
+    if(beg == end && Typ == MSH_SEGM_LINE && !List_Nbr(Control_Points))
+      return true;
+    return degenerated;
   }
 };
 
