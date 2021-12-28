@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2022 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -34,6 +34,7 @@
 #include <Geom_ToroidalSurface.hxx>
 #include <IntTools_Context.hxx>
 #include <ShapeAnalysis.hxx>
+#include <ShapeFix_Wire.hxx>
 #include <Standard_Version.hxx>
 #include <TopExp_Explorer.hxx>
 #include <TopoDS.hxx>
@@ -60,6 +61,15 @@ void OCCFace::_setup()
   for(exp2.Init(_s.Oriented(TopAbs_FORWARD), TopAbs_WIRE); exp2.More();
       exp2.Next()) {
     TopoDS_Wire wire = TopoDS::Wire(exp2.Current());
+
+    // it is crucial that the edges in the wire are ordered and oriented
+    // correctly (for non-periodic surfaces GEdgeLoop would correct it; but for
+    // periodic surfaces the location of degenerate edges linking 2 sides of the
+    // parametric space is crucial) - so always make sure to reorder the edges
+    ShapeFix_Wire sfw(wire, _s, CTX::instance()->geom.tolerance);
+    sfw.FixReorder();
+    wire = sfw.Wire();
+
     Msg::Debug("OCC surface %d - new wire", tag());
     GEdgeLoop el;
 
@@ -88,13 +98,11 @@ void OCCFace::_setup()
     }
 
     if(!el.check()) {
-      el.reverse(); // check other orientation
-      if(!el.check()) {
-        Msg::Info("Recomputing incorrect OpenCASCADE wire in surface %d", tag());
-        std::vector<GEdge*> edges;
-        el.getEdges(edges);
-        el.recompute(edges);
-      }
+      // should not happen, since ShapeFix_Wire has been called before
+      Msg::Warning("Recomputing incorrect OpenCASCADE wire in surface %d", tag());
+      std::vector<GEdge*> edges;
+      el.getEdges(edges);
+      el.recompute(edges);
     }
 
     for(GEdgeLoop::citer it = el.begin(); it != el.end(); ++it) {
