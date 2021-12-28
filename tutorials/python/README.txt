@@ -30,4 +30,4 @@ module (`gmsh.py'). These can be either obtained
 
 You can then run e.g. "python t1.py"
 
-For other Python API examples, see the `demos/api' directory.
+For other Python API examples, see the `examples/api' directory.

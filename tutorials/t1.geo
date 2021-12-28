@@ -135,4 +135,4 @@ Physical Surface("My surface") = {1};
 // `CombinedBoundary' operators.
 //
 // See e.g. `t16.geo', `t18.geo', `t19.geo' or `t20.geo' for complete examples
-// based on OpenCASCADE, and `demos/boolean' for more.
+// based on OpenCASCADE, and `examples/boolean' for more.

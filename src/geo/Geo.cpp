@@ -1691,7 +1691,7 @@ static int CompareTwoSurfaces(const void *a, const void *b)
   }
 
   // checking types is the "right thing" to do (see e.g. CompareTwoCurves)
-  // but it would break backward compatibility (see e.g. tutorial/t2.geo),
+  // but it would break backward compatibility (see e.g. tutorials/t2.geo),
   // so let's just do it for boundary layer surfaces for now:
   if(s1->Typ == MSH_SURF_BND_LAYER || s2->Typ == MSH_SURF_BND_LAYER) {
     if(s1->Typ != s2->Typ) return s1->Typ - s2->Typ;

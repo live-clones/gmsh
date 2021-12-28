@@ -29,4 +29,4 @@ module (`gmsh.jl'). These can be either obtained
 
 You can then run e.g. "julia t1.jl"
 
-For other Julia API examples, see the `demos/api' directory.
+For other Julia API examples, see the `examples/api' directory.

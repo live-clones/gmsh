@@ -9,7 +9,7 @@
 #
 # By design, the Gmsh Python API is purely functional, and only uses elementary
 # Python types (as well as `numpy' arrays if `numpy' is available). See
-# `tutorial/python' and `demos/api' for examples.
+# `tutorials/python' and `examples/api' for tutorials and examples.
 
 from ctypes import *
 from ctypes.util import find_library

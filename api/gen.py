@@ -18,8 +18,8 @@
 # By design, the Gmsh API is purely functional, and only uses elementary types
 # from the target language.
 #
-# See `tutorial/{c++,c,python,julia}' and `demos/api' for examples on how to
-# use the Gmsh API.
+# See `tutorials/{c++,c,python,julia}' and `examples/api' for tutorials and
+# examples on how to use the Gmsh API.
 
 import os
 from GenApi import *

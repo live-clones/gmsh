@@ -130,7 +130,7 @@ int main(int argc, char **argv)
 
   // Additional examples created with the OpenCASCADE geometry kernel are
   // available in `t18.cpp', `t19.cpp' and `t20.cpp', as well as in the
-  // `demos/api' directory.
+  // `examples/api' directory.
 
   // Inspect the log:
   std::vector<std::string> log;

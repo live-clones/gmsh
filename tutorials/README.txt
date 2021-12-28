@@ -1,4 +1,4 @@
-This directory contains the Gmsh tutorial.
+This directory contains the Gmsh tutorials.
 
 The `.geo' files are written in Gmsh's built-in scripting language. You can open
 them directly with the Gmsh app: in the graphical user interface (GUI), just go

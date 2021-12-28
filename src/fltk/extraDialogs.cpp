@@ -249,7 +249,7 @@ std::string connectionChooser()
   if(!_connectionChooser) {
     _connectionChooser =
       new historyChooser("connection", "Remote Start",
-                         "Command:", "./gmsh ../tutorial/view3.pos", "Run");
+                         "Command:", "./gmsh ../tutorials/view3.pos", "Run");
     _connectionChooser->browser->callback(connection_select_cb);
   }
   return _connectionChooser->run();

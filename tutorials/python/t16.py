@@ -111,7 +111,8 @@ gmsh.model.mesh.generate(3)
 gmsh.write("t16.msh")
 
 # Additional examples created with the OpenCASCADE geometry kernel are available
-# in `t18.py', `t19.py' and `t20.py', as well as in the `demos/api' directory.
+# in `t18.py', `t19.py' and `t20.py', as well as in the `examples/api'
+# directory.
 
 # Inspect the log:
 log = gmsh.logger.get()

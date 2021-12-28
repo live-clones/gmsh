@@ -5,5 +5,5 @@ to modify some mesh color settings.
 
 ### Python
 ```python
-{{#include ../../../../tutorial/python/t3.py}}
+{{#include ../../../../tutorials/python/t3.py}}
 ```

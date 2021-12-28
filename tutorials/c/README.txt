@@ -10,7 +10,7 @@ associated header file (`gmshc.h'). These can be either obtained
   first tutorial, assuming that you are currently in the root directory of the
   SDK and that you are using the gcc compiler:
 
-    gcc -o t1 -Iinclude share/doc/gmsh/tutorial/c/t1.c -Llib -lgmsh
+    gcc -o t1 -Iinclude share/doc/gmsh/tutorials/c/t1.c -Llib -lgmsh
 
   Then run
 
@@ -31,4 +31,4 @@ associated header file (`gmshc.h'). These can be either obtained
     gcc -o t1 t1.c -lgmsh
     ./t1
 
-For other C API examples, see the `demos/api' directory.
+For other C API examples, see the `examples/api' directory.

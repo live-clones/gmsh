@@ -80,4 +80,4 @@ MeshSize{ p() } = lcar2;
 
 // Additional examples created with the OpenCASCADE geometry kernel are
 // available in `t18.geo', `t19.geo' and `t20.geo', as well as in the
-// `demos/boolean' directory.
+// `examples/boolean' directory.

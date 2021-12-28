@@ -8,7 +8,7 @@ import sys
 # boundary conditions using the finite element method.
 
 # Simply run the script with
-# $ python demos/api/poisson.py
+# $ python examples/api/poisson.py
 # with usual gmsh line arguments, e.g., -clscale 0.5 -order 2
 
 DEBUG = 0

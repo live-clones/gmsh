@@ -6,8 +6,8 @@ distributed under the terms of the GNU General Public License, Version 2 or
 later, with an exception to allow for easier linking with external
 libraries. See LICENSE.txt and CREDITS.txt for more information.
 
-See the doc/ and tutorial/ directories for documentation and tutorials. The
-reference manual is located in doc/texinfo/. See the demos/ directory and the
+See the doc/ and tutorials/ directories for documentation and tutorials. The
+reference manual is located in doc/texinfo/. See the examples/ directory and the
 web site https://gmsh.info for additional examples.
 
 Building Gmsh from source code requires a C++ compiler and CMake

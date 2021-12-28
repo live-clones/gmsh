@@ -1,4 +1,4 @@
-# This reimplements gmsh/demos/boolean/boolean.geo in Python.
+# This reimplements gmsh/examples/boolean/boolean.geo in Python.
 
 import gmsh
 import sys

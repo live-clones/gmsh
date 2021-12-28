@@ -42,14 +42,6 @@ class MTet4Factory;
 //   -> 5Mb
 //
 // Grand total should thus be about 100 MB.
-//
-// The observed mem usage with "demos/cube.geo -clscale 0.61" is
-// 157MB. Where do the extra 57 MB come from?
-//
-// * surface mesh + all other overheads (model, etc.) is 19Mb
-// * tetgen initial mesh is about 20Mb, but it is deleted before mesh
-//   refinement.
-// * ?
 
 class MTet4 {
   friend class MTet4Factory;

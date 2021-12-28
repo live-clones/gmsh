@@ -168,7 +168,7 @@ if '-nopopup' not in sys.argv:
 # gmsh.model.getBoundary().
 #
 # See e.g. `t16.py', `t18.py', `t19.py' or `t20.py' for complete examples based
-# on OpenCASCADE, and `demos/api' for more.
+# on OpenCASCADE, and `examples/api' for more.
 
 # This should be called when you are done using the Gmsh Python API:
 gmsh.finalize()

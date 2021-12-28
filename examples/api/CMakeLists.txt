@@ -12,7 +12,7 @@ else()
   set(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING "Choose build type")
 endif()
 
-project(api_demos CXX C)
+project(api_examples CXX C)
 
 set(CMAKE_CXX_STANDARD 11)
 
@@ -45,22 +45,22 @@ include_directories(${GMSH_INC})
 
 include(CTest)
 
-file(GLOB DEMOS *.cpp)
-foreach(DEMO ${DEMOS})
-  get_filename_component(DEMONAME ${DEMO} NAME_WE)
-  file(STRINGS ${DEMO} DEMO_CONTENTS NEWLINE_CONSUME)
-  string(REGEX MATCH "::fltk::" GUI ${DEMO_CONTENTS})
+file(GLOB EXAMPLES *.cpp)
+foreach(EXAMPLE ${EXAMPLES})
+  get_filename_component(EXAMPLENAME ${EXAMPLE} NAME_WE)
+  file(STRINGS ${EXAMPLE} EXAMPLE_CONTENTS NEWLINE_CONSUME)
+  string(REGEX MATCH "::fltk::" GUI ${EXAMPLE_CONTENTS})
   if(GUI)
-    add_executable(${DEMONAME} WIN32 MACOSX_BUNDLE ${DEMO})
+    add_executable(${EXAMPLENAME} WIN32 MACOSX_BUNDLE ${EXAMPLE})
     if(APPLE)
-      file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/${DEMONAME}.plist
+      file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/${EXAMPLENAME}.plist
            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n\
             <!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\"\
              \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n\
             <plist version=\"1.0\">\n\
               <dict>\n\
-                <key>CFBundleName</key><string>${DEMONAME}</string>\n\
-                <key>CFBundleExecutable</key><string>${DEMONAME}</string>\n\
+                <key>CFBundleName</key><string>${EXAMPLENAME}</string>\n\
+                <key>CFBundleExecutable</key><string>${EXAMPLENAME}</string>\n\
                 <key>CFBundlePackageType</key><string>APPL</string>\n\
                 <key>CFBundleVersion</key><string>1.0.0</string>\n\
                 <key>CFBundleShortVersionString</key><string>1.0.0</string>\n\
@@ -71,41 +71,41 @@ foreach(DEMO ${DEMOS})
                 <key>NSHighResolutionCapable</key><true/>\n\
               </dict>\n\
             </plist>")
-      set_target_properties(${DEMONAME} PROPERTIES MACOSX_BUNDLE_INFO_PLIST
-                            ${CMAKE_CURRENT_BINARY_DIR}/${DEMONAME}.plist)
-      add_test(${DEMONAME} ${DEMONAME}.app/Contents/MacOS/${DEMONAME})
+      set_target_properties(${EXAMPLENAME} PROPERTIES MACOSX_BUNDLE_INFO_PLIST
+                            ${CMAKE_CURRENT_BINARY_DIR}/${EXAMPLENAME}.plist)
+      add_test(${EXAMPLENAME} ${EXAMPLENAME}.app/Contents/MacOS/${EXAMPLENAME})
     else()
-      add_test(${DEMONAME} ${DEMONAME})
+      add_test(${EXAMPLENAME} ${EXAMPLENAME})
     endif()
   else()
-    add_executable(${DEMONAME} ${DEMO})
-    add_test(${DEMONAME}_cpp ${DEMONAME})
+    add_executable(${EXAMPLENAME} ${EXAMPLE})
+    add_test(${EXAMPLENAME}_cpp ${EXAMPLENAME})
   endif()
-  target_link_libraries(${DEMONAME} ${GMSH_LIB} ${EXTRA_LIBS})
+  target_link_libraries(${EXAMPLENAME} ${GMSH_LIB} ${EXTRA_LIBS})
 endforeach()
 
-file(GLOB DEMOS *.c)
-foreach(DEMO ${DEMOS})
-  get_filename_component(DEMONAME ${DEMO} NAME_WE)
-  add_executable(${DEMONAME}c ${DEMO})
-  target_link_libraries(${DEMONAME}c ${GMSH_LIB} ${EXTRA_LIBS})
-  add_test(${DEMONAME}_c ${DEMONAME}c)
+file(GLOB EXAMPLES *.c)
+foreach(EXAMPLE ${EXAMPLES})
+  get_filename_component(EXAMPLENAME ${EXAMPLE} NAME_WE)
+  add_executable(${EXAMPLENAME}c ${EXAMPLE})
+  target_link_libraries(${EXAMPLENAME}c ${GMSH_LIB} ${EXTRA_LIBS})
+  add_test(${EXAMPLENAME}_c ${EXAMPLENAME}c)
 endforeach()
 
 find_program(PYTHON python)
 if(PYTHON)
-  file(GLOB DEMOS *.py)
-  foreach(DEMO ${DEMOS})
-    get_filename_component(DEMONAME ${DEMO} NAME_WE)
-    add_test(${DEMONAME}_py ${PYTHON} ${DEMO} -nopopup)
+  file(GLOB EXAMPLES *.py)
+  foreach(EXAMPLE ${EXAMPLES})
+    get_filename_component(EXAMPLENAME ${EXAMPLE} NAME_WE)
+    add_test(${EXAMPLENAME}_py ${PYTHON} ${EXAMPLE} -nopopup)
   endforeach()
 endif()
 
 find_program(JULIA julia)
 if(JULIA)
-  file(GLOB DEMOS *.jl)
-  foreach(DEMO ${DEMOS})
-    get_filename_component(DEMONAME ${DEMO} NAME_WE)
-    add_test(${DEMONAME}_jl ${JULIA} ${DEMO})
+  file(GLOB EXAMPLES *.jl)
+  foreach(EXAMPLE ${EXAMPLES})
+    get_filename_component(EXAMPLENAME ${EXAMPLE} NAME_WE)
+    add_test(${EXAMPLENAME}_jl ${JULIA} ${EXAMPLE})
   endforeach()
 endif()

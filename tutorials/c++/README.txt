@@ -9,7 +9,7 @@ associated header file (`gmsh.h'). These can be either obtained
   first tutorial, assuming that you are currently in the root directory of the
   SDK and that you are using the g++ compiler:
 
-    g++ -o t1 -Iinclude share/doc/gmsh/tutorial/c++/t1.cpp -Llib -lgmsh
+    g++ -o t1 -Iinclude share/doc/gmsh/tutorials/c++/t1.cpp -Llib -lgmsh
 
   Then run
 
@@ -42,4 +42,4 @@ associated header file (`gmsh.h'). These can be either obtained
     g++ -o t1 t1.cpp -lgmsh
     ./t1
 
-For other C++ API examples, see the `demos/api' directory.
+For other C++ API examples, see the `examples/api' directory.

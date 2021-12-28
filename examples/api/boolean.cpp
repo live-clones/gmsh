@@ -1,4 +1,4 @@
-// This reimplements gmsh/demos/boolean/boolean.geo in C++.
+// This reimplements gmsh/examples/boolean/boolean.geo in C++.
 
 #include <gmsh.h>
 

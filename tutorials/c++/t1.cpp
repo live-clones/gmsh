@@ -169,7 +169,7 @@ int main(int argc, char **argv)
   // gmsh::model::getBoundary().
   //
   // See e.g `t16.cpp', `t18.cpp', `t19.cpp' or `t20.cpp' for complete examples
-  // based on OpenCASCADE, and `demos/api' for more.
+  // based on OpenCASCADE, and `examples/api' for more.
 
   // This should be called when you are done using the Gmsh C++ API:
   gmsh::finalize();

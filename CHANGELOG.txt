@@ -1,5 +1,6 @@
-4.9.3 (Work-in-progress): improved handling of degenerate curves on periodic
-surfaces; moved all kernel sources to src/ subdirectory.
+4.9.3 (Work-in-progress): improved handling of degenerate curves in periodic
+surfaces; moved all kernel sources to src/ subdirectory; renamed demos/ as
+examples/ and tutorial/ as tutorials/.
 
 4.9.2 (December 23, 2021): faster projection on OCC entities; extended
 Mesh.SaveGroupsOfNodes capabilities for INP export; improved transfinite meshing
