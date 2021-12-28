@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle and Jeremy Theler
+// Gmsh - Copyright (C) 1997-2022 C. Geuzaine, J.-F. Remacle and Jeremy Theler
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -191,7 +191,7 @@ int GModel::writeX3D(const std::string &name, bool saveAll,
   FILE *fp;
 
   if(x3dsurfaces == 0 && x3dedges == 0 && x3dvertices == 0) {
-    Msg::Info("no surfaces, edges or vertices to write into '%s'",
+    Msg::Info("No surfaces, edges or vertices to write into '%s'",
               name.c_str());
     return 0;
   }
