@@ -18,6 +18,7 @@ gmsh.model.occ.fragment([(0, pp)], [(1, c)])
 
 gmsh.model.occ.synchronize()
 
-gmsh.fltk.run()
+if '-nopopup' not in sys.argv:
+    gmsh.fltk.run()
 
 gmsh.finalize()

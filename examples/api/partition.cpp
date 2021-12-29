@@ -1,5 +1,6 @@
 #include <gmsh.h>
 #include <iostream>
+#include <set>
 
 int main(int argc, char **argv)
 {
@@ -68,7 +69,9 @@ int main(int argc, char **argv)
       std::cout << "\n";
     }
   }
-  gmsh::fltk::run();
+
+  std::set<std::string> args(argv, argv + argc);
+  if(!args.count("-nopopup")) gmsh::fltk::run();
 
   gmsh::finalize();
 

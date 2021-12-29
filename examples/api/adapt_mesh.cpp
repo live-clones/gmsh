@@ -1,6 +1,7 @@
 #include <gmsh.h>
 #include <cmath>
 #include <map>
+#include <set>
 #include <complex>
 
 class myVertex {
@@ -217,6 +218,10 @@ int main(int argc, char **argv)
   double lc = 0.02;
   int N = 10000;
   bool dumpfiles = false;
+
+  std::set<std::string> args(argv, argv + argc);
+  if(args.count("-nopopup")) argc--;
+
   if(argc > 1) lc = atof(argv[1]);
   if(argc > 2) N = atoi(argv[2]);
   if(argc > 3) dumpfiles = atoi(argv[3]);
@@ -287,7 +292,7 @@ int main(int argc, char **argv)
   if(dumpfiles) gmsh::view::write(err2_view, "err2.pos");
 
   // show everything in the gui
-  gmsh::fltk::run();
+  if(!args.count("-nopopup")) gmsh::fltk::run();
 
   gmsh::finalize();
   return 0;

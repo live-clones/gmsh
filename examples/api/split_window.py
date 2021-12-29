@@ -1,6 +1,9 @@
 import gmsh
 import sys
 
+if '-nopopup' in sys.argv:
+    exit(0)
+
 gmsh.initialize(sys.argv)
 
 # create simple geometry

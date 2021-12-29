@@ -85,9 +85,10 @@ gmsh.model.occ.synchronize()
 
 # create a boundary layer for all the surfaces through extrusion using the
 # built-in CAD kernel: this creates topological entities that will be filled
-# with a discrete geometry (a mesh) during mesh generation; more general
-# boundary layer meshing constraints are currently only available in 2D, through
-# the BoundaryLayer Field - see 'naca_boundary_layer_2d.py'.
+# with a discrete geometry (a mesh extruded along the boundary normals) during
+# mesh generation; more general boundary layer meshing constraints are also
+# available in 2D through the BoundaryLayer Field - see
+# 'naca_boundary_layer_2d.py'.
 n = np.linspace(1, 1, 7)
 d = np.logspace(-4, -2, 7)
 extbl = gmsh.model.geo.extrudeBoundaryLayer(gmsh.model.getEntities(2),

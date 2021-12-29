@@ -1,5 +1,6 @@
 #include <cstdio>
 #include <gmsh.h>
+#include <set>
 
 int main(int argc, char **argv)
 {
@@ -97,7 +98,8 @@ int main(int argc, char **argv)
     gmsh::model::mesh::getJacobians(eleType1D, uvw, jac, det, pts, c);
   }
 
-  gmsh::fltk::run();
+  std::set<std::string> args(argv, argv + argc);
+  if(!args.count("-nopopup")) gmsh::fltk::run();
 
   gmsh::finalize();
   return 0;

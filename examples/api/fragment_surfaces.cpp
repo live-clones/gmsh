@@ -1,6 +1,7 @@
 #include <gmsh.h>
+#include <set>
 
-int main()
+int main(int argc, char **argv)
 {
   gmsh::initialize();
   int s1 = gmsh::model::occ::addRectangle(0, 0, 0, 1, 1);
@@ -10,5 +11,7 @@ int main()
   std::vector<std::vector<std::pair<int, int> > > outmap;
   gmsh::model::occ::fragment({{2, s1}}, {{2, s2}}, out, outmap);
   gmsh::model::occ::synchronize();
-  gmsh::fltk::run();
+
+  std::set<std::string> args(argv, argv + argc);
+  if(!args.count("-nopopup")) gmsh::fltk::run();
 }

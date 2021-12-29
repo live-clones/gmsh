@@ -2,7 +2,6 @@ import gmsh
 import sys
 import json
 import math
-import thread
 
 gmsh.initialize()
 

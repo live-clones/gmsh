@@ -1,5 +1,9 @@
 import gmsh
 
+if "-nopopup" in ARGS
+    exit(0)
+end
+
 gmsh.initialize(append!(["gmsh"], ARGS))
 
 # creates the FLTK user interface; this could also be called after the geometry

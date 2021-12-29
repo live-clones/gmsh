@@ -1,8 +1,12 @@
 #include <cstdio>
 #include <gmsh.h>
+#include <set>
 
 int main(int argc, char **argv)
 {
+  std::set<std::string> args(argv, argv + argc);
+  if(args.count("-nopopup")) exit(0);
+
   gmsh::initialize(argc, argv);
 
   // creates the FLTK user interface; this could also be called after the

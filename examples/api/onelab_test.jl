@@ -41,6 +41,8 @@ gmsh.onelab.setString("string 1", ["goodbye"])
 # remove a parameter
 gmsh.onelab.clear("string 2")
 
-gmsh.fltk.run()
+if !("-nopopup" in ARGS)
+    gmsh.fltk.run()
+end
 
 gmsh.finalize()

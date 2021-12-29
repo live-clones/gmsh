@@ -31,6 +31,7 @@ gmsh.view.addHomogeneousModelData(
 gmsh.model.mesh.renumberNodes()
 gmsh.model.mesh.renumberElements()
 
-gmsh.fltk.run()
+if '-nopopup' not in sys.argv:
+    gmsh.fltk.run()
 
 gmsh.finalize()

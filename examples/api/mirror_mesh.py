@@ -3,6 +3,7 @@
 # overall conforming mesh
 
 import gmsh
+import sys
 
 gmsh.initialize()
 
@@ -50,4 +51,5 @@ transform(m, 3000, 3000000, 3000000, -1, -1, 1)
 # boundaries
 gmsh.model.mesh.removeDuplicateNodes()
 
-gmsh.fltk.run()
+if '-nopopup' not in sys.argv:
+    gmsh.fltk.run()

@@ -70,7 +70,8 @@ if by_extrusion:
     gmsh.model.occ.synchronize()
     # a boundary layer can be created through extrusion using the built-in CAD
     # kernel: this creates topological entities that will be filled with a
-    # discrete geometry (a mesh) during mesh generation
+    # discrete geometry (a mesh extruded along the boundary normals) during mesh
+    # generation
     n = np.linspace(1, 1, 7)
     d = np.logspace(-4, -2, 7)
     extbl = gmsh.model.geo.extrudeBoundaryLayer(gmsh.model.getEntities(1),

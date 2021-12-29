@@ -1,11 +1,12 @@
 import numpy as np
 import gmsh
+import sys
 
 # number of points to trianguate
 N = 100
 
 # visualize the mesh?
-visu = True
+visu = ("-nopopup" not in sys.argv)
 
 gmsh.initialize()
 

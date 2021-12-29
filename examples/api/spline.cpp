@@ -1,4 +1,5 @@
 #include <gmsh.h>
+#include <set>
 
 int main(int argc, char **argv)
 {
@@ -35,7 +36,10 @@ int main(int argc, char **argv)
                                {3, 1, 3});
 
   gmsh::model::occ::synchronize();
-  gmsh::fltk::run();
+
+  std::set<std::string> args(argv, argv + argc);
+  if(!args.count("-nopopup")) gmsh::fltk::run();
+
   gmsh::finalize();
   return 0;
 }

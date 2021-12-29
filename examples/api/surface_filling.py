@@ -1,4 +1,5 @@
 import gmsh
+import sys
 
 gmsh.initialize()
 gmsh.option.setNumber('Mesh.MeshSizeMin', 0.02)
@@ -29,4 +30,8 @@ gmsh.model.occ.addPoint(-0.67, 0.1, -0.2, 8)
 gmsh.model.occ.addSurfaceFilling(1, 4, [7, 8])
 
 gmsh.model.occ.synchronize()
-gmsh.fltk.run()
+
+if '-nopopup' not in sys.argv:
+    gmsh.fltk.run()
+
+gmsh.finalize()

@@ -1,12 +1,14 @@
 import gmsh
 import sys
+import os
 import math
 
 gmsh.initialize(sys.argv)
 
 # merge STL, create surface patches that are reparametrizable (so we can remesh
 # them) and compute the parametrizations
-gmsh.merge('aneurysm_data.stl')
+path = os.path.dirname(os.path.abspath(__file__))
+gmsh.merge(os.path.join(path, 'aneurysm_data.stl'))
 gmsh.model.mesh.classifySurfaces(math.pi, True, True)
 gmsh.model.mesh.createGeometry()
 

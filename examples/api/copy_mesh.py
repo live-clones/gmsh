@@ -1,4 +1,5 @@
 import gmsh
+import sys
 
 gmsh.initialize()
 
@@ -52,5 +53,7 @@ gmsh.option.setNumber("Mesh.Algorithm3D", 10)
 gmsh.model.mesh.clear()
 gmsh.model.mesh.generate(3)
 
-gmsh.fltk.run()
+if '-nopopup' not in sys.argv:
+    gmsh.fltk.run()
+
 gmsh.finalize()
