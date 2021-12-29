@@ -4,5 +4,5 @@ Specify periodic meshes on geometries.
 
 ### Python
 ```python
-{{#include ../../../../tutorial/python/t18.py}}
+{{#include ../../../../tutorials/python/t18.py}}
 ```

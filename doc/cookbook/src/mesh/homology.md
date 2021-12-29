@@ -4,5 +4,5 @@ Homology and cohomology computation for a mesh.
 
 ### Python
 ```python
-{{#include ../../../../tutorial/python/t14.py}}
+{{#include ../../../../tutorials/python/t14.py}}
 ```

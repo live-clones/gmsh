@@ -1,4 +1,4 @@
-# Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
+# Gmsh - Copyright (C) 1997-2022 C. Geuzaine, J.-F. Remacle
 #
 # See the LICENSE.txt file in the Gmsh root directory for license information.
 # Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -18,8 +18,8 @@
 # By design, the Gmsh API is purely functional, and only uses elementary types
 # from the target language.
 #
-# See `tutorial/{c++,c,python,julia}' and `demos/api' for examples on how to
-# use the Gmsh API.
+# See `tutorials/{c++,c,python,julia}' and `examples/api' for tutorials and
+# examples on how to use the Gmsh API.
 
 import os
 from GenApi import *

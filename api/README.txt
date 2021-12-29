@@ -16,11 +16,11 @@ reduced performance compared to using the native Gmsh C++ API, as it entails
 additional data copies between the C++ wrapper, the C API and the native C++
 code.
 
-See `tutorial/{c++,c,python,julia}' and `demos/api' for examples on how to use
-the Gmsh API.
+See `tutorials/{c++,c,python,julia}' and `examples/api' for tutorials and
+examples on how to use the Gmsh API.
 
 To add a new function in the Gmsh API:
 
-  - add the C++ implementation of the function in 'Common/gmsh.cpp'
+  - add the C++ implementation of the function in 'src/common/gmsh.cpp'
   - add the generic function prototype in 'gen.py'
   - run 'python gen.py'

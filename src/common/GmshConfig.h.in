@@ -1,0 +1,86 @@
+// Gmsh - Copyright (C) 1997-2022 C. Geuzaine, J.-F. Remacle
+//
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+
+#ifndef GMSH_CONFIG_H
+#define GMSH_CONFIG_H
+
+#cmakedefine HAVE_3M
+#cmakedefine HAVE_64BIT_SIZE_T
+#cmakedefine HAVE_ACIS
+#cmakedefine HAVE_ALGLIB
+#cmakedefine HAVE_ANN
+#cmakedefine HAVE_BAMG
+#cmakedefine HAVE_BLAS
+#cmakedefine HAVE_BLOSSOM
+#cmakedefine HAVE_CAIRO
+#cmakedefine HAVE_DLOPEN
+#cmakedefine HAVE_DINTEGRATION
+#cmakedefine HAVE_DOMHEX
+#cmakedefine HAVE_EIGEN
+#cmakedefine HAVE_FLTK
+#cmakedefine HAVE_GEOMETRYCENTRAL
+#cmakedefine HAVE_GMM
+#cmakedefine HAVE_GMP
+#cmakedefine HAVE_HXT
+#cmakedefine HAVE_KBIPACK
+#cmakedefine HAVE_LAPACK
+#cmakedefine HAVE_LIBCGNS
+#cmakedefine HAVE_LIBCGNS_CPEX0045
+#cmakedefine HAVE_LIBJPEG
+#cmakedefine HAVE_LIBPNG
+#cmakedefine HAVE_LIBZ
+#cmakedefine HAVE_LINUX_JOYSTICK
+#cmakedefine HAVE_MATHEX
+#cmakedefine HAVE_MED
+#cmakedefine HAVE_MESH
+#cmakedefine HAVE_METIS
+#cmakedefine HAVE_MMG
+#cmakedefine HAVE_MPEG_ENCODE
+#cmakedefine HAVE_MPI
+#cmakedefine HAVE_MUMPS
+#cmakedefine HAVE_NETGEN
+#cmakedefine HAVE_NUMPY
+#cmakedefine HAVE_NO_INTPTR_T
+#cmakedefine HAVE_NO_SOCKLEN_T
+#cmakedefine HAVE_NO_STDINT_H
+#cmakedefine HAVE_NO_VSNPRINTF
+#cmakedefine HAVE_OCC
+#cmakedefine HAVE_OCC_CAF
+#cmakedefine HAVE_ONELAB
+#cmakedefine HAVE_ONELAB2
+#cmakedefine HAVE_ONELAB_METAMODEL
+#cmakedefine HAVE_UDT
+#cmakedefine HAVE_OPENGL
+#cmakedefine HAVE_OPTHOM
+#cmakedefine HAVE_OSMESA
+#cmakedefine HAVE_P4EST
+#cmakedefine HAVE_PARASOLID
+#cmakedefine HAVE_PARASOLID_STEP
+#cmakedefine HAVE_PARSER
+#cmakedefine HAVE_PETSC
+#cmakedefine HAVE_PETSC4PY
+#cmakedefine HAVE_PLUGINS
+#cmakedefine HAVE_POST
+#cmakedefine HAVE_POPPLER
+#cmakedefine HAVE_QUADTRI
+#cmakedefine HAVE_QUADMESHINGTOOLS
+#cmakedefine HAVE_REVOROPT
+#cmakedefine HAVE_SALOME
+#cmakedefine HAVE_SGEOM
+#cmakedefine HAVE_SLEPC
+#cmakedefine HAVE_SOLVER
+#cmakedefine HAVE_TAUCS
+#cmakedefine HAVE_TETGENBR
+#cmakedefine HAVE_TOUCHBAR
+#cmakedefine HAVE_VISUDEV
+#cmakedefine HAVE_VOROPP
+#cmakedefine HAVE_WINSLOWUNTANGLER
+#cmakedefine HAVE_ZIPPER
+
+#define GMSH_CONFIG_OPTIONS "${GMSH_CONFIG_OPTIONS}"
+
+${GMSH_CONFIG_PRAGMAS}
+
+#endif

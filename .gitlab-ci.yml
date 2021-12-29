@@ -1,4 +1,4 @@
-# Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
+# Gmsh - Copyright (C) 1997-2022 C. Geuzaine, J.-F. Remacle
 #
 # See the LICENSE.txt file in the Gmsh root directory for license information.
 # Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -27,7 +27,7 @@ linux64_ci:
     - make -j 8
     - make doc
     - ctest -j 8 --output-on-failure
-    - valgrind --leak-check=full --error-exitcode=1 ./gmsh ../tutorial/t5.geo -3
+    - valgrind --leak-check=full --error-exitcode=1 ./gmsh ../tutorials/t5.geo -3
   tags:
     - linux64
     - docker
@@ -111,10 +111,6 @@ linux64_official_release:
   variables:
     EXTRA_OPTION: "-DGMSH_RELEASE=1 -DCMAKE_EXE_LINKER_FLAGS=-static-libstdc++"
   <<: *linux_official
-  after_script:
-    - cd build
-    - VERSION=`cat version.txt`
-    - ssh geuzaine@gmsh.info "cd .wwwgmsh/bin/Linux && rm -f gmsh-stable-Linux64.tgz && ln -s gmsh-${VERSION}-Linux64.tgz gmsh-stable-Linux64.tgz"
   only:
     - /^gmsh_.*$/
 
@@ -136,10 +132,6 @@ linux64-sdk_official_release:
   variables:
     EXTRA_OPTION: "-DGMSH_RELEASE=1 -DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1"
   <<: *linux_official
-  after_script:
-    - cd build
-    - VERSION=`cat version.txt`
-    - ssh geuzaine@gmsh.info "cd .wwwgmsh/bin/Linux && rm -f gmsh-stable-Linux64-sdk.tgz && ln -s gmsh-${VERSION}-Linux64-sdk.tgz gmsh-stable-Linux64-sdk.tgz"
   only:
     - /^gmsh_.*$/
   artifacts:
@@ -188,9 +180,6 @@ windows64_official_release:
   variables:
     EXTRA_OPTION: "-DGMSH_RELEASE=1"
   <<: *windows_official
-  after_script:
-    - cd build
-    - c:\cygwin64\bin\bash -c 'VERSION=`cat version.txt`; /usr/bin/ssh -o StrictHostKeyChecking=no -i /home/geuzaine/.ssh/id_rsa geuzaine@gmsh.info "cd .wwwgmsh/bin/Windows && rm -f gmsh-stable-Windows64.zip && ln -s gmsh-${VERSION}-Windows64.zip gmsh-stable-Windows64.zip"'
   tags:
     - windows64
     - official
@@ -215,9 +204,6 @@ windows64-sdk_official_release:
   variables:
     EXTRA_OPTION: "-DGMSH_RELEASE=1 -DENABLE_OS_SPECIFIC_INSTALL=0 -DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1"
   <<: *windows_official
-  after_script:
-    - cd build
-    - c:\cygwin64\bin\bash -c 'VERSION=`cat version.txt`; /usr/bin/ssh -o StrictHostKeyChecking=no -i /home/geuzaine/.ssh/id_rsa geuzaine@gmsh.info "cd .wwwgmsh/bin/Windows && rm -f gmsh-stable-Windows64-sdk.zip && ln -s gmsh-${VERSION}-Windows64-sdk.zip gmsh-stable-Windows64-sdk.zip"'
   tags:
     - windows64
     - official
@@ -257,10 +243,6 @@ macos64_official_release:
   variables:
     EXTRA_OPTION: "-DGMSH_RELEASE=1"
   <<: *macos_official
-  after_script:
-    - cd build
-    - VERSION=`cat version.txt`
-    - ssh geuzaine@gmsh.info "cd .wwwgmsh/bin/MacOSX && rm -f gmsh-stable-MacOSX.dmg && ln -s gmsh-${VERSION}-MacOSX.dmg gmsh-stable-MacOSX.dmg"
   only:
     - /^gmsh_.*$/
 
@@ -279,10 +261,6 @@ macos64-sdk_official_release:
   variables:
     EXTRA_OPTION: "-DGMSH_RELEASE=1 -DENABLE_OS_SPECIFIC_INSTALL=0 -DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1"
   <<: *macos_official
-  after_script:
-    - cd build
-    - VERSION=`cat version.txt`
-    - ssh geuzaine@gmsh.info "cd .wwwgmsh/bin/MacOSX && rm -f gmsh-stable-MacOSX-sdk.tgz && ln -s gmsh-${VERSION}-MacOSX-sdk.tgz gmsh-stable-MacOSX-sdk.tgz"
   only:
     - /^gmsh_.*$/
   artifacts:
@@ -319,10 +297,6 @@ source_official_release:
   variables:
     EXTRA_OPTION: "-DGMSH_RELEASE=1"
   <<: *source_official
-  after_script:
-    - cd build_src
-    - VERSION=`cat version.txt`
-    - ssh geuzaine@gmsh.info "cd .wwwgmsh/src && rm -f gmsh-stable-source.tgz && ln -s gmsh-${VERSION}-source.tgz gmsh-stable-source.tgz"
   only:
     - /^gmsh_.*$/
 
@@ -440,6 +414,10 @@ pypi_official_release:
     - GMSH_SETUP_DIR=../utils/pypi/gmsh GMSH_SDK_DIR=_CPack_Packages/Darwin2/TGZ/gmsh-${VERSION}-MacOSX-sdk/ python3 setup-wheel.py build bdist_wheel --plat-name macosx_10_15_x86_64 --universal
     - scp dist/gmsh*.whl geuzaine@gmsh.info:.wwwgmsh/python-packages/gmsh/
     - twine upload dist/*
+    - ssh geuzaine@gmsh.info "cd .wwwgmsh/bin/Linux && rm -f gmsh-stable-Linux64* && ln -s gmsh-${VERSION}-Linux64.tgz gmsh-stable-Linux64.tgz && ln -s gmsh-${VERSION}-Linux64-sdk.tgz gmsh-stable-Linux64-sdk.tgz"
+    - ssh geuzaine@gmsh.info "cd .wwwgmsh/bin/Windows && rm -f gmsh-stable-Windows64* && ln -s gmsh-${VERSION}-Windows64.zip gmsh-stable-Windows64.zip && ln -s gmsh-${VERSION}-Windows64-sdk.zip gmsh-stable-Windows64-sdk.zip"
+    - ssh geuzaine@gmsh.info "cd .wwwgmsh/bin/MacOSX && rm -f gmsh-stable-MacOSX* && ln -s gmsh-${VERSION}-MacOSX.dmg gmsh-stable-MacOSX.dmg && ln -s gmsh-${VERSION}-MacOSX-sdk.tgz gmsh-stable-MacOSX-sdk.tgz"
+    - ssh geuzaine@gmsh.info "cd .wwwgmsh/src && rm -f gmsh-stable-source.tgz && ln -s gmsh-${VERSION}-source.tgz gmsh-stable-source.tgz"
   tags:
     - linux64
     - docker

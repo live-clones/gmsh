@@ -1,5 +1,5 @@
 
-Merge "../../tutorial/view1.pos" ;
+Merge "../../tutorials/view1.pos" ;
 
 View[0].Name = "gloups.prout" ;
 
@@ -14,4 +14,3 @@ For num In {1:2}
   Draw ;
 
 EndFor
-
