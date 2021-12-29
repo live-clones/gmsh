@@ -95,7 +95,7 @@ if by_extrusion:
 
 else:
     # in 2D, boundary layers can also be specified as a meshing constraint,
-    # trough the BoundaryLayer field; this is quite a bit more general, as it
+    # through the BoundaryLayer field; this is quite a bit more general, as it
     # handles intersections between several boundary layers, fans, etc.
     s = gmsh.model.occ.addPlaneSurface([cl])
     r = gmsh.model.occ.addRectangle(-1, -1, 0, 3, 2)

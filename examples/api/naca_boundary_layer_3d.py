@@ -75,6 +75,8 @@ eps = 1e-6
 gmsh.option.setNumber('Geometry.OCCBoundsUseStl', 1)
 tc = gmsh.model.occ.getEntitiesInBoundingBox(-eps,-eps,z-eps,
                                              bb[3]+eps,1,z+eps, dim=1)
+
+# create rounded wing tip by revolution
 rev = gmsh.model.occ.revolve(tc, 0,0,z, 1,0,0, math.pi/2)
 gmsh.model.occ.revolve(rev[0::4], 0,0,z, 1,0,0, math.pi/2)
 
@@ -86,8 +88,8 @@ gmsh.model.occ.synchronize()
 # create a boundary layer for all the surfaces through extrusion using the
 # built-in CAD kernel: this creates topological entities that will be filled
 # with a discrete geometry (a mesh extruded along the boundary normals) during
-# mesh generation; more general boundary layer meshing constraints are also
-# available in 2D through the BoundaryLayer Field - see
+# mesh generation; in 2D more general boundary layer meshing constraints are
+# also available through the BoundaryLayer Field - see
 # 'naca_boundary_layer_2d.py'.
 n = np.linspace(1, 1, 7)
 d = np.logspace(-4, -2, 7)
