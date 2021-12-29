@@ -1,4 +1,4 @@
-Include "../../tutorial/t5.geo";
+Include "../../tutorials/t5.geo";
 
 // split window 50%-50% horizontally and change the rotation;
 // rotation/translation/scale options are applied to the current subwindow (the

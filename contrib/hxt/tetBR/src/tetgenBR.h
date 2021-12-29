@@ -42,7 +42,7 @@ class tetgenbehavior {
 
 public:
 
-  // Switches of TetGen. 
+  // Switches of TetGen.
   int plc;                                                         // '-p', 0.
   int psc;                                                         // '-s', 0.
   int refine;                                                      // '-r', 0.
@@ -82,7 +82,7 @@ public:
   int quiet;                                                       // '-Q', 0.
   int verbose;                                                     // '-V', 0.
 
-  // Parameters of TetGen. 
+  // Parameters of TetGen.
   int vertexperblock;                                           // '-x', 4092.
   int tetrahedraperblock;                                       // '-x', 8188.
   int shellfaceperblock;                                        // '-x', 2044.
@@ -114,7 +114,7 @@ public:
   REAL mindihedral;                                              // '-q', 5.0.
   REAL optmaxdihedral;                                               // 165.0.
   REAL optminsmtdihed;                                               // 179.0.
-  REAL optminslidihed;                                               // 179.0.  
+  REAL optminslidihed;                                               // 179.0.
   REAL epsilon;                                               // '-T', 1.0e-8.
   REAL coarsen_percent;                                         // -R1/#, 1.0.
 
@@ -125,18 +125,18 @@ public:
   char addinfilename[1024];
   char bgmeshfilename[1024];
 
-  // The input object of TetGen. They are recognized by either the input 
-  //   file extensions or by the specified options. 
+  // The input object of TetGen. They are recognized by either the input
+  //   file extensions or by the specified options.
   // Currently the following objects are supported:
-  //   - NODES, a list of nodes (.node); 
-  //   - POLY, a piecewise linear complex (.poly or .smesh); 
-  //   - OFF, a polyhedron (.off, Geomview's file format); 
+  //   - NODES, a list of nodes (.node);
+  //   - POLY, a piecewise linear complex (.poly or .smesh);
+  //   - OFF, a polyhedron (.off, Geomview's file format);
   //   - PLY, a polyhedron (.ply, file format from gatech, only ASCII);
   //   - STL, a surface mesh (.stl, stereolithography format);
-  //   - MEDIT, a surface mesh (.mesh, Medit's file format); 
+  //   - MEDIT, a surface mesh (.mesh, Medit's file format);
   //   - MESH, a tetrahedral mesh (.ele).
   // If no extension is available, the imposed command line switch
-  //   (-p or -r) implies the object. 
+  //   (-p or -r) implies the object.
   enum objecttype {NODES, POLY, OFF, PLY, STL, MEDIT, VTK, MESH} object;
 
 
@@ -199,11 +199,11 @@ public:
     addsteiner_algo = 1;
     coarsen_param = 0;
     weighted_param = 0;
-    fliplinklevel = -1; 
-    flipstarsize = -1;  
+    fliplinklevel = -1;
+    flipstarsize = -1;
     fliplinklevelinc = 1;
     reflevel = 3;
-    optscheme = 7;  
+    optscheme = 7;
     optlevel = 2;
     delmaxfliplevel = 1;
     order = 1;
@@ -264,7 +264,7 @@ public:
 // TetGen stores the tetrahedra and vertices of T. The basic structure of a  //
 // tetrahedron contains pointers to its vertices and adjacent tetrahedra. A  //
 // vertex stores its x-, y-, and z-coordinates, and a pointer to a tetrahed- //
-// ron containing it. Both tetrahedra and vertices may contain user data.    // 
+// ron containing it. Both tetrahedra and vertices may contain user data.    //
 //                                                                           //
 // Each face of T belongs to either two tetrahedra or one tetrahedron. In    //
 // the latter case, the face is an exterior boundary face of T.  TetGen adds //
@@ -273,7 +273,7 @@ public:
 // such a vertex lies in 4D space and is visible by all exterior boundary    //
 // faces.  The extended set of tetrahedra (including the infinite vertex) is //
 // a tetrahedralization of a 3-pseudomanifold without boundary.  It has the  //
-// property that every face is shared by exactly two tetrahedra.             // 
+// property that every face is shared by exactly two tetrahedra.             //
 //                                                                           //
 // The current version of TetGen stores explicitly the subfaces and segments //
 // (which are in surface mesh S and the linear mesh L), respectively.  Extra //
@@ -317,7 +317,7 @@ public:
   //   - an integer for boundary marker (point index);
   //   - an integer for point type (and flags).
   //   - an integer for geometry tag (optional, for -s switch).
-  // The structure of a point is an array of REALs.  Its acutal size is 
+  // The structure of a point is an array of REALs.  Its acutal size is
   //   determined at the runtime.
 
   typedef REAL *point;
@@ -338,7 +338,7 @@ public:
 // this tetrahedron.  One can encode each version (a directed edge) into a   //
 // 4-bit integer such that the two upper bits encode the index (from 0 to 2) //
 // of this edge in the edge ring, and the two lower bits encode the index (  //
-// from 0 to 3) of the oriented face which contains this edge.               //  
+// from 0 to 3) of the oriented face which contains this edge.               //
 //                                                                           //
 // The four vertices of a tetrahedron are indexed from 0 to 3 (according to  //
 // their storage in the data structure).  Give each face the same index as   //
@@ -482,14 +482,14 @@ public:
     memorypool();
     memorypool(int, int, int, int);
     ~memorypool();
-    
+
     void poolinit(int, int, int, int);
     void restart();
     void *alloc();
     void dealloc(void*);
     void traversalinit();
     void *traverse();
-  };  
+  };
 
 ///////////////////////////////////////////////////////////////////////////////
 //                                                                           //
@@ -507,11 +507,11 @@ public:
 
   class badface {
   public:
-    triface tt; 
+    triface tt;
     face ss;
     REAL key, cent[6];  // circumcenter or cos(dihedral angles) at 6 edges.
     point forg, fdest, fapex, foppo, noppo;
-    badface *nextitem; 
+    badface *nextitem;
     badface() : key(0), forg(0), fdest(0), fapex(0), foppo(0), noppo(0),
       nextitem(0) {}
   };
@@ -596,7 +596,7 @@ public:
 
 
     flipconstraints() {
-      enqflag = 0; 
+      enqflag = 0;
       chkencflag = 0;
 
       unflip = 0;
@@ -631,7 +631,7 @@ public:
 
     // The one of goals of optimization.
     int max_min_volume;      // Maximize the minimum volume.
-        int min_max_aspectratio; // Minimize the maximum aspect ratio. 
+        int min_max_aspectratio; // Minimize the maximum aspect ratio.
     int min_max_dihedangle;  // Minimize the maximum dihedral angle.
 
     // The initial and improved value.
@@ -665,11 +665,11 @@ public:
 //                                                                           //
 ///////////////////////////////////////////////////////////////////////////////
 
-  // Labels that signify the type of a vertex. 
+  // Labels that signify the type of a vertex.
   enum verttype {UNUSEDVERTEX, DUPLICATEDVERTEX, RIDGEVERTEX, ACUTEVERTEX,
-                 FACETVERTEX, VOLVERTEX, FREESEGVERTEX, FREEFACETVERTEX, 
+                 FACETVERTEX, VOLVERTEX, FREESEGVERTEX, FREEFACETVERTEX,
                  FREEVOLVERTEX, NREGULARVERTEX, DEADVERTEX};
- 
+
   // Labels that signify the result of triangle-triangle intersection test.
   enum interresult {DISJOINT, INTERSECT, SHAREVERT, SHAREEDGE, SHAREFACE,
                     TOUCHEDGE, TOUCHFACE, ACROSSVERT, ACROSSEDGE, ACROSSFACE};
@@ -705,7 +705,7 @@ public:
   // A memorypool to store faces to be flipped.
   memorypool *flippool;
   arraypool *unflipqueue;
-  badface *flipstack; 
+  badface *flipstack;
 
   // Arrays used for point insertion (the Bowyer-Watson algorithm).
   arraypool *cavetetlist, *cavebdrylist, *caveoldtetlist;
@@ -796,7 +796,7 @@ public:
   // Fast lookup tables for mesh manipulation primitives.
   static int bondtbl[12][12], fsymtbl[12][12];
   static int esymtbl[12], enexttbl[12], eprevtbl[12];
-  static int enextesymtbl[12], eprevesymtbl[12]; 
+  static int enextesymtbl[12], eprevesymtbl[12];
   static int eorgoppotbl[12], edestoppotbl[12];
   static int facepivot1[12], facepivot2[12][12];
   static int orgpivot[12], destpivot[12], apexpivot[12], oppopivot[12];
@@ -869,7 +869,7 @@ public:
   inline void decreaseelemcounter(triface& t);
   inline bool ishulltet(triface& t);
   inline bool isdeadtet(triface& t);
- 
+
   // Primitives for subfaces and subsegments.
   inline void sdecode(shellface sptr, face& s);
   inline shellface sencode(face& s);
@@ -1018,7 +1018,7 @@ public:
 
   // Symbolic perturbations (robust)
   REAL insphere_s(REAL*, REAL*, REAL*, REAL*, REAL*);
-  REAL orient4d_s(REAL*, REAL*, REAL*, REAL*, REAL*, 
+  REAL orient4d_s(REAL*, REAL*, REAL*, REAL*, REAL*,
                   REAL, REAL, REAL, REAL, REAL);
 
   // Triangle-edge intersection test (robust)
@@ -1063,9 +1063,9 @@ public:
 
   // PLC error reports.
   void report_overlapping_facets(face*, face*, REAL dihedang = 0.0);
-  int report_selfint_edge(point, point, face* sedge, triface* searchtet, 
+  int report_selfint_edge(point, point, face* sedge, triface* searchtet,
                           enum interresult);
-  int report_selfint_face(point, point, point, face* sface, triface* iedge, 
+  int report_selfint_face(point, point, point, face* sface, triface* iedge,
                           int intflag, int* types, int* poss);
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1184,7 +1184,7 @@ public:
   // Point location.
   unsigned long randomnation(unsigned int choices);
   void randomsample(point searchpt, triface *searchtet);
-  enum locateresult locate(point searchpt, triface *searchtet, 
+  enum locateresult locate(point searchpt, triface *searchtet,
                            int chkencflag = 0);
 
   // Incremental flips.
@@ -1233,7 +1233,7 @@ public:
 
   int recoveredgebyflips(point, point, face*, triface*, int fullsearch);
   int add_steinerpt_in_schoenhardtpoly(triface*, int, int chkencflag);
-  int add_steinerpt_in_segment(face*, int searchlevel); 
+  int add_steinerpt_in_segment(face*, int searchlevel);
   int addsteiner4recoversegment(face*, int);
   int recoversegments(arraypool*, int fullsearch, int steinerflag);
 
@@ -1259,7 +1259,7 @@ public:
   void carveholes();
 
   // Comment: These three functions are implemented directly in:
-  //   gmsh_wrk/Mesh/meshGRegionBoundaryRecovery.cpp
+  //   gmsh/src/mesh/meshGRegionBoundaryRecovery.cpp
   int reconstructmesh(void *, double tol);
   void outsurfacemesh(const char* mfilename);
   void outmesh2medit(const char* mfilename);
@@ -1345,7 +1345,7 @@ public:
     minfaceang = minfacetdihed = PI;
     tetprism_vol_sum = 0.0;
     longest = minedgelength = 0.0;
-    xmax = xmin = ymax = ymin = zmax = zmin = 0.0; 
+    xmax = xmin = ymax = ymin = zmax = zmin = 0.0;
 
     insegments = 0l;
     hullsize = 0l;
@@ -1467,7 +1467,7 @@ public:
 
 // selfint_event, a structure to report self-intersections.
 //
-//   - e_type,  report the type of self-intersections, 
+//   - e_type,  report the type of self-intersections,
 //     it may be one of:
 //     0, reserved.
 //     1, two edges intersect,
@@ -1477,7 +1477,7 @@ public:
 //     5, an edge and a triangle are overlapping,
 //     6, two triangles are overlapping,
 //     7, a vertex lies in an edge,
-//     8, a vertex lies in a facet,         
+//     8, a vertex lies in a facet,
 
 class selfint_event {
 public:
@@ -1491,7 +1491,7 @@ public:
   REAL int_point[3];
   selfint_event() {
     e_type = 0;
-    f_marker1 = f_marker2 = 0; 
+    f_marker1 = f_marker2 = 0;
     s_marker1 = s_marker2 = 0;
   }
 };
@@ -1506,7 +1506,7 @@ inline void terminatetetgen(tetgenmesh *m, int x)
 #else
   switch (x) {
   case 1: // Out of memory.
-    printf("Error:  Out of memory.\n"); 
+    printf("Error:  Out of memory.\n");
     break;
   case 2: // Encounter an internal error.
     printf("Please report this bug to Hang.Si@wias-berlin.de. Include\n");
@@ -1515,7 +1515,7 @@ inline void terminatetetgen(tetgenmesh *m, int x)
     break;
   case 3:
     printf("A self-intersection was detected. Program stopped.\n");
-    printf("Hint: use -d option to detect all self-intersections.\n"); 
+    printf("Hint: use -d option to detect all self-intersections.\n");
     break;
   case 4:
     printf("A very small input feature size was detected. Program stopped.\n");
@@ -1528,8 +1528,8 @@ inline void terminatetetgen(tetgenmesh *m, int x)
     printf("Two very close input facets were detected. Program stopped.\n");
     printf("Hint: use -Y option to avoid adding Steiner points in boundary.\n");
     break;
-  case 10: 
-    printf("An input error was detected. Program stopped.\n"); 
+  case 10:
+    printf("An input error was detected. Program stopped.\n");
     break;
   } // switch (x)
   exit(x);
@@ -1542,7 +1542,7 @@ inline void terminatetetgen(tetgenmesh *m, int x)
 //                                                                           //
 ///////////////////////////////////////////////////////////////////////////////
 
-// encode()  compress a handle into a single pointer.  It relies on the 
+// encode()  compress a handle into a single pointer.  It relies on the
 //   assumption that all addresses of tetrahedra are aligned to sixteen-
 //   byte boundaries, so that the last four significant bits are zero.
 
@@ -1562,8 +1562,8 @@ inline void tetgenmesh::decode(tetrahedron ptr, triface& t) {
   (t).tet = (tetrahedron *) ((uintptr_t) (ptr) ^ (uintptr_t) (t).ver);
 }
 
-// bond()  connects two tetrahedra together. (t1,v1) and (t2,v2) must 
-//   refer to the same face and the same edge. 
+// bond()  connects two tetrahedra together. (t1,v1) and (t2,v2) must
+//   refer to the same face and the same edge.
 
 inline void tetgenmesh::bond(triface& t1, triface& t2) {
   //  printf("%d %d %d\n",t1.ver,t2.ver,bondtbl[t1.ver][t2.ver]);
@@ -1613,7 +1613,7 @@ inline void tetgenmesh::esymself(triface& t) {
 }
 
 // enextesym()  finds the reversed edge of the next edge. It is in the other
-//   face of the same tetrahedron. It is the combination esym() * enext(). 
+//   face of the same tetrahedron. It is the combination esym() * enext().
 
 inline void tetgenmesh::enextesym(triface& t1, triface& t2) {
   t2.tet = t1.tet;
@@ -1647,7 +1647,7 @@ inline void tetgenmesh::eorgoppoself(triface& t) {
   t.ver = eorgoppotbl[t.ver];
 }
 
-// edestoppo()    Finds the opposite face of the destination of the current 
+// edestoppo()    Finds the opposite face of the destination of the current
 //                edge. Return the opposite edge of the current edge.
 
 inline void tetgenmesh::edestoppo(triface& t1, triface& t2) {
@@ -1735,7 +1735,7 @@ inline REAL tetgenmesh::elemattribute(tetrahedron* ptr, int attnum) {
   return ((REAL *) (ptr))[elemattribindex + attnum];
 }
 
-inline void tetgenmesh::setelemattribute(tetrahedron* ptr, int attnum, 
+inline void tetgenmesh::setelemattribute(tetrahedron* ptr, int attnum,
   REAL value) {
   ((REAL *) (ptr))[elemattribindex + attnum] = value;
 }
@@ -1763,7 +1763,7 @@ inline void tetgenmesh::setelemindex(tetrahedron* ptr, int value) {
   iptr[0] = value;
 }
 
-// Get or set a tetrahedron's marker. 
+// Get or set a tetrahedron's marker.
 //   Set 'value = 0' cleans all the face/edge flags.
 
 inline int tetgenmesh::elemmarker(tetrahedron* ptr) {
@@ -1800,14 +1800,14 @@ inline void tetgenmesh::marktest(triface& t) {
 inline void tetgenmesh::unmarktest(triface& t) {
   ((int *) (t.tet))[elemmarkerindex] &= ~2;
 }
-    
+
 inline bool tetgenmesh::marktested(triface& t) {
   return (((int *) (t.tet))[elemmarkerindex] & 2) != 0;
 }
 
 // markface(), unmarkface(), facemarked() -- primitives to flag or unflag a
 //   face of a tetrahedron.  From the last 3rd to 6th bits are used for
-//   face markers, e.g., the last third bit corresponds to loc = 0. 
+//   face markers, e.g., the last third bit corresponds to loc = 0.
 
 inline void tetgenmesh::markface(triface& t) {
   ((int *) (t.tet))[elemmarkerindex] |= (4 << (t.ver & 3));
@@ -1823,7 +1823,7 @@ inline bool tetgenmesh::facemarked(triface& t) {
 
 // markedge(), unmarkedge(), edgemarked() -- primitives to flag or unflag an
 //   edge of a tetrahedron.  From the last 7th to 12th bits are used for
-//   edge markers, e.g., the last 7th bit corresponds to the 0th edge, etc. 
+//   edge markers, e.g., the last 7th bit corresponds to the 0th edge, etc.
 //   Remark: The last 7th bit is marked by 2^6 = 64.
 
 inline void tetgenmesh::markedge(triface& t) {
@@ -1835,7 +1835,7 @@ inline void tetgenmesh::unmarkedge(triface& t) {
 }
 
 inline bool tetgenmesh::edgemarked(triface& t) {
-  return (((int *) (t.tet))[elemmarkerindex] & 
+  return (((int *) (t.tet))[elemmarkerindex] &
            (int) (64 << ver2edge[(t).ver])) != 0;
 }
 
@@ -1856,7 +1856,7 @@ inline bool tetgenmesh::marktest2ed(triface& t) {
 
 // elemcounter(), setelemcounter() -- primitives to read or ser a (small)
 //   integer counter in this tet. It is saved from the 16th bit. On 32 bit
-//   system, the range of the counter is [0, 2^15 = 32768]. 
+//   system, the range of the counter is [0, 2^15 = 32768].
 
 inline int tetgenmesh::elemcounter(triface& t) {
   return (((int *) (t.tet))[elemmarkerindex]) >> 16;
@@ -1922,7 +1922,7 @@ inline tetgenmesh::shellface tetgenmesh::sencode2(shellface *sh, int shver) {
 // sbond() bonds two subfaces (s1) and (s2) together. s1 and s2 must refer
 //   to the same edge. No requirement is needed on their orientations.
 
-inline void tetgenmesh::sbond(face& s1, face& s2) 
+inline void tetgenmesh::sbond(face& s1, face& s2)
 {
   s1.sh[s1.shver >> 1] = sencode(s2);
   s2.sh[s2.shver >> 1] = sencode(s1);
@@ -1932,7 +1932,7 @@ inline void tetgenmesh::sbond(face& s1, face& s2)
 //   but s2 is not pointing to s1.  s1 and s2 must refer to the same edge.
 //   No requirement is needed on their orientations.
 
-inline void tetgenmesh::sbond1(face& s1, face& s2) 
+inline void tetgenmesh::sbond1(face& s1, face& s2)
 {
   s1.sh[s1.shver >> 1] = sencode(s2);
 }
@@ -1948,13 +1948,13 @@ inline void tetgenmesh::sdissolve(face& s)
 // spivot() finds the adjacent subface (s2) for a given subface (s1).
 //   s1 and s2 share at the same edge.
 
-inline void tetgenmesh::spivot(face& s1, face& s2) 
+inline void tetgenmesh::spivot(face& s1, face& s2)
 {
   shellface sptr = s1.sh[s1.shver >> 1];
   sdecode(sptr, s2);
 }
 
-inline void tetgenmesh::spivotself(face& s) 
+inline void tetgenmesh::spivotself(face& s)
 {
   shellface sptr = s.sh[s.shver >> 1];
   sdecode(sptr, s);
@@ -1963,32 +1963,32 @@ inline void tetgenmesh::spivotself(face& s)
 // These primitives determine or set the origin, destination, or apex
 //   of a subface with respect to the edge version.
 
-inline tetgenmesh::point tetgenmesh::sorg(face& s) 
+inline tetgenmesh::point tetgenmesh::sorg(face& s)
 {
   return (point) s.sh[sorgpivot[s.shver]];
 }
 
-inline tetgenmesh::point tetgenmesh::sdest(face& s) 
+inline tetgenmesh::point tetgenmesh::sdest(face& s)
 {
   return (point) s.sh[sdestpivot[s.shver]];
 }
 
-inline tetgenmesh::point tetgenmesh::sapex(face& s) 
+inline tetgenmesh::point tetgenmesh::sapex(face& s)
 {
   return (point) s.sh[sapexpivot[s.shver]];
 }
 
-inline void tetgenmesh::setsorg(face& s, point pointptr) 
+inline void tetgenmesh::setsorg(face& s, point pointptr)
 {
   s.sh[sorgpivot[s.shver]] = (shellface) pointptr;
 }
 
-inline void tetgenmesh::setsdest(face& s, point pointptr) 
+inline void tetgenmesh::setsdest(face& s, point pointptr)
 {
   s.sh[sdestpivot[s.shver]] = (shellface) pointptr;
 }
 
-inline void tetgenmesh::setsapex(face& s, point pointptr) 
+inline void tetgenmesh::setsapex(face& s, point pointptr)
 {
   s.sh[sapexpivot[s.shver]] = (shellface) pointptr;
 }
@@ -2000,13 +2000,13 @@ inline void tetgenmesh::setsapex(face& s, point pointptr)
 
 // sesym()  reserves the direction of the lead edge.
 
-inline void tetgenmesh::sesym(face& s1, face& s2) 
+inline void tetgenmesh::sesym(face& s1, face& s2)
 {
   s2.sh = s1.sh;
   s2.shver = (s1.shver ^ 1);  // Inverse the last bit.
 }
 
-inline void tetgenmesh::sesymself(face& s) 
+inline void tetgenmesh::sesymself(face& s)
 {
   s.shver ^= 1;
 }
@@ -2014,24 +2014,24 @@ inline void tetgenmesh::sesymself(face& s)
 // senext()  finds the next edge (counterclockwise) in the same orientation
 //   of this face.
 
-inline void tetgenmesh::senext(face& s1, face& s2) 
+inline void tetgenmesh::senext(face& s1, face& s2)
 {
   s2.sh = s1.sh;
   s2.shver = snextpivot[s1.shver];
 }
 
-inline void tetgenmesh::senextself(face& s) 
+inline void tetgenmesh::senextself(face& s)
 {
   s.shver = snextpivot[s.shver];
 }
 
-inline void tetgenmesh::senext2(face& s1, face& s2) 
+inline void tetgenmesh::senext2(face& s1, face& s2)
 {
   s2.sh = s1.sh;
   s2.shver = snextpivot[snextpivot[s1.shver]];
 }
 
-inline void tetgenmesh::senext2self(face& s) 
+inline void tetgenmesh::senext2self(face& s)
 {
   s.shver = snextpivot[snextpivot[s.shver]];
 }
@@ -2039,12 +2039,12 @@ inline void tetgenmesh::senext2self(face& s)
 
 // Check or set a subface's maximum area bound.
 
-inline REAL tetgenmesh::areabound(face& s) 
+inline REAL tetgenmesh::areabound(face& s)
 {
   return ((REAL *) (s.sh))[areaboundindex];
 }
 
-inline void tetgenmesh::setareabound(face& s, REAL value) 
+inline void tetgenmesh::setareabound(face& s, REAL value)
 {
   ((REAL *) (s.sh))[areaboundindex] = value;
 }
@@ -2052,12 +2052,12 @@ inline void tetgenmesh::setareabound(face& s, REAL value)
 // These two primitives read or set a shell marker.  Shell markers are used
 //   to hold user boundary information.
 
-inline int tetgenmesh::shellmark(face& s) 
+inline int tetgenmesh::shellmark(face& s)
 {
   return ((int *) (s.sh))[shmarkindex];
 }
 
-inline void tetgenmesh::setshellmark(face& s, int value) 
+inline void tetgenmesh::setshellmark(face& s, int value)
 {
   ((int *) (s.sh))[shmarkindex] = value;
 }
@@ -2067,21 +2067,21 @@ inline void tetgenmesh::setshellmark(face& s, int value)
 // sinfect(), sinfected(), suninfect() -- primitives to flag or unflag a
 //   subface. The last bit of ((int *) ((s).sh))[shmarkindex+1] is flagged.
 
-inline void tetgenmesh::sinfect(face& s) 
+inline void tetgenmesh::sinfect(face& s)
 {
-  ((int *) ((s).sh))[shmarkindex+1] = 
+  ((int *) ((s).sh))[shmarkindex+1] =
     (((int *) ((s).sh))[shmarkindex+1] | (int) 1);
 }
 
-inline void tetgenmesh::suninfect(face& s) 
+inline void tetgenmesh::suninfect(face& s)
 {
-  ((int *) ((s).sh))[shmarkindex+1] = 
+  ((int *) ((s).sh))[shmarkindex+1] =
     (((int *) ((s).sh))[shmarkindex+1] & ~(int) 1);
 }
 
 // Test a subface for viral infection.
 
-inline bool tetgenmesh::sinfected(face& s) 
+inline bool tetgenmesh::sinfected(face& s)
 {
   return (((int *) ((s).sh))[shmarkindex+1] & (int) 1) != 0;
 }
@@ -2089,65 +2089,65 @@ inline bool tetgenmesh::sinfected(face& s)
 // smarktest(), smarktested(), sunmarktest() -- primitives to flag or unflag
 //   a subface. The last 2nd bit of the integer is flagged.
 
-inline void tetgenmesh::smarktest(face& s) 
+inline void tetgenmesh::smarktest(face& s)
 {
-  ((int *) ((s).sh))[shmarkindex+1] = 
+  ((int *) ((s).sh))[shmarkindex+1] =
     (((int *)((s).sh))[shmarkindex+1] | (int) 2);
 }
 
-inline void tetgenmesh::sunmarktest(face& s) 
+inline void tetgenmesh::sunmarktest(face& s)
 {
-  ((int *) ((s).sh))[shmarkindex+1] = 
+  ((int *) ((s).sh))[shmarkindex+1] =
     (((int *)((s).sh))[shmarkindex+1] & ~(int)2);
 }
 
-inline bool tetgenmesh::smarktested(face& s) 
+inline bool tetgenmesh::smarktested(face& s)
 {
   return ((((int *) ((s).sh))[shmarkindex+1] & (int) 2) != 0);
 }
 
-// smarktest2(), smarktest2ed(), sunmarktest2() -- primitives to flag or 
+// smarktest2(), smarktest2ed(), sunmarktest2() -- primitives to flag or
 //   unflag a subface. The last 3rd bit of the integer is flagged.
 
-inline void tetgenmesh::smarktest2(face& s) 
+inline void tetgenmesh::smarktest2(face& s)
 {
-  ((int *) ((s).sh))[shmarkindex+1] = 
+  ((int *) ((s).sh))[shmarkindex+1] =
     (((int *)((s).sh))[shmarkindex+1] | (int) 4);
 }
 
-inline void tetgenmesh::sunmarktest2(face& s) 
+inline void tetgenmesh::sunmarktest2(face& s)
 {
-  ((int *) ((s).sh))[shmarkindex+1] = 
+  ((int *) ((s).sh))[shmarkindex+1] =
     (((int *)((s).sh))[shmarkindex+1] & ~(int)4);
 }
 
-inline bool tetgenmesh::smarktest2ed(face& s) 
+inline bool tetgenmesh::smarktest2ed(face& s)
 {
   return ((((int *) ((s).sh))[shmarkindex+1] & (int) 4) != 0);
 }
 
 // The last 4th bit of ((int *) ((s).sh))[shmarkindex+1] is flagged.
 
-inline void tetgenmesh::smarktest3(face& s) 
+inline void tetgenmesh::smarktest3(face& s)
 {
-  ((int *) ((s).sh))[shmarkindex+1] = 
+  ((int *) ((s).sh))[shmarkindex+1] =
     (((int *)((s).sh))[shmarkindex+1] | (int) 8);
 }
 
-inline void tetgenmesh::sunmarktest3(face& s) 
+inline void tetgenmesh::sunmarktest3(face& s)
 {
-  ((int *) ((s).sh))[shmarkindex+1] = 
+  ((int *) ((s).sh))[shmarkindex+1] =
     (((int *)((s).sh))[shmarkindex+1] & ~(int)8);
 }
 
-inline bool tetgenmesh::smarktest3ed(face& s) 
+inline bool tetgenmesh::smarktest3ed(face& s)
 {
   return ((((int *) ((s).sh))[shmarkindex+1] & (int) 8) != 0);
 }
 
 
 // Each facet has a unique index (automatically indexed). Starting from '0'.
-// We save this index in the same field of the shell type. 
+// We save this index in the same field of the shell type.
 
 inline void tetgenmesh::setfacetindex(face& s, int value)
 {
@@ -2167,7 +2167,7 @@ inline int tetgenmesh::getfacetindex(face& s)
 
 // tsbond() bond a tetrahedron (t) and a subface (s) together.
 // Note that t and s must be the same face and the same edge. Moreover,
-//   t and s have the same orientation. 
+//   t and s have the same orientation.
 // Since the edge number in t and in s can be any number in {0,1,2}. We bond
 //   the edge in s which corresponds to t's 0th edge, and vice versa.
 
@@ -2182,10 +2182,10 @@ inline void tetgenmesh::tsbond(triface& t, face& s)
     }
   }
   // Bond t <== s.
-  ((shellface *) (t).tet[9])[(t).ver & 3] = 
+  ((shellface *) (t).tet[9])[(t).ver & 3] =
     sencode2((s).sh, tsbondtbl[t.ver][s.shver]);
   // Bond s <== t.
-  s.sh[9 + ((s).shver & 1)] = 
+  s.sh[9 + ((s).shver & 1)] =
     (shellface) encode2((t).tet, stbondtbl[t.ver][s.shver]);
 }
 
@@ -2194,7 +2194,7 @@ inline void tetgenmesh::tsbond(triface& t, face& s)
 //   the subface s, and s and t must be at the same edge wth the same
 //   orientation.
 
-inline void tetgenmesh::tspivot(triface& t, face& s) 
+inline void tetgenmesh::tspivot(triface& t, face& s)
 {
   if ((t).tet[9] == NULL) {
     (s).sh = NULL;
@@ -2213,7 +2213,7 @@ inline void tetgenmesh::tspivot(triface& t, face& s)
 //   Return the t (if it exists) with the same edge and the same
 //   orientation of s.
 
-inline void tetgenmesh::stpivot(face& s, triface& t) 
+inline void tetgenmesh::stpivot(face& s, triface& t)
 {
   decode((tetrahedron) s.sh[9 + (s.shver & 1)], t);
   if ((t).tet == NULL) {
@@ -2229,7 +2229,7 @@ inline void tetgenmesh::stpivot(face& s, triface& t)
 
 // tsdissolve() dissolve a bond (from the tetrahedron side).
 
-inline void tetgenmesh::tsdissolve(triface& t) 
+inline void tetgenmesh::tsdissolve(triface& t)
 {
   if ((t).tet[9] != NULL) {
     ((shellface *) (t).tet[9])[(t).ver & 3] = NULL;
@@ -2238,7 +2238,7 @@ inline void tetgenmesh::tsdissolve(triface& t)
 
 // stdissolve() dissolve a bond (from the subface side).
 
-inline void tetgenmesh::stdissolve(face& s) 
+inline void tetgenmesh::stdissolve(face& s)
 {
   (s).sh[9] = NULL;
   (s).sh[10] = NULL;
@@ -2252,13 +2252,13 @@ inline void tetgenmesh::stdissolve(face& s)
 
 // ssbond() bond a subface to a subsegment.
 
-inline void tetgenmesh::ssbond(face& s, face& edge) 
+inline void tetgenmesh::ssbond(face& s, face& edge)
 {
   s.sh[6 + (s.shver >> 1)] = sencode(edge);
   edge.sh[0] = sencode(s);
 }
 
-inline void tetgenmesh::ssbond1(face& s, face& edge) 
+inline void tetgenmesh::ssbond1(face& s, face& edge)
 {
   s.sh[6 + (s.shver >> 1)] = sencode(edge);
   //edge.sh[0] = sencode(s);
@@ -2266,14 +2266,14 @@ inline void tetgenmesh::ssbond1(face& s, face& edge)
 
 // ssdisolve() dissolve a bond (from the subface side)
 
-inline void tetgenmesh::ssdissolve(face& s) 
+inline void tetgenmesh::ssdissolve(face& s)
 {
   s.sh[6 + (s.shver >> 1)] = NULL;
 }
 
 // sspivot() finds a subsegment abutting a subface.
 
-inline void tetgenmesh::sspivot(face& s, face& edge) 
+inline void tetgenmesh::sspivot(face& s, face& edge)
 {
   sdecode((shellface) s.sh[6 + (s.shver >> 1)], edge);
 }
@@ -2299,10 +2299,10 @@ inline void tetgenmesh::tssbond1(triface& t, face& s)
       ((shellface *) (t).tet[8])[i] = NULL;
     }
   }
-  ((shellface *) (t).tet[8])[ver2edge[(t).ver]] = sencode((s)); 
+  ((shellface *) (t).tet[8])[ver2edge[(t).ver]] = sencode((s));
 }
 
-inline void tetgenmesh::sstbond1(face& s, triface& t) 
+inline void tetgenmesh::sstbond1(face& s, triface& t)
 {
   ((tetrahedron *) (s).sh)[9] = encode(t);
 }
@@ -2314,7 +2314,7 @@ inline void tetgenmesh::tssdissolve1(triface& t)
   }
 }
 
-inline void tetgenmesh::sstdissolve1(face& s) 
+inline void tetgenmesh::sstdissolve1(face& s)
 {
   ((tetrahedron *) (s).sh)[9] = NULL;
 }
@@ -2333,7 +2333,7 @@ inline void tetgenmesh::tsspivot1(triface& t, face& s)
 #define issubseg(t) \
   ((t).tet[8] && ((t).tet[8])[ver2edge[(t).ver]])
 
-inline void tetgenmesh::sstpivot1(face& s, triface& t) 
+inline void tetgenmesh::sstpivot1(face& s, triface& t)
 {
   decode((tetrahedron) s.sh[9], t);
 }
@@ -2344,8 +2344,8 @@ inline void tetgenmesh::sstpivot1(face& s, triface& t)
 //                                                                           //
 ///////////////////////////////////////////////////////////////////////////////
 
-inline int tetgenmesh::pointmark(point pt) { 
-  return ((int *) (pt))[pointmarkindex]; 
+inline int tetgenmesh::pointmark(point pt) {
+  return ((int *) (pt))[pointmarkindex];
 }
 
 inline void tetgenmesh::setpointmark(point pt, int value) {
@@ -2360,14 +2360,14 @@ inline enum tetgenmesh::verttype tetgenmesh::pointtype(point pt) {
 }
 
 inline void tetgenmesh::setpointtype(point pt, enum verttype value) {
-  ((int *) (pt))[pointmarkindex + 1] = 
+  ((int *) (pt))[pointmarkindex + 1] =
     ((int) value << 8) + (((int *) (pt))[pointmarkindex + 1] & (int) 255);
 }
 
 // Read and set the geometry tag of the point (used by -s option).
 
-inline int tetgenmesh::pointgeomtag(point pt) { 
-  return ((int *) (pt))[pointmarkindex + 2]; 
+inline int tetgenmesh::pointgeomtag(point pt) {
+  return ((int *) (pt))[pointmarkindex + 2];
 }
 
 inline void tetgenmesh::setpointgeomtag(point pt, int value) {
@@ -2399,8 +2399,8 @@ inline bool tetgenmesh::pinfected(point pt) {
   return (((int *) (pt))[pointmarkindex + 1] & (int) 1) != 0;
 }
 
-// pmarktest(), punmarktest(), pmarktested() -- more primitives to 
-//   flag or unflag a point. 
+// pmarktest(), punmarktest(), pmarktested() -- more primitives to
+//   flag or unflag a point.
 
 inline void tetgenmesh::pmarktest(point pt) {
   ((int *) (pt))[pointmarkindex + 1] |= (int) 2;
@@ -2515,7 +2515,7 @@ inline void tetgenmesh::point2shorg(point pa, face& searchsh)
   if ((point) searchsh.sh[3] == pa) {
     searchsh.shver = 0;
   } else if ((point) searchsh.sh[4] == pa) {
-    searchsh.shver = (searchsh.sh[5] != NULL ? 2 : 1); 
+    searchsh.shver = (searchsh.sh[5] != NULL ? 2 : 1);
   } else {
     searchsh.shver = 4;
   }
@@ -2531,25 +2531,25 @@ inline tetgenmesh::point tetgenmesh::farsorg(face& s)
   travesh = s;
   while (1) {
     senext2(travesh, neighsh);
-    spivotself(neighsh); 
+    spivotself(neighsh);
     if (neighsh.sh == NULL) break;
     if (sorg(neighsh) != sorg(travesh)) sesymself(neighsh);
-    senext2(neighsh, travesh); 
+    senext2(neighsh, travesh);
   }
   return sorg(travesh);
 }
 
-inline tetgenmesh::point tetgenmesh::farsdest(face& s) 
+inline tetgenmesh::point tetgenmesh::farsdest(face& s)
 {
   face travesh, neighsh;
 
   travesh = s;
   while (1) {
     senext(travesh, neighsh);
-    spivotself(neighsh); 
+    spivotself(neighsh);
     if (neighsh.sh == NULL) break;
     if (sdest(neighsh) != sdest(travesh)) sesymself(neighsh);
-    senext(neighsh, travesh); 
+    senext(neighsh, travesh);
   }
   return sdest(travesh);
 }
@@ -2561,13 +2561,13 @@ inline tetgenmesh::point tetgenmesh::farsdest(face& s)
 ///////////////////////////////////////////////////////////////////////////////
 
 // dot() returns the dot product: v1 dot v2.
-inline REAL tetgenmesh::dot(REAL* v1, REAL* v2) 
+inline REAL tetgenmesh::dot(REAL* v1, REAL* v2)
 {
   return v1[0] * v2[0] + v1[1] * v2[1] + v1[2] * v2[2];
 }
 
 // cross() computes the cross product: n = v1 cross v2.
-inline void tetgenmesh::cross(REAL* v1, REAL* v2, REAL* n) 
+inline void tetgenmesh::cross(REAL* v1, REAL* v2, REAL* n)
 {
   n[0] =   v1[1] * v2[2] - v2[1] * v1[2];
   n[1] = -(v1[0] * v2[2] - v2[0] * v1[2]);

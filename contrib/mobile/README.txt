@@ -1,7 +1,7 @@
 This directory contains the source code for the ONELAB app, the mobile version
 of ONELAB for iOS and Android devices.
 
-Copyright (C) 2014-2021 Christophe Geuzaine and Maxime Graulich, University of Liege
+Copyright (C) 2014-2022 Christophe Geuzaine and Maxime Graulich, University of Liege
 
 The ONELAB (http://onelab.info) mobile app is a finite element package based on
 the open source mesh generator Gmsh (https://gmsh.info) and the solver GetDP
