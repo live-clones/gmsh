@@ -21,13 +21,24 @@ Save "node_sets_abaqus_for_each_physical_surface.inp";
 Mesh.SaveGroupsOfNodes = -110;
 Save "node_sets_abaqus_for_each_physical_surface_and_curve.inp";
 
-// save group of nodes for all surfaces
+// save group of nodes for all surfaces - warning: this dangerous, as the node
+// set could reference nodes not saved in the mesh!
 Mesh.SaveGroupsOfNodes = -200;
 Save "node_sets_abaqus_for_each_surface.inp";
 
-// last one works even if there are no physical surfaces - warning: this
-// dangerous, as the node set could reference nodes not saved in the mesh!
+// last one works even if there are no physical surfaces, allowing to only save
+// volume elements - warning: this dangerous, as the node set could reference
+// nodes not saved in the mesh!
 Delete Physicals;
 Physical Volume("my new volume") = 1;
 Mesh.SaveGroupsOfNodes = -200;
 Save "node_sets_abaqus_for_each_surface_dangerous.inp";
+
+// if the goal is to only save volume elements but also node sets for
+// surfaces/curves, instead of saving node sets for all surfaces/curves, one can
+// use a negative Mesh.SaveGroupsOfElements value:
+Physical Surface("my surface 2") = {4, 5};
+Physical Curve("my curve 2") = {4};
+Mesh.SaveGroupsOfElements = -1000;
+Mesh.SaveGroupsOfNodes = -110;
+Save "node_sets_abaqus_for_each_physical_surface_and_curve_but_only_volume_elements.inp";

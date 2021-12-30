@@ -75,21 +75,35 @@ int GModel::writeINP(const std::string &name, bool saveAll,
       entities[i]->mesh_vertices[j]->writeINP(fp, scalingFactor);
 
   fprintf(fp, "******* E L E M E N T S *************\n");
-  for(auto it = firstVertex(); it != lastVertex(); ++it) {
-    writeElementsINP(fp, *it, (*it)->points, saveAll);
+  // a negative value of saveGroupsOfElements can be used to prevent saving
+  // elements of dimension dim, if the (dim+1)^th least significant digit of
+  // -saveGroupsOfElements is equal to 0. This is useful to be able to e.g. only
+  // have 3D elements in the output file, but node sets identified by physical
+  // surfaces or curves. Cf. #1664 and the comments below for the underlying
+  // rationale
+  if(saveGroupsOfElements >= 0 || ((-saveGroupsOfElements / 1) % 10)){
+    for(auto it = firstVertex(); it != lastVertex(); ++it) {
+      writeElementsINP(fp, *it, (*it)->points, saveAll);
+    }
   }
-  for(auto it = firstEdge(); it != lastEdge(); ++it) {
-    writeElementsINP(fp, *it, (*it)->lines, saveAll);
+  if(saveGroupsOfElements >= 0 || ((-saveGroupsOfElements / 10) % 10)){
+    for(auto it = firstEdge(); it != lastEdge(); ++it) {
+      writeElementsINP(fp, *it, (*it)->lines, saveAll);
+    }
   }
-  for(auto it = firstFace(); it != lastFace(); ++it) {
-    writeElementsINP(fp, *it, (*it)->triangles, saveAll);
-    writeElementsINP(fp, *it, (*it)->quadrangles, saveAll);
+  if(saveGroupsOfElements >= 0 || ((-saveGroupsOfElements / 100) % 10)){
+    for(auto it = firstFace(); it != lastFace(); ++it) {
+      writeElementsINP(fp, *it, (*it)->triangles, saveAll);
+      writeElementsINP(fp, *it, (*it)->quadrangles, saveAll);
+    }
   }
-  for(auto it = firstRegion(); it != lastRegion(); ++it) {
-    writeElementsINP(fp, *it, (*it)->tetrahedra, saveAll);
-    writeElementsINP(fp, *it, (*it)->hexahedra, saveAll);
-    writeElementsINP(fp, *it, (*it)->prisms, saveAll);
-    writeElementsINP(fp, *it, (*it)->pyramids, saveAll);
+  if(saveGroupsOfElements >= 0 || ((-saveGroupsOfElements / 1000) % 10)){
+    for(auto it = firstRegion(); it != lastRegion(); ++it) {
+      writeElementsINP(fp, *it, (*it)->tetrahedra, saveAll);
+      writeElementsINP(fp, *it, (*it)->hexahedra, saveAll);
+      writeElementsINP(fp, *it, (*it)->prisms, saveAll);
+      writeElementsINP(fp, *it, (*it)->pyramids, saveAll);
+    }
   }
 
   std::map<int, std::vector<GEntity *> > groups[4];
@@ -101,7 +115,7 @@ int GModel::writeINP(const std::string &name, bool saveAll,
     // positive; if saveGroupsOfElements is negative, only save groups of
     // dimension dim if the (dim+1)^th least significant digit of
     // -saveGroupsOfElements is non-zero (for example: -100 will only save
-    // surfaces, while -1010 will save volumes and curves).
+    // surfaces, while -1010 will save volumes and curves)
     for(int dim = 1; dim <= 3; dim++) {
       if(saveGroupsOfElements < 0 &&
          !((-saveGroupsOfElements / (int)std::pow(10, dim)) % 10)) {
