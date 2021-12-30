@@ -21,13 +21,16 @@
 
 static void writeX3dFaces(FILE *fp, std::vector<GFace *> &faces,
                           bool useIndexedSet, double scalingFactor,
-                          const std::string &name)
+                          const std::string &name,
+                          bool useColor,
+                          std::vector<unsigned int> &colors)
 {
   bool useGeoSTL = false;
   unsigned int nfacets = 0;
   for(auto it = faces.begin(); it != faces.end(); ++it) {
     nfacets += (*it)->triangles.size() + 2 * (*it)->quadrangles.size();
   }
+
   if(!nfacets) { // use CAD STL if there is no mesh
     useGeoSTL = true;
     for(auto it = faces.begin(); it != faces.end(); ++it) {
@@ -36,10 +39,31 @@ static void writeX3dFaces(FILE *fp, std::vector<GFace *> &faces,
     }
   }
 
-  fprintf(fp, "    <Shape DEF=\"%s\">\n", name.c_str());
-  fprintf(fp,
-          "     <Appearance><Material DEF=\"mat%s\"></Material></Appearance>\n",
-          name.c_str());
+  if(!useColor){
+    fprintf(fp, "    <Shape DEF=\"%s\">\n", name.c_str());
+    fprintf(fp,
+            "     <Appearance><Material DEF=\"mat%s\"></Material></Appearance>\n",
+            name.c_str());
+  }
+  else{
+    if(colors.size()==1){
+      unsigned int cvalue = colors[0];
+      float r = static_cast<float>(CTX::instance()->unpackRed(cvalue)) / 255.0;
+      float g = static_cast<float>(CTX::instance()->unpackGreen(cvalue)) / 255.0;
+      float b = static_cast<float>(CTX::instance()->unpackBlue(cvalue)) / 255.0;
+      int a = CTX::instance()->unpackAlpha(cvalue);
+      fprintf(fp, "    <Shape DEF=\"%s\">\n", name.c_str());
+      fprintf(fp,
+              "     <Appearance><Material DEF=\"mat%s\" id=\"color\" diffuseColor=\"%s %s %s\" shininess=\"0.9\" specularColor=\"0.2 0.2 0.2\" transparency=\"0\"></Material></Appearance>\n",
+              name.c_str(),
+              std::to_string(r).c_str(),
+              std::to_string(g).c_str(),
+              std::to_string(b).c_str());
+    }
+    else{
+      std::cout << "Error in x3d coloring" << std::endl;
+    }
+  }
 
   if(useGeoSTL) {
     if(useIndexedSet) {
@@ -220,30 +244,37 @@ int GModel::writeX3D(const std::string &name, bool saveAll,
     if(x3dsurfaces == 1) {
       // all surfaces in a single x3d object
       std::vector<GFace *> faces;
+      std::vector<unsigned int> colors;
       for(auto it = firstFace(); it != lastFace(); ++it) {
         if(saveAll || (*it)->physicals.size()) { faces.push_back(*it); }
       }
       std::string name = "face";
-      writeX3dFaces(fp, faces, false, scalingFactor, name);
+      writeX3dFaces(fp, faces, false, scalingFactor, name, false, colors);
     }
     else if(x3dsurfaces == 2) {
       // one x3d object for each physical surface
       for(auto it = firstFace(); it != lastFace(); ++it) {
         if(saveAll || (*it)->physicals.size()) {
           std::vector<GFace *> faces(1, *it);
+          std::vector<unsigned int> colors;
           std::string name = getElementaryName(2, (*it)->tag());
+          // get color info
+          GEntity *ge = GModel::current()->getEntityByTag(2, (*it)->tag());
+          unsigned int cvalue = ge->getColor();
+          colors.push_back(cvalue);
           if(name.empty()) {
             std::ostringstream s;
             s << "face" << (*it)->tag();
             name = s.str();
           }
-          writeX3dFaces(fp, faces, true, scalingFactor, name);
+          writeX3dFaces(fp, faces, true, scalingFactor, name, true, colors);
         }
       }
     }
     else if(x3dsurfaces == 3) {
       // one x3d object per physical surface
       std::map<int, std::vector<GEntity *> > phys;
+      std::vector<unsigned int> colors;
       getPhysicalGroups(2, phys);
       for(auto it = phys.begin(); it != phys.end(); it++) {
         std::vector<GFace *> faces;
@@ -256,7 +287,7 @@ int GModel::writeX3D(const std::string &name, bool saveAll,
           s << "physicalsurface" << it->first;
           name = s.str();
         }
-        writeX3dFaces(fp, faces, false, scalingFactor, name);
+        writeX3dFaces(fp, faces, false, scalingFactor, name, false, colors);
       }
     }
 
