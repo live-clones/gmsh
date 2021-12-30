@@ -350,7 +350,8 @@ void CreateOutputFile(const std::string &fileName, int format,
        CTX::instance()->mesh.scalingFactor,
        CTX::instance()->print.x3dSurfaces,
        CTX::instance()->print.x3dEdges,
-       CTX::instance()->print.x3dVertices);
+       CTX::instance()->print.x3dVertices,
+       CTX::instance()->print.x3dVolumes);
     break;
 
   case FORMAT_VRML:

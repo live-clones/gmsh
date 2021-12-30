@@ -9378,6 +9378,12 @@ double opt_print_x3d_vertices(OPT_ARGS_NUM)
   return CTX::instance()->print.x3dVertices;
 }
 
+double opt_print_x3d_volumes(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->print.x3dVolumes = (int)val;
+  return CTX::instance()->print.x3dVolumes;
+}
+
 // Color option routines
 
 #if defined(HAVE_FLTK)

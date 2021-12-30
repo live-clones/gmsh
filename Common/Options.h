@@ -817,6 +817,7 @@ double opt_print_x3d_precision(OPT_ARGS_NUM);
 double opt_print_x3d_surfaces(OPT_ARGS_NUM);
 double opt_print_x3d_edges(OPT_ARGS_NUM);
 double opt_print_x3d_vertices(OPT_ARGS_NUM);
+double opt_print_x3d_volumes(OPT_ARGS_NUM);
 
 // COLORS
 

@@ -19,6 +19,30 @@
 #include "StringUtils.h"
 #include "Context.h"
 
+static void writeX3dHeader(FILE *fp, std::vector<std::string> &metadata)
+{
+  // X3D Header
+  fprintf(fp, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+  fprintf(fp, "<!DOCTYPE X3D PUBLIC \"ISO//Web3D//DTD X3D 3.3//EN\" "
+              "\"http://www.web3d.org/specifications/x3d-3.3.dtd\">\n");
+  fprintf(fp, "<X3D profile='Interchange' version='3.3'  "
+              "xmlns:xsd='http://www.w3.org/2001/XMLSchema-instance' >\n");
+  fprintf(fp, "  <head>\n");
+  fprintf(fp, "    <meta name='creator' content='gmsh'/> \n");
+  for(auto it = metadata.begin(); it != metadata.end(); ++it){
+    fprintf(fp, "    <meta name='metadata_%s' content='%s'/> \n",
+            std::to_string(std::distance(metadata.begin(), it)).c_str(),
+            (*it).c_str());
+  }
+  fprintf(fp, "  </head>\n");
+  fprintf(fp, "  <Scene>\n");
+}
+
+static void writeX3dTrailer(FILE *fp){
+  fprintf(fp, "  </Scene>\n");
+  fprintf(fp, "</X3D>\n");
+}
+
 static void writeX3dFaces(FILE *fp, std::vector<GFace *> &faces,
                           bool useIndexedSet, double scalingFactor,
                           const std::string &name,
@@ -208,36 +232,36 @@ static void writeX3dEdges(FILE *fp, std::vector<GEdge *> &edges,
   }
 }
 
-int GModel::writeX3D(const std::string &name, bool saveAll,
+int GModel::_writeX3dFile(FILE* fp, bool saveAll,
                      double scalingFactor, int x3dsurfaces, int x3dedges,
-                     int x3dvertices)
+                     int x3dvertices, std::vector<GFace *>& customFaces)
 {
-  FILE *fp;
-
-  if(x3dsurfaces == 0 && x3dedges == 0 && x3dvertices == 0) {
-    Msg::Info("no surfaces, edges or vertices to write into '%s'",
-              name.c_str());
-    return 0;
-  }
-
-  fp = Fopen(name.c_str(), "w");
-  if(!fp) {
-    Msg::Warning("Unable to open file '%s'", name.c_str());
-    return 0;
-  }
-
-  // X3D Header
-  fprintf(fp, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
-  fprintf(fp, "<!DOCTYPE X3D PUBLIC \"ISO//Web3D//DTD X3D 3.3//EN\" "
-              "\"http://www.web3d.org/specifications/x3d-3.3.dtd\">\n");
-  fprintf(fp, "<X3D profile='Interchange' version='3.3'  "
-              "xmlns:xsd='http://www.w3.org/2001/XMLSchema-instance' >\n");
-  fprintf(fp, "  <head>\n");
-  fprintf(fp, "    <meta name='creator' content='gmsh'/> \n");
-  fprintf(fp, "  </head>\n");
-  fprintf(fp, "  <Scene>\n");
-
   if(noPhysicalGroups()) saveAll = true;
+
+  /*if(customFaces.size() > 0){
+    //fiter first_face = firstFace();
+    //fiter last_face = lastFace();
+    fiter it = firstFace();
+    fiter end = lastFace();
+  }
+  else{
+    //std::vector<GFace *>::iterator first_face = customFaces.begin();
+    //std::vector<GFace *>::iterator last_face = customFaces.end();
+    std::vector<GFace *>::iterator it = customFaces.begin();
+    std::vector<GFace *>::iterator end = customFaces.end();
+  }*/
+  std::vector<GFace *> modelFaces;
+  if(customFaces.size() > 0)
+  {
+    for(auto it = customFaces.begin(); it != customFaces.end(); ++it){
+      modelFaces.push_back(*it);
+    }
+  }
+  else{
+    for(auto it = firstFace(); it != lastFace(); ++it){
+      modelFaces.push_back(*it);
+    }
+  }
 
   if(x3dsurfaces != 0) {
     fprintf(fp, "   <Group DEF=\"faces\">\n");
@@ -245,7 +269,8 @@ int GModel::writeX3D(const std::string &name, bool saveAll,
       // all surfaces in a single x3d object
       std::vector<GFace *> faces;
       std::vector<unsigned int> colors;
-      for(auto it = firstFace(); it != lastFace(); ++it) {
+      //for(auto it = first_face; it != last_face; ++it) {
+      for(auto it = modelFaces.begin(); it != modelFaces.end(); ++it) {
         if(saveAll || (*it)->physicals.size()) { faces.push_back(*it); }
       }
       std::string name = "face";
@@ -253,7 +278,8 @@ int GModel::writeX3D(const std::string &name, bool saveAll,
     }
     else if(x3dsurfaces == 2) {
       // one x3d object for each physical surface
-      for(auto it = firstFace(); it != lastFace(); ++it) {
+      //for(auto it = first_face; it != last_face; ++it) {
+      for(auto it = modelFaces.begin(); it != modelFaces.end(); ++it) {
         if(saveAll || (*it)->physicals.size()) {
           std::vector<GFace *> faces(1, *it);
           std::vector<unsigned int> colors;
@@ -360,10 +386,79 @@ int GModel::writeX3D(const std::string &name, bool saveAll,
     }
     fprintf(fp, "   </Group>\n");
   }
+  return 1;
+}
 
-  fprintf(fp, "  </Scene>\n");
-  fprintf(fp, "</X3D>\n");
+static std::string TagFileName(std::string const & name, int tag)
+{
+  std::vector<std::string> split = SplitFileName(name); //<path>/<name>.<ext>
+  std::string new_name = split[1] + "_" + std::to_string(tag);
+  return split[0] + new_name + split[2];
+}
 
+int GModel::writeX3D(const std::string &name, bool saveAll,
+                     double scalingFactor, int x3dsurfaces, int x3dedges,
+                     int x3dvertices, int x3dvolumes)
+{
+  FILE *fp;
+  std::vector<std::string> metadata;
+  if(x3dsurfaces == 0 && x3dedges == 0 && x3dvertices == 0) {
+    Msg::Info("no surfaces, edges or vertices to write into '%s'",
+              name.c_str());
+    return 0;
+  }
+
+  std::vector<GFace *> faces;
+  if(x3dvolumes == 1) {
+    Msg::Info("separating volumes into separate files");
+    std::vector<GEntity *> volumes;
+    getEntities(volumes, 3);
+    
+    // if volumes present in model, else continue to single file mode
+    if(volumes.size() > 0){
+      for(auto it = volumes.begin(); it != volumes.end(); ++it){
+        faces = (*it)->bindingsGetFaces();
+        std::string _vol_name = getElementaryName((*it)->dim(), (*it)->tag());
+        metadata.push_back(_vol_name);
+        std::string _filename = TagFileName(name, (*it)->tag());
+        fp = Fopen(_filename.c_str(), "w");
+        if(!fp) {
+          Msg::Warning("Unable to open file '%s'", name.c_str());
+          return 0;
+        }
+        writeX3dHeader(fp,metadata);
+        _writeX3dFile(fp, saveAll, scalingFactor, x3dsurfaces, x3dedges, x3dvertices, faces);
+        writeX3dTrailer(fp);
+        fclose(fp);
+        metadata.clear();
+      }
+      return 1;
+    }
+  }
+
+  Msg::Info("writing single file");
+  fp = Fopen(name.c_str(), "w");
+  if(!fp) {
+    Msg::Warning("Unable to open file '%s'", name.c_str());
+    return 0;
+  }
+  writeX3dHeader(fp,metadata);
+  // main write function
+  _writeX3dFile(fp, saveAll, scalingFactor, x3dsurfaces, x3dedges, x3dvertices, faces);
+  writeX3dTrailer(fp);
   fclose(fp);
+
+  // X3D Header
+  /*fprintf(fp, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+  fprintf(fp, "<!DOCTYPE X3D PUBLIC \"ISO//Web3D//DTD X3D 3.3//EN\" "
+              "\"http://www.web3d.org/specifications/x3d-3.3.dtd\">\n");
+  fprintf(fp, "<X3D profile='Interchange' version='3.3'  "
+              "xmlns:xsd='http://www.w3.org/2001/XMLSchema-instance' >\n");
+  fprintf(fp, "  <head>\n");
+  fprintf(fp, "    <meta name='creator' content='gmsh'/> \n");
+  fprintf(fp, "  </head>\n");
+  fprintf(fp, "  <Scene>\n");
+  */
+
   return 1;
 }
