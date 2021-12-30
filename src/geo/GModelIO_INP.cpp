@@ -163,25 +163,27 @@ int GModel::writeINP(const std::string &name, bool saveAll,
       // useful for some workflows (cf. #1664)
       if(saveGroupsOfNodes < 0  &&
          ((-saveGroupsOfNodes / (int)std::pow(10, dim)) % 10) == 2) {
-        std::set<MVertex *, MVertexPtrLessThan> nodes;
         std::vector<GEntity *> ent;
         getEntities(ent, dim);
         for(std::size_t i = 0; i < ent.size(); i++) {
+          std::set<MVertex *, MVertexPtrLessThan> nodes;
           for(std::size_t j = 0; j < ent[i]->getNumMeshElements(); j++) {
             MElement *e = ent[i]->getMeshElement(j);
             for(std::size_t k = 0; k < e->getNumVertices(); k++)
               nodes.insert(e->getVertex(k));
           }
-          fprintf(fp, "*NSET,NSET=%s%d\n",
-                  (dim == 3) ? "Volume" : (dim == 2) ? "Surface" :
-                  (dim == 1) ? "Line" : "Point", ent[i]->tag());
-          int n = 0;
-          for(auto it2 = nodes.begin(); it2 != nodes.end(); it2++) {
-            if(n && !(n % 10)) fprintf(fp, "\n");
-            fprintf(fp, "%ld, ", (*it2)->getIndex());
-            n++;
+          if(nodes.size()) {
+            fprintf(fp, "*NSET,NSET=%s%d\n",
+                    (dim == 3) ? "Volume" : (dim == 2) ? "Surface" :
+                    (dim == 1) ? "Line" : "Point", ent[i]->tag());
+            int n = 0;
+            for(auto it2 = nodes.begin(); it2 != nodes.end(); it2++) {
+              if(n && !(n % 10)) fprintf(fp, "\n");
+              fprintf(fp, "%ld, ", (*it2)->getIndex());
+              n++;
+            }
+            fprintf(fp, "\n");
           }
-          fprintf(fp, "\n");
         }
       }
     }
