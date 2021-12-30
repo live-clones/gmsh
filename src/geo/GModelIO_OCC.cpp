@@ -2330,13 +2330,13 @@ bool OCC_Internals::addSurfaceLoop(int &tag,
         fix.Perform();
         shell = fix.Shell();
       }
-      int t = tag;
       if(first) { first = false; }
       else {
-        t = getMaxTag(-2) + 1;
-        Msg::Warning("Creating additional surface loop %d", t);
+        tag = getMaxTag(-2) + 1;
+        Msg::Warning("Creating additional surface loop %d", tag);
       }
-      _bind(shell, t, true);
+      if(tag < 0) tag = getMaxTag(-2) + 1;
+      _bind(shell, tag, true);
       return true;
     }
   }
@@ -2360,6 +2360,7 @@ bool OCC_Internals::addSurfaceLoop(int &tag,
       fix.Perform();
       shell = fix.Shell();
     }
+    if(tag < 0) tag = getMaxTag(-2) + 1;
     _bind(shell, tag, true);
     return true;
   } catch(Standard_Failure &err) {
