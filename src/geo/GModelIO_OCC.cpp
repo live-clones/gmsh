@@ -323,7 +323,7 @@ void OCC_Internals::_bind(const TopoDS_Shell &shell, int tag, bool recursive)
   }
   else {
     if(_tagShell.IsBound(tag)) {
-      // this leaves the old shell bound in _faceTag, but we cannot remove it
+      // this leaves the old shell bound in _shellTag, but we cannot remove it
       Msg::Info("Rebinding OpenCASCADE shell %d", tag);
     }
     _shellTag.Bind(shell, tag);
@@ -354,7 +354,7 @@ void OCC_Internals::_bind(const TopoDS_Solid &solid, int tag, bool recursive)
   }
   else {
     if(_tagSolid.IsBound(tag)) {
-      // this leaves the old solid bound in _faceTag, but we cannot remove it
+      // this leaves the old solid bound in _solidTag, but we cannot remove it
       Msg::Info("Rebinding OpenCASCADE volume %d", tag);
     }
     _solidTag.Bind(solid, tag);
