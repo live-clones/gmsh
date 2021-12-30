@@ -2623,7 +2623,7 @@ type of the surface meshes they are based on.
 @end itemize
 
 All meshes can be subdivided to generate fully quadrangular or fully
-hexahedral meshes with the @code{Mesh.SubdivisionAlgorihm} option
+hexahedral meshes with the @code{Mesh.SubdivisionAlgorithm} option
 (@pxref{Mesh options list}).
 
 @c todo: explain what happens if we have a degenerate geometry (incorrect
