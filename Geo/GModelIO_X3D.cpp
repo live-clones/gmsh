@@ -70,7 +70,7 @@ static void writeHTMLHeader(FILE *fp){
 
 static void writeHTMLBody(FILE *fp, std::vector<std::string> &x3dfiles){
   fprintf(fp, "<body>\n");
-  fprintf(fp, "  <x3d id=\"gmsh-scene\" style=\"width: 100%; height: 100%;border: none\" >\n");
+  fprintf(fp, "  <x3d id=\"gmsh-scene\" style=\"width: 100%%; height: 100%%;border: none\" >\n");
   fprintf(fp, "    <Scene>\n");
   fprintf(fp, "      <transform scale=\"1,1,1\">\n");
   fprintf(fp, "      <transform id=\"plane_axis\" rotation=\"1 0 0 -1.57079632679\">\n"); 
@@ -81,7 +81,10 @@ static void writeHTMLBody(FILE *fp, std::vector<std::string> &x3dfiles){
   fprintf(fp, "      </transform>\n");
   fprintf(fp, "      <transform id=\"components\" rotation=\"1 0 0 -1.57079632679\">\n");
   for(auto it = x3dfiles.begin(); it != x3dfiles.end(); ++it){
-    fprintf(fp, "        <inline onload=\"fit()\" mapDEFToID=\"true\" url=%s></inline>\n", (*it).c_str());
+    //drop path on x3d since it will be in the same folder as html
+    std::vector<std::string> split = SplitFileName(*it);
+    std::string x3dname = split[1] + split[2];
+    fprintf(fp, "        <inline onload=\"fit()\" mapDEFToID=\"true\" url=%s></inline>\n", x3dname.c_str());
   }
   fprintf(fp, "      </transform>\n");
   fprintf(fp, "    </Scene>\n");
@@ -139,7 +142,7 @@ static void writeX3dFaces(FILE *fp, std::vector<GFace *> &faces,
               std::to_string(b).c_str());
     }
     else{
-      std::cout << "Error in x3d coloring" << std::endl;
+      Msg::Error("Error in x3d coloring");
     }
   }
 
@@ -292,18 +295,6 @@ int GModel::_writeX3dFile(FILE* fp, bool saveAll,
 {
   if(noPhysicalGroups()) saveAll = true;
 
-  /*if(customFaces.size() > 0){
-    //fiter first_face = firstFace();
-    //fiter last_face = lastFace();
-    fiter it = firstFace();
-    fiter end = lastFace();
-  }
-  else{
-    //std::vector<GFace *>::iterator first_face = customFaces.begin();
-    //std::vector<GFace *>::iterator last_face = customFaces.end();
-    std::vector<GFace *>::iterator it = customFaces.begin();
-    std::vector<GFace *>::iterator end = customFaces.end();
-  }*/
   std::vector<GFace *> modelFaces;
   if(customFaces.size() > 0)
   {
@@ -339,8 +330,7 @@ int GModel::_writeX3dFile(FILE* fp, bool saveAll,
           std::vector<unsigned int> colors;
           std::string name = getElementaryName(2, (*it)->tag());
           // get color info
-          GEntity *ge = GModel::current()->getEntityByTag(2, (*it)->tag());
-          unsigned int cvalue = ge->getColor();
+          unsigned int cvalue = (*it)->getColor();
           colors.push_back(cvalue);
           if(name.empty()) {
             std::ostringstream s;
@@ -517,17 +507,6 @@ int GModel::writeX3D(const std::string &name, bool saveAll,
   writeX3dTrailer(fp);
   fclose(fp);
 
-  // X3D Header
-  /*fprintf(fp, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
-  fprintf(fp, "<!DOCTYPE X3D PUBLIC \"ISO//Web3D//DTD X3D 3.3//EN\" "
-              "\"http://www.web3d.org/specifications/x3d-3.3.dtd\">\n");
-  fprintf(fp, "<X3D profile='Interchange' version='3.3'  "
-              "xmlns:xsd='http://www.w3.org/2001/XMLSchema-instance' >\n");
-  fprintf(fp, "  <head>\n");
-  fprintf(fp, "    <meta name='creator' content='gmsh'/> \n");
-  fprintf(fp, "  </head>\n");
-  fprintf(fp, "  <Scene>\n");
-  */
   std::string _htmlname = HtmlFileName(name);
   fp = Fopen(_htmlname.c_str(), "w");
   writeHTMLHeader(fp);

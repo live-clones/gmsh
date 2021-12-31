@@ -1,5 +1,6 @@
 import gmsh
 import argparse
+import os
 
 # python gmsh_breakdown.py --split 1 will create separate x3d files for each volume
 parser = argparse.ArgumentParser(description='x3d print options')
@@ -11,16 +12,16 @@ x3dsurface = args.surface_mode
 x3dvolume = args.split
 
 gmsh.initialize()
-gmsh.open('Geom.stp') # change to any input stp in directory
+gmsh.open('as1-tu-203.stp') # change to any input stp in directory
 
-E  = gmsh.model.getEntities()
-E2 = [e for e in E if e[0] == 2]
-E3 = [e for e in E if e[0] == 3]
+path = os.path.join(os.curdir,"x3d_output")
+if not os.path.exists(path):
+    os.makedirs(path)
 
 gmsh.option.setNumber('Print.X3dSurfaces',x3dsurface)
 gmsh.option.setNumber('Print.X3dVolumes',x3dvolume)
 
-
-gmsh.write('geom_phys.x3d')
+outfile = os.path.join(path, 'out.x3d')
+gmsh.write(outfile)
 gmsh.clear()
 gmsh.finalize()
