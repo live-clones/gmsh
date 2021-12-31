@@ -2650,11 +2650,9 @@ class DistanceField : public Field {
   SPoint3CloudAdaptor<SPoint3Cloud> _pc2kdtree;
   SPoint3KDTree *_kdtree;
   std::size_t _outIndex;
-  double _outDistSqr;
 
 public:
-  DistanceField() : _pc2kdtree(_pc), _kdtree(nullptr), _outIndex(0),
-                    _outDistSqr(0.)
+  DistanceField() : _pc2kdtree(_pc), _kdtree(nullptr), _outIndex(0)
   {
     _sampling = 20;
 
@@ -2689,8 +2687,7 @@ public:
       new FieldOptionInt(_sampling, "[Deprecated]", &updateNeeded, true);
   }
   DistanceField(int dim, int tag, int nbe)
-    : _sampling(nbe), _pc2kdtree(_pc), _kdtree(nullptr), _outIndex(0),
-      _outDistSqr(0)
+    : _sampling(nbe), _pc2kdtree(_pc), _kdtree(nullptr), _outIndex(0)
   {
     if(dim == 0)
       _pointTags.push_back(tag);
@@ -2721,82 +2718,83 @@ public:
   }
   void update()
   {
-    if(updateNeeded) {
-      _infos.clear();
-      std::vector<SPoint3> &points = _pc.pts;
-      points.clear();
+    _infos.clear();
+    _pc.pts.clear();
+    if(_kdtree) delete _kdtree;
 
-      for(auto it = _pointTags.begin(); it != _pointTags.end(); ++it) {
-        GVertex *gv = GModel::current()->getVertexByTag(*it);
-        if(gv) {
-          points.push_back(SPoint3(gv->x(), gv->y(), gv->z()));
-          _infos.push_back(AttractorInfo(*it, 0, 0, 0));
-        }
-        else {
-          Msg::Warning("Unknown point %d", *it);
-        }
+    for(auto it = _pointTags.begin(); it != _pointTags.end(); ++it) {
+      GVertex *gv = GModel::current()->getVertexByTag(*it);
+      if(gv) {
+        _pc.pts.push_back(SPoint3(gv->x(), gv->y(), gv->z()));
+        _infos.push_back(AttractorInfo(*it, 0, 0, 0));
       }
+      else {
+        Msg::Warning("Unknown point %d", *it);
+      }
+    }
 
-      for(auto it = _curveTags.begin(); it != _curveTags.end(); ++it) {
-        GEdge *e = GModel::current()->getEdgeByTag(*it);
-        if(e) {
-          if(e->mesh_vertices.size()) {
-            for(std::size_t i = 0; i < e->mesh_vertices.size(); i++) {
-              points.push_back(SPoint3(e->mesh_vertices[i]->x(),
-                                       e->mesh_vertices[i]->y(),
-                                       e->mesh_vertices[i]->z()));
-              double t = 0.;
-              e->mesh_vertices[i]->getParameter(0, t);
-              _infos.push_back(AttractorInfo(*it, 1, t, 0));
-            }
-          }
-          int NNN = _sampling - e->mesh_vertices.size();
-          for(int i = 1; i < NNN - 1; i++) {
-            double u = (double)i / (NNN - 1);
-            Range<double> b = e->parBounds(0);
-            double t = b.low() + u * (b.high() - b.low());
-            GPoint gp = e->point(t);
-            points.push_back(SPoint3(gp.x(), gp.y(), gp.z()));
+    for(auto it = _curveTags.begin(); it != _curveTags.end(); ++it) {
+      GEdge *e = GModel::current()->getEdgeByTag(*it);
+      if(e) {
+        if(e->mesh_vertices.size()) {
+          for(std::size_t i = 0; i < e->mesh_vertices.size(); i++) {
+            _pc.pts.push_back(SPoint3(e->mesh_vertices[i]->x(),
+                                      e->mesh_vertices[i]->y(),
+                                      e->mesh_vertices[i]->z()));
+            double t = 0.;
+            e->mesh_vertices[i]->getParameter(0, t);
             _infos.push_back(AttractorInfo(*it, 1, t, 0));
           }
         }
-        else {
-          Msg::Warning("Unknown curve %d", *it);
+        int NNN = _sampling - e->mesh_vertices.size();
+        for(int i = 1; i < NNN - 1; i++) {
+          double u = (double)i / (NNN - 1);
+          Range<double> b = e->parBounds(0);
+          double t = b.low() + u * (b.high() - b.low());
+          GPoint gp = e->point(t);
+          _pc.pts.push_back(SPoint3(gp.x(), gp.y(), gp.z()));
+          _infos.push_back(AttractorInfo(*it, 1, t, 0));
         }
       }
-
-      for(auto it = _surfaceTags.begin(); it != _surfaceTags.end(); ++it) {
-        GFace *f = GModel::current()->getFaceByTag(*it);
-        if(f) {
-          double maxDist = f->bounds().diag() / _sampling;
-          std::vector<SPoint2> uvpoints;
-          f->fillPointCloud(maxDist, &points, &uvpoints);
-          for(std::size_t i = 0; i < uvpoints.size(); i++)
-            _infos.push_back
-              (AttractorInfo(*it, 2, uvpoints[i].x(), uvpoints[i].y()));
-        }
-        else {
-          Msg::Warning("Unknown surface %d", *it);
-        }
+      else {
+        Msg::Warning("Unknown curve %d", *it);
       }
-
-      // construct a kd-tree index:
-      _kdtree = new SPoint3KDTree(3, _pc2kdtree,
-                                 nanoflann::KDTreeSingleIndexAdaptorParams(10));
-      _kdtree->buildIndex();
-      updateNeeded = false;
     }
+
+    for(auto it = _surfaceTags.begin(); it != _surfaceTags.end(); ++it) {
+      GFace *f = GModel::current()->getFaceByTag(*it);
+      if(f) {
+        double maxDist = f->bounds().diag() / _sampling;
+        std::vector<SPoint2> uvpoints;
+        f->fillPointCloud(maxDist, &_pc.pts, &uvpoints);
+        for(std::size_t i = 0; i < uvpoints.size(); i++)
+          _infos.push_back
+            (AttractorInfo(*it, 2, uvpoints[i].x(), uvpoints[i].y()));
+      }
+      else {
+        Msg::Warning("Unknown surface %d", *it);
+      }
+    }
+
+    // construct a kd-tree index:
+    _kdtree = new SPoint3KDTree(3, _pc2kdtree,
+                                nanoflann::KDTreeSingleIndexAdaptorParams(10));
+    _kdtree->buildIndex();
+    updateNeeded = false;
   }
   using Field::operator();
   virtual double operator()(double X, double Y, double Z, GEntity *ge = nullptr)
   {
-    if(!_kdtree) return MAX_LC;
+#pragma omp critical
+    {
+      if(!_kdtree || updateNeeded) update();
+    }
     double query_pt[3] = {X, Y, Z};
-    const size_t num_results = 1;
-    nanoflann::KNNResultSet<double> resultSet(num_results);
-    resultSet.init(&_outIndex, &_outDistSqr);
+    nanoflann::KNNResultSet<double> resultSet(1);
+    double outDistSqr;
+    resultSet.init(&_outIndex, &outDistSqr);
     _kdtree->findNeighbors(resultSet, &query_pt[0], nanoflann::SearchParams(10));
-    return sqrt(_outDistSqr);
+    return sqrt(outDistSqr);
   }
 };
 
