@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
+@c Gmsh - Copyright (C) 1997-2022 C. Geuzaine, J.-F. Remacle
 @c
 @c See the LICENSE.txt file in the Gmsh root directory for license information.
 @c Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -22,7 +22,7 @@
 @c %**starts of header
 @setfilename gmsh.info
 @include version.texi
-@set COPYRIGHT @copyright{} 1997-2021 Christophe Geuzaine, Jean-Fran@,{c}ois Remacle
+@set COPYRIGHT @copyright{} 1997-2022 Christophe Geuzaine, Jean-Fran@,{c}ois Remacle
 @set SYN a synchronization of the CAD model with the internal Gmsh model.
 @set SYNC This operation triggers @value{SYN}
 @set SYNCS These operations all trigger @value{SYN}
@@ -352,10 +352,10 @@ Using the Gmsh API, Gmsh can also be embedded directly in your own
 solver, and ONELAB parameters can be used to interactively drive
 it. Examples on how to embed Gmsh in your solver, and build a custom
 graphical user interface to control it, are available in
-@url{@value{GITLAB-PREFIX}/demos/api,demos/api}.  See in particular
-@url{@value{GITLAB-PREFIX}/demos/api/prepro.py,prepro.py},
-@url{@value{GITLAB-PREFIX}/demos/api/custom_gui.py,custom_gui.py} and
-@url{@value{GITLAB-PREFIX}/demos/api/custom_gui.cpp,custom_gui.cpp}.
+@url{@value{GITLAB-PREFIX}/examples/api,examples/api}.  See in particular
+@url{@value{GITLAB-PREFIX}/examples/api/prepro.py,prepro.py},
+@url{@value{GITLAB-PREFIX}/examples/api/custom_gui.py,custom_gui.py} and
+@url{@value{GITLAB-PREFIX}/examples/api/custom_gui.cpp,custom_gui.cpp}.
 
 @c -------------------------------------------------------------------------
 @c Post-processing: scalar, vector and tensor field visualization
@@ -626,7 +626,7 @@ menu using `Window->Attach/Detach Menu'.)
 
 To open the first tutorial file (@pxref{Tutorial}), select the
 `File->Open' menu, and choose
-@url{@value{GITLAB-PREFIX}/tutorial/t1.geo,t1.geo}. When
+@url{@value{GITLAB-PREFIX}/tutorials/t1.geo,t1.geo}. When
 using a terminal, you can specify the file name directly on the command
 line, i.e.:
 
@@ -664,9 +664,9 @@ the command line, the first one defines the active model and the others
 are `merged' into this model. You can merge such files with the
 `File->Merge' menu. For example, to merge the post-processing views
 contained in the files
-@url{@value{GITLAB-PREFIX}/tutorial/view1.pos,view1.pos}
+@url{@value{GITLAB-PREFIX}/tutorials/view1.pos,view1.pos}
 and
-@url{@value{GITLAB-PREFIX}/tutorial/view5.msh,view5.msh}
+@url{@value{GITLAB-PREFIX}/tutorials/view5.msh,view5.msh}
 together with the geometry of the first tutorial @ref{t1}, you can type
 the following command:
 
@@ -719,7 +719,7 @@ to mesh the first tutorial in batch mode, just type:
 
 To mesh the same example, but with the background mesh available in the
 file
-@url{@value{GITLAB-PREFIX}/tutorial/bgmesh.pos,bgmesh.pos},
+@url{@value{GITLAB-PREFIX}/tutorials/bgmesh.pos,bgmesh.pos},
 type:
 
 @example
@@ -1161,7 +1161,7 @@ Colors expressions are hybrids between fixed-length braced
 @noindent The first case permits to use the X Windows names to refer to colors,
 e.g., @code{Red}, @code{SpringGreen}, @code{LavenderBlush3}, @dots{}
 (see
-@url{@value{GITLAB-PREFIX}/Common/Colors.h,Common/Colors.h}
+@url{@value{GITLAB-PREFIX}/src/common/Colors.h,src/common/Colors.h}
 in the source code for a complete list). The second case permits to
 define colors by using three expressions to specify their red, green and
 blue components (with values comprised between 0 and 255). The third
@@ -2405,7 +2405,7 @@ As explained in @ref{Floating point expressions}, @var{boolean} can be
 used in an expression, in which case it returns the list of
 tags of the highest dimensional entities created by
 the boolean operation.  See
-@url{@value{GITLAB-PREFIX}/demos/boolean/,demos/boolean}
+@url{@value{GITLAB-PREFIX}/examples/boolean/,examples/boolean}
 for examples.
 
 An alternative syntax exists for boolean operations, which can be used
@@ -2426,7 +2426,7 @@ tag @var{expression}.
 @end ftable
 
 Again, see
-@url{@value{GITLAB-PREFIX}/demos/boolean/,demos/boolean}
+@url{@value{GITLAB-PREFIX}/examples/boolean/,examples/boolean}
 for examples.
 
 Boolean operations are only available with the OpenCASCADE geometry kernel.
@@ -2623,7 +2623,7 @@ type of the surface meshes they are based on.
 @end itemize
 
 All meshes can be subdivided to generate fully quadrangular or fully
-hexahedral meshes with the @code{Mesh.SubdivisionAlgorihm} option
+hexahedral meshes with the @code{Mesh.SubdivisionAlgorithm} option
 (@pxref{Mesh options list}).
 
 @c todo: explain what happens if we have a degenerate geometry (incorrect
@@ -3067,7 +3067,7 @@ kernel. See
 or
 @url{@value{GITLAB-PREFIX}/benchmarks/extrude/sphere_boundary_layer_from_view.geo,sphere_boundary_layer_from_view.geo}
 for @code{.geo} file examples, and
-@url{@value{GITLAB-PREFIX}/demos/api/aneurysm.py,aneurysm.py} for an API
+@url{@value{GITLAB-PREFIX}/examples/api/aneurysm.py,aneurysm.py} for an API
 example.
 
 The advantage of this approach is that it provides a topological
@@ -3364,9 +3364,9 @@ have them share parameters and modeling information.
 Using the Gmsh API, you can directly embed Gmsh in your C++, C, Python
 or Julia solver, use ONELAB for interactive parameter definition and
 modification, and to create post-processing data on the fly. See
-@url{@value{GITLAB-PREFIX}/demos/api/prepro.py,prepro.py},
-@url{@value{GITLAB-PREFIX}/demos/api/custom_gui.py,custom_gui.py} and
-@url{@value{GITLAB-PREFIX}/demos/api/custom_gui.cpp,custom_gui.cpp} for
+@url{@value{GITLAB-PREFIX}/examples/api/prepro.py,prepro.py},
+@url{@value{GITLAB-PREFIX}/examples/api/custom_gui.py,custom_gui.py} and
+@url{@value{GITLAB-PREFIX}/examples/api/custom_gui.cpp,custom_gui.cpp} for
 examples.
 
 If you prefer to keep codes separate, you can also communicate with Gmsh
@@ -3455,7 +3455,7 @@ graphical window, or be automatically positioned in order to avoid overlaps.
 
 Sample post-processing files in human-readable ``parsed'' format and in
 the native MSH file format are available in the
-@url{@value{GITLAB-PREFIX}/tutorial,tutorial}
+@url{@value{GITLAB-PREFIX}/tutorials,tutorials}
 directory of Gmsh's distribution (@file{.pos} and @file{.msh}
 files). The ``parsed'' format is defined in the next section (cf. the
 @code{View} command); the MSH format is defined in @ref{File formats}.
@@ -4153,7 +4153,7 @@ with the edges, 54 with the faces, 27 in the volume)
 @item ...
 @end table
 All the currently supported elements in the format are defined in
-@url{https://gitlab.onelab.info/gmsh/gmsh/blob/master/Common/GmshDefines.h,GmshDefines.h}. See
+@url{https://gitlab.onelab.info/gmsh/gmsh/blob/master/src/common/GmshDefines.h,GmshDefines.h}. See
 @ref{Node ordering} for the ordering of the nodes.
 
 The post-processing sections (@code{$NodeData}, @code{$ElementData},
@@ -5191,7 +5191,7 @@ the same for all other kinds of values.
 
 The following tutorials introduce new features gradually, starting with
 @ref{t1}. The corresponding files are available in the
-@url{@value{GITLAB-PREFIX}/tutorial,tutorial}
+@url{@value{GITLAB-PREFIX}/tutorials,tutorials}
 directory of the Gmsh distribution. The files starting with @code{t}
 introduce features available both in @code{.geo} scripts and through the
 @ref{Gmsh API}. The files starting with @code{x} introduce features that
@@ -5201,7 +5201,7 @@ To learn how to run Gmsh on your computer, see @ref{Running Gmsh on your
 system}. Screencasts that show how to use the GUI are available on
 @uref{https://gmsh.info/screencasts/}. To learn how to run the C++, C,
 Python and Julia API examples, see the respective subdirectories in
-@url{@value{GITLAB-PREFIX}/tutorial,tutorial}.
+@url{@value{GITLAB-PREFIX}/tutorials,tutorials}.
 
 @menu
 * t1::  Geometry basics, elementary entities, physical groups
@@ -5242,18 +5242,18 @@ Python and Julia API examples, see the respective subdirectories in
 @section @code{t1}: Geometry basics, elementary entities, physical groups
 
 See
-@url{@value{GITLAB-PREFIX}/tutorial/t1.geo,t1.geo}. Also
+@url{@value{GITLAB-PREFIX}/tutorials/t1.geo,t1.geo}. Also
 available in C++
-(@url{@value{GITLAB-PREFIX}/tutorial/c++/t1.cpp,t1.cpp}),
+(@url{@value{GITLAB-PREFIX}/tutorials/c++/t1.cpp,t1.cpp}),
 C
-(@url{@value{GITLAB-PREFIX}/tutorial/c/t1.c,t1.c}),
+(@url{@value{GITLAB-PREFIX}/tutorials/c/t1.c,t1.c}),
 Python
-(@url{@value{GITLAB-PREFIX}/tutorial/python/t1.py,t1.py})
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t1.py,t1.py})
 and Julia
-(@url{@value{GITLAB-PREFIX}/tutorial/julia/t1.jl,t1.jl}).
+(@url{@value{GITLAB-PREFIX}/tutorials/julia/t1.jl,t1.jl}).
 
 @smallformat
-@verbatiminclude ../../tutorial/t1.geo
+@verbatiminclude ../../tutorials/t1.geo
 @end smallformat
 
 @c -------------------------------------------------------------------------
@@ -5264,16 +5264,16 @@ and Julia
 @section @code{t2}: Transformations, extruded geometries, volumes
 
 See
-@url{@value{GITLAB-PREFIX}/tutorial/t2.geo,t2.geo}. Also
+@url{@value{GITLAB-PREFIX}/tutorials/t2.geo,t2.geo}. Also
 available in C++
-(@url{@value{GITLAB-PREFIX}/tutorial/c++/t2.cpp,t2.cpp}),
+(@url{@value{GITLAB-PREFIX}/tutorials/c++/t2.cpp,t2.cpp}),
 Python
-(@url{@value{GITLAB-PREFIX}/tutorial/python/t2.py,t2.py})
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t2.py,t2.py})
 and Julia
-(@url{@value{GITLAB-PREFIX}/tutorial/julia/t2.jl,t2.jl}).
+(@url{@value{GITLAB-PREFIX}/tutorials/julia/t2.jl,t2.jl}).
 
 @smallformat
-@verbatiminclude ../../tutorial/t2.geo
+@verbatiminclude ../../tutorials/t2.geo
 @end smallformat
 
 @c -------------------------------------------------------------------------
@@ -5284,16 +5284,16 @@ and Julia
 @section @code{t3}: Extruded meshes, ONELAB parameters, options
 
 See
-@url{@value{GITLAB-PREFIX}/tutorial/t3.geo,t3.geo}.
+@url{@value{GITLAB-PREFIX}/tutorials/t3.geo,t3.geo}.
 Also available in C++
-(@url{@value{GITLAB-PREFIX}/tutorial/c++/t3.cpp,t3.cpp}),
+(@url{@value{GITLAB-PREFIX}/tutorials/c++/t3.cpp,t3.cpp}),
 Python
-(@url{@value{GITLAB-PREFIX}/tutorial/python/t3.py,t3.py})
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t3.py,t3.py})
 and Julia
-(@url{@value{GITLAB-PREFIX}/tutorial/julia/t3.jl,t3.jl}).
+(@url{@value{GITLAB-PREFIX}/tutorials/julia/t3.jl,t3.jl}).
 
 @smallformat
-@verbatiminclude ../../tutorial/t3.geo
+@verbatiminclude ../../tutorials/t3.geo
 @end smallformat
 
 @c -------------------------------------------------------------------------
@@ -5304,16 +5304,16 @@ and Julia
 @section @code{t4}: Built-in functions, holes in surfaces, annotations, entity colors
 
 See
-@url{@value{GITLAB-PREFIX}/tutorial/t4.geo,t4.geo}.
+@url{@value{GITLAB-PREFIX}/tutorials/t4.geo,t4.geo}.
 Also available in C++
-(@url{@value{GITLAB-PREFIX}/tutorial/c++/t4.cpp,t4.cpp}),
+(@url{@value{GITLAB-PREFIX}/tutorials/c++/t4.cpp,t4.cpp}),
 Python
-(@url{@value{GITLAB-PREFIX}/tutorial/python/t4.py,t4.py})
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t4.py,t4.py})
 and Julia
-(@url{@value{GITLAB-PREFIX}/tutorial/julia/t4.jl,t4.jl}).
+(@url{@value{GITLAB-PREFIX}/tutorials/julia/t4.jl,t4.jl}).
 
 @smallformat
-@verbatiminclude ../../tutorial/t4.geo
+@verbatiminclude ../../tutorials/t4.geo
 @end smallformat
 
 @c -------------------------------------------------------------------------
@@ -5324,16 +5324,16 @@ and Julia
 @section @code{t5}: Mesh sizes, macros, loops, holes in volumes
 
 See
-@url{@value{GITLAB-PREFIX}/tutorial/t5.geo,t5.geo}.
+@url{@value{GITLAB-PREFIX}/tutorials/t5.geo,t5.geo}.
 Also available in C++
-(@url{@value{GITLAB-PREFIX}/tutorial/c++/t5.cpp,t5.cpp}),
+(@url{@value{GITLAB-PREFIX}/tutorials/c++/t5.cpp,t5.cpp}),
 Python
-(@url{@value{GITLAB-PREFIX}/tutorial/python/t5.py,t5.py})
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t5.py,t5.py})
 and Julia
-(@url{@value{GITLAB-PREFIX}/tutorial/julia/t5.jl,t5.jl}).
+(@url{@value{GITLAB-PREFIX}/tutorials/julia/t5.jl,t5.jl}).
 
 @smallformat
-@verbatiminclude ../../tutorial/t5.geo
+@verbatiminclude ../../tutorials/t5.geo
 @end smallformat
 
 @c -------------------------------------------------------------------------
@@ -5344,14 +5344,14 @@ and Julia
 @section @code{t6}: Transfinite meshes
 
 See
-@url{@value{GITLAB-PREFIX}/tutorial/t6.geo,t6.geo}.
+@url{@value{GITLAB-PREFIX}/tutorials/t6.geo,t6.geo}.
 Also available in C++
-(@url{@value{GITLAB-PREFIX}/tutorial/c++/t6.cpp,t6.cpp})
+(@url{@value{GITLAB-PREFIX}/tutorials/c++/t6.cpp,t6.cpp})
 and Python
-(@url{@value{GITLAB-PREFIX}/tutorial/python/t6.py,t6.py}).
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t6.py,t6.py}).
 
 @smallformat
-@verbatiminclude ../../tutorial/t6.geo
+@verbatiminclude ../../tutorials/t6.geo
 @end smallformat
 
 @c -------------------------------------------------------------------------
@@ -5362,14 +5362,14 @@ and Python
 @section @code{t7}: Background meshes
 
 See
-@url{@value{GITLAB-PREFIX}/tutorial/t7.geo,t7.geo}.
+@url{@value{GITLAB-PREFIX}/tutorials/t7.geo,t7.geo}.
 Also available in C++
-(@url{@value{GITLAB-PREFIX}/tutorial/c++/t7.cpp,t7.cpp})
+(@url{@value{GITLAB-PREFIX}/tutorials/c++/t7.cpp,t7.cpp})
 and Python
-(@url{@value{GITLAB-PREFIX}/tutorial/python/t7.py,t7.py}).
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t7.py,t7.py}).
 
 @smallformat
-@verbatiminclude ../../tutorial/t7.geo
+@verbatiminclude ../../tutorials/t7.geo
 @end smallformat
 
 @c -------------------------------------------------------------------------
@@ -5380,14 +5380,14 @@ and Python
 @section @code{t8}: Post-processing and animations
 
 See
-@url{@value{GITLAB-PREFIX}/tutorial/t8.geo,t8.geo}.
+@url{@value{GITLAB-PREFIX}/tutorials/t8.geo,t8.geo}.
 Also available in C++
-(@url{@value{GITLAB-PREFIX}/tutorial/c++/t8.cpp,t8.cpp})
+(@url{@value{GITLAB-PREFIX}/tutorials/c++/t8.cpp,t8.cpp})
 and Python
-(@url{@value{GITLAB-PREFIX}/tutorial/python/t8.py,t8.py}).
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t8.py,t8.py}).
 
 @smallformat
-@verbatiminclude ../../tutorial/t8.geo
+@verbatiminclude ../../tutorials/t8.geo
 @end smallformat
 
 @c -------------------------------------------------------------------------
@@ -5398,14 +5398,14 @@ and Python
 @section @code{t9}: Plugins
 
 See
-@url{@value{GITLAB-PREFIX}/tutorial/t9.geo,t9.geo}.
+@url{@value{GITLAB-PREFIX}/tutorials/t9.geo,t9.geo}.
 Also available in C++
-(@url{@value{GITLAB-PREFIX}/tutorial/c++/t9.cpp,t9.cpp})
+(@url{@value{GITLAB-PREFIX}/tutorials/c++/t9.cpp,t9.cpp})
 and Python
-(@url{@value{GITLAB-PREFIX}/tutorial/python/t9.py,t9.py}).
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t9.py,t9.py}).
 
 @smallformat
-@verbatiminclude ../../tutorial/t9.geo
+@verbatiminclude ../../tutorials/t9.geo
 @end smallformat
 
 @c -------------------------------------------------------------------------
@@ -5416,14 +5416,14 @@ and Python
 @section @code{t10}: Mesh size fields
 
 See
-@url{@value{GITLAB-PREFIX}/tutorial/t10.geo,t10.geo}.
+@url{@value{GITLAB-PREFIX}/tutorials/t10.geo,t10.geo}.
 Also available in C++
-(@url{@value{GITLAB-PREFIX}/tutorial/c++/t10.cpp,t10.cpp})
+(@url{@value{GITLAB-PREFIX}/tutorials/c++/t10.cpp,t10.cpp})
 and Python
-(@url{@value{GITLAB-PREFIX}/tutorial/python/t10.py,t10.py}).
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t10.py,t10.py}).
 
 @smallformat
-@verbatiminclude ../../tutorial/t10.geo
+@verbatiminclude ../../tutorials/t10.geo
 @end smallformat
 
 @c -------------------------------------------------------------------------
@@ -5434,14 +5434,14 @@ and Python
 @section @code{t11}: Unstructured quadrangular meshes
 
 See
-@url{@value{GITLAB-PREFIX}/tutorial/t11.geo,t11.geo}.
+@url{@value{GITLAB-PREFIX}/tutorials/t11.geo,t11.geo}.
 Also available in C++
-(@url{@value{GITLAB-PREFIX}/tutorial/c++/t11.cpp,t11.cpp})
+(@url{@value{GITLAB-PREFIX}/tutorials/c++/t11.cpp,t11.cpp})
 and Python
-(@url{@value{GITLAB-PREFIX}/tutorial/python/t11.py,t11.py}).
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t11.py,t11.py}).
 
 @smallformat
-@verbatiminclude ../../tutorial/t11.geo
+@verbatiminclude ../../tutorials/t11.geo
 @end smallformat
 
 @c -------------------------------------------------------------------------
@@ -5452,14 +5452,14 @@ and Python
 @section @code{t12}: Cross-patch meshing with compounds
 
 See
-@url{@value{GITLAB-PREFIX}/tutorial/t12.geo,t12.geo}/
+@url{@value{GITLAB-PREFIX}/tutorials/t12.geo,t12.geo}/
 Also available in C++
-(@url{@value{GITLAB-PREFIX}/tutorial/c++/t12.cpp,t12.cpp})
+(@url{@value{GITLAB-PREFIX}/tutorials/c++/t12.cpp,t12.cpp})
 and Python
-(@url{@value{GITLAB-PREFIX}/tutorial/python/t12.py,t12.py}).
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t12.py,t12.py}).
 
 @smallformat
-@verbatiminclude ../../tutorial/t12.geo
+@verbatiminclude ../../tutorials/t12.geo
 @end smallformat
 
 @c -------------------------------------------------------------------------
@@ -5470,14 +5470,14 @@ and Python
 @section @code{t13}: Remeshing an STL file without an underlying CAD model
 
 See
-@url{@value{GITLAB-PREFIX}/tutorial/t13.geo,t13.geo}.
+@url{@value{GITLAB-PREFIX}/tutorials/t13.geo,t13.geo}.
 Also available in C++
-(@url{@value{GITLAB-PREFIX}/tutorial/c++/t13.cpp,t13.cpp})
+(@url{@value{GITLAB-PREFIX}/tutorials/c++/t13.cpp,t13.cpp})
 and Python
-(@url{@value{GITLAB-PREFIX}/tutorial/python/t13.py,t13.py}).
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t13.py,t13.py}).
 
 @smallformat
-@verbatiminclude ../../tutorial/t13.geo
+@verbatiminclude ../../tutorials/t13.geo
 @end smallformat
 
 @c -------------------------------------------------------------------------
@@ -5488,14 +5488,14 @@ and Python
 @section @code{t14}: Homology and cohomology computation
 
 See
-@url{@value{GITLAB-PREFIX}/tutorial/t14.geo,t14.geo}.
+@url{@value{GITLAB-PREFIX}/tutorials/t14.geo,t14.geo}.
 Also available in C++
-(@url{@value{GITLAB-PREFIX}/tutorial/c++/t14.cpp,t14.cpp})
+(@url{@value{GITLAB-PREFIX}/tutorials/c++/t14.cpp,t14.cpp})
 and Python
-(@url{@value{GITLAB-PREFIX}/tutorial/python/t14.py,t14.py}).
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t14.py,t14.py}).
 
 @smallformat
-@verbatiminclude ../../tutorial/t14.geo
+@verbatiminclude ../../tutorials/t14.geo
 @end smallformat
 
 @c -------------------------------------------------------------------------
@@ -5506,14 +5506,14 @@ and Python
 @section @code{t15}: Embedded points, lines and surfaces
 
 See
-@url{@value{GITLAB-PREFIX}/tutorial/t15.geo,t15.geo}.
+@url{@value{GITLAB-PREFIX}/tutorials/t15.geo,t15.geo}.
 Also available in C++
-(@url{@value{GITLAB-PREFIX}/tutorial/c++/t15.cpp,t15.cpp})
+(@url{@value{GITLAB-PREFIX}/tutorials/c++/t15.cpp,t15.cpp})
 and Python
-(@url{@value{GITLAB-PREFIX}/tutorial/python/t15.py,t15.py}).
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t15.py,t15.py}).
 
 @smallformat
-@verbatiminclude ../../tutorial/t15.geo
+@verbatiminclude ../../tutorials/t15.geo
 @end smallformat
 
 @c -------------------------------------------------------------------------
@@ -5524,16 +5524,16 @@ and Python
 @section @code{t16}: Constructive Solid Geometry, OpenCASCADE geometry kernel
 
 See
-@url{@value{GITLAB-PREFIX}/tutorial/t16.geo,t16.geo}.
+@url{@value{GITLAB-PREFIX}/tutorials/t16.geo,t16.geo}.
 Also available in C++
-(@url{@value{GITLAB-PREFIX}/tutorial/c++/t16.cpp,t16.cpp}),
+(@url{@value{GITLAB-PREFIX}/tutorials/c++/t16.cpp,t16.cpp}),
 Python
-(@url{@value{GITLAB-PREFIX}/tutorial/python/t16.py,t16.py})
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t16.py,t16.py})
 and Julia
-(@url{@value{GITLAB-PREFIX}/tutorial/julia/t16.jl,t16.jl}).
+(@url{@value{GITLAB-PREFIX}/tutorials/julia/t16.jl,t16.jl}).
 
 @smallformat
-@verbatiminclude ../../tutorial/t16.geo
+@verbatiminclude ../../tutorials/t16.geo
 @end smallformat
 
 @c -------------------------------------------------------------------------
@@ -5544,14 +5544,14 @@ and Julia
 @section @code{t17}: Anisotropic background mesh
 
 See
-@url{@value{GITLAB-PREFIX}/tutorial/t17.geo,t17.geo}.
+@url{@value{GITLAB-PREFIX}/tutorials/t17.geo,t17.geo}.
 Also available in C++
-(@url{@value{GITLAB-PREFIX}/tutorial/c++/t17.cpp,t17.cpp})
+(@url{@value{GITLAB-PREFIX}/tutorials/c++/t17.cpp,t17.cpp})
 and Python
-(@url{@value{GITLAB-PREFIX}/tutorial/python/t17.py,t17.py}).
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t17.py,t17.py}).
 
 @smallformat
-@verbatiminclude ../../tutorial/t17.geo
+@verbatiminclude ../../tutorials/t17.geo
 @end smallformat
 
 @c -------------------------------------------------------------------------
@@ -5562,14 +5562,14 @@ and Python
 @section @code{t18}: Periodic meshes
 
 See
-@url{@value{GITLAB-PREFIX}/tutorial/t18.geo,t18.geo}.
+@url{@value{GITLAB-PREFIX}/tutorials/t18.geo,t18.geo}.
 Also available in C++
-(@url{@value{GITLAB-PREFIX}/tutorial/c++/t18.cpp,t18.cpp})
+(@url{@value{GITLAB-PREFIX}/tutorials/c++/t18.cpp,t18.cpp})
 and Python
-(@url{@value{GITLAB-PREFIX}/tutorial/python/t18.py,t18.py}).
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t18.py,t18.py}).
 
 @smallformat
-@verbatiminclude ../../tutorial/t18.geo
+@verbatiminclude ../../tutorials/t18.geo
 @end smallformat
 
 @c -------------------------------------------------------------------------
@@ -5580,14 +5580,14 @@ and Python
 @section @code{t19}: Thrusections, fillets, pipes, mesh size from curvature
 
 See
-@url{@value{GITLAB-PREFIX}/tutorial/t19.geo,t19.geo}.
+@url{@value{GITLAB-PREFIX}/tutorials/t19.geo,t19.geo}.
 Also available in C++
-(@url{@value{GITLAB-PREFIX}/tutorial/c++/t19.cpp,t19.cpp})
+(@url{@value{GITLAB-PREFIX}/tutorials/c++/t19.cpp,t19.cpp})
 and Python
-(@url{@value{GITLAB-PREFIX}/tutorial/python/t19.py,t19.py}).
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t19.py,t19.py}).
 
 @smallformat
-@verbatiminclude ../../tutorial/t19.geo
+@verbatiminclude ../../tutorials/t19.geo
 @end smallformat
 
 @c -------------------------------------------------------------------------
@@ -5598,14 +5598,14 @@ and Python
 @section @code{t20}: STEP import and manipulation, geometry partitioning
 
 See
-@url{@value{GITLAB-PREFIX}/tutorial/t20.geo,t20.geo}.
+@url{@value{GITLAB-PREFIX}/tutorials/t20.geo,t20.geo}.
 Also available in C++
-(@url{@value{GITLAB-PREFIX}/tutorial/c++/t20.cpp,t20.cpp})
+(@url{@value{GITLAB-PREFIX}/tutorials/c++/t20.cpp,t20.cpp})
 and Python
-(@url{@value{GITLAB-PREFIX}/tutorial/python/t20.py,t20.py}).
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t20.py,t20.py}).
 
 @smallformat
-@verbatiminclude ../../tutorial/t20.geo
+@verbatiminclude ../../tutorials/t20.geo
 @end smallformat
 
 @c -------------------------------------------------------------------------
@@ -5616,14 +5616,14 @@ and Python
 @section @code{t21}: Mesh partitioning
 
 See
-@url{@value{GITLAB-PREFIX}/tutorial/t21.geo,t21.geo}.
+@url{@value{GITLAB-PREFIX}/tutorials/t21.geo,t21.geo}.
 Also available in C++
-(@url{@value{GITLAB-PREFIX}/tutorial/c++/t21.cpp,t21.cpp})
+(@url{@value{GITLAB-PREFIX}/tutorials/c++/t21.cpp,t21.cpp})
 and Python
-(@url{@value{GITLAB-PREFIX}/tutorial/python/t21.py,t21.py}).
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t21.py,t21.py}).
 
 @smallformat
-@verbatiminclude ../../tutorial/t21.geo
+@verbatiminclude ../../tutorials/t21.geo
 @end smallformat
 
 @c -------------------------------------------------------------------------
@@ -5634,12 +5634,12 @@ and Python
 @section @code{x1}: Geometry and mesh data
 
 See
-@url{@value{GITLAB-PREFIX}/tutorial/python/x1.py,x1.py}.
+@url{@value{GITLAB-PREFIX}/tutorials/python/x1.py,x1.py}.
 Also available in C++
-(@url{@value{GITLAB-PREFIX}/tutorial/c++/x1.cpp,x1.cpp}).
+(@url{@value{GITLAB-PREFIX}/tutorials/c++/x1.cpp,x1.cpp}).
 
 @smallformat
-@verbatiminclude ../../tutorial/python/x1.py
+@verbatiminclude ../../tutorials/python/x1.py
 @end smallformat
 
 @c -------------------------------------------------------------------------
@@ -5650,12 +5650,12 @@ Also available in C++
 @section @code{x2}: Mesh import, discrete entities, hybrid models, terrain meshing
 
 See
-@url{@value{GITLAB-PREFIX}/tutorial/python/x2.py,x2.py}.
+@url{@value{GITLAB-PREFIX}/tutorials/python/x2.py,x2.py}.
 Also available in C++
-(@url{@value{GITLAB-PREFIX}/tutorial/c++/x2.cpp,x2.cpp}).
+(@url{@value{GITLAB-PREFIX}/tutorials/c++/x2.cpp,x2.cpp}).
 
 @smallformat
-@verbatiminclude ../../tutorial/python/x2.py
+@verbatiminclude ../../tutorials/python/x2.py
 @end smallformat
 
 @c -------------------------------------------------------------------------
@@ -5666,12 +5666,12 @@ Also available in C++
 @section @code{x3}: Post-processing data import: list-based
 
 See
-@url{@value{GITLAB-PREFIX}/tutorial/python/x3.py,x3.py}.
+@url{@value{GITLAB-PREFIX}/tutorials/python/x3.py,x3.py}.
 Also available in C++
-(@url{@value{GITLAB-PREFIX}/tutorial/c++/x3.cpp,x3.cpp}).
+(@url{@value{GITLAB-PREFIX}/tutorials/c++/x3.cpp,x3.cpp}).
 
 @smallformat
-@verbatiminclude ../../tutorial/python/x3.py
+@verbatiminclude ../../tutorials/python/x3.py
 @end smallformat
 
 @c -------------------------------------------------------------------------
@@ -5682,12 +5682,12 @@ Also available in C++
 @section @code{x4}: Post-processing data import: model-based
 
 See
-@url{@value{GITLAB-PREFIX}/tutorial/python/x4.py,x4.py}.
+@url{@value{GITLAB-PREFIX}/tutorials/python/x4.py,x4.py}.
 Also available in C++
-(@url{@value{GITLAB-PREFIX}/tutorial/c++/x4.cpp,x4.cpp}).
+(@url{@value{GITLAB-PREFIX}/tutorials/c++/x4.cpp,x4.cpp}).
 
 @smallformat
-@verbatiminclude ../../tutorial/python/x4.py
+@verbatiminclude ../../tutorials/python/x4.py
 @end smallformat
 
 @c -------------------------------------------------------------------------
@@ -5698,12 +5698,12 @@ Also available in C++
 @section @code{x5}: Additional geometrical data: parametrizations, normals, curvatures
 
 See
-@url{@value{GITLAB-PREFIX}/tutorial/python/x5.py,x5.py}.
+@url{@value{GITLAB-PREFIX}/tutorials/python/x5.py,x5.py}.
 Also available in C++
-(@url{@value{GITLAB-PREFIX}/tutorial/c++/x5.cpp,x5.cpp}).
+(@url{@value{GITLAB-PREFIX}/tutorials/c++/x5.cpp,x5.cpp}).
 
 @smallformat
-@verbatiminclude ../../tutorial/python/x5.py
+@verbatiminclude ../../tutorials/python/x5.py
 @end smallformat
 
 @c -------------------------------------------------------------------------
@@ -5714,12 +5714,12 @@ Also available in C++
 @section @code{x6}: Additional mesh data: integration points, Jacobians and basis functions
 
 See
-@url{@value{GITLAB-PREFIX}/tutorial/python/x6.py,x6.py}.
+@url{@value{GITLAB-PREFIX}/tutorials/python/x6.py,x6.py}.
 Also available in C++
-(@url{@value{GITLAB-PREFIX}/tutorial/c++/x6.cpp,x6.cpp}).
+(@url{@value{GITLAB-PREFIX}/tutorials/c++/x6.cpp,x6.cpp}).
 
 @smallformat
-@verbatiminclude ../../tutorial/python/x6.py
+@verbatiminclude ../../tutorials/python/x6.py
 @end smallformat
 
 @c -------------------------------------------------------------------------
@@ -5730,12 +5730,12 @@ Also available in C++
 @section @code{x7}: Additional mesh data: internal edges and faces
 
 See
-@url{@value{GITLAB-PREFIX}/tutorial/python/x7.py,x7.py}.
+@url{@value{GITLAB-PREFIX}/tutorials/python/x7.py,x7.py}.
 Also available in C++
-(@url{@value{GITLAB-PREFIX}/tutorial/c++/x7.cpp,x7.cpp}).
+(@url{@value{GITLAB-PREFIX}/tutorials/c++/x7.cpp,x7.cpp}).
 
 @smallformat
-@verbatiminclude ../../tutorial/python/x7.py
+@verbatiminclude ../../tutorials/python/x7.py
 @end smallformat
 
 @c =========================================================================
@@ -5895,12 +5895,12 @@ The Gmsh Application Programming Interface (API) allows you to integrate
 the Gmsh library in your own application. By design, the Gmsh API is
 purely functional, and only uses elementary types from the target
 language. Currently supported languages are C++, C, Python and Julia.
-See the @url{@value{GITLAB-PREFIX}/tutorial/c++,tutorial/c++},
-@url{@value{GITLAB-PREFIX}/tutorial/c,tutorial/c},
-@url{@value{GITLAB-PREFIX}/tutorial/python,tutorial/python} and
-@url{@value{GITLAB-PREFIX}/tutorial/julia,tutorial/julia} directories
+See the @url{@value{GITLAB-PREFIX}/tutorials/c++,tutorials/c++},
+@url{@value{GITLAB-PREFIX}/tutorials/c,tutorials/c},
+@url{@value{GITLAB-PREFIX}/tutorials/python,tutorials/python} and
+@url{@value{GITLAB-PREFIX}/tutorials/julia,tutorials/julia} directories
 from the @ref{Tutorial} for examples. For other API examples, see the
-@url{@value{GITLAB-PREFIX}/demos/api/,demos/api} directory.
+@url{@value{GITLAB-PREFIX}/examples/api/,examples/api} directory.
 
 The different versions of the API are generated automatically from the
 master API definition file
@@ -6064,70 +6064,70 @@ requests.
 
 Gmsh's code is structured in several subdirectories, roughly separated
 between the four core modules
-(@url{@value{GITLAB-PREFIX}/Geo,Geo},
-@url{@value{GITLAB-PREFIX}/Mesh,Mesh},
-@url{@value{GITLAB-PREFIX}/Solver,Solver},
-@url{@value{GITLAB-PREFIX}/Post,Post}) and
+(@url{@value{GITLAB-PREFIX}/src/geo,src/geo},
+@url{@value{GITLAB-PREFIX}/src/mesh,src/mesh},
+@url{@value{GITLAB-PREFIX}/src/solver,src/solver},
+@url{@value{GITLAB-PREFIX}/src/post,src/post}) and
 associated utilities
-(@url{@value{GITLAB-PREFIX}/Common,Common},
-@url{@value{GITLAB-PREFIX}/Numeric,Numeric})
+(@url{@value{GITLAB-PREFIX}/src/common,src/common},
+@url{@value{GITLAB-PREFIX}/src/numeric,src/numeric})
 on one hand, and the graphics
-(@url{@value{GITLAB-PREFIX}/Graphics,Graphics})
+(@url{@value{GITLAB-PREFIX}/src/graphics,src/graphics})
 and interface
-(@url{@value{GITLAB-PREFIX}/Fltk,Fltk},
-@url{@value{GITLAB-PREFIX}/Parser,Parser},
+(@url{@value{GITLAB-PREFIX}/src/fltk,src/fltk},
+@url{@value{GITLAB-PREFIX}/src/parser,src/parser},
 @url{@value{GITLAB-PREFIX}/api,api}) code on
 the other.
 
 The geometry module is based on a model class
-(@url{@value{GITLAB-PREFIX}/Geo/GModel.h,Geo/GModel.h}),
+(@url{@value{GITLAB-PREFIX}/src/geo/GModel.h,src/geo/GModel.h}),
 and abstract entity classes for geometrical points
-(@url{@value{GITLAB-PREFIX}/Geo/GVertex.h,Geo/GVertex.h}),
+(@url{@value{GITLAB-PREFIX}/src/geo/GVertex.h,src/geo/GVertex.h}),
 curves
-(@url{@value{GITLAB-PREFIX}/Geo/GEdge.h,Geo/GEdge.h}),
+(@url{@value{GITLAB-PREFIX}/src/geo/GEdge.h,src/geo/GEdge.h}),
 surfaces
-(@url{@value{GITLAB-PREFIX}/Geo/GFace.h,Geo/GFace.h})
+(@url{@value{GITLAB-PREFIX}/src/geo/GFace.h,src/geo/GFace.h})
 and volumes
-(@url{@value{GITLAB-PREFIX}/Geo/GRegion.h,Geo/GRegion.h}).
+(@url{@value{GITLAB-PREFIX}/src/geo/GRegion.h,src/geo/GRegion.h}).
 Concrete implementations of these classes are provided for each
 supported CAD kernel
-(e.g. @url{@value{GITLAB-PREFIX}/Geo/gmshVertex.h,Geo/gmshVertex.h}
+(e.g. @url{@value{GITLAB-PREFIX}/src/geo/gmshVertex.h,src/geo/gmshVertex.h}
 for points in Gmsh's built-in CAD kernel, or
-@url{@value{GITLAB-PREFIX}/Geo/OCCVertex.h,Geo/OCCVertex.h}
+@url{@value{GITLAB-PREFIX}/src/geo/OCCVertex.h,src/geo/OCCVertex.h}
 for points from OpenCASCADE). All these elementary model entities derive
 from
-@url{@value{GITLAB-PREFIX}/Geo/GEntity.h,Geo/GEntity.h}.
+@url{@value{GITLAB-PREFIX}/src/geo/GEntity.h,src/geo/GEntity.h}.
 Physical groups are simply stored as integer tags in the entities.
 
 A mesh is composed of elements: mesh points
-(@url{@value{GITLAB-PREFIX}/Geo/MPoint.h,Geo/MPoint.h}),
+(@url{@value{GITLAB-PREFIX}/src/geo/MPoint.h,src/geo/MPoint.h}),
 lines
-(@url{@value{GITLAB-PREFIX}/Geo/MLine.h,Geo/MLine.h}),
+(@url{@value{GITLAB-PREFIX}/src/geo/MLine.h,src/geo/MLine.h}),
 triangles
-(@url{@value{GITLAB-PREFIX}/Geo/MTriangle.h,Geo/MTriangle.h}),
+(@url{@value{GITLAB-PREFIX}/src/geo/MTriangle.h,src/geo/MTriangle.h}),
 quadrangles
-(@url{@value{GITLAB-PREFIX}/Geo/MQuadrangle.h,Geo/MQuadrangle.h}),
+(@url{@value{GITLAB-PREFIX}/src/geo/MQuadrangle.h,src/geo/MQuadrangle.h}),
 tetrahedra
-(@url{@value{GITLAB-PREFIX}/Geo/MTetrahedron.h,Geo/MTetrahedron.h}),
+(@url{@value{GITLAB-PREFIX}/src/geo/MTetrahedron.h,src/geo/MTetrahedron.h}),
 etc. All the mesh elements are derived from
-@url{@value{GITLAB-PREFIX}/Geo/MElement.h,Geo/MElement.h},
+@url{@value{GITLAB-PREFIX}/geo/MElement.h,src/geo/MElement.h},
 and are stored in the corresponding model entities: one mesh point per
 geometrical point, mesh lines in geometrical curves, triangles and
 quadrangles in surfaces, etc. The elements are defined in terms of their
 nodes
-(@url{@value{GITLAB-PREFIX}/Geo/MVertex.h,Geo/MVertex.h}).
+(@url{@value{GITLAB-PREFIX}/src/geo/MVertex.h,src/geo/MVertex.h}).
 Each model entity stores only its internal nodes: nodes on boundaries or
 on embedded entities are stored in the associated bounding/embedded
 entity.
 
 The post-processing module is based on the concept of views
-(@url{@value{GITLAB-PREFIX}/Post/PView.h,Post/PView.h})
+(@url{@value{GITLAB-PREFIX}/src/post/PView.h,src/post/PView.h})
 and abstract data containers (derived from
-@url{@value{GITLAB-PREFIX}/Post/PViewData.h,Post/PViewData.h}).
+@url{@value{GITLAB-PREFIX}/src/post/PViewData.h,src/post/PViewData.h}).
 Data can be either mesh-based
-(@url{@value{GITLAB-PREFIX}/Post/PViewDataGModel.h,Post/PViewDataGModel.h}),
+(@url{@value{GITLAB-PREFIX}/src/post/PViewDataGModel.h,src/post/PViewDataGModel.h}),
 in which case the view is linked to one or more models, or list-based
-(@url{@value{GITLAB-PREFIX}/Post/PViewDataList.h,Post/PViewDataLis.h}),
+(@url{@value{GITLAB-PREFIX}/src/post/PViewDataList.h,src/post/PViewDataLis.h}),
 in which case all the relevant geometrical information is self-contained
 in the view.
 
@@ -6180,24 +6180,24 @@ To add a new option in Gmsh:
 @enumerate
 @item
 create the option in the @code{CTX} class
-(@url{@value{GITLAB-PREFIX}/Common/Context.h,Common/Context.h}
+(@url{@value{GITLAB-PREFIX}/src/common/Context.h,src/common/Context.h}
 if it's a classical option, or in the @code{PViewOptions} class
-(@url{@value{GITLAB-PREFIX}/Post/PViewOptions.h,Post/PViewOptions.h})
+(@url{@value{GITLAB-PREFIX}/src/post/PViewOptions.h,src/post/PViewOptions.h})
 if it's a post-processing view-dependent option;
 @item
 in
-@url{@value{GITLAB-PREFIX}/Common/DefaultOptions.h,Common/DefaultOptions.h},
+@url{@value{GITLAB-PREFIX}/src/common/DefaultOptions.h,src/common/DefaultOptions.h},
 give a name (for the parser to be able to access it), a reference to a
 handling routine (i.e. @code{opt_XXX}) and a default value for this
 option;
 @item
 create the handling routine @code{opt_XXX} in
-@url{@value{GITLAB-PREFIX}/Common/Options.cpp,Common/Options.cpp}
+@url{@value{GITLAB-PREFIX}/src/common/Options.cpp,src/common/Options.cpp}
 (and add the prototype in
-@url{@value{GITLAB-PREFIX}/Common/Options.h,Common/Options.h});
+@url{@value{GITLAB-PREFIX}/src/common/Options.h,src/common/Options.h});
 @item
 optional: create the associated widget in
-@url{@value{GITLAB-PREFIX}/Fltk/optionWindow.cpp,Fltk/optionWindow.h};
+@url{@value{GITLAB-PREFIX}/src/fltk/optionWindow.cpp,src/fltk/optionWindow.h};
 @end enumerate
 
 @c =========================================================================
@@ -6362,7 +6362,7 @@ post-processing data sets, or to change parameters according to
 @code{Print.Parameter}. To create fully customized animations or to use
 different output formats (AVI, MP4, etc.) you should write a
 script. Have a look at @ref{t8} or
-@url{@value{GITLAB-PREFIX}/demos/post_processing/anim.script,demos/post_processing/anim.script}
+@url{@value{GITLAB-PREFIX}/examples/post_processing/anim.script,examples/post_processing/anim.script}
 for some examples.
 
 @item Can I change values in input fields with the mouse in the GUI?
@@ -6422,7 +6422,7 @@ load the file (@code{Merge "file.step";} or
 @code{ShapeFromFile("file.step");}) and add the relevant scripting
 commands after that to delete parts, create new parts or apply boolean
 operators. See
-e.g. @url{@value{GITLAB-PREFIX}/demos/boolean/import.geo,demos/boolean/import.geo}.
+e.g. @url{@value{GITLAB-PREFIX}/examples/boolean/import.geo,examples/boolean/import.geo}.
 
 @item Why are there surfaces missing when I export a STEP as an unrolled @code{.geo} file?
 
@@ -6546,7 +6546,7 @@ mesh menu. You can select the order on the command line with e.g.
 
 Yes, you can import a surface mesh in any one of the supported mesh file
 formats, define a volume, and mesh it. For an example see
-@url{@value{GITLAB-PREFIX}/demos/simple_geo/sphere-discrete.geo,demos/simple_geo/sphere-discrete.geo}.
+@url{@value{GITLAB-PREFIX}/examples/simple_geo/sphere-discrete.geo,examples/simple_geo/sphere-discrete.geo}.
 
 @item How do I define boundary conditions or material properties in Gmsh?
 
@@ -6563,7 +6563,7 @@ description and some examples.
 The Gmsh API can be used to build sophisticated interactive workflows
 where the definition of boundary conditions and material properties can
 be fully tailored to your preferred solver. For an example see
-@url{@value{GITLAB-PREFIX}/demos/api/prepro.py,demos/api/prepro.py}.
+@url{@value{GITLAB-PREFIX}/examples/api/prepro.py,examples/api/prepro.py}.
 
 @item How can I display only the mesh associated with selected geometrical entities?
 
@@ -6593,7 +6593,7 @@ SIGE: signed inverse error on the gradient of FE solution
 @end itemize
 
 For the exact definitions, see
-@url{@value{GITLAB-PREFIX}/Geo/MElement.cpp,Geo/MElement.cpp}. The
+@url{@value{GITLAB-PREFIX}/src/geo/MElement.cpp,src/geo/MElement.cpp}. The
 graphs plot the the number of elements vs. the quality measure.
 
 @item How can I save a mesh file with a given (e.g. older) MSH file format version?
@@ -6627,15 +6627,15 @@ mesh partitions or not, etc. Given the number of possibilities,
 generating the appropriate information is thus best performed in the
 numerical solver itself. The Gmsh API makes these computations easy: see
 tutorial @ref{x7} and
-@url{@value{GITLAB-PREFIX}/demos/api/neighbors.py,demos/api/neighbors.py}.
+@url{@value{GITLAB-PREFIX}/examples/api/neighbors.py,examples/api/neighbors.py}.
 
 @item Could mesh edges/faces be stored in the MSH file?
 
 Edge/faces can be easily generated from the information already
 available in the file (i.e. nodes and elements), or through the Gmsh
 API: see tutorial @ref{x7},
-@url{@value{GITLAB-PREFIX}/demos/api/edges.cpp,demos/api/edges.cpp} and
-@url{@value{GITLAB-PREFIX}/demos/api/faces.cpp,demos/api/faces.cpp}.
+@url{@value{GITLAB-PREFIX}/examples/api/edges.cpp,examples/api/edges.cpp} and
+@url{@value{GITLAB-PREFIX}/examples/api/faces.cpp,examples/api/faces.cpp}.
 
 @end enumerate
 
@@ -6657,9 +6657,9 @@ interact with external solvers. See @ref{Solver module}.
 Using the Gmsh API, you can directly embed Gmsh in your own solver, use
 ONELAB for interactive parameter definition and modification, and create
 visualization data on the fly. See e.g.
-@url{@value{GITLAB-PREFIX}/demos/api/prepro.py,prepro.py},
-@url{@value{GITLAB-PREFIX}/demos/api/custom_gui.py,custom_gui.py},
-@url{@value{GITLAB-PREFIX}/demos/api/custom_gui.cpp,custom_gui.cpp}.
+@url{@value{GITLAB-PREFIX}/examples/api/prepro.py,prepro.py},
+@url{@value{GITLAB-PREFIX}/examples/api/custom_gui.py,custom_gui.py},
+@url{@value{GITLAB-PREFIX}/examples/api/custom_gui.cpp,custom_gui.cpp}.
 
 Another (rather crude) approach if to launch the Gmsh app everytime you
 want to visualize something (a simple C program showing how to do this
@@ -6757,7 +6757,7 @@ Evaluate plugin.
 You can save simple MPEG animations directly from the `File->Export'
 menu. For other formats you should write a script. Have a look at
 @ref{t8} or
-@url{@value{GITLAB-PREFIX}/demos/post_processing/anim.script,demos/post_processing/anim.script}
+@url{@value{GITLAB-PREFIX}/examples/post_processing/anim.script,examples/post_processing/anim.script}
 for some examples.
 
 @item Is there a way to visualize only certain components of vector/tensor fields?

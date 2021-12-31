@@ -4,5 +4,5 @@ The `OpenCASCADE` kernel (OCC) is a fully-featured CAD engine with many features
 
 ### Python
 ```python
-{{#include ../../../tutorial/python/t16.py}}
+{{#include ../../../tutorials/python/t16.py}}
 ```
