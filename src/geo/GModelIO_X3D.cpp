@@ -132,7 +132,6 @@ static void writeX3dFaces(FILE *fp, std::vector<GFace *> &faces,
       float r = static_cast<float>(CTX::instance()->unpackRed(cvalue)) / 255.0;
       float g = static_cast<float>(CTX::instance()->unpackGreen(cvalue)) / 255.0;
       float b = static_cast<float>(CTX::instance()->unpackBlue(cvalue)) / 255.0;
-      int a = CTX::instance()->unpackAlpha(cvalue);
       fprintf(fp, "    <Shape DEF=\"%s\">\n", name.c_str());
       fprintf(fp,
               "     <Appearance><Material DEF=\"mat%s\" id=\"color\" diffuseColor=\"%s %s %s\" shininess=\"0.9\" specularColor=\"0.2 0.2 0.2\" transparency=\"0\"></Material></Appearance>\n",
