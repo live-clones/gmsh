@@ -344,7 +344,7 @@ public:
     std::string parameterCommand;
     int x3dCompatibility, x3dRemoveInnerBorders;
     double x3dPrecision, x3dTransparency;
-    int x3dSurfaces, x3dEdges, x3dVertices, x3dVolumes;
+    int x3dSurfaces, x3dEdges, x3dVertices, x3dVolumes, x3dColorize;
   } print;
   // color options
   struct {

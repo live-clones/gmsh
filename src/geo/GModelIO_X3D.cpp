@@ -134,7 +134,7 @@ static void writeX3dFaces(FILE *fp, std::vector<GFace *> &faces,
       float b = static_cast<float>(CTX::instance()->unpackBlue(cvalue)) / 255.0;
       fprintf(fp, "    <Shape DEF=\"%s\">\n", name.c_str());
       fprintf(fp,
-              "     <Appearance><Material DEF=\"mat%s\" id=\"color\" diffuseColor=\"%s %s %s\" shininess=\"0.9\" specularColor=\"0.2 0.2 0.2\" transparency=\"0\"></Material></Appearance>\n",
+              "     <Appearance><Material DEF=\"mat%s\" diffuseColor=\"%s %s %s\" shininess=\"0.9\" specularColor=\"0.2 0.2 0.2\" transparency=\"0\"></Material></Appearance>\n",
               name.c_str(),
               std::to_string(r).c_str(),
               std::to_string(g).c_str(),
@@ -290,7 +290,7 @@ static void writeX3dEdges(FILE *fp, std::vector<GEdge *> &edges,
 
 int GModel::_writeX3dFile(FILE* fp, bool saveAll,
                      double scalingFactor, int x3dsurfaces, int x3dedges,
-                     int x3dvertices, std::vector<GFace *>& customFaces)
+                     int x3dvertices, int x3dcolorize, std::vector<GFace *>& customFaces)
 {
   if(noPhysicalGroups()) saveAll = true;
 
@@ -336,7 +336,8 @@ int GModel::_writeX3dFile(FILE* fp, bool saveAll,
             s << "face" << (*it)->tag();
             name = s.str();
           }
-          writeX3dFaces(fp, faces, true, scalingFactor, name, true, colors);
+          bool useColor = x3dcolorize == 1;
+          writeX3dFaces(fp, faces, true, scalingFactor, name, useColor, colors);
         }
       }
     }
@@ -447,7 +448,7 @@ static std::string HtmlFileName(std::string const & name)
 
 int GModel::writeX3D(const std::string &name, bool saveAll,
                      double scalingFactor, int x3dsurfaces, int x3dedges,
-                     int x3dvertices, int x3dvolumes)
+                     int x3dvertices, int x3dvolumes, int x3dcolorize)
 {
   FILE *fp;
   std::vector<std::string> metadata;
@@ -478,7 +479,7 @@ int GModel::writeX3D(const std::string &name, bool saveAll,
           return 0;
         }
         writeX3dHeader(fp,metadata);
-        _writeX3dFile(fp, saveAll, scalingFactor, x3dsurfaces, x3dedges, x3dvertices, faces);
+        _writeX3dFile(fp, saveAll, scalingFactor, x3dsurfaces, x3dedges, x3dvertices, x3dcolorize, faces);
         writeX3dTrailer(fp);
         fclose(fp);
         metadata.clear();
@@ -502,7 +503,7 @@ int GModel::writeX3D(const std::string &name, bool saveAll,
   }
   writeX3dHeader(fp,metadata);
   // main write function
-  _writeX3dFile(fp, saveAll, scalingFactor, x3dsurfaces, x3dedges, x3dvertices, faces);
+  _writeX3dFile(fp, saveAll, scalingFactor, x3dsurfaces, x3dedges, x3dvertices, x3dcolorize, faces);
   writeX3dTrailer(fp);
   fclose(fp);
 

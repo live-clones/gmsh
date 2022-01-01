@@ -9384,6 +9384,12 @@ double opt_print_x3d_volumes(OPT_ARGS_NUM)
   return CTX::instance()->print.x3dVolumes;
 }
 
+double opt_print_x3d_colorize(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->print.x3dColorize = (int)val;
+  return CTX::instance()->print.x3dColorize;
+}
+
 // Color option routines
 
 #if defined(HAVE_FLTK)

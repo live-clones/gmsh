@@ -2079,6 +2079,8 @@ StringXNumber PrintOptions_Number[] = {
     "Save vertices in CAD X3D output (0: no, 1: yes)"},
   { F|O, "X3dVolumes" , opt_print_x3d_volumes, 0. ,
     "Save separate volumes in CAD X3D output (0: no, 1: yes)"},
+  { F|O, "X3dColorize" , opt_print_x3d_colorize, 0. ,
+    "Apply colors to faces (0: no, 1: yes)"},
 
   { F|O, "Width" , opt_print_width , -1. ,
     "Width of printed image; use (possibly scaled) current width if < 0)" },
