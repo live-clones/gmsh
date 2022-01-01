@@ -321,7 +321,7 @@ int GModel::_writeX3dFile(FILE* fp, bool saveAll,
       writeX3dFaces(fp, faces, false, scalingFactor, name, false, colors);
     }
     else if(x3dsurfaces == 2) {
-      // one x3d object for each physical surface
+      // one x3d object for each geometrical surface
       //for(auto it = first_face; it != last_face; ++it) {
       for(auto it = modelFaces.begin(); it != modelFaces.end(); ++it) {
         if(saveAll || (*it)->physicals.size()) {

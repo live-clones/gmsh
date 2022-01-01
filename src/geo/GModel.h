@@ -81,7 +81,7 @@ private:
                             double scalingFactor);
   int _writeX3dFile(FILE* fp, bool saveAll,
                      double scalingFactor, int x3dsurfaces, int x3dedges,
-                     int x3dvertices, int x3dcolorize = 0, std::vector<GFace *>& customFaces);
+                     int x3dvertices, int x3dcolorize, std::vector<GFace *>& customFaces);
 
 protected:
   // the name of the model
