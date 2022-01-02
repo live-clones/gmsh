@@ -78,7 +78,7 @@ setuptools.setup(
                    'Programming Language :: C++',
                    'Programming Language :: Python',
                    'Topic :: Scientific/Engineering'],
-    #scripts = scripts,
+    scripts = [],
     packages = ['gmsh'],
     package_dir = {'gmsh' : os.path.join(sdkdir + '/lib')},
     data_files = data_files,
