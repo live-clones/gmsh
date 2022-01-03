@@ -1,3 +1,4 @@
+#include <queue>
 #include <nanoflann.hpp>
 #include "meshGRegionHexDom.h"
 #include "GmshConfig.h"
@@ -16,6 +17,7 @@
 #include "GmshMessage.h"
 #include "Field.h"
 #include "meshQuadQuasiStructured.h"
+#include "rtree.h"
 
 #if defined(HAVE_POST)
 #include "PView.h"
@@ -183,28 +185,35 @@ typedef nanoflann::KDTreeSingleIndexAdaptor<
   PC2KD, 3 > my_kd_tree_t;
 
 
-static void compute3DScaledCrossesFast (std::vector<GRegion *> &regions){
-
-  FieldManager *fields = regions[0]->model()->getFields();
+static Field *getCrossField (GModel *gm, int numComponents){
+  FieldManager *fields = gm->getFields();
   Field *cross_field = NULL;
   if(fields->getBackgroundField() > 0) {
     cross_field = fields->get(fields->getBackgroundField());
-    if(cross_field->numComponents() != 3) {// we have a true scaled cross fields !!
+    if(cross_field->numComponents() != numComponents) {// we have a true scaled cross fields !!
       Msg::Error ("Packing of Parallelograms require a scaled cross field");
       Msg::Error ("Do first gmsh yourmeshname.msh -crossfield to create yourmeshname_scaled_crossfield.pos");
       Msg::Error ("Then do yourmeshname.geo -bgm yourmeshname_scaled_crossfield.pos");
-      return;
+      return nullptr;
     }
   }
   else {
     Msg::Error ("Packing of Parallelograms require a scaled cross field");
     Msg::Error ("Do first gmsh yourmeshname.msh -crossfield to create yourmeshname_scaled_crossfield.pos");
     Msg::Error ("Then do yourmeshname.geo -bgm yourmeshname_scaled_crossfield.pos");
-    return;
+    return nullptr;
   }
-  std::vector<GFace *> surfaces;  
-  getAllSurfaces(regions, surfaces);
+  return cross_field;
+}
 
+static void compute3DScaledCrossesFast (std::vector<GRegion *> &regions){
+
+  if (regions.empty())return;
+  std::vector<GFace *> surfaces;  
+  getAllSurfaces(regions, surfaces);  
+  Field *cross_field = getCrossField (regions[0] -> model(), 3);
+  if (cross_field == nullptr)return;
+  
   PointCloud P;
   for (auto gf : surfaces){
     std::vector<SPoint3> points;
@@ -260,31 +269,33 @@ static void compute3DScaledCrossesFast (std::vector<GRegion *> &regions){
 	else ret_index = it->second;
 	SVector3 d1 = P.t1[ret_index];
 	SVector3 d2 = P.t2[ret_index];
+	double l = P.l[ret_index];
 	SVector3 d3 = crossprod(d1,d2);
-	datalist.push_back(d1.x());
-	datalist.push_back(d2.x());
-	datalist.push_back(d3.x());
-	datalist.push_back(d1.y());
-	datalist.push_back(d2.y());
-	datalist.push_back(d3.y());
-	datalist.push_back(d1.z());
-	datalist.push_back(d2.z());
-	datalist.push_back(d3.z());
+	datalist.push_back(d1.x()*l);
+	datalist.push_back(d1.y()*l);
+	datalist.push_back(d1.z()*l);
+	datalist.push_back(d2.x()*l);
+	datalist.push_back(d2.y()*l);
+	datalist.push_back(d2.z()*l);
+	datalist.push_back(d3.x()*l);
+	datalist.push_back(d3.y()*l);
+	datalist.push_back(d3.z()*l);
       }
     }
   }
-
+  
 #if defined(HAVE_POST)
   PView *view = new PView();
-  view->getData()->setName("cross_field_3D");
+  view->getData()->setName("guiding_field_3D");
   PViewDataList *d = new PViewDataList();
-  d->setName("cross_field_3D");
-  d->setFileName("cross_field_3D.pos");
+  d->setName("guiding_field_3D");
+  d->setFileName("guiding_field_3D.pos");
   view->setData(d);
   size_t numElements = datalist.size() / (12 + 36);
   int idxtypeSS = 14; /* Post type: SS */
   d->importList(idxtypeSS, numElements, datalist, false);
-  d->writePOS("cross_field_3D.pos");
+  d->writePOS("guiding_field_3D.pos");
+  regions[0]->model()->getFields()->setBackgroundMesh(view->getIndex());
 #endif
 
 }
@@ -303,6 +314,170 @@ void compute3DScaledCrossesFast (){
   compute3DScaledCrossesFast (r);
 }
 
+
+class volumePointWithExclusionRegion {
+public:
+  MVertex *_v;
+  MVertex *_father;
+  SVector3 _t[6];
+  volumePointWithExclusionRegion (MVertex *v, SPoint3 p[6], 
+				  volumePointWithExclusionRegion *father)
+    : _v(v),_father (nullptr)
+  {
+    SPoint3 c (_v->x(),_v->y(),_v->z());
+    for (int i = 0 ; i < 6 ; i ++) _t[i] = p[i] - c;
+    if (father)_father = father->_v;
+  }
+
+  inline SPoint3 p (int i) const {
+    return SPoint3 (_v->x()+_t[i].x(),_v->y()+_t[i].y(),_v->z()+_t[i].z());     
+  }
+  
+  bool inExclusionZone(const SPoint3 &p, MVertex *v){
+    if (_father == v) return false;
+    SPoint3 c (_v->x(),_v->y(),_v->z());
+    SVector3 vec = p - c;
+    for (int i=0;i<6;i++){
+      SVector3 _tn = _t[i];
+      double ps = dot(_tn,vec);
+      if (ps >= 0){
+	double d = _tn.norm();
+	double coord = ps / d;
+	if (coord * 0.7 > d)return false;
+      }
+    }
+    return true;
+  }
+
+  void minmax(double _min[3], double _max[3]) const{
+    SPoint3 c (_v->x(),_v->y(),_v->z());
+    _min[0] = _min[1] = _min[2] = 1.e22;
+    _max[0] = _max[1] = _max[2] = -1.e22;
+    for (int i=0;i<6;i++){
+      double x = _v->x()+_t[i].x();
+      double y = _v->y()+_t[i].y();
+      double z = _v->z()+_t[i].z();
+      _min[0] = std::min(x,_min[0]);
+      _min[1] = std::min(y,_min[1]);
+      _min[2] = std::min(z,_min[2]);
+      _max[0] = std::max(x,_max[0]);
+      _max[1] = std::max(y,_max[1]);
+      _max[2] = std::max(z,_max[2]);
+    }
+  }
+  void print(FILE *f, int i){
+  }
+};
+
+class volumeWrapper {
+public:
+  SPoint3 _p;
+  MVertex *_parent;
+  bool _tooclose;
+  volumeWrapper(const SPoint3 &sp, MVertex *parent) :
+    _p(sp), _parent(parent), _tooclose(false){}
+};
+
+static bool volumeCallback(volumePointWithExclusionRegion *neighbour, void *point)
+{
+  volumeWrapper *w = static_cast<volumeWrapper *>(point);
+  
+  if(neighbour->inExclusionZone(w->_p, w->_parent)) {
+    w->_tooclose = true;
+    return false;
+  }
+  return true;
+}
+
+bool inExclusionZone(MVertex *parent, SPoint3 &p,
+		     RTree<volumePointWithExclusionRegion *, double, 3, double> &rtree)
+{
+  volumeWrapper w(p, parent);
+  double _min[3] = {p.x() - 1.e-1, p.y() - 1.e-1, p.z() - 1.e-1},
+         _max[3] = {p.x() + 1.e-1, p.y() + 1.e-1, p.z() + 1.e-1};
+  rtree.Search(_min, _max, volumeCallback, &w);
+
+  return w._tooclose;
+}
+
+static bool compute6neighbors(GRegion *gr, MVertex *v, SPoint3 newp[6], Field *cross_field){
+  SMetric3 M;
+  SPoint3 p(v->x(),v->y(),v->z()), param;
+  MElement *e = gr->model()->getMeshElementByCoord(p, param, 3);
+  if (!e)return false;
+  (*cross_field)(p.x(),p.y(),p.z(), M, gr);
+  newp[0] = SPoint3(p.x()+M(0,0),p.y()+M(0,1),p.z()+M(0,2));
+  newp[1] = SPoint3(p.x()+M(1,0),p.y()+M(1,1),p.z()+M(1,2));
+  newp[2] = SPoint3(p.x()+M(2,0),p.y()+M(2,1),p.z()+M(2,2));
+  newp[3] = SPoint3(p.x()-M(0,0),p.y()-M(0,1),p.z()-M(0,2));
+  newp[4] = SPoint3(p.x()-M(1,0),p.y()-M(1,1),p.z()-M(1,2));
+  newp[5] = SPoint3(p.x()-M(2,0),p.y()-M(2,1),p.z()-M(2,2));
+  return true;
+}
+
+
+int pack3D (GRegion * gr, std::vector<MVertex*> &pack){
+
+  Field *cross_field = getCrossField (gr -> model(), 9);
+  if (cross_field == nullptr)return -1;
+  
+  std::set<MVertex *, MVertexPtrLessThan> bnd_vertices;
+  std::vector<GFace *> faces = gr->faces();  
+  for (auto gf : faces){
+    for (auto t : gf->triangles){
+      for(std::size_t j = 0; j < t->getNumVertices(); j++) {
+	MVertex *vertex = t->getVertex(j);
+	if(vertex->onWhat()->dim() < 3) bnd_vertices.insert(vertex);
+      }
+    }
+  }
+  std::vector<volumePointWithExclusionRegion *> vertices;
+  // put boundary vertices in a fifo queue and in the RTREE
+  std::queue<volumePointWithExclusionRegion *> fifo;
+  RTree<volumePointWithExclusionRegion *, double, 3, double> rtree;
+  SPoint3 newp[6];
+  std::set<MVertex *, MVertexPtrLessThan>::iterator it = bnd_vertices.begin();
+  for(; it != bnd_vertices.end(); ++it) {
+    compute6neighbors(gr, *it, newp, cross_field);
+    volumePointWithExclusionRegion *sp =
+      new volumePointWithExclusionRegion(*it, newp, nullptr);
+    vertices.push_back(sp);
+    fifo.push(sp);
+    double _min[3], _max[3];
+    sp->minmax(_min, _max);
+    rtree.Insert(_min, _max, sp);
+  }
+
+  // fill the domain
+  while(!fifo.empty()) {
+    volumePointWithExclusionRegion *parent = fifo.front();
+    fifo.pop();
+    for(int i = 0; i < 6; i++) {
+      SPoint3 neigh = parent -> p(i);
+      if (!inExclusionZone(parent->_v, neigh,rtree)){
+	MVertex *v = new MVertex(neigh.x(),neigh.y(),neigh.z(), gr);
+	if (compute6neighbors(gr, v, newp, cross_field)){
+	  volumePointWithExclusionRegion *sp =
+	    new volumePointWithExclusionRegion(v, newp, parent);
+	  fifo.push(sp);
+	  vertices.push_back(sp);
+	  double _min[3], _max[3];
+	  sp->minmax(_min, _max);
+	  rtree.Insert(_min, _max, sp);
+	}
+	else delete v;
+      }
+    }
+  }
+  
+  // add the vertices as additional vertices in the volume mesh
+  for(unsigned int i = 0; i < vertices.size(); i++) {
+    if(vertices[i]->_v->onWhat() == gr) 
+      pack.push_back(vertices[i]->_v);
+    delete vertices[i];
+  }
+  return 0;
+}
 
 int meshGRegionHexDom (std::vector<GRegion *> &regions, double minQuality, int doPrisms, int doPyramids){
   std::vector<double> coord;
