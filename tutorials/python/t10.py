@@ -121,9 +121,8 @@ gmsh.model.mesh.setSizeCallback(meshSizeCallback)
 # The value can then be further modified by the mesh size callback, if any,
 # before being constrained in the interval [`Mesh.MeshSizeMin',
 # `Mesh.MeshSizeMax'] and multiplied by `Mesh.MeshSizeFactor'.  In addition,
-# boundary mesh sizes (on curves or surfaces) are interpolated inside the
-# enclosed entity (surface or volume, respectively) if the option
-# `Mesh.MeshSizeExtendFromBoundary' is set (which is the case by default).
+# boundary mesh sizes are interpolated inside surfaces and/or volumes depending
+# on the value of `Mesh.MeshSizeExtendFromBoundary' (which is set by default).
 #
 # When the element size is fully specified by a background mesh (as it is in
 # this example), it is thus often desirable to set

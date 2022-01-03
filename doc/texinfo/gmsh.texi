@@ -2882,10 +2882,9 @@ the smallest element size is selected at any given point.  Using the
 Gmsh API, the resulting value can be further modified using a C++, C,
 Python or Julia mesh size callback function provided via
 @code{gmsh/model/mesh/setSizeCallback} (@pxref{Namespace
-gmsh/model/mesh}). In addition, boundary mesh sizes (on curves or
-surfaces) are interpolated inside the enclosed entity (surface or
-volume, respectively) if the option
-@code{Mesh.MeshSizeExtendFromBoundary} is set (it is by default).
+gmsh/model/mesh}). In addition, boundary mesh sizes are interpolated
+inside surfaces and/or volumes depending on the value of
+@code{Mesh.MeshSizeExtendFromBoundary}.
 
 All element sizes are further constrained in the interval [
 @code{Mesh.MeshSizeMin}, @code{Mesh.MeshSizeMax} ] (which can also be

@@ -96,10 +96,9 @@ Background Field = 7;
 // 5) any per-entity mesh size constraint.
 //
 // This value is then constrained in the interval [`Mesh.MeshSizeMin',
-// `Mesh.MeshSizeMax'] and multiplied by `Mesh.MeshSizeFactor'.  In addition,
-// boundary mesh sizes (on curves or surfaces) are interpolated inside the
-// enclosed entity (surface or volume, respectively) if the option
-// `Mesh.MeshSizeExtendFromBoundary' is set (which is the case by default).
+// `Mesh.MeshSizeMax'] and multiplied by `Mesh.MeshSizeFactor'. In addition,
+// boundary mesh sizes are interpolated inside surfaces and/or volumes depending
+// on the value of `Mesh.MeshSizeExtendFromBoundary' (which is set by default).
 //
 // When the element size is fully specified by a background mesh size field (as
 // it is in this example), it is thus often desirable to set

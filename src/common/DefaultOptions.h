@@ -1246,7 +1246,9 @@ StringXNumber MeshOptions_Number[] = {
     "Mesh only entities that have no existing mesh" },
   { F|O, "MeshSizeExtendFromBoundary" , opt_mesh_lc_extend_from_boundary, 1. ,
     "Extend computation of mesh element sizes from the boundaries into the interior "
-    "(for 3D Delaunay, use 1: longest or 2: shortest surface edge length)"},
+    "(0: never; 1: for surfaces and volumes; 2: for surfaces and volumes, but use "
+    "smallest surface element edge length instead of longest length in 3D Delaunay; "
+    "-2: only for surfaces; -3: only for volumes)"},
   { F|O, "MeshSizeFactor" , opt_mesh_lc_factor , 1.0 ,
     "Factor applied to all mesh element sizes" },
   { F|O, "MeshSizeMin" , opt_mesh_lc_min, 0.0 ,

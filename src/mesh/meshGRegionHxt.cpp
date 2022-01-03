@@ -41,7 +41,7 @@ static HXTStatus nodalSizesCallBack(double *pts, uint32_t *volume,
   std::vector<GRegion *> *allGR = (std::vector<GRegion *> *)userData;
 
   double lcGlob = CTX::instance()->lc;
-  int useInterpolatedSize = CTX::instance()->mesh.lcExtendFromBoundary;
+  int useInterpolatedSize = Extend2dMeshIn3dVolumes();
 
   HXT_INFO("Computing %smesh sizes...", useInterpolatedSize ? "interpolated " : "");
 

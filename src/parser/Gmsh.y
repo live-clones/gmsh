@@ -4769,8 +4769,8 @@ Constraints :
     }
   | tMeshSizeFromBoundary tSurface '{' RecursiveListOfDouble '}' tAFFECT FExpr tEND
     {
-      // lcExtendFromBoundary onstraints are stored in GEO internals in addition
-      // to GModel, as they can be copied around during GEO operations
+      // mesh size from boundary onstraints are stored in GEO internals in
+      // addition to GModel, as they can be copied around during GEO operations
       if(GModel::current()->getOCCInternals() &&
          GModel::current()->getOCCInternals()->getChanged())
         GModel::current()->getOCCInternals()->synchronize(GModel::current());

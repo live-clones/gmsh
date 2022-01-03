@@ -356,6 +356,37 @@ type: list@*
 default value: @code{@{@}}
 @end table
 
+@item Extend
+Compute an extension of the mesh sizes from the given boundary curves (resp. surfaces) inside the surfaces (resp. volumes) being meshed. If the mesh size on the boundary, computed as the local average length of the edges of the boundary elements, is denoted by SizeBnd, the extension is computed as:@*
+@*
+  F = f * SizeBnd + (1 - f) * SizeMax, if d < DistMax@*
+@*
+  F = SizeMax, if d >= DistMax@*
+where d denotes the distance to the boundary and f = ((DistMax - d) / DistMax)^Power.@*
+Options:@*
+@table @code
+@item CurvesList
+Tags of curves in the geometric model@*
+type: list@*
+default value: @code{@{@}}
+@item DistMax
+Maximum distance of the size extension@*
+type: float@*
+default value: @code{1}
+@item Power
+Power exponent used to interpolate the mesh size@*
+type: float@*
+default value: @code{1}
+@item SizeMax
+Mesh size outside DistMax@*
+type: float@*
+default value: @code{1}
+@item SurfacesList
+Tags of surfaces in the geometric model@*
+type: list@*
+default value: @code{@{@}}
+@end table
+
 @item ExternalProcess
 **This Field is experimental**@*
 Call an external process that received coordinates triple (x,y,z) as binary double precision numbers on stdin and is supposed to write the field value on stdout as a binary double precision number.@*
@@ -800,15 +831,15 @@ Return F = SizeMin if Field[InField] <= DistMin, F = SizeMax if Field[InField] >
 Options:@*
 @table @code
 @item DistMax
-Distance from entity after which the mesh size will be SizeMax@*
+Value after which the mesh size will be SizeMax@*
 type: float@*
 default value: @code{10}
 @item DistMin
-Distance from entity up to which the mesh size will be SizeMin@*
+Value up to which the mesh size will be SizeMin@*
 type: float@*
 default value: @code{1}
 @item InField
-Tag of the field to evaluate@*
+Tag of the field computing the input value, usually a distance@*
 type: integer@*
 default value: @code{0}
 @item Sigmoid
@@ -816,11 +847,11 @@ True to interpolate between SizeMin and LcMax using a sigmoid, false to interpol
 type: boolean@*
 default value: @code{0}
 @item SizeMax
-Mesh size outside DistMax@*
+Mesh size when value > DistMax@*
 type: float@*
 default value: @code{1}
 @item SizeMin
-Mesh size inside DistMin@*
+Mesh size when value < DistMin@*
 type: float@*
 default value: @code{0.1}
 @item StopAtDistMax

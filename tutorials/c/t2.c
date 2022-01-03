@@ -172,8 +172,8 @@ int main(int argc, char **argv)
 
   int *ov2;
   size_t ov2_n;
-  int numElements[] = {};
-  double heights[] = {};
+  int *numElements;
+  double *heights;
   size_t numElements_n = 0;
   size_t heights_n = 0;
   int recombine = 0;

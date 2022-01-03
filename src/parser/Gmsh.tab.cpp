@@ -12243,8 +12243,8 @@ yyreduce:
   case 376:
 #line 4771 "Gmsh.y"
     {
-      // lcExtendFromBoundary onstraints are stored in GEO internals in addition
-      // to GModel, as they can be copied around during GEO operations
+      // mesh size from boundary onstraints are stored in GEO internals in
+      // addition to GModel, as they can be copied around during GEO operations
       if(GModel::current()->getOCCInternals() &&
          GModel::current()->getOCCInternals()->getChanged())
         GModel::current()->getOCCInternals()->synchronize(GModel::current());

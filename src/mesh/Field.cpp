@@ -633,15 +633,16 @@ public:
     _stopAtDistMax = false;
 
     options["InField"] =
-      new FieldOptionInt(_inField, "Tag of the field to evaluate");
+      new FieldOptionInt(_inField, "Tag of the field computing the input "
+                         "value, usually a distance");
     options["DistMin"] = new FieldOptionDouble(
-      _dMin, "Distance from entity up to which the mesh size will be SizeMin");
+      _dMin, "Value up to which the mesh size will be SizeMin");
     options["DistMax"] = new FieldOptionDouble(
-      _dMax, "Distance from entity after which the mesh size will be SizeMax");
+      _dMax, "Value after which the mesh size will be SizeMax");
     options["SizeMin"] =
-      new FieldOptionDouble(_lcMin, "Mesh size inside DistMin");
+      new FieldOptionDouble(_lcMin, "Mesh size when value < DistMin");
     options["SizeMax"] =
-      new FieldOptionDouble(_lcMax, "Mesh size outside DistMax");
+      new FieldOptionDouble(_lcMax, "Mesh size when value > DistMax");
     options["Sigmoid"] = new FieldOptionBool(
       _sigmoid,
       "True to interpolate between SizeMin and LcMax using a sigmoid, "
@@ -2718,83 +2719,231 @@ public:
   }
   void update()
   {
-    _infos.clear();
-    _pc.pts.clear();
-    if(_kdtree) delete _kdtree;
+    if(updateNeeded) {
+      _infos.clear();
+      _pc.pts.clear();
+      if(_kdtree) delete _kdtree;
 
-    for(auto it = _pointTags.begin(); it != _pointTags.end(); ++it) {
-      GVertex *gv = GModel::current()->getVertexByTag(*it);
-      if(gv) {
-        _pc.pts.push_back(SPoint3(gv->x(), gv->y(), gv->z()));
-        _infos.push_back(AttractorInfo(*it, 0, 0, 0));
+      for(auto it = _pointTags.begin(); it != _pointTags.end(); ++it) {
+        GVertex *gv = GModel::current()->getVertexByTag(*it);
+        if(gv) {
+          _pc.pts.push_back(SPoint3(gv->x(), gv->y(), gv->z()));
+          _infos.push_back(AttractorInfo(*it, 0, 0, 0));
+        }
+        else {
+          Msg::Warning("Unknown point %d", *it);
+        }
       }
-      else {
-        Msg::Warning("Unknown point %d", *it);
-      }
-    }
 
-    for(auto it = _curveTags.begin(); it != _curveTags.end(); ++it) {
-      GEdge *e = GModel::current()->getEdgeByTag(*it);
-      if(e) {
-        if(e->mesh_vertices.size()) {
-          for(std::size_t i = 0; i < e->mesh_vertices.size(); i++) {
-            _pc.pts.push_back(SPoint3(e->mesh_vertices[i]->x(),
-                                      e->mesh_vertices[i]->y(),
-                                      e->mesh_vertices[i]->z()));
-            double t = 0.;
-            e->mesh_vertices[i]->getParameter(0, t);
+      for(auto it = _curveTags.begin(); it != _curveTags.end(); ++it) {
+        GEdge *e = GModel::current()->getEdgeByTag(*it);
+        if(e) {
+          if(e->mesh_vertices.size()) {
+            for(std::size_t i = 0; i < e->mesh_vertices.size(); i++) {
+              _pc.pts.push_back(SPoint3(e->mesh_vertices[i]->x(),
+                                        e->mesh_vertices[i]->y(),
+                                        e->mesh_vertices[i]->z()));
+              double t = 0.;
+              e->mesh_vertices[i]->getParameter(0, t);
+              _infos.push_back(AttractorInfo(*it, 1, t, 0));
+            }
+          }
+          int NNN = _sampling - e->mesh_vertices.size();
+          for(int i = 1; i < NNN - 1; i++) {
+            double u = (double)i / (NNN - 1);
+            Range<double> b = e->parBounds(0);
+            double t = b.low() + u * (b.high() - b.low());
+            GPoint gp = e->point(t);
+            _pc.pts.push_back(SPoint3(gp.x(), gp.y(), gp.z()));
             _infos.push_back(AttractorInfo(*it, 1, t, 0));
           }
         }
-        int NNN = _sampling - e->mesh_vertices.size();
-        for(int i = 1; i < NNN - 1; i++) {
-          double u = (double)i / (NNN - 1);
-          Range<double> b = e->parBounds(0);
-          double t = b.low() + u * (b.high() - b.low());
-          GPoint gp = e->point(t);
-          _pc.pts.push_back(SPoint3(gp.x(), gp.y(), gp.z()));
-          _infos.push_back(AttractorInfo(*it, 1, t, 0));
+        else {
+          Msg::Warning("Unknown curve %d", *it);
         }
       }
-      else {
-        Msg::Warning("Unknown curve %d", *it);
-      }
-    }
 
-    for(auto it = _surfaceTags.begin(); it != _surfaceTags.end(); ++it) {
-      GFace *f = GModel::current()->getFaceByTag(*it);
-      if(f) {
-        double maxDist = f->bounds().diag() / _sampling;
-        std::vector<SPoint2> uvpoints;
-        f->fillPointCloud(maxDist, &_pc.pts, &uvpoints);
-        for(std::size_t i = 0; i < uvpoints.size(); i++)
-          _infos.push_back
-            (AttractorInfo(*it, 2, uvpoints[i].x(), uvpoints[i].y()));
+      for(auto it = _surfaceTags.begin(); it != _surfaceTags.end(); ++it) {
+        GFace *f = GModel::current()->getFaceByTag(*it);
+        if(f) {
+          double maxDist = f->bounds().diag() / _sampling;
+          std::vector<SPoint2> uvpoints;
+          f->fillPointCloud(maxDist, &_pc.pts, &uvpoints);
+          for(std::size_t i = 0; i < uvpoints.size(); i++)
+            _infos.push_back
+              (AttractorInfo(*it, 2, uvpoints[i].x(), uvpoints[i].y()));
+        }
+        else {
+          Msg::Warning("Unknown surface %d", *it);
+        }
       }
-      else {
-        Msg::Warning("Unknown surface %d", *it);
-      }
-    }
 
-    // construct a kd-tree index:
-    _kdtree = new SPoint3KDTree(3, _pc2kdtree,
-                                nanoflann::KDTreeSingleIndexAdaptorParams(10));
-    _kdtree->buildIndex();
-    updateNeeded = false;
+      // construct a kd-tree index:
+      _kdtree = new SPoint3KDTree(3, _pc2kdtree,
+                                  nanoflann::KDTreeSingleIndexAdaptorParams(10));
+      _kdtree->buildIndex();
+      updateNeeded = false;
+    }
   }
   using Field::operator();
   virtual double operator()(double X, double Y, double Z, GEntity *ge = nullptr)
   {
-#pragma omp critical
-    {
-      if(!_kdtree || updateNeeded) update();
-    }
-    double query_pt[3] = {X, Y, Z};
-    nanoflann::KNNResultSet<double> resultSet(1);
+    if(!_kdtree) return MAX_LC;
+    double pt[3] = {X, Y, Z};
+    nanoflann::KNNResultSet<double> res(1);
     double outDistSqr;
-    resultSet.init(&_outIndex, &outDistSqr);
-    _kdtree->findNeighbors(resultSet, &query_pt[0], nanoflann::SearchParams(10));
+    res.init(&_outIndex, &outDistSqr);
+    _kdtree->findNeighbors(res, &pt[0], nanoflann::SearchParams(10));
     return sqrt(outDistSqr);
+  }
+};
+
+class ExtendField : public Field {
+  std::list<int> _tagCurves, _tagSurfaces;
+  std::vector<double> _sizeCurves, _sizeSurfaces;
+  SPoint3Cloud _pcCurves, _pcSurfaces;
+  SPoint3CloudAdaptor<SPoint3Cloud> _pc2kdtreeCurves, _pc2kdtreeSurfaces;
+  SPoint3KDTree *_kdtreeCurves, *_kdtreeSurfaces;
+  double _distMax, _sizeMax, _power;
+public:
+  ExtendField()
+    : _pc2kdtreeCurves(_pcCurves), _pc2kdtreeSurfaces(_pcSurfaces),
+      _kdtreeCurves(nullptr), _kdtreeSurfaces(nullptr)
+  {
+    _distMax = 1.;
+    _sizeMax = 1.;
+    _power = 1.;
+    options["CurvesList"] = new FieldOptionList(
+      _tagCurves, "Tags of curves in the geometric model", &updateNeeded);
+    options["SurfacesList"] = new FieldOptionList(
+      _tagSurfaces, "Tags of surfaces in the geometric model", &updateNeeded);
+    options["DistMax"] = new FieldOptionDouble(
+      _distMax, "Maximum distance of the size extension");
+    options["SizeMax"] = new FieldOptionDouble(
+      _sizeMax, "Mesh size outside DistMax");
+    options["Power"] = new FieldOptionDouble(
+      _power, "Power exponent used to interpolate the mesh size");
+  }
+  ~ExtendField()
+  {
+    if(_kdtreeCurves) delete _kdtreeCurves;
+    if(_kdtreeSurfaces) delete _kdtreeSurfaces;
+  }
+  const char *getName() { return "Extend"; }
+  std::string getDescription()
+  {
+    return "Compute an extension of the mesh sizes from the given boundary "
+           "curves (resp. surfaces) inside the surfaces (resp. volumes) "
+           "being meshed. If the mesh size on the boundary, computed "
+           "as the local average length of the edges of the boundary elements, "
+           "is denoted by SizeBnd, the extension is computed as:\n\n"
+           "  F = f * SizeBnd + (1 - f) * SizeMax, if d < DistMax\n\n"
+           "  F = SizeMax, if d >= DistMax\n"
+           "where d denotes the distance to the boundary and "
+           "f = ((DistMax - d) / DistMax)^Power.";
+  }
+  void recomputeCurves()
+  {
+    _sizeCurves.clear();
+    _pcCurves.pts.clear();
+    if(_kdtreeCurves) delete _kdtreeCurves;
+    for(auto t : _tagCurves) {
+      GEdge *ge = GModel::current()->getEdgeByTag(t);
+      if(ge) {
+        for(auto e : ge->lines) {
+          _pcCurves.pts.push_back(e->barycenter());
+          _sizeCurves.push_back(e->getEdge(0).length());
+        }
+      }
+      else {
+        Msg::Warning("Unknown curve %d", t);
+      }
+    }
+    if(_sizeCurves.empty()) {
+      _kdtreeCurves = nullptr;
+    }
+    else {
+      _kdtreeCurves = new SPoint3KDTree(3, _pc2kdtreeCurves,
+                                        nanoflann::KDTreeSingleIndexAdaptorParams(10));
+      _kdtreeCurves->buildIndex();
+    }
+  }
+  void recomputeSurfaces()
+  {
+    _sizeSurfaces.clear();
+    _pcSurfaces.pts.clear();
+    if(_kdtreeSurfaces) delete _kdtreeSurfaces;
+    for(auto t : _tagSurfaces) {
+      GFace *gf = GModel::current()->getFaceByTag(t);
+      if(gf) {
+        for(auto e : gf->triangles) {
+          _pcSurfaces.pts.push_back(e->barycenter());
+          double s = e->getEdge(0).length() + e->getEdge(1).length() +
+            e->getEdge(2).length();
+          _sizeSurfaces.push_back(s / 3.);
+        }
+      }
+      else {
+        Msg::Warning("Unknown surface %d", t);
+      }
+    }
+    if(_sizeSurfaces.empty()) {
+      _kdtreeSurfaces = nullptr;
+    }
+    else {
+      _kdtreeSurfaces = new SPoint3KDTree(3, _pc2kdtreeSurfaces,
+                                          nanoflann::KDTreeSingleIndexAdaptorParams(10));
+      _kdtreeSurfaces->buildIndex();
+    }
+  }
+  using Field::operator();
+  virtual double operator()(double X, double Y, double Z, GEntity *ge = nullptr)
+  {
+    if(!ge) return MAX_LC;
+    if(ge->dim() != 2 && ge->dim() != 3) return MAX_LC;
+    if(ge->dim() == 2 && _tagCurves.empty()) return MAX_LC;
+    if(ge->dim() == 3 && _tagSurfaces.empty()) return MAX_LC;
+#pragma omp critical
+    if(updateNeeded ||
+       (ge->dim() == 2 && _tagCurves.size() && _sizeCurves.empty())) {
+      // we are meshing our first surface; recompute distance to the elements on
+      // curves, and invalidate the distance to surfaces
+      recomputeCurves();
+      _sizeSurfaces.clear();
+      updateNeeded = false;
+    }
+#pragma omp critical
+    if(updateNeeded ||
+       (ge->dim() == 3 && _tagSurfaces.size() && _sizeSurfaces.empty())) {
+      // we are meshing our first volume; recompute distance to the elements on
+      // surfaces, and invalidate the distance to curves (to be ready for
+      // subsequent surface meshing pass)
+      recomputeSurfaces();
+      _sizeCurves.clear();
+      updateNeeded = false;
+    }
+    double pt[3] = {X, Y, Z};
+    nanoflann::KNNResultSet<double> res(1);
+    std::size_t index = 0;
+    double dist2 = 0., sbnd = 0.;
+    res.init(&index, &dist2);
+    if(ge->dim() == 2 && _kdtreeCurves) {
+      _kdtreeCurves->findNeighbors(res, &pt[0], nanoflann::SearchParams(10));
+      sbnd = _sizeCurves[index];
+    }
+    else if(ge->dim() == 3 && _kdtreeSurfaces) {
+      _kdtreeSurfaces->findNeighbors(res, &pt[0], nanoflann::SearchParams(10));
+      sbnd = _sizeSurfaces[index];
+    }
+    if(sbnd <= 0 || _distMax <= 0 || _sizeMax <= 0) return MAX_LC;
+    double d = sqrt(dist2);
+    if(d >= _distMax) return _sizeMax;
+    double f = (_distMax - d) / _distMax;
+    if(_power != 1.) {
+      f = std::pow(f, _power);
+    }
+    double s = f * sbnd + (1. - f) * _sizeMax;
+    return s;
   }
 };
 
@@ -3225,6 +3374,7 @@ FieldManager::FieldManager()
   mapTypeName["Gradient"] = new FieldFactoryT<GradientField>();
   mapTypeName["Octree"] = new FieldFactoryT<OctreeField>();
   mapTypeName["Distance"] = new FieldFactoryT<DistanceField>();
+  mapTypeName["Extend"] = new FieldFactoryT<ExtendField>();
   mapTypeName["Restrict"] = new FieldFactoryT<RestrictField>();
   mapTypeName["Constant"] = new FieldFactoryT<ConstantField>();
   mapTypeName["Min"] = new FieldFactoryT<MinField>();

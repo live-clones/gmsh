@@ -172,7 +172,7 @@ static void gmsh2MMG(GRegion *gr, MMG5_pMesh mmg, MMG5_pSol sol,
     auto itv = LCS.find(v);
     if(itv != LCS.end()) {
       mmg2gmsh[(*it)->getNum()] = *it;
-      // if (CTX::instance()->mesh.lcExtendFromBoundary){
+      // if (Extend2dMeshIn3dVolumes()){
       double LL = itv->second.first / itv->second.second;
       SMetric3 l4(1. / (LL * LL));
       SMetric3 MM = intersection_conserve_mostaniso(l4, m);
@@ -218,7 +218,7 @@ static void updateSizes(GRegion *gr, MMG5_pMesh mmg, MMG5_pSol sol,
   std::vector<GFace *> f = gr->faces();
 
   std::map<MVertex *, std::pair<double, int> > LCS;
-  // if (CTX::instance()->mesh.lcExtendFromBoundary){
+  // if (Extend2dMeshIn3dVolumes()){
   for(auto it = f.begin(); it != f.end(); ++it) {
     for(unsigned int i = 0; i < (*it)->triangles.size(); i++) {
       MTriangle *t = (*it)->triangles[i];
@@ -250,7 +250,7 @@ static void updateSizes(GRegion *gr, MMG5_pMesh mmg, MMG5_pSol sol,
 
     auto it = mmg2gmsh.find(k);
 
-    if(it != mmg2gmsh.end() && CTX::instance()->mesh.lcExtendFromBoundary) {
+    if(it != mmg2gmsh.end() && Extend2dMeshIn3dVolumes()) {
       auto itv = LCS.find(it->second);
       if(itv != LCS.end()) {
         double LL = itv->second.first / itv->second.second;
