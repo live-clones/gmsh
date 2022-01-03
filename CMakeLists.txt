@@ -1933,6 +1933,12 @@ if(ENABLE_PRIVATE_API)
       -E copy_if_different ${FILE} ${CMAKE_CURRENT_BINARY_DIR}/Headers/gmsh/
       WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
   endforeach()
+  if(HAVE_CONTRIB_EIGEN) # the private API depends on Eigen
+    add_custom_command(TARGET get_headers POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory contrib/eigen/Eigen
+        ${CMAKE_CURRENT_BINARY_DIR}/Headers/gmsh/Eigen
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+  endif()
 endif()
 
 find_program(MAKEINFO makeinfo)
@@ -2010,6 +2016,12 @@ if(APPLE AND ENABLE_BUILD_LIB)
           ${FILE} ${CMAKE_CURRENT_BINARY_DIR}/gmsh.framework/Headers/
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
     endforeach()
+    if(HAVE_CONTRIB_EIGEN) # the private API depends on Eigen
+      add_custom_command(TARGET framework POST_BUILD COMMAND ${CMAKE_COMMAND}
+          -E copy_directory contrib/eigen/Eigen
+          ${CMAKE_CURRENT_BINARY_DIR}/gmsh.framework/Headers/Eigen
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+    endif()
   endif()
 endif()
 
