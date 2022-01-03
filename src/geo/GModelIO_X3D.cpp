@@ -19,15 +19,99 @@
 #include "StringUtils.h"
 #include "Context.h"
 
+static void writeX3dHeader(FILE *fp, std::vector<std::string> &metadata)
+{
+  // X3D Header
+  fprintf(fp, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+  fprintf(fp, "<!DOCTYPE X3D PUBLIC \"ISO//Web3D//DTD X3D 3.3//EN\" "
+              "\"http://www.web3d.org/specifications/x3d-3.3.dtd\">\n");
+  fprintf(fp, "<X3D profile='Interchange' version='3.3'  "
+              "xmlns:xsd='http://www.w3.org/2001/XMLSchema-instance' >\n");
+  fprintf(fp, "  <head>\n");
+  fprintf(fp, "    <meta name='creator' content='gmsh'/> \n");
+  for(auto it = metadata.begin(); it != metadata.end(); ++it){
+    fprintf(fp, "    <meta name='metadata_%s' content='%s'/> \n",
+            std::to_string(std::distance(metadata.begin(), it)).c_str(),
+            (*it).c_str());
+  }
+  fprintf(fp, "  </head>\n");
+  fprintf(fp, "  <Scene>\n");
+}
+
+static void writeX3dTrailer(FILE *fp){
+  fprintf(fp, "  </Scene>\n");
+  fprintf(fp, "</X3D>\n");
+}
+
+static void writeHTMLHeader(FILE *fp){
+  fprintf(fp, "<!DOCTYPE HTML\n>");
+  fprintf(fp, "<html lang=\"en\"> \n");
+  fprintf(fp, "<head>\n");
+  fprintf(fp, "  <title> gmsh x3d render</title>\n");
+  fprintf(fp, "  <meta charset=\"utf-8\">\n");
+  fprintf(fp, "  <link rel=\"stylesheet\" type=\"text/css\" href=\"https://x3dom.org/release/x3dom.css\">\n");
+  fprintf(fp, "  <script src=\"https://x3dom.org/release/x3dom.js\"></script>\n");
+  fprintf(fp, "  <style>\n");
+  fprintf(fp, "    body {\n");
+  fprintf(fp, "      background: #ced7de;\n");
+  fprintf(fp, "      margin: 0px;\n");
+  fprintf(fp, "      overflow: hidden;\n");
+  fprintf(fp, "    }\n");
+  fprintf(fp, "    a {\n");
+  fprintf(fp, "      color: #f7941e;\n");
+  fprintf(fp, "      text-decoration: none;\n");
+  fprintf(fp, "    }\n");
+  fprintf(fp, "    a:hover {\n");
+  fprintf(fp, "      color: #ffffff;\n");
+  fprintf(fp, "    }\n");
+  fprintf(fp, "  </style>\n");
+  fprintf(fp, "</head>\n");
+}
+
+static void writeHTMLBody(FILE *fp, std::vector<std::string> &x3dfiles){
+  fprintf(fp, "<body>\n");
+  fprintf(fp, "  <x3d id=\"gmsh-scene\" style=\"width: 100%%; height: 100%%;border: none\" >\n");
+  fprintf(fp, "    <Scene>\n");
+  fprintf(fp, "      <transform scale=\"1,1,1\">\n");
+  fprintf(fp, "      <transform id=\"plane_axis\" rotation=\"1 0 0 -1.57079632679\">\n"); 
+  fprintf(fp, "        <inline url=\"https://rawcdn.githack.com/x3dom/component-editor/master/static/x3d/plane.x3d\" mapDEFToID=\"true\" namespaceName=\"plane\"></inline>\n");
+  fprintf(fp, "        <inline url=\"https://rawcdn.githack.com/x3dom/component-editor/master/static/x3d/axesSmall.x3d\" mapDEFToID=\"true\" namespaceName=\"axesSmall\"></inline>\n");
+  fprintf(fp, "      </transform>\n");
+  fprintf(fp, "      <inline url=\"https://rawcdn.githack.com/x3dom/component-editor/master/static/x3d/axes.x3d\" mapDEFToID=\"true\" namespaceName=\"axes\"></inline>\n");
+  fprintf(fp, "      </transform>\n");
+  fprintf(fp, "      <transform id=\"components\" rotation=\"1 0 0 -1.57079632679\">\n");
+  for(auto it = x3dfiles.begin(); it != x3dfiles.end(); ++it){
+    //drop path on x3d since it will be in the same folder as html
+    std::vector<std::string> split = SplitFileName(*it);
+    std::string x3dname = split[1] + split[2];
+    fprintf(fp, "        <inline onload=\"fit()\" mapDEFToID=\"true\" url=%s></inline>\n", x3dname.c_str());
+  }
+  fprintf(fp, "      </transform>\n");
+  fprintf(fp, "    </Scene>\n");
+  fprintf(fp, "  </x3d>\n");
+  fprintf(fp, "  <script>\n");
+  fprintf(fp, "  function fit()\n");
+  fprintf(fp, "  {\n");
+  fprintf(fp, "    var x3dElem = document.getElementById('gmsh-scene');\n");
+  fprintf(fp, "    x3dElem.runtime.fitAll();\n");
+  fprintf(fp, "  }\n");
+  fprintf(fp, "  </script>\n");
+  fprintf(fp, "</body>\n");
+  fprintf(fp, "</html>\n");
+}
+
 static void writeX3dFaces(FILE *fp, std::vector<GFace *> &faces,
                           bool useIndexedSet, double scalingFactor,
-                          const std::string &name)
+                          const std::string &name,
+                          bool useColor,
+                          std::vector<unsigned int> &colors)
 {
   bool useGeoSTL = false;
   unsigned int nfacets = 0;
   for(auto it = faces.begin(); it != faces.end(); ++it) {
     nfacets += (*it)->triangles.size() + 2 * (*it)->quadrangles.size();
   }
+
   if(!nfacets) { // use CAD STL if there is no mesh
     useGeoSTL = true;
     for(auto it = faces.begin(); it != faces.end(); ++it) {
@@ -36,10 +120,30 @@ static void writeX3dFaces(FILE *fp, std::vector<GFace *> &faces,
     }
   }
 
-  fprintf(fp, "    <Shape DEF=\"%s\">\n", name.c_str());
-  fprintf(fp,
-          "     <Appearance><Material DEF=\"mat%s\"></Material></Appearance>\n",
-          name.c_str());
+  if(!useColor){
+    fprintf(fp, "    <Shape DEF=\"%s\">\n", name.c_str());
+    fprintf(fp,
+            "     <Appearance><Material DEF=\"mat%s\"></Material></Appearance>\n",
+            name.c_str());
+  }
+  else{
+    if(colors.size()==1){
+      unsigned int cvalue = colors[0];
+      float r = static_cast<float>(CTX::instance()->unpackRed(cvalue)) / 255.0;
+      float g = static_cast<float>(CTX::instance()->unpackGreen(cvalue)) / 255.0;
+      float b = static_cast<float>(CTX::instance()->unpackBlue(cvalue)) / 255.0;
+      fprintf(fp, "    <Shape DEF=\"%s\">\n", name.c_str());
+      fprintf(fp,
+              "     <Appearance><Material DEF=\"mat%s\" diffuseColor=\"%s %s %s\" shininess=\"0.9\" specularColor=\"0.2 0.2 0.2\" transparency=\"0\"></Material></Appearance>\n",
+              name.c_str(),
+              std::to_string(r).c_str(),
+              std::to_string(g).c_str(),
+              std::to_string(b).c_str());
+    }
+    else{
+      Msg::Error("Error in x3d coloring");
+    }
+  }
 
   if(useGeoSTL) {
     if(useIndexedSet) {
@@ -184,66 +288,63 @@ static void writeX3dEdges(FILE *fp, std::vector<GEdge *> &edges,
   }
 }
 
-int GModel::writeX3D(const std::string &name, bool saveAll,
+int GModel::_writeX3dFile(FILE* fp, bool saveAll,
                      double scalingFactor, int x3dsurfaces, int x3dedges,
-                     int x3dvertices)
+                     int x3dvertices, int x3dcolorize, std::vector<GFace *>& customFaces)
 {
-  FILE *fp;
-
-  if(x3dsurfaces == 0 && x3dedges == 0 && x3dvertices == 0) {
-    Msg::Info("No surfaces, edges or vertices to write into '%s'",
-              name.c_str());
-    return 0;
-  }
-
-  fp = Fopen(name.c_str(), "w");
-  if(!fp) {
-    Msg::Warning("Unable to open file '%s'", name.c_str());
-    return 0;
-  }
-
-  // X3D Header
-  fprintf(fp, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
-  fprintf(fp, "<!DOCTYPE X3D PUBLIC \"ISO//Web3D//DTD X3D 3.3//EN\" "
-              "\"http://www.web3d.org/specifications/x3d-3.3.dtd\">\n");
-  fprintf(fp, "<X3D profile='Interchange' version='3.3'  "
-              "xmlns:xsd='http://www.w3.org/2001/XMLSchema-instance' >\n");
-  fprintf(fp, "  <head>\n");
-  fprintf(fp, "    <meta name='creator' content='gmsh'/> \n");
-  fprintf(fp, "  </head>\n");
-  fprintf(fp, "  <Scene>\n");
-
   if(noPhysicalGroups()) saveAll = true;
+
+  std::vector<GFace *> modelFaces;
+  if(customFaces.size() > 0)
+  {
+    for(auto it = customFaces.begin(); it != customFaces.end(); ++it){
+      modelFaces.push_back(*it);
+    }
+  }
+  else{
+    for(auto it = firstFace(); it != lastFace(); ++it){
+      modelFaces.push_back(*it);
+    }
+  }
 
   if(x3dsurfaces != 0) {
     fprintf(fp, "   <Group DEF=\"faces\">\n");
     if(x3dsurfaces == 1) {
       // all surfaces in a single x3d object
       std::vector<GFace *> faces;
-      for(auto it = firstFace(); it != lastFace(); ++it) {
+      std::vector<unsigned int> colors;
+      //for(auto it = first_face; it != last_face; ++it) {
+      for(auto it = modelFaces.begin(); it != modelFaces.end(); ++it) {
         if(saveAll || (*it)->physicals.size()) { faces.push_back(*it); }
       }
       std::string name = "face";
-      writeX3dFaces(fp, faces, false, scalingFactor, name);
+      writeX3dFaces(fp, faces, false, scalingFactor, name, false, colors);
     }
     else if(x3dsurfaces == 2) {
-      // one x3d object for each physical surface
-      for(auto it = firstFace(); it != lastFace(); ++it) {
+      // one x3d object for each geometrical surface
+      //for(auto it = first_face; it != last_face; ++it) {
+      for(auto it = modelFaces.begin(); it != modelFaces.end(); ++it) {
         if(saveAll || (*it)->physicals.size()) {
           std::vector<GFace *> faces(1, *it);
+          std::vector<unsigned int> colors;
           std::string name = getElementaryName(2, (*it)->tag());
+          // get color info
+          unsigned int cvalue = (*it)->getColor();
+          colors.push_back(cvalue);
           if(name.empty()) {
             std::ostringstream s;
             s << "face" << (*it)->tag();
             name = s.str();
           }
-          writeX3dFaces(fp, faces, true, scalingFactor, name);
+          bool useColor = x3dcolorize == 1;
+          writeX3dFaces(fp, faces, true, scalingFactor, name, useColor, colors);
         }
       }
     }
     else if(x3dsurfaces == 3) {
       // one x3d object per physical surface
       std::map<int, std::vector<GEntity *> > phys;
+      std::vector<unsigned int> colors;
       getPhysicalGroups(2, phys);
       for(auto it = phys.begin(); it != phys.end(); it++) {
         std::vector<GFace *> faces;
@@ -256,7 +357,7 @@ int GModel::writeX3D(const std::string &name, bool saveAll,
           s << "physicalsurface" << it->first;
           name = s.str();
         }
-        writeX3dFaces(fp, faces, false, scalingFactor, name);
+        writeX3dFaces(fp, faces, false, scalingFactor, name, false, colors);
       }
     }
 
@@ -329,10 +430,88 @@ int GModel::writeX3D(const std::string &name, bool saveAll,
     }
     fprintf(fp, "   </Group>\n");
   }
+  return 1;
+}
 
-  fprintf(fp, "  </Scene>\n");
-  fprintf(fp, "</X3D>\n");
+static std::string TagFileName(std::string const & name, int tag)
+{
+  std::vector<std::string> split = SplitFileName(name); //<path>/<name>.<ext>
+  std::string new_name = split[1] + "_" + std::to_string(tag);
+  return split[0] + new_name + split[2];
+}
 
+static std::string HtmlFileName(std::string const & name)
+{
+  std::vector<std::string> split = SplitFileName(name); //<path>/<name>.<ext>
+  return split[0] + "index.html";
+}
+
+int GModel::writeX3D(const std::string &name, bool saveAll,
+                     double scalingFactor, int x3dsurfaces, int x3dedges,
+                     int x3dvertices, int x3dvolumes, int x3dcolorize)
+{
+  FILE *fp;
+  std::vector<std::string> metadata;
+  std::vector<std::string> x3dfiles;
+  if(x3dsurfaces == 0 && x3dedges == 0 && x3dvertices == 0) {
+    Msg::Info("no surfaces, edges or vertices to write into '%s'",
+              name.c_str());
+    return 0;
+  }
+
+  std::vector<GFace *> faces;
+  if(x3dvolumes == 1) {
+    Msg::Info("separating volumes into separate files");
+    std::vector<GEntity *> volumes;
+    getEntities(volumes, 3);
+    
+    // if volumes present in model, else continue to single file mode
+    if(volumes.size() > 0){
+      for(auto it = volumes.begin(); it != volumes.end(); ++it){
+        faces = (*it)->bindingsGetFaces();
+        std::string _vol_name = getElementaryName((*it)->dim(), (*it)->tag());
+        metadata.push_back(_vol_name);
+        std::string _filename = TagFileName(name, (*it)->tag());
+        x3dfiles.push_back(_filename);
+        fp = Fopen(_filename.c_str(), "w");
+        if(!fp) {
+          Msg::Warning("Unable to open file '%s'", name.c_str());
+          return 0;
+        }
+        writeX3dHeader(fp,metadata);
+        _writeX3dFile(fp, saveAll, scalingFactor, x3dsurfaces, x3dedges, x3dvertices, x3dcolorize, faces);
+        writeX3dTrailer(fp);
+        fclose(fp);
+        metadata.clear();
+      }
+      //collate x3d files to html
+      std::string _htmlname = HtmlFileName(name);
+      fp = Fopen(_htmlname.c_str(), "w");
+      writeHTMLHeader(fp);
+      writeHTMLBody(fp, x3dfiles);
+      fclose(fp);
+      return 1;
+    }
+  }
+
+  Msg::Info("writing single file");
+  x3dfiles.push_back(name);
+  fp = Fopen(name.c_str(), "w");
+  if(!fp) {
+    Msg::Warning("Unable to open file '%s'", name.c_str());
+    return 0;
+  }
+  writeX3dHeader(fp,metadata);
+  // main write function
+  _writeX3dFile(fp, saveAll, scalingFactor, x3dsurfaces, x3dedges, x3dvertices, x3dcolorize, faces);
+  writeX3dTrailer(fp);
   fclose(fp);
+
+  std::string _htmlname = HtmlFileName(name);
+  fp = Fopen(_htmlname.c_str(), "w");
+  writeHTMLHeader(fp);
+  writeHTMLBody(fp, x3dfiles);
+  fclose(fp);
+
   return 1;
 }
