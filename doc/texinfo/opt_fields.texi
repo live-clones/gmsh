@@ -3,6 +3,7 @@
 @ftable @code
 @item AttractorAnisoCurve
 Compute the distance to the given curves and specify the mesh size independently in the direction normal and parallel to the nearest curve. For efficiency each curve is replaced by a set of Sampling points, to which the distance is actually computed.@*
+@*
 Options:@*
 @table @code
 @item CurvesList
@@ -41,6 +42,7 @@ default value: @code{0.5}
 
 @item AutomaticMeshSizeField
 Compute a mesh size field that is quite automatic Takes into account surface curvatures and closeness of objects@*
+@*
 Options:@*
 @table @code
 @item features
@@ -88,6 +90,7 @@ Return VIn inside a spherical ball, and VOut outside. The ball is defined by@*
   dX = (X - XC)^2 + (Y-YC)^2 + (Z-ZC)^2@*
 @*
 If Thickness is > 0, the mesh size is interpolated between VIn and VOut in a layer around the ball of the prescribed thickness.@*
+@*
 Options:@*
 @table @code
 @item Radius
@@ -122,6 +125,7 @@ default value: @code{0}
 
 @item BoundaryLayer
 Insert a 2D boundary layer mesh next to some curves in the model.@*
+@*
 Options:@*
 @table @code
 @item AnisoMax
@@ -198,6 +202,7 @@ Return VIn inside the box, and VOut outside. The box is defined by@*
   ZMin <= z <= ZMax@*
 @*
 If Thickness is > 0, the mesh size is interpolated between VIn and VOut in a layer around the box of the prescribed thickness.@*
+@*
 Options:@*
 @table @code
 @item Thickness
@@ -240,6 +245,7 @@ default value: @code{0}
 
 @item Constant
 Return VIn when inside the entities (and on their boundary if IncludeBoundary is set), and VOut outside.@*
+@*
 Options:@*
 @table @code
 @item CurvesList
@@ -276,6 +282,7 @@ default value: @code{@{@}}
 Compute the curvature of Field[InField]:@*
 @*
   F = div(norm(grad(Field[InField])))@*
+@*
 Options:@*
 @table @code
 @item Delta
@@ -294,6 +301,7 @@ Return VIn inside a frustrated cylinder, and VOut outside. The cylinder is defin
   ||dX||^2 < R^2 &&@*
   (X-X0).A < ||A||^2@*
   dX = (X - X0) - ((X - X0).A)/(||A||^2) . A@*
+@*
 Options:@*
 @table @code
 @item Radius
@@ -336,6 +344,7 @@ default value: @code{0}
 
 @item Distance
 Compute the distance to the given points, curves or surfaces. For efficiency, curves and surfaces are replaced by a set of points (sampled according to Sampling), to which the distance is actually computed.@*
+@*
 Options:@*
 @table @code
 @item CurvesList
@@ -362,7 +371,9 @@ Compute an extension of the mesh sizes from the given boundary curves (resp. sur
   F = f * SizeBnd + (1 - f) * SizeMax, if d < DistMax@*
 @*
   F = SizeMax, if d >= DistMax@*
+@*
 where d denotes the distance to the boundary and f = ((DistMax - d) / DistMax)^Power.@*
+@*
 Options:@*
 @table @code
 @item CurvesList
@@ -448,6 +459,7 @@ int main(int argc, char **argv) @{@*
   @}@*
 @}@*
 @*
+@*
 Options:@*
 @table @code
 @item CommandLine
@@ -466,6 +478,7 @@ Interpolate mesh sizes on a extended cylinder frustrum defined by inner (R1i and
   v = (r - Ri) / (Ro - Ri) @*
   F = (1 - v) * ((1 - u) * v1i + u * v2i) +       v * ((1 - u) * v1o + u * v2o)@*
 with (u, v) in [0, 1] x [0, 1].@*
+@*
 Options:@*
 @table @code
 @item InnerR1
@@ -530,6 +543,7 @@ default value: @code{0}
 Compute the finite difference gradient of Field[InField]:@*
 @*
   F = (Field[InField](X + Delta/2) -        Field[InField](X - Delta/2)) / Delta@*
+@*
 Options:@*
 @table @code
 @item Delta
@@ -548,6 +562,7 @@ default value: @code{3}
 
 @item IntersectAniso
 Take the intersection of 2 anisotropic fields according to Alauzet.@*
+@*
 Options:@*
 @table @code
 @item FieldsList
@@ -564,6 +579,7 @@ Compute finite difference the Laplacian of Field[InField]:@*
       G(x,y,z+d) + G(x,y,z-d) - 6 * G(x,y,z),@*
 @*
 where G = Field[InField] and d = Delta.@*
+@*
 Options:@*
 @table @code
 @item Delta
@@ -580,6 +596,7 @@ default value: @code{1}
 Evaluate Field[InField] in geographic coordinates (longitude, latitude):@*
 @*
   F = Field[InField](atan(y / x), asin(z / sqrt(x^2 + y^2 + z^2))@*
+@*
 Options:@*
 @table @code
 @item FromStereo
@@ -598,6 +615,7 @@ default value: @code{6371000}
 
 @item MathEval
 Evaluate a mathematical expression. The expression can contain x, y, z for spatial coordinates, F0, F1, ... for field values, and mathematical functions.@*
+@*
 Options:@*
 @table @code
 @item F
@@ -608,6 +626,7 @@ default value: @code{"F2 + Sin(z)"}
 
 @item MathEvalAniso
 Evaluate a metric expression. The expressions can contain x, y, z for spatial coordinates, F0, F1, ... for field values, and mathematical functions.@*
+@*
 Options:@*
 @table @code
 @item M11
@@ -638,6 +657,7 @@ default value: @code{"F2 + Sin(z)"}
 
 @item Max
 Take the maximum value of a list of fields.@*
+@*
 Options:@*
 @table @code
 @item FieldsList
@@ -650,6 +670,7 @@ default value: @code{@{@}}
 Compute the maximum eigenvalue of the Hessian matrix of Field[InField], with the gradients evaluated by finite differences:@*
 @*
   F = max(eig(grad(grad(Field[InField]))))@*
+@*
 Options:@*
 @table @code
 @item Delta
@@ -671,6 +692,7 @@ Return the mean value@*
        G(x, y, z)) / 7,@*
 @*
 where G = Field[InField].@*
+@*
 Options:@*
 @table @code
 @item Delta
@@ -685,6 +707,7 @@ default value: @code{1}
 
 @item Min
 Take the minimum value of a list of fields.@*
+@*
 Options:@*
 @table @code
 @item FieldsList
@@ -695,6 +718,7 @@ default value: @code{@{@}}
 
 @item MinAniso
 Take the intersection of a list of possibly anisotropic fields.@*
+@*
 Options:@*
 @table @code
 @item FieldsList
@@ -705,6 +729,7 @@ default value: @code{@{@}}
 
 @item Octree
 Pre compute another field on an octree to speed-up evalution.@*
+@*
 Options:@*
 @table @code
 @item InField
@@ -719,6 +744,7 @@ Evaluate Field[InField] in parametric coordinates:@*
   F = Field[InField](FX,FY,FZ)@*
 @*
 See the MathEval Field help to get a description of valid FX, FY and FZ expressions.@*
+@*
 Options:@*
 @table @code
 @item FX
@@ -741,6 +767,7 @@ default value: @code{1}
 
 @item PostView
 Evaluate the post processing view with index ViewIndex, or with tag ViewTag if ViewTag is positive.@*
+@*
 Options:@*
 @table @code
 @item CropNegativeValues
@@ -763,6 +790,7 @@ default value: @code{-1}
 
 @item Restrict
 Restrict the application of a field to a given list of geometrical points, curves, surfaces or volumes (as well as their boundaries if IncludeBoundary is set).@*
+@*
 Options:@*
 @table @code
 @item CurvesList
@@ -806,6 +834,7 @@ The format of the input file is:@*
   v(1,0,0) ...      ... @*
 @*
 where O are the coordinates of the first node, D are the distances between nodes in each direction, n are the numbers of nodes in each direction, and v are the values on each node.@*
+@*
 Options:@*
 @table @code
 @item FileName
@@ -828,6 +857,7 @@ default value: @code{0}
 
 @item Threshold
 Return F = SizeMin if Field[InField] <= DistMin, F = SizeMax if Field[InField] >= DistMax, and the interpolation between SizeMin and SizeMax if DistMin < Field[InField] < DistMax.@*
+@*
 Options:@*
 @table @code
 @item DistMax

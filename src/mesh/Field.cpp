@@ -2838,7 +2838,7 @@ public:
            "as the local average length of the edges of the boundary elements, "
            "is denoted by SizeBnd, the extension is computed as:\n\n"
            "  F = f * SizeBnd + (1 - f) * SizeMax, if d < DistMax\n\n"
-           "  F = SizeMax, if d >= DistMax\n"
+           "  F = SizeMax, if d >= DistMax\n\n"
            "where d denotes the distance to the boundary and "
            "f = ((DistMax - d) / DistMax)^Power.";
   }

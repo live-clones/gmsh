@@ -957,7 +957,7 @@ void PrintOptionsDoc()
       Sanitize_String_Texi(field_description);
       fprintf(file, "%s@*\n", field_description.c_str());
       if(!f->options.empty()) {
-        fprintf(file, "Options:@*\n");
+        fprintf(file, "@*\nOptions:@*\n");
         fprintf(file, "@table @code\n");
         for(auto it2 =
               f->options.begin(); it2 != f->options.end(); it2++) {
