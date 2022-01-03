@@ -58,8 +58,8 @@ setuptools.setup(
     version = iversion,
     description = 'Gmsh is a three-dimensional finite element mesh generator '
                   'with built-in pre- and post-processing facilities.',
-    #long_description = open(os.path.join(setupdir, 'README.rst'), 'r').read(),
-    #long_description_content_type = 'text/x-rst',
+    long_description = open(os.path.join(setupdir, 'README.rst'), 'r').read(),
+    long_description_content_type = 'text/x-rst',
     maintainer = 'Christophe Geuzaine',
     maintainer_email = 'cgeuzaine@uliege.be',
     keywords = ['fem', 'mesh', 'finite element method', 'cad'],
@@ -78,9 +78,7 @@ setuptools.setup(
                    'Programming Language :: C++',
                    'Programming Language :: Python',
                    'Topic :: Scientific/Engineering'],
-    scripts = [],
-    packages = ['gmsh'],
-    package_dir = {'gmsh' : os.path.join(sdkdir + '/lib')},
-    data_files = data_files,
-    zip_safe=False,
-)
+    scripts = scripts,
+    packages = [''],
+    package_dir = {'' : os.path.join(sdkdir + '/lib')},
+    data_files = data_files)
