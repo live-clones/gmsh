@@ -1,3 +1,5 @@
+#include <time.h>
+
 #include "hxt_point_gen.h"
 #include "hxt_point_gen_1d.h"
 #include "hxt_point_gen_2d.h"
@@ -25,7 +27,7 @@ HXTStatus hxtGeneratePointsMain(HXTMesh *mesh,
 {
 
 
-  
+  clock_t time_start = clock();
 
   //*************************************************************************************
   //*************************************************************************************
@@ -50,7 +52,7 @@ HXTStatus hxtGeneratePointsMain(HXTMesh *mesh,
   // Sizing from input mesh 
   // TODO 
   if (0){
-    HXT_CHECK(hxtPointGenGetSizesInputMesh(edges,3.0,sizemap));
+    HXT_CHECK(hxtPointGenGetSizesInputMesh(edges,1.0,sizemap));
     HXT_CHECK(hxtPointGenSizemapSmoothing(edges,1.5,sizemap));
     HXT_CHECK(hxtPointGenWriteScalarTriangles(mesh,sizemap,"sizesInput.msh"));
   }
@@ -162,6 +164,7 @@ HXTStatus hxtGeneratePointsMain(HXTMesh *mesh,
   /*}*/
 
  
+  clock_t time_lines_start = clock();
   
   //**********************************************************************************************************
   //**********************************************************************************************************
@@ -229,6 +232,9 @@ HXTStatus hxtGeneratePointsMain(HXTMesh *mesh,
   HXT_INFO_COND(opt->verbosity>=1,"Number of points generated on lines    = %d", fmesh->vertices.num);
 
   uint32_t numberOfPointsOnLines = fmesh->vertices.num;
+
+
+  clock_t time_lines_end = clock();
 
   
   //**********************************************************************************************************
@@ -314,6 +320,7 @@ HXTStatus hxtGeneratePointsMain(HXTMesh *mesh,
   }
 
 
+  clock_t time_points_start = clock();
 
   //**********************************************************************************************************
   //**********************************************************************************************************
@@ -336,6 +343,8 @@ HXTStatus hxtGeneratePointsMain(HXTMesh *mesh,
   HXT_INFO_COND(opt->verbosity>=1,"");
   HXT_INFO_COND(opt->verbosity>=1,"Number of points generated on surfaces = %d", numberOfPointsOnSurfaces);
   HXT_INFO_COND(opt->verbosity>=1,"Number of points generated TOTAL       = %d", fmesh->vertices.num);
+
+  clock_t time_points_end = clock();
 
   // TODO delete
   if(opt->verbosity>=2){
@@ -394,8 +403,6 @@ HXTStatus hxtGeneratePointsMain(HXTMesh *mesh,
   
 
 
-  
- 
   if (opt->generateVolumes){
   
     HXT_CHECK(hxtGeneratePointsOnVolumes(mesh,opt,sizemap,directions,parent,fmesh,bin));
@@ -446,6 +453,7 @@ HXTStatus hxtGeneratePointsMain(HXTMesh *mesh,
 
 
 
+  clock_t time_surfaces_start = clock();
   
   if (opt->remeshSurfaces){
     // Find max length to create an area threshold 
@@ -467,6 +475,7 @@ HXTStatus hxtGeneratePointsMain(HXTMesh *mesh,
   }
 
 
+  clock_t time_surfaces_end = clock();
 
   //********************************************************
   // A LOT OF DIFFERENT MESH STRUCTURES 
@@ -499,6 +508,8 @@ HXTStatus hxtGeneratePointsMain(HXTMesh *mesh,
   // Constructing a quad mesh from binary indices 
   //**********************************************************************************************************
   //**********************************************************************************************************
+  
+  clock_t time_quads_start = clock();
 
   if (opt->verbosity>=1) HXT_CHECK(hxtMeshWriteGmsh(nmesh, "finalmeshTriangles.msh"));
   if (opt->quadSurfaces == 1){
@@ -548,6 +559,7 @@ HXTStatus hxtGeneratePointsMain(HXTMesh *mesh,
     }
   }
 
+  clock_t time_quads_end = clock();
 
 
 
@@ -575,6 +587,33 @@ HXTStatus hxtGeneratePointsMain(HXTMesh *mesh,
  
 
   if(opt->quadSurfaces) HXT_INFO_COND(opt->verbosity>=0,"PointGen | Input: %lu triangles - Output: %lu quads",mesh->triangles.num, nmesh->quads.num);
+
+
+  clock_t time_end = clock();
+
+  //**********************************************************************************************************
+  // Timings 
+  //**********************************************************************************************************
+  
+  double time_lines =    (double)(time_lines_end - time_lines_start) / CLOCKS_PER_SEC;
+  double time_points =   (double)(time_points_end - time_points_start) / CLOCKS_PER_SEC;
+  double time_surfaces = (double)(time_surfaces_end - time_surfaces_start) / CLOCKS_PER_SEC;
+  double time_quads =    (double)(time_quads_end - time_quads_start) / CLOCKS_PER_SEC;
+  double time_total =    (double)(time_end - time_start) / CLOCKS_PER_SEC;
+  HXT_INFO_COND(opt->verbosity>=0,"PointGen | Timings");
+  HXT_INFO_COND(opt->verbosity>=0,"           Lines       %f", time_lines);
+  HXT_INFO_COND(opt->verbosity>=0,"           Points      %f", time_points);
+  HXT_INFO_COND(opt->verbosity>=0,"           Surfaces    %f", time_surfaces);
+  HXT_INFO_COND(opt->verbosity>=0,"           Quads       %f", time_quads);
+  HXT_INFO_COND(opt->verbosity>=0,"           Total       %f", time_total);
+  HXT_INFO_COND(opt->verbosity>=0,"           Total-rest  %f", time_total - time_quads-time_surfaces-time_points-time_lines);
+
+
+  FILE *outt;
+  outt = fopen("outtimings.txt","w");
+  fprintf(outt,"%f , %f , %f , %f , %f , ", time_lines, time_points, time_surfaces, time_quads, time_total);
+  fclose(outt);
+
 
   //**********************************************************************************************************
   //**********************************************************************************************************

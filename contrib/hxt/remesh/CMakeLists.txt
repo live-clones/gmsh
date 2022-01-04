@@ -64,6 +64,8 @@ set(HXT_REMESH_SRC
     "${CMAKE_CURRENT_SOURCE_DIR}/src/hxt_surface_mesh_collapse.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/hxt_surface_mesh_processing.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/hxt_surface_mesh_processing.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/hxt_quad_mesh.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/hxt_quad_mesh.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/hxt_surface_mesh_quad.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/hxt_surface_mesh_quad.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/hxt_swap_edge.c"

@@ -442,12 +442,16 @@ HXTStatus hxtPointGenGetSizesInputMesh(HXTEdges *edges, double factor, double *s
     double *v0 = mesh->vertices.coord + 4*n0;
     double *v1 = mesh->vertices.coord + 4*n1;
     double length = distance(v0,v1);
-    if (length < sizemap[n0]) sizemap[n0] = length;
-    if (length < sizemap[n1]) sizemap[n1] = length;
+    if (length < sizemap[n0]) sizemap[3*n0+0] = length;
+    if (length < sizemap[n1]) sizemap[3*n1+0] = length;
   }
 
   for (uint32_t i=0; i<mesh->vertices.num; i++){
-    sizemap[i] *= factor;
+    sizemap[3*i+0] *= factor;
+    sizemap[3*i+1] = sizemap[3*i+0];
+    sizemap[3*i+2] = sizemap[3*i+0];
+
+ 
   }
 
   HXT_CHECK(hxtEdgesDelete(&edges));

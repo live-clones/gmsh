@@ -178,6 +178,8 @@ set(SRC
     hxt_point_gen_utils.c
     hxt_point_gen_utils.h
     hxt_post_debugging.h
+    hxt_quad_mesh.c
+    hxt_quad_mesh.h
     hxt_remesh_tools.c
     hxt_remesh_tools.h
     hxt_rtree_wrapper.cpp

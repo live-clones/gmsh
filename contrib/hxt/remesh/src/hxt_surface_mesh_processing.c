@@ -537,7 +537,6 @@ HXTStatus hxtSurfaceQuadColorBipartite(HXTMesh *mesh)
     if (still==1) break;
   }
 
-
   FILE *test = fopen("binInput.txt","w");
   fprintf(test,"%d\n",mesh->vertices.num);
   for (uint32_t i=0; i<mesh->vertices.num; i++){
@@ -553,8 +552,6 @@ HXTStatus hxtSurfaceQuadColorBipartite(HXTMesh *mesh)
     hxtPosAddPoint(out,&mesh->vertices.coord[4*i],bin[i]);
   }
   hxtPosFinish(out);
-
-
 
 
   HXT_CHECK(hxtFree(&bin));

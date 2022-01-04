@@ -723,7 +723,7 @@ int meshGFaceHxt(GModel *gm)
                              .generateVolumes = 0,
                              .remeshSurfaces = 1,
                              .quadSurfaces = 1,
-                             .walkMethod2D = 1,
+                             .walkMethod2D = 0,
                              .walkMethod3D = 0,
                              .dirType = 0,
                              .uniformSize = 1.0,

@@ -474,7 +474,7 @@ HXTStatus hxtSurfaceMeshCollapse(const HXTMesh *mesh,
   // check if they get correctly created there 
 
   //***********************************************************************************************
-  // Create list of color of triangles
+  // Create list of colors of triangles
   //***********************************************************************************************
   uint16_t *triColor;
   uint16_t numTriColor;
