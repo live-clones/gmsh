@@ -232,12 +232,12 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Print.X3dVolumes
-Save surfaces in CAD X3D output (0: no, 1: create separate x3d file for each volume in model)@*
+Save separate volumes in CAD X3D output (0: no, 1: yes)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Print.X3dColorize
-Save surfaces in CAD X3D output (0: no, 1: apply color to faces)@*
+Apply colors to faces (0: no, 1: yes)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
