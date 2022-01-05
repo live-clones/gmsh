@@ -6,6 +6,9 @@
 #include "MEdge.h"
 #include "MQuadrangle.h"
 
+#include "GFace.h"
+#include "GEdge.h"
+
 struct edgeNeigh {
   MQuadrangle* _q1, *_q2;
   edgeNeigh (MQuadrangle* q1 = nullptr) : _q1(q1), _q2(nullptr){
@@ -168,19 +171,20 @@ void computeStructuredBlocks (std::vector<MQuadrangle *> &blquads,
       std::map<MVertex*,std::pair<int,int>> indices;
       std::map<MVertex*,std::pair<int,int>> symmetrical_indices;
       int minIndexi, maxIndexi, minIndexj, maxIndexj;
-      std::stack<MQuadrangle*> _s;
-      _s.push(q);
+      std::set<MQuadrangle*> _s;
+      _s.insert(q);
       numberAll (q, indices_j,indices, minIndexi, maxIndexi, minIndexj, maxIndexj);
       while (!_s.empty()){
-	MQuadrangle *_q = _s.top();
+        MQuadrangle *_q = *(_s.begin());
 	touched.insert(_q);
-	_s.pop();
 	for (size_t i = 0 ; i<4 ; i++){
 	  MEdge e = _q->getEdge(i);
 	  std::map<MEdge, edgeNeigh, MEdgeLessThan> :: iterator it = ens.find(e);
 	  MQuadrangle *_neigh = it->second._q1 == _q ? it->second._q2 : it->second._q1 ;
-	  if (_neigh && touched.find(_neigh) == touched.end() && !fanQuad(_neigh,indices_i)){
-	    _s.push(_neigh);
+	  if (_neigh && touched.find(_neigh) == touched.end()
+              && _s.find(_neigh) == _s.end()
+              && !fanQuad(_neigh,indices_i)){
+            _s.insert(_neigh);
 	    for (size_t j = 0 ; j<4 ; j++){	      
 	      MEdge e_neigh = _neigh->getEdge(j);
 	      if (e == e_neigh){
@@ -193,6 +197,7 @@ void computeStructuredBlocks (std::vector<MQuadrangle *> &blquads,
 	    number (_neigh, indices, minIndexi, maxIndexi, minIndexj, maxIndexj, symmetrical_indices);	    
 	  }
 	}
+        _s.erase(_q);
       }
       std::map<std::pair<int,int>, MVertex*> inv;
       for (std::map<MVertex*,std::pair<int,int>>::iterator it = indices.begin() ; it != indices.end() ; ++it)
@@ -200,22 +205,386 @@ void computeStructuredBlocks (std::vector<MQuadrangle *> &blquads,
       for (std::map<MVertex*,std::pair<int,int>>::iterator it = symmetrical_indices.begin() ; it != symmetrical_indices.end() ; ++it)
 	inv [it->second] = it->first;
       structured_block_2D b;
-      b.ni = maxIndexi - minIndexi;
-      b.nj = maxIndexj - minIndexj;
+      b.ni = maxIndexi - minIndexi + 1;
+      b.nj = maxIndexj - minIndexj + 1;
       Msg::Info("Block %d x %d found\n",b.ni,b.nj);
       for (std::map<std::pair<int,int>, MVertex*>::iterator it = inv.begin() ; it != inv.end() ; ++it)
 	b.block.push_back(it->second);
 
-      char name[256];
       //      if (b.block[0] == b.block[0]
       blocks.push_back(b);
+      
+      char name[256];
       sprintf(name,"block%lu.pos",blocks.size());
       FILE *f = fopen(name,"w");
-      fprintf(f,"View \"%s\" {\n",name);
-      for (size_t i=0;i<b.block.size();i++)fprintf(f,"SP(%g,%g,%g){%lu};\n",b.block[i]->x(),
-						   b.block[i]->y(),b.block[i]->z(),i);
-      fprintf(f,"};\n");
-      fclose(f);
+      for (int j=0;j<b.nj;j++) {
+        fprintf(f,"View \"%s_%i\" {\n",name,j);
+        for (int i=0;i<b.ni;i++) fprintf(f,"SP(%g,%g,%g){%i};\n",
+                                         b.block[b.index(i,j)]->x(),
+                                         b.block[b.index(i,j)]->y(),
+                                         b.block[b.index(i,j)]->z(),i);
+        fprintf(f,"};\n");
+      }
+      fclose(f); 
     }    
   }
 }
+
+// -----------------------------------------------------------------------------
+
+bool structured_block_2D::getTopology()  {
+
+  // --- need underlying face 
+  
+  face = dynamic_cast<GFace*>(block[index(1,1)]->onWhat());
+  if (!face) return false;
+  
+  for (int i=1;i<ni-1;i++) {
+    for (int j=1;j<nj-1;j++) {
+      if (dynamic_cast<GFace*>(block[index(i,j)]->onWhat())!=face) return false;
+    }
+  }
+
+  Msg::Info("Computing hyperbolic grid on %i",face->tag());
+
+  // // --- get boundaries 
+  
+  // GEdge* south = dynamic_cast<GEdge*>(block[index(1,0   )]->onWhat());
+  // GEdge* north = dynamic_cast<GEdge*>(block[index(1,nj-1)]->onWhat());
+  
+  // if (!south) return false; // require south base
+
+  // for (int i=1;i<ni-1;i++) {
+  //   if (dynamic_cast<GEdge*>(block[index(i,   0)]->onWhat())!=south) return false;
+  //   if (dynamic_cast<GEdge*>(block[index(i,nj-1)]->onWhat())!=north) return false;
+  // }
+
+  // GEdge* east = dynamic_cast<GEdge*>(block[index(0,1)]->onWhat());
+  // GEdge* west = dynamic_cast<GEdge*>(block[index(ni-1,1)]->onWhat());
+  
+  // for (int j=1;j<nj-1;j++) {
+  //   if (dynamic_cast<GEdge*>(block[index(0   ,j)]->onWhat())!=east) return false;
+  //   if (dynamic_cast<GEdge*>(block[index(ni-1,j)]->onWhat())!=west) return false;
+  // }
+  
+  // edges[0] = south;
+  // edges[1] = east;
+  // edges[2] = north;
+  // edges[3] = west;
+
+  // // --- get corners
+  
+  // nodes[0] = dynamic_cast<GVertex*>(block[index(0   ,0   )]->onWhat());
+  // nodes[1] = dynamic_cast<GVertex*>(block[index(ni-1,0   )]->onWhat());
+  // nodes[2] = dynamic_cast<GVertex*>(block[index(ni-1,nj-1)]->onWhat());
+  // nodes[3] = dynamic_cast<GVertex*>(block[index(0   ,nj-1)]->onWhat());
+
+  return true;
+}
+
+// -----------------------------------------------------------------------------
+
+struct Mat2 {
+
+  Mat2() {*this = 0;}
+
+  inline Mat2& operator=(double a) {
+    mat[0] = mat[1] = mat[2] = mat[3] = a;
+    return *this;
+  }
+
+  inline Mat2& operator=(const Mat2& o) {
+    std::copy_n(o.mat,4,mat);
+    return *this;
+  }
+
+  inline Mat2& operator*=(double a) {
+    for (int i=0;i<4;i++) mat[i] *= a;
+    return *this;
+  }
+
+  inline double& operator()(int i,int j) {return mat[j*2+i];}
+  
+  inline const double& operator()(int i,int j) const {return mat[j*2+i];}
+
+  inline Mat2& invert() {
+    double det = 1./(mat[0]*mat[2] - mat[1]*mat[3]);
+    std::swap(mat[0],mat[3]);
+    mat[0] *= det;
+    mat[1] *= - det;
+    mat[2] *= - det;
+    mat[3] *= det;
+    return *this;
+  }
+
+  inline void mult(const Mat2& A1,Mat2& A2,double a,double b) const {
+    Mat2 tmp(A2);
+    tmp *= b;
+    tmp(0,0) += a*(mat[0]*A1(0,0) + mat[1]*A1(1,0));
+    tmp(0,1) += a*(mat[0]*A1(0,1) + mat[1]*A1(1,1));
+    tmp(1,0) += a*(mat[2]*A1(0,0) + mat[3]*A1(1,0));
+    tmp(1,1) += a*(mat[2]*A1(0,1) + mat[3]*A1(1,1));
+    A2 = tmp;
+  }
+
+  inline void mult(const SPoint2 v1,SPoint2 v2,double a,double b) const {
+    SPoint2 tmp(b*v2[0],b*v2[1]);
+    tmp[0] += a*(mat[0]*v1[0] + mat[1]*v1[1]);
+    tmp[1] += a*(mat[2]*v1[0] + mat[3]*v1[1]);
+    v2 = tmp;
+  }
+
+  inline void setZero()     {mat[0] = mat[1] =    mat[2] = mat[3] = 0;}
+  inline void setIdentity() {mat[0] = mat[3] = 1; mat[1] = mat[2] = 0;}
+  
+protected:
+  
+  double mat[4];
+  
+};
+
+// -----------------------------------------------------------------------------
+
+void decompose(std::vector<Mat2>& D, // diagonal         (k,k)   k = 0,n
+               std::vector<Mat2>& L, // lower diagonal   (k,k-1) k = 0,n-1
+               std::vector<Mat2>& U, // upper diagonal   (k-1,k) k = 0,n-1
+               std::vector<Mat2>& pL, // periodic row    (k,n-1) k = 0,n-2
+               std::vector<Mat2>& pU, // periodic column (n-1,k) k = 0,n-2
+               bool periodic) {
+
+  int n = D.size();
+
+  for (int i=0;i<n-1;i++) {
+  
+    D[i].invert(); // invert pivot
+    L[i].mult(D[i],L[i],-1,0); // reduction factor line i+1
+    L[i].mult(U[i],D[i+1],1,1); // upper diagonal contributes to diagonal
+    
+    if (periodic && i < n-2) {
+      
+      L[i].mult(pU[i],pU[i+1],1,1); // reduction on periodic column
+
+      pL[i].mult(D[i] ,pL[i],-1,0); // reduction factor periodic row      
+      pL[i].mult(U[i],pL[i+1],1,1); // upper diagonal impact on lower periodic
+      
+      pL[i].mult(pU[i],D[n-1],1,1); // upper periodic reduction diagonal
+    }
+  }
+  D[n-1].invert();
+}
+
+// -----------------------------------------------------------------------------
+
+void solve(const std::vector<Mat2>& D, // diagonal         (k,k)   k = 1,n
+           const std::vector<Mat2>& L, // lower diagonal   (k+1,k) k = 1,n-1
+           const std::vector<Mat2>& U, // upper diagonal   (k,k+1) k = 1,n-1
+           const std::vector<Mat2>& pL, // periodic row    (k,n) k = 1,n-1
+           const std::vector<Mat2>& pU, // periodic column (n,k) k = 1,n-1
+           const std::vector<SPoint2>& b, // right hand side
+           std::vector<SPoint2>& x,
+           bool periodic) {
+
+  int n = D.size();
+  
+  std::copy_n(b.begin(),n,x.begin());
+  
+  // forward substitution
+  
+  for (int i=1;i<n-1;i++)          L[i-1].mult(x[i-1],x[i],1,1);
+  if (periodic) for (int i=0;i<n-2;i++) pL[i].mult(x[i],x[n-1],1,1);
+
+  // find last entry
+  
+  D[n-1].mult(x[n-1],x[n-1],1,0);
+
+  // backward substitution
+  
+  for (int i=n-2;i>=0;i--) {
+    U[i].mult(x[i+1],x[i],1,1);
+    if (periodic && i<n-2) pU[i].mult(x[n-1],x[i],1,1);
+    D[i].mult(x[i],x[i],1,0);
+  }
+}
+
+// -----------------------------------------------------------------------------
+
+bool structured_block_2D::hyperbolic_smooth() {
+  
+  // // --- get topological information 
+  
+  // if (!getTopology()) {
+  //   Msg::Error("Incoherent topology for hyperbolic smoothing");
+  //   return false;
+  // }
+
+  // // --- allocate and initialise coordinates
+  
+  // std::vector<SPoint2> par(ni*nj);
+  // std::vector<SPoint3> xyz(ni*nj);
+
+  // int idx = 0;
+  // for (int j=0;j<nj;j++) {
+  //   for (int i=0;i<ni;i++,idx++) {
+  //     xyz[idx] = block[idx]->point();
+  //     par[idx]  = face->parFromPoint(xyz[idx]);
+  //   }
+  // }
+
+  // Msg::Info("Computed parametrisation of hyperbolic grid");
+
+  // // --- compute normal spacing 
+  
+  // std::vector<double> dn(ni*(nj-1),0);
+
+  // idx = 0;
+  // for (int j=0;j<nj-1;j++) {
+  //   for (int i=0;i<ni;i++,idx++) {
+  //     dn[i] = xyz[idx].distance(xyz[idx+ni]);
+  //   }
+  // }
+  
+  // Msg::Info("Computed distance in hyperbolic grid");
+  
+  // // --- smooth each layer
+
+  // periodic = true;
+  // int nbPts = periodic ? ni-1:ni;
+
+  // Msg::Info("Have %i points",nbPts);
+  
+  // std::vector<Mat2> D(nbPts);  // diagonal 
+  // std::vector<Mat2> L(nbPts);  // one below the diagonal
+  // std::vector<Mat2> U(nbPts);  // one above the diagonal 
+  // std::vector<Mat2> pL(nbPts); // periodic row at n-1
+  // std::vector<Mat2> pU(nbPts); // periodic column n-1
+  
+  // std::vector<SPoint2> h(nbPts);
+  // std::vector<SPoint2> uv0(ni);
+  // std::vector<SPoint2> uv1(ni);
+
+  // std::vector<double> J0(ni);
+  // std::vector<double> A0(ni);
+
+  // std::vector<SVector3> uvEta0(ni);
+  // std::vector<SVector3> uvXi0(ni);
+
+  // for (int i=0;i<nbPts;i++) uv0[i] = par[index(i,0)];
+  
+  // Msg::Info("Initialised derivatives on first line of hyperbolic grid");
+
+  // int nbIterations = 1;
+  
+  // for (int j=1;j<nj-1;j++) { 
+    
+  //   // --- compute solver
+    
+  //   for (int i=0;i<nbPts;i++) uv1[i] = par[index(i,j)];
+    
+  //   for (int i=0;i<nbPts;i++) {
+      
+  //     Pair<SVector3,SVector3> rUV = face->firstDer(uv0[i]);
+      
+  //     SVector3 ru = rUV.first();
+  //     SVector3 rv = rUV.second();
+
+  //     J0[i] = crossprod(ru,rv).norm();
+      
+  //     int ip = periodic ? (i+1)%(nbPts-1)           : std::max(i-1,0);
+  //     int im = periodic ? ((i-1)+nbPts-1)%(nbPts-1) : std::min(i+1,nbPts-1);
+  //     int di = std::min(std::abs(ip-im),2);
+      
+  //     SPoint2 uvXi(uv0[ip],uv0[im]);
+  //     uvXi0[i]  = uv0[ip] - uv0[im];
+  //     uvXi0[i] /= di;
+
+  //     ru *= uvXi[0];
+  //     rv *= uvXi[1];
+      
+  //     rXi0[i] = ru + rv;
+
+  //     F0[i] = rxi.norm()*dn[i*nj+(j-1)];
+      
+  //   }
+    
+  //   for (int iter=0;iter<nbIterations;++iter) {
+
+  //     for (int i=0;i<nbPts;i++) D[i] = L[i] = U[i] = pL[i] = pU[i] = 0;
+      
+  //     for (int i=0;i<nbPts;i++) {
+        
+  //       Pair<SVector3,SVector3> rUV = face->firstDer(uv1[i]);
+
+  //       SVector3 ru = rUV.first();
+  //       SVector3 rv = rUV.second();
+
+  //       double J = crossprod(ru,rv).norm();
+        
+  //       double guu = dot(ru,rv);
+  //       double guv = dot(ru,rv);
+  //       double gvv = dot(rv,rv);
+        
+  //       Mat2 B;
+  //       B(0,0) = guu*uvEta0[i][0] + guv*uvEta0[i][1];
+  //       B(0,1) = guv*uvEta0[i][0] + gvv*uvEta0[i][1];
+  //       B(1,0) =   J*uvEta0[i][1];
+  //       B(1,1) = - J*uvEta0[i][0];
+        
+  //       SPoint2& uvXi0  = metric0[i].uvXi;
+        
+  //       Mat2 A;
+  //       A(0,0) = guu*uvXi0[i][0] + guv*uvXi0[i][1];
+  //       A(0,1) = guv*uvXi0[i][0] + gvv*uvXi0[i][1];
+  //       A(1,0) = - J*uvXi0[i][1];
+  //       A(1,1) =   J*uvXi0[i][0];
+
+  //       // 
+        
+  //       B.mult(A,A,1,0);
+        
+  //       // --- general treatment 
+        
+  //       L[i].setIdentity();
+  //       U[i].setIdentity();
+  //       D[i] = A;
+
+  //       // --- periodicity
+        
+  //       if (periodic) {
+  //         pU[0] = L[0];
+  //         pL[0] = U[0];
+  //         pU[nbPts-2] = U[nbPts-1];
+  //       }
+        
+  //       h[i][0] = 0;
+  //       h[i][1] = F * J + F0[i]*J0[i]/J;
+  //     }
+      
+  //     // solve
+
+  //     Msg::Info("Composed the system");
+      
+  //     decompose(L,D,U,pL,pU,periodic);
+
+  //     Msg::Info("Decomposed the matrix");
+
+  //     solve(L,D,U,pL,pU,h,uv1,periodic);
+
+  //     Msg::Info("Solved the system");
+
+  //   }
+
+  //   if (periodic) uv1[ni-1] = uv1[0];
+    
+  //   for (int i=0;i<ni;i++) {
+  //     MVertex* v = block[index(i,j)];
+  //     GPoint p = face->point(uv1[i]);
+  //     v->setXYZ(p.x(),p.y(),p.z());
+  //   }
+    
+  //   uv0 = uv1;
+  //   metric0 = metric1;    
+  // }
+  // return true;
+}
+
+// -----------------------------------------------------------------------------

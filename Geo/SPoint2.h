@@ -42,7 +42,9 @@ public:
   void operator+=(const SPoint2 &p);
   void operator-=(const SPoint2 &p);
   void operator*=(double mult);
+  void operator/=(double div);
   SPoint2 operator*(double mult) const;
+  SPoint2 operator/(double div) const;
   operator double *() { return P; }
   bool operator<(const SPoint2 &other) const
   {
@@ -116,8 +118,20 @@ inline void SPoint2::operator*=(double mult)
   P[1] *= mult;
 }
 
+inline void SPoint2::operator/=(double div)
+{
+  P[0] /= div;
+  P[1] /= div;
+}
+
 inline SPoint2 SPoint2::operator*(double mult) const
 {
+  return SPoint2(P[0] * mult, P[1] * mult);
+}
+
+inline SPoint2 SPoint2::operator/(double div) const
+{
+  double mult = 1./div;
   return SPoint2(P[0] * mult, P[1] * mult);
 }
 
