@@ -17,12 +17,13 @@ public:
   structured_block_2D() : ni(0), nj(0) {}
   void winslow_smooth ();
   bool hyperbolic_smooth();
-  
-  inline int index(int i,int j) const {return i*nj+j;} //j*ni+i;}
 
-  inline std::pair<int,int> ij(int idx) const {
-    return std::make_pair(idx/nj,idx%nj); // idx%ni,idx/ni);
-  }
+  inline int iP(int i) const {return periodic ? (i+1)%(ni-1)         :std::min(i+1,ni-1);}
+  inline int iM(int i) const {return periodic ? ((i-1)+(ni-1))%(ni-1):std::max(0,i-1);}
+  inline int dI(int i) const {return periodic ? 2 : iP(i) - iM(i);}
+  
+  inline int idx(int i,int j)         const {return i*nj+j;}
+  inline std::pair<int,int> ij(int k) const {return std::make_pair(k/nj,k%nj);}
   
 protected:
   
