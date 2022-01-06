@@ -552,6 +552,15 @@ Curve *CreateCurve(int Num, int Typ, int Order, List_T *Liste, List_T *Knots,
     if(!EndCurve(pC)) ok = false;
   }
 
+  if(pC->Typ == MSH_SEGM_LINE && pC->beg && pC->end &&
+     List_Nbr(pC->Control_Points) <= 2) {
+    if(!ComparePosition(&pC->beg, &pC->end))
+      Msg::Warning("Start point %d and end point %d of GEO line %d are closer "
+                   "than the geometrical tolerance, at position (%g, %g, %g)",
+                   pC->beg->Num, pC->end->Num, pC->Num, pC->beg->Pos.X,
+                   pC->beg->Pos.Y, pC->beg->Pos.Z);
+  }
+
   return pC;
 }
 
