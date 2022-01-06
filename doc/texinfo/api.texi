@@ -129,7 +129,7 @@ Clear all loaded models and post-processing data, and add a new empty model.
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L99,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L77,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L308,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L117,Julia}
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/t3.cpp#L20,t3.cpp}, @url{@value{GITLAB-PREFIX}/tutorials/c++/x1.cpp#L158,x1.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorials/python/t3.py#L17,t3.py}, @url{@value{GITLAB-PREFIX}/tutorials/python/t13.py#L19,t13.py}, @url{@value{GITLAB-PREFIX}/tutorials/python/x1.py#L122,x1.py})
+C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/t3.cpp#L20,t3.cpp}, @url{@value{GITLAB-PREFIX}/tutorials/c++/x1.cpp#L158,x1.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorials/python/t3.py#L17,t3.py}, @url{@value{GITLAB-PREFIX}/tutorials/python/t13.py#L19,t13.py}, @url{@value{GITLAB-PREFIX}/tutorials/python/x1.py#L122,x1.py}, @url{@value{GITLAB-PREFIX}/examples/api/x3d_export.py#L29,x3d_export.py})
 @end table
 
 @end ftable
