@@ -542,6 +542,7 @@ double opt_mesh_flexible_transfinite(OPT_ARGS_NUM);
 double opt_mesh_algo_subdivide(OPT_ARGS_NUM);
 double opt_mesh_mesh_only_visible(OPT_ARGS_NUM);
 double opt_mesh_mesh_only_empty(OPT_ARGS_NUM);
+double opt_mesh_min_line_nodes(OPT_ARGS_NUM);
 double opt_mesh_min_circle_nodes(OPT_ARGS_NUM);
 double opt_mesh_allow_swap_edge_angle(OPT_ARGS_NUM);
 double opt_mesh_min_curve_nodes(OPT_ARGS_NUM);

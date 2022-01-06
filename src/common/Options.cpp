@@ -6063,13 +6063,24 @@ double opt_mesh_mesh_only_empty(OPT_ARGS_NUM)
   return CTX::instance()->mesh.meshOnlyEmpty;
 }
 
+double opt_mesh_min_line_nodes(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    if(!(action & GMSH_SET_DEFAULT) &&
+       (int)val != CTX::instance()->mesh.minLineNodes)
+      Msg::SetOnelabChanged(2);
+    CTX::instance()->mesh.minLineNodes = std::max((int)val, 2);
+  }
+  return CTX::instance()->mesh.minLineNodes;
+}
+
 double opt_mesh_min_circle_nodes(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
     if(!(action & GMSH_SET_DEFAULT) &&
        (int)val != CTX::instance()->mesh.minCircleNodes)
       Msg::SetOnelabChanged(2);
-    CTX::instance()->mesh.minCircleNodes = (int)val;
+    CTX::instance()->mesh.minCircleNodes = std::max((int)val, 2);
   }
   return CTX::instance()->mesh.minCircleNodes;
 }
@@ -6082,7 +6093,12 @@ double opt_mesh_allow_swap_edge_angle(OPT_ARGS_NUM)
 
 double opt_mesh_min_curve_nodes(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) CTX::instance()->mesh.minCurveNodes = (int)val;
+  if(action & GMSH_SET) {
+    if(!(action & GMSH_SET_DEFAULT) &&
+       (int)val != CTX::instance()->mesh.minCurveNodes)
+      Msg::SetOnelabChanged(2);
+    CTX::instance()->mesh.minCurveNodes = std::max((int)val, 2);
+  }
   return CTX::instance()->mesh.minCurveNodes;
 }
 

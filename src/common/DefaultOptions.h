@@ -1280,6 +1280,8 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "MetisRefinementAlgorithm" , opt_mesh_partition_metis_refinement_algorithm, 2. ,
     "METIS algorithm for k-way refinement 'rtype' (1: FM-based cut, 2: Greedy, "
     "3: Two-sided node FM, 4: One-sided node FM)" },
+  { F|O, "MinimumLineNodes" , opt_mesh_min_line_nodes, 2. ,
+    "Minimum number of nodes used to mesh (straight) lines"},
   { F|O, "MinimumCircleNodes" , opt_mesh_min_circle_nodes, 7. ,
     "Minimum number of nodes used to mesh circles and ellipses" },
   { F|O|D, "MinimumCirclePoints" , opt_mesh_min_circle_nodes, 7. ,

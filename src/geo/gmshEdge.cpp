@@ -141,7 +141,7 @@ std::string gmshEdge::getAdditionalInfoString(bool multline)
 int gmshEdge::minimumMeshSegments() const
 {
   int np;
-  if(geomType() == Line) { np = GEdge::minimumMeshSegments(); }
+  if(geomType() == Line) { np = CTX::instance()->mesh.minLineNodes - 1; }
   else if(geomType() == Circle || geomType() == Ellipse) {
     double a = fabs(_c->Circle.t1 - _c->Circle.t2);
     double n = CTX::instance()->mesh.minCircleNodes;

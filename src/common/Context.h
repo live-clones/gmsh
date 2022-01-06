@@ -32,7 +32,7 @@ struct contextMeshOptions {
   int flexibleTransfinite, maxRetries;
   int order, secondOrderLinear, secondOrderIncomplete;
   int meshOnlyVisible, meshOnlyEmpty;
-  int minCircleNodes, minCurveNodes;
+  int minCircleNodes, minCurveNodes, minLineNodes;
   int hoOptimize, hoPeriodic, hoNLayers, hoPrimSurfMesh, hoIterMax, hoPassMax;
   int hoDistCAD, hoSavePeriodic;
   double hoThresholdMin, hoThresholdMax, hoPoissonRatio;

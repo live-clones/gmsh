@@ -347,7 +347,7 @@ int OCCEdge::minimumMeshSegments() const
   // if it is a seam, then return 1
   if(_faces.size() == 1 && isSeam(_faces[0])) return 1;
 
-  if(geomType() == Line) { np = GEdge::minimumMeshSegments(); }
+  if(geomType() == Line) { np = CTX::instance()->mesh.minLineNodes - 1; }
   else if(geomType() == Circle || geomType() == Ellipse) {
     double a = fabs(_s0 - _s1);
     double n = CTX::instance()->mesh.minCircleNodes;
