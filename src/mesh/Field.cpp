@@ -204,6 +204,11 @@ public:
           input.read((char *)_d, 3 * sizeof(double));
           input.read((char *)_n, 3 * sizeof(int));
           int nt = _n[0] * _n[1] * _n[2];
+          if(nt <= 0) {
+            Msg::Error("Field %i: invalid number of data points %d x %d x %d",
+                       this->id, _n[0], _n[1], _n[2]);
+            return MAX_LC;
+          }
           if(_data) delete[] _data;
           _data = new double[nt];
           input.read((char *)_data, nt * sizeof(double));
@@ -212,6 +217,11 @@ public:
           input >> _o[0] >> _o[1] >> _o[2] >> _d[0] >> _d[1] >> _d[2] >>
             _n[0] >> _n[1] >> _n[2];
           int nt = _n[0] * _n[1] * _n[2];
+          if(nt <= 0) {
+            Msg::Error("Field %i: invalid number of data points %d x %d x %d",
+                       this->id, _n[0], _n[1], _n[2]);
+            return MAX_LC;
+          }
           if(_data) delete[] _data;
           _data = new double[nt];
           for(int i = 0; i < nt; i++) input >> _data[i];
@@ -221,6 +231,14 @@ public:
         _errorStatus = true;
         Msg::Error("Field %i: error reading file '%s'", this->id,
                    _fileName.c_str());
+      }
+      for(int i = 0; i < 3; i++) {
+        // if there is a single point, make sure _d[i] != 0
+        if(_n[i] == 1 && !_d[i]) _d[i] = 1.;
+      }
+      if(!_d[0] || !_d[1] || !_d[2]) {
+        Msg::Error("Field %i: Dx, Dy and Dz should be non zero", this->id);
+        return MAX_LC;
       }
       updateNeeded = false;
     }
