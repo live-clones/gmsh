@@ -854,10 +854,14 @@ static void modifyInitialMeshForBoundaryLayers(
       _lines.push_back((*ite)->lines[i]);
       MVertex *v1 = (*ite)->lines[i]->getVertex(0);
       MVertex *v2 = (*ite)->lines[i]->getVertex(1);
-      indices_j[v1] = indices_j[v2] = 0;
-      indices_i[v1] = v1;
-      indices_i[v2] = v2;
       MEdge dv(v1, v2);
+
+      if (_columns->_normals.count(dv)) {
+        indices_j[v1] = indices_j[v2] = 0;
+        indices_i[v1] = v1;
+        indices_i[v2] = v2;
+      }
+      
       addOrRemove(v1, v2, bedges, removed);
       for(std::size_t SIDE = 0; SIDE < _columns->_normals.count(dv); SIDE++) {
         std::vector<MElement *> myCol;

@@ -29,6 +29,9 @@ protected:
   
   GFace* face; //!< underlying face
 
+  std::vector<GEdge*> e0;
+  std::vector<GEdge*> e1;
+  
   bool periodic;
   
   bool getTopology();

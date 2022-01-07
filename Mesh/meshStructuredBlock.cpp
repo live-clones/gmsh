@@ -200,32 +200,28 @@ void computeStructuredBlocks (std::vector<MQuadrangle *> &blquads,
         _s.erase(_q);
       }
       std::map<std::pair<int,int>, MVertex*> inv;
-      for (std::map<MVertex*,std::pair<int,int>>::iterator it = indices.begin() ; it != indices.end() ; ++it)
+      for (auto it = indices.begin() ; it != indices.end() ; ++it)
 	inv [it->second] = it->first;
-      for (std::map<MVertex*,std::pair<int,int>>::iterator it = symmetrical_indices.begin() ; it != symmetrical_indices.end() ; ++it)
+      for (auto it = symmetrical_indices.begin() ; it != symmetrical_indices.end() ; ++it)
 	inv [it->second] = it->first;
       structured_block_2D b;
       b.ni = maxIndexi - minIndexi + 1;
       b.nj = maxIndexj - minIndexj + 1;
       Msg::Info("Block %d x %d found\n",b.ni,b.nj);
-      for (std::map<std::pair<int,int>, MVertex*>::iterator it = inv.begin() ; it != inv.end() ; ++it)
-	b.block.push_back(it->second);
-
-      //      if (b.block[0] == b.block[0]
+      for (auto it = inv.begin() ; it != inv.end() ; ++it) b.block.push_back(it->second);
+      
       blocks.push_back(b);
       
-      char name[256];
-      sprintf(name,"block%lu.pos",blocks.size());
-      FILE *f = fopen(name,"w");
-      for (int j=0;j<b.nj;j++) {
-        fprintf(f,"View \"%s_%i\" {\n",name,j);
-        for (int i=0;i<b.ni;i++) fprintf(f,"SP(%g,%g,%g){%i};\n",
-                                         b.block[b.idx(i,j)]->x(),
-                                         b.block[b.idx(i,j)]->y(),
-                                         b.block[b.idx(i,j)]->z(),i);
-        fprintf(f,"};\n");
-      }
-      fclose(f); 
+      // FILE *f = fopen("block1.pos","w");
+      // for (int j=0;j<b.nj;j++) {
+      //   fprintf(f,"View \"line_%i\" {\n",j);
+      //   for (int i=0;i<b.ni;i++) fprintf(f,"SP(%g,%g,%g){%i};\n",
+      //                                    b.block[b.idx(i,j)]->x(),
+      //                                    b.block[b.idx(i,j)]->y(),
+      //                                    b.block[b.idx(i,j)]->z(),i);
+      //   fprintf(f,"};\n");
+      // }
+      // fclose(f); 
     }    
   }
 }
@@ -244,6 +240,26 @@ bool structured_block_2D::getTopology()  {
       if (dynamic_cast<GFace*>(block[idx(i,j)]->onWhat())!=face) return false;
     }
   }
+
+  // --- check whether the grid is periodic 
+  
+  periodic = block[idx(0,0)] == block[idx(ni-1,0)];
+
+  if (periodic) {
+    for (int j=1;j<nj;j++) {
+      if (block[idx(0,j)]!=block[idx(ni-1,j)]) periodic = false;
+    }
+    if (!periodic) Msg::Warning("Incomplete periodicity in boundary layer mesh");
+  }
+
+  // --- if not periodic, check whether points should conform to an edge or a node
+  
+  if (!periodic) {
+    for (int j=0;j<nj;j++) {
+      e0.push_back(dynamic_cast<GEdge*  >(block[idx(0   ,j)]->onWhat()));
+      e1.push_back(dynamic_cast<GEdge*  >(block[idx(ni-1,j)]->onWhat()));
+    }
+  }
   
   return true;
 }
@@ -254,37 +270,40 @@ struct Mat2 {
 
   Mat2() {*this = 0;}
 
+  Mat2(double a11,double a12,double a21,double a22) {
+    A[0] = a11; A[1] = a12; A[2] = a21; A[3] = a22;
+  }
+  
   inline Mat2& operator=(double a) {
-    mat[0] = mat[1] = mat[2] = mat[3] = a;
+    A[0] = A[1] = A[2] = A[3] = a;
     return *this;
   }
 
   inline Mat2& operator=(const Mat2& o) {
-    std::copy_n(o.mat,4,mat);
+    std::copy_n(o.A,4,A);
     return *this;
   }
   
   inline Mat2& operator+=(const Mat2& o) {
-    for (int i=0;i<4;i++) mat[i] += o.mat[i];
+    for (int i=0;i<4;i++) A[i] += o.A[i];
     return *this;
   }
 
   inline Mat2& operator-=(const Mat2& o) {
-    for (int i=0;i<4;i++) mat[i] -= o.mat[i];
+    for (int i=0;i<4;i++) A[i] -= o.A[i];
     return *this;
   }
   
   inline Mat2& operator*=(double a) {
-    for (int i=0;i<4;i++) mat[i] *= a;
+    for (int i=0;i<4;i++) A[i] *= a;
     return *this;
   }
 
   SPoint2 eigen() const {
-    double a = 1;
-    double b = -(mat[0]+mat[3]);
+    double b = -(A[0]+A[3]);
     double c = determinant();
-    double D = b*b - 4*a*c;
-    return SPoint2((-b - std::sqrt(D))/2/a,(-b + std::sqrt(D))/2/a);
+    double D = b*b - 4*c;
+    return SPoint2((-b - std::sqrt(D))/2,(-b + std::sqrt(D))/2);
   }
 
   double specRad() const {
@@ -293,58 +312,49 @@ struct Mat2 {
   }
   
   inline Mat2& operator/=(double a) {
-    a = 1./a;
-    for (int i=0;i<4;i++) mat[i] *= a;
+    for (int i=0;i<4;i++) A[i] /= a;
     return *this;
   }
 
-  inline double determinant() const {
-    return mat[0]*mat[3] - mat[1]*mat[2];
-  }
+  inline double determinant() const {return A[0]*A[3]-A[1]*A[2];}
   
-  void print(std::string n) const {
-    std::cout << n << std::endl;
-    std::cout << mat[0] << " , " << mat[1] << std::endl;
-    std::cout << mat[2] << " , " << mat[3] << std::endl;
-  }
+  inline double& operator()(int i,int j) {return A[i*2+j];}
   
-  inline double& operator()(int i,int j) {return mat[i*2+j];}
-  
-  inline const double& operator()(int i,int j) const {return mat[i*2+j];}
+  inline const double& operator()(int i,int j) const {return A[i*2+j];}
 
   inline Mat2& invert() {
     double det = 1./determinant();
-    std::swap(mat[0],mat[3]);
-    mat[0] *= det;
-    mat[1] *= - det;
-    mat[2] *= - det;
-    mat[3] *= det;
+    std::swap(A[0],A[3]);
+    A[0] *= det;
+    A[1] *= - det;
+    A[2] *= - det;
+    A[3] *= det;
     return *this;
   }
 
   inline void mult(const Mat2& A1,Mat2& A2,double a,double b) const {
     Mat2 tmp(A2);
     tmp *= b;
-    tmp(0,0) += a*(mat[0]*A1(0,0) + mat[1]*A1(1,0));
-    tmp(0,1) += a*(mat[0]*A1(0,1) + mat[1]*A1(1,1));
-    tmp(1,0) += a*(mat[2]*A1(0,0) + mat[3]*A1(1,0));
-    tmp(1,1) += a*(mat[2]*A1(0,1) + mat[3]*A1(1,1));
+    tmp(0,0) += a*(A[0]*A1(0,0) + A[1]*A1(1,0));
+    tmp(0,1) += a*(A[0]*A1(0,1) + A[1]*A1(1,1));
+    tmp(1,0) += a*(A[2]*A1(0,0) + A[3]*A1(1,0));
+    tmp(1,1) += a*(A[2]*A1(0,1) + A[3]*A1(1,1));
     A2 = tmp;
   }
 
   inline void mult(const SPoint2& v1,SPoint2& v2,double a,double b) const {
     SPoint2 tmp(b*v2[0],b*v2[1]);
-    tmp[0] += a*(mat[0]*v1[0] + mat[1]*v1[1]);
-    tmp[1] += a*(mat[2]*v1[0] + mat[3]*v1[1]);
+    tmp[0] += a*(A[0]*v1[0] + A[1]*v1[1]);
+    tmp[1] += a*(A[2]*v1[0] + A[3]*v1[1]);
     v2 = tmp;
   }
 
-  inline void setZero()     {mat[0] = mat[1] =    mat[2] = mat[3] = 0;}
-  inline void setIdentity() {mat[0] = mat[3] = 1; mat[1] = mat[2] = 0;}
+  inline void setZero()     {A[0] = A[1] =    A[2] = A[3] = 0;}
+  inline void setIdentity() {A[0] = A[3] = 1; A[1] = A[2] = 0;}
   
 protected:
   
-  double mat[4];
+  double A[4];
   
 };
 
@@ -443,7 +453,6 @@ bool structured_block_2D::hyperbolic_smooth() {
     
   // --- smooth each layer
 
-  periodic = true;
   int nbPts = periodic ? ni-1:ni;
 
   std::vector<std::map<int,Mat2> > mat(nbPts);
@@ -490,7 +499,7 @@ bool structured_block_2D::hyperbolic_smooth() {
       
       SVector3 rxi = uvXi[0]*ru + uvXi[1]*rv;
       
-      double F = F0[i] = rxi.norm()*dn[idx(i,j-1)];
+      double F = F0[i] = 2*rxi.norm()*dn[idx(i,j-1)];
       
       SPoint2& uvEta = uvEta0[i];
       
@@ -521,14 +530,14 @@ bool structured_block_2D::hyperbolic_smooth() {
         const SPoint2& uvXiM  = uvXi0[i];
         const SPoint2& uvEtaM = uvEta0[i];
 
-        // --- compute linearisation 
+        // --- main system
         
         Mat2 A;
         A(0,0) = guu*uvEtaM[0] + guv*uvEtaM[1];
         A(0,1) = guv*uvEtaM[0] + gvv*uvEtaM[1];
         A(1,0) =   J*uvEtaM[1];
         A(1,1) = - J*uvEtaM[0];
-        A /= 2;
+        A /= dI(i);
 
         Mat2 B;
         B(0,0) = guu*uvXiM[0] + guv*uvXiM[1];
@@ -539,14 +548,18 @@ bool structured_block_2D::hyperbolic_smooth() {
         B.invert();
         B.mult(A,A,1,0);
 
-        double lambda = A.specRad();
-        
-        row[i].setIdentity();
+        row[i] = I;
         row[iP(i)] += A;
-        row[iP(i)] -= lambda*I;
         row[iM(i)] -= A;
-        row[iM(i)] -= lambda*I;
-        row[i]     += 2*lambda*I;
+
+        // --- add diffusion 
+        
+        if (periodic || i%(ni-1) == 0) {
+          double lambda = A.specRad();
+          row[iP(i)] -= lambda*I;
+          row[iM(i)] -= lambda*I;
+          row[i]     += 2*lambda*I;
+        }
         
         // --- compute right hand side
 
@@ -556,7 +569,7 @@ bool structured_block_2D::hyperbolic_smooth() {
 
         SVector3 rxi = uvXi[0]*ru + uvXi[1]*rv;
         
-        double F = rxi.norm() * dn[idx(i,j-1)]*2;
+        double F = F0[i]; // 2*rxi.norm() * dn[idx(i,j-1)];
         
         h[i][0] = (guu*uvXiM[0]*uvEtaM[0] +
                    guv*uvXiM[0]*uvEtaM[1] +
@@ -569,15 +582,55 @@ bool structured_block_2D::hyperbolic_smooth() {
 
         h[i][0] += uv0[i][0];
         h[i][1] += uv0[i][1];
+
+        // --- boundary conditions 
+        
+        if (!periodic && i%(ni-1) == 0) {
+          
+          GEdge* ge = i == 0 ? e0[j]:e1[j];
+
+          if (!ge) {
+            row[iP(i)] = row[iM(i)] = 0;
+            row[i] = I;
+            h[i] = uv1[i];
+          }
+          
+          else {
+            
+            Mat2 g(guu,guv,guv,gvv);
+            g.invert();
+            double s = ge->parFromPoint(xyz[idx(i,j)]);
+            SVector3 rs = ge->firstDer(s);
+            SPoint2  uvs(dot(ru,rs),dot(rv,rs));
+            g.mult(uvs,uvs,1,0);
+            
+            Mat2 P(uvs[0],uvs[1],0,0);
+            P.mult(row[i],row[i],1,0);
+            
+            row[i](1,0) = - uvs[1];
+            row[i](1,1) =   uvs[0];
+            
+            if (row.find(i+1)!=row.end()) P.mult(row[i+1],row[i+1],1,0);
+            if (row.find(i-1)!=row.end()) P.mult(row[i-1],row[i-1],1,0);
+            
+            P.mult(h[i],h[i],1,0);
+            h[i][1] = - uvs[1]*uv0[i][0] + uvs[0]*uv0[i][1];
+          }
+            
+        }
       }
-     
+      
       // --- solve
       
       decompose(mat);
       solve(mat,h,uv1);
     }
 
+    // --- did not solve for ni-1
+    
     if (periodic) uv1[ni-1] = uv1[0];
+
+    // --- update the coordinates
     
     for (int i=0;i<ni;i++) {
       MVertex* v = block[idx(i,j)];
@@ -587,6 +640,17 @@ bool structured_block_2D::hyperbolic_smooth() {
     
     uv0 = uv1;
   }
+  
+  // FILE *f = fopen("block2.pos","w");
+  // for (int j=0;j<nj;j++) {
+  //   fprintf(f,"View \"line_%i\" {\n",j);
+  //   for (int i=0;i<ni;i++) fprintf(f,"SP(%g,%g,%g){%i};\n",
+  //                                    block[idx(i,j)]->x(),
+  //                                    block[idx(i,j)]->y(),
+  //                                    block[idx(i,j)]->z(),i);
+  //   fprintf(f,"};\n");
+  // }
+  // fclose(f); 
   
   return true;
 }
