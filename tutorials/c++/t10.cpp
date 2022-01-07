@@ -12,6 +12,7 @@
 
 #include <set>
 #include <sstream>
+#include <algorithm>
 #include <gmsh.h>
 
 int main(int argc, char **argv)
