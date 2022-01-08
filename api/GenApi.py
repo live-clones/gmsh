@@ -1152,6 +1152,8 @@ if not os.path.exists(libpath):
 if not os.path.exists(libpath):
     if platform.system() == "Windows":
         libpath = find_library("{7}-{3}.{4}")
+        if not libpath:
+            libpath = find_library("{7}")
     else:
         libpath = find_library("{7}")
 
