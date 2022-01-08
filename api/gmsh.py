@@ -45,6 +45,8 @@ if not os.path.exists(libpath):
 if not os.path.exists(libpath):
     if platform.system() == "Windows":
         libpath = find_library("gmsh-4.9")
+        if not libpath:
+            libpath = find_library("gmsh")
     else:
         libpath = find_library("gmsh")
 
