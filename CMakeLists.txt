@@ -1452,7 +1452,8 @@ if(WIN32)
 endif()
 
 if(MSVC)
-  add_definitions(-DNOMINMAX -D_CRT_SECURE_NO_DEPRECATE -D_SCL_SECURE_NO_DEPRECATE)
+  add_definitions(-DNOMINMAX -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS
+                  -D_SCL_SECURE_NO_DEPRECATE)
 endif()
 
 # add C functions API
