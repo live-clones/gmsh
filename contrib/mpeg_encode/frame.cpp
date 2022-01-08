@@ -124,7 +124,6 @@ else{
   }
 /* Free memory */
 free(frameA);
-free(mf);
 }
 /*========================================================
 * Resize_Width
