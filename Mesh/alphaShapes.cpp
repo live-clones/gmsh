@@ -443,8 +443,8 @@ void constrainedAlphaShapes_(GModel* m,
 
   // all other fields of the options will be 0 or NULL (standard C behavior)
 	HXTTetMeshOptions options = {
-		.stat=1,
-		.verbosity=2
+		.verbosity=2,
+		.stat=1
 	};
 	// create the empty mesh
 	hxtTetMesh(mesh, &options);
@@ -465,7 +465,7 @@ void constrainedAlphaShapes_(GModel* m,
 		hxtAlignedRealloc(&mesh->vertices.coord, sizeof(double) * mesh->vertices.num * 4);
 		mesh->vertices.size = mesh->vertices.num;
 	}
-  for (int p = 0; p < numNewPts; p++) {
+  for (size_t p = 0; p < numNewPts; p++) {
     uint32_t nodeIndex = p + nBndPts;
     for (int dim = 0; dim < 3; dim++) {
       mesh->vertices.coord[4 * nodeIndex + dim] = coord[3*p+dim];
@@ -478,8 +478,8 @@ void constrainedAlphaShapes_(GModel* m,
     .bbox = &bbox,
     .numVerticesInMesh = nBndPts,
     .insertionFirst = nBndPts,
-    .verbosity = 1,
     .allowOuterInsertion = 0, // if you set this to one, even vertices that are outside will be inserted
+    .verbosity = 1,
   };
 
   /* Generate the tet mesh */
@@ -591,7 +591,7 @@ void createHxtMesh_(const std::string &inputMesh, const std::vector<double>& coo
   hxtAddNodes(mesh, arr, coord.size()/3);
 
   /* generate and write the tet mesh */
-  HXTTetMeshOptions options = {.refine=0, .optimize=0, .verbosity=2, .quality.min=0.35, .nodalSizes.factor=1.0};
+  HXTTetMeshOptions options = {.verbosity=2, .refine=0, .optimize=0, .quality={.min=0.35}, .nodalSizes={.factor=1.0}};
   hxtTetMesh(mesh, &options);
   hxtMeshWriteGmsh( mesh, &outputMesh[0]); // enlever
 
