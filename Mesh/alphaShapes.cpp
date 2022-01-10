@@ -202,8 +202,8 @@ int computeTetNeighbors_ (const std::vector<size_t> &tetrahedra, std::vector<siz
     size_t *ft1 = &temp[5*counter];
 
     if (compareFourInt(ft0,ft1) == 0){
-      neigh[4*ft0[3]+ft0[4]] = ft1[3];
-      neigh[4*ft1[3]+ft1[4]] = ft0[3];
+      neigh[4*ft0[3]+ft0[4]] = 4*ft1[3]+ ft1[4];
+      neigh[4*ft1[3]+ft1[4]] = 4*ft0[3]+ ft0[4];
       counter++;
     }
   }
@@ -352,7 +352,7 @@ int alphaShapes3D_ (const double threshold,
           size_t t = _s.top();
           _s.pop();
           for (int j=0;j<4;j++){
-            size_t tj = neigh[4*t+j];
+            size_t tj = neigh[(4*t+j)]/4;
             if (tj == tetrahedra.size()){
               _boundary.push_back(t);
               _boundary.push_back(j);
@@ -418,6 +418,8 @@ void constrainedAlphaShapes_(GModel* m,
                             std::vector<size_t> &neigh)
 {  
   int meshDim = m->getMeshStatus(false); 
+  std::cout << "mesh Dim : " << meshDim << "\n";
+  
   if (meshDim < dim-1){ // if no 1D boundary mesh for a 2D domain, if no 2D boundary mesh for a 3D domain --> so generate one
     GenerateMesh(m, dim-1);
   }
@@ -484,9 +486,13 @@ void constrainedAlphaShapes_(GModel* m,
   hxtDelaunaySteadyVertices(mesh, &delOptions, nodeInfo, numNewPts);
 
  /* ------------------------alpha shapes of the newly generated mesh -----------------------------*/
+  std::map<size_t, size_t> hxt2my;
+  size_t count = 0;
   for (size_t i=0; i<mesh->tetrahedra.num; i++){
     if (mesh->tetrahedra.color[i] < UINT32_MAX)
     {
+      hxt2my[i] = count;
+      count++;
       std::vector<size_t> tet;
       for (size_t j = 0; j < 4; j++)
       {
@@ -497,7 +503,9 @@ void constrainedAlphaShapes_(GModel* m,
       //}
     }
   }
+  
   computeTetNeighbors_ (tetrahedra, neigh);
+  
   double hMean;
   std::vector<double> allMeshPoints;
   for (size_t i=0; i<mesh->vertices.num; i++){
@@ -511,7 +519,6 @@ void constrainedAlphaShapes_(GModel* m,
   std::vector<bool> _touched;
   _touched.resize(tetrahedra.size()/4);
   for (size_t i=0;i<_touched.size();i++)_touched[i] = false;
-  
   for (size_t i = 0; i < tetrahedra.size(); i+=4){
       size_t *t = &tetrahedra[i];
       if (alphaShape(t, allMeshPoints, hMean) < alpha && _touched[i/4] == false){
@@ -525,8 +532,8 @@ void constrainedAlphaShapes_(GModel* m,
           size_t t = _s.top();
           _s.pop();
           for (int j=0;j<4;j++){
-            size_t tj = neigh[4*t+j];
-            if (tj == tetrahedra.size()){
+            size_t tj = neigh[4*t+j]/4;
+            if (tj*4 == tetrahedra.size()){
               _boundary.push_back(t);
               _boundary.push_back(j);
             }
@@ -551,6 +558,8 @@ void constrainedAlphaShapes_(GModel* m,
 
   /* write back to gmsh format */
   Hxt2GmshAlpha(regions, mesh, v2c, c2v);
+  m->renumberMeshVertices();
+  m->renumberMeshElements();
 
   /* convert tetrahedra points to gmsh global identifier */
   for (size_t i = 0; i < tetrahedra.size(); i++)
