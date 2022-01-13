@@ -64,6 +64,8 @@
 #include "meshGRegionDelaunayInsertion.h"
 #include "meshGRegionHxt.h"
 #include "gmshCrossFields.h"
+#include "alphaShapes.h"
+#include "meshTriangulation.h"
 #endif
 
 #if defined(HAVE_POST)
