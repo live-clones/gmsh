@@ -353,7 +353,7 @@ int alphaShapes3D_ (const double threshold,
           _s.pop();
           for (int j=0;j<4;j++){
             size_t tj = neigh[(4*t+j)]/4;
-            if (tj == tetrahedra.size()){
+            if (tj*4 == tetrahedra.size()){
               _boundary.push_back(t);
               _boundary.push_back(j);
             }
