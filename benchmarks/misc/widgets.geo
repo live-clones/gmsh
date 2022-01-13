@@ -1,5 +1,5 @@
-Merge "tutorial/t1.geo";
-Merge "tutorial/view1.pos";
+Merge "tutorials/t1.geo";
+Merge "tutorials/view1.pos";
 
 DefineConstant
 [

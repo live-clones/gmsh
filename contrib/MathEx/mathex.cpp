@@ -182,7 +182,7 @@
          // in future, put more precisery checking, for overflow ?
          {
             if (y == 0)
-               throw mathex::error("Error [binary_divide()]: divisin by zero");
+               throw mathex::error("Error [binary_divide()]: division by zero");
             else
                return (x/y);
          } // binary_divide()

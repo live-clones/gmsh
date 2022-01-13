@@ -16,7 +16,7 @@ The mesh size is mainly controlled by the -clscale option.
 
 1. generate initial triangulation
 2. compute cross field
-3. compute size map 
+3. compute size map
 4. save as background mesh, background field, delete mesh
 5. apply curve quantization constraints (using automatic transfinite for the moment)
 6. generate curve meshes
@@ -49,18 +49,18 @@ The mesh size is mainly controlled by the -clscale option.
 
 # Changes to gmsh
 
-- Main files at Mesh/meshQuadQuasiStructured.h/cpp, to call the QuadMeshingTools functions
-- Add Eigen-based sparse solver in Solver/linearSystemEigen.h/cpp
-- Add robin_hood fast unordered_set/map hash maps, at Common/robin_hood.h, MIT license
-- Add libOL octree for meshing library at Common/libol1.h/c, MIT license
-- Add SurfaceProjector based on libOL octree, in Mesh/meshOctreeLibOL.h/cpp
-- Add background mesh datastructures, in Mesh/BackgroundMesh.h/cpp
+- Main files at src/mesh/meshQuadQuasiStructured.{h,cpp}, to call the QuadMeshingTools functions
+- Add Eigen-based sparse solver in src/solver/linearSystemEigen.{h,cpp}
+- Add robin_hood fast unordered_set/map hash maps, at src/common/robin_hood.h, MIT license
+- Add libOL octree for meshing library at src/common/libol1.{h,c}, MIT license
+- Add SurfaceProjector based on libOL octree, in src/mesh/meshOctreeLibOL.{h,cpp}
+- Add background mesh datastructures, in src/mesh/BackgroundMesh.{h,cpp}
 - contrib/domhex replaced by the version from quadMeshingTools branch (contains JF changes to algo pack)
-- Post/OctreePost.cpp: use larger bounding boxes. Required for the background field sampling
+- src/post/OctreePost.cpp: use larger bounding boxes. Required for the background field sampling
 - ALGO_2D_PACK_PRLGRMS_CSTR deprecated
 - Add implicit conversion from SPoint3/SVector3 to std::array<double,3>
 - Many Msg::Warning switch to Msg::Debug in CAD/Post projections
-- Special case for quadqs in bbox sizing in Post/OctreePost.cpp, should find something better
+- Special case for quadqs in bbox sizing in src/post/OctreePost.cpp, should find something better
 - Add an option quadqsSizemapMethod in global context CTX::instance()->mesh
 - Add a curve transfinite method (ge->meshAttributes.typeTransfinite = 4) to get vertex positioning via size map
 
@@ -72,4 +72,3 @@ The mesh size is mainly controlled by the -clscale option.
 - Better cavity initialization strategies (e.g. pathes between irregular vertices)
 - Better CAD quantization (support for T-junctions, rings, etc)
 - Filter anisotropy after cavity remeshing to avoid some distorted patches
-

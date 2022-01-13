@@ -1,4 +1,15 @@
-4.9.2 (Work-in-progress): faster projection on OCC entities.
+(Work-in-progress): new Mesh.MinimumLineNodes option.
+
+4.9.3 (January 4, 2022): improved handling of degenerate curves in periodic
+surfaces and boundary layer extrusion; extended Mesh.SaveGroupsOfElements
+capabilities for INP export; extended Mesh.MeshSizeExtendFromBoundary + new
+"Extend" mesh size field to enable alternative mesh size extensions from
+boundary; enhanced X3D output; moved all kernel sources to src/ subdirectory;
+renamed demos/ as examples/ and tutorial/ as tutorials/; small bug fixes.
+
+4.9.2 (December 23, 2021): faster projection on OCC entities; extended
+Mesh.SaveGroupsOfNodes capabilities for INP export; improved transfinite meshing
+of surfaces with boundary on periodic seam.
 
 4.9.1 (December 18, 2021): relax tolerance on curve parametrization match for
 periodic meshing; enable extruded boundary layers on generic model entities;

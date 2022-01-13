@@ -5,5 +5,5 @@ dimensional mesh is conformal to them.
 
 ### Python
 ```python
-{{#include ../../../../tutorial/python/t15.py}}
+{{#include ../../../../tutorials/python/t15.py}}
 ```

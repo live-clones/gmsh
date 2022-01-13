@@ -249,5 +249,5 @@ One may simply copy the files distributed with the QuadTri patch
 directly into the appropriate Gmsh directories (replacing any old copies with
 the patched versions) and the changes to the source will be complete. The
 user can then compile the source as for the regular Gmsh version. Be careful
-not to get the /Mesh/CMakeLists.txt file confused with the CMakeLists.txt
+not to get the src/mesh/CMakeLists.txt file confused with the CMakeLists.txt
 file in other directories!!!!

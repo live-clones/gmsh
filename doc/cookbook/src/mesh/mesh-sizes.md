@@ -1,8 +1,8 @@
 # Mesh sizes (Tutorial 5)
 
-See the effect of varying mesh sizes and add volume holes. 
+See the effect of varying mesh sizes and add volume holes.
 
 ### Python
 ```python
-{{#include ../../../../tutorial/python/t5.py}}
+{{#include ../../../../tutorials/python/t5.py}}
 ```

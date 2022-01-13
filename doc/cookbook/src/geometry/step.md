@@ -2,8 +2,8 @@
 
 Import and manipulate a `STEP` model using `OpenCASCADE`.
 
-[**Download the STEP file used in this tutorial**](https://gitlab.onelab.info/gmsh/gmsh/-/raw/master/tutorial/t20_data.step?inline=false)
+[**Download the STEP file used in this tutorial**](https://gitlab.onelab.info/gmsh/gmsh/-/raw/master/tutorials/t20_data.step?inline=false)
 ### Python
 ```python
-{{#include ../../../../tutorial/python/t20.py}}
+{{#include ../../../../tutorials/python/t20.py}}
 ```
