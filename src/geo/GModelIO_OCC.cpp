@@ -1092,7 +1092,7 @@ bool OCC_Internals::addCircle(int &tag, double x, double y, double z, double r,
     else {
       Handle(Geom_Circle) C = new Geom_Circle(circ);
       Handle(Geom_TrimmedCurve) arc =
-        new Geom_TrimmedCurve(C, angle1, angle2, false);
+        new Geom_TrimmedCurve(C, angle1, angle2, true);
       BRepBuilderAPI_MakeEdge e(arc);
       if(!e.IsDone()) {
         Msg::Error("Could not create circle arc");
