@@ -3953,6 +3953,19 @@ static void setTargetUnit(const std::string &unit)
 
 #if defined(HAVE_OCC_CAF)
 
+static void getColorRGB(const Quantity_Color &col, double &r, double &g, double &b)
+{
+#if OCC_VERSION_HEX >= 0x070500
+  // necessary to not alter RGB colors specified in STEP files (cf. #1399 and
+  // #1723)
+  col.Values(r, g, b, Quantity_TOC_sRGB);
+#else
+  r = col.Red();
+  g = col.Green();
+  b = col.Blue();
+#endif
+}
+
 static void setShapeAttributes(OCCAttributesRTree *attributes,
                                const Handle_XCAFDoc_ShapeTool &shapeTool,
                                const Handle_XCAFDoc_ColorTool &colorTool,
@@ -4013,17 +4026,20 @@ static void setShapeAttributes(OCCAttributesRTree *attributes,
 
     Quantity_Color col;
     if(colorTool->GetColor(label, XCAFDoc_ColorGen, col)) {
-      double r = col.Red(), g = col.Green(), b = col.Blue();
+      double r, g, b;
+      getColorRGB(col, r, g, b);
       Msg::Info(" - Color (%g, %g, %g) (%dD)", r, g, b, dim);
       attributes->insert(new OCCAttributes(dim, shape, r, g, b, 1.));
     }
     else if(colorTool->GetColor(label, XCAFDoc_ColorSurf, col)) {
-      double r = col.Red(), g = col.Green(), b = col.Blue();
+      double r, g, b;
+      getColorRGB(col, r, g, b);
       Msg::Info(" - Color (%g, %g, %g) (%dD & Surfaces)", r, g, b, dim);
       attributes->insert(new OCCAttributes(dim, shape, r, g, b, 1., 1));
     }
     else if(colorTool->GetColor(label, XCAFDoc_ColorCurv, col)) {
-      double r = col.Red(), g = col.Green(), b = col.Blue();
+      double r, g, b;
+      getColorRGB(col, r, g, b);
       Msg::Info(" - Color (%g, %g, %g) (%dD & Curves)", r, g, b, dim);
       attributes->insert(new OCCAttributes(dim, shape, r, g, b, 1., 2));
     }
@@ -4034,7 +4050,8 @@ static void setShapeAttributes(OCCAttributesRTree *attributes,
         if(colorTool->GetColor(xp2.Current(), XCAFDoc_ColorGen, col) ||
            colorTool->GetColor(xp2.Current(), XCAFDoc_ColorSurf, col) ||
            colorTool->GetColor(xp2.Current(), XCAFDoc_ColorCurv, col)) {
-          double r = col.Red(), g = col.Green(), b = col.Blue();
+          double r, g, b;
+          getColorRGB(col, r, g, b);
           Msg::Info(" - Color (%g, %g, %g) (Surface)", r, g, b);
           TopoDS_Face face = TopoDS::Face(xp2.Current());
           attributes->insert(new OCCAttributes(2, face, r, g, b, 1.));
@@ -4048,7 +4065,8 @@ static void setShapeAttributes(OCCAttributesRTree *attributes,
         if(colorTool->GetColor(xp1.Current(), XCAFDoc_ColorGen, col) ||
            colorTool->GetColor(xp1.Current(), XCAFDoc_ColorSurf, col) ||
            colorTool->GetColor(xp1.Current(), XCAFDoc_ColorCurv, col)) {
-          double r = col.Red(), g = col.Green(), b = col.Blue();
+          double r, g, b;
+          getColorRGB(col, r, g, b);
           Msg::Info(" - Color (%g, %g, %g) (Curve)", r, g, b);
           attributes->insert(
             new OCCAttributes(1, TopoDS::Face(xp1.Current()), r, g, b, 1.));
