@@ -597,7 +597,7 @@ public:
   bool addBox(int &tag, double x, double y, double z, double dx, double dy,
               double dz)
   {
-    return _error("add block");
+    return _error("add box");
   }
   bool addCylinder(int &tag, double x, double y, double z, double dx, double dy,
                    double dz, double r, double angle)
