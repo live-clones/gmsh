@@ -47,6 +47,9 @@ gmsh = api.add_module('gmsh', 'top-level functions')
 doc = '''Initialize the Gmsh API. This must be called before any call to the other functions in the API. If `argc' and `argv' (or just `argv' in Python or Julia) are provided, they will be handled in the same way as the command line arguments in the Gmsh app. If `readConfigFiles' is set, read system Gmsh configuration files (gmshrc and gmsh-options). If `run' is set, run in the same way as the Gmsh app, either interactively or in batch mode depending on the command line arguments. If `run' is not set, initializing the API sets the options "General.AbortOnError" to 2 and "General.Terminal" to 1. If compiled with OpenMP support, it also sets the number of threads to "General.NumThreads".'''
 gmsh.add('initialize', doc, None, iargcargv(), ibool('readConfigFiles', 'true', 'True', 'true'), ibool('run', 'false', 'False'))
 
+doc = '''Return 1 if the Gmsh API is initialized, and 0 if not.'''
+gmsh.add('isInitialized', doc, oint)
+
 doc = '''Finalize the Gmsh API. This must be called when you are done using the Gmsh API.'''
 gmsh.add('finalize', doc, None)
 

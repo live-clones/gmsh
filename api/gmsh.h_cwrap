@@ -123,6 +123,15 @@ namespace gmsh { // Top-level functions
     if(ierr) throwLastError();
   }
 
+  // Return 1 if the Gmsh API is initialized, and 0 if not.
+  inline int isInitialized()
+  {
+    int ierr = 0;
+    int result_api_ = gmshIsInitialized(&ierr);
+    if(ierr) throwLastError();
+    return result_api_;
+  }
+
   // Finalize the Gmsh API. This must be called when you are done using the Gmsh
   // API.
   inline void finalize()

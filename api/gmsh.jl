@@ -50,6 +50,23 @@ function initialize(argv = Vector{String}(), readConfigFiles = true, run = false
 end
 
 """
+    gmsh.isInitialized()
+
+Return 1 if the Gmsh API is initialized, and 0 if not.
+
+Return an integer value.
+"""
+function isInitialized()
+    ierr = Ref{Cint}()
+    api_result_ = ccall((:gmshIsInitialized, lib), Cint,
+          (Ptr{Cint},),
+          ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return api_result_
+end
+const is_initialized = isInitialized
+
+"""
     gmsh.finalize()
 
 Finalize the Gmsh API. This must be called when you are done using the Gmsh API.

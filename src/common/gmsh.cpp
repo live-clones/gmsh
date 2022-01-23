@@ -155,6 +155,11 @@ GMSH_API void gmsh::initialize(int argc, char **argv, bool readConfigFiles,
   Msg::Error("Something went wrong when initializing Gmsh");
 }
 
+GMSH_API int gmsh::isInitialized()
+{
+  return _initialized;
+}
+
 GMSH_API void gmsh::finalize()
 {
   if(!_checkInit()) return;

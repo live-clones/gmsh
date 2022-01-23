@@ -57,6 +57,15 @@ c
             integer(c_int)::ierr
           end subroutine gmshInitialize
 
+!  Return 1 if the Gmsh API is initialized, and 0 if not.
+        function gmshIsInitialized(
+     &      ierr)
+     &    bind(C, name = "gmshIsInitialized")
+          use, intrinsic :: iso_c_binding
+          integer(c_int)::gmshIsInitialized
+            integer(c_int)::ierr
+          end function gmshIsInitialized
+
 !  Finalize the Gmsh API. This must be called when you are done using the Gmsh
 !  API.
         subroutine gmshFinalize(

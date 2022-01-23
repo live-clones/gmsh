@@ -68,6 +68,11 @@ namespace gmsh { // Top-level functions
                            const bool readConfigFiles = true,
                            const bool run = false);
 
+  // gmsh::isInitialized
+  //
+  // Return 1 if the Gmsh API is initialized, and 0 if not.
+  GMSH_API int isInitialized();
+
   // gmsh::finalize
   //
   // Finalize the Gmsh API. This must be called when you are done using the Gmsh

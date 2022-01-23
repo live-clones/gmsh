@@ -1,5 +1,7 @@
 (Work-in-progress): new Mesh.MinimumLineNodes option.
 
+* New API functions: gmsh/isInitialized.
+
 4.9.3 (January 4, 2022): improved handling of degenerate curves in periodic
 surfaces and boundary layer extrusion; extended Mesh.SaveGroupsOfElements
 capabilities for INP export; extended Mesh.MeshSizeExtendFromBoundary + new

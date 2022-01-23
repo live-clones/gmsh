@@ -52,6 +52,9 @@ GMSH_API void gmshInitialize(int argc, char ** argv,
                              const int run,
                              int * ierr);
 
+/* Return 1 if the Gmsh API is initialized, and 0 if not. */
+GMSH_API int gmshIsInitialized(int * ierr);
+
 /* Finalize the Gmsh API. This must be called when you are done using the Gmsh
  * API. */
 GMSH_API void gmshFinalize(int * ierr);

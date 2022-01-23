@@ -249,6 +249,22 @@ def initialize(argv=[], readConfigFiles=True, run=False):
     if ierr.value != 0:
         raise Exception(logger.getLastError())
 
+def isInitialized():
+    """
+    gmsh.isInitialized()
+
+    Return 1 if the Gmsh API is initialized, and 0 if not.
+
+    Return an integer value.
+    """
+    ierr = c_int()
+    api_result_ = lib.gmshIsInitialized(
+        byref(ierr))
+    if ierr.value != 0:
+        raise Exception(logger.getLastError())
+    return api_result_
+is_initialized = isInitialized
+
 def finalize():
     """
     gmsh.finalize()

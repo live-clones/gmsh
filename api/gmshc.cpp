@@ -82,6 +82,19 @@ GMSH_API void gmshInitialize(int argc, char ** argv, const int readConfigFiles, 
   }
 }
 
+GMSH_API int gmshIsInitialized(int * ierr)
+{
+  int result_api_ = 0;
+  if(ierr) *ierr = 0;
+  try {
+    result_api_ = gmsh::isInitialized();
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+  return result_api_;
+}
+
 GMSH_API void gmshFinalize(int * ierr)
 {
   if(ierr) *ierr = 0;
