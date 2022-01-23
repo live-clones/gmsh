@@ -422,6 +422,7 @@ gmsh::model::getPhysicalGroupsForEntity(const int dim, const int tag,
     return;
   }
   std::vector<int> phy = ge->getPhysicalEntities();
+  if(phy.empty()) return;
   physicalTags.resize(phy.size());
   for(std::size_t i = 0; i < phy.size(); i++) { physicalTags[i] = phy[i]; }
 }
@@ -4237,6 +4238,7 @@ GMSH_API void gmsh::model::mesh::getKeysInformation(
   basis->getKeysInfo(functionTypeInfo, orderInfo);
   delete basis;
   std::size_t keySize = typeKeys.size();
+  if(!keySize) return;
   infoKeys.resize(keySize);
   std::size_t it = keySize / numDofsPerElement;
   for(std::size_t i = 0; i < it; i++) {
@@ -4268,6 +4270,7 @@ GMSH_API void gmsh::model::mesh::getBarycenters(
     Msg::Error("Number of tasks should be > 0");
     return;
   }
+  if(!numElements) return;
   const size_t begin = (task * numElements) / numTasks;
   const size_t end = ((task + 1) * numElements) / numTasks;
   if(3 * end > barycenters.size()) {
@@ -4373,6 +4376,7 @@ GMSH_API void gmsh::model::mesh::preallocateBarycenters(
   for(std::size_t i = 0; i < entities.size(); i++)
     numElements += entities[i]->getNumMeshElementsByType(familyType);
   barycenters.clear();
+  if(!numElements) return;
   barycenters.resize(3 * numElements, 0);
 }
 
@@ -4409,6 +4413,7 @@ GMSH_API void gmsh::model::mesh::getElementEdgeNodes(
     Msg::Error("Number of tasks should be > 0");
     return;
   }
+  if(!numElements || !numEdgesPerEle || !numNodesPerEdge) return;
   const size_t begin = (task * numElements) / numTasks;
   const size_t end = ((task + 1) * numElements) / numTasks;
   if(numEdgesPerEle * numNodesPerEdge * end > nodeTags.size()) {
@@ -4478,6 +4483,7 @@ GMSH_API void gmsh::model::mesh::getElementFaceNodes(
     Msg::Error("Number of tasks should be > 0");
     return;
   }
+  if(!numElements || !numFacesPerEle || !numNodesPerFace) return;
   const size_t begin = (task * numElements) / numTasks;
   const size_t end = ((task + 1) * numElements) / numTasks;
   if(numFacesPerEle * numNodesPerFace * end > nodeTags.size()) {
@@ -5293,6 +5299,7 @@ GMSH_API void gmsh::model::mesh::triangulate(const std::vector<double> &coord,
                                              std::vector<std::size_t> &tri)
 {
   if(!_checkInit()) return;
+  tri.clear();
   if(coord.size() % 2) {
     Msg::Error("Number of 2D coordinates should be even");
     return;
@@ -5313,6 +5320,7 @@ GMSH_API void gmsh::model::mesh::triangulate(const std::vector<double> &coord,
   }
   std::vector<MTriangle *> tris;
   delaunayMeshIn2D(verts, tris);
+  if(tris.empty()) return;
   tri.resize(3 * tris.size());
   for(std::size_t i = 0; i < tris.size(); i++) {
     MTriangle *t = tris[i];
@@ -5331,6 +5339,7 @@ gmsh::model::mesh::tetrahedralize(const std::vector<double> &coord,
                                   std::vector<std::size_t> &tetra)
 {
   if(!_checkInit()) return;
+  tetra.clear();
   if(coord.size() % 3) {
     Msg::Error("Number of coordinates should be a multiple of 3");
     return;
@@ -5348,6 +5357,7 @@ gmsh::model::mesh::tetrahedralize(const std::vector<double> &coord,
     delaunayMeshIn3DHxt(verts, tets);
   else
     delaunayMeshIn3D(verts, tets, true);
+  if(tets.empty()) return;
   tetra.resize(4 * tets.size());
   for(std::size_t i = 0; i < tets.size(); i++) {
     MTetrahedron *t = tets[i];
