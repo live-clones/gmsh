@@ -290,15 +290,15 @@ public:
     for(std::size_t i = 0; i < attr.size(); i++) {
       const std::vector<double> &col = attr[i]->getColor();
       if(col.size() >= 3) {
-        int r = (int)(col[0] * 255);
+        int r = static_cast<int>(col[0] * 255. + 0.5);
         r = (r < 0) ? 0 : (r > 255) ? 255 : r;
-        int g = (int)(col[1] * 255);
+        int g = static_cast<int>(col[1] * 255. + 0.5);
         g = (g < 0) ? 0 : (g > 255) ? 255 : g;
-        int b = (int)(col[2] * 255);
+        int b = static_cast<int>(col[2] * 255. + 0.5);
         b = (b < 0) ? 0 : (b > 255) ? 255 : b;
         int a = 255;
         if(col.size() >= 4) {
-          int a = (int)(col[3] * 255);
+          int a = static_cast<int>(col[3] * 255. + 0.5);
           a = (a < 0) ? 0 : (a > 255) ? 255 : a;
         }
         color = CTX::instance()->packColor(r, g, b, a);
