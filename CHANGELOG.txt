@@ -1,4 +1,4 @@
-(Work-in-progress): new Mesh.MinimumLineNodes option.
+(Work-in-progress): new Mesh.MinimumLineNodes option; small bug fixes.
 
 * New API functions: gmsh/isInitialized.
 

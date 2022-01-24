@@ -4464,21 +4464,26 @@ GMSH_API void gmsh::model::mesh::getElementFaceNodes(
       MElement *e = ge->getMeshElementByType(familyType, 0);
       int nf = e->getNumFaces();
       numFacesPerEle = 0;
-      for(int j = 0; j < nf; j++) {
-        MFace f = e->getFace(j);
-        if(faceType == (int)f.getNumVertices()) numFacesPerEle++;
-      }
-      if(primary) { numNodesPerFace = faceType; }
-      else {
-        std::vector<MVertex *> v;
-        // we could use e->getHighOrderFace() here if we decide to remove
-        // getFaceVertices
-        e->getFaceVertices(0, v);
-        numNodesPerFace = v.size();
+      for(int k = 0; k < nf; k++) {
+        MFace f = e->getFace(k);
+        if(faceType == (int)f.getNumVertices()) {
+          numFacesPerEle++;
+          if(!numNodesPerFace) {
+            if(primary) { numNodesPerFace = faceType; }
+            else {
+              std::vector<MVertex *> v;
+              // we could use e->getHighOrderFace() here if we decide to remove
+              // getFaceVertices
+              e->getFaceVertices(k, v);
+              numNodesPerFace = v.size();
+            }
+          }
+        }
       }
     }
     numElements += n;
   }
+
   if(!numTasks) {
     Msg::Error("Number of tasks should be > 0");
     return;
