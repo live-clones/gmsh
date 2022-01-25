@@ -28,6 +28,7 @@ order = DefineNumber[1, Choices{1="First order",2="Second order"},
 
 Mesh.CompoundClassify = classif;
 Mesh.ElementOrder = order;
+Mesh.HighOrderOptimize = 1;
 
 // refine the mesh of the compound parts to improve the geometrical location of
 // compound mesh nodes (which are located on the *mesh* of the compound parts)
