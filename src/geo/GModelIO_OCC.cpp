@@ -1460,7 +1460,6 @@ bool OCC_Internals::addWire(int &tag, const std::vector<int> &curveTags,
   try {
     BRepBuilderAPI_MakeWire w;
     TopoDS_Wire wire;
-    TopTools_ListOfShape edges;
     for(std::size_t i = 0; i < curveTags.size(); i++) {
       // all curve tags are > 0 for OCC : but to improve compatibility between
       // GEO and OCC factories, we allow negative tags - and simply ignore the
@@ -1471,9 +1470,8 @@ bool OCC_Internals::addWire(int &tag, const std::vector<int> &curveTags,
         return false;
       }
       TopoDS_Edge edge = TopoDS::Edge(_tagEdge.Find(t));
-      edges.Append(edge);
+      w.Add(edge);
     }
-    w.Add(edges);
     w.Build();
     if(!w.IsDone()) {
       Msg::Error("Could not create wire");
