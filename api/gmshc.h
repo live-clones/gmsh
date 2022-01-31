@@ -2185,12 +2185,12 @@ GMSH_API int gmshModelOccAddSurfaceFilling(const int wireTag,
                                            int * ierr);
 
 /* Add a BSpline surface in the OpenCASCADE CAD representation, filling the
- * curve loop `wireTag'. The curve loop should be made of 2, 3 or 4 BSpline
- * curves. The optional `type' argument specifies the type of filling:
- * "Stretch" creates the flattest patch, "Curved" (the default) creates the
- * most rounded patch, and "Coons" creates a rounded patch with less depth
- * than "Curved". If `tag' is positive, set the tag explicitly; otherwise a
- * new tag is selected automatically. Return the tag of the surface. */
+ * curve loop `wireTag'. The curve loop should be made of 2, 3 or 4 curves.
+ * The optional `type' argument specifies the type of filling: "Stretch"
+ * creates the flattest patch, "Curved" (the default) creates the most rounded
+ * patch, and "Coons" creates a rounded patch with less depth than "Curved".
+ * If `tag' is positive, set the tag explicitly; otherwise a new tag is
+ * selected automatically. Return the tag of the surface. */
 GMSH_API int gmshModelOccAddBSplineFilling(const int wireTag,
                                            const int tag,
                                            const char * type,
@@ -2639,6 +2639,10 @@ GMSH_API void gmshModelOccHealShapes(int ** outDimTags, size_t * outDimTags_n,
                                      const int makeSolids,
                                      int * ierr);
 
+/* Convert the entities `dimTags' to NURBS. */
+GMSH_API void gmshModelOccConvertToNURBS(int * dimTags, size_t dimTags_n,
+                                         int * ierr);
+
 /* Import BREP, STEP or IGES shapes from the file `fileName' in the
  * OpenCASCADE CAD representation. The imported entities are returned in
  * `outDimTags'. If the optional argument `highestDimOnly' is set, only import
@@ -2697,6 +2701,18 @@ GMSH_API void gmshModelOccGetBoundingBox(const int dim,
                                          double * ymax,
                                          double * zmax,
                                          int * ierr);
+
+/* Get the `tags' of the curve loops making up the surface of tag
+ * `surfaceTag'. */
+GMSH_API void gmshModelOccGetCurveLoops(const int surfaceTag,
+                                        int ** tags, size_t * tags_n,
+                                        int * ierr);
+
+/* Get the `tags' of the surface loops making up the volume of tag
+ * `volumeTag'. */
+GMSH_API void gmshModelOccGetSurfaceLoops(const int volumeTag,
+                                          int ** tags, size_t * tags_n,
+                                          int * ierr);
 
 /* Get the mass of the OpenCASCADE entity of dimension `dim' and tag `tag'. */
 GMSH_API void gmshModelOccGetMass(const int dim,

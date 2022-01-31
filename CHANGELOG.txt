@@ -1,6 +1,8 @@
-(Work-in-progress): new Mesh.MinimumLineNodes option; small bug fixes.
+(Work-in-progress): new Mesh.MinimumLineNodes option; improved BSpline filling;
+small bug fixes.
 
-* New API functions: gmsh/isInitialized.
+* New API functions: gmsh/isInitialized, occ/convertToNURBS, occ/getCurveLoops,
+  occ/getSurfaceLoops
 
 4.9.3 (January 4, 2022): improved handling of degenerate curves in periodic
 surfaces and boundary layer extrusion; extended Mesh.SaveGroupsOfElements

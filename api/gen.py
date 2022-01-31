@@ -761,7 +761,7 @@ occ.add('addPlaneSurface', doc, oint, ivectorint('wireTags'), iint('tag', '-1'))
 doc = '''Add a surface in the OpenCASCADE CAD representation, filling the curve loop `wireTag'. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the surface. If `pointTags' are provided, force the surface to pass through the given points. The other optional arguments are `degree' (the degree of the energy criterion to minimize for computing the deformation of the surface), `numPointsOnCurves' (the average number of points for discretisation of the bounding curves), `numIter' (the maximum number of iterations of the optimization process), `anisotropic' (improve performance when the ratio of the length along the two parametric coordinates of the surface is high), `tol2d' (tolerance to the constraints in the parametric plane of the surface), `tol3d' (the maximum distance allowed between the support surface and the constraints), `tolAng' (the maximum angle allowed between the normal of the surface and the constraints), `tolCurv' (the maximum difference of curvature allowed between the surface and the constraint), `maxDegree' (the highest degree which the polynomial defining the filling surface can have) and, `maxSegments' (the largest number of segments which the filling surface can have).'''
 occ.add('addSurfaceFilling', doc, oint, iint('wireTag'), iint('tag', '-1'), ivectorint('pointTags', 'std::vector<int>()', "[]", "[]"), iint('degree', '3'), iint('numPointsOnCurves', '15'), iint('numIter', '2'), ibool('anisotropic', 'false', 'False'), idouble('tol2d', '0.00001'), idouble('tol3d', '0.0001'), idouble('tolAng', '0.01'), idouble('tolCurv', '0.1'), iint('maxDegree', '8'), iint('maxSegments', '9'))
 
-doc = '''Add a BSpline surface in the OpenCASCADE CAD representation, filling the curve loop `wireTag'. The curve loop should be made of 2, 3 or 4 BSpline curves. The optional `type' argument specifies the type of filling: "Stretch" creates the flattest patch, "Curved" (the default) creates the most rounded patch, and "Coons" creates a rounded patch with less depth than "Curved". If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the surface.'''
+doc = '''Add a BSpline surface in the OpenCASCADE CAD representation, filling the curve loop `wireTag'. The curve loop should be made of 2, 3 or 4 curves. The optional `type' argument specifies the type of filling: "Stretch" creates the flattest patch, "Curved" (the default) creates the most rounded patch, and "Coons" creates a rounded patch with less depth than "Curved". If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the surface.'''
 occ.add('addBSplineFilling', doc, oint, iint('wireTag'), iint('tag', '-1'), istring('type', '""'))
 
 doc = '''Add a Bezier surface in the OpenCASCADE CAD representation, filling the curve loop `wireTag'. The curve loop should be made of 2, 3 or 4 Bezier curves. The optional `type' argument specifies the type of filling: "Stretch" creates the flattest patch, "Curved" (the default) creates the most rounded patch, and "Coons" creates a rounded patch with less depth than "Curved". If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the surface.'''
@@ -862,6 +862,9 @@ occ.add('removeAllDuplicates', doc, None)
 doc = '''Apply various healing procedures to the entities `dimTags' (or to all the entities in the model if `dimTags' is empty) in the OpenCASCADE CAD representation. Return the healed entities in `outDimTags'. Available healing options are listed in the Gmsh reference manual.'''
 occ.add('healShapes', doc, None, ovectorpair('outDimTags'), ivectorpair('dimTags', 'gmsh::vectorpair()', "[]", "[]"), idouble('tolerance', '1e-8'), ibool('fixDegenerated', 'true', 'True'), ibool('fixSmallEdges', 'true', 'True'), ibool('fixSmallFaces', 'true', 'True'), ibool('sewFaces', 'true', 'True'), ibool('makeSolids', 'true', 'True'))
 
+doc = '''Convert the entities `dimTags' to NURBS.'''
+occ.add('convertToNURBS', doc, None, ivectorpair('dimTags'))
+
 doc = '''Import BREP, STEP or IGES shapes from the file `fileName' in the OpenCASCADE CAD representation. The imported entities are returned in `outDimTags'. If the optional argument `highestDimOnly' is set, only import the highest dimensional entities in the file. The optional argument `format' can be used to force the format of the file (currently "brep", "step" or "iges").'''
 occ.add('importShapes', doc, None, istring('fileName'), ovectorpair('outDimTags'), ibool('highestDimOnly', 'true', 'True'), istring('format', '""'))
 
@@ -876,6 +879,12 @@ occ.add('getEntitiesInBoundingBox', doc, None, idouble('xmin'), idouble('ymin'),
 
 doc = '''Get the bounding box (`xmin', `ymin', `zmin'), (`xmax', `ymax', `zmax') of the OpenCASCADE entity of dimension `dim' and tag `tag'.'''
 occ.add('getBoundingBox', doc, None, iint('dim'), iint('tag'), odouble('xmin'), odouble('ymin'), odouble('zmin'), odouble('xmax'), odouble('ymax'), odouble('zmax'))
+
+doc = '''Get the `tags' of the curve loops making up the surface of tag `surfaceTag'.'''
+occ.add('getCurveLoops', doc, None, iint('surfaceTag'), ovectorint('tags'))
+
+doc = '''Get the `tags' of the surface loops making up the volume of tag `volumeTag'.'''
+occ.add('getSurfaceLoops', doc, None, iint('volumeTag'), ovectorint('tags'))
 
 doc = '''Get the mass of the OpenCASCADE entity of dimension `dim' and tag `tag'.'''
 occ.add('getMass', doc, None, iint('dim'), iint('tag'), odouble('mass'))

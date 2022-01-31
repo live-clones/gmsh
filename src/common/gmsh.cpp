@@ -6638,6 +6638,13 @@ GMSH_API void gmsh::model::occ::healShapes(
     fixSmallFaces, sewFaces, makeSolids);
 }
 
+GMSH_API void gmsh::model::occ::convertToNURBS(const vectorpair &inDimTags)
+{
+  if(!_checkInit()) return;
+  _createOcc();
+  GModel::current()->getOCCInternals()->convertToNURBS(inDimTags);
+}
+
 GMSH_API void gmsh::model::occ::importShapes(const std::string &fileName,
                                              vectorpair &outDimTags,
                                              const bool highestDimOnly,
@@ -6691,6 +6698,22 @@ GMSH_API void gmsh::model::occ::getBoundingBox(const int dim, const int tag,
   _createOcc();
   GModel::current()->getOCCInternals()->getBoundingBox(dim, tag, xmin, ymin,
                                                        zmin, xmax, ymax, zmax);
+}
+
+GMSH_API void gmsh::model::occ::getCurveLoops(const int surfaceTag,
+                                              std::vector<int> &tags)
+{
+  if(!_checkInit()) return;
+  _createOcc();
+  GModel::current()->getOCCInternals()->getCurveLoops(surfaceTag, tags);
+}
+
+GMSH_API void gmsh::model::occ::getSurfaceLoops(const int volumeTag,
+                                                std::vector<int> &tags)
+{
+  if(!_checkInit()) return;
+  _createOcc();
+  GModel::current()->getOCCInternals()->getSurfaceLoops(volumeTag, tags);
 }
 
 GMSH_API void gmsh::model::occ::getMass(const int dim, const int tag,

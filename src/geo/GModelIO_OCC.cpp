@@ -3,6 +3,8 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+#include <numeric>
+#include <utility>
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "GModelIO_OCC.h"
@@ -32,6 +34,7 @@
 #include <BRepBuilderAPI_MakeSolid.hxx>
 #include <BRepBuilderAPI_MakeVertex.hxx>
 #include <BRepBuilderAPI_MakeWire.hxx>
+#include <BRepBuilderAPI_NurbsConvert.hxx>
 #include <BRepBuilderAPI_Transform.hxx>
 #include <BRepCheck_Analyzer.hxx>
 #include <BRepExtrema_DistShapeShape.hxx>
@@ -54,12 +57,14 @@
 #include <BRepPrimAPI_MakeTorus.hxx>
 #include <BRepPrimAPI_MakeWedge.hxx>
 #include <BRepTools.hxx>
+#include <BRepTools_WireExplorer.hxx>
 #include <BRep_Tool.hxx>
 #include <Bnd_Box.hxx>
 #include <ElCLib.hxx>
 #include <GProp_GProps.hxx>
 #include <Geom2d_Curve.hxx>
 #include <GeomAPI_Interpolate.hxx>
+#include <GeomConvert.hxx>
 #include <GeomFill_BSplineCurves.hxx>
 #include <GeomFill_BezierCurves.hxx>
 #include <GeomProjLib.hxx>
@@ -102,8 +107,6 @@
 #include <gce_MakeCirc.hxx>
 #include <gce_MakeElips.hxx>
 #include <gce_MakePln.hxx>
-#include <numeric>
-#include <utility>
 
 #include "OCCAttributes.h"
 
@@ -1457,6 +1460,7 @@ bool OCC_Internals::addWire(int &tag, const std::vector<int> &curveTags,
   try {
     BRepBuilderAPI_MakeWire w;
     TopoDS_Wire wire;
+    TopTools_ListOfShape edges;
     for(std::size_t i = 0; i < curveTags.size(); i++) {
       // all curve tags are > 0 for OCC : but to improve compatibility between
       // GEO and OCC factories, we allow negative tags - and simply ignore the
@@ -1467,7 +1471,13 @@ bool OCC_Internals::addWire(int &tag, const std::vector<int> &curveTags,
         return false;
       }
       TopoDS_Edge edge = TopoDS::Edge(_tagEdge.Find(t));
-      w.Add(edge);
+      edges.Append(edge);
+    }
+    w.Add(edges);
+    w.Build();
+    if(!w.IsDone()) {
+      Msg::Error("Could not create wire");
+      return false;
     }
     wire = w.Wire();
     if(checkClosed && !wire.Closed()) {
@@ -1726,10 +1736,10 @@ bool OCC_Internals::addSurfaceFilling(int &tag, int wireTag,
       return false;
     }
     TopoDS_Wire wire = TopoDS::Wire(_tagWire.Find(wireTag));
-    TopExp_Explorer exp0;
+    BRepTools_WireExplorer exp0; // guarantees edges are ordered
     std::size_t i = 0;
-    for(exp0.Init(wire, TopAbs_EDGE); exp0.More(); exp0.Next()) {
-      TopoDS_Edge edge = TopoDS::Edge(exp0.Current());
+    for(exp0.Init(wire); exp0.More(); exp0.Next()) {
+      TopoDS_Edge edge = exp0.Current();
       if(i < surfaceTags.size()) {
         // associated face constraint (does not seem to work...)
         if(!_tagFace.IsBound(surfaceTags[i])) {
@@ -1798,18 +1808,34 @@ bool OCC_Internals::addBSplineFilling(int &tag, int wireTag,
       return false;
     }
     TopoDS_Wire wire = TopoDS::Wire(_tagWire.Find(wireTag));
-    TopExp_Explorer exp0;
     std::vector<Handle(Geom_BSplineCurve)> bsplines;
-    for(exp0.Init(wire, TopAbs_EDGE); exp0.More(); exp0.Next()) {
-      TopoDS_Edge edge = TopoDS::Edge(exp0.Current());
+    BRepTools_WireExplorer exp0; // guarantees edges are ordered
+    for(exp0.Init(wire); exp0.More(); exp0.Next()) {
+      TopoDS_Edge edge = exp0.Current();
       double s0, s1;
       Handle(Geom_Curve) curve = BRep_Tool::Curve(edge, s0, s1);
+      Handle(Geom_BSplineCurve) bspline;
       if(curve->DynamicType() == STANDARD_TYPE(Geom_BSplineCurve)) {
-        bsplines.push_back(Handle(Geom_BSplineCurve)::DownCast(curve));
+        bspline = Handle(Geom_BSplineCurve)::DownCast(curve);
       }
       else {
-        Msg::Error("Bounding curve for BSpline filling should be a BSpline");
+        // cannot directly use GeomConvert::CurveToBSplineCurve because it does
+        // not handle infinite curves (e.g. straight lines)
+        BRepBuilderAPI_NurbsConvert nurbs(edge);
+        TopoDS_Edge edge2 = TopoDS::Edge(nurbs.ModifiedShape(edge));
+        curve = BRep_Tool::Curve(edge2, s0, s1);
+        bspline = Handle(Geom_BSplineCurve)::DownCast(curve);
       }
+      // if trimmed, create an approximation
+      TopoDS_Vertex v0 = TopExp::FirstVertex(edge);
+      TopoDS_Vertex v1 = TopExp::LastVertex(edge);
+      if(!bspline->StartPoint().IsEqual(BRep_Tool::Pnt(v0),
+                                        CTX::instance()->geom.tolerance) ||
+         !bspline->EndPoint().IsEqual(BRep_Tool::Pnt(v1),
+                                      CTX::instance()->geom.tolerance)) {
+        bspline = GeomConvert::SplitBSplineCurve(bspline, s0, s1, 1e-6);
+      }
+      bsplines.push_back(bspline);
     }
 
     GeomFill_FillingStyle t;
@@ -1839,7 +1865,7 @@ bool OCC_Internals::addBSplineFilling(int &tag, int wireTag,
     ShapeFix_Face fix(result); // not sure why, but this is necessary
     fix.SetPrecision(CTX::instance()->geom.tolerance);
     fix.Perform();
-    fix.FixOrientation();
+    fix.FixOrientation(); // and I don't understand why this is necessary
     result = fix.Face();
   } catch(Standard_Failure &err) {
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
@@ -1867,10 +1893,10 @@ bool OCC_Internals::addBezierFilling(int &tag, int wireTag,
       return false;
     }
     TopoDS_Wire wire = TopoDS::Wire(_tagWire.Find(wireTag));
-    TopExp_Explorer exp0;
+    BRepTools_WireExplorer exp0; // guarantees edges are ordered
     std::vector<Handle(Geom_BezierCurve)> beziers;
-    for(exp0.Init(wire, TopAbs_EDGE); exp0.More(); exp0.Next()) {
-      TopoDS_Edge edge = TopoDS::Edge(exp0.Current());
+    for(exp0.Init(wire); exp0.More(); exp0.Next()) {
+      TopoDS_Edge edge = exp0.Current();
       double s0, s1;
       Handle(Geom_Curve) curve = BRep_Tool::Curve(edge, s0, s1);
       if(curve->DynamicType() == STANDARD_TYPE(Geom_BezierCurve)) {
@@ -1909,7 +1935,7 @@ bool OCC_Internals::addBezierFilling(int &tag, int wireTag,
     ShapeFix_Face fix(result); // not sure why, but this is necessary
     fix.SetPrecision(CTX::instance()->geom.tolerance);
     fix.Perform();
-    fix.FixOrientation();
+    fix.FixOrientation(); // and I don't understand why this is necessary
     result = fix.Face();
   } catch(Standard_Failure &err) {
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
@@ -1994,7 +2020,7 @@ static bool makeTrimmedSurface(const Handle(Geom_Surface) &surf,
     ShapeFix_Face fix(result); // not sure why, but this is necessary
     fix.SetPrecision(CTX::instance()->geom.tolerance);
     fix.Perform();
-    fix.FixOrientation();
+    fix.FixOrientation(); // and I don't understand why this is necessary
     result = fix.Face();
 #endif
   }
@@ -2002,9 +2028,9 @@ static bool makeTrimmedSurface(const Handle(Geom_Surface) &surf,
     std::vector<TopoDS_Wire> wiresProj;
     for(std::size_t i = 0; i < wires.size(); i++) {
       BRepBuilderAPI_MakeWire w;
-      TopExp_Explorer exp0;
-      for(exp0.Init(wires[i], TopAbs_EDGE); exp0.More(); exp0.Next()) {
-        TopoDS_Edge edge = TopoDS::Edge(exp0.Current()), edgeOnSurf;
+      BRepTools_WireExplorer exp0; // guarantees edges are ordered
+      for(exp0.Init(wires[i]); exp0.More(); exp0.Next()) {
+        TopoDS_Edge edge = exp0.Current(), edgeOnSurf;
         if(makeEdgeOnSurface(edge, surf, wire3D, edgeOnSurf))
           w.Add(edgeOnSurf);
       }
@@ -4368,6 +4394,50 @@ bool OCC_Internals::getEntitiesInBoundingBox(
   return true;
 }
 
+bool OCC_Internals::getCurveLoops(int surfaceTag, std::vector<int> &tags)
+{
+  if(!_tagFace.IsBound(surfaceTag)) {
+    Msg::Error("Unknown OpenCASCADE surface with tag %d", surfaceTag);
+    return false;
+  }
+  TopoDS_Face face = TopoDS::Face(_tagFace.Find(surfaceTag));
+  TopExp_Explorer exp0;
+  for(exp0.Init(face, TopAbs_WIRE); exp0.More(); exp0.Next()) {
+    TopoDS_Wire wire = TopoDS::Wire(exp0.Current());
+    if(_wireTag.IsBound(wire)) {
+      tags.push_back(_wireTag.Find(wire));
+    }
+    else {
+      int t = getMaxTag(-1) + 1;
+      _bind(wire, t);
+      tags.push_back(t);
+    }
+  }
+  return true;
+}
+
+bool OCC_Internals::getSurfaceLoops(int volumeTag, std::vector<int> &tags)
+{
+  if(!_tagSolid.IsBound(volumeTag)) {
+    Msg::Error("Unknown OpenCASCADE volume with tag %d", volumeTag);
+    return false;
+  }
+  TopoDS_Solid solid = TopoDS::Solid(_tagSolid.Find(volumeTag));
+  TopExp_Explorer exp0;
+  for(exp0.Init(solid, TopAbs_SHELL); exp0.More(); exp0.Next()) {
+    TopoDS_Shell shell = TopoDS::Shell(exp0.Current());
+    if(_shellTag.IsBound(shell)) {
+      tags.push_back(_shellTag.Find(shell));
+    }
+    else {
+      int t = getMaxTag(-2) + 1;
+      _bind(shell, t);
+      tags.push_back(t);
+    }
+  }
+  return true;
+}
+
 bool OCC_Internals::getMass(int dim, int tag, double &mass)
 {
   if(!_isBound(dim, tag)) {
@@ -5205,6 +5275,28 @@ bool OCC_Internals::healShapes(
 
   // rebind
   _multiBind(c, -1, outDimTags, false, true);
+
+  return true;
+}
+
+bool OCC_Internals::convertToNURBS(
+  const std::vector<std::pair<int, int> > &inDimTags)
+{
+  for(std::size_t i = 0; i < inDimTags.size(); i++) {
+    int dim = inDimTags[i].first;
+    int tag = inDimTags[i].second;
+    if(!_isBound(dim, tag)) {
+      Msg::Error("Unknown OpenCASCADE entity of dimension %d with tag %d", dim,
+                 tag);
+      return false;
+    }
+    TopoDS_Shape shape = _find(dim, tag);
+    BRepBuilderAPI_NurbsConvert nurbs(shape);
+    TopoDS_Shape res = nurbs.ModifiedShape(shape);
+    _unbindWithoutChecks(shape);
+    for(int d = -2; d <= 3; d++) _recomputeMaxTag(d);
+    _bind(res, dim, tag, true);
+  }
 
   return true;
 }

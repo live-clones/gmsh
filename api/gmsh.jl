@@ -4797,12 +4797,12 @@ const add_surface_filling = addSurfaceFilling
     gmsh.model.occ.addBSplineFilling(wireTag, tag = -1, type = "")
 
 Add a BSpline surface in the OpenCASCADE CAD representation, filling the curve
-loop `wireTag`. The curve loop should be made of 2, 3 or 4 BSpline curves. The
-optional `type` argument specifies the type of filling: "Stretch" creates the
-flattest patch, "Curved" (the default) creates the most rounded patch, and
-"Coons" creates a rounded patch with less depth than "Curved". If `tag` is
-positive, set the tag explicitly; otherwise a new tag is selected automatically.
-Return the tag of the surface.
+loop `wireTag`. The curve loop should be made of 2, 3 or 4 curves. The optional
+`type` argument specifies the type of filling: "Stretch" creates the flattest
+patch, "Curved" (the default) creates the most rounded patch, and "Coons"
+creates a rounded patch with less depth than "Curved". If `tag` is positive, set
+the tag explicitly; otherwise a new tag is selected automatically. Return the
+tag of the surface.
 
 Return an integer value.
 """
@@ -5621,6 +5621,23 @@ end
 const heal_shapes = healShapes
 
 """
+    gmsh.model.occ.convertToNURBS(dimTags)
+
+Convert the entities `dimTags` to NURBS.
+"""
+function convertToNURBS(dimTags)
+    api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
+    api_dimTags_n_ = length(api_dimTags_)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelOccConvertToNURBS, gmsh.lib), Cvoid,
+          (Ptr{Cint}, Csize_t, Ptr{Cint}),
+          api_dimTags_, api_dimTags_n_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+const convert_to_nurbs = convertToNURBS
+
+"""
     gmsh.model.occ.importShapes(fileName, highestDimOnly = true, format = "")
 
 Import BREP, STEP or IGES shapes from the file `fileName` in the OpenCASCADE CAD
@@ -5742,6 +5759,46 @@ function getBoundingBox(dim, tag)
     return api_xmin_[], api_ymin_[], api_zmin_[], api_xmax_[], api_ymax_[], api_zmax_[]
 end
 const get_bounding_box = getBoundingBox
+
+"""
+    gmsh.model.occ.getCurveLoops(surfaceTag)
+
+Get the `tags` of the curve loops making up the surface of tag `surfaceTag`.
+
+Return `tags`.
+"""
+function getCurveLoops(surfaceTag)
+    api_tags_ = Ref{Ptr{Cint}}()
+    api_tags_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelOccGetCurveLoops, gmsh.lib), Cvoid,
+          (Cint, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
+          surfaceTag, api_tags_, api_tags_n_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    tags = unsafe_wrap(Array, api_tags_[], api_tags_n_[], own = true)
+    return tags
+end
+const get_curve_loops = getCurveLoops
+
+"""
+    gmsh.model.occ.getSurfaceLoops(volumeTag)
+
+Get the `tags` of the surface loops making up the volume of tag `volumeTag`.
+
+Return `tags`.
+"""
+function getSurfaceLoops(volumeTag)
+    api_tags_ = Ref{Ptr{Cint}}()
+    api_tags_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelOccGetSurfaceLoops, gmsh.lib), Cvoid,
+          (Cint, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
+          volumeTag, api_tags_, api_tags_n_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    tags = unsafe_wrap(Array, api_tags_[], api_tags_n_[], own = true)
+    return tags
+end
+const get_surface_loops = getSurfaceLoops
 
 """
     gmsh.model.occ.getMass(dim, tag)

@@ -4579,12 +4579,12 @@ c
           end function gmshModelOccAddSurfaceFilling
 
 !  Add a BSpline surface in the OpenCASCADE CAD representation, filling the
-!  curve loop `wireTag'. The curve loop should be made of 2, 3 or 4 BSpline
-!  curves. The optional `type' argument specifies the type of filling:
-!  "Stretch" creates the flattest patch, "Curved" (the default) creates the
-!  most rounded patch, and "Coons" creates a rounded patch with less depth
-!  than "Curved". If `tag' is positive, set the tag explicitly; otherwise a
-!  new tag is selected automatically. Return the tag of the surface.
+!  curve loop `wireTag'. The curve loop should be made of 2, 3 or 4 curves.
+!  The optional `type' argument specifies the type of filling: "Stretch"
+!  creates the flattest patch, "Curved" (the default) creates the most rounded
+!  patch, and "Coons" creates a rounded patch with less depth than "Curved".
+!  If `tag' is positive, set the tag explicitly; otherwise a new tag is
+!  selected automatically. Return the tag of the surface.
         function gmshModelOccAddBSplineFilling(
      &      wireTag,
      &      tag,
@@ -5548,6 +5548,18 @@ c
             integer(c_int)::ierr
           end subroutine gmshModelOccHealShapes
 
+!  Convert the entities `dimTags' to NURBS.
+        subroutine gmshModelOccConvertToNURBS(
+     &      dimTags,
+     &      dimTags_n,
+     &      ierr)
+     &    bind(C, name = "gmshModelOccConvertToNURBS")
+          use, intrinsic :: iso_c_binding
+            integer(c_int)::dimTags(*)
+            integer(c_size_t), value :: dimTags_n
+            integer(c_int)::ierr
+          end subroutine gmshModelOccConvertToNURBS
+
 !  Import BREP, STEP or IGES shapes from the file `fileName' in the
 !  OpenCASCADE CAD representation. The imported entities are returned in
 !  `outDimTags'. If the optional argument `highestDimOnly' is set, only import
@@ -5664,6 +5676,36 @@ c
             real(c_double)::zmax
             integer(c_int)::ierr
           end subroutine gmshModelOccGetBoundingBox
+
+!  Get the `tags' of the curve loops making up the surface of tag
+!  `surfaceTag'.
+        subroutine gmshModelOccGetCurveLoops(
+     &      surfaceTag,
+     &      tags,
+     &      tags_n,
+     &      ierr)
+     &    bind(C, name = "gmshModelOccGetCurveLoops")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::surfaceTag
+            type(c_ptr), intent(out)::tags
+            integer(c_size_t) :: tags_n
+            integer(c_int)::ierr
+          end subroutine gmshModelOccGetCurveLoops
+
+!  Get the `tags' of the surface loops making up the volume of tag
+!  `volumeTag'.
+        subroutine gmshModelOccGetSurfaceLoops(
+     &      volumeTag,
+     &      tags,
+     &      tags_n,
+     &      ierr)
+     &    bind(C, name = "gmshModelOccGetSurfaceLoops")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::volumeTag
+            type(c_ptr), intent(out)::tags
+            integer(c_size_t) :: tags_n
+            integer(c_int)::ierr
+          end subroutine gmshModelOccGetSurfaceLoops
 
 !  Get the mass of the OpenCASCADE entity of dimension `dim' and tag `tag'.
         subroutine gmshModelOccGetMass(

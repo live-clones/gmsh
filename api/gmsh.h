@@ -2480,12 +2480,12 @@ namespace gmsh { // Top-level functions
       // gmsh::model::occ::addBSplineFilling
       //
       // Add a BSpline surface in the OpenCASCADE CAD representation, filling the
-      // curve loop `wireTag'. The curve loop should be made of 2, 3 or 4 BSpline
-      // curves. The optional `type' argument specifies the type of filling:
-      // "Stretch" creates the flattest patch, "Curved" (the default) creates the
-      // most rounded patch, and "Coons" creates a rounded patch with less depth
-      // than "Curved". If `tag' is positive, set the tag explicitly; otherwise a
-      // new tag is selected automatically. Return the tag of the surface.
+      // curve loop `wireTag'. The curve loop should be made of 2, 3 or 4 curves.
+      // The optional `type' argument specifies the type of filling: "Stretch"
+      // creates the flattest patch, "Curved" (the default) creates the most
+      // rounded patch, and "Coons" creates a rounded patch with less depth than
+      // "Curved". If `tag' is positive, set the tag explicitly; otherwise a new
+      // tag is selected automatically. Return the tag of the surface.
       GMSH_API int addBSplineFilling(const int wireTag,
                                      const int tag = -1,
                                      const std::string & type = "");
@@ -2970,6 +2970,11 @@ namespace gmsh { // Top-level functions
                                const bool sewFaces = true,
                                const bool makeSolids = true);
 
+      // gmsh::model::occ::convertToNURBS
+      //
+      // Convert the entities `dimTags' to NURBS.
+      GMSH_API void convertToNURBS(const gmsh::vectorpair & dimTags);
+
       // gmsh::model::occ::importShapes
       //
       // Import BREP, STEP or IGES shapes from the file `fileName' in the
@@ -3033,6 +3038,20 @@ namespace gmsh { // Top-level functions
                                    double & xmax,
                                    double & ymax,
                                    double & zmax);
+
+      // gmsh::model::occ::getCurveLoops
+      //
+      // Get the `tags' of the curve loops making up the surface of tag
+      // `surfaceTag'.
+      GMSH_API void getCurveLoops(const int surfaceTag,
+                                  std::vector<int> & tags);
+
+      // gmsh::model::occ::getSurfaceLoops
+      //
+      // Get the `tags' of the surface loops making up the volume of tag
+      // `volumeTag'.
+      GMSH_API void getSurfaceLoops(const int volumeTag,
+                                    std::vector<int> & tags);
 
       // gmsh::model::occ::getMass
       //

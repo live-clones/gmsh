@@ -5586,12 +5586,12 @@ class model:
             gmsh.model.occ.addBSplineFilling(wireTag, tag=-1, type="")
 
             Add a BSpline surface in the OpenCASCADE CAD representation, filling the
-            curve loop `wireTag'. The curve loop should be made of 2, 3 or 4 BSpline
-            curves. The optional `type' argument specifies the type of filling:
-            "Stretch" creates the flattest patch, "Curved" (the default) creates the
-            most rounded patch, and "Coons" creates a rounded patch with less depth
-            than "Curved". If `tag' is positive, set the tag explicitly; otherwise a
-            new tag is selected automatically. Return the tag of the surface.
+            curve loop `wireTag'. The curve loop should be made of 2, 3 or 4 curves.
+            The optional `type' argument specifies the type of filling: "Stretch"
+            creates the flattest patch, "Curved" (the default) creates the most rounded
+            patch, and "Coons" creates a rounded patch with less depth than "Curved".
+            If `tag' is positive, set the tag explicitly; otherwise a new tag is
+            selected automatically. Return the tag of the surface.
 
             Return an integer value.
             """
@@ -6544,6 +6544,22 @@ class model:
         heal_shapes = healShapes
 
         @staticmethod
+        def convertToNURBS(dimTags):
+            """
+            gmsh.model.occ.convertToNURBS(dimTags)
+
+            Convert the entities `dimTags' to NURBS.
+            """
+            api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
+            ierr = c_int()
+            lib.gmshModelOccConvertToNURBS(
+                api_dimTags_, api_dimTags_n_,
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+        convert_to_nurbs = convertToNURBS
+
+        @staticmethod
         def importShapes(fileName, highestDimOnly=True, format=""):
             """
             gmsh.model.occ.importShapes(fileName, highestDimOnly=True, format="")
@@ -6687,6 +6703,48 @@ class model:
                 api_ymax_.value,
                 api_zmax_.value)
         get_bounding_box = getBoundingBox
+
+        @staticmethod
+        def getCurveLoops(surfaceTag):
+            """
+            gmsh.model.occ.getCurveLoops(surfaceTag)
+
+            Get the `tags' of the curve loops making up the surface of tag
+            `surfaceTag'.
+
+            Return `tags'.
+            """
+            api_tags_, api_tags_n_ = POINTER(c_int)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelOccGetCurveLoops(
+                c_int(surfaceTag),
+                byref(api_tags_), byref(api_tags_n_),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return _ovectorint(api_tags_, api_tags_n_.value)
+        get_curve_loops = getCurveLoops
+
+        @staticmethod
+        def getSurfaceLoops(volumeTag):
+            """
+            gmsh.model.occ.getSurfaceLoops(volumeTag)
+
+            Get the `tags' of the surface loops making up the volume of tag
+            `volumeTag'.
+
+            Return `tags'.
+            """
+            api_tags_, api_tags_n_ = POINTER(c_int)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelOccGetSurfaceLoops(
+                c_int(volumeTag),
+                byref(api_tags_), byref(api_tags_n_),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return _ovectorint(api_tags_, api_tags_n_.value)
+        get_surface_loops = getSurfaceLoops
 
         @staticmethod
         def getMass(dim, tag):

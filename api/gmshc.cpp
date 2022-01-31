@@ -3724,6 +3724,22 @@ GMSH_API void gmshModelOccHealShapes(int ** outDimTags, size_t * outDimTags_n, i
   }
 }
 
+GMSH_API void gmshModelOccConvertToNURBS(int * dimTags, size_t dimTags_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::vectorpair api_dimTags_(dimTags_n/2);
+    for(size_t i = 0; i < dimTags_n/2; ++i){
+      api_dimTags_[i].first = dimTags[i * 2 + 0];
+      api_dimTags_[i].second = dimTags[i * 2 + 1];
+    }
+    gmsh::model::occ::convertToNURBS(api_dimTags_);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API void gmshModelOccImportShapes(const char * fileName, int ** outDimTags, size_t * outDimTags_n, const int highestDimOnly, const char * format, int * ierr)
 {
   if(ierr) *ierr = 0;
@@ -3781,6 +3797,32 @@ GMSH_API void gmshModelOccGetBoundingBox(const int dim, const int tag, double * 
   if(ierr) *ierr = 0;
   try {
     gmsh::model::occ::getBoundingBox(dim, tag, *xmin, *ymin, *zmin, *xmax, *ymax, *zmax);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelOccGetCurveLoops(const int surfaceTag, int ** tags, size_t * tags_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<int> api_tags_;
+    gmsh::model::occ::getCurveLoops(surfaceTag, api_tags_);
+    vector2ptr(api_tags_, tags, tags_n);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelOccGetSurfaceLoops(const int volumeTag, int ** tags, size_t * tags_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<int> api_tags_;
+    gmsh::model::occ::getSurfaceLoops(volumeTag, api_tags_);
+    vector2ptr(api_tags_, tags, tags_n);
   }
   catch(...){
     if(ierr) *ierr = 1;
