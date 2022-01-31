@@ -64,6 +64,12 @@ OCCEdge::OCCEdge(GModel *m, TopoDS_Edge c, int num, GVertex *v1, GVertex *v2)
   }
 }
 
+void OCCEdge::delFace(GFace *f)
+{
+  if(_trimmed == f) _trimmed = nullptr;
+  GEdge::delFace(f);
+}
+
 SBoundingBox3d OCCEdge::bounds(bool fast)
 {
   Bnd_Box b;
