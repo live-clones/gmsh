@@ -1798,6 +1798,9 @@ bool OCC_Internals::addBSplineFilling(int &tag, int wireTag,
     return false;
   }
 
+  // TODO: make this a parameter
+  int degree = 0; // 0 = use the degree of the input curves
+
   const double tol = CTX::instance()->geom.tolerance;
   TopoDS_Face result;
   try {
@@ -1814,16 +1817,23 @@ bool OCC_Internals::addBSplineFilling(int &tag, int wireTag,
       double s0, s1;
       Handle(Geom_Curve) curve = BRep_Tool::Curve(edge, s0, s1);
       Handle(Geom_BSplineCurve) bspline;
+      bool approx = false;
       if(curve->DynamicType() == STANDARD_TYPE(Geom_BSplineCurve)) {
         bspline = Handle(Geom_BSplineCurve)::DownCast(curve);
+        if(bspline->Degree() < degree) approx = true;
       }
       else {
+        approx = true;
+      }
+      if(approx) {
         // cannot directly use GeomConvert::CurveToBSplineCurve because it does
         // not handle infinite curves (e.g. straight lines)
         BRepBuilderAPI_NurbsConvert nurbs(edge);
         TopoDS_Edge edge2 = TopoDS::Edge(nurbs.ModifiedShape(edge));
         curve = BRep_Tool::Curve(edge2, s0, s1);
         bspline = Handle(Geom_BSplineCurve)::DownCast(curve);
+        if(bspline->Degree() < degree)
+          bspline->IncreaseDegree(degree);
       }
       // if trimmed, create an approximation
       TopoDS_Vertex v0 = TopExp::FirstVertex(edge);
