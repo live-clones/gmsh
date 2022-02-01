@@ -375,7 +375,6 @@ public:
   // convert shapes to NURBS
   bool convertToNURBS(const std::vector<std::pair<int, int> > &dimTags);
 
-
   // set meshing constraints
   void setMeshSize(int dim, int tag, double size);
 

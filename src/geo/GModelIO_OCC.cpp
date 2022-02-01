@@ -1770,16 +1770,16 @@ bool OCC_Internals::addSurfaceFilling(int &tag, int wireTag,
       return false;
     }
     // face filling duplicates the edges, so we need to go back to the
-    // underlying surface, and remake a new face explicitly with the wire;
-    // applying ShapeFix is mandatory (not sure why...)
+    // underlying surface, and remake a new face explicitly with the wire
     TopoDS_Face tmp = TopoDS::Face(f.Shape());
     Handle(Geom_Surface) s = BRep_Tool::Surface(tmp);
-    result = BRepBuilderAPI_MakeFace(s, wire);
-    ShapeFix_Face fix(result);
-    fix.SetPrecision(CTX::instance()->geom.tolerance);
-    fix.Perform();
-    fix.FixOrientation(); // and I don't understand why this is necessary
-    result = fix.Face();
+    ShapeFix_Face sff;
+    sff.Init(s, CTX::instance()->geom.tolerance);
+    sff.Add(wire);
+    sff.Perform();
+    bool reverse = sff.FixOrientation();
+    result = sff.Face();
+    if(reverse) result.Orientation(TopAbs_REVERSED);
   } catch(Standard_Failure &err) {
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
     return false;
@@ -1865,13 +1865,13 @@ bool OCC_Internals::addBSplineFilling(int &tag, int wireTag,
         "BSpline filling requires between 2 and 4 boundary BSpline curves");
       return false;
     }
-    const Handle(Geom_BSplineSurface) &surf = f.Surface();
-    result = BRepBuilderAPI_MakeFace(surf, wire);
-    ShapeFix_Face fix(result); // not sure why, but this is necessary
-    fix.SetPrecision(tol);
-    fix.Perform();
-    fix.FixOrientation(); // and I don't understand why this is necessary
-    result = fix.Face();
+    ShapeFix_Face sff;
+    sff.Init(f.Surface(), tol);
+    sff.Add(wire);
+    sff.Perform();
+    bool reverse = sff.FixOrientation();
+    result = sff.Face();
+    if(reverse) result.Orientation(TopAbs_REVERSED);
   } catch(Standard_Failure &err) {
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
     return false;
@@ -1935,13 +1935,13 @@ bool OCC_Internals::addBezierFilling(int &tag, int wireTag,
         "Bezier filling requires between 2 and 4 boundary Bezier curves");
       return false;
     }
-    const Handle(Geom_BezierSurface) &surf = f.Surface();
-    result = BRepBuilderAPI_MakeFace(surf, wire);
-    ShapeFix_Face fix(result); // not sure why, but this is necessary
-    fix.SetPrecision(CTX::instance()->geom.tolerance);
-    fix.Perform();
-    fix.FixOrientation(); // and I don't understand why this is necessary
-    result = fix.Face();
+    ShapeFix_Face sff;
+    sff.Init(f.Surface(), CTX::instance()->geom.tolerance);
+    sff.Add(wire);
+    sff.Perform();
+    bool reverse = sff.FixOrientation();
+    result = sff.Face();
+    if(reverse) result.Orientation(TopAbs_REVERSED);
   } catch(Standard_Failure &err) {
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
     return false;
@@ -1996,7 +1996,7 @@ static bool makeTrimmedSurface(const Handle(Geom_Surface) &surf,
     // of the patch. (Since the natural "Replace(old_vertex, new_vertex)" on the
     // face does not work, we do it on each edge. Sigh...)  Since when buiding
     // multi-patch models a fragment or sewing will eventually be necessary to
-    // glue the patches, it's not that useful  let's leave this commented out.
+    // glue the patches, it's not that useful - let's leave this commented out.
     ShapeBuild_ReShape rebuild;
     TopExp_Explorer exp0;
     for(exp0.Init(result, TopAbs_EDGE); exp0.More(); exp0.Next()) {
@@ -2025,7 +2025,7 @@ static bool makeTrimmedSurface(const Handle(Geom_Surface) &surf,
     ShapeFix_Face fix(result); // not sure why, but this is necessary
     fix.SetPrecision(CTX::instance()->geom.tolerance);
     fix.Perform();
-    fix.FixOrientation(); // and I don't understand why this is necessary
+    fix.FixOrientation();
     result = fix.Face();
 #endif
   }
