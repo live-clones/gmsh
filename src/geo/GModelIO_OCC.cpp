@@ -1798,6 +1798,7 @@ bool OCC_Internals::addBSplineFilling(int &tag, int wireTag,
     return false;
   }
 
+  const double tol = CTX::instance()->geom.tolerance;
   TopoDS_Face result;
   try {
     GeomFill_BSplineCurves f;
@@ -1827,10 +1828,8 @@ bool OCC_Internals::addBSplineFilling(int &tag, int wireTag,
       // if trimmed, create an approximation
       TopoDS_Vertex v0 = TopExp::FirstVertex(edge);
       TopoDS_Vertex v1 = TopExp::LastVertex(edge);
-      if(!bspline->StartPoint().IsEqual(BRep_Tool::Pnt(v0),
-                                        CTX::instance()->geom.tolerance) ||
-         !bspline->EndPoint().IsEqual(BRep_Tool::Pnt(v1),
-                                      CTX::instance()->geom.tolerance)) {
+      if(!bspline->StartPoint().IsEqual(BRep_Tool::Pnt(v0), tol) ||
+         !bspline->EndPoint().IsEqual(BRep_Tool::Pnt(v1), tol)) {
         bspline = GeomConvert::SplitBSplineCurve(bspline, s0, s1, 1e-6);
       }
       bsplines.push_back(bspline);
@@ -1848,7 +1847,15 @@ bool OCC_Internals::addBSplineFilling(int &tag, int wireTag,
       f.Init(bsplines[0], bsplines[1], bsplines[2], bsplines[3], t);
     }
     else if(bsplines.size() == 3) {
-      f.Init(bsplines[0], bsplines[1], bsplines[2], t);
+      // workaround bug in 3-sided case in GeomFill_BSplineCurves, which fails
+      // to detect correct ordering when the first curve should be reversed:
+      if(!bsplines[0]->EndPoint().IsEqual(bsplines[1]->StartPoint(), tol) &&
+         !bsplines[0]->EndPoint().IsEqual(bsplines[1]->EndPoint(), tol)) {
+        f.Init(bsplines[0], bsplines[2], bsplines[1], t);
+      }
+      else {
+        f.Init(bsplines[0], bsplines[1], bsplines[2], t);
+      }
     }
     else if(bsplines.size() == 2) {
       f.Init(bsplines[0], bsplines[1], t);
@@ -1861,7 +1868,7 @@ bool OCC_Internals::addBSplineFilling(int &tag, int wireTag,
     const Handle(Geom_BSplineSurface) &surf = f.Surface();
     result = BRepBuilderAPI_MakeFace(surf, wire);
     ShapeFix_Face fix(result); // not sure why, but this is necessary
-    fix.SetPrecision(CTX::instance()->geom.tolerance);
+    fix.SetPrecision(tol);
     fix.Perform();
     fix.FixOrientation(); // and I don't understand why this is necessary
     result = fix.Face();
