@@ -1,5 +1,5 @@
-(Work-in-progress): new Mesh.MinimumLineNodes option; improved BSpline filling;
-small bug fixes.
+4.9.4 (Work-in-progress): new Mesh.MinimumLineNodes option; improved BSpline
+filling; small bug fixes.
 
 * New API functions: gmsh/isInitialized, occ/convertToNURBS, occ/getCurveLoops,
   occ/getSurfaceLoops

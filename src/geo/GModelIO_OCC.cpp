@@ -1831,6 +1831,11 @@ bool OCC_Internals::addBSplineFilling(int &tag, int wireTag,
         BRepBuilderAPI_NurbsConvert nurbs(edge);
         TopoDS_Edge edge2 = TopoDS::Edge(nurbs.ModifiedShape(edge));
         curve = BRep_Tool::Curve(edge2, s0, s1);
+        if(curve->DynamicType() != STANDARD_TYPE(Geom_BSplineCurve)) {
+          Msg::Error("Could not convert bounding curve for BSpline filling to "
+                     "a BSpline");
+          return false;
+        }
         bspline = Handle(Geom_BSplineCurve)::DownCast(curve);
         if(bspline->Degree() < degree)
           bspline->IncreaseDegree(degree);
