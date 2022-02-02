@@ -1282,6 +1282,8 @@ if(ENABLE_OCC)
       foreach(OCC ${OCC_LIBS_REQUIRED})
         find_library(OCC_LIB ${OCC} HINTS ENV CASROOT PATH_SUFFIXES
                      lib ${OCC_SYS_NAME}/lib ${OCC_SYS_NAME}/vc8/lib
+                     ${OCC_SYS_NAME}/vc10/lib ${OCC_SYS_NAME}/vc11/lib
+                     ${OCC_SYS_NAME}/vc12/lib ${OCC_SYS_NAME}/vc14/lib
                      ${OCC_SYS_NAME}/gcc/lib ${OCC_SYS_NAME}/gcc/bin)
         if(OCC_LIB)
 	  list(APPEND OCC_LIBS ${OCC_LIB})
@@ -1305,6 +1307,8 @@ if(ENABLE_OCC)
       foreach(OCC ${OCC_CAF_LIBS_REQUIRED})
         find_library(OCC_CAF_LIB ${OCC} HINTS ENV CASROOT PATH_SUFFIXES
                      lib ${OCC_SYS_NAME}/lib ${OCC_SYS_NAME}/vc8/lib
+                     ${OCC_SYS_NAME}/vc10/lib ${OCC_SYS_NAME}/vc11/lib
+                     ${OCC_SYS_NAME}/vc12/lib ${OCC_SYS_NAME}/vc14/lib
                      ${OCC_SYS_NAME}/gcc/lib ${OCC_SYS_NAME}/gcc/bin)
         if(OCC_CAF_LIB)
           list(APPEND OCC_CAF_LIBS ${OCC_CAF_LIB})
@@ -1332,14 +1336,10 @@ if(ENABLE_OCC)
     set_config_option(HAVE_OCC "OpenCASCADE")
     list(APPEND EXTERNAL_LIBRARIES ${OCC_LIBS})
     list(APPEND EXTERNAL_INCLUDES ${OCC_INC})
-    if(HAVE_64BIT_SIZE_T)
-      add_definitions(-D_OCC64)
-    endif()
     if(WIN32)
       list(APPEND EXTERNAL_LIBRARIES "winspool")
+      # not clear if this is still needed
       add_definitions(-DOCC_CONVERT_SIGNALS)
-    elseif(MSVC)
-      add_definitions(-DWNT)
     endif()
   endif()
 endif()
