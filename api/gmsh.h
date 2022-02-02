@@ -3674,6 +3674,19 @@ namespace gmsh { // Top-level functions
     GMSH_API void getString(const std::string & name,
                             std::vector<std::string> & value);
 
+    // gmsh::onelab::getChanged
+    //
+    // Check if any parameters in the ONELAB database used by the client `name'
+    // have been changed.
+    GMSH_API int getChanged(const std::string & name);
+
+    // gmsh::onelab::setChanged
+    //
+    // Set the changed flag to value `value' for all the parameters in the ONELAB
+    // database used by the client `name'.
+    GMSH_API void setChanged(const std::string & name,
+                             const int value);
+
     // gmsh::onelab::clear
     //
     // Clear the ONELAB database, or remove a single parameter if `name' is given.

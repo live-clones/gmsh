@@ -6836,6 +6836,31 @@ c
             integer(c_int)::ierr
           end subroutine gmshOnelabGetString
 
+!  Check if any parameters in the ONELAB database used by the client `name'
+!  have been changed.
+        function gmshOnelabGetChanged(
+     &      name,
+     &      ierr)
+     &    bind(C, name = "gmshOnelabGetChanged")
+          use, intrinsic :: iso_c_binding
+          integer(c_int)::gmshOnelabGetChanged
+            character(len = 1, kind = c_char)::name(*)
+            integer(c_int)::ierr
+          end function gmshOnelabGetChanged
+
+!  Set the changed flag to value `value' for all the parameters in the ONELAB
+!  database used by the client `name'.
+        subroutine gmshOnelabSetChanged(
+     &      name,
+     &      value,
+     &      ierr)
+     &    bind(C, name = "gmshOnelabSetChanged")
+          use, intrinsic :: iso_c_binding
+            character(len = 1, kind = c_char)::name(*)
+            integer(c_int), value::value
+            integer(c_int)::ierr
+          end subroutine gmshOnelabSetChanged
+
 !  Clear the ONELAB database, or remove a single parameter if `name' is given.
         subroutine gmshOnelabClear(
      &      name,

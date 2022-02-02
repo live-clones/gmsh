@@ -1122,6 +1122,12 @@ onelab.add('getNumber', doc, None, istring('name'), ovectordouble('value'))
 doc = '''Get the value of the string parameter `name' from the ONELAB database. Return an empty vector if the parameter does not exist.'''
 onelab.add('getString', doc, None, istring('name'), ovectorstring('value'))
 
+doc = '''Check if any parameters in the ONELAB database used by the client `name' have been changed.'''
+onelab.add('getChanged', doc, oint, istring('name'))
+
+doc = '''Set the changed flag to value `value' for all the parameters in the ONELAB database used by the client `name'.'''
+onelab.add('setChanged', doc, None, istring('name'), iint('value'))
+
 doc = '''Clear the ONELAB database, or remove a single parameter if `name' is given.'''
 onelab.add('clear', doc, None, istring('name', '""'))
 

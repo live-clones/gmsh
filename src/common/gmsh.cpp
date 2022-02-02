@@ -8241,7 +8241,7 @@ GMSH_API void gmsh::onelab::setNumber(const std::string &name,
   ::onelab::server::instance()->get(ps, name);
   if(ps.size()) p = ps[0];
   p.setValues(value);
-  ::onelab::server::instance()->set(p);
+  ::onelab::server::instance()->set(p, "Gmsh");
 #else
   Msg::Error("ONELAB not available");
 #endif
@@ -8271,7 +8271,7 @@ GMSH_API void gmsh::onelab::setString(const std::string &name,
   ::onelab::server::instance()->get(ps, name);
   if(ps.size()) p = ps[0];
   p.setValues(value);
-  ::onelab::server::instance()->set(p);
+  ::onelab::server::instance()->set(p, "Gmsh");
 #else
   Msg::Error("ONELAB not available");
 #endif
@@ -8288,6 +8288,28 @@ GMSH_API void gmsh::onelab::getString(const std::string &name,
   if(ps.size()) value = ps[0].getValues();
 #else
   Msg::Error("ONELAB not available");
+#endif
+}
+
+GMSH_API int gmsh::onelab::getChanged(const std::string &name)
+{
+  if(!_checkInit()) return 0;
+#if defined(HAVE_ONELAB)
+  return ::onelab::server::instance()->getChanged(name);
+#else
+  Msg::Error("ONELAB not available");
+  return 0;
+#endif
+}
+
+GMSH_API void gmsh::onelab::setChanged(const std::string &name, const int value)
+{
+  if(!_checkInit()) return;
+#if defined(HAVE_ONELAB)
+  return ::onelab::server::instance()->setChanged(value, name);
+#else
+  Msg::Error("ONELAB not available");
+  return 0;
 #endif
 }
 

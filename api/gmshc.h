@@ -3224,6 +3224,17 @@ GMSH_API void gmshOnelabGetString(const char * name,
                                   char *** value, size_t * value_n,
                                   int * ierr);
 
+/* Check if any parameters in the ONELAB database used by the client `name'
+ * have been changed. */
+GMSH_API int gmshOnelabGetChanged(const char * name,
+                                  int * ierr);
+
+/* Set the changed flag to value `value' for all the parameters in the ONELAB
+ * database used by the client `name'. */
+GMSH_API void gmshOnelabSetChanged(const char * name,
+                                   const int value,
+                                   int * ierr);
+
 /* Clear the ONELAB database, or remove a single parameter if `name' is given. */
 GMSH_API void gmshOnelabClear(const char * name,
                               int * ierr);

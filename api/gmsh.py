@@ -8208,6 +8208,42 @@ class onelab:
     get_string = getString
 
     @staticmethod
+    def getChanged(name):
+        """
+        gmsh.onelab.getChanged(name)
+
+        Check if any parameters in the ONELAB database used by the client `name'
+        have been changed.
+
+        Return an integer value.
+        """
+        ierr = c_int()
+        api_result_ = lib.gmshOnelabGetChanged(
+            c_char_p(name.encode()),
+            byref(ierr))
+        if ierr.value != 0:
+            raise Exception(logger.getLastError())
+        return api_result_
+    get_changed = getChanged
+
+    @staticmethod
+    def setChanged(name, value):
+        """
+        gmsh.onelab.setChanged(name, value)
+
+        Set the changed flag to value `value' for all the parameters in the ONELAB
+        database used by the client `name'.
+        """
+        ierr = c_int()
+        lib.gmshOnelabSetChanged(
+            c_char_p(name.encode()),
+            c_int(value),
+            byref(ierr))
+        if ierr.value != 0:
+            raise Exception(logger.getLastError())
+    set_changed = setChanged
+
+    @staticmethod
     def clear(name=""):
         """
         gmsh.onelab.clear(name="")

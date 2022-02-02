@@ -7165,6 +7165,40 @@ end
 const get_string = getString
 
 """
+    gmsh.onelab.getChanged(name)
+
+Check if any parameters in the ONELAB database used by the client `name` have
+been changed.
+
+Return an integer value.
+"""
+function getChanged(name)
+    ierr = Ref{Cint}()
+    api_result_ = ccall((:gmshOnelabGetChanged, gmsh.lib), Cint,
+          (Ptr{Cchar}, Ptr{Cint}),
+          name, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return api_result_
+end
+const get_changed = getChanged
+
+"""
+    gmsh.onelab.setChanged(name, value)
+
+Set the changed flag to value `value` for all the parameters in the ONELAB
+database used by the client `name`.
+"""
+function setChanged(name, value)
+    ierr = Ref{Cint}()
+    ccall((:gmshOnelabSetChanged, gmsh.lib), Cvoid,
+          (Ptr{Cchar}, Cint, Ptr{Cint}),
+          name, value, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+const set_changed = setChanged
+
+"""
     gmsh.onelab.clear(name = "")
 
 Clear the ONELAB database, or remove a single parameter if `name` is given.

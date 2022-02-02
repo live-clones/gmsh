@@ -4656,6 +4656,30 @@ GMSH_API void gmshOnelabGetString(const char * name, char *** value, size_t * va
   }
 }
 
+GMSH_API int gmshOnelabGetChanged(const char * name, int * ierr)
+{
+  int result_api_ = 0;
+  if(ierr) *ierr = 0;
+  try {
+    result_api_ = gmsh::onelab::getChanged(name);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+  return result_api_;
+}
+
+GMSH_API void gmshOnelabSetChanged(const char * name, const int value, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::onelab::setChanged(name, value);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API void gmshOnelabClear(const char * name, int * ierr)
 {
   if(ierr) *ierr = 0;
