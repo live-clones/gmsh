@@ -4,6 +4,8 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <sstream>
+#include <regex>
+
 #include "GmshConfig.h"
 #include "GmshDefines.h"
 #include "GmshGlobal.h"
