@@ -8308,10 +8308,9 @@ GMSH_API void gmsh::onelab::setChanged(const std::string &name, const int value)
 {
   if(!_checkInit()) return;
 #if defined(HAVE_ONELAB)
-  return ::onelab::server::instance()->setChanged(value, name);
+  ::onelab::server::instance()->setChanged(value, name);
 #else
   Msg::Error("ONELAB not available");
-  return 0;
 #endif
 }
 
