@@ -1,5 +1,7 @@
-4.9.4 (Work-in-progress): new Mesh.MinimumLineNodes option; improved BSpline
-filling; new options to fine-tune mesh recombination; small bug fixes.
+4.9.4 (Work-in-progress): improved BSpline filling; new options
+Mesh.MinimumLineNodes, Mesh.RecombineNodeRepositioning,
+Mesh.RecombineMinimumQuality and Mesh.StlLinearDeflectionRelative; small bug
+fixes.
 
 * New API functions: gmsh/isInitialized, occ/convertToNURBS, occ/getCurveLoops,
   occ/getSurfaceLoops, mesh/importStl
