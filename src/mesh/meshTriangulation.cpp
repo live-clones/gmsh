@@ -194,9 +194,8 @@ int PolyMesh2GFace(PolyMesh *pm, int faceTag)
 
 int GFace2PolyMesh(int faceTag, PolyMesh **pm)
 {
-  // FIXME should probably not use the public API here (and certainly not
-  // initialize it!)
-  gmsh::initialize();
+  // FIXME using the public API inside Gmsh is not a good idea
+  if(!gmsh::isInitialized()) gmsh::initialize();
   *pm = new PolyMesh;
 
   std::unordered_map<size_t, size_t> nodeLabels;

@@ -448,7 +448,7 @@ bool GFaceMeshDiff::execute(bool verifyPatchTopology)
         "gf->mesh_vertices (size %li), should NEVER happen, memory corrupted",
         ov->getNum(), ov->onWhat()->dim(), gf->mesh_vertices.size());
       if(Msg::GetVerbosity() >= 99) {
-        gmsh::initialize();
+        if(!gmsh::isInitialized()) gmsh::initialize();
         GeoLog::add(ov->point(), 0.,
                     "bad_property_v" + std::to_string(ov->getNum()));
         GeoLog::flush();

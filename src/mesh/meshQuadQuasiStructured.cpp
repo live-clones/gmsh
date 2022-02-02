@@ -1418,7 +1418,8 @@ int improveCornerValences(
         GFaceMeshPatch patchAfter = diff.after;
 
         if(SHOW_DQR) {
-          gmsh::initialize();
+          // FIXME using the public API inside Gmsh is not a good idea
+          if(!gmsh::isInitialized()) gmsh::initialize();
           GeoLog::add(patchBefore.elements, "fixCornerB");
           GeoLog::add(patchAfter.elements, "fixCornerA");
           gmsh::view::add("---");
@@ -1446,7 +1447,8 @@ int improveCornerValences(
       else {
         Msg::Debug("-- failed to fix corner %li", num);
         if(SHOW_DQR) {
-          gmsh::initialize();
+          // FIXME using the public API inside Gmsh is not a good idea
+          if(!gmsh::isInitialized()) gmsh::initialize();
           GeoLog::add(patch.elements, "fixCornerFAILED");
           gmsh::view::add("---");
           GeoLog::flush();
@@ -1553,7 +1555,8 @@ int improveCurveValences(
       GFaceMeshPatch patchAfter = diff.after;
 
       if(SHOW_DQR) {
-        gmsh::initialize();
+        // FIXME using the public API inside Gmsh is not a good idea
+        if(!gmsh::isInitialized()) gmsh::initialize();
         GeoLog::add(patchBefore.elements, "fixCurveB");
         GeoLog::add(patchAfter.elements, "fixCurveA");
         gmsh::view::add("---");
@@ -1750,7 +1753,8 @@ int improveInteriorValences(
       GFaceMeshPatch patchAfter = diff.after;
 
       if(SHOW_DQR) {
-        gmsh::initialize();
+        // FIXME using the public API inside Gmsh is not a good idea
+        if(!gmsh::isInitialized()) gmsh::initialize();
         GeoLog::add(patchBefore.elements, "fixIntB");
         GeoLog::add(patchAfter.elements, "fixIntA");
         gmsh::view::add("---");
@@ -1983,7 +1987,8 @@ int improveInteriorValencesV2(
       GFaceMeshPatch patchAfter = diff.after;
 
       if(SHOW_DQR) {
-        gmsh::initialize();
+        // FIXME using the public API inside Gmsh is not a good idea
+        if(!gmsh::isInitialized()) gmsh::initialize();
         GeoLog::add(patchBefore.elements, "fixIntB");
         GeoLog::add(patchAfter.elements, "fixIntA");
         gmsh::view::add("---");
