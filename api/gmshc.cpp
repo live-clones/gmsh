@@ -4484,6 +4484,91 @@ GMSH_API void gmshFltkCloseTreeItem(const char * name, int * ierr)
   }
 }
 
+GMSH_API void gmshParserGetNames(char *** names, size_t * names_n, const char * search, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<std::string> api_names_;
+    gmsh::parser::getNames(api_names_, search);
+    vectorstring2charptrptr(api_names_, names, names_n);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshParserSetNumber(const char * name, double * value, size_t value_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<double> api_value_(value, value + value_n);
+    gmsh::parser::setNumber(name, api_value_);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshParserSetString(const char * name, char ** value, size_t value_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<std::string> api_value_(value, value + value_n);
+    gmsh::parser::setString(name, api_value_);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshParserGetNumber(const char * name, double ** value, size_t * value_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<double> api_value_;
+    gmsh::parser::getNumber(name, api_value_);
+    vector2ptr(api_value_, value, value_n);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshParserGetString(const char * name, char *** value, size_t * value_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<std::string> api_value_;
+    gmsh::parser::getString(name, api_value_);
+    vectorstring2charptrptr(api_value_, value, value_n);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshParserClear(const char * name, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::parser::clear(name);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshParserParse(const char * fileName, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::parser::parse(fileName);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API void gmshOnelabSet(const char * data, const char * format, int * ierr)
 {
   if(ierr) *ierr = 0;

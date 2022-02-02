@@ -1074,6 +1074,31 @@ fltk.add('closeTreeItem', doc, None, istring('name'))
 
 ################################################################################
 
+parser = gmsh.add_module('parser', 'Parser functions')
+
+doc = '''Get the names of the variables in the Gmsh parser matching the `search' regular expression. If `search' is empty, return all the names.'''
+parser.add('getNames', doc, None, ovectorstring('names'), istring('search', '""'))
+
+doc = '''Set the value of the number variable `name' in the Gmsh parser. Create the variable if it does not exist; update the value if the variable exists.'''
+parser.add('setNumber', doc, None, istring('name'), ivectordouble('value'))
+
+doc = '''Set the value of the string variable `name' in the Gmsh parser. Create the variable if it does not exist; update the value if the variable exists.'''
+parser.add('setString', doc, None, istring('name'), ivectorstring('value'))
+
+doc = '''Get the value of the number variable `name' from the Gmsh parser. Return an empty vector if the variable does not exist.'''
+parser.add('getNumber', doc, None, istring('name'), ovectordouble('value'))
+
+doc = '''Get the value of the string variable `name' from the Gmsh parser. Return an empty vector if the variable does not exist.'''
+parser.add('getString', doc, None, istring('name'), ovectorstring('value'))
+
+doc = '''Clear all the Gmsh parser variables, or remove a single variable if `name' is given.'''
+parser.add('clear', doc, None, istring('name', '""'))
+
+doc = '''Parse the file `fileName' with the Gmsh parser.'''
+parser.add('parse', doc, None, istring('fileName'))
+
+################################################################################
+
 onelab = gmsh.add_module('onelab', 'ONELAB server functions')
 
 doc = '''Set one or more parameters in the ONELAB database, encoded in `format'.'''

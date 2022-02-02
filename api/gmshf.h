@@ -6636,6 +6636,102 @@ c
             integer(c_int)::ierr
           end subroutine gmshFltkCloseTreeItem
 
+!  Get the names of the variables in the Gmsh parser matching the `search'
+!  regular expression. If `search' is empty, return all the names.
+        subroutine gmshParserGetNames(
+     &      names,
+     &      names_n,
+     &      search,
+     &      ierr)
+     &    bind(C, name = "gmshParserGetNames")
+          use, intrinsic :: iso_c_binding
+            type(c_ptr), intent(out)::names
+            integer(c_size_t) :: names_n
+            character(len = 1, kind = c_char)::search(*)
+            integer(c_int)::ierr
+          end subroutine gmshParserGetNames
+
+!  Set the value of the number variable `name' in the Gmsh parser. Create the
+!  variable if it does not exist; update the value if the variable exists.
+        subroutine gmshParserSetNumber(
+     &      name,
+     &      value,
+     &      value_n,
+     &      ierr)
+     &    bind(C, name = "gmshParserSetNumber")
+          use, intrinsic :: iso_c_binding
+            character(len = 1, kind = c_char)::name(*)
+            real(c_double)::value(*)
+            integer(c_size_t), value :: value_n
+            integer(c_int)::ierr
+          end subroutine gmshParserSetNumber
+
+!  Set the value of the string variable `name' in the Gmsh parser. Create the
+!  variable if it does not exist; update the value if the variable exists.
+        subroutine gmshParserSetString(
+     &      name,
+     &      value,
+     &      value_n,
+     &      ierr)
+     &    bind(C, name = "gmshParserSetString")
+          use, intrinsic :: iso_c_binding
+            character(len = 1, kind = c_char)::name(*)
+            type(c_ptr)::value(*)
+            integer(c_size_t), value :: value_n
+            integer(c_int)::ierr
+          end subroutine gmshParserSetString
+
+!  Get the value of the number variable `name' from the Gmsh parser. Return an
+!  empty vector if the variable does not exist.
+        subroutine gmshParserGetNumber(
+     &      name,
+     &      value,
+     &      value_n,
+     &      ierr)
+     &    bind(C, name = "gmshParserGetNumber")
+          use, intrinsic :: iso_c_binding
+            character(len = 1, kind = c_char)::name(*)
+            type(c_ptr), intent(out)::value
+            integer(c_size_t) :: value_n
+            integer(c_int)::ierr
+          end subroutine gmshParserGetNumber
+
+!  Get the value of the string variable `name' from the Gmsh parser. Return an
+!  empty vector if the variable does not exist.
+        subroutine gmshParserGetString(
+     &      name,
+     &      value,
+     &      value_n,
+     &      ierr)
+     &    bind(C, name = "gmshParserGetString")
+          use, intrinsic :: iso_c_binding
+            character(len = 1, kind = c_char)::name(*)
+            type(c_ptr), intent(out)::value
+            integer(c_size_t) :: value_n
+            integer(c_int)::ierr
+          end subroutine gmshParserGetString
+
+!  Clear all the Gmsh parser variables, or remove a single variable if `name'
+!  is given.
+        subroutine gmshParserClear(
+     &      name,
+     &      ierr)
+     &    bind(C, name = "gmshParserClear")
+          use, intrinsic :: iso_c_binding
+            character(len = 1, kind = c_char)::name(*)
+            integer(c_int)::ierr
+          end subroutine gmshParserClear
+
+!  Parse the file `fileName' with the Gmsh parser.
+        subroutine gmshParserParse(
+     &      fileName,
+     &      ierr)
+     &    bind(C, name = "gmshParserParse")
+          use, intrinsic :: iso_c_binding
+            character(len = 1, kind = c_char)::fileName(*)
+            integer(c_int)::ierr
+          end subroutine gmshParserParse
+
 !  Set one or more parameters in the ONELAB database, encoded in `format'.
         subroutine gmshOnelabSet(
      &      data,

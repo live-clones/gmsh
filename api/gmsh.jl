@@ -6889,6 +6889,143 @@ const close_tree_item = closeTreeItem
 end # end of module fltk
 
 """
+    module gmsh.parser
+
+Parser functions
+"""
+module parser
+
+import ..gmsh
+
+"""
+    gmsh.parser.getNames(search = "")
+
+Get the names of the variables in the Gmsh parser matching the `search` regular
+expression. If `search` is empty, return all the names.
+
+Return `names`.
+"""
+function getNames(search = "")
+    api_names_ = Ref{Ptr{Ptr{Cchar}}}()
+    api_names_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshParserGetNames, gmsh.lib), Cvoid,
+          (Ptr{Ptr{Ptr{Cchar}}}, Ptr{Csize_t}, Ptr{Cchar}, Ptr{Cint}),
+          api_names_, api_names_n_, search, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    tmp_api_names_ = unsafe_wrap(Array, api_names_[], api_names_n_[], own = true)
+    names = [unsafe_string(tmp_api_names_[i]) for i in 1:length(tmp_api_names_) ]
+    return names
+end
+const get_names = getNames
+
+"""
+    gmsh.parser.setNumber(name, value)
+
+Set the value of the number variable `name` in the Gmsh parser. Create the
+variable if it does not exist; update the value if the variable exists.
+"""
+function setNumber(name, value)
+    ierr = Ref{Cint}()
+    ccall((:gmshParserSetNumber, gmsh.lib), Cvoid,
+          (Ptr{Cchar}, Ptr{Cdouble}, Csize_t, Ptr{Cint}),
+          name, convert(Vector{Cdouble}, value), length(value), ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+const set_number = setNumber
+
+"""
+    gmsh.parser.setString(name, value)
+
+Set the value of the string variable `name` in the Gmsh parser. Create the
+variable if it does not exist; update the value if the variable exists.
+"""
+function setString(name, value)
+    ierr = Ref{Cint}()
+    ccall((:gmshParserSetString, gmsh.lib), Cvoid,
+          (Ptr{Cchar}, Ptr{Ptr{Cchar}}, Csize_t, Ptr{Cint}),
+          name, value, length(value), ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+const set_string = setString
+
+"""
+    gmsh.parser.getNumber(name)
+
+Get the value of the number variable `name` from the Gmsh parser. Return an
+empty vector if the variable does not exist.
+
+Return `value`.
+"""
+function getNumber(name)
+    api_value_ = Ref{Ptr{Cdouble}}()
+    api_value_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshParserGetNumber, gmsh.lib), Cvoid,
+          (Ptr{Cchar}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
+          name, api_value_, api_value_n_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    value = unsafe_wrap(Array, api_value_[], api_value_n_[], own = true)
+    return value
+end
+const get_number = getNumber
+
+"""
+    gmsh.parser.getString(name)
+
+Get the value of the string variable `name` from the Gmsh parser. Return an
+empty vector if the variable does not exist.
+
+Return `value`.
+"""
+function getString(name)
+    api_value_ = Ref{Ptr{Ptr{Cchar}}}()
+    api_value_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshParserGetString, gmsh.lib), Cvoid,
+          (Ptr{Cchar}, Ptr{Ptr{Ptr{Cchar}}}, Ptr{Csize_t}, Ptr{Cint}),
+          name, api_value_, api_value_n_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    tmp_api_value_ = unsafe_wrap(Array, api_value_[], api_value_n_[], own = true)
+    value = [unsafe_string(tmp_api_value_[i]) for i in 1:length(tmp_api_value_) ]
+    return value
+end
+const get_string = getString
+
+"""
+    gmsh.parser.clear(name = "")
+
+Clear all the Gmsh parser variables, or remove a single variable if `name` is
+given.
+"""
+function clear(name = "")
+    ierr = Ref{Cint}()
+    ccall((:gmshParserClear, gmsh.lib), Cvoid,
+          (Ptr{Cchar}, Ptr{Cint}),
+          name, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+
+"""
+    gmsh.parser.parse(fileName)
+
+Parse the file `fileName` with the Gmsh parser.
+"""
+function parse(fileName)
+    ierr = Ref{Cint}()
+    ccall((:gmshParserParse, gmsh.lib), Cvoid,
+          (Ptr{Cchar}, Ptr{Cint}),
+          fileName, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+
+end # end of module parser
+
+"""
     module gmsh.onelab
 
 ONELAB server functions

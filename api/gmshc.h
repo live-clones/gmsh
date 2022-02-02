@@ -3141,6 +3141,45 @@ GMSH_API void gmshFltkOpenTreeItem(const char * name,
 GMSH_API void gmshFltkCloseTreeItem(const char * name,
                                     int * ierr);
 
+/* Get the names of the variables in the Gmsh parser matching the `search'
+ * regular expression. If `search' is empty, return all the names. */
+GMSH_API void gmshParserGetNames(char *** names, size_t * names_n,
+                                 const char * search,
+                                 int * ierr);
+
+/* Set the value of the number variable `name' in the Gmsh parser. Create the
+ * variable if it does not exist; update the value if the variable exists. */
+GMSH_API void gmshParserSetNumber(const char * name,
+                                  double * value, size_t value_n,
+                                  int * ierr);
+
+/* Set the value of the string variable `name' in the Gmsh parser. Create the
+ * variable if it does not exist; update the value if the variable exists. */
+GMSH_API void gmshParserSetString(const char * name,
+                                  char ** value, size_t value_n,
+                                  int * ierr);
+
+/* Get the value of the number variable `name' from the Gmsh parser. Return an
+ * empty vector if the variable does not exist. */
+GMSH_API void gmshParserGetNumber(const char * name,
+                                  double ** value, size_t * value_n,
+                                  int * ierr);
+
+/* Get the value of the string variable `name' from the Gmsh parser. Return an
+ * empty vector if the variable does not exist. */
+GMSH_API void gmshParserGetString(const char * name,
+                                  char *** value, size_t * value_n,
+                                  int * ierr);
+
+/* Clear all the Gmsh parser variables, or remove a single variable if `name'
+ * is given. */
+GMSH_API void gmshParserClear(const char * name,
+                              int * ierr);
+
+/* Parse the file `fileName' with the Gmsh parser. */
+GMSH_API void gmshParserParse(const char * fileName,
+                              int * ierr);
+
 /* Set one or more parameters in the ONELAB database, encoded in `format'. */
 GMSH_API void gmshOnelabSet(const char * data,
                             const char * format,

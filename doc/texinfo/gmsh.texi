@@ -5936,9 +5936,10 @@ respectively. The other top-level namespaces are @code{gmsh/option}
 (which handles all options), @code{gmsh/plugin} (which handles
 extensions to core Gmsh functionality), @code{gmsh/graphics} (which
 handles drawing), @code{gmsh/fltk} (which handles the graphical user
-interface), @code{gmsh/onelab} (which handles ONELAB parameters and
-communications with external codes) and @code{gmsh/logger} (which
-handles information logging).
+interface), @code{gmsh/parser} (which handles the Gmsh parser),
+@code{gmsh/onelab} (which handles ONELAB parameters and communications
+with external codes) and @code{gmsh/logger} (which handles information
+logging).
 @item
 Geometrical data is made of model @emph{entities}, called @emph{points}
 (entities of dimension 0), @emph{curves} (entities of dimension 1),

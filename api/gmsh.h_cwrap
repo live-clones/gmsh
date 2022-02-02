@@ -5358,6 +5358,87 @@ namespace gmsh { // Top-level functions
 
   } // namespace fltk
 
+  namespace parser { // Parser functions
+
+    // Get the names of the variables in the Gmsh parser matching the `search'
+    // regular expression. If `search' is empty, return all the names.
+    inline void getNames(std::vector<std::string> & names,
+                         const std::string & search = "")
+    {
+      int ierr = 0;
+      char **api_names_; size_t api_names_n_;
+      gmshParserGetNames(&api_names_, &api_names_n_, search.c_str(), &ierr);
+      if(ierr) throwLastError();
+      names.resize(api_names_n_); for(size_t i = 0; i < api_names_n_; ++i){ names[i] = std::string(api_names_[i]); gmshFree(api_names_[i]); } gmshFree(api_names_);
+    }
+
+    // Set the value of the number variable `name' in the Gmsh parser. Create the
+    // variable if it does not exist; update the value if the variable exists.
+    inline void setNumber(const std::string & name,
+                          const std::vector<double> & value)
+    {
+      int ierr = 0;
+      double *api_value_; size_t api_value_n_; vector2ptr(value, &api_value_, &api_value_n_);
+      gmshParserSetNumber(name.c_str(), api_value_, api_value_n_, &ierr);
+      if(ierr) throwLastError();
+      gmshFree(api_value_);
+    }
+
+    // Set the value of the string variable `name' in the Gmsh parser. Create the
+    // variable if it does not exist; update the value if the variable exists.
+    inline void setString(const std::string & name,
+                          const std::vector<std::string> & value)
+    {
+      int ierr = 0;
+      char **api_value_; size_t api_value_n_; vectorstring2charptrptr(value, &api_value_, &api_value_n_);
+      gmshParserSetString(name.c_str(), api_value_, api_value_n_, &ierr);
+      if(ierr) throwLastError();
+      for(size_t i = 0; i < api_value_n_; ++i){ gmshFree(api_value_[i]); } gmshFree(api_value_);
+    }
+
+    // Get the value of the number variable `name' from the Gmsh parser. Return an
+    // empty vector if the variable does not exist.
+    inline void getNumber(const std::string & name,
+                          std::vector<double> & value)
+    {
+      int ierr = 0;
+      double *api_value_; size_t api_value_n_;
+      gmshParserGetNumber(name.c_str(), &api_value_, &api_value_n_, &ierr);
+      if(ierr) throwLastError();
+      value.assign(api_value_, api_value_ + api_value_n_); gmshFree(api_value_);
+    }
+
+    // Get the value of the string variable `name' from the Gmsh parser. Return an
+    // empty vector if the variable does not exist.
+    inline void getString(const std::string & name,
+                          std::vector<std::string> & value)
+    {
+      int ierr = 0;
+      char **api_value_; size_t api_value_n_;
+      gmshParserGetString(name.c_str(), &api_value_, &api_value_n_, &ierr);
+      if(ierr) throwLastError();
+      value.resize(api_value_n_); for(size_t i = 0; i < api_value_n_; ++i){ value[i] = std::string(api_value_[i]); gmshFree(api_value_[i]); } gmshFree(api_value_);
+    }
+
+    // Clear all the Gmsh parser variables, or remove a single variable if `name'
+    // is given.
+    inline void clear(const std::string & name = "")
+    {
+      int ierr = 0;
+      gmshParserClear(name.c_str(), &ierr);
+      if(ierr) throwLastError();
+    }
+
+    // Parse the file `fileName' with the Gmsh parser.
+    inline void parse(const std::string & fileName)
+    {
+      int ierr = 0;
+      gmshParserParse(fileName.c_str(), &ierr);
+      if(ierr) throwLastError();
+    }
+
+  } // namespace parser
+
   namespace onelab { // ONELAB server functions
 
     // Set one or more parameters in the ONELAB database, encoded in `format'.

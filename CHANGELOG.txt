@@ -4,7 +4,9 @@ Mesh.RecombineMinimumQuality and Mesh.StlLinearDeflectionRelative; small bug
 fixes.
 
 * New API functions: gmsh/isInitialized, occ/convertToNURBS, occ/getCurveLoops,
-  occ/getSurfaceLoops, mesh/importStl
+  occ/getSurfaceLoops, mesh/importStl, parser/getNames, parser/setNumber,
+  parser/setString, parser/getNumber, parser/getString, parser/clear,
+  parser/parse
 
 4.9.3 (January 4, 2022): improved handling of degenerate curves in periodic
 surfaces and boundary layer extrusion; extended Mesh.SaveGroupsOfElements

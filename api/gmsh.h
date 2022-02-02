@@ -3571,6 +3571,56 @@ namespace gmsh { // Top-level functions
 
   } // namespace fltk
 
+  namespace parser { // Parser functions
+
+    // gmsh::parser::getNames
+    //
+    // Get the names of the variables in the Gmsh parser matching the `search'
+    // regular expression. If `search' is empty, return all the names.
+    GMSH_API void getNames(std::vector<std::string> & names,
+                           const std::string & search = "");
+
+    // gmsh::parser::setNumber
+    //
+    // Set the value of the number variable `name' in the Gmsh parser. Create the
+    // variable if it does not exist; update the value if the variable exists.
+    GMSH_API void setNumber(const std::string & name,
+                            const std::vector<double> & value);
+
+    // gmsh::parser::setString
+    //
+    // Set the value of the string variable `name' in the Gmsh parser. Create the
+    // variable if it does not exist; update the value if the variable exists.
+    GMSH_API void setString(const std::string & name,
+                            const std::vector<std::string> & value);
+
+    // gmsh::parser::getNumber
+    //
+    // Get the value of the number variable `name' from the Gmsh parser. Return an
+    // empty vector if the variable does not exist.
+    GMSH_API void getNumber(const std::string & name,
+                            std::vector<double> & value);
+
+    // gmsh::parser::getString
+    //
+    // Get the value of the string variable `name' from the Gmsh parser. Return an
+    // empty vector if the variable does not exist.
+    GMSH_API void getString(const std::string & name,
+                            std::vector<std::string> & value);
+
+    // gmsh::parser::clear
+    //
+    // Clear all the Gmsh parser variables, or remove a single variable if `name'
+    // is given.
+    GMSH_API void clear(const std::string & name = "");
+
+    // gmsh::parser::parse
+    //
+    // Parse the file `fileName' with the Gmsh parser.
+    GMSH_API void parse(const std::string & fileName);
+
+  } // namespace parser
+
   namespace onelab { // ONELAB server functions
 
     // gmsh::onelab::set

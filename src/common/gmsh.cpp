@@ -42,6 +42,7 @@
 #include "pyramidalBasis.h"
 #include "Numeric.h"
 #include "OS.h"
+#include "OpenFile.h"
 #include "HierarchicalBasisH1Quad.h"
 #include "HierarchicalBasisH1Tria.h"
 #include "HierarchicalBasisH1Line.h"
@@ -84,6 +85,10 @@
 
 #if defined(HAVE_FLTK)
 #include "FlGui.h"
+#endif
+
+#if defined(HAVE_PARSER)
+#include "Parser.h"
 #endif
 
 #if defined(HAVE_ONELAB)
@@ -8045,6 +8050,118 @@ GMSH_API void gmsh::fltk::closeTreeItem(const std::string &name)
 #if defined(HAVE_FLTK)
   _createFltk();
   FlGui::instance()->closeTreeItem(name);
+#endif
+}
+
+// gmsh::parser
+
+GMSH_API void gmsh::parser::getNames(std::vector<std::string> &names,
+                                     const std::string &search)
+{
+  if(!_checkInit()) return;
+#if defined(HAVE_PARSER)
+  names.clear();
+  if(search.empty()) {
+    for(auto &p : gmsh_yysymbols) names.push_back(p.first);
+    for(auto &p : gmsh_yystringsymbols) names.push_back(p.first);
+  }
+  else{
+    try{
+      for(auto &p : gmsh_yysymbols) {
+        if(std::regex_search(p.first, std::regex(search)))
+          names.push_back(p.first);
+      }
+      for(auto &p : gmsh_yystringsymbols) {
+        if(std::regex_search(p.first, std::regex(search)))
+          names.push_back(p.first);
+      }
+    }
+    catch(...) {
+    }
+  }
+#else
+  Msg::Error("Parser not available");
+#endif
+}
+
+GMSH_API void gmsh::parser::setNumber(const std::string &name,
+                                      const std::vector<double> &value)
+{
+  if(!_checkInit()) return;
+#if defined(HAVE_PARSER)
+  gmsh_yysymbol &s(gmsh_yysymbols[name]);
+  s.list = (value.size() != 1);
+  s.value = value;
+#else
+  Msg::Error("Parser not available");
+#endif
+}
+
+GMSH_API void gmsh::parser::getNumber(const std::string &name,
+                                      std::vector<double> &value)
+{
+  if(!_checkInit()) return;
+#if defined(HAVE_PARSER)
+  value = gmsh_yysymbols[name].value;
+#else
+  Msg::Error("Parser not available");
+#endif
+}
+
+GMSH_API void gmsh::parser::setString(const std::string &name,
+                                      const std::vector<std::string> &value)
+{
+  if(!_checkInit()) return;
+#if defined(HAVE_PARSER)
+  gmsh_yystringsymbols[name] = value;
+#else
+  Msg::Error("Parser not available");
+#endif
+}
+
+GMSH_API void gmsh::parser::getString(const std::string &name,
+                                      std::vector<std::string> &value)
+{
+  if(!_checkInit()) return;
+#if defined(HAVE_PARSER)
+  value = gmsh_yystringsymbols[name];
+#else
+  Msg::Error("Parser not available");
+#endif
+}
+
+GMSH_API void gmsh::parser::clear(const std::string &name)
+{
+  if(!_checkInit()) return;
+#if defined(HAVE_PARSER)
+  if(name.empty()) {
+    gmsh_yysymbols.clear();
+    gmsh_yystringsymbols.clear();
+  }
+  else {
+    {
+      auto it = gmsh_yysymbols.find(name);
+      if(it != gmsh_yysymbols.end())
+        gmsh_yysymbols.erase(it);
+    }
+    {
+      auto it = gmsh_yystringsymbols.find(name);
+      if(it != gmsh_yystringsymbols.end())
+        gmsh_yystringsymbols.erase(it);
+    }
+  }
+#else
+  Msg::Error("Parser not available");
+#endif
+}
+
+GMSH_API void gmsh::parser::parse(const std::string &fileName)
+{
+  if(!_checkInit()) return;
+#if defined(HAVE_PARSER)
+  ParseFile(fileName, true, true);
+#else
+  Msg::Error("Parser not available");
 #endif
 }
 

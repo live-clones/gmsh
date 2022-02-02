@@ -7931,6 +7931,140 @@ class fltk:
     close_tree_item = closeTreeItem
 
 
+class parser:
+    """
+    Parser functions
+    """
+
+    @staticmethod
+    def getNames(search=""):
+        """
+        gmsh.parser.getNames(search="")
+
+        Get the names of the variables in the Gmsh parser matching the `search'
+        regular expression. If `search' is empty, return all the names.
+
+        Return `names'.
+        """
+        api_names_, api_names_n_ = POINTER(POINTER(c_char))(), c_size_t()
+        ierr = c_int()
+        lib.gmshParserGetNames(
+            byref(api_names_), byref(api_names_n_),
+            c_char_p(search.encode()),
+            byref(ierr))
+        if ierr.value != 0:
+            raise Exception(logger.getLastError())
+        return _ovectorstring(api_names_, api_names_n_.value)
+    get_names = getNames
+
+    @staticmethod
+    def setNumber(name, value):
+        """
+        gmsh.parser.setNumber(name, value)
+
+        Set the value of the number variable `name' in the Gmsh parser. Create the
+        variable if it does not exist; update the value if the variable exists.
+        """
+        api_value_, api_value_n_ = _ivectordouble(value)
+        ierr = c_int()
+        lib.gmshParserSetNumber(
+            c_char_p(name.encode()),
+            api_value_, api_value_n_,
+            byref(ierr))
+        if ierr.value != 0:
+            raise Exception(logger.getLastError())
+    set_number = setNumber
+
+    @staticmethod
+    def setString(name, value):
+        """
+        gmsh.parser.setString(name, value)
+
+        Set the value of the string variable `name' in the Gmsh parser. Create the
+        variable if it does not exist; update the value if the variable exists.
+        """
+        api_value_, api_value_n_ = _ivectorstring(value)
+        ierr = c_int()
+        lib.gmshParserSetString(
+            c_char_p(name.encode()),
+            api_value_, api_value_n_,
+            byref(ierr))
+        if ierr.value != 0:
+            raise Exception(logger.getLastError())
+    set_string = setString
+
+    @staticmethod
+    def getNumber(name):
+        """
+        gmsh.parser.getNumber(name)
+
+        Get the value of the number variable `name' from the Gmsh parser. Return an
+        empty vector if the variable does not exist.
+
+        Return `value'.
+        """
+        api_value_, api_value_n_ = POINTER(c_double)(), c_size_t()
+        ierr = c_int()
+        lib.gmshParserGetNumber(
+            c_char_p(name.encode()),
+            byref(api_value_), byref(api_value_n_),
+            byref(ierr))
+        if ierr.value != 0:
+            raise Exception(logger.getLastError())
+        return _ovectordouble(api_value_, api_value_n_.value)
+    get_number = getNumber
+
+    @staticmethod
+    def getString(name):
+        """
+        gmsh.parser.getString(name)
+
+        Get the value of the string variable `name' from the Gmsh parser. Return an
+        empty vector if the variable does not exist.
+
+        Return `value'.
+        """
+        api_value_, api_value_n_ = POINTER(POINTER(c_char))(), c_size_t()
+        ierr = c_int()
+        lib.gmshParserGetString(
+            c_char_p(name.encode()),
+            byref(api_value_), byref(api_value_n_),
+            byref(ierr))
+        if ierr.value != 0:
+            raise Exception(logger.getLastError())
+        return _ovectorstring(api_value_, api_value_n_.value)
+    get_string = getString
+
+    @staticmethod
+    def clear(name=""):
+        """
+        gmsh.parser.clear(name="")
+
+        Clear all the Gmsh parser variables, or remove a single variable if `name'
+        is given.
+        """
+        ierr = c_int()
+        lib.gmshParserClear(
+            c_char_p(name.encode()),
+            byref(ierr))
+        if ierr.value != 0:
+            raise Exception(logger.getLastError())
+
+    @staticmethod
+    def parse(fileName):
+        """
+        gmsh.parser.parse(fileName)
+
+        Parse the file `fileName' with the Gmsh parser.
+        """
+        ierr = c_int()
+        lib.gmshParserParse(
+            c_char_p(fileName.encode()),
+            byref(ierr))
+        if ierr.value != 0:
+            raise Exception(logger.getLastError())
+
+
 class onelab:
     """
     ONELAB server functions
