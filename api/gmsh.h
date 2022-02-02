@@ -1588,6 +1588,11 @@ namespace gmsh { // Top-level functions
                                     std::vector<double> & coordMaster,
                                     const bool returnCoord = true);
 
+      // gmsh::model::mesh::importStl
+      //
+      // Import the model STL representation (if available) as the current mesh.
+      GMSH_API void importStl();
+
       // gmsh::model::mesh::removeDuplicateNodes
       //
       // Remove duplicate nodes in the mesh of the current model.

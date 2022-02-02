@@ -5245,6 +5245,17 @@ GMSH_API void gmsh::model::mesh::removeDuplicateNodes()
   CTX::instance()->mesh.changed = ENT_ALL;
 }
 
+GMSH_API void gmsh::model::mesh::importStl()
+{
+  if(!_checkInit()) return;
+  GModel *m = GModel::current();
+  m->deleteMesh();
+  for(auto it = m->firstFace(); it != m->lastFace(); it++) {
+    (*it)->buildSTLTriangulation();
+    (*it)->storeSTLTriangulationAsMesh();
+  }
+}
+
 GMSH_API void gmsh::model::mesh::classifySurfaces(
   const double angle, const bool boundary, const bool forReparametrization,
   const double curveAngle, const bool exportDiscrete)

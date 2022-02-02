@@ -1399,6 +1399,9 @@ GMSH_API void gmshModelMeshGetPeriodicKeys(const int elementType,
                                            const int returnCoord,
                                            int * ierr);
 
+/* Import the model STL representation (if available) as the current mesh. */
+GMSH_API void gmshModelMeshImportStl(int * ierr);
+
 /* Remove duplicate nodes in the mesh of the current model. */
 GMSH_API void gmshModelMeshRemoveDuplicateNodes(int * ierr);
 

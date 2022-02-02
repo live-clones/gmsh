@@ -2077,6 +2077,17 @@ GMSH_API void gmshModelMeshGetPeriodicKeys(const int elementType, const char * f
   }
 }
 
+GMSH_API void gmshModelMeshImportStl(int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::mesh::importStl();
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API void gmshModelMeshRemoveDuplicateNodes(int * ierr)
 {
   if(ierr) *ierr = 0;

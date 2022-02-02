@@ -651,6 +651,7 @@ FlGui *FlGui::instance(int argc, char **argv, bool quitShouldExit,
     // set all options in the new GUI
     InitOptionsGUI(0);
     // say welcome!
+    Msg::ResetErrorCounter();
     Msg::StatusBar(false, "Gmsh %s", GetGmshVersion());
     // log the following for bug reports
     Msg::Direct("-------------------------------------------------------");

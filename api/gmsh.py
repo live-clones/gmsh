@@ -3692,6 +3692,20 @@ class model:
         get_periodic_keys = getPeriodicKeys
 
         @staticmethod
+        def importStl():
+            """
+            gmsh.model.mesh.importStl()
+
+            Import the model STL representation (if available) as the current mesh.
+            """
+            ierr = c_int()
+            lib.gmshModelMeshImportStl(
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+        import_stl = importStl
+
+        @staticmethod
         def removeDuplicateNodes():
             """
             gmsh.model.mesh.removeDuplicateNodes()

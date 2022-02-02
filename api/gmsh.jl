@@ -3154,6 +3154,21 @@ end
 const get_periodic_keys = getPeriodicKeys
 
 """
+    gmsh.model.mesh.importStl()
+
+Import the model STL representation (if available) as the current mesh.
+"""
+function importStl()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshImportStl, gmsh.lib), Cvoid,
+          (Ptr{Cint},),
+          ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+const import_stl = importStl
+
+"""
     gmsh.model.mesh.removeDuplicateNodes()
 
 Remove duplicate nodes in the mesh of the current model.

@@ -506,6 +506,9 @@ mesh.add('getPeriodicNodes', doc, None, iint('dim'), iint('tag'), oint('tagMaste
 doc = '''Get the master entity `tagMaster' and the key pairs (`typeKeyMaster', `entityKeyMaster') corresponding to the entity `tag' and the key pairs (`typeKey', `entityKey') for the elements of type `elementType' and function space type `functionSpaceType'. If `returnCoord' is set, the `coord' and `coordMaster' vectors contain the x, y, z coordinates locating basis functions for sorting purposes.'''
 mesh.add('getPeriodicKeys', doc, None, iint('elementType'), istring('functionSpaceType'), iint('tag'), oint('tagMaster'), ovectorint('typeKeys'), ovectorint('typeKeysMaster'), ovectorsize('entityKeys'), ovectorsize('entityKeysMaster'), ovectordouble('coord'), ovectordouble('coordMaster'), ibool('returnCoord', 'true', 'True'))
 
+doc = '''Import the model STL representation (if available) as the current mesh.'''
+mesh.add('importStl', doc, None)
+
 doc = '''Remove duplicate nodes in the mesh of the current model.'''
 mesh.add('removeDuplicateNodes', doc, None)
 

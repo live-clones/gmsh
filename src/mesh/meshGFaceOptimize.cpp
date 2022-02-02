@@ -57,6 +57,15 @@ RecombineTriangle::RecombineTriangle(const MEdge &me, MElement *_t1,
   else if(t2->getVertex(2) != n1 && t2->getVertex(2) != n2)
     n4 = t2->getVertex(2);
 
+  if(!n3) {
+    Msg::Warning("Invalid quadrangle in recombination");
+    n3 = n1;
+  }
+  if(!n4) {
+    Msg::Warning("Invalid quadrangle in recombination");
+    n4 = n2;
+  }
+
   MQuadrangle q(n1, n3, n2, n4);
   angle = q.etaShapeMeasure();
 
@@ -1058,7 +1067,7 @@ static void _recombineIntoQuads(GFace *gf, bool blossom, bool cubicGraph = 1)
   FieldManager *fields = gf->model()->getFields();
   Field *cross_field = NULL;
   SVector3 t1;
-  // double L; /* unused ? */
+
   if(fields->getBackgroundField() > 0) {
     cross_field = fields->get(fields->getBackgroundField());
     if(cross_field->numComponents() != 3) { // we hae a true scaled cross fiel
@@ -1340,7 +1349,8 @@ void recombineIntoQuads(GFace *gf, bool blossom, int topologicalOptiPasses,
   }
 
   // re-split bad quads into triangles
-  quadsToTriangles(gf, minqual);
+  if(minqual > 0)
+    quadsToTriangles(gf, minqual);
 
   if(debug) gf->model()->writeMSH("recombine_4quality.msh");
 

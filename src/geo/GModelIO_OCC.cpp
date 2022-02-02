@@ -5328,16 +5328,17 @@ static bool makeSTL(const TopoDS_Face &s, std::vector<SPoint2> *verticesUV,
   if(CTX::instance()->geom.occDisableSTL) return false;
 
   double lin = CTX::instance()->mesh.stlLinearDeflection;
+  bool rel = CTX::instance()->mesh.stlLinearDeflectionRelative;
   double ang = CTX::instance()->mesh.stlAngularDeflection;
 
 #if OCC_VERSION_HEX > 0x070300
-  BRepMesh_IncrementalMesh aMesher(s, lin, Standard_True, ang, Standard_True);
+  BRepMesh_IncrementalMesh aMesher(s, lin, rel, ang, Standard_True);
 #elif OCC_VERSION_HEX > 0x070000
   Bnd_Box aBox;
   BRepBndLib::Add(s, aBox);
   BRepMesh_FastDiscret::Parameters parameters;
   parameters.Deflection = lin;
-  parameters.Relative = Standard_True;
+  parameters.Relative = rel;
   parameters.Angle = ang;
   BRepMesh_FastDiscret aMesher(aBox, parameters);
   aMesher.Perform(s);

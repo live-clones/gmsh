@@ -1510,6 +1510,34 @@ bool GFace::fillVertexArray(bool force)
   return true;
 }
 
+bool GFace::storeSTLTriangulationAsMesh()
+{
+  deleteMesh();
+  if(stl_vertices_xyz.size()) {
+    for(std::size_t i = 0; i < stl_vertices_xyz.size(); i++) {
+      SPoint3 &p(stl_vertices_xyz[i]);
+      mesh_vertices.push_back(new MVertex(p.x(), p.y(), p.z(), this));
+    }
+  }
+  else if(stl_vertices_uv.size()) {
+    for(std::size_t i = 0; i < stl_vertices_uv.size(); i++) {
+      SPoint2 &p(stl_vertices_uv[i]);
+      GPoint gp = point(p);
+      mesh_vertices.push_back(new MFaceVertex(gp.x(), gp.y(), gp.z(),
+                                              this, p.x(), p.y()));
+    }
+  }
+  else {
+    return false;
+  }
+  for(std::size_t i = 0; i < stl_triangles.size(); i += 3) {
+    triangles.push_back(new MTriangle(mesh_vertices[stl_triangles[i]],
+                                      mesh_vertices[stl_triangles[i + 1]],
+                                      mesh_vertices[stl_triangles[i + 2]]));
+  }
+  return true;
+}
+
 int GFace::genusGeom() const
 {
   int nSeams = 0;

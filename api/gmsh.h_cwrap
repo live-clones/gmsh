@@ -2440,6 +2440,14 @@ namespace gmsh { // Top-level functions
         coordMaster.assign(api_coordMaster_, api_coordMaster_ + api_coordMaster_n_); gmshFree(api_coordMaster_);
       }
 
+      // Import the model STL representation (if available) as the current mesh.
+      inline void importStl()
+      {
+        int ierr = 0;
+        gmshModelMeshImportStl(&ierr);
+        if(ierr) throwLastError();
+      }
+
       // Remove duplicate nodes in the mesh of the current model.
       inline void removeDuplicateNodes()
       {

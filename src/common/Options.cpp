@@ -5838,6 +5838,14 @@ double opt_mesh_stl_linear_deflection(OPT_ARGS_NUM)
   return CTX::instance()->mesh.stlLinearDeflection;
 }
 
+double opt_mesh_stl_linear_deflection_relative(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    CTX::instance()->mesh.stlLinearDeflectionRelative = val ? true : false;
+  }
+  return CTX::instance()->mesh.stlLinearDeflectionRelative ? 1 : 0;
+}
+
 double opt_mesh_stl_angular_deflection(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) { CTX::instance()->mesh.stlAngularDeflection = val; }
@@ -5953,6 +5961,22 @@ double opt_mesh_recombine_optimize_topology(OPT_ARGS_NUM)
     CTX::instance()->mesh.recombineOptimizeTopology = (int)val;
   }
   return CTX::instance()->mesh.recombineOptimizeTopology;
+}
+
+double opt_mesh_recombine_node_repositioning(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    CTX::instance()->mesh.recombineNodeRepositioning = (int)val;
+  }
+  return CTX::instance()->mesh.recombineNodeRepositioning;
+}
+
+double opt_mesh_recombine_minimum_quality(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    CTX::instance()->mesh.recombineMinimumQuality = val;
+  }
+  return CTX::instance()->mesh.recombineMinimumQuality;
 }
 
 double opt_mesh_recombine3d_all(OPT_ARGS_NUM)

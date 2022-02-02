@@ -1187,13 +1187,17 @@ void RecombineMesh(GModel *m)
 
   for(auto it = m->firstFace(); it != m->lastFace(); ++it) {
     GFace *gf = *it;
-    bool blossom = (CTX::instance()->mesh.algoRecombine == 1 ||
-                    CTX::instance()->mesh.algoRecombine == 3);
-    int topo = CTX::instance()->mesh.recombineOptimizeTopology;
-    if(CTX::instance()->mesh.algoRecombine == 4)
+    if(CTX::instance()->mesh.algoRecombine == 4) {
       meshGFaceQuadrangulateBipartiteLabelling(gf->tag());
-    else
-      recombineIntoQuads(gf, blossom, topo, true, .01);
+    }
+    else {
+      bool blossom = (CTX::instance()->mesh.algoRecombine == 1 ||
+                      CTX::instance()->mesh.algoRecombine == 3);
+      int topo = CTX::instance()->mesh.recombineOptimizeTopology;
+      int repos = CTX::instance()->mesh.recombineNodeRepositioning;
+      double minqual = CTX::instance()->mesh.recombineMinimumQuality;
+      recombineIntoQuads(gf, blossom, topo, repos, minqual);
+    }
   }
 
   double t2 = Cpu(), w2 = TimeOfDay();

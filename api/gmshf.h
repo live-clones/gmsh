@@ -2938,6 +2938,14 @@ c
             integer(c_int)::ierr
           end subroutine gmshModelMeshGetPeriodicKeys
 
+!  Import the model STL representation (if available) as the current mesh.
+        subroutine gmshModelMeshImportStl(
+     &      ierr)
+     &    bind(C, name = "gmshModelMeshImportStl")
+          use, intrinsic :: iso_c_binding
+            integer(c_int)::ierr
+          end subroutine gmshModelMeshImportStl
+
 !  Remove duplicate nodes in the mesh of the current model.
         subroutine gmshModelMeshRemoveDuplicateNodes(
      &      ierr)
