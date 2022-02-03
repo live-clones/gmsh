@@ -997,7 +997,9 @@ public:
           id += f[i + 1 + j];
           j++;
         }
-        _fields.insert(atoi(id.c_str()));
+        if(id.size() > 0) {
+          _fields.insert(atoi(id.c_str()));
+        }
       }
       i += j + 1;
     }
@@ -1035,7 +1037,7 @@ public:
         values[i++] = (*field)(x, y, z);
       }
       else {
-        Msg::Warning("Unknown Field %i", *it);
+        Msg::Warning("Unknown Field %i in MathEval", *it);
         values[i++] = MAX_LC;
       }
     }
