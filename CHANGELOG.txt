@@ -1,7 +1,7 @@
-4.9.4 (Work-in-progress): improved BSpline filling; new options
+4.9.4 (February 3, 2022): improved BSpline filling; new options
 Mesh.MinimumLineNodes, Mesh.RecombineNodeRepositioning,
-Mesh.RecombineMinimumQuality and Mesh.StlLinearDeflectionRelative; small bug
-fixes.
+Mesh.RecombineMinimumQuality and Mesh.StlLinearDeflectionRelative; updated
+bundled Eigen; small bug fixes.
 
 * New API functions: gmsh/isInitialized, occ/convertToNURBS, occ/getCurveLoops,
   occ/getSurfaceLoops, mesh/importStl, parser/getNames, parser/setNumber,
