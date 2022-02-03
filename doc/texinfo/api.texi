@@ -6082,7 +6082,7 @@ Close the @code{name} item in the menu tree.
 @end ftable
 
 @node Namespace gmsh/parser, Namespace gmsh/onelab, Namespace gmsh/fltk, Gmsh API
-@section Namespace @code{gmsh/parser}: Parser functions
+@section Namespace @code{gmsh/parser}: parser functions
 
 @ftable @code
 @item gmsh/parser/getNames

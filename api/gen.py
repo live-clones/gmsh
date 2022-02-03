@@ -1074,7 +1074,7 @@ fltk.add('closeTreeItem', doc, None, istring('name'))
 
 ################################################################################
 
-parser = gmsh.add_module('parser', 'Parser functions')
+parser = gmsh.add_module('parser', 'parser functions')
 
 doc = '''Get the names of the variables in the Gmsh parser matching the `search' regular expression. If `search' is empty, return all the names.'''
 parser.add('getNames', doc, None, ovectorstring('names'), istring('search', '""'))
