@@ -1281,12 +1281,13 @@ if(ENABLE_OCC)
       set(OCC_LIBS)
       foreach(OCC ${OCC_LIBS_REQUIRED})
         find_library(OCC_LIB ${OCC} HINTS ENV CASROOT PATH_SUFFIXES
-                     lib ${OCC_SYS_NAME}/lib ${OCC_SYS_NAME}/vc8/lib
-                     ${OCC_SYS_NAME}/vc10/lib ${OCC_SYS_NAME}/vc11/lib
-                     ${OCC_SYS_NAME}/vc12/lib ${OCC_SYS_NAME}/vc14/lib
-                     ${OCC_SYS_NAME}/gcc/lib ${OCC_SYS_NAME}/gcc/bin)
+                     lib ${OCC_SYS_NAME}/vc8/lib  ${OCC_SYS_NAME}/vc9/lib
+                         ${OCC_SYS_NAME}/vc10/lib ${OCC_SYS_NAME}/vc11/lib
+                         ${OCC_SYS_NAME}/vc12/lib ${OCC_SYS_NAME}/vc14/lib
+                         ${OCC_SYS_NAME}/gcc/lib  ${OCC_SYS_NAME}/gcc/bin
+                         ${OCC_SYS_NAME}/lib)
         if(OCC_LIB)
-	  list(APPEND OCC_LIBS ${OCC_LIB})
+          list(APPEND OCC_LIBS ${OCC_LIB})
         else()
           message(STATUS "OCC lib " ${OCC} " not Found")
         endif()
@@ -1306,10 +1307,11 @@ if(ENABLE_OCC)
       set(OCC_CAF_LIBS)
       foreach(OCC ${OCC_CAF_LIBS_REQUIRED})
         find_library(OCC_CAF_LIB ${OCC} HINTS ENV CASROOT PATH_SUFFIXES
-                     lib ${OCC_SYS_NAME}/lib ${OCC_SYS_NAME}/vc8/lib
-                     ${OCC_SYS_NAME}/vc10/lib ${OCC_SYS_NAME}/vc11/lib
-                     ${OCC_SYS_NAME}/vc12/lib ${OCC_SYS_NAME}/vc14/lib
-                     ${OCC_SYS_NAME}/gcc/lib ${OCC_SYS_NAME}/gcc/bin)
+                     lib ${OCC_SYS_NAME}/vc8/lib  ${OCC_SYS_NAME}/vc9/lib
+                         ${OCC_SYS_NAME}/vc10/lib ${OCC_SYS_NAME}/vc11/lib
+                         ${OCC_SYS_NAME}/vc12/lib ${OCC_SYS_NAME}/vc14/lib
+                         ${OCC_SYS_NAME}/gcc/lib  ${OCC_SYS_NAME}/gcc/bin
+                         ${OCC_SYS_NAME}/lib)
         if(OCC_CAF_LIB)
           list(APPEND OCC_CAF_LIBS ${OCC_CAF_LIB})
         else()
@@ -1336,9 +1338,7 @@ if(ENABLE_OCC)
     set_config_option(HAVE_OCC "OpenCASCADE")
     list(APPEND EXTERNAL_LIBRARIES ${OCC_LIBS})
     list(APPEND EXTERNAL_INCLUDES ${OCC_INC})
-    if(WIN32)
-      list(APPEND EXTERNAL_LIBRARIES "winspool")
-      # not clear if this is still needed
+    if(WIN32 AND NOT MSVC)
       add_definitions(-DOCC_CONVERT_SIGNALS)
     endif()
   endif()
