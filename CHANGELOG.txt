@@ -1,3 +1,5 @@
+(Work-in-progress): small bug fixes.
+
 4.9.4 (February 3, 2022): improved BSpline filling; new options
 Mesh.MinimumLineNodes, Mesh.RecombineNodeRepositioning,
 Mesh.RecombineMinimumQuality and Mesh.StlLinearDeflectionRelative; updated

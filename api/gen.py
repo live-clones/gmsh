@@ -862,7 +862,7 @@ occ.add('remove', doc, None, ivectorpair('dimTags'), ibool('recursive', 'false',
 doc = '''Remove all duplicate entities in the OpenCASCADE CAD representation (different entities at the same geometrical location) after intersecting (using boolean fragments) all highest dimensional entities.'''
 occ.add('removeAllDuplicates', doc, None)
 
-doc = '''Apply various healing procedures to the entities `dimTags' (or to all the entities in the model if `dimTags' is empty) in the OpenCASCADE CAD representation. Return the healed entities in `outDimTags'. Available healing options are listed in the Gmsh reference manual.'''
+doc = '''Apply various healing procedures to the entities `dimTags' (or to all the entities in the model if `dimTags' is empty) in the OpenCASCADE CAD representation. Return the healed entities in `outDimTags'.'''
 occ.add('healShapes', doc, None, ovectorpair('outDimTags'), ivectorpair('dimTags', 'gmsh::vectorpair()', "[]", "[]"), idouble('tolerance', '1e-8'), ibool('fixDegenerated', 'true', 'True'), ibool('fixSmallEdges', 'true', 'True'), ibool('fixSmallFaces', 'true', 'True'), ibool('sewFaces', 'true', 'True'), ibool('makeSolids', 'true', 'True'))
 
 doc = '''Convert the entities `dimTags' to NURBS.'''

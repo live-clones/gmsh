@@ -6,7 +6,7 @@
 #ifndef GMSH_H
 #define GMSH_H
 
-// This file redefines the Gmsh C++ API in terms of the C API (v4.9.4).
+// This file redefines the Gmsh C++ API in terms of the C API (v4.9.5).
 //
 // This is provided as a convenience for users of the binary Gmsh SDK whose C++
 // compiler ABI is not compatible with the ABI of the C++ compiler used to create
@@ -4466,8 +4466,7 @@ namespace gmsh { // Top-level functions
 
       // Apply various healing procedures to the entities `dimTags' (or to all the
       // entities in the model if `dimTags' is empty) in the OpenCASCADE CAD
-      // representation. Return the healed entities in `outDimTags'. Available
-      // healing options are listed in the Gmsh reference manual.
+      // representation. Return the healed entities in `outDimTags'.
       inline void healShapes(gmsh::vectorpair & outDimTags,
                              const gmsh::vectorpair & dimTags = gmsh::vectorpair(),
                              const double tolerance = 1e-8,

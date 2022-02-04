@@ -1028,6 +1028,8 @@ bool GEO_Internals::modifyPhysicalGroup(int dim, int tag, int op,
     return false;
   }
   else if(!p && op == 2) {
+    // we call this in gmsh::model::removePhysicalGroup(), so it's not an error
+    // if the group does not exist
     return true;
   }
   else if(!p && op > 0) {
