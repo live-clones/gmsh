@@ -1027,6 +1027,9 @@ bool GEO_Internals::modifyPhysicalGroup(int dim, int tag, int op,
     Msg::Error("Physical %s %d already exists", str.c_str(), tag);
     return false;
   }
+  else if(!p && op == 2) {
+    return true;
+  }
   else if(!p && op > 0) {
     Msg::Error("Physical %s %d does not exist", str.c_str(), tag);
     return false;
