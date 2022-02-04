@@ -319,6 +319,8 @@ public:
     int algorithm;
     // do we force calculation of mesh size from boundary (if >= 0)
     int meshSizeFromBoundary;
+    // do we use transfinite standard algo
+    bool transfinite_standard;
   } meshAttributes;
 
   int getMeshingAlgo() const;
