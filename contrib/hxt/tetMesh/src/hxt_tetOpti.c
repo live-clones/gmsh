@@ -681,7 +681,7 @@ HXTStatus hxtOptimizeTetrahedra(HXTMesh *mesh,
 
     roundModifIn += stat.success;
     roundModifOut += stat.success;
-    conflictRatio = (double) stat.conflict / stat.attempt;
+    conflictRatio = (stat.attempt==0) ? 0 : (double) stat.conflict / stat.attempt;
   }
 
 
