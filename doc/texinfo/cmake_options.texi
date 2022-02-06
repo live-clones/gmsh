@@ -38,6 +38,8 @@ Enable experimental DOMHEX code (default: ON)
 Enable Eigen for linear algebra (instead of Blas/Lapack) (default: ON)
 @item ENABLE_FLTK
 Enable FLTK graphical user interface (requires mesh/post) (default: ON)
+@item ENABLE_GEOMETRYCENTRAL
+Enable geometry-central library (experimental) (default: ON)
 @item ENABLE_GETDP
 Enable GetDP solver (linked as a library, experimental) (default: ON)
 @item ENABLE_GMM
@@ -89,7 +91,7 @@ Enable ONELAB metamodels (experimental) (default: ON)
 @item ENABLE_OPENACC
 Enable OpenACC (default: OFF)
 @item ENABLE_OPENMP
-Enable OpenMP (default: OFF)
+Enable OpenMP (default: ON)
 @item ENABLE_OPTHOM
 Enable high-order mesh optimization tools (default: ON)
 @item ENABLE_OS_SPECIFIC_INSTALL
@@ -138,6 +140,8 @@ Enable Apple Touch bar (default: ON)
 Enable additional visualization capabilities for development purposes (default: OFF)
 @item ENABLE_VOROPP
 Enable voro++ (for hex meshing, experimental) (default: ON)
+@item ENABLE_WINSLOWUNTANGLER
+Enable WinslowUntangler extensions (requires ALGLIB) (default: ON)
 @item ENABLE_WRAP_JAVA
 Generate SWIG Java wrappers for private API (default: OFF)
 @item ENABLE_WRAP_PYTHON
