@@ -7,6 +7,7 @@
 #include "MTetrahedron.h"
 #include "GModel.h"
 #include "Generator.h"
+#include "meshGRegion.h"
 
 extern "C" {
 #include "hxt_tetMesh.h"

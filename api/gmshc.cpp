@@ -2275,6 +2275,18 @@ GMSH_API void gmshModelMeshAlphaShapesConstrained(const int dim, double * coord,
   }
 }
 
+GMSH_API void gmshModelMeshGenerateSurfaceMeshConstrained(double * parametricCoord, size_t parametricCoord_n, const int tag, const int addNodes, const double meshSize, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<double> api_parametricCoord_(parametricCoord, parametricCoord + parametricCoord_n);
+    gmsh::model::mesh::generateSurfaceMeshConstrained(api_parametricCoord_, tag, addNodes, meshSize);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API int gmshModelMeshFieldAdd(const char * fieldType, const int tag, int * ierr)
 {
   int result_api_ = 0;

@@ -548,6 +548,9 @@ mesh.add('createHxtMesh', doc, None, istring('inputMesh'), ivectordouble('coord'
 doc = '''Generate a mesh of the array of points `coord', constrained to the surface mesh of the current model. Currently only supported for 3D.'''
 mesh.add('alphaShapesConstrained', doc, None, iint('dim'), ivectordouble('coord'), idouble('alpha'), idouble('meanValue'), ovectorsize('tetrahedra'), ovectorvectorsize('domains'), ovectorvectorsize('boundaries'), ovectorsize('neighbors'))
 
+doc = '''Generate a surface mesh on entity with tag `tag', with a constraint on nodes `parametricCoord' (i.e., `parametricCoord' must belong to the mesh). If `addNodes' is true, add nodes such that the maximum element size does not exceed `meshSize'.'''
+mesh.add('generateSurfaceMeshConstrained', doc, None, ivectordouble('parametricCoord'), iint('tag'), ibool('addNodes'), idouble('meshSize'))
+
 ################################################################################
 
 field = mesh.add_module('field', 'mesh size field functions')

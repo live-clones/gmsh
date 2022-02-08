@@ -3484,6 +3484,24 @@ end
 const alpha_shapes_constrained = alphaShapesConstrained
 
 """
+    gmsh.model.mesh.generateSurfaceMeshConstrained(parametricCoord, tag, addNodes, meshSize)
+
+Generate a surface mesh on entity with tag `tag`, with a constraint on nodes
+`parametricCoord` (i.e., `parametricCoord` must belong to the mesh). If
+`addNodes` is true, add nodes such that the maximum element size does not exceed
+`meshSize`.
+"""
+function generateSurfaceMeshConstrained(parametricCoord, tag, addNodes, meshSize)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshGenerateSurfaceMeshConstrained, gmsh.lib), Cvoid,
+          (Ptr{Cdouble}, Csize_t, Cint, Cint, Cdouble, Ptr{Cint}),
+          convert(Vector{Cdouble}, parametricCoord), length(parametricCoord), tag, addNodes, meshSize, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+const generate_surface_mesh_constrained = generateSurfaceMeshConstrained
+
+"""
     module gmsh.model.mesh.field
 
 Mesh size field functions

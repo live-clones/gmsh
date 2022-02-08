@@ -1748,6 +1748,17 @@ namespace gmsh { // Top-level functions
                                            std::vector<std::vector<std::size_t> > & boundaries,
                                            std::vector<std::size_t> & neighbors);
 
+      // gmsh::model::mesh::generateSurfaceMeshConstrained
+      //
+      // Generate a surface mesh on entity with tag `tag', with a constraint on
+      // nodes `parametricCoord' (i.e., `parametricCoord' must belong to the mesh).
+      // If `addNodes' is true, add nodes such that the maximum element size does
+      // not exceed `meshSize'.
+      GMSH_API void generateSurfaceMeshConstrained(const std::vector<double> & parametricCoord,
+                                                   const int tag,
+                                                   const bool addNodes,
+                                                   const double meshSize);
+
       namespace field { // Mesh size field functions
 
         // gmsh::model::mesh::field::add

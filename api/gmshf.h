@@ -3265,6 +3265,27 @@ c
             integer(c_int)::ierr
           end subroutine gmshModelMeshAlphaShapesConstrained
 
+!  Generate a surface mesh on entity with tag `tag', with a constraint on
+!  nodes `parametricCoord' (i.e., `parametricCoord' must belong to the mesh).
+!  If `addNodes' is true, add nodes such that the maximum element size does
+!  not exceed `meshSize'.
+        subroutine gmshModelMeshGenerateSurfaceMeshConstrained(
+     &      parametricCoord,
+     &      parametricCoord_n,
+     &      tag,
+     &      addNodes,
+     &      meshSize,
+     &      ierr)
+     &    bind(C, name = "gmshModelMeshGenerateSurfaceMeshConstrained")
+          use, intrinsic :: iso_c_binding
+            real(c_double)::parametricCoord(*)
+            integer(c_size_t), value :: parametricCoord_n
+            integer(c_int), value::tag
+            integer(c_int), value::addNodes
+            real(c_double), value::meshSize
+            integer(c_int)::ierr
+          end subroutine gmshModelMeshGenerateSurfaceMeshConstrained
+
 !  Add a new mesh size field of type `fieldType'. If `tag' is positive, assign
 !  the tag explicitly; otherwise a new tag is assigned automatically. Return
 !  the field tag.
