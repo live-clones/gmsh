@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2022 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -544,8 +544,8 @@ void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed,
     for(int i = 0; i < 4; i++) {
       if(!close2sing (singularities,gf,parent->_p[i],cross_field)
 	 && !inExclusionZone(parent->_v, parent->_p[i], rtree) &&
-	 !outBounds(parent->_p[i],minu,maxu,minv,maxv)&&
-	 gf->containsParam(parent->_p[i]))
+	 !outBounds(parent->_p[i],minu,maxu,minv,maxv)
+	 && (gf->getNativeType() == GEntity::GmshModel || gf->containsParam(parent->_p[i])))
 	{
 	  GPoint gp = gf->point(parent->_p[i]);
 	  MFaceVertex *v =

@@ -5,5 +5,5 @@ This may be useful for meshing small CAD model features for example.
 
 ### Python
 ```python
-{{#include ../../../../tutorial/python/t12.py}}
+{{#include ../../../../tutorials/python/t12.py}}
 ```

@@ -4,5 +4,5 @@ An extended `OpenCASCADE` solid modelling demo. Fillets, lofts and pipes.
 
 ### Python
 ```python
-{{#include ../../../../tutorial/python/t19.py}}
+{{#include ../../../../tutorials/python/t19.py}}
 ```

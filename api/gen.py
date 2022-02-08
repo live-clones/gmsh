@@ -1,4 +1,4 @@
-# Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
+# Gmsh - Copyright (C) 1997-2022 C. Geuzaine, J.-F. Remacle
 #
 # See the LICENSE.txt file in the Gmsh root directory for license information.
 # Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -18,8 +18,8 @@
 # By design, the Gmsh API is purely functional, and only uses elementary types
 # from the target language.
 #
-# See `tutorial/{c++,c,python,julia}' and `demos/api' for examples on how to
-# use the Gmsh API.
+# See `tutorials/{c++,c,python,julia}' and `examples/api' for tutorials and
+# examples on how to use the Gmsh API.
 
 import os
 from GenApi import *
@@ -66,22 +66,22 @@ gmsh.add('clear', doc, None)
 
 option = gmsh.add_module('option', 'option handling functions')
 
-doc = '''Set a numerical option to `value'. `name' is of the form "category.option" or "category[num].option". Available categories and options are listed in the Gmsh reference manual.'''
+doc = '''Set a numerical option to `value'. `name' is of the form "Category.Option" or "Category[num].Option". Available categories and options are listed in the Gmsh reference manual.'''
 option.add('setNumber', doc, None, istring('name'), idouble('value'))
 
-doc = '''Get the `value' of a numerical option. `name' is of the form "category.option" or "category[num].option". Available categories and options are listed in the Gmsh reference manual.'''
+doc = '''Get the `value' of a numerical option. `name' is of the form "Category.Option" or "Category[num].Option". Available categories and options are listed in the Gmsh reference manual.'''
 option.add('getNumber', doc, None, istring('name'), odouble('value'))
 
-doc = '''Set a string option to `value'. `name' is of the form "category.option" or "category[num].option". Available categories and options are listed in the Gmsh reference manual.'''
+doc = '''Set a string option to `value'. `name' is of the form "Category.Option" or "Category[num].Option". Available categories and options are listed in the Gmsh reference manual.'''
 option.add('setString', doc, None, istring('name'), istring('value'))
 
-doc = '''Get the `value' of a string option. `name' is of the form "category.option" or "category[num].option". Available categories and options are listed in the Gmsh reference manual.'''
+doc = '''Get the `value' of a string option. `name' is of the form "Category.Option" or "Category[num].Option". Available categories and options are listed in the Gmsh reference manual.'''
 option.add('getString', doc, None, istring('name'), ostring('value'))
 
-doc = '''Set a color option to the RGBA value (`r', `g', `b', `a'), where where `r', `g', `b' and `a' should be integers between 0 and 255. `name' is of the form "category.option" or "category[num].option". Available categories and options are listed in the Gmsh reference manual, with the "Color." middle string removed.'''
+doc = '''Set a color option to the RGBA value (`r', `g', `b', `a'), where where `r', `g', `b' and `a' should be integers between 0 and 255. `name' is of the form "Category.Color.Option" or "Category[num].Color.Option". Available categories and options are listed in the Gmsh reference manual. For conciseness "Color." can be ommitted in `name'.'''
 option.add('setColor', doc, None, istring('name'), iint('r'), iint('g'), iint('b'), iint('a', '255'))
 
-doc = '''Get the `r', `g', `b', `a' value of a color option. `name' is of the form "category.option" or "category[num].option". Available categories and options are listed in the Gmsh reference manual, with the "Color." middle string removed.'''
+doc = '''Get the `r', `g', `b', `a' value of a color option. `name' is of the form "Category.Color.Option" or "Category[num].Color.Option". Available categories and options are listed in the Gmsh reference manual. For conciseness "Color." can be ommitted in `name'.'''
 option.add('getColor', doc, None, istring('name'), oint('r'), oint('g'), oint('b'), oint('a'))
 
 ################################################################################
@@ -157,7 +157,7 @@ model.add('getEntitiesInBoundingBox', doc, None, idouble('xmin'), idouble('ymin'
 doc = '''Get the bounding box (`xmin', `ymin', `zmin'), (`xmax', `ymax', `zmax') of the model entity of dimension `dim' and tag `tag'. If `dim' and `tag' are negative, get the bounding box of the whole model.'''
 model.add('getBoundingBox', doc, None, iint('dim'), iint('tag'), odouble('xmin'), odouble('ymin'), odouble('zmin'), odouble('xmax'), odouble('ymax'), odouble('zmax'))
 
-doc = '''Get the geometrical dimension of the current model.'''
+doc = '''Return the geometrical dimension of the current model.'''
 model.add('getDimension', doc, oint)
 
 doc = '''Add a discrete model entity (defined by a mesh) of dimension `dim' in the current model. Return the tag of the new discrete entity, equal to `tag' if `tag' is positive, or a new tag if `tag' < 0. `boundary' specifies the tags of the entities on the boundary of the discrete entity, if any. Specifying `boundary' allows Gmsh to construct the topology of the overall model.'''
@@ -174,6 +174,9 @@ model.add('getType', doc, None, iint('dim'), iint('tag'), ostring('entityType'))
 
 doc = '''In a partitioned model, get the parent of the entity of dimension `dim' and tag `tag', i.e. from which the entity is a part of, if any. `parentDim' and `parentTag' are set to -1 if the entity has no parent.'''
 model.add('getParent', doc, None, iint('dim'), iint('tag'), oint('parentDim'), oint('parentTag'))
+
+doc = '''Return the number of partitions in the model.'''
+model.add('getNumberOfPartitions', doc, oint)
 
 doc = '''In a partitioned model, return the tags of the partition(s) to which the entity belongs.'''
 model.add('getPartitions', doc, None, iint('dim'), iint('tag'), ovectorint('partitions'))
@@ -368,10 +371,10 @@ mesh.add('getNumberOfOrientations', doc, oint, iint('elementType'), istring('fun
 doc = '''Preallocate data before calling `getBasisFunctionsOrientation' with `numTasks' > 1. For C and C++ only.'''
 mesh.add_special('preallocateBasisFunctionsOrientation', doc, ['onlycc++'], None, iint('elementType'), ovectorint('basisFunctionsOrientation'), iint('tag', '-1'))
 
-doc = '''Get the global unique mesh edge identifiers `edgeTags' and orientations `edgeOrientation' for an input list of node tag pairs defining these edges, concatenated in the vector `nodeTags'. Mesh edges are created e.g. by `createEdges()' or `getKeys()'. The reference positive orientation is n1 < n2, where n1 and n2 are the tags of the two edge nodes, which corresponds to the local orientation of edge-based basis functions as well.'''
+doc = '''Get the global unique mesh edge identifiers `edgeTags' and orientations `edgeOrientation' for an input list of node tag pairs defining these edges, concatenated in the vector `nodeTags'. Mesh edges are created e.g. by `createEdges()', `getKeys()' or `addEdges()'. The reference positive orientation is n1 < n2, where n1 and n2 are the tags of the two edge nodes, which corresponds to the local orientation of edge-based basis functions as well.'''
 mesh.add('getEdges', doc, None, ivectorsize('nodeTags'), ovectorsize('edgeTags'), ovectorint('edgeOrientations'))
 
-doc = '''Get the global unique mesh face identifiers `faceTags' and orientations `faceOrientations' for an input list of node tag triplets (if `faceType' == 3) or quadruplets (if `faceType' == 4) defining these faces, concatenated in the vector `nodeTags'. Mesh faces are created e.g. by `createFaces()' or `getKeys()'.'''
+doc = '''Get the global unique mesh face identifiers `faceTags' and orientations `faceOrientations' for an input list of node tag triplets (if `faceType' == 3) or quadruplets (if `faceType' == 4) defining these faces, concatenated in the vector `nodeTags'. Mesh faces are created e.g. by `createFaces()', `getKeys()' or `addFaces()'.'''
 mesh.add('getFaces', doc, None, iint('faceType'), ivectorsize('nodeTags'), ovectorsize('faceTags'), ovectorint('faceOrientations'))
 
 doc = '''Create unique mesh edges for the entities `dimTags'.'''
@@ -379,6 +382,18 @@ mesh.add('createEdges', doc, None, ivectorpair('dimTags', 'gmsh::vectorpair()', 
 
 doc = '''Create unique mesh faces for the entities `dimTags'.'''
 mesh.add('createFaces', doc, None, ivectorpair('dimTags', 'gmsh::vectorpair()', "[]", "[]"))
+
+doc = '''Get the global unique identifiers `edgeTags' and the nodes `edgeNodes' of the edges in the mesh. Mesh edges are created e.g. by `createEdges()', `getKeys()' or addEdges().'''
+mesh.add('getAllEdges', doc, None, ovectorsize('edgeTags'), ovectorsize('edgeNodes'))
+
+doc = '''Get the global unique identifiers `faceTags' and the nodes `faceNodes' of the faces of type `faceType' in the mesh. Mesh faces are created e.g. by `createFaces()', `getKeys()' or addFaces().'''
+mesh.add('getAllFaces', doc, None, iint('faceType'), ovectorsize('faceTags'), ovectorsize('faceNodes'))
+
+doc = '''Add mesh edges defined by their global unique identifiers `edgeTags' and their nodes `edgeNodes'.'''
+mesh.add('addEdges', doc, None, ivectorsize('edgeTags'), ivectorsize('edgeNodes'))
+
+doc = '''Add mesh faces of type `faceType' defined by their global unique identifiers `faceTags' and their nodes `faceNodes'.'''
+mesh.add('addFaces', doc, None, iint('faceType'), ivectorsize('faceTags'), ivectorsize('faceNodes'))
 
 doc = '''Generate the pair of keys for the elements of type `elementType' in the entity of tag `tag', for the `functionSpaceType' function space. Each pair (`typeKey', `entityKey') uniquely identifies a basis function in the function space. If `returnCoord' is set, the `coord' vector contains the x, y, z coordinates locating basis functions for sorting purposes. Warning: this is an experimental feature and will probably change in a future release.'''
 mesh.add('getKeys', doc, None, iint('elementType'), istring('functionSpaceType'), ovectorint('typeKeys'), ovectorsize('entityKeys'), ovectordouble('coord'), iint('tag', '-1'), ibool('returnCoord', 'true', 'True'))
@@ -494,7 +509,7 @@ mesh.add('removeDuplicateNodes', doc, None)
 doc = '''Split (into two triangles) all quadrangles in surface `tag' whose quality is lower than `quality'. If `tag' < 0, split quadrangles in all surfaces.'''
 mesh.add('splitQuadrangles', doc, None, idouble('quality', '1.'), iint('tag', '-1'))
 
-doc = '''Classify ("color") the surface mesh based on the angle threshold `angle' (in radians), and create new discrete surfaces, curves and points accordingly. If `boundary' is set, also create discrete curves on the boundary if the surface is open. If `forReparametrization' is set, create edges and surfaces that can be reparametrized using a single map. If `curveAngle' is less than Pi, also force curves to be split according to `curveAngle'. If `exportDiscrete' is set, clear any built-in CAD kernel entities and export the discrete entities in the built-in CAD kernel.'''
+doc = '''Classify ("color") the surface mesh based on the angle threshold `angle' (in radians), and create new discrete surfaces, curves and points accordingly. If `boundary' is set, also create discrete curves on the boundary if the surface is open. If `forReparametrization' is set, create curves and surfaces that can be reparametrized using a single map. If `curveAngle' is less than Pi, also force curves to be split according to `curveAngle'. If `exportDiscrete' is set, clear any built-in CAD kernel entities and export the discrete entities in the built-in CAD kernel.'''
 mesh.add('classifySurfaces', doc, None, idouble('angle'), ibool('boundary', 'true', 'True'), ibool('forReparametrization', 'false', 'False'), idouble('curveAngle', 'M_PI', 'pi', 'pi'), ibool('exportDiscrete', 'true', 'True'))
 
 doc = '''Create a geometry for the discrete entities `dimTags' (represented solely by a mesh, without an underlying CAD description), i.e. create a parametrization for discrete curves and surfaces, assuming that each can be parametrized with a single map. If `dimTags' is empty, create a geometry for all the discrete entities.'''
@@ -523,6 +538,12 @@ mesh.add('alphaShapes', doc, None, idouble('threshold'), iint('dim'), ivectordou
 
 doc = '''Take  the node tags (with numbering starting at 1) of the tetrahedra in `tetra' and returns `neighbors' as a vector of size 4 times the number of tetrahedra giving neighboring ids of tetrahedra of a given tetrahedra. When a tetrahedra has no neighbor for its ith face, the value is tetrahedra.size. For a tet with vertices (0,1,2,3), node ids of the faces are respectively (0,1,2), (0,1,3), (0,2,3) and (1,2,3)'''
 mesh.add('tetNeighbors', doc, None, ivectorsize('tetra'), ovectorsize('neighbors'))
+
+doc = '''hxt meshing test.'''
+mesh.add('createHxtMesh', doc, None, istring('inputMesh'), ivectordouble('coord'), istring('outputMesh'), ovectordouble('pts'), ovectorsize('tets'))
+
+doc = '''Generate a mesh of the array of points `coord', constrained to the surface mesh of the current model. Currently only supported for 3D.'''
+mesh.add('alphaShapesConstrained', doc, None, iint('dim'), ivectordouble('coord'), idouble('alpha'), idouble('meanValue'), ovectorsize('tetrahedra'), ovectorvectorsize('domains'), ovectorvectorsize('boundaries'), ovectorsize('neighbors'))
 
 ################################################################################
 
@@ -936,9 +957,6 @@ view.add('setInterpolationMatrices', doc, None, iint('tag'), istring('type'), ii
 doc = '''Add a post-processing view as an `alias' of the reference view with tag `refTag'. If `copyOptions' is set, copy the options of the reference view. If `tag' is positive use it (and remove the view with that tag if it already exists), otherwise associate a new tag. Return the view tag.'''
 view.add('addAlias', doc, oint, iint('refTag'), ibool('copyOptions', 'false', 'False'), iint('tag', '-1'))
 
-doc = '''Copy the options from the view with tag `refTag' to the view with tag `tag'.'''
-view.add('copyOptions', doc, None, iint('refTag'), iint('tag'))
-
 doc = '''Combine elements (if `what' == "elements") or steps (if `what' == "steps") of all views (`how' == "all"), all visible views (`how' == "visible") or all views having the same name (`how' == "name"). Remove original views if `remove' is set.'''
 view.add('combine', doc, None, istring('what'), istring('how'), ibool('remove', 'true', 'True'), ibool('copyOptions', 'true', 'True'))
 
@@ -953,6 +971,31 @@ view.add('setVisibilityPerWindow', doc, None, iint('tag'), iint('value'), iint('
 
 ################################################################################
 
+option = view.add_module('option', 'view option handling functions')
+
+doc = '''Set the numerical option `name' to value `value' for the view with tag `tag'.'''
+option.add('setNumber', doc, None, iint('tag'), istring('name'), idouble('value'))
+
+doc = '''Get the `value' of the numerical option `name' for the view with tag `tag'.'''
+option.add('getNumber', doc, None, iint('tag'), istring('name'), odouble('value'))
+
+doc = '''Set the string option `name' to value `value' for the view with tag `tag'.'''
+option.add('setString', doc, None, iint('tag'), istring('name'), istring('value'))
+
+doc = '''Get the `value' of the string option `name' for the view with tag `tag'.'''
+option.add('getString', doc, None, iint('tag'), istring('name'), ostring('value'))
+
+doc = '''Set the color option `name' to the RGBA value (`r', `g', `b', `a') for the view with tag `tag', where where `r', `g', `b' and `a' should be integers between 0 and 255.'''
+option.add('setColor', doc, None, iint('tag'), istring('name'), iint('r'), iint('g'), iint('b'), iint('a', '255'))
+
+doc = '''Get the `r', `g', `b', `a' value of the color option `name' for the view with tag `tag'.'''
+option.add('getColor', doc, None, iint('tag'), istring('name'), oint('r'), oint('g'), oint('b'), oint('a'))
+
+doc = '''Copy the options from the view with tag `refTag' to the view with tag `tag'.'''
+option.add('copy', doc, None, iint('refTag'), iint('tag'))
+
+################################################################################
+
 plugin = gmsh.add_module('plugin', 'plugin functions')
 
 doc = '''Set the numerical option `option' to the value `value' for plugin `name'.'''
@@ -961,8 +1004,8 @@ plugin.add('setNumber', doc, None, istring('name'), istring('option'), idouble('
 doc = '''Set the string option `option' to the value `value' for plugin `name'.'''
 plugin.add('setString', doc, None, istring('name'), istring('option'), istring('value'))
 
-doc = '''Run the plugin `name'.'''
-plugin.add('run', doc, None, istring('name'))
+doc = '''Run the plugin `name'. Return the tag of the created view (if any).'''
+plugin.add('run', doc, oint, istring('name'))
 
 ################################################################################
 

@@ -99,7 +99,7 @@ $headers_cmd
 mkdir -p $gmsh_framework/Headers
 cp $gmsh_git/build_${ios}/${buildtype}-${iphoneos}/libgmsh.a $gmsh_framework/gmsh
 cd $gmsh_framework/Headers
-cp $gmsh_git/build_${ios}/Headers/*.h $gmsh_git/build_${ios}/Headers/gmsh/* .
+cp -R $gmsh_git/build_${ios}/Headers/*.h $gmsh_git/build_${ios}/Headers/gmsh/* .
 ln -s . gmsh
 
 # build getdp framework

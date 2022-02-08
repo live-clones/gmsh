@@ -327,7 +327,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.MeshSizeExtendFromBoundary
-Extend computation of mesh element sizes from the boundaries into the interior (for 3D Delaunay, use 1: longest or 2: shortest surface edge length)@*
+Extend computation of mesh element sizes from the boundaries into the interior (0: never; 1: for surfaces and volumes; 2: for surfaces and volumes, but use smallest surface element edge length instead of longest length in 3D Delaunay; -2: only for surfaces; -3: only for volumes)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -393,6 +393,11 @@ Saved in: @code{General.OptionsFileName}
 
 @item Mesh.MetisRefinementAlgorithm
 METIS algorithm for k-way refinement 'rtype' (1: FM-based cut, 2: Greedy, 3: Two-sided node FM, 4: One-sided node FM)@*
+Default value: @code{2}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.MinimumLineNodes
+Minimum number of nodes used to mesh (straight) lines@*
 Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -757,12 +762,12 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.SaveGroupsOfElements
-Save groups of elements for each physical group (for UNV and INP mesh format) if value is positive; if negative, save groups of elements for entities of dimension dim if the (dim+1)^th least significant digit of -Mesh.SaveGroupsOfElements is non-zero (for example: -100 will only save surfaces, while -1010 will save volumes and curves)@*
+Save groups of elements for each physical group (for UNV and INP mesh format) if value is positive; if negative, save groups of elements for physical groups of dimension dim if the (dim+1)^th least significant digit of -Mesh.SaveGroupsOfElements is 1 (for example: -100 will only savesurfaces, while -1010 will save volumes and curves), and for INP skip saving elements of dimension dim altogether if the (dim+1)^th least significant digit of -Mesh.SaveGroupsOfElements is 0@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.SaveGroupsOfNodes
-Save groups of nodes for each physical group (for UNV, INP and Tochnog mesh formats) if value is positive; if negative, save groups of nodes for entities of dimension dim if the (dim+1)^th least significant digit of -Mesh.SaveGroupsOfNodes is non-zero (for example: -100 will only save surfaces, while -1010 will save volumes and curves)@*
+Save groups of nodes for each physical group (for UNV, INP and Tochnog mesh formats) if value is positive; if negative, save groups of nodes for physical groups of dimension dim if the (dim+1)^th least significant digit of -Mesh.SaveGroupsOfNodes is 1 (for example: -100 will only save surfaces, while -1010 will save volumes and curves); for INP, save groups of nodes for all entities of dimension dim if the (dim+1)^th least significant digit of -Mesh.SaveGroupsOfNodes is 2@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 

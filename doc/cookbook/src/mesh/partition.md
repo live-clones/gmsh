@@ -4,5 +4,5 @@ Partition a mesh for distributed processing.
 
 ### Python
 ```python
-{{#include ../../../../tutorial/python/t21.py}}
+{{#include ../../../../tutorials/python/t21.py}}
 ```

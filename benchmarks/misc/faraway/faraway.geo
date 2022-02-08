@@ -110,11 +110,11 @@ Recombine Surface (2048)  ;
 
 //5ème étape  : extrusion
 
-Extrude Surface {2038,{0,0,0.03}}{Layers{4};Recombine;};
-Extrude Surface {2040,{0,0,0.03}}{Layers{4};Recombine;};
-Extrude Surface {2042,{0,0,0.03}}{Layers{4};Recombine;};
-Extrude Surface {2044,{0,0,0.03}}{Layers{4};Recombine;};
-Extrude Surface {2048,{0,0,0.03}}{Layers{4};Recombine;};
+Extrude {0,0,0.03}{Surface {2038}; Layers{4};Recombine;}
+Extrude {0,0,0.03}{Surface {2040}; Layers{4};Recombine;}
+Extrude {0,0,0.03}{Surface {2042}; Layers{4};Recombine;}
+Extrude {0,0,0.03}{Surface {2044}; Layers{4};Recombine;}
+Extrude {0,0,0.03}{Surface {2048}; Layers{4};Recombine;}
 
 
 
@@ -241,11 +241,11 @@ Surface(5048) = {5045,5047};
 
 //5ème étape  : extrusion
 
-Extrude Surface {5038,{0,0,0.03}}{Layers{4};Recombine;};
-Extrude Surface {5040,{0,0,0.03}}{Layers{4};Recombine;};
-Extrude Surface {5042,{0,0,0.03}}{Layers{4};Recombine;};
-Extrude Surface {5044,{0,0,0.03}}{Layers{4};Recombine;};
-Extrude Surface {5048,{0,0,0.03}}{Layers{4};Recombine;};
+Extrude {0,0,0.03}{Surface {5038}; Layers{4};Recombine;}
+Extrude {0,0,0.03}{Surface {5040}; Layers{4};Recombine;}
+Extrude {0,0,0.03}{Surface {5042}; Layers{4};Recombine;}
+Extrude {0,0,0.03}{Surface {5044}; Layers{4};Recombine;}
+Extrude {0,0,0.03}{Surface {5048}; Layers{4};Recombine;}
 
 
 

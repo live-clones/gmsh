@@ -231,6 +231,16 @@ Save vertices in CAD X3D output (0: no, 1: yes)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Print.X3dVolumes
+Save separate volumes in CAD X3D output (0: no, 1: yes)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Print.X3dColorize
+Apply colors to faces (0: no, 1: yes)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Print.Width
 Width of printed image; use (possibly scaled) current width if < 0)@*
 Default value: @code{-1}@*

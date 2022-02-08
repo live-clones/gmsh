@@ -1176,6 +1176,19 @@ namespace {
     //  else curve3DBoundaryLayer(bndEl2column);
   }
 
+  std::string entName(const GEntity *ge)
+  {
+    std::stringstream stream;
+    switch(ge->dim()) {
+    case 0: stream << "point "; break;
+    case 1: stream << "curve "; break;
+    case 2: stream << "surface "; break;
+    case 3: stream << "volume "; break;
+    }
+    stream << ge->tag();
+    return stream.str();
+  }
+
   void curveMeshFromBnd(MEdgeVecMEltMap &ed2el, MFaceVecMEltMap &face2el,
                         GEntity *ent, GEntity *bndEnt,
                         const FastCurvingParameters &p, SVector3 const normal)
@@ -1203,8 +1216,7 @@ namespace {
           insertIfCurved(gFace->quadrangles[i], bndEl);
     }
     else
-      Msg::Error("Cannot process model entity %i of dim %i", bndEnt->tag(),
-                 bndEnt->dim());
+      Msg::Error("Cannot process %s in fast curving", entName(bndEnt).c_str());
 
     if(p.thickness) {
       getColumnsAndcurveBoundaryLayer(ed2el, face2el, ent, bndEnt, bndEl, p,
@@ -1230,8 +1242,7 @@ namespace {
     // inspired from curveMeshFromBnd and curveMeshFromBndElt
 
     if(bndEnt->dim() != 2) {
-      Msg::Error("Cannot process model entity %i of dim %i", bndEnt->tag(),
-                 bndEnt->dim());
+      Msg::Error("Cannot process %s in fast curving", entName(bndEnt).c_str());
       return;
     }
 
@@ -1345,7 +1356,7 @@ void HighOrderMeshFastCurving(GModel *gm, FastCurvingParameters &p,
       continue; // Skip if BL info is required but there is none
 
     // Compute edge/face -> elt. connectivity
-    Msg::Info("Computing connectivity for entity %i...", gEnt->tag());
+    Msg::Info("Computing connectivity for %s...", entName(gEnt).c_str());
     MEdgeVecMEltMap ed2el;
     MFaceVecMEltMap face2el;
     if(p.dim == 2)
@@ -1367,8 +1378,8 @@ void HighOrderMeshFastCurving(GModel *gm, FastCurvingParameters &p,
       if((bndType == GEntity::Line) || (bndType == GEntity::Plane))
         continue; // Skip if boundary is straight
       if(p.dim == 2 || !p.thickness) {
-        Msg::Info("Curving elements in surface %d for boundary edge %d...",
-                  gEnt->tag(), bndEnt->tag());
+        Msg::Info("Curving elements in %s for boundary %s...",
+                  entName(gEnt).c_str(), entName(bndEnt).c_str());
         curveMeshFromBnd(ed2el, face2el, gEnt, bndEnt, p, normal);
       }
       else
@@ -1376,7 +1387,7 @@ void HighOrderMeshFastCurving(GModel *gm, FastCurvingParameters &p,
     }
 
     if(p.thickness && p.dim == 3 && bndEnts.size()) {
-      Msg::Info("Curving elements in volume %d...", gEnt->tag());
+      Msg::Info("Curving elements in %s...", entName(gEnt).c_str());
       curve3DBoundaryLayer(bndEl2column, (GFace *)bndEnts[0]);
     }
   }

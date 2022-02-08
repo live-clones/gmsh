@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2022 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -6,7 +6,7 @@
 #ifndef GMSH_H
 #define GMSH_H
 
-// This file redefines the Gmsh C++ API in terms of the C API (v4.9.0).
+// This file redefines the Gmsh C++ API in terms of the C API (v4.9.4).
 //
 // This is provided as a convenience for users of the binary Gmsh SDK whose C++
 // compiler ABI is not compatible with the ABI of the C++ compiler used to create
@@ -170,8 +170,8 @@ namespace gmsh { // Top-level functions
 
   namespace option { // Option handling functions
 
-    // Set a numerical option to `value'. `name' is of the form "category.option"
-    // or "category[num].option". Available categories and options are listed in
+    // Set a numerical option to `value'. `name' is of the form "Category.Option"
+    // or "Category[num].Option". Available categories and options are listed in
     // the Gmsh reference manual.
     inline void setNumber(const std::string & name,
                           const double value)
@@ -182,7 +182,7 @@ namespace gmsh { // Top-level functions
     }
 
     // Get the `value' of a numerical option. `name' is of the form
-    // "category.option" or "category[num].option". Available categories and
+    // "Category.Option" or "Category[num].Option". Available categories and
     // options are listed in the Gmsh reference manual.
     inline void getNumber(const std::string & name,
                           double & value)
@@ -192,8 +192,8 @@ namespace gmsh { // Top-level functions
       if(ierr) throwLastError();
     }
 
-    // Set a string option to `value'. `name' is of the form "category.option" or
-    // "category[num].option". Available categories and options are listed in the
+    // Set a string option to `value'. `name' is of the form "Category.Option" or
+    // "Category[num].Option". Available categories and options are listed in the
     // Gmsh reference manual.
     inline void setString(const std::string & name,
                           const std::string & value)
@@ -203,8 +203,8 @@ namespace gmsh { // Top-level functions
       if(ierr) throwLastError();
     }
 
-    // Get the `value' of a string option. `name' is of the form "category.option"
-    // or "category[num].option". Available categories and options are listed in
+    // Get the `value' of a string option. `name' is of the form "Category.Option"
+    // or "Category[num].Option". Available categories and options are listed in
     // the Gmsh reference manual.
     inline void getString(const std::string & name,
                           std::string & value)
@@ -218,9 +218,9 @@ namespace gmsh { // Top-level functions
 
     // Set a color option to the RGBA value (`r', `g', `b', `a'), where where `r',
     // `g', `b' and `a' should be integers between 0 and 255. `name' is of the form
-    // "category.option" or "category[num].option". Available categories and
-    // options are listed in the Gmsh reference manual, with the "Color." middle
-    // string removed.
+    // "Category.Color.Option" or "Category[num].Color.Option". Available
+    // categories and options are listed in the Gmsh reference manual. For
+    // conciseness "Color." can be ommitted in `name'.
     inline void setColor(const std::string & name,
                          const int r,
                          const int g,
@@ -233,9 +233,9 @@ namespace gmsh { // Top-level functions
     }
 
     // Get the `r', `g', `b', `a' value of a color option. `name' is of the form
-    // "category.option" or "category[num].option". Available categories and
-    // options are listed in the Gmsh reference manual, with the "Color." middle
-    // string removed.
+    // "Category.Color.Option" or "Category[num].Color.Option". Available
+    // categories and options are listed in the Gmsh reference manual. For
+    // conciseness "Color." can be ommitted in `name'.
     inline void getColor(const std::string & name,
                          int & r,
                          int & g,
@@ -532,7 +532,7 @@ namespace gmsh { // Top-level functions
       if(ierr) throwLastError();
     }
 
-    // Get the geometrical dimension of the current model.
+    // Return the geometrical dimension of the current model.
     inline int getDimension()
     {
       int ierr = 0;
@@ -603,6 +603,15 @@ namespace gmsh { // Top-level functions
       int ierr = 0;
       gmshModelGetParent(dim, tag, &parentDim, &parentTag, &ierr);
       if(ierr) throwLastError();
+    }
+
+    // Return the number of partitions in the model.
+    inline int getNumberOfPartitions()
+    {
+      int ierr = 0;
+      int result_api_ = gmshModelGetNumberOfPartitions(&ierr);
+      if(ierr) throwLastError();
+      return result_api_;
     }
 
     // In a partitioned model, return the tags of the partition(s) to which the
@@ -1717,10 +1726,10 @@ namespace gmsh { // Top-level functions
       // Get the global unique mesh edge identifiers `edgeTags' and orientations
       // `edgeOrientation' for an input list of node tag pairs defining these
       // edges, concatenated in the vector `nodeTags'. Mesh edges are created e.g.
-      // by `createEdges()' or `getKeys()'. The reference positive orientation is
-      // n1 < n2, where n1 and n2 are the tags of the two edge nodes, which
-      // corresponds to the local orientation of edge-based basis functions as
-      // well.
+      // by `createEdges()', `getKeys()' or `addEdges()'. The reference positive
+      // orientation is n1 < n2, where n1 and n2 are the tags of the two edge
+      // nodes, which corresponds to the local orientation of edge-based basis
+      // functions as well.
       inline void getEdges(const std::vector<std::size_t> & nodeTags,
                            std::vector<std::size_t> & edgeTags,
                            std::vector<int> & edgeOrientations)
@@ -1740,7 +1749,7 @@ namespace gmsh { // Top-level functions
       // `faceOrientations' for an input list of node tag triplets (if `faceType'
       // == 3) or quadruplets (if `faceType' == 4) defining these faces,
       // concatenated in the vector `nodeTags'. Mesh faces are created e.g. by
-      // `createFaces()' or `getKeys()'.
+      // `createFaces()', `getKeys()' or `addFaces()'.
       inline void getFaces(const int faceType,
                            const std::vector<std::size_t> & nodeTags,
                            std::vector<std::size_t> & faceTags,
@@ -1775,6 +1784,66 @@ namespace gmsh { // Top-level functions
         gmshModelMeshCreateFaces(api_dimTags_, api_dimTags_n_, &ierr);
         if(ierr) throwLastError();
         gmshFree(api_dimTags_);
+      }
+
+      // Get the global unique identifiers `edgeTags' and the nodes `edgeNodes' of
+      // the edges in the mesh. Mesh edges are created e.g. by `createEdges()',
+      // `getKeys()' or addEdges().
+      inline void getAllEdges(std::vector<std::size_t> & edgeTags,
+                              std::vector<std::size_t> & edgeNodes)
+      {
+        int ierr = 0;
+        size_t *api_edgeTags_; size_t api_edgeTags_n_;
+        size_t *api_edgeNodes_; size_t api_edgeNodes_n_;
+        gmshModelMeshGetAllEdges(&api_edgeTags_, &api_edgeTags_n_, &api_edgeNodes_, &api_edgeNodes_n_, &ierr);
+        if(ierr) throwLastError();
+        edgeTags.assign(api_edgeTags_, api_edgeTags_ + api_edgeTags_n_); gmshFree(api_edgeTags_);
+        edgeNodes.assign(api_edgeNodes_, api_edgeNodes_ + api_edgeNodes_n_); gmshFree(api_edgeNodes_);
+      }
+
+      // Get the global unique identifiers `faceTags' and the nodes `faceNodes' of
+      // the faces of type `faceType' in the mesh. Mesh faces are created e.g. by
+      // `createFaces()', `getKeys()' or addFaces().
+      inline void getAllFaces(const int faceType,
+                              std::vector<std::size_t> & faceTags,
+                              std::vector<std::size_t> & faceNodes)
+      {
+        int ierr = 0;
+        size_t *api_faceTags_; size_t api_faceTags_n_;
+        size_t *api_faceNodes_; size_t api_faceNodes_n_;
+        gmshModelMeshGetAllFaces(faceType, &api_faceTags_, &api_faceTags_n_, &api_faceNodes_, &api_faceNodes_n_, &ierr);
+        if(ierr) throwLastError();
+        faceTags.assign(api_faceTags_, api_faceTags_ + api_faceTags_n_); gmshFree(api_faceTags_);
+        faceNodes.assign(api_faceNodes_, api_faceNodes_ + api_faceNodes_n_); gmshFree(api_faceNodes_);
+      }
+
+      // Add mesh edges defined by their global unique identifiers `edgeTags' and
+      // their nodes `edgeNodes'.
+      inline void addEdges(const std::vector<std::size_t> & edgeTags,
+                           const std::vector<std::size_t> & edgeNodes)
+      {
+        int ierr = 0;
+        size_t *api_edgeTags_; size_t api_edgeTags_n_; vector2ptr(edgeTags, &api_edgeTags_, &api_edgeTags_n_);
+        size_t *api_edgeNodes_; size_t api_edgeNodes_n_; vector2ptr(edgeNodes, &api_edgeNodes_, &api_edgeNodes_n_);
+        gmshModelMeshAddEdges(api_edgeTags_, api_edgeTags_n_, api_edgeNodes_, api_edgeNodes_n_, &ierr);
+        if(ierr) throwLastError();
+        gmshFree(api_edgeTags_);
+        gmshFree(api_edgeNodes_);
+      }
+
+      // Add mesh faces of type `faceType' defined by their global unique
+      // identifiers `faceTags' and their nodes `faceNodes'.
+      inline void addFaces(const int faceType,
+                           const std::vector<std::size_t> & faceTags,
+                           const std::vector<std::size_t> & faceNodes)
+      {
+        int ierr = 0;
+        size_t *api_faceTags_; size_t api_faceTags_n_; vector2ptr(faceTags, &api_faceTags_, &api_faceTags_n_);
+        size_t *api_faceNodes_; size_t api_faceNodes_n_; vector2ptr(faceNodes, &api_faceNodes_, &api_faceNodes_n_);
+        gmshModelMeshAddFaces(faceType, api_faceTags_, api_faceTags_n_, api_faceNodes_, api_faceNodes_n_, &ierr);
+        if(ierr) throwLastError();
+        gmshFree(api_faceTags_);
+        gmshFree(api_faceNodes_);
       }
 
       // Generate the pair of keys for the elements of type `elementType' in the
@@ -2384,7 +2453,7 @@ namespace gmsh { // Top-level functions
       // (in radians), and create new discrete surfaces, curves and points
       // accordingly. If `boundary' is set, also create discrete curves on the
       // boundary if the surface is open. If `forReparametrization' is set, create
-      // edges and surfaces that can be reparametrized using a single map. If
+      // curves and surfaces that can be reparametrized using a single map. If
       // `curveAngle' is less than Pi, also force curves to be split according to
       // `curveAngle'. If `exportDiscrete' is set, clear any built-in CAD kernel
       // entities and export the discrete entities in the built-in CAD kernel.
@@ -2565,6 +2634,50 @@ namespace gmsh { // Top-level functions
         gmshModelMeshTetNeighbors(api_tetra_, api_tetra_n_, &api_neighbors_, &api_neighbors_n_, &ierr);
         if(ierr) throwLastError();
         gmshFree(api_tetra_);
+        neighbors.assign(api_neighbors_, api_neighbors_ + api_neighbors_n_); gmshFree(api_neighbors_);
+      }
+
+      // hxt meshing test.
+      inline void createHxtMesh(const std::string & inputMesh,
+                                const std::vector<double> & coord,
+                                const std::string & outputMesh,
+                                std::vector<double> & pts,
+                                std::vector<std::size_t> & tets)
+      {
+        int ierr = 0;
+        double *api_coord_; size_t api_coord_n_; vector2ptr(coord, &api_coord_, &api_coord_n_);
+        double *api_pts_; size_t api_pts_n_;
+        size_t *api_tets_; size_t api_tets_n_;
+        gmshModelMeshCreateHxtMesh(inputMesh.c_str(), api_coord_, api_coord_n_, outputMesh.c_str(), &api_pts_, &api_pts_n_, &api_tets_, &api_tets_n_, &ierr);
+        if(ierr) throwLastError();
+        gmshFree(api_coord_);
+        pts.assign(api_pts_, api_pts_ + api_pts_n_); gmshFree(api_pts_);
+        tets.assign(api_tets_, api_tets_ + api_tets_n_); gmshFree(api_tets_);
+      }
+
+      // Generate a mesh of the array of points `coord', constrained to the surface
+      // mesh of the current model. Currently only supported for 3D.
+      inline void alphaShapesConstrained(const int dim,
+                                         const std::vector<double> & coord,
+                                         const double alpha,
+                                         const double meanValue,
+                                         std::vector<std::size_t> & tetrahedra,
+                                         std::vector<std::vector<std::size_t> > & domains,
+                                         std::vector<std::vector<std::size_t> > & boundaries,
+                                         std::vector<std::size_t> & neighbors)
+      {
+        int ierr = 0;
+        double *api_coord_; size_t api_coord_n_; vector2ptr(coord, &api_coord_, &api_coord_n_);
+        size_t *api_tetrahedra_; size_t api_tetrahedra_n_;
+        size_t **api_domains_; size_t *api_domains_n_, api_domains_nn_;
+        size_t **api_boundaries_; size_t *api_boundaries_n_, api_boundaries_nn_;
+        size_t *api_neighbors_; size_t api_neighbors_n_;
+        gmshModelMeshAlphaShapesConstrained(dim, api_coord_, api_coord_n_, alpha, meanValue, &api_tetrahedra_, &api_tetrahedra_n_, &api_domains_, &api_domains_n_, &api_domains_nn_, &api_boundaries_, &api_boundaries_n_, &api_boundaries_nn_, &api_neighbors_, &api_neighbors_n_, &ierr);
+        if(ierr) throwLastError();
+        gmshFree(api_coord_);
+        tetrahedra.assign(api_tetrahedra_, api_tetrahedra_ + api_tetrahedra_n_); gmshFree(api_tetrahedra_);
+        domains.resize(api_domains_nn_); for(size_t i = 0; i < api_domains_nn_; ++i){ domains[i].assign(api_domains_[i], api_domains_[i] + api_domains_n_[i]); gmshFree(api_domains_[i]); } gmshFree(api_domains_); gmshFree(api_domains_n_);
+        boundaries.resize(api_boundaries_nn_); for(size_t i = 0; i < api_boundaries_nn_; ++i){ boundaries[i].assign(api_boundaries_[i], api_boundaries_[i] + api_boundaries_n_[i]); gmshFree(api_boundaries_[i]); } gmshFree(api_boundaries_); gmshFree(api_boundaries_n_);
         neighbors.assign(api_neighbors_, api_neighbors_ + api_neighbors_n_); gmshFree(api_neighbors_);
       }
 
@@ -4910,15 +5023,6 @@ namespace gmsh { // Top-level functions
       return result_api_;
     }
 
-    // Copy the options from the view with tag `refTag' to the view with tag `tag'.
-    inline void copyOptions(const int refTag,
-                            const int tag)
-    {
-      int ierr = 0;
-      gmshViewCopyOptions(refTag, tag, &ierr);
-      if(ierr) throwLastError();
-    }
-
     // Combine elements (if `what' == "elements") or steps (if `what' == "steps")
     // of all views (`how' == "all"), all visible views (`how' == "visible") or all
     // views having the same name (`how' == "name"). Remove original views if
@@ -4996,6 +5100,93 @@ namespace gmsh { // Top-level functions
       if(ierr) throwLastError();
     }
 
+    namespace option { // View option handling functions
+
+      // Set the numerical option `name' to value `value' for the view with tag
+      // `tag'.
+      inline void setNumber(const int tag,
+                            const std::string & name,
+                            const double value)
+      {
+        int ierr = 0;
+        gmshViewOptionSetNumber(tag, name.c_str(), value, &ierr);
+        if(ierr) throwLastError();
+      }
+
+      // Get the `value' of the numerical option `name' for the view with tag
+      // `tag'.
+      inline void getNumber(const int tag,
+                            const std::string & name,
+                            double & value)
+      {
+        int ierr = 0;
+        gmshViewOptionGetNumber(tag, name.c_str(), &value, &ierr);
+        if(ierr) throwLastError();
+      }
+
+      // Set the string option `name' to value `value' for the view with tag `tag'.
+      inline void setString(const int tag,
+                            const std::string & name,
+                            const std::string & value)
+      {
+        int ierr = 0;
+        gmshViewOptionSetString(tag, name.c_str(), value.c_str(), &ierr);
+        if(ierr) throwLastError();
+      }
+
+      // Get the `value' of the string option `name' for the view with tag `tag'.
+      inline void getString(const int tag,
+                            const std::string & name,
+                            std::string & value)
+      {
+        int ierr = 0;
+        char *api_value_;
+        gmshViewOptionGetString(tag, name.c_str(), &api_value_, &ierr);
+        if(ierr) throwLastError();
+        value = std::string(api_value_); gmshFree(api_value_);
+      }
+
+      // Set the color option `name' to the RGBA value (`r', `g', `b', `a') for the
+      // view with tag `tag', where where `r', `g', `b' and `a' should be integers
+      // between 0 and 255.
+      inline void setColor(const int tag,
+                           const std::string & name,
+                           const int r,
+                           const int g,
+                           const int b,
+                           const int a = 255)
+      {
+        int ierr = 0;
+        gmshViewOptionSetColor(tag, name.c_str(), r, g, b, a, &ierr);
+        if(ierr) throwLastError();
+      }
+
+      // Get the `r', `g', `b', `a' value of the color option `name' for the view
+      // with tag `tag'.
+      inline void getColor(const int tag,
+                           const std::string & name,
+                           int & r,
+                           int & g,
+                           int & b,
+                           int & a)
+      {
+        int ierr = 0;
+        gmshViewOptionGetColor(tag, name.c_str(), &r, &g, &b, &a, &ierr);
+        if(ierr) throwLastError();
+      }
+
+      // Copy the options from the view with tag `refTag' to the view with tag
+      // `tag'.
+      inline void copy(const int refTag,
+                       const int tag)
+      {
+        int ierr = 0;
+        gmshViewOptionCopy(refTag, tag, &ierr);
+        if(ierr) throwLastError();
+      }
+
+    } // namespace option
+
   } // namespace view
 
   namespace plugin { // Plugin functions
@@ -5020,12 +5211,13 @@ namespace gmsh { // Top-level functions
       if(ierr) throwLastError();
     }
 
-    // Run the plugin `name'.
-    inline void run(const std::string & name)
+    // Run the plugin `name'. Return the tag of the created view (if any).
+    inline int run(const std::string & name)
     {
       int ierr = 0;
-      gmshPluginRun(name.c_str(), &ierr);
+      int result_api_ = gmshPluginRun(name.c_str(), &ierr);
       if(ierr) throwLastError();
+      return result_api_;
     }
 
   } // namespace plugin
