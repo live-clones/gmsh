@@ -90,6 +90,8 @@ IntPt GQQ16[16] = {
   {{xq16[12], yq16[12], 0}, pq16[12]}, {{xq16[13], yq16[13], 0}, pq16[13]},
   {{xq16[14], yq16[14], 0}, pq16[14]}, {{xq16[15], yq16[15], 0}, pq16[15]}};
 
+// Not clear which rule to use for order 2 - with this choice Gauss2 has 7
+// points, but only 4 for the tensor rule...
 static IntPt *GQQ[3] = {GQQ1, GQQ3, GQQ7};
 static int GQQnPt[3] = {1, 3, 7};
 static std::vector<IntPt *> GQQGL(40, nullptr);
