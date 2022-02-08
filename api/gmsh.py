@@ -3849,6 +3849,28 @@ class model:
         compute_cross_field = computeCrossField
 
         @staticmethod
+        def generateMesh(dim, tag, refine, coord):
+            """
+            gmsh.model.mesh.generateMesh(dim, tag, refine, coord)
+
+            Generate a mesh on one single mode entity of dimension `dim' and of tag
+            `tag'. User can give a set of points in parameter coordinates in the
+            `coord' vector. Parameter `refine' is set to 1 if additional points must be
+            added by the mesher using standard gmsh algorithms.
+            """
+            api_coord_, api_coord_n_ = _ivectordouble(coord)
+            ierr = c_int()
+            lib.gmshModelMeshGenerateMesh(
+                c_int(dim),
+                c_int(tag),
+                c_int(bool(refine)),
+                api_coord_, api_coord_n_,
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+        generate_mesh = generateMesh
+
+        @staticmethod
         def triangulate(coord):
             """
             gmsh.model.mesh.triangulate(coord)

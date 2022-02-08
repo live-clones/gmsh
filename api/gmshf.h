@@ -3076,6 +3076,27 @@ c
             integer(c_int)::ierr
           end subroutine gmshModelMeshComputeCrossField
 
+!  Generate a mesh on one single mode entity of dimension `dim' and of tag
+!  `tag'. User can give a set of points in parameter coordinates in the
+!  `coord' vector. Parameter `refine' is set to 1 if additional points must be
+!  added by the mesher using standard gmsh algorithms.
+        subroutine gmshModelMeshGenerateMesh(
+     &      dim,
+     &      tag,
+     &      refine,
+     &      coord,
+     &      coord_n,
+     &      ierr)
+     &    bind(C, name = "gmshModelMeshGenerateMesh")
+          use, intrinsic :: iso_c_binding
+            integer(c_int), value::dim
+            integer(c_int), value::tag
+            integer(c_int), value::refine
+            real(c_double)::coord(*)
+            integer(c_size_t), value :: coord_n
+            integer(c_int)::ierr
+          end subroutine gmshModelMeshGenerateMesh
+
 !  Triangulate the points given in the `coord' vector as pairs of u, v
 !  coordinates, and return the node tags (with numbering starting at 1) of the
 !  resulting triangles in `tri'.

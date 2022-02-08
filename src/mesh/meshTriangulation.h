@@ -14,13 +14,13 @@
 // to the model face are colored faceTag, other have negative colors.
 PolyMesh *GFaceInitialMesh(int faceTag, int recover = 0,
                            std::vector<double> *additional = nullptr);
-// apply Delaunay refinement using old algorithms
-// FIXME -- not working yet
-void GFaceDelaunayRefinementOldMesher(int faceTag);
 void GFaceDelaunayRefinement(int faceTag);
 int GFace2PolyMesh(int faceTag, PolyMesh **pm);
 int PolyMesh2GFace(PolyMesh *pm, int faceTag);
 int meshTriangulate2d (const std::vector<double> &coord,
 		       std::vector<std::size_t> &tri);
+// apply Delaunay refinement using old algorithms
+// FIXME -- not working yet
+void GFaceDelaunayRefinementOldMesher(int faceTag);
 
 #endif

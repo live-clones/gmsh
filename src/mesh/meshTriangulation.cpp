@@ -866,6 +866,7 @@ PolyMesh *GFaceInitialMesh(int faceTag, int recover,
 
   return pm;
 }
+
 int meshTriangulate2d (const std::vector<double> &coord,
 		      std::vector<std::size_t> &tri){
 

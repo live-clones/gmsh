@@ -2554,6 +2554,22 @@ namespace gmsh { // Top-level functions
         viewTags.assign(api_viewTags_, api_viewTags_ + api_viewTags_n_); gmshFree(api_viewTags_);
       }
 
+      // Generate a mesh on one single mode entity of dimension `dim' and of tag
+      // `tag'. User can give a set of points in parameter coordinates in the
+      // `coord' vector. Parameter `refine' is set to 1 if additional points must
+      // be added by the mesher using standard gmsh algorithms.
+      inline void generateMesh(const int dim,
+                               const int tag,
+                               const bool refine,
+                               const std::vector<double> & coord)
+      {
+        int ierr = 0;
+        double *api_coord_; size_t api_coord_n_; vector2ptr(coord, &api_coord_, &api_coord_n_);
+        gmshModelMeshGenerateMesh(dim, tag, (int)refine, api_coord_, api_coord_n_, &ierr);
+        if(ierr) throwLastError();
+        gmshFree(api_coord_);
+      }
+
       // Triangulate the points given in the `coord' vector as pairs of u, v
       // coordinates, and return the node tags (with numbering starting at 1) of
       // the resulting triangles in `tri'.

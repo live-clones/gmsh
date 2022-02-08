@@ -3295,6 +3295,24 @@ end
 const compute_cross_field = computeCrossField
 
 """
+    gmsh.model.mesh.generateMesh(dim, tag, refine, coord)
+
+Generate a mesh on one single mode entity of dimension `dim` and of tag `tag`.
+User can give a set of points in parameter coordinates in the `coord` vector.
+Parameter `refine` is set to 1 if additional points must be added by the mesher
+using standard gmsh algorithms.
+"""
+function generateMesh(dim, tag, refine, coord)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshGenerateMesh, gmsh.lib), Cvoid,
+          (Cint, Cint, Cint, Ptr{Cdouble}, Csize_t, Ptr{Cint}),
+          dim, tag, refine, convert(Vector{Cdouble}, coord), length(coord), ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+const generate_mesh = generateMesh
+
+"""
     gmsh.model.mesh.triangulate(coord)
 
 Triangulate the points given in the `coord` vector as pairs of u, v coordinates,

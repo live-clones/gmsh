@@ -1666,6 +1666,17 @@ namespace gmsh { // Top-level functions
       // of the views.
       GMSH_API void computeCrossField(std::vector<int> & viewTags);
 
+      // gmsh::model::mesh::generateMesh
+      //
+      // Generate a mesh on one single mode entity of dimension `dim' and of tag
+      // `tag'. User can give a set of points in parameter coordinates in the
+      // `coord' vector. Parameter `refine' is set to 1 if additional points must
+      // be added by the mesher using standard gmsh algorithms.
+      GMSH_API void generateMesh(const int dim,
+                                 const int tag,
+                                 const bool refine,
+                                 const std::vector<double> & coord);
+
       // gmsh::model::mesh::triangulate
       //
       // Triangulate the points given in the `coord' vector as pairs of u, v

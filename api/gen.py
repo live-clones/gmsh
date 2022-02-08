@@ -527,6 +527,9 @@ mesh.add('computeCohomology', doc, None, ivectorint('domainTags', 'std::vector<i
 doc = '''Compute a cross field for the current mesh. The function creates 3 views: the H function, the Theta function and cross directions. Return the tags of the views.'''
 mesh.add('computeCrossField', doc, None, ovectorint('viewTags'))
 
+doc = '''Generate a mesh on one single mode entity of dimension `dim' and of tag `tag'. User can give a set of points in parameter coordinates in the `coord' vector. Parameter `refine' is set to 1 if additional points must be added by the mesher using standard gmsh algorithms.'''
+mesh.add('generateMesh', doc, None, iint('dim'), iint('tag'), ibool('refine'), ivectordouble('coord'))
+
 doc = '''Triangulate the points given in the `coord' vector as pairs of u, v coordinates, and return the node tags (with numbering starting at 1) of the resulting triangles in `tri'.'''
 mesh.add('triangulate', doc, None, ivectordouble('coord'), ovectorsize('tri'))
 

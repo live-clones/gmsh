@@ -5286,6 +5286,80 @@ gmsh::model::mesh::computeCohomology(const std::vector<int> &domainTags,
                                         dims);
 }
 
+GMSH_API void gmsh::model::mesh::generateMesh(const int dim, const int tag, const bool refine, const std::vector<double> &coord)
+{
+  if(!_checkInit()) return;
+  // -----------------  1D ------------------------------
+  if (dim == 1){
+    // 2 be done ...
+  }
+  // -----------------  2D ------------------------------
+  else if (dim == 2){
+    Msg::Info("generating surface mesh for face %d\n",dim,tag);
+    deMeshGFace killer;
+    GFace *gf = GModel::current()->getFaceByTag(tag);
+    if (!gf)return;
+    killer(gf);
+    std::vector<double> cc = coord;
+    PolyMesh *pm = GFaceInitialMesh(tag, 1, &cc);
+    std::vector<GEdge*> ed = gf->edges();
+    std::map<int,MVertex*> vs;
+    int vmax = 0;
+    for (auto e : ed){
+      for (auto l : e->lines){
+	vs[l->getVertex(0)->getNum()] = l->getVertex(0);
+	vs[l->getVertex(1)->getNum()] = l->getVertex(1);
+	if (l->getVertex(0)->getNum() > vmax) vmax=l->getVertex(0)->getNum();
+	if (l->getVertex(1)->getNum() > vmax) vmax=l->getVertex(1)->getNum();
+      }
+    }
+
+    for(size_t i = 4; i < pm->vertices.size() ; i++) {
+      PolyMesh::Vertex *v = pm->vertices[i];
+      if (v->data == -1){
+	v->data = ++vmax;
+      }
+    }
+    
+    for(size_t i = 0; i < pm->faces.size(); i++) {
+      PolyMesh::HalfEdge *he = pm->faces[i]->he;
+      int a = he->v->data;
+      int b = he->next->v->data;
+      int c = he->next->next->v->data;
+      if (a != -1 && b != -1 && c != -1){
+	MVertex *va,*vb,*vc;
+	std::map<int,MVertex*>::iterator ita = vs.find(a);
+	std::map<int,MVertex*>::iterator itb = vs.find(b);
+	std::map<int,MVertex*>::iterator itc = vs.find(c);
+	if (ita != vs.end())va = ita->second;
+	else{
+	  GPoint gp = gf->point(he->v->position.x(),he->v->position.y());
+	  va = new MFaceVertex (gp.x(),gp.y(),gp.z(),gf,gp.u(),gp.v());
+	  gf->mesh_vertices.push_back(va);
+	  vs[a] = va;
+	}
+	if (itb != vs.end())vb = itb->second;
+	else{
+	  GPoint gp = gf->point(he->next->v->position.x(),he->next->v->position.y());
+	  vb = new MFaceVertex (gp.x(),gp.y(),gp.z(),gf,gp.u(),gp.v());
+	  gf->mesh_vertices.push_back(vb);
+	  vs[b] = vb;
+	}
+	if (itc != vs.end())vc = itc->second;
+	else{
+	  GPoint gp = gf->point(he->next->next->v->position.x(),he->next->next->v->position.y());
+	  vc = new MFaceVertex (gp.x(),gp.y(),gp.z(),gf,gp.u(),gp.v());
+	  gf->mesh_vertices.push_back(vc);
+	  vs[c] = vc;
+	}
+	gf->triangles.push_back(new MTriangle(va,vb,vc));
+      }
+    }
+    pm->print4debug(1);
+    delete pm;
+  }
+}
+
 GMSH_API void gmsh::model::mesh::triangulate(const std::vector<double> &coord,
                                              std::vector<std::size_t> &tri)
 {
@@ -5295,31 +5369,7 @@ GMSH_API void gmsh::model::mesh::triangulate(const std::vector<double> &coord,
     return;
   }
 #if defined(HAVE_MESH)
-meshTriangulate2d(coord,tri);
-  return;
-  SBoundingBox3d bbox;
-  for(std::size_t i = 0; i < coord.size(); i += 2)
-    bbox += SPoint3(coord[i], coord[i + 1], 0.);
-  double lc = 10. * norm(SVector3(bbox.max(), bbox.min()));
-  std::vector<MVertex *> verts(coord.size() / 2);
-  std::size_t j = 0;
-  for(std::size_t i = 0; i < coord.size(); i += 2) {
-    double XX = 1.e-12 * lc * (double)rand() / (double)RAND_MAX;
-    double YY = 1.e-12 * lc * (double)rand() / (double)RAND_MAX;
-    MVertex *v = new MVertex(coord[i] + XX, coord[i + 1] + YY, 0.);
-    v->setIndex(j);
-    verts[j++] = v;
-  }
-  std::vector<MTriangle *> tris;
-  delaunayMeshIn2D(verts, tris);
-  tri.resize(3 * tris.size());
-  for(std::size_t i = 0; i < tris.size(); i++) {
-    MTriangle *t = tris[i];
-    for(std::size_t j = 0; j < 3; j++)
-      tri[3 * i + j] = t->getVertex(j)->getIndex() + 1; // start at 1
-  }
-  for(std::size_t i = 0; i < verts.size(); i++) delete verts[i];
-  for(std::size_t i = 0; i < tris.size(); i++) delete tris[i];
+  meshTriangulate2d(coord,tri);
 #else
   Msg::Error("triangulate requires the mesh module");
 #endif

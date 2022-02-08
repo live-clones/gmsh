@@ -1470,6 +1470,16 @@ GMSH_API void gmshModelMeshComputeCohomology(int * domainTags, size_t domainTags
 GMSH_API void gmshModelMeshComputeCrossField(int ** viewTags, size_t * viewTags_n,
                                              int * ierr);
 
+/* Generate a mesh on one single mode entity of dimension `dim' and of tag
+ * `tag'. User can give a set of points in parameter coordinates in the
+ * `coord' vector. Parameter `refine' is set to 1 if additional points must be
+ * added by the mesher using standard gmsh algorithms. */
+GMSH_API void gmshModelMeshGenerateMesh(const int dim,
+                                        const int tag,
+                                        const int refine,
+                                        double * coord, size_t coord_n,
+                                        int * ierr);
+
 /* Triangulate the points given in the `coord' vector as pairs of u, v
  * coordinates, and return the node tags (with numbering starting at 1) of the
  * resulting triangles in `tri'. */
