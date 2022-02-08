@@ -420,6 +420,7 @@ void constrainedAlphaShapes_(GModel* m,
   int meshDim = m->getMeshStatus(false); 
   std::cout << "mesh Dim : " << meshDim << "\n";
   
+  
   if (meshDim < dim-1){ // if no 1D boundary mesh for a 2D domain, if no 2D boundary mesh for a 3D domain --> so generate one
     GenerateMesh(m, dim-1);
   }
@@ -427,6 +428,7 @@ void constrainedAlphaShapes_(GModel* m,
   {
     GenerateMesh(m, dim-1);
   }
+  
   
   
   /* initialize hxt mesh */
@@ -439,6 +441,7 @@ void constrainedAlphaShapes_(GModel* m,
   std::set<GRegion *, GEntityPtrLessThan> rs;
   rs = m->getRegions();
   std::vector<GRegion *> regions(rs.begin(), rs.end());
+  std::for_each(m->firstRegion(), m->lastRegion(), deMeshGRegion());
   Gmsh2HxtAlpha(regions, mesh, v2c, c2v);
 
   // all other fields of the options will be 0 or NULL (standard C behavior)

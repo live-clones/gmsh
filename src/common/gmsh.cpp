@@ -5420,6 +5420,19 @@ gmsh::model::mesh::alphaShapesConstrained(const int dim,
 #endif  
 }
 
+GMSH_API void
+gmsh::model::mesh::generateSurfaceMeshConstrained(const std::vector<double>& parametricCoord,
+                                                  const int tag,
+                                                  const bool addNodes,
+                                                  const double meshSize){
+#if defined(HAVE_MESH)
+  // TODO!
+#else 
+  Msg::Error("generateSufaceMeshConstrained requires the mesh module");
+#endif
+}
+
+
 // gmsh::model::mesh::field
 
 GMSH_API int gmsh::model::mesh::field::add(const std::string &fieldType,

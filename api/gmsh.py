@@ -4024,6 +4024,28 @@ class model:
                 _ovectorsize(api_neighbors_, api_neighbors_n_.value))
         alpha_shapes_constrained = alphaShapesConstrained
 
+        @staticmethod
+        def generateSurfaceMeshConstrained(parametricCoord, tag, addNodes, meshSize):
+            """
+            gmsh.model.mesh.generateSurfaceMeshConstrained(parametricCoord, tag, addNodes, meshSize)
+
+            Generate a surface mesh on entity with tag `tag', with a constraint on
+            nodes `parametricCoord' (i.e., `parametricCoord' must belong to the mesh).
+            If `addNodes' is true, add nodes such that the maximum element size does
+            not exceed `meshSize'.
+            """
+            api_parametricCoord_, api_parametricCoord_n_ = _ivectordouble(parametricCoord)
+            ierr = c_int()
+            lib.gmshModelMeshGenerateSurfaceMeshConstrained(
+                api_parametricCoord_, api_parametricCoord_n_,
+                c_int(tag),
+                c_int(bool(addNodes)),
+                c_double(meshSize),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+        generate_surface_mesh_constrained = generateSurfaceMeshConstrained
+
 
         class field:
             """
