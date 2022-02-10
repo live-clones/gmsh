@@ -927,3 +927,13 @@ bool GRegion::isFullyDiscrete()
   }
   return true;
 }
+
+bool GRegion::autoExtrude(const std::vector<int> &numElements,
+                          const std::vector<double> &heights,
+                          const bool recombine)
+{
+  return false;
+
+  // placeholder for reverse engineering of the GRegion, to try to set
+  // ExtrudeParams automatically on it, as well as on its bounding entities.
+}
