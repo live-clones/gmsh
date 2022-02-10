@@ -30,6 +30,8 @@
 #else
 #define GMSH_API __declspec(dllimport)
 #endif
+#elif defined(__GNUC__)
+#define GMSH_API __attribute__ ((visibility("default")))
 #else
 #define GMSH_API
 #endif

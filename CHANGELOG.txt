@@ -1,4 +1,5 @@
-(Work-in-progress): small bug fixes.
+(Work-in-progress): dynamic Gmsh library now also only exports public symbols on
+macOS and Linux, like it does on Windows; small bug fixes.
 
 4.9.4 (February 3, 2022): improved BSpline filling; new options
 Mesh.MinimumLineNodes, Mesh.RecombineNodeRepositioning,
