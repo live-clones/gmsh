@@ -1332,7 +1332,8 @@ GMSH_API void gmsh::model::mesh::setOrder(const int order)
 {
   if(!_checkInit()) return;
   GModel::current()->setOrderN(order, CTX::instance()->mesh.secondOrderLinear,
-                               CTX::instance()->mesh.secondOrderIncomplete);
+                               CTX::instance()->mesh.secondOrderIncomplete,
+                               CTX::instance()->mesh.meshOnlyVisible);
   CTX::instance()->mesh.changed = ENT_ALL;
 }
 

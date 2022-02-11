@@ -1449,11 +1449,11 @@ int GModel::optimizeMesh(const std::string &how, const bool force, int niter)
 #endif
 }
 
-int GModel::setOrderN(int order, int linear, int incomplete)
+int GModel::setOrderN(int order, int linear, int incomplete, int onlyVisible)
 {
 #if defined(HAVE_MESH)
   if(order > 1)
-    SetOrderN(this, order, linear, incomplete);
+    SetOrderN(this, order, linear, incomplete, onlyVisible);
   else
     SetOrder1(this);
   FixPeriodicMesh(this);
