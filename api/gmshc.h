@@ -1404,6 +1404,12 @@ GMSH_API void gmshModelMeshGetPeriodicKeys(const int elementType,
 /* Import the model STL representation (if available) as the current mesh. */
 GMSH_API void gmshModelMeshImportStl(int * ierr);
 
+/* Get the `tags' of any duplicate nodes in the mesh of the entities
+ * `dimTags'. If `dimTags' is empty, consider the whole mesh. */
+GMSH_API void gmshModelMeshGetDuplicateNodes(size_t ** tags, size_t * tags_n,
+                                             int * dimTags, size_t dimTags_n,
+                                             int * ierr);
+
 /* Remove duplicate nodes in the mesh of the current model. */
 GMSH_API void gmshModelMeshRemoveDuplicateNodes(int * ierr);
 

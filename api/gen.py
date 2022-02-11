@@ -509,6 +509,9 @@ mesh.add('getPeriodicKeys', doc, None, iint('elementType'), istring('functionSpa
 doc = '''Import the model STL representation (if available) as the current mesh.'''
 mesh.add('importStl', doc, None)
 
+doc = '''Get the `tags' of any duplicate nodes in the mesh of the entities `dimTags'. If `dimTags' is empty, consider the whole mesh.'''
+mesh.add('getDuplicateNodes', doc, None, ovectorsize('tags'), ivectorpair('dimTags', 'gmsh::vectorpair()', "[]", "[]"))
+
 doc = '''Remove duplicate nodes in the mesh of the current model.'''
 mesh.add('removeDuplicateNodes', doc, None)
 

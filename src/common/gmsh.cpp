@@ -37,6 +37,7 @@
 #include "MHexahedron.h"
 #include "MPrism.h"
 #include "MPyramid.h"
+#include "MVertexRTree.h"
 #include "ExtrudeParams.h"
 #include "StringUtils.h"
 #include "Context.h"
@@ -5245,6 +5246,28 @@ GMSH_API void gmsh::model::mesh::getPeriodicKeys(
   }
 }
 
+GMSH_API void gmsh::model::mesh::getDuplicateNodes(std::vector<std::size_t> &nodeTags,
+                                                   const vectorpair &dimTags)
+{
+  if(!_checkInit()) return;
+  GModel *m = GModel::current();
+  SBoundingBox3d bbox = m->bounds();
+  double lc = bbox.empty() ? 1. : bbox.diag();
+  double eps = lc * CTX::instance()->geom.tolerance;
+  std::vector<GEntity *> entities;
+  _getEntities(dimTags, entities);
+  std::vector<MVertex *> vertices;
+  for(std::size_t i = 0; i < entities.size(); i++) {
+    vertices.insert(vertices.end(), entities[i]->mesh_vertices.begin(),
+                    entities[i]->mesh_vertices.end());
+  }
+  MVertexRTree pos(eps);
+  std::set<MVertex *, MVertexPtrLessThan> duplicates;
+  pos.insert(vertices, true, &duplicates);
+  for(auto n : duplicates) nodeTags.push_back(n->getNum());
+}
+
+// TODO: add argument to limit the entities to consider
 GMSH_API void gmsh::model::mesh::removeDuplicateNodes()
 {
   if(!_checkInit()) return;
