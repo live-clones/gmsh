@@ -2946,6 +2946,23 @@ c
             integer(c_int)::ierr
           end subroutine gmshModelMeshImportStl
 
+!  Get the `tags' of any duplicate nodes in the mesh of the entities
+!  `dimTags'. If `dimTags' is empty, consider the whole mesh.
+        subroutine gmshModelMeshGetDuplicateNodes(
+     &      tags,
+     &      tags_n,
+     &      dimTags,
+     &      dimTags_n,
+     &      ierr)
+     &    bind(C, name = "gmshModelMeshGetDuplicateNodes")
+          use, intrinsic :: iso_c_binding
+            type(c_ptr), intent(out)::tags
+            integer(c_size_t) :: tags_n
+            integer(c_int)::dimTags(*)
+            integer(c_size_t), value :: dimTags_n
+            integer(c_int)::ierr
+          end subroutine gmshModelMeshGetDuplicateNodes
+
 !  Remove duplicate nodes in the mesh of the current model.
         subroutine gmshModelMeshRemoveDuplicateNodes(
      &      ierr)

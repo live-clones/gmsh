@@ -663,7 +663,7 @@ public:
   // make the mesh a high order mesh at order N (linear is 1 if the high order
   // points are not placed on the geometry of the model; incomplete is 1 if
   // incomplete basis are used)
-  int setOrderN(int order, int linear, int incomplete);
+  int setOrderN(int order, int linear, int incomplete, int onlyVisible);
 
   // refine the mesh by splitting all elements
   int refineMesh(int linear, bool splitIntoQuads = false,

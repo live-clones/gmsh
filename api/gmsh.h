@@ -1595,6 +1595,13 @@ namespace gmsh { // Top-level functions
       // Import the model STL representation (if available) as the current mesh.
       GMSH_API void importStl();
 
+      // gmsh::model::mesh::getDuplicateNodes
+      //
+      // Get the `tags' of any duplicate nodes in the mesh of the entities
+      // `dimTags'. If `dimTags' is empty, consider the whole mesh.
+      GMSH_API void getDuplicateNodes(std::vector<std::size_t> & tags,
+                                      const gmsh::vectorpair & dimTags = gmsh::vectorpair());
+
       // gmsh::model::mesh::removeDuplicateNodes
       //
       // Remove duplicate nodes in the mesh of the current model.

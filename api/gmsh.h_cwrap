@@ -2448,6 +2448,20 @@ namespace gmsh { // Top-level functions
         if(ierr) throwLastError();
       }
 
+      // Get the `tags' of any duplicate nodes in the mesh of the entities
+      // `dimTags'. If `dimTags' is empty, consider the whole mesh.
+      inline void getDuplicateNodes(std::vector<std::size_t> & tags,
+                                    const gmsh::vectorpair & dimTags = gmsh::vectorpair())
+      {
+        int ierr = 0;
+        size_t *api_tags_; size_t api_tags_n_;
+        int *api_dimTags_; size_t api_dimTags_n_; vectorpair2intptr(dimTags, &api_dimTags_, &api_dimTags_n_);
+        gmshModelMeshGetDuplicateNodes(&api_tags_, &api_tags_n_, api_dimTags_, api_dimTags_n_, &ierr);
+        if(ierr) throwLastError();
+        tags.assign(api_tags_, api_tags_ + api_tags_n_); gmshFree(api_tags_);
+        gmshFree(api_dimTags_);
+      }
+
       // Remove duplicate nodes in the mesh of the current model.
       inline void removeDuplicateNodes()
       {

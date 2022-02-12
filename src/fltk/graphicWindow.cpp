@@ -2378,7 +2378,8 @@ static void mesh_degree_cb(Fl_Widget *w, void *data)
 {
   int degree = (intptr_t)data;
   GModel::current()->setOrderN(degree, CTX::instance()->mesh.secondOrderLinear,
-                               CTX::instance()->mesh.secondOrderIncomplete);
+                               CTX::instance()->mesh.secondOrderIncomplete,
+                               CTX::instance()->mesh.meshOnlyVisible);
   drawContext::global()->draw();
 }
 

@@ -3169,6 +3169,29 @@ end
 const import_stl = importStl
 
 """
+    gmsh.model.mesh.getDuplicateNodes(dimTags = Tuple{Cint,Cint}[])
+
+Get the `tags` of any duplicate nodes in the mesh of the entities `dimTags`. If
+`dimTags` is empty, consider the whole mesh.
+
+Return `tags`.
+"""
+function getDuplicateNodes(dimTags = Tuple{Cint,Cint}[])
+    api_tags_ = Ref{Ptr{Csize_t}}()
+    api_tags_n_ = Ref{Csize_t}()
+    api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
+    api_dimTags_n_ = length(api_dimTags_)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshGetDuplicateNodes, gmsh.lib), Cvoid,
+          (Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cint}, Csize_t, Ptr{Cint}),
+          api_tags_, api_tags_n_, api_dimTags_, api_dimTags_n_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    tags = unsafe_wrap(Array, api_tags_[], api_tags_n_[], own = true)
+    return tags
+end
+const get_duplicate_nodes = getDuplicateNodes
+
+"""
     gmsh.model.mesh.removeDuplicateNodes()
 
 Remove duplicate nodes in the mesh of the current model.

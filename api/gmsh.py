@@ -3706,6 +3706,28 @@ class model:
         import_stl = importStl
 
         @staticmethod
+        def getDuplicateNodes(dimTags=[]):
+            """
+            gmsh.model.mesh.getDuplicateNodes(dimTags=[])
+
+            Get the `tags' of any duplicate nodes in the mesh of the entities
+            `dimTags'. If `dimTags' is empty, consider the whole mesh.
+
+            Return `tags'.
+            """
+            api_tags_, api_tags_n_ = POINTER(c_size_t)(), c_size_t()
+            api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
+            ierr = c_int()
+            lib.gmshModelMeshGetDuplicateNodes(
+                byref(api_tags_), byref(api_tags_n_),
+                api_dimTags_, api_dimTags_n_,
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return _ovectorsize(api_tags_, api_tags_n_.value)
+        get_duplicate_nodes = getDuplicateNodes
+
+        @staticmethod
         def removeDuplicateNodes():
             """
             gmsh.model.mesh.removeDuplicateNodes()

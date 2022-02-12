@@ -1602,7 +1602,8 @@ void GenerateMesh(GModel *m, int ask)
     // Create high order elements
     SetOrderN(m, CTX::instance()->mesh.order,
               CTX::instance()->mesh.secondOrderLinear,
-              CTX::instance()->mesh.secondOrderIncomplete);
+              CTX::instance()->mesh.secondOrderIncomplete,
+              CTX::instance()->mesh.meshOnlyVisible);
 
     // Optimize high order elements
     if(CTX::instance()->mesh.hoOptimize == 2 ||

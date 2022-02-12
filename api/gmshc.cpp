@@ -2088,6 +2088,24 @@ GMSH_API void gmshModelMeshImportStl(int * ierr)
   }
 }
 
+GMSH_API void gmshModelMeshGetDuplicateNodes(size_t ** tags, size_t * tags_n, int * dimTags, size_t dimTags_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<std::size_t> api_tags_;
+    gmsh::vectorpair api_dimTags_(dimTags_n/2);
+    for(size_t i = 0; i < dimTags_n/2; ++i){
+      api_dimTags_[i].first = dimTags[i * 2 + 0];
+      api_dimTags_[i].second = dimTags[i * 2 + 1];
+    }
+    gmsh::model::mesh::getDuplicateNodes(api_tags_, api_dimTags_);
+    vector2ptr(api_tags_, tags, tags_n);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API void gmshModelMeshRemoveDuplicateNodes(int * ierr)
 {
   if(ierr) *ierr = 0;
