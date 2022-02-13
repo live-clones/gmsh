@@ -25,23 +25,27 @@ bool sortDirCount(const std::pair<SVector3, int> &a,
 }
 
 class extrudeInfo {
+private:
+  GRegion *_region;
+  GFace *_sourceFace, *_targetFace;
+  SVector3 _direction;
 public:
   extrudeInfo(GRegion *r, GFace *s, GFace *t, SVector3 d)
-    : region(r), sourceFace(s), targetFace(t), direction(d)
+    : _region(r), _sourceFace(s), _targetFace(t), _direction(d)
   {}
-  GRegion *region;
-  GFace *sourceFace, *targetFace;
-  std::vector<GEdge *> lateralEdges;
-  std::vector<GFace *> lateralFaces;
-  SVector3 direction;
+  SVector3 getDirection() { return _direction; }
   void print()
   {
     Msg::Info("Volume %d compatible surface pair (%d, %d) extrusion %g %g %g",
-              region->tag(), sourceFace->tag(), targetFace->tag(),
-              direction.x(), direction.y(), direction.z());
+              _region->tag(), _sourceFace->tag(), _targetFace->tag(),
+              _direction.x(), _direction.y(), _direction.z());
   }
   bool fill()
   {
+    // get lateralEdges and lateralFaces
+    std::vector<GEdge *> lateralEdges;
+    std::vector<GFace *> lateralFaces;
+    // add ExtrudeParam in region, targetSurface and lateral entities
     return true;
   }
 };
@@ -53,15 +57,16 @@ void getCandidateExtrudeInfo(GRegion *gr, std::vector<extrudeInfo> &info,
   for(auto f1 : f) {
     for(auto f2 : f) {
       if(f1 == f2) continue;
+      // for each pair of surfaces...
       std::vector<GVertex *> v1 = f1->vertices(), v2 = f2->vertices();
-      // check that all edges not part of the 2 candidate surfaces are straight
-      // lines, with the same translation vector
       std::vector<GEdge *> e1 = f1->edges(), e2 = f2->edges();
       SVector3 d0(0., 0., 0.);
       bool ok = true;
       for(auto e : gr->edges()) {
         if(std::find(e1.begin(), e1.end(), e) == e1.end() &&
            std::find(e2.begin(), e2.end(), e) == e2.end()) {
+          // ... check that all curves not on the boundary of the 2 surfaces are
+          // straight lines with the same translation vector
           if(e->geomType() == GEntity::Line) {
             GVertex *vs = e->getBeginVertex(), *vt = e->getEndVertex();
             if(vs && vt) {
@@ -88,7 +93,9 @@ void getCandidateExtrudeInfo(GRegion *gr, std::vector<extrudeInfo> &info,
         }
       }
       if(ok) {
+        // we have a candidate pair...
         info.push_back(extrudeInfo(gr, f1, f2, d0));
+        // ... increase the popularity of the potential extrusion direction
         bool found = false;
         for(std::size_t i = 0; i < count.size(); i++) {
           if(sameDir(count[i].first, d0)) {
@@ -110,21 +117,20 @@ bool GModel::addAutomaticExtrusionConstraints(const std::vector<int> &numElement
   // get pairs of surfaces that could be candidates for extrusion by translation
   std::vector<extrudeInfo> candidates;
   std::vector<std::pair<SVector3, int>> dirCount;
-  for(auto r : regions)
-    getCandidateExtrudeInfo(r, candidates, dirCount);
+  for(auto r : regions) getCandidateExtrudeInfo(r, candidates, dirCount);
 
   if(candidates.empty()) {
     Msg::Info("No candidates found for automatic extrusion constraints");
     return false;
   }
 
-  // sort the extrusion directions by "popularity"
+  // sort the extrusion directions by popularity
   std::sort(dirCount.begin(), dirCount.end(), sortDirCount);
 
   // keep candidates corresponding to the most popular extrusion direction
   std::vector<extrudeInfo> matches;
   for(auto c : candidates) {
-    if(sameDir(c.direction, dirCount.front().first)) matches.push_back(c);
+    if(sameDir(c.getDirection(), dirCount.front().first)) matches.push_back(c);
   }
 
   // compute extrude information
@@ -132,5 +138,5 @@ bool GModel::addAutomaticExtrusionConstraints(const std::vector<int> &numElement
     if(m.fill()) m.print();
   }
 
-  return false;
+  return true;
 }
