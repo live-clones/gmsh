@@ -781,6 +781,10 @@ void OpenProject(const std::string &fileName, bool errorIfMissing)
 
   CTX::instance()->lock = 0;
 
+  GModel::current()->addAutomaticExtrusionConstraints(std::vector<int>(),
+                                                      std::vector<double>(),
+                                                      true);
+
 #if defined(HAVE_FLTK)
   if(FlGui::available()) {
     file_watch_cb(nullptr, nullptr);
