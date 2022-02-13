@@ -92,7 +92,7 @@ void getCandidateExtrudeInfo(GRegion *gr, std::vector<extrudeInfo> &info,
           }
         }
       }
-      if(ok) {
+      if(ok && d0.norm() != 0.) {
         // we have a candidate pair...
         info.push_back(extrudeInfo(gr, f1, f2, d0));
         // ... increase the popularity of the potential extrusion direction
