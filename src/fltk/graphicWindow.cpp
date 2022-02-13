@@ -4243,17 +4243,12 @@ bool graphicWindow::split(openglWindow *g, char how, double ratio)
     int w2 = (how == 'h') ? (g->w() - w1) : g->w();
     int h2 = (how == 'h') ? g->h() : (g->h() - h1);
 
-    openglWindow *g2 = new openglWindow(0, 0, w2, h2);
+    g->resize(x1, y1, w1, h1);
+    openglWindow *g2 = new openglWindow(x2, y2, w2, h2);
     g2->end();
     g2->mode(g->mode());
-
     gl.push_back(g2);
-
-    g->resize(x1, y1, w1, h1);
-    g2->resize(x2, y2, w2, h2);
-
     _tile->add(g2);
-
     g2->show();
     openglWindow::setLastHandled(g2);
   }
