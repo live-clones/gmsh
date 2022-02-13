@@ -582,7 +582,7 @@ std::vector<MVertex *> GRegion::getEmbeddedMeshVertices() const
 
 std::vector<GVertex *> GRegion::vertices() const
 {
-  std::set<GVertex *> v;
+  std::set<GVertex *, GEntityPtrLessThan> v;
   for(auto gf : l_faces) {
     std::vector<GVertex *> const &vs = gf->vertices();
     v.insert(vs.begin(), vs.end());
@@ -926,14 +926,4 @@ bool GRegion::isFullyDiscrete()
     if(de && de->haveParametrization()) return false;
   }
   return true;
-}
-
-bool GRegion::autoExtrude(const std::vector<int> &numElements,
-                          const std::vector<double> &heights,
-                          const bool recombine)
-{
-  return false;
-
-  // placeholder for reverse engineering of the GRegion, to try to set
-  // ExtrudeParams automatically on it, as well as on its bounding entities.
 }

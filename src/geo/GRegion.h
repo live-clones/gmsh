@@ -184,11 +184,6 @@ public:
   bool setOutwardOrientationMeshConstraint();
 
   virtual bool isFullyDiscrete();
-
-  // reverse engineering of extruded shapes
-  bool autoExtrude(const std::vector<int> &numElements,
-                   const std::vector<double> &heights,
-                   const bool recombine);
 };
 
 #endif

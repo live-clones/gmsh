@@ -347,7 +347,7 @@ std::vector<MVertex *> GFace::getEmbeddedMeshVertices(bool force) const
 
 std::vector<GVertex *> GFace::vertices() const
 {
-  std::set<GVertex *> v;
+  std::set<GVertex *, GEntityPtrLessThan> v;
   for(auto ge : l_edges) {
     GVertex *const v1 = ge->getBeginVertex();
     if(v1) v.insert(v1);
