@@ -9,7 +9,7 @@
 #include "Context.h"
 #include "ExtrudeParams.h"
 
-bool sameDir(const SVector3 &v1, const SVector3 &v2)
+static bool sameDir(const SVector3 &v1, const SVector3 &v2)
 {
   const double tol = CTX::instance()->geom.tolerance * CTX::instance()->lc;
   if(std::abs(v1.x() - v2.x()) < tol &&
@@ -18,8 +18,8 @@ bool sameDir(const SVector3 &v1, const SVector3 &v2)
   return false;
 }
 
-bool sortDirCount(const std::pair<SVector3, int> &a,
-                  const std::pair<SVector3, int> &b)
+static bool sortDirCount(const std::pair<SVector3, int> &a,
+                         const std::pair<SVector3, int> &b)
 {
   return (a.second > b.second);
 }
@@ -85,14 +85,58 @@ public:
                          const bool recombine)
   {
     // volume
-    _region->meshAttributes.extrude = new ExtrudeParams(EXTRUDED_ENTITY);
-    _fillExtrudeParams(_region->meshAttributes.extrude, _sourceFace->tag(),
-                       numElements, heights, recombine);
+    {
+      ExtrudeParams *ep = new ExtrudeParams(EXTRUDED_ENTITY);
+      _fillExtrudeParams(ep, _sourceFace->tag(), numElements, heights, recombine);
+      if(_region->meshAttributes.extrude) {
+        if(!_isCompatible(_region->meshAttributes.extrude, ep)) {
+          Msg::Warning("Incompatible extrusion parameters on volume %d",
+                       _region->tag());
+          delete ep;
+          return false;
+        }
+      }
+      _region->meshAttributes.extrude = ep;
+    }
 
     // top surface
-    _targetFace->meshAttributes.extrude = new ExtrudeParams(COPIED_ENTITY);
-    _fillExtrudeParams(_targetFace->meshAttributes.extrude, _sourceFace->tag(),
-                       numElements, heights, recombine);
+    {
+      ExtrudeParams *ep = new ExtrudeParams(COPIED_ENTITY);
+      _fillExtrudeParams(ep, _sourceFace->tag(), numElements, heights, recombine);
+      if(_targetFace->meshAttributes.extrude) {
+        if(!_isCompatible(_targetFace->meshAttributes.extrude, ep)) {
+          Msg::Warning("Incompatible extrusion parameters on surface %d",
+                       _targetFace->tag());
+          delete ep;
+          return false;
+        }
+      }
+      _targetFace->meshAttributes.extrude = ep;
+    }
+
+    // top curves
+    {
+      std::vector<GEdge *> sourceEdges = _sourceFace->edges();
+      std::vector<GEdge *> targetEdges = _targetFace->edges();
+      if(sourceEdges.size() != targetEdges.size()) {
+        Msg::Error("Incompatible number of curves in surfaces %d and %d",
+                   _sourceFace->tag(), _targetFace->tag());
+        return false;
+      }
+      for(std::size_t i = 0; i < targetEdges.size(); i++) {
+        ExtrudeParams *ep = new ExtrudeParams(COPIED_ENTITY);
+        _fillExtrudeParams(ep, sourceEdges[i]->tag(), numElements, heights, recombine);
+        if(targetEdges[i]->meshAttributes.extrude) {
+          if(!_isCompatible(targetEdges[i]->meshAttributes.extrude, ep)) {
+            Msg::Warning("Incompatible extrusion parameters on curve %d",
+                         targetEdges[i]->tag());
+            delete ep;
+            return false;
+          }
+        }
+        targetEdges[i]->meshAttributes.extrude = ep;
+      }
+    }
 
     // lateral surfaces
     std::vector<GFace *> regionFaces = _region->faces();
@@ -101,19 +145,17 @@ public:
       for(auto f : regionFaces) {
         if(f == _sourceFace || f == _targetFace) continue;
         if(std::find(edgeFaces.begin(), edgeFaces.end(), f) != edgeFaces.end()) {
+          ExtrudeParams *ep = new ExtrudeParams(EXTRUDED_ENTITY);
+          _fillExtrudeParams(ep, e->tag(), numElements, heights, recombine);
           if(f->meshAttributes.extrude) {
-            ExtrudeParams ep(EXTRUDED_ENTITY);
-            _fillExtrudeParams(&ep, e->tag(), numElements, heights, recombine);
-            if(!_isCompatible(f->meshAttributes.extrude, &ep)) {
-              Msg::Warning("Imcompatible extrusion parameters on surface %d",
+            if(!_isCompatible(f->meshAttributes.extrude, ep)) {
+              Msg::Warning("Incompatible extrusion parameters on surface %d",
                            f->tag());
+              delete ep;
+              return false;
             }
           }
-          else {
-            f->meshAttributes.extrude = new ExtrudeParams(EXTRUDED_ENTITY);
-            _fillExtrudeParams(f->meshAttributes.extrude, e->tag(),
-                               numElements, heights, recombine);
-          }
+          f->meshAttributes.extrude = ep;
         }
       }
     }
@@ -131,19 +173,17 @@ public:
            targetEdges.end()) continue;
         if(std::find(vertexEdges.begin(), vertexEdges.end(), e) !=
            vertexEdges.end()) {
+          ExtrudeParams *ep = new ExtrudeParams(EXTRUDED_ENTITY);
+          _fillExtrudeParams(ep, v->tag(), numElements, heights, recombine);
           if(e->meshAttributes.extrude) {
-            ExtrudeParams ep(EXTRUDED_ENTITY);
-            _fillExtrudeParams(&ep, v->tag(), numElements, heights, recombine);
-            if(!_isCompatible(e->meshAttributes.extrude, &ep)) {
-              Msg::Warning("Imcompatible extrusion parameters on curve %d",
+            if(!_isCompatible(e->meshAttributes.extrude, ep)) {
+              Msg::Warning("Incompatible extrusion parameters on curve %d",
                            e->tag());
+              delete ep;
+              return false;
             }
           }
-          else {
-            e->meshAttributes.extrude = new ExtrudeParams(EXTRUDED_ENTITY);
-            _fillExtrudeParams(e->meshAttributes.extrude, v->tag(),
-                               numElements, heights, recombine);
-          }
+          e->meshAttributes.extrude = ep;
         }
       }
     }
@@ -158,10 +198,11 @@ void getCandidateExtrudeInfo(GRegion *gr, std::vector<extrudeInfo> &info,
   std::vector<GFace*> f = gr->faces();
   for(auto f1 : f) {
     for(auto f2 : f) {
-      if(f1 == f2) continue;
       // for each pair of surfaces...
+      if(f1 == f2) continue;
       std::vector<GVertex *> v1 = f1->vertices(), v2 = f2->vertices();
       std::vector<GEdge *> e1 = f1->edges(), e2 = f2->edges();
+      if((v1.size() != v2.size()) || (e1.size() != e2.size())) continue;
       SVector3 d0(0., 0., 0.);
       bool ok = true;
       for(auto e : gr->edges()) {
@@ -176,10 +217,6 @@ void getCandidateExtrudeInfo(GRegion *gr, std::vector<extrudeInfo> &info,
               if(std::find(v1.begin(), v1.end(), vs) != v1.end() &&
                  std::find(v2.begin(), v2.end(), vt) != v2.end()) {
                 d = SVector3(vs->xyz(), vt->xyz());
-              }
-              else if(std::find(v1.begin(), v1.end(), vt) != v1.end() &&
-                      std::find(v2.begin(), v2.end(), vs) != v2.end()) {
-                d = SVector3(vt->xyz(), vs->xyz());
               }
               else {
                 ok = false;
