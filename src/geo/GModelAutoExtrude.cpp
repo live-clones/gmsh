@@ -29,6 +29,46 @@ private:
   GRegion *_region;
   GFace *_sourceFace, *_targetFace;
   SVector3 _direction;
+  void _fillExtrudeParams(ExtrudeParams *ep, int sourceTag,
+                          const std::vector<int> &numElements,
+                          const std::vector<double> &heights,
+                          const bool recombine)
+  {
+    ep->fill(TRANSLATE, _direction.x(), _direction.y(), _direction.z(),
+             0, 0, 0, 0, 0, 0, 0);
+    ep->geo.Source = sourceTag;
+    if(numElements.size()) {
+      ep->mesh.ExtrudeMesh = true;
+      ep->mesh.NbElmLayer = numElements;
+      ep->mesh.hLayer = heights;
+      if(ep->mesh.hLayer.empty()) {
+        ep->mesh.NbLayer = numElements.size();
+        for(int i = 0; i < ep->mesh.NbLayer; i++) {
+          ep->mesh.hLayer.push_back((i + 1.) / ep->mesh.NbLayer);
+        }
+      }
+      else {
+        ep->mesh.NbLayer = heights.size();
+      }
+      ep->mesh.Recombine = recombine;
+    }
+  }
+  bool _isCompatible(ExtrudeParams *ep1, ExtrudeParams *ep2)
+  {
+    if(ep1->geo.Mode != ep2->geo.Mode) return false;
+    if(ep1->geo.Type != ep2->geo.Type) return false;
+    if(ep1->geo.Source != ep2->geo.Source) return false;
+    for(int i = 0; i < 3; i++) {
+      if(ep1->geo.trans[i] != ep2->geo.trans[i]) return false;
+    }
+    if(ep1->mesh.ExtrudeMesh && ep2->mesh.ExtrudeMesh) {
+      if(ep1->mesh.NbElmLayer != ep2->mesh.NbElmLayer) return false;
+      if(ep1->mesh.hLayer != ep2->mesh.hLayer) return false;
+      if(ep1->mesh.NbLayer != ep2->mesh.NbLayer) return false;
+    }
+    return true;
+  }
+
 public:
   extrudeInfo(GRegion *r, GFace *s, GFace *t, SVector3 d)
     : _region(r), _sourceFace(s), _targetFace(t), _direction(d)
@@ -36,16 +76,78 @@ public:
   SVector3 getDirection() { return _direction; }
   void print()
   {
-    Msg::Info("Volume %d compatible surface pair (%d, %d) extrusion %g %g %g",
-              _region->tag(), _sourceFace->tag(), _targetFace->tag(),
+    Msg::Info("Volume %d reverse-engineered as extruded from surface %d "
+              "along (%g, %g, %g)", _region->tag(), _sourceFace->tag(),
               _direction.x(), _direction.y(), _direction.z());
   }
-  bool fill()
+  bool fillExtrudeParams(const std::vector<int> &numElements,
+                         const std::vector<double> &heights,
+                         const bool recombine)
   {
-    // get lateralEdges and lateralFaces
-    std::vector<GEdge *> lateralEdges;
-    std::vector<GFace *> lateralFaces;
-    // add ExtrudeParam in region, targetSurface and lateral entities
+    // volume
+    _region->meshAttributes.extrude = new ExtrudeParams(EXTRUDED_ENTITY);
+    _fillExtrudeParams(_region->meshAttributes.extrude, _sourceFace->tag(),
+                       numElements, heights, recombine);
+
+    // top surface
+    _targetFace->meshAttributes.extrude = new ExtrudeParams(COPIED_ENTITY);
+    _fillExtrudeParams(_targetFace->meshAttributes.extrude, _sourceFace->tag(),
+                       numElements, heights, recombine);
+
+    // lateral surfaces
+    std::vector<GFace *> regionFaces = _region->faces();
+    for(auto e : _sourceFace->edges()) {
+      std::vector<GFace*> edgeFaces = e->faces();
+      for(auto f : regionFaces) {
+        if(f == _sourceFace || f == _targetFace) continue;
+        if(std::find(edgeFaces.begin(), edgeFaces.end(), f) != edgeFaces.end()) {
+          if(f->meshAttributes.extrude) {
+            ExtrudeParams ep(EXTRUDED_ENTITY);
+            _fillExtrudeParams(&ep, e->tag(), numElements, heights, recombine);
+            if(!_isCompatible(f->meshAttributes.extrude, &ep)) {
+              Msg::Warning("Imcompatible extrusion parameters on surface %d",
+                           f->tag());
+            }
+          }
+          else {
+            f->meshAttributes.extrude = new ExtrudeParams(EXTRUDED_ENTITY);
+            _fillExtrudeParams(f->meshAttributes.extrude, e->tag(),
+                               numElements, heights, recombine);
+          }
+        }
+      }
+    }
+
+    // lateral curves
+    std::vector<GEdge *> regionEdges = _region->edges();
+    std::vector<GEdge *> sourceEdges = _sourceFace->edges();
+    std::vector<GEdge *> targetEdges = _targetFace->edges();
+    for(auto v : _sourceFace->vertices()) {
+      std::vector<GEdge*> vertexEdges = v->edges();
+      for(auto e : regionEdges) {
+        if(std::find(sourceEdges.begin(), sourceEdges.end(), e) !=
+           sourceEdges.end()) continue;
+        if(std::find(targetEdges.begin(), targetEdges.end(), e) !=
+           targetEdges.end()) continue;
+        if(std::find(vertexEdges.begin(), vertexEdges.end(), e) !=
+           vertexEdges.end()) {
+          if(e->meshAttributes.extrude) {
+            ExtrudeParams ep(EXTRUDED_ENTITY);
+            _fillExtrudeParams(&ep, v->tag(), numElements, heights, recombine);
+            if(!_isCompatible(e->meshAttributes.extrude, &ep)) {
+              Msg::Warning("Imcompatible extrusion parameters on curve %d",
+                           e->tag());
+            }
+          }
+          else {
+            e->meshAttributes.extrude = new ExtrudeParams(EXTRUDED_ENTITY);
+            _fillExtrudeParams(e->meshAttributes.extrude, v->tag(),
+                               numElements, heights, recombine);
+          }
+        }
+      }
+    }
+
     return true;
   }
 };
@@ -135,7 +237,7 @@ bool GModel::addAutomaticExtrusionConstraints(const std::vector<int> &numElement
 
   // compute extrude information
   for(auto m : matches) {
-    if(m.fill()) m.print();
+    if(m.fillExtrudeParams(numElements, heights, recombine)) m.print();
   }
 
   return true;

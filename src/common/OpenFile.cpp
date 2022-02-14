@@ -781,9 +781,8 @@ void OpenProject(const std::string &fileName, bool errorIfMissing)
 
   CTX::instance()->lock = 0;
 
-  GModel::current()->addAutomaticExtrusionConstraints(std::vector<int>(),
-                                                      std::vector<double>(),
-                                                      true);
+  // FIXME: test - to be removed!
+  GModel::current()->addAutomaticExtrusionConstraints({10}, {1}, true);
 
 #if defined(HAVE_FLTK)
   if(FlGui::available()) {
