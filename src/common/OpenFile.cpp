@@ -782,7 +782,7 @@ void OpenProject(const std::string &fileName, bool errorIfMissing)
   CTX::instance()->lock = 0;
 
   // FIXME: test - to be removed!
-  GModel::current()->addAutomaticExtrusionConstraints({10}, {1}, true);
+  GModel::current()->addAutomaticExtrusionConstraints({10}, {1}, true, {});
 
 #if defined(HAVE_FLTK)
   if(FlGui::available()) {

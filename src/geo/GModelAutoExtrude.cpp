@@ -80,9 +80,11 @@ public:
               "along (%g, %g, %g)", _region->tag(), _sourceFace->tag(),
               _direction.x(), _direction.y(), _direction.z());
   }
+
   bool fillExtrudeParams(const std::vector<int> &numElements,
                          const std::vector<double> &heights,
-                         const bool recombine)
+                         const bool recombine,
+                         bool checkOnly)
   {
     // volume
     {
@@ -96,7 +98,10 @@ public:
           return false;
         }
       }
-      _region->meshAttributes.extrude = ep;
+      if(checkOnly)
+        delete ep;
+      else
+        _region->meshAttributes.extrude = ep;
     }
 
     // top surface
@@ -111,7 +116,10 @@ public:
           return false;
         }
       }
-      _targetFace->meshAttributes.extrude = ep;
+      if(checkOnly)
+        delete ep;
+      else
+        _targetFace->meshAttributes.extrude = ep;
     }
 
     // top curves
@@ -134,7 +142,10 @@ public:
             return false;
           }
         }
-        targetEdges[i]->meshAttributes.extrude = ep;
+        if(checkOnly)
+          delete ep;
+        else
+          targetEdges[i]->meshAttributes.extrude = ep;
       }
     }
 
@@ -155,7 +166,10 @@ public:
               return false;
             }
           }
-          f->meshAttributes.extrude = ep;
+          if(checkOnly)
+            delete ep;
+          else
+            f->meshAttributes.extrude = ep;
         }
       }
     }
@@ -183,7 +197,10 @@ public:
               return false;
             }
           }
-          e->meshAttributes.extrude = ep;
+          if(checkOnly)
+            delete ep;
+          else
+            e->meshAttributes.extrude = ep;
         }
       }
     }
@@ -251,12 +268,25 @@ void getCandidateExtrudeInfo(GRegion *gr, std::vector<extrudeInfo> &info,
 
 bool GModel::addAutomaticExtrusionConstraints(const std::vector<int> &numElements,
                                               const std::vector<double> &heights,
-                                              const bool recombine)
+                                              const bool recombine,
+                                              const std::vector<int> &regionTags)
 {
+  std::vector<GRegion *> regs;
+  if(regionTags.empty()) {
+    regs.insert(regs.end(), regions.begin(), regions.end());
+  }
+  else {
+    for(auto t : regionTags) {
+      GRegion *r = getRegionByTag(t);
+      if(r) regs.push_back(r);
+      else Msg::Error("Unknown volume %d for automatic extrusion constraints");
+    }
+  }
+
   // get pairs of surfaces that could be candidates for extrusion by translation
   std::vector<extrudeInfo> candidates;
   std::vector<std::pair<SVector3, int>> dirCount;
-  for(auto r : regions) getCandidateExtrudeInfo(r, candidates, dirCount);
+  for(auto r : regs) getCandidateExtrudeInfo(r, candidates, dirCount);
 
   if(candidates.empty()) {
     Msg::Info("No candidates found for automatic extrusion constraints");
@@ -274,7 +304,10 @@ bool GModel::addAutomaticExtrusionConstraints(const std::vector<int> &numElement
 
   // compute extrude information
   for(auto m : matches) {
-    if(m.fillExtrudeParams(numElements, heights, recombine)) m.print();
+    if(m.fillExtrudeParams(numElements, heights, recombine, true)) {
+      m.fillExtrudeParams(numElements, heights, recombine, false);
+      m.print();
+    }
   }
 
   return true;
