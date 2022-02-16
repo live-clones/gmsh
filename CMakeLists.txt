@@ -203,6 +203,8 @@ endif()
 
 if(APPLE)
   set(GMSH_OS "MacOSX")
+  # build universal binary
+  #SET(CMAKE_OSX_ARCHITECTURES "x86_64;arm64" CACHE STRING "Build architectures for macOS" FORCE)
 elseif(CYGWIN OR MSYS)
   # detect if we use the MinGW compilers on Cygwin - if we do, handle the build
   # as a pure Windows build and make cmake find pure Windows import libraries
