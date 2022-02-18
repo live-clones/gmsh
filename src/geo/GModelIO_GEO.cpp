@@ -1359,6 +1359,14 @@ void GEO_Internals::setMeshSizeFromBoundary(int dim, int tag, int val)
   _changed = true;
 }
 
+bool sortEntities(const std::pair<int, int> &a,
+                  const std::pair<int, int> &b)
+{
+  if(a.first != b.first)
+    return a.first > b.first;
+  return a.second < b.second;
+}
+
 void GEO_Internals::synchronize(GModel *model, bool resetMeshAttributes)
 {
   Msg::Debug("Syncing GEO_Internals with GModel");
@@ -1406,10 +1414,12 @@ void GEO_Internals::synchronize(GModel *model, bool resetMeshAttributes)
         toRemove.push_back(std::make_pair(3, gr->tag()));
     }
   }
-  Msg::Debug("Sync is removing %d model entities", toRemove.size());
+  std::sort(toRemove.begin(), toRemove.end(), sortEntities);
+  Msg::Debug("Sync will try to remove %d model entities", toRemove.size());
+
   std::vector<GEntity*> removed;
   model->remove(toRemove, removed);
-  Msg::Debug("Destroying %lu entities in model", removed.size());
+  Msg::Debug("Destroying %lu model entities during first pass", removed.size());
   for(std::size_t i = 0; i < removed.size(); i++) delete removed[i];
 
   if(Tree_Nbr(Points)) {
@@ -1503,6 +1513,16 @@ void GEO_Internals::synchronize(GModel *model, bool resetMeshAttributes)
     }
     List_Delete(volumes);
   }
+
+  // In the first removal pass, entities which were on the boundary of a
+  // higher-dimensional entity that is not removed, will not have been removed
+  // due to the dependency that still existed in the topological GModel. After
+  // recreation of the topology of these higher dimensional entities
+  // (cf. resetNativePtr() above), we can try to re-remove the lower dimension
+  // entities
+  removed.clear();
+  model->remove(toRemove, removed);
+  Msg::Debug("Destroying %lu model entities during second pass", removed.size());
 
   // delete all physical groups before sync only if there is no mesh (if there
   // is a mesh, it could have been loaded from a file with physical groups - we
