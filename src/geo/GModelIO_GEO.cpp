@@ -1523,6 +1523,7 @@ void GEO_Internals::synchronize(GModel *model, bool resetMeshAttributes)
   removed.clear();
   model->remove(toRemove, removed);
   Msg::Debug("Destroying %lu model entities during second pass", removed.size());
+  for(std::size_t i = 0; i < removed.size(); i++) delete removed[i];
 
   // delete all physical groups before sync only if there is no mesh (if there
   // is a mesh, it could have been loaded from a file with physical groups - we
