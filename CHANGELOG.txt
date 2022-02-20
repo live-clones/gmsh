@@ -1,5 +1,6 @@
 (Work-in-progress): dynamic Gmsh library now also only exports public symbols on
-macOS and Linux, like it does on Windows; small bug fixes.
+macOS and Linux, like it does on Windows; better handling of max. thread
+settings; small bug fixes.
 
 * New API function: mesh/getDuplicateNodes
 

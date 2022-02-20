@@ -163,6 +163,8 @@ public:
   int guiColorScheme, guiRefreshRate;
   // print messages on to the terminal?
   int terminal;
+  // number of threads (0 == use system default)
+  int numThreads;
   // detached processes (WIN32)?
   int detachedProcess;
   // number of graphical windows/tiles

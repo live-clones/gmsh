@@ -29,6 +29,15 @@ extern "C" {
 #include "hxt_tetDelaunay.h"
 }
 
+static int getNumThreads()
+{
+  int nthreads = CTX::instance()->numThreads;
+  if(CTX::instance()->mesh.maxNumThreads3D > 0)
+    nthreads = CTX::instance()->mesh.maxNumThreads3D;
+  if(!nthreads) nthreads = Msg::GetMaxThreads();
+  return nthreads;
+}
+
 static HXTStatus messageCallback(HXTMessage *msg)
 {
   if(msg) Msg::Info("%s", msg->string);
@@ -45,7 +54,8 @@ static HXTStatus nodalSizesCallBack(double *pts, uint32_t *volume,
 
   HXT_INFO("Computing %smesh sizes...", useInterpolatedSize ? "interpolated " : "");
 
-#pragma omp parallel for schedule(dynamic)
+  int nthreads = getNumThreads();
+#pragma omp parallel for schedule(dynamic) num_threads(nthreads)
   for(size_t i = 0; i < numPts; i++) {
     if(volume[i] < 0 || volume[i] >= allGR->size()) {
       Msg::Error("Invalid volume tag %d in mesh size calculation", volume[i]);
@@ -253,7 +263,7 @@ static HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions, HXTMesh *m,
   HXT_CHECK( hxtAlignedFree(&m->triangles.color) );
 
 #if defined(_OPENMP)
-  int nthreads = omp_get_max_threads();
+  int nthreads = getNumThreads();
   if(nthreads > 1) {
     const uint32_t nR = regions.size();
     const uint32_t nV = m->vertices.num;
@@ -265,7 +275,7 @@ static HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions, HXTMesh *m,
                          sizeof(uint32_t)) );
     uint32_t* vR_all = hp_all + nR * (nthreads + 1); // color per point and per thread
 
-    #pragma omp parallel
+    #pragma omp parallel num_threads(nthreads)
     {
       #pragma omp single
       {
@@ -525,10 +535,12 @@ static HXTStatus _meshGRegionHxt(std::vector<GRegion *> &regions)
   std::vector<MVertex *> c2v;
   Gmsh2Hxt(regions, mesh, v2c, c2v);
 
+  int nthreads = getNumThreads();
+
   HXTTetMeshOptions options = {
-    0, // int defaultThreads;
-    0, // int delaunayThreads;
-    0, // int improveThreads;
+    nthreads, // int defaultThreads;
+    nthreads, // int delaunayThreads;
+    nthreads, // int improveThreads;
     1, // int reproducible;
     (Msg::GetVerbosity() > 5) ? 2 : 1, // int verbosity;
     1, // int stat;
@@ -583,6 +595,8 @@ static HXTStatus _delaunayMeshIn3DHxt(std::vector<MVertex *> &verts,
   mesh->vertices.num = nvert;
   mesh->vertices.size = nvert;
 
+  int nthreads = getNumThreads();
+
   HXTDelaunayOptions delOptions = {
     nullptr, // bbox
     nullptr, // nodalSizes
@@ -592,7 +606,7 @@ static HXTStatus _delaunayMeshIn3DHxt(std::vector<MVertex *> &verts,
     1, // perfectDelaunay
     0, // verbosity
     0, // reproducible
-    0 // delaunayThreads (0 = omp_get_max_threads)
+    nthreads // delaunayThreads (0 = omp_get_max_threads)
   };
 
   // HXT_CHECK(hxtDelaunay(mesh, &delOptions));

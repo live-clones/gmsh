@@ -5209,9 +5209,12 @@ GMSH_API void gmsh::model::mesh::getPeriodicKeys(
   entityKeysMaster = entityKeys;
   coordMaster = coord;
 
+  int nthreads = CTX::instance()->numThreads;
+  if(!nthreads) nthreads = Msg::GetMaxThreads();
+
   if(functionSpaceType == "IsoParametric" ||
      functionSpaceType == "Lagrange") {
-#pragma omp parallel for
+#pragma omp parallel for num_threads(nthreads)
     for(std::size_t i = 0; i < entityKeys.size(); i++) {
       MVertex v(0., 0., 0., nullptr, entityKeys[i]);
       auto mv = ge->correspondingVertices.find(&v);

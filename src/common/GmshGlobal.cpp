@@ -257,10 +257,11 @@ int GmshFinalize()
 
 static void StartupMessage()
 {
+  int nt = CTX::instance()->numThreads;
+  if(!nt) nt = Msg::GetMaxThreads();
   Msg::Info("Running '%s' [Gmsh %s, %d node%s, max. %d thread%s]",
             Msg::GetCommandLineFull().c_str(), GMSH_VERSION, Msg::GetCommSize(),
-            Msg::GetCommSize() > 1 ? "s" : "", Msg::GetMaxThreads(),
-            Msg::GetMaxThreads() > 1 ? "s" : "");
+            Msg::GetCommSize() > 1 ? "s" : "", nt, nt > 1 ? "s" : "");
   Msg::Info("Started on %s", Msg::GetLaunchDate().c_str());
 }
 

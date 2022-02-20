@@ -2845,7 +2845,9 @@ int GModel::_writePartitionedMSH4(const std::string &baseName, double version,
                                   bool binary, bool saveAll,
                                   bool saveParametric, double scalingFactor)
 {
-#pragma omp parallel for
+  int nthreads = CTX::instance()->numThreads;
+  if(!nthreads) nthreads = Msg::GetMaxThreads();
+#pragma omp parallel for num_threads(nthreads)
   for(std::size_t part = 1; part <= getNumPartitions(); part++) {
     std::ostringstream sstream;
     sstream << baseName << "_" << part << ".msh";
