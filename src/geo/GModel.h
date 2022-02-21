@@ -713,6 +713,12 @@ public:
     return _curvatures;
   }
 
+  // reverse engineering of extruded shapes
+  bool addAutomaticExtrusionConstraints(const std::vector<int> &numElements,
+                                        const std::vector<double> &heights,
+                                        const bool recombine,
+                                        const std::vector<int> &regionTag);
+
   // "automatic" IO based on Gmsh global functions
   void load(const std::string &fileName);
   void save(const std::string &fileName);
