@@ -77,8 +77,9 @@ public:
   void print()
   {
     Msg::Info("Volume %d reverse-engineered as extruded from surface %d "
-              "along (%g, %g, %g)", _region->tag(), _sourceFace->tag(),
-              _direction.x(), _direction.y(), _direction.z());
+              "to surface %d along (%g, %g, %g)", _region->tag(),
+              _sourceFace->tag(), _targetFace->tag(), _direction.x(),
+              _direction.y(), _direction.z());
   }
 
   bool fillExtrudeParams(const std::vector<int> &numElements,
@@ -86,6 +87,11 @@ public:
                          const bool recombine,
                          bool checkOnly)
   {
+    auto se = _sourceFace->edges();
+    std::set<GEdge *, GEntityPtrLessThan> sourceEdges(se.begin(), se.end());
+    auto te = _targetFace->edges();
+    std::set<GEdge *, GEntityPtrLessThan> targetEdges(te.begin(), te.end());
+
     // volume
     {
       ExtrudeParams *ep = new ExtrudeParams(EXTRUDED_ENTITY);
@@ -122,40 +128,15 @@ public:
         _targetFace->meshAttributes.extrude = ep;
     }
 
-    // top curves
-    {
-      std::vector<GEdge *> sourceEdges = _sourceFace->edges();
-      std::vector<GEdge *> targetEdges = _targetFace->edges();
-      if(sourceEdges.size() != targetEdges.size()) {
-        Msg::Error("Incompatible number of curves in surfaces %d and %d",
-                   _sourceFace->tag(), _targetFace->tag());
-        return false;
-      }
-      for(std::size_t i = 0; i < targetEdges.size(); i++) {
-        ExtrudeParams *ep = new ExtrudeParams(COPIED_ENTITY);
-        _fillExtrudeParams(ep, sourceEdges[i]->tag(), numElements, heights, recombine);
-        if(targetEdges[i]->meshAttributes.extrude) {
-          if(!_isCompatible(targetEdges[i]->meshAttributes.extrude, ep)) {
-            Msg::Warning("Incompatible extrusion parameters on curve %d",
-                         targetEdges[i]->tag());
-            delete ep;
-            return false;
-          }
-        }
-        if(checkOnly)
-          delete ep;
-        else
-          targetEdges[i]->meshAttributes.extrude = ep;
-      }
-    }
-
-    // lateral surfaces
+    // lateral surfaces and top curves
     std::vector<GFace *> regionFaces = _region->faces();
     for(auto e : _sourceFace->edges()) {
-      std::vector<GFace*> edgeFaces = e->faces();
+      auto f = e->faces();
+      std::set<GFace *, GEntityPtrLessThan> edgeFaces(f.begin(), f.end());
       for(auto f : regionFaces) {
         if(f == _sourceFace || f == _targetFace) continue;
-        if(std::find(edgeFaces.begin(), edgeFaces.end(), f) != edgeFaces.end()) {
+        if(edgeFaces.find(f) != edgeFaces.end()) {
+          // lateral surface
           ExtrudeParams *ep = new ExtrudeParams(EXTRUDED_ENTITY);
           _fillExtrudeParams(ep, e->tag(), numElements, heights, recombine);
           if(f->meshAttributes.extrude) {
@@ -170,23 +151,38 @@ public:
             delete ep;
           else
             f->meshAttributes.extrude = ep;
+          // top curve
+          for(auto fe : f->edges()) {
+            if(targetEdges.find(fe) != targetEdges.end()) {
+              ExtrudeParams *ep = new ExtrudeParams(COPIED_ENTITY);
+              _fillExtrudeParams(ep, e->tag(), numElements, heights, recombine);
+              if(fe->meshAttributes.extrude) {
+                if(!_isCompatible(fe->meshAttributes.extrude, ep)) {
+                  Msg::Warning("Incompatible extrusion parameters on curve %d",
+                               fe->tag());
+                  delete ep;
+                  return false;
+                }
+              }
+              if(checkOnly)
+                delete ep;
+              else
+                fe->meshAttributes.extrude = ep;
+            }
+          }
         }
       }
     }
 
     // lateral curves
     std::vector<GEdge *> regionEdges = _region->edges();
-    std::vector<GEdge *> sourceEdges = _sourceFace->edges();
-    std::vector<GEdge *> targetEdges = _targetFace->edges();
     for(auto v : _sourceFace->vertices()) {
-      std::vector<GEdge*> vertexEdges = v->edges();
+      auto ve = v->edges();
+      std::set<GEdge*, GEntityPtrLessThan> vertexEdges(ve.begin(), ve.end());
       for(auto e : regionEdges) {
-        if(std::find(sourceEdges.begin(), sourceEdges.end(), e) !=
-           sourceEdges.end()) continue;
-        if(std::find(targetEdges.begin(), targetEdges.end(), e) !=
-           targetEdges.end()) continue;
-        if(std::find(vertexEdges.begin(), vertexEdges.end(), e) !=
-           vertexEdges.end()) {
+        if(sourceEdges.find(e) != sourceEdges.end()) continue;
+        if(targetEdges.find(e) != targetEdges.end()) continue;
+        if(vertexEdges.find(e) != vertexEdges.end()) {
           ExtrudeParams *ep = new ExtrudeParams(EXTRUDED_ENTITY);
           _fillExtrudeParams(ep, v->tag(), numElements, heights, recombine);
           if(e->meshAttributes.extrude) {
@@ -214,53 +210,77 @@ void getCandidateExtrudeInfo(GRegion *gr, std::vector<extrudeInfo> &info,
 {
   std::vector<GFace*> f = gr->faces();
   for(auto f1 : f) {
+    auto f1v = f1->vertices();
+    auto f1e = f1->edges();
+    std::set<GVertex *, GEntityPtrLessThan> v1(f1v.begin(), f1v.end());
+    std::set<GEdge *, GEntityPtrLessThan> e1(f1e.begin(), f1e.end());
     for(auto f2 : f) {
-      // for each pair of surfaces...
+      // for each pair of surfaces
       if(f1 == f2) continue;
-      std::vector<GVertex *> v1 = f1->vertices(), v2 = f2->vertices();
-      std::vector<GEdge *> e1 = f1->edges(), e2 = f2->edges();
+      auto f2v = f2->vertices();
+      auto f2e = f2->edges();
+      std::set<GVertex *, GEntityPtrLessThan> v2(f2v.begin(), f2v.end());
+      std::set<GEdge *, GEntityPtrLessThan> e2(f2e.begin(), f2e.end());
+      // abort if different topology
       if((v1.size() != v2.size()) || (e1.size() != e2.size())) continue;
-      SVector3 d0(0., 0., 0.);
-      bool ok = true;
+
+      SVector3 t0(0., 0., 0.);
+      bool translated = true;
+
+      // check all curves not on the boundary of the 2 surfaces
       for(auto e : gr->edges()) {
-        if(std::find(e1.begin(), e1.end(), e) == e1.end() &&
-           std::find(e2.begin(), e2.end(), e) == e2.end()) {
-          // ... check that all curves not on the boundary of the 2 surfaces are
-          // straight lines with the same translation vector
+        if(e1.find(e) == e1.end() && e2.find(e) == e2.end()) {
+
+          // straight lines with the same translation vector?
           if(e->geomType() == GEntity::Line) {
             GVertex *vs = e->getBeginVertex(), *vt = e->getEndVertex();
             if(vs && vt) {
-              SVector3 d;
-              if(std::find(v1.begin(), v1.end(), vs) != v1.end() &&
-                 std::find(v2.begin(), v2.end(), vt) != v2.end()) {
-                d = SVector3(vs->xyz(), vt->xyz());
+              SVector3 t;
+              if(v1.find(vs) != v1.end() && v2.find(vt) != v2.end()) {
+                t = SVector3(vs->xyz(), vt->xyz());
+              }
+              else if(v1.find(vt) != v1.end() && v2.find(vs) != v2.end()) {
+                t = SVector3(vt->xyz(), vs->xyz());
               }
               else {
-                ok = false;
+                translated = false;
                 break;
               }
-              if(d0.norm() == 0.) d0 = d;
-              if(!sameDir(d0, d)) {
-                ok = false;
+              if(t0.norm() == 0.) t0 = t;
+              if(!sameDir(t0, t)) {
+                translated = false;
                 break;
               }
             }
           }
+          else {
+            // TODO: could check here if all curves are circles to detect
+            // extrusions by rotation
+            translated = false;
+            break;
+          }
         }
       }
-      if(ok && d0.norm() != 0.) {
-        // we have a candidate pair...
-        info.push_back(extrudeInfo(gr, f1, f2, d0));
+      if(translated && t0.norm() != 0.) {
+        for(auto v : v1) {
+          // common point is impossible, abort
+          if(v2.find(v) != v2.end()) continue;
+        }
+        // we have a candidate pair for extrusion by translation
+        Msg::Debug("Volume %d possible extrusion candidate from surface %d to "
+                   "surface %d along (%g, %g, %g)", gr->tag(), f1->tag(), f2->tag(),
+                   t0.x(), t0.y(), t0.z());
+        info.push_back(extrudeInfo(gr, f1, f2, t0));
         // ... increase the popularity of the potential extrusion direction
         bool found = false;
         for(std::size_t i = 0; i < count.size(); i++) {
-          if(sameDir(count[i].first, d0)) {
+          if(sameDir(count[i].first, t0)) {
             count[i].second++;
             found = true;
             break;
           }
         }
-        if(!found) count.push_back(std::make_pair(d0, 1));
+        if(!found) count.push_back(std::make_pair(t0, 1));
       }
     }
   }

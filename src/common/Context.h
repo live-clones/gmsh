@@ -94,6 +94,7 @@ struct contextGeometryOptions {
   int oldCircle, oldNewreg, oldRuledSurface;
   int extrudeSplinePoints, extrudeReturnLateral;
   int autoCoherence;
+  int autoExtrude; // FIXME: temporary for auto-extrude testing
   double tolerance, toleranceBoolean, snap[3], transform[3][3], offset[3];
   int occAutoFix, occAutoEmbed;
   int occFixDegenerated, occFixSmallEdges, occFixSmallFaces;
