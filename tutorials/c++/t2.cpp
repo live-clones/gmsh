@@ -32,8 +32,7 @@ int main(int argc, char **argv)
   gmsh::model::geo::addPlaneSurface({1}, 1);
   gmsh::model::geo::synchronize();
   gmsh::model::addPhysicalGroup(1, {1, 2, 4}, 5);
-  int ps = gmsh::model::addPhysicalGroup(2, {1});
-  gmsh::model::setPhysicalName(2, ps, "My surface");
+  gmsh::model::addPhysicalGroup(2, {1}, -1, "My surface");
 
   // We can then add new points and curves in the same way as we did in
   // `t1.cpp':
@@ -136,8 +135,7 @@ int main(int argc, char **argv)
 
   // We group volumes 129 and 130 in a single physical group with tag `1' and
   // name "The volume":
-  gmsh::model::addPhysicalGroup(3, {129, 130}, 1);
-  gmsh::model::setPhysicalName(3, 1, "The volume");
+  gmsh::model::addPhysicalGroup(3, {129, 130}, 1, "The volume");
 
   // We finally generate and save the mesh:
   gmsh::model::mesh::generate(3);

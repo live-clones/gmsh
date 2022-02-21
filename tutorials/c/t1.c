@@ -15,7 +15,7 @@ int main(int argc, char **argv)
   int ierr, p4;
   double lc = 1e-2;
   int cl1[] = {4, 1, -2, 3}, s1[] = {1};
-  int g5[] = {1, 2, 4}, g6[] = {1}, ps;
+  int g5[] = {1, 2, 4}, g6[] = {1};
 
   /* Before using any functions in the C API, Gmsh must be initialized. In the C
      API the last argument of all functions returns the error code, if any. */
@@ -116,9 +116,8 @@ int main(int argc, char **argv)
      curves in a single group (with prescribed tag 5); and a physical surface
      with name "My surface" (with an automatic tag) containing the geometrical
      surface 1: */
-  gmshModelAddPhysicalGroup(1, g5, sizeof(g5)/sizeof(g5[0]), 5, &ierr);
-  ps = gmshModelAddPhysicalGroup(2, g6, sizeof(g6)/sizeof(g6[0]), -1, &ierr);
-  gmshModelSetPhysicalName(2, ps, "My surface", &ierr);
+  gmshModelAddPhysicalGroup(1, g5, sizeof(g5)/sizeof(g5[0]), 5, NULL, &ierr);
+  gmshModelAddPhysicalGroup(2, g6, sizeof(g6)/sizeof(g6[0]), -1, "My surface", &ierr);
 
   /* We can then generate a 2D mesh... */
   gmshModelMeshGenerate(2, &ierr);

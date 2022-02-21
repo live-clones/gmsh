@@ -40,13 +40,10 @@ int main(int argc, char **argv)
   gmshModelGeoSynchronize(&ierr);
 
   int g5[] = {1, 2, 4};
-  gmshModelAddPhysicalGroup(1, g5, sizeof(g5) / sizeof(g5[0]), 5, &ierr);
+  gmshModelAddPhysicalGroup(1, g5, sizeof(g5) / sizeof(g5[0]), 5, NULL, &ierr);
 
   int g6[] = {1};
-  int ps =
-    gmshModelAddPhysicalGroup(2, g6, sizeof(g6) / sizeof(g6[0]), -1, &ierr);
-
-  gmshModelSetPhysicalName(2, ps, "My surface", &ierr);
+  gmshModelAddPhysicalGroup(2, g6, sizeof(g6) / sizeof(g6[0]), -1, "My surface", &ierr);
 
   // We can then add new points and curves in the same way as we did in
   // `t1.c':
@@ -193,9 +190,7 @@ int main(int argc, char **argv)
   // We group volumes 129 and 130 in a single physical group with tag `1' and
   // name "The volume":
   int g7[] = {129, 130};
-  gmshModelAddPhysicalGroup(3, g7, sizeof(g7) / sizeof(g7[0]), 1, &ierr);
-
-  gmshModelSetPhysicalName(3, 1, "The volume", &ierr);
+  gmshModelAddPhysicalGroup(3, g7, sizeof(g7) / sizeof(g7[0]), 1, "The volume", &ierr);
 
   gmshModelMeshGenerate(3, &ierr);
 

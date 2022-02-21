@@ -621,7 +621,9 @@ public:
   void checkMeshCoherence(double tolerance);
 
   // remove duplicate mesh vertices
-  int removeDuplicateMeshVertices(double tolerance);
+  int removeDuplicateMeshVertices(double tolerance,
+                                  const std::vector<GEntity*> &entities =
+                                  std::vector<GEntity*>());
 
   // create a geometry (i.e. a parametrization for curves and surfaces) for the
   // given discrete entities (or all of them if dimTags is empty)
@@ -696,6 +698,7 @@ public:
                           const std::vector<int> &domain,
                           const std::vector<int> &subdomain,
                           const std::vector<int> &dim);
+  void clearHomologyRequests();
   void computeHomology();
 
   // mesh size callback

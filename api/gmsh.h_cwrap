@@ -6,7 +6,7 @@
 #ifndef GMSH_H
 #define GMSH_H
 
-// This file redefines the Gmsh C++ API in terms of the C API (v4.9.5).
+// This file redefines the Gmsh C++ API in terms of the C API (v4.10.0).
 //
 // This is provided as a convenience for users of the binary Gmsh SDK whose C++
 // compiler ABI is not compatible with the ABI of the C++ compiler used to create
@@ -400,14 +400,16 @@ namespace gmsh { // Top-level functions
 
     // Add a physical group of dimension `dim', grouping the model entities with
     // tags `tags'. Return the tag of the physical group, equal to `tag' if `tag'
-    // is positive, or a new tag if `tag' < 0.
+    // is positive, or a new tag if `tag' < 0. Set the name of the physical group
+    // if `name' is not empty.
     inline int addPhysicalGroup(const int dim,
                                 const std::vector<int> & tags,
-                                const int tag = -1)
+                                const int tag = -1,
+                                const std::string & name = "")
     {
       int ierr = 0;
       int *api_tags_; size_t api_tags_n_; vector2ptr(tags, &api_tags_, &api_tags_n_);
-      int result_api_ = gmshModelAddPhysicalGroup(dim, api_tags_, api_tags_n_, tag, &ierr);
+      int result_api_ = gmshModelAddPhysicalGroup(dim, api_tags_, api_tags_n_, tag, name.c_str(), &ierr);
       if(ierr) throwLastError();
       gmshFree(api_tags_);
       return result_api_;
@@ -983,7 +985,7 @@ namespace gmsh { // Top-level functions
       // relocation). If `force' is set apply the optimization also to discrete
       // entities. If `dimTags' is given, only apply the optimizer to the given
       // entities.
-      inline void optimize(const std::string & method,
+      inline void optimize(const std::string & method = "",
                            const bool force = false,
                            const int niter = 1,
                            const gmsh::vectorpair & dimTags = gmsh::vectorpair())
@@ -2462,12 +2464,15 @@ namespace gmsh { // Top-level functions
         gmshFree(api_dimTags_);
       }
 
-      // Remove duplicate nodes in the mesh of the current model.
-      inline void removeDuplicateNodes()
+      // Remove duplicate nodes in the mesh of the entities `dimTags'. If `dimTags'
+      // is empty, consider the whole mesh.
+      inline void removeDuplicateNodes(const gmsh::vectorpair & dimTags = gmsh::vectorpair())
       {
         int ierr = 0;
-        gmshModelMeshRemoveDuplicateNodes(&ierr);
+        int *api_dimTags_; size_t api_dimTags_n_; vectorpair2intptr(dimTags, &api_dimTags_, &api_dimTags_n_);
+        gmshModelMeshRemoveDuplicateNodes(api_dimTags_, api_dimTags_n_, &ierr);
         if(ierr) throwLastError();
+        gmshFree(api_dimTags_);
       }
 
       // Split (into two triangles) all quadrangles in surface `tag' whose quality
@@ -2527,50 +2532,47 @@ namespace gmsh { // Top-level functions
         if(ierr) throwLastError();
       }
 
-      // Compute a basis representation for homology spaces after a mesh has been
-      // generated. The computation domain is given in a list of physical group
-      // tags `domainTags'; if empty, the whole mesh is the domain. The computation
-      // subdomain for relative homology computation is given in a list of physical
-      // group tags `subdomainTags'; if empty, absolute homology is computed. The
-      // dimensions homology bases to be computed are given in the list `dim'; if
-      // empty, all bases are computed. Resulting basis representation chains are
-      // stored as physical groups in the mesh.
-      inline void computeHomology(const std::vector<int> & domainTags = std::vector<int>(),
-                                  const std::vector<int> & subdomainTags = std::vector<int>(),
-                                  const std::vector<int> & dims = std::vector<int>())
+      // Add a request to compute a basis representation for homology spaces (if
+      // `type' == "Homology") or cohomology spaces (if `type' == "Cohomology").
+      // The computation domain is given in a list of physical group tags
+      // `domainTags'; if empty, the whole mesh is the domain. The computation
+      // subdomain for relative (co)homology computation is given in a list of
+      // physical group tags `subdomainTags'; if empty, absolute (co)homology is
+      // computed. The dimensions of the (co)homology bases to be computed are
+      // given in the list `dim'; if empty, all bases are computed. Resulting basis
+      // representation (co)chains are stored as physical groups in the mesh. If
+      // the request is added before mesh generation, the computation will be
+      // performed at the end of the meshing pipeline.
+      inline void addHomologyRequest(const std::string & type = "Homology",
+                                     const std::vector<int> & domainTags = std::vector<int>(),
+                                     const std::vector<int> & subdomainTags = std::vector<int>(),
+                                     const std::vector<int> & dims = std::vector<int>())
       {
         int ierr = 0;
         int *api_domainTags_; size_t api_domainTags_n_; vector2ptr(domainTags, &api_domainTags_, &api_domainTags_n_);
         int *api_subdomainTags_; size_t api_subdomainTags_n_; vector2ptr(subdomainTags, &api_subdomainTags_, &api_subdomainTags_n_);
         int *api_dims_; size_t api_dims_n_; vector2ptr(dims, &api_dims_, &api_dims_n_);
-        gmshModelMeshComputeHomology(api_domainTags_, api_domainTags_n_, api_subdomainTags_, api_subdomainTags_n_, api_dims_, api_dims_n_, &ierr);
+        gmshModelMeshAddHomologyRequest(type.c_str(), api_domainTags_, api_domainTags_n_, api_subdomainTags_, api_subdomainTags_n_, api_dims_, api_dims_n_, &ierr);
         if(ierr) throwLastError();
         gmshFree(api_domainTags_);
         gmshFree(api_subdomainTags_);
         gmshFree(api_dims_);
       }
 
-      // Compute a basis representation for cohomology spaces after a mesh has been
-      // generated. The computation domain is given in a list of physical group
-      // tags `domainTags'; if empty, the whole mesh is the domain. The computation
-      // subdomain for relative cohomology computation is given in a list of
-      // physical group tags `subdomainTags'; if empty, absolute cohomology is
-      // computed. The dimensions homology bases to be computed are given in the
-      // list `dim'; if empty, all bases are computed. Resulting basis
-      // representation cochains are stored as physical groups in the mesh.
-      inline void computeCohomology(const std::vector<int> & domainTags = std::vector<int>(),
-                                    const std::vector<int> & subdomainTags = std::vector<int>(),
-                                    const std::vector<int> & dims = std::vector<int>())
+      // Clear all (co)homology computation requests.
+      inline void clearHomologyRequests()
       {
         int ierr = 0;
-        int *api_domainTags_; size_t api_domainTags_n_; vector2ptr(domainTags, &api_domainTags_, &api_domainTags_n_);
-        int *api_subdomainTags_; size_t api_subdomainTags_n_; vector2ptr(subdomainTags, &api_subdomainTags_, &api_subdomainTags_n_);
-        int *api_dims_; size_t api_dims_n_; vector2ptr(dims, &api_dims_, &api_dims_n_);
-        gmshModelMeshComputeCohomology(api_domainTags_, api_domainTags_n_, api_subdomainTags_, api_subdomainTags_n_, api_dims_, api_dims_n_, &ierr);
+        gmshModelMeshClearHomologyRequests(&ierr);
         if(ierr) throwLastError();
-        gmshFree(api_domainTags_);
-        gmshFree(api_subdomainTags_);
-        gmshFree(api_dims_);
+      }
+
+      // Perform the (co)homology computations requested by addHomologyRequest().
+      inline void computeHomology()
+      {
+        int ierr = 0;
+        gmshModelMeshComputeHomology(&ierr);
+        if(ierr) throwLastError();
       }
 
       // Compute a cross field for the current mesh. The function creates 3 views:
@@ -3303,14 +3305,16 @@ namespace gmsh { // Top-level functions
 
       // Add a physical group of dimension `dim', grouping the entities with tags
       // `tags' in the built-in CAD representation. Return the tag of the physical
-      // group, equal to `tag' if `tag' is positive, or a new tag if `tag' < 0.
+      // group, equal to `tag' if `tag' is positive, or a new tag if `tag' < 0. Set
+      // the name of the physical group if `name' is not empty.
       inline int addPhysicalGroup(const int dim,
                                   const std::vector<int> & tags,
-                                  const int tag = -1)
+                                  const int tag = -1,
+                                  const std::string & name = "")
       {
         int ierr = 0;
         int *api_tags_; size_t api_tags_n_; vector2ptr(tags, &api_tags_, &api_tags_n_);
-        int result_api_ = gmshModelGeoAddPhysicalGroup(dim, api_tags_, api_tags_n_, tag, &ierr);
+        int result_api_ = gmshModelGeoAddPhysicalGroup(dim, api_tags_, api_tags_n_, tag, name.c_str(), &ierr);
         if(ierr) throwLastError();
         gmshFree(api_tags_);
         return result_api_;

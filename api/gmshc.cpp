@@ -377,13 +377,13 @@ GMSH_API void gmshModelGetPhysicalGroupsForEntity(const int dim, const int tag, 
   }
 }
 
-GMSH_API int gmshModelAddPhysicalGroup(const int dim, int * tags, size_t tags_n, const int tag, int * ierr)
+GMSH_API int gmshModelAddPhysicalGroup(const int dim, int * tags, size_t tags_n, const int tag, const char * name, int * ierr)
 {
   int result_api_ = 0;
   if(ierr) *ierr = 0;
   try {
     std::vector<int> api_tags_(tags, tags + tags_n);
-    result_api_ = gmsh::model::addPhysicalGroup(dim, api_tags_, tag);
+    result_api_ = gmsh::model::addPhysicalGroup(dim, api_tags_, tag, name);
   }
   catch(...){
     if(ierr) *ierr = 1;
@@ -2106,11 +2106,16 @@ GMSH_API void gmshModelMeshGetDuplicateNodes(size_t ** tags, size_t * tags_n, in
   }
 }
 
-GMSH_API void gmshModelMeshRemoveDuplicateNodes(int * ierr)
+GMSH_API void gmshModelMeshRemoveDuplicateNodes(int * dimTags, size_t dimTags_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    gmsh::model::mesh::removeDuplicateNodes();
+    gmsh::vectorpair api_dimTags_(dimTags_n/2);
+    for(size_t i = 0; i < dimTags_n/2; ++i){
+      api_dimTags_[i].first = dimTags[i * 2 + 0];
+      api_dimTags_[i].second = dimTags[i * 2 + 1];
+    }
+    gmsh::model::mesh::removeDuplicateNodes(api_dimTags_);
   }
   catch(...){
     if(ierr) *ierr = 1;
@@ -2166,28 +2171,36 @@ GMSH_API void gmshModelMeshCreateTopology(const int makeSimplyConnected, const i
   }
 }
 
-GMSH_API void gmshModelMeshComputeHomology(int * domainTags, size_t domainTags_n, int * subdomainTags, size_t subdomainTags_n, int * dims, size_t dims_n, int * ierr)
+GMSH_API void gmshModelMeshAddHomologyRequest(const char * type, int * domainTags, size_t domainTags_n, int * subdomainTags, size_t subdomainTags_n, int * dims, size_t dims_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
     std::vector<int> api_domainTags_(domainTags, domainTags + domainTags_n);
     std::vector<int> api_subdomainTags_(subdomainTags, subdomainTags + subdomainTags_n);
     std::vector<int> api_dims_(dims, dims + dims_n);
-    gmsh::model::mesh::computeHomology(api_domainTags_, api_subdomainTags_, api_dims_);
+    gmsh::model::mesh::addHomologyRequest(type, api_domainTags_, api_subdomainTags_, api_dims_);
   }
   catch(...){
     if(ierr) *ierr = 1;
   }
 }
 
-GMSH_API void gmshModelMeshComputeCohomology(int * domainTags, size_t domainTags_n, int * subdomainTags, size_t subdomainTags_n, int * dims, size_t dims_n, int * ierr)
+GMSH_API void gmshModelMeshClearHomologyRequests(int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    std::vector<int> api_domainTags_(domainTags, domainTags + domainTags_n);
-    std::vector<int> api_subdomainTags_(subdomainTags, subdomainTags + subdomainTags_n);
-    std::vector<int> api_dims_(dims, dims + dims_n);
-    gmsh::model::mesh::computeCohomology(api_domainTags_, api_subdomainTags_, api_dims_);
+    gmsh::model::mesh::clearHomologyRequests();
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelMeshComputeHomology(int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::mesh::computeHomology();
   }
   catch(...){
     if(ierr) *ierr = 1;
@@ -2841,13 +2854,13 @@ GMSH_API void gmshModelGeoSetMaxTag(const int dim, const int maxTag, int * ierr)
   }
 }
 
-GMSH_API int gmshModelGeoAddPhysicalGroup(const int dim, int * tags, size_t tags_n, const int tag, int * ierr)
+GMSH_API int gmshModelGeoAddPhysicalGroup(const int dim, int * tags, size_t tags_n, const int tag, const char * name, int * ierr)
 {
   int result_api_ = 0;
   if(ierr) *ierr = 0;
   try {
     std::vector<int> api_tags_(tags, tags + tags_n);
-    result_api_ = gmsh::model::geo::addPhysicalGroup(dim, api_tags_, tag);
+    result_api_ = gmsh::model::geo::addPhysicalGroup(dim, api_tags_, tag, name);
   }
   catch(...){
     if(ierr) *ierr = 1;

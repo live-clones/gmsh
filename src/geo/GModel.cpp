@@ -2673,7 +2673,8 @@ void GModel::checkMeshCoherence(double tolerance)
   Msg::StatusBar(true, "Done checking mesh coherence");
 }
 
-int GModel::removeDuplicateMeshVertices(double tolerance)
+int GModel::removeDuplicateMeshVertices(double tolerance,
+                                        const std::vector<GEntity*> &ents)
 {
   Msg::StatusBar(true, "Removing duplicate mesh nodes...");
 
@@ -2683,8 +2684,8 @@ int GModel::removeDuplicateMeshVertices(double tolerance)
 
   // get entities (in order of increasing dimensions so that topological
   // classification of vertices remains correct)
-  std::vector<GEntity *> entities;
-  getEntities(entities);
+  std::vector<GEntity*> entities(ents);
+  if(entities.empty()) getEntities(entities);
 
   // re-index all vertices (don't use MVertex::getNum(), as we want to be able
   // to remove duplicate vertices from "incorrect" meshes, where vertices with
@@ -3434,11 +3435,15 @@ void GModel::addHomologyRequest(const std::string &type,
                                 const std::vector<int> &subdomain,
                                 const std::vector<int> &dim)
 {
-  typedef std::pair<const std::vector<int>, const std::vector<int> > dpair;
-  typedef std::pair<const std::string, const std::vector<int> > tpair;
-  dpair p(domain, subdomain);
-  tpair p2(type, dim);
+  std::pair<const std::vector<int>, const std::vector<int> > p(domain,
+                                                               subdomain);
+  std::pair<const std::string, const std::vector<int> > p2(type, dim);
   _homologyRequests.insert(std::make_pair(p, p2));
+}
+
+void GModel::clearHomologyRequests()
+{
+  _homologyRequests.clear();
 }
 
 void GModel::computeHomology()

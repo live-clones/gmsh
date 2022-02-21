@@ -437,7 +437,8 @@ gmsh::model::getPhysicalGroupsForEntity(const int dim, const int tag,
 
 GMSH_API int gmsh::model::addPhysicalGroup(const int dim,
                                            const std::vector<int> &tags,
-                                           const int tag)
+                                           const int tag,
+                                           const std::string &name)
 {
   // FIXME: 1) the "master" physical group definitions are still stored in the
   // buil-in CAD kernel, so that built-in CAD operations (e.g. Coherence) can
@@ -459,6 +460,7 @@ GMSH_API int gmsh::model::addPhysicalGroup(const int dim,
     return -1;
   }
   GModel::current()->addPhysicalGroup(dim, outTag, tags);
+  if(!name.empty()) GModel::current()->setPhysicalName(name, dim, outTag);
   return outTag;
 }
 
@@ -5270,12 +5272,13 @@ GMSH_API void gmsh::model::mesh::getDuplicateNodes(std::vector<std::size_t> &nod
   for(auto n : duplicates) nodeTags.push_back(n->getNum());
 }
 
-// TODO: add argument to limit the entities to consider
-GMSH_API void gmsh::model::mesh::removeDuplicateNodes()
+GMSH_API void gmsh::model::mesh::removeDuplicateNodes(const vectorpair &dimTags)
 {
   if(!_checkInit()) return;
+  std::vector<GEntity *> entities;
+  _getEntities(dimTags, entities);
   GModel::current()->removeDuplicateMeshVertices(
-    CTX::instance()->geom.tolerance);
+    CTX::instance()->geom.tolerance, entities);
   CTX::instance()->mesh.changed = ENT_ALL;
 }
 
@@ -5326,23 +5329,28 @@ GMSH_API void gmsh::model::mesh::createTopology(const bool makeSimplyConnected,
 }
 
 GMSH_API void
-gmsh::model::mesh::computeHomology(const std::vector<int> &domainTags,
-                                   const std::vector<int> &subdomainTags,
-                                   const std::vector<int> &dims)
+gmsh::model::mesh::addHomologyRequest(const std::string &type,
+                                      const std::vector<int> &domainTags,
+                                      const std::vector<int> &subdomainTags,
+                                      const std::vector<int> &dims)
 {
   if(!_checkInit()) return;
-  GModel::current()->addHomologyRequest("Homology", domainTags, subdomainTags,
+  GModel::current()->addHomologyRequest(type, domainTags, subdomainTags,
                                         dims);
 }
 
 GMSH_API void
-gmsh::model::mesh::computeCohomology(const std::vector<int> &domainTags,
-                                     const std::vector<int> &subdomainTags,
-                                     const std::vector<int> &dims)
+gmsh::model::mesh::clearHomologyRequests()
 {
   if(!_checkInit()) return;
-  GModel::current()->addHomologyRequest("Cohomology", domainTags, subdomainTags,
-                                        dims);
+  GModel::current()->clearHomologyRequests();
+}
+
+GMSH_API void
+gmsh::model::mesh::computeHomology()
+{
+  if(!_checkInit()) return;
+  GModel::current()->computeHomology();
 }
 
 GMSH_API void gmsh::model::mesh::triangulate(const std::vector<double> &coord,
@@ -5960,7 +5968,8 @@ GMSH_API void gmsh::model::geo::setMaxTag(const int dim, const int maxTag)
 
 GMSH_API int gmsh::model::geo::addPhysicalGroup(const int dim,
                                                 const std::vector<int> &tags,
-                                                const int tag)
+                                                const int tag,
+                                                const std::string &name)
 {
   if(!_checkInit()) return -1;
   int outTag = tag;
@@ -5968,6 +5977,7 @@ GMSH_API int gmsh::model::geo::addPhysicalGroup(const int dim,
     outTag = GModel::current()->getGEOInternals()->getMaxPhysicalTag() + 1;
   GModel::current()->getGEOInternals()->modifyPhysicalGroup(dim, outTag, 0,
                                                             tags);
+  if(!name.empty()) GModel::current()->setPhysicalName(name, dim, outTag);
   return outTag;
 }
 

@@ -130,8 +130,8 @@ model.add('getEntitiesForPhysicalGroup', doc, None, iint('dim'), iint('tag'), ov
 doc = '''Get the tags of the physical groups (if any) to which the model entity of dimension `dim' and tag `tag' belongs.'''
 model.add('getPhysicalGroupsForEntity', doc, None, iint('dim'), iint('tag'), ovectorint('physicalTags'))
 
-doc = '''Add a physical group of dimension `dim', grouping the model entities with tags `tags'. Return the tag of the physical group, equal to `tag' if `tag' is positive, or a new tag if `tag' < 0.'''
-model.add('addPhysicalGroup', doc, oint, iint('dim'), ivectorint('tags'), iint('tag', '-1'))
+doc = '''Add a physical group of dimension `dim', grouping the model entities with tags `tags'. Return the tag of the physical group, equal to `tag' if `tag' is positive, or a new tag if `tag' < 0. Set the name of the physical group if `name' is not empty.'''
+model.add('addPhysicalGroup', doc, oint, iint('dim'), ivectorint('tags'), iint('tag', '-1'), istring('name', '""'))
 
 doc = '''Remove the physical groups `dimTags' from the current model. If `dimTags' is empty, remove all groups.'''
 model.add('removePhysicalGroups', doc, None, ivectorpair('dimTags', 'gmsh::vectorpair()', "[]", "[]"))
@@ -249,7 +249,7 @@ doc = '''Unpartition the mesh of the current model.'''
 mesh.add('unpartition', doc, None)
 
 doc = '''Optimize the mesh of the current model using `method' (empty for default tetrahedral mesh optimizer, "Netgen" for Netgen optimizer, "HighOrder" for direct high-order mesh optimizer, "HighOrderElastic" for high-order elastic smoother, "HighOrderFastCurving" for fast curving algorithm, "Laplace2D" for Laplace smoothing, "Relocate2D" and "Relocate3D" for node relocation). If `force' is set apply the optimization also to discrete entities. If `dimTags' is given, only apply the optimizer to the given entities.'''
-mesh.add('optimize', doc, None, istring('method', ''), ibool('force', 'false', 'False'), iint('niter', '1'), ivectorpair('dimTags', 'gmsh::vectorpair()', "[]", "[]"))
+mesh.add('optimize', doc, None, istring('method', '""'), ibool('force', 'false', 'False'), iint('niter', '1'), ivectorpair('dimTags', 'gmsh::vectorpair()', "[]", "[]"))
 
 doc = '''Recombine the mesh of the current model.'''
 mesh.add('recombine', doc, None)
@@ -512,8 +512,8 @@ mesh.add('importStl', doc, None)
 doc = '''Get the `tags' of any duplicate nodes in the mesh of the entities `dimTags'. If `dimTags' is empty, consider the whole mesh.'''
 mesh.add('getDuplicateNodes', doc, None, ovectorsize('tags'), ivectorpair('dimTags', 'gmsh::vectorpair()', "[]", "[]"))
 
-doc = '''Remove duplicate nodes in the mesh of the current model.'''
-mesh.add('removeDuplicateNodes', doc, None)
+doc = '''Remove duplicate nodes in the mesh of the entities `dimTags'. If `dimTags' is empty, consider the whole mesh.'''
+mesh.add('removeDuplicateNodes', doc, None, ivectorpair('dimTags', 'gmsh::vectorpair()', "[]", "[]"))
 
 doc = '''Split (into two triangles) all quadrangles in surface `tag' whose quality is lower than `quality'. If `tag' < 0, split quadrangles in all surfaces.'''
 mesh.add('splitQuadrangles', doc, None, idouble('quality', '1.'), iint('tag', '-1'))
@@ -527,11 +527,14 @@ mesh.add('createGeometry', doc, None, ivectorpair('dimTags', 'gmsh::vectorpair()
 doc = '''Create a boundary representation from the mesh if the model does not have one (e.g. when imported from mesh file formats with no BRep representation of the underlying model). If `makeSimplyConnected' is set, enforce simply connected discrete surfaces and volumes. If `exportDiscrete' is set, clear any built-in CAD kernel entities and export the discrete entities in the built-in CAD kernel.'''
 mesh.add('createTopology', doc, None, ibool('makeSimplyConnected', 'true', 'True'), ibool('exportDiscrete', 'true', 'True'))
 
-doc = '''Compute a basis representation for homology spaces after a mesh has been generated. The computation domain is given in a list of physical group tags `domainTags'; if empty, the whole mesh is the domain. The computation subdomain for relative homology computation is given in a list of physical group tags `subdomainTags'; if empty, absolute homology is computed. The dimensions homology bases to be computed are given in the list `dim'; if empty, all bases are computed. Resulting basis representation chains are stored as physical groups in the mesh.'''
-mesh.add('computeHomology', doc, None, ivectorint('domainTags', 'std::vector<int>()', "[]", "[]"), ivectorint('subdomainTags', 'std::vector<int>()', "[]", "[]"), ivectorint('dims', 'std::vector<int>()', "[]", "[]"))
+doc = '''Add a request to compute a basis representation for homology spaces (if `type' == "Homology") or cohomology spaces (if `type' == "Cohomology"). The computation domain is given in a list of physical group tags `domainTags'; if empty, the whole mesh is the domain. The computation subdomain for relative (co)homology computation is given in a list of physical group tags `subdomainTags'; if empty, absolute (co)homology is computed. The dimensions of the (co)homology bases to be computed are given in the list `dim'; if empty, all bases are computed. Resulting basis representation (co)chains are stored as physical groups in the mesh. If the request is added before mesh generation, the computation will be performed at the end of the meshing pipeline.'''
+mesh.add('addHomologyRequest', doc, None, istring('type', '"Homology"'), ivectorint('domainTags', 'std::vector<int>()', "[]", "[]"), ivectorint('subdomainTags', 'std::vector<int>()', "[]", "[]"), ivectorint('dims', 'std::vector<int>()', "[]", "[]"))
 
-doc = '''Compute a basis representation for cohomology spaces after a mesh has been generated. The computation domain is given in a list of physical group tags `domainTags'; if empty, the whole mesh is the domain. The computation subdomain for relative cohomology computation is given in a list of physical group tags `subdomainTags'; if empty, absolute cohomology is computed. The dimensions homology bases to be computed are given in the list `dim'; if empty, all bases are computed. Resulting basis representation cochains are stored as physical groups in the mesh.'''
-mesh.add('computeCohomology', doc, None, ivectorint('domainTags', 'std::vector<int>()', "[]", "[]"), ivectorint('subdomainTags', 'std::vector<int>()', "[]", "[]"), ivectorint('dims', 'std::vector<int>()', "[]", "[]"))
+doc = '''Clear all (co)homology computation requests.'''
+mesh.add('clearHomologyRequests', doc, None)
+
+doc = '''Perform the (co)homology computations requested by addHomologyRequest().'''
+mesh.add('computeHomology', doc, None)
 
 doc = '''Compute a cross field for the current mesh. The function creates 3 views: the H function, the Theta function and cross directions. Return the tags of the views.'''
 mesh.add('computeCrossField', doc, None, ovectorint('viewTags'))
@@ -678,8 +681,8 @@ geo.add('getMaxTag', doc, oint, iint('dim'))
 doc = '''Set the maximum tag `maxTag' for entities of dimension `dim' in the built-in CAD representation.'''
 geo.add('setMaxTag', doc, None, iint('dim'), iint('maxTag'))
 
-doc = '''Add a physical group of dimension `dim', grouping the entities with tags `tags' in the built-in CAD representation. Return the tag of the physical group, equal to `tag' if `tag' is positive, or a new tag if `tag' < 0.'''
-geo.add('addPhysicalGroup', doc, oint, iint('dim'), ivectorint('tags'), iint('tag', '-1'))
+doc = '''Add a physical group of dimension `dim', grouping the entities with tags `tags' in the built-in CAD representation. Return the tag of the physical group, equal to `tag' if `tag' is positive, or a new tag if `tag' < 0. Set the name of the physical group if `name' is not empty.'''
+geo.add('addPhysicalGroup', doc, oint, iint('dim'), ivectorint('tags'), iint('tag', '-1'), istring('name', '""'))
 
 doc = '''Remove the physical groups `dimTags' from the built-in CAD representation. If `dimTags' is empty, remove all groups.'''
 geo.add('removePhysicalGroups', doc, None, ivectorpair('dimTags', 'gmsh::vectorpair()', "[]", "[]"))

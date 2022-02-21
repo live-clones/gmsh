@@ -31,8 +31,7 @@ def createGeometryAndMesh():
     gmsh.model.geo.addPlaneSurface([1], 1)
     gmsh.model.geo.synchronize()
     gmsh.model.addPhysicalGroup(1, [1, 2, 4], 5)
-    ps = gmsh.model.addPhysicalGroup(2, [1])
-    gmsh.model.setPhysicalName(2, ps, "My surface")
+    gmsh.model.addPhysicalGroup(2, [1], name="My surface")
 
     # As in `t2.py', we plan to perform an extrusion along the z axis.  But
     # here, instead of only extruding the geometry, we also want to extrude the
