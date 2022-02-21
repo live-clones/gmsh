@@ -40,7 +40,7 @@ int main(int argc, char **argv)
   gmshModelGeoSynchronize(&ierr);
 
   int g5[] = {1, 2, 4};
-  gmshModelAddPhysicalGroup(1, g5, sizeof(g5) / sizeof(g5[0]), 5, NULL, &ierr);
+  gmshModelAddPhysicalGroup(1, g5, sizeof(g5) / sizeof(g5[0]), 5, "", &ierr);
 
   int g6[] = {1};
   gmshModelAddPhysicalGroup(2, g6, sizeof(g6) / sizeof(g6[0]), -1, "My surface", &ierr);

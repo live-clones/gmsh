@@ -116,7 +116,7 @@ int main(int argc, char **argv)
      curves in a single group (with prescribed tag 5); and a physical surface
      with name "My surface" (with an automatic tag) containing the geometrical
      surface 1: */
-  gmshModelAddPhysicalGroup(1, g5, sizeof(g5)/sizeof(g5[0]), 5, NULL, &ierr);
+  gmshModelAddPhysicalGroup(1, g5, sizeof(g5)/sizeof(g5[0]), 5, "", &ierr);
   gmshModelAddPhysicalGroup(2, g6, sizeof(g6)/sizeof(g6[0]), -1, "My surface", &ierr);
 
   /* We can then generate a 2D mesh... */
