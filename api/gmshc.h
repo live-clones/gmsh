@@ -540,9 +540,11 @@ GMSH_API void gmshModelMeshUnpartition(int * ierr);
  * tetrahedral mesh optimizer, "Netgen" for Netgen optimizer, "HighOrder" for
  * direct high-order mesh optimizer, "HighOrderElastic" for high-order elastic
  * smoother, "HighOrderFastCurving" for fast curving algorithm, "Laplace2D"
- * for Laplace smoothing, "Relocate2D" and "Relocate3D" for node relocation).
- * If `force' is set apply the optimization also to discrete entities. If
- * `dimTags' is given, only apply the optimizer to the given entities. */
+ * for Laplace smoothing, "Relocate2D" and "Relocate3D" for node relocation,
+ * "QuadQuasiStructured" for quad mesh optimization, "UntangleMeshGeometry"
+ * for untangling). If `force' is set apply the optimization also to discrete
+ * entities. If `dimTags' is given, only apply the optimizer to the given
+ * entities. */
 GMSH_API void gmshModelMeshOptimize(const char * method,
                                     const int force,
                                     const int niter,
