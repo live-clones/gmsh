@@ -1,5 +1,6 @@
 import gmsh
 import os
+import sys
 
 gmsh.initialize()
 
@@ -27,5 +28,7 @@ gmsh.option.setNumber('Mesh.RecombineNodeRepositioning', 0)
 gmsh.option.setNumber('Mesh.RecombineMinimumQuality', 1e-3)
 gmsh.model.mesh.recombine()
 
-gmsh.fltk.run()
+if '-nopopup' not in sys.argv:
+    gmsh.fltk.run()
+
 gmsh.finalize()

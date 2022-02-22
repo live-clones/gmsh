@@ -1,5 +1,6 @@
 import gmsh
 import sys
+import os
 
 gmsh.initialize()
 
