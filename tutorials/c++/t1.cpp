@@ -165,7 +165,7 @@ int main(int argc, char **argv)
   // gmsh::model::occ::synchronize();
   //
   // the underlying curves and points could be accessed with
-  // gmsh::model::getBoundary().
+  // gmsh::model::getBoundary(...).
   //
   // See e.g `t16.cpp', `t18.cpp', `t19.cpp' or `t20.cpp' for complete examples
   // based on OpenCASCADE, and `examples/api' for more.

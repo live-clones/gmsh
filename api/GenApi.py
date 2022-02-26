@@ -114,7 +114,7 @@ def ivectorint(name, value=None, python_value=None, julia_value=None):
     a.c_pre = ("    std::vector<int> " + api_name + "(" + name + ", " + name +
                " + " + name + "_n);\n")
     a.c_arg = api_name
-    a.c = "int * " + name + ", size_t " + name + "_n"
+    a.c = "const int * " + name + ", const size_t " + name + "_n"
     a.cwrap_pre = ("int *" + api_name + "; size_t " + api_name_n + "; " +
                    "vector2ptr(" + name + ", &" + api_name + ", &" +
                    api_name_n + ");\n")
@@ -140,7 +140,7 @@ def ivectorsize(name, value=None, python_value=None, julia_value=None):
     a.c_pre = ("    std::vector<std::size_t> " + api_name + "(" + name + ", " +
                name + " + " + name + "_n);\n")
     a.c_arg = api_name
-    a.c = "size_t * " + name + ", size_t " + name + "_n"
+    a.c = "const size_t * " + name + ", const size_t " + name + "_n"
     a.cwrap_pre = ("size_t *" + api_name + "; size_t " + api_name_n + "; " +
                    "vector2ptr(" + name + ", &" + api_name + ", &" +
                    api_name_n + ");\n")
@@ -160,13 +160,13 @@ def ivectordouble(name, value=None, python_value=None, julia_value=None):
     if julia_value == "[]":
         julia_value = "Cdouble[]"
     a = arg(name, value, python_value, julia_value,
-            "const std::vector<double> &", "double **", False)
+            "const std::vector<double> &", "const double **", False)
     api_name = "api_" + name + "_"
     api_name_n = "api_" + name + "_n_"
     a.c_pre = ("    std::vector<double> " + api_name + "(" + name + ", " +
                name + " + " + name + "_n);\n")
     a.c_arg = api_name
-    a.c = "double * " + name + ", size_t " + name + "_n"
+    a.c = "const double * " + name + ", const size_t " + name + "_n"
     a.cwrap_pre = ("double *" + api_name + "; size_t " + api_name_n + "; " +
                    "vector2ptr(" + name + ", &" + api_name + ", &" +
                    api_name_n + ");\n")
@@ -184,13 +184,13 @@ def ivectordouble(name, value=None, python_value=None, julia_value=None):
 
 def ivectorstring(name, value=None, python_value=None, julia_value=None):
     a = arg(name, value, python_value, julia_value,
-            "const std::vector<std::string> &", "char **", False)
+            "const std::vector<std::string> &", "const char **", False)
     api_name = "api_" + name + "_"
     api_name_n = "api_" + name + "_n_"
     a.c_pre = ("    std::vector<std::string> " + api_name + "(" + name + ", " +
                name + " + " + name + "_n);\n")
     a.c_arg = api_name
-    a.c = "char ** " + name + ", size_t " + name + "_n"
+    a.c = "const char ** " + name + ", const size_t " + name + "_n"
     a.cwrap_pre = ("char **" + api_name + "; size_t " + api_name_n + "; " +
                    "vectorstring2charptrptr(" + name + ", &" + api_name +
                    ", &" + api_name_n + ");\n")
@@ -221,7 +221,7 @@ def ivectorpair(name, value=None, python_value=None, julia_value=None):
                "[i * 2 + 0];\n" + "      " + api_name + "[i].second = " +
                name + "[i * 2 + 1];\n" + "    }\n")
     a.c_arg = api_name
-    a.c = "int * " + name + ", size_t " + name + "_n"
+    a.c = "const int * " + name + ", const size_t " + name + "_n"
     a.cwrap_pre = ("int *" + api_name + "; size_t " + api_name_n + "; " +
                    "vectorpair2intptr(" + name + ", &" + api_name + ", &" +
                    api_name_n + ");\n")
@@ -254,7 +254,7 @@ def ivectorvectorint(name, value=None, python_value=None, julia_value=None):
                name + "_n[i]);\n")
     a.c_arg = api_name
     a.c = ("const int ** " + name + ", const size_t * " + name + "_n, " +
-           "size_t " + name + "_nn")
+           "const size_t " + name + "_nn")
     a.cwrap_pre = ("int **" + api_name + "; size_t *" + api_name_n + ", " +
                    api_name_nn + "; " + "vectorvector2ptrptr(" + name + ", &" +
                    api_name + ", &" + api_name_n + ", &" + api_name_nn +
@@ -294,7 +294,7 @@ def ivectorvectorsize(name, value=None, python_value=None, julia_value=None):
                "[i] + " + name + "_n[i]);\n")
     a.c_arg = api_name
     a.c = ("const size_t ** " + name + ", const size_t * " + name + "_n, " +
-           "size_t " + name + "_nn")
+           "const size_t " + name + "_nn")
     a.cwrap_pre = ("size_t **" + api_name + "; size_t *" + api_name_n + ", " +
                    api_name_nn + "; " + "vectorvector2ptrptr(" + name + ", &" +
                    api_name + ", &" + api_name_n + ", &" + api_name_nn +
@@ -334,7 +334,7 @@ def ivectorvectordouble(name, value=None, python_value=None, julia_value=None):
                "[i] + " + name + "_n[i]);\n")
     a.c_arg = api_name
     a.c = ("const double ** " + name + ", const size_t * " + name + "_n, " +
-           "size_t " + name + "_nn")
+           "const size_t " + name + "_nn")
     a.cwrap_pre = ("double **" + api_name + "; size_t *" + api_name_n + ", " +
                    api_name_nn + "; " + "vectorvector2ptrptr(" + name + ", &" +
                    api_name + ", &" + api_name_n + ", &" + api_name_nn +
