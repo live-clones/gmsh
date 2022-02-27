@@ -6,7 +6,7 @@ gmsh.model.occ.addRectangle(0,0,0,1,1)
 gmsh.model.occ.synchronize()
 gmsh.model.mesh.generate()
 
-if '-nopopup' not in sys.argv:
+if '-nopopup' in sys.argv:
     exit(0)
 
 while 1:
