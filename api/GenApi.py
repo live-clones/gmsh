@@ -970,6 +970,9 @@ c_header = """/*
 #define {2}_API
 #endif
 
+/* All the functions in the {3} C API that return arrays allocate the
+ * necessary memory with {7}Malloc(). These arrays should be deallocated
+ * with {7}Free(). */
 {2}_API void {7}Free(void *p);
 {2}_API void *{7}Malloc(size_t n);
 """

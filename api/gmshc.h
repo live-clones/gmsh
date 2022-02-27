@@ -36,6 +36,9 @@
 #define GMSH_API
 #endif
 
+/* All the functions in the Gmsh C API that return arrays allocate the
+ * necessary memory with gmshMalloc(). These arrays should be deallocated
+ * with gmshFree(). */
 GMSH_API void gmshFree(void *p);
 GMSH_API void *gmshMalloc(size_t n);
 

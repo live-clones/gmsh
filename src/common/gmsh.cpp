@@ -124,8 +124,8 @@ static bool _checkInit()
 
 // gmsh
 
-GMSH_API void gmsh::initialize(int argc, char **argv, bool readConfigFiles,
-                               bool run)
+GMSH_API void gmsh::initialize(int argc, char ** argv,
+                               const bool readConfigFiles, const bool run)
 {
   if(_initialized) {
     Msg::Warning("Gmsh has aleady been initialized");
