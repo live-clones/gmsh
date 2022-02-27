@@ -1499,7 +1499,7 @@ namespace gmsh { // Top-level functions
         int *api_elementTypes_; size_t api_elementTypes_n_; vector2ptr(elementTypes, &api_elementTypes_, &api_elementTypes_n_);
         size_t **api_elementTags_; size_t *api_elementTags_n_, api_elementTags_nn_; vectorvector2ptrptr(elementTags, &api_elementTags_, &api_elementTags_n_, &api_elementTags_nn_);
         size_t **api_nodeTags_; size_t *api_nodeTags_n_, api_nodeTags_nn_; vectorvector2ptrptr(nodeTags, &api_nodeTags_, &api_nodeTags_n_, &api_nodeTags_nn_);
-        gmshModelMeshAddElements(dim, tag, api_elementTypes_, api_elementTypes_n_, (const size_t **)api_elementTags_, api_elementTags_n_, api_elementTags_nn_, (const size_t **)api_nodeTags_, api_nodeTags_n_, api_nodeTags_nn_, &ierr);
+        gmshModelMeshAddElements(dim, tag, api_elementTypes_, api_elementTypes_n_, api_elementTags_, api_elementTags_n_, api_elementTags_nn_, api_nodeTags_, api_nodeTags_n_, api_nodeTags_nn_, &ierr);
         if(ierr) throwLastError();
         gmshFree(api_elementTypes_);
         for(size_t i = 0; i < api_elementTags_nn_; ++i){ gmshFree(api_elementTags_[i]); } gmshFree(api_elementTags_); gmshFree(api_elementTags_n_);
@@ -4783,7 +4783,7 @@ namespace gmsh { // Top-level functions
       int ierr = 0;
       size_t *api_tags_; size_t api_tags_n_; vector2ptr(tags, &api_tags_, &api_tags_n_);
       double **api_data_; size_t *api_data_n_, api_data_nn_; vectorvector2ptrptr(data, &api_data_, &api_data_n_, &api_data_nn_);
-      gmshViewAddModelData(tag, step, modelName.c_str(), dataType.c_str(), api_tags_, api_tags_n_, (const double **)api_data_, api_data_n_, api_data_nn_, time, numComponents, partition, &ierr);
+      gmshViewAddModelData(tag, step, modelName.c_str(), dataType.c_str(), api_tags_, api_tags_n_, api_data_, api_data_n_, api_data_nn_, time, numComponents, partition, &ierr);
       if(ierr) throwLastError();
       gmshFree(api_tags_);
       for(size_t i = 0; i < api_data_nn_; ++i){ gmshFree(api_data_[i]); } gmshFree(api_data_); gmshFree(api_data_n_);

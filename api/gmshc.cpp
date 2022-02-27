@@ -1307,7 +1307,7 @@ GMSH_API void gmshModelMeshPreallocateElementsByType(const int elementType, cons
   }
 }
 
-GMSH_API void gmshModelMeshAddElements(const int dim, const int tag, const int * elementTypes, const size_t elementTypes_n, const size_t ** elementTags, const size_t * elementTags_n, const size_t elementTags_nn, const size_t ** nodeTags, const size_t * nodeTags_n, const size_t nodeTags_nn, int * ierr)
+GMSH_API void gmshModelMeshAddElements(const int dim, const int tag, const int * elementTypes, const size_t elementTypes_n, const size_t * const * elementTags, const size_t * elementTags_n, const size_t elementTags_nn, const size_t * const * nodeTags, const size_t * nodeTags_n, const size_t nodeTags_nn, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
@@ -4007,7 +4007,7 @@ GMSH_API void gmshViewGetTags(int ** tags, size_t * tags_n, int * ierr)
   }
 }
 
-GMSH_API void gmshViewAddModelData(const int tag, const int step, const char * modelName, const char * dataType, const size_t * tags, const size_t tags_n, const double ** data, const size_t * data_n, const size_t data_nn, const double time, const int numComponents, const int partition, int * ierr)
+GMSH_API void gmshViewAddModelData(const int tag, const int step, const char * modelName, const char * dataType, const size_t * tags, const size_t tags_n, const double * const * data, const size_t * data_n, const size_t data_nn, const double time, const int numComponents, const int partition, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
@@ -4081,7 +4081,7 @@ GMSH_API void gmshViewGetListData(const int tag, char *** dataType, size_t * dat
   }
 }
 
-GMSH_API void gmshViewAddListDataString(const int tag, const double * coord, const size_t coord_n, const char ** data, const size_t data_n, const char ** style, const size_t style_n, int * ierr)
+GMSH_API void gmshViewAddListDataString(const int tag, const double * coord, const size_t coord_n, const char * const * data, const size_t data_n, const char * const * style, const size_t style_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
@@ -4540,7 +4540,7 @@ GMSH_API void gmshParserSetNumber(const char * name, const double * value, const
   }
 }
 
-GMSH_API void gmshParserSetString(const char * name, const char ** value, const size_t value_n, int * ierr)
+GMSH_API void gmshParserSetString(const char * name, const char * const * value, const size_t value_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
@@ -4649,7 +4649,7 @@ GMSH_API void gmshOnelabSetNumber(const char * name, const double * value, const
   }
 }
 
-GMSH_API void gmshOnelabSetString(const char * name, const char ** value, const size_t value_n, int * ierr)
+GMSH_API void gmshOnelabSetString(const char * name, const char * const * value, const size_t value_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {

@@ -851,8 +851,8 @@ GMSH_API void gmshModelMeshPreallocateElementsByType(const int elementType,
 GMSH_API void gmshModelMeshAddElements(const int dim,
                                        const int tag,
                                        const int * elementTypes, const size_t elementTypes_n,
-                                       const size_t ** elementTags, const size_t * elementTags_n, const size_t elementTags_nn,
-                                       const size_t ** nodeTags, const size_t * nodeTags_n, const size_t nodeTags_nn,
+                                       const size_t * const * elementTags, const size_t * elementTags_n, const size_t elementTags_nn,
+                                       const size_t * const * nodeTags, const size_t * nodeTags_n, const size_t nodeTags_nn,
                                        int * ierr);
 
 /* Add elements of type `elementType' classified on the entity of tag `tag'.
@@ -2815,7 +2815,7 @@ GMSH_API void gmshViewAddModelData(const int tag,
                                    const char * modelName,
                                    const char * dataType,
                                    const size_t * tags, const size_t tags_n,
-                                   const double ** data, const size_t * data_n, const size_t data_nn,
+                                   const double * const * data, const size_t * data_n, const size_t data_nn,
                                    const double time,
                                    const int numComponents,
                                    const int partition,
@@ -2903,8 +2903,8 @@ GMSH_API void gmshViewGetListData(const int tag,
  * "CenterCenter", "CenterRight"). */
 GMSH_API void gmshViewAddListDataString(const int tag,
                                         const double * coord, const size_t coord_n,
-                                        const char ** data, const size_t data_n,
-                                        const char ** style, const size_t style_n,
+                                        const char * const * data, const size_t data_n,
+                                        const char * const * style, const size_t style_n,
                                         int * ierr);
 
 /* Get list-based post-processing data strings (2D strings if `dim' = 2, 3D
@@ -3168,7 +3168,7 @@ GMSH_API void gmshParserSetNumber(const char * name,
 /* Set the value of the string variable `name' in the Gmsh parser. Create the
  * variable if it does not exist; update the value if the variable exists. */
 GMSH_API void gmshParserSetString(const char * name,
-                                  const char ** value, const size_t value_n,
+                                  const char * const * value, const size_t value_n,
                                   int * ierr);
 
 /* Get the value of the number variable `name' from the Gmsh parser. Return an
@@ -3221,7 +3221,7 @@ GMSH_API void gmshOnelabSetNumber(const char * name,
  * the parameter if it does not exist; update the value if the parameter
  * exists. */
 GMSH_API void gmshOnelabSetString(const char * name,
-                                  const char ** value, const size_t value_n,
+                                  const char * const * value, const size_t value_n,
                                   int * ierr);
 
 /* Get the value of the number parameter `name' from the ONELAB database.

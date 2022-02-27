@@ -160,7 +160,7 @@ def ivectordouble(name, value=None, python_value=None, julia_value=None):
     if julia_value == "[]":
         julia_value = "Cdouble[]"
     a = arg(name, value, python_value, julia_value,
-            "const std::vector<double> &", "const double **", False)
+            "const std::vector<double> &", "const double * const *", False)
     api_name = "api_" + name + "_"
     api_name_n = "api_" + name + "_n_"
     a.c_pre = ("    std::vector<double> " + api_name + "(" + name + ", " +
@@ -184,13 +184,13 @@ def ivectordouble(name, value=None, python_value=None, julia_value=None):
 
 def ivectorstring(name, value=None, python_value=None, julia_value=None):
     a = arg(name, value, python_value, julia_value,
-            "const std::vector<std::string> &", "const char **", False)
+            "const std::vector<std::string> &", "const char * const *", False)
     api_name = "api_" + name + "_"
     api_name_n = "api_" + name + "_n_"
     a.c_pre = ("    std::vector<std::string> " + api_name + "(" + name + ", " +
                name + " + " + name + "_n);\n")
     a.c_arg = api_name
-    a.c = "const char ** " + name + ", const size_t " + name + "_n"
+    a.c = "const char * const * " + name + ", const size_t " + name + "_n"
     a.cwrap_pre = ("char **" + api_name + "; size_t " + api_name_n + "; " +
                    "vectorstring2charptrptr(" + name + ", &" + api_name +
                    ", &" + api_name_n + ");\n")
@@ -243,7 +243,7 @@ def ivectorvectorint(name, value=None, python_value=None, julia_value=None):
     if julia_value == "[]":
         julia_value = "Vector{Cint}[]"
     a = arg(name, value, python_value, julia_value,
-            "const std::vector<std::vector<int> > &", "const int **", False)
+            "const std::vector<std::vector<int> > &", "const int * const *", False)
     api_name = "api_" + name + "_"
     api_name_n = "api_" + name + "_n_"
     api_name_nn = "api_" + name + "_nn_"
@@ -253,13 +253,13 @@ def ivectorvectorint(name, value=None, python_value=None, julia_value=None):
                "[i] = std::vector<int>(" + name + "[i], " + name + "[i] + " +
                name + "_n[i]);\n")
     a.c_arg = api_name
-    a.c = ("const int ** " + name + ", const size_t * " + name + "_n, " +
+    a.c = ("const int * const * " + name + ", const size_t * " + name + "_n, " +
            "const size_t " + name + "_nn")
     a.cwrap_pre = ("int **" + api_name + "; size_t *" + api_name_n + ", " +
                    api_name_nn + "; " + "vectorvector2ptrptr(" + name + ", &" +
                    api_name + ", &" + api_name_n + ", &" + api_name_nn +
                    ");\n")
-    a.cwrap_arg = "(const int **)" + api_name + ", " + api_name_n + ", " + api_name_nn
+    a.cwrap_arg = api_name + ", " + api_name_n + ", " + api_name_nn
     a.cwrap_post = ("for(size_t i = 0; i < " + api_name_nn + "; ++i){ " + ns +
                     "Free(" + api_name + "[i]); } " + ns + "Free(" + api_name +
                     "); " + ns + "Free(" + api_name_n + ");\n")
@@ -283,7 +283,7 @@ def ivectorvectorsize(name, value=None, python_value=None, julia_value=None):
         julia_value = "Vector{Csize_t}[]"
     a = arg(name, value, python_value, julia_value,
             "const std::vector<std::vector<std::size_t> > &",
-            "const size_t **", False)
+            "const size_t * const *", False)
     api_name = "api_" + name + "_"
     api_name_n = "api_" + name + "_n_"
     api_name_nn = "api_" + name + "_nn_"
@@ -293,13 +293,13 @@ def ivectorvectorsize(name, value=None, python_value=None, julia_value=None):
                "[i] = std::vector<std::size_t>(" + name + "[i], " + name +
                "[i] + " + name + "_n[i]);\n")
     a.c_arg = api_name
-    a.c = ("const size_t ** " + name + ", const size_t * " + name + "_n, " +
+    a.c = ("const size_t * const * " + name + ", const size_t * " + name + "_n, " +
            "const size_t " + name + "_nn")
     a.cwrap_pre = ("size_t **" + api_name + "; size_t *" + api_name_n + ", " +
                    api_name_nn + "; " + "vectorvector2ptrptr(" + name + ", &" +
                    api_name + ", &" + api_name_n + ", &" + api_name_nn +
                    ");\n")
-    a.cwrap_arg = "(const size_t **)" + api_name + ", " + api_name_n + ", " + api_name_nn
+    a.cwrap_arg = api_name + ", " + api_name_n + ", " + api_name_nn
     a.cwrap_post = ("for(size_t i = 0; i < " + api_name_nn + "; ++i){ " + ns +
                     "Free(" + api_name + "[i]); } " + ns + "Free(" + api_name +
                     "); " + ns + "Free(" + api_name_n + ");\n")
@@ -322,7 +322,7 @@ def ivectorvectordouble(name, value=None, python_value=None, julia_value=None):
     if julia_value == "[]":
         julia_value = "Vector{Cdouble}[]"
     a = arg(name, value, python_value, julia_value,
-            "const std::vector<std::vector<double> > &", "const double**",
+            "const std::vector<std::vector<double> > &", "const double * const *",
             False)
     api_name = "api_" + name + "_"
     api_name_n = "api_" + name + "_n_"
@@ -333,13 +333,13 @@ def ivectorvectordouble(name, value=None, python_value=None, julia_value=None):
                "[i] = std::vector<double>(" + name + "[i], " + name +
                "[i] + " + name + "_n[i]);\n")
     a.c_arg = api_name
-    a.c = ("const double ** " + name + ", const size_t * " + name + "_n, " +
+    a.c = ("const double * const * " + name + ", const size_t * " + name + "_n, " +
            "const size_t " + name + "_nn")
     a.cwrap_pre = ("double **" + api_name + "; size_t *" + api_name_n + ", " +
                    api_name_nn + "; " + "vectorvector2ptrptr(" + name + ", &" +
                    api_name + ", &" + api_name_n + ", &" + api_name_nn +
                    ");\n")
-    a.cwrap_arg = "(const double **)" + api_name + ", " + api_name_n + ", " + api_name_nn
+    a.cwrap_arg = api_name + ", " + api_name_n + ", " + api_name_nn
     a.cwrap_post = ("for(size_t i = 0; i < " + api_name_nn + "; ++i){ " + ns +
                     "Free(" + api_name + "[i]); } " + ns + "Free(" + api_name +
                     "); " + ns + "Free(" + api_name_n + ");\n")
