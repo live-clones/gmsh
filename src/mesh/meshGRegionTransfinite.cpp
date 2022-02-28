@@ -179,23 +179,19 @@ private:
   int _ll, _hh;
   int _permutation, _index;
   std::vector<MVertex *> _list;
-  bool _transfinite_standard;
 
 public:
   GOrientedTransfiniteFace()
-    : _gf(nullptr), _ll(0), _hh(0), _permutation(-1), _index(-1),
-      _transfinite_standard(true)
+    : _gf(nullptr), _ll(0), _hh(0), _permutation(-1), _index(-1)
   {
   }
   GOrientedTransfiniteFace(GFace *gf, std::vector<MVertex *> &corners)
-    : _gf(gf), _ll(0), _hh(0), _permutation(-1), _index(-1),
-      _transfinite_standard(true)
+    : _gf(gf), _ll(0), _hh(0), _permutation(-1), _index(-1)
   {
     _ll = gf->transfinite_vertices.size() - 1;
     if(_ll <= 0) return;
     _hh = gf->transfinite_vertices[0].size() - 1;
     if(_hh <= 0) return;
-    _transfinite_standard = gf->meshAttributes.transfinite_standard;
     Msg::Debug("Face %d: L = %d  H = %d", gf->tag(), _ll, _hh);
 
     // get the corners of the transfinite volume interpolation
@@ -294,8 +290,6 @@ public:
     }
     return v;
   }
-  // returns the transfinite_standard
-  bool transfinite_standard() const { return _transfinite_standard; }
 };
 
 void findTransfiniteCorners(GRegion *gr, std::vector<MVertex *> &corners)
@@ -626,20 +620,19 @@ int MeshTransfiniteVolume(GRegion *gr)
     }
   }
   else if(faces.size() == 5) {
-    bool transfinite_standard_3d = true;
+    bool standard_algo = true;
     for(int i = 0; i < 5; i++) {
-      if(!orientedFaces[i].transfinite_standard()) {
-        transfinite_standard_3d = false;
+      if(orientedFaces[i].getSurface() &&
+         orientedFaces[i].getSurface()->meshAttributes.transfinite3) {
+        standard_algo = false;
         break;
       }
     }
-
-    if(transfinite_standard_3d) {
+    if(standard_algo) {
       for(int j = 0; j < N_j - 1; j++) {
         for(int k = 0; k < N_k - 1; k++) {
 #if defined(HAVE_QUADTRI)
           if(gr->meshAttributes.QuadTri) {
-            // create vertex array
             std::vector<MVertex *> verts;
             verts.resize(6);
             verts[0] = tab[0][j][k];
@@ -759,7 +752,7 @@ int MeshTransfiniteVolume(GRegion *gr)
         }
       }
     }
-    else {
+    else { // if surfaces meshed with specific algo for 3-sided surfaces
       for(int i = 0; i < N_i - 1; i++) {
         int j = i;
         for(int k = 0; k < N_k - 1; k++) {
@@ -783,49 +776,14 @@ int MeshTransfiniteVolume(GRegion *gr)
           }
         }
       }
-
       for(int i = 1; i < N_i - 1; i++) {
         for(int j = 0; j < i; j++) {
           for(int k = 0; k < N_k - 1; k++) {
-            /*
-            #if defined(HAVE_QUADTRI)
-                        if(gr->meshAttributes.QuadTri) {
-                          // create vertex array
-                          std::vector<MVertex *> verts;
-                          verts.resize(8);
-                          verts[0] = tab[i][j][k];
-                          verts[1] = tab[i + 1][j][k];
-                          verts[2] = tab[i + 1][j + 1][k];
-                          verts[3] = tab[i][j + 1][k];
-                          verts[4] = tab[i][j][k + 1];
-                          verts[5] = tab[i + 1][j][k + 1];
-                          verts[6] = tab[i + 1][j + 1][k + 1];
-                          verts[7] = tab[i][j + 1][k + 1];
-                          if((!orientedFaces[1].recombined() && i == N_i - 2) ||
-                             (!orientedFaces[0].recombined() && j == 0) ||
-                             (!orientedFaces[2].recombined() && j == N_j - 2) ||
-                             (!orientedFaces[4].recombined() && k == 0) ||
-                             (!orientedFaces[5].recombined() && k == N_k - 2)) {
-                            // make subdivided element
-                            meshTransfElemWithInternalVertex(gr, verts,
-            &boundary_diags);
-                          }
-                          else
-                            gr->hexahedra.push_back(
-                              new MHexahedron(verts[0], verts[1], verts[2],
-            verts[3], verts[4], verts[5], verts[6], verts[7]));
-                          // continue, skipping the rest which is for
-            non-divided elements continue;
-                        }
-            #endif
-            */
-
             if(orientedFaces[0].recombined() && orientedFaces[1].recombined() &&
                orientedFaces[2].recombined()) {
               gr->prisms.push_back(CREATE_PRISM_3);
               gr->prisms.push_back(CREATE_PRISM_4);
             }
-
             else if(!orientedFaces[0].recombined() &&
                     !orientedFaces[1].recombined() &&
                     !orientedFaces[2].recombined() &&

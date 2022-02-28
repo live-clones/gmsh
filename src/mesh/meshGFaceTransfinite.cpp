@@ -263,7 +263,7 @@ int MeshTransfiniteSurface(GFace *gf)
     V = V2;
   }
 
-  bool transfinite_standard = true;
+  bool transfinite3 = false;
 
   int N1 = N[0], N2 = N[1], N3 = N[2], N4 = N[3];
   int L = N2 - N1, H = N3 - N2;
@@ -280,8 +280,8 @@ int MeshTransfiniteSurface(GFace *gf)
     int Lb = m_vertices.size() - N3;
 #ifdef TFTria
     if(Lb == L && H == L) {
-      transfinite_standard = false;
-      Msg::Info("Meshing surface %d (Transfinite 3)", gf->tag());
+      transfinite3 = true;
+      Msg::Info("Using specific algorithm for 3-sided surface %d", gf->tag());
     }
     else {
 #endif
@@ -296,7 +296,7 @@ int MeshTransfiniteSurface(GFace *gf)
 #endif
   }
 
-  gf->meshAttributes.transfinite_standard = transfinite_standard;
+  gf->meshAttributes.transfinite3 = transfinite3;
 
   /*
       2L+H +------------+ L+H
@@ -416,7 +416,7 @@ int MeshTransfiniteSurface(GFace *gf)
   }
   else {
     std::vector<double> u2, v2;
-    if(!transfinite_standard) {
+    if(transfinite3) {
       u2.reserve(H + 1);
       for(int j = 0; j <= H; j++) u2.push_back(U[N2 + j]);
       v2.reserve(H + 1);
@@ -432,7 +432,7 @@ int MeshTransfiniteSurface(GFace *gf)
         int iP3 = ((N3 + N2) - i) % m_vertices.size();
         double Up, Vp;
         if(gf->geomType() != GEntity::RuledSurface) {
-          if(transfinite_standard) {
+          if(!transfinite3) {
             Up = TRAN_TRI(U[iP1], U[iP2], U[iP3], UC1, UC2, UC3, u, v);
             Vp = TRAN_TRI(V[iP1], V[iP2], V[iP3], VC1, VC2, VC3, u, v);
           }
@@ -489,7 +489,7 @@ int MeshTransfiniteSurface(GFace *gf)
   else if(gf->meshAttributes.transfiniteSmoothing > 0)
     numSmooth = gf->meshAttributes.transfiniteSmoothing;
 
-  if(corners.size() == 4 && numSmooth && transfinite_standard) {
+  if(corners.size() == 4 && numSmooth && !transfinite3) {
     std::vector<std::vector<double> > u(L + 1), v(L + 1);
     for(int i = 0; i <= L; i++) {
       u[i].resize(H + 1);
@@ -590,7 +590,7 @@ int MeshTransfiniteSurface(GFace *gf)
     }
   }
   else {
-    if(transfinite_standard) {
+    if(!transfinite3) {
       for(int j = 0; j < H; j++) {
         MVertex *v1 = tab[0][0];
         MVertex *v2 = tab[1][j];
