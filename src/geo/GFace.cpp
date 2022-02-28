@@ -237,6 +237,7 @@ void GFace::resetMeshAttributes()
   meshAttributes.meshSizeFactor = 1.;
   meshAttributes.algorithm = 0;
   meshAttributes.meshSizeFromBoundary = -1;
+  meshAttributes.transfinite3 = false;
 }
 
 SBoundingBox3d GFace::bounds(bool fast)

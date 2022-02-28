@@ -931,4 +931,5 @@ void discreteFace::resetMeshAttributes()
   meshAttributes.reverseMesh = _s->ReverseMesh;
   meshAttributes.algorithm = _s->MeshAlgorithm;
   meshAttributes.meshSizeFromBoundary = _s->MeshSizeFromBoundary;
+  meshAttributes.transfinite3 = false;
 }
