@@ -2054,6 +2054,11 @@ static bool makeTrimmedSurface(const Handle(Geom_Surface) &surf,
         if(makeEdgeOnSurface(edge, surf, wire3D, edgeOnSurf))
           w.Add(edgeOnSurf);
       }
+      w.Build();
+      if(!w.IsDone()) {
+        Msg::Error("Could not create wire");
+        return false;
+      }
       TopoDS_Wire wire = w.Wire();
       wiresProj.push_back(wire);
     }

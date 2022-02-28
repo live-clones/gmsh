@@ -319,6 +319,8 @@ public:
     int algorithm;
     // do we force calculation of mesh size from boundary (if >= 0)
     int meshSizeFromBoundary;
+    // do we use a specific transfinite algorithm for 3-sided surfaces
+    bool transfinite3;
   } meshAttributes;
 
   int getMeshingAlgo() const;
