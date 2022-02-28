@@ -97,8 +97,7 @@ namespace onelab {
         if(it != _clients.end()) it->second = changed;
       }
       else {
-        for(auto it = _clients.begin();
-            it != _clients.end(); it++)
+        for(auto it = _clients.begin(); it != _clients.end(); it++)
           it->second = changed;
       }
     }
@@ -180,8 +179,7 @@ namespace onelab {
       }
       else {
         int changed = 0;
-        for(auto it = _clients.begin();
-            it != _clients.end(); it++) {
+        for(auto it = _clients.begin(); it != _clients.end(); it++) {
           changed = std::max(changed, it->second);
         }
         return changed;
@@ -193,8 +191,7 @@ namespace onelab {
     bool getReadOnly() const { return _readOnly; }
     std::string getAttribute(const std::string &key) const
     {
-      auto it =
-        _attributes.find(key);
+      auto it = _attributes.find(key);
       if(it != _attributes.end()) return it->second;
       return "";
     }
@@ -262,14 +259,11 @@ namespace onelab {
               << getChangedValue() << charSep() << (getVisible() ? 1 : 0)
               << charSep() << (getReadOnly() ? 1 : 0) << charSep()
               << _attributes.size() << charSep();
-      for(auto it =
-            _attributes.begin();
-          it != _attributes.end(); it++)
+      for(auto it = _attributes.begin(); it != _attributes.end(); it++)
         sstream << sanitize(it->first) << charSep() << sanitize(it->second)
                 << charSep();
       sstream << getClients().size() << charSep();
-      for(auto it = getClients().begin();
-          it != getClients().end(); it++)
+      for(auto it = getClients().begin(); it != getClients().end(); it++)
         sstream << sanitize(it->first) << charSep() << (it->second ? 1 : 0)
                 << charSep();
       return sstream.str();
@@ -354,9 +348,7 @@ namespace onelab {
               << ", \"readOnly\":" << (getReadOnly() ? "true" : "false");
       if(_attributes.size()) {
         sstream << ", \"attributes\":{ ";
-        for(auto it =
-              _attributes.begin();
-            it != _attributes.end(); it++) {
+        for(auto it = _attributes.begin(); it != _attributes.end(); it++) {
           if(it != _attributes.begin()) sstream << ", ";
           sstream << "\"" << sanitizeJSON(it->first) << "\":\""
                   << sanitizeJSON(it->second) << "\"";
@@ -365,9 +357,7 @@ namespace onelab {
       }
       if(getClients().size()) {
         sstream << ", \"clients\":{ ";
-        for(auto it =
-              getClients().begin();
-            it != getClients().end(); it++) {
+        for(auto it = getClients().begin(); it != getClients().end(); it++) {
           if(it != getClients().begin()) sstream << ", ";
           sstream << "\"" << sanitizeJSON(it->first) << "\":" << it->second;
         }
@@ -378,8 +368,7 @@ namespace onelab {
 #if defined(HAVE_PICOJSON)
     virtual bool fromJSON(const picojson::value::object &par)
     {
-      for(auto it = par.begin();
-          it != par.end(); ++it) {
+      for(auto it = par.begin(); it != par.end(); ++it) {
         if(it->first == "name") {
           if(!it->second.is<std::string>()) return false;
           setName(it->second.get<std::string>());
@@ -408,8 +397,7 @@ namespace onelab {
           if(!it->second.is<picojson::object>()) return false;
           const picojson::value::object &obj =
             it->second.get<picojson::object>();
-          for(auto i = obj.begin();
-              i != obj.end(); ++i) {
+          for(auto i = obj.begin(); i != obj.end(); ++i) {
             std::string key(i->first);
             if(!i->second.is<std::string>()) return false;
             setAttribute(key, i->second.get<std::string>());
@@ -419,8 +407,7 @@ namespace onelab {
           if(!it->second.is<picojson::object>()) return false;
           const picojson::value::object &obj =
             it->second.get<picojson::object>();
-          for(auto i = obj.begin();
-              i != obj.end(); ++i) {
+          for(auto i = obj.begin(); i != obj.end(); ++i) {
             std::string client(i->first);
             if(!i->second.is<double>()) return false;
             addClient(client, (int)i->second.get<double>());
@@ -515,8 +502,7 @@ namespace onelab {
     }
     std::string getValueLabel(double value) const
     {
-      auto it =
-        _valueLabels.find(value);
+      auto it = _valueLabels.find(value);
       if(it != _valueLabels.end()) return it->second;
       return "";
     }
@@ -559,9 +545,7 @@ namespace onelab {
       for(std::size_t i = 0; i < _choices.size(); i++)
         sstream << _choices[i] << charSep();
       sstream << _valueLabels.size() << charSep();
-      for(auto it =
-            _valueLabels.begin();
-          it != _valueLabels.end(); it++) {
+      for(auto it = _valueLabels.begin(); it != _valueLabels.end(); it++) {
         sstream << it->first << charSep() << sanitize(it->second) << charSep();
       }
       return sstream.str();
@@ -609,9 +593,7 @@ namespace onelab {
       }
       if(_valueLabels.size()) {
         sstream << ", \"valueLabels\":{ ";
-        for(auto it =
-              _valueLabels.begin();
-            it != _valueLabels.end(); it++) {
+        for(auto it = _valueLabels.begin(); it != _valueLabels.end(); it++) {
           if(it != _valueLabels.begin()) sstream << ", ";
           sstream << "\"" << sanitizeJSON(it->second) << "\":" << it->first;
         }
@@ -641,8 +623,7 @@ namespace onelab {
     bool fromJSON(const picojson::value::object &par)
     {
       if(!parameter::fromJSON(par)) return false;
-      for(auto it = par.begin();
-          it != par.end(); ++it) {
+      for(auto it = par.begin(); it != par.end(); ++it) {
         if(it->first == "values") {
           if(!it->second.is<picojson::array>()) return false;
           const picojson::value::array &arr = it->second.get<picojson::array>();
@@ -681,8 +662,7 @@ namespace onelab {
           if(!it->second.is<picojson::object>()) return false;
           const picojson::value::object &obj =
             it->second.get<picojson::object>();
-          for(auto i = obj.begin();
-              i != obj.end(); ++i) {
+          for(auto i = obj.begin(); i != obj.end(); ++i) {
             if(!i->second.is<double>()) return false;
             _valueLabels[i->second.get<double>()] = i->first;
           }
@@ -730,10 +710,7 @@ namespace onelab {
       if(_values.empty()) return n;
       return _values[0];
     }
-    std::string getValueAsString() const
-    {
-      return getValue();
-    }
+    std::string getValueAsString() const { return getValue(); }
     const std::vector<std::string> &getValues() const { return _values; }
     int getNumValues() const { return (int)_values.size(); }
     const std::string &getKind() const { return _kind; }
@@ -831,8 +808,7 @@ namespace onelab {
     bool fromJSON(const picojson::value::object &par)
     {
       if(!parameter::fromJSON(par)) return false;
-      for(auto it = par.begin();
-          it != par.end(); ++it) {
+      for(auto it = par.begin(); it != par.end(); ++it) {
         if(it->first == "values") {
           if(!it->second.is<picojson::array>()) return false;
           const picojson::value::array &arr = it->second.get<picojson::array>();
@@ -876,8 +852,7 @@ namespace onelab {
     {
       if(name.empty() && client.size()) {
         std::vector<T *> toDelete;
-        for(auto it = ps.begin();
-            it != ps.end();) {
+        for(auto it = ps.begin(); it != ps.end();) {
           T *p = *it;
           if(p->hasClient(client)) {
             ps.erase(it++); // to avoid invalid iterator
@@ -936,15 +911,13 @@ namespace onelab {
     {
       p.clear();
       if(name.empty()) {
-        for(auto it = ps.begin();
-            it != ps.end(); it++)
-          p.push_back(**it);
+        for(auto it = ps.begin(); it != ps.end(); it++) p.push_back(**it);
       }
       else {
         T tmp(name);
         auto it = ps.find(&tmp);
         if(it != ps.end()) {
-          if(client.size()){
+          if(client.size()) {
             _mutex.lock();
             (*it)->addClient(client, parameter::defaultChangedValue());
             _mutex.unlock();
@@ -961,7 +934,7 @@ namespace onelab {
       T tmp(name);
       auto it = ps.find(&tmp);
       if(it != ps.end()) {
-        if(client.size()){
+        if(client.size()) {
           _mutex.lock();
           (*it)->addClient(client, parameter::defaultChangedValue());
           _mutex.unlock();
@@ -979,9 +952,7 @@ namespace onelab {
       if(name.empty() && client.empty()) {
         std::set<parameter *, parameterLessThan> ps;
         getAllParameters(ps);
-        for(auto it = ps.begin();
-            it != ps.end(); it++)
-          delete *it;
+        for(auto it = ps.begin(); it != ps.end(); it++) delete *it;
         _numbers.clear();
         _strings.clear();
       }
@@ -1023,10 +994,7 @@ namespace onelab {
       ps.insert(_numbers.begin(), _numbers.end());
       ps.insert(_strings.begin(), _strings.end());
     }
-    int getNumParameters()
-    {
-      return (int)(_numbers.size() + _strings.size());
-    }
+    int getNumParameters() { return (int)(_numbers.size() + _strings.size()); }
     void getParameterNames(std::vector<std::string> &names,
                            const std::string &search = "") const
     {
@@ -1035,8 +1003,8 @@ namespace onelab {
         for(auto &p : _numbers) names.push_back(p->getName());
         for(auto &p : _strings) names.push_back(p->getName());
       }
-      else{
-        try{
+      else {
+        try {
           for(auto &p : _numbers) {
             if(std::regex_search(p->getName(), std::regex(search)))
               names.push_back(p->getName());
@@ -1045,8 +1013,7 @@ namespace onelab {
             if(std::regex_search(p->getName(), std::regex(search)))
               names.push_back(p->getName());
           }
-        }
-        catch(...) {
+        } catch(...) {
         }
       }
     }
@@ -1055,8 +1022,7 @@ namespace onelab {
     {
       std::set<parameter *, parameterLessThan> ps;
       getAllParameters(ps);
-      for(auto it = ps.begin();
-          it != ps.end(); it++)
+      for(auto it = ps.begin(); it != ps.end(); it++)
         if((*it)->hasClient(client)) return true;
       return false;
     }
@@ -1067,8 +1033,7 @@ namespace onelab {
       std::set<parameter *, parameterLessThan> ps;
       getAllParameters(ps);
       int changed = 0;
-      for(auto it = ps.begin();
-          it != ps.end(); it++) {
+      for(auto it = ps.begin(); it != ps.end(); it++) {
         changed = std::max(changed, (*it)->getChanged(client));
       }
       return changed;
@@ -1079,16 +1044,14 @@ namespace onelab {
     {
       std::set<parameter *, parameterLessThan> ps;
       getAllParameters(ps);
-      for(auto it = ps.begin();
-          it != ps.end(); it++)
+      for(auto it = ps.begin(); it != ps.end(); it++)
         (*it)->setChanged(changed, client);
     }
     void thresholdChanged(int threshold, const std::string &client = "")
     {
       std::set<parameter *, parameterLessThan> ps;
       getAllParameters(ps);
-      for(auto it = ps.begin();
-          it != ps.end(); it++) {
+      for(auto it = ps.begin(); it != ps.end(); it++) {
         int changed = (*it)->getChanged(client);
         if(changed > threshold) (*it)->setChanged(threshold, client);
       }
@@ -1100,9 +1063,7 @@ namespace onelab {
       std::vector<std::string> s;
       std::set<parameter *, parameterLessThan> ps;
       getAllParameters(ps);
-      for(auto it =
-            ps.begin();
-          it != ps.end(); it++)
+      for(auto it = ps.begin(); it != ps.end(); it++)
         if(client.empty() || (*it)->hasClient(client)) {
           if((*it)->getAttribute("NotInDb") != "True")
             s.push_back((*it)->toChar());
@@ -1147,9 +1108,7 @@ namespace onelab {
       json += "  \"parameters\":[\n";
       std::set<parameter *, parameterLessThan> ps;
       getAllParameters(ps);
-      for(auto it =
-            ps.begin();
-          it != ps.end(); it++) {
+      for(auto it = ps.begin(); it != ps.end(); it++) {
         if(it != ps.begin()) json += ",\n";
         if(client.empty() || (*it)->hasClient(client)) {
           if((*it)->getAttribute("NotInDb") != "True") {
@@ -1166,12 +1125,13 @@ namespace onelab {
       picojson::value v;
       std::string err = picojson::parse(v, json);
       if(err.size()) return false;
-      if(v.is<picojson::object>()){ // full database or single parameter
+      if(v.is<picojson::object>()) { // full database or single parameter
         const picojson::value::object &obj = v.get<picojson::object>();
         auto it = obj.find("onelab");
-        if(it != obj.end()){ // full database
+        if(it != obj.end()) { // full database
           if(!it->second.is<picojson::object>()) return false;
-          const picojson::value::object &db = it->second.get<picojson::object>();
+          const picojson::value::object &db =
+            it->second.get<picojson::object>();
           for(auto j = db.begin(); j != db.end(); ++j) {
             if(j->first == "version") {
               if(!j->second.is<std::string>()) return false;
@@ -1180,21 +1140,23 @@ namespace onelab {
             }
             else if(j->first == "parameters") {
               if(!j->second.is<picojson::array>()) return false;
-              const picojson::value::array &arr = j->second.get<picojson::array>();
+              const picojson::value::array &arr =
+                j->second.get<picojson::array>();
               for(std::size_t k = 0; k < arr.size(); k++) {
                 if(!arr[k].is<picojson::object>()) return false;
-                const picojson::value::object &par = arr[k].get<picojson::object>();
+                const picojson::value::object &par =
+                  arr[k].get<picojson::object>();
                 if(!fromJSON(par, client)) return false;
               }
             }
           }
           return true;
         }
-        else{ // single parameter
+        else { // single parameter
           return fromJSON(obj, client);
         }
       }
-      else if(v.is<picojson::array>()){ // array of parameters
+      else if(v.is<picojson::array>()) { // array of parameters
         const picojson::value::array &arr = v.get<picojson::array>();
         for(std::size_t k = 0; k < arr.size(); k++) {
           if(!arr[k].is<picojson::object>()) return false;
@@ -1203,7 +1165,7 @@ namespace onelab {
         }
         return true;
       }
-      else{
+      else {
         return false;
       }
 #else
@@ -1211,7 +1173,8 @@ namespace onelab {
 #endif
     }
 #if defined(HAVE_PICOJSON)
-    bool fromJSON(const picojson::value::object &par, const std::string &client = "")
+    bool fromJSON(const picojson::value::object &par,
+                  const std::string &client = "")
     {
       auto it = par.find("type");
       if(it == par.end()) return false;
@@ -1391,10 +1354,7 @@ namespace onelab {
     {
       _parameterSpace.thresholdChanged(value, client);
     }
-    int getNumParameters()
-    {
-      return _parameterSpace.getNumParameters();
-    }
+    int getNumParameters() { return _parameterSpace.getNumParameters(); }
     void getParameterNames(std::vector<std::string> &names,
                            const std::string &search = "") const
     {
@@ -1706,8 +1666,8 @@ namespace onelab {
       if(!_gmshClient) return false;
       std::string msg = name;
       if(msg.empty()) msg = "*";
-      _gmshClient->SendMessage(GmshSocket::GMSH_PARAMETER_CLEAR, (int)msg.size(),
-                               &msg[0]);
+      _gmshClient->SendMessage(GmshSocket::GMSH_PARAMETER_CLEAR,
+                               (int)msg.size(), &msg[0]);
       return true;
     }
     virtual bool set(const number &p) { return _set(p); }
@@ -1783,7 +1743,8 @@ namespace onelab {
       }
 #endif
       std::string msg = name + parameter::charSep() + command;
-      _gmshClient->SendMessage(GmshSocket::GMSH_CONNECT, (int)msg.size(), &msg[0]);
+      _gmshClient->SendMessage(GmshSocket::GMSH_CONNECT, (int)msg.size(),
+                               &msg[0]);
       _numSubClients += 1;
     }
     void runSubClient(const std::string &name, const std::string &command)

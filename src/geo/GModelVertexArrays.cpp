@@ -189,7 +189,9 @@ template <class T>
 static void addElementsInArrays(GEntity *e, std::vector<T *> &elements,
                                 bool edges, bool faces)
 {
-#pragma omp parallel for schedule(dynamic)
+  int nthreads = CTX::instance()->numThreads;
+  if(!nthreads) nthreads = Msg::GetMaxThreads();
+#pragma omp parallel for schedule(dynamic) num_threads(nthreads)
   for(std::size_t i = 0; i < elements.size(); i++) {
     MElement *ele = elements[i];
 

@@ -172,7 +172,7 @@ int PolyMesh2GFace(PolyMesh *pm, int faceTag)
   }
 
   if(!hon.empty()) {
-    GModel::current()->setOrderN(2, 0, 0);
+    GModel::current()->setOrderN(2, 0, 0, 0);
 #if 1
     for(auto t : gf->triangles) {
       for(int i = 0; i < 3; i++) {

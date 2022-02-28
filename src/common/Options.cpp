@@ -4139,14 +4139,13 @@ double opt_general_light53(OPT_ARGS_NUM)
 double opt_general_num_threads(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
-    if(val > 0) Msg::SetNumThreads(val);
-    else Msg::SetNumThreads(Msg::GetStartMaxThreads());
+    CTX::instance()->numThreads = (int)val;
   }
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->options->general.value[32]->value(Msg::GetMaxThreads());
+    FlGui::instance()->options->general.value[32]->value(CTX::instance()->numThreads);
 #endif
-  return Msg::GetMaxThreads();
+  return CTX::instance()->numThreads;
 }
 
 double opt_geometry_transform(OPT_ARGS_NUM)

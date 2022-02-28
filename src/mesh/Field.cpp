@@ -2962,6 +2962,12 @@ public:
     if(_power != 1.) {
       f = std::pow(f, _power);
     }
+    // "unscale" the boundary size according to the per-entity and/or the global
+    // mesh size factor, so that, if a factor is applied, it will be on the
+    // interpolated "specified" mesh size values
+    if(ge && ge->getMeshSizeFactor() != 1.0)
+      sbnd /= ge->getMeshSizeFactor();
+    sbnd /= CTX::instance()->mesh.lcFactor;
     double s = f * sbnd + (1. - f) * _sizeMax;
     return s;
   }

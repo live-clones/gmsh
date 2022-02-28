@@ -713,7 +713,7 @@ StringXNumber GeneralOptions_Number[] = {
     "Disable interactive dialog windows in scripts (and use default values "
     "instead)" },
   { F|O, "NumThreads" , opt_general_num_threads , 1. ,
-    "Set the maximum number of threads when Gmsh is compiled with OpenMP support "
+    "Maximum number of threads used by Gmsh when compiled with OpenMP support "
     "(0: use system default, i.e. OMP_NUM_THREADS)"},
 
   { F|S, "OptionsPositionX" , opt_general_option_position0 , 650. ,
@@ -1232,11 +1232,11 @@ StringXNumber MeshOptions_Number[] = {
     "Maximum number of point insertion iterations in 3D Delaunay mesher "
     "(0: unlimited)" },
   { F|O, "MaxNumThreads1D" , opt_mesh_max_num_threads_1d , 0. ,
-    "Maximum number of threads for 1D meshing (0: use default)" },
+    "Maximum number of threads for 1D meshing (0: use General.NumThreads)" },
   { F|O, "MaxNumThreads2D" , opt_mesh_max_num_threads_2d , 0. ,
-    "Maximum number of threads for 2D meshing (0: use default)" },
+    "Maximum number of threads for 2D meshing (0: use General.NumThreads)" },
   { F|O, "MaxNumThreads3D" , opt_mesh_max_num_threads_3d , 0. ,
-    "Maximum number of threads for 3D meshing (0: use default)" },
+    "Maximum number of threads for 3D meshing (0: use General.NumThreads)" },
   { F|O, "MaxRetries" , opt_mesh_max_retries , 10 ,
     "Maximum number of times meshing is retried on curves and surfaces with a "
     "pending mesh"},

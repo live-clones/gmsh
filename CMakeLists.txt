@@ -107,8 +107,8 @@ opt(WRAP_PYTHON "Generate SWIG Python wrappers for private API (not used by publ
 opt(ZIPPER "Enable Zip file compression/decompression" OFF)
 
 set(GMSH_MAJOR_VERSION 4)
-set(GMSH_MINOR_VERSION 9)
-set(GMSH_PATCH_VERSION 4)
+set(GMSH_MINOR_VERSION 10)
+set(GMSH_PATCH_VERSION 0)
 if(NOT GMSH_EXTRA_VERSION)
   set(GMSH_EXTRA_VERSION "")
 endif()
@@ -203,6 +203,8 @@ endif()
 
 if(APPLE)
   set(GMSH_OS "MacOSX")
+  # build universal binary
+  #SET(CMAKE_OSX_ARCHITECTURES "x86_64;arm64" CACHE STRING "Build architectures for macOS" FORCE)
 elseif(CYGWIN OR MSYS)
   # detect if we use the MinGW compilers on Cygwin - if we do, handle the build
   # as a pure Windows build and make cmake find pure Windows import libraries
@@ -1673,6 +1675,10 @@ if(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
   if(WIN32)
     set_target_properties(shared PROPERTIES PREFIX "" IMPORT_PREFIX ""
       IMPORT_SUFFIX ".lib" COMPILE_FLAGS "-DGMSH_DLL -DGMSH_DLL_EXPORT")
+  elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang" AND NOT ENABLE_PRIVATE_API)
+    # hide all symbols by default (if not exporting the private API); symbols to
+    # export should be marked with __attribute__ ((visibility("default")))
+    set_target_properties(shared PROPERTIES COMPILE_FLAGS "-fvisibility=hidden")
   endif()
   target_link_libraries(shared ${LINK_LIBRARIES})
   # don't define LC_RPATH in dylib for development, to not get endless warnings

@@ -29,7 +29,7 @@ ENV FC=/usr/local/bin/gfortran
 # OpenBLAS
 # -----------------------
 
-RUN git clone https://github.com/xianyi/OpenBLAS.git && cd OpenBLAS && git checkout v0.3.15 && make NUM_THREADS=8 TARGET=CORE2 && cp libopenblas_core2p-r0.3.15.a /usr/local/lib/libopenblas.a && cd .. && rm -rf OpenBLAS
+RUN git clone https://github.com/xianyi/OpenBLAS.git && cd OpenBLAS && git checkout v0.3.15 && make NUM_THREADS=32 TARGET=CORE2 && cp libopenblas_core2p-r0.3.15.a /usr/local/lib/libopenblas.a && cd .. && rm -rf OpenBLAS
 
 # -----------------------
 # JPEG
@@ -107,7 +107,7 @@ RUN curl -L -O http://files.salome-platform.org/Salome/other/med-4.1.0.tar.gz &&
 # OpenCASCADE
 # -----------------------
 
-RUN curl -L -o occt.tgz "http://git.dev.opencascade.org/gitweb/?p=occt.git;a=snapshot;h=refs/tags/V7_6_0;sf=tgz" && tar xf occt.tgz && cd occt-* && mkdir build && cd build && CXXFLAGS="-fPIC -DIGNORE_NO_ATOMICS" cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_LIBRARY_TYPE=Static -DBUILD_MODULE_Draw=0 -DBUILD_MODULE_Visualization=0 -DBUILD_MODULE_ApplicationFramework=0 .. && make -j 4 && make install && cd ../.. && rm -rf occt.tgz occt-*
+RUN curl -L -o occt.tgz "http://git.dev.opencascade.org/gitweb/?p=occt.git;a=snapshot;h=refs/tags/V7_6_1;sf=tgz" && tar xf occt.tgz && cd occt-* && mkdir build && cd build && CXXFLAGS="-fPIC -DIGNORE_NO_ATOMICS" cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_LIBRARY_TYPE=Static -DBUILD_MODULE_Draw=0 -DBUILD_MODULE_Visualization=0 -DBUILD_MODULE_ApplicationFramework=0 .. && make -j 4 && make install && cd ../.. && rm -rf occt.tgz occt-*
 
 # -----------------------
 # FLTK

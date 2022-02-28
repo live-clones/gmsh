@@ -456,7 +456,9 @@ namespace {
     }
     if(par.nCurses) displayResultTable(nbPatchSuccess, toOptimize.size());
 
-//#pragma omp parallel for schedule(dynamic)
+  int nthreads = CTX::instance()->numThreads;
+  if(!nthreads) nthreads = Msg::GetMaxThreads();
+#pragma omp parallel for schedule(dynamic) num_threads(nthreads)
     for(int iPatch = 0; iPatch < toOptimize.size(); ++iPatch) {
       // Initialize optimization and output if asked
       if(par.nCurses) {
@@ -493,7 +495,7 @@ namespace {
       // Evaluate mesh and update it if (partial) success
       opt.updateResults();
 
-//#pragma omp critical
+#pragma omp critical
       {
         if(newObjFunctionRange.size() == 0) {
           newObjFunctionRange = opt.objFunction()->minMax();
@@ -513,7 +515,7 @@ namespace {
 
       if(success >= 0) opt.patch.updateGEntityPositions();
 
-//#pragma omp critical
+#pragma omp critical
       {
         par.success = std::min(par.success, success);
         nbPatchSuccess[success + 1]++;

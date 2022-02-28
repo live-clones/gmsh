@@ -38,7 +38,6 @@
 #include "meshGFaceBipartiteLabelling.h"
 #include "sizeField.h"
 
-
 #if defined(HAVE_DOMHEX)
 #include "simple3D.h"
 #include "yamakawa.h"
@@ -347,19 +346,20 @@ static void Mesh1D(GModel *m)
   Msg::StatusBar(true, "Meshing 1D...");
   double t1 = Cpu(), w1 = TimeOfDay();
 
-  int prevNumThreads = Msg::GetMaxThreads();
-  if(CTX::instance()->mesh.maxNumThreads1D > 0 &&
-     CTX::instance()->mesh.maxNumThreads1D <= Msg::GetMaxThreads())
-    Msg::SetNumThreads(CTX::instance()->mesh.maxNumThreads1D);
+  int nthreads = CTX::instance()->numThreads;
+  if(CTX::instance()->mesh.maxNumThreads1D > 0)
+    nthreads = CTX::instance()->mesh.maxNumThreads1D;
+  if(!nthreads) nthreads = Msg::GetMaxThreads();
 
   // boundary layers are not yet thread-safe
-  if(m->getFields()->getNumBoundaryLayerFields()) Msg::SetNumThreads(1);
+  if(m->getFields()->getNumBoundaryLayerFields())
+    nthreads = 1;
 
   for(auto it = m->firstEdge(); it != m->lastEdge(); ++it) {
     // Extruded meshes are not yet fully thread-safe (not sure why!)
     if((*it)->meshAttributes.extrude &&
        (*it)->meshAttributes.extrude->mesh.ExtrudeMesh)
-      Msg::SetNumThreads(1);
+      nthreads = 1;
   }
 
   std::vector<GEdge *> temp;
@@ -378,9 +378,8 @@ static void Mesh1D(GModel *m)
     }
 
     int nPending = 0;
-    const size_t sss = temp.size();
-#pragma omp parallel for schedule(dynamic)
-    for(size_t K = 0; K < sss; K++) {
+#pragma omp parallel for schedule(dynamic) num_threads(nthreads)
+    for(size_t K = 0; K < temp.size(); K++) {
       int localPending = 0;
       GEdge *ed = temp[K];
       if(ed->meshStatistics.status == GEdge::PENDING) {
@@ -399,8 +398,6 @@ static void Mesh1D(GModel *m)
   }
 
   Msg::StopProgressMeter();
-
-  Msg::SetNumThreads(prevNumThreads);
 
   double t2 = Cpu(), w2 = TimeOfDay();
   CTX::instance()->meshTimer[0] = w2 - w1;
@@ -483,26 +480,28 @@ static void Mesh2D(GModel *m)
   Msg::StatusBar(true, "Meshing 2D...");
   double t1 = Cpu(), w1 = TimeOfDay();
 
-  int prevNumThreads = Msg::GetMaxThreads();
-  if(CTX::instance()->mesh.maxNumThreads2D > 0 &&
-     CTX::instance()->mesh.maxNumThreads2D <= Msg::GetMaxThreads())
-    Msg::SetNumThreads(CTX::instance()->mesh.maxNumThreads2D);
+  int nthreads = CTX::instance()->numThreads;
+  if(CTX::instance()->mesh.maxNumThreads2D > 0)
+    nthreads = CTX::instance()->mesh.maxNumThreads2D;
+  if(!nthreads) nthreads = Msg::GetMaxThreads();
 
   // boundary layers are not yet thread-safe
-  if(m->getFields()->getNumBoundaryLayerFields()) Msg::SetNumThreads(1);
+  if(m->getFields()->getNumBoundaryLayerFields()) nthreads = 1;
 
   for(auto it = m->firstFace(); it != m->lastFace(); ++it) {
     // Frontal-Delaunay for quads and co are not yet thread-safe
     if((*it)->getMeshingAlgo() == ALGO_2D_FRONTAL_QUAD ||
        (*it)->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS ||
        (*it)->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS_CSTR)
-      Msg::SetNumThreads(1);
+      nthreads = 1;
+
     // Periodic meshing is not yet thread-safe
-    if((*it)->getMeshMaster() != *it) Msg::SetNumThreads(1);
+    if((*it)->getMeshMaster() != *it) nthreads = 1;
+
     // Extruded meshes are not yet fully thread-safe (not sure why!)
     if((*it)->meshAttributes.extrude &&
        (*it)->meshAttributes.extrude->mesh.ExtrudeMesh)
-      Msg::SetNumThreads(1);
+      nthreads = 1;
   }
 
   for(auto it = m->firstFace(); it != m->lastFace(); ++it)
@@ -528,7 +527,7 @@ static void Mesh2D(GModel *m)
       int nPending = 0;
       std::vector<GFace *> temp;
       temp.insert(temp.begin(), f.begin(), f.end());
-#pragma omp parallel for schedule(dynamic)
+#pragma omp parallel for schedule(dynamic) num_threads(nthreads)
       for(size_t K = 0; K < temp.size(); K++) {
         int localPending = 0;
         if(temp[K]->meshStatistics.status == GFace::PENDING) {
@@ -545,24 +544,21 @@ static void Mesh2D(GModel *m)
       if(!nPending) break;
       // iter == 2 is for meshing re-parametrized surfaces; after that, we
       // serialize (self-intersections of 1D meshes are not thread safe)!
-      if(nIter > 2) Msg::SetNumThreads(1);
+      if(nIter > 2) nthreads = 1;
       if(nIter++ > CTX::instance()->mesh.maxRetries) break;
     }
 
     Msg::StopProgressMeter();
   }
 
-  Msg::SetNumThreads(prevNumThreads);
-
   if(CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT) {
     replaceBadQuadDominantMeshes(m);
 
-    /* In the quasi-structured pipeline, the quad-dominant mesh
-     * is subdivided into a full quad mesh */
-    /* TODO: - a faster CAD projection approach (from uv)
-     *       - verify quality during projection */
-    // bool linear = false;
-    // RefineMesh(m, linear, true, false);
+    // In the quasi-structured pipeline, the quad-dominant mesh is subdivided
+    // into a full quad mesh. TODO: 1) a faster CAD projection approach (from
+    // uv) and 2) verify quality during projection
+
+    // bool linear = false; RefineMesh(m, linear, true, false);
     RefineMeshWithBackgroundMeshProjection(m);
 
     OptimizeMesh(m, "QuadQuasiStructured");
@@ -825,18 +821,6 @@ static void Mesh3D(GModel *m)
   Msg::StatusBar(true, "Meshing 3D...");
   double t1 = Cpu(), w1 = TimeOfDay();
 
-  int prevNumThreads = Msg::GetMaxThreads();
-  if(CTX::instance()->mesh.maxNumThreads3D > 0 &&
-     CTX::instance()->mesh.maxNumThreads3D <= Msg::GetMaxThreads())
-    Msg::SetNumThreads(CTX::instance()->mesh.maxNumThreads3D);
-
-  for(auto it = m->firstRegion(); it != m->lastRegion(); ++it) {
-    // Extruded meshes are not yet fully thread-safe (not sure why!)
-    if((*it)->meshAttributes.extrude &&
-       (*it)->meshAttributes.extrude->mesh.ExtrudeMesh)
-      Msg::SetNumThreads(1);
-  }
-
   if(m->getNumRegions()) {
     Msg::StartProgressMeter(1);
     Msg::ProgressMeter(0, false, "Meshing 3D...");
@@ -977,8 +961,6 @@ static void Mesh3D(GModel *m)
     Msg::Error(debugInfo.str().c_str());
   }
 
-  Msg::SetNumThreads(prevNumThreads);
-
   double t2 = Cpu(), w2 = TimeOfDay();
   CTX::instance()->meshTimer[2] = w2 - w1;
 
@@ -1111,7 +1093,7 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter)
       }
   }
   else if(how == "QuadQuasiStructured") {
-    /* The following methods only act on faces whose status is PENDING */
+    // The following methods only act on faces whose status is PENDING
     for(GFace *gf : m->getFaces())
       if(gf->meshStatistics.status == GFace::DONE) {
         gf->meshStatistics.status = GFace::PENDING;
@@ -1504,12 +1486,12 @@ void GenerateMesh(GModel *m, int ask)
     int old = m->getMeshStatus(false);
     bool doIt = (ask >= 1 && ask <= 3);
     bool exists = backgroundMeshAndGuidingFieldExists(m);
-    bool overwriteGModelMesh = false; /* use current mesh if available */
+    bool overwriteGModelMesh = false; // use current mesh if available
     bool overwriteField = false;
     if(old == 1 && ask == 1 && exists) doIt = true;
     if(old == 1 && ask == 2 && exists) doIt = false;
     if(old == 2 && exists && (ask == 1 || ask == 2)) {
-      /* User has a mesh and wants a new one (all options may have changed) */
+      // User has a mesh and wants a new one (all options may have changed)
       doIt = true;
       overwriteField = true;
       overwriteGModelMesh = true;
@@ -1518,24 +1500,23 @@ void GenerateMesh(GModel *m, int ask)
     if(old == 2 && ask == 2 && exists) doIt = true;
     if(doIt) {
       bool deleteGModelMeshAfter =
-        true; /* mesh saved in background, no longer needed */
+        true; // mesh saved in background, no longer needed
       BuildBackgroundMeshAndGuidingField(m, overwriteGModelMesh,
                                          deleteGModelMeshAfter, overwriteField);
     }
 
     if(CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT && old == 2 &&
        exists && (ask == 1 || ask == 2)) {
-      /* transferSeamGEdgesVerticesToGFace() called by quadqs remove the 1D
-       * meshes of the seam GEdge, so 2D initial meshing does not work without
-       * first remeshing the seam GEdge. We delete the whole mesh by security */
+      // transferSeamGEdgesVerticesToGFace() called by quadqs remove the 1D
+      // meshes of the seam GEdge, so 2D initial meshing does not work without
+      // first remeshing the seam GEdge. We delete the whole mesh by security
       m->deleteMesh();
     }
 
     if(CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT) {
-      /* note: the creation of QuadqsContextUpdater modifies many
-       *       meshing parameters
-       *       current parameter values are saved and will be restored
-       *       at the destruction of qqs */
+      // note: the creation of QuadqsContextUpdater modifies many meshing
+      // parameters; current parameter values are saved and will be restored at
+      // the destruction of qqs
       qqs = new QuadqsContextUpdater();
     }
 
@@ -1543,7 +1524,7 @@ void GenerateMesh(GModel *m, int ask)
       std::set<GFace *> faces;
       for(GFace *gf : m->getFaces())
         if(gf->edges().size() == 4) { faces.insert(gf); }
-      double maxDiffRel = 0.34; /* do not deviate more than 34% from size map */
+      double maxDiffRel = 0.34; // do not deviate more than 34% from size map
       MeshSetTransfiniteFacesAutomatic(faces, 2.35, true, maxDiffRel);
     }
   }
@@ -1602,7 +1583,8 @@ void GenerateMesh(GModel *m, int ask)
     // Create high order elements
     SetOrderN(m, CTX::instance()->mesh.order,
               CTX::instance()->mesh.secondOrderLinear,
-              CTX::instance()->mesh.secondOrderIncomplete);
+              CTX::instance()->mesh.secondOrderIncomplete,
+              CTX::instance()->mesh.meshOnlyVisible);
 
     // Optimize high order elements
     if(CTX::instance()->mesh.hoOptimize == 2 ||

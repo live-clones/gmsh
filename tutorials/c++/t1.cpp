@@ -114,8 +114,7 @@ int main(int argc, char **argv)
   // with name "My surface" (with an automatic tag) containing the geometrical
   // surface 1:
   gmsh::model::addPhysicalGroup(1, {1, 2, 4}, 5);
-  int ps = gmsh::model::addPhysicalGroup(2, {1});
-  gmsh::model::setPhysicalName(2, ps, "My surface");
+  gmsh::model::addPhysicalGroup(2, {1}, -1, "My surface");
 
   // We can then generate a 2D mesh...
   gmsh::model::mesh::generate(2);
@@ -166,7 +165,7 @@ int main(int argc, char **argv)
   // gmsh::model::occ::synchronize();
   //
   // the underlying curves and points could be accessed with
-  // gmsh::model::getBoundary().
+  // gmsh::model::getBoundary(...).
   //
   // See e.g `t16.cpp', `t18.cpp', `t19.cpp' or `t20.cpp' for complete examples
   // based on OpenCASCADE, and `examples/api' for more.
