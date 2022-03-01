@@ -3,7 +3,7 @@ import threading
 import sys
 
 # This shows how ONELAB clients that communicate with the ONELAB server through
-# sockets can be executed using the Gmsh API, by explicitely specying the
+# sockets can be executed using the Gmsh API, by explicitly specying the
 # command to run the client
 
 # One such example is the GetDP finite element solver (https://getdp.info).

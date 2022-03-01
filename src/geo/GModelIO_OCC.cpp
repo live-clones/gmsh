@@ -3633,7 +3633,7 @@ bool OCC_Internals::booleanOperator(
     _toPreserve.clear();
   }
 
-  // return input/output correspondance maps
+  // return input/output correspondence maps
   for(std::size_t i = 0; i < inDimTags.size(); i++) {
     int dim = inDimTags[i].first;
     int tag = inDimTags[i].second;

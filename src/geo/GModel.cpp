@@ -2944,9 +2944,8 @@ void GModel::alignPeriodicBoundaries()
 
           if(!tgtFace.computeCorrespondence(srcFace, rotation, swap)) {
             Msg::Debug(
-              "Could not find correspondance between mesh face %d-%d-%d "
-              "(slave) "
-              "and %d-%d-%d (master)",
+              "Could not find correspondence between mesh face %d-%d-%d "
+              "(slave) and %d-%d-%d (master)",
               tgtElmt->getVertex(0)->getNum(), tgtElmt->getVertex(1)->getNum(),
               tgtElmt->getVertex(2)->getNum(), srcElmt->getVertex(0)->getNum(),
               srcElmt->getVertex(1)->getNum(), srcElmt->getVertex(2)->getNum());
