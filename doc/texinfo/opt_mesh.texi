@@ -906,6 +906,11 @@ Display mesh trihedra?@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.TransfiniteTri
+Use alternative transfinite arrangement when meshing 3-sided surfaces@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.UnvStrictFormat
 Use strict format specification for UNV files, with 'D' for exponents (instead of 'E' as used by some tools)@*
 Default value: @code{1}@*

@@ -471,6 +471,7 @@ double opt_mesh_hexahedra(OPT_ARGS_NUM);
 double opt_mesh_prisms(OPT_ARGS_NUM);
 double opt_mesh_pyramids(OPT_ARGS_NUM);
 double opt_mesh_trihedra(OPT_ARGS_NUM);
+double opt_mesh_transfinite_tri(OPT_ARGS_NUM);
 double opt_mesh_surface_edges(OPT_ARGS_NUM);
 double opt_mesh_surface_faces(OPT_ARGS_NUM);
 double opt_mesh_volume_edges(OPT_ARGS_NUM);

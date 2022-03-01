@@ -1400,25 +1400,21 @@ StringXNumber MeshOptions_Number[] = {
     "Size map method in QuadQuasiStructured. 0: default, 1: cross-field,"
       "2: cross-field + CAD small features adaptation,"
       "3: from background mesh (e.g. sizes in current triangulation),"
-      "4: cross-field + CAD small features adaptation (clamped by background mesh)"
-  },
+      "4: cross-field + CAD small features adaptation (clamped by background mesh)" },
   { F|O, "QuadqsTopologyOptimizationMethods" , opt_mesh_quadqs_topo_optim_methods, 0. ,
     "Topology optimization methods in QuadQuasiStructured. 0: default (all),"
       "100: pattern-based CAD faces,"
       "010: disk quadrangulation remeshing,"
       "001: cavity remeshing,"
-      "xxx: combination of multiple methods (e.g. 111 for all)"
-  },
+      "xxx: combination of multiple methods (e.g. 111 for all)" },
   { F|O, "QuadqsRemeshingBoldness" , opt_mesh_quadqs_remeshing_boldness, 0.66 ,
     "Controls how much cavity remeshing is allowed to distort"
       " the quad mesh. From 0 (no quality decrease during remeshing) to 1"
-      " (quality can tend to 0 during remeshing)."
-  },
+      " (quality can tend to 0 during remeshing)." },
   { F|O, "QuadqsScalingOnTriangulation" , opt_mesh_quadqs_scaling_on_triangulation, 0.75,
     "Ratio on the edge length between the triangulation and the quadrangulation."
       " Use a small ratio (e.g. 0.5) to get a background triangulation finer"
-      " than the quad mesh. Useful to get a more accurate cross-field."
-  },
+      " than the quad mesh. Useful to get a more accurate cross-field." },
   { F|O, "Quadrangles" , opt_mesh_quadrangles , 1. ,
     "Display mesh quadrangles?" },
   { F|O, "QualityInf" , opt_mesh_quality_inf , 0.0 ,
@@ -1564,6 +1560,8 @@ StringXNumber MeshOptions_Number[] = {
     "Display mesh triangles?" },
   { F|O, "Trihedra" , opt_mesh_trihedra , 1. ,
     "Display mesh trihedra?" },
+  { F|O, "TransfiniteTri" , opt_mesh_transfinite_tri , 0 ,
+    "Use alternative transfinite arrangement when meshing 3-sided surfaces" },
 
   { F|O, "UnvStrictFormat" , opt_mesh_unv_strict_format , 1 ,
     "Use strict format specification for UNV files, with 'D' for exponents (instead of "

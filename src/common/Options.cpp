@@ -5408,6 +5408,12 @@ double opt_mesh_trihedra(OPT_ARGS_NUM)
   return CTX::instance()->mesh.trihedra;
 }
 
+double opt_mesh_transfinite_tri(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->mesh.transfiniteTri = (int)val;
+  return CTX::instance()->mesh.transfiniteTri;
+}
+
 double opt_mesh_surface_edges(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {

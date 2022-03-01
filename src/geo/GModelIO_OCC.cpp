@@ -2078,6 +2078,11 @@ static bool makeTrimmedSurface(const Handle(Geom_Surface) &surf,
     }
     BRepBuilderAPI_MakeFace f(surf, wiresProj[0]);
     for(std::size_t i = 1; i < wiresProj.size(); i++) f.Add(wiresProj[i]);
+    f.Build();
+    if(!f.IsDone()) {
+      Msg::Error("Could not create surface");
+      return false;
+    }
     result = f.Face();
     // recover 3D curves for pcurves
     ShapeFix_Face fix(result);

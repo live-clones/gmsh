@@ -263,8 +263,6 @@ int MeshTransfiniteSurface(GFace *gf)
     V = V2;
   }
 
-  bool transfinite3 = false;
-
   int N1 = N[0], N2 = N[1], N3 = N[2], N4 = N[3];
   int L = N2 - N1, H = N3 - N2;
   if(corners.size() == 4) {
@@ -278,25 +276,19 @@ int MeshTransfiniteSurface(GFace *gf)
   }
   else {
     int Lb = m_vertices.size() - N3;
-#ifdef TFTria
-    if(Lb == L && H == L) {
-      transfinite3 = true;
+    if(CTX::instance()->mesh.transfiniteTri && Lb == L && H == L) {
+      gf->meshAttributes.transfinite3 = true;
       Msg::Info("Using specific algorithm for 3-sided surface %d", gf->tag());
     }
     else {
-#endif
       if(Lb != L) {
         Msg::Error("Surface %d cannot be meshed using the transfinite algo "
                    "(divisions %d != %d)",
                    gf->tag(), L, Lb);
         return 0;
       }
-#ifdef TFTria
     }
-#endif
   }
-
-  gf->meshAttributes.transfinite3 = transfinite3;
 
   /*
       2L+H +------------+ L+H
@@ -416,7 +408,7 @@ int MeshTransfiniteSurface(GFace *gf)
   }
   else {
     std::vector<double> u2, v2;
-    if(transfinite3) {
+    if(gf->meshAttributes.transfinite3) {
       u2.reserve(H + 1);
       for(int j = 0; j <= H; j++) u2.push_back(U[N2 + j]);
       v2.reserve(H + 1);
@@ -432,7 +424,7 @@ int MeshTransfiniteSurface(GFace *gf)
         int iP3 = ((N3 + N2) - i) % m_vertices.size();
         double Up, Vp;
         if(gf->geomType() != GEntity::RuledSurface) {
-          if(!transfinite3) {
+          if(!gf->meshAttributes.transfinite3) {
             Up = TRAN_TRI(U[iP1], U[iP2], U[iP3], UC1, UC2, UC3, u, v);
             Vp = TRAN_TRI(V[iP1], V[iP2], V[iP3], VC1, VC2, VC3, u, v);
           }
@@ -489,7 +481,7 @@ int MeshTransfiniteSurface(GFace *gf)
   else if(gf->meshAttributes.transfiniteSmoothing > 0)
     numSmooth = gf->meshAttributes.transfiniteSmoothing;
 
-  if(corners.size() == 4 && numSmooth && !transfinite3) {
+  if(corners.size() == 4 && numSmooth && !gf->meshAttributes.transfinite3) {
     std::vector<std::vector<double> > u(L + 1), v(L + 1);
     for(int i = 0; i <= L; i++) {
       u[i].resize(H + 1);
@@ -590,7 +582,7 @@ int MeshTransfiniteSurface(GFace *gf)
     }
   }
   else {
-    if(!transfinite3) {
+    if(!gf->meshAttributes.transfinite3) {
       for(int j = 0; j < H; j++) {
         MVertex *v1 = tab[0][0];
         MVertex *v2 = tab[1][j];
