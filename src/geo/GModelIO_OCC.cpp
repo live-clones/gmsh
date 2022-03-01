@@ -141,6 +141,17 @@
 #include <XCAFDoc_ShapeTool.hxx>
 #endif
 
+// for debugging:
+template <class T>
+void writeBrep(const T &shapes, const std::string &fileName = "debug.brep")
+{
+  BRep_Builder b;
+  TopoDS_Compound c;
+  b.MakeCompound(c);
+  for(auto s : shapes) b.Add(c, s);
+  BRepTools::Write(c, fileName.c_str());
+}
+
 OCC_Internals::OCC_Internals()
 {
   for(int i = 0; i < 6; i++) _maxTag[i] = 0;
@@ -1349,7 +1360,9 @@ bool OCC_Internals::_addBSpline(int &tag, const std::vector<int> &pointTags,
       if(curve->StartPoint().IsEqual(BRep_Tool::Pnt(start),
                                      CTX::instance()->geom.tolerance) &&
          curve->EndPoint().IsEqual(BRep_Tool::Pnt(end),
-                                   CTX::instance()->geom.tolerance)) {
+                                   CTX::instance()->geom.tolerance) &&
+         !curve->StartPoint().IsEqual(curve->EndPoint(),
+                                      CTX::instance()->geom.tolerance)) {
         BRepBuilderAPI_MakeEdge e(curve, start, end);
         if(!e.IsDone()) {
           Msg::Error("Could not create BSpline curve (with end points)");
@@ -2051,8 +2064,9 @@ static bool makeTrimmedSurface(const Handle(Geom_Surface) &surf,
       BRepTools_WireExplorer exp0; // guarantees edges are ordered
       for(exp0.Init(wires[i]); exp0.More(); exp0.Next()) {
         TopoDS_Edge edge = exp0.Current(), edgeOnSurf;
-        if(makeEdgeOnSurface(edge, surf, wire3D, edgeOnSurf))
+        if(makeEdgeOnSurface(edge, surf, wire3D, edgeOnSurf)) {
           w.Add(edgeOnSurf);
+        }
       }
       w.Build();
       if(!w.IsDone()) {
