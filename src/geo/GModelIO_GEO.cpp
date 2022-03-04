@@ -1538,19 +1538,38 @@ void GEO_Internals::synchronize(GModel *model, bool resetMeshAttributes)
       int num;
       List_Read(p->Entities, j, &num);
       GEntity *ge = nullptr;
+      const char *name = "";
       int tag = CTX::instance()->geom.orientedPhysicals ? abs(num) : num;
       switch(p->Typ) {
-      case MSH_PHYSICAL_POINT: ge = model->getVertexByTag(tag); break;
-      case MSH_PHYSICAL_LINE: ge = model->getEdgeByTag(tag); break;
-      case MSH_PHYSICAL_SURFACE: ge = model->getFaceByTag(tag); break;
-      case MSH_PHYSICAL_VOLUME: ge = model->getRegionByTag(tag); break;
+      case MSH_PHYSICAL_POINT:
+        ge = model->getVertexByTag(tag);
+        name = "point";
+        break;
+      case MSH_PHYSICAL_LINE:
+        ge = model->getEdgeByTag(tag);
+        name = "curve";
+        break;
+      case MSH_PHYSICAL_SURFACE:
+        ge = model->getFaceByTag(tag);
+        name = "surface";
+        break;
+      case MSH_PHYSICAL_VOLUME:
+        ge = model->getRegionByTag(tag);
+        name = "volume";
+        break;
       }
-      int pnum = CTX::instance()->geom.orientedPhysicals ?
-                   (gmsh_sign(num) * p->Num) :
-                   p->Num;
-      if(ge && std::find(ge->physicals.begin(), ge->physicals.end(), pnum) ==
-                 ge->physicals.end())
-        ge->physicals.push_back(pnum);
+      if(ge) {
+        int pnum = CTX::instance()->geom.orientedPhysicals ?
+          (gmsh_sign(num) * p->Num) : p->Num;
+        if(std::find(ge->physicals.begin(), ge->physicals.end(), pnum) ==
+           ge->physicals.end()) {
+          ge->physicals.push_back(pnum);
+        }
+      }
+      else {
+        Msg::Warning("Skipping unknown %s %d in physical %s %d",
+                     name, tag, name, p->Num);
+      }
     }
   }
 
@@ -1563,13 +1582,21 @@ void GEO_Internals::synchronize(GModel *model, bool resetMeshAttributes)
     for(std::size_t i = 0; i < compound.size(); i++) {
       int tag = compound[i];
       GEntity *ent = nullptr;
+      const char *name = "";
       switch(dim) {
-      case 1: ent = model->getEdgeByTag(tag); break;
-      case 2: ent = model->getFaceByTag(tag); break;
-      case 3: ent = model->getRegionByTag(tag); break;
-      default: Msg::Error("Compound mesh constraint with dimension %d", dim);
+      case 1: ent = model->getEdgeByTag(tag); name = "curve"; break;
+      case 2: ent = model->getFaceByTag(tag); name = "surface"; break;
+      case 3: ent = model->getRegionByTag(tag); name = "volume"; break;
+      default:
+        Msg::Error("Compound mesh constraint with dimension %d", dim);
+        continue;
       }
-      if(ent) ents.push_back(ent);
+      if(ent) {
+        ents.push_back(ent);
+      }
+      else {
+        Msg::Warning("Skipping unknown %d %d in compound", name, tag);
+      }
     }
     for(std::size_t i = 0; i < ents.size(); i++) { ents[i]->compound = ents; }
   }
