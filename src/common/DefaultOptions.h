@@ -157,8 +157,9 @@ StringXString GeometryOptions_String[] = {
 
   { F|O, "OCCTargetUnit" , opt_geometry_occ_target_unit , "" ,
     "Length unit to which coordinates from STEP and IGES files are converted to when "
-    "imported by OpenCASCADE, e.g. 'M' for meters (leave empty to use OpenCASCADE "
-    "default behavior)"},
+    "imported by OpenCASCADE, e.g. 'M' for meters (leave empty to use the default "
+    "OpenCASCADE behavior); the option should be set before importing the STEP or "
+    "IGES file"},
 
   { 0, nullptr , nullptr , "" , nullptr }
 } ;
@@ -1058,7 +1059,7 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "Algorithm" , opt_mesh_algo2d , ALGO_2D_FRONTAL ,
     "2D mesh algorithm (1: MeshAdapt, 2: Automatic, 3: Initial mesh only, "
     "5: Delaunay, 6: Frontal-Delaunay, 7: BAMG, 8: Frontal-Delaunay for Quads, "
-    "9: Packing of Parallelograms)" },
+    "9: Packing of Parallelograms, 11: Quasi-structured Quad)" },
   { F|O, "Algorithm3D" , opt_mesh_algo3d , ALGO_3D_DELAUNAY ,
     "3D mesh algorithm (1: Delaunay, 3: Initial mesh only, 4: Frontal, "
     "7: MMG3D, 9: R-tree, 10: HXT)" },
