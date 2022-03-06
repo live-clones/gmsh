@@ -2010,15 +2010,16 @@ the OpenCASCADE kernel, this constructs a C2 BSpline. Creates a periodic
 curve if the first and last points are identical.
 
 @item Circle ( @var{expression} ) = @{ @var{expression}, @var{expression}, @var{expression} <, ...> @};
-Create a circle arc. The three @var{expression}s on the right-hand-side
-define the start point, the center and the end point of the arc. With
-the built-in geometry kernel the arc should be strictly smaller than Pi.
-With the OpenCASCADE kernel additional @var{expression}s can be provided
-to define a full circle (4th expression is the radius) or a circle arc
-between two angles (next 2 expressions).
+Create a circle arc. If three @var{expression}s are provided on the
+right-hand-side they define the start point, the center and the end
+point of the arc. With the built-in geometry kernel the arc should be
+strictly smaller than Pi. With the OpenCASCADE kernel, if between 4 and
+6 expressions are provided, the first three define the coordinates of
+the center, the next one defines the radius, and the optional next two
+the start and end angle.
 @c todo: document < Plane @{ @var{expression}, @var{expression}, @var{expression} @}; >
 
-@item Ellipse ( @var{expression} ) = @{ @var{expression}, @var{expression}, @var{expression}, <, ...> @};
+@item Ellipse ( @var{expression} ) = @{ @var{expression}, @var{expression}, @var{expression} <, ...> @};
 Create an ellipse arc. If four @var{expression}s are provided on the
 right-hand-side they define the start point, the center point, a point
 anywhere on the major axis and the end point. If the first point is a
@@ -2543,7 +2544,7 @@ Remove all duplicate elementary entities (e.g., points having identical
 coordinates). Note that with the built-in geometry kernel Gmsh executes
 the @code{Coherence} command automatically after each geometrical
 transformation, unless @code{Geometry.AutoCoherence} is set to zero
-(@pxref{Geometry options list}). With the OpenCASCADE geoemtry kernel,
+(@pxref{Geometry options list}). With the OpenCASCADE geometry kernel,
 @code{Coherence} is simply a shortcut for a @code{BooleanFragments}
 operation on all entities, with the @code{Delete} operator applied to
 all operands.
