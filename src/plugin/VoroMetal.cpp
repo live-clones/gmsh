@@ -464,7 +464,7 @@ void voroMetal3D::print_geo_face_loop(int index, std::vector<int> &indices,
   file << "};\n";
 }
 
-void voroMetal3D::correspondance(double e, double xMax, double yMax,
+void voroMetal3D::correspondence(double e, double xMax, double yMax,
                                  double zMax)
 {
   std::size_t i;
@@ -573,7 +573,7 @@ void voroMetal3D::correspondance(double e, double xMax, double yMax,
       delta_y = std::abs(p2.y() - p1.y());
       delta_z = std::abs(p2.z() - p1.z());
       flag =
-        correspondance(delta_x, delta_y, delta_z, e, val, xMax, yMax, zMax);
+        correspondence(delta_x, delta_y, delta_z, e, val, xMax, yMax, zMax);
       if(flag) {
         it5 = markings.find(faces[i]);
         it6 = markings.find(faces[j]);
@@ -843,17 +843,17 @@ void voroMetal3D::correspondance(double e, double xMax, double yMax,
       for(it8 = edges2.begin(); it8 != edges2.end(); it8++, it10++) {
         v3 = (*it8)->getBeginVertex();
         v4 = (*it8)->getEndVertex();
-        correspondance(fabs(v3->x() - v1->x()), fabs(v3->y() - v1->y()),
+        correspondence(fabs(v3->x() - v1->x()), fabs(v3->y() - v1->y()),
                        fabs(v3->z() - v1->z()), e, categories[i], flag1, xMax,
                        yMax, zMax);
-        correspondance(fabs(v4->x() - v2->x()), fabs(v4->y() - v2->y()),
+        correspondence(fabs(v4->x() - v2->x()), fabs(v4->y() - v2->y()),
                        fabs(v4->z() - v2->z()), e, categories[i], flag2, xMax,
                        yMax, zMax);
 
-        correspondance(fabs(v4->x() - v1->x()), fabs(v4->y() - v1->y()),
+        correspondence(fabs(v4->x() - v1->x()), fabs(v4->y() - v1->y()),
                        fabs(v4->z() - v1->z()), e, categories[i], flag3, xMax,
                        yMax, zMax);
-        correspondance(fabs(v3->x() - v2->x()), fabs(v3->y() - v2->y()),
+        correspondence(fabs(v3->x() - v2->x()), fabs(v3->y() - v2->y()),
                        fabs(v3->z() - v2->z()), e, categories[i], flag4, xMax,
                        yMax, zMax);
         if(flag1 && flag2) {
@@ -917,7 +917,7 @@ void voroMetal3D::correspondance(double e, double xMax, double yMax,
   file4 << "};\n";
 }
 
-bool voroMetal3D::correspondance(double delta_x, double delta_y, double delta_z,
+bool voroMetal3D::correspondence(double delta_x, double delta_y, double delta_z,
                                  double e, int &val, double xMax, double yMax,
                                  double zMax)
 {
@@ -966,7 +966,7 @@ bool voroMetal3D::correspondance(double delta_x, double delta_y, double delta_z,
   return flag;
 }
 
-void voroMetal3D::correspondance(double delta_x, double delta_y, double delta_z,
+void voroMetal3D::correspondence(double delta_x, double delta_y, double delta_z,
                                  double e, int val, bool &flag, double xMax,
                                  double yMax, double zMax)
 {
@@ -1046,7 +1046,7 @@ static void microstructure(const char *filename)
     vm1.execute(properties, radical, 0.1, xMax, yMax, zMax);
     GModel::current()->load("MicrostructurePolycrystal3D.geo");
     voroMetal3D vm2;
-    vm2.correspondance(0.00001, xMax, yMax, zMax);
+    vm2.correspondence(0.00001, xMax, yMax, zMax);
   }
 }
 
@@ -1349,7 +1349,7 @@ static void computeBestSeeds(const char *filename)
     vm1.execute(properties, radical, 0.1, xMax, yMax, zMax);
     GModel::current()->load("MicrostructurePolycrystal3D.geo");
     voroMetal3D vm2;
-    vm2.correspondance(0.00001, xMax, yMax, zMax);
+    vm2.correspondence(0.00001, xMax, yMax, zMax);
     for(std::size_t iTmp = 0; iTmp < listDistances.size(); iTmp++) {
       std::cout << "distMinGlobal " << iTmp << " egale a "
                 << listDistances[iTmp] << std::endl;

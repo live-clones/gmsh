@@ -1770,13 +1770,17 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
   if((CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine) &&
      (CTX::instance()->mesh.algoRecombine <= 1 ||
       CTX::instance()->mesh.algoRecombine == 4)) {
-    bool blossom = (CTX::instance()->mesh.algoRecombine == 1);
-    int topo = CTX::instance()->mesh.recombineOptimizeTopology;
-    bool nodeRepositioning = true;
-    if(CTX::instance()->mesh.algoRecombine == 4)
+
+    if(CTX::instance()->mesh.algoRecombine == 4) {
       meshGFaceQuadrangulateBipartiteLabelling(gf->tag());
-    else
-      recombineIntoQuads(gf, blossom, topo, nodeRepositioning, 0.1);
+    }
+    else {
+      bool blossom = (CTX::instance()->mesh.algoRecombine == 1);
+      int topo = CTX::instance()->mesh.recombineOptimizeTopology;
+      int repos = CTX::instance()->mesh.recombineNodeRepositioning;
+      double minqual = CTX::instance()->mesh.recombineMinimumQuality;
+      recombineIntoQuads(gf, blossom, topo, repos, minqual);
+    }
   }
 
   computeElementShapes(gf, gf->meshStatistics.worst_element_shape,
@@ -2827,17 +2831,18 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
   if((CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine) &&
      (CTX::instance()->mesh.algoRecombine <= 1 ||
       CTX::instance()->mesh.algoRecombine == 4)) {
-    bool blossom = (CTX::instance()->mesh.algoRecombine == 1);
-    int topo = CTX::instance()->mesh.recombineOptimizeTopology;
-    bool nodeRepositioning = true;
-    if(/*CTX::instance()->mesh.algo2d == ALGO_2D_PACK_PRLGRMS ||*/
-       CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT) {
-      nodeRepositioning = false;
-    }
-    if(CTX::instance()->mesh.algoRecombine == 4)
+
+    if(CTX::instance()->mesh.algoRecombine == 4) {
       meshGFaceQuadrangulateBipartiteLabelling(gf->tag());
+    }
     else {
-      recombineIntoQuads(gf, blossom, topo, nodeRepositioning, 0.1);
+      bool blossom = (CTX::instance()->mesh.algoRecombine == 1);
+      int topo = CTX::instance()->mesh.recombineOptimizeTopology;
+      int repos = CTX::instance()->mesh.recombineNodeRepositioning;
+      if(CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT)
+        repos = false;
+      double minqual = CTX::instance()->mesh.recombineMinimumQuality;
+      recombineIntoQuads(gf, blossom, topo, repos, minqual);
     }
   }
 

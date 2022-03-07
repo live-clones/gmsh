@@ -334,7 +334,7 @@ int MeshExtrudedSurface(
     }
     copyMesh(from, gf, pos);
     if(gf->getMeshMaster() == from) {
-      // explicit periodic constraint, to store node correspondance
+      // explicit periodic constraint, to store node correspondence
       gf->setMeshMaster(from, gf->affineTransform);
     }
   }

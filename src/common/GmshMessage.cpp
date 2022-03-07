@@ -65,7 +65,6 @@ std::map<std::string, double> Msg::_timers;
 bool Msg::_infoCpu = false;
 bool Msg::_infoMem = false;
 double Msg::_startTime = 0.;
-int Msg::_startMaxThreads = 0;
 int Msg::_warningCount = 0;
 int Msg::_errorCount = 0;
 int Msg::_atLeastOneErrorInRun = 0;
@@ -126,7 +125,6 @@ static void addGmshPathToEnvironmentVar(const std::string &name)
 void Msg::Initialize(int argc, char **argv)
 {
   _startTime = TimeOfDay();
-  _startMaxThreads = GetMaxThreads();
 #if defined(HAVE_MPI)
   int flag;
   MPI_Initialized(&flag);
@@ -216,8 +214,6 @@ void Msg::Finalize()
     MPI_Finalize();
 #endif
   FinalizeOnelab();
-  if(GetMaxThreads() != _startMaxThreads)
-    SetNumThreads(_startMaxThreads);
 }
 
 int Msg::GetCommRank()
@@ -1629,11 +1625,7 @@ int Msg::GetThreadNum(){ return omp_get_thread_num(); }
 #else
 
 int Msg::GetNumThreads(){ return 1; }
-void Msg::SetNumThreads(int num)
-{
-  if(num > 1)
-    Msg::Warning("Setting number of threads to %d requires OpenMP", num);
-}
+void Msg::SetNumThreads(int num){ }
 int Msg::GetMaxThreads(){ return 1; }
 int Msg::GetThreadNum(){ return 0; }
 

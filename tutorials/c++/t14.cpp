@@ -73,15 +73,15 @@ int main(int argc, char **argv)
   // Whole domain
   int domain_tag = e[1].second;
   int domain_physical_tag = 1001;
-  gmsh::model::addPhysicalGroup(3, {domain_tag}, domain_physical_tag);
-  gmsh::model::setPhysicalName(3, domain_physical_tag, "Whole domain");
+  gmsh::model::addPhysicalGroup(3, {domain_tag}, domain_physical_tag,
+                                "Whole domain");
 
   // Four "terminals" of the model
   std::vector<int> terminal_tags = {e[3].second, e[5].second, e[7].second,
                                     e[9].second};
   int terminals_physical_tag = 2001;
-  gmsh::model::addPhysicalGroup(2, terminal_tags, terminals_physical_tag);
-  gmsh::model::setPhysicalName(2, terminals_physical_tag, "Terminals");
+  gmsh::model::addPhysicalGroup(2, terminal_tags, terminals_physical_tag,
+                                "Terminals");
 
   // Find domain boundary tags
   std::vector<std::pair<int, int> > boundary_dimtags;
@@ -99,35 +99,35 @@ int main(int argc, char **argv)
 
   // Whole domain surface
   int boundary_physical_tag = 2002;
-  gmsh::model::addPhysicalGroup(2, boundary_tags, boundary_physical_tag);
-  gmsh::model::setPhysicalName(2, boundary_physical_tag, "Boundary");
+  gmsh::model::addPhysicalGroup(2, boundary_tags, boundary_physical_tag,
+                                "Boundary");
 
   // Complement of the domain surface with respect to the four terminals
   int complement_physical_tag = 2003;
-  gmsh::model::addPhysicalGroup(2, complement_tags, complement_physical_tag);
-  gmsh::model::setPhysicalName(2, complement_physical_tag, "Complement");
+  gmsh::model::addPhysicalGroup(2, complement_tags, complement_physical_tag,
+                                "Complement");
 
   // Find bases for relative homology spaces of the domain modulo the four
   // terminals
-  gmsh::model::mesh::computeHomology({domain_physical_tag},
-                                     {terminals_physical_tag}, {0, 1, 2, 3});
+  gmsh::model::mesh::addHomologyRequest("Homology", {domain_physical_tag},
+                                        {terminals_physical_tag}, {0, 1, 2, 3});
 
   // Find homology space bases isomorphic to the previous bases: homology spaces
   // modulo the non-terminal domain surface, a.k.a the thin cuts
-  gmsh::model::mesh::computeHomology({domain_physical_tag},
-                                     {complement_physical_tag}, {0, 1, 2, 3});
+  gmsh::model::mesh::addHomologyRequest("Homology", {domain_physical_tag},
+                                        {complement_physical_tag}, {0, 1, 2, 3});
 
   // Find cohomology space bases isomorphic to the previous bases: cohomology
   // spaces of the domain modulo the four terminals, a.k.a the thick cuts
-  gmsh::model::mesh::computeCohomology({domain_physical_tag},
-                                       {terminals_physical_tag}, {0, 1, 2, 3});
+  gmsh::model::mesh::addHomologyRequest("Cohomology", {domain_physical_tag},
+                                        {terminals_physical_tag}, {0, 1, 2, 3});
 
   // More examples:
-  // gmsh::model::mesh::computeHomology();
-  // gmsh::model::mesh::computeHomology({domain_physical_tag});
-  // gmsh::model::mesh::computeHomology({domain_physical_tag},
-  //                                    {boundary_physical_tag},
-  //                                     {0,1,2,3});
+  // gmsh::model::mesh::addHomologyRequest();
+  // gmsh::model::mesh::addHomologyRequest("Homology", {domain_physical_tag});
+  // gmsh::model::mesh::addHomologyRequest("Homology", {domain_physical_tag},
+  //                                       {boundary_physical_tag},
+  //                                       {0,1,2,3});
 
   // Generate the mesh and perform the requested homology computations
   gmsh::model::mesh::generate(3);

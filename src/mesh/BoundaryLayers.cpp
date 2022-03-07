@@ -132,7 +132,9 @@ static void addExtrudeNormals(std::set<T *> &entities,
                               std::map<int, bool> &skipScaleCalcMap)
 {
   bool normalize = true, special3dbox = false, extrudeField = false;
+#if defined(HAVE_POST)
   std::vector<PViewData *> datas;
+#endif
 
   for(auto it = entities.begin(); it != entities.end(); it++) {
     T *ge = *it;

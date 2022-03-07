@@ -44,7 +44,6 @@
 #endif
 
 #if defined(HAVE_QUADMESHINGTOOLS)
-/* QuadMeshingTools includes */
 #include "cppUtils.h"
 #include "qmtMeshUtils.h"
 #include "qmtCrossField.h"
@@ -70,7 +69,6 @@ using unordered_set =
   robin_hood::detail::Table<true, MaxLoadFactor100, Key, void, Hash, KeyEqual>;
 
 constexpr int SizeMapDefault = 0;
-//constexpr int SizeMapCrossField = 1;
 constexpr int SizeMapCrossFieldAndSmallCad = 2;
 constexpr int SizeMapBackgroundMesh = 3;
 constexpr int SizeMapCrossFieldAndBMeshOnCurves = 4;
@@ -85,6 +83,15 @@ constexpr bool SHOW_DQR = false;
 /* scaling applied on integer values stored in view (background field),
  * so the visualization is not broken by the integers */
 constexpr double VIEW_INT_SCALING = 1.e-8;
+
+static int getNumThreads()
+{
+  int nthreads = CTX::instance()->numThreads;
+  if(CTX::instance()->mesh.maxNumThreads2D > 0)
+    nthreads = CTX::instance()->mesh.maxNumThreads2D;
+  if(!nthreads) nthreads = Msg::GetMaxThreads();
+  return nthreads;
+}
 
 int buildBackgroundField(
   GModel *gm, const std::vector<MTriangle *> &global_triangles,
@@ -570,7 +577,8 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
     global_triangles.reserve(ntris);
     global_size_map.reserve(3 * ntris);
 
-#pragma omp parallel for schedule(dynamic)
+    int nthreads = getNumThreads();
+#pragma omp parallel for schedule(dynamic) num_threads(nthreads)
     for(size_t f = 0; f < faces.size(); ++f) {
       GFace *gf = faces[f];
 
@@ -1418,7 +1426,8 @@ int improveCornerValences(
         GFaceMeshPatch patchAfter = diff.after;
 
         if(SHOW_DQR) {
-          gmsh::initialize();
+          // FIXME using the public API inside Gmsh is not a good idea
+          if(!gmsh::isInitialized()) gmsh::initialize();
           GeoLog::add(patchBefore.elements, "fixCornerB");
           GeoLog::add(patchAfter.elements, "fixCornerA");
           gmsh::view::add("---");
@@ -1446,7 +1455,8 @@ int improveCornerValences(
       else {
         Msg::Debug("-- failed to fix corner %li", num);
         if(SHOW_DQR) {
-          gmsh::initialize();
+          // FIXME using the public API inside Gmsh is not a good idea
+          if(!gmsh::isInitialized()) gmsh::initialize();
           GeoLog::add(patch.elements, "fixCornerFAILED");
           gmsh::view::add("---");
           GeoLog::flush();
@@ -1553,7 +1563,8 @@ int improveCurveValences(
       GFaceMeshPatch patchAfter = diff.after;
 
       if(SHOW_DQR) {
-        gmsh::initialize();
+        // FIXME using the public API inside Gmsh is not a good idea
+        if(!gmsh::isInitialized()) gmsh::initialize();
         GeoLog::add(patchBefore.elements, "fixCurveB");
         GeoLog::add(patchAfter.elements, "fixCurveA");
         gmsh::view::add("---");
@@ -1750,7 +1761,8 @@ int improveInteriorValences(
       GFaceMeshPatch patchAfter = diff.after;
 
       if(SHOW_DQR) {
-        gmsh::initialize();
+        // FIXME using the public API inside Gmsh is not a good idea
+        if(!gmsh::isInitialized()) gmsh::initialize();
         GeoLog::add(patchBefore.elements, "fixIntB");
         GeoLog::add(patchAfter.elements, "fixIntA");
         gmsh::view::add("---");
@@ -1983,7 +1995,8 @@ int improveInteriorValencesV2(
       GFaceMeshPatch patchAfter = diff.after;
 
       if(SHOW_DQR) {
-        gmsh::initialize();
+        // FIXME using the public API inside Gmsh is not a good idea
+        if(!gmsh::isInitialized()) gmsh::initialize();
         GeoLog::add(patchBefore.elements, "fixIntB");
         GeoLog::add(patchAfter.elements, "fixIntA");
         gmsh::view::add("---");
@@ -2058,7 +2071,10 @@ int RefineMeshWithBackgroundMeshProjectionSimple(GModel *gm)
   /* old2new use to update mesh elements after */
   unordered_map<MVertex *, MVertex *> old2new;
 
-#pragma omp parallel for schedule(dynamic)
+  // FIXME: crash #1799
+  int nthreads = 1; //getNumThreads();
+
+#pragma omp parallel for schedule(dynamic) num_threads(nthreads)
   for(size_t e = 0; e < edges.size(); ++e) {
     GEdge *ge = edges[e];
     if(CTX::instance()->mesh.meshOnlyVisible && !ge->getVisibility()) continue;
@@ -2085,7 +2101,6 @@ int RefineMeshWithBackgroundMeshProjectionSimple(GModel *gm)
         delete v;
       }
     }
-
     /* Projections */
     double tMin = ge->parBounds(0).low();
     double tMax = ge->parBounds(0).high();
@@ -2114,7 +2129,7 @@ int RefineMeshWithBackgroundMeshProjectionSimple(GModel *gm)
                  "using CAD projection (slow)");
   }
 
-#pragma omp parallel for schedule(dynamic)
+#pragma omp parallel for schedule(dynamic) num_threads(nthreads)
   for(size_t f = 0; f < faces.size(); ++f) {
     GFace *gf = faces[f];
     if(CTX::instance()->mesh.meshOnlyVisible && !gf->getVisibility()) continue;
@@ -2208,7 +2223,7 @@ int RefineMeshWithBackgroundMeshProjectionSimple(GModel *gm)
   }
 
 /* Update elements */
-#pragma omp parallel for schedule(dynamic)
+#pragma omp parallel for schedule(dynamic) num_threads(nthreads)
   for(size_t e = 0; e < edges.size(); ++e) {
     GEdge *ge = edges[e];
     for(MLine *l : ge->lines) {
@@ -2220,7 +2235,7 @@ int RefineMeshWithBackgroundMeshProjectionSimple(GModel *gm)
     }
   }
 
-#pragma omp parallel for schedule(dynamic)
+#pragma omp parallel for schedule(dynamic) num_threads(nthreads)
   for(size_t f = 0; f < faces.size(); ++f) {
     GFace *gf = faces[f];
     for(size_t i = 0; i < gf->getNumMeshElements(); ++i) {
@@ -2250,6 +2265,7 @@ int RefineMeshWithBackgroundMeshProjectionSimple(GModel *gm)
 
   return 0;
 }
+
 int RefineMeshWithBackgroundMeshProjection(GModel *gm)
 {
   return RefineMeshWithBackgroundMeshProjectionSimple(gm);
@@ -2310,7 +2326,8 @@ int RefineMeshWithBackgroundMeshProjection(GModel *gm)
     for(GEdge *ge : fedges) edgeToFaces[ge].insert(gf);
   }
 
-#pragma omp parallel for schedule(dynamic)
+  int nthreads = getNumThreads();
+#pragma omp parallel for schedule(dynamic) num_threads(nthreads)
   for(size_t e = 0; e < edges.size(); ++e) {
     GEdge *ge = edges[e];
     if(CTX::instance()->mesh.meshOnlyVisible && !ge->getVisibility()) continue;
@@ -2351,7 +2368,7 @@ int RefineMeshWithBackgroundMeshProjection(GModel *gm)
     }
   }
 
-#pragma omp parallel for schedule(dynamic)
+#pragma omp parallel for schedule(dynamic) num_threads(nthreads)
   for(size_t f = 0; f < faces.size(); ++f) {
     GFace *gf = faces[f];
     if(CTX::instance()->mesh.meshOnlyVisible && !gf->getVisibility()) continue;
@@ -2394,7 +2411,7 @@ int RefineMeshWithBackgroundMeshProjection(GModel *gm)
 /* Geometric projection on model */
 
 /* - projections on curves */
-#pragma omp parallel for schedule(dynamic)
+#pragma omp parallel for schedule(dynamic) num_threads(nthreads)
   for(size_t e = 0; e < edges.size(); ++e) {
     GEdge *ge = edges[e];
     auto it = toProjectOnCurve.find(ge);
@@ -2429,7 +2446,7 @@ int RefineMeshWithBackgroundMeshProjection(GModel *gm)
   }
 
 /* - projections on faces */
-#pragma omp parallel for schedule(dynamic)
+#pragma omp parallel for schedule(dynamic) num_threads(nthreads)
   for(size_t f = 0; f < faces.size(); ++f) {
     GFace *gf = faces[f];
 
@@ -2576,7 +2593,8 @@ int replaceBadQuadDominantMeshes(GModel *gm)
 {
   std::vector<GFace *> faces = model_faces(gm);
 
-#pragma omp parallel for schedule(dynamic)
+  int nthreads = getNumThreads();
+#pragma omp parallel for schedule(dynamic) num_threads(nthreads)
   for(size_t f = 0; f < faces.size(); ++f) {
     GFace *gf = faces[f];
     if(CTX::instance()->mesh.meshOnlyVisible && !gf->getVisibility()) continue;
@@ -3028,7 +3046,8 @@ int quadMeshingOfSimpleFacesWithPatterns(GModel *gm,
 
   initQuadPatterns();
 
-#pragma omp parallel for schedule(dynamic)
+  int nthreads = getNumThreads();
+#pragma omp parallel for schedule(dynamic) num_threads(nthreads)
   for(size_t f = 0; f < faces.size(); ++f) {
     GFace *gf = faces[f];
     if(gf->meshStatistics.status != GFace::PENDING) continue;
@@ -3083,7 +3102,8 @@ int optimizeTopologyWithDiskQuadrangulationRemeshing(GModel *gm)
 
   std::vector<GFace *> faces = model_faces(gm);
 
-#pragma omp parallel for schedule(dynamic)
+  int nthreads = getNumThreads();
+#pragma omp parallel for schedule(dynamic) num_threads(nthreads)
   for(size_t f = 0; f < faces.size(); ++f) {
     GFace *gf = faces[f];
     if(gf->meshStatistics.status != GFace::PENDING) continue;
@@ -3151,7 +3171,8 @@ int optimizeTopologyWithCavityRemeshing(GModel *gm)
 
   GlobalBackgroundMesh &bmesh = getBackgroundMesh(BMESH_NAME);
 
-#pragma omp parallel for schedule(dynamic)
+  int nthreads = getNumThreads();
+#pragma omp parallel for schedule(dynamic) num_threads(nthreads)
   for(size_t f = 0; f < faces.size(); ++f) {
     GFace *gf = faces[f];
     if(gf->meshStatistics.status != GFace::PENDING) continue;
@@ -3207,7 +3228,8 @@ int optimizeQuadMeshBoundaries(GModel *gm)
 
   std::vector<GFace *> faces = model_faces(gm);
 
-#pragma omp parallel for schedule(dynamic)
+  int nthreads = getNumThreads();
+#pragma omp parallel for schedule(dynamic) num_threads(nthreads)
   for(size_t f = 0; f < faces.size(); ++f) {
     GFace *gf = faces[f];
     if(gf->meshStatistics.status != GFace::PENDING) continue;

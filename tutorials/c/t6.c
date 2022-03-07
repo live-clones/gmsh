@@ -6,6 +6,7 @@
 //
 // -----------------------------------------------------------------------------
 
+#include <string.h>
 #include <gmshc.h>
 
 int main(int argc, char **argv)
@@ -16,9 +17,8 @@ int main(int argc, char **argv)
 
   gmshModelAdd("t2", &ierr);
 
-  // Copied from t1.c...
-  double lc = 1e-2;
-
+  // Copied from `t1.c'...
+  const double lc = 1e-2;
   gmshModelGeoAddPoint(0, 0, 0, lc, 1, &ierr);
   gmshModelGeoAddPoint(.1, 0, 0, lc, 2, &ierr);
   gmshModelGeoAddPoint(.1, .3, 0, lc, 3, &ierr);
@@ -29,14 +29,14 @@ int main(int argc, char **argv)
   gmshModelGeoAddLine(3, 4, 3, &ierr);
   gmshModelGeoAddLine(4, 1, 4, &ierr);
 
-  int cl1[] = {4, 1, -2, 3};
+  const int cl1[] = {4, 1, -2, 3};
   gmshModelGeoAddCurveLoop(cl1, sizeof(cl1) / sizeof(cl1[0]), 1, 0, &ierr);
 
-  int s1[] = {1};
+  const int s1[] = {1};
   gmshModelGeoAddPlaneSurface(s1, sizeof(s1) / sizeof(s1[0]), 1, &ierr);
 
   // Delete the surface and the left line, and replace the line with 3 new ones:
-  int r4[] = {2, 1, 1, 4};
+  const int r4[] = {2, 1, 1, 4};
   gmshModelGeoRemove(r4, 4, 0, &ierr);
 
   int p1 = gmshModelGeoAddPoint(-0.05, 0.05, 0, lc, -1, &ierr);
@@ -47,10 +47,10 @@ int main(int argc, char **argv)
   int l3 = gmshModelGeoAddLine(p2, 4, -1, &ierr);
 
   // Create surface:
-  int cl2[] = {2, -1, l1, l2, l3, -3};
+  const int cl2[] = {2, -1, l1, l2, l3, -3};
   gmshModelGeoAddCurveLoop(cl2, sizeof(cl2) / sizeof(cl2[0]), 2, 0, &ierr);
 
-  int s2[] = {-2};
+  const int s2[] = {-2};
   gmshModelGeoAddPlaneSurface(s2, sizeof(s2) / sizeof(s2[0]), 1, &ierr);
 
   // The `setTransfiniteCurve()' meshing constraints explicitly specifies the
@@ -76,8 +76,7 @@ int main(int argc, char **argv)
   // the nodes on the boundary using a structured grid. If the surface has more
   // than 4 corner points, the corners of the transfinite interpolation have to
   // be specified by hand:
-  //  gmsh::model::geo::mesh::setTransfiniteSurface(1, "Left", {1, 2, 3, 4});
-  int ts[] = {1, 2, 3, 4};
+  const int ts[] = {1, 2, 3, 4};
   gmshModelGeoMeshSetTransfiniteSurface(1, "Left", ts, 4, &ierr);
 
   // To create quadrangles instead of triangles, one can use the `setRecombine'
@@ -97,26 +96,35 @@ int main(int argc, char **argv)
   gmshModelGeoAddLine(10, 7, 12, &ierr);
   gmshModelGeoAddLine(7, 8, 13, &ierr);
 
-  int cl3[] = {13, 10, 11, 12};
+  const int cl3[] = {13, 10, 11, 12};
   gmshModelGeoAddCurveLoop(cl3, sizeof(cl3) / sizeof(cl3[0]), 14, 0, &ierr);
 
-  int s3[] = {14};
+  const int s3[] = {14};
   gmshModelGeoAddPlaneSurface(s3, sizeof(s3) / sizeof(s3[0]), 15, &ierr);
 
   for(int i = 10; i <= 13; i++)
     gmshModelGeoMeshSetTransfiniteCurve(i, 10, "Progression", 1.0, &ierr);
 
-  gmshModelGeoMeshSetTransfiniteSurface(15, "Left", ts, 0, &ierr);
+  // The way triangles are generated can be controlled by specifying "Left",
+  // "Right" or "Alternate" in `setTransfiniteSurface()' command.
 
+  // Finally we apply an elliptic smoother to the grid to have a more regular
+  // mesh:
   gmshOptionSetNumber("Mesh.Smoothing", 100, &ierr);
 
   gmshModelGeoSynchronize(&ierr);
-
   gmshModelMeshGenerate(2, &ierr);
-
   gmshWrite("t6.msh", &ierr);
 
-  // gmshFltkRun(&ierr);
+  // Launch the GUI to see the results:
+  int gui = 1;
+  for(int i = 0; i < argc; i++) {
+    if(!strcmp(argv[i], "-nopopup")) {
+      gui = 0;
+      break;
+    }
+  }
+  if(gui) gmshFltkRun(&ierr);
 
   gmshFinalize(&ierr);
   return 0;

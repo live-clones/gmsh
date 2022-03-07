@@ -233,6 +233,9 @@ public:
   // fill the vertex array using an STL triangulation
   bool fillVertexArray(bool force = false);
 
+  // store the STL triangulation as the mesh of the surface
+  bool storeSTLTriangulationAsMesh();
+
   // recompute the mean plane of the surface from a list of points
   void computeMeanPlane(const std::vector<MVertex *> &points);
   void computeMeanPlane(const std::vector<SPoint3> &points);
@@ -316,6 +319,8 @@ public:
     int algorithm;
     // do we force calculation of mesh size from boundary (if >= 0)
     int meshSizeFromBoundary;
+    // do we use a specific transfinite algorithm for 3-sided surfaces
+    bool transfinite3;
   } meshAttributes;
 
   int getMeshingAlgo() const;

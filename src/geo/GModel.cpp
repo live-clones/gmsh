@@ -1449,11 +1449,11 @@ int GModel::optimizeMesh(const std::string &how, const bool force, int niter)
 #endif
 }
 
-int GModel::setOrderN(int order, int linear, int incomplete)
+int GModel::setOrderN(int order, int linear, int incomplete, int onlyVisible)
 {
 #if defined(HAVE_MESH)
   if(order > 1)
-    SetOrderN(this, order, linear, incomplete);
+    SetOrderN(this, order, linear, incomplete, onlyVisible);
   else
     SetOrder1(this);
   FixPeriodicMesh(this);
@@ -2673,7 +2673,8 @@ void GModel::checkMeshCoherence(double tolerance)
   Msg::StatusBar(true, "Done checking mesh coherence");
 }
 
-int GModel::removeDuplicateMeshVertices(double tolerance)
+int GModel::removeDuplicateMeshVertices(double tolerance,
+                                        const std::vector<GEntity*> &ents)
 {
   Msg::StatusBar(true, "Removing duplicate mesh nodes...");
 
@@ -2683,8 +2684,8 @@ int GModel::removeDuplicateMeshVertices(double tolerance)
 
   // get entities (in order of increasing dimensions so that topological
   // classification of vertices remains correct)
-  std::vector<GEntity *> entities;
-  getEntities(entities);
+  std::vector<GEntity*> entities(ents);
+  if(entities.empty()) getEntities(entities);
 
   // re-index all vertices (don't use MVertex::getNum(), as we want to be able
   // to remove duplicate vertices from "incorrect" meshes, where vertices with
@@ -2943,9 +2944,8 @@ void GModel::alignPeriodicBoundaries()
 
           if(!tgtFace.computeCorrespondence(srcFace, rotation, swap)) {
             Msg::Debug(
-              "Could not find correspondance between mesh face %d-%d-%d "
-              "(slave) "
-              "and %d-%d-%d (master)",
+              "Could not find correspondence between mesh face %d-%d-%d "
+              "(slave) and %d-%d-%d (master)",
               tgtElmt->getVertex(0)->getNum(), tgtElmt->getVertex(1)->getNum(),
               tgtElmt->getVertex(2)->getNum(), srcElmt->getVertex(0)->getNum(),
               srcElmt->getVertex(1)->getNum(), srcElmt->getVertex(2)->getNum());
@@ -3434,11 +3434,15 @@ void GModel::addHomologyRequest(const std::string &type,
                                 const std::vector<int> &subdomain,
                                 const std::vector<int> &dim)
 {
-  typedef std::pair<const std::vector<int>, const std::vector<int> > dpair;
-  typedef std::pair<const std::string, const std::vector<int> > tpair;
-  dpair p(domain, subdomain);
-  tpair p2(type, dim);
+  std::pair<const std::vector<int>, const std::vector<int> > p(domain,
+                                                               subdomain);
+  std::pair<const std::string, const std::vector<int> > p2(type, dim);
   _homologyRequests.insert(std::make_pair(p, p2));
+}
+
+void GModel::clearHomologyRequests()
+{
+  _homologyRequests.clear();
 }
 
 void GModel::computeHomology()

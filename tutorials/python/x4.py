@@ -16,7 +16,7 @@ gmsh.initialize(sys.argv)
 # model (per step). Post-processing data stored in MSH files create such
 # model-based views.
 
-# Let's create a first model-based view using a simple mesh contructed by
+# Let's create a first model-based view using a simple mesh constructed by
 # hand. We create a model with a discrete surface
 gmsh.model.add("simple model")
 surf = gmsh.model.addDiscreteEntity(2)

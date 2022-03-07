@@ -6,7 +6,7 @@
 #ifndef GMSH_H
 #define GMSH_H
 
-// This file redefines the Gmsh C++ API in terms of the C API (v4.9.4).
+// This file redefines the Gmsh C++ API in terms of the C API (v4.10.0).
 //
 // This is provided as a convenience for users of the binary Gmsh SDK whose C++
 // compiler ABI is not compatible with the ABI of the C++ compiler used to create
@@ -121,6 +121,15 @@ namespace gmsh { // Top-level functions
     int ierr = 0;
     gmshInitialize(argc, argv, (int)readConfigFiles, (int)run, &ierr);
     if(ierr) throwLastError();
+  }
+
+  // Return 1 if the Gmsh API is initialized, and 0 if not.
+  inline int isInitialized()
+  {
+    int ierr = 0;
+    int result_api_ = gmshIsInitialized(&ierr);
+    if(ierr) throwLastError();
+    return result_api_;
   }
 
   // Finalize the Gmsh API. This must be called when you are done using the Gmsh
@@ -391,14 +400,16 @@ namespace gmsh { // Top-level functions
 
     // Add a physical group of dimension `dim', grouping the model entities with
     // tags `tags'. Return the tag of the physical group, equal to `tag' if `tag'
-    // is positive, or a new tag if `tag' < 0.
+    // is positive, or a new tag if `tag' < 0. Set the name of the physical group
+    // if `name' is not empty.
     inline int addPhysicalGroup(const int dim,
                                 const std::vector<int> & tags,
-                                const int tag = -1)
+                                const int tag = -1,
+                                const std::string & name = "")
     {
       int ierr = 0;
       int *api_tags_; size_t api_tags_n_; vector2ptr(tags, &api_tags_, &api_tags_n_);
-      int result_api_ = gmshModelAddPhysicalGroup(dim, api_tags_, api_tags_n_, tag, &ierr);
+      int result_api_ = gmshModelAddPhysicalGroup(dim, api_tags_, api_tags_n_, tag, name.c_str(), &ierr);
       if(ierr) throwLastError();
       gmshFree(api_tags_);
       return result_api_;
@@ -971,10 +982,11 @@ namespace gmsh { // Top-level functions
       // direct high-order mesh optimizer, "HighOrderElastic" for high-order
       // elastic smoother, "HighOrderFastCurving" for fast curving algorithm,
       // "Laplace2D" for Laplace smoothing, "Relocate2D" and "Relocate3D" for node
-      // relocation). If `force' is set apply the optimization also to discrete
-      // entities. If `dimTags' is given, only apply the optimizer to the given
-      // entities.
-      inline void optimize(const std::string & method,
+      // relocation, "QuadQuasiStructured" for quad mesh optimization,
+      // "UntangleMeshGeometry" for untangling). If `force' is set apply the
+      // optimization also to discrete entities. If `dimTags' is given, only apply
+      // the optimizer to the given entities.
+      inline void optimize(const std::string & method = "",
                            const bool force = false,
                            const int niter = 1,
                            const gmsh::vectorpair & dimTags = gmsh::vectorpair())
@@ -1487,7 +1499,7 @@ namespace gmsh { // Top-level functions
         int *api_elementTypes_; size_t api_elementTypes_n_; vector2ptr(elementTypes, &api_elementTypes_, &api_elementTypes_n_);
         size_t **api_elementTags_; size_t *api_elementTags_n_, api_elementTags_nn_; vectorvector2ptrptr(elementTags, &api_elementTags_, &api_elementTags_n_, &api_elementTags_nn_);
         size_t **api_nodeTags_; size_t *api_nodeTags_n_, api_nodeTags_nn_; vectorvector2ptrptr(nodeTags, &api_nodeTags_, &api_nodeTags_n_, &api_nodeTags_nn_);
-        gmshModelMeshAddElements(dim, tag, api_elementTypes_, api_elementTypes_n_, (const size_t **)api_elementTags_, api_elementTags_n_, api_elementTags_nn_, (const size_t **)api_nodeTags_, api_nodeTags_n_, api_nodeTags_nn_, &ierr);
+        gmshModelMeshAddElements(dim, tag, api_elementTypes_, api_elementTypes_n_, api_elementTags_, api_elementTags_n_, api_elementTags_nn_, api_nodeTags_, api_nodeTags_n_, api_nodeTags_nn_, &ierr);
         if(ierr) throwLastError();
         gmshFree(api_elementTypes_);
         for(size_t i = 0; i < api_elementTags_nn_; ++i){ gmshFree(api_elementTags_[i]); } gmshFree(api_elementTags_); gmshFree(api_elementTags_n_);
@@ -2431,12 +2443,37 @@ namespace gmsh { // Top-level functions
         coordMaster.assign(api_coordMaster_, api_coordMaster_ + api_coordMaster_n_); gmshFree(api_coordMaster_);
       }
 
-      // Remove duplicate nodes in the mesh of the current model.
-      inline void removeDuplicateNodes()
+      // Import the model STL representation (if available) as the current mesh.
+      inline void importStl()
       {
         int ierr = 0;
-        gmshModelMeshRemoveDuplicateNodes(&ierr);
+        gmshModelMeshImportStl(&ierr);
         if(ierr) throwLastError();
+      }
+
+      // Get the `tags' of any duplicate nodes in the mesh of the entities
+      // `dimTags'. If `dimTags' is empty, consider the whole mesh.
+      inline void getDuplicateNodes(std::vector<std::size_t> & tags,
+                                    const gmsh::vectorpair & dimTags = gmsh::vectorpair())
+      {
+        int ierr = 0;
+        size_t *api_tags_; size_t api_tags_n_;
+        int *api_dimTags_; size_t api_dimTags_n_; vectorpair2intptr(dimTags, &api_dimTags_, &api_dimTags_n_);
+        gmshModelMeshGetDuplicateNodes(&api_tags_, &api_tags_n_, api_dimTags_, api_dimTags_n_, &ierr);
+        if(ierr) throwLastError();
+        tags.assign(api_tags_, api_tags_ + api_tags_n_); gmshFree(api_tags_);
+        gmshFree(api_dimTags_);
+      }
+
+      // Remove duplicate nodes in the mesh of the entities `dimTags'. If `dimTags'
+      // is empty, consider the whole mesh.
+      inline void removeDuplicateNodes(const gmsh::vectorpair & dimTags = gmsh::vectorpair())
+      {
+        int ierr = 0;
+        int *api_dimTags_; size_t api_dimTags_n_; vectorpair2intptr(dimTags, &api_dimTags_, &api_dimTags_n_);
+        gmshModelMeshRemoveDuplicateNodes(api_dimTags_, api_dimTags_n_, &ierr);
+        if(ierr) throwLastError();
+        gmshFree(api_dimTags_);
       }
 
       // Split (into two triangles) all quadrangles in surface `tag' whose quality
@@ -2496,50 +2533,47 @@ namespace gmsh { // Top-level functions
         if(ierr) throwLastError();
       }
 
-      // Compute a basis representation for homology spaces after a mesh has been
-      // generated. The computation domain is given in a list of physical group
-      // tags `domainTags'; if empty, the whole mesh is the domain. The computation
-      // subdomain for relative homology computation is given in a list of physical
-      // group tags `subdomainTags'; if empty, absolute homology is computed. The
-      // dimensions homology bases to be computed are given in the list `dim'; if
-      // empty, all bases are computed. Resulting basis representation chains are
-      // stored as physical groups in the mesh.
-      inline void computeHomology(const std::vector<int> & domainTags = std::vector<int>(),
-                                  const std::vector<int> & subdomainTags = std::vector<int>(),
-                                  const std::vector<int> & dims = std::vector<int>())
+      // Add a request to compute a basis representation for homology spaces (if
+      // `type' == "Homology") or cohomology spaces (if `type' == "Cohomology").
+      // The computation domain is given in a list of physical group tags
+      // `domainTags'; if empty, the whole mesh is the domain. The computation
+      // subdomain for relative (co)homology computation is given in a list of
+      // physical group tags `subdomainTags'; if empty, absolute (co)homology is
+      // computed. The dimensions of the (co)homology bases to be computed are
+      // given in the list `dim'; if empty, all bases are computed. Resulting basis
+      // representation (co)chains are stored as physical groups in the mesh. If
+      // the request is added before mesh generation, the computation will be
+      // performed at the end of the meshing pipeline.
+      inline void addHomologyRequest(const std::string & type = "Homology",
+                                     const std::vector<int> & domainTags = std::vector<int>(),
+                                     const std::vector<int> & subdomainTags = std::vector<int>(),
+                                     const std::vector<int> & dims = std::vector<int>())
       {
         int ierr = 0;
         int *api_domainTags_; size_t api_domainTags_n_; vector2ptr(domainTags, &api_domainTags_, &api_domainTags_n_);
         int *api_subdomainTags_; size_t api_subdomainTags_n_; vector2ptr(subdomainTags, &api_subdomainTags_, &api_subdomainTags_n_);
         int *api_dims_; size_t api_dims_n_; vector2ptr(dims, &api_dims_, &api_dims_n_);
-        gmshModelMeshComputeHomology(api_domainTags_, api_domainTags_n_, api_subdomainTags_, api_subdomainTags_n_, api_dims_, api_dims_n_, &ierr);
+        gmshModelMeshAddHomologyRequest(type.c_str(), api_domainTags_, api_domainTags_n_, api_subdomainTags_, api_subdomainTags_n_, api_dims_, api_dims_n_, &ierr);
         if(ierr) throwLastError();
         gmshFree(api_domainTags_);
         gmshFree(api_subdomainTags_);
         gmshFree(api_dims_);
       }
 
-      // Compute a basis representation for cohomology spaces after a mesh has been
-      // generated. The computation domain is given in a list of physical group
-      // tags `domainTags'; if empty, the whole mesh is the domain. The computation
-      // subdomain for relative cohomology computation is given in a list of
-      // physical group tags `subdomainTags'; if empty, absolute cohomology is
-      // computed. The dimensions homology bases to be computed are given in the
-      // list `dim'; if empty, all bases are computed. Resulting basis
-      // representation cochains are stored as physical groups in the mesh.
-      inline void computeCohomology(const std::vector<int> & domainTags = std::vector<int>(),
-                                    const std::vector<int> & subdomainTags = std::vector<int>(),
-                                    const std::vector<int> & dims = std::vector<int>())
+      // Clear all (co)homology computation requests.
+      inline void clearHomologyRequests()
       {
         int ierr = 0;
-        int *api_domainTags_; size_t api_domainTags_n_; vector2ptr(domainTags, &api_domainTags_, &api_domainTags_n_);
-        int *api_subdomainTags_; size_t api_subdomainTags_n_; vector2ptr(subdomainTags, &api_subdomainTags_, &api_subdomainTags_n_);
-        int *api_dims_; size_t api_dims_n_; vector2ptr(dims, &api_dims_, &api_dims_n_);
-        gmshModelMeshComputeCohomology(api_domainTags_, api_domainTags_n_, api_subdomainTags_, api_subdomainTags_n_, api_dims_, api_dims_n_, &ierr);
+        gmshModelMeshClearHomologyRequests(&ierr);
         if(ierr) throwLastError();
-        gmshFree(api_domainTags_);
-        gmshFree(api_subdomainTags_);
-        gmshFree(api_dims_);
+      }
+
+      // Perform the (co)homology computations requested by addHomologyRequest().
+      inline void computeHomology()
+      {
+        int ierr = 0;
+        gmshModelMeshComputeHomology(&ierr);
+        if(ierr) throwLastError();
       }
 
       // Compute a cross field for the current mesh. The function creates 3 views:
@@ -3388,14 +3422,16 @@ namespace gmsh { // Top-level functions
 
       // Add a physical group of dimension `dim', grouping the entities with tags
       // `tags' in the built-in CAD representation. Return the tag of the physical
-      // group, equal to `tag' if `tag' is positive, or a new tag if `tag' < 0.
+      // group, equal to `tag' if `tag' is positive, or a new tag if `tag' < 0. Set
+      // the name of the physical group if `name' is not empty.
       inline int addPhysicalGroup(const int dim,
                                   const std::vector<int> & tags,
-                                  const int tag = -1)
+                                  const int tag = -1,
+                                  const std::string & name = "")
       {
         int ierr = 0;
         int *api_tags_; size_t api_tags_n_; vector2ptr(tags, &api_tags_, &api_tags_n_);
-        int result_api_ = gmshModelGeoAddPhysicalGroup(dim, api_tags_, api_tags_n_, tag, &ierr);
+        int result_api_ = gmshModelGeoAddPhysicalGroup(dim, api_tags_, api_tags_n_, tag, name.c_str(), &ierr);
         if(ierr) throwLastError();
         gmshFree(api_tags_);
         return result_api_;
@@ -3852,12 +3888,12 @@ namespace gmsh { // Top-level functions
       }
 
       // Add a BSpline surface in the OpenCASCADE CAD representation, filling the
-      // curve loop `wireTag'. The curve loop should be made of 2, 3 or 4 BSpline
-      // curves. The optional `type' argument specifies the type of filling:
-      // "Stretch" creates the flattest patch, "Curved" (the default) creates the
-      // most rounded patch, and "Coons" creates a rounded patch with less depth
-      // than "Curved". If `tag' is positive, set the tag explicitly; otherwise a
-      // new tag is selected automatically. Return the tag of the surface.
+      // curve loop `wireTag'. The curve loop should be made of 2, 3 or 4 curves.
+      // The optional `type' argument specifies the type of filling: "Stretch"
+      // creates the flattest patch, "Curved" (the default) creates the most
+      // rounded patch, and "Coons" creates a rounded patch with less depth than
+      // "Curved". If `tag' is positive, set the tag explicitly; otherwise a new
+      // tag is selected automatically. Return the tag of the surface.
       inline int addBSplineFilling(const int wireTag,
                                    const int tag = -1,
                                    const std::string & type = "")
@@ -4565,8 +4601,7 @@ namespace gmsh { // Top-level functions
 
       // Apply various healing procedures to the entities `dimTags' (or to all the
       // entities in the model if `dimTags' is empty) in the OpenCASCADE CAD
-      // representation. Return the healed entities in `outDimTags'. Available
-      // healing options are listed in the Gmsh reference manual.
+      // representation. Return the healed entities in `outDimTags'.
       inline void healShapes(gmsh::vectorpair & outDimTags,
                              const gmsh::vectorpair & dimTags = gmsh::vectorpair(),
                              const double tolerance = 1e-8,
@@ -4582,6 +4617,16 @@ namespace gmsh { // Top-level functions
         gmshModelOccHealShapes(&api_outDimTags_, &api_outDimTags_n_, api_dimTags_, api_dimTags_n_, tolerance, (int)fixDegenerated, (int)fixSmallEdges, (int)fixSmallFaces, (int)sewFaces, (int)makeSolids, &ierr);
         if(ierr) throwLastError();
         outDimTags.resize(api_outDimTags_n_ / 2); for(size_t i = 0; i < api_outDimTags_n_ / 2; ++i){ outDimTags[i].first = api_outDimTags_[i * 2 + 0]; outDimTags[i].second = api_outDimTags_[i * 2 + 1]; } gmshFree(api_outDimTags_);
+        gmshFree(api_dimTags_);
+      }
+
+      // Convert the entities `dimTags' to NURBS.
+      inline void convertToNURBS(const gmsh::vectorpair & dimTags)
+      {
+        int ierr = 0;
+        int *api_dimTags_; size_t api_dimTags_n_; vectorpair2intptr(dimTags, &api_dimTags_, &api_dimTags_n_);
+        gmshModelOccConvertToNURBS(api_dimTags_, api_dimTags_n_, &ierr);
+        if(ierr) throwLastError();
         gmshFree(api_dimTags_);
       }
 
@@ -4670,6 +4715,30 @@ namespace gmsh { // Top-level functions
         int ierr = 0;
         gmshModelOccGetBoundingBox(dim, tag, &xmin, &ymin, &zmin, &xmax, &ymax, &zmax, &ierr);
         if(ierr) throwLastError();
+      }
+
+      // Get the `tags' of the curve loops making up the surface of tag
+      // `surfaceTag'.
+      inline void getCurveLoops(const int surfaceTag,
+                                std::vector<int> & tags)
+      {
+        int ierr = 0;
+        int *api_tags_; size_t api_tags_n_;
+        gmshModelOccGetCurveLoops(surfaceTag, &api_tags_, &api_tags_n_, &ierr);
+        if(ierr) throwLastError();
+        tags.assign(api_tags_, api_tags_ + api_tags_n_); gmshFree(api_tags_);
+      }
+
+      // Get the `tags' of the surface loops making up the volume of tag
+      // `volumeTag'.
+      inline void getSurfaceLoops(const int volumeTag,
+                                  std::vector<int> & tags)
+      {
+        int ierr = 0;
+        int *api_tags_; size_t api_tags_n_;
+        gmshModelOccGetSurfaceLoops(volumeTag, &api_tags_, &api_tags_n_, &ierr);
+        if(ierr) throwLastError();
+        tags.assign(api_tags_, api_tags_ + api_tags_n_); gmshFree(api_tags_);
       }
 
       // Get the mass of the OpenCASCADE entity of dimension `dim' and tag `tag'.
@@ -4830,7 +4899,7 @@ namespace gmsh { // Top-level functions
       int ierr = 0;
       size_t *api_tags_; size_t api_tags_n_; vector2ptr(tags, &api_tags_, &api_tags_n_);
       double **api_data_; size_t *api_data_n_, api_data_nn_; vectorvector2ptrptr(data, &api_data_, &api_data_n_, &api_data_nn_);
-      gmshViewAddModelData(tag, step, modelName.c_str(), dataType.c_str(), api_tags_, api_tags_n_, (const double **)api_data_, api_data_n_, api_data_nn_, time, numComponents, partition, &ierr);
+      gmshViewAddModelData(tag, step, modelName.c_str(), dataType.c_str(), api_tags_, api_tags_n_, api_data_, api_data_n_, api_data_nn_, time, numComponents, partition, &ierr);
       if(ierr) throwLastError();
       gmshFree(api_tags_);
       for(size_t i = 0; i < api_data_nn_; ++i){ gmshFree(api_data_[i]); } gmshFree(api_data_); gmshFree(api_data_n_);
@@ -5423,6 +5492,87 @@ namespace gmsh { // Top-level functions
 
   } // namespace fltk
 
+  namespace parser { // Parser functions
+
+    // Get the names of the variables in the Gmsh parser matching the `search'
+    // regular expression. If `search' is empty, return all the names.
+    inline void getNames(std::vector<std::string> & names,
+                         const std::string & search = "")
+    {
+      int ierr = 0;
+      char **api_names_; size_t api_names_n_;
+      gmshParserGetNames(&api_names_, &api_names_n_, search.c_str(), &ierr);
+      if(ierr) throwLastError();
+      names.resize(api_names_n_); for(size_t i = 0; i < api_names_n_; ++i){ names[i] = std::string(api_names_[i]); gmshFree(api_names_[i]); } gmshFree(api_names_);
+    }
+
+    // Set the value of the number variable `name' in the Gmsh parser. Create the
+    // variable if it does not exist; update the value if the variable exists.
+    inline void setNumber(const std::string & name,
+                          const std::vector<double> & value)
+    {
+      int ierr = 0;
+      double *api_value_; size_t api_value_n_; vector2ptr(value, &api_value_, &api_value_n_);
+      gmshParserSetNumber(name.c_str(), api_value_, api_value_n_, &ierr);
+      if(ierr) throwLastError();
+      gmshFree(api_value_);
+    }
+
+    // Set the value of the string variable `name' in the Gmsh parser. Create the
+    // variable if it does not exist; update the value if the variable exists.
+    inline void setString(const std::string & name,
+                          const std::vector<std::string> & value)
+    {
+      int ierr = 0;
+      char **api_value_; size_t api_value_n_; vectorstring2charptrptr(value, &api_value_, &api_value_n_);
+      gmshParserSetString(name.c_str(), api_value_, api_value_n_, &ierr);
+      if(ierr) throwLastError();
+      for(size_t i = 0; i < api_value_n_; ++i){ gmshFree(api_value_[i]); } gmshFree(api_value_);
+    }
+
+    // Get the value of the number variable `name' from the Gmsh parser. Return an
+    // empty vector if the variable does not exist.
+    inline void getNumber(const std::string & name,
+                          std::vector<double> & value)
+    {
+      int ierr = 0;
+      double *api_value_; size_t api_value_n_;
+      gmshParserGetNumber(name.c_str(), &api_value_, &api_value_n_, &ierr);
+      if(ierr) throwLastError();
+      value.assign(api_value_, api_value_ + api_value_n_); gmshFree(api_value_);
+    }
+
+    // Get the value of the string variable `name' from the Gmsh parser. Return an
+    // empty vector if the variable does not exist.
+    inline void getString(const std::string & name,
+                          std::vector<std::string> & value)
+    {
+      int ierr = 0;
+      char **api_value_; size_t api_value_n_;
+      gmshParserGetString(name.c_str(), &api_value_, &api_value_n_, &ierr);
+      if(ierr) throwLastError();
+      value.resize(api_value_n_); for(size_t i = 0; i < api_value_n_; ++i){ value[i] = std::string(api_value_[i]); gmshFree(api_value_[i]); } gmshFree(api_value_);
+    }
+
+    // Clear all the Gmsh parser variables, or remove a single variable if `name'
+    // is given.
+    inline void clear(const std::string & name = "")
+    {
+      int ierr = 0;
+      gmshParserClear(name.c_str(), &ierr);
+      if(ierr) throwLastError();
+    }
+
+    // Parse the file `fileName' with the Gmsh parser.
+    inline void parse(const std::string & fileName)
+    {
+      int ierr = 0;
+      gmshParserParse(fileName.c_str(), &ierr);
+      if(ierr) throwLastError();
+    }
+
+  } // namespace parser
+
   namespace onelab { // ONELAB server functions
 
     // Set one or more parameters in the ONELAB database, encoded in `format'.
@@ -5507,6 +5657,26 @@ namespace gmsh { // Top-level functions
       gmshOnelabGetString(name.c_str(), &api_value_, &api_value_n_, &ierr);
       if(ierr) throwLastError();
       value.resize(api_value_n_); for(size_t i = 0; i < api_value_n_; ++i){ value[i] = std::string(api_value_[i]); gmshFree(api_value_[i]); } gmshFree(api_value_);
+    }
+
+    // Check if any parameters in the ONELAB database used by the client `name'
+    // have been changed.
+    inline int getChanged(const std::string & name)
+    {
+      int ierr = 0;
+      int result_api_ = gmshOnelabGetChanged(name.c_str(), &ierr);
+      if(ierr) throwLastError();
+      return result_api_;
+    }
+
+    // Set the changed flag to value `value' for all the parameters in the ONELAB
+    // database used by the client `name'.
+    inline void setChanged(const std::string & name,
+                           const int value)
+    {
+      int ierr = 0;
+      gmshOnelabSetChanged(name.c_str(), value, &ierr);
+      if(ierr) throwLastError();
     }
 
     // Clear the ONELAB database, or remove a single parameter if `name' is given.

@@ -372,6 +372,9 @@ public:
                   double tolerance, bool fixDegenerated, bool fixSmallEdges,
                   bool fixSmallFaces, bool sewFaces, bool makeSolids);
 
+  // convert shapes to NURBS
+  bool convertToNURBS(const std::vector<std::pair<int, int> > &dimTags);
+
   // set meshing constraints
   void setMeshSize(int dim, int tag, double size);
 
@@ -391,6 +394,8 @@ public:
                                 double xmax, double ymax, double zmax,
                                 std::vector<std::pair<int, int> > &dimTags,
                                 int dim);
+  bool getCurveLoops(int surfaceTag, std::vector<int> &tags);
+  bool getSurfaceLoops(int volumeTag, std::vector<int> &tags);
   bool getMass(int dim, int tag, double &mass);
   bool getCenterOfMass(int dim, int tag, double &x, double &y, double &z);
   bool getMatrixOfInertia(int dim, int tag, std::vector<double> &mat);
@@ -597,7 +602,7 @@ public:
   bool addBox(int &tag, double x, double y, double z, double dx, double dy,
               double dz)
   {
-    return _error("add block");
+    return _error("add box");
   }
   bool addCylinder(int &tag, double x, double y, double z, double dx, double dy,
                    double dz, double r, double angle)
@@ -768,6 +773,10 @@ public:
   {
     return _error("heal shapes");
   }
+  bool convertToNURBS(const std::vector<std::pair<int, int> > &dimTags)
+  {
+    return _error("convert to NURBS");
+  }
   void setMeshSize(int dim, int tag, double size) {}
   void synchronize(GModel *model) {}
   bool exportShapes(GModel *model, const std::string &fileName,
@@ -789,6 +798,14 @@ public:
                                 double xmax, double ymax, double zmax,
                                 std::vector<std::pair<int, int> > &dimTags,
                                 int dim)
+  {
+    return false;
+  }
+  bool getCurveLoops(int surfaceTag, std::vector<int> &tags)
+  {
+    return false;
+  }
+  bool getSurfaceLoops(int volumeTag, std::vector<int> &tags)
   {
     return false;
   }

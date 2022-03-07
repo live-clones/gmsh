@@ -237,6 +237,7 @@ void GFace::resetMeshAttributes()
   meshAttributes.meshSizeFactor = 1.;
   meshAttributes.algorithm = 0;
   meshAttributes.meshSizeFromBoundary = -1;
+  meshAttributes.transfinite3 = false;
 }
 
 SBoundingBox3d GFace::bounds(bool fast)
@@ -347,7 +348,7 @@ std::vector<MVertex *> GFace::getEmbeddedMeshVertices(bool force) const
 
 std::vector<GVertex *> GFace::vertices() const
 {
-  std::set<GVertex *> v;
+  std::set<GVertex *, GEntityPtrLessThan> v;
   for(auto ge : l_edges) {
     GVertex *const v1 = ge->getBeginVertex();
     if(v1) v.insert(v1);
@@ -1084,9 +1085,9 @@ void GFace::XYZtoUV(double X, double Y, double Z, double &U, double &V,
   if(!onSurface) return;
 
   if(relax < 1.e-3)
-    Msg::Error("Inverse surface mapping could not converge");
+    Msg::Warning("Inverse surface mapping could not converge");
   else {
-    Msg::Info("point %g %g %g : Relaxation factor = %g", X, Y, Z, 0.75 * relax);
+    Msg::Info("Point %g %g %g: Relaxation factor = %g", X, Y, Z, 0.75 * relax);
     XYZtoUV(X, Y, Z, U, V, 0.75 * relax, onSurface, convTestXYZ);
   }
 }
@@ -1507,6 +1508,34 @@ bool GFace::fillVertexArray(bool force)
     }
   }
   va_geom_triangles->finalize();
+  return true;
+}
+
+bool GFace::storeSTLTriangulationAsMesh()
+{
+  deleteMesh();
+  if(stl_vertices_xyz.size()) {
+    for(std::size_t i = 0; i < stl_vertices_xyz.size(); i++) {
+      SPoint3 &p(stl_vertices_xyz[i]);
+      mesh_vertices.push_back(new MVertex(p.x(), p.y(), p.z(), this));
+    }
+  }
+  else if(stl_vertices_uv.size()) {
+    for(std::size_t i = 0; i < stl_vertices_uv.size(); i++) {
+      SPoint2 &p(stl_vertices_uv[i]);
+      GPoint gp = point(p);
+      mesh_vertices.push_back(new MFaceVertex(gp.x(), gp.y(), gp.z(),
+                                              this, p.x(), p.y()));
+    }
+  }
+  else {
+    return false;
+  }
+  for(std::size_t i = 0; i < stl_triangles.size(); i += 3) {
+    triangles.push_back(new MTriangle(mesh_vertices[stl_triangles[i]],
+                                      mesh_vertices[stl_triangles[i + 1]],
+                                      mesh_vertices[stl_triangles[i + 2]]));
+  }
   return true;
 }
 

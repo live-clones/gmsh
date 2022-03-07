@@ -480,7 +480,7 @@ void RefineMesh(GModel *m, bool linear, bool splitIntoQuads,
   if(CTX::instance()->mesh.hoOptimize == 4)
     OptimizeMesh(m, "HighOrderFastCurving");
 
-  // store periodic node correspondances
+  // store periodic node correspondences
   FixPeriodicMesh(m);
 
   // only used when splitting tets into hexes

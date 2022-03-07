@@ -107,8 +107,8 @@ opt(WRAP_PYTHON "Generate SWIG Python wrappers for private API (not used by publ
 opt(ZIPPER "Enable Zip file compression/decompression" OFF)
 
 set(GMSH_MAJOR_VERSION 4)
-set(GMSH_MINOR_VERSION 9)
-set(GMSH_PATCH_VERSION 4)
+set(GMSH_MINOR_VERSION 10)
+set(GMSH_PATCH_VERSION 0)
 if(NOT GMSH_EXTRA_VERSION)
   set(GMSH_EXTRA_VERSION "")
 endif()
@@ -203,6 +203,8 @@ endif()
 
 if(APPLE)
   set(GMSH_OS "MacOSX")
+  # build universal binary
+  #SET(CMAKE_OSX_ARCHITECTURES "x86_64;arm64" CACHE STRING "Build architectures for macOS" FORCE)
 elseif(CYGWIN OR MSYS)
   # detect if we use the MinGW compilers on Cygwin - if we do, handle the build
   # as a pure Windows build and make cmake find pure Windows import libraries
@@ -1281,10 +1283,13 @@ if(ENABLE_OCC)
       set(OCC_LIBS)
       foreach(OCC ${OCC_LIBS_REQUIRED})
         find_library(OCC_LIB ${OCC} HINTS ENV CASROOT PATH_SUFFIXES
-                     lib ${OCC_SYS_NAME}/lib ${OCC_SYS_NAME}/vc8/lib
-                     ${OCC_SYS_NAME}/gcc/lib ${OCC_SYS_NAME}/gcc/bin)
+                     lib ${OCC_SYS_NAME}/vc8/lib  ${OCC_SYS_NAME}/vc9/lib
+                         ${OCC_SYS_NAME}/vc10/lib ${OCC_SYS_NAME}/vc11/lib
+                         ${OCC_SYS_NAME}/vc12/lib ${OCC_SYS_NAME}/vc14/lib
+                         ${OCC_SYS_NAME}/gcc/lib  ${OCC_SYS_NAME}/gcc/bin
+                         ${OCC_SYS_NAME}/lib)
         if(OCC_LIB)
-	  list(APPEND OCC_LIBS ${OCC_LIB})
+          list(APPEND OCC_LIBS ${OCC_LIB})
         else()
           message(STATUS "OCC lib " ${OCC} " not Found")
         endif()
@@ -1304,8 +1309,11 @@ if(ENABLE_OCC)
       set(OCC_CAF_LIBS)
       foreach(OCC ${OCC_CAF_LIBS_REQUIRED})
         find_library(OCC_CAF_LIB ${OCC} HINTS ENV CASROOT PATH_SUFFIXES
-                     lib ${OCC_SYS_NAME}/lib ${OCC_SYS_NAME}/vc8/lib
-                     ${OCC_SYS_NAME}/gcc/lib ${OCC_SYS_NAME}/gcc/bin)
+                     lib ${OCC_SYS_NAME}/vc8/lib  ${OCC_SYS_NAME}/vc9/lib
+                         ${OCC_SYS_NAME}/vc10/lib ${OCC_SYS_NAME}/vc11/lib
+                         ${OCC_SYS_NAME}/vc12/lib ${OCC_SYS_NAME}/vc14/lib
+                         ${OCC_SYS_NAME}/gcc/lib  ${OCC_SYS_NAME}/gcc/bin
+                         ${OCC_SYS_NAME}/lib)
         if(OCC_CAF_LIB)
           list(APPEND OCC_CAF_LIBS ${OCC_CAF_LIB})
         else()
@@ -1332,14 +1340,8 @@ if(ENABLE_OCC)
     set_config_option(HAVE_OCC "OpenCASCADE")
     list(APPEND EXTERNAL_LIBRARIES ${OCC_LIBS})
     list(APPEND EXTERNAL_INCLUDES ${OCC_INC})
-    if(HAVE_64BIT_SIZE_T)
-      add_definitions(-D_OCC64)
-    endif()
-    if(WIN32)
-      list(APPEND EXTERNAL_LIBRARIES "winspool")
+    if(WIN32 AND NOT MSVC)
       add_definitions(-DOCC_CONVERT_SIGNALS)
-    elseif(MSVC)
-      add_definitions(-DWNT)
     endif()
   endif()
 endif()
@@ -1673,6 +1675,10 @@ if(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
   if(WIN32)
     set_target_properties(shared PROPERTIES PREFIX "" IMPORT_PREFIX ""
       IMPORT_SUFFIX ".lib" COMPILE_FLAGS "-DGMSH_DLL -DGMSH_DLL_EXPORT")
+  elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang" AND NOT ENABLE_PRIVATE_API)
+    # hide all symbols by default (if not exporting the private API); symbols to
+    # export should be marked with __attribute__ ((visibility("default")))
+    set_target_properties(shared PROPERTIES COMPILE_FLAGS "-fvisibility=hidden")
   endif()
   target_link_libraries(shared ${LINK_LIBRARIES})
   # don't define LC_RPATH in dylib for development, to not get endless warnings

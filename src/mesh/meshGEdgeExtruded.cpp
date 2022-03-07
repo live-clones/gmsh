@@ -121,7 +121,7 @@ int MeshExtrudedCurve(GEdge *ge)
 
     copyMesh(from, ge);
     if(ge->getMeshMaster() == from) {
-      // explicit periodic constraint, to store node correspondance
+      // explicit periodic constraint, to store node correspondence
       ge->setMeshMaster(from, ge->affineTransform);
     }
   }

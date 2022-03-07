@@ -80,7 +80,7 @@ public:
 
   // add/delete a face bounded by this edge
   void addFace(GFace *f);
-  void delFace(GFace *f);
+  virtual void delFace(GFace *f);
 
   // get the dimension of the edge (1)
   virtual int dim() const { return 1; }

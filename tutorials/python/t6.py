@@ -14,7 +14,7 @@ gmsh.initialize()
 
 gmsh.model.add("t6")
 
-# Copied from t1.py...
+# Copied from `t1.py'...
 lc = 1e-2
 gmsh.model.geo.addPoint(0, 0, 0, lc, 1)
 gmsh.model.geo.addPoint(.1, 0, 0, lc, 2)

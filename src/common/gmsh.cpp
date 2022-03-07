@@ -4,6 +4,8 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <sstream>
+#include <regex>
+
 #include "GmshConfig.h"
 #include "GmshDefines.h"
 #include "GmshGlobal.h"
@@ -35,6 +37,7 @@
 #include "MHexahedron.h"
 #include "MPrism.h"
 #include "MPyramid.h"
+#include "MVertexRTree.h"
 #include "ExtrudeParams.h"
 #include "StringUtils.h"
 #include "Context.h"
@@ -42,6 +45,7 @@
 #include "pyramidalBasis.h"
 #include "Numeric.h"
 #include "OS.h"
+#include "OpenFile.h"
 #include "HierarchicalBasisH1Quad.h"
 #include "HierarchicalBasisH1Tria.h"
 #include "HierarchicalBasisH1Line.h"
@@ -88,6 +92,10 @@
 #include "FlGui.h"
 #endif
 
+#if defined(HAVE_PARSER)
+#include "Parser.h"
+#endif
+
 #if defined(HAVE_ONELAB)
 #include "onelab.h"
 #include "onelabUtils.h"
@@ -118,8 +126,8 @@ static bool _checkInit()
 
 // gmsh
 
-GMSH_API void gmsh::initialize(int argc, char **argv, bool readConfigFiles,
-                               bool run)
+GMSH_API void gmsh::initialize(int argc, char ** argv,
+                               const bool readConfigFiles, const bool run)
 {
   if(_initialized) {
     Msg::Warning("Gmsh has aleady been initialized");
@@ -155,6 +163,11 @@ GMSH_API void gmsh::initialize(int argc, char **argv, bool readConfigFiles,
     return;
   }
   Msg::Error("Something went wrong when initializing Gmsh");
+}
+
+GMSH_API int gmsh::isInitialized()
+{
+  return _initialized;
 }
 
 GMSH_API void gmsh::finalize()
@@ -419,13 +432,15 @@ gmsh::model::getPhysicalGroupsForEntity(const int dim, const int tag,
     return;
   }
   std::vector<int> phy = ge->getPhysicalEntities();
+  if(phy.empty()) return;
   physicalTags.resize(phy.size());
   for(std::size_t i = 0; i < phy.size(); i++) { physicalTags[i] = phy[i]; }
 }
 
 GMSH_API int gmsh::model::addPhysicalGroup(const int dim,
                                            const std::vector<int> &tags,
-                                           const int tag)
+                                           const int tag,
+                                           const std::string &name)
 {
   // FIXME: 1) the "master" physical group definitions are still stored in the
   // buil-in CAD kernel, so that built-in CAD operations (e.g. Coherence) can
@@ -447,6 +462,7 @@ GMSH_API int gmsh::model::addPhysicalGroup(const int dim,
     return -1;
   }
   GModel::current()->addPhysicalGroup(dim, outTag, tags);
+  if(!name.empty()) GModel::current()->setPhysicalName(name, dim, outTag);
   return outTag;
 }
 
@@ -1321,7 +1337,8 @@ GMSH_API void gmsh::model::mesh::setOrder(const int order)
 {
   if(!_checkInit()) return;
   GModel::current()->setOrderN(order, CTX::instance()->mesh.secondOrderLinear,
-                               CTX::instance()->mesh.secondOrderIncomplete);
+                               CTX::instance()->mesh.secondOrderIncomplete,
+                               CTX::instance()->mesh.meshOnlyVisible);
   CTX::instance()->mesh.changed = ENT_ALL;
 }
 
@@ -4234,6 +4251,7 @@ GMSH_API void gmsh::model::mesh::getKeysInformation(
   basis->getKeysInfo(functionTypeInfo, orderInfo);
   delete basis;
   std::size_t keySize = typeKeys.size();
+  if(!keySize) return;
   infoKeys.resize(keySize);
   std::size_t it = keySize / numDofsPerElement;
   for(std::size_t i = 0; i < it; i++) {
@@ -4265,6 +4283,7 @@ GMSH_API void gmsh::model::mesh::getBarycenters(
     Msg::Error("Number of tasks should be > 0");
     return;
   }
+  if(!numElements) return;
   const size_t begin = (task * numElements) / numTasks;
   const size_t end = ((task + 1) * numElements) / numTasks;
   if(3 * end > barycenters.size()) {
@@ -4370,6 +4389,7 @@ GMSH_API void gmsh::model::mesh::preallocateBarycenters(
   for(std::size_t i = 0; i < entities.size(); i++)
     numElements += entities[i]->getNumMeshElementsByType(familyType);
   barycenters.clear();
+  if(!numElements) return;
   barycenters.resize(3 * numElements, 0);
 }
 
@@ -4406,6 +4426,7 @@ GMSH_API void gmsh::model::mesh::getElementEdgeNodes(
     Msg::Error("Number of tasks should be > 0");
     return;
   }
+  if(!numElements || !numEdgesPerEle || !numNodesPerEdge) return;
   const size_t begin = (task * numElements) / numTasks;
   const size_t end = ((task + 1) * numElements) / numTasks;
   if(numEdgesPerEle * numNodesPerEdge * end > nodeTags.size()) {
@@ -4456,25 +4477,31 @@ GMSH_API void gmsh::model::mesh::getElementFaceNodes(
       MElement *e = ge->getMeshElementByType(familyType, 0);
       int nf = e->getNumFaces();
       numFacesPerEle = 0;
-      for(int j = 0; j < nf; j++) {
-        MFace f = e->getFace(j);
-        if(faceType == (int)f.getNumVertices()) numFacesPerEle++;
-      }
-      if(primary) { numNodesPerFace = faceType; }
-      else {
-        std::vector<MVertex *> v;
-        // we could use e->getHighOrderFace() here if we decide to remove
-        // getFaceVertices
-        e->getFaceVertices(0, v);
-        numNodesPerFace = v.size();
+      for(int k = 0; k < nf; k++) {
+        MFace f = e->getFace(k);
+        if(faceType == (int)f.getNumVertices()) {
+          numFacesPerEle++;
+          if(!numNodesPerFace) {
+            if(primary) { numNodesPerFace = faceType; }
+            else {
+              std::vector<MVertex *> v;
+              // we could use e->getHighOrderFace() here if we decide to remove
+              // getFaceVertices
+              e->getFaceVertices(k, v);
+              numNodesPerFace = v.size();
+            }
+          }
+        }
       }
     }
     numElements += n;
   }
+
   if(!numTasks) {
     Msg::Error("Number of tasks should be > 0");
     return;
   }
+  if(!numElements || !numFacesPerEle || !numNodesPerFace) return;
   const size_t begin = (task * numElements) / numTasks;
   const size_t end = ((task + 1) * numElements) / numTasks;
   if(numFacesPerEle * numNodesPerFace * end > nodeTags.size()) {
@@ -5186,9 +5213,12 @@ GMSH_API void gmsh::model::mesh::getPeriodicKeys(
   entityKeysMaster = entityKeys;
   coordMaster = coord;
 
+  int nthreads = CTX::instance()->numThreads;
+  if(!nthreads) nthreads = Msg::GetMaxThreads();
+
   if(functionSpaceType == "IsoParametric" ||
      functionSpaceType == "Lagrange") {
-#pragma omp parallel for
+#pragma omp parallel for num_threads(nthreads)
     for(std::size_t i = 0; i < entityKeys.size(); i++) {
       MVertex v(0., 0., 0., nullptr, entityKeys[i]);
       auto mv = ge->correspondingVertices.find(&v);
@@ -5223,12 +5253,46 @@ GMSH_API void gmsh::model::mesh::getPeriodicKeys(
   }
 }
 
-GMSH_API void gmsh::model::mesh::removeDuplicateNodes()
+GMSH_API void gmsh::model::mesh::getDuplicateNodes(std::vector<std::size_t> &nodeTags,
+                                                   const vectorpair &dimTags)
 {
   if(!_checkInit()) return;
+  GModel *m = GModel::current();
+  SBoundingBox3d bbox = m->bounds();
+  double lc = bbox.empty() ? 1. : bbox.diag();
+  double eps = lc * CTX::instance()->geom.tolerance;
+  std::vector<GEntity *> entities;
+  _getEntities(dimTags, entities);
+  std::vector<MVertex *> vertices;
+  for(std::size_t i = 0; i < entities.size(); i++) {
+    vertices.insert(vertices.end(), entities[i]->mesh_vertices.begin(),
+                    entities[i]->mesh_vertices.end());
+  }
+  MVertexRTree pos(eps);
+  std::set<MVertex *, MVertexPtrLessThan> duplicates;
+  pos.insert(vertices, true, &duplicates);
+  for(auto n : duplicates) nodeTags.push_back(n->getNum());
+}
+
+GMSH_API void gmsh::model::mesh::removeDuplicateNodes(const vectorpair &dimTags)
+{
+  if(!_checkInit()) return;
+  std::vector<GEntity *> entities;
+  _getEntities(dimTags, entities);
   GModel::current()->removeDuplicateMeshVertices(
-    CTX::instance()->geom.tolerance);
+    CTX::instance()->geom.tolerance, entities);
   CTX::instance()->mesh.changed = ENT_ALL;
+}
+
+GMSH_API void gmsh::model::mesh::importStl()
+{
+  if(!_checkInit()) return;
+  GModel *m = GModel::current();
+  m->deleteMesh();
+  for(auto it = m->firstFace(); it != m->lastFace(); it++) {
+    (*it)->buildSTLTriangulation();
+    (*it)->storeSTLTriangulationAsMesh();
+  }
 }
 
 GMSH_API void gmsh::model::mesh::classifySurfaces(
@@ -5267,23 +5331,28 @@ GMSH_API void gmsh::model::mesh::createTopology(const bool makeSimplyConnected,
 }
 
 GMSH_API void
-gmsh::model::mesh::computeHomology(const std::vector<int> &domainTags,
-                                   const std::vector<int> &subdomainTags,
-                                   const std::vector<int> &dims)
+gmsh::model::mesh::addHomologyRequest(const std::string &type,
+                                      const std::vector<int> &domainTags,
+                                      const std::vector<int> &subdomainTags,
+                                      const std::vector<int> &dims)
 {
   if(!_checkInit()) return;
-  GModel::current()->addHomologyRequest("Homology", domainTags, subdomainTags,
+  GModel::current()->addHomologyRequest(type, domainTags, subdomainTags,
                                         dims);
 }
 
 GMSH_API void
-gmsh::model::mesh::computeCohomology(const std::vector<int> &domainTags,
-                                     const std::vector<int> &subdomainTags,
-                                     const std::vector<int> &dims)
+gmsh::model::mesh::clearHomologyRequests()
 {
   if(!_checkInit()) return;
-  GModel::current()->addHomologyRequest("Cohomology", domainTags, subdomainTags,
-                                        dims);
+  GModel::current()->clearHomologyRequests();
+}
+
+GMSH_API void
+gmsh::model::mesh::computeHomology()
+{
+  if(!_checkInit()) return;
+  GModel::current()->computeHomology();
 }
 
 GMSH_API void gmsh::model::mesh::generateMesh(const int dim, const int tag, const bool refine, const std::vector<double> &coord)
@@ -5365,12 +5434,36 @@ GMSH_API void gmsh::model::mesh::triangulate(const std::vector<double> &coord,
                                              std::vector<std::size_t> &tri)
 {
   if(!_checkInit()) return;
+  tri.clear();
   if(coord.size() % 2) {
     Msg::Error("Number of 2D coordinates should be even");
     return;
   }
 #if defined(HAVE_MESH)
-  meshTriangulate2d(coord,tri);
+  SBoundingBox3d bbox;
+  for(std::size_t i = 0; i < coord.size(); i += 2)
+    bbox += SPoint3(coord[i], coord[i + 1], 0.);
+  double lc = 10. * norm(SVector3(bbox.max(), bbox.min()));
+  std::vector<MVertex *> verts(coord.size() / 2);
+  std::size_t j = 0;
+  for(std::size_t i = 0; i < coord.size(); i += 2) {
+    double XX = 1.e-12 * lc * (double)rand() / (double)RAND_MAX;
+    double YY = 1.e-12 * lc * (double)rand() / (double)RAND_MAX;
+    MVertex *v = new MVertex(coord[i] + XX, coord[i + 1] + YY, 0.);
+    v->setIndex(j);
+    verts[j++] = v;
+  }
+  std::vector<MTriangle *> tris;
+  delaunayMeshIn2D(verts, tris);
+  if(tris.empty()) return;
+  tri.resize(3 * tris.size());
+  for(std::size_t i = 0; i < tris.size(); i++) {
+    MTriangle *t = tris[i];
+    for(std::size_t j = 0; j < 3; j++)
+      tri[3 * i + j] = t->getVertex(j)->getIndex() + 1; // start at 1
+  }
+  for(std::size_t i = 0; i < verts.size(); i++) delete verts[i];
+  for(std::size_t i = 0; i < tris.size(); i++) delete tris[i];
 #else
   Msg::Error("triangulate requires the mesh module");
 #endif
@@ -5381,6 +5474,7 @@ gmsh::model::mesh::tetrahedralize(const std::vector<double> &coord,
                                   std::vector<std::size_t> &tetra)
 {
   if(!_checkInit()) return;
+  tetra.clear();
   if(coord.size() % 3) {
     Msg::Error("Number of coordinates should be a multiple of 3");
     return;
@@ -5398,6 +5492,7 @@ gmsh::model::mesh::tetrahedralize(const std::vector<double> &coord,
     delaunayMeshIn3DHxt(verts, tets);
   else
     delaunayMeshIn3D(verts, tets, true);
+  if(tets.empty()) return;
   tetra.resize(4 * tets.size());
   for(std::size_t i = 0; i < tets.size(); i++) {
     MTetrahedron *t = tets[i];
@@ -6012,7 +6107,8 @@ GMSH_API void gmsh::model::geo::setMaxTag(const int dim, const int maxTag)
 
 GMSH_API int gmsh::model::geo::addPhysicalGroup(const int dim,
                                                 const std::vector<int> &tags,
-                                                const int tag)
+                                                const int tag,
+                                                const std::string &name)
 {
   if(!_checkInit()) return -1;
   int outTag = tag;
@@ -6020,6 +6116,7 @@ GMSH_API int gmsh::model::geo::addPhysicalGroup(const int dim,
     outTag = GModel::current()->getGEOInternals()->getMaxPhysicalTag() + 1;
   GModel::current()->getGEOInternals()->modifyPhysicalGroup(dim, outTag, 0,
                                                             tags);
+  if(!name.empty()) GModel::current()->setPhysicalName(name, dim, outTag);
   return outTag;
 }
 
@@ -6735,6 +6832,13 @@ GMSH_API void gmsh::model::occ::healShapes(
     fixSmallFaces, sewFaces, makeSolids);
 }
 
+GMSH_API void gmsh::model::occ::convertToNURBS(const vectorpair &inDimTags)
+{
+  if(!_checkInit()) return;
+  _createOcc();
+  GModel::current()->getOCCInternals()->convertToNURBS(inDimTags);
+}
+
 GMSH_API void gmsh::model::occ::importShapes(const std::string &fileName,
                                              vectorpair &outDimTags,
                                              const bool highestDimOnly,
@@ -6788,6 +6892,22 @@ GMSH_API void gmsh::model::occ::getBoundingBox(const int dim, const int tag,
   _createOcc();
   GModel::current()->getOCCInternals()->getBoundingBox(dim, tag, xmin, ymin,
                                                        zmin, xmax, ymax, zmax);
+}
+
+GMSH_API void gmsh::model::occ::getCurveLoops(const int surfaceTag,
+                                              std::vector<int> &tags)
+{
+  if(!_checkInit()) return;
+  _createOcc();
+  GModel::current()->getOCCInternals()->getCurveLoops(surfaceTag, tags);
+}
+
+GMSH_API void gmsh::model::occ::getSurfaceLoops(const int volumeTag,
+                                                std::vector<int> &tags)
+{
+  if(!_checkInit()) return;
+  _createOcc();
+  GModel::current()->getOCCInternals()->getSurfaceLoops(volumeTag, tags);
 }
 
 GMSH_API void gmsh::model::occ::getMass(const int dim, const int tag,
@@ -8111,6 +8231,118 @@ GMSH_API void gmsh::fltk::closeTreeItem(const std::string &name)
 #endif
 }
 
+// gmsh::parser
+
+GMSH_API void gmsh::parser::getNames(std::vector<std::string> &names,
+                                     const std::string &search)
+{
+  if(!_checkInit()) return;
+#if defined(HAVE_PARSER)
+  names.clear();
+  if(search.empty()) {
+    for(auto &p : gmsh_yysymbols) names.push_back(p.first);
+    for(auto &p : gmsh_yystringsymbols) names.push_back(p.first);
+  }
+  else{
+    try{
+      for(auto &p : gmsh_yysymbols) {
+        if(std::regex_search(p.first, std::regex(search)))
+          names.push_back(p.first);
+      }
+      for(auto &p : gmsh_yystringsymbols) {
+        if(std::regex_search(p.first, std::regex(search)))
+          names.push_back(p.first);
+      }
+    }
+    catch(...) {
+    }
+  }
+#else
+  Msg::Error("Parser not available");
+#endif
+}
+
+GMSH_API void gmsh::parser::setNumber(const std::string &name,
+                                      const std::vector<double> &value)
+{
+  if(!_checkInit()) return;
+#if defined(HAVE_PARSER)
+  gmsh_yysymbol &s(gmsh_yysymbols[name]);
+  s.list = (value.size() != 1);
+  s.value = value;
+#else
+  Msg::Error("Parser not available");
+#endif
+}
+
+GMSH_API void gmsh::parser::getNumber(const std::string &name,
+                                      std::vector<double> &value)
+{
+  if(!_checkInit()) return;
+#if defined(HAVE_PARSER)
+  value = gmsh_yysymbols[name].value;
+#else
+  Msg::Error("Parser not available");
+#endif
+}
+
+GMSH_API void gmsh::parser::setString(const std::string &name,
+                                      const std::vector<std::string> &value)
+{
+  if(!_checkInit()) return;
+#if defined(HAVE_PARSER)
+  gmsh_yystringsymbols[name] = value;
+#else
+  Msg::Error("Parser not available");
+#endif
+}
+
+GMSH_API void gmsh::parser::getString(const std::string &name,
+                                      std::vector<std::string> &value)
+{
+  if(!_checkInit()) return;
+#if defined(HAVE_PARSER)
+  value = gmsh_yystringsymbols[name];
+#else
+  Msg::Error("Parser not available");
+#endif
+}
+
+GMSH_API void gmsh::parser::clear(const std::string &name)
+{
+  if(!_checkInit()) return;
+#if defined(HAVE_PARSER)
+  if(name.empty()) {
+    gmsh_yysymbols.clear();
+    gmsh_yystringsymbols.clear();
+  }
+  else {
+    {
+      auto it = gmsh_yysymbols.find(name);
+      if(it != gmsh_yysymbols.end())
+        gmsh_yysymbols.erase(it);
+    }
+    {
+      auto it = gmsh_yystringsymbols.find(name);
+      if(it != gmsh_yystringsymbols.end())
+        gmsh_yystringsymbols.erase(it);
+    }
+  }
+#else
+  Msg::Error("Parser not available");
+#endif
+}
+
+GMSH_API void gmsh::parser::parse(const std::string &fileName)
+{
+  if(!_checkInit()) return;
+#if defined(HAVE_PARSER)
+  ParseFile(fileName, true, true);
+#else
+  Msg::Error("Parser not available");
+#endif
+}
+
 // gmsh::onelab
 
 GMSH_API void gmsh::onelab::set(const std::string &data,
@@ -8187,7 +8419,7 @@ GMSH_API void gmsh::onelab::setNumber(const std::string &name,
   ::onelab::server::instance()->get(ps, name);
   if(ps.size()) p = ps[0];
   p.setValues(value);
-  ::onelab::server::instance()->set(p);
+  ::onelab::server::instance()->set(p, "Gmsh");
 #else
   Msg::Error("ONELAB not available");
 #endif
@@ -8217,7 +8449,7 @@ GMSH_API void gmsh::onelab::setString(const std::string &name,
   ::onelab::server::instance()->get(ps, name);
   if(ps.size()) p = ps[0];
   p.setValues(value);
-  ::onelab::server::instance()->set(p);
+  ::onelab::server::instance()->set(p, "Gmsh");
 #else
   Msg::Error("ONELAB not available");
 #endif
@@ -8232,6 +8464,27 @@ GMSH_API void gmsh::onelab::getString(const std::string &name,
   std::vector< ::onelab::string> ps;
   ::onelab::server::instance()->get(ps, name);
   if(ps.size()) value = ps[0].getValues();
+#else
+  Msg::Error("ONELAB not available");
+#endif
+}
+
+GMSH_API int gmsh::onelab::getChanged(const std::string &name)
+{
+  if(!_checkInit()) return 0;
+#if defined(HAVE_ONELAB)
+  return ::onelab::server::instance()->getChanged(name);
+#else
+  Msg::Error("ONELAB not available");
+  return 0;
+#endif
+}
+
+GMSH_API void gmsh::onelab::setChanged(const std::string &name, const int value)
+{
+  if(!_checkInit()) return;
+#if defined(HAVE_ONELAB)
+  ::onelab::server::instance()->setChanged(value, name);
 #else
   Msg::Error("ONELAB not available");
 #endif

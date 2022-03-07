@@ -1,10 +1,12 @@
 import gmsh
 import sys
+import os
 
 gmsh.initialize()
 
 # load step file
-gmsh.open('as1-tu-203.stp')
+path = os.path.dirname(os.path.abspath(__file__))
+gmsh.open(os.path.join(path, 'as1-tu-203.stp'))
 
 # uncomment this to fragment all volumes, i.e. make the geometry conformal
 # gmsh.model.occ.removeAllDuplicates()

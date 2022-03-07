@@ -606,7 +606,7 @@ int CGNSZoneStruct<DIM>::readOneInterface(
   // zone.masterVert.push_back(std::vector<MVertex *>());
   // zone.masterVert.back().reserve(nbNode);
 
-  // // store periodic node correspondance
+  // // store periodic node correspondence
   // int ijk[3], ijkD[3];
   // for(int k = 0; k < nijk[2]; k++) {
   //   ijk[2] = ijkMin[2] + k;

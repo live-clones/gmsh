@@ -582,7 +582,7 @@ std::vector<MVertex *> GRegion::getEmbeddedMeshVertices() const
 
 std::vector<GVertex *> GRegion::vertices() const
 {
-  std::set<GVertex *> v;
+  std::set<GVertex *, GEntityPtrLessThan> v;
   for(auto gf : l_faces) {
     std::vector<GVertex *> const &vs = gf->vertices();
     v.insert(vs.begin(), vs.end());
