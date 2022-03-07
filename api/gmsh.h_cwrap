@@ -2675,6 +2675,7 @@ namespace gmsh { // Top-level functions
       // mesh of the current model. Currently only supported for 3D.
       inline void alphaShapesConstrained(const int dim,
                                          const std::vector<double> & coord,
+                                         const std::vector<int> & nodeTags,
                                          const double alpha,
                                          const double meanValue,
                                          std::vector<std::size_t> & tetrahedra,
@@ -2684,33 +2685,19 @@ namespace gmsh { // Top-level functions
       {
         int ierr = 0;
         double *api_coord_; size_t api_coord_n_; vector2ptr(coord, &api_coord_, &api_coord_n_);
+        int *api_nodeTags_; size_t api_nodeTags_n_; vector2ptr(nodeTags, &api_nodeTags_, &api_nodeTags_n_);
         size_t *api_tetrahedra_; size_t api_tetrahedra_n_;
         size_t **api_domains_; size_t *api_domains_n_, api_domains_nn_;
         size_t **api_boundaries_; size_t *api_boundaries_n_, api_boundaries_nn_;
         size_t *api_neighbors_; size_t api_neighbors_n_;
-        gmshModelMeshAlphaShapesConstrained(dim, api_coord_, api_coord_n_, alpha, meanValue, &api_tetrahedra_, &api_tetrahedra_n_, &api_domains_, &api_domains_n_, &api_domains_nn_, &api_boundaries_, &api_boundaries_n_, &api_boundaries_nn_, &api_neighbors_, &api_neighbors_n_, &ierr);
+        gmshModelMeshAlphaShapesConstrained(dim, api_coord_, api_coord_n_, api_nodeTags_, api_nodeTags_n_, alpha, meanValue, &api_tetrahedra_, &api_tetrahedra_n_, &api_domains_, &api_domains_n_, &api_domains_nn_, &api_boundaries_, &api_boundaries_n_, &api_boundaries_nn_, &api_neighbors_, &api_neighbors_n_, &ierr);
         if(ierr) throwLastError();
         gmshFree(api_coord_);
+        gmshFree(api_nodeTags_);
         tetrahedra.assign(api_tetrahedra_, api_tetrahedra_ + api_tetrahedra_n_); gmshFree(api_tetrahedra_);
         domains.resize(api_domains_nn_); for(size_t i = 0; i < api_domains_nn_; ++i){ domains[i].assign(api_domains_[i], api_domains_[i] + api_domains_n_[i]); gmshFree(api_domains_[i]); } gmshFree(api_domains_); gmshFree(api_domains_n_);
         boundaries.resize(api_boundaries_nn_); for(size_t i = 0; i < api_boundaries_nn_; ++i){ boundaries[i].assign(api_boundaries_[i], api_boundaries_[i] + api_boundaries_n_[i]); gmshFree(api_boundaries_[i]); } gmshFree(api_boundaries_); gmshFree(api_boundaries_n_);
         neighbors.assign(api_neighbors_, api_neighbors_ + api_neighbors_n_); gmshFree(api_neighbors_);
-      }
-
-      // Generate a surface mesh on entity with tag `tag', with a constraint on
-      // nodes `parametricCoord' (i.e., `parametricCoord' must belong to the mesh).
-      // If `addNodes' is true, add nodes such that the maximum element size does
-      // not exceed `meshSize'.
-      inline void generateSurfaceMeshConstrained(const std::vector<double> & parametricCoord,
-                                                 const int tag,
-                                                 const bool addNodes,
-                                                 const double meshSize)
-      {
-        int ierr = 0;
-        double *api_parametricCoord_; size_t api_parametricCoord_n_; vector2ptr(parametricCoord, &api_parametricCoord_, &api_parametricCoord_n_);
-        gmshModelMeshGenerateSurfaceMeshConstrained(api_parametricCoord_, api_parametricCoord_n_, tag, (int)addNodes, meshSize, &ierr);
-        if(ierr) throwLastError();
-        gmshFree(api_parametricCoord_);
       }
 
       namespace field { // Mesh size field functions

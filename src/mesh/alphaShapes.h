@@ -30,6 +30,7 @@ void createHxtMesh_(const std::string &inputMesh, const std::vector<double>& coo
 void constrainedAlphaShapes_(GModel* m, 
                             const int dim, 
                             const std::vector<double>& coord, 
+                            const std::vector<int>& nodeTags,
                             const double alpha, 
                             const double meanValue,
                             std::vector<size_t> &tetrahedra, 

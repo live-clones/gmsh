@@ -4012,9 +4012,9 @@ class model:
         create_hxt_mesh = createHxtMesh
 
         @staticmethod
-        def alphaShapesConstrained(dim, coord, alpha, meanValue):
+        def alphaShapesConstrained(dim, coord, nodeTags, alpha, meanValue):
             """
-            gmsh.model.mesh.alphaShapesConstrained(dim, coord, alpha, meanValue)
+            gmsh.model.mesh.alphaShapesConstrained(dim, coord, nodeTags, alpha, meanValue)
 
             Generate a mesh of the array of points `coord', constrained to the surface
             mesh of the current model. Currently only supported for 3D.
@@ -4022,6 +4022,7 @@ class model:
             Return `tetrahedra', `domains', `boundaries', `neighbors'.
             """
             api_coord_, api_coord_n_ = _ivectordouble(coord)
+            api_nodeTags_, api_nodeTags_n_ = _ivectorint(nodeTags)
             api_tetrahedra_, api_tetrahedra_n_ = POINTER(c_size_t)(), c_size_t()
             api_domains_, api_domains_n_, api_domains_nn_ = POINTER(POINTER(c_size_t))(), POINTER(c_size_t)(), c_size_t()
             api_boundaries_, api_boundaries_n_, api_boundaries_nn_ = POINTER(POINTER(c_size_t))(), POINTER(c_size_t)(), c_size_t()
@@ -4030,6 +4031,7 @@ class model:
             lib.gmshModelMeshAlphaShapesConstrained(
                 c_int(dim),
                 api_coord_, api_coord_n_,
+                api_nodeTags_, api_nodeTags_n_,
                 c_double(alpha),
                 c_double(meanValue),
                 byref(api_tetrahedra_), byref(api_tetrahedra_n_),
@@ -4045,28 +4047,6 @@ class model:
                 _ovectorvectorsize(api_boundaries_, api_boundaries_n_, api_boundaries_nn_),
                 _ovectorsize(api_neighbors_, api_neighbors_n_.value))
         alpha_shapes_constrained = alphaShapesConstrained
-
-        @staticmethod
-        def generateSurfaceMeshConstrained(parametricCoord, tag, addNodes, meshSize):
-            """
-            gmsh.model.mesh.generateSurfaceMeshConstrained(parametricCoord, tag, addNodes, meshSize)
-
-            Generate a surface mesh on entity with tag `tag', with a constraint on
-            nodes `parametricCoord' (i.e., `parametricCoord' must belong to the mesh).
-            If `addNodes' is true, add nodes such that the maximum element size does
-            not exceed `meshSize'.
-            """
-            api_parametricCoord_, api_parametricCoord_n_ = _ivectordouble(parametricCoord)
-            ierr = c_int()
-            lib.gmshModelMeshGenerateSurfaceMeshConstrained(
-                api_parametricCoord_, api_parametricCoord_n_,
-                c_int(tag),
-                c_int(bool(addNodes)),
-                c_double(meshSize),
-                byref(ierr))
-            if ierr.value != 0:
-                raise Exception(logger.getLastError())
-        generate_surface_mesh_constrained = generateSurfaceMeshConstrained
 
 
         class field:
