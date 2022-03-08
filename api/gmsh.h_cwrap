@@ -51,42 +51,60 @@ namespace gmsh {
   template<typename t>
   inline void vector2ptr(const std::vector<t> &v, t **p, size_t *size)
   {
-    *p = (t*)gmshMalloc(sizeof(t) * v.size());
-    for(size_t i = 0; i < v.size(); ++i){
-      (*p)[i] = v[i];
+    if(p){
+      *p = (t*)gmshMalloc(sizeof(t) * v.size());
+      for(size_t i = 0; i < v.size(); ++i){
+        (*p)[i] = v[i];
+      }
     }
-    *size = v.size();
+    if(size){
+      *size = v.size();
+    }
   }
   
   inline void vectorpair2intptr(const gmsh::vectorpair &v, int **p, size_t *size)
   {
-    *p = (int*)gmshMalloc(sizeof(int) * v.size() * 2);
-    for(size_t i = 0; i < v.size(); ++i){
-      (*p)[i * 2 + 0] = v[i].first;
-      (*p)[i * 2 + 1] = v[i].second;
+    if(p){
+      *p = (int*)gmshMalloc(sizeof(int) * v.size() * 2);
+      for(size_t i = 0; i < v.size(); ++i){
+        (*p)[i * 2 + 0] = v[i].first;
+        (*p)[i * 2 + 1] = v[i].second;
+      }
     }
-    *size = v.size() * 2;
+    if(size){
+      *size = v.size() * 2;
+    }
   }
   
   inline void vectorstring2charptrptr(const std::vector<std::string> &v, char ***p, size_t *size)
   {
-    *p = (char**)gmshMalloc(sizeof(char*) * v.size());
-    for(size_t i = 0; i < v.size(); ++i){
-      (*p)[i] = (char*)gmshMalloc(sizeof(char) * (v[i].size() + 1));
-      for(size_t j = 0; j < v[i].size(); j++) (*p)[i][j] = v[i][j];
-      (*p)[i][v[i].size()] = '\0';
+    if(p){
+      *p = (char**)gmshMalloc(sizeof(char*) * v.size());
+      for(size_t i = 0; i < v.size(); ++i){
+        (*p)[i] = (char*)gmshMalloc(sizeof(char) * (v[i].size() + 1));
+        for(size_t j = 0; j < v[i].size(); j++) (*p)[i][j] = v[i][j];
+        (*p)[i][v[i].size()] = '\0';
+      }
     }
-    *size = v.size();
+    if(size){
+      *size = v.size();
+    }
   }
   
   template<typename t>
   inline void vectorvector2ptrptr(const std::vector<std::vector<t> > &v, t ***p, size_t **size, size_t *sizeSize)
   {
-    *p = (t**)gmshMalloc(sizeof(t*) * v.size());
-    *size = (size_t*)gmshMalloc(sizeof(size_t) * v.size());
+    if(p){
+      *p = (t**)gmshMalloc(sizeof(t*) * v.size());
+    }
+    if(size){
+      *size = (size_t*)gmshMalloc(sizeof(size_t) * v.size());
+    }
     for(size_t i = 0; i < v.size(); ++i)
-      vector2ptr(v[i], &((*p)[i]), &((*size)[i]));
-    *sizeSize = v.size();
+      vector2ptr(v[i], p?&((*p)[i]):NULL, size?&((*size)[i]):NULL);
+    if(sizeSize){
+      *sizeSize = v.size();
+    }
   }
   
   inline void throwLastError()
