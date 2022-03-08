@@ -5282,6 +5282,16 @@ GMSH_API void gmsh::model::mesh::removeDuplicateNodes(const vectorpair &dimTags)
   CTX::instance()->mesh.changed = ENT_ALL;
 }
 
+GMSH_API void gmsh::model::mesh::setVisibility(
+  const std::vector<size_t> &elementTags, const int value)
+{
+  if(!_checkInit()) return;
+  for(auto t : elementTags) {
+    MElement *e = GModel::current()->getMeshElementByTag(t);
+    if(e) e->setVisibility(value);
+  }
+}
+
 GMSH_API void gmsh::model::mesh::importStl()
 {
   if(!_checkInit()) return;

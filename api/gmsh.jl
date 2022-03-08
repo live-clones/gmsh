@@ -3228,6 +3228,21 @@ end
 const split_quadrangles = splitQuadrangles
 
 """
+    gmsh.model.mesh.setVisibility(elementTags, value)
+
+Set the visibility of the elements of tags `elementTags` to `value`.
+"""
+function setVisibility(elementTags, value)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshSetVisibility, gmsh.lib), Cvoid,
+          (Ptr{Csize_t}, Csize_t, Cint, Ptr{Cint}),
+          convert(Vector{Csize_t}, elementTags), length(elementTags), value, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+const set_visibility = setVisibility
+
+"""
     gmsh.model.mesh.classifySurfaces(angle, boundary = true, forReparametrization = false, curveAngle = pi, exportDiscrete = true)
 
 Classify ("color") the surface mesh based on the angle threshold `angle` (in

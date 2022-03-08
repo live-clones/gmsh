@@ -3766,6 +3766,23 @@ class model:
         split_quadrangles = splitQuadrangles
 
         @staticmethod
+        def setVisibility(elementTags, value):
+            """
+            gmsh.model.mesh.setVisibility(elementTags, value)
+
+            Set the visibility of the elements of tags `elementTags' to `value'.
+            """
+            api_elementTags_, api_elementTags_n_ = _ivectorsize(elementTags)
+            ierr = c_int()
+            lib.gmshModelMeshSetVisibility(
+                api_elementTags_, api_elementTags_n_,
+                c_int(value),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+        set_visibility = setVisibility
+
+        @staticmethod
         def classifySurfaces(angle, boundary=True, forReparametrization=False, curveAngle=pi, exportDiscrete=True):
             """
             gmsh.model.mesh.classifySurfaces(angle, boundary=True, forReparametrization=False, curveAngle=pi, exportDiscrete=True)

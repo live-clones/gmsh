@@ -77,7 +77,7 @@ const std::string BMESH_NAME = "bmesh_quadqs";
 
 constexpr bool PARANO_QUALITY = false;
 constexpr bool PARANO_VALIDITY = false;
-constexpr bool DBG_EXPORT = true;
+constexpr bool DBG_EXPORT = false;
 constexpr bool SHOW_DQR = false;
 
 /* scaling applied on integer values stored in view (background field),

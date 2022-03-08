@@ -1428,6 +1428,11 @@ GMSH_API void gmshModelMeshSplitQuadrangles(const double quality,
                                             const int tag,
                                             int * ierr);
 
+/* Set the visibility of the elements of tags `elementTags' to `value'. */
+GMSH_API void gmshModelMeshSetVisibility(const size_t * elementTags, const size_t elementTags_n,
+                                         const int value,
+                                         int * ierr);
+
 /* Classify ("color") the surface mesh based on the angle threshold `angle'
  * (in radians), and create new discrete surfaces, curves and points
  * accordingly. If `boundary' is set, also create discrete curves on the

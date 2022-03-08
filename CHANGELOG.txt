@@ -2,7 +2,8 @@
 API; "Attractor" field is now just a synonym for the newer (and more efficient)
 "Distance" field.
 
-* New API functions: mesh/addHomologyRequest, mesh/clearHomologyRequests
+* New API functions: mesh/addHomologyRequest, mesh/clearHomologyRequests,
+  mesh/setVisibility
 
 * Incompatible API changes: additional const qualifiers in C API; removed
   mesh/computeCohomology; changed arguments of mesh/computeHomology; new

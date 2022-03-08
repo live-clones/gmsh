@@ -24,42 +24,42 @@ GMSH_API void gmshFree(void *p)
 template<typename t>
 void vector2ptr(const std::vector<t> &v, t **p, size_t *size)
 {
-  if(p){
+  if(p) {
     *p = (t*)gmshMalloc(sizeof(t) * v.size());
-    for(size_t i = 0; i < v.size(); ++i){
+    for(size_t i = 0; i < v.size(); ++i) {
       (*p)[i] = v[i];
     }
   }
-  if(size){
+  if(size) {
     *size = v.size();
   }
 }
 
 void vectorpair2intptr(const gmsh::vectorpair &v, int **p, size_t *size)
 {
-  if(p){
+  if(p) {
     *p = (int*)gmshMalloc(sizeof(int) * v.size() * 2);
-    for(size_t i = 0; i < v.size(); ++i){
+    for(size_t i = 0; i < v.size(); ++i) {
       (*p)[i * 2 + 0] = v[i].first;
       (*p)[i * 2 + 1] = v[i].second;
     }
   }
-  if(size){
+  if(size) {
     *size = v.size() * 2;
   }
 }
 
 void vectorstring2charptrptr(const std::vector<std::string> &v, char ***p, size_t *size)
 {
-  if(p){
+  if(p) {
     *p = (char**)gmshMalloc(sizeof(char*) * v.size());
-    for(size_t i = 0; i < v.size(); ++i){
+    for(size_t i = 0; i < v.size(); ++i) {
       (*p)[i] = (char*)gmshMalloc(sizeof(char) * (v[i].size() + 1));
       for(size_t j = 0; j < v[i].size(); j++) (*p)[i][j] = v[i][j];
       (*p)[i][v[i].size()] = '\0';
     }
   }
-  if(size){
+  if(size) {
     *size = v.size();
   }
 }
@@ -67,26 +67,32 @@ void vectorstring2charptrptr(const std::vector<std::string> &v, char ***p, size_
 template<typename t>
 void vectorvector2ptrptr(const std::vector<std::vector<t> > &v, t ***p, size_t **size, size_t *sizeSize)
 {
-  if(p){
+  if(p) {
     *p = (t**)gmshMalloc(sizeof(t*) * v.size());
   }
-  if(size){
+  if(size) {
     *size = (size_t*)gmshMalloc(sizeof(size_t) * v.size());
   }
   for(size_t i = 0; i < v.size(); ++i)
-    vector2ptr(v[i], p?&((*p)[i]):NULL, size?&((*size)[i]):NULL);
-  if(sizeSize){
+    vector2ptr(v[i], p ? &((*p)[i]) : NULL, size ? &((*size)[i]) : NULL);
+  if(sizeSize) {
     *sizeSize = v.size();
   }
 }
 
 void vectorvectorpair2intptrptr(const std::vector<gmsh::vectorpair > &v, int ***p, size_t **size, size_t *sizeSize)
 {
-  *p = (int**)gmshMalloc(sizeof(int*) * v.size());
-  *size = (size_t*)gmshMalloc(sizeof(size_t) * v.size());
+  if(p) {
+    *p = (int**)gmshMalloc(sizeof(int*) * v.size());
+  }
+  if(size) {
+    *size = (size_t*)gmshMalloc(sizeof(size_t) * v.size());
+  }
   for(size_t i = 0; i < v.size(); ++i)
-    vectorpair2intptr(v[i], &(*p)[i], &((*size)[i]));
-  *sizeSize = v.size();
+    vectorpair2intptr(v[i], p ? &((*p)[i]) : NULL, size ? &((*size)[i]) : NULL);
+  if(sizeSize) {
+    *sizeSize = v.size();
+  }
 }
 
 GMSH_API void gmshInitialize(int argc, char ** argv, const int readConfigFiles, const int run, int * ierr)
@@ -2145,6 +2151,18 @@ GMSH_API void gmshModelMeshSplitQuadrangles(const double quality, const int tag,
   if(ierr) *ierr = 0;
   try {
     gmsh::model::mesh::splitQuadrangles(quality, tag);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelMeshSetVisibility(const size_t * elementTags, const size_t elementTags_n, const int value, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<std::size_t> api_elementTags_(elementTags, elementTags + elementTags_n);
+    gmsh::model::mesh::setVisibility(api_elementTags_, value);
   }
   catch(...){
     if(ierr) *ierr = 1;

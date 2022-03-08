@@ -1618,6 +1618,12 @@ namespace gmsh { // Top-level functions
       GMSH_API void splitQuadrangles(const double quality = 1.,
                                      const int tag = -1);
 
+      // gmsh::model::mesh::setVisibility
+      //
+      // Set the visibility of the elements of tags `elementTags' to `value'.
+      GMSH_API void setVisibility(const std::vector<std::size_t> & elementTags,
+                                  const int value);
+
       // gmsh::model::mesh::classifySurfaces
       //
       // Classify ("color") the surface mesh based on the angle threshold `angle'

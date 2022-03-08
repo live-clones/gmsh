@@ -2994,6 +2994,20 @@ c
             integer(c_int)::ierr
           end subroutine gmshModelMeshSplitQuadrangles
 
+!  Set the visibility of the elements of tags `elementTags' to `value'.
+        subroutine gmshModelMeshSetVisibility(
+     &      elementTags,
+     &      elementTags_n,
+     &      value,
+     &      ierr)
+     &    bind(C, name = "gmshModelMeshSetVisibility")
+          use, intrinsic :: iso_c_binding
+            integer(c_size_t)::elementTags(*)
+            integer(c_size_t), value :: elementTags_n
+            integer(c_int), value::value
+            integer(c_int)::ierr
+          end subroutine gmshModelMeshSetVisibility
+
 !  Classify ("color") the surface mesh based on the angle threshold `angle'
 !  (in radians), and create new discrete surfaces, curves and points
 !  accordingly. If `boundary' is set, also create discrete curves on the
