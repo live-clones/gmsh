@@ -21,13 +21,13 @@
 #include "discreteEdge.h"
 #include "discreteFace.h"
 #include "ExtrudeParams.h"
-#include "Field.h"
 
 #if defined(HAVE_MESH)
 #include "meshGFace.h"
 #include "meshGFaceOptimize.h"
 #include "BackgroundMeshTools.h"
 #include "meshGFaceBipartiteLabelling.h"
+#include "Field.h"
 #endif
 
 #if defined(HAVE_ALGLIB)

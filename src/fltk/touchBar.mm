@@ -344,6 +344,7 @@ static NSString *touchBarItemViewSlider = @"com.something.item_viewSlider";
 
 - (void)buttonRunMesh:(id)sender
 {
+#if defined(HAVE_MESH)
   NSInteger segment = ((NSSegmentedControl *)sender).selectedSegment;
   switch(segment) {
   case 0: mesh_1d_cb(0, 0); break;
@@ -352,6 +353,9 @@ static NSString *touchBarItemViewSlider = @"com.something.item_viewSlider";
   default: break;
   }
   FlGui::check(); // to see meshing messages in the fltk gui
+#else
+  Msg::Warning("Mesh module not available");
+#endif
 }
 
 - (void)buttonGeo:(id)sender
