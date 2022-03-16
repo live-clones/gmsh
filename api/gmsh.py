@@ -2389,6 +2389,35 @@ class model:
         get_max_element_tag = getMaxElementTag
 
         @staticmethod
+        def getElementQualities(elementTags, qualityName="minSICN", task=0, numTasks=1):
+            """
+            gmsh.model.mesh.getElementQualities(elementTags, qualityName="minSICN", task=0, numTasks=1)
+
+            Get the quality `elementQualities' of the elements with tags `elementTags'.
+            `qualityType' is the requested quality measure: "minSJ" for the minimal
+            scaled jacobien, "minSICN" for the minimal signed inverted condition
+            number, "minSIGE" for the signed inverted gradient error, "gamma" for the
+            ratio of the inscribed to circumcribed sphere radius. If `numTasks' > 1,
+            only compute and return the part of the data indexed by `task'.
+
+            Return `elementsQuality'.
+            """
+            api_elementTags_, api_elementTags_n_ = _ivectorsize(elementTags)
+            api_elementsQuality_, api_elementsQuality_n_ = POINTER(c_double)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshGetElementQualities(
+                api_elementTags_, api_elementTags_n_,
+                byref(api_elementsQuality_), byref(api_elementsQuality_n_),
+                c_char_p(qualityName.encode()),
+                c_size_t(task),
+                c_size_t(numTasks),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return _ovectordouble(api_elementsQuality_, api_elementsQuality_n_.value)
+        get_element_qualities = getElementQualities
+
+        @staticmethod
         def addElements(dim, tag, elementTypes, elementTags, nodeTags):
             """
             gmsh.model.mesh.addElements(dim, tag, elementTypes, elementTags, nodeTags)

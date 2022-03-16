@@ -1759,6 +1759,33 @@ c
             integer(c_int)::ierr
           end subroutine gmshModelMeshPreallocateElementsByType
 
+!  Get the quality `elementQualities' of the elements with tags `elementTags'.
+!  `qualityType' is the requested quality measure: "minSJ" for the minimal
+!  scaled jacobien, "minSICN" for the minimal signed inverted condition
+!  number, "minSIGE" for the signed inverted gradient error, "gamma" for the
+!  ratio of the inscribed to circumcribed sphere radius. If `numTasks' > 1,
+!  only compute and return the part of the data indexed by `task'.
+        subroutine gmshModelMeshGetElementQualities(
+     &      elementTags,
+     &      elementTags_n,
+     &      elementsQuality,
+     &      elementsQuality_n,
+     &      qualityName,
+     &      task,
+     &      numTasks,
+     &      ierr)
+     &    bind(C, name = "gmshModelMeshGetElementQualities")
+          use, intrinsic :: iso_c_binding
+            integer(c_size_t)::elementTags(*)
+            integer(c_size_t), value :: elementTags_n
+            type(c_ptr), intent(out)::elementsQuality
+            integer(c_size_t) :: elementsQuality_n
+            character(len = 1, kind = c_char)::qualityName(*)
+            integer(c_size_t), value::task
+            integer(c_size_t), value::numTasks
+            integer(c_int)::ierr
+          end subroutine gmshModelMeshGetElementQualities
+
 !  Add elements classified on the entity of dimension `dim' and tag `tag'.
 !  `types' contains the MSH types of the elements (e.g. `2' for 3-node
 !  triangles: see the Gmsh reference manual). `elementTags' is a vector of the

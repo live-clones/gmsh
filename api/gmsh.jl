@@ -1995,6 +1995,31 @@ end
 const get_max_element_tag = getMaxElementTag
 
 """
+    gmsh.model.mesh.getElementQualities(elementTags, qualityName = "minSICN", task = 0, numTasks = 1)
+
+Get the quality `elementQualities` of the elements with tags `elementTags`.
+`qualityType` is the requested quality measure: "minSJ" for the minimal scaled
+jacobien, "minSICN" for the minimal signed inverted condition number, "minSIGE"
+for the signed inverted gradient error, "gamma" for the ratio of the inscribed
+to circumcribed sphere radius. If `numTasks` > 1, only compute and return the
+part of the data indexed by `task`.
+
+Return `elementsQuality`.
+"""
+function getElementQualities(elementTags, qualityName = "minSICN", task = 0, numTasks = 1)
+    api_elementsQuality_ = Ref{Ptr{Cdouble}}()
+    api_elementsQuality_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshGetElementQualities, gmsh.lib), Cvoid,
+          (Ptr{Csize_t}, Csize_t, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cchar}, Csize_t, Csize_t, Ptr{Cint}),
+          convert(Vector{Csize_t}, elementTags), length(elementTags), api_elementsQuality_, api_elementsQuality_n_, qualityName, task, numTasks, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    elementsQuality = unsafe_wrap(Array, api_elementsQuality_[], api_elementsQuality_n_[], own = true)
+    return elementsQuality
+end
+const get_element_qualities = getElementQualities
+
+"""
     gmsh.model.mesh.addElements(dim, tag, elementTypes, elementTags, nodeTags)
 
 Add elements classified on the entity of dimension `dim` and tag `tag`. `types`

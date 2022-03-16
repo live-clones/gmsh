@@ -2198,6 +2198,69 @@ GMSH_API void gmsh::model::mesh::preallocateElementsByType(
   }
 }
 
+GMSH_API void gmsh::model::mesh::getElementQualities(
+  const std::vector<std::size_t> &elementTags,
+  std::vector<double> &elementQualities, const std::string &qualityName,
+  const std::size_t task, const std::size_t numTasks)
+{
+  if(!_checkInit()) return;
+
+  if(!numTasks) {
+    Msg::Error("Number of tasks should be > 0");
+    return;
+  }
+
+  std::size_t numElements = elementTags.size();
+  bool haveElementQualities = elementQualities.size();
+  if(!haveElementQualities ||
+     (haveElementQualities && (elementQualities.size() < numElements))) {
+    if(numTasks > 1)
+      Msg::Warning("elementQualities should be preallocated "
+                   "if numTasks > 1");
+    haveElementQualities = true;
+    elementQualities.clear();
+    elementQualities.resize(numElements, 0.);
+  }
+
+  const std::size_t begin = (task * numElements) / numTasks;
+  const std::size_t end = ((task + 1) * numElements) / numTasks;
+  for(size_t k = begin; k < end; k++){
+    MElement *e = GModel::current()->getMeshElementByTag(elementTags[k]);
+    if(!e) {
+      Msg::Error("Unknown element %d", elementTags[k]);
+      elementQualities[k] = 0.;
+      continue;
+    }
+    if(qualityName == "minSICN"){
+      elementQualities[k] = e->minSICNShapeMeasure();
+    }
+    else if(qualityName == "minSIGE"){
+      elementQualities[k] = e->minSIGEShapeMeasure();
+    }
+    else if(qualityName == "minSJ"){
+      elementQualities[k] = e->distoShapeMeasure();
+    }
+    else if(qualityName == "gamma"){
+      elementQualities[k] = e->gammaShapeMeasure();
+    }
+    else if(qualityName == "eta"){
+      elementQualities[k] = e->etaShapeMeasure();
+    }
+    else if(qualityName == "minIsotropy"){
+      elementQualities[k] = e->minIsotropyMeasure();
+    }
+    else if(qualityName == "angleShape"){
+      elementQualities[k] = e->angleShapeMeasure();
+    }
+    else{
+      if(k == begin) {
+        Msg::Error("Unknown quality name '%s'", qualityName.c_str());
+      }
+      elementQualities[k] = 0.;
+    }
+  }
+}
+
 static bool _getFunctionSpaceInfo(const std::string &fsType,
                                   std::string &fsName, int &fsOrder,
                                   int &fsComp)

@@ -1497,6 +1497,28 @@ namespace gmsh { // Top-level functions
         nodeTags.assign(api_nodeTags_, api_nodeTags_ + api_nodeTags_n_); gmshFree(api_nodeTags_);
       }
 
+      // Get the quality `elementQualities' of the elements with tags
+      // `elementTags'. `qualityType' is the requested quality measure: "minSJ" for
+      // the minimal scaled jacobien, "minSICN" for the minimal signed inverted
+      // condition number, "minSIGE" for the signed inverted gradient error,
+      // "gamma" for the ratio of the inscribed to circumcribed sphere radius. If
+      // `numTasks' > 1, only compute and return the part of the data indexed by
+      // `task'.
+      inline void getElementQualities(const std::vector<std::size_t> & elementTags,
+                                      std::vector<double> & elementsQuality,
+                                      const std::string & qualityName = "minSICN",
+                                      const std::size_t task = 0,
+                                      const std::size_t numTasks = 1)
+      {
+        int ierr = 0;
+        size_t *api_elementTags_; size_t api_elementTags_n_; vector2ptr(elementTags, &api_elementTags_, &api_elementTags_n_);
+        double *api_elementsQuality_; size_t api_elementsQuality_n_;
+        gmshModelMeshGetElementQualities(api_elementTags_, api_elementTags_n_, &api_elementsQuality_, &api_elementsQuality_n_, qualityName.c_str(), task, numTasks, &ierr);
+        if(ierr) throwLastError();
+        gmshFree(api_elementTags_);
+        elementsQuality.assign(api_elementsQuality_, api_elementsQuality_ + api_elementsQuality_n_); gmshFree(api_elementsQuality_);
+      }
+
       // Add elements classified on the entity of dimension `dim' and tag `tag'.
       // `types' contains the MSH types of the elements (e.g. `2' for 3-node
       // triangles: see the Gmsh reference manual). `elementTags' is a vector of

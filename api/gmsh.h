@@ -967,6 +967,21 @@ namespace gmsh { // Top-level functions
                                               std::vector<std::size_t> & nodeTags,
                                               const int tag = -1);
 
+      // gmsh::model::mesh::getElementQualities
+      //
+      // Get the quality `elementQualities' of the elements with tags
+      // `elementTags'. `qualityType' is the requested quality measure: "minSJ" for
+      // the minimal scaled jacobien, "minSICN" for the minimal signed inverted
+      // condition number, "minSIGE" for the signed inverted gradient error,
+      // "gamma" for the ratio of the inscribed to circumcribed sphere radius. If
+      // `numTasks' > 1, only compute and return the part of the data indexed by
+      // `task'.
+      GMSH_API void getElementQualities(const std::vector<std::size_t> & elementTags,
+                                        std::vector<double> & elementsQuality,
+                                        const std::string & qualityName = "minSICN",
+                                        const std::size_t task = 0,
+                                        const std::size_t numTasks = 1);
+
       // gmsh::model::mesh::addElements
       //
       // Add elements classified on the entity of dimension `dim' and tag `tag'.
