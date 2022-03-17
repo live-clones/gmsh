@@ -6804,20 +6804,25 @@ class model:
             """
             gmsh.model.occ.getCurveLoops(surfaceTag)
 
-            Get the `tags' of the curve loops making up the surface of tag
-            `surfaceTag'.
+            Get the tags `curveLoopTags' of the curve loops making up the surface of
+            tag `surfaceTag', as well as the tags `curveTags' of the curves making up
+            each curve loop.
 
-            Return `tags'.
+            Return `curveLoopTags', `curveTags'.
             """
-            api_tags_, api_tags_n_ = POINTER(c_int)(), c_size_t()
+            api_curveLoopTags_, api_curveLoopTags_n_ = POINTER(c_int)(), c_size_t()
+            api_curveTags_, api_curveTags_n_, api_curveTags_nn_ = POINTER(POINTER(c_int))(), POINTER(c_size_t)(), c_size_t()
             ierr = c_int()
             lib.gmshModelOccGetCurveLoops(
                 c_int(surfaceTag),
-                byref(api_tags_), byref(api_tags_n_),
+                byref(api_curveLoopTags_), byref(api_curveLoopTags_n_),
+                byref(api_curveTags_), byref(api_curveTags_n_), byref(api_curveTags_nn_),
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
-            return _ovectorint(api_tags_, api_tags_n_.value)
+            return (
+                _ovectorint(api_curveLoopTags_, api_curveLoopTags_n_.value),
+                _ovectorvectorint(api_curveTags_, api_curveTags_n_, api_curveTags_nn_))
         get_curve_loops = getCurveLoops
 
         @staticmethod
@@ -6825,20 +6830,25 @@ class model:
             """
             gmsh.model.occ.getSurfaceLoops(volumeTag)
 
-            Get the `tags' of the surface loops making up the volume of tag
-            `volumeTag'.
+            Get the tags `surfaceLoopTags' of the surface loops making up the volume of
+            tag `volumeTag', as well as the tags `surfaceTags' of the surfaces making
+            up each surface loop.
 
-            Return `tags'.
+            Return `surfaceLoopTags', `surfaceTags'.
             """
-            api_tags_, api_tags_n_ = POINTER(c_int)(), c_size_t()
+            api_surfaceLoopTags_, api_surfaceLoopTags_n_ = POINTER(c_int)(), c_size_t()
+            api_surfaceTags_, api_surfaceTags_n_, api_surfaceTags_nn_ = POINTER(POINTER(c_int))(), POINTER(c_size_t)(), c_size_t()
             ierr = c_int()
             lib.gmshModelOccGetSurfaceLoops(
                 c_int(volumeTag),
-                byref(api_tags_), byref(api_tags_n_),
+                byref(api_surfaceLoopTags_), byref(api_surfaceLoopTags_n_),
+                byref(api_surfaceTags_), byref(api_surfaceTags_n_), byref(api_surfaceTags_nn_),
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
-            return _ovectorint(api_tags_, api_tags_n_.value)
+            return (
+                _ovectorint(api_surfaceLoopTags_, api_surfaceLoopTags_n_.value),
+                _ovectorvectorint(api_surfaceTags_, api_surfaceTags_n_, api_surfaceTags_nn_))
         get_surface_loops = getSurfaceLoops
 
         @staticmethod

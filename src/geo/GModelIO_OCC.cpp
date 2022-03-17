@@ -4438,45 +4438,77 @@ bool OCC_Internals::getEntitiesInBoundingBox(
   return true;
 }
 
-bool OCC_Internals::getCurveLoops(int surfaceTag, std::vector<int> &tags)
+bool OCC_Internals::getCurveLoops(int surfaceTag, std::vector<int> &curveLoopTags,
+                                  std::vector<std::vector<int> > &curveTags)
 {
   if(!_tagFace.IsBound(surfaceTag)) {
     Msg::Error("Unknown OpenCASCADE surface with tag %d", surfaceTag);
     return false;
   }
+  curveLoopTags.clear();
+  curveTags.clear();
   TopoDS_Face face = TopoDS::Face(_tagFace.Find(surfaceTag));
   TopExp_Explorer exp0;
   for(exp0.Init(face, TopAbs_WIRE); exp0.More(); exp0.Next()) {
     TopoDS_Wire wire = TopoDS::Wire(exp0.Current());
     if(_wireTag.IsBound(wire)) {
-      tags.push_back(_wireTag.Find(wire));
+      curveLoopTags.push_back(_wireTag.Find(wire));
     }
     else {
       int t = getMaxTag(-1) + 1;
       _bind(wire, t);
-      tags.push_back(t);
+      curveLoopTags.push_back(t);
+    }
+    curveTags.push_back(std::vector<int>());
+    BRepTools_WireExplorer exp1; // guarantees edges are ordered
+    for(exp1.Init(wire); exp1.More(); exp1.Next()) {
+      TopoDS_Edge edge = exp1.Current();
+      if(_edgeTag.IsBound(edge)) {
+        curveTags.back().push_back(_edgeTag.Find(edge));
+      }
+      else {
+        int t = getMaxTag(1) + 1;
+        _bind(edge, t);
+        curveTags.back().push_back(t);
+      }
     }
   }
   return true;
 }
 
-bool OCC_Internals::getSurfaceLoops(int volumeTag, std::vector<int> &tags)
+bool OCC_Internals::getSurfaceLoops(int volumeTag, std::vector<int> &surfaceLoopTags,
+                                    std::vector<std::vector<int> > &surfaceTags)
 {
   if(!_tagSolid.IsBound(volumeTag)) {
     Msg::Error("Unknown OpenCASCADE volume with tag %d", volumeTag);
     return false;
   }
+  surfaceLoopTags.clear();
+  surfaceTags.clear();
   TopoDS_Solid solid = TopoDS::Solid(_tagSolid.Find(volumeTag));
   TopExp_Explorer exp0;
   for(exp0.Init(solid, TopAbs_SHELL); exp0.More(); exp0.Next()) {
     TopoDS_Shell shell = TopoDS::Shell(exp0.Current());
     if(_shellTag.IsBound(shell)) {
-      tags.push_back(_shellTag.Find(shell));
+      surfaceLoopTags.push_back(_shellTag.Find(shell));
     }
     else {
       int t = getMaxTag(-2) + 1;
       _bind(shell, t);
-      tags.push_back(t);
+      surfaceLoopTags.push_back(t);
+    }
+    surfaceTags.push_back(std::vector<int>());
+    TopExp_Explorer exp1;
+    for(exp1.Init(shell, TopAbs_FACE); exp1.More(); exp1.Next()) {
+      TopoDS_Face face = TopoDS::Face(exp1.Current());
+      if(_faceTag.IsBound(face)) {
+        surfaceTags.back().push_back(_faceTag.Find(face));
+      }
+      else {
+        int t = getMaxTag(2) + 1;
+        _bind(face, t);
+        surfaceTags.back().push_back(t);
+      }
     }
   }
   return true;

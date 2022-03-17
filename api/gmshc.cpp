@@ -3895,26 +3895,30 @@ GMSH_API void gmshModelOccGetBoundingBox(const int dim, const int tag, double * 
   }
 }
 
-GMSH_API void gmshModelOccGetCurveLoops(const int surfaceTag, int ** tags, size_t * tags_n, int * ierr)
+GMSH_API void gmshModelOccGetCurveLoops(const int surfaceTag, int ** curveLoopTags, size_t * curveLoopTags_n, int *** curveTags, size_t ** curveTags_n, size_t *curveTags_nn, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    std::vector<int> api_tags_;
-    gmsh::model::occ::getCurveLoops(surfaceTag, api_tags_);
-    vector2ptr(api_tags_, tags, tags_n);
+    std::vector<int> api_curveLoopTags_;
+    std::vector<std::vector<int> > api_curveTags_;
+    gmsh::model::occ::getCurveLoops(surfaceTag, api_curveLoopTags_, api_curveTags_);
+    vector2ptr(api_curveLoopTags_, curveLoopTags, curveLoopTags_n);
+    vectorvector2ptrptr(api_curveTags_, curveTags, curveTags_n, curveTags_nn);
   }
   catch(...){
     if(ierr) *ierr = 1;
   }
 }
 
-GMSH_API void gmshModelOccGetSurfaceLoops(const int volumeTag, int ** tags, size_t * tags_n, int * ierr)
+GMSH_API void gmshModelOccGetSurfaceLoops(const int volumeTag, int ** surfaceLoopTags, size_t * surfaceLoopTags_n, int *** surfaceTags, size_t ** surfaceTags_n, size_t *surfaceTags_nn, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    std::vector<int> api_tags_;
-    gmsh::model::occ::getSurfaceLoops(volumeTag, api_tags_);
-    vector2ptr(api_tags_, tags, tags_n);
+    std::vector<int> api_surfaceLoopTags_;
+    std::vector<std::vector<int> > api_surfaceTags_;
+    gmsh::model::occ::getSurfaceLoops(volumeTag, api_surfaceLoopTags_, api_surfaceTags_);
+    vector2ptr(api_surfaceLoopTags_, surfaceLoopTags, surfaceLoopTags_n);
+    vectorvector2ptrptr(api_surfaceTags_, surfaceTags, surfaceTags_n, surfaceTags_nn);
   }
   catch(...){
     if(ierr) *ierr = 1;

@@ -6803,20 +6803,26 @@ GMSH_API void gmsh::model::occ::getBoundingBox(const int dim, const int tag,
                                                        zmin, xmax, ymax, zmax);
 }
 
-GMSH_API void gmsh::model::occ::getCurveLoops(const int surfaceTag,
-                                              std::vector<int> &tags)
+GMSH_API void gmsh::model::occ::getCurveLoops(
+  const int surfaceTag, std::vector<int> &curveLooptags,
+  std::vector<std::vector<int> > &curveTags)
 {
   if(!_checkInit()) return;
   _createOcc();
-  GModel::current()->getOCCInternals()->getCurveLoops(surfaceTag, tags);
+  GModel::current()->getOCCInternals()->getCurveLoops(surfaceTag,
+                                                      curveLooptags,
+                                                      curveTags);
 }
 
-GMSH_API void gmsh::model::occ::getSurfaceLoops(const int volumeTag,
-                                                std::vector<int> &tags)
+GMSH_API void gmsh::model::occ::getSurfaceLoops(
+  const int volumeTag, std::vector<int> &surfaceLoopTags,
+  std::vector<std::vector<int> > &surfaceTags)
 {
   if(!_checkInit()) return;
   _createOcc();
-  GModel::current()->getOCCInternals()->getSurfaceLoops(volumeTag, tags);
+  GModel::current()->getOCCInternals()->getSurfaceLoops(volumeTag,
+                                                        surfaceLoopTags,
+                                                        surfaceTags);
 }
 
 GMSH_API void gmsh::model::occ::getMass(const int dim, const int tag,

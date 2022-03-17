@@ -5749,33 +5749,47 @@ c
             integer(c_int)::ierr
           end subroutine gmshModelOccGetBoundingBox
 
-!  Get the `tags' of the curve loops making up the surface of tag
-!  `surfaceTag'.
+!  Get the tags `curveLoopTags' of the curve loops making up the surface of
+!  tag `surfaceTag', as well as the tags `curveTags' of the curves making up
+!  each curve loop.
         subroutine gmshModelOccGetCurveLoops(
      &      surfaceTag,
-     &      tags,
-     &      tags_n,
+     &      curveLoopTags,
+     &      curveLoopTags_n,
+     &      curveTags,
+     &      curveTags_n,
+     &      curveTags_nn,
      &      ierr)
      &    bind(C, name = "gmshModelOccGetCurveLoops")
           use, intrinsic :: iso_c_binding
             integer(c_int), value::surfaceTag
-            type(c_ptr), intent(out)::tags
-            integer(c_size_t) :: tags_n
+            type(c_ptr), intent(out)::curveLoopTags
+            integer(c_size_t) :: curveLoopTags_n
+            type(c_ptr), intent(out)::curveTags
+            type(c_ptr), intent(out) :: curveTags_n
+            integer(c_size_t) :: curveTags_nn
             integer(c_int)::ierr
           end subroutine gmshModelOccGetCurveLoops
 
-!  Get the `tags' of the surface loops making up the volume of tag
-!  `volumeTag'.
+!  Get the tags `surfaceLoopTags' of the surface loops making up the volume of
+!  tag `volumeTag', as well as the tags `surfaceTags' of the surfaces making
+!  up each surface loop.
         subroutine gmshModelOccGetSurfaceLoops(
      &      volumeTag,
-     &      tags,
-     &      tags_n,
+     &      surfaceLoopTags,
+     &      surfaceLoopTags_n,
+     &      surfaceTags,
+     &      surfaceTags_n,
+     &      surfaceTags_nn,
      &      ierr)
      &    bind(C, name = "gmshModelOccGetSurfaceLoops")
           use, intrinsic :: iso_c_binding
             integer(c_int), value::volumeTag
-            type(c_ptr), intent(out)::tags
-            integer(c_size_t) :: tags_n
+            type(c_ptr), intent(out)::surfaceLoopTags
+            integer(c_size_t) :: surfaceLoopTags_n
+            type(c_ptr), intent(out)::surfaceTags
+            type(c_ptr), intent(out) :: surfaceTags_n
+            integer(c_size_t) :: surfaceTags_nn
             integer(c_int)::ierr
           end subroutine gmshModelOccGetSurfaceLoops
 

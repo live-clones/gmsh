@@ -5856,40 +5856,56 @@ const get_bounding_box = getBoundingBox
 """
     gmsh.model.occ.getCurveLoops(surfaceTag)
 
-Get the `tags` of the curve loops making up the surface of tag `surfaceTag`.
+Get the tags `curveLoopTags` of the curve loops making up the surface of tag
+`surfaceTag`, as well as the tags `curveTags` of the curves making up each curve
+loop.
 
-Return `tags`.
+Return `curveLoopTags`, `curveTags`.
 """
 function getCurveLoops(surfaceTag)
-    api_tags_ = Ref{Ptr{Cint}}()
-    api_tags_n_ = Ref{Csize_t}()
+    api_curveLoopTags_ = Ref{Ptr{Cint}}()
+    api_curveLoopTags_n_ = Ref{Csize_t}()
+    api_curveTags_ = Ref{Ptr{Ptr{Cint}}}()
+    api_curveTags_n_ = Ref{Ptr{Csize_t}}()
+    api_curveTags_nn_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelOccGetCurveLoops, gmsh.lib), Cvoid,
-          (Cint, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
-          surfaceTag, api_tags_, api_tags_n_, ierr)
+          (Cint, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Cint}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cint}),
+          surfaceTag, api_curveLoopTags_, api_curveLoopTags_n_, api_curveTags_, api_curveTags_n_, api_curveTags_nn_, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    tags = unsafe_wrap(Array, api_tags_[], api_tags_n_[], own = true)
-    return tags
+    curveLoopTags = unsafe_wrap(Array, api_curveLoopTags_[], api_curveLoopTags_n_[], own = true)
+    tmp_api_curveTags_ = unsafe_wrap(Array, api_curveTags_[], api_curveTags_nn_[], own = true)
+    tmp_api_curveTags_n_ = unsafe_wrap(Array, api_curveTags_n_[], api_curveTags_nn_[], own = true)
+    curveTags = [ unsafe_wrap(Array, tmp_api_curveTags_[i], tmp_api_curveTags_n_[i], own = true) for i in 1:api_curveTags_nn_[] ]
+    return curveLoopTags, curveTags
 end
 const get_curve_loops = getCurveLoops
 
 """
     gmsh.model.occ.getSurfaceLoops(volumeTag)
 
-Get the `tags` of the surface loops making up the volume of tag `volumeTag`.
+Get the tags `surfaceLoopTags` of the surface loops making up the volume of tag
+`volumeTag`, as well as the tags `surfaceTags` of the surfaces making up each
+surface loop.
 
-Return `tags`.
+Return `surfaceLoopTags`, `surfaceTags`.
 """
 function getSurfaceLoops(volumeTag)
-    api_tags_ = Ref{Ptr{Cint}}()
-    api_tags_n_ = Ref{Csize_t}()
+    api_surfaceLoopTags_ = Ref{Ptr{Cint}}()
+    api_surfaceLoopTags_n_ = Ref{Csize_t}()
+    api_surfaceTags_ = Ref{Ptr{Ptr{Cint}}}()
+    api_surfaceTags_n_ = Ref{Ptr{Csize_t}}()
+    api_surfaceTags_nn_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelOccGetSurfaceLoops, gmsh.lib), Cvoid,
-          (Cint, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
-          volumeTag, api_tags_, api_tags_n_, ierr)
+          (Cint, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Cint}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cint}),
+          volumeTag, api_surfaceLoopTags_, api_surfaceLoopTags_n_, api_surfaceTags_, api_surfaceTags_n_, api_surfaceTags_nn_, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    tags = unsafe_wrap(Array, api_tags_[], api_tags_n_[], own = true)
-    return tags
+    surfaceLoopTags = unsafe_wrap(Array, api_surfaceLoopTags_[], api_surfaceLoopTags_n_[], own = true)
+    tmp_api_surfaceTags_ = unsafe_wrap(Array, api_surfaceTags_[], api_surfaceTags_nn_[], own = true)
+    tmp_api_surfaceTags_n_ = unsafe_wrap(Array, api_surfaceTags_n_[], api_surfaceTags_nn_[], own = true)
+    surfaceTags = [ unsafe_wrap(Array, tmp_api_surfaceTags_[i], tmp_api_surfaceTags_n_[i], own = true) for i in 1:api_surfaceTags_nn_[] ]
+    return surfaceLoopTags, surfaceTags
 end
 const get_surface_loops = getSurfaceLoops
 

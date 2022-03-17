@@ -4652,28 +4652,36 @@ namespace gmsh { // Top-level functions
         if(ierr) throwLastError();
       }
 
-      // Get the `tags' of the curve loops making up the surface of tag
-      // `surfaceTag'.
+      // Get the tags `curveLoopTags' of the curve loops making up the surface of
+      // tag `surfaceTag', as well as the tags `curveTags' of the curves making up
+      // each curve loop.
       inline void getCurveLoops(const int surfaceTag,
-                                std::vector<int> & tags)
+                                std::vector<int> & curveLoopTags,
+                                std::vector<std::vector<int> > & curveTags)
       {
         int ierr = 0;
-        int *api_tags_; size_t api_tags_n_;
-        gmshModelOccGetCurveLoops(surfaceTag, &api_tags_, &api_tags_n_, &ierr);
+        int *api_curveLoopTags_; size_t api_curveLoopTags_n_;
+        int **api_curveTags_; size_t *api_curveTags_n_, api_curveTags_nn_;
+        gmshModelOccGetCurveLoops(surfaceTag, &api_curveLoopTags_, &api_curveLoopTags_n_, &api_curveTags_, &api_curveTags_n_, &api_curveTags_nn_, &ierr);
         if(ierr) throwLastError();
-        tags.assign(api_tags_, api_tags_ + api_tags_n_); gmshFree(api_tags_);
+        curveLoopTags.assign(api_curveLoopTags_, api_curveLoopTags_ + api_curveLoopTags_n_); gmshFree(api_curveLoopTags_);
+        curveTags.resize(api_curveTags_nn_); for(size_t i = 0; i < api_curveTags_nn_; ++i){ curveTags[i].assign(api_curveTags_[i], api_curveTags_[i] + api_curveTags_n_[i]); gmshFree(api_curveTags_[i]); } gmshFree(api_curveTags_); gmshFree(api_curveTags_n_);
       }
 
-      // Get the `tags' of the surface loops making up the volume of tag
-      // `volumeTag'.
+      // Get the tags `surfaceLoopTags' of the surface loops making up the volume
+      // of tag `volumeTag', as well as the tags `surfaceTags' of the surfaces
+      // making up each surface loop.
       inline void getSurfaceLoops(const int volumeTag,
-                                  std::vector<int> & tags)
+                                  std::vector<int> & surfaceLoopTags,
+                                  std::vector<std::vector<int> > & surfaceTags)
       {
         int ierr = 0;
-        int *api_tags_; size_t api_tags_n_;
-        gmshModelOccGetSurfaceLoops(volumeTag, &api_tags_, &api_tags_n_, &ierr);
+        int *api_surfaceLoopTags_; size_t api_surfaceLoopTags_n_;
+        int **api_surfaceTags_; size_t *api_surfaceTags_n_, api_surfaceTags_nn_;
+        gmshModelOccGetSurfaceLoops(volumeTag, &api_surfaceLoopTags_, &api_surfaceLoopTags_n_, &api_surfaceTags_, &api_surfaceTags_n_, &api_surfaceTags_nn_, &ierr);
         if(ierr) throwLastError();
-        tags.assign(api_tags_, api_tags_ + api_tags_n_); gmshFree(api_tags_);
+        surfaceLoopTags.assign(api_surfaceLoopTags_, api_surfaceLoopTags_ + api_surfaceLoopTags_n_); gmshFree(api_surfaceLoopTags_);
+        surfaceTags.resize(api_surfaceTags_nn_); for(size_t i = 0; i < api_surfaceTags_nn_; ++i){ surfaceTags[i].assign(api_surfaceTags_[i], api_surfaceTags_[i] + api_surfaceTags_n_[i]); gmshFree(api_surfaceTags_[i]); } gmshFree(api_surfaceTags_); gmshFree(api_surfaceTags_n_);
       }
 
       // Get the mass of the OpenCASCADE entity of dimension `dim' and tag `tag'.

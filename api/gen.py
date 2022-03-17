@@ -895,11 +895,11 @@ occ.add('getEntitiesInBoundingBox', doc, None, idouble('xmin'), idouble('ymin'),
 doc = '''Get the bounding box (`xmin', `ymin', `zmin'), (`xmax', `ymax', `zmax') of the OpenCASCADE entity of dimension `dim' and tag `tag'.'''
 occ.add('getBoundingBox', doc, None, iint('dim'), iint('tag'), odouble('xmin'), odouble('ymin'), odouble('zmin'), odouble('xmax'), odouble('ymax'), odouble('zmax'))
 
-doc = '''Get the `tags' of the curve loops making up the surface of tag `surfaceTag'.'''
-occ.add('getCurveLoops', doc, None, iint('surfaceTag'), ovectorint('tags'))
+doc = '''Get the tags `curveLoopTags' of the curve loops making up the surface of tag `surfaceTag', as well as the tags `curveTags' of the curves making up each curve loop.'''
+occ.add('getCurveLoops', doc, None, iint('surfaceTag'), ovectorint('curveLoopTags'), ovectorvectorint('curveTags'))
 
-doc = '''Get the `tags' of the surface loops making up the volume of tag `volumeTag'.'''
-occ.add('getSurfaceLoops', doc, None, iint('volumeTag'), ovectorint('tags'))
+doc = '''Get the tags `surfaceLoopTags' of the surface loops making up the volume of tag `volumeTag', as well as the tags `surfaceTags' of the surfaces making up each surface loop.'''
+occ.add('getSurfaceLoops', doc, None, iint('volumeTag'), ovectorint('surfaceLoopTags'), ovectorvectorint('surfaceTags'))
 
 doc = '''Get the mass of the OpenCASCADE entity of dimension `dim' and tag `tag'.'''
 occ.add('getMass', doc, None, iint('dim'), iint('tag'), odouble('mass'))

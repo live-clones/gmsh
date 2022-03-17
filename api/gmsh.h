@@ -3081,17 +3081,21 @@ namespace gmsh { // Top-level functions
 
       // gmsh::model::occ::getCurveLoops
       //
-      // Get the `tags' of the curve loops making up the surface of tag
-      // `surfaceTag'.
+      // Get the tags `curveLoopTags' of the curve loops making up the surface of
+      // tag `surfaceTag', as well as the tags `curveTags' of the curves making up
+      // each curve loop.
       GMSH_API void getCurveLoops(const int surfaceTag,
-                                  std::vector<int> & tags);
+                                  std::vector<int> & curveLoopTags,
+                                  std::vector<std::vector<int> > & curveTags);
 
       // gmsh::model::occ::getSurfaceLoops
       //
-      // Get the `tags' of the surface loops making up the volume of tag
-      // `volumeTag'.
+      // Get the tags `surfaceLoopTags' of the surface loops making up the volume
+      // of tag `volumeTag', as well as the tags `surfaceTags' of the surfaces
+      // making up each surface loop.
       GMSH_API void getSurfaceLoops(const int volumeTag,
-                                    std::vector<int> & tags);
+                                    std::vector<int> & surfaceLoopTags,
+                                    std::vector<std::vector<int> > & surfaceTags);
 
       // gmsh::model::occ::getMass
       //

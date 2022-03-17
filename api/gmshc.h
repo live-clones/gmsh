@@ -2738,16 +2738,20 @@ GMSH_API void gmshModelOccGetBoundingBox(const int dim,
                                          double * zmax,
                                          int * ierr);
 
-/* Get the `tags' of the curve loops making up the surface of tag
- * `surfaceTag'. */
+/* Get the tags `curveLoopTags' of the curve loops making up the surface of
+ * tag `surfaceTag', as well as the tags `curveTags' of the curves making up
+ * each curve loop. */
 GMSH_API void gmshModelOccGetCurveLoops(const int surfaceTag,
-                                        int ** tags, size_t * tags_n,
+                                        int ** curveLoopTags, size_t * curveLoopTags_n,
+                                        int *** curveTags, size_t ** curveTags_n, size_t *curveTags_nn,
                                         int * ierr);
 
-/* Get the `tags' of the surface loops making up the volume of tag
- * `volumeTag'. */
+/* Get the tags `surfaceLoopTags' of the surface loops making up the volume of
+ * tag `volumeTag', as well as the tags `surfaceTags' of the surfaces making
+ * up each surface loop. */
 GMSH_API void gmshModelOccGetSurfaceLoops(const int volumeTag,
-                                          int ** tags, size_t * tags_n,
+                                          int ** surfaceLoopTags, size_t * surfaceLoopTags_n,
+                                          int *** surfaceTags, size_t ** surfaceTags_n, size_t *surfaceTags_nn,
                                           int * ierr);
 
 /* Get the mass of the OpenCASCADE entity of dimension `dim' and tag `tag'. */
