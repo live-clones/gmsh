@@ -4129,7 +4129,7 @@ static void setShapeAttributes(OCCAttributesRTree *attributes,
         xp2.Next();
       }
     }
-    if(dim == 2) {
+    else if(dim == 2) {
       TopExp_Explorer xp1(shape, TopAbs_EDGE);
       while(xp1.More()) {
         if(colorTool->GetColor(xp1.Current(), XCAFDoc_ColorGen, col) ||
@@ -4138,8 +4138,8 @@ static void setShapeAttributes(OCCAttributesRTree *attributes,
           double r, g, b;
           getColorRGB(col, r, g, b);
           Msg::Info(" - Color (%g, %g, %g) (Curve)", r, g, b);
-          attributes->insert(
-            new OCCAttributes(1, TopoDS::Face(xp1.Current()), r, g, b, 1.));
+          TopoDS_Edge edge = TopoDS::Edge(xp1.Current());
+          attributes->insert(new OCCAttributes(1, edge, r, g, b, 1.));
         }
         xp1.Next();
       }
