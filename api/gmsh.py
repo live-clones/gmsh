@@ -4628,6 +4628,62 @@ class model:
         add_volume = addVolume
 
         @staticmethod
+        def addGeometry(geometry, numbers=[], strings=[], tag=-1):
+            """
+            gmsh.model.geo.addGeometry(geometry, numbers=[], strings=[], tag=-1)
+
+            Add a `geometry' in the built-in CAD representation. `geometry' can
+            currently be one of "Sphere" or "PolarSphere" (where `numbers' should
+            contain the x, y, z coordinates of the center, followed by the radius), or
+            "Parametric" (where `strings' should contains three expression evaluating
+            to the x, y and z coordinates. If `tag' is positive, set the tag of the
+            geometry explicitly; otherwise a new tag is selected automatically. Return
+            the tag of the geometry.
+
+            Return an integer value.
+            """
+            api_numbers_, api_numbers_n_ = _ivectordouble(numbers)
+            api_strings_, api_strings_n_ = _ivectorstring(strings)
+            ierr = c_int()
+            api_result_ = lib.gmshModelGeoAddGeometry(
+                c_char_p(geometry.encode()),
+                api_numbers_, api_numbers_n_,
+                api_strings_, api_strings_n_,
+                c_int(tag),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return api_result_
+        add_geometry = addGeometry
+
+        @staticmethod
+        def addPointOnGeometry(geometryTag, x, y, z=0., meshSize=0., tag=-1):
+            """
+            gmsh.model.geo.addPointOnGeometry(geometryTag, x, y, z=0., meshSize=0., tag=-1)
+
+            Add a point in the built-in CAD representation, at coordinates (`x', `y',
+            `z') on the geometry `geometryTag'. If `meshSize' is > 0, add a meshing
+            constraint at that point. If `tag' is positive, set the tag explicitly;
+            otherwise a new tag is selected automatically. Return the tag of the point.
+            For surface geometries, only the `x' and `y' coordinates are used.
+
+            Return an integer value.
+            """
+            ierr = c_int()
+            api_result_ = lib.gmshModelGeoAddPointOnGeometry(
+                c_int(geometryTag),
+                c_double(x),
+                c_double(y),
+                c_double(z),
+                c_double(meshSize),
+                c_int(tag),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return api_result_
+        add_point_on_geometry = addPointOnGeometry
+
+        @staticmethod
         def extrude(dimTags, dx, dy, dz, numElements=[], heights=[], recombine=False):
             """
             gmsh.model.geo.extrude(dimTags, dx, dy, dz, numElements=[], heights=[], recombine=False)

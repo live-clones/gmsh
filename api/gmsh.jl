@@ -4002,6 +4002,49 @@ end
 const add_volume = addVolume
 
 """
+    gmsh.model.geo.addGeometry(geometry, numbers = Cdouble[], strings = [], tag = -1)
+
+Add a `geometry` in the built-in CAD representation. `geometry` can currently be
+one of "Sphere" or "PolarSphere" (where `numbers` should contain the x, y, z
+coordinates of the center, followed by the radius), or "Parametric" (where
+`strings` should contains three expression evaluating to the x, y and z
+coordinates. If `tag` is positive, set the tag of the geometry explicitly;
+otherwise a new tag is selected automatically. Return the tag of the geometry.
+
+Return an integer value.
+"""
+function addGeometry(geometry, numbers = Cdouble[], strings = [], tag = -1)
+    ierr = Ref{Cint}()
+    api_result_ = ccall((:gmshModelGeoAddGeometry, gmsh.lib), Cint,
+          (Ptr{Cchar}, Ptr{Cdouble}, Csize_t, Ptr{Ptr{Cchar}}, Csize_t, Cint, Ptr{Cint}),
+          geometry, convert(Vector{Cdouble}, numbers), length(numbers), strings, length(strings), tag, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return api_result_
+end
+const add_geometry = addGeometry
+
+"""
+    gmsh.model.geo.addPointOnGeometry(geometryTag, x, y, z = 0., meshSize = 0., tag = -1)
+
+Add a point in the built-in CAD representation, at coordinates (`x`, `y`, `z`)
+on the geometry `geometryTag`. If `meshSize` is > 0, add a meshing constraint at
+that point. If `tag` is positive, set the tag explicitly; otherwise a new tag is
+selected automatically. Return the tag of the point. For surface geometries,
+only the `x` and `y` coordinates are used.
+
+Return an integer value.
+"""
+function addPointOnGeometry(geometryTag, x, y, z = 0., meshSize = 0., tag = -1)
+    ierr = Ref{Cint}()
+    api_result_ = ccall((:gmshModelGeoAddPointOnGeometry, gmsh.lib), Cint,
+          (Cint, Cdouble, Cdouble, Cdouble, Cdouble, Cint, Ptr{Cint}),
+          geometryTag, x, y, z, meshSize, tag, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return api_result_
+end
+const add_point_on_geometry = addPointOnGeometry
+
+"""
     gmsh.model.geo.extrude(dimTags, dx, dy, dz, numElements = Cint[], heights = Cdouble[], recombine = false)
 
 Extrude the entities `dimTags` in the built-in CAD representation, using a

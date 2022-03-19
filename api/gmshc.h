@@ -1745,6 +1745,32 @@ GMSH_API int gmshModelGeoAddVolume(const int * shellTags, const size_t shellTags
                                    const int tag,
                                    int * ierr);
 
+/* Add a `geometry' in the built-in CAD representation. `geometry' can
+ * currently be one of "Sphere" or "PolarSphere" (where `numbers' should
+ * contain the x, y, z coordinates of the center, followed by the radius), or
+ * "Parametric" (where `strings' should contains three expression evaluating
+ * to the x, y and z coordinates. If `tag' is positive, set the tag of the
+ * geometry explicitly; otherwise a new tag is selected automatically. Return
+ * the tag of the geometry. */
+GMSH_API int gmshModelGeoAddGeometry(const char * geometry,
+                                     const double * numbers, const size_t numbers_n,
+                                     const char * const * strings, const size_t strings_n,
+                                     const int tag,
+                                     int * ierr);
+
+/* Add a point in the built-in CAD representation, at coordinates (`x', `y',
+ * `z') on the geometry `geometryTag'. If `meshSize' is > 0, add a meshing
+ * constraint at that point. If `tag' is positive, set the tag explicitly;
+ * otherwise a new tag is selected automatically. Return the tag of the point.
+ * For surface geometries, only the `x' and `y' coordinates are used. */
+GMSH_API int gmshModelGeoAddPointOnGeometry(const int geometryTag,
+                                            const double x,
+                                            const double y,
+                                            const double z,
+                                            const double meshSize,
+                                            const int tag,
+                                            int * ierr);
+
 /* Extrude the entities `dimTags' in the built-in CAD representation, using a
  * translation along (`dx', `dy', `dz'). Return extruded entities in
  * `outDimTags'. If `numElements' is not empty, also extrude the mesh: the

@@ -3066,6 +3066,46 @@ namespace gmsh { // Top-level functions
         return result_api_;
       }
 
+      // Add a `geometry' in the built-in CAD representation. `geometry' can
+      // currently be one of "Sphere" or "PolarSphere" (where `numbers' should
+      // contain the x, y, z coordinates of the center, followed by the radius), or
+      // "Parametric" (where `strings' should contains three expression evaluating
+      // to the x, y and z coordinates. If `tag' is positive, set the tag of the
+      // geometry explicitly; otherwise a new tag is selected automatically. Return
+      // the tag of the geometry.
+      inline int addGeometry(const std::string & geometry,
+                             const std::vector<double> & numbers = std::vector<double>(),
+                             const std::vector<std::string> & strings = std::vector<std::string>(),
+                             const int tag = -1)
+      {
+        int ierr = 0;
+        double *api_numbers_; size_t api_numbers_n_; vector2ptr(numbers, &api_numbers_, &api_numbers_n_);
+        char **api_strings_; size_t api_strings_n_; vectorstring2charptrptr(strings, &api_strings_, &api_strings_n_);
+        int result_api_ = gmshModelGeoAddGeometry(geometry.c_str(), api_numbers_, api_numbers_n_, api_strings_, api_strings_n_, tag, &ierr);
+        if(ierr) throwLastError();
+        gmshFree(api_numbers_);
+        for(size_t i = 0; i < api_strings_n_; ++i){ gmshFree(api_strings_[i]); } gmshFree(api_strings_);
+        return result_api_;
+      }
+
+      // Add a point in the built-in CAD representation, at coordinates (`x', `y',
+      // `z') on the geometry `geometryTag'. If `meshSize' is > 0, add a meshing
+      // constraint at that point. If `tag' is positive, set the tag explicitly;
+      // otherwise a new tag is selected automatically. Return the tag of the
+      // point. For surface geometries, only the `x' and `y' coordinates are used.
+      inline int addPointOnGeometry(const int geometryTag,
+                                    const double x,
+                                    const double y,
+                                    const double z = 0.,
+                                    const double meshSize = 0.,
+                                    const int tag = -1)
+      {
+        int ierr = 0;
+        int result_api_ = gmshModelGeoAddPointOnGeometry(geometryTag, x, y, z, meshSize, tag, &ierr);
+        if(ierr) throwLastError();
+        return result_api_;
+      }
+
       // Extrude the entities `dimTags' in the built-in CAD representation, using a
       // translation along (`dx', `dy', `dz'). Return extruded entities in
       // `outDimTags'. If `numElements' is not empty, also extrude the mesh: the

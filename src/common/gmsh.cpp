@@ -28,6 +28,7 @@
 #include "ghostEdge.h"
 #include "ghostFace.h"
 #include "ghostRegion.h"
+#include "gmshSurface.h"
 #include "MVertex.h"
 #include "MPoint.h"
 #include "MLine.h"
@@ -5841,6 +5842,68 @@ GMSH_API int gmsh::model::geo::addVolume(const std::vector<int> &shellTags,
   int outTag = tag;
   GModel::current()->getGEOInternals()->addVolume(outTag, shellTags);
   return outTag;
+}
+
+GMSH_API int gmsh::model::geo::addGeometry(const std::string &geometry,
+                                           const std::vector<double> &numbers,
+                                           const std::vector<std::string> &strings,
+                                           const int tag)
+{
+  int t = tag;
+  if(t < 0) t = gmshSurface::maxTag() + 1;
+
+  if(geometry == "ParametricSurface") {
+    if(strings.size() == 3)
+      gmshParametricSurface::NewParametricSurface(t, strings[0].c_str(),
+                                                  strings[1].c_str(),
+                                                  strings[2].c_str());
+    else
+      Msg::Error("Parametric surface definition requires 3 strings "
+                 "(3 expressions to compute the coordinates)");
+  }
+  else if(geometry == "Sphere") {
+    if(numbers.size() == 4)
+      gmshSphere::NewSphere(t, numbers[0], numbers[1], numbers[2], numbers[3]);
+    else
+      Msg::Error("Sphere definition requires 4 numbers (3 coordinates "
+                 "of the center and the radius)");
+  }
+  else if(geometry == "PolarSphere") {
+    if(numbers.size() == 4)
+      gmshPolarSphere::NewPolarSphere(t, numbers[0], numbers[1],
+                                      numbers[2], numbers[3]);
+    else
+      Msg::Error("Polar sphere definition requires 4 numbers (3 coordinates "
+                 "of the center and the radius)");
+  }
+  else {
+    Msg::Error("Unknown geometry '%s'", geometry.c_str());
+    return 0;
+  }
+  return t;
+}
+
+GMSH_API int gmsh::model::geo::addPointOnGeometry(const int geometryTag,
+                                                  const double x,
+                                                  const double y,
+                                                  const double z,
+                                                  const double meshSize,
+                                                  const int tag)
+{
+  if(!_checkInit()) return -1;
+  int outTag = tag;
+  double xx = CTX::instance()->geom.scalingFactor * x;
+  double yy = CTX::instance()->geom.scalingFactor * y;
+  //double zz = CTX::instance()->geom.scalingFactor * z;
+  double lc = CTX::instance()->geom.scalingFactor * meshSize;
+  gmshSurface *s = gmshSurface::getSurface(geometryTag);
+  if(s) {
+    GModel::current()->getGEOInternals()->addVertex(outTag, xx, yy, s, lc);
+    return outTag;
+  }
+  else {
+    return 0;
+  }
 }
 
 static ExtrudeParams *_getExtrudeParams(const std::vector<int> &numElements,

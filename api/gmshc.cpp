@@ -2661,6 +2661,34 @@ GMSH_API int gmshModelGeoAddVolume(const int * shellTags, const size_t shellTags
   return result_api_;
 }
 
+GMSH_API int gmshModelGeoAddGeometry(const char * geometry, const double * numbers, const size_t numbers_n, const char * const * strings, const size_t strings_n, const int tag, int * ierr)
+{
+  int result_api_ = 0;
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<double> api_numbers_(numbers, numbers + numbers_n);
+    std::vector<std::string> api_strings_(strings, strings + strings_n);
+    result_api_ = gmsh::model::geo::addGeometry(geometry, api_numbers_, api_strings_, tag);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+  return result_api_;
+}
+
+GMSH_API int gmshModelGeoAddPointOnGeometry(const int geometryTag, const double x, const double y, const double z, const double meshSize, const int tag, int * ierr)
+{
+  int result_api_ = 0;
+  if(ierr) *ierr = 0;
+  try {
+    result_api_ = gmsh::model::geo::addPointOnGeometry(geometryTag, x, y, z, meshSize, tag);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+  return result_api_;
+}
+
 GMSH_API void gmshModelGeoExtrude(const int * dimTags, const size_t dimTags_n, const double dx, const double dy, const double dz, int ** outDimTags, size_t * outDimTags_n, const int * numElements, const size_t numElements_n, const double * heights, const size_t heights_n, const int recombine, int * ierr)
 {
   if(ierr) *ierr = 0;

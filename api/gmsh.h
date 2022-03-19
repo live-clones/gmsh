@@ -1987,6 +1987,34 @@ namespace gmsh { // Top-level functions
       GMSH_API int addVolume(const std::vector<int> & shellTags,
                              const int tag = -1);
 
+      // gmsh::model::geo::addGeometry
+      //
+      // Add a `geometry' in the built-in CAD representation. `geometry' can
+      // currently be one of "Sphere" or "PolarSphere" (where `numbers' should
+      // contain the x, y, z coordinates of the center, followed by the radius), or
+      // "Parametric" (where `strings' should contains three expression evaluating
+      // to the x, y and z coordinates. If `tag' is positive, set the tag of the
+      // geometry explicitly; otherwise a new tag is selected automatically. Return
+      // the tag of the geometry.
+      GMSH_API int addGeometry(const std::string & geometry,
+                               const std::vector<double> & numbers = std::vector<double>(),
+                               const std::vector<std::string> & strings = std::vector<std::string>(),
+                               const int tag = -1);
+
+      // gmsh::model::geo::addPointOnGeometry
+      //
+      // Add a point in the built-in CAD representation, at coordinates (`x', `y',
+      // `z') on the geometry `geometryTag'. If `meshSize' is > 0, add a meshing
+      // constraint at that point. If `tag' is positive, set the tag explicitly;
+      // otherwise a new tag is selected automatically. Return the tag of the
+      // point. For surface geometries, only the `x' and `y' coordinates are used.
+      GMSH_API int addPointOnGeometry(const int geometryTag,
+                                      const double x,
+                                      const double y,
+                                      const double z = 0.,
+                                      const double meshSize = 0.,
+                                      const int tag = -1);
+
       // gmsh::model::geo::extrude
       //
       // Extrude the entities `dimTags' in the built-in CAD representation, using a

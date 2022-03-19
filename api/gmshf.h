@@ -3679,6 +3679,58 @@ c
             integer(c_int)::ierr
           end function gmshModelGeoAddVolume
 
+!  Add a `geometry' in the built-in CAD representation. `geometry' can
+!  currently be one of "Sphere" or "PolarSphere" (where `numbers' should
+!  contain the x, y, z coordinates of the center, followed by the radius), or
+!  "Parametric" (where `strings' should contains three expression evaluating
+!  to the x, y and z coordinates. If `tag' is positive, set the tag of the
+!  geometry explicitly; otherwise a new tag is selected automatically. Return
+!  the tag of the geometry.
+        function gmshModelGeoAddGeometry(
+     &      geometry,
+     &      numbers,
+     &      numbers_n,
+     &      strings,
+     &      strings_n,
+     &      tag,
+     &      ierr)
+     &    bind(C, name = "gmshModelGeoAddGeometry")
+          use, intrinsic :: iso_c_binding
+          integer(c_int)::gmshModelGeoAddGeometry
+            character(len = 1, kind = c_char)::geometry(*)
+            real(c_double)::numbers(*)
+            integer(c_size_t), value :: numbers_n
+            type(c_ptr)::strings(*)
+            integer(c_size_t), value :: strings_n
+            integer(c_int), value::tag
+            integer(c_int)::ierr
+          end function gmshModelGeoAddGeometry
+
+!  Add a point in the built-in CAD representation, at coordinates (`x', `y',
+!  `z') on the geometry `geometryTag'. If `meshSize' is > 0, add a meshing
+!  constraint at that point. If `tag' is positive, set the tag explicitly;
+!  otherwise a new tag is selected automatically. Return the tag of the point.
+!  For surface geometries, only the `x' and `y' coordinates are used.
+        function gmshModelGeoAddPointOnGeometry(
+     &      geometryTag,
+     &      x,
+     &      y,
+     &      z,
+     &      meshSize,
+     &      tag,
+     &      ierr)
+     &    bind(C, name = "gmshModelGeoAddPointOnGeometry")
+          use, intrinsic :: iso_c_binding
+          integer(c_int)::gmshModelGeoAddPointOnGeometry
+            integer(c_int), value::geometryTag
+            real(c_double), value::x
+            real(c_double), value::y
+            real(c_double), value::z
+            real(c_double), value::meshSize
+            integer(c_int), value::tag
+            integer(c_int)::ierr
+          end function gmshModelGeoAddPointOnGeometry
+
 !  Extrude the entities `dimTags' in the built-in CAD representation, using a
 !  translation along (`dx', `dy', `dz'). Return extruded entities in
 !  `outDimTags'. If `numElements' is not empty, also extrude the mesh: the

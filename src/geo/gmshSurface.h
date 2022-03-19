@@ -7,6 +7,7 @@
 #define GMSH_SURFACE_H
 
 #include <cmath>
+#include <cstdio>
 #include <map>
 #include "Pair.h"
 #include "Range.h"
@@ -15,6 +16,8 @@
 #include "SVector3.h"
 #include "SBoundingBox3d.h"
 #include "Numeric.h"
+
+class mathEvaluator;
 
 class gmshSurface {
 protected:
@@ -32,6 +35,12 @@ public:
     }
     allGmshSurfaces.clear();
   };
+  static int maxTag()
+  {
+    int t = 0;
+    for(auto p : allGmshSurfaces) t = std::max(t, p.first);
+    return t;
+  }
   static gmshSurface *getSurface(int tag);
   virtual Range<double> parBounds(int i) const = 0;
   // Underlying geometric representation of this entity.
@@ -90,7 +99,6 @@ public:
   }
 };
 
-#include "stdio.h"
 class gmshPolarSphere : public gmshSurface {
 private:
   double r;
@@ -127,16 +135,15 @@ public:
   }
 };
 
-class mathEvaluator;
-
 class gmshParametricSurface : public gmshSurface {
 private:
   mathEvaluator *_f;
-  gmshParametricSurface(char *, char *, char *);
+  gmshParametricSurface(const char *, const char *, const char *);
   ~gmshParametricSurface();
 
 public:
-  static gmshSurface *NewParametricSurface(int iSurf, char *, char *, char *);
+  static gmshSurface *NewParametricSurface(int iSurf, const char *, const char *,
+                                           const char *);
   virtual Range<double> parBounds(int i) const;
   virtual gmshSurface::gmshSurfaceType geomType() const
   {
