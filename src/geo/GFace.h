@@ -223,6 +223,9 @@ public:
   // export in GEO format
   virtual void writeGEO(FILE *fp);
 
+  // export in Python
+  virtual void writePY(FILE *fp);
+
   // fill the crude representation cross
   virtual bool buildRepresentationCross(bool force = false);
 

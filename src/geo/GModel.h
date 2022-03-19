@@ -723,12 +723,15 @@ public:
   void load(const std::string &fileName);
   void save(const std::string &fileName);
 
-  // Gmsh native CAD format (readGEO is static, since it can create
-  // multiple models)
+  // GEO file interface (readGEO is static, since it can create multiple models)
   static int readGEO(const std::string &name);
   int writeGEO(const std::string &name, bool printLabels = true,
                bool onlyPhysicals = false);
   int exportDiscreteGEOInternals();
+
+  // PY export (mostly a placeholder for now)
+  int writePY(const std::string &name, bool printLabels = true,
+              bool onlyPhysicals = false);
 
   // OCC model
   int readOCCBREP(const std::string &name);

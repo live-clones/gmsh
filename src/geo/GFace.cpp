@@ -515,6 +515,36 @@ void GFace::writeGEO(FILE *fp)
   if(meshAttributes.reverseMesh) fprintf(fp, "Reverse Surface {%d};\n", tag());
 }
 
+void GFace::writePY(FILE *fp)
+{
+  if(geomType() == DiscreteSurface || geomType() == BoundaryLayerSurface) return;
+
+  const char *factory = getNativeType() == OpenCascadeModel ? "occ" : "geo";
+
+  std::vector<GEdge *> const &edg = edges();
+  std::vector<int> const &dir = orientations();
+  if(edg.size() && dir.size() == edg.size()) {
+    std::vector<int> num, ori;
+    for(auto it = edg.begin(); it != edg.end(); it++)
+      num.push_back((*it)->tag());
+    for(auto it = dir.begin(); it != dir.end(); it++)
+      ori.push_back((*it) > 0 ? 1 : -1);
+    fprintf(fp, "gmsh.model.%s.addCurveLoop([", factory);
+    for(std::size_t i = 0; i < num.size(); i++) {
+      if(i) fprintf(fp, ", ");
+      fprintf(fp, "%d", num[i] * ori[i]);
+    }
+    fprintf(fp, "], %d)\n", tag());
+    if(geomType() == GEntity::Plane) {
+      fprintf(fp, "gmsh.model.%s.addPlaneSurface([%d], %d)\n", factory,
+              tag(), tag());
+    }
+    else {
+      // TODO
+    }
+  }
+}
+
 void GFace::computeMeanPlane()
 {
   std::vector<SPoint3> pts;
