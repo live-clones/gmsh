@@ -2633,7 +2633,7 @@ c
 
 !  Set a recombination meshing constraint on the model entity of dimension
 !  `dim' and tag `tag'. Currently only entities of dimension 2 (to recombine
-!  triangles into quadrangles) are supported; `angle' secifies the threshold
+!  triangles into quadrangles) are supported; `angle' specifies the threshold
 !  angle for the simple recombination algorithm..
         subroutine gmshModelMeshSetRecombine(
      &      dim,
@@ -4243,7 +4243,7 @@ c
 !  Set a recombination meshing constraint on the entity of dimension `dim' and
 !  tag `tag' in the built-in CAD kernel representation. Currently only
 !  entities of dimension 2 (to recombine triangles into quadrangles) are
-!  supported; `angle' secifies the threshold angle for the simple
+!  supported; `angle' specifies the threshold angle for the simple
 !  recombination algorithm.
         subroutine gmshModelGeoMeshSetRecombine(
      &      dim,

@@ -2470,7 +2470,7 @@ C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/x2.cpp#L169,x2.cpp}, @url{@value{G
 @item gmsh/model/mesh/setRecombine
 Set a recombination meshing constraint on the model entity of dimension
 @code{dim} and tag @code{tag}. Currently only entities of dimension 2 (to
-recombine triangles into quadrangles) are supported; @code{angle} secifies the
+recombine triangles into quadrangles) are supported; @code{angle} specifies the
 threshold angle for the simple recombination algorithm..
 
 @table @asis
@@ -3994,7 +3994,7 @@ corners of the transfinite interpolation explicitly.
 Set a recombination meshing constraint on the entity of dimension @code{dim} and
 tag @code{tag} in the built-in CAD kernel representation. Currently only
 entities of dimension 2 (to recombine triangles into quadrangles) are supported;
-@code{angle} secifies the threshold angle for the simple recombination
+@code{angle} specifies the threshold angle for the simple recombination
 algorithm.
 
 @table @asis

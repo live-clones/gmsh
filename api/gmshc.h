@@ -1269,7 +1269,7 @@ GMSH_API void gmshModelMeshSetTransfiniteAutomatic(const int * dimTags, const si
 
 /* Set a recombination meshing constraint on the model entity of dimension
  * `dim' and tag `tag'. Currently only entities of dimension 2 (to recombine
- * triangles into quadrangles) are supported; `angle' secifies the threshold
+ * triangles into quadrangles) are supported; `angle' specifies the threshold
  * angle for the simple recombination algorithm.. */
 GMSH_API void gmshModelMeshSetRecombine(const int dim,
                                         const int tag,
@@ -2011,7 +2011,7 @@ GMSH_API void gmshModelGeoMeshSetTransfiniteVolume(const int tag,
 /* Set a recombination meshing constraint on the entity of dimension `dim' and
  * tag `tag' in the built-in CAD kernel representation. Currently only
  * entities of dimension 2 (to recombine triangles into quadrangles) are
- * supported; `angle' secifies the threshold angle for the simple
+ * supported; `angle' specifies the threshold angle for the simple
  * recombination algorithm. */
 GMSH_API void gmshModelGeoMeshSetRecombine(const int dim,
                                            const int tag,

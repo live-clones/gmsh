@@ -2827,7 +2827,7 @@ const set_transfinite_automatic = setTransfiniteAutomatic
 
 Set a recombination meshing constraint on the model entity of dimension `dim`
 and tag `tag`. Currently only entities of dimension 2 (to recombine triangles
-into quadrangles) are supported; `angle` secifies the threshold angle for the
+into quadrangles) are supported; `angle` specifies the threshold angle for the
 simple recombination algorithm..
 """
 function setRecombine(dim, tag, angle = 45.)
@@ -4509,7 +4509,7 @@ const set_transfinite_volume = setTransfiniteVolume
 Set a recombination meshing constraint on the entity of dimension `dim` and tag
 `tag` in the built-in CAD kernel representation. Currently only entities of
 dimension 2 (to recombine triangles into quadrangles) are supported; `angle`
-secifies the threshold angle for the simple recombination algorithm.
+specifies the threshold angle for the simple recombination algorithm.
 """
 function setRecombine(dim, tag, angle = 45.)
     ierr = Ref{Cint}()
