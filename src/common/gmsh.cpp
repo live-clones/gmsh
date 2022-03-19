@@ -4849,7 +4849,8 @@ GMSH_API void gmsh::model::mesh::setTransfiniteAutomatic(
 #endif
 }
 
-GMSH_API void gmsh::model::mesh::setRecombine(const int dim, const int tag)
+GMSH_API void gmsh::model::mesh::setRecombine(const int dim, const int tag,
+                                              const double angle)
 {
   if(!_checkInit()) return;
   if(dim == 2) {
@@ -4859,7 +4860,7 @@ GMSH_API void gmsh::model::mesh::setRecombine(const int dim, const int tag)
       return;
     }
     gf->meshAttributes.recombine = 1;
-    gf->meshAttributes.recombineAngle = 45.;
+    gf->meshAttributes.recombineAngle = angle;
   }
 }
 

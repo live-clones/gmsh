@@ -3329,18 +3329,20 @@ class model:
         set_transfinite_automatic = setTransfiniteAutomatic
 
         @staticmethod
-        def setRecombine(dim, tag):
+        def setRecombine(dim, tag, angle=45.):
             """
-            gmsh.model.mesh.setRecombine(dim, tag)
+            gmsh.model.mesh.setRecombine(dim, tag, angle=45.)
 
             Set a recombination meshing constraint on the model entity of dimension
             `dim' and tag `tag'. Currently only entities of dimension 2 (to recombine
-            triangles into quadrangles) are supported.
+            triangles into quadrangles) are supported; `angle' secifies the threshold
+            angle for the simple recombination algorithm..
             """
             ierr = c_int()
             lib.gmshModelMeshSetRecombine(
                 c_int(dim),
                 c_int(tag),
+                c_double(angle),
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
@@ -5218,7 +5220,8 @@ class model:
                 Set a recombination meshing constraint on the entity of dimension `dim' and
                 tag `tag' in the built-in CAD kernel representation. Currently only
                 entities of dimension 2 (to recombine triangles into quadrangles) are
-                supported.
+                supported; `angle' secifies the threshold angle for the simple
+                recombination algorithm.
                 """
                 ierr = c_int()
                 lib.gmshModelGeoMeshSetRecombine(

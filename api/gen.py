@@ -455,8 +455,8 @@ mesh.add('setTransfiniteVolume', doc, None, iint('tag'), ivectorint('cornerTags'
 doc = '''Set transfinite meshing constraints on the model entities in `dimTag'. Transfinite meshing constraints are added to the curves of the quadrangular surfaces and to the faces of 6-sided volumes. Quadragular faces with a corner angle superior to `cornerAngle' (in radians) are ignored. The number of points is automatically determined from the sizing constraints. If `dimTag' is empty, the constraints are applied to all entities in the model. If `recombine' is true, the recombine flag is automatically set on the transfinite surfaces.  '''
 mesh.add('setTransfiniteAutomatic', doc, None, ivectorpair('dimTags', 'gmsh::vectorpair()', "[]", "[]"), idouble('cornerAngle', '2.35', '2.35', '2.35'), ibool('recombine', 'true', 'True'))
 
-doc = '''Set a recombination meshing constraint on the model entity of dimension `dim' and tag `tag'. Currently only entities of dimension 2 (to recombine triangles into quadrangles) are supported.'''
-mesh.add('setRecombine', doc, None, iint('dim'), iint('tag'))
+doc = '''Set a recombination meshing constraint on the model entity of dimension `dim' and tag `tag'. Currently only entities of dimension 2 (to recombine triangles into quadrangles) are supported; `angle' secifies the threshold angle for the simple recombination algorithm..'''
+mesh.add('setRecombine', doc, None, iint('dim'), iint('tag'), idouble('angle', '45.'))
 
 doc = '''Set a smoothing meshing constraint on the model entity of dimension `dim' and tag `tag'. `val' iterations of a Laplace smoother are applied.'''
 mesh.add('setSmoothing', doc, None, iint('dim'), iint('tag'), iint('val'))
@@ -718,7 +718,7 @@ mesh.add('setTransfiniteSurface', doc, None, iint('tag'), istring('arrangement',
 doc = '''Set a transfinite meshing constraint on the surface `tag' in the built-in CAD kernel representation. `cornerTags' can be used to specify the (6 or 8) corners of the transfinite interpolation explicitly.'''
 mesh.add('setTransfiniteVolume', doc, None, iint('tag'), ivectorint('cornerTags', 'std::vector<int>()', "[]", "[]"))
 
-doc = '''Set a recombination meshing constraint on the entity of dimension `dim' and tag `tag' in the built-in CAD kernel representation. Currently only entities of dimension 2 (to recombine triangles into quadrangles) are supported.'''
+doc = '''Set a recombination meshing constraint on the entity of dimension `dim' and tag `tag' in the built-in CAD kernel representation. Currently only entities of dimension 2 (to recombine triangles into quadrangles) are supported; `angle' secifies the threshold angle for the simple recombination algorithm.'''
 mesh.add('setRecombine', doc, None, iint('dim'), iint('tag'), idouble('angle', '45.'))
 
 doc = '''Set a smoothing meshing constraint on the entity of dimension `dim' and tag `tag' in the built-in CAD kernel representation. `val' iterations of a Laplace smoother are applied.'''

@@ -1878,11 +1878,11 @@ GMSH_API void gmshModelMeshSetTransfiniteAutomatic(const int * dimTags, const si
   }
 }
 
-GMSH_API void gmshModelMeshSetRecombine(const int dim, const int tag, int * ierr)
+GMSH_API void gmshModelMeshSetRecombine(const int dim, const int tag, const double angle, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    gmsh::model::mesh::setRecombine(dim, tag);
+    gmsh::model::mesh::setRecombine(dim, tag, angle);
   }
   catch(...){
     if(ierr) *ierr = 1;

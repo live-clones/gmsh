@@ -2823,17 +2823,18 @@ end
 const set_transfinite_automatic = setTransfiniteAutomatic
 
 """
-    gmsh.model.mesh.setRecombine(dim, tag)
+    gmsh.model.mesh.setRecombine(dim, tag, angle = 45.)
 
 Set a recombination meshing constraint on the model entity of dimension `dim`
 and tag `tag`. Currently only entities of dimension 2 (to recombine triangles
-into quadrangles) are supported.
+into quadrangles) are supported; `angle` secifies the threshold angle for the
+simple recombination algorithm..
 """
-function setRecombine(dim, tag)
+function setRecombine(dim, tag, angle = 45.)
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshSetRecombine, gmsh.lib), Cvoid,
-          (Cint, Cint, Ptr{Cint}),
-          dim, tag, ierr)
+          (Cint, Cint, Cdouble, Ptr{Cint}),
+          dim, tag, angle, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
@@ -4507,7 +4508,8 @@ const set_transfinite_volume = setTransfiniteVolume
 
 Set a recombination meshing constraint on the entity of dimension `dim` and tag
 `tag` in the built-in CAD kernel representation. Currently only entities of
-dimension 2 (to recombine triangles into quadrangles) are supported.
+dimension 2 (to recombine triangles into quadrangles) are supported; `angle`
+secifies the threshold angle for the simple recombination algorithm.
 """
 function setRecombine(dim, tag, angle = 45.)
     ierr = Ref{Cint}()
