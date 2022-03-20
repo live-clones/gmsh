@@ -56,6 +56,12 @@ set(SRC
   HierarchicalBasisHcurlTetra.cpp
   HierarchicalBasisHcurlPri.cpp
   HierarchicalBasisHcurlLine.cpp
+  HierarchicalBasisHdiv.cpp
+  HierarchicalBasisHdivQuad.cpp
+  HierarchicalBasisHdivBrick.cpp
+  HierarchicalBasisHdivTria.cpp
+  HierarchicalBasisHdivTetra.cpp
+  HierarchicalBasisHdivPri.cpp
   curvature.cpp
 )
 

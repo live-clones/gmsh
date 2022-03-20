@@ -59,6 +59,11 @@
 #include "HierarchicalBasisHcurlTria.h"
 #include "HierarchicalBasisHcurlTetra.h"
 #include "HierarchicalBasisHcurlPri.h"
+#include "HierarchicalBasisHdivQuad.h"
+#include "HierarchicalBasisHdivBrick.h"
+#include "HierarchicalBasisHdivTria.h"
+#include "HierarchicalBasisHdivTetra.h"
+#include "HierarchicalBasisHdivPri.h"
 
 #if defined(HAVE_MESH)
 #include "Field.h"
@@ -2319,6 +2324,18 @@ static bool _getFunctionSpaceInfo(const std::string &fsType,
     fsComp = 3;
     return true;
   }
+  if(fsType.substr(0, 12) == "HdivLegendre") {
+    fsName = "HdivLegendre";
+    fsOrder = atoi(fsType.substr(12).c_str());
+    fsComp = 3;
+    return true;
+  }
+  if(fsType.substr(0, 15) == "DivHdivLegendre") {
+    fsName = "DivHdivLegendre";
+    fsOrder = atoi(fsType.substr(15).c_str());
+    fsComp = 1;
+    return true;
+  }
   return false;
 }
 
@@ -2750,6 +2767,29 @@ GMSH_API void gmsh::model::mesh::getBasisFunctions(
       } break;
       case TYPE_LIN: {
         basis = new HierarchicalBasisHcurlLine(fsOrder);
+      } break;
+      default:
+        Msg::Error("Unknown familyType %i for basis function type %s",
+                   familyType, fsName.c_str());
+        return;
+      }
+    }
+    else if(fsName == "HdivLegendre" || fsName == "DivHdivLegendre") {
+      switch(familyType) {
+      case TYPE_QUA: {
+        basis = new HierarchicalBasisHdivQuad(fsOrder);
+      } break;
+      case TYPE_HEX: {
+        basis = new HierarchicalBasisHdivBrick(fsOrder);
+      } break;
+      case TYPE_TRI: {
+        basis = new HierarchicalBasisHdivTria(fsOrder);
+      } break;
+      case TYPE_TET: {
+        basis = new HierarchicalBasisHdivTetra(fsOrder);
+      } break;
+      case TYPE_PRI: {
+        basis = new HierarchicalBasisHdivPri(fsOrder);
       } break;
       default:
         Msg::Error("Unknown familyType %i for basis function type %s",
@@ -3647,6 +3687,29 @@ GMSH_API void gmsh::model::mesh::getKeys(
       return;
     }
   }
+  else if(fsName == "HdivLegendre" || fsName == "DivHdivLegendre") {
+    switch(familyType) {
+    case TYPE_QUA: {
+      basis = new HierarchicalBasisHdivQuad(order);
+    } break;
+    case TYPE_HEX: {
+      basis = new HierarchicalBasisHdivBrick(order);
+    } break;
+    case TYPE_TRI: {
+      basis = new HierarchicalBasisHdivTria(order);
+    } break;
+    case TYPE_TET: {
+      basis = new HierarchicalBasisHdivTetra(order);
+    } break;
+    case TYPE_PRI: {
+      basis = new HierarchicalBasisHdivPri(order);
+    } break;
+    default:
+      Msg::Error("Unknown familyType %i for basis function type %s", familyType,
+                 fsName.c_str());
+      return;
+    }
+  }
   else if(fsName == "IsoParametric" || fsName == "Lagrange" ||
           fsName == "GradIsoParametric" || fsName == "GradLagrange") {
     const nodalBasis *nodalB(nullptr);
@@ -3907,6 +3970,29 @@ GMSH_API void gmsh::model::mesh::getKeysForElement(
       return;
     }
   }
+  else if(fsName == "HdivLegendre" || fsName == "DivHdivLegendre") {
+    switch(familyType) {
+    case TYPE_QUA: {
+      basis = new HierarchicalBasisHdivQuad(order);
+    } break;
+    case TYPE_HEX: {
+      basis = new HierarchicalBasisHdivBrick(order);
+    } break;
+    case TYPE_TRI: {
+      basis = new HierarchicalBasisHdivTria(order);
+    } break;
+    case TYPE_TET: {
+      basis = new HierarchicalBasisHdivTetra(order);
+    } break;
+    case TYPE_PRI: {
+      basis = new HierarchicalBasisHdivPri(order);
+    } break;
+    default:
+      Msg::Error("Unknown familyType %i for basis function type %s", familyType,
+                 fsName.c_str());
+      return;
+    }
+  }
   else if(fsName == "IsoParametric" || fsName == "Lagrange" ||
           fsName == "GradIsoParametric" || fsName == "GradLagrange") {
     typeKeys.reserve(e->getNumVertices());
@@ -4138,6 +4224,37 @@ GMSH_API int gmsh::model::mesh::getNumberOfKeys(
     numberOfKeys = vSize + bSize + eSize + quadFSize + triFSize;
     delete basis;
   }
+  else if(fsName == "HdivLegendre" || fsName == "DivHdivLegendre") {
+    HierarchicalBasis *basis(nullptr);
+    switch(familyType) {
+    case TYPE_QUA: {
+      basis = new HierarchicalBasisHdivQuad(basisOrder);
+    } break;
+    case TYPE_HEX: {
+      basis = new HierarchicalBasisHdivBrick(basisOrder);
+    } break;
+    case TYPE_TRI: {
+      basis = new HierarchicalBasisHdivTria(basisOrder);
+    } break;
+    case TYPE_TET: {
+      basis = new HierarchicalBasisHdivTetra(basisOrder);
+    } break;
+    case TYPE_PRI: {
+      basis = new HierarchicalBasisHdivPri(basisOrder);
+    } break;
+    default:
+      Msg::Error("Unknown familyType %i for basis function type %s", familyType,
+                 fsName.c_str());
+      return 0;
+    }
+    int vSize = basis->getnVertexFunction();
+    int bSize = basis->getnBubbleFunction();
+    int eSize = basis->getnEdgeFunction();
+    int quadFSize = basis->getnQuadFaceFunction();
+    int triFSize = basis->getnTriFaceFunction();
+    numberOfKeys = vSize + bSize + eSize + quadFSize + triFSize;
+    delete basis;
+  }
   else if(fsName == "IsoParametric" || fsName == "Lagrange" ||
           fsName == "GradIsoParametric" || fsName == "GradLagrange") {
     const nodalBasis *basis(nullptr);
@@ -4231,6 +4348,29 @@ GMSH_API void gmsh::model::mesh::getKeysInformation(
     } break;
     case TYPE_LIN: {
       basis = new HierarchicalBasisHcurlLine(basisOrder);
+    } break;
+    default:
+      Msg::Error("Unknown familyType %i for basis function type %s", familyType,
+                 fsName.c_str());
+      return;
+    }
+  }
+  else if(fsName == "HdivLegendre" || fsName == "DivHdivLegendre") {
+    switch(familyType) {
+    case TYPE_QUA: {
+      basis = new HierarchicalBasisHdivQuad(basisOrder);
+    } break;
+    case TYPE_HEX: {
+      basis = new HierarchicalBasisHdivBrick(basisOrder);
+    } break;
+    case TYPE_TRI: {
+      basis = new HierarchicalBasisHdivTria(basisOrder);
+    } break;
+    case TYPE_TET: {
+      basis = new HierarchicalBasisHdivTetra(basisOrder);
+    } break;
+    case TYPE_PRI: {
+      basis = new HierarchicalBasisHdivPri(basisOrder);
     } break;
     default:
       Msg::Error("Unknown familyType %i for basis function type %s", familyType,
