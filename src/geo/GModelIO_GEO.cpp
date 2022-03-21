@@ -1899,6 +1899,8 @@ int GModel::writePY(const std::string &name, bool printLabels,
     if(!onlyPhysicals || !skipRegion(*it)) (*it)->writePY(fp);
   }
 
+  fprintf(fp, "gmsh.model.geo.synchronize()\n");
+  fprintf(fp, "gmsh.fltk.run()\n");
   fprintf(fp, "gmsh.finalize()\n");
 
   fclose(fp);

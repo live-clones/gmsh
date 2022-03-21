@@ -487,7 +487,7 @@ void GFace::writeGEO(FILE *fp)
       fprintf(fp, "Surface(%d) = {%d};\n", tag(), tag());
     }
     else {
-      Msg::Error("Skipping surface %d in export", tag());
+      Msg::Warning("Skipping surface %d in export", tag());
     }
   }
 
@@ -517,31 +517,41 @@ void GFace::writeGEO(FILE *fp)
 
 void GFace::writePY(FILE *fp)
 {
+  // This is by no means complete - merely a placeholder for a future
+  // implementation
+
   if(geomType() == DiscreteSurface || geomType() == BoundaryLayerSurface) return;
 
   const char *factory = getNativeType() == OpenCascadeModel ? "occ" : "geo";
 
-  std::vector<GEdge *> const &edg = edges();
-  std::vector<int> const &dir = orientations();
-  if(edg.size() && dir.size() == edg.size()) {
-    std::vector<int> num, ori;
-    for(auto it = edg.begin(); it != edg.end(); it++)
-      num.push_back((*it)->tag());
-    for(auto it = dir.begin(); it != dir.end(); it++)
-      ori.push_back((*it) > 0 ? 1 : -1);
-    fprintf(fp, "gmsh.model.%s.addCurveLoop([", factory);
-    for(std::size_t i = 0; i < num.size(); i++) {
+  std::size_t numcl = 0;
+  for(std::size_t i = 0; i < edgeLoops.size(); i++) {
+    std::vector<GEdge *> edges;
+    std::vector<int> signs;
+    edgeLoops[i].getEdges(edges);
+    edgeLoops[i].getSigns(signs);
+    if(edges.size() && edges.size() == signs.size()) {
+      fprintf(fp, "s%d_cl%lu = gmsh.model.%s.addCurveLoop([", tag(), ++numcl,
+              factory);
+      for(std::size_t j = 0; j < edges.size(); j++) {
+        if(j) fprintf(fp, ", ");
+        fprintf(fp, "%d", edges[j]->tag() * signs[j]);
+      }
+      fprintf(fp, "])\n");
+    }
+  }
+
+  if(geomType() == GEntity::Plane || geomType() == GEntity::ParametricSurface) {
+    fprintf(fp, "gmsh.model.%s.addPlaneSurface([", factory);
+    for(std::size_t i = 0; i < numcl; i++) {
       if(i) fprintf(fp, ", ");
-      fprintf(fp, "%d", num[i] * ori[i]);
+      fprintf(fp, "s%d_cl%lu", tag(), i + 1);
     }
     fprintf(fp, "], %d)\n", tag());
-    if(geomType() == GEntity::Plane) {
-      fprintf(fp, "gmsh.model.%s.addPlaneSurface([%d], %d)\n", factory,
-              tag(), tag());
-    }
-    else {
-      // TODO
-    }
+  }
+  else {
+    // TODO
+    Msg::Warning("Skipping surface %d in export", tag());
   }
 }
 

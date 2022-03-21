@@ -404,6 +404,9 @@ void GEdge::writeGEO(FILE *fp)
 
 void GEdge::writePY(FILE *fp)
 {
+  // This is by no means complete - merely a placeholder for a future
+  // implementation
+
   if(!getBeginVertex() || !getEndVertex() || geomType() == DiscreteCurve ||
      geomType() == BoundaryLayerCurve)
     return;

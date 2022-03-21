@@ -43,7 +43,7 @@ protected:
   BoundaryLayerColumns _columns;
 
 public: // this will become protected or private
-  std::list<GEdgeLoop> edgeLoops;
+  std::vector<GEdgeLoop> edgeLoops;
 
   // periodic counterparts of edges
   std::map<GEdge *, std::pair<GEdge *, int> > edgeCounterparts;

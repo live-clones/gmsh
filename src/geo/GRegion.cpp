@@ -438,6 +438,9 @@ void GRegion::writeGEO(FILE *fp)
 
 void GRegion::writePY(FILE *fp)
 {
+  // This is by no means complete - merely a placeholder for a future
+  // implementation
+
   if(geomType() == DiscreteVolume) return;
 
   const char *factory = getNativeType() == OpenCascadeModel ? "occ" : "geo";
