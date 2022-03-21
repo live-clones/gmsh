@@ -151,9 +151,10 @@ int main(int argc, char **argv)
 
       if(num == 3) {
         // Uncomment the following lines to save each frame to an image file
-        // gmsh::write("t2-" + std::to_string(num2) + ".gif");
-        // gmsh::write("t2-" + std::to_string(num2) + ".ppm");
-        // gmsh::write("t2-" + std::to_string(num2) + ".jpg");
+
+        // gmsh::write("t8-" + std::to_string(num2) + ".gif");
+        // gmsh::write("t8-" + std::to_string(num2) + ".ppm");
+        // gmsh::write("t8-" + std::to_string(num2) + ".jpg");
       }
     }
 
