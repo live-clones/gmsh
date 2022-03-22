@@ -57,6 +57,7 @@
 #define FORMAT_KEY          51
 #define FORMAT_XMT          52
 #define FORMAT_OFF          53
+#define FORMAT_PY           54
 
 // Element types
 #define TYPE_PNT     1

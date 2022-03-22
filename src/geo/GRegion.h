@@ -106,6 +106,9 @@ public:
   // export in GEO format
   virtual void writeGEO(FILE *fp);
 
+  // export in Python
+  virtual void writePY(FILE *fp);
+
   // types of elements
   virtual void getElementTypes(std::vector<int> &types) const
   {

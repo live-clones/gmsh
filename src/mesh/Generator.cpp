@@ -1600,7 +1600,7 @@ void GenerateMesh(GModel *m, int ask)
   }
 
   // make sure periodic meshes are actually periodic and store periodic node
-  // correspondances
+  // correspondences
   FixPeriodicMesh(m);
 
   Msg::Info("%d nodes %d elements", m->getNumMeshVertices(),

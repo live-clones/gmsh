@@ -1,4 +1,5 @@
 import gmsh
+import sys
 
 gmsh.initialize()
 b = gmsh.model.occ.addBox(0,0,0, 1,1,0.5)
@@ -32,4 +33,7 @@ gmsh.option.setNumber("Mesh.MeshSizeExtendFromBoundary", 0)
 # new 3D algo:
 gmsh.option.setNumber("Mesh.Algorithm3D", 10)
 
-gmsh.fltk.run()
+if '-nopopup' not in sys.argv:
+    gmsh.fltk.run()
+
+gmsh.finalize()

@@ -6,6 +6,7 @@
 #include <FL/Fl_Tabs.H>
 #include <FL/Fl_Box.H>
 #include <FL/Fl_Return_Button.H>
+#include "GmshConfig.h"
 #include "FlGui.h"
 #include "classificationEditor.h"
 #include "paletteWindow.h"
@@ -16,10 +17,13 @@
 #include "GmshMessage.h"
 #include "MLine.h"
 #include "MQuadrangle.h"
-#include "meshGFaceDelaunayInsertion.h"
 #include "discreteEdge.h"
 #include "discreteFace.h"
 #include "GModelParametrize.h"
+
+#if defined(HAVE_MESH)
+#include "meshGFaceDelaunayInsertion.h"
+#endif
 
 static void NoElementsSelectedMode(classificationEditor *e)
 {
@@ -57,6 +61,7 @@ static void update_edges_cb(Fl_Widget *w, void *data)
     delete e->selected->lines[i];
   e->selected->lines.clear();
 
+#if defined(HAVE_MESH)
   double threshold = e->inputs[CLASS_VALUE_ANGLE]->value() / 180. * M_PI;
   for(std::size_t i = 0; i < e->edges_detected.size(); i++) {
     edge_angle ea = e->edges_detected[i];
@@ -70,6 +75,7 @@ static void update_edges_cb(Fl_Widget *w, void *data)
       e->selected->lines.push_back(new MLine(ea.v1, ea.v2));
     }
   }
+#endif
 
   Msg::Info("Edges: %d inside, %d boundary, %d selected",
             (int)e->edges_detected.size(), (int)e->edges_lonly.size(),
@@ -143,9 +149,14 @@ static void select_elements_cb(Fl_Widget *w, void *data)
     CTX::instance()->pickElements = 0;
   }
 
+#if defined(HAVE_MESH)
   e2t_cont adj;
   buildEdgeToElements(e->elements, adj);
   buildListOfEdgeAngle(adj, e->edges_detected, e->edges_lonly);
+#else
+  Msg::Error("Classification requires mesh module");
+#endif
+
   ElementsSelectedMode(e);
   update_edges_cb(nullptr, data);
   Msg::StatusGl("");

@@ -29,6 +29,7 @@ public:
   virtual void setPrescribedMeshSizeAtVertex(double l);
   virtual SPoint2 reparamOnFace(const GFace *gf, int) const;
   virtual void writeGEO(FILE *fp, const std::string &meshSizeParameter = "");
+  virtual void writePY(FILE *fp, const std::string &meshSizeParameter = "");
   void resetNativePtr(Vertex *v);
 };
 

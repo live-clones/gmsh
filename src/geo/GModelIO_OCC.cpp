@@ -141,6 +141,17 @@
 #include <XCAFDoc_ShapeTool.hxx>
 #endif
 
+// for debugging:
+template <class T>
+void writeBrep(const T &shapes, const std::string &fileName = "debug.brep")
+{
+  BRep_Builder b;
+  TopoDS_Compound c;
+  b.MakeCompound(c);
+  for(auto s : shapes) b.Add(c, s);
+  BRepTools::Write(c, fileName.c_str());
+}
+
 OCC_Internals::OCC_Internals()
 {
   for(int i = 0; i < 6; i++) _maxTag[i] = 0;
@@ -1349,7 +1360,9 @@ bool OCC_Internals::_addBSpline(int &tag, const std::vector<int> &pointTags,
       if(curve->StartPoint().IsEqual(BRep_Tool::Pnt(start),
                                      CTX::instance()->geom.tolerance) &&
          curve->EndPoint().IsEqual(BRep_Tool::Pnt(end),
-                                   CTX::instance()->geom.tolerance)) {
+                                   CTX::instance()->geom.tolerance) &&
+         !curve->StartPoint().IsEqual(curve->EndPoint(),
+                                      CTX::instance()->geom.tolerance)) {
         BRepBuilderAPI_MakeEdge e(curve, start, end);
         if(!e.IsDone()) {
           Msg::Error("Could not create BSpline curve (with end points)");
@@ -2051,14 +2064,25 @@ static bool makeTrimmedSurface(const Handle(Geom_Surface) &surf,
       BRepTools_WireExplorer exp0; // guarantees edges are ordered
       for(exp0.Init(wires[i]); exp0.More(); exp0.Next()) {
         TopoDS_Edge edge = exp0.Current(), edgeOnSurf;
-        if(makeEdgeOnSurface(edge, surf, wire3D, edgeOnSurf))
+        if(makeEdgeOnSurface(edge, surf, wire3D, edgeOnSurf)) {
           w.Add(edgeOnSurf);
+        }
+      }
+      w.Build();
+      if(!w.IsDone()) {
+        Msg::Error("Could not create wire");
+        return false;
       }
       TopoDS_Wire wire = w.Wire();
       wiresProj.push_back(wire);
     }
     BRepBuilderAPI_MakeFace f(surf, wiresProj[0]);
     for(std::size_t i = 1; i < wiresProj.size(); i++) f.Add(wiresProj[i]);
+    f.Build();
+    if(!f.IsDone()) {
+      Msg::Error("Could not create surface");
+      return false;
+    }
     result = f.Face();
     // recover 3D curves for pcurves
     ShapeFix_Face fix(result);
@@ -3609,7 +3633,7 @@ bool OCC_Internals::booleanOperator(
     _toPreserve.clear();
   }
 
-  // return input/output correspondance maps
+  // return input/output correspondence maps
   for(std::size_t i = 0; i < inDimTags.size(); i++) {
     int dim = inDimTags[i].first;
     int tag = inDimTags[i].second;
@@ -4105,7 +4129,7 @@ static void setShapeAttributes(OCCAttributesRTree *attributes,
         xp2.Next();
       }
     }
-    if(dim == 2) {
+    else if(dim == 2) {
       TopExp_Explorer xp1(shape, TopAbs_EDGE);
       while(xp1.More()) {
         if(colorTool->GetColor(xp1.Current(), XCAFDoc_ColorGen, col) ||
@@ -4114,8 +4138,8 @@ static void setShapeAttributes(OCCAttributesRTree *attributes,
           double r, g, b;
           getColorRGB(col, r, g, b);
           Msg::Info(" - Color (%g, %g, %g) (Curve)", r, g, b);
-          attributes->insert(
-            new OCCAttributes(1, TopoDS::Face(xp1.Current()), r, g, b, 1.));
+          TopoDS_Edge edge = TopoDS::Edge(xp1.Current());
+          attributes->insert(new OCCAttributes(1, edge, r, g, b, 1.));
         }
         xp1.Next();
       }
@@ -4414,45 +4438,77 @@ bool OCC_Internals::getEntitiesInBoundingBox(
   return true;
 }
 
-bool OCC_Internals::getCurveLoops(int surfaceTag, std::vector<int> &tags)
+bool OCC_Internals::getCurveLoops(int surfaceTag, std::vector<int> &curveLoopTags,
+                                  std::vector<std::vector<int> > &curveTags)
 {
   if(!_tagFace.IsBound(surfaceTag)) {
     Msg::Error("Unknown OpenCASCADE surface with tag %d", surfaceTag);
     return false;
   }
+  curveLoopTags.clear();
+  curveTags.clear();
   TopoDS_Face face = TopoDS::Face(_tagFace.Find(surfaceTag));
   TopExp_Explorer exp0;
   for(exp0.Init(face, TopAbs_WIRE); exp0.More(); exp0.Next()) {
     TopoDS_Wire wire = TopoDS::Wire(exp0.Current());
     if(_wireTag.IsBound(wire)) {
-      tags.push_back(_wireTag.Find(wire));
+      curveLoopTags.push_back(_wireTag.Find(wire));
     }
     else {
       int t = getMaxTag(-1) + 1;
       _bind(wire, t);
-      tags.push_back(t);
+      curveLoopTags.push_back(t);
+    }
+    curveTags.push_back(std::vector<int>());
+    BRepTools_WireExplorer exp1; // guarantees edges are ordered
+    for(exp1.Init(wire); exp1.More(); exp1.Next()) {
+      TopoDS_Edge edge = exp1.Current();
+      if(_edgeTag.IsBound(edge)) {
+        curveTags.back().push_back(_edgeTag.Find(edge));
+      }
+      else {
+        int t = getMaxTag(1) + 1;
+        _bind(edge, t);
+        curveTags.back().push_back(t);
+      }
     }
   }
   return true;
 }
 
-bool OCC_Internals::getSurfaceLoops(int volumeTag, std::vector<int> &tags)
+bool OCC_Internals::getSurfaceLoops(int volumeTag, std::vector<int> &surfaceLoopTags,
+                                    std::vector<std::vector<int> > &surfaceTags)
 {
   if(!_tagSolid.IsBound(volumeTag)) {
     Msg::Error("Unknown OpenCASCADE volume with tag %d", volumeTag);
     return false;
   }
+  surfaceLoopTags.clear();
+  surfaceTags.clear();
   TopoDS_Solid solid = TopoDS::Solid(_tagSolid.Find(volumeTag));
   TopExp_Explorer exp0;
   for(exp0.Init(solid, TopAbs_SHELL); exp0.More(); exp0.Next()) {
     TopoDS_Shell shell = TopoDS::Shell(exp0.Current());
     if(_shellTag.IsBound(shell)) {
-      tags.push_back(_shellTag.Find(shell));
+      surfaceLoopTags.push_back(_shellTag.Find(shell));
     }
     else {
       int t = getMaxTag(-2) + 1;
       _bind(shell, t);
-      tags.push_back(t);
+      surfaceLoopTags.push_back(t);
+    }
+    surfaceTags.push_back(std::vector<int>());
+    TopExp_Explorer exp1;
+    for(exp1.Init(shell, TopAbs_FACE); exp1.More(); exp1.Next()) {
+      TopoDS_Face face = TopoDS::Face(exp1.Current());
+      if(_faceTag.IsBound(face)) {
+        surfaceTags.back().push_back(_faceTag.Find(face));
+      }
+      else {
+        int t = getMaxTag(2) + 1;
+        _bind(face, t);
+        surfaceTags.back().push_back(t);
+      }
     }
   }
   return true;

@@ -16,7 +16,7 @@ gmsh.initialize(sys.argv)
 
 gmsh.model.add("t2")
 
-# Copied from t1.py...
+# Copied from `t1.py'...
 lc = 1e-2
 gmsh.model.geo.addPoint(0, 0, 0, lc, 1)
 gmsh.model.geo.addPoint(.1, 0, 0, lc, 2)
@@ -29,9 +29,8 @@ gmsh.model.geo.addLine(4, 1, 4)
 gmsh.model.geo.addCurveLoop([4, 1, -2, 3], 1)
 gmsh.model.geo.addPlaneSurface([1], 1)
 gmsh.model.geo.synchronize()
-gmsh.model.addPhysicalGroup(0, [1, 2, 4], 5)
-ps = gmsh.model.addPhysicalGroup(2, [1])
-gmsh.model.setPhysicalName(2, ps, "My surface")
+gmsh.model.addPhysicalGroup(1, [1, 2, 4], 5)
+gmsh.model.addPhysicalGroup(2, [1], name="My surface")
 
 # We can then add new points and curves in the same way as we did in `t1.py':
 gmsh.model.geo.addPoint(0, .4, 0, lc, 5)
@@ -129,8 +128,7 @@ gmsh.model.geo.synchronize()
 
 # We group volumes 129 and 130 in a single physical group with tag `1' and name
 # "The volume":
-gmsh.model.addPhysicalGroup(3, [129, 130], 1)
-gmsh.model.setPhysicalName(3, 1, "The volume")
+gmsh.model.addPhysicalGroup(3, [129, 130], 1, "The volume")
 
 # We finally generate and save the mesh:
 gmsh.model.mesh.generate(3)

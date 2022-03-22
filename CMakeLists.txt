@@ -59,7 +59,7 @@ opt(HXT "Enable HXT library (for reparametrization and meshing)" ${DEFAULT})
 opt(KBIPACK "Enable Kbipack (neeeded by homology solver)" ${DEFAULT})
 opt(MATHEX "Enable Mathex expression parser (used by plugins and options)" ${DEFAULT})
 opt(MED "Enable MED mesh and post file formats" ${DEFAULT})
-opt(MESH "Enable mesh module (required by GUI)" ${DEFAULT})
+opt(MESH "Enable mesh module" ${DEFAULT})
 opt(METIS "Enable Metis mesh partitioner" ${DEFAULT})
 opt(MMG "Enable Mmg mesh adaptation interface" ${DEFAULT})
 opt(MPEG_ENCODE "Enable built-in MPEG movie encoder" ${DEFAULT})
@@ -107,8 +107,8 @@ opt(WRAP_PYTHON "Generate SWIG Python wrappers for private API (not used by publ
 opt(ZIPPER "Enable Zip file compression/decompression" OFF)
 
 set(GMSH_MAJOR_VERSION 4)
-set(GMSH_MINOR_VERSION 9)
-set(GMSH_PATCH_VERSION 5)
+set(GMSH_MINOR_VERSION 10)
+set(GMSH_PATCH_VERSION 0)
 if(NOT GMSH_EXTRA_VERSION)
   set(GMSH_EXTRA_VERSION "")
 endif()
@@ -681,8 +681,8 @@ if(ENABLE_BUILD_IOS)
 endif()
 
 if(HAVE_FLTK OR ENABLE_GRAPHICS)
-  if(NOT HAVE_MESH OR NOT HAVE_POST OR NOT HAVE_PLUGINS OR NOT HAVE_ONELAB)
-    message(SEND_ERROR "Cannot compile GUI without Mesh, Post, Plugin and ONELAB")
+  if(NOT HAVE_POST OR NOT HAVE_PLUGINS OR NOT HAVE_ONELAB)
+    message(SEND_ERROR "Cannot compile GUI without Post, Plugin and ONELAB")
   endif()
 
   find_package(JPEG)
@@ -785,34 +785,6 @@ if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/DiscreteIntegration AND
   add_subdirectory(contrib/DiscreteIntegration)
   include_directories(contrib/DiscreteIntegration)
   set_config_option(HAVE_DINTEGRATION "DIntegration")
-endif()
-
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/HighOrderMeshOptimizer AND
-   EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/MeshOptimizer AND
-   EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/MeshQualityOptimizer AND
-   ENABLE_OPTHOM AND HAVE_MESH)
-  add_subdirectory(contrib/HighOrderMeshOptimizer)
-  include_directories(contrib/HighOrderMeshOptimizer)
-  add_subdirectory(contrib/MeshOptimizer)
-  include_directories(contrib/MeshOptimizer)
-  include_directories(${CMAKE_CURRENT_BINARY_DIR}/contrib/MeshOptimizer)
-  add_subdirectory(contrib/MeshQualityOptimizer)
-  include_directories(contrib/MeshQualityOptimizer)
-  set_config_option(HAVE_OPTHOM "OptHom")
-endif()
-
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/domhex AND
-   ENABLE_DOMHEX AND HAVE_MESH)
-  add_subdirectory(contrib/domhex)
-  include_directories(contrib/domhex)
-  set_config_option(HAVE_DOMHEX "DomHex")
-endif()
-
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadTri AND
-   ENABLE_QUADTRI AND HAVE_MESH)
-  add_subdirectory(contrib/QuadTri)
-  include_directories(contrib/QuadTri)
-  set_config_option(HAVE_QUADTRI "QuadTri")
 endif()
 
 if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/kbipack AND ENABLE_KBIPACK)
@@ -920,6 +892,32 @@ if(HAVE_MESH)
     endif()
   endif()
 
+  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/HighOrderMeshOptimizer AND
+     EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/MeshOptimizer AND
+     EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/MeshQualityOptimizer AND
+     ENABLE_OPTHOM)
+    add_subdirectory(contrib/HighOrderMeshOptimizer)
+    include_directories(contrib/HighOrderMeshOptimizer)
+    add_subdirectory(contrib/MeshOptimizer)
+    include_directories(contrib/MeshOptimizer)
+    include_directories(${CMAKE_CURRENT_BINARY_DIR}/contrib/MeshOptimizer)
+    add_subdirectory(contrib/MeshQualityOptimizer)
+    include_directories(contrib/MeshQualityOptimizer)
+    set_config_option(HAVE_OPTHOM "OptHom")
+  endif()
+
+  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/domhex AND ENABLE_DOMHEX)
+    add_subdirectory(contrib/domhex)
+    include_directories(contrib/domhex)
+    set_config_option(HAVE_DOMHEX "DomHex")
+  endif()
+
+  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadTri AND ENABLE_QUADTRI)
+    add_subdirectory(contrib/QuadTri)
+    include_directories(contrib/QuadTri)
+    set_config_option(HAVE_QUADTRI "QuadTri")
+  endif()
+
   if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/blossom AND ENABLE_BLOSSOM)
     add_subdirectory(contrib/blossom)
     include_directories(contrib/blossom/MATCH contrib/blossom/concorde97
@@ -949,6 +947,48 @@ if(HAVE_MESH)
       list(APPEND EXTERNAL_INCLUDES ${MMG_INC})
       set_config_option(HAVE_MMG "Mmg")
     endif()
+  endif()
+
+  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/hxt AND ENABLE_HXT)
+    add_subdirectory(contrib/hxt)
+    include_directories(BEFORE ${HXT_INC_DIRS})
+    set_config_option(HAVE_HXT "Hxt")
+    # do not use arithmetic contraction in predicates.c
+    if(MSVC OR (CMAKE_C_COMPILER_ID STREQUAL "Intel" AND WIN32))
+      set_source_files_properties(
+          "${CMAKE_CURRENT_SOURCE_DIR}/contrib/hxt/predicates/src/predicates.c"
+          PROPERTIES COMPILE_FLAGS "/fp:strict")
+    elseif(CMAKE_C_COMPILER_ID STREQUAL "Intel")
+      set_source_files_properties(
+          "${CMAKE_CURRENT_SOURCE_DIR}/contrib/hxt/predicates/src/predicates.c"
+          PROPERTIES COMPILE_FLAGS "-fp-model strict")
+    elseif(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+      set_source_files_properties(
+          "${CMAKE_CURRENT_SOURCE_DIR}/contrib/hxt/predicates/src/predicates.c"
+          PROPERTIES COMPILE_FLAGS  "-fno-unsafe-math-optimizations -ffp-contract=off")
+    else()
+      message(WARNING "Unknown compiler: make sure compiled functions from "
+              "predicates.c do not use extended double precision and follow "
+              "the IEEE754 standard. It is crucial for the robustness of "
+              "geometric predicates.")
+    endif()
+    if(MSVC)
+      add_definitions(/bigobj)
+    endif()
+  endif()
+
+  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadMeshingTools
+     AND ENABLE_QUADMESHINGTOOLS)
+    set_config_option(HAVE_QUADMESHINGTOOLS "QuadMeshingTools")
+    add_subdirectory(contrib/QuadMeshingTools)
+    include_directories(BEFORE contrib/QuadMeshingTools)
+  endif()
+
+  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/WinslowUntangler
+     AND ENABLE_WINSLOWUNTANGLER)
+    set_config_option(HAVE_WINSLOWUNTANGLER "WinslowUntangler")
+    add_subdirectory(contrib/WinslowUntangler)
+    include_directories(BEFORE contrib/WinslowUntangler)
   endif()
 endif()
 
@@ -1184,48 +1224,8 @@ if(HAVE_SOLVER)
   endif()
 endif()
 
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/hxt AND ENABLE_HXT)
-  add_subdirectory(contrib/hxt)
-  include_directories(BEFORE ${HXT_INC_DIRS})
-  set_config_option(HAVE_HXT "Hxt")
-  # do not use arithmetic contraction in predicates.c
-  if(MSVC OR (CMAKE_C_COMPILER_ID STREQUAL "Intel" AND WIN32))
-    set_source_files_properties(
-        "${CMAKE_CURRENT_SOURCE_DIR}/contrib/hxt/predicates/src/predicates.c"
-        PROPERTIES COMPILE_FLAGS "/fp:strict")
-  elseif(CMAKE_C_COMPILER_ID STREQUAL "Intel")
-    set_source_files_properties(
-        "${CMAKE_CURRENT_SOURCE_DIR}/contrib/hxt/predicates/src/predicates.c"
-        PROPERTIES COMPILE_FLAGS "-fp-model strict")
-  elseif(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
-    set_source_files_properties(
-        "${CMAKE_CURRENT_SOURCE_DIR}/contrib/hxt/predicates/src/predicates.c"
-        PROPERTIES COMPILE_FLAGS  "-fno-unsafe-math-optimizations -ffp-contract=off")
-  else()
-    message(WARNING "Unknown compiler: make sure compiled functions from "
-            "predicates.c do not use extended double precision and follow "
-            "the IEEE754 standard. It is crucial for the robustness of "
-            "geometric predicates.")
-  endif()
-  if(MSVC)
-    add_definitions(/bigobj)
-  endif()
-endif()
-
 if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/pro AND ENABLE_PRO)
   add_subdirectory(pro)
-endif()
-
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadMeshingTools AND ENABLE_QUADMESHINGTOOLS)
-  set_config_option(HAVE_QUADMESHINGTOOLS "QuadMeshingTools")
-  add_subdirectory(contrib/QuadMeshingTools)
-  include_directories(BEFORE contrib/QuadMeshingTools)
-endif()
-
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/WinslowUntangler AND ENABLE_WINSLOWUNTANGLER)
-  set_config_option(HAVE_WINSLOWUNTANGLER "WinslowUntangler")
-  add_subdirectory(contrib/WinslowUntangler)
-  include_directories(BEFORE contrib/WinslowUntangler)
 endif()
 
 if(ENABLE_OCC)

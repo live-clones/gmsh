@@ -87,6 +87,9 @@ public:
   // export in GEO format
   virtual void writeGEO(FILE *fp, const std::string &meshSizeParameter = "");
 
+  // export in Python
+  virtual void writePY(FILE *fp, const std::string &meshSizeParameter = "");
+
   // types of elements
   virtual void getElementTypes(std::vector<int> &types) const
   {

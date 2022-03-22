@@ -148,12 +148,53 @@ SPoint2 gmshVertex::reparamOnFace(const GFace *face, int dir) const
 
 void gmshVertex::writeGEO(FILE *fp, const std::string &meshSizeParameter)
 {
+  double xx, yy, zz;
+  if(_v->geometry) {
+    xx = _v->pntOnGeometry.x();
+    yy = _v->pntOnGeometry.y();
+    zz = 0.;
+  }
+  else {
+    xx = x();
+    yy = y();
+    zz = z();
+  }
+
   if(meshSizeParameter.size())
-    fprintf(fp, "Point(%d) = {%.16g, %.16g, %.16g, %s};\n", tag(), x(), y(),
-            z(), meshSizeParameter.c_str());
+    fprintf(fp, "Point(%d) = {%.16g, %.16g, %.16g, %s};\n", tag(),
+            xx, yy, zz, meshSizeParameter.c_str());
   else if(_v->lc != MAX_LC)
-    fprintf(fp, "Point(%d) = {%.16g, %.16g, %.16g, %.16g};\n", tag(), x(), y(),
-            z(), _v->lc);
+    fprintf(fp, "Point(%d) = {%.16g, %.16g, %.16g, %.16g};\n", tag(),
+            xx, yy, zz, _v->lc);
   else
-    fprintf(fp, "Point(%d) = {%.16g, %.16g, %.16g};\n", tag(), x(), y(), z());
+    fprintf(fp, "Point(%d) = {%.16g, %.16g, %.16g};\n", tag(),
+            xx, yy, zz);
+}
+
+void gmshVertex::writePY(FILE *fp, const std::string &meshSizeParameter)
+{
+  double xx, yy, zz;
+  const char *fct;
+  if(_v->geometry) {
+    xx = _v->pntOnGeometry.x();
+    yy = _v->pntOnGeometry.y();
+    zz = 0.;
+    fct = "gmsh.model.geo.addPointOnGeometry(1, "; // TODO geometryTag
+  }
+  else {
+    xx = x();
+    yy = y();
+    zz = z();
+    fct = "gmsh.model.geo.addPoint(";
+  }
+
+  if(meshSizeParameter.size())
+    fprintf(fp, "%s%.16g, %.16g, %.16g, %s, %d)\n",
+            fct, xx, yy, zz, meshSizeParameter.c_str(), tag());
+  else if(prescribedMeshSizeAtVertex() != MAX_LC)
+    fprintf(fp, "%s%.16g, %.16g, %.16g, %.16g, %d)\n",
+            fct, xx, yy, zz, prescribedMeshSizeAtVertex(), tag());
+  else
+    fprintf(fp, "%s%.16g, %.16g, %.16g, tag=%d)\n",
+            fct, xx, yy, zz, tag());
 }

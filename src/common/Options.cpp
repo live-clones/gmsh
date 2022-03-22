@@ -950,6 +950,7 @@ void PrintOptionsDoc()
     FieldManager &fields = *GModel::current()->getFields();
     for(auto it = fields.mapTypeName.begin(); it != fields.mapTypeName.end();
         it++) {
+      if(it->first == "Attractor") continue;
       Field *f = (*it->second)();
       if(f->isDeprecated()) continue;
       fprintf(file, "@item %s\n", it->first.c_str());
@@ -959,8 +960,7 @@ void PrintOptionsDoc()
       if(!f->options.empty()) {
         fprintf(file, "@*\nOptions:@*\n");
         fprintf(file, "@table @code\n");
-        for(auto it2 =
-              f->options.begin(); it2 != f->options.end(); it2++) {
+        for(auto it2 = f->options.begin(); it2 != f->options.end(); it2++) {
           if(it2->second->isDeprecated()) continue;
           fprintf(file, "@item %s\n", it2->first.c_str());
           std::string val;
@@ -5406,6 +5406,12 @@ double opt_mesh_trihedra(OPT_ARGS_NUM)
   }
 #endif
   return CTX::instance()->mesh.trihedra;
+}
+
+double opt_mesh_transfinite_tri(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->mesh.transfiniteTri = (int)val;
+  return CTX::instance()->mesh.transfiniteTri;
 }
 
 double opt_mesh_surface_edges(OPT_ARGS_NUM)

@@ -439,6 +439,7 @@ int GmshFLTK(int argc, char **argv)
     break;
   }
 
+#if defined(HAVE_POST) && defined(HAVE_MESH)
   // read background mesh if any
   if(!CTX::instance()->bgmFileName.empty()) {
     // If the background mesh is an octree (we us p4est), then we load the
@@ -461,6 +462,7 @@ int GmshFLTK(int argc, char **argv)
         Msg::Error("Invalid background mesh (no view)");
     }
   }
+#endif
 
   // listen to external solvers
   if(CTX::instance()->solver.listen) {

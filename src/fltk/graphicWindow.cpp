@@ -61,10 +61,15 @@ typedef unsigned long intptr_t;
 #include "StringUtils.h"
 #include "OS.h"
 #include "onelabUtils.h"
+
+#if defined(HAVE_MESH)
 #include "gmshCrossFields.h"
+#endif
+
 #if defined(HAVE_3M)
 #include "3M.h"
 #endif
+
 #if defined(HAVE_TOUCHBAR)
 #include "touchBar.h"
 #endif
@@ -2178,6 +2183,8 @@ void mesh_3d_cb(Fl_Widget *w, void *data)
   drawContext::global()->draw();
 }
 
+#if defined(HAVE_MESH)
+
 static void mesh_modify_parts(Fl_Widget *w, void *data,
                               const std::string &action)
 {
@@ -2413,8 +2420,10 @@ static void mesh_untangle_cb(Fl_Widget *w, void *data)
 
 static void mesh_cross_compute_cb(Fl_Widget *w, void *data)
 {
+#if defined(HAVE_MESH)
   std::vector<int> tags;
   computeCrossField(GModel::current(), tags);
+#endif
   drawContext::global()->draw();
 }
 
@@ -2810,6 +2819,8 @@ static void mesh_define_compound_entity_cb(Fl_Widget *w, void *data)
 {
   action_point_line_surface_volume(10, (const char *)data);
 }
+
+#endif // HAVE_MESH
 
 // clang-format off
 
@@ -4648,6 +4659,7 @@ static menuItem static_modules[] = {
   {"0Modules/Geometry/Remove last script command",
    (Fl_Callback *)geometry_remove_last_command_cb},
   {"0Modules/Geometry/Edit script", (Fl_Callback *)geometry_edit_cb},
+#if defined(HAVE_MESH)
   {"0Modules/Mesh/Define/Size at points", (Fl_Callback *)mesh_define_length_cb},
   {"0Modules/Mesh/Define/Size fields", (Fl_Callback *)field_cb},
   {"0Modules/Mesh/Define/Embedded/Point",
@@ -4715,6 +4727,7 @@ static menuItem static_modules[] = {
    (void *)"volumes"},
   {"0Modules/Mesh/Inspect", (Fl_Callback *)mesh_inspect_cb},
   {"0Modules/Mesh/Save", (Fl_Callback *)mesh_save_cb},
+#endif
 };
 
 void onelabGroup::_addGmshMenus()

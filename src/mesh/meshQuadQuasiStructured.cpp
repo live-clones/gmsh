@@ -69,7 +69,6 @@ using unordered_set =
   robin_hood::detail::Table<true, MaxLoadFactor100, Key, void, Hash, KeyEqual>;
 
 constexpr int SizeMapDefault = 0;
-//constexpr int SizeMapCrossField = 1;
 constexpr int SizeMapCrossFieldAndSmallCad = 2;
 constexpr int SizeMapBackgroundMesh = 3;
 constexpr int SizeMapCrossFieldAndBMeshOnCurves = 4;
@@ -78,7 +77,7 @@ const std::string BMESH_NAME = "bmesh_quadqs";
 
 constexpr bool PARANO_QUALITY = false;
 constexpr bool PARANO_VALIDITY = false;
-constexpr bool DBG_EXPORT = true;
+constexpr bool DBG_EXPORT = false;
 constexpr bool SHOW_DQR = false;
 
 /* scaling applied on integer values stored in view (background field),
@@ -2072,7 +2071,9 @@ int RefineMeshWithBackgroundMeshProjectionSimple(GModel *gm)
   /* old2new use to update mesh elements after */
   unordered_map<MVertex *, MVertex *> old2new;
 
-  int nthreads = getNumThreads();
+  // FIXME: crash #1799
+  int nthreads = 1; //getNumThreads();
+
 #pragma omp parallel for schedule(dynamic) num_threads(nthreads)
   for(size_t e = 0; e < edges.size(); ++e) {
     GEdge *ge = edges[e];
@@ -2100,7 +2101,6 @@ int RefineMeshWithBackgroundMeshProjectionSimple(GModel *gm)
         delete v;
       }
     }
-
     /* Projections */
     double tMin = ge->parBounds(0).low();
     double tMax = ge->parBounds(0).high();
@@ -2265,6 +2265,7 @@ int RefineMeshWithBackgroundMeshProjectionSimple(GModel *gm)
 
   return 0;
 }
+
 int RefineMeshWithBackgroundMeshProjection(GModel *gm)
 {
   return RefineMeshWithBackgroundMeshProjectionSimple(gm);

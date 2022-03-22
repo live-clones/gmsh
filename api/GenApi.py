@@ -114,7 +114,7 @@ def ivectorint(name, value=None, python_value=None, julia_value=None):
     a.c_pre = ("    std::vector<int> " + api_name + "(" + name + ", " + name +
                " + " + name + "_n);\n")
     a.c_arg = api_name
-    a.c = "int * " + name + ", size_t " + name + "_n"
+    a.c = "const int * " + name + ", const size_t " + name + "_n"
     a.cwrap_pre = ("int *" + api_name + "; size_t " + api_name_n + "; " +
                    "vector2ptr(" + name + ", &" + api_name + ", &" +
                    api_name_n + ");\n")
@@ -140,7 +140,7 @@ def ivectorsize(name, value=None, python_value=None, julia_value=None):
     a.c_pre = ("    std::vector<std::size_t> " + api_name + "(" + name + ", " +
                name + " + " + name + "_n);\n")
     a.c_arg = api_name
-    a.c = "size_t * " + name + ", size_t " + name + "_n"
+    a.c = "const size_t * " + name + ", const size_t " + name + "_n"
     a.cwrap_pre = ("size_t *" + api_name + "; size_t " + api_name_n + "; " +
                    "vector2ptr(" + name + ", &" + api_name + ", &" +
                    api_name_n + ");\n")
@@ -160,13 +160,13 @@ def ivectordouble(name, value=None, python_value=None, julia_value=None):
     if julia_value == "[]":
         julia_value = "Cdouble[]"
     a = arg(name, value, python_value, julia_value,
-            "const std::vector<double> &", "double **", False)
+            "const std::vector<double> &", "const double * const *", False)
     api_name = "api_" + name + "_"
     api_name_n = "api_" + name + "_n_"
     a.c_pre = ("    std::vector<double> " + api_name + "(" + name + ", " +
                name + " + " + name + "_n);\n")
     a.c_arg = api_name
-    a.c = "double * " + name + ", size_t " + name + "_n"
+    a.c = "const double * " + name + ", const size_t " + name + "_n"
     a.cwrap_pre = ("double *" + api_name + "; size_t " + api_name_n + "; " +
                    "vector2ptr(" + name + ", &" + api_name + ", &" +
                    api_name_n + ");\n")
@@ -184,13 +184,13 @@ def ivectordouble(name, value=None, python_value=None, julia_value=None):
 
 def ivectorstring(name, value=None, python_value=None, julia_value=None):
     a = arg(name, value, python_value, julia_value,
-            "const std::vector<std::string> &", "char **", False)
+            "const std::vector<std::string> &", "const char * const *", False)
     api_name = "api_" + name + "_"
     api_name_n = "api_" + name + "_n_"
     a.c_pre = ("    std::vector<std::string> " + api_name + "(" + name + ", " +
                name + " + " + name + "_n);\n")
     a.c_arg = api_name
-    a.c = "char ** " + name + ", size_t " + name + "_n"
+    a.c = "const char * const * " + name + ", const size_t " + name + "_n"
     a.cwrap_pre = ("char **" + api_name + "; size_t " + api_name_n + "; " +
                    "vectorstring2charptrptr(" + name + ", &" + api_name +
                    ", &" + api_name_n + ");\n")
@@ -221,7 +221,7 @@ def ivectorpair(name, value=None, python_value=None, julia_value=None):
                "[i * 2 + 0];\n" + "      " + api_name + "[i].second = " +
                name + "[i * 2 + 1];\n" + "    }\n")
     a.c_arg = api_name
-    a.c = "int * " + name + ", size_t " + name + "_n"
+    a.c = "const int * " + name + ", const size_t " + name + "_n"
     a.cwrap_pre = ("int *" + api_name + "; size_t " + api_name_n + "; " +
                    "vectorpair2intptr(" + name + ", &" + api_name + ", &" +
                    api_name_n + ");\n")
@@ -243,7 +243,7 @@ def ivectorvectorint(name, value=None, python_value=None, julia_value=None):
     if julia_value == "[]":
         julia_value = "Vector{Cint}[]"
     a = arg(name, value, python_value, julia_value,
-            "const std::vector<std::vector<int> > &", "const int **", False)
+            "const std::vector<std::vector<int> > &", "const int * const *", False)
     api_name = "api_" + name + "_"
     api_name_n = "api_" + name + "_n_"
     api_name_nn = "api_" + name + "_nn_"
@@ -253,13 +253,13 @@ def ivectorvectorint(name, value=None, python_value=None, julia_value=None):
                "[i] = std::vector<int>(" + name + "[i], " + name + "[i] + " +
                name + "_n[i]);\n")
     a.c_arg = api_name
-    a.c = ("const int ** " + name + ", const size_t * " + name + "_n, " +
-           "size_t " + name + "_nn")
+    a.c = ("const int * const * " + name + ", const size_t * " + name + "_n, " +
+           "const size_t " + name + "_nn")
     a.cwrap_pre = ("int **" + api_name + "; size_t *" + api_name_n + ", " +
                    api_name_nn + "; " + "vectorvector2ptrptr(" + name + ", &" +
                    api_name + ", &" + api_name_n + ", &" + api_name_nn +
                    ");\n")
-    a.cwrap_arg = "(const int **)" + api_name + ", " + api_name_n + ", " + api_name_nn
+    a.cwrap_arg = api_name + ", " + api_name_n + ", " + api_name_nn
     a.cwrap_post = ("for(size_t i = 0; i < " + api_name_nn + "; ++i){ " + ns +
                     "Free(" + api_name + "[i]); } " + ns + "Free(" + api_name +
                     "); " + ns + "Free(" + api_name_n + ");\n")
@@ -283,7 +283,7 @@ def ivectorvectorsize(name, value=None, python_value=None, julia_value=None):
         julia_value = "Vector{Csize_t}[]"
     a = arg(name, value, python_value, julia_value,
             "const std::vector<std::vector<std::size_t> > &",
-            "const size_t **", False)
+            "const size_t * const *", False)
     api_name = "api_" + name + "_"
     api_name_n = "api_" + name + "_n_"
     api_name_nn = "api_" + name + "_nn_"
@@ -293,13 +293,13 @@ def ivectorvectorsize(name, value=None, python_value=None, julia_value=None):
                "[i] = std::vector<std::size_t>(" + name + "[i], " + name +
                "[i] + " + name + "_n[i]);\n")
     a.c_arg = api_name
-    a.c = ("const size_t ** " + name + ", const size_t * " + name + "_n, " +
-           "size_t " + name + "_nn")
+    a.c = ("const size_t * const * " + name + ", const size_t * " + name + "_n, " +
+           "const size_t " + name + "_nn")
     a.cwrap_pre = ("size_t **" + api_name + "; size_t *" + api_name_n + ", " +
                    api_name_nn + "; " + "vectorvector2ptrptr(" + name + ", &" +
                    api_name + ", &" + api_name_n + ", &" + api_name_nn +
                    ");\n")
-    a.cwrap_arg = "(const size_t **)" + api_name + ", " + api_name_n + ", " + api_name_nn
+    a.cwrap_arg = api_name + ", " + api_name_n + ", " + api_name_nn
     a.cwrap_post = ("for(size_t i = 0; i < " + api_name_nn + "; ++i){ " + ns +
                     "Free(" + api_name + "[i]); } " + ns + "Free(" + api_name +
                     "); " + ns + "Free(" + api_name_n + ");\n")
@@ -322,7 +322,7 @@ def ivectorvectordouble(name, value=None, python_value=None, julia_value=None):
     if julia_value == "[]":
         julia_value = "Vector{Cdouble}[]"
     a = arg(name, value, python_value, julia_value,
-            "const std::vector<std::vector<double> > &", "const double**",
+            "const std::vector<std::vector<double> > &", "const double * const *",
             False)
     api_name = "api_" + name + "_"
     api_name_n = "api_" + name + "_n_"
@@ -333,13 +333,13 @@ def ivectorvectordouble(name, value=None, python_value=None, julia_value=None):
                "[i] = std::vector<double>(" + name + "[i], " + name +
                "[i] + " + name + "_n[i]);\n")
     a.c_arg = api_name
-    a.c = ("const double ** " + name + ", const size_t * " + name + "_n, " +
-           "size_t " + name + "_nn")
+    a.c = ("const double * const * " + name + ", const size_t * " + name + "_n, " +
+           "const size_t " + name + "_nn")
     a.cwrap_pre = ("double **" + api_name + "; size_t *" + api_name_n + ", " +
                    api_name_nn + "; " + "vectorvector2ptrptr(" + name + ", &" +
                    api_name + ", &" + api_name_n + ", &" + api_name_nn +
                    ");\n")
-    a.cwrap_arg = "(const double **)" + api_name + ", " + api_name_n + ", " + api_name_nn
+    a.cwrap_arg = api_name + ", " + api_name_n + ", " + api_name_nn
     a.cwrap_post = ("for(size_t i = 0; i < " + api_name_nn + "; ++i){ " + ns +
                     "Free(" + api_name + "[i]); } " + ns + "Free(" + api_name +
                     "); " + ns + "Free(" + api_name_n + ");\n")
@@ -970,6 +970,9 @@ c_header = """/*
 #define {2}_API
 #endif
 
+/* All the functions in the {3} C API that return arrays allocate the
+ * necessary memory with {7}Malloc(). These arrays should be deallocated
+ * with {7}Free(). */
 {2}_API void {7}Free(void *p);
 {2}_API void *{7}Malloc(size_t n);
 """
@@ -1005,11 +1008,17 @@ extern \"C\" {{
 c_cpp_utils = """
 void vectorvectorpair2intptrptr(const std::vector<{0}::vectorpair > &v, int ***p, size_t **size, size_t *sizeSize)
 {{
-  *p = (int**){0}Malloc(sizeof(int*) * v.size());
-  *size = (size_t*){0}Malloc(sizeof(size_t) * v.size());
+  if(p) {{
+    *p = (int**){0}Malloc(sizeof(int*) * v.size());
+  }}
+  if(size) {{
+    *size = (size_t*){0}Malloc(sizeof(size_t) * v.size());
+  }}
   for(size_t i = 0; i < v.size(); ++i)
-    vectorpair2intptr(v[i], &(*p)[i], &((*size)[i]));
-  *sizeSize = v.size();
+    vectorpair2intptr(v[i], p ? &((*p)[i]) : NULL, size ? &((*size)[i]) : NULL);
+  if(sizeSize) {{
+    *sizeSize = v.size();
+  }}
 }}
 """
 
@@ -1067,42 +1076,60 @@ cwrap_utils = """
 template<typename t>
 {1}void vector2ptr(const std::vector<t> &v, t **p, size_t *size)
 {{
-  *p = (t*){0}Malloc(sizeof(t) * v.size());
-  for(size_t i = 0; i < v.size(); ++i){{
-    (*p)[i] = v[i];
+  if(p) {{
+    *p = (t*){0}Malloc(sizeof(t) * v.size());
+    for(size_t i = 0; i < v.size(); ++i) {{
+      (*p)[i] = v[i];
+    }}
   }}
-  *size = v.size();
+  if(size) {{
+    *size = v.size();
+  }}
 }}
 
 {1}void vectorpair2intptr(const {0}::vectorpair &v, int **p, size_t *size)
 {{
-  *p = (int*){0}Malloc(sizeof(int) * v.size() * 2);
-  for(size_t i = 0; i < v.size(); ++i){{
-    (*p)[i * 2 + 0] = v[i].first;
-    (*p)[i * 2 + 1] = v[i].second;
+  if(p) {{
+    *p = (int*){0}Malloc(sizeof(int) * v.size() * 2);
+    for(size_t i = 0; i < v.size(); ++i) {{
+      (*p)[i * 2 + 0] = v[i].first;
+      (*p)[i * 2 + 1] = v[i].second;
+    }}
   }}
-  *size = v.size() * 2;
+  if(size) {{
+    *size = v.size() * 2;
+  }}
 }}
 
 {1}void vectorstring2charptrptr(const std::vector<std::string> &v, char ***p, size_t *size)
 {{
-  *p = (char**){0}Malloc(sizeof(char*) * v.size());
-  for(size_t i = 0; i < v.size(); ++i){{
-    (*p)[i] = (char*){0}Malloc(sizeof(char) * (v[i].size() + 1));
-    for(size_t j = 0; j < v[i].size(); j++) (*p)[i][j] = v[i][j];
-    (*p)[i][v[i].size()] = '\\0';
+  if(p) {{
+    *p = (char**){0}Malloc(sizeof(char*) * v.size());
+    for(size_t i = 0; i < v.size(); ++i) {{
+      (*p)[i] = (char*){0}Malloc(sizeof(char) * (v[i].size() + 1));
+      for(size_t j = 0; j < v[i].size(); j++) (*p)[i][j] = v[i][j];
+      (*p)[i][v[i].size()] = '\\0';
+    }}
   }}
-  *size = v.size();
+  if(size) {{
+    *size = v.size();
+  }}
 }}
 
 template<typename t>
 {1}void vectorvector2ptrptr(const std::vector<std::vector<t> > &v, t ***p, size_t **size, size_t *sizeSize)
 {{
-  *p = (t**){0}Malloc(sizeof(t*) * v.size());
-  *size = (size_t*){0}Malloc(sizeof(size_t) * v.size());
+  if(p) {{
+    *p = (t**){0}Malloc(sizeof(t*) * v.size());
+  }}
+  if(size) {{
+    *size = (size_t*){0}Malloc(sizeof(size_t) * v.size());
+  }}
   for(size_t i = 0; i < v.size(); ++i)
-    vector2ptr(v[i], &((*p)[i]), &((*size)[i]));
-  *sizeSize = v.size();
+    vector2ptr(v[i], p ? &((*p)[i]) : NULL, size ? &((*size)[i]) : NULL);
+  if(sizeSize) {{
+    *sizeSize = v.size();
+  }}
 }}
 """
 

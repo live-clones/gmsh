@@ -18,10 +18,8 @@ gmsh.model.geo.addLine(4, 1, 4)
 gmsh.model.geo.addCurveLoop([4, 1, -2, 3], 1)
 gmsh.model.geo.addPlaneSurface([1], 1)
 gmsh.model.geo.synchronize()
-gmsh.model.addPhysicalGroup(0, [1, 2], 1)
-gmsh.model.addPhysicalGroup(1, [1, 2], 2)
-gmsh.model.addPhysicalGroup(2, [1], 6)
-gmsh.model.setPhysicalName(2, 6, "My surface")
+gmsh.model.addPhysicalGroup(1, [1, 2, 4], 5)
+gmsh.model.addPhysicalGroup(2, [1], -1, "My surface")
 
 gmsh.model.geo.addPoint(0, .4, 0, lc, 5)
 gmsh.model.geo.addLine(4, 5, 5)
@@ -80,8 +78,7 @@ gmsh.model.geo.mesh.setSize([(0,103), (0,105), (0,109), (0,102), (0,28),
 
 gmsh.model.geo.synchronize()
 
-gmsh.model.addPhysicalGroup(3, [129,130], 1)
-gmsh.model.setPhysicalName(3, 1, "The volume")
+gmsh.model.addPhysicalGroup(3, [129,130], 1, "The volume")
 
 gmsh.model.mesh.generate(3)
 

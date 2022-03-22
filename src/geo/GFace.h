@@ -43,7 +43,7 @@ protected:
   BoundaryLayerColumns _columns;
 
 public: // this will become protected or private
-  std::list<GEdgeLoop> edgeLoops;
+  std::vector<GEdgeLoop> edgeLoops;
 
   // periodic counterparts of edges
   std::map<GEdge *, std::pair<GEdge *, int> > edgeCounterparts;
@@ -223,6 +223,9 @@ public:
   // export in GEO format
   virtual void writeGEO(FILE *fp);
 
+  // export in Python
+  virtual void writePY(FILE *fp);
+
   // fill the crude representation cross
   virtual bool buildRepresentationCross(bool force = false);
 
@@ -319,6 +322,8 @@ public:
     int algorithm;
     // do we force calculation of mesh size from boundary (if >= 0)
     int meshSizeFromBoundary;
+    // do we use a specific transfinite algorithm for 3-sided surfaces
+    bool transfinite3;
   } meshAttributes;
 
   int getMeshingAlgo() const;

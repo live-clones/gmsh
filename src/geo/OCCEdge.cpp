@@ -350,8 +350,8 @@ int OCCEdge::minimumMeshSegments() const
 {
   int np;
 
-  // if it is a seam, then return 1
-  if(_faces.size() == 1 && isSeam(_faces[0])) return 1;
+  // if it is a seam, then return 1 - but why? removed this in Gmsh 4.10.0
+  //if(_faces.size() == 1 && isSeam(_faces[0])) return 1;
 
   if(geomType() == Line) { np = CTX::instance()->mesh.minLineNodes - 1; }
   else if(geomType() == Circle || geomType() == Ellipse) {

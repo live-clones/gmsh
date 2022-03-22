@@ -1,4 +1,6 @@
 import gmsh
+import sys
+
 gmsh.initialize()
 gmsh.model.occ.addBox(0,0,0,1,1,1)
 gmsh.model.occ.addBox(1,0,0,1,1,1)
@@ -16,4 +18,5 @@ gmsh.model.setVisibility([(3,2)], 0, recursive=True)
 gmsh.model.mesh.setOrder(2) # only on volume 1
 gmsh.model.setVisibility([(3,2)], 1, recursive=True)
 
-gmsh.fltk.run()
+if '-nopopup' not in sys.argv:
+    gmsh.fltk.run()

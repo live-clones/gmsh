@@ -621,7 +621,9 @@ public:
   void checkMeshCoherence(double tolerance);
 
   // remove duplicate mesh vertices
-  int removeDuplicateMeshVertices(double tolerance);
+  int removeDuplicateMeshVertices(double tolerance,
+                                  const std::vector<GEntity*> &entities =
+                                  std::vector<GEntity*>());
 
   // create a geometry (i.e. a parametrization for curves and surfaces) for the
   // given discrete entities (or all of them if dimTags is empty)
@@ -696,6 +698,7 @@ public:
                           const std::vector<int> &domain,
                           const std::vector<int> &subdomain,
                           const std::vector<int> &dim);
+  void clearHomologyRequests();
   void computeHomology();
 
   // mesh size callback
@@ -710,16 +713,25 @@ public:
     return _curvatures;
   }
 
+  // reverse engineering of extruded shapes
+  bool addAutomaticExtrusionConstraints(const std::vector<int> &numElements,
+                                        const std::vector<double> &heights,
+                                        const bool recombine,
+                                        const std::vector<int> &regionTag);
+
   // "automatic" IO based on Gmsh global functions
   void load(const std::string &fileName);
   void save(const std::string &fileName);
 
-  // Gmsh native CAD format (readGEO is static, since it can create
-  // multiple models)
+  // GEO file interface (readGEO is static, since it can create multiple models)
   static int readGEO(const std::string &name);
   int writeGEO(const std::string &name, bool printLabels = true,
                bool onlyPhysicals = false);
   int exportDiscreteGEOInternals();
+
+  // PY export (mostly a placeholder for now)
+  int writePY(const std::string &name, bool printLabels = true,
+              bool onlyPhysicals = false);
 
   // OCC model
   int readOCCBREP(const std::string &name);

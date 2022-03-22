@@ -580,7 +580,7 @@ namespace QMT {
     vector<double> x(2 * uIEdges.size(), 0.);
 
     /* Initial Dirichlet boundary conditions
-     * alignement of crosses with edges (relative angle = 0)
+     * alignment of crosses with edges (relative angle = 0)
      * theta_e = 0 => (cos4t/sin4t) = (1,0) */
     size_t nbc = 0;
     vector<bool> dirichletEdge(uIEdges.size(), false);

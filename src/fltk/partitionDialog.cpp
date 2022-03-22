@@ -27,11 +27,12 @@
 #include "GModel.h"
 #include "drawContext.h"
 #include "Options.h"
-#include "meshPartition.h"
 #include "Context.h"
 #include "fileDialogs.h"
 
-#if defined(HAVE_METIS)
+#if defined(HAVE_MESH) && defined(HAVE_METIS)
+
+#include "meshPartition.h"
 
 // Forward declarations of some callbacks
 void partition_opt_num_partitions_cb(Fl_Widget *widget, void *data);

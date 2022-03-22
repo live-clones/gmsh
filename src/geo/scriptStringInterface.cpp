@@ -5,7 +5,6 @@
 
 #include <string.h>
 #include <sstream>
-#include "Field.h"
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "GModel.h"
@@ -19,6 +18,10 @@
 #include "Context.h"
 #include "OS.h"
 #include "Parser.h"
+
+#if defined(HAVE_MESH)
+#include "Field.h"
+#endif
 
 #if defined(HAVE_ONELAB)
 #include "onelab.h"
@@ -459,6 +462,7 @@ void scriptAddFieldOption(int field_id, const std::string &option_name,
                           const std::string &option_value, int option_type,
                           const std::string &fileName)
 {
+#if defined(HAVE_MESH)
   for(auto &lang : CTX::instance()->scriptLang) {
     std::ostringstream sstream;
     if(lang == "geo") {
@@ -493,6 +497,7 @@ void scriptAddFieldOption(int field_id, const std::string &option_name,
     }
     scriptAddCommand(sstream.str(), fileName, lang);
   }
+#endif
 }
 
 void scriptAddField(int field_id, const std::string &type_name,

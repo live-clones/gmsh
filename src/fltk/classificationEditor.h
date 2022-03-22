@@ -11,9 +11,13 @@
 #include <FL/Fl_Window.H>
 #include <FL/Fl_Check_Button.H>
 #include <FL/Fl_Value_Input.H>
+#include "GmshConfig.h"
 #include "GModel.h"
 #include "MElement.h"
+
+#if defined(HAVE_MESH)
 #include "meshGFaceOptimize.h"
+#endif
 
 #define CLASS_BUTTON_SELECT_ELEMENTS 0
 #define CLASS_BUTTON_SELECT_ALL_ELEMENTS 1
@@ -38,7 +42,11 @@ public:
   Fl_Check_Button *toggles[4];
   Fl_Value_Input *inputs[1];
   GEdge *selected;
+#if defined(HAVE_MESH)
   std::vector<edge_angle> edges_detected, edges_lonly;
+#else
+  std::vector<double> edges_detected, edges_lonly;
+#endif
   classificationEditor();
   void show() { window->show(); }
 };
