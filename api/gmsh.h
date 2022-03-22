@@ -967,6 +967,21 @@ namespace gmsh { // Top-level functions
                                               std::vector<std::size_t> & nodeTags,
                                               const int tag = -1);
 
+      // gmsh::model::mesh::getElementQualities
+      //
+      // Get the quality `elementQualities' of the elements with tags
+      // `elementTags'. `qualityType' is the requested quality measure: "minSJ" for
+      // the minimal scaled jacobien, "minSICN" for the minimal signed inverted
+      // condition number, "minSIGE" for the signed inverted gradient error,
+      // "gamma" for the ratio of the inscribed to circumcribed sphere radius. If
+      // `numTasks' > 1, only compute and return the part of the data indexed by
+      // `task'.
+      GMSH_API void getElementQualities(const std::vector<std::size_t> & elementTags,
+                                        std::vector<double> & elementsQuality,
+                                        const std::string & qualityName = "minSICN",
+                                        const std::size_t task = 0,
+                                        const std::size_t numTasks = 1);
+
       // gmsh::model::mesh::addElements
       //
       // Add elements classified on the entity of dimension `dim' and tag `tag'.
@@ -1423,9 +1438,11 @@ namespace gmsh { // Top-level functions
       //
       // Set a recombination meshing constraint on the model entity of dimension
       // `dim' and tag `tag'. Currently only entities of dimension 2 (to recombine
-      // triangles into quadrangles) are supported.
+      // triangles into quadrangles) are supported; `angle' specifies the threshold
+      // angle for the simple recombination algorithm..
       GMSH_API void setRecombine(const int dim,
-                                 const int tag);
+                                 const int tag,
+                                 const double angle = 45.);
 
       // gmsh::model::mesh::setSmoothing
       //
@@ -1617,6 +1634,12 @@ namespace gmsh { // Top-level functions
       // is lower than `quality'. If `tag' < 0, split quadrangles in all surfaces.
       GMSH_API void splitQuadrangles(const double quality = 1.,
                                      const int tag = -1);
+
+      // gmsh::model::mesh::setVisibility
+      //
+      // Set the visibility of the elements of tags `elementTags' to `value'.
+      GMSH_API void setVisibility(const std::vector<std::size_t> & elementTags,
+                                  const int value);
 
       // gmsh::model::mesh::classifySurfaces
       //
@@ -2035,6 +2058,34 @@ namespace gmsh { // Top-level functions
       GMSH_API int addVolume(const std::vector<int> & shellTags,
                              const int tag = -1);
 
+      // gmsh::model::geo::addGeometry
+      //
+      // Add a `geometry' in the built-in CAD representation. `geometry' can
+      // currently be one of "Sphere" or "PolarSphere" (where `numbers' should
+      // contain the x, y, z coordinates of the center, followed by the radius), or
+      // "Parametric" (where `strings' should contains three expression evaluating
+      // to the x, y and z coordinates. If `tag' is positive, set the tag of the
+      // geometry explicitly; otherwise a new tag is selected automatically. Return
+      // the tag of the geometry.
+      GMSH_API int addGeometry(const std::string & geometry,
+                               const std::vector<double> & numbers = std::vector<double>(),
+                               const std::vector<std::string> & strings = std::vector<std::string>(),
+                               const int tag = -1);
+
+      // gmsh::model::geo::addPointOnGeometry
+      //
+      // Add a point in the built-in CAD representation, at coordinates (`x', `y',
+      // `z') on the geometry `geometryTag'. If `meshSize' is > 0, add a meshing
+      // constraint at that point. If `tag' is positive, set the tag explicitly;
+      // otherwise a new tag is selected automatically. Return the tag of the
+      // point. For surface geometries, only the `x' and `y' coordinates are used.
+      GMSH_API int addPointOnGeometry(const int geometryTag,
+                                      const double x,
+                                      const double y,
+                                      const double z = 0.,
+                                      const double meshSize = 0.,
+                                      const int tag = -1);
+
       // gmsh::model::geo::extrude
       //
       // Extrude the entities `dimTags' in the built-in CAD representation, using a
@@ -2302,7 +2353,8 @@ namespace gmsh { // Top-level functions
         // Set a recombination meshing constraint on the entity of dimension `dim'
         // and tag `tag' in the built-in CAD kernel representation. Currently only
         // entities of dimension 2 (to recombine triangles into quadrangles) are
-        // supported.
+        // supported; `angle' specifies the threshold angle for the simple
+        // recombination algorithm.
         GMSH_API void setRecombine(const int dim,
                                    const int tag,
                                    const double angle = 45.);
@@ -3129,17 +3181,21 @@ namespace gmsh { // Top-level functions
 
       // gmsh::model::occ::getCurveLoops
       //
-      // Get the `tags' of the curve loops making up the surface of tag
-      // `surfaceTag'.
+      // Get the tags `curveLoopTags' of the curve loops making up the surface of
+      // tag `surfaceTag', as well as the tags `curveTags' of the curves making up
+      // each curve loop.
       GMSH_API void getCurveLoops(const int surfaceTag,
-                                  std::vector<int> & tags);
+                                  std::vector<int> & curveLoopTags,
+                                  std::vector<std::vector<int> > & curveTags);
 
       // gmsh::model::occ::getSurfaceLoops
       //
-      // Get the `tags' of the surface loops making up the volume of tag
-      // `volumeTag'.
+      // Get the tags `surfaceLoopTags' of the surface loops making up the volume
+      // of tag `volumeTag', as well as the tags `surfaceTags' of the surfaces
+      // making up each surface loop.
       GMSH_API void getSurfaceLoops(const int volumeTag,
-                                    std::vector<int> & tags);
+                                    std::vector<int> & surfaceLoopTags,
+                                    std::vector<std::vector<int> > & surfaceTags);
 
       // gmsh::model::occ::getMass
       //

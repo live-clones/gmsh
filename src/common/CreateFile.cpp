@@ -34,6 +34,7 @@
 int GetFileFormatFromExtension(const std::string &ext, double *version)
 {
   if(ext == ".geo_unrolled")  return FORMAT_GEO;
+  else if(ext == ".py_unrolled") return FORMAT_PY;
   else if(ext == ".auto")     return FORMAT_AUTO;
   else if(ext == ".msh")      return FORMAT_MSH;
   else if(ext == ".msh1")     { if(version) *version = 1.0; return FORMAT_MSH; }
@@ -108,6 +109,7 @@ std::string GetDefaultFileExtension(int format, bool onlyMeshFormats)
   bool mesh = false;
   switch(format){
   case FORMAT_GEO:     name = ".geo_unrolled"; break;
+  case FORMAT_PY:      name = ".py_unrolled"; break;
   case FORMAT_MSH:     name = ".msh"; mesh = true; break;
   case FORMAT_POS:     name = ".pos"; break;
   case FORMAT_X3D:     name = ".x3d"; mesh = true; break;
@@ -478,6 +480,11 @@ void CreateOutputFile(const std::string &fileName, int format,
   case FORMAT_GEO:
     GModel::current()->writeGEO(name, CTX::instance()->print.geoLabels,
                                 CTX::instance()->print.geoOnlyPhysicals);
+    break;
+
+  case FORMAT_PY:
+    GModel::current()->writePY(name, CTX::instance()->print.geoLabels,
+                               CTX::instance()->print.geoOnlyPhysicals);
     break;
 
   case FORMAT_BREP:

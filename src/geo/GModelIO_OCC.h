@@ -394,8 +394,10 @@ public:
                                 double xmax, double ymax, double zmax,
                                 std::vector<std::pair<int, int> > &dimTags,
                                 int dim);
-  bool getCurveLoops(int surfaceTag, std::vector<int> &tags);
-  bool getSurfaceLoops(int volumeTag, std::vector<int> &tags);
+  bool getCurveLoops(int surfaceTag, std::vector<int> &curveLoopTags,
+                     std::vector<std::vector<int> > &curveTags);
+  bool getSurfaceLoops(int volumeTag, std::vector<int> &surfaceLoopTags,
+                       std::vector<std::vector<int> > &surfaceTags);
   bool getMass(int dim, int tag, double &mass);
   bool getCenterOfMass(int dim, int tag, double &x, double &y, double &z);
   bool getMatrixOfInertia(int dim, int tag, std::vector<double> &mat);
@@ -801,11 +803,13 @@ public:
   {
     return false;
   }
-  bool getCurveLoops(int surfaceTag, std::vector<int> &tags)
+  bool getCurveLoops(int surfaceTag, std::vector<int> &curveLoopTags,
+                     std::vector<std::vector<int> > &curveTags)
   {
     return false;
   }
-  bool getSurfaceLoops(int volumeTag, std::vector<int> &tags)
+  bool getSurfaceLoops(int volumeTag, std::vector<int> &surfaceLoopTags,
+                       std::vector<std::vector<int> > &surfaceTags)
   {
     return false;
   }

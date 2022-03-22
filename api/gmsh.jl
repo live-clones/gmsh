@@ -1995,6 +1995,31 @@ end
 const get_max_element_tag = getMaxElementTag
 
 """
+    gmsh.model.mesh.getElementQualities(elementTags, qualityName = "minSICN", task = 0, numTasks = 1)
+
+Get the quality `elementQualities` of the elements with tags `elementTags`.
+`qualityType` is the requested quality measure: "minSJ" for the minimal scaled
+jacobien, "minSICN" for the minimal signed inverted condition number, "minSIGE"
+for the signed inverted gradient error, "gamma" for the ratio of the inscribed
+to circumcribed sphere radius. If `numTasks` > 1, only compute and return the
+part of the data indexed by `task`.
+
+Return `elementsQuality`.
+"""
+function getElementQualities(elementTags, qualityName = "minSICN", task = 0, numTasks = 1)
+    api_elementsQuality_ = Ref{Ptr{Cdouble}}()
+    api_elementsQuality_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshGetElementQualities, gmsh.lib), Cvoid,
+          (Ptr{Csize_t}, Csize_t, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cchar}, Csize_t, Csize_t, Ptr{Cint}),
+          convert(Vector{Csize_t}, elementTags), length(elementTags), api_elementsQuality_, api_elementsQuality_n_, qualityName, task, numTasks, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    elementsQuality = unsafe_wrap(Array, api_elementsQuality_[], api_elementsQuality_n_[], own = true)
+    return elementsQuality
+end
+const get_element_qualities = getElementQualities
+
+"""
     gmsh.model.mesh.addElements(dim, tag, elementTypes, elementTags, nodeTags)
 
 Add elements classified on the entity of dimension `dim` and tag `tag`. `types`
@@ -2798,17 +2823,18 @@ end
 const set_transfinite_automatic = setTransfiniteAutomatic
 
 """
-    gmsh.model.mesh.setRecombine(dim, tag)
+    gmsh.model.mesh.setRecombine(dim, tag, angle = 45.)
 
 Set a recombination meshing constraint on the model entity of dimension `dim`
 and tag `tag`. Currently only entities of dimension 2 (to recombine triangles
-into quadrangles) are supported.
+into quadrangles) are supported; `angle` specifies the threshold angle for the
+simple recombination algorithm..
 """
-function setRecombine(dim, tag)
+function setRecombine(dim, tag, angle = 45.)
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshSetRecombine, gmsh.lib), Cvoid,
-          (Cint, Cint, Ptr{Cint}),
-          dim, tag, ierr)
+          (Cint, Cint, Cdouble, Ptr{Cint}),
+          dim, tag, angle, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
@@ -3226,6 +3252,21 @@ function splitQuadrangles(quality = 1., tag = -1)
     return nothing
 end
 const split_quadrangles = splitQuadrangles
+
+"""
+    gmsh.model.mesh.setVisibility(elementTags, value)
+
+Set the visibility of the elements of tags `elementTags` to `value`.
+"""
+function setVisibility(elementTags, value)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshSetVisibility, gmsh.lib), Cvoid,
+          (Ptr{Csize_t}, Csize_t, Cint, Ptr{Cint}),
+          convert(Vector{Csize_t}, elementTags), length(elementTags), value, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+const set_visibility = setVisibility
 
 """
     gmsh.model.mesh.classifySurfaces(angle, boundary = true, forReparametrization = false, curveAngle = pi, exportDiscrete = true)
@@ -4109,6 +4150,49 @@ end
 const add_volume = addVolume
 
 """
+    gmsh.model.geo.addGeometry(geometry, numbers = Cdouble[], strings = [], tag = -1)
+
+Add a `geometry` in the built-in CAD representation. `geometry` can currently be
+one of "Sphere" or "PolarSphere" (where `numbers` should contain the x, y, z
+coordinates of the center, followed by the radius), or "Parametric" (where
+`strings` should contains three expression evaluating to the x, y and z
+coordinates. If `tag` is positive, set the tag of the geometry explicitly;
+otherwise a new tag is selected automatically. Return the tag of the geometry.
+
+Return an integer value.
+"""
+function addGeometry(geometry, numbers = Cdouble[], strings = [], tag = -1)
+    ierr = Ref{Cint}()
+    api_result_ = ccall((:gmshModelGeoAddGeometry, gmsh.lib), Cint,
+          (Ptr{Cchar}, Ptr{Cdouble}, Csize_t, Ptr{Ptr{Cchar}}, Csize_t, Cint, Ptr{Cint}),
+          geometry, convert(Vector{Cdouble}, numbers), length(numbers), strings, length(strings), tag, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return api_result_
+end
+const add_geometry = addGeometry
+
+"""
+    gmsh.model.geo.addPointOnGeometry(geometryTag, x, y, z = 0., meshSize = 0., tag = -1)
+
+Add a point in the built-in CAD representation, at coordinates (`x`, `y`, `z`)
+on the geometry `geometryTag`. If `meshSize` is > 0, add a meshing constraint at
+that point. If `tag` is positive, set the tag explicitly; otherwise a new tag is
+selected automatically. Return the tag of the point. For surface geometries,
+only the `x` and `y` coordinates are used.
+
+Return an integer value.
+"""
+function addPointOnGeometry(geometryTag, x, y, z = 0., meshSize = 0., tag = -1)
+    ierr = Ref{Cint}()
+    api_result_ = ccall((:gmshModelGeoAddPointOnGeometry, gmsh.lib), Cint,
+          (Cint, Cdouble, Cdouble, Cdouble, Cdouble, Cint, Ptr{Cint}),
+          geometryTag, x, y, z, meshSize, tag, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return api_result_
+end
+const add_point_on_geometry = addPointOnGeometry
+
+"""
     gmsh.model.geo.extrude(dimTags, dx, dy, dz, numElements = Cint[], heights = Cdouble[], recombine = false)
 
 Extrude the entities `dimTags` in the built-in CAD representation, using a
@@ -4571,7 +4655,8 @@ const set_transfinite_volume = setTransfiniteVolume
 
 Set a recombination meshing constraint on the entity of dimension `dim` and tag
 `tag` in the built-in CAD kernel representation. Currently only entities of
-dimension 2 (to recombine triangles into quadrangles) are supported.
+dimension 2 (to recombine triangles into quadrangles) are supported; `angle`
+specifies the threshold angle for the simple recombination algorithm.
 """
 function setRecombine(dim, tag, angle = 45.)
     ierr = Ref{Cint}()
@@ -5963,40 +6048,56 @@ const get_bounding_box = getBoundingBox
 """
     gmsh.model.occ.getCurveLoops(surfaceTag)
 
-Get the `tags` of the curve loops making up the surface of tag `surfaceTag`.
+Get the tags `curveLoopTags` of the curve loops making up the surface of tag
+`surfaceTag`, as well as the tags `curveTags` of the curves making up each curve
+loop.
 
-Return `tags`.
+Return `curveLoopTags`, `curveTags`.
 """
 function getCurveLoops(surfaceTag)
-    api_tags_ = Ref{Ptr{Cint}}()
-    api_tags_n_ = Ref{Csize_t}()
+    api_curveLoopTags_ = Ref{Ptr{Cint}}()
+    api_curveLoopTags_n_ = Ref{Csize_t}()
+    api_curveTags_ = Ref{Ptr{Ptr{Cint}}}()
+    api_curveTags_n_ = Ref{Ptr{Csize_t}}()
+    api_curveTags_nn_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelOccGetCurveLoops, gmsh.lib), Cvoid,
-          (Cint, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
-          surfaceTag, api_tags_, api_tags_n_, ierr)
+          (Cint, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Cint}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cint}),
+          surfaceTag, api_curveLoopTags_, api_curveLoopTags_n_, api_curveTags_, api_curveTags_n_, api_curveTags_nn_, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    tags = unsafe_wrap(Array, api_tags_[], api_tags_n_[], own = true)
-    return tags
+    curveLoopTags = unsafe_wrap(Array, api_curveLoopTags_[], api_curveLoopTags_n_[], own = true)
+    tmp_api_curveTags_ = unsafe_wrap(Array, api_curveTags_[], api_curveTags_nn_[], own = true)
+    tmp_api_curveTags_n_ = unsafe_wrap(Array, api_curveTags_n_[], api_curveTags_nn_[], own = true)
+    curveTags = [ unsafe_wrap(Array, tmp_api_curveTags_[i], tmp_api_curveTags_n_[i], own = true) for i in 1:api_curveTags_nn_[] ]
+    return curveLoopTags, curveTags
 end
 const get_curve_loops = getCurveLoops
 
 """
     gmsh.model.occ.getSurfaceLoops(volumeTag)
 
-Get the `tags` of the surface loops making up the volume of tag `volumeTag`.
+Get the tags `surfaceLoopTags` of the surface loops making up the volume of tag
+`volumeTag`, as well as the tags `surfaceTags` of the surfaces making up each
+surface loop.
 
-Return `tags`.
+Return `surfaceLoopTags`, `surfaceTags`.
 """
 function getSurfaceLoops(volumeTag)
-    api_tags_ = Ref{Ptr{Cint}}()
-    api_tags_n_ = Ref{Csize_t}()
+    api_surfaceLoopTags_ = Ref{Ptr{Cint}}()
+    api_surfaceLoopTags_n_ = Ref{Csize_t}()
+    api_surfaceTags_ = Ref{Ptr{Ptr{Cint}}}()
+    api_surfaceTags_n_ = Ref{Ptr{Csize_t}}()
+    api_surfaceTags_nn_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelOccGetSurfaceLoops, gmsh.lib), Cvoid,
-          (Cint, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
-          volumeTag, api_tags_, api_tags_n_, ierr)
+          (Cint, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Cint}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cint}),
+          volumeTag, api_surfaceLoopTags_, api_surfaceLoopTags_n_, api_surfaceTags_, api_surfaceTags_n_, api_surfaceTags_nn_, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    tags = unsafe_wrap(Array, api_tags_[], api_tags_n_[], own = true)
-    return tags
+    surfaceLoopTags = unsafe_wrap(Array, api_surfaceLoopTags_[], api_surfaceLoopTags_n_[], own = true)
+    tmp_api_surfaceTags_ = unsafe_wrap(Array, api_surfaceTags_[], api_surfaceTags_nn_[], own = true)
+    tmp_api_surfaceTags_n_ = unsafe_wrap(Array, api_surfaceTags_n_[], api_surfaceTags_nn_[], own = true)
+    surfaceTags = [ unsafe_wrap(Array, tmp_api_surfaceTags_[i], tmp_api_surfaceTags_n_[i], own = true) for i in 1:api_surfaceTags_nn_[] ]
+    return surfaceLoopTags, surfaceTags
 end
 const get_surface_loops = getSurfaceLoops
 

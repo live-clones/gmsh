@@ -1008,11 +1008,17 @@ extern \"C\" {{
 c_cpp_utils = """
 void vectorvectorpair2intptrptr(const std::vector<{0}::vectorpair > &v, int ***p, size_t **size, size_t *sizeSize)
 {{
-  *p = (int**){0}Malloc(sizeof(int*) * v.size());
-  *size = (size_t*){0}Malloc(sizeof(size_t) * v.size());
+  if(p) {{
+    *p = (int**){0}Malloc(sizeof(int*) * v.size());
+  }}
+  if(size) {{
+    *size = (size_t*){0}Malloc(sizeof(size_t) * v.size());
+  }}
   for(size_t i = 0; i < v.size(); ++i)
-    vectorpair2intptr(v[i], &(*p)[i], &((*size)[i]));
-  *sizeSize = v.size();
+    vectorpair2intptr(v[i], p ? &((*p)[i]) : NULL, size ? &((*size)[i]) : NULL);
+  if(sizeSize) {{
+    *sizeSize = v.size();
+  }}
 }}
 """
 
@@ -1070,42 +1076,60 @@ cwrap_utils = """
 template<typename t>
 {1}void vector2ptr(const std::vector<t> &v, t **p, size_t *size)
 {{
-  *p = (t*){0}Malloc(sizeof(t) * v.size());
-  for(size_t i = 0; i < v.size(); ++i){{
-    (*p)[i] = v[i];
+  if(p) {{
+    *p = (t*){0}Malloc(sizeof(t) * v.size());
+    for(size_t i = 0; i < v.size(); ++i) {{
+      (*p)[i] = v[i];
+    }}
   }}
-  *size = v.size();
+  if(size) {{
+    *size = v.size();
+  }}
 }}
 
 {1}void vectorpair2intptr(const {0}::vectorpair &v, int **p, size_t *size)
 {{
-  *p = (int*){0}Malloc(sizeof(int) * v.size() * 2);
-  for(size_t i = 0; i < v.size(); ++i){{
-    (*p)[i * 2 + 0] = v[i].first;
-    (*p)[i * 2 + 1] = v[i].second;
+  if(p) {{
+    *p = (int*){0}Malloc(sizeof(int) * v.size() * 2);
+    for(size_t i = 0; i < v.size(); ++i) {{
+      (*p)[i * 2 + 0] = v[i].first;
+      (*p)[i * 2 + 1] = v[i].second;
+    }}
   }}
-  *size = v.size() * 2;
+  if(size) {{
+    *size = v.size() * 2;
+  }}
 }}
 
 {1}void vectorstring2charptrptr(const std::vector<std::string> &v, char ***p, size_t *size)
 {{
-  *p = (char**){0}Malloc(sizeof(char*) * v.size());
-  for(size_t i = 0; i < v.size(); ++i){{
-    (*p)[i] = (char*){0}Malloc(sizeof(char) * (v[i].size() + 1));
-    for(size_t j = 0; j < v[i].size(); j++) (*p)[i][j] = v[i][j];
-    (*p)[i][v[i].size()] = '\\0';
+  if(p) {{
+    *p = (char**){0}Malloc(sizeof(char*) * v.size());
+    for(size_t i = 0; i < v.size(); ++i) {{
+      (*p)[i] = (char*){0}Malloc(sizeof(char) * (v[i].size() + 1));
+      for(size_t j = 0; j < v[i].size(); j++) (*p)[i][j] = v[i][j];
+      (*p)[i][v[i].size()] = '\\0';
+    }}
   }}
-  *size = v.size();
+  if(size) {{
+    *size = v.size();
+  }}
 }}
 
 template<typename t>
 {1}void vectorvector2ptrptr(const std::vector<std::vector<t> > &v, t ***p, size_t **size, size_t *sizeSize)
 {{
-  *p = (t**){0}Malloc(sizeof(t*) * v.size());
-  *size = (size_t*){0}Malloc(sizeof(size_t) * v.size());
+  if(p) {{
+    *p = (t**){0}Malloc(sizeof(t*) * v.size());
+  }}
+  if(size) {{
+    *size = (size_t*){0}Malloc(sizeof(size_t) * v.size());
+  }}
   for(size_t i = 0; i < v.size(); ++i)
-    vector2ptr(v[i], &((*p)[i]), &((*size)[i]));
-  *sizeSize = v.size();
+    vector2ptr(v[i], p ? &((*p)[i]) : NULL, size ? &((*size)[i]) : NULL);
+  if(sizeSize) {{
+    *sizeSize = v.size();
+  }}
 }}
 """
 

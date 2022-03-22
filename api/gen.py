@@ -341,6 +341,9 @@ mesh.add('getMaxElementTag', doc, None, osize('maxTag'))
 doc = '''Preallocate data before calling `getElementsByType' with `numTasks' > 1. For C and C++ only.'''
 mesh.add_special('preallocateElementsByType', doc, ['onlycc++'], None, iint('elementType'), ibool('elementTag'), ibool('nodeTag'), ovectorsize('elementTags'), ovectorsize('nodeTags'), iint('tag', '-1'))
 
+doc = '''Get the quality `elementQualities' of the elements with tags `elementTags'. `qualityType' is the requested quality measure: "minSJ" for the minimal scaled jacobien, "minSICN" for the minimal signed inverted condition number, "minSIGE" for the signed inverted gradient error, "gamma" for the ratio of the inscribed to circumcribed sphere radius. If `numTasks' > 1, only compute and return the part of the data indexed by `task'.'''
+mesh.add('getElementQualities', doc, None, ivectorsize('elementTags'), ovectordouble('elementsQuality'), istring('qualityName', '"minSICN"'), isize('task', '0'), isize('numTasks', '1'))
+
 doc = '''Add elements classified on the entity of dimension `dim' and tag `tag'. `types' contains the MSH types of the elements (e.g. `2' for 3-node triangles: see the Gmsh reference manual). `elementTags' is a vector of the same length as `types'; each entry is a vector containing the tags (unique, strictly positive identifiers) of the elements of the corresponding type. `nodeTags' is also a vector of the same length as `types'; each entry is a vector of length equal to the number of elements of the given type times the number N of nodes per element, that contains the node tags of all the elements of the given type, concatenated: [e1n1, e1n2, ..., e1nN, e2n1, ...].'''
 mesh.add('addElements', doc, None, iint('dim'), iint('tag'), ivectorint('elementTypes'), ivectorvectorsize('elementTags'), ivectorvectorsize('nodeTags'))
 
@@ -452,8 +455,8 @@ mesh.add('setTransfiniteVolume', doc, None, iint('tag'), ivectorint('cornerTags'
 doc = '''Set transfinite meshing constraints on the model entities in `dimTag'. Transfinite meshing constraints are added to the curves of the quadrangular surfaces and to the faces of 6-sided volumes. Quadragular faces with a corner angle superior to `cornerAngle' (in radians) are ignored. The number of points is automatically determined from the sizing constraints. If `dimTag' is empty, the constraints are applied to all entities in the model. If `recombine' is true, the recombine flag is automatically set on the transfinite surfaces.  '''
 mesh.add('setTransfiniteAutomatic', doc, None, ivectorpair('dimTags', 'gmsh::vectorpair()', "[]", "[]"), idouble('cornerAngle', '2.35', '2.35', '2.35'), ibool('recombine', 'true', 'True'))
 
-doc = '''Set a recombination meshing constraint on the model entity of dimension `dim' and tag `tag'. Currently only entities of dimension 2 (to recombine triangles into quadrangles) are supported.'''
-mesh.add('setRecombine', doc, None, iint('dim'), iint('tag'))
+doc = '''Set a recombination meshing constraint on the model entity of dimension `dim' and tag `tag'. Currently only entities of dimension 2 (to recombine triangles into quadrangles) are supported; `angle' specifies the threshold angle for the simple recombination algorithm..'''
+mesh.add('setRecombine', doc, None, iint('dim'), iint('tag'), idouble('angle', '45.'))
 
 doc = '''Set a smoothing meshing constraint on the model entity of dimension `dim' and tag `tag'. `val' iterations of a Laplace smoother are applied.'''
 mesh.add('setSmoothing', doc, None, iint('dim'), iint('tag'), iint('val'))
@@ -517,6 +520,9 @@ mesh.add('removeDuplicateNodes', doc, None, ivectorpair('dimTags', 'gmsh::vector
 
 doc = '''Split (into two triangles) all quadrangles in surface `tag' whose quality is lower than `quality'. If `tag' < 0, split quadrangles in all surfaces.'''
 mesh.add('splitQuadrangles', doc, None, idouble('quality', '1.'), iint('tag', '-1'))
+
+doc = '''Set the visibility of the elements of tags `elementTags' to `value'.'''
+mesh.add('setVisibility', doc, None, ivectorsize('elementTags'), iint('value'))
 
 doc = '''Classify ("color") the surface mesh based on the angle threshold `angle' (in radians), and create new discrete surfaces, curves and points accordingly. If `boundary' is set, also create discrete curves on the boundary if the surface is open. If `forReparametrization' is set, create curves and surfaces that can be reparametrized using a single map. If `curveAngle' is less than Pi, also force curves to be split according to `curveAngle'. If `exportDiscrete' is set, clear any built-in CAD kernel entities and export the discrete entities in the built-in CAD kernel.'''
 mesh.add('classifySurfaces', doc, None, idouble('angle'), ibool('boundary', 'true', 'True'), ibool('forReparametrization', 'false', 'False'), idouble('curveAngle', 'M_PI', 'pi', 'pi'), ibool('exportDiscrete', 'true', 'True'))
@@ -652,6 +658,12 @@ geo.add('addSurfaceLoop', doc, oint, ivectorint('surfaceTags'), iint('tag', '-1'
 doc = '''Add a volume (a region) in the built-in CAD representation, defined by one or more shells `shellTags'. The first surface loop defines the exterior boundary; additional surface loop define holes. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the volume.'''
 geo.add('addVolume', doc, oint, ivectorint('shellTags'), iint('tag', '-1'))
 
+doc = '''Add a `geometry' in the built-in CAD representation. `geometry' can currently be one of "Sphere" or "PolarSphere" (where `numbers' should contain the x, y, z coordinates of the center, followed by the radius), or "Parametric" (where `strings' should contains three expression evaluating to the x, y and z coordinates. If `tag' is positive, set the tag of the geometry explicitly; otherwise a new tag is selected automatically. Return the tag of the geometry.'''
+geo.add('addGeometry', doc, oint, istring('geometry'), ivectordouble('numbers', 'std::vector<double>()', "[]", "[]"), ivectorstring('strings', 'std::vector<std::string>()', "[]", "[]"), iint('tag', '-1'))
+
+doc = '''Add a point in the built-in CAD representation, at coordinates (`x', `y', `z') on the geometry `geometryTag'. If `meshSize' is > 0, add a meshing constraint at that point. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the point. For surface geometries, only the `x' and `y' coordinates are used.'''
+geo.add('addPointOnGeometry', doc, oint, iint('geometryTag'), idouble('x'), idouble('y'), idouble('z', '0.'), idouble('meshSize', '0.'), iint('tag', '-1'))
+
 doc = '''Extrude the entities `dimTags' in the built-in CAD representation, using a translation along (`dx', `dy', `dz'). Return extruded entities in `outDimTags'. If `numElements' is not empty, also extrude the mesh: the entries in `numElements' give the number of elements in each layer. If `height' is not empty, it provides the (cumulative) height of the different layers, normalized to 1. If `recombine' is set, recombine the mesh in the layers.'''
 geo.add('extrude', doc, None, ivectorpair('dimTags'), idouble('dx'), idouble('dy'), idouble('dz'), ovectorpair('outDimTags'), ivectorint('numElements', 'std::vector<int>()', "[]", "[]"), ivectordouble('heights', 'std::vector<double>()', "[]", "[]"), ibool('recombine', 'false', 'False'))
 
@@ -721,7 +733,7 @@ mesh.add('setTransfiniteSurface', doc, None, iint('tag'), istring('arrangement',
 doc = '''Set a transfinite meshing constraint on the surface `tag' in the built-in CAD kernel representation. `cornerTags' can be used to specify the (6 or 8) corners of the transfinite interpolation explicitly.'''
 mesh.add('setTransfiniteVolume', doc, None, iint('tag'), ivectorint('cornerTags', 'std::vector<int>()', "[]", "[]"))
 
-doc = '''Set a recombination meshing constraint on the entity of dimension `dim' and tag `tag' in the built-in CAD kernel representation. Currently only entities of dimension 2 (to recombine triangles into quadrangles) are supported.'''
+doc = '''Set a recombination meshing constraint on the entity of dimension `dim' and tag `tag' in the built-in CAD kernel representation. Currently only entities of dimension 2 (to recombine triangles into quadrangles) are supported; `angle' specifies the threshold angle for the simple recombination algorithm.'''
 mesh.add('setRecombine', doc, None, iint('dim'), iint('tag'), idouble('angle', '45.'))
 
 doc = '''Set a smoothing meshing constraint on the entity of dimension `dim' and tag `tag' in the built-in CAD kernel representation. `val' iterations of a Laplace smoother are applied.'''
@@ -904,11 +916,11 @@ occ.add('getEntitiesInBoundingBox', doc, None, idouble('xmin'), idouble('ymin'),
 doc = '''Get the bounding box (`xmin', `ymin', `zmin'), (`xmax', `ymax', `zmax') of the OpenCASCADE entity of dimension `dim' and tag `tag'.'''
 occ.add('getBoundingBox', doc, None, iint('dim'), iint('tag'), odouble('xmin'), odouble('ymin'), odouble('zmin'), odouble('xmax'), odouble('ymax'), odouble('zmax'))
 
-doc = '''Get the `tags' of the curve loops making up the surface of tag `surfaceTag'.'''
-occ.add('getCurveLoops', doc, None, iint('surfaceTag'), ovectorint('tags'))
+doc = '''Get the tags `curveLoopTags' of the curve loops making up the surface of tag `surfaceTag', as well as the tags `curveTags' of the curves making up each curve loop.'''
+occ.add('getCurveLoops', doc, None, iint('surfaceTag'), ovectorint('curveLoopTags'), ovectorvectorint('curveTags'))
 
-doc = '''Get the `tags' of the surface loops making up the volume of tag `volumeTag'.'''
-occ.add('getSurfaceLoops', doc, None, iint('volumeTag'), ovectorint('tags'))
+doc = '''Get the tags `surfaceLoopTags' of the surface loops making up the volume of tag `volumeTag', as well as the tags `surfaceTags' of the surfaces making up each surface loop.'''
+occ.add('getSurfaceLoops', doc, None, iint('volumeTag'), ovectorint('surfaceLoopTags'), ovectorvectorint('surfaceTags'))
 
 doc = '''Get the mass of the OpenCASCADE entity of dimension `dim' and tag `tag'.'''
 occ.add('getMass', doc, None, iint('dim'), iint('tag'), odouble('mass'))

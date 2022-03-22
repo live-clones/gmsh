@@ -32,16 +32,10 @@ int main(int argc, char **argv)
   gmshModelOccAddBox(0, 0, 0, 0.5, 0.5, 0.5, 2, &ierr);
 
   // We apply a boolean difference to create the "cube minus one eigth" shape:
-  int *ov, **ovv;
-  size_t ov_n, *ovv_n, ovv_nn;
   const int o[] = {3, 1};
   const int t[] = {3, 2};
   gmshModelOccCut(o, sizeof(o) / sizeof(o[0]), t, sizeof(t) / sizeof(t[0]),
-                  &ov, &ov_n, &ovv, &ovv_n, &ovv_nn, 3, 1, 1, &ierr);
-  gmshFree(ov);
-  for(int i = 0; i < ovv_nn; i++)
-    gmshFree(ovv[i]);
-  gmshFree(ovv_n);
+                  NULL, NULL, NULL, NULL, NULL, 3, 1, 1, &ierr);
 
   // Boolean operations with OpenCASCADE always create new entities. The
   // arguments `removeObject' and `removeTool' are set to `1', which will delete
@@ -64,6 +58,8 @@ int main(int argc, char **argv)
   // which intersects all volumes in a conformal manner (without creating
   // duplicate interfaces):
   const int o2[] = {3, 3};
+  int *ov, **ovv;
+  size_t ov_n, *ovv_n, ovv_nn;
   gmshModelOccFragment(o2, sizeof(o) / sizeof(o[0]),
                        holes, sizeof(holes) / sizeof(holes[0]),
                        &ov, &ov_n, &ovv, &ovv_n, &ovv_nn, -1, 1, 1, &ierr);
@@ -74,6 +70,15 @@ int main(int argc, char **argv)
   for(int i = 0; i < ov_n; i += 2)
     printf("(%d, %d) ", ov[i], ov[i + 1]);
   printf("\n");
+
+  // ovv contains the parent-child relationships for all the input entities:
+  for(size_t i = 0; i < ovv_nn; i++) {
+    printf("parent (3, %d) -> child", !i ? o2[1] : holes[(i - 1) * 2 + 1]);
+    for(size_t j = 0; j < ovv_n[i]; j += 2) {
+      printf(" (%d, %d)", ovv[i][j], ovv[i][j + 1]);
+    }
+    printf("\n");
+  }
 
   gmshModelOccSynchronize(&ierr);
 

@@ -841,6 +841,19 @@ GMSH_API void gmshModelMeshPreallocateElementsByType(const int elementType,
                                                      const int tag,
                                                      int * ierr);
 
+/* Get the quality `elementQualities' of the elements with tags `elementTags'.
+ * `qualityType' is the requested quality measure: "minSJ" for the minimal
+ * scaled jacobien, "minSICN" for the minimal signed inverted condition
+ * number, "minSIGE" for the signed inverted gradient error, "gamma" for the
+ * ratio of the inscribed to circumcribed sphere radius. If `numTasks' > 1,
+ * only compute and return the part of the data indexed by `task'. */
+GMSH_API void gmshModelMeshGetElementQualities(const size_t * elementTags, const size_t elementTags_n,
+                                               double ** elementsQuality, size_t * elementsQuality_n,
+                                               const char * qualityName,
+                                               const size_t task,
+                                               const size_t numTasks,
+                                               int * ierr);
+
 /* Add elements classified on the entity of dimension `dim' and tag `tag'.
  * `types' contains the MSH types of the elements (e.g. `2' for 3-node
  * triangles: see the Gmsh reference manual). `elementTags' is a vector of the
@@ -1256,9 +1269,11 @@ GMSH_API void gmshModelMeshSetTransfiniteAutomatic(const int * dimTags, const si
 
 /* Set a recombination meshing constraint on the model entity of dimension
  * `dim' and tag `tag'. Currently only entities of dimension 2 (to recombine
- * triangles into quadrangles) are supported. */
+ * triangles into quadrangles) are supported; `angle' specifies the threshold
+ * angle for the simple recombination algorithm.. */
 GMSH_API void gmshModelMeshSetRecombine(const int dim,
                                         const int tag,
+                                        const double angle,
                                         int * ierr);
 
 /* Set a smoothing meshing constraint on the model entity of dimension `dim'
@@ -1428,6 +1443,11 @@ GMSH_API void gmshModelMeshSplitQuadrangles(const double quality,
                                             const int tag,
                                             int * ierr);
 
+/* Set the visibility of the elements of tags `elementTags' to `value'. */
+GMSH_API void gmshModelMeshSetVisibility(const size_t * elementTags, const size_t elementTags_n,
+                                         const int value,
+                                         int * ierr);
+
 /* Classify ("color") the surface mesh based on the angle threshold `angle'
  * (in radians), and create new discrete surfaces, curves and points
  * accordingly. If `boundary' is set, also create discrete curves on the
@@ -1498,7 +1518,10 @@ GMSH_API void gmshModelMeshGenerateMesh(const int dim,
                                         const int tag,
                                         const int refine,
                                         const double * coord, const size_t coord_n,
+<<<<<<< HEAD
                                         const int * nodeTags, const size_t nodeTags_n,
+=======
+>>>>>>> 33145a3798c3d193184aa034d66dd464cfd5ed7f
                                         int * ierr);
 
 /* Triangulate the points given in the `coord' vector as pairs of u, v
@@ -1791,6 +1814,32 @@ GMSH_API int gmshModelGeoAddVolume(const int * shellTags, const size_t shellTags
                                    const int tag,
                                    int * ierr);
 
+/* Add a `geometry' in the built-in CAD representation. `geometry' can
+ * currently be one of "Sphere" or "PolarSphere" (where `numbers' should
+ * contain the x, y, z coordinates of the center, followed by the radius), or
+ * "Parametric" (where `strings' should contains three expression evaluating
+ * to the x, y and z coordinates. If `tag' is positive, set the tag of the
+ * geometry explicitly; otherwise a new tag is selected automatically. Return
+ * the tag of the geometry. */
+GMSH_API int gmshModelGeoAddGeometry(const char * geometry,
+                                     const double * numbers, const size_t numbers_n,
+                                     const char * const * strings, const size_t strings_n,
+                                     const int tag,
+                                     int * ierr);
+
+/* Add a point in the built-in CAD representation, at coordinates (`x', `y',
+ * `z') on the geometry `geometryTag'. If `meshSize' is > 0, add a meshing
+ * constraint at that point. If `tag' is positive, set the tag explicitly;
+ * otherwise a new tag is selected automatically. Return the tag of the point.
+ * For surface geometries, only the `x' and `y' coordinates are used. */
+GMSH_API int gmshModelGeoAddPointOnGeometry(const int geometryTag,
+                                            const double x,
+                                            const double y,
+                                            const double z,
+                                            const double meshSize,
+                                            const int tag,
+                                            int * ierr);
+
 /* Extrude the entities `dimTags' in the built-in CAD representation, using a
  * translation along (`dx', `dy', `dz'). Return extruded entities in
  * `outDimTags'. If `numElements' is not empty, also extrude the mesh: the
@@ -2029,7 +2078,8 @@ GMSH_API void gmshModelGeoMeshSetTransfiniteVolume(const int tag,
 /* Set a recombination meshing constraint on the entity of dimension `dim' and
  * tag `tag' in the built-in CAD kernel representation. Currently only
  * entities of dimension 2 (to recombine triangles into quadrangles) are
- * supported. */
+ * supported; `angle' specifies the threshold angle for the simple
+ * recombination algorithm. */
 GMSH_API void gmshModelGeoMeshSetRecombine(const int dim,
                                            const int tag,
                                            const double angle,
@@ -2784,16 +2834,20 @@ GMSH_API void gmshModelOccGetBoundingBox(const int dim,
                                          double * zmax,
                                          int * ierr);
 
-/* Get the `tags' of the curve loops making up the surface of tag
- * `surfaceTag'. */
+/* Get the tags `curveLoopTags' of the curve loops making up the surface of
+ * tag `surfaceTag', as well as the tags `curveTags' of the curves making up
+ * each curve loop. */
 GMSH_API void gmshModelOccGetCurveLoops(const int surfaceTag,
-                                        int ** tags, size_t * tags_n,
+                                        int ** curveLoopTags, size_t * curveLoopTags_n,
+                                        int *** curveTags, size_t ** curveTags_n, size_t *curveTags_nn,
                                         int * ierr);
 
-/* Get the `tags' of the surface loops making up the volume of tag
- * `volumeTag'. */
+/* Get the tags `surfaceLoopTags' of the surface loops making up the volume of
+ * tag `volumeTag', as well as the tags `surfaceTags' of the surfaces making
+ * up each surface loop. */
 GMSH_API void gmshModelOccGetSurfaceLoops(const int volumeTag,
-                                          int ** tags, size_t * tags_n,
+                                          int ** surfaceLoopTags, size_t * surfaceLoopTags_n,
+                                          int *** surfaceTags, size_t ** surfaceTags_n, size_t *surfaceTags_nn,
                                           int * ierr);
 
 /* Get the mass of the OpenCASCADE entity of dimension `dim' and tag `tag'. */

@@ -29,7 +29,7 @@ gmsh.model.geo.addLine(4, 1, 4)
 gmsh.model.geo.addCurveLoop([4, 1, -2, 3], 1)
 gmsh.model.geo.addPlaneSurface([1], 1)
 gmsh.model.geo.synchronize()
-gmsh.model.addPhysicalGroup(0, [1, 2, 4], 5)
+gmsh.model.addPhysicalGroup(1, [1, 2, 4], 5)
 gmsh.model.addPhysicalGroup(2, [1], name="My surface")
 
 # We can then add new points and curves in the same way as we did in `t1.py':

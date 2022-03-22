@@ -2389,6 +2389,35 @@ class model:
         get_max_element_tag = getMaxElementTag
 
         @staticmethod
+        def getElementQualities(elementTags, qualityName="minSICN", task=0, numTasks=1):
+            """
+            gmsh.model.mesh.getElementQualities(elementTags, qualityName="minSICN", task=0, numTasks=1)
+
+            Get the quality `elementQualities' of the elements with tags `elementTags'.
+            `qualityType' is the requested quality measure: "minSJ" for the minimal
+            scaled jacobien, "minSICN" for the minimal signed inverted condition
+            number, "minSIGE" for the signed inverted gradient error, "gamma" for the
+            ratio of the inscribed to circumcribed sphere radius. If `numTasks' > 1,
+            only compute and return the part of the data indexed by `task'.
+
+            Return `elementsQuality'.
+            """
+            api_elementTags_, api_elementTags_n_ = _ivectorsize(elementTags)
+            api_elementsQuality_, api_elementsQuality_n_ = POINTER(c_double)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshGetElementQualities(
+                api_elementTags_, api_elementTags_n_,
+                byref(api_elementsQuality_), byref(api_elementsQuality_n_),
+                c_char_p(qualityName.encode()),
+                c_size_t(task),
+                c_size_t(numTasks),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return _ovectordouble(api_elementsQuality_, api_elementsQuality_n_.value)
+        get_element_qualities = getElementQualities
+
+        @staticmethod
         def addElements(dim, tag, elementTypes, elementTags, nodeTags):
             """
             gmsh.model.mesh.addElements(dim, tag, elementTypes, elementTags, nodeTags)
@@ -3300,18 +3329,20 @@ class model:
         set_transfinite_automatic = setTransfiniteAutomatic
 
         @staticmethod
-        def setRecombine(dim, tag):
+        def setRecombine(dim, tag, angle=45.):
             """
-            gmsh.model.mesh.setRecombine(dim, tag)
+            gmsh.model.mesh.setRecombine(dim, tag, angle=45.)
 
             Set a recombination meshing constraint on the model entity of dimension
             `dim' and tag `tag'. Currently only entities of dimension 2 (to recombine
-            triangles into quadrangles) are supported.
+            triangles into quadrangles) are supported; `angle' specifies the threshold
+            angle for the simple recombination algorithm..
             """
             ierr = c_int()
             lib.gmshModelMeshSetRecombine(
                 c_int(dim),
                 c_int(tag),
+                c_double(angle),
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
@@ -3764,6 +3795,23 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
         split_quadrangles = splitQuadrangles
+
+        @staticmethod
+        def setVisibility(elementTags, value):
+            """
+            gmsh.model.mesh.setVisibility(elementTags, value)
+
+            Set the visibility of the elements of tags `elementTags' to `value'.
+            """
+            api_elementTags_, api_elementTags_n_ = _ivectorsize(elementTags)
+            ierr = c_int()
+            lib.gmshModelMeshSetVisibility(
+                api_elementTags_, api_elementTags_n_,
+                c_int(value),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+        set_visibility = setVisibility
 
         @staticmethod
         def classifySurfaces(angle, boundary=True, forReparametrization=False, curveAngle=pi, exportDiscrete=True):
@@ -4742,6 +4790,62 @@ class model:
         add_volume = addVolume
 
         @staticmethod
+        def addGeometry(geometry, numbers=[], strings=[], tag=-1):
+            """
+            gmsh.model.geo.addGeometry(geometry, numbers=[], strings=[], tag=-1)
+
+            Add a `geometry' in the built-in CAD representation. `geometry' can
+            currently be one of "Sphere" or "PolarSphere" (where `numbers' should
+            contain the x, y, z coordinates of the center, followed by the radius), or
+            "Parametric" (where `strings' should contains three expression evaluating
+            to the x, y and z coordinates. If `tag' is positive, set the tag of the
+            geometry explicitly; otherwise a new tag is selected automatically. Return
+            the tag of the geometry.
+
+            Return an integer value.
+            """
+            api_numbers_, api_numbers_n_ = _ivectordouble(numbers)
+            api_strings_, api_strings_n_ = _ivectorstring(strings)
+            ierr = c_int()
+            api_result_ = lib.gmshModelGeoAddGeometry(
+                c_char_p(geometry.encode()),
+                api_numbers_, api_numbers_n_,
+                api_strings_, api_strings_n_,
+                c_int(tag),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return api_result_
+        add_geometry = addGeometry
+
+        @staticmethod
+        def addPointOnGeometry(geometryTag, x, y, z=0., meshSize=0., tag=-1):
+            """
+            gmsh.model.geo.addPointOnGeometry(geometryTag, x, y, z=0., meshSize=0., tag=-1)
+
+            Add a point in the built-in CAD representation, at coordinates (`x', `y',
+            `z') on the geometry `geometryTag'. If `meshSize' is > 0, add a meshing
+            constraint at that point. If `tag' is positive, set the tag explicitly;
+            otherwise a new tag is selected automatically. Return the tag of the point.
+            For surface geometries, only the `x' and `y' coordinates are used.
+
+            Return an integer value.
+            """
+            ierr = c_int()
+            api_result_ = lib.gmshModelGeoAddPointOnGeometry(
+                c_int(geometryTag),
+                c_double(x),
+                c_double(y),
+                c_double(z),
+                c_double(meshSize),
+                c_int(tag),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return api_result_
+        add_point_on_geometry = addPointOnGeometry
+
+        @staticmethod
         def extrude(dimTags, dx, dy, dz, numElements=[], heights=[], recombine=False):
             """
             gmsh.model.geo.extrude(dimTags, dx, dy, dz, numElements=[], heights=[], recombine=False)
@@ -5276,7 +5380,8 @@ class model:
                 Set a recombination meshing constraint on the entity of dimension `dim' and
                 tag `tag' in the built-in CAD kernel representation. Currently only
                 entities of dimension 2 (to recombine triangles into quadrangles) are
-                supported.
+                supported; `angle' specifies the threshold angle for the simple
+                recombination algorithm.
                 """
                 ierr = c_int()
                 lib.gmshModelGeoMeshSetRecombine(
@@ -6918,20 +7023,25 @@ class model:
             """
             gmsh.model.occ.getCurveLoops(surfaceTag)
 
-            Get the `tags' of the curve loops making up the surface of tag
-            `surfaceTag'.
+            Get the tags `curveLoopTags' of the curve loops making up the surface of
+            tag `surfaceTag', as well as the tags `curveTags' of the curves making up
+            each curve loop.
 
-            Return `tags'.
+            Return `curveLoopTags', `curveTags'.
             """
-            api_tags_, api_tags_n_ = POINTER(c_int)(), c_size_t()
+            api_curveLoopTags_, api_curveLoopTags_n_ = POINTER(c_int)(), c_size_t()
+            api_curveTags_, api_curveTags_n_, api_curveTags_nn_ = POINTER(POINTER(c_int))(), POINTER(c_size_t)(), c_size_t()
             ierr = c_int()
             lib.gmshModelOccGetCurveLoops(
                 c_int(surfaceTag),
-                byref(api_tags_), byref(api_tags_n_),
+                byref(api_curveLoopTags_), byref(api_curveLoopTags_n_),
+                byref(api_curveTags_), byref(api_curveTags_n_), byref(api_curveTags_nn_),
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
-            return _ovectorint(api_tags_, api_tags_n_.value)
+            return (
+                _ovectorint(api_curveLoopTags_, api_curveLoopTags_n_.value),
+                _ovectorvectorint(api_curveTags_, api_curveTags_n_, api_curveTags_nn_))
         get_curve_loops = getCurveLoops
 
         @staticmethod
@@ -6939,20 +7049,25 @@ class model:
             """
             gmsh.model.occ.getSurfaceLoops(volumeTag)
 
-            Get the `tags' of the surface loops making up the volume of tag
-            `volumeTag'.
+            Get the tags `surfaceLoopTags' of the surface loops making up the volume of
+            tag `volumeTag', as well as the tags `surfaceTags' of the surfaces making
+            up each surface loop.
 
-            Return `tags'.
+            Return `surfaceLoopTags', `surfaceTags'.
             """
-            api_tags_, api_tags_n_ = POINTER(c_int)(), c_size_t()
+            api_surfaceLoopTags_, api_surfaceLoopTags_n_ = POINTER(c_int)(), c_size_t()
+            api_surfaceTags_, api_surfaceTags_n_, api_surfaceTags_nn_ = POINTER(POINTER(c_int))(), POINTER(c_size_t)(), c_size_t()
             ierr = c_int()
             lib.gmshModelOccGetSurfaceLoops(
                 c_int(volumeTag),
-                byref(api_tags_), byref(api_tags_n_),
+                byref(api_surfaceLoopTags_), byref(api_surfaceLoopTags_n_),
+                byref(api_surfaceTags_), byref(api_surfaceTags_n_), byref(api_surfaceTags_nn_),
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
-            return _ovectorint(api_tags_, api_tags_n_.value)
+            return (
+                _ovectorint(api_surfaceLoopTags_, api_surfaceLoopTags_n_.value),
+                _ovectorvectorint(api_surfaceTags_, api_surfaceTags_n_, api_surfaceTags_nn_))
         get_surface_loops = getSurfaceLoops
 
         @staticmethod

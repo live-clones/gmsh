@@ -24,51 +24,75 @@ GMSH_API void gmshFree(void *p)
 template<typename t>
 void vector2ptr(const std::vector<t> &v, t **p, size_t *size)
 {
-  *p = (t*)gmshMalloc(sizeof(t) * v.size());
-  for(size_t i = 0; i < v.size(); ++i){
-    (*p)[i] = v[i];
+  if(p) {
+    *p = (t*)gmshMalloc(sizeof(t) * v.size());
+    for(size_t i = 0; i < v.size(); ++i) {
+      (*p)[i] = v[i];
+    }
   }
-  *size = v.size();
+  if(size) {
+    *size = v.size();
+  }
 }
 
 void vectorpair2intptr(const gmsh::vectorpair &v, int **p, size_t *size)
 {
-  *p = (int*)gmshMalloc(sizeof(int) * v.size() * 2);
-  for(size_t i = 0; i < v.size(); ++i){
-    (*p)[i * 2 + 0] = v[i].first;
-    (*p)[i * 2 + 1] = v[i].second;
+  if(p) {
+    *p = (int*)gmshMalloc(sizeof(int) * v.size() * 2);
+    for(size_t i = 0; i < v.size(); ++i) {
+      (*p)[i * 2 + 0] = v[i].first;
+      (*p)[i * 2 + 1] = v[i].second;
+    }
   }
-  *size = v.size() * 2;
+  if(size) {
+    *size = v.size() * 2;
+  }
 }
 
 void vectorstring2charptrptr(const std::vector<std::string> &v, char ***p, size_t *size)
 {
-  *p = (char**)gmshMalloc(sizeof(char*) * v.size());
-  for(size_t i = 0; i < v.size(); ++i){
-    (*p)[i] = (char*)gmshMalloc(sizeof(char) * (v[i].size() + 1));
-    for(size_t j = 0; j < v[i].size(); j++) (*p)[i][j] = v[i][j];
-    (*p)[i][v[i].size()] = '\0';
+  if(p) {
+    *p = (char**)gmshMalloc(sizeof(char*) * v.size());
+    for(size_t i = 0; i < v.size(); ++i) {
+      (*p)[i] = (char*)gmshMalloc(sizeof(char) * (v[i].size() + 1));
+      for(size_t j = 0; j < v[i].size(); j++) (*p)[i][j] = v[i][j];
+      (*p)[i][v[i].size()] = '\0';
+    }
   }
-  *size = v.size();
+  if(size) {
+    *size = v.size();
+  }
 }
 
 template<typename t>
 void vectorvector2ptrptr(const std::vector<std::vector<t> > &v, t ***p, size_t **size, size_t *sizeSize)
 {
-  *p = (t**)gmshMalloc(sizeof(t*) * v.size());
-  *size = (size_t*)gmshMalloc(sizeof(size_t) * v.size());
+  if(p) {
+    *p = (t**)gmshMalloc(sizeof(t*) * v.size());
+  }
+  if(size) {
+    *size = (size_t*)gmshMalloc(sizeof(size_t) * v.size());
+  }
   for(size_t i = 0; i < v.size(); ++i)
-    vector2ptr(v[i], &((*p)[i]), &((*size)[i]));
-  *sizeSize = v.size();
+    vector2ptr(v[i], p ? &((*p)[i]) : NULL, size ? &((*size)[i]) : NULL);
+  if(sizeSize) {
+    *sizeSize = v.size();
+  }
 }
 
 void vectorvectorpair2intptrptr(const std::vector<gmsh::vectorpair > &v, int ***p, size_t **size, size_t *sizeSize)
 {
-  *p = (int**)gmshMalloc(sizeof(int*) * v.size());
-  *size = (size_t*)gmshMalloc(sizeof(size_t) * v.size());
+  if(p) {
+    *p = (int**)gmshMalloc(sizeof(int*) * v.size());
+  }
+  if(size) {
+    *size = (size_t*)gmshMalloc(sizeof(size_t) * v.size());
+  }
   for(size_t i = 0; i < v.size(); ++i)
-    vectorpair2intptr(v[i], &(*p)[i], &((*size)[i]));
-  *sizeSize = v.size();
+    vectorpair2intptr(v[i], p ? &((*p)[i]) : NULL, size ? &((*size)[i]) : NULL);
+  if(sizeSize) {
+    *sizeSize = v.size();
+  }
 }
 
 GMSH_API void gmshInitialize(int argc, char ** argv, const int readConfigFiles, const int run, int * ierr)
@@ -1307,6 +1331,20 @@ GMSH_API void gmshModelMeshPreallocateElementsByType(const int elementType, cons
   }
 }
 
+GMSH_API void gmshModelMeshGetElementQualities(const size_t * elementTags, const size_t elementTags_n, double ** elementsQuality, size_t * elementsQuality_n, const char * qualityName, const size_t task, const size_t numTasks, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<std::size_t> api_elementTags_(elementTags, elementTags + elementTags_n);
+    std::vector<double> api_elementsQuality_;
+    gmsh::model::mesh::getElementQualities(api_elementTags_, api_elementsQuality_, qualityName, task, numTasks);
+    vector2ptr(api_elementsQuality_, elementsQuality, elementsQuality_n);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API void gmshModelMeshAddElements(const int dim, const int tag, const int * elementTypes, const size_t elementTypes_n, const size_t * const * elementTags, const size_t * elementTags_n, const size_t elementTags_nn, const size_t * const * nodeTags, const size_t * nodeTags_n, const size_t nodeTags_nn, int * ierr)
 {
   if(ierr) *ierr = 0;
@@ -1840,11 +1878,11 @@ GMSH_API void gmshModelMeshSetTransfiniteAutomatic(const int * dimTags, const si
   }
 }
 
-GMSH_API void gmshModelMeshSetRecombine(const int dim, const int tag, int * ierr)
+GMSH_API void gmshModelMeshSetRecombine(const int dim, const int tag, const double angle, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    gmsh::model::mesh::setRecombine(dim, tag);
+    gmsh::model::mesh::setRecombine(dim, tag, angle);
   }
   catch(...){
     if(ierr) *ierr = 1;
@@ -2133,6 +2171,18 @@ GMSH_API void gmshModelMeshSplitQuadrangles(const double quality, const int tag,
   }
 }
 
+GMSH_API void gmshModelMeshSetVisibility(const size_t * elementTags, const size_t elementTags_n, const int value, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<std::size_t> api_elementTags_(elementTags, elementTags + elementTags_n);
+    gmsh::model::mesh::setVisibility(api_elementTags_, value);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API void gmshModelMeshClassifySurfaces(const double angle, const int boundary, const int forReparametrization, const double curveAngle, const int exportDiscrete, int * ierr)
 {
   if(ierr) *ierr = 0;
@@ -2220,7 +2270,11 @@ GMSH_API void gmshModelMeshComputeCrossField(int ** viewTags, size_t * viewTags_
   }
 }
 
+<<<<<<< HEAD
 GMSH_API void gmshModelMeshGenerateMesh(const int dim, const int tag, const int refine, const double * coord, const size_t coord_n, const int * nodeTags, const size_t nodeTags_n, int * ierr)
+=======
+GMSH_API void gmshModelMeshGenerateMesh(const int dim, const int tag, const int refine, const double * coord, const size_t coord_n, int * ierr)
+>>>>>>> 33145a3798c3d193184aa034d66dd464cfd5ed7f
 {
   if(ierr) *ierr = 0;
   try {
@@ -2311,7 +2365,11 @@ GMSH_API void gmshModelMeshCreateHxtMesh(const char * inputMesh, const double * 
   }
 }
 
+<<<<<<< HEAD
 GMSH_API void gmshModelMeshAlphaShapesConstrained(const int dim, const double * coord, const size_t coord_n, const int * nodeTags, const size_t nodeTags_n, const double alpha, const double meanValue, size_t ** tetrahedra, size_t * tetrahedra_n, size_t *** domains, size_t ** domains_n, size_t *domains_nn, size_t *** boundaries, size_t ** boundaries_n, size_t *boundaries_nn, size_t ** neighbors, size_t * neighbors_n, const int * controlTags, const size_t controlTags_n, int * ierr)
+=======
+GMSH_API void gmshModelMeshAlphaShapesConstrained(const int dim, const double * coord, const size_t coord_n, const int * nodeTags, const size_t nodeTags_n, const double alpha, const double meanValue, size_t ** tetrahedra, size_t * tetrahedra_n, size_t *** domains, size_t ** domains_n, size_t *domains_nn, size_t *** boundaries, size_t ** boundaries_n, size_t *boundaries_nn, size_t ** neighbors, size_t * neighbors_n, int * ierr)
+>>>>>>> 33145a3798c3d193184aa034d66dd464cfd5ed7f
 {
   if(ierr) *ierr = 0;
   try {
@@ -2689,6 +2747,34 @@ GMSH_API int gmshModelGeoAddVolume(const int * shellTags, const size_t shellTags
   try {
     std::vector<int> api_shellTags_(shellTags, shellTags + shellTags_n);
     result_api_ = gmsh::model::geo::addVolume(api_shellTags_, tag);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+  return result_api_;
+}
+
+GMSH_API int gmshModelGeoAddGeometry(const char * geometry, const double * numbers, const size_t numbers_n, const char * const * strings, const size_t strings_n, const int tag, int * ierr)
+{
+  int result_api_ = 0;
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<double> api_numbers_(numbers, numbers + numbers_n);
+    std::vector<std::string> api_strings_(strings, strings + strings_n);
+    result_api_ = gmsh::model::geo::addGeometry(geometry, api_numbers_, api_strings_, tag);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+  return result_api_;
+}
+
+GMSH_API int gmshModelGeoAddPointOnGeometry(const int geometryTag, const double x, const double y, const double z, const double meshSize, const int tag, int * ierr)
+{
+  int result_api_ = 0;
+  if(ierr) *ierr = 0;
+  try {
+    result_api_ = gmsh::model::geo::addPointOnGeometry(geometryTag, x, y, z, meshSize, tag);
   }
   catch(...){
     if(ierr) *ierr = 1;
@@ -3930,26 +4016,30 @@ GMSH_API void gmshModelOccGetBoundingBox(const int dim, const int tag, double * 
   }
 }
 
-GMSH_API void gmshModelOccGetCurveLoops(const int surfaceTag, int ** tags, size_t * tags_n, int * ierr)
+GMSH_API void gmshModelOccGetCurveLoops(const int surfaceTag, int ** curveLoopTags, size_t * curveLoopTags_n, int *** curveTags, size_t ** curveTags_n, size_t *curveTags_nn, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    std::vector<int> api_tags_;
-    gmsh::model::occ::getCurveLoops(surfaceTag, api_tags_);
-    vector2ptr(api_tags_, tags, tags_n);
+    std::vector<int> api_curveLoopTags_;
+    std::vector<std::vector<int> > api_curveTags_;
+    gmsh::model::occ::getCurveLoops(surfaceTag, api_curveLoopTags_, api_curveTags_);
+    vector2ptr(api_curveLoopTags_, curveLoopTags, curveLoopTags_n);
+    vectorvector2ptrptr(api_curveTags_, curveTags, curveTags_n, curveTags_nn);
   }
   catch(...){
     if(ierr) *ierr = 1;
   }
 }
 
-GMSH_API void gmshModelOccGetSurfaceLoops(const int volumeTag, int ** tags, size_t * tags_n, int * ierr)
+GMSH_API void gmshModelOccGetSurfaceLoops(const int volumeTag, int ** surfaceLoopTags, size_t * surfaceLoopTags_n, int *** surfaceTags, size_t ** surfaceTags_n, size_t *surfaceTags_nn, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    std::vector<int> api_tags_;
-    gmsh::model::occ::getSurfaceLoops(volumeTag, api_tags_);
-    vector2ptr(api_tags_, tags, tags_n);
+    std::vector<int> api_surfaceLoopTags_;
+    std::vector<std::vector<int> > api_surfaceTags_;
+    gmsh::model::occ::getSurfaceLoops(volumeTag, api_surfaceLoopTags_, api_surfaceTags_);
+    vector2ptr(api_surfaceLoopTags_, surfaceLoopTags, surfaceLoopTags_n);
+    vectorvector2ptrptr(api_surfaceTags_, surfaceTags, surfaceTags_n, surfaceTags_nn);
   }
   catch(...){
     if(ierr) *ierr = 1;

@@ -28,6 +28,7 @@
 #include "ghostEdge.h"
 #include "ghostFace.h"
 #include "ghostRegion.h"
+#include "gmshSurface.h"
 #include "MVertex.h"
 #include "MPoint.h"
 #include "MLine.h"
@@ -62,6 +63,7 @@
 
 #if defined(HAVE_MESH)
 #include "Field.h"
+#include "meshGEdge.h"
 #include "meshGFace.h"
 #include "meshGFaceDelaunayInsertion.h"
 #include "meshGFaceOptimize.h"
@@ -2140,12 +2142,12 @@ GMSH_API void gmsh::model::mesh::getElementsByType(
     Msg::Error("Number of tasks should be > 0");
     return;
   }
-  const std::size_t begin = (task * numElements) / numTasks;
-  const std::size_t end = ((task + 1) * numElements) / numTasks;
   // check arrays
-  bool haveElementTags = elementTags.size();
-  bool haveNodeTags = nodeTags.size();
-  if(!haveElementTags && !haveNodeTags) {
+  bool haveElementTags = !elementTags.empty();
+  bool haveNodeTags = !nodeTags.empty();
+  if((!haveElementTags && !haveNodeTags) ||
+     (haveElementTags && (elementTags.size() != numElements)) ||
+     (haveNodeTags && (nodeTags.size() != numElements * numNodes))) {
     if(numTasks > 1)
       Msg::Warning("ElementTags and nodeTags should be preallocated "
                    "if numTasks > 1");
@@ -2153,16 +2155,8 @@ GMSH_API void gmsh::model::mesh::getElementsByType(
     preallocateElementsByType(elementType, haveElementTags, haveNodeTags,
                               elementTags, nodeTags, tag);
   }
-  if(haveElementTags && (elementTags.size() < numElements)) {
-    Msg::Error("Wrong size of elementTags array (%d < %d)", elementTags.size(),
-               numElements);
-    return;
-  }
-  if(haveNodeTags && (nodeTags.size() < numElements * numNodes)) {
-    Msg::Error("Wrong size of nodeTags array (%d < %d)", nodeTags.size(),
-               numElements * numNodes);
-    return;
-  }
+  const std::size_t begin = (task * numElements) / numTasks;
+  const std::size_t end = ((task + 1) * numElements) / numTasks;
   size_t o = 0;
   size_t idx = begin * numNodes;
   for(std::size_t i = 0; i < entities.size(); i++) {
@@ -2205,6 +2199,69 @@ GMSH_API void gmsh::model::mesh::preallocateElementsByType(
   if(nodeTag) {
     nodeTags.clear();
     nodeTags.resize(numElements * numNodesPerEle, 0);
+  }
+}
+
+GMSH_API void gmsh::model::mesh::getElementQualities(
+  const std::vector<std::size_t> &elementTags,
+  std::vector<double> &elementQualities, const std::string &qualityName,
+  const std::size_t task, const std::size_t numTasks)
+{
+  if(!_checkInit()) return;
+
+  if(!numTasks) {
+    Msg::Error("Number of tasks should be > 0");
+    return;
+  }
+
+  std::size_t numElements = elementTags.size();
+  bool haveElementQualities = elementQualities.size();
+  if(!haveElementQualities ||
+     (haveElementQualities && (elementQualities.size() < numElements))) {
+    if(numTasks > 1)
+      Msg::Warning("elementQualities should be preallocated "
+                   "if numTasks > 1");
+    haveElementQualities = true;
+    elementQualities.clear();
+    elementQualities.resize(numElements, 0.);
+  }
+
+  const std::size_t begin = (task * numElements) / numTasks;
+  const std::size_t end = ((task + 1) * numElements) / numTasks;
+  for(size_t k = begin; k < end; k++){
+    MElement *e = GModel::current()->getMeshElementByTag(elementTags[k]);
+    if(!e) {
+      Msg::Error("Unknown element %d", elementTags[k]);
+      elementQualities[k] = 0.;
+      continue;
+    }
+    if(qualityName == "minSICN"){
+      elementQualities[k] = e->minSICNShapeMeasure();
+    }
+    else if(qualityName == "minSIGE"){
+      elementQualities[k] = e->minSIGEShapeMeasure();
+    }
+    else if(qualityName == "minSJ"){
+      elementQualities[k] = e->distoShapeMeasure();
+    }
+    else if(qualityName == "gamma"){
+      elementQualities[k] = e->gammaShapeMeasure();
+    }
+    else if(qualityName == "eta"){
+      elementQualities[k] = e->etaShapeMeasure();
+    }
+    else if(qualityName == "minIsotropy"){
+      elementQualities[k] = e->minIsotropyMeasure();
+    }
+    else if(qualityName == "angleShape"){
+      elementQualities[k] = e->angleShapeMeasure();
+    }
+    else{
+      if(k == begin) {
+        Msg::Error("Unknown quality name '%s'", qualityName.c_str());
+      }
+      elementQualities[k] = 0.;
+    }
   }
 }
 
@@ -2276,22 +2333,34 @@ GMSH_API void gmsh::model::mesh::getJacobians(
   const std::size_t numTasks)
 {
   if(!_checkInit()) return;
-  int dim = ElementType::getDimension(elementType);
-  std::map<int, std::vector<GEntity *> > typeEnt;
-  _getEntitiesForElementTypes(dim, tag, typeEnt);
-  const std::vector<GEntity *> &entities(typeEnt[elementType]);
-  int familyType = ElementType::getParentType(elementType);
   int numPoints = localCoord.size() / 3;
   if(!numPoints) {
     Msg::Warning("No evaluation points in getJacobians");
     return;
   }
+  int dim = ElementType::getDimension(elementType);
+  std::map<int, std::vector<GEntity *> > typeEnt;
+  _getEntitiesForElementTypes(dim, tag, typeEnt);
+  const std::vector<GEntity *> &entities(typeEnt[elementType]);
+  int familyType = ElementType::getParentType(elementType);
+  std::size_t numElements = 0;
+  for(std::size_t i = 0; i < entities.size(); i++) {
+    GEntity *ge = entities[i];
+    numElements += ge->getNumMeshElementsByType(familyType);
+  }
+  if(!numTasks) {
+    Msg::Error("Number of tasks should be > 0");
+    return;
+  }
 
   // check arrays
-  bool haveJacobians = jacobians.size();
-  bool haveDeterminants = determinants.size();
-  bool havePoints = coord.size();
-  if(!haveDeterminants && !haveJacobians && !havePoints) {
+  bool haveJacobians = !jacobians.empty();
+  bool haveDeterminants = !determinants.empty();
+  bool havePoints = !coord.empty();
+  if((!haveDeterminants && !haveJacobians && !havePoints) ||
+     (haveDeterminants && (numElements * numPoints != determinants.size())) ||
+     (haveJacobians && (9 * numElements * numPoints != jacobians.size())) ||
+     (havePoints && (3 * numElements * numPoints > coord.size()))) {
     if(numTasks > 1)
       Msg::Warning("Jacobians, determinants and points should be preallocated "
                    "if numTasks > 1");
@@ -2302,32 +2371,8 @@ GMSH_API void gmsh::model::mesh::getJacobians(
   }
   // get data
   {
-    std::size_t numElements = 0;
-    for(std::size_t i = 0; i < entities.size(); i++) {
-      GEntity *ge = entities[i];
-      numElements += ge->getNumMeshElementsByType(familyType);
-    }
-    if(!numTasks) {
-      Msg::Error("Number of tasks should be > 0");
-      return;
-    }
     const size_t begin = (task * numElements) / numTasks;
     const size_t end = ((task + 1) * numElements) / numTasks;
-    if(haveDeterminants && (end * numPoints > determinants.size())) {
-      Msg::Error("Wrong size of determinants array (%d < %d)",
-                 determinants.size(), end * numPoints);
-      return;
-    }
-    if(haveJacobians && (9 * end * numPoints > jacobians.size())) {
-      Msg::Error("Wrong size of jacobians array (%d < %d)", jacobians.size(),
-                 9 * end * numPoints);
-      return;
-    }
-    if(havePoints && (3 * end * numPoints > coord.size())) {
-      Msg::Error("Wrong size of points array (%d < %d)", coord.size(),
-                 3 * end * numPoints);
-      return;
-    }
     if(haveDeterminants && haveJacobians && havePoints) {
       std::vector<std::vector<SVector3> > gsf;
       size_t o = 0;
@@ -3135,17 +3180,6 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsOrientation(
 {
   if(!_checkInit()) return;
 
-  if(!basisFunctionsOrientation.size()) {
-    if(numTasks > 1) {
-      Msg::Warning(
-        "basisFunctionsOrientation should be preallocated if numTasks > 1");
-    }
-    preallocateBasisFunctionsOrientation(
-      elementType, basisFunctionsOrientation, tag);
-  }
-
-  const int familyType = ElementType::getParentType(elementType);
-
   int basisOrder = 0;
   std::string fsName = "";
   int numComponents = 0;
@@ -3159,17 +3193,21 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsOrientation(
   std::map<int, std::vector<GEntity *> > typeEnt;
   _getEntitiesForElementTypes(dim, tag, typeEnt);
   const std::vector<GEntity *> &entities(typeEnt[elementType]);
-
+  const int familyType = ElementType::getParentType(elementType);
   std::size_t numElements = 0;
   for(std::size_t i = 0; i < entities.size(); i++) {
     const GEntity *ge = entities[i];
     numElements += ge->getNumMeshElementsByType(familyType);
   }
 
-  if(numElements != basisFunctionsOrientation.size()) {
-    Msg::Error("Wrong size of 'basisFunctionsOrientation' vector (%i != %i)",
-               numElements, basisFunctionsOrientation.size());
-    return;
+  if(basisFunctionsOrientation.empty() ||
+     numElements != basisFunctionsOrientation.size()) {
+    if(numTasks > 1) {
+      Msg::Warning(
+        "basisFunctionsOrientation should be preallocated if numTasks > 1");
+    }
+    preallocateBasisFunctionsOrientation(
+      elementType, basisFunctionsOrientation, tag);
   }
 
   if(fsName == "Lagrange" || fsName == "GradLagrange") { // Lagrange type
@@ -3242,10 +3280,6 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsOrientationForElement(
 {
   if(!_checkInit()) return;
 
-  MElement *e = GModel::current()->getMeshElementByTag(elementTag);
-  int elementType = e->getTypeForMSH();
-  int familyType = ElementType::getParentType(elementType);
-
   int basisOrder = 0;
   std::string fsName = "";
   int numComponents = 0;
@@ -3254,6 +3288,10 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsOrientationForElement(
     Msg::Error("Unknown function space type '%s'", functionSpaceType.c_str());
     return;
   }
+
+  MElement *e = GModel::current()->getMeshElementByTag(elementTag);
+  int elementType = e->getTypeForMSH();
+  int familyType = ElementType::getParentType(elementType);
 
   if(fsName == "Lagrange" || fsName == "GradLagrange") { // Lagrange type
     basisFunctionsOrientation = 0;
@@ -4284,13 +4322,15 @@ GMSH_API void gmsh::model::mesh::getBarycenters(
     return;
   }
   if(!numElements) return;
-  const size_t begin = (task * numElements) / numTasks;
-  const size_t end = ((task + 1) * numElements) / numTasks;
-  if(3 * end > barycenters.size()) {
+
+  if(3 * numElements != barycenters.size()) {
     if(numTasks > 1)
       Msg::Warning("Barycenters should be preallocated if numTasks > 1");
     barycenters.resize(3 * numElements);
   }
+
+  const size_t begin = (task * numElements) / numTasks;
+  const size_t end = ((task + 1) * numElements) / numTasks;
   size_t o = 0;
   size_t idx = 3 * begin;
   if(fast) {
@@ -4427,13 +4467,13 @@ GMSH_API void gmsh::model::mesh::getElementEdgeNodes(
     return;
   }
   if(!numElements || !numEdgesPerEle || !numNodesPerEdge) return;
-  const size_t begin = (task * numElements) / numTasks;
-  const size_t end = ((task + 1) * numElements) / numTasks;
-  if(numEdgesPerEle * numNodesPerEdge * end > nodeTags.size()) {
+  if(numEdgesPerEle * numNodesPerEdge * numElements != nodeTags.size()) {
     if(numTasks > 1)
       Msg::Warning("Nodes should be preallocated if numTasks > 1");
     nodeTags.resize(numEdgesPerEle * numNodesPerEdge * numElements);
   }
+  const size_t begin = (task * numElements) / numTasks;
+  const size_t end = ((task + 1) * numElements) / numTasks;
   size_t o = 0;
   size_t idx = numEdgesPerEle * numNodesPerEdge * begin;
   for(std::size_t i = 0; i < entities.size(); i++) {
@@ -4502,13 +4542,13 @@ GMSH_API void gmsh::model::mesh::getElementFaceNodes(
     return;
   }
   if(!numElements || !numFacesPerEle || !numNodesPerFace) return;
-  const size_t begin = (task * numElements) / numTasks;
-  const size_t end = ((task + 1) * numElements) / numTasks;
-  if(numFacesPerEle * numNodesPerFace * end > nodeTags.size()) {
+  if(numFacesPerEle * numNodesPerFace * numElements > nodeTags.size()) {
     if(numTasks > 1)
       Msg::Warning("Nodes should be preallocated if numTasks > 1");
     nodeTags.resize(numFacesPerEle * numNodesPerFace * numElements);
   }
+  const size_t begin = (task * numElements) / numTasks;
+  const size_t end = ((task + 1) * numElements) / numTasks;
   size_t o = 0;
   size_t idx = numFacesPerEle * numNodesPerFace * begin;
   for(std::size_t i = 0; i < entities.size(); i++) {
@@ -4812,7 +4852,8 @@ GMSH_API void gmsh::model::mesh::setTransfiniteAutomatic(
 #endif
 }
 
-GMSH_API void gmsh::model::mesh::setRecombine(const int dim, const int tag)
+GMSH_API void gmsh::model::mesh::setRecombine(const int dim, const int tag,
+                                              const double angle)
 {
   if(!_checkInit()) return;
   if(dim == 2) {
@@ -4822,7 +4863,7 @@ GMSH_API void gmsh::model::mesh::setRecombine(const int dim, const int tag)
       return;
     }
     gf->meshAttributes.recombine = 1;
-    gf->meshAttributes.recombineAngle = 45.;
+    gf->meshAttributes.recombineAngle = angle;
   }
 }
 
@@ -5284,6 +5325,16 @@ GMSH_API void gmsh::model::mesh::removeDuplicateNodes(const vectorpair &dimTags)
   CTX::instance()->mesh.changed = ENT_ALL;
 }
 
+GMSH_API void gmsh::model::mesh::setVisibility(
+  const std::vector<size_t> &elementTags, const int value)
+{
+  if(!_checkInit()) return;
+  for(auto t : elementTags) {
+    MElement *e = GModel::current()->getMeshElementByTag(t);
+    if(e) e->setVisibility(value);
+  }
+}
+
 GMSH_API void gmsh::model::mesh::importStl()
 {
   if(!_checkInit()) return;
@@ -5360,7 +5411,23 @@ GMSH_API void gmsh::model::mesh::generateMesh(const int dim, const int tag, cons
   if(!_checkInit()) return;
   // -----------------  1D ------------------------------
   if (dim == 1){
-    // 2 be done ...
+    deMeshGEdge killer;
+    GEdge *ge = GModel::current()->getEdgeByTag(tag);
+    if (!ge)return;
+    killer(ge);
+    for (auto t : coord){
+      GPoint gp = ge->point(t);
+      MEdgeVertex *vv = new MEdgeVertex(gp.x(), gp.y(), gp.z(), ge, t);
+      ge->mesh_vertices.push_back(vv);      
+    }
+    for(std::size_t i = 0; i < ge->mesh_vertices.size() + 1; i++) {
+      MVertex *v0 = (i == 0) ? ge->getBeginVertex()->mesh_vertices[0] :
+	ge->mesh_vertices[i - 1];
+      MVertex *v1 = (i == ge->mesh_vertices.size()) ?
+	ge->getEndVertex()->mesh_vertices[0] :
+	ge->mesh_vertices[i];
+      ge->lines.push_back(new MLine(v0, v1));
+    }
   }
   // -----------------  2D ------------------------------
   else if (dim == 2){
@@ -5443,30 +5510,7 @@ GMSH_API void gmsh::model::mesh::triangulate(const std::vector<double> &coord,
     return;
   }
 #if defined(HAVE_MESH)
-  SBoundingBox3d bbox;
-  for(std::size_t i = 0; i < coord.size(); i += 2)
-    bbox += SPoint3(coord[i], coord[i + 1], 0.);
-  double lc = 10. * norm(SVector3(bbox.max(), bbox.min()));
-  std::vector<MVertex *> verts(coord.size() / 2);
-  std::size_t j = 0;
-  for(std::size_t i = 0; i < coord.size(); i += 2) {
-    double XX = 1.e-12 * lc * (double)rand() / (double)RAND_MAX;
-    double YY = 1.e-12 * lc * (double)rand() / (double)RAND_MAX;
-    MVertex *v = new MVertex(coord[i] + XX, coord[i + 1] + YY, 0.);
-    v->setIndex(j);
-    verts[j++] = v;
-  }
-  std::vector<MTriangle *> tris;
-  delaunayMeshIn2D(verts, tris);
-  if(tris.empty()) return;
-  tri.resize(3 * tris.size());
-  for(std::size_t i = 0; i < tris.size(); i++) {
-    MTriangle *t = tris[i];
-    for(std::size_t j = 0; j < 3; j++)
-      tri[3 * i + j] = t->getVertex(j)->getIndex() + 1; // start at 1
-  }
-  for(std::size_t i = 0; i < verts.size(); i++) delete verts[i];
-  for(std::size_t i = 0; i < tris.size(); i++) delete tris[i];
+  meshTriangulate2d(coord,tri);
 #else
   Msg::Error("triangulate requires the mesh module");
 #endif
@@ -5936,6 +5980,68 @@ GMSH_API int gmsh::model::geo::addVolume(const std::vector<int> &shellTags,
   int outTag = tag;
   GModel::current()->getGEOInternals()->addVolume(outTag, shellTags);
   return outTag;
+}
+
+GMSH_API int gmsh::model::geo::addGeometry(const std::string &geometry,
+                                           const std::vector<double> &numbers,
+                                           const std::vector<std::string> &strings,
+                                           const int tag)
+{
+  int t = tag;
+  if(t < 0) t = gmshSurface::maxTag() + 1;
+
+  if(geometry == "ParametricSurface") {
+    if(strings.size() == 3)
+      gmshParametricSurface::NewParametricSurface(t, strings[0].c_str(),
+                                                  strings[1].c_str(),
+                                                  strings[2].c_str());
+    else
+      Msg::Error("Parametric surface definition requires 3 strings "
+                 "(3 expressions to compute the coordinates)");
+  }
+  else if(geometry == "Sphere") {
+    if(numbers.size() == 4)
+      gmshSphere::NewSphere(t, numbers[0], numbers[1], numbers[2], numbers[3]);
+    else
+      Msg::Error("Sphere definition requires 4 numbers (3 coordinates "
+                 "of the center and the radius)");
+  }
+  else if(geometry == "PolarSphere") {
+    if(numbers.size() == 4)
+      gmshPolarSphere::NewPolarSphere(t, numbers[0], numbers[1],
+                                      numbers[2], numbers[3]);
+    else
+      Msg::Error("Polar sphere definition requires 4 numbers (3 coordinates "
+                 "of the center and the radius)");
+  }
+  else {
+    Msg::Error("Unknown geometry '%s'", geometry.c_str());
+    return 0;
+  }
+  return t;
+}
+
+GMSH_API int gmsh::model::geo::addPointOnGeometry(const int geometryTag,
+                                                  const double x,
+                                                  const double y,
+                                                  const double z,
+                                                  const double meshSize,
+                                                  const int tag)
+{
+  if(!_checkInit()) return -1;
+  int outTag = tag;
+  double xx = CTX::instance()->geom.scalingFactor * x;
+  double yy = CTX::instance()->geom.scalingFactor * y;
+  //double zz = CTX::instance()->geom.scalingFactor * z;
+  double lc = CTX::instance()->geom.scalingFactor * meshSize;
+  gmshSurface *s = gmshSurface::getSurface(geometryTag);
+  if(s) {
+    GModel::current()->getGEOInternals()->addVertex(outTag, xx, yy, s, lc);
+    return outTag;
+  }
+  else {
+    return 0;
+  }
 }
 
 static ExtrudeParams *_getExtrudeParams(const std::vector<int> &numElements,
@@ -6898,20 +7004,26 @@ GMSH_API void gmsh::model::occ::getBoundingBox(const int dim, const int tag,
                                                        zmin, xmax, ymax, zmax);
 }
 
-GMSH_API void gmsh::model::occ::getCurveLoops(const int surfaceTag,
-                                              std::vector<int> &tags)
+GMSH_API void gmsh::model::occ::getCurveLoops(
+  const int surfaceTag, std::vector<int> &curveLooptags,
+  std::vector<std::vector<int> > &curveTags)
 {
   if(!_checkInit()) return;
   _createOcc();
-  GModel::current()->getOCCInternals()->getCurveLoops(surfaceTag, tags);
+  GModel::current()->getOCCInternals()->getCurveLoops(surfaceTag,
+                                                      curveLooptags,
+                                                      curveTags);
 }
 
-GMSH_API void gmsh::model::occ::getSurfaceLoops(const int volumeTag,
-                                                std::vector<int> &tags)
+GMSH_API void gmsh::model::occ::getSurfaceLoops(
+  const int volumeTag, std::vector<int> &surfaceLoopTags,
+  std::vector<std::vector<int> > &surfaceTags)
 {
   if(!_checkInit()) return;
   _createOcc();
-  GModel::current()->getOCCInternals()->getSurfaceLoops(volumeTag, tags);
+  GModel::current()->getOCCInternals()->getSurfaceLoops(volumeTag,
+                                                        surfaceLoopTags,
+                                                        surfaceTags);
 }
 
 GMSH_API void gmsh::model::occ::getMass(const int dim, const int tag,

@@ -21,13 +21,13 @@
 #include "discreteEdge.h"
 #include "discreteFace.h"
 #include "ExtrudeParams.h"
-#include "Field.h"
 
 #if defined(HAVE_MESH)
 #include "meshGFace.h"
 #include "meshGFaceOptimize.h"
 #include "BackgroundMeshTools.h"
 #include "meshGFaceBipartiteLabelling.h"
+#include "Field.h"
 #endif
 
 #if defined(HAVE_ALGLIB)
@@ -487,7 +487,7 @@ void GFace::writeGEO(FILE *fp)
       fprintf(fp, "Surface(%d) = {%d};\n", tag(), tag());
     }
     else {
-      Msg::Error("Skipping surface %d in export", tag());
+      Msg::Warning("Skipping surface %d in export", tag());
     }
   }
 
@@ -513,6 +513,46 @@ void GFace::writeGEO(FILE *fp)
   if(meshAttributes.recombine) fprintf(fp, "Recombine Surface {%d};\n", tag());
 
   if(meshAttributes.reverseMesh) fprintf(fp, "Reverse Surface {%d};\n", tag());
+}
+
+void GFace::writePY(FILE *fp)
+{
+  // This is by no means complete - merely a placeholder for a future
+  // implementation
+
+  if(geomType() == DiscreteSurface || geomType() == BoundaryLayerSurface) return;
+
+  const char *factory = getNativeType() == OpenCascadeModel ? "occ" : "geo";
+
+  std::size_t numcl = 0;
+  for(std::size_t i = 0; i < edgeLoops.size(); i++) {
+    std::vector<GEdge *> edges;
+    std::vector<int> signs;
+    edgeLoops[i].getEdges(edges);
+    edgeLoops[i].getSigns(signs);
+    if(edges.size() && edges.size() == signs.size()) {
+      fprintf(fp, "s%d_cl%lu = gmsh.model.%s.addCurveLoop([", tag(), ++numcl,
+              factory);
+      for(std::size_t j = 0; j < edges.size(); j++) {
+        if(j) fprintf(fp, ", ");
+        fprintf(fp, "%d", edges[j]->tag() * signs[j]);
+      }
+      fprintf(fp, "])\n");
+    }
+  }
+
+  if(geomType() == GEntity::Plane || geomType() == GEntity::ParametricSurface) {
+    fprintf(fp, "gmsh.model.%s.addPlaneSurface([", factory);
+    for(std::size_t i = 0; i < numcl; i++) {
+      if(i) fprintf(fp, ", ");
+      fprintf(fp, "s%d_cl%lu", tag(), i + 1);
+    }
+    fprintf(fp, "], %d)\n", tag());
+  }
+  else {
+    // TODO
+    Msg::Warning("Skipping surface %d in export", tag());
+  }
 }
 
 void GFace::computeMeanPlane()

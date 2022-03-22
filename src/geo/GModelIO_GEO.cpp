@@ -1860,6 +1860,53 @@ int GModel::writeGEO(const std::string &name, bool printLabels,
   return 1;
 }
 
+int GModel::writePY(const std::string &name, bool printLabels,
+                     bool onlyPhysicals)
+{
+  FILE *fp = Fopen(name.c_str(), "w");
+  if(!fp) {
+    Msg::Error("Could not open file '%s'", name.c_str());
+    return 0;
+  }
+
+  fprintf(fp, "import gmsh\n");
+  fprintf(fp, "gmsh.initialize()\n");
+
+  std::map<double, std::string> meshSizeParameters;
+  int cpt = 0;
+  for(auto it = firstVertex(); it != lastVertex(); it++) {
+    double val = (*it)->prescribedMeshSizeAtVertex();
+    if(meshSizeParameters.find(val) == meshSizeParameters.end()) {
+      std::ostringstream paramName;
+      paramName << "cl__" << ++cpt;
+      fprintf(fp, "%s = %.16g\n", paramName.str().c_str(), val);
+      meshSizeParameters.insert(std::make_pair(val, paramName.str()));
+    }
+  }
+
+  for(auto it = firstVertex(); it != lastVertex(); it++) {
+    double val = (*it)->prescribedMeshSizeAtVertex();
+    if(!onlyPhysicals || !skipVertex(*it))
+      (*it)->writePY(fp, meshSizeParameters[val]);
+  }
+  for(auto it = firstEdge(); it != lastEdge(); it++) {
+    if(!onlyPhysicals || !skipEdge(*it)) (*it)->writePY(fp);
+  }
+  for(auto it = firstFace(); it != lastFace(); it++) {
+    if(!onlyPhysicals || !skipFace(*it)) (*it)->writePY(fp);
+  }
+  for(auto it = firstRegion(); it != lastRegion(); it++) {
+    if(!onlyPhysicals || !skipRegion(*it)) (*it)->writePY(fp);
+  }
+
+  fprintf(fp, "gmsh.model.geo.synchronize()\n");
+  fprintf(fp, "gmsh.fltk.run()\n");
+  fprintf(fp, "gmsh.finalize()\n");
+
+  fclose(fp);
+  return 1;
+}
+
 int GModel::exportDiscreteGEOInternals()
 {
   if(_geo_internals) delete _geo_internals;

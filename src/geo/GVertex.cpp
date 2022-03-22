@@ -95,6 +95,20 @@ void GVertex::writeGEO(FILE *fp, const std::string &meshSizeParameter)
     fprintf(fp, "Point(%d) = {%.16g, %.16g, %.16g};\n", tag(), x(), y(), z());
 }
 
+void GVertex::writePY(FILE *fp, const std::string &meshSizeParameter)
+{
+  const char *factory = getNativeType() == OpenCascadeModel ? "occ" : "geo";
+  if(meshSizeParameter.size())
+    fprintf(fp, "gmsh.model.%s.addPoint(%.16g, %.16g, %.16g, %s, %d)\n",
+            factory, x(), y(), z(), meshSizeParameter.c_str(), tag());
+  else if(prescribedMeshSizeAtVertex() != MAX_LC)
+    fprintf(fp, "gmsh.model.%s.addPoint(%.16g, %.16g, %.16g, %.16g, %d)\n",
+            factory, x(), y(), z(), prescribedMeshSizeAtVertex(), tag());
+  else
+    fprintf(fp, "gmsh.model.%s.addPoint(%.16g, %.16g, %.16g, tag=%d)\n",
+            factory, x(), y(), z(), tag());
+}
+
 std::size_t GVertex::getNumMeshElementsByType(const int familyType) const
 {
   if(familyType == TYPE_PNT) return points.size();

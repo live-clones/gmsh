@@ -113,59 +113,18 @@ For num In {1:3}
       // `Print' command saves the graphical window; the `Sprintf' function
       // permits to create the file names on the fly):
 
-      // Print Sprintf("t8-%02g.gif", num2);
-      // Print Sprintf("t8-%02g.ppm", num2);
-      // Print Sprintf("t8-%02g.jpg", num2);
+      // Print Sprintf("t8-%g.gif", num2);
+      // Print Sprintf("t8-%g.ppm", num2);
+      // Print Sprintf("t8-%g.jpg", num2);
     EndIf
 
   EndFor
 
   If(num == 3)
-    // Here we could make a system call to generate a movie. For example,
+    // Here we could make a system call to generate a movie. For example, with
+    // ffmpeg:
 
-    // with whirlgif:
-    /*
-    System "whirlgif -minimize -loop -o t8.gif t8-*.gif";
-    */
-
-    // with mpeg_encode (create parameter file first, then run encoder):
-    /*
-    Printf("PATTERN I") > "t8.par";
-    Printf("BASE_FILE_FORMAT PPM") >> "t8.par";
-    Printf("GOP_SIZE 1") >> "t8.par";
-    Printf("SLICES_PER_FRAME 1") >> "t8.par";
-    Printf("PIXEL HALF") >> "t8.par";
-    Printf("RANGE 10") >> "t8.par";
-    Printf("PSEARCH_ALG EXHAUSTIVE") >> "t8.par";
-    Printf("BSEARCH_ALG CROSS2") >> "t8.par";
-    Printf("IQSCALE 1") >> "t8.par";
-    Printf("PQSCALE 1") >> "t8.par";
-    Printf("BQSCALE 25") >> "t8.par";
-    Printf("REFERENCE_FRAME DECODED") >> "t8.par";
-    Printf("OUTPUT t8.mpg") >> "t8.par";
-    Printf("INPUT_CONVERT *") >> "t8.par";
-    Printf("INPUT_DIR .") >> "t8.par";
-    Printf("INPUT") >> "t8.par";
-    tmp = Sprintf("t8-*.ppm [01-%02g]", frames);
-    Printf(tmp) >> "t8.par";
-    Printf("END_INPUT") >> "t8.par";
-    System "mpeg_encode t8.par";
-    */
-
-    // with mencoder:
-    /*
-    System "mencoder 'mf://*.jpg' -mf fps=5 -o t8.mpg -ovc lavc
-            -lavcopts vcodec=mpeg1video:vhq";
-    System "mencoder 'mf://*.jpg' -mf fps=5 -o t8.mpg -ovc lavc
-           -lavcopts vcodec=mpeg4:vhq";
-    */
-
-    // with ffmpeg:
-    /*
-    System "ffmpeg -hq -r 5 -b 800 -vcodec mpeg1video
-            -i t8-%02d.jpg t8.mpg"
-    System "ffmpeg -hq -r 5 -b 800 -i t8-%02d.jpg t8.asf"
-    */
+    // System "ffmpeg -i t8-%d.jpg t8.mpg"
   EndIf
 
 EndFor

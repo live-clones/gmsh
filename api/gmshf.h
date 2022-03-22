@@ -1759,6 +1759,33 @@ c
             integer(c_int)::ierr
           end subroutine gmshModelMeshPreallocateElementsByType
 
+!  Get the quality `elementQualities' of the elements with tags `elementTags'.
+!  `qualityType' is the requested quality measure: "minSJ" for the minimal
+!  scaled jacobien, "minSICN" for the minimal signed inverted condition
+!  number, "minSIGE" for the signed inverted gradient error, "gamma" for the
+!  ratio of the inscribed to circumcribed sphere radius. If `numTasks' > 1,
+!  only compute and return the part of the data indexed by `task'.
+        subroutine gmshModelMeshGetElementQualities(
+     &      elementTags,
+     &      elementTags_n,
+     &      elementsQuality,
+     &      elementsQuality_n,
+     &      qualityName,
+     &      task,
+     &      numTasks,
+     &      ierr)
+     &    bind(C, name = "gmshModelMeshGetElementQualities")
+          use, intrinsic :: iso_c_binding
+            integer(c_size_t)::elementTags(*)
+            integer(c_size_t), value :: elementTags_n
+            type(c_ptr), intent(out)::elementsQuality
+            integer(c_size_t) :: elementsQuality_n
+            character(len = 1, kind = c_char)::qualityName(*)
+            integer(c_size_t), value::task
+            integer(c_size_t), value::numTasks
+            integer(c_int)::ierr
+          end subroutine gmshModelMeshGetElementQualities
+
 !  Add elements classified on the entity of dimension `dim' and tag `tag'.
 !  `types' contains the MSH types of the elements (e.g. `2' for 3-node
 !  triangles: see the Gmsh reference manual). `elementTags' is a vector of the
@@ -2606,15 +2633,18 @@ c
 
 !  Set a recombination meshing constraint on the model entity of dimension
 !  `dim' and tag `tag'. Currently only entities of dimension 2 (to recombine
-!  triangles into quadrangles) are supported.
+!  triangles into quadrangles) are supported; `angle' specifies the threshold
+!  angle for the simple recombination algorithm..
         subroutine gmshModelMeshSetRecombine(
      &      dim,
      &      tag,
+     &      angle,
      &      ierr)
      &    bind(C, name = "gmshModelMeshSetRecombine")
           use, intrinsic :: iso_c_binding
             integer(c_int), value::dim
             integer(c_int), value::tag
+            real(c_double), value::angle
             integer(c_int)::ierr
           end subroutine gmshModelMeshSetRecombine
 
@@ -2993,6 +3023,20 @@ c
             integer(c_int), value::tag
             integer(c_int)::ierr
           end subroutine gmshModelMeshSplitQuadrangles
+
+!  Set the visibility of the elements of tags `elementTags' to `value'.
+        subroutine gmshModelMeshSetVisibility(
+     &      elementTags,
+     &      elementTags_n,
+     &      value,
+     &      ierr)
+     &    bind(C, name = "gmshModelMeshSetVisibility")
+          use, intrinsic :: iso_c_binding
+            integer(c_size_t)::elementTags(*)
+            integer(c_size_t), value :: elementTags_n
+            integer(c_int), value::value
+            integer(c_int)::ierr
+          end subroutine gmshModelMeshSetVisibility
 
 !  Classify ("color") the surface mesh based on the angle threshold `angle'
 !  (in radians), and create new discrete surfaces, curves and points
@@ -3803,6 +3847,58 @@ c
             integer(c_int)::ierr
           end function gmshModelGeoAddVolume
 
+!  Add a `geometry' in the built-in CAD representation. `geometry' can
+!  currently be one of "Sphere" or "PolarSphere" (where `numbers' should
+!  contain the x, y, z coordinates of the center, followed by the radius), or
+!  "Parametric" (where `strings' should contains three expression evaluating
+!  to the x, y and z coordinates. If `tag' is positive, set the tag of the
+!  geometry explicitly; otherwise a new tag is selected automatically. Return
+!  the tag of the geometry.
+        function gmshModelGeoAddGeometry(
+     &      geometry,
+     &      numbers,
+     &      numbers_n,
+     &      strings,
+     &      strings_n,
+     &      tag,
+     &      ierr)
+     &    bind(C, name = "gmshModelGeoAddGeometry")
+          use, intrinsic :: iso_c_binding
+          integer(c_int)::gmshModelGeoAddGeometry
+            character(len = 1, kind = c_char)::geometry(*)
+            real(c_double)::numbers(*)
+            integer(c_size_t), value :: numbers_n
+            type(c_ptr)::strings(*)
+            integer(c_size_t), value :: strings_n
+            integer(c_int), value::tag
+            integer(c_int)::ierr
+          end function gmshModelGeoAddGeometry
+
+!  Add a point in the built-in CAD representation, at coordinates (`x', `y',
+!  `z') on the geometry `geometryTag'. If `meshSize' is > 0, add a meshing
+!  constraint at that point. If `tag' is positive, set the tag explicitly;
+!  otherwise a new tag is selected automatically. Return the tag of the point.
+!  For surface geometries, only the `x' and `y' coordinates are used.
+        function gmshModelGeoAddPointOnGeometry(
+     &      geometryTag,
+     &      x,
+     &      y,
+     &      z,
+     &      meshSize,
+     &      tag,
+     &      ierr)
+     &    bind(C, name = "gmshModelGeoAddPointOnGeometry")
+          use, intrinsic :: iso_c_binding
+          integer(c_int)::gmshModelGeoAddPointOnGeometry
+            integer(c_int), value::geometryTag
+            real(c_double), value::x
+            real(c_double), value::y
+            real(c_double), value::z
+            real(c_double), value::meshSize
+            integer(c_int), value::tag
+            integer(c_int)::ierr
+          end function gmshModelGeoAddPointOnGeometry
+
 !  Extrude the entities `dimTags' in the built-in CAD representation, using a
 !  translation along (`dx', `dy', `dz'). Return extruded entities in
 !  `outDimTags'. If `numElements' is not empty, also extrude the mesh: the
@@ -4312,7 +4408,8 @@ c
 !  Set a recombination meshing constraint on the entity of dimension `dim' and
 !  tag `tag' in the built-in CAD kernel representation. Currently only
 !  entities of dimension 2 (to recombine triangles into quadrangles) are
-!  supported.
+!  supported; `angle' specifies the threshold angle for the simple
+!  recombination algorithm.
         subroutine gmshModelGeoMeshSetRecombine(
      &      dim,
      &      tag,
@@ -5873,33 +5970,47 @@ c
             integer(c_int)::ierr
           end subroutine gmshModelOccGetBoundingBox
 
-!  Get the `tags' of the curve loops making up the surface of tag
-!  `surfaceTag'.
+!  Get the tags `curveLoopTags' of the curve loops making up the surface of
+!  tag `surfaceTag', as well as the tags `curveTags' of the curves making up
+!  each curve loop.
         subroutine gmshModelOccGetCurveLoops(
      &      surfaceTag,
-     &      tags,
-     &      tags_n,
+     &      curveLoopTags,
+     &      curveLoopTags_n,
+     &      curveTags,
+     &      curveTags_n,
+     &      curveTags_nn,
      &      ierr)
      &    bind(C, name = "gmshModelOccGetCurveLoops")
           use, intrinsic :: iso_c_binding
             integer(c_int), value::surfaceTag
-            type(c_ptr), intent(out)::tags
-            integer(c_size_t) :: tags_n
+            type(c_ptr), intent(out)::curveLoopTags
+            integer(c_size_t) :: curveLoopTags_n
+            type(c_ptr), intent(out)::curveTags
+            type(c_ptr), intent(out) :: curveTags_n
+            integer(c_size_t) :: curveTags_nn
             integer(c_int)::ierr
           end subroutine gmshModelOccGetCurveLoops
 
-!  Get the `tags' of the surface loops making up the volume of tag
-!  `volumeTag'.
+!  Get the tags `surfaceLoopTags' of the surface loops making up the volume of
+!  tag `volumeTag', as well as the tags `surfaceTags' of the surfaces making
+!  up each surface loop.
         subroutine gmshModelOccGetSurfaceLoops(
      &      volumeTag,
-     &      tags,
-     &      tags_n,
+     &      surfaceLoopTags,
+     &      surfaceLoopTags_n,
+     &      surfaceTags,
+     &      surfaceTags_n,
+     &      surfaceTags_nn,
      &      ierr)
      &    bind(C, name = "gmshModelOccGetSurfaceLoops")
           use, intrinsic :: iso_c_binding
             integer(c_int), value::volumeTag
-            type(c_ptr), intent(out)::tags
-            integer(c_size_t) :: tags_n
+            type(c_ptr), intent(out)::surfaceLoopTags
+            integer(c_size_t) :: surfaceLoopTags_n
+            type(c_ptr), intent(out)::surfaceTags
+            type(c_ptr), intent(out) :: surfaceTags_n
+            integer(c_size_t) :: surfaceTags_nn
             integer(c_int)::ierr
           end subroutine gmshModelOccGetSurfaceLoops
 

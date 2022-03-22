@@ -177,20 +177,21 @@ for num in range(1, 4):
         # Draw the scene
         gmsh.graphics.draw()
 
-        # Uncomment the following lines to save each frame to an image file
-        # if num == 3:
-        #     gmsh.write("t2-{:.2g}.gif".format(num2))
-        #     gmsh.write("t2-{:.2g}.ppm".format(num2))
-        #     gmsh.write("t2-{:.2g}.jpg".format(num2))
+        if num == 3:
+            # Uncomment the following lines to save each frame to an image file
+
+            # gmsh.write("t8-{}.gif".format(num2))
+            # gmsh.write("t8-{}.ppm".format(num2))
+            # gmsh.write("t8-{}.jpg".format(num2))
+            pass
 
     if num == 3:
-        pass
-        # Here we could make a system call to generate a movie. For example:
+        # Here we could make a system call to generate a movie. For example,
+        # with ffmeg:
+
         # import subprocess
-        # call_ffmpeg1 = "ffmpeg -hq -r 5 -b 800 -vcodec mpeg1video -i t8-%02d.jpg t8.mpg"
-        # call_ffmpeg2 = "ffmpeg -hq -r 5 -b 800 -i t8-%02d.jpg t8.asf"
-        # subprocess.call(call_ffmpeg1.split(' '))
-        # subprocess.call(call_ffmpeg2.split(' '))
+        # subprocess.call("ffmpeg -i t8-%d.jpg t8.mpg".split(' '))
+        pass
 
 if '-nopopup' not in sys.argv:
     gmsh.fltk.run()

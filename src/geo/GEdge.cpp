@@ -402,6 +402,26 @@ void GEdge::writeGEO(FILE *fp)
   if(meshAttributes.reverseMesh) fprintf(fp, "Reverse Line {%d};\n", tag());
 }
 
+void GEdge::writePY(FILE *fp)
+{
+  // This is by no means complete - merely a placeholder for a future
+  // implementation
+
+  if(!getBeginVertex() || !getEndVertex() || geomType() == DiscreteCurve ||
+     geomType() == BoundaryLayerCurve)
+    return;
+
+  const char *factory = getNativeType() == OpenCascadeModel ? "occ" : "geo";
+
+  if(geomType() == Line) {
+    fprintf(fp, "gmsh.model.%s.addLine(%d, %d, %d)\n", factory,
+            getBeginVertex()->tag(), getEndVertex()->tag(), tag());
+  }
+  else {
+    // TODO
+  }
+}
+
 bool GEdge::containsPoint(const SPoint3 &pt) const
 {
   if(geomType() == BoundaryLayerCurve) return false;

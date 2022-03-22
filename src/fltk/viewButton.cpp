@@ -22,10 +22,13 @@ typedef unsigned long intptr_t;
 #include "PViewOptions.h"
 #include "Options.h"
 #include "OpenFile.h"
-#include "Field.h"
 #include "OS.h"
 #include "onelabGroup.h"
 #include "viewButton.h"
+
+#if defined(HAVE_MESH)
+#include "Field.h"
+#endif
 
 static void view_toggle_cb(Fl_Widget *w, void *data)
 {
@@ -260,9 +263,13 @@ static void view_all_visible_cb(Fl_Widget *w, void *data)
 
 static void view_applybgmesh_cb(Fl_Widget *w, void *data)
 {
+#if defined(HAVE_MESH)
   int index = (intptr_t)data;
   if(index >= 0 && index < (int)PView::list.size())
     GModel::current()->getFields()->setBackgroundMesh(index);
+#else
+  Msg::Error("Background mesh requires mesh module");
+#endif
 }
 
 viewButton::viewButton(int x, int y, int w, int h, int num, Fl_Color col)

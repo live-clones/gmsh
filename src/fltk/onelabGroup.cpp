@@ -1303,7 +1303,7 @@ Fl_Widget *addParameterWidget(onelab::string &p, int xx, int yy, int ww, int hh,
     if(multipleSelection.size() > j && multipleSelection[j] == '1')
       choice |= FL_MENU_VALUE;
     Fl_Menu_Item it = {str, 0, nullptr, nullptr,
-                       choice | (divider ? FL_MENU_DIVIDER : 0)};
+                       (int)(choice | (divider ? FL_MENU_DIVIDER : 0))};
     menu.push_back(it);
   }
   if(multipleSelection.size()) {

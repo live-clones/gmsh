@@ -3,7 +3,6 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#include "GmshConfig.h"
 #include <string>
 #include <sstream>
 #include <map>
@@ -23,6 +22,9 @@
 #include "GModel.h"
 #include "MElement.h"
 #include "Context.h"
+
+#if defined(HAVE_MESH)
+
 #include "Generator.h"
 #include "HighOrder.h"
 
@@ -268,7 +270,10 @@ static void getMeshInfoForHighOrder(GModel *gm, int &meshOrder, bool &complete,
 
 highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
 {
+#if defined(HAVE_MESH)
   getMeshInfoForHighOrder(GModel::current(), meshOrder, complete, CAD);
+#endif
+
   FL_NORMAL_SIZE -= deltaFontSize;
 
   int width = 3 * IW + 4 * WB;
@@ -513,3 +518,39 @@ void highordertools_cb(Fl_Widget *w, void *data)
   else
     FlGui::instance()->highordertools->show(false);
 }
+
+#else // HAVE_MESH
+
+highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
+{
+  FL_NORMAL_SIZE -= deltaFontSize;
+
+  int width = 3 * IW + 4 * WB;
+  int height = 24 * BH;
+  win = new paletteWindow(width, height,
+                          CTX::instance()->nonModalWindows ? true : false,
+                          "High-order tools");
+  win->box(GMSH_WINDOW_BOX);
+
+  int y = WB;
+  int x = 2 * WB;
+
+  box = new Fl_Box(x, y, width - 4 * WB, BH);
+  box->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
+  box->label("High-order tools requires mesh module");
+
+  win->position(CTX::instance()->hotPosition[0],
+                CTX::instance()->hotPosition[1]);
+  win->end();
+  FL_NORMAL_SIZE += deltaFontSize;
+}
+
+void highOrderToolsWindow::show(bool redrawOnly)
+{
+}
+
+void highordertools_cb(Fl_Widget *w, void *data)
+{
+}
+
+#endif

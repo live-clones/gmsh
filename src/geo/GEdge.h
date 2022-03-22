@@ -153,6 +153,9 @@ public:
   // export in GEO format
   virtual void writeGEO(FILE *fp);
 
+  // export in Python
+  virtual void writePY(FILE *fp);
+
   // tell if the edge is a 3D edge (in opposition with a trimmed curve on a
   // surface)
   virtual bool is3D() const { return true; }
