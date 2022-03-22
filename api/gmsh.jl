@@ -3559,14 +3559,14 @@ end
 const create_hxt_mesh = createHxtMesh
 
 """
-    gmsh.model.mesh.alphaShapesConstrained(dim, coord, alpha, meanValue)
+    gmsh.model.mesh.alphaShapesConstrained(dim, coord, nodeTags, alpha, meanValue)
 
 Generate a mesh of the array of points `coord`, constrained to the surface mesh
 of the current model. Currently only supported for 3D.
 
 Return `tetrahedra`, `domains`, `boundaries`, `neighbors`.
 """
-function alphaShapesConstrained(dim, coord, alpha, meanValue)
+function alphaShapesConstrained(dim, coord, nodeTags, alpha, meanValue)
     api_tetrahedra_ = Ref{Ptr{Csize_t}}()
     api_tetrahedra_n_ = Ref{Csize_t}()
     api_domains_ = Ref{Ptr{Ptr{Csize_t}}}()
@@ -3579,8 +3579,8 @@ function alphaShapesConstrained(dim, coord, alpha, meanValue)
     api_neighbors_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshAlphaShapesConstrained, gmsh.lib), Cvoid,
-          (Cint, Ptr{Cdouble}, Csize_t, Cdouble, Cdouble, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Csize_t}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Csize_t}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cint}),
-          dim, convert(Vector{Cdouble}, coord), length(coord), alpha, meanValue, api_tetrahedra_, api_tetrahedra_n_, api_domains_, api_domains_n_, api_domains_nn_, api_boundaries_, api_boundaries_n_, api_boundaries_nn_, api_neighbors_, api_neighbors_n_, ierr)
+          (Cint, Ptr{Cdouble}, Csize_t, Ptr{Cint}, Csize_t, Cdouble, Cdouble, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Csize_t}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Csize_t}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cint}),
+          dim, convert(Vector{Cdouble}, coord), length(coord), convert(Vector{Cint}, nodeTags), length(nodeTags), alpha, meanValue, api_tetrahedra_, api_tetrahedra_n_, api_domains_, api_domains_n_, api_domains_nn_, api_boundaries_, api_boundaries_n_, api_boundaries_nn_, api_neighbors_, api_neighbors_n_, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     tetrahedra = unsafe_wrap(Array, api_tetrahedra_[], api_tetrahedra_n_[], own = true)
     tmp_api_domains_ = unsafe_wrap(Array, api_domains_[], api_domains_nn_[], own = true)
@@ -3593,24 +3593,6 @@ function alphaShapesConstrained(dim, coord, alpha, meanValue)
     return tetrahedra, domains, boundaries, neighbors
 end
 const alpha_shapes_constrained = alphaShapesConstrained
-
-"""
-    gmsh.model.mesh.generateSurfaceMeshConstrained(parametricCoord, tag, addNodes, meshSize)
-
-Generate a surface mesh on entity with tag `tag`, with a constraint on nodes
-`parametricCoord` (i.e., `parametricCoord` must belong to the mesh). If
-`addNodes` is true, add nodes such that the maximum element size does not exceed
-`meshSize`.
-"""
-function generateSurfaceMeshConstrained(parametricCoord, tag, addNodes, meshSize)
-    ierr = Ref{Cint}()
-    ccall((:gmshModelMeshGenerateSurfaceMeshConstrained, gmsh.lib), Cvoid,
-          (Ptr{Cdouble}, Csize_t, Cint, Cint, Cdouble, Ptr{Cint}),
-          convert(Vector{Cdouble}, parametricCoord), length(parametricCoord), tag, addNodes, meshSize, ierr)
-    ierr[] != 0 && error(gmsh.logger.getLastError())
-    return nothing
-end
-const generate_surface_mesh_constrained = generateSurfaceMeshConstrained
 
 """
     module gmsh.model.mesh.field

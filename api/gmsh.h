@@ -1787,23 +1787,13 @@ namespace gmsh { // Top-level functions
       // mesh of the current model. Currently only supported for 3D.
       GMSH_API void alphaShapesConstrained(const int dim,
                                            const std::vector<double> & coord,
+                                           const std::vector<int> & nodeTags,
                                            const double alpha,
                                            const double meanValue,
                                            std::vector<std::size_t> & tetrahedra,
                                            std::vector<std::vector<std::size_t> > & domains,
                                            std::vector<std::vector<std::size_t> > & boundaries,
                                            std::vector<std::size_t> & neighbors);
-
-      // gmsh::model::mesh::generateSurfaceMeshConstrained
-      //
-      // Generate a surface mesh on entity with tag `tag', with a constraint on
-      // nodes `parametricCoord' (i.e., `parametricCoord' must belong to the mesh).
-      // If `addNodes' is true, add nodes such that the maximum element size does
-      // not exceed `meshSize'.
-      GMSH_API void generateSurfaceMeshConstrained(const std::vector<double> & parametricCoord,
-                                                   const int tag,
-                                                   const bool addNodes,
-                                                   const double meshSize);
 
       namespace field { // Mesh size field functions
 

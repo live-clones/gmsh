@@ -5431,7 +5431,7 @@ GMSH_API void gmsh::model::mesh::generateMesh(const int dim, const int tag, cons
   }
   // -----------------  2D ------------------------------
   else if (dim == 2){
-    Msg::Info("generating surface mesh for face %d\n",dim,tag);
+    Msg::Info("generating surface mesh for face %d\n",tag);
     deMeshGFace killer;
     GFace *gf = GModel::current()->getFaceByTag(tag);
     if (!gf)return;
@@ -5441,19 +5441,20 @@ GMSH_API void gmsh::model::mesh::generateMesh(const int dim, const int tag, cons
     std::vector<GEdge*> ed = gf->edges();
     std::map<int,MVertex*> vs;
     int vmax = 0;
+    
     for (auto e : ed){
       for (auto l : e->lines){
-	vs[l->getVertex(0)->getNum()] = l->getVertex(0);
-	vs[l->getVertex(1)->getNum()] = l->getVertex(1);
-	if (l->getVertex(0)->getNum() > vmax) vmax=l->getVertex(0)->getNum();
-	if (l->getVertex(1)->getNum() > vmax) vmax=l->getVertex(1)->getNum();
+        vs[l->getVertex(0)->getNum()] = l->getVertex(0);
+        vs[l->getVertex(1)->getNum()] = l->getVertex(1);
+        if (l->getVertex(0)->getNum() > vmax) vmax=l->getVertex(0)->getNum();
+        if (l->getVertex(1)->getNum() > vmax) vmax=l->getVertex(1)->getNum();
       }
     }
 
     for(size_t i = 4; i < pm->vertices.size() ; i++) {
       PolyMesh::Vertex *v = pm->vertices[i];
       if (v->data == -1){
-	v->data = ++vmax;
+	      v->data = ++vmax;
       }
     }
     
@@ -5463,32 +5464,32 @@ GMSH_API void gmsh::model::mesh::generateMesh(const int dim, const int tag, cons
       int b = he->next->v->data;
       int c = he->next->next->v->data;
       if (a != -1 && b != -1 && c != -1){
-	MVertex *va,*vb,*vc;
-	std::map<int,MVertex*>::iterator ita = vs.find(a);
-	std::map<int,MVertex*>::iterator itb = vs.find(b);
-	std::map<int,MVertex*>::iterator itc = vs.find(c);
-	if (ita != vs.end())va = ita->second;
-	else{
-	  GPoint gp = gf->point(he->v->position.x(),he->v->position.y());
-	  va = new MFaceVertex (gp.x(),gp.y(),gp.z(),gf,gp.u(),gp.v());
-	  gf->mesh_vertices.push_back(va);
-	  vs[a] = va;
-	}
-	if (itb != vs.end())vb = itb->second;
-	else{
-	  GPoint gp = gf->point(he->next->v->position.x(),he->next->v->position.y());
-	  vb = new MFaceVertex (gp.x(),gp.y(),gp.z(),gf,gp.u(),gp.v());
-	  gf->mesh_vertices.push_back(vb);
-	  vs[b] = vb;
-	}
-	if (itc != vs.end())vc = itc->second;
-	else{
-	  GPoint gp = gf->point(he->next->next->v->position.x(),he->next->next->v->position.y());
-	  vc = new MFaceVertex (gp.x(),gp.y(),gp.z(),gf,gp.u(),gp.v());
-	  gf->mesh_vertices.push_back(vc);
-	  vs[c] = vc;
-	}
-	gf->triangles.push_back(new MTriangle(va,vb,vc));
+        MVertex *va,*vb,*vc;
+        std::map<int,MVertex*>::iterator ita = vs.find(a);
+        std::map<int,MVertex*>::iterator itb = vs.find(b);
+        std::map<int,MVertex*>::iterator itc = vs.find(c);
+        if (ita != vs.end())va = ita->second;
+        else{
+          GPoint gp = gf->point(he->v->position.x(),he->v->position.y());
+          va = new MFaceVertex (gp.x(),gp.y(),gp.z(),gf,gp.u(),gp.v());
+          gf->mesh_vertices.push_back(va);
+          vs[a] = va;
+        }
+        if (itb != vs.end())vb = itb->second;
+        else{
+          GPoint gp = gf->point(he->next->v->position.x(),he->next->v->position.y());
+          vb = new MFaceVertex (gp.x(),gp.y(),gp.z(),gf,gp.u(),gp.v());
+          gf->mesh_vertices.push_back(vb);
+          vs[b] = vb;
+        }
+        if (itc != vs.end())vc = itc->second;
+        else{
+          GPoint gp = gf->point(he->next->next->v->position.x(),he->next->next->v->position.y());
+          vc = new MFaceVertex (gp.x(),gp.y(),gp.z(),gf,gp.u(),gp.v());
+          gf->mesh_vertices.push_back(vc);
+          vs[c] = vc;
+        }
+	      gf->triangles.push_back(new MTriangle(va,vb,vc));
       }
     }
     pm->print4debug(1);
@@ -5595,7 +5596,8 @@ gmsh::model::mesh::createHxtMesh(const std::string &inputMesh, const std::vector
 
 GMSH_API void
 gmsh::model::mesh::alphaShapesConstrained(const int dim, 
-                                          const std::vector<double>& coord, 
+                                          const std::vector<double>& coord,
+                                          const std::vector<int>& nodeTags,
                                           const double alpha, 
                                           const double meanValue, 
                                           std::vector<size_t> &tetrahedra, 
@@ -5603,22 +5605,10 @@ gmsh::model::mesh::alphaShapesConstrained(const int dim,
                                           std::vector<std::vector<size_t> > &boundaries,
                                           std::vector<size_t> &neigh){
 #if defined(HAVE_MESH)
-  constrainedAlphaShapes_(GModel::current(), dim, coord, alpha, meanValue, tetrahedra, domains, boundaries, neigh);
+  constrainedAlphaShapes_(GModel::current(), dim, coord, nodeTags, alpha, meanValue, tetrahedra, domains, boundaries, neigh);
 #else
   Msg::Error("alphaShapesConstrained requires the mesh module");
 #endif  
-}
-
-GMSH_API void
-gmsh::model::mesh::generateSurfaceMeshConstrained(const std::vector<double>& parametricCoord,
-                                                  const int tag,
-                                                  const bool addNodes,
-                                                  const double meshSize){
-#if defined(HAVE_MESH)
-  // TODO!
-#else 
-  Msg::Error("generateSufaceMeshConstrained requires the mesh module");
-#endif
 }
 
 

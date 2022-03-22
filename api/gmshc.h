@@ -1577,6 +1577,7 @@ GMSH_API void gmshModelMeshCreateHxtMesh(const char * inputMesh,
  * mesh of the current model. Currently only supported for 3D. */
 GMSH_API void gmshModelMeshAlphaShapesConstrained(const int dim,
                                                   const double * coord, const size_t coord_n,
+                                                  const int * nodeTags, const size_t nodeTags_n,
                                                   const double alpha,
                                                   const double meanValue,
                                                   size_t ** tetrahedra, size_t * tetrahedra_n,
@@ -1584,16 +1585,6 @@ GMSH_API void gmshModelMeshAlphaShapesConstrained(const int dim,
                                                   size_t *** boundaries, size_t ** boundaries_n, size_t *boundaries_nn,
                                                   size_t ** neighbors, size_t * neighbors_n,
                                                   int * ierr);
-
-/* Generate a surface mesh on entity with tag `tag', with a constraint on
- * nodes `parametricCoord' (i.e., `parametricCoord' must belong to the mesh).
- * If `addNodes' is true, add nodes such that the maximum element size does
- * not exceed `meshSize'. */
-GMSH_API void gmshModelMeshGenerateSurfaceMeshConstrained(const double * parametricCoord, const size_t parametricCoord_n,
-                                                          const int tag,
-                                                          const int addNodes,
-                                                          const double meshSize,
-                                                          int * ierr);
 
 /* Add a new mesh size field of type `fieldType'. If `tag' is positive, assign
  * the tag explicitly; otherwise a new tag is assigned automatically. Return

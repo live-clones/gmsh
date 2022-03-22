@@ -409,7 +409,8 @@ bool onlyBnd(std::vector<std::size_t> tet, size_t nBndPts){
 
 void constrainedAlphaShapes_(GModel* m, 
                             const int dim, 
-                            const std::vector<double>& coord, 
+                            const std::vector<double>& coord,
+                            const std::vector<int>& nodeTags, 
                             const double alpha, 
                             const double meanValue,
                             std::vector<size_t> &tetrahedra, 
@@ -417,10 +418,8 @@ void constrainedAlphaShapes_(GModel* m,
                             std::vector<std::vector<size_t> > &boundaries,
                             std::vector<size_t> &neigh)
 {  
-  int meshDim = m->getMeshStatus(false); 
-  std::cout << "mesh Dim : " << meshDim << "\n";
   
-  
+  /*
   if (meshDim < dim-1){ // if no 1D boundary mesh for a 2D domain, if no 2D boundary mesh for a 3D domain --> so generate one
     GenerateMesh(m, dim-1);
   }
@@ -428,7 +427,7 @@ void constrainedAlphaShapes_(GModel* m,
   {
     GenerateMesh(m, dim-1);
   }
-  
+  */
   
   
   /* initialize hxt mesh */
@@ -443,7 +442,7 @@ void constrainedAlphaShapes_(GModel* m,
   std::vector<GRegion *> regions(rs.begin(), rs.end());
   std::for_each(m->firstRegion(), m->lastRegion(), deMeshGRegion());
   Gmsh2HxtAlpha(regions, mesh, v2c, c2v);
-
+  
   // all other fields of the options will be 0 or NULL (standard C behavior)
 	HXTTetMeshOptions options = {
 		.verbosity=2,
@@ -561,8 +560,32 @@ void constrainedAlphaShapes_(GModel* m,
 
   /* write back to gmsh format */
   Hxt2GmshAlpha(regions, mesh, v2c, c2v);
-  m->renumberMeshVertices();
-  m->renumberMeshElements();
+
+  // reset the vertex indices
+  for (size_t i=nBndPts; i<mesh->vertices.num; i++){
+    MVertex* oldv = c2v[i];
+    oldv->forceNum(nodeTags[i-nBndPts]);
+    //std::cout <<"newnodetag : " <<  oldv->getNum() <<  "\n";
+  }
+  /*
+  std::vector<GEntity *> entities;
+  m->getEntities(entities);
+  
+  for(std::size_t i = 0; i < entities.size(); i++) {
+    GEntity *ge = entities[i];
+    for(std::size_t j = 0; j < ge->getNumMeshVertices(); j++) {
+      MVertex* oldv = ge->getMeshVertex(j);
+      int index = v2c[oldv];
+      std::cout <<"index : " <<  index <<  "\n";
+      ge->getMeshVertex(j)->forceNum(nodeTags[index]);
+      std::cout <<"index new : " <<  ge->getMeshVertex(j)->getNum() <<  "\n";
+      /// TO CONTINUE!
+    }
+  }
+  */
+
+  //m->renumberMeshVertices();
+  //m->renumberMeshElements();
 
   /* convert tetrahedra points to gmsh global identifier */
   for (size_t i = 0; i < tetrahedra.size(); i++)
@@ -571,6 +594,7 @@ void constrainedAlphaShapes_(GModel* m,
   }
 
   hxtMeshDelete(&mesh);
+  int meshDim = m->getMeshStatus(false); 
 }
 
 /*
