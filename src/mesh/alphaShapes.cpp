@@ -416,7 +416,8 @@ void constrainedAlphaShapes_(GModel* m,
                             std::vector<size_t> &tetrahedra, 
                             std::vector<std::vector<size_t> > &domains,
                             std::vector<std::vector<size_t> > &boundaries,
-                            std::vector<size_t> &neigh)
+                            std::vector<size_t> &neigh, 
+                            const std::vector<int> &controlNodes)
 {  
   
   /*
@@ -442,12 +443,14 @@ void constrainedAlphaShapes_(GModel* m,
   std::vector<GRegion *> regions(rs.begin(), rs.end());
   std::for_each(m->firstRegion(), m->lastRegion(), deMeshGRegion());
   Gmsh2HxtAlpha(regions, mesh, v2c, c2v);
-  
+
   // all other fields of the options will be 0 or NULL (standard C behavior)
 	HXTTetMeshOptions options = {
 		.verbosity=2,
-    .stat=1
+    .stat=1,
+    .optimize=0
 	};
+
 	// create the empty mesh
 	hxtTetMesh(mesh, &options);
 
@@ -481,32 +484,64 @@ void constrainedAlphaShapes_(GModel* m,
     .numVerticesInMesh = nBndPts,
     .insertionFirst = nBndPts,
     .allowOuterInsertion = 0, // if you set this to one, even vertices that are outside will be inserted
-    .verbosity = 1,
+    .verbosity = 2,
+  };
+
+  HXTTetMeshOptions options2 = {
+    .refine=0, 
+    .quality={.min=0.35}, 
+    .nodalSizes={.factor=1.0},
+    .verbosity=2,
+    .optimize=0,
+    .stat=1,
+    .reproducible=0
+	};
+
+  HXTOptimizeOptions optiOptions = {
+    .bbox = &bbox,
+    .qualityFun = options2.quality.callback,
+    .qualityData = options2.quality.userData,
+    .qualityMin = options2.quality.min,
+    .numThreads = options2.improveThreads,
+    .numVerticesConstrained = mesh->vertices.num,
+    .verbosity = options2.verbosity,
+    .reproducible = 0
   };
 
   /* Generate the tet mesh */
   hxtDelaunaySteadyVertices(mesh, &delOptions, nodeInfo, numNewPts);
 
+
  /* ------------------------alpha shapes of the newly generated mesh -----------------------------*/
-  std::map<size_t, size_t> hxt2my;
-  size_t count = 0;
+  std::map<std::size_t,std::size_t> controlIndices;
+  size_t count=0;
+  for (size_t i = 0; i < mesh->lines.num; i++)
+  {
+    controlIndices[mesh->lines.node[2*i+0]] = count++;
+    controlIndices[mesh->lines.node[2*i+1]] = count++;
+  }
+
+  //setFlagsToProcessOnlyVolumesInBrep(mesh);
+  //hxtOptimizeTetrahedra(mesh,&optiOptions);
+
+  std::vector<size_t> fluidTets;
+  bool flag;
   for (size_t i=0; i<mesh->tetrahedra.num; i++){
-    if (mesh->tetrahedra.color[i] < UINT32_MAX)
+    flag = false;
+    for (size_t j = 0; j < 4; j++)
     {
-      hxt2my[i] = count;
-      count++;
-      std::vector<size_t> tet;
-      for (size_t j = 0; j < 4; j++)
-      {
-        tet.push_back(mesh->tetrahedra.node[4*i+j]);
+      if (controlIndices.find(mesh->tetrahedra.node[4*i+j]) != controlIndices.end()){
+        flag = true; break;
       }
-      //if(!onlyBnd(tet, nBndPts)){
-      tetrahedra.insert(tetrahedra.end(), tet.begin(), tet.end());
-      //}
+    }
+    if (!flag){
+      for (size_t j = 0; j < 4; j++){
+        fluidTets.push_back(mesh->tetrahedra.node[4*i+j]); 
+      }
     }
   }
   
-  computeTetNeighbors_ (tetrahedra, neigh);
+  computeTetNeighbors_ (fluidTets, neigh);
   
   double hMean;
   std::vector<double> allMeshPoints;
@@ -516,13 +551,15 @@ void constrainedAlphaShapes_(GModel* m,
     }
   }
   
-  if (meanValue < 0) hMean = meanEdgeLength(allMeshPoints,tetrahedra);
+  if (meanValue < 0) hMean = meanEdgeLength(allMeshPoints, fluidTets);
   else hMean = meanValue;
+  std::cout << "hMean = " << hMean << "\n";
+
   std::vector<bool> _touched;
-  _touched.resize(tetrahedra.size()/4);
+  _touched.resize(fluidTets.size()/4);
   for (size_t i=0;i<_touched.size();i++)_touched[i] = false;
-  for (size_t i = 0; i < tetrahedra.size(); i+=4){
-      size_t *t = &tetrahedra[i];
+  for (size_t i = 0; i < fluidTets.size(); i+=4){
+      size_t *t = &fluidTets[i];
       if (alphaShape(t, allMeshPoints, hMean) < alpha && _touched[i/4] == false){
         std::stack<size_t> _s;
         std::vector<size_t> _domain;
@@ -535,12 +572,12 @@ void constrainedAlphaShapes_(GModel* m,
           _s.pop();
           for (int j=0;j<4;j++){
             size_t tj = neigh[4*t+j]/4;
-            if (tj*4 == tetrahedra.size()){
+            if (tj*4 == fluidTets.size()){
               _boundary.push_back(t);
               _boundary.push_back(j);
             }
             else if (!_touched[tj]){
-              if (alphaShape(&tetrahedra[4*tj], allMeshPoints, hMean) < alpha){
+              if (alphaShape(&fluidTets[4*tj], allMeshPoints, hMean) < alpha){
                 _s.push(tj);
                 _touched[tj] = true;
                 _domain.push_back(tj);	    
@@ -558,39 +595,32 @@ void constrainedAlphaShapes_(GModel* m,
   }
   /* ------------------------------------------------------------------ */
 
-  /* write back to gmsh format */
-  Hxt2GmshAlpha(regions, mesh, v2c, c2v);
-
-  // reset the vertex indices
-  for (size_t i=nBndPts; i<mesh->vertices.num; i++){
-    MVertex* oldv = c2v[i];
-    oldv->forceNum(nodeTags[i-nBndPts]);
-    //std::cout <<"newnodetag : " <<  oldv->getNum() <<  "\n";
-  }
-  /*
-  std::vector<GEntity *> entities;
-  m->getEntities(entities);
-  
-  for(std::size_t i = 0; i < entities.size(); i++) {
-    GEntity *ge = entities[i];
-    for(std::size_t j = 0; j < ge->getNumMeshVertices(); j++) {
-      MVertex* oldv = ge->getMeshVertex(j);
-      int index = v2c[oldv];
-      std::cout <<"index : " <<  index <<  "\n";
-      ge->getMeshVertex(j)->forceNum(nodeTags[index]);
-      std::cout <<"index new : " <<  ge->getMeshVertex(j)->getNum() <<  "\n";
-      /// TO CONTINUE!
+  /* write back to gmsh format, and do not keep "external elements" */
+  for (size_t i=0; i<mesh->tetrahedra.num; i++){
+    for (size_t j = 0; j < 4; j++)
+    {
+      if (controlIndices.find(mesh->tetrahedra.node[4*i+j]) != controlIndices.end()){
+        mesh->tetrahedra.color[i] = UINT64_MAX;
+      }
     }
   }
-  */
+  Hxt2GmshAlpha(regions, mesh, v2c, c2v);
 
-  //m->renumberMeshVertices();
-  //m->renumberMeshElements();
+  /* reset the vertex indices */
+  for (size_t i=nBndPts; i<mesh->vertices.num; i++){
+    MVertex* oldv = c2v[i];
+    if(nodeTags.size()){
+      oldv->forceNum(nodeTags[i-nBndPts]);
+    }
+  }
 
   /* convert tetrahedra points to gmsh global identifier */
-  for (size_t i = 0; i < tetrahedra.size(); i++)
-  { 
-    tetrahedra[i] = c2v[tetrahedra[i]]->getNum();
+  for (size_t i=0; i < mesh->tetrahedra.num; i++){
+    if (mesh->tetrahedra.color[i] > mesh->brep.numVolumes)
+      continue;
+    for (size_t j = 0; j < 4; j++){
+        tetrahedra.push_back(c2v[mesh->tetrahedra.node[4*i+j]]->getNum());
+    }
   }
 
   hxtMeshDelete(&mesh);
@@ -618,7 +648,7 @@ void createHxtMesh_(const std::string &inputMesh, const std::vector<double>& coo
   hxtAddNodes(mesh, arr, coord.size()/3);
 
   /* generate and write the tet mesh */
-  HXTTetMeshOptions options = {.verbosity=2, .refine=0, .optimize=0, .quality={.min=0.35}, .nodalSizes={.factor=1.0}};
+  HXTTetMeshOptions options = {.verbosity=3, .refine=0, .optimize=1, .quality={.min=0.35}, .nodalSizes={.factor=1.0}};
   hxtTetMesh(mesh, &options);
   hxtMeshWriteGmsh( mesh, &outputMesh[0]); // enlever
 

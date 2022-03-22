@@ -3913,9 +3913,9 @@ class model:
         compute_cross_field = computeCrossField
 
         @staticmethod
-        def generateMesh(dim, tag, refine, coord):
+        def generateMesh(dim, tag, refine, coord, nodeTags):
             """
-            gmsh.model.mesh.generateMesh(dim, tag, refine, coord)
+            gmsh.model.mesh.generateMesh(dim, tag, refine, coord, nodeTags)
 
             Generate a mesh on one single mode entity of dimension `dim' and of tag
             `tag'. User can give a set of points in parameter coordinates in the
@@ -3923,12 +3923,14 @@ class model:
             added by the mesher using standard gmsh algorithms.
             """
             api_coord_, api_coord_n_ = _ivectordouble(coord)
+            api_nodeTags_, api_nodeTags_n_ = _ivectorint(nodeTags)
             ierr = c_int()
             lib.gmshModelMeshGenerateMesh(
                 c_int(dim),
                 c_int(tag),
                 c_int(bool(refine)),
                 api_coord_, api_coord_n_,
+                api_nodeTags_, api_nodeTags_n_,
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
@@ -4076,9 +4078,9 @@ class model:
         create_hxt_mesh = createHxtMesh
 
         @staticmethod
-        def alphaShapesConstrained(dim, coord, nodeTags, alpha, meanValue):
+        def alphaShapesConstrained(dim, coord, nodeTags, alpha, meanValue, controlTags):
             """
-            gmsh.model.mesh.alphaShapesConstrained(dim, coord, nodeTags, alpha, meanValue)
+            gmsh.model.mesh.alphaShapesConstrained(dim, coord, nodeTags, alpha, meanValue, controlTags)
 
             Generate a mesh of the array of points `coord', constrained to the surface
             mesh of the current model. Currently only supported for 3D.
@@ -4091,6 +4093,7 @@ class model:
             api_domains_, api_domains_n_, api_domains_nn_ = POINTER(POINTER(c_size_t))(), POINTER(c_size_t)(), c_size_t()
             api_boundaries_, api_boundaries_n_, api_boundaries_nn_ = POINTER(POINTER(c_size_t))(), POINTER(c_size_t)(), c_size_t()
             api_neighbors_, api_neighbors_n_ = POINTER(c_size_t)(), c_size_t()
+            api_controlTags_, api_controlTags_n_ = _ivectorint(controlTags)
             ierr = c_int()
             lib.gmshModelMeshAlphaShapesConstrained(
                 c_int(dim),
@@ -4102,6 +4105,7 @@ class model:
                 byref(api_domains_), byref(api_domains_n_), byref(api_domains_nn_),
                 byref(api_boundaries_), byref(api_boundaries_n_), byref(api_boundaries_nn_),
                 byref(api_neighbors_), byref(api_neighbors_n_),
+                api_controlTags_, api_controlTags_n_,
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())

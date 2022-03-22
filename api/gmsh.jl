@@ -3365,18 +3365,18 @@ end
 const compute_cross_field = computeCrossField
 
 """
-    gmsh.model.mesh.generateMesh(dim, tag, refine, coord)
+    gmsh.model.mesh.generateMesh(dim, tag, refine, coord, nodeTags)
 
 Generate a mesh on one single mode entity of dimension `dim` and of tag `tag`.
 User can give a set of points in parameter coordinates in the `coord` vector.
 Parameter `refine` is set to 1 if additional points must be added by the mesher
 using standard gmsh algorithms.
 """
-function generateMesh(dim, tag, refine, coord)
+function generateMesh(dim, tag, refine, coord, nodeTags)
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGenerateMesh, gmsh.lib), Cvoid,
-          (Cint, Cint, Cint, Ptr{Cdouble}, Csize_t, Ptr{Cint}),
-          dim, tag, refine, convert(Vector{Cdouble}, coord), length(coord), ierr)
+          (Cint, Cint, Cint, Ptr{Cdouble}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Cint}),
+          dim, tag, refine, convert(Vector{Cdouble}, coord), length(coord), convert(Vector{Cint}, nodeTags), length(nodeTags), ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
@@ -3518,14 +3518,14 @@ end
 const create_hxt_mesh = createHxtMesh
 
 """
-    gmsh.model.mesh.alphaShapesConstrained(dim, coord, nodeTags, alpha, meanValue)
+    gmsh.model.mesh.alphaShapesConstrained(dim, coord, nodeTags, alpha, meanValue, controlTags)
 
 Generate a mesh of the array of points `coord`, constrained to the surface mesh
 of the current model. Currently only supported for 3D.
 
 Return `tetrahedra`, `domains`, `boundaries`, `neighbors`.
 """
-function alphaShapesConstrained(dim, coord, nodeTags, alpha, meanValue)
+function alphaShapesConstrained(dim, coord, nodeTags, alpha, meanValue, controlTags)
     api_tetrahedra_ = Ref{Ptr{Csize_t}}()
     api_tetrahedra_n_ = Ref{Csize_t}()
     api_domains_ = Ref{Ptr{Ptr{Csize_t}}}()
@@ -3538,8 +3538,8 @@ function alphaShapesConstrained(dim, coord, nodeTags, alpha, meanValue)
     api_neighbors_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshAlphaShapesConstrained, gmsh.lib), Cvoid,
-          (Cint, Ptr{Cdouble}, Csize_t, Ptr{Cint}, Csize_t, Cdouble, Cdouble, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Csize_t}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Csize_t}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cint}),
-          dim, convert(Vector{Cdouble}, coord), length(coord), convert(Vector{Cint}, nodeTags), length(nodeTags), alpha, meanValue, api_tetrahedra_, api_tetrahedra_n_, api_domains_, api_domains_n_, api_domains_nn_, api_boundaries_, api_boundaries_n_, api_boundaries_nn_, api_neighbors_, api_neighbors_n_, ierr)
+          (Cint, Ptr{Cdouble}, Csize_t, Ptr{Cint}, Csize_t, Cdouble, Cdouble, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Csize_t}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Csize_t}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cint}, Csize_t, Ptr{Cint}),
+          dim, convert(Vector{Cdouble}, coord), length(coord), convert(Vector{Cint}, nodeTags), length(nodeTags), alpha, meanValue, api_tetrahedra_, api_tetrahedra_n_, api_domains_, api_domains_n_, api_domains_nn_, api_boundaries_, api_boundaries_n_, api_boundaries_nn_, api_neighbors_, api_neighbors_n_, convert(Vector{Cint}, controlTags), length(controlTags), ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     tetrahedra = unsafe_wrap(Array, api_tetrahedra_[], api_tetrahedra_n_[], own = true)
     tmp_api_domains_ = unsafe_wrap(Array, api_domains_[], api_domains_nn_[], own = true)

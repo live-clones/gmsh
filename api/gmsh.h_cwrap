@@ -2595,13 +2595,16 @@ namespace gmsh { // Top-level functions
       inline void generateMesh(const int dim,
                                const int tag,
                                const bool refine,
-                               const std::vector<double> & coord)
+                               const std::vector<double> & coord,
+                               const std::vector<int> & nodeTags)
       {
         int ierr = 0;
         double *api_coord_; size_t api_coord_n_; vector2ptr(coord, &api_coord_, &api_coord_n_);
-        gmshModelMeshGenerateMesh(dim, tag, (int)refine, api_coord_, api_coord_n_, &ierr);
+        int *api_nodeTags_; size_t api_nodeTags_n_; vector2ptr(nodeTags, &api_nodeTags_, &api_nodeTags_n_);
+        gmshModelMeshGenerateMesh(dim, tag, (int)refine, api_coord_, api_coord_n_, api_nodeTags_, api_nodeTags_n_, &ierr);
         if(ierr) throwLastError();
         gmshFree(api_coord_);
+        gmshFree(api_nodeTags_);
       }
 
       // Triangulate the points given in the `coord' vector as pairs of u, v
@@ -2715,7 +2718,8 @@ namespace gmsh { // Top-level functions
                                          std::vector<std::size_t> & tetrahedra,
                                          std::vector<std::vector<std::size_t> > & domains,
                                          std::vector<std::vector<std::size_t> > & boundaries,
-                                         std::vector<std::size_t> & neighbors)
+                                         std::vector<std::size_t> & neighbors,
+                                         const std::vector<int> & controlTags)
       {
         int ierr = 0;
         double *api_coord_; size_t api_coord_n_; vector2ptr(coord, &api_coord_, &api_coord_n_);
@@ -2724,7 +2728,8 @@ namespace gmsh { // Top-level functions
         size_t **api_domains_; size_t *api_domains_n_, api_domains_nn_;
         size_t **api_boundaries_; size_t *api_boundaries_n_, api_boundaries_nn_;
         size_t *api_neighbors_; size_t api_neighbors_n_;
-        gmshModelMeshAlphaShapesConstrained(dim, api_coord_, api_coord_n_, api_nodeTags_, api_nodeTags_n_, alpha, meanValue, &api_tetrahedra_, &api_tetrahedra_n_, &api_domains_, &api_domains_n_, &api_domains_nn_, &api_boundaries_, &api_boundaries_n_, &api_boundaries_nn_, &api_neighbors_, &api_neighbors_n_, &ierr);
+        int *api_controlTags_; size_t api_controlTags_n_; vector2ptr(controlTags, &api_controlTags_, &api_controlTags_n_);
+        gmshModelMeshAlphaShapesConstrained(dim, api_coord_, api_coord_n_, api_nodeTags_, api_nodeTags_n_, alpha, meanValue, &api_tetrahedra_, &api_tetrahedra_n_, &api_domains_, &api_domains_n_, &api_domains_nn_, &api_boundaries_, &api_boundaries_n_, &api_boundaries_nn_, &api_neighbors_, &api_neighbors_n_, api_controlTags_, api_controlTags_n_, &ierr);
         if(ierr) throwLastError();
         gmshFree(api_coord_);
         gmshFree(api_nodeTags_);
@@ -2732,6 +2737,7 @@ namespace gmsh { // Top-level functions
         domains.resize(api_domains_nn_); for(size_t i = 0; i < api_domains_nn_; ++i){ domains[i].assign(api_domains_[i], api_domains_[i] + api_domains_n_[i]); gmshFree(api_domains_[i]); } gmshFree(api_domains_); gmshFree(api_domains_n_);
         boundaries.resize(api_boundaries_nn_); for(size_t i = 0; i < api_boundaries_nn_; ++i){ boundaries[i].assign(api_boundaries_[i], api_boundaries_[i] + api_boundaries_n_[i]); gmshFree(api_boundaries_[i]); } gmshFree(api_boundaries_); gmshFree(api_boundaries_n_);
         neighbors.assign(api_neighbors_, api_neighbors_ + api_neighbors_n_); gmshFree(api_neighbors_);
+        gmshFree(api_controlTags_);
       }
 
       namespace field { // Mesh size field functions

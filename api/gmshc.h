@@ -1497,7 +1497,8 @@ GMSH_API void gmshModelMeshComputeCrossField(int ** viewTags, size_t * viewTags_
 GMSH_API void gmshModelMeshGenerateMesh(const int dim,
                                         const int tag,
                                         const int refine,
-                                        double * coord, size_t coord_n,
+                                        const double * coord, const size_t coord_n,
+                                        const int * nodeTags, const size_t nodeTags_n,
                                         int * ierr);
 
 /* Triangulate the points given in the `coord' vector as pairs of u, v
@@ -1527,7 +1528,7 @@ GMSH_API void gmshModelMeshTetrahedralize(const double * coord, const size_t coo
  * computed as the average minimum edge length of each element. */
 GMSH_API void gmshModelMeshAlphaShapes(const double threshold,
                                        const int dim,
-                                       double * coord, size_t coord_n,
+                                       const double * coord, const size_t coord_n,
                                        size_t ** tetra, size_t * tetra_n,
                                        size_t *** domains, size_t ** domains_n, size_t *domains_nn,
                                        size_t *** boundaries, size_t ** boundaries_n, size_t *boundaries_nn,
@@ -1541,13 +1542,13 @@ GMSH_API void gmshModelMeshAlphaShapes(const double threshold,
  * a tetrahedra has no neighbor for its ith face, the value is
  * tetrahedra.size. For a tet with vertices (0,1,2,3), node ids of the faces
  * are respectively (0,1,2), (0,1,3), (0,2,3) and (1,2,3) */
-GMSH_API void gmshModelMeshTetNeighbors(size_t * tetra, size_t tetra_n,
+GMSH_API void gmshModelMeshTetNeighbors(const size_t * tetra, const size_t tetra_n,
                                         size_t ** neighbors, size_t * neighbors_n,
                                         int * ierr);
 
 /* hxt meshing test. */
 GMSH_API void gmshModelMeshCreateHxtMesh(const char * inputMesh,
-                                         double * coord, size_t coord_n,
+                                         const double * coord, const size_t coord_n,
                                          const char * outputMesh,
                                          double ** pts, size_t * pts_n,
                                          size_t ** tets, size_t * tets_n,
@@ -1556,14 +1557,15 @@ GMSH_API void gmshModelMeshCreateHxtMesh(const char * inputMesh,
 /* Generate a mesh of the array of points `coord', constrained to the surface
  * mesh of the current model. Currently only supported for 3D. */
 GMSH_API void gmshModelMeshAlphaShapesConstrained(const int dim,
-                                                  double * coord, size_t coord_n,
-                                                  int * nodeTags, size_t nodeTags_n,
+                                                  const double * coord, const size_t coord_n,
+                                                  const int * nodeTags, const size_t nodeTags_n,
                                                   const double alpha,
                                                   const double meanValue,
                                                   size_t ** tetrahedra, size_t * tetrahedra_n,
                                                   size_t *** domains, size_t ** domains_n, size_t *domains_nn,
                                                   size_t *** boundaries, size_t ** boundaries_n, size_t *boundaries_nn,
                                                   size_t ** neighbors, size_t * neighbors_n,
+                                                  const int * controlTags, const size_t controlTags_n,
                                                   int * ierr);
 
 /* Add a new mesh size field of type `fieldType'. If `tag' is positive, assign

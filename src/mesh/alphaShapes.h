@@ -12,6 +12,8 @@
 extern "C" {
 #include "hxt_tetMesh.h"
 #include "hxt_tetDelaunay.h"
+#include "hxt_tetOpti.h"
+#include "hxt_tetColor.h"
 }
 
 int computeTetNeighbors_ (const std::vector<size_t> &tetrahedra, std::vector<size_t> &neigh);
@@ -36,5 +38,6 @@ void constrainedAlphaShapes_(GModel* m,
                             std::vector<size_t> &tetrahedra, 
                             std::vector<std::vector<size_t> > &domains,
                             std::vector<std::vector<size_t> > &boundaries,
-                            std::vector<size_t> &neigh);
+                            std::vector<size_t> &neigh,
+                            const std::vector<int> &controlTags);
 #endif

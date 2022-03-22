@@ -725,6 +725,31 @@ static void getNodeCopies(GFace *gf,
   }
 }
 
+void addPointsAlpha(PolyMesh *pm, std::vector<double> &pts, SBoundingBox3d &bb, std::vector<size_t> &IND)
+{
+  const size_t N = pts.size() / 2;
+  std::vector<double> X(N), Y(N);
+  std::vector<size_t> HC(N);
+  PolyMesh::Face *f = pm->faces[0];
+  for(size_t i = 0; i < N; i++) {
+    X[i] = pts[2 * i];
+    Y[i] = pts[2 * i + 1];
+    HC[i] = HilbertCoordinates(X[i], Y[i], bb.center().x(), bb.center().y(),
+                               bb.max().x() - bb.center().x(), 0, 0,
+                               bb.max().y() - bb.center().y());
+    IND[i] = i;
+  }
+  std::sort(IND.begin(), IND.end(),
+            [&](size_t i, size_t j) { return HC[i] < HC[j]; });
+
+  for(size_t i = 0; i < N; i++) {
+    size_t I = IND[i];
+    f = Walk(f, X[I], Y[I]);
+    pm->split_triangle(i, X[I], Y[I], 0, f, delaunayEdgeCriterionPlaneIsotropic,
+                       nullptr);
+  }
+}
+
 void addPoints(PolyMesh *pm, std::vector<double> &pts, SBoundingBox3d &bb)
 {
   const size_t N = pts.size() / 2;
@@ -739,8 +764,9 @@ void addPoints(PolyMesh *pm, std::vector<double> &pts, SBoundingBox3d &bb)
                                bb.max().y() - bb.center().y());
     IND[i] = i;
   }
-  std::sort(IND.begin(), IND.end(),
-            [&](size_t i, size_t j) { return HC[i] < HC[j]; });
+  // NB: temporary workaround for alphashapes : avoiding the sort so the numbering is not messed up
+  //std::sort(IND.begin(), IND.end(),
+  //          [&](size_t i, size_t j) { return HC[i] < HC[j]; });
 
   for(size_t i = 0; i < N; i++) {
     size_t I = IND[i];
@@ -865,6 +891,125 @@ PolyMesh *GFaceInitialMesh(int faceTag, int recover,
 
   return pm;
 }
+
+PolyMesh *GFaceInitialMeshAlpha(int faceTag, int recover,
+                           std::vector<double> *additional, std::vector<size_t>& IND)
+{
+  GFace *gf = GModel::current()->getFaceByTag(faceTag);
+
+  if(!gf) Msg::Error("GFaceInitialMesh: no face with tag %d", faceTag);
+
+  PolyMesh *pm = new PolyMesh;
+
+  std::unordered_map<size_t, nodeCopies> copies;
+  getNodeCopies(gf, copies);
+
+  SBoundingBox3d bb;
+  for(auto c : copies) {
+    for(size_t i = 0; i < c.second.nbCopies; i++)
+      bb += SPoint3(c.second.u[i], c.second.v[i], 0);
+  }
+  bb *= 1.1;
+  pm->initialize_rectangle(bb.min().x(), bb.max().x(), bb.min().y(),
+                           bb.max().y());
+  PolyMesh::Face *f = pm->faces[0];
+  for(std::unordered_map<size_t, nodeCopies>::iterator it = copies.begin();
+      it != copies.end(); ++it) {
+    for(size_t i = 0; i < it->second.nbCopies; i++) {
+      double x = it->second.u[i];
+      double y = it->second.v[i];
+      // find face in which lies x,y
+      f = Walk(f, x, y);
+      // split f and then swap edges to recover delaunayness
+      pm->split_triangle(-1, x, y, 0, f, delaunayEdgeCriterionPlaneIsotropic,
+                         nullptr);
+      // remember node tags
+      it->second.id[i] = pm->vertices.size() - 1;
+      pm->vertices[pm->vertices.size() - 1]->data = it->first;
+    }
+  }
+
+  //pm->print4debug(faceTag);
+
+  if(recover) {
+    std::vector<GEdge *> edges = gf->edges();
+    std::vector<GEdge *> emb_edges = gf->getEmbeddedEdges();
+    edges.insert(edges.end(), emb_edges.begin(), emb_edges.end());
+    if(edges.empty())
+      edges.insert(edges.end(), gf->model()->firstEdge(),
+                   gf->model()->lastEdge());
+
+    for(auto e : edges) {
+      if(!e->isMeshDegenerated()) {
+        for(auto l : e->lines) {
+          auto c0 = copies.find(l->getVertex(0)->getNum());
+          auto c1 = copies.find(l->getVertex(1)->getNum());
+          if(c0 == copies.end() || c1 == copies.end())
+            Msg::Error("unable to find %lu %lu %d %d",
+                       l->getVertex(0)->getNum(), l->getVertex(1)->getNum(),
+                       c0 == copies.end(), c1 == copies.end());
+          if(c0->second.nbCopies > c1->second.nbCopies) {
+            auto cc = c0;
+            c0 = c1;
+            c1 = cc;
+          }
+          for(size_t j = 0; j < c0->second.nbCopies; j++) {
+            PolyMesh::Vertex *v0 = pm->vertices[c0->second.id[j]];
+            PolyMesh::Vertex *v1 = pm->vertices[c1->second.closest(
+              c0->second.u[j], c0->second.v[j])];
+            int result = recover_edge(pm, v0, v1);
+            if(result < 0) {
+              Msg::Warning("Impossible to recover edge %lu %lu (error tag %d)",
+                           l->getVertex(0)->getNum(), l->getVertex(0)->getNum(),
+                           result);
+            }
+            else {
+              PolyMesh::HalfEdge *he = pm->getEdge(v0, v1);
+              if(he) {
+                if(he->opposite) he->opposite->data = e->tag();
+                he->data = e->tag();
+              }
+            }
+          }
+        }
+      }
+    }
+
+    // color all PolyMesh::Faces
+    // the first 4 vertices are "infinite vertices" --> color them with tag -2
+    // meaning exterior
+    PolyMesh::HalfEdge *other_side = Color(pm->vertices[0]->he, -2);
+    // other_side is inthernal to the face --> color them with tag faceTag
+    other_side = Color(other_side, faceTag);
+    // holes will be tagged -1
+
+    // flip edges that have been scrambled
+    int iter = 0;
+    while(iter++ < 100) {
+      int count = 0;
+      for(auto he : pm->hedges) {
+        if(he->opposite && he->f->data == faceTag &&
+           he->opposite->f->data == faceTag) {
+          if(delaunayEdgeCriterionPlaneIsotropic(he, nullptr)) {
+            if(intersect(he->v, he->next->v, he->next->next->v,
+                         he->opposite->next->next->v)) {
+              pm->swap_edge(he);
+              count++;
+            }
+          }
+        }
+      }
+      if(!count) break;
+    }
+  }
+  if(additional) addPointsAlpha(pm, *additional, bb, IND);
+
+
+
+
+  return pm;
+}
+
 
 int meshTriangulate2d (const std::vector<double> &coord,
 		      std::vector<std::size_t> &tri){

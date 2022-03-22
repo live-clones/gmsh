@@ -3124,6 +3124,8 @@ c
      &      refine,
      &      coord,
      &      coord_n,
+     &      nodeTags,
+     &      nodeTags_n,
      &      ierr)
      &    bind(C, name = "gmshModelMeshGenerateMesh")
           use, intrinsic :: iso_c_binding
@@ -3132,6 +3134,8 @@ c
             integer(c_int), value::refine
             real(c_double)::coord(*)
             integer(c_size_t), value :: coord_n
+            integer(c_int)::nodeTags(*)
+            integer(c_size_t), value :: nodeTags_n
             integer(c_int)::ierr
           end subroutine gmshModelMeshGenerateMesh
 
@@ -3284,6 +3288,8 @@ c
      &      boundaries_nn,
      &      neighbors,
      &      neighbors_n,
+     &      controlTags,
+     &      controlTags_n,
      &      ierr)
      &    bind(C, name = "gmshModelMeshAlphaShapesConstrained")
           use, intrinsic :: iso_c_binding
@@ -3304,6 +3310,8 @@ c
             integer(c_size_t) :: boundaries_nn
             type(c_ptr), intent(out)::neighbors
             integer(c_size_t) :: neighbors_n
+            integer(c_int)::controlTags(*)
+            integer(c_size_t), value :: controlTags_n
             integer(c_int)::ierr
           end subroutine gmshModelMeshAlphaShapesConstrained
 

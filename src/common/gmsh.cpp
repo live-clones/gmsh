@@ -5355,7 +5355,7 @@ gmsh::model::mesh::computeHomology()
   GModel::current()->computeHomology();
 }
 
-GMSH_API void gmsh::model::mesh::generateMesh(const int dim, const int tag, const bool refine, const std::vector<double> &coord)
+GMSH_API void gmsh::model::mesh::generateMesh(const int dim, const int tag, const bool refine, const std::vector<double> &coord, const std::vector<int> &nodeTags)
 {
   if(!_checkInit()) return;
   // -----------------  1D ------------------------------
@@ -5384,13 +5384,16 @@ GMSH_API void gmsh::model::mesh::generateMesh(const int dim, const int tag, cons
       }
     }
 
+    size_t idx = 0;
     for(size_t i = 4; i < pm->vertices.size() ; i++) {
       PolyMesh::Vertex *v = pm->vertices[i];
       if (v->data == -1){
-	      v->data = ++vmax;
+	      //v->data = ++vmax;
+        v->data = nodeTags[idx];
+        idx++;
       }
     }
-    
+
     for(size_t i = 0; i < pm->faces.size(); i++) {
       PolyMesh::HalfEdge *he = pm->faces[i]->he;
       int a = he->v->data;
@@ -5404,21 +5407,21 @@ GMSH_API void gmsh::model::mesh::generateMesh(const int dim, const int tag, cons
         if (ita != vs.end())va = ita->second;
         else{
           GPoint gp = gf->point(he->v->position.x(),he->v->position.y());
-          va = new MFaceVertex (gp.x(),gp.y(),gp.z(),gf,gp.u(),gp.v());
+          va = new MFaceVertex (gp.x(),gp.y(),gp.z(),gf,gp.u(),gp.v(),he->v->data);
           gf->mesh_vertices.push_back(va);
           vs[a] = va;
         }
         if (itb != vs.end())vb = itb->second;
         else{
           GPoint gp = gf->point(he->next->v->position.x(),he->next->v->position.y());
-          vb = new MFaceVertex (gp.x(),gp.y(),gp.z(),gf,gp.u(),gp.v());
+          vb = new MFaceVertex (gp.x(),gp.y(),gp.z(),gf,gp.u(),gp.v(),he->next->v->data);
           gf->mesh_vertices.push_back(vb);
           vs[b] = vb;
         }
         if (itc != vs.end())vc = itc->second;
         else{
           GPoint gp = gf->point(he->next->next->v->position.x(),he->next->next->v->position.y());
-          vc = new MFaceVertex (gp.x(),gp.y(),gp.z(),gf,gp.u(),gp.v());
+          vc = new MFaceVertex (gp.x(),gp.y(),gp.z(),gf,gp.u(),gp.v(),he->next->next->v->data);
           gf->mesh_vertices.push_back(vc);
           vs[c] = vc;
         }
@@ -5559,9 +5562,10 @@ gmsh::model::mesh::alphaShapesConstrained(const int dim,
                                           std::vector<size_t> &tetrahedra, 
                                           std::vector<std::vector<size_t> > &domains,
                                           std::vector<std::vector<size_t> > &boundaries,
-                                          std::vector<size_t> &neigh){
+                                          std::vector<size_t> &neigh, 
+                                          const std::vector<int> &controlTags){
 #if defined(HAVE_MESH)
-  constrainedAlphaShapes_(GModel::current(), dim, coord, nodeTags, alpha, meanValue, tetrahedra, domains, boundaries, neigh);
+  constrainedAlphaShapes_(GModel::current(), dim, coord, nodeTags, alpha, meanValue, tetrahedra, domains, boundaries, neigh, controlTags);
 #else
   Msg::Error("alphaShapesConstrained requires the mesh module");
 #endif  

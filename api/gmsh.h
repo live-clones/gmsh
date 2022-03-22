@@ -1698,7 +1698,8 @@ namespace gmsh { // Top-level functions
       GMSH_API void generateMesh(const int dim,
                                  const int tag,
                                  const bool refine,
-                                 const std::vector<double> & coord);
+                                 const std::vector<double> & coord,
+                                 const std::vector<int> & nodeTags);
 
       // gmsh::model::mesh::triangulate
       //
@@ -1770,7 +1771,8 @@ namespace gmsh { // Top-level functions
                                            std::vector<std::size_t> & tetrahedra,
                                            std::vector<std::vector<std::size_t> > & domains,
                                            std::vector<std::vector<std::size_t> > & boundaries,
-                                           std::vector<std::size_t> & neighbors);
+                                           std::vector<std::size_t> & neighbors,
+                                           const std::vector<int> & controlTags);
 
       namespace field { // Mesh size field functions
 

@@ -583,7 +583,6 @@ void Gmsh2HxtAlpha(std::vector<GRegion *> &regions, HXTMesh *m,
   
   m->vertices.num = m->vertices.size = all.size();
   hxtAlignedMalloc(&m->vertices.coord, 4 * m->vertices.num * sizeof(double));
-  HXT_INFO("trying to understand, size of num : %d\n", m->vertices.num);
   size_t count = 0;
   c2v.resize(all.size());
   for(MVertex *v : all) {
