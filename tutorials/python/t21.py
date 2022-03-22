@@ -36,10 +36,8 @@ gmsh.model.mesh.setSize(gmsh.model.getEntities(0), 0.05)
 
 # We create one physical group for each square, and we mesh the resulting
 # geometry:
-gmsh.model.addPhysicalGroup(2, [1], 100)
-gmsh.model.setPhysicalName(2, 100, "Left")
-gmsh.model.addPhysicalGroup(2, [2], 200)
-gmsh.model.setPhysicalName(2, 200, "Right")
+gmsh.model.addPhysicalGroup(2, [1], 100, "Left")
+gmsh.model.addPhysicalGroup(2, [2], 200, "Right")
 gmsh.model.mesh.generate(2)
 
 # We now define several ONELAB parameters to fine-tune how the mesh will be

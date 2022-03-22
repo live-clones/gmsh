@@ -950,6 +950,7 @@ void PrintOptionsDoc()
     FieldManager &fields = *GModel::current()->getFields();
     for(auto it = fields.mapTypeName.begin(); it != fields.mapTypeName.end();
         it++) {
+      if(it->first == "Attractor") continue;
       Field *f = (*it->second)();
       if(f->isDeprecated()) continue;
       fprintf(file, "@item %s\n", it->first.c_str());
@@ -959,8 +960,7 @@ void PrintOptionsDoc()
       if(!f->options.empty()) {
         fprintf(file, "@*\nOptions:@*\n");
         fprintf(file, "@table @code\n");
-        for(auto it2 =
-              f->options.begin(); it2 != f->options.end(); it2++) {
+        for(auto it2 = f->options.begin(); it2 != f->options.end(); it2++) {
           if(it2->second->isDeprecated()) continue;
           fprintf(file, "@item %s\n", it2->first.c_str());
           std::string val;
@@ -4139,14 +4139,13 @@ double opt_general_light53(OPT_ARGS_NUM)
 double opt_general_num_threads(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
-    if(val > 0) Msg::SetNumThreads(val);
-    else Msg::SetNumThreads(Msg::GetStartMaxThreads());
+    CTX::instance()->numThreads = (int)val;
   }
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->options->general.value[32]->value(Msg::GetMaxThreads());
+    FlGui::instance()->options->general.value[32]->value(CTX::instance()->numThreads);
 #endif
-  return Msg::GetMaxThreads();
+  return CTX::instance()->numThreads;
 }
 
 double opt_geometry_transform(OPT_ARGS_NUM)
@@ -5409,6 +5408,12 @@ double opt_mesh_trihedra(OPT_ARGS_NUM)
   return CTX::instance()->mesh.trihedra;
 }
 
+double opt_mesh_transfinite_tri(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->mesh.transfiniteTri = (int)val;
+  return CTX::instance()->mesh.transfiniteTri;
+}
+
 double opt_mesh_surface_edges(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
@@ -5838,6 +5843,14 @@ double opt_mesh_stl_linear_deflection(OPT_ARGS_NUM)
   return CTX::instance()->mesh.stlLinearDeflection;
 }
 
+double opt_mesh_stl_linear_deflection_relative(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    CTX::instance()->mesh.stlLinearDeflectionRelative = val ? true : false;
+  }
+  return CTX::instance()->mesh.stlLinearDeflectionRelative ? 1 : 0;
+}
+
 double opt_mesh_stl_angular_deflection(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) { CTX::instance()->mesh.stlAngularDeflection = val; }
@@ -5953,6 +5966,22 @@ double opt_mesh_recombine_optimize_topology(OPT_ARGS_NUM)
     CTX::instance()->mesh.recombineOptimizeTopology = (int)val;
   }
   return CTX::instance()->mesh.recombineOptimizeTopology;
+}
+
+double opt_mesh_recombine_node_repositioning(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    CTX::instance()->mesh.recombineNodeRepositioning = (int)val;
+  }
+  return CTX::instance()->mesh.recombineNodeRepositioning;
+}
+
+double opt_mesh_recombine_minimum_quality(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    CTX::instance()->mesh.recombineMinimumQuality = val;
+  }
+  return CTX::instance()->mesh.recombineMinimumQuality;
 }
 
 double opt_mesh_recombine3d_all(OPT_ARGS_NUM)

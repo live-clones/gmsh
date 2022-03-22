@@ -59,10 +59,10 @@ public:
   void print_geo_line_loop(int, std::vector<int> &, std::vector<int> &,
                            std::ofstream &);
   void print_geo_face_loop(int, std::vector<int> &, std::ofstream &);
-  void correspondance(double, double, double, double);
-  bool correspondance(double, double, double, double, int &, double, double,
+  void correspondence(double, double, double, double);
+  bool correspondence(double, double, double, double, int &, double, double,
                       double);
-  void correspondance(double, double, double, double, int, bool &, double,
+  void correspondence(double, double, double, double, int, bool &, double,
                       double, double);
   bool equal(double, double, double);
 };

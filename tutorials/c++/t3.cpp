@@ -20,7 +20,7 @@ int main(int argc, char **argv)
     gmsh::clear();
     gmsh::model::add("t3");
 
-    // Copied from t1.cpp...
+    // Copied from `t1.cpp'...
     double lc = 1e-2;
     gmsh::model::geo::addPoint(0, 0, 0, lc, 1);
     gmsh::model::geo::addPoint(.1, 0, 0, lc, 2);
@@ -34,8 +34,7 @@ int main(int argc, char **argv)
     gmsh::model::geo::addPlaneSurface({1}, 1);
     gmsh::model::geo::synchronize();
     gmsh::model::addPhysicalGroup(1, {1, 2, 4}, 5);
-    int ps = gmsh::model::addPhysicalGroup(2, {1});
-    gmsh::model::setPhysicalName(2, ps, "My surface");
+    gmsh::model::addPhysicalGroup(2, {1}, -1, "My surface");
 
     // As in `t2.cpp', we plan to perform an extrusion along the z axis.  But
     // here, instead of only extruding the geometry, we also want to extrude the

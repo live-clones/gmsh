@@ -7,6 +7,7 @@
 #define MESH_POLYMESH_H
 
 #include <vector>
+#include <map>
 #include <algorithm>
 #include <stack>
 #include <stdio.h>
@@ -68,6 +69,41 @@ public:
     for(auto it : faces) delete it;
   }
 
+  // constructor that does nothing
+  PolyMesh() {
+  }
+  // copy constructor
+  PolyMesh(const PolyMesh &p) {
+    std::map<Vertex *,Vertex *> vs;
+    for ( auto v : p.vertices){
+      Vertex *newv = new Vertex (v->position.x(),v->position.y(),v->position.z());
+      newv->data = v->data;
+      vs[v] = newv;
+      vertices.push_back(newv);
+    }
+    std::map<HalfEdge *,HalfEdge *> hs;
+    for ( auto h : p.hedges){
+      HalfEdge *newh = new HalfEdge (vs[h->v]);
+      newh->data = h->data;
+      hs[h] = newh;
+      hedges.push_back(newh);
+    }
+    std::map<Face *,Face *> fs;
+    for ( auto f : p.faces){
+      Face *newf = new Face (hs[f->he]);
+      newf->data = f->data;
+      fs[f] = newf;
+      faces.push_back(newf);
+    }
+    for ( auto h : p.hedges){
+      HalfEdge * he = hs[h];
+      he->next = h->next == nullptr ? nullptr :  hs[h->next];
+      he->prev = h->prev == nullptr ? nullptr :  hs[h->prev];
+      he->opposite = h->opposite == nullptr ? nullptr :  hs[h->opposite];
+      he->f = h->f == nullptr ? nullptr : fs[h->f];
+    }        
+  }  
+  
   ~PolyMesh() { reset(); }
 
   void print4debug(const int debugTag)

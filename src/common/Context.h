@@ -28,8 +28,10 @@ struct contextMeshOptions {
   int lcExtendFromBoundary;
   int nbSmoothing, algo2d, algo3d, algoSubdivide, algoSwitchOnFailure;
   int algoRecombine, recombineAll, recombineOptimizeTopology;
+  int recombineNodeRepositioning;
+  int recombineMinimumQuality;
   int recombine3DAll, recombine3DLevel, recombine3DConformity;
-  int flexibleTransfinite, maxRetries;
+  int flexibleTransfinite, transfiniteTri, maxRetries;
   int order, secondOrderLinear, secondOrderIncomplete;
   int meshOnlyVisible, meshOnlyEmpty;
   int minCircleNodes, minCurveNodes, minLineNodes;
@@ -60,6 +62,7 @@ struct contextMeshOptions {
   int binary, bdfFieldFormat;
   int unvStrictFormat, stlRemoveDuplicateTriangles, stlOneSolidPerSurface;
   double stlLinearDeflection, stlAngularDeflection;
+  bool stlLinearDeflectionRelative;
   int saveParametric, saveTopology, zoneDefinition;
   int saveElementTagType, switchElementTags;
   int cgnsImportIgnoreBC, cgnsImportIgnoreSolution, cgnsImportOrder;
@@ -91,6 +94,7 @@ struct contextGeometryOptions {
   int oldCircle, oldNewreg, oldRuledSurface;
   int extrudeSplinePoints, extrudeReturnLateral;
   int autoCoherence;
+  int autoExtrude; // FIXME: temporary for auto-extrude testing
   double tolerance, toleranceBoolean, snap[3], transform[3][3], offset[3];
   int occAutoFix, occAutoEmbed;
   int occFixDegenerated, occFixSmallEdges, occFixSmallFaces;
@@ -160,6 +164,8 @@ public:
   int guiColorScheme, guiRefreshRate;
   // print messages on to the terminal?
   int terminal;
+  // number of threads (0 == use system default)
+  int numThreads;
   // detached processes (WIN32)?
   int detachedProcess;
   // number of graphical windows/tiles

@@ -41,7 +41,7 @@ gmshSurface *gmshSphere::NewSphere(int iSphere, double x, double y, double z,
   gmshSphere *sph = new gmshSphere(x, y, z, r);
 
   if(allGmshSurfaces.find(iSphere) != allGmshSurfaces.end()) {
-    Msg::Error("gmshSurface %d already exists", iSphere);
+    Msg::Error("Surface %d already exists", iSphere);
   }
 
   allGmshSurfaces[iSphere] = sph;
@@ -52,7 +52,7 @@ gmshSurface *gmshSurface::getSurface(int iSurface)
 {
   auto it = allGmshSurfaces.find(iSurface);
   if(it == allGmshSurfaces.end()) {
-    Msg::Error("gmshSurface %d does not exist", iSurface);
+    Msg::Error("Surface %d does not exist", iSurface);
     return nullptr;
   }
   return it->second;
@@ -73,7 +73,7 @@ gmshSurface *gmshPolarSphere::NewPolarSphere(int iSphere, double x, double y,
   gmshPolarSphere *sph = new gmshPolarSphere(x, y, z, r);
 
   if(allGmshSurfaces.find(iSphere) != allGmshSurfaces.end()) {
-    Msg::Error("gmshSurface %d already exists", iSphere);
+    Msg::Error("Surface %d already exists", iSphere);
   }
 
   allGmshSurfaces[iSphere] = sph;
@@ -97,19 +97,23 @@ SPoint3 gmshPolarSphere::point(double u, double v) const
   return p;
 }
 
-gmshSurface *gmshParametricSurface::NewParametricSurface(int iSurf, char *valX,
-                                                         char *valY, char *valZ)
+gmshSurface *gmshParametricSurface::NewParametricSurface(int iSurf,
+                                                         const char *valX,
+                                                         const char *valY,
+                                                         const char *valZ)
 {
   gmshParametricSurface *sph = new gmshParametricSurface(valX, valY, valZ);
 
   if(allGmshSurfaces.find(iSurf) != allGmshSurfaces.end()) {
-    Msg::Error("gmshSurface %d already exists", iSurf);
+    Msg::Error("Surface %d already exists", iSurf);
   }
   allGmshSurfaces[iSurf] = sph;
   return sph;
 }
 
-gmshParametricSurface::gmshParametricSurface(char *valX, char *valY, char *valZ)
+gmshParametricSurface::gmshParametricSurface(const char *valX,
+                                             const char *valY,
+                                             const char *valZ)
 {
   std::vector<std::string> expressions(3), variables(2);
   expressions[0] = valX;

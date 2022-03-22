@@ -1027,6 +1027,11 @@ bool GEO_Internals::modifyPhysicalGroup(int dim, int tag, int op,
     Msg::Error("Physical %s %d already exists", str.c_str(), tag);
     return false;
   }
+  else if(!p && op == 2) {
+    // we call this in gmsh::model::removePhysicalGroup(), so it's not an error
+    // if the group does not exist
+    return true;
+  }
   else if(!p && op > 0) {
     Msg::Error("Physical %s %d does not exist", str.c_str(), tag);
     return false;
@@ -1354,6 +1359,14 @@ void GEO_Internals::setMeshSizeFromBoundary(int dim, int tag, int val)
   _changed = true;
 }
 
+bool sortEntities(const std::pair<int, int> &a,
+                  const std::pair<int, int> &b)
+{
+  if(a.first != b.first)
+    return a.first > b.first;
+  return a.second < b.second;
+}
+
 void GEO_Internals::synchronize(GModel *model, bool resetMeshAttributes)
 {
   Msg::Debug("Syncing GEO_Internals with GModel");
@@ -1401,10 +1414,12 @@ void GEO_Internals::synchronize(GModel *model, bool resetMeshAttributes)
         toRemove.push_back(std::make_pair(3, gr->tag()));
     }
   }
-  Msg::Debug("Sync is removing %d model entities", toRemove.size());
+  std::sort(toRemove.begin(), toRemove.end(), sortEntities);
+  Msg::Debug("Sync will try to remove %d model entities", toRemove.size());
+
   std::vector<GEntity*> removed;
   model->remove(toRemove, removed);
-  Msg::Debug("Destroying %lu entities in model", removed.size());
+  Msg::Debug("Destroying %lu model entities during first pass", removed.size());
   for(std::size_t i = 0; i < removed.size(); i++) delete removed[i];
 
   if(Tree_Nbr(Points)) {
@@ -1499,6 +1514,17 @@ void GEO_Internals::synchronize(GModel *model, bool resetMeshAttributes)
     List_Delete(volumes);
   }
 
+  // In the first removal pass, entities which were on the boundary of a
+  // higher-dimensional entity that is not removed, will not have been removed
+  // due to the dependency that still existed in the topological GModel. After
+  // recreation of the topology of these higher dimensional entities
+  // (cf. resetNativePtr() above), we can try to re-remove the lower dimension
+  // entities
+  removed.clear();
+  model->remove(toRemove, removed);
+  Msg::Debug("Destroying %lu model entities during second pass", removed.size());
+  for(std::size_t i = 0; i < removed.size(); i++) delete removed[i];
+
   // delete all physical groups before sync only if there is no mesh (if there
   // is a mesh, it could have been loaded from a file with physical groups - we
   // don't want to remove those)
@@ -1512,19 +1538,38 @@ void GEO_Internals::synchronize(GModel *model, bool resetMeshAttributes)
       int num;
       List_Read(p->Entities, j, &num);
       GEntity *ge = nullptr;
+      const char *name = "";
       int tag = CTX::instance()->geom.orientedPhysicals ? abs(num) : num;
       switch(p->Typ) {
-      case MSH_PHYSICAL_POINT: ge = model->getVertexByTag(tag); break;
-      case MSH_PHYSICAL_LINE: ge = model->getEdgeByTag(tag); break;
-      case MSH_PHYSICAL_SURFACE: ge = model->getFaceByTag(tag); break;
-      case MSH_PHYSICAL_VOLUME: ge = model->getRegionByTag(tag); break;
+      case MSH_PHYSICAL_POINT:
+        ge = model->getVertexByTag(tag);
+        name = "point";
+        break;
+      case MSH_PHYSICAL_LINE:
+        ge = model->getEdgeByTag(tag);
+        name = "curve";
+        break;
+      case MSH_PHYSICAL_SURFACE:
+        ge = model->getFaceByTag(tag);
+        name = "surface";
+        break;
+      case MSH_PHYSICAL_VOLUME:
+        ge = model->getRegionByTag(tag);
+        name = "volume";
+        break;
       }
-      int pnum = CTX::instance()->geom.orientedPhysicals ?
-                   (gmsh_sign(num) * p->Num) :
-                   p->Num;
-      if(ge && std::find(ge->physicals.begin(), ge->physicals.end(), pnum) ==
-                 ge->physicals.end())
-        ge->physicals.push_back(pnum);
+      if(ge) {
+        int pnum = CTX::instance()->geom.orientedPhysicals ?
+          (gmsh_sign(num) * p->Num) : p->Num;
+        if(std::find(ge->physicals.begin(), ge->physicals.end(), pnum) ==
+           ge->physicals.end()) {
+          ge->physicals.push_back(pnum);
+        }
+      }
+      else {
+        Msg::Warning("Skipping unknown %s %d in physical %s %d",
+                     name, tag, name, p->Num);
+      }
     }
   }
 
@@ -1537,13 +1582,21 @@ void GEO_Internals::synchronize(GModel *model, bool resetMeshAttributes)
     for(std::size_t i = 0; i < compound.size(); i++) {
       int tag = compound[i];
       GEntity *ent = nullptr;
+      const char *name = "";
       switch(dim) {
-      case 1: ent = model->getEdgeByTag(tag); break;
-      case 2: ent = model->getFaceByTag(tag); break;
-      case 3: ent = model->getRegionByTag(tag); break;
-      default: Msg::Error("Compound mesh constraint with dimension %d", dim);
+      case 1: ent = model->getEdgeByTag(tag); name = "curve"; break;
+      case 2: ent = model->getFaceByTag(tag); name = "surface"; break;
+      case 3: ent = model->getRegionByTag(tag); name = "volume"; break;
+      default:
+        Msg::Error("Compound mesh constraint with dimension %d", dim);
+        continue;
       }
-      if(ent) ents.push_back(ent);
+      if(ent) {
+        ents.push_back(ent);
+      }
+      else {
+        Msg::Warning("Skipping unknown %d %d in compound", name, tag);
+      }
     }
     for(std::size_t i = 0; i < ents.size(); i++) { ents[i]->compound = ents; }
   }
@@ -1802,6 +1855,53 @@ int GModel::writeGEO(const std::string &name, bool printLabels,
   if(getFields()->getBackgroundField() > 0)
     fprintf(fp, "Background Field = %i;\n", getFields()->getBackgroundField());
 #endif
+
+  fclose(fp);
+  return 1;
+}
+
+int GModel::writePY(const std::string &name, bool printLabels,
+                     bool onlyPhysicals)
+{
+  FILE *fp = Fopen(name.c_str(), "w");
+  if(!fp) {
+    Msg::Error("Could not open file '%s'", name.c_str());
+    return 0;
+  }
+
+  fprintf(fp, "import gmsh\n");
+  fprintf(fp, "gmsh.initialize()\n");
+
+  std::map<double, std::string> meshSizeParameters;
+  int cpt = 0;
+  for(auto it = firstVertex(); it != lastVertex(); it++) {
+    double val = (*it)->prescribedMeshSizeAtVertex();
+    if(meshSizeParameters.find(val) == meshSizeParameters.end()) {
+      std::ostringstream paramName;
+      paramName << "cl__" << ++cpt;
+      fprintf(fp, "%s = %.16g\n", paramName.str().c_str(), val);
+      meshSizeParameters.insert(std::make_pair(val, paramName.str()));
+    }
+  }
+
+  for(auto it = firstVertex(); it != lastVertex(); it++) {
+    double val = (*it)->prescribedMeshSizeAtVertex();
+    if(!onlyPhysicals || !skipVertex(*it))
+      (*it)->writePY(fp, meshSizeParameters[val]);
+  }
+  for(auto it = firstEdge(); it != lastEdge(); it++) {
+    if(!onlyPhysicals || !skipEdge(*it)) (*it)->writePY(fp);
+  }
+  for(auto it = firstFace(); it != lastFace(); it++) {
+    if(!onlyPhysicals || !skipFace(*it)) (*it)->writePY(fp);
+  }
+  for(auto it = firstRegion(); it != lastRegion(); it++) {
+    if(!onlyPhysicals || !skipRegion(*it)) (*it)->writePY(fp);
+  }
+
+  fprintf(fp, "gmsh.model.geo.synchronize()\n");
+  fprintf(fp, "gmsh.fltk.run()\n");
+  fprintf(fp, "gmsh.finalize()\n");
 
   fclose(fp);
   return 1;

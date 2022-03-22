@@ -57,6 +57,6 @@ Transfinite Surface {24} = {7,10,2,1};
 
 Transfinite Volume {26} = {7,10,2,1,8,9,6,5};
 
-Recombine Surface {6,20,18,22,16,24};
+//Recombine Surface {6,20,18,22,16,24};
 
 Physical Volume(3333) = 26;

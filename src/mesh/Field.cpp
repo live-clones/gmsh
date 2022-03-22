@@ -997,7 +997,9 @@ public:
           id += f[i + 1 + j];
           j++;
         }
-        _fields.insert(atoi(id.c_str()));
+        if(id.size() > 0) {
+          _fields.insert(atoi(id.c_str()));
+        }
       }
       i += j + 1;
     }
@@ -1035,7 +1037,7 @@ public:
         values[i++] = (*field)(x, y, z);
       }
       else {
-        Msg::Warning("Unknown Field %i", *it);
+        Msg::Warning("Unknown Field %i in MathEval", *it);
         values[i++] = MAX_LC;
       }
     }
@@ -2250,223 +2252,6 @@ public:
   }
 };
 
-class AttractorField : public Field {
-private:
-  ANNkd_tree *_kdTree;
-  ANNpointArray _zeroNodes;
-  std::list<int> _pointTags, _curveTags, _surfaceTags;
-  std::vector<AttractorInfo> _infos;
-  int _xFieldId, _yFieldId, _zFieldId;
-  Field *_xField, *_yField, *_zField;
-  int _sampling;
-  ANNidxArray _index;
-  ANNdistArray _dist;
-
-public:
-  AttractorField(int dim, int tag, int nbe)
-    : _kdTree(nullptr), _zeroNodes(nullptr), _sampling(nbe)
-  {
-    _deprecated = true;
-    _index = new ANNidx[1];
-    _dist = new ANNdist[1];
-    if(dim == 0)
-      _pointTags.push_back(tag);
-    else if(dim == 1)
-      _curveTags.push_back(tag);
-    else if(dim == 2)
-      _surfaceTags.push_back(tag);
-    _xField = _yField = _zField = nullptr;
-    _xFieldId = _yFieldId = _zFieldId = -1;
-    updateNeeded = true;
-  }
-  AttractorField() : _kdTree(nullptr), _zeroNodes(nullptr)
-  {
-    _deprecated = true;
-    _index = new ANNidx[1];
-    _dist = new ANNdist[1];
-    _sampling = 20;
-    _xFieldId = _yFieldId = _zFieldId = -1;
-
-    options["PointsList"] = new FieldOptionList(
-      _pointTags, "Tags of points in the geometric model", &updateNeeded);
-    options["CurvesList"] = new FieldOptionList(
-      _curveTags, "Tags of curves in the geometric model", &updateNeeded);
-    options["SurfacesList"] = new FieldOptionList(
-      _surfaceTags, "Tags of surfaces in the geometric model", &updateNeeded);
-    options["Sampling"] = new FieldOptionInt(
-      _sampling, "Linear (i.e. per dimension) number of sampling points to "
-      "discretize each curve and surface", &updateNeeded);
-    options["FieldX"] = new FieldOptionInt(
-      _xFieldId, "Tag of the field to use as x coordinate", &updateNeeded);
-    options["FieldY"] = new FieldOptionInt(
-      _yFieldId, "Tag of the field to use as y coordinate", &updateNeeded);
-    options["FieldZ"] = new FieldOptionInt(
-      _zFieldId, "Tag of the field to use as z coordinate", &updateNeeded);
-
-    // deprecated names
-    options["NodesList"] =
-      new FieldOptionList(_pointTags, "[Deprecated]", &updateNeeded, true);
-    options["EdgesList"] =
-      new FieldOptionList(_curveTags, "[Deprecated]", &updateNeeded, true);
-    options["FacesList"] =
-      new FieldOptionList(_surfaceTags, "[Deprecated]", &updateNeeded, true);
-    options["NNodesByEdge"] =
-      new FieldOptionInt(_sampling, "[Deprecated]", &updateNeeded, true);
-    options["NumPointsPerCurve"] =
-      new FieldOptionInt(_sampling, "[Deprecated]", &updateNeeded, true);
-  }
-  ~AttractorField()
-  {
-    delete[] _index;
-    delete[] _dist;
-    if(_kdTree) delete _kdTree;
-    if(_zeroNodes) annDeallocPts(_zeroNodes);
-  }
-  const char *getName() { return "Attractor"; }
-  std::string getDescription()
-  {
-    return "Compute the distance to the given points, curves or surfaces. "
-           "For efficiency, curves and surfaces are replaced by a set "
-           "of points (sampled according to Sampling), to which the distance "
-           "is actually computed. "
-           "The Attractor field is deprecated: use the Distance field instead.";
-  }
-  void getCoord(double x, double y, double z, double &cx, double &cy,
-                double &cz, GEntity *ge = nullptr)
-  {
-    cx = _xField ? (*_xField)(x, y, z, ge) : x;
-    cy = _yField ? (*_yField)(x, y, z, ge) : y;
-    cz = _zField ? (*_zField)(x, y, z, ge) : z;
-  }
-  std::pair<AttractorInfo, SPoint3> getAttractorInfo() const
-  {
-    return std::make_pair(_infos[_index[0]], SPoint3(_zeroNodes[_index[0]][0],
-                                                     _zeroNodes[_index[0]][1],
-                                                     _zeroNodes[_index[0]][2]));
-  }
-  void update()
-  {
-    if(updateNeeded) {
-      _xField = _xFieldId >= 0 ?
-                  (GModel::current()->getFields()->get(_xFieldId)) :
-                  nullptr;
-      _yField = _yFieldId >= 0 ?
-                  (GModel::current()->getFields()->get(_yFieldId)) :
-                  nullptr;
-      _zField = _zFieldId >= 0 ?
-                  (GModel::current()->getFields()->get(_zFieldId)) :
-                  nullptr;
-      if(_zeroNodes) {
-        annDeallocPts(_zeroNodes);
-        delete _kdTree;
-      }
-      std::vector<SPoint3> points;
-      std::vector<SPoint2> uvpoints;
-      double x, y, z;
-      std::vector<double> px, py, pz;
-
-      for(auto it = _pointTags.begin(); it != _pointTags.end(); ++it) {
-        GVertex *gv = GModel::current()->getVertexByTag(*it);
-        if(gv) {
-          getCoord(gv->x(), gv->y(), gv->z(), x, y, z, gv);
-          px.push_back(x);
-          py.push_back(y);
-          pz.push_back(z);
-          _infos.push_back(AttractorInfo(*it, 0, 0, 0));
-        }
-        else {
-          Msg::Warning("Unknown point %d", *it);
-        }
-      }
-
-      for(auto it = _curveTags.begin(); it != _curveTags.end(); ++it) {
-        GEdge *e = GModel::current()->getEdgeByTag(*it);
-        if(e) {
-          if(e->mesh_vertices.size()) {
-            for(std::size_t i = 0; i < e->mesh_vertices.size(); i++) {
-              double u;
-              e->mesh_vertices[i]->getParameter(0, u);
-              GPoint gp = e->point(u);
-              getCoord(gp.x(), gp.y(), gp.z(), x, y, z, e);
-              px.push_back(x);
-              py.push_back(y);
-              pz.push_back(z);
-              _infos.push_back(AttractorInfo(*it, 1, u, 0));
-            }
-          }
-          int NNN = _sampling - e->mesh_vertices.size();
-          for(int i = 1; i < NNN - 1; i++) {
-            double u = (double)i / (NNN - 1);
-            Range<double> b = e->parBounds(0);
-            double t = b.low() + u * (b.high() - b.low());
-            GPoint gp = e->point(t);
-            getCoord(gp.x(), gp.y(), gp.z(), x, y, z, e);
-            px.push_back(x);
-            py.push_back(y);
-            pz.push_back(z);
-            _infos.push_back(AttractorInfo(*it, 1, t, 0));
-          }
-        }
-        else {
-          Msg::Warning("Unknown curve %d", *it);
-        }
-      }
-
-      for(auto it = _surfaceTags.begin(); it != _surfaceTags.end(); ++it) {
-        GFace *f = GModel::current()->getFaceByTag(*it);
-        if(f) {
-          double maxDist = f->bounds().diag() / _sampling;
-          f->fillPointCloud(maxDist, &points, &uvpoints);
-          for(std::size_t i = 0; i < points.size(); i++) {
-            getCoord(points[i].x(), points[i].y(), points[i].z(), x, y, z, f);
-            px.push_back(x);
-            py.push_back(y);
-            pz.push_back(z);
-          }
-          for(std::size_t i = 0; i < uvpoints.size(); i++)
-            _infos.push_back
-              (AttractorInfo(*it, 2, uvpoints[i].x(), uvpoints[i].y()));
-        }
-        else {
-          Msg::Warning("Unknown surface %d", *it);
-        }
-      }
-
-      int totpoints = px.size();
-      if(!totpoints) { // for backward compatibility
-        totpoints = 1;
-        px.push_back(0.);
-        py.push_back(0.);
-        pz.push_back(0.);
-      }
-
-      _zeroNodes = annAllocPts(totpoints, 3);
-      for(int i = 0; i < totpoints; i++) {
-        _zeroNodes[i][0] = px[i];
-        _zeroNodes[i][1] = py[i];
-        _zeroNodes[i][2] = pz[i];
-      }
-      _kdTree = new ANNkd_tree(_zeroNodes, totpoints, 3);
-      updateNeeded = false;
-    }
-  }
-
-  using Field::operator();
-  virtual double operator()(double X, double Y, double Z, GEntity *ge = nullptr)
-  {
-#pragma omp critical
-    {
-      update();
-    }
-    double xyz[3];
-    getCoord(X, Y, Z, xyz[0], xyz[1], xyz[2], ge);
-#pragma omp critical // avoid crash (still incorrect) - use Distance instead
-    _kdTree->annkSearch(xyz, 1, _index, _dist);
-    double d = _dist[0];
-    return sqrt(d);
-  }
-};
-
 #endif // ANN
 
 class OctreeField : public Field {
@@ -2960,6 +2745,12 @@ public:
     if(_power != 1.) {
       f = std::pow(f, _power);
     }
+    // "unscale" the boundary size according to the per-entity and/or the global
+    // mesh size factor, so that, if a factor is applied, it will be on the
+    // interpolated "specified" mesh size values
+    if(ge && ge->getMeshSizeFactor() != 1.0)
+      sbnd /= ge->getMeshSizeFactor();
+    sbnd /= CTX::instance()->mesh.lcFactor;
     double s = f * sbnd + (1. - f) * _sizeMax;
     return s;
   }
@@ -3392,6 +3183,7 @@ FieldManager::FieldManager()
   mapTypeName["Gradient"] = new FieldFactoryT<GradientField>();
   mapTypeName["Octree"] = new FieldFactoryT<OctreeField>();
   mapTypeName["Distance"] = new FieldFactoryT<DistanceField>();
+  mapTypeName["Attractor"] = new FieldFactoryT<DistanceField>();
   mapTypeName["Extend"] = new FieldFactoryT<ExtendField>();
   mapTypeName["Restrict"] = new FieldFactoryT<RestrictField>();
   mapTypeName["Constant"] = new FieldFactoryT<ConstantField>();
@@ -3407,7 +3199,6 @@ FieldManager::FieldManager()
   mapTypeName["MathEval"] = new FieldFactoryT<MathEvalField>();
   mapTypeName["MathEvalAniso"] = new FieldFactoryT<MathEvalFieldAniso>();
 #if defined(HAVE_ANN)
-  mapTypeName["Attractor"] = new FieldFactoryT<AttractorField>();
   mapTypeName["AttractorAnisoCurve"] =
     new FieldFactoryT<AttractorAnisoCurveField>();
 #endif

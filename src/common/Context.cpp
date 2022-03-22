@@ -69,6 +69,8 @@ void CTX::init()
   lock = 0; // very primitive locking
   fileread = false;
 
+  geom.autoExtrude = 0; // FIXME: temporary for auto-extrude testing
+
 #if defined(HAVE_FLTK)
   glFontEnum = FL_HELVETICA;
 #else

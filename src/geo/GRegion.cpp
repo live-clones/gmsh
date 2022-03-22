@@ -436,6 +436,26 @@ void GRegion::writeGEO(FILE *fp)
   }
 }
 
+void GRegion::writePY(FILE *fp)
+{
+  // This is by no means complete - merely a placeholder for a future
+  // implementation
+
+  if(geomType() == DiscreteVolume) return;
+
+  const char *factory = getNativeType() == OpenCascadeModel ? "occ" : "geo";
+
+  if(l_faces.size()) {
+    fprintf(fp, "gmsh.model.%s.addSurfaceLoop([", factory);
+    for(auto it = l_faces.begin(); it != l_faces.end(); it++) {
+      if(it != l_faces.begin()) fprintf(fp, ", ");
+      fprintf(fp, "%d", (*it)->tag());
+    }
+    fprintf(fp, "], %d)\n", tag());
+    fprintf(fp, "gmsh.model.%s.addVolume(%d, %d)\n", factory, tag(), tag());
+  }
+}
+
 std::vector<GEdge *> const &GRegion::edges() const
 {
   static std::vector<GEdge *> e;
@@ -582,7 +602,7 @@ std::vector<MVertex *> GRegion::getEmbeddedMeshVertices() const
 
 std::vector<GVertex *> GRegion::vertices() const
 {
-  std::set<GVertex *> v;
+  std::set<GVertex *, GEntityPtrLessThan> v;
   for(auto gf : l_faces) {
     std::vector<GVertex *> const &vs = gf->vertices();
     v.insert(vs.begin(), vs.end());

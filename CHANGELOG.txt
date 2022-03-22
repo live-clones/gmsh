@@ -1,4 +1,32 @@
-(Work-in-progress): new Mesh.MinimumLineNodes option.
+4.10.0 (Work-in-progress): more flexible homology/cohomology workflow in the
+API; "Attractor" field is now just a synonym for the newer (and more efficient)
+"Distance" field; small bug fixes.
+
+* New API functions: geo/addGeometry, geo/addPointOnGeometry,
+  mesh/addHomologyRequest, mesh/clearHomologyRequests, mesh/setVisibility,
+  mesh/getElementQualities
+
+* Incompatible API changes: additional const qualifiers in C API; removed
+  mesh/computeCohomology; new arguments to occ/getCurveLoops and
+  occ/getSurfaceLoops, changed arguments of mesh/computeHomology; new optional
+  arguments to model/addPhysicalGroup, model/geo/addPhysicalGroup,
+  mesh/removeDuplicateNodes and mesh/setRecombine.
+
+4.9.5 (February 21, 2022): dynamic Gmsh library now also only exports public
+symbols on macOS and Linux, like it does on Windows; better handling of
+max. thread settings; small bug fixes.
+
+* New API function: mesh/getDuplicateNodes
+
+4.9.4 (February 3, 2022): improved BSpline filling; new options
+Mesh.MinimumLineNodes, Mesh.RecombineNodeRepositioning,
+Mesh.RecombineMinimumQuality and Mesh.StlLinearDeflectionRelative; updated
+bundled Eigen; small bug fixes.
+
+* New API functions: gmsh/isInitialized, occ/convertToNURBS, occ/getCurveLoops,
+  occ/getSurfaceLoops, mesh/importStl, parser/getNames, parser/setNumber,
+  parser/setString, parser/getNumber, parser/getString, parser/clear,
+  parser/parse, onelab/getChanged, onelab/setChanged
 
 4.9.3 (January 4, 2022): improved handling of degenerate curves in periodic
 surfaces and boundary layer extrusion; extended Mesh.SaveGroupsOfElements

@@ -193,12 +193,8 @@ static bool computeEquidistantParameters(GFace *gf, double u0, double uN,
     u[i] = u0 + (uN - u0) * t;
     v[i] = v0 + (vN - v0) * t;
     // only use closestPoint for non-plane surfaces (for performance reasons -
-    // it's very slow in OpenCASCADE), and not with the built-in representation
-    // (since it does not support complex surfaces anyway)
-    if(geodesic &&
-       gf->getNativeType() != GEntity::GmshModel &&
-       gf->getNativeType() != GEntity::UnknownModel &&
-       gf->geomType() != GEntity::Plane) {
+    // it's very slow in OpenCASCADE)
+    if(geodesic && gf->geomType() != GEntity::Plane) {
       SPoint3 pc(t * pN + (1. - t) * p0);
       double guess[2] = {u[i], v[i]};
       GPoint gp = gf->closestPoint(pc, guess);

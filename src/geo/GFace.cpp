@@ -21,13 +21,13 @@
 #include "discreteEdge.h"
 #include "discreteFace.h"
 #include "ExtrudeParams.h"
-#include "Field.h"
 
 #if defined(HAVE_MESH)
 #include "meshGFace.h"
 #include "meshGFaceOptimize.h"
 #include "BackgroundMeshTools.h"
 #include "meshGFaceBipartiteLabelling.h"
+#include "Field.h"
 #endif
 
 #if defined(HAVE_ALGLIB)
@@ -237,6 +237,7 @@ void GFace::resetMeshAttributes()
   meshAttributes.meshSizeFactor = 1.;
   meshAttributes.algorithm = 0;
   meshAttributes.meshSizeFromBoundary = -1;
+  meshAttributes.transfinite3 = false;
 }
 
 SBoundingBox3d GFace::bounds(bool fast)
@@ -347,7 +348,7 @@ std::vector<MVertex *> GFace::getEmbeddedMeshVertices(bool force) const
 
 std::vector<GVertex *> GFace::vertices() const
 {
-  std::set<GVertex *> v;
+  std::set<GVertex *, GEntityPtrLessThan> v;
   for(auto ge : l_edges) {
     GVertex *const v1 = ge->getBeginVertex();
     if(v1) v.insert(v1);
@@ -486,7 +487,7 @@ void GFace::writeGEO(FILE *fp)
       fprintf(fp, "Surface(%d) = {%d};\n", tag(), tag());
     }
     else {
-      Msg::Error("Skipping surface %d in export", tag());
+      Msg::Warning("Skipping surface %d in export", tag());
     }
   }
 
@@ -512,6 +513,46 @@ void GFace::writeGEO(FILE *fp)
   if(meshAttributes.recombine) fprintf(fp, "Recombine Surface {%d};\n", tag());
 
   if(meshAttributes.reverseMesh) fprintf(fp, "Reverse Surface {%d};\n", tag());
+}
+
+void GFace::writePY(FILE *fp)
+{
+  // This is by no means complete - merely a placeholder for a future
+  // implementation
+
+  if(geomType() == DiscreteSurface || geomType() == BoundaryLayerSurface) return;
+
+  const char *factory = getNativeType() == OpenCascadeModel ? "occ" : "geo";
+
+  std::size_t numcl = 0;
+  for(std::size_t i = 0; i < edgeLoops.size(); i++) {
+    std::vector<GEdge *> edges;
+    std::vector<int> signs;
+    edgeLoops[i].getEdges(edges);
+    edgeLoops[i].getSigns(signs);
+    if(edges.size() && edges.size() == signs.size()) {
+      fprintf(fp, "s%d_cl%lu = gmsh.model.%s.addCurveLoop([", tag(), ++numcl,
+              factory);
+      for(std::size_t j = 0; j < edges.size(); j++) {
+        if(j) fprintf(fp, ", ");
+        fprintf(fp, "%d", edges[j]->tag() * signs[j]);
+      }
+      fprintf(fp, "])\n");
+    }
+  }
+
+  if(geomType() == GEntity::Plane || geomType() == GEntity::ParametricSurface) {
+    fprintf(fp, "gmsh.model.%s.addPlaneSurface([", factory);
+    for(std::size_t i = 0; i < numcl; i++) {
+      if(i) fprintf(fp, ", ");
+      fprintf(fp, "s%d_cl%lu", tag(), i + 1);
+    }
+    fprintf(fp, "], %d)\n", tag());
+  }
+  else {
+    // TODO
+    Msg::Warning("Skipping surface %d in export", tag());
+  }
 }
 
 void GFace::computeMeanPlane()
@@ -1084,9 +1125,9 @@ void GFace::XYZtoUV(double X, double Y, double Z, double &U, double &V,
   if(!onSurface) return;
 
   if(relax < 1.e-3)
-    Msg::Error("Inverse surface mapping could not converge");
+    Msg::Warning("Inverse surface mapping could not converge");
   else {
-    Msg::Info("point %g %g %g : Relaxation factor = %g", X, Y, Z, 0.75 * relax);
+    Msg::Info("Point %g %g %g: Relaxation factor = %g", X, Y, Z, 0.75 * relax);
     XYZtoUV(X, Y, Z, U, V, 0.75 * relax, onSurface, convTestXYZ);
   }
 }
@@ -1507,6 +1548,34 @@ bool GFace::fillVertexArray(bool force)
     }
   }
   va_geom_triangles->finalize();
+  return true;
+}
+
+bool GFace::storeSTLTriangulationAsMesh()
+{
+  deleteMesh();
+  if(stl_vertices_xyz.size()) {
+    for(std::size_t i = 0; i < stl_vertices_xyz.size(); i++) {
+      SPoint3 &p(stl_vertices_xyz[i]);
+      mesh_vertices.push_back(new MVertex(p.x(), p.y(), p.z(), this));
+    }
+  }
+  else if(stl_vertices_uv.size()) {
+    for(std::size_t i = 0; i < stl_vertices_uv.size(); i++) {
+      SPoint2 &p(stl_vertices_uv[i]);
+      GPoint gp = point(p);
+      mesh_vertices.push_back(new MFaceVertex(gp.x(), gp.y(), gp.z(),
+                                              this, p.x(), p.y()));
+    }
+  }
+  else {
+    return false;
+  }
+  for(std::size_t i = 0; i < stl_triangles.size(); i += 3) {
+    triangles.push_back(new MTriangle(mesh_vertices[stl_triangles[i]],
+                                      mesh_vertices[stl_triangles[i + 1]],
+                                      mesh_vertices[stl_triangles[i + 2]]));
+  }
   return true;
 }
 

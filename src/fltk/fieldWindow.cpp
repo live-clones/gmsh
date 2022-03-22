@@ -15,26 +15,32 @@
 #include <FL/Fl_Round_Button.H>
 #include <FL/Fl_Value_Input.H>
 #include <FL/fl_draw.H>
+#include "GmshConfig.h"
+#include "GmshDefines.h"
 #include "FlGui.h"
 #include "drawContext.h"
 #include "fieldWindow.h"
 #include "paletteWindow.h"
 #include "fileDialogs.h"
-#include "GmshDefines.h"
 #include "GModel.h"
 #include "PView.h"
 #include "GmshMessage.h"
-#include "Field.h"
 #include "scriptStringInterface.h"
 #include "StringUtils.h"
 #include "Options.h"
 #include "Context.h"
+
+#if defined(HAVE_MESH)
+#include "Field.h"
+#endif
 
 void field_cb(Fl_Widget *w, void *data)
 {
   FlGui::instance()->fields->win->show();
   FlGui::instance()->fields->editField(nullptr);
 }
+
+#if defined(HAVE_MESH)
 
 static void field_delete_cb(Fl_Widget *w, void *data)
 {
@@ -94,6 +100,8 @@ static void field_select_file_cb(Fl_Widget *w, void *data)
   }
 }
 
+#endif
+
 fieldWindow::fieldWindow(int deltaFontSize) : _deltaFontSize(deltaFontSize)
 {
   FL_NORMAL_SIZE -= deltaFontSize;
@@ -112,6 +120,7 @@ fieldWindow::fieldWindow(int deltaFontSize) : _deltaFontSize(deltaFontSize)
                           "Size fields");
   win->box(GMSH_WINDOW_BOX);
 
+#if defined(HAVE_MESH)
   int x = WB, y = WB, w = (int)(1.5 * BB), h = height - 2 * WB - 3 * BH;
 
   Fl_Menu_Button *new_btn = new Fl_Menu_Button(x, y, w, BH, "New");
@@ -188,6 +197,9 @@ fieldWindow::fieldWindow(int deltaFontSize) : _deltaFontSize(deltaFontSize)
                                     width - 9 * WB - 5 * BB,
                                     height - 3 * BH - 5 * WB));
   win->size_range(width0, height0);
+
+#endif
+
   win->position(CTX::instance()->fieldPosition[0],
                 CTX::instance()->fieldPosition[1]);
   win->end();
@@ -200,6 +212,7 @@ fieldWindow::fieldWindow(int deltaFontSize) : _deltaFontSize(deltaFontSize)
 
 void fieldWindow::loadFieldViewList()
 {
+#if defined(HAVE_MESH)
   put_on_view_btn->clear();
   put_on_view_btn->add("Create new view");
   put_on_view_btn->activate();
@@ -208,10 +221,12 @@ void fieldWindow::loadFieldViewList()
     s << "Put on View [" << i << "]";
     put_on_view_btn->add(s.str().c_str());
   }
+#endif
 }
 
 void fieldWindow::loadFieldList()
 {
+#if defined(HAVE_MESH)
   FieldManager &fields = *GModel::current()->getFields();
   Field *selected_field = (Field *)editor_group->user_data();
   browser->clear();
@@ -225,10 +240,12 @@ void fieldWindow::loadFieldList()
     browser->add(sstream.str().c_str(), field);
     if(it->second == selected_field) browser->select(i_entry);
   }
+#endif
 }
 
 void fieldWindow::saveFieldOptions()
 {
+#if defined(HAVE_MESH)
   auto input = options_widget.begin();
   Field *f = (Field *)editor_group->user_data();
   std::ostringstream sstream;
@@ -302,10 +319,12 @@ void fieldWindow::saveFieldOptions()
     scriptSetBackgroundField(-1, GModel::current()->getFileName());
     loadFieldList();
   }
+#endif
 }
 
 void fieldWindow::loadFieldOptions()
 {
+#if defined(HAVE_MESH)
   Field *f = (Field *)editor_group->user_data();
   auto input = options_widget.begin();
   for(auto it = f->options.begin(); it != f->options.end(); it++) {
@@ -361,10 +380,12 @@ void fieldWindow::loadFieldOptions()
       "Only a single field can be set as background field.\n"
       "To combine multiple fields use the Min or Max fields.");
   }
+#endif
 }
 
 void fieldWindow::editField(Field *f)
 {
+#if defined(HAVE_MESH)
   editor_group->user_data(f);
   put_on_view_btn->deactivate();
   delete_btn->deactivate();
@@ -450,4 +471,5 @@ void fieldWindow::editField(Field *f)
   put_on_view_btn->activate();
   delete_btn->activate();
   loadFieldList();
+#endif
 }

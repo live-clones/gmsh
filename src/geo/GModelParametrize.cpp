@@ -121,7 +121,7 @@ void classifyFaces(GModel *gm, double curveAngleThreshold)
   }
   if(ho) {
     Msg::Warning("Reverting to first order mesh for classification");
-    gm->setOrderN(1, false, false);
+    gm->setOrderN(1, 0, 0, 0);
   }
 
   // create a structure from mesh edges to geometrical curves, and remove curves

@@ -781,6 +781,10 @@ void OpenProject(const std::string &fileName, bool errorIfMissing)
 
   CTX::instance()->lock = 0;
 
+  // FIXME: temporary for auto-extrude testing
+  if(CTX::instance()->geom.autoExtrude)
+    GModel::current()->addAutomaticExtrusionConstraints({10}, {1}, true, {});
+
 #if defined(HAVE_FLTK)
   if(FlGui::available()) {
     file_watch_cb(nullptr, nullptr);

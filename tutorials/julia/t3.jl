@@ -20,10 +20,8 @@ function createGeometryAndMesh()
     gmsh.model.geo.addCurveLoop([4, 1, -2, 3], 1)
     gmsh.model.geo.addPlaneSurface([1], 1)
     gmsh.model.geo.synchronize()
-    gmsh.model.addPhysicalGroup(0, [1, 2], 1)
-    gmsh.model.addPhysicalGroup(1, [1, 2], 2)
-    gmsh.model.addPhysicalGroup(2, [1], 6)
-    gmsh.model.setPhysicalName(2, 6, "My surface")
+    gmsh.model.addPhysicalGroup(1, [1, 2, 4], 5)
+    gmsh.model.addPhysicalGroup(2, [1], -1, "My surface")
 
     h = 0.1
     angle = 90.

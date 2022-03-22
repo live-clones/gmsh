@@ -80,7 +80,7 @@ public:
 
   // add/delete a face bounded by this edge
   void addFace(GFace *f);
-  void delFace(GFace *f);
+  virtual void delFace(GFace *f);
 
   // get the dimension of the edge (1)
   virtual int dim() const { return 1; }
@@ -152,6 +152,9 @@ public:
 
   // export in GEO format
   virtual void writeGEO(FILE *fp);
+
+  // export in Python
+  virtual void writePY(FILE *fp);
 
   // tell if the edge is a 3D edge (in opposition with a trimmed curve on a
   // surface)

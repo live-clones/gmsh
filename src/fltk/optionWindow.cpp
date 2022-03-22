@@ -1546,7 +1546,7 @@ optionWindow::optionWindow(int deltaFontSize)
       general.butt[10]->callback(general_options_ok_cb);
 
       general.value[32] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 9 * BH, IW,
-                                             BH, "Number of threads");
+                                             BH, "Maximum number of threads");
       general.value[32]->tooltip("General.NumThreads");
       general.value[32]->minimum(0);
       general.value[32]->maximum(16);

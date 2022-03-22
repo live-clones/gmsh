@@ -452,7 +452,7 @@ namespace {
       }
     }
 
-    // Build top face from max face (with right correspondance)
+    // Build top face from max face (with right correspondence)
     MVertex *maxVert[3] = {elMaxFace.getVertex(0), elMaxFace.getVertex(1),
                            elMaxFace.getVertex(2)};
     std::vector<MVertex *> topVert(3, static_cast<MVertex *>(nullptr));

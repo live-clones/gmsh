@@ -2517,7 +2517,7 @@ static void writeMSH4Elements(GModel *const model, FILE *fp, bool partitioned,
 static void writeMSH4PeriodicNodes(GModel *const model, FILE *fp,
                                    bool binary, double version)
 {
-  // To avoid saving correspondances bwteen nodes that are not saved (either in
+  // To avoid saving correspondences bwteen nodes that are not saved (either in
   // the same file or not at all, e.g. in the partitioned case, or simply if
   // some physical entities are not defined), we could only apply the code below
   // to the entities returned by getEntitiesForNodes().
@@ -2845,7 +2845,9 @@ int GModel::_writePartitionedMSH4(const std::string &baseName, double version,
                                   bool binary, bool saveAll,
                                   bool saveParametric, double scalingFactor)
 {
-#pragma omp parallel for
+  int nthreads = CTX::instance()->numThreads;
+  if(!nthreads) nthreads = Msg::GetMaxThreads();
+#pragma omp parallel for num_threads(nthreads)
   for(std::size_t part = 1; part <= getNumPartitions(); part++) {
     std::ostringstream sstream;
     sstream << baseName << "_" << part << ".msh";

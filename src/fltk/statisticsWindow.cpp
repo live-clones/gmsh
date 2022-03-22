@@ -13,10 +13,13 @@
 #include "GModel.h"
 #include "MElement.h"
 #include "PView.h"
-#include "Generator.h"
 #include "Context.h"
 #include "OS.h"
+
+#if defined(HAVE_MESH)
+#include "Generator.h"
 #include "Field.h"
+#endif
 
 enum QM_HISTO {
   QMH_SICN_XY,
@@ -230,12 +233,18 @@ void statisticsWindow::compute(bool elementQuality)
   int num = 0;
   static double s[50];
   static char label[50][256];
-  bool visibleOnly = visible->value() ? true : false;
 
+#if defined(HAVE_MESH)
+  bool visibleOnly = visible->value() ? true : false;
   if(elementQuality)
     GetStatistics(s, quality, visibleOnly);
   else
     GetStatistics(s, nullptr, visibleOnly);
+#else
+  for(int i = 0; i < 3; i++)
+    for(int j = 0; j < 100; j++)
+      quality[i][j] = 0;
+#endif
 
   // geom
   sprintf(label[num], "%g", s[0]);

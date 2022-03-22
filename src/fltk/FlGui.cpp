@@ -36,7 +36,6 @@
 #include "OS.h"
 #include "MElement.h"
 #include "PView.h"
-#include "Field.h"
 #include "Plugin.h"
 #include "PluginManager.h"
 #include "OpenFile.h"
@@ -48,9 +47,15 @@
 #include "gl2ps.h"
 #include "gmshPopplerWrapper.h"
 #include "PixelBuffer.h"
+
+#if defined(HAVE_MESH)
+#include "Field.h"
+#endif
+
 #if defined(HAVE_TOUCHBAR)
 #include "touchBar.h"
 #endif
+
 #if defined(HAVE_3M)
 #include "3M.h"
 #endif
@@ -651,6 +656,7 @@ FlGui *FlGui::instance(int argc, char **argv, bool quitShouldExit,
     // set all options in the new GUI
     InitOptionsGUI(0);
     // say welcome!
+    Msg::ResetErrorCounter();
     Msg::StatusBar(false, "Gmsh %s", GetGmshVersion());
     // log the following for bug reports
     Msg::Direct("-------------------------------------------------------");
@@ -1128,7 +1134,9 @@ void FlGui::updateViews(bool numberOfViewsHasChanged, bool deleteWidgets)
 
 void FlGui::updateFields()
 {
+#if defined(HAVE_MESH)
   fields->editField(GModel::current()->getFields()->get(fields->selected_id));
+#endif
 }
 
 void FlGui::resetVisibility()

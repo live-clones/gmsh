@@ -1339,6 +1339,11 @@ void GetOptions(bool readConfigFiles, bool exitOnError)
         terminal = 1;
         i++;
       }
+      // FIXME: temporary for auto-extrude testing
+      else if(argv[i] == "-autoex") {
+        CTX::instance()->geom.autoExtrude = 1;
+        i++;
+      }
 #if defined(HAVE_FLTK)
       else if(argv[i] == "-dual") {
         opt_mesh_dual(0, GMSH_SET, 1);

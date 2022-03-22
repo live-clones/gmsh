@@ -57,6 +57,15 @@ RecombineTriangle::RecombineTriangle(const MEdge &me, MElement *_t1,
   else if(t2->getVertex(2) != n1 && t2->getVertex(2) != n2)
     n4 = t2->getVertex(2);
 
+  if(!n3) {
+    Msg::Warning("Invalid quadrangle in recombination");
+    n3 = n1;
+  }
+  if(!n4) {
+    Msg::Warning("Invalid quadrangle in recombination");
+    n4 = n2;
+  }
+
   MQuadrangle q(n1, n3, n2, n4);
   angle = q.etaShapeMeasure();
 
@@ -1058,7 +1067,7 @@ static void _recombineIntoQuads(GFace *gf, bool blossom, bool cubicGraph = 1)
   FieldManager *fields = gf->model()->getFields();
   Field *cross_field = NULL;
   SVector3 t1;
-  // double L; /* unused ? */
+
   if(fields->getBackgroundField() > 0) {
     cross_field = fields->get(fields->getBackgroundField());
     if(cross_field->numComponents() != 3) { // we hae a true scaled cross fiel
@@ -1318,29 +1327,34 @@ void recombineIntoQuads(GFace *gf, bool blossom, int topologicalOptiPasses,
     if(debug) gf->model()->writeMSH("recombine_2smoothed.msh");
   }
 
-  if(topologicalOptiPasses > 0) {
-    if(!_isModelOkForTopologicalOpti(gf->model())) {
-      Msg::Info(
-        "Skipping topological optimization - mesh topology is not complete");
-    }
-    else {
-      int iter = 0, nbTwoQuadNodes = 1, nbDiamonds = 1;
-      while(nbTwoQuadNodes || nbDiamonds) {
-        Msg::Debug("Topological optimization of quad mesh: pass %d", iter);
-        nbTwoQuadNodes = removeTwoQuadsNodes(gf);
-        // removeDiamonds uses the parametrization or searches for closest point
-        nbDiamonds = haveParam ? removeDiamonds(gf) : 0;
-        if(haveParam && nodeRepositioning)
-          RelocateVertices(gf, CTX::instance()->mesh.nbSmoothing);
-        iter++;
-        if(iter > topologicalOptiPasses) break;
+// FIXME: not thread-safe
+#pragma omp critical
+  {
+    if(topologicalOptiPasses > 0) {
+      if(!_isModelOkForTopologicalOpti(gf->model())) {
+        Msg::Info
+          ("Skipping topological optimization - mesh topology is not complete");
       }
-      if(debug) gf->model()->writeMSH("recombine_3topo.msh");
+      else {
+        int iter = 0, nbTwoQuadNodes = 1, nbDiamonds = 1;
+        while(nbTwoQuadNodes || nbDiamonds) {
+          Msg::Debug("Topological optimization of quad mesh: pass %d", iter);
+          nbTwoQuadNodes = removeTwoQuadsNodes(gf);
+          // removeDiamonds uses the parametrization or searches for closest point
+          nbDiamonds = haveParam ? removeDiamonds(gf) : 0;
+          if(haveParam && nodeRepositioning)
+            RelocateVertices(gf, CTX::instance()->mesh.nbSmoothing);
+          iter++;
+          if(iter > topologicalOptiPasses) break;
+        }
+        if(debug) gf->model()->writeMSH("recombine_3topo.msh");
+      }
     }
   }
 
   // re-split bad quads into triangles
-  quadsToTriangles(gf, minqual);
+  if(minqual > 0)
+    quadsToTriangles(gf, minqual);
 
   if(debug) gf->model()->writeMSH("recombine_4quality.msh");
 

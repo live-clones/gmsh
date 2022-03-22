@@ -189,10 +189,10 @@ static double closest(double t, double u)
   return u + 2 * D;
 }
 
-static double p2triangle_alignement_quality_measure(double *xa, double *xb,
-                                                    double *xc, double *xab,
-                                                    double *xbc, double *xca,
-                                                    int VIEW_TAG)
+static double p2triangle_alignment_quality_measure(double *xa, double *xb,
+                                                   double *xc, double *xab,
+                                                   double *xbc, double *xca,
+                                                   int VIEW_TAG)
 {
   double xis[6] = {0, .2, .4, .6, .8, 1};
   double etas[6] = {0, 0, 0, 0., 0., 0.};
@@ -623,7 +623,7 @@ triangleQualityP2(int VIEW_TAG, PolyMesh::HalfEdge *hea,
 
   double validity = triangleValidityP2(hea, midPoints);
   if(validity < 0) return validity;
-  return p2triangle_alignement_quality_measure(
+  return p2triangle_alignment_quality_measure(
     hea->v->position, heb->v->position, hec->v->position, ab, bc, ca, VIEW_TAG);
 }
 
@@ -786,7 +786,7 @@ double bestParabola(double x0, double y0, double x1, double y1, double &xmid,
     double xi = XI_MIN + (XI_MAX - XI_MIN) * t;
     SPoint2 X(xmid - xi * direction[0], ymid - xi * direction[1]);
     double Q =
-      p2triangle_alignement_quality_measure(P0, P1, P0, PM, PM, PM, VIEW_TAG);
+      p2triangle_alignment_quality_measure(P0, P1, P0, PM, PM, PM, VIEW_TAG);
     if(Q > QMAX) {
       QMAX = Q;
       CUR = X;
