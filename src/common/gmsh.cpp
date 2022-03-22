@@ -113,6 +113,7 @@ static char **_argv = nullptr;
 static bool _checkInit()
 {
   if(!_initialized) {
+    CTX::instance()->terminal = 1;
     Msg::Error("Gmsh has not been initialized");
     return false;
   }
