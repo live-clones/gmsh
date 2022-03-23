@@ -485,14 +485,16 @@ void Msg::Error(const char *fmt, ...)
   {
     _errorCount++;
     _atLeastOneErrorInRun = 1;
+  }
+  char str[5000];
+  va_list args;
+  va_start(args, fmt);
+  vsnprintf(str, sizeof(str), fmt, args);
+  va_end(args);
+  int l = strlen(str); if(str[l - 1] == '\n') str[l - 1] = '\0';
 
-    char str[5000];
-    va_list args;
-    va_start(args, fmt);
-    vsnprintf(str, sizeof(str), fmt, args);
-    va_end(args);
-    int l = strlen(str); if(str[l - 1] == '\n') str[l - 1] = '\0';
-
+#pragma omp critical(MsgError)
+  {
     if(_firstError.empty()) _firstError = str;
     _lastError = str;
 
@@ -522,19 +524,19 @@ void Msg::Error(const char *fmt, ...)
         fflush(stderr);
       }
     }
+  }
 
-    if(CTX::instance()->abortOnError == 2) {
-  #if defined(HAVE_FLTK)
-      if(FlGui::available()) return; // don't throw if GUI is running
-  #endif
-      throw _lastError;
-    }
-    else if(CTX::instance()->abortOnError == 3) {
-      throw _lastError;
-    }
-    else if(CTX::instance()->abortOnError == 4) {
-      Exit(1);
-    }
+  if(CTX::instance()->abortOnError == 2) {
+#if defined(HAVE_FLTK)
+    if(FlGui::available()) return; // don't throw if GUI is running
+#endif
+    throw _lastError;
+  }
+  else if(CTX::instance()->abortOnError == 3) {
+    throw _lastError;
+  }
+  else if(CTX::instance()->abortOnError == 4) {
+    Exit(1);
   }
 }
 
