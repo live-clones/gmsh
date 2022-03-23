@@ -481,140 +481,148 @@ std::string Msg::PrintResources(bool printDate, bool printWallTime,
 
 void Msg::Error(const char *fmt, ...)
 {
-  _errorCount++;
-  _atLeastOneErrorInRun = 1;
+#pragma omp critical(MsgError)
+  {
+    _errorCount++;
+    _atLeastOneErrorInRun = 1;
 
-  char str[5000];
-  va_list args;
-  va_start(args, fmt);
-  vsnprintf(str, sizeof(str), fmt, args);
-  va_end(args);
-  int l = strlen(str); if(str[l - 1] == '\n') str[l - 1] = '\0';
+    char str[5000];
+    va_list args;
+    va_start(args, fmt);
+    vsnprintf(str, sizeof(str), fmt, args);
+    va_end(args);
+    int l = strlen(str); if(str[l - 1] == '\n') str[l - 1] = '\0';
 
-  if(_firstError.empty()) _firstError = str;
-  _lastError = str;
+    if(_firstError.empty()) _firstError = str;
+    _lastError = str;
 
-  if(GetVerbosity() >= 1) {
-    if(_logFile) fprintf(_logFile, "Error: %s\n", str);
-    if(_callback) (*_callback)("Error", str);
-    if(_client) _client->Error(str);
-#if defined(HAVE_FLTK)
-    if(FlGui::available()){
-      std::string tmp = std::string(CTX::instance()->guiColorScheme ? "@B72@." : "@C1@.")
-        + "Error   : " + str;
-      FlGui::instance()->addMessage(tmp.c_str());
-      FlGui::instance()->setLastStatus
-        (CTX::instance()->guiColorScheme ? FL_DARK_RED : FL_RED);
-      FlGui::check(true);
-    }
-#endif
-    if(CTX::instance()->terminal){
-      const char *c0 = "", *c1 = "";
-      if(!streamIsFile(stderr) && streamIsVT100(stderr)){
-        c0 = "\33[1m\33[31m"; c1 = "\33[0m";  // bold red
+    if(GetVerbosity() >= 1) {
+      if(_logFile) fprintf(_logFile, "Error: %s\n", str);
+      if(_callback) (*_callback)("Error", str);
+      if(_client) _client->Error(str);
+  #if defined(HAVE_FLTK)
+      if(FlGui::available()){
+        std::string tmp = std::string(CTX::instance()->guiColorScheme ? "@B72@." : "@C1@.")
+          + "Error   : " + str;
+        FlGui::instance()->addMessage(tmp.c_str());
+        FlGui::instance()->setLastStatus
+          (CTX::instance()->guiColorScheme ? FL_DARK_RED : FL_RED);
+        FlGui::check(true);
       }
-      if(_commSize > 1)
-        fprintf(stderr, "%sError   : [rank %3d] %s%s\n", c0, GetCommRank(), str, c1);
-      else
-        fprintf(stderr, "%sError   : %s%s\n", c0, str, c1);
-      fflush(stderr);
+  #endif
+      if(CTX::instance()->terminal){
+        const char *c0 = "", *c1 = "";
+        if(!streamIsFile(stderr) && streamIsVT100(stderr)){
+          c0 = "\33[1m\33[31m"; c1 = "\33[0m";  // bold red
+        }
+        if(_commSize > 1)
+          fprintf(stderr, "%sError   : [rank %3d] %s%s\n", c0, GetCommRank(), str, c1);
+        else
+          fprintf(stderr, "%sError   : %s%s\n", c0, str, c1);
+        fflush(stderr);
+      }
     }
-  }
 
-  if(CTX::instance()->abortOnError == 2) {
-#if defined(HAVE_FLTK)
-    if(FlGui::available()) return; // don't throw if GUI is running
-#endif
-    throw _lastError;
-  }
-  else if(CTX::instance()->abortOnError == 3) {
-    throw _lastError;
-  }
-  else if(CTX::instance()->abortOnError == 4) {
-    Exit(1);
+    if(CTX::instance()->abortOnError == 2) {
+  #if defined(HAVE_FLTK)
+      if(FlGui::available()) return; // don't throw if GUI is running
+  #endif
+      throw _lastError;
+    }
+    else if(CTX::instance()->abortOnError == 3) {
+      throw _lastError;
+    }
+    else if(CTX::instance()->abortOnError == 4) {
+      Exit(1);
+    }
   }
 }
 
 void Msg::Warning(const char *fmt, ...)
 {
-  _warningCount++;
+#pragma omp critical(MsgWarning)
+  {
+    _warningCount++;
 
-  if(GetVerbosity() < 2) return;
+    if(GetVerbosity() < 2) return;
 
-  char str[5000];
-  va_list args;
-  va_start(args, fmt);
-  vsnprintf(str, sizeof(str), fmt, args);
-  va_end(args);
-  int l = strlen(str); if(str[l - 1] == '\n') str[l - 1] = '\0';
+    char str[5000];
+    va_list args;
+    va_start(args, fmt);
+    vsnprintf(str, sizeof(str), fmt, args);
+    va_end(args);
+    int l = strlen(str); if(str[l - 1] == '\n') str[l - 1] = '\0';
 
-  if(_logFile) fprintf(_logFile, "Warning: %s\n", str);
-  if(_callback) (*_callback)("Warning", str);
-  if(_client) _client->Warning(str);
+    if(_logFile) fprintf(_logFile, "Warning: %s\n", str);
+    if(_callback) (*_callback)("Warning", str);
+    if(_client) _client->Warning(str);
 
-#if defined(HAVE_FLTK)
-  if(FlGui::available()){
-    std::string tmp = std::string(CTX::instance()->guiColorScheme ? "@B152@." : "@C5@.")
-      + "Warning : " + str;
-    FlGui::instance()->addMessage(tmp.c_str());
-    if(_firstWarning.empty()) _firstWarning = str;
-    FlGui::instance()->setLastStatus();
-    FlGui::check(true);
-  }
-#endif
-
-  if(CTX::instance()->terminal){
-    const char *c0 = "", *c1 = "";
-    if(!streamIsFile(stderr) && streamIsVT100(stderr)){
-      c0 = "\33[35m"; c1 = "\33[0m";  // magenta
+  #if defined(HAVE_FLTK)
+    if(FlGui::available()){
+      std::string tmp = std::string(CTX::instance()->guiColorScheme ? "@B152@." : "@C5@.")
+        + "Warning : " + str;
+      FlGui::instance()->addMessage(tmp.c_str());
+      if(_firstWarning.empty()) _firstWarning = str;
+      FlGui::instance()->setLastStatus();
+      FlGui::check(true);
     }
-    if(_commSize > 1)
-      fprintf(stderr, "%sWarning : [rank %3d] %s%s\n", c0, GetCommRank(), str, c1);
-    else
-      fprintf(stderr, "%sWarning : %s%s\n", c0, str, c1);
-    fflush(stderr);
+  #endif
+
+    if(CTX::instance()->terminal){
+      const char *c0 = "", *c1 = "";
+      if(!streamIsFile(stderr) && streamIsVT100(stderr)){
+        c0 = "\33[35m"; c1 = "\33[0m";  // magenta
+      }
+      if(_commSize > 1)
+        fprintf(stderr, "%sWarning : [rank %3d] %s%s\n", c0, GetCommRank(), str, c1);
+      else
+        fprintf(stderr, "%sWarning : %s%s\n", c0, str, c1);
+      fflush(stderr);
+    }
   }
 }
 
 void Msg::Info(const char *fmt, ...)
 {
   if(GetVerbosity() < 4) return;
+#pragma omp critical(MsgInfo)
+  {
+    char str[5000];
+    va_list args;
+    va_start(args, fmt);
+    vsnprintf(str, sizeof(str), fmt, args);
+    va_end(args);
+    int l = strlen(str); if(str[l - 1] == '\n') str[l - 1] = '\0';
 
-  char str[5000];
-  va_list args;
-  va_start(args, fmt);
-  vsnprintf(str, sizeof(str), fmt, args);
-  va_end(args);
-  int l = strlen(str); if(str[l - 1] == '\n') str[l - 1] = '\0';
-
-  if(_infoCpu || _infoMem){
-    std::string res = PrintResources(false, _infoCpu, _infoCpu, _infoMem);
-    strcat(str, res.c_str());
-  }
-
-  if(_logFile) fprintf(_logFile, "Info: %s\n", str);
-  if(_callback) (*_callback)("Info", str);
-  if(_client) _client->Info(str);
-
-#if defined(HAVE_FLTK)
-  if(FlGui::available()){
-    std::string tmp = std::string("Info    : ") + str;
-    FlGui::instance()->addMessage(tmp.c_str());
-    FlGui::check(true);
-  }
-#endif
-
-  if(CTX::instance()->terminal){
-    if(_progressMeterCurrent >= 0 && _progressMeterTotal > 1 &&
-       _commSize == 1) {
-      int p =  _progressMeterCurrent;
-      fprintf(stdout, "Info    : [%3d%%] %s\n", p, str);
+    if(_infoCpu || _infoMem){
+      std::string res = PrintResources(false, _infoCpu, _infoCpu, _infoMem);
+      strcat(str, res.c_str());
     }
-    else if(_commSize > 1)
-      fprintf(stdout, "Info    : [rank %3d] %s\n", GetCommRank(), str);
-    else
-      fprintf(stdout, "Info    : %s\n", str);
-    fflush(stdout);
+
+    if(_logFile) fprintf(_logFile, "Info: %s\n", str);
+    if(_callback) (*_callback)("Info", str);
+    if(_client) _client->Info(str);
+
+  #if defined(HAVE_FLTK)
+    if(FlGui::available()){
+      std::string tmp = std::string("Info    : ") + str;
+      FlGui::instance()->addMessage(tmp.c_str());
+      FlGui::check(true);
+    }
+  #endif
+
+    if(CTX::instance()->terminal){
+      if(_progressMeterCurrent >= 0 && _progressMeterTotal > 1 &&
+         _commSize == 1) {
+        int p =  _progressMeterCurrent;
+        fprintf(stdout, "Info    : [%3d%%] %s\n", p, str);
+      }
+      else if(_commSize > 1)
+        fprintf(stdout, "Info    : [rank %3d] %s\n", GetCommRank(), str);
+      else
+        fprintf(stdout, "Info    : %s\n", str);
+      fflush(stdout);
+    }
   }
 }
 
