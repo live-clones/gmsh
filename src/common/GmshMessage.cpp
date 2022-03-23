@@ -543,9 +543,12 @@ void Msg::Warning(const char *fmt, ...)
 #pragma omp critical(MsgWarning)
   {
     _warningCount++;
-
-    if(GetVerbosity() < 2) return;
-
+  }
+  
+  if(GetVerbosity() < 2) return;
+  
+#pragma omp critical(MsgWarning)
+  {
     char str[5000];
     va_list args;
     va_start(args, fmt);
