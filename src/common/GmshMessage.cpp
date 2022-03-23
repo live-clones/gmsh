@@ -530,10 +530,10 @@ void Msg::Error(const char *fmt, ...)
 #if defined(HAVE_FLTK)
     if(FlGui::available()) return; // don't throw if GUI is running
 #endif
-    throw _lastError;
+    throw std::runtime_error(_lastError);
   }
   else if(CTX::instance()->abortOnError == 3) {
-    throw _lastError;
+    throw std::runtime_error(_lastError);
   }
   else if(CTX::instance()->abortOnError == 4) {
     Exit(1);
