@@ -5,8 +5,9 @@
 //
 // Contributed by Ismail Badia.
 
-#include "HierarchicalBasisHcurlTria.h"
+#include <stdexcept>
 #include <iostream>
+#include "HierarchicalBasisHcurlTria.h"
 
 HierarchicalBasisHcurlTria::HierarchicalBasisHcurlTria(int order)
 
@@ -49,7 +50,7 @@ double HierarchicalBasisHcurlTria::_affineCoordinate(int const &j,
   case(1): return 0.5 * (1 + v);
   case(2): return -0.5 * (u + v);
   case(3): return 0.5 * (1 + u);
-  default: throw std::string("j must be : 1<=j<=3");
+  default: throw std::runtime_error("j must be : 1<=j<=3");
   }
 }
 
@@ -743,7 +744,7 @@ void HierarchicalBasisHcurlTria::orientOneFace(
       }
     }
     else {
-      throw std::string("unknown typeFunction");
+      throw std::runtime_error("unknown typeFunction");
     }
   }
 }

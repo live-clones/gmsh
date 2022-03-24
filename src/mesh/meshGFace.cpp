@@ -1346,8 +1346,8 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
     Msg::Debug("Meshing of the convex hull (%d points)", points.size());
     try {
       doc.MakeMeshWithPoints();
-    } catch(const char *err) {
-      Msg::Error("%s", err);
+    } catch(std::runtime_error &e) {
+      Msg::Error("%s", e.what());
     }
     Msg::Debug("Meshing of the convex hull (%d points) done", points.size());
 
@@ -2381,8 +2381,8 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
 
     try {
       doc.MakeMeshWithPoints();
-    } catch(const char *err) {
-      Msg::Error("%s", err);
+    } catch(std::runtime_error &e) {
+      Msg::Error("%s", e.what());
     }
 
     for(int i = 0; i < doc.numTriangles; i++) {
