@@ -590,44 +590,42 @@ void Msg::Warning(const char *fmt, ...)
 void Msg::Info(const char *fmt, ...)
 {
   if(GetVerbosity() < 4) return;
-#pragma omp critical(MsgInfo)
-  {
-    char str[5000];
-    va_list args;
-    va_start(args, fmt);
-    vsnprintf(str, sizeof(str), fmt, args);
-    va_end(args);
-    int l = strlen(str); if(str[l - 1] == '\n') str[l - 1] = '\0';
+  
+  char str[5000];
+  va_list args;
+  va_start(args, fmt);
+  vsnprintf(str, sizeof(str), fmt, args);
+  va_end(args);
+  int l = strlen(str); if(str[l - 1] == '\n') str[l - 1] = '\0';
 
-    if(_infoCpu || _infoMem){
-      std::string res = PrintResources(false, _infoCpu, _infoCpu, _infoMem);
-      strcat(str, res.c_str());
+  if(_infoCpu || _infoMem){
+    std::string res = PrintResources(false, _infoCpu, _infoCpu, _infoMem);
+    strcat(str, res.c_str());
+  }
+
+  if(_logFile) fprintf(_logFile, "Info: %s\n", str);
+  if(_callback) (*_callback)("Info", str);
+  if(_client) _client->Info(str);
+
+#if defined(HAVE_FLTK)
+  if(FlGui::available()){
+    std::string tmp = std::string("Info    : ") + str;
+    FlGui::instance()->addMessage(tmp.c_str());
+    FlGui::check(true);
+  }
+#endif
+
+  if(CTX::instance()->terminal){
+    if(_progressMeterCurrent >= 0 && _progressMeterTotal > 1 &&
+        _commSize == 1) {
+      int p =  _progressMeterCurrent;
+      fprintf(stdout, "Info    : [%3d%%] %s\n", p, str);
     }
-
-    if(_logFile) fprintf(_logFile, "Info: %s\n", str);
-    if(_callback) (*_callback)("Info", str);
-    if(_client) _client->Info(str);
-
-  #if defined(HAVE_FLTK)
-    if(FlGui::available()){
-      std::string tmp = std::string("Info    : ") + str;
-      FlGui::instance()->addMessage(tmp.c_str());
-      FlGui::check(true);
-    }
-  #endif
-
-    if(CTX::instance()->terminal){
-      if(_progressMeterCurrent >= 0 && _progressMeterTotal > 1 &&
-         _commSize == 1) {
-        int p =  _progressMeterCurrent;
-        fprintf(stdout, "Info    : [%3d%%] %s\n", p, str);
-      }
-      else if(_commSize > 1)
-        fprintf(stdout, "Info    : [rank %3d] %s\n", GetCommRank(), str);
-      else
-        fprintf(stdout, "Info    : %s\n", str);
-      fflush(stdout);
-    }
+    else if(_commSize > 1)
+      fprintf(stdout, "Info    : [rank %3d] %s\n", GetCommRank(), str);
+    else
+      fprintf(stdout, "Info    : %s\n", str);
+    fflush(stdout);
   }
 }
 
