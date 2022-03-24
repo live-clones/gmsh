@@ -3,6 +3,7 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+#include <stdexcept>
 #include "OrthogonalPoly.h"
 
 double OrthogonalPoly::EvalLobatto(int order, double x)
