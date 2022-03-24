@@ -4,11 +4,12 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 //
 // Contributed by Ismail Badia.
+
 // Reference :  "Higher-Order Finite Element  Methods"; Pavel Solin, Karel
-// Segeth ,
-//                 Ivo Dolezel , Chapman and Hall/CRC; Edition : Har/Cdr (2003).
+// Segeth, Ivo Dolezel, Chapman and Hall/CRC; Edition : Har/Cdr (2003).
 
 #include <algorithm>
+#include <stdexcept>
 #include "HierarchicalBasisH1Brick.h"
 
 HierarchicalBasisH1Brick::HierarchicalBasisH1Brick(int order)
@@ -51,7 +52,7 @@ double HierarchicalBasisH1Brick::_affineCoordinate(const int &j,
   case(4): return 0.5 * (1 - v);
   case(5): return 0.5 * (1 + w);
   case(6): return 0.5 * (1 - w);
-  default: throw std::string("j must be : 1<=j<=6");
+  default: throw std::runtime_error("j must be : 1<=j<=6");
   }
 }
 inline void HierarchicalBasisH1Brick::_someProduct(double const &u,
