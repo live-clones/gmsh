@@ -335,8 +335,8 @@ bool localNetworkSolverClient::run()
   try {
     sock = socketConnection->Start(exe.c_str(), command.c_str(),
                                    sockname.c_str(), 10);
-  } catch(const char *err) {
-    OLMsg::Error("%s (on socket '%s')", err, sockname.c_str());
+  } catch(std::runtime_error &e) {
+    OLMsg::Error("%s (on socket '%s')", e.what(), sockname.c_str());
     sock = -1;
   }
 

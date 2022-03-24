@@ -5,7 +5,9 @@
 //
 // Contributed by Ismail Badia.
 
+#include <stdexcept>
 #include "HierarchicalBasisHcurlQuad.h"
+
 HierarchicalBasisHcurlQuad::HierarchicalBasisHcurlQuad(int order)
 
 {
@@ -42,7 +44,7 @@ double HierarchicalBasisHcurlQuad::_affineCoordinate(int const &j,
   case(2): return 0.5 * (1 - u);
   case(3): return 0.5 * (1 + v);
   case(4): return 0.5 * (1 - v);
-  default: throw std::string("j must be : 1<=j<=4");
+  default: throw std::runtime_error("j must be : 1<=j<=4");
   }
 }
 
@@ -366,7 +368,7 @@ void HierarchicalBasisHcurlQuad::orientOneFace(
         }
       }
       else {
-        throw std::string("unknown typeFunction");
+        throw std::runtime_error("unknown typeFunction");
       }
     }
   }

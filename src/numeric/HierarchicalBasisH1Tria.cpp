@@ -4,10 +4,11 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 //
 // Contributed by Ismail Badia.
-// Reference :  "Higher-Order Finite Element  Methods"; Pavel Solin, Karel
-// Segeth ,
-//                 Ivo Dolezel , Chapman and Hall/CRC; Edition : Har/Cdr (2003).
 
+// Reference :  "Higher-Order Finite Element  Methods"; Pavel Solin, Karel
+// Segeth, Ivo Dolezel, Chapman and Hall/CRC; Edition : Har/Cdr (2003).
+
+#include <stdexcept>
 #include "HierarchicalBasisH1Tria.h"
 
 HierarchicalBasisH1Tria::HierarchicalBasisH1Tria(int pf, int pe0, int pe1,
@@ -25,7 +26,7 @@ HierarchicalBasisH1Tria::HierarchicalBasisH1Tria(int pf, int pe0, int pe1,
   _pf = pf;
 
   if(pe0 > pf || pe2 > pf || pe1 > pf) {
-    throw std::string("pe0, pe1  and pe2  must be <=pf");
+    throw std::runtime_error("pe0, pe1  and pe2  must be <=pf");
   }
   _pOrderEdge[0] = pe0;
   _pOrderEdge[1] = pe1;
@@ -61,7 +62,7 @@ double HierarchicalBasisH1Tria::_affineCoordinate(int const &j, double const &u,
   case(1): return 0.5 * (1 + v);
   case(2): return -0.5 * (u + v);
   case(3): return 0.5 * (1 + u);
-  default: throw std::string("j must be : 1<=j<=3");
+  default: throw std::runtime_error("j must be : 1<=j<=3");
   }
 }
 

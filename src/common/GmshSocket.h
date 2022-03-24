@@ -28,6 +28,7 @@
 #include "GmshConfig.h"
 
 #include <string>
+#include <stdexcept>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -361,7 +362,7 @@ public:
       unlink(_sockname.c_str());
       // create a socket
       tmpsock = socket(PF_UNIX, SOCK_STREAM, 0);
-      if(tmpsock < 0) throw "Couldn't create socket";
+      if(tmpsock < 0) throw std::runtime_error("Couldn't create socket");
       // bind the socket to its name
       struct sockaddr_un addr_un;
       memset((char *)&addr_un, 0, sizeof(addr_un));
@@ -369,12 +370,12 @@ public:
       addr_un.sun_family = AF_UNIX;
       if(bind(tmpsock, (struct sockaddr *)&addr_un, sizeof(addr_un)) < 0) {
         CloseSocket(tmpsock);
-        throw "Couldn't bind socket to name";
+        throw std::runtime_error("Couldn't bind socket to name");
       }
       // change permissions on the socket name in case it has to be rm'd later
       chmod(_sockname.c_str(), 0666);
 #else
-      throw "Unix sockets not available on Windows";
+      throw std::runtime_error("Unix sockets not available on Windows");
 #endif
     }
     else {
@@ -393,7 +394,7 @@ public:
 #else
       if(tmpsock == (int)INVALID_SOCKET)
 #endif
-        throw "Couldn't create socket";
+        throw std::runtime_error("Couldn't create socket");
       // bind the socket to its name
       struct sockaddr_in addr_in;
       memset((char *)&addr_in, 0, sizeof(addr_in));
@@ -402,7 +403,7 @@ public:
       addr_in.sin_port = htons(_portno); // random assign if _portno == 0
       if(bind(tmpsock, (struct sockaddr *)&addr_in, sizeof(addr_in)) < 0) {
         CloseSocket(tmpsock);
-        throw "Couldn't bind socket to name";
+        throw std::runtime_error("Couldn't bind socket to name");
       }
       if(!_portno) { // retrieve name if randomly assigned port
         socklen_t addrlen = sizeof(addr_in);
@@ -428,14 +429,14 @@ public:
     // them automatically rejected)
     if(listen(tmpsock, 20)) {
       CloseSocket(tmpsock);
-      throw "Socket listen failed";
+      throw std::runtime_error("Socket listen failed");
     }
 
     // wait until we get data
     int ret = NonBlockingWait(0.001, timeout, tmpsock);
     if(ret) {
       CloseSocket(tmpsock);
-      if(ret == 2) { throw "Socket listening timeout"; }
+      if(ret == 2) { throw std::runtime_error("Socket listening timeout"); }
       else {
         return -1; // stopped listening
       }
@@ -457,7 +458,7 @@ public:
       setsockopt(_sock, IPPROTO_TCP, TCP_NODELAY, &one, sizeof(one));
     }
     CloseSocket(tmpsock);
-    if(_sock < 0) throw "Socket accept failed";
+    if(_sock < 0) throw std::runtime_error("Socket accept failed");
     return _sock;
   }
   int Shutdown()
