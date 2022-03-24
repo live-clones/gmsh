@@ -306,8 +306,8 @@ SOrientedBoundingBox::buildOBB(std::vector<SPoint3> &vertices)
 
   try {
     record.MakeMeshWithPoints();
-  } catch(const char *err) {
-    Msg::Error("%s", err);
+  } catch(std::runtime_error &e) {
+    Msg::Error("%s", e.what());
   }
 
   std::vector<Segment> convex_hull;

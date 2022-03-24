@@ -3173,7 +3173,7 @@ Set the numerical list option @code{option} to value @code{value} for field
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L1788,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1572,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4162,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L3601,Julia}
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/t10.cpp#L48,t10.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorials/python/t10.py#L44,t10.py}, @url{@value{GITLAB-PREFIX}/examples/api/extend_field.py#L23,extend_field.py}, @url{@value{GITLAB-PREFIX}/examples/api/naca_boundary_layer_2d.py#L106,naca_boundary_layer_2d.py})
+C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/t10.cpp#L48,t10.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorials/python/t10.py#L44,t10.py}, @url{@value{GITLAB-PREFIX}/examples/api/extend_field.py#L23,extend_field.py}, @url{@value{GITLAB-PREFIX}/examples/api/naca_boundary_layer_2d.py#L106,naca_boundary_layer_2d.py}, @url{@value{GITLAB-PREFIX}/examples/api/ocean.py#L4544,ocean.py})
 @end table
 
 @item gmsh/model/mesh/field/getNumbers
@@ -3552,7 +3552,7 @@ integer value
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L2001,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1757,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4633,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4017,Julia}
 @item Examples:
-Python (@url{@value{GITLAB-PREFIX}/examples/api/ocean.py#L4,ocean.py})
+Python (@url{@value{GITLAB-PREFIX}/examples/api/ocean.py#L9,ocean.py})
 @end table
 
 @item gmsh/model/geo/addPointOnGeometry
@@ -3573,7 +3573,7 @@ integer value
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L2013,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1768,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4662,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4038,Julia}
 @item Examples:
-Python (@url{@value{GITLAB-PREFIX}/examples/api/ocean.py#L6,ocean.py})
+Python (@url{@value{GITLAB-PREFIX}/examples/api/ocean.py#L11,ocean.py})
 @end table
 
 @item gmsh/model/geo/extrude

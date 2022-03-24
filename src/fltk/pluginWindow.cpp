@@ -192,7 +192,7 @@ static void plugin_run_cb(Fl_Widget *w, void *data)
             pp->execute(nullptr);
             add_scripting(pp, nullptr);
           }
-        } catch(GMSH_Plugin *err) {
+        } catch(...) {
           char tmp[256];
           pp->catchErrorMessage(tmp);
           Msg::Warning("%s", tmp);

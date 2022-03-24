@@ -4,10 +4,13 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 //
 // Contributed by Ismail Badia.
+
 // Reference :  "Higher-Order Finite Element  Methods"; Pavel Solin, Karel
-// Segeth ,
-//                 Ivo Dolezel , Chapman and Hall/CRC; Edition : Har/Cdr (2003).
+// Segeth, Ivo Dolezel, Chapman and Hall/CRC; Edition : Har/Cdr (2003).
+
+#include <stdexcept>
 #include "HierarchicalBasisHcurlPri.h"
+
 HierarchicalBasisHcurlPri::HierarchicalBasisHcurlPri(int order)
 {
   _nvertex = 6;
@@ -55,7 +58,7 @@ double HierarchicalBasisHcurlPri::_affineCoordinate(const int &j,
   case(3): return 0.5 * (1 + u);
   case(4): return 0.5 * (1 + w);
   case(5): return 0.5 * (1 - w);
-  default: throw std::string("j must be : 1<=j<=5");
+  default: throw std::runtime_error("j must be : 1<=j<=5");
   }
 }
 
@@ -790,7 +793,7 @@ void HierarchicalBasisHcurlPri::orientOneFace(
           }
         }
         else {
-          throw std::string("unknown typeFunction");
+          throw std::runtime_error("unknown typeFunction");
         }
       }
     }
@@ -1185,7 +1188,7 @@ void HierarchicalBasisHcurlPri::orientOneFace(
         }
       }
       else {
-        throw std::string("unknown typeFunction");
+        throw std::runtime_error("unknown typeFunction");
       }
     }
   }

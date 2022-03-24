@@ -4,10 +4,11 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 //
 // Contributed by Ismail Badia.
-// Reference :  "Higher-Order Finite Element  Methods"; Pavel Solin, Karel
-// Segeth ,
-//                 Ivo Dolezel , Chapman and Hall/CRC; Edition : Har/Cdr (2003).
 
+// Reference :  "Higher-Order Finite Element  Methods"; Pavel Solin, Karel
+// Segeth, Ivo Dolezel, Chapman and Hall/CRC; Edition : Har/Cdr (2003).
+
+#include <stdexcept>
 #include "HierarchicalBasisH1Line.h"
 
 HierarchicalBasisH1Line::HierarchicalBasisH1Line(int pe)
@@ -36,7 +37,7 @@ double HierarchicalBasisH1Line::_affineCoordinate(int j, double u)
   switch(j) {
   case(1): return 0.5 * (1 + u);
   case(2): return 0.5 * (1 - u);
-  default: throw std::string("j must be : 1<=j<=2");
+  default: throw std::runtime_error("j must be : 1<=j<=2");
   }
 }
 

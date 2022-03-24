@@ -163,9 +163,9 @@ public:
     int sock;
     try {
       sock = Start(exe, args, sockname, CTX::instance()->solver.timeout);
-    } catch(const char *err) {
-      Msg::Error("Abnormal server termination (%s on socket %s)", err,
-                 sockname.c_str());
+    } catch(std::runtime_error &e) {
+      Msg::Error("Abnormal server termination (%s on socket %s)",
+                 e.what(), sockname.c_str());
       sock = -1;
     }
 

@@ -5,6 +5,7 @@
 //
 // Contributed by Ismail Badia.
 
+#include <stdexcept>
 #include "HierarchicalBasisH1Quad.h"
 
 HierarchicalBasisH1Quad::HierarchicalBasisH1Quad(int pf1, int pf2, int pe0,
@@ -22,9 +23,11 @@ HierarchicalBasisH1Quad::HierarchicalBasisH1Quad(int pf1, int pf2, int pe0,
   _nBubbleFunction = 0;
   _pf1 = pf1;
   _pf2 = pf2;
-  if(pe1 > pf2 || pe3 > pf2) { throw std::string("pe1 and pe3 must be <=pf2"); }
+  if(pe1 > pf2 || pe3 > pf2) {
+    throw std::runtime_error("pe1 and pe3 must be <=pf2");
+  }
   if(pe0 > pf1 || pe2 > pf1) {
-    throw std::string("pe0  and pe2  must be <=pf1");
+    throw std::runtime_error("pe0  and pe2  must be <=pf1");
   }
   _pOrderEdge[0] = pe0;
   _pOrderEdge[1] = pe1;
@@ -66,7 +69,7 @@ double HierarchicalBasisH1Quad::_affineCoordinate(int const &j, double const &u,
   case(2): return 0.5 * (1 - u);
   case(3): return 0.5 * (1 + v);
   case(4): return 0.5 * (1 - v);
-  default: throw std::string("j must be : 1<=j<=4");
+  default: throw std::runtime_error("j must be : 1<=j<=4");
   }
 }
 

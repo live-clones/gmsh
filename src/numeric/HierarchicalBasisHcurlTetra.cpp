@@ -4,11 +4,13 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 //
 // Contributed by Ismail Badia.
-// Reference :  "Higher-Order Finite Element  Methods"; Pavel Solin, Karel
-// Segeth ,
-//                 Ivo Dolezel , Chapman and Hall/CRC; Edition : Har/Cdr (2003).
 
+// Reference :  "Higher-Order Finite Element  Methods"; Pavel Solin, Karel
+// Segeth, Ivo Dolezel, Chapman and Hall/CRC; Edition : Har/Cdr (2003).
+
+#include <stdexcept>
 #include "HierarchicalBasisHcurlTetra.h"
+
 HierarchicalBasisHcurlTetra::HierarchicalBasisHcurlTetra(int order)
 {
   _nvertex = 4;
@@ -49,7 +51,7 @@ double HierarchicalBasisHcurlTetra::_affineCoordinate(const int &j,
   case(2): return -0.5 * (1 + u + v + w);
   case(3): return 0.5 * (1 + u);
   case(4): return 0.5 * (1 + w);
-  default: throw std::string("j must be : 1<=j<=4");
+  default: throw std::runtime_error("j must be : 1<=j<=4");
   }
 }
 
@@ -917,7 +919,7 @@ void HierarchicalBasisHcurlTetra::orientOneFace(
       }
     }
     else {
-      throw std::string("unknown typeFunction");
+      throw std::runtime_error("unknown typeFunction");
     }
   }
 }

@@ -4,6 +4,7 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <map>
+#include <stdexcept>
 #include <stdlib.h>
 #include "GmshConfig.h"
 #include "StringUtils.h"
@@ -119,7 +120,7 @@ int PluginManager::action(const std::string &pluginName,
                           const std::string &action, void *data)
 {
   GMSH_Plugin *plugin = find(pluginName);
-  if(!plugin) throw "Unknown plugin name";
+  if(!plugin) throw std::runtime_error("Unknown plugin name");
 
   if(action == "Run") {
     Msg::Info("Running Plugin(%s)...", pluginName.c_str());
@@ -128,7 +129,7 @@ int PluginManager::action(const std::string &pluginName,
     return tag;
   }
   else
-    throw "Unknown plugin action";
+    throw std::runtime_error("Unknown plugin action");
 }
 
 void PluginManager::setPluginOption(const std::string &pluginName,
@@ -136,7 +137,7 @@ void PluginManager::setPluginOption(const std::string &pluginName,
                                     const std::string &value)
 {
   GMSH_Plugin *plugin = find(pluginName);
-  if(!plugin) throw "Unknown plugin name";
+  if(!plugin) throw std::runtime_error("Unknown plugin name");
 
   for(int i = 0; i < plugin->getNbOptionsStr(); i++) {
     StringXString *sxs = plugin->getOptionStr(i);
@@ -145,7 +146,7 @@ void PluginManager::setPluginOption(const std::string &pluginName,
       return;
     }
   }
-  throw "Unknown plugin option name";
+  throw std::runtime_error("Unknown plugin option name");
 }
 
 void PluginManager::setPluginOption(const std::string &pluginName,
@@ -153,7 +154,7 @@ void PluginManager::setPluginOption(const std::string &pluginName,
                                     double const value)
 {
   GMSH_Plugin *plugin = find(pluginName);
-  if(!plugin) throw "Unknown plugin name";
+  if(!plugin) throw std::runtime_error("Unknown plugin name");
 
   for(int i = 0; i < plugin->getNbOptions(); i++) {
     StringXNumber *sxn = plugin->getOption(i);
@@ -162,7 +163,7 @@ void PluginManager::setPluginOption(const std::string &pluginName,
       return;
     }
   }
-  throw "Unknown plugin option name";
+  throw std::runtime_error("Unknown plugin option name");
 }
 
 PluginManager *PluginManager::instance()

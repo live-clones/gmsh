@@ -1050,6 +1050,7 @@ cwrap_header = """// {0}
 #include <string>
 #include <utility>
 #include <functional>
+#include <stdexcept>
 
 #ifndef M_PI
 #define M_PI (3.14159265358979323846)
@@ -1573,7 +1574,7 @@ class API:
                 if name == 'getLastError':  # special case for getLastError() function
                     fcwrap.write(
                         indent + "  " +
-                        'if(ierr) throw "Could not get last error";\n')
+                        'if(ierr) throw std::runtime_error("Could not get last error");\n')
                 else:
                     fcwrap.write(indent + "  " +
                                  "if(ierr) throwLastError();\n")
@@ -1621,11 +1622,11 @@ class API:
                     fcwrap.write(
                         '     gmshLoggerGetLastError(&api_error_, &ierr);\n')
                     fcwrap.write(
-                        '     if(ierr) throw "Could not get last error";\n')
+                        '     if(ierr) throw std::runtime_error("Could not get last error");\n')
                     fcwrap.write(
                         '     std::string error = std::string(api_error_);\n')
                     fcwrap.write('     gmshFree(api_error_);\n')
-                    fcwrap.write('     throw error;\n')
+                    fcwrap.write('     throw std::runtime_error(error);\n')
                     fcwrap.write("  }\n\n")
                     fcwrap.write("}\n\n")
                     for module in self.modules:

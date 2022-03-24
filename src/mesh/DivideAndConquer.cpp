@@ -15,6 +15,7 @@
 // Warning: point positions must be PERTURBED by a small random
 // value to avoid 3 aligned points or 4 cocyclical points!
 
+#include <stdexcept>
 #include "GmshMessage.h"
 #include "DivideAndConquer.h"
 #include "Numeric.h"
@@ -157,8 +158,8 @@ Segment DocRecord::UpperCommonTangent(DT vl, DT vr)
 int DocRecord::Qtest(PointNumero h, PointNumero i, PointNumero j, PointNumero k)
 {
   if((h == i) && (h == j) && (h == k)) {
-    throw "Identical points in triangulation: increase element size "
-          "or Mesh.RandomFactor";
+    throw std::runtime_error("Identical points in triangulation: "
+                             "increase element size or Mesh.RandomFactor");
     return 0;
   }
 
@@ -873,7 +874,8 @@ void DocRecord::Voronoi()
 
 void DocRecord::setPoints(fullMatrix<double> *p)
 {
-  if(numPoints != p->size1()) throw;
+  if(numPoints != p->size1())
+    throw std::runtime_error("Incompatible number of points");
   for(int i = 0; i < p->size1(); i++) {
     x(i) = (*p)(i, 0);
     y(i) = (*p)(i, 1);
