@@ -1369,7 +1369,7 @@ bool GFace::buildRepresentationCross(bool force)
           cross[dir].push_back(std::vector<SPoint3>());
       }
     }
-    while(cross[dir].back().empty())
+    while(!cross[dir].empty() && cross[dir].back().empty())
       cross[dir].pop_back();
   }
 
