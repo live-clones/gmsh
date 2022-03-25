@@ -143,6 +143,12 @@ GMSH_API void gmsh::initialize(int argc, char ** argv,
     _argc = argc;
     _argv = new char *[_argc + 1];
     for(int i = 0; i < argc; i++) _argv[i] = argv[i];
+
+#if defined(HAVE_FLTK)
+    // if the GUI is already running (rare case, but could happen), we're done
+    if(FlGui::available()) return;
+#endif
+
     if(run) {
       if(CTX::instance()->batch) {
         if(!Msg::GetGmshClient()) CTX::instance()->terminal = 1;
