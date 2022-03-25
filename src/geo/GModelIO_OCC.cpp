@@ -1037,9 +1037,9 @@ bool OCC_Internals::addEllipseArc(int &tag, int startTag, int centerTag,
       Msg::Error("The points do not define an ellipse");
       return false;
     }
-    Standard_Real a; // Major radius
-    Standard_Real b; // Minor radius
-    gp_Ax2 Axes; // Ellipse local coordinate system
+    Standard_Real a; // major radius
+    Standard_Real b; // minor radius
+    gp_Ax2 Axes; // ellipse local coordinate system
     if(a2 >= b2) {
       a = Sqrt(a2);
       b = Sqrt(b2);
@@ -1082,7 +1082,9 @@ bool OCC_Internals::addEllipseArc(int &tag, int startTag, int centerTag,
 }
 
 bool OCC_Internals::addCircle(int &tag, double x, double y, double z, double r,
-                              double angle1, double angle2)
+                              double angle1, double angle2,
+                              const std::vector<double> &N,
+                              const std::vector<double> &V)
 {
   if(tag >= 0 && _tagEdge.IsBound(tag)) {
     Msg::Error("OpenCASCADE curve with tag %d already exists", tag);
@@ -1095,11 +1097,26 @@ bool OCC_Internals::addCircle(int &tag, double x, double y, double z, double r,
 
   TopoDS_Edge result;
   try {
-    gp_Dir N_dir(0., 0., 1.);
-    gp_Dir x_dir(1., 0., 0.);
+    gp_Circ circ;
     gp_Pnt center(x, y, z);
-    gp_Ax2 axis(center, N_dir, x_dir);
-    gp_Circ circ(axis, r);
+    if(N.size() == 3 && V.size() == 3) {
+      gp_Dir N_dir(N[0], N[1], N[2]);
+      gp_Dir x_dir(V[0], V[1], V[2]);
+      gp_Ax2 axis(center, N_dir, x_dir);
+      circ.SetPosition(axis);
+    }
+    else if(N.size() == 3) {
+      gp_Dir N_dir(N[0], N[1], N[2]);
+      gp_Ax2 axis(center, N_dir);
+      circ.SetPosition(axis);
+    }
+    else {
+      gp_Dir N_dir(0., 0., 1.);
+      gp_Dir x_dir(1., 0., 0.);
+      gp_Ax2 axis(center, N_dir, x_dir);
+      circ.SetPosition(axis);
+    }
+    circ.SetRadius(r);
     if(angle1 == 0. && angle2 == 2 * M_PI) {
       result = BRepBuilderAPI_MakeEdge(circ);
     }
@@ -1125,7 +1142,8 @@ bool OCC_Internals::addCircle(int &tag, double x, double y, double z, double r,
 
 bool OCC_Internals::addEllipse(int &tag, double x, double y, double z,
                                double rx, double ry, double angle1,
-                               double angle2)
+                               double angle2, const std::vector<double> &N,
+                               const std::vector<double> &V)
 {
   if(tag >= 0 && _tagEdge.IsBound(tag)) {
     Msg::Error("OpenCASCADE curve with tag %d already exists", tag);
@@ -1142,16 +1160,32 @@ bool OCC_Internals::addEllipse(int &tag, double x, double y, double z,
 
   TopoDS_Edge result;
   try {
-    gp_Dir N_dir(0., 0., 1.);
-    gp_Dir x_dir(1., 0., 0.);
+    gp_Elips el;
     gp_Pnt center(x, y, z);
-    gp_Ax2 axis(center, N_dir, x_dir);
-    gp_Elips elips(axis, rx, ry);
-    if(angle1 == 0 && angle2 == 2 * M_PI) {
-      result = BRepBuilderAPI_MakeEdge(elips);
+    if(N.size() == 3 && V.size() == 3) {
+      gp_Dir N_dir(N[0], N[1], N[2]);
+      gp_Dir x_dir(V[0], V[1], V[2]);
+      gp_Ax2 axis(center, N_dir, x_dir);
+      el.SetPosition(axis);
+    }
+    else if(N.size() == 3) {
+      gp_Dir N_dir(N[0], N[1], N[2]);
+      gp_Ax2 axis(center, N_dir);
+      el.SetPosition(axis);
     }
     else {
-      Handle(Geom_Ellipse) E = new Geom_Ellipse(elips);
+      gp_Dir N_dir(0., 0., 1.);
+      gp_Dir x_dir(1., 0., 0.);
+      gp_Ax2 axis(center, N_dir, x_dir);
+      el.SetPosition(axis);
+    }
+    el.SetMajorRadius(rx);
+    el.SetMinorRadius(ry);
+    if(angle1 == 0 && angle2 == 2 * M_PI) {
+      result = BRepBuilderAPI_MakeEdge(el);
+    }
+    else {
+      Handle(Geom_Ellipse) E = new Geom_Ellipse(el);
       Handle(Geom_TrimmedCurve) arc =
         new Geom_TrimmedCurve(E, angle1, angle2, true);
       BRepBuilderAPI_MakeEdge e(arc);
@@ -1620,7 +1654,9 @@ bool OCC_Internals::addRectangle(int &tag, double x, double y, double z,
 }
 
 static bool makeDisk(TopoDS_Face &result, double xc, double yc, double zc,
-                     double rx, double ry)
+                     double rx, double ry,
+                     const std::vector<double> &N = std::vector<double>(),
+                     const std::vector<double> &V = std::vector<double>())
 {
   if(ry > rx) {
     Msg::Error("Major radius rx should be larger than minor radius ry");
@@ -1631,12 +1667,28 @@ static bool makeDisk(TopoDS_Face &result, double xc, double yc, double zc,
     return false;
   }
   try {
-    gp_Dir N_dir(0., 0., 1.);
-    gp_Dir x_dir(1., 0., 0.);
+    gp_Elips el;
     gp_Pnt center(xc, yc, zc);
-    gp_Ax2 axis(center, N_dir, x_dir);
-    gp_Elips ellipse = gp_Elips(axis, rx, ry);
-    TopoDS_Edge edge = BRepBuilderAPI_MakeEdge(ellipse);
+    if(N.size() == 3 && V.size() == 3) {
+      gp_Dir N_dir(N[0], N[1], N[2]);
+      gp_Dir x_dir(V[0], V[1], V[2]);
+      gp_Ax2 axis(center, N_dir, x_dir);
+      el.SetPosition(axis);
+    }
+    else if(N.size() == 3) {
+      gp_Dir N_dir(N[0], N[1], N[2]);
+      gp_Ax2 axis(center, N_dir);
+      el.SetPosition(axis);
+    }
+    else {
+      gp_Dir N_dir(0., 0., 1.);
+      gp_Dir x_dir(1., 0., 0.);
+      gp_Ax2 axis(center, N_dir, x_dir);
+      el.SetPosition(axis);
+    }
+    el.SetMajorRadius(rx);
+    el.SetMinorRadius(ry);
+    TopoDS_Edge edge = BRepBuilderAPI_MakeEdge(el);
     TopoDS_Wire wire = BRepBuilderAPI_MakeWire(edge);
     result = BRepBuilderAPI_MakeFace(wire);
   } catch(Standard_Failure &err) {
@@ -1647,14 +1699,15 @@ static bool makeDisk(TopoDS_Face &result, double xc, double yc, double zc,
 }
 
 bool OCC_Internals::addDisk(int &tag, double xc, double yc, double zc,
-                            double rx, double ry)
+                            double rx, double ry, const std::vector<double> &N,
+                            const std::vector<double> &V)
 {
   if(tag >= 0 && _tagFace.IsBound(tag)) {
     Msg::Error("OpenCASCADE surface with tag %d already exists", tag);
     return false;
   }
   TopoDS_Face result;
-  if(!makeDisk(result, xc, yc, zc, rx, ry)) return false;
+  if(!makeDisk(result, xc, yc, zc, rx, ry, N, V)) return false;
   if(tag < 0) tag = getMaxTag(2) + 1;
   _bind(result, tag, true);
   return true;
@@ -2570,10 +2623,10 @@ static bool makeCylinder(TopoDS_Solid &result, double x, double y, double z,
     return false;
   }
   try {
-    gp_Pnt aP(x, y, z);
-    gp_Vec aV(dx / H, dy / H, dz / H);
-    gp_Ax2 anAxes(aP, aV);
-    BRepPrimAPI_MakeCylinder c(anAxes, r, H, angle);
+    gp_Pnt p(x, y, z);
+    gp_Vec v(dx / H, dy / H, dz / H);
+    gp_Ax2 axis(p, v);
+    BRepPrimAPI_MakeCylinder c(axis, r, H, angle);
     c.Build();
     if(!c.IsDone()) {
       Msg::Error("Could not create cylinder");
@@ -2603,17 +2656,25 @@ bool OCC_Internals::addCylinder(int &tag, double x, double y, double z,
 }
 
 static bool makeTorus(TopoDS_Solid &result, double x, double y, double z,
-                      double r1, double r2, double angle)
+                      double r1, double r2, double angle,
+                      const std::vector<double> &N = std::vector<double>())
 {
   if(r1 <= 0 || r2 <= 0) {
     Msg::Error("Torus radii should be positive");
     return false;
   }
   try {
-    gp_Pnt aP(x, y, z);
-    gp_Vec aV(0, 0, 1);
-    gp_Ax2 anAxes(aP, aV);
-    BRepPrimAPI_MakeTorus t(anAxes, r1, r2, angle);
+    gp_Pnt p(x, y, z);
+    std::vector<double> NN(N);
+    if(NN.size() != 3) {
+      NN.resize(3);
+      NN[0] = 0.;
+      NN[1] = 0.;
+      NN[2] = 1.;
+    }
+    gp_Vec v(NN[0], NN[1], NN[2]);
+    gp_Ax2 axis(p, v);
+    BRepPrimAPI_MakeTorus t(axis, r1, r2, angle);
     t.Build();
     if(!t.IsDone()) {
       Msg::Error("Could not create torus");
@@ -2628,14 +2689,15 @@ static bool makeTorus(TopoDS_Solid &result, double x, double y, double z,
 }
 
 bool OCC_Internals::addTorus(int &tag, double x, double y, double z, double r1,
-                             double r2, double angle)
+                             double r2, double angle,
+                             const std::vector<double> &N)
 {
   if(tag >= 0 && _tagSolid.IsBound(tag)) {
     Msg::Error("OpenCASCADE volume with tag %d already exists", tag);
     return false;
   }
   TopoDS_Solid result;
-  if(!makeTorus(result, x, y, z, r1, r2, angle)) return false;
+  if(!makeTorus(result, x, y, z, r1, r2, angle, N)) return false;
   if(tag < 0) tag = getMaxTag(3) + 1;
   _bind(result, tag, true);
   return true;
@@ -2688,13 +2750,21 @@ bool OCC_Internals::addCone(int &tag, double x, double y, double z, double dx,
 }
 
 static bool makeWedge(TopoDS_Solid &result, double x, double y, double z,
-                      double dx, double dy, double dz, double ltx)
+                      double dx, double dy, double dz, double ltx,
+                      const std::vector<double> &N = std::vector<double>())
 {
   try {
-    gp_Pnt aP(x, y, z);
-    gp_Vec aV(0, 0, 1);
-    gp_Ax2 anAxes(aP, aV);
-    BRepPrimAPI_MakeWedge w(anAxes, dx, dy, dz, ltx);
+    gp_Pnt p(x, y, z);
+    std::vector<double> NN(N);
+    if(NN.size() != 3) {
+      NN.resize(3);
+      NN[0] = 0.;
+      NN[1] = 0.;
+      NN[2] = 1.;
+    }
+    gp_Vec v(NN[0], NN[1], NN[2]);
+    gp_Ax2 axis(p, v);
+    BRepPrimAPI_MakeWedge w(axis, dx, dy, dz, ltx);
     w.Build();
     if(!w.IsDone()) {
       Msg::Error("Could not create wedge");
@@ -2709,14 +2779,15 @@ static bool makeWedge(TopoDS_Solid &result, double x, double y, double z,
 }
 
 bool OCC_Internals::addWedge(int &tag, double x, double y, double z, double dx,
-                             double dy, double dz, double ltx)
+                             double dy, double dz, double ltx,
+                             const std::vector<double> &N)
 {
   if(tag >= 0 && _tagSolid.IsBound(tag)) {
     Msg::Error("OpenCASCADE volume with tag %d already exists", tag);
     return false;
   }
   TopoDS_Solid result;
-  if(!makeWedge(result, x, y, z, dx, dy, dz, ltx)) return false;
+  if(!makeWedge(result, x, y, z, dx, dy, dz, ltx, N)) return false;
   if(tag < 0) tag = getMaxTag(3) + 1;
   _bind(result, tag, true);
   return true;

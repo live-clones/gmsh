@@ -6256,13 +6256,15 @@ GMSH_API int gmsh::model::occ::addCircleArc(const int startTag,
 GMSH_API int gmsh::model::occ::addCircle(const double x, const double y,
                                          const double z, const double r,
                                          const int tag, const double angle1,
-                                         const double angle2)
+                                         const double angle2,
+                                         const std::vector<double> &zAxis,
+                                         const std::vector<double> &xAxis)
 {
   if(!_checkInit()) return -1;
   _createOcc();
   int outTag = tag;
   GModel::current()->getOCCInternals()->addCircle(outTag, x, y, z, r, angle1,
-                                                  angle2);
+                                                  angle2, zAxis, xAxis);
   return outTag;
 }
 
@@ -6283,13 +6285,16 @@ GMSH_API int gmsh::model::occ::addEllipse(const double x, const double y,
                                           const double z, const double r1,
                                           const double r2, const int tag,
                                           const double angle1,
-                                          const double angle2)
+                                          const double angle2,
+                                          const std::vector<double> &zAxis,
+                                          const std::vector<double> &xAxis)
 {
   if(!_checkInit()) return -1;
   _createOcc();
   int outTag = tag;
   GModel::current()->getOCCInternals()->addEllipse(outTag, x, y, z, r1, r2,
-                                                   angle1, angle2);
+                                                   angle1, angle2, zAxis,
+                                                   xAxis);
   return outTag;
 }
 
@@ -6361,12 +6366,15 @@ GMSH_API int gmsh::model::occ::addRectangle(const double x, const double y,
 
 GMSH_API int gmsh::model::occ::addDisk(const double xc, const double yc,
                                        const double zc, const double rx,
-                                       const double ry, const int tag)
+                                       const double ry, const int tag,
+                                       const std::vector<double> &zAxis,
+                                       const std::vector<double> &xAxis)
 {
   if(!_checkInit()) return -1;
   _createOcc();
   int outTag = tag;
-  GModel::current()->getOCCInternals()->addDisk(outTag, xc, yc, zc, rx, ry);
+  GModel::current()->getOCCInternals()->addDisk(outTag, xc, yc, zc, rx, ry,
+                                                zAxis, xAxis);
   return outTag;
 }
 
@@ -6542,26 +6550,28 @@ GMSH_API int gmsh::model::occ::addCone(const double x, const double y,
 GMSH_API int gmsh::model::occ::addWedge(const double x, const double y,
                                         const double z, const double dx,
                                         const double dy, const double dz,
-                                        const int tag, const double ltx)
+                                        const int tag, const double ltx,
+                                        const std::vector<double> &zAxis)
 {
   if(!_checkInit()) return -1;
   _createOcc();
   int outTag = tag;
   GModel::current()->getOCCInternals()->addWedge(outTag, x, y, z, dx, dy, dz,
-                                                 ltx);
+                                                 ltx, zAxis);
   return outTag;
 }
 
 GMSH_API int gmsh::model::occ::addTorus(const double x, const double y,
                                         const double z, const double r1,
                                         const double r2, const int tag,
-                                        const double angle)
+                                        const double angle,
+                                        const std::vector<double> &zAxis)
 {
   if(!_checkInit()) return -1;
   _createOcc();
   int outTag = tag;
   GModel::current()->getOCCInternals()->addTorus(outTag, x, y, z, r1, r2,
-                                                 angle);
+                                                 angle, zAxis);
   return outTag;
 }
 

@@ -2375,15 +2375,19 @@ namespace gmsh { // Top-level functions
       // Add a circle of center (`x', `y', `z') and radius `r' in the OpenCASCADE
       // CAD representation. If `tag' is positive, set the tag explicitly;
       // otherwise a new tag is selected automatically. If `angle1' and `angle2'
-      // are specified, create a circle arc between the two angles. Return the tag
-      // of the circle.
+      // are specified, create a circle arc between the two angles. If a vector
+      // `zAxis' of size 3 is provided, use it as the normal to the circle plane
+      // (z-axis). If a vector `xAxis' of size 3 is provided in addition to
+      // `zAxis', use it to define the x-axis. Return the tag of the circle.
       GMSH_API int addCircle(const double x,
                              const double y,
                              const double z,
                              const double r,
                              const int tag = -1,
                              const double angle1 = 0.,
-                             const double angle2 = 2*M_PI);
+                             const double angle2 = 2*M_PI,
+                             const std::vector<double> & zAxis = std::vector<double>(),
+                             const std::vector<double> & xAxis = std::vector<double>());
 
       // gmsh::model::occ::addEllipseArc
       //
@@ -2401,14 +2405,14 @@ namespace gmsh { // Top-level functions
 
       // gmsh::model::occ::addEllipse
       //
-      // Add an ellipse of center (`x', `y', `z') and radii `r1' and `r2' along the
-      // x- and y-axes, respectively, in the OpenCASCADE CAD representation. If
-      // `tag' is positive, set the tag explicitly; otherwise a new tag is selected
-      // automatically. If `angle1' and `angle2' are specified, create an ellipse
-      // arc between the two angles. Return the tag of the ellipse. Note that
-      // OpenCASCADE does not allow creating ellipses with the major radius (along
-      // the x-axis) smaller than or equal to the minor radius (along the y-axis):
-      // rotate the shape or use `addCircle' in such cases.
+      // Add an ellipse of center (`x', `y', `z') and radii `r1' and `r2' (with
+      // `r1' >= `r2') along the x- and y-axes, respectively, in the OpenCASCADE
+      // CAD representation. If `tag' is positive, set the tag explicitly;
+      // otherwise a new tag is selected automatically. If `angle1' and `angle2'
+      // are specified, create an ellipse arc between the two angles. If a vector
+      // `zAxis' of size 3 is provided, use it as the normal to the ellipse plane
+      // (z-axis). If a vector `xAxis' of size 3 is provided in addition to
+      // `zAxis', use it to define the x-axis. Return the tag of the ellipse.
       GMSH_API int addEllipse(const double x,
                               const double y,
                               const double z,
@@ -2416,7 +2420,9 @@ namespace gmsh { // Top-level functions
                               const double r2,
                               const int tag = -1,
                               const double angle1 = 0.,
-                              const double angle2 = 2*M_PI);
+                              const double angle2 = 2*M_PI,
+                              const std::vector<double> & zAxis = std::vector<double>(),
+                              const std::vector<double> & xAxis = std::vector<double>());
 
       // gmsh::model::occ::addSpline
       //
@@ -2494,15 +2500,20 @@ namespace gmsh { // Top-level functions
       // gmsh::model::occ::addDisk
       //
       // Add a disk in the OpenCASCADE CAD representation, with center (`xc', `yc',
-      // `zc') and radius `rx' along the x-axis and `ry' along the y-axis. If `tag'
-      // is positive, set the tag explicitly; otherwise a new tag is selected
-      // automatically. Return the tag of the disk.
+      // `zc') and radius `rx' along the x-axis and `ry' along the y-axis (`rx' >=
+      // `ry'). If `tag' is positive, set the tag explicitly; otherwise a new tag
+      // is selected automatically. If a vector `zAxis' of size 3 is provided, use
+      // it as the normal to the disk (z-axis). If a vector `xAxis' of size 3 is
+      // provided in addition to `zAxis', use it to define the x-axis. Return the
+      // tag of the disk.
       GMSH_API int addDisk(const double xc,
                            const double yc,
                            const double zc,
                            const double rx,
                            const double ry,
-                           const int tag = -1);
+                           const int tag = -1,
+                           const std::vector<double> & zAxis = std::vector<double>(),
+                           const std::vector<double> & xAxis = std::vector<double>());
 
       // gmsh::model::occ::addPlaneSurface
       //
@@ -2728,8 +2739,9 @@ namespace gmsh { // Top-level functions
       // by the right-angle point (`x', `y', `z') and the 3 extends along the x-,
       // y- and z-axes (`dx', `dy', `dz'). If `tag' is positive, set the tag
       // explicitly; otherwise a new tag is selected automatically. The optional
-      // argument `ltx' defines the top extent along the x-axis. Return the tag of
-      // the wedge.
+      // argument `ltx' defines the top extent along the x-axis. If a vector
+      // `zAxis' of size 3 is provided, use it to define the z-axis. Return the tag
+      // of the wedge.
       GMSH_API int addWedge(const double x,
                             const double y,
                             const double z,
@@ -2737,22 +2749,25 @@ namespace gmsh { // Top-level functions
                             const double dy,
                             const double dz,
                             const int tag = -1,
-                            const double ltx = 0.);
+                            const double ltx = 0.,
+                            const std::vector<double> & zAxis = std::vector<double>());
 
       // gmsh::model::occ::addTorus
       //
       // Add a torus in the OpenCASCADE CAD representation, defined by its center
       // (`x', `y', `z') and its 2 radii `r' and `r2'. If `tag' is positive, set
       // the tag explicitly; otherwise a new tag is selected automatically. The
-      // optional argument `angle' defines the angular opening (from 0 to 2*Pi).
-      // Return the tag of the wedge.
+      // optional argument `angle' defines the angular opening (from 0 to 2*Pi). If
+      // a vector `zAxis' of size 3 is provided, use it to define the z-axis.
+      // Return the tag of the torus.
       GMSH_API int addTorus(const double x,
                             const double y,
                             const double z,
                             const double r1,
                             const double r2,
                             const int tag = -1,
-                            const double angle = 2*M_PI);
+                            const double angle = 2*M_PI,
+                            const std::vector<double> & zAxis = std::vector<double>());
 
       // gmsh::model::occ::addThruSections
       //

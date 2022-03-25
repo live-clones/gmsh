@@ -4666,20 +4666,23 @@ end
 const add_circle_arc = addCircleArc
 
 """
-    gmsh.model.occ.addCircle(x, y, z, r, tag = -1, angle1 = 0., angle2 = 2*pi)
+    gmsh.model.occ.addCircle(x, y, z, r, tag = -1, angle1 = 0., angle2 = 2*pi, zAxis = Cdouble[], xAxis = Cdouble[])
 
 Add a circle of center (`x`, `y`, `z`) and radius `r` in the OpenCASCADE CAD
 representation. If `tag` is positive, set the tag explicitly; otherwise a new
 tag is selected automatically. If `angle1` and `angle2` are specified, create a
-circle arc between the two angles. Return the tag of the circle.
+circle arc between the two angles. If a vector `zAxis` of size 3 is provided,
+use it as the normal to the circle plane (z-axis). If a vector `xAxis` of size 3
+is provided in addition to `zAxis`, use it to define the x-axis. Return the tag
+of the circle.
 
 Return an integer value.
 """
-function addCircle(x, y, z, r, tag = -1, angle1 = 0., angle2 = 2*pi)
+function addCircle(x, y, z, r, tag = -1, angle1 = 0., angle2 = 2*pi, zAxis = Cdouble[], xAxis = Cdouble[])
     ierr = Ref{Cint}()
     api_result_ = ccall((:gmshModelOccAddCircle, gmsh.lib), Cint,
-          (Cdouble, Cdouble, Cdouble, Cdouble, Cint, Cdouble, Cdouble, Ptr{Cint}),
-          x, y, z, r, tag, angle1, angle2, ierr)
+          (Cdouble, Cdouble, Cdouble, Cdouble, Cint, Cdouble, Cdouble, Ptr{Cdouble}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Cint}),
+          x, y, z, r, tag, angle1, angle2, convert(Vector{Cdouble}, zAxis), length(zAxis), convert(Vector{Cdouble}, xAxis), length(xAxis), ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_result_
 end
@@ -4708,24 +4711,24 @@ end
 const add_ellipse_arc = addEllipseArc
 
 """
-    gmsh.model.occ.addEllipse(x, y, z, r1, r2, tag = -1, angle1 = 0., angle2 = 2*pi)
+    gmsh.model.occ.addEllipse(x, y, z, r1, r2, tag = -1, angle1 = 0., angle2 = 2*pi, zAxis = Cdouble[], xAxis = Cdouble[])
 
-Add an ellipse of center (`x`, `y`, `z`) and radii `r1` and `r2` along the x-
-and y-axes, respectively, in the OpenCASCADE CAD representation. If `tag` is
-positive, set the tag explicitly; otherwise a new tag is selected automatically.
-If `angle1` and `angle2` are specified, create an ellipse arc between the two
-angles. Return the tag of the ellipse. Note that OpenCASCADE does not allow
-creating ellipses with the major radius (along the x-axis) smaller than or equal
-to the minor radius (along the y-axis): rotate the shape or use `addCircle` in
-such cases.
+Add an ellipse of center (`x`, `y`, `z`) and radii `r1` and `r2` (with `r1` >=
+`r2`) along the x- and y-axes, respectively, in the OpenCASCADE CAD
+representation. If `tag` is positive, set the tag explicitly; otherwise a new
+tag is selected automatically. If `angle1` and `angle2` are specified, create an
+ellipse arc between the two angles. If a vector `zAxis` of size 3 is provided,
+use it as the normal to the ellipse plane (z-axis). If a vector `xAxis` of size
+3 is provided in addition to `zAxis`, use it to define the x-axis. Return the
+tag of the ellipse.
 
 Return an integer value.
 """
-function addEllipse(x, y, z, r1, r2, tag = -1, angle1 = 0., angle2 = 2*pi)
+function addEllipse(x, y, z, r1, r2, tag = -1, angle1 = 0., angle2 = 2*pi, zAxis = Cdouble[], xAxis = Cdouble[])
     ierr = Ref{Cint}()
     api_result_ = ccall((:gmshModelOccAddEllipse, gmsh.lib), Cint,
-          (Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cint, Cdouble, Cdouble, Ptr{Cint}),
-          x, y, z, r1, r2, tag, angle1, angle2, ierr)
+          (Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cint, Cdouble, Cdouble, Ptr{Cdouble}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Cint}),
+          x, y, z, r1, r2, tag, angle1, angle2, convert(Vector{Cdouble}, zAxis), length(zAxis), convert(Vector{Cdouble}, xAxis), length(xAxis), ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_result_
 end
@@ -4859,20 +4862,22 @@ end
 const add_rectangle = addRectangle
 
 """
-    gmsh.model.occ.addDisk(xc, yc, zc, rx, ry, tag = -1)
+    gmsh.model.occ.addDisk(xc, yc, zc, rx, ry, tag = -1, zAxis = Cdouble[], xAxis = Cdouble[])
 
 Add a disk in the OpenCASCADE CAD representation, with center (`xc`, `yc`, `zc`)
-and radius `rx` along the x-axis and `ry` along the y-axis. If `tag` is
-positive, set the tag explicitly; otherwise a new tag is selected automatically.
-Return the tag of the disk.
+and radius `rx` along the x-axis and `ry` along the y-axis (`rx` >= `ry`). If
+`tag` is positive, set the tag explicitly; otherwise a new tag is selected
+automatically. If a vector `zAxis` of size 3 is provided, use it as the normal
+to the disk (z-axis). If a vector `xAxis` of size 3 is provided in addition to
+`zAxis`, use it to define the x-axis. Return the tag of the disk.
 
 Return an integer value.
 """
-function addDisk(xc, yc, zc, rx, ry, tag = -1)
+function addDisk(xc, yc, zc, rx, ry, tag = -1, zAxis = Cdouble[], xAxis = Cdouble[])
     ierr = Ref{Cint}()
     api_result_ = ccall((:gmshModelOccAddDisk, gmsh.lib), Cint,
-          (Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cint, Ptr{Cint}),
-          xc, yc, zc, rx, ry, tag, ierr)
+          (Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cint, Ptr{Cdouble}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Cint}),
+          xc, yc, zc, rx, ry, tag, convert(Vector{Cdouble}, zAxis), length(zAxis), convert(Vector{Cdouble}, xAxis), length(xAxis), ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_result_
 end
@@ -5180,42 +5185,43 @@ end
 const add_cone = addCone
 
 """
-    gmsh.model.occ.addWedge(x, y, z, dx, dy, dz, tag = -1, ltx = 0.)
+    gmsh.model.occ.addWedge(x, y, z, dx, dy, dz, tag = -1, ltx = 0., zAxis = Cdouble[])
 
 Add a right angular wedge in the OpenCASCADE CAD representation, defined by the
 right-angle point (`x`, `y`, `z`) and the 3 extends along the x-, y- and z-axes
 (`dx`, `dy`, `dz`). If `tag` is positive, set the tag explicitly; otherwise a
 new tag is selected automatically. The optional argument `ltx` defines the top
-extent along the x-axis. Return the tag of the wedge.
+extent along the x-axis. If a vector `zAxis` of size 3 is provided, use it to
+define the z-axis. Return the tag of the wedge.
 
 Return an integer value.
 """
-function addWedge(x, y, z, dx, dy, dz, tag = -1, ltx = 0.)
+function addWedge(x, y, z, dx, dy, dz, tag = -1, ltx = 0., zAxis = Cdouble[])
     ierr = Ref{Cint}()
     api_result_ = ccall((:gmshModelOccAddWedge, gmsh.lib), Cint,
-          (Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cint, Cdouble, Ptr{Cint}),
-          x, y, z, dx, dy, dz, tag, ltx, ierr)
+          (Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cint, Cdouble, Ptr{Cdouble}, Csize_t, Ptr{Cint}),
+          x, y, z, dx, dy, dz, tag, ltx, convert(Vector{Cdouble}, zAxis), length(zAxis), ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_result_
 end
 const add_wedge = addWedge
 
 """
-    gmsh.model.occ.addTorus(x, y, z, r1, r2, tag = -1, angle = 2*pi)
+    gmsh.model.occ.addTorus(x, y, z, r1, r2, tag = -1, angle = 2*pi, zAxis = Cdouble[])
 
 Add a torus in the OpenCASCADE CAD representation, defined by its center (`x`,
 `y`, `z`) and its 2 radii `r` and `r2`. If `tag` is positive, set the tag
 explicitly; otherwise a new tag is selected automatically. The optional argument
-`angle` defines the angular opening (from 0 to 2*Pi). Return the tag of the
-wedge.
+`angle` defines the angular opening (from 0 to 2*Pi). If a vector `zAxis` of
+size 3 is provided, use it to define the z-axis. Return the tag of the torus.
 
 Return an integer value.
 """
-function addTorus(x, y, z, r1, r2, tag = -1, angle = 2*pi)
+function addTorus(x, y, z, r1, r2, tag = -1, angle = 2*pi, zAxis = Cdouble[])
     ierr = Ref{Cint}()
     api_result_ = ccall((:gmshModelOccAddTorus, gmsh.lib), Cint,
-          (Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cint, Cdouble, Ptr{Cint}),
-          x, y, z, r1, r2, tag, angle, ierr)
+          (Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cint, Cdouble, Ptr{Cdouble}, Csize_t, Ptr{Cint}),
+          x, y, z, r1, r2, tag, angle, convert(Vector{Cdouble}, zAxis), length(zAxis), ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_result_
 end

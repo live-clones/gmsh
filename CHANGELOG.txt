@@ -8,8 +8,9 @@ API; "Attractor" field is now just a synonym for the newer (and more efficient)
 
 * Incompatible API changes: additional const qualifiers in C API; removed
   mesh/computeCohomology; new arguments to occ/getCurveLoops and
-  occ/getSurfaceLoops, changed arguments of mesh/computeHomology; new optional
-  arguments to model/addPhysicalGroup, model/geo/addPhysicalGroup,
+  occ/getSurfaceLoops; changed arguments of mesh/computeHomology; new optional
+  arguments to occ/addCircle, occ/addEllipse, occ/addDisk, occ/addTorus,
+  occ/addWedge, model/addPhysicalGroup, model/geo/addPhysicalGroup,
   mesh/removeDuplicateNodes and mesh/setRecombine.
 
 4.9.5 (February 21, 2022): dynamic Gmsh library now also only exports public
