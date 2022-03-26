@@ -191,6 +191,95 @@ void HierarchicalBasisHdivBrick::orientOneFace(
   int const &flag2, int const &flag3, int const &faceNumber,
   std::vector< double > &faceFunctions)
 {
+  if(!(flag1 == 1 && flag2 == 1 && flag3 == 1)) {
+    int iterator = 0;
+    for(int i = 0; i < faceNumber; i++) {
+      iterator += (_pOrderFace1[i] + 1) * (_pOrderFace2[i] + 1);
+    }
+    if(flag3 == 1) {
+      for(int it1 = 0; it1 < _pOrderFace1[faceNumber] + 1; it1++) {
+        for(int it2 = 0; it2 < _pOrderFace2[faceNumber] + 1; it2++) {
+          int impactFlag1 = 1;
+          int impactFlag2 = 1;
+          if(flag1 == -1 && it1 % 2 == 0) { impactFlag1 = -1; }
+          if(flag2 == -1 && it2 % 2 == 0) { impactFlag2 = -1; }
+          faceFunctions[iterator] =
+            faceFunctions[iterator] * impactFlag1 * impactFlag2;
+          iterator++;
+        }
+      }
+    }
+    else {
+      std::vector<double> uvw(3);
+      uvw[0] = u;
+      uvw[1] = v;
+      uvw[2] = w;
+      double dlambda = 0.;
+      int var1 = 0;
+      int var2 = 0;
+      std::vector<double> direction(3, 0);
+      std::vector<double> legendreVector1(_pOrderFace1[faceNumber] + 1);
+      std::vector<double> legendreVector2(_pOrderFace2[faceNumber] + 1);
+      switch(faceNumber) {
+      case(0):
+        dlambda = -0.5;
+        var1 = 0;
+        var2 = 1;
+        direction[2] = 1;
+        break;
+      case(1):
+        dlambda = -0.5;
+        var1 = 0;
+        var2 = 2;
+        direction[1] = 1;
+        break;
+      case(2):
+        dlambda = -0.5;
+        var1 = 1;
+        var2 = 2;
+        direction[0] = 1;
+        break;
+      case(3):
+        dlambda = 0.5;
+        var1 = 1;
+        var2 = 2;
+        direction[0] = 1;
+        break;
+      case(4):
+        dlambda = 0.5;
+        var1 = 0;
+        var2 = 2;
+        direction[1] = 1;
+        break;
+      case(5):
+        dlambda = 0.5;
+        var1 = 0;
+        var2 = 1;
+        direction[2] = 1;
+        break;
+      }
+      for(int it = 0; it <= _pOrderFace1[faceNumber]; it++) {
+        legendreVector1[it] = OrthogonalPoly::EvalLegendre(it, uvw[var1]);
+      }
+      for(int it = 0; it <= _pOrderFace2[faceNumber]; it++) {
+        legendreVector2[it] = OrthogonalPoly::EvalLegendre(it, uvw[var2]);
+      }
+      for(int index1 = 0; index1 < _pOrderFace2[faceNumber] + 1; index1++) {
+        for(int index2 = 0; index2 < _pOrderFace1[faceNumber] + 1; index2++) {
+          int impactFlag1 = 1;
+          int impactFlag2 = 1;
+          if(flag1 == -1 && index1 % 2 == 0) { impactFlag1 = -1; }
+          if(flag2 == -1 && index2 % 2 == 0) { impactFlag2 = -1; }
+          for(int j = 0; j < 3; j++) {
+            faceFunctions[iterator] +=
+              dlambda * legendreVector1[index2] * legendreVector2[index1]
+                * direction[j] * impactFlag1 * impactFlag2;
+          }
+          iterator++;
+        }
+      }
+    }
+  }
 }
 
 void HierarchicalBasisHdivBrick::orientOneFace(
@@ -209,7 +298,7 @@ void HierarchicalBasisHdivBrick::orientOneFace(
           int impactFlag1 = 1;
           int impactFlag2 = 1;
           if(flag1 == -1 && it1 % 2 == 0) { impactFlag1 = -1; }
-          if(flag2 == -1 && it2 % 2 != 0) { impactFlag2 = -1; }
+          if(flag2 == -1 && it2 % 2 == 0) { impactFlag2 = -1; }
           faceFunctions[iterator][0] =
             faceFunctions[iterator][0] * impactFlag1 * impactFlag2;
           faceFunctions[iterator][1] =
@@ -221,7 +310,74 @@ void HierarchicalBasisHdivBrick::orientOneFace(
       }
     }
     else {
-    
+      std::vector<double> uvw(3);
+      uvw[0] = u;
+      uvw[1] = v;
+      uvw[2] = w;
+      double lambda = 0.;
+      int var1 = 0;
+      int var2 = 0;
+      std::vector<double> direction(3, 0);
+      std::vector<double> legendreVector1(_pOrderFace1[faceNumber] + 1);
+      std::vector<double> legendreVector2(_pOrderFace2[faceNumber] + 1);
+      switch(faceNumber) {
+      case(0):
+        lambda = _affineCoordinate(6, u, v, w);
+        var1 = 0;
+        var2 = 1;
+        direction[2] = 1;
+        break;
+      case(1):
+        lambda = _affineCoordinate(4, u, v, w);
+        var1 = 0;
+        var2 = 2;
+        direction[1] = 1;
+        break;
+      case(2):
+        lambda = _affineCoordinate(2, u, v, w);
+        var1 = 1;
+        var2 = 2;
+        direction[0] = 1;
+        break;
+      case(3):
+        lambda = _affineCoordinate(1, u, v, w);
+        var1 = 1;
+        var2 = 2;
+        direction[0] = 1;
+        break;
+      case(4):
+        lambda = _affineCoordinate(3, u, v, w);
+        var1 = 0;
+        var2 = 2;
+        direction[1] = 1;
+        break;
+      case(5):
+        lambda = _affineCoordinate(5, u, v, w);
+        var1 = 0;
+        var2 = 1;
+        direction[2] = 1;
+        break;
+      }
+      for(int it = 0; it <= _pOrderFace1[faceNumber]; it++) {
+        legendreVector1[it] = OrthogonalPoly::EvalLegendre(it, uvw[var1]);
+      }
+      for(int it = 0; it <= _pOrderFace2[faceNumber]; it++) {
+        legendreVector2[it] = OrthogonalPoly::EvalLegendre(it, uvw[var2]);
+      }
+      for(int index1 = 0; index1 < _pOrderFace2[faceNumber] + 1; index1++) {
+        for(int index2 = 0; index2 < _pOrderFace1[faceNumber] + 1; index2++) {
+          int impactFlag1 = 1;
+          int impactFlag2 = 1;
+          if(flag1 == -1 && index1 % 2 == 0) { impactFlag1 = -1; }
+          if(flag2 == -1 && index2 % 2 == 0) { impactFlag2 = -1; }
+          for(int j = 0; j < 3; j++) {
+            faceFunctions[iterator][j] =
+              lambda * legendreVector1[index2] * legendreVector2[index1]
+                * direction[j] * impactFlag1 * impactFlag2;
+          }
+          iterator++;
+        }
+      }
     }
   }
 }
@@ -420,42 +576,35 @@ void HierarchicalBasisHdivBrick::getKeysInfo(
 {
   int it = 0;
   for(int iFace = 0; iFace < _nfaceQuad; iFace++) {
-    for(int index1 = 0; index1 <= _pOrderFace1[iFace]; index1++) {
-      for(int index2 = 2; index2 <= _pOrderFace2[iFace] + 1; index2++) {
+    for(int index1 = 0; index1 <= _pOrderFace1[iFace] + 1; index1++) {
+      for(int index2 = 0; index2 <= _pOrderFace2[iFace] + 1; index2++) {
         functionTypeInfo[it] = 2;
         orderInfo[it] = std::max(index1, index2);
         it++;
       }
     }
-    for(int index1 = 2; index1 <= _pOrderFace1[iFace] + 1; index1++) {
-      for(int index2 = 0; index2 <= _pOrderFace2[iFace]; index2++) {
-        functionTypeInfo[it] = 2;
-        orderInfo[it] = std::max(index1, index2);
+  }
+  for(int ipb1 = 0; ipb1 < _pb1; ipb1++) {
+    for(int ipb2 = 0; ipb2 < _pb2 + 1; ipb2++) {
+      for(int ipb3 = 0; ipb3 < _pb3 + 1; ipb3++) {
+        functionTypeInfo[it] = 3;
+        orderInfo[it] = std::max(std::max(ipb1, ipb2), ipb3);
         it++;
       }
     }
   }
   for(int ipb1 = 0; ipb1 < _pb1 + 1; ipb1++) {
-    for(int ipb2 = 2; ipb2 <= _pb2 + 1; ipb2++) {
-      for(int ipb3 = 2; ipb3 <= _pb3 + 1; ipb3++) {
-        functionTypeInfo[it] = 3;
-        orderInfo[it] = std::max(std::max(ipb1, ipb2), ipb3);
-        it++;
-      }
-    }
-  }
-  for(int ipb1 = 2; ipb1 <= _pb1 + 1; ipb1++) {
-    for(int ipb2 = 0; ipb2 < _pb2 + 1; ipb2++) {
-      for(int ipb3 = 2; ipb3 <= _pb3 + 1; ipb3++) {
-        functionTypeInfo[it] = 3;
-        orderInfo[it] = std::max(std::max(ipb1, ipb2), ipb3);
-        it++;
-      }
-    }
-  }
-  for(int ipb1 = 2; ipb1 <= _pb1 + 1; ipb1++) {
-    for(int ipb2 = 2; ipb2 <= _pb2 + 1; ipb2++) {
+    for(int ipb2 = 0; ipb2 < _pb2; ipb2++) {
       for(int ipb3 = 0; ipb3 < _pb3 + 1; ipb3++) {
+        functionTypeInfo[it] = 3;
+        orderInfo[it] = std::max(std::max(ipb1, ipb2), ipb3);
+        it++;
+      }
+    }
+  }
+  for(int ipb1 = 0; ipb1 < _pb1 + 1; ipb1++) {
+    for(int ipb2 = 0; ipb2 < _pb2 + 1; ipb2++) {
+      for(int ipb3 = 0; ipb3 < _pb3; ipb3++) {
         functionTypeInfo[it] = 3;
         orderInfo[it] = std::max(std::max(ipb1, ipb2), ipb3);
         it++;
