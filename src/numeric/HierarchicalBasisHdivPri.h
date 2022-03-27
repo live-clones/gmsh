@@ -93,8 +93,6 @@ public:
 private:
   int _pb1; // bubble function order in  direction uv
   int _pb2; // bubble function order in  direction w
-  int _pOrderEdge[9]; // Edge functions order (pOrderEdge[0] matches the order
-                      // of the edge 0)
   int _pOrderQuadFace1[3]; // Quad Face functions order in direction u
                            // (pOrderFace1[0] matches the order of face 0 in
                            // direction u)
@@ -105,7 +103,7 @@ private:
  
   static double
   _affineCoordinate(const int &j, const double &u, const double &v,
-                    const double &w); // affine coordinate lambdaj j=1..6
+                    const double &w); // affine coordinate lambdaj j=1..5
 
   virtual void
   generateHdivBasis(double const &u, double const &v, double const &w,

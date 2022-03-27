@@ -92,8 +92,6 @@ public:
                            
 private:
   int _pb; // bubble function order
-  int _pOrderEdge[6]; // Edge functions order (pOrderEdge[0] matches the order
-                      // of the edge 0)
   int _pOrderFace[4]; // Face functions order in direction
   
   static double
