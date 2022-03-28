@@ -31,7 +31,7 @@
 #include "PViewData.h"
 #include "PViewDataRemote.h"
 
-static void computeAndSendVertexArrays(GmshClient *client, bool compute = true)
+static void ComputeAndSendVertexArrays(GmshClient *client, bool compute = true)
 {
   for(std::size_t i = 0; i < PView::list.size(); i++) {
     PView *p = PView::list[i];
@@ -61,7 +61,7 @@ static void computeAndSendVertexArrays(GmshClient *client, bool compute = true)
 
 #if defined(HAVE_MPI)
 // This version sends VArrays using MPI
-static void computeAndSendVertexArrays()
+static void ComputeAndSendVertexArrays()
 {
   // compute...
   for(std::size_t i = 0; i < PView::list.size(); i++)
@@ -98,7 +98,7 @@ static void computeAndSendVertexArrays()
 }
 
 // Merge the vertex arrays
-static void addToVertexArrays(int length, const char *bytes, int swap)
+static void AddToVertexArrays(int length, const char *bytes, int swap)
 {
   std::string name;
   int num, type, numSteps;
@@ -131,7 +131,7 @@ static void addToVertexArrays(int length, const char *bytes, int swap)
 }
 #endif
 
-static void gatherAndSendVertexArrays(GmshClient *client, bool swap)
+static void GatherAndSendVertexArrays(GmshClient *client, bool swap)
 {
 #if defined(HAVE_MPI)
   // int rank = Msg::GetCommRank();
@@ -159,10 +159,10 @@ static void gatherAndSendVertexArrays(GmshClient *client, bool swap)
       char str[len];
       MPI_Recv(str, len, MPI_CHAR, status.MPI_SOURCE, MPI_GMSH_VARRAY,
                MPI_COMM_WORLD, &status2);
-      addToVertexArrays(len, str, swap);
+      AddToVertexArrays(len, str, swap);
     }
   }
-  computeAndSendVertexArrays(client, false);
+  ComputeAndSendVertexArrays(client, false);
 #endif
 }
 
@@ -176,9 +176,9 @@ int GmshRemote()
   if(!client && rank == 0) return 0;
 
   if(client && nbDaemon < 2)
-    computeAndSendVertexArrays(client);
+    ComputeAndSendVertexArrays(client);
   else if(client && nbDaemon >= 2 && rank == 0)
-    gatherAndSendVertexArrays(client, false);
+    GatherAndSendVertexArrays(client, false);
 
   while(1) {
     // on the node with MPI rank 0, communicate through a socket
@@ -216,25 +216,25 @@ int GmshRemote()
       else if(type == GmshSocket::GMSH_VERTEX_ARRAY) {
         ParseString(msg);
 #if !defined(HAVE_MPI)
-        computeAndSendVertexArrays(client);
+        ComputeAndSendVertexArrays(client);
 #else
         int mpi_msg = MPI_GMSH_PARSE_STRING;
         MPI_Bcast(&mpi_msg, 1, MPI_INT, 0, MPI_COMM_WORLD);
         MPI_Bcast(&length, 1, MPI_INT, 0, MPI_COMM_WORLD);
         MPI_Bcast(msg, length, MPI_CHAR, 0, MPI_COMM_WORLD);
-        gatherAndSendVertexArrays(client, swap);
+        GatherAndSendVertexArrays(client, swap);
 #endif
       }
       else if(type == GmshSocket::GMSH_MERGE_FILE) {
         MergeFile(msg);
 #if !defined(HAVE_MPI)
-        computeAndSendVertexArrays(client);
+        ComputeAndSendVertexArrays(client);
 #else
         int mpi_msg = MPI_GMSH_MERGE_FILE;
         MPI_Bcast(&mpi_msg, 1, MPI_INT, 0, MPI_COMM_WORLD);
         MPI_Bcast(&length, 1, MPI_INT, 0, MPI_COMM_WORLD);
         MPI_Bcast(msg, length, MPI_CHAR, 0, MPI_COMM_WORLD);
-        gatherAndSendVertexArrays(client, swap);
+        GatherAndSendVertexArrays(client, swap);
 #endif
       }
       else if(type == GmshSocket::GMSH_PARSE_STRING) {
@@ -262,7 +262,7 @@ int GmshRemote()
       int mpi_msg;
       MPI_Bcast(&mpi_msg, 1, MPI_INT, 0, MPI_COMM_WORLD);
       if(mpi_msg == MPI_GMSH_COMPUTE_VIEW)
-        computeAndSendVertexArrays();
+        ComputeAndSendVertexArrays();
       else if(mpi_msg == MPI_GMSH_SHUTDOWN)
         Msg::Exit(0);
       else if(mpi_msg == MPI_GMSH_PARSE_STRING) {
