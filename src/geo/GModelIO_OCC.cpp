@@ -942,15 +942,26 @@ bool OCC_Internals::addCircleArc(int &tag, int startTag, int centerTag,
   }
 
   TopoDS_Edge result;
+  TopoDS_Vertex start = TopoDS::Vertex(_tagVertex.Find(startTag));
+  TopoDS_Vertex center = TopoDS::Vertex(_tagVertex.Find(centerTag));
+  TopoDS_Vertex end = TopoDS::Vertex(_tagVertex.Find(endTag));
+  gp_Pnt aP1 = BRep_Tool::Pnt(start);
+  gp_Pnt aP2 = BRep_Tool::Pnt(center);
+  gp_Pnt aP3 = BRep_Tool::Pnt(end);
+  Standard_Real Radius = aP1.Distance(aP2);
+
+  gp_Pln p;
   try {
-    TopoDS_Vertex start = TopoDS::Vertex(_tagVertex.Find(startTag));
-    TopoDS_Vertex center = TopoDS::Vertex(_tagVertex.Find(centerTag));
-    TopoDS_Vertex end = TopoDS::Vertex(_tagVertex.Find(endTag));
-    gp_Pnt aP1 = BRep_Tool::Pnt(start);
-    gp_Pnt aP2 = BRep_Tool::Pnt(center);
-    gp_Pnt aP3 = BRep_Tool::Pnt(end);
-    Standard_Real Radius = aP1.Distance(aP2);
-    gce_MakeCirc MC(aP2, gce_MakePln(aP1, aP2, aP3).Value(), Radius);
+    p = gce_MakePln(aP1, aP2, aP3).Value();
+  }
+  catch (...){
+    Msg::Info("Could not make plane from 3 points - assuming z=%g", aP2.Z());
+    gp_Dir N_dir(0., 0., 1.);
+    p = gce_MakePln(aP2, N_dir).Value();
+  }
+
+  try {
+    gce_MakeCirc MC(aP2, p, Radius);
     if(!MC.IsDone()) {
       Msg::Error("Could not build circle");
       return false;
