@@ -116,16 +116,15 @@ void HierarchicalBasisHdivQuad::orientOneFace(
       }
 
       // face  functions:
-      int indexFaceFunction = 0;
       for(int index1 = 0; index1 < _pf2 + 1; index1++) {
         for(int index2 = 0; index2 < _pf1 + 1; index2++) {
           int impactFlag1 = 1;
           int impactFlag2 = 1;
           if(flag1 == -1 && index1 % 2 == 0) { impactFlag1 = -1; }
           if(flag2 == -1 && index2 % 2 == 0) { impactFlag2 = -1; }
-          faceFunctions[indexFaceFunction][0] = 0.;
-          faceFunctions[indexFaceFunction][1] = 0.;
-          faceFunctions[indexFaceFunction][2] = legendreVector[0][index1] *
+          faceFunctions[iterator][0] = 0.;
+          faceFunctions[iterator][1] = 0.;
+          faceFunctions[iterator][2] = legendreVector[0][index1] *
             legendreVector[1][index2] * impactFlag1 * impactFlag2;
           iterator++;
         }
@@ -140,14 +139,11 @@ void HierarchicalBasisHdivQuad::orientFace(
   const std::vector< double > &triFaceFunctionsAllOrientation,
   std::vector< double > &fTableCopy)
 {
-  int iterator = 0;
-  int numFaceFunctions =
-    (_pf1 + 1) * (_pf2 + 1);
   int iOrientation = numberOrientationQuadFace(flag1, flag2, flag3);
   int offset = iOrientation * _nQuadFaceFunction;
-  int offset2 = iterator + numFaceFunctions;
-  for(int i = iterator; i < offset2; i++) {
+  for(int i = 0; i < _nQuadFaceFunction; i++) {
     fTableCopy[i] = quadFaceFunctionsAllOrientation[i + offset];
+
   }
 }
 
@@ -157,13 +153,9 @@ void HierarchicalBasisHdivQuad::orientFace(
   const std::vector<std::vector<double> > &triFaceFunctionsAllOrientation,
   std::vector<std::vector<double> > &fTableCopy)
 {
-  int iterator = 0;
-  int numFaceFunctions =
-    (_pf1 + 1) * (_pf2 + 1);
   int iOrientation = numberOrientationQuadFace(flag1, flag2, flag3);
   int offset = iOrientation * _nQuadFaceFunction;
-  int offset2 = iterator + numFaceFunctions;
-  for(int i = iterator; i < offset2; i++) {
+  for(int i = 0; i < _nQuadFaceFunction; i++) {
     fTableCopy[i][0] = quadFaceFunctionsAllOrientation[i + offset][0];
     fTableCopy[i][1] = quadFaceFunctionsAllOrientation[i + offset][1];
     fTableCopy[i][2] = quadFaceFunctionsAllOrientation[i + offset][2];
@@ -182,8 +174,8 @@ void HierarchicalBasisHdivQuad::getKeysInfo(
   std::vector<int> &functionTypeInfo, std::vector<int> &orderInfo)
 {
   int it = 0;
-  for(int index1 = 0; index1 <= _pf1 + 1; index1++) {
-    for(int index2 = 0; index2 <= _pf2 + 1; index2++) {
+  for(int index1 = 0; index1 < _pf1 + 1; index1++) {
+    for(int index2 = 0; index2 < _pf2 + 1; index2++) {
       functionTypeInfo[it] = 2;
       orderInfo[it] = std::max(index1, index2);
       it++;

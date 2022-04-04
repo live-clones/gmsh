@@ -147,18 +147,13 @@ void HierarchicalBasisHdivPri::generateHdivBasis(
                       _pOrderQuadFace2[2] + 1),
              _pb2 + 1),
     0);
-//  std::vector<double> lobattoW(
-//    std::max(
-//      std::max(std::max(_pOrderQuadFace2[0] + 2, _pOrderQuadFace2[1] + 2),
-//               _pOrderQuadFace2[2] + 2),
-//      _pb2 + 2),
-//    0);
+  std::vector<double> lobattoW(2, 0);
   for(unsigned int k = 0; k < legendreW.size(); k++) {
     legendreW[k] = OrthogonalPoly::EvalLegendre(k, wc);
   }
-//  for(unsigned int k = 0; k < lobattoW.size(); k++) {
-//    lobattoW[k] = OrthogonalPoly::EvalLobatto(k, wc);
-//  }
+  for(unsigned int k = 0; k < lobattoW.size(); k++) {
+    lobattoW[k] = OrthogonalPoly::EvalLobatto(k, wc);
+  }
   // quad face
   int faceIt = 0;
   for(int iFace = 0; iFace < _nfaceQuad; iFace++) {
@@ -258,8 +253,140 @@ void HierarchicalBasisHdivPri::generateHdivBasis(
       }
     }
   }
+  int bubbleIt = 0;
   // horizontal bubble
+  if(_pb1 >= 2) {
+    // based on interior edge BFs of K_div^tri
+    std::vector< std::vector< double > > triEgdeBF(3, std::vector< double >(3, 0.));
+    for(int n1 = 0; n1 < _pb1 - 2; n1++) {
+      for(int iEdge = 0; iEdge < 3; ++iEdge) {
+        double prod = 0.;
+        int index = 0;
+        double t0 = 0., t1 = 0.;
+        switch(iEdge) {
+        case 0:
+          prod = lambda2 * lambda3;
+          index = 0;
+          t0 = 1.;
+          t1 = 0.;
+          break;
+        case 1:
+          {
+            prod = lambda1 * lambda3;
+            index = 1;
+            const double invSqrt2 = sqrt(0.5);
+            t0 = - invSqrt2;
+            t1 = invSqrt2;
+          }
+          break;
+        case 2:
+          prod = lambda1 * lambda2;
+          index = 3;
+          t0 = 0.;
+          t1 = 1.;
+          break;
+        }
+        triEgdeBF[iEdge][0] = t0 * prod * legendreVector[index][n1];
+        triEgdeBF[iEdge][1] = t1 * prod * legendreVector[index][n1];
+      }
+    }
+    for(int n1 = 0; n1 < _pb1 - 2; n1++) {
+      for(int n3 = 0; n3 <= _pb2; n3++) {
+        for(int iEdge = 0; iEdge < 3; ++iEdge) {
+          matrixVectorProductForMapping(legendreW[n3], triEgdeBF[iEdge], faceBasis[faceIt]);
+        }
+        bubbleIt++;
+      }
+    }
+    // based on genuine bubble BFs of K_div^tri
+    double product = lambda1 * lambda2 * lambda3;
+    for(int n1 = 0; n1 < _pb1 - 2; n1++) {
+      for(int n2 = 0; n2 < _pb1 - 2 - n1; n2++) {
+        std::vector<double> term(3, 0);
+        term[0] = product * legendreVector[0][n1] * legendreVector[3][n2];
+        for(int n3 = 2; n3 <= _pb2 + 1; n3++) {
+          matrixVectorProductForMapping(lobattoW[n3], term, bubbleBasis[bubbleIt]);
+          bubbleIt++;
+        }
+        term[0] = 0.;
+        term[1] = product * legendreVector[0][n1] * legendreVector[3][n2];
+        for(int n3 = 2; n3 <= _pb2 + 1; n3++) {
+          matrixVectorProductForMapping(lobattoW[n3], term, bubbleBasis[bubbleIt]);
+          bubbleIt++;
+        }
+      }
+    }
+  }
   // vertical bubble
+  if(_pb2 >= 1) {
+    std::vector<double> term(3, 0);
+    // lowest-order
+    if(_pb1 >= 1) {
+      term[0] = 1. * lobattoW[0] * lobattoW[1];
+      for(int n3 = 0; n3 < _pb2 - 2; ++n3) {
+        matrixVectorProductForMapping(lobattoW[n3], term, bubbleBasis[bubbleIt]);
+        bubbleIt++;
+      }
+    }
+    // linear
+    if(_pb1 >= 2) {
+      term[0] = lambda3 * lobattoW[0] * lobattoW[1];
+      for(int n3 = 0; n3 < _pb2 - 2; ++n3) {
+        matrixVectorProductForMapping(lobattoW[n3], term, bubbleBasis[bubbleIt]);
+        bubbleIt++;
+      }
+      term[0] = lambda1 * lobattoW[0] * lobattoW[1];
+      for(int n3 = 0; n3 < _pb2 - 2; ++n3) {
+        matrixVectorProductForMapping(lobattoW[n3], term, bubbleBasis[bubbleIt]);
+        bubbleIt++;
+      }
+    }
+    // high-order edge
+    if(_pb1 >= 3) {
+      for(int iEdge = 0; iEdge < 3; iEdge++) {
+        double prod = 0.;
+        int subIndex = 0;
+        std::vector< double > triEgdeBF(_pb1 - 2, 0.);
+        switch(iEdge) {
+        case 0:
+          prod = lambda2 * lambda3;
+          subIndex = 0;
+          break;
+        case 1:
+          prod = lambda1 * lambda3;
+          subIndex = 1;
+          break;
+        case 2:
+          prod = lambda1 * lambda2;
+          subIndex = 3;
+          break;
+        }
+        for(int k = 0; k <= _pb1 - 3; k++) {
+          triEgdeBF[k] = prod * OrthogonalPoly::EvalKernelFunction(k, sub[subIndex]);
+        }
+        for(int k = 0; k <= _pb1 - 3; k++) {
+          term[0] = triEgdeBF[k] * lobattoW[0] * lobattoW[1];
+          for(int n3 = 0; n3 < _pb2 - 2; ++n3) {
+            matrixVectorProductForMapping(lobattoW[n3], term, bubbleBasis[bubbleIt]);
+            bubbleIt++;
+          }
+        }
+      }
+    }
+    // high-order bubble
+    if(_pb1 >= 4) {
+      for(int n1 = 0; n1 < _pb1 - 4; n1++) {
+        const double prod = lambda1 * lambda2 * lambda3 * OrthogonalPoly::EvalKernelFunction(n1, subl3l2);
+        for(int n2 = 0; n2 < _pb1 - 4 - n1; n2++) {
+          term[0] = prod * OrthogonalPoly::EvalKernelFunction(n2, subl2l1);
+          for(int n3 = 0; n3 <= _pb2 - 2; n2++) {
+            matrixVectorProductForMapping(lobattoW[n3], term, bubbleBasis[bubbleIt]);
+            bubbleIt++;
+          }
+        }
+      }
+    }
+  }
 }
 
 void HierarchicalBasisHdivPri::orientOneFace(
@@ -267,7 +394,6 @@ void HierarchicalBasisHdivPri::orientOneFace(
   int const &flag2, int const &flag3, int const &faceNumber,
   std::vector< double > &faceFunctions)
 {
-
 }
 
 void HierarchicalBasisHdivPri::orientOneFace(
@@ -275,7 +401,52 @@ void HierarchicalBasisHdivPri::orientOneFace(
   int const &flag2, int const &flag3, int const &faceNumber,
   std::vector<std::vector<double> > &faceFunctions, std::string typeFunction)
 {
-
+  if(faceNumber < 3) {
+    if(!(flag1 == 1 && flag2 == 1 && flag3 == 1)) {
+      int iterator = 0;
+      for(int k = 0; k < faceNumber; k++) {
+        iterator = iterator +
+          (_pOrderQuadFace1[k] + 1) * (_pOrderQuadFace2[k] + 1);
+      }
+      if(flag3 == 1) {
+        for(int it1 = 0; it1 <= _pOrderQuadFace1[faceNumber] + 1; it1++) {
+          for(int it2 = 2; it2 <= _pOrderQuadFace2[faceNumber] + 1; it2++) {
+            int impactFlag1 = 1;
+            int impactFlag2 = 1;
+            if(flag1 == -1 && it1 % 2 == 0) { impactFlag1 = -1; }
+            if(flag2 == -1 && it2 % 2 != 0) { impactFlag2 = -1; }
+            faceFunctions[iterator][0] =
+              faceFunctions[iterator][0] * impactFlag1 * impactFlag2;
+            faceFunctions[iterator][1] =
+              faceFunctions[iterator][1] * impactFlag1 * impactFlag2;
+            faceFunctions[iterator][2] =
+              faceFunctions[iterator][2] * impactFlag1 * impactFlag2;
+            iterator++;
+          }
+        }
+        for(int it1 = 2; it1 <= _pOrderQuadFace1[faceNumber] + 1; it1++) {
+          for(int it2 = 0; it2 <= _pOrderQuadFace2[faceNumber] + 1; it2++) {
+            int impactFlag1 = 1;
+            int impactFlag2 = 1;
+            if(flag1 == -1 && it1 % 2 != 0) { impactFlag1 = -1; }
+            if(flag2 == -1 && it2 % 2 == 0) { impactFlag2 = -1; }
+            faceFunctions[iterator][0] =
+              faceFunctions[iterator][0] * impactFlag1 * impactFlag2;
+            faceFunctions[iterator][1] =
+              faceFunctions[iterator][1] * impactFlag1 * impactFlag2;
+            faceFunctions[iterator][2] =
+              faceFunctions[iterator][2] * impactFlag1 * impactFlag2;
+            iterator++;
+          }
+        }
+      }
+      else {
+      }
+    }
+  }
+  else {
+  
+  }
 }
 
 void HierarchicalBasisHdivPri::orientFace(
