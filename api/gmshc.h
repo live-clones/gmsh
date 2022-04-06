@@ -845,8 +845,9 @@ GMSH_API void gmshModelMeshPreallocateElementsByType(const int elementType,
  * `qualityType' is the requested quality measure: "minSJ" for the minimal
  * scaled jacobien, "minSICN" for the minimal signed inverted condition
  * number, "minSIGE" for the signed inverted gradient error, "gamma" for the
- * ratio of the inscribed to circumcribed sphere radius. If `numTasks' > 1,
- * only compute and return the part of the data indexed by `task'. */
+ * ratio of the inscribed to circumcribed sphere radius, "volume" for the
+ * volume. If `numTasks' > 1, only compute and return the part of the data
+ * indexed by `task'. */
 GMSH_API void gmshModelMeshGetElementQualities(const size_t * elementTags, const size_t elementTags_n,
                                                double ** elementsQuality, size_t * elementsQuality_n,
                                                const char * qualityName,

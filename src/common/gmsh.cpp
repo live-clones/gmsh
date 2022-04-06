@@ -2260,6 +2260,9 @@ GMSH_API void gmsh::model::mesh::getElementQualities(
     else if(qualityName == "angleShape"){
       elementQualities[k] = e->angleShapeMeasure();
     }
+    else if(qualityName == "volume"){
+      elementQualities[k] = e->getVolume();
+    }
     else{
       if(k == begin) {
         Msg::Error("Unknown quality name '%s'", qualityName.c_str());
