@@ -5577,6 +5577,11 @@ GMSH_API void gmsh::model::mesh::field::setNumber(const int tag,
 #if defined(HAVE_MESH)
   FieldOption *o = _getFieldOption(tag, option);
   if(!o) return;
+  if(o->getType() != FIELD_OPTION_DOUBLE &&
+     o->getType() != FIELD_OPTION_INT &&
+     o->getType() != FIELD_OPTION_BOOL) {
+    Msg::Warning("Field option '%s' is not a number", option.c_str());
+  }
   o->numericalValue(value);
 #else
   Msg::Error("Fields require the mesh module");
@@ -5591,6 +5596,11 @@ GMSH_API void gmsh::model::mesh::field::getNumber(const int tag,
 #if defined(HAVE_MESH)
   FieldOption *o = _getFieldOption(tag, option);
   if(!o) { return; }
+  if(o->getType() != FIELD_OPTION_DOUBLE &&
+     o->getType() != FIELD_OPTION_INT &&
+     o->getType() != FIELD_OPTION_BOOL) {
+    Msg::Warning("Field option '%s' is not a number", option.c_str());
+  }
   value = o->numericalValue();
 #else
   Msg::Error("Fields require the mesh module");
@@ -5605,6 +5615,10 @@ GMSH_API void gmsh::model::mesh::field::setString(const int tag,
 #if defined(HAVE_MESH)
   FieldOption *o = _getFieldOption(tag, option);
   if(!o) return;
+  if(o->getType() != FIELD_OPTION_STRING &&
+     o->getType() != FIELD_OPTION_PATH) {
+    Msg::Warning("Field option '%s' is not a string", option.c_str());
+  }
   o->string(value);
 #else
   Msg::Error("Fields require the mesh module");
@@ -5619,6 +5633,10 @@ GMSH_API void gmsh::model::mesh::field::getString(const int tag,
 #if defined(HAVE_MESH)
   FieldOption *o = _getFieldOption(tag, option);
   if(!o) { return; }
+  if(o->getType() != FIELD_OPTION_STRING &&
+     o->getType() != FIELD_OPTION_PATH) {
+    Msg::Warning("Field option '%s' is not a string", option.c_str());
+  }
   value = o->string();
 #else
   Msg::Error("Fields require the mesh module");
@@ -5639,6 +5657,9 @@ gmsh::model::mesh::field::setNumbers(const int tag, const std::string &option,
     o->list(vl);
   }
   else {
+    if(o->getType() != FIELD_OPTION_LIST_DOUBLE) {
+      Msg::Warning("Field option '%s' is not a list", option.c_str());
+    }
     std::list<double> vl;
     for(std::size_t i = 0; i < value.size(); i++) vl.push_back(value[i]);
     o->listdouble(vl);
@@ -5653,6 +5674,7 @@ gmsh::model::mesh::field::getNumbers(const int tag, const std::string &option,
                                      std::vector<double> &value)
 {
   if(!_checkInit()) return;
+  value.clear();
 #if defined(HAVE_MESH)
   FieldOption *o = _getFieldOption(tag, option);
   if(!o) { return; }
@@ -5661,6 +5683,9 @@ gmsh::model::mesh::field::getNumbers(const int tag, const std::string &option,
     for(auto i : vl) value.push_back(i);
   }
   else {
+    if(o->getType() != FIELD_OPTION_LIST_DOUBLE) {
+      Msg::Warning("Field option '%s' is not a list", option.c_str());
+    }
     std::list<double> vl = o->listdouble();
     for(auto d : vl) value.push_back(d);
   }
