@@ -1493,11 +1493,9 @@ bool OCC_Internals::addBSpline(int &tag, const std::vector<int> &pointTags,
       m.back() = d + 1;
     }
     else {
-      k.resize(np - d + 2);
+      k.resize(np);
       for(std::size_t i = 0; i < k.size(); i++) k[i] = i;
       m.resize(k.size(), 1);
-      m.front() = d - 1;
-      m.back() = d - 1;
     }
   }
   return _addBSpline(tag, pointTags, 2, d, w, k, m);
