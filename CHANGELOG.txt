@@ -1,6 +1,7 @@
 4.10.0 (Work-in-progress): more flexible homology/cohomology workflow in the
 API; "Attractor" field is now just a synonym for the newer (and more efficient)
-"Distance" field; small bug fixes.
+"Distance" field; periodic bsplines now use the same default multiplicities in
+OCC as in the built-in kernel; small bug fixes.
 
 * New API functions: geo/addGeometry, geo/addPointOnGeometry,
   mesh/addHomologyRequest, mesh/clearHomologyRequests, mesh/setVisibility,
