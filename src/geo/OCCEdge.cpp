@@ -259,7 +259,14 @@ bool OCCEdge::isSeam(const GFace *face) const
 {
   if(face->getNativeType() != GEntity::OpenCascadeModel) return false;
   const TopoDS_Face *s = (TopoDS_Face *)face->getNativePtr();
-  bool ret = BRep_Tool::IsClosed(_c, *s);
+  // use IsClosed() variant taking Geom_Surface instead of TopoDS_Face as
+  // argument, as the latter also tests the STL triangulation if available,
+  // which can lead to different results depending if the STL mesh is available
+  // or not; e.g. it can return true on plane surfaces with an internal curve,
+  // which is not expected by Gmsh 2D meshing algorithms
+  TopLoc_Location l;
+  const Handle(Geom_Surface)& surf = BRep_Tool::Surface(*s, l);
+  bool ret = BRep_Tool::IsClosed(_c, surf, l);
   return ret;
 }
 
