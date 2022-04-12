@@ -1062,7 +1062,19 @@ GMSH_API int gmsh::model::isInside(const int dim, const int tag,
     }
     for(std::size_t i = 0; i < coord.size(); i += 3) {
       SPoint3 pt(coord[i], coord[i + 1], coord[i + 2]);
-      if(entity->containsPoint(pt)) num++;
+      if(entity->isFullyDiscrete()) { // query the mesh
+        SPoint3 uvw;
+        MElement *e = GModel::current()->getMeshElementByCoord(pt, uvw,
+                                                               entity->dim());
+        if(e) {
+          int entityTag;
+          e = GModel::current()->getMeshElementByTag(e->getNum(), entityTag);
+          if(e && entityTag == entity->tag()) num++;
+        }
+      }
+      else { // query the CAD
+        if(entity->containsPoint(pt)) num++;
+      }
     }
   }
   return num;
@@ -1883,15 +1895,18 @@ GMSH_API void gmsh::model::mesh::getElementByCoordinates(
   double &w, const int dim, const bool strict)
 {
   if(!_checkInit()) return;
+  nodeTags.clear();
   SPoint3 xyz(x, y, z), uvw;
   MElement *e = GModel::current()->getMeshElementByCoord(xyz, uvw, dim, strict);
   if(!e) {
+    elementTag = 0;
+    elementType = 0;
+    u = v = w = 0.;
     Msg::Error("No element found at (%g, %g, %g)", x, y, z);
     return;
   }
   elementTag = e->getNum();
   elementType = e->getTypeForMSH();
-  nodeTags.clear();
   for(std::size_t i = 0; i < e->getNumVertices(); i++) {
     MVertex *v = e->getVertex(i);
     if(!v) {
