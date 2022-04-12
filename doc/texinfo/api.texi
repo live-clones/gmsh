@@ -950,7 +950,7 @@ Check if the coordinates (or the parametric coordinates if @code{parametric} is
 set) provided in @code{coord} correspond to points inside the entity of
 dimension @code{dim} and tag @code{tag}, and return the number of points inside.
 This feature is only available for a subset of entities, depending on the
-underyling geometrical representation.
+underlying geometrical representation.
 
 @table @asis
 @item Input:
@@ -991,7 +991,7 @@ Reparametrize the boundary entity (point or curve, i.e. with @code{dim} == 0 or
 @code{dim} == 1, reparametrize all the points corresponding to the parametric
 coordinates @code{parametricCoord}. Multiple matches in case of periodic
 surfaces can be selected with @code{which}. This feature is only available for a
-subset of entities, depending on the underyling geometrical representation.
+subset of entities, depending on the underlying geometrical representation.
 
 @table @asis
 @item Input:
@@ -1179,7 +1179,7 @@ entities.
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L643,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L551,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L1636,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L1333,Julia}
 @item Examples:
-Python (@url{@value{GITLAB-PREFIX}/examples/api/naca_boundary_layer_2d.py#L124,naca_boundary_layer_2d.py}, @url{@value{GITLAB-PREFIX}/examples/api/naca_boundary_layer_3d.py#L157,naca_boundary_layer_3d.py}, @url{@value{GITLAB-PREFIX}/examples/api/opt.py#L12,opt.py}, @url{@value{GITLAB-PREFIX}/examples/api/tube_boundary_layer.py#L53,tube_boundary_layer.py})
+Python (@url{@value{GITLAB-PREFIX}/examples/api/naca_boundary_layer_2d.py#L133,naca_boundary_layer_2d.py}, @url{@value{GITLAB-PREFIX}/examples/api/naca_boundary_layer_3d.py#L166,naca_boundary_layer_3d.py}, @url{@value{GITLAB-PREFIX}/examples/api/opt.py#L12,opt.py}, @url{@value{GITLAB-PREFIX}/examples/api/tube_boundary_layer.py#L53,tube_boundary_layer.py})
 @end table
 
 @item gmsh/model/mesh/recombine
@@ -1225,7 +1225,7 @@ Set the order of the elements in the mesh of the current model to @code{order}.
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L661,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L564,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L1688,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L1377,Julia}
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/x6.cpp#L27,x6.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorials/python/x6.py#L27,x6.py}, @url{@value{GITLAB-PREFIX}/examples/api/hybrid_order.py#L18,hybrid_order.py}, @url{@value{GITLAB-PREFIX}/examples/api/naca_boundary_layer_2d.py#L123,naca_boundary_layer_2d.py}, @url{@value{GITLAB-PREFIX}/examples/api/naca_boundary_layer_3d.py#L156,naca_boundary_layer_3d.py}, @url{@value{GITLAB-PREFIX}/examples/api/tube_boundary_layer.py#L52,tube_boundary_layer.py})
+C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/x6.cpp#L27,x6.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorials/python/x6.py#L27,x6.py}, @url{@value{GITLAB-PREFIX}/examples/api/hybrid_order.py#L18,hybrid_order.py}, @url{@value{GITLAB-PREFIX}/examples/api/naca_boundary_layer_2d.py#L132,naca_boundary_layer_2d.py}, @url{@value{GITLAB-PREFIX}/examples/api/naca_boundary_layer_3d.py#L165,naca_boundary_layer_3d.py}, @url{@value{GITLAB-PREFIX}/examples/api/tube_boundary_layer.py#L52,tube_boundary_layer.py})
 @end table
 
 @item gmsh/model/mesh/getLastEntityError
@@ -3174,7 +3174,7 @@ Set the numerical list option @code{option} to value @code{value} for field
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L1788,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1573,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4163,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L3601,Julia}
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/t10.cpp#L48,t10.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorials/python/t10.py#L44,t10.py}, @url{@value{GITLAB-PREFIX}/examples/api/extend_field.py#L23,extend_field.py}, @url{@value{GITLAB-PREFIX}/examples/api/naca_boundary_layer_2d.py#L106,naca_boundary_layer_2d.py}, @url{@value{GITLAB-PREFIX}/examples/api/ocean.py#L4544,ocean.py})
+C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/t10.cpp#L48,t10.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorials/python/t10.py#L44,t10.py}, @url{@value{GITLAB-PREFIX}/examples/api/extend_field.py#L23,extend_field.py}, @url{@value{GITLAB-PREFIX}/examples/api/naca_boundary_layer_2d.py#L115,naca_boundary_layer_2d.py}, @url{@value{GITLAB-PREFIX}/examples/api/ocean.py#L4544,ocean.py})
 @end table
 
 @item gmsh/model/mesh/field/getNumbers
@@ -3220,7 +3220,7 @@ Set the field @code{tag} as a boundary layer size field.
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L1807,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1589,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4217,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L3651,Julia}
 @item Examples:
-Python (@url{@value{GITLAB-PREFIX}/examples/api/naca_boundary_layer_2d.py#L116,naca_boundary_layer_2d.py})
+Python (@url{@value{GITLAB-PREFIX}/examples/api/naca_boundary_layer_2d.py#L125,naca_boundary_layer_2d.py})
 @end table
 
 @end ftable
@@ -3652,12 +3652,12 @@ C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/t3.cpp#L70,t3.cpp}), Python (@url{
 Extrude the entities @code{dimTags} in the built-in CAD representation along the
 normals of the mesh, creating discrete boundary layer entities. Return extruded
 entities in @code{outDimTags}. The entries in @code{numElements} give the number
-of elements in each layer. If @code{height} is not empty, it provides the height
-of the different layers. If @code{recombine} is set, recombine the mesh in the
-layers. A second boundary layer can be created from the same entities if
-@code{second} is set. If @code{viewIndex} is >= 0, use the corresponding view to
-either specify the normals (if the view contains a vector field) or scale the
-normals (if the view is scalar).
+of elements in each layer. If @code{height} is not empty, it provides the
+(cumulative) height of the different layers. If @code{recombine} is set,
+recombine the mesh in the layers. A second boundary layer can be created from
+the same entities if @code{second} is set. If @code{viewIndex} is >= 0, use the
+corresponding view to either specify the normals (if the view contains a vector
+field) or scale the normals (if the view is scalar).
 
 @table @asis
 @item Input:
@@ -3669,7 +3669,7 @@ normals (if the view is scalar).
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L2100,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1852,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4807,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4149,Julia}
 @item Examples:
-Python (@url{@value{GITLAB-PREFIX}/examples/api/aneurysm.py#L19,aneurysm.py}, @url{@value{GITLAB-PREFIX}/examples/api/naca_boundary_layer_2d.py#L77,naca_boundary_layer_2d.py}, @url{@value{GITLAB-PREFIX}/examples/api/naca_boundary_layer_3d.py#L96,naca_boundary_layer_3d.py}, @url{@value{GITLAB-PREFIX}/examples/api/tube_boundary_layer.py#L26,tube_boundary_layer.py}, @url{@value{GITLAB-PREFIX}/examples/api/tube_hole_boundary_layer.py#L85,tube_hole_boundary_layer.py})
+Python (@url{@value{GITLAB-PREFIX}/examples/api/aneurysm.py#L19,aneurysm.py}, @url{@value{GITLAB-PREFIX}/examples/api/naca_boundary_layer_2d.py#L86,naca_boundary_layer_2d.py}, @url{@value{GITLAB-PREFIX}/examples/api/naca_boundary_layer_3d.py#L105,naca_boundary_layer_3d.py}, @url{@value{GITLAB-PREFIX}/examples/api/tube_boundary_layer.py#L26,tube_boundary_layer.py}, @url{@value{GITLAB-PREFIX}/examples/api/tube_hole_boundary_layer.py#L85,tube_hole_boundary_layer.py})
 @end table
 
 @item gmsh/model/geo/translate
@@ -4121,7 +4121,7 @@ integer value
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L2358,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2073,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L5349,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4638,Julia}
 @item Examples:
-Python (@url{@value{GITLAB-PREFIX}/examples/api/crack.py#L13,crack.py}, @url{@value{GITLAB-PREFIX}/examples/api/naca_boundary_layer_2d.py#L64,naca_boundary_layer_2d.py}, @url{@value{GITLAB-PREFIX}/examples/api/naca_boundary_layer_3d.py#L67,naca_boundary_layer_3d.py}, @url{@value{GITLAB-PREFIX}/examples/api/tube_hole_boundary_layer.py#L30,tube_hole_boundary_layer.py})
+Python (@url{@value{GITLAB-PREFIX}/examples/api/crack.py#L13,crack.py}, @url{@value{GITLAB-PREFIX}/examples/api/naca_boundary_layer_2d.py#L67,naca_boundary_layer_2d.py}, @url{@value{GITLAB-PREFIX}/examples/api/naca_boundary_layer_3d.py#L70,naca_boundary_layer_3d.py}, @url{@value{GITLAB-PREFIX}/examples/api/tube_hole_boundary_layer.py#L30,tube_hole_boundary_layer.py})
 @end table
 
 @item gmsh/model/occ/addCircleArc
@@ -4140,7 +4140,7 @@ integer value
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L2368,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2082,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L5372,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4658,Julia}
 @item Examples:
-Python (@url{@value{GITLAB-PREFIX}/examples/api/naca_boundary_layer_2d.py#L61,naca_boundary_layer_2d.py}, @url{@value{GITLAB-PREFIX}/examples/api/naca_boundary_layer_3d.py#L57,naca_boundary_layer_3d.py}, @url{@value{GITLAB-PREFIX}/examples/api/tube_hole_boundary_layer.py#L34,tube_hole_boundary_layer.py})
+Python (@url{@value{GITLAB-PREFIX}/examples/api/naca_boundary_layer_2d.py#L64,naca_boundary_layer_2d.py}, @url{@value{GITLAB-PREFIX}/examples/api/naca_boundary_layer_3d.py#L60,naca_boundary_layer_3d.py}, @url{@value{GITLAB-PREFIX}/examples/api/tube_hole_boundary_layer.py#L34,tube_hole_boundary_layer.py})
 @end table
 
 @item gmsh/model/occ/addCircle
@@ -4224,7 +4224,7 @@ integer value
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L2434,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2144,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L5493,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4747,Julia}
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/t19.cpp#L71,t19.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorials/python/t19.py#L62,t19.py}, @url{@value{GITLAB-PREFIX}/examples/api/naca_boundary_layer_2d.py#L56,naca_boundary_layer_2d.py}, @url{@value{GITLAB-PREFIX}/examples/api/naca_boundary_layer_3d.py#L53,naca_boundary_layer_3d.py}, @url{@value{GITLAB-PREFIX}/examples/api/pipe.py#L20,pipe.py}, @url{@value{GITLAB-PREFIX}/examples/api/spline.py#L12,spline.py}, ...)
+C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/t19.cpp#L71,t19.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorials/python/t19.py#L62,t19.py}, @url{@value{GITLAB-PREFIX}/examples/api/naca_boundary_layer_2d.py#L59,naca_boundary_layer_2d.py}, @url{@value{GITLAB-PREFIX}/examples/api/naca_boundary_layer_3d.py#L56,naca_boundary_layer_3d.py}, @url{@value{GITLAB-PREFIX}/examples/api/pipe.py#L20,pipe.py}, @url{@value{GITLAB-PREFIX}/examples/api/spline.py#L12,spline.py}, ...)
 @end table
 
 @item gmsh/model/occ/addBSpline
@@ -4306,7 +4306,7 @@ integer value
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L2482,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2188,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L5596,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4833,Julia}
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/t19.cpp#L26,t19.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorials/python/t19.py#L24,t19.py}, @url{@value{GITLAB-PREFIX}/examples/api/naca_boundary_layer_2d.py#L67,naca_boundary_layer_2d.py}, @url{@value{GITLAB-PREFIX}/examples/api/surface_filling.py#L16,surface_filling.py})
+C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/t19.cpp#L26,t19.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorials/python/t19.py#L24,t19.py}, @url{@value{GITLAB-PREFIX}/examples/api/naca_boundary_layer_2d.py#L73,naca_boundary_layer_2d.py}, @url{@value{GITLAB-PREFIX}/examples/api/surface_filling.py#L16,surface_filling.py})
 @end table
 
 @item gmsh/model/occ/addRectangle
@@ -4368,7 +4368,7 @@ integer value
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L2525,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2228,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L5685,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4897,Julia}
 @item Examples:
-Python (@url{@value{GITLAB-PREFIX}/examples/api/naca_boundary_layer_2d.py#L100,naca_boundary_layer_2d.py})
+Python (@url{@value{GITLAB-PREFIX}/examples/api/naca_boundary_layer_2d.py#L109,naca_boundary_layer_2d.py})
 @end table
 
 @item gmsh/model/occ/addSurfaceFilling
@@ -4738,7 +4738,7 @@ layers.
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L2811,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2495,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L6208,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5294,Julia}
 @item Examples:
-Python (@url{@value{GITLAB-PREFIX}/examples/api/naca_boundary_layer_3d.py#L60,naca_boundary_layer_3d.py}, @url{@value{GITLAB-PREFIX}/examples/api/tube_hole_boundary_layer.py#L42,tube_hole_boundary_layer.py})
+Python (@url{@value{GITLAB-PREFIX}/examples/api/naca_boundary_layer_3d.py#L63,naca_boundary_layer_3d.py}, @url{@value{GITLAB-PREFIX}/examples/api/tube_hole_boundary_layer.py#L42,tube_hole_boundary_layer.py})
 @end table
 
 @item gmsh/model/occ/revolve
@@ -4762,7 +4762,7 @@ set, recombine the mesh in the layers.
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L2831,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2514,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L6242,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5323,Julia}
 @item Examples:
-Python (@url{@value{GITLAB-PREFIX}/examples/api/naca_boundary_layer_3d.py#L80,naca_boundary_layer_3d.py})
+Python (@url{@value{GITLAB-PREFIX}/examples/api/naca_boundary_layer_3d.py#L83,naca_boundary_layer_3d.py})
 @end table
 
 @item gmsh/model/occ/addPipe
@@ -4888,7 +4888,7 @@ Remove the object if @code{removeObject} is set. Remove the tool if
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L2929,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2605,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L6442,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5506,Julia}
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/t16.cpp#L41,t16.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorials/python/t16.py#L32,t16.py}, @url{@value{GITLAB-PREFIX}/examples/api/boolean.py#L27,boolean.py}, @url{@value{GITLAB-PREFIX}/examples/api/extend_field.py#L7,extend_field.py}, @url{@value{GITLAB-PREFIX}/examples/api/gui.py#L28,gui.py}, @url{@value{GITLAB-PREFIX}/examples/api/naca_boundary_layer_2d.py#L102,naca_boundary_layer_2d.py}, ...)
+C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/t16.cpp#L41,t16.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorials/python/t16.py#L32,t16.py}, @url{@value{GITLAB-PREFIX}/examples/api/boolean.py#L27,boolean.py}, @url{@value{GITLAB-PREFIX}/examples/api/extend_field.py#L7,extend_field.py}, @url{@value{GITLAB-PREFIX}/examples/api/gui.py#L28,gui.py}, @url{@value{GITLAB-PREFIX}/examples/api/naca_boundary_layer_2d.py#L111,naca_boundary_layer_2d.py}, ...)
 @end table
 
 @item gmsh/model/occ/fragment
@@ -4948,7 +4948,7 @@ Rotate the entities @code{dimTags} in the OpenCASCADE CAD representation by
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L2970,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2643,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L6532,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5601,Julia}
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/t19.cpp#L78,t19.cpp}, @url{@value{GITLAB-PREFIX}/tutorials/c++/t20.cpp#L64,t20.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorials/python/t19.py#L69,t19.py}, @url{@value{GITLAB-PREFIX}/tutorials/python/t20.py#L54,t20.py}, @url{@value{GITLAB-PREFIX}/examples/api/pipe.py#L26,pipe.py})
+C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/t19.cpp#L78,t19.cpp}, @url{@value{GITLAB-PREFIX}/tutorials/c++/t20.cpp#L64,t20.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorials/python/t19.py#L69,t19.py}, @url{@value{GITLAB-PREFIX}/tutorials/python/t20.py#L54,t20.py}, @url{@value{GITLAB-PREFIX}/examples/api/naca_boundary_layer_2d.py#L71,naca_boundary_layer_2d.py}, @url{@value{GITLAB-PREFIX}/examples/api/naca_boundary_layer_3d.py#L91,naca_boundary_layer_3d.py}, @url{@value{GITLAB-PREFIX}/examples/api/pipe.py#L26,pipe.py})
 @end table
 
 @item gmsh/model/occ/dilate
@@ -5159,7 +5159,7 @@ entities are returned as a vector of (dim, tag) integer pairs.
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L3097,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2756,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L6797,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5846,Julia}
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/t20.cpp#L90,t20.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorials/python/t20.py#L73,t20.py}, @url{@value{GITLAB-PREFIX}/examples/api/bspline_bezier_patches.py#L70,bspline_bezier_patches.py}, @url{@value{GITLAB-PREFIX}/examples/api/naca_boundary_layer_3d.py#L71,naca_boundary_layer_3d.py}, @url{@value{GITLAB-PREFIX}/examples/api/tube_boundary_layer.py#L17,tube_boundary_layer.py}, @url{@value{GITLAB-PREFIX}/examples/api/tube_hole_boundary_layer.py#L52,tube_hole_boundary_layer.py})
+C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/t20.cpp#L90,t20.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorials/python/t20.py#L73,t20.py}, @url{@value{GITLAB-PREFIX}/examples/api/bspline_bezier_patches.py#L70,bspline_bezier_patches.py}, @url{@value{GITLAB-PREFIX}/examples/api/naca_boundary_layer_2d.py#L71,naca_boundary_layer_2d.py}, @url{@value{GITLAB-PREFIX}/examples/api/naca_boundary_layer_3d.py#L74,naca_boundary_layer_3d.py}, @url{@value{GITLAB-PREFIX}/examples/api/tube_boundary_layer.py#L17,tube_boundary_layer.py}, ...)
 @end table
 
 @item gmsh/model/occ/getEntitiesInBoundingBox
@@ -5178,7 +5178,7 @@ dimension (e.g. points if @code{dim} == 0).
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L3106,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2764,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L6819,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5869,Julia}
 @item Examples:
-Python (@url{@value{GITLAB-PREFIX}/examples/api/naca_boundary_layer_3d.py#L76,naca_boundary_layer_3d.py})
+Python (@url{@value{GITLAB-PREFIX}/examples/api/naca_boundary_layer_3d.py#L79,naca_boundary_layer_3d.py})
 @end table
 
 @item gmsh/model/occ/getBoundingBox
@@ -5196,7 +5196,7 @@ tag @code{tag}.
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L3119,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2776,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L6848,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5891,Julia}
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/t20.cpp#L44,t20.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorials/python/t20.py#L34,t20.py}, @url{@value{GITLAB-PREFIX}/examples/api/naca_boundary_layer_3d.py#L64,naca_boundary_layer_3d.py})
+C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/t20.cpp#L44,t20.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorials/python/t20.py#L34,t20.py}, @url{@value{GITLAB-PREFIX}/examples/api/naca_boundary_layer_3d.py#L67,naca_boundary_layer_3d.py})
 @end table
 
 @item gmsh/model/occ/getCurveLoops
@@ -5348,7 +5348,7 @@ representation. Currently only entities of dimension 0 (points) are handled.
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L3201,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2846,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7070,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6090,Julia}
 @item Examples:
-Python (@url{@value{GITLAB-PREFIX}/examples/api/naca_boundary_layer_3d.py#L85,naca_boundary_layer_3d.py})
+Python (@url{@value{GITLAB-PREFIX}/examples/api/naca_boundary_layer_3d.py#L88,naca_boundary_layer_3d.py})
 @end table
 
 @end ftable

@@ -1090,7 +1090,7 @@ const get_parametrization_bounds = getParametrizationBounds
 Check if the coordinates (or the parametric coordinates if `parametric` is set)
 provided in `coord` correspond to points inside the entity of dimension `dim`
 and tag `tag`, and return the number of points inside. This feature is only
-available for a subset of entities, depending on the underyling geometrical
+available for a subset of entities, depending on the underlying geometrical
 representation.
 
 Return an integer value.
@@ -1140,7 +1140,7 @@ Reparametrize the boundary entity (point or curve, i.e. with `dim` == 0 or `dim`
 == 1) of tag `tag` on the surface `surfaceTag`. If `dim` == 1, reparametrize all
 the points corresponding to the parametric coordinates `parametricCoord`.
 Multiple matches in case of periodic surfaces can be selected with `which`. This
-feature is only available for a subset of entities, depending on the underyling
+feature is only available for a subset of entities, depending on the underlying
 geometrical representation.
 
 Return `surfaceParametricCoord`.
@@ -4137,12 +4137,12 @@ end
 Extrude the entities `dimTags` in the built-in CAD representation along the
 normals of the mesh, creating discrete boundary layer entities. Return extruded
 entities in `outDimTags`. The entries in `numElements` give the number of
-elements in each layer. If `height` is not empty, it provides the height of the
-different layers. If `recombine` is set, recombine the mesh in the layers. A
-second boundary layer can be created from the same entities if `second` is set.
-If `viewIndex` is >= 0, use the corresponding view to either specify the normals
-(if the view contains a vector field) or scale the normals (if the view is
-scalar).
+elements in each layer. If `height` is not empty, it provides the (cumulative)
+height of the different layers. If `recombine` is set, recombine the mesh in the
+layers. A second boundary layer can be created from the same entities if
+`second` is set. If `viewIndex` is >= 0, use the corresponding view to either
+specify the normals (if the view contains a vector field) or scale the normals
+(if the view is scalar).
 
 Return `outDimTags`.
 """

@@ -1370,7 +1370,7 @@ class model:
         set) provided in `coord' correspond to points inside the entity of
         dimension `dim' and tag `tag', and return the number of points inside. This
         feature is only available for a subset of entities, depending on the
-        underyling geometrical representation.
+        underlying geometrical representation.
 
         Return an integer value.
         """
@@ -1430,7 +1430,7 @@ class model:
         reparametrize all the points corresponding to the parametric coordinates
         `parametricCoord'. Multiple matches in case of periodic surfaces can be
         selected with `which'. This feature is only available for a subset of
-        entities, depending on the underyling geometrical representation.
+        entities, depending on the underlying geometrical representation.
 
         Return `surfaceParametricCoord'.
         """
@@ -4812,11 +4812,11 @@ class model:
             normals of the mesh, creating discrete boundary layer entities. Return
             extruded entities in `outDimTags'. The entries in `numElements' give the
             number of elements in each layer. If `height' is not empty, it provides the
-            height of the different layers. If `recombine' is set, recombine the mesh
-            in the layers. A second boundary layer can be created from the same
-            entities if `second' is set. If `viewIndex' is >= 0, use the corresponding
-            view to either specify the normals (if the view contains a vector field) or
-            scale the normals (if the view is scalar).
+            (cumulative) height of the different layers. If `recombine' is set,
+            recombine the mesh in the layers. A second boundary layer can be created
+            from the same entities if `second' is set. If `viewIndex' is >= 0, use the
+            corresponding view to either specify the normals (if the view contains a
+            vector field) or scale the normals (if the view is scalar).
 
             Return `outDimTags'.
             """

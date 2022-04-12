@@ -827,7 +827,7 @@ namespace gmsh { // Top-level functions
     // Check if the coordinates (or the parametric coordinates if `parametric' is
     // set) provided in `coord' correspond to points inside the entity of dimension
     // `dim' and tag `tag', and return the number of points inside. This feature is
-    // only available for a subset of entities, depending on the underyling
+    // only available for a subset of entities, depending on the underlying
     // geometrical representation.
     inline int isInside(const int dim,
                         const int tag,
@@ -870,7 +870,7 @@ namespace gmsh { // Top-level functions
     // reparametrize all the points corresponding to the parametric coordinates
     // `parametricCoord'. Multiple matches in case of periodic surfaces can be
     // selected with `which'. This feature is only available for a subset of
-    // entities, depending on the underyling geometrical representation.
+    // entities, depending on the underlying geometrical representation.
     inline void reparametrizeOnSurface(const int dim,
                                        const int tag,
                                        const std::vector<double> & parametricCoord,
@@ -3215,11 +3215,11 @@ namespace gmsh { // Top-level functions
       // the normals of the mesh, creating discrete boundary layer entities. Return
       // extruded entities in `outDimTags'. The entries in `numElements' give the
       // number of elements in each layer. If `height' is not empty, it provides
-      // the height of the different layers. If `recombine' is set, recombine the
-      // mesh in the layers. A second boundary layer can be created from the same
-      // entities if `second' is set. If `viewIndex' is >= 0, use the corresponding
-      // view to either specify the normals (if the view contains a vector field)
-      // or scale the normals (if the view is scalar).
+      // the (cumulative) height of the different layers. If `recombine' is set,
+      // recombine the mesh in the layers. A second boundary layer can be created
+      // from the same entities if `second' is set. If `viewIndex' is >= 0, use the
+      // corresponding view to either specify the normals (if the view contains a
+      // vector field) or scale the normals (if the view is scalar).
       inline void extrudeBoundaryLayer(const gmsh::vectorpair & dimTags,
                                        gmsh::vectorpair & outDimTags,
                                        const std::vector<int> & numElements = std::vector<int>(1, 1),
