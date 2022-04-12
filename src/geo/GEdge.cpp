@@ -425,7 +425,9 @@ void GEdge::writePY(FILE *fp)
 bool GEdge::containsPoint(const SPoint3 &pt) const
 {
   if(geomType() == BoundaryLayerCurve) return false;
-  return containsParam(parFromPoint(pt));
+  double t;
+  if(!XYZToU(pt.x(), pt.y(), pt.z(), t, 1, false)) return false;
+  return containsParam(t);
 }
 
 bool GEdge::containsParam(double pt) const
