@@ -5366,6 +5366,8 @@ GMSH_API void gmsh::model::mesh::importStl()
     (*it)->buildSTLTriangulation();
     (*it)->storeSTLTriangulationAsMesh();
   }
+
+  // TODO: do it with the curves as well
 }
 
 GMSH_API void gmsh::model::mesh::classifySurfaces(
