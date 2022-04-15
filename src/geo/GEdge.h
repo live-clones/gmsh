@@ -156,6 +156,9 @@ public:
   // export in Python
   virtual void writePY(FILE *fp);
 
+  // store the STL triangulation as the mesh of the surface
+  bool storeSTLAsMesh();
+
   // tell if the edge is a 3D edge (in opposition with a trimmed curve on a
   // surface)
   virtual bool is3D() const { return true; }

@@ -5364,10 +5364,11 @@ GMSH_API void gmsh::model::mesh::importStl()
   m->deleteMesh();
   for(auto it = m->firstFace(); it != m->lastFace(); it++) {
     (*it)->buildSTLTriangulation();
-    (*it)->storeSTLTriangulationAsMesh();
+    (*it)->storeSTLAsMesh();
   }
-
-  // TODO: do it with the curves as well
+  for(auto it = m->firstEdge(); it != m->lastEdge(); it++) {
+    (*it)->storeSTLAsMesh();
+  }
 }
 
 GMSH_API void gmsh::model::mesh::classifySurfaces(

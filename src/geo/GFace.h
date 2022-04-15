@@ -237,7 +237,7 @@ public:
   bool fillVertexArray(bool force = false);
 
   // store the STL triangulation as the mesh of the surface
-  bool storeSTLTriangulationAsMesh();
+  bool storeSTLAsMesh();
 
   // recompute the mean plane of the surface from a list of points
   void computeMeanPlane(const std::vector<MVertex *> &points);

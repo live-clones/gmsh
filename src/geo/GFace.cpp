@@ -1551,9 +1551,11 @@ bool GFace::fillVertexArray(bool force)
   return true;
 }
 
-bool GFace::storeSTLTriangulationAsMesh()
+bool GFace::storeSTLAsMesh()
 {
-  deleteMesh();
+  // as the STL might be non-conforming, we make no effort to have a conformal
+  // mesh - nodes will not be classified on boundaries, and not shared with
+  // adjacent entities
   if(stl_vertices_xyz.size()) {
     for(std::size_t i = 0; i < stl_vertices_xyz.size(); i++) {
       SPoint3 &p(stl_vertices_xyz[i]);
