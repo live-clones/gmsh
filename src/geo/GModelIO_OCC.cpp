@@ -141,6 +141,9 @@
 #include <XCAFDoc_ShapeTool.hxx>
 #endif
 
+// define this to deactive the optimizations introduced in #1240:
+// #define SAFE_UNBIND
+
 // for debugging:
 template <class T>
 void writeBrep(const T &shapes, const std::string &fileName = "debug.brep")
@@ -655,6 +658,7 @@ void OCC_Internals::_unbindWithoutChecks(TopoDS_Shape shape)
       _changed = true;
     }
   }
+  for(int d = -2; d <= 3; d++) _recomputeMaxTag(d);
 }
 
 void OCC_Internals::_unbind()
@@ -3660,7 +3664,11 @@ bool OCC_Internals::booleanOperator(
       if(remove) {
         int d = inDimTags[i].first;
         int t = inDimTags[i].second;
+#ifdef SAFE_UNBIND
         if(_isBound(d, t)) _unbind(_find(d, t), d, t, true);
+#else
+        if(_isBound(d, t)) _unbindWithoutChecks(_find(d, t));
+#endif
       }
     }
     _multiBind(result, tag, outDimTags, (tag >= 0) ? true : false, true,
@@ -3678,7 +3686,11 @@ bool OCC_Internals::booleanOperator(
       int tag = inDimTags[i].second;
       bool remove = (i < numObjects) ? removeObject : removeTool;
       if(mapDeleted[i]) { // deleted
+#ifdef SAFE_UNBIND
         if(remove) _unbind(mapOriginal[i], dim, tag, true);
+#else
+        if(remove) _unbindWithoutChecks(mapOriginal[i]);
+#endif
         Msg::Debug("BOOL (%d,%d) deleted", dim, tag);
       }
       else if(mapModified[i].Extent() == 0) { // not modified
@@ -3702,7 +3714,11 @@ bool OCC_Internals::booleanOperator(
         Msg::Debug("BOOL (%d,%d) replaced by 1", dim, tag);
       }
       else {
+#ifdef SAFE_UNBIND
         if(remove) _unbind(mapOriginal[i], dim, tag, true);
+#else
+        if(remove) _unbindWithoutChecks(mapOriginal[i]);
+#endif
         Msg::Debug("BOOL (%d,%d) other", dim, tag);
       }
     }
@@ -3940,7 +3956,7 @@ bool OCC_Internals::_transform(
   for(std::size_t i = 0; i < inDimTags.size(); i++) {
     int dim = inDimTags[i].first;
     int tag = inDimTags[i].second;
-#if 0
+#ifdef SAFE_UNBIND
     // safe, but slow: _unbind() has linear complexity with respect to the number
     // of entities in the model (due to the dependency checking of upward
     // adjencencies and the maximum tag update). Using this in a for loop to
@@ -3953,11 +3969,9 @@ bool OCC_Internals::_transform(
     // cube. But the original face will actually be re-bound (with a warning) at
     // the next syncronization point, so it's not too bad...
     _unbindWithoutChecks(inShapes[i]);
-    for(int d = -2; d <= 3; d++) _recomputeMaxTag(d);
-
-    // FIXME: it would be even better to code a rebind() function to reuse the
-    // tags not only of the shape, but of all the sub-shapes as well
 #endif
+    // TODO: it would be even better to code a rebind() function to reuse the
+    // tags not only of the shape, but of all the sub-shapes as well
     _bind(outShapes[i], dim, tag, true);
   }
 
@@ -5450,7 +5464,6 @@ bool OCC_Internals::convertToNURBS(
     BRepBuilderAPI_NurbsConvert nurbs(shape);
     TopoDS_Shape res = nurbs.ModifiedShape(shape);
     _unbindWithoutChecks(shape);
-    for(int d = -2; d <= 3; d++) _recomputeMaxTag(d);
     _bind(res, dim, tag, true);
   }
 
