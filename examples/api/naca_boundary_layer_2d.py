@@ -68,7 +68,7 @@ else:
     curv.append(gmsh.model.occ.addLine(pt, pts[0]))
 
 # rotate the profile
-gmsh.model.occ.rotate(gmsh.model.occ.getEntities(1), 0.25, 0, 0, 0, 0, 1, incidence)
+gmsh.model.occ.rotate([(1, c) for c in curv], 0.25, 0, 0, 0, 0, 1, incidence)
 
 cl = gmsh.model.occ.addCurveLoop(curv)
 
@@ -106,9 +106,16 @@ else:
     # in 2D, boundary layers can also be specified as a meshing constraint,
     # through the BoundaryLayer field; this is quite a bit more general, as it
     # handles intersections between several boundary layers, fans, etc.
-    s = gmsh.model.occ.addPlaneSurface([cl])
-    r = gmsh.model.occ.addRectangle(-1, -1, 0, 3, 2)
-    gmsh.model.occ.cut([(2, r)], [(2, s)])
+    p1 = gmsh.model.occ.addPoint(-1, -1, 0, lc2)
+    p2 = gmsh.model.occ.addPoint(2, -1, 0, lc2)
+    p3 = gmsh.model.occ.addPoint(2, 1, 0, lc2)
+    p4 = gmsh.model.occ.addPoint(-1, 1, 0, lc2)
+    l1 = gmsh.model.occ.addLine(p1, p2)
+    l2 = gmsh.model.occ.addLine(p2, p3)
+    l3 = gmsh.model.occ.addLine(p3, p4)
+    l4 = gmsh.model.occ.addLine(p4, p1)
+    cl2 = gmsh.model.occ.addCurveLoop([l1, l2, l3, l4])
+    s = gmsh.model.occ.addPlaneSurface([cl2, cl])
     gmsh.model.occ.synchronize()
 
     f = gmsh.model.mesh.field.add('BoundaryLayer')
