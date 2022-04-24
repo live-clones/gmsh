@@ -1,4 +1,6 @@
 import gmsh
+import sys
+
 gmsh.initialize()
 
 gmsh.model.occ.addCircle(0,0,0, 0.2)
@@ -22,4 +24,6 @@ gmsh.model.occ.addWedge(1,-4,0, 0.4, 0.2, 0.4, zAxis=[0.2,0,1])
 gmsh.model.occ.synchronize()
 
 gmsh.option.setNumber('Mesh.MeshSizeFromCurvature', 10)
-gmsh.fltk.run()
+
+if '-nopopup' not in sys.argv:
+    gmsh.fltk.run()
