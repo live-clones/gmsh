@@ -5448,9 +5448,7 @@ GMSH_API void gmsh::model::mesh::generateMesh(const int dim, const int tag, cons
     int vmax = 0;
     
     for (auto e : ed){
-      std::cout << "edge " << e->masterOrientation << "\n";
       for (auto l : e->lines){
-        std::cout << "line " << l->getVertex(0)->getNum() << " ; " << l->getVertex(1)->getNum() << "\n";
         vs[l->getVertex(0)->getNum()] = l->getVertex(0);
         vs[l->getVertex(1)->getNum()] = l->getVertex(1);
         if (l->getVertex(0)->getNum() > vmax) vmax=l->getVertex(0)->getNum();
@@ -5468,13 +5466,11 @@ GMSH_API void gmsh::model::mesh::generateMesh(const int dim, const int tag, cons
       }
     }
     int triCount = 1;
-    std::cout << "size of faces : " << pm->faces.size() << "\n";
     for(size_t i = 0; i < pm->faces.size(); i++) {
       PolyMesh::HalfEdge *he = pm->faces[i]->he;
       int a = he->v->data;
       int b = he->next->v->data;
       int c = he->next->next->v->data;
-      std::cout << "triangle " << i << " : " << a << " ; " << b << " ; " << c << "\n";
       if (a != -1 && b != -1 && c != -1){
         MVertex *va,*vb,*vc;
         std::map<int,MVertex*>::iterator ita = vs.find(a);
