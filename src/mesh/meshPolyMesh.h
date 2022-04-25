@@ -48,6 +48,11 @@ public:
       t.normalize();
       return t;
     }
+    double l() const
+    {
+      SVector3 t = next->v->position - v->position;
+      return t.norm();
+    }
   };
 
   class Face {

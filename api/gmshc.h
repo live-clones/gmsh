@@ -1518,10 +1518,7 @@ GMSH_API void gmshModelMeshGenerateMesh(const int dim,
                                         const int tag,
                                         const int refine,
                                         const double * coord, const size_t coord_n,
-<<<<<<< HEAD
                                         const int * nodeTags, const size_t nodeTags_n,
-=======
->>>>>>> 33145a3798c3d193184aa034d66dd464cfd5ed7f
                                         int * ierr);
 
 /* Triangulate the points given in the `coord' vector as pairs of u, v

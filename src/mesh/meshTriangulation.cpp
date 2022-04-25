@@ -813,7 +813,8 @@ PolyMesh *GFaceInitialMesh(int faceTag, int recover,
     }
   }
 
-  //pm->print4debug(faceTag);
+  if(additional) addPoints(pm, *additional, bb);
+  //  pm->print4debug(faceTag);
 
   if(recover) {
     std::vector<GEdge *> edges = gf->edges();
@@ -858,37 +859,39 @@ PolyMesh *GFaceInitialMesh(int faceTag, int recover,
         }
       }
     }
-
-    // color all PolyMesh::Faces
-    // the first 4 vertices are "infinite vertices" --> color them with tag -2
-    // meaning exterior
-    PolyMesh::HalfEdge *other_side = Color(pm->vertices[0]->he, -2);
-    // other_side is inthernal to the face --> color them with tag faceTag
-    other_side = Color(other_side, faceTag);
-    // holes will be tagged -1
-
-    // flip edges that have been scrambled
+    //    printf("AAAAAAAAAAAAAAAAA %d\n",recover);
+    pm->print4debug(faceTag+1000);
+  }
+  // color all PolyMesh::Faces
+  // the first 4 vertices are "infinite vertices" --> color them with tag -2
+  // meaning exterior
+  PolyMesh::HalfEdge *other_side = Color(pm->vertices[0]->he, -2);
+  // other_side is inthernal to the face --> color them with tag faceTag
+  other_side = Color(other_side, faceTag);
+  // holes will be tagged -1
+  
+  // flip edges that have been scrambled
+  if (!recover){
     int iter = 0;
     while(iter++ < 100) {
       int count = 0;
       for(auto he : pm->hedges) {
-        if(he->opposite && he->f->data == faceTag &&
-           he->opposite->f->data == faceTag) {
-          if(delaunayEdgeCriterionPlaneIsotropic(he, nullptr)) {
-            if(intersect(he->v, he->next->v, he->next->next->v,
-                         he->opposite->next->next->v)) {
-              pm->swap_edge(he);
-              count++;
-            }
-          }
-        }
+	if(he->opposite && he->f->data == faceTag &&
+	   he->opposite->f->data == faceTag) {
+	  if(delaunayEdgeCriterionPlaneIsotropic(he, nullptr)) {
+	    if(intersect(he->v, he->next->v, he->next->next->v,
+			 he->opposite->next->next->v)) {
+	      pm->swap_edge(he);
+	      count++;
+	      }
+	  }
+	}
       }
       if(!count) break;
     }
   }
 
-  if(additional) addPoints(pm, *additional, bb);
-
+  
   return pm;
 }
 

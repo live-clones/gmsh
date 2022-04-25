@@ -2270,11 +2270,7 @@ GMSH_API void gmshModelMeshComputeCrossField(int ** viewTags, size_t * viewTags_
   }
 }
 
-<<<<<<< HEAD
 GMSH_API void gmshModelMeshGenerateMesh(const int dim, const int tag, const int refine, const double * coord, const size_t coord_n, const int * nodeTags, const size_t nodeTags_n, int * ierr)
-=======
-GMSH_API void gmshModelMeshGenerateMesh(const int dim, const int tag, const int refine, const double * coord, const size_t coord_n, int * ierr)
->>>>>>> 33145a3798c3d193184aa034d66dd464cfd5ed7f
 {
   if(ierr) *ierr = 0;
   try {
@@ -2365,11 +2361,7 @@ GMSH_API void gmshModelMeshCreateHxtMesh(const char * inputMesh, const double * 
   }
 }
 
-<<<<<<< HEAD
 GMSH_API void gmshModelMeshAlphaShapesConstrained(const int dim, const double * coord, const size_t coord_n, const int * nodeTags, const size_t nodeTags_n, const double alpha, const double meanValue, size_t ** tetrahedra, size_t * tetrahedra_n, size_t *** domains, size_t ** domains_n, size_t *domains_nn, size_t *** boundaries, size_t ** boundaries_n, size_t *boundaries_nn, size_t ** neighbors, size_t * neighbors_n, const int * controlTags, const size_t controlTags_n, int * ierr)
-=======
-GMSH_API void gmshModelMeshAlphaShapesConstrained(const int dim, const double * coord, const size_t coord_n, const int * nodeTags, const size_t nodeTags_n, const double alpha, const double meanValue, size_t ** tetrahedra, size_t * tetrahedra_n, size_t *** domains, size_t ** domains_n, size_t *domains_nn, size_t *** boundaries, size_t ** boundaries_n, size_t *boundaries_nn, size_t ** neighbors, size_t * neighbors_n, int * ierr)
->>>>>>> 33145a3798c3d193184aa034d66dd464cfd5ed7f
 {
   if(ierr) *ierr = 0;
   try {
