@@ -5411,22 +5411,27 @@ GMSH_API void gmsh::model::mesh::generateMesh(const int dim, const int tag, cons
   if(!_checkInit()) return;
   // -----------------  1D ------------------------------
   if (dim == 1){
+    Msg::Info("generating mesh for edge %d\n",tag);
     deMeshGEdge killer;
     GEdge *ge = GModel::current()->getEdgeByTag(tag);
     if (!ge)return;
     killer(ge);
-    for (auto t : coord){
-      GPoint gp = ge->point(t);
-      MEdgeVertex *vv = new MEdgeVertex(gp.x(), gp.y(), gp.z(), ge, t);
-      ge->mesh_vertices.push_back(vv);      
+    std::vector<int> index(coord.size(), 0);
+    for (int i = 0 ; i != index.size() ; i++) {
+      index[i] = i;
     }
+    sort(index.begin(), index.end(), [&](const int& a, const int& b) { return (coord[a] < coord[b]);});
+    for (auto t : index){
+      GPoint gp = ge->point(coord[t]);
+      MEdgeVertex *vv = new MEdgeVertex(gp.x(), gp.y(), gp.z(), ge, coord[t], nodeTags[t]);
+      ge->mesh_vertices.push_back(vv);   
+    }
+    int lineCount = 1;
     for(std::size_t i = 0; i < ge->mesh_vertices.size() + 1; i++) {
-      MVertex *v0 = (i == 0) ? ge->getBeginVertex()->mesh_vertices[0] :
-	ge->mesh_vertices[i - 1];
-      MVertex *v1 = (i == ge->mesh_vertices.size()) ?
-	ge->getEndVertex()->mesh_vertices[0] :
-	ge->mesh_vertices[i];
+      MVertex *v0 = (i == 0) ? ge->getBeginVertex()->mesh_vertices[0] : ge->mesh_vertices[i - 1];
+      MVertex *v1 = (i == ge->mesh_vertices.size()) ? ge->getEndVertex()->mesh_vertices[0] : ge->mesh_vertices[i];
       ge->lines.push_back(new MLine(v0, v1));
+      lineCount++;
     }
   }
   // -----------------  2D ------------------------------
@@ -5443,7 +5448,9 @@ GMSH_API void gmsh::model::mesh::generateMesh(const int dim, const int tag, cons
     int vmax = 0;
     
     for (auto e : ed){
+      std::cout << "edge " << e->masterOrientation << "\n";
       for (auto l : e->lines){
+        std::cout << "line " << l->getVertex(0)->getNum() << " ; " << l->getVertex(1)->getNum() << "\n";
         vs[l->getVertex(0)->getNum()] = l->getVertex(0);
         vs[l->getVertex(1)->getNum()] = l->getVertex(1);
         if (l->getVertex(0)->getNum() > vmax) vmax=l->getVertex(0)->getNum();
@@ -5460,12 +5467,14 @@ GMSH_API void gmsh::model::mesh::generateMesh(const int dim, const int tag, cons
         idx++;
       }
     }
-
+    int triCount = 1;
+    std::cout << "size of faces : " << pm->faces.size() << "\n";
     for(size_t i = 0; i < pm->faces.size(); i++) {
       PolyMesh::HalfEdge *he = pm->faces[i]->he;
       int a = he->v->data;
       int b = he->next->v->data;
       int c = he->next->next->v->data;
+      std::cout << "triangle " << i << " : " << a << " ; " << b << " ; " << c << "\n";
       if (a != -1 && b != -1 && c != -1){
         MVertex *va,*vb,*vc;
         std::map<int,MVertex*>::iterator ita = vs.find(a);
@@ -5493,6 +5502,7 @@ GMSH_API void gmsh::model::mesh::generateMesh(const int dim, const int tag, cons
           vs[c] = vc;
         }
 	      gf->triangles.push_back(new MTriangle(va,vb,vc));
+        triCount++;
       }
     }
     pm->print4debug(1);

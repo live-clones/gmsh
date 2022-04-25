@@ -513,6 +513,7 @@ void constrainedAlphaShapes_(GModel* m,
 
 
  /* ------------------------alpha shapes of the newly generated mesh -----------------------------*/
+  /*
   std::map<std::size_t,std::size_t> controlIndices;
   size_t count=0;
   for (size_t i = 0; i < mesh->lines.num; i++)
@@ -520,6 +521,7 @@ void constrainedAlphaShapes_(GModel* m,
     controlIndices[mesh->lines.node[2*i+0]] = count++;
     controlIndices[mesh->lines.node[2*i+1]] = count++;
   }
+  */
 
   //setFlagsToProcessOnlyVolumesInBrep(mesh);
   //hxtOptimizeTetrahedra(mesh,&optiOptions);
@@ -528,13 +530,15 @@ void constrainedAlphaShapes_(GModel* m,
   bool flag;
   for (size_t i=0; i<mesh->tetrahedra.num; i++){
     flag = false;
+    /*
     for (size_t j = 0; j < 4; j++)
     {
       if (controlIndices.find(mesh->tetrahedra.node[4*i+j]) != controlIndices.end()){
         flag = true; break;
       }
     }
-    if (!flag){
+    */
+    if (mesh->tetrahedra.color[i] < mesh->brep.numVolumes){
       for (size_t j = 0; j < 4; j++){
         fluidTets.push_back(mesh->tetrahedra.node[4*i+j]); 
       }
@@ -596,6 +600,7 @@ void constrainedAlphaShapes_(GModel* m,
   /* ------------------------------------------------------------------ */
 
   /* write back to gmsh format, and do not keep "external elements" */
+  /*
   for (size_t i=0; i<mesh->tetrahedra.num; i++){
     for (size_t j = 0; j < 4; j++)
     {
@@ -604,6 +609,7 @@ void constrainedAlphaShapes_(GModel* m,
       }
     }
   }
+  */
   Hxt2GmshAlpha(regions, mesh, v2c, c2v);
 
   /* reset the vertex indices */

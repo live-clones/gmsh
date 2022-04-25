@@ -845,7 +845,7 @@ PolyMesh *GFaceInitialMesh(int faceTag, int recover,
             int result = recover_edge(pm, v0, v1);
             if(result < 0) {
               Msg::Warning("Impossible to recover edge %lu %lu (error tag %d)",
-                           l->getVertex(0)->getNum(), l->getVertex(0)->getNum(),
+                           l->getVertex(0)->getNum(), l->getVertex(1)->getNum(),
                            result);
             }
             else {
