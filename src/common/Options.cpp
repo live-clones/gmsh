@@ -1430,6 +1430,12 @@ std::string opt_geometry_occ_target_unit(OPT_ARGS_STR)
   return CTX::instance()->geom.occTargetUnit;
 }
 
+std::string opt_geometry_pipe_default_trihedron(OPT_ARGS_STR)
+{
+  if(action & GMSH_SET) CTX::instance()->geom.pipeDefaultTrihedron = val;
+  return CTX::instance()->geom.pipeDefaultTrihedron;
+}
+
 std::string opt_solver_socket_name(OPT_ARGS_STR)
 {
   if(action & GMSH_SET) CTX::instance()->solver.socketName = val;

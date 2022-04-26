@@ -3190,7 +3190,7 @@ bool OCC_Internals::_extrudePerDim(
       // DiscreteTrihedron seems the most robust; CorrectedFrenet e.g. fails on
       // very simple cases with straight extrusions.
       GeomFill_Trihedron mode = GeomFill_IsDiscreteTrihedron;
-      if(trihedron == "" || trihedron == "DiscreteTrihedron")
+      if(trihedron == "DiscreteTrihedron")
         mode = GeomFill_IsDiscreteTrihedron;
       else if(trihedron == "CorrectedFrenet")
         mode = GeomFill_IsCorrectedFrenet;
@@ -3315,8 +3315,10 @@ bool OCC_Internals::addPipe(const std::vector<std::pair<int, int> > &inDimTags,
                             std::vector<std::pair<int, int> > &outDimTags,
                             const std::string &trihedron)
 {
+  std::string t = trihedron;
+  if(t.empty()) t = CTX::instance()->geom.pipeDefaultTrihedron;
   return _extrude(2, inDimTags, 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., wireTag,
-                  outDimTags, nullptr, trihedron);
+                  outDimTags, nullptr, t);
 }
 
 bool OCC_Internals::_fillet(int mode, const std::vector<int> &volumeTags,

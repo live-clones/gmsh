@@ -93,6 +93,7 @@ struct contextGeometryOptions {
   // geometry algorithms
   int oldCircle, oldNewreg, oldRuledSurface;
   int extrudeSplinePoints, extrudeReturnLateral;
+  std::string pipeDefaultTrihedron;
   int autoCoherence;
   int autoExtrude; // FIXME: temporary for auto-extrude testing
   double tolerance, toleranceBoolean, snap[3], transform[3][3], offset[3];

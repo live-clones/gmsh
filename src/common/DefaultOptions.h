@@ -161,6 +161,9 @@ StringXString GeometryOptions_String[] = {
     "OpenCASCADE behavior); the option should be set before importing the STEP or "
     "IGES file"},
 
+  { F|O, "PipeDefaultTrihedron" , opt_geometry_pipe_default_trihedron,
+    "DiscreteTrihedron" , "Default trihedron type when creating pipes" },
+
   { 0, nullptr , nullptr , "" , nullptr }
 } ;
 
