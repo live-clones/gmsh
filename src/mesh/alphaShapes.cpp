@@ -488,13 +488,13 @@ void constrainedAlphaShapes_(GModel* m,
   };
 
   HXTTetMeshOptions options2 = {
-    .refine=0, 
-    .quality={.min=0.35}, 
-    .nodalSizes={.factor=1.0},
+    .reproducible=0,
     .verbosity=2,
-    .optimize=0,
     .stat=1,
-    .reproducible=0
+    .refine=0, 
+    .optimize=0,
+    .quality={.min=0.35}, 
+    .nodalSizes={.factor=1.0}
 	};
 
   HXTOptimizeOptions optiOptions = {
