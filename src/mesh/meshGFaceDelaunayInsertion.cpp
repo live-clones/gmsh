@@ -1826,9 +1826,6 @@ void delaunayMeshIn2D(std::vector<MVertex *> &v,
   MVertex *box[4];
   initialSquare(v, box, t);
 
-  double AVG_ITER = 0;
-  double AVG_CAVSIZE = 0;
-
   if(hilbertSort) SortHilbert(v);
 
   for(size_t i = 0; i < v.size(); i++) {
@@ -1836,7 +1833,6 @@ void delaunayMeshIn2D(std::vector<MVertex *> &v,
 
     int NITER = 0;
     MTri3 *found = getTriToBreak(pv, t, NITER);
-    AVG_ITER += (double)NITER;
     if(!found) {
       Msg::Error("Cannot insert a point in 2D Delaunay");
       continue;
@@ -1845,7 +1841,6 @@ void delaunayMeshIn2D(std::vector<MVertex *> &v,
     cavity.clear();
 
     recurFindCavity(shell, cavity, pv, found);
-    AVG_CAVSIZE += (double)cavity.size();
 
     std::vector<MTri3 *> extended_cavity;
     for(std::size_t count = 0; count < shell.size(); count++) {
