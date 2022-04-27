@@ -21,6 +21,7 @@
 
 #if defined(HAVE_OCC)
 
+#include <BOPAlgo_Alerts.hxx>
 #include <BRepAlgoAPI_Common.hxx>
 #include <BRepAlgoAPI_Cut.hxx>
 #include <BRepAlgoAPI_Fuse.hxx>
@@ -3634,6 +3635,11 @@ bool OCC_Internals::booleanOperator(
       fragments.SetArguments(objectShapes);
       if(tolerance > 0.0) fragments.SetFuzzyValue(tolerance);
       fragments.Build();
+      if(fragments.HasErrors() &&
+         fragments.HasError(STANDARD_TYPE(BOPAlgo_AlertTooFewArguments))) {
+        Msg::Warning("Boolean fragments skipped - too few arguments");
+        return true;
+      }
       if(!fragments.IsDone()) {
         Msg::Error("Boolean fragments failed");
         return false;
