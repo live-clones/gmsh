@@ -57,7 +57,7 @@ Enable Mathex expression parser (used by plugins and options) (default: ON)
 @item ENABLE_MED
 Enable MED mesh and post file formats (default: ON)
 @item ENABLE_MESH
-Enable mesh module (required by GUI) (default: ON)
+Enable mesh module (default: ON)
 @item ENABLE_METIS
 Enable Metis mesh partitioner (default: ON)
 @item ENABLE_MMG
