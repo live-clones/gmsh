@@ -2057,6 +2057,9 @@ static bool buildConsecutiveListOfVertices(
     count++;
   }
 
+  Msg::Debug("Succeeded finding consecutive list of nodes on surface "
+             "%d, with tolerance %g", gf->tag(), tol);
+
   // we're all set!
   recoverMap.insert(recoverMapLocal.begin(), recoverMapLocal.end());
 
