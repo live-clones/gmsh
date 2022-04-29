@@ -459,13 +459,13 @@ static void computeLifting(cross2d *first, int branch,
           bool b1 = bnd.find(n->_e.getVertex(1)) != bnd.end();
 
           s0 = s1 = false;
-          //          b0 = b1 = false;
+          // b0 = b1 = false;
           if(((s0 && c1) || (s0 && b1)) || ((s1 && c0) || (s1 && b0))) {
             printf("BLOCKED \n");
           }
 
           if((!s0 && !s1)) _s.push(n);
-          //	  printf("%12.5E %12.5E %12.5E\n",n->a,n->_atemp,c->_atemp);
+          // printf("%12.5E %12.5E %12.5E\n",n->a,n->_atemp,c->_atemp);
           n->_atemp = a2;
           visited.insert(n);
           SVector3 d = n->_tgt * cos(n->_atemp) + n->_tgt2 * sin(n->_atemp);
@@ -574,7 +574,6 @@ static void duplicateNodesInCutGraph(
       }
 
       if(ITER) {
-        //	if (it->first->getNum() != 268){
         MVertex *v =
           new MVertex(it->first->x(), it->first->y(), it->first->z(), f[0]);
         std::pair<MVertex *, MVertex *> p = std::make_pair(it->first, v);
@@ -592,8 +591,7 @@ static void duplicateNodesInCutGraph(
         }
         fprintf(_f, "SP(%g,%g,%g){%d};\n", it->first->x(), it->first->y(),
                 it->first->z(), (int)els.size());
-        //      printf("found vertex with %d on one side\n",els.size());
-        //	}
+        // printf("found vertex with %d on one side\n",els.size());
       }
       ++ITER;
     }
@@ -2763,7 +2761,7 @@ public:
       std::vector<double> CURVATURE;
       CURVATURE.resize(vsorted[j].size());
       for(size_t i = 0; i < vsorted[j].size(); ++i) { CURVATURE[i] = 0.0; }
-      double SUM = 0.0;
+
       for(size_t i = 0; i < vsorted[j].size(); ++i) {
         MVertex *vi = vsorted[j][i];
         MVertex *vip = vsorted[j][(i + 1) % vsorted[j].size()];
@@ -2806,9 +2804,6 @@ public:
         // printf("%12.5E\n",sign);
       }
 
-      for(size_t i = 0; i < vsorted[j].size(); ++i) { SUM += CURVATURE[i]; }
-
-      //      printf("%22.15E %22.15E\n",SUM, CORR );
       for(size_t i = 0; i < vsorted[j].size(); ++i) {
         Dof E(vsorted[j][i]->getNum(), Dof::createTypeWithTwoInts(0, 1));
         _lsys->addToRightHandSide(dof->getDofNumber(E), CURVATURE[i]);
@@ -2821,12 +2816,10 @@ public:
       //_lsys->addToRightHandSide(dof->getDofNumber(E),-it->second);
     }
 
-    double SSUM = 0;
     for(auto it = sing.begin(); it != sing.end(); ++it) {
       Dof E(it->first->getNum(), Dof::createTypeWithTwoInts(0, 1));
       _lsys->addToRightHandSide(dof->getDofNumber(E),
                                 2.0 * M_PI * (double)it->second / nbTurns);
-      SSUM += 2.0 * M_PI * (double)it->second / nbTurns;
     }
 
     // FIX DE LA MORT
@@ -2943,20 +2936,7 @@ public:
       }
     }
 
-    double SUM = 0.0;
-    for(size_t i = 0; i < aaa.size(); i++) {
-      double a;
-      _lsys->getFromRightHandSide(i, a);
-      SUM += a;
-    }
-    printf("SUM = %12.5E\n", SUM);
-    SUM /= aaa.size();
-    for(size_t i = 0; i < aaa.size(); i++) {
-      //      _lsys->addToRightHandSide(i, -SUM);
-    }
-
     _lsys->systemSolve();
-    //    printScalar(theta, 'T');
 
     double sum = 0;
     int count_ = 0;
@@ -3637,17 +3617,9 @@ public:
     correctionOnCutGraph(cuts, new2old);
 
     double MAXX = 0.;
-    //    double SUM_LEFT = 0 , SUM_RIGHT = 0;
     for(size_t i = 0; i < groups_cg.size(); i++) {
       double MAXD1 = -1.e22, MIND1 = 1.e22, MAXD2 = -1.e22, MIND2 = 1.e22;
       for(size_t j = 0; j < G[i].left.size(); j++) {
-        /*	if (G[i].groupId == 5 || G[i].groupId == 6){
-          printf("%lu %lu %12.5E %12.5E %12.5E
-        %12.5E\n",G[i].left[j]->getNum(),G[i].right[j]->getNum(),
-             potU[G[i].left[j]],potU[G[i].right[j]],
-             potV[G[i].left[j]],potV[G[i].right[j]]);
-        }
-        */
         double Ul = potU[G[i].left[j]];
         double Ur = potU[G[i].right[j]];
         double Vl = potV[G[i].left[j]];
@@ -3659,10 +3631,6 @@ public:
         MIND1 = std::min(D1, MIND1);
         MIND2 = std::min(D2, MIND2);
       }
-      //      SUM_LEFT += MAXD1;
-      //      SUM_RIGHT += MAXD2;
-      //      Dof E1(g.left[]->getNum(),
-      //           Dof::createTypeWithTwoInts(0, 3 + 100 * G[i].groupId));
 
       Msg::Debug("group %3d ROT (%12.5E %12.5E) (%12.5E %12.5E)", G[i].groupId,
                  G[i].mat[0][0], G[i].mat[0][1], G[i].mat[1][0],

@@ -485,9 +485,11 @@ Cell *CellComplex::_omitCell(Cell *cell, bool dual)
   std::string domainstr = "";
   int domain = getDomain(cell, domainstr);
 
-  Msg::Debug("Cell complex %d-omit removed %dv, %df, %de, %dn", cell->getDim(),
+  Msg::Debug("Cell complex %d-omit removed %dv, %df, %de, %dn (total %d)",
+             cell->getDim(),
              numCells[3] - getSize(3), numCells[2] - getSize(2),
-             numCells[1] - getSize(1), numCells[0] - getSize(0));
+             numCells[1] - getSize(1), numCells[0] - getSize(0),
+             count);
   Msg::Debug(" - number of %d-cells left in %s: %d", cell->getDim(),
              domainstr.c_str(), getNumCells(cell->getDim(), domain));
 
