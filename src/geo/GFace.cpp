@@ -2130,21 +2130,35 @@ void GFace::setMeshMaster(GFace *master, const std::vector<double> &tfo)
       sign = -1;
     }
 
-    // multiple matches (when several curves have the same begin/end points)
+    // if there are multiple matches (when several curves have the same
+    // begin/end points), we must compare the geometry: mid-points (general) or
+    // transformed bounding boxes as a fallback (ok for translations or
+    // rotations by n*pi/2)
     SBoundingBox3d localbb = localEdge->bounds(true);
-    // using the global geometrical tolerance does not work well, as the
-    // accuracy of bounding boxes can be poor (e.g. in OCC, computed through a
-    // mesh, ...)
     double tol = localbb.diag() * 1e-3;
-
+    Range<double> localr = localEdge->parBounds(0);
+    GPoint localp = localEdge->point(0.5 * (localr.low() + localr.high()));
     if(!masterEdge && numf) {
       auto ret = m_vtxToEdge.equal_range(forward);
       for(auto it = ret.first; it != ret.second; it++) {
-        SBoundingBox3d masterbb = it->second->bounds(true);
+        GEdge *ge = it->second;
+        Range<double> masterr = ge->parBounds(0);
+        GPoint masterp = ge->point(0.5 * (masterr.low() + masterr.high()));
+        if(localp.succeeded() && masterp.succeeded()) {
+          SPoint3 p1(localp.x(), localp.y(), localp.z());
+          SPoint3 p2(masterp.x(), masterp.y(), masterp.z());
+          p2.transform(tfo);
+          if(p1.distance(p2) < tol) {
+            masterEdge = ge;
+            sign = 1;
+            break;
+          }
+        }
+        SBoundingBox3d masterbb = ge->bounds(true);
         masterbb.transform(tfo);
         if(masterbb.min().distance(localbb.min()) < tol &&
            masterbb.max().distance(localbb.max()) < tol) {
-          masterEdge = it->second;
+          masterEdge = ge;
           sign = 1;
           break;
         }
@@ -2153,11 +2167,24 @@ void GFace::setMeshMaster(GFace *master, const std::vector<double> &tfo)
     if(!masterEdge && numb) {
       auto ret = m_vtxToEdge.equal_range(backward);
       for(auto it = ret.first; it != ret.second; it++) {
-        SBoundingBox3d masterbb = it->second->bounds(true);
+        GEdge *ge = it->second;
+        Range<double> masterr = ge->parBounds(0);
+        GPoint masterp = ge->point(0.5 * (masterr.low() + masterr.high()));
+        if(localp.succeeded() && masterp.succeeded()) {
+          SPoint3 p1(localp.x(), localp.y(), localp.z());
+          SPoint3 p2(masterp.x(), masterp.y(), masterp.z());
+          p2.transform(tfo);
+          if(p1.distance(p2) < tol) {
+            masterEdge = ge;
+            sign = -1;
+            break;
+          }
+        }
+        SBoundingBox3d masterbb = ge->bounds(true);
         masterbb.transform(tfo);
         if(masterbb.min().distance(localbb.min()) < tol &&
            masterbb.max().distance(localbb.max()) < tol) {
-          masterEdge = it->second;
+          masterEdge = ge;
           sign = -1;
           break;
         }
@@ -2165,7 +2192,7 @@ void GFace::setMeshMaster(GFace *master, const std::vector<double> &tfo)
     }
 
     if(!masterEdge) {
-      Msg::Error("Could not find counterpart of curve %d with end points %d-%d "
+      Msg::Error("Could not find counterpart of curve %d with end points %d %d "
                  "(corresponding to curve with end points %d %d) in surface %d",
                  localEdge->tag(), lPair.first->tag(), lPair.second->tag(),
                  forward.first->tag(), forward.second->tag(), master->tag());
