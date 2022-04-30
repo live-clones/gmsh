@@ -3722,11 +3722,7 @@ bool OCC_Internals::booleanOperator(
         Msg::Debug("BOOL (%d,%d) replaced by 1", dim, tag);
       }
       else {
-#ifdef SAFE_UNBIND
         if(remove) _unbind(mapOriginal[i], dim, tag, true);
-#else
-        if(remove) _unbindWithoutChecks(mapOriginal[i]);
-#endif
         Msg::Debug("BOOL (%d,%d) other", dim, tag);
       }
     }
