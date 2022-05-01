@@ -1,4 +1,4 @@
-4.10.1 (Work-in-progress): small bug fixes.
+4.10.1 (May 1, 2022): small bug fixes.
 
 4.10.0 (April 25, 2022): more flexible homology/cohomology workflow in the API;
 "Attractor" field is now just a synonym for the newer (and more efficient)
