@@ -1,3 +1,6 @@
+4.10.2 (Work-in-progress): fixed regression introduced in 4.9 for recombined
+meshes with boundary layers.
+
 4.10.1 (May 1, 2022): small bug fixes.
 
 4.10.0 (April 25, 2022): more flexible homology/cohomology workflow in the API;

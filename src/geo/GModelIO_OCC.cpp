@@ -4416,6 +4416,11 @@ bool OCC_Internals::exportShapes(GModel *model, const std::string &fileName,
             split[2] == ".STEP" || split[2] == ".STP") {
       STEPControl_Writer writer;
       setTargetUnit(CTX::instance()->geom.occTargetUnit);
+
+      // this does not seem to solve the issue that entities get duplicated when
+      // exporting STEP files (see issue #906):
+      // Interface_Static::SetIVal("write.step.nonmanifold", 1);
+
       if(writer.Transfer(c, STEPControl_AsIs) == IFSelect_RetDone) {
         if(writer.Write(occfile.ToCString()) != IFSelect_RetDone) {
           Msg::Error("Could not create file '%s'", fileName.c_str());

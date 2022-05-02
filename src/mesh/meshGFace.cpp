@@ -825,6 +825,8 @@ static void addOrRemove(MVertex *v1, MVertex *v2,
   }
 }
 
+bool meshGenerator(GFace *, int, bool, int, bool, std::vector<GEdge *> *);
+
 static void modifyInitialMeshForBoundaryLayers(
   GFace *gf, std::vector<MQuadrangle *> &blQuads,
   std::vector<MTriangle *> &blTris, std::set<MVertex *> &verts, bool debug)
@@ -1018,7 +1020,7 @@ static void modifyInitialMeshForBoundaryLayers(
 
   deMeshGFace kil_;
   kil_(gf);
-  meshGenerator(gf, 0, 0, true, false, &hop);
+  meshGenerator(gf, 0, false, 99, false, &hop);
 }
 
 static bool improved_translate(GFace *gf, MVertex *vertex, SVector3 &v1,
@@ -1154,7 +1156,7 @@ static void _deleteUnusedVertices(GFace *gf)
 // Builds An initial triangular mesh that respects the boundaries of
 // the domain, including embedded points and surfaces
 bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
-                   bool onlyInitialMesh, bool debug,
+                   int onlyInitialMesh, bool debug,
                    std::vector<GEdge *> *replacement_edges)
 {
   if(CTX::instance()->debugSurface > 0 &&
@@ -1768,8 +1770,8 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
   splitElementsInBoundaryLayerIfNeeded(gf);
 
   if((CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine) &&
-     (CTX::instance()->mesh.algoRecombine <= 1 ||
-      CTX::instance()->mesh.algoRecombine == 4)) {
+     (onlyInitialMesh != 99) && (CTX::instance()->mesh.algoRecombine <= 1 ||
+                                 CTX::instance()->mesh.algoRecombine == 4)) {
 
     if(CTX::instance()->mesh.algoRecombine == 4) {
       meshGFaceQuadrangulateBipartiteLabelling(gf->tag());
@@ -2989,8 +2991,9 @@ void meshGFace::operator()(GFace *gf, bool print)
   }
   else {
     meshGenerator(gf, 0, repairSelfIntersecting1dMesh,
-                  gf->getMeshingAlgo() == ALGO_2D_INITIAL_ONLY,
-                  debugSurface >= 0 || debugSurface == -100);
+                  (gf->getMeshingAlgo() == ALGO_2D_INITIAL_ONLY) ? 1 : 0,
+                  (debugSurface >= 0 || debugSurface == -100),
+                  NULL);
   }
 
   Msg::Debug("Type %d %d triangles generated, %d internal nodes",
