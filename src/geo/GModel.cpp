@@ -1071,7 +1071,9 @@ int GModel::mesh(int dimension)
     renumberMeshVertices();
     renumberMeshElements();
   }
-  computeHomology(); // must be done after renumbering
+  // must be done after renumbering:
+  std::vector<std::pair<int, int> > newPhysicals;
+  computeHomology(newPhysicals);
   CTX::instance()->mesh.changed = ENT_ALL;
   return true;
 #else
@@ -3445,8 +3447,10 @@ void GModel::clearHomologyRequests()
   _homologyRequests.clear();
 }
 
-void GModel::computeHomology()
+void GModel::computeHomology(std::vector<std::pair<int, int> > &newPhysicals)
 {
+  newPhysicals.clear();
+
   if(_homologyRequests.empty()) return;
 
 #if defined(HAVE_KBIPACK)
@@ -3508,14 +3512,16 @@ void GModel::computeHomology()
         homology->findHomologyBasis(dim);
         Msg::Info("Homology space basis chains to save: %s", dims.c_str());
         for(std::size_t i = 0; i < dim.size(); i++) {
-          homology->addChainsToModel(dim.at(i));
+          std::vector<int> p = homology->addChainsToModel(dim.at(i));
+          for(auto t : p) newPhysicals.push_back({dim.at(i), t});
         }
       }
       else if(type == "Cohomology" && !homology->isCohomologyComputed(dim)) {
         homology->findCohomologyBasis(dim);
         Msg::Info("Cohomology space basis cochains to save: %s", dims.c_str());
         for(std::size_t i = 0; i < dim.size(); i++) {
-          homology->addCochainsToModel(dim.at(i));
+          std::vector<int> p = homology->addCochainsToModel(dim.at(i));
+          for(auto t : p) newPhysicals.push_back({dim.at(i), t});
         }
       }
     }

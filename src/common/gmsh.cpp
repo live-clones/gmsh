@@ -5428,7 +5428,11 @@ GMSH_API void
 gmsh::model::mesh::computeHomology()
 {
   if(!_checkInit()) return;
-  GModel::current()->computeHomology();
+  // TODO in Gmsh 4.11: return newPhysicals (and remove message)
+  std::vector<std::pair<int, int> > newPhysicals;
+  GModel::current()->computeHomology(newPhysicals);
+  for(auto p : newPhysicals)
+    Msg::Info("New Physical %s", _getEntityName(p.first, p.second).c_str());
 }
 
 GMSH_API void gmsh::model::mesh::triangulate(const std::vector<double> &coord,
