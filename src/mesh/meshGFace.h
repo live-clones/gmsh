@@ -50,9 +50,6 @@ int MeshTransfiniteSurface(GFace *gf);
 int MeshExtrudedSurface(
   GFace *gf,
   std::set<std::pair<MVertex *, MVertex *> > *constrainedEdges = nullptr);
-bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
-                   bool onlyInitialMesh, bool debug = true,
-                   std::vector<GEdge *> *replacement_edges = nullptr);
 bool pointInsideParametricDomain(std::vector<SPoint2> &bnd, SPoint2 &p,
                                  SPoint2 &out, int &N);
 

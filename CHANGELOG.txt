@@ -1,6 +1,14 @@
-4.10.0 (Work-in-progress): more flexible homology/cohomology workflow in the
-API; "Attractor" field is now just a synonym for the newer (and more efficient)
-"Distance" field; small bug fixes.
+4.10.2 (Work-in-progress): fixed regression introduced in 4.9 for recombined
+meshes with boundary layers.
+
+4.10.1 (May 1, 2022): small bug fixes.
+
+4.10.0 (April 25, 2022): more flexible homology/cohomology workflow in the API;
+"Attractor" field is now just a synonym for the newer (and more efficient)
+"Distance" field; periodic bsplines now use the same default multiplicities in
+OCC as in the built-in kernel; model/isInside now also handles discrete
+entities; speed-up repeated simple boolean operations; C++ api now throws
+std::runtime_error on errors; small bug fixes.
 
 * New API functions: geo/addGeometry, geo/addPointOnGeometry,
   mesh/addHomologyRequest, mesh/clearHomologyRequests, mesh/setVisibility,
@@ -8,8 +16,9 @@ API; "Attractor" field is now just a synonym for the newer (and more efficient)
 
 * Incompatible API changes: additional const qualifiers in C API; removed
   mesh/computeCohomology; new arguments to occ/getCurveLoops and
-  occ/getSurfaceLoops, changed arguments of mesh/computeHomology; new optional
-  arguments to model/addPhysicalGroup, model/geo/addPhysicalGroup,
+  occ/getSurfaceLoops; changed arguments of mesh/computeHomology; new optional
+  arguments to occ/addCircle, occ/addEllipse, occ/addDisk, occ/addTorus,
+  occ/addWedge, model/addPhysicalGroup, model/geo/addPhysicalGroup,
   mesh/removeDuplicateNodes and mesh/setRecombine.
 
 4.9.5 (February 21, 2022): dynamic Gmsh library now also only exports public

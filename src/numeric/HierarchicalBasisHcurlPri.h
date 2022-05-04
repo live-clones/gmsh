@@ -4,14 +4,17 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 //
 // Contributed by Ismail Badia.
+
 // Reference :  "Higher-Order Finite Element  Methods"; Pavel Solin, Karel
-// Segeth ,
-//                 Ivo Dolezel , Chapman and Hall/CRC; Edition : Har/Cdr (2003).
+// Segeth, Ivo Dolezel, Chapman and Hall/CRC; Edition : Har/Cdr (2003).
+
 #ifndef HIERARCHICAL_BASIS_HCURL_PRI_H
 #define HIERARCHICAL_BASIS_HCURL_PRI_H
 
-#include "HierarchicalBasisHcurl.h"
+#include <stdexcept>
 #include <math.h>
+#include "HierarchicalBasisHcurl.h"
+
 
 /**
  * MPrism
@@ -68,7 +71,7 @@ public:
       generateCurlBasis(u, v, w, edgeBasis, faceBasis, bubbleBasis);
     }
     else {
-      throw std::string("unknown typeFunction");
+      throw std::runtime_error("unknown typeFunction");
     }
   }
 

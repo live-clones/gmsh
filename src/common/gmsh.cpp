@@ -116,6 +116,7 @@ static char **_argv = nullptr;
 static bool _checkInit()
 {
   if(!_initialized) {
+    CTX::instance()->terminal = 1;
     Msg::Error("Gmsh has not been initialized");
     return false;
   }
@@ -145,6 +146,12 @@ GMSH_API void gmsh::initialize(int argc, char ** argv,
     _argc = argc;
     _argv = new char *[_argc + 1];
     for(int i = 0; i < argc; i++) _argv[i] = argv[i];
+
+#if defined(HAVE_FLTK)
+    // if the GUI is already running (rare case, but could happen), we're done
+    if(FlGui::available()) return;
+#endif
+
     if(run) {
       if(CTX::instance()->batch) {
         if(!Msg::GetGmshClient()) CTX::instance()->terminal = 1;
@@ -1058,7 +1065,19 @@ GMSH_API int gmsh::model::isInside(const int dim, const int tag,
     }
     for(std::size_t i = 0; i < coord.size(); i += 3) {
       SPoint3 pt(coord[i], coord[i + 1], coord[i + 2]);
-      if(entity->containsPoint(pt)) num++;
+      if(entity->isFullyDiscrete()) { // query the mesh
+        SPoint3 uvw;
+        MElement *e = GModel::current()->getMeshElementByCoord(pt, uvw,
+                                                               entity->dim());
+        if(e) {
+          int entityTag;
+          e = GModel::current()->getMeshElementByTag(e->getNum(), entityTag);
+          if(e && entityTag == entity->tag()) num++;
+        }
+      }
+      else { // query the CAD
+        if(entity->containsPoint(pt)) num++;
+      }
     }
   }
   return num;
@@ -1879,15 +1898,18 @@ GMSH_API void gmsh::model::mesh::getElementByCoordinates(
   double &w, const int dim, const bool strict)
 {
   if(!_checkInit()) return;
+  nodeTags.clear();
   SPoint3 xyz(x, y, z), uvw;
   MElement *e = GModel::current()->getMeshElementByCoord(xyz, uvw, dim, strict);
   if(!e) {
+    elementTag = 0;
+    elementType = 0;
+    u = v = w = 0.;
     Msg::Error("No element found at (%g, %g, %g)", x, y, z);
     return;
   }
   elementTag = e->getNum();
   elementType = e->getTypeForMSH();
-  nodeTags.clear();
   for(std::size_t i = 0; i < e->getNumVertices(); i++) {
     MVertex *v = e->getVertex(i);
     if(!v) {
@@ -2255,6 +2277,9 @@ GMSH_API void gmsh::model::mesh::getElementQualities(
     }
     else if(qualityName == "angleShape"){
       elementQualities[k] = e->angleShapeMeasure();
+    }
+    else if(qualityName == "volume"){
+      elementQualities[k] = e->getVolume();
     }
     else{
       if(k == begin) {
@@ -5342,7 +5367,10 @@ GMSH_API void gmsh::model::mesh::importStl()
   m->deleteMesh();
   for(auto it = m->firstFace(); it != m->lastFace(); it++) {
     (*it)->buildSTLTriangulation();
-    (*it)->storeSTLTriangulationAsMesh();
+    (*it)->storeSTLAsMesh();
+  }
+  for(auto it = m->firstEdge(); it != m->lastEdge(); it++) {
+    (*it)->storeSTLAsMesh();
   }
 }
 
@@ -5713,6 +5741,11 @@ GMSH_API void gmsh::model::mesh::field::setNumber(const int tag,
 #if defined(HAVE_MESH)
   FieldOption *o = _getFieldOption(tag, option);
   if(!o) return;
+  if(o->getType() != FIELD_OPTION_DOUBLE &&
+     o->getType() != FIELD_OPTION_INT &&
+     o->getType() != FIELD_OPTION_BOOL) {
+    Msg::Warning("Field option '%s' is not a number", option.c_str());
+  }
   o->numericalValue(value);
 #else
   Msg::Error("Fields require the mesh module");
@@ -5727,6 +5760,11 @@ GMSH_API void gmsh::model::mesh::field::getNumber(const int tag,
 #if defined(HAVE_MESH)
   FieldOption *o = _getFieldOption(tag, option);
   if(!o) { return; }
+  if(o->getType() != FIELD_OPTION_DOUBLE &&
+     o->getType() != FIELD_OPTION_INT &&
+     o->getType() != FIELD_OPTION_BOOL) {
+    Msg::Warning("Field option '%s' is not a number", option.c_str());
+  }
   value = o->numericalValue();
 #else
   Msg::Error("Fields require the mesh module");
@@ -5741,6 +5779,10 @@ GMSH_API void gmsh::model::mesh::field::setString(const int tag,
 #if defined(HAVE_MESH)
   FieldOption *o = _getFieldOption(tag, option);
   if(!o) return;
+  if(o->getType() != FIELD_OPTION_STRING &&
+     o->getType() != FIELD_OPTION_PATH) {
+    Msg::Warning("Field option '%s' is not a string", option.c_str());
+  }
   o->string(value);
 #else
   Msg::Error("Fields require the mesh module");
@@ -5755,6 +5797,10 @@ GMSH_API void gmsh::model::mesh::field::getString(const int tag,
 #if defined(HAVE_MESH)
   FieldOption *o = _getFieldOption(tag, option);
   if(!o) { return; }
+  if(o->getType() != FIELD_OPTION_STRING &&
+     o->getType() != FIELD_OPTION_PATH) {
+    Msg::Warning("Field option '%s' is not a string", option.c_str());
+  }
   value = o->string();
 #else
   Msg::Error("Fields require the mesh module");
@@ -5775,6 +5821,9 @@ gmsh::model::mesh::field::setNumbers(const int tag, const std::string &option,
     o->list(vl);
   }
   else {
+    if(o->getType() != FIELD_OPTION_LIST_DOUBLE) {
+      Msg::Warning("Field option '%s' is not a list", option.c_str());
+    }
     std::list<double> vl;
     for(std::size_t i = 0; i < value.size(); i++) vl.push_back(value[i]);
     o->listdouble(vl);
@@ -5789,6 +5838,7 @@ gmsh::model::mesh::field::getNumbers(const int tag, const std::string &option,
                                      std::vector<double> &value)
 {
   if(!_checkInit()) return;
+  value.clear();
 #if defined(HAVE_MESH)
   FieldOption *o = _getFieldOption(tag, option);
   if(!o) { return; }
@@ -5797,6 +5847,9 @@ gmsh::model::mesh::field::getNumbers(const int tag, const std::string &option,
     for(auto i : vl) value.push_back(i);
   }
   else {
+    if(o->getType() != FIELD_OPTION_LIST_DOUBLE) {
+      Msg::Warning("Field option '%s' is not a list", option.c_str());
+    }
     std::list<double> vl = o->listdouble();
     for(auto d : vl) value.push_back(d);
   }
@@ -6392,13 +6445,15 @@ GMSH_API int gmsh::model::occ::addCircleArc(const int startTag,
 GMSH_API int gmsh::model::occ::addCircle(const double x, const double y,
                                          const double z, const double r,
                                          const int tag, const double angle1,
-                                         const double angle2)
+                                         const double angle2,
+                                         const std::vector<double> &zAxis,
+                                         const std::vector<double> &xAxis)
 {
   if(!_checkInit()) return -1;
   _createOcc();
   int outTag = tag;
   GModel::current()->getOCCInternals()->addCircle(outTag, x, y, z, r, angle1,
-                                                  angle2);
+                                                  angle2, zAxis, xAxis);
   return outTag;
 }
 
@@ -6419,13 +6474,16 @@ GMSH_API int gmsh::model::occ::addEllipse(const double x, const double y,
                                           const double z, const double r1,
                                           const double r2, const int tag,
                                           const double angle1,
-                                          const double angle2)
+                                          const double angle2,
+                                          const std::vector<double> &zAxis,
+                                          const std::vector<double> &xAxis)
 {
   if(!_checkInit()) return -1;
   _createOcc();
   int outTag = tag;
   GModel::current()->getOCCInternals()->addEllipse(outTag, x, y, z, r1, r2,
-                                                   angle1, angle2);
+                                                   angle1, angle2, zAxis,
+                                                   xAxis);
   return outTag;
 }
 
@@ -6497,12 +6555,15 @@ GMSH_API int gmsh::model::occ::addRectangle(const double x, const double y,
 
 GMSH_API int gmsh::model::occ::addDisk(const double xc, const double yc,
                                        const double zc, const double rx,
-                                       const double ry, const int tag)
+                                       const double ry, const int tag,
+                                       const std::vector<double> &zAxis,
+                                       const std::vector<double> &xAxis)
 {
   if(!_checkInit()) return -1;
   _createOcc();
   int outTag = tag;
-  GModel::current()->getOCCInternals()->addDisk(outTag, xc, yc, zc, rx, ry);
+  GModel::current()->getOCCInternals()->addDisk(outTag, xc, yc, zc, rx, ry,
+                                                zAxis, xAxis);
   return outTag;
 }
 
@@ -6678,26 +6739,28 @@ GMSH_API int gmsh::model::occ::addCone(const double x, const double y,
 GMSH_API int gmsh::model::occ::addWedge(const double x, const double y,
                                         const double z, const double dx,
                                         const double dy, const double dz,
-                                        const int tag, const double ltx)
+                                        const int tag, const double ltx,
+                                        const std::vector<double> &zAxis)
 {
   if(!_checkInit()) return -1;
   _createOcc();
   int outTag = tag;
   GModel::current()->getOCCInternals()->addWedge(outTag, x, y, z, dx, dy, dz,
-                                                 ltx);
+                                                 ltx, zAxis);
   return outTag;
 }
 
 GMSH_API int gmsh::model::occ::addTorus(const double x, const double y,
                                         const double z, const double r1,
                                         const double r2, const int tag,
-                                        const double angle)
+                                        const double angle,
+                                        const std::vector<double> &zAxis)
 {
   if(!_checkInit()) return -1;
   _createOcc();
   int outTag = tag;
   GModel::current()->getOCCInternals()->addTorus(outTag, x, y, z, r1, r2,
-                                                 angle);
+                                                 angle, zAxis);
   return outTag;
 }
 

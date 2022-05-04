@@ -6,7 +6,7 @@
 #ifndef GMSH_H
 #define GMSH_H
 
-// This file redefines the Gmsh C++ API in terms of the C API (v4.10.0).
+// This file redefines the Gmsh C++ API in terms of the C API (v4.10.2).
 //
 // This is provided as a convenience for users of the binary Gmsh SDK whose C++
 // compiler ABI is not compatible with the ABI of the C++ compiler used to create
@@ -26,6 +26,7 @@
 #include <string>
 #include <utility>
 #include <functional>
+#include <stdexcept>
 
 #ifndef M_PI
 #define M_PI (3.14159265358979323846)
@@ -112,10 +113,10 @@ namespace gmsh {
      int ierr = 0;
      char *api_error_;
      gmshLoggerGetLastError(&api_error_, &ierr);
-     if(ierr) throw "Could not get last error";
+     if(ierr) throw std::runtime_error("Could not get last error");
      std::string error = std::string(api_error_);
      gmshFree(api_error_);
-     throw error;
+     throw std::runtime_error(error);
   }
 
 }
@@ -826,7 +827,7 @@ namespace gmsh { // Top-level functions
     // Check if the coordinates (or the parametric coordinates if `parametric' is
     // set) provided in `coord' correspond to points inside the entity of dimension
     // `dim' and tag `tag', and return the number of points inside. This feature is
-    // only available for a subset of entities, depending on the underyling
+    // only available for a subset of entities, depending on the underlying
     // geometrical representation.
     inline int isInside(const int dim,
                         const int tag,
@@ -869,7 +870,7 @@ namespace gmsh { // Top-level functions
     // reparametrize all the points corresponding to the parametric coordinates
     // `parametricCoord'. Multiple matches in case of periodic surfaces can be
     // selected with `which'. This feature is only available for a subset of
-    // entities, depending on the underyling geometrical representation.
+    // entities, depending on the underlying geometrical representation.
     inline void reparametrizeOnSurface(const int dim,
                                        const int tag,
                                        const std::vector<double> & parametricCoord,
@@ -1501,9 +1502,9 @@ namespace gmsh { // Top-level functions
       // `elementTags'. `qualityType' is the requested quality measure: "minSJ" for
       // the minimal scaled jacobien, "minSICN" for the minimal signed inverted
       // condition number, "minSIGE" for the signed inverted gradient error,
-      // "gamma" for the ratio of the inscribed to circumcribed sphere radius. If
-      // `numTasks' > 1, only compute and return the part of the data indexed by
-      // `task'.
+      // "gamma" for the ratio of the inscribed to circumcribed sphere radius,
+      // "volume" for the volume. If `numTasks' > 1, only compute and return the
+      // part of the data indexed by `task'.
       inline void getElementQualities(const std::vector<std::size_t> & elementTags,
                                       std::vector<double> & elementsQuality,
                                       const std::string & qualityName = "minSICN",
@@ -3336,11 +3337,11 @@ namespace gmsh { // Top-level functions
       // the normals of the mesh, creating discrete boundary layer entities. Return
       // extruded entities in `outDimTags'. The entries in `numElements' give the
       // number of elements in each layer. If `height' is not empty, it provides
-      // the height of the different layers. If `recombine' is set, recombine the
-      // mesh in the layers. A second boundary layer can be created from the same
-      // entities if `second' is set. If `viewIndex' is >= 0, use the corresponding
-      // view to either specify the normals (if the view contains a vector field)
-      // or scale the normals (if the view is scalar).
+      // the (cumulative) height of the different layers. If `recombine' is set,
+      // recombine the mesh in the layers. A second boundary layer can be created
+      // from the same entities if `second' is set. If `viewIndex' is >= 0, use the
+      // corresponding view to either specify the normals (if the view contains a
+      // vector field) or scale the normals (if the view is scalar).
       inline void extrudeBoundaryLayer(const gmsh::vectorpair & dimTags,
                                        gmsh::vectorpair & outDimTags,
                                        const std::vector<int> & numElements = std::vector<int>(1, 1),
@@ -3743,19 +3744,27 @@ namespace gmsh { // Top-level functions
       // Add a circle of center (`x', `y', `z') and radius `r' in the OpenCASCADE
       // CAD representation. If `tag' is positive, set the tag explicitly;
       // otherwise a new tag is selected automatically. If `angle1' and `angle2'
-      // are specified, create a circle arc between the two angles. Return the tag
-      // of the circle.
+      // are specified, create a circle arc between the two angles. If a vector
+      // `zAxis' of size 3 is provided, use it as the normal to the circle plane
+      // (z-axis). If a vector `xAxis' of size 3 is provided in addition to
+      // `zAxis', use it to define the x-axis. Return the tag of the circle.
       inline int addCircle(const double x,
                            const double y,
                            const double z,
                            const double r,
                            const int tag = -1,
                            const double angle1 = 0.,
-                           const double angle2 = 2*M_PI)
+                           const double angle2 = 2*M_PI,
+                           const std::vector<double> & zAxis = std::vector<double>(),
+                           const std::vector<double> & xAxis = std::vector<double>())
       {
         int ierr = 0;
-        int result_api_ = gmshModelOccAddCircle(x, y, z, r, tag, angle1, angle2, &ierr);
+        double *api_zAxis_; size_t api_zAxis_n_; vector2ptr(zAxis, &api_zAxis_, &api_zAxis_n_);
+        double *api_xAxis_; size_t api_xAxis_n_; vector2ptr(xAxis, &api_xAxis_, &api_xAxis_n_);
+        int result_api_ = gmshModelOccAddCircle(x, y, z, r, tag, angle1, angle2, api_zAxis_, api_zAxis_n_, api_xAxis_, api_xAxis_n_, &ierr);
         if(ierr) throwLastError();
+        gmshFree(api_zAxis_);
+        gmshFree(api_xAxis_);
         return result_api_;
       }
 
@@ -3777,14 +3786,14 @@ namespace gmsh { // Top-level functions
         return result_api_;
       }
 
-      // Add an ellipse of center (`x', `y', `z') and radii `r1' and `r2' along the
-      // x- and y-axes, respectively, in the OpenCASCADE CAD representation. If
-      // `tag' is positive, set the tag explicitly; otherwise a new tag is selected
-      // automatically. If `angle1' and `angle2' are specified, create an ellipse
-      // arc between the two angles. Return the tag of the ellipse. Note that
-      // OpenCASCADE does not allow creating ellipses with the major radius (along
-      // the x-axis) smaller than or equal to the minor radius (along the y-axis):
-      // rotate the shape or use `addCircle' in such cases.
+      // Add an ellipse of center (`x', `y', `z') and radii `r1' and `r2' (with
+      // `r1' >= `r2') along the x- and y-axes, respectively, in the OpenCASCADE
+      // CAD representation. If `tag' is positive, set the tag explicitly;
+      // otherwise a new tag is selected automatically. If `angle1' and `angle2'
+      // are specified, create an ellipse arc between the two angles. If a vector
+      // `zAxis' of size 3 is provided, use it as the normal to the ellipse plane
+      // (z-axis). If a vector `xAxis' of size 3 is provided in addition to
+      // `zAxis', use it to define the x-axis. Return the tag of the ellipse.
       inline int addEllipse(const double x,
                             const double y,
                             const double z,
@@ -3792,11 +3801,17 @@ namespace gmsh { // Top-level functions
                             const double r2,
                             const int tag = -1,
                             const double angle1 = 0.,
-                            const double angle2 = 2*M_PI)
+                            const double angle2 = 2*M_PI,
+                            const std::vector<double> & zAxis = std::vector<double>(),
+                            const std::vector<double> & xAxis = std::vector<double>())
       {
         int ierr = 0;
-        int result_api_ = gmshModelOccAddEllipse(x, y, z, r1, r2, tag, angle1, angle2, &ierr);
+        double *api_zAxis_; size_t api_zAxis_n_; vector2ptr(zAxis, &api_zAxis_, &api_zAxis_n_);
+        double *api_xAxis_; size_t api_xAxis_n_; vector2ptr(xAxis, &api_xAxis_, &api_xAxis_n_);
+        int result_api_ = gmshModelOccAddEllipse(x, y, z, r1, r2, tag, angle1, angle2, api_zAxis_, api_zAxis_n_, api_xAxis_, api_xAxis_n_, &ierr);
         if(ierr) throwLastError();
+        gmshFree(api_zAxis_);
+        gmshFree(api_xAxis_);
         return result_api_;
       }
 
@@ -3914,19 +3929,28 @@ namespace gmsh { // Top-level functions
       }
 
       // Add a disk in the OpenCASCADE CAD representation, with center (`xc', `yc',
-      // `zc') and radius `rx' along the x-axis and `ry' along the y-axis. If `tag'
-      // is positive, set the tag explicitly; otherwise a new tag is selected
-      // automatically. Return the tag of the disk.
+      // `zc') and radius `rx' along the x-axis and `ry' along the y-axis (`rx' >=
+      // `ry'). If `tag' is positive, set the tag explicitly; otherwise a new tag
+      // is selected automatically. If a vector `zAxis' of size 3 is provided, use
+      // it as the normal to the disk (z-axis). If a vector `xAxis' of size 3 is
+      // provided in addition to `zAxis', use it to define the x-axis. Return the
+      // tag of the disk.
       inline int addDisk(const double xc,
                          const double yc,
                          const double zc,
                          const double rx,
                          const double ry,
-                         const int tag = -1)
+                         const int tag = -1,
+                         const std::vector<double> & zAxis = std::vector<double>(),
+                         const std::vector<double> & xAxis = std::vector<double>())
       {
         int ierr = 0;
-        int result_api_ = gmshModelOccAddDisk(xc, yc, zc, rx, ry, tag, &ierr);
+        double *api_zAxis_; size_t api_zAxis_n_; vector2ptr(zAxis, &api_zAxis_, &api_zAxis_n_);
+        double *api_xAxis_; size_t api_xAxis_n_; vector2ptr(xAxis, &api_xAxis_, &api_xAxis_n_);
+        int result_api_ = gmshModelOccAddDisk(xc, yc, zc, rx, ry, tag, api_zAxis_, api_zAxis_n_, api_xAxis_, api_xAxis_n_, &ierr);
         if(ierr) throwLastError();
+        gmshFree(api_zAxis_);
+        gmshFree(api_xAxis_);
         return result_api_;
       }
 
@@ -4232,8 +4256,9 @@ namespace gmsh { // Top-level functions
       // by the right-angle point (`x', `y', `z') and the 3 extends along the x-,
       // y- and z-axes (`dx', `dy', `dz'). If `tag' is positive, set the tag
       // explicitly; otherwise a new tag is selected automatically. The optional
-      // argument `ltx' defines the top extent along the x-axis. Return the tag of
-      // the wedge.
+      // argument `ltx' defines the top extent along the x-axis. If a vector
+      // `zAxis' of size 3 is provided, use it to define the z-axis. Return the tag
+      // of the wedge.
       inline int addWedge(const double x,
                           const double y,
                           const double z,
@@ -4241,30 +4266,37 @@ namespace gmsh { // Top-level functions
                           const double dy,
                           const double dz,
                           const int tag = -1,
-                          const double ltx = 0.)
+                          const double ltx = 0.,
+                          const std::vector<double> & zAxis = std::vector<double>())
       {
         int ierr = 0;
-        int result_api_ = gmshModelOccAddWedge(x, y, z, dx, dy, dz, tag, ltx, &ierr);
+        double *api_zAxis_; size_t api_zAxis_n_; vector2ptr(zAxis, &api_zAxis_, &api_zAxis_n_);
+        int result_api_ = gmshModelOccAddWedge(x, y, z, dx, dy, dz, tag, ltx, api_zAxis_, api_zAxis_n_, &ierr);
         if(ierr) throwLastError();
+        gmshFree(api_zAxis_);
         return result_api_;
       }
 
       // Add a torus in the OpenCASCADE CAD representation, defined by its center
       // (`x', `y', `z') and its 2 radii `r' and `r2'. If `tag' is positive, set
       // the tag explicitly; otherwise a new tag is selected automatically. The
-      // optional argument `angle' defines the angular opening (from 0 to 2*Pi).
-      // Return the tag of the wedge.
+      // optional argument `angle' defines the angular opening (from 0 to 2*Pi). If
+      // a vector `zAxis' of size 3 is provided, use it to define the z-axis.
+      // Return the tag of the torus.
       inline int addTorus(const double x,
                           const double y,
                           const double z,
                           const double r1,
                           const double r2,
                           const int tag = -1,
-                          const double angle = 2*M_PI)
+                          const double angle = 2*M_PI,
+                          const std::vector<double> & zAxis = std::vector<double>())
       {
         int ierr = 0;
-        int result_api_ = gmshModelOccAddTorus(x, y, z, r1, r2, tag, angle, &ierr);
+        double *api_zAxis_; size_t api_zAxis_n_; vector2ptr(zAxis, &api_zAxis_, &api_zAxis_n_);
+        int result_api_ = gmshModelOccAddTorus(x, y, z, r1, r2, tag, angle, api_zAxis_, api_zAxis_n_, &ierr);
         if(ierr) throwLastError();
+        gmshFree(api_zAxis_);
         return result_api_;
       }
 
@@ -5869,7 +5901,7 @@ namespace gmsh { // Top-level functions
       int ierr = 0;
       char *api_error_;
       gmshLoggerGetLastError(&api_error_, &ierr);
-      if(ierr) throw "Could not get last error";
+      if(ierr) throw std::runtime_error("Could not get last error");
       error = std::string(api_error_); gmshFree(api_error_);
     }
 

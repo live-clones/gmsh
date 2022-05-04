@@ -5986,6 +5986,23 @@ FExpr_Multi :
         yymsg(0, "MatrixOfInertia only available with OpenCASCADE geometry kernel");
       }
     }
+   | tColor GeoEntity123 '{' FExpr '}'
+    {
+      $$ = List_Create(3, 1, sizeof(double));
+      double r = 0., g = 0., b = 0., a = 0.;
+      GEntity *ge = GModel::current()->getEntityByTag($2, (int)$4);
+      if(ge){
+        unsigned int value = ge->getColor();
+        r = CTX::instance()->unpackRed(value);
+        g = CTX::instance()->unpackGreen(value);
+        b = CTX::instance()->unpackBlue(value);
+        a = CTX::instance()->unpackAlpha(value);
+        List_Add($$, &r);
+        List_Add($$, &g);
+        List_Add($$, &b);
+        List_Add($$, &a);
+      }
+    }
   | Transform
     {
       $$ = List_Create(List_Nbr($1), 1, sizeof(double));

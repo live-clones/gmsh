@@ -369,6 +369,37 @@ static void copyMesh(GEdge *from, GEdge *to, int direction)
   }
 }
 
+
+static void fillCorrespondingNodes(GEdge *from, GEdge *to, int direction)
+{
+  if(!from->getBeginVertex() || !from->getEndVertex() ||
+     !to->getBeginVertex() || !to->getEndVertex()) {
+    Msg::Error("Cannot fill corresponding nodes on curves without begin/end points");
+    return;
+  }
+
+  // include begin and end point to avoid conflicts when realigning
+  MVertex *vt0 = to->getBeginVertex()->mesh_vertices[0];
+  MVertex *vt1 = to->getEndVertex()->mesh_vertices[0];
+  MVertex *vs0 = from->getBeginVertex()->mesh_vertices[0];
+  MVertex *vs1 = from->getEndVertex()->mesh_vertices[0];
+
+  to->correspondingVertices[vt0] = direction > 0 ? vs0 : vs1;
+  to->correspondingVertices[vt1] = direction > 0 ? vs1 : vs0;
+
+  if(to->mesh_vertices.size() != from->mesh_vertices.size()) {
+    Msg::Error("Incompatible meshes to fill node correspondance");
+    return;
+  }
+
+  for(std::size_t i = 0; i < from->mesh_vertices.size(); i++) {
+    int index = (direction < 0) ? (from->mesh_vertices.size() - 1 - i) : i;
+    MVertex *v = from->mesh_vertices[index];
+    // FIXME: verify that the nodes follow the transformation!
+    to->correspondingVertices[to->mesh_vertices[i]] = v;
+  }
+}
+
 void deMeshGEdge::operator()(GEdge *ge)
 {
   if(ge->isFullyDiscrete()) return;
@@ -715,7 +746,15 @@ void meshGEdge::operator()(GEdge *ge)
   deMeshGEdge dem;
   dem(ge);
 
-  if(MeshExtrudedCurve(ge)) return;
+  if(MeshExtrudedCurve(ge)) {
+
+    // if there is a periodic constraint, fill the corresponding node arrays
+    if(ge->getMeshMaster() != ge) {
+      GEdge *gef = dynamic_cast<GEdge *>(ge->getMeshMaster());
+      fillCorrespondingNodes(gef, ge, ge->masterOrientation);
+    }
+    return;
+  }
 
   if(ge->getMeshMaster() != ge) {
     GEdge *gef = dynamic_cast<GEdge *>(ge->getMeshMaster());

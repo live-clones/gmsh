@@ -118,6 +118,14 @@ int MeshExtrudedCurve(GEdge *ge)
       // cannot mesh this edge yet: will do it later
       return 1;
     }
+    else if(ge->getMeshMaster() != ge) {
+      GEdge *gef = dynamic_cast<GEdge *>(ge->getMeshMaster());
+      if(gef->meshStatistics.status != GEdge::DONE) {
+        // there is a periodicity constraint, and the source has not been
+        // meshed: will do it later
+        return 1;
+      }
+    }
 
     copyMesh(from, ge);
     if(ge->getMeshMaster() == from) {

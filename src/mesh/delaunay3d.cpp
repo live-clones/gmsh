@@ -993,7 +993,6 @@ void delaunayTrgl(const std::size_t numThreads, const std::size_t NPTS_AT_ONCE,
 #endif
 
     double totSearch = 0;
-    double totCavity = 0;
     std::vector<std::size_t> _negatives;
     std::vector<cavityContainer> cavity(NPTS_AT_ONCE);
     std::vector<connContainer> bnd(NPTS_AT_ONCE);
@@ -1076,7 +1075,6 @@ void delaunayTrgl(const std::size_t numThreads, const std::size_t NPTS_AT_ONCE,
           faceToTet.clear();
           const std::size_t cSize = cavityK.size();
           const std::size_t bSize = bndK.size();
-          totCavity += cSize;
           Choice[K] = cavityK[0];
           for(std::size_t i = 0; i < bSize; i++) {
             // reuse memory slots of invalid elements
