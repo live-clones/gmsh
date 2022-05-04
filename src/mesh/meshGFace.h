@@ -44,7 +44,6 @@ public:
   void operator()(GFace *);
 };
 
-void fourthPoint(double *p1, double *p2, double *p3, double *p4);
 void findTransfiniteCorners(GFace *gf, std::vector<MVertex *> &corners);
 int MeshTransfiniteSurface(GFace *gf);
 int MeshExtrudedSurface(
