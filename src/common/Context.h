@@ -36,7 +36,7 @@ struct contextMeshOptions {
   int meshOnlyVisible, meshOnlyEmpty;
   int minCircleNodes, minCurveNodes, minLineNodes;
   int hoOptimize, hoPeriodic, hoNLayers, hoPrimSurfMesh, hoIterMax, hoPassMax;
-  int hoDistCAD, hoSavePeriodic;
+  int hoDistCAD, hoSavePeriodic, hoFixBndNodes;
   double hoThresholdMin, hoThresholdMax, hoPoissonRatio;
   bool hoNewFastCurvingAlgo;
   int hoCurveOuterBL;

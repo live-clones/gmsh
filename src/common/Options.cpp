@@ -6261,6 +6261,12 @@ double opt_mesh_ho_max_in_angle(OPT_ARGS_NUM)
   return CTX::instance()->mesh.hoMaxInnerAngle;
 }
 
+double opt_mesh_ho_fix_bnd_nodes(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->mesh.hoFixBndNodes = val;
+  return CTX::instance()->mesh.hoFixBndNodes;
+}
+
 double opt_mesh_second_order_linear(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {

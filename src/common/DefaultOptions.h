@@ -1162,6 +1162,8 @@ StringXNumber MeshOptions_Number[] = {
 
   { F|O, "HighOrderDistCAD", opt_mesh_ho_dist_cad, 0,
     "Try to optimize distance to CAD in high-order optimizer?"},
+  { F|O, "HighOrderFixBoundaryNodes", opt_mesh_ho_fix_bnd_nodes, 0,
+    "Fix boundary nodes during high-order optimization?"},
   { F|O, "HighOrderIterMax", opt_mesh_ho_iter_max, 100,
     "Maximum number of iterations in high-order optimization pass"},
   { F|O, "HighOrderNumLayers", opt_mesh_ho_nlayers, 6.,

@@ -1015,6 +1015,7 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter)
     p.BARRIER_MAX = CTX::instance()->mesh.hoThresholdMax;
     p.itMax = CTX::instance()->mesh.hoIterMax;
     p.optPassMax = CTX::instance()->mesh.hoPassMax;
+    p.fixBndNodes = CTX::instance()->mesh.hoFixBndNodes;
     p.dim = m->getDim();
     p.optPrimSurfMesh = CTX::instance()->mesh.hoPrimSurfMesh;
     p.optCAD = CTX::instance()->mesh.hoDistCAD;
@@ -1065,49 +1066,49 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter)
     }
   }
   else if(how == "DiskQuadrangulation") {
-    for(GFace *gf : m->getFaces())
+    for(GFace *gf : m->getFaces()) {
       if(gf->meshStatistics.status == GFace::DONE) {
         gf->meshStatistics.status = GFace::PENDING;
       }
-
+    }
     transferSeamGEdgesVerticesToGFace(m);
     optimizeTopologyWithDiskQuadrangulationRemeshing(m);
-
-    for(GFace *gf : m->getFaces())
+    for(GFace *gf : m->getFaces()) {
       if(gf->meshStatistics.status == GFace::PENDING) {
         gf->meshStatistics.status = GFace::DONE;
       }
+    }
   }
   else if(how == "QuadCavityRemeshing") {
-    for(GFace *gf : m->getFaces())
+    for(GFace *gf : m->getFaces()) {
       if(gf->meshStatistics.status == GFace::DONE) {
         gf->meshStatistics.status = GFace::PENDING;
       }
-
+    }
     transferSeamGEdgesVerticesToGFace(m);
     optimizeTopologyWithCavityRemeshing(m);
-
-    for(GFace *gf : m->getFaces())
+    for(GFace *gf : m->getFaces()) {
       if(gf->meshStatistics.status == GFace::PENDING) {
         gf->meshStatistics.status = GFace::DONE;
       }
+    }
   }
   else if(how == "QuadQuasiStructured") {
     // The following methods only act on faces whose status is PENDING
-    for(GFace *gf : m->getFaces())
+    for(GFace *gf : m->getFaces()) {
       if(gf->meshStatistics.status == GFace::DONE) {
         gf->meshStatistics.status = GFace::PENDING;
       }
-
+    }
     transferSeamGEdgesVerticesToGFace(m);
     quadMeshingOfSimpleFacesWithPatterns(m);
     optimizeTopologyWithDiskQuadrangulationRemeshing(m);
     optimizeTopologyWithCavityRemeshing(m);
-
-    for(GFace *gf : m->getFaces())
+    for(GFace *gf : m->getFaces()) {
       if(gf->meshStatistics.status == GFace::PENDING) {
         gf->meshStatistics.status = GFace::DONE;
       }
+    }
   }
   else if(how == "UntangleMeshGeometry") {
 #if defined(HAVE_WINSLOWUNTANGLER)
@@ -1120,7 +1121,7 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter)
         untangleGFaceMeshConstrained(gf, nIterWinslow, timeMax);
       }
       else {
-        Msg::Debug("- Face %i: not planar, do not apply Winslow untangling",
+        Msg::Debug("- Surface %i: not planar, do not apply Winslow untangling",
                    gf->tag());
       }
     }
