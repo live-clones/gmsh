@@ -7282,6 +7282,9 @@ void getAllElementaryTags(int dim, List_T *out)
 
 void getAllPhysicalTags(int dim, List_T *out)
 {
+  if(GModel::current()->getOCCInternals() &&
+     GModel::current()->getOCCInternals()->getChanged())
+    GModel::current()->getOCCInternals()->synchronize(GModel::current());
   if(GModel::current()->getGEOInternals()->getChanged())
     GModel::current()->getGEOInternals()->synchronize(GModel::current());
 
