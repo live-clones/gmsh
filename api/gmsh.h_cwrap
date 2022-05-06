@@ -2699,27 +2699,36 @@ namespace gmsh { // Top-level functions
       // tetrahedra of a given tetrahedra. When a tetrahedra has no neighbor for
       // its ith face, the value is tetrahedra.size. For a tet with vertices
       // (0,1,2,3), node ids of the faces are respectively (0,1,2), (0,1,3),
-      // (0,2,3) and (1,2,3). `meanValue' is a parameter used in the alpha shape
-      // criterion test : R_circumsribed / meanValue < alpha. if meanValue < 0,
-      // meanValue is computed as the average minimum edge length of each element.
+      // (0,2,3) and (1,2,3). `nodalSize' is a vector defining the desired alpha
+      // criterion at each point. It should either be of size 1 : it is then used
+      // as a global  alpha shape criterion : R_circumsribed / nodalSize[0] <
+      // threshold. (if meanValue < 0,  meanValue is computed as the average
+      // minimum edge length of each element.). `nodalSize' can also be a vector of
+      // size corresponding to the number of points : it is then used as a local
+      // alpha shape criterion. After triangulation, the average of `nodalSize' of
+      // each vertex of the element (= hElement) is taken and compared to
+      // R_circumscribed. Thus, if threshold == 1, the alpha criterion becomes
+      // R_circumscribed < hElement.
       inline void alphaShapes(const double threshold,
                               const int dim,
                               const std::vector<double> & coord,
+                              const std::vector<double> & nodalSize,
                               std::vector<std::size_t> & tetra,
                               std::vector<std::vector<std::size_t> > & domains,
                               std::vector<std::vector<std::size_t> > & boundaries,
-                              std::vector<std::size_t> & neighbors,
-                              const double meanValue = -1.)
+                              std::vector<std::size_t> & neighbors)
       {
         int ierr = 0;
         double *api_coord_; size_t api_coord_n_; vector2ptr(coord, &api_coord_, &api_coord_n_);
+        double *api_nodalSize_; size_t api_nodalSize_n_; vector2ptr(nodalSize, &api_nodalSize_, &api_nodalSize_n_);
         size_t *api_tetra_; size_t api_tetra_n_;
         size_t **api_domains_; size_t *api_domains_n_, api_domains_nn_;
         size_t **api_boundaries_; size_t *api_boundaries_n_, api_boundaries_nn_;
         size_t *api_neighbors_; size_t api_neighbors_n_;
-        gmshModelMeshAlphaShapes(threshold, dim, api_coord_, api_coord_n_, &api_tetra_, &api_tetra_n_, &api_domains_, &api_domains_n_, &api_domains_nn_, &api_boundaries_, &api_boundaries_n_, &api_boundaries_nn_, &api_neighbors_, &api_neighbors_n_, meanValue, &ierr);
+        gmshModelMeshAlphaShapes(threshold, dim, api_coord_, api_coord_n_, api_nodalSize_, api_nodalSize_n_, &api_tetra_, &api_tetra_n_, &api_domains_, &api_domains_n_, &api_domains_nn_, &api_boundaries_, &api_boundaries_n_, &api_boundaries_nn_, &api_neighbors_, &api_neighbors_n_, &ierr);
         if(ierr) throwLastError();
         gmshFree(api_coord_);
+        gmshFree(api_nodalSize_);
         tetra.assign(api_tetra_, api_tetra_ + api_tetra_n_); gmshFree(api_tetra_);
         domains.resize(api_domains_nn_); for(size_t i = 0; i < api_domains_nn_; ++i){ domains[i].assign(api_domains_[i], api_domains_[i] + api_domains_n_[i]); gmshFree(api_domains_[i]); } gmshFree(api_domains_); gmshFree(api_domains_n_);
         boundaries.resize(api_boundaries_nn_); for(size_t i = 0; i < api_boundaries_nn_; ++i){ boundaries[i].assign(api_boundaries_[i], api_boundaries_[i] + api_boundaries_n_[i]); gmshFree(api_boundaries_[i]); } gmshFree(api_boundaries_); gmshFree(api_boundaries_n_);

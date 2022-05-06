@@ -256,29 +256,48 @@ int computeTriNeighbors_ (const std::vector<size_t> &triangles, std::vector<size
 /* return the alphashape of the delaunay triangulation of a cloud of points, with alpha = threshold. -- 2D */ 
 int alphaShapes2D_(const double threshold,
 		 const std::vector<double> &pts,
-		 std::vector<size_t> &triangles, 
+		 const std::vector<double> &nodalSize,
+     std::vector<size_t> &triangles, 
 		 std::vector<std::vector<size_t> > &domains,
 		 std::vector<std::vector<size_t> > &boundaries,
-		 std::vector<size_t> &neigh, 
-     const double meanValue){
+		 std::vector<size_t> &neigh){
   
   
   gmsh::model::mesh::triangulate(pts, triangles);
+  const int numPts = (int)(pts.size()/2);
+  std::vector<double> h; 
+  double hMean;
+  if (nodalSize.size() == 1) {
+    if (nodalSize[0] < 0) hMean = meanEdgeLength2D(pts,triangles);
+    else hMean = nodalSize[0];
+    for (size_t i = 0; i < numPts; i++)
+    {
+      h[i] = hMean;
+    }
+  }
+  else if (nodalSize.size() == numPts) {
+    for (size_t i = 0; i < numPts; i++)
+    {
+      h[i] = nodalSize[i];
+    }
+  }
 
   for (size_t i = 0; i < triangles.size(); i++) triangles[i]--;
-  double hMean; 
-  if(meanValue < 0) hMean = meanEdgeLength2D(pts, triangles);
-  else hMean = meanValue;
+
+  //double hMean; 
+  // if(meanValue < 0) hMean = meanEdgeLength2D(pts, triangles);
+  // else hMean = meanValue;
 
   computeTriNeighbors_ (triangles, neigh);
 
   std::vector<bool> _touched;
   _touched.resize(triangles.size()/3);
   for (size_t i=0;i<_touched.size();i++)_touched[i] = false;
-
+  double hTriangle;
   for (size_t i = 0; i < triangles.size(); i+=3){
     size_t *t = &triangles[i];
-    if (alphaShape2D(t, pts, hMean) < threshold && _touched[i/3] == false){
+    hTriangle = (h[t[0]] + h[t[1]] + h[t[2]])/3;
+    if (alphaShape2D(t, pts, hTriangle) < threshold && _touched[i/3] == false){
       std::stack<size_t> _s;
       std::vector<size_t> _domain;
       std::vector<size_t> _boundary;
@@ -295,7 +314,9 @@ int alphaShapes2D_(const double threshold,
             _boundary.push_back(j);
           }
           else if (!_touched[tj]){
-            if (alphaShape2D(&triangles[3*tj], pts, hMean) < threshold){
+            size_t *t_neigh = &triangles[3*tj]; 
+            hTriangle = (h[t_neigh[0]] + h[t_neigh[1]] + h[t_neigh[2]])/3;
+            if (alphaShape2D(t_neigh, pts, hTriangle) < threshold){
               _s.push(tj);
               _touched[tj] = true;
               _domain.push_back(tj);	    
@@ -319,29 +340,45 @@ int alphaShapes2D_(const double threshold,
 /* return the alphashape of the delaunay triangulation of a cloud of points, with alpha = threshold. -- 3D */
 int alphaShapes3D_ (const double threshold,
 		 const std::vector<double> &pts,
+     const std::vector<double> &nodalSize,
 		 std::vector<size_t> &tetrahedra, 
 		 std::vector<std::vector<size_t> > &domains,
 		 std::vector<std::vector<size_t> > &boundaries,
-		 std::vector<size_t> &neigh, 
-     const double meanValue) {
+		 std::vector<size_t> &neigh) {
   
   gmsh::model::mesh::tetrahedralize(pts, tetrahedra);
   
-
+  const int numPts = (int)(pts.size()/3);
   for (size_t i = 0; i < tetrahedra.size(); i++)tetrahedra[i]--;
+  std::vector<double> h; 
   double hMean;
-  if (meanValue < 0) hMean = meanEdgeLength(pts,tetrahedra);
-  else hMean = meanValue;
+  if (nodalSize.size() == 1) {
+    if (nodalSize[0] < 0) hMean = meanEdgeLength(pts,tetrahedra);
+    else hMean = nodalSize[0];
+    for (size_t i = 0; i < numPts; i++)
+    {
+      h[i] = hMean;
+    }
+  }
+  else if (nodalSize.size() == numPts) {
+    for (size_t i = 0; i < numPts; i++)
+    {
+      h[i] = nodalSize[i];
+    }
+  }
+  // if (meanValue < 0) hMean = meanEdgeLength(pts,tetrahedra);
+  // else hMean = meanValue;
   
   computeTetNeighbors_ (tetrahedra, neigh);
 
   std::vector<bool> _touched;
   _touched.resize(tetrahedra.size()/4);
   for (size_t i=0;i<_touched.size();i++)_touched[i] = false;
-
+  double hTet;
   for (size_t i = 0; i < tetrahedra.size(); i+=4){
       size_t *t = &tetrahedra[i];
-      if (alphaShape(t, pts, hMean) < threshold && _touched[i/4] == false){
+      hTet = (h[t[0]] + h[t[1]] + h[t[2]] + h[t[3]])/4; 
+      if (alphaShape(t, pts, hTet) < threshold && _touched[i/4] == false){
         std::stack<size_t> _s;
         std::vector<size_t> _domain;
         std::vector<size_t> _boundary;
@@ -358,7 +395,9 @@ int alphaShapes3D_ (const double threshold,
               _boundary.push_back(j);
             }
             else if (!_touched[tj]){
-              if (alphaShape(&tetrahedra[4*tj], pts, hMean) < threshold){
+              size_t *t_neigh = &tetrahedra[4*tj];
+              hTet = (h[t_neigh[0]] + h[t_neigh[1]] + h[t_neigh[2]] + h[t_neigh[3]])/4; 
+              if (alphaShape(t_neigh, pts, hTet) < threshold){
                 _s.push(tj);
                 _touched[tj] = true;
                 _domain.push_back(tj);	    
@@ -381,17 +420,17 @@ int alphaShapes3D_ (const double threshold,
 int alphaShapes_ (const double threshold,
      const int dim,
 		 const std::vector<double> &pts,
+     const std::vector<double> &nodalSize,
 		 std::vector<size_t> &elements, 
 		 std::vector<std::vector<size_t> > &domains,
 		 std::vector<std::vector<size_t> > &boundaries,
-		 std::vector<size_t> &neigh, 
-     const double meanValue){
+		 std::vector<size_t> &neigh){
   
   if (dim == 2){
-    return alphaShapes2D_(threshold, pts, elements, domains, boundaries, neigh, meanValue);
+    return alphaShapes2D_(threshold, pts, nodalSize, elements, domains, boundaries, neigh);
   }
   else if (dim == 3){
-    return alphaShapes3D_(threshold, pts, elements, domains, boundaries, neigh, meanValue);
+    return alphaShapes3D_(threshold, pts, nodalSize, elements, domains, boundaries, neigh);
   }
   else {
     Msg::Error("Invalid dimension");
@@ -487,26 +526,26 @@ void constrainedAlphaShapes_(GModel* m,
     .verbosity = 2,
   };
 
-  HXTTetMeshOptions options2 = {
-    .reproducible=0,
-    .verbosity=2,
-    .stat=1,
-    .refine=0, 
-    .optimize=0,
-    .quality={.min=0.35}, 
-    .nodalSizes={.factor=1.0}
-	};
+  // HXTTetMeshOptions options2 = {
+  //   .reproducible=0,
+  //   .verbosity=2,
+  //   .stat=1,
+  //   .refine=0, 
+  //   .optimize=0,
+  //   .quality={.min=0.35}, 
+  //   .nodalSizes={.factor=1.0}
+	// };
 
-  HXTOptimizeOptions optiOptions = {
-    .bbox = &bbox,
-    .qualityFun = options2.quality.callback,
-    .qualityData = options2.quality.userData,
-    .qualityMin = options2.quality.min,
-    .numThreads = options2.improveThreads,
-    .numVerticesConstrained = mesh->vertices.num,
-    .verbosity = options2.verbosity,
-    .reproducible = 0
-  };
+  // HXTOptimizeOptions optiOptions = {
+  //   .bbox = &bbox,
+  //   .qualityFun = options2.quality.callback,
+  //   .qualityData = options2.quality.userData,
+  //   .qualityMin = options2.quality.min,
+  //   .numThreads = options2.improveThreads,
+  //   .numVerticesConstrained = mesh->vertices.num,
+  //   .verbosity = options2.verbosity,
+  //   .reproducible = 0
+  // };
 
   /* Generate the tet mesh */
   hxtDelaunaySteadyVertices(mesh, &delOptions, nodeInfo, numNewPts);
@@ -630,7 +669,7 @@ void constrainedAlphaShapes_(GModel* m,
   }
 
   hxtMeshDelete(&mesh);
-  int meshDim = m->getMeshStatus(false); 
+  //int meshDim = m->getMeshStatus(false); 
 }
 
 /*

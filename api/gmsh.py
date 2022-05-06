@@ -4030,9 +4030,9 @@ class model:
             return _ovectorsize(api_tetra_, api_tetra_n_.value)
 
         @staticmethod
-        def alphaShapes(threshold, dim, coord, meanValue=-1.):
+        def alphaShapes(threshold, dim, coord, nodalSize):
             """
-            gmsh.model.mesh.alphaShapes(threshold, dim, coord, meanValue=-1.)
+            gmsh.model.mesh.alphaShapes(threshold, dim, coord, nodalSize)
 
             Give an alpha shape `threshold', points given in the `coord' vector as
             triplets of x, y, z coordinates, and return the tetrahedra (like
@@ -4042,13 +4042,20 @@ class model:
             tetrahedra of a given tetrahedra. When a tetrahedra has no neighbor for its
             ith face, the value is tetrahedra.size. For a tet with vertices (0,1,2,3),
             node ids of the faces are respectively (0,1,2), (0,1,3), (0,2,3) and
-            (1,2,3). `meanValue' is a parameter used in the alpha shape  criterion test
-            : R_circumsribed / meanValue < alpha. if meanValue < 0,  meanValue is
-            computed as the average minimum edge length of each element.
+            (1,2,3). `nodalSize' is a vector defining the desired alpha criterion at
+            each point. It should either be of size 1 : it is then used as a global
+            alpha shape criterion : R_circumsribed / nodalSize[0] < threshold. (if
+            meanValue < 0,  meanValue is computed as the average minimum edge length of
+            each element.). `nodalSize' can also be a vector of size corresponding to
+            the number of points : it is then used as a local alpha shape criterion.
+            After triangulation, the average of `nodalSize' of each vertex of the
+            element (= hElement) is taken and compared to R_circumscribed. Thus, if
+            threshold == 1, the alpha criterion becomes R_circumscribed < hElement.
 
             Return `tetra', `domains', `boundaries', `neighbors'.
             """
             api_coord_, api_coord_n_ = _ivectordouble(coord)
+            api_nodalSize_, api_nodalSize_n_ = _ivectordouble(nodalSize)
             api_tetra_, api_tetra_n_ = POINTER(c_size_t)(), c_size_t()
             api_domains_, api_domains_n_, api_domains_nn_ = POINTER(POINTER(c_size_t))(), POINTER(c_size_t)(), c_size_t()
             api_boundaries_, api_boundaries_n_, api_boundaries_nn_ = POINTER(POINTER(c_size_t))(), POINTER(c_size_t)(), c_size_t()
@@ -4058,11 +4065,11 @@ class model:
                 c_double(threshold),
                 c_int(dim),
                 api_coord_, api_coord_n_,
+                api_nodalSize_, api_nodalSize_n_,
                 byref(api_tetra_), byref(api_tetra_n_),
                 byref(api_domains_), byref(api_domains_n_), byref(api_domains_nn_),
                 byref(api_boundaries_), byref(api_boundaries_n_), byref(api_boundaries_nn_),
                 byref(api_neighbors_), byref(api_neighbors_n_),
-                c_double(meanValue),
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())

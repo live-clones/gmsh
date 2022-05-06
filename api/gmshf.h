@@ -3228,14 +3228,22 @@ c
 !  tetrahedra of a given tetrahedra. When a tetrahedra has no neighbor for its
 !  ith face, the value is tetrahedra.size. For a tet with vertices (0,1,2,3),
 !  node ids of the faces are respectively (0,1,2), (0,1,3), (0,2,3) and
-!  (1,2,3). `meanValue' is a parameter used in the alpha shape  criterion test
-!  : R_circumsribed / meanValue < alpha. if meanValue < 0,  meanValue is
-!  computed as the average minimum edge length of each element.
+!  (1,2,3). `nodalSize' is a vector defining the desired alpha criterion at
+!  each point. It should either be of size 1 : it is then used as a global
+!  alpha shape criterion : R_circumsribed / nodalSize[0] < threshold. (if
+!  meanValue < 0,  meanValue is computed as the average minimum edge length of
+!  each element.). `nodalSize' can also be a vector of size corresponding to
+!  the number of points : it is then used as a local alpha shape criterion.
+!  After triangulation, the average of `nodalSize' of each vertex of the
+!  element (= hElement) is taken and compared to R_circumscribed. Thus, if
+!  threshold == 1, the alpha criterion becomes R_circumscribed < hElement.
         subroutine gmshModelMeshAlphaShapes(
      &      threshold,
      &      dim,
      &      coord,
      &      coord_n,
+     &      nodalSize,
+     &      nodalSize_n,
      &      tetra,
      &      tetra_n,
      &      domains,
@@ -3246,7 +3254,6 @@ c
      &      boundaries_nn,
      &      neighbors,
      &      neighbors_n,
-     &      meanValue,
      &      ierr)
      &    bind(C, name = "gmshModelMeshAlphaShapes")
           use, intrinsic :: iso_c_binding
@@ -3254,6 +3261,8 @@ c
             integer(c_int), value::dim
             real(c_double)::coord(*)
             integer(c_size_t), value :: coord_n
+            real(c_double)::nodalSize(*)
+            integer(c_size_t), value :: nodalSize_n
             type(c_ptr), intent(out)::tetra
             integer(c_size_t) :: tetra_n
             type (c_ptr), intent(out)::domains
@@ -3264,7 +3273,6 @@ c
             integer(c_size_t) :: boundaries_nn
             type(c_ptr), intent(out)::neighbors
             integer(c_size_t) :: neighbors_n
-            real(c_double), value::meanValue
             integer(c_int)::ierr
           end subroutine gmshModelMeshAlphaShapes
 

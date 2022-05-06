@@ -1544,17 +1544,23 @@ GMSH_API void gmshModelMeshTetrahedralize(const double * coord, const size_t coo
  * tetrahedra of a given tetrahedra. When a tetrahedra has no neighbor for its
  * ith face, the value is tetrahedra.size. For a tet with vertices (0,1,2,3),
  * node ids of the faces are respectively (0,1,2), (0,1,3), (0,2,3) and
- * (1,2,3). `meanValue' is a parameter used in the alpha shape  criterion test
- * : R_circumsribed / meanValue < alpha. if meanValue < 0,  meanValue is
- * computed as the average minimum edge length of each element. */
+ * (1,2,3). `nodalSize' is a vector defining the desired alpha criterion at
+ * each point. It should either be of size 1 : it is then used as a global
+ * alpha shape criterion : R_circumsribed / nodalSize[0] < threshold. (if
+ * meanValue < 0,  meanValue is computed as the average minimum edge length of
+ * each element.). `nodalSize' can also be a vector of size corresponding to
+ * the number of points : it is then used as a local alpha shape criterion.
+ * After triangulation, the average of `nodalSize' of each vertex of the
+ * element (= hElement) is taken and compared to R_circumscribed. Thus, if
+ * threshold == 1, the alpha criterion becomes R_circumscribed < hElement. */
 GMSH_API void gmshModelMeshAlphaShapes(const double threshold,
                                        const int dim,
                                        const double * coord, const size_t coord_n,
+                                       const double * nodalSize, const size_t nodalSize_n,
                                        size_t ** tetra, size_t * tetra_n,
                                        size_t *** domains, size_t ** domains_n, size_t *domains_nn,
                                        size_t *** boundaries, size_t ** boundaries_n, size_t *boundaries_nn,
                                        size_t ** neighbors, size_t * neighbors_n,
-                                       const double meanValue,
                                        int * ierr);
 
 /* Take  the node tags (with numbering starting at 1) of the tetrahedra in
