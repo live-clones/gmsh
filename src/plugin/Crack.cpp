@@ -21,7 +21,8 @@ StringXNumber CrackOptions_Number[] = {
   {GMSH_FULLRC, "NormalX", nullptr, 0.},
   {GMSH_FULLRC, "NormalY", nullptr, 0.},
   {GMSH_FULLRC, "NormalZ", nullptr, 1.},
-  {GMSH_FULLRC, "NewPhysicalGroup", nullptr, 0}
+  {GMSH_FULLRC, "NewPhysicalGroup", nullptr, 0},
+  {GMSH_FULLRC, "Debug", nullptr, 0}
 };
 
 extern "C" {
@@ -86,6 +87,7 @@ PView *GMSH_CrackPlugin::execute(PView *view)
   SVector3 normal1d(CrackOptions_Number[3].def, CrackOptions_Number[4].def,
                     CrackOptions_Number[5].def);
   int newPhysical = (int)CrackOptions_Number[6].def;
+  int debug = (int)CrackOptions_Number[7].def;
 
   if(dim != 1 && dim != 2) {
     Msg::Error("Crack dimension should be 1 or 2");
@@ -122,13 +124,19 @@ PView *GMSH_CrackPlugin::execute(PView *view)
     for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++)
       crackElements.push_back(entities[i]->getMeshElement(j));
 
-  // get internal crack nodes and boundary nodes
-  std::set<MVertex *> crackVertices, bndVertices;
+  // get internal crack nodes (and list of connected crack elements), as well as
+  // and boundary nodes
+  std::map<MVertex *, std::vector<MElement *> > crackVertices;
+  std::set<MVertex *> bndVertices;
   if(dim == 1) {
     for(std::size_t i = 0; i < crackElements.size(); i++) {
       for(std::size_t j = 0; j < crackElements[i]->getNumVertices(); j++) {
         MVertex *v = crackElements[i]->getVertex(j);
-        crackVertices.insert(v);
+        auto it = crackVertices.find(v);
+        if(it == crackVertices.end())
+          crackVertices[v] = {crackElements[i]};
+        else
+          it->second.push_back(crackElements[i]);
       }
       for(std::size_t j = 0; j < crackElements[i]->getNumPrimaryVertices();
           j++) {
@@ -145,7 +153,11 @@ PView *GMSH_CrackPlugin::execute(PView *view)
     for(std::size_t i = 0; i < crackElements.size(); i++) {
       for(std::size_t j = 0; j < crackElements[i]->getNumVertices(); j++) {
         MVertex *v = crackElements[i]->getVertex(j);
-        crackVertices.insert(v);
+        auto it = crackVertices.find(v);
+        if(it == crackVertices.end())
+          crackVertices[v] = {crackElements[i]};
+        else
+          it->second.push_back(crackElements[i]);
       }
       for(int j = 0; j < crackElements[i]->getNumEdges(); j++) {
         EdgeData ed(crackElements[i]->getEdge(j));
@@ -208,40 +220,46 @@ PView *GMSH_CrackPlugin::execute(PView *view)
     for(std::size_t i = 0; i < allentities[ent]->getNumMeshElements(); i++) {
       MElement *e = allentities[ent]->getMeshElement(i);
       for(std::size_t j = 0; j < e->getNumVertices(); j++) {
-        if(crackVertices.find(e->getVertex(j)) != crackVertices.end()) {
-          // element touches the crack: find the closest crack element
-          SPoint3 b = e->barycenter();
-          double d = 1e200;
-          MElement *ce = nullptr;
-          for(std::size_t k = 0; k < crackElements.size(); k++) {
-            double d2 = b.distance(crackElements[k]->barycenter());
-            if(d2 < d) {
-              d = d2;
-              ce = crackElements[k];
-            }
-          }
-          SVector3 dv = SVector3(e->barycenter(), ce->barycenter());
+        auto it = crackVertices.find(e->getVertex(j));
+        if(it == crackVertices.end()) continue;
+        // the element touches the crack by at least one node: determine if the
+        // vector joining its barycenter to the barycenter of one of the
+        // connected crack elements is not in the same direction as the normal
+        // to the crack element; if the condition is fulfilled for one of the
+        // connected crack elements, we consider the element lies on the
+        // "positive side" of the crack
+        SPoint3 b = e->barycenter();
+        bool found = false;
+        for(auto ce : it->second) {
+          SVector3 dv = SVector3(b, ce->barycenter());
           SVector3 n;
           if(dim == 1)
             n = crossprod(normal1d, ce->getEdge(0).tangent());
           else
             n = ce->getFace(0).normal();
-          if(dot(n, dv) < 0) { oneside.insert(e); }
+          if(dot(n, dv) < 0) {
+            oneside.insert(e);
+            found = true;
+            break;
+          }
         }
+        if(found) break; // we're done for the element
       }
     }
   }
 
-  /*
-  FILE *fp = fopen("debug.pos", "w");
-  if(fp){
-    fprintf(fp, "View \"Ele < 0\" {\n");
-    for(auto it = oneside.begin(); it != oneside.end(); it++)
-      (*it)->writePOS(fp, false, true, false, false, false, false);
-    fprintf(fp, "};\n");
-    fclose(fp);
+  if(debug) {
+    Msg::Info("Writing 'debug.pos' file with elements detected on one side "
+              "of the crack");
+    FILE *fp = fopen("debug.pos", "w");
+    if(fp){
+      fprintf(fp, "View \"Elements on one side\" {\n");
+      for(auto it = oneside.begin(); it != oneside.end(); it++)
+        (*it)->writePOS(fp, false, true, false, false, false, false);
+      fprintf(fp, "};\n");
+      fclose(fp);
+    }
   }
-  */
 
   // create new crack entity
 
@@ -278,7 +296,7 @@ PView *GMSH_CrackPlugin::execute(PView *view)
   // duplicate internal crack nodes
   std::map<MVertex *, MVertex *> vxv;
   for(auto it = crackVertices.begin(); it != crackVertices.end(); it++) {
-    MVertex *v = *it;
+    MVertex *v = it->first;
     MVertex *newv = new MVertex(v->x(), v->y(), v->z(), crackEntity);
     crackEntity->mesh_vertices.push_back(newv);
     vxv[v] = newv;
