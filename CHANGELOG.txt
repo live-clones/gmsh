@@ -1,5 +1,5 @@
 4.10.2 (Work-in-progress): fixed regression introduced in 4.9 for recombined
-meshes with boundary layers.
+meshes with boundary layers; small bug fixes.
 
 4.10.1 (May 1, 2022): small bug fixes.
 
