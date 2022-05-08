@@ -31,6 +31,7 @@ gmsh.model.addPhysicalGroup(1, new_lines, 101)
 gmsh.model.mesh.generate(2)
 
 gmsh.plugin.setNumber("Crack", "PhysicalGroup", 101)
+# gmsh.plugin.setNumber("Crack", "DebugView", 1)
 gmsh.plugin.run("Crack")
 
 # save all the elements in the mesh (even those that do not belong to any

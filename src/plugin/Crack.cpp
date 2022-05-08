@@ -211,8 +211,11 @@ PView *GMSH_CrackPlugin::execute(PView *view)
   for(auto it = bndVertices.begin(); it != bndVertices.end(); it++)
     crackVertices.erase(*it);
 
-  // compute elements on one side of the crack
-  std::set<MElement *> oneside;
+  // compute elements on the positive side of the crack, and keep track of each
+  // node in the element that leads to categorizing the element on this side
+  // (this allows to handle the degenerate case where the same element touches
+  // the same crack on both sides, with different nodes - cf. #1750)
+  std::map<MElement *, std::vector<std::size_t> > oneside;
   std::vector<GEntity *> allentities;
   m->getEntities(allentities);
   for(std::size_t ent = 0; ent < allentities.size(); ent++) {
@@ -229,7 +232,6 @@ PView *GMSH_CrackPlugin::execute(PView *view)
         // connected crack elements, we consider the element lies on the
         // "positive side" of the crack
         SPoint3 b = e->barycenter();
-        bool found = false;
         for(auto ce : it->second) {
           SVector3 dv = SVector3(b, ce->barycenter());
           SVector3 n;
@@ -238,20 +240,24 @@ PView *GMSH_CrackPlugin::execute(PView *view)
           else
             n = ce->getFace(0).normal();
           if(dot(n, dv) < 0) {
-            oneside.insert(e);
-            found = true;
-            break;
+            auto it2 = oneside.find(e);
+            if(it2 == oneside.end())
+              oneside[e] = {j};
+            else {
+              if(std::find(it2->second.begin(), it2->second.end(), j) ==
+                 it2->second.end())
+                it2->second.push_back(j);
+            }
           }
         }
-        if(found) break; // we're done for the element
       }
     }
   }
 
   if(debug) {
     std::map<int, std::vector<double> > d;
-    for(auto e : oneside) d[e->getNum()] = {(double)e->getNum()};
-    view = new PView("Elements on one side of crack", "ElementData",
+    for(auto e : oneside) d[e.first->getNum()] = {(double)e.first->getNum()};
+    view = new PView("Elements on positive side of crack", "ElementData",
                      GModel::current(), d);
   }
 
@@ -316,13 +322,15 @@ PView *GMSH_CrackPlugin::execute(PView *view)
 
   // replace vertices in elements on one side of the crack
   for(auto it = oneside.begin(); it != oneside.end(); it++) {
-    MElement *e = *it;
-    for(std::size_t i = 0; i < e->getNumVertices(); i++) {
-      if(vxv.count(e->getVertex(i))) e->setVertex(i, vxv[e->getVertex(i)]);
+    MElement *e = it->first;
+    for(auto i : it->second) {
+      MVertex *v = e->getVertex(i);
+      if(vxv.count(v))
+        e->setVertex(i, vxv[v]);
+      else
+        Msg::Warning("Mesh node %lu not found in cracked nodes", v->getNum());
     }
   }
-
-  // m->pruneMeshVertexAssociations();
 
   CTX::instance()->mesh.changed = ENT_ALL;
 
