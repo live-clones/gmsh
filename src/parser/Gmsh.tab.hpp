@@ -203,86 +203,87 @@
      tSplit = 419,
      tDelete = 420,
      tCoherence = 421,
-     tIntersect = 422,
-     tMeshAlgorithm = 423,
-     tReverseMesh = 424,
-     tMeshSize = 425,
-     tMeshSizeFromBoundary = 426,
-     tLayers = 427,
-     tScaleLast = 428,
-     tHole = 429,
-     tAlias = 430,
-     tAliasWithOptions = 431,
-     tCopyOptions = 432,
-     tQuadTriAddVerts = 433,
-     tQuadTriNoNewVerts = 434,
-     tRecombLaterals = 435,
-     tTransfQuadTri = 436,
-     tText2D = 437,
-     tText3D = 438,
-     tInterpolationScheme = 439,
-     tTime = 440,
-     tCombine = 441,
-     tBSpline = 442,
-     tBezier = 443,
-     tNurbs = 444,
-     tNurbsOrder = 445,
-     tNurbsKnots = 446,
-     tColor = 447,
-     tColorTable = 448,
-     tFor = 449,
-     tIn = 450,
-     tEndFor = 451,
-     tIf = 452,
-     tElseIf = 453,
-     tElse = 454,
-     tEndIf = 455,
-     tExit = 456,
-     tAbort = 457,
-     tField = 458,
-     tReturn = 459,
-     tCall = 460,
-     tSlide = 461,
-     tMacro = 462,
-     tShow = 463,
-     tHide = 464,
-     tGetValue = 465,
-     tGetStringValue = 466,
-     tGetEnv = 467,
-     tGetString = 468,
-     tGetNumber = 469,
-     tUnique = 470,
-     tSetMaxTag = 471,
-     tHomology = 472,
-     tCohomology = 473,
-     tBetti = 474,
-     tExists = 475,
-     tFileExists = 476,
-     tGetForced = 477,
-     tGetForcedStr = 478,
-     tGMSH_MAJOR_VERSION = 479,
-     tGMSH_MINOR_VERSION = 480,
-     tGMSH_PATCH_VERSION = 481,
-     tGmshExecutableName = 482,
-     tSetPartition = 483,
-     tNameToString = 484,
-     tStringToName = 485,
-     tUnsplitWindow = 486,
-     tAFFECTDIVIDE = 487,
-     tAFFECTTIMES = 488,
-     tAFFECTMINUS = 489,
-     tAFFECTPLUS = 490,
-     tOR = 491,
-     tAND = 492,
-     tNOTEQUAL = 493,
-     tEQUAL = 494,
-     tGREATERGREATER = 495,
-     tLESSLESS = 496,
-     tGREATEROREQUAL = 497,
-     tLESSOREQUAL = 498,
-     UNARYPREC = 499,
-     tMINUSMINUS = 500,
-     tPLUSPLUS = 501
+     tHealShapes = 422,
+     tIntersect = 423,
+     tMeshAlgorithm = 424,
+     tReverseMesh = 425,
+     tMeshSize = 426,
+     tMeshSizeFromBoundary = 427,
+     tLayers = 428,
+     tScaleLast = 429,
+     tHole = 430,
+     tAlias = 431,
+     tAliasWithOptions = 432,
+     tCopyOptions = 433,
+     tQuadTriAddVerts = 434,
+     tQuadTriNoNewVerts = 435,
+     tRecombLaterals = 436,
+     tTransfQuadTri = 437,
+     tText2D = 438,
+     tText3D = 439,
+     tInterpolationScheme = 440,
+     tTime = 441,
+     tCombine = 442,
+     tBSpline = 443,
+     tBezier = 444,
+     tNurbs = 445,
+     tNurbsOrder = 446,
+     tNurbsKnots = 447,
+     tColor = 448,
+     tColorTable = 449,
+     tFor = 450,
+     tIn = 451,
+     tEndFor = 452,
+     tIf = 453,
+     tElseIf = 454,
+     tElse = 455,
+     tEndIf = 456,
+     tExit = 457,
+     tAbort = 458,
+     tField = 459,
+     tReturn = 460,
+     tCall = 461,
+     tSlide = 462,
+     tMacro = 463,
+     tShow = 464,
+     tHide = 465,
+     tGetValue = 466,
+     tGetStringValue = 467,
+     tGetEnv = 468,
+     tGetString = 469,
+     tGetNumber = 470,
+     tUnique = 471,
+     tSetMaxTag = 472,
+     tHomology = 473,
+     tCohomology = 474,
+     tBetti = 475,
+     tExists = 476,
+     tFileExists = 477,
+     tGetForced = 478,
+     tGetForcedStr = 479,
+     tGMSH_MAJOR_VERSION = 480,
+     tGMSH_MINOR_VERSION = 481,
+     tGMSH_PATCH_VERSION = 482,
+     tGmshExecutableName = 483,
+     tSetPartition = 484,
+     tNameToString = 485,
+     tStringToName = 486,
+     tUnsplitWindow = 487,
+     tAFFECTDIVIDE = 488,
+     tAFFECTTIMES = 489,
+     tAFFECTMINUS = 490,
+     tAFFECTPLUS = 491,
+     tOR = 492,
+     tAND = 493,
+     tNOTEQUAL = 494,
+     tEQUAL = 495,
+     tGREATERGREATER = 496,
+     tLESSLESS = 497,
+     tGREATEROREQUAL = 498,
+     tLESSOREQUAL = 499,
+     UNARYPREC = 500,
+     tMINUSMINUS = 501,
+     tPLUSPLUS = 502
    };
 #endif
 /* Tokens.  */
@@ -450,86 +451,87 @@
 #define tSplit 419
 #define tDelete 420
 #define tCoherence 421
-#define tIntersect 422
-#define tMeshAlgorithm 423
-#define tReverseMesh 424
-#define tMeshSize 425
-#define tMeshSizeFromBoundary 426
-#define tLayers 427
-#define tScaleLast 428
-#define tHole 429
-#define tAlias 430
-#define tAliasWithOptions 431
-#define tCopyOptions 432
-#define tQuadTriAddVerts 433
-#define tQuadTriNoNewVerts 434
-#define tRecombLaterals 435
-#define tTransfQuadTri 436
-#define tText2D 437
-#define tText3D 438
-#define tInterpolationScheme 439
-#define tTime 440
-#define tCombine 441
-#define tBSpline 442
-#define tBezier 443
-#define tNurbs 444
-#define tNurbsOrder 445
-#define tNurbsKnots 446
-#define tColor 447
-#define tColorTable 448
-#define tFor 449
-#define tIn 450
-#define tEndFor 451
-#define tIf 452
-#define tElseIf 453
-#define tElse 454
-#define tEndIf 455
-#define tExit 456
-#define tAbort 457
-#define tField 458
-#define tReturn 459
-#define tCall 460
-#define tSlide 461
-#define tMacro 462
-#define tShow 463
-#define tHide 464
-#define tGetValue 465
-#define tGetStringValue 466
-#define tGetEnv 467
-#define tGetString 468
-#define tGetNumber 469
-#define tUnique 470
-#define tSetMaxTag 471
-#define tHomology 472
-#define tCohomology 473
-#define tBetti 474
-#define tExists 475
-#define tFileExists 476
-#define tGetForced 477
-#define tGetForcedStr 478
-#define tGMSH_MAJOR_VERSION 479
-#define tGMSH_MINOR_VERSION 480
-#define tGMSH_PATCH_VERSION 481
-#define tGmshExecutableName 482
-#define tSetPartition 483
-#define tNameToString 484
-#define tStringToName 485
-#define tUnsplitWindow 486
-#define tAFFECTDIVIDE 487
-#define tAFFECTTIMES 488
-#define tAFFECTMINUS 489
-#define tAFFECTPLUS 490
-#define tOR 491
-#define tAND 492
-#define tNOTEQUAL 493
-#define tEQUAL 494
-#define tGREATERGREATER 495
-#define tLESSLESS 496
-#define tGREATEROREQUAL 497
-#define tLESSOREQUAL 498
-#define UNARYPREC 499
-#define tMINUSMINUS 500
-#define tPLUSPLUS 501
+#define tHealShapes 422
+#define tIntersect 423
+#define tMeshAlgorithm 424
+#define tReverseMesh 425
+#define tMeshSize 426
+#define tMeshSizeFromBoundary 427
+#define tLayers 428
+#define tScaleLast 429
+#define tHole 430
+#define tAlias 431
+#define tAliasWithOptions 432
+#define tCopyOptions 433
+#define tQuadTriAddVerts 434
+#define tQuadTriNoNewVerts 435
+#define tRecombLaterals 436
+#define tTransfQuadTri 437
+#define tText2D 438
+#define tText3D 439
+#define tInterpolationScheme 440
+#define tTime 441
+#define tCombine 442
+#define tBSpline 443
+#define tBezier 444
+#define tNurbs 445
+#define tNurbsOrder 446
+#define tNurbsKnots 447
+#define tColor 448
+#define tColorTable 449
+#define tFor 450
+#define tIn 451
+#define tEndFor 452
+#define tIf 453
+#define tElseIf 454
+#define tElse 455
+#define tEndIf 456
+#define tExit 457
+#define tAbort 458
+#define tField 459
+#define tReturn 460
+#define tCall 461
+#define tSlide 462
+#define tMacro 463
+#define tShow 464
+#define tHide 465
+#define tGetValue 466
+#define tGetStringValue 467
+#define tGetEnv 468
+#define tGetString 469
+#define tGetNumber 470
+#define tUnique 471
+#define tSetMaxTag 472
+#define tHomology 473
+#define tCohomology 474
+#define tBetti 475
+#define tExists 476
+#define tFileExists 477
+#define tGetForced 478
+#define tGetForcedStr 479
+#define tGMSH_MAJOR_VERSION 480
+#define tGMSH_MINOR_VERSION 481
+#define tGMSH_PATCH_VERSION 482
+#define tGmshExecutableName 483
+#define tSetPartition 484
+#define tNameToString 485
+#define tStringToName 486
+#define tUnsplitWindow 487
+#define tAFFECTDIVIDE 488
+#define tAFFECTTIMES 489
+#define tAFFECTMINUS 490
+#define tAFFECTPLUS 491
+#define tOR 492
+#define tAND 493
+#define tNOTEQUAL 494
+#define tEQUAL 495
+#define tGREATERGREATER 496
+#define tLESSLESS 497
+#define tGREATEROREQUAL 498
+#define tLESSOREQUAL 499
+#define UNARYPREC 500
+#define tMINUSMINUS 501
+#define tPLUSPLUS 502
 
 
 
@@ -548,7 +550,7 @@ typedef union YYSTYPE
   struct TwoChar c2;
 }
 /* Line 1529 of yacc.c.  */
-#line 552 "Gmsh.tab.hpp"
+#line 554 "Gmsh.tab.hpp"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1

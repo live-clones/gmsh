@@ -2549,6 +2549,13 @@ transformation, unless @code{Geometry.AutoCoherence} is set to zero
 operation on all entities, with the @code{Delete} operator applied to
 all operands.
 
+@item HealShapes;
+Apply the shape healing procedure(s), according to
+@code{Geometry.OCCFixDegenerated}, @code{Geometry.OCCFixSmallEdges},
+@code{Geometry.OCCFixSmallFaces}, @code{Geometry.OCCSewFaces},
+@code{Geometry.OCCMakeSolids}. Only available with the OpenCASCADE
+geometry kernel.
+
 @item < Recursive > Delete @{ <Physical> Point | Curve | Surface | Volume @{ @var{expression-list-or-all} @}; @dots{} @}
 Delete all elementary entities whose tags are given in
 @var{expression-list-or-all}. If an entity is linked to another entity
