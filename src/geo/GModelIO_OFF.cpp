@@ -115,10 +115,10 @@ int GModel::writeOFF(const std::string &name, bool saveAll, double scalingFactor
                 (int)gf->triangles[i]->getVertex(2)->getIndex() - 1);
       for(std::size_t i = 0; i < gf->quadrangles.size(); i++)
         fprintf(fp, "4 %d %d %d %d\n",
-                (int)gf->triangles[i]->getVertex(0)->getIndex() - 1,
-                (int)gf->triangles[i]->getVertex(1)->getIndex() - 1,
-                (int)gf->triangles[i]->getVertex(2)->getIndex() - 1,
-                (int)gf->triangles[i]->getVertex(3)->getIndex() - 1);
+                (int)gf->quadrangles[i]->getVertex(0)->getIndex() - 1,
+                (int)gf->quadrangles[i]->getVertex(1)->getIndex() - 1,
+                (int)gf->quadrangles[i]->getVertex(2)->getIndex() - 1,
+                (int)gf->quadrangles[i]->getVertex(3)->getIndex() - 1);
     }
   }
 
