@@ -2639,7 +2639,7 @@ static void mesh_define_transfinite(int dim)
                 Msg::Error("Wrong number of points for mesh constraint");
               break;
             case 3:
-              if(p.size() == 6 + 1 || p.size() == 8 + 1)
+              if((p.size() == 0 + 1 || p.size() == 6 + 1 || p.size() == 8 + 1))
                 scriptSetTransfiniteVolume(p, GModel::current()->getFileName());
               else
                 Msg::Error("Wrong number of points for transfinite volume");
