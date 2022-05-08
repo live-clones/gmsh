@@ -72,6 +72,21 @@ void OCCEdge::delFace(GFace *f)
 
 SBoundingBox3d OCCEdge::bounds(bool fast)
 {
+  if(CTX::instance()->geom.occBoundsUseSTL && stl_vertices_xyz.size()) {
+    // BRepBndLib can use the STL mesh if available, but unfortunately it
+    // enlarges the box with the mesh deflection tolerance and the shape
+    // tolerance, which makes it hard to get the expected minimal box in simple
+    // cases (e.g. for straight lines), and always leads to boxes that are too
+    // large; so we simply compute the box from the STL vertices. The downside
+    // of this approach is that the bbox might be *smaller* than the actual box
+    // for curved shapes, but this is preferable for us as boxes are mostly used
+    // to find/identify entities
+    SBoundingBox3d bbox;
+    for(std::size_t i = 0; i < stl_vertices_xyz.size(); i++)
+      bbox += stl_vertices_xyz[i];
+    return bbox;
+  }
+
   Bnd_Box b;
   try {
     BRepBndLib::Add(_c, b);
@@ -81,11 +96,6 @@ SBoundingBox3d OCCEdge::bounds(bool fast)
   }
   double xmin, ymin, zmin, xmax, ymax, zmax;
   b.Get(xmin, ymin, zmin, xmax, ymax, zmax);
-
-  if(CTX::instance()->geom.occBoundsUseSTL)
-    model()->getOCCInternals()->fixSTLBounds(xmin, ymin, zmin, xmax, ymax,
-                                             zmax);
-
   SBoundingBox3d bbox(xmin, ymin, zmin, xmax, ymax, zmax);
   return bbox;
 }
