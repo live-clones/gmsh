@@ -22,7 +22,7 @@ StringXNumber CrackOptions_Number[] = {
   {GMSH_FULLRC, "NormalY", nullptr, 0.},
   {GMSH_FULLRC, "NormalZ", nullptr, 1.},
   {GMSH_FULLRC, "NewPhysicalGroup", nullptr, 0},
-  {GMSH_FULLRC, "Debug", nullptr, 0}
+  {GMSH_FULLRC, "DebugView", nullptr, 0}
 };
 
 extern "C" {
@@ -249,16 +249,10 @@ PView *GMSH_CrackPlugin::execute(PView *view)
   }
 
   if(debug) {
-    Msg::Info("Writing 'debug.pos' file with elements detected on one side "
-              "of the crack");
-    FILE *fp = fopen("debug.pos", "w");
-    if(fp){
-      fprintf(fp, "View \"Elements on one side\" {\n");
-      for(auto it = oneside.begin(); it != oneside.end(); it++)
-        (*it)->writePOS(fp, false, true, false, false, false, false);
-      fprintf(fp, "};\n");
-      fclose(fp);
-    }
+    std::map<int, std::vector<double> > d;
+    for(auto e : oneside) d[e->getNum()] = {(double)e->getNum()};
+    view = new PView("Elements on one side of crack", "ElementData",
+                     GModel::current(), d);
   }
 
   // create new crack entity
