@@ -37,7 +37,7 @@ std::string GMSH_CrackPlugin::getHelp() const
          "The plugin duplicates the nodes and the elements on "
          "the crack and stores them in a new discrete curve "
          "(`Dimension' = 1) or surface (`Dimension' = 2). The "
-         "elements touching the crack on the ``negative'' side "
+         "elements touching the crack on the positive side "
          "are modified to use the newly generated nodes."
          "If `OpenBoundaryPhysicalGroup' is given (> 0), its "
          "nodes are duplicated and the crack will be left "
@@ -47,7 +47,7 @@ std::string GMSH_CrackPlugin::getHelp() const
          "`NormalZ' provide the reference normal of the surface "
          "in which the crack is supposed to be embedded. If "
          "`NewPhysicalGroup' is positive, use it as the tag of "
-         "the newly created curve or surface; oterwise use "
+         "the newly created curve or surface; otherwise use "
          "`PhysicalGroup'.";
 }
 
