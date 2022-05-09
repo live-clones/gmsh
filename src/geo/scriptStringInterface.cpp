@@ -375,12 +375,16 @@ void scriptSetTransfiniteVolume(std::vector<int> &l,
   for(auto &lang : CTX::instance()->scriptLang) {
     std::ostringstream sstream;
     if(lang == "geo") {
-      sstream << "Transfinite Volume{" << l[0] << "} = {";
-      for(std::size_t i = 1; i < l.size(); i++) {
-        if(i > 1) sstream << ", ";
-        sstream << l[i];
+      sstream << "Transfinite Volume{" << l[0] << "}";
+      if(l.size() > 1) {
+        sstream << " = {";
+        for(std::size_t i = 1; i < l.size(); i++) {
+          if(i > 1) sstream << ", ";
+          sstream << l[i];
+        }
+        sstream << "}";
       }
-      sstream << "};";
+      sstream << ";";
     }
     else {
       // TODO

@@ -4489,6 +4489,26 @@ bool OCC_Internals::_getBoundingBox(const TopoDS_Shape &shape, double &xmin,
     std::vector<SVector3> normals;
     std::vector<int> triangles;
     _makeSTL(shape, vertices, normals, triangles);
+    // BRepBndLib can use the STL mesh if available, but unfortunately it
+    // enlarges the box with the mesh deflection tolerance and the shape
+    // tolerance, which makes it hard to get the expected minimal box in simple
+    // cases (e.g. for plane surfaces), and always leads to boxes that are too
+    // large; so we simply compute the box from the STL vertices. The downside
+    // of this approach is that the bbox might be *smaller* than the actual box
+    // for curved shapes, but this is preferable for us as boxes are mostly used
+    // to find/identify entities
+    if(vertices.size()) {
+      SBoundingBox3d bbox;
+      for(std::size_t i = 0; i < vertices.size(); i++)
+        bbox += vertices[i];
+      xmin = bbox.min().x();
+      ymin = bbox.min().y();
+      zmin = bbox.min().z();
+      xmax = bbox.max().x();
+      ymax = bbox.max().y();
+      zmax = bbox.max().z();
+      return true;
+    }
   }
   Bnd_Box b;
   try {
@@ -4498,8 +4518,6 @@ bool OCC_Internals::_getBoundingBox(const TopoDS_Shape &shape, double &xmin,
     return false;
   }
   b.Get(xmin, ymin, zmin, xmax, ymax, zmax);
-  if(CTX::instance()->geom.occBoundsUseSTL)
-    fixSTLBounds(xmin, ymin, zmin, xmax, ymax, zmax);
   return true;
 }
 
@@ -5743,28 +5761,6 @@ bool OCC_Internals::makeTorusSTL(double x, double y, double z, double r1,
   if(!makeTorus(result, x, y, z, r1, r2, angle)) return false;
   if(!_makeSTL(result, vertices, normals, triangles)) return false;
   return true;
-}
-
-void OCC_Internals::fixSTLBounds(double &xmin, double &ymin, double &zmin,
-                                 double &xmax, double &ymax, double &zmax)
-{
-  // When an STL exists, OCC enlarges the bounding box by the allowed linear
-  // deflection given to BRepMesh_IncrementalMesh. This is "safe", but on simple
-  // polyhedral geometries (a cube!) it will consistently lead to enlarging the
-  // bounding box by twice this value in all directions. Since we use bounds()
-  // mostly for locating entities, it's better to remove the tolerance (with the
-  // risk that the bbox is a bit too small for curved boundaries - but that's
-  // fine)
-  double eps = CTX::instance()->mesh.stlLinearDeflection;
-  // OCC also enlarges the bounding box by Precision::Confusion(): remove it as
-  // well
-  eps += Precision::Confusion();
-  xmin += eps;
-  xmax -= eps;
-  ymin += eps;
-  ymax -= eps;
-  zmin += eps;
-  zmax -= eps;
 }
 
 #endif
