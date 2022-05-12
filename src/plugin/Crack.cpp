@@ -254,13 +254,6 @@ PView *GMSH_CrackPlugin::execute(PView *view)
     }
   }
 
-  if(debug) {
-    std::map<int, std::vector<double> > d;
-    for(auto e : oneside) d[e.first->getNum()] = {(double)e.first->getNum()};
-    view = new PView("Elements on positive side of crack", "ElementData",
-                     GModel::current(), d);
-  }
-
   // create new crack entity
 
   // TODO: the new discrete entities do not have a consistent topology: we don't
@@ -330,6 +323,18 @@ PView *GMSH_CrackPlugin::execute(PView *view)
       else
         Msg::Warning("Mesh node %lu not found in cracked nodes", v->getNum());
     }
+  }
+
+  if(debug) {
+    std::map<int, std::vector<double> > d;
+    for(auto e : oneside) {
+      // 1: if node duplicated, 0: if node not duplicated
+      std::vector<double> nodeDuplicated(e.first->getNumVertices(), 0.0);
+      for(auto & node: e.second) nodeDuplicated[node] = 1.0;
+      d[e.first->getNum()] = nodeDuplicated;
+    }
+    view = new PView("Positive-side elements and duplicated nodes (1: true, 0: false)",
+                     "ElementNodeData", GModel::current(), d, 0, 1);
   }
 
   CTX::instance()->mesh.changed = ENT_ALL;
