@@ -4,15 +4,17 @@
 
 import gmsh
 import sys
+import math
 
 gmsh.initialize()
 
 # create a simple non-uniform mesh of a rectangle
 gmsh.model.occ.addRectangle(0,0,0, 1,0.5)
+#gmsh.model.occ.addBox(0,0,0, 1,0.5,0.5)
 gmsh.model.occ.synchronize()
 gmsh.model.mesh.setSize(gmsh.model.getEntities(0), 0.1)
 gmsh.model.mesh.setSize([(0, 2)], 0.01)
-gmsh.model.mesh.generate(2)
+gmsh.model.mesh.generate(3)
 
 # get the mesh data
 m = {}
@@ -25,8 +27,9 @@ for e in gmsh.model.getEntities():
 # transform the mesh and create new discrete entities to store it
 def transform(m, offset_entity, offset_node, offset_element, tx, ty, tz):
     for e in sorted(m):
-        gmsh.model.addDiscreteEntity(e[0], e[1] + offset_entity,
-                                     [abs(b[1]) + offset_entity for b in m[e][0]])
+        gmsh.model.addDiscreteEntity(
+            e[0], e[1] + offset_entity,
+            [(abs(b[1]) + offset_entity) * math.copysign(1, b[1]) for b in m[e][0]])
         coord = []
         for i in range(0, len(m[e][1][1]), 3):
             x = m[e][1][1][i] * tx
