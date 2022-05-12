@@ -18,6 +18,7 @@ StringXNumber CrackOptions_Number[] = {
   {GMSH_FULLRC, "Dimension", nullptr, 1.},
   {GMSH_FULLRC, "PhysicalGroup", nullptr, 1.},
   {GMSH_FULLRC, "OpenBoundaryPhysicalGroup", nullptr, 0.},
+  {GMSH_FULLRC, "AuxiliaryPhysicalGroup", nullptr, 0},
   {GMSH_FULLRC, "NormalX", nullptr, 0.},
   {GMSH_FULLRC, "NormalY", nullptr, 0.},
   {GMSH_FULLRC, "NormalZ", nullptr, 1.},
@@ -84,10 +85,11 @@ PView *GMSH_CrackPlugin::execute(PView *view)
   int dim = (int)CrackOptions_Number[0].def;
   int physical = (int)CrackOptions_Number[1].def;
   int open = (int)CrackOptions_Number[2].def;
-  SVector3 normal1d(CrackOptions_Number[3].def, CrackOptions_Number[4].def,
-                    CrackOptions_Number[5].def);
-  int newPhysical = (int)CrackOptions_Number[6].def;
-  int debug = (int)CrackOptions_Number[7].def;
+  int aux = (int)CrackOptions_Number[3].def;
+  SVector3 normal1d(CrackOptions_Number[4].def, CrackOptions_Number[5].def,
+                    CrackOptions_Number[6].def);
+  int newPhysical = (int)CrackOptions_Number[7].def;
+  int debug = (int)CrackOptions_Number[8].def;
 
   if(dim != 1 && dim != 2) {
     Msg::Error("Crack dimension should be 1 or 2");
@@ -110,6 +112,16 @@ PView *GMSH_CrackPlugin::execute(PView *view)
     if(openEntities.empty()) {
       Msg::Error("Open boundary physical group %d (dimension %d) is empty",
                  open, dim - 1);
+      return view;
+    }
+  }
+
+  std::vector<GEntity *> auxEntities;
+  if(aux > 0) {
+    auxEntities = groups[dim][aux];
+    if(auxEntities.empty()) {
+      Msg::Warning("Auxiliary physical group %d (dimension %d) is empty",
+                   aux, dim);
       return view;
     }
   }
@@ -210,6 +222,25 @@ PView *GMSH_CrackPlugin::execute(PView *view)
   }
   for(auto it = bndVertices.begin(); it != bndVertices.end(); it++)
     crackVertices.erase(*it);
+
+  // get auxiliary elements
+  std::vector<MElement *> auxElements;
+  for(std::size_t i = 0; i < auxEntities.size(); i++)
+    for(std::size_t j = 0; j < auxEntities[i]->getNumMeshElements(); j++)
+      auxElements.push_back(auxEntities[i]->getMeshElement(j));
+
+  // add auxiliary elements to crackVertices if they are connected to the
+  // vertex (see #1750)
+  for(std::size_t i = 0; i < auxElements.size(); i++) {
+    for(std::size_t j = 0; j < auxElements[i]->getNumVertices(); j++) {
+      MVertex *v = auxElements[i]->getVertex(j);
+      auto it = crackVertices.find(v);
+      // vertex v is in crackVertices: add aux element to vector of connected
+      // elements
+      if(it != crackVertices.end())
+        it->second.push_back(auxElements[i]);
+    }
+  }
 
   // compute elements on the positive side of the crack, and keep track of each
   // node in the element that leads to categorizing the element on this side
