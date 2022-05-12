@@ -142,9 +142,6 @@
 #include <XCAFDoc_ShapeTool.hxx>
 #endif
 
-// define this to deactive the optimizations introduced in #1240:
-// #define SAFE_UNBIND
-
 // for debugging:
 template <class T>
 void writeBrep(const T &shapes, const std::string &fileName = "debug.brep")
@@ -3672,11 +3669,12 @@ bool OCC_Internals::booleanOperator(
       if(remove) {
         int d = inDimTags[i].first;
         int t = inDimTags[i].second;
-#ifdef SAFE_UNBIND
-        if(_isBound(d, t)) _unbind(_find(d, t), d, t, true);
-#else
-        if(_isBound(d, t)) _unbindWithoutChecks(_find(d, t));
-#endif
+        if(_isBound(d, t)) {
+          if(CTX::instance()->geom.occSafeUnbind)
+            _unbind(_find(d, t), d, t, true);
+          else
+            _unbindWithoutChecks(_find(d, t));
+        }
       }
     }
     _multiBind(result, tag, outDimTags, (tag >= 0) ? true : false, true,
@@ -3694,11 +3692,12 @@ bool OCC_Internals::booleanOperator(
       int tag = inDimTags[i].second;
       bool remove = (i < numObjects) ? removeObject : removeTool;
       if(mapDeleted[i]) { // deleted
-#ifdef SAFE_UNBIND
-        if(remove) _unbind(mapOriginal[i], dim, tag, true);
-#else
-        if(remove) _unbindWithoutChecks(mapOriginal[i]);
-#endif
+        if(remove) {
+          if(CTX::instance()->geom.occSafeUnbind)
+            _unbind(mapOriginal[i], dim, tag, true);
+          else
+            _unbindWithoutChecks(mapOriginal[i]);
+        }
         Msg::Debug("BOOL (%d,%d) deleted", dim, tag);
       }
       else if(mapModified[i].Extent() == 0) { // not modified
@@ -3960,20 +3959,21 @@ bool OCC_Internals::_transform(
   for(std::size_t i = 0; i < inDimTags.size(); i++) {
     int dim = inDimTags[i].first;
     int tag = inDimTags[i].second;
-#ifdef SAFE_UNBIND
-    // safe, but slow: _unbind() has linear complexity with respect to the number
-    // of entities in the model (due to the dependency checking of upward
-    // adjencencies and the maximum tag update). Using this in a for loop to
-    // translate copies of entities leads to quadratic complexity.
-    _unbind(inShapes[i], dim, tag, true);
-#else
-    // bypass it by unbinding the shape and all its subshapes without checking
-    // dependencies: this is a bit dangerous, as one could translate e.g. the
-    // face of a cube (this is not allowed!) - which will unbind the face of the
-    // cube. But the original face will actually be re-bound (with a warning) at
-    // the next syncronization point, so it's not too bad...
-    _unbindWithoutChecks(inShapes[i]);
-#endif
+    if(CTX::instance()->geom.occSafeUnbind) {
+      // safe, but slow: _unbind() has linear complexity with respect to the number
+      // of entities in the model (due to the dependency checking of upward
+      // adjencencies and the maximum tag update). Using this in a for loop to
+      // translate copies of entities leads to quadratic complexity.
+      _unbind(inShapes[i], dim, tag, true);
+    }
+    else {
+      // bypass it by unbinding the shape and all its subshapes without checking
+      // dependencies: this is a bit dangerous, as one could translate e.g. the
+      // face of a cube (this is not allowed!) - which will unbind the face of
+      // the cube. But the original face will actually be re-bound (with a
+      // warning) at the next syncronization point, so it's not too bad...
+      _unbindWithoutChecks(inShapes[i]);
+    }
     // TODO: it would be even better to code a rebind() function to reuse the
     // tags not only of the shape, but of all the sub-shapes as well
     _bind(outShapes[i], dim, tag, true);

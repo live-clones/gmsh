@@ -4571,6 +4571,12 @@ double opt_geometry_occ_auto_embed(OPT_ARGS_NUM)
   return CTX::instance()->geom.occAutoEmbed;
 }
 
+double opt_geometry_occ_safe_unbind(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->geom.occSafeUnbind = val ? 1 : 0;
+  return CTX::instance()->geom.occSafeUnbind;
+}
+
 double opt_geometry_occ_auto_fix(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->geom.occAutoFix = val ? 1 : 0;
