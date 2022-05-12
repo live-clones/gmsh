@@ -26,7 +26,7 @@ for e in gmsh.model.getEntities():
 def transform(m, offset_entity, offset_node, offset_element, tx, ty, tz):
     for e in sorted(m):
         gmsh.model.addDiscreteEntity(e[0], e[1] + offset_entity,
-                                     [b[1] + offset_entity for b in m[e][0]])
+                                     [abs(b[1]) + offset_entity for b in m[e][0]])
         coord = []
         for i in range(0, len(m[e][1][1]), 3):
             x = m[e][1][1][i] * tx
