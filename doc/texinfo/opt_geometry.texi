@@ -191,6 +191,11 @@ Use multi-threaded OpenCASCADE boolean operators@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Geometry.OCCSafeUnbind
+Revert to safe (i.e. with recursive checks on boundaries) unbinding of entities in boolean operations and geometrical transformations@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Geometry.OCCScaling
 Scale STEP, IGES and BRep models by the given factor when importing them with the OpenCASCADE kernel@*
 Default value: @code{1}@*
