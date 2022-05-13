@@ -334,7 +334,7 @@ GMSH_API void gmsh::model::setCurrent(const std::string &name)
   if(!_checkInit()) return;
   GModel *m = GModel::findByName(name);
   if(!m) {
-    Msg::Error("Could find model '%s'", name.c_str());
+    Msg::Error("Could not find model '%s'", name.c_str());
     return;
   }
   GModel::setCurrent(m);
