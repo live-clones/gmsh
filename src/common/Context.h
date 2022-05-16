@@ -29,7 +29,7 @@ struct contextMeshOptions {
   int nbSmoothing, algo2d, algo3d, algoSubdivide, algoSwitchOnFailure;
   int algoRecombine, recombineAll, recombineOptimizeTopology;
   int recombineNodeRepositioning;
-  int recombineMinimumQuality;
+  double recombineMinimumQuality;
   int recombine3DAll, recombine3DLevel, recombine3DConformity;
   int flexibleTransfinite, transfiniteTri, maxRetries;
   int order, secondOrderLinear, secondOrderIncomplete;
