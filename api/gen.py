@@ -1042,6 +1042,9 @@ fltk = gmsh.add_module('fltk', 'FLTK graphical user interface functions')
 doc = '''Create the FLTK graphical user interface. Can only be called in the main thread.'''
 fltk.add('initialize', doc, None)
 
+doc = '''Close the FLTK graphical user interface. Can only be called in the main thread.'''
+fltk.add('finalize', doc, None)
+
 doc = '''Wait at most `time' seconds for user interface events and return. If `time' < 0, wait indefinitely. First automatically create the user interface if it has not yet been initialized. Can only be called in the main thread.'''
 fltk.add('wait', doc, None, idouble('time', '-1.'))
 

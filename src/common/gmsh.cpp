@@ -8054,6 +8054,16 @@ GMSH_API void gmsh::fltk::initialize()
 #endif
 }
 
+GMSH_API void gmsh::fltk::finalize()
+{
+  if(!_checkInit()) return;
+#if defined(HAVE_FLTK)
+  FlGui::destroy();
+#else
+  Msg::Error("Fltk not available");
+#endif
+}
+
 GMSH_API int gmsh::fltk::isAvailable()
 {
   if(!_checkInit()) return -1;

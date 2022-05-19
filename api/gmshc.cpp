@@ -4415,6 +4415,17 @@ GMSH_API void gmshFltkInitialize(int * ierr)
   }
 }
 
+GMSH_API void gmshFltkFinalize(int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::fltk::finalize();
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API void gmshFltkWait(const double time, int * ierr)
 {
   if(ierr) *ierr = 0;

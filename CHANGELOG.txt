@@ -1,4 +1,6 @@
-(Work-in-progress): small bug fixes.
+4.10.3 (Work-in-progress): small bug fixes.
+
+* New API function: fltk/finalize
 
 4.10.2 (May 13, 2022): fixed regression introduced in 4.9 for recombined meshes
 with boundary layers; new Geometry.OCCSafeUnbind option to disable boolean
