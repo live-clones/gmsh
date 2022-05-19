@@ -1787,7 +1787,7 @@ static void meshCompound(GFace *gf, bool verbose)
 
   std::set<GEdge *, GEntityPtrLessThan> bnd, emb1;
   std::set<GVertex *, GEntityPtrLessThan> emb0;
-  std::vector<int> phys;
+  std::set<int> phys;
   for(std::size_t i = 0; i < gf->compound.size(); i++) {
     auto *c = (GFace *)gf->compound[i];
     df->triangles.insert(df->triangles.end(), c->triangles.begin(),
@@ -1818,7 +1818,7 @@ static void meshCompound(GFace *gf, bool verbose)
     }
     c->compoundSurface = df;
     if(!magic) {
-      phys.insert(phys.end(), c->physicals.begin(), c->physicals.end());
+      phys.insert(c->physicals.begin(), c->physicals.end());
       c->physicals.clear();
     }
   }
@@ -1869,7 +1869,8 @@ static void meshCompound(GFace *gf, bool verbose)
   }
 
   if(!magic) {
-    df->physicals = phys;
+    df->physicals.clear();
+    df->physicals.insert(df->physicals.end(), phys.begin(), phys.end());
     return;
   }
 
