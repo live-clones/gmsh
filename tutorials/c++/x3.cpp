@@ -83,15 +83,12 @@ int main(int argc, char **argv)
                                 {"Align", "Center", "Font", "Helvetica"});
 
   // The various attributes of the view can be queried and changed using the
-  // option interface. Beware that the option interface uses view indices
-  // instead of view tags; so to change the current time step and the intervals
-  // type, and to retrieve the total number of steps, one would do:
-  std::string v1 = "View[" + std::to_string(gmsh::view::getIndex(t1)) + "]";
-  gmsh::option::setNumber(v1 + ".TimeStep", 5);
-  gmsh::option::setNumber(v1 + ".IntervalsType", 3);
+  // option interface:
+  gmsh::view::option::setNumber(t1, "TimeStep", 5);
+  gmsh::view::option::setNumber(t1, "IntervalsType", 3);
   double ns;
-  gmsh::option::getNumber(v1 + ".NbTimeStep", ns);
-  std::cout << v1 << " with tag " << t1 << " has " << ns << " time steps\n";
+  gmsh::view::option::getNumber(t1, "NbTimeStep", ns);
+  std::cout << "View " << t1 << " has " << ns << " time steps" << std::endl;
 
   // Views can be queried and modified in various ways using plugins (see
   // `t9.py'), or probed directly using `gmsh::view::probe()' - here at point
@@ -101,7 +98,7 @@ int main(int argc, char **argv)
   gmsh::view::probe(t1, 0.9, 0.1, 0, val, distance);
   std::cout << "Value at (0.9, 0.1, 0):";
   for(auto v : val) std::cout << " " << v;
-  std::cout << "\n";
+  std::cout << std::endl;
 
   // Views can be saved to disk using `gmsh::view::write()':
   gmsh::view::write(t1, "x3.pos");
@@ -148,10 +145,9 @@ int main(int argc, char **argv)
   // visualization, set a visualization error threshold and a maximum
   // subdivision level (Gmsh does automatic mesh refinement to visualize the
   // high-order field with the requested accuracy):
-  std::string v2 = "View[" + std::to_string(gmsh::view::getIndex(t2)) + "]";
-  gmsh::option::setNumber(v2 + ".AdaptVisualizationGrid", 1);
-  gmsh::option::setNumber(v2 + ".TargetError", 1e-2);
-  gmsh::option::setNumber(v2 + ".MaxRecursionLevel", 5);
+  gmsh::view::option::setNumber(t2, "AdaptVisualizationGrid", 1);
+  gmsh::view::option::setNumber(t2, "TargetError", 1e-2);
+  gmsh::view::option::setNumber(t2, "MaxRecursionLevel", 5);
 
   // Launch the GUI to see the results:
   std::set<std::string> args(argv, argv + argc);

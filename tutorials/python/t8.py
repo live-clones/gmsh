@@ -56,11 +56,8 @@ black = (0, 0, 0)
 # Setting a color option of "X.Y" actually sets the option "X.Color.Y"
 # Sets "General.Color.Background", etc.
 gmsh.option.setColor("General.Background", white[0], white[1], white[2])
-
-# We can make our own shorter versions of repetitive methods
-set_color = lambda name, c: gmsh.option.setColor(name, c[0], c[1], c[2])
-set_color("General.Foreground", black)
-set_color("General.Text", black)
+gmsh.option.setColor("General.Foreground", black[0], black[1], black[2])
+gmsh.option.setColor("General.Text", black[0], black[1], black[2])
 
 gmsh.option.setNumber("General.Orthographic", 0)
 gmsh.option.setNumber("General.Axes", 0)
@@ -73,62 +70,37 @@ if '-nopopup' not in sys.argv:
 # We also set some options for each post-processing view:
 
 # If we were to follow the geo example blindly, we would read the number of
-# views from the relevant option value. A nicer way is to use
-# gmsh.view.getTags()
-view_tags = [v0, v1, v2, v3] = gmsh.view.getTags()
-
-# View name format helper function: returns "View[index]." for a given view tag
-view_fmt = lambda v_tag: "View[" + str(gmsh.view.getIndex(v_tag)) + "]."
-
-
-# Option setter
-def set_opt(name, val):
-    # if it's a string, call the string method
-    val_type = type(val)
-    if val_type == type("str"):
-        gmsh.option.setString(name, val)
-    # otherwise call the number method
-    elif val_type == type(0.5) or val_type == type(1):
-        gmsh.option.setNumber(name, val)
-    else:
-        print("error: bad input to set_opt: " + name + " = " + str(val))
-        print("error: set_opt is only meant for numbers and strings, aborting")
-        quit(1)
-
-
-# We'll use this helper function for our views
-set_view_opt = lambda v_tag, name, val: set_opt(view_fmt(v_tag) + name, val)
+# views from the relevant option value, and use the gmsh.option.setNumber()
+# and gmsh.option.setString() functions. A nicer way is to use
+# gmsh.view.getTags() and to use the gmsh.view.setNumber() and
+# gmsh.view.setString() functions.
+v = gmsh.view.getTags()
 
 # We set some options for each post-processing view:
-# v0
-set_view_opt(v0, "IntervalsType", 2)
-set_view_opt(v0, "OffsetZ", 0.05)
-set_view_opt(v0, "RaiseZ", 0)
-set_view_opt(v0, "Light", 1)
-set_view_opt(v0, "ShowScale", 0)
-set_view_opt(v0, "SmoothNormals", 1)
+gmsh.view.option.setNumber(v[0], "IntervalsType", 2)
+gmsh.view.option.setNumber(v[0], "OffsetZ", 0.05)
+gmsh.view.option.setNumber(v[0], "RaiseZ", 0)
+gmsh.view.option.setNumber(v[0], "Light", 1)
+gmsh.view.option.setNumber(v[0], "ShowScale", 0)
+gmsh.view.option.setNumber(v[0], "SmoothNormals", 1)
 
-# v1
-set_view_opt(v1, "IntervalsType", 1)
-# We can't yet set the ColorTable in API
-# gmsh.option.setColorTable(view_opt[v1] + "ColorTable", "{ Green, Blue }")
-set_view_opt(v1, "NbIso", 10)
-set_view_opt(v1, "ShowScale", 0)
+gmsh.view.option.setNumber(v[1], "IntervalsType", 1)
+# Note that we can't yet set the ColorTable in API
+gmsh.view.option.setNumber(v[1], "NbIso", 10)
+gmsh.view.option.setNumber(v[1], "ShowScale", 0)
 
-# v2
-set_view_opt(v2, "Name", "Test...")
-set_view_opt(v2, "Axes", 1)
-set_view_opt(v2, "IntervalsType", 2)
-set_view_opt(v2, "Type", 2)
-set_view_opt(v2, "IntervalsType", 2)
-set_view_opt(v2, "AutoPosition", 0)
-set_view_opt(v2, "PositionX", 85)
-set_view_opt(v2, "PositionY", 50)
-set_view_opt(v2, "Width", 200)
-set_view_opt(v2, "Height", 130)
+gmsh.view.option.setString(v[2], "Name", "Test...")
+gmsh.view.option.setNumber(v[2], "Axes", 1)
+gmsh.view.option.setNumber(v[2], "IntervalsType", 2)
+gmsh.view.option.setNumber(v[2], "Type", 2)
+gmsh.view.option.setNumber(v[2], "IntervalsType", 2)
+gmsh.view.option.setNumber(v[2], "AutoPosition", 0)
+gmsh.view.option.setNumber(v[2], "PositionX", 85)
+gmsh.view.option.setNumber(v[2], "PositionY", 50)
+gmsh.view.option.setNumber(v[2], "Width", 200)
+gmsh.view.option.setNumber(v[2], "Height", 130)
 
-# v3
-set_view_opt(v3, "Visible", 0)
+gmsh.view.option.setNumber(v[3], "Visible", 0)
 
 # You can save an MPEG movie directly by selecting `File->Export' in the
 # GUI. Several predefined animations are setup, for looping on all the time
@@ -144,35 +116,35 @@ t = 0  # Initial step
 for num in range(1, 4):
 
     # Set time step
-    for v in view_tags:
-        set_view_opt(v, "TimeStep", t)
+    for vv in v:
+        gmsh.view.option.setNumber(vv, "TimeStep", t)
 
-    # helper function to match the geo file's +=, -= operators for numbers
-    adjust_num_opt =\
-    lambda name, diff: set_opt(name, gmsh.option.getNumber(name) + diff)
-
-    current_step = gmsh.option.getNumber(view_fmt(v0) + "TimeStep")
-    max_step = gmsh.option.getNumber(view_fmt(v0) + "NbTimeStep") - 1
+    current_step = gmsh.view.option.getNumber(v[0], "TimeStep")
+    max_step = gmsh.view.option.getNumber(v[0], "NbTimeStep") - 1
     if current_step < max_step:
         t = t + 1
     else:
         t = 0
 
-    v0_max = gmsh.option.getNumber(view_fmt(v0) + "Max")
-    adjust_num_opt(view_fmt(v0) + "RaiseZ", 0.01 / v0_max * t)
+    gmsh.view.option.setNumber(v[0], "RaiseZ",
+                               gmsh.view.option.getNumber(v[0], "RaiseZ") +
+                               0.01 / gmsh.view.option.getNumber(v[0], "Max") * t)
 
     if num == 3:
-        set_opt("General.GraphicsWidth",
-                gmsh.option.getNumber("General.MenuWidth") + 640)
-        set_opt("General.GraphicsHeight", 480)
+        # Resize the graphics when num == 3, to create 640x480 frames
+        gmsh.option.setNumber("General.GraphicsWidth",
+                              gmsh.option.getNumber("General.MenuWidth") + 640)
+        gmsh.option.setNumber("General.GraphicsHeight", 480)
 
     frames = 50
     for num2 in range(frames):
         # Incrementally rotate the scene
-        adjust_num_opt("General.RotationX", 10)
-        set_opt("General.RotationY",
-                gmsh.option.getNumber("General.RotationX") / 3)
-        adjust_num_opt("General.RotationZ", 0.1)
+        gmsh.option.setNumber("General.RotationX",
+                              gmsh.option.getNumber("General.RotationX") + 10)
+        gmsh.option.setNumber("General.RotationY",
+                              gmsh.option.getNumber("General.RotationX") / 3)
+        gmsh.option.setNumber("General.RotationZ",
+                              gmsh.option.getNumber("General.RotationZ") + 0.1)
 
         # Draw the scene
         gmsh.graphics.draw()
