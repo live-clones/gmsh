@@ -25,6 +25,10 @@ gmsh.initialize()
 path = os.path.dirname(os.path.abspath(__file__))
 gmsh.merge(os.path.join(path, os.pardir, 'view3.pos'))
 v = gmsh.view.getTags()
+if len(v) != 1:
+    gmsh.logger.write("Wrong number of views!", "error")
+    gmsh.finalize()
+    exit()
 
 # We then set some options for the `Isosurface' plugin (which extracts an
 # isosurface from a 3D scalar view), and run it:

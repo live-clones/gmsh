@@ -70,11 +70,15 @@ if '-nopopup' not in sys.argv:
 # We also set some options for each post-processing view:
 
 # If we were to follow the geo example blindly, we would read the number of
-# views from the relevant option value, and use the gmsh.option.setNumber()
-# and gmsh.option.setString() functions. A nicer way is to use
-# gmsh.view.getTags() and to use the gmsh.view.setNumber() and
-# gmsh.view.setString() functions.
+# views from the relevant option value, and use the gmsh.option.setNumber() and
+# gmsh.option.setString() functions. A nicer way is to use gmsh.view.getTags()
+# and to use the gmsh.view.option.setNumber() and gmsh.view.option.setString()
+# functions.
 v = gmsh.view.getTags()
+if len(v) != 4:
+    gmsh.logger.write("Wrong number of views!", "error")
+    gmsh.finalize()
+    exit()
 
 # We set some options for each post-processing view:
 gmsh.view.option.setNumber(v[0], "IntervalsType", 2)

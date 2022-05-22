@@ -75,10 +75,15 @@ int main(int argc, char **argv)
   // If we were to follow the geo example blindly, we would read the number of
   // views from the relevant option value, and use the gmsh::option::setNumber()
   // and gmsh::option::setString() functions. A nicer way is to use
-  // gmsh::view::getTags() and to use the gmsh::view::setNumber() and
-  // gmsh::view::setString() functions.
+  // gmsh::view::getTags() and to use the gmsh::view::option::setNumber() and
+  // gmsh::view::option::setString() functions.
   std::vector<int> v;
   gmsh::view::getTags(v);
+  if(v.size() != 4) {
+    gmsh::logger::write("Wrong number of views!", "error");
+    gmsh::finalize();
+    return 1;
+  }
 
   gmsh::view::option::setNumber(v[0], "IntervalsType", 2);
   gmsh::view::option::setNumber(v[0], "OffsetZ", 0.05);

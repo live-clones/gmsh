@@ -35,6 +35,11 @@ int main(int argc, char **argv)
 
   std::vector<int> v;
   gmsh::view::getTags(v);
+  if(v.size() != 1) {
+    gmsh::logger::write("Wrong number of views!", "error");
+    gmsh::finalize();
+    return 1;
+  }
 
   // We then set some options for the `Isosurface' plugin (which extracts an
   // isosurface from a 3D scalar view), and run it:
