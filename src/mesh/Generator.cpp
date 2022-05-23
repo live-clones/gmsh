@@ -5,6 +5,8 @@
 
 #include <stdlib.h>
 #include <stack>
+#include <stdexcept>
+
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "Numeric.h"
@@ -378,12 +380,18 @@ static void Mesh1D(GModel *m)
     }
 
     int nPending = 0;
+    bool exceptions = false;
 #pragma omp parallel for schedule(dynamic) num_threads(nthreads)
     for(size_t K = 0; K < temp.size(); K++) {
       int localPending = 0;
       GEdge *ed = temp[K];
       if(ed->meshStatistics.status == GEdge::PENDING) {
-        ed->mesh(true);
+        try{ // OpenMP forbids leaving block via exception
+          ed->mesh(true);
+        }
+        catch(...){
+          exceptions = true;
+        }
 #pragma omp atomic capture
         {
           ++nPending;
@@ -392,7 +400,7 @@ static void Mesh1D(GModel *m)
       }
       if(!nIter) Msg::ProgressMeter(localPending, false, "Meshing 1D...");
     }
-
+    if(exceptions) throw std::runtime_error(Msg::GetLastError());
     if(!nPending) break;
     if(nIter++ > CTX::instance()->mesh.maxRetries) break;
   }
@@ -525,6 +533,7 @@ static void Mesh2D(GModel *m)
       }
 
       int nPending = 0;
+      bool exceptions = false;
       std::vector<GFace *> temp;
       temp.insert(temp.begin(), f.begin(), f.end());
 #pragma omp parallel for schedule(dynamic) num_threads(nthreads)
@@ -532,7 +541,12 @@ static void Mesh2D(GModel *m)
         int localPending = 0;
         if(temp[K]->meshStatistics.status == GFace::PENDING) {
           backgroundMesh::current()->unset();
-          temp[K]->mesh(true);
+          try{ // OpenMP forbids leaving block via exception
+            temp[K]->mesh(true);
+          }
+          catch(...) {
+            exceptions = true;
+          }
 #pragma omp atomic capture
           {
             ++nPending;
@@ -541,6 +555,7 @@ static void Mesh2D(GModel *m)
         }
         if(!nIter) Msg::ProgressMeter(localPending, false, "Meshing 2D...");
       }
+      if(exceptions) throw std::runtime_error(Msg::GetLastError());
       if(!nPending) break;
       // iter == 2 is for meshing re-parametrized surfaces; after that, we
       // serialize (self-intersections of 1D meshes are not thread safe)!
