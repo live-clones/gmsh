@@ -383,6 +383,7 @@ static void Mesh1D(GModel *m)
     bool exceptions = false;
 #pragma omp parallel for schedule(dynamic) num_threads(nthreads)
     for(size_t K = 0; K < temp.size(); K++) {
+      if(exceptions) continue;
       int localPending = 0;
       GEdge *ed = temp[K];
       if(ed->meshStatistics.status == GEdge::PENDING) {
@@ -538,6 +539,7 @@ static void Mesh2D(GModel *m)
       temp.insert(temp.begin(), f.begin(), f.end());
 #pragma omp parallel for schedule(dynamic) num_threads(nthreads)
       for(size_t K = 0; K < temp.size(); K++) {
+        if(exceptions) continue;
         int localPending = 0;
         if(temp[K]->meshStatistics.status == GFace::PENDING) {
           backgroundMesh::current()->unset();

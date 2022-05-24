@@ -2851,6 +2851,7 @@ int GModel::_writePartitionedMSH4(const std::string &baseName, double version,
   bool exceptions = false;
 #pragma omp parallel for num_threads(nthreads)
   for(std::size_t part = 1; part <= getNumPartitions(); part++) {
+    if(exceptions) continue;
     std::ostringstream sstream;
     sstream << baseName << "_" << part << ".msh";
     if(getNumPartitions() > 100) {

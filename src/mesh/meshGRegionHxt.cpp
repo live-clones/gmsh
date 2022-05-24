@@ -59,6 +59,7 @@ static HXTStatus nodalSizesCallBack(double *pts, uint32_t *volume,
   bool exceptions = false;
 #pragma omp parallel for schedule(dynamic) num_threads(nthreads)
   for(size_t i = 0; i < numPts; i++) {
+    if(exceptions) continue;
     if(volume[i] < 0 || volume[i] >= allGR->size()) {
       Msg::Error("Invalid volume tag %d in mesh size calculation", volume[i]);
       continue;
