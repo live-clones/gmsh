@@ -1,4 +1,4 @@
-4.10.3 (Work-in-progress): small bug fixes.
+4.10.3 (May 26, 2022): small bug fixes.
 
 * New API function: fltk/finalize
 
