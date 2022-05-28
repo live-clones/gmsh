@@ -1,3 +1,7 @@
+(Work-in-progress):
+
+* New API function: mesh/removeDuplicateElements
+
 4.10.3 (May 26, 2022): small bug fixes.
 
 * New API function: fltk/finalize

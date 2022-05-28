@@ -263,6 +263,7 @@ public:
   void addLine(MLine *line) { lines.push_back(line); }
   void addElement(int type, MElement *e);
   void removeElement(int type, MElement *e);
+  void removeElements(int type);
 
   virtual void discretize(double tol, std::vector<SPoint3> &dpts,
                           std::vector<double> &ts);

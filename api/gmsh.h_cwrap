@@ -6,7 +6,7 @@
 #ifndef GMSH_H
 #define GMSH_H
 
-// This file redefines the Gmsh C++ API in terms of the C API (v4.10.3).
+// This file redefines the Gmsh C++ API in terms of the C API (v4.10.4).
 //
 // This is provided as a convenience for users of the binary Gmsh SDK whose C++
 // compiler ABI is not compatible with the ABI of the C++ compiler used to create
@@ -2515,6 +2515,18 @@ namespace gmsh { // Top-level functions
         int ierr = 0;
         int *api_dimTags_; size_t api_dimTags_n_; vectorpair2intptr(dimTags, &api_dimTags_, &api_dimTags_n_);
         gmshModelMeshRemoveDuplicateNodes(api_dimTags_, api_dimTags_n_, &ierr);
+        if(ierr) throwLastError();
+        gmshFree(api_dimTags_);
+      }
+
+      // Remove duplicate elements (defined by the same nodes, in the same entity)
+      // in the mesh of the entities `dimTags'. If `dimTags' is empty, consider the
+      // whole mesh.
+      inline void removeDuplicateElements(const gmsh::vectorpair & dimTags = gmsh::vectorpair())
+      {
+        int ierr = 0;
+        int *api_dimTags_; size_t api_dimTags_n_; vectorpair2intptr(dimTags, &api_dimTags_, &api_dimTags_n_);
+        gmshModelMeshRemoveDuplicateElements(api_dimTags_, api_dimTags_n_, &ierr);
         if(ierr) throwLastError();
         gmshFree(api_dimTags_);
       }

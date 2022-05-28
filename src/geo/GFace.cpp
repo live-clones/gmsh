@@ -1844,7 +1844,7 @@ static void meshCompound(GFace *gf, bool verbose)
   Field *backgroundField = fields->get(BGTAG);
 
   if(df->createGeometry()) {
-    Msg::Error("Could not create geometry of discrete face %d (check "
+    Msg::Error("Could not create geometry of discrete surface %d (check "
                "orientation of input triangulations)",
                df->tag());
   }
@@ -2442,7 +2442,7 @@ void GFace::setMeshMaster(GFace *master, const std::map<int, int> &edgeCopies)
     }
     else {
       Msg::Error("Only rotations or translations can currently be computed "
-                 "automatically for periodic faces: face %d not meshed",
+                 "automatically for periodic surfaces: surface %d not meshed",
                  tag());
       return;
     }
@@ -2460,7 +2460,8 @@ void GFace::addElement(int type, MElement *e)
   case TYPE_TRI: addTriangle(reinterpret_cast<MTriangle *>(e)); break;
   case TYPE_QUA: addQuadrangle(reinterpret_cast<MQuadrangle *>(e)); break;
   case TYPE_POLYG: addPolygon(reinterpret_cast<MPolygon *>(e)); break;
-  default: Msg::Error("Trying to add unsupported element in face");
+  default:
+    Msg::Error("Trying to add unsupported element in surface %d", tag());
   }
 }
 
@@ -2482,7 +2483,19 @@ void GFace::removeElement(int type, MElement *e)
                         reinterpret_cast<MPolygon *>(e));
     if(it != polygons.end()) polygons.erase(it);
   } break;
-  default: Msg::Error("Trying to remove unsupported element in face");
+  default:
+    Msg::Error("Trying to remove unsupported element in surface %d", tag());
+  }
+}
+
+void GFace::removeElements(int type)
+{
+  switch(type) {
+  case TYPE_TRI: triangles.clear(); break;
+  case TYPE_QUA: quadrangles.clear(); break;
+  case TYPE_POLYG: polygons.clear(); break;
+  default:
+    Msg::Error("Trying to remove unsupported elements in surface %d", tag());
   }
 }
 

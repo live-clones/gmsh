@@ -518,6 +518,9 @@ mesh.add('getDuplicateNodes', doc, None, ovectorsize('tags'), ivectorpair('dimTa
 doc = '''Remove duplicate nodes in the mesh of the entities `dimTags'. If `dimTags' is empty, consider the whole mesh.'''
 mesh.add('removeDuplicateNodes', doc, None, ivectorpair('dimTags', 'gmsh::vectorpair()', "[]", "[]"))
 
+doc = '''Remove duplicate elements (defined by the same nodes, in the same entity) in the mesh of the entities `dimTags'. If `dimTags' is empty, consider the whole mesh.'''
+mesh.add('removeDuplicateElements', doc, None, ivectorpair('dimTags', 'gmsh::vectorpair()', "[]", "[]"))
+
 doc = '''Split (into two triangles) all quadrangles in surface `tag' whose quality is lower than `quality'. If `tag' < 0, split quadrangles in all surfaces.'''
 mesh.add('splitQuadrangles', doc, None, idouble('quality', '1.'), iint('tag', '-1'))
 

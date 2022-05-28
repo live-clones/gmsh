@@ -387,6 +387,7 @@ public:
   void addPolygon(MPolygon *p) { polygons.push_back(p); }
   void addElement(int type, MElement *e);
   void removeElement(int type, MElement *e);
+  void removeElements(int type);
 
   // get the boundary layer columns
   BoundaryLayerColumns *getColumns() { return &_columns; }

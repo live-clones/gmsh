@@ -2160,6 +2160,22 @@ GMSH_API void gmshModelMeshRemoveDuplicateNodes(const int * dimTags, const size_
   }
 }
 
+GMSH_API void gmshModelMeshRemoveDuplicateElements(const int * dimTags, const size_t dimTags_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::vectorpair api_dimTags_(dimTags_n/2);
+    for(size_t i = 0; i < dimTags_n/2; ++i){
+      api_dimTags_[i].first = dimTags[i * 2 + 0];
+      api_dimTags_[i].second = dimTags[i * 2 + 1];
+    }
+    gmsh::model::mesh::removeDuplicateElements(api_dimTags_);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API void gmshModelMeshSplitQuadrangles(const double quality, const int tag, int * ierr)
 {
   if(ierr) *ierr = 0;
