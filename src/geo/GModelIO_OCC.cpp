@@ -21,7 +21,6 @@
 
 #if defined(HAVE_OCC)
 
-#include <BOPAlgo_Alerts.hxx>
 #include <BRepAlgoAPI_Common.hxx>
 #include <BRepAlgoAPI_Cut.hxx>
 #include <BRepAlgoAPI_Fuse.hxx>
@@ -113,6 +112,10 @@
 
 #if OCC_VERSION_HEX < 0x060900
 #error "Gmsh requires OpenCASCADE >= 6.9"
+#endif
+
+#if OCC_VERSION_HEX > 0x070100
+#include <BOPAlgo_Alerts.hxx>
 #endif
 
 #if OCC_VERSION_HEX > 0x070300
@@ -3632,11 +3635,13 @@ bool OCC_Internals::booleanOperator(
       fragments.SetArguments(objectShapes);
       if(tolerance > 0.0) fragments.SetFuzzyValue(tolerance);
       fragments.Build();
+#if OCC_VERSION_HEX > 0x070100
       if(fragments.HasErrors() &&
          fragments.HasError(STANDARD_TYPE(BOPAlgo_AlertTooFewArguments))) {
         Msg::Warning("Boolean fragments skipped - too few arguments");
         return true;
       }
+#endif
       if(!fragments.IsDone()) {
         Msg::Error("Boolean fragments failed");
         return false;
