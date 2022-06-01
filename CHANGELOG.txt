@@ -1,4 +1,4 @@
-(Work-in-progress):
+4.10.4 (Work-in-progress): small bug fixes.
 
 * New API function: mesh/removeDuplicateElements
 
