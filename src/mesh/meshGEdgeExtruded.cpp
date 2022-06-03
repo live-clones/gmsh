@@ -104,7 +104,12 @@ int MeshExtrudedCurve(GEdge *ge)
 
   if(ep->geo.Mode == EXTRUDED_ENTITY) {
     // curve is extruded from a point
-    extrudeMesh(ge->getBeginVertex(), ge);
+    GVertex *from = ge->model()->getVertexByTag(std::abs(ep->geo.Source));
+    if(!from) {
+      Msg::Error("Unknown source point %d for extrusion", ep->geo.Source);
+      return 0;
+    }
+    extrudeMesh(from, ge);
   }
   else {
     GEdge *from = ge->model()->getEdgeByTag(std::abs(ep->geo.Source));
