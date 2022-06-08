@@ -609,6 +609,7 @@ template <class T> void onelabGroup::_addParameter(T &p)
   std::string help = p.getHelp();
   if(help.empty()) help = p.getLabel();
   if(help.empty()) help = p.getShortName();
+  ReplaceSubStringInPlace("\r", "", help); // remove carriage return characters
   widget->copy_tooltip(help.c_str());
   n->widget(grp);
   _tree->end();

@@ -619,7 +619,8 @@ void GRegion::addElement(int type, MElement *e)
   case TYPE_PYR: addPyramid(reinterpret_cast<MPyramid *>(e)); break;
   case TYPE_TRIH: addTrihedron(reinterpret_cast<MTrihedron *>(e)); break;
   case TYPE_POLYH: addPolyhedron(reinterpret_cast<MPolyhedron *>(e)); break;
-  default: Msg::Error("Trying to add unsupported element in region");
+  default:
+    Msg::Error("Trying to add unsupported element in volume %d", tag());
   }
 }
 
@@ -656,7 +657,22 @@ void GRegion::removeElement(int type, MElement *e)
                         reinterpret_cast<MPolyhedron *>(e));
     if(it != polyhedra.end()) polyhedra.erase(it);
   } break;
-  default: Msg::Error("Trying to remove unsupported element in region");
+  default:
+    Msg::Error("Trying to remove unsupported element in volume %d", tag());
+  }
+}
+
+void GRegion::removeElements(int type)
+{
+  switch(type) {
+  case TYPE_TET: tetrahedra.clear(); break;
+  case TYPE_HEX: hexahedra.clear(); break;
+  case TYPE_PRI: prisms.clear(); break;
+  case TYPE_PYR: pyramids.clear(); break;
+  case TYPE_TRIH: trihedra.clear(); break;
+  case TYPE_POLYH: polyhedra.clear(); break;
+  default:
+    Msg::Error("Trying to remove unsupported elements in volume %d", tag());
   }
 }
 

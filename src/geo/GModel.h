@@ -625,6 +625,10 @@ public:
                                   const std::vector<GEntity*> &entities =
                                   std::vector<GEntity*>());
 
+  // remove duplicate mesh elements (within an entity)
+  int removeDuplicateMeshElements(const std::vector<GEntity*> &entities =
+                                  std::vector<GEntity*>());
+
   // create a geometry (i.e. a parametrization for curves and surfaces) for the
   // given discrete entities (or all of them if dimTags is empty)
   void createGeometryOfDiscreteEntities(
@@ -699,7 +703,7 @@ public:
                           const std::vector<int> &subdomain,
                           const std::vector<int> &dim);
   void clearHomologyRequests();
-  void computeHomology();
+  void computeHomology(std::vector<std::pair<int, int> > &newPhysicals);
 
   // mesh size callback
   std::function<double(int, int, double, double, double, double)> lcCallback;

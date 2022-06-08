@@ -5,6 +5,7 @@
 
 #include <map>
 #include <set>
+#include <stdexcept>
 
 #include "GmshConfig.h"
 #include "meshGRegionHxt.h"
@@ -55,20 +56,29 @@ static HXTStatus nodalSizesCallBack(double *pts, uint32_t *volume,
   HXT_INFO("Computing %smesh sizes...", useInterpolatedSize ? "interpolated " : "");
 
   int nthreads = getNumThreads();
+  bool exceptions = false;
 #pragma omp parallel for schedule(dynamic) num_threads(nthreads)
   for(size_t i = 0; i < numPts; i++) {
+    if(exceptions) continue;
     if(volume[i] < 0 || volume[i] >= allGR->size()) {
       Msg::Error("Invalid volume tag %d in mesh size calculation", volume[i]);
       continue;
     }
     GRegion *gr = (*allGR)[volume[i]];
-    double lc = BGM_MeshSizeWithoutScaling(gr, 0, 0, pts[4 * i + 0],
-                                           pts[4 * i + 1], pts[4 * i + 2]);
-    if(useInterpolatedSize && pts[4 * i + 3] > 0.0)
-      pts[4 * i + 3] = std::min(pts[4 * i + 3], std::min(lcGlob, lc));
-    else
-      pts[4 * i + 3] = std::min(lcGlob, lc);
+    try{ // OpenMP forbids leaving block via exception
+      double lc = BGM_MeshSizeWithoutScaling(gr, 0, 0, pts[4 * i + 0],
+                                             pts[4 * i + 1], pts[4 * i + 2]);
+      if(useInterpolatedSize && pts[4 * i + 3] > 0.0)
+        pts[4 * i + 3] = std::min(pts[4 * i + 3], std::min(lcGlob, lc));
+      else
+        pts[4 * i + 3] = std::min(lcGlob, lc);
+    }
+    catch(...) {
+      exceptions = true;
+    }
   }
+
+  if(exceptions) throw std::runtime_error(Msg::GetLastError());
 
   HXT_INFO("Done computing %smesh sizes", useInterpolatedSize ? "interpolated " : "");
 

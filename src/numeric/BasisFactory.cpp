@@ -163,6 +163,13 @@ void BasisFactory::clearAll()
   }
   js.clear();
 
+  auto itC = cs.begin();
+  while(itC != cs.end()) {
+    delete itC->second;
+    itC++;
+  }
+  cs.clear();
+
   auto itG = gs.begin();
   while(itG != gs.end()) {
     delete itG->second;

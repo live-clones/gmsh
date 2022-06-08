@@ -28,6 +28,7 @@ gmsh.model.mesh.generate(3)
 # "crack" the mesh by duplicating the elements and nodes on the small surface
 gmsh.plugin.setNumber("Crack", "Dimension", 2)
 gmsh.plugin.setNumber("Crack", "PhysicalGroup", phys)
+gmsh.plugin.setNumber("Crack", "DebugView", 1)
 gmsh.plugin.run("Crack")
 
 # save all the elements in the mesh (even those that do not belong to any

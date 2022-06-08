@@ -2160,6 +2160,22 @@ GMSH_API void gmshModelMeshRemoveDuplicateNodes(const int * dimTags, const size_
   }
 }
 
+GMSH_API void gmshModelMeshRemoveDuplicateElements(const int * dimTags, const size_t dimTags_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::vectorpair api_dimTags_(dimTags_n/2);
+    for(size_t i = 0; i < dimTags_n/2; ++i){
+      api_dimTags_[i].first = dimTags[i * 2 + 0];
+      api_dimTags_[i].second = dimTags[i * 2 + 1];
+    }
+    gmsh::model::mesh::removeDuplicateElements(api_dimTags_);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API void gmshModelMeshSplitQuadrangles(const double quality, const int tag, int * ierr)
 {
   if(ierr) *ierr = 0;
@@ -3118,12 +3134,14 @@ GMSH_API int gmshModelOccAddCircleArc(const int startTag, const int centerTag, c
   return result_api_;
 }
 
-GMSH_API int gmshModelOccAddCircle(const double x, const double y, const double z, const double r, const int tag, const double angle1, const double angle2, int * ierr)
+GMSH_API int gmshModelOccAddCircle(const double x, const double y, const double z, const double r, const int tag, const double angle1, const double angle2, const double * zAxis, const size_t zAxis_n, const double * xAxis, const size_t xAxis_n, int * ierr)
 {
   int result_api_ = 0;
   if(ierr) *ierr = 0;
   try {
-    result_api_ = gmsh::model::occ::addCircle(x, y, z, r, tag, angle1, angle2);
+    std::vector<double> api_zAxis_(zAxis, zAxis + zAxis_n);
+    std::vector<double> api_xAxis_(xAxis, xAxis + xAxis_n);
+    result_api_ = gmsh::model::occ::addCircle(x, y, z, r, tag, angle1, angle2, api_zAxis_, api_xAxis_);
   }
   catch(...){
     if(ierr) *ierr = 1;
@@ -3144,12 +3162,14 @@ GMSH_API int gmshModelOccAddEllipseArc(const int startTag, const int centerTag, 
   return result_api_;
 }
 
-GMSH_API int gmshModelOccAddEllipse(const double x, const double y, const double z, const double r1, const double r2, const int tag, const double angle1, const double angle2, int * ierr)
+GMSH_API int gmshModelOccAddEllipse(const double x, const double y, const double z, const double r1, const double r2, const int tag, const double angle1, const double angle2, const double * zAxis, const size_t zAxis_n, const double * xAxis, const size_t xAxis_n, int * ierr)
 {
   int result_api_ = 0;
   if(ierr) *ierr = 0;
   try {
-    result_api_ = gmsh::model::occ::addEllipse(x, y, z, r1, r2, tag, angle1, angle2);
+    std::vector<double> api_zAxis_(zAxis, zAxis + zAxis_n);
+    std::vector<double> api_xAxis_(xAxis, xAxis + xAxis_n);
+    result_api_ = gmsh::model::occ::addEllipse(x, y, z, r1, r2, tag, angle1, angle2, api_zAxis_, api_xAxis_);
   }
   catch(...){
     if(ierr) *ierr = 1;
@@ -3243,12 +3263,14 @@ GMSH_API int gmshModelOccAddRectangle(const double x, const double y, const doub
   return result_api_;
 }
 
-GMSH_API int gmshModelOccAddDisk(const double xc, const double yc, const double zc, const double rx, const double ry, const int tag, int * ierr)
+GMSH_API int gmshModelOccAddDisk(const double xc, const double yc, const double zc, const double rx, const double ry, const int tag, const double * zAxis, const size_t zAxis_n, const double * xAxis, const size_t xAxis_n, int * ierr)
 {
   int result_api_ = 0;
   if(ierr) *ierr = 0;
   try {
-    result_api_ = gmsh::model::occ::addDisk(xc, yc, zc, rx, ry, tag);
+    std::vector<double> api_zAxis_(zAxis, zAxis + zAxis_n);
+    std::vector<double> api_xAxis_(xAxis, xAxis + xAxis_n);
+    result_api_ = gmsh::model::occ::addDisk(xc, yc, zc, rx, ry, tag, api_zAxis_, api_xAxis_);
   }
   catch(...){
     if(ierr) *ierr = 1;
@@ -3439,12 +3461,13 @@ GMSH_API int gmshModelOccAddCone(const double x, const double y, const double z,
   return result_api_;
 }
 
-GMSH_API int gmshModelOccAddWedge(const double x, const double y, const double z, const double dx, const double dy, const double dz, const int tag, const double ltx, int * ierr)
+GMSH_API int gmshModelOccAddWedge(const double x, const double y, const double z, const double dx, const double dy, const double dz, const int tag, const double ltx, const double * zAxis, const size_t zAxis_n, int * ierr)
 {
   int result_api_ = 0;
   if(ierr) *ierr = 0;
   try {
-    result_api_ = gmsh::model::occ::addWedge(x, y, z, dx, dy, dz, tag, ltx);
+    std::vector<double> api_zAxis_(zAxis, zAxis + zAxis_n);
+    result_api_ = gmsh::model::occ::addWedge(x, y, z, dx, dy, dz, tag, ltx, api_zAxis_);
   }
   catch(...){
     if(ierr) *ierr = 1;
@@ -3452,12 +3475,13 @@ GMSH_API int gmshModelOccAddWedge(const double x, const double y, const double z
   return result_api_;
 }
 
-GMSH_API int gmshModelOccAddTorus(const double x, const double y, const double z, const double r1, const double r2, const int tag, const double angle, int * ierr)
+GMSH_API int gmshModelOccAddTorus(const double x, const double y, const double z, const double r1, const double r2, const int tag, const double angle, const double * zAxis, const size_t zAxis_n, int * ierr)
 {
   int result_api_ = 0;
   if(ierr) *ierr = 0;
   try {
-    result_api_ = gmsh::model::occ::addTorus(x, y, z, r1, r2, tag, angle);
+    std::vector<double> api_zAxis_(zAxis, zAxis + zAxis_n);
+    result_api_ = gmsh::model::occ::addTorus(x, y, z, r1, r2, tag, angle, api_zAxis_);
   }
   catch(...){
     if(ierr) *ierr = 1;
@@ -4401,6 +4425,17 @@ GMSH_API void gmshFltkInitialize(int * ierr)
   if(ierr) *ierr = 0;
   try {
     gmsh::fltk::initialize();
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshFltkFinalize(int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::fltk::finalize();
   }
   catch(...){
     if(ierr) *ierr = 1;

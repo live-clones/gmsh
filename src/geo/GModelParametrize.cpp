@@ -732,9 +732,7 @@ static int isTriangulationParametrizable(const std::vector<MTriangle *> &t,
 
   std::set<MVertex *> v;
   std::map<MEdge, int, MEdgeLessThan> e;
-  double surf = 0;
   for(std::size_t i = 0; i < t.size(); ++i) {
-    surf += t[i]->getVolume();
     for(int j = 0; j < 3; j++) {
       v.insert(t[i]->getVertex(j));
       auto it = e.find(t[i]->getEdge(j));

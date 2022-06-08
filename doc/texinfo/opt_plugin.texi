@@ -111,7 +111,7 @@ Default value: @code{0}
 @end table
 
 @item Plugin(Crack)
-Plugin(Crack) creates a crack around the physical group `PhysicalGroup' of dimension `Dimension' (1 or 2), embedded in a mesh of dimension `Dimension' + 1. The plugin duplicates the nodes and the elements on the crack and stores them in a new discrete curve (`Dimension' = 1) or surface (`Dimension' = 2). The elements touching the crack on the ``negative'' side are modified to use the newly generated nodes.If `OpenBoundaryPhysicalGroup' is given (> 0), its nodes are duplicated and the crack will be left open on that (part of the) boundary. Otherwise, the lips of the crack are sealed, i.e., its nodes are not duplicated. For 1D cracks, `NormalX', `NormalY' and `NormalZ' provide the reference normal of the surface in which the crack is supposed to be embedded. If `NewPhysicalGroup' is positive, use it as the tag of the newly created curve or surface; oterwise use `PhysicalGroup'.
+Plugin(Crack) creates a crack around the physical group `PhysicalGroup' of dimension `Dimension' (1 or 2), embedded in a mesh of dimension `Dimension' + 1. The plugin duplicates the nodes and the elements on the crack and stores them in a new discrete curve (`Dimension' = 1) or surface (`Dimension' = 2). The elements touching the crack on the positive side are modified to use the newly generated nodes.If `OpenBoundaryPhysicalGroup' is given (> 0), its nodes are duplicated and the crack will be left open on that (part of the) boundary. Otherwise, the lips of the crack are sealed, i.e., its nodes are not duplicated. If `AuxiliaryPhysicalGroup' is given (> 0), its elements are considered in addition to those in `PhysicalGroup' for the logic that groups the elements into the positive and negative side of the crack. However, the nodes in `AuxiliaryPhysicalGroup' are not duplicated (unless they are also in `PhysicalGroup'). This can be useful to treat corner cases in non-trivial geometries. For 1D cracks, `NormalX', `NormalY' and `NormalZ' provide the reference normal of the surface in which the crack is supposed to be embedded. If `NewPhysicalGroup' is positive, use it as the tag of the newly created curve or surface; otherwise use `PhysicalGroup'.
 Numeric options:
 @table @code
 @item Dimension
@@ -120,6 +120,8 @@ Default value: @code{1}
 Default value: @code{1}
 @item OpenBoundaryPhysicalGroup
 Default value: @code{0}
+@item AuxiliaryPhysicalGroup
+Default value: @code{0}
 @item NormalX
 Default value: @code{0}
 @item NormalY
@@ -127,6 +129,8 @@ Default value: @code{0}
 @item NormalZ
 Default value: @code{1}
 @item NewPhysicalGroup
+Default value: @code{0}
+@item DebugView
 Default value: @code{0}
 @end table
 

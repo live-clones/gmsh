@@ -537,4 +537,16 @@ struct MElementPtrHash {
   size_t operator()(const MElement *e) const { return e->getNum(); }
 };
 
+struct MElementPtrLessThanVertices {
+  bool operator()(MElement *e1, MElement *e2) const
+  {
+    std::vector<MVertex *> v1, v2;
+    e1->getVertices(v1);
+    e2->getVertices(v2);
+    std::sort(v1.begin(), v1.end());
+    std::sort(v2.begin(), v2.end());
+    return v1 < v2;
+  }
+};
+
 #endif

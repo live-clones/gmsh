@@ -209,7 +209,7 @@ struct doubleXstring{
 %token tRotate tTranslate tSymmetry tDilate tExtrude tLevelset tAffine
 %token tBooleanUnion tBooleanIntersection tBooleanDifference tBooleanSection
 %token tBooleanFragments tThickSolid
-%token tRecombine tSmoother tSplit tDelete tCoherence
+%token tRecombine tSmoother tSplit tDelete tCoherence tHealShapes
 %token tIntersect tMeshAlgorithm tReverseMesh tMeshSize tMeshSizeFromBoundary
 %token tLayers tScaleLast tHole tAlias tAliasWithOptions tCopyOptions
 %token tQuadTriAddVerts tQuadTriNoNewVerts
@@ -5242,6 +5242,22 @@ Coherence :
         GModel::current()->getGEOInternals()->mergeVertices(tags);
       List_Delete($4);
     }
+  | tHealShapes tEND
+    {
+      if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()) {
+        std::vector<std::pair<int, int> > in, out;
+        GModel::current()->getOCCInternals()->healShapes
+          (in, out, CTX::instance()->geom.tolerance,
+           CTX::instance()->geom.occFixDegenerated,
+           CTX::instance()->geom.occFixSmallEdges,
+           CTX::instance()->geom.occFixSmallFaces,
+           CTX::instance()->geom.occSewFaces,
+           CTX::instance()->geom.occMakeSolids);
+      }
+      else {
+        yymsg(0, "HealShapes only available with OpenCASCADE geometry kernel");
+      }
+    }
 ;
 
 //  H O M O L O G Y
@@ -5984,6 +6000,23 @@ FExpr_Multi :
       }
       else{
         yymsg(0, "MatrixOfInertia only available with OpenCASCADE geometry kernel");
+      }
+    }
+   | tColor GeoEntity123 '{' FExpr '}'
+    {
+      $$ = List_Create(3, 1, sizeof(double));
+      double r = 0., g = 0., b = 0., a = 0.;
+      GEntity *ge = GModel::current()->getEntityByTag($2, (int)$4);
+      if(ge){
+        unsigned int value = ge->getColor();
+        r = CTX::instance()->unpackRed(value);
+        g = CTX::instance()->unpackGreen(value);
+        b = CTX::instance()->unpackBlue(value);
+        a = CTX::instance()->unpackAlpha(value);
+        List_Add($$, &r);
+        List_Add($$, &g);
+        List_Add($$, &b);
+        List_Add($$, &a);
       }
     }
   | Transform
@@ -7265,6 +7298,9 @@ void getAllElementaryTags(int dim, List_T *out)
 
 void getAllPhysicalTags(int dim, List_T *out)
 {
+  if(GModel::current()->getOCCInternals() &&
+     GModel::current()->getOCCInternals()->getChanged())
+    GModel::current()->getOCCInternals()->synchronize(GModel::current());
   if(GModel::current()->getGEOInternals()->getChanged())
     GModel::current()->getGEOInternals()->synchronize(GModel::current());
 

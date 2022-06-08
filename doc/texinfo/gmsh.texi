@@ -2549,6 +2549,13 @@ transformation, unless @code{Geometry.AutoCoherence} is set to zero
 operation on all entities, with the @code{Delete} operator applied to
 all operands.
 
+@item HealShapes;
+Apply the shape healing procedure(s), according to
+@code{Geometry.OCCFixDegenerated}, @code{Geometry.OCCFixSmallEdges},
+@code{Geometry.OCCFixSmallFaces}, @code{Geometry.OCCSewFaces},
+@code{Geometry.OCCMakeSolids}. Only available with the OpenCASCADE
+geometry kernel.
+
 @item < Recursive > Delete @{ <Physical> Point | Curve | Surface | Volume @{ @var{expression-list-or-all} @}; @dots{} @}
 Delete all elementary entities whose tags are given in
 @var{expression-list-or-all}. If an entity is linked to another entity
@@ -2577,6 +2584,18 @@ Show the entities listed in @var{expression-list-or-all}.
 
 @item Show @{ : @}
 Show all entities.
+
+@item Sphere | PolarSphere ( @var{expression} ) = @{@var{expression}, @var{expression}@};
+Change the current (surface) geometry used by the built-in geometry kernel to a (polar) sphere, defined by the two point tags specified on the right hand side. The @var{expression} between parentheses on the left hand side specifies a new unique tag for this geometry.
+
+@item Parametric Surface ( @var{expression} ) = "@var{string}" "@var{string}" "@var{string}";
+Change the current (surface) geometry used by the built-in geometry kernel to a parametric surface defined by the three strings expression evaluating to the x, y and z coordinates. The @var{expression} between parentheses on the left hand side specifies a new unique tag for this geometry.
+
+@item Coordinates Surface @var{expression};
+Change the current (surface) geometry used by the built-in geometry kernel to the geometry identified by the given @var{expression}.
+
+@item Euclidian Coordinates ;
+Restore the default planar geometry for the built-in geometry kernel.
 
 @end ftable
 

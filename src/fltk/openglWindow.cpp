@@ -405,7 +405,7 @@ int openglWindow::handle(int event)
       else if(edges.size() &&
               CTX::instance()->geom.doubleClickedCurveCommand.size()) {
         CTX::instance()->geom.doubleClickedEntityTag = edges[0]->tag();
-        if(CTX::instance()->geom.doubleClickedPointCommand == "ONELAB")
+        if(CTX::instance()->geom.doubleClickedCurveCommand == "ONELAB")
           FlGui::instance()->onelabContext->show(1, edges[0]->tag());
         else
           ParseString(CTX::instance()->geom.doubleClickedCurveCommand, true);
@@ -413,7 +413,7 @@ int openglWindow::handle(int event)
       else if(faces.size() &&
               CTX::instance()->geom.doubleClickedSurfaceCommand.size()) {
         CTX::instance()->geom.doubleClickedEntityTag = faces[0]->tag();
-        if(CTX::instance()->geom.doubleClickedPointCommand == "ONELAB")
+        if(CTX::instance()->geom.doubleClickedSurfaceCommand == "ONELAB")
           FlGui::instance()->onelabContext->show(2, faces[0]->tag());
         else
           ParseString(CTX::instance()->geom.doubleClickedSurfaceCommand, true);
@@ -421,7 +421,7 @@ int openglWindow::handle(int event)
       else if(regions.size() &&
               CTX::instance()->geom.doubleClickedVolumeCommand.size()) {
         CTX::instance()->geom.doubleClickedEntityTag = regions[0]->tag();
-        if(CTX::instance()->geom.doubleClickedPointCommand == "ONELAB")
+        if(CTX::instance()->geom.doubleClickedVolumeCommand == "ONELAB")
           FlGui::instance()->onelabContext->show(3, regions[0]->tag());
         else
           ParseString(CTX::instance()->geom.doubleClickedVolumeCommand, true);

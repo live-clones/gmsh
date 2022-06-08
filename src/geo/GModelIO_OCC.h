@@ -203,11 +203,15 @@ public:
   bool addLine(int &tag, const std::vector<int> &pointTags);
   bool addCircleArc(int &tag, int startTag, int centerTag, int endTag);
   bool addCircle(int &tag, double x, double y, double z, double r,
-                 double angle1, double angle2);
+                 double angle1, double angle2,
+                 const std::vector<double> &N = std::vector<double>(),
+                 const std::vector<double> &V = std::vector<double>());
   bool addEllipseArc(int &tag, int startTag, int centerTag, int majorTag,
                      int endTag);
   bool addEllipse(int &tag, double x, double y, double z, double r1, double r2,
-                  double angle1, double angle2);
+                  double angle1, double angle2,
+                  const std::vector<double> &N = std::vector<double>(),
+                  const std::vector<double> &V = std::vector<double>());
   bool addSpline(int &tag, const std::vector<int> &pointTags);
   bool addBezier(int &tag, const std::vector<int> &pointTags);
   bool addBSpline(int &tag, const std::vector<int> &pointTags,
@@ -219,7 +223,9 @@ public:
   bool addCurveLoop(int &tag, const std::vector<int> &curveTags);
   bool addRectangle(int &tag, double x, double y, double z, double dx,
                     double dy, double roundedRadius = 0.);
-  bool addDisk(int &tag, double xc, double yc, double zc, double rx, double ry);
+  bool addDisk(int &tag, double xc, double yc, double zc, double rx, double ry,
+               const std::vector<double> &N = std::vector<double>(),
+               const std::vector<double> &V = std::vector<double>());
   bool addPlaneSurface(int &tag, const std::vector<int> &wireTags);
   bool addSurfaceFilling(
     int &tag, int wireTag,
@@ -260,9 +266,11 @@ public:
   bool addCone(int &tag, double x, double y, double z, double dx, double dy,
                double dz, double r1, double r2, double angle);
   bool addWedge(int &tag, double x, double y, double z, double dx, double dy,
-                double dz, double ltx);
+                double dz, double ltx,
+                const std::vector<double> &N = std::vector<double>());
   bool addTorus(int &tag, double x, double y, double z, double r1, double r2,
-                double angle);
+                double angle,
+                const std::vector<double> &N = std::vector<double>());
 
   // thrusections and thick solids (can create multiple entities)
   bool addThruSections(int tag, const std::vector<int> &wireTags,
@@ -452,8 +460,6 @@ public:
                     double angle, std::vector<SPoint3> &vertices,
                     std::vector<SVector3> &normals,
                     std::vector<int> &triangles);
-  void fixSTLBounds(double &xmin, double &ymin, double &zmin, double &xmax,
-                    double &ymax, double &zmax);
 };
 
 #else
@@ -491,7 +497,9 @@ public:
     return _error("add circle arc");
   }
   bool addCircle(int &tag, double x, double y, double z, double r,
-                 double angle1, double angle2)
+                 double angle1, double angle2,
+                 const std::vector<double> &N = std::vector<double>(),
+                 const std::vector<double> &V = std::vector<double>())
   {
     return _error("add circle");
   }
@@ -501,7 +509,9 @@ public:
     return _error("add ellipse arc");
   }
   bool addEllipse(int &tag, double x, double y, double z, double r1, double r2,
-                  double angle1, double angle2)
+                  double angle1, double angle2,
+                  const std::vector<double> &N = std::vector<double>(),
+                  const std::vector<double> &V = std::vector<double>())
   {
     return _error("add ellipse");
   }
@@ -534,7 +544,9 @@ public:
   {
     return _error("add rectangle");
   }
-  bool addDisk(int &tag, double xc, double yc, double zc, double rx, double ry)
+  bool addDisk(int &tag, double xc, double yc, double zc, double rx, double ry,
+               const std::vector<double> &N = std::vector<double>(),
+               const std::vector<double> &V = std::vector<double>())
   {
     return _error("add disk");
   }
@@ -617,13 +629,14 @@ public:
     return _error("add cone");
   }
   bool addWedge(int &tag, double x, double y, double z, double dx, double dy,
-                double dz, double ltx)
-
+                double dz, double ltx,
+                const std::vector<double> &N = std::vector<double>())
   {
     return _error("add wedge");
   }
   bool addTorus(int &tag, double x, double y, double z, double r1, double r2,
-                double angle)
+                double angle,
+                const std::vector<double> &N = std::vector<double>())
   {
     return _error("add torus");
   }

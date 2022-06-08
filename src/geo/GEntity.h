@@ -384,6 +384,8 @@ public:
   virtual void addElement(int type, MElement *e) {}
   // remove an element
   virtual void removeElement(int type, MElement *e) {}
+  // remove all elements of a given type
+  virtual void removeElements(int type) {}
 
   // relocate mesh vertices using their parametric coordinates
   virtual void relocateMeshVertices() {}

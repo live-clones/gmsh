@@ -490,23 +490,6 @@ static void copyMesh(GFace *source, GFace *target)
   }
 }
 
-void fourthPoint(double *p1, double *p2, double *p3, double *p4)
-{
-  double c[3];
-  circumCenterXYZ(p1, p2, p3, c);
-  double vx[3] = {p2[0] - p1[0], p2[1] - p1[1], p2[2] - p1[2]};
-  double vy[3] = {p3[0] - p1[0], p3[1] - p1[1], p3[2] - p1[2]};
-  double vz[3];
-  prodve(vx, vy, vz);
-  norme(vz);
-  double R =
-    sqrt((p1[0] - c[0]) * (p1[0] - c[0]) + (p1[1] - c[1]) * (p1[1] - c[1]) +
-         (p1[2] - c[2]) * (p1[2] - c[2]));
-  p4[0] = c[0] + R * vz[0];
-  p4[1] = c[1] + R * vz[1];
-  p4[2] = c[2] + R * vz[2];
-}
-
 static void remeshUnrecoveredEdges(
   std::multimap<MVertex *, BDS_Point *> &recoverMultiMapInv,
   std::set<EdgeToRecover> &edgesNotRecovered, bool all)
@@ -825,6 +808,8 @@ static void addOrRemove(MVertex *v1, MVertex *v2,
   }
 }
 
+static bool meshGenerator(GFace *, int, bool, int, bool, std::vector<GEdge *> *);
+
 static void modifyInitialMeshForBoundaryLayers(
   GFace *gf, std::vector<MQuadrangle *> &blQuads,
   std::vector<MTriangle *> &blTris, std::set<MVertex *> &verts, bool debug)
@@ -1018,7 +1003,7 @@ static void modifyInitialMeshForBoundaryLayers(
 
   deMeshGFace kil_;
   kil_(gf);
-  meshGenerator(gf, 0, 0, true, false, &hop);
+  meshGenerator(gf, 0, false, 99, false, &hop);
 }
 
 static bool improved_translate(GFace *gf, MVertex *vertex, SVector3 &v1,
@@ -1127,7 +1112,7 @@ BDS2GMSH(BDS_Mesh *m, GFace *gf,
   }
 }
 
-static void _deleteUnusedVertices(GFace *gf)
+static void deleteUnusedVertices(GFace *gf)
 {
   std::set<MVertex *, MVertexPtrLessThan> allverts;
   for(std::size_t i = 0; i < gf->triangles.size(); i++) {
@@ -1153,9 +1138,10 @@ static void _deleteUnusedVertices(GFace *gf)
 
 // Builds An initial triangular mesh that respects the boundaries of
 // the domain, including embedded points and surfaces
-bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
-                   bool onlyInitialMesh, bool debug,
-                   std::vector<GEdge *> *replacement_edges)
+static bool meshGenerator(GFace *gf, int RECUR_ITER,
+                          bool repairSelfIntersecting1dMesh,
+                          int onlyInitialMesh, bool debug,
+                          std::vector<GEdge *> *replacementEdges)
 {
   if(CTX::instance()->debugSurface > 0 &&
      gf->tag() != CTX::instance()->debugSurface) {
@@ -1169,7 +1155,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
   std::map<BDS_Point *, MVertex *, PointLessThan> recoverMap;
   std::map<MVertex *, BDS_Point *> recoverMapInv;
   std::vector<GEdge *> edges =
-    replacement_edges ? *replacement_edges : gf->edges();
+    replacementEdges ? *replacementEdges : gf->edges();
 
   FILE *fdeb = nullptr;
   if(debug && RECUR_ITER == 0) {
@@ -1346,8 +1332,8 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
     Msg::Debug("Meshing of the convex hull (%d points)", points.size());
     try {
       doc.MakeMeshWithPoints();
-    } catch(const char *err) {
-      Msg::Error("%s", err);
+    } catch(std::runtime_error &e) {
+      Msg::Error("%s", e.what());
     }
     Msg::Debug("Meshing of the convex hull (%d points) done", points.size());
 
@@ -1373,15 +1359,15 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
     // -- color triangles
 
     std::vector<GEdge *> temp;
-    if(replacement_edges) {
+    if(replacementEdges) {
       temp = gf->edges();
-      gf->set(*replacement_edges);
+      gf->set(*replacementEdges);
     }
     // recover and color so most of the code below can go away. Works also for
     // periodic faces
     PolyMesh *pm = GFaceInitialMesh(gf->tag(), 1);
 
-    if(replacement_edges) { gf->set(temp); }
+    if(replacementEdges) { gf->set(temp); }
 
     std::map<int, BDS_Point *> aaa;
     for(auto it = all_vertices.begin(); it != all_vertices.end(); it++) {
@@ -1501,7 +1487,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
     delete m;
     if(RECUR_ITER < 10) {
       return meshGenerator(gf, RECUR_ITER + 1, repairSelfIntersecting1dMesh,
-                           onlyInitialMesh, debug, replacement_edges);
+                           onlyInitialMesh, debug, replacementEdges);
     }
     return false;
   }
@@ -1768,8 +1754,8 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
   splitElementsInBoundaryLayerIfNeeded(gf);
 
   if((CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine) &&
-     (CTX::instance()->mesh.algoRecombine <= 1 ||
-      CTX::instance()->mesh.algoRecombine == 4)) {
+     (onlyInitialMesh != 99) && (CTX::instance()->mesh.algoRecombine <= 1 ||
+                                 CTX::instance()->mesh.algoRecombine == 4)) {
 
     if(CTX::instance()->mesh.algoRecombine == 4) {
       meshGFaceQuadrangulateBipartiteLabelling(gf->tag());
@@ -1792,7 +1778,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER, bool repairSelfIntersecting1dMesh,
   if(CTX::instance()->mesh.algo3d == ALGO_3D_RTREE) { directions_storage(gf); }
 
   // remove unused vertices, generated e.g. during background mesh
-  _deleteUnusedVertices(gf);
+  deleteUnusedVertices(gf);
 
   return true;
 }
@@ -2056,6 +2042,9 @@ static bool buildConsecutiveListOfVertices(
     recoverMapLocal[pp] = here;
     count++;
   }
+
+  Msg::Debug("Succeeded finding consecutive list of nodes on surface "
+             "%d, with tolerance %g", gf->tag(), tol);
 
   // we're all set!
   recoverMap.insert(recoverMapLocal.begin(), recoverMapLocal.end());
@@ -2381,8 +2370,8 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
 
     try {
       doc.MakeMeshWithPoints();
-    } catch(const char *err) {
-      Msg::Error("%s", err);
+    } catch(std::runtime_error &e) {
+      Msg::Error("%s", e.what());
     }
 
     for(int i = 0; i < doc.numTriangles; i++) {
@@ -2854,7 +2843,7 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
   gf->meshStatistics.status = GFace::DONE;
 
   // Remove unused vertices, generated e.g. during background mesh
-  _deleteUnusedVertices(gf);
+  deleteUnusedVertices(gf);
 
   return true;
 }
@@ -2986,8 +2975,9 @@ void meshGFace::operator()(GFace *gf, bool print)
   }
   else {
     meshGenerator(gf, 0, repairSelfIntersecting1dMesh,
-                  gf->getMeshingAlgo() == ALGO_2D_INITIAL_ONLY,
-                  debugSurface >= 0 || debugSurface == -100);
+                  (gf->getMeshingAlgo() == ALGO_2D_INITIAL_ONLY) ? 1 : 0,
+                  (debugSurface >= 0 || debugSurface == -100),
+                  NULL);
   }
 
   Msg::Debug("Type %d %d triangles generated, %d internal nodes",

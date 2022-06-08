@@ -114,27 +114,27 @@ int GModel::writeINP(const std::string &name, bool saveAll,
     // elements: is there this concept in Abaqus?) if saveGroupsOfElements is
     // positive; if saveGroupsOfElements is negative, only save groups of
     // dimension dim if the (dim+1)^th least significant digit of
-    // -saveGroupsOfElements is non-zero (for example: -100 will only save
-    // surfaces, while -1010 will save volumes and curves)
+    // -saveGroupsOfElements is 1 (for example: -100 will only save surfaces,
+    // while -1010 will save volumes and curves)
     for(int dim = 1; dim <= 3; dim++) {
-      if(saveGroupsOfElements < 0 &&
-         !((-saveGroupsOfElements / (int)std::pow(10, dim)) % 10)) {
-        continue;
-      }
-      for(auto it = groups[dim].begin(); it != groups[dim].end(); it++) {
-        std::vector<GEntity *> &ent = it->second;
-        fprintf(fp, "*ELSET,ELSET=%s\n",
-                physicalName(this, dim, it->first).c_str());
-        int n = 0;
-        for(std::size_t i = 0; i < ent.size(); i++) {
-          for(std::size_t j = 0; j < ent[i]->getNumMeshElements(); j++) {
-            MElement *e = ent[i]->getMeshElement(j);
-            if(n && !(n % 10)) fprintf(fp, "\n");
-            fprintf(fp, "%lu, ", e->getNum());
-            n++;
+      if(saveGroupsOfElements > 0 ||
+         (saveGroupsOfElements < 0 &&
+          ((-saveGroupsOfElements / (int)std::pow(10, dim)) % 10) == 1)) {
+        for(auto it = groups[dim].begin(); it != groups[dim].end(); it++) {
+          std::vector<GEntity *> &ent = it->second;
+          fprintf(fp, "*ELSET,ELSET=%s\n",
+                  physicalName(this, dim, it->first).c_str());
+          int n = 0;
+          for(std::size_t i = 0; i < ent.size(); i++) {
+            for(std::size_t j = 0; j < ent[i]->getNumMeshElements(); j++) {
+              MElement *e = ent[i]->getMeshElement(j);
+              if(n && !(n % 10)) fprintf(fp, "\n");
+              fprintf(fp, "%lu, ", e->getNum());
+              n++;
+            }
           }
+          fprintf(fp, "\n");
         }
-        fprintf(fp, "\n");
       }
     }
   }

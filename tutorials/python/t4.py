@@ -156,8 +156,8 @@ gmsh.view.addListDataString(v, [150, -7], ["file://../t4_image.png@20x0"])
 
 # Views and geometrical entities can be made to respond to double-click
 # events, here to print some messages to the console:
-gmsh.option.setString("View[0].DoubleClickedCommand",
-                      "Printf('View[0] has been double-clicked!');")
+gmsh.view.option.setString(v, "DoubleClickedCommand",
+                           "Printf('View[0] has been double-clicked!');")
 gmsh.option.setString(
     "Geometry.DoubleClickedLineCommand",
     "Printf('Curve %g has been double-clicked!', "

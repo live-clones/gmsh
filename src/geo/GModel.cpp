@@ -1071,7 +1071,9 @@ int GModel::mesh(int dimension)
     renumberMeshVertices();
     renumberMeshElements();
   }
-  computeHomology(); // must be done after renumbering
+  // must be done after renumbering:
+  std::vector<std::pair<int, int> > newPhysicals;
+  computeHomology(newPhysicals);
   CTX::instance()->mesh.changed = ENT_ALL;
   return true;
 #else
@@ -2777,6 +2779,38 @@ int GModel::removeDuplicateMeshVertices(double tolerance,
   return num;
 }
 
+int GModel::removeDuplicateMeshElements(const std::vector<GEntity*> &ents)
+{
+  Msg::StatusBar(true, "Removing duplicate mesh elements...");
+
+  // this removes elements that have the same nodes (in the same entity)
+  std::vector<GEntity*> entities(ents);
+  if(entities.empty()) getEntities(entities);
+  int num = 0;
+  for(auto &e : entities) {
+    std::vector<int> types;
+    e->getElementTypes(types);
+    for(auto t : types) {
+      std::set<MElement*, MElementPtrLessThanVertices> uniq;
+      for(std::size_t i = 0; i < e->getNumMeshElementsByType(t); i++) {
+        MElement *ele = e->getMeshElementByType(t, i);
+        uniq.insert(ele);
+      }
+      int diff = e->getNumMeshElementsByType(t) - uniq.size();
+      if(diff > 0) {
+        num += diff;
+        Msg::Info("Removed %d duplicate element%s in entity %d of dimension %d",
+                  diff, diff > 1 ? "s" : "", e->tag(), e->dim());
+        e->removeElements(t);
+        for(auto ele : uniq) e->addElement(t, ele);
+      }
+    }
+  }
+
+  Msg::StatusBar(true, "Done removing duplicate mesh elements");
+  return num;
+}
+
 void GModel::alignPeriodicBoundaries()
 {
   // Is this still necessary/useful?
@@ -3445,8 +3479,10 @@ void GModel::clearHomologyRequests()
   _homologyRequests.clear();
 }
 
-void GModel::computeHomology()
+void GModel::computeHomology(std::vector<std::pair<int, int> > &newPhysicals)
 {
+  newPhysicals.clear();
+
   if(_homologyRequests.empty()) return;
 
 #if defined(HAVE_KBIPACK)
@@ -3508,14 +3544,16 @@ void GModel::computeHomology()
         homology->findHomologyBasis(dim);
         Msg::Info("Homology space basis chains to save: %s", dims.c_str());
         for(std::size_t i = 0; i < dim.size(); i++) {
-          homology->addChainsToModel(dim.at(i));
+          std::vector<int> p = homology->addChainsToModel(dim.at(i));
+          for(auto t : p) newPhysicals.push_back({dim.at(i), t});
         }
       }
       else if(type == "Cohomology" && !homology->isCohomologyComputed(dim)) {
         homology->findCohomologyBasis(dim);
         Msg::Info("Cohomology space basis cochains to save: %s", dims.c_str());
         for(std::size_t i = 0; i < dim.size(); i++) {
-          homology->addCochainsToModel(dim.at(i));
+          std::vector<int> p = homology->addCochainsToModel(dim.at(i));
+          for(auto t : p) newPhysicals.push_back({dim.at(i), t});
         }
       }
     }

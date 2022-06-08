@@ -239,7 +239,7 @@ int ParseFile(const std::string &fileName, bool close, bool errorIfMissing)
 #endif
 }
 
-static bool doSystemUncompress(const std::string &fileName,
+static bool DoSystemUncompress(const std::string &fileName,
                                const std::string &noExt)
 {
   std::ostringstream sstream;
@@ -275,7 +275,7 @@ void ParseString(const std::string &str, bool inCurrentModelDir)
 }
 
 #if defined(HAVE_ONELAB)
-static std::string getSolverForExtension(const std::string &ext)
+static std::string GetSolverForExtension(const std::string &ext)
 {
   for(int i = 0; i < NUM_SOLVERS; i++) {
     if(opt_solver_extension(i, GMSH_GET, "") == ext)
@@ -284,7 +284,7 @@ static std::string getSolverForExtension(const std::string &ext)
   return "";
 }
 
-static int defineSolver(const std::string &name)
+static int DefineSolver(const std::string &name)
 {
   int i;
   for(i = 0; i < NUM_SOLVERS; i++) {
@@ -324,7 +324,7 @@ int MergeFile(const std::string &fileName, bool errorIfMissing,
   std::string noExt = split[0] + split[1], ext = split[2];
 
   if(ext == ".gz") {
-    if(doSystemUncompress(fileName, noExt)) return MergeFile(noExt, false);
+    if(DoSystemUncompress(fileName, noExt)) return MergeFile(noExt, false);
   }
 
   CTX::instance()->geom.draw = 0; // don't try to draw the model while reading
@@ -335,9 +335,9 @@ int MergeFile(const std::string &fileName, bool errorIfMissing,
   int status = 0;
 
 #if defined(HAVE_ONELAB)
-  std::string solver = getSolverForExtension(ext);
+  std::string solver = GetSolverForExtension(ext);
   if(solver.size()) {
-    int num = defineSolver(solver);
+    int num = DefineSolver(solver);
     Msg::SetOnelabString(solver + "/Model name", fileName, true, true, false, 3,
                          "file");
     if(GModel::current()->getName() == "" ||
@@ -352,7 +352,7 @@ int MergeFile(const std::string &fileName, bool errorIfMissing,
   }
   else if(ext == ".py" || ext == ".PY" || ext == ".m" || ext == ".M" ||
           ext == ".exe" || ext == ".EXE") {
-    int num = defineSolver(split[1]);
+    int num = DefineSolver(split[1]);
     opt_solver_executable(num, GMSH_SET, fileName);
     CTX::instance()->launchSolverAtStartup = num;
     CTX::instance()->geom.draw = 1;

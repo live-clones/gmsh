@@ -15,6 +15,7 @@
 #include <string>
 #include <cstdlib>
 #include <limits>
+#include <stdexcept>
 
 #include "GmshDefines.h"
 #include "OS.h"
@@ -2847,8 +2848,10 @@ int GModel::_writePartitionedMSH4(const std::string &baseName, double version,
 {
   int nthreads = CTX::instance()->numThreads;
   if(!nthreads) nthreads = Msg::GetMaxThreads();
+  bool exceptions = false;
 #pragma omp parallel for num_threads(nthreads)
   for(std::size_t part = 1; part <= getNumPartitions(); part++) {
+    if(exceptions) continue;
     std::ostringstream sstream;
     sstream << baseName << "_" << part << ".msh";
     if(getNumPartitions() > 100) {
@@ -2860,9 +2863,16 @@ int GModel::_writePartitionedMSH4(const std::string &baseName, double version,
     else {
       Msg::Info("Writing partition %d in file '%s'", part, sstream.str().c_str());
     }
-    _writeMSH4(sstream.str(), version, binary, saveAll, saveParametric,
-               scalingFactor, false, part);
+    try { // OpenMP forbids leaving block via exception
+      _writeMSH4(sstream.str(), version, binary, saveAll, saveParametric,
+                 scalingFactor, false, part);
+    }
+    catch(...) {
+      exceptions = true;
+    }
   }
+
+  if(exceptions) throw std::runtime_error(Msg::GetLastError());
 
   return 1;
 }

@@ -422,10 +422,32 @@ void GEdge::writePY(FILE *fp)
   }
 }
 
+bool GEdge::storeSTLAsMesh()
+{
+  // as the STL might be non-conforming, we make no effort to have a conformal
+  // mesh - nodes will not be classified on boundaries, and not shared with
+  // adjacent entities
+  if(stl_vertices_xyz.size()) {
+    for(std::size_t i = 0; i < stl_vertices_xyz.size(); i++) {
+      SPoint3 &p(stl_vertices_xyz[i]);
+      mesh_vertices.push_back(new MVertex(p.x(), p.y(), p.z(), this));
+    }
+  }
+  else {
+    return false;
+  }
+  for(std::size_t i = 0; i < mesh_vertices.size() - 1; i++) {
+    lines.push_back(new MLine(mesh_vertices[i], mesh_vertices[i + 1]));
+  }
+  return true;
+}
+
 bool GEdge::containsPoint(const SPoint3 &pt) const
 {
   if(geomType() == BoundaryLayerCurve) return false;
-  return containsParam(parFromPoint(pt));
+  double t;
+  if(!XYZToU(pt.x(), pt.y(), pt.z(), t, 1, false)) return false;
+  return containsParam(t);
 }
 
 bool GEdge::containsParam(double pt) const
@@ -745,7 +767,8 @@ void GEdge::addElement(int type, MElement *e)
 {
   switch(type) {
   case TYPE_LIN: addLine(reinterpret_cast<MLine *>(e)); break;
-  default: Msg::Error("Trying to add unsupported element in curve %d", tag());
+  default:
+    Msg::Error("Trying to add unsupported element in curve %d", tag());
   }
 }
 
@@ -759,6 +782,15 @@ void GEdge::removeElement(int type, MElement *e)
   } break;
   default:
     Msg::Error("Trying to remove unsupported element in curve %d", tag());
+  }
+}
+
+void GEdge::removeElements(int type)
+{
+  switch(type) {
+  case TYPE_LIN: lines.clear(); break;
+  default:
+    Msg::Error("Trying to remove unsupported elements in curve %d", tag());
   }
 }
 

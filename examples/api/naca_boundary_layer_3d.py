@@ -6,8 +6,11 @@ import numpy as np
 gmsh.initialize(sys.argv)
 gmsh.model.add("NACA 0012 with a round tip")
 
-# extrusion length of the profle in the z-direction
-z = 0.5
+# incidence angle
+incidence = -math.pi / 18.;
+
+# extrusion length of the profile in the z-direction
+z = 0.63
 
 # base mesh sizes
 fact = 1;
@@ -83,6 +86,10 @@ gmsh.model.occ.revolve(rev[0::4], 0,0,z, 1,0,0, math.pi/2)
 # glue surfaces, set mesh size and sync to model
 gmsh.model.occ.fragment(gmsh.model.occ.getEntities(2), [])
 gmsh.model.occ.mesh.setSize(gmsh.model.occ.getEntities(0), lc1)
+
+# rotate the profile
+gmsh.model.occ.rotate(gmsh.model.occ.getEntities(2), 0.25, 0, 0, 0, 0, 1, incidence)
+
 gmsh.model.occ.synchronize()
 
 # create a boundary layer for all the surfaces through extrusion using the
@@ -91,10 +98,12 @@ gmsh.model.occ.synchronize()
 # mesh generation; in 2D more general boundary layer meshing constraints are
 # also available through the BoundaryLayer Field - see
 # 'naca_boundary_layer_2d.py'.
-n = np.linspace(1, 1, 7)
-d = np.logspace(-4, -2, 7)
+N = 10 # number of layers
+r = 2 # ratio
+d = [1.7e-5] # thickness of first layer
+for i in range(1, N): d.append(d[-1] + d[0] * r**i)
 extbl = gmsh.model.geo.extrudeBoundaryLayer(gmsh.model.getEntities(2),
-                                            n, d, True)
+                                            [1] * N, d, True)
 
 # get "top" surfaces of the boundary layer
 top = []

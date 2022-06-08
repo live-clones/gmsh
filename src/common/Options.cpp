@@ -1430,6 +1430,12 @@ std::string opt_geometry_occ_target_unit(OPT_ARGS_STR)
   return CTX::instance()->geom.occTargetUnit;
 }
 
+std::string opt_geometry_pipe_default_trihedron(OPT_ARGS_STR)
+{
+  if(action & GMSH_SET) CTX::instance()->geom.pipeDefaultTrihedron = val;
+  return CTX::instance()->geom.pipeDefaultTrihedron;
+}
+
 std::string opt_solver_socket_name(OPT_ARGS_STR)
 {
   if(action & GMSH_SET) CTX::instance()->solver.socketName = val;
@@ -4565,6 +4571,12 @@ double opt_geometry_occ_auto_embed(OPT_ARGS_NUM)
   return CTX::instance()->geom.occAutoEmbed;
 }
 
+double opt_geometry_occ_safe_unbind(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->geom.occSafeUnbind = val ? 1 : 0;
+  return CTX::instance()->geom.occSafeUnbind;
+}
+
 double opt_geometry_occ_auto_fix(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->geom.occAutoFix = val ? 1 : 0;
@@ -6253,6 +6265,12 @@ double opt_mesh_ho_max_in_angle(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->mesh.hoMaxInnerAngle = val;
   return CTX::instance()->mesh.hoMaxInnerAngle;
+}
+
+double opt_mesh_ho_fix_bnd_nodes(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->mesh.hoFixBndNodes = val;
+  return CTX::instance()->mesh.hoFixBndNodes;
 }
 
 double opt_mesh_second_order_linear(OPT_ARGS_NUM)

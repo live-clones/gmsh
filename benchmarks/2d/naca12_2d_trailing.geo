@@ -1,5 +1,5 @@
 lc = .033 ;
-lc2 = 2.2 ;
+lc2 = 0.3 ;
 lc3 = .03 ;
 Point(1) =  {1.000000e+00,0.000000e+00,0.000000e+00,lc3};
 Point(2) =  {9.997533e-01,0.000000e+00,-3.498543e-05,lc};
@@ -238,3 +238,6 @@ Field[2].FanPointsList = {1004};
 Field[2].Quads = 1;
 
 BoundaryLayer Field = 2;
+
+Mesh.Algorithm = 8; // del for quads
+Mesh.RecombineAll = 1;

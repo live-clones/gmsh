@@ -75,14 +75,11 @@ gmsh.view.addListDataString(t1, [0.5, 1.5, 0.],
                             ["Align", "Center", "Font", "Helvetica"])
 
 # The various attributes of the view can be queried and changed using the option
-# interface. Beware that the option interface uses view indices instead of view
-# tags; so to change the current time step and the intervals type, and to
-# retrieve the total number of steps, one would do:
-v1 = "View[" + str(gmsh.view.getIndex(t1)) + "]"
-gmsh.option.setNumber(v1 + ".TimeStep", 5)
-gmsh.option.setNumber(v1 + ".IntervalsType", 3)
-ns = gmsh.option.getNumber(v1 + ".NbTimeStep")
-print(v1 + " with tag " + str(t1) + " has " + str(ns) + " time steps")
+# interface:
+gmsh.view.option.setNumber(t1, "TimeStep", 5)
+gmsh.view.option.setNumber(t1, "IntervalsType", 3)
+ns = gmsh.view.option.getNumber(t1, "NbTimeStep")
+print("View " + str(t1) + " has " + str(ns) + " time steps")
 
 # Views can be queried and modified in various ways using plugins (see `t9.py'),
 # or probed directly using `gmsh.view.probe()' - here at point (0.9, 0.1, 0):
@@ -140,10 +137,9 @@ gmsh.view.addListData(t2, "SQ", 1, quad)
 # visualization, set a visualization error threshold and a maximum subdivision
 # level (Gmsh does automatic mesh refinement to visualize the high-order field
 # with the requested accuracy):
-v2 = "View[" + str(gmsh.view.getIndex(t2)) + "]"
-gmsh.option.setNumber(v2 + ".AdaptVisualizationGrid", 1)
-gmsh.option.setNumber(v2 + ".TargetError", 1e-2)
-gmsh.option.setNumber(v2 + ".MaxRecursionLevel", 5)
+gmsh.view.option.setNumber(t2, "AdaptVisualizationGrid", 1)
+gmsh.view.option.setNumber(t2, "TargetError", 1e-2)
+gmsh.view.option.setNumber(t2, "MaxRecursionLevel", 5)
 
 # Launch the GUI to see the results:
 if '-nopopup' not in sys.argv:
