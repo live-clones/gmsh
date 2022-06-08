@@ -1142,12 +1142,15 @@ static void addTensorElement(PView *p, int iEnt, int iEle, int numNodes,
       for(int i = 0; i < numNodes; i++) {
         double d0[3], d1[3], d2[3];
         double nrm = sqrt(val[i][0] * val[i][0] + val[i][1] * val[i][1] +
-                          val[i][2] * val[i][2]);
+                          val[i][2] * val[i][2] + val[i][3] * val[i][3] +
+			  val[i][4] * val[i][4] + val[i][5] * val[i][5]+
+			  val[i][6] * val[i][6] + val[i][7] * val[i][7]+
+			  val[i][8] * val[i][8]);
 
         for(int j = 0; j < 3; j++) {
-          d0[j] = opt->displacementFactor * val[i][j + 0 * 3] / nrm;
-          d1[j] = opt->displacementFactor * val[i][j + 1 * 3] / nrm;
-          d2[j] = opt->displacementFactor * val[i][j + 2 * 3] / nrm;
+          d0[j] = opt->displacementFactor * val[i][j + 0 * 3];
+          d1[j] = opt->displacementFactor * val[i][j + 1 * 3];
+          d2[j] = opt->displacementFactor * val[i][j + 2 * 3];
         }
         double x = xyz[i][0];
         double y = xyz[i][1];

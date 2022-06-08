@@ -1269,9 +1269,8 @@ static bool optimalPointFrontalB(GFace *gf, MTri3 *worst, int active_edge,
   return true;
 }
 
-#if 0
+#if 1
 #include "meshTriangulation.h"
-#include "meshIntrinsicTriangulation.h"
 #endif
 
 void bowyerWatsonFrontal(GFace *gf, std::map<MVertex *, MVertex *> *equivalence,
@@ -1348,11 +1347,29 @@ void bowyerWatsonFrontal(GFace *gf, std::map<MVertex *, MVertex *> *equivalence,
   transferDataStructure(gf, AllTris, DATA);
 
   splitElementsInBoundaryLayerIfNeeded(gf);
-#if 0
+#if 1
   PolyMesh *pm;
   GFace2PolyMesh(gf->tag(), &pm);
-  IntrinsicTriangulation T (pm);
-  T.test();  
+  std::map<PolyMesh::Vertex*,double> dist_exact;
+
+  // Choose a source  
+  PolyMesh::VertexOnFace _source;
+  _source.u = 0.33;
+  _source.v = 0.33;
+  _source.he = pm->vertices[rand() % (pm->vertices.size() -1)]->he;
+  pm->exactGeodesicDistance(_source,dist_exact);
+
+  for (int i=0;i<120;i++){    
+    PolyMesh::VertexOnFace _target;
+    _target.u = 0.33;
+    _target.v = 0.33;
+    _target.he = pm->vertices[rand() % (pm->vertices.size() -1)]->he;
+    if (_target.he !=_source.he){
+      PolyMesh::Path P = pm->backTrack (_source, _target, dist_exact );
+      P.print4debug(i);
+    }
+  }
+  
 #endif
   
 }

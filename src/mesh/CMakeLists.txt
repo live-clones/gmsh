@@ -23,7 +23,6 @@ set(SRC
   meshGRegionBoundaryLayer.cpp
   meshRelocateVertex.cpp
   meshTriangulation.cpp
-  meshIntrinsicTriangulation.cpp
   meshMetric.cpp
   BackgroundMesh.cpp BackgroundMeshTools.cpp
   qualityMeasures.cpp qualityMeasuresJacobian.cpp
@@ -40,6 +39,7 @@ set(SRC
   automaticMeshSizeField.cpp
   meshQuadQuasiStructured.cpp
   meshOctreeLibOL.cpp
+  meshPolyMesh.cpp
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h)

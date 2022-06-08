@@ -1,6 +1,4 @@
 #include "meshIntrinsicTriangulation.h"
-#include <set>
-#include "SPoint2.h"
 #include "Numeric.h"
 #include "robustPredicates.h"
 /*                ^ d2b
@@ -17,6 +15,7 @@
     
 */
 
+// FIXME should be more robust
 static int intersection_segments_(const SPoint2 &p1, const SPoint2 &p2,
 				  const SPoint2 &q1, const SPoint2 &q2, double x[2])
 {
@@ -30,30 +29,24 @@ static int intersection_segments_(const SPoint2 &p1, const SPoint2 &p2,
   return (x[0] >= 0.0 && x[0] <= 1. && x[1] >= 0.0 && x[1] <= 1.);
 }
 
-static bool intersectTwoCircles ( SPoint2 &pA,
-				  SPoint2 &pB,
-				  double ra, double rb,
-				  SPoint2 & p,
-				  SPoint2 * _end = nullptr){
-
-  // ** OK ** //
+bool intersectTwoCircles ( SPoint2 &pA,
+			   SPoint2 &pB,
+			   double ra, double rb,
+			   SPoint2 & p,
+			   SPoint2 & q){
   double xa = pA.x();
   double xb = pB.x();
   double ya = pA.y();
   double yb = pB.y();
 
+  // FIXME : should work
   if (fabs(xb-xa) < fabs(yb-ya)) {
     SPoint2 AA(pA.y(), pA.x());
     SPoint2 BB(pB.y(), pB.x());
-    SPoint2 PP;
-    if (_end){
-      SPoint2 EE(_end->y(), _end->x());
-      intersectTwoCircles(AA,BB,ra,rb,PP,&EE);
-    }
-    else{
-      intersectTwoCircles(AA,BB,ra,rb,PP,nullptr);
-    }
-    p = SPoint2(PP.y(),PP.x());
+    SPoint2 PP, QQ;
+    intersectTwoCircles(AA,BB,ra,rb,PP,QQ);
+    q = SPoint2(PP.y(),PP.x());
+    p = SPoint2(QQ.y(),QQ.x());
     return true;
   }
 
@@ -77,31 +70,13 @@ static bool intersectTwoCircles ( SPoint2 &pA,
   double xP = a - b * yP;
   double xQ = a - b * yQ;
 
-  //  double D2P = xP*xP + yP*yP;
-  //  double D2Q = xQ*xQ + yQ*yQ;
-  //  if (D2P < D2Q)p = SPoint2 (xP,yP);
-  //  else p = SPoint2 (xQ,yQ);
-  if (yP > 0 ) p = SPoint2 (xP,yP);
-  else p = SPoint2 (xQ,yQ);
-  return true;
-  
-  // ** OK ** //
-  //  printf("--> %g %g -- %g %g -- %g %g %g\n",xP,yP,xQ,yQ, delta, ra, rb);
-
-    //    printf("--> %g %g vs %g %g\n",ra,rb,pA.distance(SPoint2(xP,yP)),pB.distance(SPoint2(xP,yP)));
-    //    printf("--> %g %g vs %g %g\n",ra,rb,pA.distance(SPoint2(xQ,yQ)),pB.distance(SPoint2(xQ,yQ)));
-  if (_end){
-    if (_end->distance (SPoint2 (xQ,yQ)) < _end->distance (SPoint2 (xP,yP))) 
-      p = SPoint2 (xQ,yQ);
-    else
-      p = SPoint2 (xP,yP);
-  }
-  else{
-      p = SPoint2 (xQ,yQ);
-      printf("robustPredicates::orient2d (pA, pB, p) %g\n",robustPredicates::orient2d (pA, pB, p));
-      if (robustPredicates::orient2d (pA, pB, p) < 0)return true; 
-      p = SPoint2 (xP,yP);
-  }
+  p = SPoint2 (xP,yP);
+  q = SPoint2 (xQ,yQ);
+  //  printf("robustPredicates::orient2d (pA, pB, p) %g\n",robustPredicates::orient2d (pA, pB, p));
+  //  printf("robustPredicates::orient2d (pA, pB, q) %g\n",robustPredicates::orient2d (pA, pB, q));
+  if (robustPredicates::orient2d (pA, pB, p) < 0)return true; 
+  p = SPoint2 (xQ,yQ);
+  q = SPoint2 (xP,yP);
   return true;  
 }
 
@@ -110,8 +85,10 @@ void IntrinsicTriangulation::test(){
   printf("triangulation with %lu faces %lu half edges %lu vertices\n",
 	 extrinsic_->faces.size(),extrinsic_->hedges.size(),extrinsic_->vertices.size());
 
-  PolyMesh::Vertex *vert = extrinsic_->vertices[extrinsic_->vertices.size()/2];
-  continuousRienstra (vert, 0.0);
+  PolyMesh::Vertex *vert = extrinsic_->vertices[extrinsic_->vertices.size()-2];
+  IntrinsicTriangulation::DistanceField df;
+  continuousRienstra (vert, 0.0, df );
+  df.print("distanceField.pos");
   return;
   
   PolyMesh::HalfEdge *he = extrinsic_->hedges[extrinsic_->hedges.size()/2];
@@ -149,15 +126,17 @@ void IntrinsicTriangulation::Geodesic::print4debug (int id) {
 }
 
 
-int IntrinsicTriangulation::continuousRienstra (PolyMesh::Vertex *v, double Lmax){
+int IntrinsicTriangulation::continuousRienstra (PolyMesh::Vertex *v, double Lmax, IntrinsicTriangulation::DistanceField &df){
 
   std::set<IntrinsicTriangulation::Window> windows;
   PolyMesh::HalfEdge *he = v->he;
 
+  //  printf("point %d\n",v->data);
+  
   FILE *f = fopen ("rienstra.pos", "w");
   fprintf(f,"View \"\"{\n");
   fprintf(f,"SP(%g,%g,%g){1};\n",v->position.x(),v->position.y(),v->position.z());
-  fprintf(f,"SP(0,0,0){2};\n");
+  //  fprintf(f,"SP(0,0,0){2};\n");
   
   // initialize with as much windows as there are triangles around vertex v
   do {
@@ -166,23 +145,24 @@ int IntrinsicTriangulation::continuousRienstra (PolyMesh::Vertex *v, double Lmax
     SVector3 p_end = he->next->next->v->position;
     SVector3 ppp = he->v->position;
     w.he = he->next;
-    w.t1 = 0.65;
-    w.t2 = 0.75;
+    w.t1 = 0.00000;
+    w.t2 = 1.0;
     SVector3 p_w1 = p_start * (1.-w.t1) + p_end *w.t1;
     SVector3 p_w2 = p_start * (1.-w.t2) + p_end *w.t2;
-    fprintf(f,"SL(%g,%g,%g,%g,%g,%g){0,0};\n",p_w1.x(),p_w1.y(),p_w1.z(),p_w2.x(),p_w2.y(),p_w2.z());
-    fprintf(f,"SL(%g,%g,%g,%g,%g,%g){0,0};\n",p_w1.x(),p_w1.y(),p_w1.z(),v->position.x(),v->position.y(),v->position.z());
-    fprintf(f,"SL(%g,%g,%g,%g,%g,%g){0,0};\n",p_w2.x(),p_w2.y(),p_w2.z(),v->position.x(),v->position.y(),v->position.z());
     SVector3 a1 = ppp - p_w1;
     SVector3 a2 = ppp - p_w2;    
     w.d1 = a1.norm();
     w.d2 = a2.norm();
+    fprintf(f,"SL(%g,%g,%g,%g,%g,%g){%g,%g};\n",p_w1.x(),p_w1.y(),p_w1.z(),p_w2.x(),p_w2.y(),p_w2.z(),w.d1,w.d2);
+    //    fprintf(f,"SL(%g,%g,%g,%g,%g,%g){0,0};\n",p_w1.x(),p_w1.y(),p_w1.z(),v->position.x(),v->position.y(),v->position.z());
+    //    fprintf(f,"SL(%g,%g,%g,%g,%g,%g){0,0};\n",p_w2.x(),p_w2.y(),p_w2.z(),v->position.x(),v->position.y(),v->position.z());
     windows.insert(w);
+    df.addWindow(w);
     he = he->opposite;
     if(he == NULL) return -1;
     he = he->next;
     // TEST
-    break;
+    //    break;
   } while(he != v->he);
 
   int itx = 1;
@@ -191,6 +171,7 @@ int IntrinsicTriangulation::continuousRienstra (PolyMesh::Vertex *v, double Lmax
     std::set<IntrinsicTriangulation::Window>::iterator it = windows.begin();
     he = it->he->opposite;
     if (he){
+      //      printf("half edge %d %d opposite %d\n",he->v->data,he->next->v->data,he->next->next->v->data);
       SVector3 p_start = he->v->position;
       SVector3 p_end = he->next->v->position;
       SVector3 p_opposite = he->next->next->v->position;
@@ -198,11 +179,17 @@ int IntrinsicTriangulation::continuousRienstra (PolyMesh::Vertex *v, double Lmax
       double d2 = it->d1;
       double t1 = 1.-it->t2;
       double t2 = 1.-it->t1;
+      //      printf("================> half edge %d %d (%g %g) (%g %g)\n",he->v->data,he->next->v->data,t1,t2,d1,d2);
       SVector3 p_w1 = p_start * (1.-t1) + p_end *t1;
       SVector3 p_w2 = p_start * (1.-t2) + p_end *t2;
-      fprintf(f,"SL(%g,%g,%g,%g,%g,%g){1,1};\n",p_w1.x(),p_w1.y(),p_w1.z(),p_w2.x(),p_w2.y(),p_w2.z());
-      fprintf(f,"SL(%g,%g,%g,%g,%g,%g){1,1};\n",p_w1.x(),p_w1.y(),p_w1.z(),v->position.x(),v->position.y(),v->position.z());
-      fprintf(f,"SL(%g,%g,%g,%g,%g,%g){1,1};\n",p_w2.x(),p_w2.y(),p_w2.z(),v->position.x(),v->position.y(),v->position.z());
+      //      SVector3 xx1 = p_w1 - v->position;
+      //      SVector3 xx2 = p_w2 - v->position;
+      //      printf("%12.5E %12.5E and %12.5E %12.5E \n",d1,xx1.norm(),d2,xx2.norm());
+      //      if (itx <= 11112){
+      fprintf(f,"SL(%g,%g,%g,%g,%g,%g){%g,%g};\n",p_w1.x(),p_w1.y(),p_w1.z(),p_w2.x(),p_w2.y(),p_w2.z(),d1,d2);
+	//fprintf(f,"SL(%g,%g,%g,%g,%g,%g){1,1};\n",p_w1.x(),p_w1.y(),p_w1.z(),v->position.x(),v->position.y(),v->position.z());
+	//	fprintf(f,"SL(%g,%g,%g,%g,%g,%g){1,1};\n",p_w2.x(),p_w2.y(),p_w2.z(),v->position.x(),v->position.y(),v->position.z());
+      //      }
       //      break;
       SVector3 diff = p_w2 - p_w1;
       double d3b = diff.norm();
@@ -212,13 +199,13 @@ int IntrinsicTriangulation::continuousRienstra (PolyMesh::Vertex *v, double Lmax
       double d3c = diff.norm();
       double d3a = d3 - d3b - d3c;
       // DEBUG
-      diff = p_end-p_w2;
-      printf("%g %g -----------> %g vs %g\n",t1,t2,d3a,diff.norm());
+      //      diff = p_end-p_w2;
+      //      printf("%g %g -----------> %g vs %g\n",t1,t2,d3a,diff.norm());
       // DEBUG
       SPoint2 s (0,0) ;
       SPoint2 start (d1,0);
-      SPoint2 p1 ;
-      bool ok = intersectTwoCircles (s, start, d2, d3b, p1);
+      SPoint2 p1 , wrong;
+      bool ok = intersectTwoCircles (start, s, d3b, d2, p1, wrong);
       double dir[2] = {p1.x() - start.x(), p1.y() - start.y()};
       double norm = sqrt(dir[0]*dir[0]+dir[1]*dir[1]);
       SPoint2 p2 (p1.x() + d3a*dir[0]/norm, p1.y() + d3a*dir[1]/norm);
@@ -227,13 +214,36 @@ int IntrinsicTriangulation::continuousRienstra (PolyMesh::Vertex *v, double Lmax
       double d4 = he->next->l();
       double d5 = he->next->next->l();
       //      printf("D's : %g %g %g %g %g %g %g %g\n",d1,d2,d3,d3a,d3b,d3c,d4, d5);
-      ok = intersectTwoCircles (p3, p2, d5, d4, p4);      
+      ok = intersectTwoCircles (p3, p2, d5, d4, p4, wrong);      
       //      printf("p2 %g %g p3 %g %g p4 %g %g\n",p2.x(),p2.y(),p3.x(),p3.y(),p4.x(),p4.y());
-
-      //      fprintf(f,"ST(%g,%g,0,%g,%g,0,%g,%g,0){2,3,4};\n",p2.x(),p2.y(),p3.x(),p3.y(),p4.x(),p4.y());
+      SVector3 dd1 (p_w1.x() -v->position.x(),p_w1.y() -v->position.y(),0);dd1.normalize();
+      SVector3 dd2 (-dd1.y(), dd1.x(), 0);
+      /*      if (itx <= -1112){
+	fprintf(f,"ST(%g,%g,0,%g,%g,0,%g,%g,0){2,3,4};\n",p_start.x(),p_start.y(),p_end.x(),p_end.y(),
+	      v->position.x()+p4.x()*dd1.x()+p4.y()*dd2.x(),
+	      v->position.y()+p4.x()*dd1.y()+p4.y()*dd2.y());
+	fprintf(f,"SP(%g,%g,0){0};\n",
+		v->position.x()+start.x()*dd1.x()+start.y()*dd2.x(),
+		v->position.y()+start.x()*dd1.y()+start.y()*dd2.y());
+	fprintf(f,"SP(%g,%g,0){-1};\n",
+		v->position.x()+p1.x()*dd1.x()+p1.y()*dd2.x(),
+		v->position.y()+p1.x()*dd1.y()+p1.y()*dd2.y());
+	fprintf(f,"SP(%g,%g,0){-2};\n",
+		v->position.x()+p2.x()*dd1.x()+p2.y()*dd2.x(),
+		v->position.y()+p2.x()*dd1.y()+p2.y()*dd2.y());
+	fprintf(f,"SP(%g,%g,0){-3};\n",
+		v->position.x()+p3.x()*dd1.x()+p3.y()*dd2.x(),
+		v->position.y()+p3.x()*dd1.y()+p3.y()*dd2.y());
+	fprintf(f,"SP(%g,%g,0){-4};\n",
+		v->position.x()+p4.x()*dd1.x()+p4.y()*dd2.x(),
+		v->position.y()+p4.x()*dd1.y()+p4.y()*dd2.y());
+	//	fprintf(f,"SP(%g,%g,0){-14};\n",
+	//		v->position.x()+wrong.x()*dd1.x()+wrong.y()*dd2.x(),
+	//		v->position.y()+wrong.x()*dd1.y()+wrong.y()*dd2.y());
+      }
       //      fprintf(f,"SP(%g,%g,0){1};\n",p1.x(),p1.y());
       //      fprintf(f,"SP(%g,%g,0){0};\n",start.x(),start.y());
-      
+      */
       double xi1[2];
       intersection_segments_(s, p1, p2, p4,xi1);
       double xi2[2];
@@ -252,25 +262,46 @@ int IntrinsicTriangulation::continuousRienstra (PolyMesh::Vertex *v, double Lmax
       SPoint2 p22 = start * xi2[0];
       SPoint2 p33 = p1 * xi3[0];
       SPoint2 p44 = start * xi4[0];
-      
-      // create one new window on he->next
-      printf("%g %g -- %g %g -- %g %g -- %g %g \n",
-	     xi1[0],xi1[1],xi2[0],xi2[1],xi3[0],xi3[1],xi4[0],xi4[1]);
-      if ((xi1[1] >=0 && xi1[1] <= 1)&&
-	  (xi2[1] >=0 && xi2[1] <= 1)){	
+      /*
+      if (itx <= -1111112){
+	fprintf(f,"SP(%g,%g,0){10};\n",
+		v->position.x()+p11.x()*dd1.x()+p11.y()*dd2.x(),
+		v->position.y()+p11.x()*dd1.y()+p11.y()*dd2.y());
+	fprintf(f,"SP(%g,%g,0){11};\n",
+		v->position.x()+p22.x()*dd1.x()+p22.y()*dd2.x(),
+		v->position.y()+p22.x()*dd1.y()+p22.y()*dd2.y());
+	fprintf(f,"SP(%g,%g,0){12};\n",
+		v->position.x()+p33.x()*dd1.x()+p33.y()*dd2.x(),
+		v->position.y()+p33.x()*dd1.y()+p33.y()*dd2.y());
+	fprintf(f,"SP(%g,%g,0){13};\n",
+		v->position.x()+p44.x()*dd1.x()+p44.y()*dd2.x(),
+		v->position.y()+p44.x()*dd1.y()+p44.y()*dd2.y());
+      }
+      */
+	// create one new window on he->next
+      //      printf("%g %g -- %g %g -- %g %g -- %g %g \n",
+      //	     xi1[0],xi1[1],xi2[0],xi2[1],xi3[0],xi3[1],xi4[0],xi4[1]);
+      // create two windows
+      // FIXME or more if point p4 is a saddle point
+      if ((xi1[1] >=-IntrinsicTriangulation::EPS() && xi1[1] <= 1+IntrinsicTriangulation::EPS())&&
+	  (xi2[1] >=-IntrinsicTriangulation::EPS() && xi2[1] <= 1+IntrinsicTriangulation::EPS())){	
 	IntrinsicTriangulation::Window w;
+	//	printf("ITXX %d -- CASE 0 \n",itx);
 	w.he = he->next;
 	w.d1 = sqrt(p11.x()*p11.x() + p11.y()*p11.y());
 	w.d2 = sqrt(p22.x()*p22.x() + p22.y()*p22.y());
 	w.t1 = xi1[1];
 	w.t2 = xi2[1];
-	printf(" create one new window on he->next->next --> %g %g\n",w.t1,w.t2);
-	windows.insert(w);
+	//	if (w.he->v->data == 46 && w.he->next->v->data == 31)printf(" (CASE 0) create one new window (%lu) on %d %d lengths %g %g\n",windows.size(),w.he->v->data,w.he->next->v->data,w.d1,w.d2);
+	df.addWindow(w);
+	if (w.d1 >= -IntrinsicTriangulation::EPS())
+	  windows.insert(w);
       }
       // create one new window on he->next->next
-      else if ((xi3[1] >=0 && xi3[1] <= 1)&&
-	       (xi4[1] >=0 && xi4[1] <= 1)){
+      else if ((xi3[1] >=-IntrinsicTriangulation::EPS() && xi3[1] <= 1+IntrinsicTriangulation::EPS())&&
+	       (xi4[1] >=-IntrinsicTriangulation::EPS() && xi4[1] <= 1+IntrinsicTriangulation::EPS())){
 	// OK VERIFIE
+	//	printf("ITXX %d -- CASE 1 \n",itx);
 	IntrinsicTriangulation::Window w;
 	w.he = he->next->next;
 	w.d2 = sqrt(p44.x()*p44.x() + p44.y()*p44.y());//d1*xi4[0]
@@ -278,32 +309,33 @@ int IntrinsicTriangulation::continuousRienstra (PolyMesh::Vertex *v, double Lmax
 	//	printf("%g %g -- %g %g\n",w.d1,w.d2,d2*xi3[0],d2*xi4[0]);	       
 	w.t2 = xi4[1];
 	w.t1 = xi3[1];
-	printf(" create one new window on he->next --> %g %g\n",w.t1,w.t2);
-	windows.insert(w);
+	//	if (w.he->v->data == 46 && w.he->next->v->data == 31)printf(" (CASE 1) create one new window on %d %d lengths %g %g t's %g %g\n",w.he->v->data,w.he->next->v->data,w.d1,w.d2,w.t1,w.t2 );
+	df.addWindow(w);
+	if (w.d1 >= -IntrinsicTriangulation::EPS())windows.insert(w);
       }
-      // create two windows
-      // FIXME or more if point p4 is a saddle point
-      else if ((xi1[1] >=0 && xi1[1] <= 1)&&
-	       (xi4[1] >=0 && xi4[1] <= 1)){	
+      else if ((xi1[1] >=-IntrinsicTriangulation::EPS() && xi1[1] <= 1+IntrinsicTriangulation::EPS())&&
+	       (xi4[1] >=-IntrinsicTriangulation::EPS() && xi4[1] <= 1+IntrinsicTriangulation::EPS())){	
 	double dd = sqrt (p4.x()*p4.x()+p4.y()*p4.y());
-	printf("coucou dd %g\n",dd);
+	//	printf("ITXX %d -- CASE 2 \n",itx);
 	IntrinsicTriangulation::Window w;
 	w.he = he->next;
 	w.d1 = sqrt(p11.x()*p11.x() + p11.y()*p11.y());
 	w.d2 = dd;
 	w.t1 = xi1[1];
 	w.t2 = 1.0;
-	windows.insert(w);
+	df.addWindow(w);
+	if (w.d1 >= -IntrinsicTriangulation::EPS())windows.insert(w);
 	w.he = he->next->next;
 	w.d2 = sqrt(p44.x()*p44.x() + p44.y()*p44.y());
 	w.d1 = dd;
 	w.t1 = 0.0;
 	w.t2 = xi4[1];
-	windows.insert(w);
+	df.addWindow(w);
+	if (w.d1 >= -IntrinsicTriangulation::EPS())windows.insert(w);
       }
     }    
     windows.erase(it);
-    if (itx++ == 7) break;
+    if (itx++ == 400) break;
   }
   fprintf(f,"};\n");
   fclose(f);
@@ -387,10 +419,10 @@ IntrinsicTriangulation::Geodesic IntrinsicTriangulation::trace (const IntrinsicT
     if (it2 == P.end())printf("pas normal\n");
     p1 = P[he_current->v];
     p2 = P[he_current->next->v];
-    SPoint2 ppp;
+    SPoint2 ppp, qqq;
     double r1 = he_current->next->next->l();
     double r2 = he_current->next->l();
-    bool ok = intersectTwoCircles ( p1, p2, r1, r2, ppp , &_end);
+    bool ok = intersectTwoCircles ( p1, p2, r1, r2, ppp , qqq);
     if (!ok)return G; 
     P[he_current->next->next->v] = ppp;
 

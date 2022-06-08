@@ -12,6 +12,7 @@
 #include <stack>
 #include <stdio.h>
 #include "SVector3.h"
+#include "Numeric.h"
 
 class PolyMesh {
 public:
@@ -60,6 +61,22 @@ public:
     Face(HalfEdge *e) : he(e), data(-1) {}
     HalfEdge *he; // one half edge of the face
     int data;
+    SVector3 grad (double v1, double v2, double v3){
+      SVector3 p1 = he->v->position;
+      SVector3 p2 = he->next->v->position;
+      SVector3 p3 = he->next->next->v->position;
+      SVector3 d1 = p2 - p1;
+      SVector3 d2 = p3 - p1;
+      SVector3 d3 = crossprod(d1, d2);
+      d3.normalize();
+      double J[3][3] = {{d1.x(),d1.y(),d1.z()},
+			{d2.x(),d2.y(),d2.z()},
+			{d3.x(),d3.y(),d3.z()}};
+      double g[3], rhs[3] = {v2-v1,v3-v1,0.0};
+      double det;
+      sys3x3 (J, rhs, g, &det);
+      return SVector3(g[0],g[1],g[2]);
+    }
   };
 
   std::vector<Vertex *> vertices;
@@ -67,6 +84,32 @@ public:
   std::vector<Face *> faces;
   std::vector<SVector3> high_order_nodes;
 
+  struct VertexOnEdge {
+    PolyMesh::HalfEdge *he; // he in the extrinsic_ mesh
+    double t; // local coordinates of the vertex in that edge
+    SVector3 point  ()const{
+      return he->v->position*(1.-t)+
+	he->next->v->position*t;
+    }
+  };
+  
+  struct VertexOnFace {
+    PolyMesh::HalfEdge *he; // he->f in the extrinsic_ mesh
+    double u,v; // local coordinates of the vertex in that face
+    SVector3 point () const {
+      return he->v->position*(1.-u-v)+
+      he->next->v->position*u+
+	he->next->next->v->position*v;
+    }
+  };
+  
+  struct Path {
+    VertexOnFace _start;
+    VertexOnFace _end;
+    std::vector<VertexOnEdge> _pts;
+    void print4debug (int id);
+  };
+    
   void reset()
   {
     for(auto it : vertices) delete it;
@@ -534,7 +577,19 @@ public:
     }
     return 0;
   }
-};
+  void fastMarching (std::vector<Vertex *> &seeds, std::map<Vertex*,double> &d);
+  void fastMarching (Vertex *v, std::map<Vertex*,double> &d){
+    std::vector<Vertex *> seeds; seeds.push_back(v);
+    fastMarching(seeds,d);
+  }
+  void exactGeodesicDistance (const PolyMesh::VertexOnFace &_start, std::map<Vertex*,double> &ls);
+  
+  PolyMesh::Path traceGeodesic (const PolyMesh::VertexOnFace &_v, double theta, double L);  
+  PolyMesh::Path traceGeodesic (const PolyMesh::VertexOnFace &_start, const PolyMesh::VertexOnFace &_end);
+  PolyMesh::Path backTrack (const PolyMesh::VertexOnFace &_start, const PolyMesh::VertexOnFace &_end,
+			    std::map<Vertex*,double> &ls);
+  
+ };
 
 struct HalfEdgePtrLessThan {
   bool operator()(PolyMesh::HalfEdge *l1, PolyMesh::HalfEdge *l2) const
