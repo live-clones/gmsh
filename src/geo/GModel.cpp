@@ -2772,6 +2772,10 @@ int GModel::removeDuplicateMeshVertices(double tolerance,
     to_delete.push_back(it->first);
   for(std::size_t i = 0; i < to_delete.size(); i++) delete to_delete[i];
 
+  if(CTX::instance()->mesh.renumber) {
+    renumberMeshVertices();
+  }
+
   if(num)
     Msg::Info("Removed %d duplicate mesh node%s", num, num > 1 ? "s" : "");
 
@@ -2805,6 +2809,10 @@ int GModel::removeDuplicateMeshElements(const std::vector<GEntity*> &ents)
         for(auto ele : uniq) e->addElement(t, ele);
       }
     }
+  }
+
+  if(CTX::instance()->mesh.renumber) {
+    renumberMeshElements();
   }
 
   Msg::StatusBar(true, "Done removing duplicate mesh elements");
