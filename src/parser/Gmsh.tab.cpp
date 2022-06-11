@@ -10936,7 +10936,7 @@ yyreduce:
 #line 3631 "Gmsh.y"
     {
 #if defined(HAVE_OPENGL)
-      drawContext::global()->draw();
+      drawContext::global()->draw(false); // not rate limited
 #endif
     ;}
     break;

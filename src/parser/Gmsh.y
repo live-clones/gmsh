@@ -3630,7 +3630,7 @@ Command :
    | tDraw tEND
     {
 #if defined(HAVE_OPENGL)
-      drawContext::global()->draw();
+      drawContext::global()->draw(false); // not rate limited
 #endif
     }
   | tSetChanged tEND
