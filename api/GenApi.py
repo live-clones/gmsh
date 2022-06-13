@@ -1403,7 +1403,6 @@ module gmsh
     integer, parameter :: {2}_API_VERSION_MINOR = {5}
     integer, parameter :: {2}_API_VERSION_PATCH = {6}
     character(len=100), parameter :: {2}_API_VERSION = "{4}.{5}.{6}"
-    real(c_double), parameter::M_PI = 3.14159265358979323846d0
 
     interface
 """

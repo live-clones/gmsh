@@ -98,7 +98,7 @@ program main
 
     call gmshModelGeoTranslate(t, 2_8, -0.02d0, 0d0, 0d0, ierr)
 
-    call gmshModelGeoRotate(t, 2_8, 0d0, 0.3d0, 0d0, 0d0, 0d0, 1d0, -M_PI / 4d0, ierr)
+    call gmshModelGeoRotate(t, 2_8, 0d0, 0.3d0, 0d0, 0d0, 0d0, 1d0, -acos(1.0) / 4d0, ierr)
 
     call gmshModelGeoCopy(iv, 2_8, ov, ov_n, ierr)
 
