@@ -38,7 +38,7 @@ module gmsh
     subroutine gmshInitialize(argc,argv, readConfigFiles, run, ierr) bind(C, name="gmshInitialize")
         use, intrinsic :: iso_c_binding
         integer(c_int), value :: argc
-        type(c_ptr) :: argv(*)
+        type(c_ptr), dimension(*) :: argv
         integer(c_int), value :: readConfigFiles
         integer(c_int), value :: run
         integer(c_int) :: ierr
@@ -63,7 +63,7 @@ module gmsh
     !! with model data will create a new model.
     subroutine gmshOpen(fileName, ierr) bind(C, name="gmshOpen")
         use, intrinsic :: iso_c_binding
-        character(len=1, kind=c_char) :: fileName(*)
+        character(len=1, kind=c_char), dimension(*) :: fileName
         integer(c_int) :: ierr
     end subroutine gmshOpen
 
@@ -72,14 +72,14 @@ module gmsh
     !! a file with model data will add the data to the current model.
     subroutine gmshMerge(fileName, ierr) bind(C, name="gmshMerge")
         use, intrinsic :: iso_c_binding
-        character(len=1, kind=c_char) :: fileName(*)
+        character(len=1, kind=c_char), dimension(*) :: fileName
         integer(c_int) :: ierr
     end subroutine gmshMerge
 
     !> Write a file. The export format is determined by the file extension.
     subroutine gmshWrite(fileName, ierr) bind(C, name="gmshWrite")
         use, intrinsic :: iso_c_binding
-        character(len=1, kind=c_char) :: fileName(*)
+        character(len=1, kind=c_char), dimension(*) :: fileName
         integer(c_int) :: ierr
     end subroutine gmshWrite
 
@@ -95,7 +95,7 @@ module gmsh
     !! the Gmsh reference manual.
     subroutine gmshOptionSetNumber(name, value, ierr) bind(C, name="gmshOptionSetNumber")
         use, intrinsic :: iso_c_binding
-        character(len=1, kind=c_char) :: name(*)
+        character(len=1, kind=c_char), dimension(*) :: name
         real(c_double), value :: value
         integer(c_int) :: ierr
     end subroutine gmshOptionSetNumber
@@ -105,7 +105,7 @@ module gmsh
     !! options are listed in the Gmsh reference manual.
     subroutine gmshOptionGetNumber(name, value, ierr) bind(C, name="gmshOptionGetNumber")
         use, intrinsic :: iso_c_binding
-        character(len=1, kind=c_char) :: name(*)
+        character(len=1, kind=c_char), dimension(*) :: name
         real(c_double) :: value
         integer(c_int) :: ierr
     end subroutine gmshOptionGetNumber
@@ -115,8 +115,8 @@ module gmsh
     !! Gmsh reference manual.
     subroutine gmshOptionSetString(name, value, ierr) bind(C, name="gmshOptionSetString")
         use, intrinsic :: iso_c_binding
-        character(len=1, kind=c_char) :: name(*)
-        character(len=1, kind=c_char) :: value(*)
+        character(len=1, kind=c_char), dimension(*) :: name
+        character(len=1, kind=c_char), dimension(*) :: value
         integer(c_int) :: ierr
     end subroutine gmshOptionSetString
 
@@ -125,8 +125,8 @@ module gmsh
     !! the Gmsh reference manual.
     subroutine gmshOptionGetString(name, value, ierr) bind(C, name="gmshOptionGetString")
         use, intrinsic :: iso_c_binding
-        character(len=1, kind=c_char) :: name(*)
-        type(c_ptr) :: value(*)
+        character(len=1, kind=c_char), dimension(*) :: name
+        type(c_ptr), dimension(*) :: value
         integer(c_int) :: ierr
     end subroutine gmshOptionGetString
 
@@ -137,7 +137,7 @@ module gmsh
     !! conciseness "Color." can be ommitted in `name'.
     subroutine gmshOptionSetColor(name, r, g, b, a, ierr) bind(C, name="gmshOptionSetColor")
         use, intrinsic :: iso_c_binding
-        character(len=1, kind=c_char) :: name(*)
+        character(len=1, kind=c_char), dimension(*) :: name
         integer(c_int), value :: r
         integer(c_int), value :: g
         integer(c_int), value :: b
@@ -151,7 +151,7 @@ module gmsh
     !! conciseness "Color." can be ommitted in `name'.
     subroutine gmshOptionGetColor(name, r, g, b, a, ierr) bind(C, name="gmshOptionGetColor")
         use, intrinsic :: iso_c_binding
-        character(len=1, kind=c_char) :: name(*)
+        character(len=1, kind=c_char), dimension(*) :: name
         integer(c_int) :: r
         integer(c_int) :: g
         integer(c_int) :: b
@@ -162,7 +162,7 @@ module gmsh
     !> Add a new model, with name `name', and set it as the current model.
     subroutine gmshModelAdd(name, ierr) bind(C, name="gmshModelAdd")
         use, intrinsic :: iso_c_binding
-        character(len=1, kind=c_char) :: name(*)
+        character(len=1, kind=c_char), dimension(*) :: name
         integer(c_int) :: ierr
     end subroutine gmshModelAdd
 
@@ -183,7 +183,7 @@ module gmsh
     !> Get the name of the current model.
     subroutine gmshModelGetCurrent(name, ierr) bind(C, name="gmshModelGetCurrent")
         use, intrinsic :: iso_c_binding
-        type(c_ptr) :: name(*)
+        type(c_ptr), dimension(*) :: name
         integer(c_int) :: ierr
     end subroutine gmshModelGetCurrent
 
@@ -191,7 +191,7 @@ module gmsh
     !! the same name, select the one that was added first.
     subroutine gmshModelSetCurrent(name, ierr) bind(C, name="gmshModelSetCurrent")
         use, intrinsic :: iso_c_binding
-        character(len=1, kind=c_char) :: name(*)
+        character(len=1, kind=c_char), dimension(*) :: name
         integer(c_int) :: ierr
     end subroutine gmshModelSetCurrent
 
@@ -199,14 +199,14 @@ module gmsh
     !! is associated when a model is read from a file on disk.
     subroutine gmshModelGetFileName(fileName, ierr) bind(C, name="gmshModelGetFileName")
         use, intrinsic :: iso_c_binding
-        type(c_ptr) :: fileName(*)
+        type(c_ptr), dimension(*) :: fileName
         integer(c_int) :: ierr
     end subroutine gmshModelGetFileName
 
     !> Set the file name associated with the current model.
     subroutine gmshModelSetFileName(fileName, ierr) bind(C, name="gmshModelSetFileName")
         use, intrinsic :: iso_c_binding
-        character(len=1, kind=c_char) :: fileName(*)
+        character(len=1, kind=c_char), dimension(*) :: fileName
         integer(c_int) :: ierr
     end subroutine gmshModelSetFileName
 
@@ -226,7 +226,7 @@ module gmsh
         use, intrinsic :: iso_c_binding
         integer(c_int), value :: dim
         integer(c_int), value :: tag
-        character(len=1, kind=c_char) :: name(*)
+        character(len=1, kind=c_char), dimension(*) :: name
         integer(c_int) :: ierr
     end subroutine gmshModelSetEntityName
 
@@ -235,7 +235,7 @@ module gmsh
         use, intrinsic :: iso_c_binding
         integer(c_int), value :: dim
         integer(c_int), value :: tag
-        type(c_ptr) :: name(*)
+        type(c_ptr), dimension(*) :: name
         integer(c_int) :: ierr
     end subroutine gmshModelGetEntityName
 
@@ -280,10 +280,10 @@ module gmsh
         use, intrinsic :: iso_c_binding
         integer(c_int) :: gmshModelAddPhysicalGroup
         integer(c_int), value :: dim
-        integer(c_int) :: tags(*)
+        integer(c_int), dimension(*) :: tags
         integer(c_size_t), value :: tags_n
         integer(c_int), value :: tag
-        character(len=1, kind=c_char) :: name(*)
+        character(len=1, kind=c_char), dimension(*) :: name
         integer(c_int) :: ierr
     end function gmshModelAddPhysicalGroup
 
@@ -291,7 +291,7 @@ module gmsh
     !! is empty, remove all groups.
     subroutine gmshModelRemovePhysicalGroups(dimTags, dimTags_n, ierr) bind(C, name="gmshModelRemovePhysicalGroups")
         use, intrinsic :: iso_c_binding
-        integer(c_int) :: dimTags(*)
+        integer(c_int), dimension(*) :: dimTags
         integer(c_size_t), value :: dimTags_n
         integer(c_int) :: ierr
     end subroutine gmshModelRemovePhysicalGroups
@@ -301,14 +301,14 @@ module gmsh
         use, intrinsic :: iso_c_binding
         integer(c_int), value :: dim
         integer(c_int), value :: tag
-        character(len=1, kind=c_char) :: name(*)
+        character(len=1, kind=c_char), dimension(*) :: name
         integer(c_int) :: ierr
     end subroutine gmshModelSetPhysicalName
 
     !> Remove the physical name `name' from the current model.
     subroutine gmshModelRemovePhysicalName(name, ierr) bind(C, name="gmshModelRemovePhysicalName")
         use, intrinsic :: iso_c_binding
-        character(len=1, kind=c_char) :: name(*)
+        character(len=1, kind=c_char), dimension(*) :: name
         integer(c_int) :: ierr
     end subroutine gmshModelRemovePhysicalName
 
@@ -317,7 +317,7 @@ module gmsh
         use, intrinsic :: iso_c_binding
         integer(c_int), value :: dim
         integer(c_int), value :: tag
-        type(c_ptr) :: name(*)
+        type(c_ptr), dimension(*) :: name
         integer(c_int) :: ierr
     end subroutine gmshModelGetPhysicalName
 
@@ -339,7 +339,7 @@ module gmsh
     !! to dimension 0 (i.e. to points) if `recursive' is true.
     subroutine gmshModelGetBoundary(dimTags, dimTags_n, outDimTags, outDimTags_n, combined, oriented, recursive, ierr) bind(C, name="gmshModelGetBoundary")
         use, intrinsic :: iso_c_binding
-        integer(c_int) :: dimTags(*)
+        integer(c_int), dimension(*) :: dimTags
         integer(c_size_t), value :: dimTags_n
         type(c_ptr), intent(out) :: outDimTags
         integer(c_size_t) :: outDimTags_n
@@ -415,7 +415,7 @@ module gmsh
         integer(c_int) :: gmshModelAddDiscreteEntity
         integer(c_int), value :: dim
         integer(c_int), value :: tag
-        integer(c_int) :: boundary(*)
+        integer(c_int), dimension(*) :: boundary
         integer(c_size_t), value :: boundary_n
         integer(c_int) :: ierr
     end function gmshModelAddDiscreteEntity
@@ -426,7 +426,7 @@ module gmsh
     !! dimension 0.
     subroutine gmshModelRemoveEntities(dimTags, dimTags_n, recursive, ierr) bind(C, name="gmshModelRemoveEntities")
         use, intrinsic :: iso_c_binding
-        integer(c_int) :: dimTags(*)
+        integer(c_int), dimension(*) :: dimTags
         integer(c_size_t), value :: dimTags_n
         integer(c_int), value :: recursive
         integer(c_int) :: ierr
@@ -435,7 +435,7 @@ module gmsh
     !> Remove the entity name `name' from the current model.
     subroutine gmshModelRemoveEntityName(name, ierr) bind(C, name="gmshModelRemoveEntityName")
         use, intrinsic :: iso_c_binding
-        character(len=1, kind=c_char) :: name(*)
+        character(len=1, kind=c_char), dimension(*) :: name
         integer(c_int) :: ierr
     end subroutine gmshModelRemoveEntityName
 
@@ -444,7 +444,7 @@ module gmsh
         use, intrinsic :: iso_c_binding
         integer(c_int), value :: dim
         integer(c_int), value :: tag
-        type(c_ptr) :: entityType(*)
+        type(c_ptr), dimension(*) :: entityType
         integer(c_int) :: ierr
     end subroutine gmshModelGetType
 
@@ -489,7 +489,7 @@ module gmsh
         use, intrinsic :: iso_c_binding
         integer(c_int), value :: dim
         integer(c_int), value :: tag
-        real(c_double) :: parametricCoord(*)
+        real(c_double), dimension(*) :: parametricCoord
         integer(c_size_t), value :: parametricCoord_n
         type(c_ptr), intent(out) :: coord
         integer(c_size_t) :: coord_n
@@ -509,7 +509,7 @@ module gmsh
         use, intrinsic :: iso_c_binding
         integer(c_int), value :: dim
         integer(c_int), value :: tag
-        real(c_double) :: parametricCoord(*)
+        real(c_double), dimension(*) :: parametricCoord
         integer(c_size_t), value :: parametricCoord_n
         type(c_ptr), intent(out) :: derivatives
         integer(c_size_t) :: derivatives_n
@@ -531,7 +531,7 @@ module gmsh
         use, intrinsic :: iso_c_binding
         integer(c_int), value :: dim
         integer(c_int), value :: tag
-        real(c_double) :: parametricCoord(*)
+        real(c_double), dimension(*) :: parametricCoord
         integer(c_size_t), value :: parametricCoord_n
         type(c_ptr), intent(out) :: derivatives
         integer(c_size_t) :: derivatives_n
@@ -547,7 +547,7 @@ module gmsh
         use, intrinsic :: iso_c_binding
         integer(c_int), value :: dim
         integer(c_int), value :: tag
-        real(c_double) :: parametricCoord(*)
+        real(c_double), dimension(*) :: parametricCoord
         integer(c_size_t), value :: parametricCoord_n
         type(c_ptr), intent(out) :: curvatures
         integer(c_size_t) :: curvatures_n
@@ -561,7 +561,7 @@ module gmsh
     subroutine gmshModelGetPrincipalCurvatures(tag, parametricCoord, parametricCoord_n, curvatureMax, curvatureMax_n, curvatureMin, curvatureMin_n, directionMax, directionMax_n, directionMin, directionMin_n, ierr) bind(C, name="gmshModelGetPrincipalCurvatures")
         use, intrinsic :: iso_c_binding
         integer(c_int), value :: tag
-        real(c_double) :: parametricCoord(*)
+        real(c_double), dimension(*) :: parametricCoord
         integer(c_size_t), value :: parametricCoord_n
         type(c_ptr), intent(out) :: curvatureMax
         integer(c_size_t) :: curvatureMax_n
@@ -581,7 +581,7 @@ module gmsh
     subroutine gmshModelGetNormal(tag, parametricCoord, parametricCoord_n, normals, normals_n, ierr) bind(C, name="gmshModelGetNormal")
         use, intrinsic :: iso_c_binding
         integer(c_int), value :: tag
-        real(c_double) :: parametricCoord(*)
+        real(c_double), dimension(*) :: parametricCoord
         integer(c_size_t), value :: parametricCoord_n
         type(c_ptr), intent(out) :: normals
         integer(c_size_t) :: normals_n
@@ -598,7 +598,7 @@ module gmsh
         use, intrinsic :: iso_c_binding
         integer(c_int), value :: dim
         integer(c_int), value :: tag
-        real(c_double) :: coord(*)
+        real(c_double), dimension(*) :: coord
         integer(c_size_t), value :: coord_n
         type(c_ptr), intent(out) :: parametricCoord
         integer(c_size_t) :: parametricCoord_n
@@ -628,7 +628,7 @@ module gmsh
         integer(c_int) :: gmshModelIsInside
         integer(c_int), value :: dim
         integer(c_int), value :: tag
-        real(c_double) :: coord(*)
+        real(c_double), dimension(*) :: coord
         integer(c_size_t), value :: coord_n
         integer(c_int), value :: parametric
         integer(c_int) :: ierr
@@ -645,7 +645,7 @@ module gmsh
         use, intrinsic :: iso_c_binding
         integer(c_int), value :: dim
         integer(c_int), value :: tag
-        real(c_double) :: coord(*)
+        real(c_double), dimension(*) :: coord
         integer(c_size_t), value :: coord_n
         type(c_ptr), intent(out) :: closestCoord
         integer(c_size_t) :: closestCoord_n
@@ -664,7 +664,7 @@ module gmsh
         use, intrinsic :: iso_c_binding
         integer(c_int), value :: dim
         integer(c_int), value :: tag
-        real(c_double) :: parametricCoord(*)
+        real(c_double), dimension(*) :: parametricCoord
         integer(c_size_t), value :: parametricCoord_n
         integer(c_int), value :: surfaceTag
         type(c_ptr), intent(out) :: surfaceParametricCoord
@@ -677,7 +677,7 @@ module gmsh
     !! visibility setting recursively if `recursive' is true.
     subroutine gmshModelSetVisibility(dimTags, dimTags_n, value, recursive, ierr) bind(C, name="gmshModelSetVisibility")
         use, intrinsic :: iso_c_binding
-        integer(c_int) :: dimTags(*)
+        integer(c_int), dimension(*) :: dimTags
         integer(c_size_t), value :: dimTags_n
         integer(c_int), value :: value
         integer(c_int), value :: recursive
@@ -707,7 +707,7 @@ module gmsh
     !! 255. Apply the color setting recursively if `recursive' is true.
     subroutine gmshModelSetColor(dimTags, dimTags_n, r, g, b, a, recursive, ierr) bind(C, name="gmshModelSetColor")
         use, intrinsic :: iso_c_binding
-        integer(c_int) :: dimTags(*)
+        integer(c_int), dimension(*) :: dimTags
         integer(c_size_t), value :: dimTags_n
         integer(c_int), value :: r
         integer(c_int), value :: g
@@ -752,9 +752,9 @@ module gmsh
     subroutine gmshModelMeshPartition(numPart, elementTags, elementTags_n, partitions, partitions_n, ierr) bind(C, name="gmshModelMeshPartition")
         use, intrinsic :: iso_c_binding
         integer(c_int), value :: numPart
-        integer(c_size_t) :: elementTags(*)
+        integer(c_size_t), dimension(*) :: elementTags
         integer(c_size_t), value :: elementTags_n
-        integer(c_int) :: partitions(*)
+        integer(c_int), dimension(*) :: partitions
         integer(c_size_t), value :: partitions_n
         integer(c_int) :: ierr
     end subroutine gmshModelMeshPartition
@@ -776,10 +776,10 @@ module gmsh
     !! entities.
     subroutine gmshModelMeshOptimize(method, force, niter, dimTags, dimTags_n, ierr) bind(C, name="gmshModelMeshOptimize")
         use, intrinsic :: iso_c_binding
-        character(len=1, kind=c_char) :: method(*)
+        character(len=1, kind=c_char), dimension(*) :: method
         integer(c_int), value :: force
         integer(c_int), value :: niter
-        integer(c_int) :: dimTags(*)
+        integer(c_int), dimension(*) :: dimTags
         integer(c_size_t), value :: dimTags_n
         integer(c_int) :: ierr
     end subroutine gmshModelMeshOptimize
@@ -827,7 +827,7 @@ module gmsh
     !! another entity with a non-empty mesh.
     subroutine gmshModelMeshClear(dimTags, dimTags_n, ierr) bind(C, name="gmshModelMeshClear")
         use, intrinsic :: iso_c_binding
-        integer(c_int) :: dimTags(*)
+        integer(c_int), dimension(*) :: dimTags
         integer(c_size_t), value :: dimTags_n
         integer(c_int) :: ierr
     end subroutine gmshModelMeshClear
@@ -837,7 +837,7 @@ module gmsh
     !! mesh.
     subroutine gmshModelMeshReverse(dimTags, dimTags_n, ierr) bind(C, name="gmshModelMeshReverse")
         use, intrinsic :: iso_c_binding
-        integer(c_int) :: dimTags(*)
+        integer(c_int), dimension(*) :: dimTags
         integer(c_size_t), value :: dimTags_n
         integer(c_int) :: ierr
     end subroutine gmshModelMeshReverse
@@ -848,9 +848,9 @@ module gmsh
     !! is empty, transform all the nodes in the mesh.
     subroutine gmshModelMeshAffineTransform(affineTransform, affineTransform_n, dimTags, dimTags_n, ierr) bind(C, name="gmshModelMeshAffineTransform")
         use, intrinsic :: iso_c_binding
-        real(c_double) :: affineTransform(*)
+        real(c_double), dimension(*) :: affineTransform
         integer(c_size_t), value :: affineTransform_n
-        integer(c_int) :: dimTags(*)
+        integer(c_int), dimension(*) :: dimTags
         integer(c_size_t), value :: dimTags_n
         integer(c_int) :: ierr
     end subroutine gmshModelMeshAffineTransform
@@ -923,9 +923,9 @@ module gmsh
     subroutine gmshModelMeshSetNode(nodeTag, coord, coord_n, parametricCoord, parametricCoord_n, ierr) bind(C, name="gmshModelMeshSetNode")
         use, intrinsic :: iso_c_binding
         integer(c_size_t), value :: nodeTag
-        real(c_double) :: coord(*)
+        real(c_double), dimension(*) :: coord
         integer(c_size_t), value :: coord_n
-        real(c_double) :: parametricCoord(*)
+        real(c_double), dimension(*) :: parametricCoord
         integer(c_size_t), value :: parametricCoord_n
         integer(c_int) :: ierr
     end subroutine gmshModelMeshSetNode
@@ -979,11 +979,11 @@ module gmsh
         use, intrinsic :: iso_c_binding
         integer(c_int), value :: dim
         integer(c_int), value :: tag
-        integer(c_size_t) :: nodeTags(*)
+        integer(c_size_t), dimension(*) :: nodeTags
         integer(c_size_t), value :: nodeTags_n
-        real(c_double) :: coord(*)
+        real(c_double), dimension(*) :: coord
         integer(c_size_t), value :: coord_n
-        real(c_double) :: parametricCoord(*)
+        real(c_double), dimension(*) :: parametricCoord
         integer(c_size_t), value :: parametricCoord_n
         integer(c_int) :: ierr
     end subroutine gmshModelMeshAddNodes
@@ -1129,7 +1129,7 @@ module gmsh
     function gmshModelMeshGetElementType(familyName, order, serendip, ierr) bind(C, name="gmshModelMeshGetElementType")
         use, intrinsic :: iso_c_binding
         integer(c_int) :: gmshModelMeshGetElementType
-        character(len=1, kind=c_char) :: familyName(*)
+        character(len=1, kind=c_char), dimension(*) :: familyName
         integer(c_int), value :: order
         integer(c_int), value :: serendip
         integer(c_int) :: ierr
@@ -1143,7 +1143,7 @@ module gmsh
     subroutine gmshModelMeshGetElementProperties(elementType, elementName, dim, order, numNodes, localNodeCoord, localNodeCoord_n, numPrimaryNodes, ierr) bind(C, name="gmshModelMeshGetElementProperties")
         use, intrinsic :: iso_c_binding
         integer(c_int), value :: elementType
-        type(c_ptr) :: elementName(*)
+        type(c_ptr), dimension(*) :: elementName
         integer(c_int) :: dim
         integer(c_int) :: order
         integer(c_int) :: numNodes
@@ -1206,11 +1206,11 @@ module gmsh
     !! indexed by `task'.
     subroutine gmshModelMeshGetElementQualities(elementTags, elementTags_n, elementsQuality, elementsQuality_n, qualityName, task, numTasks, ierr) bind(C, name="gmshModelMeshGetElementQualities")
         use, intrinsic :: iso_c_binding
-        integer(c_size_t) :: elementTags(*)
+        integer(c_size_t), dimension(*) :: elementTags
         integer(c_size_t), value :: elementTags_n
         type(c_ptr), intent(out) :: elementsQuality
         integer(c_size_t) :: elementsQuality_n
-        character(len=1, kind=c_char) :: qualityName(*)
+        character(len=1, kind=c_char), dimension(*) :: qualityName
         integer(c_size_t), value :: task
         integer(c_size_t), value :: numTasks
         integer(c_int) :: ierr
@@ -1230,7 +1230,7 @@ module gmsh
         use, intrinsic :: iso_c_binding
         integer(c_int), value :: dim
         integer(c_int), value :: tag
-        integer(c_int) :: elementTypes(*)
+        integer(c_int), dimension(*) :: elementTypes
         integer(c_size_t), value :: elementTypes_n
         type(c_ptr), intent(out) :: elementTags
         type(c_ptr), intent(out) :: elementTags_n
@@ -1252,9 +1252,9 @@ module gmsh
         use, intrinsic :: iso_c_binding
         integer(c_int), value :: tag
         integer(c_int), value :: elementType
-        integer(c_size_t) :: elementTags(*)
+        integer(c_size_t), dimension(*) :: elementTags
         integer(c_size_t), value :: elementTags_n
-        integer(c_size_t) :: nodeTags(*)
+        integer(c_size_t), dimension(*) :: nodeTags
         integer(c_size_t), value :: nodeTags_n
         integer(c_int) :: ierr
     end subroutine gmshModelMeshAddElementsByType
@@ -1274,7 +1274,7 @@ module gmsh
     subroutine gmshModelMeshGetIntegrationPoints(elementType, integrationType, localCoord, localCoord_n, weights, weights_n, ierr) bind(C, name="gmshModelMeshGetIntegrationPoints")
         use, intrinsic :: iso_c_binding
         integer(c_int), value :: elementType
-        character(len=1, kind=c_char) :: integrationType(*)
+        character(len=1, kind=c_char), dimension(*) :: integrationType
         type(c_ptr), intent(out) :: localCoord
         integer(c_size_t) :: localCoord_n
         type(c_ptr), intent(out) :: weights
@@ -1299,7 +1299,7 @@ module gmsh
     subroutine gmshModelMeshGetJacobians(elementType, localCoord, localCoord_n, jacobians, jacobians_n, determinants, determinants_n, coord, coord_n, tag, task, numTasks, ierr) bind(C, name="gmshModelMeshGetJacobians")
         use, intrinsic :: iso_c_binding
         integer(c_int), value :: elementType
-        real(c_double) :: localCoord(*)
+        real(c_double), dimension(*) :: localCoord
         integer(c_size_t), value :: localCoord_n
         type(c_ptr), intent(out) :: jacobians
         integer(c_size_t) :: jacobians_n
@@ -1346,7 +1346,7 @@ module gmsh
     subroutine gmshModelMeshGetJacobian(elementTag, localCoord, localCoord_n, jacobians, jacobians_n, determinants, determinants_n, coord, coord_n, ierr) bind(C, name="gmshModelMeshGetJacobian")
         use, intrinsic :: iso_c_binding
         integer(c_size_t), value :: elementTag
-        real(c_double) :: localCoord(*)
+        real(c_double), dimension(*) :: localCoord
         integer(c_size_t), value :: localCoord_n
         type(c_ptr), intent(out) :: jacobians
         integer(c_size_t) :: jacobians_n
@@ -1380,14 +1380,14 @@ module gmsh
     subroutine gmshModelMeshGetBasisFunctions(elementType, localCoord, localCoord_n, functionSpaceType, numComponents, basisFunctions, basisFunctions_n, numOrientations, wantedOrientations, wantedOrientations_n, ierr) bind(C, name="gmshModelMeshGetBasisFunctions")
         use, intrinsic :: iso_c_binding
         integer(c_int), value :: elementType
-        real(c_double) :: localCoord(*)
+        real(c_double), dimension(*) :: localCoord
         integer(c_size_t), value :: localCoord_n
-        character(len=1, kind=c_char) :: functionSpaceType(*)
+        character(len=1, kind=c_char), dimension(*) :: functionSpaceType
         integer(c_int) :: numComponents
         type(c_ptr), intent(out) :: basisFunctions
         integer(c_size_t) :: basisFunctions_n
         integer(c_int) :: numOrientations
-        integer(c_int) :: wantedOrientations(*)
+        integer(c_int), dimension(*) :: wantedOrientations
         integer(c_size_t), value :: wantedOrientations_n
         integer(c_int) :: ierr
     end subroutine gmshModelMeshGetBasisFunctions
@@ -1401,7 +1401,7 @@ module gmsh
     subroutine gmshModelMeshGetBasisFunctionsOrientation(elementType, functionSpaceType, basisFunctionsOrientation, basisFunctionsOrientation_n, tag, task, numTasks, ierr) bind(C, name="gmshModelMeshGetBasisFunctionsOrientation")
         use, intrinsic :: iso_c_binding
         integer(c_int), value :: elementType
-        character(len=1, kind=c_char) :: functionSpaceType(*)
+        character(len=1, kind=c_char), dimension(*) :: functionSpaceType
         type(c_ptr), intent(out) :: basisFunctionsOrientation
         integer(c_size_t) :: basisFunctionsOrientation_n
         integer(c_int), value :: tag
@@ -1414,7 +1414,7 @@ module gmsh
     subroutine gmshModelMeshGetBasisFunctionsOrientationForElement(elementTag, functionSpaceType, basisFunctionsOrientation, ierr) bind(C, name="gmshModelMeshGetBasisFunctionsOrientationForElement")
         use, intrinsic :: iso_c_binding
         integer(c_size_t), value :: elementTag
-        character(len=1, kind=c_char) :: functionSpaceType(*)
+        character(len=1, kind=c_char), dimension(*) :: functionSpaceType
         integer(c_int) :: basisFunctionsOrientation
         integer(c_int) :: ierr
     end subroutine gmshModelMeshGetBasisFunctionsOrientationForElement
@@ -1425,7 +1425,7 @@ module gmsh
         use, intrinsic :: iso_c_binding
         integer(c_int) :: gmshModelMeshGetNumberOfOrientations
         integer(c_int), value :: elementType
-        character(len=1, kind=c_char) :: functionSpaceType(*)
+        character(len=1, kind=c_char), dimension(*) :: functionSpaceType
         integer(c_int) :: ierr
     end function gmshModelMeshGetNumberOfOrientations
 
@@ -1449,7 +1449,7 @@ module gmsh
     !! well.
     subroutine gmshModelMeshGetEdges(nodeTags, nodeTags_n, edgeTags, edgeTags_n, edgeOrientations, edgeOrientations_n, ierr) bind(C, name="gmshModelMeshGetEdges")
         use, intrinsic :: iso_c_binding
-        integer(c_size_t) :: nodeTags(*)
+        integer(c_size_t), dimension(*) :: nodeTags
         integer(c_size_t), value :: nodeTags_n
         type(c_ptr), intent(out) :: edgeTags
         integer(c_size_t) :: edgeTags_n
@@ -1466,7 +1466,7 @@ module gmsh
     subroutine gmshModelMeshGetFaces(faceType, nodeTags, nodeTags_n, faceTags, faceTags_n, faceOrientations, faceOrientations_n, ierr) bind(C, name="gmshModelMeshGetFaces")
         use, intrinsic :: iso_c_binding
         integer(c_int), value :: faceType
-        integer(c_size_t) :: nodeTags(*)
+        integer(c_size_t), dimension(*) :: nodeTags
         integer(c_size_t), value :: nodeTags_n
         type(c_ptr), intent(out) :: faceTags
         integer(c_size_t) :: faceTags_n
@@ -1478,7 +1478,7 @@ module gmsh
     !> Create unique mesh edges for the entities `dimTags'.
     subroutine gmshModelMeshCreateEdges(dimTags, dimTags_n, ierr) bind(C, name="gmshModelMeshCreateEdges")
         use, intrinsic :: iso_c_binding
-        integer(c_int) :: dimTags(*)
+        integer(c_int), dimension(*) :: dimTags
         integer(c_size_t), value :: dimTags_n
         integer(c_int) :: ierr
     end subroutine gmshModelMeshCreateEdges
@@ -1486,7 +1486,7 @@ module gmsh
     !> Create unique mesh faces for the entities `dimTags'.
     subroutine gmshModelMeshCreateFaces(dimTags, dimTags_n, ierr) bind(C, name="gmshModelMeshCreateFaces")
         use, intrinsic :: iso_c_binding
-        integer(c_int) :: dimTags(*)
+        integer(c_int), dimension(*) :: dimTags
         integer(c_size_t), value :: dimTags_n
         integer(c_int) :: ierr
     end subroutine gmshModelMeshCreateFaces
@@ -1520,9 +1520,9 @@ module gmsh
     !! their nodes `edgeNodes'.
     subroutine gmshModelMeshAddEdges(edgeTags, edgeTags_n, edgeNodes, edgeNodes_n, ierr) bind(C, name="gmshModelMeshAddEdges")
         use, intrinsic :: iso_c_binding
-        integer(c_size_t) :: edgeTags(*)
+        integer(c_size_t), dimension(*) :: edgeTags
         integer(c_size_t), value :: edgeTags_n
-        integer(c_size_t) :: edgeNodes(*)
+        integer(c_size_t), dimension(*) :: edgeNodes
         integer(c_size_t), value :: edgeNodes_n
         integer(c_int) :: ierr
     end subroutine gmshModelMeshAddEdges
@@ -1532,9 +1532,9 @@ module gmsh
     subroutine gmshModelMeshAddFaces(faceType, faceTags, faceTags_n, faceNodes, faceNodes_n, ierr) bind(C, name="gmshModelMeshAddFaces")
         use, intrinsic :: iso_c_binding
         integer(c_int), value :: faceType
-        integer(c_size_t) :: faceTags(*)
+        integer(c_size_t), dimension(*) :: faceTags
         integer(c_size_t), value :: faceTags_n
-        integer(c_size_t) :: faceNodes(*)
+        integer(c_size_t), dimension(*) :: faceNodes
         integer(c_size_t), value :: faceNodes_n
         integer(c_int) :: ierr
     end subroutine gmshModelMeshAddFaces
@@ -1549,7 +1549,7 @@ module gmsh
     subroutine gmshModelMeshGetKeys(elementType, functionSpaceType, typeKeys, typeKeys_n, entityKeys, entityKeys_n, coord, coord_n, tag, returnCoord, ierr) bind(C, name="gmshModelMeshGetKeys")
         use, intrinsic :: iso_c_binding
         integer(c_int), value :: elementType
-        character(len=1, kind=c_char) :: functionSpaceType(*)
+        character(len=1, kind=c_char), dimension(*) :: functionSpaceType
         type(c_ptr), intent(out) :: typeKeys
         integer(c_size_t) :: typeKeys_n
         type(c_ptr), intent(out) :: entityKeys
@@ -1565,7 +1565,7 @@ module gmsh
     subroutine gmshModelMeshGetKeysForElement(elementTag, functionSpaceType, typeKeys, typeKeys_n, entityKeys, entityKeys_n, coord, coord_n, returnCoord, ierr) bind(C, name="gmshModelMeshGetKeysForElement")
         use, intrinsic :: iso_c_binding
         integer(c_size_t), value :: elementTag
-        character(len=1, kind=c_char) :: functionSpaceType(*)
+        character(len=1, kind=c_char), dimension(*) :: functionSpaceType
         type(c_ptr), intent(out) :: typeKeys
         integer(c_size_t) :: typeKeys_n
         type(c_ptr), intent(out) :: entityKeys
@@ -1582,7 +1582,7 @@ module gmsh
         use, intrinsic :: iso_c_binding
         integer(c_int) :: gmshModelMeshGetNumberOfKeys
         integer(c_int), value :: elementType
-        character(len=1, kind=c_char) :: functionSpaceType(*)
+        character(len=1, kind=c_char), dimension(*) :: functionSpaceType
         integer(c_int) :: ierr
     end function gmshModelMeshGetNumberOfKeys
 
@@ -1595,12 +1595,12 @@ module gmsh
     !! future release.
     subroutine gmshModelMeshGetKeysInformation(typeKeys, typeKeys_n, entityKeys, entityKeys_n, elementType, functionSpaceType, infoKeys, infoKeys_n, ierr) bind(C, name="gmshModelMeshGetKeysInformation")
         use, intrinsic :: iso_c_binding
-        integer(c_int) :: typeKeys(*)
+        integer(c_int), dimension(*) :: typeKeys
         integer(c_size_t), value :: typeKeys_n
-        integer(c_size_t) :: entityKeys(*)
+        integer(c_size_t), dimension(*) :: entityKeys
         integer(c_size_t), value :: entityKeys_n
         integer(c_int), value :: elementType
-        character(len=1, kind=c_char) :: functionSpaceType(*)
+        character(len=1, kind=c_char), dimension(*) :: functionSpaceType
         type(c_ptr), intent(out) :: infoKeys
         integer(c_size_t) :: infoKeys_n
         integer(c_int) :: ierr
@@ -1696,7 +1696,7 @@ module gmsh
     !! entities of dimension 0 (points) are handled.
     subroutine gmshModelMeshSetSize(dimTags, dimTags_n, size, ierr) bind(C, name="gmshModelMeshSetSize")
         use, intrinsic :: iso_c_binding
-        integer(c_int) :: dimTags(*)
+        integer(c_int), dimension(*) :: dimTags
         integer(c_size_t), value :: dimTags_n
         real(c_double), value :: size
         integer(c_int) :: ierr
@@ -1707,7 +1707,7 @@ module gmsh
     !! constraint is specified on the corresponding entity.
     subroutine gmshModelMeshGetSizes(dimTags, dimTags_n, sizes, sizes_n, ierr) bind(C, name="gmshModelMeshGetSizes")
         use, intrinsic :: iso_c_binding
-        integer(c_int) :: dimTags(*)
+        integer(c_int), dimension(*) :: dimTags
         integer(c_size_t), value :: dimTags_n
         type(c_ptr), intent(out) :: sizes
         integer(c_size_t) :: sizes_n
@@ -1721,9 +1721,9 @@ module gmsh
         use, intrinsic :: iso_c_binding
         integer(c_int), value :: dim
         integer(c_int), value :: tag
-        real(c_double) :: parametricCoord(*)
+        real(c_double), dimension(*) :: parametricCoord
         integer(c_size_t), value :: parametricCoord_n
-        real(c_double) :: sizes(*)
+        real(c_double), dimension(*) :: sizes
         integer(c_size_t), value :: sizes_n
         integer(c_int) :: ierr
     end subroutine gmshModelMeshSetSizeAtParametricPoints
@@ -1739,7 +1739,8 @@ module gmsh
     !! equivalent to a no-op.
     subroutine gmshModelMeshSetSizeCallback(callback, ierr) bind(C, name="gmshModelMeshSetSizeCallback")
         use, intrinsic :: iso_c_binding
-        type(c_funptr) :: callback ! TODO: Needs implementation
+        type(c_funptr) :: callback
+        ! TODO: callback needs implementation
         integer(c_int) :: ierr
     end subroutine gmshModelMeshSetSizeCallback
 
@@ -1757,7 +1758,7 @@ module gmsh
         use, intrinsic :: iso_c_binding
         integer(c_int), value :: tag
         integer(c_int), value :: numNodes
-        character(len=1, kind=c_char) :: meshType(*)
+        character(len=1, kind=c_char), dimension(*) :: meshType
         real(c_double), value :: coef
         integer(c_int) :: ierr
     end subroutine gmshModelMeshSetTransfiniteCurve
@@ -1772,8 +1773,8 @@ module gmsh
     subroutine gmshModelMeshSetTransfiniteSurface(tag, arrangement, cornerTags, cornerTags_n, ierr) bind(C, name="gmshModelMeshSetTransfiniteSurface")
         use, intrinsic :: iso_c_binding
         integer(c_int), value :: tag
-        character(len=1, kind=c_char) :: arrangement(*)
-        integer(c_int) :: cornerTags(*)
+        character(len=1, kind=c_char), dimension(*) :: arrangement
+        integer(c_int), dimension(*) :: cornerTags
         integer(c_size_t), value :: cornerTags_n
         integer(c_int) :: ierr
     end subroutine gmshModelMeshSetTransfiniteSurface
@@ -1784,7 +1785,7 @@ module gmsh
     subroutine gmshModelMeshSetTransfiniteVolume(tag, cornerTags, cornerTags_n, ierr) bind(C, name="gmshModelMeshSetTransfiniteVolume")
         use, intrinsic :: iso_c_binding
         integer(c_int), value :: tag
-        integer(c_int) :: cornerTags(*)
+        integer(c_int), dimension(*) :: cornerTags
         integer(c_size_t), value :: cornerTags_n
         integer(c_int) :: ierr
     end subroutine gmshModelMeshSetTransfiniteVolume
@@ -1799,7 +1800,7 @@ module gmsh
     !! the transfinite surfaces.
     subroutine gmshModelMeshSetTransfiniteAutomatic(dimTags, dimTags_n, cornerAngle, recombine, ierr) bind(C, name="gmshModelMeshSetTransfiniteAutomatic")
         use, intrinsic :: iso_c_binding
-        integer(c_int) :: dimTags(*)
+        integer(c_int), dimension(*) :: dimTags
         integer(c_size_t), value :: dimTags_n
         real(c_double), value :: cornerAngle
         integer(c_int), value :: recombine
@@ -1868,7 +1869,7 @@ module gmsh
     subroutine gmshModelMeshSetCompound(dim, tags, tags_n, ierr) bind(C, name="gmshModelMeshSetCompound")
         use, intrinsic :: iso_c_binding
         integer(c_int), value :: dim
-        integer(c_int) :: tags(*)
+        integer(c_int), dimension(*) :: tags
         integer(c_size_t), value :: tags_n
         integer(c_int) :: ierr
     end subroutine gmshModelMeshSetCompound
@@ -1887,7 +1888,7 @@ module gmsh
     !! `dimTags' is empty, remove all constraings.
     subroutine gmshModelMeshRemoveConstraints(dimTags, dimTags_n, ierr) bind(C, name="gmshModelMeshRemoveConstraints")
         use, intrinsic :: iso_c_binding
-        integer(c_int) :: dimTags(*)
+        integer(c_int), dimension(*) :: dimTags
         integer(c_size_t), value :: dimTags_n
         integer(c_int) :: ierr
     end subroutine gmshModelMeshRemoveConstraints
@@ -1904,7 +1905,7 @@ module gmsh
     subroutine gmshModelMeshEmbed(dim, tags, tags_n, inDim, inTag, ierr) bind(C, name="gmshModelMeshEmbed")
         use, intrinsic :: iso_c_binding
         integer(c_int), value :: dim
-        integer(c_int) :: tags(*)
+        integer(c_int), dimension(*) :: tags
         integer(c_size_t), value :: tags_n
         integer(c_int), value :: inDim
         integer(c_int), value :: inTag
@@ -1916,7 +1917,7 @@ module gmsh
     !! points if `dim' == 0).
     subroutine gmshModelMeshRemoveEmbedded(dimTags, dimTags_n, dim, ierr) bind(C, name="gmshModelMeshRemoveEmbedded")
         use, intrinsic :: iso_c_binding
-        integer(c_int) :: dimTags(*)
+        integer(c_int), dimension(*) :: dimTags
         integer(c_size_t), value :: dimTags_n
         integer(c_int), value :: dim
         integer(c_int) :: ierr
@@ -1939,7 +1940,7 @@ module gmsh
         use, intrinsic :: iso_c_binding
         integer(c_int), value :: elementType
         integer(c_int), value :: tag
-        integer(c_size_t) :: ordering(*)
+        integer(c_size_t), dimension(*) :: ordering
         integer(c_size_t), value :: ordering_n
         integer(c_int) :: ierr
     end subroutine gmshModelMeshReorderElements
@@ -1967,11 +1968,11 @@ module gmsh
     subroutine gmshModelMeshSetPeriodic(dim, tags, tags_n, tagsMaster, tagsMaster_n, affineTransform, affineTransform_n, ierr) bind(C, name="gmshModelMeshSetPeriodic")
         use, intrinsic :: iso_c_binding
         integer(c_int), value :: dim
-        integer(c_int) :: tags(*)
+        integer(c_int), dimension(*) :: tags
         integer(c_size_t), value :: tags_n
-        integer(c_int) :: tagsMaster(*)
+        integer(c_int), dimension(*) :: tagsMaster
         integer(c_size_t), value :: tagsMaster_n
-        real(c_double) :: affineTransform(*)
+        real(c_double), dimension(*) :: affineTransform
         integer(c_size_t), value :: affineTransform_n
         integer(c_int) :: ierr
     end subroutine gmshModelMeshSetPeriodic
@@ -1981,7 +1982,7 @@ module gmsh
     subroutine gmshModelMeshGetPeriodic(dim, tags, tags_n, tagMaster, tagMaster_n, ierr) bind(C, name="gmshModelMeshGetPeriodic")
         use, intrinsic :: iso_c_binding
         integer(c_int), value :: dim
-        integer(c_int) :: tags(*)
+        integer(c_int), dimension(*) :: tags
         integer(c_size_t), value :: tags_n
         type(c_ptr), intent(out) :: tagMaster
         integer(c_size_t) :: tagMaster_n
@@ -2017,7 +2018,7 @@ module gmsh
     subroutine gmshModelMeshGetPeriodicKeys(elementType, functionSpaceType, tag, tagMaster, typeKeys, typeKeys_n, typeKeysMaster, typeKeysMaster_n, entityKeys, entityKeys_n, entityKeysMaster, entityKeysMaster_n, coord, coord_n, coordMaster, coordMaster_n, returnCoord, ierr) bind(C, name="gmshModelMeshGetPeriodicKeys")
         use, intrinsic :: iso_c_binding
         integer(c_int), value :: elementType
-        character(len=1, kind=c_char) :: functionSpaceType(*)
+        character(len=1, kind=c_char), dimension(*) :: functionSpaceType
         integer(c_int), value :: tag
         integer(c_int) :: tagMaster
         type(c_ptr), intent(out) :: typeKeys
@@ -2048,7 +2049,7 @@ module gmsh
         use, intrinsic :: iso_c_binding
         type(c_ptr), intent(out) :: tags
         integer(c_size_t) :: tags_n
-        integer(c_int) :: dimTags(*)
+        integer(c_int), dimension(*) :: dimTags
         integer(c_size_t), value :: dimTags_n
         integer(c_int) :: ierr
     end subroutine gmshModelMeshGetDuplicateNodes
@@ -2057,7 +2058,7 @@ module gmsh
     !! is empty, consider the whole mesh.
     subroutine gmshModelMeshRemoveDuplicateNodes(dimTags, dimTags_n, ierr) bind(C, name="gmshModelMeshRemoveDuplicateNodes")
         use, intrinsic :: iso_c_binding
-        integer(c_int) :: dimTags(*)
+        integer(c_int), dimension(*) :: dimTags
         integer(c_size_t), value :: dimTags_n
         integer(c_int) :: ierr
     end subroutine gmshModelMeshRemoveDuplicateNodes
@@ -2067,7 +2068,7 @@ module gmsh
     !! whole mesh.
     subroutine gmshModelMeshRemoveDuplicateElements(dimTags, dimTags_n, ierr) bind(C, name="gmshModelMeshRemoveDuplicateElements")
         use, intrinsic :: iso_c_binding
-        integer(c_int) :: dimTags(*)
+        integer(c_int), dimension(*) :: dimTags
         integer(c_size_t), value :: dimTags_n
         integer(c_int) :: ierr
     end subroutine gmshModelMeshRemoveDuplicateElements
@@ -2084,7 +2085,7 @@ module gmsh
     !> Set the visibility of the elements of tags `elementTags' to `value'.
     subroutine gmshModelMeshSetVisibility(elementTags, elementTags_n, value, ierr) bind(C, name="gmshModelMeshSetVisibility")
         use, intrinsic :: iso_c_binding
-        integer(c_size_t) :: elementTags(*)
+        integer(c_size_t), dimension(*) :: elementTags
         integer(c_size_t), value :: elementTags_n
         integer(c_int), value :: value
         integer(c_int) :: ierr
@@ -2115,7 +2116,7 @@ module gmsh
     !! for all the discrete entities.
     subroutine gmshModelMeshCreateGeometry(dimTags, dimTags_n, ierr) bind(C, name="gmshModelMeshCreateGeometry")
         use, intrinsic :: iso_c_binding
-        integer(c_int) :: dimTags(*)
+        integer(c_int), dimension(*) :: dimTags
         integer(c_size_t), value :: dimTags_n
         integer(c_int) :: ierr
     end subroutine gmshModelMeshCreateGeometry
@@ -2146,12 +2147,12 @@ module gmsh
     !! of the meshing pipeline.
     subroutine gmshModelMeshAddHomologyRequest(type, domainTags, domainTags_n, subdomainTags, subdomainTags_n, dims, dims_n, ierr) bind(C, name="gmshModelMeshAddHomologyRequest")
         use, intrinsic :: iso_c_binding
-        character(len=1, kind=c_char) :: type(*)
-        integer(c_int) :: domainTags(*)
+        character(len=1, kind=c_char), dimension(*) :: type
+        integer(c_int), dimension(*) :: domainTags
         integer(c_size_t), value :: domainTags_n
-        integer(c_int) :: subdomainTags(*)
+        integer(c_int), dimension(*) :: subdomainTags
         integer(c_size_t), value :: subdomainTags_n
-        integer(c_int) :: dims(*)
+        integer(c_int), dimension(*) :: dims
         integer(c_size_t), value :: dims_n
         integer(c_int) :: ierr
     end subroutine gmshModelMeshAddHomologyRequest
@@ -2183,7 +2184,7 @@ module gmsh
     !! resulting triangles in `tri'.
     subroutine gmshModelMeshTriangulate(coord, coord_n, tri, tri_n, ierr) bind(C, name="gmshModelMeshTriangulate")
         use, intrinsic :: iso_c_binding
-        real(c_double) :: coord(*)
+        real(c_double), dimension(*) :: coord
         integer(c_size_t), value :: coord_n
         type(c_ptr), intent(out) :: tri
         integer(c_size_t) :: tri_n
@@ -2195,7 +2196,7 @@ module gmsh
     !! the resulting tetrahedra in `tetra'.
     subroutine gmshModelMeshTetrahedralize(coord, coord_n, tetra, tetra_n, ierr) bind(C, name="gmshModelMeshTetrahedralize")
         use, intrinsic :: iso_c_binding
-        real(c_double) :: coord(*)
+        real(c_double), dimension(*) :: coord
         integer(c_size_t), value :: coord_n
         type(c_ptr), intent(out) :: tetra
         integer(c_size_t) :: tetra_n
@@ -2208,7 +2209,7 @@ module gmsh
     function gmshModelMeshFieldAdd(fieldType, tag, ierr) bind(C, name="gmshModelMeshFieldAdd")
         use, intrinsic :: iso_c_binding
         integer(c_int) :: gmshModelMeshFieldAdd
-        character(len=1, kind=c_char) :: fieldType(*)
+        character(len=1, kind=c_char), dimension(*) :: fieldType
         integer(c_int), value :: tag
         integer(c_int) :: ierr
     end function gmshModelMeshFieldAdd
@@ -2232,7 +2233,7 @@ module gmsh
     subroutine gmshModelMeshFieldGetType(tag, fileType, ierr) bind(C, name="gmshModelMeshFieldGetType")
         use, intrinsic :: iso_c_binding
         integer(c_int), value :: tag
-        type(c_ptr) :: fileType(*)
+        type(c_ptr), dimension(*) :: fileType
         integer(c_int) :: ierr
     end subroutine gmshModelMeshFieldGetType
 
@@ -2240,7 +2241,7 @@ module gmsh
     subroutine gmshModelMeshFieldSetNumber(tag, option, value, ierr) bind(C, name="gmshModelMeshFieldSetNumber")
         use, intrinsic :: iso_c_binding
         integer(c_int), value :: tag
-        character(len=1, kind=c_char) :: option(*)
+        character(len=1, kind=c_char), dimension(*) :: option
         real(c_double), value :: value
         integer(c_int) :: ierr
     end subroutine gmshModelMeshFieldSetNumber
@@ -2249,7 +2250,7 @@ module gmsh
     subroutine gmshModelMeshFieldGetNumber(tag, option, value, ierr) bind(C, name="gmshModelMeshFieldGetNumber")
         use, intrinsic :: iso_c_binding
         integer(c_int), value :: tag
-        character(len=1, kind=c_char) :: option(*)
+        character(len=1, kind=c_char), dimension(*) :: option
         real(c_double) :: value
         integer(c_int) :: ierr
     end subroutine gmshModelMeshFieldGetNumber
@@ -2258,8 +2259,8 @@ module gmsh
     subroutine gmshModelMeshFieldSetString(tag, option, value, ierr) bind(C, name="gmshModelMeshFieldSetString")
         use, intrinsic :: iso_c_binding
         integer(c_int), value :: tag
-        character(len=1, kind=c_char) :: option(*)
-        character(len=1, kind=c_char) :: value(*)
+        character(len=1, kind=c_char), dimension(*) :: option
+        character(len=1, kind=c_char), dimension(*) :: value
         integer(c_int) :: ierr
     end subroutine gmshModelMeshFieldSetString
 
@@ -2267,8 +2268,8 @@ module gmsh
     subroutine gmshModelMeshFieldGetString(tag, option, value, ierr) bind(C, name="gmshModelMeshFieldGetString")
         use, intrinsic :: iso_c_binding
         integer(c_int), value :: tag
-        character(len=1, kind=c_char) :: option(*)
-        type(c_ptr) :: value(*)
+        character(len=1, kind=c_char), dimension(*) :: option
+        type(c_ptr), dimension(*) :: value
         integer(c_int) :: ierr
     end subroutine gmshModelMeshFieldGetString
 
@@ -2276,8 +2277,8 @@ module gmsh
     subroutine gmshModelMeshFieldSetNumbers(tag, option, value, value_n, ierr) bind(C, name="gmshModelMeshFieldSetNumbers")
         use, intrinsic :: iso_c_binding
         integer(c_int), value :: tag
-        character(len=1, kind=c_char) :: option(*)
-        real(c_double) :: value(*)
+        character(len=1, kind=c_char), dimension(*) :: option
+        real(c_double), dimension(*) :: value
         integer(c_size_t), value :: value_n
         integer(c_int) :: ierr
     end subroutine gmshModelMeshFieldSetNumbers
@@ -2286,7 +2287,7 @@ module gmsh
     subroutine gmshModelMeshFieldGetNumbers(tag, option, value, value_n, ierr) bind(C, name="gmshModelMeshFieldGetNumbers")
         use, intrinsic :: iso_c_binding
         integer(c_int), value :: tag
-        character(len=1, kind=c_char) :: option(*)
+        character(len=1, kind=c_char), dimension(*) :: option
         type(c_ptr), intent(out) :: value
         integer(c_size_t) :: value_n
         integer(c_int) :: ierr
@@ -2383,7 +2384,7 @@ module gmsh
     function gmshModelGeoAddSpline(pointTags, pointTags_n, tag, ierr) bind(C, name="gmshModelGeoAddSpline")
         use, intrinsic :: iso_c_binding
         integer(c_int) :: gmshModelGeoAddSpline
-        integer(c_int) :: pointTags(*)
+        integer(c_int), dimension(*) :: pointTags
         integer(c_size_t), value :: pointTags_n
         integer(c_int), value :: tag
         integer(c_int) :: ierr
@@ -2397,7 +2398,7 @@ module gmsh
     function gmshModelGeoAddBSpline(pointTags, pointTags_n, tag, ierr) bind(C, name="gmshModelGeoAddBSpline")
         use, intrinsic :: iso_c_binding
         integer(c_int) :: gmshModelGeoAddBSpline
-        integer(c_int) :: pointTags(*)
+        integer(c_int), dimension(*) :: pointTags
         integer(c_size_t), value :: pointTags_n
         integer(c_int), value :: tag
         integer(c_int) :: ierr
@@ -2409,7 +2410,7 @@ module gmsh
     function gmshModelGeoAddBezier(pointTags, pointTags_n, tag, ierr) bind(C, name="gmshModelGeoAddBezier")
         use, intrinsic :: iso_c_binding
         integer(c_int) :: gmshModelGeoAddBezier
-        integer(c_int) :: pointTags(*)
+        integer(c_int), dimension(*) :: pointTags
         integer(c_size_t), value :: pointTags_n
         integer(c_int), value :: tag
         integer(c_int) :: ierr
@@ -2422,7 +2423,7 @@ module gmsh
     function gmshModelGeoAddPolyline(pointTags, pointTags_n, tag, ierr) bind(C, name="gmshModelGeoAddPolyline")
         use, intrinsic :: iso_c_binding
         integer(c_int) :: gmshModelGeoAddPolyline
-        integer(c_int) :: pointTags(*)
+        integer(c_int), dimension(*) :: pointTags
         integer(c_size_t), value :: pointTags_n
         integer(c_int), value :: tag
         integer(c_int) :: ierr
@@ -2436,7 +2437,7 @@ module gmsh
     function gmshModelGeoAddCompoundSpline(curveTags, curveTags_n, numIntervals, tag, ierr) bind(C, name="gmshModelGeoAddCompoundSpline")
         use, intrinsic :: iso_c_binding
         integer(c_int) :: gmshModelGeoAddCompoundSpline
-        integer(c_int) :: curveTags(*)
+        integer(c_int), dimension(*) :: curveTags
         integer(c_size_t), value :: curveTags_n
         integer(c_int), value :: numIntervals
         integer(c_int), value :: tag
@@ -2451,7 +2452,7 @@ module gmsh
     function gmshModelGeoAddCompoundBSpline(curveTags, curveTags_n, numIntervals, tag, ierr) bind(C, name="gmshModelGeoAddCompoundBSpline")
         use, intrinsic :: iso_c_binding
         integer(c_int) :: gmshModelGeoAddCompoundBSpline
-        integer(c_int) :: curveTags(*)
+        integer(c_int), dimension(*) :: curveTags
         integer(c_size_t), value :: curveTags_n
         integer(c_int), value :: numIntervals
         integer(c_int), value :: tag
@@ -2468,7 +2469,7 @@ module gmsh
     function gmshModelGeoAddCurveLoop(curveTags, curveTags_n, tag, reorient, ierr) bind(C, name="gmshModelGeoAddCurveLoop")
         use, intrinsic :: iso_c_binding
         integer(c_int) :: gmshModelGeoAddCurveLoop
-        integer(c_int) :: curveTags(*)
+        integer(c_int), dimension(*) :: curveTags
         integer(c_size_t), value :: curveTags_n
         integer(c_int), value :: tag
         integer(c_int), value :: reorient
@@ -2479,7 +2480,7 @@ module gmsh
     !! `curveTags'. Return the `tags' of found curve loops, if any.
     subroutine gmshModelGeoAddCurveLoops(curveTags, curveTags_n, tags, tags_n, ierr) bind(C, name="gmshModelGeoAddCurveLoops")
         use, intrinsic :: iso_c_binding
-        integer(c_int) :: curveTags(*)
+        integer(c_int), dimension(*) :: curveTags
         integer(c_size_t), value :: curveTags_n
         type(c_ptr), intent(out) :: tags
         integer(c_size_t) :: tags_n
@@ -2494,7 +2495,7 @@ module gmsh
     function gmshModelGeoAddPlaneSurface(wireTags, wireTags_n, tag, ierr) bind(C, name="gmshModelGeoAddPlaneSurface")
         use, intrinsic :: iso_c_binding
         integer(c_int) :: gmshModelGeoAddPlaneSurface
-        integer(c_int) :: wireTags(*)
+        integer(c_int), dimension(*) :: wireTags
         integer(c_size_t), value :: wireTags_n
         integer(c_int), value :: tag
         integer(c_int) :: ierr
@@ -2508,7 +2509,7 @@ module gmsh
     function gmshModelGeoAddSurfaceFilling(wireTags, wireTags_n, tag, sphereCenterTag, ierr) bind(C, name="gmshModelGeoAddSurfaceFilling")
         use, intrinsic :: iso_c_binding
         integer(c_int) :: gmshModelGeoAddSurfaceFilling
-        integer(c_int) :: wireTags(*)
+        integer(c_int), dimension(*) :: wireTags
         integer(c_size_t), value :: wireTags_n
         integer(c_int), value :: tag
         integer(c_int), value :: sphereCenterTag
@@ -2521,7 +2522,7 @@ module gmsh
     function gmshModelGeoAddSurfaceLoop(surfaceTags, surfaceTags_n, tag, ierr) bind(C, name="gmshModelGeoAddSurfaceLoop")
         use, intrinsic :: iso_c_binding
         integer(c_int) :: gmshModelGeoAddSurfaceLoop
-        integer(c_int) :: surfaceTags(*)
+        integer(c_int), dimension(*) :: surfaceTags
         integer(c_size_t), value :: surfaceTags_n
         integer(c_int), value :: tag
         integer(c_int) :: ierr
@@ -2535,7 +2536,7 @@ module gmsh
     function gmshModelGeoAddVolume(shellTags, shellTags_n, tag, ierr) bind(C, name="gmshModelGeoAddVolume")
         use, intrinsic :: iso_c_binding
         integer(c_int) :: gmshModelGeoAddVolume
-        integer(c_int) :: shellTags(*)
+        integer(c_int), dimension(*) :: shellTags
         integer(c_size_t), value :: shellTags_n
         integer(c_int), value :: tag
         integer(c_int) :: ierr
@@ -2551,10 +2552,10 @@ module gmsh
     function gmshModelGeoAddGeometry(geometry, numbers, numbers_n, strings, strings_n, tag, ierr) bind(C, name="gmshModelGeoAddGeometry")
         use, intrinsic :: iso_c_binding
         integer(c_int) :: gmshModelGeoAddGeometry
-        character(len=1, kind=c_char) :: geometry(*)
-        real(c_double) :: numbers(*)
+        character(len=1, kind=c_char), dimension(*) :: geometry
+        real(c_double), dimension(*) :: numbers
         integer(c_size_t), value :: numbers_n
-        type(c_ptr) :: strings(*)
+        type(c_ptr), dimension(*) :: strings
         integer(c_size_t), value :: strings_n
         integer(c_int), value :: tag
         integer(c_int) :: ierr
@@ -2586,16 +2587,16 @@ module gmsh
     !! layers.
     subroutine gmshModelGeoExtrude(dimTags, dimTags_n, dx, dy, dz, outDimTags, outDimTags_n, numElements, numElements_n, heights, heights_n, recombine, ierr) bind(C, name="gmshModelGeoExtrude")
         use, intrinsic :: iso_c_binding
-        integer(c_int) :: dimTags(*)
+        integer(c_int), dimension(*) :: dimTags
         integer(c_size_t), value :: dimTags_n
         real(c_double), value :: dx
         real(c_double), value :: dy
         real(c_double), value :: dz
         type(c_ptr), intent(out) :: outDimTags
         integer(c_size_t) :: outDimTags_n
-        integer(c_int) :: numElements(*)
+        integer(c_int), dimension(*) :: numElements
         integer(c_size_t), value :: numElements_n
-        real(c_double) :: heights(*)
+        real(c_double), dimension(*) :: heights
         integer(c_size_t), value :: heights_n
         integer(c_int), value :: recombine
         integer(c_int) :: ierr
@@ -2612,7 +2613,7 @@ module gmsh
     !! layers.
     subroutine gmshModelGeoRevolve(dimTags, dimTags_n, x, y, z, ax, ay, az, angle, outDimTags, outDimTags_n, numElements, numElements_n, heights, heights_n, recombine, ierr) bind(C, name="gmshModelGeoRevolve")
         use, intrinsic :: iso_c_binding
-        integer(c_int) :: dimTags(*)
+        integer(c_int), dimension(*) :: dimTags
         integer(c_size_t), value :: dimTags_n
         real(c_double), value :: x
         real(c_double), value :: y
@@ -2623,9 +2624,9 @@ module gmsh
         real(c_double), value :: angle
         type(c_ptr), intent(out) :: outDimTags
         integer(c_size_t) :: outDimTags_n
-        integer(c_int) :: numElements(*)
+        integer(c_int), dimension(*) :: numElements
         integer(c_size_t), value :: numElements_n
-        real(c_double) :: heights(*)
+        real(c_double), dimension(*) :: heights
         integer(c_size_t), value :: heights_n
         integer(c_int), value :: recombine
         integer(c_int) :: ierr
@@ -2642,7 +2643,7 @@ module gmsh
     !! `recombine' is set, recombine the mesh in the layers.
     subroutine gmshModelGeoTwist(dimTags, dimTags_n, x, y, z, dx, dy, dz, ax, ay, az, angle, outDimTags, outDimTags_n, numElements, numElements_n, heights, heights_n, recombine, ierr) bind(C, name="gmshModelGeoTwist")
         use, intrinsic :: iso_c_binding
-        integer(c_int) :: dimTags(*)
+        integer(c_int), dimension(*) :: dimTags
         integer(c_size_t), value :: dimTags_n
         real(c_double), value :: x
         real(c_double), value :: y
@@ -2656,9 +2657,9 @@ module gmsh
         real(c_double), value :: angle
         type(c_ptr), intent(out) :: outDimTags
         integer(c_size_t) :: outDimTags_n
-        integer(c_int) :: numElements(*)
+        integer(c_int), dimension(*) :: numElements
         integer(c_size_t), value :: numElements_n
-        real(c_double) :: heights(*)
+        real(c_double), dimension(*) :: heights
         integer(c_size_t), value :: heights_n
         integer(c_int), value :: recombine
         integer(c_int) :: ierr
@@ -2675,13 +2676,13 @@ module gmsh
     !! vector field) or scale the normals (if the view is scalar).
     subroutine gmshModelGeoExtrudeBoundaryLayer(dimTags, dimTags_n, outDimTags, outDimTags_n, numElements, numElements_n, heights, heights_n, recombine, second, viewIndex, ierr) bind(C, name="gmshModelGeoExtrudeBoundaryLayer")
         use, intrinsic :: iso_c_binding
-        integer(c_int) :: dimTags(*)
+        integer(c_int), dimension(*) :: dimTags
         integer(c_size_t), value :: dimTags_n
         type(c_ptr), intent(out) :: outDimTags
         integer(c_size_t) :: outDimTags_n
-        integer(c_int) :: numElements(*)
+        integer(c_int), dimension(*) :: numElements
         integer(c_size_t), value :: numElements_n
-        real(c_double) :: heights(*)
+        real(c_double), dimension(*) :: heights
         integer(c_size_t), value :: heights_n
         integer(c_int), value :: recombine
         integer(c_int), value :: second
@@ -2693,7 +2694,7 @@ module gmsh
     !! (`dx', `dy', `dz').
     subroutine gmshModelGeoTranslate(dimTags, dimTags_n, dx, dy, dz, ierr) bind(C, name="gmshModelGeoTranslate")
         use, intrinsic :: iso_c_binding
-        integer(c_int) :: dimTags(*)
+        integer(c_int), dimension(*) :: dimTags
         integer(c_size_t), value :: dimTags_n
         real(c_double), value :: dx
         real(c_double), value :: dy
@@ -2706,7 +2707,7 @@ module gmsh
     !! and the direction (`ax', `ay', `az').
     subroutine gmshModelGeoRotate(dimTags, dimTags_n, x, y, z, ax, ay, az, angle, ierr) bind(C, name="gmshModelGeoRotate")
         use, intrinsic :: iso_c_binding
-        integer(c_int) :: dimTags(*)
+        integer(c_int), dimension(*) :: dimTags
         integer(c_size_t), value :: dimTags_n
         real(c_double), value :: x
         real(c_double), value :: y
@@ -2723,7 +2724,7 @@ module gmsh
     !! the center of the homothetic transformation.
     subroutine gmshModelGeoDilate(dimTags, dimTags_n, x, y, z, a, b, c, ierr) bind(C, name="gmshModelGeoDilate")
         use, intrinsic :: iso_c_binding
-        integer(c_int) :: dimTags(*)
+        integer(c_int), dimension(*) :: dimTags
         integer(c_size_t), value :: dimTags_n
         real(c_double), value :: x
         real(c_double), value :: y
@@ -2738,7 +2739,7 @@ module gmsh
     !! respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' = 0.
     subroutine gmshModelGeoMirror(dimTags, dimTags_n, a, b, c, d, ierr) bind(C, name="gmshModelGeoMirror")
         use, intrinsic :: iso_c_binding
-        integer(c_int) :: dimTags(*)
+        integer(c_int), dimension(*) :: dimTags
         integer(c_size_t), value :: dimTags_n
         real(c_double), value :: a
         real(c_double), value :: b
@@ -2753,7 +2754,7 @@ module gmsh
     !! release.)
     subroutine gmshModelGeoSymmetrize(dimTags, dimTags_n, a, b, c, d, ierr) bind(C, name="gmshModelGeoSymmetrize")
         use, intrinsic :: iso_c_binding
-        integer(c_int) :: dimTags(*)
+        integer(c_int), dimension(*) :: dimTags
         integer(c_size_t), value :: dimTags_n
         real(c_double), value :: a
         real(c_double), value :: b
@@ -2766,7 +2767,7 @@ module gmsh
     !! entities are returned in `outDimTags'.
     subroutine gmshModelGeoCopy(dimTags, dimTags_n, outDimTags, outDimTags_n, ierr) bind(C, name="gmshModelGeoCopy")
         use, intrinsic :: iso_c_binding
-        integer(c_int) :: dimTags(*)
+        integer(c_int), dimension(*) :: dimTags
         integer(c_size_t), value :: dimTags_n
         type(c_ptr), intent(out) :: outDimTags
         integer(c_size_t) :: outDimTags_n
@@ -2779,7 +2780,7 @@ module gmsh
     !! dimension 0.
     subroutine gmshModelGeoRemove(dimTags, dimTags_n, recursive, ierr) bind(C, name="gmshModelGeoRemove")
         use, intrinsic :: iso_c_binding
-        integer(c_int) :: dimTags(*)
+        integer(c_int), dimension(*) :: dimTags
         integer(c_size_t), value :: dimTags_n
         integer(c_int), value :: recursive
         integer(c_int) :: ierr
@@ -2799,7 +2800,7 @@ module gmsh
     subroutine gmshModelGeoSplitCurve(tag, pointTags, pointTags_n, curveTags, curveTags_n, ierr) bind(C, name="gmshModelGeoSplitCurve")
         use, intrinsic :: iso_c_binding
         integer(c_int), value :: tag
-        integer(c_int) :: pointTags(*)
+        integer(c_int), dimension(*) :: pointTags
         integer(c_size_t), value :: pointTags_n
         type(c_ptr), intent(out) :: curveTags
         integer(c_size_t) :: curveTags_n
@@ -2832,10 +2833,10 @@ module gmsh
         use, intrinsic :: iso_c_binding
         integer(c_int) :: gmshModelGeoAddPhysicalGroup
         integer(c_int), value :: dim
-        integer(c_int) :: tags(*)
+        integer(c_int), dimension(*) :: tags
         integer(c_size_t), value :: tags_n
         integer(c_int), value :: tag
-        character(len=1, kind=c_char) :: name(*)
+        character(len=1, kind=c_char), dimension(*) :: name
         integer(c_int) :: ierr
     end function gmshModelGeoAddPhysicalGroup
 
@@ -2843,7 +2844,7 @@ module gmsh
     !! If `dimTags' is empty, remove all groups.
     subroutine gmshModelGeoRemovePhysicalGroups(dimTags, dimTags_n, ierr) bind(C, name="gmshModelGeoRemovePhysicalGroups")
         use, intrinsic :: iso_c_binding
-        integer(c_int) :: dimTags(*)
+        integer(c_int), dimension(*) :: dimTags
         integer(c_size_t), value :: dimTags_n
         integer(c_int) :: ierr
     end subroutine gmshModelGeoRemovePhysicalGroups
@@ -2864,7 +2865,7 @@ module gmsh
     !! handled.
     subroutine gmshModelGeoMeshSetSize(dimTags, dimTags_n, size, ierr) bind(C, name="gmshModelGeoMeshSetSize")
         use, intrinsic :: iso_c_binding
-        integer(c_int) :: dimTags(*)
+        integer(c_int), dimension(*) :: dimTags
         integer(c_size_t), value :: dimTags_n
         real(c_double), value :: size
         integer(c_int) :: ierr
@@ -2879,7 +2880,7 @@ module gmsh
         use, intrinsic :: iso_c_binding
         integer(c_int), value :: tag
         integer(c_int), value :: nPoints
-        character(len=1, kind=c_char) :: meshType(*)
+        character(len=1, kind=c_char), dimension(*) :: meshType
         real(c_double), value :: coef
         integer(c_int) :: ierr
     end subroutine gmshModelGeoMeshSetTransfiniteCurve
@@ -2894,8 +2895,8 @@ module gmsh
     subroutine gmshModelGeoMeshSetTransfiniteSurface(tag, arrangement, cornerTags, cornerTags_n, ierr) bind(C, name="gmshModelGeoMeshSetTransfiniteSurface")
         use, intrinsic :: iso_c_binding
         integer(c_int), value :: tag
-        character(len=1, kind=c_char) :: arrangement(*)
-        integer(c_int) :: cornerTags(*)
+        character(len=1, kind=c_char), dimension(*) :: arrangement
+        integer(c_int), dimension(*) :: cornerTags
         integer(c_size_t), value :: cornerTags_n
         integer(c_int) :: ierr
     end subroutine gmshModelGeoMeshSetTransfiniteSurface
@@ -2906,7 +2907,7 @@ module gmsh
     subroutine gmshModelGeoMeshSetTransfiniteVolume(tag, cornerTags, cornerTags_n, ierr) bind(C, name="gmshModelGeoMeshSetTransfiniteVolume")
         use, intrinsic :: iso_c_binding
         integer(c_int), value :: tag
-        integer(c_int) :: cornerTags(*)
+        integer(c_int), dimension(*) :: cornerTags
         integer(c_size_t), value :: cornerTags_n
         integer(c_int) :: ierr
     end subroutine gmshModelGeoMeshSetTransfiniteVolume
@@ -3031,9 +3032,9 @@ module gmsh
         integer(c_int), value :: tag
         real(c_double), value :: angle1
         real(c_double), value :: angle2
-        real(c_double) :: zAxis(*)
+        real(c_double), dimension(*) :: zAxis
         integer(c_size_t), value :: zAxis_n
-        real(c_double) :: xAxis(*)
+        real(c_double), dimension(*) :: xAxis
         integer(c_size_t), value :: xAxis_n
         integer(c_int) :: ierr
     end function gmshModelOccAddCircle
@@ -3074,9 +3075,9 @@ module gmsh
         integer(c_int), value :: tag
         real(c_double), value :: angle1
         real(c_double), value :: angle2
-        real(c_double) :: zAxis(*)
+        real(c_double), dimension(*) :: zAxis
         integer(c_size_t), value :: zAxis_n
-        real(c_double) :: xAxis(*)
+        real(c_double), dimension(*) :: xAxis
         integer(c_size_t), value :: xAxis_n
         integer(c_int) :: ierr
     end function gmshModelOccAddEllipse
@@ -3089,7 +3090,7 @@ module gmsh
     function gmshModelOccAddSpline(pointTags, pointTags_n, tag, ierr) bind(C, name="gmshModelOccAddSpline")
         use, intrinsic :: iso_c_binding
         integer(c_int) :: gmshModelOccAddSpline
-        integer(c_int) :: pointTags(*)
+        integer(c_int), dimension(*) :: pointTags
         integer(c_size_t), value :: pointTags_n
         integer(c_int), value :: tag
         integer(c_int) :: ierr
@@ -3104,15 +3105,15 @@ module gmsh
     function gmshModelOccAddBSpline(pointTags, pointTags_n, tag, degree, weights, weights_n, knots, knots_n, multiplicities, multiplicities_n, ierr) bind(C, name="gmshModelOccAddBSpline")
         use, intrinsic :: iso_c_binding
         integer(c_int) :: gmshModelOccAddBSpline
-        integer(c_int) :: pointTags(*)
+        integer(c_int), dimension(*) :: pointTags
         integer(c_size_t), value :: pointTags_n
         integer(c_int), value :: tag
         integer(c_int), value :: degree
-        real(c_double) :: weights(*)
+        real(c_double), dimension(*) :: weights
         integer(c_size_t), value :: weights_n
-        real(c_double) :: knots(*)
+        real(c_double), dimension(*) :: knots
         integer(c_size_t), value :: knots_n
-        integer(c_int) :: multiplicities(*)
+        integer(c_int), dimension(*) :: multiplicities
         integer(c_size_t), value :: multiplicities_n
         integer(c_int) :: ierr
     end function gmshModelOccAddBSpline
@@ -3123,7 +3124,7 @@ module gmsh
     function gmshModelOccAddBezier(pointTags, pointTags_n, tag, ierr) bind(C, name="gmshModelOccAddBezier")
         use, intrinsic :: iso_c_binding
         integer(c_int) :: gmshModelOccAddBezier
-        integer(c_int) :: pointTags(*)
+        integer(c_int), dimension(*) :: pointTags
         integer(c_size_t), value :: pointTags_n
         integer(c_int), value :: tag
         integer(c_int) :: ierr
@@ -3137,7 +3138,7 @@ module gmsh
     function gmshModelOccAddWire(curveTags, curveTags_n, tag, checkClosed, ierr) bind(C, name="gmshModelOccAddWire")
         use, intrinsic :: iso_c_binding
         integer(c_int) :: gmshModelOccAddWire
-        integer(c_int) :: curveTags(*)
+        integer(c_int), dimension(*) :: curveTags
         integer(c_size_t), value :: curveTags_n
         integer(c_int), value :: tag
         integer(c_int), value :: checkClosed
@@ -3156,7 +3157,7 @@ module gmsh
     function gmshModelOccAddCurveLoop(curveTags, curveTags_n, tag, ierr) bind(C, name="gmshModelOccAddCurveLoop")
         use, intrinsic :: iso_c_binding
         integer(c_int) :: gmshModelOccAddCurveLoop
-        integer(c_int) :: curveTags(*)
+        integer(c_int), dimension(*) :: curveTags
         integer(c_size_t), value :: curveTags_n
         integer(c_int), value :: tag
         integer(c_int) :: ierr
@@ -3196,9 +3197,9 @@ module gmsh
         real(c_double), value :: rx
         real(c_double), value :: ry
         integer(c_int), value :: tag
-        real(c_double) :: zAxis(*)
+        real(c_double), dimension(*) :: zAxis
         integer(c_size_t), value :: zAxis_n
-        real(c_double) :: xAxis(*)
+        real(c_double), dimension(*) :: xAxis
         integer(c_size_t), value :: xAxis_n
         integer(c_int) :: ierr
     end function gmshModelOccAddDisk
@@ -3211,7 +3212,7 @@ module gmsh
     function gmshModelOccAddPlaneSurface(wireTags, wireTags_n, tag, ierr) bind(C, name="gmshModelOccAddPlaneSurface")
         use, intrinsic :: iso_c_binding
         integer(c_int) :: gmshModelOccAddPlaneSurface
-        integer(c_int) :: wireTags(*)
+        integer(c_int), dimension(*) :: wireTags
         integer(c_size_t), value :: wireTags_n
         integer(c_int), value :: tag
         integer(c_int) :: ierr
@@ -3240,7 +3241,7 @@ module gmsh
         integer(c_int) :: gmshModelOccAddSurfaceFilling
         integer(c_int), value :: wireTag
         integer(c_int), value :: tag
-        integer(c_int) :: pointTags(*)
+        integer(c_int), dimension(*) :: pointTags
         integer(c_size_t), value :: pointTags_n
         integer(c_int), value :: degree
         integer(c_int), value :: numPointsOnCurves
@@ -3267,7 +3268,7 @@ module gmsh
         integer(c_int) :: gmshModelOccAddBSplineFilling
         integer(c_int), value :: wireTag
         integer(c_int), value :: tag
-        character(len=1, kind=c_char) :: type(*)
+        character(len=1, kind=c_char), dimension(*) :: type
         integer(c_int) :: ierr
     end function gmshModelOccAddBSplineFilling
 
@@ -3283,7 +3284,7 @@ module gmsh
         integer(c_int) :: gmshModelOccAddBezierFilling
         integer(c_int), value :: wireTag
         integer(c_int), value :: tag
-        character(len=1, kind=c_char) :: type(*)
+        character(len=1, kind=c_char), dimension(*) :: type
         integer(c_int) :: ierr
     end function gmshModelOccAddBezierFilling
 
@@ -3301,23 +3302,23 @@ module gmsh
     function gmshModelOccAddBSplineSurface(pointTags, pointTags_n, numPointsU, tag, degreeU, degreeV, weights, weights_n, knotsU, knotsU_n, knotsV, knotsV_n, multiplicitiesU, multiplicitiesU_n, multiplicitiesV, multiplicitiesV_n, wireTags, wireTags_n, wire3D, ierr) bind(C, name="gmshModelOccAddBSplineSurface")
         use, intrinsic :: iso_c_binding
         integer(c_int) :: gmshModelOccAddBSplineSurface
-        integer(c_int) :: pointTags(*)
+        integer(c_int), dimension(*) :: pointTags
         integer(c_size_t), value :: pointTags_n
         integer(c_int), value :: numPointsU
         integer(c_int), value :: tag
         integer(c_int), value :: degreeU
         integer(c_int), value :: degreeV
-        real(c_double) :: weights(*)
+        real(c_double), dimension(*) :: weights
         integer(c_size_t), value :: weights_n
-        real(c_double) :: knotsU(*)
+        real(c_double), dimension(*) :: knotsU
         integer(c_size_t), value :: knotsU_n
-        real(c_double) :: knotsV(*)
+        real(c_double), dimension(*) :: knotsV
         integer(c_size_t), value :: knotsV_n
-        integer(c_int) :: multiplicitiesU(*)
+        integer(c_int), dimension(*) :: multiplicitiesU
         integer(c_size_t), value :: multiplicitiesU_n
-        integer(c_int) :: multiplicitiesV(*)
+        integer(c_int), dimension(*) :: multiplicitiesV
         integer(c_size_t), value :: multiplicitiesV_n
-        integer(c_int) :: wireTags(*)
+        integer(c_int), dimension(*) :: wireTags
         integer(c_size_t), value :: wireTags_n
         integer(c_int), value :: wire3D
         integer(c_int) :: ierr
@@ -3335,11 +3336,11 @@ module gmsh
     function gmshModelOccAddBezierSurface(pointTags, pointTags_n, numPointsU, tag, wireTags, wireTags_n, wire3D, ierr) bind(C, name="gmshModelOccAddBezierSurface")
         use, intrinsic :: iso_c_binding
         integer(c_int) :: gmshModelOccAddBezierSurface
-        integer(c_int) :: pointTags(*)
+        integer(c_int), dimension(*) :: pointTags
         integer(c_size_t), value :: pointTags_n
         integer(c_int), value :: numPointsU
         integer(c_int), value :: tag
-        integer(c_int) :: wireTags(*)
+        integer(c_int), dimension(*) :: wireTags
         integer(c_size_t), value :: wireTags_n
         integer(c_int), value :: wire3D
         integer(c_int) :: ierr
@@ -3356,7 +3357,7 @@ module gmsh
         use, intrinsic :: iso_c_binding
         integer(c_int) :: gmshModelOccAddTrimmedSurface
         integer(c_int), value :: surfaceTag
-        integer(c_int) :: wireTags(*)
+        integer(c_int), dimension(*) :: wireTags
         integer(c_size_t), value :: wireTags_n
         integer(c_int), value :: wire3D
         integer(c_int), value :: tag
@@ -3371,7 +3372,7 @@ module gmsh
     function gmshModelOccAddSurfaceLoop(surfaceTags, surfaceTags_n, tag, sewing, ierr) bind(C, name="gmshModelOccAddSurfaceLoop")
         use, intrinsic :: iso_c_binding
         integer(c_int) :: gmshModelOccAddSurfaceLoop
-        integer(c_int) :: surfaceTags(*)
+        integer(c_int), dimension(*) :: surfaceTags
         integer(c_size_t), value :: surfaceTags_n
         integer(c_int), value :: tag
         integer(c_int), value :: sewing
@@ -3386,7 +3387,7 @@ module gmsh
     function gmshModelOccAddVolume(shellTags, shellTags_n, tag, ierr) bind(C, name="gmshModelOccAddVolume")
         use, intrinsic :: iso_c_binding
         integer(c_int) :: gmshModelOccAddVolume
-        integer(c_int) :: shellTags(*)
+        integer(c_int), dimension(*) :: shellTags
         integer(c_size_t), value :: shellTags_n
         integer(c_int), value :: tag
         integer(c_int) :: ierr
@@ -3490,7 +3491,7 @@ module gmsh
         real(c_double), value :: dz
         integer(c_int), value :: tag
         real(c_double), value :: ltx
-        real(c_double) :: zAxis(*)
+        real(c_double), dimension(*) :: zAxis
         integer(c_size_t), value :: zAxis_n
         integer(c_int) :: ierr
     end function gmshModelOccAddWedge
@@ -3511,7 +3512,7 @@ module gmsh
         real(c_double), value :: r2
         integer(c_int), value :: tag
         real(c_double), value :: angle
-        real(c_double) :: zAxis(*)
+        real(c_double), dimension(*) :: zAxis
         integer(c_size_t), value :: zAxis_n
         integer(c_int) :: ierr
     end function gmshModelOccAddTorus
@@ -3525,7 +3526,7 @@ module gmsh
     !! positive, set the maximal degree of resulting surface.
     subroutine gmshModelOccAddThruSections(wireTags, wireTags_n, outDimTags, outDimTags_n, tag, makeSolid, makeRuled, maxDegree, ierr) bind(C, name="gmshModelOccAddThruSections")
         use, intrinsic :: iso_c_binding
-        integer(c_int) :: wireTags(*)
+        integer(c_int), dimension(*) :: wireTags
         integer(c_size_t), value :: wireTags_n
         type(c_ptr), intent(out) :: outDimTags
         integer(c_size_t) :: outDimTags_n
@@ -3545,7 +3546,7 @@ module gmsh
     subroutine gmshModelOccAddThickSolid(volumeTag, excludeSurfaceTags, excludeSurfaceTags_n, offset, outDimTags, outDimTags_n, tag, ierr) bind(C, name="gmshModelOccAddThickSolid")
         use, intrinsic :: iso_c_binding
         integer(c_int), value :: volumeTag
-        integer(c_int) :: excludeSurfaceTags(*)
+        integer(c_int), dimension(*) :: excludeSurfaceTags
         integer(c_size_t), value :: excludeSurfaceTags_n
         real(c_double), value :: offset
         type(c_ptr), intent(out) :: outDimTags
@@ -3563,16 +3564,16 @@ module gmsh
     !! layers.
     subroutine gmshModelOccExtrude(dimTags, dimTags_n, dx, dy, dz, outDimTags, outDimTags_n, numElements, numElements_n, heights, heights_n, recombine, ierr) bind(C, name="gmshModelOccExtrude")
         use, intrinsic :: iso_c_binding
-        integer(c_int) :: dimTags(*)
+        integer(c_int), dimension(*) :: dimTags
         integer(c_size_t), value :: dimTags_n
         real(c_double), value :: dx
         real(c_double), value :: dy
         real(c_double), value :: dz
         type(c_ptr), intent(out) :: outDimTags
         integer(c_size_t) :: outDimTags_n
-        integer(c_int) :: numElements(*)
+        integer(c_int), dimension(*) :: numElements
         integer(c_size_t), value :: numElements_n
-        real(c_double) :: heights(*)
+        real(c_double), dimension(*) :: heights
         integer(c_size_t), value :: heights_n
         integer(c_int), value :: recombine
         integer(c_int) :: ierr
@@ -3589,7 +3590,7 @@ module gmsh
     !! mesh in the layers.
     subroutine gmshModelOccRevolve(dimTags, dimTags_n, x, y, z, ax, ay, az, angle, outDimTags, outDimTags_n, numElements, numElements_n, heights, heights_n, recombine, ierr) bind(C, name="gmshModelOccRevolve")
         use, intrinsic :: iso_c_binding
-        integer(c_int) :: dimTags(*)
+        integer(c_int), dimension(*) :: dimTags
         integer(c_size_t), value :: dimTags_n
         real(c_double), value :: x
         real(c_double), value :: y
@@ -3600,9 +3601,9 @@ module gmsh
         real(c_double), value :: angle
         type(c_ptr), intent(out) :: outDimTags
         integer(c_size_t) :: outDimTags_n
-        integer(c_int) :: numElements(*)
+        integer(c_int), dimension(*) :: numElements
         integer(c_size_t), value :: numElements_n
-        real(c_double) :: heights(*)
+        real(c_double), dimension(*) :: heights
         integer(c_size_t), value :: heights_n
         integer(c_int), value :: recombine
         integer(c_int) :: ierr
@@ -3616,12 +3617,12 @@ module gmsh
     !! provided, "DiscreteTrihedron" is assumed. Return the pipe in `outDimTags'.
     subroutine gmshModelOccAddPipe(dimTags, dimTags_n, wireTag, outDimTags, outDimTags_n, trihedron, ierr) bind(C, name="gmshModelOccAddPipe")
         use, intrinsic :: iso_c_binding
-        integer(c_int) :: dimTags(*)
+        integer(c_int), dimension(*) :: dimTags
         integer(c_size_t), value :: dimTags_n
         integer(c_int), value :: wireTag
         type(c_ptr), intent(out) :: outDimTags
         integer(c_size_t) :: outDimTags_n
-        character(len=1, kind=c_char) :: trihedron(*)
+        character(len=1, kind=c_char), dimension(*) :: trihedron
         integer(c_int) :: ierr
     end subroutine gmshModelOccAddPipe
 
@@ -3633,11 +3634,11 @@ module gmsh
     !! `removeVolume' is set.
     subroutine gmshModelOccFillet(volumeTags, volumeTags_n, curveTags, curveTags_n, radii, radii_n, outDimTags, outDimTags_n, removeVolume, ierr) bind(C, name="gmshModelOccFillet")
         use, intrinsic :: iso_c_binding
-        integer(c_int) :: volumeTags(*)
+        integer(c_int), dimension(*) :: volumeTags
         integer(c_size_t), value :: volumeTags_n
-        integer(c_int) :: curveTags(*)
+        integer(c_int), dimension(*) :: curveTags
         integer(c_size_t), value :: curveTags_n
-        real(c_double) :: radii(*)
+        real(c_double), dimension(*) :: radii
         integer(c_size_t), value :: radii_n
         type(c_ptr), intent(out) :: outDimTags
         integer(c_size_t) :: outDimTags_n
@@ -3655,13 +3656,13 @@ module gmsh
     !! `removeVolume' is set.
     subroutine gmshModelOccChamfer(volumeTags, volumeTags_n, curveTags, curveTags_n, surfaceTags, surfaceTags_n, distances, distances_n, outDimTags, outDimTags_n, removeVolume, ierr) bind(C, name="gmshModelOccChamfer")
         use, intrinsic :: iso_c_binding
-        integer(c_int) :: volumeTags(*)
+        integer(c_int), dimension(*) :: volumeTags
         integer(c_size_t), value :: volumeTags_n
-        integer(c_int) :: curveTags(*)
+        integer(c_int), dimension(*) :: curveTags
         integer(c_size_t), value :: curveTags_n
-        integer(c_int) :: surfaceTags(*)
+        integer(c_int), dimension(*) :: surfaceTags
         integer(c_size_t), value :: surfaceTags_n
-        real(c_double) :: distances(*)
+        real(c_double), dimension(*) :: distances
         integer(c_size_t), value :: distances_n
         type(c_ptr), intent(out) :: outDimTags
         integer(c_size_t) :: outDimTags_n
@@ -3677,15 +3678,15 @@ module gmsh
     !! `removeTool' is set.
     subroutine gmshModelOccFuse(objectDimTags, objectDimTags_n, toolDimTags, toolDimTags_n, outDimTags, outDimTags_n, outDimTagsMap, outDimTagsMap_n,outDimTagsMap_nn, tag, removeObject, removeTool, ierr) bind(C, name="gmshModelOccFuse")
         use, intrinsic :: iso_c_binding
-        integer(c_int) :: objectDimTags(*)
+        integer(c_int), dimension(*) :: objectDimTags
         integer(c_size_t), value :: objectDimTags_n
-        integer(c_int) :: toolDimTags(*)
+        integer(c_int), dimension(*) :: toolDimTags
         integer(c_size_t), value :: toolDimTags_n
         type(c_ptr), intent(out) :: outDimTags
         integer(c_size_t) :: outDimTags_n
         type(c_ptr), intent(out) :: outDimTagsMap
         type(c_ptr), intent(out) :: outDimTagsMap_n
-        integer (C_SIZE_T) ::outDimTagsMap_nn
+        integer(c_size_t) ::outDimTagsMap_nn
         integer(c_int), value :: tag
         integer(c_int), value :: removeObject
         integer(c_int), value :: removeTool
@@ -3700,15 +3701,15 @@ module gmsh
     !! if `removeTool' is set.
     subroutine gmshModelOccIntersect(objectDimTags, objectDimTags_n, toolDimTags, toolDimTags_n, outDimTags, outDimTags_n, outDimTagsMap, outDimTagsMap_n,outDimTagsMap_nn, tag, removeObject, removeTool, ierr) bind(C, name="gmshModelOccIntersect")
         use, intrinsic :: iso_c_binding
-        integer(c_int) :: objectDimTags(*)
+        integer(c_int), dimension(*) :: objectDimTags
         integer(c_size_t), value :: objectDimTags_n
-        integer(c_int) :: toolDimTags(*)
+        integer(c_int), dimension(*) :: toolDimTags
         integer(c_size_t), value :: toolDimTags_n
         type(c_ptr), intent(out) :: outDimTags
         integer(c_size_t) :: outDimTags_n
         type(c_ptr), intent(out) :: outDimTagsMap
         type(c_ptr), intent(out) :: outDimTagsMap_n
-        integer (C_SIZE_T) ::outDimTagsMap_nn
+        integer(c_size_t) ::outDimTagsMap_nn
         integer(c_int), value :: tag
         integer(c_int), value :: removeObject
         integer(c_int), value :: removeTool
@@ -3723,15 +3724,15 @@ module gmsh
     !! `removeTool' is set.
     subroutine gmshModelOccCut(objectDimTags, objectDimTags_n, toolDimTags, toolDimTags_n, outDimTags, outDimTags_n, outDimTagsMap, outDimTagsMap_n,outDimTagsMap_nn, tag, removeObject, removeTool, ierr) bind(C, name="gmshModelOccCut")
         use, intrinsic :: iso_c_binding
-        integer(c_int) :: objectDimTags(*)
+        integer(c_int), dimension(*) :: objectDimTags
         integer(c_size_t), value :: objectDimTags_n
-        integer(c_int) :: toolDimTags(*)
+        integer(c_int), dimension(*) :: toolDimTags
         integer(c_size_t), value :: toolDimTags_n
         type(c_ptr), intent(out) :: outDimTags
         integer(c_size_t) :: outDimTags_n
         type(c_ptr), intent(out) :: outDimTagsMap
         type(c_ptr), intent(out) :: outDimTagsMap_n
-        integer (C_SIZE_T) ::outDimTagsMap_nn
+        integer(c_size_t) ::outDimTagsMap_nn
         integer(c_int), value :: tag
         integer(c_int), value :: removeObject
         integer(c_int), value :: removeTool
@@ -3749,15 +3750,15 @@ module gmsh
     !! `removeObject' is set. Remove the tool if `removeTool' is set.
     subroutine gmshModelOccFragment(objectDimTags, objectDimTags_n, toolDimTags, toolDimTags_n, outDimTags, outDimTags_n, outDimTagsMap, outDimTagsMap_n,outDimTagsMap_nn, tag, removeObject, removeTool, ierr) bind(C, name="gmshModelOccFragment")
         use, intrinsic :: iso_c_binding
-        integer(c_int) :: objectDimTags(*)
+        integer(c_int), dimension(*) :: objectDimTags
         integer(c_size_t), value :: objectDimTags_n
-        integer(c_int) :: toolDimTags(*)
+        integer(c_int), dimension(*) :: toolDimTags
         integer(c_size_t), value :: toolDimTags_n
         type(c_ptr), intent(out) :: outDimTags
         integer(c_size_t) :: outDimTags_n
         type(c_ptr), intent(out) :: outDimTagsMap
         type(c_ptr), intent(out) :: outDimTagsMap_n
-        integer (C_SIZE_T) ::outDimTagsMap_nn
+        integer(c_size_t) ::outDimTagsMap_nn
         integer(c_int), value :: tag
         integer(c_int), value :: removeObject
         integer(c_int), value :: removeTool
@@ -3768,7 +3769,7 @@ module gmsh
     !! along (`dx', `dy', `dz').
     subroutine gmshModelOccTranslate(dimTags, dimTags_n, dx, dy, dz, ierr) bind(C, name="gmshModelOccTranslate")
         use, intrinsic :: iso_c_binding
-        integer(c_int) :: dimTags(*)
+        integer(c_int), dimension(*) :: dimTags
         integer(c_size_t), value :: dimTags_n
         real(c_double), value :: dx
         real(c_double), value :: dy
@@ -3781,7 +3782,7 @@ module gmsh
     !! `y', `z') and the direction (`ax', `ay', `az').
     subroutine gmshModelOccRotate(dimTags, dimTags_n, x, y, z, ax, ay, az, angle, ierr) bind(C, name="gmshModelOccRotate")
         use, intrinsic :: iso_c_binding
-        integer(c_int) :: dimTags(*)
+        integer(c_int), dimension(*) :: dimTags
         integer(c_size_t), value :: dimTags_n
         real(c_double), value :: x
         real(c_double), value :: y
@@ -3798,7 +3799,7 @@ module gmsh
     !! `z') as the center of the homothetic transformation.
     subroutine gmshModelOccDilate(dimTags, dimTags_n, x, y, z, a, b, c, ierr) bind(C, name="gmshModelOccDilate")
         use, intrinsic :: iso_c_binding
-        integer(c_int) :: dimTags(*)
+        integer(c_int), dimension(*) :: dimTags
         integer(c_size_t), value :: dimTags_n
         real(c_double), value :: x
         real(c_double), value :: y
@@ -3813,7 +3814,7 @@ module gmsh
     !! respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' = 0.
     subroutine gmshModelOccMirror(dimTags, dimTags_n, a, b, c, d, ierr) bind(C, name="gmshModelOccMirror")
         use, intrinsic :: iso_c_binding
-        integer(c_int) :: dimTags(*)
+        integer(c_int), dimension(*) :: dimTags
         integer(c_size_t), value :: dimTags_n
         real(c_double), value :: a
         real(c_double), value :: b
@@ -3827,7 +3828,7 @@ module gmsh
     !! (This is a deprecated synonym for `mirror'.)
     subroutine gmshModelOccSymmetrize(dimTags, dimTags_n, a, b, c, d, ierr) bind(C, name="gmshModelOccSymmetrize")
         use, intrinsic :: iso_c_binding
-        integer(c_int) :: dimTags(*)
+        integer(c_int), dimension(*) :: dimTags
         integer(c_size_t), value :: dimTags_n
         real(c_double), value :: a
         real(c_double), value :: b
@@ -3841,9 +3842,9 @@ module gmsh
     !! to the entities `dimTags' in the OpenCASCADE CAD representation.
     subroutine gmshModelOccAffineTransform(dimTags, dimTags_n, affineTransform, affineTransform_n, ierr) bind(C, name="gmshModelOccAffineTransform")
         use, intrinsic :: iso_c_binding
-        integer(c_int) :: dimTags(*)
+        integer(c_int), dimension(*) :: dimTags
         integer(c_size_t), value :: dimTags_n
-        real(c_double) :: affineTransform(*)
+        real(c_double), dimension(*) :: affineTransform
         integer(c_size_t), value :: affineTransform_n
         integer(c_int) :: ierr
     end subroutine gmshModelOccAffineTransform
@@ -3852,7 +3853,7 @@ module gmsh
     !! entities are returned in `outDimTags'.
     subroutine gmshModelOccCopy(dimTags, dimTags_n, outDimTags, outDimTags_n, ierr) bind(C, name="gmshModelOccCopy")
         use, intrinsic :: iso_c_binding
-        integer(c_int) :: dimTags(*)
+        integer(c_int), dimension(*) :: dimTags
         integer(c_size_t), value :: dimTags_n
         type(c_ptr), intent(out) :: outDimTags
         integer(c_size_t) :: outDimTags_n
@@ -3865,7 +3866,7 @@ module gmsh
     !! to dimension 0.
     subroutine gmshModelOccRemove(dimTags, dimTags_n, recursive, ierr) bind(C, name="gmshModelOccRemove")
         use, intrinsic :: iso_c_binding
-        integer(c_int) :: dimTags(*)
+        integer(c_int), dimension(*) :: dimTags
         integer(c_size_t), value :: dimTags_n
         integer(c_int), value :: recursive
         integer(c_int) :: ierr
@@ -3886,7 +3887,7 @@ module gmsh
         use, intrinsic :: iso_c_binding
         type(c_ptr), intent(out) :: outDimTags
         integer(c_size_t) :: outDimTags_n
-        integer(c_int) :: dimTags(*)
+        integer(c_int), dimension(*) :: dimTags
         integer(c_size_t), value :: dimTags_n
         real(c_double), value :: tolerance
         integer(c_int), value :: fixDegenerated
@@ -3900,7 +3901,7 @@ module gmsh
     !> Convert the entities `dimTags' to NURBS.
     subroutine gmshModelOccConvertToNURBS(dimTags, dimTags_n, ierr) bind(C, name="gmshModelOccConvertToNURBS")
         use, intrinsic :: iso_c_binding
-        integer(c_int) :: dimTags(*)
+        integer(c_int), dimension(*) :: dimTags
         integer(c_size_t), value :: dimTags_n
         integer(c_int) :: ierr
     end subroutine gmshModelOccConvertToNURBS
@@ -3913,11 +3914,11 @@ module gmsh
     !! "step" or "iges").
     subroutine gmshModelOccImportShapes(fileName, outDimTags, outDimTags_n, highestDimOnly, format, ierr) bind(C, name="gmshModelOccImportShapes")
         use, intrinsic :: iso_c_binding
-        character(len=1, kind=c_char) :: fileName(*)
+        character(len=1, kind=c_char), dimension(*) :: fileName
         type(c_ptr), intent(out) :: outDimTags
         integer(c_size_t) :: outDimTags_n
         integer(c_int), value :: highestDimOnly
-        character(len=1, kind=c_char) :: format(*)
+        character(len=1, kind=c_char), dimension(*) :: format
         integer(c_int) :: ierr
     end subroutine gmshModelOccImportShapes
 
@@ -3932,7 +3933,7 @@ module gmsh
     !! to undefined behavior.
     subroutine gmshModelOccImportShapesNativePointer(shape, outDimTags, outDimTags_n, highestDimOnly, ierr) bind(C, name="gmshModelOccImportShapesNativePointer")
         use, intrinsic :: iso_c_binding
-        integer(c_int) :: shape(*)
+        integer(c_int), dimension(*) :: shape
         type(c_ptr), intent(out) :: outDimTags
         integer(c_size_t) :: outDimTags_n
         integer(c_int), value :: highestDimOnly
@@ -4077,7 +4078,7 @@ module gmsh
     !! handled.
     subroutine gmshModelOccMeshSetSize(dimTags, dimTags_n, size, ierr) bind(C, name="gmshModelOccMeshSetSize")
         use, intrinsic :: iso_c_binding
-        integer(c_int) :: dimTags(*)
+        integer(c_int), dimension(*) :: dimTags
         integer(c_size_t), value :: dimTags_n
         real(c_double), value :: size
         integer(c_int) :: ierr
@@ -4089,7 +4090,7 @@ module gmsh
     function gmshViewAdd(name, tag, ierr) bind(C, name="gmshViewAdd")
         use, intrinsic :: iso_c_binding
         integer(c_int) :: gmshViewAdd
-        character(len=1, kind=c_char) :: name(*)
+        character(len=1, kind=c_char), dimension(*) :: name
         integer(c_int), value :: tag
         integer(c_int) :: ierr
     end function gmshViewAdd
@@ -4135,9 +4136,9 @@ module gmsh
         use, intrinsic :: iso_c_binding
         integer(c_int), value :: tag
         integer(c_int), value :: step
-        character(len=1, kind=c_char) :: modelName(*)
-        character(len=1, kind=c_char) :: dataType(*)
-        integer(c_size_t) :: tags(*)
+        character(len=1, kind=c_char), dimension(*) :: modelName
+        character(len=1, kind=c_char), dimension(*) :: dataType
+        integer(c_size_t), dimension(*) :: tags
         integer(c_size_t), value :: tags_n
         type(c_ptr), intent(out) :: data
         type(c_ptr), intent(out) :: data_n
@@ -4157,11 +4158,11 @@ module gmsh
         use, intrinsic :: iso_c_binding
         integer(c_int), value :: tag
         integer(c_int), value :: step
-        character(len=1, kind=c_char) :: modelName(*)
-        character(len=1, kind=c_char) :: dataType(*)
-        integer(c_size_t) :: tags(*)
+        character(len=1, kind=c_char), dimension(*) :: modelName
+        character(len=1, kind=c_char), dimension(*) :: dataType
+        integer(c_size_t), dimension(*) :: tags
         integer(c_size_t), value :: tags_n
-        real(c_double) :: data(*)
+        real(c_double), dimension(*) :: data
         integer(c_size_t), value :: data_n
         real(c_double), value :: time
         integer(c_int), value :: numComponents
@@ -4177,7 +4178,7 @@ module gmsh
         use, intrinsic :: iso_c_binding
         integer(c_int), value :: tag
         integer(c_int), value :: step
-        type(c_ptr) :: dataType(*)
+        type(c_ptr), dimension(*) :: dataType
         type(c_ptr), intent(out) :: tags
         integer(c_size_t) :: tags_n
         type (c_ptr), intent(out) :: data
@@ -4196,7 +4197,7 @@ module gmsh
         use, intrinsic :: iso_c_binding
         integer(c_int), value :: tag
         integer(c_int), value :: step
-        type(c_ptr) :: dataType(*)
+        type(c_ptr), dimension(*) :: dataType
         type(c_ptr), intent(out) :: tags
         integer(c_size_t) :: tags_n
         type(c_ptr), intent(out) :: data
@@ -4219,9 +4220,9 @@ module gmsh
     subroutine gmshViewAddListData(tag, dataType, numEle, data, data_n, ierr) bind(C, name="gmshViewAddListData")
         use, intrinsic :: iso_c_binding
         integer(c_int), value :: tag
-        character(len=1, kind=c_char) :: dataType(*)
+        character(len=1, kind=c_char), dimension(*) :: dataType
         integer(c_int), value :: numEle
-        real(c_double) :: data(*)
+        real(c_double), dimension(*) :: data
         integer(c_size_t), value :: data_n
         integer(c_int) :: ierr
     end subroutine gmshViewAddListData
@@ -4258,11 +4259,11 @@ module gmsh
     subroutine gmshViewAddListDataString(tag, coord, coord_n, data, data_n, style, style_n, ierr) bind(C, name="gmshViewAddListDataString")
         use, intrinsic :: iso_c_binding
         integer(c_int), value :: tag
-        real(c_double) :: coord(*)
+        real(c_double), dimension(*) :: coord
         integer(c_size_t), value :: coord_n
-        type(c_ptr) :: data(*)
+        type(c_ptr), dimension(*) :: data
         integer(c_size_t), value :: data_n
-        type(c_ptr) :: style(*)
+        type(c_ptr), dimension(*) :: style
         integer(c_size_t), value :: style_n
         integer(c_int) :: ierr
     end subroutine gmshViewAddListDataString
@@ -4297,16 +4298,16 @@ module gmsh
     subroutine gmshViewSetInterpolationMatrices(tag, type, d, coef, coef_n, exp, exp_n, dGeo, coefGeo, coefGeo_n, expGeo, expGeo_n, ierr) bind(C, name="gmshViewSetInterpolationMatrices")
         use, intrinsic :: iso_c_binding
         integer(c_int), value :: tag
-        character(len=1, kind=c_char) :: type(*)
+        character(len=1, kind=c_char), dimension(*) :: type
         integer(c_int), value :: d
-        real(c_double) :: coef(*)
+        real(c_double), dimension(*) :: coef
         integer(c_size_t), value :: coef_n
-        real(c_double) :: exp(*)
+        real(c_double), dimension(*) :: exp
         integer(c_size_t), value :: exp_n
         integer(c_int), value :: dGeo
-        real(c_double) :: coefGeo(*)
+        real(c_double), dimension(*) :: coefGeo
         integer(c_size_t), value :: coefGeo_n
-        real(c_double) :: expGeo(*)
+        real(c_double), dimension(*) :: expGeo
         integer(c_size_t), value :: expGeo_n
         integer(c_int) :: ierr
     end subroutine gmshViewSetInterpolationMatrices
@@ -4330,8 +4331,8 @@ module gmsh
     !! `remove' is set.
     subroutine gmshViewCombine(what, how, remove, copyOptions, ierr) bind(C, name="gmshViewCombine")
         use, intrinsic :: iso_c_binding
-        character(len=1, kind=c_char) :: what(*)
-        character(len=1, kind=c_char) :: how(*)
+        character(len=1, kind=c_char), dimension(*) :: what
+        character(len=1, kind=c_char), dimension(*) :: how
         integer(c_int), value :: remove
         integer(c_int), value :: copyOptions
         integer(c_int) :: ierr
@@ -4363,11 +4364,11 @@ module gmsh
         integer(c_int), value :: numComp
         integer(c_int), value :: gradient
         real(c_double), value :: distanceMax
-        real(c_double) :: xElemCoord(*)
+        real(c_double), dimension(*) :: xElemCoord
         integer(c_size_t), value :: xElemCoord_n
-        real(c_double) :: yElemCoord(*)
+        real(c_double), dimension(*) :: yElemCoord
         integer(c_size_t), value :: yElemCoord_n
-        real(c_double) :: zElemCoord(*)
+        real(c_double), dimension(*) :: zElemCoord
         integer(c_size_t), value :: zElemCoord_n
         integer(c_int), value :: dim
         integer(c_int) :: ierr
@@ -4378,7 +4379,7 @@ module gmsh
     subroutine gmshViewWrite(tag, fileName, append, ierr) bind(C, name="gmshViewWrite")
         use, intrinsic :: iso_c_binding
         integer(c_int), value :: tag
-        character(len=1, kind=c_char) :: fileName(*)
+        character(len=1, kind=c_char), dimension(*) :: fileName
         integer(c_int), value :: append
         integer(c_int) :: ierr
     end subroutine gmshViewWrite
@@ -4398,7 +4399,7 @@ module gmsh
     subroutine gmshViewOptionSetNumber(tag, name, value, ierr) bind(C, name="gmshViewOptionSetNumber")
         use, intrinsic :: iso_c_binding
         integer(c_int), value :: tag
-        character(len=1, kind=c_char) :: name(*)
+        character(len=1, kind=c_char), dimension(*) :: name
         real(c_double), value :: value
         integer(c_int) :: ierr
     end subroutine gmshViewOptionSetNumber
@@ -4407,7 +4408,7 @@ module gmsh
     subroutine gmshViewOptionGetNumber(tag, name, value, ierr) bind(C, name="gmshViewOptionGetNumber")
         use, intrinsic :: iso_c_binding
         integer(c_int), value :: tag
-        character(len=1, kind=c_char) :: name(*)
+        character(len=1, kind=c_char), dimension(*) :: name
         real(c_double) :: value
         integer(c_int) :: ierr
     end subroutine gmshViewOptionGetNumber
@@ -4416,8 +4417,8 @@ module gmsh
     subroutine gmshViewOptionSetString(tag, name, value, ierr) bind(C, name="gmshViewOptionSetString")
         use, intrinsic :: iso_c_binding
         integer(c_int), value :: tag
-        character(len=1, kind=c_char) :: name(*)
-        character(len=1, kind=c_char) :: value(*)
+        character(len=1, kind=c_char), dimension(*) :: name
+        character(len=1, kind=c_char), dimension(*) :: value
         integer(c_int) :: ierr
     end subroutine gmshViewOptionSetString
 
@@ -4425,8 +4426,8 @@ module gmsh
     subroutine gmshViewOptionGetString(tag, name, value, ierr) bind(C, name="gmshViewOptionGetString")
         use, intrinsic :: iso_c_binding
         integer(c_int), value :: tag
-        character(len=1, kind=c_char) :: name(*)
-        type(c_ptr) :: value(*)
+        character(len=1, kind=c_char), dimension(*) :: name
+        type(c_ptr), dimension(*) :: value
         integer(c_int) :: ierr
     end subroutine gmshViewOptionGetString
 
@@ -4436,7 +4437,7 @@ module gmsh
     subroutine gmshViewOptionSetColor(tag, name, r, g, b, a, ierr) bind(C, name="gmshViewOptionSetColor")
         use, intrinsic :: iso_c_binding
         integer(c_int), value :: tag
-        character(len=1, kind=c_char) :: name(*)
+        character(len=1, kind=c_char), dimension(*) :: name
         integer(c_int), value :: r
         integer(c_int), value :: g
         integer(c_int), value :: b
@@ -4449,7 +4450,7 @@ module gmsh
     subroutine gmshViewOptionGetColor(tag, name, r, g, b, a, ierr) bind(C, name="gmshViewOptionGetColor")
         use, intrinsic :: iso_c_binding
         integer(c_int), value :: tag
-        character(len=1, kind=c_char) :: name(*)
+        character(len=1, kind=c_char), dimension(*) :: name
         integer(c_int) :: r
         integer(c_int) :: g
         integer(c_int) :: b
@@ -4469,8 +4470,8 @@ module gmsh
     !> Set the numerical option `option' to the value `value' for plugin `name'.
     subroutine gmshPluginSetNumber(name, option, value, ierr) bind(C, name="gmshPluginSetNumber")
         use, intrinsic :: iso_c_binding
-        character(len=1, kind=c_char) :: name(*)
-        character(len=1, kind=c_char) :: option(*)
+        character(len=1, kind=c_char), dimension(*) :: name
+        character(len=1, kind=c_char), dimension(*) :: option
         real(c_double), value :: value
         integer(c_int) :: ierr
     end subroutine gmshPluginSetNumber
@@ -4478,9 +4479,9 @@ module gmsh
     !> Set the string option `option' to the value `value' for plugin `name'.
     subroutine gmshPluginSetString(name, option, value, ierr) bind(C, name="gmshPluginSetString")
         use, intrinsic :: iso_c_binding
-        character(len=1, kind=c_char) :: name(*)
-        character(len=1, kind=c_char) :: option(*)
-        character(len=1, kind=c_char) :: value(*)
+        character(len=1, kind=c_char), dimension(*) :: name
+        character(len=1, kind=c_char), dimension(*) :: option
+        character(len=1, kind=c_char), dimension(*) :: value
         integer(c_int) :: ierr
     end subroutine gmshPluginSetString
 
@@ -4488,7 +4489,7 @@ module gmsh
     function gmshPluginRun(name, ierr) bind(C, name="gmshPluginRun")
         use, intrinsic :: iso_c_binding
         integer(c_int) :: gmshPluginRun
-        character(len=1, kind=c_char) :: name(*)
+        character(len=1, kind=c_char), dimension(*) :: name
         integer(c_int) :: ierr
     end function gmshPluginRun
 
@@ -4535,7 +4536,7 @@ module gmsh
     !! "update").
     subroutine gmshFltkAwake(action, ierr) bind(C, name="gmshFltkAwake")
         use, intrinsic :: iso_c_binding
-        character(len=1, kind=c_char) :: action(*)
+        character(len=1, kind=c_char), dimension(*) :: action
         integer(c_int) :: ierr
     end subroutine gmshFltkAwake
 
@@ -4600,7 +4601,7 @@ module gmsh
     !! `how' = "v"), using ratio `ratio'. If `how' = "u", restore a single window.
     subroutine gmshFltkSplitCurrentWindow(how, ratio, ierr) bind(C, name="gmshFltkSplitCurrentWindow")
         use, intrinsic :: iso_c_binding
-        character(len=1, kind=c_char) :: how(*)
+        character(len=1, kind=c_char), dimension(*) :: how
         real(c_double), value :: ratio
         integer(c_int) :: ierr
     end subroutine gmshFltkSplitCurrentWindow
@@ -4618,7 +4619,7 @@ module gmsh
     !! the message inside the graphic window instead of the status bar.
     subroutine gmshFltkSetStatusMessage(message, graphics, ierr) bind(C, name="gmshFltkSetStatusMessage")
         use, intrinsic :: iso_c_binding
-        character(len=1, kind=c_char) :: message(*)
+        character(len=1, kind=c_char), dimension(*) :: message
         integer(c_int), value :: graphics
         integer(c_int) :: ierr
     end subroutine gmshFltkSetStatusMessage
@@ -4634,14 +4635,14 @@ module gmsh
     !> Open the `name' item in the menu tree.
     subroutine gmshFltkOpenTreeItem(name, ierr) bind(C, name="gmshFltkOpenTreeItem")
         use, intrinsic :: iso_c_binding
-        character(len=1, kind=c_char) :: name(*)
+        character(len=1, kind=c_char), dimension(*) :: name
         integer(c_int) :: ierr
     end subroutine gmshFltkOpenTreeItem
 
     !> Close the `name' item in the menu tree.
     subroutine gmshFltkCloseTreeItem(name, ierr) bind(C, name="gmshFltkCloseTreeItem")
         use, intrinsic :: iso_c_binding
-        character(len=1, kind=c_char) :: name(*)
+        character(len=1, kind=c_char), dimension(*) :: name
         integer(c_int) :: ierr
     end subroutine gmshFltkCloseTreeItem
 
@@ -4651,7 +4652,7 @@ module gmsh
         use, intrinsic :: iso_c_binding
         type(c_ptr), intent(out) :: names
         integer(c_size_t) :: names_n
-        character(len=1, kind=c_char) :: search(*)
+        character(len=1, kind=c_char), dimension(*) :: search
         integer(c_int) :: ierr
     end subroutine gmshParserGetNames
 
@@ -4659,8 +4660,8 @@ module gmsh
     !! variable if it does not exist; update the value if the variable exists.
     subroutine gmshParserSetNumber(name, value, value_n, ierr) bind(C, name="gmshParserSetNumber")
         use, intrinsic :: iso_c_binding
-        character(len=1, kind=c_char) :: name(*)
-        real(c_double) :: value(*)
+        character(len=1, kind=c_char), dimension(*) :: name
+        real(c_double), dimension(*) :: value
         integer(c_size_t), value :: value_n
         integer(c_int) :: ierr
     end subroutine gmshParserSetNumber
@@ -4669,8 +4670,8 @@ module gmsh
     !! variable if it does not exist; update the value if the variable exists.
     subroutine gmshParserSetString(name, value, value_n, ierr) bind(C, name="gmshParserSetString")
         use, intrinsic :: iso_c_binding
-        character(len=1, kind=c_char) :: name(*)
-        type(c_ptr) :: value(*)
+        character(len=1, kind=c_char), dimension(*) :: name
+        type(c_ptr), dimension(*) :: value
         integer(c_size_t), value :: value_n
         integer(c_int) :: ierr
     end subroutine gmshParserSetString
@@ -4679,7 +4680,7 @@ module gmsh
     !! empty vector if the variable does not exist.
     subroutine gmshParserGetNumber(name, value, value_n, ierr) bind(C, name="gmshParserGetNumber")
         use, intrinsic :: iso_c_binding
-        character(len=1, kind=c_char) :: name(*)
+        character(len=1, kind=c_char), dimension(*) :: name
         type(c_ptr), intent(out) :: value
         integer(c_size_t) :: value_n
         integer(c_int) :: ierr
@@ -4689,7 +4690,7 @@ module gmsh
     !! empty vector if the variable does not exist.
     subroutine gmshParserGetString(name, value, value_n, ierr) bind(C, name="gmshParserGetString")
         use, intrinsic :: iso_c_binding
-        character(len=1, kind=c_char) :: name(*)
+        character(len=1, kind=c_char), dimension(*) :: name
         type(c_ptr), intent(out) :: value
         integer(c_size_t) :: value_n
         integer(c_int) :: ierr
@@ -4699,22 +4700,22 @@ module gmsh
     !! is given.
     subroutine gmshParserClear(name, ierr) bind(C, name="gmshParserClear")
         use, intrinsic :: iso_c_binding
-        character(len=1, kind=c_char) :: name(*)
+        character(len=1, kind=c_char), dimension(*) :: name
         integer(c_int) :: ierr
     end subroutine gmshParserClear
 
     !> Parse the file `fileName' with the Gmsh parser.
     subroutine gmshParserParse(fileName, ierr) bind(C, name="gmshParserParse")
         use, intrinsic :: iso_c_binding
-        character(len=1, kind=c_char) :: fileName(*)
+        character(len=1, kind=c_char), dimension(*) :: fileName
         integer(c_int) :: ierr
     end subroutine gmshParserParse
 
     !> Set one or more parameters in the ONELAB database, encoded in `format'.
     subroutine gmshOnelabSet(data, format, ierr) bind(C, name="gmshOnelabSet")
         use, intrinsic :: iso_c_binding
-        character(len=1, kind=c_char) :: data(*)
-        character(len=1, kind=c_char) :: format(*)
+        character(len=1, kind=c_char), dimension(*) :: data
+        character(len=1, kind=c_char), dimension(*) :: format
         integer(c_int) :: ierr
     end subroutine gmshOnelabSet
 
@@ -4722,9 +4723,9 @@ module gmsh
     !! ONELAB database, encoded in `format'.
     subroutine gmshOnelabGet(data, name, format, ierr) bind(C, name="gmshOnelabGet")
         use, intrinsic :: iso_c_binding
-        type(c_ptr) :: data(*)
-        character(len=1, kind=c_char) :: name(*)
-        character(len=1, kind=c_char) :: format(*)
+        type(c_ptr), dimension(*) :: data
+        character(len=1, kind=c_char), dimension(*) :: name
+        character(len=1, kind=c_char), dimension(*) :: format
         integer(c_int) :: ierr
     end subroutine gmshOnelabGet
 
@@ -4734,7 +4735,7 @@ module gmsh
         use, intrinsic :: iso_c_binding
         type(c_ptr), intent(out) :: names
         integer(c_size_t) :: names_n
-        character(len=1, kind=c_char) :: search(*)
+        character(len=1, kind=c_char), dimension(*) :: search
         integer(c_int) :: ierr
     end subroutine gmshOnelabGetNames
 
@@ -4743,8 +4744,8 @@ module gmsh
     !! exists.
     subroutine gmshOnelabSetNumber(name, value, value_n, ierr) bind(C, name="gmshOnelabSetNumber")
         use, intrinsic :: iso_c_binding
-        character(len=1, kind=c_char) :: name(*)
-        real(c_double) :: value(*)
+        character(len=1, kind=c_char), dimension(*) :: name
+        real(c_double), dimension(*) :: value
         integer(c_size_t), value :: value_n
         integer(c_int) :: ierr
     end subroutine gmshOnelabSetNumber
@@ -4754,8 +4755,8 @@ module gmsh
     !! exists.
     subroutine gmshOnelabSetString(name, value, value_n, ierr) bind(C, name="gmshOnelabSetString")
         use, intrinsic :: iso_c_binding
-        character(len=1, kind=c_char) :: name(*)
-        type(c_ptr) :: value(*)
+        character(len=1, kind=c_char), dimension(*) :: name
+        type(c_ptr), dimension(*) :: value
         integer(c_size_t), value :: value_n
         integer(c_int) :: ierr
     end subroutine gmshOnelabSetString
@@ -4764,7 +4765,7 @@ module gmsh
     !! Return an empty vector if the parameter does not exist.
     subroutine gmshOnelabGetNumber(name, value, value_n, ierr) bind(C, name="gmshOnelabGetNumber")
         use, intrinsic :: iso_c_binding
-        character(len=1, kind=c_char) :: name(*)
+        character(len=1, kind=c_char), dimension(*) :: name
         type(c_ptr), intent(out) :: value
         integer(c_size_t) :: value_n
         integer(c_int) :: ierr
@@ -4774,7 +4775,7 @@ module gmsh
     !! Return an empty vector if the parameter does not exist.
     subroutine gmshOnelabGetString(name, value, value_n, ierr) bind(C, name="gmshOnelabGetString")
         use, intrinsic :: iso_c_binding
-        character(len=1, kind=c_char) :: name(*)
+        character(len=1, kind=c_char), dimension(*) :: name
         type(c_ptr), intent(out) :: value
         integer(c_size_t) :: value_n
         integer(c_int) :: ierr
@@ -4785,7 +4786,7 @@ module gmsh
     function gmshOnelabGetChanged(name, ierr) bind(C, name="gmshOnelabGetChanged")
         use, intrinsic :: iso_c_binding
         integer(c_int) :: gmshOnelabGetChanged
-        character(len=1, kind=c_char) :: name(*)
+        character(len=1, kind=c_char), dimension(*) :: name
         integer(c_int) :: ierr
     end function gmshOnelabGetChanged
 
@@ -4793,7 +4794,7 @@ module gmsh
     !! database used by the client `name'.
     subroutine gmshOnelabSetChanged(name, value, ierr) bind(C, name="gmshOnelabSetChanged")
         use, intrinsic :: iso_c_binding
-        character(len=1, kind=c_char) :: name(*)
+        character(len=1, kind=c_char), dimension(*) :: name
         integer(c_int), value :: value
         integer(c_int) :: ierr
     end subroutine gmshOnelabSetChanged
@@ -4801,7 +4802,7 @@ module gmsh
     !> Clear the ONELAB database, or remove a single parameter if `name' is given.
     subroutine gmshOnelabClear(name, ierr) bind(C, name="gmshOnelabClear")
         use, intrinsic :: iso_c_binding
-        character(len=1, kind=c_char) :: name(*)
+        character(len=1, kind=c_char), dimension(*) :: name
         integer(c_int) :: ierr
     end subroutine gmshOnelabClear
 
@@ -4810,16 +4811,16 @@ module gmsh
     !! be linked to the processed input files.
     subroutine gmshOnelabRun(name, command, ierr) bind(C, name="gmshOnelabRun")
         use, intrinsic :: iso_c_binding
-        character(len=1, kind=c_char) :: name(*)
-        character(len=1, kind=c_char) :: command(*)
+        character(len=1, kind=c_char), dimension(*) :: name
+        character(len=1, kind=c_char), dimension(*) :: command
         integer(c_int) :: ierr
     end subroutine gmshOnelabRun
 
     !> Write a `message'. `level' can be "info", "warning" or "error".
     subroutine gmshLoggerWrite(message, level, ierr) bind(C, name="gmshLoggerWrite")
         use, intrinsic :: iso_c_binding
-        character(len=1, kind=c_char) :: message(*)
-        character(len=1, kind=c_char) :: level(*)
+        character(len=1, kind=c_char), dimension(*) :: message
+        character(len=1, kind=c_char), dimension(*) :: level
         integer(c_int) :: ierr
     end subroutine gmshLoggerWrite
 
@@ -4860,7 +4861,7 @@ module gmsh
     !> Return last error message, if any.
     subroutine gmshLoggerGetLastError(error, ierr) bind(C, name="gmshLoggerGetLastError")
         use, intrinsic :: iso_c_binding
-        type(c_ptr) :: error(*)
+        type(c_ptr), dimension(*) :: error
         integer(c_int) :: ierr
     end subroutine gmshLoggerGetLastError
 
