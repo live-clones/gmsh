@@ -810,7 +810,7 @@ def iargcargv():
     a.julia_arg = "length(argv), argv"
     a.texi = "(argc = 0)}, @code{argv = []"
     a.fortran_name_pre = "argc,"
-    a.fortran_type = "integer (C_INT), value :: argc\n            type (C_PTR)"
+    a.fortran_type = "integer(c_int), value :: argc\n" + " " * 8 + "type(c_ptr)"
     a.fortran_type_post = "(*)"
     return a
 

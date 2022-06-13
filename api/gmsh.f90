@@ -21,9 +21,7 @@ module gmsh
     integer, parameter :: GMSH_API_VERSION_MAJOR = 4
     integer, parameter :: GMSH_API_VERSION_MINOR = 10
     integer, parameter :: GMSH_API_VERSION_PATCH = 4
-    ! TODO: the len= is problematic
-    character(len = 100), parameter :: GMSH_API_VERSION = "4.10.4"
-    real(c_double), parameter::M_PI = 3.14159265358979323846d0
+    character(len=100), parameter :: GMSH_API_VERSION = "4.10.4"
 
     interface
 
@@ -39,8 +37,8 @@ module gmsh
     !! to "General.NumThreads".
     subroutine gmshInitialize(argc,argv, readConfigFiles, run, ierr) bind(C, name="gmshInitialize")
         use, intrinsic :: iso_c_binding
-        integer (C_INT), value :: argc
-            type (C_PTR) :: argv(*)
+        integer(c_int), value :: argc
+        type(c_ptr) :: argv(*)
         integer(c_int), value :: readConfigFiles
         integer(c_int), value :: run
         integer(c_int) :: ierr
