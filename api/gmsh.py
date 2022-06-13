@@ -236,8 +236,7 @@ def initialize(argv=[], readConfigFiles=True, run=False):
     the same way as the Gmsh app, either interactively or in batch mode
     depending on the command line arguments. If `run' is not set, initializing
     the API sets the options "General.AbortOnError" to 2 and "General.Terminal"
-    to 1. If compiled with OpenMP support, it also sets the number of threads
-    to "General.NumThreads".
+    to 1.
     """
     api_argc_, api_argv_ = _iargcargv(argv)
     ierr = c_int()

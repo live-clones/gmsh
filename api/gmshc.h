@@ -50,8 +50,7 @@ GMSH_API void *gmshMalloc(size_t n);
  * the same way as the Gmsh app, either interactively or in batch mode
  * depending on the command line arguments. If `run' is not set, initializing
  * the API sets the options "General.AbortOnError" to 2 and "General.Terminal"
- * to 1. If compiled with OpenMP support, it also sets the number of threads
- * to "General.NumThreads". */
+ * to 1. */
 GMSH_API void gmshInitialize(int argc, char ** argv,
                              const int readConfigFiles,
                              const int run,
