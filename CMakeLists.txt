@@ -142,7 +142,7 @@ else()
   set(GMSH_GITLAB_PREFIX "${GMSH_GITLAB_PREFIX}/blob/master")
 endif()
 
-set(GMSH_API api/gmsh.h api/gmshc.h api/gmsh.h_cwrap api/gmshf.h)
+set(GMSH_API api/gmsh.h api/gmshc.h api/gmsh.h_cwrap api/gmsh.f90)
 
 if(ENABLE_PRIVATE_API)
   message(WARNING "The private API is unsupported and undocumented. It is meant "
