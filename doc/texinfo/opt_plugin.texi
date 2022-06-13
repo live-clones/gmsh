@@ -585,9 +585,9 @@ Plugin(HomologyPostProcessing) operates on representative basis chains of homolo
 1. (co)homology basis transformation:@*
  'TransformationMatrix': Integer matrix of the transformation.@*
  'PhysicalGroupsOfOperatedChains': (Co)chains of a (co)homology space basis to be transformed.@*
- Results a new (co)chain basis that is an integer cobination of the given basis. @*
+ Results a new (co)chain basis that is an integer combination of the given basis.@*
 @*
-2. Make basis representations of a homology space and a cohomology space compatible: @*
+2. Make basis representations of a homology space and a cohomology space compatible:@*
 'PhysicalGroupsOfOperatedChains': Chains of a homology space basis.@*
 'PhysicalGroupsOfOperatedChains2': Cochains of a cohomology space basis.@*
 Results a new basis for the homology space such that the incidence matrix of the new basis and the basis of the cohomology space is the identity matrix.@*
