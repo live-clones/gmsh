@@ -1849,36 +1849,50 @@ class API:
 
 
     def write_fortran(self):
+        def write_function(f, fun, c_mpath, f_mpath, indent):
+            (rtype, name, args, doc, special) = fun
+            fname = c_mpath + name[0].upper() + name[1:]
+            # Documentation (Doxygen)
+            self.fwrite(
+                f, "\n" + indent + "!> " +
+                ("\n" + indent + "!! ").join(textwrap.wrap(doc, 75)) + "\n")
+            # Procedure definition
+            fnamef = indent + ("function"
+                               if rtype else "subroutine") + " " + fname + "("
+            # Procedure name and Argument list
+            self.fwrite(
+                f, fnamef + ", ".join(
+                    list((a.fortran_name_pre + a.name + a.fortran_name_post
+                          for a in args + (oint("ierr"), )))) +
+                ") bind(C, name=\"" + fname + "\")" + "\n")
+            # C interoperability
+            self.fwrite(f,
+                        indent * 2 + "use, intrinsic :: iso_c_binding" + "\n")
+            # Return variable definition
+            if rtype:
+                self.fwrite(
+                    f, indent * 2 + rtype.fortran_type + " :: " + fname + "\n")
+            # Variable defintions
+            self.fwrite(
+                f, "".join(
+                    list((indent * 2 + a.fortran_type + " :: " + a.name +
+                          "\n" + (a.fortran_type_post +
+                                  "\n" if a.fortran_type_post else "")
+                          for a in args + (oint("ierr"), )))))
+            # Procedure end
+            self.fwrite(
+                f, indent + "end " + ("function" if rtype else "subroutine") +
+                " " + fname + "\n")
 
         def write_module(f, m, c_mpath, f_mpath, indent):
-            f_mpath += m.name + "::"
+            f_mpath += m.name + "%"  # Unused, access to user defined type object
             if c_mpath:
                 c_mpath += m.name[0].upper() + m.name[1:]
             else:
                 c_mpath = m.name
-
-            indent += "  "
-            for rtype, name, args, doc, special in m.fs:
-                fname = c_mpath + name[0].upper() + name[1:]
-                tab = " " * 4
-                # Documentation (Doxygen)
-                self.fwrite(f, "\n" + tab + "!> " + ("\n" + tab + "!! ").join(textwrap.wrap(doc, 75)) + "\n")
-                # Procedure definition
-                fnamef = tab + ("function" if rtype else "subroutine") + " " + fname + "("
-                # Procedure name and Argument list
-                self.fwrite(f, fnamef + (", ").join(
-                        list((a.fortran_name_pre + a.name + a.fortran_name_post for a in args + (oint("ierr"), )))) + ")")
-                # C interoperability
-                self.fwrite(f, " bind(C, name=\"" + fname + "\")" + "\n")
-                self.fwrite(f, tab*2 + "use, intrinsic :: iso_c_binding" + "\n")
-                # Return variable definition
-                if rtype :
-                    self.fwrite(f, tab*2 + rtype.fortran_type + " :: " + fname + "\n")
-                # Variable defintions
-                self.fwrite(f, "".join(list(( tab*2 + a.fortran_type + " :: " + a.name + "\n" +  (a.fortran_type_post + "\n" if a.fortran_type_post else "") for a in args + (oint("ierr"), ) ))))
-                # Procedure end
-                self.fwrite(f, tab + "end " + ("function" if rtype else "subroutine") + " " + fname + "\n")
-
+            indent = " " * 4
+            for fun in m.fs:
+                write_function(f, fun, c_mpath, f_mpath, indent)
             for m in m.submodules:
                 write_module(f, m, c_mpath, f_mpath, indent)
 
