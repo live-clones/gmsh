@@ -4307,6 +4307,8 @@ bool OCC_Internals::importShapes(const std::string &fileName,
             split[2] == ".STEP" || split[2] == ".STP") {
       STEPControl_Reader reader;
       setTargetUnit(CTX::instance()->geom.occTargetUnit);
+      Interface_Static::SetIVal("read.step.ideas", 1);
+      Interface_Static::SetIVal("read.step.nonmanifold", 1);
 #if defined(HAVE_OCC_CAF)
       //Interface_Static::SetIVal("read.stepcaf.subshapes.name", 1);
       STEPCAFControl_Reader cafreader;
@@ -4424,7 +4426,7 @@ bool OCC_Internals::exportShapes(GModel *model, const std::string &fileName,
 
       // this does not seem to solve the issue that entities get duplicated when
       // exporting STEP files (see issue #906):
-      // Interface_Static::SetIVal("write.step.nonmanifold", 1);
+      Interface_Static::SetIVal("write.step.nonmanifold", 1);
 
       if(writer.Transfer(c, STEPControl_AsIs) == IFSelect_RetDone) {
         if(writer.Write(occfile.ToCString()) != IFSelect_RetDone) {
