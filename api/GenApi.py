@@ -272,7 +272,7 @@ def ivectorvectorint(name, value=None, python_value=None, julia_value=None):
     a.julia_arg = ("convert(Vector{Vector{Cint}}," + name + "), " +
                    api_name_n + ", length(" + name + ")")
     a.fortran_type = "type(c_ptr), intent(out)"
-    a.fortran_type_post = (" " * 8 + "type(c_ptr), intent(out) :: " + name + "_n\n" + 
+    a.fortran_type_post = (" " * 8 + "type(c_ptr), intent(out) :: " + name + "_n\n" +
                            " " * 8 + "integer(c_size_t) :: " + name + "_nn")
     a.fortran_name_post = ", " + name + "_n,"  + name + "_nn"
     return a
@@ -352,7 +352,7 @@ def ivectorvectordouble(name, value=None, python_value=None, julia_value=None):
     a.julia_arg = ("convert(Vector{Vector{Cdouble}}," + name + "), " +
                    api_name_n + ", length(" + name + ")")
     a.fortran_type = "type(c_ptr), intent(out)"
-    a.fortran_type_post = (" " * 8 + "type(c_ptr), intent(out) :: " + name + "_n\n" + 
+    a.fortran_type_post = (" " * 8 + "type(c_ptr), intent(out) :: " + name + "_n\n" +
                            " " * 8 + "integer(c_size_t) :: " + name + "_nn")
     a.fortran_name_post = ", " + name + "_n,"  + name + "_nn"
     return a
@@ -1849,23 +1849,20 @@ class API:
 
 
     def write_fortran(self):
-        def write_module(module, c_namespace, cpp_namespace, indent):
-            cpp_namespace += module.name + "::"
-            if c_namespace:
-                c_namespace += module.name[0].upper() + module.name[1:]
+
+        def write_module(f, m, c_mpath, f_mpath, indent):
+            f_mpath += m.name + "::"
+            if c_mpath:
+                c_mpath += m.name[0].upper() + m.name[1:]
             else:
-                c_namespace = module.name
+                c_mpath = m.name
 
             indent += "  "
-            for rtype, name, args, doc, special in module.fs:
-                fname = c_namespace + name[0].upper() + name[1:]
+            for rtype, name, args, doc, special in m.fs:
+                fname = c_mpath + name[0].upper() + name[1:]
                 tab = " " * 4
                 # Documentation (Doxygen)
                 self.fwrite(f, "\n" + tab + "!> " + ("\n" + tab + "!! ").join(textwrap.wrap(doc, 75)) + "\n")
-                fnameapi = "!  " + ns.upper() + "_API " + (rtype.rc_type if rtype else
-                                                   "void") + " " + fname + "("
-                self.flog('f', cpp_namespace.replace('::', '/') + name)
-
                 # Procedure definition
                 fnamef = tab + ("function" if rtype else "subroutine") + " " + fname + "("
                 # Procedure name and Argument list
@@ -1882,20 +1879,19 @@ class API:
                 # Procedure end
                 self.fwrite(f, tab + "end " + ("function" if rtype else "subroutine") + " " + fname + "\n")
 
-            for m in module.submodules:
-                write_module(m, c_namespace, cpp_namespace, indent)
+            for m in m.submodules:
+                write_module(f, m, c_mpath, f_mpath, indent)
 
         self.current_lineno = 1
         with open(ns + ".f90", "w") as f:
-                    self.fwrite(
-                        f,
-                        fortran_header.format(self.copyright, self.issues,
-                                        ns.upper(), self.code,
-                                        self.version_major, self.version_minor,
-                                        self.version_patch, ns))
-                    for module in self.modules:
-                        write_module(module, "", "", "")
-                    self.fwrite(f, fortran_footer)
+            self.fwrite(
+                f,
+                fortran_header.format(self.copyright, self.issues, ns.upper(),
+                                      self.code, self.version_major,
+                                      self.version_minor, self.version_patch))
+            for module in self.modules:
+                write_module(f, module, "", "", "")
+            self.fwrite(f, fortran_footer)
 
 
     def write_texi(self):
