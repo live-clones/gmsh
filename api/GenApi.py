@@ -36,9 +36,7 @@ class arg:
         self.julia_pre = ""
         self.julia_post = ""
         self.julia_return = name
-        self.fortran_type_post = ""
-        self.fortran_name_pre  = ""
-        self.fortran_name_post = ""
+        self.fortran_args = [name]
         self.texi = name + (
             (" = " + self.python_value) if self.python_value else "")
 
@@ -52,7 +50,7 @@ def ibool(name, value=None, python_value=None, julia_value=None):
     a.python_arg = "c_int(bool(" + name + "))"
     a.cwrap_arg = "(int)" + name
     a.julia_ctype = "Cint"
-    a.fortran_type = "integer(c_int), value"
+    a.fortran_types = ["integer(c_int), value"]
     return a
 
 
@@ -61,7 +59,7 @@ def iint(name, value=None, python_value=None, julia_value=None):
             False)
     a.python_arg = "c_int(" + name + ")"
     a.julia_ctype = "Cint"
-    a.fortran_type = "integer(c_int), value"
+    a.fortran_types = ["integer(c_int), value"]
     return a
 
 
@@ -70,7 +68,7 @@ def isize(name, value=None, python_value=None, julia_value=None):
             "const size_t", False)
     a.python_arg = "c_size_t(" + name + ")"
     a.julia_ctype = "Csize_t"
-    a.fortran_type = "integer(c_size_t), value"
+    a.fortran_types = ["integer(c_size_t), value"]
     return a
 
 
@@ -79,7 +77,7 @@ def idouble(name, value=None, python_value=None, julia_value=None):
             "const double", False)
     a.python_arg = "c_double(" + name + ")"
     a.julia_ctype = "Cdouble"
-    a.fortran_type = "real(c_double), value"
+    a.fortran_types = ["real(c_double), value"]
     return a
 
 
@@ -89,8 +87,7 @@ def istring(name, value=None, python_value=None, julia_value=None):
     a.python_arg = "c_char_p(" + name + ".encode())"
     a.cwrap_arg = name + ".c_str()"
     a.julia_ctype = "Ptr{Cchar}"
-    a.fortran_type = "character(len=1, kind=c_char), dimension(*)"
-    a.fortran_type_post = ""
+    a.fortran_types = ["character(len=1, kind=c_char), dimension(*)"]
     return a
 
 
@@ -99,8 +96,7 @@ def ivoidstar(name, value=None, python_value=None, julia_value=None):
             "const void *", False)
     a.python_arg = "c_void_p(" + name + ")"
     a.julia_ctype = "Ptr{Cvoid}"
-    a.fortran_type = "integer(c_int), dimension(*)"
-    a.fortran_type_post = ""
+    a.fortran_types = ["integer(c_int), dimension(*)"]
     return a
 
 
@@ -124,9 +120,8 @@ def ivectorint(name, value=None, python_value=None, julia_value=None):
     a.python_arg = api_name + ", " + api_name_n
     a.julia_ctype = "Ptr{Cint}, Csize_t"
     a.julia_arg = "convert(Vector{Cint}, " + name + "), length(" + name + ")"
-    a.fortran_type = "integer(c_int), dimension(*)"
-    a.fortran_type_post = " " * 8 + "integer(c_size_t), value :: " + name + "_n"
-    a.fortran_name_post = ", " + name + "_n"
+    a.fortran_args = [name, name + "_n"]
+    a.fortran_types = ["integer(c_int), dimension(*)", "integer(c_size_t), value"]
     return a
 
 
@@ -150,9 +145,8 @@ def ivectorsize(name, value=None, python_value=None, julia_value=None):
     a.python_arg = api_name + ", " + api_name_n
     a.julia_ctype = "Ptr{Csize_t}, Csize_t"
     a.julia_arg = "convert(Vector{Csize_t}, " + name + "), length(" + name + ")"
-    a.fortran_type = "integer(c_size_t), dimension(*)"
-    a.fortran_type_post = " " * 8 + "integer(c_size_t), value :: " + name + "_n"
-    a.fortran_name_post = ", " + name + "_n"
+    a.fortran_args = [name, name + "_n"]
+    a.fortran_types = ["integer(c_size_t), dimension(*)", "integer(c_size_t), value"]
     return a
 
 
@@ -176,9 +170,8 @@ def ivectordouble(name, value=None, python_value=None, julia_value=None):
     a.python_arg = api_name + ", " + api_name_n
     a.julia_ctype = "Ptr{Cdouble}, Csize_t"
     a.julia_arg = "convert(Vector{Cdouble}, " + name + "), length(" + name + ")"
-    a.fortran_type = "real(c_double), dimension(*)"
-    a.fortran_type_post = " " * 8 + "integer(c_size_t), value :: " + name + "_n"
-    a.fortran_name_post = ", " + name + "_n"
+    a.fortran_args = [name, name + "_n"]
+    a.fortran_types = ["real(c_double), dimension(*)", "integer(c_size_t), value"]
     return a
 
 
@@ -202,9 +195,8 @@ def ivectorstring(name, value=None, python_value=None, julia_value=None):
     a.python_arg = api_name + ", " + api_name_n
     a.julia_ctype = "Ptr{Ptr{Cchar}}, Csize_t"
     a.julia_arg = name + ", length(" + name + ")"
-    a.fortran_type = "type(c_ptr), dimension(*)"
-    a.fortran_type_post = " " * 8 + "integer(c_size_t), value :: " + name + "_n"
-    a.fortran_name_post = ", " + name + "_n"
+    a.fortran_args = [name, name + "_n"]
+    a.fortran_types = ["type(c_ptr), dimension(*)", "integer(c_size_t), value"]
     return a
 
 
@@ -233,9 +225,8 @@ def ivectorpair(name, value=None, python_value=None, julia_value=None):
     a.julia_pre = (api_name + " = collect(Cint, Iterators.flatten(" + name +
                    "))\n    " + api_name_n + " = length(" + api_name + ")")
     a.julia_arg = (api_name + ", " + api_name_n)
-    a.fortran_type = "integer(c_int), dimension(*)"
-    a.fortran_type_post = " " * 8 + "integer(c_size_t), value :: " + name + "_n"
-    a.fortran_name_post = ", " + name + "_n"
+    a.fortran_args = [name, name + "_n"]
+    a.fortran_types = ["integer(c_int), dimension(*)", "integer(c_size_t), value"]
     return a
 
 
@@ -271,10 +262,8 @@ def ivectorvectorint(name, value=None, python_value=None, julia_value=None):
                    "[i]) for i in 1:length(" + name + ") ]")
     a.julia_arg = ("convert(Vector{Vector{Cint}}," + name + "), " +
                    api_name_n + ", length(" + name + ")")
-    a.fortran_type = "type(c_ptr), intent(out)"
-    a.fortran_type_post = (" " * 8 + "type(c_ptr), intent(out) :: " + name + "_n\n" +
-                           " " * 8 + "integer(c_size_t) :: " + name + "_nn")
-    a.fortran_name_post = ", " + name + "_n,"  + name + "_nn"
+    a.fortran_args = [name, name + "_n", name + "_nn"]
+    a.fortran_types = ["type(c_ptr), intent(out)", "type(c_ptr), intent(out)", "integer(c_size_t)"]
     return a
 
 
@@ -311,10 +300,8 @@ def ivectorvectorsize(name, value=None, python_value=None, julia_value=None):
                    "[i]) for i in 1:length(" + name + ") ]")
     a.julia_arg = ("convert(Vector{Vector{Csize_t}}," + name + "), " +
                    api_name_n + ", length(" + name + ")")
-    a.fortran_type = "type(c_ptr), intent(out)"
-    a.fortran_type_post = (" " * 8 + "type(c_ptr), intent(out) :: " + name + "_n\n" +
-                           " " * 8 + "integer(c_size_t) :: " + name + "_nn")
-    a.fortran_name_post = ", " + name + "_n,"  + name + "_nn"
+    a.fortran_args = [name, name + "_n", name + "_nn"]
+    a.fortran_types = ["type(c_ptr), intent(out)", "type(c_ptr), intent(out)", "integer(c_size_t)"]
     return a
 
 
@@ -351,10 +338,8 @@ def ivectorvectordouble(name, value=None, python_value=None, julia_value=None):
                    "[i]) for i in 1:length(" + name + ") ]")
     a.julia_arg = ("convert(Vector{Vector{Cdouble}}," + name + "), " +
                    api_name_n + ", length(" + name + ")")
-    a.fortran_type = "type(c_ptr), intent(out)"
-    a.fortran_type_post = (" " * 8 + "type(c_ptr), intent(out) :: " + name + "_n\n" +
-                           " " * 8 + "integer(c_size_t) :: " + name + "_nn")
-    a.fortran_name_post = ", " + name + "_n,"  + name + "_nn"
+    a.fortran_args = [name, name + "_n", name + "_nn"]
+    a.fortran_types = ["type(c_ptr), intent(out)", "type(c_ptr), intent(out)", "integer(c_size_t)"]
     return a
 
 
@@ -366,8 +351,7 @@ class oint(arg):
     rc_type = "int"
     rtexi_type = "integer value"
     rjulia_type = "Cint"
-    fortran_type = "integer(c_int)"
-    fortran_type_post = ""
+    fortran_types = ["integer(c_int)"]
 
     def __init__(self, name, value=None, python_value=None, julia_value=None):
         arg.__init__(self, name, value, python_value, julia_value, "int &",
@@ -389,8 +373,7 @@ class osize(arg):
     rc_type = "size_t"
     rtexi_type = "size value"
     rjulia_type = "Csize_t"
-    fortran_type = "integer(c_size_t)"
-    fortran_type_post = ""
+    fortran_types = ["integer(c_size_t)"]
 
     def __init__(self, name, value=None, python_value=None, julia_value=None):
         arg.__init__(self, name, value, python_value, julia_value,
@@ -412,8 +395,7 @@ class odouble(arg):
     rc_type = "double"
     rtexi_type = "floating point value"
     rjulia_type = "Cdouble"
-    fortran_type = "real(c_double)"
-    fortran_type_post = ""
+    fortran_types = ["real(c_double)"]
 
     def __init__(self, name, value=None, python_value=None, julia_value=None):
         arg.__init__(self, name, value, python_value, julia_value, "double &",
@@ -449,7 +431,7 @@ def ostring(name, value=None, python_value=None, julia_value=None):
     a.julia_arg = api_name
     a.julia_post = name + " = unsafe_string(" + api_name + "[])"
     a.fortran_type = "type(c_ptr), dimension(*)"
-    a.fortran_type_post = ""
+    a.fortran_types = ["type(c_ptr), dimension(*)"]
     return a
 
 
@@ -475,9 +457,8 @@ def ovectorint(name, value=None, python_value=None, julia_value=None):
     a.julia_arg = api_name + ", " + api_name_n
     a.julia_post = (name + " = unsafe_wrap(Array, " + api_name + "[], " +
                     api_name_n + "[], own = true)")
-    a.fortran_type = "type(c_ptr), intent(out)"
-    a.fortran_type_post = " " * 8 + "integer(c_size_t) :: " + name +"_n"
-    a.fortran_name_post = ", " + name + "_n"
+    a.fortran_args = [name, name + "_n"]
+    a.fortran_types = ["type(c_ptr), intent(out)", "integer(c_size_t)"]
     return a
 
 
@@ -503,9 +484,8 @@ def ovectorsize(name, value=None, python_value=None, julia_value=None):
     a.julia_arg = api_name + ", " + api_name_n
     a.julia_post = (name + " = unsafe_wrap(Array, " + api_name + "[], " +
                     api_name_n + "[], own = true)")
-    a.fortran_type = "type(c_ptr), intent(out)"
-    a.fortran_type_post = " " * 8 + "integer(c_size_t) :: " + name + "_n"
-    a.fortran_name_post = ", " + name + "_n"
+    a.fortran_args = [name, name + "_n"]
+    a.fortran_types = ["type(c_ptr), intent(out)", "integer(c_size_t)"]
     return a
 
 
@@ -531,9 +511,8 @@ def ovectordouble(name, value=None, python_value=None, julia_value=None):
     a.julia_arg = api_name + ", " + api_name_n
     a.julia_post = (name + " = unsafe_wrap(Array, " + api_name + "[], " +
                     api_name_n + "[], own = true)")
-    a.fortran_type = "type(c_ptr), intent(out)"
-    a.fortran_type_post = " " * 8 + "integer(c_size_t) :: " + name + "_n"
-    a.fortran_name_post = ", " + name + "_n"
+    a.fortran_args = [name, name + "_n"]
+    a.fortran_types = ["type(c_ptr), intent(out)", "integer(c_size_t)"]
     return a
 
 
@@ -564,9 +543,8 @@ def ovectorstring(name, value=None, python_value=None, julia_value=None):
                     "[], " + api_name_n + "[], own = true)\n    " + name +
                     " = [unsafe_string(tmp_" + api_name +
                     "[i]) for i in 1:length(tmp_" + api_name + ") ]")
-    a.fortran_type = "type(c_ptr), intent(out)"
-    a.fortran_type_post = " " * 8 + "integer(c_size_t) :: " + name + "_n"
-    a.fortran_name_post = ", " + name + "_n"
+    a.fortran_args = [name, name + "_n"]
+    a.fortran_types = ["type(c_ptr), intent(out)", "integer(c_size_t)"]
     return a
 
 
@@ -597,9 +575,8 @@ def ovectorpair(name, value=None, python_value=None, julia_value=None):
                     "[], " + api_name_n + "[], own = true)\n    " + name +
                     " = [ (tmp_" + api_name + "[i], tmp_" + api_name +
                     "[i+1]) " + "for i in 1:2:length(tmp_" + api_name + ") ]")
-    a.fortran_type = "type(c_ptr), intent(out)"
-    a.fortran_type_post = " " * 8 + "integer(c_size_t) :: " + name + "_n"
-    a.fortran_name_post = ", " + name + "_n"
+    a.fortran_args = [name, name + "_n"]
+    a.fortran_types = ["type(c_ptr), intent(out)", "integer(c_size_t)"]
     return a
 
 
@@ -641,10 +618,8 @@ def ovectorvectorint(name, value=None, python_value=None, julia_value=None):
                     " = [ unsafe_wrap(Array, tmp_" + api_name + "[i], " +
                     "tmp_" + api_name_n + "[i], own = true) for i in 1:" +
                     api_name_nn + "[] ]")
-    a.fortran_type = "type(c_ptr), intent(out)"
-    a.fortran_type_post = (" " * 8 + "type(c_ptr), intent(out) :: " + name + "_n\n" +
-                           " " * 8 + "integer(c_size_t) :: " + name +"_nn")
-    a.fortran_name_post = ", " + name + "_n,"  + name + "_nn"
+    a.fortran_args = [name, name + "_n", name + "_nn"]
+    a.fortran_types = ["type(c_ptr), intent(out)", "type(c_ptr), intent(out)", "integer(c_size_t)"]
     return a
 
 
@@ -686,10 +661,8 @@ def ovectorvectorsize(name, value=None, python_value=None, julia_value=None):
                     " = [ unsafe_wrap(Array, tmp_" + api_name + "[i], " +
                     "tmp_" + api_name_n + "[i], own = true) for i in 1:" +
                     api_name_nn + "[] ]")
-    a.fortran_type = "type (c_ptr), intent(out)"
-    a.fortran_type_post = (" " * 8 + "type(c_ptr), intent(out) :: " + name + "_n\n" +
-                           " " * 8 + "integer(c_size_t) :: " + name +"_nn")
-    a.fortran_name_post = ", " + name + "_n,"  + name + "_nn"
+    a.fortran_args = [name, name + "_n", name + "_nn"]
+    a.fortran_types = ["type (c_ptr), intent(out)", "type(c_ptr), intent(out)", "integer(c_size_t)"]
     return a
 
 
@@ -732,10 +705,8 @@ def ovectorvectordouble(name, value=None, python_value=None, julia_value=None):
                     " = [ unsafe_wrap(Array, tmp_" + api_name + "[i], " +
                     "tmp_" + api_name_n + "[i], own = true) for i in 1:" +
                     api_name_nn + "[] ]")
-    a.fortran_type = "type (c_ptr), intent(out)"
-    a.fortran_type_post = (" " * 8 + "type(c_ptr), intent(out) :: " + name + "_n\n" +
-                           " " * 8 + "integer (c_size_t) :: " + name + "_nn")
-    a.fortran_name_post = ", " + name + "_n,"  + name + "_nn"
+    a.fortran_args = [name, name + "_n", name + "_nn"]
+    a.fortran_types = ["type (c_ptr), intent(out)", "type(c_ptr), intent(out)", "integer(c_size_t)"]
     return a
 
 
@@ -783,10 +754,8 @@ def ovectorvectorpair(name, value=None, python_value=None, julia_value=None):
         api_name + "[i], tmp_" + api_name_n + "[i], own = true)\n    " + "    " +
         name + "[i] = [(tmp[i], tmp[i+1]) for i in 1:2:length(tmp)]\n    " +
         "end")
-    a.fortran_type = "type(c_ptr), intent(out)"
-    a.fortran_type_post = (" " * 8 + "type(c_ptr), intent(out) :: " + name + "_n\n" +
-                           " " * 8 + "integer(c_size_t) ::" + name +"_nn")
-    a.fortran_name_post = ", " + name + "_n," + name + "_nn"
+    a.fortran_args = [name, name + "_n", name + "_nn"]
+    a.fortran_types = ["type(c_ptr), intent(out)", "type(c_ptr), intent(out)", "integer(c_size_t)"]
     return a
 
 
@@ -809,9 +778,8 @@ def iargcargv():
     a.julia_ctype = "Cint, Ptr{Ptr{Cchar}}"
     a.julia_arg = "length(argv), argv"
     a.texi = "(argc = 0)}, @code{argv = []"
-    a.fortran_name_pre = "argc,"
-    a.fortran_type = "integer(c_int), value :: argc\n" + " " * 8 + "type(c_ptr), dimension(*)"
-    a.fortran_type_post = ""
+    a.fortran_args = ["argc", "argv"]
+    a.fortran_types = ["integer(c_int), value", "type(c_ptr), dimension(*)"]
     return a
 
 
@@ -849,8 +817,8 @@ def isizefun(name):
         ", Cdouble, (Cint, Cint, Cdouble, Cdouble, Cdouble, Cdouble, Ptr{Cvoid}))")
     a.julia_arg = "api_" + name + "_, C_NULL"
     a.julia_ctype = "Ptr{Cvoid}, Ptr{Cvoid}"
-    a.fortran_type = "type(c_funptr)"
-    a.fortran_type_post = " " * 8 + "! TODO: callback needs implementation"
+    a.fortran_args = [name]
+    a.fortran_types = ["type(c_funptr)"] # TODO: callback needs implementation"
     return a
 
 
@@ -1856,33 +1824,22 @@ class API:
             self.fwrite(
                 f, "\n" + indent + "!> " +
                 ("\n" + indent + "!! ").join(textwrap.wrap(doc, 75)) + "\n")
-            # Procedure definition
-            fnamef = indent + ("function"
-                               if rtype else "subroutine") + " " + fname + "("
-            # Procedure name and Argument list
-            self.fwrite(
-                f, fnamef + ", ".join(
-                    list((a.fortran_name_pre + a.name + a.fortran_name_post
-                          for a in args + (oint("ierr"), )))) +
-                ") bind(C, name=\"" + fname + "\")" + "\n")
-            # C interoperability
-            self.fwrite(f,
-                        indent * 2 + "use, intrinsic :: iso_c_binding" + "\n")
-            # Return variable definition
+
+            fnamef = ("function" if rtype else "subroutine") + " " + fname
+            r = indent + fnamef + "("
+            for arg in args:
+                for a in arg.fortran_args:
+                    r += a + ", "
+            r += "ierr) bind(C, name=\"" + fname + "\")" + "\n"
+            r += indent * 2 + "use, intrinsic :: iso_c_binding" + "\n"
             if rtype:
-                self.fwrite(
-                    f, indent * 2 + rtype.fortran_type + " :: " + fname + "\n")
-            # Variable defintions
-            self.fwrite(
-                f, "".join(
-                    list((indent * 2 + a.fortran_type + " :: " + a.name +
-                          "\n" + (a.fortran_type_post +
-                                  "\n" if a.fortran_type_post else "")
-                          for a in args + (oint("ierr"), )))))
-            # Procedure end
-            self.fwrite(
-                f, indent + "end " + ("function" if rtype else "subroutine") +
-                " " + fname + "\n")
+                r += indent * 2 + rtype.fortran_types[0] + " :: " + fname + "\n"
+            for arg in args:
+                for t, a in zip(arg.fortran_types, arg.fortran_args):
+                    r += indent * 2 + t + " :: " + a + "\n"
+            r += indent * 2 + "integer(c_int) :: ierr" + "\n"
+            r += indent + "end " + fnamef + "\n"
+            self.fwrite(f, r)
 
         def write_module(f, m, c_mpath, f_mpath, indent):
             f_mpath += m.name + "%"  # Unused, access to user defined type object

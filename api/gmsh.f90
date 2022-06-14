@@ -35,7 +35,7 @@ module gmsh
     !! the API sets the options "General.AbortOnError" to 2 and "General.Terminal"
     !! to 1. If compiled with OpenMP support, it also sets the number of threads
     !! to "General.NumThreads".
-    subroutine gmshInitialize(argc,argv, readConfigFiles, run, ierr) bind(C, name="gmshInitialize")
+    subroutine gmshInitialize(argc, argv, readConfigFiles, run, ierr) bind(C, name="gmshInitialize")
         use, intrinsic :: iso_c_binding
         integer(c_int), value :: argc
         type(c_ptr), dimension(*) :: argv
@@ -1021,7 +1021,7 @@ module gmsh
     !! type times the number N of nodes for this type of element, that contains
     !! the node tags of all the elements of the given type, concatenated: [e1n1,
     !! e1n2, ..., e1nN, e2n1, ...].
-    subroutine gmshModelMeshGetElements(elementTypes, elementTypes_n, elementTags, elementTags_n,elementTags_nn, nodeTags, nodeTags_n,nodeTags_nn, dim, tag, ierr) bind(C, name="gmshModelMeshGetElements")
+    subroutine gmshModelMeshGetElements(elementTypes, elementTypes_n, elementTags, elementTags_n, elementTags_nn, nodeTags, nodeTags_n, nodeTags_nn, dim, tag, ierr) bind(C, name="gmshModelMeshGetElements")
         use, intrinsic :: iso_c_binding
         type(c_ptr), intent(out) :: elementTypes
         integer(c_size_t) :: elementTypes_n
@@ -1226,7 +1226,7 @@ module gmsh
     !! the number N of nodes per element, that contains the node tags of all the
     !! elements of the given type, concatenated: [e1n1, e1n2, ..., e1nN, e2n1,
     !! ...].
-    subroutine gmshModelMeshAddElements(dim, tag, elementTypes, elementTypes_n, elementTags, elementTags_n,elementTags_nn, nodeTags, nodeTags_n,nodeTags_nn, ierr) bind(C, name="gmshModelMeshAddElements")
+    subroutine gmshModelMeshAddElements(dim, tag, elementTypes, elementTypes_n, elementTags, elementTags_n, elementTags_nn, nodeTags, nodeTags_n, nodeTags_nn, ierr) bind(C, name="gmshModelMeshAddElements")
         use, intrinsic :: iso_c_binding
         integer(c_int), value :: dim
         integer(c_int), value :: tag
@@ -1740,7 +1740,6 @@ module gmsh
     subroutine gmshModelMeshSetSizeCallback(callback, ierr) bind(C, name="gmshModelMeshSetSizeCallback")
         use, intrinsic :: iso_c_binding
         type(c_funptr) :: callback
-        ! TODO: callback needs implementation
         integer(c_int) :: ierr
     end subroutine gmshModelMeshSetSizeCallback
 
@@ -3676,7 +3675,7 @@ module gmsh
     !! explicitly (only valid if the boolean operation results in a single
     !! entity). Remove the object if `removeObject' is set. Remove the tool if
     !! `removeTool' is set.
-    subroutine gmshModelOccFuse(objectDimTags, objectDimTags_n, toolDimTags, toolDimTags_n, outDimTags, outDimTags_n, outDimTagsMap, outDimTagsMap_n,outDimTagsMap_nn, tag, removeObject, removeTool, ierr) bind(C, name="gmshModelOccFuse")
+    subroutine gmshModelOccFuse(objectDimTags, objectDimTags_n, toolDimTags, toolDimTags_n, outDimTags, outDimTags_n, outDimTagsMap, outDimTagsMap_n, outDimTagsMap_nn, tag, removeObject, removeTool, ierr) bind(C, name="gmshModelOccFuse")
         use, intrinsic :: iso_c_binding
         integer(c_int), dimension(*) :: objectDimTags
         integer(c_size_t), value :: objectDimTags_n
@@ -3686,7 +3685,7 @@ module gmsh
         integer(c_size_t) :: outDimTags_n
         type(c_ptr), intent(out) :: outDimTagsMap
         type(c_ptr), intent(out) :: outDimTagsMap_n
-        integer(c_size_t) ::outDimTagsMap_nn
+        integer(c_size_t) :: outDimTagsMap_nn
         integer(c_int), value :: tag
         integer(c_int), value :: removeObject
         integer(c_int), value :: removeTool
@@ -3699,7 +3698,7 @@ module gmsh
     !! set the tag explicitly (only valid if the boolean operation results in a
     !! single entity). Remove the object if `removeObject' is set. Remove the tool
     !! if `removeTool' is set.
-    subroutine gmshModelOccIntersect(objectDimTags, objectDimTags_n, toolDimTags, toolDimTags_n, outDimTags, outDimTags_n, outDimTagsMap, outDimTagsMap_n,outDimTagsMap_nn, tag, removeObject, removeTool, ierr) bind(C, name="gmshModelOccIntersect")
+    subroutine gmshModelOccIntersect(objectDimTags, objectDimTags_n, toolDimTags, toolDimTags_n, outDimTags, outDimTags_n, outDimTagsMap, outDimTagsMap_n, outDimTagsMap_nn, tag, removeObject, removeTool, ierr) bind(C, name="gmshModelOccIntersect")
         use, intrinsic :: iso_c_binding
         integer(c_int), dimension(*) :: objectDimTags
         integer(c_size_t), value :: objectDimTags_n
@@ -3709,7 +3708,7 @@ module gmsh
         integer(c_size_t) :: outDimTags_n
         type(c_ptr), intent(out) :: outDimTagsMap
         type(c_ptr), intent(out) :: outDimTagsMap_n
-        integer(c_size_t) ::outDimTagsMap_nn
+        integer(c_size_t) :: outDimTagsMap_nn
         integer(c_int), value :: tag
         integer(c_int), value :: removeObject
         integer(c_int), value :: removeTool
@@ -3722,7 +3721,7 @@ module gmsh
     !! explicitly (only valid if the boolean operation results in a single
     !! entity). Remove the object if `removeObject' is set. Remove the tool if
     !! `removeTool' is set.
-    subroutine gmshModelOccCut(objectDimTags, objectDimTags_n, toolDimTags, toolDimTags_n, outDimTags, outDimTags_n, outDimTagsMap, outDimTagsMap_n,outDimTagsMap_nn, tag, removeObject, removeTool, ierr) bind(C, name="gmshModelOccCut")
+    subroutine gmshModelOccCut(objectDimTags, objectDimTags_n, toolDimTags, toolDimTags_n, outDimTags, outDimTags_n, outDimTagsMap, outDimTagsMap_n, outDimTagsMap_nn, tag, removeObject, removeTool, ierr) bind(C, name="gmshModelOccCut")
         use, intrinsic :: iso_c_binding
         integer(c_int), dimension(*) :: objectDimTags
         integer(c_size_t), value :: objectDimTags_n
@@ -3732,7 +3731,7 @@ module gmsh
         integer(c_size_t) :: outDimTags_n
         type(c_ptr), intent(out) :: outDimTagsMap
         type(c_ptr), intent(out) :: outDimTagsMap_n
-        integer(c_size_t) ::outDimTagsMap_nn
+        integer(c_size_t) :: outDimTagsMap_nn
         integer(c_int), value :: tag
         integer(c_int), value :: removeObject
         integer(c_int), value :: removeTool
@@ -3748,7 +3747,7 @@ module gmsh
     !! If `tag' is positive, try to set the tag explicitly (only valid if the
     !! boolean operation results in a single entity). Remove the object if
     !! `removeObject' is set. Remove the tool if `removeTool' is set.
-    subroutine gmshModelOccFragment(objectDimTags, objectDimTags_n, toolDimTags, toolDimTags_n, outDimTags, outDimTags_n, outDimTagsMap, outDimTagsMap_n,outDimTagsMap_nn, tag, removeObject, removeTool, ierr) bind(C, name="gmshModelOccFragment")
+    subroutine gmshModelOccFragment(objectDimTags, objectDimTags_n, toolDimTags, toolDimTags_n, outDimTags, outDimTags_n, outDimTagsMap, outDimTagsMap_n, outDimTagsMap_nn, tag, removeObject, removeTool, ierr) bind(C, name="gmshModelOccFragment")
         use, intrinsic :: iso_c_binding
         integer(c_int), dimension(*) :: objectDimTags
         integer(c_size_t), value :: objectDimTags_n
@@ -3758,7 +3757,7 @@ module gmsh
         integer(c_size_t) :: outDimTags_n
         type(c_ptr), intent(out) :: outDimTagsMap
         type(c_ptr), intent(out) :: outDimTagsMap_n
-        integer(c_size_t) ::outDimTagsMap_nn
+        integer(c_size_t) :: outDimTagsMap_nn
         integer(c_int), value :: tag
         integer(c_int), value :: removeObject
         integer(c_int), value :: removeTool
@@ -3987,7 +3986,7 @@ module gmsh
     !> Get the tags `curveLoopTags' of the curve loops making up the surface of
     !! tag `surfaceTag', as well as the tags `curveTags' of the curves making up
     !! each curve loop.
-    subroutine gmshModelOccGetCurveLoops(surfaceTag, curveLoopTags, curveLoopTags_n, curveTags, curveTags_n,curveTags_nn, ierr) bind(C, name="gmshModelOccGetCurveLoops")
+    subroutine gmshModelOccGetCurveLoops(surfaceTag, curveLoopTags, curveLoopTags_n, curveTags, curveTags_n, curveTags_nn, ierr) bind(C, name="gmshModelOccGetCurveLoops")
         use, intrinsic :: iso_c_binding
         integer(c_int), value :: surfaceTag
         type(c_ptr), intent(out) :: curveLoopTags
@@ -4001,7 +4000,7 @@ module gmsh
     !> Get the tags `surfaceLoopTags' of the surface loops making up the volume of
     !! tag `volumeTag', as well as the tags `surfaceTags' of the surfaces making
     !! up each surface loop.
-    subroutine gmshModelOccGetSurfaceLoops(volumeTag, surfaceLoopTags, surfaceLoopTags_n, surfaceTags, surfaceTags_n,surfaceTags_nn, ierr) bind(C, name="gmshModelOccGetSurfaceLoops")
+    subroutine gmshModelOccGetSurfaceLoops(volumeTag, surfaceLoopTags, surfaceLoopTags_n, surfaceTags, surfaceTags_n, surfaceTags_nn, ierr) bind(C, name="gmshModelOccGetSurfaceLoops")
         use, intrinsic :: iso_c_binding
         integer(c_int), value :: volumeTag
         type(c_ptr), intent(out) :: surfaceLoopTags
@@ -4132,7 +4131,7 @@ module gmsh
     !! number of data components (1 for scalar data, 3 for vector data, etc.) per
     !! entity; if negative, it is automatically inferred (when possible) from the
     !! input data. `partition' allows one to specify data in several sub-sets.
-    subroutine gmshViewAddModelData(tag, step, modelName, dataType, tags, tags_n, data, data_n,data_nn, time, numComponents, partition, ierr) bind(C, name="gmshViewAddModelData")
+    subroutine gmshViewAddModelData(tag, step, modelName, dataType, tags, tags_n, data, data_n, data_nn, time, numComponents, partition, ierr) bind(C, name="gmshViewAddModelData")
         use, intrinsic :: iso_c_binding
         integer(c_int), value :: tag
         integer(c_int), value :: step
@@ -4174,7 +4173,7 @@ module gmsh
     !! `step'. Return the `data' associated to the nodes or the elements with tags
     !! `tags', as well as the `dataType' and the number of components
     !! `numComponents'.
-    subroutine gmshViewGetModelData(tag, step, dataType, tags, tags_n, data, data_n,data_nn, time, numComponents, ierr) bind(C, name="gmshViewGetModelData")
+    subroutine gmshViewGetModelData(tag, step, dataType, tags, tags_n, data, data_n, data_nn, time, numComponents, ierr) bind(C, name="gmshViewGetModelData")
         use, intrinsic :: iso_c_binding
         integer(c_int), value :: tag
         integer(c_int), value :: step
@@ -4183,7 +4182,7 @@ module gmsh
         integer(c_size_t) :: tags_n
         type (c_ptr), intent(out) :: data
         type(c_ptr), intent(out) :: data_n
-        integer (c_size_t) :: data_nn
+        integer(c_size_t) :: data_nn
         real(c_double) :: time
         integer(c_int) :: numComponents
         integer(c_int) :: ierr
@@ -4230,7 +4229,7 @@ module gmsh
     !> Get list-based post-processing data from the view with tag `tag'. Return
     !! the types `dataTypes', the number of elements `numElements' for each data
     !! type and the `data' for each data type.
-    subroutine gmshViewGetListData(tag, dataType, dataType_n, numElements, numElements_n, data, data_n,data_nn, ierr) bind(C, name="gmshViewGetListData")
+    subroutine gmshViewGetListData(tag, dataType, dataType_n, numElements, numElements_n, data, data_n, data_nn, ierr) bind(C, name="gmshViewGetListData")
         use, intrinsic :: iso_c_binding
         integer(c_int), value :: tag
         type(c_ptr), intent(out) :: dataType
@@ -4239,7 +4238,7 @@ module gmsh
         integer(c_size_t) :: numElements_n
         type (c_ptr), intent(out) :: data
         type(c_ptr), intent(out) :: data_n
-        integer (c_size_t) :: data_nn
+        integer(c_size_t) :: data_nn
         integer(c_int) :: ierr
     end subroutine gmshViewGetListData
 
