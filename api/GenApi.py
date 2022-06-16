@@ -662,7 +662,7 @@ def ovectorvectorsize(name, value=None, python_value=None, julia_value=None):
                     "tmp_" + api_name_n + "[i], own = true) for i in 1:" +
                     api_name_nn + "[] ]")
     a.fortran_args = [name, name + "_n", name + "_nn"]
-    a.fortran_types = ["type (c_ptr), intent(out)", "type(c_ptr), intent(out)", "integer(c_size_t)"]
+    a.fortran_types = ["type(c_ptr), intent(out)", "type(c_ptr), intent(out)", "integer(c_size_t)"]
     return a
 
 
@@ -706,7 +706,7 @@ def ovectorvectordouble(name, value=None, python_value=None, julia_value=None):
                     "tmp_" + api_name_n + "[i], own = true) for i in 1:" +
                     api_name_nn + "[] ]")
     a.fortran_args = [name, name + "_n", name + "_nn"]
-    a.fortran_types = ["type (c_ptr), intent(out)", "type(c_ptr), intent(out)", "integer(c_size_t)"]
+    a.fortran_types = ["type(c_ptr), intent(out)", "type(c_ptr), intent(out)", "integer(c_size_t)"]
     return a
 
 
