@@ -50,7 +50,7 @@ def ibool(name, value=None, python_value=None, julia_value=None):
     a.python_arg = "c_int(bool(" + name + "))"
     a.cwrap_arg = "(int)" + name
     a.julia_ctype = "Cint"
-    a.fortran_types = ["integer(c_int), value"]
+    a.fortran_types = ["integer(c_int), value, intent(in)"]
     return a
 
 
@@ -59,7 +59,7 @@ def iint(name, value=None, python_value=None, julia_value=None):
             False)
     a.python_arg = "c_int(" + name + ")"
     a.julia_ctype = "Cint"
-    a.fortran_types = ["integer(c_int), value"]
+    a.fortran_types = ["integer(c_int), value, intent(in)"]
     return a
 
 
@@ -68,7 +68,7 @@ def isize(name, value=None, python_value=None, julia_value=None):
             "const size_t", False)
     a.python_arg = "c_size_t(" + name + ")"
     a.julia_ctype = "Csize_t"
-    a.fortran_types = ["integer(c_size_t), value"]
+    a.fortran_types = ["integer(c_size_t), value, intent(in)"]
     return a
 
 
@@ -77,7 +77,7 @@ def idouble(name, value=None, python_value=None, julia_value=None):
             "const double", False)
     a.python_arg = "c_double(" + name + ")"
     a.julia_ctype = "Cdouble"
-    a.fortran_types = ["real(c_double), value"]
+    a.fortran_types = ["real(c_double), value, intent(in)"]
     return a
 
 
@@ -121,7 +121,7 @@ def ivectorint(name, value=None, python_value=None, julia_value=None):
     a.julia_ctype = "Ptr{Cint}, Csize_t"
     a.julia_arg = "convert(Vector{Cint}, " + name + "), length(" + name + ")"
     a.fortran_args = [name, name + "_n"]
-    a.fortran_types = ["integer(c_int), dimension(*)", "integer(c_size_t), value"]
+    a.fortran_types = ["integer(c_int), dimension(*)", "integer(c_size_t), value, intent(in)"]
     return a
 
 
@@ -146,7 +146,7 @@ def ivectorsize(name, value=None, python_value=None, julia_value=None):
     a.julia_ctype = "Ptr{Csize_t}, Csize_t"
     a.julia_arg = "convert(Vector{Csize_t}, " + name + "), length(" + name + ")"
     a.fortran_args = [name, name + "_n"]
-    a.fortran_types = ["integer(c_size_t), dimension(*)", "integer(c_size_t), value"]
+    a.fortran_types = ["integer(c_size_t), dimension(*)", "integer(c_size_t), value, intent(in)"]
     return a
 
 
@@ -171,7 +171,7 @@ def ivectordouble(name, value=None, python_value=None, julia_value=None):
     a.julia_ctype = "Ptr{Cdouble}, Csize_t"
     a.julia_arg = "convert(Vector{Cdouble}, " + name + "), length(" + name + ")"
     a.fortran_args = [name, name + "_n"]
-    a.fortran_types = ["real(c_double), dimension(*)", "integer(c_size_t), value"]
+    a.fortran_types = ["real(c_double), dimension(*)", "integer(c_size_t), value, intent(in)"]
     return a
 
 
@@ -196,7 +196,7 @@ def ivectorstring(name, value=None, python_value=None, julia_value=None):
     a.julia_ctype = "Ptr{Ptr{Cchar}}, Csize_t"
     a.julia_arg = name + ", length(" + name + ")"
     a.fortran_args = [name, name + "_n"]
-    a.fortran_types = ["type(c_ptr), dimension(*)", "integer(c_size_t), value"]
+    a.fortran_types = ["type(c_ptr), dimension(*)", "integer(c_size_t), value, intent(in)"]
     return a
 
 
@@ -226,7 +226,7 @@ def ivectorpair(name, value=None, python_value=None, julia_value=None):
                    "))\n    " + api_name_n + " = length(" + api_name + ")")
     a.julia_arg = (api_name + ", " + api_name_n)
     a.fortran_args = [name, name + "_n"]
-    a.fortran_types = ["integer(c_int), dimension(*)", "integer(c_size_t), value"]
+    a.fortran_types = ["integer(c_int), dimension(*)", "integer(c_size_t), value, intent(in)"]
     return a
 
 
@@ -779,7 +779,7 @@ def iargcargv():
     a.julia_arg = "length(argv), argv"
     a.texi = "(argc = 0)}, @code{argv = []"
     a.fortran_args = ["argc", "argv"]
-    a.fortran_types = ["integer(c_int), value", "type(c_ptr), dimension(*)"]
+    a.fortran_types = ["integer(c_int), value, intent(in)", "type(c_ptr), dimension(*)"]
     return a
 
 
