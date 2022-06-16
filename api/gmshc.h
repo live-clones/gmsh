@@ -1584,6 +1584,7 @@ GMSH_API void gmshModelMeshCreateHxtMesh(const char * inputMesh,
 /* Generate a mesh of the array of points `coord', constrained to the surface
  * mesh of the current model. Currently only supported for 3D. */
 GMSH_API void gmshModelMeshAlphaShapesConstrained(const int dim,
+                                                  const int tag,
                                                   const double * coord, const size_t coord_n,
                                                   const int * nodeTags, const size_t nodeTags_n,
                                                   const double alpha,
@@ -1592,6 +1593,7 @@ GMSH_API void gmshModelMeshAlphaShapesConstrained(const int dim,
                                                   size_t *** domains, size_t ** domains_n, size_t *domains_nn,
                                                   size_t *** boundaries, size_t ** boundaries_n, size_t *boundaries_nn,
                                                   size_t ** neighbors, size_t * neighbors_n,
+                                                  double * hMean,
                                                   const int * controlTags, const size_t controlTags_n,
                                                   int * ierr);
 

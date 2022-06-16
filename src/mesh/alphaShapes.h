@@ -31,6 +31,7 @@ void createHxtMesh_(const std::string &inputMesh, const std::vector<double>& coo
 
 void constrainedAlphaShapes_(GModel* m, 
                             const int dim, 
+                            const int tag,
                             const std::vector<double>& coord, 
                             const std::vector<int>& nodeTags,
                             const double alpha, 
@@ -39,5 +40,6 @@ void constrainedAlphaShapes_(GModel* m,
                             std::vector<std::vector<size_t> > &domains,
                             std::vector<std::vector<size_t> > &boundaries,
                             std::vector<size_t> &neigh,
+                            double &hMean,
                             const std::vector<int> &controlTags);
 #endif

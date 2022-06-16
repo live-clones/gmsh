@@ -1794,6 +1794,7 @@ namespace gmsh { // Top-level functions
       // Generate a mesh of the array of points `coord', constrained to the surface
       // mesh of the current model. Currently only supported for 3D.
       GMSH_API void alphaShapesConstrained(const int dim,
+                                           const int tag,
                                            const std::vector<double> & coord,
                                            const std::vector<int> & nodeTags,
                                            const double alpha,
@@ -1802,6 +1803,7 @@ namespace gmsh { // Top-level functions
                                            std::vector<std::vector<std::size_t> > & domains,
                                            std::vector<std::vector<std::size_t> > & boundaries,
                                            std::vector<std::size_t> & neighbors,
+                                           double & hMean,
                                            const std::vector<int> & controlTags);
 
       namespace field { // Mesh size field functions

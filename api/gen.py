@@ -564,7 +564,7 @@ doc = '''hxt meshing test.'''
 mesh.add('createHxtMesh', doc, None, istring('inputMesh'), ivectordouble('coord'), istring('outputMesh'), ovectordouble('pts'), ovectorsize('tets'))
 
 doc = '''Generate a mesh of the array of points `coord', constrained to the surface mesh of the current model. Currently only supported for 3D.'''
-mesh.add('alphaShapesConstrained', doc, None, iint('dim'), ivectordouble('coord'), ivectorint('nodeTags'), idouble('alpha'), idouble('meanValue'), ovectorsize('tetrahedra'), ovectorvectorsize('domains'), ovectorvectorsize('boundaries'), ovectorsize('neighbors'), ivectorint('controlTags'))
+mesh.add('alphaShapesConstrained', doc, None, iint('dim'), iint('tag'), ivectordouble('coord'), ivectorint('nodeTags'), idouble('alpha'), idouble('meanValue'), ovectorsize('tetrahedra'), ovectorvectorsize('domains'), ovectorvectorsize('boundaries'), ovectorsize('neighbors'), odouble('hMean'), ivectorint('controlTags'))
 
 ################################################################################
 

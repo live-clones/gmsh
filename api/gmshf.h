@@ -3325,6 +3325,7 @@ c
 !  mesh of the current model. Currently only supported for 3D.
         subroutine gmshModelMeshAlphaShapesConstrained(
      &      dim,
+     &      tag,
      &      coord,
      &      coord_n,
      &      nodeTags,
@@ -3341,12 +3342,14 @@ c
      &      boundaries_nn,
      &      neighbors,
      &      neighbors_n,
+     &      hMean,
      &      controlTags,
      &      controlTags_n,
      &      ierr)
      &    bind(C, name = "gmshModelMeshAlphaShapesConstrained")
           use, intrinsic :: iso_c_binding
             integer(c_int), value::dim
+            integer(c_int), value::tag
             real(c_double)::coord(*)
             integer(c_size_t), value :: coord_n
             integer(c_int)::nodeTags(*)
@@ -3363,6 +3366,7 @@ c
             integer(c_size_t) :: boundaries_nn
             type(c_ptr), intent(out)::neighbors
             integer(c_size_t) :: neighbors_n
+            real(c_double)::hMean
             integer(c_int)::controlTags(*)
             integer(c_size_t), value :: controlTags_n
             integer(c_int)::ierr

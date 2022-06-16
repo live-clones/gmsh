@@ -265,7 +265,7 @@ int alphaShapes2D_(const double threshold,
   
   gmsh::model::mesh::triangulate(pts, triangles);
   const int numPts = (int)(pts.size()/2);
-  std::vector<double> h; 
+  std::vector<double> h(numPts); 
   double hMean;
   if (nodalSize.size() == 1) {
     if (nodalSize[0] < 0) hMean = meanEdgeLength2D(pts,triangles);
@@ -351,7 +351,7 @@ int alphaShapes3D_ (const double threshold,
   const int numPts = (int)(pts.size()/3);
   for (size_t i = 0; i < tetrahedra.size(); i++)tetrahedra[i]--;
   std::vector<double> h; 
-  double hMean;
+  double hMean(numPts);
   if (nodalSize.size() == 1) {
     if (nodalSize[0] < 0) hMean = meanEdgeLength(pts,tetrahedra);
     else hMean = nodalSize[0];
@@ -446,7 +446,148 @@ bool onlyBnd(std::vector<std::size_t> tet, size_t nBndPts){
   return true;
 }
 
-void constrainedAlphaShapes_(GModel* m, 
+bool checkBndColor(const size_t *t, std::vector<size_t> &bndColor, const std::vector<size_t> &controlNodeIndices){
+  size_t nBnd = 0;
+  size_t nControlNodes = 8;
+  for (size_t i = 0; i < 4; i++)
+  {
+    if (bndColor[t[i]])
+      nBnd++;
+  }
+  return nBnd > 2;
+  // if (nBnd > 2) {
+  //   for (size_t i = 0; i < 4; i++){
+  //     if (std::find(controlNodeIndices.begin(), controlNodeIndices.end(), t[i]) != controlNodeIndices.end()){
+  //       return false;
+  //     }
+  //   }
+  //   return true;
+  // }
+  // return false;
+}
+
+void constrainedAlphaShapes2D_(GModel* m, 
+                            const int dim, 
+                            const int tag,
+                            const std::vector<double>& coord,
+                            const std::vector<int>& nodeTags, 
+                            const double alpha, 
+                            const double meanValue,
+                            std::vector<size_t> &triangles, 
+                            std::vector<std::vector<size_t> > &domains,
+                            std::vector<std::vector<size_t> > &boundaries,
+                            std::vector<size_t> &neigh, 
+                            double &hMean,
+                            const std::vector<int> &controlNodes)
+{
+  std::set<GRegion *, GEntityPtrLessThan> rs;
+  rs = m->getRegions();
+  std::vector<GRegion *> regions(rs.begin(), rs.end());
+  std::for_each(m->firstRegion(), m->lastRegion(), deMeshGRegion());
+
+  std::vector<double> pCoords;
+  gmsh::model::getParametrization(2, tag, coord, pCoords);
+  
+  gmsh::model::mesh::generateMesh(2, tag, 0, pCoords, nodeTags);
+  
+  std::map<int,int> g2i;
+  int count = 0;
+  for (size_t i=0; i<controlNodes.size(); i++){
+    g2i.insert(std::pair<int,int>(controlNodes[i], count));
+    count++;
+  }
+  std::vector<std::size_t> tags1D;
+  std::vector<double> coord1D, pCoord1D;
+  gmsh::model::mesh::getNodes(tags1D, coord1D,pCoord1D,1,-1,false,false);
+  for (size_t i=0; i<tags1D.size(); i++){
+    g2i.insert(std::pair<int,int>(tags1D[i], count));
+    count++;
+  }                           
+  for (size_t i=0; i<nodeTags.size(); i++){
+    g2i.insert(std::pair<int,int>(nodeTags[i], count));
+    count++;
+  }
+
+  std::vector<int> elementTypes;
+  std::vector<std::vector<std::size_t> > elementTags;
+  std::vector<std::vector<std::size_t> > elementNodeTags;
+  
+  gmsh::model::mesh::getElements(elementTypes, elementTags, elementNodeTags, 2, tag);
+  std::vector<size_t> tris;
+  for (size_t i = 0; i < elementNodeTags[0].size(); i++)
+  {
+    triangles.push_back(elementNodeTags[0][i]);
+    tris.push_back(g2i[elementNodeTags[0][i]]);
+  }
+  std::vector<double> allNodeCoords; 
+  for (size_t i = 0; i < controlNodes.size(); i++)
+  {
+    std::vector<double> c, pc;
+    int d0, t0;
+    gmsh::model::mesh::getNode(controlNodes[i],c, pc,d0,t0);
+    allNodeCoords.push_back(c[0]);
+    allNodeCoords.push_back(c[1]);
+  }
+  for (size_t i = 0; i < coord1D.size()/3; i++)
+  {
+    allNodeCoords.push_back(coord1D[3*i+0]);
+    allNodeCoords.push_back(coord1D[3*i+1]);
+  }
+  for (size_t i = 0; i < coord.size()/3; i++)
+  {
+    allNodeCoords.push_back(coord[3*i+0]);
+    allNodeCoords.push_back(coord[3*i+1]);
+  }
+
+  //double hMean;
+  if (meanValue < 0) hMean = meanEdgeLength2D(allNodeCoords,tris);
+  else hMean = meanValue;
+  int ok = computeTriNeighbors_ (tris, neigh);
+
+  // The alpha-shape
+  std::vector<bool> _touched;
+  _touched.resize(tris.size()/3);
+  for (size_t i=0;i<_touched.size();i++)_touched[i] = false;
+  for (size_t i = 0; i < tris.size(); i+=3){
+    size_t *t = &tris[i];
+    if (alphaShape2D(t, allNodeCoords, hMean) < alpha && _touched[i/3] == false){
+      std::stack<size_t> _s;
+      std::vector<size_t> _domain;
+      std::vector<size_t> _boundary;
+      _s.push(i/3);
+      _touched[i/3] = true;
+      _domain.push_back(i/3);
+      while(!_s.empty()){
+        size_t t = _s.top();
+        _s.pop();
+        for (int j=0;j<3;j++){
+          size_t tj = neigh[3*t+j];
+          if (tj == tris.size()){
+            _boundary.push_back(t);
+            _boundary.push_back(j);
+          }
+          else if (!_touched[tj]){
+            size_t *t_neigh = &tris[3*tj]; 
+            if (alphaShape2D(t_neigh, allNodeCoords, hMean) < alpha){
+              _s.push(tj);
+              _touched[tj] = true;
+              _domain.push_back(tj);	    
+            }	    
+            else {
+              _boundary.push_back(t);
+              _boundary.push_back(j);	      
+            }
+          }
+        }	  
+      }
+      boundaries.push_back(_boundary);
+      domains.push_back(_domain); 
+    }
+  }
+
+}
+
+void constrainedAlphaShapes3D_(GModel* m, 
                             const int dim, 
                             const std::vector<double>& coord,
                             const std::vector<int>& nodeTags, 
@@ -456,6 +597,7 @@ void constrainedAlphaShapes_(GModel* m,
                             std::vector<std::vector<size_t> > &domains,
                             std::vector<std::vector<size_t> > &boundaries,
                             std::vector<size_t> &neigh, 
+                            double &hMean,
                             const std::vector<int> &controlNodes)
 {  
   
@@ -586,14 +728,23 @@ void constrainedAlphaShapes_(GModel* m,
   
   computeTetNeighbors_ (fluidTets, neigh);
   
-  double hMean;
+  //double hMean;
   std::vector<double> allMeshPoints;
   for (size_t i=0; i<mesh->vertices.num; i++){
     for (size_t dim=0; dim<3; dim++){
       allMeshPoints.push_back(mesh->vertices.coord[4*i+dim]);
     }
   }
-  
+
+  std::vector<size_t> bndColor;
+  std::vector<size_t> controlNodeIndices;
+  for (size_t i=0; i<mesh->vertices.num; i++){
+    bndColor.push_back(i<nBndPts && c2v[i]->getNum() > controlNodes.size());
+    if (i<nBndPts && c2v[i]->getNum() <= controlNodes.size() ){
+       controlNodeIndices.push_back(i);
+    }
+  }
+
   if (meanValue < 0) hMean = meanEdgeLength(allMeshPoints, fluidTets);
   else hMean = meanValue;
   std::cout << "hMean = " << hMean << "\n";
@@ -601,9 +752,13 @@ void constrainedAlphaShapes_(GModel* m,
   std::vector<bool> _touched;
   _touched.resize(fluidTets.size()/4);
   for (size_t i=0;i<_touched.size();i++)_touched[i] = false;
+  double alpha_test;
   for (size_t i = 0; i < fluidTets.size(); i+=4){
       size_t *t = &fluidTets[i];
-      if (alphaShape(t, allMeshPoints, hMean) < alpha && _touched[i/4] == false){
+      //if ((alphaShape(t, allMeshPoints, hMean) < alpha || checkBndColor(t, bndColor, controlNodeIndices)) && _touched[i/4] == false){
+      if (checkBndColor(t, bndColor, controlNodeIndices)) alpha_test = 1.5 * alpha;
+      else alpha_test = alpha;
+      if (alphaShape(t, allMeshPoints, hMean) < alpha_test && _touched[i/4] == false){
         std::stack<size_t> _s;
         std::vector<size_t> _domain;
         std::vector<size_t> _boundary;
@@ -620,7 +775,10 @@ void constrainedAlphaShapes_(GModel* m,
               _boundary.push_back(j);
             }
             else if (!_touched[tj]){
-              if (alphaShape(&fluidTets[4*tj], allMeshPoints, hMean) < alpha){
+              //if (alphaShape(&fluidTets[4*tj], allMeshPoints, hMean) < alpha || checkBndColor(&fluidTets[4*tj], bndColor, controlNodeIndices)){
+              if (checkBndColor(&fluidTets[4*tj], bndColor, controlNodeIndices)) alpha_test = 1.5 * alpha;
+              else alpha_test = alpha;
+              if (alphaShape(&fluidTets[4*tj], allMeshPoints, hMean) < alpha_test){
                 _s.push(tj);
                 _touched[tj] = true;
                 _domain.push_back(tj);	    
@@ -671,6 +829,25 @@ void constrainedAlphaShapes_(GModel* m,
   hxtMeshDelete(&mesh);
   //int meshDim = m->getMeshStatus(false); 
 }
+
+void constrainedAlphaShapes_(GModel* m, 
+                            const int dim, 
+                            const int tag,
+                            const std::vector<double>& coord,
+                            const std::vector<int>& nodeTags, 
+                            const double alpha, 
+                            const double meanValue,
+                            std::vector<size_t> &tetrahedra, 
+                            std::vector<std::vector<size_t> > &domains,
+                            std::vector<std::vector<size_t> > &boundaries,
+                            std::vector<size_t> &neigh, 
+                            double &hMean,
+                            const std::vector<int> &controlNodes)
+{
+  if (dim == 2) constrainedAlphaShapes2D_(m, dim, tag, coord, nodeTags, alpha, meanValue, tetrahedra, domains, boundaries, neigh, hMean, controlNodes);
+  else if (dim == 3) constrainedAlphaShapes3D_(m, dim, coord, nodeTags, alpha, meanValue, tetrahedra, domains, boundaries, neigh, hMean, controlNodes);
+}
+
 
 /*
  * filename : the 2D boundary mesh

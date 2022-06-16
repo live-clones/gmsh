@@ -4134,14 +4134,14 @@ class model:
         create_hxt_mesh = createHxtMesh
 
         @staticmethod
-        def alphaShapesConstrained(dim, coord, nodeTags, alpha, meanValue, controlTags):
+        def alphaShapesConstrained(dim, tag, coord, nodeTags, alpha, meanValue, controlTags):
             """
-            gmsh.model.mesh.alphaShapesConstrained(dim, coord, nodeTags, alpha, meanValue, controlTags)
+            gmsh.model.mesh.alphaShapesConstrained(dim, tag, coord, nodeTags, alpha, meanValue, controlTags)
 
             Generate a mesh of the array of points `coord', constrained to the surface
             mesh of the current model. Currently only supported for 3D.
 
-            Return `tetrahedra', `domains', `boundaries', `neighbors'.
+            Return `tetrahedra', `domains', `boundaries', `neighbors', `hMean'.
             """
             api_coord_, api_coord_n_ = _ivectordouble(coord)
             api_nodeTags_, api_nodeTags_n_ = _ivectorint(nodeTags)
@@ -4149,10 +4149,12 @@ class model:
             api_domains_, api_domains_n_, api_domains_nn_ = POINTER(POINTER(c_size_t))(), POINTER(c_size_t)(), c_size_t()
             api_boundaries_, api_boundaries_n_, api_boundaries_nn_ = POINTER(POINTER(c_size_t))(), POINTER(c_size_t)(), c_size_t()
             api_neighbors_, api_neighbors_n_ = POINTER(c_size_t)(), c_size_t()
+            api_hMean_ = c_double()
             api_controlTags_, api_controlTags_n_ = _ivectorint(controlTags)
             ierr = c_int()
             lib.gmshModelMeshAlphaShapesConstrained(
                 c_int(dim),
+                c_int(tag),
                 api_coord_, api_coord_n_,
                 api_nodeTags_, api_nodeTags_n_,
                 c_double(alpha),
@@ -4161,6 +4163,7 @@ class model:
                 byref(api_domains_), byref(api_domains_n_), byref(api_domains_nn_),
                 byref(api_boundaries_), byref(api_boundaries_n_), byref(api_boundaries_nn_),
                 byref(api_neighbors_), byref(api_neighbors_n_),
+                byref(api_hMean_),
                 api_controlTags_, api_controlTags_n_,
                 byref(ierr))
             if ierr.value != 0:
@@ -4169,7 +4172,8 @@ class model:
                 _ovectorsize(api_tetrahedra_, api_tetrahedra_n_.value),
                 _ovectorvectorsize(api_domains_, api_domains_n_, api_domains_nn_),
                 _ovectorvectorsize(api_boundaries_, api_boundaries_n_, api_boundaries_nn_),
-                _ovectorsize(api_neighbors_, api_neighbors_n_.value))
+                _ovectorsize(api_neighbors_, api_neighbors_n_.value),
+                api_hMean_.value)
         alpha_shapes_constrained = alphaShapesConstrained
 
 

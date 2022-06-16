@@ -2774,6 +2774,7 @@ namespace gmsh { // Top-level functions
       // Generate a mesh of the array of points `coord', constrained to the surface
       // mesh of the current model. Currently only supported for 3D.
       inline void alphaShapesConstrained(const int dim,
+                                         const int tag,
                                          const std::vector<double> & coord,
                                          const std::vector<int> & nodeTags,
                                          const double alpha,
@@ -2782,6 +2783,7 @@ namespace gmsh { // Top-level functions
                                          std::vector<std::vector<std::size_t> > & domains,
                                          std::vector<std::vector<std::size_t> > & boundaries,
                                          std::vector<std::size_t> & neighbors,
+                                         double & hMean,
                                          const std::vector<int> & controlTags)
       {
         int ierr = 0;
@@ -2792,7 +2794,7 @@ namespace gmsh { // Top-level functions
         size_t **api_boundaries_; size_t *api_boundaries_n_, api_boundaries_nn_;
         size_t *api_neighbors_; size_t api_neighbors_n_;
         int *api_controlTags_; size_t api_controlTags_n_; vector2ptr(controlTags, &api_controlTags_, &api_controlTags_n_);
-        gmshModelMeshAlphaShapesConstrained(dim, api_coord_, api_coord_n_, api_nodeTags_, api_nodeTags_n_, alpha, meanValue, &api_tetrahedra_, &api_tetrahedra_n_, &api_domains_, &api_domains_n_, &api_domains_nn_, &api_boundaries_, &api_boundaries_n_, &api_boundaries_nn_, &api_neighbors_, &api_neighbors_n_, api_controlTags_, api_controlTags_n_, &ierr);
+        gmshModelMeshAlphaShapesConstrained(dim, tag, api_coord_, api_coord_n_, api_nodeTags_, api_nodeTags_n_, alpha, meanValue, &api_tetrahedra_, &api_tetrahedra_n_, &api_domains_, &api_domains_n_, &api_domains_nn_, &api_boundaries_, &api_boundaries_n_, &api_boundaries_nn_, &api_neighbors_, &api_neighbors_n_, &hMean, api_controlTags_, api_controlTags_n_, &ierr);
         if(ierr) throwLastError();
         gmshFree(api_coord_);
         gmshFree(api_nodeTags_);

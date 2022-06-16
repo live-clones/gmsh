@@ -86,6 +86,7 @@
         "memory_resource": "cpp",
         "stop_token": "cpp",
         "cinttypes": "cpp",
-        "filesystem": "cpp"
+        "filesystem": "cpp",
+        "variant": "cpp"
     }
 }
