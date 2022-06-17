@@ -1031,7 +1031,7 @@ static HXTStatus insertion(HXT2Sync* shared2sync,
   HXT_CHECK(status);
 
   if(!perfectDelaunay) {
-    int undeleteTet;
+    int undeleteTet = 0;
     if(edgeConstraint) {
       // printf("we have an edge constraint\n");
       HXT_CHECK( respectEdgeConstraint(local, mesh, vta, color, prevDeleted, &undeleteTet) );
