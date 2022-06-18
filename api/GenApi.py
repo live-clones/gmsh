@@ -1367,16 +1367,18 @@ module gmsh
 
     use, intrinsic :: iso_c_binding
 
-    integer, parameter :: {2}_API_VERSION_MAJOR = {4}
-    integer, parameter :: {2}_API_VERSION_MINOR = {5}
-    integer, parameter :: {2}_API_VERSION_PATCH = {6}
-    character(len=100), parameter :: {2}_API_VERSION = "{4}.{5}.{6}"
+    implicit none
 
-    interface
+    private
+
+    integer, parameter, public :: {2}_API_VERSION_MAJOR = {4}
+    integer, parameter, public :: {2}_API_VERSION_MINOR = {5}
+    integer, parameter, public :: {2}_API_VERSION_PATCH = {6}
+    character(len=100), parameter, public :: {2}_API_VERSION = "{4}.{5}.{6}"
+    
 """
 
 fortran_footer = """
-    end interface
 end module gmsh
 """
 
@@ -1817,36 +1819,105 @@ class API:
 
 
     def write_fortran(self):
+        types_list = []
+
+        def get_fname(name):
+            return name[0].upper() + name[1:]
+
+        def get_fc_name_t(name, c_mpath, f_mpath):
+            f_mpath += name + "_"
+            if c_mpath:
+                c_mpath += get_fname(name)
+            else:
+                c_mpath = name
+            return c_mpath, f_mpath
+
+        def write_type_vars(m, c_mpath, f_mpath, indent):
+            r = ""
+            for var in m.submodules:
+                c_mpath_l, f_mpath_l = get_fc_name_t(var.name, c_mpath, f_mpath)
+                r += f"{indent}type({f_mpath_l}t) :: {var.name}\n"
+            return r
+
+        def generate_procedures(m, c_mpath, indent):
+            r = ""
+            for fun in m.fs:
+                (_, name, _, _, _) = fun
+                fname = c_mpath + get_fname(name)
+                r += f"{indent}procedure, nopass :: {name} => {fname}\n"
+            return r
+
+        def generate_ftypes(f, m, c_mpath, f_mpath, indent):
+            c_mpath, f_mpath = get_fc_name_t(m.name, c_mpath, f_mpath)
+            r = f"{indent}type, public :: {f_mpath}t\n"
+            r += write_type_vars(m, c_mpath, f_mpath, indent * 2)
+            r += f"{indent * 2}contains\n"
+            r += generate_procedures(m, c_mpath, indent * 2)
+            r += f"{indent}end type {f_mpath}t\n"
+            # Save the types in a list
+            types_list.append(r)
+
+            for ftype in m.submodules:
+                generate_ftypes(f, ftype, c_mpath, f_mpath, indent)
+
         def write_function(f, fun, c_mpath, f_mpath, indent):
+            def get_arg_list(args, indent):
+                arg_list = ""
+                for arg in args:
+                    for t, a in zip(arg.fortran_types, arg.fortran_args):
+                        arg_list += f"{indent}{t} :: {a}\n"
+                arg_list += f"{indent}integer(c_int) :: ierr\n"
+                return arg_list
+
+            def get_dummy_arg_list(args):
+                dummy_list = ""
+                for arg in args:
+                    for a in arg.fortran_args:
+                        dummy_list += f"{a}, "
+                dummy_list += "ierr"
+                return dummy_list
+
+            def write_c_interface(args, rtype, fname, indent):
+                proc_type = "function" if rtype else "subroutine"
+                dummy_list = get_dummy_arg_list(args)
+                r = f"{indent * 2}interface\n"
+                r += f"{indent * 2}{proc_type} C_API({dummy_list})"
+                r += f" bind(C, name=\"{fname}\")\n"
+                r += f"{indent * 3}use, intrinsic :: iso_c_binding\n"
+                if rtype:
+                    r += f"{indent * 3}{rtype.fortran_types[0]} :: C_API\n"
+
+                r += get_arg_list(args, indent * 3)
+                r += f"{indent * 2}end {proc_type} C_API\n"
+                r += f"{indent * 2}end interface\n"
+                return r
+
             (rtype, name, args, doc, special) = fun
-            fname = c_mpath + name[0].upper() + name[1:]
+            fname = c_mpath + get_fname(name)
             # Documentation (Doxygen)
             self.fwrite(
-                f, "\n" + indent + "!> " +
-                ("\n" + indent + "!! ").join(textwrap.wrap(doc, 75)) + "\n")
+                f, f"\n{indent}!> " +
+                (f"\n{indent}!! ").join(textwrap.wrap(doc, 75)) + "\n")
 
-            fnamef = ("function" if rtype else "subroutine") + " " + fname
-            r = indent + fnamef + "("
-            for arg in args:
-                for a in arg.fortran_args:
-                    r += a + ", "
-            r += "ierr) bind(C, name=\"" + fname + "\")" + "\n"
-            r += indent * 2 + "use, intrinsic :: iso_c_binding" + "\n"
+            # Procedure declaration
+            proc_type = "function" if rtype else "subroutine"
+            fnamef = f"{proc_type} {fname}"
+            dummy_list = get_dummy_arg_list(args)
+            r = f"{indent}{fnamef}({dummy_list})\n"
+            r += write_c_interface(args, rtype, fname, indent)
             if rtype:
-                r += indent * 2 + rtype.fortran_types[0] + " :: " + fname + "\n"
-            for arg in args:
-                for t, a in zip(arg.fortran_types, arg.fortran_args):
-                    r += indent * 2 + t + " :: " + a + "\n"
-            r += indent * 2 + "integer(c_int) :: ierr" + "\n"
-            r += indent + "end " + fnamef + "\n"
+                r += f"{indent * 2}{rtype.fortran_types[0]} :: {fname}\n"
+            r += get_arg_list(args, indent * 2)
+            # call the C function
+            if rtype:
+                r += f"{indent * 2}{fname} = C_API({dummy_list})\n"
+            else:
+                r += f"{indent * 2}call C_API({dummy_list})\n"
+            r += f"{indent}end {fnamef}\n"
             self.fwrite(f, r)
 
         def write_module(f, m, c_mpath, f_mpath, indent):
-            f_mpath += m.name + "%"  # Unused, access to user defined type object
-            if c_mpath:
-                c_mpath += m.name[0].upper() + m.name[1:]
-            else:
-                c_mpath = m.name
+            c_mpath, f_mpath = get_fc_name_t(m.name, c_mpath, f_mpath)
             indent = " " * 4
             for fun in m.fs:
                 write_function(f, fun, c_mpath, f_mpath, indent)
@@ -1860,6 +1931,13 @@ class API:
                 fortran_header.format(self.copyright, self.issues, ns.upper(),
                                       self.code, self.version_major,
                                       self.version_minor, self.version_patch))
+            for ftype in self.modules:
+                generate_ftypes(f, ftype, "", "", " " * 4)
+            # Write types in reverse since they have to be defined before use
+            for ftype in reversed(types_list):
+                self.fwrite(f, ftype)
+                self.fwrite(f, "\n")
+            self.fwrite(f, f"{' ' * 4}contains\n")
             for module in self.modules:
                 write_module(f, module, "", "", "")
             self.fwrite(f, fortran_footer)
