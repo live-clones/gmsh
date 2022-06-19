@@ -1,4 +1,4 @@
-4.10.4 (Work-in-progress): improved graphical window tooltips; small bug fixes.
+4.10.4 (June 19, 2022): improved graphical window tooltips; small bug fixes.
 
 * New API function: mesh/removeDuplicateElements
 
