@@ -2636,11 +2636,11 @@ module gmsh
             integer(c_int), value, intent(in) :: tag
             integer(c_int), dimension(*) :: elementTypes
             integer(c_size_t), value, intent(in) :: elementTypes_n
-            type(c_ptr), intent(out) :: elementTags
-            type(c_ptr), intent(out) :: elementTags_n
+            type(c_ptr), intent(in) :: elementTags
+            type(c_ptr), intent(in) :: elementTags_n
             integer(c_size_t) :: elementTags_nn
-            type(c_ptr), intent(out) :: nodeTags
-            type(c_ptr), intent(out) :: nodeTags_n
+            type(c_ptr), intent(in) :: nodeTags
+            type(c_ptr), intent(in) :: nodeTags_n
             integer(c_size_t) :: nodeTags_nn
             integer(c_int) :: ierr
         end subroutine C_API
@@ -2649,11 +2649,11 @@ module gmsh
         integer(c_int), value, intent(in) :: tag
         integer(c_int), dimension(*) :: elementTypes
         integer(c_size_t), value, intent(in) :: elementTypes_n
-        type(c_ptr), intent(out) :: elementTags
-        type(c_ptr), intent(out) :: elementTags_n
+        type(c_ptr), intent(in) :: elementTags
+        type(c_ptr), intent(in) :: elementTags_n
         integer(c_size_t) :: elementTags_nn
-        type(c_ptr), intent(out) :: nodeTags
-        type(c_ptr), intent(out) :: nodeTags_n
+        type(c_ptr), intent(in) :: nodeTags
+        type(c_ptr), intent(in) :: nodeTags_n
         integer(c_size_t) :: nodeTags_nn
         integer(c_int) :: ierr
         call C_API(dim, tag, elementTypes, elementTypes_n, elementTags, elementTags_n, elementTags_nn, nodeTags, nodeTags_n, nodeTags_nn, ierr)
@@ -7769,8 +7769,8 @@ module gmsh
             character(len=1, kind=c_char), dimension(*) :: dataType
             integer(c_size_t), dimension(*) :: tags
             integer(c_size_t), value, intent(in) :: tags_n
-            type(c_ptr), intent(out) :: data
-            type(c_ptr), intent(out) :: data_n
+            type(c_ptr), intent(in) :: data
+            type(c_ptr), intent(in) :: data_n
             integer(c_size_t) :: data_nn
             real(c_double), value, intent(in) :: time
             integer(c_int), value, intent(in) :: numComponents
@@ -7784,8 +7784,8 @@ module gmsh
         character(len=1, kind=c_char), dimension(*) :: dataType
         integer(c_size_t), dimension(*) :: tags
         integer(c_size_t), value, intent(in) :: tags_n
-        type(c_ptr), intent(out) :: data
-        type(c_ptr), intent(out) :: data_n
+        type(c_ptr), intent(in) :: data
+        type(c_ptr), intent(in) :: data_n
         integer(c_size_t) :: data_nn
         real(c_double), value, intent(in) :: time
         integer(c_int), value, intent(in) :: numComponents

@@ -263,7 +263,7 @@ def ivectorvectorint(name, value=None, python_value=None, julia_value=None):
     a.julia_arg = ("convert(Vector{Vector{Cint}}," + name + "), " +
                    api_name_n + ", length(" + name + ")")
     a.fortran_args = [name, name + "_n", name + "_nn"]
-    a.fortran_types = ["type(c_ptr), intent(out)", "type(c_ptr), intent(out)", "integer(c_size_t)"]
+    a.fortran_types = ["type(c_ptr), intent(in)", "type(c_ptr), intent(in)", "integer(c_size_t)"]
     return a
 
 
@@ -301,7 +301,7 @@ def ivectorvectorsize(name, value=None, python_value=None, julia_value=None):
     a.julia_arg = ("convert(Vector{Vector{Csize_t}}," + name + "), " +
                    api_name_n + ", length(" + name + ")")
     a.fortran_args = [name, name + "_n", name + "_nn"]
-    a.fortran_types = ["type(c_ptr), intent(out)", "type(c_ptr), intent(out)", "integer(c_size_t)"]
+    a.fortran_types = ["type(c_ptr), intent(in)", "type(c_ptr), intent(in)", "integer(c_size_t)"]
     return a
 
 
@@ -339,7 +339,7 @@ def ivectorvectordouble(name, value=None, python_value=None, julia_value=None):
     a.julia_arg = ("convert(Vector{Vector{Cdouble}}," + name + "), " +
                    api_name_n + ", length(" + name + ")")
     a.fortran_args = [name, name + "_n", name + "_nn"]
-    a.fortran_types = ["type(c_ptr), intent(out)", "type(c_ptr), intent(out)", "integer(c_size_t)"]
+    a.fortran_types = ["type(c_ptr), intent(in)", "type(c_ptr), intent(in)", "integer(c_size_t)"]
     return a
 
 
