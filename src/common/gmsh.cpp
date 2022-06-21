@@ -8596,6 +8596,7 @@ public:
   apiMsg() {}
   virtual void operator()(std::string level, std::string message)
   {
+#pragma omp critical
     _log.push_back(level + ": " + message);
   }
   void get(std::vector<std::string> &log) const { log = _log; }
