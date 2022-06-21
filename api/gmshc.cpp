@@ -2262,11 +2262,13 @@ GMSH_API void gmshModelMeshClearHomologyRequests(int * ierr)
   }
 }
 
-GMSH_API void gmshModelMeshComputeHomology(int * ierr)
+GMSH_API void gmshModelMeshComputeHomology(int ** dimTags, size_t * dimTags_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    gmsh::model::mesh::computeHomology();
+    gmsh::vectorpair api_dimTags_;
+    gmsh::model::mesh::computeHomology(api_dimTags_);
+    vectorpair2intptr(api_dimTags_, dimTags, dimTags_n);
   }
   catch(...){
     if(ierr) *ierr = 1;
@@ -3489,13 +3491,13 @@ GMSH_API int gmshModelOccAddTorus(const double x, const double y, const double z
   return result_api_;
 }
 
-GMSH_API void gmshModelOccAddThruSections(const int * wireTags, const size_t wireTags_n, int ** outDimTags, size_t * outDimTags_n, const int tag, const int makeSolid, const int makeRuled, const int maxDegree, int * ierr)
+GMSH_API void gmshModelOccAddThruSections(const int * wireTags, const size_t wireTags_n, int ** outDimTags, size_t * outDimTags_n, const int tag, const int makeSolid, const int makeRuled, const int maxDegree, const char * continuity, const char * parametrization, const int smoothing, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
     std::vector<int> api_wireTags_(wireTags, wireTags + wireTags_n);
     gmsh::vectorpair api_outDimTags_;
-    gmsh::model::occ::addThruSections(api_wireTags_, api_outDimTags_, tag, makeSolid, makeRuled, maxDegree);
+    gmsh::model::occ::addThruSections(api_wireTags_, api_outDimTags_, tag, makeSolid, makeRuled, maxDegree, continuity, parametrization, smoothing);
     vectorpair2intptr(api_outDimTags_, outDimTags, outDimTags_n);
   }
   catch(...){

@@ -5434,14 +5434,10 @@ gmsh::model::mesh::clearHomologyRequests()
 }
 
 GMSH_API void
-gmsh::model::mesh::computeHomology()
+gmsh::model::mesh::computeHomology(vectorpair &dimTags)
 {
   if(!_checkInit()) return;
-  // TODO in Gmsh 4.11: return newPhysicals (and remove message)
-  std::vector<std::pair<int, int> > newPhysicals;
-  GModel::current()->computeHomology(newPhysicals);
-  for(auto p : newPhysicals)
-    Msg::Info("New Physical %s", _getEntityName(p.first, p.second).c_str());
+  GModel::current()->computeHomology(dimTags);
 }
 
 GMSH_API void gmsh::model::mesh::triangulate(const std::vector<double> &coord,
@@ -6636,13 +6632,16 @@ GMSH_API int gmsh::model::occ::addTorus(const double x, const double y,
 
 GMSH_API void gmsh::model::occ::addThruSections(
   const std::vector<int> &wireTags, vectorpair &outDimTags, const int tag,
-  const bool makeSolid, const bool makeRuled, const int maxDegree)
+  const bool makeSolid, const bool makeRuled, const int maxDegree,
+  const std::string &continuity, const std::string &parametrization,
+  const bool smoothing)
 {
   if(!_checkInit()) return;
   _createOcc();
   outDimTags.clear();
   GModel::current()->getOCCInternals()->addThruSections(
-    tag, wireTags, makeSolid, makeRuled, outDimTags, maxDegree);
+    tag, wireTags, makeSolid, makeRuled, outDimTags, maxDegree,
+    continuity, parametrization, smoothing);
 }
 
 GMSH_API void gmsh::model::occ::addThickSolid(

@@ -2809,7 +2809,9 @@ bool OCC_Internals::addWedge(int &tag, double x, double y, double z, double dx,
 
 bool OCC_Internals::addThruSections(
   int tag, const std::vector<int> &wireTags, bool makeSolid, bool makeRuled,
-  std::vector<std::pair<int, int> > &outDimTags, int maxDegree)
+  std::vector<std::pair<int, int> > &outDimTags, int maxDegree,
+  const std::string &continuity, const std::string &parametrization,
+  bool smoothing)
 {
   int dim = makeSolid ? 3 : 2;
   if(tag >= 0 && _isBound(dim, tag)) {
@@ -2824,10 +2826,20 @@ bool OCC_Internals::addThruSections(
   TopoDS_Shape result;
   try {
     BRepOffsetAPI_ThruSections ts(makeSolid, makeRuled);
-    // ts.SetContinuity(GeomAbs_C1);
-    // Available choices:
-    //    GeomAbs_C0, GeomAbs_G1, GeomAbs_C1, GeomAbs_G2, GeomAbs_C2,
-    //    GeomAbs_C3, GeomAbs_CN
+    if(continuity == "C0")
+      ts.SetContinuity(GeomAbs_C0);
+    else if(continuity == "G1")
+      ts.SetContinuity(GeomAbs_G1);
+    else if(continuity == "C1")
+      ts.SetContinuity(GeomAbs_C1);
+    else if(continuity == "G2")
+      ts.SetContinuity(GeomAbs_G2);
+    else if(continuity == "C2")
+      ts.SetContinuity(GeomAbs_C2);
+    else if(continuity == "C3")
+      ts.SetContinuity(GeomAbs_C3);
+    else if(continuity == "CN")
+      ts.SetContinuity(GeomAbs_CN);
 
     // ts.SetCriteriumWeight(1, 1, 1);
 
@@ -2836,11 +2848,15 @@ bool OCC_Internals::addThruSections(
     else if(CTX::instance()->geom.occThruSectionsDegree > 0)
       ts.SetMaxDegree(CTX::instance()->geom.occThruSectionsDegree);
 
-    // ts.SetParType(Approx_ChordLength);
-    // Available choices:
-    //    Approx_ChordLength, Approx_Centripetal, Approx_IsoParametric
+    if(parametrization == "ChordLength")
+      ts.SetParType(Approx_ChordLength);
+    else if(parametrization == "Centripetal")
+      ts.SetParType(Approx_Centripetal);
+    else if(parametrization == "IsoParametric")
+      ts.SetParType(Approx_IsoParametric);
 
-    // ts.SetSmoothing(Standard_True);
+    ts.SetSmoothing(smoothing ? Standard_True : Standard_False);
+
     for(std::size_t i = 0; i < wireTags.size(); i++) {
       if(!_tagWire.IsBound(wireTags[i])) {
         Msg::Error("Unknown OpenCASCADE wire or curve loop with tag %d",
