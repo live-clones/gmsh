@@ -423,7 +423,7 @@ endif()
 
 if(ENABLE_EIGEN)
   if(ENABLE_SYSTEM_CONTRIB)
-    find_path(EIGEN_INC "Eigen/Dense" HINTS eigen3)
+    find_path(EIGEN_INC "Eigen/Dense" PATH_SUFFIXES eigen3)
     if(EIGEN_INC)
       include_directories(${EIGEN_INC})
       set_config_option(HAVE_EIGEN "Eigen")
