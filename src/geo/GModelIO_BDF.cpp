@@ -161,15 +161,15 @@ static int readElementBDF(FILE *fp, char *buffer, int keySize, int numVertices,
   readLineBDF(buffer, format, fields);
 
   if(((int)fields.size() - 2 < abs(numVertices)) ||
-     (numVertices < 0 && (fields.size() == 9))) {
-    if(fields.size() == 9) fields.pop_back();
+     (numVertices < 0 && (fields.size() == 8 || fields.size() == 9))) {
+    if(fields.size() == 9) fields.pop_back(); // drop continuation string
     if(!fgets(buffer2, sizeof(buffer2), fp)) return 0;
     readLineBDF(buffer2, format, fields);
   }
 
   if(((int)fields.size() - 2 < abs(numVertices)) ||
-     (numVertices < 0 && (fields.size() == 17))) {
-    if(fields.size() == 17) fields.pop_back();
+     (numVertices < 0 && (fields.size() == 15 || fields.size() == 17))) {
+    if(fields.size() == 17) fields.pop_back(); // drop continuation string
     if(!fgets(buffer3, sizeof(buffer3), fp)) return 0;
     readLineBDF(buffer3, format, fields);
   }
