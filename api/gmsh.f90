@@ -8148,14 +8148,14 @@ module gmsh
     interface
     subroutine C_API(shape, api_outDimTags_, api_outDimTags_n_, highestDimOnly, ierr_) bind(C, name="gmshModelOccImportShapesNativePointer")
       use, intrinsic :: iso_c_binding
-      integer(c_int), dimension(*) :: shape
+      type(c_ptr), value, intent(in) :: shape
       type(c_ptr), intent(out) :: api_outDimTags_
       integer(c_size_t), intent(out) :: api_outDimTags_n_
       integer(c_int), value, intent(in) :: highestDimOnly
       integer(c_int), intent(out) :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), dimension(*) :: shape
+    type(c_ptr), intent(in) :: shape
     integer(c_int), dimension(:,:), allocatable, intent(out) :: outDimTags
     integer(c_int), intent(in) :: highestDimOnly
     integer(c_int), intent(out) :: ierr
@@ -10295,7 +10295,6 @@ module gmsh
   ! ----------------------------------------------------------------------------
   ! Output routines from C to Fortran
   ! ----------------------------------------------------------------------------
-  ! TODO: ensure that taget keyword are not abused
 
   function ovectorint_(cptr, n) result(v)
     type(c_ptr), intent(in) :: cptr
@@ -10357,7 +10356,7 @@ module gmsh
   end function ovectorpair_
 
   subroutine ovectorvectorint_(cptr1, cptr2, n, v, dims)
-    type(c_ptr), target, intent(in) :: cptr1, cptr2
+    type(c_ptr), intent(in) :: cptr1, cptr2
     integer(c_size_t), intent(in) :: n
     integer(c_int), allocatable, intent(out) :: v(:)
     integer(c_size_t), allocatable, intent(out) :: dims(:)
@@ -10371,7 +10370,7 @@ module gmsh
   end subroutine ovectorvectorint_
 
   subroutine ovectorvectorsize_(cptr1, cptr2, n, v, dims)
-    type(c_ptr), target, intent(in) :: cptr1, cptr2
+    type(c_ptr), intent(in) :: cptr1, cptr2
     integer(c_size_t), intent(in) :: n
     integer(c_size_t), allocatable, intent(out) :: v(:)
     integer(c_size_t), allocatable, intent(out) :: dims(:)
@@ -10385,7 +10384,7 @@ module gmsh
   end subroutine ovectorvectorsize_
 
   subroutine ovectorvectordouble_(cptr1, cptr2, n, v, dims)
-    type(c_ptr), target, intent(in) :: cptr1, cptr2
+    type(c_ptr), intent(in) :: cptr1, cptr2
     integer(c_size_t), intent(in) :: n
     real(c_double), allocatable, intent(out) :: v(:)
     integer(c_size_t), allocatable, intent(out) :: dims(:)
@@ -10399,7 +10398,7 @@ module gmsh
   end subroutine ovectorvectordouble_
 
   subroutine ovectorvectorpair_(cptr1, cptr2, n, v, dims)
-    type(c_ptr), target, intent(in) :: cptr1, cptr2
+    type(c_ptr), intent(in) :: cptr1, cptr2
     integer(c_size_t), intent(in) :: n
     integer(c_int), allocatable, intent(out) :: v(:,:)
     integer(c_size_t), allocatable, intent(out) :: dims(:)

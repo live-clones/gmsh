@@ -111,8 +111,8 @@ def ivoidstar(name, value=None, python_value=None, julia_value=None):
             "const void *", False)
     a.python_arg = "c_void_p(" + name + ")"
     a.julia_ctype = "Ptr{Cvoid}"
-    a.fortran_types = ["integer(c_int), dimension(*)"]  # TODO: should this be even an arg?
-    a.fortran_c_api = ["integer(c_int), dimension(*)"]  # ignore
+    a.fortran_types = ["type(c_ptr), intent(in)"]
+    a.fortran_c_api = ["type(c_ptr), value, intent(in)"]
     return a
 
 
@@ -226,7 +226,6 @@ def ivectorstring(name, value=None, python_value=None, julia_value=None):
     a.fortran_c_args = [api_name, api_name_n]
     a.fortran_call = f"{api_name}, fsize({name}, kind=c_size_t)"
     a.fortran_pre = f"call ivectorstring_({name}, {api_name}strs, {api_name})"
-    # TODO: I don't think these allocatables are correct, can be of fixed dimension
     a.fortran_local = [f"character(len=GMSH_API_MAX_STR_LEN, kind=c_char), allocatable :: {api_name}strs(:)",
                        f"type(c_ptr), allocatable :: {api_name}(:)"]
     return a
@@ -395,7 +394,7 @@ def ivectorvectordouble(name, value=None, python_value=None, julia_value=None):
 
 
 # output types
-# TODO: should the output types be marked as intent(out)?
+# TODO: mark as intent(out), remember to remove intent from result() in function
 
 class oint(arg):
     rcpp_type = "int"
@@ -425,7 +424,7 @@ class osize(arg):
     rc_type = "size_t"
     rtexi_type = "size value"
     rjulia_type = "Csize_t"
-    fortran_c_api = ["integer(c_size_t)"]   # TODO: should this be intent(out)?
+    fortran_c_api = ["integer(c_size_t)"]
     fortran_types = ["integer(c_size_t)"]
 
     def __init__(self, name, value=None, python_value=None, julia_value=None):
@@ -448,7 +447,7 @@ class odouble(arg):
     rc_type = "double"
     rtexi_type = "floating point value"
     rjulia_type = "Cdouble"
-    fortran_c_api = ["real(c_double)"]  # TODO: should this be intent(out)?
+    fortran_c_api = ["real(c_double)"]
     fortran_types = ["real(c_double)"]
 
     def __init__(self, name, value=None, python_value=None, julia_value=None):
@@ -615,7 +614,6 @@ def ovectorstring(name, value=None, python_value=None, julia_value=None):
                     " = [unsafe_string(tmp_" + api_name +
                     "[i]) for i in 1:length(tmp_" + api_name + ") ]")
     a.fortran_args = [name]
-    # TODO: not sure about this conversion
     a.fortran_types = ["character(len=GMSH_API_MAX_STR_LEN), dimension(:), allocatable, intent(out)"]
     a.fortran_c_api = ["type(c_ptr), intent(out)", "integer(c_size_t), intent(out)"]
     a.fortran_c_args = [api_name, api_name_n]
@@ -1594,7 +1592,6 @@ fortran_footer = """
   ! ----------------------------------------------------------------------------
   ! Output routines from C to Fortran
   ! ----------------------------------------------------------------------------
-  ! TODO: ensure that taget keyword are not abused
 
   function ovectorint_(cptr, n) result(v)
     type(c_ptr), intent(in) :: cptr
@@ -1656,7 +1653,7 @@ fortran_footer = """
   end function ovectorpair_
 
   subroutine ovectorvectorint_(cptr1, cptr2, n, v, dims)
-    type(c_ptr), target, intent(in) :: cptr1, cptr2
+    type(c_ptr), intent(in) :: cptr1, cptr2
     integer(c_size_t), intent(in) :: n
     integer(c_int), allocatable, intent(out) :: v(:)
     integer(c_size_t), allocatable, intent(out) :: dims(:)
@@ -1670,7 +1667,7 @@ fortran_footer = """
   end subroutine ovectorvectorint_
 
   subroutine ovectorvectorsize_(cptr1, cptr2, n, v, dims)
-    type(c_ptr), target, intent(in) :: cptr1, cptr2
+    type(c_ptr), intent(in) :: cptr1, cptr2
     integer(c_size_t), intent(in) :: n
     integer(c_size_t), allocatable, intent(out) :: v(:)
     integer(c_size_t), allocatable, intent(out) :: dims(:)
@@ -1684,7 +1681,7 @@ fortran_footer = """
   end subroutine ovectorvectorsize_
 
   subroutine ovectorvectordouble_(cptr1, cptr2, n, v, dims)
-    type(c_ptr), target, intent(in) :: cptr1, cptr2
+    type(c_ptr), intent(in) :: cptr1, cptr2
     integer(c_size_t), intent(in) :: n
     real(c_double), allocatable, intent(out) :: v(:)
     integer(c_size_t), allocatable, intent(out) :: dims(:)
@@ -1698,7 +1695,7 @@ fortran_footer = """
   end subroutine ovectorvectordouble_
 
   subroutine ovectorvectorpair_(cptr1, cptr2, n, v, dims)
-    type(c_ptr), target, intent(in) :: cptr1, cptr2
+    type(c_ptr), intent(in) :: cptr1, cptr2
     integer(c_size_t), intent(in) :: n
     integer(c_int), allocatable, intent(out) :: v(:,:)
     integer(c_size_t), allocatable, intent(out) :: dims(:)
