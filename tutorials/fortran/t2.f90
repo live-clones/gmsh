@@ -151,9 +151,7 @@ program main
     ! We finally generate and save the mesh:
     call gmsh%model%mesh%generate(3, ierr)
     call gmsh%write("t2.msh", ierr)
-
-    ! call gmshFltkRun(ierr)
-
+    ! call gmsh%fltk%run(ierr)
     call gmsh%finalize(ierr)
 
 end program main
