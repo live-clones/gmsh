@@ -11,6 +11,7 @@ import string
 import os
 import re
 
+# TODO: if (allocated({name})) deallocate({name})
 
 class arg:
     def __init__(self, name, value, python_value, julia_value, cpp_type,
@@ -1469,259 +1470,260 @@ fortran_header = """!
 !
 
 module fsize_m
-    intrinsic :: size
+  intrinsic :: size
 end module fsize_m
 
 module gmsh
 
-    use, intrinsic :: iso_c_binding
-    use fsize_m, only: fsize => size
+  use, intrinsic :: iso_c_binding
+  use fsize_m, only: fsize => size
 
-    implicit none
+  implicit none
 
-    private
+  private
 
-    integer, parameter, public :: {2}_API_VERSION_MAJOR = {4}
-    integer, parameter, public :: {2}_API_VERSION_MINOR = {5}
-    integer, parameter, public :: {2}_API_VERSION_PATCH = {6}
-    integer, parameter, public :: {2}_API_MAX_STR_LEN = 512
-    character(len=100), parameter, public :: {2}_API_VERSION = "{4}.{5}.{6}"
+  integer, parameter, public :: {2}_API_VERSION_MAJOR = {4}
+  integer, parameter, public :: {2}_API_VERSION_MINOR = {5}
+  integer, parameter, public :: {2}_API_VERSION_PATCH = {6}
+  integer, parameter, public :: {2}_API_MAX_STR_LEN = 512
+  character(len=100), parameter, public :: {2}_API_VERSION = "{4}.{5}.{6}"
 
-    type cstr_t
-        character(len=:), allocatable :: s
-    end type cstr_t
+  type cstr_t
+    character(len=:), allocatable :: s
+  end type cstr_t
 
-    type, private :: c_array_t
-        type(c_ptr) :: s
-    end type c_array_t
+  type, private :: c_array_t
+    type(c_ptr) :: s
+  end type c_array_t
 
 """
 
 fortran_footer = """
-    ! --------------------------------------------------------------------------
-    ! Input routines from Fortran to C
-    ! --------------------------------------------------------------------------
+  ! ----------------------------------------------------------------------------
+  ! Input routines from Fortran to C
+  ! ----------------------------------------------------------------------------
 
-    function istring_(o) result(v)
-        character(len=*), intent(in) :: o
-        character(len=:, kind=c_char), allocatable :: v
-        v = trim(o)//c_null_char
-    end function istring_
+  function istring_(o) result(v)
+    character(len=*), intent(in) :: o
+    character(len=:, kind=c_char), allocatable :: v
+    v = trim(o)//c_null_char
+  end function istring_
 
-    function ivectorint_(o) result(v)
-        integer(c_int), intent(in) :: o(:)
-        integer(c_int), dimension(size(o)) :: v
-        v = o
-    end function ivectorint_
+  function ivectorint_(o) result(v)
+    integer(c_int), intent(in) :: o(:)
+    integer(c_int), dimension(size(o)) :: v
+    v = o
+  end function ivectorint_
 
-    function ivectorsize_(o) result(v)
-        integer(c_size_t), intent(in) :: o(:)
-        integer(c_size_t), dimension(size(o)) :: v
-        v = o
-    end function ivectorsize_
+  function ivectorsize_(o) result(v)
+    integer(c_size_t), intent(in) :: o(:)
+    integer(c_size_t), dimension(size(o)) :: v
+    v = o
+  end function ivectorsize_
 
-    function ivectordouble_(o) result(v)
-        real(c_double), intent(in) :: o(:)
-        real(c_double), dimension(size(o)) :: v
-        v = o
-    end function ivectordouble_
+  function ivectordouble_(o) result(v)
+    real(c_double), intent(in) :: o(:)
+    real(c_double), dimension(size(o)) :: v
+    v = o
+  end function ivectordouble_
 
-    subroutine ivectorstring_(o, cstrs, cptrs)
-        character(len=*), intent(in) :: o(:)
-        character(len=GMSH_API_MAX_STR_LEN, kind=c_char), target, allocatable, intent(out) :: cstrs(:)
-        type(c_ptr), allocatable, intent(out) :: cptrs(:)
-        integer :: i
-        allocate(cstrs(size(o)))    ! Return to keep references from cptrs
-        allocate(cptrs(size(o)))
-        do i = 1, size(o)
-            cstrs(i) = istring_(o(i))
-            cptrs(i) = c_loc(cstrs(i))
-        end do
-    end subroutine ivectorstring_
+  subroutine ivectorstring_(o, cstrs, cptrs)
+    character(len=*), intent(in) :: o(:)
+    character(len=GMSH_API_MAX_STR_LEN, kind=c_char), target, allocatable, intent(out) :: cstrs(:)
+    type(c_ptr), allocatable, intent(out) :: cptrs(:)
+    integer :: i
+    allocate(cstrs(size(o)))    ! Return to keep references from cptrs
+    allocate(cptrs(size(o)))
+    do i = 1, size(o)
+        cstrs(i) = istring_(o(i))
+        cptrs(i) = c_loc(cstrs(i))
+    end do
+  end subroutine ivectorstring_
 
-    function ivectorpair_(o) result(v)
-        integer(c_int), intent(in) :: o(:,:)
-        integer(c_int), dimension(size(o,1),2) :: v
-        v = o
-    end function ivectorpair_
+  function ivectorpair_(o) result(v)
+    integer(c_int), intent(in) :: o(:,:)
+    integer(c_int), dimension(size(o,1),2) :: v
+    v = o
+  end function ivectorpair_
 
-    subroutine ivectorvectorint_(v, dims, cptr1, cptr2, n)
-        integer(c_int), target, intent(in) :: v(:)
-        integer(c_size_t), target, intent(in) :: dims(:)
-        type(c_ptr), intent(out) :: cptr1, cptr2
-        integer(c_size_t), intent(out) :: n
+  subroutine ivectorvectorint_(v, dims, cptr1, cptr2, n)
+    integer(c_int), target, intent(in) :: v(:)
+    integer(c_size_t), target, intent(in) :: dims(:)
+    type(c_ptr), intent(out) :: cptr1, cptr2
+    integer(c_size_t), intent(out) :: n
 
-        n = size(dims, kind=c_size_t)
-        cptr1 = c_loc(v)
-        cptr2 = c_loc(dims)
-    end subroutine ivectorvectorint_
+    n = size(dims, kind=c_size_t)
+    cptr1 = c_loc(v)
+    cptr2 = c_loc(dims)
+  end subroutine ivectorvectorint_
 
-    subroutine ivectorvectorsize_(v, dims, cptr1, cptr2, n)
-        integer(c_size_t), target, intent(in) :: v(:)
-        integer(c_size_t), target, intent(in) :: dims(:)
-        type(c_ptr), intent(out) :: cptr1, cptr2
-        integer(c_size_t), intent(out) :: n
+  subroutine ivectorvectorsize_(v, dims, cptr1, cptr2, n)
+    integer(c_size_t), target, intent(in) :: v(:)
+    integer(c_size_t), target, intent(in) :: dims(:)
+    type(c_ptr), intent(out) :: cptr1, cptr2
+    integer(c_size_t), intent(out) :: n
 
-        n = size(dims, kind=c_size_t)
-        cptr1 = c_loc(v)
-        cptr2 = c_loc(dims)
-    end subroutine ivectorvectorsize_
+    n = size(dims, kind=c_size_t)
+    cptr1 = c_loc(v)
+    cptr2 = c_loc(dims)
+  end subroutine ivectorvectorsize_
 
-    subroutine ivectorvectordouble_(v, dims, cptr1, cptr2, n)
-        real(c_double), target, intent(in) :: v(:)
-        integer(c_size_t), target, intent(in) :: dims(:)
-        type(c_ptr), intent(out) :: cptr1, cptr2
-        integer(c_size_t), intent(out) :: n
+  subroutine ivectorvectordouble_(v, dims, cptr1, cptr2, n)
+    real(c_double), target, intent(in) :: v(:)
+    integer(c_size_t), target, intent(in) :: dims(:)
+    type(c_ptr), intent(out) :: cptr1, cptr2
+    integer(c_size_t), intent(out) :: n
 
-        n = size(dims, kind=c_size_t)
-        cptr1 = c_loc(v)
-        cptr2 = c_loc(dims)
-    end subroutine ivectorvectordouble_
+    n = size(dims, kind=c_size_t)
+    cptr1 = c_loc(v)
+    cptr2 = c_loc(dims)
+  end subroutine ivectorvectordouble_
 
-    ! subroutine ivectorvectorpair_(v, dims, cptr1, cptr2, n)
-    !     integer(c_int), target, intent(in) :: v(:,:)
-    !     integer(c_size_t), target, intent(in) :: dims(:)
-    !     type(c_ptr), intent(out) :: cptr1, cptr2
-    !     integer(c_size_t), intent(out) :: n
-    !
-    !     n = size(dims, kind=c_size_t)
-    !     cptr1 = c_loc(v)
-    !     cptr2 = c_loc(dims)
-    ! end subroutine ivectorvectorpair_
+  ! subroutine ivectorvectorpair_(v, dims, cptr1, cptr2, n)
+  !   integer(c_int), target, intent(in) :: v(:,:)
+  !   integer(c_size_t), target, intent(in) :: dims(:)
+  !   type(c_ptr), intent(out) :: cptr1, cptr2
+  !   integer(c_size_t), intent(out) :: n
+  !
+  !   n = size(dims, kind=c_size_t)
+  !   cptr1 = c_loc(v)
+  !   cptr2 = c_loc(dims)
+  ! end subroutine ivectorvectorpair_
 
 
-    ! --------------------------------------------------------------------------
-    ! Output routines from C to Fortran
-    ! --------------------------------------------------------------------------
-    ! TODO: ensure that taget keyword are not abused
+  ! ----------------------------------------------------------------------------
+  ! Output routines from C to Fortran
+  ! ----------------------------------------------------------------------------
+  ! TODO: ensure that taget keyword are not abused
 
-    function ovectorint_(cptr, n) result(v)
-        type(c_ptr), intent(in) :: cptr
-        integer(c_size_t), intent(in) :: n
-        integer(c_int), allocatable :: v(:)
-        integer(c_int), pointer :: v_(:)
-        call c_f_pointer(cptr, v_, [n])
-        allocate(v, source=v_)
-        deallocate(v_)
-    end function ovectorint_
+  function ovectorint_(cptr, n) result(v)
+    type(c_ptr), intent(in) :: cptr
+    integer(c_size_t), intent(in) :: n
+    integer(c_int), allocatable :: v(:)
+    integer(c_int), pointer :: v_(:)
+    call c_f_pointer(cptr, v_, [n])
+    allocate(v, source=v_)
+    deallocate(v_)
+  end function ovectorint_
 
-    function ovectorsize_(cptr, n) result(v)
-        type(c_ptr), intent(in) :: cptr
-        integer(c_size_t), intent(in) :: n
-        integer(c_size_t), allocatable :: v(:)
-        integer(c_size_t), pointer :: v_(:)
-        call c_f_pointer(cptr, v_, [n])
-        allocate(v, source=v_)
-        deallocate(v_)
-    end function ovectorsize_
+  function ovectorsize_(cptr, n) result(v)
+    type(c_ptr), intent(in) :: cptr
+    integer(c_size_t), intent(in) :: n
+    integer(c_size_t), allocatable :: v(:)
+    integer(c_size_t), pointer :: v_(:)
+    call c_f_pointer(cptr, v_, [n])
+    allocate(v, source=v_)
+    deallocate(v_)
+  end function ovectorsize_
 
-    function ovectordouble_(cptr, n) result(v)
-        type(c_ptr), intent(in) :: cptr
-        integer(c_size_t), intent(in) :: n
-        real(c_double), allocatable :: v(:)
-        real(c_double), pointer :: v_(:)
-        call c_f_pointer(cptr, v_, [n])
-        allocate(v, source=v_)
-        deallocate(v_)
-    end function ovectordouble_
+  function ovectordouble_(cptr, n) result(v)
+    type(c_ptr), intent(in) :: cptr
+    integer(c_size_t), intent(in) :: n
+    real(c_double), allocatable :: v(:)
+    real(c_double), pointer :: v_(:)
+    call c_f_pointer(cptr, v_, [n])
+    allocate(v, source=v_)
+    deallocate(v_)
+  end function ovectordouble_
 
-    function ovectorstring_(cptr, n) result(v)
-        type(c_ptr), intent(in) :: cptr
-        integer(c_size_t), intent(in) :: n
-        character(len=GMSH_API_MAX_STR_LEN), allocatable :: v(:)
+  function ovectorstring_(cptr, n) result(v)
+    type(c_ptr), intent(in) :: cptr
+    integer(c_size_t), intent(in) :: n
+    character(len=GMSH_API_MAX_STR_LEN), allocatable :: v(:)
 
-        integer(c_size_t) :: i, lenstr
-        type(c_array_t), pointer :: c_array(:)
-        character(kind=c_char, len=1), pointer :: fptr(:)
+    integer(c_size_t) :: i, lenstr
+    type(c_array_t), pointer :: c_array(:)
+    character(kind=c_char, len=1), pointer :: fptr(:)
 
-        call c_f_pointer(cptr, c_array, [n])
-        allocate(v(n))
-        do i = 1_c_size_t, n
-            call c_f_pointer(c_array(i)%s, fptr, [int(GMSH_API_MAX_STR_LEN, kind=c_size_t)])
-            lenstr = cstrlen(fptr)
-            v(i) = transfer(fptr(1:lenstr), v(i))
-        end do
-    end function ovectorstring_
+    call c_f_pointer(cptr, c_array, [n])
+    allocate(v(n))
+    do i = 1_c_size_t, n
+        call c_f_pointer(c_array(i)%s, fptr, &
+                         [int(GMSH_API_MAX_STR_LEN, kind=c_size_t)])
+        lenstr = cstrlen(fptr)
+        v(i) = transfer(fptr(1:lenstr), v(i))
+    end do
+  end function ovectorstring_
 
-    function ovectorpair_(cptr, n) result(v)
-        type(c_ptr), intent(in) :: cptr
-        integer(c_size_t), intent(in) :: n
-        integer(c_int), allocatable :: v(:,:)
-        integer(c_int), pointer :: v_(:,:)
-        call c_f_pointer(cptr, v_, [2_c_size_t, n / 2_c_size_t])
-        allocate(v, source=v_)
-        deallocate(v_)
-    end function ovectorpair_
+  function ovectorpair_(cptr, n) result(v)
+    type(c_ptr), intent(in) :: cptr
+    integer(c_size_t), intent(in) :: n
+    integer(c_int), allocatable :: v(:,:)
+    integer(c_int), pointer :: v_(:,:)
+    call c_f_pointer(cptr, v_, [2_c_size_t, n / 2_c_size_t])
+    allocate(v, source=v_)
+    deallocate(v_)
+  end function ovectorpair_
 
-    subroutine ovectorvectorint_(cptr1, cptr2, n, v, dims)
-        type(c_ptr), target, intent(in) :: cptr1, cptr2
-        integer(c_size_t), intent(in) :: n
-        integer(c_int), allocatable, intent(out) :: v(:)
-        integer(c_size_t), allocatable, intent(out) :: dims(:)
-        integer(c_int), pointer :: v_(:)
-        integer(c_size_t), pointer :: dims_(:)
-        call c_f_pointer(cptr2, dims_, [n])
-        call c_f_pointer(cptr1, v_, [sum(dims)])
-        allocate(dims, source=dims_)
-        allocate(v, source=v_)
-        deallocate(v_, dims_)
-    end subroutine ovectorvectorint_
+  subroutine ovectorvectorint_(cptr1, cptr2, n, v, dims)
+    type(c_ptr), target, intent(in) :: cptr1, cptr2
+    integer(c_size_t), intent(in) :: n
+    integer(c_int), allocatable, intent(out) :: v(:)
+    integer(c_size_t), allocatable, intent(out) :: dims(:)
+    integer(c_int), pointer :: v_(:)
+    integer(c_size_t), pointer :: dims_(:)
+    call c_f_pointer(cptr2, dims_, [n])
+    call c_f_pointer(cptr1, v_, [sum(dims)])
+    allocate(dims, source=dims_)
+    allocate(v, source=v_)
+    deallocate(v_, dims_)
+  end subroutine ovectorvectorint_
 
-    subroutine ovectorvectorsize_(cptr1, cptr2, n, v, dims)
-        type(c_ptr), target, intent(in) :: cptr1, cptr2
-        integer(c_size_t), intent(in) :: n
-        integer(c_size_t), allocatable, intent(out) :: v(:)
-        integer(c_size_t), allocatable, intent(out) :: dims(:)
-        integer(c_size_t), pointer :: v_(:)
-        integer(c_size_t), pointer :: dims_(:)
-        call c_f_pointer(cptr2, dims_, [n])
-        call c_f_pointer(cptr1, v_, [sum(dims)])
-        allocate(dims, source=dims_)
-        allocate(v, source=v_)
-        deallocate(v_, dims_)
-    end subroutine ovectorvectorsize_
+  subroutine ovectorvectorsize_(cptr1, cptr2, n, v, dims)
+    type(c_ptr), target, intent(in) :: cptr1, cptr2
+    integer(c_size_t), intent(in) :: n
+    integer(c_size_t), allocatable, intent(out) :: v(:)
+    integer(c_size_t), allocatable, intent(out) :: dims(:)
+    integer(c_size_t), pointer :: v_(:)
+    integer(c_size_t), pointer :: dims_(:)
+    call c_f_pointer(cptr2, dims_, [n])
+    call c_f_pointer(cptr1, v_, [sum(dims)])
+    allocate(dims, source=dims_)
+    allocate(v, source=v_)
+    deallocate(v_, dims_)
+  end subroutine ovectorvectorsize_
 
-    subroutine ovectorvectordouble_(cptr1, cptr2, n, v, dims)
-        type(c_ptr), target, intent(in) :: cptr1, cptr2
-        integer(c_size_t), intent(in) :: n
-        real(c_double), allocatable, intent(out) :: v(:)
-        integer(c_size_t), allocatable, intent(out) :: dims(:)
-        real(c_double), pointer :: v_(:)
-        integer(c_size_t), pointer :: dims_(:)
-        call c_f_pointer(cptr2, dims_, [n])
-        call c_f_pointer(cptr1, v_, [sum(dims)])
-        allocate(dims, source=dims_)
-        allocate(v, source=v_)
-        deallocate(v_, dims_)
-    end subroutine ovectorvectordouble_
+  subroutine ovectorvectordouble_(cptr1, cptr2, n, v, dims)
+    type(c_ptr), target, intent(in) :: cptr1, cptr2
+    integer(c_size_t), intent(in) :: n
+    real(c_double), allocatable, intent(out) :: v(:)
+    integer(c_size_t), allocatable, intent(out) :: dims(:)
+    real(c_double), pointer :: v_(:)
+    integer(c_size_t), pointer :: dims_(:)
+    call c_f_pointer(cptr2, dims_, [n])
+    call c_f_pointer(cptr1, v_, [sum(dims)])
+    allocate(dims, source=dims_)
+    allocate(v, source=v_)
+    deallocate(v_, dims_)
+  end subroutine ovectorvectordouble_
 
-    subroutine ovectorvectorpair_(cptr1, cptr2, n, v, dims)
-        type(c_ptr), target, intent(in) :: cptr1, cptr2
-        integer(c_size_t), intent(in) :: n
-        integer(c_int), allocatable, intent(out) :: v(:,:)
-        integer(c_size_t), allocatable, intent(out) :: dims(:)
-        integer(c_int), pointer :: v_(:,:)
-        integer(c_size_t), pointer :: dims_(:)
-        call c_f_pointer(cptr2, dims_, [n])
-        call c_f_pointer(cptr1, v_, [sum(dims), 2_c_size_t])
-        allocate(dims, source=dims_)
-        allocate(v, source=v_)
-        deallocate(v_, dims_)
-    end subroutine ovectorvectorpair_
+  subroutine ovectorvectorpair_(cptr1, cptr2, n, v, dims)
+    type(c_ptr), target, intent(in) :: cptr1, cptr2
+    integer(c_size_t), intent(in) :: n
+    integer(c_int), allocatable, intent(out) :: v(:,:)
+    integer(c_size_t), allocatable, intent(out) :: dims(:)
+    integer(c_int), pointer :: v_(:,:)
+    integer(c_size_t), pointer :: dims_(:)
+    call c_f_pointer(cptr2, dims_, [n])
+    call c_f_pointer(cptr1, v_, [sum(dims), 2_c_size_t])
+    allocate(dims, source=dims_)
+    allocate(v, source=v_)
+    deallocate(v_, dims_)
+  end subroutine ovectorvectorpair_
 
-    !> Calculates the length of a C string.
-    function cstrlen(carray) result(res)
-        character(kind=c_char, len=1), intent(in) :: carray(:)
-        integer :: res
-        integer :: i
-        do i = 1, size(carray)
-          if (carray(i) == c_null_char) then
-            res = i - 1
-            return
-          end if
-        end do
-        res = i
-    end function cstrlen
+  !> Calculates the length of a C string.
+  function cstrlen(carray) result(res)
+    character(kind=c_char, len=1), intent(in) :: carray(:)
+    integer :: res
+    integer :: i
+    do i = 1, size(carray)
+      if (carray(i) == c_null_char) then
+        res = i - 1
+        return
+      end if
+    end do
+    res = i
+  end function cstrlen
 
 end module gmsh
 """
@@ -2318,7 +2320,6 @@ class API:
 
         def write_module(f, m, c_mpath, f_mpath, indent):
             c_mpath, f_mpath = get_fc_name_t(m.name, c_mpath, f_mpath)
-            indent = " " * 4
             for fun in m.fs:
                 write_function(f, fun, c_mpath, f_mpath, indent)
             for m in m.submodules:
@@ -2331,15 +2332,16 @@ class API:
                 fortran_header.format(self.copyright, self.issues, ns.upper(),
                                       self.code, self.version_major,
                                       self.version_minor, self.version_patch))
+            indent = " " * 2
             for ftype in self.modules:
-                generate_ftypes(f, ftype, "", "", " " * 4)
+                generate_ftypes(f, ftype, "", "", indent)
             # Write types in reverse since they have to be defined before use
             for ftype in reversed(types_list):
                 self.fwrite(f, ftype)
                 self.fwrite(f, "\n")
-            self.fwrite(f, f"{' ' * 4}contains\n")
+            self.fwrite(f, f"{indent}contains\n")
             for module in self.modules:
-                write_module(f, module, "", "", "")
+                write_module(f, module, "", "", indent)
             self.fwrite(f, fortran_footer)
 
 
