@@ -496,7 +496,7 @@ module gmsh
   !! the API sets the options "General.AbortOnError" to 2 and "General.Terminal"
   !! to 1. If compiled with OpenMP support, it also sets the number of threads
   !! to "General.NumThreads".
-  subroutine gmshInitialize(argc, argv, readConfigFiles, run, ierr)
+  subroutine gmshInitialize(argv, readConfigFiles, run, ierr)
     interface
     subroutine C_API(argc, argv, readConfigFiles, run, ierr_) bind(C, name="gmshInitialize")
       use, intrinsic :: iso_c_binding
@@ -507,13 +507,15 @@ module gmsh
       integer(c_int), intent(out) :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), value, intent(in) :: argc
-    type(c_ptr), dimension(*), intent(in) :: argv
+    character(len=*), dimension(:), intent(in) :: argv
     integer(c_int), intent(in) :: readConfigFiles
     integer(c_int), intent(in) :: run
     integer(c_int), intent(out) :: ierr
     ! Local variables
-    call C_API(argc, argv, readConfigFiles, run, ierr)
+    character(len=GMSH_API_MAX_STR_LEN, kind=c_char), allocatable :: argv_strs(:)
+    type(c_ptr), allocatable :: argv_cptr(:)
+    call ivectorstring_(argv, argv_strs, argv_cptr)
+    call C_API(fsize(argv, kind=c_int), argv_cptr, readConfigFiles, run, ierr)
     ! Post processing
   end subroutine gmshInitialize
 

@@ -878,10 +878,14 @@ def iargcargv():
     a.julia_ctype = "Cint, Ptr{Ptr{Cchar}}"
     a.julia_arg = "length(argv), argv"
     a.texi = "(argc = 0)}, @code{argv = []"
-    a.fortran_args = ["argc", "argv"]
-    a.fortran_types = ["integer(c_int), value, intent(in)", "type(c_ptr), dimension(*), intent(in)"]
+    a.fortran_args = ["argv"]
+    a.fortran_types = ["character(len=*), dimension(:), intent(in)"]
     a.fortran_c_api = ["integer(c_int), value, intent(in)", "type(c_ptr), dimension(*), intent(in)"]
     a.fortran_c_args = ["argc", "argv"]
+    a.fortran_call = "fsize(argv, kind=c_int), argv_cptr"
+    a.fortran_pre = "call ivectorstring_(argv, argv_strs, argv_cptr)"
+    a.fortran_local = ["character(len=GMSH_API_MAX_STR_LEN, kind=c_char), allocatable :: argv_strs(:)",
+                       "type(c_ptr), allocatable :: argv_cptr(:)"]
     return a
 
 

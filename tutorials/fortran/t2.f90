@@ -13,33 +13,19 @@ program main
 
     implicit none
     type(gmsh_t) :: gmsh
-    integer(c_int) :: t(2,1), numElements(0),      &
-                      ss(2,8), ierr, argc, itmp, i, length
+    integer(c_int) :: t(2,1), numElements(0), ss(2,8), ierr, itmp, i
     real (c_double) :: lc, iv0(0), heights(0)
     integer(c_int), allocatable :: ov(:,:), ov2(:,:)
-    type(c_ptr), allocatable :: argv(:)
-
-    type string
-        character(len = :, kind = c_char), allocatable :: item
-    end type string
-    type(string), allocatable, target :: tmp(:)
-
-    character(80) :: buf
-
+    character(len=GMSH_API_MAX_STR_LEN), allocatable :: argv(:)
+    character(len=GMSH_API_MAX_STR_LEN) :: buf
     real(c_double), allocatable :: xyz(:)
 
-    argc = command_argument_count()
-    allocate(argv(argc + 2))
-    allocate(tmp(argc + 1))
-
-    do i = 0, argc
-        call get_command_argument(i, buf, length)
-        tmp(i + 1) % item = buf(1 : length)
-        argv(i + 1) = c_loc(tmp(i + 1) % item)
+    allocate(argv(command_argument_count() + 1))
+    do i = 0, size(argv) - 1
+        call get_command_argument(i, buf)
+        argv(i+1) = trim(buf)
     end do
-    argv(argc + 2) = c_null_ptr
-
-    call gmsh%initialize(argc + 1, argv, 1, 0, ierr)
+    call gmsh%initialize(argv, 1, 0, ierr)
 
     call gmsh%model%add("t2", ierr)
 
@@ -169,8 +155,5 @@ program main
     ! call gmshFltkRun(ierr)
 
     call gmsh%finalize(ierr)
-
-    deallocate(tmp)
-    deallocate(argv)
 
 end program main
