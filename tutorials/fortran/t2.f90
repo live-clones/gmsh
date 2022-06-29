@@ -153,5 +153,6 @@ program main
     call gmsh%write("t2.msh", ierr)
     ! call gmsh%fltk%run(ierr)
     call gmsh%finalize(ierr)
+    deallocate(ov, ov2, argv, xyz)
 
 end program main
