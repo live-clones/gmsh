@@ -33,6 +33,8 @@ module gmsh
   integer, parameter, public :: GMSH_API_MAX_STR_LEN = 512
   character(len=100), parameter, public :: GMSH_API_VERSION = "4.10.4"
 
+  public :: gmshFree
+
   type cstr_t
     character(len=:), allocatable :: s
   end type cstr_t
@@ -10203,6 +10205,22 @@ module gmsh
   end subroutine gmshLoggerGetLastError
 
   ! ----------------------------------------------------------------------------
+  ! GMSH C memory management tools
+  ! ----------------------------------------------------------------------------
+
+  !> Callback to C to free any reserved memory
+  subroutine gmshFree(p)
+    interface
+      subroutine C_API(ptr) bind(C, name="gmshFree")
+        use, intrinsic :: iso_c_binding
+        type(c_ptr), value :: ptr
+      end subroutine C_API
+    end interface
+    type(c_ptr) :: p
+    call C_API(p)
+  end subroutine gmshFree
+
+  ! ----------------------------------------------------------------------------
   ! Input routines from Fortran to C
   ! ----------------------------------------------------------------------------
 
@@ -10299,37 +10317,37 @@ module gmsh
   ! ----------------------------------------------------------------------------
 
   function ovectorint_(cptr, n) result(v)
-    type(c_ptr), intent(in) :: cptr
+    type(c_ptr), intent(inout) :: cptr
     integer(c_size_t), intent(in) :: n
     integer(c_int), allocatable :: v(:)
     integer(c_int), pointer :: v_(:)
     call c_f_pointer(cptr, v_, [n])
     allocate(v, source=v_)
-    deallocate(v_)
+    call gmshFree(cptr)
   end function ovectorint_
 
   function ovectorsize_(cptr, n) result(v)
-    type(c_ptr), intent(in) :: cptr
+    type(c_ptr), intent(inout) :: cptr
     integer(c_size_t), intent(in) :: n
     integer(c_size_t), allocatable :: v(:)
     integer(c_size_t), pointer :: v_(:)
     call c_f_pointer(cptr, v_, [n])
     allocate(v, source=v_)
-    deallocate(v_)
+    call gmshFree(cptr)
   end function ovectorsize_
 
   function ovectordouble_(cptr, n) result(v)
-    type(c_ptr), intent(in) :: cptr
+    type(c_ptr), intent(inout) :: cptr
     integer(c_size_t), intent(in) :: n
     real(c_double), allocatable :: v(:)
     real(c_double), pointer :: v_(:)
     call c_f_pointer(cptr, v_, [n])
     allocate(v, source=v_)
-    deallocate(v_)
+    call gmshFree(cptr)
   end function ovectordouble_
 
   function ovectorstring_(cptr, n) result(v)
-    type(c_ptr), intent(in) :: cptr
+    type(c_ptr), intent(inout) :: cptr
     integer(c_size_t), intent(in) :: n
     character(len=GMSH_API_MAX_STR_LEN), allocatable :: v(:)
 
@@ -10345,20 +10363,21 @@ module gmsh
         lenstr = cstrlen(fptr)
         v(i) = transfer(fptr(1:lenstr), v(i))
     end do
+    call gmshFree(cptr)
   end function ovectorstring_
 
   function ovectorpair_(cptr, n) result(v)
-    type(c_ptr), intent(in) :: cptr
+    type(c_ptr), intent(inout) :: cptr
     integer(c_size_t), intent(in) :: n
     integer(c_int), allocatable :: v(:,:)
     integer(c_int), pointer :: v_(:,:)
     call c_f_pointer(cptr, v_, [2_c_size_t, n / 2_c_size_t])
     allocate(v, source=v_)
-    deallocate(v_)
+    call gmshFree(cptr)
   end function ovectorpair_
 
   subroutine ovectorvectorint_(cptr1, cptr2, n, v, dims)
-    type(c_ptr), intent(in) :: cptr1, cptr2
+    type(c_ptr), intent(inout) :: cptr1, cptr2
     integer(c_size_t), intent(in) :: n
     integer(c_int), allocatable, intent(out) :: v(:)
     integer(c_size_t), allocatable, intent(out) :: dims(:)
@@ -10368,11 +10387,12 @@ module gmsh
     call c_f_pointer(cptr1, v_, [sum(dims)])
     allocate(dims, source=dims_)
     allocate(v, source=v_)
-    deallocate(v_, dims_)
+    call gmshFree(cptr1)
+    call gmshFree(cptr2)
   end subroutine ovectorvectorint_
 
   subroutine ovectorvectorsize_(cptr1, cptr2, n, v, dims)
-    type(c_ptr), intent(in) :: cptr1, cptr2
+    type(c_ptr), intent(inout) :: cptr1, cptr2
     integer(c_size_t), intent(in) :: n
     integer(c_size_t), allocatable, intent(out) :: v(:)
     integer(c_size_t), allocatable, intent(out) :: dims(:)
@@ -10382,11 +10402,12 @@ module gmsh
     call c_f_pointer(cptr1, v_, [sum(dims)])
     allocate(dims, source=dims_)
     allocate(v, source=v_)
-    deallocate(v_, dims_)
+    call gmshFree(cptr1)
+    call gmshFree(cptr2)
   end subroutine ovectorvectorsize_
 
   subroutine ovectorvectordouble_(cptr1, cptr2, n, v, dims)
-    type(c_ptr), intent(in) :: cptr1, cptr2
+    type(c_ptr), intent(inout) :: cptr1, cptr2
     integer(c_size_t), intent(in) :: n
     real(c_double), allocatable, intent(out) :: v(:)
     integer(c_size_t), allocatable, intent(out) :: dims(:)
@@ -10396,11 +10417,12 @@ module gmsh
     call c_f_pointer(cptr1, v_, [sum(dims)])
     allocate(dims, source=dims_)
     allocate(v, source=v_)
-    deallocate(v_, dims_)
+    call gmshFree(cptr1)
+    call gmshFree(cptr2)
   end subroutine ovectorvectordouble_
 
   subroutine ovectorvectorpair_(cptr1, cptr2, n, v, dims)
-    type(c_ptr), intent(in) :: cptr1, cptr2
+    type(c_ptr), intent(inout) :: cptr1, cptr2
     integer(c_size_t), intent(in) :: n
     integer(c_int), allocatable, intent(out) :: v(:,:)
     integer(c_size_t), allocatable, intent(out) :: dims(:)
@@ -10410,7 +10432,8 @@ module gmsh
     call c_f_pointer(cptr1, v_, [sum(dims), 2_c_size_t])
     allocate(dims, source=dims_)
     allocate(v, source=v_)
-    deallocate(v_, dims_)
+    call gmshFree(cptr1)
+    call gmshFree(cptr2)
   end subroutine ovectorvectorpair_
 
   !> Calculates the length of a C string.
