@@ -5286,6 +5286,8 @@ See
 @url{@value{GITLAB-PREFIX}/tutorials/t2.geo,t2.geo}. Also
 available in C++
 (@url{@value{GITLAB-PREFIX}/tutorials/c++/t2.cpp,t2.cpp}),
+C
+(@url{@value{GITLAB-PREFIX}/tutorials/c/t2.c,t2.c}),
 Python
 (@url{@value{GITLAB-PREFIX}/tutorials/python/t2.py,t2.py})
 and Julia
@@ -5365,7 +5367,9 @@ and Julia
 See
 @url{@value{GITLAB-PREFIX}/tutorials/t6.geo,t6.geo}.
 Also available in C++
-(@url{@value{GITLAB-PREFIX}/tutorials/c++/t6.cpp,t6.cpp})
+(@url{@value{GITLAB-PREFIX}/tutorials/c++/t6.cpp,t6.cpp}),
+C
+(@url{@value{GITLAB-PREFIX}/tutorials/c/t6.c,t6.c})
 and Python
 (@url{@value{GITLAB-PREFIX}/tutorials/python/t6.py,t6.py}).
 
@@ -5439,7 +5443,9 @@ See
 Also available in C++
 (@url{@value{GITLAB-PREFIX}/tutorials/c++/t10.cpp,t10.cpp})
 and Python
-(@url{@value{GITLAB-PREFIX}/tutorials/python/t10.py,t10.py}).
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t10.py,t10.py})
+and Julia
+(@url{@value{GITLAB-PREFIX}/tutorials/julia/t10.jl,t10.jl}).
 
 @smallformat
 @verbatiminclude ../../tutorials/t10.geo
@@ -5546,6 +5552,8 @@ See
 @url{@value{GITLAB-PREFIX}/tutorials/t16.geo,t16.geo}.
 Also available in C++
 (@url{@value{GITLAB-PREFIX}/tutorials/c++/t16.cpp,t16.cpp}),
+C
+(@url{@value{GITLAB-PREFIX}/tutorials/c/t16.c,t16.c}),
 Python
 (@url{@value{GITLAB-PREFIX}/tutorials/python/t16.py,t16.py})
 and Julia
