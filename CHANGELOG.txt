@@ -1,4 +1,4 @@
-(Work-in-progress): small bug fixes.
+4.10.5 (July 1, 2022): small bug fixes.
 
 4.10.4 (June 19, 2022): improved graphical window tooltips; small bug fixes.
 
