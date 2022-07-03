@@ -4094,22 +4094,26 @@ bool OCC_Internals::affine(const std::vector<std::pair<int, int> > &inDimTags,
 bool OCC_Internals::copy(const std::vector<std::pair<int, int> > &inDimTags,
                          std::vector<std::pair<int, int> > &outDimTags)
 {
-  bool ret = true;
+  // build a single compound shape, so that we won't duplicate internal
+  // boundaries
+  BRep_Builder b;
+  TopoDS_Compound c;
+  b.MakeCompound(c);
   for(std::size_t i = 0; i < inDimTags.size(); i++) {
     int dim = inDimTags[i].first;
     int tag = inDimTags[i].second;
     if(!_isBound(dim, tag)) {
       Msg::Error("Unknown OpenCASCADE entity of dimension %d with tag %d", dim,
                  tag);
-      ret = false;
-      continue;
+      return false;
     }
-    TopoDS_Shape result = BRepBuilderAPI_Copy(_find(dim, tag)).Shape();
-    int newtag = getMaxTag(dim) + 1;
-    _bind(result, dim, newtag, true);
-    outDimTags.push_back(std::make_pair(dim, newtag));
+    TopoDS_Shape shape = _find(dim, tag);
+    b.Add(c, shape);
   }
-  return ret;
+
+  TopoDS_Shape result = BRepBuilderAPI_Copy(c).Shape();
+  _multiBind(result, -1, outDimTags, true, true);
+  return true;
 }
 
 bool OCC_Internals::remove(int dim, int tag, bool recursive)

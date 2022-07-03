@@ -1,7 +1,10 @@
-4.11.0 (Work-in-progress): small bug fixes.
+4.11.0 (Work-in-progress): improved copying ("Duplicata") of mutiple shapes with
+OCC; small bug fixes.
 
 * Incompatible API changes: new argument to mesh/computeHomology; new optional
   arguments to occ/addThruSections
+
+4.10.5 (July 1, 2022): small bug fixes.
 
 4.10.4 (June 19, 2022): improved graphical window tooltips; small bug fixes.
 
