@@ -174,8 +174,8 @@ static void Subdivide(GFace *gf, bool splitIntoQuads, bool splitIntoHexas,
         quadrangles2.push_back(new MQuadrangle(
           t->getVertex(5), newv, t->getVertex(4), t->getVertex(2)));
         if(setBLData(t)) setBLData(newv);
-        delete t;
       }
+      delete t;
     }
     gf->triangles.clear();
   }
@@ -303,8 +303,8 @@ static void Subdivide(GRegion *gr, bool splitIntoHexas,
           setBLData(newv[3]);
           setBLData(newv[4]);
         }
-        delete t;
       }
+      delete t;
     }
     gr->tetrahedra.clear();
 
@@ -350,6 +350,7 @@ static void Subdivide(GRegion *gr, bool splitIntoHexas,
           setBLData(newv[2]);
         }
       }
+      delete p;
     }
     gr->prisms.clear();
 
@@ -362,6 +363,7 @@ static void Subdivide(GRegion *gr, bool splitIntoHexas,
         subdivide_pyramid(p, gr, faceVertices, dwarfs88);
         for(int j = 0; j < 88; j++) hexahedra2.push_back(dwarfs88[j]);
       }
+      delete p;
     }
     gr->pyramids.clear();
   }
