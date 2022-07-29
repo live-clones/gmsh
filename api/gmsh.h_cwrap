@@ -6,7 +6,7 @@
 #ifndef GMSH_H
 #define GMSH_H
 
-// This file redefines the Gmsh C++ API in terms of the C API (v4.10.4).
+// This file redefines the Gmsh C++ API in terms of the C API (v4.11.0).
 //
 // This is provided as a convenience for users of the binary Gmsh SDK whose C++
 // compiler ABI is not compatible with the ABI of the C++ compiler used to create
@@ -130,9 +130,7 @@ namespace gmsh { // Top-level functions
   // configuration files (gmshrc and gmsh-options). If `run' is set, run in the
   // same way as the Gmsh app, either interactively or in batch mode depending on
   // the command line arguments. If `run' is not set, initializing the API sets the
-  // options "General.AbortOnError" to 2 and "General.Terminal" to 1. If compiled
-  // with OpenMP support, it also sets the number of threads to
-  // "General.NumThreads".
+  // options "General.AbortOnError" to 2 and "General.Terminal" to 1.
   inline void initialize(int argc = 0, char ** argv = 0,
                          const bool readConfigFiles = true,
                          const bool run = false)
@@ -2635,11 +2633,14 @@ namespace gmsh { // Top-level functions
       }
 
       // Perform the (co)homology computations requested by addHomologyRequest().
-      inline void computeHomology()
+      // The newly created physical groups are returned in `dimTags'.
+      inline void computeHomology(gmsh::vectorpair & dimTags)
       {
         int ierr = 0;
-        gmshModelMeshComputeHomology(&ierr);
+        int *api_dimTags_; size_t api_dimTags_n_;
+        gmshModelMeshComputeHomology(&api_dimTags_, &api_dimTags_n_, &ierr);
         if(ierr) throwLastError();
+        dimTags.resize(api_dimTags_n_ / 2); for(size_t i = 0; i < api_dimTags_n_ / 2; ++i){ dimTags[i].first = api_dimTags_[i * 2 + 0]; dimTags[i].second = api_dimTags_[i * 2 + 1]; } gmshFree(api_dimTags_);
       }
 
       // Compute a cross field for the current mesh. The function creates 3 views:
@@ -4196,18 +4197,26 @@ namespace gmsh { // Top-level functions
       // a new tag is selected automatically. The new entities are returned in
       // `outDimTags'. If the optional argument `makeRuled' is set, the surfaces
       // created on the boundary are forced to be ruled surfaces. If `maxDegree' is
-      // positive, set the maximal degree of resulting surface.
+      // positive, set the maximal degree of resulting surface. The optional
+      // argument `continuity' allows to specify the continuity of the resulting
+      // shape ("C0", "G1", "C1", "G2", "C2", "C3", "CN"). The optional argument
+      // `parametrization' sets the parametrization type ("ChordLength",
+      // "Centripetal", "IsoParametric"). The optional argument `smoothing'
+      // determines if smoothing is applied.
       inline void addThruSections(const std::vector<int> & wireTags,
                                   gmsh::vectorpair & outDimTags,
                                   const int tag = -1,
                                   const bool makeSolid = true,
                                   const bool makeRuled = false,
-                                  const int maxDegree = -1)
+                                  const int maxDegree = -1,
+                                  const std::string & continuity = "",
+                                  const std::string & parametrization = "",
+                                  const bool smoothing = false)
       {
         int ierr = 0;
         int *api_wireTags_; size_t api_wireTags_n_; vector2ptr(wireTags, &api_wireTags_, &api_wireTags_n_);
         int *api_outDimTags_; size_t api_outDimTags_n_;
-        gmshModelOccAddThruSections(api_wireTags_, api_wireTags_n_, &api_outDimTags_, &api_outDimTags_n_, tag, (int)makeSolid, (int)makeRuled, maxDegree, &ierr);
+        gmshModelOccAddThruSections(api_wireTags_, api_wireTags_n_, &api_outDimTags_, &api_outDimTags_n_, tag, (int)makeSolid, (int)makeRuled, maxDegree, continuity.c_str(), parametrization.c_str(), (int)smoothing, &ierr);
         if(ierr) throwLastError();
         gmshFree(api_wireTags_);
         outDimTags.resize(api_outDimTags_n_ / 2); for(size_t i = 0; i < api_outDimTags_n_ / 2; ++i){ outDimTags[i].first = api_outDimTags_[i * 2 + 0]; outDimTags[i].second = api_outDimTags_[i * 2 + 1]; } gmshFree(api_outDimTags_);

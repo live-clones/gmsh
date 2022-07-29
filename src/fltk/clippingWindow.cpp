@@ -225,6 +225,7 @@ clippingWindow::clippingWindow(int deltaFontSize)
     for(int j = 0; j < 4; j++) {
       plane[j]->align(FL_ALIGN_RIGHT);
       plane[j]->callback(clip_update_cb);
+      plane[j]->tooltip("A * X + B * Y + C * Z + D = 0");
     }
 
     group[0]->end();
@@ -236,12 +237,12 @@ clippingWindow::clippingWindow(int deltaFontSize)
 
     int w2 = (width - L - 4 * WB) / 2;
     int BW = w2 - 2 * FL_NORMAL_SIZE;
-    box[0] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 1 * BH, BW, BH, "Cx");
-    box[1] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 2 * BH, BW, BH, "Cy");
-    box[2] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 3 * BH, BW, BH, "Cz");
-    box[3] = new Fl_Value_Input(L + 2 * WB + w2, 2 * WB + 1 * BH, BW, BH, "Wx");
-    box[4] = new Fl_Value_Input(L + 2 * WB + w2, 2 * WB + 2 * BH, BW, BH, "Wy");
-    box[5] = new Fl_Value_Input(L + 2 * WB + w2, 2 * WB + 3 * BH, BW, BH, "Wz");
+    box[0] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 1 * BH, BW, BH, "X");
+    box[1] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 2 * BH, BW, BH, "Y");
+    box[2] = new Fl_Value_Input(L + 2 * WB, 2 * WB + 3 * BH, BW, BH, "Z");
+    box[3] = new Fl_Value_Input(L + 2 * WB + w2, 2 * WB + 1 * BH, BW, BH, "DX");
+    box[4] = new Fl_Value_Input(L + 2 * WB + w2, 2 * WB + 2 * BH, BW, BH, "DY");
+    box[5] = new Fl_Value_Input(L + 2 * WB + w2, 2 * WB + 3 * BH, BW, BH, "DZ");
     for(int i = 0; i < 6; i++) {
       box[i]->align(FL_ALIGN_RIGHT);
       box[i]->callback(clip_update_cb);

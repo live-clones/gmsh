@@ -80,7 +80,7 @@ struct edgeContainerB {
   std::size_t _size, _size_obj;
 
   edgeContainerB(std::size_t N = 1000000)
-    : _hash(N), _size(0), _size_obj(sizeof(MEdge))
+    : _hash(N > 0 ? N : 1), _size(0), _size_obj(sizeof(MEdge))
   {
   }
 
@@ -1350,9 +1350,15 @@ void insertVerticesInRegion(GRegion *gr, int maxIter,
     (*it)->setNeigh(2, nullptr);
     (*it)->setNeigh(3, nullptr);
   }
-  // store all embedded faces
+  // store all embedded edges and faces
   std::set<MFace, MFaceLessThan> allEmbeddedFaces;
-  edgeContainerB allEmbeddedEdges;
+  std::size_t N = 0;
+  for(auto it = gr->model()->firstRegion(); it != gr->model()->lastRegion();
+      ++it) {
+    for(auto e : (*it)->embeddedEdges())
+      N += e->getNumMeshElements();
+  }
+  edgeContainerB allEmbeddedEdges(N);
   for(auto it = gr->model()->firstRegion(); it != gr->model()->lastRegion();
       ++it) {
     createAllEmbeddedFaces((*it), allEmbeddedFaces);

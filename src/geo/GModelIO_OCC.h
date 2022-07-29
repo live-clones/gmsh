@@ -276,7 +276,9 @@ public:
   bool addThruSections(int tag, const std::vector<int> &wireTags,
                        bool makeSolid, bool makeRuled,
                        std::vector<std::pair<int, int> > &outDimTags,
-                       int maxDegree = -1);
+                       int maxDegree = -1, const std::string &continuity = "",
+                       const std::string &parametrization = "",
+                       bool smoothing = false);
   bool addThickSolid(int tag, int solidTag,
                      const std::vector<int> &excludeFaceTags, double offset,
                      std::vector<std::pair<int, int> > &outDimTags);
@@ -643,7 +645,9 @@ public:
   bool addThruSections(int tag, const std::vector<int> &wireTags,
                        bool makeSolid, bool makeRuled,
                        std::vector<std::pair<int, int> > &outDimTags,
-                       int maxDegree = -1)
+                       int maxDegree = -1, const std::string &continuity = "",
+                       const std::string &parametrization = "",
+                       bool smoothing = false)
   {
     return _error("add thrusection");
   }

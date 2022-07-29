@@ -217,48 +217,81 @@ void getCandidateExtrudeInfo(GRegion *gr, std::vector<extrudeInfo> &info,
     for(auto f2 : f) {
       // for each pair of surfaces
       if(f1 == f2) continue;
+
+      Msg::Debug("Testing surface pair %d - %d:", f1->tag(), f2->tag());
       auto f2v = f2->vertices();
       auto f2e = f2->edges();
       std::set<GVertex *, GEntityPtrLessThan> v2(f2v.begin(), f2v.end());
       std::set<GEdge *, GEntityPtrLessThan> e2(f2e.begin(), f2e.end());
       // abort if different topology
-      if((v1.size() != v2.size()) || (e1.size() != e2.size())) continue;
+      if((v1.size() != v2.size()) || (e1.size() != e2.size())) {
+        Msg::Debug(" - incompatible surfaces %d (#points=%lu, #curves=%lu) - "
+                   "%d (#points=%lu, #curves=%lu)",
+                   f1->tag(), v1.size(), e1.size(),
+                   f2->tag(), v2.size(), e2.size());
+        continue;
+      }
 
       SVector3 t0(0., 0., 0.);
       bool translated = true;
 
-      // check all curves not on the boundary of the 2 surfaces
+      std::set<GEdge*> perp;
       for(auto e : gr->edges()) {
-        if(e1.find(e) == e1.end() && e2.find(e) == e2.end()) {
+        // skip curves that are on the boundary of the 2 surfaces
+        if(e1.find(e) != e1.end() || e2.find(e) != e2.end()) {
+          continue;
+        }
+        if((v1.find(e->getBeginVertex()) != v1.end() ||
+            v1.find(e->getEndVertex()) != v1.end()) &&
+           (v2.find(e->getBeginVertex()) != v2.end() ||
+            v2.find(e->getEndVertex()) != v2.end())) {
+          perp.insert(e);
+        }
+      }
 
-          // straight lines with the same translation vector?
-          if(e->geomType() == GEntity::Line) {
-            GVertex *vs = e->getBeginVertex(), *vt = e->getEndVertex();
-            if(vs && vt) {
-              SVector3 t;
-              if(v1.find(vs) != v1.end() && v2.find(vt) != v2.end()) {
-                t = SVector3(vs->xyz(), vt->xyz());
-              }
-              else if(v1.find(vt) != v1.end() && v2.find(vs) != v2.end()) {
-                t = SVector3(vt->xyz(), vs->xyz());
-              }
-              else {
-                translated = false;
-                break;
-              }
-              if(t0.norm() == 0.) t0 = t;
-              if(!sameDir(t0, t)) {
-                translated = false;
-                break;
-              }
+      if(perp.size() != v1.size()) {
+        Msg::Debug(" - number of extruded curves differs from number of "
+                   "source/target surface points (%lu != %lu)",
+                   perp.size(), v1.size());
+        continue;
+      }
+
+      if(perp.size() + e1.size() + e2.size() != gr->edges().size()) {
+        Msg::Debug(" - extra curves not connected to source/target surfaces");
+        continue;
+      }
+
+      for(auto e : perp) {
+        // straight lines with the same translation vector?
+        if(e->geomType() == GEntity::Line) {
+          GVertex *vs = e->getBeginVertex(), *vt = e->getEndVertex();
+          if(vs && vt) {
+            SVector3 t;
+            if(v1.find(vs) != v1.end() && v2.find(vt) != v2.end()) {
+              t = SVector3(vs->xyz(), vt->xyz());
+            }
+            else if(v1.find(vt) != v1.end() && v2.find(vs) != v2.end()) {
+              t = SVector3(vt->xyz(), vs->xyz());
+            }
+            else {
+              // should not happen
+              translated = false;
+              break;
+            }
+            if(t0.norm() == 0.) t0 = t;
+            if(!sameDir(t0, t)) {
+              Msg::Debug(" - straight line t=(%g, %g, %g) != t0=(%g, %g, %g)",
+                         t.x(), t.y(), t.z(), t0.x(), t0.y(), t0.z());
+              translated = false;
+              break;
             }
           }
-          else {
-            // TODO: could check here if all curves are circles to detect
-            // extrusions by rotation
-            translated = false;
-            break;
-          }
+        }
+        else {
+          // TODO: could check here if all curves are circles to detect
+          // extrusions by rotation
+          translated = false;
+          break;
         }
       }
       if(translated && t0.norm() != 0.) {
