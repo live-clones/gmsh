@@ -158,7 +158,10 @@ static void drawEllipseArray(drawContext *ctx, PView *p, VertexArray *va)
       for(int k = 0; k < 3; k++) { vv[j][k] = v[k] / l * (scale * l2 + lmin); }
     }
     glColor4ubv((GLubyte *)va->getColorArray(4 * i));
-    if(opt->tensorType == PViewOptions::Ellipsoid)
+
+    if(opt->tensorType == PViewOptions::Frame)
+      ctx->drawCube(s[0], s[1], s[2], vv[0], vv[1], vv[2], opt->light);
+    else if(opt->tensorType == PViewOptions::Ellipsoid)
       ctx->drawEllipsoid(s[0], s[1], s[2], vv[0], vv[1], vv[2], opt->light);
     else
       ctx->drawEllipse(s[0], s[1], s[2], vv[0], vv[1], opt->light);

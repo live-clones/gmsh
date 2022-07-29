@@ -1136,77 +1136,51 @@ static void addTensorElement(PView *p, int iEnt, int iEle, int numNodes,
     for(int i = 0; i < numNodes; i++) val[i][0] = ComputeVonMises(val[i]);
     addScalarElement(p, type, xyz, val, pre, numNodes);
   }
-
-  else if(opt->tensorType == PViewOptions::Frame) {
-    if(opt->glyphLocation == PViewOptions::Vertex) {
-      for(int i = 0; i < numNodes; i++) {
-        double d0[3], d1[3], d2[3];
-        double nrm = sqrt(val[i][0] * val[i][0] + val[i][1] * val[i][1] +
-                          val[i][2] * val[i][2]);
-
-        for(int j = 0; j < 3; j++) {
-          d0[j] = opt->displacementFactor * val[i][j + 0 * 3] / nrm;
-          d1[j] = opt->displacementFactor * val[i][j + 1 * 3] / nrm;
-          d2[j] = opt->displacementFactor * val[i][j + 2 * 3] / nrm;
-        }
-        double x = xyz[i][0];
-        double y = xyz[i][1];
-        double z = xyz[i][2];
-
-        SPoint3 xx(x, y, z);
-        double x0[3] = {x + d0[0] + d1[0] + d2[0], y + d0[1] + d1[1] + d2[1],
-                        z + d0[2] + d1[2] + d2[2]};
-        double x1[3] = {x - d0[0] + d1[0] + d2[0], y - d0[1] + d1[1] + d2[1],
-                        z - d0[2] + d1[2] + d2[2]};
-        double x2[3] = {x - d0[0] - d1[0] + d2[0], y - d0[1] - d1[1] + d2[1],
-                        z - d0[2] - d1[2] + d2[2]};
-        double x3[3] = {x + d0[0] - d1[0] + d2[0], y + d0[1] - d1[1] + d2[1],
-                        z + d0[2] - d1[2] + d2[2]};
-
-        double x4[3] = {x + d0[0] + d1[0] - d2[0], y + d0[1] + d1[1] - d2[1],
-                        z + d0[2] + d1[2] - d2[2]};
-        double x5[3] = {x - d0[0] + d1[0] - d2[0], y - d0[1] + d1[1] - d2[1],
-                        z - d0[2] + d1[2] - d2[2]};
-        double x6[3] = {x - d0[0] - d1[0] - d2[0], y - d0[1] - d1[1] - d2[1],
-                        z - d0[2] - d1[2] - d2[2]};
-        double x7[3] = {x + d0[0] - d1[0] - d2[0], y + d0[1] - d1[1] - d2[1],
-                        z + d0[2] - d1[2] - d2[2]};
-
-        if((nrm > opt->tmpMin && opt->tmpMax) || opt->saturateValues) {
-          addTriangle(p, opt, x0, x1, x2, xx, nrm);
-          addTriangle(p, opt, x2, x3, x0, xx, nrm);
-          addTriangle(p, opt, x4, x7, x6, xx, nrm);
-          addTriangle(p, opt, x6, x5, x4, xx, nrm);
-          addTriangle(p, opt, x0, x3, x7, xx, nrm);
-          addTriangle(p, opt, x7, x4, x0, xx, nrm);
-          addTriangle(p, opt, x1, x5, x6, xx, nrm);
-          addTriangle(p, opt, x6, x2, x1, xx, nrm);
-          addTriangle(p, opt, x0, x4, x5, xx, nrm);
-          addTriangle(p, opt, x5, x1, x0, xx, nrm);
-          addTriangle(p, opt, x3, x2, x6, xx, nrm);
-          addTriangle(p, opt, x6, x7, x3, xx, nrm);
-        }
-      }
-    }
-  }
   else if(opt->tensorType == PViewOptions::Ellipse ||
-          opt->tensorType == PViewOptions::Ellipsoid) {
+          opt->tensorType == PViewOptions::Ellipsoid ||
+	  opt->tensorType == PViewOptions::Frame) {
     if(opt->glyphLocation == PViewOptions::Vertex) {
       double vval[3][4] = {{0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}};
       for(int i = 0; i < numNodes; i++) {
-        for(int j = 0; j < 3; j++) {
-          tensor(j, 0) = val[i][0 + j * 3];
-          tensor(j, 1) = val[i][1 + j * 3];
-          tensor(j, 2) = val[i][2 + j * 3];
-        }
-        tensor.eig(S, imS, leftV, rightV, false);
-        for(int k = 0; k < 3; k++) {
-          vval[k][0] = xyz[i][k];
-          for(int j = 0; j < 3; j++) { vval[k][j + 1] = rightV(k, j) * S(j); }
-        }
-        double lmax = std::max(S(0), std::max(S(1), S(2)));
+	if (opt->tensorType == PViewOptions::Frame) {
+	  SVector3 v0 (val[i][0],val[i][3],val[i][6]);
+	  SVector3 v1 (val[i][1],val[i][4],val[i][7]);
+	  SVector3 v2 (val[i][2],val[i][5],val[i][8]);
+	  S(0) = v0.norm();
+	  S(1) = v1.norm();
+	  S(2) = v2.norm();
+	  for(int k = 0; k < 3; k++) vval[k][0] = xyz[i][k];
+	  vval[0][1] = v0.x();
+	  vval[0][2] = v0.y();
+	  vval[0][3] = v0.z();
+	  vval[1][1] = v1.x();
+	  vval[1][2] = v1.y();
+	  vval[1][3] = v1.z();
+	  vval[2][1] = v2.x();
+	  vval[2][2] = v2.y();
+	  vval[2][3] = v2.z();
+	}
+	else {
+	  for(int j = 0; j < 3; j++) {
+	    tensor(j, 0) = val[i][0 + j * 3];
+	    tensor(j, 1) = val[i][1 + j * 3];
+	    tensor(j, 2) = val[i][2 + j * 3];
+	  }	  
+	  tensor.eig(S, imS, leftV, rightV, false);
+	  for(int k = 0; k < 3; k++) {
+	    vval[k][0] = xyz[i][k];
+	    for(int j = 0; j < 3; j++) { vval[k][j + 1] = rightV(k, j) * S(j); }
+	  }
+	}
+	
+	//	double lmax = std::max(S(0), std::max(S(1), S(2)));
+	//	double lmin = std::min(S(0), std::min(S(1), S(2)));
+	double det = S(0)*S(1)*S(2);
+
+	printf("%12.5E %12.5E %12.5E \n",det,opt->tmpMin, opt->tmpMax);
+	
         unsigned int color = opt->getColor(
-          lmax, opt->tmpMin, opt->tmpMax, false,
+          det, opt->tmpMin, opt->tmpMax, false,
           (opt->intervalsType == PViewOptions::Discrete) ? opt->nbIso : -1);
         unsigned int col[4] = {color, color, color, color};
         p->va_ellipses->add(vval[0], vval[1], vval[2], nullptr, col, nullptr,
