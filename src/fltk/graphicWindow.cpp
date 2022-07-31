@@ -3810,6 +3810,11 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
 
   int mheight = main ? 2 * BH /* nonzero! */ : 0;
   int glheight = CTX::instance()->glSize[1] - mheight;
+  // make sure glheight is positive
+  if(glheight <= 0) {
+    CTX::instance()->glSize[1] = 600;
+    glheight = CTX::instance()->glSize[1] - mheight;
+  }
   int height = mh + glheight + mheight + sh;
   // make sure height < screen height
   if(height > Fl::h()) {
@@ -3820,6 +3825,11 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
 
   int twidth = (main && !detachedMenu) ? 14 * sw : 0;
   int glwidth = CTX::instance()->glSize[0] - twidth;
+  // make sure glwidth is positive
+  if(glwidth <= 0) {
+    CTX::instance()->glSize[0] = 600;
+    glwidth = CTX::instance()->glSize[0] - twidth;
+  }
   int width = glwidth + twidth;
   // make sure width < screen width
   if(width > Fl::w()) {
