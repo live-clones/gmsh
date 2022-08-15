@@ -26,6 +26,7 @@ private:
   TopoDS_Edge _c;
   TopoDS_Edge _c_rev;
   double _s0, _s1;
+  int _nbpoles;
   Handle(Geom_Curve) _curve;
   mutable Handle(Geom2d_Curve) _curve2d;
   mutable GFace *_trimmed;
