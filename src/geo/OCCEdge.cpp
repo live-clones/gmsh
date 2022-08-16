@@ -403,7 +403,6 @@ int OCCEdge::minimumDrawSegments() const
   int n = _nbpoles;
   if(n <= 0) n = GEdge::minimumDrawSegments();
 
-  printf("n=%d\n", n);
   if(geomType() == Line)
     return n;
   else
