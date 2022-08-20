@@ -1,5 +1,5 @@
 4.11.0 (Work-in-progress): improved copying ("Duplicata") of multiple shapes
-with OCC; small bug fixes.
+with OCC; reduced default order for OCC surface filling; small bug fixes.
 
 * Incompatible API changes: new argument to mesh/computeHomology; new optional
   arguments to occ/addThruSections
