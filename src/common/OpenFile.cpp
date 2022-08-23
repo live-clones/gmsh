@@ -216,8 +216,8 @@ int ParseFile(const std::string &fileName, bool close, bool errorIfMissing)
   }
 
   if(close) {
-    gmsh_yyflush();
     fclose(gmsh_yyin);
+    gmsh_yyflush();
   }
   else {
     openedFiles.push_back(gmsh_yyin);
