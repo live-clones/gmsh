@@ -959,6 +959,46 @@ namespace gmsh { // Top-level functions
       if(ierr) throwLastError();
     }
 
+    // Get the names of any optional attributes stored in the model.
+    inline void getAttributeNames(std::vector<std::string> & names)
+    {
+      int ierr = 0;
+      char **api_names_; size_t api_names_n_;
+      gmshModelGetAttributeNames(&api_names_, &api_names_n_, &ierr);
+      if(ierr) throwLastError();
+      names.resize(api_names_n_); for(size_t i = 0; i < api_names_n_; ++i){ names[i] = std::string(api_names_[i]); gmshFree(api_names_[i]); } gmshFree(api_names_);
+    }
+
+    // Get the value of the attribute with name `name'.
+    inline void getAttribute(const std::string & name,
+                             std::vector<std::string> & value)
+    {
+      int ierr = 0;
+      char **api_value_; size_t api_value_n_;
+      gmshModelGetAttribute(name.c_str(), &api_value_, &api_value_n_, &ierr);
+      if(ierr) throwLastError();
+      value.resize(api_value_n_); for(size_t i = 0; i < api_value_n_; ++i){ value[i] = std::string(api_value_[i]); gmshFree(api_value_[i]); } gmshFree(api_value_);
+    }
+
+    // Set the value of the attribute with name `name'.
+    inline void setAttribute(const std::string & name,
+                             const std::vector<std::string> & value)
+    {
+      int ierr = 0;
+      char **api_value_; size_t api_value_n_; vectorstring2charptrptr(value, &api_value_, &api_value_n_);
+      gmshModelSetAttribute(name.c_str(), api_value_, api_value_n_, &ierr);
+      if(ierr) throwLastError();
+      for(size_t i = 0; i < api_value_n_; ++i){ gmshFree(api_value_[i]); } gmshFree(api_value_);
+    }
+
+    // Remove the attribute with name `name'.
+    inline void removeAttribute(const std::string & name)
+    {
+      int ierr = 0;
+      gmshModelRemoveAttribute(name.c_str(), &ierr);
+      if(ierr) throwLastError();
+    }
+
     namespace mesh { // Mesh functions
 
       // Generate a mesh of the current model, up to dimension `dim' (0, 1, 2 or

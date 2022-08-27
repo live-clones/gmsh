@@ -1578,6 +1578,77 @@ class model:
             raise Exception(logger.getLastError())
     set_coordinates = setCoordinates
 
+    @staticmethod
+    def getAttributeNames():
+        """
+        gmsh.model.getAttributeNames()
+
+        Get the names of any optional attributes stored in the model.
+
+        Return `names'.
+        """
+        api_names_, api_names_n_ = POINTER(POINTER(c_char))(), c_size_t()
+        ierr = c_int()
+        lib.gmshModelGetAttributeNames(
+            byref(api_names_), byref(api_names_n_),
+            byref(ierr))
+        if ierr.value != 0:
+            raise Exception(logger.getLastError())
+        return _ovectorstring(api_names_, api_names_n_.value)
+    get_attribute_names = getAttributeNames
+
+    @staticmethod
+    def getAttribute(name):
+        """
+        gmsh.model.getAttribute(name)
+
+        Get the value of the attribute with name `name'.
+
+        Return `value'.
+        """
+        api_value_, api_value_n_ = POINTER(POINTER(c_char))(), c_size_t()
+        ierr = c_int()
+        lib.gmshModelGetAttribute(
+            c_char_p(name.encode()),
+            byref(api_value_), byref(api_value_n_),
+            byref(ierr))
+        if ierr.value != 0:
+            raise Exception(logger.getLastError())
+        return _ovectorstring(api_value_, api_value_n_.value)
+    get_attribute = getAttribute
+
+    @staticmethod
+    def setAttribute(name, value):
+        """
+        gmsh.model.setAttribute(name, value)
+
+        Set the value of the attribute with name `name'.
+        """
+        api_value_, api_value_n_ = _ivectorstring(value)
+        ierr = c_int()
+        lib.gmshModelSetAttribute(
+            c_char_p(name.encode()),
+            api_value_, api_value_n_,
+            byref(ierr))
+        if ierr.value != 0:
+            raise Exception(logger.getLastError())
+    set_attribute = setAttribute
+
+    @staticmethod
+    def removeAttribute(name):
+        """
+        gmsh.model.removeAttribute(name)
+
+        Remove the attribute with name `name'.
+        """
+        ierr = c_int()
+        lib.gmshModelRemoveAttribute(
+            c_char_p(name.encode()),
+            byref(ierr))
+        if ierr.value != 0:
+            raise Exception(logger.getLastError())
+    remove_attribute = removeAttribute
+
 
     class mesh:
         """

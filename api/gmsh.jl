@@ -1265,6 +1265,78 @@ end
 const set_coordinates = setCoordinates
 
 """
+    gmsh.model.getAttributeNames()
+
+Get the names of any optional attributes stored in the model.
+
+Return `names`.
+"""
+function getAttributeNames()
+    api_names_ = Ref{Ptr{Ptr{Cchar}}}()
+    api_names_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelGetAttributeNames, gmsh.lib), Cvoid,
+          (Ptr{Ptr{Ptr{Cchar}}}, Ptr{Csize_t}, Ptr{Cint}),
+          api_names_, api_names_n_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    tmp_api_names_ = unsafe_wrap(Array, api_names_[], api_names_n_[], own = true)
+    names = [unsafe_string(tmp_api_names_[i]) for i in 1:length(tmp_api_names_) ]
+    return names
+end
+const get_attribute_names = getAttributeNames
+
+"""
+    gmsh.model.getAttribute(name)
+
+Get the value of the attribute with name `name`.
+
+Return `value`.
+"""
+function getAttribute(name)
+    api_value_ = Ref{Ptr{Ptr{Cchar}}}()
+    api_value_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelGetAttribute, gmsh.lib), Cvoid,
+          (Ptr{Cchar}, Ptr{Ptr{Ptr{Cchar}}}, Ptr{Csize_t}, Ptr{Cint}),
+          name, api_value_, api_value_n_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    tmp_api_value_ = unsafe_wrap(Array, api_value_[], api_value_n_[], own = true)
+    value = [unsafe_string(tmp_api_value_[i]) for i in 1:length(tmp_api_value_) ]
+    return value
+end
+const get_attribute = getAttribute
+
+"""
+    gmsh.model.setAttribute(name, value)
+
+Set the value of the attribute with name `name`.
+"""
+function setAttribute(name, value)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelSetAttribute, gmsh.lib), Cvoid,
+          (Ptr{Cchar}, Ptr{Ptr{Cchar}}, Csize_t, Ptr{Cint}),
+          name, value, length(value), ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+const set_attribute = setAttribute
+
+"""
+    gmsh.model.removeAttribute(name)
+
+Remove the attribute with name `name`.
+"""
+function removeAttribute(name)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelRemoveAttribute, gmsh.lib), Cvoid,
+          (Ptr{Cchar}, Ptr{Cint}),
+          name, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+const remove_attribute = removeAttribute
+
+"""
     module gmsh.model.mesh
 
 Mesh functions

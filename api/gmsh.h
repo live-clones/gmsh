@@ -605,6 +605,28 @@ namespace gmsh { // Top-level functions
                                  const double y,
                                  const double z);
 
+    // gmsh::model::getAttributeNames
+    //
+    // Get the names of any optional attributes stored in the model.
+    GMSH_API void getAttributeNames(std::vector<std::string> & names);
+
+    // gmsh::model::getAttribute
+    //
+    // Get the value of the attribute with name `name'.
+    GMSH_API void getAttribute(const std::string & name,
+                               std::vector<std::string> & value);
+
+    // gmsh::model::setAttribute
+    //
+    // Set the value of the attribute with name `name'.
+    GMSH_API void setAttribute(const std::string & name,
+                               const std::vector<std::string> & value);
+
+    // gmsh::model::removeAttribute
+    //
+    // Remove the attribute with name `name'.
+    GMSH_API void removeAttribute(const std::string & name);
+
     namespace mesh { // Mesh functions
 
       // gmsh::model::mesh::generate

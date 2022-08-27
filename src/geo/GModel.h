@@ -152,6 +152,9 @@ protected:
   // the set of all used mesh partition numbers
   std::size_t _numPartitions;
 
+  // additional attributes (e.g. stored in extra sections of MSH files)
+  std::map<std::string, std::vector<std::string> > _attributes;
+
 protected:
   // store the elements given in the map (indexed by elementary region
   // number) into the model, creating discrete geometrical entities on
@@ -723,6 +726,12 @@ public:
                                         const std::vector<double> &heights,
                                         const bool recombine,
                                         const std::vector<int> &regionTag);
+
+  // get additional attributes
+  std::map<std::string, std::vector<std::string> > &getAttributes()
+  {
+    return _attributes;
+  }
 
   // "automatic" IO based on Gmsh global functions
   void load(const std::string &fileName);

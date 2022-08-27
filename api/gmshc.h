@@ -523,6 +523,24 @@ GMSH_API void gmshModelSetCoordinates(const int tag,
                                       const double z,
                                       int * ierr);
 
+/* Get the names of any optional attributes stored in the model. */
+GMSH_API void gmshModelGetAttributeNames(char *** names, size_t * names_n,
+                                         int * ierr);
+
+/* Get the value of the attribute with name `name'. */
+GMSH_API void gmshModelGetAttribute(const char * name,
+                                    char *** value, size_t * value_n,
+                                    int * ierr);
+
+/* Set the value of the attribute with name `name'. */
+GMSH_API void gmshModelSetAttribute(const char * name,
+                                    const char * const * value, const size_t value_n,
+                                    int * ierr);
+
+/* Remove the attribute with name `name'. */
+GMSH_API void gmshModelRemoveAttribute(const char * name,
+                                       int * ierr);
+
 /* Generate a mesh of the current model, up to dimension `dim' (0, 1, 2 or 3). */
 GMSH_API void gmshModelMeshGenerate(const int dim,
                                     int * ierr);

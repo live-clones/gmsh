@@ -235,6 +235,18 @@ model.add('getColor', doc, None, iint('dim'), iint('tag'), oint('r'), oint('g'),
 doc = '''Set the `x', `y', `z' coordinates of a geometrical point.'''
 model.add('setCoordinates', doc, None, iint('tag'), idouble('x'), idouble('y'), idouble('z'))
 
+doc = '''Get the names of any optional attributes stored in the model.'''
+model.add('getAttributeNames', doc, None, ovectorstring('names'))
+
+doc = '''Get the value of the attribute with name `name'.'''
+model.add('getAttribute', doc, None, istring('name'), ovectorstring('value'))
+
+doc = '''Set the value of the attribute with name `name'.'''
+model.add('setAttribute', doc, None, istring('name'), ivectorstring('value'))
+
+doc = '''Remove the attribute with name `name'.'''
+model.add('removeAttribute', doc, None, istring('name'))
+
 ################################################################################
 
 mesh = model.add_module('mesh', 'mesh functions')

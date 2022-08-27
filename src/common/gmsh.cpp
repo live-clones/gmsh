@@ -1239,6 +1239,34 @@ GMSH_API void gmsh::model::setCoordinates(const int tag, const double x,
   gv->setPosition(p);
 }
 
+GMSH_API void gmsh::model::getAttributeNames(std::vector<std::string> &names)
+{
+  if(!_checkInit()) return;
+  names.clear();
+  for(auto a : GModel::current()->getAttributes())
+    names.push_back(a.first);
+}
+
+GMSH_API void gmsh::model::getAttribute(const std::string &name,
+                                        std::vector<std::string> &value)
+{
+  if(!_checkInit()) return;
+  value = GModel::current()->getAttributes()[name];
+}
+
+GMSH_API void gmsh::model::setAttribute(const std::string &name,
+                                        const std::vector<std::string> &value)
+{
+  if(!_checkInit()) return;
+  GModel::current()->getAttributes()[name] = value;
+}
+
+GMSH_API void gmsh::model::removeAttribute(const std::string &name)
+{
+  if(!_checkInit()) return;
+  GModel::current()->getAttributes().erase(name);
+}
+
 // gmsh::model::mesh
 
 GMSH_API void gmsh::model::mesh::generate(const int dim)

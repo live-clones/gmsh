@@ -1454,6 +1454,22 @@ int GModel::_readMSH4(const std::string &name)
       postpro = true;
       break;
     }
+    else if(strlen(&str[1]) > 0){
+      sectionName.pop_back();
+      Msg::Info("Storing section $%s as model attribute", sectionName.c_str());
+      std::vector<std::string> section;
+      while(1) {
+        if(!fgets(str, sizeof(str), fp) || feof(fp) ||
+           !strncmp(&str[1], endSectionName.c_str(), endSectionName.size())) {
+          break;
+        }
+        std::string s(str);
+        if(s.back() == '\n') s.pop_back();
+        if(s.back() == '\r') s.pop_back();
+        section.push_back(s);
+      }
+      _attributes[sectionName] = section;
+    }
 
     while(strncmp(&str[1], endSectionName.c_str(), endSectionName.size())) {
       if(!fgets(str, sizeof(str), fp) || feof(fp)) { break; }
@@ -2840,6 +2856,13 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary,
 
   // parametrizations
   writeMSH4Parametrizations(this, fp, binary);
+
+  // attributes
+  for(auto &a : _attributes) {
+    fprintf(fp, "$%s\n", a.first.c_str());
+    for(auto &s : a.second) fprintf(fp, "%s\n", s.c_str());
+    fprintf(fp, "$End%s\n", a.first.c_str());
+  }
 
   fclose(fp);
 

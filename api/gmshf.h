@@ -1084,6 +1084,56 @@ c
             integer(c_int)::ierr
           end subroutine gmshModelSetCoordinates
 
+!  Get the names of any optional attributes stored in the model.
+        subroutine gmshModelGetAttributeNames(
+     &      names,
+     &      names_n,
+     &      ierr)
+     &    bind(C, name = "gmshModelGetAttributeNames")
+          use, intrinsic :: iso_c_binding
+            type(c_ptr), intent(out)::names
+            integer(c_size_t) :: names_n
+            integer(c_int)::ierr
+          end subroutine gmshModelGetAttributeNames
+
+!  Get the value of the attribute with name `name'.
+        subroutine gmshModelGetAttribute(
+     &      name,
+     &      value,
+     &      value_n,
+     &      ierr)
+     &    bind(C, name = "gmshModelGetAttribute")
+          use, intrinsic :: iso_c_binding
+            character(len = 1, kind = c_char)::name(*)
+            type(c_ptr), intent(out)::value
+            integer(c_size_t) :: value_n
+            integer(c_int)::ierr
+          end subroutine gmshModelGetAttribute
+
+!  Set the value of the attribute with name `name'.
+        subroutine gmshModelSetAttribute(
+     &      name,
+     &      value,
+     &      value_n,
+     &      ierr)
+     &    bind(C, name = "gmshModelSetAttribute")
+          use, intrinsic :: iso_c_binding
+            character(len = 1, kind = c_char)::name(*)
+            type(c_ptr)::value(*)
+            integer(c_size_t), value :: value_n
+            integer(c_int)::ierr
+          end subroutine gmshModelSetAttribute
+
+!  Remove the attribute with name `name'.
+        subroutine gmshModelRemoveAttribute(
+     &      name,
+     &      ierr)
+     &    bind(C, name = "gmshModelRemoveAttribute")
+          use, intrinsic :: iso_c_binding
+            character(len = 1, kind = c_char)::name(*)
+            integer(c_int)::ierr
+          end subroutine gmshModelRemoveAttribute
+
 !  Generate a mesh of the current model, up to dimension `dim' (0, 1, 2 or 3).
         subroutine gmshModelMeshGenerate(
      &      dim,
