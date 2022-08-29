@@ -8,12 +8,12 @@ mesh generator with built-in pre- and post-processing facilities.
 The aim of this package is to install the latest development snapshot of the
 official Gmsh app and binary Software Development Kit (SDK) in a pythonic way on
 Linux systems without X Windows. For Windows, macOS or graphics-enabled Linux
-systems, use the ``gmsh-dev`` package instead; for the latest stable release,
-use the ``gmsh`` package.
+systems, use the ``dev`` version of the gmsh package instead; for the latest
+stable release, use the official ``gmsh`` package.
 
-To install ``gmsh-nox-dev``::
+To install ``gmsh`` (development, ``nox`` version)::
 
-    $ pip install -i https://gmsh.info/python-packages --force-reinstall --no-cache-dir gmsh-nox-dev
+    $ pip install -i https://gmsh.info/python-packages-dev-nox --force-reinstall --no-cache-dir gmsh
 
 This will download and install the latest development snapshot from
 https://gmsh.info, bypassing the cache.

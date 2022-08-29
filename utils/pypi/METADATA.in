@@ -1,5 +1,5 @@
 Metadata-Version: 2.1
-Name: ${GMSH_PYTHON_PACKAGE_NAME}
+Name: gmsh
 Version: ${GMSH_PYTHON_VERSION}
 Summary: Gmsh is a three-dimensional finite element mesh generator with built-in pre- and post-processing facilities.
 Home-page: https://gmsh.info
