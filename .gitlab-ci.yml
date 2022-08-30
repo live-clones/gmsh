@@ -124,7 +124,6 @@ linux64-sdk_official_snapshot:
   artifacts:
     paths:
       - build/_CPack_Packages/
-      - build/setup-wheel.py
     expire_in: 1day
 
 linux64-sdk_official_release:
@@ -137,7 +136,6 @@ linux64-sdk_official_release:
   artifacts:
     paths:
       - build/_CPack_Packages/
-      - build/setup-wheel.py
       - build/version.txt
     expire_in: 1day
 
@@ -377,13 +375,13 @@ pypi_official_snapshot:
     - macos64-sdk_official_snapshot
   script:
     - cd build
-    - GMSH_SETUP_DIR=../utils/pypi/gmsh-dev GMSH_SDK_DIR=_CPack_Packages/Linux/TGZ/gmsh-git-Linux64-sdk/ python3 setup-wheel.py build bdist_wheel --plat-name manylinux1_x86_64 --universal
-    - GMSH_SETUP_DIR=../utils/pypi/gmsh-nox-dev GMSH_SDK_DIR=_CPack_Packages/Linux/TGZ/gmsh-nox-git-Linux64-sdk/ python3 setup-wheel.py build bdist_wheel --plat-name manylinux1_x86_64 --universal
-    - GMSH_SETUP_DIR=../utils/pypi/gmsh-dev GMSH_SDK_DIR=_CPack_Packages/CYGWIN/ZIP/gmsh-git-Windows64-sdk/ python3 setup-wheel.py build bdist_wheel --plat-name win_amd64 --universal
+    - python3 ../utils/pypi/sdktowheel.py _CPack_Packages/Linux/TGZ/gmsh-git-Linux64-sdk/ manylinux1_x86_64
+    - python3 ../utils/pypi/sdktowheel.py _CPack_Packages/Linux/TGZ/gmsh-nox-git-Linux64-sdk/ manylinux1_x86_64
+    - python3 ../utils/pypi/sdktowheel.py _CPack_Packages/CYGWIN/ZIP/gmsh-git-Windows64-sdk/ win_amd64
     - cp -R _CPack_Packages/Darwin _CPack_Packages/Darwin2
-    - GMSH_SETUP_DIR=../utils/pypi/gmsh-dev GMSH_SDK_DIR=_CPack_Packages/Darwin2/TGZ/gmsh-git-MacOSX-sdk/ python3 setup-wheel.py build bdist_wheel --plat-name macosx_10_15_x86_64 --universal
-    - scp dist/gmsh_dev*.whl geuzaine@gmsh.info:.wwwgmsh/python-packages/gmsh-dev/
-    - scp dist/gmsh_nox_dev*.whl geuzaine@gmsh.info:.wwwgmsh/python-packages/gmsh-nox-dev/
+    - python3 ../utils/pypi/sdktowheel.py _CPack_Packages/Darwin2/TGZ/gmsh-git-MacOSX-sdk/ macosx_10_15_x86_64
+    - scp gmsh-*.dev1+nox*.whl geuzaine@gmsh.info:.wwwgmsh/python-packages-dev-nox/gmsh/
+    - scp gmsh-*.dev1-*.whl geuzaine@gmsh.info:.wwwgmsh/python-packages-dev/gmsh/
   tags:
     - linux64
     - docker
@@ -408,12 +406,12 @@ pypi_official_release:
     - echo "password = $PYPI_TOKEN" >> ~/.pypirc
     - cd build
     - VERSION=`cat version.txt`
-    - GMSH_SETUP_DIR=../utils/pypi/gmsh GMSH_SDK_DIR=_CPack_Packages/Linux/TGZ/gmsh-${VERSION}-Linux64-sdk/ python3 setup-wheel.py build bdist_wheel --plat-name manylinux1_x86_64 --universal
-    - GMSH_SETUP_DIR=../utils/pypi/gmsh GMSH_SDK_DIR=_CPack_Packages/CYGWIN/ZIP/gmsh-${VERSION}-Windows64-sdk/ python3 setup-wheel.py build bdist_wheel --plat-name win_amd64 --universal
+    - python3 ../utils/pypi/sdktowheel.py _CPack_Packages/Linux/TGZ/gmsh-${VERSION}-Linux64-sdk/ manylinux1_x86_64
+    - python3 ../utils/pypi/sdktowheel.py _CPack_Packages/CYGWIN/ZIP/gmsh-${VERSION}-Windows64-sdk/ win_amd64
     - cp -R _CPack_Packages/Darwin _CPack_Packages/Darwin2
-    - GMSH_SETUP_DIR=../utils/pypi/gmsh GMSH_SDK_DIR=_CPack_Packages/Darwin2/TGZ/gmsh-${VERSION}-MacOSX-sdk/ python3 setup-wheel.py build bdist_wheel --plat-name macosx_10_15_x86_64 --universal
-    - scp dist/gmsh*.whl geuzaine@gmsh.info:.wwwgmsh/python-packages/gmsh/
-    - twine upload dist/*
+    - python3 ../utils/pypi/sdktowheel.py _CPack_Packages/Darwin2/TGZ/gmsh-${VERSION}-MacOSX-sdk/ macosx_10_15_x86_64
+    - scp gmsh*.whl geuzaine@gmsh.info:.wwwgmsh/python-packages/gmsh/
+    - twine upload gmsh*.whl
     - ssh geuzaine@gmsh.info "cd .wwwgmsh/bin/Linux && rm -f gmsh-stable-Linux64* && ln -s gmsh-${VERSION}-Linux64.tgz gmsh-stable-Linux64.tgz && ln -s gmsh-${VERSION}-Linux64-sdk.tgz gmsh-stable-Linux64-sdk.tgz"
     - ssh geuzaine@gmsh.info "cd .wwwgmsh/bin/Windows && rm -f gmsh-stable-Windows64* && ln -s gmsh-${VERSION}-Windows64.zip gmsh-stable-Windows64.zip && ln -s gmsh-${VERSION}-Windows64-sdk.zip gmsh-stable-Windows64-sdk.zip"
     - ssh geuzaine@gmsh.info "cd .wwwgmsh/bin/MacOSX && rm -f gmsh-stable-MacOSX* && ln -s gmsh-${VERSION}-MacOSX.dmg gmsh-stable-MacOSX.dmg && ln -s gmsh-${VERSION}-MacOSX-sdk.tgz gmsh-stable-MacOSX-sdk.tgz"

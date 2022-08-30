@@ -1564,14 +1564,28 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/common/GmshConfig.h.in
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/common/GmshVersion.h.in
                ${CMAKE_CURRENT_BINARY_DIR}/src/common/GmshVersion.h)
 
-# the texi and pypi version files are modified in the source directory (not
+# the texi version file is modified in the source directory (not
 # ideal for version.texi, but since git tracks the contents of the file this is
 # acceptable as it will only change when the actual version is changed - not for
 # each git hash)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/doc/texinfo/version.texi.in
                ${CMAKE_CURRENT_SOURCE_DIR}/doc/texinfo/version.texi)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/utils/pypi/setup-wheel.py.in
-               ${CMAKE_CURRENT_BINARY_DIR}/setup-wheel.py)
+
+if(ENABLE_BUILD_LIB OR ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
+  if (GMSH_RELEASE)
+    set(GMSH_PYTHON_VERSION ${GMSH_SHORT_VERSION})
+    file(READ ${CMAKE_CURRENT_SOURCE_DIR}/utils/pypi/README.gmsh.rst GMSH_LONG_DESCRIPTION)
+  else()
+    if ("${GMSH_EXTRA_VERSION}" MATCHES "-nox")
+      set(GMSH_PYTHON_VERSION "${GMSH_SHORT_VERSION}.dev1+nox")
+      file(READ ${CMAKE_CURRENT_SOURCE_DIR}/utils/pypi/README.gmsh-nox-dev.rst GMSH_LONG_DESCRIPTION)
+    else ()
+      set(GMSH_PYTHON_VERSION "${GMSH_SHORT_VERSION}.dev1")
+      file(READ ${CMAKE_CURRENT_SOURCE_DIR}/utils/pypi/README.gmsh-dev.rst GMSH_LONG_DESCRIPTION)
+    endif()
+  endif()
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/utils/pypi/METADATA.in ${CMAKE_CURRENT_BINARY_DIR}/METADATA)
+endif()
 
 file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/version.txt ${GMSH_SHORT_VERSION})
 
@@ -1897,6 +1911,8 @@ if(ENABLE_BUILD_LIB OR ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
   install(FILES ${GMSH_API} DESTINATION ${GMSH_INC})
   install(FILES ${GMSH_PY} DESTINATION ${GMSH_LIB})
   install(FILES ${GMSH_JL} DESTINATION ${GMSH_LIB})
+  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/METADATA DESTINATION
+                ${GMSH_LIB}/gmsh-${GMSH_PYTHON_VERSION}.dist-info)
   if(ENABLE_PRIVATE_API)
     install(FILES ${GMSH_PRIVATE_API} DESTINATION ${GMSH_INC}/gmsh)
     if(HAVE_CONTRIB_EIGEN) # the private API depends on Eigen
