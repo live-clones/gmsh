@@ -375,17 +375,8 @@ pypi_official_snapshot:
     - windows64-sdk_official_snapshot
     - macos64-sdk_official_snapshot
   script:
-    - echo "step 0"
-    - pwd
-    - echo "step 1"
     - cd build
-    - pwd
-    - ls -al
-    - echo "step 2"
-    - python3 --version
-    - cat ../utils/pypi/sdktowheel.py
     - python3 ../utils/pypi/sdktowheel.py _CPack_Packages/Linux/TGZ/gmsh-git-Linux64-sdk/ manylinux1_x86_64
-    - echo "step 3"
     - python3 ../utils/pypi/sdktowheel.py _CPack_Packages/Linux/TGZ/gmsh-nox-git-Linux64-sdk/ manylinux1_x86_64
     - python3 ../utils/pypi/sdktowheel.py _CPack_Packages/CYGWIN/ZIP/gmsh-git-Windows64-sdk/ win_amd64
     - cp -R _CPack_Packages/Darwin _CPack_Packages/Darwin2
