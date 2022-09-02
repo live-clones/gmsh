@@ -11,8 +11,6 @@ import string
 import os
 import re
 
-# TODO: if (allocated({name})) deallocate({name})
-
 class arg:
     def __init__(self, name, value, python_value, julia_value, cpp_type,
                  c_type, out):
@@ -56,9 +54,9 @@ def ibool(name, value=None, python_value=None, julia_value=None):
     a.python_arg = "c_int(bool(" + name + "))"
     a.cwrap_arg = "(int)" + name
     a.julia_ctype = "Cint"
-    a.fortran_types = ["integer(c_int), intent(in)"]
+    a.fortran_types = ["logical, intent(in)"]
     a.fortran_c_api = ["integer(c_int), value, intent(in)"]
-    # TODO: change to ["logical(c_bool), value, intent(in)"]
+    a.fortran_call = f"{name}=optval_c_bool(.{value}., {name})" if value is not None else f"{name}=merge(1_c_int, 0_c_int, {name})"
     return a
 
 
@@ -67,8 +65,9 @@ def iint(name, value=None, python_value=None, julia_value=None):
             False)
     a.python_arg = "c_int(" + name + ")"
     a.julia_ctype = "Cint"
-    a.fortran_types = ["integer(c_int), intent(in)"]
+    a.fortran_types = ["integer, intent(in)"]
     a.fortran_c_api = ["integer(c_int), value, intent(in)"]
+    a.fortran_call = f"{name}=optval_c_int({value}, {name})" if value is not None else f"{name}=int({name}, c_int)"
     return a
 
 
@@ -77,8 +76,9 @@ def isize(name, value=None, python_value=None, julia_value=None):
             "const size_t", False)
     a.python_arg = "c_size_t(" + name + ")"
     a.julia_ctype = "Csize_t"
-    a.fortran_types = ["integer(c_size_t), intent(in)"]
+    a.fortran_types = ["integer, intent(in)"]
     a.fortran_c_api = ["integer(c_size_t), value, intent(in)"]
+    a.fortran_call = f"{name}=optval_c_size_t({value}, {name})" if value is not None else f"{name}=int({name}, c_size_t)"
     return a
 
 
@@ -89,6 +89,7 @@ def idouble(name, value=None, python_value=None, julia_value=None):
     a.julia_ctype = "Cdouble"
     a.fortran_types = ["real(c_double), intent(in)"]
     a.fortran_c_api = ["real(c_double), value, intent(in)"]
+    a.fortran_call = f"{name}=optval_c_double({value}, {name})" if value is not None else f"{name}=real({name}, c_double)"
     return a
 
 
@@ -100,9 +101,7 @@ def istring(name, value=None, python_value=None, julia_value=None):
     a.julia_ctype = "Ptr{Cchar}"
     a.fortran_types = ["character(len=*), intent(in)"]
     a.fortran_c_api = ["character(len=1, kind=c_char), dimension(*), intent(in)"]
-    a.fortran_pre = f"{name}_c = istring_({name})"
-    a.fortran_local = [f"character(len=:, kind=c_char), allocatable :: {name}_c"]
-    a.fortran_call = f"{name}_c"
+    a.fortran_call = f"{name}=istring_(optval_c_str({value}, {name}))" if value is not None else f"{name}=istring_({name})"
     return a
 
 
@@ -140,7 +139,7 @@ def ivectorint(name, value=None, python_value=None, julia_value=None):
     a.fortran_types = ["integer(c_int), dimension(:), intent(in)"]
     a.fortran_c_api = ["integer(c_int), dimension(*)", "integer(c_size_t), value, intent(in)"]
     a.fortran_c_args = [api_name, api_name_n]
-    a.fortran_call = f"{name}, fsize({name}, kind=c_size_t)"
+    a.fortran_call = f"{api_name}={name}, {api_name_n}=size_gmsh_int({name})"
     return a
 
 
@@ -168,7 +167,7 @@ def ivectorsize(name, value=None, python_value=None, julia_value=None):
     a.fortran_types = ["integer(c_size_t), dimension(:), intent(in)"]
     a.fortran_c_api = ["integer(c_size_t), dimension(*)", "integer(c_size_t), value, intent(in)"]
     a.fortran_c_args = [api_name, api_name_n]
-    a.fortran_call = f"{name}, fsize({name}, kind=c_size_t)"
+    a.fortran_call = f"{api_name}={name}, {api_name_n}=size_gmsh_size({name})"
     return a
 
 
@@ -196,7 +195,7 @@ def ivectordouble(name, value=None, python_value=None, julia_value=None):
     a.fortran_types = ["real(c_double), dimension(:), intent(in)"]
     a.fortran_c_api = ["real(c_double), dimension(*)", "integer(c_size_t), value, intent(in)"]
     a.fortran_c_args = [api_name, api_name_n]
-    a.fortran_call = f"{name}, fsize({name}, kind=c_size_t)"
+    a.fortran_call = f"{api_name}={name}, {api_name_n}=size_gmsh_double({name})"
     return a
 
 
@@ -224,7 +223,8 @@ def ivectorstring(name, value=None, python_value=None, julia_value=None):
     a.fortran_types = ["character(len=*), dimension(:), intent(in)"]
     a.fortran_c_api = ["type(c_ptr), dimension(*)", "integer(c_size_t), value, intent(in)"]
     a.fortran_c_args = [api_name, api_name_n]
-    a.fortran_call = f"{api_name}, fsize({name}, kind=c_size_t)"
+    # pass the locally created api_name variable to the C interface
+    a.fortran_call = f"{api_name}={api_name}, {api_name_n}=size_gmsh_str({name})"
     a.fortran_pre = f"call ivectorstring_({name}, {api_name}strs, {api_name})"
     a.fortran_local = [f"character(len=GMSH_API_MAX_STR_LEN, kind=c_char), allocatable :: {api_name}strs(:)",
                        f"type(c_ptr), allocatable :: {api_name}(:)"]
@@ -260,7 +260,7 @@ def ivectorpair(name, value=None, python_value=None, julia_value=None):
     a.fortran_types = ["integer(c_int), dimension(:,:), intent(in)"]
     a.fortran_c_api = ["integer(c_int), dimension(*)", "integer(c_size_t), value, intent(in)"]
     a.fortran_c_args = [api_name, api_name_n]
-    a.fortran_call = f"{name}, fsize({name}, kind=c_size_t)"
+    a.fortran_call = f"{api_name}={name}, {api_name_n}=size_gmsh_pair({name})"
     return a
 
 
@@ -302,8 +302,7 @@ def ivectorvectorint(name, value=None, python_value=None, julia_value=None):
     a.fortran_c_args = [api_name, api_name_n, api_name_nn]
     a.fortran_pre = f"call ivectorvectorint_({name}, {name}_n, {api_name}, {api_name_n}, {api_name_nn})"
     a.fortran_local = [f"type(c_ptr) :: {api_name}", f"type(c_ptr) :: {api_name_n}", f"integer(c_size_t) :: {api_name_nn}"]
-    a.fortran_call = f"{api_name}, {api_name_n}, {api_name_nn}"
-
+    a.fortran_call = f"{api_name}={api_name}, {api_name_n}={api_name_n}, {api_name_nn}={api_name_nn}"
     return a
 
 
@@ -346,7 +345,7 @@ def ivectorvectorsize(name, value=None, python_value=None, julia_value=None):
     a.fortran_c_args = [api_name, api_name_n, api_name_nn]
     a.fortran_pre = f"call ivectorvectorsize_({name}, {name}_n, {api_name}, {api_name_n}, {api_name_nn})"
     a.fortran_local = [f"type(c_ptr) :: {api_name}", f"type(c_ptr) :: {api_name_n}", f"integer(c_size_t) :: {api_name_nn}"]
-    a.fortran_call = f"{api_name}, {api_name_n}, {api_name_nn}"
+    a.fortran_call = f"{api_name}={api_name}, {api_name_n}={api_name_n}, {api_name_nn}={api_name_nn}"
     return a
 
 
@@ -389,7 +388,7 @@ def ivectorvectordouble(name, value=None, python_value=None, julia_value=None):
     a.fortran_c_args = [api_name, api_name_n, api_name_nn]
     a.fortran_pre = f"call ivectorvectordouble_({name}, {name}_n, {api_name}, {api_name_n}, {api_name_nn})"
     a.fortran_local = [f"type(c_ptr) :: {api_name}", f"type(c_ptr) :: {api_name_n}", f"integer(c_size_t) :: {api_name_nn}"]
-    a.fortran_call = f"{api_name}, {api_name_n}, {api_name_nn}"
+    a.fortran_call = f"{api_name}={api_name}, {api_name_n}={api_name_n}, {api_name_nn}={api_name_nn}"
     return a
 
 
@@ -517,7 +516,7 @@ def ovectorint(name, value=None, python_value=None, julia_value=None):
     a.fortran_types = ["integer(c_int), dimension(:), allocatable, intent(out)"]
     a.fortran_c_api = ["type(c_ptr), intent(out)", "integer(c_size_t), intent(out)"]
     a.fortran_c_args = [api_name, api_name_n]
-    a.fortran_call = f"{api_name}, {api_name_n}"
+    a.fortran_call = f"{api_name}={api_name}, {api_name_n}={api_name_n}"
     a.fortran_post = f"{name} = ovectorint_({api_name}, {api_name_n})"
     a.fortran_local = [f"type(c_ptr) :: {api_name}", f"integer(c_size_t) :: {api_name_n}"]
     return a
@@ -549,7 +548,7 @@ def ovectorsize(name, value=None, python_value=None, julia_value=None):
     a.fortran_types = ["integer(c_size_t), dimension(:), allocatable, intent(out)"]
     a.fortran_c_api = ["type(c_ptr), intent(out)", "integer(c_size_t), intent(out)"]
     a.fortran_c_args = [api_name, api_name_n]
-    a.fortran_call = f"{api_name}, {api_name_n}"
+    a.fortran_call = f"{api_name}={api_name}, {api_name_n}={api_name_n}"
     a.fortran_post = f"{name} = ovectorsize_({api_name}, {api_name_n})"
     a.fortran_local = [f"type(c_ptr) :: {api_name}", f"integer(c_size_t) :: {api_name_n}"]
     return a
@@ -581,7 +580,7 @@ def ovectordouble(name, value=None, python_value=None, julia_value=None):
     a.fortran_c_api = ["type(c_ptr), intent(out)", "integer(c_size_t)"]
     a.fortran_c_args = [api_name, api_name_n]
     a.fortran_types = ["real(c_double), dimension(:), allocatable, intent(out)"]
-    a.fortran_call = f"{api_name}, {api_name_n}"
+    a.fortran_call = f"{api_name}={api_name}, {api_name_n}={api_name_n}"
     a.fortran_post = f"{name} = ovectordouble_({api_name}, {api_name_n})"
     a.fortran_local = [f"type(c_ptr) :: {api_name}", f"integer(c_size_t) :: {api_name_n}"]
     return a
@@ -618,7 +617,7 @@ def ovectorstring(name, value=None, python_value=None, julia_value=None):
     a.fortran_types = ["character(len=GMSH_API_MAX_STR_LEN), dimension(:), allocatable, intent(out)"]
     a.fortran_c_api = ["type(c_ptr), intent(out)", "integer(c_size_t), intent(out)"]
     a.fortran_c_args = [api_name, api_name_n]
-    a.fortran_call = f"{api_name}, {api_name_n}"
+    a.fortran_call = f"{api_name}={api_name}, {api_name_n}={api_name_n}"
     a.fortran_post = f"{name} = ovectorstring_({api_name}, {api_name_n})"
     a.fortran_local = [f"type(c_ptr) :: {api_name}", f"integer(c_size_t) :: {api_name_n}"]
     return a
@@ -655,7 +654,7 @@ def ovectorpair(name, value=None, python_value=None, julia_value=None):
     a.fortran_types = ["integer(c_int), dimension(:,:), allocatable, intent(out)"]
     a.fortran_c_api = ["type(c_ptr), intent(out)", "integer(c_size_t), intent(out)"]
     a.fortran_c_args = [api_name, api_name_n]
-    a.fortran_call = f"{api_name}, {api_name_n}"
+    a.fortran_call = f"{api_name}={api_name}, {api_name_n}={api_name_n}"
     a.fortran_post = f"{name} = ovectorpair_({api_name}, {api_name_n})"
     a.fortran_local = [f"type(c_ptr) :: {api_name}", f"integer(c_size_t) :: {api_name_n}"]
     return a
@@ -703,7 +702,7 @@ def ovectorvectorint(name, value=None, python_value=None, julia_value=None):
     a.fortran_types = ["integer(c_int), dimension(:), allocatable, intent(out)", "integer(c_size_t), dimension(:), allocatable, intent(out)"]
     a.fortran_c_api = ["type(c_ptr), intent(out)", "type(c_ptr), intent(out)", "integer(c_size_t), intent(out)"]
     a.fortran_c_args = [api_name, api_name_n, api_name_nn]
-    a.fortran_call = f"{api_name}, {api_name_n}, {api_name_nn}"
+    a.fortran_call = f"{api_name}={api_name}, {api_name_n}={api_name_n}, {api_name_nn}={api_name_nn}"
     a.fortran_post = f"call ovectorvectorint_({api_name}, {api_name_n}, {api_name_nn}, {name}, {name}_n)"
     a.fortran_local = [f"type(c_ptr) :: {api_name}, {api_name_n}", f"integer(c_size_t) :: {api_name_nn}"]
     return a
@@ -750,8 +749,8 @@ def ovectorvectorsize(name, value=None, python_value=None, julia_value=None):
     a.fortran_args = [name, name + "_n"]
     a.fortran_types = ["integer(c_size_t), dimension(:), allocatable, intent(out)", "integer(c_size_t), dimension(:), allocatable, intent(out)"]
     a.fortran_c_api = ["type(c_ptr), intent(out)", "type(c_ptr), intent(out)", "integer(c_size_t), intent(out)"]
-    a.fortran_c_args = [name, name + "_n", name + "_nn"]
-    a.fortran_call = f"{api_name}, {api_name_n}, {api_name_nn}"
+    a.fortran_c_args = [api_name, api_name_n, api_name_nn]
+    a.fortran_call = f"{api_name}={api_name}, {api_name_n}={api_name_n}, {api_name_nn}={api_name_nn}"
     a.fortran_post = f"call ovectorvectorsize_({api_name}, {api_name_n}, {api_name_nn}, {name}, {name}_n)"
     a.fortran_local = [f"type(c_ptr) :: {api_name}, {api_name_n}", f"integer(c_size_t) :: {api_name_nn}"]
     return a
@@ -799,8 +798,8 @@ def ovectorvectordouble(name, value=None, python_value=None, julia_value=None):
     a.fortran_args = [name, name + "_n"]
     a.fortran_types = ["real(c_double), dimension(:), allocatable, intent(out)", "integer(c_size_t), dimension(:), allocatable, intent(out)"]
     a.fortran_c_api = ["type(c_ptr), intent(out)", "type(c_ptr), intent(out)", "integer(c_size_t), intent(out)"]
-    a.fortran_c_args = [name, name + "_n", name + "_nn"]
-    a.fortran_call = f"{api_name}, {api_name_n}, {api_name_nn}"
+    a.fortran_c_args = [api_name, api_name_n, api_name_nn]
+    a.fortran_call = f"{api_name}={api_name}, {api_name_n}={api_name_n}, {api_name_nn}={api_name_nn}"
     a.fortran_post = f"call ovectorvectordouble_({api_name}, {api_name_n}, {api_name_nn}, {name}, {name}_n)"
     a.fortran_local = [f"type(c_ptr) :: {api_name}, {api_name_n}", f"integer(c_size_t) :: {api_name_nn}"]
     return a
@@ -853,8 +852,8 @@ def ovectorvectorpair(name, value=None, python_value=None, julia_value=None):
     a.fortran_args = [name, name + "_n"]
     a.fortran_types = ["integer(c_int), dimension(:,:), allocatable, intent(out)", "integer(c_size_t), dimension(:), allocatable, intent(out)"]
     a.fortran_c_api = ["type(c_ptr), intent(out)", "type(c_ptr), intent(out)", "integer(c_size_t)"]
-    a.fortran_c_args = [name, name + "_n", name + "_nn"]
-    a.fortran_call = f"{api_name}, {api_name_n}, {api_name_nn}"
+    a.fortran_c_args = [api_name, api_name_n, api_name_nn]
+    a.fortran_call = f"{api_name}={api_name}, {api_name_n}={api_name_n}, {api_name_nn}={api_name_nn}"
     a.fortran_post = f"call ovectorvectorpair_({api_name}, {api_name_n}, {api_name_nn}, {name}, {name}_n)"
     a.fortran_local = [f"type(c_ptr) :: {api_name}, {api_name_n}", f"integer(c_size_t) :: {api_name_nn}"]
     return a
@@ -880,11 +879,11 @@ def iargcargv():
     a.julia_arg = "length(argv), argv"
     a.texi = "(argc = 0)}, @code{argv = []"
     a.fortran_args = ["argv"]
-    a.fortran_types = ["character(len=*), dimension(:), intent(in)"]
+    a.fortran_types = ["character(len=*), dimension(:), intent(in), optional"]
     a.fortran_c_api = ["integer(c_int), value, intent(in)", "type(c_ptr), dimension(*), intent(in)"]
     a.fortran_c_args = ["argc", "argv"]
-    a.fortran_call = "fsize(argv, kind=c_int), argv_cptr"
-    a.fortran_pre = "call ivectorstring_(argv, argv_strs, argv_cptr)"
+    a.fortran_call = "argc=size_gmsh_str_array(argv), argv=argv_cptr"
+    a.fortran_pre = "call ivectorstring_(optval_str_array(def=[''], val=argv), argv_strs, argv_cptr)"
     a.fortran_local = ["character(len=GMSH_API_MAX_STR_LEN, kind=c_char), allocatable :: argv_strs(:)",
                        "type(c_ptr), allocatable :: argv_cptr(:)"]
     return a
@@ -925,8 +924,8 @@ def isizefun(name):
     a.julia_arg = "api_" + name + "_, C_NULL"
     a.julia_ctype = "Ptr{Cvoid}, Ptr{Cvoid}"
     a.fortran_args = [name]
-    a.fortran_types = ["type(c_funptr)"]
-    a.fortran_c_api = ["type(c_funptr)"] # TODO: callback needs implementation"
+    a.fortran_types = ["type(c_funptr), value, intent(in)"]
+    a.fortran_c_api = ["type(c_funptr), value, intent(in)"]
     a.fortran_c_args = [name]
     return a
 
@@ -1472,14 +1471,9 @@ fortran_header = """!
 ! examples.
 !
 
-module fsize_m
-  intrinsic :: size
-end module fsize_m
-
 module gmsh
 
   use, intrinsic :: iso_c_binding
-  use fsize_m, only: fsize => size
 
   implicit none
 
@@ -1489,6 +1483,7 @@ module gmsh
   integer, parameter, public :: {2}_API_VERSION_MINOR = {5}
   integer, parameter, public :: {2}_API_VERSION_PATCH = {6}
   integer, parameter, public :: {2}_API_MAX_STR_LEN = 512
+  real(c_double), parameter, public :: M_PI = 3.14159265358979323846_c_double
   character(len=100), parameter, public :: {2}_API_VERSION = "{4}.{5}.{6}"
 
   public :: gmshFree
@@ -1501,9 +1496,129 @@ module gmsh
     type(c_ptr) :: s
   end type c_array_t
 
+  interface optval_c_int
+    module procedure optval_c_int_1
+  end interface optval_c_int
+
+  interface optval_c_size_t
+    module procedure optval_c_size_t_1, optval_c_size_t_2
+  end interface optval_c_size_t
+
+  interface optval_c_double
+    module procedure optval_c_double_1, optval_c_double_2
+  end interface optval_c_double
+
 """
 
 fortran_footer = """
+  ! ----------------------------------------------------------------------------
+  ! GMSH size function
+  ! ----------------------------------------------------------------------------
+
+  pure integer(c_int) function optval_c_int_1(def, val) result(res)
+    integer(c_int), intent(in) :: def
+    integer(c_int), optional, intent(in) :: val
+    res = int(def, kind=c_int)
+    if (present(val)) res = int(val, kind=c_int)
+  end function optval_c_int_1
+
+  pure integer(c_size_t) function optval_c_size_t_1(def, val) result(res)
+    integer, intent(in) :: def
+    integer, optional, intent(in) :: val
+    res = int(def, kind=c_size_t)
+    if (present(val)) res = int(val, kind=c_size_t)
+  end function optval_c_size_t_1
+
+  pure integer(c_size_t) function optval_c_size_t_2(def, val) result(res)
+    integer(c_size_t), intent(in) :: def
+    integer(c_size_t), optional, intent(in) :: val
+    res = int(def, kind=c_size_t)
+    if (present(val)) res = int(val, kind=c_size_t)
+  end function optval_c_size_t_2
+
+  pure real(c_double) function optval_c_double_1(def, val) result(res)
+    real(c_double), intent(in) :: def
+    real(c_double), optional, intent(in) :: val
+    res = real(def, kind=c_double)
+    if (present(val)) res = real(val, kind=c_double)
+  end function optval_c_double_1
+
+  pure real(c_double) function optval_c_double_2(def, val) result(res)
+    real, intent(in) :: def
+    real(c_double), optional, intent(in) :: val
+    res = real(def, kind=c_double)
+    if (present(val)) res = real(val, kind=c_double)
+  end function optval_c_double_2
+
+  pure integer(c_int) function optval_c_bool(def, val) result(res)
+    logical, intent(in) :: def
+    logical, optional, intent(in) :: val
+    res = merge(1_c_int, 0_c_int, def)
+    if (present(val)) res = merge(1_c_int, 0_c_int, val)
+  end function optval_c_bool
+
+  pure function optval_c_str(def, val) result(res)
+    character(len=*), intent(in) :: def
+    character(len=*), optional, intent(in) :: val
+    character(len=:), allocatable :: res
+    if (present(val)) then
+      res = val
+    else
+      res = def
+    end if
+  end function optval_c_str
+
+  pure function optval_str_array(def, val) result(res)
+    character(len=*), intent(in) :: def(:)
+    character(len=*), optional, intent(in) :: val(:)
+    character(len=:), allocatable :: res(:)
+    if (present(val)) then
+      res = val
+    else
+      res = def
+    end if
+  end function optval_str_array
+
+  ! ----------------------------------------------------------------------------
+  ! GMSH size functions, with handling of optional arguments
+  ! ----------------------------------------------------------------------------
+
+  pure integer(c_size_t) function size_gmsh_int(v) result(n)
+    integer(c_int), optional, intent(in) :: v(:)
+    n = 0
+    if (present(v)) n = size(v, kind=c_size_t)
+  end function size_gmsh_int
+
+  pure integer(c_size_t) function size_gmsh_size(v) result(n)
+    integer(c_size_t), optional, intent(in) :: v(:)
+    n = 0
+    if (present(v)) n = size(v, kind=c_size_t)
+  end function size_gmsh_size
+
+  pure integer(c_size_t) function size_gmsh_double(v) result(n)
+    real(c_double), optional, intent(in) :: v(:)
+    n = 0
+    if (present(v)) n = size(v, kind=c_size_t)
+  end function size_gmsh_double
+
+  pure integer(c_size_t) function size_gmsh_str(v) result(n)
+    character(len=*), optional, intent(in) :: v(:)
+    n = 0
+    if (present(v)) n = size(v, kind=c_size_t)
+  end function size_gmsh_str
+
+  pure integer(c_size_t) function size_gmsh_pair(v) result(n)
+    integer(c_int), optional, intent(in) :: v(:,:)
+    n = 0
+    if (present(v)) n = size(v, kind=c_size_t)
+  end function size_gmsh_pair
+
+  pure integer(c_int) function size_gmsh_str_array(v) result(n)
+    character(len=*), optional, intent(in) :: v(:)
+    n = 1   ! can't have 0-length commands
+    if (present(v)) n = size(v, kind=c_int)
+  end function size_gmsh_str_array
+
   ! ----------------------------------------------------------------------------
   ! GMSH C memory management tools
   ! ----------------------------------------------------------------------------
@@ -1683,10 +1798,22 @@ fortran_footer = """
     integer(c_size_t), allocatable, intent(out) :: dims(:)
     integer(c_int), pointer :: v_(:)
     integer(c_size_t), pointer :: dims_(:)
+    type(c_ptr), pointer :: ptrs(:)
+    integer(c_size_t) :: i, istart, iend
     call c_f_pointer(cptr2, dims_, [n])
-    call c_f_pointer(cptr1, v_, [sum(dims)])
     allocate(dims, source=dims_)
-    allocate(v, source=v_)
+    allocate(v(sum(dims_)))
+    istart = 1
+    call c_f_pointer(cptr1, ptrs, [n])
+    do i = 1_c_size_t, n
+        iend = int(dims(i))
+        call c_f_pointer(ptrs(i), v_, [iend])
+        v(istart:iend) = v_
+        istart = istart + iend
+    end do
+    do i = 1_c_size_t, n
+        call gmshFree(ptrs(i))
+    end do
     call gmshFree(cptr1)
     call gmshFree(cptr2)
   end subroutine ovectorvectorint_
@@ -1698,10 +1825,22 @@ fortran_footer = """
     integer(c_size_t), allocatable, intent(out) :: dims(:)
     integer(c_size_t), pointer :: v_(:)
     integer(c_size_t), pointer :: dims_(:)
+    type(c_ptr), pointer :: ptrs(:)
+    integer(c_size_t) :: i, istart, iend
     call c_f_pointer(cptr2, dims_, [n])
-    call c_f_pointer(cptr1, v_, [sum(dims)])
     allocate(dims, source=dims_)
-    allocate(v, source=v_)
+    allocate(v(sum(dims_)))
+    istart = 1
+    call c_f_pointer(cptr1, ptrs, [n])
+    do i = 1_c_size_t, n
+        iend = int(dims(i))
+        call c_f_pointer(ptrs(i), v_, [iend])
+        v(istart:iend) = v_
+        istart = istart + iend
+    end do
+    do i = 1_c_size_t, n
+        call gmshFree(ptrs(i))
+    end do
     call gmshFree(cptr1)
     call gmshFree(cptr2)
   end subroutine ovectorvectorsize_
@@ -1713,10 +1852,22 @@ fortran_footer = """
     integer(c_size_t), allocatable, intent(out) :: dims(:)
     real(c_double), pointer :: v_(:)
     integer(c_size_t), pointer :: dims_(:)
+    type(c_ptr), pointer :: ptrs(:)
+    integer(c_size_t) :: i, istart, iend
     call c_f_pointer(cptr2, dims_, [n])
-    call c_f_pointer(cptr1, v_, [sum(dims)])
     allocate(dims, source=dims_)
-    allocate(v, source=v_)
+    allocate(v(sum(dims_)))
+    istart = 1
+    call c_f_pointer(cptr1, ptrs, [n])
+    do i = 1_c_size_t, n
+        iend = int(dims(i))
+        call c_f_pointer(ptrs(i), v_, [iend])
+        v(istart:iend) = v_
+        istart = istart + iend
+    end do
+    do i = 1_c_size_t, n
+        call gmshFree(ptrs(i))
+    end do
     call gmshFree(cptr1)
     call gmshFree(cptr2)
   end subroutine ovectorvectordouble_
@@ -1728,10 +1879,22 @@ fortran_footer = """
     integer(c_size_t), allocatable, intent(out) :: dims(:)
     integer(c_int), pointer :: v_(:,:)
     integer(c_size_t), pointer :: dims_(:)
+    type(c_ptr), pointer :: ptrs(:)
+    integer(c_size_t) :: i, istart, iend
     call c_f_pointer(cptr2, dims_, [n])
-    call c_f_pointer(cptr1, v_, [sum(dims), 2_c_size_t])
     allocate(dims, source=dims_)
-    allocate(v, source=v_)
+    allocate(v(2, int(sum(dims_)/2)))
+    istart = 1
+    call c_f_pointer(cptr1, ptrs, [n])
+    do i = 1_c_size_t, n
+        iend = int(dims(i)/2)
+        call c_f_pointer(ptrs(i), v_, [2_c_size_t, iend])
+        v(:,istart:iend) = v_
+        istart = istart + iend
+    end do
+    do i = 1_c_size_t, n
+        call gmshFree(ptrs(i))
+    end do
     call gmshFree(cptr1)
     call gmshFree(cptr2)
   end subroutine ovectorvectorpair_
@@ -2234,19 +2397,24 @@ class API:
             def get_arg_list(args, indent):
                 arg_list = ""
                 for arg in args:
+                    # These lists contain only a single element = arg.value
                     for t, a in zip(arg.fortran_types, arg.fortran_args):
-                        # if arg.value:
-                        #     t += ", optional" # TODO: add optional to ierr
+                        if arg.value:
+                            t += ", optional"
                         arg_list += f"{indent}{t} :: {a}\n"
-                arg_list += f"{indent}integer(c_int), intent(out) :: ierr\n"
+                arg_list += f"{indent}integer(c_int), intent(out), optional :: ierr\n"
                 return arg_list
 
             def get_c_api_arg_list(args, indent):
                 arg_list = ""
                 for arg in args:
+                    # These lists can contain multiple elements e.g. array, array_n
                     for t, a in zip(arg.fortran_c_api, arg.fortran_c_args):
+                        # Passing by VALUE cannot be OPTIONAL
+                        if arg.value and not (", value" in t):
+                            t += f", optional"
                         arg_list += f"{indent}{t} :: {a}\n"
-                arg_list += f"{indent}integer(c_int), intent(out) :: ierr_\n"
+                arg_list += f"{indent}integer(c_int), intent(out), optional :: ierr_\n"
                 return arg_list
 
             def get_dummy_arg_list(args):
@@ -2263,9 +2431,10 @@ class API:
                     if arg.fortran_call:
                         dummy_list += f"{arg.fortran_call}, "
                     else:
-                        for a in arg.fortran_args:
-                            dummy_list += f"{a}, "
-                dummy_list += "ierr"
+                        # These are single element lists
+                        for c, a in zip(arg.fortran_c_args, arg.fortran_args):
+                            dummy_list += f"{c}={a}, "
+                dummy_list += "ierr_=ierr"
                 return dummy_list
 
             def get_c_api_dummy_arg_list(args):

@@ -14,14 +14,9 @@
 ! examples.
 !
 
-module fsize_m
-  intrinsic :: size
-end module fsize_m
-
 module gmsh
 
   use, intrinsic :: iso_c_binding
-  use fsize_m, only: fsize => size
 
   implicit none
 
@@ -31,6 +26,7 @@ module gmsh
   integer, parameter, public :: GMSH_API_VERSION_MINOR = 10
   integer, parameter, public :: GMSH_API_VERSION_PATCH = 4
   integer, parameter, public :: GMSH_API_MAX_STR_LEN = 512
+  real(c_double), parameter, public :: M_PI = 3.14159265358979323846_c_double
   character(len=100), parameter, public :: GMSH_API_VERSION = "4.10.4"
 
   public :: gmshFree
@@ -42,6 +38,18 @@ module gmsh
   type, private :: c_array_t
     type(c_ptr) :: s
   end type c_array_t
+
+  interface optval_c_int
+    module procedure optval_c_int_1
+  end interface optval_c_int
+
+  interface optval_c_size_t
+    module procedure optval_c_size_t_1, optval_c_size_t_2
+  end interface optval_c_size_t
+
+  interface optval_c_double
+    module procedure optval_c_double_1, optval_c_double_2
+  end interface optval_c_double
 
   type, public :: gmsh_logger_t
     contains
@@ -506,18 +514,18 @@ module gmsh
       type(c_ptr), dimension(*), intent(in) :: argv
       integer(c_int), value, intent(in) :: readConfigFiles
       integer(c_int), value, intent(in) :: run
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    character(len=*), dimension(:), intent(in) :: argv
-    integer(c_int), intent(in) :: readConfigFiles
-    integer(c_int), intent(in) :: run
-    integer(c_int), intent(out) :: ierr
+    character(len=*), dimension(:), intent(in), optional :: argv
+    logical, intent(in), optional :: readConfigFiles
+    logical, intent(in), optional :: run
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     character(len=GMSH_API_MAX_STR_LEN, kind=c_char), allocatable :: argv_strs(:)
     type(c_ptr), allocatable :: argv_cptr(:)
-    call ivectorstring_(argv, argv_strs, argv_cptr)
-    call C_API(fsize(argv, kind=c_int), argv_cptr, readConfigFiles, run, ierr)
+    call ivectorstring_(optval_str_array(def=[''], val=argv), argv_strs, argv_cptr)
+    call C_API(argc=size_gmsh_str_array(argv), argv=argv_cptr, readConfigFiles=optval_c_bool(.true., readConfigFiles), run=optval_c_bool(.false., run), ierr_=ierr)
     ! Post processing
   end subroutine gmshInitialize
 
@@ -527,13 +535,13 @@ module gmsh
     function C_API(ierr_) bind(C, name="gmshIsInitialized")
       use, intrinsic :: iso_c_binding
       integer(c_int) :: C_API
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end function C_API
     end interface
     integer(c_int) :: gmshIsInitialized
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    gmshIsInitialized = C_API(ierr)
+    gmshIsInitialized = C_API(ierr_=ierr)
     ! Post processing
   end function gmshIsInitialized
 
@@ -543,12 +551,12 @@ module gmsh
     interface
     subroutine C_API(ierr_) bind(C, name="gmshFinalize")
       use, intrinsic :: iso_c_binding
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(ierr)
+    call C_API(ierr_=ierr)
     ! Post processing
   end subroutine gmshFinalize
 
@@ -560,15 +568,13 @@ module gmsh
     subroutine C_API(fileName, ierr_) bind(C, name="gmshOpen")
       use, intrinsic :: iso_c_binding
       character(len=1, kind=c_char), dimension(*), intent(in) :: fileName
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     character(len=*), intent(in) :: fileName
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    character(len=:, kind=c_char), allocatable :: fileName_c
-    fileName_c = istring_(fileName)
-    call C_API(fileName_c, ierr)
+    call C_API(fileName=istring_(fileName), ierr_=ierr)
     ! Post processing
   end subroutine gmshOpen
 
@@ -580,15 +586,13 @@ module gmsh
     subroutine C_API(fileName, ierr_) bind(C, name="gmshMerge")
       use, intrinsic :: iso_c_binding
       character(len=1, kind=c_char), dimension(*), intent(in) :: fileName
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     character(len=*), intent(in) :: fileName
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    character(len=:, kind=c_char), allocatable :: fileName_c
-    fileName_c = istring_(fileName)
-    call C_API(fileName_c, ierr)
+    call C_API(fileName=istring_(fileName), ierr_=ierr)
     ! Post processing
   end subroutine gmshMerge
 
@@ -598,15 +602,13 @@ module gmsh
     subroutine C_API(fileName, ierr_) bind(C, name="gmshWrite")
       use, intrinsic :: iso_c_binding
       character(len=1, kind=c_char), dimension(*), intent(in) :: fileName
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     character(len=*), intent(in) :: fileName
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    character(len=:, kind=c_char), allocatable :: fileName_c
-    fileName_c = istring_(fileName)
-    call C_API(fileName_c, ierr)
+    call C_API(fileName=istring_(fileName), ierr_=ierr)
     ! Post processing
   end subroutine gmshWrite
 
@@ -616,12 +618,12 @@ module gmsh
     interface
     subroutine C_API(ierr_) bind(C, name="gmshClear")
       use, intrinsic :: iso_c_binding
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(ierr)
+    call C_API(ierr_=ierr)
     ! Post processing
   end subroutine gmshClear
 
@@ -634,16 +636,14 @@ module gmsh
       use, intrinsic :: iso_c_binding
       character(len=1, kind=c_char), dimension(*), intent(in) :: name
       real(c_double), value, intent(in) :: value
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     character(len=*), intent(in) :: name
     real(c_double), intent(in) :: value
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    character(len=:, kind=c_char), allocatable :: name_c
-    name_c = istring_(name)
-    call C_API(name_c, value, ierr)
+    call C_API(name=istring_(name), value=real(value, c_double), ierr_=ierr)
     ! Post processing
   end subroutine gmshOptionSetNumber
 
@@ -656,16 +656,14 @@ module gmsh
       use, intrinsic :: iso_c_binding
       character(len=1, kind=c_char), dimension(*), intent(in) :: name
       real(c_double) :: value
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     character(len=*), intent(in) :: name
     real(c_double) :: value
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    character(len=:, kind=c_char), allocatable :: name_c
-    name_c = istring_(name)
-    call C_API(name_c, value, ierr)
+    call C_API(name=istring_(name), value=value, ierr_=ierr)
     ! Post processing
   end subroutine gmshOptionGetNumber
 
@@ -678,18 +676,14 @@ module gmsh
       use, intrinsic :: iso_c_binding
       character(len=1, kind=c_char), dimension(*), intent(in) :: name
       character(len=1, kind=c_char), dimension(*), intent(in) :: value
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     character(len=*), intent(in) :: name
     character(len=*), intent(in) :: value
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    character(len=:, kind=c_char), allocatable :: name_c
-    character(len=:, kind=c_char), allocatable :: value_c
-    name_c = istring_(name)
-    value_c = istring_(value)
-    call C_API(name_c, value_c, ierr)
+    call C_API(name=istring_(name), value=istring_(value), ierr_=ierr)
     ! Post processing
   end subroutine gmshOptionSetString
 
@@ -702,16 +696,14 @@ module gmsh
       use, intrinsic :: iso_c_binding
       character(len=1, kind=c_char), dimension(*), intent(in) :: name
       character(kind=c_char), dimension(*) :: api_value_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     character(len=*), intent(in) :: name
     character(len=:), allocatable, intent(out) :: value
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    character(len=:, kind=c_char), allocatable :: name_c
-    name_c = istring_(name)
-    call C_API(name_c, value, ierr)
+    call C_API(name=istring_(name), api_value_=value, ierr_=ierr)
     ! Post processing
   end subroutine gmshOptionGetString
 
@@ -729,19 +721,17 @@ module gmsh
       integer(c_int), value, intent(in) :: g
       integer(c_int), value, intent(in) :: b
       integer(c_int), value, intent(in) :: a
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     character(len=*), intent(in) :: name
-    integer(c_int), intent(in) :: r
-    integer(c_int), intent(in) :: g
-    integer(c_int), intent(in) :: b
-    integer(c_int), intent(in) :: a
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in) :: r
+    integer, intent(in) :: g
+    integer, intent(in) :: b
+    integer, intent(in), optional :: a
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    character(len=:, kind=c_char), allocatable :: name_c
-    name_c = istring_(name)
-    call C_API(name_c, r, g, b, a, ierr)
+    call C_API(name=istring_(name), r=int(r, c_int), g=int(g, c_int), b=int(b, c_int), a=optval_c_int(255, a), ierr_=ierr)
     ! Post processing
   end subroutine gmshOptionSetColor
 
@@ -758,7 +748,7 @@ module gmsh
       integer(c_int) :: g
       integer(c_int) :: b
       integer(c_int) :: a
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     character(len=*), intent(in) :: name
@@ -766,11 +756,9 @@ module gmsh
     integer(c_int) :: g
     integer(c_int) :: b
     integer(c_int) :: a
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    character(len=:, kind=c_char), allocatable :: name_c
-    name_c = istring_(name)
-    call C_API(name_c, r, g, b, a, ierr)
+    call C_API(name=istring_(name), r=r, g=g, b=b, a=a, ierr_=ierr)
     ! Post processing
   end subroutine gmshOptionGetColor
 
@@ -780,15 +768,13 @@ module gmsh
     subroutine C_API(name, ierr_) bind(C, name="gmshModelAdd")
       use, intrinsic :: iso_c_binding
       character(len=1, kind=c_char), dimension(*), intent(in) :: name
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     character(len=*), intent(in) :: name
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    character(len=:, kind=c_char), allocatable :: name_c
-    name_c = istring_(name)
-    call C_API(name_c, ierr)
+    call C_API(name=istring_(name), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelAdd
 
@@ -797,12 +783,12 @@ module gmsh
     interface
     subroutine C_API(ierr_) bind(C, name="gmshModelRemove")
       use, intrinsic :: iso_c_binding
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(ierr)
+    call C_API(ierr_=ierr)
     ! Post processing
   end subroutine gmshModelRemove
 
@@ -813,15 +799,15 @@ module gmsh
       use, intrinsic :: iso_c_binding
       type(c_ptr), intent(out) :: api_names_
       integer(c_size_t), intent(out) :: api_names_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     character(len=GMSH_API_MAX_STR_LEN), dimension(:), allocatable, intent(out) :: names
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_names_
     integer(c_size_t) :: api_names_n_
-    call C_API(api_names_, api_names_n_, ierr)
+    call C_API(api_names_=api_names_, api_names_n_=api_names_n_, ierr_=ierr)
     ! Post processing
     names = ovectorstring_(api_names_, api_names_n_)
   end subroutine gmshModelList
@@ -832,13 +818,13 @@ module gmsh
     subroutine C_API(api_name_, ierr_) bind(C, name="gmshModelGetCurrent")
       use, intrinsic :: iso_c_binding
       character(kind=c_char), dimension(*) :: api_name_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     character(len=:), allocatable, intent(out) :: name
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(name, ierr)
+    call C_API(api_name_=name, ierr_=ierr)
     ! Post processing
   end subroutine gmshModelGetCurrent
 
@@ -849,15 +835,13 @@ module gmsh
     subroutine C_API(name, ierr_) bind(C, name="gmshModelSetCurrent")
       use, intrinsic :: iso_c_binding
       character(len=1, kind=c_char), dimension(*), intent(in) :: name
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     character(len=*), intent(in) :: name
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    character(len=:, kind=c_char), allocatable :: name_c
-    name_c = istring_(name)
-    call C_API(name_c, ierr)
+    call C_API(name=istring_(name), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelSetCurrent
 
@@ -868,13 +852,13 @@ module gmsh
     subroutine C_API(api_fileName_, ierr_) bind(C, name="gmshModelGetFileName")
       use, intrinsic :: iso_c_binding
       character(kind=c_char), dimension(*) :: api_fileName_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     character(len=:), allocatable, intent(out) :: fileName
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(fileName, ierr)
+    call C_API(api_fileName_=fileName, ierr_=ierr)
     ! Post processing
   end subroutine gmshModelGetFileName
 
@@ -884,15 +868,13 @@ module gmsh
     subroutine C_API(fileName, ierr_) bind(C, name="gmshModelSetFileName")
       use, intrinsic :: iso_c_binding
       character(len=1, kind=c_char), dimension(*), intent(in) :: fileName
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     character(len=*), intent(in) :: fileName
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    character(len=:, kind=c_char), allocatable :: fileName_c
-    fileName_c = istring_(fileName)
-    call C_API(fileName_c, ierr)
+    call C_API(fileName=istring_(fileName), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelSetFileName
 
@@ -906,16 +888,16 @@ module gmsh
       type(c_ptr), intent(out) :: api_dimTags_
       integer(c_size_t), intent(out) :: api_dimTags_n_
       integer(c_int), value, intent(in) :: dim
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     integer(c_int), dimension(:,:), allocatable, intent(out) :: dimTags
-    integer(c_int), intent(in) :: dim
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in), optional :: dim
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_dimTags_
     integer(c_size_t) :: api_dimTags_n_
-    call C_API(api_dimTags_, api_dimTags_n_, dim, ierr)
+    call C_API(api_dimTags_=api_dimTags_, api_dimTags_n_=api_dimTags_n_, dim=optval_c_int(-1, dim), ierr_=ierr)
     ! Post processing
     dimTags = ovectorpair_(api_dimTags_, api_dimTags_n_)
   end subroutine gmshModelGetEntities
@@ -928,17 +910,15 @@ module gmsh
       integer(c_int), value, intent(in) :: dim
       integer(c_int), value, intent(in) :: tag
       character(len=1, kind=c_char), dimension(*), intent(in) :: name
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: dim
-    integer(c_int), intent(in) :: tag
+    integer, intent(in) :: dim
+    integer, intent(in) :: tag
     character(len=*), intent(in) :: name
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    character(len=:, kind=c_char), allocatable :: name_c
-    name_c = istring_(name)
-    call C_API(dim, tag, name_c, ierr)
+    call C_API(dim=int(dim, c_int), tag=int(tag, c_int), name=istring_(name), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelSetEntityName
 
@@ -950,15 +930,15 @@ module gmsh
       integer(c_int), value, intent(in) :: dim
       integer(c_int), value, intent(in) :: tag
       character(kind=c_char), dimension(*) :: api_name_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: dim
-    integer(c_int), intent(in) :: tag
+    integer, intent(in) :: dim
+    integer, intent(in) :: tag
     character(len=:), allocatable, intent(out) :: name
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(dim, tag, name, ierr)
+    call C_API(dim=int(dim, c_int), tag=int(tag, c_int), api_name_=name, ierr_=ierr)
     ! Post processing
   end subroutine gmshModelGetEntityName
 
@@ -972,16 +952,16 @@ module gmsh
       type(c_ptr), intent(out) :: api_dimTags_
       integer(c_size_t), intent(out) :: api_dimTags_n_
       integer(c_int), value, intent(in) :: dim
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     integer(c_int), dimension(:,:), allocatable, intent(out) :: dimTags
-    integer(c_int), intent(in) :: dim
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in), optional :: dim
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_dimTags_
     integer(c_size_t) :: api_dimTags_n_
-    call C_API(api_dimTags_, api_dimTags_n_, dim, ierr)
+    call C_API(api_dimTags_=api_dimTags_, api_dimTags_n_=api_dimTags_n_, dim=optval_c_int(-1, dim), ierr_=ierr)
     ! Post processing
     dimTags = ovectorpair_(api_dimTags_, api_dimTags_n_)
   end subroutine gmshModelGetPhysicalGroups
@@ -996,17 +976,17 @@ module gmsh
       integer(c_int), value, intent(in) :: tag
       type(c_ptr), intent(out) :: api_tags_
       integer(c_size_t), intent(out) :: api_tags_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: dim
-    integer(c_int), intent(in) :: tag
+    integer, intent(in) :: dim
+    integer, intent(in) :: tag
     integer(c_int), dimension(:), allocatable, intent(out) :: tags
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_tags_
     integer(c_size_t) :: api_tags_n_
-    call C_API(dim, tag, api_tags_, api_tags_n_, ierr)
+    call C_API(dim=int(dim, c_int), tag=int(tag, c_int), api_tags_=api_tags_, api_tags_n_=api_tags_n_, ierr_=ierr)
     ! Post processing
     tags = ovectorint_(api_tags_, api_tags_n_)
   end subroutine gmshModelGetEntitiesForPhysicalGroup
@@ -1021,17 +1001,17 @@ module gmsh
       integer(c_int), value, intent(in) :: tag
       type(c_ptr), intent(out) :: api_physicalTags_
       integer(c_size_t), intent(out) :: api_physicalTags_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: dim
-    integer(c_int), intent(in) :: tag
+    integer, intent(in) :: dim
+    integer, intent(in) :: tag
     integer(c_int), dimension(:), allocatable, intent(out) :: physicalTags
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_physicalTags_
     integer(c_size_t) :: api_physicalTags_n_
-    call C_API(dim, tag, api_physicalTags_, api_physicalTags_n_, ierr)
+    call C_API(dim=int(dim, c_int), tag=int(tag, c_int), api_physicalTags_=api_physicalTags_, api_physicalTags_n_=api_physicalTags_n_, ierr_=ierr)
     ! Post processing
     physicalTags = ovectorint_(api_physicalTags_, api_physicalTags_n_)
   end subroutine gmshModelGetPhysicalGroupsForEntity
@@ -1049,20 +1029,18 @@ module gmsh
       integer(c_int), dimension(*) :: api_tags_
       integer(c_size_t), value, intent(in) :: api_tags_n_
       integer(c_int), value, intent(in) :: tag
-      character(len=1, kind=c_char), dimension(*), intent(in) :: name
-      integer(c_int), intent(out) :: ierr_
+      character(len=1, kind=c_char), dimension(*), intent(in), optional :: name
+      integer(c_int), intent(out), optional :: ierr_
     end function C_API
     end interface
     integer(c_int) :: gmshModelAddPhysicalGroup
-    integer(c_int), intent(in) :: dim
+    integer, intent(in) :: dim
     integer(c_int), dimension(:), intent(in) :: tags
-    integer(c_int), intent(in) :: tag
-    character(len=*), intent(in) :: name
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in), optional :: tag
+    character(len=*), intent(in), optional :: name
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    character(len=:, kind=c_char), allocatable :: name_c
-    name_c = istring_(name)
-    gmshModelAddPhysicalGroup = C_API(dim, tags, fsize(tags, kind=c_size_t), tag, name_c, ierr)
+    gmshModelAddPhysicalGroup = C_API(dim=int(dim, c_int), api_tags_=tags, api_tags_n_=size_gmsh_int(tags), tag=optval_c_int(-1, tag), name=istring_(optval_c_str("", name)), ierr_=ierr)
     ! Post processing
   end function gmshModelAddPhysicalGroup
 
@@ -1072,15 +1050,15 @@ module gmsh
     interface
     subroutine C_API(api_dimTags_, api_dimTags_n_, ierr_) bind(C, name="gmshModelRemovePhysicalGroups")
       use, intrinsic :: iso_c_binding
-      integer(c_int), dimension(*) :: api_dimTags_
+      integer(c_int), dimension(*), optional :: api_dimTags_
       integer(c_size_t), value, intent(in) :: api_dimTags_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), dimension(:,:), intent(in) :: dimTags
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), dimension(:,:), intent(in), optional :: dimTags
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(dimTags, fsize(dimTags, kind=c_size_t), ierr)
+    call C_API(api_dimTags_=dimTags, api_dimTags_n_=size_gmsh_pair(dimTags), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelRemovePhysicalGroups
 
@@ -1092,17 +1070,15 @@ module gmsh
       integer(c_int), value, intent(in) :: dim
       integer(c_int), value, intent(in) :: tag
       character(len=1, kind=c_char), dimension(*), intent(in) :: name
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: dim
-    integer(c_int), intent(in) :: tag
+    integer, intent(in) :: dim
+    integer, intent(in) :: tag
     character(len=*), intent(in) :: name
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    character(len=:, kind=c_char), allocatable :: name_c
-    name_c = istring_(name)
-    call C_API(dim, tag, name_c, ierr)
+    call C_API(dim=int(dim, c_int), tag=int(tag, c_int), name=istring_(name), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelSetPhysicalName
 
@@ -1112,15 +1088,13 @@ module gmsh
     subroutine C_API(name, ierr_) bind(C, name="gmshModelRemovePhysicalName")
       use, intrinsic :: iso_c_binding
       character(len=1, kind=c_char), dimension(*), intent(in) :: name
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     character(len=*), intent(in) :: name
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    character(len=:, kind=c_char), allocatable :: name_c
-    name_c = istring_(name)
-    call C_API(name_c, ierr)
+    call C_API(name=istring_(name), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelRemovePhysicalName
 
@@ -1132,15 +1106,15 @@ module gmsh
       integer(c_int), value, intent(in) :: dim
       integer(c_int), value, intent(in) :: tag
       character(kind=c_char), dimension(*) :: api_name_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: dim
-    integer(c_int), intent(in) :: tag
+    integer, intent(in) :: dim
+    integer, intent(in) :: tag
     character(len=:), allocatable, intent(out) :: name
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(dim, tag, name, ierr)
+    call C_API(dim=int(dim, c_int), tag=int(tag, c_int), api_name_=name, ierr_=ierr)
     ! Post processing
   end subroutine gmshModelGetPhysicalName
 
@@ -1153,15 +1127,15 @@ module gmsh
       integer(c_int), value, intent(in) :: dim
       integer(c_int), value, intent(in) :: tag
       integer(c_int), value, intent(in) :: newTag
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: dim
-    integer(c_int), intent(in) :: tag
-    integer(c_int), intent(in) :: newTag
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in) :: dim
+    integer, intent(in) :: tag
+    integer, intent(in) :: newTag
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(dim, tag, newTag, ierr)
+    call C_API(dim=int(dim, c_int), tag=int(tag, c_int), newTag=int(newTag, c_int), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelSetTag
 
@@ -1182,19 +1156,19 @@ module gmsh
       integer(c_int), value, intent(in) :: combined
       integer(c_int), value, intent(in) :: oriented
       integer(c_int), value, intent(in) :: recursive
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     integer(c_int), dimension(:,:), intent(in) :: dimTags
     integer(c_int), dimension(:,:), allocatable, intent(out) :: outDimTags
-    integer(c_int), intent(in) :: combined
-    integer(c_int), intent(in) :: oriented
-    integer(c_int), intent(in) :: recursive
-    integer(c_int), intent(out) :: ierr
+    logical, intent(in), optional :: combined
+    logical, intent(in), optional :: oriented
+    logical, intent(in), optional :: recursive
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_outDimTags_
     integer(c_size_t) :: api_outDimTags_n_
-    call C_API(dimTags, fsize(dimTags, kind=c_size_t), api_outDimTags_, api_outDimTags_n_, combined, oriented, recursive, ierr)
+    call C_API(api_dimTags_=dimTags, api_dimTags_n_=size_gmsh_pair(dimTags), api_outDimTags_=api_outDimTags_, api_outDimTags_n_=api_outDimTags_n_, combined=optval_c_bool(.true., combined), oriented=optval_c_bool(.true., oriented), recursive=optval_c_bool(.false., recursive), ierr_=ierr)
     ! Post processing
     outDimTags = ovectorpair_(api_outDimTags_, api_outDimTags_n_)
   end subroutine gmshModelGetBoundary
@@ -1213,20 +1187,20 @@ module gmsh
       integer(c_size_t), intent(out) :: api_upward_n_
       type(c_ptr), intent(out) :: api_downward_
       integer(c_size_t), intent(out) :: api_downward_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: dim
-    integer(c_int), intent(in) :: tag
+    integer, intent(in) :: dim
+    integer, intent(in) :: tag
     integer(c_int), dimension(:), allocatable, intent(out) :: upward
     integer(c_int), dimension(:), allocatable, intent(out) :: downward
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_upward_
     integer(c_size_t) :: api_upward_n_
     type(c_ptr) :: api_downward_
     integer(c_size_t) :: api_downward_n_
-    call C_API(dim, tag, api_upward_, api_upward_n_, api_downward_, api_downward_n_, ierr)
+    call C_API(dim=int(dim, c_int), tag=int(tag, c_int), api_upward_=api_upward_, api_upward_n_=api_upward_n_, api_downward_=api_downward_, api_downward_n_=api_downward_n_, ierr_=ierr)
     ! Post processing
     upward = ovectorint_(api_upward_, api_upward_n_)
     downward = ovectorint_(api_downward_, api_downward_n_)
@@ -1249,7 +1223,7 @@ module gmsh
       type(c_ptr), intent(out) :: api_tags_
       integer(c_size_t), intent(out) :: api_tags_n_
       integer(c_int), value, intent(in) :: dim
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     real(c_double), intent(in) :: xmin
@@ -1259,12 +1233,12 @@ module gmsh
     real(c_double), intent(in) :: ymax
     real(c_double), intent(in) :: zmax
     integer(c_int), dimension(:,:), allocatable, intent(out) :: tags
-    integer(c_int), intent(in) :: dim
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in), optional :: dim
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_tags_
     integer(c_size_t) :: api_tags_n_
-    call C_API(xmin, ymin, zmin, xmax, ymax, zmax, api_tags_, api_tags_n_, dim, ierr)
+    call C_API(xmin=real(xmin, c_double), ymin=real(ymin, c_double), zmin=real(zmin, c_double), xmax=real(xmax, c_double), ymax=real(ymax, c_double), zmax=real(zmax, c_double), api_tags_=api_tags_, api_tags_n_=api_tags_n_, dim=optval_c_int(-1, dim), ierr_=ierr)
     ! Post processing
     tags = ovectorpair_(api_tags_, api_tags_n_)
   end subroutine gmshModelGetEntitiesInBoundingBox
@@ -1284,20 +1258,20 @@ module gmsh
       real(c_double) :: xmax
       real(c_double) :: ymax
       real(c_double) :: zmax
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: dim
-    integer(c_int), intent(in) :: tag
+    integer, intent(in) :: dim
+    integer, intent(in) :: tag
     real(c_double) :: xmin
     real(c_double) :: ymin
     real(c_double) :: zmin
     real(c_double) :: xmax
     real(c_double) :: ymax
     real(c_double) :: zmax
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(dim, tag, xmin, ymin, zmin, xmax, ymax, zmax, ierr)
+    call C_API(dim=int(dim, c_int), tag=int(tag, c_int), xmin=xmin, ymin=ymin, zmin=zmin, xmax=xmax, ymax=ymax, zmax=zmax, ierr_=ierr)
     ! Post processing
   end subroutine gmshModelGetBoundingBox
 
@@ -1307,13 +1281,13 @@ module gmsh
     function C_API(ierr_) bind(C, name="gmshModelGetDimension")
       use, intrinsic :: iso_c_binding
       integer(c_int) :: C_API
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end function C_API
     end interface
     integer(c_int) :: gmshModelGetDimension
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    gmshModelGetDimension = C_API(ierr)
+    gmshModelGetDimension = C_API(ierr_=ierr)
     ! Post processing
   end function gmshModelGetDimension
 
@@ -1329,18 +1303,18 @@ module gmsh
       integer(c_int) :: C_API
       integer(c_int), value, intent(in) :: dim
       integer(c_int), value, intent(in) :: tag
-      integer(c_int), dimension(*) :: api_boundary_
+      integer(c_int), dimension(*), optional :: api_boundary_
       integer(c_size_t), value, intent(in) :: api_boundary_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end function C_API
     end interface
     integer(c_int) :: gmshModelAddDiscreteEntity
-    integer(c_int), intent(in) :: dim
-    integer(c_int), intent(in) :: tag
-    integer(c_int), dimension(:), intent(in) :: boundary
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in) :: dim
+    integer, intent(in), optional :: tag
+    integer(c_int), dimension(:), intent(in), optional :: boundary
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    gmshModelAddDiscreteEntity = C_API(dim, tag, boundary, fsize(boundary, kind=c_size_t), ierr)
+    gmshModelAddDiscreteEntity = C_API(dim=int(dim, c_int), tag=optval_c_int(-1, tag), api_boundary_=boundary, api_boundary_n_=size_gmsh_int(boundary), ierr_=ierr)
     ! Post processing
   end function gmshModelAddDiscreteEntity
 
@@ -1355,14 +1329,14 @@ module gmsh
       integer(c_int), dimension(*) :: api_dimTags_
       integer(c_size_t), value, intent(in) :: api_dimTags_n_
       integer(c_int), value, intent(in) :: recursive
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     integer(c_int), dimension(:,:), intent(in) :: dimTags
-    integer(c_int), intent(in) :: recursive
-    integer(c_int), intent(out) :: ierr
+    logical, intent(in), optional :: recursive
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(dimTags, fsize(dimTags, kind=c_size_t), recursive, ierr)
+    call C_API(api_dimTags_=dimTags, api_dimTags_n_=size_gmsh_pair(dimTags), recursive=optval_c_bool(.false., recursive), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelRemoveEntities
 
@@ -1372,15 +1346,13 @@ module gmsh
     subroutine C_API(name, ierr_) bind(C, name="gmshModelRemoveEntityName")
       use, intrinsic :: iso_c_binding
       character(len=1, kind=c_char), dimension(*), intent(in) :: name
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     character(len=*), intent(in) :: name
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    character(len=:, kind=c_char), allocatable :: name_c
-    name_c = istring_(name)
-    call C_API(name_c, ierr)
+    call C_API(name=istring_(name), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelRemoveEntityName
 
@@ -1392,15 +1364,15 @@ module gmsh
       integer(c_int), value, intent(in) :: dim
       integer(c_int), value, intent(in) :: tag
       character(kind=c_char), dimension(*) :: api_entityType_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: dim
-    integer(c_int), intent(in) :: tag
+    integer, intent(in) :: dim
+    integer, intent(in) :: tag
     character(len=:), allocatable, intent(out) :: entityType
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(dim, tag, entityType, ierr)
+    call C_API(dim=int(dim, c_int), tag=int(tag, c_int), api_entityType_=entityType, ierr_=ierr)
     ! Post processing
   end subroutine gmshModelGetType
 
@@ -1415,16 +1387,16 @@ module gmsh
       integer(c_int), value, intent(in) :: tag
       integer(c_int) :: parentDim
       integer(c_int) :: parentTag
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: dim
-    integer(c_int), intent(in) :: tag
+    integer, intent(in) :: dim
+    integer, intent(in) :: tag
     integer(c_int) :: parentDim
     integer(c_int) :: parentTag
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(dim, tag, parentDim, parentTag, ierr)
+    call C_API(dim=int(dim, c_int), tag=int(tag, c_int), parentDim=parentDim, parentTag=parentTag, ierr_=ierr)
     ! Post processing
   end subroutine gmshModelGetParent
 
@@ -1434,13 +1406,13 @@ module gmsh
     function C_API(ierr_) bind(C, name="gmshModelGetNumberOfPartitions")
       use, intrinsic :: iso_c_binding
       integer(c_int) :: C_API
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end function C_API
     end interface
     integer(c_int) :: gmshModelGetNumberOfPartitions
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    gmshModelGetNumberOfPartitions = C_API(ierr)
+    gmshModelGetNumberOfPartitions = C_API(ierr_=ierr)
     ! Post processing
   end function gmshModelGetNumberOfPartitions
 
@@ -1454,17 +1426,17 @@ module gmsh
       integer(c_int), value, intent(in) :: tag
       type(c_ptr), intent(out) :: api_partitions_
       integer(c_size_t), intent(out) :: api_partitions_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: dim
-    integer(c_int), intent(in) :: tag
+    integer, intent(in) :: dim
+    integer, intent(in) :: tag
     integer(c_int), dimension(:), allocatable, intent(out) :: partitions
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_partitions_
     integer(c_size_t) :: api_partitions_n_
-    call C_API(dim, tag, api_partitions_, api_partitions_n_, ierr)
+    call C_API(dim=int(dim, c_int), tag=int(tag, c_int), api_partitions_=api_partitions_, api_partitions_n_=api_partitions_n_, ierr_=ierr)
     ! Post processing
     partitions = ovectorint_(api_partitions_, api_partitions_n_)
   end subroutine gmshModelGetPartitions
@@ -1486,18 +1458,18 @@ module gmsh
       integer(c_size_t), value, intent(in) :: api_parametricCoord_n_
       type(c_ptr), intent(out) :: api_coord_
       integer(c_size_t) :: api_coord_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: dim
-    integer(c_int), intent(in) :: tag
+    integer, intent(in) :: dim
+    integer, intent(in) :: tag
     real(c_double), dimension(:), intent(in) :: parametricCoord
     real(c_double), dimension(:), allocatable, intent(out) :: coord
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_coord_
     integer(c_size_t) :: api_coord_n_
-    call C_API(dim, tag, parametricCoord, fsize(parametricCoord, kind=c_size_t), api_coord_, api_coord_n_, ierr)
+    call C_API(dim=int(dim, c_int), tag=int(tag, c_int), api_parametricCoord_=parametricCoord, api_parametricCoord_n_=size_gmsh_double(parametricCoord), api_coord_=api_coord_, api_coord_n_=api_coord_n_, ierr_=ierr)
     ! Post processing
     coord = ovectordouble_(api_coord_, api_coord_n_)
   end subroutine gmshModelGetValue
@@ -1521,18 +1493,18 @@ module gmsh
       integer(c_size_t), value, intent(in) :: api_parametricCoord_n_
       type(c_ptr), intent(out) :: api_derivatives_
       integer(c_size_t) :: api_derivatives_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: dim
-    integer(c_int), intent(in) :: tag
+    integer, intent(in) :: dim
+    integer, intent(in) :: tag
     real(c_double), dimension(:), intent(in) :: parametricCoord
     real(c_double), dimension(:), allocatable, intent(out) :: derivatives
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_derivatives_
     integer(c_size_t) :: api_derivatives_n_
-    call C_API(dim, tag, parametricCoord, fsize(parametricCoord, kind=c_size_t), api_derivatives_, api_derivatives_n_, ierr)
+    call C_API(dim=int(dim, c_int), tag=int(tag, c_int), api_parametricCoord_=parametricCoord, api_parametricCoord_n_=size_gmsh_double(parametricCoord), api_derivatives_=api_derivatives_, api_derivatives_n_=api_derivatives_n_, ierr_=ierr)
     ! Post processing
     derivatives = ovectordouble_(api_derivatives_, api_derivatives_n_)
   end subroutine gmshModelGetDerivative
@@ -1558,18 +1530,18 @@ module gmsh
       integer(c_size_t), value, intent(in) :: api_parametricCoord_n_
       type(c_ptr), intent(out) :: api_derivatives_
       integer(c_size_t) :: api_derivatives_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: dim
-    integer(c_int), intent(in) :: tag
+    integer, intent(in) :: dim
+    integer, intent(in) :: tag
     real(c_double), dimension(:), intent(in) :: parametricCoord
     real(c_double), dimension(:), allocatable, intent(out) :: derivatives
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_derivatives_
     integer(c_size_t) :: api_derivatives_n_
-    call C_API(dim, tag, parametricCoord, fsize(parametricCoord, kind=c_size_t), api_derivatives_, api_derivatives_n_, ierr)
+    call C_API(dim=int(dim, c_int), tag=int(tag, c_int), api_parametricCoord_=parametricCoord, api_parametricCoord_n_=size_gmsh_double(parametricCoord), api_derivatives_=api_derivatives_, api_derivatives_n_=api_derivatives_n_, ierr_=ierr)
     ! Post processing
     derivatives = ovectordouble_(api_derivatives_, api_derivatives_n_)
   end subroutine gmshModelGetSecondDerivative
@@ -1589,18 +1561,18 @@ module gmsh
       integer(c_size_t), value, intent(in) :: api_parametricCoord_n_
       type(c_ptr), intent(out) :: api_curvatures_
       integer(c_size_t) :: api_curvatures_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: dim
-    integer(c_int), intent(in) :: tag
+    integer, intent(in) :: dim
+    integer, intent(in) :: tag
     real(c_double), dimension(:), intent(in) :: parametricCoord
     real(c_double), dimension(:), allocatable, intent(out) :: curvatures
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_curvatures_
     integer(c_size_t) :: api_curvatures_n_
-    call C_API(dim, tag, parametricCoord, fsize(parametricCoord, kind=c_size_t), api_curvatures_, api_curvatures_n_, ierr)
+    call C_API(dim=int(dim, c_int), tag=int(tag, c_int), api_parametricCoord_=parametricCoord, api_parametricCoord_n_=size_gmsh_double(parametricCoord), api_curvatures_=api_curvatures_, api_curvatures_n_=api_curvatures_n_, ierr_=ierr)
     ! Post processing
     curvatures = ovectordouble_(api_curvatures_, api_curvatures_n_)
   end subroutine gmshModelGetCurvature
@@ -1624,16 +1596,16 @@ module gmsh
       integer(c_size_t) :: api_directionMax_n_
       type(c_ptr), intent(out) :: api_directionMin_
       integer(c_size_t) :: api_directionMin_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: tag
+    integer, intent(in) :: tag
     real(c_double), dimension(:), intent(in) :: parametricCoord
     real(c_double), dimension(:), allocatable, intent(out) :: curvatureMax
     real(c_double), dimension(:), allocatable, intent(out) :: curvatureMin
     real(c_double), dimension(:), allocatable, intent(out) :: directionMax
     real(c_double), dimension(:), allocatable, intent(out) :: directionMin
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_curvatureMax_
     integer(c_size_t) :: api_curvatureMax_n_
@@ -1643,7 +1615,7 @@ module gmsh
     integer(c_size_t) :: api_directionMax_n_
     type(c_ptr) :: api_directionMin_
     integer(c_size_t) :: api_directionMin_n_
-    call C_API(tag, parametricCoord, fsize(parametricCoord, kind=c_size_t), api_curvatureMax_, api_curvatureMax_n_, api_curvatureMin_, api_curvatureMin_n_, api_directionMax_, api_directionMax_n_, api_directionMin_, api_directionMin_n_, ierr)
+    call C_API(tag=int(tag, c_int), api_parametricCoord_=parametricCoord, api_parametricCoord_n_=size_gmsh_double(parametricCoord), api_curvatureMax_=api_curvatureMax_, api_curvatureMax_n_=api_curvatureMax_n_, api_curvatureMin_=api_curvatureMin_, api_curvatureMin_n_=api_curvatureMin_n_, api_directionMax_=api_directionMax_, api_directionMax_n_=api_directionMax_n_, api_directionMin_=api_directionMin_, api_directionMin_n_=api_directionMin_n_, ierr_=ierr)
     ! Post processing
     curvatureMax = ovectordouble_(api_curvatureMax_, api_curvatureMax_n_)
     curvatureMin = ovectordouble_(api_curvatureMin_, api_curvatureMin_n_)
@@ -1664,17 +1636,17 @@ module gmsh
       integer(c_size_t), value, intent(in) :: api_parametricCoord_n_
       type(c_ptr), intent(out) :: api_normals_
       integer(c_size_t) :: api_normals_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: tag
+    integer, intent(in) :: tag
     real(c_double), dimension(:), intent(in) :: parametricCoord
     real(c_double), dimension(:), allocatable, intent(out) :: normals
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_normals_
     integer(c_size_t) :: api_normals_n_
-    call C_API(tag, parametricCoord, fsize(parametricCoord, kind=c_size_t), api_normals_, api_normals_n_, ierr)
+    call C_API(tag=int(tag, c_int), api_parametricCoord_=parametricCoord, api_parametricCoord_n_=size_gmsh_double(parametricCoord), api_normals_=api_normals_, api_normals_n_=api_normals_n_, ierr_=ierr)
     ! Post processing
     normals = ovectordouble_(api_normals_, api_normals_n_)
   end subroutine gmshModelGetNormal
@@ -1695,18 +1667,18 @@ module gmsh
       integer(c_size_t), value, intent(in) :: api_coord_n_
       type(c_ptr), intent(out) :: api_parametricCoord_
       integer(c_size_t) :: api_parametricCoord_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: dim
-    integer(c_int), intent(in) :: tag
+    integer, intent(in) :: dim
+    integer, intent(in) :: tag
     real(c_double), dimension(:), intent(in) :: coord
     real(c_double), dimension(:), allocatable, intent(out) :: parametricCoord
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_parametricCoord_
     integer(c_size_t) :: api_parametricCoord_n_
-    call C_API(dim, tag, coord, fsize(coord, kind=c_size_t), api_parametricCoord_, api_parametricCoord_n_, ierr)
+    call C_API(dim=int(dim, c_int), tag=int(tag, c_int), api_coord_=coord, api_coord_n_=size_gmsh_double(coord), api_parametricCoord_=api_parametricCoord_, api_parametricCoord_n_=api_parametricCoord_n_, ierr_=ierr)
     ! Post processing
     parametricCoord = ovectordouble_(api_parametricCoord_, api_parametricCoord_n_)
   end subroutine gmshModelGetParametrization
@@ -1723,20 +1695,20 @@ module gmsh
       integer(c_size_t) :: api_min_n_
       type(c_ptr), intent(out) :: api_max_
       integer(c_size_t) :: api_max_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: dim
-    integer(c_int), intent(in) :: tag
+    integer, intent(in) :: dim
+    integer, intent(in) :: tag
     real(c_double), dimension(:), allocatable, intent(out) :: min
     real(c_double), dimension(:), allocatable, intent(out) :: max
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_min_
     integer(c_size_t) :: api_min_n_
     type(c_ptr) :: api_max_
     integer(c_size_t) :: api_max_n_
-    call C_API(dim, tag, api_min_, api_min_n_, api_max_, api_max_n_, ierr)
+    call C_API(dim=int(dim, c_int), tag=int(tag, c_int), api_min_=api_min_, api_min_n_=api_min_n_, api_max_=api_max_, api_max_n_=api_max_n_, ierr_=ierr)
     ! Post processing
     min = ovectordouble_(api_min_, api_min_n_)
     max = ovectordouble_(api_max_, api_max_n_)
@@ -1757,17 +1729,17 @@ module gmsh
       real(c_double), dimension(*) :: api_coord_
       integer(c_size_t), value, intent(in) :: api_coord_n_
       integer(c_int), value, intent(in) :: parametric
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end function C_API
     end interface
     integer(c_int) :: gmshModelIsInside
-    integer(c_int), intent(in) :: dim
-    integer(c_int), intent(in) :: tag
+    integer, intent(in) :: dim
+    integer, intent(in) :: tag
     real(c_double), dimension(:), intent(in) :: coord
-    integer(c_int), intent(in) :: parametric
-    integer(c_int), intent(out) :: ierr
+    logical, intent(in), optional :: parametric
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    gmshModelIsInside = C_API(dim, tag, coord, fsize(coord, kind=c_size_t), parametric, ierr)
+    gmshModelIsInside = C_API(dim=int(dim, c_int), tag=int(tag, c_int), api_coord_=coord, api_coord_n_=size_gmsh_double(coord), parametric=optval_c_bool(.false., parametric), ierr_=ierr)
     ! Post processing
   end function gmshModelIsInside
 
@@ -1790,21 +1762,21 @@ module gmsh
       integer(c_size_t) :: api_closestCoord_n_
       type(c_ptr), intent(out) :: api_parametricCoord_
       integer(c_size_t) :: api_parametricCoord_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: dim
-    integer(c_int), intent(in) :: tag
+    integer, intent(in) :: dim
+    integer, intent(in) :: tag
     real(c_double), dimension(:), intent(in) :: coord
     real(c_double), dimension(:), allocatable, intent(out) :: closestCoord
     real(c_double), dimension(:), allocatable, intent(out) :: parametricCoord
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_closestCoord_
     integer(c_size_t) :: api_closestCoord_n_
     type(c_ptr) :: api_parametricCoord_
     integer(c_size_t) :: api_parametricCoord_n_
-    call C_API(dim, tag, coord, fsize(coord, kind=c_size_t), api_closestCoord_, api_closestCoord_n_, api_parametricCoord_, api_parametricCoord_n_, ierr)
+    call C_API(dim=int(dim, c_int), tag=int(tag, c_int), api_coord_=coord, api_coord_n_=size_gmsh_double(coord), api_closestCoord_=api_closestCoord_, api_closestCoord_n_=api_closestCoord_n_, api_parametricCoord_=api_parametricCoord_, api_parametricCoord_n_=api_parametricCoord_n_, ierr_=ierr)
     ! Post processing
     closestCoord = ovectordouble_(api_closestCoord_, api_closestCoord_n_)
     parametricCoord = ovectordouble_(api_parametricCoord_, api_parametricCoord_n_)
@@ -1828,20 +1800,20 @@ module gmsh
       type(c_ptr), intent(out) :: api_surfaceParametricCoord_
       integer(c_size_t) :: api_surfaceParametricCoord_n_
       integer(c_int), value, intent(in) :: which
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: dim
-    integer(c_int), intent(in) :: tag
+    integer, intent(in) :: dim
+    integer, intent(in) :: tag
     real(c_double), dimension(:), intent(in) :: parametricCoord
-    integer(c_int), intent(in) :: surfaceTag
+    integer, intent(in) :: surfaceTag
     real(c_double), dimension(:), allocatable, intent(out) :: surfaceParametricCoord
-    integer(c_int), intent(in) :: which
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in), optional :: which
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_surfaceParametricCoord_
     integer(c_size_t) :: api_surfaceParametricCoord_n_
-    call C_API(dim, tag, parametricCoord, fsize(parametricCoord, kind=c_size_t), surfaceTag, api_surfaceParametricCoord_, api_surfaceParametricCoord_n_, which, ierr)
+    call C_API(dim=int(dim, c_int), tag=int(tag, c_int), api_parametricCoord_=parametricCoord, api_parametricCoord_n_=size_gmsh_double(parametricCoord), surfaceTag=int(surfaceTag, c_int), api_surfaceParametricCoord_=api_surfaceParametricCoord_, api_surfaceParametricCoord_n_=api_surfaceParametricCoord_n_, which=optval_c_int(0, which), ierr_=ierr)
     ! Post processing
     surfaceParametricCoord = ovectordouble_(api_surfaceParametricCoord_, api_surfaceParametricCoord_n_)
   end subroutine gmshModelReparametrizeOnSurface
@@ -1856,15 +1828,15 @@ module gmsh
       integer(c_size_t), value, intent(in) :: api_dimTags_n_
       integer(c_int), value, intent(in) :: value
       integer(c_int), value, intent(in) :: recursive
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     integer(c_int), dimension(:,:), intent(in) :: dimTags
-    integer(c_int), intent(in) :: value
-    integer(c_int), intent(in) :: recursive
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in) :: value
+    logical, intent(in), optional :: recursive
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(dimTags, fsize(dimTags, kind=c_size_t), value, recursive, ierr)
+    call C_API(api_dimTags_=dimTags, api_dimTags_n_=size_gmsh_pair(dimTags), value=int(value, c_int), recursive=optval_c_bool(.false., recursive), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelSetVisibility
 
@@ -1876,15 +1848,15 @@ module gmsh
       integer(c_int), value, intent(in) :: dim
       integer(c_int), value, intent(in) :: tag
       integer(c_int) :: value
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: dim
-    integer(c_int), intent(in) :: tag
+    integer, intent(in) :: dim
+    integer, intent(in) :: tag
     integer(c_int) :: value
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(dim, tag, value, ierr)
+    call C_API(dim=int(dim, c_int), tag=int(tag, c_int), value=value, ierr_=ierr)
     ! Post processing
   end subroutine gmshModelGetVisibility
 
@@ -1896,14 +1868,14 @@ module gmsh
       use, intrinsic :: iso_c_binding
       integer(c_int), value, intent(in) :: value
       integer(c_int), value, intent(in) :: windowIndex
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: value
-    integer(c_int), intent(in) :: windowIndex
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in) :: value
+    integer, intent(in), optional :: windowIndex
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(value, windowIndex, ierr)
+    call C_API(value=int(value, c_int), windowIndex=optval_c_int(0, windowIndex), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelSetVisibilityPerWindow
 
@@ -1921,18 +1893,18 @@ module gmsh
       integer(c_int), value, intent(in) :: b
       integer(c_int), value, intent(in) :: a
       integer(c_int), value, intent(in) :: recursive
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     integer(c_int), dimension(:,:), intent(in) :: dimTags
-    integer(c_int), intent(in) :: r
-    integer(c_int), intent(in) :: g
-    integer(c_int), intent(in) :: b
-    integer(c_int), intent(in) :: a
-    integer(c_int), intent(in) :: recursive
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in) :: r
+    integer, intent(in) :: g
+    integer, intent(in) :: b
+    integer, intent(in), optional :: a
+    logical, intent(in), optional :: recursive
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(dimTags, fsize(dimTags, kind=c_size_t), r, g, b, a, recursive, ierr)
+    call C_API(api_dimTags_=dimTags, api_dimTags_n_=size_gmsh_pair(dimTags), r=int(r, c_int), g=int(g, c_int), b=int(b, c_int), a=optval_c_int(255, a), recursive=optval_c_bool(.false., recursive), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelSetColor
 
@@ -1947,18 +1919,18 @@ module gmsh
       integer(c_int) :: g
       integer(c_int) :: b
       integer(c_int) :: a
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: dim
-    integer(c_int), intent(in) :: tag
+    integer, intent(in) :: dim
+    integer, intent(in) :: tag
     integer(c_int) :: r
     integer(c_int) :: g
     integer(c_int) :: b
     integer(c_int) :: a
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(dim, tag, r, g, b, a, ierr)
+    call C_API(dim=int(dim, c_int), tag=int(tag, c_int), r=r, g=g, b=b, a=a, ierr_=ierr)
     ! Post processing
   end subroutine gmshModelGetColor
 
@@ -1971,16 +1943,16 @@ module gmsh
       real(c_double), value, intent(in) :: x
       real(c_double), value, intent(in) :: y
       real(c_double), value, intent(in) :: z
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: tag
+    integer, intent(in) :: tag
     real(c_double), intent(in) :: x
     real(c_double), intent(in) :: y
     real(c_double), intent(in) :: z
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(tag, x, y, z, ierr)
+    call C_API(tag=int(tag, c_int), x=real(x, c_double), y=real(y, c_double), z=real(z, c_double), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelSetCoordinates
 
@@ -1990,13 +1962,13 @@ module gmsh
     subroutine C_API(dim, ierr_) bind(C, name="gmshModelMeshGenerate")
       use, intrinsic :: iso_c_binding
       integer(c_int), value, intent(in) :: dim
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: dim
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in), optional :: dim
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(dim, ierr)
+    call C_API(dim=optval_c_int(3, dim), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelMeshGenerate
 
@@ -2008,19 +1980,19 @@ module gmsh
     subroutine C_API(numPart, api_elementTags_, api_elementTags_n_, api_partitions_, api_partitions_n_, ierr_) bind(C, name="gmshModelMeshPartition")
       use, intrinsic :: iso_c_binding
       integer(c_int), value, intent(in) :: numPart
-      integer(c_size_t), dimension(*) :: api_elementTags_
+      integer(c_size_t), dimension(*), optional :: api_elementTags_
       integer(c_size_t), value, intent(in) :: api_elementTags_n_
-      integer(c_int), dimension(*) :: api_partitions_
+      integer(c_int), dimension(*), optional :: api_partitions_
       integer(c_size_t), value, intent(in) :: api_partitions_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: numPart
-    integer(c_size_t), dimension(:), intent(in) :: elementTags
-    integer(c_int), dimension(:), intent(in) :: partitions
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in) :: numPart
+    integer(c_size_t), dimension(:), intent(in), optional :: elementTags
+    integer(c_int), dimension(:), intent(in), optional :: partitions
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(numPart, elementTags, fsize(elementTags, kind=c_size_t), partitions, fsize(partitions, kind=c_size_t), ierr)
+    call C_API(numPart=int(numPart, c_int), api_elementTags_=elementTags, api_elementTags_n_=size_gmsh_size(elementTags), api_partitions_=partitions, api_partitions_n_=size_gmsh_int(partitions), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelMeshPartition
 
@@ -2029,12 +2001,12 @@ module gmsh
     interface
     subroutine C_API(ierr_) bind(C, name="gmshModelMeshUnpartition")
       use, intrinsic :: iso_c_binding
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(ierr)
+    call C_API(ierr_=ierr)
     ! Post processing
   end subroutine gmshModelMeshUnpartition
 
@@ -2051,23 +2023,21 @@ module gmsh
     interface
     subroutine C_API(method, force, niter, api_dimTags_, api_dimTags_n_, ierr_) bind(C, name="gmshModelMeshOptimize")
       use, intrinsic :: iso_c_binding
-      character(len=1, kind=c_char), dimension(*), intent(in) :: method
+      character(len=1, kind=c_char), dimension(*), intent(in), optional :: method
       integer(c_int), value, intent(in) :: force
       integer(c_int), value, intent(in) :: niter
-      integer(c_int), dimension(*) :: api_dimTags_
+      integer(c_int), dimension(*), optional :: api_dimTags_
       integer(c_size_t), value, intent(in) :: api_dimTags_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    character(len=*), intent(in) :: method
-    integer(c_int), intent(in) :: force
-    integer(c_int), intent(in) :: niter
-    integer(c_int), dimension(:,:), intent(in) :: dimTags
-    integer(c_int), intent(out) :: ierr
+    character(len=*), intent(in), optional :: method
+    logical, intent(in), optional :: force
+    integer, intent(in), optional :: niter
+    integer(c_int), dimension(:,:), intent(in), optional :: dimTags
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    character(len=:, kind=c_char), allocatable :: method_c
-    method_c = istring_(method)
-    call C_API(method_c, force, niter, dimTags, fsize(dimTags, kind=c_size_t), ierr)
+    call C_API(method=istring_(optval_c_str("", method)), force=optval_c_bool(.false., force), niter=optval_c_int(1, niter), api_dimTags_=dimTags, api_dimTags_n_=size_gmsh_pair(dimTags), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelMeshOptimize
 
@@ -2076,12 +2046,12 @@ module gmsh
     interface
     subroutine C_API(ierr_) bind(C, name="gmshModelMeshRecombine")
       use, intrinsic :: iso_c_binding
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(ierr)
+    call C_API(ierr_=ierr)
     ! Post processing
   end subroutine gmshModelMeshRecombine
 
@@ -2090,12 +2060,12 @@ module gmsh
     interface
     subroutine C_API(ierr_) bind(C, name="gmshModelMeshRefine")
       use, intrinsic :: iso_c_binding
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(ierr)
+    call C_API(ierr_=ierr)
     ! Post processing
   end subroutine gmshModelMeshRefine
 
@@ -2105,13 +2075,13 @@ module gmsh
     subroutine C_API(order, ierr_) bind(C, name="gmshModelMeshSetOrder")
       use, intrinsic :: iso_c_binding
       integer(c_int), value, intent(in) :: order
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: order
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in) :: order
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(order, ierr)
+    call C_API(order=int(order, c_int), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelMeshSetOrder
 
@@ -2123,15 +2093,15 @@ module gmsh
       use, intrinsic :: iso_c_binding
       type(c_ptr), intent(out) :: api_dimTags_
       integer(c_size_t), intent(out) :: api_dimTags_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     integer(c_int), dimension(:,:), allocatable, intent(out) :: dimTags
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_dimTags_
     integer(c_size_t) :: api_dimTags_n_
-    call C_API(api_dimTags_, api_dimTags_n_, ierr)
+    call C_API(api_dimTags_=api_dimTags_, api_dimTags_n_=api_dimTags_n_, ierr_=ierr)
     ! Post processing
     dimTags = ovectorpair_(api_dimTags_, api_dimTags_n_)
   end subroutine gmshModelMeshGetLastEntityError
@@ -2144,15 +2114,15 @@ module gmsh
       use, intrinsic :: iso_c_binding
       type(c_ptr), intent(out) :: api_nodeTags_
       integer(c_size_t), intent(out) :: api_nodeTags_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     integer(c_size_t), dimension(:), allocatable, intent(out) :: nodeTags
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_nodeTags_
     integer(c_size_t) :: api_nodeTags_n_
-    call C_API(api_nodeTags_, api_nodeTags_n_, ierr)
+    call C_API(api_nodeTags_=api_nodeTags_, api_nodeTags_n_=api_nodeTags_n_, ierr_=ierr)
     ! Post processing
     nodeTags = ovectorsize_(api_nodeTags_, api_nodeTags_n_)
   end subroutine gmshModelMeshGetLastNodeError
@@ -2165,15 +2135,15 @@ module gmsh
     interface
     subroutine C_API(api_dimTags_, api_dimTags_n_, ierr_) bind(C, name="gmshModelMeshClear")
       use, intrinsic :: iso_c_binding
-      integer(c_int), dimension(*) :: api_dimTags_
+      integer(c_int), dimension(*), optional :: api_dimTags_
       integer(c_size_t), value, intent(in) :: api_dimTags_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), dimension(:,:), intent(in) :: dimTags
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), dimension(:,:), intent(in), optional :: dimTags
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(dimTags, fsize(dimTags, kind=c_size_t), ierr)
+    call C_API(api_dimTags_=dimTags, api_dimTags_n_=size_gmsh_pair(dimTags), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelMeshClear
 
@@ -2184,15 +2154,15 @@ module gmsh
     interface
     subroutine C_API(api_dimTags_, api_dimTags_n_, ierr_) bind(C, name="gmshModelMeshReverse")
       use, intrinsic :: iso_c_binding
-      integer(c_int), dimension(*) :: api_dimTags_
+      integer(c_int), dimension(*), optional :: api_dimTags_
       integer(c_size_t), value, intent(in) :: api_dimTags_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), dimension(:,:), intent(in) :: dimTags
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), dimension(:,:), intent(in), optional :: dimTags
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(dimTags, fsize(dimTags, kind=c_size_t), ierr)
+    call C_API(api_dimTags_=dimTags, api_dimTags_n_=size_gmsh_pair(dimTags), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelMeshReverse
 
@@ -2206,16 +2176,16 @@ module gmsh
       use, intrinsic :: iso_c_binding
       real(c_double), dimension(*) :: api_affineTransform_
       integer(c_size_t), value, intent(in) :: api_affineTransform_n_
-      integer(c_int), dimension(*) :: api_dimTags_
+      integer(c_int), dimension(*), optional :: api_dimTags_
       integer(c_size_t), value, intent(in) :: api_dimTags_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     real(c_double), dimension(:), intent(in) :: affineTransform
-    integer(c_int), dimension(:,:), intent(in) :: dimTags
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), dimension(:,:), intent(in), optional :: dimTags
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(affineTransform, fsize(affineTransform, kind=c_size_t), dimTags, fsize(dimTags, kind=c_size_t), ierr)
+    call C_API(api_affineTransform_=affineTransform, api_affineTransform_n_=size_gmsh_double(affineTransform), api_dimTags_=dimTags, api_dimTags_n_=size_gmsh_pair(dimTags), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelMeshAffineTransform
 
@@ -2246,17 +2216,17 @@ module gmsh
       integer(c_int), value, intent(in) :: tag
       integer(c_int), value, intent(in) :: includeBoundary
       integer(c_int), value, intent(in) :: returnParametricCoord
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     integer(c_size_t), dimension(:), allocatable, intent(out) :: nodeTags
     real(c_double), dimension(:), allocatable, intent(out) :: coord
     real(c_double), dimension(:), allocatable, intent(out) :: parametricCoord
-    integer(c_int), intent(in) :: dim
-    integer(c_int), intent(in) :: tag
-    integer(c_int), intent(in) :: includeBoundary
-    integer(c_int), intent(in) :: returnParametricCoord
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in), optional :: dim
+    integer, intent(in), optional :: tag
+    logical, intent(in), optional :: includeBoundary
+    logical, intent(in), optional :: returnParametricCoord
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_nodeTags_
     integer(c_size_t) :: api_nodeTags_n_
@@ -2264,7 +2234,7 @@ module gmsh
     integer(c_size_t) :: api_coord_n_
     type(c_ptr) :: api_parametricCoord_
     integer(c_size_t) :: api_parametricCoord_n_
-    call C_API(api_nodeTags_, api_nodeTags_n_, api_coord_, api_coord_n_, api_parametricCoord_, api_parametricCoord_n_, dim, tag, includeBoundary, returnParametricCoord, ierr)
+    call C_API(api_nodeTags_=api_nodeTags_, api_nodeTags_n_=api_nodeTags_n_, api_coord_=api_coord_, api_coord_n_=api_coord_n_, api_parametricCoord_=api_parametricCoord_, api_parametricCoord_n_=api_parametricCoord_n_, dim=optval_c_int(-1, dim), tag=optval_c_int(-1, tag), includeBoundary=optval_c_bool(.false., includeBoundary), returnParametricCoord=optval_c_bool(.true., returnParametricCoord), ierr_=ierr)
     ! Post processing
     nodeTags = ovectorsize_(api_nodeTags_, api_nodeTags_n_)
     coord = ovectordouble_(api_coord_, api_coord_n_)
@@ -2286,16 +2256,16 @@ module gmsh
       integer(c_size_t) :: api_parametricCoord_n_
       integer(c_int), value, intent(in) :: tag
       integer(c_int), value, intent(in) :: returnParametricCoord
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: elementType
+    integer, intent(in) :: elementType
     integer(c_size_t), dimension(:), allocatable, intent(out) :: nodeTags
     real(c_double), dimension(:), allocatable, intent(out) :: coord
     real(c_double), dimension(:), allocatable, intent(out) :: parametricCoord
-    integer(c_int), intent(in) :: tag
-    integer(c_int), intent(in) :: returnParametricCoord
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in), optional :: tag
+    logical, intent(in), optional :: returnParametricCoord
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_nodeTags_
     integer(c_size_t) :: api_nodeTags_n_
@@ -2303,7 +2273,7 @@ module gmsh
     integer(c_size_t) :: api_coord_n_
     type(c_ptr) :: api_parametricCoord_
     integer(c_size_t) :: api_parametricCoord_n_
-    call C_API(elementType, api_nodeTags_, api_nodeTags_n_, api_coord_, api_coord_n_, api_parametricCoord_, api_parametricCoord_n_, tag, returnParametricCoord, ierr)
+    call C_API(elementType=int(elementType, c_int), api_nodeTags_=api_nodeTags_, api_nodeTags_n_=api_nodeTags_n_, api_coord_=api_coord_, api_coord_n_=api_coord_n_, api_parametricCoord_=api_parametricCoord_, api_parametricCoord_n_=api_parametricCoord_n_, tag=optval_c_int(-1, tag), returnParametricCoord=optval_c_bool(.true., returnParametricCoord), ierr_=ierr)
     ! Post processing
     nodeTags = ovectorsize_(api_nodeTags_, api_nodeTags_n_)
     coord = ovectordouble_(api_coord_, api_coord_n_)
@@ -2326,21 +2296,21 @@ module gmsh
       integer(c_size_t) :: api_parametricCoord_n_
       integer(c_int) :: dim
       integer(c_int) :: tag
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_size_t), intent(in) :: nodeTag
+    integer, intent(in) :: nodeTag
     real(c_double), dimension(:), allocatable, intent(out) :: coord
     real(c_double), dimension(:), allocatable, intent(out) :: parametricCoord
     integer(c_int) :: dim
     integer(c_int) :: tag
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_coord_
     integer(c_size_t) :: api_coord_n_
     type(c_ptr) :: api_parametricCoord_
     integer(c_size_t) :: api_parametricCoord_n_
-    call C_API(nodeTag, api_coord_, api_coord_n_, api_parametricCoord_, api_parametricCoord_n_, dim, tag, ierr)
+    call C_API(nodeTag=int(nodeTag, c_size_t), api_coord_=api_coord_, api_coord_n_=api_coord_n_, api_parametricCoord_=api_parametricCoord_, api_parametricCoord_n_=api_parametricCoord_n_, dim=dim, tag=tag, ierr_=ierr)
     ! Post processing
     coord = ovectordouble_(api_coord_, api_coord_n_)
     parametricCoord = ovectordouble_(api_parametricCoord_, api_parametricCoord_n_)
@@ -2359,15 +2329,15 @@ module gmsh
       integer(c_size_t), value, intent(in) :: api_coord_n_
       real(c_double), dimension(*) :: api_parametricCoord_
       integer(c_size_t), value, intent(in) :: api_parametricCoord_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_size_t), intent(in) :: nodeTag
+    integer, intent(in) :: nodeTag
     real(c_double), dimension(:), intent(in) :: coord
     real(c_double), dimension(:), intent(in) :: parametricCoord
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(nodeTag, coord, fsize(coord, kind=c_size_t), parametricCoord, fsize(parametricCoord, kind=c_size_t), ierr)
+    call C_API(nodeTag=int(nodeTag, c_size_t), api_coord_=coord, api_coord_n_=size_gmsh_double(coord), api_parametricCoord_=parametricCoord, api_parametricCoord_n_=size_gmsh_double(parametricCoord), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelMeshSetNode
 
@@ -2377,13 +2347,13 @@ module gmsh
     subroutine C_API(onlyIfNecessary, ierr_) bind(C, name="gmshModelMeshRebuildNodeCache")
       use, intrinsic :: iso_c_binding
       integer(c_int), value, intent(in) :: onlyIfNecessary
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: onlyIfNecessary
-    integer(c_int), intent(out) :: ierr
+    logical, intent(in), optional :: onlyIfNecessary
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(onlyIfNecessary, ierr)
+    call C_API(onlyIfNecessary=optval_c_bool(.true., onlyIfNecessary), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelMeshRebuildNodeCache
 
@@ -2393,13 +2363,13 @@ module gmsh
     subroutine C_API(onlyIfNecessary, ierr_) bind(C, name="gmshModelMeshRebuildElementCache")
       use, intrinsic :: iso_c_binding
       integer(c_int), value, intent(in) :: onlyIfNecessary
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: onlyIfNecessary
-    integer(c_int), intent(out) :: ierr
+    logical, intent(in), optional :: onlyIfNecessary
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(onlyIfNecessary, ierr)
+    call C_API(onlyIfNecessary=optval_c_bool(.true., onlyIfNecessary), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelMeshRebuildElementCache
 
@@ -2417,20 +2387,20 @@ module gmsh
       integer(c_size_t), intent(out) :: api_nodeTags_n_
       type(c_ptr), intent(out) :: api_coord_
       integer(c_size_t) :: api_coord_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: dim
-    integer(c_int), intent(in) :: tag
+    integer, intent(in) :: dim
+    integer, intent(in) :: tag
     integer(c_size_t), dimension(:), allocatable, intent(out) :: nodeTags
     real(c_double), dimension(:), allocatable, intent(out) :: coord
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_nodeTags_
     integer(c_size_t) :: api_nodeTags_n_
     type(c_ptr) :: api_coord_
     integer(c_size_t) :: api_coord_n_
-    call C_API(dim, tag, api_nodeTags_, api_nodeTags_n_, api_coord_, api_coord_n_, ierr)
+    call C_API(dim=int(dim, c_int), tag=int(tag, c_int), api_nodeTags_=api_nodeTags_, api_nodeTags_n_=api_nodeTags_n_, api_coord_=api_coord_, api_coord_n_=api_coord_n_, ierr_=ierr)
     ! Post processing
     nodeTags = ovectorsize_(api_nodeTags_, api_nodeTags_n_)
     coord = ovectordouble_(api_coord_, api_coord_n_)
@@ -2442,13 +2412,13 @@ module gmsh
     subroutine C_API(maxTag, ierr_) bind(C, name="gmshModelMeshGetMaxNodeTag")
       use, intrinsic :: iso_c_binding
       integer(c_size_t) :: maxTag
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     integer(c_size_t) :: maxTag
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(maxTag, ierr)
+    call C_API(maxTag=maxTag, ierr_=ierr)
     ! Post processing
   end subroutine gmshModelMeshGetMaxNodeTag
 
@@ -2471,19 +2441,19 @@ module gmsh
       integer(c_size_t), value, intent(in) :: api_nodeTags_n_
       real(c_double), dimension(*) :: api_coord_
       integer(c_size_t), value, intent(in) :: api_coord_n_
-      real(c_double), dimension(*) :: api_parametricCoord_
+      real(c_double), dimension(*), optional :: api_parametricCoord_
       integer(c_size_t), value, intent(in) :: api_parametricCoord_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: dim
-    integer(c_int), intent(in) :: tag
+    integer, intent(in) :: dim
+    integer, intent(in) :: tag
     integer(c_size_t), dimension(:), intent(in) :: nodeTags
     real(c_double), dimension(:), intent(in) :: coord
-    real(c_double), dimension(:), intent(in) :: parametricCoord
-    integer(c_int), intent(out) :: ierr
+    real(c_double), dimension(:), intent(in), optional :: parametricCoord
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(dim, tag, nodeTags, fsize(nodeTags, kind=c_size_t), coord, fsize(coord, kind=c_size_t), parametricCoord, fsize(parametricCoord, kind=c_size_t), ierr)
+    call C_API(dim=int(dim, c_int), tag=int(tag, c_int), api_nodeTags_=nodeTags, api_nodeTags_n_=size_gmsh_size(nodeTags), api_coord_=coord, api_coord_n_=size_gmsh_double(coord), api_parametricCoord_=parametricCoord, api_parametricCoord_n_=size_gmsh_double(parametricCoord), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelMeshAddNodes
 
@@ -2495,12 +2465,12 @@ module gmsh
     interface
     subroutine C_API(ierr_) bind(C, name="gmshModelMeshReclassifyNodes")
       use, intrinsic :: iso_c_binding
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(ierr)
+    call C_API(ierr_=ierr)
     ! Post processing
   end subroutine gmshModelMeshReclassifyNodes
 
@@ -2514,14 +2484,14 @@ module gmsh
       use, intrinsic :: iso_c_binding
       integer(c_int), value, intent(in) :: dim
       integer(c_int), value, intent(in) :: tag
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: dim
-    integer(c_int), intent(in) :: tag
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in), optional :: dim
+    integer, intent(in), optional :: tag
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(dim, tag, ierr)
+    call C_API(dim=optval_c_int(-1, dim), tag=optval_c_int(-1, tag), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelMeshRelocateNodes
 
@@ -2540,19 +2510,19 @@ module gmsh
   !! e1n2, ..., e1nN, e2n1, ...].
   subroutine gmshModelMeshGetElements(elementTypes, elementTags, elementTags_n, nodeTags, nodeTags_n, dim, tag, ierr)
     interface
-    subroutine C_API(api_elementTypes_, api_elementTypes_n_, elementTags, elementTags_n, elementTags_nn, nodeTags, nodeTags_n, nodeTags_nn, dim, tag, ierr_) bind(C, name="gmshModelMeshGetElements")
+    subroutine C_API(api_elementTypes_, api_elementTypes_n_, api_elementTags_, api_elementTags_n_, api_elementTags_nn_, api_nodeTags_, api_nodeTags_n_, api_nodeTags_nn_, dim, tag, ierr_) bind(C, name="gmshModelMeshGetElements")
       use, intrinsic :: iso_c_binding
       type(c_ptr), intent(out) :: api_elementTypes_
       integer(c_size_t), intent(out) :: api_elementTypes_n_
-      type(c_ptr), intent(out) :: elementTags
-      type(c_ptr), intent(out) :: elementTags_n
-      integer(c_size_t), intent(out) :: elementTags_nn
-      type(c_ptr), intent(out) :: nodeTags
-      type(c_ptr), intent(out) :: nodeTags_n
-      integer(c_size_t), intent(out) :: nodeTags_nn
+      type(c_ptr), intent(out) :: api_elementTags_
+      type(c_ptr), intent(out) :: api_elementTags_n_
+      integer(c_size_t), intent(out) :: api_elementTags_nn_
+      type(c_ptr), intent(out) :: api_nodeTags_
+      type(c_ptr), intent(out) :: api_nodeTags_n_
+      integer(c_size_t), intent(out) :: api_nodeTags_nn_
       integer(c_int), value, intent(in) :: dim
       integer(c_int), value, intent(in) :: tag
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     integer(c_int), dimension(:), allocatable, intent(out) :: elementTypes
@@ -2560,9 +2530,9 @@ module gmsh
     integer(c_size_t), dimension(:), allocatable, intent(out) :: elementTags_n
     integer(c_size_t), dimension(:), allocatable, intent(out) :: nodeTags
     integer(c_size_t), dimension(:), allocatable, intent(out) :: nodeTags_n
-    integer(c_int), intent(in) :: dim
-    integer(c_int), intent(in) :: tag
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in), optional :: dim
+    integer, intent(in), optional :: tag
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_elementTypes_
     integer(c_size_t) :: api_elementTypes_n_
@@ -2570,7 +2540,7 @@ module gmsh
     integer(c_size_t) :: api_elementTags_nn_
     type(c_ptr) :: api_nodeTags_, api_nodeTags_n_
     integer(c_size_t) :: api_nodeTags_nn_
-    call C_API(api_elementTypes_, api_elementTypes_n_, api_elementTags_, api_elementTags_n_, api_elementTags_nn_, api_nodeTags_, api_nodeTags_n_, api_nodeTags_nn_, dim, tag, ierr)
+    call C_API(api_elementTypes_=api_elementTypes_, api_elementTypes_n_=api_elementTypes_n_, api_elementTags_=api_elementTags_, api_elementTags_n_=api_elementTags_n_, api_elementTags_nn_=api_elementTags_nn_, api_nodeTags_=api_nodeTags_, api_nodeTags_n_=api_nodeTags_n_, api_nodeTags_nn_=api_nodeTags_nn_, dim=optval_c_int(-1, dim), tag=optval_c_int(-1, tag), ierr_=ierr)
     ! Post processing
     elementTypes = ovectorint_(api_elementTypes_, api_elementTypes_n_)
     call ovectorvectorsize_(api_elementTags_, api_elementTags_n_, api_elementTags_nn_, elementTags, elementTags_n)
@@ -2592,19 +2562,19 @@ module gmsh
       integer(c_size_t), intent(out) :: api_nodeTags_n_
       integer(c_int) :: dim
       integer(c_int) :: tag
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_size_t), intent(in) :: elementTag
+    integer, intent(in) :: elementTag
     integer(c_int) :: elementType
     integer(c_size_t), dimension(:), allocatable, intent(out) :: nodeTags
     integer(c_int) :: dim
     integer(c_int) :: tag
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_nodeTags_
     integer(c_size_t) :: api_nodeTags_n_
-    call C_API(elementTag, elementType, api_nodeTags_, api_nodeTags_n_, dim, tag, ierr)
+    call C_API(elementTag=int(elementTag, c_size_t), elementType=elementType, api_nodeTags_=api_nodeTags_, api_nodeTags_n_=api_nodeTags_n_, dim=dim, tag=tag, ierr_=ierr)
     ! Post processing
     nodeTags = ovectorsize_(api_nodeTags_, api_nodeTags_n_)
   end subroutine gmshModelMeshGetElement
@@ -2631,7 +2601,7 @@ module gmsh
       real(c_double) :: w
       integer(c_int), value, intent(in) :: dim
       integer(c_int), value, intent(in) :: strict
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     real(c_double), intent(in) :: x
@@ -2643,13 +2613,13 @@ module gmsh
     real(c_double) :: u
     real(c_double) :: v
     real(c_double) :: w
-    integer(c_int), intent(in) :: dim
-    integer(c_int), intent(in) :: strict
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in), optional :: dim
+    logical, intent(in), optional :: strict
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_nodeTags_
     integer(c_size_t) :: api_nodeTags_n_
-    call C_API(x, y, z, elementTag, elementType, api_nodeTags_, api_nodeTags_n_, u, v, w, dim, strict, ierr)
+    call C_API(x=real(x, c_double), y=real(y, c_double), z=real(z, c_double), elementTag=elementTag, elementType=elementType, api_nodeTags_=api_nodeTags_, api_nodeTags_n_=api_nodeTags_n_, u=u, v=v, w=w, dim=optval_c_int(-1, dim), strict=optval_c_bool(.false., strict), ierr_=ierr)
     ! Post processing
     nodeTags = ovectorsize_(api_nodeTags_, api_nodeTags_n_)
   end subroutine gmshModelMeshGetElementByCoordinates
@@ -2671,20 +2641,20 @@ module gmsh
       integer(c_size_t), intent(out) :: api_elementTags_n_
       integer(c_int), value, intent(in) :: dim
       integer(c_int), value, intent(in) :: strict
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     real(c_double), intent(in) :: x
     real(c_double), intent(in) :: y
     real(c_double), intent(in) :: z
     integer(c_size_t), dimension(:), allocatable, intent(out) :: elementTags
-    integer(c_int), intent(in) :: dim
-    integer(c_int), intent(in) :: strict
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in), optional :: dim
+    logical, intent(in), optional :: strict
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_elementTags_
     integer(c_size_t) :: api_elementTags_n_
-    call C_API(x, y, z, api_elementTags_, api_elementTags_n_, dim, strict, ierr)
+    call C_API(x=real(x, c_double), y=real(y, c_double), z=real(z, c_double), api_elementTags_=api_elementTags_, api_elementTags_n_=api_elementTags_n_, dim=optval_c_int(-1, dim), strict=optval_c_bool(.false., strict), ierr_=ierr)
     ! Post processing
     elementTags = ovectorsize_(api_elementTags_, api_elementTags_n_)
   end subroutine gmshModelMeshGetElementsByCoordinates
@@ -2705,19 +2675,19 @@ module gmsh
       real(c_double) :: u
       real(c_double) :: v
       real(c_double) :: w
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_size_t), intent(in) :: elementTag
+    integer, intent(in) :: elementTag
     real(c_double), intent(in) :: x
     real(c_double), intent(in) :: y
     real(c_double), intent(in) :: z
     real(c_double) :: u
     real(c_double) :: v
     real(c_double) :: w
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(elementTag, x, y, z, u, v, w, ierr)
+    call C_API(elementTag=int(elementTag, c_size_t), x=real(x, c_double), y=real(y, c_double), z=real(z, c_double), u=u, v=v, w=w, ierr_=ierr)
     ! Post processing
   end subroutine gmshModelMeshGetLocalCoordinatesInElement
 
@@ -2732,17 +2702,17 @@ module gmsh
       integer(c_size_t), intent(out) :: api_elementTypes_n_
       integer(c_int), value, intent(in) :: dim
       integer(c_int), value, intent(in) :: tag
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     integer(c_int), dimension(:), allocatable, intent(out) :: elementTypes
-    integer(c_int), intent(in) :: dim
-    integer(c_int), intent(in) :: tag
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in), optional :: dim
+    integer, intent(in), optional :: tag
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_elementTypes_
     integer(c_size_t) :: api_elementTypes_n_
-    call C_API(api_elementTypes_, api_elementTypes_n_, dim, tag, ierr)
+    call C_API(api_elementTypes_=api_elementTypes_, api_elementTypes_n_=api_elementTypes_n_, dim=optval_c_int(-1, dim), tag=optval_c_int(-1, tag), ierr_=ierr)
     ! Post processing
     elementTypes = ovectorint_(api_elementTypes_, api_elementTypes_n_)
   end subroutine gmshModelMeshGetElementTypes
@@ -2759,18 +2729,16 @@ module gmsh
       character(len=1, kind=c_char), dimension(*), intent(in) :: familyName
       integer(c_int), value, intent(in) :: order
       integer(c_int), value, intent(in) :: serendip
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end function C_API
     end interface
     integer(c_int) :: gmshModelMeshGetElementType
     character(len=*), intent(in) :: familyName
-    integer(c_int), intent(in) :: order
-    integer(c_int), intent(in) :: serendip
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in) :: order
+    logical, intent(in), optional :: serendip
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    character(len=:, kind=c_char), allocatable :: familyName_c
-    familyName_c = istring_(familyName)
-    gmshModelMeshGetElementType = C_API(familyName_c, order, serendip, ierr)
+    gmshModelMeshGetElementType = C_API(familyName=istring_(familyName), order=int(order, c_int), serendip=optval_c_bool(.false., serendip), ierr_=ierr)
     ! Post processing
   end function gmshModelMeshGetElementType
 
@@ -2791,21 +2759,21 @@ module gmsh
       type(c_ptr), intent(out) :: api_localNodeCoord_
       integer(c_size_t) :: api_localNodeCoord_n_
       integer(c_int) :: numPrimaryNodes
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: elementType
+    integer, intent(in) :: elementType
     character(len=:), allocatable, intent(out) :: elementName
     integer(c_int) :: dim
     integer(c_int) :: order
     integer(c_int) :: numNodes
     real(c_double), dimension(:), allocatable, intent(out) :: localNodeCoord
     integer(c_int) :: numPrimaryNodes
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_localNodeCoord_
     integer(c_size_t) :: api_localNodeCoord_n_
-    call C_API(elementType, elementName, dim, order, numNodes, api_localNodeCoord_, api_localNodeCoord_n_, numPrimaryNodes, ierr)
+    call C_API(elementType=int(elementType, c_int), api_elementName_=elementName, dim=dim, order=order, numNodes=numNodes, api_localNodeCoord_=api_localNodeCoord_, api_localNodeCoord_n_=api_localNodeCoord_n_, numPrimaryNodes=numPrimaryNodes, ierr_=ierr)
     ! Post processing
     localNodeCoord = ovectordouble_(api_localNodeCoord_, api_localNodeCoord_n_)
   end subroutine gmshModelMeshGetElementProperties
@@ -2831,22 +2799,22 @@ module gmsh
       integer(c_int), value, intent(in) :: tag
       integer(c_size_t), value, intent(in) :: task
       integer(c_size_t), value, intent(in) :: numTasks
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: elementType
+    integer, intent(in) :: elementType
     integer(c_size_t), dimension(:), allocatable, intent(out) :: elementTags
     integer(c_size_t), dimension(:), allocatable, intent(out) :: nodeTags
-    integer(c_int), intent(in) :: tag
-    integer(c_size_t), intent(in) :: task
-    integer(c_size_t), intent(in) :: numTasks
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in), optional :: tag
+    integer, intent(in), optional :: task
+    integer, intent(in), optional :: numTasks
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_elementTags_
     integer(c_size_t) :: api_elementTags_n_
     type(c_ptr) :: api_nodeTags_
     integer(c_size_t) :: api_nodeTags_n_
-    call C_API(elementType, api_elementTags_, api_elementTags_n_, api_nodeTags_, api_nodeTags_n_, tag, task, numTasks, ierr)
+    call C_API(elementType=int(elementType, c_int), api_elementTags_=api_elementTags_, api_elementTags_n_=api_elementTags_n_, api_nodeTags_=api_nodeTags_, api_nodeTags_n_=api_nodeTags_n_, tag=optval_c_int(-1, tag), task=optval_c_size_t(0, task), numTasks=optval_c_size_t(1, numTasks), ierr_=ierr)
     ! Post processing
     elementTags = ovectorsize_(api_elementTags_, api_elementTags_n_)
     nodeTags = ovectorsize_(api_nodeTags_, api_nodeTags_n_)
@@ -2858,13 +2826,13 @@ module gmsh
     subroutine C_API(maxTag, ierr_) bind(C, name="gmshModelMeshGetMaxElementTag")
       use, intrinsic :: iso_c_binding
       integer(c_size_t) :: maxTag
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     integer(c_size_t) :: maxTag
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(maxTag, ierr)
+    call C_API(maxTag=maxTag, ierr_=ierr)
     ! Post processing
   end subroutine gmshModelMeshGetMaxElementTag
 
@@ -2882,22 +2850,22 @@ module gmsh
       type(c_ptr), intent(out) :: api_nodeTags_
       integer(c_size_t), intent(out) :: api_nodeTags_n_
       integer(c_int), value, intent(in) :: tag
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: elementType
-    integer(c_int), intent(in) :: elementTag
-    integer(c_int), intent(in) :: nodeTag
+    integer, intent(in) :: elementType
+    logical, intent(in) :: elementTag
+    logical, intent(in) :: nodeTag
     integer(c_size_t), dimension(:), allocatable, intent(out) :: elementTags
     integer(c_size_t), dimension(:), allocatable, intent(out) :: nodeTags
-    integer(c_int), intent(in) :: tag
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in), optional :: tag
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_elementTags_
     integer(c_size_t) :: api_elementTags_n_
     type(c_ptr) :: api_nodeTags_
     integer(c_size_t) :: api_nodeTags_n_
-    call C_API(elementType, elementTag, nodeTag, api_elementTags_, api_elementTags_n_, api_nodeTags_, api_nodeTags_n_, tag, ierr)
+    call C_API(elementType=int(elementType, c_int), elementTag=merge(1_c_int, 0_c_int, elementTag), nodeTag=merge(1_c_int, 0_c_int, nodeTag), api_elementTags_=api_elementTags_, api_elementTags_n_=api_elementTags_n_, api_nodeTags_=api_nodeTags_, api_nodeTags_n_=api_nodeTags_n_, tag=optval_c_int(-1, tag), ierr_=ierr)
     ! Post processing
     elementTags = ovectorsize_(api_elementTags_, api_elementTags_n_)
     nodeTags = ovectorsize_(api_nodeTags_, api_nodeTags_n_)
@@ -2918,24 +2886,22 @@ module gmsh
       integer(c_size_t), value, intent(in) :: api_elementTags_n_
       type(c_ptr), intent(out) :: api_elementsQuality_
       integer(c_size_t) :: api_elementsQuality_n_
-      character(len=1, kind=c_char), dimension(*), intent(in) :: qualityName
+      character(len=1, kind=c_char), dimension(*), intent(in), optional :: qualityName
       integer(c_size_t), value, intent(in) :: task
       integer(c_size_t), value, intent(in) :: numTasks
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     integer(c_size_t), dimension(:), intent(in) :: elementTags
     real(c_double), dimension(:), allocatable, intent(out) :: elementsQuality
-    character(len=*), intent(in) :: qualityName
-    integer(c_size_t), intent(in) :: task
-    integer(c_size_t), intent(in) :: numTasks
-    integer(c_int), intent(out) :: ierr
+    character(len=*), intent(in), optional :: qualityName
+    integer, intent(in), optional :: task
+    integer, intent(in), optional :: numTasks
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_elementsQuality_
     integer(c_size_t) :: api_elementsQuality_n_
-    character(len=:, kind=c_char), allocatable :: qualityName_c
-    qualityName_c = istring_(qualityName)
-    call C_API(elementTags, fsize(elementTags, kind=c_size_t), api_elementsQuality_, api_elementsQuality_n_, qualityName_c, task, numTasks, ierr)
+    call C_API(api_elementTags_=elementTags, api_elementTags_n_=size_gmsh_size(elementTags), api_elementsQuality_=api_elementsQuality_, api_elementsQuality_n_=api_elementsQuality_n_, qualityName=istring_(optval_c_str("minSICN", qualityName)), task=optval_c_size_t(0, task), numTasks=optval_c_size_t(1, numTasks), ierr_=ierr)
     ! Post processing
     elementsQuality = ovectordouble_(api_elementsQuality_, api_elementsQuality_n_)
   end subroutine gmshModelMeshGetElementQualities
@@ -2964,17 +2930,17 @@ module gmsh
       type(c_ptr), intent(in) :: api_nodeTags_
       type(c_ptr), intent(in) :: api_nodeTags_n_
       integer(c_size_t), value, intent(in) :: api_nodeTags_nn_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: dim
-    integer(c_int), intent(in) :: tag
+    integer, intent(in) :: dim
+    integer, intent(in) :: tag
     integer(c_int), dimension(:), intent(in) :: elementTypes
     integer(c_size_t), dimension(:), intent(in) :: elementTags
     integer(c_size_t), dimension(:), intent(in) :: elementTags_n
     integer(c_size_t), dimension(:), intent(in) :: nodeTags
     integer(c_size_t), dimension(:), intent(in) :: nodeTags_n
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_elementTags_
     type(c_ptr) :: api_elementTags_n_
@@ -2984,7 +2950,7 @@ module gmsh
     integer(c_size_t) :: api_nodeTags_nn_
     call ivectorvectorsize_(elementTags, elementTags_n, api_elementTags_, api_elementTags_n_, api_elementTags_nn_)
     call ivectorvectorsize_(nodeTags, nodeTags_n, api_nodeTags_, api_nodeTags_n_, api_nodeTags_nn_)
-    call C_API(dim, tag, elementTypes, fsize(elementTypes, kind=c_size_t), api_elementTags_, api_elementTags_n_, api_elementTags_nn_, api_nodeTags_, api_nodeTags_n_, api_nodeTags_nn_, ierr)
+    call C_API(dim=int(dim, c_int), tag=int(tag, c_int), api_elementTypes_=elementTypes, api_elementTypes_n_=size_gmsh_int(elementTypes), api_elementTags_=api_elementTags_, api_elementTags_n_=api_elementTags_n_, api_elementTags_nn_=api_elementTags_nn_, api_nodeTags_=api_nodeTags_, api_nodeTags_n_=api_nodeTags_n_, api_nodeTags_nn_=api_nodeTags_nn_, ierr_=ierr)
     ! Post processing
   end subroutine gmshModelMeshAddElements
 
@@ -3005,16 +2971,16 @@ module gmsh
       integer(c_size_t), value, intent(in) :: api_elementTags_n_
       integer(c_size_t), dimension(*) :: api_nodeTags_
       integer(c_size_t), value, intent(in) :: api_nodeTags_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: tag
-    integer(c_int), intent(in) :: elementType
+    integer, intent(in) :: tag
+    integer, intent(in) :: elementType
     integer(c_size_t), dimension(:), intent(in) :: elementTags
     integer(c_size_t), dimension(:), intent(in) :: nodeTags
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(tag, elementType, elementTags, fsize(elementTags, kind=c_size_t), nodeTags, fsize(nodeTags, kind=c_size_t), ierr)
+    call C_API(tag=int(tag, c_int), elementType=int(elementType, c_int), api_elementTags_=elementTags, api_elementTags_n_=size_gmsh_size(elementTags), api_nodeTags_=nodeTags, api_nodeTags_n_=size_gmsh_size(nodeTags), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelMeshAddElementsByType
 
@@ -3040,22 +3006,20 @@ module gmsh
       integer(c_size_t) :: api_localCoord_n_
       type(c_ptr), intent(out) :: api_weights_
       integer(c_size_t) :: api_weights_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: elementType
+    integer, intent(in) :: elementType
     character(len=*), intent(in) :: integrationType
     real(c_double), dimension(:), allocatable, intent(out) :: localCoord
     real(c_double), dimension(:), allocatable, intent(out) :: weights
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    character(len=:, kind=c_char), allocatable :: integrationType_c
     type(c_ptr) :: api_localCoord_
     integer(c_size_t) :: api_localCoord_n_
     type(c_ptr) :: api_weights_
     integer(c_size_t) :: api_weights_n_
-    integrationType_c = istring_(integrationType)
-    call C_API(elementType, integrationType_c, api_localCoord_, api_localCoord_n_, api_weights_, api_weights_n_, ierr)
+    call C_API(elementType=int(elementType, c_int), integrationType=istring_(integrationType), api_localCoord_=api_localCoord_, api_localCoord_n_=api_localCoord_n_, api_weights_=api_weights_, api_weights_n_=api_weights_n_, ierr_=ierr)
     ! Post processing
     localCoord = ovectordouble_(api_localCoord_, api_localCoord_n_)
     weights = ovectordouble_(api_weights_, api_weights_n_)
@@ -3091,18 +3055,18 @@ module gmsh
       integer(c_int), value, intent(in) :: tag
       integer(c_size_t), value, intent(in) :: task
       integer(c_size_t), value, intent(in) :: numTasks
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: elementType
+    integer, intent(in) :: elementType
     real(c_double), dimension(:), intent(in) :: localCoord
     real(c_double), dimension(:), allocatable, intent(out) :: jacobians
     real(c_double), dimension(:), allocatable, intent(out) :: determinants
     real(c_double), dimension(:), allocatable, intent(out) :: coord
-    integer(c_int), intent(in) :: tag
-    integer(c_size_t), intent(in) :: task
-    integer(c_size_t), intent(in) :: numTasks
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in), optional :: tag
+    integer, intent(in), optional :: task
+    integer, intent(in), optional :: numTasks
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_jacobians_
     integer(c_size_t) :: api_jacobians_n_
@@ -3110,7 +3074,7 @@ module gmsh
     integer(c_size_t) :: api_determinants_n_
     type(c_ptr) :: api_coord_
     integer(c_size_t) :: api_coord_n_
-    call C_API(elementType, localCoord, fsize(localCoord, kind=c_size_t), api_jacobians_, api_jacobians_n_, api_determinants_, api_determinants_n_, api_coord_, api_coord_n_, tag, task, numTasks, ierr)
+    call C_API(elementType=int(elementType, c_int), api_localCoord_=localCoord, api_localCoord_n_=size_gmsh_double(localCoord), api_jacobians_=api_jacobians_, api_jacobians_n_=api_jacobians_n_, api_determinants_=api_determinants_, api_determinants_n_=api_determinants_n_, api_coord_=api_coord_, api_coord_n_=api_coord_n_, tag=optval_c_int(-1, tag), task=optval_c_size_t(0, task), numTasks=optval_c_size_t(1, numTasks), ierr_=ierr)
     ! Post processing
     jacobians = ovectordouble_(api_jacobians_, api_jacobians_n_)
     determinants = ovectordouble_(api_determinants_, api_determinants_n_)
@@ -3135,19 +3099,19 @@ module gmsh
       type(c_ptr), intent(out) :: api_coord_
       integer(c_size_t) :: api_coord_n_
       integer(c_int), value, intent(in) :: tag
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: elementType
-    integer(c_int), intent(in) :: numEvaluationPoints
-    integer(c_int), intent(in) :: allocateJacobians
-    integer(c_int), intent(in) :: allocateDeterminants
-    integer(c_int), intent(in) :: allocateCoord
+    integer, intent(in) :: elementType
+    integer, intent(in) :: numEvaluationPoints
+    logical, intent(in) :: allocateJacobians
+    logical, intent(in) :: allocateDeterminants
+    logical, intent(in) :: allocateCoord
     real(c_double), dimension(:), allocatable, intent(out) :: jacobians
     real(c_double), dimension(:), allocatable, intent(out) :: determinants
     real(c_double), dimension(:), allocatable, intent(out) :: coord
-    integer(c_int), intent(in) :: tag
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in), optional :: tag
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_jacobians_
     integer(c_size_t) :: api_jacobians_n_
@@ -3155,7 +3119,7 @@ module gmsh
     integer(c_size_t) :: api_determinants_n_
     type(c_ptr) :: api_coord_
     integer(c_size_t) :: api_coord_n_
-    call C_API(elementType, numEvaluationPoints, allocateJacobians, allocateDeterminants, allocateCoord, api_jacobians_, api_jacobians_n_, api_determinants_, api_determinants_n_, api_coord_, api_coord_n_, tag, ierr)
+    call C_API(elementType=int(elementType, c_int), numEvaluationPoints=int(numEvaluationPoints, c_int), allocateJacobians=merge(1_c_int, 0_c_int, allocateJacobians), allocateDeterminants=merge(1_c_int, 0_c_int, allocateDeterminants), allocateCoord=merge(1_c_int, 0_c_int, allocateCoord), api_jacobians_=api_jacobians_, api_jacobians_n_=api_jacobians_n_, api_determinants_=api_determinants_, api_determinants_n_=api_determinants_n_, api_coord_=api_coord_, api_coord_n_=api_coord_n_, tag=optval_c_int(-1, tag), ierr_=ierr)
     ! Post processing
     jacobians = ovectordouble_(api_jacobians_, api_jacobians_n_)
     determinants = ovectordouble_(api_determinants_, api_determinants_n_)
@@ -3186,15 +3150,15 @@ module gmsh
       integer(c_size_t) :: api_determinants_n_
       type(c_ptr), intent(out) :: api_coord_
       integer(c_size_t) :: api_coord_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_size_t), intent(in) :: elementTag
+    integer, intent(in) :: elementTag
     real(c_double), dimension(:), intent(in) :: localCoord
     real(c_double), dimension(:), allocatable, intent(out) :: jacobians
     real(c_double), dimension(:), allocatable, intent(out) :: determinants
     real(c_double), dimension(:), allocatable, intent(out) :: coord
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_jacobians_
     integer(c_size_t) :: api_jacobians_n_
@@ -3202,7 +3166,7 @@ module gmsh
     integer(c_size_t) :: api_determinants_n_
     type(c_ptr) :: api_coord_
     integer(c_size_t) :: api_coord_n_
-    call C_API(elementTag, localCoord, fsize(localCoord, kind=c_size_t), api_jacobians_, api_jacobians_n_, api_determinants_, api_determinants_n_, api_coord_, api_coord_n_, ierr)
+    call C_API(elementTag=int(elementTag, c_size_t), api_localCoord_=localCoord, api_localCoord_n_=size_gmsh_double(localCoord), api_jacobians_=api_jacobians_, api_jacobians_n_=api_jacobians_n_, api_determinants_=api_determinants_, api_determinants_n_=api_determinants_n_, api_coord_=api_coord_, api_coord_n_=api_coord_n_, ierr_=ierr)
     ! Post processing
     jacobians = ovectordouble_(api_jacobians_, api_jacobians_n_)
     determinants = ovectordouble_(api_determinants_, api_determinants_n_)
@@ -3241,25 +3205,23 @@ module gmsh
       type(c_ptr), intent(out) :: api_basisFunctions_
       integer(c_size_t) :: api_basisFunctions_n_
       integer(c_int) :: numOrientations
-      integer(c_int), dimension(*) :: api_wantedOrientations_
+      integer(c_int), dimension(*), optional :: api_wantedOrientations_
       integer(c_size_t), value, intent(in) :: api_wantedOrientations_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: elementType
+    integer, intent(in) :: elementType
     real(c_double), dimension(:), intent(in) :: localCoord
     character(len=*), intent(in) :: functionSpaceType
     integer(c_int) :: numComponents
     real(c_double), dimension(:), allocatable, intent(out) :: basisFunctions
     integer(c_int) :: numOrientations
-    integer(c_int), dimension(:), intent(in) :: wantedOrientations
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), dimension(:), intent(in), optional :: wantedOrientations
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    character(len=:, kind=c_char), allocatable :: functionSpaceType_c
     type(c_ptr) :: api_basisFunctions_
     integer(c_size_t) :: api_basisFunctions_n_
-    functionSpaceType_c = istring_(functionSpaceType)
-    call C_API(elementType, localCoord, fsize(localCoord, kind=c_size_t), functionSpaceType_c, numComponents, api_basisFunctions_, api_basisFunctions_n_, numOrientations, wantedOrientations, fsize(wantedOrientations, kind=c_size_t), ierr)
+    call C_API(elementType=int(elementType, c_int), api_localCoord_=localCoord, api_localCoord_n_=size_gmsh_double(localCoord), functionSpaceType=istring_(functionSpaceType), numComponents=numComponents, api_basisFunctions_=api_basisFunctions_, api_basisFunctions_n_=api_basisFunctions_n_, numOrientations=numOrientations, api_wantedOrientations_=wantedOrientations, api_wantedOrientations_n_=size_gmsh_int(wantedOrientations), ierr_=ierr)
     ! Post processing
     basisFunctions = ovectordouble_(api_basisFunctions_, api_basisFunctions_n_)
   end subroutine gmshModelMeshGetBasisFunctions
@@ -3281,22 +3243,20 @@ module gmsh
       integer(c_int), value, intent(in) :: tag
       integer(c_size_t), value, intent(in) :: task
       integer(c_size_t), value, intent(in) :: numTasks
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: elementType
+    integer, intent(in) :: elementType
     character(len=*), intent(in) :: functionSpaceType
     integer(c_int), dimension(:), allocatable, intent(out) :: basisFunctionsOrientation
-    integer(c_int), intent(in) :: tag
-    integer(c_size_t), intent(in) :: task
-    integer(c_size_t), intent(in) :: numTasks
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in), optional :: tag
+    integer, intent(in), optional :: task
+    integer, intent(in), optional :: numTasks
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    character(len=:, kind=c_char), allocatable :: functionSpaceType_c
     type(c_ptr) :: api_basisFunctionsOrientation_
     integer(c_size_t) :: api_basisFunctionsOrientation_n_
-    functionSpaceType_c = istring_(functionSpaceType)
-    call C_API(elementType, functionSpaceType_c, api_basisFunctionsOrientation_, api_basisFunctionsOrientation_n_, tag, task, numTasks, ierr)
+    call C_API(elementType=int(elementType, c_int), functionSpaceType=istring_(functionSpaceType), api_basisFunctionsOrientation_=api_basisFunctionsOrientation_, api_basisFunctionsOrientation_n_=api_basisFunctionsOrientation_n_, tag=optval_c_int(-1, tag), task=optval_c_size_t(0, task), numTasks=optval_c_size_t(1, numTasks), ierr_=ierr)
     ! Post processing
     basisFunctionsOrientation = ovectorint_(api_basisFunctionsOrientation_, api_basisFunctionsOrientation_n_)
   end subroutine gmshModelMeshGetBasisFunctionsOrientation
@@ -3309,17 +3269,15 @@ module gmsh
       integer(c_size_t), value, intent(in) :: elementTag
       character(len=1, kind=c_char), dimension(*), intent(in) :: functionSpaceType
       integer(c_int) :: basisFunctionsOrientation
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_size_t), intent(in) :: elementTag
+    integer, intent(in) :: elementTag
     character(len=*), intent(in) :: functionSpaceType
     integer(c_int) :: basisFunctionsOrientation
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    character(len=:, kind=c_char), allocatable :: functionSpaceType_c
-    functionSpaceType_c = istring_(functionSpaceType)
-    call C_API(elementTag, functionSpaceType_c, basisFunctionsOrientation, ierr)
+    call C_API(elementTag=int(elementTag, c_size_t), functionSpaceType=istring_(functionSpaceType), basisFunctionsOrientation=basisFunctionsOrientation, ierr_=ierr)
     ! Post processing
   end subroutine gmshModelMeshGetBasisFunctionsOrientationForElement
 
@@ -3332,17 +3290,15 @@ module gmsh
       integer(c_int) :: C_API
       integer(c_int), value, intent(in) :: elementType
       character(len=1, kind=c_char), dimension(*), intent(in) :: functionSpaceType
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end function C_API
     end interface
     integer(c_int) :: gmshModelMeshGetNumberOfOrientations
-    integer(c_int), intent(in) :: elementType
+    integer, intent(in) :: elementType
     character(len=*), intent(in) :: functionSpaceType
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    character(len=:, kind=c_char), allocatable :: functionSpaceType_c
-    functionSpaceType_c = istring_(functionSpaceType)
-    gmshModelMeshGetNumberOfOrientations = C_API(elementType, functionSpaceType_c, ierr)
+    gmshModelMeshGetNumberOfOrientations = C_API(elementType=int(elementType, c_int), functionSpaceType=istring_(functionSpaceType), ierr_=ierr)
     ! Post processing
   end function gmshModelMeshGetNumberOfOrientations
 
@@ -3356,17 +3312,17 @@ module gmsh
       type(c_ptr), intent(out) :: api_basisFunctionsOrientation_
       integer(c_size_t), intent(out) :: api_basisFunctionsOrientation_n_
       integer(c_int), value, intent(in) :: tag
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: elementType
+    integer, intent(in) :: elementType
     integer(c_int), dimension(:), allocatable, intent(out) :: basisFunctionsOrientation
-    integer(c_int), intent(in) :: tag
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in), optional :: tag
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_basisFunctionsOrientation_
     integer(c_size_t) :: api_basisFunctionsOrientation_n_
-    call C_API(elementType, api_basisFunctionsOrientation_, api_basisFunctionsOrientation_n_, tag, ierr)
+    call C_API(elementType=int(elementType, c_int), api_basisFunctionsOrientation_=api_basisFunctionsOrientation_, api_basisFunctionsOrientation_n_=api_basisFunctionsOrientation_n_, tag=optval_c_int(-1, tag), ierr_=ierr)
     ! Post processing
     basisFunctionsOrientation = ovectorint_(api_basisFunctionsOrientation_, api_basisFunctionsOrientation_n_)
   end subroutine gmshModelMeshPreallocateBasisFunctionsOrientation
@@ -3388,19 +3344,19 @@ module gmsh
       integer(c_size_t), intent(out) :: api_edgeTags_n_
       type(c_ptr), intent(out) :: api_edgeOrientations_
       integer(c_size_t), intent(out) :: api_edgeOrientations_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     integer(c_size_t), dimension(:), intent(in) :: nodeTags
     integer(c_size_t), dimension(:), allocatable, intent(out) :: edgeTags
     integer(c_int), dimension(:), allocatable, intent(out) :: edgeOrientations
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_edgeTags_
     integer(c_size_t) :: api_edgeTags_n_
     type(c_ptr) :: api_edgeOrientations_
     integer(c_size_t) :: api_edgeOrientations_n_
-    call C_API(nodeTags, fsize(nodeTags, kind=c_size_t), api_edgeTags_, api_edgeTags_n_, api_edgeOrientations_, api_edgeOrientations_n_, ierr)
+    call C_API(api_nodeTags_=nodeTags, api_nodeTags_n_=size_gmsh_size(nodeTags), api_edgeTags_=api_edgeTags_, api_edgeTags_n_=api_edgeTags_n_, api_edgeOrientations_=api_edgeOrientations_, api_edgeOrientations_n_=api_edgeOrientations_n_, ierr_=ierr)
     ! Post processing
     edgeTags = ovectorsize_(api_edgeTags_, api_edgeTags_n_)
     edgeOrientations = ovectorint_(api_edgeOrientations_, api_edgeOrientations_n_)
@@ -3422,20 +3378,20 @@ module gmsh
       integer(c_size_t), intent(out) :: api_faceTags_n_
       type(c_ptr), intent(out) :: api_faceOrientations_
       integer(c_size_t), intent(out) :: api_faceOrientations_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: faceType
+    integer, intent(in) :: faceType
     integer(c_size_t), dimension(:), intent(in) :: nodeTags
     integer(c_size_t), dimension(:), allocatable, intent(out) :: faceTags
     integer(c_int), dimension(:), allocatable, intent(out) :: faceOrientations
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_faceTags_
     integer(c_size_t) :: api_faceTags_n_
     type(c_ptr) :: api_faceOrientations_
     integer(c_size_t) :: api_faceOrientations_n_
-    call C_API(faceType, nodeTags, fsize(nodeTags, kind=c_size_t), api_faceTags_, api_faceTags_n_, api_faceOrientations_, api_faceOrientations_n_, ierr)
+    call C_API(faceType=int(faceType, c_int), api_nodeTags_=nodeTags, api_nodeTags_n_=size_gmsh_size(nodeTags), api_faceTags_=api_faceTags_, api_faceTags_n_=api_faceTags_n_, api_faceOrientations_=api_faceOrientations_, api_faceOrientations_n_=api_faceOrientations_n_, ierr_=ierr)
     ! Post processing
     faceTags = ovectorsize_(api_faceTags_, api_faceTags_n_)
     faceOrientations = ovectorint_(api_faceOrientations_, api_faceOrientations_n_)
@@ -3446,15 +3402,15 @@ module gmsh
     interface
     subroutine C_API(api_dimTags_, api_dimTags_n_, ierr_) bind(C, name="gmshModelMeshCreateEdges")
       use, intrinsic :: iso_c_binding
-      integer(c_int), dimension(*) :: api_dimTags_
+      integer(c_int), dimension(*), optional :: api_dimTags_
       integer(c_size_t), value, intent(in) :: api_dimTags_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), dimension(:,:), intent(in) :: dimTags
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), dimension(:,:), intent(in), optional :: dimTags
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(dimTags, fsize(dimTags, kind=c_size_t), ierr)
+    call C_API(api_dimTags_=dimTags, api_dimTags_n_=size_gmsh_pair(dimTags), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelMeshCreateEdges
 
@@ -3463,15 +3419,15 @@ module gmsh
     interface
     subroutine C_API(api_dimTags_, api_dimTags_n_, ierr_) bind(C, name="gmshModelMeshCreateFaces")
       use, intrinsic :: iso_c_binding
-      integer(c_int), dimension(*) :: api_dimTags_
+      integer(c_int), dimension(*), optional :: api_dimTags_
       integer(c_size_t), value, intent(in) :: api_dimTags_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), dimension(:,:), intent(in) :: dimTags
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), dimension(:,:), intent(in), optional :: dimTags
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(dimTags, fsize(dimTags, kind=c_size_t), ierr)
+    call C_API(api_dimTags_=dimTags, api_dimTags_n_=size_gmsh_pair(dimTags), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelMeshCreateFaces
 
@@ -3486,18 +3442,18 @@ module gmsh
       integer(c_size_t), intent(out) :: api_edgeTags_n_
       type(c_ptr), intent(out) :: api_edgeNodes_
       integer(c_size_t), intent(out) :: api_edgeNodes_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     integer(c_size_t), dimension(:), allocatable, intent(out) :: edgeTags
     integer(c_size_t), dimension(:), allocatable, intent(out) :: edgeNodes
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_edgeTags_
     integer(c_size_t) :: api_edgeTags_n_
     type(c_ptr) :: api_edgeNodes_
     integer(c_size_t) :: api_edgeNodes_n_
-    call C_API(api_edgeTags_, api_edgeTags_n_, api_edgeNodes_, api_edgeNodes_n_, ierr)
+    call C_API(api_edgeTags_=api_edgeTags_, api_edgeTags_n_=api_edgeTags_n_, api_edgeNodes_=api_edgeNodes_, api_edgeNodes_n_=api_edgeNodes_n_, ierr_=ierr)
     ! Post processing
     edgeTags = ovectorsize_(api_edgeTags_, api_edgeTags_n_)
     edgeNodes = ovectorsize_(api_edgeNodes_, api_edgeNodes_n_)
@@ -3515,19 +3471,19 @@ module gmsh
       integer(c_size_t), intent(out) :: api_faceTags_n_
       type(c_ptr), intent(out) :: api_faceNodes_
       integer(c_size_t), intent(out) :: api_faceNodes_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: faceType
+    integer, intent(in) :: faceType
     integer(c_size_t), dimension(:), allocatable, intent(out) :: faceTags
     integer(c_size_t), dimension(:), allocatable, intent(out) :: faceNodes
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_faceTags_
     integer(c_size_t) :: api_faceTags_n_
     type(c_ptr) :: api_faceNodes_
     integer(c_size_t) :: api_faceNodes_n_
-    call C_API(faceType, api_faceTags_, api_faceTags_n_, api_faceNodes_, api_faceNodes_n_, ierr)
+    call C_API(faceType=int(faceType, c_int), api_faceTags_=api_faceTags_, api_faceTags_n_=api_faceTags_n_, api_faceNodes_=api_faceNodes_, api_faceNodes_n_=api_faceNodes_n_, ierr_=ierr)
     ! Post processing
     faceTags = ovectorsize_(api_faceTags_, api_faceTags_n_)
     faceNodes = ovectorsize_(api_faceNodes_, api_faceNodes_n_)
@@ -3543,14 +3499,14 @@ module gmsh
       integer(c_size_t), value, intent(in) :: api_edgeTags_n_
       integer(c_size_t), dimension(*) :: api_edgeNodes_
       integer(c_size_t), value, intent(in) :: api_edgeNodes_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     integer(c_size_t), dimension(:), intent(in) :: edgeTags
     integer(c_size_t), dimension(:), intent(in) :: edgeNodes
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(edgeTags, fsize(edgeTags, kind=c_size_t), edgeNodes, fsize(edgeNodes, kind=c_size_t), ierr)
+    call C_API(api_edgeTags_=edgeTags, api_edgeTags_n_=size_gmsh_size(edgeTags), api_edgeNodes_=edgeNodes, api_edgeNodes_n_=size_gmsh_size(edgeNodes), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelMeshAddEdges
 
@@ -3565,15 +3521,15 @@ module gmsh
       integer(c_size_t), value, intent(in) :: api_faceTags_n_
       integer(c_size_t), dimension(*) :: api_faceNodes_
       integer(c_size_t), value, intent(in) :: api_faceNodes_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: faceType
+    integer, intent(in) :: faceType
     integer(c_size_t), dimension(:), intent(in) :: faceTags
     integer(c_size_t), dimension(:), intent(in) :: faceNodes
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(faceType, faceTags, fsize(faceTags, kind=c_size_t), faceNodes, fsize(faceNodes, kind=c_size_t), ierr)
+    call C_API(faceType=int(faceType, c_int), api_faceTags_=faceTags, api_faceTags_n_=size_gmsh_size(faceTags), api_faceNodes_=faceNodes, api_faceNodes_n_=size_gmsh_size(faceNodes), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelMeshAddFaces
 
@@ -3598,27 +3554,25 @@ module gmsh
       integer(c_size_t) :: api_coord_n_
       integer(c_int), value, intent(in) :: tag
       integer(c_int), value, intent(in) :: returnCoord
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: elementType
+    integer, intent(in) :: elementType
     character(len=*), intent(in) :: functionSpaceType
     integer(c_int), dimension(:), allocatable, intent(out) :: typeKeys
     integer(c_size_t), dimension(:), allocatable, intent(out) :: entityKeys
     real(c_double), dimension(:), allocatable, intent(out) :: coord
-    integer(c_int), intent(in) :: tag
-    integer(c_int), intent(in) :: returnCoord
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in), optional :: tag
+    logical, intent(in), optional :: returnCoord
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    character(len=:, kind=c_char), allocatable :: functionSpaceType_c
     type(c_ptr) :: api_typeKeys_
     integer(c_size_t) :: api_typeKeys_n_
     type(c_ptr) :: api_entityKeys_
     integer(c_size_t) :: api_entityKeys_n_
     type(c_ptr) :: api_coord_
     integer(c_size_t) :: api_coord_n_
-    functionSpaceType_c = istring_(functionSpaceType)
-    call C_API(elementType, functionSpaceType_c, api_typeKeys_, api_typeKeys_n_, api_entityKeys_, api_entityKeys_n_, api_coord_, api_coord_n_, tag, returnCoord, ierr)
+    call C_API(elementType=int(elementType, c_int), functionSpaceType=istring_(functionSpaceType), api_typeKeys_=api_typeKeys_, api_typeKeys_n_=api_typeKeys_n_, api_entityKeys_=api_entityKeys_, api_entityKeys_n_=api_entityKeys_n_, api_coord_=api_coord_, api_coord_n_=api_coord_n_, tag=optval_c_int(-1, tag), returnCoord=optval_c_bool(.true., returnCoord), ierr_=ierr)
     ! Post processing
     typeKeys = ovectorint_(api_typeKeys_, api_typeKeys_n_)
     entityKeys = ovectorsize_(api_entityKeys_, api_entityKeys_n_)
@@ -3639,26 +3593,24 @@ module gmsh
       type(c_ptr), intent(out) :: api_coord_
       integer(c_size_t) :: api_coord_n_
       integer(c_int), value, intent(in) :: returnCoord
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_size_t), intent(in) :: elementTag
+    integer, intent(in) :: elementTag
     character(len=*), intent(in) :: functionSpaceType
     integer(c_int), dimension(:), allocatable, intent(out) :: typeKeys
     integer(c_size_t), dimension(:), allocatable, intent(out) :: entityKeys
     real(c_double), dimension(:), allocatable, intent(out) :: coord
-    integer(c_int), intent(in) :: returnCoord
-    integer(c_int), intent(out) :: ierr
+    logical, intent(in), optional :: returnCoord
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    character(len=:, kind=c_char), allocatable :: functionSpaceType_c
     type(c_ptr) :: api_typeKeys_
     integer(c_size_t) :: api_typeKeys_n_
     type(c_ptr) :: api_entityKeys_
     integer(c_size_t) :: api_entityKeys_n_
     type(c_ptr) :: api_coord_
     integer(c_size_t) :: api_coord_n_
-    functionSpaceType_c = istring_(functionSpaceType)
-    call C_API(elementTag, functionSpaceType_c, api_typeKeys_, api_typeKeys_n_, api_entityKeys_, api_entityKeys_n_, api_coord_, api_coord_n_, returnCoord, ierr)
+    call C_API(elementTag=int(elementTag, c_size_t), functionSpaceType=istring_(functionSpaceType), api_typeKeys_=api_typeKeys_, api_typeKeys_n_=api_typeKeys_n_, api_entityKeys_=api_entityKeys_, api_entityKeys_n_=api_entityKeys_n_, api_coord_=api_coord_, api_coord_n_=api_coord_n_, returnCoord=optval_c_bool(.true., returnCoord), ierr_=ierr)
     ! Post processing
     typeKeys = ovectorint_(api_typeKeys_, api_typeKeys_n_)
     entityKeys = ovectorsize_(api_entityKeys_, api_entityKeys_n_)
@@ -3674,17 +3626,15 @@ module gmsh
       integer(c_int) :: C_API
       integer(c_int), value, intent(in) :: elementType
       character(len=1, kind=c_char), dimension(*), intent(in) :: functionSpaceType
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end function C_API
     end interface
     integer(c_int) :: gmshModelMeshGetNumberOfKeys
-    integer(c_int), intent(in) :: elementType
+    integer, intent(in) :: elementType
     character(len=*), intent(in) :: functionSpaceType
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    character(len=:, kind=c_char), allocatable :: functionSpaceType_c
-    functionSpaceType_c = istring_(functionSpaceType)
-    gmshModelMeshGetNumberOfKeys = C_API(elementType, functionSpaceType_c, ierr)
+    gmshModelMeshGetNumberOfKeys = C_API(elementType=int(elementType, c_int), functionSpaceType=istring_(functionSpaceType), ierr_=ierr)
     ! Post processing
   end function gmshModelMeshGetNumberOfKeys
 
@@ -3707,21 +3657,19 @@ module gmsh
       character(len=1, kind=c_char), dimension(*), intent(in) :: functionSpaceType
       type(c_ptr), intent(out) :: api_infoKeys_
       integer(c_size_t), intent(out) :: api_infoKeys_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     integer(c_int), dimension(:), intent(in) :: typeKeys
     integer(c_size_t), dimension(:), intent(in) :: entityKeys
-    integer(c_int), intent(in) :: elementType
+    integer, intent(in) :: elementType
     character(len=*), intent(in) :: functionSpaceType
     integer(c_int), dimension(:,:), allocatable, intent(out) :: infoKeys
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    character(len=:, kind=c_char), allocatable :: functionSpaceType_c
     type(c_ptr) :: api_infoKeys_
     integer(c_size_t) :: api_infoKeys_n_
-    functionSpaceType_c = istring_(functionSpaceType)
-    call C_API(typeKeys, fsize(typeKeys, kind=c_size_t), entityKeys, fsize(entityKeys, kind=c_size_t), elementType, functionSpaceType_c, api_infoKeys_, api_infoKeys_n_, ierr)
+    call C_API(api_typeKeys_=typeKeys, api_typeKeys_n_=size_gmsh_int(typeKeys), api_entityKeys_=entityKeys, api_entityKeys_n_=size_gmsh_size(entityKeys), elementType=int(elementType, c_int), functionSpaceType=istring_(functionSpaceType), api_infoKeys_=api_infoKeys_, api_infoKeys_n_=api_infoKeys_n_, ierr_=ierr)
     ! Post processing
     infoKeys = ovectorpair_(api_infoKeys_, api_infoKeys_n_)
   end subroutine gmshModelMeshGetKeysInformation
@@ -3745,21 +3693,21 @@ module gmsh
       integer(c_size_t) :: api_barycenters_n_
       integer(c_size_t), value, intent(in) :: task
       integer(c_size_t), value, intent(in) :: numTasks
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: elementType
-    integer(c_int), intent(in) :: tag
-    integer(c_int), intent(in) :: fast
-    integer(c_int), intent(in) :: primary
+    integer, intent(in) :: elementType
+    integer, intent(in) :: tag
+    logical, intent(in) :: fast
+    logical, intent(in) :: primary
     real(c_double), dimension(:), allocatable, intent(out) :: barycenters
-    integer(c_size_t), intent(in) :: task
-    integer(c_size_t), intent(in) :: numTasks
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in), optional :: task
+    integer, intent(in), optional :: numTasks
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_barycenters_
     integer(c_size_t) :: api_barycenters_n_
-    call C_API(elementType, tag, fast, primary, api_barycenters_, api_barycenters_n_, task, numTasks, ierr)
+    call C_API(elementType=int(elementType, c_int), tag=int(tag, c_int), fast=merge(1_c_int, 0_c_int, fast), primary=merge(1_c_int, 0_c_int, primary), api_barycenters_=api_barycenters_, api_barycenters_n_=api_barycenters_n_, task=optval_c_size_t(0, task), numTasks=optval_c_size_t(1, numTasks), ierr_=ierr)
     ! Post processing
     barycenters = ovectordouble_(api_barycenters_, api_barycenters_n_)
   end subroutine gmshModelMeshGetBarycenters
@@ -3774,17 +3722,17 @@ module gmsh
       type(c_ptr), intent(out) :: api_barycenters_
       integer(c_size_t) :: api_barycenters_n_
       integer(c_int), value, intent(in) :: tag
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: elementType
+    integer, intent(in) :: elementType
     real(c_double), dimension(:), allocatable, intent(out) :: barycenters
-    integer(c_int), intent(in) :: tag
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in), optional :: tag
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_barycenters_
     integer(c_size_t) :: api_barycenters_n_
-    call C_API(elementType, api_barycenters_, api_barycenters_n_, tag, ierr)
+    call C_API(elementType=int(elementType, c_int), api_barycenters_=api_barycenters_, api_barycenters_n_=api_barycenters_n_, tag=optval_c_int(-1, tag), ierr_=ierr)
     ! Post processing
     barycenters = ovectordouble_(api_barycenters_, api_barycenters_n_)
   end subroutine gmshModelMeshPreallocateBarycenters
@@ -3808,20 +3756,20 @@ module gmsh
       integer(c_int), value, intent(in) :: primary
       integer(c_size_t), value, intent(in) :: task
       integer(c_size_t), value, intent(in) :: numTasks
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: elementType
+    integer, intent(in) :: elementType
     integer(c_size_t), dimension(:), allocatable, intent(out) :: nodeTags
-    integer(c_int), intent(in) :: tag
-    integer(c_int), intent(in) :: primary
-    integer(c_size_t), intent(in) :: task
-    integer(c_size_t), intent(in) :: numTasks
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in), optional :: tag
+    logical, intent(in), optional :: primary
+    integer, intent(in), optional :: task
+    integer, intent(in), optional :: numTasks
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_nodeTags_
     integer(c_size_t) :: api_nodeTags_n_
-    call C_API(elementType, api_nodeTags_, api_nodeTags_n_, tag, primary, task, numTasks, ierr)
+    call C_API(elementType=int(elementType, c_int), api_nodeTags_=api_nodeTags_, api_nodeTags_n_=api_nodeTags_n_, tag=optval_c_int(-1, tag), primary=optval_c_bool(.false., primary), task=optval_c_size_t(0, task), numTasks=optval_c_size_t(1, numTasks), ierr_=ierr)
     ! Post processing
     nodeTags = ovectorsize_(api_nodeTags_, api_nodeTags_n_)
   end subroutine gmshModelMeshGetElementEdgeNodes
@@ -3847,21 +3795,21 @@ module gmsh
       integer(c_int), value, intent(in) :: primary
       integer(c_size_t), value, intent(in) :: task
       integer(c_size_t), value, intent(in) :: numTasks
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: elementType
-    integer(c_int), intent(in) :: faceType
+    integer, intent(in) :: elementType
+    integer, intent(in) :: faceType
     integer(c_size_t), dimension(:), allocatable, intent(out) :: nodeTags
-    integer(c_int), intent(in) :: tag
-    integer(c_int), intent(in) :: primary
-    integer(c_size_t), intent(in) :: task
-    integer(c_size_t), intent(in) :: numTasks
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in), optional :: tag
+    logical, intent(in), optional :: primary
+    integer, intent(in), optional :: task
+    integer, intent(in), optional :: numTasks
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_nodeTags_
     integer(c_size_t) :: api_nodeTags_n_
-    call C_API(elementType, faceType, api_nodeTags_, api_nodeTags_n_, tag, primary, task, numTasks, ierr)
+    call C_API(elementType=int(elementType, c_int), faceType=int(faceType, c_int), api_nodeTags_=api_nodeTags_, api_nodeTags_n_=api_nodeTags_n_, tag=optval_c_int(-1, tag), primary=optval_c_bool(.false., primary), task=optval_c_size_t(0, task), numTasks=optval_c_size_t(1, numTasks), ierr_=ierr)
     ! Post processing
     nodeTags = ovectorsize_(api_nodeTags_, api_nodeTags_n_)
   end subroutine gmshModelMeshGetElementFaceNodes
@@ -3878,20 +3826,20 @@ module gmsh
       integer(c_size_t), intent(out) :: api_elementTags_n_
       type(c_ptr), intent(out) :: api_partitions_
       integer(c_size_t), intent(out) :: api_partitions_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: dim
-    integer(c_int), intent(in) :: tag
+    integer, intent(in) :: dim
+    integer, intent(in) :: tag
     integer(c_size_t), dimension(:), allocatable, intent(out) :: elementTags
     integer(c_int), dimension(:), allocatable, intent(out) :: partitions
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_elementTags_
     integer(c_size_t) :: api_elementTags_n_
     type(c_ptr) :: api_partitions_
     integer(c_size_t) :: api_partitions_n_
-    call C_API(dim, tag, api_elementTags_, api_elementTags_n_, api_partitions_, api_partitions_n_, ierr)
+    call C_API(dim=int(dim, c_int), tag=int(tag, c_int), api_elementTags_=api_elementTags_, api_elementTags_n_=api_elementTags_n_, api_partitions_=api_partitions_, api_partitions_n_=api_partitions_n_, ierr_=ierr)
     ! Post processing
     elementTags = ovectorsize_(api_elementTags_, api_elementTags_n_)
     partitions = ovectorint_(api_partitions_, api_partitions_n_)
@@ -3906,14 +3854,14 @@ module gmsh
       integer(c_int), dimension(*) :: api_dimTags_
       integer(c_size_t), value, intent(in) :: api_dimTags_n_
       real(c_double), value, intent(in) :: size
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     integer(c_int), dimension(:,:), intent(in) :: dimTags
     real(c_double), intent(in) :: size
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(dimTags, fsize(dimTags, kind=c_size_t), size, ierr)
+    call C_API(api_dimTags_=dimTags, api_dimTags_n_=size_gmsh_pair(dimTags), size=real(size, c_double), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelMeshSetSize
 
@@ -3928,16 +3876,16 @@ module gmsh
       integer(c_size_t), value, intent(in) :: api_dimTags_n_
       type(c_ptr), intent(out) :: api_sizes_
       integer(c_size_t) :: api_sizes_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     integer(c_int), dimension(:,:), intent(in) :: dimTags
     real(c_double), dimension(:), allocatable, intent(out) :: sizes
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_sizes_
     integer(c_size_t) :: api_sizes_n_
-    call C_API(dimTags, fsize(dimTags, kind=c_size_t), api_sizes_, api_sizes_n_, ierr)
+    call C_API(api_dimTags_=dimTags, api_dimTags_n_=size_gmsh_pair(dimTags), api_sizes_=api_sizes_, api_sizes_n_=api_sizes_n_, ierr_=ierr)
     ! Post processing
     sizes = ovectordouble_(api_sizes_, api_sizes_n_)
   end subroutine gmshModelMeshGetSizes
@@ -3955,16 +3903,16 @@ module gmsh
       integer(c_size_t), value, intent(in) :: api_parametricCoord_n_
       real(c_double), dimension(*) :: api_sizes_
       integer(c_size_t), value, intent(in) :: api_sizes_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: dim
-    integer(c_int), intent(in) :: tag
+    integer, intent(in) :: dim
+    integer, intent(in) :: tag
     real(c_double), dimension(:), intent(in) :: parametricCoord
     real(c_double), dimension(:), intent(in) :: sizes
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(dim, tag, parametricCoord, fsize(parametricCoord, kind=c_size_t), sizes, fsize(sizes, kind=c_size_t), ierr)
+    call C_API(dim=int(dim, c_int), tag=int(tag, c_int), api_parametricCoord_=parametricCoord, api_parametricCoord_n_=size_gmsh_double(parametricCoord), api_sizes_=sizes, api_sizes_n_=size_gmsh_double(sizes), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelMeshSetSizeAtParametricPoints
 
@@ -3981,14 +3929,14 @@ module gmsh
     interface
     subroutine C_API(callback, ierr_) bind(C, name="gmshModelMeshSetSizeCallback")
       use, intrinsic :: iso_c_binding
-      type(c_funptr) :: callback
-      integer(c_int), intent(out) :: ierr_
+      type(c_funptr), value, intent(in) :: callback
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    type(c_funptr) :: callback
-    integer(c_int), intent(out) :: ierr
+    type(c_funptr), value, intent(in) :: callback
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(callback, ierr)
+    call C_API(callback=callback, ierr_=ierr)
     ! Post processing
   end subroutine gmshModelMeshSetSizeCallback
 
@@ -3997,12 +3945,12 @@ module gmsh
     interface
     subroutine C_API(ierr_) bind(C, name="gmshModelMeshRemoveSizeCallback")
       use, intrinsic :: iso_c_binding
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(ierr)
+    call C_API(ierr_=ierr)
     ! Post processing
   end subroutine gmshModelMeshRemoveSizeCallback
 
@@ -4016,20 +3964,18 @@ module gmsh
       use, intrinsic :: iso_c_binding
       integer(c_int), value, intent(in) :: tag
       integer(c_int), value, intent(in) :: numNodes
-      character(len=1, kind=c_char), dimension(*), intent(in) :: meshType
+      character(len=1, kind=c_char), dimension(*), intent(in), optional :: meshType
       real(c_double), value, intent(in) :: coef
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: tag
-    integer(c_int), intent(in) :: numNodes
-    character(len=*), intent(in) :: meshType
-    real(c_double), intent(in) :: coef
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in) :: tag
+    integer, intent(in) :: numNodes
+    character(len=*), intent(in), optional :: meshType
+    real(c_double), intent(in), optional :: coef
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    character(len=:, kind=c_char), allocatable :: meshType_c
-    meshType_c = istring_(meshType)
-    call C_API(tag, numNodes, meshType_c, coef, ierr)
+    call C_API(tag=int(tag, c_int), numNodes=int(numNodes, c_int), meshType=istring_(optval_c_str("Progression", meshType)), coef=optval_c_double(1., coef), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelMeshSetTransfiniteCurve
 
@@ -4045,20 +3991,18 @@ module gmsh
     subroutine C_API(tag, arrangement, api_cornerTags_, api_cornerTags_n_, ierr_) bind(C, name="gmshModelMeshSetTransfiniteSurface")
       use, intrinsic :: iso_c_binding
       integer(c_int), value, intent(in) :: tag
-      character(len=1, kind=c_char), dimension(*), intent(in) :: arrangement
-      integer(c_int), dimension(*) :: api_cornerTags_
+      character(len=1, kind=c_char), dimension(*), intent(in), optional :: arrangement
+      integer(c_int), dimension(*), optional :: api_cornerTags_
       integer(c_size_t), value, intent(in) :: api_cornerTags_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: tag
-    character(len=*), intent(in) :: arrangement
-    integer(c_int), dimension(:), intent(in) :: cornerTags
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in) :: tag
+    character(len=*), intent(in), optional :: arrangement
+    integer(c_int), dimension(:), intent(in), optional :: cornerTags
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    character(len=:, kind=c_char), allocatable :: arrangement_c
-    arrangement_c = istring_(arrangement)
-    call C_API(tag, arrangement_c, cornerTags, fsize(cornerTags, kind=c_size_t), ierr)
+    call C_API(tag=int(tag, c_int), arrangement=istring_(optval_c_str("Left", arrangement)), api_cornerTags_=cornerTags, api_cornerTags_n_=size_gmsh_int(cornerTags), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelMeshSetTransfiniteSurface
 
@@ -4070,16 +4014,16 @@ module gmsh
     subroutine C_API(tag, api_cornerTags_, api_cornerTags_n_, ierr_) bind(C, name="gmshModelMeshSetTransfiniteVolume")
       use, intrinsic :: iso_c_binding
       integer(c_int), value, intent(in) :: tag
-      integer(c_int), dimension(*) :: api_cornerTags_
+      integer(c_int), dimension(*), optional :: api_cornerTags_
       integer(c_size_t), value, intent(in) :: api_cornerTags_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: tag
-    integer(c_int), dimension(:), intent(in) :: cornerTags
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in) :: tag
+    integer(c_int), dimension(:), intent(in), optional :: cornerTags
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(tag, cornerTags, fsize(cornerTags, kind=c_size_t), ierr)
+    call C_API(tag=int(tag, c_int), api_cornerTags_=cornerTags, api_cornerTags_n_=size_gmsh_int(cornerTags), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelMeshSetTransfiniteVolume
 
@@ -4095,19 +4039,19 @@ module gmsh
     interface
     subroutine C_API(api_dimTags_, api_dimTags_n_, cornerAngle, recombine, ierr_) bind(C, name="gmshModelMeshSetTransfiniteAutomatic")
       use, intrinsic :: iso_c_binding
-      integer(c_int), dimension(*) :: api_dimTags_
+      integer(c_int), dimension(*), optional :: api_dimTags_
       integer(c_size_t), value, intent(in) :: api_dimTags_n_
       real(c_double), value, intent(in) :: cornerAngle
       integer(c_int), value, intent(in) :: recombine
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), dimension(:,:), intent(in) :: dimTags
-    real(c_double), intent(in) :: cornerAngle
-    integer(c_int), intent(in) :: recombine
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), dimension(:,:), intent(in), optional :: dimTags
+    real(c_double), intent(in), optional :: cornerAngle
+    logical, intent(in), optional :: recombine
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(dimTags, fsize(dimTags, kind=c_size_t), cornerAngle, recombine, ierr)
+    call C_API(api_dimTags_=dimTags, api_dimTags_n_=size_gmsh_pair(dimTags), cornerAngle=optval_c_double(2.35, cornerAngle), recombine=optval_c_bool(.true., recombine), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelMeshSetTransfiniteAutomatic
 
@@ -4122,15 +4066,15 @@ module gmsh
       integer(c_int), value, intent(in) :: dim
       integer(c_int), value, intent(in) :: tag
       real(c_double), value, intent(in) :: angle
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: dim
-    integer(c_int), intent(in) :: tag
-    real(c_double), intent(in) :: angle
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in) :: dim
+    integer, intent(in) :: tag
+    real(c_double), intent(in), optional :: angle
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(dim, tag, angle, ierr)
+    call C_API(dim=int(dim, c_int), tag=int(tag, c_int), angle=optval_c_double(45., angle), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelMeshSetRecombine
 
@@ -4143,15 +4087,15 @@ module gmsh
       integer(c_int), value, intent(in) :: dim
       integer(c_int), value, intent(in) :: tag
       integer(c_int), value, intent(in) :: val
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: dim
-    integer(c_int), intent(in) :: tag
-    integer(c_int), intent(in) :: val
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in) :: dim
+    integer, intent(in) :: tag
+    integer, intent(in) :: val
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(dim, tag, val, ierr)
+    call C_API(dim=int(dim, c_int), tag=int(tag, c_int), val=int(val, c_int), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelMeshSetSmoothing
 
@@ -4167,15 +4111,15 @@ module gmsh
       integer(c_int), value, intent(in) :: dim
       integer(c_int), value, intent(in) :: tag
       integer(c_int), value, intent(in) :: val
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: dim
-    integer(c_int), intent(in) :: tag
-    integer(c_int), intent(in) :: val
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in) :: dim
+    integer, intent(in) :: tag
+    logical, intent(in), optional :: val
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(dim, tag, val, ierr)
+    call C_API(dim=int(dim, c_int), tag=int(tag, c_int), val=optval_c_bool(.true., val), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelMeshSetReverse
 
@@ -4188,15 +4132,15 @@ module gmsh
       integer(c_int), value, intent(in) :: dim
       integer(c_int), value, intent(in) :: tag
       integer(c_int), value, intent(in) :: val
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: dim
-    integer(c_int), intent(in) :: tag
-    integer(c_int), intent(in) :: val
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in) :: dim
+    integer, intent(in) :: tag
+    integer, intent(in) :: val
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(dim, tag, val, ierr)
+    call C_API(dim=int(dim, c_int), tag=int(tag, c_int), val=int(val, c_int), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelMeshSetAlgorithm
 
@@ -4210,15 +4154,15 @@ module gmsh
       integer(c_int), value, intent(in) :: dim
       integer(c_int), value, intent(in) :: tag
       integer(c_int), value, intent(in) :: val
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: dim
-    integer(c_int), intent(in) :: tag
-    integer(c_int), intent(in) :: val
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in) :: dim
+    integer, intent(in) :: tag
+    integer, intent(in) :: val
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(dim, tag, val, ierr)
+    call C_API(dim=int(dim, c_int), tag=int(tag, c_int), val=int(val, c_int), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelMeshSetSizeFromBoundary
 
@@ -4232,14 +4176,14 @@ module gmsh
       integer(c_int), value, intent(in) :: dim
       integer(c_int), dimension(*) :: api_tags_
       integer(c_size_t), value, intent(in) :: api_tags_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: dim
+    integer, intent(in) :: dim
     integer(c_int), dimension(:), intent(in) :: tags
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(dim, tags, fsize(tags, kind=c_size_t), ierr)
+    call C_API(dim=int(dim, c_int), api_tags_=tags, api_tags_n_=size_gmsh_int(tags), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelMeshSetCompound
 
@@ -4252,13 +4196,13 @@ module gmsh
     subroutine C_API(tag, ierr_) bind(C, name="gmshModelMeshSetOutwardOrientation")
       use, intrinsic :: iso_c_binding
       integer(c_int), value, intent(in) :: tag
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: tag
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in) :: tag
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(tag, ierr)
+    call C_API(tag=int(tag, c_int), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelMeshSetOutwardOrientation
 
@@ -4268,15 +4212,15 @@ module gmsh
     interface
     subroutine C_API(api_dimTags_, api_dimTags_n_, ierr_) bind(C, name="gmshModelMeshRemoveConstraints")
       use, intrinsic :: iso_c_binding
-      integer(c_int), dimension(*) :: api_dimTags_
+      integer(c_int), dimension(*), optional :: api_dimTags_
       integer(c_size_t), value, intent(in) :: api_dimTags_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), dimension(:,:), intent(in) :: dimTags
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), dimension(:,:), intent(in), optional :: dimTags
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(dimTags, fsize(dimTags, kind=c_size_t), ierr)
+    call C_API(api_dimTags_=dimTags, api_dimTags_n_=size_gmsh_pair(dimTags), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelMeshRemoveConstraints
 
@@ -4298,16 +4242,16 @@ module gmsh
       integer(c_size_t), value, intent(in) :: api_tags_n_
       integer(c_int), value, intent(in) :: inDim
       integer(c_int), value, intent(in) :: inTag
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: dim
+    integer, intent(in) :: dim
     integer(c_int), dimension(:), intent(in) :: tags
-    integer(c_int), intent(in) :: inDim
-    integer(c_int), intent(in) :: inTag
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in) :: inDim
+    integer, intent(in) :: inTag
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(dim, tags, fsize(tags, kind=c_size_t), inDim, inTag, ierr)
+    call C_API(dim=int(dim, c_int), api_tags_=tags, api_tags_n_=size_gmsh_int(tags), inDim=int(inDim, c_int), inTag=int(inTag, c_int), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelMeshEmbed
 
@@ -4321,14 +4265,14 @@ module gmsh
       integer(c_int), dimension(*) :: api_dimTags_
       integer(c_size_t), value, intent(in) :: api_dimTags_n_
       integer(c_int), value, intent(in) :: dim
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     integer(c_int), dimension(:,:), intent(in) :: dimTags
-    integer(c_int), intent(in) :: dim
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in), optional :: dim
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(dimTags, fsize(dimTags, kind=c_size_t), dim, ierr)
+    call C_API(api_dimTags_=dimTags, api_dimTags_n_=size_gmsh_pair(dimTags), dim=optval_c_int(-1, dim), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelMeshRemoveEmbedded
 
@@ -4342,17 +4286,17 @@ module gmsh
       integer(c_int), value, intent(in) :: tag
       type(c_ptr), intent(out) :: api_dimTags_
       integer(c_size_t), intent(out) :: api_dimTags_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: dim
-    integer(c_int), intent(in) :: tag
+    integer, intent(in) :: dim
+    integer, intent(in) :: tag
     integer(c_int), dimension(:,:), allocatable, intent(out) :: dimTags
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_dimTags_
     integer(c_size_t) :: api_dimTags_n_
-    call C_API(dim, tag, api_dimTags_, api_dimTags_n_, ierr)
+    call C_API(dim=int(dim, c_int), tag=int(tag, c_int), api_dimTags_=api_dimTags_, api_dimTags_n_=api_dimTags_n_, ierr_=ierr)
     ! Post processing
     dimTags = ovectorpair_(api_dimTags_, api_dimTags_n_)
   end subroutine gmshModelMeshGetEmbedded
@@ -4367,15 +4311,15 @@ module gmsh
       integer(c_int), value, intent(in) :: tag
       integer(c_size_t), dimension(*) :: api_ordering_
       integer(c_size_t), value, intent(in) :: api_ordering_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: elementType
-    integer(c_int), intent(in) :: tag
+    integer, intent(in) :: elementType
+    integer, intent(in) :: tag
     integer(c_size_t), dimension(:), intent(in) :: ordering
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(elementType, tag, ordering, fsize(ordering, kind=c_size_t), ierr)
+    call C_API(elementType=int(elementType, c_int), tag=int(tag, c_int), api_ordering_=ordering, api_ordering_n_=size_gmsh_size(ordering), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelMeshReorderElements
 
@@ -4384,12 +4328,12 @@ module gmsh
     interface
     subroutine C_API(ierr_) bind(C, name="gmshModelMeshRenumberNodes")
       use, intrinsic :: iso_c_binding
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(ierr)
+    call C_API(ierr_=ierr)
     ! Post processing
   end subroutine gmshModelMeshRenumberNodes
 
@@ -4398,12 +4342,12 @@ module gmsh
     interface
     subroutine C_API(ierr_) bind(C, name="gmshModelMeshRenumberElements")
       use, intrinsic :: iso_c_binding
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(ierr)
+    call C_API(ierr_=ierr)
     ! Post processing
   end subroutine gmshModelMeshRenumberElements
 
@@ -4426,16 +4370,16 @@ module gmsh
       integer(c_size_t), value, intent(in) :: api_tagsMaster_n_
       real(c_double), dimension(*) :: api_affineTransform_
       integer(c_size_t), value, intent(in) :: api_affineTransform_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: dim
+    integer, intent(in) :: dim
     integer(c_int), dimension(:), intent(in) :: tags
     integer(c_int), dimension(:), intent(in) :: tagsMaster
     real(c_double), dimension(:), intent(in) :: affineTransform
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(dim, tags, fsize(tags, kind=c_size_t), tagsMaster, fsize(tagsMaster, kind=c_size_t), affineTransform, fsize(affineTransform, kind=c_size_t), ierr)
+    call C_API(dim=int(dim, c_int), api_tags_=tags, api_tags_n_=size_gmsh_int(tags), api_tagsMaster_=tagsMaster, api_tagsMaster_n_=size_gmsh_int(tagsMaster), api_affineTransform_=affineTransform, api_affineTransform_n_=size_gmsh_double(affineTransform), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelMeshSetPeriodic
 
@@ -4450,17 +4394,17 @@ module gmsh
       integer(c_size_t), value, intent(in) :: api_tags_n_
       type(c_ptr), intent(out) :: api_tagMaster_
       integer(c_size_t), intent(out) :: api_tagMaster_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: dim
+    integer, intent(in) :: dim
     integer(c_int), dimension(:), intent(in) :: tags
     integer(c_int), dimension(:), allocatable, intent(out) :: tagMaster
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_tagMaster_
     integer(c_size_t) :: api_tagMaster_n_
-    call C_API(dim, tags, fsize(tags, kind=c_size_t), api_tagMaster_, api_tagMaster_n_, ierr)
+    call C_API(dim=int(dim, c_int), api_tags_=tags, api_tags_n_=size_gmsh_int(tags), api_tagMaster_=api_tagMaster_, api_tagMaster_n_=api_tagMaster_n_, ierr_=ierr)
     ! Post processing
     tagMaster = ovectorint_(api_tagMaster_, api_tagMaster_n_)
   end subroutine gmshModelMeshGetPeriodic
@@ -4484,17 +4428,17 @@ module gmsh
       type(c_ptr), intent(out) :: api_affineTransform_
       integer(c_size_t) :: api_affineTransform_n_
       integer(c_int), value, intent(in) :: includeHighOrderNodes
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: dim
-    integer(c_int), intent(in) :: tag
+    integer, intent(in) :: dim
+    integer, intent(in) :: tag
     integer(c_int) :: tagMaster
     integer(c_size_t), dimension(:), allocatable, intent(out) :: nodeTags
     integer(c_size_t), dimension(:), allocatable, intent(out) :: nodeTagsMaster
     real(c_double), dimension(:), allocatable, intent(out) :: affineTransform
-    integer(c_int), intent(in) :: includeHighOrderNodes
-    integer(c_int), intent(out) :: ierr
+    logical, intent(in), optional :: includeHighOrderNodes
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_nodeTags_
     integer(c_size_t) :: api_nodeTags_n_
@@ -4502,7 +4446,7 @@ module gmsh
     integer(c_size_t) :: api_nodeTagsMaster_n_
     type(c_ptr) :: api_affineTransform_
     integer(c_size_t) :: api_affineTransform_n_
-    call C_API(dim, tag, tagMaster, api_nodeTags_, api_nodeTags_n_, api_nodeTagsMaster_, api_nodeTagsMaster_n_, api_affineTransform_, api_affineTransform_n_, includeHighOrderNodes, ierr)
+    call C_API(dim=int(dim, c_int), tag=int(tag, c_int), tagMaster=tagMaster, api_nodeTags_=api_nodeTags_, api_nodeTags_n_=api_nodeTags_n_, api_nodeTagsMaster_=api_nodeTagsMaster_, api_nodeTagsMaster_n_=api_nodeTagsMaster_n_, api_affineTransform_=api_affineTransform_, api_affineTransform_n_=api_affineTransform_n_, includeHighOrderNodes=optval_c_bool(.false., includeHighOrderNodes), ierr_=ierr)
     ! Post processing
     nodeTags = ovectorsize_(api_nodeTags_, api_nodeTags_n_)
     nodeTagsMaster = ovectorsize_(api_nodeTagsMaster_, api_nodeTagsMaster_n_)
@@ -4536,12 +4480,12 @@ module gmsh
       type(c_ptr), intent(out) :: api_coordMaster_
       integer(c_size_t) :: api_coordMaster_n_
       integer(c_int), value, intent(in) :: returnCoord
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: elementType
+    integer, intent(in) :: elementType
     character(len=*), intent(in) :: functionSpaceType
-    integer(c_int), intent(in) :: tag
+    integer, intent(in) :: tag
     integer(c_int) :: tagMaster
     integer(c_int), dimension(:), allocatable, intent(out) :: typeKeys
     integer(c_int), dimension(:), allocatable, intent(out) :: typeKeysMaster
@@ -4549,10 +4493,9 @@ module gmsh
     integer(c_size_t), dimension(:), allocatable, intent(out) :: entityKeysMaster
     real(c_double), dimension(:), allocatable, intent(out) :: coord
     real(c_double), dimension(:), allocatable, intent(out) :: coordMaster
-    integer(c_int), intent(in) :: returnCoord
-    integer(c_int), intent(out) :: ierr
+    logical, intent(in), optional :: returnCoord
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    character(len=:, kind=c_char), allocatable :: functionSpaceType_c
     type(c_ptr) :: api_typeKeys_
     integer(c_size_t) :: api_typeKeys_n_
     type(c_ptr) :: api_typeKeysMaster_
@@ -4565,8 +4508,7 @@ module gmsh
     integer(c_size_t) :: api_coord_n_
     type(c_ptr) :: api_coordMaster_
     integer(c_size_t) :: api_coordMaster_n_
-    functionSpaceType_c = istring_(functionSpaceType)
-    call C_API(elementType, functionSpaceType_c, tag, tagMaster, api_typeKeys_, api_typeKeys_n_, api_typeKeysMaster_, api_typeKeysMaster_n_, api_entityKeys_, api_entityKeys_n_, api_entityKeysMaster_, api_entityKeysMaster_n_, api_coord_, api_coord_n_, api_coordMaster_, api_coordMaster_n_, returnCoord, ierr)
+    call C_API(elementType=int(elementType, c_int), functionSpaceType=istring_(functionSpaceType), tag=int(tag, c_int), tagMaster=tagMaster, api_typeKeys_=api_typeKeys_, api_typeKeys_n_=api_typeKeys_n_, api_typeKeysMaster_=api_typeKeysMaster_, api_typeKeysMaster_n_=api_typeKeysMaster_n_, api_entityKeys_=api_entityKeys_, api_entityKeys_n_=api_entityKeys_n_, api_entityKeysMaster_=api_entityKeysMaster_, api_entityKeysMaster_n_=api_entityKeysMaster_n_, api_coord_=api_coord_, api_coord_n_=api_coord_n_, api_coordMaster_=api_coordMaster_, api_coordMaster_n_=api_coordMaster_n_, returnCoord=optval_c_bool(.true., returnCoord), ierr_=ierr)
     ! Post processing
     typeKeys = ovectorint_(api_typeKeys_, api_typeKeys_n_)
     typeKeysMaster = ovectorint_(api_typeKeysMaster_, api_typeKeysMaster_n_)
@@ -4581,12 +4523,12 @@ module gmsh
     interface
     subroutine C_API(ierr_) bind(C, name="gmshModelMeshImportStl")
       use, intrinsic :: iso_c_binding
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(ierr)
+    call C_API(ierr_=ierr)
     ! Post processing
   end subroutine gmshModelMeshImportStl
 
@@ -4598,18 +4540,18 @@ module gmsh
       use, intrinsic :: iso_c_binding
       type(c_ptr), intent(out) :: api_tags_
       integer(c_size_t), intent(out) :: api_tags_n_
-      integer(c_int), dimension(*) :: api_dimTags_
+      integer(c_int), dimension(*), optional :: api_dimTags_
       integer(c_size_t), value, intent(in) :: api_dimTags_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     integer(c_size_t), dimension(:), allocatable, intent(out) :: tags
-    integer(c_int), dimension(:,:), intent(in) :: dimTags
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), dimension(:,:), intent(in), optional :: dimTags
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_tags_
     integer(c_size_t) :: api_tags_n_
-    call C_API(api_tags_, api_tags_n_, dimTags, fsize(dimTags, kind=c_size_t), ierr)
+    call C_API(api_tags_=api_tags_, api_tags_n_=api_tags_n_, api_dimTags_=dimTags, api_dimTags_n_=size_gmsh_pair(dimTags), ierr_=ierr)
     ! Post processing
     tags = ovectorsize_(api_tags_, api_tags_n_)
   end subroutine gmshModelMeshGetDuplicateNodes
@@ -4620,15 +4562,15 @@ module gmsh
     interface
     subroutine C_API(api_dimTags_, api_dimTags_n_, ierr_) bind(C, name="gmshModelMeshRemoveDuplicateNodes")
       use, intrinsic :: iso_c_binding
-      integer(c_int), dimension(*) :: api_dimTags_
+      integer(c_int), dimension(*), optional :: api_dimTags_
       integer(c_size_t), value, intent(in) :: api_dimTags_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), dimension(:,:), intent(in) :: dimTags
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), dimension(:,:), intent(in), optional :: dimTags
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(dimTags, fsize(dimTags, kind=c_size_t), ierr)
+    call C_API(api_dimTags_=dimTags, api_dimTags_n_=size_gmsh_pair(dimTags), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelMeshRemoveDuplicateNodes
 
@@ -4639,15 +4581,15 @@ module gmsh
     interface
     subroutine C_API(api_dimTags_, api_dimTags_n_, ierr_) bind(C, name="gmshModelMeshRemoveDuplicateElements")
       use, intrinsic :: iso_c_binding
-      integer(c_int), dimension(*) :: api_dimTags_
+      integer(c_int), dimension(*), optional :: api_dimTags_
       integer(c_size_t), value, intent(in) :: api_dimTags_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), dimension(:,:), intent(in) :: dimTags
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), dimension(:,:), intent(in), optional :: dimTags
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(dimTags, fsize(dimTags, kind=c_size_t), ierr)
+    call C_API(api_dimTags_=dimTags, api_dimTags_n_=size_gmsh_pair(dimTags), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelMeshRemoveDuplicateElements
 
@@ -4659,14 +4601,14 @@ module gmsh
       use, intrinsic :: iso_c_binding
       real(c_double), value, intent(in) :: quality
       integer(c_int), value, intent(in) :: tag
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    real(c_double), intent(in) :: quality
-    integer(c_int), intent(in) :: tag
-    integer(c_int), intent(out) :: ierr
+    real(c_double), intent(in), optional :: quality
+    integer, intent(in), optional :: tag
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(quality, tag, ierr)
+    call C_API(quality=optval_c_double(1., quality), tag=optval_c_int(-1, tag), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelMeshSplitQuadrangles
 
@@ -4678,14 +4620,14 @@ module gmsh
       integer(c_size_t), dimension(*) :: api_elementTags_
       integer(c_size_t), value, intent(in) :: api_elementTags_n_
       integer(c_int), value, intent(in) :: value
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     integer(c_size_t), dimension(:), intent(in) :: elementTags
-    integer(c_int), intent(in) :: value
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in) :: value
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(elementTags, fsize(elementTags, kind=c_size_t), value, ierr)
+    call C_API(api_elementTags_=elementTags, api_elementTags_n_=size_gmsh_size(elementTags), value=int(value, c_int), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelMeshSetVisibility
 
@@ -4706,17 +4648,17 @@ module gmsh
       integer(c_int), value, intent(in) :: forReparametrization
       real(c_double), value, intent(in) :: curveAngle
       integer(c_int), value, intent(in) :: exportDiscrete
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     real(c_double), intent(in) :: angle
-    integer(c_int), intent(in) :: boundary
-    integer(c_int), intent(in) :: forReparametrization
-    real(c_double), intent(in) :: curveAngle
-    integer(c_int), intent(in) :: exportDiscrete
-    integer(c_int), intent(out) :: ierr
+    logical, intent(in), optional :: boundary
+    logical, intent(in), optional :: forReparametrization
+    real(c_double), intent(in), optional :: curveAngle
+    logical, intent(in), optional :: exportDiscrete
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(angle, boundary, forReparametrization, curveAngle, exportDiscrete, ierr)
+    call C_API(angle=real(angle, c_double), boundary=optval_c_bool(.true., boundary), forReparametrization=optval_c_bool(.false., forReparametrization), curveAngle=optval_c_double(M_PI, curveAngle), exportDiscrete=optval_c_bool(.true., exportDiscrete), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelMeshClassifySurfaces
 
@@ -4729,15 +4671,15 @@ module gmsh
     interface
     subroutine C_API(api_dimTags_, api_dimTags_n_, ierr_) bind(C, name="gmshModelMeshCreateGeometry")
       use, intrinsic :: iso_c_binding
-      integer(c_int), dimension(*) :: api_dimTags_
+      integer(c_int), dimension(*), optional :: api_dimTags_
       integer(c_size_t), value, intent(in) :: api_dimTags_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), dimension(:,:), intent(in) :: dimTags
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), dimension(:,:), intent(in), optional :: dimTags
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(dimTags, fsize(dimTags, kind=c_size_t), ierr)
+    call C_API(api_dimTags_=dimTags, api_dimTags_n_=size_gmsh_pair(dimTags), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelMeshCreateGeometry
 
@@ -4753,14 +4695,14 @@ module gmsh
       use, intrinsic :: iso_c_binding
       integer(c_int), value, intent(in) :: makeSimplyConnected
       integer(c_int), value, intent(in) :: exportDiscrete
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: makeSimplyConnected
-    integer(c_int), intent(in) :: exportDiscrete
-    integer(c_int), intent(out) :: ierr
+    logical, intent(in), optional :: makeSimplyConnected
+    logical, intent(in), optional :: exportDiscrete
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(makeSimplyConnected, exportDiscrete, ierr)
+    call C_API(makeSimplyConnected=optval_c_bool(.true., makeSimplyConnected), exportDiscrete=optval_c_bool(.true., exportDiscrete), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelMeshCreateTopology
 
@@ -4779,25 +4721,23 @@ module gmsh
     interface
     subroutine C_API(type, api_domainTags_, api_domainTags_n_, api_subdomainTags_, api_subdomainTags_n_, api_dims_, api_dims_n_, ierr_) bind(C, name="gmshModelMeshAddHomologyRequest")
       use, intrinsic :: iso_c_binding
-      character(len=1, kind=c_char), dimension(*), intent(in) :: type
-      integer(c_int), dimension(*) :: api_domainTags_
+      character(len=1, kind=c_char), dimension(*), intent(in), optional :: type
+      integer(c_int), dimension(*), optional :: api_domainTags_
       integer(c_size_t), value, intent(in) :: api_domainTags_n_
-      integer(c_int), dimension(*) :: api_subdomainTags_
+      integer(c_int), dimension(*), optional :: api_subdomainTags_
       integer(c_size_t), value, intent(in) :: api_subdomainTags_n_
-      integer(c_int), dimension(*) :: api_dims_
+      integer(c_int), dimension(*), optional :: api_dims_
       integer(c_size_t), value, intent(in) :: api_dims_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    character(len=*), intent(in) :: type
-    integer(c_int), dimension(:), intent(in) :: domainTags
-    integer(c_int), dimension(:), intent(in) :: subdomainTags
-    integer(c_int), dimension(:), intent(in) :: dims
-    integer(c_int), intent(out) :: ierr
+    character(len=*), intent(in), optional :: type
+    integer(c_int), dimension(:), intent(in), optional :: domainTags
+    integer(c_int), dimension(:), intent(in), optional :: subdomainTags
+    integer(c_int), dimension(:), intent(in), optional :: dims
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    character(len=:, kind=c_char), allocatable :: type_c
-    type_c = istring_(type)
-    call C_API(type_c, domainTags, fsize(domainTags, kind=c_size_t), subdomainTags, fsize(subdomainTags, kind=c_size_t), dims, fsize(dims, kind=c_size_t), ierr)
+    call C_API(type=istring_(optval_c_str("Homology", type)), api_domainTags_=domainTags, api_domainTags_n_=size_gmsh_int(domainTags), api_subdomainTags_=subdomainTags, api_subdomainTags_n_=size_gmsh_int(subdomainTags), api_dims_=dims, api_dims_n_=size_gmsh_int(dims), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelMeshAddHomologyRequest
 
@@ -4806,12 +4746,12 @@ module gmsh
     interface
     subroutine C_API(ierr_) bind(C, name="gmshModelMeshClearHomologyRequests")
       use, intrinsic :: iso_c_binding
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(ierr)
+    call C_API(ierr_=ierr)
     ! Post processing
   end subroutine gmshModelMeshClearHomologyRequests
 
@@ -4820,12 +4760,12 @@ module gmsh
     interface
     subroutine C_API(ierr_) bind(C, name="gmshModelMeshComputeHomology")
       use, intrinsic :: iso_c_binding
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(ierr)
+    call C_API(ierr_=ierr)
     ! Post processing
   end subroutine gmshModelMeshComputeHomology
 
@@ -4838,15 +4778,15 @@ module gmsh
       use, intrinsic :: iso_c_binding
       type(c_ptr), intent(out) :: api_viewTags_
       integer(c_size_t), intent(out) :: api_viewTags_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     integer(c_int), dimension(:), allocatable, intent(out) :: viewTags
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_viewTags_
     integer(c_size_t) :: api_viewTags_n_
-    call C_API(api_viewTags_, api_viewTags_n_, ierr)
+    call C_API(api_viewTags_=api_viewTags_, api_viewTags_n_=api_viewTags_n_, ierr_=ierr)
     ! Post processing
     viewTags = ovectorint_(api_viewTags_, api_viewTags_n_)
   end subroutine gmshModelMeshComputeCrossField
@@ -4862,16 +4802,16 @@ module gmsh
       integer(c_size_t), value, intent(in) :: api_coord_n_
       type(c_ptr), intent(out) :: api_tri_
       integer(c_size_t), intent(out) :: api_tri_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     real(c_double), dimension(:), intent(in) :: coord
     integer(c_size_t), dimension(:), allocatable, intent(out) :: tri
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_tri_
     integer(c_size_t) :: api_tri_n_
-    call C_API(coord, fsize(coord, kind=c_size_t), api_tri_, api_tri_n_, ierr)
+    call C_API(api_coord_=coord, api_coord_n_=size_gmsh_double(coord), api_tri_=api_tri_, api_tri_n_=api_tri_n_, ierr_=ierr)
     ! Post processing
     tri = ovectorsize_(api_tri_, api_tri_n_)
   end subroutine gmshModelMeshTriangulate
@@ -4887,16 +4827,16 @@ module gmsh
       integer(c_size_t), value, intent(in) :: api_coord_n_
       type(c_ptr), intent(out) :: api_tetra_
       integer(c_size_t), intent(out) :: api_tetra_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     real(c_double), dimension(:), intent(in) :: coord
     integer(c_size_t), dimension(:), allocatable, intent(out) :: tetra
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_tetra_
     integer(c_size_t) :: api_tetra_n_
-    call C_API(coord, fsize(coord, kind=c_size_t), api_tetra_, api_tetra_n_, ierr)
+    call C_API(api_coord_=coord, api_coord_n_=size_gmsh_double(coord), api_tetra_=api_tetra_, api_tetra_n_=api_tetra_n_, ierr_=ierr)
     ! Post processing
     tetra = ovectorsize_(api_tetra_, api_tetra_n_)
   end subroutine gmshModelMeshTetrahedralize
@@ -4911,17 +4851,15 @@ module gmsh
       integer(c_int) :: C_API
       character(len=1, kind=c_char), dimension(*), intent(in) :: fieldType
       integer(c_int), value, intent(in) :: tag
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end function C_API
     end interface
     integer(c_int) :: gmshModelMeshFieldAdd
     character(len=*), intent(in) :: fieldType
-    integer(c_int), intent(in) :: tag
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in), optional :: tag
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    character(len=:, kind=c_char), allocatable :: fieldType_c
-    fieldType_c = istring_(fieldType)
-    gmshModelMeshFieldAdd = C_API(fieldType_c, tag, ierr)
+    gmshModelMeshFieldAdd = C_API(fieldType=istring_(fieldType), tag=optval_c_int(-1, tag), ierr_=ierr)
     ! Post processing
   end function gmshModelMeshFieldAdd
 
@@ -4931,13 +4869,13 @@ module gmsh
     subroutine C_API(tag, ierr_) bind(C, name="gmshModelMeshFieldRemove")
       use, intrinsic :: iso_c_binding
       integer(c_int), value, intent(in) :: tag
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: tag
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in) :: tag
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(tag, ierr)
+    call C_API(tag=int(tag, c_int), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelMeshFieldRemove
 
@@ -4948,15 +4886,15 @@ module gmsh
       use, intrinsic :: iso_c_binding
       type(c_ptr), intent(out) :: api_tags_
       integer(c_size_t), intent(out) :: api_tags_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     integer(c_int), dimension(:), allocatable, intent(out) :: tags
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_tags_
     integer(c_size_t) :: api_tags_n_
-    call C_API(api_tags_, api_tags_n_, ierr)
+    call C_API(api_tags_=api_tags_, api_tags_n_=api_tags_n_, ierr_=ierr)
     ! Post processing
     tags = ovectorint_(api_tags_, api_tags_n_)
   end subroutine gmshModelMeshFieldList
@@ -4968,14 +4906,14 @@ module gmsh
       use, intrinsic :: iso_c_binding
       integer(c_int), value, intent(in) :: tag
       character(kind=c_char), dimension(*) :: api_fileType_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: tag
+    integer, intent(in) :: tag
     character(len=:), allocatable, intent(out) :: fileType
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(tag, fileType, ierr)
+    call C_API(tag=int(tag, c_int), api_fileType_=fileType, ierr_=ierr)
     ! Post processing
   end subroutine gmshModelMeshFieldGetType
 
@@ -4987,17 +4925,15 @@ module gmsh
       integer(c_int), value, intent(in) :: tag
       character(len=1, kind=c_char), dimension(*), intent(in) :: option
       real(c_double), value, intent(in) :: value
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: tag
+    integer, intent(in) :: tag
     character(len=*), intent(in) :: option
     real(c_double), intent(in) :: value
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    character(len=:, kind=c_char), allocatable :: option_c
-    option_c = istring_(option)
-    call C_API(tag, option_c, value, ierr)
+    call C_API(tag=int(tag, c_int), option=istring_(option), value=real(value, c_double), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelMeshFieldSetNumber
 
@@ -5009,17 +4945,15 @@ module gmsh
       integer(c_int), value, intent(in) :: tag
       character(len=1, kind=c_char), dimension(*), intent(in) :: option
       real(c_double) :: value
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: tag
+    integer, intent(in) :: tag
     character(len=*), intent(in) :: option
     real(c_double) :: value
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    character(len=:, kind=c_char), allocatable :: option_c
-    option_c = istring_(option)
-    call C_API(tag, option_c, value, ierr)
+    call C_API(tag=int(tag, c_int), option=istring_(option), value=value, ierr_=ierr)
     ! Post processing
   end subroutine gmshModelMeshFieldGetNumber
 
@@ -5031,19 +4965,15 @@ module gmsh
       integer(c_int), value, intent(in) :: tag
       character(len=1, kind=c_char), dimension(*), intent(in) :: option
       character(len=1, kind=c_char), dimension(*), intent(in) :: value
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: tag
+    integer, intent(in) :: tag
     character(len=*), intent(in) :: option
     character(len=*), intent(in) :: value
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    character(len=:, kind=c_char), allocatable :: option_c
-    character(len=:, kind=c_char), allocatable :: value_c
-    option_c = istring_(option)
-    value_c = istring_(value)
-    call C_API(tag, option_c, value_c, ierr)
+    call C_API(tag=int(tag, c_int), option=istring_(option), value=istring_(value), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelMeshFieldSetString
 
@@ -5055,17 +4985,15 @@ module gmsh
       integer(c_int), value, intent(in) :: tag
       character(len=1, kind=c_char), dimension(*), intent(in) :: option
       character(kind=c_char), dimension(*) :: api_value_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: tag
+    integer, intent(in) :: tag
     character(len=*), intent(in) :: option
     character(len=:), allocatable, intent(out) :: value
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    character(len=:, kind=c_char), allocatable :: option_c
-    option_c = istring_(option)
-    call C_API(tag, option_c, value, ierr)
+    call C_API(tag=int(tag, c_int), option=istring_(option), api_value_=value, ierr_=ierr)
     ! Post processing
   end subroutine gmshModelMeshFieldGetString
 
@@ -5078,17 +5006,15 @@ module gmsh
       character(len=1, kind=c_char), dimension(*), intent(in) :: option
       real(c_double), dimension(*) :: api_value_
       integer(c_size_t), value, intent(in) :: api_value_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: tag
+    integer, intent(in) :: tag
     character(len=*), intent(in) :: option
     real(c_double), dimension(:), intent(in) :: value
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    character(len=:, kind=c_char), allocatable :: option_c
-    option_c = istring_(option)
-    call C_API(tag, option_c, value, fsize(value, kind=c_size_t), ierr)
+    call C_API(tag=int(tag, c_int), option=istring_(option), api_value_=value, api_value_n_=size_gmsh_double(value), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelMeshFieldSetNumbers
 
@@ -5101,19 +5027,17 @@ module gmsh
       character(len=1, kind=c_char), dimension(*), intent(in) :: option
       type(c_ptr), intent(out) :: api_value_
       integer(c_size_t) :: api_value_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: tag
+    integer, intent(in) :: tag
     character(len=*), intent(in) :: option
     real(c_double), dimension(:), allocatable, intent(out) :: value
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    character(len=:, kind=c_char), allocatable :: option_c
     type(c_ptr) :: api_value_
     integer(c_size_t) :: api_value_n_
-    option_c = istring_(option)
-    call C_API(tag, option_c, api_value_, api_value_n_, ierr)
+    call C_API(tag=int(tag, c_int), option=istring_(option), api_value_=api_value_, api_value_n_=api_value_n_, ierr_=ierr)
     ! Post processing
     value = ovectordouble_(api_value_, api_value_n_)
   end subroutine gmshModelMeshFieldGetNumbers
@@ -5124,13 +5048,13 @@ module gmsh
     subroutine C_API(tag, ierr_) bind(C, name="gmshModelMeshFieldSetAsBackgroundMesh")
       use, intrinsic :: iso_c_binding
       integer(c_int), value, intent(in) :: tag
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: tag
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in) :: tag
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(tag, ierr)
+    call C_API(tag=int(tag, c_int), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelMeshFieldSetAsBackgroundMesh
 
@@ -5140,13 +5064,13 @@ module gmsh
     subroutine C_API(tag, ierr_) bind(C, name="gmshModelMeshFieldSetAsBoundaryLayer")
       use, intrinsic :: iso_c_binding
       integer(c_int), value, intent(in) :: tag
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: tag
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in) :: tag
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(tag, ierr)
+    call C_API(tag=int(tag, c_int), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelMeshFieldSetAsBoundaryLayer
 
@@ -5166,18 +5090,18 @@ module gmsh
       real(c_double), value, intent(in) :: z
       real(c_double), value, intent(in) :: meshSize
       integer(c_int), value, intent(in) :: tag
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end function C_API
     end interface
     integer(c_int) :: gmshModelGeoAddPoint
     real(c_double), intent(in) :: x
     real(c_double), intent(in) :: y
     real(c_double), intent(in) :: z
-    real(c_double), intent(in) :: meshSize
-    integer(c_int), intent(in) :: tag
-    integer(c_int), intent(out) :: ierr
+    real(c_double), intent(in), optional :: meshSize
+    integer, intent(in), optional :: tag
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    gmshModelGeoAddPoint = C_API(x, y, z, meshSize, tag, ierr)
+    gmshModelGeoAddPoint = C_API(x=real(x, c_double), y=real(y, c_double), z=real(z, c_double), meshSize=optval_c_double(0., meshSize), tag=optval_c_int(-1, tag), ierr_=ierr)
     ! Post processing
   end function gmshModelGeoAddPoint
 
@@ -5193,16 +5117,16 @@ module gmsh
       integer(c_int), value, intent(in) :: startTag
       integer(c_int), value, intent(in) :: endTag
       integer(c_int), value, intent(in) :: tag
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end function C_API
     end interface
     integer(c_int) :: gmshModelGeoAddLine
-    integer(c_int), intent(in) :: startTag
-    integer(c_int), intent(in) :: endTag
-    integer(c_int), intent(in) :: tag
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in) :: startTag
+    integer, intent(in) :: endTag
+    integer, intent(in), optional :: tag
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    gmshModelGeoAddLine = C_API(startTag, endTag, tag, ierr)
+    gmshModelGeoAddLine = C_API(startTag=int(startTag, c_int), endTag=int(endTag, c_int), tag=optval_c_int(-1, tag), ierr_=ierr)
     ! Post processing
   end function gmshModelGeoAddLine
 
@@ -5224,20 +5148,20 @@ module gmsh
       real(c_double), value, intent(in) :: nx
       real(c_double), value, intent(in) :: ny
       real(c_double), value, intent(in) :: nz
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end function C_API
     end interface
     integer(c_int) :: gmshModelGeoAddCircleArc
-    integer(c_int), intent(in) :: startTag
-    integer(c_int), intent(in) :: centerTag
-    integer(c_int), intent(in) :: endTag
-    integer(c_int), intent(in) :: tag
-    real(c_double), intent(in) :: nx
-    real(c_double), intent(in) :: ny
-    real(c_double), intent(in) :: nz
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in) :: startTag
+    integer, intent(in) :: centerTag
+    integer, intent(in) :: endTag
+    integer, intent(in), optional :: tag
+    real(c_double), intent(in), optional :: nx
+    real(c_double), intent(in), optional :: ny
+    real(c_double), intent(in), optional :: nz
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    gmshModelGeoAddCircleArc = C_API(startTag, centerTag, endTag, tag, nx, ny, nz, ierr)
+    gmshModelGeoAddCircleArc = C_API(startTag=int(startTag, c_int), centerTag=int(centerTag, c_int), endTag=int(endTag, c_int), tag=optval_c_int(-1, tag), nx=optval_c_double(0., nx), ny=optval_c_double(0., ny), nz=optval_c_double(0., nz), ierr_=ierr)
     ! Post processing
   end function gmshModelGeoAddCircleArc
 
@@ -5260,21 +5184,21 @@ module gmsh
       real(c_double), value, intent(in) :: nx
       real(c_double), value, intent(in) :: ny
       real(c_double), value, intent(in) :: nz
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end function C_API
     end interface
     integer(c_int) :: gmshModelGeoAddEllipseArc
-    integer(c_int), intent(in) :: startTag
-    integer(c_int), intent(in) :: centerTag
-    integer(c_int), intent(in) :: majorTag
-    integer(c_int), intent(in) :: endTag
-    integer(c_int), intent(in) :: tag
-    real(c_double), intent(in) :: nx
-    real(c_double), intent(in) :: ny
-    real(c_double), intent(in) :: nz
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in) :: startTag
+    integer, intent(in) :: centerTag
+    integer, intent(in) :: majorTag
+    integer, intent(in) :: endTag
+    integer, intent(in), optional :: tag
+    real(c_double), intent(in), optional :: nx
+    real(c_double), intent(in), optional :: ny
+    real(c_double), intent(in), optional :: nz
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    gmshModelGeoAddEllipseArc = C_API(startTag, centerTag, majorTag, endTag, tag, nx, ny, nz, ierr)
+    gmshModelGeoAddEllipseArc = C_API(startTag=int(startTag, c_int), centerTag=int(centerTag, c_int), majorTag=int(majorTag, c_int), endTag=int(endTag, c_int), tag=optval_c_int(-1, tag), nx=optval_c_double(0., nx), ny=optval_c_double(0., ny), nz=optval_c_double(0., nz), ierr_=ierr)
     ! Post processing
   end function gmshModelGeoAddEllipseArc
 
@@ -5291,15 +5215,15 @@ module gmsh
       integer(c_int), dimension(*) :: api_pointTags_
       integer(c_size_t), value, intent(in) :: api_pointTags_n_
       integer(c_int), value, intent(in) :: tag
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end function C_API
     end interface
     integer(c_int) :: gmshModelGeoAddSpline
     integer(c_int), dimension(:), intent(in) :: pointTags
-    integer(c_int), intent(in) :: tag
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in), optional :: tag
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    gmshModelGeoAddSpline = C_API(pointTags, fsize(pointTags, kind=c_size_t), tag, ierr)
+    gmshModelGeoAddSpline = C_API(api_pointTags_=pointTags, api_pointTags_n_=size_gmsh_int(pointTags), tag=optval_c_int(-1, tag), ierr_=ierr)
     ! Post processing
   end function gmshModelGeoAddSpline
 
@@ -5316,15 +5240,15 @@ module gmsh
       integer(c_int), dimension(*) :: api_pointTags_
       integer(c_size_t), value, intent(in) :: api_pointTags_n_
       integer(c_int), value, intent(in) :: tag
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end function C_API
     end interface
     integer(c_int) :: gmshModelGeoAddBSpline
     integer(c_int), dimension(:), intent(in) :: pointTags
-    integer(c_int), intent(in) :: tag
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in), optional :: tag
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    gmshModelGeoAddBSpline = C_API(pointTags, fsize(pointTags, kind=c_size_t), tag, ierr)
+    gmshModelGeoAddBSpline = C_API(api_pointTags_=pointTags, api_pointTags_n_=size_gmsh_int(pointTags), tag=optval_c_int(-1, tag), ierr_=ierr)
     ! Post processing
   end function gmshModelGeoAddBSpline
 
@@ -5339,15 +5263,15 @@ module gmsh
       integer(c_int), dimension(*) :: api_pointTags_
       integer(c_size_t), value, intent(in) :: api_pointTags_n_
       integer(c_int), value, intent(in) :: tag
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end function C_API
     end interface
     integer(c_int) :: gmshModelGeoAddBezier
     integer(c_int), dimension(:), intent(in) :: pointTags
-    integer(c_int), intent(in) :: tag
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in), optional :: tag
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    gmshModelGeoAddBezier = C_API(pointTags, fsize(pointTags, kind=c_size_t), tag, ierr)
+    gmshModelGeoAddBezier = C_API(api_pointTags_=pointTags, api_pointTags_n_=size_gmsh_int(pointTags), tag=optval_c_int(-1, tag), ierr_=ierr)
     ! Post processing
   end function gmshModelGeoAddBezier
 
@@ -5363,15 +5287,15 @@ module gmsh
       integer(c_int), dimension(*) :: api_pointTags_
       integer(c_size_t), value, intent(in) :: api_pointTags_n_
       integer(c_int), value, intent(in) :: tag
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end function C_API
     end interface
     integer(c_int) :: gmshModelGeoAddPolyline
     integer(c_int), dimension(:), intent(in) :: pointTags
-    integer(c_int), intent(in) :: tag
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in), optional :: tag
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    gmshModelGeoAddPolyline = C_API(pointTags, fsize(pointTags, kind=c_size_t), tag, ierr)
+    gmshModelGeoAddPolyline = C_API(api_pointTags_=pointTags, api_pointTags_n_=size_gmsh_int(pointTags), tag=optval_c_int(-1, tag), ierr_=ierr)
     ! Post processing
   end function gmshModelGeoAddPolyline
 
@@ -5389,16 +5313,16 @@ module gmsh
       integer(c_size_t), value, intent(in) :: api_curveTags_n_
       integer(c_int), value, intent(in) :: numIntervals
       integer(c_int), value, intent(in) :: tag
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end function C_API
     end interface
     integer(c_int) :: gmshModelGeoAddCompoundSpline
     integer(c_int), dimension(:), intent(in) :: curveTags
-    integer(c_int), intent(in) :: numIntervals
-    integer(c_int), intent(in) :: tag
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in), optional :: numIntervals
+    integer, intent(in), optional :: tag
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    gmshModelGeoAddCompoundSpline = C_API(curveTags, fsize(curveTags, kind=c_size_t), numIntervals, tag, ierr)
+    gmshModelGeoAddCompoundSpline = C_API(api_curveTags_=curveTags, api_curveTags_n_=size_gmsh_int(curveTags), numIntervals=optval_c_int(5, numIntervals), tag=optval_c_int(-1, tag), ierr_=ierr)
     ! Post processing
   end function gmshModelGeoAddCompoundSpline
 
@@ -5416,16 +5340,16 @@ module gmsh
       integer(c_size_t), value, intent(in) :: api_curveTags_n_
       integer(c_int), value, intent(in) :: numIntervals
       integer(c_int), value, intent(in) :: tag
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end function C_API
     end interface
     integer(c_int) :: gmshModelGeoAddCompoundBSpline
     integer(c_int), dimension(:), intent(in) :: curveTags
-    integer(c_int), intent(in) :: numIntervals
-    integer(c_int), intent(in) :: tag
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in), optional :: numIntervals
+    integer, intent(in), optional :: tag
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    gmshModelGeoAddCompoundBSpline = C_API(curveTags, fsize(curveTags, kind=c_size_t), numIntervals, tag, ierr)
+    gmshModelGeoAddCompoundBSpline = C_API(api_curveTags_=curveTags, api_curveTags_n_=size_gmsh_int(curveTags), numIntervals=optval_c_int(20, numIntervals), tag=optval_c_int(-1, tag), ierr_=ierr)
     ! Post processing
   end function gmshModelGeoAddCompoundBSpline
 
@@ -5445,16 +5369,16 @@ module gmsh
       integer(c_size_t), value, intent(in) :: api_curveTags_n_
       integer(c_int), value, intent(in) :: tag
       integer(c_int), value, intent(in) :: reorient
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end function C_API
     end interface
     integer(c_int) :: gmshModelGeoAddCurveLoop
     integer(c_int), dimension(:), intent(in) :: curveTags
-    integer(c_int), intent(in) :: tag
-    integer(c_int), intent(in) :: reorient
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in), optional :: tag
+    logical, intent(in), optional :: reorient
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    gmshModelGeoAddCurveLoop = C_API(curveTags, fsize(curveTags, kind=c_size_t), tag, reorient, ierr)
+    gmshModelGeoAddCurveLoop = C_API(api_curveTags_=curveTags, api_curveTags_n_=size_gmsh_int(curveTags), tag=optval_c_int(-1, tag), reorient=optval_c_bool(.false., reorient), ierr_=ierr)
     ! Post processing
   end function gmshModelGeoAddCurveLoop
 
@@ -5468,16 +5392,16 @@ module gmsh
       integer(c_size_t), value, intent(in) :: api_curveTags_n_
       type(c_ptr), intent(out) :: api_tags_
       integer(c_size_t), intent(out) :: api_tags_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     integer(c_int), dimension(:), intent(in) :: curveTags
     integer(c_int), dimension(:), allocatable, intent(out) :: tags
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_tags_
     integer(c_size_t) :: api_tags_n_
-    call C_API(curveTags, fsize(curveTags, kind=c_size_t), api_tags_, api_tags_n_, ierr)
+    call C_API(api_curveTags_=curveTags, api_curveTags_n_=size_gmsh_int(curveTags), api_tags_=api_tags_, api_tags_n_=api_tags_n_, ierr_=ierr)
     ! Post processing
     tags = ovectorint_(api_tags_, api_tags_n_)
   end subroutine gmshModelGeoAddCurveLoops
@@ -5495,15 +5419,15 @@ module gmsh
       integer(c_int), dimension(*) :: api_wireTags_
       integer(c_size_t), value, intent(in) :: api_wireTags_n_
       integer(c_int), value, intent(in) :: tag
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end function C_API
     end interface
     integer(c_int) :: gmshModelGeoAddPlaneSurface
     integer(c_int), dimension(:), intent(in) :: wireTags
-    integer(c_int), intent(in) :: tag
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in), optional :: tag
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    gmshModelGeoAddPlaneSurface = C_API(wireTags, fsize(wireTags, kind=c_size_t), tag, ierr)
+    gmshModelGeoAddPlaneSurface = C_API(api_wireTags_=wireTags, api_wireTags_n_=size_gmsh_int(wireTags), tag=optval_c_int(-1, tag), ierr_=ierr)
     ! Post processing
   end function gmshModelGeoAddPlaneSurface
 
@@ -5521,16 +5445,16 @@ module gmsh
       integer(c_size_t), value, intent(in) :: api_wireTags_n_
       integer(c_int), value, intent(in) :: tag
       integer(c_int), value, intent(in) :: sphereCenterTag
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end function C_API
     end interface
     integer(c_int) :: gmshModelGeoAddSurfaceFilling
     integer(c_int), dimension(:), intent(in) :: wireTags
-    integer(c_int), intent(in) :: tag
-    integer(c_int), intent(in) :: sphereCenterTag
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in), optional :: tag
+    integer, intent(in), optional :: sphereCenterTag
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    gmshModelGeoAddSurfaceFilling = C_API(wireTags, fsize(wireTags, kind=c_size_t), tag, sphereCenterTag, ierr)
+    gmshModelGeoAddSurfaceFilling = C_API(api_wireTags_=wireTags, api_wireTags_n_=size_gmsh_int(wireTags), tag=optval_c_int(-1, tag), sphereCenterTag=optval_c_int(-1, sphereCenterTag), ierr_=ierr)
     ! Post processing
   end function gmshModelGeoAddSurfaceFilling
 
@@ -5545,15 +5469,15 @@ module gmsh
       integer(c_int), dimension(*) :: api_surfaceTags_
       integer(c_size_t), value, intent(in) :: api_surfaceTags_n_
       integer(c_int), value, intent(in) :: tag
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end function C_API
     end interface
     integer(c_int) :: gmshModelGeoAddSurfaceLoop
     integer(c_int), dimension(:), intent(in) :: surfaceTags
-    integer(c_int), intent(in) :: tag
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in), optional :: tag
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    gmshModelGeoAddSurfaceLoop = C_API(surfaceTags, fsize(surfaceTags, kind=c_size_t), tag, ierr)
+    gmshModelGeoAddSurfaceLoop = C_API(api_surfaceTags_=surfaceTags, api_surfaceTags_n_=size_gmsh_int(surfaceTags), tag=optval_c_int(-1, tag), ierr_=ierr)
     ! Post processing
   end function gmshModelGeoAddSurfaceLoop
 
@@ -5570,15 +5494,15 @@ module gmsh
       integer(c_int), dimension(*) :: api_shellTags_
       integer(c_size_t), value, intent(in) :: api_shellTags_n_
       integer(c_int), value, intent(in) :: tag
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end function C_API
     end interface
     integer(c_int) :: gmshModelGeoAddVolume
     integer(c_int), dimension(:), intent(in) :: shellTags
-    integer(c_int), intent(in) :: tag
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in), optional :: tag
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    gmshModelGeoAddVolume = C_API(shellTags, fsize(shellTags, kind=c_size_t), tag, ierr)
+    gmshModelGeoAddVolume = C_API(api_shellTags_=shellTags, api_shellTags_n_=size_gmsh_int(shellTags), tag=optval_c_int(-1, tag), ierr_=ierr)
     ! Post processing
   end function gmshModelGeoAddVolume
 
@@ -5595,27 +5519,25 @@ module gmsh
       use, intrinsic :: iso_c_binding
       integer(c_int) :: C_API
       character(len=1, kind=c_char), dimension(*), intent(in) :: geometry
-      real(c_double), dimension(*) :: api_numbers_
+      real(c_double), dimension(*), optional :: api_numbers_
       integer(c_size_t), value, intent(in) :: api_numbers_n_
-      type(c_ptr), dimension(*) :: api_strings_
+      type(c_ptr), dimension(*), optional :: api_strings_
       integer(c_size_t), value, intent(in) :: api_strings_n_
       integer(c_int), value, intent(in) :: tag
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end function C_API
     end interface
     integer(c_int) :: gmshModelGeoAddGeometry
     character(len=*), intent(in) :: geometry
-    real(c_double), dimension(:), intent(in) :: numbers
-    character(len=*), dimension(:), intent(in) :: strings
-    integer(c_int), intent(in) :: tag
-    integer(c_int), intent(out) :: ierr
+    real(c_double), dimension(:), intent(in), optional :: numbers
+    character(len=*), dimension(:), intent(in), optional :: strings
+    integer, intent(in), optional :: tag
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    character(len=:, kind=c_char), allocatable :: geometry_c
     character(len=GMSH_API_MAX_STR_LEN, kind=c_char), allocatable :: api_strings_strs(:)
     type(c_ptr), allocatable :: api_strings_(:)
-    geometry_c = istring_(geometry)
     call ivectorstring_(strings, api_strings_strs, api_strings_)
-    gmshModelGeoAddGeometry = C_API(geometry_c, numbers, fsize(numbers, kind=c_size_t), api_strings_, fsize(strings, kind=c_size_t), tag, ierr)
+    gmshModelGeoAddGeometry = C_API(geometry=istring_(geometry), api_numbers_=numbers, api_numbers_n_=size_gmsh_double(numbers), api_strings_=api_strings_, api_strings_n_=size_gmsh_str(strings), tag=optval_c_int(-1, tag), ierr_=ierr)
     ! Post processing
   end function gmshModelGeoAddGeometry
 
@@ -5635,19 +5557,19 @@ module gmsh
       real(c_double), value, intent(in) :: z
       real(c_double), value, intent(in) :: meshSize
       integer(c_int), value, intent(in) :: tag
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end function C_API
     end interface
     integer(c_int) :: gmshModelGeoAddPointOnGeometry
-    integer(c_int), intent(in) :: geometryTag
+    integer, intent(in) :: geometryTag
     real(c_double), intent(in) :: x
     real(c_double), intent(in) :: y
-    real(c_double), intent(in) :: z
-    real(c_double), intent(in) :: meshSize
-    integer(c_int), intent(in) :: tag
-    integer(c_int), intent(out) :: ierr
+    real(c_double), intent(in), optional :: z
+    real(c_double), intent(in), optional :: meshSize
+    integer, intent(in), optional :: tag
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    gmshModelGeoAddPointOnGeometry = C_API(geometryTag, x, y, z, meshSize, tag, ierr)
+    gmshModelGeoAddPointOnGeometry = C_API(geometryTag=int(geometryTag, c_int), x=real(x, c_double), y=real(y, c_double), z=optval_c_double(0., z), meshSize=optval_c_double(0., meshSize), tag=optval_c_int(-1, tag), ierr_=ierr)
     ! Post processing
   end function gmshModelGeoAddPointOnGeometry
 
@@ -5669,12 +5591,12 @@ module gmsh
       real(c_double), value, intent(in) :: dz
       type(c_ptr), intent(out) :: api_outDimTags_
       integer(c_size_t), intent(out) :: api_outDimTags_n_
-      integer(c_int), dimension(*) :: api_numElements_
+      integer(c_int), dimension(*), optional :: api_numElements_
       integer(c_size_t), value, intent(in) :: api_numElements_n_
-      real(c_double), dimension(*) :: api_heights_
+      real(c_double), dimension(*), optional :: api_heights_
       integer(c_size_t), value, intent(in) :: api_heights_n_
       integer(c_int), value, intent(in) :: recombine
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     integer(c_int), dimension(:,:), intent(in) :: dimTags
@@ -5682,14 +5604,14 @@ module gmsh
     real(c_double), intent(in) :: dy
     real(c_double), intent(in) :: dz
     integer(c_int), dimension(:,:), allocatable, intent(out) :: outDimTags
-    integer(c_int), dimension(:), intent(in) :: numElements
-    real(c_double), dimension(:), intent(in) :: heights
-    integer(c_int), intent(in) :: recombine
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), dimension(:), intent(in), optional :: numElements
+    real(c_double), dimension(:), intent(in), optional :: heights
+    logical, intent(in), optional :: recombine
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_outDimTags_
     integer(c_size_t) :: api_outDimTags_n_
-    call C_API(dimTags, fsize(dimTags, kind=c_size_t), dx, dy, dz, api_outDimTags_, api_outDimTags_n_, numElements, fsize(numElements, kind=c_size_t), heights, fsize(heights, kind=c_size_t), recombine, ierr)
+    call C_API(api_dimTags_=dimTags, api_dimTags_n_=size_gmsh_pair(dimTags), dx=real(dx, c_double), dy=real(dy, c_double), dz=real(dz, c_double), api_outDimTags_=api_outDimTags_, api_outDimTags_n_=api_outDimTags_n_, api_numElements_=numElements, api_numElements_n_=size_gmsh_int(numElements), api_heights_=heights, api_heights_n_=size_gmsh_double(heights), recombine=optval_c_bool(.false., recombine), ierr_=ierr)
     ! Post processing
     outDimTags = ovectorpair_(api_outDimTags_, api_outDimTags_n_)
   end subroutine gmshModelGeoExtrude
@@ -5718,12 +5640,12 @@ module gmsh
       real(c_double), value, intent(in) :: angle
       type(c_ptr), intent(out) :: api_outDimTags_
       integer(c_size_t), intent(out) :: api_outDimTags_n_
-      integer(c_int), dimension(*) :: api_numElements_
+      integer(c_int), dimension(*), optional :: api_numElements_
       integer(c_size_t), value, intent(in) :: api_numElements_n_
-      real(c_double), dimension(*) :: api_heights_
+      real(c_double), dimension(*), optional :: api_heights_
       integer(c_size_t), value, intent(in) :: api_heights_n_
       integer(c_int), value, intent(in) :: recombine
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     integer(c_int), dimension(:,:), intent(in) :: dimTags
@@ -5735,14 +5657,14 @@ module gmsh
     real(c_double), intent(in) :: az
     real(c_double), intent(in) :: angle
     integer(c_int), dimension(:,:), allocatable, intent(out) :: outDimTags
-    integer(c_int), dimension(:), intent(in) :: numElements
-    real(c_double), dimension(:), intent(in) :: heights
-    integer(c_int), intent(in) :: recombine
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), dimension(:), intent(in), optional :: numElements
+    real(c_double), dimension(:), intent(in), optional :: heights
+    logical, intent(in), optional :: recombine
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_outDimTags_
     integer(c_size_t) :: api_outDimTags_n_
-    call C_API(dimTags, fsize(dimTags, kind=c_size_t), x, y, z, ax, ay, az, angle, api_outDimTags_, api_outDimTags_n_, numElements, fsize(numElements, kind=c_size_t), heights, fsize(heights, kind=c_size_t), recombine, ierr)
+    call C_API(api_dimTags_=dimTags, api_dimTags_n_=size_gmsh_pair(dimTags), x=real(x, c_double), y=real(y, c_double), z=real(z, c_double), ax=real(ax, c_double), ay=real(ay, c_double), az=real(az, c_double), angle=real(angle, c_double), api_outDimTags_=api_outDimTags_, api_outDimTags_n_=api_outDimTags_n_, api_numElements_=numElements, api_numElements_n_=size_gmsh_int(numElements), api_heights_=heights, api_heights_n_=size_gmsh_double(heights), recombine=optval_c_bool(.false., recombine), ierr_=ierr)
     ! Post processing
     outDimTags = ovectorpair_(api_outDimTags_, api_outDimTags_n_)
   end subroutine gmshModelGeoRevolve
@@ -5774,12 +5696,12 @@ module gmsh
       real(c_double), value, intent(in) :: angle
       type(c_ptr), intent(out) :: api_outDimTags_
       integer(c_size_t), intent(out) :: api_outDimTags_n_
-      integer(c_int), dimension(*) :: api_numElements_
+      integer(c_int), dimension(*), optional :: api_numElements_
       integer(c_size_t), value, intent(in) :: api_numElements_n_
-      real(c_double), dimension(*) :: api_heights_
+      real(c_double), dimension(*), optional :: api_heights_
       integer(c_size_t), value, intent(in) :: api_heights_n_
       integer(c_int), value, intent(in) :: recombine
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     integer(c_int), dimension(:,:), intent(in) :: dimTags
@@ -5794,14 +5716,14 @@ module gmsh
     real(c_double), intent(in) :: az
     real(c_double), intent(in) :: angle
     integer(c_int), dimension(:,:), allocatable, intent(out) :: outDimTags
-    integer(c_int), dimension(:), intent(in) :: numElements
-    real(c_double), dimension(:), intent(in) :: heights
-    integer(c_int), intent(in) :: recombine
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), dimension(:), intent(in), optional :: numElements
+    real(c_double), dimension(:), intent(in), optional :: heights
+    logical, intent(in), optional :: recombine
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_outDimTags_
     integer(c_size_t) :: api_outDimTags_n_
-    call C_API(dimTags, fsize(dimTags, kind=c_size_t), x, y, z, dx, dy, dz, ax, ay, az, angle, api_outDimTags_, api_outDimTags_n_, numElements, fsize(numElements, kind=c_size_t), heights, fsize(heights, kind=c_size_t), recombine, ierr)
+    call C_API(api_dimTags_=dimTags, api_dimTags_n_=size_gmsh_pair(dimTags), x=real(x, c_double), y=real(y, c_double), z=real(z, c_double), dx=real(dx, c_double), dy=real(dy, c_double), dz=real(dz, c_double), ax=real(ax, c_double), ay=real(ay, c_double), az=real(az, c_double), angle=real(angle, c_double), api_outDimTags_=api_outDimTags_, api_outDimTags_n_=api_outDimTags_n_, api_numElements_=numElements, api_numElements_n_=size_gmsh_int(numElements), api_heights_=heights, api_heights_n_=size_gmsh_double(heights), recombine=optval_c_bool(.false., recombine), ierr_=ierr)
     ! Post processing
     outDimTags = ovectorpair_(api_outDimTags_, api_outDimTags_n_)
   end subroutine gmshModelGeoTwist
@@ -5823,28 +5745,28 @@ module gmsh
       integer(c_size_t), value, intent(in) :: api_dimTags_n_
       type(c_ptr), intent(out) :: api_outDimTags_
       integer(c_size_t), intent(out) :: api_outDimTags_n_
-      integer(c_int), dimension(*) :: api_numElements_
+      integer(c_int), dimension(*), optional :: api_numElements_
       integer(c_size_t), value, intent(in) :: api_numElements_n_
-      real(c_double), dimension(*) :: api_heights_
+      real(c_double), dimension(*), optional :: api_heights_
       integer(c_size_t), value, intent(in) :: api_heights_n_
       integer(c_int), value, intent(in) :: recombine
       integer(c_int), value, intent(in) :: second
       integer(c_int), value, intent(in) :: viewIndex
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     integer(c_int), dimension(:,:), intent(in) :: dimTags
     integer(c_int), dimension(:,:), allocatable, intent(out) :: outDimTags
-    integer(c_int), dimension(:), intent(in) :: numElements
-    real(c_double), dimension(:), intent(in) :: heights
-    integer(c_int), intent(in) :: recombine
-    integer(c_int), intent(in) :: second
-    integer(c_int), intent(in) :: viewIndex
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), dimension(:), intent(in), optional :: numElements
+    real(c_double), dimension(:), intent(in), optional :: heights
+    logical, intent(in), optional :: recombine
+    logical, intent(in), optional :: second
+    integer, intent(in), optional :: viewIndex
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_outDimTags_
     integer(c_size_t) :: api_outDimTags_n_
-    call C_API(dimTags, fsize(dimTags, kind=c_size_t), api_outDimTags_, api_outDimTags_n_, numElements, fsize(numElements, kind=c_size_t), heights, fsize(heights, kind=c_size_t), recombine, second, viewIndex, ierr)
+    call C_API(api_dimTags_=dimTags, api_dimTags_n_=size_gmsh_pair(dimTags), api_outDimTags_=api_outDimTags_, api_outDimTags_n_=api_outDimTags_n_, api_numElements_=numElements, api_numElements_n_=size_gmsh_int(numElements), api_heights_=heights, api_heights_n_=size_gmsh_double(heights), recombine=optval_c_bool(.false., recombine), second=optval_c_bool(.false., second), viewIndex=optval_c_int(-1, viewIndex), ierr_=ierr)
     ! Post processing
     outDimTags = ovectorpair_(api_outDimTags_, api_outDimTags_n_)
   end subroutine gmshModelGeoExtrudeBoundaryLayer
@@ -5860,16 +5782,16 @@ module gmsh
       real(c_double), value, intent(in) :: dx
       real(c_double), value, intent(in) :: dy
       real(c_double), value, intent(in) :: dz
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     integer(c_int), dimension(:,:), intent(in) :: dimTags
     real(c_double), intent(in) :: dx
     real(c_double), intent(in) :: dy
     real(c_double), intent(in) :: dz
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(dimTags, fsize(dimTags, kind=c_size_t), dx, dy, dz, ierr)
+    call C_API(api_dimTags_=dimTags, api_dimTags_n_=size_gmsh_pair(dimTags), dx=real(dx, c_double), dy=real(dy, c_double), dz=real(dz, c_double), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelGeoTranslate
 
@@ -5889,7 +5811,7 @@ module gmsh
       real(c_double), value, intent(in) :: ay
       real(c_double), value, intent(in) :: az
       real(c_double), value, intent(in) :: angle
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     integer(c_int), dimension(:,:), intent(in) :: dimTags
@@ -5900,9 +5822,9 @@ module gmsh
     real(c_double), intent(in) :: ay
     real(c_double), intent(in) :: az
     real(c_double), intent(in) :: angle
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(dimTags, fsize(dimTags, kind=c_size_t), x, y, z, ax, ay, az, angle, ierr)
+    call C_API(api_dimTags_=dimTags, api_dimTags_n_=size_gmsh_pair(dimTags), x=real(x, c_double), y=real(y, c_double), z=real(z, c_double), ax=real(ax, c_double), ay=real(ay, c_double), az=real(az, c_double), angle=real(angle, c_double), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelGeoRotate
 
@@ -5921,7 +5843,7 @@ module gmsh
       real(c_double), value, intent(in) :: a
       real(c_double), value, intent(in) :: b
       real(c_double), value, intent(in) :: c
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     integer(c_int), dimension(:,:), intent(in) :: dimTags
@@ -5931,9 +5853,9 @@ module gmsh
     real(c_double), intent(in) :: a
     real(c_double), intent(in) :: b
     real(c_double), intent(in) :: c
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(dimTags, fsize(dimTags, kind=c_size_t), x, y, z, a, b, c, ierr)
+    call C_API(api_dimTags_=dimTags, api_dimTags_n_=size_gmsh_pair(dimTags), x=real(x, c_double), y=real(y, c_double), z=real(z, c_double), a=real(a, c_double), b=real(b, c_double), c=real(c, c_double), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelGeoDilate
 
@@ -5949,7 +5871,7 @@ module gmsh
       real(c_double), value, intent(in) :: b
       real(c_double), value, intent(in) :: c
       real(c_double), value, intent(in) :: d
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     integer(c_int), dimension(:,:), intent(in) :: dimTags
@@ -5957,9 +5879,9 @@ module gmsh
     real(c_double), intent(in) :: b
     real(c_double), intent(in) :: c
     real(c_double), intent(in) :: d
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(dimTags, fsize(dimTags, kind=c_size_t), a, b, c, d, ierr)
+    call C_API(api_dimTags_=dimTags, api_dimTags_n_=size_gmsh_pair(dimTags), a=real(a, c_double), b=real(b, c_double), c=real(c, c_double), d=real(d, c_double), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelGeoMirror
 
@@ -5977,7 +5899,7 @@ module gmsh
       real(c_double), value, intent(in) :: b
       real(c_double), value, intent(in) :: c
       real(c_double), value, intent(in) :: d
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     integer(c_int), dimension(:,:), intent(in) :: dimTags
@@ -5985,9 +5907,9 @@ module gmsh
     real(c_double), intent(in) :: b
     real(c_double), intent(in) :: c
     real(c_double), intent(in) :: d
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(dimTags, fsize(dimTags, kind=c_size_t), a, b, c, d, ierr)
+    call C_API(api_dimTags_=dimTags, api_dimTags_n_=size_gmsh_pair(dimTags), a=real(a, c_double), b=real(b, c_double), c=real(c, c_double), d=real(d, c_double), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelGeoSymmetrize
 
@@ -6001,16 +5923,16 @@ module gmsh
       integer(c_size_t), value, intent(in) :: api_dimTags_n_
       type(c_ptr), intent(out) :: api_outDimTags_
       integer(c_size_t), intent(out) :: api_outDimTags_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     integer(c_int), dimension(:,:), intent(in) :: dimTags
     integer(c_int), dimension(:,:), allocatable, intent(out) :: outDimTags
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_outDimTags_
     integer(c_size_t) :: api_outDimTags_n_
-    call C_API(dimTags, fsize(dimTags, kind=c_size_t), api_outDimTags_, api_outDimTags_n_, ierr)
+    call C_API(api_dimTags_=dimTags, api_dimTags_n_=size_gmsh_pair(dimTags), api_outDimTags_=api_outDimTags_, api_outDimTags_n_=api_outDimTags_n_, ierr_=ierr)
     ! Post processing
     outDimTags = ovectorpair_(api_outDimTags_, api_outDimTags_n_)
   end subroutine gmshModelGeoCopy
@@ -6026,14 +5948,14 @@ module gmsh
       integer(c_int), dimension(*) :: api_dimTags_
       integer(c_size_t), value, intent(in) :: api_dimTags_n_
       integer(c_int), value, intent(in) :: recursive
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     integer(c_int), dimension(:,:), intent(in) :: dimTags
-    integer(c_int), intent(in) :: recursive
-    integer(c_int), intent(out) :: ierr
+    logical, intent(in), optional :: recursive
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(dimTags, fsize(dimTags, kind=c_size_t), recursive, ierr)
+    call C_API(api_dimTags_=dimTags, api_dimTags_n_=size_gmsh_pair(dimTags), recursive=optval_c_bool(.false., recursive), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelGeoRemove
 
@@ -6043,12 +5965,12 @@ module gmsh
     interface
     subroutine C_API(ierr_) bind(C, name="gmshModelGeoRemoveAllDuplicates")
       use, intrinsic :: iso_c_binding
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(ierr)
+    call C_API(ierr_=ierr)
     ! Post processing
   end subroutine gmshModelGeoRemoveAllDuplicates
 
@@ -6065,17 +5987,17 @@ module gmsh
       integer(c_size_t), value, intent(in) :: api_pointTags_n_
       type(c_ptr), intent(out) :: api_curveTags_
       integer(c_size_t), intent(out) :: api_curveTags_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: tag
+    integer, intent(in) :: tag
     integer(c_int), dimension(:), intent(in) :: pointTags
     integer(c_int), dimension(:), allocatable, intent(out) :: curveTags
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_curveTags_
     integer(c_size_t) :: api_curveTags_n_
-    call C_API(tag, pointTags, fsize(pointTags, kind=c_size_t), api_curveTags_, api_curveTags_n_, ierr)
+    call C_API(tag=int(tag, c_int), api_pointTags_=pointTags, api_pointTags_n_=size_gmsh_int(pointTags), api_curveTags_=api_curveTags_, api_curveTags_n_=api_curveTags_n_, ierr_=ierr)
     ! Post processing
     curveTags = ovectorint_(api_curveTags_, api_curveTags_n_)
   end subroutine gmshModelGeoSplitCurve
@@ -6088,14 +6010,14 @@ module gmsh
       use, intrinsic :: iso_c_binding
       integer(c_int) :: C_API
       integer(c_int), value, intent(in) :: dim
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end function C_API
     end interface
     integer(c_int) :: gmshModelGeoGetMaxTag
-    integer(c_int), intent(in) :: dim
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in) :: dim
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    gmshModelGeoGetMaxTag = C_API(dim, ierr)
+    gmshModelGeoGetMaxTag = C_API(dim=int(dim, c_int), ierr_=ierr)
     ! Post processing
   end function gmshModelGeoGetMaxTag
 
@@ -6107,14 +6029,14 @@ module gmsh
       use, intrinsic :: iso_c_binding
       integer(c_int), value, intent(in) :: dim
       integer(c_int), value, intent(in) :: maxTag
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: dim
-    integer(c_int), intent(in) :: maxTag
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in) :: dim
+    integer, intent(in) :: maxTag
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(dim, maxTag, ierr)
+    call C_API(dim=int(dim, c_int), maxTag=int(maxTag, c_int), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelGeoSetMaxTag
 
@@ -6131,20 +6053,18 @@ module gmsh
       integer(c_int), dimension(*) :: api_tags_
       integer(c_size_t), value, intent(in) :: api_tags_n_
       integer(c_int), value, intent(in) :: tag
-      character(len=1, kind=c_char), dimension(*), intent(in) :: name
-      integer(c_int), intent(out) :: ierr_
+      character(len=1, kind=c_char), dimension(*), intent(in), optional :: name
+      integer(c_int), intent(out), optional :: ierr_
     end function C_API
     end interface
     integer(c_int) :: gmshModelGeoAddPhysicalGroup
-    integer(c_int), intent(in) :: dim
+    integer, intent(in) :: dim
     integer(c_int), dimension(:), intent(in) :: tags
-    integer(c_int), intent(in) :: tag
-    character(len=*), intent(in) :: name
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in), optional :: tag
+    character(len=*), intent(in), optional :: name
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    character(len=:, kind=c_char), allocatable :: name_c
-    name_c = istring_(name)
-    gmshModelGeoAddPhysicalGroup = C_API(dim, tags, fsize(tags, kind=c_size_t), tag, name_c, ierr)
+    gmshModelGeoAddPhysicalGroup = C_API(dim=int(dim, c_int), api_tags_=tags, api_tags_n_=size_gmsh_int(tags), tag=optval_c_int(-1, tag), name=istring_(optval_c_str("", name)), ierr_=ierr)
     ! Post processing
   end function gmshModelGeoAddPhysicalGroup
 
@@ -6154,15 +6074,15 @@ module gmsh
     interface
     subroutine C_API(api_dimTags_, api_dimTags_n_, ierr_) bind(C, name="gmshModelGeoRemovePhysicalGroups")
       use, intrinsic :: iso_c_binding
-      integer(c_int), dimension(*) :: api_dimTags_
+      integer(c_int), dimension(*), optional :: api_dimTags_
       integer(c_size_t), value, intent(in) :: api_dimTags_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), dimension(:,:), intent(in) :: dimTags
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), dimension(:,:), intent(in), optional :: dimTags
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(dimTags, fsize(dimTags, kind=c_size_t), ierr)
+    call C_API(api_dimTags_=dimTags, api_dimTags_n_=size_gmsh_pair(dimTags), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelGeoRemovePhysicalGroups
 
@@ -6176,12 +6096,12 @@ module gmsh
     interface
     subroutine C_API(ierr_) bind(C, name="gmshModelGeoSynchronize")
       use, intrinsic :: iso_c_binding
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(ierr)
+    call C_API(ierr_=ierr)
     ! Post processing
   end subroutine gmshModelGeoSynchronize
 
@@ -6195,14 +6115,14 @@ module gmsh
       integer(c_int), dimension(*) :: api_dimTags_
       integer(c_size_t), value, intent(in) :: api_dimTags_n_
       real(c_double), value, intent(in) :: size
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     integer(c_int), dimension(:,:), intent(in) :: dimTags
     real(c_double), intent(in) :: size
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(dimTags, fsize(dimTags, kind=c_size_t), size, ierr)
+    call C_API(api_dimTags_=dimTags, api_dimTags_n_=size_gmsh_pair(dimTags), size=real(size, c_double), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelGeoMeshSetSize
 
@@ -6217,20 +6137,18 @@ module gmsh
       use, intrinsic :: iso_c_binding
       integer(c_int), value, intent(in) :: tag
       integer(c_int), value, intent(in) :: nPoints
-      character(len=1, kind=c_char), dimension(*), intent(in) :: meshType
+      character(len=1, kind=c_char), dimension(*), intent(in), optional :: meshType
       real(c_double), value, intent(in) :: coef
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: tag
-    integer(c_int), intent(in) :: nPoints
-    character(len=*), intent(in) :: meshType
-    real(c_double), intent(in) :: coef
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in) :: tag
+    integer, intent(in) :: nPoints
+    character(len=*), intent(in), optional :: meshType
+    real(c_double), intent(in), optional :: coef
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    character(len=:, kind=c_char), allocatable :: meshType_c
-    meshType_c = istring_(meshType)
-    call C_API(tag, nPoints, meshType_c, coef, ierr)
+    call C_API(tag=int(tag, c_int), nPoints=int(nPoints, c_int), meshType=istring_(optval_c_str("Progression", meshType)), coef=optval_c_double(1., coef), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelGeoMeshSetTransfiniteCurve
 
@@ -6246,20 +6164,18 @@ module gmsh
     subroutine C_API(tag, arrangement, api_cornerTags_, api_cornerTags_n_, ierr_) bind(C, name="gmshModelGeoMeshSetTransfiniteSurface")
       use, intrinsic :: iso_c_binding
       integer(c_int), value, intent(in) :: tag
-      character(len=1, kind=c_char), dimension(*), intent(in) :: arrangement
-      integer(c_int), dimension(*) :: api_cornerTags_
+      character(len=1, kind=c_char), dimension(*), intent(in), optional :: arrangement
+      integer(c_int), dimension(*), optional :: api_cornerTags_
       integer(c_size_t), value, intent(in) :: api_cornerTags_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: tag
-    character(len=*), intent(in) :: arrangement
-    integer(c_int), dimension(:), intent(in) :: cornerTags
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in) :: tag
+    character(len=*), intent(in), optional :: arrangement
+    integer(c_int), dimension(:), intent(in), optional :: cornerTags
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    character(len=:, kind=c_char), allocatable :: arrangement_c
-    arrangement_c = istring_(arrangement)
-    call C_API(tag, arrangement_c, cornerTags, fsize(cornerTags, kind=c_size_t), ierr)
+    call C_API(tag=int(tag, c_int), arrangement=istring_(optval_c_str("Left", arrangement)), api_cornerTags_=cornerTags, api_cornerTags_n_=size_gmsh_int(cornerTags), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelGeoMeshSetTransfiniteSurface
 
@@ -6271,16 +6187,16 @@ module gmsh
     subroutine C_API(tag, api_cornerTags_, api_cornerTags_n_, ierr_) bind(C, name="gmshModelGeoMeshSetTransfiniteVolume")
       use, intrinsic :: iso_c_binding
       integer(c_int), value, intent(in) :: tag
-      integer(c_int), dimension(*) :: api_cornerTags_
+      integer(c_int), dimension(*), optional :: api_cornerTags_
       integer(c_size_t), value, intent(in) :: api_cornerTags_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: tag
-    integer(c_int), dimension(:), intent(in) :: cornerTags
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in) :: tag
+    integer(c_int), dimension(:), intent(in), optional :: cornerTags
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(tag, cornerTags, fsize(cornerTags, kind=c_size_t), ierr)
+    call C_API(tag=int(tag, c_int), api_cornerTags_=cornerTags, api_cornerTags_n_=size_gmsh_int(cornerTags), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelGeoMeshSetTransfiniteVolume
 
@@ -6296,15 +6212,15 @@ module gmsh
       integer(c_int), value, intent(in) :: dim
       integer(c_int), value, intent(in) :: tag
       real(c_double), value, intent(in) :: angle
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: dim
-    integer(c_int), intent(in) :: tag
-    real(c_double), intent(in) :: angle
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in) :: dim
+    integer, intent(in) :: tag
+    real(c_double), intent(in), optional :: angle
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(dim, tag, angle, ierr)
+    call C_API(dim=int(dim, c_int), tag=int(tag, c_int), angle=optval_c_double(45., angle), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelGeoMeshSetRecombine
 
@@ -6318,15 +6234,15 @@ module gmsh
       integer(c_int), value, intent(in) :: dim
       integer(c_int), value, intent(in) :: tag
       integer(c_int), value, intent(in) :: val
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: dim
-    integer(c_int), intent(in) :: tag
-    integer(c_int), intent(in) :: val
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in) :: dim
+    integer, intent(in) :: tag
+    integer, intent(in) :: val
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(dim, tag, val, ierr)
+    call C_API(dim=int(dim, c_int), tag=int(tag, c_int), val=int(val, c_int), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelGeoMeshSetSmoothing
 
@@ -6342,15 +6258,15 @@ module gmsh
       integer(c_int), value, intent(in) :: dim
       integer(c_int), value, intent(in) :: tag
       integer(c_int), value, intent(in) :: val
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: dim
-    integer(c_int), intent(in) :: tag
-    integer(c_int), intent(in) :: val
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in) :: dim
+    integer, intent(in) :: tag
+    logical, intent(in), optional :: val
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(dim, tag, val, ierr)
+    call C_API(dim=int(dim, c_int), tag=int(tag, c_int), val=optval_c_bool(.true., val), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelGeoMeshSetReverse
 
@@ -6364,15 +6280,15 @@ module gmsh
       integer(c_int), value, intent(in) :: dim
       integer(c_int), value, intent(in) :: tag
       integer(c_int), value, intent(in) :: val
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: dim
-    integer(c_int), intent(in) :: tag
-    integer(c_int), intent(in) :: val
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in) :: dim
+    integer, intent(in) :: tag
+    integer, intent(in) :: val
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(dim, tag, val, ierr)
+    call C_API(dim=int(dim, c_int), tag=int(tag, c_int), val=int(val, c_int), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelGeoMeshSetAlgorithm
 
@@ -6386,15 +6302,15 @@ module gmsh
       integer(c_int), value, intent(in) :: dim
       integer(c_int), value, intent(in) :: tag
       integer(c_int), value, intent(in) :: val
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: dim
-    integer(c_int), intent(in) :: tag
-    integer(c_int), intent(in) :: val
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in) :: dim
+    integer, intent(in) :: tag
+    integer, intent(in) :: val
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(dim, tag, val, ierr)
+    call C_API(dim=int(dim, c_int), tag=int(tag, c_int), val=int(val, c_int), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelGeoMeshSetSizeFromBoundary
 
@@ -6414,18 +6330,18 @@ module gmsh
       real(c_double), value, intent(in) :: z
       real(c_double), value, intent(in) :: meshSize
       integer(c_int), value, intent(in) :: tag
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end function C_API
     end interface
     integer(c_int) :: gmshModelOccAddPoint
     real(c_double), intent(in) :: x
     real(c_double), intent(in) :: y
     real(c_double), intent(in) :: z
-    real(c_double), intent(in) :: meshSize
-    integer(c_int), intent(in) :: tag
-    integer(c_int), intent(out) :: ierr
+    real(c_double), intent(in), optional :: meshSize
+    integer, intent(in), optional :: tag
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    gmshModelOccAddPoint = C_API(x, y, z, meshSize, tag, ierr)
+    gmshModelOccAddPoint = C_API(x=real(x, c_double), y=real(y, c_double), z=real(z, c_double), meshSize=optval_c_double(0., meshSize), tag=optval_c_int(-1, tag), ierr_=ierr)
     ! Post processing
   end function gmshModelOccAddPoint
 
@@ -6441,16 +6357,16 @@ module gmsh
       integer(c_int), value, intent(in) :: startTag
       integer(c_int), value, intent(in) :: endTag
       integer(c_int), value, intent(in) :: tag
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end function C_API
     end interface
     integer(c_int) :: gmshModelOccAddLine
-    integer(c_int), intent(in) :: startTag
-    integer(c_int), intent(in) :: endTag
-    integer(c_int), intent(in) :: tag
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in) :: startTag
+    integer, intent(in) :: endTag
+    integer, intent(in), optional :: tag
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    gmshModelOccAddLine = C_API(startTag, endTag, tag, ierr)
+    gmshModelOccAddLine = C_API(startTag=int(startTag, c_int), endTag=int(endTag, c_int), tag=optval_c_int(-1, tag), ierr_=ierr)
     ! Post processing
   end function gmshModelOccAddLine
 
@@ -6467,17 +6383,17 @@ module gmsh
       integer(c_int), value, intent(in) :: centerTag
       integer(c_int), value, intent(in) :: endTag
       integer(c_int), value, intent(in) :: tag
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end function C_API
     end interface
     integer(c_int) :: gmshModelOccAddCircleArc
-    integer(c_int), intent(in) :: startTag
-    integer(c_int), intent(in) :: centerTag
-    integer(c_int), intent(in) :: endTag
-    integer(c_int), intent(in) :: tag
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in) :: startTag
+    integer, intent(in) :: centerTag
+    integer, intent(in) :: endTag
+    integer, intent(in), optional :: tag
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    gmshModelOccAddCircleArc = C_API(startTag, centerTag, endTag, tag, ierr)
+    gmshModelOccAddCircleArc = C_API(startTag=int(startTag, c_int), centerTag=int(centerTag, c_int), endTag=int(endTag, c_int), tag=optval_c_int(-1, tag), ierr_=ierr)
     ! Post processing
   end function gmshModelOccAddCircleArc
 
@@ -6500,11 +6416,11 @@ module gmsh
       integer(c_int), value, intent(in) :: tag
       real(c_double), value, intent(in) :: angle1
       real(c_double), value, intent(in) :: angle2
-      real(c_double), dimension(*) :: api_zAxis_
+      real(c_double), dimension(*), optional :: api_zAxis_
       integer(c_size_t), value, intent(in) :: api_zAxis_n_
-      real(c_double), dimension(*) :: api_xAxis_
+      real(c_double), dimension(*), optional :: api_xAxis_
       integer(c_size_t), value, intent(in) :: api_xAxis_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end function C_API
     end interface
     integer(c_int) :: gmshModelOccAddCircle
@@ -6512,14 +6428,14 @@ module gmsh
     real(c_double), intent(in) :: y
     real(c_double), intent(in) :: z
     real(c_double), intent(in) :: r
-    integer(c_int), intent(in) :: tag
-    real(c_double), intent(in) :: angle1
-    real(c_double), intent(in) :: angle2
-    real(c_double), dimension(:), intent(in) :: zAxis
-    real(c_double), dimension(:), intent(in) :: xAxis
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in), optional :: tag
+    real(c_double), intent(in), optional :: angle1
+    real(c_double), intent(in), optional :: angle2
+    real(c_double), dimension(:), intent(in), optional :: zAxis
+    real(c_double), dimension(:), intent(in), optional :: xAxis
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    gmshModelOccAddCircle = C_API(x, y, z, r, tag, angle1, angle2, zAxis, fsize(zAxis, kind=c_size_t), xAxis, fsize(xAxis, kind=c_size_t), ierr)
+    gmshModelOccAddCircle = C_API(x=real(x, c_double), y=real(y, c_double), z=real(z, c_double), r=real(r, c_double), tag=optval_c_int(-1, tag), angle1=optval_c_double(0., angle1), angle2=optval_c_double(2*M_PI, angle2), api_zAxis_=zAxis, api_zAxis_n_=size_gmsh_double(zAxis), api_xAxis_=xAxis, api_xAxis_n_=size_gmsh_double(xAxis), ierr_=ierr)
     ! Post processing
   end function gmshModelOccAddCircle
 
@@ -6539,18 +6455,18 @@ module gmsh
       integer(c_int), value, intent(in) :: majorTag
       integer(c_int), value, intent(in) :: endTag
       integer(c_int), value, intent(in) :: tag
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end function C_API
     end interface
     integer(c_int) :: gmshModelOccAddEllipseArc
-    integer(c_int), intent(in) :: startTag
-    integer(c_int), intent(in) :: centerTag
-    integer(c_int), intent(in) :: majorTag
-    integer(c_int), intent(in) :: endTag
-    integer(c_int), intent(in) :: tag
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in) :: startTag
+    integer, intent(in) :: centerTag
+    integer, intent(in) :: majorTag
+    integer, intent(in) :: endTag
+    integer, intent(in), optional :: tag
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    gmshModelOccAddEllipseArc = C_API(startTag, centerTag, majorTag, endTag, tag, ierr)
+    gmshModelOccAddEllipseArc = C_API(startTag=int(startTag, c_int), centerTag=int(centerTag, c_int), majorTag=int(majorTag, c_int), endTag=int(endTag, c_int), tag=optval_c_int(-1, tag), ierr_=ierr)
     ! Post processing
   end function gmshModelOccAddEllipseArc
 
@@ -6575,11 +6491,11 @@ module gmsh
       integer(c_int), value, intent(in) :: tag
       real(c_double), value, intent(in) :: angle1
       real(c_double), value, intent(in) :: angle2
-      real(c_double), dimension(*) :: api_zAxis_
+      real(c_double), dimension(*), optional :: api_zAxis_
       integer(c_size_t), value, intent(in) :: api_zAxis_n_
-      real(c_double), dimension(*) :: api_xAxis_
+      real(c_double), dimension(*), optional :: api_xAxis_
       integer(c_size_t), value, intent(in) :: api_xAxis_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end function C_API
     end interface
     integer(c_int) :: gmshModelOccAddEllipse
@@ -6588,14 +6504,14 @@ module gmsh
     real(c_double), intent(in) :: z
     real(c_double), intent(in) :: r1
     real(c_double), intent(in) :: r2
-    integer(c_int), intent(in) :: tag
-    real(c_double), intent(in) :: angle1
-    real(c_double), intent(in) :: angle2
-    real(c_double), dimension(:), intent(in) :: zAxis
-    real(c_double), dimension(:), intent(in) :: xAxis
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in), optional :: tag
+    real(c_double), intent(in), optional :: angle1
+    real(c_double), intent(in), optional :: angle2
+    real(c_double), dimension(:), intent(in), optional :: zAxis
+    real(c_double), dimension(:), intent(in), optional :: xAxis
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    gmshModelOccAddEllipse = C_API(x, y, z, r1, r2, tag, angle1, angle2, zAxis, fsize(zAxis, kind=c_size_t), xAxis, fsize(xAxis, kind=c_size_t), ierr)
+    gmshModelOccAddEllipse = C_API(x=real(x, c_double), y=real(y, c_double), z=real(z, c_double), r1=real(r1, c_double), r2=real(r2, c_double), tag=optval_c_int(-1, tag), angle1=optval_c_double(0., angle1), angle2=optval_c_double(2*M_PI, angle2), api_zAxis_=zAxis, api_zAxis_n_=size_gmsh_double(zAxis), api_xAxis_=xAxis, api_xAxis_n_=size_gmsh_double(xAxis), ierr_=ierr)
     ! Post processing
   end function gmshModelOccAddEllipse
 
@@ -6612,15 +6528,15 @@ module gmsh
       integer(c_int), dimension(*) :: api_pointTags_
       integer(c_size_t), value, intent(in) :: api_pointTags_n_
       integer(c_int), value, intent(in) :: tag
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end function C_API
     end interface
     integer(c_int) :: gmshModelOccAddSpline
     integer(c_int), dimension(:), intent(in) :: pointTags
-    integer(c_int), intent(in) :: tag
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in), optional :: tag
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    gmshModelOccAddSpline = C_API(pointTags, fsize(pointTags, kind=c_size_t), tag, ierr)
+    gmshModelOccAddSpline = C_API(api_pointTags_=pointTags, api_pointTags_n_=size_gmsh_int(pointTags), tag=optval_c_int(-1, tag), ierr_=ierr)
     ! Post processing
   end function gmshModelOccAddSpline
 
@@ -6639,25 +6555,25 @@ module gmsh
       integer(c_size_t), value, intent(in) :: api_pointTags_n_
       integer(c_int), value, intent(in) :: tag
       integer(c_int), value, intent(in) :: degree
-      real(c_double), dimension(*) :: api_weights_
+      real(c_double), dimension(*), optional :: api_weights_
       integer(c_size_t), value, intent(in) :: api_weights_n_
-      real(c_double), dimension(*) :: api_knots_
+      real(c_double), dimension(*), optional :: api_knots_
       integer(c_size_t), value, intent(in) :: api_knots_n_
-      integer(c_int), dimension(*) :: api_multiplicities_
+      integer(c_int), dimension(*), optional :: api_multiplicities_
       integer(c_size_t), value, intent(in) :: api_multiplicities_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end function C_API
     end interface
     integer(c_int) :: gmshModelOccAddBSpline
     integer(c_int), dimension(:), intent(in) :: pointTags
-    integer(c_int), intent(in) :: tag
-    integer(c_int), intent(in) :: degree
-    real(c_double), dimension(:), intent(in) :: weights
-    real(c_double), dimension(:), intent(in) :: knots
-    integer(c_int), dimension(:), intent(in) :: multiplicities
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in), optional :: tag
+    integer, intent(in), optional :: degree
+    real(c_double), dimension(:), intent(in), optional :: weights
+    real(c_double), dimension(:), intent(in), optional :: knots
+    integer(c_int), dimension(:), intent(in), optional :: multiplicities
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    gmshModelOccAddBSpline = C_API(pointTags, fsize(pointTags, kind=c_size_t), tag, degree, weights, fsize(weights, kind=c_size_t), knots, fsize(knots, kind=c_size_t), multiplicities, fsize(multiplicities, kind=c_size_t), ierr)
+    gmshModelOccAddBSpline = C_API(api_pointTags_=pointTags, api_pointTags_n_=size_gmsh_int(pointTags), tag=optval_c_int(-1, tag), degree=optval_c_int(3, degree), api_weights_=weights, api_weights_n_=size_gmsh_double(weights), api_knots_=knots, api_knots_n_=size_gmsh_double(knots), api_multiplicities_=multiplicities, api_multiplicities_n_=size_gmsh_int(multiplicities), ierr_=ierr)
     ! Post processing
   end function gmshModelOccAddBSpline
 
@@ -6672,15 +6588,15 @@ module gmsh
       integer(c_int), dimension(*) :: api_pointTags_
       integer(c_size_t), value, intent(in) :: api_pointTags_n_
       integer(c_int), value, intent(in) :: tag
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end function C_API
     end interface
     integer(c_int) :: gmshModelOccAddBezier
     integer(c_int), dimension(:), intent(in) :: pointTags
-    integer(c_int), intent(in) :: tag
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in), optional :: tag
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    gmshModelOccAddBezier = C_API(pointTags, fsize(pointTags, kind=c_size_t), tag, ierr)
+    gmshModelOccAddBezier = C_API(api_pointTags_=pointTags, api_pointTags_n_=size_gmsh_int(pointTags), tag=optval_c_int(-1, tag), ierr_=ierr)
     ! Post processing
   end function gmshModelOccAddBezier
 
@@ -6698,16 +6614,16 @@ module gmsh
       integer(c_size_t), value, intent(in) :: api_curveTags_n_
       integer(c_int), value, intent(in) :: tag
       integer(c_int), value, intent(in) :: checkClosed
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end function C_API
     end interface
     integer(c_int) :: gmshModelOccAddWire
     integer(c_int), dimension(:), intent(in) :: curveTags
-    integer(c_int), intent(in) :: tag
-    integer(c_int), intent(in) :: checkClosed
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in), optional :: tag
+    logical, intent(in), optional :: checkClosed
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    gmshModelOccAddWire = C_API(curveTags, fsize(curveTags, kind=c_size_t), tag, checkClosed, ierr)
+    gmshModelOccAddWire = C_API(api_curveTags_=curveTags, api_curveTags_n_=size_gmsh_int(curveTags), tag=optval_c_int(-1, tag), checkClosed=optval_c_bool(.false., checkClosed), ierr_=ierr)
     ! Post processing
   end function gmshModelOccAddWire
 
@@ -6728,15 +6644,15 @@ module gmsh
       integer(c_int), dimension(*) :: api_curveTags_
       integer(c_size_t), value, intent(in) :: api_curveTags_n_
       integer(c_int), value, intent(in) :: tag
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end function C_API
     end interface
     integer(c_int) :: gmshModelOccAddCurveLoop
     integer(c_int), dimension(:), intent(in) :: curveTags
-    integer(c_int), intent(in) :: tag
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in), optional :: tag
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    gmshModelOccAddCurveLoop = C_API(curveTags, fsize(curveTags, kind=c_size_t), tag, ierr)
+    gmshModelOccAddCurveLoop = C_API(api_curveTags_=curveTags, api_curveTags_n_=size_gmsh_int(curveTags), tag=optval_c_int(-1, tag), ierr_=ierr)
     ! Post processing
   end function gmshModelOccAddCurveLoop
 
@@ -6757,7 +6673,7 @@ module gmsh
       real(c_double), value, intent(in) :: dy
       integer(c_int), value, intent(in) :: tag
       real(c_double), value, intent(in) :: roundedRadius
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end function C_API
     end interface
     integer(c_int) :: gmshModelOccAddRectangle
@@ -6766,11 +6682,11 @@ module gmsh
     real(c_double), intent(in) :: z
     real(c_double), intent(in) :: dx
     real(c_double), intent(in) :: dy
-    integer(c_int), intent(in) :: tag
-    real(c_double), intent(in) :: roundedRadius
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in), optional :: tag
+    real(c_double), intent(in), optional :: roundedRadius
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    gmshModelOccAddRectangle = C_API(x, y, z, dx, dy, tag, roundedRadius, ierr)
+    gmshModelOccAddRectangle = C_API(x=real(x, c_double), y=real(y, c_double), z=real(z, c_double), dx=real(dx, c_double), dy=real(dy, c_double), tag=optval_c_int(-1, tag), roundedRadius=optval_c_double(0., roundedRadius), ierr_=ierr)
     ! Post processing
   end function gmshModelOccAddRectangle
 
@@ -6792,11 +6708,11 @@ module gmsh
       real(c_double), value, intent(in) :: rx
       real(c_double), value, intent(in) :: ry
       integer(c_int), value, intent(in) :: tag
-      real(c_double), dimension(*) :: api_zAxis_
+      real(c_double), dimension(*), optional :: api_zAxis_
       integer(c_size_t), value, intent(in) :: api_zAxis_n_
-      real(c_double), dimension(*) :: api_xAxis_
+      real(c_double), dimension(*), optional :: api_xAxis_
       integer(c_size_t), value, intent(in) :: api_xAxis_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end function C_API
     end interface
     integer(c_int) :: gmshModelOccAddDisk
@@ -6805,12 +6721,12 @@ module gmsh
     real(c_double), intent(in) :: zc
     real(c_double), intent(in) :: rx
     real(c_double), intent(in) :: ry
-    integer(c_int), intent(in) :: tag
-    real(c_double), dimension(:), intent(in) :: zAxis
-    real(c_double), dimension(:), intent(in) :: xAxis
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in), optional :: tag
+    real(c_double), dimension(:), intent(in), optional :: zAxis
+    real(c_double), dimension(:), intent(in), optional :: xAxis
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    gmshModelOccAddDisk = C_API(xc, yc, zc, rx, ry, tag, zAxis, fsize(zAxis, kind=c_size_t), xAxis, fsize(xAxis, kind=c_size_t), ierr)
+    gmshModelOccAddDisk = C_API(xc=real(xc, c_double), yc=real(yc, c_double), zc=real(zc, c_double), rx=real(rx, c_double), ry=real(ry, c_double), tag=optval_c_int(-1, tag), api_zAxis_=zAxis, api_zAxis_n_=size_gmsh_double(zAxis), api_xAxis_=xAxis, api_xAxis_n_=size_gmsh_double(xAxis), ierr_=ierr)
     ! Post processing
   end function gmshModelOccAddDisk
 
@@ -6827,15 +6743,15 @@ module gmsh
       integer(c_int), dimension(*) :: api_wireTags_
       integer(c_size_t), value, intent(in) :: api_wireTags_n_
       integer(c_int), value, intent(in) :: tag
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end function C_API
     end interface
     integer(c_int) :: gmshModelOccAddPlaneSurface
     integer(c_int), dimension(:), intent(in) :: wireTags
-    integer(c_int), intent(in) :: tag
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in), optional :: tag
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    gmshModelOccAddPlaneSurface = C_API(wireTags, fsize(wireTags, kind=c_size_t), tag, ierr)
+    gmshModelOccAddPlaneSurface = C_API(api_wireTags_=wireTags, api_wireTags_n_=size_gmsh_int(wireTags), tag=optval_c_int(-1, tag), ierr_=ierr)
     ! Post processing
   end function gmshModelOccAddPlaneSurface
 
@@ -6864,7 +6780,7 @@ module gmsh
       integer(c_int) :: C_API
       integer(c_int), value, intent(in) :: wireTag
       integer(c_int), value, intent(in) :: tag
-      integer(c_int), dimension(*) :: api_pointTags_
+      integer(c_int), dimension(*), optional :: api_pointTags_
       integer(c_size_t), value, intent(in) :: api_pointTags_n_
       integer(c_int), value, intent(in) :: degree
       integer(c_int), value, intent(in) :: numPointsOnCurves
@@ -6876,26 +6792,26 @@ module gmsh
       real(c_double), value, intent(in) :: tolCurv
       integer(c_int), value, intent(in) :: maxDegree
       integer(c_int), value, intent(in) :: maxSegments
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end function C_API
     end interface
     integer(c_int) :: gmshModelOccAddSurfaceFilling
-    integer(c_int), intent(in) :: wireTag
-    integer(c_int), intent(in) :: tag
-    integer(c_int), dimension(:), intent(in) :: pointTags
-    integer(c_int), intent(in) :: degree
-    integer(c_int), intent(in) :: numPointsOnCurves
-    integer(c_int), intent(in) :: numIter
-    integer(c_int), intent(in) :: anisotropic
-    real(c_double), intent(in) :: tol2d
-    real(c_double), intent(in) :: tol3d
-    real(c_double), intent(in) :: tolAng
-    real(c_double), intent(in) :: tolCurv
-    integer(c_int), intent(in) :: maxDegree
-    integer(c_int), intent(in) :: maxSegments
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in) :: wireTag
+    integer, intent(in), optional :: tag
+    integer(c_int), dimension(:), intent(in), optional :: pointTags
+    integer, intent(in), optional :: degree
+    integer, intent(in), optional :: numPointsOnCurves
+    integer, intent(in), optional :: numIter
+    logical, intent(in), optional :: anisotropic
+    real(c_double), intent(in), optional :: tol2d
+    real(c_double), intent(in), optional :: tol3d
+    real(c_double), intent(in), optional :: tolAng
+    real(c_double), intent(in), optional :: tolCurv
+    integer, intent(in), optional :: maxDegree
+    integer, intent(in), optional :: maxSegments
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    gmshModelOccAddSurfaceFilling = C_API(wireTag, tag, pointTags, fsize(pointTags, kind=c_size_t), degree, numPointsOnCurves, numIter, anisotropic, tol2d, tol3d, tolAng, tolCurv, maxDegree, maxSegments, ierr)
+    gmshModelOccAddSurfaceFilling = C_API(wireTag=int(wireTag, c_int), tag=optval_c_int(-1, tag), api_pointTags_=pointTags, api_pointTags_n_=size_gmsh_int(pointTags), degree=optval_c_int(3, degree), numPointsOnCurves=optval_c_int(15, numPointsOnCurves), numIter=optval_c_int(2, numIter), anisotropic=optval_c_bool(.false., anisotropic), tol2d=optval_c_double(0.00001, tol2d), tol3d=optval_c_double(0.0001, tol3d), tolAng=optval_c_double(0.01, tolAng), tolCurv=optval_c_double(0.1, tolCurv), maxDegree=optval_c_int(8, maxDegree), maxSegments=optval_c_int(9, maxSegments), ierr_=ierr)
     ! Post processing
   end function gmshModelOccAddSurfaceFilling
 
@@ -6913,19 +6829,17 @@ module gmsh
       integer(c_int) :: C_API
       integer(c_int), value, intent(in) :: wireTag
       integer(c_int), value, intent(in) :: tag
-      character(len=1, kind=c_char), dimension(*), intent(in) :: type
-      integer(c_int), intent(out) :: ierr_
+      character(len=1, kind=c_char), dimension(*), intent(in), optional :: type
+      integer(c_int), intent(out), optional :: ierr_
     end function C_API
     end interface
     integer(c_int) :: gmshModelOccAddBSplineFilling
-    integer(c_int), intent(in) :: wireTag
-    integer(c_int), intent(in) :: tag
-    character(len=*), intent(in) :: type
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in) :: wireTag
+    integer, intent(in), optional :: tag
+    character(len=*), intent(in), optional :: type
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    character(len=:, kind=c_char), allocatable :: type_c
-    type_c = istring_(type)
-    gmshModelOccAddBSplineFilling = C_API(wireTag, tag, type_c, ierr)
+    gmshModelOccAddBSplineFilling = C_API(wireTag=int(wireTag, c_int), tag=optval_c_int(-1, tag), type=istring_(optval_c_str("", type)), ierr_=ierr)
     ! Post processing
   end function gmshModelOccAddBSplineFilling
 
@@ -6943,19 +6857,17 @@ module gmsh
       integer(c_int) :: C_API
       integer(c_int), value, intent(in) :: wireTag
       integer(c_int), value, intent(in) :: tag
-      character(len=1, kind=c_char), dimension(*), intent(in) :: type
-      integer(c_int), intent(out) :: ierr_
+      character(len=1, kind=c_char), dimension(*), intent(in), optional :: type
+      integer(c_int), intent(out), optional :: ierr_
     end function C_API
     end interface
     integer(c_int) :: gmshModelOccAddBezierFilling
-    integer(c_int), intent(in) :: wireTag
-    integer(c_int), intent(in) :: tag
-    character(len=*), intent(in) :: type
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in) :: wireTag
+    integer, intent(in), optional :: tag
+    character(len=*), intent(in), optional :: type
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    character(len=:, kind=c_char), allocatable :: type_c
-    type_c = istring_(type)
-    gmshModelOccAddBezierFilling = C_API(wireTag, tag, type_c, ierr)
+    gmshModelOccAddBezierFilling = C_API(wireTag=int(wireTag, c_int), tag=optval_c_int(-1, tag), type=istring_(optval_c_str("", type)), ierr_=ierr)
     ! Post processing
   end function gmshModelOccAddBezierFilling
 
@@ -6981,38 +6893,38 @@ module gmsh
       integer(c_int), value, intent(in) :: tag
       integer(c_int), value, intent(in) :: degreeU
       integer(c_int), value, intent(in) :: degreeV
-      real(c_double), dimension(*) :: api_weights_
+      real(c_double), dimension(*), optional :: api_weights_
       integer(c_size_t), value, intent(in) :: api_weights_n_
-      real(c_double), dimension(*) :: api_knotsU_
+      real(c_double), dimension(*), optional :: api_knotsU_
       integer(c_size_t), value, intent(in) :: api_knotsU_n_
-      real(c_double), dimension(*) :: api_knotsV_
+      real(c_double), dimension(*), optional :: api_knotsV_
       integer(c_size_t), value, intent(in) :: api_knotsV_n_
-      integer(c_int), dimension(*) :: api_multiplicitiesU_
+      integer(c_int), dimension(*), optional :: api_multiplicitiesU_
       integer(c_size_t), value, intent(in) :: api_multiplicitiesU_n_
-      integer(c_int), dimension(*) :: api_multiplicitiesV_
+      integer(c_int), dimension(*), optional :: api_multiplicitiesV_
       integer(c_size_t), value, intent(in) :: api_multiplicitiesV_n_
-      integer(c_int), dimension(*) :: api_wireTags_
+      integer(c_int), dimension(*), optional :: api_wireTags_
       integer(c_size_t), value, intent(in) :: api_wireTags_n_
       integer(c_int), value, intent(in) :: wire3D
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end function C_API
     end interface
     integer(c_int) :: gmshModelOccAddBSplineSurface
     integer(c_int), dimension(:), intent(in) :: pointTags
-    integer(c_int), intent(in) :: numPointsU
-    integer(c_int), intent(in) :: tag
-    integer(c_int), intent(in) :: degreeU
-    integer(c_int), intent(in) :: degreeV
-    real(c_double), dimension(:), intent(in) :: weights
-    real(c_double), dimension(:), intent(in) :: knotsU
-    real(c_double), dimension(:), intent(in) :: knotsV
-    integer(c_int), dimension(:), intent(in) :: multiplicitiesU
-    integer(c_int), dimension(:), intent(in) :: multiplicitiesV
-    integer(c_int), dimension(:), intent(in) :: wireTags
-    integer(c_int), intent(in) :: wire3D
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in) :: numPointsU
+    integer, intent(in), optional :: tag
+    integer, intent(in), optional :: degreeU
+    integer, intent(in), optional :: degreeV
+    real(c_double), dimension(:), intent(in), optional :: weights
+    real(c_double), dimension(:), intent(in), optional :: knotsU
+    real(c_double), dimension(:), intent(in), optional :: knotsV
+    integer(c_int), dimension(:), intent(in), optional :: multiplicitiesU
+    integer(c_int), dimension(:), intent(in), optional :: multiplicitiesV
+    integer(c_int), dimension(:), intent(in), optional :: wireTags
+    logical, intent(in), optional :: wire3D
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    gmshModelOccAddBSplineSurface = C_API(pointTags, fsize(pointTags, kind=c_size_t), numPointsU, tag, degreeU, degreeV, weights, fsize(weights, kind=c_size_t), knotsU, fsize(knotsU, kind=c_size_t), knotsV, fsize(knotsV, kind=c_size_t), multiplicitiesU, fsize(multiplicitiesU, kind=c_size_t), multiplicitiesV, fsize(multiplicitiesV, kind=c_size_t), wireTags, fsize(wireTags, kind=c_size_t), wire3D, ierr)
+    gmshModelOccAddBSplineSurface = C_API(api_pointTags_=pointTags, api_pointTags_n_=size_gmsh_int(pointTags), numPointsU=int(numPointsU, c_int), tag=optval_c_int(-1, tag), degreeU=optval_c_int(3, degreeU), degreeV=optval_c_int(3, degreeV), api_weights_=weights, api_weights_n_=size_gmsh_double(weights), api_knotsU_=knotsU, api_knotsU_n_=size_gmsh_double(knotsU), api_knotsV_=knotsV, api_knotsV_n_=size_gmsh_double(knotsV), api_multiplicitiesU_=multiplicitiesU, api_multiplicitiesU_n_=size_gmsh_int(multiplicitiesU), api_multiplicitiesV_=multiplicitiesV, api_multiplicitiesV_n_=size_gmsh_int(multiplicitiesV), api_wireTags_=wireTags, api_wireTags_n_=size_gmsh_int(wireTags), wire3D=optval_c_bool(.false., wire3D), ierr_=ierr)
     ! Post processing
   end function gmshModelOccAddBSplineSurface
 
@@ -7034,21 +6946,21 @@ module gmsh
       integer(c_size_t), value, intent(in) :: api_pointTags_n_
       integer(c_int), value, intent(in) :: numPointsU
       integer(c_int), value, intent(in) :: tag
-      integer(c_int), dimension(*) :: api_wireTags_
+      integer(c_int), dimension(*), optional :: api_wireTags_
       integer(c_size_t), value, intent(in) :: api_wireTags_n_
       integer(c_int), value, intent(in) :: wire3D
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end function C_API
     end interface
     integer(c_int) :: gmshModelOccAddBezierSurface
     integer(c_int), dimension(:), intent(in) :: pointTags
-    integer(c_int), intent(in) :: numPointsU
-    integer(c_int), intent(in) :: tag
-    integer(c_int), dimension(:), intent(in) :: wireTags
-    integer(c_int), intent(in) :: wire3D
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in) :: numPointsU
+    integer, intent(in), optional :: tag
+    integer(c_int), dimension(:), intent(in), optional :: wireTags
+    logical, intent(in), optional :: wire3D
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    gmshModelOccAddBezierSurface = C_API(pointTags, fsize(pointTags, kind=c_size_t), numPointsU, tag, wireTags, fsize(wireTags, kind=c_size_t), wire3D, ierr)
+    gmshModelOccAddBezierSurface = C_API(api_pointTags_=pointTags, api_pointTags_n_=size_gmsh_int(pointTags), numPointsU=int(numPointsU, c_int), tag=optval_c_int(-1, tag), api_wireTags_=wireTags, api_wireTags_n_=size_gmsh_int(wireTags), wire3D=optval_c_bool(.false., wire3D), ierr_=ierr)
     ! Post processing
   end function gmshModelOccAddBezierSurface
 
@@ -7065,21 +6977,21 @@ module gmsh
       use, intrinsic :: iso_c_binding
       integer(c_int) :: C_API
       integer(c_int), value, intent(in) :: surfaceTag
-      integer(c_int), dimension(*) :: api_wireTags_
+      integer(c_int), dimension(*), optional :: api_wireTags_
       integer(c_size_t), value, intent(in) :: api_wireTags_n_
       integer(c_int), value, intent(in) :: wire3D
       integer(c_int), value, intent(in) :: tag
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end function C_API
     end interface
     integer(c_int) :: gmshModelOccAddTrimmedSurface
-    integer(c_int), intent(in) :: surfaceTag
-    integer(c_int), dimension(:), intent(in) :: wireTags
-    integer(c_int), intent(in) :: wire3D
-    integer(c_int), intent(in) :: tag
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in) :: surfaceTag
+    integer(c_int), dimension(:), intent(in), optional :: wireTags
+    logical, intent(in), optional :: wire3D
+    integer, intent(in), optional :: tag
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    gmshModelOccAddTrimmedSurface = C_API(surfaceTag, wireTags, fsize(wireTags, kind=c_size_t), wire3D, tag, ierr)
+    gmshModelOccAddTrimmedSurface = C_API(surfaceTag=int(surfaceTag, c_int), api_wireTags_=wireTags, api_wireTags_n_=size_gmsh_int(wireTags), wire3D=optval_c_bool(.false., wire3D), tag=optval_c_int(-1, tag), ierr_=ierr)
     ! Post processing
   end function gmshModelOccAddTrimmedSurface
 
@@ -7097,16 +7009,16 @@ module gmsh
       integer(c_size_t), value, intent(in) :: api_surfaceTags_n_
       integer(c_int), value, intent(in) :: tag
       integer(c_int), value, intent(in) :: sewing
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end function C_API
     end interface
     integer(c_int) :: gmshModelOccAddSurfaceLoop
     integer(c_int), dimension(:), intent(in) :: surfaceTags
-    integer(c_int), intent(in) :: tag
-    integer(c_int), intent(in) :: sewing
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in), optional :: tag
+    logical, intent(in), optional :: sewing
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    gmshModelOccAddSurfaceLoop = C_API(surfaceTags, fsize(surfaceTags, kind=c_size_t), tag, sewing, ierr)
+    gmshModelOccAddSurfaceLoop = C_API(api_surfaceTags_=surfaceTags, api_surfaceTags_n_=size_gmsh_int(surfaceTags), tag=optval_c_int(-1, tag), sewing=optval_c_bool(.false., sewing), ierr_=ierr)
     ! Post processing
   end function gmshModelOccAddSurfaceLoop
 
@@ -7123,15 +7035,15 @@ module gmsh
       integer(c_int), dimension(*) :: api_shellTags_
       integer(c_size_t), value, intent(in) :: api_shellTags_n_
       integer(c_int), value, intent(in) :: tag
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end function C_API
     end interface
     integer(c_int) :: gmshModelOccAddVolume
     integer(c_int), dimension(:), intent(in) :: shellTags
-    integer(c_int), intent(in) :: tag
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in), optional :: tag
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    gmshModelOccAddVolume = C_API(shellTags, fsize(shellTags, kind=c_size_t), tag, ierr)
+    gmshModelOccAddVolume = C_API(api_shellTags_=shellTags, api_shellTags_n_=size_gmsh_int(shellTags), tag=optval_c_int(-1, tag), ierr_=ierr)
     ! Post processing
   end function gmshModelOccAddVolume
 
@@ -7154,7 +7066,7 @@ module gmsh
       real(c_double), value, intent(in) :: angle1
       real(c_double), value, intent(in) :: angle2
       real(c_double), value, intent(in) :: angle3
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end function C_API
     end interface
     integer(c_int) :: gmshModelOccAddSphere
@@ -7162,13 +7074,13 @@ module gmsh
     real(c_double), intent(in) :: yc
     real(c_double), intent(in) :: zc
     real(c_double), intent(in) :: radius
-    integer(c_int), intent(in) :: tag
-    real(c_double), intent(in) :: angle1
-    real(c_double), intent(in) :: angle2
-    real(c_double), intent(in) :: angle3
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in), optional :: tag
+    real(c_double), intent(in), optional :: angle1
+    real(c_double), intent(in), optional :: angle2
+    real(c_double), intent(in), optional :: angle3
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    gmshModelOccAddSphere = C_API(xc, yc, zc, radius, tag, angle1, angle2, angle3, ierr)
+    gmshModelOccAddSphere = C_API(xc=real(xc, c_double), yc=real(yc, c_double), zc=real(zc, c_double), radius=real(radius, c_double), tag=optval_c_int(-1, tag), angle1=optval_c_double(-M_PI/2, angle1), angle2=optval_c_double(M_PI/2, angle2), angle3=optval_c_double(2*M_PI, angle3), ierr_=ierr)
     ! Post processing
   end function gmshModelOccAddSphere
 
@@ -7188,7 +7100,7 @@ module gmsh
       real(c_double), value, intent(in) :: dy
       real(c_double), value, intent(in) :: dz
       integer(c_int), value, intent(in) :: tag
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end function C_API
     end interface
     integer(c_int) :: gmshModelOccAddBox
@@ -7198,10 +7110,10 @@ module gmsh
     real(c_double), intent(in) :: dx
     real(c_double), intent(in) :: dy
     real(c_double), intent(in) :: dz
-    integer(c_int), intent(in) :: tag
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in), optional :: tag
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    gmshModelOccAddBox = C_API(x, y, z, dx, dy, dz, tag, ierr)
+    gmshModelOccAddBox = C_API(x=real(x, c_double), y=real(y, c_double), z=real(z, c_double), dx=real(dx, c_double), dy=real(dy, c_double), dz=real(dz, c_double), tag=optval_c_int(-1, tag), ierr_=ierr)
     ! Post processing
   end function gmshModelOccAddBox
 
@@ -7225,7 +7137,7 @@ module gmsh
       real(c_double), value, intent(in) :: r
       integer(c_int), value, intent(in) :: tag
       real(c_double), value, intent(in) :: angle
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end function C_API
     end interface
     integer(c_int) :: gmshModelOccAddCylinder
@@ -7236,11 +7148,11 @@ module gmsh
     real(c_double), intent(in) :: dy
     real(c_double), intent(in) :: dz
     real(c_double), intent(in) :: r
-    integer(c_int), intent(in) :: tag
-    real(c_double), intent(in) :: angle
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in), optional :: tag
+    real(c_double), intent(in), optional :: angle
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    gmshModelOccAddCylinder = C_API(x, y, z, dx, dy, dz, r, tag, angle, ierr)
+    gmshModelOccAddCylinder = C_API(x=real(x, c_double), y=real(y, c_double), z=real(z, c_double), dx=real(dx, c_double), dy=real(dy, c_double), dz=real(dz, c_double), r=real(r, c_double), tag=optval_c_int(-1, tag), angle=optval_c_double(2*M_PI, angle), ierr_=ierr)
     ! Post processing
   end function gmshModelOccAddCylinder
 
@@ -7265,7 +7177,7 @@ module gmsh
       real(c_double), value, intent(in) :: r2
       integer(c_int), value, intent(in) :: tag
       real(c_double), value, intent(in) :: angle
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end function C_API
     end interface
     integer(c_int) :: gmshModelOccAddCone
@@ -7277,11 +7189,11 @@ module gmsh
     real(c_double), intent(in) :: dz
     real(c_double), intent(in) :: r1
     real(c_double), intent(in) :: r2
-    integer(c_int), intent(in) :: tag
-    real(c_double), intent(in) :: angle
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in), optional :: tag
+    real(c_double), intent(in), optional :: angle
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    gmshModelOccAddCone = C_API(x, y, z, dx, dy, dz, r1, r2, tag, angle, ierr)
+    gmshModelOccAddCone = C_API(x=real(x, c_double), y=real(y, c_double), z=real(z, c_double), dx=real(dx, c_double), dy=real(dy, c_double), dz=real(dz, c_double), r1=real(r1, c_double), r2=real(r2, c_double), tag=optval_c_int(-1, tag), angle=optval_c_double(2*M_PI, angle), ierr_=ierr)
     ! Post processing
   end function gmshModelOccAddCone
 
@@ -7305,9 +7217,9 @@ module gmsh
       real(c_double), value, intent(in) :: dz
       integer(c_int), value, intent(in) :: tag
       real(c_double), value, intent(in) :: ltx
-      real(c_double), dimension(*) :: api_zAxis_
+      real(c_double), dimension(*), optional :: api_zAxis_
       integer(c_size_t), value, intent(in) :: api_zAxis_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end function C_API
     end interface
     integer(c_int) :: gmshModelOccAddWedge
@@ -7317,12 +7229,12 @@ module gmsh
     real(c_double), intent(in) :: dx
     real(c_double), intent(in) :: dy
     real(c_double), intent(in) :: dz
-    integer(c_int), intent(in) :: tag
-    real(c_double), intent(in) :: ltx
-    real(c_double), dimension(:), intent(in) :: zAxis
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in), optional :: tag
+    real(c_double), intent(in), optional :: ltx
+    real(c_double), dimension(:), intent(in), optional :: zAxis
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    gmshModelOccAddWedge = C_API(x, y, z, dx, dy, dz, tag, ltx, zAxis, fsize(zAxis, kind=c_size_t), ierr)
+    gmshModelOccAddWedge = C_API(x=real(x, c_double), y=real(y, c_double), z=real(z, c_double), dx=real(dx, c_double), dy=real(dy, c_double), dz=real(dz, c_double), tag=optval_c_int(-1, tag), ltx=optval_c_double(0., ltx), api_zAxis_=zAxis, api_zAxis_n_=size_gmsh_double(zAxis), ierr_=ierr)
     ! Post processing
   end function gmshModelOccAddWedge
 
@@ -7344,9 +7256,9 @@ module gmsh
       real(c_double), value, intent(in) :: r2
       integer(c_int), value, intent(in) :: tag
       real(c_double), value, intent(in) :: angle
-      real(c_double), dimension(*) :: api_zAxis_
+      real(c_double), dimension(*), optional :: api_zAxis_
       integer(c_size_t), value, intent(in) :: api_zAxis_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end function C_API
     end interface
     integer(c_int) :: gmshModelOccAddTorus
@@ -7355,12 +7267,12 @@ module gmsh
     real(c_double), intent(in) :: z
     real(c_double), intent(in) :: r1
     real(c_double), intent(in) :: r2
-    integer(c_int), intent(in) :: tag
-    real(c_double), intent(in) :: angle
-    real(c_double), dimension(:), intent(in) :: zAxis
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in), optional :: tag
+    real(c_double), intent(in), optional :: angle
+    real(c_double), dimension(:), intent(in), optional :: zAxis
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    gmshModelOccAddTorus = C_API(x, y, z, r1, r2, tag, angle, zAxis, fsize(zAxis, kind=c_size_t), ierr)
+    gmshModelOccAddTorus = C_API(x=real(x, c_double), y=real(y, c_double), z=real(z, c_double), r1=real(r1, c_double), r2=real(r2, c_double), tag=optval_c_int(-1, tag), angle=optval_c_double(2*M_PI, angle), api_zAxis_=zAxis, api_zAxis_n_=size_gmsh_double(zAxis), ierr_=ierr)
     ! Post processing
   end function gmshModelOccAddTorus
 
@@ -7383,20 +7295,20 @@ module gmsh
       integer(c_int), value, intent(in) :: makeSolid
       integer(c_int), value, intent(in) :: makeRuled
       integer(c_int), value, intent(in) :: maxDegree
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     integer(c_int), dimension(:), intent(in) :: wireTags
     integer(c_int), dimension(:,:), allocatable, intent(out) :: outDimTags
-    integer(c_int), intent(in) :: tag
-    integer(c_int), intent(in) :: makeSolid
-    integer(c_int), intent(in) :: makeRuled
-    integer(c_int), intent(in) :: maxDegree
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in), optional :: tag
+    logical, intent(in), optional :: makeSolid
+    logical, intent(in), optional :: makeRuled
+    integer, intent(in), optional :: maxDegree
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_outDimTags_
     integer(c_size_t) :: api_outDimTags_n_
-    call C_API(wireTags, fsize(wireTags, kind=c_size_t), api_outDimTags_, api_outDimTags_n_, tag, makeSolid, makeRuled, maxDegree, ierr)
+    call C_API(api_wireTags_=wireTags, api_wireTags_n_=size_gmsh_int(wireTags), api_outDimTags_=api_outDimTags_, api_outDimTags_n_=api_outDimTags_n_, tag=optval_c_int(-1, tag), makeSolid=optval_c_bool(.true., makeSolid), makeRuled=optval_c_bool(.false., makeRuled), maxDegree=optval_c_int(-1, maxDegree), ierr_=ierr)
     ! Post processing
     outDimTags = ovectorpair_(api_outDimTags_, api_outDimTags_n_)
   end subroutine gmshModelOccAddThruSections
@@ -7418,19 +7330,19 @@ module gmsh
       type(c_ptr), intent(out) :: api_outDimTags_
       integer(c_size_t), intent(out) :: api_outDimTags_n_
       integer(c_int), value, intent(in) :: tag
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: volumeTag
+    integer, intent(in) :: volumeTag
     integer(c_int), dimension(:), intent(in) :: excludeSurfaceTags
     real(c_double), intent(in) :: offset
     integer(c_int), dimension(:,:), allocatable, intent(out) :: outDimTags
-    integer(c_int), intent(in) :: tag
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in), optional :: tag
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_outDimTags_
     integer(c_size_t) :: api_outDimTags_n_
-    call C_API(volumeTag, excludeSurfaceTags, fsize(excludeSurfaceTags, kind=c_size_t), offset, api_outDimTags_, api_outDimTags_n_, tag, ierr)
+    call C_API(volumeTag=int(volumeTag, c_int), api_excludeSurfaceTags_=excludeSurfaceTags, api_excludeSurfaceTags_n_=size_gmsh_int(excludeSurfaceTags), offset=real(offset, c_double), api_outDimTags_=api_outDimTags_, api_outDimTags_n_=api_outDimTags_n_, tag=optval_c_int(-1, tag), ierr_=ierr)
     ! Post processing
     outDimTags = ovectorpair_(api_outDimTags_, api_outDimTags_n_)
   end subroutine gmshModelOccAddThickSolid
@@ -7453,12 +7365,12 @@ module gmsh
       real(c_double), value, intent(in) :: dz
       type(c_ptr), intent(out) :: api_outDimTags_
       integer(c_size_t), intent(out) :: api_outDimTags_n_
-      integer(c_int), dimension(*) :: api_numElements_
+      integer(c_int), dimension(*), optional :: api_numElements_
       integer(c_size_t), value, intent(in) :: api_numElements_n_
-      real(c_double), dimension(*) :: api_heights_
+      real(c_double), dimension(*), optional :: api_heights_
       integer(c_size_t), value, intent(in) :: api_heights_n_
       integer(c_int), value, intent(in) :: recombine
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     integer(c_int), dimension(:,:), intent(in) :: dimTags
@@ -7466,14 +7378,14 @@ module gmsh
     real(c_double), intent(in) :: dy
     real(c_double), intent(in) :: dz
     integer(c_int), dimension(:,:), allocatable, intent(out) :: outDimTags
-    integer(c_int), dimension(:), intent(in) :: numElements
-    real(c_double), dimension(:), intent(in) :: heights
-    integer(c_int), intent(in) :: recombine
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), dimension(:), intent(in), optional :: numElements
+    real(c_double), dimension(:), intent(in), optional :: heights
+    logical, intent(in), optional :: recombine
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_outDimTags_
     integer(c_size_t) :: api_outDimTags_n_
-    call C_API(dimTags, fsize(dimTags, kind=c_size_t), dx, dy, dz, api_outDimTags_, api_outDimTags_n_, numElements, fsize(numElements, kind=c_size_t), heights, fsize(heights, kind=c_size_t), recombine, ierr)
+    call C_API(api_dimTags_=dimTags, api_dimTags_n_=size_gmsh_pair(dimTags), dx=real(dx, c_double), dy=real(dy, c_double), dz=real(dz, c_double), api_outDimTags_=api_outDimTags_, api_outDimTags_n_=api_outDimTags_n_, api_numElements_=numElements, api_numElements_n_=size_gmsh_int(numElements), api_heights_=heights, api_heights_n_=size_gmsh_double(heights), recombine=optval_c_bool(.false., recombine), ierr_=ierr)
     ! Post processing
     outDimTags = ovectorpair_(api_outDimTags_, api_outDimTags_n_)
   end subroutine gmshModelOccExtrude
@@ -7502,12 +7414,12 @@ module gmsh
       real(c_double), value, intent(in) :: angle
       type(c_ptr), intent(out) :: api_outDimTags_
       integer(c_size_t), intent(out) :: api_outDimTags_n_
-      integer(c_int), dimension(*) :: api_numElements_
+      integer(c_int), dimension(*), optional :: api_numElements_
       integer(c_size_t), value, intent(in) :: api_numElements_n_
-      real(c_double), dimension(*) :: api_heights_
+      real(c_double), dimension(*), optional :: api_heights_
       integer(c_size_t), value, intent(in) :: api_heights_n_
       integer(c_int), value, intent(in) :: recombine
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     integer(c_int), dimension(:,:), intent(in) :: dimTags
@@ -7519,14 +7431,14 @@ module gmsh
     real(c_double), intent(in) :: az
     real(c_double), intent(in) :: angle
     integer(c_int), dimension(:,:), allocatable, intent(out) :: outDimTags
-    integer(c_int), dimension(:), intent(in) :: numElements
-    real(c_double), dimension(:), intent(in) :: heights
-    integer(c_int), intent(in) :: recombine
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), dimension(:), intent(in), optional :: numElements
+    real(c_double), dimension(:), intent(in), optional :: heights
+    logical, intent(in), optional :: recombine
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_outDimTags_
     integer(c_size_t) :: api_outDimTags_n_
-    call C_API(dimTags, fsize(dimTags, kind=c_size_t), x, y, z, ax, ay, az, angle, api_outDimTags_, api_outDimTags_n_, numElements, fsize(numElements, kind=c_size_t), heights, fsize(heights, kind=c_size_t), recombine, ierr)
+    call C_API(api_dimTags_=dimTags, api_dimTags_n_=size_gmsh_pair(dimTags), x=real(x, c_double), y=real(y, c_double), z=real(z, c_double), ax=real(ax, c_double), ay=real(ay, c_double), az=real(az, c_double), angle=real(angle, c_double), api_outDimTags_=api_outDimTags_, api_outDimTags_n_=api_outDimTags_n_, api_numElements_=numElements, api_numElements_n_=size_gmsh_int(numElements), api_heights_=heights, api_heights_n_=size_gmsh_double(heights), recombine=optval_c_bool(.false., recombine), ierr_=ierr)
     ! Post processing
     outDimTags = ovectorpair_(api_outDimTags_, api_outDimTags_n_)
   end subroutine gmshModelOccRevolve
@@ -7546,21 +7458,19 @@ module gmsh
       integer(c_int), value, intent(in) :: wireTag
       type(c_ptr), intent(out) :: api_outDimTags_
       integer(c_size_t), intent(out) :: api_outDimTags_n_
-      character(len=1, kind=c_char), dimension(*), intent(in) :: trihedron
-      integer(c_int), intent(out) :: ierr_
+      character(len=1, kind=c_char), dimension(*), intent(in), optional :: trihedron
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     integer(c_int), dimension(:,:), intent(in) :: dimTags
-    integer(c_int), intent(in) :: wireTag
+    integer, intent(in) :: wireTag
     integer(c_int), dimension(:,:), allocatable, intent(out) :: outDimTags
-    character(len=*), intent(in) :: trihedron
-    integer(c_int), intent(out) :: ierr
+    character(len=*), intent(in), optional :: trihedron
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_outDimTags_
     integer(c_size_t) :: api_outDimTags_n_
-    character(len=:, kind=c_char), allocatable :: trihedron_c
-    trihedron_c = istring_(trihedron)
-    call C_API(dimTags, fsize(dimTags, kind=c_size_t), wireTag, api_outDimTags_, api_outDimTags_n_, trihedron_c, ierr)
+    call C_API(api_dimTags_=dimTags, api_dimTags_n_=size_gmsh_pair(dimTags), wireTag=int(wireTag, c_int), api_outDimTags_=api_outDimTags_, api_outDimTags_n_=api_outDimTags_n_, trihedron=istring_(optval_c_str("", trihedron)), ierr_=ierr)
     ! Post processing
     outDimTags = ovectorpair_(api_outDimTags_, api_outDimTags_n_)
   end subroutine gmshModelOccAddPipe
@@ -7584,19 +7494,19 @@ module gmsh
       type(c_ptr), intent(out) :: api_outDimTags_
       integer(c_size_t), intent(out) :: api_outDimTags_n_
       integer(c_int), value, intent(in) :: removeVolume
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     integer(c_int), dimension(:), intent(in) :: volumeTags
     integer(c_int), dimension(:), intent(in) :: curveTags
     real(c_double), dimension(:), intent(in) :: radii
     integer(c_int), dimension(:,:), allocatable, intent(out) :: outDimTags
-    integer(c_int), intent(in) :: removeVolume
-    integer(c_int), intent(out) :: ierr
+    logical, intent(in), optional :: removeVolume
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_outDimTags_
     integer(c_size_t) :: api_outDimTags_n_
-    call C_API(volumeTags, fsize(volumeTags, kind=c_size_t), curveTags, fsize(curveTags, kind=c_size_t), radii, fsize(radii, kind=c_size_t), api_outDimTags_, api_outDimTags_n_, removeVolume, ierr)
+    call C_API(api_volumeTags_=volumeTags, api_volumeTags_n_=size_gmsh_int(volumeTags), api_curveTags_=curveTags, api_curveTags_n_=size_gmsh_int(curveTags), api_radii_=radii, api_radii_n_=size_gmsh_double(radii), api_outDimTags_=api_outDimTags_, api_outDimTags_n_=api_outDimTags_n_, removeVolume=optval_c_bool(.true., removeVolume), ierr_=ierr)
     ! Post processing
     outDimTags = ovectorpair_(api_outDimTags_, api_outDimTags_n_)
   end subroutine gmshModelOccFillet
@@ -7624,7 +7534,7 @@ module gmsh
       type(c_ptr), intent(out) :: api_outDimTags_
       integer(c_size_t), intent(out) :: api_outDimTags_n_
       integer(c_int), value, intent(in) :: removeVolume
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     integer(c_int), dimension(:), intent(in) :: volumeTags
@@ -7632,12 +7542,12 @@ module gmsh
     integer(c_int), dimension(:), intent(in) :: surfaceTags
     real(c_double), dimension(:), intent(in) :: distances
     integer(c_int), dimension(:,:), allocatable, intent(out) :: outDimTags
-    integer(c_int), intent(in) :: removeVolume
-    integer(c_int), intent(out) :: ierr
+    logical, intent(in), optional :: removeVolume
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_outDimTags_
     integer(c_size_t) :: api_outDimTags_n_
-    call C_API(volumeTags, fsize(volumeTags, kind=c_size_t), curveTags, fsize(curveTags, kind=c_size_t), surfaceTags, fsize(surfaceTags, kind=c_size_t), distances, fsize(distances, kind=c_size_t), api_outDimTags_, api_outDimTags_n_, removeVolume, ierr)
+    call C_API(api_volumeTags_=volumeTags, api_volumeTags_n_=size_gmsh_int(volumeTags), api_curveTags_=curveTags, api_curveTags_n_=size_gmsh_int(curveTags), api_surfaceTags_=surfaceTags, api_surfaceTags_n_=size_gmsh_int(surfaceTags), api_distances_=distances, api_distances_n_=size_gmsh_double(distances), api_outDimTags_=api_outDimTags_, api_outDimTags_n_=api_outDimTags_n_, removeVolume=optval_c_bool(.true., removeVolume), ierr_=ierr)
     ! Post processing
     outDimTags = ovectorpair_(api_outDimTags_, api_outDimTags_n_)
   end subroutine gmshModelOccChamfer
@@ -7650,7 +7560,7 @@ module gmsh
   !! `removeTool' is set.
   subroutine gmshModelOccFuse(objectDimTags, toolDimTags, outDimTags, outDimTagsMap, outDimTagsMap_n, tag, removeObject, removeTool, ierr)
     interface
-    subroutine C_API(api_objectDimTags_, api_objectDimTags_n_, api_toolDimTags_, api_toolDimTags_n_, api_outDimTags_, api_outDimTags_n_, outDimTagsMap, outDimTagsMap_n, outDimTagsMap_nn, tag, removeObject, removeTool, ierr_) bind(C, name="gmshModelOccFuse")
+    subroutine C_API(api_objectDimTags_, api_objectDimTags_n_, api_toolDimTags_, api_toolDimTags_n_, api_outDimTags_, api_outDimTags_n_, api_outDimTagsMap_, api_outDimTagsMap_n_, api_outDimTagsMap_nn_, tag, removeObject, removeTool, ierr_) bind(C, name="gmshModelOccFuse")
       use, intrinsic :: iso_c_binding
       integer(c_int), dimension(*) :: api_objectDimTags_
       integer(c_size_t), value, intent(in) :: api_objectDimTags_n_
@@ -7658,13 +7568,13 @@ module gmsh
       integer(c_size_t), value, intent(in) :: api_toolDimTags_n_
       type(c_ptr), intent(out) :: api_outDimTags_
       integer(c_size_t), intent(out) :: api_outDimTags_n_
-      type(c_ptr), intent(out) :: outDimTagsMap
-      type(c_ptr), intent(out) :: outDimTagsMap_n
-      integer(c_size_t) :: outDimTagsMap_nn
+      type(c_ptr), intent(out) :: api_outDimTagsMap_
+      type(c_ptr), intent(out) :: api_outDimTagsMap_n_
+      integer(c_size_t) :: api_outDimTagsMap_nn_
       integer(c_int), value, intent(in) :: tag
       integer(c_int), value, intent(in) :: removeObject
       integer(c_int), value, intent(in) :: removeTool
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     integer(c_int), dimension(:,:), intent(in) :: objectDimTags
@@ -7672,16 +7582,16 @@ module gmsh
     integer(c_int), dimension(:,:), allocatable, intent(out) :: outDimTags
     integer(c_int), dimension(:,:), allocatable, intent(out) :: outDimTagsMap
     integer(c_size_t), dimension(:), allocatable, intent(out) :: outDimTagsMap_n
-    integer(c_int), intent(in) :: tag
-    integer(c_int), intent(in) :: removeObject
-    integer(c_int), intent(in) :: removeTool
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in), optional :: tag
+    logical, intent(in), optional :: removeObject
+    logical, intent(in), optional :: removeTool
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_outDimTags_
     integer(c_size_t) :: api_outDimTags_n_
     type(c_ptr) :: api_outDimTagsMap_, api_outDimTagsMap_n_
     integer(c_size_t) :: api_outDimTagsMap_nn_
-    call C_API(objectDimTags, fsize(objectDimTags, kind=c_size_t), toolDimTags, fsize(toolDimTags, kind=c_size_t), api_outDimTags_, api_outDimTags_n_, api_outDimTagsMap_, api_outDimTagsMap_n_, api_outDimTagsMap_nn_, tag, removeObject, removeTool, ierr)
+    call C_API(api_objectDimTags_=objectDimTags, api_objectDimTags_n_=size_gmsh_pair(objectDimTags), api_toolDimTags_=toolDimTags, api_toolDimTags_n_=size_gmsh_pair(toolDimTags), api_outDimTags_=api_outDimTags_, api_outDimTags_n_=api_outDimTags_n_, api_outDimTagsMap_=api_outDimTagsMap_, api_outDimTagsMap_n_=api_outDimTagsMap_n_, api_outDimTagsMap_nn_=api_outDimTagsMap_nn_, tag=optval_c_int(-1, tag), removeObject=optval_c_bool(.true., removeObject), removeTool=optval_c_bool(.true., removeTool), ierr_=ierr)
     ! Post processing
     outDimTags = ovectorpair_(api_outDimTags_, api_outDimTags_n_)
     call ovectorvectorpair_(api_outDimTagsMap_, api_outDimTagsMap_n_, api_outDimTagsMap_nn_, outDimTagsMap, outDimTagsMap_n)
@@ -7695,7 +7605,7 @@ module gmsh
   !! if `removeTool' is set.
   subroutine gmshModelOccIntersect(objectDimTags, toolDimTags, outDimTags, outDimTagsMap, outDimTagsMap_n, tag, removeObject, removeTool, ierr)
     interface
-    subroutine C_API(api_objectDimTags_, api_objectDimTags_n_, api_toolDimTags_, api_toolDimTags_n_, api_outDimTags_, api_outDimTags_n_, outDimTagsMap, outDimTagsMap_n, outDimTagsMap_nn, tag, removeObject, removeTool, ierr_) bind(C, name="gmshModelOccIntersect")
+    subroutine C_API(api_objectDimTags_, api_objectDimTags_n_, api_toolDimTags_, api_toolDimTags_n_, api_outDimTags_, api_outDimTags_n_, api_outDimTagsMap_, api_outDimTagsMap_n_, api_outDimTagsMap_nn_, tag, removeObject, removeTool, ierr_) bind(C, name="gmshModelOccIntersect")
       use, intrinsic :: iso_c_binding
       integer(c_int), dimension(*) :: api_objectDimTags_
       integer(c_size_t), value, intent(in) :: api_objectDimTags_n_
@@ -7703,13 +7613,13 @@ module gmsh
       integer(c_size_t), value, intent(in) :: api_toolDimTags_n_
       type(c_ptr), intent(out) :: api_outDimTags_
       integer(c_size_t), intent(out) :: api_outDimTags_n_
-      type(c_ptr), intent(out) :: outDimTagsMap
-      type(c_ptr), intent(out) :: outDimTagsMap_n
-      integer(c_size_t) :: outDimTagsMap_nn
+      type(c_ptr), intent(out) :: api_outDimTagsMap_
+      type(c_ptr), intent(out) :: api_outDimTagsMap_n_
+      integer(c_size_t) :: api_outDimTagsMap_nn_
       integer(c_int), value, intent(in) :: tag
       integer(c_int), value, intent(in) :: removeObject
       integer(c_int), value, intent(in) :: removeTool
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     integer(c_int), dimension(:,:), intent(in) :: objectDimTags
@@ -7717,16 +7627,16 @@ module gmsh
     integer(c_int), dimension(:,:), allocatable, intent(out) :: outDimTags
     integer(c_int), dimension(:,:), allocatable, intent(out) :: outDimTagsMap
     integer(c_size_t), dimension(:), allocatable, intent(out) :: outDimTagsMap_n
-    integer(c_int), intent(in) :: tag
-    integer(c_int), intent(in) :: removeObject
-    integer(c_int), intent(in) :: removeTool
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in), optional :: tag
+    logical, intent(in), optional :: removeObject
+    logical, intent(in), optional :: removeTool
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_outDimTags_
     integer(c_size_t) :: api_outDimTags_n_
     type(c_ptr) :: api_outDimTagsMap_, api_outDimTagsMap_n_
     integer(c_size_t) :: api_outDimTagsMap_nn_
-    call C_API(objectDimTags, fsize(objectDimTags, kind=c_size_t), toolDimTags, fsize(toolDimTags, kind=c_size_t), api_outDimTags_, api_outDimTags_n_, api_outDimTagsMap_, api_outDimTagsMap_n_, api_outDimTagsMap_nn_, tag, removeObject, removeTool, ierr)
+    call C_API(api_objectDimTags_=objectDimTags, api_objectDimTags_n_=size_gmsh_pair(objectDimTags), api_toolDimTags_=toolDimTags, api_toolDimTags_n_=size_gmsh_pair(toolDimTags), api_outDimTags_=api_outDimTags_, api_outDimTags_n_=api_outDimTags_n_, api_outDimTagsMap_=api_outDimTagsMap_, api_outDimTagsMap_n_=api_outDimTagsMap_n_, api_outDimTagsMap_nn_=api_outDimTagsMap_nn_, tag=optval_c_int(-1, tag), removeObject=optval_c_bool(.true., removeObject), removeTool=optval_c_bool(.true., removeTool), ierr_=ierr)
     ! Post processing
     outDimTags = ovectorpair_(api_outDimTags_, api_outDimTags_n_)
     call ovectorvectorpair_(api_outDimTagsMap_, api_outDimTagsMap_n_, api_outDimTagsMap_nn_, outDimTagsMap, outDimTagsMap_n)
@@ -7740,7 +7650,7 @@ module gmsh
   !! `removeTool' is set.
   subroutine gmshModelOccCut(objectDimTags, toolDimTags, outDimTags, outDimTagsMap, outDimTagsMap_n, tag, removeObject, removeTool, ierr)
     interface
-    subroutine C_API(api_objectDimTags_, api_objectDimTags_n_, api_toolDimTags_, api_toolDimTags_n_, api_outDimTags_, api_outDimTags_n_, outDimTagsMap, outDimTagsMap_n, outDimTagsMap_nn, tag, removeObject, removeTool, ierr_) bind(C, name="gmshModelOccCut")
+    subroutine C_API(api_objectDimTags_, api_objectDimTags_n_, api_toolDimTags_, api_toolDimTags_n_, api_outDimTags_, api_outDimTags_n_, api_outDimTagsMap_, api_outDimTagsMap_n_, api_outDimTagsMap_nn_, tag, removeObject, removeTool, ierr_) bind(C, name="gmshModelOccCut")
       use, intrinsic :: iso_c_binding
       integer(c_int), dimension(*) :: api_objectDimTags_
       integer(c_size_t), value, intent(in) :: api_objectDimTags_n_
@@ -7748,13 +7658,13 @@ module gmsh
       integer(c_size_t), value, intent(in) :: api_toolDimTags_n_
       type(c_ptr), intent(out) :: api_outDimTags_
       integer(c_size_t), intent(out) :: api_outDimTags_n_
-      type(c_ptr), intent(out) :: outDimTagsMap
-      type(c_ptr), intent(out) :: outDimTagsMap_n
-      integer(c_size_t) :: outDimTagsMap_nn
+      type(c_ptr), intent(out) :: api_outDimTagsMap_
+      type(c_ptr), intent(out) :: api_outDimTagsMap_n_
+      integer(c_size_t) :: api_outDimTagsMap_nn_
       integer(c_int), value, intent(in) :: tag
       integer(c_int), value, intent(in) :: removeObject
       integer(c_int), value, intent(in) :: removeTool
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     integer(c_int), dimension(:,:), intent(in) :: objectDimTags
@@ -7762,16 +7672,16 @@ module gmsh
     integer(c_int), dimension(:,:), allocatable, intent(out) :: outDimTags
     integer(c_int), dimension(:,:), allocatable, intent(out) :: outDimTagsMap
     integer(c_size_t), dimension(:), allocatable, intent(out) :: outDimTagsMap_n
-    integer(c_int), intent(in) :: tag
-    integer(c_int), intent(in) :: removeObject
-    integer(c_int), intent(in) :: removeTool
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in), optional :: tag
+    logical, intent(in), optional :: removeObject
+    logical, intent(in), optional :: removeTool
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_outDimTags_
     integer(c_size_t) :: api_outDimTags_n_
     type(c_ptr) :: api_outDimTagsMap_, api_outDimTagsMap_n_
     integer(c_size_t) :: api_outDimTagsMap_nn_
-    call C_API(objectDimTags, fsize(objectDimTags, kind=c_size_t), toolDimTags, fsize(toolDimTags, kind=c_size_t), api_outDimTags_, api_outDimTags_n_, api_outDimTagsMap_, api_outDimTagsMap_n_, api_outDimTagsMap_nn_, tag, removeObject, removeTool, ierr)
+    call C_API(api_objectDimTags_=objectDimTags, api_objectDimTags_n_=size_gmsh_pair(objectDimTags), api_toolDimTags_=toolDimTags, api_toolDimTags_n_=size_gmsh_pair(toolDimTags), api_outDimTags_=api_outDimTags_, api_outDimTags_n_=api_outDimTags_n_, api_outDimTagsMap_=api_outDimTagsMap_, api_outDimTagsMap_n_=api_outDimTagsMap_n_, api_outDimTagsMap_nn_=api_outDimTagsMap_nn_, tag=optval_c_int(-1, tag), removeObject=optval_c_bool(.true., removeObject), removeTool=optval_c_bool(.true., removeTool), ierr_=ierr)
     ! Post processing
     outDimTags = ovectorpair_(api_outDimTags_, api_outDimTags_n_)
     call ovectorvectorpair_(api_outDimTagsMap_, api_outDimTagsMap_n_, api_outDimTagsMap_nn_, outDimTagsMap, outDimTagsMap_n)
@@ -7788,7 +7698,7 @@ module gmsh
   !! `removeObject' is set. Remove the tool if `removeTool' is set.
   subroutine gmshModelOccFragment(objectDimTags, toolDimTags, outDimTags, outDimTagsMap, outDimTagsMap_n, tag, removeObject, removeTool, ierr)
     interface
-    subroutine C_API(api_objectDimTags_, api_objectDimTags_n_, api_toolDimTags_, api_toolDimTags_n_, api_outDimTags_, api_outDimTags_n_, outDimTagsMap, outDimTagsMap_n, outDimTagsMap_nn, tag, removeObject, removeTool, ierr_) bind(C, name="gmshModelOccFragment")
+    subroutine C_API(api_objectDimTags_, api_objectDimTags_n_, api_toolDimTags_, api_toolDimTags_n_, api_outDimTags_, api_outDimTags_n_, api_outDimTagsMap_, api_outDimTagsMap_n_, api_outDimTagsMap_nn_, tag, removeObject, removeTool, ierr_) bind(C, name="gmshModelOccFragment")
       use, intrinsic :: iso_c_binding
       integer(c_int), dimension(*) :: api_objectDimTags_
       integer(c_size_t), value, intent(in) :: api_objectDimTags_n_
@@ -7796,13 +7706,13 @@ module gmsh
       integer(c_size_t), value, intent(in) :: api_toolDimTags_n_
       type(c_ptr), intent(out) :: api_outDimTags_
       integer(c_size_t), intent(out) :: api_outDimTags_n_
-      type(c_ptr), intent(out) :: outDimTagsMap
-      type(c_ptr), intent(out) :: outDimTagsMap_n
-      integer(c_size_t) :: outDimTagsMap_nn
+      type(c_ptr), intent(out) :: api_outDimTagsMap_
+      type(c_ptr), intent(out) :: api_outDimTagsMap_n_
+      integer(c_size_t) :: api_outDimTagsMap_nn_
       integer(c_int), value, intent(in) :: tag
       integer(c_int), value, intent(in) :: removeObject
       integer(c_int), value, intent(in) :: removeTool
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     integer(c_int), dimension(:,:), intent(in) :: objectDimTags
@@ -7810,16 +7720,16 @@ module gmsh
     integer(c_int), dimension(:,:), allocatable, intent(out) :: outDimTags
     integer(c_int), dimension(:,:), allocatable, intent(out) :: outDimTagsMap
     integer(c_size_t), dimension(:), allocatable, intent(out) :: outDimTagsMap_n
-    integer(c_int), intent(in) :: tag
-    integer(c_int), intent(in) :: removeObject
-    integer(c_int), intent(in) :: removeTool
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in), optional :: tag
+    logical, intent(in), optional :: removeObject
+    logical, intent(in), optional :: removeTool
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_outDimTags_
     integer(c_size_t) :: api_outDimTags_n_
     type(c_ptr) :: api_outDimTagsMap_, api_outDimTagsMap_n_
     integer(c_size_t) :: api_outDimTagsMap_nn_
-    call C_API(objectDimTags, fsize(objectDimTags, kind=c_size_t), toolDimTags, fsize(toolDimTags, kind=c_size_t), api_outDimTags_, api_outDimTags_n_, api_outDimTagsMap_, api_outDimTagsMap_n_, api_outDimTagsMap_nn_, tag, removeObject, removeTool, ierr)
+    call C_API(api_objectDimTags_=objectDimTags, api_objectDimTags_n_=size_gmsh_pair(objectDimTags), api_toolDimTags_=toolDimTags, api_toolDimTags_n_=size_gmsh_pair(toolDimTags), api_outDimTags_=api_outDimTags_, api_outDimTags_n_=api_outDimTags_n_, api_outDimTagsMap_=api_outDimTagsMap_, api_outDimTagsMap_n_=api_outDimTagsMap_n_, api_outDimTagsMap_nn_=api_outDimTagsMap_nn_, tag=optval_c_int(-1, tag), removeObject=optval_c_bool(.true., removeObject), removeTool=optval_c_bool(.true., removeTool), ierr_=ierr)
     ! Post processing
     outDimTags = ovectorpair_(api_outDimTags_, api_outDimTags_n_)
     call ovectorvectorpair_(api_outDimTagsMap_, api_outDimTagsMap_n_, api_outDimTagsMap_nn_, outDimTagsMap, outDimTagsMap_n)
@@ -7836,16 +7746,16 @@ module gmsh
       real(c_double), value, intent(in) :: dx
       real(c_double), value, intent(in) :: dy
       real(c_double), value, intent(in) :: dz
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     integer(c_int), dimension(:,:), intent(in) :: dimTags
     real(c_double), intent(in) :: dx
     real(c_double), intent(in) :: dy
     real(c_double), intent(in) :: dz
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(dimTags, fsize(dimTags, kind=c_size_t), dx, dy, dz, ierr)
+    call C_API(api_dimTags_=dimTags, api_dimTags_n_=size_gmsh_pair(dimTags), dx=real(dx, c_double), dy=real(dy, c_double), dz=real(dz, c_double), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelOccTranslate
 
@@ -7865,7 +7775,7 @@ module gmsh
       real(c_double), value, intent(in) :: ay
       real(c_double), value, intent(in) :: az
       real(c_double), value, intent(in) :: angle
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     integer(c_int), dimension(:,:), intent(in) :: dimTags
@@ -7876,9 +7786,9 @@ module gmsh
     real(c_double), intent(in) :: ay
     real(c_double), intent(in) :: az
     real(c_double), intent(in) :: angle
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(dimTags, fsize(dimTags, kind=c_size_t), x, y, z, ax, ay, az, angle, ierr)
+    call C_API(api_dimTags_=dimTags, api_dimTags_n_=size_gmsh_pair(dimTags), x=real(x, c_double), y=real(y, c_double), z=real(z, c_double), ax=real(ax, c_double), ay=real(ay, c_double), az=real(az, c_double), angle=real(angle, c_double), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelOccRotate
 
@@ -7897,7 +7807,7 @@ module gmsh
       real(c_double), value, intent(in) :: a
       real(c_double), value, intent(in) :: b
       real(c_double), value, intent(in) :: c
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     integer(c_int), dimension(:,:), intent(in) :: dimTags
@@ -7907,9 +7817,9 @@ module gmsh
     real(c_double), intent(in) :: a
     real(c_double), intent(in) :: b
     real(c_double), intent(in) :: c
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(dimTags, fsize(dimTags, kind=c_size_t), x, y, z, a, b, c, ierr)
+    call C_API(api_dimTags_=dimTags, api_dimTags_n_=size_gmsh_pair(dimTags), x=real(x, c_double), y=real(y, c_double), z=real(z, c_double), a=real(a, c_double), b=real(b, c_double), c=real(c, c_double), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelOccDilate
 
@@ -7925,7 +7835,7 @@ module gmsh
       real(c_double), value, intent(in) :: b
       real(c_double), value, intent(in) :: c
       real(c_double), value, intent(in) :: d
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     integer(c_int), dimension(:,:), intent(in) :: dimTags
@@ -7933,9 +7843,9 @@ module gmsh
     real(c_double), intent(in) :: b
     real(c_double), intent(in) :: c
     real(c_double), intent(in) :: d
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(dimTags, fsize(dimTags, kind=c_size_t), a, b, c, d, ierr)
+    call C_API(api_dimTags_=dimTags, api_dimTags_n_=size_gmsh_pair(dimTags), a=real(a, c_double), b=real(b, c_double), c=real(c, c_double), d=real(d, c_double), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelOccMirror
 
@@ -7952,7 +7862,7 @@ module gmsh
       real(c_double), value, intent(in) :: b
       real(c_double), value, intent(in) :: c
       real(c_double), value, intent(in) :: d
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     integer(c_int), dimension(:,:), intent(in) :: dimTags
@@ -7960,9 +7870,9 @@ module gmsh
     real(c_double), intent(in) :: b
     real(c_double), intent(in) :: c
     real(c_double), intent(in) :: d
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(dimTags, fsize(dimTags, kind=c_size_t), a, b, c, d, ierr)
+    call C_API(api_dimTags_=dimTags, api_dimTags_n_=size_gmsh_pair(dimTags), a=real(a, c_double), b=real(b, c_double), c=real(c, c_double), d=real(d, c_double), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelOccSymmetrize
 
@@ -7977,14 +7887,14 @@ module gmsh
       integer(c_size_t), value, intent(in) :: api_dimTags_n_
       real(c_double), dimension(*) :: api_affineTransform_
       integer(c_size_t), value, intent(in) :: api_affineTransform_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     integer(c_int), dimension(:,:), intent(in) :: dimTags
     real(c_double), dimension(:), intent(in) :: affineTransform
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(dimTags, fsize(dimTags, kind=c_size_t), affineTransform, fsize(affineTransform, kind=c_size_t), ierr)
+    call C_API(api_dimTags_=dimTags, api_dimTags_n_=size_gmsh_pair(dimTags), api_affineTransform_=affineTransform, api_affineTransform_n_=size_gmsh_double(affineTransform), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelOccAffineTransform
 
@@ -7998,16 +7908,16 @@ module gmsh
       integer(c_size_t), value, intent(in) :: api_dimTags_n_
       type(c_ptr), intent(out) :: api_outDimTags_
       integer(c_size_t), intent(out) :: api_outDimTags_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     integer(c_int), dimension(:,:), intent(in) :: dimTags
     integer(c_int), dimension(:,:), allocatable, intent(out) :: outDimTags
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_outDimTags_
     integer(c_size_t) :: api_outDimTags_n_
-    call C_API(dimTags, fsize(dimTags, kind=c_size_t), api_outDimTags_, api_outDimTags_n_, ierr)
+    call C_API(api_dimTags_=dimTags, api_dimTags_n_=size_gmsh_pair(dimTags), api_outDimTags_=api_outDimTags_, api_outDimTags_n_=api_outDimTags_n_, ierr_=ierr)
     ! Post processing
     outDimTags = ovectorpair_(api_outDimTags_, api_outDimTags_n_)
   end subroutine gmshModelOccCopy
@@ -8023,14 +7933,14 @@ module gmsh
       integer(c_int), dimension(*) :: api_dimTags_
       integer(c_size_t), value, intent(in) :: api_dimTags_n_
       integer(c_int), value, intent(in) :: recursive
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     integer(c_int), dimension(:,:), intent(in) :: dimTags
-    integer(c_int), intent(in) :: recursive
-    integer(c_int), intent(out) :: ierr
+    logical, intent(in), optional :: recursive
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(dimTags, fsize(dimTags, kind=c_size_t), recursive, ierr)
+    call C_API(api_dimTags_=dimTags, api_dimTags_n_=size_gmsh_pair(dimTags), recursive=optval_c_bool(.false., recursive), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelOccRemove
 
@@ -8041,12 +7951,12 @@ module gmsh
     interface
     subroutine C_API(ierr_) bind(C, name="gmshModelOccRemoveAllDuplicates")
       use, intrinsic :: iso_c_binding
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(ierr)
+    call C_API(ierr_=ierr)
     ! Post processing
   end subroutine gmshModelOccRemoveAllDuplicates
 
@@ -8059,7 +7969,7 @@ module gmsh
       use, intrinsic :: iso_c_binding
       type(c_ptr), intent(out) :: api_outDimTags_
       integer(c_size_t), intent(out) :: api_outDimTags_n_
-      integer(c_int), dimension(*) :: api_dimTags_
+      integer(c_int), dimension(*), optional :: api_dimTags_
       integer(c_size_t), value, intent(in) :: api_dimTags_n_
       real(c_double), value, intent(in) :: tolerance
       integer(c_int), value, intent(in) :: fixDegenerated
@@ -8067,22 +7977,22 @@ module gmsh
       integer(c_int), value, intent(in) :: fixSmallFaces
       integer(c_int), value, intent(in) :: sewFaces
       integer(c_int), value, intent(in) :: makeSolids
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     integer(c_int), dimension(:,:), allocatable, intent(out) :: outDimTags
-    integer(c_int), dimension(:,:), intent(in) :: dimTags
-    real(c_double), intent(in) :: tolerance
-    integer(c_int), intent(in) :: fixDegenerated
-    integer(c_int), intent(in) :: fixSmallEdges
-    integer(c_int), intent(in) :: fixSmallFaces
-    integer(c_int), intent(in) :: sewFaces
-    integer(c_int), intent(in) :: makeSolids
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), dimension(:,:), intent(in), optional :: dimTags
+    real(c_double), intent(in), optional :: tolerance
+    logical, intent(in), optional :: fixDegenerated
+    logical, intent(in), optional :: fixSmallEdges
+    logical, intent(in), optional :: fixSmallFaces
+    logical, intent(in), optional :: sewFaces
+    logical, intent(in), optional :: makeSolids
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_outDimTags_
     integer(c_size_t) :: api_outDimTags_n_
-    call C_API(api_outDimTags_, api_outDimTags_n_, dimTags, fsize(dimTags, kind=c_size_t), tolerance, fixDegenerated, fixSmallEdges, fixSmallFaces, sewFaces, makeSolids, ierr)
+    call C_API(api_outDimTags_=api_outDimTags_, api_outDimTags_n_=api_outDimTags_n_, api_dimTags_=dimTags, api_dimTags_n_=size_gmsh_pair(dimTags), tolerance=optval_c_double(1e-8, tolerance), fixDegenerated=optval_c_bool(.true., fixDegenerated), fixSmallEdges=optval_c_bool(.true., fixSmallEdges), fixSmallFaces=optval_c_bool(.true., fixSmallFaces), sewFaces=optval_c_bool(.true., sewFaces), makeSolids=optval_c_bool(.true., makeSolids), ierr_=ierr)
     ! Post processing
     outDimTags = ovectorpair_(api_outDimTags_, api_outDimTags_n_)
   end subroutine gmshModelOccHealShapes
@@ -8094,13 +8004,13 @@ module gmsh
       use, intrinsic :: iso_c_binding
       integer(c_int), dimension(*) :: api_dimTags_
       integer(c_size_t), value, intent(in) :: api_dimTags_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     integer(c_int), dimension(:,:), intent(in) :: dimTags
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(dimTags, fsize(dimTags, kind=c_size_t), ierr)
+    call C_API(api_dimTags_=dimTags, api_dimTags_n_=size_gmsh_pair(dimTags), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelOccConvertToNURBS
 
@@ -8118,23 +8028,19 @@ module gmsh
       type(c_ptr), intent(out) :: api_outDimTags_
       integer(c_size_t), intent(out) :: api_outDimTags_n_
       integer(c_int), value, intent(in) :: highestDimOnly
-      character(len=1, kind=c_char), dimension(*), intent(in) :: format
-      integer(c_int), intent(out) :: ierr_
+      character(len=1, kind=c_char), dimension(*), intent(in), optional :: format
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     character(len=*), intent(in) :: fileName
     integer(c_int), dimension(:,:), allocatable, intent(out) :: outDimTags
-    integer(c_int), intent(in) :: highestDimOnly
-    character(len=*), intent(in) :: format
-    integer(c_int), intent(out) :: ierr
+    logical, intent(in), optional :: highestDimOnly
+    character(len=*), intent(in), optional :: format
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    character(len=:, kind=c_char), allocatable :: fileName_c
     type(c_ptr) :: api_outDimTags_
     integer(c_size_t) :: api_outDimTags_n_
-    character(len=:, kind=c_char), allocatable :: format_c
-    fileName_c = istring_(fileName)
-    format_c = istring_(format)
-    call C_API(fileName_c, api_outDimTags_, api_outDimTags_n_, highestDimOnly, format_c, ierr)
+    call C_API(fileName=istring_(fileName), api_outDimTags_=api_outDimTags_, api_outDimTags_n_=api_outDimTags_n_, highestDimOnly=optval_c_bool(.true., highestDimOnly), format=istring_(optval_c_str("", format)), ierr_=ierr)
     ! Post processing
     outDimTags = ovectorpair_(api_outDimTags_, api_outDimTags_n_)
   end subroutine gmshModelOccImportShapes
@@ -8156,17 +8062,17 @@ module gmsh
       type(c_ptr), intent(out) :: api_outDimTags_
       integer(c_size_t), intent(out) :: api_outDimTags_n_
       integer(c_int), value, intent(in) :: highestDimOnly
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     type(c_ptr), intent(in) :: shape
     integer(c_int), dimension(:,:), allocatable, intent(out) :: outDimTags
-    integer(c_int), intent(in) :: highestDimOnly
-    integer(c_int), intent(out) :: ierr
+    logical, intent(in), optional :: highestDimOnly
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_outDimTags_
     integer(c_size_t) :: api_outDimTags_n_
-    call C_API(shape, api_outDimTags_, api_outDimTags_n_, highestDimOnly, ierr)
+    call C_API(shape=shape, api_outDimTags_=api_outDimTags_, api_outDimTags_n_=api_outDimTags_n_, highestDimOnly=optval_c_bool(.true., highestDimOnly), ierr_=ierr)
     ! Post processing
     outDimTags = ovectorpair_(api_outDimTags_, api_outDimTags_n_)
   end subroutine gmshModelOccImportShapesNativePointer
@@ -8181,16 +8087,16 @@ module gmsh
       type(c_ptr), intent(out) :: api_dimTags_
       integer(c_size_t), intent(out) :: api_dimTags_n_
       integer(c_int), value, intent(in) :: dim
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     integer(c_int), dimension(:,:), allocatable, intent(out) :: dimTags
-    integer(c_int), intent(in) :: dim
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in), optional :: dim
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_dimTags_
     integer(c_size_t) :: api_dimTags_n_
-    call C_API(api_dimTags_, api_dimTags_n_, dim, ierr)
+    call C_API(api_dimTags_=api_dimTags_, api_dimTags_n_=api_dimTags_n_, dim=optval_c_int(-1, dim), ierr_=ierr)
     ! Post processing
     dimTags = ovectorpair_(api_dimTags_, api_dimTags_n_)
   end subroutine gmshModelOccGetEntities
@@ -8212,7 +8118,7 @@ module gmsh
       type(c_ptr), intent(out) :: api_tags_
       integer(c_size_t), intent(out) :: api_tags_n_
       integer(c_int), value, intent(in) :: dim
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     real(c_double), intent(in) :: xmin
@@ -8222,12 +8128,12 @@ module gmsh
     real(c_double), intent(in) :: ymax
     real(c_double), intent(in) :: zmax
     integer(c_int), dimension(:,:), allocatable, intent(out) :: tags
-    integer(c_int), intent(in) :: dim
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in), optional :: dim
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_tags_
     integer(c_size_t) :: api_tags_n_
-    call C_API(xmin, ymin, zmin, xmax, ymax, zmax, api_tags_, api_tags_n_, dim, ierr)
+    call C_API(xmin=real(xmin, c_double), ymin=real(ymin, c_double), zmin=real(zmin, c_double), xmax=real(xmax, c_double), ymax=real(ymax, c_double), zmax=real(zmax, c_double), api_tags_=api_tags_, api_tags_n_=api_tags_n_, dim=optval_c_int(-1, dim), ierr_=ierr)
     ! Post processing
     tags = ovectorpair_(api_tags_, api_tags_n_)
   end subroutine gmshModelOccGetEntitiesInBoundingBox
@@ -8246,20 +8152,20 @@ module gmsh
       real(c_double) :: xmax
       real(c_double) :: ymax
       real(c_double) :: zmax
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: dim
-    integer(c_int), intent(in) :: tag
+    integer, intent(in) :: dim
+    integer, intent(in) :: tag
     real(c_double) :: xmin
     real(c_double) :: ymin
     real(c_double) :: zmin
     real(c_double) :: xmax
     real(c_double) :: ymax
     real(c_double) :: zmax
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(dim, tag, xmin, ymin, zmin, xmax, ymax, zmax, ierr)
+    call C_API(dim=int(dim, c_int), tag=int(tag, c_int), xmin=xmin, ymin=ymin, zmin=zmin, xmax=xmax, ymax=ymax, zmax=zmax, ierr_=ierr)
     ! Post processing
   end subroutine gmshModelOccGetBoundingBox
 
@@ -8276,20 +8182,20 @@ module gmsh
       type(c_ptr), intent(out) :: api_curveTags_
       type(c_ptr), intent(out) :: api_curveTags_n_
       integer(c_size_t), intent(out) :: api_curveTags_nn_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: surfaceTag
+    integer, intent(in) :: surfaceTag
     integer(c_int), dimension(:), allocatable, intent(out) :: curveLoopTags
     integer(c_int), dimension(:), allocatable, intent(out) :: curveTags
     integer(c_size_t), dimension(:), allocatable, intent(out) :: curveTags_n
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_curveLoopTags_
     integer(c_size_t) :: api_curveLoopTags_n_
     type(c_ptr) :: api_curveTags_, api_curveTags_n_
     integer(c_size_t) :: api_curveTags_nn_
-    call C_API(surfaceTag, api_curveLoopTags_, api_curveLoopTags_n_, api_curveTags_, api_curveTags_n_, api_curveTags_nn_, ierr)
+    call C_API(surfaceTag=int(surfaceTag, c_int), api_curveLoopTags_=api_curveLoopTags_, api_curveLoopTags_n_=api_curveLoopTags_n_, api_curveTags_=api_curveTags_, api_curveTags_n_=api_curveTags_n_, api_curveTags_nn_=api_curveTags_nn_, ierr_=ierr)
     ! Post processing
     curveLoopTags = ovectorint_(api_curveLoopTags_, api_curveLoopTags_n_)
     call ovectorvectorint_(api_curveTags_, api_curveTags_n_, api_curveTags_nn_, curveTags, curveTags_n)
@@ -8308,20 +8214,20 @@ module gmsh
       type(c_ptr), intent(out) :: api_surfaceTags_
       type(c_ptr), intent(out) :: api_surfaceTags_n_
       integer(c_size_t), intent(out) :: api_surfaceTags_nn_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: volumeTag
+    integer, intent(in) :: volumeTag
     integer(c_int), dimension(:), allocatable, intent(out) :: surfaceLoopTags
     integer(c_int), dimension(:), allocatable, intent(out) :: surfaceTags
     integer(c_size_t), dimension(:), allocatable, intent(out) :: surfaceTags_n
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_surfaceLoopTags_
     integer(c_size_t) :: api_surfaceLoopTags_n_
     type(c_ptr) :: api_surfaceTags_, api_surfaceTags_n_
     integer(c_size_t) :: api_surfaceTags_nn_
-    call C_API(volumeTag, api_surfaceLoopTags_, api_surfaceLoopTags_n_, api_surfaceTags_, api_surfaceTags_n_, api_surfaceTags_nn_, ierr)
+    call C_API(volumeTag=int(volumeTag, c_int), api_surfaceLoopTags_=api_surfaceLoopTags_, api_surfaceLoopTags_n_=api_surfaceLoopTags_n_, api_surfaceTags_=api_surfaceTags_, api_surfaceTags_n_=api_surfaceTags_n_, api_surfaceTags_nn_=api_surfaceTags_nn_, ierr_=ierr)
     ! Post processing
     surfaceLoopTags = ovectorint_(api_surfaceLoopTags_, api_surfaceLoopTags_n_)
     call ovectorvectorint_(api_surfaceTags_, api_surfaceTags_n_, api_surfaceTags_nn_, surfaceTags, surfaceTags_n)
@@ -8335,15 +8241,15 @@ module gmsh
       integer(c_int), value, intent(in) :: dim
       integer(c_int), value, intent(in) :: tag
       real(c_double) :: mass
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: dim
-    integer(c_int), intent(in) :: tag
+    integer, intent(in) :: dim
+    integer, intent(in) :: tag
     real(c_double) :: mass
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(dim, tag, mass, ierr)
+    call C_API(dim=int(dim, c_int), tag=int(tag, c_int), mass=mass, ierr_=ierr)
     ! Post processing
   end subroutine gmshModelOccGetMass
 
@@ -8358,17 +8264,17 @@ module gmsh
       real(c_double) :: x
       real(c_double) :: y
       real(c_double) :: z
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: dim
-    integer(c_int), intent(in) :: tag
+    integer, intent(in) :: dim
+    integer, intent(in) :: tag
     real(c_double) :: x
     real(c_double) :: y
     real(c_double) :: z
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(dim, tag, x, y, z, ierr)
+    call C_API(dim=int(dim, c_int), tag=int(tag, c_int), x=x, y=y, z=z, ierr_=ierr)
     ! Post processing
   end subroutine gmshModelOccGetCenterOfMass
 
@@ -8382,17 +8288,17 @@ module gmsh
       integer(c_int), value, intent(in) :: tag
       type(c_ptr), intent(out) :: api_mat_
       integer(c_size_t) :: api_mat_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: dim
-    integer(c_int), intent(in) :: tag
+    integer, intent(in) :: dim
+    integer, intent(in) :: tag
     real(c_double), dimension(:), allocatable, intent(out) :: mat
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_mat_
     integer(c_size_t) :: api_mat_n_
-    call C_API(dim, tag, api_mat_, api_mat_n_, ierr)
+    call C_API(dim=int(dim, c_int), tag=int(tag, c_int), api_mat_=api_mat_, api_mat_n_=api_mat_n_, ierr_=ierr)
     ! Post processing
     mat = ovectordouble_(api_mat_, api_mat_n_)
   end subroutine gmshModelOccGetMatrixOfInertia
@@ -8405,14 +8311,14 @@ module gmsh
       use, intrinsic :: iso_c_binding
       integer(c_int) :: C_API
       integer(c_int), value, intent(in) :: dim
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end function C_API
     end interface
     integer(c_int) :: gmshModelOccGetMaxTag
-    integer(c_int), intent(in) :: dim
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in) :: dim
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    gmshModelOccGetMaxTag = C_API(dim, ierr)
+    gmshModelOccGetMaxTag = C_API(dim=int(dim, c_int), ierr_=ierr)
     ! Post processing
   end function gmshModelOccGetMaxTag
 
@@ -8424,14 +8330,14 @@ module gmsh
       use, intrinsic :: iso_c_binding
       integer(c_int), value, intent(in) :: dim
       integer(c_int), value, intent(in) :: maxTag
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: dim
-    integer(c_int), intent(in) :: maxTag
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in) :: dim
+    integer, intent(in) :: maxTag
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(dim, maxTag, ierr)
+    call C_API(dim=int(dim, c_int), maxTag=int(maxTag, c_int), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelOccSetMaxTag
 
@@ -8445,12 +8351,12 @@ module gmsh
     interface
     subroutine C_API(ierr_) bind(C, name="gmshModelOccSynchronize")
       use, intrinsic :: iso_c_binding
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(ierr)
+    call C_API(ierr_=ierr)
     ! Post processing
   end subroutine gmshModelOccSynchronize
 
@@ -8464,14 +8370,14 @@ module gmsh
       integer(c_int), dimension(*) :: api_dimTags_
       integer(c_size_t), value, intent(in) :: api_dimTags_n_
       real(c_double), value, intent(in) :: size
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     integer(c_int), dimension(:,:), intent(in) :: dimTags
     real(c_double), intent(in) :: size
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(dimTags, fsize(dimTags, kind=c_size_t), size, ierr)
+    call C_API(api_dimTags_=dimTags, api_dimTags_n_=size_gmsh_pair(dimTags), size=real(size, c_double), ierr_=ierr)
     ! Post processing
   end subroutine gmshModelOccMeshSetSize
 
@@ -8485,17 +8391,15 @@ module gmsh
       integer(c_int) :: C_API
       character(len=1, kind=c_char), dimension(*), intent(in) :: name
       integer(c_int), value, intent(in) :: tag
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end function C_API
     end interface
     integer(c_int) :: gmshViewAdd
     character(len=*), intent(in) :: name
-    integer(c_int), intent(in) :: tag
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in), optional :: tag
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    character(len=:, kind=c_char), allocatable :: name_c
-    name_c = istring_(name)
-    gmshViewAdd = C_API(name_c, tag, ierr)
+    gmshViewAdd = C_API(name=istring_(name), tag=optval_c_int(-1, tag), ierr_=ierr)
     ! Post processing
   end function gmshViewAdd
 
@@ -8505,13 +8409,13 @@ module gmsh
     subroutine C_API(tag, ierr_) bind(C, name="gmshViewRemove")
       use, intrinsic :: iso_c_binding
       integer(c_int), value, intent(in) :: tag
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: tag
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in) :: tag
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(tag, ierr)
+    call C_API(tag=int(tag, c_int), ierr_=ierr)
     ! Post processing
   end subroutine gmshViewRemove
 
@@ -8524,14 +8428,14 @@ module gmsh
       use, intrinsic :: iso_c_binding
       integer(c_int) :: C_API
       integer(c_int), value, intent(in) :: tag
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end function C_API
     end interface
     integer(c_int) :: gmshViewGetIndex
-    integer(c_int), intent(in) :: tag
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in) :: tag
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    gmshViewGetIndex = C_API(tag, ierr)
+    gmshViewGetIndex = C_API(tag=int(tag, c_int), ierr_=ierr)
     ! Post processing
   end function gmshViewGetIndex
 
@@ -8542,15 +8446,15 @@ module gmsh
       use, intrinsic :: iso_c_binding
       type(c_ptr), intent(out) :: api_tags_
       integer(c_size_t), intent(out) :: api_tags_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     integer(c_int), dimension(:), allocatable, intent(out) :: tags
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_tags_
     integer(c_size_t) :: api_tags_n_
-    call C_API(api_tags_, api_tags_n_, ierr)
+    call C_API(api_tags_=api_tags_, api_tags_n_=api_tags_n_, ierr_=ierr)
     ! Post processing
     tags = ovectorint_(api_tags_, api_tags_n_)
   end subroutine gmshViewGetTags
@@ -8583,30 +8487,26 @@ module gmsh
       real(c_double), value, intent(in) :: time
       integer(c_int), value, intent(in) :: numComponents
       integer(c_int), value, intent(in) :: partition
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: tag
-    integer(c_int), intent(in) :: step
+    integer, intent(in) :: tag
+    integer, intent(in) :: step
     character(len=*), intent(in) :: modelName
     character(len=*), intent(in) :: dataType
     integer(c_size_t), dimension(:), intent(in) :: tags
     real(c_double), dimension(:), intent(in) :: data
     integer(c_size_t), dimension(:), intent(in) :: data_n
-    real(c_double), intent(in) :: time
-    integer(c_int), intent(in) :: numComponents
-    integer(c_int), intent(in) :: partition
-    integer(c_int), intent(out) :: ierr
+    real(c_double), intent(in), optional :: time
+    integer, intent(in), optional :: numComponents
+    integer, intent(in), optional :: partition
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    character(len=:, kind=c_char), allocatable :: modelName_c
-    character(len=:, kind=c_char), allocatable :: dataType_c
     type(c_ptr) :: api_data_
     type(c_ptr) :: api_data_n_
     integer(c_size_t) :: api_data_nn_
-    modelName_c = istring_(modelName)
-    dataType_c = istring_(dataType)
     call ivectorvectordouble_(data, data_n, api_data_, api_data_n_, api_data_nn_)
-    call C_API(tag, step, modelName_c, dataType_c, tags, fsize(tags, kind=c_size_t), api_data_, api_data_n_, api_data_nn_, time, numComponents, partition, ierr)
+    call C_API(tag=int(tag, c_int), step=int(step, c_int), modelName=istring_(modelName), dataType=istring_(dataType), api_tags_=tags, api_tags_n_=size_gmsh_size(tags), api_data_=api_data_, api_data_n_=api_data_n_, api_data_nn_=api_data_nn_, time=optval_c_double(0., time), numComponents=optval_c_int(-1, numComponents), partition=optval_c_int(0, partition), ierr_=ierr)
     ! Post processing
   end subroutine gmshViewAddModelData
 
@@ -8630,25 +8530,21 @@ module gmsh
       real(c_double), value, intent(in) :: time
       integer(c_int), value, intent(in) :: numComponents
       integer(c_int), value, intent(in) :: partition
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: tag
-    integer(c_int), intent(in) :: step
+    integer, intent(in) :: tag
+    integer, intent(in) :: step
     character(len=*), intent(in) :: modelName
     character(len=*), intent(in) :: dataType
     integer(c_size_t), dimension(:), intent(in) :: tags
     real(c_double), dimension(:), intent(in) :: data
-    real(c_double), intent(in) :: time
-    integer(c_int), intent(in) :: numComponents
-    integer(c_int), intent(in) :: partition
-    integer(c_int), intent(out) :: ierr
+    real(c_double), intent(in), optional :: time
+    integer, intent(in), optional :: numComponents
+    integer, intent(in), optional :: partition
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    character(len=:, kind=c_char), allocatable :: modelName_c
-    character(len=:, kind=c_char), allocatable :: dataType_c
-    modelName_c = istring_(modelName)
-    dataType_c = istring_(dataType)
-    call C_API(tag, step, modelName_c, dataType_c, tags, fsize(tags, kind=c_size_t), data, fsize(data, kind=c_size_t), time, numComponents, partition, ierr)
+    call C_API(tag=int(tag, c_int), step=int(step, c_int), modelName=istring_(modelName), dataType=istring_(dataType), api_tags_=tags, api_tags_n_=size_gmsh_size(tags), api_data_=data, api_data_n_=size_gmsh_double(data), time=optval_c_double(0., time), numComponents=optval_c_int(-1, numComponents), partition=optval_c_int(0, partition), ierr_=ierr)
     ! Post processing
   end subroutine gmshViewAddHomogeneousModelData
 
@@ -8658,36 +8554,36 @@ module gmsh
   !! `numComponents'.
   subroutine gmshViewGetModelData(tag, step, dataType, tags, data, data_n, time, numComponents, ierr)
     interface
-    subroutine C_API(tag, step, api_dataType_, api_tags_, api_tags_n_, data, data_n, data_nn, time, numComponents, ierr_) bind(C, name="gmshViewGetModelData")
+    subroutine C_API(tag, step, api_dataType_, api_tags_, api_tags_n_, api_data_, api_data_n_, api_data_nn_, time, numComponents, ierr_) bind(C, name="gmshViewGetModelData")
       use, intrinsic :: iso_c_binding
       integer(c_int), value, intent(in) :: tag
       integer(c_int), value, intent(in) :: step
       character(kind=c_char), dimension(*) :: api_dataType_
       type(c_ptr), intent(out) :: api_tags_
       integer(c_size_t), intent(out) :: api_tags_n_
-      type(c_ptr), intent(out) :: data
-      type(c_ptr), intent(out) :: data_n
-      integer(c_size_t), intent(out) :: data_nn
+      type(c_ptr), intent(out) :: api_data_
+      type(c_ptr), intent(out) :: api_data_n_
+      integer(c_size_t), intent(out) :: api_data_nn_
       real(c_double) :: time
       integer(c_int) :: numComponents
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: tag
-    integer(c_int), intent(in) :: step
+    integer, intent(in) :: tag
+    integer, intent(in) :: step
     character(len=:), allocatable, intent(out) :: dataType
     integer(c_size_t), dimension(:), allocatable, intent(out) :: tags
     real(c_double), dimension(:), allocatable, intent(out) :: data
     integer(c_size_t), dimension(:), allocatable, intent(out) :: data_n
     real(c_double) :: time
     integer(c_int) :: numComponents
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_tags_
     integer(c_size_t) :: api_tags_n_
     type(c_ptr) :: api_data_, api_data_n_
     integer(c_size_t) :: api_data_nn_
-    call C_API(tag, step, dataType, api_tags_, api_tags_n_, api_data_, api_data_n_, api_data_nn_, time, numComponents, ierr)
+    call C_API(tag=int(tag, c_int), step=int(step, c_int), api_dataType_=dataType, api_tags_=api_tags_, api_tags_n_=api_tags_n_, api_data_=api_data_, api_data_n_=api_data_n_, api_data_nn_=api_data_nn_, time=time, numComponents=numComponents, ierr_=ierr)
     ! Post processing
     tags = ovectorsize_(api_tags_, api_tags_n_)
     call ovectorvectordouble_(api_data_, api_data_n_, api_data_nn_, data, data_n)
@@ -8710,23 +8606,23 @@ module gmsh
       integer(c_size_t) :: api_data_n_
       real(c_double) :: time
       integer(c_int) :: numComponents
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: tag
-    integer(c_int), intent(in) :: step
+    integer, intent(in) :: tag
+    integer, intent(in) :: step
     character(len=:), allocatable, intent(out) :: dataType
     integer(c_size_t), dimension(:), allocatable, intent(out) :: tags
     real(c_double), dimension(:), allocatable, intent(out) :: data
     real(c_double) :: time
     integer(c_int) :: numComponents
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_tags_
     integer(c_size_t) :: api_tags_n_
     type(c_ptr) :: api_data_
     integer(c_size_t) :: api_data_n_
-    call C_API(tag, step, dataType, api_tags_, api_tags_n_, api_data_, api_data_n_, time, numComponents, ierr)
+    call C_API(tag=int(tag, c_int), step=int(step, c_int), api_dataType_=dataType, api_tags_=api_tags_, api_tags_n_=api_tags_n_, api_data_=api_data_, api_data_n_=api_data_n_, time=time, numComponents=numComponents, ierr_=ierr)
     ! Post processing
     tags = ovectorsize_(api_tags_, api_tags_n_)
     data = ovectordouble_(api_data_, api_data_n_)
@@ -8751,18 +8647,16 @@ module gmsh
       integer(c_int), value, intent(in) :: numEle
       real(c_double), dimension(*) :: api_data_
       integer(c_size_t), value, intent(in) :: api_data_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: tag
+    integer, intent(in) :: tag
     character(len=*), intent(in) :: dataType
-    integer(c_int), intent(in) :: numEle
+    integer, intent(in) :: numEle
     real(c_double), dimension(:), intent(in) :: data
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    character(len=:, kind=c_char), allocatable :: dataType_c
-    dataType_c = istring_(dataType)
-    call C_API(tag, dataType_c, numEle, data, fsize(data, kind=c_size_t), ierr)
+    call C_API(tag=int(tag, c_int), dataType=istring_(dataType), numEle=int(numEle, c_int), api_data_=data, api_data_n_=size_gmsh_double(data), ierr_=ierr)
     ! Post processing
   end subroutine gmshViewAddListData
 
@@ -8771,25 +8665,25 @@ module gmsh
   !! type and the `data' for each data type.
   subroutine gmshViewGetListData(tag, dataType, numElements, data, data_n, ierr)
     interface
-    subroutine C_API(tag, api_dataType_, api_dataType_n_, api_numElements_, api_numElements_n_, data, data_n, data_nn, ierr_) bind(C, name="gmshViewGetListData")
+    subroutine C_API(tag, api_dataType_, api_dataType_n_, api_numElements_, api_numElements_n_, api_data_, api_data_n_, api_data_nn_, ierr_) bind(C, name="gmshViewGetListData")
       use, intrinsic :: iso_c_binding
       integer(c_int), value, intent(in) :: tag
       type(c_ptr), intent(out) :: api_dataType_
       integer(c_size_t), intent(out) :: api_dataType_n_
       type(c_ptr), intent(out) :: api_numElements_
       integer(c_size_t), intent(out) :: api_numElements_n_
-      type(c_ptr), intent(out) :: data
-      type(c_ptr), intent(out) :: data_n
-      integer(c_size_t), intent(out) :: data_nn
-      integer(c_int), intent(out) :: ierr_
+      type(c_ptr), intent(out) :: api_data_
+      type(c_ptr), intent(out) :: api_data_n_
+      integer(c_size_t), intent(out) :: api_data_nn_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: tag
+    integer, intent(in) :: tag
     character(len=GMSH_API_MAX_STR_LEN), dimension(:), allocatable, intent(out) :: dataType
     integer(c_int), dimension(:), allocatable, intent(out) :: numElements
     real(c_double), dimension(:), allocatable, intent(out) :: data
     integer(c_size_t), dimension(:), allocatable, intent(out) :: data_n
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_dataType_
     integer(c_size_t) :: api_dataType_n_
@@ -8797,7 +8691,7 @@ module gmsh
     integer(c_size_t) :: api_numElements_n_
     type(c_ptr) :: api_data_, api_data_n_
     integer(c_size_t) :: api_data_nn_
-    call C_API(tag, api_dataType_, api_dataType_n_, api_numElements_, api_numElements_n_, api_data_, api_data_n_, api_data_nn_, ierr)
+    call C_API(tag=int(tag, c_int), api_dataType_=api_dataType_, api_dataType_n_=api_dataType_n_, api_numElements_=api_numElements_, api_numElements_n_=api_numElements_n_, api_data_=api_data_, api_data_n_=api_data_n_, api_data_nn_=api_data_nn_, ierr_=ierr)
     ! Post processing
     dataType = ovectorstring_(api_dataType_, api_dataType_n_)
     numElements = ovectorint_(api_numElements_, api_numElements_n_)
@@ -8826,16 +8720,16 @@ module gmsh
       integer(c_size_t), value, intent(in) :: api_coord_n_
       type(c_ptr), dimension(*) :: api_data_
       integer(c_size_t), value, intent(in) :: api_data_n_
-      type(c_ptr), dimension(*) :: api_style_
+      type(c_ptr), dimension(*), optional :: api_style_
       integer(c_size_t), value, intent(in) :: api_style_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: tag
+    integer, intent(in) :: tag
     real(c_double), dimension(:), intent(in) :: coord
     character(len=*), dimension(:), intent(in) :: data
-    character(len=*), dimension(:), intent(in) :: style
-    integer(c_int), intent(out) :: ierr
+    character(len=*), dimension(:), intent(in), optional :: style
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     character(len=GMSH_API_MAX_STR_LEN, kind=c_char), allocatable :: api_data_strs(:)
     type(c_ptr), allocatable :: api_data_(:)
@@ -8843,7 +8737,7 @@ module gmsh
     type(c_ptr), allocatable :: api_style_(:)
     call ivectorstring_(data, api_data_strs, api_data_)
     call ivectorstring_(style, api_style_strs, api_style_)
-    call C_API(tag, coord, fsize(coord, kind=c_size_t), api_data_, fsize(data, kind=c_size_t), api_style_, fsize(style, kind=c_size_t), ierr)
+    call C_API(tag=int(tag, c_int), api_coord_=coord, api_coord_n_=size_gmsh_double(coord), api_data_=api_data_, api_data_n_=size_gmsh_str(data), api_style_=api_style_, api_style_n_=size_gmsh_str(style), ierr_=ierr)
     ! Post processing
   end subroutine gmshViewAddListDataString
 
@@ -8862,15 +8756,15 @@ module gmsh
       integer(c_size_t), intent(out) :: api_data_n_
       type(c_ptr), intent(out) :: api_style_
       integer(c_size_t), intent(out) :: api_style_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: tag
-    integer(c_int), intent(in) :: dim
+    integer, intent(in) :: tag
+    integer, intent(in) :: dim
     real(c_double), dimension(:), allocatable, intent(out) :: coord
     character(len=GMSH_API_MAX_STR_LEN), dimension(:), allocatable, intent(out) :: data
     character(len=GMSH_API_MAX_STR_LEN), dimension(:), allocatable, intent(out) :: style
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_coord_
     integer(c_size_t) :: api_coord_n_
@@ -8878,7 +8772,7 @@ module gmsh
     integer(c_size_t) :: api_data_n_
     type(c_ptr) :: api_style_
     integer(c_size_t) :: api_style_n_
-    call C_API(tag, dim, api_coord_, api_coord_n_, api_data_, api_data_n_, api_style_, api_style_n_, ierr)
+    call C_API(tag=int(tag, c_int), dim=int(dim, c_int), api_coord_=api_coord_, api_coord_n_=api_coord_n_, api_data_=api_data_, api_data_n_=api_data_n_, api_style_=api_style_, api_style_n_=api_style_n_, ierr_=ierr)
     ! Post processing
     coord = ovectordouble_(api_coord_, api_coord_n_)
     data = ovectorstring_(api_data_, api_data_n_)
@@ -8908,26 +8802,24 @@ module gmsh
       real(c_double), dimension(*) :: api_exp_
       integer(c_size_t), value, intent(in) :: api_exp_n_
       integer(c_int), value, intent(in) :: dGeo
-      real(c_double), dimension(*) :: api_coefGeo_
+      real(c_double), dimension(*), optional :: api_coefGeo_
       integer(c_size_t), value, intent(in) :: api_coefGeo_n_
-      real(c_double), dimension(*) :: api_expGeo_
+      real(c_double), dimension(*), optional :: api_expGeo_
       integer(c_size_t), value, intent(in) :: api_expGeo_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: tag
+    integer, intent(in) :: tag
     character(len=*), intent(in) :: type
-    integer(c_int), intent(in) :: d
+    integer, intent(in) :: d
     real(c_double), dimension(:), intent(in) :: coef
     real(c_double), dimension(:), intent(in) :: exp
-    integer(c_int), intent(in) :: dGeo
-    real(c_double), dimension(:), intent(in) :: coefGeo
-    real(c_double), dimension(:), intent(in) :: expGeo
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in), optional :: dGeo
+    real(c_double), dimension(:), intent(in), optional :: coefGeo
+    real(c_double), dimension(:), intent(in), optional :: expGeo
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    character(len=:, kind=c_char), allocatable :: type_c
-    type_c = istring_(type)
-    call C_API(tag, type_c, d, coef, fsize(coef, kind=c_size_t), exp, fsize(exp, kind=c_size_t), dGeo, coefGeo, fsize(coefGeo, kind=c_size_t), expGeo, fsize(expGeo, kind=c_size_t), ierr)
+    call C_API(tag=int(tag, c_int), type=istring_(type), d=int(d, c_int), api_coef_=coef, api_coef_n_=size_gmsh_double(coef), api_exp_=exp, api_exp_n_=size_gmsh_double(exp), dGeo=optval_c_int(0, dGeo), api_coefGeo_=coefGeo, api_coefGeo_n_=size_gmsh_double(coefGeo), api_expGeo_=expGeo, api_expGeo_n_=size_gmsh_double(expGeo), ierr_=ierr)
     ! Post processing
   end subroutine gmshViewSetInterpolationMatrices
 
@@ -8943,16 +8835,16 @@ module gmsh
       integer(c_int), value, intent(in) :: refTag
       integer(c_int), value, intent(in) :: copyOptions
       integer(c_int), value, intent(in) :: tag
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end function C_API
     end interface
     integer(c_int) :: gmshViewAddAlias
-    integer(c_int), intent(in) :: refTag
-    integer(c_int), intent(in) :: copyOptions
-    integer(c_int), intent(in) :: tag
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in) :: refTag
+    logical, intent(in), optional :: copyOptions
+    integer, intent(in), optional :: tag
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    gmshViewAddAlias = C_API(refTag, copyOptions, tag, ierr)
+    gmshViewAddAlias = C_API(refTag=int(refTag, c_int), copyOptions=optval_c_bool(.false., copyOptions), tag=optval_c_int(-1, tag), ierr_=ierr)
     ! Post processing
   end function gmshViewAddAlias
 
@@ -8968,20 +8860,16 @@ module gmsh
       character(len=1, kind=c_char), dimension(*), intent(in) :: how
       integer(c_int), value, intent(in) :: remove
       integer(c_int), value, intent(in) :: copyOptions
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     character(len=*), intent(in) :: what
     character(len=*), intent(in) :: how
-    integer(c_int), intent(in) :: remove
-    integer(c_int), intent(in) :: copyOptions
-    integer(c_int), intent(out) :: ierr
+    logical, intent(in), optional :: remove
+    logical, intent(in), optional :: copyOptions
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    character(len=:, kind=c_char), allocatable :: what_c
-    character(len=:, kind=c_char), allocatable :: how_c
-    what_c = istring_(what)
-    how_c = istring_(how)
-    call C_API(what_c, how_c, remove, copyOptions, ierr)
+    call C_API(what=istring_(what), how=istring_(how), remove=optval_c_bool(.true., remove), copyOptions=optval_c_bool(.true., copyOptions), ierr_=ierr)
     ! Post processing
   end subroutine gmshViewCombine
 
@@ -9013,35 +8901,35 @@ module gmsh
       integer(c_int), value, intent(in) :: numComp
       integer(c_int), value, intent(in) :: gradient
       real(c_double), value, intent(in) :: distanceMax
-      real(c_double), dimension(*) :: api_xElemCoord_
+      real(c_double), dimension(*), optional :: api_xElemCoord_
       integer(c_size_t), value, intent(in) :: api_xElemCoord_n_
-      real(c_double), dimension(*) :: api_yElemCoord_
+      real(c_double), dimension(*), optional :: api_yElemCoord_
       integer(c_size_t), value, intent(in) :: api_yElemCoord_n_
-      real(c_double), dimension(*) :: api_zElemCoord_
+      real(c_double), dimension(*), optional :: api_zElemCoord_
       integer(c_size_t), value, intent(in) :: api_zElemCoord_n_
       integer(c_int), value, intent(in) :: dim
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: tag
+    integer, intent(in) :: tag
     real(c_double), intent(in) :: x
     real(c_double), intent(in) :: y
     real(c_double), intent(in) :: z
     real(c_double), dimension(:), allocatable, intent(out) :: value
     real(c_double) :: distance
-    integer(c_int), intent(in) :: step
-    integer(c_int), intent(in) :: numComp
-    integer(c_int), intent(in) :: gradient
-    real(c_double), intent(in) :: distanceMax
-    real(c_double), dimension(:), intent(in) :: xElemCoord
-    real(c_double), dimension(:), intent(in) :: yElemCoord
-    real(c_double), dimension(:), intent(in) :: zElemCoord
-    integer(c_int), intent(in) :: dim
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in), optional :: step
+    integer, intent(in), optional :: numComp
+    logical, intent(in), optional :: gradient
+    real(c_double), intent(in), optional :: distanceMax
+    real(c_double), dimension(:), intent(in), optional :: xElemCoord
+    real(c_double), dimension(:), intent(in), optional :: yElemCoord
+    real(c_double), dimension(:), intent(in), optional :: zElemCoord
+    integer, intent(in), optional :: dim
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_value_
     integer(c_size_t) :: api_value_n_
-    call C_API(tag, x, y, z, api_value_, api_value_n_, distance, step, numComp, gradient, distanceMax, xElemCoord, fsize(xElemCoord, kind=c_size_t), yElemCoord, fsize(yElemCoord, kind=c_size_t), zElemCoord, fsize(zElemCoord, kind=c_size_t), dim, ierr)
+    call C_API(tag=int(tag, c_int), x=real(x, c_double), y=real(y, c_double), z=real(z, c_double), api_value_=api_value_, api_value_n_=api_value_n_, distance=distance, step=optval_c_int(-1, step), numComp=optval_c_int(-1, numComp), gradient=optval_c_bool(.false., gradient), distanceMax=optval_c_double(0., distanceMax), api_xElemCoord_=xElemCoord, api_xElemCoord_n_=size_gmsh_double(xElemCoord), api_yElemCoord_=yElemCoord, api_yElemCoord_n_=size_gmsh_double(yElemCoord), api_zElemCoord_=zElemCoord, api_zElemCoord_n_=size_gmsh_double(zElemCoord), dim=optval_c_int(-1, dim), ierr_=ierr)
     ! Post processing
     value = ovectordouble_(api_value_, api_value_n_)
   end subroutine gmshViewProbe
@@ -9055,17 +8943,15 @@ module gmsh
       integer(c_int), value, intent(in) :: tag
       character(len=1, kind=c_char), dimension(*), intent(in) :: fileName
       integer(c_int), value, intent(in) :: append
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: tag
+    integer, intent(in) :: tag
     character(len=*), intent(in) :: fileName
-    integer(c_int), intent(in) :: append
-    integer(c_int), intent(out) :: ierr
+    logical, intent(in), optional :: append
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    character(len=:, kind=c_char), allocatable :: fileName_c
-    fileName_c = istring_(fileName)
-    call C_API(tag, fileName_c, append, ierr)
+    call C_API(tag=int(tag, c_int), fileName=istring_(fileName), append=optval_c_bool(.false., append), ierr_=ierr)
     ! Post processing
   end subroutine gmshViewWrite
 
@@ -9078,15 +8964,15 @@ module gmsh
       integer(c_int), value, intent(in) :: tag
       integer(c_int), value, intent(in) :: value
       integer(c_int), value, intent(in) :: windowIndex
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: tag
-    integer(c_int), intent(in) :: value
-    integer(c_int), intent(in) :: windowIndex
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in) :: tag
+    integer, intent(in) :: value
+    integer, intent(in), optional :: windowIndex
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(tag, value, windowIndex, ierr)
+    call C_API(tag=int(tag, c_int), value=int(value, c_int), windowIndex=optval_c_int(0, windowIndex), ierr_=ierr)
     ! Post processing
   end subroutine gmshViewSetVisibilityPerWindow
 
@@ -9099,17 +8985,15 @@ module gmsh
       integer(c_int), value, intent(in) :: tag
       character(len=1, kind=c_char), dimension(*), intent(in) :: name
       real(c_double), value, intent(in) :: value
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: tag
+    integer, intent(in) :: tag
     character(len=*), intent(in) :: name
     real(c_double), intent(in) :: value
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    character(len=:, kind=c_char), allocatable :: name_c
-    name_c = istring_(name)
-    call C_API(tag, name_c, value, ierr)
+    call C_API(tag=int(tag, c_int), name=istring_(name), value=real(value, c_double), ierr_=ierr)
     ! Post processing
   end subroutine gmshViewOptionSetNumber
 
@@ -9121,17 +9005,15 @@ module gmsh
       integer(c_int), value, intent(in) :: tag
       character(len=1, kind=c_char), dimension(*), intent(in) :: name
       real(c_double) :: value
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: tag
+    integer, intent(in) :: tag
     character(len=*), intent(in) :: name
     real(c_double) :: value
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    character(len=:, kind=c_char), allocatable :: name_c
-    name_c = istring_(name)
-    call C_API(tag, name_c, value, ierr)
+    call C_API(tag=int(tag, c_int), name=istring_(name), value=value, ierr_=ierr)
     ! Post processing
   end subroutine gmshViewOptionGetNumber
 
@@ -9143,19 +9025,15 @@ module gmsh
       integer(c_int), value, intent(in) :: tag
       character(len=1, kind=c_char), dimension(*), intent(in) :: name
       character(len=1, kind=c_char), dimension(*), intent(in) :: value
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: tag
+    integer, intent(in) :: tag
     character(len=*), intent(in) :: name
     character(len=*), intent(in) :: value
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    character(len=:, kind=c_char), allocatable :: name_c
-    character(len=:, kind=c_char), allocatable :: value_c
-    name_c = istring_(name)
-    value_c = istring_(value)
-    call C_API(tag, name_c, value_c, ierr)
+    call C_API(tag=int(tag, c_int), name=istring_(name), value=istring_(value), ierr_=ierr)
     ! Post processing
   end subroutine gmshViewOptionSetString
 
@@ -9167,17 +9045,15 @@ module gmsh
       integer(c_int), value, intent(in) :: tag
       character(len=1, kind=c_char), dimension(*), intent(in) :: name
       character(kind=c_char), dimension(*) :: api_value_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: tag
+    integer, intent(in) :: tag
     character(len=*), intent(in) :: name
     character(len=:), allocatable, intent(out) :: value
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    character(len=:, kind=c_char), allocatable :: name_c
-    name_c = istring_(name)
-    call C_API(tag, name_c, value, ierr)
+    call C_API(tag=int(tag, c_int), name=istring_(name), api_value_=value, ierr_=ierr)
     ! Post processing
   end subroutine gmshViewOptionGetString
 
@@ -9194,20 +9070,18 @@ module gmsh
       integer(c_int), value, intent(in) :: g
       integer(c_int), value, intent(in) :: b
       integer(c_int), value, intent(in) :: a
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: tag
+    integer, intent(in) :: tag
     character(len=*), intent(in) :: name
-    integer(c_int), intent(in) :: r
-    integer(c_int), intent(in) :: g
-    integer(c_int), intent(in) :: b
-    integer(c_int), intent(in) :: a
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in) :: r
+    integer, intent(in) :: g
+    integer, intent(in) :: b
+    integer, intent(in), optional :: a
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    character(len=:, kind=c_char), allocatable :: name_c
-    name_c = istring_(name)
-    call C_API(tag, name_c, r, g, b, a, ierr)
+    call C_API(tag=int(tag, c_int), name=istring_(name), r=int(r, c_int), g=int(g, c_int), b=int(b, c_int), a=optval_c_int(255, a), ierr_=ierr)
     ! Post processing
   end subroutine gmshViewOptionSetColor
 
@@ -9223,20 +9097,18 @@ module gmsh
       integer(c_int) :: g
       integer(c_int) :: b
       integer(c_int) :: a
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: tag
+    integer, intent(in) :: tag
     character(len=*), intent(in) :: name
     integer(c_int) :: r
     integer(c_int) :: g
     integer(c_int) :: b
     integer(c_int) :: a
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    character(len=:, kind=c_char), allocatable :: name_c
-    name_c = istring_(name)
-    call C_API(tag, name_c, r, g, b, a, ierr)
+    call C_API(tag=int(tag, c_int), name=istring_(name), r=r, g=g, b=b, a=a, ierr_=ierr)
     ! Post processing
   end subroutine gmshViewOptionGetColor
 
@@ -9248,14 +9120,14 @@ module gmsh
       use, intrinsic :: iso_c_binding
       integer(c_int), value, intent(in) :: refTag
       integer(c_int), value, intent(in) :: tag
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: refTag
-    integer(c_int), intent(in) :: tag
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in) :: refTag
+    integer, intent(in) :: tag
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(refTag, tag, ierr)
+    call C_API(refTag=int(refTag, c_int), tag=int(tag, c_int), ierr_=ierr)
     ! Post processing
   end subroutine gmshViewOptionCopy
 
@@ -9267,19 +9139,15 @@ module gmsh
       character(len=1, kind=c_char), dimension(*), intent(in) :: name
       character(len=1, kind=c_char), dimension(*), intent(in) :: option
       real(c_double), value, intent(in) :: value
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     character(len=*), intent(in) :: name
     character(len=*), intent(in) :: option
     real(c_double), intent(in) :: value
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    character(len=:, kind=c_char), allocatable :: name_c
-    character(len=:, kind=c_char), allocatable :: option_c
-    name_c = istring_(name)
-    option_c = istring_(option)
-    call C_API(name_c, option_c, value, ierr)
+    call C_API(name=istring_(name), option=istring_(option), value=real(value, c_double), ierr_=ierr)
     ! Post processing
   end subroutine gmshPluginSetNumber
 
@@ -9291,21 +9159,15 @@ module gmsh
       character(len=1, kind=c_char), dimension(*), intent(in) :: name
       character(len=1, kind=c_char), dimension(*), intent(in) :: option
       character(len=1, kind=c_char), dimension(*), intent(in) :: value
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     character(len=*), intent(in) :: name
     character(len=*), intent(in) :: option
     character(len=*), intent(in) :: value
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    character(len=:, kind=c_char), allocatable :: name_c
-    character(len=:, kind=c_char), allocatable :: option_c
-    character(len=:, kind=c_char), allocatable :: value_c
-    name_c = istring_(name)
-    option_c = istring_(option)
-    value_c = istring_(value)
-    call C_API(name_c, option_c, value_c, ierr)
+    call C_API(name=istring_(name), option=istring_(option), value=istring_(value), ierr_=ierr)
     ! Post processing
   end subroutine gmshPluginSetString
 
@@ -9316,16 +9178,14 @@ module gmsh
       use, intrinsic :: iso_c_binding
       integer(c_int) :: C_API
       character(len=1, kind=c_char), dimension(*), intent(in) :: name
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end function C_API
     end interface
     integer(c_int) :: gmshPluginRun
     character(len=*), intent(in) :: name
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    character(len=:, kind=c_char), allocatable :: name_c
-    name_c = istring_(name)
-    gmshPluginRun = C_API(name_c, ierr)
+    gmshPluginRun = C_API(name=istring_(name), ierr_=ierr)
     ! Post processing
   end function gmshPluginRun
 
@@ -9334,12 +9194,12 @@ module gmsh
     interface
     subroutine C_API(ierr_) bind(C, name="gmshGraphicsDraw")
       use, intrinsic :: iso_c_binding
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(ierr)
+    call C_API(ierr_=ierr)
     ! Post processing
   end subroutine gmshGraphicsDraw
 
@@ -9349,12 +9209,12 @@ module gmsh
     interface
     subroutine C_API(ierr_) bind(C, name="gmshFltkInitialize")
       use, intrinsic :: iso_c_binding
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(ierr)
+    call C_API(ierr_=ierr)
     ! Post processing
   end subroutine gmshFltkInitialize
 
@@ -9364,12 +9224,12 @@ module gmsh
     interface
     subroutine C_API(ierr_) bind(C, name="gmshFltkFinalize")
       use, intrinsic :: iso_c_binding
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(ierr)
+    call C_API(ierr_=ierr)
     ! Post processing
   end subroutine gmshFltkFinalize
 
@@ -9381,13 +9241,13 @@ module gmsh
     subroutine C_API(time, ierr_) bind(C, name="gmshFltkWait")
       use, intrinsic :: iso_c_binding
       real(c_double), value, intent(in) :: time
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    real(c_double), intent(in) :: time
-    integer(c_int), intent(out) :: ierr
+    real(c_double), intent(in), optional :: time
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(time, ierr)
+    call C_API(time=optval_c_double(-1., time), ierr_=ierr)
     ! Post processing
   end subroutine gmshFltkWait
 
@@ -9399,12 +9259,12 @@ module gmsh
     interface
     subroutine C_API(ierr_) bind(C, name="gmshFltkUpdate")
       use, intrinsic :: iso_c_binding
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(ierr)
+    call C_API(ierr_=ierr)
     ! Post processing
   end subroutine gmshFltkUpdate
 
@@ -9415,16 +9275,14 @@ module gmsh
     interface
     subroutine C_API(action, ierr_) bind(C, name="gmshFltkAwake")
       use, intrinsic :: iso_c_binding
-      character(len=1, kind=c_char), dimension(*), intent(in) :: action
-      integer(c_int), intent(out) :: ierr_
+      character(len=1, kind=c_char), dimension(*), intent(in), optional :: action
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    character(len=*), intent(in) :: action
-    integer(c_int), intent(out) :: ierr
+    character(len=*), intent(in), optional :: action
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    character(len=:, kind=c_char), allocatable :: action_c
-    action_c = istring_(action)
-    call C_API(action_c, ierr)
+    call C_API(action=istring_(optval_c_str("", action)), ierr_=ierr)
     ! Post processing
   end subroutine gmshFltkAwake
 
@@ -9433,12 +9291,12 @@ module gmsh
     interface
     subroutine C_API(ierr_) bind(C, name="gmshFltkLock")
       use, intrinsic :: iso_c_binding
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(ierr)
+    call C_API(ierr_=ierr)
     ! Post processing
   end subroutine gmshFltkLock
 
@@ -9447,12 +9305,12 @@ module gmsh
     interface
     subroutine C_API(ierr_) bind(C, name="gmshFltkUnlock")
       use, intrinsic :: iso_c_binding
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(ierr)
+    call C_API(ierr_=ierr)
     ! Post processing
   end subroutine gmshFltkUnlock
 
@@ -9463,12 +9321,12 @@ module gmsh
     interface
     subroutine C_API(ierr_) bind(C, name="gmshFltkRun")
       use, intrinsic :: iso_c_binding
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(ierr)
+    call C_API(ierr_=ierr)
     ! Post processing
   end subroutine gmshFltkRun
 
@@ -9479,13 +9337,13 @@ module gmsh
     function C_API(ierr_) bind(C, name="gmshFltkIsAvailable")
       use, intrinsic :: iso_c_binding
       integer(c_int) :: C_API
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end function C_API
     end interface
     integer(c_int) :: gmshFltkIsAvailable
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    gmshFltkIsAvailable = C_API(ierr)
+    gmshFltkIsAvailable = C_API(ierr_=ierr)
     ! Post processing
   end function gmshFltkIsAvailable
 
@@ -9499,17 +9357,17 @@ module gmsh
       type(c_ptr), intent(out) :: api_dimTags_
       integer(c_size_t), intent(out) :: api_dimTags_n_
       integer(c_int), value, intent(in) :: dim
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end function C_API
     end interface
     integer(c_int) :: gmshFltkSelectEntities
     integer(c_int), dimension(:,:), allocatable, intent(out) :: dimTags
-    integer(c_int), intent(in) :: dim
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in), optional :: dim
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_dimTags_
     integer(c_size_t) :: api_dimTags_n_
-    gmshFltkSelectEntities = C_API(api_dimTags_, api_dimTags_n_, dim, ierr)
+    gmshFltkSelectEntities = C_API(api_dimTags_=api_dimTags_, api_dimTags_n_=api_dimTags_n_, dim=optval_c_int(-1, dim), ierr_=ierr)
     ! Post processing
     dimTags = ovectorpair_(api_dimTags_, api_dimTags_n_)
   end function gmshFltkSelectEntities
@@ -9522,16 +9380,16 @@ module gmsh
       integer(c_int) :: C_API
       type(c_ptr), intent(out) :: api_elementTags_
       integer(c_size_t), intent(out) :: api_elementTags_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end function C_API
     end interface
     integer(c_int) :: gmshFltkSelectElements
     integer(c_size_t), dimension(:), allocatable, intent(out) :: elementTags
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_elementTags_
     integer(c_size_t) :: api_elementTags_n_
-    gmshFltkSelectElements = C_API(api_elementTags_, api_elementTags_n_, ierr)
+    gmshFltkSelectElements = C_API(api_elementTags_=api_elementTags_, api_elementTags_n_=api_elementTags_n_, ierr_=ierr)
     ! Post processing
     elementTags = ovectorsize_(api_elementTags_, api_elementTags_n_)
   end function gmshFltkSelectElements
@@ -9544,16 +9402,16 @@ module gmsh
       integer(c_int) :: C_API
       type(c_ptr), intent(out) :: api_viewTags_
       integer(c_size_t), intent(out) :: api_viewTags_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end function C_API
     end interface
     integer(c_int) :: gmshFltkSelectViews
     integer(c_int), dimension(:), allocatable, intent(out) :: viewTags
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_viewTags_
     integer(c_size_t) :: api_viewTags_n_
-    gmshFltkSelectViews = C_API(api_viewTags_, api_viewTags_n_, ierr)
+    gmshFltkSelectViews = C_API(api_viewTags_=api_viewTags_, api_viewTags_n_=api_viewTags_n_, ierr_=ierr)
     ! Post processing
     viewTags = ovectorint_(api_viewTags_, api_viewTags_n_)
   end function gmshFltkSelectViews
@@ -9564,18 +9422,16 @@ module gmsh
     interface
     subroutine C_API(how, ratio, ierr_) bind(C, name="gmshFltkSplitCurrentWindow")
       use, intrinsic :: iso_c_binding
-      character(len=1, kind=c_char), dimension(*), intent(in) :: how
+      character(len=1, kind=c_char), dimension(*), intent(in), optional :: how
       real(c_double), value, intent(in) :: ratio
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    character(len=*), intent(in) :: how
-    real(c_double), intent(in) :: ratio
-    integer(c_int), intent(out) :: ierr
+    character(len=*), intent(in), optional :: how
+    real(c_double), intent(in), optional :: ratio
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    character(len=:, kind=c_char), allocatable :: how_c
-    how_c = istring_(how)
-    call C_API(how_c, ratio, ierr)
+    call C_API(how=istring_(optval_c_str("v", how)), ratio=optval_c_double(0.5, ratio), ierr_=ierr)
     ! Post processing
   end subroutine gmshFltkSplitCurrentWindow
 
@@ -9587,13 +9443,13 @@ module gmsh
     subroutine C_API(windowIndex, ierr_) bind(C, name="gmshFltkSetCurrentWindow")
       use, intrinsic :: iso_c_binding
       integer(c_int), value, intent(in) :: windowIndex
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: windowIndex
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in), optional :: windowIndex
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(windowIndex, ierr)
+    call C_API(windowIndex=optval_c_int(0, windowIndex), ierr_=ierr)
     ! Post processing
   end subroutine gmshFltkSetCurrentWindow
 
@@ -9605,16 +9461,14 @@ module gmsh
       use, intrinsic :: iso_c_binding
       character(len=1, kind=c_char), dimension(*), intent(in) :: message
       integer(c_int), value, intent(in) :: graphics
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     character(len=*), intent(in) :: message
-    integer(c_int), intent(in) :: graphics
-    integer(c_int), intent(out) :: ierr
+    logical, intent(in), optional :: graphics
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    character(len=:, kind=c_char), allocatable :: message_c
-    message_c = istring_(message)
-    call C_API(message_c, graphics, ierr)
+    call C_API(message=istring_(message), graphics=optval_c_bool(.false., graphics), ierr_=ierr)
     ! Post processing
   end subroutine gmshFltkSetStatusMessage
 
@@ -9625,14 +9479,14 @@ module gmsh
       use, intrinsic :: iso_c_binding
       integer(c_int), value, intent(in) :: dim
       integer(c_int), value, intent(in) :: tag
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(in) :: dim
-    integer(c_int), intent(in) :: tag
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in) :: dim
+    integer, intent(in) :: tag
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(dim, tag, ierr)
+    call C_API(dim=int(dim, c_int), tag=int(tag, c_int), ierr_=ierr)
     ! Post processing
   end subroutine gmshFltkShowContextWindow
 
@@ -9642,15 +9496,13 @@ module gmsh
     subroutine C_API(name, ierr_) bind(C, name="gmshFltkOpenTreeItem")
       use, intrinsic :: iso_c_binding
       character(len=1, kind=c_char), dimension(*), intent(in) :: name
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     character(len=*), intent(in) :: name
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    character(len=:, kind=c_char), allocatable :: name_c
-    name_c = istring_(name)
-    call C_API(name_c, ierr)
+    call C_API(name=istring_(name), ierr_=ierr)
     ! Post processing
   end subroutine gmshFltkOpenTreeItem
 
@@ -9660,15 +9512,13 @@ module gmsh
     subroutine C_API(name, ierr_) bind(C, name="gmshFltkCloseTreeItem")
       use, intrinsic :: iso_c_binding
       character(len=1, kind=c_char), dimension(*), intent(in) :: name
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     character(len=*), intent(in) :: name
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    character(len=:, kind=c_char), allocatable :: name_c
-    name_c = istring_(name)
-    call C_API(name_c, ierr)
+    call C_API(name=istring_(name), ierr_=ierr)
     ! Post processing
   end subroutine gmshFltkCloseTreeItem
 
@@ -9680,19 +9530,17 @@ module gmsh
       use, intrinsic :: iso_c_binding
       type(c_ptr), intent(out) :: api_names_
       integer(c_size_t), intent(out) :: api_names_n_
-      character(len=1, kind=c_char), dimension(*), intent(in) :: search
-      integer(c_int), intent(out) :: ierr_
+      character(len=1, kind=c_char), dimension(*), intent(in), optional :: search
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     character(len=GMSH_API_MAX_STR_LEN), dimension(:), allocatable, intent(out) :: names
-    character(len=*), intent(in) :: search
-    integer(c_int), intent(out) :: ierr
+    character(len=*), intent(in), optional :: search
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_names_
     integer(c_size_t) :: api_names_n_
-    character(len=:, kind=c_char), allocatable :: search_c
-    search_c = istring_(search)
-    call C_API(api_names_, api_names_n_, search_c, ierr)
+    call C_API(api_names_=api_names_, api_names_n_=api_names_n_, search=istring_(optval_c_str("", search)), ierr_=ierr)
     ! Post processing
     names = ovectorstring_(api_names_, api_names_n_)
   end subroutine gmshParserGetNames
@@ -9706,16 +9554,14 @@ module gmsh
       character(len=1, kind=c_char), dimension(*), intent(in) :: name
       real(c_double), dimension(*) :: api_value_
       integer(c_size_t), value, intent(in) :: api_value_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     character(len=*), intent(in) :: name
     real(c_double), dimension(:), intent(in) :: value
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    character(len=:, kind=c_char), allocatable :: name_c
-    name_c = istring_(name)
-    call C_API(name_c, value, fsize(value, kind=c_size_t), ierr)
+    call C_API(name=istring_(name), api_value_=value, api_value_n_=size_gmsh_double(value), ierr_=ierr)
     ! Post processing
   end subroutine gmshParserSetNumber
 
@@ -9728,19 +9574,17 @@ module gmsh
       character(len=1, kind=c_char), dimension(*), intent(in) :: name
       type(c_ptr), dimension(*) :: api_value_
       integer(c_size_t), value, intent(in) :: api_value_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     character(len=*), intent(in) :: name
     character(len=*), dimension(:), intent(in) :: value
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    character(len=:, kind=c_char), allocatable :: name_c
     character(len=GMSH_API_MAX_STR_LEN, kind=c_char), allocatable :: api_value_strs(:)
     type(c_ptr), allocatable :: api_value_(:)
-    name_c = istring_(name)
     call ivectorstring_(value, api_value_strs, api_value_)
-    call C_API(name_c, api_value_, fsize(value, kind=c_size_t), ierr)
+    call C_API(name=istring_(name), api_value_=api_value_, api_value_n_=size_gmsh_str(value), ierr_=ierr)
     ! Post processing
   end subroutine gmshParserSetString
 
@@ -9753,18 +9597,16 @@ module gmsh
       character(len=1, kind=c_char), dimension(*), intent(in) :: name
       type(c_ptr), intent(out) :: api_value_
       integer(c_size_t) :: api_value_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     character(len=*), intent(in) :: name
     real(c_double), dimension(:), allocatable, intent(out) :: value
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    character(len=:, kind=c_char), allocatable :: name_c
     type(c_ptr) :: api_value_
     integer(c_size_t) :: api_value_n_
-    name_c = istring_(name)
-    call C_API(name_c, api_value_, api_value_n_, ierr)
+    call C_API(name=istring_(name), api_value_=api_value_, api_value_n_=api_value_n_, ierr_=ierr)
     ! Post processing
     value = ovectordouble_(api_value_, api_value_n_)
   end subroutine gmshParserGetNumber
@@ -9778,18 +9620,16 @@ module gmsh
       character(len=1, kind=c_char), dimension(*), intent(in) :: name
       type(c_ptr), intent(out) :: api_value_
       integer(c_size_t), intent(out) :: api_value_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     character(len=*), intent(in) :: name
     character(len=GMSH_API_MAX_STR_LEN), dimension(:), allocatable, intent(out) :: value
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    character(len=:, kind=c_char), allocatable :: name_c
     type(c_ptr) :: api_value_
     integer(c_size_t) :: api_value_n_
-    name_c = istring_(name)
-    call C_API(name_c, api_value_, api_value_n_, ierr)
+    call C_API(name=istring_(name), api_value_=api_value_, api_value_n_=api_value_n_, ierr_=ierr)
     ! Post processing
     value = ovectorstring_(api_value_, api_value_n_)
   end subroutine gmshParserGetString
@@ -9800,16 +9640,14 @@ module gmsh
     interface
     subroutine C_API(name, ierr_) bind(C, name="gmshParserClear")
       use, intrinsic :: iso_c_binding
-      character(len=1, kind=c_char), dimension(*), intent(in) :: name
-      integer(c_int), intent(out) :: ierr_
+      character(len=1, kind=c_char), dimension(*), intent(in), optional :: name
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    character(len=*), intent(in) :: name
-    integer(c_int), intent(out) :: ierr
+    character(len=*), intent(in), optional :: name
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    character(len=:, kind=c_char), allocatable :: name_c
-    name_c = istring_(name)
-    call C_API(name_c, ierr)
+    call C_API(name=istring_(optval_c_str("", name)), ierr_=ierr)
     ! Post processing
   end subroutine gmshParserClear
 
@@ -9819,15 +9657,13 @@ module gmsh
     subroutine C_API(fileName, ierr_) bind(C, name="gmshParserParse")
       use, intrinsic :: iso_c_binding
       character(len=1, kind=c_char), dimension(*), intent(in) :: fileName
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     character(len=*), intent(in) :: fileName
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    character(len=:, kind=c_char), allocatable :: fileName_c
-    fileName_c = istring_(fileName)
-    call C_API(fileName_c, ierr)
+    call C_API(fileName=istring_(fileName), ierr_=ierr)
     ! Post processing
   end subroutine gmshParserParse
 
@@ -9837,19 +9673,15 @@ module gmsh
     subroutine C_API(data, format, ierr_) bind(C, name="gmshOnelabSet")
       use, intrinsic :: iso_c_binding
       character(len=1, kind=c_char), dimension(*), intent(in) :: data
-      character(len=1, kind=c_char), dimension(*), intent(in) :: format
-      integer(c_int), intent(out) :: ierr_
+      character(len=1, kind=c_char), dimension(*), intent(in), optional :: format
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     character(len=*), intent(in) :: data
-    character(len=*), intent(in) :: format
-    integer(c_int), intent(out) :: ierr
+    character(len=*), intent(in), optional :: format
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    character(len=:, kind=c_char), allocatable :: data_c
-    character(len=:, kind=c_char), allocatable :: format_c
-    data_c = istring_(data)
-    format_c = istring_(format)
-    call C_API(data_c, format_c, ierr)
+    call C_API(data=istring_(data), format=istring_(optval_c_str("json", format)), ierr_=ierr)
     ! Post processing
   end subroutine gmshOnelabSet
 
@@ -9860,21 +9692,17 @@ module gmsh
     subroutine C_API(api_data_, name, format, ierr_) bind(C, name="gmshOnelabGet")
       use, intrinsic :: iso_c_binding
       character(kind=c_char), dimension(*) :: api_data_
-      character(len=1, kind=c_char), dimension(*), intent(in) :: name
-      character(len=1, kind=c_char), dimension(*), intent(in) :: format
-      integer(c_int), intent(out) :: ierr_
+      character(len=1, kind=c_char), dimension(*), intent(in), optional :: name
+      character(len=1, kind=c_char), dimension(*), intent(in), optional :: format
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     character(len=:), allocatable, intent(out) :: data
-    character(len=*), intent(in) :: name
-    character(len=*), intent(in) :: format
-    integer(c_int), intent(out) :: ierr
+    character(len=*), intent(in), optional :: name
+    character(len=*), intent(in), optional :: format
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    character(len=:, kind=c_char), allocatable :: name_c
-    character(len=:, kind=c_char), allocatable :: format_c
-    name_c = istring_(name)
-    format_c = istring_(format)
-    call C_API(data, name_c, format_c, ierr)
+    call C_API(api_data_=data, name=istring_(optval_c_str("", name)), format=istring_(optval_c_str("json", format)), ierr_=ierr)
     ! Post processing
   end subroutine gmshOnelabGet
 
@@ -9886,19 +9714,17 @@ module gmsh
       use, intrinsic :: iso_c_binding
       type(c_ptr), intent(out) :: api_names_
       integer(c_size_t), intent(out) :: api_names_n_
-      character(len=1, kind=c_char), dimension(*), intent(in) :: search
-      integer(c_int), intent(out) :: ierr_
+      character(len=1, kind=c_char), dimension(*), intent(in), optional :: search
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     character(len=GMSH_API_MAX_STR_LEN), dimension(:), allocatable, intent(out) :: names
-    character(len=*), intent(in) :: search
-    integer(c_int), intent(out) :: ierr
+    character(len=*), intent(in), optional :: search
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_names_
     integer(c_size_t) :: api_names_n_
-    character(len=:, kind=c_char), allocatable :: search_c
-    search_c = istring_(search)
-    call C_API(api_names_, api_names_n_, search_c, ierr)
+    call C_API(api_names_=api_names_, api_names_n_=api_names_n_, search=istring_(optval_c_str("", search)), ierr_=ierr)
     ! Post processing
     names = ovectorstring_(api_names_, api_names_n_)
   end subroutine gmshOnelabGetNames
@@ -9913,16 +9739,14 @@ module gmsh
       character(len=1, kind=c_char), dimension(*), intent(in) :: name
       real(c_double), dimension(*) :: api_value_
       integer(c_size_t), value, intent(in) :: api_value_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     character(len=*), intent(in) :: name
     real(c_double), dimension(:), intent(in) :: value
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    character(len=:, kind=c_char), allocatable :: name_c
-    name_c = istring_(name)
-    call C_API(name_c, value, fsize(value, kind=c_size_t), ierr)
+    call C_API(name=istring_(name), api_value_=value, api_value_n_=size_gmsh_double(value), ierr_=ierr)
     ! Post processing
   end subroutine gmshOnelabSetNumber
 
@@ -9936,19 +9760,17 @@ module gmsh
       character(len=1, kind=c_char), dimension(*), intent(in) :: name
       type(c_ptr), dimension(*) :: api_value_
       integer(c_size_t), value, intent(in) :: api_value_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     character(len=*), intent(in) :: name
     character(len=*), dimension(:), intent(in) :: value
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    character(len=:, kind=c_char), allocatable :: name_c
     character(len=GMSH_API_MAX_STR_LEN, kind=c_char), allocatable :: api_value_strs(:)
     type(c_ptr), allocatable :: api_value_(:)
-    name_c = istring_(name)
     call ivectorstring_(value, api_value_strs, api_value_)
-    call C_API(name_c, api_value_, fsize(value, kind=c_size_t), ierr)
+    call C_API(name=istring_(name), api_value_=api_value_, api_value_n_=size_gmsh_str(value), ierr_=ierr)
     ! Post processing
   end subroutine gmshOnelabSetString
 
@@ -9961,18 +9783,16 @@ module gmsh
       character(len=1, kind=c_char), dimension(*), intent(in) :: name
       type(c_ptr), intent(out) :: api_value_
       integer(c_size_t) :: api_value_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     character(len=*), intent(in) :: name
     real(c_double), dimension(:), allocatable, intent(out) :: value
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    character(len=:, kind=c_char), allocatable :: name_c
     type(c_ptr) :: api_value_
     integer(c_size_t) :: api_value_n_
-    name_c = istring_(name)
-    call C_API(name_c, api_value_, api_value_n_, ierr)
+    call C_API(name=istring_(name), api_value_=api_value_, api_value_n_=api_value_n_, ierr_=ierr)
     ! Post processing
     value = ovectordouble_(api_value_, api_value_n_)
   end subroutine gmshOnelabGetNumber
@@ -9986,18 +9806,16 @@ module gmsh
       character(len=1, kind=c_char), dimension(*), intent(in) :: name
       type(c_ptr), intent(out) :: api_value_
       integer(c_size_t), intent(out) :: api_value_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     character(len=*), intent(in) :: name
     character(len=GMSH_API_MAX_STR_LEN), dimension(:), allocatable, intent(out) :: value
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    character(len=:, kind=c_char), allocatable :: name_c
     type(c_ptr) :: api_value_
     integer(c_size_t) :: api_value_n_
-    name_c = istring_(name)
-    call C_API(name_c, api_value_, api_value_n_, ierr)
+    call C_API(name=istring_(name), api_value_=api_value_, api_value_n_=api_value_n_, ierr_=ierr)
     ! Post processing
     value = ovectorstring_(api_value_, api_value_n_)
   end subroutine gmshOnelabGetString
@@ -10010,16 +9828,14 @@ module gmsh
       use, intrinsic :: iso_c_binding
       integer(c_int) :: C_API
       character(len=1, kind=c_char), dimension(*), intent(in) :: name
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end function C_API
     end interface
     integer(c_int) :: gmshOnelabGetChanged
     character(len=*), intent(in) :: name
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    character(len=:, kind=c_char), allocatable :: name_c
-    name_c = istring_(name)
-    gmshOnelabGetChanged = C_API(name_c, ierr)
+    gmshOnelabGetChanged = C_API(name=istring_(name), ierr_=ierr)
     ! Post processing
   end function gmshOnelabGetChanged
 
@@ -10031,16 +9847,14 @@ module gmsh
       use, intrinsic :: iso_c_binding
       character(len=1, kind=c_char), dimension(*), intent(in) :: name
       integer(c_int), value, intent(in) :: value
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     character(len=*), intent(in) :: name
-    integer(c_int), intent(in) :: value
-    integer(c_int), intent(out) :: ierr
+    integer, intent(in) :: value
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    character(len=:, kind=c_char), allocatable :: name_c
-    name_c = istring_(name)
-    call C_API(name_c, value, ierr)
+    call C_API(name=istring_(name), value=int(value, c_int), ierr_=ierr)
     ! Post processing
   end subroutine gmshOnelabSetChanged
 
@@ -10049,16 +9863,14 @@ module gmsh
     interface
     subroutine C_API(name, ierr_) bind(C, name="gmshOnelabClear")
       use, intrinsic :: iso_c_binding
-      character(len=1, kind=c_char), dimension(*), intent(in) :: name
-      integer(c_int), intent(out) :: ierr_
+      character(len=1, kind=c_char), dimension(*), intent(in), optional :: name
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    character(len=*), intent(in) :: name
-    integer(c_int), intent(out) :: ierr
+    character(len=*), intent(in), optional :: name
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    character(len=:, kind=c_char), allocatable :: name_c
-    name_c = istring_(name)
-    call C_API(name_c, ierr)
+    call C_API(name=istring_(optval_c_str("", name)), ierr_=ierr)
     ! Post processing
   end subroutine gmshOnelabClear
 
@@ -10069,20 +9881,16 @@ module gmsh
     interface
     subroutine C_API(name, command, ierr_) bind(C, name="gmshOnelabRun")
       use, intrinsic :: iso_c_binding
-      character(len=1, kind=c_char), dimension(*), intent(in) :: name
-      character(len=1, kind=c_char), dimension(*), intent(in) :: command
-      integer(c_int), intent(out) :: ierr_
+      character(len=1, kind=c_char), dimension(*), intent(in), optional :: name
+      character(len=1, kind=c_char), dimension(*), intent(in), optional :: command
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    character(len=*), intent(in) :: name
-    character(len=*), intent(in) :: command
-    integer(c_int), intent(out) :: ierr
+    character(len=*), intent(in), optional :: name
+    character(len=*), intent(in), optional :: command
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    character(len=:, kind=c_char), allocatable :: name_c
-    character(len=:, kind=c_char), allocatable :: command_c
-    name_c = istring_(name)
-    command_c = istring_(command)
-    call C_API(name_c, command_c, ierr)
+    call C_API(name=istring_(optval_c_str("", name)), command=istring_(optval_c_str("", command)), ierr_=ierr)
     ! Post processing
   end subroutine gmshOnelabRun
 
@@ -10092,19 +9900,15 @@ module gmsh
     subroutine C_API(message, level, ierr_) bind(C, name="gmshLoggerWrite")
       use, intrinsic :: iso_c_binding
       character(len=1, kind=c_char), dimension(*), intent(in) :: message
-      character(len=1, kind=c_char), dimension(*), intent(in) :: level
-      integer(c_int), intent(out) :: ierr_
+      character(len=1, kind=c_char), dimension(*), intent(in), optional :: level
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     character(len=*), intent(in) :: message
-    character(len=*), intent(in) :: level
-    integer(c_int), intent(out) :: ierr
+    character(len=*), intent(in), optional :: level
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    character(len=:, kind=c_char), allocatable :: message_c
-    character(len=:, kind=c_char), allocatable :: level_c
-    message_c = istring_(message)
-    level_c = istring_(level)
-    call C_API(message_c, level_c, ierr)
+    call C_API(message=istring_(message), level=istring_(optval_c_str("info", level)), ierr_=ierr)
     ! Post processing
   end subroutine gmshLoggerWrite
 
@@ -10113,12 +9917,12 @@ module gmsh
     interface
     subroutine C_API(ierr_) bind(C, name="gmshLoggerStart")
       use, intrinsic :: iso_c_binding
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(ierr)
+    call C_API(ierr_=ierr)
     ! Post processing
   end subroutine gmshLoggerStart
 
@@ -10129,15 +9933,15 @@ module gmsh
       use, intrinsic :: iso_c_binding
       type(c_ptr), intent(out) :: api_log_
       integer(c_size_t), intent(out) :: api_log_n_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     character(len=GMSH_API_MAX_STR_LEN), dimension(:), allocatable, intent(out) :: log
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
     type(c_ptr) :: api_log_
     integer(c_size_t) :: api_log_n_
-    call C_API(api_log_, api_log_n_, ierr)
+    call C_API(api_log_=api_log_, api_log_n_=api_log_n_, ierr_=ierr)
     ! Post processing
     log = ovectorstring_(api_log_, api_log_n_)
   end subroutine gmshLoggerGet
@@ -10147,12 +9951,12 @@ module gmsh
     interface
     subroutine C_API(ierr_) bind(C, name="gmshLoggerStop")
       use, intrinsic :: iso_c_binding
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(ierr)
+    call C_API(ierr_=ierr)
     ! Post processing
   end subroutine gmshLoggerStop
 
@@ -10162,13 +9966,13 @@ module gmsh
     function C_API(ierr_) bind(C, name="gmshLoggerGetWallTime")
       use, intrinsic :: iso_c_binding
       real(c_double) :: C_API
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end function C_API
     end interface
     real(c_double) :: gmshLoggerGetWallTime
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    gmshLoggerGetWallTime = C_API(ierr)
+    gmshLoggerGetWallTime = C_API(ierr_=ierr)
     ! Post processing
   end function gmshLoggerGetWallTime
 
@@ -10178,13 +9982,13 @@ module gmsh
     function C_API(ierr_) bind(C, name="gmshLoggerGetCpuTime")
       use, intrinsic :: iso_c_binding
       real(c_double) :: C_API
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end function C_API
     end interface
     real(c_double) :: gmshLoggerGetCpuTime
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    gmshLoggerGetCpuTime = C_API(ierr)
+    gmshLoggerGetCpuTime = C_API(ierr_=ierr)
     ! Post processing
   end function gmshLoggerGetCpuTime
 
@@ -10194,15 +9998,123 @@ module gmsh
     subroutine C_API(api_error_, ierr_) bind(C, name="gmshLoggerGetLastError")
       use, intrinsic :: iso_c_binding
       character(kind=c_char), dimension(*) :: api_error_
-      integer(c_int), intent(out) :: ierr_
+      integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     character(len=:), allocatable, intent(out) :: error
-    integer(c_int), intent(out) :: ierr
+    integer(c_int), intent(out), optional :: ierr
     ! Local variables
-    call C_API(error, ierr)
+    call C_API(api_error_=error, ierr_=ierr)
     ! Post processing
   end subroutine gmshLoggerGetLastError
+
+  ! ----------------------------------------------------------------------------
+  ! GMSH size function
+  ! ----------------------------------------------------------------------------
+
+  pure integer(c_int) function optval_c_int_1(def, val) result(res)
+    integer(c_int), intent(in) :: def
+    integer(c_int), optional, intent(in) :: val
+    res = int(def, kind=c_int)
+    if (present(val)) res = int(val, kind=c_int)
+  end function optval_c_int_1
+
+  pure integer(c_size_t) function optval_c_size_t_1(def, val) result(res)
+    integer, intent(in) :: def
+    integer, optional, intent(in) :: val
+    res = int(def, kind=c_size_t)
+    if (present(val)) res = int(val, kind=c_size_t)
+  end function optval_c_size_t_1
+
+  pure integer(c_size_t) function optval_c_size_t_2(def, val) result(res)
+    integer(c_size_t), intent(in) :: def
+    integer(c_size_t), optional, intent(in) :: val
+    res = int(def, kind=c_size_t)
+    if (present(val)) res = int(val, kind=c_size_t)
+  end function optval_c_size_t_2
+
+  pure real(c_double) function optval_c_double_1(def, val) result(res)
+    real(c_double), intent(in) :: def
+    real(c_double), optional, intent(in) :: val
+    res = real(def, kind=c_double)
+    if (present(val)) res = real(val, kind=c_double)
+  end function optval_c_double_1
+
+  pure real(c_double) function optval_c_double_2(def, val) result(res)
+    real, intent(in) :: def
+    real(c_double), optional, intent(in) :: val
+    res = real(def, kind=c_double)
+    if (present(val)) res = real(val, kind=c_double)
+  end function optval_c_double_2
+
+  pure integer(c_int) function optval_c_bool(def, val) result(res)
+    logical, intent(in) :: def
+    logical, optional, intent(in) :: val
+    res = merge(1_c_int, 0_c_int, def)
+    if (present(val)) res = merge(1_c_int, 0_c_int, val)
+  end function optval_c_bool
+
+  pure function optval_c_str(def, val) result(res)
+    character(len=*), intent(in) :: def
+    character(len=*), optional, intent(in) :: val
+    character(len=:), allocatable :: res
+    if (present(val)) then
+      res = val
+    else
+      res = def
+    end if
+  end function optval_c_str
+
+  pure function optval_str_array(def, val) result(res)
+    character(len=*), intent(in) :: def(:)
+    character(len=*), optional, intent(in) :: val(:)
+    character(len=:), allocatable :: res(:)
+    if (present(val)) then
+      res = val
+    else
+      res = def
+    end if
+  end function optval_str_array
+
+  ! ----------------------------------------------------------------------------
+  ! GMSH size functions, with handling of optional arguments
+  ! ----------------------------------------------------------------------------
+
+  pure integer(c_size_t) function size_gmsh_int(v) result(n)
+    integer(c_int), optional, intent(in) :: v(:)
+    n = 0
+    if (present(v)) n = size(v, kind=c_size_t)
+  end function size_gmsh_int
+
+  pure integer(c_size_t) function size_gmsh_size(v) result(n)
+    integer(c_size_t), optional, intent(in) :: v(:)
+    n = 0
+    if (present(v)) n = size(v, kind=c_size_t)
+  end function size_gmsh_size
+
+  pure integer(c_size_t) function size_gmsh_double(v) result(n)
+    real(c_double), optional, intent(in) :: v(:)
+    n = 0
+    if (present(v)) n = size(v, kind=c_size_t)
+  end function size_gmsh_double
+
+  pure integer(c_size_t) function size_gmsh_str(v) result(n)
+    character(len=*), optional, intent(in) :: v(:)
+    n = 0
+    if (present(v)) n = size(v, kind=c_size_t)
+  end function size_gmsh_str
+
+  pure integer(c_size_t) function size_gmsh_pair(v) result(n)
+    integer(c_int), optional, intent(in) :: v(:,:)
+    n = 0
+    if (present(v)) n = size(v, kind=c_size_t)
+  end function size_gmsh_pair
+
+  pure integer(c_int) function size_gmsh_str_array(v) result(n)
+    character(len=*), optional, intent(in) :: v(:)
+    n = 1   ! can't have 0-length commands
+    if (present(v)) n = size(v, kind=c_int)
+  end function size_gmsh_str_array
 
   ! ----------------------------------------------------------------------------
   ! GMSH C memory management tools
@@ -10383,10 +10295,22 @@ module gmsh
     integer(c_size_t), allocatable, intent(out) :: dims(:)
     integer(c_int), pointer :: v_(:)
     integer(c_size_t), pointer :: dims_(:)
+    type(c_ptr), pointer :: ptrs(:)
+    integer(c_size_t) :: i, istart, iend
     call c_f_pointer(cptr2, dims_, [n])
-    call c_f_pointer(cptr1, v_, [sum(dims)])
     allocate(dims, source=dims_)
-    allocate(v, source=v_)
+    allocate(v(sum(dims_)))
+    istart = 1
+    call c_f_pointer(cptr1, ptrs, [n])
+    do i = 1_c_size_t, n
+        iend = int(dims(i))
+        call c_f_pointer(ptrs(i), v_, [iend])
+        v(istart:iend) = v_
+        istart = istart + iend
+    end do
+    do i = 1_c_size_t, n
+        call gmshFree(ptrs(i))
+    end do
     call gmshFree(cptr1)
     call gmshFree(cptr2)
   end subroutine ovectorvectorint_
@@ -10398,10 +10322,22 @@ module gmsh
     integer(c_size_t), allocatable, intent(out) :: dims(:)
     integer(c_size_t), pointer :: v_(:)
     integer(c_size_t), pointer :: dims_(:)
+    type(c_ptr), pointer :: ptrs(:)
+    integer(c_size_t) :: i, istart, iend
     call c_f_pointer(cptr2, dims_, [n])
-    call c_f_pointer(cptr1, v_, [sum(dims)])
     allocate(dims, source=dims_)
-    allocate(v, source=v_)
+    allocate(v(sum(dims_)))
+    istart = 1
+    call c_f_pointer(cptr1, ptrs, [n])
+    do i = 1_c_size_t, n
+        iend = int(dims(i))
+        call c_f_pointer(ptrs(i), v_, [iend])
+        v(istart:iend) = v_
+        istart = istart + iend
+    end do
+    do i = 1_c_size_t, n
+        call gmshFree(ptrs(i))
+    end do
     call gmshFree(cptr1)
     call gmshFree(cptr2)
   end subroutine ovectorvectorsize_
@@ -10413,10 +10349,22 @@ module gmsh
     integer(c_size_t), allocatable, intent(out) :: dims(:)
     real(c_double), pointer :: v_(:)
     integer(c_size_t), pointer :: dims_(:)
+    type(c_ptr), pointer :: ptrs(:)
+    integer(c_size_t) :: i, istart, iend
     call c_f_pointer(cptr2, dims_, [n])
-    call c_f_pointer(cptr1, v_, [sum(dims)])
     allocate(dims, source=dims_)
-    allocate(v, source=v_)
+    allocate(v(sum(dims_)))
+    istart = 1
+    call c_f_pointer(cptr1, ptrs, [n])
+    do i = 1_c_size_t, n
+        iend = int(dims(i))
+        call c_f_pointer(ptrs(i), v_, [iend])
+        v(istart:iend) = v_
+        istart = istart + iend
+    end do
+    do i = 1_c_size_t, n
+        call gmshFree(ptrs(i))
+    end do
     call gmshFree(cptr1)
     call gmshFree(cptr2)
   end subroutine ovectorvectordouble_
@@ -10428,10 +10376,22 @@ module gmsh
     integer(c_size_t), allocatable, intent(out) :: dims(:)
     integer(c_int), pointer :: v_(:,:)
     integer(c_size_t), pointer :: dims_(:)
+    type(c_ptr), pointer :: ptrs(:)
+    integer(c_size_t) :: i, istart, iend
     call c_f_pointer(cptr2, dims_, [n])
-    call c_f_pointer(cptr1, v_, [sum(dims), 2_c_size_t])
     allocate(dims, source=dims_)
-    allocate(v, source=v_)
+    allocate(v(2, int(sum(dims_)/2)))
+    istart = 1
+    call c_f_pointer(cptr1, ptrs, [n])
+    do i = 1_c_size_t, n
+        iend = int(dims(i)/2)
+        call c_f_pointer(ptrs(i), v_, [2_c_size_t, iend])
+        v(:,istart:iend) = v_
+        istart = istart + iend
+    end do
+    do i = 1_c_size_t, n
+        call gmshFree(ptrs(i))
+    end do
     call gmshFree(cptr1)
     call gmshFree(cptr2)
   end subroutine ovectorvectorpair_
