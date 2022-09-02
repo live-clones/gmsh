@@ -1,126 +1,114 @@
-! ---------------------------------------------------------------------------
+! ------------------------------------------------------------------------------
 !
-!   Gmsh Fortran tutorial 6
+!  Gmsh Fortran tutorial 6
 !
-!   Transfinite meshes
+!  Transfinite meshes
 !
-! ---------------------------------------------------------------------------
+! ------------------------------------------------------------------------------
 
-program main
-    use, intrinsic :: iso_c_binding
-    use gmsh
+program t6
+use, intrinsic :: iso_c_binding
+use gmsh
 
-    implicit none
-    integer(c_int) :: ierr, argc, itmp, i, len
-    integer(c_int) :: p1, p2, l1, l2, l3
-    real(c_double) :: lc
+implicit none
+type(gmsh_t) :: gmsh
+integer(c_int) :: ret, i
+integer(c_int) :: p1, p2, l1, l2, l3
+real(c_double), parameter :: lc = 1e-2
+character(len=GMSH_API_MAX_STR_LEN) :: cmd
 
-    integer(c_int) :: cl1(4) = [4, 1, -2, 3]
-    integer(c_int) :: cl2(6) = [2, -1, 0, 0, 0, -3]
-    integer(c_int) :: cl3(4) = [13, 10, 11, 12]
-    integer(c_int) :: s1(1) = [1]
-    integer(c_int) :: s2(1) = [-2]
-    integer(c_int) :: s3(1) = [14]
+call gmsh%initialize()
+call gmsh%model%add("t6")
 
-    integer(c_int) :: r4(4) = [2, 1, 1, 4]
-    integer(c_int) :: ts(4) = [1, 2, 3, 4]
+! Copied from `t1.py'...
+ret = gmsh%model%geo%addPoint(0.0d0, 0.0d0, 0.0d0, lc, 1)
+ret = gmsh%model%geo%addPoint(0.1d0, 0.0d0, 0.0d0, lc, 2)
+ret = gmsh%model%geo%addPoint(0.1d0, 0.3d0, 0.0d0, lc, 3)
+ret = gmsh%model%geo%addPoint(0.0d0, 0.3d0, 0.0d0, lc, 4)
+ret = gmsh%model%geo%addLine(1, 2, 1)
+ret = gmsh%model%geo%addLine(3, 2, 2)
+ret = gmsh%model%geo%addLine(3, 4, 3)
+ret = gmsh%model%geo%addLine(4, 1, 4)
+ret = gmsh%model%geo%addCurveLoop([4, 1, -2, 3], 1)
+ret = gmsh%model%geo%addPlaneSurface([1], 1)
 
-    type(c_ptr), allocatable :: argv(:)
+! Delete the surface and the left line, and replace the line with 3 new ones:
+call gmsh%model%geo%remove(reshape([2, 1, 1, 4], [2, 2]))
 
-    type string
-        character(len = :, kind = c_char), allocatable :: item
-    end type string
-    type(string), allocatable, target :: tmp(:)
+p1 = gmsh%model%geo%addPoint(-0.05d0, 0.05d0, 0.0d0, lc)
+p2 = gmsh%model%geo%addPoint(-0.05d0, 0.10d0, 0.0d0, lc)
+l1 = gmsh%model%geo%addLine(1, p1)
+l2 = gmsh%model%geo%addLine(p1, p2)
+l3 = gmsh%model%geo%addLine(p2, 4)
 
-    character(80) :: buf
+! Create surface
+ret = gmsh%model%geo%addCurveLoop([2, -1, l1, l2, l3, -3], 2)
+ret = gmsh%model%geo%addPlaneSurface([-2], 1)
 
-    lc = 0.1
+! The `setTransfiniteCurve()' meshing constraints explicitly specifies the
+! location of the nodes on the curve. For example, the following command forces
+! 20 uniformly placed nodes on curve 2 (including the nodes on the two end
+! points):
+call gmsh%model%geo%mesh%setTransfiniteCurve(2, 20)
 
-    argc = command_argument_count()
-    allocate(argv(argc + 2))
-    allocate(tmp(argc + 1))
+! Let's put 20 points total on combination of curves `l1', `l2' and `l3' (beware
+! that the points `p1' and `p2' are shared by the curves, so we do not create 6
+! + 6 + 10 = 22 nodes, but 20!)
+call gmsh%model%geo%mesh%setTransfiniteCurve(l1, 6)
+call gmsh%model%geo%mesh%setTransfiniteCurve(l2, 6)
+call gmsh%model%geo%mesh%setTransfiniteCurve(l3, 10)
 
-    do i = 0, argc
-        call get_command_argument(i, buf, len)
-        tmp(i + 1) % item = buf(1 : len) // c_null_char
-        argv(i + 1) = c_loc(tmp(i + 1) % item)
-    enddo
-    argv(argc + 2) = c_null_ptr
+! Finally, we put 30 nodes following a geometric progression on curve 1
+! (reversed) and on curve 3: Put 30 points following a geometric progression
+call gmsh%model%geo%mesh%setTransfiniteCurve(1, 30, "Progression", -1.2d0)
+call gmsh%model%geo%mesh%setTransfiniteCurve(3, 30, "Progression", +1.2d0)
 
-    call gmshInitialize(argc + 1, argv, 1, 0, ierr)
+! The `setTransfiniteSurface()' meshing constraint uses a transfinite
+! interpolation algorithm in the parametric plane of the surface to connect the
+! nodes on the boundary using a structured grid. If the surface has more than 4
+! corner points, the corners of the transfinite interpolation have to be
+! specified by hand:
+call gmsh%model%geo%mesh%setTransfiniteSurface(1, "Left", [1, 2, 3, 4])
 
-    call gmshModelAdd("t6"//c_null_char, ierr)
+! To create quadrangles instead of triangles, one can use the `setRecombine'
+! constraint:
+call gmsh%model%geo%mesh%setRecombine(2, 1)
 
-    itmp = gmshModelGeoAddPoint(0d0, 0d0, 0d0, lc, 1, ierr)
-    itmp = gmshModelGeoAddPoint(0.1d0, 0d0, 0d0, lc, 2, ierr)
-    itmp = gmshModelGeoAddPoint(0.1d0, 0.3d0, 0d0, lc, 3, ierr)
-    itmp = gmshModelGeoAddPoint(0d0, 0.3d0, 0d0, lc, 4, ierr)
+! When the surface has only 3 or 4 points on its boundary the list of corners
+! can be omitted in the `setTransfiniteSurface()' call:
+ret = gmsh%model%geo%addPoint(0.20d0, 0.2d0, 0.0d0, 1.0d0, 7)
+ret = gmsh%model%geo%addPoint(0.20d0, 0.1d0, 0.0d0, 1.0d0, 8)
+ret = gmsh%model%geo%addPoint(0.00d0, 0.3d0, 0.0d0, 1.0d0, 9)
+ret = gmsh%model%geo%addPoint(0.25d0, 0.2d0, 0.0d0, 1.0d0, 10)
+ret = gmsh%model%geo%addPoint(0.30d0, 0.1d0, 0.0d0, 1.0d0, 11)
+ret = gmsh%model%geo%addLine(8, 11, 10)
+ret = gmsh%model%geo%addLine(11, 10, 11)
+ret = gmsh%model%geo%addLine(10, 7, 12)
+ret = gmsh%model%geo%addLine(7, 8, 13)
+ret = gmsh%model%geo%addCurveLoop([13, 10, 11, 12], 14)
+ret = gmsh%model%geo%addPlaneSurface([14], 15)
+do i = 10, 13
+    call gmsh%model%geo%mesh%setTransfiniteCurve(i, 10)
+end do
+call gmsh%model%geo%mesh%setTransfiniteSurface(15)
 
-    itmp = gmshModelGeoAddLine(1, 2, 1, ierr)
-    itmp = gmshModelGeoAddLine(3, 2, 2, ierr)
-    itmp = gmshModelGeoAddLine(3, 4, 3, ierr)
-    itmp = gmshModelGeoAddLine(4, 1, 4, ierr)
+! The way triangles are generated can be controlled by specifying "Left",
+! "Right" or "Alternate" in `setTransfiniteSurface()' command. Try e.g.
+!
+! gmsh%model%geo%mesh%setTransfiniteSurface(15, "Alternate")
 
-    itmp = gmshModelGeoAddCurveLoop(cl1, 4_8, 1, 0, ierr)
-    itmp = gmshModelGeoAddPlaneSurface(s1, 1_8, 1, ierr)
+call gmsh%model%geo%synchronize()
 
-    call gmshModelGeoRemove(r4, 4_8, 0, ierr)
+! Finally we apply an elliptic smoother to the grid to have a more regular
+! mesh:
+call gmsh%option%setNumber("Mesh.Smoothing", 100d0)
 
-    p1 = gmshModelGeoAddPoint(-0.05d0, 0.05d0, 0d0, lc, -1, ierr)
-    p2 = gmshModelGeoAddPoint(-0.05d0, 0.1d0, 0d0, lc, -1, ierr)
+call gmsh%model%mesh%generate(2)
+call gmsh%write("t6.msh")
 
-    l1 = gmshModelGeoAddLine(1, p1, -1, ierr)
-    l2 = gmshModelGeoAddLine(p1, p2, -1, ierr)
-    l3 = gmshModelGeoAddLine(p2, 4, -1, ierr)
+! Launch the GUI to see the results:
+call get_command(cmd)
+if (index(cmd, "-nopopup") == 0) call gmsh%fltk%run()
+call gmsh%finalize()
 
-    cl2(3) = l1
-    cl2(4) = l2
-    cl2(5) = l3
-    itmp = gmshModelGeoAddCurveLoop(cl2, 6_8, 2, 0, ierr)
-    itmp = gmshModelGeoAddPlaneSurface(s2, 1_8, 1, ierr)
-
-    call gmshModelGeoMeshSetTransfiniteCurve(2, 20, "Progression"//c_null_char, 1d0, ierr)
-    call gmshModelGeoMeshSetTransfiniteCurve(l1, 6, "Progression"//c_null_char, 1d0, ierr)
-    call gmshModelGeoMeshSetTransfiniteCurve(l2, 6, "Progression"//c_null_char, 1d0, ierr)
-    call gmshModelGeoMeshSetTransfiniteCurve(l3, 10, "Progression"//c_null_char, 1d0, ierr)
-    call gmshModelGeoMeshSetTransfiniteCurve(1, 30, "Progression"//c_null_char, -1.2d0, ierr)
-    call gmshModelGeoMeshSetTransfiniteCurve(3, 30, "Progression"//c_null_char, 1.2d0, ierr)
-
-    call gmshModelGeoMeshSetTransfiniteSurface(1,"Left"//c_null_char, ts, 4_8, ierr)
-    call gmshModelGeoMeshSetRecombine(2, 1, 45d0, ierr)
-
-    itmp = gmshModelGeoAddPoint(0.2d0, 0.2d0, 0d0, 1d0, 7, ierr)
-    itmp = gmshModelGeoAddPoint(0.2d0, 0.1d0, 0d0, 1d0, 8, ierr)
-    itmp = gmshModelGeoAddPoint(0d0, 0.3d0, 0d0, 1d0, 9, ierr)
-    itmp = gmshModelGeoAddPoint(0.25d0, 0.2d0, 0d0, 1d0, 10, ierr)
-    itmp = gmshModelGeoAddPoint(0.3d0, 0.1d0, 0d0, 1d0, 11, ierr)
-
-    itmp = gmshModelGeoAddLine(8, 11, 10, ierr)
-    itmp = gmshModelGeoAddLine(11, 10, 11, ierr)
-    itmp = gmshModelGeoAddLine(10, 7, 12, ierr)
-    itmp = gmshModelGeoAddLine(7, 8, 13, ierr)
-
-    itmp = gmshModelGeoAddCurveLoop(cl3, 4_8, 14, 0, ierr)
-    itmp = gmshModelGeoAddPlaneSurface(s3, 1_8, 15, ierr)
-
-    do i = 10, 13
-        call gmshModelGeoMeshSetTransfiniteCurve(i, 10, "Progression"//c_null_char, 1d0, ierr)
-    enddo
-
-    call gmshModelGeoMeshSetTransfiniteSurface(15, "Left"//c_null_char, ts, 0_8, ierr)
-
-    call gmshOptionSetNumber("Mesh.Smoothing"//c_null_char, 100d0, ierr)
-
-    call gmshModelGeoSynchronize(ierr)
-
-    call gmshModelMeshGenerate(2, ierr)
-    call gmshWrite("t6.msh"//c_null_char, ierr)
-
-    ! call gmshFltkRun(ierr)
-
-    call gmshFinalize(ierr)
-
-    deallocate(tmp)
-    deallocate(argv)
-
-end program main
+end program t6
