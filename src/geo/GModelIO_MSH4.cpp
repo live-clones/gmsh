@@ -1454,6 +1454,22 @@ int GModel::_readMSH4(const std::string &name)
       postpro = true;
       break;
     }
+    else if(strlen(&str[1]) > 0){
+      sectionName.pop_back();
+      Msg::Info("Storing section $%s as model attribute", sectionName.c_str());
+      std::vector<std::string> section;
+      while(1) {
+        if(!fgets(str, sizeof(str), fp) || feof(fp) ||
+           !strncmp(&str[1], endSectionName.c_str(), endSectionName.size())) {
+          break;
+        }
+        std::string s(str);
+        if(s.back() == '\n') s.pop_back();
+        if(s.back() == '\r') s.pop_back();
+        section.push_back(s);
+      }
+      _attributes[sectionName] = section;
+    }
 
     while(strncmp(&str[1], endSectionName.c_str(), endSectionName.size())) {
       if(!fgets(str, sizeof(str), fp) || feof(fp)) { break; }
@@ -1554,7 +1570,8 @@ static void writeMSH4BoundingBox(SBoundingBox3d boundBox, FILE *fp,
 }
 
 static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
-                              bool binary, double scalingFactor, double version)
+                              bool binary, double scalingFactor, double version,
+                              std::map<GEntity*, SBoundingBox3d> *entityBounds)
 {
   std::set<GEntity *, GEntityPtrFullLessThan> ghost;
   std::set<GRegion *, GEntityPtrLessThan> regions;
@@ -1658,8 +1675,8 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
         fwrite(&numPart, sizeof(std::size_t), 1, fp);
         fwrite(&partitions[0], sizeof(int), partitions.size(), fp);
       }
-      writeMSH4BoundingBox((*it)->bounds(), fp, scalingFactor, binary, 0,
-                           version);
+      SBoundingBox3d bb = entityBounds ? (*entityBounds)[*it] : (*it)->bounds();
+      writeMSH4BoundingBox(bb, fp, scalingFactor, binary, 0, version);
       writeMSH4Physicals(fp, *it, binary);
     }
 
@@ -1692,8 +1709,8 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
         fwrite(&numPart, sizeof(std::size_t), 1, fp);
         fwrite(&partitions[0], sizeof(int), partitions.size(), fp);
       }
-      writeMSH4BoundingBox((*it)->bounds(), fp, scalingFactor, binary, 1,
-                           version);
+      SBoundingBox3d bb = entityBounds ? (*entityBounds)[*it] : (*it)->bounds();
+      writeMSH4BoundingBox(bb, fp, scalingFactor, binary, 1, version);
       writeMSH4Physicals(fp, *it, binary);
       fwrite(&verticesSize, sizeof(std::size_t), 1, fp);
       int oriI = 0;
@@ -1725,8 +1742,8 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
         fwrite(&numPart, sizeof(std::size_t), 1, fp);
         fwrite(&partitions[0], sizeof(int), partitions.size(), fp);
       }
-      writeMSH4BoundingBox((*it)->bounds(), fp, scalingFactor, binary, 2,
-                           version);
+      SBoundingBox3d bb = entityBounds ? (*entityBounds)[*it] : (*it)->bounds();
+      writeMSH4BoundingBox(bb, fp, scalingFactor, binary, 2, version);
       writeMSH4Physicals(fp, *it, binary);
       fwrite(&edgesSize, sizeof(std::size_t), 1, fp);
       std::vector<int> tags, signs;
@@ -1766,8 +1783,8 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
         fwrite(&numPart, sizeof(std::size_t), 1, fp);
         fwrite(&partitions[0], sizeof(int), partitions.size(), fp);
       }
-      writeMSH4BoundingBox((*it)->bounds(), fp, scalingFactor, binary, 3,
-                           version);
+      SBoundingBox3d bb = entityBounds ? (*entityBounds)[*it] : (*it)->bounds();
+      writeMSH4BoundingBox(bb, fp, scalingFactor, binary, 3, version);
       writeMSH4Physicals(fp, *it, binary);
       fwrite(&facesSize, sizeof(std::size_t), 1, fp);
       std::vector<int> tags, signs;
@@ -1838,8 +1855,8 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
         for(std::size_t i = 0; i < partitions.size(); i++)
           fprintf(fp, "%d ", partitions[i]);
       }
-      writeMSH4BoundingBox((*it)->bounds(), fp, scalingFactor, binary, 0,
-                           version);
+      SBoundingBox3d bb = entityBounds ? (*entityBounds)[*it] : (*it)->bounds();
+      writeMSH4BoundingBox(bb, fp, scalingFactor, binary, 0, version);
       writeMSH4Physicals(fp, *it, binary);
       fprintf(fp, "\n");
     }
@@ -1871,8 +1888,8 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
         for(std::size_t i = 0; i < partitions.size(); i++)
           fprintf(fp, "%d ", partitions[i]);
       }
-      writeMSH4BoundingBox((*it)->bounds(), fp, scalingFactor, binary, 1,
-                           version);
+      SBoundingBox3d bb = entityBounds ? (*entityBounds)[*it] : (*it)->bounds();
+      writeMSH4BoundingBox(bb, fp, scalingFactor, binary, 1, version);
       writeMSH4Physicals(fp, *it, binary);
       fprintf(fp, "%lu ", vertices.size());
       int oriI = 0;
@@ -1901,8 +1918,8 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
         for(std::size_t i = 0; i < partitions.size(); i++)
           fprintf(fp, "%d ", partitions[i]);
       }
-      writeMSH4BoundingBox((*it)->bounds(), fp, scalingFactor, binary, 2,
-                           version);
+      SBoundingBox3d bb = entityBounds ? (*entityBounds)[*it] : (*it)->bounds();
+      writeMSH4BoundingBox(bb, fp, scalingFactor, binary, 2, version);
       writeMSH4Physicals(fp, *it, binary);
       fprintf(fp, "%lu ", edges.size());
       std::vector<int> tags, signs;
@@ -1937,8 +1954,8 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
           fprintf(fp, "%d ", partition);
         }
       }
-      writeMSH4BoundingBox((*it)->bounds(), fp, scalingFactor, binary, 3,
-                           version);
+      SBoundingBox3d bb = entityBounds ? (*entityBounds)[*it] : (*it)->bounds();
+      writeMSH4BoundingBox(bb, fp, scalingFactor, binary, 3, version);
       writeMSH4Physicals(fp, *it, binary);
       fprintf(fp, "%lu ", faces.size());
 
@@ -2744,7 +2761,8 @@ static void writeMSH4Parametrizations(GModel *const model, FILE *fp,
 
 int GModel::_writeMSH4(const std::string &name, double version, bool binary,
                        bool saveAll, bool saveParametric, double scalingFactor,
-                       bool append, int partitionToSave)
+                       bool append, int partitionToSave,
+                       std::map<GEntity*, SBoundingBox3d> *entityBounds)
 {
   FILE *fp = nullptr;
   if(append)
@@ -2789,7 +2807,8 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary,
   }
 
   // entities
-  writeMSH4Entities(this, fp, false, binary, scalingFactor, version);
+  writeMSH4Entities(this, fp, false, binary, scalingFactor, version,
+                    entityBounds);
 
   // check if the mesh is partitioned... and if we actually have elements in the
   // partitioned entities
@@ -2818,7 +2837,8 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary,
 
   // partitioned entities
   if(partitioned)
-    writeMSH4Entities(this, fp, true, binary, scalingFactor, version);
+    writeMSH4Entities(this, fp, true, binary, scalingFactor, version,
+                      entityBounds);
 
   // nodes
   writeMSH4Nodes(this, fp, partitioned, partitionToSave, binary,
@@ -2837,6 +2857,13 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary,
   // parametrizations
   writeMSH4Parametrizations(this, fp, binary);
 
+  // attributes
+  for(auto &a : _attributes) {
+    fprintf(fp, "$%s\n", a.first.c_str());
+    for(auto &s : a.second) fprintf(fp, "%s\n", s.c_str());
+    fprintf(fp, "$End%s\n", a.first.c_str());
+  }
+
   fclose(fp);
 
   return 1;
@@ -2848,6 +2875,22 @@ int GModel::_writePartitionedMSH4(const std::string &baseName, double version,
 {
   int nthreads = CTX::instance()->numThreads;
   if(!nthreads) nthreads = Msg::GetMaxThreads();
+
+  // precompute entity bounding boxes (we write the full brep in each file, so
+  // otherwise we would compute the bounding boxes as many times as we have
+  // partitions)
+  std::vector<GEntity*> entities;
+  getEntities(entities);
+  std::vector<SBoundingBox3d> bounds(entities.size());
+#pragma omp parallel for num_threads(nthreads)
+  for(std::size_t i = 0; i < entities.size(); i++) {
+    bounds[i] = entities[i]->bounds();
+  }
+  std::map<GEntity*, SBoundingBox3d> entityBounds;
+  for(std::size_t i = 0; i < entities.size(); i++) {
+    entityBounds[entities[i]] = bounds[i];
+  }
+
   bool exceptions = false;
 #pragma omp parallel for num_threads(nthreads)
   for(std::size_t part = 1; part <= getNumPartitions(); part++) {
@@ -2865,7 +2908,7 @@ int GModel::_writePartitionedMSH4(const std::string &baseName, double version,
     }
     try { // OpenMP forbids leaving block via exception
       _writeMSH4(sstream.str(), version, binary, saveAll, saveParametric,
-                 scalingFactor, false, part);
+                 scalingFactor, false, part, &entityBounds);
     }
     catch(...) {
       exceptions = true;

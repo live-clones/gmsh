@@ -1239,6 +1239,34 @@ GMSH_API void gmsh::model::setCoordinates(const int tag, const double x,
   gv->setPosition(p);
 }
 
+GMSH_API void gmsh::model::getAttributeNames(std::vector<std::string> &names)
+{
+  if(!_checkInit()) return;
+  names.clear();
+  for(auto a : GModel::current()->getAttributes())
+    names.push_back(a.first);
+}
+
+GMSH_API void gmsh::model::getAttribute(const std::string &name,
+                                        std::vector<std::string> &value)
+{
+  if(!_checkInit()) return;
+  value = GModel::current()->getAttributes()[name];
+}
+
+GMSH_API void gmsh::model::setAttribute(const std::string &name,
+                                        const std::vector<std::string> &value)
+{
+  if(!_checkInit()) return;
+  GModel::current()->getAttributes()[name] = value;
+}
+
+GMSH_API void gmsh::model::removeAttribute(const std::string &name)
+{
+  if(!_checkInit()) return;
+  GModel::current()->getAttributes().erase(name);
+}
+
 // gmsh::model::mesh
 
 GMSH_API void gmsh::model::mesh::generate(const int dim)
@@ -5434,14 +5462,10 @@ gmsh::model::mesh::clearHomologyRequests()
 }
 
 GMSH_API void
-gmsh::model::mesh::computeHomology()
+gmsh::model::mesh::computeHomology(vectorpair &dimTags)
 {
   if(!_checkInit()) return;
-  // TODO in Gmsh 4.11: return newPhysicals (and remove message)
-  std::vector<std::pair<int, int> > newPhysicals;
-  GModel::current()->computeHomology(newPhysicals);
-  for(auto p : newPhysicals)
-    Msg::Info("New Physical %s", _getEntityName(p.first, p.second).c_str());
+  GModel::current()->computeHomology(dimTags);
 }
 
 GMSH_API void gmsh::model::mesh::triangulate(const std::vector<double> &coord,
@@ -6636,13 +6660,16 @@ GMSH_API int gmsh::model::occ::addTorus(const double x, const double y,
 
 GMSH_API void gmsh::model::occ::addThruSections(
   const std::vector<int> &wireTags, vectorpair &outDimTags, const int tag,
-  const bool makeSolid, const bool makeRuled, const int maxDegree)
+  const bool makeSolid, const bool makeRuled, const int maxDegree,
+  const std::string &continuity, const std::string &parametrization,
+  const bool smoothing)
 {
   if(!_checkInit()) return;
   _createOcc();
   outDimTags.clear();
   GModel::current()->getOCCInternals()->addThruSections(
-    tag, wireTags, makeSolid, makeRuled, outDimTags, maxDegree);
+    tag, wireTags, makeSolid, makeRuled, outDimTags, maxDegree,
+    continuity, parametrization, smoothing);
 }
 
 GMSH_API void gmsh::model::occ::addThickSolid(
@@ -8596,6 +8623,7 @@ public:
   apiMsg() {}
   virtual void operator()(std::string level, std::string message)
   {
+#pragma omp critical
     _log.push_back(level + ": " + message);
   }
   void get(std::vector<std::string> &log) const { log = _log; }

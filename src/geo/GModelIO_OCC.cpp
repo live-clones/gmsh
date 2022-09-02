@@ -2809,7 +2809,9 @@ bool OCC_Internals::addWedge(int &tag, double x, double y, double z, double dx,
 
 bool OCC_Internals::addThruSections(
   int tag, const std::vector<int> &wireTags, bool makeSolid, bool makeRuled,
-  std::vector<std::pair<int, int> > &outDimTags, int maxDegree)
+  std::vector<std::pair<int, int> > &outDimTags, int maxDegree,
+  const std::string &continuity, const std::string &parametrization,
+  bool smoothing)
 {
   int dim = makeSolid ? 3 : 2;
   if(tag >= 0 && _isBound(dim, tag)) {
@@ -2824,10 +2826,20 @@ bool OCC_Internals::addThruSections(
   TopoDS_Shape result;
   try {
     BRepOffsetAPI_ThruSections ts(makeSolid, makeRuled);
-    // ts.SetContinuity(GeomAbs_C1);
-    // Available choices:
-    //    GeomAbs_C0, GeomAbs_G1, GeomAbs_C1, GeomAbs_G2, GeomAbs_C2,
-    //    GeomAbs_C3, GeomAbs_CN
+    if(continuity == "C0")
+      ts.SetContinuity(GeomAbs_C0);
+    else if(continuity == "G1")
+      ts.SetContinuity(GeomAbs_G1);
+    else if(continuity == "C1")
+      ts.SetContinuity(GeomAbs_C1);
+    else if(continuity == "G2")
+      ts.SetContinuity(GeomAbs_G2);
+    else if(continuity == "C2")
+      ts.SetContinuity(GeomAbs_C2);
+    else if(continuity == "C3")
+      ts.SetContinuity(GeomAbs_C3);
+    else if(continuity == "CN")
+      ts.SetContinuity(GeomAbs_CN);
 
     // ts.SetCriteriumWeight(1, 1, 1);
 
@@ -2836,11 +2848,15 @@ bool OCC_Internals::addThruSections(
     else if(CTX::instance()->geom.occThruSectionsDegree > 0)
       ts.SetMaxDegree(CTX::instance()->geom.occThruSectionsDegree);
 
-    // ts.SetParType(Approx_ChordLength);
-    // Available choices:
-    //    Approx_ChordLength, Approx_Centripetal, Approx_IsoParametric
+    if(parametrization == "ChordLength")
+      ts.SetParType(Approx_ChordLength);
+    else if(parametrization == "Centripetal")
+      ts.SetParType(Approx_Centripetal);
+    else if(parametrization == "IsoParametric")
+      ts.SetParType(Approx_IsoParametric);
 
-    // ts.SetSmoothing(Standard_True);
+    ts.SetSmoothing(smoothing ? Standard_True : Standard_False);
+
     for(std::size_t i = 0; i < wireTags.size(); i++) {
       if(!_tagWire.IsBound(wireTags[i])) {
         Msg::Error("Unknown OpenCASCADE wire or curve loop with tag %d",
@@ -4078,22 +4094,26 @@ bool OCC_Internals::affine(const std::vector<std::pair<int, int> > &inDimTags,
 bool OCC_Internals::copy(const std::vector<std::pair<int, int> > &inDimTags,
                          std::vector<std::pair<int, int> > &outDimTags)
 {
-  bool ret = true;
+  // build a single compound shape, so that we won't duplicate internal
+  // boundaries
+  BRep_Builder b;
+  TopoDS_Compound c;
+  b.MakeCompound(c);
   for(std::size_t i = 0; i < inDimTags.size(); i++) {
     int dim = inDimTags[i].first;
     int tag = inDimTags[i].second;
     if(!_isBound(dim, tag)) {
       Msg::Error("Unknown OpenCASCADE entity of dimension %d with tag %d", dim,
                  tag);
-      ret = false;
-      continue;
+      return false;
     }
-    TopoDS_Shape result = BRepBuilderAPI_Copy(_find(dim, tag)).Shape();
-    int newtag = getMaxTag(dim) + 1;
-    _bind(result, dim, newtag, true);
-    outDimTags.push_back(std::make_pair(dim, newtag));
+    TopoDS_Shape shape = _find(dim, tag);
+    b.Add(c, shape);
   }
-  return ret;
+
+  TopoDS_Shape result = BRepBuilderAPI_Copy(c).Shape();
+  _multiBind(result, -1, outDimTags, true, true);
+  return true;
 }
 
 bool OCC_Internals::remove(int dim, int tag, bool recursive)
@@ -4307,6 +4327,8 @@ bool OCC_Internals::importShapes(const std::string &fileName,
             split[2] == ".STEP" || split[2] == ".STP") {
       STEPControl_Reader reader;
       setTargetUnit(CTX::instance()->geom.occTargetUnit);
+      Interface_Static::SetIVal("read.step.ideas", 1);
+      Interface_Static::SetIVal("read.step.nonmanifold", 1);
 #if defined(HAVE_OCC_CAF)
       //Interface_Static::SetIVal("read.stepcaf.subshapes.name", 1);
       STEPCAFControl_Reader cafreader;
@@ -4424,7 +4446,7 @@ bool OCC_Internals::exportShapes(GModel *model, const std::string &fileName,
 
       // this does not seem to solve the issue that entities get duplicated when
       // exporting STEP files (see issue #906):
-      // Interface_Static::SetIVal("write.step.nonmanifold", 1);
+      Interface_Static::SetIVal("write.step.nonmanifold", 1);
 
       if(writer.Transfer(c, STEPControl_AsIs) == IFSelect_RetDone) {
         if(writer.Write(occfile.ToCString()) != IFSelect_RetDone) {

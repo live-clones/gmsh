@@ -76,8 +76,9 @@ gmsh.model.occ.fragment([(1, c1), (1, c2)], gmsh.model.occ.getEntities(2))
 # retrieve tip curves that will be revolved
 eps = 1e-6
 gmsh.option.setNumber('Geometry.OCCBoundsUseStl', 1)
-tc = gmsh.model.occ.getEntitiesInBoundingBox(-eps,-eps,z-eps,
-                                             bb[3]+eps,1,z+eps, dim=1)
+gmsh.model.occ.synchronize()
+tc = gmsh.model.getEntitiesInBoundingBox(-eps,-eps,z-eps,
+                                         bb[3]+eps,1,z+eps, dim=1)
 
 # create rounded wing tip by revolution
 rev = gmsh.model.occ.revolve(tc, 0,0,z, 1,0,0, math.pi/2)

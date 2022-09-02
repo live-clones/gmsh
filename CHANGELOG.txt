@@ -1,4 +1,16 @@
-4.10.4 (Work-in-progress): small bug fixes.
+4.11.0 (Work-in-progress): improved copying ("Duplicata") of multiple shapes
+with OCC; reduced default order for OCC surface filling; arbitrary string
+attributes can now be stored in models and MSH files; small bug fixes.
+
+* New API functions: model/getAttributeNames, model/getAttribute,
+  model/setAttribute, model/removeAttribute
+
+* Incompatible API changes: new argument to mesh/computeHomology; new optional
+  arguments to occ/addThruSections
+
+4.10.5 (July 1, 2022): small bug fixes.
+
+4.10.4 (June 19, 2022): improved graphical window tooltips; small bug fixes.
 
 * New API function: mesh/removeDuplicateElements
 

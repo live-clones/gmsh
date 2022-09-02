@@ -877,6 +877,55 @@ GMSH_API void gmshModelSetCoordinates(const int tag, const double x, const doubl
   }
 }
 
+GMSH_API void gmshModelGetAttributeNames(char *** names, size_t * names_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<std::string> api_names_;
+    gmsh::model::getAttributeNames(api_names_);
+    vectorstring2charptrptr(api_names_, names, names_n);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelGetAttribute(const char * name, char *** value, size_t * value_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<std::string> api_value_;
+    gmsh::model::getAttribute(name, api_value_);
+    vectorstring2charptrptr(api_value_, value, value_n);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelSetAttribute(const char * name, const char * const * value, const size_t value_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<std::string> api_value_(value, value + value_n);
+    gmsh::model::setAttribute(name, api_value_);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelRemoveAttribute(const char * name, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::removeAttribute(name);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API void gmshModelMeshGenerate(const int dim, int * ierr)
 {
   if(ierr) *ierr = 0;
@@ -2262,11 +2311,13 @@ GMSH_API void gmshModelMeshClearHomologyRequests(int * ierr)
   }
 }
 
-GMSH_API void gmshModelMeshComputeHomology(int * ierr)
+GMSH_API void gmshModelMeshComputeHomology(int ** dimTags, size_t * dimTags_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    gmsh::model::mesh::computeHomology();
+    gmsh::vectorpair api_dimTags_;
+    gmsh::model::mesh::computeHomology(api_dimTags_);
+    vectorpair2intptr(api_dimTags_, dimTags, dimTags_n);
   }
   catch(...){
     if(ierr) *ierr = 1;
@@ -3489,13 +3540,13 @@ GMSH_API int gmshModelOccAddTorus(const double x, const double y, const double z
   return result_api_;
 }
 
-GMSH_API void gmshModelOccAddThruSections(const int * wireTags, const size_t wireTags_n, int ** outDimTags, size_t * outDimTags_n, const int tag, const int makeSolid, const int makeRuled, const int maxDegree, int * ierr)
+GMSH_API void gmshModelOccAddThruSections(const int * wireTags, const size_t wireTags_n, int ** outDimTags, size_t * outDimTags_n, const int tag, const int makeSolid, const int makeRuled, const int maxDegree, const char * continuity, const char * parametrization, const int smoothing, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
     std::vector<int> api_wireTags_(wireTags, wireTags + wireTags_n);
     gmsh::vectorpair api_outDimTags_;
-    gmsh::model::occ::addThruSections(api_wireTags_, api_outDimTags_, tag, makeSolid, makeRuled, maxDegree);
+    gmsh::model::occ::addThruSections(api_wireTags_, api_outDimTags_, tag, makeSolid, makeRuled, maxDegree, continuity, parametrization, smoothing);
     vectorpair2intptr(api_outDimTags_, outDimTags, outDimTags_n);
   }
   catch(...){

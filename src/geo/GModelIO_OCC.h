@@ -232,7 +232,7 @@ public:
     const std::vector<int> &pointTags = std::vector<int>(),
     const std::vector<int> &surfaceTags = std::vector<int>(),
     const std::vector<int> &surfaceContinuity = std::vector<int>(),
-    const int degree = 3, const int numPointsOnCurves = 15,
+    const int degree = 2, const int numPointsOnCurves = 15,
     const int numIter = 2, const bool anisotropic = false,
     const double tol2d = 0.00001, const double tol3d = 0.0001,
     const double tolAng = 0.01, const double tolCurv = 0.1,
@@ -276,7 +276,9 @@ public:
   bool addThruSections(int tag, const std::vector<int> &wireTags,
                        bool makeSolid, bool makeRuled,
                        std::vector<std::pair<int, int> > &outDimTags,
-                       int maxDegree = -1);
+                       int maxDegree = -1, const std::string &continuity = "",
+                       const std::string &parametrization = "",
+                       bool smoothing = false);
   bool addThickSolid(int tag, int solidTag,
                      const std::vector<int> &excludeFaceTags, double offset,
                      std::vector<std::pair<int, int> > &outDimTags);
@@ -559,7 +561,7 @@ public:
     const std::vector<int> &pointTags = std::vector<int>(),
     const std::vector<int> &surfaceTags = std::vector<int>(),
     const std::vector<int> &surfaceContinuity = std::vector<int>(),
-    const int degree = 3, const int numPointsOnCurves = 15,
+    const int degree = 2, const int numPointsOnCurves = 15,
     const int numIter = 2, const bool anisotropic = false,
     const double tol2d = 0.00001, const double tol3d = 0.0001,
     const double tolAng = 0.01, const double tolCurv = 0.1,
@@ -643,7 +645,9 @@ public:
   bool addThruSections(int tag, const std::vector<int> &wireTags,
                        bool makeSolid, bool makeRuled,
                        std::vector<std::pair<int, int> > &outDimTags,
-                       int maxDegree = -1)
+                       int maxDegree = -1, const std::string &continuity = "",
+                       const std::string &parametrization = "",
+                       bool smoothing = false)
   {
     return _error("add thrusection");
   }

@@ -1370,7 +1370,7 @@ transformContextWindow::transformContextWindow(int deltaFontSize)
 {
   FL_NORMAL_SIZE -= deltaFontSize;
 
-  int width = 34 * FL_NORMAL_SIZE;
+  int width = 36 * FL_NORMAL_SIZE;
   int height = 5 * WB + 10 * BH;
 
   win = new paletteWindow(width, height,
@@ -1415,13 +1415,13 @@ transformContextWindow::transformContextWindow(int deltaFontSize)
       input[5] = new Fl_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "Axis point Z");
       input[5]->value("0");
       input[6] =
-        new Fl_Input(width / 2 + 2 * WB, 2 * WB + 1 * BH, IW, BH, "Axis DX");
+        new Fl_Input(width / 2 + 2 * WB, 2 * WB + 1 * BH, IW/2, BH, "Axis direction DX");
       input[6]->value("0");
       input[7] =
-        new Fl_Input(width / 2 + 2 * WB, 2 * WB + 2 * BH, IW, BH, "Axis DY");
+        new Fl_Input(width / 2 + 2 * WB, 2 * WB + 2 * BH, IW/2, BH, "Axis direction DY");
       input[7]->value("1");
       input[8] =
-        new Fl_Input(width / 2 + 2 * WB, 2 * WB + 3 * BH, IW, BH, "Axis DZ");
+        new Fl_Input(width / 2 + 2 * WB, 2 * WB + 3 * BH, IW/2, BH, "Axis direction DZ");
       input[8]->value("0");
       input[9] = new Fl_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "Angle");
       input[9]->value("Pi/4");
@@ -1450,11 +1450,11 @@ transformContextWindow::transformContextWindow(int deltaFontSize)
       input[11]->value("0");
       input[12] = new Fl_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "Center Z");
       input[12]->value("0");
-      input[13] = new Fl_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "Scale X");
+      input[13] = new Fl_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "Scaling X");
       input[13]->value("0.5");
-      input[14] = new Fl_Input(2 * WB, 2 * WB + 5 * BH, IW, BH, "Scale Y");
+      input[14] = new Fl_Input(2 * WB, 2 * WB + 5 * BH, IW, BH, "Scaling Y");
       input[14]->value("0.5");
-      input[15] = new Fl_Input(2 * WB, 2 * WB + 6 * BH, IW, BH, "Scale Z");
+      input[15] = new Fl_Input(2 * WB, 2 * WB + 6 * BH, IW, BH, "Scaling Z");
       input[15]->value("0.5");
       for(int i = 10; i < 16; i++) { input[i]->align(FL_ALIGN_RIGHT); }
       butt[2] = new Fl_Check_Button(2 * WB, 2 * WB + 7 * BH, width - 4 * WB, BH,
@@ -1466,15 +1466,18 @@ transformContextWindow::transformContextWindow(int deltaFontSize)
     {
       group[3] = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 2 * WB - BH,
                               "Symmetry");
-      input[16] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "Plane A");
+      input[16] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "Symmetry plane coefficient A");
       input[16]->value("1");
-      input[17] = new Fl_Input(2 * WB, 2 * WB + 2 * BH, IW, BH, "Plane B");
+      input[17] = new Fl_Input(2 * WB, 2 * WB + 2 * BH, IW, BH, "Symmetry plane coefficient B");
       input[17]->value("0");
-      input[18] = new Fl_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "Plane C");
+      input[18] = new Fl_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "Symmetry plane coefficient C");
       input[18]->value("0");
-      input[19] = new Fl_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "Plane D");
+      input[19] = new Fl_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "Symmetry plane coefficient D");
       input[19]->value("1");
-      for(int i = 16; i < 20; i++) { input[i]->align(FL_ALIGN_RIGHT); }
+      for(int i = 16; i < 20; i++) {
+        input[i]->align(FL_ALIGN_RIGHT);
+        input[i]->tooltip("A * X + B * Y + C * Z + D = 0");
+      }
       butt[3] = new Fl_Check_Button(2 * WB, 2 * WB + 5 * BH, width - 4 * WB, BH,
                                     "Apply symmetry on copy");
       butt[3]->value(0);

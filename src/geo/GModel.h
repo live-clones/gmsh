@@ -75,7 +75,8 @@ private:
   int _readMSH4(const std::string &name);
   int _writeMSH4(const std::string &name, double version, bool binary,
                  bool saveAll, bool saveParametric, double scalingFactor,
-                 bool append, int partitionToSave = 0);
+                 bool append, int partitionToSave = 0,
+                 std::map<GEntity*, SBoundingBox3d> *entityBounds = nullptr);
   int _writePartitionedMSH4(const std::string &baseName, double version,
                             bool binary, bool saveAll, bool saveParametric,
                             double scalingFactor);
@@ -150,6 +151,9 @@ protected:
 
   // the set of all used mesh partition numbers
   std::size_t _numPartitions;
+
+  // additional attributes (e.g. stored in extra sections of MSH files)
+  std::map<std::string, std::vector<std::string> > _attributes;
 
 protected:
   // store the elements given in the map (indexed by elementary region
@@ -722,6 +726,12 @@ public:
                                         const std::vector<double> &heights,
                                         const bool recombine,
                                         const std::vector<int> &regionTag);
+
+  // get additional attributes
+  std::map<std::string, std::vector<std::string> > &getAttributes()
+  {
+    return _attributes;
+  }
 
   // "automatic" IO based on Gmsh global functions
   void load(const std::string &fileName);
