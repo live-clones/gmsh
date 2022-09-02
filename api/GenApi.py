@@ -11,6 +11,8 @@ import string
 import os
 import re
 
+# TODO: Fortran mark all output variables with intent(out)
+# TODO: Fortran all methods that return a single value, should be functions not subroutines
 class arg:
     def __init__(self, name, value, python_value, julia_value, cpp_type,
                  c_type, out):
@@ -139,7 +141,7 @@ def ivectorint(name, value=None, python_value=None, julia_value=None):
     a.fortran_types = ["integer(c_int), dimension(:), intent(in)"]
     a.fortran_c_api = ["integer(c_int), dimension(*)", "integer(c_size_t), value, intent(in)"]
     a.fortran_c_args = [api_name, api_name_n]
-    a.fortran_call = f"{api_name}={name}, {api_name_n}=size_gmsh_int({name})"
+    a.fortran_call = f"{api_name}={name}, &{api_name_n}=size_gmsh_int({name})"
     return a
 
 
@@ -167,7 +169,7 @@ def ivectorsize(name, value=None, python_value=None, julia_value=None):
     a.fortran_types = ["integer(c_size_t), dimension(:), intent(in)"]
     a.fortran_c_api = ["integer(c_size_t), dimension(*)", "integer(c_size_t), value, intent(in)"]
     a.fortran_c_args = [api_name, api_name_n]
-    a.fortran_call = f"{api_name}={name}, {api_name_n}=size_gmsh_size({name})"
+    a.fortran_call = f"{api_name}={name}, &{api_name_n}=size_gmsh_size({name})"
     return a
 
 
@@ -195,7 +197,7 @@ def ivectordouble(name, value=None, python_value=None, julia_value=None):
     a.fortran_types = ["real(c_double), dimension(:), intent(in)"]
     a.fortran_c_api = ["real(c_double), dimension(*)", "integer(c_size_t), value, intent(in)"]
     a.fortran_c_args = [api_name, api_name_n]
-    a.fortran_call = f"{api_name}={name}, {api_name_n}=size_gmsh_double({name})"
+    a.fortran_call = f"{api_name}={name}, &{api_name_n}=size_gmsh_double({name})"
     return a
 
 
@@ -224,8 +226,8 @@ def ivectorstring(name, value=None, python_value=None, julia_value=None):
     a.fortran_c_api = ["type(c_ptr), dimension(*)", "integer(c_size_t), value, intent(in)"]
     a.fortran_c_args = [api_name, api_name_n]
     # pass the locally created api_name variable to the C interface
-    a.fortran_call = f"{api_name}={api_name}, {api_name_n}=size_gmsh_str({name})"
-    a.fortran_pre = f"call ivectorstring_({name}, {api_name}strs, {api_name})"
+    a.fortran_call = f"{api_name}={api_name}, &{api_name_n}=size_gmsh_str({name})"
+    a.fortran_pre = f"call ivectorstring_({name}, &{api_name}strs, &{api_name})"
     a.fortran_local = [f"character(len=GMSH_API_MAX_STR_LEN, kind=c_char), allocatable :: {api_name}strs(:)",
                        f"type(c_ptr), allocatable :: {api_name}(:)"]
     return a
@@ -260,7 +262,7 @@ def ivectorpair(name, value=None, python_value=None, julia_value=None):
     a.fortran_types = ["integer(c_int), dimension(:,:), intent(in)"]
     a.fortran_c_api = ["integer(c_int), dimension(*)", "integer(c_size_t), value, intent(in)"]
     a.fortran_c_args = [api_name, api_name_n]
-    a.fortran_call = f"{api_name}={name}, {api_name_n}=size_gmsh_pair({name})"
+    a.fortran_call = f"{api_name}={name}, &{api_name_n}=size_gmsh_pair({name})"
     return a
 
 
@@ -300,9 +302,9 @@ def ivectorvectorint(name, value=None, python_value=None, julia_value=None):
     a.fortran_types = ["integer(c_int), dimension(:), intent(in)", "integer(c_size_t), dimension(:), intent(in)"]
     a.fortran_c_api = ["type(c_ptr), intent(in)", "type(c_ptr), intent(in)", "integer(c_size_t), value, intent(in)"]
     a.fortran_c_args = [api_name, api_name_n, api_name_nn]
-    a.fortran_pre = f"call ivectorvectorint_({name}, {name}_n, {api_name}, {api_name_n}, {api_name_nn})"
+    a.fortran_pre = f"call ivectorvectorint_({name}, &{name}_n, &{api_name}, &{api_name_n}, &{api_name_nn})"
     a.fortran_local = [f"type(c_ptr) :: {api_name}", f"type(c_ptr) :: {api_name_n}", f"integer(c_size_t) :: {api_name_nn}"]
-    a.fortran_call = f"{api_name}={api_name}, {api_name_n}={api_name_n}, {api_name_nn}={api_name_nn}"
+    a.fortran_call = f"{api_name}={api_name}, &{api_name_n}={api_name_n}, &{api_name_nn}={api_name_nn}"
     return a
 
 
@@ -343,9 +345,9 @@ def ivectorvectorsize(name, value=None, python_value=None, julia_value=None):
     a.fortran_types = ["integer(c_size_t), dimension(:), intent(in)", "integer(c_size_t), dimension(:), intent(in)"]
     a.fortran_c_api = ["type(c_ptr), intent(in)", "type(c_ptr), intent(in)", "integer(c_size_t), value, intent(in)"]
     a.fortran_c_args = [api_name, api_name_n, api_name_nn]
-    a.fortran_pre = f"call ivectorvectorsize_({name}, {name}_n, {api_name}, {api_name_n}, {api_name_nn})"
+    a.fortran_pre = f"call ivectorvectorsize_({name}, &{name}_n, &{api_name}, &{api_name_n}, &{api_name_nn})"
     a.fortran_local = [f"type(c_ptr) :: {api_name}", f"type(c_ptr) :: {api_name_n}", f"integer(c_size_t) :: {api_name_nn}"]
-    a.fortran_call = f"{api_name}={api_name}, {api_name_n}={api_name_n}, {api_name_nn}={api_name_nn}"
+    a.fortran_call = f"{api_name}={api_name}, &{api_name_n}={api_name_n}, &{api_name_nn}={api_name_nn}"
     return a
 
 
@@ -386,14 +388,13 @@ def ivectorvectordouble(name, value=None, python_value=None, julia_value=None):
     a.fortran_types = ["real(c_double), dimension(:), intent(in)", "integer(c_size_t), dimension(:), intent(in)"]
     a.fortran_c_api = ["type(c_ptr), intent(in)", "type(c_ptr), intent(in)", "integer(c_size_t), value, intent(in)"]
     a.fortran_c_args = [api_name, api_name_n, api_name_nn]
-    a.fortran_pre = f"call ivectorvectordouble_({name}, {name}_n, {api_name}, {api_name_n}, {api_name_nn})"
+    a.fortran_pre = f"call ivectorvectordouble_({name}, &{name}_n, &{api_name}, &{api_name_n}, &{api_name_nn})"
     a.fortran_local = [f"type(c_ptr) :: {api_name}", f"type(c_ptr) :: {api_name_n}", f"integer(c_size_t) :: {api_name_nn}"]
-    a.fortran_call = f"{api_name}={api_name}, {api_name_n}={api_name_n}, {api_name_nn}={api_name_nn}"
+    a.fortran_call = f"{api_name}={api_name}, &{api_name_n}={api_name_n}, &{api_name_nn}={api_name_nn}"
     return a
 
 
 # output types
-# TODO: mark as intent(out), remember to remove intent from result() in function
 
 class oint(arg):
     rcpp_type = "int"
@@ -516,8 +517,8 @@ def ovectorint(name, value=None, python_value=None, julia_value=None):
     a.fortran_types = ["integer(c_int), dimension(:), allocatable, intent(out)"]
     a.fortran_c_api = ["type(c_ptr), intent(out)", "integer(c_size_t), intent(out)"]
     a.fortran_c_args = [api_name, api_name_n]
-    a.fortran_call = f"{api_name}={api_name}, {api_name_n}={api_name_n}"
-    a.fortran_post = f"{name} = ovectorint_({api_name}, {api_name_n})"
+    a.fortran_call = f"{api_name}={api_name}, &{api_name_n}={api_name_n}"
+    a.fortran_post = f"{name} = ovectorint_({api_name}, &{api_name_n})"
     a.fortran_local = [f"type(c_ptr) :: {api_name}", f"integer(c_size_t) :: {api_name_n}"]
     return a
 
@@ -548,8 +549,8 @@ def ovectorsize(name, value=None, python_value=None, julia_value=None):
     a.fortran_types = ["integer(c_size_t), dimension(:), allocatable, intent(out)"]
     a.fortran_c_api = ["type(c_ptr), intent(out)", "integer(c_size_t), intent(out)"]
     a.fortran_c_args = [api_name, api_name_n]
-    a.fortran_call = f"{api_name}={api_name}, {api_name_n}={api_name_n}"
-    a.fortran_post = f"{name} = ovectorsize_({api_name}, {api_name_n})"
+    a.fortran_call = f"{api_name}={api_name}, &{api_name_n}={api_name_n}"
+    a.fortran_post = f"{name} = ovectorsize_({api_name}, &{api_name_n})"
     a.fortran_local = [f"type(c_ptr) :: {api_name}", f"integer(c_size_t) :: {api_name_n}"]
     return a
 
@@ -580,8 +581,8 @@ def ovectordouble(name, value=None, python_value=None, julia_value=None):
     a.fortran_c_api = ["type(c_ptr), intent(out)", "integer(c_size_t)"]
     a.fortran_c_args = [api_name, api_name_n]
     a.fortran_types = ["real(c_double), dimension(:), allocatable, intent(out)"]
-    a.fortran_call = f"{api_name}={api_name}, {api_name_n}={api_name_n}"
-    a.fortran_post = f"{name} = ovectordouble_({api_name}, {api_name_n})"
+    a.fortran_call = f"{api_name}={api_name}, &{api_name_n}={api_name_n}"
+    a.fortran_post = f"{name} = ovectordouble_({api_name}, &{api_name_n})"
     a.fortran_local = [f"type(c_ptr) :: {api_name}", f"integer(c_size_t) :: {api_name_n}"]
     return a
 
@@ -617,8 +618,8 @@ def ovectorstring(name, value=None, python_value=None, julia_value=None):
     a.fortran_types = ["character(len=GMSH_API_MAX_STR_LEN), dimension(:), allocatable, intent(out)"]
     a.fortran_c_api = ["type(c_ptr), intent(out)", "integer(c_size_t), intent(out)"]
     a.fortran_c_args = [api_name, api_name_n]
-    a.fortran_call = f"{api_name}={api_name}, {api_name_n}={api_name_n}"
-    a.fortran_post = f"{name} = ovectorstring_({api_name}, {api_name_n})"
+    a.fortran_call = f"{api_name}={api_name}, &{api_name_n}={api_name_n}"
+    a.fortran_post = f"{name} = ovectorstring_({api_name}, &{api_name_n})"
     a.fortran_local = [f"type(c_ptr) :: {api_name}", f"integer(c_size_t) :: {api_name_n}"]
     return a
 
@@ -654,8 +655,8 @@ def ovectorpair(name, value=None, python_value=None, julia_value=None):
     a.fortran_types = ["integer(c_int), dimension(:,:), allocatable, intent(out)"]
     a.fortran_c_api = ["type(c_ptr), intent(out)", "integer(c_size_t), intent(out)"]
     a.fortran_c_args = [api_name, api_name_n]
-    a.fortran_call = f"{api_name}={api_name}, {api_name_n}={api_name_n}"
-    a.fortran_post = f"{name} = ovectorpair_({api_name}, {api_name_n})"
+    a.fortran_call = f"{api_name}={api_name}, &{api_name_n}={api_name_n}"
+    a.fortran_post = f"{name} = ovectorpair_({api_name}, &{api_name_n})"
     a.fortran_local = [f"type(c_ptr) :: {api_name}", f"integer(c_size_t) :: {api_name_n}"]
     return a
 
@@ -702,8 +703,8 @@ def ovectorvectorint(name, value=None, python_value=None, julia_value=None):
     a.fortran_types = ["integer(c_int), dimension(:), allocatable, intent(out)", "integer(c_size_t), dimension(:), allocatable, intent(out)"]
     a.fortran_c_api = ["type(c_ptr), intent(out)", "type(c_ptr), intent(out)", "integer(c_size_t), intent(out)"]
     a.fortran_c_args = [api_name, api_name_n, api_name_nn]
-    a.fortran_call = f"{api_name}={api_name}, {api_name_n}={api_name_n}, {api_name_nn}={api_name_nn}"
-    a.fortran_post = f"call ovectorvectorint_({api_name}, {api_name_n}, {api_name_nn}, {name}, {name}_n)"
+    a.fortran_call = f"{api_name}={api_name}, &{api_name_n}={api_name_n}, &{api_name_nn}={api_name_nn}"
+    a.fortran_post = f"call ovectorvectorint_({api_name}, &{api_name_n}, &{api_name_nn}, &{name}, &{name}_n)"
     a.fortran_local = [f"type(c_ptr) :: {api_name}, {api_name_n}", f"integer(c_size_t) :: {api_name_nn}"]
     return a
 
@@ -750,8 +751,8 @@ def ovectorvectorsize(name, value=None, python_value=None, julia_value=None):
     a.fortran_types = ["integer(c_size_t), dimension(:), allocatable, intent(out)", "integer(c_size_t), dimension(:), allocatable, intent(out)"]
     a.fortran_c_api = ["type(c_ptr), intent(out)", "type(c_ptr), intent(out)", "integer(c_size_t), intent(out)"]
     a.fortran_c_args = [api_name, api_name_n, api_name_nn]
-    a.fortran_call = f"{api_name}={api_name}, {api_name_n}={api_name_n}, {api_name_nn}={api_name_nn}"
-    a.fortran_post = f"call ovectorvectorsize_({api_name}, {api_name_n}, {api_name_nn}, {name}, {name}_n)"
+    a.fortran_call = f"{api_name}={api_name}, &{api_name_n}={api_name_n}, &{api_name_nn}={api_name_nn}"
+    a.fortran_post = f"call ovectorvectorsize_({api_name}, &{api_name_n}, &{api_name_nn}, &{name}, &{name}_n)"
     a.fortran_local = [f"type(c_ptr) :: {api_name}, {api_name_n}", f"integer(c_size_t) :: {api_name_nn}"]
     return a
 
@@ -799,8 +800,8 @@ def ovectorvectordouble(name, value=None, python_value=None, julia_value=None):
     a.fortran_types = ["real(c_double), dimension(:), allocatable, intent(out)", "integer(c_size_t), dimension(:), allocatable, intent(out)"]
     a.fortran_c_api = ["type(c_ptr), intent(out)", "type(c_ptr), intent(out)", "integer(c_size_t), intent(out)"]
     a.fortran_c_args = [api_name, api_name_n, api_name_nn]
-    a.fortran_call = f"{api_name}={api_name}, {api_name_n}={api_name_n}, {api_name_nn}={api_name_nn}"
-    a.fortran_post = f"call ovectorvectordouble_({api_name}, {api_name_n}, {api_name_nn}, {name}, {name}_n)"
+    a.fortran_call = f"{api_name}={api_name}, &{api_name_n}={api_name_n}, &{api_name_nn}={api_name_nn}"
+    a.fortran_post = f"call ovectorvectordouble_({api_name}, &{api_name_n}, &{api_name_nn}, &{name}, &{name}_n)"
     a.fortran_local = [f"type(c_ptr) :: {api_name}, {api_name_n}", f"integer(c_size_t) :: {api_name_nn}"]
     return a
 
@@ -853,8 +854,8 @@ def ovectorvectorpair(name, value=None, python_value=None, julia_value=None):
     a.fortran_types = ["integer(c_int), dimension(:,:), allocatable, intent(out)", "integer(c_size_t), dimension(:), allocatable, intent(out)"]
     a.fortran_c_api = ["type(c_ptr), intent(out)", "type(c_ptr), intent(out)", "integer(c_size_t)"]
     a.fortran_c_args = [api_name, api_name_n, api_name_nn]
-    a.fortran_call = f"{api_name}={api_name}, {api_name_n}={api_name_n}, {api_name_nn}={api_name_nn}"
-    a.fortran_post = f"call ovectorvectorpair_({api_name}, {api_name_n}, {api_name_nn}, {name}, {name}_n)"
+    a.fortran_call = f"{api_name}={api_name}, &{api_name_n}={api_name_n}, &{api_name_nn}={api_name_nn}"
+    a.fortran_post = f"call ovectorvectorpair_({api_name}, &{api_name_n}, &{api_name_nn}, &{name}, &{name}_n)"
     a.fortran_local = [f"type(c_ptr) :: {api_name}, {api_name_n}", f"integer(c_size_t) :: {api_name_nn}"]
     return a
 
@@ -2377,7 +2378,7 @@ class API:
             for fun in m.fs:
                 (_, name, _, _, _) = fun
                 fname = c_mpath + get_fname(name)
-                r += f"{indent}procedure, nopass :: {name} => {fname}\n"
+                r += f"{indent}procedure, nopass :: {name} => &\n{indent*2}{fname}\n"
             return r
 
         def generate_ftypes(f, m, c_mpath, f_mpath, indent):
@@ -2421,7 +2422,7 @@ class API:
                 dummy_list = ""
                 for arg in args:
                     for a in arg.fortran_args:
-                        dummy_list += f"{a}, "
+                        dummy_list += f"{a}, &"
                 dummy_list += "ierr"
                 return dummy_list
 
@@ -2429,11 +2430,11 @@ class API:
                 dummy_list = ""
                 for arg in args:
                     if arg.fortran_call:
-                        dummy_list += f"{arg.fortran_call}, "
+                        dummy_list += f"{arg.fortran_call}, &"
                     else:
                         # These are single element lists
                         for c, a in zip(arg.fortran_c_args, arg.fortran_args):
-                            dummy_list += f"{c}={a}, "
+                            dummy_list += f"{c}={a}, &"
                 dummy_list += "ierr_=ierr"
                 return dummy_list
 
@@ -2441,7 +2442,7 @@ class API:
                 dummy_list = ""
                 for arg in args:
                     for a in arg.fortran_c_args:
-                        dummy_list += f"{a}, "
+                        dummy_list += f"{a}, &"
                 dummy_list += "ierr_"
                 return dummy_list
 
@@ -2449,8 +2450,10 @@ class API:
                 proc_type = "function" if rtype else "subroutine"
                 dummy_list = get_c_api_dummy_arg_list(args)
                 r = f"{indent * 2}interface\n"
-                r += f"{indent * 2}{proc_type} C_API({dummy_list})"
-                r += f" bind(C, name=\"{fname}\")\n"
+                r += f"{indent * 2}{proc_type} C_API({dummy_list})".replace(
+                    "&", f"&\n{(len(indent * 2+proc_type+' C_API('))*' '}"
+                )
+                r += f" &\n{indent * 3}bind(C, name=\"{fname}\")\n"
                 r += f"{indent * 3}use, intrinsic :: iso_c_binding\n"
                 if rtype:
                     r += f"{indent * 3}{rtype.fortran_c_api[0]} :: C_API\n"
@@ -2493,7 +2496,9 @@ class API:
             proc_type = "function" if rtype else "subroutine"
             fnamef = f"{proc_type} {fname}"
             dummy_list = get_dummy_arg_list(args)
-            r = f"{indent}{fnamef}({dummy_list})\n"
+            r = f"{indent}{fnamef}({dummy_list})\n".replace(
+                    "&", f"&\n{(len(indent+fnamef)+1)*' '}"
+                )
             r += write_c_interface(args, rtype, fname, indent)
             if rtype:
                 r += f"{indent * 2}{rtype.fortran_types[0]} :: {fname}\n"
@@ -2501,16 +2506,20 @@ class API:
             r += f"{indent * 2}! Local variables\n"
             # Prepare input arguments
             r += get_local_variables(args, indent * 2)
-            r += get_local_setup(args, indent * 2)
+            r += get_local_setup(args, indent * 2).replace("&", f"&\n{indent*3}")
             # call the C function
             dummy_list = get_c_api_call(args)
             if rtype:
-                r += f"{indent * 2}{fname} = C_API({dummy_list})\n"
+                r += f"{indent * 2}{fname} = C_API({dummy_list})\n".replace(
+                    "&", f"&\n{(len(indent*2)+len(fname)+3)*' '}"
+                )
             else:
-                r += f"{indent * 2}call C_API({dummy_list})\n"
+                r += f"{indent * 2}call C_API({dummy_list})\n".replace(
+                    "&", f"&\n{(len(indent*2)+5)*' '}"
+                )
             # Prepare output arguments
             r += f"{indent * 2}! Post processing\n"
-            r += get_local_cleanup(args, indent * 2)
+            r += get_local_cleanup(args, indent * 2).replace("&", f"&\n{indent * 3}")
             r += f"{indent}end {fnamef}\n"
             self.fwrite(f, r)
 
