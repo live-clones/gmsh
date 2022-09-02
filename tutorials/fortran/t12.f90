@@ -1,6 +1,6 @@
 ! ------------------------------------------------------------------------------
 !
-!  Gmsh Python tutorial 12
+!  Gmsh Fortran tutorial 12
 !
 !  Cross-patch meshing with compounds
 !
@@ -26,7 +26,7 @@
 ! combination of the individual meshes can be reparametrized, i.e. if the shape
 ! is "simple enough". If the shape is not amenable to reparametrization, you
 ! should create a full mesh of the geometry and first re-classify it to
-! generate patches amenable to reparametrization (see `t13.py').
+! generate patches amenable to reparametrization (see `t13.f90').
 
 ! The mesh of the individual entities performed in Step 1. should usually be
 ! finer than the desired final mesh; this can be controlled with the

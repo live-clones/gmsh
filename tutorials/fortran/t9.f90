@@ -1,6 +1,6 @@
 ! ------------------------------------------------------------------------------
 !
-!  Gmsh Python tutorial 9
+!  Gmsh Fortran tutorial 9
 !
 !  Plugins
 !

@@ -283,7 +283,7 @@ def ivectorvectorint(name, value=None, python_value=None, julia_value=None):
     a.c = ("const int * const * " + name + ", const size_t * " + name + "_n, " +
            "const size_t " + name + "_nn")
     a.cwrap_pre = ("int **" + api_name + "; size_t *" + api_name_n + ", " +
-                   api_name_nn + "; " + "vectorvector2ptrptr( " + name + ", &" +
+                   api_name_nn + "; " + "vectorvector2ptrptr(" + name + ", &" +
                    api_name + ", &" + api_name_n + ", &" + api_name_nn +
                    ");\n")
     a.cwrap_arg = api_name + ", " + api_name_n + ", " + api_name_nn
