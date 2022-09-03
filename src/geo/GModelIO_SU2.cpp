@@ -91,24 +91,6 @@ int GModel::writeSU2(const std::string &name, bool saveAll,
   // markers for physical groups of dimensions (ndime - 1) and ndime
   std::map<int, std::vector<GEntity *> > groups[4];
   getPhysicalGroups(groups);
-<<<<<<< Updated upstream
-  int nmark = groups[ndime - 1].size();
-  if(nmark) {
-    fprintf(fp, "NMARK= %d\n", nmark);
-    for(auto it = groups[ndime - 1].begin(); it != groups[ndime - 1].end();
-        it++) {
-      std::vector<GEntity *> &entities = it->second;
-      int n = 0;
-      for(std::size_t i = 0; i < entities.size(); i++)
-        n += entities[i]->getNumMeshElements();
-      if(n) {
-        fprintf(fp, "MARKER_TAG= %s\n",
-                physicalName(this, ndime - 1, it->first).c_str());
-        fprintf(fp, "MARKER_ELEMS= %d\n", n);
-        for(std::size_t i = 0; i < entities.size(); i++)
-          for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++)
-            entities[i]->getMeshElement(j)->writeSU2(fp, -1);
-=======
   int nmark = groups[ndime - 1].size() + groups[ndime].size();
   if(nmark) {
     fprintf(fp, "NMARK= %d\n", nmark);
@@ -127,7 +109,6 @@ int GModel::writeSU2(const std::string &name, bool saveAll,
                 entities[i]->getMeshElement(j)->writeSU2(fp, -1);
           }
         }
->>>>>>> Stashed changes
       }
     }
   }
