@@ -115,18 +115,18 @@ call gmsh%model%mesh%setSizeCallback(c_funloc(meshSizeCallback))
 ! To determine the size of mesh elements, Gmsh locally computes the minimum of
 !
 ! 1) the size of the model bounding box;
-! 2) if `mesh%MeshSizeFromPoints' is set, the mesh size specified at geometrical
+! 2) if `Mesh.MeshSizeFromPoints' is set, the mesh size specified at geometrical
 !    points;
-! 3) if `mesh%MeshSizeFromCurvature' is positive, the mesh size based on
+! 3) if `Mesh.MeshSizeFromCurvature' is positive, the mesh size based on
 !    curvature (the value specifying the number of elements per 2 * pi rad);
 ! 4) the background mesh field;
 ! 5) any per-entity mesh size constraint;
 !
 ! The value can then be further modified by the mesh size callback, if any,
-! before being constrained in the interval [`mesh%MeshSizeMin',
-! `mesh%MeshSizeMax'] and multiplied by `mesh%MeshSizeFactor'.  In addition,
+! before being constrained in the interval [`Mesh.MeshSizeMin',
+! `Mesh.MeshSizeMax'] and multiplied by `Mesh.MeshSizeFactor'.  In addition,
 ! boundary mesh sizes are interpolated inside surfaces and/or volumes depending
-! on the value of `mesh%MeshSizeExtendFromBoundary' (which is set by default).
+! on the value of `Mesh.MeshSizeExtendFromBoundary' (which is set by default).
 !
 ! When the element size is fully specified by a background mesh (as it is in
 ! this example), it is thus often desirable to set
@@ -138,7 +138,7 @@ call gmsh%option%setNumber("Mesh.MeshSizeFromCurvature", 0d0)
 ! This will prevent over-refinement due to small mesh sizes on the boundary.
 
 ! Finally, while the default "Frontal-Delaunay" 2D meshing algorithm
-! (mesh%Algorithm = 6) usually leads to the highest quality meshes, the
+! (Mesh.Algorithm = 6) usually leads to the highest quality meshes, the
 ! "Delaunay" algorithm (mesh%Algorithm = 5) will handle complex mesh size fields
 ! better - in particular size fields with large element size gradients:
 

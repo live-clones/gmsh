@@ -30,10 +30,10 @@
 
 ! The mesh of the individual entities performed in Step 1. should usually be
 ! finer than the desired final mesh; this can be controlled with the
-! `mesh%CompoundMeshSizeFactor' option.
+! `Mesh.CompoundMeshSizeFactor' option.
 
 ! The optional reclassification on the underlying elementary entities in Step
-! 5. is governed by the `mesh%CompoundClassify' option.
+! 5. is governed by the `Mesh.CompoundClassify' option.
 
 program t12
 
