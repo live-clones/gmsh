@@ -11,13 +11,14 @@ the command line, run "gmsh t1.geo" (which will launch the GUI) or "gmsh t1.geo
    Gmsh app. See the top-level `README.txt' file in the Gmsh source code for
    instructions on how to compile the app from source.
 
-The `c++', `c', `python' and `julia' subdirectories contain the C++, C, Python
-and Julia tutorials, written using the Gmsh Application Programming Interface
-(API). You will need the Gmsh dynamic library and the associated header files
-(for C++ and C) or modules (for Python and Julia) to run them. Each subdirectory
-contains additional information on how to run the tutorials for each supported
-language, as well as extended tutorials (starting with `x') introducing features
-available through the API but not available in `.geo' files.
+The `c++', `c', `python', `julia' and `fortran' subdirectories contain the C++,
+C, Python, Julia and Fortran tutorials, written using the Gmsh Application
+Programming Interface (API). You will need the Gmsh dynamic library and the
+associated header files (for C++ and C) or modules (for Python, Julia and
+Fortran) to run them. Each subdirectory contains additional information on how
+to run the tutorials for each supported language, as well as extended tutorials
+(starting with `x') introducing features available through the API but not
+available in `.geo' files.
 
  * A binary Software Development Kit (SDK) for Windows, Linux and macOS, that
    contains the dynamic Gmsh library and the associated header and module files,

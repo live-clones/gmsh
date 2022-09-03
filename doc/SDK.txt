@@ -20,12 +20,14 @@ SDK layout:
   * include/gmsh.h: C++ API header
   * include/gmshc.h: C API header
   * include/gmsh.h_cwrap: C++ wrapper of the C API (see the `Notes' below)
+  * include/gmsh.f90: Fortran module
   * bin/gmsh: gmsh executable (linked with the shared Gmsh library)
   * share/doc/gmsh/tutorials/c++: C++ API tutorials
   * share/doc/gmsh/tutorials/c: C API tutorials
   * share/doc/gmsh/tutorials/python: Python API tutorials
   * share/doc/gmsh/tutorials/julia: Julia API tutorials
-  * share/doc/gmsh/examples/api: Other API examples in C++, C, Python and Julia
+  * share/doc/gmsh/tutorials/fortran: Fortran API tutorials
+  * share/doc/gmsh/examples/api: Other API examples
 
 Notes:
 

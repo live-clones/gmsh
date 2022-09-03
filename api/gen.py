@@ -13,12 +13,13 @@
 #  - gmsh.h_cwrap: the Gmsh C++ API redefined in terms of the C API
 #  - gmsh.py: the Gmsh Python API module
 #  - gmsh.jl: the Gmsh Julia API module
+#  - gmsh.f90: the Gmsh Fortran API module
 #  - api.texi: the texinfo API documentation
 #
 # By design, the Gmsh API is purely functional, and only uses elementary types
 # from the target language.
 #
-# See `tutorials/{c++,c,python,julia}' and `examples/api' for tutorials and
+# See `tutorials/{c++,c,python,julia,fortran}' and `examples/api' for tutorials and
 # examples on how to use the Gmsh API.
 
 import os
