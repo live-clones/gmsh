@@ -231,8 +231,9 @@ instructions are prescribed either interactively using the graphical
 user interface (GUI) or in text files using Gmsh's own scripting
 language.  Interactive actions generate language bits in the input
 files, and vice versa. A programming API is also available, for
-integrating Gmsh in your own C++, C, Python or Julia code: see @ref{Gmsh
-API}. A brief description of the four modules is given hereafter.
+integrating Gmsh in your own C++, C, Python, Julia or Fortran code: see
+@ref{Gmsh API}. A brief description of the four modules is given
+hereafter.
 
 @menu
 * Geometry::
@@ -394,11 +395,12 @@ built-in scripting language, thanks to user-defined macros, loops,
 conditionals and includes (see @ref{User-defined macros}, @ref{Loops and
 conditionals}, and @ref{General commands}). For more advanced
 geometries, using the Gmsh API (@pxref{Gmsh API}) in the language of
-your choice (C++, C, Python or Julia) brings even greater flexibility,
-the only downside being that you need to either compile your code (for
-C++ and C) or to configure and install an interpreter (Python or Julia)
-in addition to Gmsh. A binary Software Development Kit (SDK) is
-distributed on the Gmsh web site to make the process easier;
+your choice (C++, C, Python, Julia or Fortran) brings even greater
+flexibility, the only downside being that you need to either compile
+your code (for C++, C and Fortran) or to configure and install an
+interpreter (Python or Julia) in addition to Gmsh. A binary Software
+Development Kit (SDK) is distributed on the Gmsh web site to make the
+process easier;
 @item
 parametrize these geometries. Gmsh's scripting language or the Gmsh API
 enable all commands and command arguments to depend on previous
@@ -544,8 +546,8 @@ built: check the `File->Export' menu for a list of available formats.
 
 Finally, to use Gmsh at the third level (i.e., to link the Gmsh library
 with your own code), you will need to learn the Gmsh Application
-Programming Interface (API). This API is available in C++, C, Python and
-Julia, and is fully documented in @ref{Gmsh API}.
+Programming Interface (API). This API is available in C++, C, Python,
+Julia and Fortran, and is fully documented in @ref{Gmsh API}.
 
 @c -------------------------------------------------------------------------
 @c Syntactic rules used in the manual
@@ -2900,7 +2902,7 @@ example is available in @ref{t10}.
 All the aforementioned methods can be used simultaneously, in which case
 the smallest element size is selected at any given point.  Using the
 Gmsh API, the resulting value can be further modified using a C++, C,
-Python or Julia mesh size callback function provided via
+Python, Julia or Fortran mesh size callback function provided via
 @code{gmsh/model/mesh/setSizeCallback} (@pxref{Namespace
 gmsh/model/mesh}). In addition, boundary mesh sizes are interpolated
 inside surfaces and/or volumes depending on the value of
@@ -3380,13 +3382,13 @@ Solvers and other external codes can be driven by Gmsh through the
 ONELAB interface (see @url{http://www.onelab.info}), which allows to
 have them share parameters and modeling information.
 
-Using the Gmsh API, you can directly embed Gmsh in your C++, C, Python
-or Julia solver, use ONELAB for interactive parameter definition and
-modification, and to create post-processing data on the fly. See
+Using the Gmsh API, you can directly embed Gmsh in your C++, C, Python,
+Julia or Fotran solver, use ONELAB for interactive parameter definition
+and modification, and to create post-processing data on the fly. See
 @url{@value{GITLAB-PREFIX}/examples/api/prepro.py,prepro.py},
 @url{@value{GITLAB-PREFIX}/examples/api/custom_gui.py,custom_gui.py} and
-@url{@value{GITLAB-PREFIX}/examples/api/custom_gui.cpp,custom_gui.cpp} for
-examples.
+@url{@value{GITLAB-PREFIX}/examples/api/custom_gui.cpp,custom_gui.cpp}
+for examples.
 
 If you prefer to keep codes separate, you can also communicate with Gmsh
 through a socket by providing the solver name (@code{Solver.Name0},
@@ -5219,8 +5221,8 @@ are only available via the API.
 To learn how to run Gmsh on your computer, see @ref{Running Gmsh on your
 system}. Screencasts that show how to use the GUI are available on
 @uref{https://gmsh.info/screencasts/}. To learn how to run the C++, C,
-Python and Julia API examples, see the respective subdirectories in
-@url{@value{GITLAB-PREFIX}/tutorials,tutorials}.
+Python, Julia and Fortran API examples, see the respective
+subdirectories in @url{@value{GITLAB-PREFIX}/tutorials,tutorials}.
 
 @menu
 * t1::  Geometry basics, elementary entities, physical groups
@@ -5267,9 +5269,11 @@ available in C++
 C
 (@url{@value{GITLAB-PREFIX}/tutorials/c/t1.c,t1.c}),
 Python
-(@url{@value{GITLAB-PREFIX}/tutorials/python/t1.py,t1.py})
-and Julia
-(@url{@value{GITLAB-PREFIX}/tutorials/julia/t1.jl,t1.jl}).
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t1.py,t1.py}),
+Julia
+(@url{@value{GITLAB-PREFIX}/tutorials/julia/t1.jl,t1.jl})
+and Fortran
+(@url{@value{GITLAB-PREFIX}/tutorials/fortran/t1.f90,t1.f90}).
 
 @smallformat
 @verbatiminclude ../../tutorials/t1.geo
@@ -5289,9 +5293,11 @@ available in C++
 C
 (@url{@value{GITLAB-PREFIX}/tutorials/c/t2.c,t2.c}),
 Python
-(@url{@value{GITLAB-PREFIX}/tutorials/python/t2.py,t2.py})
-and Julia
-(@url{@value{GITLAB-PREFIX}/tutorials/julia/t2.jl,t2.jl}).
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t2.py,t2.py}),
+Julia
+(@url{@value{GITLAB-PREFIX}/tutorials/julia/t2.jl,t2.jl})
+and Fortran
+(@url{@value{GITLAB-PREFIX}/tutorials/fortran/t2.f90,t2.f90}).
 
 @smallformat
 @verbatiminclude ../../tutorials/t2.geo
@@ -5309,9 +5315,11 @@ See
 Also available in C++
 (@url{@value{GITLAB-PREFIX}/tutorials/c++/t3.cpp,t3.cpp}),
 Python
-(@url{@value{GITLAB-PREFIX}/tutorials/python/t3.py,t3.py})
-and Julia
-(@url{@value{GITLAB-PREFIX}/tutorials/julia/t3.jl,t3.jl}).
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t3.py,t3.py}),
+Julia
+(@url{@value{GITLAB-PREFIX}/tutorials/julia/t3.jl,t3.jl})
+and Fortran
+(@url{@value{GITLAB-PREFIX}/tutorials/fortran/t3.f90,t3.f90}).
 
 @smallformat
 @verbatiminclude ../../tutorials/t3.geo
@@ -5329,9 +5337,11 @@ See
 Also available in C++
 (@url{@value{GITLAB-PREFIX}/tutorials/c++/t4.cpp,t4.cpp}),
 Python
-(@url{@value{GITLAB-PREFIX}/tutorials/python/t4.py,t4.py})
-and Julia
-(@url{@value{GITLAB-PREFIX}/tutorials/julia/t4.jl,t4.jl}).
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t4.py,t4.py}),
+Julia
+(@url{@value{GITLAB-PREFIX}/tutorials/julia/t4.jl,t4.jl})
+and Fortran
+(@url{@value{GITLAB-PREFIX}/tutorials/fortran/t4.f90,t4.f90}).
 
 @smallformat
 @verbatiminclude ../../tutorials/t4.geo
@@ -5349,9 +5359,11 @@ See
 Also available in C++
 (@url{@value{GITLAB-PREFIX}/tutorials/c++/t5.cpp,t5.cpp}),
 Python
-(@url{@value{GITLAB-PREFIX}/tutorials/python/t5.py,t5.py})
-and Julia
-(@url{@value{GITLAB-PREFIX}/tutorials/julia/t5.jl,t5.jl}).
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t5.py,t5.py}),
+Julia
+(@url{@value{GITLAB-PREFIX}/tutorials/julia/t5.jl,t5.jl})
+and Fortran
+(@url{@value{GITLAB-PREFIX}/tutorials/fortran/t5.f90,t5.f90}).
 
 @smallformat
 @verbatiminclude ../../tutorials/t5.geo
@@ -5369,9 +5381,11 @@ See
 Also available in C++
 (@url{@value{GITLAB-PREFIX}/tutorials/c++/t6.cpp,t6.cpp}),
 C
-(@url{@value{GITLAB-PREFIX}/tutorials/c/t6.c,t6.c})
-and Python
-(@url{@value{GITLAB-PREFIX}/tutorials/python/t6.py,t6.py}).
+(@url{@value{GITLAB-PREFIX}/tutorials/c/t6.c,t6.c}),
+Python
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t6.py,t6.py})
+and Fortran
+(@url{@value{GITLAB-PREFIX}/tutorials/fortran/t6.f90,t6.f90}).
 
 @smallformat
 @verbatiminclude ../../tutorials/t6.geo
@@ -5387,9 +5401,11 @@ and Python
 See
 @url{@value{GITLAB-PREFIX}/tutorials/t7.geo,t7.geo}.
 Also available in C++
-(@url{@value{GITLAB-PREFIX}/tutorials/c++/t7.cpp,t7.cpp})
-and Python
-(@url{@value{GITLAB-PREFIX}/tutorials/python/t7.py,t7.py}).
+(@url{@value{GITLAB-PREFIX}/tutorials/c++/t7.cpp,t7.cpp}),
+Python
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t7.py,t7.py})
+and Fortran
+(@url{@value{GITLAB-PREFIX}/tutorials/fortran/t7.f90,t7.f90}).
 
 @smallformat
 @verbatiminclude ../../tutorials/t7.geo
@@ -5405,9 +5421,11 @@ and Python
 See
 @url{@value{GITLAB-PREFIX}/tutorials/t8.geo,t8.geo}.
 Also available in C++
-(@url{@value{GITLAB-PREFIX}/tutorials/c++/t8.cpp,t8.cpp})
-and Python
-(@url{@value{GITLAB-PREFIX}/tutorials/python/t8.py,t8.py}).
+(@url{@value{GITLAB-PREFIX}/tutorials/c++/t8.cpp,t8.cpp}),
+Python
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t8.py,t8.py})
+and Fortran
+(@url{@value{GITLAB-PREFIX}/tutorials/fortran/t8.f90,t8.f90}).
 
 @smallformat
 @verbatiminclude ../../tutorials/t8.geo
@@ -5423,9 +5441,11 @@ and Python
 See
 @url{@value{GITLAB-PREFIX}/tutorials/t9.geo,t9.geo}.
 Also available in C++
-(@url{@value{GITLAB-PREFIX}/tutorials/c++/t9.cpp,t9.cpp})
-and Python
-(@url{@value{GITLAB-PREFIX}/tutorials/python/t9.py,t9.py}).
+(@url{@value{GITLAB-PREFIX}/tutorials/c++/t9.cpp,t9.cpp}),
+Python
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t9.py,t9.py})
+and Fortran
+(@url{@value{GITLAB-PREFIX}/tutorials/fortran/t9.f90,t9.f90}).
 
 @smallformat
 @verbatiminclude ../../tutorials/t9.geo
@@ -5441,11 +5461,13 @@ and Python
 See
 @url{@value{GITLAB-PREFIX}/tutorials/t10.geo,t10.geo}.
 Also available in C++
-(@url{@value{GITLAB-PREFIX}/tutorials/c++/t10.cpp,t10.cpp})
-and Python
-(@url{@value{GITLAB-PREFIX}/tutorials/python/t10.py,t10.py})
-and Julia
-(@url{@value{GITLAB-PREFIX}/tutorials/julia/t10.jl,t10.jl}).
+(@url{@value{GITLAB-PREFIX}/tutorials/c++/t10.cpp,t10.cpp}),
+Python
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t10.py,t10.py}),
+Julia
+(@url{@value{GITLAB-PREFIX}/tutorials/julia/t10.jl,t10.jl})
+and Fortran
+(@url{@value{GITLAB-PREFIX}/tutorials/fortran/t10.f90,t10.f90}).
 
 @smallformat
 @verbatiminclude ../../tutorials/t10.geo
@@ -5461,9 +5483,11 @@ and Julia
 See
 @url{@value{GITLAB-PREFIX}/tutorials/t11.geo,t11.geo}.
 Also available in C++
-(@url{@value{GITLAB-PREFIX}/tutorials/c++/t11.cpp,t11.cpp})
-and Python
-(@url{@value{GITLAB-PREFIX}/tutorials/python/t11.py,t11.py}).
+(@url{@value{GITLAB-PREFIX}/tutorials/c++/t11.cpp,t11.cpp}),
+Python
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t11.py,t11.py})
+and Fortran
+(@url{@value{GITLAB-PREFIX}/tutorials/fortran/t11.f90,t11.f90}).
 
 @smallformat
 @verbatiminclude ../../tutorials/t11.geo
@@ -5479,9 +5503,11 @@ and Python
 See
 @url{@value{GITLAB-PREFIX}/tutorials/t12.geo,t12.geo}/
 Also available in C++
-(@url{@value{GITLAB-PREFIX}/tutorials/c++/t12.cpp,t12.cpp})
-and Python
-(@url{@value{GITLAB-PREFIX}/tutorials/python/t12.py,t12.py}).
+(@url{@value{GITLAB-PREFIX}/tutorials/c++/t12.cpp,t12.cpp}),
+Python
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t12.py,t12.py})
+and Fortran
+(@url{@value{GITLAB-PREFIX}/tutorials/fortran/t12.f90,t12.f90}).
 
 @smallformat
 @verbatiminclude ../../tutorials/t12.geo
@@ -5497,9 +5523,11 @@ and Python
 See
 @url{@value{GITLAB-PREFIX}/tutorials/t13.geo,t13.geo}.
 Also available in C++
-(@url{@value{GITLAB-PREFIX}/tutorials/c++/t13.cpp,t13.cpp})
-and Python
-(@url{@value{GITLAB-PREFIX}/tutorials/python/t13.py,t13.py}).
+(@url{@value{GITLAB-PREFIX}/tutorials/c++/t13.cpp,t13.cpp}),
+Python
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t13.py,t13.py})
+and Fortran
+(@url{@value{GITLAB-PREFIX}/tutorials/fortran/t13.f90,t13.f90}).
 
 @smallformat
 @verbatiminclude ../../tutorials/t13.geo
@@ -5515,9 +5543,11 @@ and Python
 See
 @url{@value{GITLAB-PREFIX}/tutorials/t14.geo,t14.geo}.
 Also available in C++
-(@url{@value{GITLAB-PREFIX}/tutorials/c++/t14.cpp,t14.cpp})
-and Python
-(@url{@value{GITLAB-PREFIX}/tutorials/python/t14.py,t14.py}).
+(@url{@value{GITLAB-PREFIX}/tutorials/c++/t14.cpp,t14.cpp}),
+Python
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t14.py,t14.py})
+and Fortran
+(@url{@value{GITLAB-PREFIX}/tutorials/fortran/t14.f90,t14.f90}).
 
 @smallformat
 @verbatiminclude ../../tutorials/t14.geo
@@ -5533,9 +5563,11 @@ and Python
 See
 @url{@value{GITLAB-PREFIX}/tutorials/t15.geo,t15.geo}.
 Also available in C++
-(@url{@value{GITLAB-PREFIX}/tutorials/c++/t15.cpp,t15.cpp})
-and Python
-(@url{@value{GITLAB-PREFIX}/tutorials/python/t15.py,t15.py}).
+(@url{@value{GITLAB-PREFIX}/tutorials/c++/t15.cpp,t15.cpp}),
+Python
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t15.py,t15.py})
+and Fortran
+(@url{@value{GITLAB-PREFIX}/tutorials/fortran/t15.f90,t15.f90}).
 
 @smallformat
 @verbatiminclude ../../tutorials/t15.geo
@@ -5555,9 +5587,11 @@ Also available in C++
 C
 (@url{@value{GITLAB-PREFIX}/tutorials/c/t16.c,t16.c}),
 Python
-(@url{@value{GITLAB-PREFIX}/tutorials/python/t16.py,t16.py})
-and Julia
-(@url{@value{GITLAB-PREFIX}/tutorials/julia/t16.jl,t16.jl}).
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t16.py,t16.py}),
+Julia
+(@url{@value{GITLAB-PREFIX}/tutorials/julia/t16.jl,t16.jl})
+and Fortran
+(@url{@value{GITLAB-PREFIX}/tutorials/fortran/t16.f90,t16.f90}).
 
 @smallformat
 @verbatiminclude ../../tutorials/t16.geo
@@ -5573,9 +5607,11 @@ and Julia
 See
 @url{@value{GITLAB-PREFIX}/tutorials/t17.geo,t17.geo}.
 Also available in C++
-(@url{@value{GITLAB-PREFIX}/tutorials/c++/t17.cpp,t17.cpp})
-and Python
-(@url{@value{GITLAB-PREFIX}/tutorials/python/t17.py,t17.py}).
+(@url{@value{GITLAB-PREFIX}/tutorials/c++/t17.cpp,t17.cpp}),
+Python
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t17.py,t17.py})
+and Fortran
+(@url{@value{GITLAB-PREFIX}/tutorials/fortran/t17.f90,t17.f90}).
 
 @smallformat
 @verbatiminclude ../../tutorials/t17.geo
@@ -5591,9 +5627,11 @@ and Python
 See
 @url{@value{GITLAB-PREFIX}/tutorials/t18.geo,t18.geo}.
 Also available in C++
-(@url{@value{GITLAB-PREFIX}/tutorials/c++/t18.cpp,t18.cpp})
-and Python
-(@url{@value{GITLAB-PREFIX}/tutorials/python/t18.py,t18.py}).
+(@url{@value{GITLAB-PREFIX}/tutorials/c++/t18.cpp,t18.cpp}),
+Python
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t18.py,t18.py})
+and Fortran
+(@url{@value{GITLAB-PREFIX}/tutorials/fortran/t18.f90,t18.f90}).
 
 @smallformat
 @verbatiminclude ../../tutorials/t18.geo
@@ -5609,9 +5647,11 @@ and Python
 See
 @url{@value{GITLAB-PREFIX}/tutorials/t19.geo,t19.geo}.
 Also available in C++
-(@url{@value{GITLAB-PREFIX}/tutorials/c++/t19.cpp,t19.cpp})
-and Python
-(@url{@value{GITLAB-PREFIX}/tutorials/python/t19.py,t19.py}).
+(@url{@value{GITLAB-PREFIX}/tutorials/c++/t19.cpp,t19.cpp}),
+Python
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t19.py,t19.py})
+and Fortran
+(@url{@value{GITLAB-PREFIX}/tutorials/fortran/t19.f90,t19.f90}).
 
 @smallformat
 @verbatiminclude ../../tutorials/t19.geo
@@ -5627,9 +5667,11 @@ and Python
 See
 @url{@value{GITLAB-PREFIX}/tutorials/t20.geo,t20.geo}.
 Also available in C++
-(@url{@value{GITLAB-PREFIX}/tutorials/c++/t20.cpp,t20.cpp})
-and Python
-(@url{@value{GITLAB-PREFIX}/tutorials/python/t20.py,t20.py}).
+(@url{@value{GITLAB-PREFIX}/tutorials/c++/t20.cpp,t20.cpp}),
+Python
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t20.py,t20.py})
+and Fortran
+(@url{@value{GITLAB-PREFIX}/tutorials/fortran/t20.f90,t20.f90}).
 
 @smallformat
 @verbatiminclude ../../tutorials/t20.geo
@@ -5645,9 +5687,11 @@ and Python
 See
 @url{@value{GITLAB-PREFIX}/tutorials/t21.geo,t21.geo}.
 Also available in C++
-(@url{@value{GITLAB-PREFIX}/tutorials/c++/t21.cpp,t21.cpp})
-and Python
-(@url{@value{GITLAB-PREFIX}/tutorials/python/t21.py,t21.py}).
+(@url{@value{GITLAB-PREFIX}/tutorials/c++/t21.cpp,t21.cpp}),
+Python
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t21.py,t21.py})
+and Fortran
+(@url{@value{GITLAB-PREFIX}/tutorials/fortran/t21.f90,t21.f90}).
 
 @smallformat
 @verbatiminclude ../../tutorials/t21.geo
