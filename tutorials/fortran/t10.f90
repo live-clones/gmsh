@@ -139,7 +139,7 @@ call gmsh%option%setNumber("Mesh.MeshSizeFromCurvature", 0d0)
 
 ! Finally, while the default "Frontal-Delaunay" 2D meshing algorithm
 ! (Mesh.Algorithm = 6) usually leads to the highest quality meshes, the
-! "Delaunay" algorithm (mesh%Algorithm = 5) will handle complex mesh size fields
+! "Delaunay" algorithm (Mesh.Algorithm = 5) will handle complex mesh size fields
 ! better - in particular size fields with large element size gradients:
 
 call gmsh%option%setNumber("Mesh.Algorithm", 5d0)
