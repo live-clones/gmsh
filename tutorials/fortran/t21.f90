@@ -188,10 +188,12 @@ logical function checkForEvent() result(val)
 
   val = .false.
   call gmsh%onelab%getString("ONELAB/Action", action)
-  if (size(action) > 0 .and. trim(action(1)) == "check") then
-    call gmsh%onelab%setString("ONELAB/Action", [""])
-    call partitionMesh()
-    call gmsh%graphics%draw()
+  if (size(action) > 0) then
+    if (trim(action(1)) == "check") then
+      call gmsh%onelab%setString("ONELAB/Action", [""])
+      call partitionMesh()
+      call gmsh%graphics%draw()
+    end if
   end if
   val = .true.
 end function checkForEvent
