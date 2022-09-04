@@ -164,7 +164,7 @@ contains
     call gmsh%onelab%getString("ONELAB/Action", action)
     if (size(action) > 0) then
       if (trim(action(1)) == "check") then
-        call gmsh%onelab%setString("ONELAB/Action", [""])
+        call gmsh%onelab%setString("ONELAB/Action", [c_null_char])
         call createGeometryAndMesh()
         call gmsh%graphics%draw()
       end if
