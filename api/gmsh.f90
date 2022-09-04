@@ -893,7 +893,6 @@ module gmsh
     logical, intent(in), optional :: readConfigFiles
     logical, intent(in), optional :: run
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     character(len=GMSH_API_MAX_STR_LEN, kind=c_char), allocatable :: argv_strs(:)
     type(c_ptr), allocatable :: argv_cptr(:)
     call ivectorstring_(optval_str_array(def=[''], val=argv), argv_strs, argv_cptr)
@@ -901,7 +900,6 @@ module gmsh
          readConfigFiles=optval_c_bool(.true., readConfigFiles), &
          run=optval_c_bool(.false., run), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshInitialize
 
   !> Return 1 if the Gmsh API is initialized, and 0 if not.
@@ -916,9 +914,7 @@ module gmsh
     end interface
     integer(c_int) :: gmshIsInitialized
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     gmshIsInitialized = C_API(ierr_=ierr)
-    ! Post processing
   end function gmshIsInitialized
 
   !> Finalize the Gmsh API. This must be called when you are done using the Gmsh
@@ -932,9 +928,7 @@ module gmsh
     end subroutine C_API
     end interface
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(ierr_=ierr)
-    ! Post processing
   end subroutine gmshFinalize
 
   !> Open a file. Equivalent to the `File->Open' menu in the Gmsh app. Handling
@@ -953,10 +947,8 @@ module gmsh
     end interface
     character(len=*), intent(in) :: fileName
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(fileName=istring_(fileName), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshOpen
 
   !> Merge a file. Equivalent to the `File->Merge' menu in the Gmsh app.
@@ -975,10 +967,8 @@ module gmsh
     end interface
     character(len=*), intent(in) :: fileName
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(fileName=istring_(fileName), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshMerge
 
   !> Write a file. The export format is determined by the file extension.
@@ -995,10 +985,8 @@ module gmsh
     end interface
     character(len=*), intent(in) :: fileName
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(fileName=istring_(fileName), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshWrite
 
   !> Clear all loaded models and post-processing data, and add a new empty
@@ -1012,9 +1000,7 @@ module gmsh
     end subroutine C_API
     end interface
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(ierr_=ierr)
-    ! Post processing
   end subroutine gmshClear
 
   !> Set a numerical option to `value'. `name' is of the form "Category.Option"
@@ -1037,11 +1023,9 @@ module gmsh
     character(len=*), intent(in) :: name
     real(c_double), intent(in) :: value
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(name=istring_(name), &
          value=real(value, c_double), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshOptionSetNumber
 
   !> Get the `value' of a numerical option. `name' is of the form
@@ -1064,11 +1048,9 @@ module gmsh
     character(len=*), intent(in) :: name
     real(c_double) :: value
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(name=istring_(name), &
          value=value, &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshOptionGetNumber
 
   !> Set a string option to `value'. `name' is of the form "Category.Option" or
@@ -1091,11 +1073,9 @@ module gmsh
     character(len=*), intent(in) :: name
     character(len=*), intent(in) :: value
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(name=istring_(name), &
          value=istring_(value), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshOptionSetString
 
   !> Get the `value' of a string option. `name' is of the form "Category.Option"
@@ -1118,11 +1098,9 @@ module gmsh
     character(len=*), intent(in) :: name
     character(len=:), allocatable, intent(out) :: value
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(name=istring_(name), &
          api_value_=value, &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshOptionGetString
 
   !> Set a color option to the RGBA value (`r', `g', `b', `a'), where where `r',
@@ -1159,14 +1137,12 @@ module gmsh
     integer, intent(in) :: b
     integer, intent(in), optional :: a
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(name=istring_(name), &
          r=int(r, c_int), &
          g=int(g, c_int), &
          b=int(b, c_int), &
          a=optval_c_int(255, a), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshOptionSetColor
 
   !> Get the `r', `g', `b', `a' value of a color option. `name' is of the form
@@ -1202,14 +1178,12 @@ module gmsh
     integer(c_int) :: b
     integer(c_int) :: a
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(name=istring_(name), &
          r=r, &
          g=g, &
          b=b, &
          a=a, &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshOptionGetColor
 
   !> Add a new model, with name `name', and set it as the current model.
@@ -1226,10 +1200,8 @@ module gmsh
     end interface
     character(len=*), intent(in) :: name
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(name=istring_(name), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelAdd
 
   !> Remove the current model.
@@ -1242,9 +1214,7 @@ module gmsh
     end subroutine C_API
     end interface
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelRemove
 
   !> List the names of all models.
@@ -1263,13 +1233,11 @@ module gmsh
     end interface
     character(len=GMSH_API_MAX_STR_LEN), dimension(:), allocatable, intent(out) :: names
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_names_
     integer(c_size_t) :: api_names_n_
     call C_API(api_names_=api_names_, &
          api_names_n_=api_names_n_, &
          ierr_=ierr)
-    ! Post processing
     names = ovectorstring_(api_names_, &
       api_names_n_)
   end subroutine gmshModelList
@@ -1288,10 +1256,8 @@ module gmsh
     end interface
     character(len=:), allocatable, intent(out) :: name
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(api_name_=name, &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelGetCurrent
 
   !> Set the current model to the model with name `name'. If several models have
@@ -1309,10 +1275,8 @@ module gmsh
     end interface
     character(len=*), intent(in) :: name
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(name=istring_(name), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelSetCurrent
 
   !> Get the file name (if any) associated with the current model. A file name
@@ -1330,10 +1294,8 @@ module gmsh
     end interface
     character(len=:), allocatable, intent(out) :: fileName
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(api_fileName_=fileName, &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelGetFileName
 
   !> Set the file name associated with the current model.
@@ -1350,10 +1312,8 @@ module gmsh
     end interface
     character(len=*), intent(in) :: fileName
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(fileName=istring_(fileName), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelSetFileName
 
   !> Get all the entities in the current model. If `dim' is >= 0, return only
@@ -1378,14 +1338,12 @@ module gmsh
     integer(c_int), dimension(:,:), allocatable, intent(out) :: dimTags
     integer, intent(in), optional :: dim
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_dimTags_
     integer(c_size_t) :: api_dimTags_n_
     call C_API(api_dimTags_=api_dimTags_, &
          api_dimTags_n_=api_dimTags_n_, &
          dim=optval_c_int(-1, dim), &
          ierr_=ierr)
-    ! Post processing
     dimTags = ovectorpair_(api_dimTags_, &
       api_dimTags_n_)
   end subroutine gmshModelGetEntities
@@ -1412,12 +1370,10 @@ module gmsh
     integer, intent(in) :: tag
     character(len=*), intent(in) :: name
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(dim=int(dim, c_int), &
          tag=int(tag, c_int), &
          name=istring_(name), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelSetEntityName
 
   !> Get the name of the entity of dimension `dim' and tag `tag'.
@@ -1442,12 +1398,10 @@ module gmsh
     integer, intent(in) :: tag
     character(len=:), allocatable, intent(out) :: name
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(dim=int(dim, c_int), &
          tag=int(tag, c_int), &
          api_name_=name, &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelGetEntityName
 
   !> Get all the physical groups in the current model. If `dim' is >= 0, return
@@ -1472,14 +1426,12 @@ module gmsh
     integer(c_int), dimension(:,:), allocatable, intent(out) :: dimTags
     integer, intent(in), optional :: dim
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_dimTags_
     integer(c_size_t) :: api_dimTags_n_
     call C_API(api_dimTags_=api_dimTags_, &
          api_dimTags_n_=api_dimTags_n_, &
          dim=optval_c_int(-1, dim), &
          ierr_=ierr)
-    ! Post processing
     dimTags = ovectorpair_(api_dimTags_, &
       api_dimTags_n_)
   end subroutine gmshModelGetPhysicalGroups
@@ -1509,7 +1461,6 @@ module gmsh
     integer, intent(in) :: tag
     integer(c_int), dimension(:), allocatable, intent(out) :: tags
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_tags_
     integer(c_size_t) :: api_tags_n_
     call C_API(dim=int(dim, c_int), &
@@ -1517,7 +1468,6 @@ module gmsh
          api_tags_=api_tags_, &
          api_tags_n_=api_tags_n_, &
          ierr_=ierr)
-    ! Post processing
     tags = ovectorint_(api_tags_, &
       api_tags_n_)
   end subroutine gmshModelGetEntitiesForPhysicalGroup
@@ -1547,7 +1497,6 @@ module gmsh
     integer, intent(in) :: tag
     integer(c_int), dimension(:), allocatable, intent(out) :: physicalTags
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_physicalTags_
     integer(c_size_t) :: api_physicalTags_n_
     call C_API(dim=int(dim, c_int), &
@@ -1555,7 +1504,6 @@ module gmsh
          api_physicalTags_=api_physicalTags_, &
          api_physicalTags_n_=api_physicalTags_n_, &
          ierr_=ierr)
-    ! Post processing
     physicalTags = ovectorint_(api_physicalTags_, &
       api_physicalTags_n_)
   end subroutine gmshModelGetPhysicalGroupsForEntity
@@ -1593,14 +1541,12 @@ module gmsh
     integer, intent(in), optional :: tag
     character(len=*), intent(in), optional :: name
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     gmshModelAddPhysicalGroup = C_API(dim=int(dim, c_int), &
                                 api_tags_=tags, &
                                 api_tags_n_=size_gmsh_int(tags), &
                                 tag=optval_c_int(-1, tag), &
                                 name=istring_(optval_c_str("", name)), &
                                 ierr_=ierr)
-    ! Post processing
   end function gmshModelAddPhysicalGroup
 
   !> Remove the physical groups `dimTags' from the current model. If `dimTags'
@@ -1620,11 +1566,9 @@ module gmsh
     end interface
     integer(c_int), dimension(:,:), intent(in), optional :: dimTags
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(api_dimTags_=dimTags, &
          api_dimTags_n_=size_gmsh_pair(dimTags), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelRemovePhysicalGroups
 
   !> Set the name of the physical group of dimension `dim' and tag `tag'.
@@ -1649,12 +1593,10 @@ module gmsh
     integer, intent(in) :: tag
     character(len=*), intent(in) :: name
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(dim=int(dim, c_int), &
          tag=int(tag, c_int), &
          name=istring_(name), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelSetPhysicalName
 
   !> Remove the physical name `name' from the current model.
@@ -1671,10 +1613,8 @@ module gmsh
     end interface
     character(len=*), intent(in) :: name
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(name=istring_(name), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelRemovePhysicalName
 
   !> Get the name of the physical group of dimension `dim' and tag `tag'.
@@ -1699,12 +1639,10 @@ module gmsh
     integer, intent(in) :: tag
     character(len=:), allocatable, intent(out) :: name
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(dim=int(dim, c_int), &
          tag=int(tag, c_int), &
          api_name_=name, &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelGetPhysicalName
 
   !> Set the tag of the entity of dimension `dim' and tag `tag' to the new value
@@ -1730,12 +1668,10 @@ module gmsh
     integer, intent(in) :: tag
     integer, intent(in) :: newTag
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(dim=int(dim, c_int), &
          tag=int(tag, c_int), &
          newTag=int(newTag, c_int), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelSetTag
 
   !> Get the boundary of the model entities `dimTags'. Return in `outDimTags'
@@ -1777,7 +1713,6 @@ module gmsh
     logical, intent(in), optional :: oriented
     logical, intent(in), optional :: recursive
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_outDimTags_
     integer(c_size_t) :: api_outDimTags_n_
     call C_API(api_dimTags_=dimTags, &
@@ -1788,7 +1723,6 @@ module gmsh
          oriented=optval_c_bool(.true., oriented), &
          recursive=optval_c_bool(.false., recursive), &
          ierr_=ierr)
-    ! Post processing
     outDimTags = ovectorpair_(api_outDimTags_, &
       api_outDimTags_n_)
   end subroutine gmshModelGetBoundary
@@ -1826,7 +1760,6 @@ module gmsh
     integer(c_int), dimension(:), allocatable, intent(out) :: upward
     integer(c_int), dimension(:), allocatable, intent(out) :: downward
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_upward_
     integer(c_size_t) :: api_upward_n_
     type(c_ptr) :: api_downward_
@@ -1838,7 +1771,6 @@ module gmsh
          api_downward_=api_downward_, &
          api_downward_n_=api_downward_n_, &
          ierr_=ierr)
-    ! Post processing
     upward = ovectorint_(api_upward_, &
       api_upward_n_)
     downward = ovectorint_(api_downward_, &
@@ -1892,7 +1824,6 @@ module gmsh
     integer(c_int), dimension(:,:), allocatable, intent(out) :: tags
     integer, intent(in), optional :: dim
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_tags_
     integer(c_size_t) :: api_tags_n_
     call C_API(xmin=real(xmin, c_double), &
@@ -1905,7 +1836,6 @@ module gmsh
          api_tags_n_=api_tags_n_, &
          dim=optval_c_int(-1, dim), &
          ierr_=ierr)
-    ! Post processing
     tags = ovectorpair_(api_tags_, &
       api_tags_n_)
   end subroutine gmshModelGetEntitiesInBoundingBox
@@ -1954,7 +1884,6 @@ module gmsh
     real(c_double) :: ymax
     real(c_double) :: zmax
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(dim=int(dim, c_int), &
          tag=int(tag, c_int), &
          xmin=xmin, &
@@ -1964,7 +1893,6 @@ module gmsh
          ymax=ymax, &
          zmax=zmax, &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelGetBoundingBox
 
   !> Return the geometrical dimension of the current model.
@@ -1979,9 +1907,7 @@ module gmsh
     end interface
     integer(c_int) :: gmshModelGetDimension
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     gmshModelGetDimension = C_API(ierr_=ierr)
-    ! Post processing
   end function gmshModelGetDimension
 
   !> Add a discrete model entity (defined by a mesh) of dimension `dim' in the
@@ -2014,13 +1940,11 @@ module gmsh
     integer, intent(in), optional :: tag
     integer(c_int), dimension(:), intent(in), optional :: boundary
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     gmshModelAddDiscreteEntity = C_API(dim=int(dim, c_int), &
                                  tag=optval_c_int(-1, tag), &
                                  api_boundary_=boundary, &
                                  api_boundary_n_=size_gmsh_int(boundary), &
                                  ierr_=ierr)
-    ! Post processing
   end function gmshModelAddDiscreteEntity
 
   !> Remove the entities `dimTags' of the current model, provided that they are
@@ -2046,12 +1970,10 @@ module gmsh
     integer(c_int), dimension(:,:), intent(in) :: dimTags
     logical, intent(in), optional :: recursive
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(api_dimTags_=dimTags, &
          api_dimTags_n_=size_gmsh_pair(dimTags), &
          recursive=optval_c_bool(.false., recursive), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelRemoveEntities
 
   !> Remove the entity name `name' from the current model.
@@ -2068,10 +1990,8 @@ module gmsh
     end interface
     character(len=*), intent(in) :: name
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(name=istring_(name), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelRemoveEntityName
 
   !> Get the type of the entity of dimension `dim' and tag `tag'.
@@ -2096,12 +2016,10 @@ module gmsh
     integer, intent(in) :: tag
     character(len=:), allocatable, intent(out) :: entityType
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(dim=int(dim, c_int), &
          tag=int(tag, c_int), &
          api_entityType_=entityType, &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelGetType
 
   !> In a partitioned model, get the parent of the entity of dimension `dim' and
@@ -2132,13 +2050,11 @@ module gmsh
     integer(c_int) :: parentDim
     integer(c_int) :: parentTag
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(dim=int(dim, c_int), &
          tag=int(tag, c_int), &
          parentDim=parentDim, &
          parentTag=parentTag, &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelGetParent
 
   !> Return the number of partitions in the model.
@@ -2153,9 +2069,7 @@ module gmsh
     end interface
     integer(c_int) :: gmshModelGetNumberOfPartitions
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     gmshModelGetNumberOfPartitions = C_API(ierr_=ierr)
-    ! Post processing
   end function gmshModelGetNumberOfPartitions
 
   !> In a partitioned model, return the tags of the partition(s) to which the
@@ -2183,7 +2097,6 @@ module gmsh
     integer, intent(in) :: tag
     integer(c_int), dimension(:), allocatable, intent(out) :: partitions
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_partitions_
     integer(c_size_t) :: api_partitions_n_
     call C_API(dim=int(dim, c_int), &
@@ -2191,7 +2104,6 @@ module gmsh
          api_partitions_=api_partitions_, &
          api_partitions_n_=api_partitions_n_, &
          ierr_=ierr)
-    ! Post processing
     partitions = ovectorint_(api_partitions_, &
       api_partitions_n_)
   end subroutine gmshModelGetPartitions
@@ -2232,7 +2144,6 @@ module gmsh
     real(c_double), dimension(:), intent(in) :: parametricCoord
     real(c_double), dimension(:), allocatable, intent(out) :: coord
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_coord_
     integer(c_size_t) :: api_coord_n_
     call C_API(dim=int(dim, c_int), &
@@ -2242,7 +2153,6 @@ module gmsh
          api_coord_=api_coord_, &
          api_coord_n_=api_coord_n_, &
          ierr_=ierr)
-    ! Post processing
     coord = ovectordouble_(api_coord_, &
       api_coord_n_)
   end subroutine gmshModelGetValue
@@ -2285,7 +2195,6 @@ module gmsh
     real(c_double), dimension(:), intent(in) :: parametricCoord
     real(c_double), dimension(:), allocatable, intent(out) :: derivatives
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_derivatives_
     integer(c_size_t) :: api_derivatives_n_
     call C_API(dim=int(dim, c_int), &
@@ -2295,7 +2204,6 @@ module gmsh
          api_derivatives_=api_derivatives_, &
          api_derivatives_n_=api_derivatives_n_, &
          ierr_=ierr)
-    ! Post processing
     derivatives = ovectordouble_(api_derivatives_, &
       api_derivatives_n_)
   end subroutine gmshModelGetDerivative
@@ -2340,7 +2248,6 @@ module gmsh
     real(c_double), dimension(:), intent(in) :: parametricCoord
     real(c_double), dimension(:), allocatable, intent(out) :: derivatives
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_derivatives_
     integer(c_size_t) :: api_derivatives_n_
     call C_API(dim=int(dim, c_int), &
@@ -2350,7 +2257,6 @@ module gmsh
          api_derivatives_=api_derivatives_, &
          api_derivatives_n_=api_derivatives_n_, &
          ierr_=ierr)
-    ! Post processing
     derivatives = ovectordouble_(api_derivatives_, &
       api_derivatives_n_)
   end subroutine gmshModelGetSecondDerivative
@@ -2389,7 +2295,6 @@ module gmsh
     real(c_double), dimension(:), intent(in) :: parametricCoord
     real(c_double), dimension(:), allocatable, intent(out) :: curvatures
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_curvatures_
     integer(c_size_t) :: api_curvatures_n_
     call C_API(dim=int(dim, c_int), &
@@ -2399,7 +2304,6 @@ module gmsh
          api_curvatures_=api_curvatures_, &
          api_curvatures_n_=api_curvatures_n_, &
          ierr_=ierr)
-    ! Post processing
     curvatures = ovectordouble_(api_curvatures_, &
       api_curvatures_n_)
   end subroutine gmshModelGetCurvature
@@ -2451,7 +2355,6 @@ module gmsh
     real(c_double), dimension(:), allocatable, intent(out) :: directionMax
     real(c_double), dimension(:), allocatable, intent(out) :: directionMin
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_curvatureMax_
     integer(c_size_t) :: api_curvatureMax_n_
     type(c_ptr) :: api_curvatureMin_
@@ -2472,7 +2375,6 @@ module gmsh
          api_directionMin_=api_directionMin_, &
          api_directionMin_n_=api_directionMin_n_, &
          ierr_=ierr)
-    ! Post processing
     curvatureMax = ovectordouble_(api_curvatureMax_, &
       api_curvatureMax_n_)
     curvatureMin = ovectordouble_(api_curvatureMin_, &
@@ -2512,7 +2414,6 @@ module gmsh
     real(c_double), dimension(:), intent(in) :: parametricCoord
     real(c_double), dimension(:), allocatable, intent(out) :: normals
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_normals_
     integer(c_size_t) :: api_normals_n_
     call C_API(tag=int(tag, c_int), &
@@ -2521,7 +2422,6 @@ module gmsh
          api_normals_=api_normals_, &
          api_normals_n_=api_normals_n_, &
          ierr_=ierr)
-    ! Post processing
     normals = ovectordouble_(api_normals_, &
       api_normals_n_)
   end subroutine gmshModelGetNormal
@@ -2561,7 +2461,6 @@ module gmsh
     real(c_double), dimension(:), intent(in) :: coord
     real(c_double), dimension(:), allocatable, intent(out) :: parametricCoord
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_parametricCoord_
     integer(c_size_t) :: api_parametricCoord_n_
     call C_API(dim=int(dim, c_int), &
@@ -2571,7 +2470,6 @@ module gmsh
          api_parametricCoord_=api_parametricCoord_, &
          api_parametricCoord_n_=api_parametricCoord_n_, &
          ierr_=ierr)
-    ! Post processing
     parametricCoord = ovectordouble_(api_parametricCoord_, &
       api_parametricCoord_n_)
   end subroutine gmshModelGetParametrization
@@ -2607,7 +2505,6 @@ module gmsh
     real(c_double), dimension(:), allocatable, intent(out) :: min
     real(c_double), dimension(:), allocatable, intent(out) :: max
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_min_
     integer(c_size_t) :: api_min_n_
     type(c_ptr) :: api_max_
@@ -2619,7 +2516,6 @@ module gmsh
          api_max_=api_max_, &
          api_max_n_=api_max_n_, &
          ierr_=ierr)
-    ! Post processing
     min = ovectordouble_(api_min_, &
       api_min_n_)
     max = ovectordouble_(api_max_, &
@@ -2660,14 +2556,12 @@ module gmsh
     real(c_double), dimension(:), intent(in) :: coord
     logical, intent(in), optional :: parametric
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     gmshModelIsInside = C_API(dim=int(dim, c_int), &
                         tag=int(tag, c_int), &
                         api_coord_=coord, &
                         api_coord_n_=size_gmsh_double(coord), &
                         parametric=optval_c_bool(.false., parametric), &
                         ierr_=ierr)
-    ! Post processing
   end function gmshModelIsInside
 
   !> Get the points `closestCoord' on the entity of dimension `dim' and tag
@@ -2712,7 +2606,6 @@ module gmsh
     real(c_double), dimension(:), allocatable, intent(out) :: closestCoord
     real(c_double), dimension(:), allocatable, intent(out) :: parametricCoord
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_closestCoord_
     integer(c_size_t) :: api_closestCoord_n_
     type(c_ptr) :: api_parametricCoord_
@@ -2726,7 +2619,6 @@ module gmsh
          api_parametricCoord_=api_parametricCoord_, &
          api_parametricCoord_n_=api_parametricCoord_n_, &
          ierr_=ierr)
-    ! Post processing
     closestCoord = ovectordouble_(api_closestCoord_, &
       api_closestCoord_n_)
     parametricCoord = ovectordouble_(api_parametricCoord_, &
@@ -2776,7 +2668,6 @@ module gmsh
     real(c_double), dimension(:), allocatable, intent(out) :: surfaceParametricCoord
     integer, intent(in), optional :: which
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_surfaceParametricCoord_
     integer(c_size_t) :: api_surfaceParametricCoord_n_
     call C_API(dim=int(dim, c_int), &
@@ -2788,7 +2679,6 @@ module gmsh
          api_surfaceParametricCoord_n_=api_surfaceParametricCoord_n_, &
          which=optval_c_int(0, which), &
          ierr_=ierr)
-    ! Post processing
     surfaceParametricCoord = ovectordouble_(api_surfaceParametricCoord_, &
       api_surfaceParametricCoord_n_)
   end subroutine gmshModelReparametrizeOnSurface
@@ -2818,13 +2708,11 @@ module gmsh
     integer, intent(in) :: value
     logical, intent(in), optional :: recursive
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(api_dimTags_=dimTags, &
          api_dimTags_n_=size_gmsh_pair(dimTags), &
          value=int(value, c_int), &
          recursive=optval_c_bool(.false., recursive), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelSetVisibility
 
   !> Get the visibility of the model entity of dimension `dim' and tag `tag'.
@@ -2849,12 +2737,10 @@ module gmsh
     integer, intent(in) :: tag
     integer(c_int) :: value
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(dim=int(dim, c_int), &
          tag=int(tag, c_int), &
          value=value, &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelGetVisibility
 
   !> Set the global visibility of the model per window to `value', where
@@ -2876,11 +2762,9 @@ module gmsh
     integer, intent(in) :: value
     integer, intent(in), optional :: windowIndex
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(value=int(value, c_int), &
          windowIndex=optval_c_int(0, windowIndex), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelSetVisibilityPerWindow
 
   !> Set the color of the model entities `dimTags' to the RGBA value (`r', `g',
@@ -2921,7 +2805,6 @@ module gmsh
     integer, intent(in), optional :: a
     logical, intent(in), optional :: recursive
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(api_dimTags_=dimTags, &
          api_dimTags_n_=size_gmsh_pair(dimTags), &
          r=int(r, c_int), &
@@ -2930,7 +2813,6 @@ module gmsh
          a=optval_c_int(255, a), &
          recursive=optval_c_bool(.false., recursive), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelSetColor
 
   !> Get the color of the model entity of dimension `dim' and tag `tag'.
@@ -2967,7 +2849,6 @@ module gmsh
     integer(c_int) :: b
     integer(c_int) :: a
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(dim=int(dim, c_int), &
          tag=int(tag, c_int), &
          r=r, &
@@ -2975,7 +2856,6 @@ module gmsh
          b=b, &
          a=a, &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelGetColor
 
   !> Set the `x', `y', `z' coordinates of a geometrical point.
@@ -3004,13 +2884,11 @@ module gmsh
     real(c_double), intent(in) :: y
     real(c_double), intent(in) :: z
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(tag=int(tag, c_int), &
          x=real(x, c_double), &
          y=real(y, c_double), &
          z=real(z, c_double), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelSetCoordinates
 
   !> Get the names of any optional attributes stored in the model.
@@ -3029,13 +2907,11 @@ module gmsh
     end interface
     character(len=GMSH_API_MAX_STR_LEN), dimension(:), allocatable, intent(out) :: names
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_names_
     integer(c_size_t) :: api_names_n_
     call C_API(api_names_=api_names_, &
          api_names_n_=api_names_n_, &
          ierr_=ierr)
-    ! Post processing
     names = ovectorstring_(api_names_, &
       api_names_n_)
   end subroutine gmshModelGetAttributeNames
@@ -3060,14 +2936,12 @@ module gmsh
     character(len=*), intent(in) :: name
     character(len=GMSH_API_MAX_STR_LEN), dimension(:), allocatable, intent(out) :: value
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_value_
     integer(c_size_t) :: api_value_n_
     call C_API(name=istring_(name), &
          api_value_=api_value_, &
          api_value_n_=api_value_n_, &
          ierr_=ierr)
-    ! Post processing
     value = ovectorstring_(api_value_, &
       api_value_n_)
   end subroutine gmshModelGetAttribute
@@ -3092,7 +2966,6 @@ module gmsh
     character(len=*), intent(in) :: name
     character(len=*), dimension(:), intent(in) :: value
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     character(len=GMSH_API_MAX_STR_LEN, kind=c_char), allocatable :: api_value_strs(:)
     type(c_ptr), allocatable :: api_value_(:)
     call ivectorstring_(value, &
@@ -3102,7 +2975,6 @@ module gmsh
          api_value_=api_value_, &
          api_value_n_=size_gmsh_str(value), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelSetAttribute
 
   !> Remove the attribute with name `name'.
@@ -3119,10 +2991,8 @@ module gmsh
     end interface
     character(len=*), intent(in) :: name
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(name=istring_(name), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelRemoveAttribute
 
   !> Generate a mesh of the current model, up to dimension `dim' (0, 1, 2 or 3).
@@ -3139,10 +3009,8 @@ module gmsh
     end interface
     integer, intent(in), optional :: dim
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(dim=optval_c_int(3, dim), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelMeshGenerate
 
   !> Partition the mesh of the current model into `numPart' partitions.
@@ -3173,14 +3041,12 @@ module gmsh
     integer(c_size_t), dimension(:), intent(in), optional :: elementTags
     integer(c_int), dimension(:), intent(in), optional :: partitions
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(numPart=int(numPart, c_int), &
          api_elementTags_=elementTags, &
          api_elementTags_n_=size_gmsh_size(elementTags), &
          api_partitions_=partitions, &
          api_partitions_n_=size_gmsh_int(partitions), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelMeshPartition
 
   !> Unpartition the mesh of the current model.
@@ -3193,9 +3059,7 @@ module gmsh
     end subroutine C_API
     end interface
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelMeshUnpartition
 
   !> Optimize the mesh of the current model using `method' (empty for default
@@ -3234,14 +3098,12 @@ module gmsh
     integer, intent(in), optional :: niter
     integer(c_int), dimension(:,:), intent(in), optional :: dimTags
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(method=istring_(optval_c_str("", method)), &
          force=optval_c_bool(.false., force), &
          niter=optval_c_int(1, niter), &
          api_dimTags_=dimTags, &
          api_dimTags_n_=size_gmsh_pair(dimTags), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelMeshOptimize
 
   !> Recombine the mesh of the current model.
@@ -3254,9 +3116,7 @@ module gmsh
     end subroutine C_API
     end interface
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelMeshRecombine
 
   !> Refine the mesh of the current model by uniformly splitting the elements.
@@ -3269,9 +3129,7 @@ module gmsh
     end subroutine C_API
     end interface
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelMeshRefine
 
   !> Set the order of the elements in the mesh of the current model to `order'.
@@ -3288,10 +3146,8 @@ module gmsh
     end interface
     integer, intent(in) :: order
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(order=int(order, c_int), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelMeshSetOrder
 
   !> Get the last entities (if any) where a meshing error occurred. Currently
@@ -3311,13 +3167,11 @@ module gmsh
     end interface
     integer(c_int), dimension(:,:), allocatable, intent(out) :: dimTags
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_dimTags_
     integer(c_size_t) :: api_dimTags_n_
     call C_API(api_dimTags_=api_dimTags_, &
          api_dimTags_n_=api_dimTags_n_, &
          ierr_=ierr)
-    ! Post processing
     dimTags = ovectorpair_(api_dimTags_, &
       api_dimTags_n_)
   end subroutine gmshModelMeshGetLastEntityError
@@ -3339,13 +3193,11 @@ module gmsh
     end interface
     integer(c_size_t), dimension(:), allocatable, intent(out) :: nodeTags
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_nodeTags_
     integer(c_size_t) :: api_nodeTags_n_
     call C_API(api_nodeTags_=api_nodeTags_, &
          api_nodeTags_n_=api_nodeTags_n_, &
          ierr_=ierr)
-    ! Post processing
     nodeTags = ovectorsize_(api_nodeTags_, &
       api_nodeTags_n_)
   end subroutine gmshModelMeshGetLastNodeError
@@ -3369,11 +3221,9 @@ module gmsh
     end interface
     integer(c_int), dimension(:,:), intent(in), optional :: dimTags
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(api_dimTags_=dimTags, &
          api_dimTags_n_=size_gmsh_pair(dimTags), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelMeshClear
 
   !> Reverse the orientation of the elements in the entities `dimTags'. If
@@ -3394,11 +3244,9 @@ module gmsh
     end interface
     integer(c_int), dimension(:,:), intent(in), optional :: dimTags
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(api_dimTags_=dimTags, &
          api_dimTags_n_=size_gmsh_pair(dimTags), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelMeshReverse
 
   !> Apply the affine transformation `affineTransform' (16 entries of a 4x4
@@ -3426,13 +3274,11 @@ module gmsh
     real(c_double), dimension(:), intent(in) :: affineTransform
     integer(c_int), dimension(:,:), intent(in), optional :: dimTags
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(api_affineTransform_=affineTransform, &
          api_affineTransform_n_=size_gmsh_double(affineTransform), &
          api_dimTags_=dimTags, &
          api_dimTags_n_=size_gmsh_pair(dimTags), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelMeshAffineTransform
 
   !> Get the nodes classified on the entity of dimension `dim' and tag `tag'. If
@@ -3491,7 +3337,6 @@ module gmsh
     logical, intent(in), optional :: includeBoundary
     logical, intent(in), optional :: returnParametricCoord
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_nodeTags_
     integer(c_size_t) :: api_nodeTags_n_
     type(c_ptr) :: api_coord_
@@ -3509,7 +3354,6 @@ module gmsh
          includeBoundary=optval_c_bool(.false., includeBoundary), &
          returnParametricCoord=optval_c_bool(.true., returnParametricCoord), &
          ierr_=ierr)
-    ! Post processing
     nodeTags = ovectorsize_(api_nodeTags_, &
       api_nodeTags_n_)
     coord = ovectordouble_(api_coord_, &
@@ -3559,7 +3403,6 @@ module gmsh
     integer, intent(in), optional :: tag
     logical, intent(in), optional :: returnParametricCoord
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_nodeTags_
     integer(c_size_t) :: api_nodeTags_n_
     type(c_ptr) :: api_coord_
@@ -3576,7 +3419,6 @@ module gmsh
          tag=optval_c_int(-1, tag), &
          returnParametricCoord=optval_c_bool(.true., returnParametricCoord), &
          ierr_=ierr)
-    ! Post processing
     nodeTags = ovectorsize_(api_nodeTags_, &
       api_nodeTags_n_)
     coord = ovectordouble_(api_coord_, &
@@ -3623,7 +3465,6 @@ module gmsh
     integer(c_int) :: dim
     integer(c_int) :: tag
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_coord_
     integer(c_size_t) :: api_coord_n_
     type(c_ptr) :: api_parametricCoord_
@@ -3636,7 +3477,6 @@ module gmsh
          dim=dim, &
          tag=tag, &
          ierr_=ierr)
-    ! Post processing
     coord = ovectordouble_(api_coord_, &
       api_coord_n_)
     parametricCoord = ovectordouble_(api_parametricCoord_, &
@@ -3672,14 +3512,12 @@ module gmsh
     real(c_double), dimension(:), intent(in) :: coord
     real(c_double), dimension(:), intent(in) :: parametricCoord
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(nodeTag=int(nodeTag, c_size_t), &
          api_coord_=coord, &
          api_coord_n_=size_gmsh_double(coord), &
          api_parametricCoord_=parametricCoord, &
          api_parametricCoord_n_=size_gmsh_double(parametricCoord), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelMeshSetNode
 
   !> Rebuild the node cache.
@@ -3696,10 +3534,8 @@ module gmsh
     end interface
     logical, intent(in), optional :: onlyIfNecessary
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(onlyIfNecessary=optval_c_bool(.true., onlyIfNecessary), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelMeshRebuildNodeCache
 
   !> Rebuild the element cache.
@@ -3716,10 +3552,8 @@ module gmsh
     end interface
     logical, intent(in), optional :: onlyIfNecessary
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(onlyIfNecessary=optval_c_bool(.true., onlyIfNecessary), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelMeshRebuildElementCache
 
   !> Get the nodes from all the elements belonging to the physical group of
@@ -3755,7 +3589,6 @@ module gmsh
     integer(c_size_t), dimension(:), allocatable, intent(out) :: nodeTags
     real(c_double), dimension(:), allocatable, intent(out) :: coord
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_nodeTags_
     integer(c_size_t) :: api_nodeTags_n_
     type(c_ptr) :: api_coord_
@@ -3767,7 +3600,6 @@ module gmsh
          api_coord_=api_coord_, &
          api_coord_n_=api_coord_n_, &
          ierr_=ierr)
-    ! Post processing
     nodeTags = ovectorsize_(api_nodeTags_, &
       api_nodeTags_n_)
     coord = ovectordouble_(api_coord_, &
@@ -3788,10 +3620,8 @@ module gmsh
     end interface
     integer(c_size_t) :: maxTag
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(maxTag=maxTag, &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelMeshGetMaxNodeTag
 
   !> Add nodes classified on the model entity of dimension `dim' and tag `tag'.
@@ -3838,7 +3668,6 @@ module gmsh
     real(c_double), dimension(:), intent(in) :: coord
     real(c_double), dimension(:), intent(in), optional :: parametricCoord
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(dim=int(dim, c_int), &
          tag=int(tag, c_int), &
          api_nodeTags_=nodeTags, &
@@ -3848,7 +3677,6 @@ module gmsh
          api_parametricCoord_=parametricCoord, &
          api_parametricCoord_n_=size_gmsh_double(parametricCoord), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelMeshAddNodes
 
   !> Reclassify all nodes on their associated model entity, based on the
@@ -3864,9 +3692,7 @@ module gmsh
     end subroutine C_API
     end interface
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelMeshReclassifyNodes
 
   !> Relocate the nodes classified on the entity of dimension `dim' and tag
@@ -3890,11 +3716,9 @@ module gmsh
     integer, intent(in), optional :: dim
     integer, intent(in), optional :: tag
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(dim=optval_c_int(-1, dim), &
          tag=optval_c_int(-1, tag), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelMeshRelocateNodes
 
   !> Get the elements classified on the entity of dimension `dim' and tag `tag'.
@@ -3953,7 +3777,6 @@ module gmsh
     integer, intent(in), optional :: dim
     integer, intent(in), optional :: tag
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_elementTypes_
     integer(c_size_t) :: api_elementTypes_n_
     type(c_ptr) :: api_elementTags_, api_elementTags_n_
@@ -3971,7 +3794,6 @@ module gmsh
          dim=optval_c_int(-1, dim), &
          tag=optval_c_int(-1, tag), &
          ierr_=ierr)
-    ! Post processing
     elementTypes = ovectorint_(api_elementTypes_, &
       api_elementTypes_n_)
     call ovectorvectorsize_(api_elementTags_, &
@@ -4022,7 +3844,6 @@ module gmsh
     integer(c_int) :: dim
     integer(c_int) :: tag
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_nodeTags_
     integer(c_size_t) :: api_nodeTags_n_
     call C_API(elementTag=int(elementTag, c_size_t), &
@@ -4032,7 +3853,6 @@ module gmsh
          dim=dim, &
          tag=tag, &
          ierr_=ierr)
-    ! Post processing
     nodeTags = ovectorsize_(api_nodeTags_, &
       api_nodeTags_n_)
   end subroutine gmshModelMeshGetElement
@@ -4098,7 +3918,6 @@ module gmsh
     integer, intent(in), optional :: dim
     logical, intent(in), optional :: strict
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_nodeTags_
     integer(c_size_t) :: api_nodeTags_n_
     call C_API(x=real(x, c_double), &
@@ -4114,7 +3933,6 @@ module gmsh
          dim=optval_c_int(-1, dim), &
          strict=optval_c_bool(.false., strict), &
          ierr_=ierr)
-    ! Post processing
     nodeTags = ovectorsize_(api_nodeTags_, &
       api_nodeTags_n_)
   end subroutine gmshModelMeshGetElementByCoordinates
@@ -4160,7 +3978,6 @@ module gmsh
     integer, intent(in), optional :: dim
     logical, intent(in), optional :: strict
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_elementTags_
     integer(c_size_t) :: api_elementTags_n_
     call C_API(x=real(x, c_double), &
@@ -4171,7 +3988,6 @@ module gmsh
          dim=optval_c_int(-1, dim), &
          strict=optval_c_bool(.false., strict), &
          ierr_=ierr)
-    ! Post processing
     elementTags = ovectorsize_(api_elementTags_, &
       api_elementTags_n_)
   end subroutine gmshModelMeshGetElementsByCoordinates
@@ -4218,7 +4034,6 @@ module gmsh
     real(c_double) :: v
     real(c_double) :: w
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(elementTag=int(elementTag, c_size_t), &
          x=real(x, c_double), &
          y=real(y, c_double), &
@@ -4227,7 +4042,6 @@ module gmsh
          v=v, &
          w=w, &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelMeshGetLocalCoordinatesInElement
 
   !> Get the types of elements in the entity of dimension `dim' and tag `tag'.
@@ -4256,7 +4070,6 @@ module gmsh
     integer, intent(in), optional :: dim
     integer, intent(in), optional :: tag
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_elementTypes_
     integer(c_size_t) :: api_elementTypes_n_
     call C_API(api_elementTypes_=api_elementTypes_, &
@@ -4264,7 +4077,6 @@ module gmsh
          dim=optval_c_int(-1, dim), &
          tag=optval_c_int(-1, tag), &
          ierr_=ierr)
-    ! Post processing
     elementTypes = ovectorint_(api_elementTypes_, &
       api_elementTypes_n_)
   end subroutine gmshModelMeshGetElementTypes
@@ -4296,12 +4108,10 @@ module gmsh
     integer, intent(in) :: order
     logical, intent(in), optional :: serendip
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     gmshModelMeshGetElementType = C_API(familyName=istring_(familyName), &
                                   order=int(order, c_int), &
                                   serendip=optval_c_bool(.false., serendip), &
                                   ierr_=ierr)
-    ! Post processing
   end function gmshModelMeshGetElementType
 
   !> Get the properties of an element of type `elementType': its name
@@ -4348,7 +4158,6 @@ module gmsh
     real(c_double), dimension(:), allocatable, intent(out) :: localNodeCoord
     integer(c_int) :: numPrimaryNodes
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_localNodeCoord_
     integer(c_size_t) :: api_localNodeCoord_n_
     call C_API(elementType=int(elementType, c_int), &
@@ -4360,7 +4169,6 @@ module gmsh
          api_localNodeCoord_n_=api_localNodeCoord_n_, &
          numPrimaryNodes=numPrimaryNodes, &
          ierr_=ierr)
-    ! Post processing
     localNodeCoord = ovectordouble_(api_localNodeCoord_, &
       api_localNodeCoord_n_)
   end subroutine gmshModelMeshGetElementProperties
@@ -4411,7 +4219,6 @@ module gmsh
     integer, intent(in), optional :: task
     integer, intent(in), optional :: numTasks
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_elementTags_
     integer(c_size_t) :: api_elementTags_n_
     type(c_ptr) :: api_nodeTags_
@@ -4425,7 +4232,6 @@ module gmsh
          task=optval_c_size_t(0, task), &
          numTasks=optval_c_size_t(1, numTasks), &
          ierr_=ierr)
-    ! Post processing
     elementTags = ovectorsize_(api_elementTags_, &
       api_elementTags_n_)
     nodeTags = ovectorsize_(api_nodeTags_, &
@@ -4446,10 +4252,8 @@ module gmsh
     end interface
     integer(c_size_t) :: maxTag
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(maxTag=maxTag, &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelMeshGetMaxElementTag
 
   !> Preallocate data before calling `getElementsByType' with `numTasks' > 1.
@@ -4491,7 +4295,6 @@ module gmsh
     integer(c_size_t), dimension(:), allocatable, intent(out) :: nodeTags
     integer, intent(in), optional :: tag
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_elementTags_
     integer(c_size_t) :: api_elementTags_n_
     type(c_ptr) :: api_nodeTags_
@@ -4505,7 +4308,6 @@ module gmsh
          api_nodeTags_n_=api_nodeTags_n_, &
          tag=optval_c_int(-1, tag), &
          ierr_=ierr)
-    ! Post processing
     elementTags = ovectorsize_(api_elementTags_, &
       api_elementTags_n_)
     nodeTags = ovectorsize_(api_nodeTags_, &
@@ -4552,7 +4354,6 @@ module gmsh
     integer, intent(in), optional :: task
     integer, intent(in), optional :: numTasks
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_elementsQuality_
     integer(c_size_t) :: api_elementsQuality_n_
     call C_API(api_elementTags_=elementTags, &
@@ -4563,7 +4364,6 @@ module gmsh
          task=optval_c_size_t(0, task), &
          numTasks=optval_c_size_t(1, numTasks), &
          ierr_=ierr)
-    ! Post processing
     elementsQuality = ovectordouble_(api_elementsQuality_, &
       api_elementsQuality_n_)
   end subroutine gmshModelMeshGetElementQualities
@@ -4621,7 +4421,6 @@ module gmsh
     integer(c_size_t), dimension(:), intent(in) :: nodeTags
     integer(c_size_t), dimension(:), intent(in) :: nodeTags_n
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_elementTags_
     type(c_ptr) :: api_elementTags_n_
     integer(c_size_t) :: api_elementTags_nn_
@@ -4649,7 +4448,6 @@ module gmsh
          api_nodeTags_n_=api_nodeTags_n_, &
          api_nodeTags_nn_=api_nodeTags_nn_, &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelMeshAddElements
 
   !> Add elements of type `elementType' classified on the entity of tag `tag'.
@@ -4688,7 +4486,6 @@ module gmsh
     integer(c_size_t), dimension(:), intent(in) :: elementTags
     integer(c_size_t), dimension(:), intent(in) :: nodeTags
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(tag=int(tag, c_int), &
          elementType=int(elementType, c_int), &
          api_elementTags_=elementTags, &
@@ -4696,7 +4493,6 @@ module gmsh
          api_nodeTags_=nodeTags, &
          api_nodeTags_n_=size_gmsh_size(nodeTags), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelMeshAddElementsByType
 
   !> Get the numerical quadrature information for the given element type
@@ -4740,7 +4536,6 @@ module gmsh
     real(c_double), dimension(:), allocatable, intent(out) :: localCoord
     real(c_double), dimension(:), allocatable, intent(out) :: weights
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_localCoord_
     integer(c_size_t) :: api_localCoord_n_
     type(c_ptr) :: api_weights_
@@ -4752,7 +4547,6 @@ module gmsh
          api_weights_=api_weights_, &
          api_weights_n_=api_weights_n_, &
          ierr_=ierr)
-    ! Post processing
     localCoord = ovectordouble_(api_localCoord_, &
       api_localCoord_n_)
     weights = ovectordouble_(api_weights_, &
@@ -4822,7 +4616,6 @@ module gmsh
     integer, intent(in), optional :: task
     integer, intent(in), optional :: numTasks
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_jacobians_
     integer(c_size_t) :: api_jacobians_n_
     type(c_ptr) :: api_determinants_
@@ -4842,7 +4635,6 @@ module gmsh
          task=optval_c_size_t(0, task), &
          numTasks=optval_c_size_t(1, numTasks), &
          ierr_=ierr)
-    ! Post processing
     jacobians = ovectordouble_(api_jacobians_, &
       api_jacobians_n_)
     determinants = ovectordouble_(api_determinants_, &
@@ -4904,7 +4696,6 @@ module gmsh
     real(c_double), dimension(:), allocatable, intent(out) :: coord
     integer, intent(in), optional :: tag
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_jacobians_
     integer(c_size_t) :: api_jacobians_n_
     type(c_ptr) :: api_determinants_
@@ -4924,7 +4715,6 @@ module gmsh
          api_coord_n_=api_coord_n_, &
          tag=optval_c_int(-1, tag), &
          ierr_=ierr)
-    ! Post processing
     jacobians = ovectordouble_(api_jacobians_, &
       api_jacobians_n_)
     determinants = ovectordouble_(api_determinants_, &
@@ -4981,7 +4771,6 @@ module gmsh
     real(c_double), dimension(:), allocatable, intent(out) :: determinants
     real(c_double), dimension(:), allocatable, intent(out) :: coord
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_jacobians_
     integer(c_size_t) :: api_jacobians_n_
     type(c_ptr) :: api_determinants_
@@ -4998,7 +4787,6 @@ module gmsh
          api_coord_=api_coord_, &
          api_coord_n_=api_coord_n_, &
          ierr_=ierr)
-    ! Post processing
     jacobians = ovectordouble_(api_jacobians_, &
       api_jacobians_n_)
     determinants = ovectordouble_(api_determinants_, &
@@ -5070,7 +4858,6 @@ module gmsh
     integer(c_int) :: numOrientations
     integer(c_int), dimension(:), intent(in), optional :: wantedOrientations
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_basisFunctions_
     integer(c_size_t) :: api_basisFunctions_n_
     call C_API(elementType=int(elementType, c_int), &
@@ -5084,7 +4871,6 @@ module gmsh
          api_wantedOrientations_=wantedOrientations, &
          api_wantedOrientations_n_=size_gmsh_int(wantedOrientations), &
          ierr_=ierr)
-    ! Post processing
     basisFunctions = ovectordouble_(api_basisFunctions_, &
       api_basisFunctions_n_)
   end subroutine gmshModelMeshGetBasisFunctions
@@ -5130,7 +4916,6 @@ module gmsh
     integer, intent(in), optional :: task
     integer, intent(in), optional :: numTasks
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_basisFunctionsOrientation_
     integer(c_size_t) :: api_basisFunctionsOrientation_n_
     call C_API(elementType=int(elementType, c_int), &
@@ -5141,7 +4926,6 @@ module gmsh
          task=optval_c_size_t(0, task), &
          numTasks=optval_c_size_t(1, numTasks), &
          ierr_=ierr)
-    ! Post processing
     basisFunctionsOrientation = ovectorint_(api_basisFunctionsOrientation_, &
       api_basisFunctionsOrientation_n_)
   end subroutine gmshModelMeshGetBasisFunctionsOrientation
@@ -5168,12 +4952,10 @@ module gmsh
     character(len=*), intent(in) :: functionSpaceType
     integer(c_int) :: basisFunctionsOrientation
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(elementTag=int(elementTag, c_size_t), &
          functionSpaceType=istring_(functionSpaceType), &
          basisFunctionsOrientation=basisFunctionsOrientation, &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelMeshGetBasisFunctionsOrientationForElement
 
   !> Get the number of possible orientations for elements of type `elementType'
@@ -5197,11 +4979,9 @@ module gmsh
     integer, intent(in) :: elementType
     character(len=*), intent(in) :: functionSpaceType
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     gmshModelMeshGetNumberOfOrientations = C_API(elementType=int(elementType, c_int), &
                                            functionSpaceType=istring_(functionSpaceType), &
                                            ierr_=ierr)
-    ! Post processing
   end function gmshModelMeshGetNumberOfOrientations
 
   !> Preallocate data before calling `getBasisFunctionsOrientation' with
@@ -5229,7 +5009,6 @@ module gmsh
     integer(c_int), dimension(:), allocatable, intent(out) :: basisFunctionsOrientation
     integer, intent(in), optional :: tag
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_basisFunctionsOrientation_
     integer(c_size_t) :: api_basisFunctionsOrientation_n_
     call C_API(elementType=int(elementType, c_int), &
@@ -5237,7 +5016,6 @@ module gmsh
          api_basisFunctionsOrientation_n_=api_basisFunctionsOrientation_n_, &
          tag=optval_c_int(-1, tag), &
          ierr_=ierr)
-    ! Post processing
     basisFunctionsOrientation = ovectorint_(api_basisFunctionsOrientation_, &
       api_basisFunctionsOrientation_n_)
   end subroutine gmshModelMeshPreallocateBasisFunctionsOrientation
@@ -5276,7 +5054,6 @@ module gmsh
     integer(c_size_t), dimension(:), allocatable, intent(out) :: edgeTags
     integer(c_int), dimension(:), allocatable, intent(out) :: edgeOrientations
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_edgeTags_
     integer(c_size_t) :: api_edgeTags_n_
     type(c_ptr) :: api_edgeOrientations_
@@ -5288,7 +5065,6 @@ module gmsh
          api_edgeOrientations_=api_edgeOrientations_, &
          api_edgeOrientations_n_=api_edgeOrientations_n_, &
          ierr_=ierr)
-    ! Post processing
     edgeTags = ovectorsize_(api_edgeTags_, &
       api_edgeTags_n_)
     edgeOrientations = ovectorint_(api_edgeOrientations_, &
@@ -5331,7 +5107,6 @@ module gmsh
     integer(c_size_t), dimension(:), allocatable, intent(out) :: faceTags
     integer(c_int), dimension(:), allocatable, intent(out) :: faceOrientations
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_faceTags_
     integer(c_size_t) :: api_faceTags_n_
     type(c_ptr) :: api_faceOrientations_
@@ -5344,7 +5119,6 @@ module gmsh
          api_faceOrientations_=api_faceOrientations_, &
          api_faceOrientations_n_=api_faceOrientations_n_, &
          ierr_=ierr)
-    ! Post processing
     faceTags = ovectorsize_(api_faceTags_, &
       api_faceTags_n_)
     faceOrientations = ovectorint_(api_faceOrientations_, &
@@ -5367,11 +5141,9 @@ module gmsh
     end interface
     integer(c_int), dimension(:,:), intent(in), optional :: dimTags
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(api_dimTags_=dimTags, &
          api_dimTags_n_=size_gmsh_pair(dimTags), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelMeshCreateEdges
 
   !> Create unique mesh faces for the entities `dimTags'.
@@ -5390,11 +5162,9 @@ module gmsh
     end interface
     integer(c_int), dimension(:,:), intent(in), optional :: dimTags
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(api_dimTags_=dimTags, &
          api_dimTags_n_=size_gmsh_pair(dimTags), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelMeshCreateFaces
 
   !> Get the global unique identifiers `edgeTags' and the nodes `edgeNodes' of
@@ -5421,7 +5191,6 @@ module gmsh
     integer(c_size_t), dimension(:), allocatable, intent(out) :: edgeTags
     integer(c_size_t), dimension(:), allocatable, intent(out) :: edgeNodes
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_edgeTags_
     integer(c_size_t) :: api_edgeTags_n_
     type(c_ptr) :: api_edgeNodes_
@@ -5431,7 +5200,6 @@ module gmsh
          api_edgeNodes_=api_edgeNodes_, &
          api_edgeNodes_n_=api_edgeNodes_n_, &
          ierr_=ierr)
-    ! Post processing
     edgeTags = ovectorsize_(api_edgeTags_, &
       api_edgeTags_n_)
     edgeNodes = ovectorsize_(api_edgeNodes_, &
@@ -5466,7 +5234,6 @@ module gmsh
     integer(c_size_t), dimension(:), allocatable, intent(out) :: faceTags
     integer(c_size_t), dimension(:), allocatable, intent(out) :: faceNodes
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_faceTags_
     integer(c_size_t) :: api_faceTags_n_
     type(c_ptr) :: api_faceNodes_
@@ -5477,7 +5244,6 @@ module gmsh
          api_faceNodes_=api_faceNodes_, &
          api_faceNodes_n_=api_faceNodes_n_, &
          ierr_=ierr)
-    ! Post processing
     faceTags = ovectorsize_(api_faceTags_, &
       api_faceTags_n_)
     faceNodes = ovectorsize_(api_faceNodes_, &
@@ -5507,13 +5273,11 @@ module gmsh
     integer(c_size_t), dimension(:), intent(in) :: edgeTags
     integer(c_size_t), dimension(:), intent(in) :: edgeNodes
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(api_edgeTags_=edgeTags, &
          api_edgeTags_n_=size_gmsh_size(edgeTags), &
          api_edgeNodes_=edgeNodes, &
          api_edgeNodes_n_=size_gmsh_size(edgeNodes), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelMeshAddEdges
 
   !> Add mesh faces of type `faceType' defined by their global unique
@@ -5543,14 +5307,12 @@ module gmsh
     integer(c_size_t), dimension(:), intent(in) :: faceTags
     integer(c_size_t), dimension(:), intent(in) :: faceNodes
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(faceType=int(faceType, c_int), &
          api_faceTags_=faceTags, &
          api_faceTags_n_=size_gmsh_size(faceTags), &
          api_faceNodes_=faceNodes, &
          api_faceNodes_n_=size_gmsh_size(faceNodes), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelMeshAddFaces
 
   !> Generate the pair of keys for the elements of type `elementType' in the
@@ -5603,7 +5365,6 @@ module gmsh
     integer, intent(in), optional :: tag
     logical, intent(in), optional :: returnCoord
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_typeKeys_
     integer(c_size_t) :: api_typeKeys_n_
     type(c_ptr) :: api_entityKeys_
@@ -5621,7 +5382,6 @@ module gmsh
          tag=optval_c_int(-1, tag), &
          returnCoord=optval_c_bool(.true., returnCoord), &
          ierr_=ierr)
-    ! Post processing
     typeKeys = ovectorint_(api_typeKeys_, &
       api_typeKeys_n_)
     entityKeys = ovectorsize_(api_entityKeys_, &
@@ -5670,7 +5430,6 @@ module gmsh
     real(c_double), dimension(:), allocatable, intent(out) :: coord
     logical, intent(in), optional :: returnCoord
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_typeKeys_
     integer(c_size_t) :: api_typeKeys_n_
     type(c_ptr) :: api_entityKeys_
@@ -5687,7 +5446,6 @@ module gmsh
          api_coord_n_=api_coord_n_, &
          returnCoord=optval_c_bool(.true., returnCoord), &
          ierr_=ierr)
-    ! Post processing
     typeKeys = ovectorint_(api_typeKeys_, &
       api_typeKeys_n_)
     entityKeys = ovectorsize_(api_entityKeys_, &
@@ -5717,11 +5475,9 @@ module gmsh
     integer, intent(in) :: elementType
     character(len=*), intent(in) :: functionSpaceType
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     gmshModelMeshGetNumberOfKeys = C_API(elementType=int(elementType, c_int), &
                                    functionSpaceType=istring_(functionSpaceType), &
                                    ierr_=ierr)
-    ! Post processing
   end function gmshModelMeshGetNumberOfKeys
 
   !> Get information about the pair of `keys'. `infoKeys' returns information
@@ -5766,7 +5522,6 @@ module gmsh
     character(len=*), intent(in) :: functionSpaceType
     integer(c_int), dimension(:,:), allocatable, intent(out) :: infoKeys
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_infoKeys_
     integer(c_size_t) :: api_infoKeys_n_
     call C_API(api_typeKeys_=typeKeys, &
@@ -5778,7 +5533,6 @@ module gmsh
          api_infoKeys_=api_infoKeys_, &
          api_infoKeys_n_=api_infoKeys_n_, &
          ierr_=ierr)
-    ! Post processing
     infoKeys = ovectorpair_(api_infoKeys_, &
       api_infoKeys_n_)
   end subroutine gmshModelMeshGetKeysInformation
@@ -5829,7 +5583,6 @@ module gmsh
     integer, intent(in), optional :: task
     integer, intent(in), optional :: numTasks
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_barycenters_
     integer(c_size_t) :: api_barycenters_n_
     call C_API(elementType=int(elementType, c_int), &
@@ -5841,7 +5594,6 @@ module gmsh
          task=optval_c_size_t(0, task), &
          numTasks=optval_c_size_t(1, numTasks), &
          ierr_=ierr)
-    ! Post processing
     barycenters = ovectordouble_(api_barycenters_, &
       api_barycenters_n_)
   end subroutine gmshModelMeshGetBarycenters
@@ -5871,7 +5623,6 @@ module gmsh
     real(c_double), dimension(:), allocatable, intent(out) :: barycenters
     integer, intent(in), optional :: tag
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_barycenters_
     integer(c_size_t) :: api_barycenters_n_
     call C_API(elementType=int(elementType, c_int), &
@@ -5879,7 +5630,6 @@ module gmsh
          api_barycenters_n_=api_barycenters_n_, &
          tag=optval_c_int(-1, tag), &
          ierr_=ierr)
-    ! Post processing
     barycenters = ovectordouble_(api_barycenters_, &
       api_barycenters_n_)
   end subroutine gmshModelMeshPreallocateBarycenters
@@ -5927,7 +5677,6 @@ module gmsh
     integer, intent(in), optional :: task
     integer, intent(in), optional :: numTasks
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_nodeTags_
     integer(c_size_t) :: api_nodeTags_n_
     call C_API(elementType=int(elementType, c_int), &
@@ -5938,7 +5687,6 @@ module gmsh
          task=optval_c_size_t(0, task), &
          numTasks=optval_c_size_t(1, numTasks), &
          ierr_=ierr)
-    ! Post processing
     nodeTags = ovectorsize_(api_nodeTags_, &
       api_nodeTags_n_)
   end subroutine gmshModelMeshGetElementEdgeNodes
@@ -5991,7 +5739,6 @@ module gmsh
     integer, intent(in), optional :: task
     integer, intent(in), optional :: numTasks
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_nodeTags_
     integer(c_size_t) :: api_nodeTags_n_
     call C_API(elementType=int(elementType, c_int), &
@@ -6003,7 +5750,6 @@ module gmsh
          task=optval_c_size_t(0, task), &
          numTasks=optval_c_size_t(1, numTasks), &
          ierr_=ierr)
-    ! Post processing
     nodeTags = ovectorsize_(api_nodeTags_, &
       api_nodeTags_n_)
   end subroutine gmshModelMeshGetElementFaceNodes
@@ -6039,7 +5785,6 @@ module gmsh
     integer(c_size_t), dimension(:), allocatable, intent(out) :: elementTags
     integer(c_int), dimension(:), allocatable, intent(out) :: partitions
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_elementTags_
     integer(c_size_t) :: api_elementTags_n_
     type(c_ptr) :: api_partitions_
@@ -6051,7 +5796,6 @@ module gmsh
          api_partitions_=api_partitions_, &
          api_partitions_n_=api_partitions_n_, &
          ierr_=ierr)
-    ! Post processing
     elementTags = ovectorsize_(api_elementTags_, &
       api_elementTags_n_)
     partitions = ovectorint_(api_partitions_, &
@@ -6079,12 +5823,10 @@ module gmsh
     integer(c_int), dimension(:,:), intent(in) :: dimTags
     real(c_double), intent(in) :: size
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(api_dimTags_=dimTags, &
          api_dimTags_n_=size_gmsh_pair(dimTags), &
          size=real(size, c_double), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelMeshSetSize
 
   !> Get the mesh size constraints (if any) associated with the model entities
@@ -6111,7 +5853,6 @@ module gmsh
     integer(c_int), dimension(:,:), intent(in) :: dimTags
     real(c_double), dimension(:), allocatable, intent(out) :: sizes
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_sizes_
     integer(c_size_t) :: api_sizes_n_
     call C_API(api_dimTags_=dimTags, &
@@ -6119,7 +5860,6 @@ module gmsh
          api_sizes_=api_sizes_, &
          api_sizes_n_=api_sizes_n_, &
          ierr_=ierr)
-    ! Post processing
     sizes = ovectordouble_(api_sizes_, &
       api_sizes_n_)
   end subroutine gmshModelMeshGetSizes
@@ -6156,7 +5896,6 @@ module gmsh
     real(c_double), dimension(:), intent(in) :: parametricCoord
     real(c_double), dimension(:), intent(in) :: sizes
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(dim=int(dim, c_int), &
          tag=int(tag, c_int), &
          api_parametricCoord_=parametricCoord, &
@@ -6164,7 +5903,6 @@ module gmsh
          api_sizes_=sizes, &
          api_sizes_n_=size_gmsh_double(sizes), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelMeshSetSizeAtParametricPoints
 
   !> Set a mesh size callback for the current model. The callback function
@@ -6189,10 +5927,8 @@ module gmsh
     end interface
     type(c_funptr), value, intent(in) :: callback
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(callback=callback, &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelMeshSetSizeCallback
 
   !> Remove the mesh size callback from the current model.
@@ -6205,9 +5941,7 @@ module gmsh
     end subroutine C_API
     end interface
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelMeshRemoveSizeCallback
 
   !> Set a transfinite meshing constraint on the curve `tag', with `numNodes'
@@ -6239,13 +5973,11 @@ module gmsh
     character(len=*), intent(in), optional :: meshType
     real(c_double), intent(in), optional :: coef
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(tag=int(tag, c_int), &
          numNodes=int(numNodes, c_int), &
          meshType=istring_(optval_c_str("Progression", meshType)), &
          coef=optval_c_double(1., coef), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelMeshSetTransfiniteCurve
 
   !> Set a transfinite meshing constraint on the surface `tag'. `arrangement'
@@ -6278,13 +6010,11 @@ module gmsh
     character(len=*), intent(in), optional :: arrangement
     integer(c_int), dimension(:), intent(in), optional :: cornerTags
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(tag=int(tag, c_int), &
          arrangement=istring_(optval_c_str("Left", arrangement)), &
          api_cornerTags_=cornerTags, &
          api_cornerTags_n_=size_gmsh_int(cornerTags), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelMeshSetTransfiniteSurface
 
   !> Set a transfinite meshing constraint on the surface `tag'. `cornerTags' can
@@ -6309,12 +6039,10 @@ module gmsh
     integer, intent(in) :: tag
     integer(c_int), dimension(:), intent(in), optional :: cornerTags
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(tag=int(tag, c_int), &
          api_cornerTags_=cornerTags, &
          api_cornerTags_n_=size_gmsh_int(cornerTags), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelMeshSetTransfiniteVolume
 
   !> Set transfinite meshing constraints on the model entities in `dimTag'.
@@ -6348,13 +6076,11 @@ module gmsh
     real(c_double), intent(in), optional :: cornerAngle
     logical, intent(in), optional :: recombine
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(api_dimTags_=dimTags, &
          api_dimTags_n_=size_gmsh_pair(dimTags), &
          cornerAngle=optval_c_double(2.35, cornerAngle), &
          recombine=optval_c_bool(.true., recombine), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelMeshSetTransfiniteAutomatic
 
   !> Set a recombination meshing constraint on the model entity of dimension
@@ -6382,12 +6108,10 @@ module gmsh
     integer, intent(in) :: tag
     real(c_double), intent(in), optional :: angle
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(dim=int(dim, c_int), &
          tag=int(tag, c_int), &
          angle=optval_c_double(45., angle), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelMeshSetRecombine
 
   !> Set a smoothing meshing constraint on the model entity of dimension `dim'
@@ -6413,12 +6137,10 @@ module gmsh
     integer, intent(in) :: tag
     integer, intent(in) :: val
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(dim=int(dim, c_int), &
          tag=int(tag, c_int), &
          val=int(val, c_int), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelMeshSetSmoothing
 
   !> Set a reverse meshing constraint on the model entity of dimension `dim' and
@@ -6447,12 +6169,10 @@ module gmsh
     integer, intent(in) :: tag
     logical, intent(in), optional :: val
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(dim=int(dim, c_int), &
          tag=int(tag, c_int), &
          val=optval_c_bool(.true., val), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelMeshSetReverse
 
   !> Set the meshing algorithm on the model entity of dimension `dim' and tag
@@ -6478,12 +6198,10 @@ module gmsh
     integer, intent(in) :: tag
     integer, intent(in) :: val
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(dim=int(dim, c_int), &
          tag=int(tag, c_int), &
          val=int(val, c_int), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelMeshSetAlgorithm
 
   !> Force the mesh size to be extended from the boundary, or not, for the model
@@ -6510,12 +6228,10 @@ module gmsh
     integer, intent(in) :: tag
     integer, intent(in) :: val
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(dim=int(dim, c_int), &
          tag=int(tag, c_int), &
          val=int(val, c_int), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelMeshSetSizeFromBoundary
 
   !> Set a compound meshing constraint on the model entities of dimension `dim'
@@ -6540,12 +6256,10 @@ module gmsh
     integer, intent(in) :: dim
     integer(c_int), dimension(:), intent(in) :: tags
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(dim=int(dim, c_int), &
          api_tags_=tags, &
          api_tags_n_=size_gmsh_int(tags), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelMeshSetCompound
 
   !> Set meshing constraints on the bounding surfaces of the volume of tag `tag'
@@ -6565,10 +6279,8 @@ module gmsh
     end interface
     integer, intent(in) :: tag
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(tag=int(tag, c_int), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelMeshSetOutwardOrientation
 
   !> Remove all meshing constraints from the model entities `dimTags'. If
@@ -6588,11 +6300,9 @@ module gmsh
     end interface
     integer(c_int), dimension(:,:), intent(in), optional :: dimTags
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(api_dimTags_=dimTags, &
          api_dimTags_n_=size_gmsh_pair(dimTags), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelMeshRemoveConstraints
 
   !> Embed the model entities of dimension `dim' and tags `tags' in the
@@ -6631,14 +6341,12 @@ module gmsh
     integer, intent(in) :: inDim
     integer, intent(in) :: inTag
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(dim=int(dim, c_int), &
          api_tags_=tags, &
          api_tags_n_=size_gmsh_int(tags), &
          inDim=int(inDim, c_int), &
          inTag=int(inTag, c_int), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelMeshEmbed
 
   !> Remove embedded entities from the model entities `dimTags'. if `dim' is >=
@@ -6663,12 +6371,10 @@ module gmsh
     integer(c_int), dimension(:,:), intent(in) :: dimTags
     integer, intent(in), optional :: dim
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(api_dimTags_=dimTags, &
          api_dimTags_n_=size_gmsh_pair(dimTags), &
          dim=optval_c_int(-1, dim), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelMeshRemoveEmbedded
 
   !> Get the entities (if any) embedded in the model entity of dimension `dim'
@@ -6696,7 +6402,6 @@ module gmsh
     integer, intent(in) :: tag
     integer(c_int), dimension(:,:), allocatable, intent(out) :: dimTags
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_dimTags_
     integer(c_size_t) :: api_dimTags_n_
     call C_API(dim=int(dim, c_int), &
@@ -6704,7 +6409,6 @@ module gmsh
          api_dimTags_=api_dimTags_, &
          api_dimTags_n_=api_dimTags_n_, &
          ierr_=ierr)
-    ! Post processing
     dimTags = ovectorpair_(api_dimTags_, &
       api_dimTags_n_)
   end subroutine gmshModelMeshGetEmbedded
@@ -6734,13 +6438,11 @@ module gmsh
     integer, intent(in) :: tag
     integer(c_size_t), dimension(:), intent(in) :: ordering
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(elementType=int(elementType, c_int), &
          tag=int(tag, c_int), &
          api_ordering_=ordering, &
          api_ordering_n_=size_gmsh_size(ordering), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelMeshReorderElements
 
   !> Renumber the node tags in a continuous sequence.
@@ -6753,9 +6455,7 @@ module gmsh
     end subroutine C_API
     end interface
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelMeshRenumberNodes
 
   !> Renumber the element tags in a continuous sequence.
@@ -6768,9 +6468,7 @@ module gmsh
     end subroutine C_API
     end interface
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelMeshRenumberElements
 
   !> Set the meshes of the entities of dimension `dim' and tag `tags' as
@@ -6812,7 +6510,6 @@ module gmsh
     integer(c_int), dimension(:), intent(in) :: tagsMaster
     real(c_double), dimension(:), intent(in) :: affineTransform
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(dim=int(dim, c_int), &
          api_tags_=tags, &
          api_tags_n_=size_gmsh_int(tags), &
@@ -6821,7 +6518,6 @@ module gmsh
          api_affineTransform_=affineTransform, &
          api_affineTransform_n_=size_gmsh_double(affineTransform), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelMeshSetPeriodic
 
   !> Get master entities `tagsMaster' for the entities of dimension `dim' and
@@ -6851,7 +6547,6 @@ module gmsh
     integer(c_int), dimension(:), intent(in) :: tags
     integer(c_int), dimension(:), allocatable, intent(out) :: tagMaster
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_tagMaster_
     integer(c_size_t) :: api_tagMaster_n_
     call C_API(dim=int(dim, c_int), &
@@ -6860,7 +6555,6 @@ module gmsh
          api_tagMaster_=api_tagMaster_, &
          api_tagMaster_n_=api_tagMaster_n_, &
          ierr_=ierr)
-    ! Post processing
     tagMaster = ovectorint_(api_tagMaster_, &
       api_tagMaster_n_)
   end subroutine gmshModelMeshGetPeriodic
@@ -6913,7 +6607,6 @@ module gmsh
     real(c_double), dimension(:), allocatable, intent(out) :: affineTransform
     logical, intent(in), optional :: includeHighOrderNodes
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_nodeTags_
     integer(c_size_t) :: api_nodeTags_n_
     type(c_ptr) :: api_nodeTagsMaster_
@@ -6931,7 +6624,6 @@ module gmsh
          api_affineTransform_n_=api_affineTransform_n_, &
          includeHighOrderNodes=optval_c_bool(.false., includeHighOrderNodes), &
          ierr_=ierr)
-    ! Post processing
     nodeTags = ovectorsize_(api_nodeTags_, &
       api_nodeTags_n_)
     nodeTagsMaster = ovectorsize_(api_nodeTagsMaster_, &
@@ -7011,7 +6703,6 @@ module gmsh
     real(c_double), dimension(:), allocatable, intent(out) :: coordMaster
     logical, intent(in), optional :: returnCoord
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_typeKeys_
     integer(c_size_t) :: api_typeKeys_n_
     type(c_ptr) :: api_typeKeysMaster_
@@ -7042,7 +6733,6 @@ module gmsh
          api_coordMaster_n_=api_coordMaster_n_, &
          returnCoord=optval_c_bool(.true., returnCoord), &
          ierr_=ierr)
-    ! Post processing
     typeKeys = ovectorint_(api_typeKeys_, &
       api_typeKeys_n_)
     typeKeysMaster = ovectorint_(api_typeKeysMaster_, &
@@ -7067,9 +6757,7 @@ module gmsh
     end subroutine C_API
     end interface
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelMeshImportStl
 
   !> Get the `tags' of any duplicate nodes in the mesh of the entities
@@ -7095,7 +6783,6 @@ module gmsh
     integer(c_size_t), dimension(:), allocatable, intent(out) :: tags
     integer(c_int), dimension(:,:), intent(in), optional :: dimTags
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_tags_
     integer(c_size_t) :: api_tags_n_
     call C_API(api_tags_=api_tags_, &
@@ -7103,7 +6790,6 @@ module gmsh
          api_dimTags_=dimTags, &
          api_dimTags_n_=size_gmsh_pair(dimTags), &
          ierr_=ierr)
-    ! Post processing
     tags = ovectorsize_(api_tags_, &
       api_tags_n_)
   end subroutine gmshModelMeshGetDuplicateNodes
@@ -7125,11 +6811,9 @@ module gmsh
     end interface
     integer(c_int), dimension(:,:), intent(in), optional :: dimTags
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(api_dimTags_=dimTags, &
          api_dimTags_n_=size_gmsh_pair(dimTags), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelMeshRemoveDuplicateNodes
 
   !> Remove duplicate elements (defined by the same nodes, in the same entity)
@@ -7150,11 +6834,9 @@ module gmsh
     end interface
     integer(c_int), dimension(:,:), intent(in), optional :: dimTags
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(api_dimTags_=dimTags, &
          api_dimTags_n_=size_gmsh_pair(dimTags), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelMeshRemoveDuplicateElements
 
   !> Split (into two triangles) all quadrangles in surface `tag' whose quality
@@ -7176,11 +6858,9 @@ module gmsh
     real(c_double), intent(in), optional :: quality
     integer, intent(in), optional :: tag
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(quality=optval_c_double(1., quality), &
          tag=optval_c_int(-1, tag), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelMeshSplitQuadrangles
 
   !> Set the visibility of the elements of tags `elementTags' to `value'.
@@ -7203,12 +6883,10 @@ module gmsh
     integer(c_size_t), dimension(:), intent(in) :: elementTags
     integer, intent(in) :: value
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(api_elementTags_=elementTags, &
          api_elementTags_n_=size_gmsh_size(elementTags), &
          value=int(value, c_int), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelMeshSetVisibility
 
   !> Classify ("color") the surface mesh based on the angle threshold `angle'
@@ -7248,14 +6926,12 @@ module gmsh
     real(c_double), intent(in), optional :: curveAngle
     logical, intent(in), optional :: exportDiscrete
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(angle=real(angle, c_double), &
          boundary=optval_c_bool(.true., boundary), &
          forReparametrization=optval_c_bool(.false., forReparametrization), &
          curveAngle=optval_c_double(M_PI, curveAngle), &
          exportDiscrete=optval_c_bool(.true., exportDiscrete), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelMeshClassifySurfaces
 
   !> Create a geometry for the discrete entities `dimTags' (represented solely
@@ -7278,11 +6954,9 @@ module gmsh
     end interface
     integer(c_int), dimension(:,:), intent(in), optional :: dimTags
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(api_dimTags_=dimTags, &
          api_dimTags_n_=size_gmsh_pair(dimTags), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelMeshCreateGeometry
 
   !> Create a boundary representation from the mesh if the model does not have
@@ -7308,11 +6982,9 @@ module gmsh
     logical, intent(in), optional :: makeSimplyConnected
     logical, intent(in), optional :: exportDiscrete
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(makeSimplyConnected=optval_c_bool(.true., makeSimplyConnected), &
          exportDiscrete=optval_c_bool(.true., exportDiscrete), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelMeshCreateTopology
 
   !> Add a request to compute a basis representation for homology spaces (if
@@ -7357,7 +7029,6 @@ module gmsh
     integer(c_int), dimension(:), intent(in), optional :: subdomainTags
     integer(c_int), dimension(:), intent(in), optional :: dims
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(type=istring_(optval_c_str("Homology", type)), &
          api_domainTags_=domainTags, &
          api_domainTags_n_=size_gmsh_int(domainTags), &
@@ -7366,7 +7037,6 @@ module gmsh
          api_dims_=dims, &
          api_dims_n_=size_gmsh_int(dims), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelMeshAddHomologyRequest
 
   !> Clear all (co)homology computation requests.
@@ -7379,9 +7049,7 @@ module gmsh
     end subroutine C_API
     end interface
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelMeshClearHomologyRequests
 
   !> Perform the (co)homology computations requested by addHomologyRequest().
@@ -7401,13 +7069,11 @@ module gmsh
     end interface
     integer(c_int), dimension(:,:), allocatable, intent(out) :: dimTags
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_dimTags_
     integer(c_size_t) :: api_dimTags_n_
     call C_API(api_dimTags_=api_dimTags_, &
          api_dimTags_n_=api_dimTags_n_, &
          ierr_=ierr)
-    ! Post processing
     dimTags = ovectorpair_(api_dimTags_, &
       api_dimTags_n_)
   end subroutine gmshModelMeshComputeHomology
@@ -7430,13 +7096,11 @@ module gmsh
     end interface
     integer(c_int), dimension(:), allocatable, intent(out) :: viewTags
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_viewTags_
     integer(c_size_t) :: api_viewTags_n_
     call C_API(api_viewTags_=api_viewTags_, &
          api_viewTags_n_=api_viewTags_n_, &
          ierr_=ierr)
-    ! Post processing
     viewTags = ovectorint_(api_viewTags_, &
       api_viewTags_n_)
   end subroutine gmshModelMeshComputeCrossField
@@ -7465,7 +7129,6 @@ module gmsh
     real(c_double), dimension(:), intent(in) :: coord
     integer(c_size_t), dimension(:), allocatable, intent(out) :: tri
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_tri_
     integer(c_size_t) :: api_tri_n_
     call C_API(api_coord_=coord, &
@@ -7473,7 +7136,6 @@ module gmsh
          api_tri_=api_tri_, &
          api_tri_n_=api_tri_n_, &
          ierr_=ierr)
-    ! Post processing
     tri = ovectorsize_(api_tri_, &
       api_tri_n_)
   end subroutine gmshModelMeshTriangulate
@@ -7502,7 +7164,6 @@ module gmsh
     real(c_double), dimension(:), intent(in) :: coord
     integer(c_size_t), dimension(:), allocatable, intent(out) :: tetra
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_tetra_
     integer(c_size_t) :: api_tetra_n_
     call C_API(api_coord_=coord, &
@@ -7510,7 +7171,6 @@ module gmsh
          api_tetra_=api_tetra_, &
          api_tetra_n_=api_tetra_n_, &
          ierr_=ierr)
-    ! Post processing
     tetra = ovectorsize_(api_tetra_, &
       api_tetra_n_)
   end subroutine gmshModelMeshTetrahedralize
@@ -7537,11 +7197,9 @@ module gmsh
     character(len=*), intent(in) :: fieldType
     integer, intent(in), optional :: tag
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     gmshModelMeshFieldAdd = C_API(fieldType=istring_(fieldType), &
                             tag=optval_c_int(-1, tag), &
                             ierr_=ierr)
-    ! Post processing
   end function gmshModelMeshFieldAdd
 
   !> Remove the field with tag `tag'.
@@ -7558,10 +7216,8 @@ module gmsh
     end interface
     integer, intent(in) :: tag
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(tag=int(tag, c_int), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelMeshFieldRemove
 
   !> Get the list of all fields.
@@ -7580,13 +7236,11 @@ module gmsh
     end interface
     integer(c_int), dimension(:), allocatable, intent(out) :: tags
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_tags_
     integer(c_size_t) :: api_tags_n_
     call C_API(api_tags_=api_tags_, &
          api_tags_n_=api_tags_n_, &
          ierr_=ierr)
-    ! Post processing
     tags = ovectorint_(api_tags_, &
       api_tags_n_)
   end subroutine gmshModelMeshFieldList
@@ -7609,11 +7263,9 @@ module gmsh
     integer, intent(in) :: tag
     character(len=:), allocatable, intent(out) :: fileType
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(tag=int(tag, c_int), &
          api_fileType_=fileType, &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelMeshFieldGetType
 
   !> Set the numerical option `option' to value `value' for field `tag'.
@@ -7638,12 +7290,10 @@ module gmsh
     character(len=*), intent(in) :: option
     real(c_double), intent(in) :: value
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(tag=int(tag, c_int), &
          option=istring_(option), &
          value=real(value, c_double), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelMeshFieldSetNumber
 
   !> Get the value of the numerical option `option' for field `tag'.
@@ -7668,12 +7318,10 @@ module gmsh
     character(len=*), intent(in) :: option
     real(c_double) :: value
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(tag=int(tag, c_int), &
          option=istring_(option), &
          value=value, &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelMeshFieldGetNumber
 
   !> Set the string option `option' to value `value' for field `tag'.
@@ -7698,12 +7346,10 @@ module gmsh
     character(len=*), intent(in) :: option
     character(len=*), intent(in) :: value
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(tag=int(tag, c_int), &
          option=istring_(option), &
          value=istring_(value), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelMeshFieldSetString
 
   !> Get the value of the string option `option' for field `tag'.
@@ -7728,12 +7374,10 @@ module gmsh
     character(len=*), intent(in) :: option
     character(len=:), allocatable, intent(out) :: value
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(tag=int(tag, c_int), &
          option=istring_(option), &
          api_value_=value, &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelMeshFieldGetString
 
   !> Set the numerical list option `option' to value `value' for field `tag'.
@@ -7760,13 +7404,11 @@ module gmsh
     character(len=*), intent(in) :: option
     real(c_double), dimension(:), intent(in) :: value
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(tag=int(tag, c_int), &
          option=istring_(option), &
          api_value_=value, &
          api_value_n_=size_gmsh_double(value), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelMeshFieldSetNumbers
 
   !> Get the value of the numerical list option `option' for field `tag'.
@@ -7793,7 +7435,6 @@ module gmsh
     character(len=*), intent(in) :: option
     real(c_double), dimension(:), allocatable, intent(out) :: value
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_value_
     integer(c_size_t) :: api_value_n_
     call C_API(tag=int(tag, c_int), &
@@ -7801,7 +7442,6 @@ module gmsh
          api_value_=api_value_, &
          api_value_n_=api_value_n_, &
          ierr_=ierr)
-    ! Post processing
     value = ovectordouble_(api_value_, &
       api_value_n_)
   end subroutine gmshModelMeshFieldGetNumbers
@@ -7820,10 +7460,8 @@ module gmsh
     end interface
     integer, intent(in) :: tag
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(tag=int(tag, c_int), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelMeshFieldSetAsBackgroundMesh
 
   !> Set the field `tag' as a boundary layer size field.
@@ -7840,10 +7478,8 @@ module gmsh
     end interface
     integer, intent(in) :: tag
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(tag=int(tag, c_int), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelMeshFieldSetAsBoundaryLayer
 
   !> Add a geometrical point in the built-in CAD representation, at coordinates
@@ -7883,14 +7519,12 @@ module gmsh
     real(c_double), intent(in), optional :: meshSize
     integer, intent(in), optional :: tag
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     gmshModelGeoAddPoint = C_API(x=real(x, c_double), &
                            y=real(y, c_double), &
                            z=real(z, c_double), &
                            meshSize=optval_c_double(0., meshSize), &
                            tag=optval_c_int(-1, tag), &
                            ierr_=ierr)
-    ! Post processing
   end function gmshModelGeoAddPoint
 
   !> Add a straight line segment in the built-in CAD representation, between the
@@ -7920,12 +7554,10 @@ module gmsh
     integer, intent(in) :: endTag
     integer, intent(in), optional :: tag
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     gmshModelGeoAddLine = C_API(startTag=int(startTag, c_int), &
                           endTag=int(endTag, c_int), &
                           tag=optval_c_int(-1, tag), &
                           ierr_=ierr)
-    ! Post processing
   end function gmshModelGeoAddLine
 
   !> Add a circle arc (strictly smaller than Pi) in the built-in CAD
@@ -7973,7 +7605,6 @@ module gmsh
     real(c_double), intent(in), optional :: ny
     real(c_double), intent(in), optional :: nz
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     gmshModelGeoAddCircleArc = C_API(startTag=int(startTag, c_int), &
                                centerTag=int(centerTag, c_int), &
                                endTag=int(endTag, c_int), &
@@ -7982,7 +7613,6 @@ module gmsh
                                ny=optval_c_double(0., ny), &
                                nz=optval_c_double(0., nz), &
                                ierr_=ierr)
-    ! Post processing
   end function gmshModelGeoAddCircleArc
 
   !> Add an ellipse arc (strictly smaller than Pi) in the built-in CAD
@@ -8034,7 +7664,6 @@ module gmsh
     real(c_double), intent(in), optional :: ny
     real(c_double), intent(in), optional :: nz
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     gmshModelGeoAddEllipseArc = C_API(startTag=int(startTag, c_int), &
                                 centerTag=int(centerTag, c_int), &
                                 majorTag=int(majorTag, c_int), &
@@ -8044,7 +7673,6 @@ module gmsh
                                 ny=optval_c_double(0., ny), &
                                 nz=optval_c_double(0., nz), &
                                 ierr_=ierr)
-    ! Post processing
   end function gmshModelGeoAddEllipseArc
 
   !> Add a spline (Catmull-Rom) curve in the built-in CAD representation, going
@@ -8073,12 +7701,10 @@ module gmsh
     integer(c_int), dimension(:), intent(in) :: pointTags
     integer, intent(in), optional :: tag
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     gmshModelGeoAddSpline = C_API(api_pointTags_=pointTags, &
                             api_pointTags_n_=size_gmsh_int(pointTags), &
                             tag=optval_c_int(-1, tag), &
                             ierr_=ierr)
-    ! Post processing
   end function gmshModelGeoAddSpline
 
   !> Add a cubic b-spline curve in the built-in CAD representation, with
@@ -8107,12 +7733,10 @@ module gmsh
     integer(c_int), dimension(:), intent(in) :: pointTags
     integer, intent(in), optional :: tag
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     gmshModelGeoAddBSpline = C_API(api_pointTags_=pointTags, &
                              api_pointTags_n_=size_gmsh_int(pointTags), &
                              tag=optval_c_int(-1, tag), &
                              ierr_=ierr)
-    ! Post processing
   end function gmshModelGeoAddBSpline
 
   !> Add a Bezier curve in the built-in CAD representation, with `pointTags'
@@ -8139,12 +7763,10 @@ module gmsh
     integer(c_int), dimension(:), intent(in) :: pointTags
     integer, intent(in), optional :: tag
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     gmshModelGeoAddBezier = C_API(api_pointTags_=pointTags, &
                             api_pointTags_n_=size_gmsh_int(pointTags), &
                             tag=optval_c_int(-1, tag), &
                             ierr_=ierr)
-    ! Post processing
   end function gmshModelGeoAddBezier
 
   !> Add a polyline curve in the built-in CAD representation, going through the
@@ -8172,12 +7794,10 @@ module gmsh
     integer(c_int), dimension(:), intent(in) :: pointTags
     integer, intent(in), optional :: tag
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     gmshModelGeoAddPolyline = C_API(api_pointTags_=pointTags, &
                               api_pointTags_n_=size_gmsh_int(pointTags), &
                               tag=optval_c_int(-1, tag), &
                               ierr_=ierr)
-    ! Post processing
   end function gmshModelGeoAddPolyline
 
   !> Add a spline (Catmull-Rom) curve in the built-in CAD representation, going
@@ -8210,13 +7830,11 @@ module gmsh
     integer, intent(in), optional :: numIntervals
     integer, intent(in), optional :: tag
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     gmshModelGeoAddCompoundSpline = C_API(api_curveTags_=curveTags, &
                                     api_curveTags_n_=size_gmsh_int(curveTags), &
                                     numIntervals=optval_c_int(5, numIntervals), &
                                     tag=optval_c_int(-1, tag), &
                                     ierr_=ierr)
-    ! Post processing
   end function gmshModelGeoAddCompoundSpline
 
   !> Add a b-spline curve in the built-in CAD representation, with control
@@ -8249,13 +7867,11 @@ module gmsh
     integer, intent(in), optional :: numIntervals
     integer, intent(in), optional :: tag
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     gmshModelGeoAddCompoundBSpline = C_API(api_curveTags_=curveTags, &
                                      api_curveTags_n_=size_gmsh_int(curveTags), &
                                      numIntervals=optval_c_int(20, numIntervals), &
                                      tag=optval_c_int(-1, tag), &
                                      ierr_=ierr)
-    ! Post processing
   end function gmshModelGeoAddCompoundBSpline
 
   !> Add a curve loop (a closed wire) in the built-in CAD representation, formed
@@ -8290,13 +7906,11 @@ module gmsh
     integer, intent(in), optional :: tag
     logical, intent(in), optional :: reorient
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     gmshModelGeoAddCurveLoop = C_API(api_curveTags_=curveTags, &
                                api_curveTags_n_=size_gmsh_int(curveTags), &
                                tag=optval_c_int(-1, tag), &
                                reorient=optval_c_bool(.false., reorient), &
                                ierr_=ierr)
-    ! Post processing
   end function gmshModelGeoAddCurveLoop
 
   !> Add curve loops in the built-in CAD representation based on the curves
@@ -8322,7 +7936,6 @@ module gmsh
     integer(c_int), dimension(:), intent(in) :: curveTags
     integer(c_int), dimension(:), allocatable, intent(out) :: tags
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_tags_
     integer(c_size_t) :: api_tags_n_
     call C_API(api_curveTags_=curveTags, &
@@ -8330,7 +7943,6 @@ module gmsh
          api_tags_=api_tags_, &
          api_tags_n_=api_tags_n_, &
          ierr_=ierr)
-    ! Post processing
     tags = ovectorint_(api_tags_, &
       api_tags_n_)
   end subroutine gmshModelGeoAddCurveLoops
@@ -8361,12 +7973,10 @@ module gmsh
     integer(c_int), dimension(:), intent(in) :: wireTags
     integer, intent(in), optional :: tag
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     gmshModelGeoAddPlaneSurface = C_API(api_wireTags_=wireTags, &
                                   api_wireTags_n_=size_gmsh_int(wireTags), &
                                   tag=optval_c_int(-1, tag), &
                                   ierr_=ierr)
-    ! Post processing
   end function gmshModelGeoAddPlaneSurface
 
   !> Add a surface in the built-in CAD representation, filling the curve loops
@@ -8399,13 +8009,11 @@ module gmsh
     integer, intent(in), optional :: tag
     integer, intent(in), optional :: sphereCenterTag
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     gmshModelGeoAddSurfaceFilling = C_API(api_wireTags_=wireTags, &
                                     api_wireTags_n_=size_gmsh_int(wireTags), &
                                     tag=optval_c_int(-1, tag), &
                                     sphereCenterTag=optval_c_int(-1, sphereCenterTag), &
                                     ierr_=ierr)
-    ! Post processing
   end function gmshModelGeoAddSurfaceFilling
 
   !> Add a surface loop (a closed shell) formed by `surfaceTags' in the built-in
@@ -8432,12 +8040,10 @@ module gmsh
     integer(c_int), dimension(:), intent(in) :: surfaceTags
     integer, intent(in), optional :: tag
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     gmshModelGeoAddSurfaceLoop = C_API(api_surfaceTags_=surfaceTags, &
                                  api_surfaceTags_n_=size_gmsh_int(surfaceTags), &
                                  tag=optval_c_int(-1, tag), &
                                  ierr_=ierr)
-    ! Post processing
   end function gmshModelGeoAddSurfaceLoop
 
   !> Add a volume (a region) in the built-in CAD representation, defined by one
@@ -8466,12 +8072,10 @@ module gmsh
     integer(c_int), dimension(:), intent(in) :: shellTags
     integer, intent(in), optional :: tag
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     gmshModelGeoAddVolume = C_API(api_shellTags_=shellTags, &
                             api_shellTags_n_=size_gmsh_int(shellTags), &
                             tag=optval_c_int(-1, tag), &
                             ierr_=ierr)
-    ! Post processing
   end function gmshModelGeoAddVolume
 
   !> Add a `geometry' in the built-in CAD representation. `geometry' can
@@ -8512,7 +8116,6 @@ module gmsh
     character(len=*), dimension(:), intent(in), optional :: strings
     integer, intent(in), optional :: tag
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     character(len=GMSH_API_MAX_STR_LEN, kind=c_char), allocatable :: api_strings_strs(:)
     type(c_ptr), allocatable :: api_strings_(:)
     call ivectorstring_(strings, &
@@ -8525,7 +8128,6 @@ module gmsh
                               api_strings_n_=size_gmsh_str(strings), &
                               tag=optval_c_int(-1, tag), &
                               ierr_=ierr)
-    ! Post processing
   end function gmshModelGeoAddGeometry
 
   !> Add a point in the built-in CAD representation, at coordinates (`x', `y',
@@ -8568,7 +8170,6 @@ module gmsh
     real(c_double), intent(in), optional :: meshSize
     integer, intent(in), optional :: tag
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     gmshModelGeoAddPointOnGeometry = C_API(geometryTag=int(geometryTag, c_int), &
                                      x=real(x, c_double), &
                                      y=real(y, c_double), &
@@ -8576,7 +8177,6 @@ module gmsh
                                      meshSize=optval_c_double(0., meshSize), &
                                      tag=optval_c_int(-1, tag), &
                                      ierr_=ierr)
-    ! Post processing
   end function gmshModelGeoAddPointOnGeometry
 
   !> Extrude the entities `dimTags' in the built-in CAD representation, using a
@@ -8635,7 +8235,6 @@ module gmsh
     real(c_double), dimension(:), intent(in), optional :: heights
     logical, intent(in), optional :: recombine
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_outDimTags_
     integer(c_size_t) :: api_outDimTags_n_
     call C_API(api_dimTags_=dimTags, &
@@ -8651,7 +8250,6 @@ module gmsh
          api_heights_n_=size_gmsh_double(heights), &
          recombine=optval_c_bool(.false., recombine), &
          ierr_=ierr)
-    ! Post processing
     outDimTags = ovectorpair_(api_outDimTags_, &
       api_outDimTags_n_)
   end subroutine gmshModelGeoExtrude
@@ -8730,7 +8328,6 @@ module gmsh
     real(c_double), dimension(:), intent(in), optional :: heights
     logical, intent(in), optional :: recombine
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_outDimTags_
     integer(c_size_t) :: api_outDimTags_n_
     call C_API(api_dimTags_=dimTags, &
@@ -8750,7 +8347,6 @@ module gmsh
          api_heights_n_=size_gmsh_double(heights), &
          recombine=optval_c_bool(.false., recombine), &
          ierr_=ierr)
-    ! Post processing
     outDimTags = ovectorpair_(api_outDimTags_, &
       api_outDimTags_n_)
   end subroutine gmshModelGeoRevolve
@@ -8841,7 +8437,6 @@ module gmsh
     real(c_double), dimension(:), intent(in), optional :: heights
     logical, intent(in), optional :: recombine
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_outDimTags_
     integer(c_size_t) :: api_outDimTags_n_
     call C_API(api_dimTags_=dimTags, &
@@ -8864,7 +8459,6 @@ module gmsh
          api_heights_n_=size_gmsh_double(heights), &
          recombine=optval_c_bool(.false., recombine), &
          ierr_=ierr)
-    ! Post processing
     outDimTags = ovectorpair_(api_outDimTags_, &
       api_outDimTags_n_)
   end subroutine gmshModelGeoTwist
@@ -8923,7 +8517,6 @@ module gmsh
     logical, intent(in), optional :: second
     integer, intent(in), optional :: viewIndex
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_outDimTags_
     integer(c_size_t) :: api_outDimTags_n_
     call C_API(api_dimTags_=dimTags, &
@@ -8938,7 +8531,6 @@ module gmsh
          second=optval_c_bool(.false., second), &
          viewIndex=optval_c_int(-1, viewIndex), &
          ierr_=ierr)
-    ! Post processing
     outDimTags = ovectorpair_(api_outDimTags_, &
       api_outDimTags_n_)
   end subroutine gmshModelGeoExtrudeBoundaryLayer
@@ -8972,14 +8564,12 @@ module gmsh
     real(c_double), intent(in) :: dy
     real(c_double), intent(in) :: dz
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(api_dimTags_=dimTags, &
          api_dimTags_n_=size_gmsh_pair(dimTags), &
          dx=real(dx, c_double), &
          dy=real(dy, c_double), &
          dz=real(dz, c_double), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelGeoTranslate
 
   !> Rotate the entities `dimTags' in the built-in CAD representation by `angle'
@@ -9028,7 +8618,6 @@ module gmsh
     real(c_double), intent(in) :: az
     real(c_double), intent(in) :: angle
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(api_dimTags_=dimTags, &
          api_dimTags_n_=size_gmsh_pair(dimTags), &
          x=real(x, c_double), &
@@ -9039,7 +8628,6 @@ module gmsh
          az=real(az, c_double), &
          angle=real(angle, c_double), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelGeoRotate
 
   !> Scale the entities `dimTag' in the built-in CAD representation by factors
@@ -9084,7 +8672,6 @@ module gmsh
     real(c_double), intent(in) :: b
     real(c_double), intent(in) :: c
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(api_dimTags_=dimTags, &
          api_dimTags_n_=size_gmsh_pair(dimTags), &
          x=real(x, c_double), &
@@ -9094,7 +8681,6 @@ module gmsh
          b=real(b, c_double), &
          c=real(c, c_double), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelGeoDilate
 
   !> Mirror the entities `dimTag' in the built-in CAD representation, with
@@ -9130,7 +8716,6 @@ module gmsh
     real(c_double), intent(in) :: c
     real(c_double), intent(in) :: d
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(api_dimTags_=dimTags, &
          api_dimTags_n_=size_gmsh_pair(dimTags), &
          a=real(a, c_double), &
@@ -9138,7 +8723,6 @@ module gmsh
          c=real(c, c_double), &
          d=real(d, c_double), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelGeoMirror
 
   !> Mirror the entities `dimTag' in the built-in CAD representation, with
@@ -9176,7 +8760,6 @@ module gmsh
     real(c_double), intent(in) :: c
     real(c_double), intent(in) :: d
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(api_dimTags_=dimTags, &
          api_dimTags_n_=size_gmsh_pair(dimTags), &
          a=real(a, c_double), &
@@ -9184,7 +8767,6 @@ module gmsh
          c=real(c, c_double), &
          d=real(d, c_double), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelGeoSymmetrize
 
   !> Copy the entities `dimTags' in the built-in CAD representation; the new
@@ -9210,7 +8792,6 @@ module gmsh
     integer(c_int), dimension(:,:), intent(in) :: dimTags
     integer(c_int), dimension(:,:), allocatable, intent(out) :: outDimTags
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_outDimTags_
     integer(c_size_t) :: api_outDimTags_n_
     call C_API(api_dimTags_=dimTags, &
@@ -9218,7 +8799,6 @@ module gmsh
          api_outDimTags_=api_outDimTags_, &
          api_outDimTags_n_=api_outDimTags_n_, &
          ierr_=ierr)
-    ! Post processing
     outDimTags = ovectorpair_(api_outDimTags_, &
       api_outDimTags_n_)
   end subroutine gmshModelGeoCopy
@@ -9246,12 +8826,10 @@ module gmsh
     integer(c_int), dimension(:,:), intent(in) :: dimTags
     logical, intent(in), optional :: recursive
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(api_dimTags_=dimTags, &
          api_dimTags_n_=size_gmsh_pair(dimTags), &
          recursive=optval_c_bool(.false., recursive), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelGeoRemove
 
   !> Remove all duplicate entities in the built-in CAD representation (different
@@ -9265,9 +8843,7 @@ module gmsh
     end subroutine C_API
     end interface
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelGeoRemoveAllDuplicates
 
   !> Split the curve of tag `tag' in the built-in CAD representation, on the
@@ -9299,7 +8875,6 @@ module gmsh
     integer(c_int), dimension(:), intent(in) :: pointTags
     integer(c_int), dimension(:), allocatable, intent(out) :: curveTags
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_curveTags_
     integer(c_size_t) :: api_curveTags_n_
     call C_API(tag=int(tag, c_int), &
@@ -9308,7 +8883,6 @@ module gmsh
          api_curveTags_=api_curveTags_, &
          api_curveTags_n_=api_curveTags_n_, &
          ierr_=ierr)
-    ! Post processing
     curveTags = ovectorint_(api_curveTags_, &
       api_curveTags_n_)
   end subroutine gmshModelGeoSplitCurve
@@ -9330,10 +8904,8 @@ module gmsh
     integer(c_int) :: gmshModelGeoGetMaxTag
     integer, intent(in) :: dim
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     gmshModelGeoGetMaxTag = C_API(dim=int(dim, c_int), &
                             ierr_=ierr)
-    ! Post processing
   end function gmshModelGeoGetMaxTag
 
   !> Set the maximum tag `maxTag' for entities of dimension `dim' in the built-
@@ -9355,11 +8927,9 @@ module gmsh
     integer, intent(in) :: dim
     integer, intent(in) :: maxTag
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(dim=int(dim, c_int), &
          maxTag=int(maxTag, c_int), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelGeoSetMaxTag
 
   !> Add a physical group of dimension `dim', grouping the entities with tags
@@ -9395,14 +8965,12 @@ module gmsh
     integer, intent(in), optional :: tag
     character(len=*), intent(in), optional :: name
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     gmshModelGeoAddPhysicalGroup = C_API(dim=int(dim, c_int), &
                                    api_tags_=tags, &
                                    api_tags_n_=size_gmsh_int(tags), &
                                    tag=optval_c_int(-1, tag), &
                                    name=istring_(optval_c_str("", name)), &
                                    ierr_=ierr)
-    ! Post processing
   end function gmshModelGeoAddPhysicalGroup
 
   !> Remove the physical groups `dimTags' from the built-in CAD representation.
@@ -9422,11 +8990,9 @@ module gmsh
     end interface
     integer(c_int), dimension(:,:), intent(in), optional :: dimTags
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(api_dimTags_=dimTags, &
          api_dimTags_n_=size_gmsh_pair(dimTags), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelGeoRemovePhysicalGroups
 
   !> Synchronize the built-in CAD representation with the current Gmsh model.
@@ -9444,9 +9010,7 @@ module gmsh
     end subroutine C_API
     end interface
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelGeoSynchronize
 
   !> Set a mesh size constraint on the entities `dimTags' in the built-in CAD
@@ -9471,12 +9035,10 @@ module gmsh
     integer(c_int), dimension(:,:), intent(in) :: dimTags
     real(c_double), intent(in) :: size
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(api_dimTags_=dimTags, &
          api_dimTags_n_=size_gmsh_pair(dimTags), &
          size=real(size, c_double), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelGeoMeshSetSize
 
   !> Set a transfinite meshing constraint on the curve `tag' in the built-in CAD
@@ -9509,13 +9071,11 @@ module gmsh
     character(len=*), intent(in), optional :: meshType
     real(c_double), intent(in), optional :: coef
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(tag=int(tag, c_int), &
          nPoints=int(nPoints, c_int), &
          meshType=istring_(optval_c_str("Progression", meshType)), &
          coef=optval_c_double(1., coef), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelGeoMeshSetTransfiniteCurve
 
   !> Set a transfinite meshing constraint on the surface `tag' in the built-in
@@ -9548,13 +9108,11 @@ module gmsh
     character(len=*), intent(in), optional :: arrangement
     integer(c_int), dimension(:), intent(in), optional :: cornerTags
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(tag=int(tag, c_int), &
          arrangement=istring_(optval_c_str("Left", arrangement)), &
          api_cornerTags_=cornerTags, &
          api_cornerTags_n_=size_gmsh_int(cornerTags), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelGeoMeshSetTransfiniteSurface
 
   !> Set a transfinite meshing constraint on the surface `tag' in the built-in
@@ -9579,12 +9137,10 @@ module gmsh
     integer, intent(in) :: tag
     integer(c_int), dimension(:), intent(in), optional :: cornerTags
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(tag=int(tag, c_int), &
          api_cornerTags_=cornerTags, &
          api_cornerTags_n_=size_gmsh_int(cornerTags), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelGeoMeshSetTransfiniteVolume
 
   !> Set a recombination meshing constraint on the entity of dimension `dim' and
@@ -9613,12 +9169,10 @@ module gmsh
     integer, intent(in) :: tag
     real(c_double), intent(in), optional :: angle
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(dim=int(dim, c_int), &
          tag=int(tag, c_int), &
          angle=optval_c_double(45., angle), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelGeoMeshSetRecombine
 
   !> Set a smoothing meshing constraint on the entity of dimension `dim' and tag
@@ -9645,12 +9199,10 @@ module gmsh
     integer, intent(in) :: tag
     integer, intent(in) :: val
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(dim=int(dim, c_int), &
          tag=int(tag, c_int), &
          val=int(val, c_int), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelGeoMeshSetSmoothing
 
   !> Set a reverse meshing constraint on the entity of dimension `dim' and tag
@@ -9679,12 +9231,10 @@ module gmsh
     integer, intent(in) :: tag
     logical, intent(in), optional :: val
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(dim=int(dim, c_int), &
          tag=int(tag, c_int), &
          val=optval_c_bool(.true., val), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelGeoMeshSetReverse
 
   !> Set the meshing algorithm on the entity of dimension `dim' and tag `tag' in
@@ -9711,12 +9261,10 @@ module gmsh
     integer, intent(in) :: tag
     integer, intent(in) :: val
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(dim=int(dim, c_int), &
          tag=int(tag, c_int), &
          val=int(val, c_int), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelGeoMeshSetAlgorithm
 
   !> Force the mesh size to be extended from the boundary, or not, for the
@@ -9743,12 +9291,10 @@ module gmsh
     integer, intent(in) :: tag
     integer, intent(in) :: val
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(dim=int(dim, c_int), &
          tag=int(tag, c_int), &
          val=int(val, c_int), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelGeoMeshSetSizeFromBoundary
 
   !> Add a geometrical point in the OpenCASCADE CAD representation, at
@@ -9788,14 +9334,12 @@ module gmsh
     real(c_double), intent(in), optional :: meshSize
     integer, intent(in), optional :: tag
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     gmshModelOccAddPoint = C_API(x=real(x, c_double), &
                            y=real(y, c_double), &
                            z=real(z, c_double), &
                            meshSize=optval_c_double(0., meshSize), &
                            tag=optval_c_int(-1, tag), &
                            ierr_=ierr)
-    ! Post processing
   end function gmshModelOccAddPoint
 
   !> Add a straight line segment in the OpenCASCADE CAD representation, between
@@ -9825,12 +9369,10 @@ module gmsh
     integer, intent(in) :: endTag
     integer, intent(in), optional :: tag
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     gmshModelOccAddLine = C_API(startTag=int(startTag, c_int), &
                           endTag=int(endTag, c_int), &
                           tag=optval_c_int(-1, tag), &
                           ierr_=ierr)
-    ! Post processing
   end function gmshModelOccAddLine
 
   !> Add a circle arc in the OpenCASCADE CAD representation, between the two
@@ -9864,13 +9406,11 @@ module gmsh
     integer, intent(in) :: endTag
     integer, intent(in), optional :: tag
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     gmshModelOccAddCircleArc = C_API(startTag=int(startTag, c_int), &
                                centerTag=int(centerTag, c_int), &
                                endTag=int(endTag, c_int), &
                                tag=optval_c_int(-1, tag), &
                                ierr_=ierr)
-    ! Post processing
   end function gmshModelOccAddCircleArc
 
   !> Add a circle of center (`x', `y', `z') and radius `r' in the OpenCASCADE
@@ -9931,7 +9471,6 @@ module gmsh
     real(c_double), dimension(:), intent(in), optional :: zAxis
     real(c_double), dimension(:), intent(in), optional :: xAxis
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     gmshModelOccAddCircle = C_API(x=real(x, c_double), &
                             y=real(y, c_double), &
                             z=real(z, c_double), &
@@ -9944,7 +9483,6 @@ module gmsh
                             api_xAxis_=xAxis, &
                             api_xAxis_n_=size_gmsh_double(xAxis), &
                             ierr_=ierr)
-    ! Post processing
   end function gmshModelOccAddCircle
 
   !> Add an ellipse arc in the OpenCASCADE CAD representation, between the two
@@ -9984,14 +9522,12 @@ module gmsh
     integer, intent(in) :: endTag
     integer, intent(in), optional :: tag
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     gmshModelOccAddEllipseArc = C_API(startTag=int(startTag, c_int), &
                                 centerTag=int(centerTag, c_int), &
                                 majorTag=int(majorTag, c_int), &
                                 endTag=int(endTag, c_int), &
                                 tag=optval_c_int(-1, tag), &
                                 ierr_=ierr)
-    ! Post processing
   end function gmshModelOccAddEllipseArc
 
   !> Add an ellipse of center (`x', `y', `z') and radii `r1' and `r2' (with `r1'
@@ -10057,7 +9593,6 @@ module gmsh
     real(c_double), dimension(:), intent(in), optional :: zAxis
     real(c_double), dimension(:), intent(in), optional :: xAxis
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     gmshModelOccAddEllipse = C_API(x=real(x, c_double), &
                              y=real(y, c_double), &
                              z=real(z, c_double), &
@@ -10071,7 +9606,6 @@ module gmsh
                              api_xAxis_=xAxis, &
                              api_xAxis_n_=size_gmsh_double(xAxis), &
                              ierr_=ierr)
-    ! Post processing
   end function gmshModelOccAddEllipse
 
   !> Add a spline (C2 b-spline) curve in the OpenCASCADE CAD representation,
@@ -10100,12 +9634,10 @@ module gmsh
     integer(c_int), dimension(:), intent(in) :: pointTags
     integer, intent(in), optional :: tag
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     gmshModelOccAddSpline = C_API(api_pointTags_=pointTags, &
                             api_pointTags_n_=size_gmsh_int(pointTags), &
                             tag=optval_c_int(-1, tag), &
                             ierr_=ierr)
-    ! Post processing
   end function gmshModelOccAddSpline
 
   !> Add a b-spline curve of degree `degree' in the OpenCASCADE CAD
@@ -10157,7 +9689,6 @@ module gmsh
     real(c_double), dimension(:), intent(in), optional :: knots
     integer(c_int), dimension(:), intent(in), optional :: multiplicities
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     gmshModelOccAddBSpline = C_API(api_pointTags_=pointTags, &
                              api_pointTags_n_=size_gmsh_int(pointTags), &
                              tag=optval_c_int(-1, tag), &
@@ -10169,7 +9700,6 @@ module gmsh
                              api_multiplicities_=multiplicities, &
                              api_multiplicities_n_=size_gmsh_int(multiplicities), &
                              ierr_=ierr)
-    ! Post processing
   end function gmshModelOccAddBSpline
 
   !> Add a Bezier curve in the OpenCASCADE CAD representation, with `pointTags'
@@ -10196,12 +9726,10 @@ module gmsh
     integer(c_int), dimension(:), intent(in) :: pointTags
     integer, intent(in), optional :: tag
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     gmshModelOccAddBezier = C_API(api_pointTags_=pointTags, &
                             api_pointTags_n_=size_gmsh_int(pointTags), &
                             tag=optval_c_int(-1, tag), &
                             ierr_=ierr)
-    ! Post processing
   end function gmshModelOccAddBezier
 
   !> Add a wire (open or closed) in the OpenCASCADE CAD representation, formed
@@ -10234,13 +9762,11 @@ module gmsh
     integer, intent(in), optional :: tag
     logical, intent(in), optional :: checkClosed
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     gmshModelOccAddWire = C_API(api_curveTags_=curveTags, &
                           api_curveTags_n_=size_gmsh_int(curveTags), &
                           tag=optval_c_int(-1, tag), &
                           checkClosed=optval_c_bool(.false., checkClosed), &
                           ierr_=ierr)
-    ! Post processing
   end function gmshModelOccAddWire
 
   !> Add a curve loop (a closed wire) in the OpenCASCADE CAD representation,
@@ -10273,12 +9799,10 @@ module gmsh
     integer(c_int), dimension(:), intent(in) :: curveTags
     integer, intent(in), optional :: tag
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     gmshModelOccAddCurveLoop = C_API(api_curveTags_=curveTags, &
                                api_curveTags_n_=size_gmsh_int(curveTags), &
                                tag=optval_c_int(-1, tag), &
                                ierr_=ierr)
-    ! Post processing
   end function gmshModelOccAddCurveLoop
 
   !> Add a rectangle in the OpenCASCADE CAD representation, with lower left
@@ -10325,7 +9849,6 @@ module gmsh
     integer, intent(in), optional :: tag
     real(c_double), intent(in), optional :: roundedRadius
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     gmshModelOccAddRectangle = C_API(x=real(x, c_double), &
                                y=real(y, c_double), &
                                z=real(z, c_double), &
@@ -10334,7 +9857,6 @@ module gmsh
                                tag=optval_c_int(-1, tag), &
                                roundedRadius=optval_c_double(0., roundedRadius), &
                                ierr_=ierr)
-    ! Post processing
   end function gmshModelOccAddRectangle
 
   !> Add a disk in the OpenCASCADE CAD representation, with center (`xc', `yc',
@@ -10391,7 +9913,6 @@ module gmsh
     real(c_double), dimension(:), intent(in), optional :: zAxis
     real(c_double), dimension(:), intent(in), optional :: xAxis
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     gmshModelOccAddDisk = C_API(xc=real(xc, c_double), &
                           yc=real(yc, c_double), &
                           zc=real(zc, c_double), &
@@ -10403,7 +9924,6 @@ module gmsh
                           api_xAxis_=xAxis, &
                           api_xAxis_n_=size_gmsh_double(xAxis), &
                           ierr_=ierr)
-    ! Post processing
   end function gmshModelOccAddDisk
 
   !> Add a plane surface in the OpenCASCADE CAD representation, defined by one
@@ -10432,12 +9952,10 @@ module gmsh
     integer(c_int), dimension(:), intent(in) :: wireTags
     integer, intent(in), optional :: tag
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     gmshModelOccAddPlaneSurface = C_API(api_wireTags_=wireTags, &
                                   api_wireTags_n_=size_gmsh_int(wireTags), &
                                   tag=optval_c_int(-1, tag), &
                                   ierr_=ierr)
-    ! Post processing
   end function gmshModelOccAddPlaneSurface
 
   !> Add a surface in the OpenCASCADE CAD representation, filling the curve loop
@@ -10523,7 +10041,6 @@ module gmsh
     integer, intent(in), optional :: maxDegree
     integer, intent(in), optional :: maxSegments
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     gmshModelOccAddSurfaceFilling = C_API(wireTag=int(wireTag, c_int), &
                                     tag=optval_c_int(-1, tag), &
                                     api_pointTags_=pointTags, &
@@ -10539,7 +10056,6 @@ module gmsh
                                     maxDegree=optval_c_int(8, maxDegree), &
                                     maxSegments=optval_c_int(9, maxSegments), &
                                     ierr_=ierr)
-    ! Post processing
   end function gmshModelOccAddSurfaceFilling
 
   !> Add a BSpline surface in the OpenCASCADE CAD representation, filling the
@@ -10572,12 +10088,10 @@ module gmsh
     integer, intent(in), optional :: tag
     character(len=*), intent(in), optional :: type
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     gmshModelOccAddBSplineFilling = C_API(wireTag=int(wireTag, c_int), &
                                     tag=optval_c_int(-1, tag), &
                                     type=istring_(optval_c_str("", type)), &
                                     ierr_=ierr)
-    ! Post processing
   end function gmshModelOccAddBSplineFilling
 
   !> Add a Bezier surface in the OpenCASCADE CAD representation, filling the
@@ -10610,12 +10124,10 @@ module gmsh
     integer, intent(in), optional :: tag
     character(len=*), intent(in), optional :: type
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     gmshModelOccAddBezierFilling = C_API(wireTag=int(wireTag, c_int), &
                                    tag=optval_c_int(-1, tag), &
                                    type=istring_(optval_c_str("", type)), &
                                    ierr_=ierr)
-    ! Post processing
   end function gmshModelOccAddBezierFilling
 
   !> Add a b-spline surface of degree `degreeU' x `degreeV' in the OpenCASCADE
@@ -10702,7 +10214,6 @@ module gmsh
     integer(c_int), dimension(:), intent(in), optional :: wireTags
     logical, intent(in), optional :: wire3D
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     gmshModelOccAddBSplineSurface = C_API(api_pointTags_=pointTags, &
                                     api_pointTags_n_=size_gmsh_int(pointTags), &
                                     numPointsU=int(numPointsU, c_int), &
@@ -10723,7 +10234,6 @@ module gmsh
                                     api_wireTags_n_=size_gmsh_int(wireTags), &
                                     wire3D=optval_c_bool(.false., wire3D), &
                                     ierr_=ierr)
-    ! Post processing
   end function gmshModelOccAddBSplineSurface
 
   !> Add a Bezier surface in the OpenCASCADE CAD representation, with
@@ -10770,7 +10280,6 @@ module gmsh
     integer(c_int), dimension(:), intent(in), optional :: wireTags
     logical, intent(in), optional :: wire3D
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     gmshModelOccAddBezierSurface = C_API(api_pointTags_=pointTags, &
                                    api_pointTags_n_=size_gmsh_int(pointTags), &
                                    numPointsU=int(numPointsU, c_int), &
@@ -10779,7 +10288,6 @@ module gmsh
                                    api_wireTags_n_=size_gmsh_int(wireTags), &
                                    wire3D=optval_c_bool(.false., wire3D), &
                                    ierr_=ierr)
-    ! Post processing
   end function gmshModelOccAddBezierSurface
 
   !> Trim the surface `surfaceTag' with the wires `wireTags', replacing any
@@ -10818,14 +10326,12 @@ module gmsh
     logical, intent(in), optional :: wire3D
     integer, intent(in), optional :: tag
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     gmshModelOccAddTrimmedSurface = C_API(surfaceTag=int(surfaceTag, c_int), &
                                     api_wireTags_=wireTags, &
                                     api_wireTags_n_=size_gmsh_int(wireTags), &
                                     wire3D=optval_c_bool(.false., wire3D), &
                                     tag=optval_c_int(-1, tag), &
                                     ierr_=ierr)
-    ! Post processing
   end function gmshModelOccAddTrimmedSurface
 
   !> Add a surface loop (a closed shell) in the OpenCASCADE CAD representation,
@@ -10858,13 +10364,11 @@ module gmsh
     integer, intent(in), optional :: tag
     logical, intent(in), optional :: sewing
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     gmshModelOccAddSurfaceLoop = C_API(api_surfaceTags_=surfaceTags, &
                                  api_surfaceTags_n_=size_gmsh_int(surfaceTags), &
                                  tag=optval_c_int(-1, tag), &
                                  sewing=optval_c_bool(.false., sewing), &
                                  ierr_=ierr)
-    ! Post processing
   end function gmshModelOccAddSurfaceLoop
 
   !> Add a volume (a region) in the OpenCASCADE CAD representation, defined by
@@ -10893,12 +10397,10 @@ module gmsh
     integer(c_int), dimension(:), intent(in) :: shellTags
     integer, intent(in), optional :: tag
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     gmshModelOccAddVolume = C_API(api_shellTags_=shellTags, &
                             api_shellTags_n_=size_gmsh_int(shellTags), &
                             tag=optval_c_int(-1, tag), &
                             ierr_=ierr)
-    ! Post processing
   end function gmshModelOccAddVolume
 
   !> Add a sphere of center (`xc', `yc', `zc') and radius `r' in the OpenCASCADE
@@ -10950,7 +10452,6 @@ module gmsh
     real(c_double), intent(in), optional :: angle2
     real(c_double), intent(in), optional :: angle3
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     gmshModelOccAddSphere = C_API(xc=real(xc, c_double), &
                             yc=real(yc, c_double), &
                             zc=real(zc, c_double), &
@@ -10960,7 +10461,6 @@ module gmsh
                             angle2=optval_c_double(M_PI/2, angle2), &
                             angle3=optval_c_double(2*M_PI, angle3), &
                             ierr_=ierr)
-    ! Post processing
   end function gmshModelOccAddSphere
 
   !> Add a parallelepipedic box in the OpenCASCADE CAD representation, defined
@@ -11006,7 +10506,6 @@ module gmsh
     real(c_double), intent(in) :: dz
     integer, intent(in), optional :: tag
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     gmshModelOccAddBox = C_API(x=real(x, c_double), &
                          y=real(y, c_double), &
                          z=real(z, c_double), &
@@ -11015,7 +10514,6 @@ module gmsh
                          dz=real(dz, c_double), &
                          tag=optval_c_int(-1, tag), &
                          ierr_=ierr)
-    ! Post processing
   end function gmshModelOccAddBox
 
   !> Add a cylinder in the OpenCASCADE CAD representation, defined by the center
@@ -11071,7 +10569,6 @@ module gmsh
     integer, intent(in), optional :: tag
     real(c_double), intent(in), optional :: angle
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     gmshModelOccAddCylinder = C_API(x=real(x, c_double), &
                               y=real(y, c_double), &
                               z=real(z, c_double), &
@@ -11082,7 +10579,6 @@ module gmsh
                               tag=optval_c_int(-1, tag), &
                               angle=optval_c_double(2*M_PI, angle), &
                               ierr_=ierr)
-    ! Post processing
   end function gmshModelOccAddCylinder
 
   !> Add a cone in the OpenCASCADE CAD representation, defined by the center
@@ -11142,7 +10638,6 @@ module gmsh
     integer, intent(in), optional :: tag
     real(c_double), intent(in), optional :: angle
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     gmshModelOccAddCone = C_API(x=real(x, c_double), &
                           y=real(y, c_double), &
                           z=real(z, c_double), &
@@ -11154,7 +10649,6 @@ module gmsh
                           tag=optval_c_int(-1, tag), &
                           angle=optval_c_double(2*M_PI, angle), &
                           ierr_=ierr)
-    ! Post processing
   end function gmshModelOccAddCone
 
   !> Add a right angular wedge in the OpenCASCADE CAD representation, defined by
@@ -11213,7 +10707,6 @@ module gmsh
     real(c_double), intent(in), optional :: ltx
     real(c_double), dimension(:), intent(in), optional :: zAxis
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     gmshModelOccAddWedge = C_API(x=real(x, c_double), &
                            y=real(y, c_double), &
                            z=real(z, c_double), &
@@ -11225,7 +10718,6 @@ module gmsh
                            api_zAxis_=zAxis, &
                            api_zAxis_n_=size_gmsh_double(zAxis), &
                            ierr_=ierr)
-    ! Post processing
   end function gmshModelOccAddWedge
 
   !> Add a torus in the OpenCASCADE CAD representation, defined by its center
@@ -11279,7 +10771,6 @@ module gmsh
     real(c_double), intent(in), optional :: angle
     real(c_double), dimension(:), intent(in), optional :: zAxis
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     gmshModelOccAddTorus = C_API(x=real(x, c_double), &
                            y=real(y, c_double), &
                            z=real(z, c_double), &
@@ -11290,7 +10781,6 @@ module gmsh
                            api_zAxis_=zAxis, &
                            api_zAxis_n_=size_gmsh_double(zAxis), &
                            ierr_=ierr)
-    ! Post processing
   end function gmshModelOccAddTorus
 
   !> Add a volume (if the optional argument `makeSolid' is set) or surfaces in
@@ -11354,7 +10844,6 @@ module gmsh
     character(len=*), intent(in), optional :: parametrization
     logical, intent(in), optional :: smoothing
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_outDimTags_
     integer(c_size_t) :: api_outDimTags_n_
     call C_API(api_wireTags_=wireTags, &
@@ -11369,7 +10858,6 @@ module gmsh
          parametrization=istring_(optval_c_str("", parametrization)), &
          smoothing=optval_c_bool(.false., smoothing), &
          ierr_=ierr)
-    ! Post processing
     outDimTags = ovectorpair_(api_outDimTags_, &
       api_outDimTags_n_)
   end subroutine gmshModelOccAddThruSections
@@ -11413,7 +10901,6 @@ module gmsh
     integer(c_int), dimension(:,:), allocatable, intent(out) :: outDimTags
     integer, intent(in), optional :: tag
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_outDimTags_
     integer(c_size_t) :: api_outDimTags_n_
     call C_API(volumeTag=int(volumeTag, c_int), &
@@ -11424,7 +10911,6 @@ module gmsh
          api_outDimTags_n_=api_outDimTags_n_, &
          tag=optval_c_int(-1, tag), &
          ierr_=ierr)
-    ! Post processing
     outDimTags = ovectorpair_(api_outDimTags_, &
       api_outDimTags_n_)
   end subroutine gmshModelOccAddThickSolid
@@ -11485,7 +10971,6 @@ module gmsh
     real(c_double), dimension(:), intent(in), optional :: heights
     logical, intent(in), optional :: recombine
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_outDimTags_
     integer(c_size_t) :: api_outDimTags_n_
     call C_API(api_dimTags_=dimTags, &
@@ -11501,7 +10986,6 @@ module gmsh
          api_heights_n_=size_gmsh_double(heights), &
          recombine=optval_c_bool(.false., recombine), &
          ierr_=ierr)
-    ! Post processing
     outDimTags = ovectorpair_(api_outDimTags_, &
       api_outDimTags_n_)
   end subroutine gmshModelOccExtrude
@@ -11580,7 +11064,6 @@ module gmsh
     real(c_double), dimension(:), intent(in), optional :: heights
     logical, intent(in), optional :: recombine
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_outDimTags_
     integer(c_size_t) :: api_outDimTags_n_
     call C_API(api_dimTags_=dimTags, &
@@ -11600,7 +11083,6 @@ module gmsh
          api_heights_n_=size_gmsh_double(heights), &
          recombine=optval_c_bool(.false., recombine), &
          ierr_=ierr)
-    ! Post processing
     outDimTags = ovectorpair_(api_outDimTags_, &
       api_outDimTags_n_)
   end subroutine gmshModelOccRevolve
@@ -11640,7 +11122,6 @@ module gmsh
     integer(c_int), dimension(:,:), allocatable, intent(out) :: outDimTags
     character(len=*), intent(in), optional :: trihedron
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_outDimTags_
     integer(c_size_t) :: api_outDimTags_n_
     call C_API(api_dimTags_=dimTags, &
@@ -11650,7 +11131,6 @@ module gmsh
          api_outDimTags_n_=api_outDimTags_n_, &
          trihedron=istring_(optval_c_str("", trihedron)), &
          ierr_=ierr)
-    ! Post processing
     outDimTags = ovectorpair_(api_outDimTags_, &
       api_outDimTags_n_)
   end subroutine gmshModelOccAddPipe
@@ -11698,7 +11178,6 @@ module gmsh
     integer(c_int), dimension(:,:), allocatable, intent(out) :: outDimTags
     logical, intent(in), optional :: removeVolume
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_outDimTags_
     integer(c_size_t) :: api_outDimTags_n_
     call C_API(api_volumeTags_=volumeTags, &
@@ -11711,7 +11190,6 @@ module gmsh
          api_outDimTags_n_=api_outDimTags_n_, &
          removeVolume=optval_c_bool(.true., removeVolume), &
          ierr_=ierr)
-    ! Post processing
     outDimTags = ovectorpair_(api_outDimTags_, &
       api_outDimTags_n_)
   end subroutine gmshModelOccFillet
@@ -11767,7 +11245,6 @@ module gmsh
     integer(c_int), dimension(:,:), allocatable, intent(out) :: outDimTags
     logical, intent(in), optional :: removeVolume
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_outDimTags_
     integer(c_size_t) :: api_outDimTags_n_
     call C_API(api_volumeTags_=volumeTags, &
@@ -11782,7 +11259,6 @@ module gmsh
          api_outDimTags_n_=api_outDimTags_n_, &
          removeVolume=optval_c_bool(.true., removeVolume), &
          ierr_=ierr)
-    ! Post processing
     outDimTags = ovectorpair_(api_outDimTags_, &
       api_outDimTags_n_)
   end subroutine gmshModelOccChamfer
@@ -11842,7 +11318,6 @@ module gmsh
     logical, intent(in), optional :: removeObject
     logical, intent(in), optional :: removeTool
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_outDimTags_
     integer(c_size_t) :: api_outDimTags_n_
     type(c_ptr) :: api_outDimTagsMap_, api_outDimTagsMap_n_
@@ -11860,7 +11335,6 @@ module gmsh
          removeObject=optval_c_bool(.true., removeObject), &
          removeTool=optval_c_bool(.true., removeTool), &
          ierr_=ierr)
-    ! Post processing
     outDimTags = ovectorpair_(api_outDimTags_, &
       api_outDimTags_n_)
     call ovectorvectorpair_(api_outDimTagsMap_, &
@@ -11925,7 +11399,6 @@ module gmsh
     logical, intent(in), optional :: removeObject
     logical, intent(in), optional :: removeTool
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_outDimTags_
     integer(c_size_t) :: api_outDimTags_n_
     type(c_ptr) :: api_outDimTagsMap_, api_outDimTagsMap_n_
@@ -11943,7 +11416,6 @@ module gmsh
          removeObject=optval_c_bool(.true., removeObject), &
          removeTool=optval_c_bool(.true., removeTool), &
          ierr_=ierr)
-    ! Post processing
     outDimTags = ovectorpair_(api_outDimTags_, &
       api_outDimTags_n_)
     call ovectorvectorpair_(api_outDimTagsMap_, &
@@ -12008,7 +11480,6 @@ module gmsh
     logical, intent(in), optional :: removeObject
     logical, intent(in), optional :: removeTool
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_outDimTags_
     integer(c_size_t) :: api_outDimTags_n_
     type(c_ptr) :: api_outDimTagsMap_, api_outDimTagsMap_n_
@@ -12026,7 +11497,6 @@ module gmsh
          removeObject=optval_c_bool(.true., removeObject), &
          removeTool=optval_c_bool(.true., removeTool), &
          ierr_=ierr)
-    ! Post processing
     outDimTags = ovectorpair_(api_outDimTags_, &
       api_outDimTags_n_)
     call ovectorvectorpair_(api_outDimTagsMap_, &
@@ -12094,7 +11564,6 @@ module gmsh
     logical, intent(in), optional :: removeObject
     logical, intent(in), optional :: removeTool
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_outDimTags_
     integer(c_size_t) :: api_outDimTags_n_
     type(c_ptr) :: api_outDimTagsMap_, api_outDimTagsMap_n_
@@ -12112,7 +11581,6 @@ module gmsh
          removeObject=optval_c_bool(.true., removeObject), &
          removeTool=optval_c_bool(.true., removeTool), &
          ierr_=ierr)
-    ! Post processing
     outDimTags = ovectorpair_(api_outDimTags_, &
       api_outDimTags_n_)
     call ovectorvectorpair_(api_outDimTagsMap_, &
@@ -12151,14 +11619,12 @@ module gmsh
     real(c_double), intent(in) :: dy
     real(c_double), intent(in) :: dz
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(api_dimTags_=dimTags, &
          api_dimTags_n_=size_gmsh_pair(dimTags), &
          dx=real(dx, c_double), &
          dy=real(dy, c_double), &
          dz=real(dz, c_double), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelOccTranslate
 
   !> Rotate the entities `dimTags' in the OpenCASCADE CAD representation by
@@ -12207,7 +11673,6 @@ module gmsh
     real(c_double), intent(in) :: az
     real(c_double), intent(in) :: angle
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(api_dimTags_=dimTags, &
          api_dimTags_n_=size_gmsh_pair(dimTags), &
          x=real(x, c_double), &
@@ -12218,7 +11683,6 @@ module gmsh
          az=real(az, c_double), &
          angle=real(angle, c_double), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelOccRotate
 
   !> Scale the entities `dimTags' in the OpenCASCADE CAD representation by
@@ -12263,7 +11727,6 @@ module gmsh
     real(c_double), intent(in) :: b
     real(c_double), intent(in) :: c
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(api_dimTags_=dimTags, &
          api_dimTags_n_=size_gmsh_pair(dimTags), &
          x=real(x, c_double), &
@@ -12273,7 +11736,6 @@ module gmsh
          b=real(b, c_double), &
          c=real(c, c_double), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelOccDilate
 
   !> Mirror the entities `dimTags' in the OpenCASCADE CAD representation, with
@@ -12309,7 +11771,6 @@ module gmsh
     real(c_double), intent(in) :: c
     real(c_double), intent(in) :: d
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(api_dimTags_=dimTags, &
          api_dimTags_n_=size_gmsh_pair(dimTags), &
          a=real(a, c_double), &
@@ -12317,7 +11778,6 @@ module gmsh
          c=real(c, c_double), &
          d=real(d, c_double), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelOccMirror
 
   !> Mirror the entities `dimTags' in the OpenCASCADE CAD representation, with
@@ -12354,7 +11814,6 @@ module gmsh
     real(c_double), intent(in) :: c
     real(c_double), intent(in) :: d
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(api_dimTags_=dimTags, &
          api_dimTags_n_=size_gmsh_pair(dimTags), &
          a=real(a, c_double), &
@@ -12362,7 +11821,6 @@ module gmsh
          c=real(c, c_double), &
          d=real(d, c_double), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelOccSymmetrize
 
   !> Apply a general affine transformation matrix `affineTransform' (16 entries
@@ -12389,13 +11847,11 @@ module gmsh
     integer(c_int), dimension(:,:), intent(in) :: dimTags
     real(c_double), dimension(:), intent(in) :: affineTransform
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(api_dimTags_=dimTags, &
          api_dimTags_n_=size_gmsh_pair(dimTags), &
          api_affineTransform_=affineTransform, &
          api_affineTransform_n_=size_gmsh_double(affineTransform), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelOccAffineTransform
 
   !> Copy the entities `dimTags' in the OpenCASCADE CAD representation; the new
@@ -12421,7 +11877,6 @@ module gmsh
     integer(c_int), dimension(:,:), intent(in) :: dimTags
     integer(c_int), dimension(:,:), allocatable, intent(out) :: outDimTags
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_outDimTags_
     integer(c_size_t) :: api_outDimTags_n_
     call C_API(api_dimTags_=dimTags, &
@@ -12429,7 +11884,6 @@ module gmsh
          api_outDimTags_=api_outDimTags_, &
          api_outDimTags_n_=api_outDimTags_n_, &
          ierr_=ierr)
-    ! Post processing
     outDimTags = ovectorpair_(api_outDimTags_, &
       api_outDimTags_n_)
   end subroutine gmshModelOccCopy
@@ -12457,12 +11911,10 @@ module gmsh
     integer(c_int), dimension(:,:), intent(in) :: dimTags
     logical, intent(in), optional :: recursive
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(api_dimTags_=dimTags, &
          api_dimTags_n_=size_gmsh_pair(dimTags), &
          recursive=optval_c_bool(.false., recursive), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelOccRemove
 
   !> Remove all duplicate entities in the OpenCASCADE CAD representation
@@ -12477,9 +11929,7 @@ module gmsh
     end subroutine C_API
     end interface
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelOccRemoveAllDuplicates
 
   !> Apply various healing procedures to the entities `dimTags' (or to all the
@@ -12530,7 +11980,6 @@ module gmsh
     logical, intent(in), optional :: sewFaces
     logical, intent(in), optional :: makeSolids
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_outDimTags_
     integer(c_size_t) :: api_outDimTags_n_
     call C_API(api_outDimTags_=api_outDimTags_, &
@@ -12544,7 +11993,6 @@ module gmsh
          sewFaces=optval_c_bool(.true., sewFaces), &
          makeSolids=optval_c_bool(.true., makeSolids), &
          ierr_=ierr)
-    ! Post processing
     outDimTags = ovectorpair_(api_outDimTags_, &
       api_outDimTags_n_)
   end subroutine gmshModelOccHealShapes
@@ -12565,11 +12013,9 @@ module gmsh
     end interface
     integer(c_int), dimension(:,:), intent(in) :: dimTags
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(api_dimTags_=dimTags, &
          api_dimTags_n_=size_gmsh_pair(dimTags), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelOccConvertToNURBS
 
   !> Import BREP, STEP or IGES shapes from the file `fileName' in the
@@ -12605,7 +12051,6 @@ module gmsh
     logical, intent(in), optional :: highestDimOnly
     character(len=*), intent(in), optional :: format
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_outDimTags_
     integer(c_size_t) :: api_outDimTags_n_
     call C_API(fileName=istring_(fileName), &
@@ -12614,7 +12059,6 @@ module gmsh
          highestDimOnly=optval_c_bool(.true., highestDimOnly), &
          format=istring_(optval_c_str("", format)), &
          ierr_=ierr)
-    ! Post processing
     outDimTags = ovectorpair_(api_outDimTags_, &
       api_outDimTags_n_)
   end subroutine gmshModelOccImportShapes
@@ -12651,7 +12095,6 @@ module gmsh
     integer(c_int), dimension(:,:), allocatable, intent(out) :: outDimTags
     logical, intent(in), optional :: highestDimOnly
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_outDimTags_
     integer(c_size_t) :: api_outDimTags_n_
     call C_API(shape=shape, &
@@ -12659,7 +12102,6 @@ module gmsh
          api_outDimTags_n_=api_outDimTags_n_, &
          highestDimOnly=optval_c_bool(.true., highestDimOnly), &
          ierr_=ierr)
-    ! Post processing
     outDimTags = ovectorpair_(api_outDimTags_, &
       api_outDimTags_n_)
   end subroutine gmshModelOccImportShapesNativePointer
@@ -12686,14 +12128,12 @@ module gmsh
     integer(c_int), dimension(:,:), allocatable, intent(out) :: dimTags
     integer, intent(in), optional :: dim
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_dimTags_
     integer(c_size_t) :: api_dimTags_n_
     call C_API(api_dimTags_=api_dimTags_, &
          api_dimTags_n_=api_dimTags_n_, &
          dim=optval_c_int(-1, dim), &
          ierr_=ierr)
-    ! Post processing
     dimTags = ovectorpair_(api_dimTags_, &
       api_dimTags_n_)
   end subroutine gmshModelOccGetEntities
@@ -12745,7 +12185,6 @@ module gmsh
     integer(c_int), dimension(:,:), allocatable, intent(out) :: tags
     integer, intent(in), optional :: dim
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_tags_
     integer(c_size_t) :: api_tags_n_
     call C_API(xmin=real(xmin, c_double), &
@@ -12758,7 +12197,6 @@ module gmsh
          api_tags_n_=api_tags_n_, &
          dim=optval_c_int(-1, dim), &
          ierr_=ierr)
-    ! Post processing
     tags = ovectorpair_(api_tags_, &
       api_tags_n_)
   end subroutine gmshModelOccGetEntitiesInBoundingBox
@@ -12806,7 +12244,6 @@ module gmsh
     real(c_double) :: ymax
     real(c_double) :: zmax
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(dim=int(dim, c_int), &
          tag=int(tag, c_int), &
          xmin=xmin, &
@@ -12816,7 +12253,6 @@ module gmsh
          ymax=ymax, &
          zmax=zmax, &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelOccGetBoundingBox
 
   !> Get the tags `curveLoopTags' of the curve loops making up the surface of
@@ -12851,7 +12287,6 @@ module gmsh
     integer(c_int), dimension(:), allocatable, intent(out) :: curveTags
     integer(c_size_t), dimension(:), allocatable, intent(out) :: curveTags_n
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_curveLoopTags_
     integer(c_size_t) :: api_curveLoopTags_n_
     type(c_ptr) :: api_curveTags_, api_curveTags_n_
@@ -12863,7 +12298,6 @@ module gmsh
          api_curveTags_n_=api_curveTags_n_, &
          api_curveTags_nn_=api_curveTags_nn_, &
          ierr_=ierr)
-    ! Post processing
     curveLoopTags = ovectorint_(api_curveLoopTags_, &
       api_curveLoopTags_n_)
     call ovectorvectorint_(api_curveTags_, &
@@ -12905,7 +12339,6 @@ module gmsh
     integer(c_int), dimension(:), allocatable, intent(out) :: surfaceTags
     integer(c_size_t), dimension(:), allocatable, intent(out) :: surfaceTags_n
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_surfaceLoopTags_
     integer(c_size_t) :: api_surfaceLoopTags_n_
     type(c_ptr) :: api_surfaceTags_, api_surfaceTags_n_
@@ -12917,7 +12350,6 @@ module gmsh
          api_surfaceTags_n_=api_surfaceTags_n_, &
          api_surfaceTags_nn_=api_surfaceTags_nn_, &
          ierr_=ierr)
-    ! Post processing
     surfaceLoopTags = ovectorint_(api_surfaceLoopTags_, &
       api_surfaceLoopTags_n_)
     call ovectorvectorint_(api_surfaceTags_, &
@@ -12949,12 +12381,10 @@ module gmsh
     integer, intent(in) :: tag
     real(c_double) :: mass
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(dim=int(dim, c_int), &
          tag=int(tag, c_int), &
          mass=mass, &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelOccGetMass
 
   !> Get the center of mass of the OpenCASCADE entity of dimension `dim' and tag
@@ -12988,14 +12418,12 @@ module gmsh
     real(c_double) :: y
     real(c_double) :: z
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(dim=int(dim, c_int), &
          tag=int(tag, c_int), &
          x=x, &
          y=y, &
          z=z, &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelOccGetCenterOfMass
 
   !> Get the matrix of inertia (by row) of the OpenCASCADE entity of dimension
@@ -13023,7 +12451,6 @@ module gmsh
     integer, intent(in) :: tag
     real(c_double), dimension(:), allocatable, intent(out) :: mat
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_mat_
     integer(c_size_t) :: api_mat_n_
     call C_API(dim=int(dim, c_int), &
@@ -13031,7 +12458,6 @@ module gmsh
          api_mat_=api_mat_, &
          api_mat_n_=api_mat_n_, &
          ierr_=ierr)
-    ! Post processing
     mat = ovectordouble_(api_mat_, &
       api_mat_n_)
   end subroutine gmshModelOccGetMatrixOfInertia
@@ -13053,10 +12479,8 @@ module gmsh
     integer(c_int) :: gmshModelOccGetMaxTag
     integer, intent(in) :: dim
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     gmshModelOccGetMaxTag = C_API(dim=int(dim, c_int), &
                             ierr_=ierr)
-    ! Post processing
   end function gmshModelOccGetMaxTag
 
   !> Set the maximum tag `maxTag' for entities of dimension `dim' in the
@@ -13078,11 +12502,9 @@ module gmsh
     integer, intent(in) :: dim
     integer, intent(in) :: maxTag
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(dim=int(dim, c_int), &
          maxTag=int(maxTag, c_int), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelOccSetMaxTag
 
   !> Synchronize the OpenCASCADE CAD representation with the current Gmsh model.
@@ -13100,9 +12522,7 @@ module gmsh
     end subroutine C_API
     end interface
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelOccSynchronize
 
   !> Set a mesh size constraint on the entities `dimTags' in the OpenCASCADE CAD
@@ -13127,12 +12547,10 @@ module gmsh
     integer(c_int), dimension(:,:), intent(in) :: dimTags
     real(c_double), intent(in) :: size
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(api_dimTags_=dimTags, &
          api_dimTags_n_=size_gmsh_pair(dimTags), &
          size=real(size, c_double), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshModelOccMeshSetSize
 
   !> Add a new post-processing view, with name `name'. If `tag' is positive use
@@ -13157,11 +12575,9 @@ module gmsh
     character(len=*), intent(in) :: name
     integer, intent(in), optional :: tag
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     gmshViewAdd = C_API(name=istring_(name), &
                   tag=optval_c_int(-1, tag), &
                   ierr_=ierr)
-    ! Post processing
   end function gmshViewAdd
 
   !> Remove the view with tag `tag'.
@@ -13178,10 +12594,8 @@ module gmsh
     end interface
     integer, intent(in) :: tag
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(tag=int(tag, c_int), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshViewRemove
 
   !> Get the index of the view with tag `tag' in the list of currently loaded
@@ -13202,10 +12616,8 @@ module gmsh
     integer(c_int) :: gmshViewGetIndex
     integer, intent(in) :: tag
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     gmshViewGetIndex = C_API(tag=int(tag, c_int), &
                        ierr_=ierr)
-    ! Post processing
   end function gmshViewGetIndex
 
   !> Get the tags of all views.
@@ -13224,13 +12636,11 @@ module gmsh
     end interface
     integer(c_int), dimension(:), allocatable, intent(out) :: tags
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_tags_
     integer(c_size_t) :: api_tags_n_
     call C_API(api_tags_=api_tags_, &
          api_tags_n_=api_tags_n_, &
          ierr_=ierr)
-    ! Post processing
     tags = ovectorint_(api_tags_, &
       api_tags_n_)
   end subroutine gmshViewGetTags
@@ -13300,7 +12710,6 @@ module gmsh
     integer, intent(in), optional :: numComponents
     integer, intent(in), optional :: partition
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_data_
     type(c_ptr) :: api_data_n_
     integer(c_size_t) :: api_data_nn_
@@ -13322,7 +12731,6 @@ module gmsh
          numComponents=optval_c_int(-1, numComponents), &
          partition=optval_c_int(0, partition), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshViewAddModelData
 
   !> Add homogeneous model-based post-processing data to the view with tag
@@ -13379,7 +12787,6 @@ module gmsh
     integer, intent(in), optional :: numComponents
     integer, intent(in), optional :: partition
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(tag=int(tag, c_int), &
          step=int(step, c_int), &
          modelName=istring_(modelName), &
@@ -13392,7 +12799,6 @@ module gmsh
          numComponents=optval_c_int(-1, numComponents), &
          partition=optval_c_int(0, partition), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshViewAddHomogeneousModelData
 
   !> Get model-based post-processing data from the view with tag `tag' at step
@@ -13444,7 +12850,6 @@ module gmsh
     real(c_double) :: time
     integer(c_int) :: numComponents
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_tags_
     integer(c_size_t) :: api_tags_n_
     type(c_ptr) :: api_data_, api_data_n_
@@ -13460,7 +12865,6 @@ module gmsh
          time=time, &
          numComponents=numComponents, &
          ierr_=ierr)
-    ! Post processing
     tags = ovectorsize_(api_tags_, &
       api_tags_n_)
     call ovectorvectordouble_(api_data_, &
@@ -13515,7 +12919,6 @@ module gmsh
     real(c_double) :: time
     integer(c_int) :: numComponents
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_tags_
     integer(c_size_t) :: api_tags_n_
     type(c_ptr) :: api_data_
@@ -13530,7 +12933,6 @@ module gmsh
          time=time, &
          numComponents=numComponents, &
          ierr_=ierr)
-    ! Post processing
     tags = ovectorsize_(api_tags_, &
       api_tags_n_)
     data = ovectordouble_(api_data_, &
@@ -13574,14 +12976,12 @@ module gmsh
     integer, intent(in) :: numEle
     real(c_double), dimension(:), intent(in) :: data
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(tag=int(tag, c_int), &
          dataType=istring_(dataType), &
          numEle=int(numEle, c_int), &
          api_data_=data, &
          api_data_n_=size_gmsh_double(data), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshViewAddListData
 
   !> Get list-based post-processing data from the view with tag `tag'. Return
@@ -13622,7 +13022,6 @@ module gmsh
     real(c_double), dimension(:), allocatable, intent(out) :: data
     integer(c_size_t), dimension(:), allocatable, intent(out) :: data_n
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_dataType_
     integer(c_size_t) :: api_dataType_n_
     type(c_ptr) :: api_numElements_
@@ -13638,7 +13037,6 @@ module gmsh
          api_data_n_=api_data_n_, &
          api_data_nn_=api_data_nn_, &
          ierr_=ierr)
-    ! Post processing
     dataType = ovectorstring_(api_dataType_, &
       api_dataType_n_)
     numElements = ovectorint_(api_numElements_, &
@@ -13694,7 +13092,6 @@ module gmsh
     character(len=*), dimension(:), intent(in) :: data
     character(len=*), dimension(:), intent(in), optional :: style
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     character(len=GMSH_API_MAX_STR_LEN, kind=c_char), allocatable :: api_data_strs(:)
     type(c_ptr), allocatable :: api_data_(:)
     character(len=GMSH_API_MAX_STR_LEN, kind=c_char), allocatable :: api_style_strs(:)
@@ -13713,7 +13110,6 @@ module gmsh
          api_style_=api_style_, &
          api_style_n_=size_gmsh_str(style), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshViewAddListDataString
 
   !> Get list-based post-processing data strings (2D strings if `dim' = 2, 3D
@@ -13754,7 +13150,6 @@ module gmsh
     character(len=GMSH_API_MAX_STR_LEN), dimension(:), allocatable, intent(out) :: data
     character(len=GMSH_API_MAX_STR_LEN), dimension(:), allocatable, intent(out) :: style
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_coord_
     integer(c_size_t) :: api_coord_n_
     type(c_ptr) :: api_data_
@@ -13770,7 +13165,6 @@ module gmsh
          api_style_=api_style_, &
          api_style_n_=api_style_n_, &
          ierr_=ierr)
-    ! Post processing
     coord = ovectordouble_(api_coord_, &
       api_coord_n_)
     data = ovectorstring_(api_data_, &
@@ -13839,7 +13233,6 @@ module gmsh
     real(c_double), dimension(:), intent(in), optional :: coefGeo
     real(c_double), dimension(:), intent(in), optional :: expGeo
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(tag=int(tag, c_int), &
          type=istring_(type), &
          d=int(d, c_int), &
@@ -13853,7 +13246,6 @@ module gmsh
          api_expGeo_=expGeo, &
          api_expGeo_n_=size_gmsh_double(expGeo), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshViewSetInterpolationMatrices
 
   !> Add a post-processing view as an `alias' of the reference view with tag
@@ -13883,12 +13275,10 @@ module gmsh
     logical, intent(in), optional :: copyOptions
     integer, intent(in), optional :: tag
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     gmshViewAddAlias = C_API(refTag=int(refTag, c_int), &
                        copyOptions=optval_c_bool(.false., copyOptions), &
                        tag=optval_c_int(-1, tag), &
                        ierr_=ierr)
-    ! Post processing
   end function gmshViewAddAlias
 
   !> Combine elements (if `what' == "elements") or steps (if `what' == "steps")
@@ -13920,13 +13310,11 @@ module gmsh
     logical, intent(in), optional :: remove
     logical, intent(in), optional :: copyOptions
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(what=istring_(what), &
          how=istring_(how), &
          remove=optval_c_bool(.true., remove), &
          copyOptions=optval_c_bool(.true., copyOptions), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshViewCombine
 
   !> Probe the view `tag' for its `value' at point (`x', `y', `z'). If no match
@@ -14015,7 +13403,6 @@ module gmsh
     real(c_double), dimension(:), intent(in), optional :: zElemCoord
     integer, intent(in), optional :: dim
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_value_
     integer(c_size_t) :: api_value_n_
     call C_API(tag=int(tag, c_int), &
@@ -14037,7 +13424,6 @@ module gmsh
          api_zElemCoord_n_=size_gmsh_double(zElemCoord), &
          dim=optval_c_int(-1, dim), &
          ierr_=ierr)
-    ! Post processing
     value = ovectordouble_(api_value_, &
       api_value_n_)
   end subroutine gmshViewProbe
@@ -14065,12 +13451,10 @@ module gmsh
     character(len=*), intent(in) :: fileName
     logical, intent(in), optional :: append
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(tag=int(tag, c_int), &
          fileName=istring_(fileName), &
          append=optval_c_bool(.false., append), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshViewWrite
 
   !> Set the global visibility of the view `tag' per window to `value', where
@@ -14096,12 +13480,10 @@ module gmsh
     integer, intent(in) :: value
     integer, intent(in), optional :: windowIndex
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(tag=int(tag, c_int), &
          value=int(value, c_int), &
          windowIndex=optval_c_int(0, windowIndex), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshViewSetVisibilityPerWindow
 
   !> Set the numerical option `name' to value `value' for the view with tag
@@ -14127,12 +13509,10 @@ module gmsh
     character(len=*), intent(in) :: name
     real(c_double), intent(in) :: value
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(tag=int(tag, c_int), &
          name=istring_(name), &
          value=real(value, c_double), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshViewOptionSetNumber
 
   !> Get the `value' of the numerical option `name' for the view with tag `tag'.
@@ -14157,12 +13537,10 @@ module gmsh
     character(len=*), intent(in) :: name
     real(c_double) :: value
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(tag=int(tag, c_int), &
          name=istring_(name), &
          value=value, &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshViewOptionGetNumber
 
   !> Set the string option `name' to value `value' for the view with tag `tag'.
@@ -14187,12 +13565,10 @@ module gmsh
     character(len=*), intent(in) :: name
     character(len=*), intent(in) :: value
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(tag=int(tag, c_int), &
          name=istring_(name), &
          value=istring_(value), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshViewOptionSetString
 
   !> Get the `value' of the string option `name' for the view with tag `tag'.
@@ -14217,12 +13593,10 @@ module gmsh
     character(len=*), intent(in) :: name
     character(len=:), allocatable, intent(out) :: value
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(tag=int(tag, c_int), &
          name=istring_(name), &
          api_value_=value, &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshViewOptionGetString
 
   !> Set the color option `name' to the RGBA value (`r', `g', `b', `a') for the
@@ -14261,7 +13635,6 @@ module gmsh
     integer, intent(in) :: b
     integer, intent(in), optional :: a
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(tag=int(tag, c_int), &
          name=istring_(name), &
          r=int(r, c_int), &
@@ -14269,7 +13642,6 @@ module gmsh
          b=int(b, c_int), &
          a=optval_c_int(255, a), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshViewOptionSetColor
 
   !> Get the `r', `g', `b', `a' value of the color option `name' for the view
@@ -14307,7 +13679,6 @@ module gmsh
     integer(c_int) :: b
     integer(c_int) :: a
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(tag=int(tag, c_int), &
          name=istring_(name), &
          r=r, &
@@ -14315,7 +13686,6 @@ module gmsh
          b=b, &
          a=a, &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshViewOptionGetColor
 
   !> Copy the options from the view with tag `refTag' to the view with tag
@@ -14337,11 +13707,9 @@ module gmsh
     integer, intent(in) :: refTag
     integer, intent(in) :: tag
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(refTag=int(refTag, c_int), &
          tag=int(tag, c_int), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshViewOptionCopy
 
   !> Set the numerical option `option' to the value `value' for plugin `name'.
@@ -14366,12 +13734,10 @@ module gmsh
     character(len=*), intent(in) :: option
     real(c_double), intent(in) :: value
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(name=istring_(name), &
          option=istring_(option), &
          value=real(value, c_double), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshPluginSetNumber
 
   !> Set the string option `option' to the value `value' for plugin `name'.
@@ -14396,12 +13762,10 @@ module gmsh
     character(len=*), intent(in) :: option
     character(len=*), intent(in) :: value
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(name=istring_(name), &
          option=istring_(option), &
          value=istring_(value), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshPluginSetString
 
   !> Run the plugin `name'. Return the tag of the created view (if any).
@@ -14420,10 +13784,8 @@ module gmsh
     integer(c_int) :: gmshPluginRun
     character(len=*), intent(in) :: name
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     gmshPluginRun = C_API(name=istring_(name), &
                     ierr_=ierr)
-    ! Post processing
   end function gmshPluginRun
 
   !> Draw all the OpenGL scenes.
@@ -14436,9 +13798,7 @@ module gmsh
     end subroutine C_API
     end interface
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(ierr_=ierr)
-    ! Post processing
   end subroutine gmshGraphicsDraw
 
   !> Create the FLTK graphical user interface. Can only be called in the main
@@ -14452,9 +13812,7 @@ module gmsh
     end subroutine C_API
     end interface
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(ierr_=ierr)
-    ! Post processing
   end subroutine gmshFltkInitialize
 
   !> Close the FLTK graphical user interface. Can only be called in the main
@@ -14468,9 +13826,7 @@ module gmsh
     end subroutine C_API
     end interface
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(ierr_=ierr)
-    ! Post processing
   end subroutine gmshFltkFinalize
 
   !> Wait at most `time' seconds for user interface events and return. If `time'
@@ -14489,10 +13845,8 @@ module gmsh
     end interface
     real(c_double), intent(in), optional :: time
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(time=optval_c_double(-1., time), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshFltkWait
 
   !> Update the user interface (potentially creating new widgets and windows).
@@ -14508,9 +13862,7 @@ module gmsh
     end subroutine C_API
     end interface
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(ierr_=ierr)
-    ! Post processing
   end subroutine gmshFltkUpdate
 
   !> Awake the main user interface thread and process pending events, and
@@ -14529,10 +13881,8 @@ module gmsh
     end interface
     character(len=*), intent(in), optional :: action
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(action=istring_(optval_c_str("", action)), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshFltkAwake
 
   !> Block the current thread until it can safely modify the user interface.
@@ -14545,9 +13895,7 @@ module gmsh
     end subroutine C_API
     end interface
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(ierr_=ierr)
-    ! Post processing
   end subroutine gmshFltkLock
 
   !> Release the lock that was set using lock.
@@ -14560,9 +13908,7 @@ module gmsh
     end subroutine C_API
     end interface
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(ierr_=ierr)
-    ! Post processing
   end subroutine gmshFltkUnlock
 
   !> Run the event loop of the graphical user interface, i.e. repeatedly call
@@ -14577,9 +13923,7 @@ module gmsh
     end subroutine C_API
     end interface
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(ierr_=ierr)
-    ! Post processing
   end subroutine gmshFltkRun
 
   !> Check if the user interface is available (e.g. to detect if it has been
@@ -14595,9 +13939,7 @@ module gmsh
     end interface
     integer(c_int) :: gmshFltkIsAvailable
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     gmshFltkIsAvailable = C_API(ierr_=ierr)
-    ! Post processing
   end function gmshFltkIsAvailable
 
   !> Select entities in the user interface. If `dim' is >= 0, return only the
@@ -14623,14 +13965,12 @@ module gmsh
     integer(c_int), dimension(:,:), allocatable, intent(out) :: dimTags
     integer, intent(in), optional :: dim
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_dimTags_
     integer(c_size_t) :: api_dimTags_n_
     gmshFltkSelectEntities = C_API(api_dimTags_=api_dimTags_, &
                              api_dimTags_n_=api_dimTags_n_, &
                              dim=optval_c_int(-1, dim), &
                              ierr_=ierr)
-    ! Post processing
     dimTags = ovectorpair_(api_dimTags_, &
       api_dimTags_n_)
   end function gmshFltkSelectEntities
@@ -14653,13 +13993,11 @@ module gmsh
     integer(c_int) :: gmshFltkSelectElements
     integer(c_size_t), dimension(:), allocatable, intent(out) :: elementTags
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_elementTags_
     integer(c_size_t) :: api_elementTags_n_
     gmshFltkSelectElements = C_API(api_elementTags_=api_elementTags_, &
                              api_elementTags_n_=api_elementTags_n_, &
                              ierr_=ierr)
-    ! Post processing
     elementTags = ovectorsize_(api_elementTags_, &
       api_elementTags_n_)
   end function gmshFltkSelectElements
@@ -14682,13 +14020,11 @@ module gmsh
     integer(c_int) :: gmshFltkSelectViews
     integer(c_int), dimension(:), allocatable, intent(out) :: viewTags
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_viewTags_
     integer(c_size_t) :: api_viewTags_n_
     gmshFltkSelectViews = C_API(api_viewTags_=api_viewTags_, &
                           api_viewTags_n_=api_viewTags_n_, &
                           ierr_=ierr)
-    ! Post processing
     viewTags = ovectorint_(api_viewTags_, &
       api_viewTags_n_)
   end function gmshFltkSelectViews
@@ -14712,11 +14048,9 @@ module gmsh
     character(len=*), intent(in), optional :: how
     real(c_double), intent(in), optional :: ratio
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(how=istring_(optval_c_str("v", how)), &
          ratio=optval_c_double(0.5, ratio), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshFltkSplitCurrentWindow
 
   !> Set the current window by speficying its index (starting at 0) in the list
@@ -14735,10 +14069,8 @@ module gmsh
     end interface
     integer, intent(in), optional :: windowIndex
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(windowIndex=optval_c_int(0, windowIndex), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshFltkSetCurrentWindow
 
   !> Set a status message in the current window. If `graphics' is set, display
@@ -14760,11 +14092,9 @@ module gmsh
     character(len=*), intent(in) :: message
     logical, intent(in), optional :: graphics
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(message=istring_(message), &
          graphics=optval_c_bool(.false., graphics), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshFltkSetStatusMessage
 
   !> Show context window for the entity of dimension `dim' and tag `tag'.
@@ -14785,11 +14115,9 @@ module gmsh
     integer, intent(in) :: dim
     integer, intent(in) :: tag
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(dim=int(dim, c_int), &
          tag=int(tag, c_int), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshFltkShowContextWindow
 
   !> Open the `name' item in the menu tree.
@@ -14806,10 +14134,8 @@ module gmsh
     end interface
     character(len=*), intent(in) :: name
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(name=istring_(name), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshFltkOpenTreeItem
 
   !> Close the `name' item in the menu tree.
@@ -14826,10 +14152,8 @@ module gmsh
     end interface
     character(len=*), intent(in) :: name
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(name=istring_(name), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshFltkCloseTreeItem
 
   !> Get the names of the variables in the Gmsh parser matching the `search'
@@ -14853,14 +14177,12 @@ module gmsh
     character(len=GMSH_API_MAX_STR_LEN), dimension(:), allocatable, intent(out) :: names
     character(len=*), intent(in), optional :: search
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_names_
     integer(c_size_t) :: api_names_n_
     call C_API(api_names_=api_names_, &
          api_names_n_=api_names_n_, &
          search=istring_(optval_c_str("", search)), &
          ierr_=ierr)
-    ! Post processing
     names = ovectorstring_(api_names_, &
       api_names_n_)
   end subroutine gmshParserGetNames
@@ -14886,12 +14208,10 @@ module gmsh
     character(len=*), intent(in) :: name
     real(c_double), dimension(:), intent(in) :: value
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(name=istring_(name), &
          api_value_=value, &
          api_value_n_=size_gmsh_double(value), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshParserSetNumber
 
   !> Set the value of the string variable `name' in the Gmsh parser. Create the
@@ -14915,7 +14235,6 @@ module gmsh
     character(len=*), intent(in) :: name
     character(len=*), dimension(:), intent(in) :: value
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     character(len=GMSH_API_MAX_STR_LEN, kind=c_char), allocatable :: api_value_strs(:)
     type(c_ptr), allocatable :: api_value_(:)
     call ivectorstring_(value, &
@@ -14925,7 +14244,6 @@ module gmsh
          api_value_=api_value_, &
          api_value_n_=size_gmsh_str(value), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshParserSetString
 
   !> Get the value of the number variable `name' from the Gmsh parser. Return an
@@ -14949,14 +14267,12 @@ module gmsh
     character(len=*), intent(in) :: name
     real(c_double), dimension(:), allocatable, intent(out) :: value
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_value_
     integer(c_size_t) :: api_value_n_
     call C_API(name=istring_(name), &
          api_value_=api_value_, &
          api_value_n_=api_value_n_, &
          ierr_=ierr)
-    ! Post processing
     value = ovectordouble_(api_value_, &
       api_value_n_)
   end subroutine gmshParserGetNumber
@@ -14982,14 +14298,12 @@ module gmsh
     character(len=*), intent(in) :: name
     character(len=GMSH_API_MAX_STR_LEN), dimension(:), allocatable, intent(out) :: value
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_value_
     integer(c_size_t) :: api_value_n_
     call C_API(name=istring_(name), &
          api_value_=api_value_, &
          api_value_n_=api_value_n_, &
          ierr_=ierr)
-    ! Post processing
     value = ovectorstring_(api_value_, &
       api_value_n_)
   end subroutine gmshParserGetString
@@ -15009,10 +14323,8 @@ module gmsh
     end interface
     character(len=*), intent(in), optional :: name
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(name=istring_(optval_c_str("", name)), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshParserClear
 
   !> Parse the file `fileName' with the Gmsh parser.
@@ -15029,10 +14341,8 @@ module gmsh
     end interface
     character(len=*), intent(in) :: fileName
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(fileName=istring_(fileName), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshParserParse
 
   !> Set one or more parameters in the ONELAB database, encoded in `format'.
@@ -15053,11 +14363,9 @@ module gmsh
     character(len=*), intent(in) :: data
     character(len=*), intent(in), optional :: format
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(data=istring_(data), &
          format=istring_(optval_c_str("json", format)), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshOnelabSet
 
   !> Get all the parameters (or a single one if `name' is specified) from the
@@ -15083,12 +14391,10 @@ module gmsh
     character(len=*), intent(in), optional :: name
     character(len=*), intent(in), optional :: format
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(api_data_=data, &
          name=istring_(optval_c_str("", name)), &
          format=istring_(optval_c_str("json", format)), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshOnelabGet
 
   !> Get the names of the parameters in the ONELAB database matching the
@@ -15112,14 +14418,12 @@ module gmsh
     character(len=GMSH_API_MAX_STR_LEN), dimension(:), allocatable, intent(out) :: names
     character(len=*), intent(in), optional :: search
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_names_
     integer(c_size_t) :: api_names_n_
     call C_API(api_names_=api_names_, &
          api_names_n_=api_names_n_, &
          search=istring_(optval_c_str("", search)), &
          ierr_=ierr)
-    ! Post processing
     names = ovectorstring_(api_names_, &
       api_names_n_)
   end subroutine gmshOnelabGetNames
@@ -15146,12 +14450,10 @@ module gmsh
     character(len=*), intent(in) :: name
     real(c_double), dimension(:), intent(in) :: value
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(name=istring_(name), &
          api_value_=value, &
          api_value_n_=size_gmsh_double(value), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshOnelabSetNumber
 
   !> Set the value of the string parameter `name' in the ONELAB database. Create
@@ -15176,7 +14478,6 @@ module gmsh
     character(len=*), intent(in) :: name
     character(len=*), dimension(:), intent(in) :: value
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     character(len=GMSH_API_MAX_STR_LEN, kind=c_char), allocatable :: api_value_strs(:)
     type(c_ptr), allocatable :: api_value_(:)
     call ivectorstring_(value, &
@@ -15186,7 +14487,6 @@ module gmsh
          api_value_=api_value_, &
          api_value_n_=size_gmsh_str(value), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshOnelabSetString
 
   !> Get the value of the number parameter `name' from the ONELAB database.
@@ -15210,14 +14510,12 @@ module gmsh
     character(len=*), intent(in) :: name
     real(c_double), dimension(:), allocatable, intent(out) :: value
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_value_
     integer(c_size_t) :: api_value_n_
     call C_API(name=istring_(name), &
          api_value_=api_value_, &
          api_value_n_=api_value_n_, &
          ierr_=ierr)
-    ! Post processing
     value = ovectordouble_(api_value_, &
       api_value_n_)
   end subroutine gmshOnelabGetNumber
@@ -15243,14 +14541,12 @@ module gmsh
     character(len=*), intent(in) :: name
     character(len=GMSH_API_MAX_STR_LEN), dimension(:), allocatable, intent(out) :: value
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_value_
     integer(c_size_t) :: api_value_n_
     call C_API(name=istring_(name), &
          api_value_=api_value_, &
          api_value_n_=api_value_n_, &
          ierr_=ierr)
-    ! Post processing
     value = ovectorstring_(api_value_, &
       api_value_n_)
   end subroutine gmshOnelabGetString
@@ -15272,10 +14568,8 @@ module gmsh
     integer(c_int) :: gmshOnelabGetChanged
     character(len=*), intent(in) :: name
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     gmshOnelabGetChanged = C_API(name=istring_(name), &
                            ierr_=ierr)
-    ! Post processing
   end function gmshOnelabGetChanged
 
   !> Set the changed flag to value `value' for all the parameters in the ONELAB
@@ -15297,11 +14591,9 @@ module gmsh
     character(len=*), intent(in) :: name
     integer, intent(in) :: value
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(name=istring_(name), &
          value=int(value, c_int), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshOnelabSetChanged
 
   !> Clear the ONELAB database, or remove a single parameter if `name' is given.
@@ -15318,10 +14610,8 @@ module gmsh
     end interface
     character(len=*), intent(in), optional :: name
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(name=istring_(optval_c_str("", name)), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshOnelabClear
 
   !> Run a ONELAB client. If `name' is provided, create a new ONELAB client with
@@ -15344,11 +14634,9 @@ module gmsh
     character(len=*), intent(in), optional :: name
     character(len=*), intent(in), optional :: command
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(name=istring_(optval_c_str("", name)), &
          command=istring_(optval_c_str("", command)), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshOnelabRun
 
   !> Write a `message'. `level' can be "info", "warning" or "error".
@@ -15369,11 +14657,9 @@ module gmsh
     character(len=*), intent(in) :: message
     character(len=*), intent(in), optional :: level
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(message=istring_(message), &
          level=istring_(optval_c_str("info", level)), &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshLoggerWrite
 
   !> Start logging messages.
@@ -15386,9 +14672,7 @@ module gmsh
     end subroutine C_API
     end interface
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(ierr_=ierr)
-    ! Post processing
   end subroutine gmshLoggerStart
 
   !> Get logged messages.
@@ -15407,13 +14691,11 @@ module gmsh
     end interface
     character(len=GMSH_API_MAX_STR_LEN), dimension(:), allocatable, intent(out) :: log
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     type(c_ptr) :: api_log_
     integer(c_size_t) :: api_log_n_
     call C_API(api_log_=api_log_, &
          api_log_n_=api_log_n_, &
          ierr_=ierr)
-    ! Post processing
     log = ovectorstring_(api_log_, &
       api_log_n_)
   end subroutine gmshLoggerGet
@@ -15428,9 +14710,7 @@ module gmsh
     end subroutine C_API
     end interface
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(ierr_=ierr)
-    ! Post processing
   end subroutine gmshLoggerStop
 
   !> Return wall clock time.
@@ -15445,9 +14725,7 @@ module gmsh
     end interface
     real(c_double) :: gmshLoggerGetWallTime
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     gmshLoggerGetWallTime = C_API(ierr_=ierr)
-    ! Post processing
   end function gmshLoggerGetWallTime
 
   !> Return CPU time.
@@ -15462,9 +14740,7 @@ module gmsh
     end interface
     real(c_double) :: gmshLoggerGetCpuTime
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     gmshLoggerGetCpuTime = C_API(ierr_=ierr)
-    ! Post processing
   end function gmshLoggerGetCpuTime
 
   !> Return last error message, if any.
@@ -15481,10 +14757,8 @@ module gmsh
     end interface
     character(len=:), allocatable, intent(out) :: error
     integer(c_int), intent(out), optional :: ierr
-    ! Local variables
     call C_API(api_error_=error, &
          ierr_=ierr)
-    ! Post processing
   end subroutine gmshLoggerGetLastError
 
   ! ----------------------------------------------------------------------------

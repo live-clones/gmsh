@@ -2501,7 +2501,7 @@ class API:
             if rtype:
                 r += f"{indent * 2}{rtype.fortran_types[0]} :: {fname}\n"
             r += get_arg_list(args, indent * 2)
-            r += f"{indent * 2}! Local variables\n"
+            # r += f"{indent * 2}! Local variables\n"
             # Prepare input arguments
             r += get_local_variables(args, indent * 2)
             r += get_local_setup(args, indent * 2).replace("&", f"&\n{indent*3}")
@@ -2516,7 +2516,7 @@ class API:
                     "&", f"&\n{(len(indent*2)+5)*' '}"
                 )
             # Prepare output arguments
-            r += f"{indent * 2}! Post processing\n"
+            # r += f"{indent * 2}! Post processing\n"
             r += get_local_cleanup(args, indent * 2).replace("&", f"&\n{indent * 3}")
             r += f"{indent}end {fnamef}\n"
             self.fwrite(f, r)
