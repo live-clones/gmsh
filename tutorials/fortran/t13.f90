@@ -120,7 +120,7 @@ subroutine createGeometryAndMesh()
     ! We specify element sizes imposed by a size field, just because we can :-)
     f = gmsh%model%mesh%field%add("MathEval")
     call gmsh%onelab%getNumber('Parameters/Apply funny mesh size field?', tmp)
-    if (size(tmp)> 1) then
+    if (int(tmp(1)) > 0) then
         call gmsh%model%mesh%field%setString(f, "F", "2*Sin((x+y)/5) + 3")
     else
         call gmsh%model%mesh%field%setString(f, "F", "4")
@@ -139,9 +139,9 @@ logical function checkForEvent()
     character(len=GMSH_API_MAX_STR_LEN), allocatable :: action(:)
     checkForEvent = .false.
     call gmsh%onelab%getString("ONELAB/Action", action)
-    if (size(action) > 1) then
+    if (size(action) > 0) then
         if (trim(action(1)) == "check") then
-            call gmsh%onelab%setString("ONELAB/Action", [""])
+            call gmsh%onelab%setString("ONELAB/Action", [c_null_char])
             call createGeometryAndMesh()
             call gmsh%graphics%draw()
         end if
