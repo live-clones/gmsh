@@ -80,6 +80,7 @@ public:
   virtual const char *getStringForBDF() const { return "CBAR"; }
   virtual const char *getStringForINP() const { return "T3D2" /*"C1D2"*/; }
   virtual const char *getStringForKEY() const { return "_BEAM"; }
+  virtual const char *getStringForRAD() const { return "/TRUSS"; }
   virtual const char *getStringForTOCHNOG() const { return "-bar2"; }
   virtual void reverse()
   {
@@ -166,6 +167,7 @@ public:
   }
   virtual MVertex *getVertexINP(int num) { return getVertexUNV(num); }
   virtual MVertex *getVertexKEY(int num) { return getVertexUNV(num); }
+  virtual MVertex *getVertexRAD(int num) { return getVertexUNV(num); }
   virtual int getNumEdgeVertices() const { return 1; }
   virtual int getNumEdgesRep(bool curved);
   virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z,
@@ -182,6 +184,7 @@ public:
   virtual const char *getStringForPOS() const { return "SL2"; }
   virtual const char *getStringForINP() const { return "T3D3" /*"C1D3"*/; }
   virtual const char *getStringForKEY() const { return "_BEAM_ELBOW"; }
+  virtual const char *getStringForRAD() const { return "/BEAM"; }
   virtual const char *getStringForTOCHNOG() const { return "-bar3"; }
   virtual void getNode(int num, double &u, double &v, double &w) const
   {
