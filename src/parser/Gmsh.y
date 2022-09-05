@@ -204,7 +204,7 @@ struct doubleXstring{
 %token tCharacteristic tLength tParametric tElliptic
 %token tRefineMesh tRecombineMesh tAdaptMesh tTransformMesh
 %token tRelocateMesh tReorientMesh tSetFactory tThruSections tWedge tFillet tChamfer
-%token tPlane tRuled tTransfinite tPhysical tCompound tPeriodic tParent
+%token tPlane tRuled tTransfinite tAutomatic tPhysical tCompound tPeriodic tParent
 %token tUsing tPlugin tDegenerated tRecursive tSewing
 %token tRotate tTranslate tSymmetry tDilate tExtrude tLevelset tAffine
 %token tBooleanUnion tBooleanIntersection tBooleanDifference tBooleanSection
@@ -4705,6 +4705,34 @@ Constraints :
         }
         List_Delete($3);
       }
+      List_Delete($4);
+    }
+  | tTransfinite tSTRING '{' ListOfShapes '}'
+    {
+      std::vector<std::pair<int, int> > dimTags;
+      std::string action($2);
+      ListOfShapes2VectorOfPairs($4, dimTags);
+      if(action == "Automatic"){
+        // sync
+        if(GModel::current()->getOCCInternals() &&
+         GModel::current()->getOCCInternals()->getChanged())
+          GModel::current()->getOCCInternals()->synchronize(GModel::current());
+        
+
+        std::vector<GEntity *> entities;
+        std::set<GFace *> faces;
+        GModel::current()->getEntities(entities, 2);
+        for(std::size_t i = 0; i < entities.size(); i++) {
+          GFace *gf = static_cast<GFace *>(entities[i]);
+          if(gf->edges().size() == 4) { faces.insert(gf); }
+        }
+        GModel::current()->getOCCInternals()->setTransfiniteAutomatic(faces, 2.35, true);
+
+      }
+      else{
+        yymsg(0, "Unknown transfinite option '%s'", $2);
+      }
+      Free($2);
       List_Delete($4);
     }
   | tTransfQuadTri ListOfDoubleOrAll tEND

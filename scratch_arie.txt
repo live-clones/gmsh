@@ -1,0 +1,7 @@
+cat .\Dockerfile_build_arie.txt | docker build -t build_arie -
+
+docker run --name buildtest -e DISPLAY=10.0.0.4:0.0 -it --mount type=bind,source=J:\dev\gmsh\,target=/gmsh build_arie
+
+mkdir -p ~/build && cd ~/build && cmake /gmsh
+
+make -j8 parser && make -j8 && make -j8 install
