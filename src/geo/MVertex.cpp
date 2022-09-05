@@ -377,6 +377,14 @@ void MVertex::writeKEY(FILE *fp, double scalingFactor)
           y() * scalingFactor, z() * scalingFactor);
 }
 
+void MVertex::writeRAD(FILE *fp, double scalingFactor)
+{
+  if(_index < 0) return; // negative index vertices are never saved
+
+  fprintf(fp, "%10ld%20g%20g%20g\n", _index, x() * scalingFactor,
+          y() * scalingFactor, z() * scalingFactor);
+}
+
 void MVertex::writeDIFF(FILE *fp, bool binary, double scalingFactor)
 {
   if(_index < 0) return; // negative index vertices are never saved
