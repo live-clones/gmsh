@@ -116,6 +116,7 @@ public:
   virtual const char *getStringForBDF() const { return "CPENTA"; }
   virtual const char *getStringForINP() const { return "C3D6"; }
   virtual const char *getStringForKEY() const { return "_SOLID"; }
+  virtual const char *getStringForRAD() const { return "/BRICK"; }
   virtual void reverse()
   {
     MVertex *tmp;
