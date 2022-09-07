@@ -1956,6 +1956,93 @@ void MElement::writeKEY(FILE *fp, int pid, int num)
   fprintf(fp, "\n");
 }
 
+void MElement::writeRAD(FILE *fp, int num)
+{
+  fprintf(fp, "%10d", num);
+  int n = getNumVertices();
+  int nid[64];
+  int i;
+  for(i = 0; i < n; i++) nid[i] = (int)getVertexRAD(i)->getIndex();
+  if(getDim() == 3) {
+    if(n == 4) { /* tet4, repeating n4 */
+      n = 4;
+    }
+    else if(n == 6) { /* penta degenerated hexa, n7=n6 & n8=n5 */
+      nid[50] = nid[3];
+      nid[51] = nid[0];
+      nid[53] = nid[5];
+      nid[55] = nid[1];
+      nid[0] = nid[50];
+      nid[1] = nid[51];
+      nid[3] = nid[53];
+      nid[5] = nid[55];
+      nid[6] = nid[5];
+      nid[7] = nid[4];
+      n = 8;
+//    }
+//    else if(n == 8) { n = 8;
+    }
+    else if (n == 10) {/* tetra 10, id line 1, nodes line2 */
+      fprintf(fp, "\n");
+      n = 10;
+    }
+    else if (n == 20) {/* Bric20, id and nodes 1-8 line1, nodes 9-16 line2, nodes 17-20 line3 */
+      for(i = 0; i < 8; i++) {
+        fprintf(fp, "%10d", nid[i]);
+      }
+      fprintf(fp, "\n");
+      for(i = 8; i < 16; i++) {
+        fprintf(fp, "%10d", nid[i]);
+      }
+      fprintf(fp, "\n");
+      for(i = 16; i < 20; i++) {
+        fprintf(fp, "%10d", nid[i]);
+      }
+      fprintf(fp, "\n");
+      return;
+    }
+    else if (n == 27) {/* Bric27 does not exist in Radioss write as Bric20 */
+      for(i = 0; i < 8; i++) {
+        fprintf(fp, "%10d", nid[i]);
+      }
+      fprintf(fp, "\n");
+      for(i = 8; i < 16; i++) {
+        fprintf(fp, "%10d", nid[i]);
+      }
+      fprintf(fp, "\n");
+      for(i = 16; i < 20; i++) {
+        fprintf(fp, "%10d", nid[i]);
+      }
+      fprintf(fp, "\n");
+      n = 20;
+      return;
+    }
+  }
+  else if(getDim() == 2) {
+    if(n == 3) { /* 3-node shell */
+      n = 3;
+    }
+    else if(n == 6) { /* 6-node shell */
+      nid[7] = nid[6] = nid[5];
+      nid[5] = nid[4];
+      nid[4] = nid[3];
+      nid[3] = nid[2];
+      n = 8;
+    }
+  }
+//  else if(getDim() == 1) {
+//    if(n == 3) { /* elbow, write the third node on the next line */
+//      nid[8] = nid[2];
+//      for(i = 2; i < 8; i++) nid[i] = 0;
+//      n = 9;
+//    }
+//  }
+  for(i = 0; i < n; i++) {
+    fprintf(fp, "%10d", nid[i]);
+  }
+  fprintf(fp, "\n");
+}
+
 void MElement::writeSU2(FILE *fp, int num)
 {
   fprintf(fp, "%d ", getTypeForVTK());

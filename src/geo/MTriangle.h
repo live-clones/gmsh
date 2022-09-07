@@ -115,6 +115,7 @@ public:
     return "CPS3" /*"STRI3"*/ /*"C2D3"*/;
   }
   virtual const char *getStringForKEY() const { return "_SHELL"; }
+  virtual const char *getStringForRAD() const { return "/SH3N"; }
   virtual const char *getStringForTOCHNOG() const { return "-tria3"; }
   virtual void reverse()
   {

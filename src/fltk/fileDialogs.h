@@ -41,6 +41,7 @@ int stlFileDialog(const char *filename);
 void format_cb(Fl_Widget *widget, void *data);
 int unvinpFileDialog(const char *filename, const char *title, int format);
 int keyFileDialog(const char *filename, const char *title, int format);
+int radFileDialog(const char *filename, const char *title, int format);
 int bdfFileDialog(const char *filename);
 int latexFileDialog(const char *filename);
 int cgnsFileDialog(const char *filename);
