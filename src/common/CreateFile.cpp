@@ -65,7 +65,7 @@ int GetFileFormatFromExtension(const std::string &ext, double *version)
   else if(ext == ".diff")     return FORMAT_DIFF;
   else if(ext == ".inp")      return FORMAT_INP;
   else if(ext == ".key")      return FORMAT_KEY;
-  else if(ext == "_0000.rad") return FORMAT_RAD;
+  else if(ext == ".rad")      return FORMAT_RAD;
   else if(ext == ".celum")    return FORMAT_CELUM;
   else if(ext == ".su2")      return FORMAT_SU2;
   else if(ext == ".nas")      return FORMAT_BDF;
@@ -132,7 +132,7 @@ std::string GetDefaultFileExtension(int format, bool onlyMeshFormats)
   case FORMAT_DIFF:    name = ".diff"; mesh = true; break;
   case FORMAT_INP:     name = ".inp"; mesh = true; break;
   case FORMAT_KEY:     name = ".key"; mesh = true; break;
-  case FORMAT_RAD:     name = "_0000.rad"; mesh = true; break;
+  case FORMAT_RAD:     name = ".rad"; mesh = true; break;
   case FORMAT_CELUM:   name = ".celum"; mesh = true; break;
   case FORMAT_SU2:     name = ".su2"; mesh = true; break;
   case FORMAT_P3D:     name = ".p3d"; mesh = true; break;
@@ -443,7 +443,7 @@ void CreateOutputFile(const std::string &fileName, int format,
       (name, CTX::instance()->mesh.saveAll, CTX::instance()->mesh.saveGroupsOfNodes,
        CTX::instance()->mesh.scalingFactor);
     break;
-    
+
   case FORMAT_RAD:
     GModel::current()->writeRAD
       (name, CTX::instance()->mesh.saveAll, CTX::instance()->mesh.saveGroupsOfNodes,

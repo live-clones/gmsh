@@ -2,6 +2,8 @@
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+//
+// Contributed by Paul Sharp
 
 #include "GModel.h"
 #include "OS.h"
@@ -39,7 +41,7 @@ static void writeElementsRAD(FILE *fp, GEntity *ge, std::vector<T *> &elements,
   if(elements.size() && (saveAll || ge->physicals.size())) {
     const char *typ = elements[0]->getStringForRAD();
     int pid = partID(ge->dim(), ge->tag());
-        if(typ) {
+    if(typ) {
       fprintf(fp, "%s/%d\n#SET_ELEMENT=%s%d\n", typ, pid,
               physicalName(ge->model(), ge->dim(), ge->tag()).c_str(),
               ge->tag());
@@ -67,26 +69,23 @@ int GModel::writeRAD(const std::string &name, int saveAll,
   indexMeshVertices(saveAll & 0x51, 0, false);
   std::vector<GEntity *> entities;
   getEntities(entities);
-  std::string beginname=name;
-  std::size_t n=name.find_last_of("/");
-  if (n!=std::string::npos) {
-     beginname=name.substr(n+1);
-  }
+  std::string beginname = name;
+  std::size_t n = name.find_last_of("/");
+  if(n != std::string::npos) { beginname = name.substr(n + 1); }
 
-  n=beginname.find("_0000.rad");
-  if (n!=std::string::npos) {
-     beginname=beginname.substr(0,n);
-  }
+  n = beginname.find("_0000.rad");
+  if(n != std::string::npos) { beginname = beginname.substr(0, n); }
 
-  n=beginname.find(".rad");
-  if (n!=std::string::npos) {
-     beginname=beginname.substr(0,n);
-  }
- 
+  n = beginname.find(".rad");
+  if(n != std::string::npos) { beginname = beginname.substr(0, n); }
+
   fprintf(fp, "#RADIOSS STARTER\n");
-  fprintf(fp, "#---1----|----2----|----3----|----4----|----5----|----6----|----7----|----8----|----9----|---10----|\n");
-  fprintf(fp, "# Created by Gmsh, Radioss Mesh Interface by PaulAltair sharp@altair.com\n");
-  fprintf(fp, "#---1----|----2----|----3----|----4----|----5----|----6----|----7----|----8----|----9----|---10----|\n");
+  fprintf(fp, "#---1----|----2----|----3----|----4----|----5----|----6----|"
+              "----7----|----8----|----9----|---10----|\n");
+  fprintf(fp, "# Created by Gmsh, Radioss Mesh Interface by PaulAltair "
+              "sharp@altair.com\n");
+  fprintf(fp, "#---1----|----2----|----3----|----4----|----5----|----6----|"
+              "----7----|----8----|----9----|---10----|\n");
   fprintf(fp, "/BEGIN\n");
   fprintf(fp, "%s\n", beginname.c_str());
   fprintf(fp, "      2022         0\n");

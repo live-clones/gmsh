@@ -1984,7 +1984,7 @@ void MElement::writeRAD(FILE *fp, int num)
     }
     else if (n == 10) {/* tetra 10, id line 1, nodes line2 */
       fprintf(fp, "\n");
-      n = 10;      
+      n = 10;
     }
     else if (n == 20) {/* Bric20, id and nodes 1-8 line1, nodes 9-16 line2, nodes 17-20 line3 */
       for(i = 0; i < 8; i++) {
