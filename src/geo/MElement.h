@@ -141,6 +141,9 @@ public:
   // get the vertex using KEY ordering
   virtual MVertex *getVertexKEY(int num) { return getVertex(num); }
 
+  // get the vertex using RAD ordering
+  virtual MVertex *getVertexRAD(int num) { return getVertex(num); }
+
   // get the vertex using NEU ordering
   virtual MVertex *getVertexNEU(int num) { return getVertex(num); }
 
@@ -477,6 +480,7 @@ public:
                          int physical_property = 1);
   virtual void writeINP(FILE *fp, int num);
   virtual void writeKEY(FILE *fp, int pid, int num);
+  virtual void writeRAD(FILE *fp, int num);
   virtual void writeSU2(FILE *fp, int num);
 
   // info for specific IO formats (returning 0 means that the element is not
@@ -490,6 +494,7 @@ public:
   virtual const char *getStringForDIFF() const { return nullptr; }
   virtual const char *getStringForINP() const { return nullptr; }
   virtual const char *getStringForKEY() const { return nullptr; }
+  virtual const char *getStringForRAD() const { return nullptr; }
 
   // return the number of vertices, as well as the element name if 'name' != 0
   static unsigned int getInfoMSH(const int typeMSH,

@@ -114,6 +114,7 @@ public:
   virtual const char *getStringForDIFF() const { return "ElmB4n2D"; }
   virtual const char *getStringForINP() const { return "CPS4" /*"C2D4"*/; }
   virtual const char *getStringForKEY() const { return "_SHELL"; }
+  virtual const char *getStringForRAD() const { return "/SHELL"; }
   virtual const char *getStringForTOCHNOG() const { return "-quad4"; }
   virtual void getNode(int num, double &u, double &v, double &w) const
   {
