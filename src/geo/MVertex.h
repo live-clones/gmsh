@@ -129,6 +129,7 @@ public:
   void writeBDF(FILE *fp, int format = 0, double scalingFactor = 1.0);
   void writeINP(FILE *fp, double scalingFactor = 1.0);
   void writeKEY(FILE *fp, double scalingFactor = 1.0);
+  void writeRAD(FILE *fp, double scalingFactor = 1.0);
   void writeDIFF(FILE *fp, bool binary, double scalingFactor = 1.0);
   void writeSU2(FILE *fp, int dim, double scalingFactor = 1.0);
 };

@@ -338,6 +338,10 @@ static int _save_key(const char *name)
 {
   return keyFileDialog(name, "LSDYNA KEY Options", FORMAT_KEY);
 }
+static int _save_rad(const char *name)
+{
+  return radFileDialog(name, "RADIOSS Block Options", FORMAT_RAD);
+}
 static int _save_celum(const char *name)
 {
   return genericMeshFileDialog(name, "CELUM Options", FORMAT_CELUM, false,
@@ -489,6 +493,7 @@ static int _save_auto(const char *name)
   case FORMAT_DIFF: return _save_diff(name);
   case FORMAT_INP: return _save_inp(name);
   case FORMAT_KEY: return _save_key(name);
+  case FORMAT_RAD: return _save_rad(name);
   case FORMAT_CELUM: return _save_celum(name);
   case FORMAT_SU2: return _save_su2(name);
   case FORMAT_P3D: return _save_p3d(name);
@@ -538,6 +543,7 @@ static void file_export_cb(Fl_Widget *w, void *data)
     {"Mesh - Gmsh MSH\t*.msh", _save_msh},
     {"Mesh - Abaqus INP\t*.inp", _save_inp},
     {"Mesh - LSDYNA KEY\t*.key", _save_key},
+    {"Mesh - RADIOSS BLOCK\t*_0000.rad", _save_rad},
     {"Mesh - CELUM\t*.celum", _save_celum},
 #if defined(HAVE_LIBCGNS)
     {"Mesh - CGNS (Experimental)\t*.cgns", _save_cgns},

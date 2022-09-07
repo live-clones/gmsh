@@ -887,6 +887,10 @@ public:
   int writeKEY(const std::string &name, int saveAll = 0,
                int saveGroupsOfNodes = 0, double scalingFactor = 1.0);
 
+  // RADIOSS
+  int writeRAD(const std::string &name, int saveAll = 0,
+               int saveGroupsOfNodes = 0, double scalingFactor = 1.0);
+
   // CELUM
   int writeCELUM(const std::string &name, bool saveAll = false,
                  double scalingFactor = 1.0);
