@@ -1,7 +1,7 @@
 4.11.0 (Work-in-progress): new Fortran API; improved copying ("Duplicata") of
 multiple shapes with OCC; reduced default order for OCC surface filling;
 arbitrary string attributes can now be stored in models and MSH files; new
-Radioss export; small bug fixes.
+Radioss export; new official macOS ARM builds; small bug fixes.
 
 * New API functions: model/getAttributeNames, model/getAttribute,
   model/setAttribute, model/removeAttribute
