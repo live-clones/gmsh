@@ -202,7 +202,11 @@ if(NOT GMSH_PACKAGER)
 endif()
 
 if(APPLE)
-  set(GMSH_OS "MacOSX")
+  if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "arm64")
+    set(GMSH_OS "MacOSARM")
+  else()
+    set(GMSH_OS "MacOSX")
+  endif()
   # build universal binary
   #SET(CMAKE_OSX_ARCHITECTURES "x86_64;arm64" CACHE STRING "Build architectures for macOS" FORCE)
 elseif(CYGWIN OR MSYS)
@@ -1880,8 +1884,7 @@ if(WIN32)
     endforeach()
   endif()
 elseif(APPLE AND ENABLE_OS_SPECIFIC_INSTALL)
-  # set these so that the files get installed nicely in the MacOSX
-  # .app bundle
+  # set these so that the files get installed nicely in the macOS .app bundle
   set(GMSH_BIN ../MacOS)
   set(GMSH_LIB ../MacOS)
   set(GMSH_DOC ../../..)
