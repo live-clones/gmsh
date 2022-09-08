@@ -435,9 +435,8 @@ pypi_official_snapshot:
     - python3 ../utils/pypi/sdktowheel.py _CPack_Packages/Linux/TGZ/gmsh-git-Linux64-sdk/ manylinux1_x86_64
     - python3 ../utils/pypi/sdktowheel.py _CPack_Packages/Linux/TGZ/gmsh-nox-git-Linux64-sdk/ manylinux1_x86_64
     - python3 ../utils/pypi/sdktowheel.py _CPack_Packages/CYGWIN/ZIP/gmsh-git-Windows64-sdk/ win_amd64
-    - cp -R _CPack_Packages/Darwin _CPack_Packages/Darwin2
-    - python3 ../utils/pypi/sdktowheel.py _CPack_Packages/Darwin2/TGZ/gmsh-git-MacOSX-sdk/ macosx_10_15_x86_64
-    - python3 ../utils/pypi/sdktowheel.py _CPack_Packages/Darwin2/TGZ/gmsh-git-MacOSARM-sdk/ macosx_12_0_arm64
+    - python3 ../utils/pypi/sdktowheel.py _CPack_Packages/Darwin/TGZ/gmsh-git-MacOSX-sdk/ macosx_10_15_x86_64
+    - python3 ../utils/pypi/sdktowheel.py _CPack_Packages/Darwin/TGZ/gmsh-git-MacOSARM-sdk/ macosx_12_0_arm64
     - scp gmsh-*.dev1+nox*.whl geuzaine@gmsh.info:.wwwgmsh/python-packages-dev-nox/gmsh/
     - scp gmsh-*.dev1-*.whl geuzaine@gmsh.info:.wwwgmsh/python-packages-dev/gmsh/
   tags:
@@ -467,9 +466,8 @@ pypi_official_release:
     - VERSION=`cat version.txt`
     - python3 ../utils/pypi/sdktowheel.py _CPack_Packages/Linux/TGZ/gmsh-${VERSION}-Linux64-sdk/ manylinux1_x86_64
     - python3 ../utils/pypi/sdktowheel.py _CPack_Packages/CYGWIN/ZIP/gmsh-${VERSION}-Windows64-sdk/ win_amd64
-    - cp -R _CPack_Packages/Darwin _CPack_Packages/Darwin2
-    - python3 ../utils/pypi/sdktowheel.py _CPack_Packages/Darwin2/TGZ/gmsh-${VERSION}-MacOSX-sdk/ macosx_10_15_x86_64
-    - python3 ../utils/pypi/sdktowheel.py _CPack_Packages/Darwin2/TGZ/gmsh-${VERSION}-MacOSARM-sdk/ macosx_12_0_arm64
+    - python3 ../utils/pypi/sdktowheel.py _CPack_Packages/Darwin/TGZ/gmsh-${VERSION}-MacOSX-sdk/ macosx_10_15_x86_64
+    - python3 ../utils/pypi/sdktowheel.py _CPack_Packages/Darwin/TGZ/gmsh-${VERSION}-MacOSARM-sdk/ macosx_12_0_arm64
     - scp gmsh*.whl geuzaine@gmsh.info:.wwwgmsh/python-packages/gmsh/
     - twine upload gmsh*.whl
     - ssh geuzaine@gmsh.info "cd .wwwgmsh/bin/Linux && rm -f gmsh-stable-Linux64* && ln -s gmsh-${VERSION}-Linux64.tgz gmsh-stable-Linux64.tgz && ln -s gmsh-${VERSION}-Linux64-sdk.tgz gmsh-stable-Linux64-sdk.tgz"
