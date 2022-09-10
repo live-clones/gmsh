@@ -30,6 +30,7 @@ gmsh.model.addPhysicalGroup(1, new_lines, 101)
 
 gmsh.model.mesh.generate(2)
 
+gmsh.plugin.setNumber("Crack", "Dimension", 1)
 gmsh.plugin.setNumber("Crack", "PhysicalGroup", 101)
 gmsh.plugin.setNumber("Crack", "DebugView", 1)
 gmsh.plugin.run("Crack")
