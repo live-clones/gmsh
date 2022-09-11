@@ -17,7 +17,7 @@ variables:
 # Continuous integration builds for all branches
 # ----------------------------------------------
 
-linux64_ci:
+linux_ci:
   image: onelab/ubuntu20.04
   script:
     - mkdir build
@@ -34,7 +34,7 @@ linux64_ci:
   except:
     - tags
 
-linux64_compatibility_ci:
+linux_compatibility_ci:
   image: onelab/ubuntu20.04
   script:
     - mkdir build
@@ -53,7 +53,7 @@ linux64_compatibility_ci:
   except:
     - tags
 
-windows64_ci:
+windows_ci:
   script:
     - md build
     - cd build
@@ -66,7 +66,7 @@ windows64_ci:
   except:
     - tags
 
-windows64_msvc_ci:
+windows_msvc_ci:
   script:
     - md build
     - cd build
@@ -98,7 +98,7 @@ windows64_msvc_ci:
     - linux64
     - docker
 
-linux64_official_snapshot:
+linux_official_snapshot:
   image: onelab/debian.stretch.64bit
   variables:
     EXTRA_OPTION: "-DCMAKE_EXE_LINKER_FLAGS=-static-libstdc++"
@@ -106,7 +106,7 @@ linux64_official_snapshot:
   except:
     - tags
 
-linux64_official_release:
+linux_official_release:
   image: onelab/debian.stretch.64bit
   variables:
     EXTRA_OPTION: "-DGMSH_RELEASE=1 -DCMAKE_EXE_LINKER_FLAGS=-static-libstdc++"
@@ -114,7 +114,7 @@ linux64_official_release:
   only:
     - /^gmsh_.*$/
 
-linux64-sdk_official_snapshot:
+linux-sdk_official_snapshot:
   image: onelab/debian.stretch.64bit
   variables:
     EXTRA_OPTION: "-DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1"
@@ -127,7 +127,7 @@ linux64-sdk_official_snapshot:
       - build/version.txt
     expire_in: 1day
 
-linux64-sdk_official_release:
+linux-sdk_official_release:
   image: onelab/debian.stretch.64bit
   variables:
     EXTRA_OPTION: "-DGMSH_RELEASE=1 -DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1"
@@ -140,7 +140,7 @@ linux64-sdk_official_release:
       - build/version.txt
     expire_in: 1day
 
-linux64-nox-sdk_official_snapshot:
+linux-nox-sdk_official_snapshot:
   image: onelab/debian.stretch.64bit
   variables:
     EXTRA_OPTION: "-DGMSH_EXTRA_VERSION=-nox -DENABLE_FLTK=0 -DENABLE_OCC_CAF=0 -DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1"
@@ -167,7 +167,7 @@ linux64-nox-sdk_official_snapshot:
     - c:\cygwin64\bin\bash -c "/usr/bin/scp -o StrictHostKeyChecking=no -i /home/geuzaine/.ssh/id_rsa gmsh-*.zip geuzaine@gmsh.info:.wwwgmsh/bin/Windows/"
     - c:\cygwin64\bin\bash -c "/usr/bin/ctest -j 4 --output-on-failure"
 
-windows64_official_snapshot:
+windows_official_snapshot:
   <<: *windows_official
   tags:
     - windows64
@@ -175,7 +175,7 @@ windows64_official_snapshot:
   except:
     - tags
 
-windows64_official_release:
+windows_official_release:
   variables:
     EXTRA_OPTION: "-DGMSH_RELEASE=1"
   <<: *windows_official
@@ -185,7 +185,7 @@ windows64_official_release:
   only:
     - /^gmsh_.*$/
 
-windows64-sdk_official_snapshot:
+windows-sdk_official_snapshot:
   variables:
     EXTRA_OPTION: "-DENABLE_OS_SPECIFIC_INSTALL=0 -DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1"
   <<: *windows_official
@@ -199,7 +199,7 @@ windows64-sdk_official_snapshot:
       - build/_CPack_Packages/
     expire_in: 1day
 
-windows64-sdk_official_release:
+windows-sdk_official_release:
   variables:
     EXTRA_OPTION: "-DGMSH_RELEASE=1 -DENABLE_OS_SPECIFIC_INSTALL=0 -DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1"
   <<: *windows_official
@@ -425,9 +425,9 @@ pypi_official_snapshot:
     - master@gmsh/gmsh
   <<: *ssh_config
   dependencies:
-    - linux64-sdk_official_snapshot
-    - linux64-nox-sdk_official_snapshot
-    - windows64-sdk_official_snapshot
+    - linux-sdk_official_snapshot
+    - linux-nox-sdk_official_snapshot
+    - windows-sdk_official_snapshot
     - macosx-sdk_official_snapshot
     - macosarm-sdk_official_snapshot
   script:
@@ -452,8 +452,8 @@ pypi_official_release:
     - master@gmsh/gmsh
   <<: *ssh_config
   dependencies:
-    - linux64-sdk_official_release
-    - windows64-sdk_official_release
+    - linux-sdk_official_release
+    - windows-sdk_official_release
     - macosx-sdk_official_release
     - macosarm-sdk_official_release
   script:
