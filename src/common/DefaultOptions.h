@@ -947,6 +947,9 @@ StringXNumber GeometryOptions_Number[] = {
   { F|O, "OCCFixSmallFaces" , opt_geometry_occ_fix_small_faces , 0. ,
     "Fix small faces when importing STEP, IGES and BRep models with the "
     "OpenCASCADE kernel" },
+  { F|O, "OCCExportOnlyVisible" , opt_geometry_occ_export_only_visible , 0. ,
+    "Only consider visible shapes when exporting STEP or BREP models with the "
+    "OpenCASCADE kernel" },
   { F|O, "OCCImportLabels" , opt_geometry_occ_import_labels , 1. ,
     "Import labels and colors when importing STEP models with the OpenCASCADE kernel" },
   { F|O, "OCCMakeSolids" , opt_geometry_occ_make_solids , 0. ,

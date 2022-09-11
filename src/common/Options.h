@@ -412,6 +412,7 @@ double opt_geometry_occ_union_unify(OPT_ARGS_NUM);
 double opt_geometry_occ_parallel(OPT_ARGS_NUM);
 double opt_geometry_occ_boolean_preserve_numbering(OPT_ARGS_NUM);
 double opt_geometry_occ_scaling(OPT_ARGS_NUM);
+double opt_geometry_occ_export_only_visible(OPT_ARGS_NUM);
 double opt_geometry_occ_import_labels(OPT_ARGS_NUM);
 double opt_geometry_occ_thrusections_degree(OPT_ARGS_NUM);
 double opt_geometry_occ_use_generic_closest_point(OPT_ARGS_NUM);

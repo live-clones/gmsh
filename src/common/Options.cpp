@@ -4692,6 +4692,12 @@ double opt_geometry_occ_scaling(OPT_ARGS_NUM)
   return CTX::instance()->geom.occScaling;
 }
 
+double opt_geometry_occ_export_only_visible(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->geom.occExportOnlyVisible = (int)val;
+  return CTX::instance()->geom.occExportOnlyVisible;
+}
+
 double opt_geometry_occ_import_labels(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->geom.occImportLabels = (int)val;

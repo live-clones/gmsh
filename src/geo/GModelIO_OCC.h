@@ -393,7 +393,7 @@ public:
 
   // export all bound shapes to file
   bool exportShapes(GModel *model, const std::string &fileName,
-                    const std::string &format = "");
+                    const std::string &format = "", bool onlyVisible = false);
 
   // queries
   bool getEntities(std::vector<std::pair<int, int> > &dimTags, int dim);
@@ -799,7 +799,7 @@ public:
   void setMeshSize(int dim, int tag, double size) {}
   void synchronize(GModel *model) {}
   bool exportShapes(GModel *model, const std::string &fileName,
-                    const std::string &format = "")
+                    const std::string &format = "", bool onlyVisible = false)
   {
     return _error("export shape");
   }

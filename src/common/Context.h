@@ -100,8 +100,8 @@ struct contextGeometryOptions {
   int occAutoFix, occAutoEmbed, occSafeUnbind;
   int occFixDegenerated, occFixSmallEdges, occFixSmallFaces;
   int occSewFaces, occMakeSolids, occParallel, occBooleanPreserveNumbering;
-  int occBoundsUseSTL, occDisableSTL, occImportLabels, occUnionUnify;
-  int occThruSectionsDegree, occUseGenericClosestPoint;
+  int occBoundsUseSTL, occDisableSTL, occImportLabels, occExportOnlyVisible;
+  int occUnionUnify, occThruSectionsDegree, occUseGenericClosestPoint;
   double occScaling;
   std::string occTargetUnit;
   int copyMeshingMethod, exactExtrusion;

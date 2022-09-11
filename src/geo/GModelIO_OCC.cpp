@@ -4402,7 +4402,7 @@ bool OCC_Internals::importShapes(const TopoDS_Shape *shape, bool highestDimOnly,
 }
 
 bool OCC_Internals::exportShapes(GModel *model, const std::string &fileName,
-                                 const std::string &format)
+                                 const std::string &format, bool onlyVisible)
 {
   // put all top-level OCC shapes from a GModel in a single compound (we use the
   // topology to only consider top-level shapes; otherwise we get duplicates in
@@ -4412,23 +4412,70 @@ bool OCC_Internals::exportShapes(GModel *model, const std::string &fileName,
   b.MakeCompound(c);
   for(auto it = model->firstRegion(); it != model->lastRegion(); it++) {
     GRegion *gr = *it;
-    if(gr->getNativeType() == GEntity::OpenCascadeModel)
+    if(onlyVisible) {
+      if(!gr->getVisibility()) continue;
+    }
+    if(gr->getNativeType() == GEntity::OpenCascadeModel) {
+      Msg::Debug("Adding volume %d to exported compound", gr->tag());
       b.Add(c, *(TopoDS_Solid *)gr->getNativePtr());
+    }
   }
   for(auto it = model->firstFace(); it != model->lastFace(); it++) {
     GFace *gf = *it;
-    if(!gf->numRegions() && gf->getNativeType() == GEntity::OpenCascadeModel)
+    if(onlyVisible) {
+      if(!gf->getVisibility()) continue;
+      auto regions = gf->regions();
+      bool skip = false;
+      for(auto gr : regions) {
+        if(gr->getVisibility()) { skip = true; break; }
+      }
+      if(skip) continue;
+    }
+    else {
+      if(gf->numRegions()) continue;
+    }
+    if(gf->getNativeType() == GEntity::OpenCascadeModel) {
+      Msg::Debug("Adding surface %d to exported compound", gf->tag());
       b.Add(c, *(TopoDS_Face *)gf->getNativePtr());
+    }
   }
   for(auto it = model->firstEdge(); it != model->lastEdge(); it++) {
     GEdge *ge = *it;
-    if(!ge->numFaces() && ge->getNativeType() == GEntity::OpenCascadeModel)
+    if(onlyVisible) {
+      if(!ge->getVisibility()) continue;
+      auto faces = ge->faces();
+      bool skip = false;
+      for(auto gf : faces) {
+        if(gf->getVisibility()) { skip = true; break; }
+      }
+      if(skip) continue;
+    }
+    else {
+      if(ge->numFaces()) continue;
+    }
+    if(ge->getNativeType() == GEntity::OpenCascadeModel) {
+      Msg::Debug("Adding curve %d to exported compound", ge->tag());
       b.Add(c, *(TopoDS_Edge *)ge->getNativePtr());
+    }
   }
   for(auto it = model->firstVertex(); it != model->lastVertex(); it++) {
     GVertex *gv = *it;
-    if(!gv->numEdges() && gv->getNativeType() == GEntity::OpenCascadeModel)
+    if(onlyVisible) {
+      if(!gv->getVisibility()) continue;
+      auto edges = gv->edges();
+      bool skip = false;
+      for(auto ge : edges) {
+        if(ge->getVisibility()) { skip = true; break; }
+      }
+      if(skip) continue;
+    }
+    else {
+      if(gv->numEdges()) continue;
+    }
+    if(gv->getNativeType() == GEntity::OpenCascadeModel) {
+      Msg::Debug("Adding point %d to exported compound", gv->tag());
       b.Add(c, *(TopoDS_Vertex *)gv->getNativePtr());
+    }
   }
 
   std::vector<std::string> split = SplitFileName(fileName);
@@ -5844,7 +5891,8 @@ int GModel::writeOCCBREP(const std::string &fn)
     Msg::Error("No OpenCASCADE model found");
     return 0;
   }
-  _occ_internals->exportShapes(this, fn, "brep");
+  _occ_internals->exportShapes(this, fn, "brep",
+                               CTX::instance()->geom.occExportOnlyVisible);
   return 1;
 }
 
@@ -5854,7 +5902,8 @@ int GModel::writeOCCSTEP(const std::string &fn)
     Msg::Error("No OpenCASCADE model found");
     return 0;
   }
-  _occ_internals->exportShapes(this, fn, "step");
+  _occ_internals->exportShapes(this, fn, "step",
+                               CTX::instance()->geom.occExportOnlyVisible);
   return 1;
 }
 

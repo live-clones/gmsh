@@ -517,7 +517,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.NumSubEdges
-Number of edge subdivisions when displaying high-order elements@*
+Number of edge subdivisions used to draw high-order mesh elements@*
 Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
