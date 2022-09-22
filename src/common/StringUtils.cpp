@@ -65,9 +65,9 @@ std::string SanitizeTeXString(const char *in, int equation)
 std::string FixWindowsPath(const std::string &in)
 {
 #if defined(__CYGWIN__)
-  char tmp[MAX_PATH];
+  char tmp[1024];
   //cygwin_conv_to_win32_path(in.c_str(), tmp);
-  cygwin_conv_path(CCP_POSIX_TO_WIN_A, in.c_str(), tmp, MAX_PATH);
+  cygwin_conv_path(CCP_POSIX_TO_WIN_A, in.c_str(), tmp, 1024);
   return std::string(tmp);
 #else
   return in;
