@@ -6471,8 +6471,9 @@ things a lot if many transformations are performed. There are two
 solutions to this problem:
 @itemize
 @item
-you may save the unrolled geometry in another file (e.g. with gmsh
-file.geo -0), and use this new file for subsequent computations;
+you may save the serialized (``unrolled'') geometry in another file
+(using @code{gmsh file.geo -0} or exporting to ``.geo_unrolled''), and
+use this new file for subsequent computations;
 @item
 or you may set the @code{Geometry.AutoCoherence} option to 0. This will
 prevent any automatic duplicate check/replacement. If you still need to
@@ -6480,6 +6481,13 @@ remove the duplicates entities, simply add @code{Coherence;} at
 strategic locations in your @code{.geo} files (e.g. before the creation
 of curve loops, etc.).
 @end itemize
+
+@item Why is my ``.geo_unrolled'' file incomplete?
+
+``Unrolled GEO'' files can only fully represent geometries created with
+the built-in geometry kernel. If you want to serialize a geometry
+created with the OpenCASCADE geometry kernel, you should use the native
+OpenCASCADE ``.brep'' format.
 
 @item How can I display only selected parts of my model?
 
@@ -6500,10 +6508,10 @@ e.g. @url{@value{GITLAB-PREFIX}/examples/boolean/import.geo,examples/boolean/imp
 
 You should @emph{not} export STEP models as @code{.geo} files. By
 design, Gmsh never translates from one CAD format to another. The
-``unrolled GEO'' feature is there for unrolling complex GEO
-scripts. While it can indeed export a limited subset of geometrical
-entities created by other CAD kernels, it's there only for debugging
-purposes. If you want to modify a STEP model, see the previous question.
+``unrolled GEO'' feature is there for unrolling complex GEO scripts
+writted with the built-in geometry kernel. While it can indeed export a
+limited subset of geometrical entities created by other CAD kernels
+(e.g. OpenCASCADE), this feature is available for debugging purposes.
 
 @item How can I build modular geometries?
 
