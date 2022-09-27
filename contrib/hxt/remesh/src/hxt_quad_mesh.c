@@ -6,6 +6,7 @@
 #include "hxt_tools.h"
 #include "hxt_post_debugging.h"
 #include "hxt_point_gen_utils.h"
+#include "hxt_point_gen_realloc.h"
 #include "hxt_point_gen_numerics.h"
 #include "hxt_rtree_wrapper.h"
 
@@ -234,20 +235,22 @@ HXTStatus hxtPointGenProjectCloseRTree(HXTMesh *omesh,
 //*****************************************************************************************
 //*****************************************************************************************
 //
-// FUNCTION 
+// FUNCTION to remove from quad mesh:
 //
-// TODO 
+// - doublets (1 vertex with two quads)
+// - diamonds (quads with two 3-valant opposite vertices)
 //
 //*****************************************************************************************
 //*****************************************************************************************
-HXTStatus hxtQuadMeshRemoveDoublets(HXTPointGenOptions *opt, 
-                                    HXTMesh *omesh,
-                                    void *dataTri,
-                                    uint64_t *p2t,
-                                    HXTMesh *mesh, 
-                                    uint64_t *v2q,
-                                    uint64_t maxValence,
-                                    uint32_t *isBoundary)
+HXTStatus hxtQuadMeshRemoveDoubletsAndDiamonds(HXTPointGenOptions *opt, 
+                                               HXTMesh *omesh,
+                                               void *dataTri,
+                                               uint64_t *p2t,
+                                               HXTMesh *mesh, 
+                                               uint64_t *v2q,
+                                               uint64_t maxValence,
+                                               uint32_t *isBoundary,
+                                               int *stop)
 {
   //===========================================================================
   // Count valence of each vertex 
@@ -274,6 +277,7 @@ HXTStatus hxtQuadMeshRemoveDoublets(HXTPointGenOptions *opt,
   HXT_INFO_COND(opt->verbosity>=2,"    - %d doublets to be removed",countDoublets);
   if(countDoublets==0){
     HXT_CHECK(hxtFree(&vertexValence));
+    *stop = 1;
     return HXT_STATUS_OK;
   }
 
@@ -364,6 +368,20 @@ HXTStatus hxtQuadMeshRemoveDoublets(HXTPointGenOptions *opt,
           vertexValence[v0] = UINT64_MAX;
         }
 
+        double np[3];
+        np[0] = (mesh->vertices.coord[4*v0+0]+mesh->vertices.coord[4*v1+0])/2;
+        np[1] = (mesh->vertices.coord[4*v0+1]+mesh->vertices.coord[4*v1+1])/2;
+        np[2] = (mesh->vertices.coord[4*v0+2]+mesh->vertices.coord[4*v1+2])/2;
+        np[0]/=2;
+        np[1]/=2;
+        np[2]/=2;
+        mesh->vertices.coord[4*v0+0] = np[0];
+        mesh->vertices.coord[4*v0+1] = np[1];
+        mesh->vertices.coord[4*v0+2] = np[2];
+        mesh->vertices.coord[4*v1+0] = np[0];
+        mesh->vertices.coord[4*v1+1] = np[1];
+        mesh->vertices.coord[4*v1+2] = np[2];
+
         countDeletedQuads++;
 
         break;
@@ -428,6 +446,7 @@ HXTStatus hxtQuadMeshRemoveDoublets(HXTPointGenOptions *opt,
   }
   /*hxtPosFinish(test);*/
 
+  HXT_INFO_COND(opt->verbosity>=2,"    - %d quads to be deleted",countDeletedQuads);
 
   //===========================================================================
   // New index of vertices on quads
@@ -583,167 +602,6 @@ HXTStatus hxtQuadMeshBuildV2Q(HXTPointGenOptions *opt,
 //*****************************************************************************************
 //*****************************************************************************************
 //
-// FUNCTION TODO delete, not used  
-//
-//*****************************************************************************************
-//*****************************************************************************************
-HXTStatus hxtQuadMeshFans(HXTPointGenOptions *opt, 
-                         HXTMesh *mesh, 
-                         uint64_t *v2q,
-                         uint64_t maxValence,
-                         uint32_t *isBoundary,
-                         uint32_t vertex)
-{
-
-
-  {
-    FILE *test;
-    hxtPosInit("checkBoundary.pos","quads",&test);
-
-    for (uint32_t i=0; i<mesh->vertices.num; i++){
-      if (isBoundary[i] != 1) continue;
-      hxtPosAddPoint(test,&mesh->vertices.coord[4*i],0);
-    }
-
-    hxtPosFinish(test);
-  }
-
-  FILE *test;
-  hxtPosInit("checkQuadFan.pos","quads",&test);
-
-  for (uint32_t i=0; i<mesh->vertices.num; i++){
-    uint64_t countQuads = 0; 
-    for (uint64_t j=0; j<maxValence; j++){
-      if (v2q[maxValence*i+j] == UINT64_MAX) break;
-      countQuads++;
-    }
-
-    if (isBoundary[i] != 1){
-
-      hxtPosNewView(test,"vert %d",i);
-      for (uint64_t j=0; j<countQuads; j++){
-        hxtPosNewView(test,"  quad %d",j);
-        uint32_t *v = mesh->quads.node + 4*v2q[maxValence*i+j];
-        double *p0 = mesh->vertices.coord + 4*v[0];
-        double *p1 = mesh->vertices.coord + 4*v[1];
-        double *p2 = mesh->vertices.coord + 4*v[2];
-        double *p3 = mesh->vertices.coord + 4*v[3];
-        hxtPosAddQuad(test,p0,p1,p2,p3,0);
-        hxtPosAddText(test,p0,"0");
-        hxtPosAddText(test,p1,"1");
-        hxtPosAddText(test,p2,"2");
-        hxtPosAddText(test,p3,"3");
-
-        hxtPosNewView(test,"  q nodes");
-        hxtPosAddText(test,p0,"%d",v[0]);
-        hxtPosAddText(test,p1,"%d",v[1]);
-        hxtPosAddText(test,p2,"%d",v[2]);
-        hxtPosAddText(test,p3,"%d",v[3]);
-      }
-      break;
-    }
-  }
-  hxtPosFinish(test);
-
-
-
-  // TODO this can be outside the function 
-  uint64_t *fanQuads;
-  uint32_t *fanNodes;
-  HXT_CHECK(hxtMalloc(&fanQuads,maxValence*sizeof(uint64_t)));
-  HXT_CHECK(hxtMalloc(&fanNodes,2*maxValence*sizeof(uint32_t)));
-
-
-  for (uint32_t i=0; i<mesh->vertices.num; i++){
-
-    if (isBoundary[i] == 1) continue;
-
-    for (uint64_t k=0; k<maxValence; k++) fanQuads[k] = UINT64_MAX;
-    for (uint64_t k=0; k<2*maxValence; k++) fanNodes[k] = UINT32_MAX;
-
-    uint64_t countQuads = 0; 
-    for (uint64_t j=0; j<maxValence; j++){
-      if (v2q[maxValence*i+j] == UINT64_MAX) break;
-      countQuads++;
-    }
-
-    printf("%d\n",i);
-
-    uint64_t firstQuad = v2q[maxValence*i+0];
-
-    uint32_t nodeIndex = UINT32_MAX;
-    for (uint32_t j=0; j<4; j++)
-      if (mesh->quads.node[4*firstQuad+j] == i) nodeIndex = j;
-
-    uint32_t firstNode = mesh->quads.node[4*firstQuad+(nodeIndex+3)%4];
-    uint32_t lastNode =  mesh->quads.node[4*firstQuad+(nodeIndex+1)%4];
-    uint32_t medNode =  mesh->quads.node[4*firstQuad+(nodeIndex+2)%4];
-
-    uint64_t currQuad = firstQuad;
-    uint32_t currNode = firstNode;
-
-    uint64_t qcounter = 0;
-    fanQuads[countQuads-1] = currQuad;
-    fanNodes[2*qcounter+0] = currNode;
-    fanNodes[2*(countQuads-1)+1] = medNode;
-    qcounter++;
-
-    
-    printf("   %d %d\n", firstNode, lastNode);
-
-    while(1){
-
-      for (uint64_t j=1; j<countQuads; j++){
-        uint64_t cq = v2q[maxValence*i+j];
-        if (cq == currQuad)continue;
-
-        for (uint32_t k=0; k<4; k++){
-
-          uint32_t cn = mesh->quads.node[4*cq+k];
-
-          if (cn != currNode) continue;
-
-          uint32_t nextNode1 = mesh->quads.node[4*cq+(k+1)%4];
-          uint32_t nextNode2 = mesh->quads.node[4*cq+(k+2)%4];
-
-          printf("   %d %d \n", nextNode1, nextNode2); 
-
-          currQuad = cq;
-          currNode = nextNode2;
-
-          fanQuads[qcounter-1] = currQuad;
-          fanNodes[2*qcounter-1] = nextNode1;
-          fanNodes[2*qcounter+0] = nextNode2;
-          qcounter++;
-          break;
-
-        }
-
-      }
-      if (currNode == lastNode){
-        break;
-      }
-
-    }
-
-    for (uint64_t k=0; k<countQuads; k++){
-      printf("%d %d \n", fanNodes[2*k+0], fanNodes[2*k+1]);
-    }
-
-  }
-
-
-  HXT_CHECK(hxtFree(&fanQuads));
-  HXT_CHECK(hxtFree(&fanNodes));
-
-  return HXT_STATUS_OK; 
-  
-}
-
-
-//*****************************************************************************************
-//*****************************************************************************************
-//
 // FUNCTION 
 //
 //*****************************************************************************************
@@ -862,25 +720,28 @@ HXTStatus hxtQuadMeshSmoothConcave(HXTPointGenOptions *opt,
 
   HXT_INFO_COND(opt->verbosity>=2,"      - Smoothing of concave vertex %d", v);
 
-  char buf[40];
-  snprintf(buf, 40, "checkConcave_%d.msh", v); // puts string into buffer
+
+  if (opt->verbosity>=2){
+    char buf[40];
+    snprintf(buf, 40, "checkConcave_%d.msh", v); // puts string into buffer
  
-  FILE *test;
-  hxtPosInit(buf,"quads",&test);
-  hxtPosAddPoint(test,&mesh->vertices.coord[4*concaveVertex],0);
-  for (uint64_t j=0; j<numQuads; j++){
-    uint64_t cq = fanQuads[j];
+    FILE *test;
+    hxtPosInit(buf,"quads",&test);
+    hxtPosAddPoint(test,&mesh->vertices.coord[4*concaveVertex],0);
+    for (uint64_t j=0; j<numQuads; j++){
+      uint64_t cq = fanQuads[j];
 
-    uint32_t *v = mesh->quads.node + 4*cq;
+      uint32_t *v = mesh->quads.node + 4*cq;
 
-    double *p0 = mesh->vertices.coord + 4*v[0];
-    double *p1 = mesh->vertices.coord + 4*v[1];
-    double *p2 = mesh->vertices.coord + 4*v[2];
-    double *p3 = mesh->vertices.coord + 4*v[3];
+      double *p0 = mesh->vertices.coord + 4*v[0];
+      double *p1 = mesh->vertices.coord + 4*v[1];
+      double *p2 = mesh->vertices.coord + 4*v[2];
+      double *p3 = mesh->vertices.coord + 4*v[3];
 
-    hxtPosAddQuad(test,p0,p1,p2,p3,0);
+      hxtPosAddQuad(test,p0,p1,p2,p3,0);
+    }
+    hxtPosFinish(test);
   }
-  hxtPosFinish(test);
 
 
 
@@ -1032,96 +893,6 @@ HXTStatus hxtQuadMeshSmoothConcave(HXTPointGenOptions *opt,
   mesh->vertices.coord[4*v+2] = np[2];
 
 
-  negative = 0;
-  for (uint64_t i=0; i<numQuads; i++){
-    uint64_t cq = fanQuads[i];
-
-    uint32_t *v = mesh->quads.node + 4*cq;
-
-    double *p0 = mesh->vertices.coord + 4*v[0];
-    double *p1 = mesh->vertices.coord + 4*v[1];
-    double *p2 = mesh->vertices.coord + 4*v[2];
-    double *p3 = mesh->vertices.coord + 4*v[3];
-
-    int temp = UINT32_MAX;
-    double qual = hxtPointGenQuadScaledJacobian(p0,p1,p2,p3,&temp);
-
-    if (qual<=0.0) negative = 1;
-  }
-  if (negative == 0){
-    return HXT_STATUS_OK; 
-  }
-  
-  {
-
-    newpoint[0] = mesh->vertices.coord[4*fanNodes[badVertex]+0] + vec0[0]*minDist;
-    newpoint[1] = mesh->vertices.coord[4*fanNodes[badVertex]+1] + vec0[1]*minDist;
-    newpoint[2] = mesh->vertices.coord[4*fanNodes[badVertex]+2] + vec0[2]*minDist;
-
-
-    mesh->vertices.coord[4*v+0] = newpoint[0];
-    mesh->vertices.coord[4*v+1] = newpoint[1];
-    mesh->vertices.coord[4*v+2] = newpoint[2];
-       
-
-    // Project point back to initial triangulation 
-    uint64_t nt = p2t[v];
-    if (p2t[v] == UINT64_MAX) return HXT_STATUS_ERROR;
-    double np[3] = {mesh->vertices.coord[4*v+0],mesh->vertices.coord[4*v+1],mesh->vertices.coord[4*v+2]};
-
-    HXT_CHECK(hxtPointGenProjectCloseRTree(omesh,dataTri,p2t[v],&mesh->vertices.coord[4*v],&nt,np));
-
-    p2t[v] = nt;
-    mesh->vertices.coord[4*v+0] = np[0];
-    mesh->vertices.coord[4*v+1] = np[1];
-    mesh->vertices.coord[4*v+2] = np[2];
-  }
-
-  negative = 0;
-  for (uint64_t i=0; i<numQuads; i++){
-    uint64_t cq = fanQuads[i];
-
-    uint32_t *v = mesh->quads.node + 4*cq;
-
-    double *p0 = mesh->vertices.coord + 4*v[0];
-    double *p1 = mesh->vertices.coord + 4*v[1];
-    double *p2 = mesh->vertices.coord + 4*v[2];
-    double *p3 = mesh->vertices.coord + 4*v[3];
-
-    int temp = UINT32_MAX;
-    double qual = hxtPointGenQuadScaledJacobian(p0,p1,p2,p3,&temp);
-
-    if (qual<=0.0) negative = 1;
-  }
-  if (negative == 0){
-    return HXT_STATUS_OK; 
-  }
-
-  {
-
-    newpoint[0] = mesh->vertices.coord[4*fanNodes[badVertex]+0] + vec1[0]*minDist;
-    newpoint[1] = mesh->vertices.coord[4*fanNodes[badVertex]+1] + vec1[1]*minDist;
-    newpoint[2] = mesh->vertices.coord[4*fanNodes[badVertex]+2] + vec1[2]*minDist;
-
-
-    mesh->vertices.coord[4*v+0] = newpoint[0];
-    mesh->vertices.coord[4*v+1] = newpoint[1];
-    mesh->vertices.coord[4*v+2] = newpoint[2];
-       
-    // Project point back to initial triangulation 
-    uint64_t nt = p2t[v];
-    if (p2t[v] == UINT64_MAX) return HXT_STATUS_ERROR;
-    double np[3] = {mesh->vertices.coord[4*v+0],mesh->vertices.coord[4*v+1],mesh->vertices.coord[4*v+2]};
-
-    HXT_CHECK(hxtPointGenProjectCloseRTree(omesh,dataTri,p2t[v],&mesh->vertices.coord[4*v],&nt,np));
-
-    p2t[v] = nt;
-    mesh->vertices.coord[4*v+0] = np[0];
-    mesh->vertices.coord[4*v+1] = np[1];
-    mesh->vertices.coord[4*v+2] = np[2];
-  }
-
-
 
 
 
@@ -1239,6 +1010,30 @@ HXTStatus hxtQuadMeshSmoothing(HXTPointGenOptions *opt,
                                          concaveVertex,
                                          vertex));
 
+      if (opt->verbosity>=2){
+        char buf[40];
+        snprintf(buf, 40, "checkConcave_%d_after.msh", vertex); // puts string into buffer
+        
+        FILE *test;
+        hxtPosInit(buf,"quads",&test);
+        hxtPosAddPoint(test,&mesh->vertices.coord[4*concaveVertex],0);
+        for (uint64_t j=0; j<numQuads; j++){
+          uint64_t cq = fanQuads[j];
+        
+          uint32_t *v = mesh->quads.node + 4*cq;
+        
+          double *p0 = mesh->vertices.coord + 4*v[0];
+          double *p1 = mesh->vertices.coord + 4*v[1];
+          double *p2 = mesh->vertices.coord + 4*v[2];
+          double *p3 = mesh->vertices.coord + 4*v[3];
+        
+          hxtPosAddQuad(test,p0,p1,p2,p3,0);
+        }
+        hxtPosFinish(test);
+      }
+
+
+
     }
     else{
 
@@ -1262,7 +1057,10 @@ HXTStatus hxtQuadMeshSmoothing(HXTPointGenOptions *opt,
 
       // Project point back to initial triangulation 
       uint64_t nt = p2t[i];
+
       if (p2t[i] == UINT64_MAX) return HXT_STATUS_ERROR;
+
+
       double np[3] = {mesh->vertices.coord[4*cv+0],mesh->vertices.coord[4*cv+1],mesh->vertices.coord[4*cv+2]};
 
       HXT_CHECK(hxtPointGenProjectCloseRTree(omesh,dataTri,p2t[i],&mesh->vertices.coord[4*cv],&nt,np));
@@ -1290,6 +1088,159 @@ HXTStatus hxtQuadMeshSmoothing(HXTPointGenOptions *opt,
 //
 //*****************************************************************************************
 //*****************************************************************************************
+HXTStatus hxtQuadMeshFixBadQuads(HXTPointGenOptions *opt, 
+                                 HXTMesh *omesh,
+                                 void *dataTri,
+                                 uint64_t *p2t,
+                                 HXTMesh *mesh, 
+                                 uint32_t *isBoundary,
+                                 double *qual)
+{
+  int countBadQuads = 0;
+
+  for (uint64_t i=0; i<mesh->quads.num; i++){
+    if (qual[i] <= 0) countBadQuads++; 
+  }
+
+  HXT_CHECK(hxtVerticesReserve(mesh,4*countBadQuads));
+  HXT_CHECK(hxtQuadsReserve(mesh,4*countBadQuads));
+
+  for (uint32_t i=mesh->vertices.num; i<(mesh->vertices.num+countBadQuads); i++){
+    p2t[i] = UINT64_MAX;
+  }
+
+
+  for (uint64_t i=0; i<mesh->quads.num; i++){
+
+    if (qual[i] <= 0){
+
+      double *p0 = mesh->vertices.coord + 4*mesh->quads.node[4*i+0];
+      double *p1 = mesh->vertices.coord + 4*mesh->quads.node[4*i+1];
+      double *p2 = mesh->vertices.coord + 4*mesh->quads.node[4*i+2];
+      double *p3 = mesh->vertices.coord + 4*mesh->quads.node[4*i+3];
+
+      double pc[3]; 
+      pc[0] = (p0[0]+p1[0]+p2[0]+p3[0])/4;
+      pc[1] = (p0[1]+p1[1]+p2[1]+p3[1])/4;
+      pc[2] = (p0[2]+p1[2]+p2[2]+p3[2])/4;
+      pc[3] = (p0[3]+p1[3]+p2[3]+p3[3])/4;
+
+
+      uint32_t template[8] = {mesh->quads.node[4*i+0],
+                              mesh->quads.node[4*i+1],
+                              mesh->quads.node[4*i+2],
+                              mesh->quads.node[4*i+3],
+                              mesh->vertices.num+0,
+                              mesh->vertices.num+1,
+                              mesh->vertices.num+2,
+                              mesh->vertices.num+3};
+
+
+
+
+      // Add four new vertices 
+      for (uint32_t j=0; j<4; j++){
+        mesh->vertices.coord[4*(mesh->vertices.num+j)+0] = pc[0];
+        mesh->vertices.coord[4*(mesh->vertices.num+j)+1] = pc[1];
+        mesh->vertices.coord[4*(mesh->vertices.num+j)+2] = pc[2];
+        mesh->vertices.coord[4*(mesh->vertices.num+j)+3] = 0;
+      }
+      mesh->vertices.num += 4;
+
+      // Change vertices of current quad 
+      
+      mesh->quads.node[4*i+0] = template[0];
+      mesh->quads.node[4*i+1] = template[1];
+      mesh->quads.node[4*i+2] = template[5];
+      mesh->quads.node[4*i+3] = template[4];
+
+      // Add four new quads 
+
+      mesh->quads.node[4*mesh->quads.num+0] = template[1];
+      mesh->quads.node[4*mesh->quads.num+1] = template[2];
+      mesh->quads.node[4*mesh->quads.num+2] = template[6];
+      mesh->quads.node[4*mesh->quads.num+3] = template[5];
+      mesh->quads.color[mesh->quads.num] = mesh->quads.color[i];
+      mesh->quads.num++;
+
+      mesh->quads.node[4*mesh->quads.num+0] = template[2];
+      mesh->quads.node[4*mesh->quads.num+1] = template[3];
+      mesh->quads.node[4*mesh->quads.num+2] = template[7];
+      mesh->quads.node[4*mesh->quads.num+3] = template[6];
+      mesh->quads.color[mesh->quads.num] = mesh->quads.color[i];
+      mesh->quads.num++;
+
+      mesh->quads.node[4*mesh->quads.num+0] = template[3];
+      mesh->quads.node[4*mesh->quads.num+1] = template[0];
+      mesh->quads.node[4*mesh->quads.num+2] = template[4];
+      mesh->quads.node[4*mesh->quads.num+3] = template[7];
+      mesh->quads.color[mesh->quads.num] = mesh->quads.color[i];
+      mesh->quads.num++;
+
+      mesh->quads.node[4*mesh->quads.num+0] = template[4];
+      mesh->quads.node[4*mesh->quads.num+1] = template[5];
+      mesh->quads.node[4*mesh->quads.num+2] = template[6];
+      mesh->quads.node[4*mesh->quads.num+3] = template[7];
+      mesh->quads.color[mesh->quads.num] = mesh->quads.color[i];
+      mesh->quads.num++;
+
+
+      // Smooth position of four new vertices inside old bad quad 
+      
+      uint32_t stencil[4*3];
+      stencil[3*0+0] = template[0];
+      stencil[3*0+1] = template[5];
+      stencil[3*0+2] = template[7];
+
+      stencil[3*1+0] = template[1];
+      stencil[3*1+1] = template[4];
+      stencil[3*1+2] = template[6];
+
+      stencil[3*2+0] = template[2];
+      stencil[3*2+1] = template[5];
+      stencil[3*2+2] = template[7];
+
+      stencil[3*3+0] = template[3];
+      stencil[3*3+1] = template[6];
+      stencil[3*3+2] = template[4];
+
+ 
+      for (int iter = 0 ; iter < 10; iter++){
+         for (uint32_t j=0; j<4; j++){
+           uint32_t cv = template[j+4]; 
+           double x = 0;
+           double y = 0;
+           double z = 0;
+
+           for (uint64_t k=0; k<3; k++){
+       
+             uint32_t v0 = stencil[3*j+k];
+
+             x+= mesh->vertices.coord[4*v0+0];
+             y+= mesh->vertices.coord[4*v0+1];
+             z+= mesh->vertices.coord[4*v0+2];
+           }
+
+           mesh->vertices.coord[4*cv+0] = x/3;
+           mesh->vertices.coord[4*cv+1] = y/3;
+           mesh->vertices.coord[4*cv+2] = z/3;
+
+         }
+      }
+
+    }
+  }
+
+  return HXT_STATUS_OK;
+}
+
+//*****************************************************************************************
+//*****************************************************************************************
+//
+// FUNCTION 
+//
+//*****************************************************************************************
+//*****************************************************************************************
 HXTStatus hxtQuadMeshOptimize(HXTPointGenOptions *opt, 
                               HXTMesh *omesh,
                               void *dataTri,
@@ -1301,6 +1252,7 @@ HXTStatus hxtQuadMeshOptimize(HXTPointGenOptions *opt,
   HXT_INFO_COND(opt->verbosity>=2,"");
 
   clock_t time_pre_start = clock();
+
 
   uint64_t *v2q;
   uint64_t maxValence;
@@ -1340,12 +1292,18 @@ HXTStatus hxtQuadMeshOptimize(HXTPointGenOptions *opt,
     HXT_INFO_COND(opt->verbosity>=2,"    - Build v2v");
     HXT_CHECK(hxtQuadMeshBuildV2Q(opt, mesh, &v2q, &maxValence));
 
+    int stop = 0;
     HXT_INFO_COND(opt->verbosity>=2,"    - Remove doublets and diamonds");
-    HXT_CHECK(hxtQuadMeshRemoveDoublets(opt,omesh, dataTri, p2t, mesh,v2q,maxValence,isBoundary));
+    HXT_CHECK(hxtQuadMeshRemoveDoubletsAndDiamonds(opt,omesh, dataTri, p2t, mesh,v2q,maxValence,isBoundary,&stop));
+
+    if (stop == 1) break;
 
   }
 
   clock_t time_remove_end = clock();
+
+  //===========================================================================
+  // Smoothing 
 
   clock_t time_smooth_final_start = clock();
 
@@ -1354,12 +1312,179 @@ HXTStatus hxtQuadMeshOptimize(HXTPointGenOptions *opt,
   HXT_INFO_COND(opt->verbosity>=2,"    - Build v2v");
   HXT_CHECK(hxtQuadMeshBuildV2Q(opt, mesh, &v2q, &maxValence));
 
-  HXT_CHECK(hxtQuadMeshSmoothing(opt,omesh, dataTri, p2t, mesh,v2q,maxValence,isBoundary));
-  /*HXT_CHECK(hxtQuadMeshSmoothing(opt,omesh, dataTri, p2t, mesh,v2q,maxValence,isBoundary));*/
+  int smoothIterMax = 2;
+  for (int i = 0; i < smoothIterMax; i++){
+    HXT_CHECK(hxtQuadMeshSmoothing(opt,omesh, dataTri, p2t, mesh,v2q,maxValence,isBoundary));
+  }
+
   HXT_INFO_COND(opt->verbosity>=2,"");
 
   clock_t time_smooth_final_end = clock();
 
+
+
+  //===========================================================================
+  // Output quality and bad vertices
+
+  double *qual;
+  HXT_CHECK(hxtMalloc(&qual,2*mesh->quads.num*sizeof(double)));
+
+  for (uint64_t i=0; i<mesh->quads.num; i++){
+    double *p0 = mesh->vertices.coord + 4*mesh->quads.node[4*i+0];
+    double *p1 = mesh->vertices.coord + 4*mesh->quads.node[4*i+1];
+    double *p2 = mesh->vertices.coord + 4*mesh->quads.node[4*i+2];
+    double *p3 = mesh->vertices.coord + 4*mesh->quads.node[4*i+3];
+    int temp = UINT32_MAX;
+    qual[i] = hxtPointGenQuadScaledJacobian(p0,p1,p2,p3,&temp);
+  }
+
+
+  if(opt->verbosity>=2){
+    FILE *q;
+    hxtPosInit("quadQuality.pos","scaledJacobian",&q);
+    FILE *out = fopen("quadHistogram.txt","w");
+    for (uint64_t i=0; i<mesh->quads.num; i++){
+      double *p0 = mesh->vertices.coord + 4*mesh->quads.node[4*i+0];
+      double *p1 = mesh->vertices.coord + 4*mesh->quads.node[4*i+1];
+      double *p2 = mesh->vertices.coord + 4*mesh->quads.node[4*i+2];
+      double *p3 = mesh->vertices.coord + 4*mesh->quads.node[4*i+3];
+      double quality = qual[i];
+      hxtPosAddQuad(q,p0,p1,p2,p3,quality);
+      fprintf(out,"%f\n",quality);
+    }
+    fclose(out);
+    hxtPosFinish(q);
+  }
+
+  if(opt->verbosity>=0){
+
+    int countInvalid = 0;
+    double total = 0.0;
+    double min = 1;
+    double max = -1;
+    FILE *q;
+    hxtPosInit("quadQualityINVALID.pos","scaledJacobian",&q);
+    for (uint64_t i=0; i<mesh->quads.num; i++){
+      double *p0 = mesh->vertices.coord + 4*mesh->quads.node[4*i+0];
+      double *p1 = mesh->vertices.coord + 4*mesh->quads.node[4*i+1];
+      double *p2 = mesh->vertices.coord + 4*mesh->quads.node[4*i+2];
+      double *p3 = mesh->vertices.coord + 4*mesh->quads.node[4*i+3];
+      double quality = qual[i];
+      total+= quality;
+      if(quality>max) max=quality;
+      if(quality<min) min = quality;
+      if (quality<=0.00){
+        hxtPosAddQuad(q,p0,p1,p2,p3,quality);
+        hxtPosAddVector(q,p0,p1);
+        countInvalid++;
+      }
+    }
+    hxtPosFinish(q);
+    
+    double avg = total/(float)mesh->quads.num;
+
+    FILE *outq;
+    outq = fopen("outquality.txt","w");
+    fprintf(outq,"%d , %f , %f , %f , %d , ", mesh->quads.num, min, avg,max, countInvalid);
+    fclose(outq);
+
+
+    HXT_INFO_COND(opt->verbosity>=0, "");
+    HXT_INFO_COND(opt->verbosity>=0, "PointGen | %d quads with negative quality", countInvalid);
+    HXT_INFO_COND(opt->verbosity>=0, "");
+    HXT_INFO_COND(opt->verbosity>=0, "PointGen | Quad quality min/avg/max: %f, %f, %f", min,avg,max);
+    HXT_INFO_COND(opt->verbosity>=0, "");
+  }
+
+
+
+
+
+  HXT_INFO_COND(opt->verbosity>=2,"    - Replacing negative quality quads with a 5-quad stencil !!! ");
+  HXT_CHECK(hxtQuadMeshFixBadQuads(opt,omesh,dataTri,p2t,mesh,isBoundary,qual));
+
+  HXT_CHECK(hxtFree(&qual));
+
+
+
+  {
+    double *qual;
+    HXT_CHECK(hxtMalloc(&qual,2*mesh->quads.num*sizeof(double)));
+
+    for (uint64_t i=0; i<mesh->quads.num; i++){
+      double *p0 = mesh->vertices.coord + 4*mesh->quads.node[4*i+0];
+      double *p1 = mesh->vertices.coord + 4*mesh->quads.node[4*i+1];
+      double *p2 = mesh->vertices.coord + 4*mesh->quads.node[4*i+2];
+      double *p3 = mesh->vertices.coord + 4*mesh->quads.node[4*i+3];
+      int temp = UINT32_MAX;
+      qual[i] = hxtPointGenQuadScaledJacobian(p0,p1,p2,p3,&temp);
+    }
+
+
+    if(opt->verbosity>=2){
+      FILE *q;
+      hxtPosInit("quadQuality.pos","scaledJacobian",&q);
+      FILE *out = fopen("quadHistogram.txt","w");
+      for (uint64_t i=0; i<mesh->quads.num; i++){
+        double *p0 = mesh->vertices.coord + 4*mesh->quads.node[4*i+0];
+        double *p1 = mesh->vertices.coord + 4*mesh->quads.node[4*i+1];
+        double *p2 = mesh->vertices.coord + 4*mesh->quads.node[4*i+2];
+        double *p3 = mesh->vertices.coord + 4*mesh->quads.node[4*i+3];
+        double quality = qual[i];
+        hxtPosAddQuad(q,p0,p1,p2,p3,quality);
+        fprintf(out,"%f\n",quality);
+      }
+      fclose(out);
+      hxtPosFinish(q);
+    }
+
+    if(opt->verbosity>=0){
+
+      int countInvalid = 0;
+      double total = 0.0;
+      double min = 1;
+      double max = -1;
+      FILE *q;
+      hxtPosInit("quadQualityINVALID.pos","scaledJacobian",&q);
+      for (uint64_t i=0; i<mesh->quads.num; i++){
+        double *p0 = mesh->vertices.coord + 4*mesh->quads.node[4*i+0];
+        double *p1 = mesh->vertices.coord + 4*mesh->quads.node[4*i+1];
+        double *p2 = mesh->vertices.coord + 4*mesh->quads.node[4*i+2];
+        double *p3 = mesh->vertices.coord + 4*mesh->quads.node[4*i+3];
+        double quality = qual[i];
+        total+= quality;
+        if(quality>max) max=quality;
+        if(quality<min) min = quality;
+        if (quality<=0.00){
+          hxtPosAddQuad(q,p0,p1,p2,p3,quality);
+          hxtPosAddVector(q,p0,p1);
+          countInvalid++;
+        }
+      }
+      hxtPosFinish(q);
+      
+      double avg = total/(float)mesh->quads.num;
+
+      FILE *outq;
+      outq = fopen("outquality.txt","w");
+      fprintf(outq,"%d , %f , %f , %f , %d , ", mesh->quads.num, min, avg,max, countInvalid);
+      fclose(outq);
+
+
+      HXT_INFO_COND(opt->verbosity>=0, "");
+      HXT_INFO_COND(opt->verbosity>=0, "PointGen | %d quads with negative quality", countInvalid);
+      HXT_INFO_COND(opt->verbosity>=0, "");
+      HXT_INFO_COND(opt->verbosity>=0, "PointGen | Quad quality min/avg/max: %f, %f, %f", min,avg,max);
+      HXT_INFO_COND(opt->verbosity>=0, "");
+    }
+
+
+    HXT_CHECK(hxtFree(&qual));
+  }
+
+
+  //===========================================================================
+  // Timings 
 
   double time_pre          =    (double)(time_pre_end          - time_pre_start)          / CLOCKS_PER_SEC;
   double time_remove       =    (double)(time_remove_end       - time_remove_start)       / CLOCKS_PER_SEC;
