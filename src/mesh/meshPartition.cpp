@@ -599,7 +599,9 @@ static int partitionGraph(Graph &graph, bool verbose)
     idx_t metisOptions[METIS_NOPTIONS];
     METIS_SetDefaultOptions(metisOptions);
 
-    opt << 8 * sizeof(idx_t) << " bit indices";
+    opt << "npart:" << graph.nparts();
+
+    opt << ", sizeof(idx_t):" << 8 * sizeof(idx_t);
 
     opt << ", ptype:";
     switch(CTX::instance()->mesh.metisAlgorithm) {
