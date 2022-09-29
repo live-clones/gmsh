@@ -166,7 +166,7 @@ static int readElementBDF(FILE *fp, char *buffer, int keySize, int numVertices,
     fpos_t pos;
     fgetpos(fp, &pos);
     if(!fgets(buffer2, sizeof(buffer2), fp)) return 0;
-    if(buffer2[0] == 'C' || buffer2[0] == 'E') {
+    if(buffer2[0] == 'C' || buffer2[0] == 'E' || buffer2[0] == '$') {
       // next line is a new element or end of data - we're done; this can happen
       // for CPENTA with 6 nodes, since we allow empty continuation fields
       fsetpos(fp, &pos);
