@@ -945,6 +945,8 @@ void optimizeMesh(GRegion *gr, const qmTetrahedron::Measures &qm)
   int nbESwap = 0, nbReloc = 0;
   double worstA = 0.0;
 
+  std::set<MTetrahedron*> to_delete;
+
   while(1) {
     std::vector<MTet4 *> newTets;
 
@@ -982,7 +984,7 @@ void optimizeMesh(GRegion *gr, const qmTetrahedron::Measures &qm)
     for(std::size_t i = 0; i < newTets.size(); i++) {
       if(!newTets[i]->isDeleted()) { allTets.push_back(newTets[i]); }
       else {
-        delete newTets[i]->tet();
+        to_delete.insert(newTets[i]->tet());
         delete newTets[i];
       }
     }
@@ -1024,6 +1026,8 @@ void optimizeMesh(GRegion *gr, const qmTetrahedron::Measures &qm)
     if(worstA != 0.0 && worst - worstA < 1.e-6) break;
     worstA = worst;
   }
+
+  for(auto t : to_delete) delete t;
 
   if(illegals.size()) {
     Msg::Warning("%d ill-shaped tets are still in the mesh", illegals.size());
