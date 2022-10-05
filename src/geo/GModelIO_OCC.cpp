@@ -4883,7 +4883,9 @@ void OCC_Internals::synchronize(GModel *model)
     _attributes->getLabels(0, vertex, labels);
     if(labels.size()) model->setElementaryName(0, occv->tag(), labels[0]);
     unsigned int col = 0, boundary = 0;
-    if(_attributes->getColor(0, vertex, col, boundary)) { occv->setColor(col); }
+    if(!occv->useColor() && _attributes->getColor(0, vertex, col, boundary)) {
+      occv->setColor(col);
+    }
   }
   for(int i = 1; i <= _emap.Extent(); i++) {
     TopoDS_Edge edge = TopoDS::Edge(_emap(i));
@@ -4907,7 +4909,9 @@ void OCC_Internals::synchronize(GModel *model)
     _attributes->getLabels(1, edge, labels);
     if(labels.size()) model->setElementaryName(1, occe->tag(), labels[0]);
     unsigned int col = 0, boundary = 0;
-    if(_attributes->getColor(1, edge, col, boundary)) { occe->setColor(col); }
+    if(!occe->useColor() && _attributes->getColor(1, edge, col, boundary)) {
+      occe->setColor(col);
+    }
   }
   for(int i = 1; i <= _fmap.Extent(); i++) {
     TopoDS_Face face = TopoDS::Face(_fmap(i));
@@ -4929,12 +4933,11 @@ void OCC_Internals::synchronize(GModel *model)
     _attributes->getLabels(2, face, labels);
     if(labels.size()) model->setElementaryName(2, occf->tag(), labels[0]);
     unsigned int col = 0, boundary = 0;
-    if(_attributes->getColor(2, face, col, boundary)) {
+    if(!occf->useColor() && _attributes->getColor(2, face, col, boundary)) {
       occf->setColor(col);
       if(boundary == 2) {
         std::vector<GEdge *> edges = occf->edges();
         for(std::size_t j = 0; j < edges.size(); j++) {
-          // only if not specified explicitly before
           if(!edges[j]->useColor()) edges[j]->setColor(col);
         }
       }
@@ -4960,19 +4963,17 @@ void OCC_Internals::synchronize(GModel *model)
     _attributes->getLabels(3, region, labels);
     if(labels.size()) model->setElementaryName(3, occr->tag(), labels[0]);
     unsigned int col = 0, boundary = 0;
-    if(_attributes->getColor(3, region, col, boundary)) {
+    if(!occr->useColor() && _attributes->getColor(3, region, col, boundary)) {
       occr->setColor(col);
       if(boundary == 1) {
         std::vector<GFace *> faces = occr->faces();
         for(std::size_t j = 0; j < faces.size(); j++) {
-          // only if not specified explicitly before
           if(!faces[j]->useColor()) faces[j]->setColor(col);
         }
       }
       else if(boundary == 2) {
         std::vector<GEdge *> edges = occr->edges();
         for(std::size_t j = 0; j < edges.size(); j++) {
-          // only if not specified explicitly before
           if(!edges[j]->useColor()) edges[j]->setColor(col);
         }
       }
