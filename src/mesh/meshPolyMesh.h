@@ -77,8 +77,14 @@ public:
       sys3x3 (J, rhs, g, &det);
       return SVector3(g[0],g[1],g[2]);
     }
+    SVector3 cog() const {
+      SVector3 p1 = he->v->position;
+      SVector3 p2 = he->next->v->position;
+      SVector3 p3 = he->next->next->v->position;
+      return (p1 + p2 + p3) * (1./3.);
+    }
   };
-
+  
   std::vector<Vertex *> vertices;
   std::vector<HalfEdge *> hedges;
   std::vector<Face *> faces;
@@ -582,7 +588,8 @@ public:
     std::vector<Vertex *> seeds; seeds.push_back(v);
     fastMarching(seeds,d);
   }
-  void exactGeodesicDistance (const PolyMesh::VertexOnFace &_start, std::map<Vertex*,double> &ls);
+
+  void exactGeodesicDistance (const PolyMesh::VertexOnFace &_start, std::map<Vertex*,double> &ls, double d = 1.e22);
   
   PolyMesh::Path traceGeodesic (const PolyMesh::VertexOnFace &_v, double theta, double L);  
   PolyMesh::Path traceGeodesic (const PolyMesh::VertexOnFace &_start, const PolyMesh::VertexOnFace &_end);

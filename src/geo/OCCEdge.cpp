@@ -72,6 +72,21 @@ void OCCEdge::delFace(GFace *f)
 
 SBoundingBox3d OCCEdge::bounds(bool fast)
 {
+  if(CTX::instance()->geom.occBoundsUseSTL && stl_vertices_xyz.size()) {
+    // BRepBndLib can use the STL mesh if available, but unfortunately it
+    // enlarges the box with the mesh deflection tolerance and the shape
+    // tolerance, which makes it hard to get the expected minimal box in simple
+    // cases (e.g. for straight lines), and always leads to boxes that are too
+    // large; so we simply compute the box from the STL vertices. The downside
+    // of this approach is that the bbox might be *smaller* than the actual box
+    // for curved shapes, but this is preferable for us as boxes are mostly used
+    // to find/identify entities
+    SBoundingBox3d bbox;
+    for(std::size_t i = 0; i < stl_vertices_xyz.size(); i++)
+      bbox += stl_vertices_xyz[i];
+    return bbox;
+  }
+
   Bnd_Box b;
   try {
     BRepBndLib::Add(_c, b);
@@ -81,11 +96,6 @@ SBoundingBox3d OCCEdge::bounds(bool fast)
   }
   double xmin, ymin, zmin, xmax, ymax, zmax;
   b.Get(xmin, ymin, zmin, xmax, ymax, zmax);
-
-  if(CTX::instance()->geom.occBoundsUseSTL)
-    model()->getOCCInternals()->fixSTLBounds(xmin, ymin, zmin, xmax, ymax,
-                                             zmax);
-
   SBoundingBox3d bbox(xmin, ymin, zmin, xmax, ymax, zmax);
   return bbox;
 }
@@ -259,7 +269,14 @@ bool OCCEdge::isSeam(const GFace *face) const
 {
   if(face->getNativeType() != GEntity::OpenCascadeModel) return false;
   const TopoDS_Face *s = (TopoDS_Face *)face->getNativePtr();
-  bool ret = BRep_Tool::IsClosed(_c, *s);
+  // use IsClosed() variant taking Geom_Surface instead of TopoDS_Face as
+  // argument, as the latter also tests the STL triangulation if available,
+  // which can lead to different results depending if the STL mesh is available
+  // or not; e.g. it can return true on plane surfaces with an internal curve,
+  // which is not expected by Gmsh 2D meshing algorithms
+  TopLoc_Location l;
+  const Handle(Geom_Surface)& surf = BRep_Tool::Surface(*s, l);
+  bool ret = BRep_Tool::IsClosed(_c, surf, l);
   return ret;
 }
 

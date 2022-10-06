@@ -161,6 +161,9 @@ StringXString GeometryOptions_String[] = {
     "OpenCASCADE behavior); the option should be set before importing the STEP or "
     "IGES file"},
 
+  { F|O, "PipeDefaultTrihedron" , opt_geometry_pipe_default_trihedron,
+    "DiscreteTrihedron" , "Default trihedron type when creating pipes" },
+
   { 0, nullptr , nullptr , "" , nullptr }
 } ;
 
@@ -951,6 +954,9 @@ StringXNumber GeometryOptions_Number[] = {
     "OpenCASCADE kernel" },
   { F|O, "OCCParallel" , opt_geometry_occ_parallel , 0. ,
     "Use multi-threaded OpenCASCADE boolean operators" },
+  { F|O, "OCCSafeUnbind" , opt_geometry_occ_safe_unbind , 0. ,
+    "Revert to safe (i.e. with recursive checks on boundaries) unbinding of entities "
+    "in boolean operations and geometrical transformations" },
   { F|O, "OCCScaling" , opt_geometry_occ_scaling , 1. ,
     "Scale STEP, IGES and BRep models by the given factor when importing them with the "
     "OpenCASCADE kernel" },
@@ -1159,6 +1165,8 @@ StringXNumber MeshOptions_Number[] = {
 
   { F|O, "HighOrderDistCAD", opt_mesh_ho_dist_cad, 0,
     "Try to optimize distance to CAD in high-order optimizer?"},
+  { F|O, "HighOrderFixBoundaryNodes", opt_mesh_ho_fix_bnd_nodes, 0,
+    "Fix boundary nodes during high-order optimization?"},
   { F|O, "HighOrderIterMax", opt_mesh_ho_iter_max, 100,
     "Maximum number of iterations in high-order optimization pass"},
   { F|O, "HighOrderNumLayers", opt_mesh_ho_nlayers, 6.,

@@ -255,6 +255,7 @@ void fieldWindow::saveFieldOptions()
   sstream.precision(16);
   for(auto it = f->options.begin(); it != f->options.end(); it++) {
     FieldOption *option = it->second;
+    if(!option) continue;
     if(option->isDeprecated()) continue;
     sstream.str("");
     switch(option->getType()) {
@@ -329,6 +330,7 @@ void fieldWindow::loadFieldOptions()
   auto input = options_widget.begin();
   for(auto it = f->options.begin(); it != f->options.end(); it++) {
     FieldOption *option = it->second;
+    if(!option) continue;
     if(option->isDeprecated()) continue;
     std::ostringstream vstr;
     switch(option->getType()) {
@@ -415,12 +417,14 @@ void fieldWindow::editField(Field *f)
   if(!f->options.empty())
     help += std::string("<p><center><b>Options</b></center>");
   for(auto it = f->options.begin(); it != f->options.end(); it++) {
-    if(it->second->isDeprecated()) continue;
+    FieldOption *option = it->second;
+    if(!option) continue;
+    if(option->isDeprecated()) continue;
     Fl_Widget *input;
     help += std::string("<p><b>") + it->first + "</b>";
-    help += " (<em>" + it->second->getTypeName() + "</em>): ";
-    help += it->second->getDescription();
-    switch(it->second->getType()) {
+    help += " (<em>" + option->getTypeName() + "</em>): ";
+    help += option->getDescription();
+    switch(option->getType()) {
     case FIELD_OPTION_INT:
     case FIELD_OPTION_DOUBLE:
       input = new Fl_Value_Input(xx, yy, IW, BH, it->first.c_str());

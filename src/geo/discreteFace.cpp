@@ -933,3 +933,4 @@ void discreteFace::resetMeshAttributes()
   meshAttributes.meshSizeFromBoundary = _s->MeshSizeFromBoundary;
   meshAttributes.transfinite3 = false;
 }
+

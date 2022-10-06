@@ -391,6 +391,23 @@ int inCircumCircleAniso(GFace *gf, MTriangle *base, const double *uv,
   return d3 < Radius2;
 }
 
+static void fourthPoint(double *p1, double *p2, double *p3, double *p4)
+{
+  double c[3];
+  circumCenterXYZ(p1, p2, p3, c);
+  double vx[3] = {p2[0] - p1[0], p2[1] - p1[1], p2[2] - p1[2]};
+  double vy[3] = {p3[0] - p1[0], p3[1] - p1[1], p3[2] - p1[2]};
+  double vz[3];
+  prodve(vx, vy, vz);
+  norme(vz);
+  double R =
+    sqrt((p1[0] - c[0]) * (p1[0] - c[0]) + (p1[1] - c[1]) * (p1[1] - c[1]) +
+         (p1[2] - c[2]) * (p1[2] - c[2]));
+  p4[0] = c[0] + R * vz[0];
+  p4[1] = c[1] + R * vz[1];
+  p4[2] = c[2] + R * vz[2];
+}
+
 MTri3::MTri3(MTriangle *t, double lc, SMetric3 *metric, bidimMeshData *data,
              GFace *gf)
   : deleted(false), base(t)
@@ -1347,7 +1364,7 @@ void bowyerWatsonFrontal(GFace *gf, std::map<MVertex *, MVertex *> *equivalence,
   transferDataStructure(gf, AllTris, DATA);
 
   splitElementsInBoundaryLayerIfNeeded(gf);
-#if 1
+#if 0
   PolyMesh *pm;
   GFace2PolyMesh(gf->tag(), &pm);
   std::map<PolyMesh::Vertex*,double> dist_exact;
@@ -1854,9 +1871,6 @@ void delaunayMeshIn2D(std::vector<MVertex *> &v,
   MVertex *box[4];
   initialSquare(v, box, t);
 
-  double AVG_ITER = 0;
-  double AVG_CAVSIZE = 0;
-
   if(hilbertSort) SortHilbert(v);
 
   for(size_t i = 0; i < v.size(); i++) {
@@ -1864,7 +1878,6 @@ void delaunayMeshIn2D(std::vector<MVertex *> &v,
 
     int NITER = 0;
     MTri3 *found = getTriToBreak(pv, t, NITER);
-    AVG_ITER += (double)NITER;
     if(!found) {
       Msg::Error("Cannot insert a point in 2D Delaunay");
       continue;
@@ -1873,7 +1886,6 @@ void delaunayMeshIn2D(std::vector<MVertex *> &v,
     cavity.clear();
 
     recurFindCavity(shell, cavity, pv, found);
-    AVG_CAVSIZE += (double)cavity.size();
 
     std::vector<MTri3 *> extended_cavity;
     for(std::size_t count = 0; count < shell.size(); count++) {

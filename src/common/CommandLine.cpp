@@ -77,8 +77,6 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
   s.push_back(mp("-match", "Match geometries and meshes"));
   s.push_back(mp("Mesh:", ""));
   s.push_back(mp("-1, -2, -3", "Perform 1D, 2D or 3D mesh generation, then exit"));
-  s.push_back(mp("-save", "Save mesh, then exit"));
-  s.push_back(mp("-o file", "Specify output file name"));
   s.push_back(mp("-format string", "Select output mesh format: " +
                  GetKnownFileFormats(true) + " (Mesh.Format)"));
   s.push_back(mp("-bin", "Create binary files when possible (Mesh.Binary)"));
@@ -180,6 +178,8 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
 #endif
   s.push_back(mp("Other:", ""));
   s.push_back(mp("-, -parse_and_exit", "Parse input files, then exit"));
+  s.push_back(mp("-save", "Save output file, then exit"));
+  s.push_back(mp("-o file", "Specify output file name"));
   s.push_back(mp("-new", "Create new model before merge next file"));
   s.push_back(mp("-merge", "Merge next files"));
   s.push_back(mp("-open", "Open next files"));
@@ -419,6 +419,1062 @@ void PrintBuildInfo()
   for(std::size_t i = 0; i < s.size(); i++) Msg::Direct("%s", s[i].c_str());
 }
 
+static bool GetGeometryOption(const std::vector<std::string> &argv,
+                              std::size_t &i, bool exitOnError)
+{
+  if(i < 0 || i >= argv.size()) return false;
+
+  if(argv[i] == "-0") {
+    CTX::instance()->batch = -1;
+    i++;
+  }
+  else if(argv[i] == "-tol") {
+    i++;
+    if(i < argv.size())
+      opt_geometry_tolerance(0, GMSH_SET, atof(argv[i++].c_str()));
+    else {
+      Msg::Error("Missing number");
+      if(exitOnError) Msg::Exit(1);
+    }
+  }
+  else if(argv[i] == "-match") {
+    i++;
+    opt_geometry_match_geom_and_mesh(0, GMSH_SET, 1);
+  }
+  else if(argv[i] == "-scale") {
+    i++;
+    if(i < argv.size())
+      opt_geometry_scaling_factor(0, GMSH_SET, atof(argv[i++].c_str()));
+    else {
+      Msg::Error("Missing number");
+      if(exitOnError) Msg::Exit(1);
+    }
+  }
+  else if(argv[i] == "-autoex") { // FIXME: temporary for auto-extrude testing
+    CTX::instance()->geom.autoExtrude = 1;
+    i++;
+  }
+  else {
+    return false;
+  }
+
+  return true;
+}
+
+static bool GetMeshOption(const std::vector<std::string> &argv,
+                          std::size_t &i, bool exitOnError)
+{
+  if(i < 0 || i >= argv.size()) return false;
+
+  if(argv[i] == "-check") {
+    CTX::instance()->batch = -2;
+    i++;
+  }
+  else if(argv[i] == "-1") {
+    CTX::instance()->batch = 1;
+    i++;
+  }
+  else if(argv[i] == "-2") {
+    CTX::instance()->batch = 2;
+    i++;
+  }
+  else if(argv[i] == "-3") {
+    CTX::instance()->batch = 3;
+    i++;
+  }
+  else if(argv[i] == "-4") {
+    CTX::instance()->batch = 4;
+    i++;
+  }
+  else if(argv[i] == "-save") {
+    CTX::instance()->batch = 99;
+    i++;
+  }
+  else if(argv[i] == "-refine") {
+    CTX::instance()->batch = 5;
+    i++;
+  }
+  else if(argv[i] == "-barycentric_refine") {
+    CTX::instance()->batch = 6;
+    i++;
+  }
+  else if(argv[i] == "-reclassify") {
+    i++;
+    if(i < argv.size()) {
+      CTX::instance()->batch = 7;
+      CTX::instance()->batchSomeValue = atof(argv[i].c_str());
+    }
+    else {
+      Msg::Error("Missing number");
+      if(exitOnError) Msg::Exit(1);
+    }
+  }
+  else if(argv[i] == "-reparam") {
+    i++;
+    if(i < argv.size()) {
+      CTX::instance()->batch = 8;
+      CTX::instance()->batchSomeValue = atof(argv[i].c_str());
+    }
+    else {
+      Msg::Error("Missing number");
+      if(exitOnError) Msg::Exit(1);
+    }
+  }
+  else if(argv[i] == "-quadlayout") {
+    CTX::instance()->batch = 69;
+    i++;
+  }
+  else if(argv[i] == "-part") {
+    i++;
+    if(i < argv.size()) {
+      CTX::instance()->batchAfterMesh = 1;
+      opt_mesh_partition_num(0, GMSH_SET, atoi(argv[i++].c_str()));
+    }
+    else {
+      Msg::Error("Missing number");
+      if(exitOnError) Msg::Exit(1);
+    }
+  }
+  else if(argv[i] == "-part_weight" || argv[i] == "-partWeight") {
+    i++;
+    bool check = true;
+    // partGraphKWay w/ weights
+    opt_mesh_partition_metis_algorithm(0, GMSH_SET, 3);
+    while(check) {
+      if(i < argv.size()) {
+        if(argv[i] == "tri" || argv[i] == "triangle") {
+          i++;
+          opt_mesh_partition_tri_weight(0, GMSH_SET, atoi(argv[i].c_str()));
+        }
+        else if(argv[i] == "quad" || argv[i] == "quadrangle") {
+          i++;
+          opt_mesh_partition_qua_weight(0, GMSH_SET, atoi(argv[i].c_str()));
+        }
+        else if(argv[i] == "tet" || argv[i] == "tetrahedron") {
+          i++;
+          opt_mesh_partition_tet_weight(0, GMSH_SET, atoi(argv[i].c_str()));
+        }
+        else if(argv[i] == "hex" || argv[i] == "hexahedron") {
+          i++;
+          opt_mesh_partition_hex_weight(0, GMSH_SET, atoi(argv[i].c_str()));
+        }
+        else if(argv[i] == "pri" || argv[i] == "prism") {
+          i++;
+          opt_mesh_partition_pri_weight(0, GMSH_SET, atoi(argv[i].c_str()));
+        }
+        else if(argv[i] == "pyr" || argv[i] == "pyramid") {
+          i++;
+          opt_mesh_partition_pyr_weight(0, GMSH_SET, atoi(argv[i].c_str()));
+        }
+        else if(argv[i] == "trih" || argv[i] == "trihedron") {
+          i++;
+          opt_mesh_partition_trih_weight(0, GMSH_SET,
+                                         atoi(argv[i].c_str()));
+        }
+        else {
+          Msg::Error("Bad argument for 'partWeight' (%s)", argv[i].c_str());
+          if(exitOnError) Msg::Exit(1);
+        }
+        i++;
+      }
+      else
+        check = false;
+    }
+  }
+  else if(argv[i] == "-part_split" || argv[i] == "-part_split_files" ||
+          argv[i] == "-oneFilePerPart") {
+    opt_mesh_partition_split_mesh_files(0, GMSH_SET, 1.);
+    i++;
+  }
+  else if(argv[i] == "-preserve_numbering_msh2" ||
+          argv[i] == "-preserveNumberingMsh2") {
+    opt_mesh_preserve_numbering_msh2(0, GMSH_SET, 1.);
+    i++;
+  }
+  else if(argv[i] == "-part_topo_pro" || argv[i] == "-savePartTopology") {
+    opt_mesh_partition_save_topology_file(0, GMSH_SET, 1.);
+    i++;
+  }
+  else if(argv[i] == "-part_topo") {
+    opt_mesh_partition_create_topology(0, GMSH_SET, 1.);
+    i++;
+  }
+  else if(argv[i] == "-part_no_topo") {
+    opt_mesh_partition_create_topology(0, GMSH_SET, 0.);
+    i++;
+  }
+  else if(argv[i] == "-part_physicals") {
+    opt_mesh_partition_create_physicals(0, GMSH_SET, 1.);
+    i++;
+  }
+  else if(argv[i] == "-part_no_physicals") {
+    opt_mesh_partition_create_physicals(0, GMSH_SET, 0.);
+    i++;
+  }
+  else if(argv[i] == "-part_ghosts") {
+    opt_mesh_partition_create_ghost_cells(0, GMSH_SET, 1.);
+    i++;
+  }
+  else if(argv[i] == "-part_no_ghosts") {
+    opt_mesh_partition_create_ghost_cells(0, GMSH_SET, 0.);
+    i++;
+  }
+  else if(argv[i] == "-saveall" || argv[i] == "-save_all") {
+    opt_mesh_save_all(0, GMSH_SET, 1);
+    i++;
+  }
+  else if(argv[i] == "-switch_tags") {
+    opt_mesh_switch_elem_tags(0, GMSH_SET, 1);
+    i++;
+  }
+  else if(argv[i] == "-optimize") {
+    Msg::Warning("The '-optimize' option is now obsolete: "
+                 "Gmsh optimizes tetrahedral meshes by default");
+    Msg::Warning("Use '-optimize_threshold threshold' to "
+                 "control which elements are optimized");
+    Msg::Warning("Option '-optimize_threshold 0' leads to no optimization");
+    opt_mesh_optimize(0, GMSH_SET, 1);
+    i++;
+  }
+  else if(argv[i] == "-optimize_threshold") {
+    i++;
+    if(i < argv.size())
+      opt_mesh_optimize_threshold(0, GMSH_SET, atof(argv[i++].c_str()));
+    else {
+      Msg::Error("Missing number");
+      if(exitOnError) Msg::Exit(1);
+    }
+  }
+  else if(argv[i] == "-optimize_netgen") {
+    opt_mesh_optimize_netgen(0, GMSH_SET, 1);
+    i++;
+  }
+  else if(argv[i] == "-optimize_ho" || argv[i] == "-hoOptimize") {
+    i++;
+    opt_mesh_ho_optimize(0, GMSH_SET, 2);
+  }
+  else if(argv[i] == "-ho_min") {
+    i++;
+    if(i < argv.size())
+      opt_mesh_ho_threshold_min(0, GMSH_SET, atof(argv[i++].c_str()));
+    else {
+      Msg::Error("Missing number");
+      if(exitOnError) Msg::Exit(1);
+    }
+  }
+  else if(argv[i] == "-ho_max") {
+    i++;
+    if(i < argv.size())
+      opt_mesh_ho_threshold_max(0, GMSH_SET, atof(argv[i++].c_str()));
+    else {
+      Msg::Error("Missing number");
+      if(exitOnError) Msg::Exit(1);
+    }
+  }
+  else if(argv[i] == "-ho_nlayers") {
+    i++;
+    if(i < argv.size())
+      opt_mesh_ho_nlayers(0, GMSH_SET, atoi(argv[i++].c_str()));
+    else {
+      Msg::Error("Missing number");
+      if(exitOnError) Msg::Exit(1);
+    }
+  }
+  else if(argv[i] == "-debugSurface") {
+    i++;
+    if(i < argv.size())
+      CTX::instance()->debugSurface = atoi(argv[i++].c_str());
+    else {
+      Msg::Error("Missing number");
+      if(exitOnError) Msg::Exit(1);
+    }
+  }
+  else if(argv[i] == "-aniso_max" || argv[i] == "-anisoMax") {
+    i++;
+    if(i < argv.size())
+      opt_mesh_aniso_max(0, GMSH_SET, atof(argv[i++].c_str()));
+    else {
+      Msg::Error("Missing anisotropy ratio");
+      if(exitOnError) Msg::Exit(1);
+    }
+  }
+  else if(argv[i] == "-smooth_ratio" || argv[i] == "-smoothRatio") {
+    i++;
+    if(i < argv.size())
+      opt_mesh_smooth_ratio(0, GMSH_SET, atof(argv[i++].c_str()));
+    else {
+      Msg::Error("Missing smooth ratio");
+      if(exitOnError) Msg::Exit(1);
+    }
+  }
+  else if(argv[i] == "-bgm") {
+    i++;
+    if(i < argv.size())
+      CTX::instance()->bgmFileName = argv[i++];
+    else {
+      Msg::Error("Missing file name");
+      if(exitOnError) Msg::Exit(1);
+    }
+  }
+  else if(argv[i] == "-size_field") {
+    i++;
+    if(i < argv.size()){
+      CTX::instance()->mesh.nLayersPerGap = atoi(argv[i].c_str());
+      CTX::instance()->batch = 9;
+    }
+    else{
+      Msg::Error("Missing number of layers per gap");
+      if(exitOnError) Msg::Exit(1);
+    }
+    i++;
+    if(i < argv.size()){
+      CTX::instance()->mesh.lcFromCurvature = atoi(argv[i].c_str());
+      if(CTX::instance()->mesh.lcFromCurvature <= 0.)
+        CTX::instance()->mesh.lcFromCurvature = 0;
+    }
+    else{
+      Msg::Error("Missing number of elements density");
+      if(exitOnError) Msg::Exit(1);
+    }
+    i++;
+    if(i < argv.size()){
+      CTX::instance()->mesh.gradation = atof(argv[i].c_str());
+      if(CTX::instance()->mesh.gradation <= 1.){
+        CTX::instance()->mesh.gradation = 1.05;
+        Msg::Info("Gradation must be > 1 : set to 1.05");
+      }
+    }
+    else{
+      Msg::Error("Missing gradation");
+      if(exitOnError) Msg::Exit(1);
+    }
+  }
+  else if(argv[i] == "-vmsh") {
+    i++;
+    if(i < argv.size()) {
+      opt_mesh_msh_file_version(0, GMSH_SET, atof(argv[i++].c_str()));
+    }
+    else {
+      Msg::Error("Missing number");
+      if(exitOnError) Msg::Exit(1);
+    }
+  }
+  else if(argv[i] == "-convert") {
+    i++;
+    CTX::instance()->batch = 1;
+    while(i < argv.size()) {
+      std::string fileName = std::string(argv[i]) + "_new";
+#if defined(HAVE_POST)
+      std::size_t n = PView::list.size();
+#endif
+      OpenProject(argv[i]);
+#if defined(HAVE_POST)
+      // convert post-processing views to latest binary format
+      for(std::size_t j = n; j < PView::list.size(); j++)
+        PView::list[j]->write(fileName, 1, (j == n) ? false : true);
+#endif
+      // convert mesh to latest binary format
+      if(GModel::current()->getMeshStatus() > 0) {
+        opt_mesh_msh_file_version(0, GMSH_SET, 4.1);
+        opt_mesh_binary(0, GMSH_SET, 1);
+        CreateOutputFile(fileName, FORMAT_MSH);
+      }
+      i++;
+    }
+    Msg::Exit(0);
+  }
+  else if(argv[i] == "-meshscale") {
+    i++;
+    if(i < argv.size())
+      opt_mesh_scaling_factor(0, GMSH_SET, atof(argv[i++].c_str()));
+    else {
+      Msg::Error("Missing number");
+      if(exitOnError) Msg::Exit(1);
+    }
+  }
+  else if(argv[i] == "-rand") {
+    i++;
+    if(i < argv.size())
+      opt_mesh_rand_factor(0, GMSH_SET, atof(argv[i++].c_str()));
+    else {
+      Msg::Error("Missing number");
+      if(exitOnError) Msg::Exit(1);
+    }
+  }
+  else if(argv[i] == "-clscale") {
+    i++;
+    if(i < argv.size()) {
+      opt_mesh_lc_factor(0, GMSH_SET, atof(argv[i++].c_str()));
+      if(CTX::instance()->mesh.lcFactor <= 0.0) {
+        Msg::Error("Mesh element size factor must be > 0");
+        if(exitOnError) Msg::Exit(1);
+      }
+    }
+    else {
+      Msg::Error("Missing number");
+      if(exitOnError) Msg::Exit(1);
+    }
+  }
+  else if(argv[i] == "-clmin") {
+    i++;
+    if(i < argv.size())
+      opt_mesh_lc_min(0, GMSH_SET, atof(argv[i++].c_str()));
+    else {
+      Msg::Error("Missing number");
+      if(exitOnError) Msg::Exit(1);
+    }
+  }
+  else if(argv[i] == "-clmax") {
+    i++;
+    if(i < argv.size()) {
+      opt_mesh_lc_max(0, GMSH_SET, atof(argv[i++].c_str()));
+      if(CTX::instance()->mesh.lcMax <= 0.0) {
+        Msg::Error("Maximum length size must be > 0");
+        if(exitOnError) Msg::Exit(1);
+      }
+    }
+    else {
+      Msg::Error("Missing number");
+      if(exitOnError) Msg::Exit(1);
+    }
+  }
+  else if(argv[i] == "-clextend") {
+    i++;
+    if(i < argv.size())
+      opt_mesh_lc_extend_from_boundary(0, GMSH_SET, atof(argv[i++].c_str()));
+    else {
+      Msg::Error("Missing number");
+      if(exitOnError) Msg::Exit(1);
+    }
+  }
+  else if(argv[i] == "-ignore_periodicity" ||
+          argv[i] == "-ignorePeriodicity") {
+    i++;
+    opt_mesh_ignore_periodicity(0, GMSH_SET, 1);
+  }
+  else if(argv[i] == "-edgelmin") {
+    i++;
+    if(i < argv.size())
+      opt_mesh_tolerance_edge_length(0, GMSH_SET, atof(argv[i++].c_str()));
+    else {
+      Msg::Error("Missing number");
+      if(exitOnError) Msg::Exit(1);
+    }
+  }
+  else if(argv[i] == "-epslc1d") {
+    i++;
+    if(i < argv.size()) {
+      opt_mesh_lc_integration_precision(0, GMSH_SET,
+                                        atof(argv[i++].c_str()));
+      if(CTX::instance()->mesh.lcIntegrationPrecision <= 0.0) {
+        Msg::Error("Integration accuracy must be > 0");
+        if(exitOnError) Msg::Exit(1);
+      }
+    }
+    else {
+      Msg::Error("Missing number");
+      if(exitOnError) Msg::Exit(1);
+    }
+  }
+  else if(argv[i] == "-swapangle") {
+    i++;
+    if(i < argv.size())
+      opt_mesh_allow_swap_edge_angle(0, GMSH_SET, atof(argv[i++].c_str()));
+    else {
+      Msg::Error("Missing number");
+      if(exitOnError) Msg::Exit(1);
+    }
+  }
+  else if(argv[i] == "-clcurv") {
+    i++;
+    if(i < argv.size()) {
+      opt_mesh_lc_from_curvature(0, GMSH_SET, atof(argv[i++].c_str()));
+    }
+    else {
+      Msg::Error("Missing number");
+      if(exitOnError) Msg::Exit(1);
+    }
+  }
+  else if(argv[i] == "-clcurviso") {
+    opt_mesh_lc_from_curvature_iso(0, GMSH_SET, 1);
+    i++;
+  }
+  else if(argv[i] == "-smooth") {
+    i++;
+    if(i < argv.size())
+      opt_mesh_nb_smoothing(0, GMSH_SET, atoi(argv[i++].c_str()));
+    else {
+      Msg::Error("Missing number");
+      if(exitOnError) Msg::Exit(1);
+    }
+  }
+  else if(argv[i] == "-order" || argv[i] == "-degree") {
+    i++;
+    if(i < argv.size())
+      opt_mesh_order(0, GMSH_SET, atof(argv[i++].c_str()));
+    else {
+      Msg::Error("Missing number");
+      if(exitOnError) Msg::Exit(1);
+    }
+  }
+  else if(argv[i] == "-numsubedges") {
+    i++;
+    if(i < argv.size())
+      opt_mesh_num_sub_edges(0, GMSH_SET, atof(argv[i++].c_str()));
+    else {
+      Msg::Error("Missing number");
+      if(exitOnError) Msg::Exit(1);
+    }
+  }
+  else if(argv[i] == "-statreport") {
+    i++;
+    CTX::instance()->createAppendMeshStatReport = 1;
+    if(i < argv.size())
+      CTX::instance()->meshStatReportFileName = argv[i++];
+    else {
+      Msg::Error("Missing argument");
+      if(exitOnError) Msg::Exit(1);
+    }
+  }
+  else if(argv[i] == "-append_statreport") {
+    i++;
+    CTX::instance()->createAppendMeshStatReport = 2;
+    if(i < argv.size())
+      CTX::instance()->meshStatReportFileName = argv[i++];
+    else {
+      Msg::Error("Missing argument");
+      if(exitOnError) Msg::Exit(1);
+    }
+  }
+  else if(argv[i] == "-bin") {
+    i++;
+    opt_mesh_binary(0, GMSH_SET, 1);
+  }
+  else if(argv[i] == "-save_parametric" || argv[i] == "-parametric") {
+    i++;
+    opt_mesh_save_parametric(0, GMSH_SET, 1);
+  }
+  else if(argv[i] == "-save_topology" || argv[i] == "-save_entities") {
+    i++;
+    opt_mesh_save_topology(0, GMSH_SET, 1);
+  }
+  else if(argv[i] == "-algo") {
+    i++;
+    if(i < argv.size()) {
+      if(argv[i] == "MeshAdapt" || argv[i] == "meshadapt" ||
+         argv[i] == "iso")
+        opt_mesh_algo2d(0, GMSH_SET, ALGO_2D_MESHADAPT);
+      else if(argv[i] == "auto")
+        CTX::instance()->mesh.algo2d = ALGO_2D_AUTO;
+      else if(argv[i] == "Delaunay2D" || argv[i] == "del2d" ||
+              argv[i] == "tri")
+        opt_mesh_algo2d(0, GMSH_SET, ALGO_2D_DELAUNAY);
+      else if(argv[i] == "FrontalDelaunay2D" || argv[i] == "front2d" ||
+              argv[i] == "frontal")
+        opt_mesh_algo2d(0, GMSH_SET, ALGO_2D_FRONTAL);
+      else if(argv[i] == "bamg")
+        opt_mesh_algo2d(0, GMSH_SET, ALGO_2D_BAMG);
+      else if(argv[i] == "DelaunayFrontalForQuads" || argv[i] == "delquad")
+        opt_mesh_algo2d(0, GMSH_SET, ALGO_2D_FRONTAL_QUAD);
+      else if(argv[i] == "PackingOfParallelograms" || argv[i] == "pack")
+        opt_mesh_algo2d(0, GMSH_SET, ALGO_2D_PACK_PRLGRMS);
+      else if(argv[i] == "QuadQuasiStructured" || argv[i] == "quadqs")
+        opt_mesh_algo2d(0, GMSH_SET, ALGO_2D_QUAD_QUASI_STRUCT);
+      else if(argv[i] == "initial2d")
+        opt_mesh_algo2d(0, GMSH_SET, ALGO_2D_INITIAL_ONLY);
+      else if(argv[i] == "del3d" || argv[i] == "gmsh3d")
+        opt_mesh_algo3d(0, GMSH_SET, ALGO_3D_DELAUNAY);
+      else if(argv[i] == "front3d" || argv[i] == "netgen")
+        opt_mesh_algo3d(0, GMSH_SET, ALGO_3D_FRONTAL);
+      else if(argv[i] == "mmg3d")
+        opt_mesh_algo3d(0, GMSH_SET, ALGO_3D_MMG3D);
+      else if(argv[i] == "rtree3d")
+        opt_mesh_algo3d(0, GMSH_SET, ALGO_3D_RTREE);
+      else if(argv[i] == "hxt")
+        opt_mesh_algo3d(0, GMSH_SET, ALGO_3D_HXT);
+      else if(argv[i] == "initial3d")
+        opt_mesh_algo3d(0, GMSH_SET, ALGO_3D_INITIAL_ONLY);
+      else {
+        Msg::Error("Unknown mesh algorithm");
+        if(exitOnError) Msg::Exit(1);
+      }
+      i++;
+    }
+    else {
+      Msg::Error("Missing algorithm");
+      if(exitOnError) Msg::Exit(1);
+    }
+  }
+  else if(argv[i] == "-quad") {
+    opt_mesh_recombine_all(0, GMSH_SET, 1);
+    opt_mesh_algo_recombine(0, GMSH_SET, 2);
+    i++;
+  }
+  else if(argv[i] == "-format" || argv[i] == "-f") {
+    i++;
+    if(i < argv.size()) {
+      double version = 0.;
+      int format =
+        GetFileFormatFromExtension(std::string(".") + argv[i], &version);
+      if(format < 0) {
+        Msg::Error("Unknown mesh format '%s'", argv[i].c_str());
+        if(exitOnError) Msg::Exit(1);
+      }
+      else {
+        opt_mesh_file_format(0, GMSH_SET, format);
+        if(format == FORMAT_MSH && version > 0.)
+          opt_mesh_msh_file_version(0, GMSH_SET, version);
+      }
+      i++;
+    }
+    else {
+      Msg::Error("Missing format");
+      if(exitOnError) Msg::Exit(1);
+    }
+  }
+  else if(argv[i] == "-dual") {
+    opt_mesh_dual(0, GMSH_SET, 1);
+    i++;
+  }
+  else if(argv[i] == "-voronoi") {
+    opt_mesh_voronoi(0, GMSH_SET, 1);
+    i++;
+  }
+  else if(argv[i] == "-nomesh") {
+    opt_mesh_nodes(0, GMSH_SET, 0.);
+    opt_mesh_lines(0, GMSH_SET, 0.);
+    opt_mesh_surface_edges(0, GMSH_SET, 0.);
+    opt_mesh_surface_faces(0, GMSH_SET, 0.);
+    opt_mesh_volume_edges(0, GMSH_SET, 0.);
+    opt_mesh_volume_faces(0, GMSH_SET, 0.);
+    i++;
+  }
+  else {
+    return false;
+  }
+
+  return true;
+}
+
+static bool GetPostProcessingOption(const std::vector<std::string> &argv,
+                                    std::size_t &i, bool exitOnError)
+{
+  if(i < 0 || i >= argv.size()) return false;
+
+  if(argv[i] == "-noview") {
+    opt_view_visible(0, GMSH_SET, 0);
+    i++;
+  }
+  else if(argv[i] == "-link") {
+    i++;
+    if(i < argv.size())
+      opt_post_link(0, GMSH_SET, atoi(argv[i++].c_str()));
+    else {
+      Msg::Error("Missing number");
+      if(exitOnError) Msg::Exit(1);
+    }
+  }
+  else if(argv[i] == "-smoothview") {
+    opt_post_smooth(0, GMSH_SET, 1.);
+    i++;
+  }
+  else if(argv[i] == "-combine") {
+    CTX::instance()->post.combineTime = 1;
+    i++;
+  }
+  else {
+    return false;
+  }
+
+  return true;
+}
+
+static bool GetSolverOption(const std::vector<std::string> &argv,
+                            std::size_t &i, bool exitOnError)
+{
+  if(i < 0 || i >= argv.size()) return false;
+
+  if(argv[i] == "-run") {
+    // same as '-', but will run local Gmsh client (if no other clients are
+    // requested, e.g. by opening a '.pro' or '.py' file)
+    CTX::instance()->batch = -99;
+    CTX::instance()->launchSolverAtStartup = -2;
+    i++;
+  }
+  else if(argv[i] == "-onelab") {
+    i++;
+    if(i + 1 < argv.size() && argv[i + 1].size() && argv[i + 1][0] != '-') {
+      Msg::InitializeOnelab(argv[i], argv[i + 1]);
+      i += 2;
+    }
+    else if(i < argv.size()) {
+      Msg::InitializeOnelab(argv[i]);
+      i += 1;
+    }
+    else {
+      Msg::Error("Missing client name and/or address of ONELAB server");
+      if(exitOnError) Msg::Exit(1);
+    }
+  }
+  else if(argv[i] == "-socket") {
+    i++;
+    if(i < argv.size())
+      Msg::InitializeOnelab("GmshRemote", argv[i++]);
+    else {
+      Msg::Error("Missing string");
+      if(exitOnError) Msg::Exit(1);
+    }
+    CTX::instance()->batch = -3;
+  }
+  else if(argv[i] == "-listen") {
+    i++;
+    opt_solver_listen(0, GMSH_SET, 1);
+    if(i < argv.size() && argv[i].size() && argv[i][0] != '-')
+      opt_solver_socket_name(0, GMSH_SET, argv[i++]);
+  }
+  else if(argv[i] == "-minterpreter") {
+    i++;
+    if(i < argv.size())
+      opt_solver_octave_interpreter(0, GMSH_SET, argv[i++]);
+    else {
+      Msg::Error("Missing interpreter name");
+      if(exitOnError) Msg::Exit(1);
+    }
+  }
+  else if(argv[i] == "-pyinterpreter") {
+    i++;
+    if(i < argv.size())
+      opt_solver_python_interpreter(0, GMSH_SET, argv[i++]);
+    else {
+      Msg::Error("Missing interpreter name");
+      if(exitOnError) Msg::Exit(1);
+    }
+  }
+  else {
+    return false;
+  }
+
+  return true;
+}
+
+static bool GetOtherOption(const std::vector<std::string> &argv,
+                           std::size_t &i, bool exitOnError)
+{
+  if(i < 0 || i >= argv.size()) return false;
+
+  if(argv[i] == "-" || argv[i] == "-parse_and_exit") {
+    CTX::instance()->batch = -99;
+    i++;
+  }
+  else if(argv[i] == "-log") {
+    i++;
+    if(i < argv.size()) { Msg::SetLogFile(argv[i++]); }
+    else {
+      Msg::Error("Missing filename");
+      if(exitOnError) Msg::Exit(1);
+    }
+  }
+  else if(argv[i] == "-new") {
+    CTX::instance()->files.push_back("-new");
+    i++;
+  }
+  else if(argv[i] == "-open") {
+    CTX::instance()->files.push_back("-open");
+    i++;
+  }
+  else if(argv[i] == "-merge") {
+    CTX::instance()->files.push_back("-merge");
+    i++;
+  }
+  else if(argv[i] == "-pid") {
+    fprintf(stdout, "%d\n", GetProcessId());
+    fflush(stdout);
+    i++;
+  }
+  else if(argv[i] == "-a") {
+    opt_general_initial_context(0, GMSH_SET, 0);
+    i++;
+  }
+  else if(argv[i] == "-g") {
+    opt_general_initial_context(0, GMSH_SET, 1);
+    i++;
+  }
+  else if(argv[i] == "-m") {
+    opt_general_initial_context(0, GMSH_SET, 2);
+    i++;
+  }
+  else if(argv[i] == "-s") {
+    opt_general_initial_context(0, GMSH_SET, 3);
+    i++;
+  }
+  else if(argv[i] == "-p") {
+    opt_general_initial_context(0, GMSH_SET, 4);
+    i++;
+  }
+  else if(argv[i] == "-nopopup") {
+    opt_general_nopopup(0, GMSH_SET, 1);
+    i++;
+  }
+  else if(argv[i] == "-watch") {
+    i++;
+    if(i < argv.size()) {
+      std::string tmp = argv[i++];
+      if(tmp.size() > 2 && tmp[0] == '"' && tmp[tmp.size() - 1] == '"')
+        opt_general_watch_file_pattern(0, GMSH_SET,
+                                       tmp.substr(1, tmp.size() - 2));
+      else
+        opt_general_watch_file_pattern(0, GMSH_SET, tmp);
+    }
+    else {
+      Msg::Error("Missing string");
+      if(exitOnError) Msg::Exit(1);
+    }
+  }
+  else if(argv[i] == "-string") {
+    i++;
+    if(i < argv.size())
+      ParseString(argv[i++]);
+    else {
+      Msg::Error("Missing string");
+      if(exitOnError) Msg::Exit(1);
+    }
+  }
+  else if(argv[i] == "-setstring") {
+    i++;
+    if(i + 1 < argv.size()) {
+      std::string n(argv[i]), cat, opt, v = argv[i + 1], olName;
+      int index = 0;
+      if(SplitOptionName(n, cat, opt, index)) {
+        GmshSetStringOption(cat, opt, v, index);
+      }
+      else if(IsOnelabName(n, olName)) {
+        Msg::SetOnelabString(olName, v, true, true);
+      }
+      else {
+#if defined(HAVE_PARSER)
+        gmsh_yystringsymbols[n] = std::vector<std::string>(1, v);
+#endif
+        Msg::GetCommandLineStrings()[n] = v;
+      }
+      i += 2;
+    }
+    else {
+      Msg::Error("Missing name and/or value for string definition");
+      if(exitOnError) Msg::Exit(1);
+    }
+  }
+  else if(argv[i] == "-setnumber") {
+    i++;
+    if(i + 1 < argv.size()) {
+      std::string n(argv[i]), cat, opt, olName;
+      double v = atof(argv[i + 1].c_str());
+      int index = 0;
+      if(SplitOptionName(n, cat, opt, index)) {
+        GmshSetNumberOption(cat, opt, v, index);
+      }
+      else if(IsOnelabName(n, olName)) {
+        Msg::SetOnelabNumber(olName, v, true, true);
+      }
+      else {
+#if defined(HAVE_PARSER)
+        gmsh_yysymbols[n].value = std::vector<double>(1, v);
+#endif
+        Msg::GetCommandLineNumbers()[n] = std::vector<double>(1, v);
+      }
+      i += 2;
+    }
+    else {
+      Msg::Error("Missing name and/or value for number definition");
+      if(exitOnError) Msg::Exit(1);
+    }
+  }
+  else if(argv[i] == "-setlist" || argv[i] == "-setlistofnumbers") {
+    i++;
+    if(i + 1 < argv.size() && argv[i].size() && argv[i][0] != '-') {
+      std::string n(argv[i]);
+      std::vector<double> v;
+      int s = atoi(argv[i + 1].c_str()), j = 0;
+      i += 2;
+      while(j < s && i < argv.size()) {
+        v.push_back(atof(argv[i].c_str()));
+        i++;
+        j++;
+      }
+      if(j < s) {
+        Msg::Error("Missing values in list (got %d instead of %d)", j, s);
+        if(exitOnError) Msg::Exit(1);
+      }
+#if defined(HAVE_PARSER)
+      gmsh_yysymbols[n].value = v;
+#endif
+      Msg::GetCommandLineNumbers()[n] = v;
+    }
+    else {
+      Msg::Error(
+                 "Missing name and/or value for definition of list of numbers");
+      if(exitOnError) Msg::Exit(1);
+    }
+  }
+  else if(argv[i] == "-option") {
+    i++;
+    if(i < argv.size())
+      ParseFile(argv[i++], true);
+    else {
+      Msg::Error("Missing file name");
+      if(exitOnError) Msg::Exit(1);
+    }
+  }
+  else if(argv[i] == "-cpu") {
+    Msg::SetInfoCpu(true);
+    Msg::SetInfoMem(true);
+    i++;
+  }
+  else if(argv[i] == "-o") {
+    i++;
+    if(i < argv.size())
+      CTX::instance()->outputFileName = argv[i++];
+    else {
+      Msg::Error("Missing file name");
+      if(exitOnError) Msg::Exit(1);
+    }
+  }
+  else if(argv[i] == "-windows") {
+    i++;
+    if(i < argv.size())
+      CTX::instance()->numWindows = atoi(argv[i++].c_str());
+    else {
+      Msg::Error("Missing number");
+      if(exitOnError) Msg::Exit(1);
+    }
+  }
+  else if(argv[i] == "-tiles") {
+    i++;
+    if(i < argv.size())
+      CTX::instance()->numTiles = atoi(argv[i++].c_str());
+    else {
+      Msg::Error("Missing number");
+      if(exitOnError) Msg::Exit(1);
+    }
+  }
+  else if(argv[i] == "-bg") {
+    i++;
+    if(i < argv.size())
+      opt_general_background_image_filename(0, GMSH_SET, argv[i++]);
+    else {
+      Msg::Error("Missing filename");
+      if(exitOnError) Msg::Exit(1);
+    }
+  }
+  else if(argv[i] == "-version" || argv[i] == "--version") {
+    fprintf(stdout, "%s\n", GMSH_VERSION);
+    fflush(stdout);
+    Msg::Exit(0);
+  }
+  else if(argv[i] == "-info" || argv[i] == "--info") {
+    PrintBuildInfo();
+    Msg::Exit(0);
+  }
+  else if(argv[i] == "-help" || argv[i] == "--help") {
+    Msg::Direct("Gmsh, a 3D mesh generator with pre- and post-processing "
+                "facilities");
+    Msg::Direct("Copyright (C) 1997-2022 C. Geuzaine and J.-F. Remacle");
+    PrintUsage(argv[0]);
+    Msg::Exit(0);
+  }
+  else if(argv[i] == "-help_options") {
+    std::vector<std::string> s;
+    PrintOptions(0, GMSH_FULLRC, 0, 1, nullptr, &s);
+    for(std::size_t i = 0; i < s.size(); i++)
+      Msg::Direct("%s\n", s[i].c_str());
+    Msg::Exit(0);
+  }
+  else if(argv[i] == "-v" || argv[i] == "-verbose") {
+    i++;
+    if(i < argv.size())
+      Msg::SetVerbosity(atoi(argv[i++].c_str()));
+    else {
+      Msg::Error("Missing number");
+      if(exitOnError) Msg::Exit(1);
+    }
+  }
+  else if(argv[i] == "-nt") {
+    i++;
+    if(i < argv.size())
+      opt_general_num_threads(0, GMSH_SET, atoi(argv[i++].c_str()));
+    else {
+      Msg::Error("Missing number");
+      if(exitOnError) Msg::Exit(1);
+    }
+  }
+  else if(argv[i] == "-n") {
+    opt_view_visible(0, GMSH_SET, 0);
+    opt_mesh_nodes(0, GMSH_SET, 0.);
+    opt_mesh_lines(0, GMSH_SET, 0.);
+    opt_mesh_surface_edges(0, GMSH_SET, 0.);
+    opt_mesh_surface_faces(0, GMSH_SET, 0.);
+    opt_mesh_volume_edges(0, GMSH_SET, 0.);
+    opt_mesh_volume_faces(0, GMSH_SET, 0.);
+    i++;
+  }
+  else if(argv[i] == "-nodb") {
+    opt_general_double_buffer(0, GMSH_SET, 0.);
+    i++;
+  }
+  else if(argv[i] == "-camera") {
+    opt_general_camera_mode(0, GMSH_SET, 1.);
+    i++;
+  }
+  else if(argv[i] == "-stereo") {
+    opt_general_stereo_mode(0, GMSH_SET, 1.);
+    i++;
+  }
+  else if(argv[i] == "-gamepad") {
+    opt_general_gamepad(0, GMSH_SET, 1.);
+    i++;
+  }
+  else if(argv[i] == "-fontsize") {
+    i++;
+    if(i < argv.size())
+      opt_general_fontsize(0, GMSH_SET, atoi(argv[i++].c_str()));
+    else {
+      Msg::Error("Missing number");
+      if(exitOnError) Msg::Exit(1);
+    }
+  }
+  else if(argv[i] == "-deltafontsize") {
+    i++;
+    if(i < argv.size())
+      CTX::instance()->deltaFontSize = atoi(argv[i++].c_str());
+    else {
+      Msg::Error("Missing number");
+      if(exitOnError) Msg::Exit(1);
+    }
+  }
+  else if(argv[i] == "-theme" || argv[i] == "-scheme") {
+    i++;
+    if(i < argv.size())
+      opt_general_gui_theme(0, GMSH_SET, argv[i++]);
+    else {
+      Msg::Error("Missing argument");
+      if(exitOnError) Msg::Exit(1);
+    }
+  }
+  else if(argv[i] == "-display") {
+    i++;
+    if(i < argv.size())
+      opt_general_display(0, GMSH_SET, argv[i++]);
+    else {
+      Msg::Error("Missing argument");
+      if(exitOnError) Msg::Exit(1);
+    }
+  }
+  else {
+    return false;
+  }
+
+  return true;
+}
+
 void GetOptions(bool readConfigFiles, bool exitOnError)
 {
   // print messages on terminal (use special 99 value so that we can detect if
@@ -443,1009 +1499,20 @@ void GetOptions(bool readConfigFiles, bool exitOnError)
   std::size_t i = 1;
   while(i < argv.size()) {
     if(argv[i].size() && argv[i][0] == '-') {
-      if(argv[i] == "-" || argv[i] == "-parse_and_exit") {
-        CTX::instance()->batch = -99;
-        i++;
+      if(GetGeometryOption(argv, i, exitOnError)) {
       }
-      else if(argv[i] == "-run") {
-        // same as '-', but will run local Gmsh client (if no other clients are
-        // requested, e.g. by opening a '.pro' or '.py' file)
-        CTX::instance()->batch = -99;
-        CTX::instance()->launchSolverAtStartup = -2;
-        i++;
+      else if(GetMeshOption(argv, i, exitOnError)) {
       }
-      else if(argv[i] == "-onelab") {
-        i++;
-        if(i + 1 < argv.size() && argv[i + 1].size() && argv[i + 1][0] != '-') {
-          Msg::InitializeOnelab(argv[i], argv[i + 1]);
-          i += 2;
-        }
-        else if(i < argv.size()) {
-          Msg::InitializeOnelab(argv[i]);
-          i += 1;
-        }
-        else {
-          Msg::Error("Missing client name and/or address of ONELAB server");
-          if(exitOnError) Msg::Exit(1);
-        }
+      else if(GetPostProcessingOption(argv, i, exitOnError)) {
       }
-      else if(argv[i] == "-socket") {
-        i++;
-        if(i < argv.size())
-          Msg::InitializeOnelab("GmshRemote", argv[i++]);
-        else {
-          Msg::Error("Missing string");
-          if(exitOnError) Msg::Exit(1);
-        }
-        CTX::instance()->batch = -3;
+      else if(GetSolverOption(argv, i, exitOnError)) {
       }
-      else if(argv[i] == "-check") {
-        CTX::instance()->batch = -2;
-        i++;
-      }
-      else if(argv[i] == "-0") {
-        CTX::instance()->batch = -1;
-        i++;
-      }
-      else if(argv[i] == "-1") {
-        CTX::instance()->batch = 1;
-        i++;
-      }
-      else if(argv[i] == "-2") {
-        CTX::instance()->batch = 2;
-        i++;
-      }
-      else if(argv[i] == "-3") {
-        CTX::instance()->batch = 3;
-        i++;
-      }
-      else if(argv[i] == "-4") {
-        CTX::instance()->batch = 4;
-        i++;
-      }
-      else if(argv[i] == "-save") {
-        CTX::instance()->batch = 99;
-        i++;
-      }
-      else if(argv[i] == "-cpu") {
-        Msg::SetInfoCpu(true);
-        Msg::SetInfoMem(true);
-        i++;
-      }
-      else if(argv[i] == "-log") {
-        i++;
-        if(i < argv.size()) { Msg::SetLogFile(argv[i++]); }
-        else {
-          Msg::Error("Missing filename");
-          if(exitOnError) Msg::Exit(1);
-        }
-      }
-      else if(argv[i] == "-refine") {
-        CTX::instance()->batch = 5;
-        i++;
-      }
-      else if(argv[i] == "-barycentric_refine") {
-        CTX::instance()->batch = 6;
-        i++;
-      }
-      else if(argv[i] == "-reclassify") {
-        i++;
-        if(i < argv.size()) {
-          CTX::instance()->batch = 7;
-          CTX::instance()->batchSomeValue = atof(argv[i].c_str());
-        }
-        else {
-          Msg::Error("Missing number");
-          if(exitOnError) Msg::Exit(1);
-        }
-      }
-      else if(argv[i] == "-reparam") {
-        i++;
-        if(i < argv.size()) {
-          CTX::instance()->batch = 8;
-          CTX::instance()->batchSomeValue = atof(argv[i].c_str());
-        }
-        else {
-          Msg::Error("Missing number");
-          if(exitOnError) Msg::Exit(1);
-        }
-      }
-      else if(argv[i] == "-quadlayout") {
-        CTX::instance()->batch = 69;
-        i++;
-      }
-      else if(argv[i] == "-part") {
-        i++;
-        if(i < argv.size()) {
-          CTX::instance()->batchAfterMesh = 1;
-          opt_mesh_partition_num(0, GMSH_SET, atoi(argv[i++].c_str()));
-        }
-        else {
-          Msg::Error("Missing number");
-          if(exitOnError) Msg::Exit(1);
-        }
-      }
-      else if(argv[i] == "-part_weight" || argv[i] == "-partWeight") {
-        i++;
-        bool check = true;
-        opt_mesh_partition_metis_algorithm(0, GMSH_SET,
-                                           3); // partGraphKWay w/ weights
-        while(check) {
-          if(i < argv.size()) {
-            if(argv[i] == "tri" || argv[i] == "triangle") {
-              i++;
-              opt_mesh_partition_tri_weight(0, GMSH_SET, atoi(argv[i].c_str()));
-            }
-            else if(argv[i] == "quad" || argv[i] == "quadrangle") {
-              i++;
-              opt_mesh_partition_qua_weight(0, GMSH_SET, atoi(argv[i].c_str()));
-            }
-            else if(argv[i] == "tet" || argv[i] == "tetrahedron") {
-              i++;
-              opt_mesh_partition_tet_weight(0, GMSH_SET, atoi(argv[i].c_str()));
-            }
-            else if(argv[i] == "hex" || argv[i] == "hexahedron") {
-              i++;
-              opt_mesh_partition_hex_weight(0, GMSH_SET, atoi(argv[i].c_str()));
-            }
-            else if(argv[i] == "pri" || argv[i] == "prism") {
-              i++;
-              opt_mesh_partition_pri_weight(0, GMSH_SET, atoi(argv[i].c_str()));
-            }
-            else if(argv[i] == "pyr" || argv[i] == "pyramid") {
-              i++;
-              opt_mesh_partition_pyr_weight(0, GMSH_SET, atoi(argv[i].c_str()));
-            }
-            else if(argv[i] == "trih" || argv[i] == "trihedron") {
-              i++;
-              opt_mesh_partition_trih_weight(0, GMSH_SET,
-                                             atoi(argv[i].c_str()));
-            }
-            else {
-              Msg::Error("Bad argument for 'partWeight' (%s)", argv[i].c_str());
-              if(exitOnError) Msg::Exit(1);
-            }
-            i++;
-          }
-          else
-            check = false;
-        }
-      }
-      else if(argv[i] == "-part_split" || argv[i] == "-part_split_files" ||
-              argv[i] == "-oneFilePerPart") {
-        opt_mesh_partition_split_mesh_files(0, GMSH_SET, 1.);
-        i++;
-      }
-      else if(argv[i] == "-preserve_numbering_msh2" ||
-              argv[i] == "-preserveNumberingMsh2") {
-        opt_mesh_preserve_numbering_msh2(0, GMSH_SET, 1.);
-        i++;
-      }
-      else if(argv[i] == "-part_topo_pro" || argv[i] == "-savePartTopology") {
-        opt_mesh_partition_save_topology_file(0, GMSH_SET, 1.);
-        i++;
-      }
-      else if(argv[i] == "-part_topo") {
-        opt_mesh_partition_create_topology(0, GMSH_SET, 1.);
-        i++;
-      }
-      else if(argv[i] == "-part_no_topo") {
-        opt_mesh_partition_create_topology(0, GMSH_SET, 0.);
-        i++;
-      }
-      else if(argv[i] == "-part_physicals") {
-        opt_mesh_partition_create_physicals(0, GMSH_SET, 1.);
-        i++;
-      }
-      else if(argv[i] == "-part_no_physicals") {
-        opt_mesh_partition_create_physicals(0, GMSH_SET, 0.);
-        i++;
-      }
-      else if(argv[i] == "-part_ghosts") {
-        opt_mesh_partition_create_ghost_cells(0, GMSH_SET, 1.);
-        i++;
-      }
-      else if(argv[i] == "-part_no_ghosts") {
-        opt_mesh_partition_create_ghost_cells(0, GMSH_SET, 0.);
-        i++;
-      }
-      else if(argv[i] == "-new") {
-        CTX::instance()->files.push_back("-new");
-        i++;
-      }
-      else if(argv[i] == "-open") {
-        CTX::instance()->files.push_back("-open");
-        i++;
-      }
-      else if(argv[i] == "-merge") {
-        CTX::instance()->files.push_back("-merge");
-        i++;
-      }
-      else if(argv[i] == "-pid") {
-        fprintf(stdout, "%d\n", GetProcessId());
-        fflush(stdout);
-        i++;
-      }
-      else if(argv[i] == "-a") {
-        opt_general_initial_context(0, GMSH_SET, 0);
-        i++;
-      }
-      else if(argv[i] == "-g") {
-        opt_general_initial_context(0, GMSH_SET, 1);
-        i++;
-      }
-      else if(argv[i] == "-m") {
-        opt_general_initial_context(0, GMSH_SET, 2);
-        i++;
-      }
-      else if(argv[i] == "-s") {
-        opt_general_initial_context(0, GMSH_SET, 3);
-        i++;
-      }
-      else if(argv[i] == "-p") {
-        opt_general_initial_context(0, GMSH_SET, 4);
-        i++;
-      }
-      else if(argv[i] == "-saveall" || argv[i] == "-save_all") {
-        opt_mesh_save_all(0, GMSH_SET, 1);
-        i++;
-      }
-      else if(argv[i] == "-switch_tags") {
-        opt_mesh_switch_elem_tags(0, GMSH_SET, 1);
-        i++;
-      }
-      else if(argv[i] == "-optimize") {
-        Msg::Warning("The '-optimize' option is now obsolete: "
-                     "Gmsh optimizes tetrahedral meshes by default");
-        Msg::Warning("Use '-optimize_threshold threshold' to "
-                     "control which elements are optimized");
-        Msg::Warning("Option '-optimize_threshold 0' leads to no optimization");
-        opt_mesh_optimize(0, GMSH_SET, 1);
-        i++;
-      }
-      else if(argv[i] == "-optimize_threshold") {
-        i++;
-        if(i < argv.size())
-          opt_mesh_optimize_threshold(0, GMSH_SET, atof(argv[i++].c_str()));
-        else {
-          Msg::Error("Missing number");
-          if(exitOnError) Msg::Exit(1);
-        }
-      }
-      else if(argv[i] == "-optimize_netgen") {
-        opt_mesh_optimize_netgen(0, GMSH_SET, 1);
-        i++;
-      }
-      else if(argv[i] == "-optimize_ho" || argv[i] == "-hoOptimize") {
-        i++;
-        opt_mesh_ho_optimize(0, GMSH_SET, 2);
-      }
-      else if(argv[i] == "-ho_min") {
-        i++;
-        if(i < argv.size())
-          opt_mesh_ho_threshold_min(0, GMSH_SET, atof(argv[i++].c_str()));
-        else {
-          Msg::Error("Missing number");
-          if(exitOnError) Msg::Exit(1);
-        }
-      }
-      else if(argv[i] == "-debugSurface") {
-        i++;
-        if(i < argv.size())
-          CTX::instance()->debugSurface = atoi(argv[i++].c_str());
-        else {
-          Msg::Error("Missing number");
-          if(exitOnError) Msg::Exit(1);
-        }
-      }
-      else if(argv[i] == "-ho_max") {
-        i++;
-        if(i < argv.size())
-          opt_mesh_ho_threshold_max(0, GMSH_SET, atof(argv[i++].c_str()));
-        else {
-          Msg::Error("Missing number");
-          if(exitOnError) Msg::Exit(1);
-        }
-      }
-      else if(argv[i] == "-ho_nlayers") {
-        i++;
-        if(i < argv.size())
-          opt_mesh_ho_nlayers(0, GMSH_SET, atoi(argv[i++].c_str()));
-        else {
-          Msg::Error("Missing number");
-          if(exitOnError) Msg::Exit(1);
-        }
-      }
-      else if(argv[i] == "-nopopup") {
-        opt_general_nopopup(0, GMSH_SET, 1);
-        i++;
-      }
-      else if(argv[i] == "-watch") {
-        i++;
-        if(i < argv.size()) {
-          std::string tmp = argv[i++];
-          if(tmp.size() > 2 && tmp[0] == '"' && tmp[tmp.size() - 1] == '"')
-            opt_general_watch_file_pattern(0, GMSH_SET,
-                                           tmp.substr(1, tmp.size() - 2));
-          else
-            opt_general_watch_file_pattern(0, GMSH_SET, tmp);
-        }
-        else {
-          Msg::Error("Missing string");
-          if(exitOnError) Msg::Exit(1);
-        }
-      }
-      else if(argv[i] == "-string") {
-        i++;
-        if(i < argv.size())
-          ParseString(argv[i++]);
-        else {
-          Msg::Error("Missing string");
-          if(exitOnError) Msg::Exit(1);
-        }
-      }
-      else if(argv[i] == "-setstring") {
-        i++;
-        if(i + 1 < argv.size()) {
-          std::string n(argv[i]), cat, opt, v = argv[i + 1], olName;
-          int index = 0;
-          if(SplitOptionName(n, cat, opt, index)) {
-            GmshSetStringOption(cat, opt, v, index);
-          }
-          else if(IsOnelabName(n, olName)) {
-            Msg::SetOnelabString(olName, v, true, true);
-          }
-          else {
-#if defined(HAVE_PARSER)
-            gmsh_yystringsymbols[n] = std::vector<std::string>(1, v);
-#endif
-            Msg::GetCommandLineStrings()[n] = v;
-          }
-          i += 2;
-        }
-        else {
-          Msg::Error("Missing name and/or value for string definition");
-          if(exitOnError) Msg::Exit(1);
-        }
-      }
-      else if(argv[i] == "-setnumber") {
-        i++;
-        if(i + 1 < argv.size()) {
-          std::string n(argv[i]), cat, opt, olName;
-          double v = atof(argv[i + 1].c_str());
-          int index = 0;
-          if(SplitOptionName(n, cat, opt, index)) {
-            GmshSetNumberOption(cat, opt, v, index);
-          }
-          else if(IsOnelabName(n, olName)) {
-            Msg::SetOnelabNumber(olName, v, true, true);
-          }
-          else {
-#if defined(HAVE_PARSER)
-            gmsh_yysymbols[n].value = std::vector<double>(1, v);
-#endif
-            Msg::GetCommandLineNumbers()[n] = std::vector<double>(1, v);
-          }
-          i += 2;
-        }
-        else {
-          Msg::Error("Missing name and/or value for number definition");
-          if(exitOnError) Msg::Exit(1);
-        }
-      }
-      else if(argv[i] == "-setlist" || argv[i] == "-setlistofnumbers") {
-        i++;
-        if(i + 1 < argv.size() && argv[i].size() && argv[i][0] != '-') {
-          std::string n(argv[i]);
-          std::vector<double> v;
-          int s = atoi(argv[i + 1].c_str()), j = 0;
-          i += 2;
-          while(j < s && i < argv.size()) {
-            v.push_back(atof(argv[i].c_str()));
-            i++;
-            j++;
-          }
-          if(j < s) {
-            Msg::Error("Missing values in list (got %d instead of %d)", j, s);
-            if(exitOnError) Msg::Exit(1);
-          }
-#if defined(HAVE_PARSER)
-          gmsh_yysymbols[n].value = v;
-#endif
-          Msg::GetCommandLineNumbers()[n] = v;
-        }
-        else {
-          Msg::Error(
-            "Missing name and/or value for definition of list of numbers");
-          if(exitOnError) Msg::Exit(1);
-        }
-      }
-      else if(argv[i] == "-option") {
-        i++;
-        if(i < argv.size())
-          ParseFile(argv[i++], true);
-        else {
-          Msg::Error("Missing file name");
-          if(exitOnError) Msg::Exit(1);
-        }
-      }
-      else if(argv[i] == "-o") {
-        i++;
-        if(i < argv.size())
-          CTX::instance()->outputFileName = argv[i++];
-        else {
-          Msg::Error("Missing file name");
-          if(exitOnError) Msg::Exit(1);
-        }
-      }
-      else if(argv[i] == "-aniso_max" || argv[i] == "-anisoMax") {
-        i++;
-        if(i < argv.size())
-          opt_mesh_aniso_max(0, GMSH_SET, atof(argv[i++].c_str()));
-        else {
-          Msg::Error("Missing anisotropy ratio");
-          if(exitOnError) Msg::Exit(1);
-        }
-      }
-      else if(argv[i] == "-smooth_ratio" || argv[i] == "-smoothRatio") {
-        i++;
-        if(i < argv.size())
-          opt_mesh_smooth_ratio(0, GMSH_SET, atof(argv[i++].c_str()));
-        else {
-          Msg::Error("Missing smooth ratio");
-          if(exitOnError) Msg::Exit(1);
-        }
-      }
-      else if(argv[i] == "-bgm") {
-        i++;
-        if(i < argv.size())
-          CTX::instance()->bgmFileName = argv[i++];
-        else {
-          Msg::Error("Missing file name");
-          if(exitOnError) Msg::Exit(1);
-        }
-      }
-      else if(argv[i] == "-size_field") {
-        i++;
-        if(i < argv.size()){
-          CTX::instance()->mesh.nLayersPerGap = atoi(argv[i].c_str());
-          CTX::instance()->batch = 9;
-        }
-        else{
-          Msg::Error("Missing number of layers per gap");
-          if(exitOnError) Msg::Exit(1);
-        }
-        i++;
-        if(i < argv.size()){
-          CTX::instance()->mesh.lcFromCurvature = atoi(argv[i].c_str());
-          if(CTX::instance()->mesh.lcFromCurvature <= 0.)
-            CTX::instance()->mesh.lcFromCurvature = 0;
-        }
-        else{
-          Msg::Error("Missing number of elements density");
-          if(exitOnError) Msg::Exit(1);
-        }
-        i++;
-        if(i < argv.size()){
-          CTX::instance()->mesh.gradation = atof(argv[i].c_str());
-          if(CTX::instance()->mesh.gradation <= 1.){
-            CTX::instance()->mesh.gradation = 1.05;
-            Msg::Info("Gradation must be > 1 : set to 1.05");
-          }
-        }
-        else{
-          Msg::Error("Missing gradation");
-          if(exitOnError) Msg::Exit(1);
-        }
-      }
-      else if(argv[i] == "-windows") {
-        i++;
-        if(i < argv.size())
-          CTX::instance()->numWindows = atoi(argv[i++].c_str());
-        else {
-          Msg::Error("Missing number");
-          if(exitOnError) Msg::Exit(1);
-        }
-      }
-      else if(argv[i] == "-tiles") {
-        i++;
-        if(i < argv.size())
-          CTX::instance()->numTiles = atoi(argv[i++].c_str());
-        else {
-          Msg::Error("Missing number");
-          if(exitOnError) Msg::Exit(1);
-        }
-      }
-      else if(argv[i] == "-vmsh") {
-        i++;
-        if(i < argv.size()) {
-          opt_mesh_msh_file_version(0, GMSH_SET, atof(argv[i++].c_str()));
-        }
-        else {
-          Msg::Error("Missing number");
-          if(exitOnError) Msg::Exit(1);
-        }
-      }
-      else if(argv[i] == "-convert") {
-        i++;
-        CTX::instance()->batch = 1;
-        while(i < argv.size()) {
-          std::string fileName = std::string(argv[i]) + "_new";
-#if defined(HAVE_POST)
-          std::size_t n = PView::list.size();
-#endif
-          OpenProject(argv[i]);
-#if defined(HAVE_POST)
-          // convert post-processing views to latest binary format
-          for(std::size_t j = n; j < PView::list.size(); j++)
-            PView::list[j]->write(fileName, 1, (j == n) ? false : true);
-#endif
-          // convert mesh to latest binary format
-          if(GModel::current()->getMeshStatus() > 0) {
-            opt_mesh_msh_file_version(0, GMSH_SET, 4.1);
-            opt_mesh_binary(0, GMSH_SET, 1);
-            CreateOutputFile(fileName, FORMAT_MSH);
-          }
-          i++;
-        }
-        Msg::Exit(0);
-      }
-      else if(argv[i] == "-tol") {
-        i++;
-        if(i < argv.size())
-          opt_geometry_tolerance(0, GMSH_SET, atof(argv[i++].c_str()));
-        else {
-          Msg::Error("Missing number");
-          if(exitOnError) Msg::Exit(1);
-        }
-      }
-      else if(argv[i] == "-match") {
-        i++;
-        opt_geometry_match_geom_and_mesh(0, GMSH_SET, 1);
-      }
-      else if(argv[i] == "-scale") {
-        i++;
-        if(i < argv.size())
-          opt_geometry_scaling_factor(0, GMSH_SET, atof(argv[i++].c_str()));
-        else {
-          Msg::Error("Missing number");
-          if(exitOnError) Msg::Exit(1);
-        }
-      }
-      else if(argv[i] == "-meshscale") {
-        i++;
-        if(i < argv.size())
-          opt_mesh_scaling_factor(0, GMSH_SET, atof(argv[i++].c_str()));
-        else {
-          Msg::Error("Missing number");
-          if(exitOnError) Msg::Exit(1);
-        }
-      }
-      else if(argv[i] == "-rand") {
-        i++;
-        if(i < argv.size())
-          opt_mesh_rand_factor(0, GMSH_SET, atof(argv[i++].c_str()));
-        else {
-          Msg::Error("Missing number");
-          if(exitOnError) Msg::Exit(1);
-        }
-      }
-      else if(argv[i] == "-clscale") {
-        i++;
-        if(i < argv.size()) {
-          opt_mesh_lc_factor(0, GMSH_SET, atof(argv[i++].c_str()));
-          if(CTX::instance()->mesh.lcFactor <= 0.0) {
-            Msg::Error("Mesh element size factor must be > 0");
-            if(exitOnError) Msg::Exit(1);
-          }
-        }
-        else {
-          Msg::Error("Missing number");
-          if(exitOnError) Msg::Exit(1);
-        }
-      }
-      else if(argv[i] == "-clmin") {
-        i++;
-        if(i < argv.size())
-          opt_mesh_lc_min(0, GMSH_SET, atof(argv[i++].c_str()));
-        else {
-          Msg::Error("Missing number");
-          if(exitOnError) Msg::Exit(1);
-        }
-      }
-      else if(argv[i] == "-clmax") {
-        i++;
-        if(i < argv.size()) {
-          opt_mesh_lc_max(0, GMSH_SET, atof(argv[i++].c_str()));
-          if(CTX::instance()->mesh.lcMax <= 0.0) {
-            Msg::Error("Maximum length size must be > 0");
-            if(exitOnError) Msg::Exit(1);
-          }
-        }
-        else {
-          Msg::Error("Missing number");
-          if(exitOnError) Msg::Exit(1);
-        }
-      }
-      else if(argv[i] == "-clextend") {
-        i++;
-        if(i < argv.size())
-          opt_mesh_lc_extend_from_boundary(0, GMSH_SET, atof(argv[i++].c_str()));
-        else {
-          Msg::Error("Missing number");
-          if(exitOnError) Msg::Exit(1);
-        }
-      }
-      else if(argv[i] == "-ignore_periodicity" ||
-              argv[i] == "-ignorePeriodicity") {
-        i++;
-        opt_mesh_ignore_periodicity(0, GMSH_SET, 1);
-      }
-      else if(argv[i] == "-edgelmin") {
-        i++;
-        if(i < argv.size())
-          opt_mesh_tolerance_edge_length(0, GMSH_SET, atof(argv[i++].c_str()));
-        else {
-          Msg::Error("Missing number");
-          if(exitOnError) Msg::Exit(1);
-        }
-      }
-      else if(argv[i] == "-epslc1d") {
-        i++;
-        if(i < argv.size()) {
-          opt_mesh_lc_integration_precision(0, GMSH_SET,
-                                            atof(argv[i++].c_str()));
-          if(CTX::instance()->mesh.lcIntegrationPrecision <= 0.0) {
-            Msg::Error("Integration accuracy must be > 0");
-            if(exitOnError) Msg::Exit(1);
-          }
-        }
-        else {
-          Msg::Error("Missing number");
-          if(exitOnError) Msg::Exit(1);
-        }
-      }
-      else if(argv[i] == "-swapangle") {
-        i++;
-        if(i < argv.size())
-          opt_mesh_allow_swap_edge_angle(0, GMSH_SET, atof(argv[i++].c_str()));
-        else {
-          Msg::Error("Missing number");
-          if(exitOnError) Msg::Exit(1);
-        }
-      }
-      else if(argv[i] == "-clcurv") {
-        i++;
-        if(i < argv.size()) {
-          opt_mesh_lc_from_curvature(0, GMSH_SET, atof(argv[i++].c_str()));
-        }
-        else {
-          Msg::Error("Missing number");
-          if(exitOnError) Msg::Exit(1);
-        }
-      }
-      else if(argv[i] == "-clcurviso") {
-        opt_mesh_lc_from_curvature_iso(0, GMSH_SET, 1);
-        i++;
-      }
-      else if(argv[i] == "-smooth") {
-        i++;
-        if(i < argv.size())
-          opt_mesh_nb_smoothing(0, GMSH_SET, atoi(argv[i++].c_str()));
-        else {
-          Msg::Error("Missing number");
-          if(exitOnError) Msg::Exit(1);
-        }
-      }
-      else if(argv[i] == "-order" || argv[i] == "-degree") {
-        i++;
-        if(i < argv.size())
-          opt_mesh_order(0, GMSH_SET, atof(argv[i++].c_str()));
-        else {
-          Msg::Error("Missing number");
-          if(exitOnError) Msg::Exit(1);
-        }
-      }
-      else if(argv[i] == "-numsubedges") {
-        i++;
-        if(i < argv.size())
-          opt_mesh_num_sub_edges(0, GMSH_SET, atof(argv[i++].c_str()));
-        else {
-          Msg::Error("Missing number");
-          if(exitOnError) Msg::Exit(1);
-        }
-      }
-      else if(argv[i] == "-statreport") {
-        i++;
-        CTX::instance()->createAppendMeshStatReport = 1;
-        if(i < argv.size())
-          CTX::instance()->meshStatReportFileName = argv[i++];
-        else {
-          Msg::Error("Missing argument");
-          if(exitOnError) Msg::Exit(1);
-        }
-      }
-      else if(argv[i] == "-append_statreport") {
-        i++;
-        CTX::instance()->createAppendMeshStatReport = 2;
-        if(i < argv.size())
-          CTX::instance()->meshStatReportFileName = argv[i++];
-        else {
-          Msg::Error("Missing argument");
-          if(exitOnError) Msg::Exit(1);
-        }
-      }
-      else if(argv[i] == "-bin") {
-        i++;
-        opt_mesh_binary(0, GMSH_SET, 1);
-      }
-      else if(argv[i] == "-save_parametric" || argv[i] == "-parametric") {
-        i++;
-        opt_mesh_save_parametric(0, GMSH_SET, 1);
-      }
-      else if(argv[i] == "-save_topology" || argv[i] == "-save_entities") {
-        i++;
-        opt_mesh_save_topology(0, GMSH_SET, 1);
-      }
-      else if(argv[i] == "-algo") {
-        i++;
-        if(i < argv.size()) {
-          if(argv[i] == "MeshAdapt" || argv[i] == "meshadapt" ||
-             argv[i] == "iso")
-            opt_mesh_algo2d(0, GMSH_SET, ALGO_2D_MESHADAPT);
-          else if(argv[i] == "auto")
-            CTX::instance()->mesh.algo2d = ALGO_2D_AUTO;
-          else if(argv[i] == "Delaunay2D" || argv[i] == "del2d" ||
-                  argv[i] == "tri")
-            opt_mesh_algo2d(0, GMSH_SET, ALGO_2D_DELAUNAY);
-          else if(argv[i] == "FrontalDelaunay2D" || argv[i] == "front2d" ||
-                  argv[i] == "frontal")
-            opt_mesh_algo2d(0, GMSH_SET, ALGO_2D_FRONTAL);
-          else if(argv[i] == "bamg")
-            opt_mesh_algo2d(0, GMSH_SET, ALGO_2D_BAMG);
-          else if(argv[i] == "DelaunayFrontalForQuads" || argv[i] == "delquad")
-            opt_mesh_algo2d(0, GMSH_SET, ALGO_2D_FRONTAL_QUAD);
-          else if(argv[i] == "PackingOfParallelograms" || argv[i] == "pack")
-            opt_mesh_algo2d(0, GMSH_SET, ALGO_2D_PACK_PRLGRMS);
-          else if(argv[i] == "QuadQuasiStructured" || argv[i] == "quadqs")
-            opt_mesh_algo2d(0, GMSH_SET, ALGO_2D_QUAD_QUASI_STRUCT);
-          else if(argv[i] == "initial2d")
-            opt_mesh_algo2d(0, GMSH_SET, ALGO_2D_INITIAL_ONLY);
-          else if(argv[i] == "del3d" || argv[i] == "gmsh3d")
-            opt_mesh_algo3d(0, GMSH_SET, ALGO_3D_DELAUNAY);
-          else if(argv[i] == "front3d" || argv[i] == "netgen")
-            opt_mesh_algo3d(0, GMSH_SET, ALGO_3D_FRONTAL);
-          else if(argv[i] == "mmg3d")
-            opt_mesh_algo3d(0, GMSH_SET, ALGO_3D_MMG3D);
-          else if(argv[i] == "rtree3d")
-            opt_mesh_algo3d(0, GMSH_SET, ALGO_3D_RTREE);
-          else if(argv[i] == "hxt")
-            opt_mesh_algo3d(0, GMSH_SET, ALGO_3D_HXT);
-          else if(argv[i] == "initial3d")
-            opt_mesh_algo3d(0, GMSH_SET, ALGO_3D_INITIAL_ONLY);
-          else {
-            Msg::Error("Unknown mesh algorithm");
-            if(exitOnError) Msg::Exit(1);
-          }
-          i++;
-        }
-        else {
-          Msg::Error("Missing algorithm");
-          if(exitOnError) Msg::Exit(1);
-        }
-      }
-      else if(argv[i] == "-quad") {
-        opt_mesh_recombine_all(0, GMSH_SET, 1);
-        opt_mesh_algo_recombine(0, GMSH_SET, 2);
-        i++;
-      }
-      else if(argv[i] == "-format" || argv[i] == "-f") {
-        i++;
-        if(i < argv.size()) {
-          double version = 0.;
-          int format =
-            GetFileFormatFromExtension(std::string(".") + argv[i], &version);
-          if(format < 0) {
-            Msg::Error("Unknown mesh format '%s'", argv[i].c_str());
-            if(exitOnError) Msg::Exit(1);
-          }
-          else {
-            opt_mesh_file_format(0, GMSH_SET, format);
-            if(format == FORMAT_MSH && version > 0.)
-              opt_mesh_msh_file_version(0, GMSH_SET, version);
-          }
-          i++;
-        }
-        else {
-          Msg::Error("Missing format");
-          if(exitOnError) Msg::Exit(1);
-        }
-      }
-      else if(argv[i] == "-listen") {
-        i++;
-        opt_solver_listen(0, GMSH_SET, 1);
-        if(i < argv.size() && argv[i].size() && argv[i][0] != '-')
-          opt_solver_socket_name(0, GMSH_SET, argv[i++]);
-      }
-      else if(argv[i] == "-minterpreter") {
-        i++;
-        if(i < argv.size())
-          opt_solver_octave_interpreter(0, GMSH_SET, argv[i++]);
-        else {
-          Msg::Error("Missing interpreter name");
-          if(exitOnError) Msg::Exit(1);
-        }
-      }
-      else if(argv[i] == "-pyinterpreter") {
-        i++;
-        if(i < argv.size())
-          opt_solver_python_interpreter(0, GMSH_SET, argv[i++]);
-        else {
-          Msg::Error("Missing interpreter name");
-          if(exitOnError) Msg::Exit(1);
-        }
-      }
-      else if(argv[i] == "-bg") {
-        i++;
-        if(i < argv.size())
-          opt_general_background_image_filename(0, GMSH_SET, argv[i++]);
-        else {
-          Msg::Error("Missing filename");
-          if(exitOnError) Msg::Exit(1);
-        }
-      }
-      else if(argv[i] == "-version" || argv[i] == "--version") {
-        fprintf(stdout, "%s\n", GMSH_VERSION);
-        fflush(stdout);
-        Msg::Exit(0);
-      }
-      else if(argv[i] == "-info" || argv[i] == "--info") {
-        PrintBuildInfo();
-        Msg::Exit(0);
-      }
-      else if(argv[i] == "-help" || argv[i] == "--help") {
-        Msg::Direct(
-          "Gmsh, a 3D mesh generator with pre- and post-processing facilities");
-        Msg::Direct("Copyright (C) 1997-2022 C. Geuzaine and J.-F. Remacle");
-        PrintUsage(argv[0]);
-        Msg::Exit(0);
-      }
-      else if(argv[i] == "-help_options") {
-        std::vector<std::string> s;
-        PrintOptions(0, GMSH_FULLRC, 0, 1, nullptr, &s);
-        for(std::size_t i = 0; i < s.size(); i++)
-          Msg::Direct("%s\n", s[i].c_str());
-        Msg::Exit(0);
-      }
-      else if(argv[i] == "-v" || argv[i] == "-verbose") {
-        i++;
-        if(i < argv.size())
-          Msg::SetVerbosity(atoi(argv[i++].c_str()));
-        else {
-          Msg::Error("Missing number");
-          if(exitOnError) Msg::Exit(1);
-        }
-      }
-      else if(argv[i] == "-nt") {
-        i++;
-        if(i < argv.size())
-          opt_general_num_threads(0, GMSH_SET, atoi(argv[i++].c_str()));
-        else {
-          Msg::Error("Missing number");
-          if(exitOnError) Msg::Exit(1);
-        }
+      else if(GetOtherOption(argv, i, exitOnError)) {
       }
       else if(argv[i] == "-term") {
         terminal = 1;
         i++;
       }
-      // FIXME: temporary for auto-extrude testing
-      else if(argv[i] == "-autoex") {
-        CTX::instance()->geom.autoExtrude = 1;
-        i++;
-      }
-#if defined(HAVE_FLTK)
-      else if(argv[i] == "-dual") {
-        opt_mesh_dual(0, GMSH_SET, 1);
-        i++;
-      }
-      else if(argv[i] == "-voronoi") {
-        opt_mesh_voronoi(0, GMSH_SET, 1);
-        i++;
-      }
-      else if(argv[i] == "-noview") {
-        opt_view_visible(0, GMSH_SET, 0);
-        i++;
-      }
-      else if(argv[i] == "-nomesh") {
-        opt_mesh_nodes(0, GMSH_SET, 0.);
-        opt_mesh_lines(0, GMSH_SET, 0.);
-        opt_mesh_surface_edges(0, GMSH_SET, 0.);
-        opt_mesh_surface_faces(0, GMSH_SET, 0.);
-        opt_mesh_volume_edges(0, GMSH_SET, 0.);
-        opt_mesh_volume_faces(0, GMSH_SET, 0.);
-        i++;
-      }
-      else if(argv[i] == "-n") {
-        opt_view_visible(0, GMSH_SET, 0);
-        opt_mesh_nodes(0, GMSH_SET, 0.);
-        opt_mesh_lines(0, GMSH_SET, 0.);
-        opt_mesh_surface_edges(0, GMSH_SET, 0.);
-        opt_mesh_surface_faces(0, GMSH_SET, 0.);
-        opt_mesh_volume_edges(0, GMSH_SET, 0.);
-        opt_mesh_volume_faces(0, GMSH_SET, 0.);
-        i++;
-      }
-      else if(argv[i] == "-link") {
-        i++;
-        if(i < argv.size())
-          opt_post_link(0, GMSH_SET, atoi(argv[i++].c_str()));
-        else {
-          Msg::Error("Missing number");
-          if(exitOnError) Msg::Exit(1);
-        }
-      }
-      else if(argv[i] == "-smoothview") {
-        opt_post_smooth(0, GMSH_SET, 1.);
-        i++;
-      }
-      else if(argv[i] == "-combine") {
-        CTX::instance()->post.combineTime = 1;
-        i++;
-      }
-      else if(argv[i] == "-nodb") {
-        opt_general_double_buffer(0, GMSH_SET, 0.);
-        i++;
-      }
-      else if(argv[i] == "-camera") {
-        opt_general_camera_mode(0, GMSH_SET, 1.);
-        i++;
-      }
-      else if(argv[i] == "-stereo") {
-        opt_general_stereo_mode(0, GMSH_SET, 1.);
-        i++;
-      }
-      else if(argv[i] == "-gamepad") {
-        opt_general_gamepad(0, GMSH_SET, 1.);
-        i++;
-      }
-      else if(argv[i] == "-fontsize") {
-        i++;
-        if(i < argv.size())
-          opt_general_fontsize(0, GMSH_SET, atoi(argv[i++].c_str()));
-        else {
-          Msg::Error("Missing number");
-          if(exitOnError) Msg::Exit(1);
-        }
-      }
-      else if(argv[i] == "-deltafontsize") {
-        i++;
-        if(i < argv.size())
-          CTX::instance()->deltaFontSize = atoi(argv[i++].c_str());
-        else {
-          Msg::Error("Missing number");
-          if(exitOnError) Msg::Exit(1);
-        }
-      }
-      else if(argv[i] == "-theme" || argv[i] == "-scheme") {
-        i++;
-        if(i < argv.size())
-          opt_general_gui_theme(0, GMSH_SET, argv[i++]);
-        else {
-          Msg::Error("Missing argument");
-          if(exitOnError) Msg::Exit(1);
-        }
-      }
-      else if(argv[i] == "-display") {
-        i++;
-        if(i < argv.size())
-          opt_general_display(0, GMSH_SET, argv[i++]);
-        else {
-          Msg::Error("Missing argument");
-          if(exitOnError) Msg::Exit(1);
-        }
-      }
-#endif
 #if defined(__APPLE__)
       else if(argv[i] == "-psn") {
         // the Mac Finder launches programs with a special command line argument

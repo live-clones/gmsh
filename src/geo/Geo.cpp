@@ -2613,6 +2613,7 @@ int ExtrudePoint(int type, int ip, double T0, double T1, double T2, double A0,
     c->Control_Points = List_Create(2, 1, sizeof(Vertex *));
     c->Extrude = new ExtrudeParams;
     c->Extrude->fill(type, T0, T1, T2, A0, A1, A2, X0, X1, X2, alpha);
+    c->Extrude->geo.Source = pv->Num;
     if(e) c->Extrude->mesh = e->mesh;
     List_Add(c->Control_Points, &pv);
     List_Add(c->Control_Points, &chapeau);
@@ -2627,6 +2628,7 @@ int ExtrudePoint(int type, int ip, double T0, double T1, double T2, double A0,
     c->Control_Points = List_Create(2, 1, sizeof(Vertex *));
     c->Extrude = new ExtrudeParams;
     c->Extrude->fill(type, T0, T1, T2, A0, A1, A2, X0, X1, X2, alpha);
+    c->Extrude->geo.Source = pv->Num;
     if(e) c->Extrude->mesh = e->mesh;
     List_Add(c->Control_Points, &pv);
     List_Add(c->Control_Points, &chapeau);
@@ -2659,6 +2661,7 @@ int ExtrudePoint(int type, int ip, double T0, double T1, double T2, double A0,
     c->Control_Points = List_Create(3, 1, sizeof(Vertex *));
     c->Extrude = new ExtrudeParams;
     c->Extrude->fill(type, T0, T1, T2, A0, A1, A2, X0, X1, X2, alpha);
+    c->Extrude->geo.Source = pv->Num;
     if(e) c->Extrude->mesh = e->mesh;
     List_Add(c->Control_Points, &pv);
     // compute circle center
@@ -2688,6 +2691,7 @@ int ExtrudePoint(int type, int ip, double T0, double T1, double T2, double A0,
       CTX::instance()->geom.extrudeSplinePoints + 1, 1, sizeof(Vertex *));
     c->Extrude = new ExtrudeParams;
     c->Extrude->fill(type, T0, T1, T2, A0, A1, A2, X0, X1, X2, alpha);
+    c->Extrude->geo.Source = pv->Num;
     if(e) c->Extrude->mesh = e->mesh;
     List_Add(c->Control_Points, &pv);
     c->beg = pv;
@@ -3017,7 +3021,6 @@ int ExtrudeSurface(int type, int is, double T0, double T1, double T2, double A0,
     List_Read(chapeau->Generatrices, i, &c);
     c->Extrude = new ExtrudeParams(COPIED_ENTITY);
     c->Extrude->fill(type, T0, T1, T2, A0, A1, A2, X0, X1, X2, alpha);
-
     int c2num = 0;
     if(ps) {
       List_Read(ps->Generatrices, i, &c2);

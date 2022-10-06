@@ -24,12 +24,17 @@ gmsh.initialize()
 # Let us for example include a three-dimensional scalar view:
 path = os.path.dirname(os.path.abspath(__file__))
 gmsh.merge(os.path.join(path, os.pardir, 'view3.pos'))
+v = gmsh.view.getTags()
+if len(v) != 1:
+    gmsh.logger.write("Wrong number of views!", "error")
+    gmsh.finalize()
+    exit()
 
 # We then set some options for the `Isosurface' plugin (which extracts an
 # isosurface from a 3D scalar view), and run it:
 gmsh.plugin.setNumber("Isosurface", "Value", 0.67)
 gmsh.plugin.setNumber("Isosurface", "View", 0)
-gmsh.plugin.run("Isosurface")
+v1 = gmsh.plugin.run("Isosurface")
 
 # We also set some options for the `CutPlane' plugin (which computes a section
 # of a 3D view using the plane A*x+B*y+C*z+D=0), and then run it:
@@ -38,7 +43,7 @@ gmsh.plugin.setNumber("CutPlane", "B", 0.2)
 gmsh.plugin.setNumber("CutPlane", "C", 1)
 gmsh.plugin.setNumber("CutPlane", "D", 0)
 gmsh.plugin.setNumber("CutPlane", "View", 0)
-gmsh.plugin.run("CutPlane")
+v2 = gmsh.plugin.run("CutPlane")
 
 # Add a title (By convention, for window coordinates a value greater than 99999
 # represents the center. We could also use `General.GraphicsWidth / 2', but that
@@ -59,12 +64,12 @@ gmsh.plugin.setNumber("Annotate", "FontSize", 12)
 gmsh.plugin.run("Annotate")
 
 # We finish by setting some options:
-gmsh.option.setNumber("View[0].Light", 1)
-gmsh.option.setNumber("View[0].IntervalsType", 1)
-gmsh.option.setNumber("View[0].NbIso", 6)
-gmsh.option.setNumber("View[0].SmoothNormals", 1)
-gmsh.option.setNumber("View[1].IntervalsType", 2)
-gmsh.option.setNumber("View[2].IntervalsType", 2)
+gmsh.view.option.setNumber(v[0], "Light", 1)
+gmsh.view.option.setNumber(v[0], "IntervalsType", 1)
+gmsh.view.option.setNumber(v[0], "NbIso", 6)
+gmsh.view.option.setNumber(v[0], "SmoothNormals", 1)
+gmsh.view.option.setNumber(v1, "IntervalsType", 2)
+gmsh.view.option.setNumber(v2, "IntervalsType", 2)
 
 # Launch the GUI to see the results:
 if '-nopopup' not in sys.argv:

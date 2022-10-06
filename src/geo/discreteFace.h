@@ -16,7 +16,7 @@
 class MElementOctree;
 
 class discreteFace : public GFace {
-private:
+public:
   class param {
   public:
     MElementOctree *oct;
@@ -38,8 +38,7 @@ private:
   param _param;
   void _createGeometryFromSTL();
   void _computeSTLNormals();
-  void _debugParametrization(bool uv);
-
+  void _debugParametrization(bool uv);  
 public:
   discreteFace(GModel *model, int num);
   discreteFace(GModel *model);

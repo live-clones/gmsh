@@ -5,6 +5,8 @@
 
 #include <stdlib.h>
 #include <stack>
+#include <stdexcept>
+
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "Numeric.h"
@@ -378,12 +380,19 @@ static void Mesh1D(GModel *m)
     }
 
     int nPending = 0;
+    bool exceptions = false;
 #pragma omp parallel for schedule(dynamic) num_threads(nthreads)
     for(size_t K = 0; K < temp.size(); K++) {
+      if(exceptions) continue;
       int localPending = 0;
       GEdge *ed = temp[K];
       if(ed->meshStatistics.status == GEdge::PENDING) {
-        ed->mesh(true);
+        try{ // OpenMP forbids leaving block via exception
+          ed->mesh(true);
+        }
+        catch(...){
+          exceptions = true;
+        }
 #pragma omp atomic capture
         {
           ++nPending;
@@ -392,7 +401,7 @@ static void Mesh1D(GModel *m)
       }
       if(!nIter) Msg::ProgressMeter(localPending, false, "Meshing 1D...");
     }
-
+    if(exceptions) throw std::runtime_error(Msg::GetLastError());
     if(!nPending) break;
     if(nIter++ > CTX::instance()->mesh.maxRetries) break;
   }
@@ -525,14 +534,21 @@ static void Mesh2D(GModel *m)
       }
 
       int nPending = 0;
+      bool exceptions = false;
       std::vector<GFace *> temp;
       temp.insert(temp.begin(), f.begin(), f.end());
 #pragma omp parallel for schedule(dynamic) num_threads(nthreads)
       for(size_t K = 0; K < temp.size(); K++) {
+        if(exceptions) continue;
         int localPending = 0;
         if(temp[K]->meshStatistics.status == GFace::PENDING) {
           backgroundMesh::current()->unset();
-          temp[K]->mesh(true);
+          try{ // OpenMP forbids leaving block via exception
+            temp[K]->mesh(true);
+          }
+          catch(...) {
+            exceptions = true;
+          }
 #pragma omp atomic capture
           {
             ++nPending;
@@ -541,6 +557,7 @@ static void Mesh2D(GModel *m)
         }
         if(!nIter) Msg::ProgressMeter(localPending, false, "Meshing 2D...");
       }
+      if(exceptions) throw std::runtime_error(Msg::GetLastError());
       if(!nPending) break;
       // iter == 2 is for meshing re-parametrized surfaces; after that, we
       // serialize (self-intersections of 1D meshes are not thread safe)!
@@ -1015,6 +1032,7 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter)
     p.BARRIER_MAX = CTX::instance()->mesh.hoThresholdMax;
     p.itMax = CTX::instance()->mesh.hoIterMax;
     p.optPassMax = CTX::instance()->mesh.hoPassMax;
+    p.fixBndNodes = CTX::instance()->mesh.hoFixBndNodes;
     p.dim = m->getDim();
     p.optPrimSurfMesh = CTX::instance()->mesh.hoPrimSurfMesh;
     p.optCAD = CTX::instance()->mesh.hoDistCAD;
@@ -1065,49 +1083,49 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter)
     }
   }
   else if(how == "DiskQuadrangulation") {
-    for(GFace *gf : m->getFaces())
+    for(GFace *gf : m->getFaces()) {
       if(gf->meshStatistics.status == GFace::DONE) {
         gf->meshStatistics.status = GFace::PENDING;
       }
-
+    }
     transferSeamGEdgesVerticesToGFace(m);
     optimizeTopologyWithDiskQuadrangulationRemeshing(m);
-
-    for(GFace *gf : m->getFaces())
+    for(GFace *gf : m->getFaces()) {
       if(gf->meshStatistics.status == GFace::PENDING) {
         gf->meshStatistics.status = GFace::DONE;
       }
+    }
   }
   else if(how == "QuadCavityRemeshing") {
-    for(GFace *gf : m->getFaces())
+    for(GFace *gf : m->getFaces()) {
       if(gf->meshStatistics.status == GFace::DONE) {
         gf->meshStatistics.status = GFace::PENDING;
       }
-
+    }
     transferSeamGEdgesVerticesToGFace(m);
     optimizeTopologyWithCavityRemeshing(m);
-
-    for(GFace *gf : m->getFaces())
+    for(GFace *gf : m->getFaces()) {
       if(gf->meshStatistics.status == GFace::PENDING) {
         gf->meshStatistics.status = GFace::DONE;
       }
+    }
   }
   else if(how == "QuadQuasiStructured") {
     // The following methods only act on faces whose status is PENDING
-    for(GFace *gf : m->getFaces())
+    for(GFace *gf : m->getFaces()) {
       if(gf->meshStatistics.status == GFace::DONE) {
         gf->meshStatistics.status = GFace::PENDING;
       }
-
+    }
     transferSeamGEdgesVerticesToGFace(m);
     quadMeshingOfSimpleFacesWithPatterns(m);
     optimizeTopologyWithDiskQuadrangulationRemeshing(m);
     optimizeTopologyWithCavityRemeshing(m);
-
-    for(GFace *gf : m->getFaces())
+    for(GFace *gf : m->getFaces()) {
       if(gf->meshStatistics.status == GFace::PENDING) {
         gf->meshStatistics.status = GFace::DONE;
       }
+    }
   }
   else if(how == "UntangleMeshGeometry") {
 #if defined(HAVE_WINSLOWUNTANGLER)
@@ -1120,7 +1138,7 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter)
         untangleGFaceMeshConstrained(gf, nIterWinslow, timeMax);
       }
       else {
-        Msg::Debug("- Face %i: not planar, do not apply Winslow untangling",
+        Msg::Debug("- Surface %i: not planar, do not apply Winslow untangling",
                    gf->tag());
       }
     }

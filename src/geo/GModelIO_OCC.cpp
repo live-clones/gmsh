@@ -114,6 +114,10 @@
 #error "Gmsh requires OpenCASCADE >= 6.9"
 #endif
 
+#if OCC_VERSION_HEX > 0x070100
+#include <BOPAlgo_Alerts.hxx>
+#endif
+
 #if OCC_VERSION_HEX > 0x070300
 #include <BRepMesh_IncrementalMesh.hxx>
 #else
@@ -655,6 +659,7 @@ void OCC_Internals::_unbindWithoutChecks(TopoDS_Shape shape)
       _changed = true;
     }
   }
+  for(int d = -2; d <= 3; d++) _recomputeMaxTag(d);
 }
 
 void OCC_Internals::_unbind()
@@ -942,15 +947,26 @@ bool OCC_Internals::addCircleArc(int &tag, int startTag, int centerTag,
   }
 
   TopoDS_Edge result;
+  TopoDS_Vertex start = TopoDS::Vertex(_tagVertex.Find(startTag));
+  TopoDS_Vertex center = TopoDS::Vertex(_tagVertex.Find(centerTag));
+  TopoDS_Vertex end = TopoDS::Vertex(_tagVertex.Find(endTag));
+  gp_Pnt aP1 = BRep_Tool::Pnt(start);
+  gp_Pnt aP2 = BRep_Tool::Pnt(center);
+  gp_Pnt aP3 = BRep_Tool::Pnt(end);
+  Standard_Real Radius = aP1.Distance(aP2);
+
+  gp_Pln p;
   try {
-    TopoDS_Vertex start = TopoDS::Vertex(_tagVertex.Find(startTag));
-    TopoDS_Vertex center = TopoDS::Vertex(_tagVertex.Find(centerTag));
-    TopoDS_Vertex end = TopoDS::Vertex(_tagVertex.Find(endTag));
-    gp_Pnt aP1 = BRep_Tool::Pnt(start);
-    gp_Pnt aP2 = BRep_Tool::Pnt(center);
-    gp_Pnt aP3 = BRep_Tool::Pnt(end);
-    Standard_Real Radius = aP1.Distance(aP2);
-    gce_MakeCirc MC(aP2, gce_MakePln(aP1, aP2, aP3).Value(), Radius);
+    p = gce_MakePln(aP1, aP2, aP3).Value();
+  }
+  catch (...){
+    Msg::Info("Could not make plane from 3 points - assuming z=%g", aP2.Z());
+    gp_Dir N_dir(0., 0., 1.);
+    p = gce_MakePln(aP2, N_dir).Value();
+  }
+
+  try {
+    gce_MakeCirc MC(aP2, p, Radius);
     if(!MC.IsDone()) {
       Msg::Error("Could not build circle");
       return false;
@@ -1037,9 +1053,9 @@ bool OCC_Internals::addEllipseArc(int &tag, int startTag, int centerTag,
       Msg::Error("The points do not define an ellipse");
       return false;
     }
-    Standard_Real a; // Major radius
-    Standard_Real b; // Minor radius
-    gp_Ax2 Axes; // Ellipse local coordinate system
+    Standard_Real a; // major radius
+    Standard_Real b; // minor radius
+    gp_Ax2 Axes; // ellipse local coordinate system
     if(a2 >= b2) {
       a = Sqrt(a2);
       b = Sqrt(b2);
@@ -1082,7 +1098,9 @@ bool OCC_Internals::addEllipseArc(int &tag, int startTag, int centerTag,
 }
 
 bool OCC_Internals::addCircle(int &tag, double x, double y, double z, double r,
-                              double angle1, double angle2)
+                              double angle1, double angle2,
+                              const std::vector<double> &N,
+                              const std::vector<double> &V)
 {
   if(tag >= 0 && _tagEdge.IsBound(tag)) {
     Msg::Error("OpenCASCADE curve with tag %d already exists", tag);
@@ -1095,11 +1113,26 @@ bool OCC_Internals::addCircle(int &tag, double x, double y, double z, double r,
 
   TopoDS_Edge result;
   try {
-    gp_Dir N_dir(0., 0., 1.);
-    gp_Dir x_dir(1., 0., 0.);
+    gp_Circ circ;
     gp_Pnt center(x, y, z);
-    gp_Ax2 axis(center, N_dir, x_dir);
-    gp_Circ circ(axis, r);
+    if(N.size() == 3 && V.size() == 3) {
+      gp_Dir N_dir(N[0], N[1], N[2]);
+      gp_Dir x_dir(V[0], V[1], V[2]);
+      gp_Ax2 axis(center, N_dir, x_dir);
+      circ.SetPosition(axis);
+    }
+    else if(N.size() == 3) {
+      gp_Dir N_dir(N[0], N[1], N[2]);
+      gp_Ax2 axis(center, N_dir);
+      circ.SetPosition(axis);
+    }
+    else {
+      gp_Dir N_dir(0., 0., 1.);
+      gp_Dir x_dir(1., 0., 0.);
+      gp_Ax2 axis(center, N_dir, x_dir);
+      circ.SetPosition(axis);
+    }
+    circ.SetRadius(r);
     if(angle1 == 0. && angle2 == 2 * M_PI) {
       result = BRepBuilderAPI_MakeEdge(circ);
     }
@@ -1125,7 +1158,8 @@ bool OCC_Internals::addCircle(int &tag, double x, double y, double z, double r,
 
 bool OCC_Internals::addEllipse(int &tag, double x, double y, double z,
                                double rx, double ry, double angle1,
-                               double angle2)
+                               double angle2, const std::vector<double> &N,
+                               const std::vector<double> &V)
 {
   if(tag >= 0 && _tagEdge.IsBound(tag)) {
     Msg::Error("OpenCASCADE curve with tag %d already exists", tag);
@@ -1142,16 +1176,32 @@ bool OCC_Internals::addEllipse(int &tag, double x, double y, double z,
 
   TopoDS_Edge result;
   try {
-    gp_Dir N_dir(0., 0., 1.);
-    gp_Dir x_dir(1., 0., 0.);
+    gp_Elips el;
     gp_Pnt center(x, y, z);
-    gp_Ax2 axis(center, N_dir, x_dir);
-    gp_Elips elips(axis, rx, ry);
-    if(angle1 == 0 && angle2 == 2 * M_PI) {
-      result = BRepBuilderAPI_MakeEdge(elips);
+    if(N.size() == 3 && V.size() == 3) {
+      gp_Dir N_dir(N[0], N[1], N[2]);
+      gp_Dir x_dir(V[0], V[1], V[2]);
+      gp_Ax2 axis(center, N_dir, x_dir);
+      el.SetPosition(axis);
+    }
+    else if(N.size() == 3) {
+      gp_Dir N_dir(N[0], N[1], N[2]);
+      gp_Ax2 axis(center, N_dir);
+      el.SetPosition(axis);
     }
     else {
-      Handle(Geom_Ellipse) E = new Geom_Ellipse(elips);
+      gp_Dir N_dir(0., 0., 1.);
+      gp_Dir x_dir(1., 0., 0.);
+      gp_Ax2 axis(center, N_dir, x_dir);
+      el.SetPosition(axis);
+    }
+    el.SetMajorRadius(rx);
+    el.SetMinorRadius(ry);
+    if(angle1 == 0 && angle2 == 2 * M_PI) {
+      result = BRepBuilderAPI_MakeEdge(el);
+    }
+    else {
+      Handle(Geom_Ellipse) E = new Geom_Ellipse(el);
       Handle(Geom_TrimmedCurve) arc =
         new Geom_TrimmedCurve(E, angle1, angle2, true);
       BRepBuilderAPI_MakeEdge e(arc);
@@ -1448,11 +1498,9 @@ bool OCC_Internals::addBSpline(int &tag, const std::vector<int> &pointTags,
       m.back() = d + 1;
     }
     else {
-      k.resize(np - d + 2);
+      k.resize(np);
       for(std::size_t i = 0; i < k.size(); i++) k[i] = i;
       m.resize(k.size(), 1);
-      m.front() = d - 1;
-      m.back() = d - 1;
     }
   }
   return _addBSpline(tag, pointTags, 2, d, w, k, m);
@@ -1620,7 +1668,9 @@ bool OCC_Internals::addRectangle(int &tag, double x, double y, double z,
 }
 
 static bool makeDisk(TopoDS_Face &result, double xc, double yc, double zc,
-                     double rx, double ry)
+                     double rx, double ry,
+                     const std::vector<double> &N = std::vector<double>(),
+                     const std::vector<double> &V = std::vector<double>())
 {
   if(ry > rx) {
     Msg::Error("Major radius rx should be larger than minor radius ry");
@@ -1631,12 +1681,28 @@ static bool makeDisk(TopoDS_Face &result, double xc, double yc, double zc,
     return false;
   }
   try {
-    gp_Dir N_dir(0., 0., 1.);
-    gp_Dir x_dir(1., 0., 0.);
+    gp_Elips el;
     gp_Pnt center(xc, yc, zc);
-    gp_Ax2 axis(center, N_dir, x_dir);
-    gp_Elips ellipse = gp_Elips(axis, rx, ry);
-    TopoDS_Edge edge = BRepBuilderAPI_MakeEdge(ellipse);
+    if(N.size() == 3 && V.size() == 3) {
+      gp_Dir N_dir(N[0], N[1], N[2]);
+      gp_Dir x_dir(V[0], V[1], V[2]);
+      gp_Ax2 axis(center, N_dir, x_dir);
+      el.SetPosition(axis);
+    }
+    else if(N.size() == 3) {
+      gp_Dir N_dir(N[0], N[1], N[2]);
+      gp_Ax2 axis(center, N_dir);
+      el.SetPosition(axis);
+    }
+    else {
+      gp_Dir N_dir(0., 0., 1.);
+      gp_Dir x_dir(1., 0., 0.);
+      gp_Ax2 axis(center, N_dir, x_dir);
+      el.SetPosition(axis);
+    }
+    el.SetMajorRadius(rx);
+    el.SetMinorRadius(ry);
+    TopoDS_Edge edge = BRepBuilderAPI_MakeEdge(el);
     TopoDS_Wire wire = BRepBuilderAPI_MakeWire(edge);
     result = BRepBuilderAPI_MakeFace(wire);
   } catch(Standard_Failure &err) {
@@ -1647,14 +1713,15 @@ static bool makeDisk(TopoDS_Face &result, double xc, double yc, double zc,
 }
 
 bool OCC_Internals::addDisk(int &tag, double xc, double yc, double zc,
-                            double rx, double ry)
+                            double rx, double ry, const std::vector<double> &N,
+                            const std::vector<double> &V)
 {
   if(tag >= 0 && _tagFace.IsBound(tag)) {
     Msg::Error("OpenCASCADE surface with tag %d already exists", tag);
     return false;
   }
   TopoDS_Face result;
-  if(!makeDisk(result, xc, yc, zc, rx, ry)) return false;
+  if(!makeDisk(result, xc, yc, zc, rx, ry, N, V)) return false;
   if(tag < 0) tag = getMaxTag(2) + 1;
   _bind(result, tag, true);
   return true;
@@ -2570,10 +2637,10 @@ static bool makeCylinder(TopoDS_Solid &result, double x, double y, double z,
     return false;
   }
   try {
-    gp_Pnt aP(x, y, z);
-    gp_Vec aV(dx / H, dy / H, dz / H);
-    gp_Ax2 anAxes(aP, aV);
-    BRepPrimAPI_MakeCylinder c(anAxes, r, H, angle);
+    gp_Pnt p(x, y, z);
+    gp_Vec v(dx / H, dy / H, dz / H);
+    gp_Ax2 axis(p, v);
+    BRepPrimAPI_MakeCylinder c(axis, r, H, angle);
     c.Build();
     if(!c.IsDone()) {
       Msg::Error("Could not create cylinder");
@@ -2603,17 +2670,25 @@ bool OCC_Internals::addCylinder(int &tag, double x, double y, double z,
 }
 
 static bool makeTorus(TopoDS_Solid &result, double x, double y, double z,
-                      double r1, double r2, double angle)
+                      double r1, double r2, double angle,
+                      const std::vector<double> &N = std::vector<double>())
 {
   if(r1 <= 0 || r2 <= 0) {
     Msg::Error("Torus radii should be positive");
     return false;
   }
   try {
-    gp_Pnt aP(x, y, z);
-    gp_Vec aV(0, 0, 1);
-    gp_Ax2 anAxes(aP, aV);
-    BRepPrimAPI_MakeTorus t(anAxes, r1, r2, angle);
+    gp_Pnt p(x, y, z);
+    std::vector<double> NN(N);
+    if(NN.size() != 3) {
+      NN.resize(3);
+      NN[0] = 0.;
+      NN[1] = 0.;
+      NN[2] = 1.;
+    }
+    gp_Vec v(NN[0], NN[1], NN[2]);
+    gp_Ax2 axis(p, v);
+    BRepPrimAPI_MakeTorus t(axis, r1, r2, angle);
     t.Build();
     if(!t.IsDone()) {
       Msg::Error("Could not create torus");
@@ -2628,14 +2703,15 @@ static bool makeTorus(TopoDS_Solid &result, double x, double y, double z,
 }
 
 bool OCC_Internals::addTorus(int &tag, double x, double y, double z, double r1,
-                             double r2, double angle)
+                             double r2, double angle,
+                             const std::vector<double> &N)
 {
   if(tag >= 0 && _tagSolid.IsBound(tag)) {
     Msg::Error("OpenCASCADE volume with tag %d already exists", tag);
     return false;
   }
   TopoDS_Solid result;
-  if(!makeTorus(result, x, y, z, r1, r2, angle)) return false;
+  if(!makeTorus(result, x, y, z, r1, r2, angle, N)) return false;
   if(tag < 0) tag = getMaxTag(3) + 1;
   _bind(result, tag, true);
   return true;
@@ -2688,13 +2764,21 @@ bool OCC_Internals::addCone(int &tag, double x, double y, double z, double dx,
 }
 
 static bool makeWedge(TopoDS_Solid &result, double x, double y, double z,
-                      double dx, double dy, double dz, double ltx)
+                      double dx, double dy, double dz, double ltx,
+                      const std::vector<double> &N = std::vector<double>())
 {
   try {
-    gp_Pnt aP(x, y, z);
-    gp_Vec aV(0, 0, 1);
-    gp_Ax2 anAxes(aP, aV);
-    BRepPrimAPI_MakeWedge w(anAxes, dx, dy, dz, ltx);
+    gp_Pnt p(x, y, z);
+    std::vector<double> NN(N);
+    if(NN.size() != 3) {
+      NN.resize(3);
+      NN[0] = 0.;
+      NN[1] = 0.;
+      NN[2] = 1.;
+    }
+    gp_Vec v(NN[0], NN[1], NN[2]);
+    gp_Ax2 axis(p, v);
+    BRepPrimAPI_MakeWedge w(axis, dx, dy, dz, ltx);
     w.Build();
     if(!w.IsDone()) {
       Msg::Error("Could not create wedge");
@@ -2709,14 +2793,15 @@ static bool makeWedge(TopoDS_Solid &result, double x, double y, double z,
 }
 
 bool OCC_Internals::addWedge(int &tag, double x, double y, double z, double dx,
-                             double dy, double dz, double ltx)
+                             double dy, double dz, double ltx,
+                             const std::vector<double> &N)
 {
   if(tag >= 0 && _tagSolid.IsBound(tag)) {
     Msg::Error("OpenCASCADE volume with tag %d already exists", tag);
     return false;
   }
   TopoDS_Solid result;
-  if(!makeWedge(result, x, y, z, dx, dy, dz, ltx)) return false;
+  if(!makeWedge(result, x, y, z, dx, dy, dz, ltx, N)) return false;
   if(tag < 0) tag = getMaxTag(3) + 1;
   _bind(result, tag, true);
   return true;
@@ -2724,7 +2809,9 @@ bool OCC_Internals::addWedge(int &tag, double x, double y, double z, double dx,
 
 bool OCC_Internals::addThruSections(
   int tag, const std::vector<int> &wireTags, bool makeSolid, bool makeRuled,
-  std::vector<std::pair<int, int> > &outDimTags, int maxDegree)
+  std::vector<std::pair<int, int> > &outDimTags, int maxDegree,
+  const std::string &continuity, const std::string &parametrization,
+  bool smoothing)
 {
   int dim = makeSolid ? 3 : 2;
   if(tag >= 0 && _isBound(dim, tag)) {
@@ -2739,10 +2826,20 @@ bool OCC_Internals::addThruSections(
   TopoDS_Shape result;
   try {
     BRepOffsetAPI_ThruSections ts(makeSolid, makeRuled);
-    // ts.SetContinuity(GeomAbs_C1);
-    // Available choices:
-    //    GeomAbs_C0, GeomAbs_G1, GeomAbs_C1, GeomAbs_G2, GeomAbs_C2,
-    //    GeomAbs_C3, GeomAbs_CN
+    if(continuity == "C0")
+      ts.SetContinuity(GeomAbs_C0);
+    else if(continuity == "G1")
+      ts.SetContinuity(GeomAbs_G1);
+    else if(continuity == "C1")
+      ts.SetContinuity(GeomAbs_C1);
+    else if(continuity == "G2")
+      ts.SetContinuity(GeomAbs_G2);
+    else if(continuity == "C2")
+      ts.SetContinuity(GeomAbs_C2);
+    else if(continuity == "C3")
+      ts.SetContinuity(GeomAbs_C3);
+    else if(continuity == "CN")
+      ts.SetContinuity(GeomAbs_CN);
 
     // ts.SetCriteriumWeight(1, 1, 1);
 
@@ -2751,11 +2848,15 @@ bool OCC_Internals::addThruSections(
     else if(CTX::instance()->geom.occThruSectionsDegree > 0)
       ts.SetMaxDegree(CTX::instance()->geom.occThruSectionsDegree);
 
-    // ts.SetParType(Approx_ChordLength);
-    // Available choices:
-    //    Approx_ChordLength, Approx_Centripetal, Approx_IsoParametric
+    if(parametrization == "ChordLength")
+      ts.SetParType(Approx_ChordLength);
+    else if(parametrization == "Centripetal")
+      ts.SetParType(Approx_Centripetal);
+    else if(parametrization == "IsoParametric")
+      ts.SetParType(Approx_IsoParametric);
 
-    // ts.SetSmoothing(Standard_True);
+    ts.SetSmoothing(smoothing ? Standard_True : Standard_False);
+
     for(std::size_t i = 0; i < wireTags.size(); i++) {
       if(!_tagWire.IsBound(wireTags[i])) {
         Msg::Error("Unknown OpenCASCADE wire or curve loop with tag %d",
@@ -3106,7 +3207,7 @@ bool OCC_Internals::_extrudePerDim(
       // DiscreteTrihedron seems the most robust; CorrectedFrenet e.g. fails on
       // very simple cases with straight extrusions.
       GeomFill_Trihedron mode = GeomFill_IsDiscreteTrihedron;
-      if(trihedron == "" || trihedron == "DiscreteTrihedron")
+      if(trihedron == "DiscreteTrihedron")
         mode = GeomFill_IsDiscreteTrihedron;
       else if(trihedron == "CorrectedFrenet")
         mode = GeomFill_IsCorrectedFrenet;
@@ -3231,8 +3332,10 @@ bool OCC_Internals::addPipe(const std::vector<std::pair<int, int> > &inDimTags,
                             std::vector<std::pair<int, int> > &outDimTags,
                             const std::string &trihedron)
 {
+  std::string t = trihedron;
+  if(t.empty()) t = CTX::instance()->geom.pipeDefaultTrihedron;
   return _extrude(2, inDimTags, 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., wireTag,
-                  outDimTags, nullptr, trihedron);
+                  outDimTags, nullptr, t);
 }
 
 bool OCC_Internals::_fillet(int mode, const std::vector<int> &volumeTags,
@@ -3548,6 +3651,13 @@ bool OCC_Internals::booleanOperator(
       fragments.SetArguments(objectShapes);
       if(tolerance > 0.0) fragments.SetFuzzyValue(tolerance);
       fragments.Build();
+#if OCC_VERSION_HEX > 0x070100
+      if(fragments.HasErrors() &&
+         fragments.HasError(STANDARD_TYPE(BOPAlgo_AlertTooFewArguments))) {
+        Msg::Warning("Boolean fragments skipped - too few arguments");
+        return true;
+      }
+#endif
       if(!fragments.IsDone()) {
         Msg::Error("Boolean fragments failed");
         return false;
@@ -3580,7 +3690,12 @@ bool OCC_Internals::booleanOperator(
       if(remove) {
         int d = inDimTags[i].first;
         int t = inDimTags[i].second;
-        if(_isBound(d, t)) _unbind(_find(d, t), d, t, true);
+        if(_isBound(d, t)) {
+          if(CTX::instance()->geom.occSafeUnbind)
+            _unbind(_find(d, t), d, t, true);
+          else
+            _unbindWithoutChecks(_find(d, t));
+        }
       }
     }
     _multiBind(result, tag, outDimTags, (tag >= 0) ? true : false, true,
@@ -3598,7 +3713,12 @@ bool OCC_Internals::booleanOperator(
       int tag = inDimTags[i].second;
       bool remove = (i < numObjects) ? removeObject : removeTool;
       if(mapDeleted[i]) { // deleted
-        if(remove) _unbind(mapOriginal[i], dim, tag, true);
+        if(remove) {
+          if(CTX::instance()->geom.occSafeUnbind)
+            _unbind(mapOriginal[i], dim, tag, true);
+          else
+            _unbindWithoutChecks(mapOriginal[i]);
+        }
         Msg::Debug("BOOL (%d,%d) deleted", dim, tag);
       }
       else if(mapModified[i].Extent() == 0) { // not modified
@@ -3860,24 +3980,23 @@ bool OCC_Internals::_transform(
   for(std::size_t i = 0; i < inDimTags.size(); i++) {
     int dim = inDimTags[i].first;
     int tag = inDimTags[i].second;
-#if 0
-    // safe, but slow: _unbind() has linear complexity with respect to the number
-    // of entities in the model (due to the dependency checking of upward
-    // adjencencies and the maximum tag update). Using this in a for loop to
-    // translate copies of entities leads to quadratic complexity.
-    _unbind(inShapes[i], dim, tag, true);
-#else
-    // bypass it by unbinding the shape and all its subshapes without checking
-    // dependencies: this is a bit dangerous, as one could translate e.g. the
-    // face of a cube (this is not allowed!) - which will unbind the face of the
-    // cube. But the original face will actually be re-bound (with a warning) at
-    // the next syncronization point, so it's not too bad...
-    _unbindWithoutChecks(inShapes[i]);
-    for(int d = -2; d <= 3; d++) _recomputeMaxTag(d);
-
-    // FIXME: it would be even better to code a rebind() function to reuse the
+    if(CTX::instance()->geom.occSafeUnbind) {
+      // safe, but slow: _unbind() has linear complexity with respect to the number
+      // of entities in the model (due to the dependency checking of upward
+      // adjencencies and the maximum tag update). Using this in a for loop to
+      // translate copies of entities leads to quadratic complexity.
+      _unbind(inShapes[i], dim, tag, true);
+    }
+    else {
+      // bypass it by unbinding the shape and all its subshapes without checking
+      // dependencies: this is a bit dangerous, as one could translate e.g. the
+      // face of a cube (this is not allowed!) - which will unbind the face of
+      // the cube. But the original face will actually be re-bound (with a
+      // warning) at the next syncronization point, so it's not too bad...
+      _unbindWithoutChecks(inShapes[i]);
+    }
+    // TODO: it would be even better to code a rebind() function to reuse the
     // tags not only of the shape, but of all the sub-shapes as well
-#endif
     _bind(outShapes[i], dim, tag, true);
   }
 
@@ -3975,22 +4094,26 @@ bool OCC_Internals::affine(const std::vector<std::pair<int, int> > &inDimTags,
 bool OCC_Internals::copy(const std::vector<std::pair<int, int> > &inDimTags,
                          std::vector<std::pair<int, int> > &outDimTags)
 {
-  bool ret = true;
+  // build a single compound shape, so that we won't duplicate internal
+  // boundaries
+  BRep_Builder b;
+  TopoDS_Compound c;
+  b.MakeCompound(c);
   for(std::size_t i = 0; i < inDimTags.size(); i++) {
     int dim = inDimTags[i].first;
     int tag = inDimTags[i].second;
     if(!_isBound(dim, tag)) {
       Msg::Error("Unknown OpenCASCADE entity of dimension %d with tag %d", dim,
                  tag);
-      ret = false;
-      continue;
+      return false;
     }
-    TopoDS_Shape result = BRepBuilderAPI_Copy(_find(dim, tag)).Shape();
-    int newtag = getMaxTag(dim) + 1;
-    _bind(result, dim, newtag, true);
-    outDimTags.push_back(std::make_pair(dim, newtag));
+    TopoDS_Shape shape = _find(dim, tag);
+    b.Add(c, shape);
   }
-  return ret;
+
+  TopoDS_Shape result = BRepBuilderAPI_Copy(c).Shape();
+  _multiBind(result, -1, outDimTags, true, true);
+  return true;
 }
 
 bool OCC_Internals::remove(int dim, int tag, bool recursive)
@@ -4204,6 +4327,8 @@ bool OCC_Internals::importShapes(const std::string &fileName,
             split[2] == ".STEP" || split[2] == ".STP") {
       STEPControl_Reader reader;
       setTargetUnit(CTX::instance()->geom.occTargetUnit);
+      Interface_Static::SetIVal("read.step.ideas", 1);
+      Interface_Static::SetIVal("read.step.nonmanifold", 1);
 #if defined(HAVE_OCC_CAF)
       //Interface_Static::SetIVal("read.stepcaf.subshapes.name", 1);
       STEPCAFControl_Reader cafreader;
@@ -4318,6 +4443,11 @@ bool OCC_Internals::exportShapes(GModel *model, const std::string &fileName,
             split[2] == ".STEP" || split[2] == ".STP") {
       STEPControl_Writer writer;
       setTargetUnit(CTX::instance()->geom.occTargetUnit);
+
+      // this does not seem to solve the issue that entities get duplicated when
+      // exporting STEP files (see issue #906):
+      Interface_Static::SetIVal("write.step.nonmanifold", 1);
+
       if(writer.Transfer(c, STEPControl_AsIs) == IFSelect_RetDone) {
         if(writer.Write(occfile.ToCString()) != IFSelect_RetDone) {
           Msg::Error("Could not create file '%s'", fileName.c_str());
@@ -4386,6 +4516,26 @@ bool OCC_Internals::_getBoundingBox(const TopoDS_Shape &shape, double &xmin,
     std::vector<SVector3> normals;
     std::vector<int> triangles;
     _makeSTL(shape, vertices, normals, triangles);
+    // BRepBndLib can use the STL mesh if available, but unfortunately it
+    // enlarges the box with the mesh deflection tolerance and the shape
+    // tolerance, which makes it hard to get the expected minimal box in simple
+    // cases (e.g. for plane surfaces), and always leads to boxes that are too
+    // large; so we simply compute the box from the STL vertices. The downside
+    // of this approach is that the bbox might be *smaller* than the actual box
+    // for curved shapes, but this is preferable for us as boxes are mostly used
+    // to find/identify entities
+    if(vertices.size()) {
+      SBoundingBox3d bbox;
+      for(std::size_t i = 0; i < vertices.size(); i++)
+        bbox += vertices[i];
+      xmin = bbox.min().x();
+      ymin = bbox.min().y();
+      zmin = bbox.min().z();
+      xmax = bbox.max().x();
+      ymax = bbox.max().y();
+      zmax = bbox.max().z();
+      return true;
+    }
   }
   Bnd_Box b;
   try {
@@ -4395,8 +4545,6 @@ bool OCC_Internals::_getBoundingBox(const TopoDS_Shape &shape, double &xmin,
     return false;
   }
   b.Get(xmin, ymin, zmin, xmax, ymax, zmax);
-  if(CTX::instance()->geom.occBoundsUseSTL)
-    fixSTLBounds(xmin, ymin, zmin, xmax, ymax, zmax);
   return true;
 }
 
@@ -5370,7 +5518,6 @@ bool OCC_Internals::convertToNURBS(
     BRepBuilderAPI_NurbsConvert nurbs(shape);
     TopoDS_Shape res = nurbs.ModifiedShape(shape);
     _unbindWithoutChecks(shape);
-    for(int d = -2; d <= 3; d++) _recomputeMaxTag(d);
     _bind(res, dim, tag, true);
   }
 
@@ -5641,28 +5788,6 @@ bool OCC_Internals::makeTorusSTL(double x, double y, double z, double r1,
   if(!makeTorus(result, x, y, z, r1, r2, angle)) return false;
   if(!_makeSTL(result, vertices, normals, triangles)) return false;
   return true;
-}
-
-void OCC_Internals::fixSTLBounds(double &xmin, double &ymin, double &zmin,
-                                 double &xmax, double &ymax, double &zmax)
-{
-  // When an STL exists, OCC enlarges the bounding box by the allowed linear
-  // deflection given to BRepMesh_IncrementalMesh. This is "safe", but on simple
-  // polyhedral geometries (a cube!) it will consistently lead to enlarging the
-  // bounding box by twice this value in all directions. Since we use bounds()
-  // mostly for locating entities, it's better to remove the tolerance (with the
-  // risk that the bbox is a bit too small for curved boundaries - but that's
-  // fine)
-  double eps = CTX::instance()->mesh.stlLinearDeflection;
-  // OCC also enlarges the bounding box by Precision::Confusion(): remove it as
-  // well
-  eps += Precision::Confusion();
-  xmin += eps;
-  xmax -= eps;
-  ymin += eps;
-  ymax -= eps;
-  zmin += eps;
-  zmax -= eps;
 }
 
 #endif

@@ -4,10 +4,13 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 //
 // Contributed by Ismail Badia.
+
 // Reference :  "Higher-Order Finite Element  Methods"; Pavel Solin, Karel
-// Segeth ,
-//                 Ivo Dolezel , Chapman and Hall/CRC; Edition : Har/Cdr (2003).
+// Segeth, Ivo Dolezel, Chapman and Hall/CRC; Edition : Har/Cdr (2003).
+
+#include <stdexcept>
 #include "HierarchicalBasisH1Pri.h"
+
 HierarchicalBasisH1Pri::HierarchicalBasisH1Pri(int order)
 {
   _nvertex = 6;
@@ -49,7 +52,7 @@ double HierarchicalBasisH1Pri::_affineCoordinate(const int &j, const double &u,
   case(3): return 0.5 * (1 + u);
   case(4): return 0.5 * (1 + w);
   case(5): return 0.5 * (1 - w);
-  default: throw std::string("j must be : 1<=j<=5");
+  default: throw std::runtime_error("j must be : 1<=j<=5");
   }
 }
 void HierarchicalBasisH1Pri::generateBasis(double const &u, double const &v,

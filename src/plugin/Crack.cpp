@@ -18,10 +18,12 @@ StringXNumber CrackOptions_Number[] = {
   {GMSH_FULLRC, "Dimension", nullptr, 1.},
   {GMSH_FULLRC, "PhysicalGroup", nullptr, 1.},
   {GMSH_FULLRC, "OpenBoundaryPhysicalGroup", nullptr, 0.},
+  {GMSH_FULLRC, "AuxiliaryPhysicalGroup", nullptr, 0},
   {GMSH_FULLRC, "NormalX", nullptr, 0.},
   {GMSH_FULLRC, "NormalY", nullptr, 0.},
   {GMSH_FULLRC, "NormalZ", nullptr, 1.},
-  {GMSH_FULLRC, "NewPhysicalGroup", nullptr, 0}
+  {GMSH_FULLRC, "NewPhysicalGroup", nullptr, 0},
+  {GMSH_FULLRC, "DebugView", nullptr, 0}
 };
 
 extern "C" {
@@ -36,17 +38,24 @@ std::string GMSH_CrackPlugin::getHelp() const
          "The plugin duplicates the nodes and the elements on "
          "the crack and stores them in a new discrete curve "
          "(`Dimension' = 1) or surface (`Dimension' = 2). The "
-         "elements touching the crack on the ``negative'' side "
+         "elements touching the crack on the positive side "
          "are modified to use the newly generated nodes."
          "If `OpenBoundaryPhysicalGroup' is given (> 0), its "
          "nodes are duplicated and the crack will be left "
          "open on that (part of the) boundary. Otherwise, the "
          "lips of the crack are sealed, i.e., its nodes are "
-         "not duplicated. For 1D cracks, `NormalX', `NormalY' and "
+         "not duplicated. If `AuxiliaryPhysicalGroup' is given "
+         "(> 0), its elements are considered in addition to those in "
+         "`PhysicalGroup' for the logic that groups the elements "
+         "into the positive and negative side of the crack. "
+         "However, the nodes in `AuxiliaryPhysicalGroup' are not "
+         "duplicated (unless they are also in `PhysicalGroup'). "
+         "This can be useful to treat corner cases in non-trivial "
+         "geometries. For 1D cracks, `NormalX', `NormalY' and "
          "`NormalZ' provide the reference normal of the surface "
          "in which the crack is supposed to be embedded. If "
          "`NewPhysicalGroup' is positive, use it as the tag of "
-         "the newly created curve or surface; oterwise use "
+         "the newly created curve or surface; otherwise use "
          "`PhysicalGroup'.";
 }
 
@@ -83,9 +92,11 @@ PView *GMSH_CrackPlugin::execute(PView *view)
   int dim = (int)CrackOptions_Number[0].def;
   int physical = (int)CrackOptions_Number[1].def;
   int open = (int)CrackOptions_Number[2].def;
-  SVector3 normal1d(CrackOptions_Number[3].def, CrackOptions_Number[4].def,
-                    CrackOptions_Number[5].def);
-  int newPhysical = (int)CrackOptions_Number[6].def;
+  int aux = (int)CrackOptions_Number[3].def;
+  SVector3 normal1d(CrackOptions_Number[4].def, CrackOptions_Number[5].def,
+                    CrackOptions_Number[6].def);
+  int newPhysical = (int)CrackOptions_Number[7].def;
+  int debug = (int)CrackOptions_Number[8].def;
 
   if(dim != 1 && dim != 2) {
     Msg::Error("Crack dimension should be 1 or 2");
@@ -112,6 +123,16 @@ PView *GMSH_CrackPlugin::execute(PView *view)
     }
   }
 
+  std::vector<GEntity *> auxEntities;
+  if(aux > 0) {
+    auxEntities = groups[dim][aux];
+    if(auxEntities.empty()) {
+      Msg::Warning("Auxiliary physical group %d (dimension %d) is empty",
+                   aux, dim);
+      return view;
+    }
+  }
+
   std::set<GEntity *> crackEntities;
   crackEntities.insert(entities.begin(), entities.end());
   crackEntities.insert(openEntities.begin(), openEntities.end());
@@ -122,13 +143,19 @@ PView *GMSH_CrackPlugin::execute(PView *view)
     for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++)
       crackElements.push_back(entities[i]->getMeshElement(j));
 
-  // get internal crack nodes and boundary nodes
-  std::set<MVertex *> crackVertices, bndVertices;
+  // get internal crack nodes (and list of connected crack elements), as well as
+  // and boundary nodes
+  std::map<MVertex *, std::vector<MElement *> > crackVertices;
+  std::set<MVertex *> bndVertices;
   if(dim == 1) {
     for(std::size_t i = 0; i < crackElements.size(); i++) {
       for(std::size_t j = 0; j < crackElements[i]->getNumVertices(); j++) {
         MVertex *v = crackElements[i]->getVertex(j);
-        crackVertices.insert(v);
+        auto it = crackVertices.find(v);
+        if(it == crackVertices.end())
+          crackVertices[v] = {crackElements[i]};
+        else
+          it->second.push_back(crackElements[i]);
       }
       for(std::size_t j = 0; j < crackElements[i]->getNumPrimaryVertices();
           j++) {
@@ -145,7 +172,11 @@ PView *GMSH_CrackPlugin::execute(PView *view)
     for(std::size_t i = 0; i < crackElements.size(); i++) {
       for(std::size_t j = 0; j < crackElements[i]->getNumVertices(); j++) {
         MVertex *v = crackElements[i]->getVertex(j);
-        crackVertices.insert(v);
+        auto it = crackVertices.find(v);
+        if(it == crackVertices.end())
+          crackVertices[v] = {crackElements[i]};
+        else
+          it->second.push_back(crackElements[i]);
       }
       for(int j = 0; j < crackElements[i]->getNumEdges(); j++) {
         EdgeData ed(crackElements[i]->getEdge(j));
@@ -199,8 +230,30 @@ PView *GMSH_CrackPlugin::execute(PView *view)
   for(auto it = bndVertices.begin(); it != bndVertices.end(); it++)
     crackVertices.erase(*it);
 
-  // compute elements on one side of the crack
-  std::set<MElement *> oneside;
+  // get auxiliary elements
+  std::vector<MElement *> auxElements;
+  for(std::size_t i = 0; i < auxEntities.size(); i++)
+    for(std::size_t j = 0; j < auxEntities[i]->getNumMeshElements(); j++)
+      auxElements.push_back(auxEntities[i]->getMeshElement(j));
+
+  // add auxiliary elements to crackVertices if they are connected to the
+  // vertex (see #1750)
+  for(std::size_t i = 0; i < auxElements.size(); i++) {
+    for(std::size_t j = 0; j < auxElements[i]->getNumVertices(); j++) {
+      MVertex *v = auxElements[i]->getVertex(j);
+      auto it = crackVertices.find(v);
+      // vertex v is in crackVertices: add aux element to vector of connected
+      // elements
+      if(it != crackVertices.end())
+        it->second.push_back(auxElements[i]);
+    }
+  }
+
+  // compute elements on the positive side of the crack, and keep track of each
+  // node in the element that leads to categorizing the element on this side
+  // (this allows to handle the degenerate case where the same element touches
+  // the same crack on both sides, with different nodes - cf. #1750)
+  std::map<MElement *, std::vector<std::size_t> > oneside;
   std::vector<GEntity *> allentities;
   m->getEntities(allentities);
   for(std::size_t ent = 0; ent < allentities.size(); ent++) {
@@ -208,40 +261,36 @@ PView *GMSH_CrackPlugin::execute(PView *view)
     for(std::size_t i = 0; i < allentities[ent]->getNumMeshElements(); i++) {
       MElement *e = allentities[ent]->getMeshElement(i);
       for(std::size_t j = 0; j < e->getNumVertices(); j++) {
-        if(crackVertices.find(e->getVertex(j)) != crackVertices.end()) {
-          // element touches the crack: find the closest crack element
-          SPoint3 b = e->barycenter();
-          double d = 1e200;
-          MElement *ce = nullptr;
-          for(std::size_t k = 0; k < crackElements.size(); k++) {
-            double d2 = b.distance(crackElements[k]->barycenter());
-            if(d2 < d) {
-              d = d2;
-              ce = crackElements[k];
-            }
-          }
-          SVector3 dv = SVector3(e->barycenter(), ce->barycenter());
+        auto it = crackVertices.find(e->getVertex(j));
+        if(it == crackVertices.end()) continue;
+        // the element touches the crack by at least one node: determine if the
+        // vector joining its barycenter to the barycenter of one of the
+        // connected crack elements is not in the same direction as the normal
+        // to the crack element; if the condition is fulfilled for one of the
+        // connected crack elements, we consider the element lies on the
+        // "positive side" of the crack
+        SPoint3 b = e->barycenter();
+        for(auto ce : it->second) {
+          SVector3 dv = SVector3(b, ce->barycenter());
           SVector3 n;
           if(dim == 1)
             n = crossprod(normal1d, ce->getEdge(0).tangent());
           else
             n = ce->getFace(0).normal();
-          if(dot(n, dv) < 0) { oneside.insert(e); }
+          if(dot(n, dv) < 0) {
+            auto it2 = oneside.find(e);
+            if(it2 == oneside.end())
+              oneside[e] = {j};
+            else {
+              if(std::find(it2->second.begin(), it2->second.end(), j) ==
+                 it2->second.end())
+                it2->second.push_back(j);
+            }
+          }
         }
       }
     }
   }
-
-  /*
-  FILE *fp = fopen("debug.pos", "w");
-  if(fp){
-    fprintf(fp, "View \"Ele < 0\" {\n");
-    for(auto it = oneside.begin(); it != oneside.end(); it++)
-      (*it)->writePOS(fp, false, true, false, false, false, false);
-    fprintf(fp, "};\n");
-    fclose(fp);
-  }
-  */
 
   // create new crack entity
 
@@ -278,7 +327,7 @@ PView *GMSH_CrackPlugin::execute(PView *view)
   // duplicate internal crack nodes
   std::map<MVertex *, MVertex *> vxv;
   for(auto it = crackVertices.begin(); it != crackVertices.end(); it++) {
-    MVertex *v = *it;
+    MVertex *v = it->first;
     MVertex *newv = new MVertex(v->x(), v->y(), v->z(), crackEntity);
     crackEntity->mesh_vertices.push_back(newv);
     vxv[v] = newv;
@@ -304,13 +353,27 @@ PView *GMSH_CrackPlugin::execute(PView *view)
 
   // replace vertices in elements on one side of the crack
   for(auto it = oneside.begin(); it != oneside.end(); it++) {
-    MElement *e = *it;
-    for(std::size_t i = 0; i < e->getNumVertices(); i++) {
-      if(vxv.count(e->getVertex(i))) e->setVertex(i, vxv[e->getVertex(i)]);
+    MElement *e = it->first;
+    for(auto i : it->second) {
+      MVertex *v = e->getVertex(i);
+      if(vxv.count(v))
+        e->setVertex(i, vxv[v]);
+      else
+        Msg::Warning("Mesh node %lu not found in cracked nodes", v->getNum());
     }
   }
 
-  // m->pruneMeshVertexAssociations();
+  if(debug) {
+    std::map<int, std::vector<double> > d;
+    for(auto e : oneside) {
+      // 1: if node duplicated, 0: if node not duplicated
+      std::vector<double> nodeDuplicated(e.first->getNumVertices(), 0.0);
+      for(auto & node: e.second) nodeDuplicated[node] = 1.0;
+      d[e.first->getNum()] = nodeDuplicated;
+    }
+    view = new PView("Positive-side elements and duplicated nodes (1: true, 0: false)",
+                     "ElementNodeData", GModel::current(), d, 0, 1);
+  }
 
   CTX::instance()->mesh.changed = ENT_ALL;
 

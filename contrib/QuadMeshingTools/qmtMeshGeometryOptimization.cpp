@@ -26,6 +26,7 @@
 #include "meshOctreeLibOL.h"
 #include "Context.h"
 #include "gmsh.h" // api
+#include "GmshConfig.h"
 
 /* QuadMeshingTools includes */
 #include "cppUtils.h"
@@ -2422,8 +2423,12 @@ bool GeometryOptimizer::smoothWithWinslowUntangler(PlanarMethod planar,
   std::vector<std::array<vec2, 3> > triIdealShapes;
   std::vector<std::array<uint32_t, 3> > triangles;
   bool preserveQuadAnisotropy = false;
+#if defined(HAVE_WINSLOWUNTANGLER)
   buildTrianglesAndTargetsFromElements(points_2D, quads, triangles,
                                        triIdealShapes, preserveQuadAnisotropy);
+#else
+  Msg::Error("smoothWithWinslowUntangler requires WinslowUntangler");
+#endif
 
   /* Planar smoothing with Winslow untangler */
   Msg::Debug("- Untangle/Smooth quad mesh (%li quads -> %li optim tris, %li "
@@ -2438,10 +2443,15 @@ bool GeometryOptimizer::smoothWithWinslowUntangler(PlanarMethod planar,
   double timeMax = 1000;
   if(Msg::GetVerbosity() >= 99) verbosity = 1;
   std::string pp = "Debug   : ---- ";
+#if defined(HAVE_WINSLOWUNTANGLER)
   bool oku =
     untangle_triangles_2D(points_2D, locked, triangles, triIdealShapes, lambda,
                           iterMaxInner, iterMaxOuter, nFailMax, timeMax);
   if(!oku) { Msg::Debug("---- failed to untangle"); }
+#else
+  Msg::Error("smoothWithWinslowUntangler requires WinslowUntangler");
+#endif
+
   // {
   //   for (size_t v = 0; v < points_2D.size(); ++v) {
   //     GeoLog::add({points_2D[v][0],points_2D[v][1],0.},double(locked[v]),"2D_aftersmooth");

@@ -99,8 +99,8 @@ gmsh.view.addListDataString(v, [0, 0.12, 0],
 
 gmsh.view.addListDataString(v, [150, -7], ["file://../t4_image.png@20x0"])
 
-gmsh.option.setString("View[0].DoubleClickedCommand",
-                      "Printf('View[0] has been double-clicked!');")
+gmsh.view.option.setString(v, "DoubleClickedCommand",
+                           "Printf('View[0] has been double-clicked!');")
 gmsh.option.setString(
     "Geometry.DoubleClickedLineCommand",
     "Printf('Curve %g has been double-clicked!', Geometry.DoubleClickedEntityTag);")

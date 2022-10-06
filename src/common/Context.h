@@ -29,14 +29,14 @@ struct contextMeshOptions {
   int nbSmoothing, algo2d, algo3d, algoSubdivide, algoSwitchOnFailure;
   int algoRecombine, recombineAll, recombineOptimizeTopology;
   int recombineNodeRepositioning;
-  int recombineMinimumQuality;
+  double recombineMinimumQuality;
   int recombine3DAll, recombine3DLevel, recombine3DConformity;
   int flexibleTransfinite, transfiniteTri, maxRetries;
   int order, secondOrderLinear, secondOrderIncomplete;
   int meshOnlyVisible, meshOnlyEmpty;
   int minCircleNodes, minCurveNodes, minLineNodes;
   int hoOptimize, hoPeriodic, hoNLayers, hoPrimSurfMesh, hoIterMax, hoPassMax;
-  int hoDistCAD, hoSavePeriodic;
+  int hoDistCAD, hoSavePeriodic, hoFixBndNodes;
   double hoThresholdMin, hoThresholdMax, hoPoissonRatio;
   bool hoNewFastCurvingAlgo;
   int hoCurveOuterBL;
@@ -93,10 +93,11 @@ struct contextGeometryOptions {
   // geometry algorithms
   int oldCircle, oldNewreg, oldRuledSurface;
   int extrudeSplinePoints, extrudeReturnLateral;
+  std::string pipeDefaultTrihedron;
   int autoCoherence;
   int autoExtrude; // FIXME: temporary for auto-extrude testing
   double tolerance, toleranceBoolean, snap[3], transform[3][3], offset[3];
-  int occAutoFix, occAutoEmbed;
+  int occAutoFix, occAutoEmbed, occSafeUnbind;
   int occFixDegenerated, occFixSmallEdges, occFixSmallFaces;
   int occSewFaces, occMakeSolids, occParallel, occBooleanPreserveNumbering;
   int occBoundsUseSTL, occDisableSTL, occImportLabels, occUnionUnify;

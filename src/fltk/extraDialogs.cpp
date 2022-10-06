@@ -355,11 +355,7 @@ public:
 };
 
 static cgnsImportDialog *_cgnsImport = nullptr;
-/*static void pattern_select_cb(Fl_Widget* w, void *data)
-{
-  _cgnsImport->input_choice->value("1");
-}
-*/
+
 int cgnsImport()
 {
   if(!_cgnsImport) { _cgnsImport = new cgnsImportDialog(); }

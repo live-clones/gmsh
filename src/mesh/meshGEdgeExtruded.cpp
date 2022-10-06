@@ -104,7 +104,12 @@ int MeshExtrudedCurve(GEdge *ge)
 
   if(ep->geo.Mode == EXTRUDED_ENTITY) {
     // curve is extruded from a point
-    extrudeMesh(ge->getBeginVertex(), ge);
+    GVertex *from = ge->model()->getVertexByTag(std::abs(ep->geo.Source));
+    if(!from) {
+      Msg::Error("Unknown source point %d for extrusion", ep->geo.Source);
+      return 0;
+    }
+    extrudeMesh(from, ge);
   }
   else {
     GEdge *from = ge->model()->getEdgeByTag(std::abs(ep->geo.Source));
@@ -117,6 +122,14 @@ int MeshExtrudedCurve(GEdge *ge)
             from->meshStatistics.status != GEdge::DONE) {
       // cannot mesh this edge yet: will do it later
       return 1;
+    }
+    else if(ge->getMeshMaster() != ge) {
+      GEdge *gef = dynamic_cast<GEdge *>(ge->getMeshMaster());
+      if(gef->meshStatistics.status != GEdge::DONE) {
+        // there is a periodicity constraint, and the source has not been
+        // meshed: will do it later
+        return 1;
+      }
     }
 
     copyMesh(from, ge);

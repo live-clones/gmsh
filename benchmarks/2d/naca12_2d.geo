@@ -250,3 +250,6 @@ Background Field = 3;
 BoundaryLayer Field = 2;
 
 Mesh.BoundaryLayerFanElements = 30;
+
+//Mesh.Algorithm = 8; // del for quads
+//Mesh.RecombineAll = 1;

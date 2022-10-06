@@ -6,6 +6,9 @@ import numpy as np
 gmsh.initialize(sys.argv)
 gmsh.model.add("NACA 0012")
 
+# incidence angle
+incidence = -math.pi / 18.;
+
 # create the boundary layer by extrusion, or as a mesh constraint?
 by_extrusion = False
 
@@ -18,7 +21,7 @@ lc1 = 0.01 * fact
 lc2 = 0.3 * fact
 
 # generate curved mesh?
-order2 = True
+order2 = False
 
 # xy coordinates of top part of NACA 0012 profile
 naca = [0.9987518, 0.0014399, 0.9976658, 0.0015870, 0.9947532, 0.0019938,
@@ -64,6 +67,9 @@ else:
     curv.append(gmsh.model.occ.addLine(pts[-1], pt))
     curv.append(gmsh.model.occ.addLine(pt, pts[0]))
 
+# rotate the profile
+gmsh.model.occ.rotate([(1, c) for c in curv], 0.25, 0, 0, 0, 0, 1, incidence)
+
 cl = gmsh.model.occ.addCurveLoop(curv)
 
 if by_extrusion:
@@ -72,10 +78,13 @@ if by_extrusion:
     # kernel: this creates topological entities that will be filled with a
     # discrete geometry (a mesh extruded along the boundary normals) during mesh
     # generation
-    n = np.linspace(1, 1, 7)
-    d = np.logspace(-4, -2, 7)
+    N = 10 # number of layers
+    r = 2 # ratio
+    d = [-1.7e-5] # thickness of first layer
+    for i in range(1, N): d.append(d[-1] - (-d[0]) * r**i)
+    print(d)
     extbl = gmsh.model.geo.extrudeBoundaryLayer(gmsh.model.getEntities(1),
-                                                n, -d, True)
+                                                [1] * N, d, True)
 
     # create curve loop with "top" curves of the boundary layer
     cl2 = gmsh.model.geo.addCurveLoop([c[1] for c in extbl[::2]])
@@ -97,17 +106,24 @@ else:
     # in 2D, boundary layers can also be specified as a meshing constraint,
     # through the BoundaryLayer field; this is quite a bit more general, as it
     # handles intersections between several boundary layers, fans, etc.
-    s = gmsh.model.occ.addPlaneSurface([cl])
-    r = gmsh.model.occ.addRectangle(-1, -1, 0, 3, 2)
-    gmsh.model.occ.cut([(2, r)], [(2, s)])
+    p1 = gmsh.model.occ.addPoint(-1, -1, 0, lc2)
+    p2 = gmsh.model.occ.addPoint(2, -1, 0, lc2)
+    p3 = gmsh.model.occ.addPoint(2, 1, 0, lc2)
+    p4 = gmsh.model.occ.addPoint(-1, 1, 0, lc2)
+    l1 = gmsh.model.occ.addLine(p1, p2)
+    l2 = gmsh.model.occ.addLine(p2, p3)
+    l3 = gmsh.model.occ.addLine(p3, p4)
+    l4 = gmsh.model.occ.addLine(p4, p1)
+    cl2 = gmsh.model.occ.addCurveLoop([l1, l2, l3, l4])
+    s = gmsh.model.occ.addPlaneSurface([cl2, cl])
     gmsh.model.occ.synchronize()
 
     f = gmsh.model.mesh.field.add('BoundaryLayer')
     gmsh.model.mesh.field.setNumbers(f, 'CurvesList', curv)
-    gmsh.model.mesh.field.setNumber(f, 'Size', lc1 / 100)
-    gmsh.model.mesh.field.setNumber(f, 'Ratio', 2.4)
+    gmsh.model.mesh.field.setNumber(f, 'Size', 1.7e-5)
+    gmsh.model.mesh.field.setNumber(f, 'Ratio', 2)
     gmsh.model.mesh.field.setNumber(f, 'Quads', 1)
-    gmsh.model.mesh.field.setNumber(f, 'Thickness', 0.02)
+    gmsh.model.mesh.field.setNumber(f, 'Thickness', 0.01)
     if not rounded:
         # create a fan at the trailing edge
         gmsh.option.setNumber('Mesh.BoundaryLayerFanElements', 7)

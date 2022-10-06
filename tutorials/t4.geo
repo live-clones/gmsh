@@ -118,7 +118,7 @@ View "comments" {
 // here to print some messages to the console:
 
 View[0].DoubleClickedCommand = "Printf('View[0] has been double-clicked!');";
-Geometry.DoubleClickedLineCommand = "Printf('Curve %g has been double-clicked!',
+Geometry.DoubleClickedCurveCommand = "Printf('Curve %g has been double-clicked!',
   Geometry.DoubleClickedEntityTag);";
 
 // We can also change the color of some entities:

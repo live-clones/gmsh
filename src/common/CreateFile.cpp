@@ -272,7 +272,7 @@ static PixelBuffer *GetCompositePixelBuffer(GLenum format, GLenum type)
 }
 #endif
 
-void change_print_parameter(int frame)
+static void ChangePrintParameter(int frame)
 {
   double first = CTX::instance()->print.parameterFirst;
   double last = CTX::instance()->print.parameterLast;
@@ -765,7 +765,7 @@ void CreateOutputFile(const std::string &fileName, int format,
         status_play_manual(!cycle, 0, false);
       for(std::size_t i = 0; i < frames.size(); i++){
         if(cycle == 2)
-          change_print_parameter(i);
+          ChangePrintParameter(i);
         if(fp)
           CreateOutputFile(CTX::instance()->homeDir + frames[i], FORMAT_PPM,
                            false);

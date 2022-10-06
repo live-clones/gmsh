@@ -1369,7 +1369,7 @@ bool GFace::buildRepresentationCross(bool force)
           cross[dir].push_back(std::vector<SPoint3>());
       }
     }
-    while(cross[dir].back().empty())
+    while(!cross[dir].empty() && cross[dir].back().empty())
       cross[dir].pop_back();
   }
 
@@ -1551,9 +1551,11 @@ bool GFace::fillVertexArray(bool force)
   return true;
 }
 
-bool GFace::storeSTLTriangulationAsMesh()
+bool GFace::storeSTLAsMesh()
 {
-  deleteMesh();
+  // as the STL might be non-conforming, we make no effort to have a conformal
+  // mesh - nodes will not be classified on boundaries, and not shared with
+  // adjacent entities
   if(stl_vertices_xyz.size()) {
     for(std::size_t i = 0; i < stl_vertices_xyz.size(); i++) {
       SPoint3 &p(stl_vertices_xyz[i]);
@@ -1785,7 +1787,7 @@ static void meshCompound(GFace *gf, bool verbose)
 
   std::set<GEdge *, GEntityPtrLessThan> bnd, emb1;
   std::set<GVertex *, GEntityPtrLessThan> emb0;
-  std::vector<int> phys;
+  std::set<int> phys;
   for(std::size_t i = 0; i < gf->compound.size(); i++) {
     auto *c = (GFace *)gf->compound[i];
     df->triangles.insert(df->triangles.end(), c->triangles.begin(),
@@ -1816,7 +1818,7 @@ static void meshCompound(GFace *gf, bool verbose)
     }
     c->compoundSurface = df;
     if(!magic) {
-      phys.insert(phys.end(), c->physicals.begin(), c->physicals.end());
+      phys.insert(c->physicals.begin(), c->physicals.end());
       c->physicals.clear();
     }
   }
@@ -1842,7 +1844,7 @@ static void meshCompound(GFace *gf, bool verbose)
   Field *backgroundField = fields->get(BGTAG);
 
   if(df->createGeometry()) {
-    Msg::Error("Could not create geometry of discrete face %d (check "
+    Msg::Error("Could not create geometry of discrete surface %d (check "
                "orientation of input triangulations)",
                df->tag());
   }
@@ -1867,7 +1869,8 @@ static void meshCompound(GFace *gf, bool verbose)
   }
 
   if(!magic) {
-    df->physicals = phys;
+    df->physicals.clear();
+    df->physicals.insert(df->physicals.end(), phys.begin(), phys.end());
     return;
   }
 
@@ -1923,6 +1926,7 @@ static void meshCompound(GFace *gf, bool verbose)
   df->mesh_vertices.clear();
 }
 #endif
+
 
 void GFace::mesh(bool verbose)
 {
@@ -2128,21 +2132,35 @@ void GFace::setMeshMaster(GFace *master, const std::vector<double> &tfo)
       sign = -1;
     }
 
-    // multiple matches (when several curves have the same begin/end points)
+    // if there are multiple matches (when several curves have the same
+    // begin/end points), we must compare the geometry: mid-points (general) or
+    // transformed bounding boxes as a fallback (ok for translations or
+    // rotations by n*pi/2)
     SBoundingBox3d localbb = localEdge->bounds(true);
-    // using the global geometrical tolerance does not work well, as the
-    // accuracy of bounding boxes can be poor (e.g. in OCC, computed through a
-    // mesh, ...)
     double tol = localbb.diag() * 1e-3;
-
+    Range<double> localr = localEdge->parBounds(0);
+    GPoint localp = localEdge->point(0.5 * (localr.low() + localr.high()));
     if(!masterEdge && numf) {
       auto ret = m_vtxToEdge.equal_range(forward);
       for(auto it = ret.first; it != ret.second; it++) {
-        SBoundingBox3d masterbb = it->second->bounds(true);
+        GEdge *ge = it->second;
+        Range<double> masterr = ge->parBounds(0);
+        GPoint masterp = ge->point(0.5 * (masterr.low() + masterr.high()));
+        if(localp.succeeded() && masterp.succeeded()) {
+          SPoint3 p1(localp.x(), localp.y(), localp.z());
+          SPoint3 p2(masterp.x(), masterp.y(), masterp.z());
+          p2.transform(tfo);
+          if(p1.distance(p2) < tol) {
+            masterEdge = ge;
+            sign = 1;
+            break;
+          }
+        }
+        SBoundingBox3d masterbb = ge->bounds(true);
         masterbb.transform(tfo);
         if(masterbb.min().distance(localbb.min()) < tol &&
            masterbb.max().distance(localbb.max()) < tol) {
-          masterEdge = it->second;
+          masterEdge = ge;
           sign = 1;
           break;
         }
@@ -2151,11 +2169,24 @@ void GFace::setMeshMaster(GFace *master, const std::vector<double> &tfo)
     if(!masterEdge && numb) {
       auto ret = m_vtxToEdge.equal_range(backward);
       for(auto it = ret.first; it != ret.second; it++) {
-        SBoundingBox3d masterbb = it->second->bounds(true);
+        GEdge *ge = it->second;
+        Range<double> masterr = ge->parBounds(0);
+        GPoint masterp = ge->point(0.5 * (masterr.low() + masterr.high()));
+        if(localp.succeeded() && masterp.succeeded()) {
+          SPoint3 p1(localp.x(), localp.y(), localp.z());
+          SPoint3 p2(masterp.x(), masterp.y(), masterp.z());
+          p2.transform(tfo);
+          if(p1.distance(p2) < tol) {
+            masterEdge = ge;
+            sign = -1;
+            break;
+          }
+        }
+        SBoundingBox3d masterbb = ge->bounds(true);
         masterbb.transform(tfo);
         if(masterbb.min().distance(localbb.min()) < tol &&
            masterbb.max().distance(localbb.max()) < tol) {
-          masterEdge = it->second;
+          masterEdge = ge;
           sign = -1;
           break;
         }
@@ -2163,7 +2194,7 @@ void GFace::setMeshMaster(GFace *master, const std::vector<double> &tfo)
     }
 
     if(!masterEdge) {
-      Msg::Error("Could not find counterpart of curve %d with end points %d-%d "
+      Msg::Error("Could not find counterpart of curve %d with end points %d %d "
                  "(corresponding to curve with end points %d %d) in surface %d",
                  localEdge->tag(), lPair.first->tag(), lPair.second->tag(),
                  forward.first->tag(), forward.second->tag(), master->tag());
@@ -2412,7 +2443,7 @@ void GFace::setMeshMaster(GFace *master, const std::map<int, int> &edgeCopies)
     }
     else {
       Msg::Error("Only rotations or translations can currently be computed "
-                 "automatically for periodic faces: face %d not meshed",
+                 "automatically for periodic surfaces: surface %d not meshed",
                  tag());
       return;
     }
@@ -2430,7 +2461,8 @@ void GFace::addElement(int type, MElement *e)
   case TYPE_TRI: addTriangle(reinterpret_cast<MTriangle *>(e)); break;
   case TYPE_QUA: addQuadrangle(reinterpret_cast<MQuadrangle *>(e)); break;
   case TYPE_POLYG: addPolygon(reinterpret_cast<MPolygon *>(e)); break;
-  default: Msg::Error("Trying to add unsupported element in face");
+  default:
+    Msg::Error("Trying to add unsupported element in surface %d", tag());
   }
 }
 
@@ -2452,7 +2484,19 @@ void GFace::removeElement(int type, MElement *e)
                         reinterpret_cast<MPolygon *>(e));
     if(it != polygons.end()) polygons.erase(it);
   } break;
-  default: Msg::Error("Trying to remove unsupported element in face");
+  default:
+    Msg::Error("Trying to remove unsupported element in surface %d", tag());
+  }
+}
+
+void GFace::removeElements(int type)
+{
+  switch(type) {
+  case TYPE_TRI: triangles.clear(); break;
+  case TYPE_QUA: quadrangles.clear(); break;
+  case TYPE_POLYG: polygons.clear(); break;
+  default:
+    Msg::Error("Trying to remove unsupported elements in surface %d", tag());
   }
 }
 

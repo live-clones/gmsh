@@ -481,9 +481,11 @@ std::string Msg::PrintResources(bool printDate, bool printWallTime,
 
 void Msg::Error(const char *fmt, ...)
 {
-  _errorCount++;
-  _atLeastOneErrorInRun = 1;
-
+#pragma omp critical(MsgError)
+  {
+    _errorCount++;
+    _atLeastOneErrorInRun = 1;
+  }
   char str[5000];
   va_list args;
   va_start(args, fmt);
@@ -491,8 +493,11 @@ void Msg::Error(const char *fmt, ...)
   va_end(args);
   int l = strlen(str); if(str[l - 1] == '\n') str[l - 1] = '\0';
 
-  if(_firstError.empty()) _firstError = str;
-  _lastError = str;
+#pragma omp critical(MsgError)
+  {
+    if(_firstError.empty()) _firstError = str;
+    _lastError = str;
+  }
 
   if(GetVerbosity() >= 1) {
     if(_logFile) fprintf(_logFile, "Error: %s\n", str);
@@ -525,10 +530,10 @@ void Msg::Error(const char *fmt, ...)
 #if defined(HAVE_FLTK)
     if(FlGui::available()) return; // don't throw if GUI is running
 #endif
-    throw _lastError;
+    throw std::runtime_error(_lastError);
   }
   else if(CTX::instance()->abortOnError == 3) {
-    throw _lastError;
+    throw std::runtime_error(_lastError);
   }
   else if(CTX::instance()->abortOnError == 4) {
     Exit(1);
@@ -537,7 +542,10 @@ void Msg::Error(const char *fmt, ...)
 
 void Msg::Warning(const char *fmt, ...)
 {
-  _warningCount++;
+#pragma omp critical(MsgWarning)
+  {
+    _warningCount++;
+  }
 
   if(GetVerbosity() < 2) return;
 
@@ -606,7 +614,7 @@ void Msg::Info(const char *fmt, ...)
 
   if(CTX::instance()->terminal){
     if(_progressMeterCurrent >= 0 && _progressMeterTotal > 1 &&
-       _commSize == 1) {
+        _commSize == 1) {
       int p =  _progressMeterCurrent;
       fprintf(stdout, "Info    : [%3d%%] %s\n", p, str);
     }
