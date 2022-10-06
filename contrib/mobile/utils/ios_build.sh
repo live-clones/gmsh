@@ -5,8 +5,8 @@ enable_occ=1
 enable_simulator=0
 #buildtype=Debug
 buildtype=Release
-version=2.3.4
-build=56 # must be incremented for each submitted build
+version=2.3.5
+build=58 # must be incremented for each submitted build
 
 while [[ $# -gt 0 ]]; do
   key="$1"
