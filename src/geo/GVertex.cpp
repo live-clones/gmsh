@@ -172,6 +172,17 @@ std::list<GRegion *> GVertex::regions() const
   return ret;
 }
 
+bool GVertex::isOrphan()
+{
+  if(model()->getNumRegions())
+    return regions().empty();
+  else if(model()->getNumFaces())
+    return faces().empty();
+  else if(model()->getNumEdges())
+    return edges().empty();
+  return false;
+}
+
 void GVertex::relocateMeshVertices()
 {
   for(std::size_t i = 0; i < mesh_vertices.size(); i++) {

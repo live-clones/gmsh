@@ -242,12 +242,12 @@ Default value: @code{0.523599}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.IgnoreParametrization
-Skip parametrization section when reading meshes in the MSH4 format.@*
+Skip parametrization section when reading meshes in the MSH4 format@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.IgnorePeriodicity
-Skip periodic node section and skip periodic boundary alignment step when reading meshes in the MSH2 format.@*
+Skip periodic node section and skip periodic boundary alignment step when reading meshes in the MSH2 format@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -766,8 +766,13 @@ Type of the element tag saved in mesh formats that don't support saving physical
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.SaveTopology
-Save model topology in MSH2 output files (this is always saved in MSH3 and above)@*
+@item Mesh.SaveGroupsOfElements
+Save groups of elements for each physical group (for UNV and INP mesh format) if value is positive; if negative, save groups of elements for physical groups of dimension dim if the (dim+1)^th least significant digit of -Mesh.SaveGroupsOfElements is 1 (for example: -100 will only savesurfaces, while -1010 will save volumes and curves), and for INP skip saving elements of dimension dim altogether if the (dim+1)^th least significant digit of -Mesh.SaveGroupsOfElements is 0@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.SaveGroupsOfNodes
+Save groups of nodes for each physical group (for UNV, INP and Tochnog mesh formats) if value is positive; if negative, save groups of nodes for physical groups of dimension dim if the (dim+1)^th least significant digit of -Mesh.SaveGroupsOfNodes is 1 (for example: -100 will only save surfaces, while -1010 will save volumes and curves); for INP, save groups of nodes for all entities of dimension dim if the (dim+1)^th least significant digit of -Mesh.SaveGroupsOfNodes is 2@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -776,13 +781,13 @@ Save parametric coordinates of nodes@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.SaveGroupsOfElements
-Save groups of elements for each physical group (for UNV and INP mesh format) if value is positive; if negative, save groups of elements for physical groups of dimension dim if the (dim+1)^th least significant digit of -Mesh.SaveGroupsOfElements is 1 (for example: -100 will only savesurfaces, while -1010 will save volumes and curves), and for INP skip saving elements of dimension dim altogether if the (dim+1)^th least significant digit of -Mesh.SaveGroupsOfElements is 0@*
-Default value: @code{1}@*
+@item Mesh.SaveWithoutOrphans
+Don't save orphan entities (not connected to any highest dimensional entity in the model) in MSH4 files@*
+Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.SaveGroupsOfNodes
-Save groups of nodes for each physical group (for UNV, INP and Tochnog mesh formats) if value is positive; if negative, save groups of nodes for physical groups of dimension dim if the (dim+1)^th least significant digit of -Mesh.SaveGroupsOfNodes is 1 (for example: -100 will only save surfaces, while -1010 will save volumes and curves); for INP, save groups of nodes for all entities of dimension dim if the (dim+1)^th least significant digit of -Mesh.SaveGroupsOfNodes is 2@*
+@item Mesh.SaveTopology
+Save model topology in MSH2 output files (this is always saved in MSH3 and above)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 

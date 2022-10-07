@@ -894,7 +894,7 @@ StringXNumber GeometryOptions_Number[] = {
     "Number of control points for splines created during extrusion" },
 
   { F|O, "HighlightOrphans" , opt_geometry_highlight_orphans, 0. ,
-    "Highlight orphan and boundary curves and surfaces?" },
+    "Highlight orphan and boundary entities?" },
 
   { F|O, "LabelType" , opt_geometry_label_type , 0. ,
     "Type of entity label (0: description, 1: elementary entity tag, "
@@ -1213,10 +1213,10 @@ StringXNumber MeshOptions_Number[] = {
     "for the detection of columns in the fast curving algorithm"},
 
   { F|O, "IgnoreParametrization" , opt_mesh_ignore_parametrization, 0. ,
-    "Skip parametrization section when reading meshes in the MSH4 format." },
+    "Skip parametrization section when reading meshes in the MSH4 format" },
   { F|O, "IgnorePeriodicity" , opt_mesh_ignore_periodicity , 1. ,
     "Skip periodic node section and skip periodic boundary alignment step when "
-    "reading meshes in the MSH2 format." },
+    "reading meshes in the MSH2 format" },
 
   { F|O, "LabelSampling" , opt_mesh_label_sampling , 1. ,
     "Label sampling rate (display one label every `LabelSampling' elements)" },
@@ -1492,10 +1492,6 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "SaveElementTagType" , opt_mesh_save_element_tag_type , 1. ,
     "Type of the element tag saved in mesh formats that don't support saving "
     "physical or partition ids (1: elementary, 2: physical, 3: partition)" },
-  { F|O, "SaveTopology" , opt_mesh_save_topology, 0. ,
-    "Save model topology in MSH2 output files (this is always saved in MSH3 and above)" },
-  { F|O, "SaveParametric" , opt_mesh_save_parametric , 0. ,
-    "Save parametric coordinates of nodes" },
   { F|O, "SaveGroupsOfElements" , opt_mesh_save_groups_of_elements , 1. ,
     "Save groups of elements for each physical group (for UNV and INP mesh format) "
     "if value is positive; if negative, save groups of elements for physical "
@@ -1512,6 +1508,13 @@ StringXNumber MeshOptions_Number[] = {
     "save surfaces, while -1010 will save volumes and curves); for INP, save "
     "groups of nodes for all entities of dimension dim if the (dim+1)^th least "
     "significant digit of -Mesh.SaveGroupsOfNodes is 2"},
+  { F|O, "SaveParametric" , opt_mesh_save_parametric , 0. ,
+    "Save parametric coordinates of nodes" },
+  { F|O, "SaveWithoutOrphans" , opt_mesh_save_without_orphans , 0. ,
+    "Don't save orphan entities (not connected to any highest dimensional entity "
+    "in the model) in MSH4 files" },
+  { F|O, "SaveTopology" , opt_mesh_save_topology, 0. ,
+    "Save model topology in MSH2 output files (this is always saved in MSH3 and above)" },
   { F|O, "ScalingFactor" , opt_mesh_scaling_factor , 1.0 ,
     "Global scaling factor applied to the saved mesh" },
   { F|O, "SecondOrderIncomplete" , opt_mesh_second_order_incomplete , 0. ,

@@ -63,7 +63,7 @@ struct contextMeshOptions {
   int unvStrictFormat, stlRemoveDuplicateTriangles, stlOneSolidPerSurface;
   double stlLinearDeflection, stlAngularDeflection;
   bool stlLinearDeflectionRelative;
-  int saveParametric, saveTopology, zoneDefinition;
+  int saveParametric, saveTopology, saveWithoutOrphans, zoneDefinition;
   int saveElementTagType, switchElementTags;
   int cgnsImportIgnoreBC, cgnsImportIgnoreSolution, cgnsImportOrder;
   int cgnsConstructTopology, cgnsExportCPEX0045, cgnsExportStructured;

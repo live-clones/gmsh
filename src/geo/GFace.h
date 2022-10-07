@@ -87,6 +87,9 @@ public:
     return r;
   }
 
+  // is this entity an orphan?
+  bool isOrphan();
+
   // add embedded vertices/edges
   void addEmbeddedVertex(GVertex *v) { embedded_vertices.insert(v); }
   void addEmbeddedEdge(GEdge *e) { embedded_edges.push_back(e); }

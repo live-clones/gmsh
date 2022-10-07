@@ -115,6 +115,9 @@ public:
   // get number of faces
   virtual std::size_t numFaces() const { return _faces.size(); }
 
+  // is this entity an orphan?
+  bool isOrphan();
+
   // get the point for the given parameter location
   virtual GPoint point(double p) const = 0;
 

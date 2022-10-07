@@ -65,6 +65,9 @@ public:
   // returns the parent entity for partitioned entities
   virtual GEntity *getParentEntity() { return nullptr; }
 
+  // is this entity an orphan?
+  bool isOrphan();
+
   // get the geometric type of the vertex
   virtual GeomType geomType() const { return Point; }
 

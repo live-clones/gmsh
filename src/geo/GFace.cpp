@@ -75,6 +75,13 @@ int GFace::getMeshSizeFromBoundary() const
     return CTX::instance()->mesh.lcExtendFromBoundary;
 }
 
+bool GFace::isOrphan()
+{
+  if(model()->getNumRegions())
+    return regions().empty();
+  return false;
+}
+
 int GFace::delEdge(GEdge *edge)
 {
   const auto found = std::find(l_edges.begin(), l_edges.end(), edge);

@@ -1581,13 +1581,19 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
 
   if(partition) {
     for(auto it = model->firstVertex(); it != model->lastVertex(); ++it) {
+      if(CTX::instance()->mesh.saveWithoutOrphans && (*it)->isOrphan())
+        continue;
       if((*it)->geomType() == GEntity::PartitionPoint) vertices.insert(*it);
     }
     for(auto it = model->firstEdge(); it != model->lastEdge(); ++it) {
+      if(CTX::instance()->mesh.saveWithoutOrphans && (*it)->isOrphan())
+        continue;
       if((*it)->geomType() == GEntity::PartitionCurve) edges.insert(*it);
       if((*it)->geomType() == GEntity::GhostCurve) ghost.insert(*it);
     }
     for(auto it = model->firstFace(); it != model->lastFace(); ++it) {
+      if(CTX::instance()->mesh.saveWithoutOrphans && (*it)->isOrphan())
+        continue;
       if((*it)->geomType() == GEntity::PartitionSurface) faces.insert(*it);
       if((*it)->geomType() == GEntity::GhostSurface) ghost.insert(*it);
     }
@@ -1597,20 +1603,30 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
     }
   }
   else {
-    for(auto it = model->firstVertex(); it != model->lastVertex(); ++it)
+    for(auto it = model->firstVertex(); it != model->lastVertex(); ++it) {
+      if(CTX::instance()->mesh.saveWithoutOrphans && (*it)->isOrphan())
+        continue;
       if((*it)->geomType() != GEntity::PartitionPoint) vertices.insert(*it);
-    for(auto it = model->firstEdge(); it != model->lastEdge(); ++it)
+    }
+    for(auto it = model->firstEdge(); it != model->lastEdge(); ++it) {
+      if(CTX::instance()->mesh.saveWithoutOrphans && (*it)->isOrphan())
+        continue;
       if((*it)->geomType() != GEntity::PartitionCurve &&
          (*it)->geomType() != GEntity::GhostCurve)
         edges.insert(*it);
-    for(auto it = model->firstFace(); it != model->lastFace(); ++it)
+    }
+    for(auto it = model->firstFace(); it != model->lastFace(); ++it) {
+      if(CTX::instance()->mesh.saveWithoutOrphans && (*it)->isOrphan())
+        continue;
       if((*it)->geomType() != GEntity::PartitionSurface &&
          (*it)->geomType() != GEntity::GhostSurface)
         faces.insert(*it);
-    for(auto it = model->firstRegion(); it != model->lastRegion(); ++it)
+    }
+    for(auto it = model->firstRegion(); it != model->lastRegion(); ++it) {
       if((*it)->geomType() != GEntity::PartitionVolume &&
          (*it)->geomType() != GEntity::GhostVolume)
         regions.insert(*it);
+    }
   }
 
   if(partition)
@@ -2201,6 +2217,8 @@ getEntitiesToSave(GModel *const model, bool partitioned,
 {
   if(partitioned) {
     for(auto it = model->firstVertex(); it != model->lastVertex(); ++it) {
+      if(CTX::instance()->mesh.saveWithoutOrphans && (*it)->isOrphan())
+        continue;
       if((*it)->geomType() == GEntity::PartitionPoint) {
         partitionVertex *pv = static_cast<partitionVertex *>(*it);
         if(!partitionToSave ||
@@ -2210,6 +2228,8 @@ getEntitiesToSave(GModel *const model, bool partitioned,
       }
     }
     for(auto it = model->firstEdge(); it != model->lastEdge(); ++it) {
+      if(CTX::instance()->mesh.saveWithoutOrphans && (*it)->isOrphan())
+        continue;
       if((*it)->geomType() == GEntity::PartitionCurve) {
         partitionEdge *pe = static_cast<partitionEdge *>(*it);
         if(!partitionToSave ||
@@ -2224,6 +2244,8 @@ getEntitiesToSave(GModel *const model, bool partitioned,
       }
     }
     for(auto it = model->firstFace(); it != model->lastFace(); ++it) {
+      if(CTX::instance()->mesh.saveWithoutOrphans && (*it)->isOrphan())
+        continue;
       if((*it)->geomType() == GEntity::PartitionSurface) {
         partitionFace *pf = static_cast<partitionFace *>(*it);
         if(!partitionToSave ||
@@ -2253,25 +2275,35 @@ getEntitiesToSave(GModel *const model, bool partitioned,
     }
   }
   else {
-    for(auto it = model->firstVertex(); it != model->lastVertex(); ++it)
+    for(auto it = model->firstVertex(); it != model->lastVertex(); ++it) {
+      if(CTX::instance()->mesh.saveWithoutOrphans && (*it)->isOrphan())
+        continue;
       if((*it)->geomType() != GEntity::PartitionPoint &&
          (saveAll || (!saveAll && (*it)->getPhysicalEntities().size() != 0)))
         vertices.insert(*it);
-    for(auto it = model->firstEdge(); it != model->lastEdge(); ++it)
+    }
+    for(auto it = model->firstEdge(); it != model->lastEdge(); ++it) {
+      if(CTX::instance()->mesh.saveWithoutOrphans && (*it)->isOrphan())
+        continue;
       if((*it)->geomType() != GEntity::PartitionCurve &&
          (saveAll || (!saveAll && (*it)->getPhysicalEntities().size() != 0) ||
           (*it)->geomType() == GEntity::GhostCurve))
         edges.insert(*it);
-    for(auto it = model->firstFace(); it != model->lastFace(); ++it)
+    }
+    for(auto it = model->firstFace(); it != model->lastFace(); ++it) {
+      if(CTX::instance()->mesh.saveWithoutOrphans && (*it)->isOrphan())
+        continue;
       if((*it)->geomType() != GEntity::PartitionSurface &&
          (saveAll || (!saveAll && (*it)->getPhysicalEntities().size() != 0) ||
           (*it)->geomType() == GEntity::GhostSurface))
         faces.insert(*it);
-    for(auto it = model->firstRegion(); it != model->lastRegion(); ++it)
+    }
+    for(auto it = model->firstRegion(); it != model->lastRegion(); ++it) {
       if((*it)->geomType() != GEntity::PartitionVolume &&
          (saveAll || (!saveAll && (*it)->getPhysicalEntities().size() != 0) ||
           (*it)->geomType() == GEntity::GhostVolume))
         regions.insert(*it);
+    }
   }
 }
 

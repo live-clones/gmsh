@@ -702,6 +702,15 @@ std::list<GRegion *> GEdge::regions() const
   return ret;
 }
 
+bool GEdge::isOrphan()
+{
+  if(model()->getNumRegions())
+    return regions().empty();
+  else if(model()->getNumFaces())
+    return faces().empty();
+  return false;
+}
+
 void GEdge::relocateMeshVertices()
 {
   for(std::size_t i = 0; i < mesh_vertices.size(); i++) {
