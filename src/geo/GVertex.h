@@ -66,7 +66,7 @@ public:
   virtual GEntity *getParentEntity() { return nullptr; }
 
   // is this entity an orphan?
-  bool isOrphan();
+  virtual bool isOrphan();
 
   // get the geometric type of the vertex
   virtual GeomType geomType() const { return Point; }

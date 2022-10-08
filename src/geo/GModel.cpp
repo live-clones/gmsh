@@ -1644,20 +1644,21 @@ void GModel::renumberMeshVertices()
   }
 #endif
 
-  // check if we will potentially only save a subset of elements, i.e. those
-  // belonging to physical groups
-  bool potentiallySaveSubset = false;
+  // check if we will potentially only save a subset of elements: only those
+  // belonging to physical groups and/or those not being orphans
+  bool saveOnlyPhysicals = false;
   if(!CTX::instance()->mesh.saveAll) {
     for(std::size_t i = 0; i < entities.size(); i++) {
       if(entities[i]->physicals.size()) {
-        potentiallySaveSubset = true;
+        saveOnlyPhysicals = true;
         break;
       }
     }
   }
+  bool pruneOrphans = CTX::instance()->mesh.saveWithoutOrphans;
 
   std::size_t n = CTX::instance()->mesh.firstNodeTag - 1;
-  if(potentiallySaveSubset) {
+  if(saveOnlyPhysicals || pruneOrphans) {
     Msg::Debug("Renumbering for potentially partial mesh save");
     // if we potentially only save a subset of elements, make sure to first
     // renumber the nodes that belong to those elements (so that we end up
@@ -1675,7 +1676,8 @@ void GModel::renumberMeshVertices()
     }
     for(std::size_t i = 0; i < entities.size(); i++) {
       GEntity *ge = entities[i];
-      if(ge->physicals.size()) {
+      if(!((pruneOrphans && ge->isOrphan()) ||
+           (saveOnlyPhysicals && ge->physicals.empty()))) {
         for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
           MElement *e = ge->getMeshElement(j);
           for(std::size_t k = 0; k < e->getNumVertices(); k++) {
@@ -1700,7 +1702,7 @@ void GModel::renumberMeshVertices()
     }
   }
   else {
-    // no physical groups
+    // full save
     for(std::size_t i = 0; i < entities.size(); i++) {
       GEntity *ge = entities[i];
       for(std::size_t j = 0; j < ge->getNumMeshVertices(); j++) {
@@ -1752,23 +1754,25 @@ void GModel::renumberMeshElements()
   }
 #endif
 
-  // check if we will potentially only save a subset of elements, i.e. those
-  // belonging to physical groups
-  bool potentiallySaveSubset = false;
+  // check if we will potentially only save a subset of elements: only those
+  // belonging to physical groups and/or those not being orphans
+  bool saveOnlyPhysicals = false;
   if(!CTX::instance()->mesh.saveAll) {
     for(std::size_t i = 0; i < entities.size(); i++) {
       if(entities[i]->physicals.size()) {
-        potentiallySaveSubset = true;
+        saveOnlyPhysicals = true;
         break;
       }
     }
   }
+  bool pruneOrphans = CTX::instance()->mesh.saveWithoutOrphans;
 
   std::size_t n = CTX::instance()->mesh.firstElementTag - 1;
-  if(potentiallySaveSubset) {
+  if(saveOnlyPhysicals || pruneOrphans) {
     for(std::size_t i = 0; i < entities.size(); i++) {
       GEntity *ge = entities[i];
-      if(ge->physicals.size()) {
+      if(!((pruneOrphans && ge->isOrphan()) ||
+           (saveOnlyPhysicals && ge->physicals.empty()))) {
         for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
           ge->getMeshElement(j)->forceNum(++n);
         }
@@ -1776,7 +1780,8 @@ void GModel::renumberMeshElements()
     }
     for(std::size_t i = 0; i < entities.size(); i++) {
       GEntity *ge = entities[i];
-      if(ge->physicals.empty()) {
+      if(((pruneOrphans && ge->isOrphan()) ||
+          (saveOnlyPhysicals && ge->physicals.empty()))) {
         for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
           ge->getMeshElement(j)->forceNum(++n);
         }
@@ -1784,6 +1789,7 @@ void GModel::renumberMeshElements()
     }
   }
   else {
+    // full save
     for(std::size_t i = 0; i < entities.size(); i++) {
       GEntity *ge = entities[i];
       for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {

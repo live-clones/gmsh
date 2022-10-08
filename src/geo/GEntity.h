@@ -220,6 +220,9 @@ public:
     return std::vector<GVertex *>();
   }
 
+  // is this entity an orphan?
+  virtual bool isOrphan() { return false; }
+
   // for Python, temporary solution while iterator are not binded
   std::vector<GRegion *> bindingsGetRegions()
   {
