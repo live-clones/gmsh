@@ -2318,7 +2318,8 @@ static void writeMSH4Nodes(GModel *const model, FILE *fp, bool partitioned,
   getEntitiesToSave(model, partitioned, partitionToSave, saveAll, regions,
                     faces, edges, vertices);
 
-  std::size_t numNodes = (saveAll && !partitioned) ?
+  std::size_t numNodes = (saveAll && !partitioned &&
+                          !CTX::instance()->mesh.saveWithoutOrphans) ?
     model->getNumMeshVertices() :
     getAdditionalEntities(regions, faces, edges, vertices);
 
