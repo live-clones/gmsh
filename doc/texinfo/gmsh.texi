@@ -4541,6 +4541,7 @@ $Elements
 $EndElements
 $Periodic
 @var{number-of-periodic-entities}
+<Affine @var{value} ...>
 @var{dimension} @var{entity-tag} @var{master-entity-tag}
 @var{number-of-nodes}
 @var{node-number master-node-number}
