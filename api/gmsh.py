@@ -237,6 +237,11 @@ def initialize(argv=[], readConfigFiles=True, run=False):
     depending on the command line arguments. If `run' is not set, initializing
     the API sets the options "General.AbortOnError" to 2 and "General.Terminal"
     to 1.
+
+    Argument types:
+    - `argv': command line arguments
+    - `readConfigFiles': boolean
+    - `run': boolean
     """
     api_argc_, api_argv_ = _iargcargv(argv)
     ierr = c_int()
@@ -254,7 +259,7 @@ def isInitialized():
 
     Return 1 if the Gmsh API is initialized, and 0 if not.
 
-    Return an integer value.
+    Return an integer.
     """
     ierr = c_int()
     api_result_ = lib.gmshIsInitialized(
@@ -286,6 +291,9 @@ def open(fileName):
     Open a file. Equivalent to the `File->Open' menu in the Gmsh app. Handling
     of the file depends on its extension and/or its contents: opening a file
     with model data will create a new model.
+
+    Argument types:
+    - `fileName': string
     """
     ierr = c_int()
     lib.gmshOpen(
@@ -301,6 +309,9 @@ def merge(fileName):
     Merge a file. Equivalent to the `File->Merge' menu in the Gmsh app.
     Handling of the file depends on its extension and/or its contents. Merging
     a file with model data will add the data to the current model.
+
+    Argument types:
+    - `fileName': string
     """
     ierr = c_int()
     lib.gmshMerge(
@@ -314,6 +325,9 @@ def write(fileName):
     gmsh.write(fileName)
 
     Write a file. The export format is determined by the file extension.
+
+    Argument types:
+    - `fileName': string
     """
     ierr = c_int()
     lib.gmshWrite(
@@ -349,6 +363,10 @@ class option:
         Set a numerical option to `value'. `name' is of the form "Category.Option"
         or "Category[num].Option". Available categories and options are listed in
         the Gmsh reference manual.
+
+        Argument types:
+        - `name': string
+        - `value': double
         """
         ierr = c_int()
         lib.gmshOptionSetNumber(
@@ -369,6 +387,10 @@ class option:
         options are listed in the Gmsh reference manual.
 
         Return `value'.
+
+        Argument types:
+        - `name': string
+        - `value': double
         """
         api_value_ = c_double()
         ierr = c_int()
@@ -389,6 +411,10 @@ class option:
         Set a string option to `value'. `name' is of the form "Category.Option" or
         "Category[num].Option". Available categories and options are listed in the
         Gmsh reference manual.
+
+        Argument types:
+        - `name': string
+        - `value': string
         """
         ierr = c_int()
         lib.gmshOptionSetString(
@@ -409,6 +435,10 @@ class option:
         the Gmsh reference manual.
 
         Return `value'.
+
+        Argument types:
+        - `name': string
+        - `value': string
         """
         api_value_ = c_char_p()
         ierr = c_int()
@@ -431,6 +461,13 @@ class option:
         form "Category.Color.Option" or "Category[num].Color.Option". Available
         categories and options are listed in the Gmsh reference manual. For
         conciseness "Color." can be ommitted in `name'.
+
+        Argument types:
+        - `name': string
+        - `r': integer
+        - `g': integer
+        - `b': integer
+        - `a': integer
         """
         ierr = c_int()
         lib.gmshOptionSetColor(
@@ -455,6 +492,13 @@ class option:
         conciseness "Color." can be ommitted in `name'.
 
         Return `r', `g', `b', `a'.
+
+        Argument types:
+        - `name': string
+        - `r': integer
+        - `g': integer
+        - `b': integer
+        - `a': integer
         """
         api_r_ = c_int()
         api_g_ = c_int()
@@ -489,6 +533,9 @@ class model:
         gmsh.model.add(name)
 
         Add a new model, with name `name', and set it as the current model.
+
+        Argument types:
+        - `name': string
         """
         ierr = c_int()
         lib.gmshModelAdd(
@@ -518,6 +565,9 @@ class model:
         List the names of all models.
 
         Return `names'.
+
+        Argument types:
+        - `names': vector of strings
         """
         api_names_, api_names_n_ = POINTER(POINTER(c_char))(), c_size_t()
         ierr = c_int()
@@ -536,6 +586,9 @@ class model:
         Get the name of the current model.
 
         Return `name'.
+
+        Argument types:
+        - `name': string
         """
         api_name_ = c_char_p()
         ierr = c_int()
@@ -554,6 +607,9 @@ class model:
 
         Set the current model to the model with name `name'. If several models have
         the same name, select the one that was added first.
+
+        Argument types:
+        - `name': string
         """
         ierr = c_int()
         lib.gmshModelSetCurrent(
@@ -572,6 +628,9 @@ class model:
         is associated when a model is read from a file on disk.
 
         Return `fileName'.
+
+        Argument types:
+        - `fileName': string
         """
         api_fileName_ = c_char_p()
         ierr = c_int()
@@ -589,6 +648,9 @@ class model:
         gmsh.model.setFileName(fileName)
 
         Set the file name associated with the current model.
+
+        Argument types:
+        - `fileName': string
         """
         ierr = c_int()
         lib.gmshModelSetFileName(
@@ -605,9 +667,13 @@ class model:
 
         Get all the entities in the current model. If `dim' is >= 0, return only
         the entities of the specified dimension (e.g. points if `dim' == 0). The
-        entities are returned as a vector of (dim, tag) integer pairs.
+        entities are returned as a vector of (dim, tag) pairs.
 
         Return `dimTags'.
+
+        Argument types:
+        - `dimTags': vector of pairs of integers
+        - `dim': integer
         """
         api_dimTags_, api_dimTags_n_ = POINTER(c_int)(), c_size_t()
         ierr = c_int()
@@ -626,6 +692,11 @@ class model:
         gmsh.model.setEntityName(dim, tag, name)
 
         Set the name of the entity of dimension `dim' and tag `tag'.
+
+        Argument types:
+        - `dim': integer
+        - `tag': integer
+        - `name': string
         """
         ierr = c_int()
         lib.gmshModelSetEntityName(
@@ -645,6 +716,11 @@ class model:
         Get the name of the entity of dimension `dim' and tag `tag'.
 
         Return `name'.
+
+        Argument types:
+        - `dim': integer
+        - `tag': integer
+        - `name': string
         """
         api_name_ = c_char_p()
         ierr = c_int()
@@ -665,9 +741,13 @@ class model:
 
         Get all the physical groups in the current model. If `dim' is >= 0, return
         only the entities of the specified dimension (e.g. physical points if `dim'
-        == 0). The entities are returned as a vector of (dim, tag) integer pairs.
+        == 0). The entities are returned as a vector of (dim, tag) pairs.
 
         Return `dimTags'.
+
+        Argument types:
+        - `dimTags': vector of pairs of integers
+        - `dim': integer
         """
         api_dimTags_, api_dimTags_n_ = POINTER(c_int)(), c_size_t()
         ierr = c_int()
@@ -689,6 +769,11 @@ class model:
         dimension `dim' and tag `tag'.
 
         Return `tags'.
+
+        Argument types:
+        - `dim': integer
+        - `tag': integer
+        - `tags': vector of integers
         """
         api_tags_, api_tags_n_ = POINTER(c_int)(), c_size_t()
         ierr = c_int()
@@ -711,6 +796,11 @@ class model:
         dimension `dim' and tag `tag' belongs.
 
         Return `physicalTags'.
+
+        Argument types:
+        - `dim': integer
+        - `tag': integer
+        - `physicalTags': vector of integers
         """
         api_physicalTags_, api_physicalTags_n_ = POINTER(c_int)(), c_size_t()
         ierr = c_int()
@@ -734,7 +824,13 @@ class model:
         is positive, or a new tag if `tag' < 0. Set the name of the physical group
         if `name' is not empty.
 
-        Return an integer value.
+        Return an integer.
+
+        Argument types:
+        - `dim': integer
+        - `tags': vector of integers
+        - `tag': integer
+        - `name': string
         """
         api_tags_, api_tags_n_ = _ivectorint(tags)
         ierr = c_int()
@@ -754,8 +850,11 @@ class model:
         """
         gmsh.model.removePhysicalGroups(dimTags=[])
 
-        Remove the physical groups `dimTags' from the current model. If `dimTags'
-        is empty, remove all groups.
+        Remove the physical groups `dimTags' (given as a vector of (dim, tag)
+        pairs) from the current model. If `dimTags' is empty, remove all groups.
+
+        Argument types:
+        - `dimTags': vector of pairs of integers
         """
         api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
         ierr = c_int()
@@ -772,6 +871,11 @@ class model:
         gmsh.model.setPhysicalName(dim, tag, name)
 
         Set the name of the physical group of dimension `dim' and tag `tag'.
+
+        Argument types:
+        - `dim': integer
+        - `tag': integer
+        - `name': string
         """
         ierr = c_int()
         lib.gmshModelSetPhysicalName(
@@ -789,6 +893,9 @@ class model:
         gmsh.model.removePhysicalName(name)
 
         Remove the physical name `name' from the current model.
+
+        Argument types:
+        - `name': string
         """
         ierr = c_int()
         lib.gmshModelRemovePhysicalName(
@@ -806,6 +913,11 @@ class model:
         Get the name of the physical group of dimension `dim' and tag `tag'.
 
         Return `name'.
+
+        Argument types:
+        - `dim': integer
+        - `tag': integer
+        - `name': string
         """
         api_name_ = c_char_p()
         ierr = c_int()
@@ -826,6 +938,11 @@ class model:
 
         Set the tag of the entity of dimension `dim' and tag `tag' to the new value
         `newTag'.
+
+        Argument types:
+        - `dim': integer
+        - `tag': integer
+        - `newTag': integer
         """
         ierr = c_int()
         lib.gmshModelSetTag(
@@ -842,14 +959,22 @@ class model:
         """
         gmsh.model.getBoundary(dimTags, combined=True, oriented=True, recursive=False)
 
-        Get the boundary of the model entities `dimTags'. Return in `outDimTags'
-        the boundary of the individual entities (if `combined' is false) or the
-        boundary of the combined geometrical shape formed by all input entities (if
-        `combined' is true). Return tags multiplied by the sign of the boundary
-        entity if `oriented' is true. Apply the boundary operator recursively down
-        to dimension 0 (i.e. to points) if `recursive' is true.
+        Get the boundary of the model entities `dimTags', given as a vector of
+        (dim, tag) pairs. Return in `outDimTags' the boundary of the individual
+        entities (if `combined' is false) or the boundary of the combined
+        geometrical shape formed by all input entities (if `combined' is true).
+        Return tags multiplied by the sign of the boundary entity if `oriented' is
+        true. Apply the boundary operator recursively down to dimension 0 (i.e. to
+        points) if `recursive' is true.
 
         Return `outDimTags'.
+
+        Argument types:
+        - `dimTags': vector of pairs of integers
+        - `outDimTags': vector of pairs of integers
+        - `combined': boolean
+        - `oriented': boolean
+        - `recursive': boolean
         """
         api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
         api_outDimTags_, api_outDimTags_n_ = POINTER(c_int)(), c_size_t()
@@ -877,6 +1002,12 @@ class model:
         dimension `dim' - 1.
 
         Return `upward', `downward'.
+
+        Argument types:
+        - `dim': integer
+        - `tag': integer
+        - `upward': vector of integers
+        - `downward': vector of integers
         """
         api_upward_, api_upward_n_ = POINTER(c_int)(), c_size_t()
         api_downward_, api_downward_n_ = POINTER(c_int)(), c_size_t()
@@ -905,6 +1036,16 @@ class model:
         == 0).
 
         Return `tags'.
+
+        Argument types:
+        - `xmin': double
+        - `ymin': double
+        - `zmin': double
+        - `xmax': double
+        - `ymax': double
+        - `zmax': double
+        - `tags': vector of pairs of integers
+        - `dim': integer
         """
         api_tags_, api_tags_n_ = POINTER(c_int)(), c_size_t()
         ierr = c_int()
@@ -933,6 +1074,16 @@ class model:
         negative, get the bounding box of the whole model.
 
         Return `xmin', `ymin', `zmin', `xmax', `ymax', `zmax'.
+
+        Argument types:
+        - `dim': integer
+        - `tag': integer
+        - `xmin': double
+        - `ymin': double
+        - `zmin': double
+        - `xmax': double
+        - `ymax': double
+        - `zmax': double
         """
         api_xmin_ = c_double()
         api_ymin_ = c_double()
@@ -969,7 +1120,7 @@ class model:
 
         Return the geometrical dimension of the current model.
 
-        Return an integer value.
+        Return an integer.
         """
         ierr = c_int()
         api_result_ = lib.gmshModelGetDimension(
@@ -990,7 +1141,12 @@ class model:
         of the entities on the boundary of the discrete entity, if any. Specifying
         `boundary' allows Gmsh to construct the topology of the overall model.
 
-        Return an integer value.
+        Return an integer.
+
+        Argument types:
+        - `dim': integer
+        - `tag': integer
+        - `boundary': vector of integers
         """
         api_boundary_, api_boundary_n_ = _ivectorint(boundary)
         ierr = c_int()
@@ -1009,10 +1165,14 @@ class model:
         """
         gmsh.model.removeEntities(dimTags, recursive=False)
 
-        Remove the entities `dimTags' of the current model, provided that they are
-        not on the boundary of (or embedded in) higher-dimensional entities. If
-        `recursive' is true, remove all the entities on their boundaries, down to
-        dimension 0.
+        Remove the entities `dimTags' (given as a vector of (dim, tag) pairs) of
+        the current model, provided that they are not on the boundary of (or
+        embedded in) higher-dimensional entities. If `recursive' is true, remove
+        all the entities on their boundaries, down to dimension 0.
+
+        Argument types:
+        - `dimTags': vector of pairs of integers
+        - `recursive': boolean
         """
         api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
         ierr = c_int()
@@ -1030,6 +1190,9 @@ class model:
         gmsh.model.removeEntityName(name)
 
         Remove the entity name `name' from the current model.
+
+        Argument types:
+        - `name': string
         """
         ierr = c_int()
         lib.gmshModelRemoveEntityName(
@@ -1047,6 +1210,11 @@ class model:
         Get the type of the entity of dimension `dim' and tag `tag'.
 
         Return `entityType'.
+
+        Argument types:
+        - `dim': integer
+        - `tag': integer
+        - `entityType': string
         """
         api_entityType_ = c_char_p()
         ierr = c_int()
@@ -1070,6 +1238,12 @@ class model:
         `parentTag' are set to -1 if the entity has no parent.
 
         Return `parentDim', `parentTag'.
+
+        Argument types:
+        - `dim': integer
+        - `tag': integer
+        - `parentDim': integer
+        - `parentTag': integer
         """
         api_parentDim_ = c_int()
         api_parentTag_ = c_int()
@@ -1094,7 +1268,7 @@ class model:
 
         Return the number of partitions in the model.
 
-        Return an integer value.
+        Return an integer.
         """
         ierr = c_int()
         api_result_ = lib.gmshModelGetNumberOfPartitions(
@@ -1113,6 +1287,11 @@ class model:
         entity belongs.
 
         Return `partitions'.
+
+        Argument types:
+        - `dim': integer
+        - `tag': integer
+        - `partitions': vector of integers
         """
         api_partitions_, api_partitions_n_ = POINTER(c_int)(), c_size_t()
         ierr = c_int()
@@ -1135,11 +1314,17 @@ class model:
         at the parametric coordinates `parametricCoord'. Only valid for `dim' equal
         to 0 (with empty `parametricCoord'), 1 (with `parametricCoord' containing
         parametric coordinates on the curve) or 2 (with `parametricCoord'
-        containing pairs of u, v parametric coordinates on the surface,
-        concatenated: [p1u, p1v, p2u, ...]). Return triplets of x, y, z coordinates
-        in `coord', concatenated: [p1x, p1y, p1z, p2x, ...].
+        containing u, v parametric coordinates on the surface, concatenated: [p1u,
+        p1v, p2u, ...]). Return x, y, z coordinates in `coord', concatenated: [p1x,
+        p1y, p1z, p2x, ...].
 
         Return `coord'.
+
+        Argument types:
+        - `dim': integer
+        - `tag': integer
+        - `parametricCoord': vector of doubles
+        - `coord': vector of doubles
         """
         api_parametricCoord_, api_parametricCoord_n_ = _ivectordouble(parametricCoord)
         api_coord_, api_coord_n_ = POINTER(c_double)(), c_size_t()
@@ -1163,14 +1348,20 @@ class model:
         Evaluate the derivative of the parametrization of the entity of dimension
         `dim' and tag `tag' at the parametric coordinates `parametricCoord'. Only
         valid for `dim' equal to 1 (with `parametricCoord' containing parametric
-        coordinates on the curve) or 2 (with `parametricCoord' containing pairs of
-        u, v parametric coordinates on the surface, concatenated: [p1u, p1v, p2u,
-        ...]). For `dim' equal to 1 return the x, y, z components of the derivative
-        with respect to u [d1ux, d1uy, d1uz, d2ux, ...]; for `dim' equal to 2
-        return the x, y, z components of the derivative with respect to u and v:
-        [d1ux, d1uy, d1uz, d1vx, d1vy, d1vz, d2ux, ...].
+        coordinates on the curve) or 2 (with `parametricCoord' containing u, v
+        parametric coordinates on the surface, concatenated: [p1u, p1v, p2u, ...]).
+        For `dim' equal to 1 return the x, y, z components of the derivative with
+        respect to u [d1ux, d1uy, d1uz, d2ux, ...]; for `dim' equal to 2 return the
+        x, y, z components of the derivative with respect to u and v: [d1ux, d1uy,
+        d1uz, d1vx, d1vy, d1vz, d2ux, ...].
 
         Return `derivatives'.
+
+        Argument types:
+        - `dim': integer
+        - `tag': integer
+        - `parametricCoord': vector of doubles
+        - `derivatives': vector of doubles
         """
         api_parametricCoord_, api_parametricCoord_n_ = _ivectordouble(parametricCoord)
         api_derivatives_, api_derivatives_n_ = POINTER(c_double)(), c_size_t()
@@ -1195,15 +1386,21 @@ class model:
         dimension `dim' and tag `tag' at the parametric coordinates
         `parametricCoord'. Only valid for `dim' equal to 1 (with `parametricCoord'
         containing parametric coordinates on the curve) or 2 (with
-        `parametricCoord' containing pairs of u, v parametric coordinates on the
-        surface, concatenated: [p1u, p1v, p2u, ...]). For `dim' equal to 1 return
-        the x, y, z components of the second derivative with respect to u [d1uux,
-        d1uuy, d1uuz, d2uux, ...]; for `dim' equal to 2 return the x, y, z
-        components of the second derivative with respect to u and v, and the mixed
-        derivative with respect to u and v: [d1uux, d1uuy, d1uuz, d1vvx, d1vvy,
-        d1vvz, d1uvx, d1uvy, d1uvz, d2uux, ...].
+        `parametricCoord' containing u, v parametric coordinates on the surface,
+        concatenated: [p1u, p1v, p2u, ...]). For `dim' equal to 1 return the x, y,
+        z components of the second derivative with respect to u [d1uux, d1uuy,
+        d1uuz, d2uux, ...]; for `dim' equal to 2 return the x, y, z components of
+        the second derivative with respect to u and v, and the mixed derivative
+        with respect to u and v: [d1uux, d1uuy, d1uuz, d1vvx, d1vvy, d1vvz, d1uvx,
+        d1uvy, d1uvz, d2uux, ...].
 
         Return `derivatives'.
+
+        Argument types:
+        - `dim': integer
+        - `tag': integer
+        - `parametricCoord': vector of doubles
+        - `derivatives': vector of doubles
         """
         api_parametricCoord_, api_parametricCoord_n_ = _ivectordouble(parametricCoord)
         api_derivatives_, api_derivatives_n_ = POINTER(c_double)(), c_size_t()
@@ -1227,10 +1424,16 @@ class model:
         Evaluate the (maximum) curvature of the entity of dimension `dim' and tag
         `tag' at the parametric coordinates `parametricCoord'. Only valid for `dim'
         equal to 1 (with `parametricCoord' containing parametric coordinates on the
-        curve) or 2 (with `parametricCoord' containing pairs of u, v parametric
-        coordinates on the surface, concatenated: [p1u, p1v, p2u, ...]).
+        curve) or 2 (with `parametricCoord' containing u, v parametric coordinates
+        on the surface, concatenated: [p1u, p1v, p2u, ...]).
 
         Return `curvatures'.
+
+        Argument types:
+        - `dim': integer
+        - `tag': integer
+        - `parametricCoord': vector of doubles
+        - `curvatures': vector of doubles
         """
         api_parametricCoord_, api_parametricCoord_n_ = _ivectordouble(parametricCoord)
         api_curvatures_, api_curvatures_n_ = POINTER(c_double)(), c_size_t()
@@ -1257,6 +1460,14 @@ class model:
         concatenated: [p1u, p1v, p2u, ...].
 
         Return `curvatureMax', `curvatureMin', `directionMax', `directionMin'.
+
+        Argument types:
+        - `tag': integer
+        - `parametricCoord': vector of doubles
+        - `curvatureMax': vector of doubles
+        - `curvatureMin': vector of doubles
+        - `directionMax': vector of doubles
+        - `directionMin': vector of doubles
         """
         api_parametricCoord_, api_parametricCoord_n_ = _ivectordouble(parametricCoord)
         api_curvatureMax_, api_curvatureMax_n_ = POINTER(c_double)(), c_size_t()
@@ -1287,11 +1498,16 @@ class model:
         gmsh.model.getNormal(tag, parametricCoord)
 
         Get the normal to the surface with tag `tag' at the parametric coordinates
-        `parametricCoord'. `parametricCoord' are given by pairs of u and v
+        `parametricCoord'. The `parametricCoord' vector should contain u and v
         coordinates, concatenated: [p1u, p1v, p2u, ...]. `normals' are returned as
-        triplets of x, y, z components, concatenated: [n1x, n1y, n1z, n2x, ...].
+        a vector of x, y, z components, concatenated: [n1x, n1y, n1z, n2x, ...].
 
         Return `normals'.
+
+        Argument types:
+        - `tag': integer
+        - `parametricCoord': vector of doubles
+        - `normals': vector of doubles
         """
         api_parametricCoord_, api_parametricCoord_n_ = _ivectordouble(parametricCoord)
         api_normals_, api_normals_n_ = POINTER(c_double)(), c_size_t()
@@ -1312,13 +1528,19 @@ class model:
         gmsh.model.getParametrization(dim, tag, coord)
 
         Get the parametric coordinates `parametricCoord' for the points `coord' on
-        the entity of dimension `dim' and tag `tag'. `coord' are given as triplets
-        of x, y, z coordinates, concatenated: [p1x, p1y, p1z, p2x, ...].
-        `parametricCoord' returns the parametric coordinates t on the curve (if
-        `dim' = 1) or pairs of u and v coordinates concatenated on the surface (if
-        `dim' = 2), i.e. [p1t, p2t, ...] or [p1u, p1v, p2u, ...].
+        the entity of dimension `dim' and tag `tag'. `coord' are given as x, y, z
+        coordinates, concatenated: [p1x, p1y, p1z, p2x, ...]. `parametricCoord'
+        returns the parametric coordinates t on the curve (if `dim' = 1) or u and v
+        coordinates concatenated on the surface (if `dim' = 2), i.e. [p1t, p2t,
+        ...] or [p1u, p1v, p2u, ...].
 
         Return `parametricCoord'.
+
+        Argument types:
+        - `dim': integer
+        - `tag': integer
+        - `coord': vector of doubles
+        - `parametricCoord': vector of doubles
         """
         api_coord_, api_coord_n_ = _ivectordouble(coord)
         api_parametricCoord_, api_parametricCoord_n_ = POINTER(c_double)(), c_size_t()
@@ -1343,6 +1565,12 @@ class model:
         of dimension `dim' and tag `tag'.
 
         Return `min', `max'.
+
+        Argument types:
+        - `dim': integer
+        - `tag': integer
+        - `min': vector of doubles
+        - `max': vector of doubles
         """
         api_min_, api_min_n_ = POINTER(c_double)(), c_size_t()
         api_max_, api_max_n_ = POINTER(c_double)(), c_size_t()
@@ -1371,7 +1599,13 @@ class model:
         feature is only available for a subset of entities, depending on the
         underlying geometrical representation.
 
-        Return an integer value.
+        Return an integer.
+
+        Argument types:
+        - `dim': integer
+        - `tag': integer
+        - `coord': vector of doubles
+        - `parametric': boolean
         """
         api_coord_, api_coord_n_ = _ivectordouble(coord)
         ierr = c_int()
@@ -1393,13 +1627,19 @@ class model:
 
         Get the points `closestCoord' on the entity of dimension `dim' and tag
         `tag' to the points `coord', by orthogonal projection. `coord' and
-        `closestCoord' are given as triplets of x, y, z coordinates, concatenated:
-        [p1x, p1y, p1z, p2x, ...]. `parametricCoord' returns the parametric
-        coordinates t on the curve (if `dim' = 1) or pairs of u and v coordinates
-        concatenated on the surface (if `dim' = 2), i.e. [p1t, p2t, ...] or [p1u,
-        p1v, p2u, ...].
+        `closestCoord' are given as x, y, z coordinates, concatenated: [p1x, p1y,
+        p1z, p2x, ...]. `parametricCoord' returns the parametric coordinates t on
+        the curve (if `dim' = 1) or u and v coordinates concatenated on the surface
+        (if `dim' = 2), i.e. [p1t, p2t, ...] or [p1u, p1v, p2u, ...].
 
         Return `closestCoord', `parametricCoord'.
+
+        Argument types:
+        - `dim': integer
+        - `tag': integer
+        - `coord': vector of doubles
+        - `closestCoord': vector of doubles
+        - `parametricCoord': vector of doubles
         """
         api_coord_, api_coord_n_ = _ivectordouble(coord)
         api_closestCoord_, api_closestCoord_n_ = POINTER(c_double)(), c_size_t()
@@ -1432,6 +1672,14 @@ class model:
         entities, depending on the underlying geometrical representation.
 
         Return `surfaceParametricCoord'.
+
+        Argument types:
+        - `dim': integer
+        - `tag': integer
+        - `parametricCoord': vector of doubles
+        - `surfaceTag': integer
+        - `surfaceParametricCoord': vector of doubles
+        - `which': integer
         """
         api_parametricCoord_, api_parametricCoord_n_ = _ivectordouble(parametricCoord)
         api_surfaceParametricCoord_, api_surfaceParametricCoord_n_ = POINTER(c_double)(), c_size_t()
@@ -1454,8 +1702,14 @@ class model:
         """
         gmsh.model.setVisibility(dimTags, value, recursive=False)
 
-        Set the visibility of the model entities `dimTags' to `value'. Apply the
-        visibility setting recursively if `recursive' is true.
+        Set the visibility of the model entities `dimTags' (given as a vector of
+        (dim, tag) pairs) to `value'. Apply the visibility setting recursively if
+        `recursive' is true.
+
+        Argument types:
+        - `dimTags': vector of pairs of integers
+        - `value': integer
+        - `recursive': boolean
         """
         api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
         ierr = c_int()
@@ -1476,6 +1730,11 @@ class model:
         Get the visibility of the model entity of dimension `dim' and tag `tag'.
 
         Return `value'.
+
+        Argument types:
+        - `dim': integer
+        - `tag': integer
+        - `value': integer
         """
         api_value_ = c_int()
         ierr = c_int()
@@ -1496,6 +1755,10 @@ class model:
 
         Set the global visibility of the model per window to `value', where
         `windowIndex' identifies the window in the window list.
+
+        Argument types:
+        - `value': integer
+        - `windowIndex': integer
         """
         ierr = c_int()
         lib.gmshModelSetVisibilityPerWindow(
@@ -1511,9 +1774,18 @@ class model:
         """
         gmsh.model.setColor(dimTags, r, g, b, a=255, recursive=False)
 
-        Set the color of the model entities `dimTags' to the RGBA value (`r', `g',
-        `b', `a'), where `r', `g', `b' and `a' should be integers between 0 and
-        255. Apply the color setting recursively if `recursive' is true.
+        Set the color of the model entities `dimTags' (given as a vector of (dim,
+        tag) pairs) to the RGBA value (`r', `g', `b', `a'), where `r', `g', `b' and
+        `a' should be integers between 0 and 255. Apply the color setting
+        recursively if `recursive' is true.
+
+        Argument types:
+        - `dimTags': vector of pairs of integers
+        - `r': integer
+        - `g': integer
+        - `b': integer
+        - `a': integer
+        - `recursive': boolean
         """
         api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
         ierr = c_int()
@@ -1537,6 +1809,14 @@ class model:
         Get the color of the model entity of dimension `dim' and tag `tag'.
 
         Return `r', `g', `b', `a'.
+
+        Argument types:
+        - `dim': integer
+        - `tag': integer
+        - `r': integer
+        - `g': integer
+        - `b': integer
+        - `a': integer
         """
         api_r_ = c_int()
         api_g_ = c_int()
@@ -1566,6 +1846,12 @@ class model:
         gmsh.model.setCoordinates(tag, x, y, z)
 
         Set the `x', `y', `z' coordinates of a geometrical point.
+
+        Argument types:
+        - `tag': integer
+        - `x': double
+        - `y': double
+        - `z': double
         """
         ierr = c_int()
         lib.gmshModelSetCoordinates(
@@ -1586,6 +1872,9 @@ class model:
         Get the names of any optional attributes stored in the model.
 
         Return `names'.
+
+        Argument types:
+        - `names': vector of strings
         """
         api_names_, api_names_n_ = POINTER(POINTER(c_char))(), c_size_t()
         ierr = c_int()
@@ -1602,33 +1891,41 @@ class model:
         """
         gmsh.model.getAttribute(name)
 
-        Get the value of the attribute with name `name'.
+        Get the values of the attribute with name `name'.
 
-        Return `value'.
+        Return `values'.
+
+        Argument types:
+        - `name': string
+        - `values': vector of strings
         """
-        api_value_, api_value_n_ = POINTER(POINTER(c_char))(), c_size_t()
+        api_values_, api_values_n_ = POINTER(POINTER(c_char))(), c_size_t()
         ierr = c_int()
         lib.gmshModelGetAttribute(
             c_char_p(name.encode()),
-            byref(api_value_), byref(api_value_n_),
+            byref(api_values_), byref(api_values_n_),
             byref(ierr))
         if ierr.value != 0:
             raise Exception(logger.getLastError())
-        return _ovectorstring(api_value_, api_value_n_.value)
+        return _ovectorstring(api_values_, api_values_n_.value)
     get_attribute = getAttribute
 
     @staticmethod
-    def setAttribute(name, value):
+    def setAttribute(name, values):
         """
-        gmsh.model.setAttribute(name, value)
+        gmsh.model.setAttribute(name, values)
 
-        Set the value of the attribute with name `name'.
+        Set the values of the attribute with name `name'.
+
+        Argument types:
+        - `name': string
+        - `values': vector of strings
         """
-        api_value_, api_value_n_ = _ivectorstring(value)
+        api_values_, api_values_n_ = _ivectorstring(values)
         ierr = c_int()
         lib.gmshModelSetAttribute(
             c_char_p(name.encode()),
-            api_value_, api_value_n_,
+            api_values_, api_values_n_,
             byref(ierr))
         if ierr.value != 0:
             raise Exception(logger.getLastError())
@@ -1640,6 +1937,9 @@ class model:
         gmsh.model.removeAttribute(name)
 
         Remove the attribute with name `name'.
+
+        Argument types:
+        - `name': string
         """
         ierr = c_int()
         lib.gmshModelRemoveAttribute(
@@ -1661,6 +1961,9 @@ class model:
             gmsh.model.mesh.generate(dim=3)
 
             Generate a mesh of the current model, up to dimension `dim' (0, 1, 2 or 3).
+
+            Argument types:
+            - `dim': integer
             """
             ierr = c_int()
             lib.gmshModelMeshGenerate(
@@ -1677,6 +1980,11 @@ class model:
             Partition the mesh of the current model into `numPart' partitions.
             Optionally, `elementTags' and `partitions' can be provided to specify the
             partition of each element explicitly.
+
+            Argument types:
+            - `numPart': integer
+            - `elementTags': vector of sizes
+            - `partitions': vector of integers
             """
             api_elementTags_, api_elementTags_n_ = _ivectorsize(elementTags)
             api_partitions_, api_partitions_n_ = _ivectorint(partitions)
@@ -1714,8 +2022,14 @@ class model:
             for Laplace smoothing, "Relocate2D" and "Relocate3D" for node relocation,
             "QuadQuasiStructured" for quad mesh optimization, "UntangleMeshGeometry"
             for untangling). If `force' is set apply the optimization also to discrete
-            entities. If `dimTags' is given, only apply the optimizer to the given
-            entities.
+            entities. If `dimTags' (given as a vector of (dim, tag) pairs) is given,
+            only apply the optimizer to the given entities.
+
+            Argument types:
+            - `method': string
+            - `force': boolean
+            - `niter': integer
+            - `dimTags': vector of pairs of integers
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             ierr = c_int()
@@ -1760,6 +2074,9 @@ class model:
             gmsh.model.mesh.setOrder(order)
 
             Set the order of the elements in the mesh of the current model to `order'.
+
+            Argument types:
+            - `order': integer
             """
             ierr = c_int()
             lib.gmshModelMeshSetOrder(
@@ -1774,10 +2091,14 @@ class model:
             """
             gmsh.model.mesh.getLastEntityError()
 
-            Get the last entities (if any) where a meshing error occurred. Currently
-            only populated by the new 3D meshing algorithms.
+            Get the last entities `dimTags' (given as a vector of (dim, tag) pairs), if
+            any where a meshing error occurred. Currently only populated by the new 3D
+            meshing algorithms.
 
             Return `dimTags'.
+
+            Argument types:
+            - `dimTags': vector of pairs of integers
             """
             api_dimTags_, api_dimTags_n_ = POINTER(c_int)(), c_size_t()
             ierr = c_int()
@@ -1794,10 +2115,13 @@ class model:
             """
             gmsh.model.mesh.getLastNodeError()
 
-            Get the last nodes (if any) where a meshing error occurred. Currently only
-            populated by the new 3D meshing algorithms.
+            Get the last node tags `nodeTags', if any, where a meshing error occurred.
+            Currently only populated by the new 3D meshing algorithms.
 
             Return `nodeTags'.
+
+            Argument types:
+            - `nodeTags': vector of sizes
             """
             api_nodeTags_, api_nodeTags_n_ = POINTER(c_size_t)(), c_size_t()
             ierr = c_int()
@@ -1815,9 +2139,13 @@ class model:
             gmsh.model.mesh.clear(dimTags=[])
 
             Clear the mesh, i.e. delete all the nodes and elements, for the entities
-            `dimTags'. If `dimTags' is empty, clear the whole mesh. Note that the mesh
-            of an entity can only be cleared if this entity is not on the boundary of
-            another entity with a non-empty mesh.
+            `dimTags', given as a vector of (dim, tag) pairs. If `dimTags' is empty,
+            clear the whole mesh. Note that the mesh of an entity can only be cleared
+            if this entity is not on the boundary of another entity with a non-empty
+            mesh.
+
+            Argument types:
+            - `dimTags': vector of pairs of integers
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             ierr = c_int()
@@ -1832,9 +2160,12 @@ class model:
             """
             gmsh.model.mesh.reverse(dimTags=[])
 
-            Reverse the orientation of the elements in the entities `dimTags'. If
-            `dimTags' is empty, reverse the orientation of the elements in the whole
-            mesh.
+            Reverse the orientation of the elements in the entities `dimTags', given as
+            a vector of (dim, tag) pairs. If `dimTags' is empty, reverse the
+            orientation of the elements in the whole mesh.
+
+            Argument types:
+            - `dimTags': vector of pairs of integers
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             ierr = c_int()
@@ -1851,8 +2182,13 @@ class model:
 
             Apply the affine transformation `affineTransform' (16 entries of a 4x4
             matrix, by row; only the 12 first can be provided for convenience) to the
-            coordinates of the nodes classified on the entities `dimTags'. If `dimTags'
-            is empty, transform all the nodes in the mesh.
+            coordinates of the nodes classified on the entities `dimTags', given as a
+            vector of (dim, tag) pairs. If `dimTags' is empty, transform all the nodes
+            in the mesh.
+
+            Argument types:
+            - `affineTransform': vector of doubles
+            - `dimTags': vector of pairs of integers
             """
             api_affineTransform_, api_affineTransform_n_ = _ivectordouble(affineTransform)
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
@@ -1885,6 +2221,15 @@ class model:
             parametric coordinates).
 
             Return `nodeTags', `coord', `parametricCoord'.
+
+            Argument types:
+            - `nodeTags': vector of sizes
+            - `coord': vector of doubles
+            - `parametricCoord': vector of doubles
+            - `dim': integer
+            - `tag': integer
+            - `includeBoundary': boolean
+            - `returnParametricCoord': boolean
             """
             api_nodeTags_, api_nodeTags_n_ = POINTER(c_size_t)(), c_size_t()
             api_coord_, api_coord_n_ = POINTER(c_double)(), c_size_t()
@@ -1916,6 +2261,14 @@ class model:
             of type `elementType'. The other arguments are treated as in `getNodes'.
 
             Return `nodeTags', `coord', `parametricCoord'.
+
+            Argument types:
+            - `elementType': integer
+            - `nodeTags': vector of sizes
+            - `coord': vector of doubles
+            - `parametricCoord': vector of doubles
+            - `tag': integer
+            - `returnParametricCoord': boolean
             """
             api_nodeTags_, api_nodeTags_n_ = POINTER(c_size_t)(), c_size_t()
             api_coord_, api_coord_n_ = POINTER(c_double)(), c_size_t()
@@ -1949,6 +2302,13 @@ class model:
             meshes accessing nodes in bulk is often preferable.
 
             Return `coord', `parametricCoord', `dim', `tag'.
+
+            Argument types:
+            - `nodeTag': size
+            - `coord': vector of doubles
+            - `parametricCoord': vector of doubles
+            - `dim': integer
+            - `tag': integer
             """
             api_coord_, api_coord_n_ = POINTER(c_double)(), c_size_t()
             api_parametricCoord_, api_parametricCoord_n_ = POINTER(c_double)(), c_size_t()
@@ -1980,6 +2340,11 @@ class model:
             with tag `tag'. This function relies on an internal cache (a vector in case
             of dense node numbering, a map otherwise); for large meshes accessing nodes
             in bulk is often preferable.
+
+            Argument types:
+            - `nodeTag': size
+            - `coord': vector of doubles
+            - `parametricCoord': vector of doubles
             """
             api_coord_, api_coord_n_ = _ivectordouble(coord)
             api_parametricCoord_, api_parametricCoord_n_ = _ivectordouble(parametricCoord)
@@ -1999,6 +2364,9 @@ class model:
             gmsh.model.mesh.rebuildNodeCache(onlyIfNecessary=True)
 
             Rebuild the node cache.
+
+            Argument types:
+            - `onlyIfNecessary': boolean
             """
             ierr = c_int()
             lib.gmshModelMeshRebuildNodeCache(
@@ -2014,6 +2382,9 @@ class model:
             gmsh.model.mesh.rebuildElementCache(onlyIfNecessary=True)
 
             Rebuild the element cache.
+
+            Argument types:
+            - `onlyIfNecessary': boolean
             """
             ierr = c_int()
             lib.gmshModelMeshRebuildElementCache(
@@ -2034,6 +2405,12 @@ class model:
             y, z coordinates of the nodes, concatenated: [n1x, n1y, n1z, n2x, ...].
 
             Return `nodeTags', `coord'.
+
+            Argument types:
+            - `dim': integer
+            - `tag': integer
+            - `nodeTags': vector of sizes
+            - `coord': vector of doubles
             """
             api_nodeTags_, api_nodeTags_n_ = POINTER(c_size_t)(), c_size_t()
             api_coord_, api_coord_n_ = POINTER(c_double)(), c_size_t()
@@ -2059,6 +2436,9 @@ class model:
             Get the maximum tag `maxTag' of a node in the mesh.
 
             Return `maxTag'.
+
+            Argument types:
+            - `maxTag': size
             """
             api_maxTag_ = c_size_t()
             ierr = c_int()
@@ -2084,6 +2464,13 @@ class model:
             of `parametricCoord' can be 0 or `dim' times the length of `nodeTags'. If
             the `nodeTags' vector is empty, new tags are automatically assigned to the
             nodes.
+
+            Argument types:
+            - `dim': integer
+            - `tag': integer
+            - `nodeTags': vector of sizes
+            - `coord': vector of doubles
+            - `parametricCoord': vector of doubles
             """
             api_nodeTags_, api_nodeTags_n_ = _ivectorsize(nodeTags)
             api_coord_, api_coord_n_ = _ivectordouble(coord)
@@ -2126,6 +2513,10 @@ class model:
             `tag' using their parametric coordinates. If `tag' < 0, relocate the nodes
             for all entities of dimension `dim'. If `dim' and `tag' are negative,
             relocate all the nodes in the mesh.
+
+            Argument types:
+            - `dim': integer
+            - `tag': integer
             """
             ierr = c_int()
             lib.gmshModelMeshRelocateNodes(
@@ -2156,6 +2547,13 @@ class model:
             e1n2, ..., e1nN, e2n1, ...].
 
             Return `elementTypes', `elementTags', `nodeTags'.
+
+            Argument types:
+            - `elementTypes': vector of integers
+            - `elementTags': vector of vectors of sizes
+            - `nodeTags': vector of vectors of sizes
+            - `dim': integer
+            - `tag': integer
             """
             api_elementTypes_, api_elementTypes_n_ = POINTER(c_int)(), c_size_t()
             api_elementTags_, api_elementTags_n_, api_elementTags_nn_ = POINTER(POINTER(c_size_t))(), POINTER(c_size_t)(), c_size_t()
@@ -2188,6 +2586,13 @@ class model:
             elements in bulk is often preferable.
 
             Return `elementType', `nodeTags', `dim', `tag'.
+
+            Argument types:
+            - `elementTag': size
+            - `elementType': integer
+            - `nodeTags': vector of sizes
+            - `dim': integer
+            - `tag': integer
             """
             api_elementType_ = c_int()
             api_nodeTags_, api_nodeTags_n_ = POINTER(c_size_t)(), c_size_t()
@@ -2223,6 +2628,19 @@ class model:
             is not set, use a tolerance to find elements near the search location.
 
             Return `elementTag', `elementType', `nodeTags', `u', `v', `w'.
+
+            Argument types:
+            - `x': double
+            - `y': double
+            - `z': double
+            - `elementTag': size
+            - `elementType': integer
+            - `nodeTags': vector of sizes
+            - `u': double
+            - `v': double
+            - `w': double
+            - `dim': integer
+            - `strict': boolean
             """
             api_elementTag_ = c_size_t()
             api_elementType_ = c_int()
@@ -2268,6 +2686,14 @@ class model:
             is not set, use a tolerance to find elements near the search location.
 
             Return `elementTags'.
+
+            Argument types:
+            - `x': double
+            - `y': double
+            - `z': double
+            - `elementTags': vector of sizes
+            - `dim': integer
+            - `strict': boolean
             """
             api_elementTags_, api_elementTags_n_ = POINTER(c_size_t)(), c_size_t()
             ierr = c_int()
@@ -2296,6 +2722,15 @@ class model:
             often preferable.
 
             Return `u', `v', `w'.
+
+            Argument types:
+            - `elementTag': size
+            - `x': double
+            - `y': double
+            - `z': double
+            - `u': double
+            - `v': double
+            - `w': double
             """
             api_u_ = c_double()
             api_v_ = c_double()
@@ -2328,6 +2763,11 @@ class model:
             and `tag' are negative, get all the types in the mesh.
 
             Return `elementTypes'.
+
+            Argument types:
+            - `elementTypes': vector of integers
+            - `dim': integer
+            - `tag': integer
             """
             api_elementTypes_, api_elementTypes_n_ = POINTER(c_int)(), c_size_t()
             ierr = c_int()
@@ -2351,7 +2791,12 @@ class model:
             and polynomial order `order'. If `serendip' is true, return the
             corresponding serendip element type (element without interior nodes).
 
-            Return an integer value.
+            Return an integer.
+
+            Argument types:
+            - `familyName': string
+            - `order': integer
+            - `serendip': boolean
             """
             ierr = c_int()
             api_result_ = lib.gmshModelMeshGetElementType(
@@ -2376,6 +2821,15 @@ class model:
             primary (first order) nodes (`numPrimaryNodes').
 
             Return `elementName', `dim', `order', `numNodes', `localNodeCoord', `numPrimaryNodes'.
+
+            Argument types:
+            - `elementType': integer
+            - `elementName': string
+            - `dim': integer
+            - `order': integer
+            - `numNodes': integer
+            - `localNodeCoord': vector of doubles
+            - `numPrimaryNodes': integer
             """
             api_elementName_ = c_char_p()
             api_dim_ = c_int()
@@ -2420,6 +2874,14 @@ class model:
             `task'.
 
             Return `elementTags', `nodeTags'.
+
+            Argument types:
+            - `elementType': integer
+            - `elementTags': vector of sizes
+            - `nodeTags': vector of sizes
+            - `tag': integer
+            - `task': size
+            - `numTasks': size
             """
             api_elementTags_, api_elementTags_n_ = POINTER(c_size_t)(), c_size_t()
             api_nodeTags_, api_nodeTags_n_ = POINTER(c_size_t)(), c_size_t()
@@ -2447,6 +2909,9 @@ class model:
             Get the maximum tag `maxTag' of an element in the mesh.
 
             Return `maxTag'.
+
+            Argument types:
+            - `maxTag': size
             """
             api_maxTag_ = c_size_t()
             ierr = c_int()
@@ -2472,6 +2937,13 @@ class model:
             indexed by `task'.
 
             Return `elementsQuality'.
+
+            Argument types:
+            - `elementTags': vector of sizes
+            - `elementsQuality': vector of doubles
+            - `qualityName': string
+            - `task': size
+            - `numTasks': size
             """
             api_elementTags_, api_elementTags_n_ = _ivectorsize(elementTags)
             api_elementsQuality_, api_elementsQuality_n_ = POINTER(c_double)(), c_size_t()
@@ -2503,6 +2975,13 @@ class model:
             the number N of nodes per element, that contains the node tags of all the
             elements of the given type, concatenated: [e1n1, e1n2, ..., e1nN, e2n1,
             ...].
+
+            Argument types:
+            - `dim': integer
+            - `tag': integer
+            - `elementTypes': vector of integers
+            - `elementTags': vector of vectors of integers (size)
+            - `nodeTags': vector of vectors of integers (size)
             """
             api_elementTypes_, api_elementTypes_n_ = _ivectorint(elementTypes)
             api_elementTags_, api_elementTags_n_, api_elementTags_nn_ = _ivectorvectorsize(elementTags)
@@ -2531,6 +3010,12 @@ class model:
             that contains the node tags of all the elements, concatenated: [e1n1, e1n2,
             ..., e1nN, e2n1, ...]. If the `elementTag' vector is empty, new tags are
             automatically assigned to the elements.
+
+            Argument types:
+            - `tag': integer
+            - `elementType': integer
+            - `elementTags': vector of sizes
+            - `nodeTags': vector of sizes
             """
             api_elementTags_, api_elementTags_n_ = _ivectorsize(elementTags)
             api_nodeTags_, api_nodeTags_n_ = _ivectorsize(nodeTags)
@@ -2564,6 +3049,12 @@ class model:
             `weights' contains the associated weights: [g1q, ..., gGq].
 
             Return `localCoord', `weights'.
+
+            Argument types:
+            - `elementType': integer
+            - `integrationType': string
+            - `localCoord': vector of doubles
+            - `weights': vector of doubles
             """
             api_localCoord_, api_localCoord_n_ = POINTER(c_double)(), c_size_t()
             api_weights_, api_weights_n_ = POINTER(c_double)(), c_size_t()
@@ -2588,12 +3079,12 @@ class model:
 
             Get the Jacobians of all the elements of type `elementType' classified on
             the entity of tag `tag', at the G evaluation points `localCoord' given as
-            concatenated triplets of coordinates in the reference element [g1u, g1v,
-            g1w, ..., gGu, gGv, gGw]. Data is returned by element, with elements in the
-            same order as in `getElements' and `getElementsByType'. `jacobians'
-            contains for each element the 9 entries of the 3x3 Jacobian matrix at each
-            evaluation point. The matrix is returned by column: [e1g1Jxu, e1g1Jyu,
-            e1g1Jzu, e1g1Jxv, ..., e1g1Jzw, e1g2Jxu, ..., e1gGJzw, e2g1Jxu, ...], with
+            concatenated u, v, w coordinates in the reference element [g1u, g1v, g1w,
+            ..., gGu, gGv, gGw]. Data is returned by element, with elements in the same
+            order as in `getElements' and `getElementsByType'. `jacobians' contains for
+            each element the 9 entries of the 3x3 Jacobian matrix at each evaluation
+            point. The matrix is returned by column: [e1g1Jxu, e1g1Jyu, e1g1Jzu,
+            e1g1Jxv, ..., e1g1Jzw, e1g2Jxu, ..., e1gGJzw, e2g1Jxu, ...], with
             Jxu=dx/du, Jyu=dy/du, etc. `determinants' contains for each element the
             determinant of the Jacobian matrix at each evaluation point: [e1g1, e1g2,
             ... e1gG, e2g1, ...]. `coord' contains for each element the x, y, z
@@ -2602,6 +3093,16 @@ class model:
             the data indexed by `task'.
 
             Return `jacobians', `determinants', `coord'.
+
+            Argument types:
+            - `elementType': integer
+            - `localCoord': vector of doubles
+            - `jacobians': vector of doubles
+            - `determinants': vector of doubles
+            - `coord': vector of doubles
+            - `tag': integer
+            - `task': size
+            - `numTasks': size
             """
             api_localCoord_, api_localCoord_n_ = _ivectordouble(localCoord)
             api_jacobians_, api_jacobians_n_ = POINTER(c_double)(), c_size_t()
@@ -2632,7 +3133,7 @@ class model:
             gmsh.model.mesh.getJacobian(elementTag, localCoord)
 
             Get the Jacobian for a single element `elementTag', at the G evaluation
-            points `localCoord' given as concatenated triplets of coordinates in the
+            points `localCoord' given as concatenated u, v, w coordinates in the
             reference element [g1u, g1v, g1w, ..., gGu, gGv, gGw]. `jacobians' contains
             the 9 entries of the 3x3 Jacobian matrix at each evaluation point. The
             matrix is returned by column: [e1g1Jxu, e1g1Jyu, e1g1Jzu, e1g1Jxv, ...,
@@ -2644,6 +3145,13 @@ class model:
             accessing Jacobians in bulk is often preferable.
 
             Return `jacobians', `determinants', `coord'.
+
+            Argument types:
+            - `elementTag': size
+            - `localCoord': vector of doubles
+            - `jacobians': vector of doubles
+            - `determinants': vector of doubles
+            - `coord': vector of doubles
             """
             api_localCoord_, api_localCoord_n_ = _ivectordouble(localCoord)
             api_jacobians_, api_jacobians_n_ = POINTER(c_double)(), c_size_t()
@@ -2671,14 +3179,14 @@ class model:
             gmsh.model.mesh.getBasisFunctions(elementType, localCoord, functionSpaceType, wantedOrientations=[])
 
             Get the basis functions of the element of type `elementType' at the
-            evaluation points `localCoord' (given as concatenated triplets of
-            coordinates in the reference element [g1u, g1v, g1w, ..., gGu, gGv, gGw]),
-            for the function space `functionSpaceType'. Currently supported function
-            spaces include "Lagrange" and "GradLagrange" for isoparametric Lagrange
-            basis functions and their gradient in the u, v, w coordinates of the
-            reference element; "LagrangeN" and "GradLagrangeN", with N = 1, 2, ..., for
-            N-th order Lagrange basis functions; "H1LegendreN" and "GradH1LegendreN",
-            with N = 1, 2, ..., for N-th order hierarchical H1 Legendre functions;
+            evaluation points `localCoord' (given as concatenated u, v, w coordinates
+            in the reference element [g1u, g1v, g1w, ..., gGu, gGv, gGw]), for the
+            function space `functionSpaceType'. Currently supported function spaces
+            include "Lagrange" and "GradLagrange" for isoparametric Lagrange basis
+            functions and their gradient in the u, v, w coordinates of the reference
+            element; "LagrangeN" and "GradLagrangeN", with N = 1, 2, ..., for N-th
+            order Lagrange basis functions; "H1LegendreN" and "GradH1LegendreN", with N
+            = 1, 2, ..., for N-th order hierarchical H1 Legendre functions;
             "HcurlLegendreN" and "CurlHcurlLegendreN", with N = 1, 2, ..., for N-th
             order curl-conforming basis functions. `numComponents' returns the number C
             of components of a basis function (e.g. 1 for scalar functions and 3 for
@@ -2688,10 +3196,19 @@ class model:
             == 3. For basis functions that depend on the orientation of the elements,
             all values for the first orientation are returned first, followed by values
             for the second, etc. `numOrientations' returns the overall number of
-            orientations. If `wantedOrientations' is not empty, only return the values
-            for the desired orientation indices.
+            orientations. If the `wantedOrientations' vector is not empty, only return
+            the values for the desired orientation indices.
 
             Return `numComponents', `basisFunctions', `numOrientations'.
+
+            Argument types:
+            - `elementType': integer
+            - `localCoord': vector of doubles
+            - `functionSpaceType': string
+            - `numComponents': integer
+            - `basisFunctions': vector of doubles
+            - `numOrientations': integer
+            - `wantedOrientations': vector of integers
             """
             api_localCoord_, api_localCoord_n_ = _ivectordouble(localCoord)
             api_numComponents_ = c_int()
@@ -2729,6 +3246,14 @@ class model:
             as it will return a vector of zeros.
 
             Return `basisFunctionsOrientation'.
+
+            Argument types:
+            - `elementType': integer
+            - `functionSpaceType': string
+            - `basisFunctionsOrientation': vector of integers
+            - `tag': integer
+            - `task': size
+            - `numTasks': size
             """
             api_basisFunctionsOrientation_, api_basisFunctionsOrientation_n_ = POINTER(c_int)(), c_size_t()
             ierr = c_int()
@@ -2753,6 +3278,11 @@ class model:
             Get the orientation of a single element `elementTag'.
 
             Return `basisFunctionsOrientation'.
+
+            Argument types:
+            - `elementTag': size
+            - `functionSpaceType': string
+            - `basisFunctionsOrientation': integer
             """
             api_basisFunctionsOrientation_ = c_int()
             ierr = c_int()
@@ -2774,7 +3304,11 @@ class model:
             Get the number of possible orientations for elements of type `elementType'
             and function space named `functionSpaceType'.
 
-            Return an integer value.
+            Return an integer.
+
+            Argument types:
+            - `elementType': integer
+            - `functionSpaceType': string
             """
             ierr = c_int()
             api_result_ = lib.gmshModelMeshGetNumberOfOrientations(
@@ -2800,6 +3334,11 @@ class model:
             well.
 
             Return `edgeTags', `edgeOrientations'.
+
+            Argument types:
+            - `nodeTags': vector of sizes
+            - `edgeTags': vector of sizes
+            - `edgeOrientations': vector of integers
             """
             api_nodeTags_, api_nodeTags_n_ = _ivectorsize(nodeTags)
             api_edgeTags_, api_edgeTags_n_ = POINTER(c_size_t)(), c_size_t()
@@ -2823,12 +3362,18 @@ class model:
             gmsh.model.mesh.getFaces(faceType, nodeTags)
 
             Get the global unique mesh face identifiers `faceTags' and orientations
-            `faceOrientations' for an input list of node tag triplets (if `faceType' ==
-            3) or quadruplets (if `faceType' == 4) defining these faces, concatenated
-            in the vector `nodeTags'. Mesh faces are created e.g. by `createFaces()',
-            `getKeys()' or `addFaces()'.
+            `faceOrientations' for an input list of a multiple of three (if `faceType'
+            == 3) or four (if `faceType' == 4) node tags defining these faces,
+            concatenated in the vector `nodeTags'. Mesh faces are created e.g. by
+            `createFaces()', `getKeys()' or `addFaces()'.
 
             Return `faceTags', `faceOrientations'.
+
+            Argument types:
+            - `faceType': integer
+            - `nodeTags': vector of sizes
+            - `faceTags': vector of sizes
+            - `faceOrientations': vector of integers
             """
             api_nodeTags_, api_nodeTags_n_ = _ivectorsize(nodeTags)
             api_faceTags_, api_faceTags_n_ = POINTER(c_size_t)(), c_size_t()
@@ -2852,7 +3397,11 @@ class model:
             """
             gmsh.model.mesh.createEdges(dimTags=[])
 
-            Create unique mesh edges for the entities `dimTags'.
+            Create unique mesh edges for the entities `dimTags', given as a vector of
+            (dim, tag) pairs.
+
+            Argument types:
+            - `dimTags': vector of pairs of integers
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             ierr = c_int()
@@ -2868,7 +3417,11 @@ class model:
             """
             gmsh.model.mesh.createFaces(dimTags=[])
 
-            Create unique mesh faces for the entities `dimTags'.
+            Create unique mesh faces for the entities `dimTags', given as a vector of
+            (dim, tag) pairs.
+
+            Argument types:
+            - `dimTags': vector of pairs of integers
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             ierr = c_int()
@@ -2889,6 +3442,10 @@ class model:
             `getKeys()' or addEdges().
 
             Return `edgeTags', `edgeNodes'.
+
+            Argument types:
+            - `edgeTags': vector of sizes
+            - `edgeNodes': vector of sizes
             """
             api_edgeTags_, api_edgeTags_n_ = POINTER(c_size_t)(), c_size_t()
             api_edgeNodes_, api_edgeNodes_n_ = POINTER(c_size_t)(), c_size_t()
@@ -2914,6 +3471,11 @@ class model:
             `createFaces()', `getKeys()' or addFaces().
 
             Return `faceTags', `faceNodes'.
+
+            Argument types:
+            - `faceType': integer
+            - `faceTags': vector of sizes
+            - `faceNodes': vector of sizes
             """
             api_faceTags_, api_faceTags_n_ = POINTER(c_size_t)(), c_size_t()
             api_faceNodes_, api_faceNodes_n_ = POINTER(c_size_t)(), c_size_t()
@@ -2937,6 +3499,10 @@ class model:
 
             Add mesh edges defined by their global unique identifiers `edgeTags' and
             their nodes `edgeNodes'.
+
+            Argument types:
+            - `edgeTags': vector of sizes
+            - `edgeNodes': vector of sizes
             """
             api_edgeTags_, api_edgeTags_n_ = _ivectorsize(edgeTags)
             api_edgeNodes_, api_edgeNodes_n_ = _ivectorsize(edgeNodes)
@@ -2956,6 +3522,11 @@ class model:
 
             Add mesh faces of type `faceType' defined by their global unique
             identifiers `faceTags' and their nodes `faceNodes'.
+
+            Argument types:
+            - `faceType': integer
+            - `faceTags': vector of sizes
+            - `faceNodes': vector of sizes
             """
             api_faceTags_, api_faceTags_n_ = _ivectorsize(faceTags)
             api_faceNodes_, api_faceNodes_n_ = _ivectorsize(faceNodes)
@@ -2983,6 +3554,15 @@ class model:
             release.
 
             Return `typeKeys', `entityKeys', `coord'.
+
+            Argument types:
+            - `elementType': integer
+            - `functionSpaceType': string
+            - `typeKeys': vector of integers
+            - `entityKeys': vector of sizes
+            - `coord': vector of doubles
+            - `tag': integer
+            - `returnCoord': boolean
             """
             api_typeKeys_, api_typeKeys_n_ = POINTER(c_int)(), c_size_t()
             api_entityKeys_, api_entityKeys_n_ = POINTER(c_size_t)(), c_size_t()
@@ -3013,6 +3593,14 @@ class model:
             Get the pair of keys for a single element `elementTag'.
 
             Return `typeKeys', `entityKeys', `coord'.
+
+            Argument types:
+            - `elementTag': size
+            - `functionSpaceType': string
+            - `typeKeys': vector of integers
+            - `entityKeys': vector of sizes
+            - `coord': vector of doubles
+            - `returnCoord': boolean
             """
             api_typeKeys_, api_typeKeys_n_ = POINTER(c_int)(), c_size_t()
             api_entityKeys_, api_entityKeys_n_ = POINTER(c_size_t)(), c_size_t()
@@ -3042,7 +3630,11 @@ class model:
             Get the number of keys by elements of type `elementType' for function space
             named `functionSpaceType'.
 
-            Return an integer value.
+            Return an integer.
+
+            Argument types:
+            - `elementType': integer
+            - `functionSpaceType': string
             """
             ierr = c_int()
             api_result_ = lib.gmshModelMeshGetNumberOfKeys(
@@ -3068,6 +3660,13 @@ class model:
             future release.
 
             Return `infoKeys'.
+
+            Argument types:
+            - `typeKeys': vector of integers
+            - `entityKeys': vector of sizes
+            - `elementType': integer
+            - `functionSpaceType': string
+            - `infoKeys': vector of pairs of integers
             """
             api_typeKeys_, api_typeKeys_n_ = _ivectorint(typeKeys)
             api_entityKeys_, api_entityKeys_n_ = _ivectorsize(entityKeys)
@@ -3099,6 +3698,15 @@ class model:
             the part of the data indexed by `task'.
 
             Return `barycenters'.
+
+            Argument types:
+            - `elementType': integer
+            - `tag': integer
+            - `fast': boolean
+            - `primary': boolean
+            - `barycenters': vector of doubles
+            - `task': size
+            - `numTasks': size
             """
             api_barycenters_, api_barycenters_n_ = POINTER(c_double)(), c_size_t()
             ierr = c_int()
@@ -3131,6 +3739,14 @@ class model:
             indexed by `task'.
 
             Return `nodeTags'.
+
+            Argument types:
+            - `elementType': integer
+            - `nodeTags': vector of sizes
+            - `tag': integer
+            - `primary': boolean
+            - `task': size
+            - `numTasks': size
             """
             api_nodeTags_, api_nodeTags_n_ = POINTER(c_size_t)(), c_size_t()
             ierr = c_int()
@@ -3163,6 +3779,15 @@ class model:
             indexed by `task'.
 
             Return `nodeTags'.
+
+            Argument types:
+            - `elementType': integer
+            - `faceType': integer
+            - `nodeTags': vector of sizes
+            - `tag': integer
+            - `primary': boolean
+            - `task': size
+            - `numTasks': size
             """
             api_nodeTags_, api_nodeTags_n_ = POINTER(c_size_t)(), c_size_t()
             ierr = c_int()
@@ -3189,6 +3814,12 @@ class model:
             stored in the ghost entity of dimension `dim' and tag `tag'.
 
             Return `elementTags', `partitions'.
+
+            Argument types:
+            - `dim': integer
+            - `tag': integer
+            - `elementTags': vector of sizes
+            - `partitions': vector of integers
             """
             api_elementTags_, api_elementTags_n_ = POINTER(c_size_t)(), c_size_t()
             api_partitions_, api_partitions_n_ = POINTER(c_int)(), c_size_t()
@@ -3211,8 +3842,13 @@ class model:
             """
             gmsh.model.mesh.setSize(dimTags, size)
 
-            Set a mesh size constraint on the model entities `dimTags'. Currently only
-            entities of dimension 0 (points) are handled.
+            Set a mesh size constraint on the model entities `dimTags', given as a
+            vector of (dim, tag) pairs. Currently only entities of dimension 0 (points)
+            are handled.
+
+            Argument types:
+            - `dimTags': vector of pairs of integers
+            - `size': double
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             ierr = c_int()
@@ -3230,10 +3866,15 @@ class model:
             gmsh.model.mesh.getSizes(dimTags)
 
             Get the mesh size constraints (if any) associated with the model entities
-            `dimTags'. A zero entry in the output `sizes' vector indicates that no size
-            constraint is specified on the corresponding entity.
+            `dimTags', given as a vector of (dim, tag) pairs. A zero entry in the
+            output `sizes' vector indicates that no size constraint is specified on the
+            corresponding entity.
 
             Return `sizes'.
+
+            Argument types:
+            - `dimTags': vector of pairs of integers
+            - `sizes': vector of doubles
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             api_sizes_, api_sizes_n_ = POINTER(c_double)(), c_size_t()
@@ -3255,6 +3896,12 @@ class model:
             Set mesh size constraints at the given parametric points `parametricCoord'
             on the model entity of dimension `dim' and tag `tag'. Currently only
             entities of dimension 1 (lines) are handled.
+
+            Argument types:
+            - `dim': integer
+            - `tag': integer
+            - `parametricCoord': vector of doubles
+            - `sizes': vector of doubles
             """
             api_parametricCoord_, api_parametricCoord_n_ = _ivectordouble(parametricCoord)
             api_sizes_, api_sizes_n_ = _ivectordouble(sizes)
@@ -3283,6 +3930,9 @@ class model:
             callback had not been called. The callback function should return a double
             precision number specifying the desired mesh size; returning `lc' is
             equivalent to a no-op.
+
+            Argument types:
+            - `callback': 
             """
             global api_callback_type_
             api_callback_type_ = CFUNCTYPE(c_double, c_int, c_int, c_double, c_double, c_double, c_double, c_void_p)
@@ -3319,6 +3969,12 @@ class model:
             nodes distributed according to `meshType' and `coef'. Currently supported
             types are "Progression" (geometrical progression with power `coef'), "Bump"
             (refinement toward both extremities of the curve) and "Beta" (beta law).
+
+            Argument types:
+            - `tag': integer
+            - `numNodes': integer
+            - `meshType': string
+            - `coef': double
             """
             ierr = c_int()
             lib.gmshModelMeshSetTransfiniteCurve(
@@ -3343,6 +3999,11 @@ class model:
             the (3 or 4) corners of the transfinite interpolation explicitly;
             specifying the corners explicitly is mandatory if the surface has more that
             3 or 4 points on its boundary.
+
+            Argument types:
+            - `tag': integer
+            - `arrangement': string
+            - `cornerTags': vector of integers
             """
             api_cornerTags_, api_cornerTags_n_ = _ivectorint(cornerTags)
             ierr = c_int()
@@ -3363,6 +4024,10 @@ class model:
             Set a transfinite meshing constraint on the surface `tag'. `cornerTags' can
             be used to specify the (6 or 8) corners of the transfinite interpolation
             explicitly.
+
+            Argument types:
+            - `tag': integer
+            - `cornerTags': vector of integers
             """
             api_cornerTags_, api_cornerTags_n_ = _ivectorint(cornerTags)
             ierr = c_int()
@@ -3379,14 +4044,19 @@ class model:
             """
             gmsh.model.mesh.setTransfiniteAutomatic(dimTags=[], cornerAngle=2.35, recombine=True)
 
-            Set transfinite meshing constraints on the model entities in `dimTag'.
-            Transfinite meshing constraints are added to the curves of the quadrangular
-            surfaces and to the faces of 6-sided volumes. Quadragular faces with a
-            corner angle superior to `cornerAngle' (in radians) are ignored. The number
-            of points is automatically determined from the sizing constraints. If
-            `dimTag' is empty, the constraints are applied to all entities in the
-            model. If `recombine' is true, the recombine flag is automatically set on
-            the transfinite surfaces.
+            Set transfinite meshing constraints on the model entities in `dimTags',
+            given as a vector of (dim, tag) pairs. Transfinite meshing constraints are
+            added to the curves of the quadrangular surfaces and to the faces of
+            6-sided volumes. Quadragular faces with a corner angle superior to
+            `cornerAngle' (in radians) are ignored. The number of points is
+            automatically determined from the sizing constraints. If `dimTag' is empty,
+            the constraints are applied to all entities in the model. If `recombine' is
+            true, the recombine flag is automatically set on the transfinite surfaces.
+
+            Argument types:
+            - `dimTags': vector of pairs of integers
+            - `cornerAngle': double
+            - `recombine': boolean
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             ierr = c_int()
@@ -3408,6 +4078,11 @@ class model:
             `dim' and tag `tag'. Currently only entities of dimension 2 (to recombine
             triangles into quadrangles) are supported; `angle' specifies the threshold
             angle for the simple recombination algorithm..
+
+            Argument types:
+            - `dim': integer
+            - `tag': integer
+            - `angle': double
             """
             ierr = c_int()
             lib.gmshModelMeshSetRecombine(
@@ -3426,6 +4101,11 @@ class model:
 
             Set a smoothing meshing constraint on the model entity of dimension `dim'
             and tag `tag'. `val' iterations of a Laplace smoother are applied.
+
+            Argument types:
+            - `dim': integer
+            - `tag': integer
+            - `val': integer
             """
             ierr = c_int()
             lib.gmshModelMeshSetSmoothing(
@@ -3447,6 +4127,11 @@ class model:
             respect to the natural mesh orientation (i.e. the orientation consistent
             with the orientation of the geometry). If `val' is false, the mesh is left
             as-is.
+
+            Argument types:
+            - `dim': integer
+            - `tag': integer
+            - `val': boolean
             """
             ierr = c_int()
             lib.gmshModelMeshSetReverse(
@@ -3465,6 +4150,11 @@ class model:
 
             Set the meshing algorithm on the model entity of dimension `dim' and tag
             `tag'. Currently only supported for `dim' == 2.
+
+            Argument types:
+            - `dim': integer
+            - `tag': integer
+            - `val': integer
             """
             ierr = c_int()
             lib.gmshModelMeshSetAlgorithm(
@@ -3484,6 +4174,11 @@ class model:
             Force the mesh size to be extended from the boundary, or not, for the model
             entity of dimension `dim' and tag `tag'. Currently only supported for `dim'
             == 2.
+
+            Argument types:
+            - `dim': integer
+            - `tag': integer
+            - `val': integer
             """
             ierr = c_int()
             lib.gmshModelMeshSetSizeFromBoundary(
@@ -3503,6 +4198,10 @@ class model:
             Set a compound meshing constraint on the model entities of dimension `dim'
             and tags `tags'. During meshing, compound entities are treated as a single
             discrete entity, which is automatically reparametrized.
+
+            Argument types:
+            - `dim': integer
+            - `tags': vector of integers
             """
             api_tags_, api_tags_n_ = _ivectorint(tags)
             ierr = c_int()
@@ -3523,6 +4222,9 @@ class model:
             so that all surfaces are oriented with outward pointing normals; and if a
             mesh already exists, reorient it. Currently only available with the
             OpenCASCADE kernel, as it relies on the STL triangulation.
+
+            Argument types:
+            - `tag': integer
             """
             ierr = c_int()
             lib.gmshModelMeshSetOutwardOrientation(
@@ -3537,8 +4239,12 @@ class model:
             """
             gmsh.model.mesh.removeConstraints(dimTags=[])
 
-            Remove all meshing constraints from the model entities `dimTags'. If
-            `dimTags' is empty, remove all constraings.
+            Remove all meshing constraints from the model entities `dimTags', given as
+            a vector of (dim, tag) pairs. If `dimTags' is empty, remove all
+            constraings.
+
+            Argument types:
+            - `dimTags': vector of pairs of integers
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             ierr = c_int()
@@ -3563,6 +4269,12 @@ class model:
             applied to entities of different dimensions, the lower dimensional entities
             will be automatically embedded in the higher dimensional entities if they
             are not on their boundary.
+
+            Argument types:
+            - `dim': integer
+            - `tags': vector of integers
+            - `inDim': integer
+            - `inTag': integer
             """
             api_tags_, api_tags_n_ = _ivectorint(tags)
             ierr = c_int()
@@ -3580,9 +4292,13 @@ class model:
             """
             gmsh.model.mesh.removeEmbedded(dimTags, dim=-1)
 
-            Remove embedded entities from the model entities `dimTags'. if `dim' is >=
-            0, only remove embedded entities of the given dimension (e.g. embedded
-            points if `dim' == 0).
+            Remove embedded entities from the model entities `dimTags', given as a
+            vector of (dim, tag) pairs. if `dim' is >= 0, only remove embedded entities
+            of the given dimension (e.g. embedded points if `dim' == 0).
+
+            Argument types:
+            - `dimTags': vector of pairs of integers
+            - `dim': integer
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             ierr = c_int()
@@ -3603,6 +4319,11 @@ class model:
             and tag `tag'.
 
             Return `dimTags'.
+
+            Argument types:
+            - `dim': integer
+            - `tag': integer
+            - `dimTags': vector of pairs of integers
             """
             api_dimTags_, api_dimTags_n_ = POINTER(c_int)(), c_size_t()
             ierr = c_int()
@@ -3622,7 +4343,12 @@ class model:
             gmsh.model.mesh.reorderElements(elementType, tag, ordering)
 
             Reorder the elements of type `elementType' classified on the entity of tag
-            `tag' according to `ordering'.
+            `tag' according to the `ordering' vector.
+
+            Argument types:
+            - `elementType': integer
+            - `tag': integer
+            - `ordering': vector of sizes
             """
             api_ordering_, api_ordering_n_ = _ivectorsize(ordering)
             ierr = c_int()
@@ -3676,6 +4402,12 @@ class model:
             effectively match the meshes of entities `tagsMaster' (useful for
             structured and extruded meshes). Currently only available for @code{dim} ==
             1 and @code{dim} == 2.
+
+            Argument types:
+            - `dim': integer
+            - `tags': vector of integers
+            - `tagsMaster': vector of integers
+            - `affineTransform': vector of doubles
             """
             api_tags_, api_tags_n_ = _ivectorint(tags)
             api_tagsMaster_, api_tagsMaster_n_ = _ivectorint(tagsMaster)
@@ -3700,6 +4432,11 @@ class model:
             tags `tags'.
 
             Return `tagMaster'.
+
+            Argument types:
+            - `dim': integer
+            - `tags': vector of integers
+            - `tagMaster': vector of integers
             """
             api_tags_, api_tags_n_ = _ivectorint(tags)
             api_tagMaster_, api_tagMaster_n_ = POINTER(c_int)(), c_size_t()
@@ -3726,6 +4463,15 @@ class model:
             data.
 
             Return `tagMaster', `nodeTags', `nodeTagsMaster', `affineTransform'.
+
+            Argument types:
+            - `dim': integer
+            - `tag': integer
+            - `tagMaster': integer
+            - `nodeTags': vector of sizes
+            - `nodeTagsMaster': vector of sizes
+            - `affineTransform': vector of doubles
+            - `includeHighOrderNodes': boolean
             """
             api_tagMaster_ = c_int()
             api_nodeTags_, api_nodeTags_n_ = POINTER(c_size_t)(), c_size_t()
@@ -3763,6 +4509,19 @@ class model:
             basis functions for sorting purposes.
 
             Return `tagMaster', `typeKeys', `typeKeysMaster', `entityKeys', `entityKeysMaster', `coord', `coordMaster'.
+
+            Argument types:
+            - `elementType': integer
+            - `functionSpaceType': string
+            - `tag': integer
+            - `tagMaster': integer
+            - `typeKeys': vector of integers
+            - `typeKeysMaster': vector of integers
+            - `entityKeys': vector of sizes
+            - `entityKeysMaster': vector of sizes
+            - `coord': vector of doubles
+            - `coordMaster': vector of doubles
+            - `returnCoord': boolean
             """
             api_tagMaster_ = c_int()
             api_typeKeys_, api_typeKeys_n_ = POINTER(c_int)(), c_size_t()
@@ -3817,9 +4576,14 @@ class model:
             gmsh.model.mesh.getDuplicateNodes(dimTags=[])
 
             Get the `tags' of any duplicate nodes in the mesh of the entities
-            `dimTags'. If `dimTags' is empty, consider the whole mesh.
+            `dimTags', given as a vector of (dim, tag) pairs. If `dimTags' is empty,
+            consider the whole mesh.
 
             Return `tags'.
+
+            Argument types:
+            - `tags': vector of sizes
+            - `dimTags': vector of pairs of integers
             """
             api_tags_, api_tags_n_ = POINTER(c_size_t)(), c_size_t()
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
@@ -3838,8 +4602,11 @@ class model:
             """
             gmsh.model.mesh.removeDuplicateNodes(dimTags=[])
 
-            Remove duplicate nodes in the mesh of the entities `dimTags'. If `dimTags'
-            is empty, consider the whole mesh.
+            Remove duplicate nodes in the mesh of the entities `dimTags', given as a
+            vector of (dim, tag) pairs. If `dimTags' is empty, consider the whole mesh.
+
+            Argument types:
+            - `dimTags': vector of pairs of integers
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             ierr = c_int()
@@ -3856,8 +4623,11 @@ class model:
             gmsh.model.mesh.removeDuplicateElements(dimTags=[])
 
             Remove duplicate elements (defined by the same nodes, in the same entity)
-            in the mesh of the entities `dimTags'. If `dimTags' is empty, consider the
-            whole mesh.
+            in the mesh of the entities `dimTags', given as a vector of (dim, tag)
+            pairs. If `dimTags' is empty, consider the whole mesh.
+
+            Argument types:
+            - `dimTags': vector of pairs of integers
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             ierr = c_int()
@@ -3875,6 +4645,10 @@ class model:
 
             Split (into two triangles) all quadrangles in surface `tag' whose quality
             is lower than `quality'. If `tag' < 0, split quadrangles in all surfaces.
+
+            Argument types:
+            - `quality': double
+            - `tag': integer
             """
             ierr = c_int()
             lib.gmshModelMeshSplitQuadrangles(
@@ -3891,6 +4665,10 @@ class model:
             gmsh.model.mesh.setVisibility(elementTags, value)
 
             Set the visibility of the elements of tags `elementTags' to `value'.
+
+            Argument types:
+            - `elementTags': vector of sizes
+            - `value': integer
             """
             api_elementTags_, api_elementTags_n_ = _ivectorsize(elementTags)
             ierr = c_int()
@@ -3915,6 +4693,13 @@ class model:
             `curveAngle' is less than Pi, also force curves to be split according to
             `curveAngle'. If `exportDiscrete' is set, clear any built-in CAD kernel
             entities and export the discrete entities in the built-in CAD kernel.
+
+            Argument types:
+            - `angle': double
+            - `boundary': boolean
+            - `forReparametrization': boolean
+            - `curveAngle': double
+            - `exportDiscrete': boolean
             """
             ierr = c_int()
             lib.gmshModelMeshClassifySurfaces(
@@ -3933,11 +4718,14 @@ class model:
             """
             gmsh.model.mesh.createGeometry(dimTags=[])
 
-            Create a geometry for the discrete entities `dimTags' (represented solely
-            by a mesh, without an underlying CAD description), i.e. create a
-            parametrization for discrete curves and surfaces, assuming that each can be
-            parametrized with a single map. If `dimTags' is empty, create a geometry
-            for all the discrete entities.
+            Create a geometry for the discrete entities `dimTags' (given as a vector of
+            (dim, tag) pairs) represented solely by a mesh (without an underlying CAD
+            description), i.e. create a parametrization for discrete curves and
+            surfaces, assuming that each can be parametrized with a single map. If
+            `dimTags' is empty, create a geometry for all the discrete entities.
+
+            Argument types:
+            - `dimTags': vector of pairs of integers
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             ierr = c_int()
@@ -3959,6 +4747,10 @@ class model:
             connected discrete surfaces and volumes. If `exportDiscrete' is set, clear
             any built-in CAD kernel entities and export the discrete entities in the
             built-in CAD kernel.
+
+            Argument types:
+            - `makeSimplyConnected': boolean
+            - `exportDiscrete': boolean
             """
             ierr = c_int()
             lib.gmshModelMeshCreateTopology(
@@ -3985,6 +4777,12 @@ class model:
             (co)chains are stored as physical groups in the mesh. If the request is
             added before mesh generation, the computation will be performed at the end
             of the meshing pipeline.
+
+            Argument types:
+            - `type': string
+            - `domainTags': vector of integers
+            - `subdomainTags': vector of integers
+            - `dims': vector of integers
             """
             api_domainTags_, api_domainTags_n_ = _ivectorint(domainTags)
             api_subdomainTags_, api_subdomainTags_n_ = _ivectorint(subdomainTags)
@@ -4020,9 +4818,13 @@ class model:
             gmsh.model.mesh.computeHomology()
 
             Perform the (co)homology computations requested by addHomologyRequest().
-            The newly created physical groups are returned in `dimTags'.
+            The newly created physical groups are returned in `dimTags' as a vector of
+            (dim, tag) pairs.
 
             Return `dimTags'.
+
+            Argument types:
+            - `dimTags': vector of pairs of integers
             """
             api_dimTags_, api_dimTags_n_ = POINTER(c_int)(), c_size_t()
             ierr = c_int()
@@ -4044,6 +4846,9 @@ class model:
             the views.
 
             Return `viewTags'.
+
+            Argument types:
+            - `viewTags': vector of integers
             """
             api_viewTags_, api_viewTags_n_ = POINTER(c_int)(), c_size_t()
             ierr = c_int()
@@ -4065,6 +4870,10 @@ class model:
             resulting triangles in `tri'.
 
             Return `tri'.
+
+            Argument types:
+            - `coord': vector of doubles
+            - `tri': vector of sizes
             """
             api_coord_, api_coord_n_ = _ivectordouble(coord)
             api_tri_, api_tri_n_ = POINTER(c_size_t)(), c_size_t()
@@ -4082,11 +4891,15 @@ class model:
             """
             gmsh.model.mesh.tetrahedralize(coord)
 
-            Tetrahedralize the points given in the `coord' vector as triplets of x, y,
-            z coordinates, and return the node tags (with numbering starting at 1) of
-            the resulting tetrahedra in `tetra'.
+            Tetrahedralize the points given in the `coord' vector as x, y, z
+            coordinates, concatenated, and return the node tags (with numbering
+            starting at 1) of the resulting tetrahedra in `tetra'.
 
             Return `tetra'.
+
+            Argument types:
+            - `coord': vector of doubles
+            - `tetra': vector of sizes
             """
             api_coord_, api_coord_n_ = _ivectordouble(coord)
             api_tetra_, api_tetra_n_ = POINTER(c_size_t)(), c_size_t()
@@ -4114,7 +4927,11 @@ class model:
                 the tag explicitly; otherwise a new tag is assigned automatically. Return
                 the field tag.
 
-                Return an integer value.
+                Return an integer.
+
+                Argument types:
+                - `fieldType': string
+                - `tag': integer
                 """
                 ierr = c_int()
                 api_result_ = lib.gmshModelMeshFieldAdd(
@@ -4131,6 +4948,9 @@ class model:
                 gmsh.model.mesh.field.remove(tag)
 
                 Remove the field with tag `tag'.
+
+                Argument types:
+                - `tag': integer
                 """
                 ierr = c_int()
                 lib.gmshModelMeshFieldRemove(
@@ -4147,6 +4967,9 @@ class model:
                 Get the list of all fields.
 
                 Return `tags'.
+
+                Argument types:
+                - `tags': vector of integers
                 """
                 api_tags_, api_tags_n_ = POINTER(c_int)(), c_size_t()
                 ierr = c_int()
@@ -4165,6 +4988,10 @@ class model:
                 Get the type `fieldType' of the field with tag `tag'.
 
                 Return `fileType'.
+
+                Argument types:
+                - `tag': integer
+                - `fileType': string
                 """
                 api_fileType_ = c_char_p()
                 ierr = c_int()
@@ -4183,6 +5010,11 @@ class model:
                 gmsh.model.mesh.field.setNumber(tag, option, value)
 
                 Set the numerical option `option' to value `value' for field `tag'.
+
+                Argument types:
+                - `tag': integer
+                - `option': string
+                - `value': double
                 """
                 ierr = c_int()
                 lib.gmshModelMeshFieldSetNumber(
@@ -4202,6 +5034,11 @@ class model:
                 Get the value of the numerical option `option' for field `tag'.
 
                 Return `value'.
+
+                Argument types:
+                - `tag': integer
+                - `option': string
+                - `value': double
                 """
                 api_value_ = c_double()
                 ierr = c_int()
@@ -4221,6 +5058,11 @@ class model:
                 gmsh.model.mesh.field.setString(tag, option, value)
 
                 Set the string option `option' to value `value' for field `tag'.
+
+                Argument types:
+                - `tag': integer
+                - `option': string
+                - `value': string
                 """
                 ierr = c_int()
                 lib.gmshModelMeshFieldSetString(
@@ -4240,6 +5082,11 @@ class model:
                 Get the value of the string option `option' for field `tag'.
 
                 Return `value'.
+
+                Argument types:
+                - `tag': integer
+                - `option': string
+                - `value': string
                 """
                 api_value_ = c_char_p()
                 ierr = c_int()
@@ -4254,18 +5101,23 @@ class model:
             get_string = getString
 
             @staticmethod
-            def setNumbers(tag, option, value):
+            def setNumbers(tag, option, values):
                 """
-                gmsh.model.mesh.field.setNumbers(tag, option, value)
+                gmsh.model.mesh.field.setNumbers(tag, option, values)
 
-                Set the numerical list option `option' to value `value' for field `tag'.
+                Set the numerical list option `option' to value `values' for field `tag'.
+
+                Argument types:
+                - `tag': integer
+                - `option': string
+                - `values': vector of doubles
                 """
-                api_value_, api_value_n_ = _ivectordouble(value)
+                api_values_, api_values_n_ = _ivectordouble(values)
                 ierr = c_int()
                 lib.gmshModelMeshFieldSetNumbers(
                     c_int(tag),
                     c_char_p(option.encode()),
-                    api_value_, api_value_n_,
+                    api_values_, api_values_n_,
                     byref(ierr))
                 if ierr.value != 0:
                     raise Exception(logger.getLastError())
@@ -4278,18 +5130,23 @@ class model:
 
                 Get the value of the numerical list option `option' for field `tag'.
 
-                Return `value'.
+                Return `values'.
+
+                Argument types:
+                - `tag': integer
+                - `option': string
+                - `values': vector of doubles
                 """
-                api_value_, api_value_n_ = POINTER(c_double)(), c_size_t()
+                api_values_, api_values_n_ = POINTER(c_double)(), c_size_t()
                 ierr = c_int()
                 lib.gmshModelMeshFieldGetNumbers(
                     c_int(tag),
                     c_char_p(option.encode()),
-                    byref(api_value_), byref(api_value_n_),
+                    byref(api_values_), byref(api_values_n_),
                     byref(ierr))
                 if ierr.value != 0:
                     raise Exception(logger.getLastError())
-                return _ovectordouble(api_value_, api_value_n_.value)
+                return _ovectordouble(api_values_, api_values_n_.value)
             get_numbers = getNumbers
 
             @staticmethod
@@ -4298,6 +5155,9 @@ class model:
                 gmsh.model.mesh.field.setAsBackgroundMesh(tag)
 
                 Set the field `tag' as the background mesh size field.
+
+                Argument types:
+                - `tag': integer
                 """
                 ierr = c_int()
                 lib.gmshModelMeshFieldSetAsBackgroundMesh(
@@ -4313,6 +5173,9 @@ class model:
                 gmsh.model.mesh.field.setAsBoundaryLayer(tag)
 
                 Set the field `tag' as a boundary layer size field.
+
+                Argument types:
+                - `tag': integer
                 """
                 ierr = c_int()
                 lib.gmshModelMeshFieldSetAsBoundaryLayer(
@@ -4340,7 +5203,14 @@ class model:
             will be added in the current model only after `synchronize' is called. This
             behavior holds for all the entities added in the geo module.)
 
-            Return an integer value.
+            Return an integer.
+
+            Argument types:
+            - `x': double
+            - `y': double
+            - `z': double
+            - `meshSize': double
+            - `tag': integer
             """
             ierr = c_int()
             api_result_ = lib.gmshModelGeoAddPoint(
@@ -4365,7 +5235,12 @@ class model:
             tag explicitly; otherwise a new tag is selected automatically. Return the
             tag of the line.
 
-            Return an integer value.
+            Return an integer.
+
+            Argument types:
+            - `startTag': integer
+            - `endTag': integer
+            - `tag': integer
             """
             ierr = c_int()
             api_result_ = lib.gmshModelGeoAddLine(
@@ -4390,7 +5265,16 @@ class model:
             0, 0), explicitly set the plane of the circle arc. Return the tag of the
             circle arc.
 
-            Return an integer value.
+            Return an integer.
+
+            Argument types:
+            - `startTag': integer
+            - `centerTag': integer
+            - `endTag': integer
+            - `tag': integer
+            - `nx': double
+            - `ny': double
+            - `nz': double
             """
             ierr = c_int()
             api_result_ = lib.gmshModelGeoAddCircleArc(
@@ -4419,7 +5303,17 @@ class model:
             (`nx', `ny', `nz') != (0, 0, 0), explicitly set the plane of the circle
             arc. Return the tag of the ellipse arc.
 
-            Return an integer value.
+            Return an integer.
+
+            Argument types:
+            - `startTag': integer
+            - `centerTag': integer
+            - `majorTag': integer
+            - `endTag': integer
+            - `tag': integer
+            - `nx': double
+            - `ny': double
+            - `nz': double
             """
             ierr = c_int()
             api_result_ = lib.gmshModelGeoAddEllipseArc(
@@ -4448,7 +5342,11 @@ class model:
             periodic curve if the first and last points are the same. Return the tag of
             the spline curve.
 
-            Return an integer value.
+            Return an integer.
+
+            Argument types:
+            - `pointTags': vector of integers
+            - `tag': integer
             """
             api_pointTags_, api_pointTags_n_ = _ivectorint(pointTags)
             ierr = c_int()
@@ -4472,7 +5370,11 @@ class model:
             the first and last points are the same. Return the tag of the b-spline
             curve.
 
-            Return an integer value.
+            Return an integer.
+
+            Argument types:
+            - `pointTags': vector of integers
+            - `tag': integer
             """
             api_pointTags_, api_pointTags_n_ = _ivectorint(pointTags)
             ierr = c_int()
@@ -4494,7 +5396,11 @@ class model:
             control points. If `tag' is positive, set the tag explicitly; otherwise a
             new tag is selected automatically.  Return the tag of the Bezier curve.
 
-            Return an integer value.
+            Return an integer.
+
+            Argument types:
+            - `pointTags': vector of integers
+            - `tag': integer
             """
             api_pointTags_, api_pointTags_n_ = _ivectorint(pointTags)
             ierr = c_int()
@@ -4517,7 +5423,11 @@ class model:
             a new tag is selected automatically. Create a periodic curve if the first
             and last points are the same. Return the tag of the polyline curve.
 
-            Return an integer value.
+            Return an integer.
+
+            Argument types:
+            - `pointTags': vector of integers
+            - `tag': integer
             """
             api_pointTags_, api_pointTags_n_ = _ivectorint(pointTags)
             ierr = c_int()
@@ -4541,7 +5451,12 @@ class model:
             set the tag explicitly; otherwise a new tag is selected automatically.
             Return the tag of the spline.
 
-            Return an integer value.
+            Return an integer.
+
+            Argument types:
+            - `curveTags': vector of integers
+            - `numIntervals': integer
+            - `tag': integer
             """
             api_curveTags_, api_curveTags_n_ = _ivectorint(curveTags)
             ierr = c_int()
@@ -4566,7 +5481,12 @@ class model:
             tag explicitly; otherwise a new tag is selected automatically. Return the
             tag of the b-spline.
 
-            Return an integer value.
+            Return an integer.
+
+            Argument types:
+            - `curveTags': vector of integers
+            - `numIntervals': integer
+            - `tag': integer
             """
             api_curveTags_, api_curveTags_n_ = _ivectorint(curveTags)
             ierr = c_int()
@@ -4593,7 +5513,12 @@ class model:
             tag is selected automatically. If `reorient' is set, automatically reorient
             the curves if necessary. Return the tag of the curve loop.
 
-            Return an integer value.
+            Return an integer.
+
+            Argument types:
+            - `curveTags': vector of integers
+            - `tag': integer
+            - `reorient': boolean
             """
             api_curveTags_, api_curveTags_n_ = _ivectorint(curveTags)
             ierr = c_int()
@@ -4616,6 +5541,10 @@ class model:
             `curveTags'. Return the `tags' of found curve loops, if any.
 
             Return `tags'.
+
+            Argument types:
+            - `curveTags': vector of integers
+            - `tags': vector of integers
             """
             api_curveTags_, api_curveTags_n_ = _ivectorint(curveTags)
             api_tags_, api_tags_n_ = POINTER(c_int)(), c_size_t()
@@ -4640,7 +5569,11 @@ class model:
             tag explicitly; otherwise a new tag is selected automatically. Return the
             tag of the surface.
 
-            Return an integer value.
+            Return an integer.
+
+            Argument types:
+            - `wireTags': vector of integers
+            - `tag': integer
             """
             api_wireTags_, api_wireTags_n_ = _ivectorint(wireTags)
             ierr = c_int()
@@ -4664,7 +5597,12 @@ class model:
             curves only. If `tag' is positive, set the tag explicitly; otherwise a new
             tag is selected automatically. Return the tag of the surface.
 
-            Return an integer value.
+            Return an integer.
+
+            Argument types:
+            - `wireTags': vector of integers
+            - `tag': integer
+            - `sphereCenterTag': integer
             """
             api_wireTags_, api_wireTags_n_ = _ivectorint(wireTags)
             ierr = c_int()
@@ -4687,7 +5625,11 @@ class model:
             CAD representation.  If `tag' is positive, set the tag explicitly;
             otherwise a new tag is selected automatically. Return the tag of the shell.
 
-            Return an integer value.
+            Return an integer.
+
+            Argument types:
+            - `surfaceTags': vector of integers
+            - `tag': integer
             """
             api_surfaceTags_, api_surfaceTags_n_ = _ivectorint(surfaceTags)
             ierr = c_int()
@@ -4711,7 +5653,11 @@ class model:
             the tag explicitly; otherwise a new tag is selected automatically. Return
             the tag of the volume.
 
-            Return an integer value.
+            Return an integer.
+
+            Argument types:
+            - `shellTags': vector of integers
+            - `tag': integer
             """
             api_shellTags_, api_shellTags_n_ = _ivectorint(shellTags)
             ierr = c_int()
@@ -4737,7 +5683,13 @@ class model:
             geometry explicitly; otherwise a new tag is selected automatically. Return
             the tag of the geometry.
 
-            Return an integer value.
+            Return an integer.
+
+            Argument types:
+            - `geometry': string
+            - `numbers': vector of doubles
+            - `strings': vector of strings
+            - `tag': integer
             """
             api_numbers_, api_numbers_n_ = _ivectordouble(numbers)
             api_strings_, api_strings_n_ = _ivectorstring(strings)
@@ -4764,7 +5716,15 @@ class model:
             otherwise a new tag is selected automatically. Return the tag of the point.
             For surface geometries, only the `x' and `y' coordinates are used.
 
-            Return an integer value.
+            Return an integer.
+
+            Argument types:
+            - `geometryTag': integer
+            - `x': double
+            - `y': double
+            - `z': double
+            - `meshSize': double
+            - `tag': integer
             """
             ierr = c_int()
             api_result_ = lib.gmshModelGeoAddPointOnGeometry(
@@ -4785,15 +5745,25 @@ class model:
             """
             gmsh.model.geo.extrude(dimTags, dx, dy, dz, numElements=[], heights=[], recombine=False)
 
-            Extrude the entities `dimTags' in the built-in CAD representation, using a
-            translation along (`dx', `dy', `dz'). Return extruded entities in
-            `outDimTags'. If `numElements' is not empty, also extrude the mesh: the
-            entries in `numElements' give the number of elements in each layer. If
-            `height' is not empty, it provides the (cumulative) height of the different
-            layers, normalized to 1. If `recombine' is set, recombine the mesh in the
-            layers.
+            Extrude the entities `dimTags' (given as a vector of (dim, tag) pairs) in
+            the built-in CAD representation, using a translation along (`dx', `dy',
+            `dz'). Return extruded entities in `outDimTags'. If the `numElements'
+            vector is not empty, also extrude the mesh: the entries in `numElements'
+            give the number of elements in each layer. If the `height' vector is not
+            empty, it provides the (cumulative) height of the different layers,
+            normalized to 1. If `recombine' is set, recombine the mesh in the layers.
 
             Return `outDimTags'.
+
+            Argument types:
+            - `dimTags': vector of pairs of integers
+            - `dx': double
+            - `dy': double
+            - `dz': double
+            - `outDimTags': vector of pairs of integers
+            - `numElements': vector of integers
+            - `heights': vector of doubles
+            - `recombine': boolean
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             api_outDimTags_, api_outDimTags_n_ = POINTER(c_int)(), c_size_t()
@@ -4819,17 +5789,31 @@ class model:
             """
             gmsh.model.geo.revolve(dimTags, x, y, z, ax, ay, az, angle, numElements=[], heights=[], recombine=False)
 
-            Extrude the entities `dimTags' in the built-in CAD representation, using a
-            rotation of `angle' radians around the axis of revolution defined by the
-            point (`x', `y', `z') and the direction (`ax', `ay', `az'). The angle
-            should be strictly smaller than Pi. Return extruded entities in
-            `outDimTags'. If `numElements' is not empty, also extrude the mesh: the
-            entries in `numElements' give the number of elements in each layer. If
-            `height' is not empty, it provides the (cumulative) height of the different
-            layers, normalized to 1. If `recombine' is set, recombine the mesh in the
-            layers.
+            Extrude the entities `dimTags' (given as a vector of (dim, tag) pairs) in
+            the built-in CAD representation, using a rotation of `angle' radians around
+            the axis of revolution defined by the point (`x', `y', `z') and the
+            direction (`ax', `ay', `az'). The angle should be strictly smaller than Pi.
+            Return extruded entities in `outDimTags'. If the `numElements' vector is
+            not empty, also extrude the mesh: the entries in `numElements' give the
+            number of elements in each layer. If the `height' vector is not empty, it
+            provides the (cumulative) height of the different layers, normalized to 1.
+            If `recombine' is set, recombine the mesh in the layers.
 
             Return `outDimTags'.
+
+            Argument types:
+            - `dimTags': vector of pairs of integers
+            - `x': double
+            - `y': double
+            - `z': double
+            - `ax': double
+            - `ay': double
+            - `az': double
+            - `angle': double
+            - `outDimTags': vector of pairs of integers
+            - `numElements': vector of integers
+            - `heights': vector of doubles
+            - `recombine': boolean
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             api_outDimTags_, api_outDimTags_n_ = POINTER(c_int)(), c_size_t()
@@ -4859,17 +5843,35 @@ class model:
             """
             gmsh.model.geo.twist(dimTags, x, y, z, dx, dy, dz, ax, ay, az, angle, numElements=[], heights=[], recombine=False)
 
-            Extrude the entities `dimTags' in the built-in CAD representation, using a
-            combined translation and rotation of `angle' radians, along (`dx', `dy',
-            `dz') and around the axis of revolution defined by the point (`x', `y',
-            `z') and the direction (`ax', `ay', `az'). The angle should be strictly
-            smaller than Pi. Return extruded entities in `outDimTags'. If `numElements'
-            is not empty, also extrude the mesh: the entries in `numElements' give the
-            number of elements in each layer. If `height' is not empty, it provides the
+            Extrude the entities `dimTags' (given as a vector of (dim, tag) pairs) in
+            the built-in CAD representation, using a combined translation and rotation
+            of `angle' radians, along (`dx', `dy', `dz') and around the axis of
+            revolution defined by the point (`x', `y', `z') and the direction (`ax',
+            `ay', `az'). The angle should be strictly smaller than Pi. Return extruded
+            entities in `outDimTags'. If the `numElements' vector is not empty, also
+            extrude the mesh: the entries in `numElements' give the number of elements
+            in each layer. If the `height' vector is not empty, it provides the
             (cumulative) height of the different layers, normalized to 1. If
             `recombine' is set, recombine the mesh in the layers.
 
             Return `outDimTags'.
+
+            Argument types:
+            - `dimTags': vector of pairs of integers
+            - `x': double
+            - `y': double
+            - `z': double
+            - `dx': double
+            - `dy': double
+            - `dz': double
+            - `ax': double
+            - `ay': double
+            - `az': double
+            - `angle': double
+            - `outDimTags': vector of pairs of integers
+            - `numElements': vector of integers
+            - `heights': vector of doubles
+            - `recombine': boolean
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             api_outDimTags_, api_outDimTags_n_ = POINTER(c_int)(), c_size_t()
@@ -4902,17 +5904,27 @@ class model:
             """
             gmsh.model.geo.extrudeBoundaryLayer(dimTags, numElements=[1], heights=[], recombine=False, second=False, viewIndex=-1)
 
-            Extrude the entities `dimTags' in the built-in CAD representation along the
-            normals of the mesh, creating discrete boundary layer entities. Return
-            extruded entities in `outDimTags'. The entries in `numElements' give the
-            number of elements in each layer. If `height' is not empty, it provides the
-            (cumulative) height of the different layers. If `recombine' is set,
-            recombine the mesh in the layers. A second boundary layer can be created
-            from the same entities if `second' is set. If `viewIndex' is >= 0, use the
-            corresponding view to either specify the normals (if the view contains a
-            vector field) or scale the normals (if the view is scalar).
+            Extrude the entities `dimTags' (given as a vector of (dim, tag) pairs) in
+            the built-in CAD representation along the normals of the mesh, creating
+            discrete boundary layer entities. Return extruded entities in `outDimTags'.
+            The entries in `numElements' give the number of elements in each layer. If
+            the `height' vector is not empty, it provides the (cumulative) height of
+            the different layers. If `recombine' is set, recombine the mesh in the
+            layers. A second boundary layer can be created from the same entities if
+            `second' is set. If `viewIndex' is >= 0, use the corresponding view to
+            either specify the normals (if the view contains a vector field) or scale
+            the normals (if the view is scalar).
 
             Return `outDimTags'.
+
+            Argument types:
+            - `dimTags': vector of pairs of integers
+            - `outDimTags': vector of pairs of integers
+            - `numElements': vector of integers
+            - `heights': vector of doubles
+            - `recombine': boolean
+            - `second': boolean
+            - `viewIndex': integer
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             api_outDimTags_, api_outDimTags_n_ = POINTER(c_int)(), c_size_t()
@@ -4938,8 +5950,14 @@ class model:
             """
             gmsh.model.geo.translate(dimTags, dx, dy, dz)
 
-            Translate the entities `dimTags' in the built-in CAD representation along
-            (`dx', `dy', `dz').
+            Translate the entities `dimTags' (given as a vector of (dim, tag) pairs) in
+            the built-in CAD representation along (`dx', `dy', `dz').
+
+            Argument types:
+            - `dimTags': vector of pairs of integers
+            - `dx': double
+            - `dy': double
+            - `dz': double
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             ierr = c_int()
@@ -4957,9 +5975,20 @@ class model:
             """
             gmsh.model.geo.rotate(dimTags, x, y, z, ax, ay, az, angle)
 
-            Rotate the entities `dimTags' in the built-in CAD representation by `angle'
-            radians around the axis of revolution defined by the point (`x', `y', `z')
-            and the direction (`ax', `ay', `az').
+            Rotate the entities `dimTags' (given as a vector of (dim, tag) pairs) in
+            the built-in CAD representation by `angle' radians around the axis of
+            revolution defined by the point (`x', `y', `z') and the direction (`ax',
+            `ay', `az').
+
+            Argument types:
+            - `dimTags': vector of pairs of integers
+            - `x': double
+            - `y': double
+            - `z': double
+            - `ax': double
+            - `ay': double
+            - `az': double
+            - `angle': double
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             ierr = c_int()
@@ -4981,9 +6010,19 @@ class model:
             """
             gmsh.model.geo.dilate(dimTags, x, y, z, a, b, c)
 
-            Scale the entities `dimTag' in the built-in CAD representation by factors
-            `a', `b' and `c' along the three coordinate axes; use (`x', `y', `z') as
-            the center of the homothetic transformation.
+            Scale the entities `dimTags' (given as a vector of (dim, tag) pairs) in the
+            built-in CAD representation by factors `a', `b' and `c' along the three
+            coordinate axes; use (`x', `y', `z') as the center of the homothetic
+            transformation.
+
+            Argument types:
+            - `dimTags': vector of pairs of integers
+            - `x': double
+            - `y': double
+            - `z': double
+            - `a': double
+            - `b': double
+            - `c': double
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             ierr = c_int()
@@ -5004,8 +6043,16 @@ class model:
             """
             gmsh.model.geo.mirror(dimTags, a, b, c, d)
 
-            Mirror the entities `dimTag' in the built-in CAD representation, with
-            respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' = 0.
+            Mirror the entities `dimTags' (given as a vector of (dim, tag) pairs) in
+            the built-in CAD representation, with respect to the plane of equation `a'
+            * x + `b' * y + `c' * z + `d' = 0.
+
+            Argument types:
+            - `dimTags': vector of pairs of integers
+            - `a': double
+            - `b': double
+            - `c': double
+            - `d': double
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             ierr = c_int()
@@ -5024,10 +6071,17 @@ class model:
             """
             gmsh.model.geo.symmetrize(dimTags, a, b, c, d)
 
-            Mirror the entities `dimTag' in the built-in CAD representation, with
-            respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' = 0.
-            (This is a synonym for `mirror', which will be deprecated in a future
-            release.)
+            Mirror the entities `dimTags' (given as a vector of (dim, tag) pairs) in
+            the built-in CAD representation, with respect to the plane of equation `a'
+            * x + `b' * y + `c' * z + `d' = 0. (This is a synonym for `mirror', which
+            will be deprecated in a future release.)
+
+            Argument types:
+            - `dimTags': vector of pairs of integers
+            - `a': double
+            - `b': double
+            - `c': double
+            - `d': double
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             ierr = c_int()
@@ -5046,10 +6100,14 @@ class model:
             """
             gmsh.model.geo.copy(dimTags)
 
-            Copy the entities `dimTags' in the built-in CAD representation; the new
-            entities are returned in `outDimTags'.
+            Copy the entities `dimTags' (given as a vector of (dim, tag) pairs) in the
+            built-in CAD representation; the new entities are returned in `outDimTags'.
 
             Return `outDimTags'.
+
+            Argument types:
+            - `dimTags': vector of pairs of integers
+            - `outDimTags': vector of pairs of integers
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             api_outDimTags_, api_outDimTags_n_ = POINTER(c_int)(), c_size_t()
@@ -5067,10 +6125,14 @@ class model:
             """
             gmsh.model.geo.remove(dimTags, recursive=False)
 
-            Remove the entities `dimTags' in the built-in CAD representation, provided
-            that they are not on the boundary of higher-dimensional entities. If
-            `recursive' is true, remove all the entities on their boundaries, down to
-            dimension 0.
+            Remove the entities `dimTags' (given as a vector of (dim, tag) pairs) in
+            the built-in CAD representation, provided that they are not on the boundary
+            of higher-dimensional entities. If `recursive' is true, remove all the
+            entities on their boundaries, down to dimension 0.
+
+            Argument types:
+            - `dimTags': vector of pairs of integers
+            - `recursive': boolean
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             ierr = c_int()
@@ -5107,6 +6169,11 @@ class model:
             created curve(s).
 
             Return `curveTags'.
+
+            Argument types:
+            - `tag': integer
+            - `pointTags': vector of integers
+            - `curveTags': vector of integers
             """
             api_pointTags_, api_pointTags_n_ = _ivectorint(pointTags)
             api_curveTags_, api_curveTags_n_ = POINTER(c_int)(), c_size_t()
@@ -5129,7 +6196,10 @@ class model:
             Get the maximum tag of entities of dimension `dim' in the built-in CAD
             representation.
 
-            Return an integer value.
+            Return an integer.
+
+            Argument types:
+            - `dim': integer
             """
             ierr = c_int()
             api_result_ = lib.gmshModelGeoGetMaxTag(
@@ -5147,6 +6217,10 @@ class model:
 
             Set the maximum tag `maxTag' for entities of dimension `dim' in the built-
             in CAD representation.
+
+            Argument types:
+            - `dim': integer
+            - `maxTag': integer
             """
             ierr = c_int()
             lib.gmshModelGeoSetMaxTag(
@@ -5167,7 +6241,13 @@ class model:
             group, equal to `tag' if `tag' is positive, or a new tag if `tag' < 0. Set
             the name of the physical group if `name' is not empty.
 
-            Return an integer value.
+            Return an integer.
+
+            Argument types:
+            - `dim': integer
+            - `tags': vector of integers
+            - `tag': integer
+            - `name': string
             """
             api_tags_, api_tags_n_ = _ivectorint(tags)
             ierr = c_int()
@@ -5187,8 +6267,12 @@ class model:
             """
             gmsh.model.geo.removePhysicalGroups(dimTags=[])
 
-            Remove the physical groups `dimTags' from the built-in CAD representation.
-            If `dimTags' is empty, remove all groups.
+            Remove the physical groups `dimTags' (given as a vector of (dim, tag)
+            pairs) from the built-in CAD representation. If `dimTags' is empty, remove
+            all groups.
+
+            Argument types:
+            - `dimTags': vector of pairs of integers
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             ierr = c_int()
@@ -5228,9 +6312,13 @@ class model:
                 """
                 gmsh.model.geo.mesh.setSize(dimTags, size)
 
-                Set a mesh size constraint on the entities `dimTags' in the built-in CAD
-                kernel representation. Currently only entities of dimension 0 (points) are
-                handled.
+                Set a mesh size constraint on the entities `dimTags' (given as a vector of
+                (dim, tag) pairs) in the built-in CAD kernel representation. Currently only
+                entities of dimension 0 (points) are handled.
+
+                Argument types:
+                - `dimTags': vector of pairs of integers
+                - `size': double
                 """
                 api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
                 ierr = c_int()
@@ -5252,6 +6340,12 @@ class model:
                 `meshType' and `coef'. Currently supported types are "Progression"
                 (geometrical progression with power `coef') and "Bump" (refinement toward
                 both extremities of the curve).
+
+                Argument types:
+                - `tag': integer
+                - `nPoints': integer
+                - `meshType': string
+                - `coef': double
                 """
                 ierr = c_int()
                 lib.gmshModelGeoMeshSetTransfiniteCurve(
@@ -5276,6 +6370,11 @@ class model:
                 `cornerTags' can be used to specify the (3 or 4) corners of the transfinite
                 interpolation explicitly; specifying the corners explicitly is mandatory if
                 the surface has more that 3 or 4 points on its boundary.
+
+                Argument types:
+                - `tag': integer
+                - `arrangement': string
+                - `cornerTags': vector of integers
                 """
                 api_cornerTags_, api_cornerTags_n_ = _ivectorint(cornerTags)
                 ierr = c_int()
@@ -5296,6 +6395,10 @@ class model:
                 Set a transfinite meshing constraint on the surface `tag' in the built-in
                 CAD kernel representation. `cornerTags' can be used to specify the (6 or 8)
                 corners of the transfinite interpolation explicitly.
+
+                Argument types:
+                - `tag': integer
+                - `cornerTags': vector of integers
                 """
                 api_cornerTags_, api_cornerTags_n_ = _ivectorint(cornerTags)
                 ierr = c_int()
@@ -5317,6 +6420,11 @@ class model:
                 entities of dimension 2 (to recombine triangles into quadrangles) are
                 supported; `angle' specifies the threshold angle for the simple
                 recombination algorithm.
+
+                Argument types:
+                - `dim': integer
+                - `tag': integer
+                - `angle': double
                 """
                 ierr = c_int()
                 lib.gmshModelGeoMeshSetRecombine(
@@ -5336,6 +6444,11 @@ class model:
                 Set a smoothing meshing constraint on the entity of dimension `dim' and tag
                 `tag' in the built-in CAD kernel representation. `val' iterations of a
                 Laplace smoother are applied.
+
+                Argument types:
+                - `dim': integer
+                - `tag': integer
+                - `val': integer
                 """
                 ierr = c_int()
                 lib.gmshModelGeoMeshSetSmoothing(
@@ -5357,6 +6470,11 @@ class model:
                 orientation will be reversed with respect to the natural mesh orientation
                 (i.e. the orientation consistent with the orientation of the geometry). If
                 `val' is false, the mesh is left as-is.
+
+                Argument types:
+                - `dim': integer
+                - `tag': integer
+                - `val': boolean
                 """
                 ierr = c_int()
                 lib.gmshModelGeoMeshSetReverse(
@@ -5376,6 +6494,11 @@ class model:
                 Set the meshing algorithm on the entity of dimension `dim' and tag `tag' in
                 the built-in CAD kernel representation. Currently only supported for `dim'
                 == 2.
+
+                Argument types:
+                - `dim': integer
+                - `tag': integer
+                - `val': integer
                 """
                 ierr = c_int()
                 lib.gmshModelGeoMeshSetAlgorithm(
@@ -5395,6 +6518,11 @@ class model:
                 Force the mesh size to be extended from the boundary, or not, for the
                 entity of dimension `dim' and tag `tag' in the built-in CAD kernel
                 representation. Currently only supported for `dim' == 2.
+
+                Argument types:
+                - `dim': integer
+                - `tag': integer
+                - `val': integer
                 """
                 ierr = c_int()
                 lib.gmshModelGeoMeshSetSizeFromBoundary(
@@ -5424,7 +6552,14 @@ class model:
             the point will be added in the current model only after `synchronize' is
             called. This behavior holds for all the entities added in the occ module.)
 
-            Return an integer value.
+            Return an integer.
+
+            Argument types:
+            - `x': double
+            - `y': double
+            - `z': double
+            - `meshSize': double
+            - `tag': integer
             """
             ierr = c_int()
             api_result_ = lib.gmshModelOccAddPoint(
@@ -5449,7 +6584,12 @@ class model:
             the tag explicitly; otherwise a new tag is selected automatically. Return
             the tag of the line.
 
-            Return an integer value.
+            Return an integer.
+
+            Argument types:
+            - `startTag': integer
+            - `endTag': integer
+            - `tag': integer
             """
             ierr = c_int()
             api_result_ = lib.gmshModelOccAddLine(
@@ -5472,7 +6612,13 @@ class model:
             is positive, set the tag explicitly; otherwise a new tag is selected
             automatically. Return the tag of the circle arc.
 
-            Return an integer value.
+            Return an integer.
+
+            Argument types:
+            - `startTag': integer
+            - `centerTag': integer
+            - `endTag': integer
+            - `tag': integer
             """
             ierr = c_int()
             api_result_ = lib.gmshModelOccAddCircleArc(
@@ -5499,7 +6645,18 @@ class model:
             If a vector `xAxis' of size 3 is provided in addition to `zAxis', use it to
             define the x-axis. Return the tag of the circle.
 
-            Return an integer value.
+            Return an integer.
+
+            Argument types:
+            - `x': double
+            - `y': double
+            - `z': double
+            - `r': double
+            - `tag': integer
+            - `angle1': double
+            - `angle2': double
+            - `zAxis': vector of doubles
+            - `xAxis': vector of doubles
             """
             api_zAxis_, api_zAxis_n_ = _ivectordouble(zAxis)
             api_xAxis_, api_xAxis_n_ = _ivectordouble(xAxis)
@@ -5532,7 +6689,14 @@ class model:
             that OpenCASCADE does not allow creating ellipse arcs with the major radius
             smaller than the minor radius.
 
-            Return an integer value.
+            Return an integer.
+
+            Argument types:
+            - `startTag': integer
+            - `centerTag': integer
+            - `majorTag': integer
+            - `endTag': integer
+            - `tag': integer
             """
             ierr = c_int()
             api_result_ = lib.gmshModelOccAddEllipseArc(
@@ -5561,7 +6725,19 @@ class model:
             vector `xAxis' of size 3 is provided in addition to `zAxis', use it to
             define the x-axis. Return the tag of the ellipse.
 
-            Return an integer value.
+            Return an integer.
+
+            Argument types:
+            - `x': double
+            - `y': double
+            - `z': double
+            - `r1': double
+            - `r2': double
+            - `tag': integer
+            - `angle1': double
+            - `angle2': double
+            - `zAxis': vector of doubles
+            - `xAxis': vector of doubles
             """
             api_zAxis_, api_zAxis_n_ = _ivectordouble(zAxis)
             api_xAxis_, api_xAxis_n_ = _ivectordouble(xAxis)
@@ -5594,7 +6770,11 @@ class model:
             periodic curve if the first and last points are the same. Return the tag of
             the spline curve.
 
-            Return an integer value.
+            Return an integer.
+
+            Argument types:
+            - `pointTags': vector of integers
+            - `tag': integer
             """
             api_pointTags_, api_pointTags_n_ = _ivectorint(pointTags)
             ierr = c_int()
@@ -5619,7 +6799,15 @@ class model:
             new tag is selected automatically. Create a periodic curve if the first and
             last points are the same. Return the tag of the b-spline curve.
 
-            Return an integer value.
+            Return an integer.
+
+            Argument types:
+            - `pointTags': vector of integers
+            - `tag': integer
+            - `degree': integer
+            - `weights': vector of doubles
+            - `knots': vector of doubles
+            - `multiplicities': vector of integers
             """
             api_pointTags_, api_pointTags_n_ = _ivectorint(pointTags)
             api_weights_, api_weights_n_ = _ivectordouble(weights)
@@ -5648,7 +6836,11 @@ class model:
             control points. If `tag' is positive, set the tag explicitly; otherwise a
             new tag is selected automatically. Return the tag of the Bezier curve.
 
-            Return an integer value.
+            Return an integer.
+
+            Argument types:
+            - `pointTags': vector of integers
+            - `tag': integer
             """
             api_pointTags_, api_pointTags_n_ = _ivectorint(pointTags)
             ierr = c_int()
@@ -5672,7 +6864,12 @@ class model:
             points. If `tag' is positive, set the tag explicitly; otherwise a new tag
             is selected automatically. Return the tag of the wire.
 
-            Return an integer value.
+            Return an integer.
+
+            Argument types:
+            - `curveTags': vector of integers
+            - `tag': integer
+            - `checkClosed': boolean
             """
             api_curveTags_, api_curveTags_n_ = _ivectorint(curveTags)
             ierr = c_int()
@@ -5701,7 +6898,11 @@ class model:
             explicitly; otherwise a new tag is selected automatically. Return the tag
             of the curve loop.
 
-            Return an integer value.
+            Return an integer.
+
+            Argument types:
+            - `curveTags': vector of integers
+            - `tag': integer
             """
             api_curveTags_, api_curveTags_n_ = _ivectorint(curveTags)
             ierr = c_int()
@@ -5725,7 +6926,16 @@ class model:
             tag is selected automatically. Round the corners if `roundedRadius' is
             nonzero. Return the tag of the rectangle.
 
-            Return an integer value.
+            Return an integer.
+
+            Argument types:
+            - `x': double
+            - `y': double
+            - `z': double
+            - `dx': double
+            - `dy': double
+            - `tag': integer
+            - `roundedRadius': double
             """
             ierr = c_int()
             api_result_ = lib.gmshModelOccAddRectangle(
@@ -5755,7 +6965,17 @@ class model:
             provided in addition to `zAxis', use it to define the x-axis. Return the
             tag of the disk.
 
-            Return an integer value.
+            Return an integer.
+
+            Argument types:
+            - `xc': double
+            - `yc': double
+            - `zc': double
+            - `rx': double
+            - `ry': double
+            - `tag': integer
+            - `zAxis': vector of doubles
+            - `xAxis': vector of doubles
             """
             api_zAxis_, api_zAxis_n_ = _ivectordouble(zAxis)
             api_xAxis_, api_xAxis_n_ = _ivectordouble(xAxis)
@@ -5786,7 +7006,11 @@ class model:
             is positive, set the tag explicitly; otherwise a new tag is selected
             automatically. Return the tag of the surface.
 
-            Return an integer value.
+            Return an integer.
+
+            Argument types:
+            - `wireTags': vector of integers
+            - `tag': integer
             """
             api_wireTags_, api_wireTags_n_ = _ivectorint(wireTags)
             ierr = c_int()
@@ -5823,7 +7047,22 @@ class model:
             surface can have) and, `maxSegments' (the largest number of segments which
             the filling surface can have).
 
-            Return an integer value.
+            Return an integer.
+
+            Argument types:
+            - `wireTag': integer
+            - `tag': integer
+            - `pointTags': vector of integers
+            - `degree': integer
+            - `numPointsOnCurves': integer
+            - `numIter': integer
+            - `anisotropic': boolean
+            - `tol2d': double
+            - `tol3d': double
+            - `tolAng': double
+            - `tolCurv': double
+            - `maxDegree': integer
+            - `maxSegments': integer
             """
             api_pointTags_, api_pointTags_n_ = _ivectorint(pointTags)
             ierr = c_int()
@@ -5860,7 +7099,12 @@ class model:
             If `tag' is positive, set the tag explicitly; otherwise a new tag is
             selected automatically. Return the tag of the surface.
 
-            Return an integer value.
+            Return an integer.
+
+            Argument types:
+            - `wireTag': integer
+            - `tag': integer
+            - `type': string
             """
             ierr = c_int()
             api_result_ = lib.gmshModelOccAddBSplineFilling(
@@ -5886,7 +7130,12 @@ class model:
             than "Curved". If `tag' is positive, set the tag explicitly; otherwise a
             new tag is selected automatically. Return the tag of the surface.
 
-            Return an integer value.
+            Return an integer.
+
+            Argument types:
+            - `wireTag': integer
+            - `tag': integer
+            - `type': string
             """
             ierr = c_int()
             api_result_ = lib.gmshModelOccAddBezierFilling(
@@ -5916,7 +7165,21 @@ class model:
             otherwise consider the wire curves as defined in the parametric space of
             the surface. Return the tag of the b-spline surface.
 
-            Return an integer value.
+            Return an integer.
+
+            Argument types:
+            - `pointTags': vector of integers
+            - `numPointsU': integer
+            - `tag': integer
+            - `degreeU': integer
+            - `degreeV': integer
+            - `weights': vector of doubles
+            - `knotsU': vector of doubles
+            - `knotsV': vector of doubles
+            - `multiplicitiesU': vector of integers
+            - `multiplicitiesV': vector of integers
+            - `wireTags': vector of integers
+            - `wire3D': boolean
             """
             api_pointTags_, api_pointTags_n_ = _ivectorint(pointTags)
             api_weights_, api_weights_n_ = _ivectordouble(weights)
@@ -5960,7 +7223,14 @@ class model:
             otherwise consider the wire curves as defined in the parametric space of
             the surface. Return the tag of the Bezier surface.
 
-            Return an integer value.
+            Return an integer.
+
+            Argument types:
+            - `pointTags': vector of integers
+            - `numPointsU': integer
+            - `tag': integer
+            - `wireTags': vector of integers
+            - `wire3D': boolean
             """
             api_pointTags_, api_pointTags_n_ = _ivectorint(pointTags)
             api_wireTags_, api_wireTags_n_ = _ivectorint(wireTags)
@@ -5990,7 +7260,13 @@ class model:
             the tag explicitly; otherwise a new tag is selected automatically. Return
             the tag of the trimmed surface.
 
-            Return an integer value.
+            Return an integer.
+
+            Argument types:
+            - `surfaceTag': integer
+            - `wireTags': vector of integers
+            - `wire3D': boolean
+            - `tag': integer
             """
             api_wireTags_, api_wireTags_n_ = _ivectorint(wireTags)
             ierr = c_int()
@@ -6016,7 +7292,12 @@ class model:
             surface loop. Setting `sewing' allows one to build a shell made of surfaces
             that share geometrically identical (but topologically different) curves.
 
-            Return an integer value.
+            Return an integer.
+
+            Argument types:
+            - `surfaceTags': vector of integers
+            - `tag': integer
+            - `sewing': boolean
             """
             api_surfaceTags_, api_surfaceTags_n_ = _ivectorint(surfaceTags)
             ierr = c_int()
@@ -6041,7 +7322,11 @@ class model:
             positive, set the tag explicitly; otherwise a new tag is selected
             automatically. Return the tag of the volume.
 
-            Return an integer value.
+            Return an integer.
+
+            Argument types:
+            - `shellTags': vector of integers
+            - `tag': integer
             """
             api_shellTags_, api_shellTags_n_ = _ivectorint(shellTags)
             ierr = c_int()
@@ -6066,7 +7351,17 @@ class model:
             the tag explicitly; otherwise a new tag is selected automatically. Return
             the tag of the sphere.
 
-            Return an integer value.
+            Return an integer.
+
+            Argument types:
+            - `xc': double
+            - `yc': double
+            - `zc': double
+            - `radius': double
+            - `tag': integer
+            - `angle1': double
+            - `angle2': double
+            - `angle3': double
             """
             ierr = c_int()
             api_result_ = lib.gmshModelOccAddSphere(
@@ -6094,7 +7389,16 @@ class model:
             `tag' is positive, set the tag explicitly; otherwise a new tag is selected
             automatically. Return the tag of the box.
 
-            Return an integer value.
+            Return an integer.
+
+            Argument types:
+            - `x': double
+            - `y': double
+            - `z': double
+            - `dx': double
+            - `dy': double
+            - `dz': double
+            - `tag': integer
             """
             ierr = c_int()
             api_result_ = lib.gmshModelOccAddBox(
@@ -6123,7 +7427,18 @@ class model:
             positive, set the tag explicitly; otherwise a new tag is selected
             automatically. Return the tag of the cylinder.
 
-            Return an integer value.
+            Return an integer.
+
+            Argument types:
+            - `x': double
+            - `y': double
+            - `z': double
+            - `dx': double
+            - `dy': double
+            - `dz': double
+            - `r': double
+            - `tag': integer
+            - `angle': double
             """
             ierr = c_int()
             api_result_ = lib.gmshModelOccAddCylinder(
@@ -6154,7 +7469,19 @@ class model:
             explicitly; otherwise a new tag is selected automatically. `angle' defines
             the optional angular opening (from 0 to 2*Pi). Return the tag of the cone.
 
-            Return an integer value.
+            Return an integer.
+
+            Argument types:
+            - `x': double
+            - `y': double
+            - `z': double
+            - `dx': double
+            - `dy': double
+            - `dz': double
+            - `r1': double
+            - `r2': double
+            - `tag': integer
+            - `angle': double
             """
             ierr = c_int()
             api_result_ = lib.gmshModelOccAddCone(
@@ -6187,7 +7514,18 @@ class model:
             of size 3 is provided, use it to define the z-axis. Return the tag of the
             wedge.
 
-            Return an integer value.
+            Return an integer.
+
+            Argument types:
+            - `x': double
+            - `y': double
+            - `z': double
+            - `dx': double
+            - `dy': double
+            - `dz': double
+            - `tag': integer
+            - `ltx': double
+            - `zAxis': vector of doubles
             """
             api_zAxis_, api_zAxis_n_ = _ivectordouble(zAxis)
             ierr = c_int()
@@ -6219,7 +7557,17 @@ class model:
             `zAxis' of size 3 is provided, use it to define the z-axis. Return the tag
             of the torus.
 
-            Return an integer value.
+            Return an integer.
+
+            Argument types:
+            - `x': double
+            - `y': double
+            - `z': double
+            - `r1': double
+            - `r2': double
+            - `tag': integer
+            - `angle': double
+            - `zAxis': vector of doubles
             """
             api_zAxis_, api_zAxis_n_ = _ivectordouble(zAxis)
             ierr = c_int()
@@ -6247,16 +7595,27 @@ class model:
             the OpenCASCADE CAD representation, defined through the open or closed
             wires `wireTags'. If `tag' is positive, set the tag explicitly; otherwise a
             new tag is selected automatically. The new entities are returned in
-            `outDimTags'. If the optional argument `makeRuled' is set, the surfaces
-            created on the boundary are forced to be ruled surfaces. If `maxDegree' is
-            positive, set the maximal degree of resulting surface. The optional
-            argument `continuity' allows to specify the continuity of the resulting
-            shape ("C0", "G1", "C1", "G2", "C2", "C3", "CN"). The optional argument
-            `parametrization' sets the parametrization type ("ChordLength",
-            "Centripetal", "IsoParametric"). The optional argument `smoothing'
-            determines if smoothing is applied.
+            `outDimTags' as a vector of (dim, tag) pairs. If the optional argument
+            `makeRuled' is set, the surfaces created on the boundary are forced to be
+            ruled surfaces. If `maxDegree' is positive, set the maximal degree of
+            resulting surface. The optional argument `continuity' allows to specify the
+            continuity of the resulting shape ("C0", "G1", "C1", "G2", "C2", "C3",
+            "CN"). The optional argument `parametrization' sets the parametrization
+            type ("ChordLength", "Centripetal", "IsoParametric"). The optional argument
+            `smoothing' determines if smoothing is applied.
 
             Return `outDimTags'.
+
+            Argument types:
+            - `wireTags': vector of integers
+            - `outDimTags': vector of pairs of integers
+            - `tag': integer
+            - `makeSolid': boolean
+            - `makeRuled': boolean
+            - `maxDegree': integer
+            - `continuity': string
+            - `parametrization': string
+            - `smoothing': boolean
             """
             api_wireTags_, api_wireTags_n_ = _ivectorint(wireTags)
             api_outDimTags_, api_outDimTags_n_ = POINTER(c_int)(), c_size_t()
@@ -6290,6 +7649,13 @@ class model:
             automatically.
 
             Return `outDimTags'.
+
+            Argument types:
+            - `volumeTag': integer
+            - `excludeSurfaceTags': vector of integers
+            - `offset': double
+            - `outDimTags': vector of pairs of integers
+            - `tag': integer
             """
             api_excludeSurfaceTags_, api_excludeSurfaceTags_n_ = _ivectorint(excludeSurfaceTags)
             api_outDimTags_, api_outDimTags_n_ = POINTER(c_int)(), c_size_t()
@@ -6311,15 +7677,25 @@ class model:
             """
             gmsh.model.occ.extrude(dimTags, dx, dy, dz, numElements=[], heights=[], recombine=False)
 
-            Extrude the entities `dimTags' in the OpenCASCADE CAD representation, using
-            a translation along (`dx', `dy', `dz'). Return extruded entities in
-            `outDimTags'. If `numElements' is not empty, also extrude the mesh: the
-            entries in `numElements' give the number of elements in each layer. If
-            `height' is not empty, it provides the (cumulative) height of the different
-            layers, normalized to 1. If `recombine' is set, recombine the mesh in the
-            layers.
+            Extrude the entities `dimTags' (given as a vector of (dim, tag) pairs) in
+            the OpenCASCADE CAD representation, using a translation along (`dx', `dy',
+            `dz'). Return extruded entities in `outDimTags'. If the `numElements'
+            vector is not empty, also extrude the mesh: the entries in `numElements'
+            give the number of elements in each layer. If the `height' vector is not
+            empty, it provides the (cumulative) height of the different layers,
+            normalized to 1. If `recombine' is set, recombine the mesh in the layers.
 
             Return `outDimTags'.
+
+            Argument types:
+            - `dimTags': vector of pairs of integers
+            - `dx': double
+            - `dy': double
+            - `dz': double
+            - `outDimTags': vector of pairs of integers
+            - `numElements': vector of integers
+            - `heights': vector of doubles
+            - `recombine': boolean
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             api_outDimTags_, api_outDimTags_n_ = POINTER(c_int)(), c_size_t()
@@ -6345,17 +7721,32 @@ class model:
             """
             gmsh.model.occ.revolve(dimTags, x, y, z, ax, ay, az, angle, numElements=[], heights=[], recombine=False)
 
-            Extrude the entities `dimTags' in the OpenCASCADE CAD representation, using
-            a rotation of `angle' radians around the axis of revolution defined by the
-            point (`x', `y', `z') and the direction (`ax', `ay', `az'). Return extruded
-            entities in `outDimTags'. If `numElements' is not empty, also extrude the
-            mesh: the entries in `numElements' give the number of elements in each
-            layer. If `height' is not empty, it provides the (cumulative) height of the
-            different layers, normalized to 1. When the mesh is extruded the angle
-            should be strictly smaller than 2*Pi. If `recombine' is set, recombine the
-            mesh in the layers.
+            Extrude the entities `dimTags' (given as a vector of (dim, tag) pairs) in
+            the OpenCASCADE CAD representation, using a rotation of `angle' radians
+            around the axis of revolution defined by the point (`x', `y', `z') and the
+            direction (`ax', `ay', `az'). Return extruded entities in `outDimTags'. If
+            the `numElements' vector is not empty, also extrude the mesh: the entries
+            in `numElements' give the number of elements in each layer. If the `height'
+            vector is not empty, it provides the (cumulative) height of the different
+            layers, normalized to 1. When the mesh is extruded the angle should be
+            strictly smaller than 2*Pi. If `recombine' is set, recombine the mesh in
+            the layers.
 
             Return `outDimTags'.
+
+            Argument types:
+            - `dimTags': vector of pairs of integers
+            - `x': double
+            - `y': double
+            - `z': double
+            - `ax': double
+            - `ay': double
+            - `az': double
+            - `angle': double
+            - `outDimTags': vector of pairs of integers
+            - `numElements': vector of integers
+            - `heights': vector of doubles
+            - `recombine': boolean
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             api_outDimTags_, api_outDimTags_n_ = POINTER(c_int)(), c_size_t()
@@ -6386,13 +7777,20 @@ class model:
             gmsh.model.occ.addPipe(dimTags, wireTag, trihedron="")
 
             Add a pipe in the OpenCASCADE CAD representation, by extruding the entities
-            `dimTags' along the wire `wireTag'. The type of sweep can be specified with
-            `trihedron' (possible values: "DiscreteTrihedron", "CorrectedFrenet",
-            "Fixed", "Frenet", "ConstantNormal", "Darboux", "GuideAC", "GuidePlan",
-            "GuideACWithContact", "GuidePlanWithContact"). If `trihedron' is not
-            provided, "DiscreteTrihedron" is assumed. Return the pipe in `outDimTags'.
+            `dimTags' (given as a vector of (dim, tag) pairs) along the wire `wireTag'.
+            The type of sweep can be specified with `trihedron' (possible values:
+            "DiscreteTrihedron", "CorrectedFrenet", "Fixed", "Frenet",
+            "ConstantNormal", "Darboux", "GuideAC", "GuidePlan", "GuideACWithContact",
+            "GuidePlanWithContact"). If `trihedron' is not provided,
+            "DiscreteTrihedron" is assumed. Return the pipe in `outDimTags'.
 
             Return `outDimTags'.
+
+            Argument types:
+            - `dimTags': vector of pairs of integers
+            - `wireTag': integer
+            - `outDimTags': vector of pairs of integers
+            - `trihedron': string
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             api_outDimTags_, api_outDimTags_n_ = POINTER(c_int)(), c_size_t()
@@ -6417,10 +7815,17 @@ class model:
             `radii'. The `radii' vector can either contain a single radius, as many
             radii as `curveTags', or twice as many as `curveTags' (in which case
             different radii are provided for the begin and end points of the curves).
-            Return the filleted entities in `outDimTags'. Remove the original volume if
-            `removeVolume' is set.
+            Return the filleted entities in `outDimTags' as a vector of (dim, tag)
+            pairs. Remove the original volume if `removeVolume' is set.
 
             Return `outDimTags'.
+
+            Argument types:
+            - `volumeTags': vector of integers
+            - `curveTags': vector of integers
+            - `radii': vector of doubles
+            - `outDimTags': vector of pairs of integers
+            - `removeVolume': boolean
             """
             api_volumeTags_, api_volumeTags_n_ = _ivectorint(volumeTags)
             api_curveTags_, api_curveTags_n_ = _ivectorint(curveTags)
@@ -6453,6 +7858,14 @@ class model:
             `removeVolume' is set.
 
             Return `outDimTags'.
+
+            Argument types:
+            - `volumeTags': vector of integers
+            - `curveTags': vector of integers
+            - `surfaceTags': vector of integers
+            - `distances': vector of doubles
+            - `outDimTags': vector of pairs of integers
+            - `removeVolume': boolean
             """
             api_volumeTags_, api_volumeTags_n_ = _ivectorint(volumeTags)
             api_curveTags_, api_curveTags_n_ = _ivectorint(curveTags)
@@ -6478,13 +7891,22 @@ class model:
             gmsh.model.occ.fuse(objectDimTags, toolDimTags, tag=-1, removeObject=True, removeTool=True)
 
             Compute the boolean union (the fusion) of the entities `objectDimTags' and
-            `toolDimTags' in the OpenCASCADE CAD representation. Return the resulting
-            entities in `outDimTags'. If `tag' is positive, try to set the tag
-            explicitly (only valid if the boolean operation results in a single
-            entity). Remove the object if `removeObject' is set. Remove the tool if
-            `removeTool' is set.
+            `toolDimTags' (vectors of (dim, tag) pairs) in the OpenCASCADE CAD
+            representation. Return the resulting entities in `outDimTags'. If `tag' is
+            positive, try to set the tag explicitly (only valid if the boolean
+            operation results in a single entity). Remove the object if `removeObject'
+            is set. Remove the tool if `removeTool' is set.
 
             Return `outDimTags', `outDimTagsMap'.
+
+            Argument types:
+            - `objectDimTags': vector of pairs of integers
+            - `toolDimTags': vector of pairs of integers
+            - `outDimTags': vector of pairs of integers
+            - `outDimTagsMap': vector of vectors of pairs of integers
+            - `tag': integer
+            - `removeObject': boolean
+            - `removeTool': boolean
             """
             api_objectDimTags_, api_objectDimTags_n_ = _ivectorpair(objectDimTags)
             api_toolDimTags_, api_toolDimTags_n_ = _ivectorpair(toolDimTags)
@@ -6512,13 +7934,22 @@ class model:
             gmsh.model.occ.intersect(objectDimTags, toolDimTags, tag=-1, removeObject=True, removeTool=True)
 
             Compute the boolean intersection (the common parts) of the entities
-            `objectDimTags' and `toolDimTags' in the OpenCASCADE CAD representation.
-            Return the resulting entities in `outDimTags'. If `tag' is positive, try to
-            set the tag explicitly (only valid if the boolean operation results in a
-            single entity). Remove the object if `removeObject' is set. Remove the tool
-            if `removeTool' is set.
+            `objectDimTags' and `toolDimTags' (vectors of (dim, tag) pairs) in the
+            OpenCASCADE CAD representation. Return the resulting entities in
+            `outDimTags'. If `tag' is positive, try to set the tag explicitly (only
+            valid if the boolean operation results in a single entity). Remove the
+            object if `removeObject' is set. Remove the tool if `removeTool' is set.
 
             Return `outDimTags', `outDimTagsMap'.
+
+            Argument types:
+            - `objectDimTags': vector of pairs of integers
+            - `toolDimTags': vector of pairs of integers
+            - `outDimTags': vector of pairs of integers
+            - `outDimTagsMap': vector of vectors of pairs of integers
+            - `tag': integer
+            - `removeObject': boolean
+            - `removeTool': boolean
             """
             api_objectDimTags_, api_objectDimTags_n_ = _ivectorpair(objectDimTags)
             api_toolDimTags_, api_toolDimTags_n_ = _ivectorpair(toolDimTags)
@@ -6546,13 +7977,22 @@ class model:
             gmsh.model.occ.cut(objectDimTags, toolDimTags, tag=-1, removeObject=True, removeTool=True)
 
             Compute the boolean difference between the entities `objectDimTags' and
-            `toolDimTags' in the OpenCASCADE CAD representation. Return the resulting
-            entities in `outDimTags'. If `tag' is positive, try to set the tag
-            explicitly (only valid if the boolean operation results in a single
-            entity). Remove the object if `removeObject' is set. Remove the tool if
-            `removeTool' is set.
+            `toolDimTags' (given as vectors of (dim, tag) pairs) in the OpenCASCADE CAD
+            representation. Return the resulting entities in `outDimTags'. If `tag' is
+            positive, try to set the tag explicitly (only valid if the boolean
+            operation results in a single entity). Remove the object if `removeObject'
+            is set. Remove the tool if `removeTool' is set.
 
             Return `outDimTags', `outDimTagsMap'.
+
+            Argument types:
+            - `objectDimTags': vector of pairs of integers
+            - `toolDimTags': vector of pairs of integers
+            - `outDimTags': vector of pairs of integers
+            - `outDimTagsMap': vector of vectors of pairs of integers
+            - `tag': integer
+            - `removeObject': boolean
+            - `removeTool': boolean
             """
             api_objectDimTags_, api_objectDimTags_n_ = _ivectorpair(objectDimTags)
             api_toolDimTags_, api_toolDimTags_n_ = _ivectorpair(toolDimTags)
@@ -6580,16 +8020,26 @@ class model:
             gmsh.model.occ.fragment(objectDimTags, toolDimTags, tag=-1, removeObject=True, removeTool=True)
 
             Compute the boolean fragments (general fuse) resulting from the
-            intersection of the entities `objectDimTags' and `toolDimTags' in the
-            OpenCASCADE CAD representation, making all iterfaces conformal. When
-            applied to entities of different dimensions, the lower dimensional entities
-            will be automatically embedded in the higher dimensional entities if they
-            are not on their boundary. Return the resulting entities in `outDimTags'.
-            If `tag' is positive, try to set the tag explicitly (only valid if the
-            boolean operation results in a single entity). Remove the object if
-            `removeObject' is set. Remove the tool if `removeTool' is set.
+            intersection of the entities `objectDimTags' and `toolDimTags' (given as
+            vectors of (dim, tag) pairs) in the OpenCASCADE CAD representation, making
+            all iterfaces conformal. When applied to entities of different dimensions,
+            the lower dimensional entities will be automatically embedded in the higher
+            dimensional entities if they are not on their boundary. Return the
+            resulting entities in `outDimTags'. If `tag' is positive, try to set the
+            tag explicitly (only valid if the boolean operation results in a single
+            entity). Remove the object if `removeObject' is set. Remove the tool if
+            `removeTool' is set.
 
             Return `outDimTags', `outDimTagsMap'.
+
+            Argument types:
+            - `objectDimTags': vector of pairs of integers
+            - `toolDimTags': vector of pairs of integers
+            - `outDimTags': vector of pairs of integers
+            - `outDimTagsMap': vector of vectors of pairs of integers
+            - `tag': integer
+            - `removeObject': boolean
+            - `removeTool': boolean
             """
             api_objectDimTags_, api_objectDimTags_n_ = _ivectorpair(objectDimTags)
             api_toolDimTags_, api_toolDimTags_n_ = _ivectorpair(toolDimTags)
@@ -6616,8 +8066,14 @@ class model:
             """
             gmsh.model.occ.translate(dimTags, dx, dy, dz)
 
-            Translate the entities `dimTags' in the OpenCASCADE CAD representation
-            along (`dx', `dy', `dz').
+            Translate the entities `dimTags' (given as a vector of (dim, tag) pairs) in
+            the OpenCASCADE CAD representation along (`dx', `dy', `dz').
+
+            Argument types:
+            - `dimTags': vector of pairs of integers
+            - `dx': double
+            - `dy': double
+            - `dz': double
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             ierr = c_int()
@@ -6635,9 +8091,20 @@ class model:
             """
             gmsh.model.occ.rotate(dimTags, x, y, z, ax, ay, az, angle)
 
-            Rotate the entities `dimTags' in the OpenCASCADE CAD representation by
-            `angle' radians around the axis of revolution defined by the point (`x',
-            `y', `z') and the direction (`ax', `ay', `az').
+            Rotate the entities `dimTags' (given as a vector of (dim, tag) pairs) in
+            the OpenCASCADE CAD representation by `angle' radians around the axis of
+            revolution defined by the point (`x', `y', `z') and the direction (`ax',
+            `ay', `az').
+
+            Argument types:
+            - `dimTags': vector of pairs of integers
+            - `x': double
+            - `y': double
+            - `z': double
+            - `ax': double
+            - `ay': double
+            - `az': double
+            - `angle': double
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             ierr = c_int()
@@ -6659,9 +8126,19 @@ class model:
             """
             gmsh.model.occ.dilate(dimTags, x, y, z, a, b, c)
 
-            Scale the entities `dimTags' in the OpenCASCADE CAD representation by
-            factors `a', `b' and `c' along the three coordinate axes; use (`x', `y',
-            `z') as the center of the homothetic transformation.
+            Scale the entities `dimTags' (given as a vector of (dim, tag) pairs) in the
+            OpenCASCADE CAD representation by factors `a', `b' and `c' along the three
+            coordinate axes; use (`x', `y', `z') as the center of the homothetic
+            transformation.
+
+            Argument types:
+            - `dimTags': vector of pairs of integers
+            - `x': double
+            - `y': double
+            - `z': double
+            - `a': double
+            - `b': double
+            - `c': double
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             ierr = c_int()
@@ -6682,8 +8159,16 @@ class model:
             """
             gmsh.model.occ.mirror(dimTags, a, b, c, d)
 
-            Mirror the entities `dimTags' in the OpenCASCADE CAD representation, with
-            respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' = 0.
+            Mirror the entities `dimTags' (given as a vector of (dim, tag) pairs) in
+            the OpenCASCADE CAD representation, with respect to the plane of equation
+            `a' * x + `b' * y + `c' * z + `d' = 0.
+
+            Argument types:
+            - `dimTags': vector of pairs of integers
+            - `a': double
+            - `b': double
+            - `c': double
+            - `d': double
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             ierr = c_int()
@@ -6702,9 +8187,17 @@ class model:
             """
             gmsh.model.occ.symmetrize(dimTags, a, b, c, d)
 
-            Mirror the entities `dimTags' in the OpenCASCADE CAD representation, with
-            respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' = 0.
-            (This is a deprecated synonym for `mirror'.)
+            Mirror the entities `dimTags' (given as a vector of (dim, tag) pairs) in
+            the OpenCASCADE CAD representation, with respect to the plane of equation
+            `a' * x + `b' * y + `c' * z + `d' = 0. (This is a deprecated synonym for
+            `mirror'.)
+
+            Argument types:
+            - `dimTags': vector of pairs of integers
+            - `a': double
+            - `b': double
+            - `c': double
+            - `d': double
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             ierr = c_int()
@@ -6725,7 +8218,12 @@ class model:
 
             Apply a general affine transformation matrix `affineTransform' (16 entries
             of a 4x4 matrix, by row; only the 12 first can be provided for convenience)
-            to the entities `dimTags' in the OpenCASCADE CAD representation.
+            to the entities `dimTags' (given as a vector of (dim, tag) pairs) in the
+            OpenCASCADE CAD representation.
+
+            Argument types:
+            - `dimTags': vector of pairs of integers
+            - `affineTransform': vector of doubles
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             api_affineTransform_, api_affineTransform_n_ = _ivectordouble(affineTransform)
@@ -6747,6 +8245,10 @@ class model:
             entities are returned in `outDimTags'.
 
             Return `outDimTags'.
+
+            Argument types:
+            - `dimTags': vector of pairs of integers
+            - `outDimTags': vector of pairs of integers
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             api_outDimTags_, api_outDimTags_n_ = POINTER(c_int)(), c_size_t()
@@ -6764,10 +8266,14 @@ class model:
             """
             gmsh.model.occ.remove(dimTags, recursive=False)
 
-            Remove the entities `dimTags' in the OpenCASCADE CAD representation,
-            provided that they are not on the boundary of higher-dimensional entities.
-            If `recursive' is true, remove all the entities on their boundaries, down
-            to dimension 0.
+            Remove the entities `dimTags' (given as a vector of (dim, tag) pairs) in
+            the OpenCASCADE CAD representation, provided that they are not on the
+            boundary of higher-dimensional entities. If `recursive' is true, remove all
+            the entities on their boundaries, down to dimension 0.
+
+            Argument types:
+            - `dimTags': vector of pairs of integers
+            - `recursive': boolean
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             ierr = c_int()
@@ -6799,11 +8305,22 @@ class model:
             """
             gmsh.model.occ.healShapes(dimTags=[], tolerance=1e-8, fixDegenerated=True, fixSmallEdges=True, fixSmallFaces=True, sewFaces=True, makeSolids=True)
 
-            Apply various healing procedures to the entities `dimTags' (or to all the
-            entities in the model if `dimTags' is empty) in the OpenCASCADE CAD
-            representation. Return the healed entities in `outDimTags'.
+            Apply various healing procedures to the entities `dimTags' (given as a
+            vector of (dim, tag) pairs), or to all the entities in the model if
+            `dimTags' is empty, in the OpenCASCADE CAD representation. Return the
+            healed entities in `outDimTags'.
 
             Return `outDimTags'.
+
+            Argument types:
+            - `outDimTags': vector of pairs of integers
+            - `dimTags': vector of pairs of integers
+            - `tolerance': double
+            - `fixDegenerated': boolean
+            - `fixSmallEdges': boolean
+            - `fixSmallFaces': boolean
+            - `sewFaces': boolean
+            - `makeSolids': boolean
             """
             api_outDimTags_, api_outDimTags_n_ = POINTER(c_int)(), c_size_t()
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
@@ -6829,6 +8346,9 @@ class model:
             gmsh.model.occ.convertToNURBS(dimTags)
 
             Convert the entities `dimTags' to NURBS.
+
+            Argument types:
+            - `dimTags': vector of pairs of integers
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             ierr = c_int()
@@ -6846,12 +8366,18 @@ class model:
 
             Import BREP, STEP or IGES shapes from the file `fileName' in the
             OpenCASCADE CAD representation. The imported entities are returned in
-            `outDimTags'. If the optional argument `highestDimOnly' is set, only import
-            the highest dimensional entities in the file. The optional argument
-            `format' can be used to force the format of the file (currently "brep",
-            "step" or "iges").
+            `outDimTags', as a vector of (dim, tag) pairs. If the optional argument
+            `highestDimOnly' is set, only import the highest dimensional entities in
+            the file. The optional argument `format' can be used to force the format of
+            the file (currently "brep", "step" or "iges").
 
             Return `outDimTags'.
+
+            Argument types:
+            - `fileName': string
+            - `outDimTags': vector of pairs of integers
+            - `highestDimOnly': boolean
+            - `format': string
             """
             api_outDimTags_, api_outDimTags_n_ = POINTER(c_int)(), c_size_t()
             ierr = c_int()
@@ -6873,15 +8399,20 @@ class model:
 
             Imports an OpenCASCADE `shape' by providing a pointer to a native
             OpenCASCADE `TopoDS_Shape' object (passed as a pointer to void). The
-            imported entities are returned in `outDimTags'. If the optional argument
-            `highestDimOnly' is set, only import the highest dimensional entities in
-            `shape'. In Python, this function can be used for integration with
-            PythonOCC, in which the SwigPyObject pointer of `TopoDS_Shape' must be
-            passed as an int to `shape', i.e., `shape = int(pythonocc_shape.this)'.
-            Warning: this function is unsafe, as providing an invalid pointer will lead
-            to undefined behavior.
+            imported entities are returned in `outDimTags' as a vector of (dim, tag)
+            pairs. If the optional argument `highestDimOnly' is set, only import the
+            highest dimensional entities in `shape'. In Python, this function can be
+            used for integration with PythonOCC, in which the SwigPyObject pointer of
+            `TopoDS_Shape' must be passed as an int to `shape', i.e., `shape =
+            int(pythonocc_shape.this)'. Warning: this function is unsafe, as providing
+            an invalid pointer will lead to undefined behavior.
 
             Return `outDimTags'.
+
+            Argument types:
+            - `shape': pointer
+            - `outDimTags': vector of pairs of integers
+            - `highestDimOnly': boolean
             """
             api_outDimTags_, api_outDimTags_n_ = POINTER(c_int)(), c_size_t()
             ierr = c_int()
@@ -6902,9 +8433,13 @@ class model:
 
             Get all the OpenCASCADE entities. If `dim' is >= 0, return only the
             entities of the specified dimension (e.g. points if `dim' == 0). The
-            entities are returned as a vector of (dim, tag) integer pairs.
+            entities are returned as a vector of (dim, tag) pairs.
 
             Return `dimTags'.
+
+            Argument types:
+            - `dimTags': vector of pairs of integers
+            - `dim': integer
             """
             api_dimTags_, api_dimTags_n_ = POINTER(c_int)(), c_size_t()
             ierr = c_int()
@@ -6928,6 +8463,16 @@ class model:
             == 0).
 
             Return `tags'.
+
+            Argument types:
+            - `xmin': double
+            - `ymin': double
+            - `zmin': double
+            - `xmax': double
+            - `ymax': double
+            - `zmax': double
+            - `tags': vector of pairs of integers
+            - `dim': integer
             """
             api_tags_, api_tags_n_ = POINTER(c_int)(), c_size_t()
             ierr = c_int()
@@ -6955,6 +8500,16 @@ class model:
             the OpenCASCADE entity of dimension `dim' and tag `tag'.
 
             Return `xmin', `ymin', `zmin', `xmax', `ymax', `zmax'.
+
+            Argument types:
+            - `dim': integer
+            - `tag': integer
+            - `xmin': double
+            - `ymin': double
+            - `zmin': double
+            - `xmax': double
+            - `ymax': double
+            - `zmax': double
             """
             api_xmin_ = c_double()
             api_ymin_ = c_double()
@@ -6994,6 +8549,11 @@ class model:
             each curve loop.
 
             Return `curveLoopTags', `curveTags'.
+
+            Argument types:
+            - `surfaceTag': integer
+            - `curveLoopTags': vector of integers
+            - `curveTags': vector of vectors of integers
             """
             api_curveLoopTags_, api_curveLoopTags_n_ = POINTER(c_int)(), c_size_t()
             api_curveTags_, api_curveTags_n_, api_curveTags_nn_ = POINTER(POINTER(c_int))(), POINTER(c_size_t)(), c_size_t()
@@ -7020,6 +8580,11 @@ class model:
             up each surface loop.
 
             Return `surfaceLoopTags', `surfaceTags'.
+
+            Argument types:
+            - `volumeTag': integer
+            - `surfaceLoopTags': vector of integers
+            - `surfaceTags': vector of vectors of integers
             """
             api_surfaceLoopTags_, api_surfaceLoopTags_n_ = POINTER(c_int)(), c_size_t()
             api_surfaceTags_, api_surfaceTags_n_, api_surfaceTags_nn_ = POINTER(POINTER(c_int))(), POINTER(c_size_t)(), c_size_t()
@@ -7044,6 +8609,11 @@ class model:
             Get the mass of the OpenCASCADE entity of dimension `dim' and tag `tag'.
 
             Return `mass'.
+
+            Argument types:
+            - `dim': integer
+            - `tag': integer
+            - `mass': double
             """
             api_mass_ = c_double()
             ierr = c_int()
@@ -7066,6 +8636,13 @@ class model:
             `tag'.
 
             Return `x', `y', `z'.
+
+            Argument types:
+            - `dim': integer
+            - `tag': integer
+            - `x': double
+            - `y': double
+            - `z': double
             """
             api_x_ = c_double()
             api_y_ = c_double()
@@ -7095,6 +8672,11 @@ class model:
             `dim' and tag `tag'.
 
             Return `mat'.
+
+            Argument types:
+            - `dim': integer
+            - `tag': integer
+            - `mat': vector of doubles
             """
             api_mat_, api_mat_n_ = POINTER(c_double)(), c_size_t()
             ierr = c_int()
@@ -7116,7 +8698,10 @@ class model:
             Get the maximum tag of entities of dimension `dim' in the OpenCASCADE CAD
             representation.
 
-            Return an integer value.
+            Return an integer.
+
+            Argument types:
+            - `dim': integer
             """
             ierr = c_int()
             api_result_ = lib.gmshModelOccGetMaxTag(
@@ -7134,6 +8719,10 @@ class model:
 
             Set the maximum tag `maxTag' for entities of dimension `dim' in the
             OpenCASCADE CAD representation.
+
+            Argument types:
+            - `dim': integer
+            - `maxTag': integer
             """
             ierr = c_int()
             lib.gmshModelOccSetMaxTag(
@@ -7173,9 +8762,13 @@ class model:
                 """
                 gmsh.model.occ.mesh.setSize(dimTags, size)
 
-                Set a mesh size constraint on the entities `dimTags' in the OpenCASCADE CAD
-                representation. Currently only entities of dimension 0 (points) are
-                handled.
+                Set a mesh size constraint on the entities `dimTags' (given as a vector of
+                (dim, tag) pairs) in the OpenCASCADE CAD representation. Currently only
+                entities of dimension 0 (points) are handled.
+
+                Argument types:
+                - `dimTags': vector of pairs of integers
+                - `size': double
                 """
                 api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
                 ierr = c_int()
@@ -7202,7 +8795,11 @@ class view:
         it (and remove the view with that tag if it already exists), otherwise
         associate a new tag. Return the view tag.
 
-        Return an integer value.
+        Return an integer.
+
+        Argument types:
+        - `name': string
+        - `tag': integer
         """
         ierr = c_int()
         api_result_ = lib.gmshViewAdd(
@@ -7219,6 +8816,9 @@ class view:
         gmsh.view.remove(tag)
 
         Remove the view with tag `tag'.
+
+        Argument types:
+        - `tag': integer
         """
         ierr = c_int()
         lib.gmshViewRemove(
@@ -7236,7 +8836,10 @@ class view:
         views. This dynamic index (it can change when views are removed) is used to
         access view options.
 
-        Return an integer value.
+        Return an integer.
+
+        Argument types:
+        - `tag': integer
         """
         ierr = c_int()
         api_result_ = lib.gmshViewGetIndex(
@@ -7255,6 +8858,9 @@ class view:
         Get the tags of all views.
 
         Return `tags'.
+
+        Argument types:
+        - `tags': vector of integers
         """
         api_tags_, api_tags_n_ = POINTER(c_int)(), c_size_t()
         ierr = c_int()
@@ -7283,6 +8889,17 @@ class view:
         number of data components (1 for scalar data, 3 for vector data, etc.) per
         entity; if negative, it is automatically inferred (when possible) from the
         input data. `partition' allows one to specify data in several sub-sets.
+
+        Argument types:
+        - `tag': integer
+        - `step': integer
+        - `modelName': string
+        - `dataType': string
+        - `tags': vector of sizes
+        - `data': vector of vectors of doubles
+        - `time': double
+        - `numComponents': integer
+        - `partition': integer
         """
         api_tags_, api_tags_n_ = _ivectorsize(tags)
         api_data_, api_data_n_, api_data_nn_ = _ivectorvectordouble(data)
@@ -7312,6 +8929,17 @@ class view:
         that `data' is supposed to be homogeneous and is thus flattened in a single
         vector. For data types that can lead to different data sizes per tag (like
         "ElementNodeData"), the data should be padded.
+
+        Argument types:
+        - `tag': integer
+        - `step': integer
+        - `modelName': string
+        - `dataType': string
+        - `tags': vector of sizes
+        - `data': vector of doubles
+        - `time': double
+        - `numComponents': integer
+        - `partition': integer
         """
         api_tags_, api_tags_n_ = _ivectorsize(tags)
         api_data_, api_data_n_ = _ivectordouble(data)
@@ -7342,6 +8970,15 @@ class view:
         `numComponents'.
 
         Return `dataType', `tags', `data', `time', `numComponents'.
+
+        Argument types:
+        - `tag': integer
+        - `step': integer
+        - `dataType': string
+        - `tags': vector of sizes
+        - `data': vector of vectors of doubles
+        - `time': double
+        - `numComponents': integer
         """
         api_dataType_ = c_char_p()
         api_tags_, api_tags_n_ = POINTER(c_size_t)(), c_size_t()
@@ -7379,6 +9016,15 @@ class view:
         vector, with the appropriate padding if necessary.
 
         Return `dataType', `tags', `data', `time', `numComponents'.
+
+        Argument types:
+        - `tag': integer
+        - `step': integer
+        - `dataType': string
+        - `tags': vector of sizes
+        - `data': vector of doubles
+        - `time': double
+        - `numComponents': integer
         """
         api_dataType_ = c_char_p()
         api_tags_, api_tags_n_ = POINTER(c_size_t)(), c_size_t()
@@ -7420,6 +9066,12 @@ class view:
         contains the data for the `numEle' elements, concatenated, with node
         coordinates followed by values per node, repeated for each step: [e1x1,
         ..., e1xn, e1y1, ..., e1yn, e1z1, ..., e1zn, e1v1..., e1vN, e2x1, ...].
+
+        Argument types:
+        - `tag': integer
+        - `dataType': string
+        - `numEle': integer
+        - `data': vector of doubles
         """
         api_data_, api_data_n_ = _ivectordouble(data)
         ierr = c_int()
@@ -7443,6 +9095,12 @@ class view:
         type and the `data' for each data type.
 
         Return `dataType', `numElements', `data'.
+
+        Argument types:
+        - `tag': integer
+        - `dataType': vector of strings
+        - `numElements': vector of integers
+        - `data': vector of vectors of doubles
         """
         api_dataType_, api_dataType_n_ = POINTER(POINTER(c_char))(), c_size_t()
         api_numElements_, api_numElements_n_ = POINTER(c_int)(), c_size_t()
@@ -7480,6 +9138,12 @@ class view:
         (possible values: "Left" or "BottomLeft", "Center" or "BottomCenter",
         "Right" or "BottomRight", "TopLeft", "TopCenter", "TopRight", "CenterLeft",
         "CenterCenter", "CenterRight").
+
+        Argument types:
+        - `tag': integer
+        - `coord': vector of doubles
+        - `data': vector of strings
+        - `style': vector of strings
         """
         api_coord_, api_coord_n_ = _ivectordouble(coord)
         api_data_, api_data_n_ = _ivectorstring(data)
@@ -7505,6 +9169,13 @@ class view:
         in `coord', the strings in `data' and the styles in `style'.
 
         Return `coord', `data', `style'.
+
+        Argument types:
+        - `tag': integer
+        - `dim': integer
+        - `coord': vector of doubles
+        - `data': vector of strings
+        - `style': vector of strings
         """
         api_coord_, api_coord_n_ = POINTER(c_double)(), c_size_t()
         api_data_, api_data_n_ = POINTER(POINTER(c_char))(), c_size_t()
@@ -7541,6 +9212,16 @@ class view:
         positive, use `coefGeo' and `expGeo' to define the interpolation of the x,
         y, z coordinates of the element in terms of the u, v, w coordinates, in
         exactly the same way. If `d' < 0, remove the interpolation matrices.
+
+        Argument types:
+        - `tag': integer
+        - `type': string
+        - `d': integer
+        - `coef': vector of doubles
+        - `exp': vector of doubles
+        - `dGeo': integer
+        - `coefGeo': vector of doubles
+        - `expGeo': vector of doubles
         """
         api_coef_, api_coef_n_ = _ivectordouble(coef)
         api_exp_, api_exp_n_ = _ivectordouble(exp)
@@ -7571,7 +9252,12 @@ class view:
         If `tag' is positive use it (and remove the view with that tag if it
         already exists), otherwise associate a new tag. Return the view tag.
 
-        Return an integer value.
+        Return an integer.
+
+        Argument types:
+        - `refTag': integer
+        - `copyOptions': boolean
+        - `tag': integer
         """
         ierr = c_int()
         api_result_ = lib.gmshViewAddAlias(
@@ -7593,6 +9279,12 @@ class view:
         of all views (`how' == "all"), all visible views (`how' == "visible") or
         all views having the same name (`how' == "name"). Remove original views if
         `remove' is set.
+
+        Argument types:
+        - `what': string
+        - `how': string
+        - `remove': boolean
+        - `copyOptions': boolean
         """
         ierr = c_int()
         lib.gmshViewCombine(
@@ -7609,10 +9301,10 @@ class view:
         """
         gmsh.view.probe(tag, x, y, z, step=-1, numComp=-1, gradient=False, distanceMax=0., xElemCoord=[], yElemCoord=[], zElemCoord=[], dim=-1)
 
-        Probe the view `tag' for its `value' at point (`x', `y', `z'). If no match
+        Probe the view `tag' for its `values' at point (`x', `y', `z'). If no match
         is found, `value' is returned empty. Return only the value at step `step'
         is `step' is positive. Return only values with `numComp' if `numComp' is
-        positive. Return the gradient of the `value' if `gradient' is set. If
+        positive. Return the gradient of the `values' if `gradient' is set. If
         `distanceMax' is zero, only return a result if an exact match inside an
         element in the view is found; if `distanceMax' is positive and an exact
         match is not found, return the value at the closest node if it is closer
@@ -7623,9 +9315,25 @@ class view:
         `zElementCoord' are provided. If `dim' is >= 0, return only matches from
         elements of the specified dimension.
 
-        Return `value', `distance'.
+        Return `values', `distance'.
+
+        Argument types:
+        - `tag': integer
+        - `x': double
+        - `y': double
+        - `z': double
+        - `values': vector of doubles
+        - `distance': double
+        - `step': integer
+        - `numComp': integer
+        - `gradient': boolean
+        - `distanceMax': double
+        - `xElemCoord': vector of doubles
+        - `yElemCoord': vector of doubles
+        - `zElemCoord': vector of doubles
+        - `dim': integer
         """
-        api_value_, api_value_n_ = POINTER(c_double)(), c_size_t()
+        api_values_, api_values_n_ = POINTER(c_double)(), c_size_t()
         api_distance_ = c_double()
         api_xElemCoord_, api_xElemCoord_n_ = _ivectordouble(xElemCoord)
         api_yElemCoord_, api_yElemCoord_n_ = _ivectordouble(yElemCoord)
@@ -7636,7 +9344,7 @@ class view:
             c_double(x),
             c_double(y),
             c_double(z),
-            byref(api_value_), byref(api_value_n_),
+            byref(api_values_), byref(api_values_n_),
             byref(api_distance_),
             c_int(step),
             c_int(numComp),
@@ -7650,7 +9358,7 @@ class view:
         if ierr.value != 0:
             raise Exception(logger.getLastError())
         return (
-            _ovectordouble(api_value_, api_value_n_.value),
+            _ovectordouble(api_values_, api_values_n_.value),
             api_distance_.value)
 
     @staticmethod
@@ -7660,6 +9368,11 @@ class view:
 
         Write the view to a file `fileName'. The export format is determined by the
         file extension. Append to the file if `append' is set.
+
+        Argument types:
+        - `tag': integer
+        - `fileName': string
+        - `append': boolean
         """
         ierr = c_int()
         lib.gmshViewWrite(
@@ -7677,6 +9390,11 @@ class view:
 
         Set the global visibility of the view `tag' per window to `value', where
         `windowIndex' identifies the window in the window list.
+
+        Argument types:
+        - `tag': integer
+        - `value': integer
+        - `windowIndex': integer
         """
         ierr = c_int()
         lib.gmshViewSetVisibilityPerWindow(
@@ -7701,6 +9419,11 @@ class view:
 
             Set the numerical option `name' to value `value' for the view with tag
             `tag'.
+
+            Argument types:
+            - `tag': integer
+            - `name': string
+            - `value': double
             """
             ierr = c_int()
             lib.gmshViewOptionSetNumber(
@@ -7720,6 +9443,11 @@ class view:
             Get the `value' of the numerical option `name' for the view with tag `tag'.
 
             Return `value'.
+
+            Argument types:
+            - `tag': integer
+            - `name': string
+            - `value': double
             """
             api_value_ = c_double()
             ierr = c_int()
@@ -7739,6 +9467,11 @@ class view:
             gmsh.view.option.setString(tag, name, value)
 
             Set the string option `name' to value `value' for the view with tag `tag'.
+
+            Argument types:
+            - `tag': integer
+            - `name': string
+            - `value': string
             """
             ierr = c_int()
             lib.gmshViewOptionSetString(
@@ -7758,6 +9491,11 @@ class view:
             Get the `value' of the string option `name' for the view with tag `tag'.
 
             Return `value'.
+
+            Argument types:
+            - `tag': integer
+            - `name': string
+            - `value': string
             """
             api_value_ = c_char_p()
             ierr = c_int()
@@ -7779,6 +9517,14 @@ class view:
             Set the color option `name' to the RGBA value (`r', `g', `b', `a') for the
             view with tag `tag', where where `r', `g', `b' and `a' should be integers
             between 0 and 255.
+
+            Argument types:
+            - `tag': integer
+            - `name': string
+            - `r': integer
+            - `g': integer
+            - `b': integer
+            - `a': integer
             """
             ierr = c_int()
             lib.gmshViewOptionSetColor(
@@ -7802,6 +9548,14 @@ class view:
             with tag `tag'.
 
             Return `r', `g', `b', `a'.
+
+            Argument types:
+            - `tag': integer
+            - `name': string
+            - `r': integer
+            - `g': integer
+            - `b': integer
+            - `a': integer
             """
             api_r_ = c_int()
             api_g_ = c_int()
@@ -7832,6 +9586,10 @@ class view:
 
             Copy the options from the view with tag `refTag' to the view with tag
             `tag'.
+
+            Argument types:
+            - `refTag': integer
+            - `tag': integer
             """
             ierr = c_int()
             lib.gmshViewOptionCopy(
@@ -7853,6 +9611,11 @@ class plugin:
         gmsh.plugin.setNumber(name, option, value)
 
         Set the numerical option `option' to the value `value' for plugin `name'.
+
+        Argument types:
+        - `name': string
+        - `option': string
+        - `value': double
         """
         ierr = c_int()
         lib.gmshPluginSetNumber(
@@ -7870,6 +9633,11 @@ class plugin:
         gmsh.plugin.setString(name, option, value)
 
         Set the string option `option' to the value `value' for plugin `name'.
+
+        Argument types:
+        - `name': string
+        - `option': string
+        - `value': string
         """
         ierr = c_int()
         lib.gmshPluginSetString(
@@ -7888,7 +9656,10 @@ class plugin:
 
         Run the plugin `name'. Return the tag of the created view (if any).
 
-        Return an integer value.
+        Return an integer.
+
+        Argument types:
+        - `name': string
         """
         ierr = c_int()
         api_result_ = lib.gmshPluginRun(
@@ -7961,6 +9732,9 @@ class fltk:
         Wait at most `time' seconds for user interface events and return. If `time'
         < 0, wait indefinitely. First automatically create the user interface if it
         has not yet been initialized. Can only be called in the main thread.
+
+        Argument types:
+        - `time': double
         """
         ierr = c_int()
         lib.gmshFltkWait(
@@ -7993,6 +9767,9 @@ class fltk:
         Awake the main user interface thread and process pending events, and
         optionally perform an action (currently the only `action' allowed is
         "update").
+
+        Argument types:
+        - `action': string
         """
         ierr = c_int()
         lib.gmshFltkAwake(
@@ -8050,7 +9827,7 @@ class fltk:
         Check if the user interface is available (e.g. to detect if it has been
         closed).
 
-        Return an integer value.
+        Return an integer.
         """
         ierr = c_int()
         api_result_ = lib.gmshFltkIsAvailable(
@@ -8065,10 +9842,15 @@ class fltk:
         """
         gmsh.fltk.selectEntities(dim=-1)
 
-        Select entities in the user interface. If `dim' is >= 0, return only the
-        entities of the specified dimension (e.g. points if `dim' == 0).
+        Select entities in the user interface. Return the selected entities as a
+        vector of (dim, tag) pairs. If `dim' is >= 0, return only the entities of
+        the specified dimension (e.g. points if `dim' == 0).
 
-        Return an integer value, `dimTags'.
+        Return an integer, `dimTags'.
+
+        Argument types:
+        - `dimTags': vector of pairs of integers
+        - `dim': integer
         """
         api_dimTags_, api_dimTags_n_ = POINTER(c_int)(), c_size_t()
         ierr = c_int()
@@ -8090,7 +9872,10 @@ class fltk:
 
         Select elements in the user interface.
 
-        Return an integer value, `elementTags'.
+        Return an integer, `elementTags'.
+
+        Argument types:
+        - `elementTags': vector of sizes
         """
         api_elementTags_, api_elementTags_n_ = POINTER(c_size_t)(), c_size_t()
         ierr = c_int()
@@ -8111,7 +9896,10 @@ class fltk:
 
         Select views in the user interface.
 
-        Return an integer value, `viewTags'.
+        Return an integer, `viewTags'.
+
+        Argument types:
+        - `viewTags': vector of integers
         """
         api_viewTags_, api_viewTags_n_ = POINTER(c_int)(), c_size_t()
         ierr = c_int()
@@ -8132,6 +9920,10 @@ class fltk:
 
         Split the current window horizontally (if `how' = "h") or vertically (if
         `how' = "v"), using ratio `ratio'. If `how' = "u", restore a single window.
+
+        Argument types:
+        - `how': string
+        - `ratio': double
         """
         ierr = c_int()
         lib.gmshFltkSplitCurrentWindow(
@@ -8150,6 +9942,9 @@ class fltk:
         Set the current window by speficying its index (starting at 0) in the list
         of all windows. When new windows are created by splits, new windows are
         appended at the end of the list.
+
+        Argument types:
+        - `windowIndex': integer
         """
         ierr = c_int()
         lib.gmshFltkSetCurrentWindow(
@@ -8166,6 +9961,10 @@ class fltk:
 
         Set a status message in the current window. If `graphics' is set, display
         the message inside the graphic window instead of the status bar.
+
+        Argument types:
+        - `message': string
+        - `graphics': boolean
         """
         ierr = c_int()
         lib.gmshFltkSetStatusMessage(
@@ -8182,6 +9981,10 @@ class fltk:
         gmsh.fltk.showContextWindow(dim, tag)
 
         Show context window for the entity of dimension `dim' and tag `tag'.
+
+        Argument types:
+        - `dim': integer
+        - `tag': integer
         """
         ierr = c_int()
         lib.gmshFltkShowContextWindow(
@@ -8198,6 +10001,9 @@ class fltk:
         gmsh.fltk.openTreeItem(name)
 
         Open the `name' item in the menu tree.
+
+        Argument types:
+        - `name': string
         """
         ierr = c_int()
         lib.gmshFltkOpenTreeItem(
@@ -8213,6 +10019,9 @@ class fltk:
         gmsh.fltk.closeTreeItem(name)
 
         Close the `name' item in the menu tree.
+
+        Argument types:
+        - `name': string
         """
         ierr = c_int()
         lib.gmshFltkCloseTreeItem(
@@ -8237,6 +10046,10 @@ class parser:
         regular expression. If `search' is empty, return all the names.
 
         Return `names'.
+
+        Argument types:
+        - `names': vector of strings
+        - `search': string
         """
         api_names_, api_names_n_ = POINTER(POINTER(c_char))(), c_size_t()
         ierr = c_int()
@@ -8256,6 +10069,10 @@ class parser:
 
         Set the value of the number variable `name' in the Gmsh parser. Create the
         variable if it does not exist; update the value if the variable exists.
+
+        Argument types:
+        - `name': string
+        - `value': vector of doubles
         """
         api_value_, api_value_n_ = _ivectordouble(value)
         ierr = c_int()
@@ -8274,6 +10091,10 @@ class parser:
 
         Set the value of the string variable `name' in the Gmsh parser. Create the
         variable if it does not exist; update the value if the variable exists.
+
+        Argument types:
+        - `name': string
+        - `value': vector of strings
         """
         api_value_, api_value_n_ = _ivectorstring(value)
         ierr = c_int()
@@ -8294,6 +10115,10 @@ class parser:
         empty vector if the variable does not exist.
 
         Return `value'.
+
+        Argument types:
+        - `name': string
+        - `value': vector of doubles
         """
         api_value_, api_value_n_ = POINTER(c_double)(), c_size_t()
         ierr = c_int()
@@ -8315,6 +10140,10 @@ class parser:
         empty vector if the variable does not exist.
 
         Return `value'.
+
+        Argument types:
+        - `name': string
+        - `value': vector of strings
         """
         api_value_, api_value_n_ = POINTER(POINTER(c_char))(), c_size_t()
         ierr = c_int()
@@ -8334,6 +10163,9 @@ class parser:
 
         Clear all the Gmsh parser variables, or remove a single variable if `name'
         is given.
+
+        Argument types:
+        - `name': string
         """
         ierr = c_int()
         lib.gmshParserClear(
@@ -8348,6 +10180,9 @@ class parser:
         gmsh.parser.parse(fileName)
 
         Parse the file `fileName' with the Gmsh parser.
+
+        Argument types:
+        - `fileName': string
         """
         ierr = c_int()
         lib.gmshParserParse(
@@ -8368,6 +10203,10 @@ class onelab:
         gmsh.onelab.set(data, format="json")
 
         Set one or more parameters in the ONELAB database, encoded in `format'.
+
+        Argument types:
+        - `data': string
+        - `format': string
         """
         ierr = c_int()
         lib.gmshOnelabSet(
@@ -8386,6 +10225,11 @@ class onelab:
         ONELAB database, encoded in `format'.
 
         Return `data'.
+
+        Argument types:
+        - `data': string
+        - `name': string
+        - `format': string
         """
         api_data_ = c_char_p()
         ierr = c_int()
@@ -8407,6 +10251,10 @@ class onelab:
         `search' regular expression. If `search' is empty, return all the names.
 
         Return `names'.
+
+        Argument types:
+        - `names': vector of strings
+        - `search': string
         """
         api_names_, api_names_n_ = POINTER(POINTER(c_char))(), c_size_t()
         ierr = c_int()
@@ -8427,6 +10275,10 @@ class onelab:
         Set the value of the number parameter `name' in the ONELAB database. Create
         the parameter if it does not exist; update the value if the parameter
         exists.
+
+        Argument types:
+        - `name': string
+        - `value': vector of doubles
         """
         api_value_, api_value_n_ = _ivectordouble(value)
         ierr = c_int()
@@ -8446,6 +10298,10 @@ class onelab:
         Set the value of the string parameter `name' in the ONELAB database. Create
         the parameter if it does not exist; update the value if the parameter
         exists.
+
+        Argument types:
+        - `name': string
+        - `value': vector of strings
         """
         api_value_, api_value_n_ = _ivectorstring(value)
         ierr = c_int()
@@ -8466,6 +10322,10 @@ class onelab:
         Return an empty vector if the parameter does not exist.
 
         Return `value'.
+
+        Argument types:
+        - `name': string
+        - `value': vector of doubles
         """
         api_value_, api_value_n_ = POINTER(c_double)(), c_size_t()
         ierr = c_int()
@@ -8487,6 +10347,10 @@ class onelab:
         Return an empty vector if the parameter does not exist.
 
         Return `value'.
+
+        Argument types:
+        - `name': string
+        - `value': vector of strings
         """
         api_value_, api_value_n_ = POINTER(POINTER(c_char))(), c_size_t()
         ierr = c_int()
@@ -8507,7 +10371,10 @@ class onelab:
         Check if any parameters in the ONELAB database used by the client `name'
         have been changed.
 
-        Return an integer value.
+        Return an integer.
+
+        Argument types:
+        - `name': string
         """
         ierr = c_int()
         api_result_ = lib.gmshOnelabGetChanged(
@@ -8525,6 +10392,10 @@ class onelab:
 
         Set the changed flag to value `value' for all the parameters in the ONELAB
         database used by the client `name'.
+
+        Argument types:
+        - `name': string
+        - `value': integer
         """
         ierr = c_int()
         lib.gmshOnelabSetChanged(
@@ -8541,6 +10412,9 @@ class onelab:
         gmsh.onelab.clear(name="")
 
         Clear the ONELAB database, or remove a single parameter if `name' is given.
+
+        Argument types:
+        - `name': string
         """
         ierr = c_int()
         lib.gmshOnelabClear(
@@ -8557,6 +10431,10 @@ class onelab:
         Run a ONELAB client. If `name' is provided, create a new ONELAB client with
         name `name' and executes `command'. If not, try to run a client that might
         be linked to the processed input files.
+
+        Argument types:
+        - `name': string
+        - `command': string
         """
         ierr = c_int()
         lib.gmshOnelabRun(
@@ -8578,6 +10456,10 @@ class logger:
         gmsh.logger.write(message, level="info")
 
         Write a `message'. `level' can be "info", "warning" or "error".
+
+        Argument types:
+        - `message': string
+        - `level': string
         """
         ierr = c_int()
         lib.gmshLoggerWrite(
@@ -8608,6 +10490,9 @@ class logger:
         Get logged messages.
 
         Return `log'.
+
+        Argument types:
+        - `log': vector of strings
         """
         api_log_, api_log_n_ = POINTER(POINTER(c_char))(), c_size_t()
         ierr = c_int()
@@ -8638,7 +10523,7 @@ class logger:
 
         Return wall clock time.
 
-        Return a floating point value.
+        Return a double.
         """
         ierr = c_int()
         lib.gmshLoggerGetWallTime.restype = c_double
@@ -8656,7 +10541,7 @@ class logger:
 
         Return CPU time.
 
-        Return a floating point value.
+        Return a double.
         """
         ierr = c_int()
         lib.gmshLoggerGetCpuTime.restype = c_double
@@ -8675,6 +10560,9 @@ class logger:
         Return last error message, if any.
 
         Return `error'.
+
+        Argument types:
+        - `error': string
         """
         api_error_ = c_char_p()
         ierr = c_int()

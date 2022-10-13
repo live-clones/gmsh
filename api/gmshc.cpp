@@ -890,25 +890,25 @@ GMSH_API void gmshModelGetAttributeNames(char *** names, size_t * names_n, int *
   }
 }
 
-GMSH_API void gmshModelGetAttribute(const char * name, char *** value, size_t * value_n, int * ierr)
+GMSH_API void gmshModelGetAttribute(const char * name, char *** values, size_t * values_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    std::vector<std::string> api_value_;
-    gmsh::model::getAttribute(name, api_value_);
-    vectorstring2charptrptr(api_value_, value, value_n);
+    std::vector<std::string> api_values_;
+    gmsh::model::getAttribute(name, api_values_);
+    vectorstring2charptrptr(api_values_, values, values_n);
   }
   catch(...){
     if(ierr) *ierr = 1;
   }
 }
 
-GMSH_API void gmshModelSetAttribute(const char * name, const char * const * value, const size_t value_n, int * ierr)
+GMSH_API void gmshModelSetAttribute(const char * name, const char * const * values, const size_t values_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    std::vector<std::string> api_value_(value, value + value_n);
-    gmsh::model::setAttribute(name, api_value_);
+    std::vector<std::string> api_values_(values, values + values_n);
+    gmsh::model::setAttribute(name, api_values_);
   }
   catch(...){
     if(ierr) *ierr = 1;
@@ -2461,25 +2461,25 @@ GMSH_API void gmshModelMeshFieldGetString(const int tag, const char * option, ch
   }
 }
 
-GMSH_API void gmshModelMeshFieldSetNumbers(const int tag, const char * option, const double * value, const size_t value_n, int * ierr)
+GMSH_API void gmshModelMeshFieldSetNumbers(const int tag, const char * option, const double * values, const size_t values_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    std::vector<double> api_value_(value, value + value_n);
-    gmsh::model::mesh::field::setNumbers(tag, option, api_value_);
+    std::vector<double> api_values_(values, values + values_n);
+    gmsh::model::mesh::field::setNumbers(tag, option, api_values_);
   }
   catch(...){
     if(ierr) *ierr = 1;
   }
 }
 
-GMSH_API void gmshModelMeshFieldGetNumbers(const int tag, const char * option, double ** value, size_t * value_n, int * ierr)
+GMSH_API void gmshModelMeshFieldGetNumbers(const int tag, const char * option, double ** values, size_t * values_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    std::vector<double> api_value_;
-    gmsh::model::mesh::field::getNumbers(tag, option, api_value_);
-    vector2ptr(api_value_, value, value_n);
+    std::vector<double> api_values_;
+    gmsh::model::mesh::field::getNumbers(tag, option, api_values_);
+    vector2ptr(api_values_, values, values_n);
   }
   catch(...){
     if(ierr) *ierr = 1;
@@ -4308,16 +4308,16 @@ GMSH_API void gmshViewCombine(const char * what, const char * how, const int rem
   }
 }
 
-GMSH_API void gmshViewProbe(const int tag, const double x, const double y, const double z, double ** value, size_t * value_n, double * distance, const int step, const int numComp, const int gradient, const double distanceMax, const double * xElemCoord, const size_t xElemCoord_n, const double * yElemCoord, const size_t yElemCoord_n, const double * zElemCoord, const size_t zElemCoord_n, const int dim, int * ierr)
+GMSH_API void gmshViewProbe(const int tag, const double x, const double y, const double z, double ** values, size_t * values_n, double * distance, const int step, const int numComp, const int gradient, const double distanceMax, const double * xElemCoord, const size_t xElemCoord_n, const double * yElemCoord, const size_t yElemCoord_n, const double * zElemCoord, const size_t zElemCoord_n, const int dim, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    std::vector<double> api_value_;
+    std::vector<double> api_values_;
     std::vector<double> api_xElemCoord_(xElemCoord, xElemCoord + xElemCoord_n);
     std::vector<double> api_yElemCoord_(yElemCoord, yElemCoord + yElemCoord_n);
     std::vector<double> api_zElemCoord_(zElemCoord, zElemCoord + zElemCoord_n);
-    gmsh::view::probe(tag, x, y, z, api_value_, *distance, step, numComp, gradient, distanceMax, api_xElemCoord_, api_yElemCoord_, api_zElemCoord_, dim);
-    vector2ptr(api_value_, value, value_n);
+    gmsh::view::probe(tag, x, y, z, api_values_, *distance, step, numComp, gradient, distanceMax, api_xElemCoord_, api_yElemCoord_, api_zElemCoord_, dim);
+    vector2ptr(api_values_, values, values_n);
   }
   catch(...){
     if(ierr) *ierr = 1;

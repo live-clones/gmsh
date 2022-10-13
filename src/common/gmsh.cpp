@@ -1248,17 +1248,17 @@ GMSH_API void gmsh::model::getAttributeNames(std::vector<std::string> &names)
 }
 
 GMSH_API void gmsh::model::getAttribute(const std::string &name,
-                                        std::vector<std::string> &value)
+                                        std::vector<std::string> &values)
 {
   if(!_checkInit()) return;
-  value = GModel::current()->getAttributes()[name];
+  values = GModel::current()->getAttributes()[name];
 }
 
 GMSH_API void gmsh::model::setAttribute(const std::string &name,
-                                        const std::vector<std::string> &value)
+                                        const std::vector<std::string> &values)
 {
   if(!_checkInit()) return;
-  GModel::current()->getAttributes()[name] = value;
+  GModel::current()->getAttributes()[name] = values;
 }
 
 GMSH_API void gmsh::model::removeAttribute(const std::string &name)
@@ -5703,7 +5703,7 @@ GMSH_API void gmsh::model::mesh::field::getString(const int tag,
 
 GMSH_API void
 gmsh::model::mesh::field::setNumbers(const int tag, const std::string &option,
-                                     const std::vector<double> &value)
+                                     const std::vector<double> &values)
 {
   if(!_checkInit()) return;
 #if defined(HAVE_MESH)
@@ -5711,7 +5711,7 @@ gmsh::model::mesh::field::setNumbers(const int tag, const std::string &option,
   if(!o) return;
   if(o->getType() == FIELD_OPTION_LIST) {
     std::list<int> vl;
-    for(std::size_t i = 0; i < value.size(); i++) vl.push_back((int)value[i]);
+    for(std::size_t i = 0; i < values.size(); i++) vl.push_back((int)values[i]);
     o->list(vl);
   }
   else {
@@ -5719,7 +5719,7 @@ gmsh::model::mesh::field::setNumbers(const int tag, const std::string &option,
       Msg::Warning("Field option '%s' is not a list", option.c_str());
     }
     std::list<double> vl;
-    for(std::size_t i = 0; i < value.size(); i++) vl.push_back(value[i]);
+    for(std::size_t i = 0; i < values.size(); i++) vl.push_back(values[i]);
     o->listdouble(vl);
   }
 #else
@@ -5729,23 +5729,23 @@ gmsh::model::mesh::field::setNumbers(const int tag, const std::string &option,
 
 GMSH_API void
 gmsh::model::mesh::field::getNumbers(const int tag, const std::string &option,
-                                     std::vector<double> &value)
+                                     std::vector<double> &values)
 {
   if(!_checkInit()) return;
-  value.clear();
+  values.clear();
 #if defined(HAVE_MESH)
   FieldOption *o = _getFieldOption(tag, option);
   if(!o) { return; }
   if(o->getType() == FIELD_OPTION_LIST) {
     std::list<int> vl = o->list();
-    for(auto i : vl) value.push_back(i);
+    for(auto i : vl) values.push_back(i);
   }
   else {
     if(o->getType() != FIELD_OPTION_LIST_DOUBLE) {
       Msg::Warning("Field option '%s' is not a list", option.c_str());
     }
     std::list<double> vl = o->listdouble();
-    for(auto d : vl) value.push_back(d);
+    for(auto d : vl) values.push_back(d);
   }
 #else
   Msg::Error("Fields require the mesh module");
@@ -7731,7 +7731,7 @@ GMSH_API void gmsh::view::combine(const std::string &what,
 }
 
 GMSH_API void gmsh::view::probe(const int tag, const double x, const double y,
-                                const double z, std::vector<double> &value,
+                                const double z, std::vector<double> &values,
                                 double &distance, const int step,
                                 const int numComp, const bool gradient,
                                 const double distanceMax,
@@ -7752,7 +7752,7 @@ GMSH_API void gmsh::view::probe(const int tag, const double x, const double y,
     Msg::Error("No data in view %d", tag);
     return;
   }
-  value.clear();
+  values.clear();
   std::vector<double> val(9 * data->getNumTimeSteps() * 3);
   int qn = 0;
   double *qx = nullptr, *qy = nullptr, *qz = nullptr;
@@ -7804,7 +7804,7 @@ GMSH_API void gmsh::view::probe(const int tag, const double x, const double y,
     }
     break;
   }
-  for(int i = 0; i < numVal; i++) value.push_back(val[i]);
+  for(int i = 0; i < numVal; i++) values.push_back(val[i]);
 #else
   Msg::Error("Views require the post-processing module");
 #endif

@@ -43,6 +43,7 @@ class arg:
         self.fortran_post = None
         self.fortran_call = None
         self.fortran_local = None
+        self.texi_type = ""
         self.texi = name + (
             (" = " + self.python_value) if self.python_value else "")
 
@@ -59,6 +60,7 @@ def ibool(name, value=None, python_value=None, julia_value=None):
     a.fortran_types = ["logical, intent(in)"]
     a.fortran_c_api = ["integer(c_int), value, intent(in)"]
     a.fortran_call = f"{name}=optval_c_bool(.{value}., {name})" if value is not None else f"{name}=merge(1_c_int, 0_c_int, {name})"
+    a.texi_type = "boolean"
     return a
 
 
@@ -70,6 +72,7 @@ def iint(name, value=None, python_value=None, julia_value=None):
     a.fortran_types = ["integer, intent(in)"]
     a.fortran_c_api = ["integer(c_int), value, intent(in)"]
     a.fortran_call = f"{name}=optval_c_int({value}, {name})" if value is not None else f"{name}=int({name}, c_int)"
+    a.texi_type = "integer"
     return a
 
 
@@ -81,6 +84,7 @@ def isize(name, value=None, python_value=None, julia_value=None):
     a.fortran_types = ["integer, intent(in)"]
     a.fortran_c_api = ["integer(c_size_t), value, intent(in)"]
     a.fortran_call = f"{name}=optval_c_size_t({value}, {name})" if value is not None else f"{name}=int({name}, c_size_t)"
+    a.texi_type = "size"
     return a
 
 
@@ -92,6 +96,7 @@ def idouble(name, value=None, python_value=None, julia_value=None):
     a.fortran_types = ["real(c_double), intent(in)"]
     a.fortran_c_api = ["real(c_double), value, intent(in)"]
     a.fortran_call = f"{name}=optval_c_double({value}, {name})" if value is not None else f"{name}=real({name}, c_double)"
+    a.texi_type = "double"
     return a
 
 
@@ -104,6 +109,7 @@ def istring(name, value=None, python_value=None, julia_value=None):
     a.fortran_types = ["character(len=*), intent(in)"]
     a.fortran_c_api = ["character(len=1, kind=c_char), dimension(*), intent(in)"]
     a.fortran_call = f"{name}=istring_(optval_c_str({value}, {name}))" if value is not None else f"{name}=istring_({name})"
+    a.texi_type = "string"
     return a
 
 
@@ -114,6 +120,7 @@ def ivoidstar(name, value=None, python_value=None, julia_value=None):
     a.julia_ctype = "Ptr{Cvoid}"
     a.fortran_types = ["type(c_ptr), intent(in)"]
     a.fortran_c_api = ["type(c_ptr), value, intent(in)"]
+    a.texi_type = "pointer"
     return a
 
 
@@ -142,6 +149,7 @@ def ivectorint(name, value=None, python_value=None, julia_value=None):
     a.fortran_c_api = ["integer(c_int), dimension(*)", "integer(c_size_t), value, intent(in)"]
     a.fortran_c_args = [api_name, api_name_n]
     a.fortran_call = f"{api_name}={name}, &{api_name_n}=size_gmsh_int({name})"
+    a.texi_type = "vector of integers"
     return a
 
 
@@ -170,6 +178,7 @@ def ivectorsize(name, value=None, python_value=None, julia_value=None):
     a.fortran_c_api = ["integer(c_size_t), dimension(*)", "integer(c_size_t), value, intent(in)"]
     a.fortran_c_args = [api_name, api_name_n]
     a.fortran_call = f"{api_name}={name}, &{api_name_n}=size_gmsh_size({name})"
+    a.texi_type = "vector of sizes"
     return a
 
 
@@ -198,6 +207,7 @@ def ivectordouble(name, value=None, python_value=None, julia_value=None):
     a.fortran_c_api = ["real(c_double), dimension(*)", "integer(c_size_t), value, intent(in)"]
     a.fortran_c_args = [api_name, api_name_n]
     a.fortran_call = f"{api_name}={name}, &{api_name_n}=size_gmsh_double({name})"
+    a.texi_type = "vector of doubles"
     return a
 
 
@@ -230,6 +240,7 @@ def ivectorstring(name, value=None, python_value=None, julia_value=None):
     a.fortran_pre = f"call ivectorstring_({name}, &{api_name}strs, &{api_name})"
     a.fortran_local = [f"character(len=GMSH_API_MAX_STR_LEN, kind=c_char), allocatable :: {api_name}strs(:)",
                        f"type(c_ptr), allocatable :: {api_name}(:)"]
+    a.texi_type = "vector of strings"
     return a
 
 
@@ -263,6 +274,7 @@ def ivectorpair(name, value=None, python_value=None, julia_value=None):
     a.fortran_c_api = ["integer(c_int), dimension(*)", "integer(c_size_t), value, intent(in)"]
     a.fortran_c_args = [api_name, api_name_n]
     a.fortran_call = f"{api_name}={name}, &{api_name_n}=size_gmsh_pair({name})"
+    a.texi_type = "vector of pairs of integers"
     return a
 
 
@@ -305,6 +317,7 @@ def ivectorvectorint(name, value=None, python_value=None, julia_value=None):
     a.fortran_pre = f"call ivectorvectorint_({name}, &{name}_n, &{api_name}, &{api_name_n}, &{api_name_nn})"
     a.fortran_local = [f"type(c_ptr) :: {api_name}", f"type(c_ptr) :: {api_name_n}", f"integer(c_size_t) :: {api_name_nn}"]
     a.fortran_call = f"{api_name}={api_name}, &{api_name_n}={api_name_n}, &{api_name_nn}={api_name_nn}"
+    a.texi_type = "vector of vectors of integers"
     return a
 
 
@@ -348,6 +361,7 @@ def ivectorvectorsize(name, value=None, python_value=None, julia_value=None):
     a.fortran_pre = f"call ivectorvectorsize_({name}, &{name}_n, &{api_name}, &{api_name_n}, &{api_name_nn})"
     a.fortran_local = [f"type(c_ptr) :: {api_name}", f"type(c_ptr) :: {api_name_n}", f"integer(c_size_t) :: {api_name_nn}"]
     a.fortran_call = f"{api_name}={api_name}, &{api_name_n}={api_name_n}, &{api_name_nn}={api_name_nn}"
+    a.texi_type = "vector of vectors of integers (size)"
     return a
 
 
@@ -391,6 +405,7 @@ def ivectorvectordouble(name, value=None, python_value=None, julia_value=None):
     a.fortran_pre = f"call ivectorvectordouble_({name}, &{name}_n, &{api_name}, &{api_name_n}, &{api_name_nn})"
     a.fortran_local = [f"type(c_ptr) :: {api_name}", f"type(c_ptr) :: {api_name_n}", f"integer(c_size_t) :: {api_name_nn}"]
     a.fortran_call = f"{api_name}={api_name}, &{api_name_n}={api_name_n}, &{api_name_nn}={api_name_nn}"
+    a.texi_type = "vector of vectors of doubles"
     return a
 
 
@@ -399,15 +414,16 @@ def ivectorvectordouble(name, value=None, python_value=None, julia_value=None):
 class oint(arg):
     rcpp_type = "int"
     rc_type = "int"
-    rtexi_type = "integer value"
     rjulia_type = "Cint"
     fortran_c_api = ["integer(c_int)"]
     fortran_types = ["integer(c_int)"]
+    texi_type = "integer"
 
     def __init__(self, name, value=None, python_value=None, julia_value=None):
         arg.__init__(self, name, value, python_value, julia_value, "int &",
                      "int *", True)
         api_name = "api_" + name + "_"
+        self.texi_type = "integer"
         self.c_arg = "*" + name
         self.cwrap_arg = "&" + name
         self.python_pre = api_name + " = c_int()"
@@ -422,15 +438,16 @@ class oint(arg):
 class osize(arg):
     rcpp_type = "std::size_t"
     rc_type = "size_t"
-    rtexi_type = "size value"
     rjulia_type = "Csize_t"
     fortran_c_api = ["integer(c_size_t)"]
     fortran_types = ["integer(c_size_t)"]
+    texi_type = "size"
 
     def __init__(self, name, value=None, python_value=None, julia_value=None):
         arg.__init__(self, name, value, python_value, julia_value,
                      "std::size_t &", "size_t *", True)
         api_name = "api_" + name + "_"
+        self.texi_type = "size"
         self.c_arg = "*" + name
         self.cwrap_arg = "&" + name
         self.python_pre = api_name + " = c_size_t()"
@@ -445,15 +462,16 @@ class osize(arg):
 class odouble(arg):
     rcpp_type = "double"
     rc_type = "double"
-    rtexi_type = "floating point value"
     rjulia_type = "Cdouble"
     fortran_c_api = ["real(c_double)"]
     fortran_types = ["real(c_double)"]
+    texi_type = "double"
 
     def __init__(self, name, value=None, python_value=None, julia_value=None):
         arg.__init__(self, name, value, python_value, julia_value, "double &",
                      "double *", True)
         api_name = "api_" + name + "_"
+        self.texi_type = "double"
         self.c_arg = "*" + name
         self.cwrap_arg = "&" + name
         self.python_pre = api_name + " = c_double()"
@@ -488,6 +506,7 @@ def ostring(name, value=None, python_value=None, julia_value=None):
     a.fortran_c_api = ["character(kind=c_char), dimension(*)"]
     a.fortran_c_args = [api_name]
     # TODO: Does this need to be C deallocated?
+    a.texi_type = "string"
     return a
 
 
@@ -520,6 +539,7 @@ def ovectorint(name, value=None, python_value=None, julia_value=None):
     a.fortran_call = f"{api_name}={api_name}, &{api_name_n}={api_name_n}"
     a.fortran_post = f"{name} = ovectorint_({api_name}, &{api_name_n})"
     a.fortran_local = [f"type(c_ptr) :: {api_name}", f"integer(c_size_t) :: {api_name_n}"]
+    a.texi_type = "vector of integers"
     return a
 
 
@@ -552,6 +572,7 @@ def ovectorsize(name, value=None, python_value=None, julia_value=None):
     a.fortran_call = f"{api_name}={api_name}, &{api_name_n}={api_name_n}"
     a.fortran_post = f"{name} = ovectorsize_({api_name}, &{api_name_n})"
     a.fortran_local = [f"type(c_ptr) :: {api_name}", f"integer(c_size_t) :: {api_name_n}"]
+    a.texi_type = "vector of sizes"
     return a
 
 
@@ -584,6 +605,7 @@ def ovectordouble(name, value=None, python_value=None, julia_value=None):
     a.fortran_call = f"{api_name}={api_name}, &{api_name_n}={api_name_n}"
     a.fortran_post = f"{name} = ovectordouble_({api_name}, &{api_name_n})"
     a.fortran_local = [f"type(c_ptr) :: {api_name}", f"integer(c_size_t) :: {api_name_n}"]
+    a.texi_type = "vector of doubles"
     return a
 
 
@@ -621,6 +643,7 @@ def ovectorstring(name, value=None, python_value=None, julia_value=None):
     a.fortran_call = f"{api_name}={api_name}, &{api_name_n}={api_name_n}"
     a.fortran_post = f"{name} = ovectorstring_({api_name}, &{api_name_n})"
     a.fortran_local = [f"type(c_ptr) :: {api_name}", f"integer(c_size_t) :: {api_name_n}"]
+    a.texi_type = "vector of strings"
     return a
 
 
@@ -658,6 +681,7 @@ def ovectorpair(name, value=None, python_value=None, julia_value=None):
     a.fortran_call = f"{api_name}={api_name}, &{api_name_n}={api_name_n}"
     a.fortran_post = f"{name} = ovectorpair_({api_name}, &{api_name_n})"
     a.fortran_local = [f"type(c_ptr) :: {api_name}", f"integer(c_size_t) :: {api_name_n}"]
+    a.texi_type = "vector of pairs of integers"
     return a
 
 
@@ -706,6 +730,7 @@ def ovectorvectorint(name, value=None, python_value=None, julia_value=None):
     a.fortran_call = f"{api_name}={api_name}, &{api_name_n}={api_name_n}, &{api_name_nn}={api_name_nn}"
     a.fortran_post = f"call ovectorvectorint_({api_name}, &{api_name_n}, &{api_name_nn}, &{name}, &{name}_n)"
     a.fortran_local = [f"type(c_ptr) :: {api_name}, {api_name_n}", f"integer(c_size_t) :: {api_name_nn}"]
+    a.texi_type = "vector of vectors of integers"
     return a
 
 
@@ -754,6 +779,7 @@ def ovectorvectorsize(name, value=None, python_value=None, julia_value=None):
     a.fortran_call = f"{api_name}={api_name}, &{api_name_n}={api_name_n}, &{api_name_nn}={api_name_nn}"
     a.fortran_post = f"call ovectorvectorsize_({api_name}, &{api_name_n}, &{api_name_nn}, &{name}, &{name}_n)"
     a.fortran_local = [f"type(c_ptr) :: {api_name}, {api_name_n}", f"integer(c_size_t) :: {api_name_nn}"]
+    a.texi_type = "vector of vectors of sizes"
     return a
 
 
@@ -803,6 +829,7 @@ def ovectorvectordouble(name, value=None, python_value=None, julia_value=None):
     a.fortran_call = f"{api_name}={api_name}, &{api_name_n}={api_name_n}, &{api_name_nn}={api_name_nn}"
     a.fortran_post = f"call ovectorvectordouble_({api_name}, &{api_name_n}, &{api_name_nn}, &{name}, &{name}_n)"
     a.fortran_local = [f"type(c_ptr) :: {api_name}, {api_name_n}", f"integer(c_size_t) :: {api_name_nn}"]
+    a.texi_type = "vector of vectors of doubles"
     return a
 
 
@@ -857,6 +884,7 @@ def ovectorvectorpair(name, value=None, python_value=None, julia_value=None):
     a.fortran_call = f"{api_name}={api_name}, &{api_name_n}={api_name_n}, &{api_name_nn}={api_name_nn}"
     a.fortran_post = f"call ovectorvectorpair_({api_name}, &{api_name_n}, &{api_name_nn}, &{name}, &{name}_n)"
     a.fortran_local = [f"type(c_ptr) :: {api_name}, {api_name_n}", f"integer(c_size_t) :: {api_name_nn}"]
+    a.texi_type = "vector of vectors of pairs of integers"
     return a
 
 
@@ -887,6 +915,7 @@ def iargcargv():
     a.fortran_pre = "call ivectorstring_(optval_str_array(def=[''], val=argv), argv_strs, argv_cptr)"
     a.fortran_local = ["character(len=GMSH_API_MAX_STR_LEN, kind=c_char), allocatable :: argv_strs(:)",
                        "type(c_ptr), allocatable :: argv_cptr(:)"]
+    a.texi_type = "command line arguments"
     return a
 
 
@@ -2159,10 +2188,15 @@ class API:
             if rtype or oargs:
                 self.fwrite(
                     f, "\n" + ind + "Return " +
-                    ", ".join(([("an " if rtype.rtexi_type ==
-                                 "integer value" else "a ") +
-                                rtype.rtexi_type] if rtype else []) +
+                    ", ".join(([("an " if rtype.texi_type ==
+                                 "integer" else "a ") +
+                                rtype.texi_type] if rtype else []) +
                               [("`" + a.name + "'") for a in oargs]) + ".\n")
+            if args:
+                self.fwrite(f, "\n" + ind + "Argument types:")
+                for a in args:
+                    self.fwrite(f, "\n" + ind + "- `" + a.name + "': " + a.texi_type)
+                self.fwrite(f, "\n")
             self.fwrite(f, ind + '"""\n')
             for a in args:
                 if a.python_pre: self.fwrite(f, ind + a.python_pre + "\n")
@@ -2253,10 +2287,15 @@ class API:
             if rtype or oargs:
                 self.fwrite(
                     f, "\nReturn " +
-                    ", ".join(([("an " if rtype.rtexi_type ==
-                                 "integer value" else "a ") +
-                                rtype.rtexi_type] if rtype else []) +
+                    ", ".join(([("an " if rtype.texi_type ==
+                                 "integer" else "a ") +
+                                rtype.texi_type] if rtype else []) +
                               [("`" + a.name + "`") for a in oargs]) + ".\n")
+            if args:
+                self.fwrite(f, "\nArgument types:")
+                for a in args:
+                    self.fwrite(f, "\n - `" + a.name + "`: " + a.texi_type)
+                self.fwrite(f, "\n")
             self.fwrite(f, '"""\n')
             self.flog('jl', jl_mpath.replace('.', '/') + name)
             self.fwrite(
@@ -2625,13 +2664,13 @@ class API:
                 iargs = list(a for a in args if not a.out)
                 oargs = list(a for a in args if a.out)
                 f.write("@item " + "Input:\n" + (", ".join(
-                    ("@code{" + iarg.texi + "}")
+                    ("@code{" + iarg.texi + "} (" + iarg.texi_type + ")")
                     for iarg in iargs) if len(iargs) else "-") + "\n")
                 f.write("@item " + "Output:\n" + (", ".join(
-                    ("@code{" + oarg.name + "}")
+                    ("@code{" + oarg.name + "} (" + oarg.texi_type + ")")
                     for oarg in oargs) if len(oargs) else "-") + "\n")
                 f.write("@item " + "Return:\n" +
-                        (rtype.rtexi_type if rtype else "-") + "\n")
+                        (rtype.texi_type if rtype else "-") + "\n")
                 f.write("@item " + "Language-specific definition:\n")
                 f.write("@url{@value{GITLAB-PREFIX}/api/gmsh.h#L" +
                         str(self.api_lineno['cpp'][path + '/' + name]) +

@@ -38,6 +38,11 @@ files (gmshrc and gmsh-options). If `run` is set, run in the same way as the
 Gmsh app, either interactively or in batch mode depending on the command line
 arguments. If `run` is not set, initializing the API sets the options
 "General.AbortOnError" to 2 and "General.Terminal" to 1.
+
+Argument types:
+ - `argv`: command line arguments
+ - `readConfigFiles`: boolean
+ - `run`: boolean
 """
 function initialize(argv = Vector{String}(), readConfigFiles = true, run = false)
     ierr = Ref{Cint}()
@@ -53,7 +58,7 @@ end
 
 Return 1 if the Gmsh API is initialized, and 0 if not.
 
-Return an integer value.
+Return an integer.
 """
 function isInitialized()
     ierr = Ref{Cint}()
@@ -85,6 +90,9 @@ end
 Open a file. Equivalent to the `File->Open` menu in the Gmsh app. Handling of
 the file depends on its extension and/or its contents: opening a file with model
 data will create a new model.
+
+Argument types:
+ - `fileName`: string
 """
 function open(fileName)
     ierr = Ref{Cint}()
@@ -101,6 +109,9 @@ end
 Merge a file. Equivalent to the `File->Merge` menu in the Gmsh app. Handling of
 the file depends on its extension and/or its contents. Merging a file with model
 data will add the data to the current model.
+
+Argument types:
+ - `fileName`: string
 """
 function merge(fileName)
     ierr = Ref{Cint}()
@@ -115,6 +126,9 @@ end
     gmsh.write(fileName)
 
 Write a file. The export format is determined by the file extension.
+
+Argument types:
+ - `fileName`: string
 """
 function write(fileName)
     ierr = Ref{Cint}()
@@ -154,6 +168,10 @@ import ..gmsh
 Set a numerical option to `value`. `name` is of the form "Category.Option" or
 "Category[num].Option". Available categories and options are listed in the Gmsh
 reference manual.
+
+Argument types:
+ - `name`: string
+ - `value`: double
 """
 function setNumber(name, value)
     ierr = Ref{Cint}()
@@ -173,6 +191,10 @@ or "Category[num].Option". Available categories and options are listed in the
 Gmsh reference manual.
 
 Return `value`.
+
+Argument types:
+ - `name`: string
+ - `value`: double
 """
 function getNumber(name)
     api_value_ = Ref{Cdouble}()
@@ -191,6 +213,10 @@ const get_number = getNumber
 Set a string option to `value`. `name` is of the form "Category.Option" or
 "Category[num].Option". Available categories and options are listed in the Gmsh
 reference manual.
+
+Argument types:
+ - `name`: string
+ - `value`: string
 """
 function setString(name, value)
     ierr = Ref{Cint}()
@@ -210,6 +236,10 @@ Get the `value` of a string option. `name` is of the form "Category.Option" or
 reference manual.
 
 Return `value`.
+
+Argument types:
+ - `name`: string
+ - `value`: string
 """
 function getString(name)
     api_value_ = Ref{Ptr{Cchar}}()
@@ -231,6 +261,13 @@ Set a color option to the RGBA value (`r`, `g`, `b`, `a`), where where `r`, `g`,
 "Category.Color.Option" or "Category[num].Color.Option". Available categories
 and options are listed in the Gmsh reference manual. For conciseness "Color."
 can be ommitted in `name`.
+
+Argument types:
+ - `name`: string
+ - `r`: integer
+ - `g`: integer
+ - `b`: integer
+ - `a`: integer
 """
 function setColor(name, r, g, b, a = 255)
     ierr = Ref{Cint}()
@@ -251,6 +288,13 @@ and options are listed in the Gmsh reference manual. For conciseness "Color."
 can be ommitted in `name`.
 
 Return `r`, `g`, `b`, `a`.
+
+Argument types:
+ - `name`: string
+ - `r`: integer
+ - `g`: integer
+ - `b`: integer
+ - `a`: integer
 """
 function getColor(name)
     api_r_ = Ref{Cint}()
@@ -281,6 +325,9 @@ import ..gmsh
     gmsh.model.add(name)
 
 Add a new model, with name `name`, and set it as the current model.
+
+Argument types:
+ - `name`: string
 """
 function add(name)
     ierr = Ref{Cint}()
@@ -311,6 +358,9 @@ end
 List the names of all models.
 
 Return `names`.
+
+Argument types:
+ - `names`: vector of strings
 """
 function list()
     api_names_ = Ref{Ptr{Ptr{Cchar}}}()
@@ -331,6 +381,9 @@ end
 Get the name of the current model.
 
 Return `name`.
+
+Argument types:
+ - `name`: string
 """
 function getCurrent()
     api_name_ = Ref{Ptr{Cchar}}()
@@ -349,6 +402,9 @@ const get_current = getCurrent
 
 Set the current model to the model with name `name`. If several models have the
 same name, select the one that was added first.
+
+Argument types:
+ - `name`: string
 """
 function setCurrent(name)
     ierr = Ref{Cint}()
@@ -367,6 +423,9 @@ Get the file name (if any) associated with the current model. A file name is
 associated when a model is read from a file on disk.
 
 Return `fileName`.
+
+Argument types:
+ - `fileName`: string
 """
 function getFileName()
     api_fileName_ = Ref{Ptr{Cchar}}()
@@ -384,6 +443,9 @@ const get_file_name = getFileName
     gmsh.model.setFileName(fileName)
 
 Set the file name associated with the current model.
+
+Argument types:
+ - `fileName`: string
 """
 function setFileName(fileName)
     ierr = Ref{Cint}()
@@ -400,9 +462,13 @@ const set_file_name = setFileName
 
 Get all the entities in the current model. If `dim` is >= 0, return only the
 entities of the specified dimension (e.g. points if `dim` == 0). The entities
-are returned as a vector of (dim, tag) integer pairs.
+are returned as a vector of (dim, tag) pairs.
 
 Return `dimTags`.
+
+Argument types:
+ - `dimTags`: vector of pairs of integers
+ - `dim`: integer
 """
 function getEntities(dim = -1)
     api_dimTags_ = Ref{Ptr{Cint}}()
@@ -422,6 +488,11 @@ const get_entities = getEntities
     gmsh.model.setEntityName(dim, tag, name)
 
 Set the name of the entity of dimension `dim` and tag `tag`.
+
+Argument types:
+ - `dim`: integer
+ - `tag`: integer
+ - `name`: string
 """
 function setEntityName(dim, tag, name)
     ierr = Ref{Cint}()
@@ -439,6 +510,11 @@ const set_entity_name = setEntityName
 Get the name of the entity of dimension `dim` and tag `tag`.
 
 Return `name`.
+
+Argument types:
+ - `dim`: integer
+ - `tag`: integer
+ - `name`: string
 """
 function getEntityName(dim, tag)
     api_name_ = Ref{Ptr{Cchar}}()
@@ -457,9 +533,13 @@ const get_entity_name = getEntityName
 
 Get all the physical groups in the current model. If `dim` is >= 0, return only
 the entities of the specified dimension (e.g. physical points if `dim` == 0).
-The entities are returned as a vector of (dim, tag) integer pairs.
+The entities are returned as a vector of (dim, tag) pairs.
 
 Return `dimTags`.
+
+Argument types:
+ - `dimTags`: vector of pairs of integers
+ - `dim`: integer
 """
 function getPhysicalGroups(dim = -1)
     api_dimTags_ = Ref{Ptr{Cint}}()
@@ -482,6 +562,11 @@ Get the tags of the model entities making up the physical group of dimension
 `dim` and tag `tag`.
 
 Return `tags`.
+
+Argument types:
+ - `dim`: integer
+ - `tag`: integer
+ - `tags`: vector of integers
 """
 function getEntitiesForPhysicalGroup(dim, tag)
     api_tags_ = Ref{Ptr{Cint}}()
@@ -503,6 +588,11 @@ Get the tags of the physical groups (if any) to which the model entity of
 dimension `dim` and tag `tag` belongs.
 
 Return `physicalTags`.
+
+Argument types:
+ - `dim`: integer
+ - `tag`: integer
+ - `physicalTags`: vector of integers
 """
 function getPhysicalGroupsForEntity(dim, tag)
     api_physicalTags_ = Ref{Ptr{Cint}}()
@@ -525,7 +615,13 @@ Add a physical group of dimension `dim`, grouping the model entities with tags
 positive, or a new tag if `tag` < 0. Set the name of the physical group if
 `name` is not empty.
 
-Return an integer value.
+Return an integer.
+
+Argument types:
+ - `dim`: integer
+ - `tags`: vector of integers
+ - `tag`: integer
+ - `name`: string
 """
 function addPhysicalGroup(dim, tags, tag = -1, name = "")
     ierr = Ref{Cint}()
@@ -540,8 +636,11 @@ const add_physical_group = addPhysicalGroup
 """
     gmsh.model.removePhysicalGroups(dimTags = Tuple{Cint,Cint}[])
 
-Remove the physical groups `dimTags` from the current model. If `dimTags` is
-empty, remove all groups.
+Remove the physical groups `dimTags` (given as a vector of (dim, tag) pairs)
+from the current model. If `dimTags` is empty, remove all groups.
+
+Argument types:
+ - `dimTags`: vector of pairs of integers
 """
 function removePhysicalGroups(dimTags = Tuple{Cint,Cint}[])
     api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
@@ -559,6 +658,11 @@ const remove_physical_groups = removePhysicalGroups
     gmsh.model.setPhysicalName(dim, tag, name)
 
 Set the name of the physical group of dimension `dim` and tag `tag`.
+
+Argument types:
+ - `dim`: integer
+ - `tag`: integer
+ - `name`: string
 """
 function setPhysicalName(dim, tag, name)
     ierr = Ref{Cint}()
@@ -574,6 +678,9 @@ const set_physical_name = setPhysicalName
     gmsh.model.removePhysicalName(name)
 
 Remove the physical name `name` from the current model.
+
+Argument types:
+ - `name`: string
 """
 function removePhysicalName(name)
     ierr = Ref{Cint}()
@@ -591,6 +698,11 @@ const remove_physical_name = removePhysicalName
 Get the name of the physical group of dimension `dim` and tag `tag`.
 
 Return `name`.
+
+Argument types:
+ - `dim`: integer
+ - `tag`: integer
+ - `name`: string
 """
 function getPhysicalName(dim, tag)
     api_name_ = Ref{Ptr{Cchar}}()
@@ -609,6 +721,11 @@ const get_physical_name = getPhysicalName
 
 Set the tag of the entity of dimension `dim` and tag `tag` to the new value
 `newTag`.
+
+Argument types:
+ - `dim`: integer
+ - `tag`: integer
+ - `newTag`: integer
 """
 function setTag(dim, tag, newTag)
     ierr = Ref{Cint}()
@@ -623,14 +740,21 @@ const set_tag = setTag
 """
     gmsh.model.getBoundary(dimTags, combined = true, oriented = true, recursive = false)
 
-Get the boundary of the model entities `dimTags`. Return in `outDimTags` the
-boundary of the individual entities (if `combined` is false) or the boundary of
-the combined geometrical shape formed by all input entities (if `combined` is
-true). Return tags multiplied by the sign of the boundary entity if `oriented`
-is true. Apply the boundary operator recursively down to dimension 0 (i.e. to
-points) if `recursive` is true.
+Get the boundary of the model entities `dimTags`, given as a vector of (dim,
+tag) pairs. Return in `outDimTags` the boundary of the individual entities (if
+`combined` is false) or the boundary of the combined geometrical shape formed by
+all input entities (if `combined` is true). Return tags multiplied by the sign
+of the boundary entity if `oriented` is true. Apply the boundary operator
+recursively down to dimension 0 (i.e. to points) if `recursive` is true.
 
 Return `outDimTags`.
+
+Argument types:
+ - `dimTags`: vector of pairs of integers
+ - `outDimTags`: vector of pairs of integers
+ - `combined`: boolean
+ - `oriented`: boolean
+ - `recursive`: boolean
 """
 function getBoundary(dimTags, combined = true, oriented = true, recursive = false)
     api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
@@ -657,6 +781,12 @@ and tag `tag`. The `upward` vector returns the adjacent entities of dimension
 `dim` - 1.
 
 Return `upward`, `downward`.
+
+Argument types:
+ - `dim`: integer
+ - `tag`: integer
+ - `upward`: vector of integers
+ - `downward`: vector of integers
 """
 function getAdjacencies(dim, tag)
     api_upward_ = Ref{Ptr{Cint}}()
@@ -682,6 +812,16 @@ Get the model entities in the bounding box defined by the two points (`xmin`,
 entities of the specified dimension (e.g. points if `dim` == 0).
 
 Return `tags`.
+
+Argument types:
+ - `xmin`: double
+ - `ymin`: double
+ - `zmin`: double
+ - `xmax`: double
+ - `ymax`: double
+ - `zmax`: double
+ - `tags`: vector of pairs of integers
+ - `dim`: integer
 """
 function getEntitiesInBoundingBox(xmin, ymin, zmin, xmax, ymax, zmax, dim = -1)
     api_tags_ = Ref{Ptr{Cint}}()
@@ -705,6 +845,16 @@ model entity of dimension `dim` and tag `tag`. If `dim` and `tag` are negative,
 get the bounding box of the whole model.
 
 Return `xmin`, `ymin`, `zmin`, `xmax`, `ymax`, `zmax`.
+
+Argument types:
+ - `dim`: integer
+ - `tag`: integer
+ - `xmin`: double
+ - `ymin`: double
+ - `zmin`: double
+ - `xmax`: double
+ - `ymax`: double
+ - `zmax`: double
 """
 function getBoundingBox(dim, tag)
     api_xmin_ = Ref{Cdouble}()
@@ -727,7 +877,7 @@ const get_bounding_box = getBoundingBox
 
 Return the geometrical dimension of the current model.
 
-Return an integer value.
+Return an integer.
 """
 function getDimension()
     ierr = Ref{Cint}()
@@ -748,7 +898,12 @@ current model. Return the tag of the new discrete entity, equal to `tag` if
 the entities on the boundary of the discrete entity, if any. Specifying
 `boundary` allows Gmsh to construct the topology of the overall model.
 
-Return an integer value.
+Return an integer.
+
+Argument types:
+ - `dim`: integer
+ - `tag`: integer
+ - `boundary`: vector of integers
 """
 function addDiscreteEntity(dim, tag = -1, boundary = Cint[])
     ierr = Ref{Cint}()
@@ -763,9 +918,14 @@ const add_discrete_entity = addDiscreteEntity
 """
     gmsh.model.removeEntities(dimTags, recursive = false)
 
-Remove the entities `dimTags` of the current model, provided that they are not
-on the boundary of (or embedded in) higher-dimensional entities. If `recursive`
-is true, remove all the entities on their boundaries, down to dimension 0.
+Remove the entities `dimTags` (given as a vector of (dim, tag) pairs) of the
+current model, provided that they are not on the boundary of (or embedded in)
+higher-dimensional entities. If `recursive` is true, remove all the entities on
+their boundaries, down to dimension 0.
+
+Argument types:
+ - `dimTags`: vector of pairs of integers
+ - `recursive`: boolean
 """
 function removeEntities(dimTags, recursive = false)
     api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
@@ -783,6 +943,9 @@ const remove_entities = removeEntities
     gmsh.model.removeEntityName(name)
 
 Remove the entity name `name` from the current model.
+
+Argument types:
+ - `name`: string
 """
 function removeEntityName(name)
     ierr = Ref{Cint}()
@@ -800,6 +963,11 @@ const remove_entity_name = removeEntityName
 Get the type of the entity of dimension `dim` and tag `tag`.
 
 Return `entityType`.
+
+Argument types:
+ - `dim`: integer
+ - `tag`: integer
+ - `entityType`: string
 """
 function getType(dim, tag)
     api_entityType_ = Ref{Ptr{Cchar}}()
@@ -821,6 +989,12 @@ In a partitioned model, get the parent of the entity of dimension `dim` and tag
 `parentTag` are set to -1 if the entity has no parent.
 
 Return `parentDim`, `parentTag`.
+
+Argument types:
+ - `dim`: integer
+ - `tag`: integer
+ - `parentDim`: integer
+ - `parentTag`: integer
 """
 function getParent(dim, tag)
     api_parentDim_ = Ref{Cint}()
@@ -839,7 +1013,7 @@ const get_parent = getParent
 
 Return the number of partitions in the model.
 
-Return an integer value.
+Return an integer.
 """
 function getNumberOfPartitions()
     ierr = Ref{Cint}()
@@ -858,6 +1032,11 @@ In a partitioned model, return the tags of the partition(s) to which the entity
 belongs.
 
 Return `partitions`.
+
+Argument types:
+ - `dim`: integer
+ - `tag`: integer
+ - `partitions`: vector of integers
 """
 function getPartitions(dim, tag)
     api_partitions_ = Ref{Ptr{Cint}}()
@@ -878,12 +1057,17 @@ const get_partitions = getPartitions
 Evaluate the parametrization of the entity of dimension `dim` and tag `tag` at
 the parametric coordinates `parametricCoord`. Only valid for `dim` equal to 0
 (with empty `parametricCoord`), 1 (with `parametricCoord` containing parametric
-coordinates on the curve) or 2 (with `parametricCoord` containing pairs of u, v
+coordinates on the curve) or 2 (with `parametricCoord` containing u, v
 parametric coordinates on the surface, concatenated: [p1u, p1v, p2u, ...]).
-Return triplets of x, y, z coordinates in `coord`, concatenated: [p1x, p1y, p1z,
-p2x, ...].
+Return x, y, z coordinates in `coord`, concatenated: [p1x, p1y, p1z, p2x, ...].
 
 Return `coord`.
+
+Argument types:
+ - `dim`: integer
+ - `tag`: integer
+ - `parametricCoord`: vector of doubles
+ - `coord`: vector of doubles
 """
 function getValue(dim, tag, parametricCoord)
     api_coord_ = Ref{Ptr{Cdouble}}()
@@ -904,14 +1088,19 @@ const get_value = getValue
 Evaluate the derivative of the parametrization of the entity of dimension `dim`
 and tag `tag` at the parametric coordinates `parametricCoord`. Only valid for
 `dim` equal to 1 (with `parametricCoord` containing parametric coordinates on
-the curve) or 2 (with `parametricCoord` containing pairs of u, v parametric
-coordinates on the surface, concatenated: [p1u, p1v, p2u, ...]). For `dim` equal
-to 1 return the x, y, z components of the derivative with respect to u [d1ux,
-d1uy, d1uz, d2ux, ...]; for `dim` equal to 2 return the x, y, z components of
-the derivative with respect to u and v: [d1ux, d1uy, d1uz, d1vx, d1vy, d1vz,
-d2ux, ...].
+the curve) or 2 (with `parametricCoord` containing u, v parametric coordinates
+on the surface, concatenated: [p1u, p1v, p2u, ...]). For `dim` equal to 1 return
+the x, y, z components of the derivative with respect to u [d1ux, d1uy, d1uz,
+d2ux, ...]; for `dim` equal to 2 return the x, y, z components of the derivative
+with respect to u and v: [d1ux, d1uy, d1uz, d1vx, d1vy, d1vz, d2ux, ...].
 
 Return `derivatives`.
+
+Argument types:
+ - `dim`: integer
+ - `tag`: integer
+ - `parametricCoord`: vector of doubles
+ - `derivatives`: vector of doubles
 """
 function getDerivative(dim, tag, parametricCoord)
     api_derivatives_ = Ref{Ptr{Cdouble}}()
@@ -932,7 +1121,7 @@ const get_derivative = getDerivative
 Evaluate the second derivative of the parametrization of the entity of dimension
 `dim` and tag `tag` at the parametric coordinates `parametricCoord`. Only valid
 for `dim` equal to 1 (with `parametricCoord` containing parametric coordinates
-on the curve) or 2 (with `parametricCoord` containing pairs of u, v parametric
+on the curve) or 2 (with `parametricCoord` containing u, v parametric
 coordinates on the surface, concatenated: [p1u, p1v, p2u, ...]). For `dim` equal
 to 1 return the x, y, z components of the second derivative with respect to u
 [d1uux, d1uuy, d1uuz, d2uux, ...]; for `dim` equal to 2 return the x, y, z
@@ -941,6 +1130,12 @@ derivative with respect to u and v: [d1uux, d1uuy, d1uuz, d1vvx, d1vvy, d1vvz,
 d1uvx, d1uvy, d1uvz, d2uux, ...].
 
 Return `derivatives`.
+
+Argument types:
+ - `dim`: integer
+ - `tag`: integer
+ - `parametricCoord`: vector of doubles
+ - `derivatives`: vector of doubles
 """
 function getSecondDerivative(dim, tag, parametricCoord)
     api_derivatives_ = Ref{Ptr{Cdouble}}()
@@ -961,10 +1156,16 @@ const get_second_derivative = getSecondDerivative
 Evaluate the (maximum) curvature of the entity of dimension `dim` and tag `tag`
 at the parametric coordinates `parametricCoord`. Only valid for `dim` equal to 1
 (with `parametricCoord` containing parametric coordinates on the curve) or 2
-(with `parametricCoord` containing pairs of u, v parametric coordinates on the
-surface, concatenated: [p1u, p1v, p2u, ...]).
+(with `parametricCoord` containing u, v parametric coordinates on the surface,
+concatenated: [p1u, p1v, p2u, ...]).
 
 Return `curvatures`.
+
+Argument types:
+ - `dim`: integer
+ - `tag`: integer
+ - `parametricCoord`: vector of doubles
+ - `curvatures`: vector of doubles
 """
 function getCurvature(dim, tag, parametricCoord)
     api_curvatures_ = Ref{Ptr{Cdouble}}()
@@ -988,6 +1189,14 @@ directions. `parametricCoord` are given by pair of u and v coordinates,
 concatenated: [p1u, p1v, p2u, ...].
 
 Return `curvatureMax`, `curvatureMin`, `directionMax`, `directionMin`.
+
+Argument types:
+ - `tag`: integer
+ - `parametricCoord`: vector of doubles
+ - `curvatureMax`: vector of doubles
+ - `curvatureMin`: vector of doubles
+ - `directionMax`: vector of doubles
+ - `directionMin`: vector of doubles
 """
 function getPrincipalCurvatures(tag, parametricCoord)
     api_curvatureMax_ = Ref{Ptr{Cdouble}}()
@@ -1015,11 +1224,16 @@ const get_principal_curvatures = getPrincipalCurvatures
     gmsh.model.getNormal(tag, parametricCoord)
 
 Get the normal to the surface with tag `tag` at the parametric coordinates
-`parametricCoord`. `parametricCoord` are given by pairs of u and v coordinates,
-concatenated: [p1u, p1v, p2u, ...]. `normals` are returned as triplets of x, y,
-z components, concatenated: [n1x, n1y, n1z, n2x, ...].
+`parametricCoord`. The `parametricCoord` vector should contain u and v
+coordinates, concatenated: [p1u, p1v, p2u, ...]. `normals` are returned as a
+vector of x, y, z components, concatenated: [n1x, n1y, n1z, n2x, ...].
 
 Return `normals`.
+
+Argument types:
+ - `tag`: integer
+ - `parametricCoord`: vector of doubles
+ - `normals`: vector of doubles
 """
 function getNormal(tag, parametricCoord)
     api_normals_ = Ref{Ptr{Cdouble}}()
@@ -1038,13 +1252,19 @@ const get_normal = getNormal
     gmsh.model.getParametrization(dim, tag, coord)
 
 Get the parametric coordinates `parametricCoord` for the points `coord` on the
-entity of dimension `dim` and tag `tag`. `coord` are given as triplets of x, y,
-z coordinates, concatenated: [p1x, p1y, p1z, p2x, ...]. `parametricCoord`
-returns the parametric coordinates t on the curve (if `dim` = 1) or pairs of u
-and v coordinates concatenated on the surface (if `dim` = 2), i.e. [p1t, p2t,
-...] or [p1u, p1v, p2u, ...].
+entity of dimension `dim` and tag `tag`. `coord` are given as x, y, z
+coordinates, concatenated: [p1x, p1y, p1z, p2x, ...]. `parametricCoord` returns
+the parametric coordinates t on the curve (if `dim` = 1) or u and v coordinates
+concatenated on the surface (if `dim` = 2), i.e. [p1t, p2t, ...] or [p1u, p1v,
+p2u, ...].
 
 Return `parametricCoord`.
+
+Argument types:
+ - `dim`: integer
+ - `tag`: integer
+ - `coord`: vector of doubles
+ - `parametricCoord`: vector of doubles
 """
 function getParametrization(dim, tag, coord)
     api_parametricCoord_ = Ref{Ptr{Cdouble}}()
@@ -1066,6 +1286,12 @@ Get the `min` and `max` bounds of the parametric coordinates for the entity of
 dimension `dim` and tag `tag`.
 
 Return `min`, `max`.
+
+Argument types:
+ - `dim`: integer
+ - `tag`: integer
+ - `min`: vector of doubles
+ - `max`: vector of doubles
 """
 function getParametrizationBounds(dim, tag)
     api_min_ = Ref{Ptr{Cdouble}}()
@@ -1092,7 +1318,13 @@ and tag `tag`, and return the number of points inside. This feature is only
 available for a subset of entities, depending on the underlying geometrical
 representation.
 
-Return an integer value.
+Return an integer.
+
+Argument types:
+ - `dim`: integer
+ - `tag`: integer
+ - `coord`: vector of doubles
+ - `parametric`: boolean
 """
 function isInside(dim, tag, coord, parametric = false)
     ierr = Ref{Cint}()
@@ -1109,12 +1341,19 @@ const is_inside = isInside
 
 Get the points `closestCoord` on the entity of dimension `dim` and tag `tag` to
 the points `coord`, by orthogonal projection. `coord` and `closestCoord` are
-given as triplets of x, y, z coordinates, concatenated: [p1x, p1y, p1z, p2x,
-...]. `parametricCoord` returns the parametric coordinates t on the curve (if
-`dim` = 1) or pairs of u and v coordinates concatenated on the surface (if `dim`
-= 2), i.e. [p1t, p2t, ...] or [p1u, p1v, p2u, ...].
+given as x, y, z coordinates, concatenated: [p1x, p1y, p1z, p2x, ...].
+`parametricCoord` returns the parametric coordinates t on the curve (if `dim` =
+1) or u and v coordinates concatenated on the surface (if `dim` = 2), i.e. [p1t,
+p2t, ...] or [p1u, p1v, p2u, ...].
 
 Return `closestCoord`, `parametricCoord`.
+
+Argument types:
+ - `dim`: integer
+ - `tag`: integer
+ - `coord`: vector of doubles
+ - `closestCoord`: vector of doubles
+ - `parametricCoord`: vector of doubles
 """
 function getClosestPoint(dim, tag, coord)
     api_closestCoord_ = Ref{Ptr{Cdouble}}()
@@ -1143,6 +1382,14 @@ feature is only available for a subset of entities, depending on the underlying
 geometrical representation.
 
 Return `surfaceParametricCoord`.
+
+Argument types:
+ - `dim`: integer
+ - `tag`: integer
+ - `parametricCoord`: vector of doubles
+ - `surfaceTag`: integer
+ - `surfaceParametricCoord`: vector of doubles
+ - `which`: integer
 """
 function reparametrizeOnSurface(dim, tag, parametricCoord, surfaceTag, which = 0)
     api_surfaceParametricCoord_ = Ref{Ptr{Cdouble}}()
@@ -1160,8 +1407,14 @@ const reparametrize_on_surface = reparametrizeOnSurface
 """
     gmsh.model.setVisibility(dimTags, value, recursive = false)
 
-Set the visibility of the model entities `dimTags` to `value`. Apply the
-visibility setting recursively if `recursive` is true.
+Set the visibility of the model entities `dimTags` (given as a vector of (dim,
+tag) pairs) to `value`. Apply the visibility setting recursively if `recursive`
+is true.
+
+Argument types:
+ - `dimTags`: vector of pairs of integers
+ - `value`: integer
+ - `recursive`: boolean
 """
 function setVisibility(dimTags, value, recursive = false)
     api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
@@ -1181,6 +1434,11 @@ const set_visibility = setVisibility
 Get the visibility of the model entity of dimension `dim` and tag `tag`.
 
 Return `value`.
+
+Argument types:
+ - `dim`: integer
+ - `tag`: integer
+ - `value`: integer
 """
 function getVisibility(dim, tag)
     api_value_ = Ref{Cint}()
@@ -1198,6 +1456,10 @@ const get_visibility = getVisibility
 
 Set the global visibility of the model per window to `value`, where
 `windowIndex` identifies the window in the window list.
+
+Argument types:
+ - `value`: integer
+ - `windowIndex`: integer
 """
 function setVisibilityPerWindow(value, windowIndex = 0)
     ierr = Ref{Cint}()
@@ -1212,9 +1474,18 @@ const set_visibility_per_window = setVisibilityPerWindow
 """
     gmsh.model.setColor(dimTags, r, g, b, a = 255, recursive = false)
 
-Set the color of the model entities `dimTags` to the RGBA value (`r`, `g`, `b`,
-`a`), where `r`, `g`, `b` and `a` should be integers between 0 and 255. Apply
-the color setting recursively if `recursive` is true.
+Set the color of the model entities `dimTags` (given as a vector of (dim, tag)
+pairs) to the RGBA value (`r`, `g`, `b`, `a`), where `r`, `g`, `b` and `a`
+should be integers between 0 and 255. Apply the color setting recursively if
+`recursive` is true.
+
+Argument types:
+ - `dimTags`: vector of pairs of integers
+ - `r`: integer
+ - `g`: integer
+ - `b`: integer
+ - `a`: integer
+ - `recursive`: boolean
 """
 function setColor(dimTags, r, g, b, a = 255, recursive = false)
     api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
@@ -1234,6 +1505,14 @@ const set_color = setColor
 Get the color of the model entity of dimension `dim` and tag `tag`.
 
 Return `r`, `g`, `b`, `a`.
+
+Argument types:
+ - `dim`: integer
+ - `tag`: integer
+ - `r`: integer
+ - `g`: integer
+ - `b`: integer
+ - `a`: integer
 """
 function getColor(dim, tag)
     api_r_ = Ref{Cint}()
@@ -1253,6 +1532,12 @@ const get_color = getColor
     gmsh.model.setCoordinates(tag, x, y, z)
 
 Set the `x`, `y`, `z` coordinates of a geometrical point.
+
+Argument types:
+ - `tag`: integer
+ - `x`: double
+ - `y`: double
+ - `z`: double
 """
 function setCoordinates(tag, x, y, z)
     ierr = Ref{Cint}()
@@ -1270,6 +1555,9 @@ const set_coordinates = setCoordinates
 Get the names of any optional attributes stored in the model.
 
 Return `names`.
+
+Argument types:
+ - `names`: vector of strings
 """
 function getAttributeNames()
     api_names_ = Ref{Ptr{Ptr{Cchar}}}()
@@ -1288,34 +1576,42 @@ const get_attribute_names = getAttributeNames
 """
     gmsh.model.getAttribute(name)
 
-Get the value of the attribute with name `name`.
+Get the values of the attribute with name `name`.
 
-Return `value`.
+Return `values`.
+
+Argument types:
+ - `name`: string
+ - `values`: vector of strings
 """
 function getAttribute(name)
-    api_value_ = Ref{Ptr{Ptr{Cchar}}}()
-    api_value_n_ = Ref{Csize_t}()
+    api_values_ = Ref{Ptr{Ptr{Cchar}}}()
+    api_values_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelGetAttribute, gmsh.lib), Cvoid,
           (Ptr{Cchar}, Ptr{Ptr{Ptr{Cchar}}}, Ptr{Csize_t}, Ptr{Cint}),
-          name, api_value_, api_value_n_, ierr)
+          name, api_values_, api_values_n_, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    tmp_api_value_ = unsafe_wrap(Array, api_value_[], api_value_n_[], own = true)
-    value = [unsafe_string(tmp_api_value_[i]) for i in 1:length(tmp_api_value_) ]
-    return value
+    tmp_api_values_ = unsafe_wrap(Array, api_values_[], api_values_n_[], own = true)
+    values = [unsafe_string(tmp_api_values_[i]) for i in 1:length(tmp_api_values_) ]
+    return values
 end
 const get_attribute = getAttribute
 
 """
-    gmsh.model.setAttribute(name, value)
+    gmsh.model.setAttribute(name, values)
 
-Set the value of the attribute with name `name`.
+Set the values of the attribute with name `name`.
+
+Argument types:
+ - `name`: string
+ - `values`: vector of strings
 """
-function setAttribute(name, value)
+function setAttribute(name, values)
     ierr = Ref{Cint}()
     ccall((:gmshModelSetAttribute, gmsh.lib), Cvoid,
           (Ptr{Cchar}, Ptr{Ptr{Cchar}}, Csize_t, Ptr{Cint}),
-          name, value, length(value), ierr)
+          name, values, length(values), ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
@@ -1325,6 +1621,9 @@ const set_attribute = setAttribute
     gmsh.model.removeAttribute(name)
 
 Remove the attribute with name `name`.
+
+Argument types:
+ - `name`: string
 """
 function removeAttribute(name)
     ierr = Ref{Cint}()
@@ -1349,6 +1648,9 @@ import ...gmsh
     gmsh.model.mesh.generate(dim = 3)
 
 Generate a mesh of the current model, up to dimension `dim` (0, 1, 2 or 3).
+
+Argument types:
+ - `dim`: integer
 """
 function generate(dim = 3)
     ierr = Ref{Cint}()
@@ -1365,6 +1667,11 @@ end
 Partition the mesh of the current model into `numPart` partitions. Optionally,
 `elementTags` and `partitions` can be provided to specify the partition of each
 element explicitly.
+
+Argument types:
+ - `numPart`: integer
+ - `elementTags`: vector of sizes
+ - `partitions`: vector of integers
 """
 function partition(numPart, elementTags = Csize_t[], partitions = Cint[])
     ierr = Ref{Cint}()
@@ -1399,7 +1706,14 @@ smoother, "HighOrderFastCurving" for fast curving algorithm, "Laplace2D" for
 Laplace smoothing, "Relocate2D" and "Relocate3D" for node relocation,
 "QuadQuasiStructured" for quad mesh optimization, "UntangleMeshGeometry" for
 untangling). If `force` is set apply the optimization also to discrete entities.
-If `dimTags` is given, only apply the optimizer to the given entities.
+If `dimTags` (given as a vector of (dim, tag) pairs) is given, only apply the
+optimizer to the given entities.
+
+Argument types:
+ - `method`: string
+ - `force`: boolean
+ - `niter`: integer
+ - `dimTags`: vector of pairs of integers
 """
 function optimize(method = "", force = false, niter = 1, dimTags = Tuple{Cint,Cint}[])
     api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
@@ -1444,6 +1758,9 @@ end
     gmsh.model.mesh.setOrder(order)
 
 Set the order of the elements in the mesh of the current model to `order`.
+
+Argument types:
+ - `order`: integer
 """
 function setOrder(order)
     ierr = Ref{Cint}()
@@ -1458,10 +1775,14 @@ const set_order = setOrder
 """
     gmsh.model.mesh.getLastEntityError()
 
-Get the last entities (if any) where a meshing error occurred. Currently only
-populated by the new 3D meshing algorithms.
+Get the last entities `dimTags` (given as a vector of (dim, tag) pairs), if any
+where a meshing error occurred. Currently only populated by the new 3D meshing
+algorithms.
 
 Return `dimTags`.
+
+Argument types:
+ - `dimTags`: vector of pairs of integers
 """
 function getLastEntityError()
     api_dimTags_ = Ref{Ptr{Cint}}()
@@ -1480,10 +1801,13 @@ const get_last_entity_error = getLastEntityError
 """
     gmsh.model.mesh.getLastNodeError()
 
-Get the last nodes (if any) where a meshing error occurred. Currently only
-populated by the new 3D meshing algorithms.
+Get the last node tags `nodeTags`, if any, where a meshing error occurred.
+Currently only populated by the new 3D meshing algorithms.
 
 Return `nodeTags`.
+
+Argument types:
+ - `nodeTags`: vector of sizes
 """
 function getLastNodeError()
     api_nodeTags_ = Ref{Ptr{Csize_t}}()
@@ -1502,9 +1826,12 @@ const get_last_node_error = getLastNodeError
     gmsh.model.mesh.clear(dimTags = Tuple{Cint,Cint}[])
 
 Clear the mesh, i.e. delete all the nodes and elements, for the entities
-`dimTags`. If `dimTags` is empty, clear the whole mesh. Note that the mesh of an
-entity can only be cleared if this entity is not on the boundary of another
-entity with a non-empty mesh.
+`dimTags`, given as a vector of (dim, tag) pairs. If `dimTags` is empty, clear
+the whole mesh. Note that the mesh of an entity can only be cleared if this
+entity is not on the boundary of another entity with a non-empty mesh.
+
+Argument types:
+ - `dimTags`: vector of pairs of integers
 """
 function clear(dimTags = Tuple{Cint,Cint}[])
     api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
@@ -1520,8 +1847,12 @@ end
 """
     gmsh.model.mesh.reverse(dimTags = Tuple{Cint,Cint}[])
 
-Reverse the orientation of the elements in the entities `dimTags`. If `dimTags`
-is empty, reverse the orientation of the elements in the whole mesh.
+Reverse the orientation of the elements in the entities `dimTags`, given as a
+vector of (dim, tag) pairs. If `dimTags` is empty, reverse the orientation of
+the elements in the whole mesh.
+
+Argument types:
+ - `dimTags`: vector of pairs of integers
 """
 function reverse(dimTags = Tuple{Cint,Cint}[])
     api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
@@ -1539,8 +1870,12 @@ end
 
 Apply the affine transformation `affineTransform` (16 entries of a 4x4 matrix,
 by row; only the 12 first can be provided for convenience) to the coordinates of
-the nodes classified on the entities `dimTags`. If `dimTags` is empty, transform
-all the nodes in the mesh.
+the nodes classified on the entities `dimTags`, given as a vector of (dim, tag)
+pairs. If `dimTags` is empty, transform all the nodes in the mesh.
+
+Argument types:
+ - `affineTransform`: vector of doubles
+ - `dimTags`: vector of pairs of integers
 """
 function affineTransform(affineTransform, dimTags = Tuple{Cint,Cint}[])
     api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
@@ -1571,6 +1906,15 @@ the entity (which will be reparametrized on the entity if `dim` >= 0 in order to
 compute their parametric coordinates).
 
 Return `nodeTags`, `coord`, `parametricCoord`.
+
+Argument types:
+ - `nodeTags`: vector of sizes
+ - `coord`: vector of doubles
+ - `parametricCoord`: vector of doubles
+ - `dim`: integer
+ - `tag`: integer
+ - `includeBoundary`: boolean
+ - `returnParametricCoord`: boolean
 """
 function getNodes(dim = -1, tag = -1, includeBoundary = false, returnParametricCoord = true)
     api_nodeTags_ = Ref{Ptr{Csize_t}}()
@@ -1598,6 +1942,14 @@ Get the nodes classified on the entity of tag `tag`, for all the elements of
 type `elementType`. The other arguments are treated as in `getNodes`.
 
 Return `nodeTags`, `coord`, `parametricCoord`.
+
+Argument types:
+ - `elementType`: integer
+ - `nodeTags`: vector of sizes
+ - `coord`: vector of doubles
+ - `parametricCoord`: vector of doubles
+ - `tag`: integer
+ - `returnParametricCoord`: boolean
 """
 function getNodesByElementType(elementType, tag = -1, returnParametricCoord = true)
     api_nodeTags_ = Ref{Ptr{Csize_t}}()
@@ -1628,6 +1980,13 @@ of dense node numbering, a map otherwise); for large meshes accessing nodes in
 bulk is often preferable.
 
 Return `coord`, `parametricCoord`, `dim`, `tag`.
+
+Argument types:
+ - `nodeTag`: size
+ - `coord`: vector of doubles
+ - `parametricCoord`: vector of doubles
+ - `dim`: integer
+ - `tag`: integer
 """
 function getNode(nodeTag)
     api_coord_ = Ref{Ptr{Cdouble}}()
@@ -1654,6 +2013,11 @@ Set the coordinates and the parametric coordinates (if any) of the node with tag
 `tag`. This function relies on an internal cache (a vector in case of dense node
 numbering, a map otherwise); for large meshes accessing nodes in bulk is often
 preferable.
+
+Argument types:
+ - `nodeTag`: size
+ - `coord`: vector of doubles
+ - `parametricCoord`: vector of doubles
 """
 function setNode(nodeTag, coord, parametricCoord)
     ierr = Ref{Cint}()
@@ -1669,6 +2033,9 @@ const set_node = setNode
     gmsh.model.mesh.rebuildNodeCache(onlyIfNecessary = true)
 
 Rebuild the node cache.
+
+Argument types:
+ - `onlyIfNecessary`: boolean
 """
 function rebuildNodeCache(onlyIfNecessary = true)
     ierr = Ref{Cint}()
@@ -1684,6 +2051,9 @@ const rebuild_node_cache = rebuildNodeCache
     gmsh.model.mesh.rebuildElementCache(onlyIfNecessary = true)
 
 Rebuild the element cache.
+
+Argument types:
+ - `onlyIfNecessary`: boolean
 """
 function rebuildElementCache(onlyIfNecessary = true)
     ierr = Ref{Cint}()
@@ -1704,6 +2074,12 @@ length 3 times the length of `nodeTags` that contains the x, y, z coordinates of
 the nodes, concatenated: [n1x, n1y, n1z, n2x, ...].
 
 Return `nodeTags`, `coord`.
+
+Argument types:
+ - `dim`: integer
+ - `tag`: integer
+ - `nodeTags`: vector of sizes
+ - `coord`: vector of doubles
 """
 function getNodesForPhysicalGroup(dim, tag)
     api_nodeTags_ = Ref{Ptr{Csize_t}}()
@@ -1727,6 +2103,9 @@ const get_nodes_for_physical_group = getNodesForPhysicalGroup
 Get the maximum tag `maxTag` of a node in the mesh.
 
 Return `maxTag`.
+
+Argument types:
+ - `maxTag`: size
 """
 function getMaxNodeTag()
     api_maxTag_ = Ref{Csize_t}()
@@ -1750,6 +2129,13 @@ identification numbers). `coord` is a vector of length 3 times the length of
 parametric coordinates of the nodes, if any. The length of `parametricCoord` can
 be 0 or `dim` times the length of `nodeTags`. If the `nodeTags` vector is empty,
 new tags are automatically assigned to the nodes.
+
+Argument types:
+ - `dim`: integer
+ - `tag`: integer
+ - `nodeTags`: vector of sizes
+ - `coord`: vector of doubles
+ - `parametricCoord`: vector of doubles
 """
 function addNodes(dim, tag, nodeTags, coord, parametricCoord = Cdouble[])
     ierr = Ref{Cint}()
@@ -1786,6 +2172,10 @@ Relocate the nodes classified on the entity of dimension `dim` and tag `tag`
 using their parametric coordinates. If `tag` < 0, relocate the nodes for all
 entities of dimension `dim`. If `dim` and `tag` are negative, relocate all the
 nodes in the mesh.
+
+Argument types:
+ - `dim`: integer
+ - `tag`: integer
 """
 function relocateNodes(dim = -1, tag = -1)
     ierr = Ref{Cint}()
@@ -1814,6 +2204,13 @@ element, that contains the node tags of all the elements of the given type,
 concatenated: [e1n1, e1n2, ..., e1nN, e2n1, ...].
 
 Return `elementTypes`, `elementTags`, `nodeTags`.
+
+Argument types:
+ - `elementTypes`: vector of integers
+ - `elementTags`: vector of vectors of sizes
+ - `nodeTags`: vector of vectors of sizes
+ - `dim`: integer
+ - `tag`: integer
 """
 function getElements(dim = -1, tag = -1)
     api_elementTypes_ = Ref{Ptr{Cint}}()
@@ -1850,6 +2247,13 @@ numbering, a map otherwise); for large meshes accessing elements in bulk is
 often preferable.
 
 Return `elementType`, `nodeTags`, `dim`, `tag`.
+
+Argument types:
+ - `elementTag`: size
+ - `elementType`: integer
+ - `nodeTags`: vector of sizes
+ - `dim`: integer
+ - `tag`: integer
 """
 function getElement(elementTag)
     api_elementType_ = Ref{Cint}()
@@ -1878,6 +2282,19 @@ only search for elements of the given dimension. If `strict` is not set, use a
 tolerance to find elements near the search location.
 
 Return `elementTag`, `elementType`, `nodeTags`, `u`, `v`, `w`.
+
+Argument types:
+ - `x`: double
+ - `y`: double
+ - `z`: double
+ - `elementTag`: size
+ - `elementType`: integer
+ - `nodeTags`: vector of sizes
+ - `u`: double
+ - `v`: double
+ - `w`: double
+ - `dim`: integer
+ - `strict`: boolean
 """
 function getElementByCoordinates(x, y, z, dim = -1, strict = false)
     api_elementTag_ = Ref{Csize_t}()
@@ -1908,6 +2325,14 @@ accessed through `getElement` and `getLocalCoordinatesInElement`. If `dim` is >=
 a tolerance to find elements near the search location.
 
 Return `elementTags`.
+
+Argument types:
+ - `x`: double
+ - `y`: double
+ - `z`: double
+ - `elementTags`: vector of sizes
+ - `dim`: integer
+ - `strict`: boolean
 """
 function getElementsByCoordinates(x, y, z, dim = -1, strict = false)
     api_elementTags_ = Ref{Ptr{Csize_t}}()
@@ -1931,6 +2356,15 @@ an internal cache (a vector in case of dense element numbering, a map
 otherwise); for large meshes accessing elements in bulk is often preferable.
 
 Return `u`, `v`, `w`.
+
+Argument types:
+ - `elementTag`: size
+ - `x`: double
+ - `y`: double
+ - `z`: double
+ - `u`: double
+ - `v`: double
+ - `w`: double
 """
 function getLocalCoordinatesInElement(elementTag, x, y, z)
     api_u_ = Ref{Cdouble}()
@@ -1953,6 +2387,11 @@ Get the types of elements in the entity of dimension `dim` and tag `tag`. If
 are negative, get all the types in the mesh.
 
 Return `elementTypes`.
+
+Argument types:
+ - `elementTypes`: vector of integers
+ - `dim`: integer
+ - `tag`: integer
 """
 function getElementTypes(dim = -1, tag = -1)
     api_elementTypes_ = Ref{Ptr{Cint}}()
@@ -1975,7 +2414,12 @@ Return an element type given its family name `familyName` ("Point", "Line",
 polynomial order `order`. If `serendip` is true, return the corresponding
 serendip element type (element without interior nodes).
 
-Return an integer value.
+Return an integer.
+
+Argument types:
+ - `familyName`: string
+ - `order`: integer
+ - `serendip`: boolean
 """
 function getElementType(familyName, order, serendip = false)
     ierr = Ref{Cint}()
@@ -1997,6 +2441,15 @@ Get the properties of an element of type `elementType`: its name
 primary (first order) nodes (`numPrimaryNodes`).
 
 Return `elementName`, `dim`, `order`, `numNodes`, `localNodeCoord`, `numPrimaryNodes`.
+
+Argument types:
+ - `elementType`: integer
+ - `elementName`: string
+ - `dim`: integer
+ - `order`: integer
+ - `numNodes`: integer
+ - `localNodeCoord`: vector of doubles
+ - `numPrimaryNodes`: integer
 """
 function getElementProperties(elementType)
     api_elementName_ = Ref{Ptr{Cchar}}()
@@ -2030,6 +2483,14 @@ that contains the node tags of all the elements of the given type, concatenated:
 the part of the data indexed by `task`.
 
 Return `elementTags`, `nodeTags`.
+
+Argument types:
+ - `elementType`: integer
+ - `elementTags`: vector of sizes
+ - `nodeTags`: vector of sizes
+ - `tag`: integer
+ - `task`: size
+ - `numTasks`: size
 """
 function getElementsByType(elementType, tag = -1, task = 0, numTasks = 1)
     api_elementTags_ = Ref{Ptr{Csize_t}}()
@@ -2053,6 +2514,9 @@ const get_elements_by_type = getElementsByType
 Get the maximum tag `maxTag` of an element in the mesh.
 
 Return `maxTag`.
+
+Argument types:
+ - `maxTag`: size
 """
 function getMaxElementTag()
     api_maxTag_ = Ref{Csize_t}()
@@ -2076,6 +2540,13 @@ to circumcribed sphere radius, "volume" for the volume. If `numTasks` > 1, only
 compute and return the part of the data indexed by `task`.
 
 Return `elementsQuality`.
+
+Argument types:
+ - `elementTags`: vector of sizes
+ - `elementsQuality`: vector of doubles
+ - `qualityName`: string
+ - `task`: size
+ - `numTasks`: size
 """
 function getElementQualities(elementTags, qualityName = "minSICN", task = 0, numTasks = 1)
     api_elementsQuality_ = Ref{Ptr{Cdouble}}()
@@ -2102,6 +2573,13 @@ vector of the same length as `types`; each entry is a vector of length equal to
 the number of elements of the given type times the number N of nodes per
 element, that contains the node tags of all the elements of the given type,
 concatenated: [e1n1, e1n2, ..., e1nN, e2n1, ...].
+
+Argument types:
+ - `dim`: integer
+ - `tag`: integer
+ - `elementTypes`: vector of integers
+ - `elementTags`: vector of vectors of integers (size)
+ - `nodeTags`: vector of vectors of integers (size)
 """
 function addElements(dim, tag, elementTypes, elementTags, nodeTags)
     api_elementTags_n_ = [ length(elementTags[i]) for i in 1:length(elementTags) ]
@@ -2125,6 +2603,12 @@ the number of elements times the number N of nodes per element, that contains
 the node tags of all the elements, concatenated: [e1n1, e1n2, ..., e1nN, e2n1,
 ...]. If the `elementTag` vector is empty, new tags are automatically assigned
 to the elements.
+
+Argument types:
+ - `tag`: integer
+ - `elementType`: integer
+ - `elementTags`: vector of sizes
+ - `nodeTags`: vector of sizes
 """
 function addElementsByType(tag, elementType, elementTags, nodeTags)
     ierr = Ref{Cint}()
@@ -2152,6 +2636,12 @@ the G integration points in the reference element: [g1u, g1v, g1w, ..., gGu,
 gGv, gGw]. `weights` contains the associated weights: [g1q, ..., gGq].
 
 Return `localCoord`, `weights`.
+
+Argument types:
+ - `elementType`: integer
+ - `integrationType`: string
+ - `localCoord`: vector of doubles
+ - `weights`: vector of doubles
 """
 function getIntegrationPoints(elementType, integrationType)
     api_localCoord_ = Ref{Ptr{Cdouble}}()
@@ -2174,19 +2664,29 @@ const get_integration_points = getIntegrationPoints
 
 Get the Jacobians of all the elements of type `elementType` classified on the
 entity of tag `tag`, at the G evaluation points `localCoord` given as
-concatenated triplets of coordinates in the reference element [g1u, g1v, g1w,
-..., gGu, gGv, gGw]. Data is returned by element, with elements in the same
-order as in `getElements` and `getElementsByType`. `jacobians` contains for each
-element the 9 entries of the 3x3 Jacobian matrix at each evaluation point. The
-matrix is returned by column: [e1g1Jxu, e1g1Jyu, e1g1Jzu, e1g1Jxv, ..., e1g1Jzw,
-e1g2Jxu, ..., e1gGJzw, e2g1Jxu, ...], with Jxu=dx/du, Jyu=dy/du, etc.
-`determinants` contains for each element the determinant of the Jacobian matrix
-at each evaluation point: [e1g1, e1g2, ... e1gG, e2g1, ...]. `coord` contains
-for each element the x, y, z coordinates of the evaluation points. If `tag` < 0,
-get the Jacobian data for all entities. If `numTasks` > 1, only compute and
-return the part of the data indexed by `task`.
+concatenated u, v, w coordinates in the reference element [g1u, g1v, g1w, ...,
+gGu, gGv, gGw]. Data is returned by element, with elements in the same order as
+in `getElements` and `getElementsByType`. `jacobians` contains for each element
+the 9 entries of the 3x3 Jacobian matrix at each evaluation point. The matrix is
+returned by column: [e1g1Jxu, e1g1Jyu, e1g1Jzu, e1g1Jxv, ..., e1g1Jzw, e1g2Jxu,
+..., e1gGJzw, e2g1Jxu, ...], with Jxu=dx/du, Jyu=dy/du, etc. `determinants`
+contains for each element the determinant of the Jacobian matrix at each
+evaluation point: [e1g1, e1g2, ... e1gG, e2g1, ...]. `coord` contains for each
+element the x, y, z coordinates of the evaluation points. If `tag` < 0, get the
+Jacobian data for all entities. If `numTasks` > 1, only compute and return the
+part of the data indexed by `task`.
 
 Return `jacobians`, `determinants`, `coord`.
+
+Argument types:
+ - `elementType`: integer
+ - `localCoord`: vector of doubles
+ - `jacobians`: vector of doubles
+ - `determinants`: vector of doubles
+ - `coord`: vector of doubles
+ - `tag`: integer
+ - `task`: size
+ - `numTasks`: size
 """
 function getJacobians(elementType, localCoord, tag = -1, task = 0, numTasks = 1)
     api_jacobians_ = Ref{Ptr{Cdouble}}()
@@ -2211,17 +2711,24 @@ const get_jacobians = getJacobians
     gmsh.model.mesh.getJacobian(elementTag, localCoord)
 
 Get the Jacobian for a single element `elementTag`, at the G evaluation points
-`localCoord` given as concatenated triplets of coordinates in the reference
-element [g1u, g1v, g1w, ..., gGu, gGv, gGw]. `jacobians` contains the 9 entries
-of the 3x3 Jacobian matrix at each evaluation point. The matrix is returned by
-column: [e1g1Jxu, e1g1Jyu, e1g1Jzu, e1g1Jxv, ..., e1g1Jzw, e1g2Jxu, ...,
-e1gGJzw, e2g1Jxu, ...], with Jxu=dx/du, Jyu=dy/du, etc. `determinants` contains
-the determinant of the Jacobian matrix at each evaluation point. `coord`
-contains the x, y, z coordinates of the evaluation points. This function relies
-on an internal cache (a vector in case of dense element numbering, a map
-otherwise); for large meshes accessing Jacobians in bulk is often preferable.
+`localCoord` given as concatenated u, v, w coordinates in the reference element
+[g1u, g1v, g1w, ..., gGu, gGv, gGw]. `jacobians` contains the 9 entries of the
+3x3 Jacobian matrix at each evaluation point. The matrix is returned by column:
+[e1g1Jxu, e1g1Jyu, e1g1Jzu, e1g1Jxv, ..., e1g1Jzw, e1g2Jxu, ..., e1gGJzw,
+e2g1Jxu, ...], with Jxu=dx/du, Jyu=dy/du, etc. `determinants` contains the
+determinant of the Jacobian matrix at each evaluation point. `coord` contains
+the x, y, z coordinates of the evaluation points. This function relies on an
+internal cache (a vector in case of dense element numbering, a map otherwise);
+for large meshes accessing Jacobians in bulk is often preferable.
 
 Return `jacobians`, `determinants`, `coord`.
+
+Argument types:
+ - `elementTag`: size
+ - `localCoord`: vector of doubles
+ - `jacobians`: vector of doubles
+ - `determinants`: vector of doubles
+ - `coord`: vector of doubles
 """
 function getJacobian(elementTag, localCoord)
     api_jacobians_ = Ref{Ptr{Cdouble}}()
@@ -2246,8 +2753,8 @@ const get_jacobian = getJacobian
     gmsh.model.mesh.getBasisFunctions(elementType, localCoord, functionSpaceType, wantedOrientations = Cint[])
 
 Get the basis functions of the element of type `elementType` at the evaluation
-points `localCoord` (given as concatenated triplets of coordinates in the
-reference element [g1u, g1v, g1w, ..., gGu, gGv, gGw]), for the function space
+points `localCoord` (given as concatenated u, v, w coordinates in the reference
+element [g1u, g1v, g1w, ..., gGu, gGv, gGw]), for the function space
 `functionSpaceType`. Currently supported function spaces include "Lagrange" and
 "GradLagrange" for isoparametric Lagrange basis functions and their gradient in
 the u, v, w coordinates of the reference element; "LagrangeN" and
@@ -2262,10 +2769,19 @@ g1fN, g2f1, ...] when C == 1 or [g1f1u, g1f1v, g1f1w, g1f2u, ..., g1fNw, g2f1u,
 ...] when C == 3. For basis functions that depend on the orientation of the
 elements, all values for the first orientation are returned first, followed by
 values for the second, etc. `numOrientations` returns the overall number of
-orientations. If `wantedOrientations` is not empty, only return the values for
-the desired orientation indices.
+orientations. If the `wantedOrientations` vector is not empty, only return the
+values for the desired orientation indices.
 
 Return `numComponents`, `basisFunctions`, `numOrientations`.
+
+Argument types:
+ - `elementType`: integer
+ - `localCoord`: vector of doubles
+ - `functionSpaceType`: string
+ - `numComponents`: integer
+ - `basisFunctions`: vector of doubles
+ - `numOrientations`: integer
+ - `wantedOrientations`: vector of integers
 """
 function getBasisFunctions(elementType, localCoord, functionSpaceType, wantedOrientations = Cint[])
     api_numComponents_ = Ref{Cint}()
@@ -2292,6 +2808,14 @@ index in the values returned by `getBasisFunctions`. For Lagrange basis
 functions the call is superfluous as it will return a vector of zeros.
 
 Return `basisFunctionsOrientation`.
+
+Argument types:
+ - `elementType`: integer
+ - `functionSpaceType`: string
+ - `basisFunctionsOrientation`: vector of integers
+ - `tag`: integer
+ - `task`: size
+ - `numTasks`: size
 """
 function getBasisFunctionsOrientation(elementType, functionSpaceType, tag = -1, task = 0, numTasks = 1)
     api_basisFunctionsOrientation_ = Ref{Ptr{Cint}}()
@@ -2312,6 +2836,11 @@ const get_basis_functions_orientation = getBasisFunctionsOrientation
 Get the orientation of a single element `elementTag`.
 
 Return `basisFunctionsOrientation`.
+
+Argument types:
+ - `elementTag`: size
+ - `functionSpaceType`: string
+ - `basisFunctionsOrientation`: integer
 """
 function getBasisFunctionsOrientationForElement(elementTag, functionSpaceType)
     api_basisFunctionsOrientation_ = Ref{Cint}()
@@ -2330,7 +2859,11 @@ const get_basis_functions_orientation_for_element = getBasisFunctionsOrientation
 Get the number of possible orientations for elements of type `elementType` and
 function space named `functionSpaceType`.
 
-Return an integer value.
+Return an integer.
+
+Argument types:
+ - `elementType`: integer
+ - `functionSpaceType`: string
 """
 function getNumberOfOrientations(elementType, functionSpaceType)
     ierr = Ref{Cint}()
@@ -2353,6 +2886,11 @@ is n1 < n2, where n1 and n2 are the tags of the two edge nodes, which
 corresponds to the local orientation of edge-based basis functions as well.
 
 Return `edgeTags`, `edgeOrientations`.
+
+Argument types:
+ - `nodeTags`: vector of sizes
+ - `edgeTags`: vector of sizes
+ - `edgeOrientations`: vector of integers
 """
 function getEdges(nodeTags)
     api_edgeTags_ = Ref{Ptr{Csize_t}}()
@@ -2374,12 +2912,18 @@ const get_edges = getEdges
     gmsh.model.mesh.getFaces(faceType, nodeTags)
 
 Get the global unique mesh face identifiers `faceTags` and orientations
-`faceOrientations` for an input list of node tag triplets (if `faceType` == 3)
-or quadruplets (if `faceType` == 4) defining these faces, concatenated in the
+`faceOrientations` for an input list of a multiple of three (if `faceType` == 3)
+or four (if `faceType` == 4) node tags defining these faces, concatenated in the
 vector `nodeTags`. Mesh faces are created e.g. by `createFaces()`, `getKeys()`
 or `addFaces()`.
 
 Return `faceTags`, `faceOrientations`.
+
+Argument types:
+ - `faceType`: integer
+ - `nodeTags`: vector of sizes
+ - `faceTags`: vector of sizes
+ - `faceOrientations`: vector of integers
 """
 function getFaces(faceType, nodeTags)
     api_faceTags_ = Ref{Ptr{Csize_t}}()
@@ -2400,7 +2944,11 @@ const get_faces = getFaces
 """
     gmsh.model.mesh.createEdges(dimTags = Tuple{Cint,Cint}[])
 
-Create unique mesh edges for the entities `dimTags`.
+Create unique mesh edges for the entities `dimTags`, given as a vector of (dim,
+tag) pairs.
+
+Argument types:
+ - `dimTags`: vector of pairs of integers
 """
 function createEdges(dimTags = Tuple{Cint,Cint}[])
     api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
@@ -2417,7 +2965,11 @@ const create_edges = createEdges
 """
     gmsh.model.mesh.createFaces(dimTags = Tuple{Cint,Cint}[])
 
-Create unique mesh faces for the entities `dimTags`.
+Create unique mesh faces for the entities `dimTags`, given as a vector of (dim,
+tag) pairs.
+
+Argument types:
+ - `dimTags`: vector of pairs of integers
 """
 function createFaces(dimTags = Tuple{Cint,Cint}[])
     api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
@@ -2439,6 +2991,10 @@ edges in the mesh. Mesh edges are created e.g. by `createEdges()`, `getKeys()`
 or addEdges().
 
 Return `edgeTags`, `edgeNodes`.
+
+Argument types:
+ - `edgeTags`: vector of sizes
+ - `edgeNodes`: vector of sizes
 """
 function getAllEdges()
     api_edgeTags_ = Ref{Ptr{Csize_t}}()
@@ -2464,6 +3020,11 @@ faces of type `faceType` in the mesh. Mesh faces are created e.g. by
 `createFaces()`, `getKeys()` or addFaces().
 
 Return `faceTags`, `faceNodes`.
+
+Argument types:
+ - `faceType`: integer
+ - `faceTags`: vector of sizes
+ - `faceNodes`: vector of sizes
 """
 function getAllFaces(faceType)
     api_faceTags_ = Ref{Ptr{Csize_t}}()
@@ -2486,6 +3047,10 @@ const get_all_faces = getAllFaces
 
 Add mesh edges defined by their global unique identifiers `edgeTags` and their
 nodes `edgeNodes`.
+
+Argument types:
+ - `edgeTags`: vector of sizes
+ - `edgeNodes`: vector of sizes
 """
 function addEdges(edgeTags, edgeNodes)
     ierr = Ref{Cint}()
@@ -2502,6 +3067,11 @@ const add_edges = addEdges
 
 Add mesh faces of type `faceType` defined by their global unique identifiers
 `faceTags` and their nodes `faceNodes`.
+
+Argument types:
+ - `faceType`: integer
+ - `faceTags`: vector of sizes
+ - `faceNodes`: vector of sizes
 """
 function addFaces(faceType, faceTags, faceNodes)
     ierr = Ref{Cint}()
@@ -2524,6 +3094,15 @@ locating basis functions for sorting purposes. Warning: this is an experimental
 feature and will probably change in a future release.
 
 Return `typeKeys`, `entityKeys`, `coord`.
+
+Argument types:
+ - `elementType`: integer
+ - `functionSpaceType`: string
+ - `typeKeys`: vector of integers
+ - `entityKeys`: vector of sizes
+ - `coord`: vector of doubles
+ - `tag`: integer
+ - `returnCoord`: boolean
 """
 function getKeys(elementType, functionSpaceType, tag = -1, returnCoord = true)
     api_typeKeys_ = Ref{Ptr{Cint}}()
@@ -2550,6 +3129,14 @@ const get_keys = getKeys
 Get the pair of keys for a single element `elementTag`.
 
 Return `typeKeys`, `entityKeys`, `coord`.
+
+Argument types:
+ - `elementTag`: size
+ - `functionSpaceType`: string
+ - `typeKeys`: vector of integers
+ - `entityKeys`: vector of sizes
+ - `coord`: vector of doubles
+ - `returnCoord`: boolean
 """
 function getKeysForElement(elementTag, functionSpaceType, returnCoord = true)
     api_typeKeys_ = Ref{Ptr{Cint}}()
@@ -2576,7 +3163,11 @@ const get_keys_for_element = getKeysForElement
 Get the number of keys by elements of type `elementType` for function space
 named `functionSpaceType`.
 
-Return an integer value.
+Return an integer.
+
+Argument types:
+ - `elementType`: integer
+ - `functionSpaceType`: string
 """
 function getNumberOfKeys(elementType, functionSpaceType)
     ierr = Ref{Cint}()
@@ -2600,6 +3191,13 @@ Warning: this is an experimental feature and will probably change in a future
 release.
 
 Return `infoKeys`.
+
+Argument types:
+ - `typeKeys`: vector of integers
+ - `entityKeys`: vector of sizes
+ - `elementType`: integer
+ - `functionSpaceType`: string
+ - `infoKeys`: vector of pairs of integers
 """
 function getKeysInformation(typeKeys, entityKeys, elementType, functionSpaceType)
     api_infoKeys_ = Ref{Ptr{Cint}}()
@@ -2626,6 +3224,15 @@ the number of nodes). If `tag` < 0, get the barycenters for all entities. If
 `numTasks` > 1, only compute and return the part of the data indexed by `task`.
 
 Return `barycenters`.
+
+Argument types:
+ - `elementType`: integer
+ - `tag`: integer
+ - `fast`: boolean
+ - `primary`: boolean
+ - `barycenters`: vector of doubles
+ - `task`: size
+ - `numTasks`: size
 """
 function getBarycenters(elementType, tag, fast, primary, task = 0, numTasks = 1)
     api_barycenters_ = Ref{Ptr{Cdouble}}()
@@ -2652,6 +3259,14 @@ If `tag` < 0, get the edge nodes for all entities. If `numTasks` > 1, only
 compute and return the part of the data indexed by `task`.
 
 Return `nodeTags`.
+
+Argument types:
+ - `elementType`: integer
+ - `nodeTags`: vector of sizes
+ - `tag`: integer
+ - `primary`: boolean
+ - `task`: size
+ - `numTasks`: size
 """
 function getElementEdgeNodes(elementType, tag = -1, primary = false, task = 0, numTasks = 1)
     api_nodeTags_ = Ref{Ptr{Csize_t}}()
@@ -2679,6 +3294,15 @@ faces are returned. If `tag` < 0, get the face nodes for all entities. If
 `numTasks` > 1, only compute and return the part of the data indexed by `task`.
 
 Return `nodeTags`.
+
+Argument types:
+ - `elementType`: integer
+ - `faceType`: integer
+ - `nodeTags`: vector of sizes
+ - `tag`: integer
+ - `primary`: boolean
+ - `task`: size
+ - `numTasks`: size
 """
 function getElementFaceNodes(elementType, faceType, tag = -1, primary = false, task = 0, numTasks = 1)
     api_nodeTags_ = Ref{Ptr{Csize_t}}()
@@ -2700,6 +3324,12 @@ Get the ghost elements `elementTags` and their associated `partitions` stored in
 the ghost entity of dimension `dim` and tag `tag`.
 
 Return `elementTags`, `partitions`.
+
+Argument types:
+ - `dim`: integer
+ - `tag`: integer
+ - `elementTags`: vector of sizes
+ - `partitions`: vector of integers
 """
 function getGhostElements(dim, tag)
     api_elementTags_ = Ref{Ptr{Csize_t}}()
@@ -2720,8 +3350,12 @@ const get_ghost_elements = getGhostElements
 """
     gmsh.model.mesh.setSize(dimTags, size)
 
-Set a mesh size constraint on the model entities `dimTags`. Currently only
-entities of dimension 0 (points) are handled.
+Set a mesh size constraint on the model entities `dimTags`, given as a vector of
+(dim, tag) pairs. Currently only entities of dimension 0 (points) are handled.
+
+Argument types:
+ - `dimTags`: vector of pairs of integers
+ - `size`: double
 """
 function setSize(dimTags, size)
     api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
@@ -2739,10 +3373,15 @@ const set_size = setSize
     gmsh.model.mesh.getSizes(dimTags)
 
 Get the mesh size constraints (if any) associated with the model entities
-`dimTags`. A zero entry in the output `sizes` vector indicates that no size
-constraint is specified on the corresponding entity.
+`dimTags`, given as a vector of (dim, tag) pairs. A zero entry in the output
+`sizes` vector indicates that no size constraint is specified on the
+corresponding entity.
 
 Return `sizes`.
+
+Argument types:
+ - `dimTags`: vector of pairs of integers
+ - `sizes`: vector of doubles
 """
 function getSizes(dimTags)
     api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
@@ -2765,6 +3404,12 @@ const get_sizes = getSizes
 Set mesh size constraints at the given parametric points `parametricCoord` on
 the model entity of dimension `dim` and tag `tag`. Currently only entities of
 dimension 1 (lines) are handled.
+
+Argument types:
+ - `dim`: integer
+ - `tag`: integer
+ - `parametricCoord`: vector of doubles
+ - `sizes`: vector of doubles
 """
 function setSizeAtParametricPoints(dim, tag, parametricCoord, sizes)
     ierr = Ref{Cint}()
@@ -2787,6 +3432,9 @@ coordinates `x`, `y` and `z` around which to prescribe the mesh size and to the
 mesh size `lc` that would be prescribed if the callback had not been called. The
 callback function should return a double precision number specifying the desired
 mesh size; returning `lc` is equivalent to a no-op.
+
+Argument types:
+ - `callback`: 
 """
 function setSizeCallback(callback)
     api_callback__(dim, tag, x, y, z, lc, data) = callback(dim, tag, x, y, z, lc)
@@ -2822,6 +3470,12 @@ Set a transfinite meshing constraint on the curve `tag`, with `numNodes` nodes
 distributed according to `meshType` and `coef`. Currently supported types are
 "Progression" (geometrical progression with power `coef`), "Bump" (refinement
 toward both extremities of the curve) and "Beta" (beta law).
+
+Argument types:
+ - `tag`: integer
+ - `numNodes`: integer
+ - `meshType`: string
+ - `coef`: double
 """
 function setTransfiniteCurve(tag, numNodes, meshType = "Progression", coef = 1.)
     ierr = Ref{Cint}()
@@ -2842,6 +3496,11 @@ recombined: currently supported values are "Left", "Right", "AlternateLeft" and
 "AlternateRight". `cornerTags` can be used to specify the (3 or 4) corners of
 the transfinite interpolation explicitly; specifying the corners explicitly is
 mandatory if the surface has more that 3 or 4 points on its boundary.
+
+Argument types:
+ - `tag`: integer
+ - `arrangement`: string
+ - `cornerTags`: vector of integers
 """
 function setTransfiniteSurface(tag, arrangement = "Left", cornerTags = Cint[])
     ierr = Ref{Cint}()
@@ -2859,6 +3518,10 @@ const set_transfinite_surface = setTransfiniteSurface
 Set a transfinite meshing constraint on the surface `tag`. `cornerTags` can be
 used to specify the (6 or 8) corners of the transfinite interpolation
 explicitly.
+
+Argument types:
+ - `tag`: integer
+ - `cornerTags`: vector of integers
 """
 function setTransfiniteVolume(tag, cornerTags = Cint[])
     ierr = Ref{Cint}()
@@ -2873,13 +3536,19 @@ const set_transfinite_volume = setTransfiniteVolume
 """
     gmsh.model.mesh.setTransfiniteAutomatic(dimTags = Tuple{Cint,Cint}[], cornerAngle = 2.35, recombine = true)
 
-Set transfinite meshing constraints on the model entities in `dimTag`.
-Transfinite meshing constraints are added to the curves of the quadrangular
-surfaces and to the faces of 6-sided volumes. Quadragular faces with a corner
-angle superior to `cornerAngle` (in radians) are ignored. The number of points
-is automatically determined from the sizing constraints. If `dimTag` is empty,
-the constraints are applied to all entities in the model. If `recombine` is
-true, the recombine flag is automatically set on the transfinite surfaces.
+Set transfinite meshing constraints on the model entities in `dimTags`, given as
+a vector of (dim, tag) pairs. Transfinite meshing constraints are added to the
+curves of the quadrangular surfaces and to the faces of 6-sided volumes.
+Quadragular faces with a corner angle superior to `cornerAngle` (in radians) are
+ignored. The number of points is automatically determined from the sizing
+constraints. If `dimTag` is empty, the constraints are applied to all entities
+in the model. If `recombine` is true, the recombine flag is automatically set on
+the transfinite surfaces.
+
+Argument types:
+ - `dimTags`: vector of pairs of integers
+ - `cornerAngle`: double
+ - `recombine`: boolean
 """
 function setTransfiniteAutomatic(dimTags = Tuple{Cint,Cint}[], cornerAngle = 2.35, recombine = true)
     api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
@@ -2900,6 +3569,11 @@ Set a recombination meshing constraint on the model entity of dimension `dim`
 and tag `tag`. Currently only entities of dimension 2 (to recombine triangles
 into quadrangles) are supported; `angle` specifies the threshold angle for the
 simple recombination algorithm..
+
+Argument types:
+ - `dim`: integer
+ - `tag`: integer
+ - `angle`: double
 """
 function setRecombine(dim, tag, angle = 45.)
     ierr = Ref{Cint}()
@@ -2916,6 +3590,11 @@ const set_recombine = setRecombine
 
 Set a smoothing meshing constraint on the model entity of dimension `dim` and
 tag `tag`. `val` iterations of a Laplace smoother are applied.
+
+Argument types:
+ - `dim`: integer
+ - `tag`: integer
+ - `val`: integer
 """
 function setSmoothing(dim, tag, val)
     ierr = Ref{Cint}()
@@ -2934,6 +3613,11 @@ Set a reverse meshing constraint on the model entity of dimension `dim` and tag
 `tag`. If `val` is true, the mesh orientation will be reversed with respect to
 the natural mesh orientation (i.e. the orientation consistent with the
 orientation of the geometry). If `val` is false, the mesh is left as-is.
+
+Argument types:
+ - `dim`: integer
+ - `tag`: integer
+ - `val`: boolean
 """
 function setReverse(dim, tag, val = true)
     ierr = Ref{Cint}()
@@ -2950,6 +3634,11 @@ const set_reverse = setReverse
 
 Set the meshing algorithm on the model entity of dimension `dim` and tag `tag`.
 Currently only supported for `dim` == 2.
+
+Argument types:
+ - `dim`: integer
+ - `tag`: integer
+ - `val`: integer
 """
 function setAlgorithm(dim, tag, val)
     ierr = Ref{Cint}()
@@ -2967,6 +3656,11 @@ const set_algorithm = setAlgorithm
 Force the mesh size to be extended from the boundary, or not, for the model
 entity of dimension `dim` and tag `tag`. Currently only supported for `dim` ==
 2.
+
+Argument types:
+ - `dim`: integer
+ - `tag`: integer
+ - `val`: integer
 """
 function setSizeFromBoundary(dim, tag, val)
     ierr = Ref{Cint}()
@@ -2984,6 +3678,10 @@ const set_size_from_boundary = setSizeFromBoundary
 Set a compound meshing constraint on the model entities of dimension `dim` and
 tags `tags`. During meshing, compound entities are treated as a single discrete
 entity, which is automatically reparametrized.
+
+Argument types:
+ - `dim`: integer
+ - `tags`: vector of integers
 """
 function setCompound(dim, tags)
     ierr = Ref{Cint}()
@@ -3002,6 +3700,9 @@ Set meshing constraints on the bounding surfaces of the volume of tag `tag` so
 that all surfaces are oriented with outward pointing normals; and if a mesh
 already exists, reorient it. Currently only available with the OpenCASCADE
 kernel, as it relies on the STL triangulation.
+
+Argument types:
+ - `tag`: integer
 """
 function setOutwardOrientation(tag)
     ierr = Ref{Cint}()
@@ -3016,8 +3717,11 @@ const set_outward_orientation = setOutwardOrientation
 """
     gmsh.model.mesh.removeConstraints(dimTags = Tuple{Cint,Cint}[])
 
-Remove all meshing constraints from the model entities `dimTags`. If `dimTags`
-is empty, remove all constraings.
+Remove all meshing constraints from the model entities `dimTags`, given as a
+vector of (dim, tag) pairs. If `dimTags` is empty, remove all constraings.
+
+Argument types:
+ - `dimTags`: vector of pairs of integers
 """
 function removeConstraints(dimTags = Tuple{Cint,Cint}[])
     api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
@@ -3042,6 +3746,12 @@ mesh will conform to the mesh of the embedded entities. With the OpenCASCADE
 kernel, if the `fragment` operation is applied to entities of different
 dimensions, the lower dimensional entities will be automatically embedded in the
 higher dimensional entities if they are not on their boundary.
+
+Argument types:
+ - `dim`: integer
+ - `tags`: vector of integers
+ - `inDim`: integer
+ - `inTag`: integer
 """
 function embed(dim, tags, inDim, inTag)
     ierr = Ref{Cint}()
@@ -3055,9 +3765,13 @@ end
 """
     gmsh.model.mesh.removeEmbedded(dimTags, dim = -1)
 
-Remove embedded entities from the model entities `dimTags`. if `dim` is >= 0,
-only remove embedded entities of the given dimension (e.g. embedded points if
-`dim` == 0).
+Remove embedded entities from the model entities `dimTags`, given as a vector of
+(dim, tag) pairs. if `dim` is >= 0, only remove embedded entities of the given
+dimension (e.g. embedded points if `dim` == 0).
+
+Argument types:
+ - `dimTags`: vector of pairs of integers
+ - `dim`: integer
 """
 function removeEmbedded(dimTags, dim = -1)
     api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
@@ -3078,6 +3792,11 @@ Get the entities (if any) embedded in the model entity of dimension `dim` and
 tag `tag`.
 
 Return `dimTags`.
+
+Argument types:
+ - `dim`: integer
+ - `tag`: integer
+ - `dimTags`: vector of pairs of integers
 """
 function getEmbedded(dim, tag)
     api_dimTags_ = Ref{Ptr{Cint}}()
@@ -3097,7 +3816,12 @@ const get_embedded = getEmbedded
     gmsh.model.mesh.reorderElements(elementType, tag, ordering)
 
 Reorder the elements of type `elementType` classified on the entity of tag `tag`
-according to `ordering`.
+according to the `ordering` vector.
+
+Argument types:
+ - `elementType`: integer
+ - `tag`: integer
+ - `ordering`: vector of sizes
 """
 function reorderElements(elementType, tag, ordering)
     ierr = Ref{Cint}()
@@ -3149,6 +3873,12 @@ used after meshing, generate the periodic node correspondence information
 assuming the meshes of entities `tags` effectively match the meshes of entities
 `tagsMaster` (useful for structured and extruded meshes). Currently only
 available for @code{dim} == 1 and @code{dim} == 2.
+
+Argument types:
+ - `dim`: integer
+ - `tags`: vector of integers
+ - `tagsMaster`: vector of integers
+ - `affineTransform`: vector of doubles
 """
 function setPeriodic(dim, tags, tagsMaster, affineTransform)
     ierr = Ref{Cint}()
@@ -3167,6 +3897,11 @@ Get master entities `tagsMaster` for the entities of dimension `dim` and tags
 `tags`.
 
 Return `tagMaster`.
+
+Argument types:
+ - `dim`: integer
+ - `tags`: vector of integers
+ - `tagMaster`: vector of integers
 """
 function getPeriodic(dim, tags)
     api_tagMaster_ = Ref{Ptr{Cint}}()
@@ -3190,6 +3925,15 @@ corresponding master node tags `nodeTagsMaster`, and the affine transform
 `includeHighOrderNodes` is set, include high-order nodes in the returned data.
 
 Return `tagMaster`, `nodeTags`, `nodeTagsMaster`, `affineTransform`.
+
+Argument types:
+ - `dim`: integer
+ - `tag`: integer
+ - `tagMaster`: integer
+ - `nodeTags`: vector of sizes
+ - `nodeTagsMaster`: vector of sizes
+ - `affineTransform`: vector of doubles
+ - `includeHighOrderNodes`: boolean
 """
 function getPeriodicNodes(dim, tag, includeHighOrderNodes = false)
     api_tagMaster_ = Ref{Cint}()
@@ -3222,6 +3966,19 @@ space type `functionSpaceType`. If `returnCoord` is set, the `coord` and
 for sorting purposes.
 
 Return `tagMaster`, `typeKeys`, `typeKeysMaster`, `entityKeys`, `entityKeysMaster`, `coord`, `coordMaster`.
+
+Argument types:
+ - `elementType`: integer
+ - `functionSpaceType`: string
+ - `tag`: integer
+ - `tagMaster`: integer
+ - `typeKeys`: vector of integers
+ - `typeKeysMaster`: vector of integers
+ - `entityKeys`: vector of sizes
+ - `entityKeysMaster`: vector of sizes
+ - `coord`: vector of doubles
+ - `coordMaster`: vector of doubles
+ - `returnCoord`: boolean
 """
 function getPeriodicKeys(elementType, functionSpaceType, tag, returnCoord = true)
     api_tagMaster_ = Ref{Cint}()
@@ -3270,10 +4027,15 @@ const import_stl = importStl
 """
     gmsh.model.mesh.getDuplicateNodes(dimTags = Tuple{Cint,Cint}[])
 
-Get the `tags` of any duplicate nodes in the mesh of the entities `dimTags`. If
-`dimTags` is empty, consider the whole mesh.
+Get the `tags` of any duplicate nodes in the mesh of the entities `dimTags`,
+given as a vector of (dim, tag) pairs. If `dimTags` is empty, consider the whole
+mesh.
 
 Return `tags`.
+
+Argument types:
+ - `tags`: vector of sizes
+ - `dimTags`: vector of pairs of integers
 """
 function getDuplicateNodes(dimTags = Tuple{Cint,Cint}[])
     api_tags_ = Ref{Ptr{Csize_t}}()
@@ -3293,8 +4055,11 @@ const get_duplicate_nodes = getDuplicateNodes
 """
     gmsh.model.mesh.removeDuplicateNodes(dimTags = Tuple{Cint,Cint}[])
 
-Remove duplicate nodes in the mesh of the entities `dimTags`. If `dimTags` is
-empty, consider the whole mesh.
+Remove duplicate nodes in the mesh of the entities `dimTags`, given as a vector
+of (dim, tag) pairs. If `dimTags` is empty, consider the whole mesh.
+
+Argument types:
+ - `dimTags`: vector of pairs of integers
 """
 function removeDuplicateNodes(dimTags = Tuple{Cint,Cint}[])
     api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
@@ -3312,7 +4077,11 @@ const remove_duplicate_nodes = removeDuplicateNodes
     gmsh.model.mesh.removeDuplicateElements(dimTags = Tuple{Cint,Cint}[])
 
 Remove duplicate elements (defined by the same nodes, in the same entity) in the
-mesh of the entities `dimTags`. If `dimTags` is empty, consider the whole mesh.
+mesh of the entities `dimTags`, given as a vector of (dim, tag) pairs. If
+`dimTags` is empty, consider the whole mesh.
+
+Argument types:
+ - `dimTags`: vector of pairs of integers
 """
 function removeDuplicateElements(dimTags = Tuple{Cint,Cint}[])
     api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
@@ -3331,6 +4100,10 @@ const remove_duplicate_elements = removeDuplicateElements
 
 Split (into two triangles) all quadrangles in surface `tag` whose quality is
 lower than `quality`. If `tag` < 0, split quadrangles in all surfaces.
+
+Argument types:
+ - `quality`: double
+ - `tag`: integer
 """
 function splitQuadrangles(quality = 1., tag = -1)
     ierr = Ref{Cint}()
@@ -3346,6 +4119,10 @@ const split_quadrangles = splitQuadrangles
     gmsh.model.mesh.setVisibility(elementTags, value)
 
 Set the visibility of the elements of tags `elementTags` to `value`.
+
+Argument types:
+ - `elementTags`: vector of sizes
+ - `value`: integer
 """
 function setVisibility(elementTags, value)
     ierr = Ref{Cint}()
@@ -3368,6 +4145,13 @@ reparametrized using a single map. If `curveAngle` is less than Pi, also force
 curves to be split according to `curveAngle`. If `exportDiscrete` is set, clear
 any built-in CAD kernel entities and export the discrete entities in the built-
 in CAD kernel.
+
+Argument types:
+ - `angle`: double
+ - `boundary`: boolean
+ - `forReparametrization`: boolean
+ - `curveAngle`: double
+ - `exportDiscrete`: boolean
 """
 function classifySurfaces(angle, boundary = true, forReparametrization = false, curveAngle = pi, exportDiscrete = true)
     ierr = Ref{Cint}()
@@ -3382,11 +4166,14 @@ const classify_surfaces = classifySurfaces
 """
     gmsh.model.mesh.createGeometry(dimTags = Tuple{Cint,Cint}[])
 
-Create a geometry for the discrete entities `dimTags` (represented solely by a
-mesh, without an underlying CAD description), i.e. create a parametrization for
-discrete curves and surfaces, assuming that each can be parametrized with a
-single map. If `dimTags` is empty, create a geometry for all the discrete
-entities.
+Create a geometry for the discrete entities `dimTags` (given as a vector of
+(dim, tag) pairs) represented solely by a mesh (without an underlying CAD
+description), i.e. create a parametrization for discrete curves and surfaces,
+assuming that each can be parametrized with a single map. If `dimTags` is empty,
+create a geometry for all the discrete entities.
+
+Argument types:
+ - `dimTags`: vector of pairs of integers
 """
 function createGeometry(dimTags = Tuple{Cint,Cint}[])
     api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
@@ -3408,6 +4195,10 @@ Create a boundary representation from the mesh if the model does not have one
 underlying model). If `makeSimplyConnected` is set, enforce simply connected
 discrete surfaces and volumes. If `exportDiscrete` is set, clear any built-in
 CAD kernel entities and export the discrete entities in the built-in CAD kernel.
+
+Argument types:
+ - `makeSimplyConnected`: boolean
+ - `exportDiscrete`: boolean
 """
 function createTopology(makeSimplyConnected = true, exportDiscrete = true)
     ierr = Ref{Cint}()
@@ -3432,6 +4223,12 @@ be computed are given in the list `dim`; if empty, all bases are computed.
 Resulting basis representation (co)chains are stored as physical groups in the
 mesh. If the request is added before mesh generation, the computation will be
 performed at the end of the meshing pipeline.
+
+Argument types:
+ - `type`: string
+ - `domainTags`: vector of integers
+ - `subdomainTags`: vector of integers
+ - `dims`: vector of integers
 """
 function addHomologyRequest(type = "Homology", domainTags = Cint[], subdomainTags = Cint[], dims = Cint[])
     ierr = Ref{Cint}()
@@ -3462,9 +4259,13 @@ const clear_homology_requests = clearHomologyRequests
     gmsh.model.mesh.computeHomology()
 
 Perform the (co)homology computations requested by addHomologyRequest(). The
-newly created physical groups are returned in `dimTags`.
+newly created physical groups are returned in `dimTags` as a vector of (dim,
+tag) pairs.
 
 Return `dimTags`.
+
+Argument types:
+ - `dimTags`: vector of pairs of integers
 """
 function computeHomology()
     api_dimTags_ = Ref{Ptr{Cint}}()
@@ -3487,6 +4288,9 @@ Compute a cross field for the current mesh. The function creates 3 views: the H
 function, the Theta function and cross directions. Return the tags of the views.
 
 Return `viewTags`.
+
+Argument types:
+ - `viewTags`: vector of integers
 """
 function computeCrossField()
     api_viewTags_ = Ref{Ptr{Cint}}()
@@ -3509,6 +4313,10 @@ and return the node tags (with numbering starting at 1) of the resulting
 triangles in `tri`.
 
 Return `tri`.
+
+Argument types:
+ - `coord`: vector of doubles
+ - `tri`: vector of sizes
 """
 function triangulate(coord)
     api_tri_ = Ref{Ptr{Csize_t}}()
@@ -3525,11 +4333,15 @@ end
 """
     gmsh.model.mesh.tetrahedralize(coord)
 
-Tetrahedralize the points given in the `coord` vector as triplets of x, y, z
-coordinates, and return the node tags (with numbering starting at 1) of the
+Tetrahedralize the points given in the `coord` vector as x, y, z coordinates,
+concatenated, and return the node tags (with numbering starting at 1) of the
 resulting tetrahedra in `tetra`.
 
 Return `tetra`.
+
+Argument types:
+ - `coord`: vector of doubles
+ - `tetra`: vector of sizes
 """
 function tetrahedralize(coord)
     api_tetra_ = Ref{Ptr{Csize_t}}()
@@ -3559,7 +4371,11 @@ Add a new mesh size field of type `fieldType`. If `tag` is positive, assign the
 tag explicitly; otherwise a new tag is assigned automatically. Return the field
 tag.
 
-Return an integer value.
+Return an integer.
+
+Argument types:
+ - `fieldType`: string
+ - `tag`: integer
 """
 function add(fieldType, tag = -1)
     ierr = Ref{Cint}()
@@ -3574,6 +4390,9 @@ end
     gmsh.model.mesh.field.remove(tag)
 
 Remove the field with tag `tag`.
+
+Argument types:
+ - `tag`: integer
 """
 function remove(tag)
     ierr = Ref{Cint}()
@@ -3590,6 +4409,9 @@ end
 Get the list of all fields.
 
 Return `tags`.
+
+Argument types:
+ - `tags`: vector of integers
 """
 function list()
     api_tags_ = Ref{Ptr{Cint}}()
@@ -3609,6 +4431,10 @@ end
 Get the type `fieldType` of the field with tag `tag`.
 
 Return `fileType`.
+
+Argument types:
+ - `tag`: integer
+ - `fileType`: string
 """
 function getType(tag)
     api_fileType_ = Ref{Ptr{Cchar}}()
@@ -3626,6 +4452,11 @@ const get_type = getType
     gmsh.model.mesh.field.setNumber(tag, option, value)
 
 Set the numerical option `option` to value `value` for field `tag`.
+
+Argument types:
+ - `tag`: integer
+ - `option`: string
+ - `value`: double
 """
 function setNumber(tag, option, value)
     ierr = Ref{Cint}()
@@ -3643,6 +4474,11 @@ const set_number = setNumber
 Get the value of the numerical option `option` for field `tag`.
 
 Return `value`.
+
+Argument types:
+ - `tag`: integer
+ - `option`: string
+ - `value`: double
 """
 function getNumber(tag, option)
     api_value_ = Ref{Cdouble}()
@@ -3659,6 +4495,11 @@ const get_number = getNumber
     gmsh.model.mesh.field.setString(tag, option, value)
 
 Set the string option `option` to value `value` for field `tag`.
+
+Argument types:
+ - `tag`: integer
+ - `option`: string
+ - `value`: string
 """
 function setString(tag, option, value)
     ierr = Ref{Cint}()
@@ -3676,6 +4517,11 @@ const set_string = setString
 Get the value of the string option `option` for field `tag`.
 
 Return `value`.
+
+Argument types:
+ - `tag`: integer
+ - `option`: string
+ - `value`: string
 """
 function getString(tag, option)
     api_value_ = Ref{Ptr{Cchar}}()
@@ -3690,15 +4536,20 @@ end
 const get_string = getString
 
 """
-    gmsh.model.mesh.field.setNumbers(tag, option, value)
+    gmsh.model.mesh.field.setNumbers(tag, option, values)
 
-Set the numerical list option `option` to value `value` for field `tag`.
+Set the numerical list option `option` to value `values` for field `tag`.
+
+Argument types:
+ - `tag`: integer
+ - `option`: string
+ - `values`: vector of doubles
 """
-function setNumbers(tag, option, value)
+function setNumbers(tag, option, values)
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshFieldSetNumbers, gmsh.lib), Cvoid,
           (Cint, Ptr{Cchar}, Ptr{Cdouble}, Csize_t, Ptr{Cint}),
-          tag, option, convert(Vector{Cdouble}, value), length(value), ierr)
+          tag, option, convert(Vector{Cdouble}, values), length(values), ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
@@ -3709,18 +4560,23 @@ const set_numbers = setNumbers
 
 Get the value of the numerical list option `option` for field `tag`.
 
-Return `value`.
+Return `values`.
+
+Argument types:
+ - `tag`: integer
+ - `option`: string
+ - `values`: vector of doubles
 """
 function getNumbers(tag, option)
-    api_value_ = Ref{Ptr{Cdouble}}()
-    api_value_n_ = Ref{Csize_t}()
+    api_values_ = Ref{Ptr{Cdouble}}()
+    api_values_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshFieldGetNumbers, gmsh.lib), Cvoid,
           (Cint, Ptr{Cchar}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
-          tag, option, api_value_, api_value_n_, ierr)
+          tag, option, api_values_, api_values_n_, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    value = unsafe_wrap(Array, api_value_[], api_value_n_[], own = true)
-    return value
+    values = unsafe_wrap(Array, api_values_[], api_values_n_[], own = true)
+    return values
 end
 const get_numbers = getNumbers
 
@@ -3728,6 +4584,9 @@ const get_numbers = getNumbers
     gmsh.model.mesh.field.setAsBackgroundMesh(tag)
 
 Set the field `tag` as the background mesh size field.
+
+Argument types:
+ - `tag`: integer
 """
 function setAsBackgroundMesh(tag)
     ierr = Ref{Cint}()
@@ -3743,6 +4602,9 @@ const set_as_background_mesh = setAsBackgroundMesh
     gmsh.model.mesh.field.setAsBoundaryLayer(tag)
 
 Set the field `tag` as a boundary layer size field.
+
+Argument types:
+ - `tag`: integer
 """
 function setAsBoundaryLayer(tag)
     ierr = Ref{Cint}()
@@ -3777,7 +4639,14 @@ automatically. Return the tag of the point. (Note that the point will be added
 in the current model only after `synchronize` is called. This behavior holds for
 all the entities added in the geo module.)
 
-Return an integer value.
+Return an integer.
+
+Argument types:
+ - `x`: double
+ - `y`: double
+ - `z`: double
+ - `meshSize`: double
+ - `tag`: integer
 """
 function addPoint(x, y, z, meshSize = 0., tag = -1)
     ierr = Ref{Cint}()
@@ -3797,7 +4666,12 @@ points with tags `startTag` and `endTag`. If `tag` is positive, set the tag
 explicitly; otherwise a new tag is selected automatically. Return the tag of the
 line.
 
-Return an integer value.
+Return an integer.
+
+Argument types:
+ - `startTag`: integer
+ - `endTag`: integer
+ - `tag`: integer
 """
 function addLine(startTag, endTag, tag = -1)
     ierr = Ref{Cint}()
@@ -3818,7 +4692,16 @@ between the two points with tags `startTag` and `endTag`, and with center
 is selected automatically. If (`nx`, `ny`, `nz`) != (0, 0, 0), explicitly set
 the plane of the circle arc. Return the tag of the circle arc.
 
-Return an integer value.
+Return an integer.
+
+Argument types:
+ - `startTag`: integer
+ - `centerTag`: integer
+ - `endTag`: integer
+ - `tag`: integer
+ - `nx`: double
+ - `ny`: double
+ - `nz`: double
 """
 function addCircleArc(startTag, centerTag, endTag, tag = -1, nx = 0., ny = 0., nz = 0.)
     ierr = Ref{Cint}()
@@ -3840,7 +4723,17 @@ explicitly; otherwise a new tag is selected automatically. If (`nx`, `ny`, `nz`)
 != (0, 0, 0), explicitly set the plane of the circle arc. Return the tag of the
 ellipse arc.
 
-Return an integer value.
+Return an integer.
+
+Argument types:
+ - `startTag`: integer
+ - `centerTag`: integer
+ - `majorTag`: integer
+ - `endTag`: integer
+ - `tag`: integer
+ - `nx`: double
+ - `ny`: double
+ - `nz`: double
 """
 function addEllipseArc(startTag, centerTag, majorTag, endTag, tag = -1, nx = 0., ny = 0., nz = 0.)
     ierr = Ref{Cint}()
@@ -3860,7 +4753,11 @@ through the points `pointTags`. If `tag` is positive, set the tag explicitly;
 otherwise a new tag is selected automatically. Create a periodic curve if the
 first and last points are the same. Return the tag of the spline curve.
 
-Return an integer value.
+Return an integer.
+
+Argument types:
+ - `pointTags`: vector of integers
+ - `tag`: integer
 """
 function addSpline(pointTags, tag = -1)
     ierr = Ref{Cint}()
@@ -3880,7 +4777,11 @@ control points. If `tag` is positive, set the tag explicitly; otherwise a new
 tag is selected automatically. Creates a periodic curve if the first and last
 points are the same. Return the tag of the b-spline curve.
 
-Return an integer value.
+Return an integer.
+
+Argument types:
+ - `pointTags`: vector of integers
+ - `tag`: integer
 """
 function addBSpline(pointTags, tag = -1)
     ierr = Ref{Cint}()
@@ -3899,7 +4800,11 @@ Add a Bezier curve in the built-in CAD representation, with `pointTags` control
 points. If `tag` is positive, set the tag explicitly; otherwise a new tag is
 selected automatically.  Return the tag of the Bezier curve.
 
-Return an integer value.
+Return an integer.
+
+Argument types:
+ - `pointTags`: vector of integers
+ - `tag`: integer
 """
 function addBezier(pointTags, tag = -1)
     ierr = Ref{Cint}()
@@ -3919,7 +4824,11 @@ points `pointTags`. If `tag` is positive, set the tag explicitly; otherwise a
 new tag is selected automatically. Create a periodic curve if the first and last
 points are the same. Return the tag of the polyline curve.
 
-Return an integer value.
+Return an integer.
+
+Argument types:
+ - `pointTags`: vector of integers
+ - `tag`: integer
 """
 function addPolyline(pointTags, tag = -1)
     ierr = Ref{Cint}()
@@ -3940,7 +4849,12 @@ points on each curve is governed by `numIntervals`. If `tag` is positive, set
 the tag explicitly; otherwise a new tag is selected automatically. Return the
 tag of the spline.
 
-Return an integer value.
+Return an integer.
+
+Argument types:
+ - `curveTags`: vector of integers
+ - `numIntervals`: integer
+ - `tag`: integer
 """
 function addCompoundSpline(curveTags, numIntervals = 5, tag = -1)
     ierr = Ref{Cint}()
@@ -3960,7 +4874,12 @@ sampling the curves in `curveTags`. The density of sampling points on each curve
 is governed by `numIntervals`. If `tag` is positive, set the tag explicitly;
 otherwise a new tag is selected automatically. Return the tag of the b-spline.
 
-Return an integer value.
+Return an integer.
+
+Argument types:
+ - `curveTags`: vector of integers
+ - `numIntervals`: integer
+ - `tag`: integer
 """
 function addCompoundBSpline(curveTags, numIntervals = 20, tag = -1)
     ierr = Ref{Cint}()
@@ -3983,7 +4902,12 @@ set the tag explicitly; otherwise a new tag is selected automatically. If
 `reorient` is set, automatically reorient the curves if necessary. Return the
 tag of the curve loop.
 
-Return an integer value.
+Return an integer.
+
+Argument types:
+ - `curveTags`: vector of integers
+ - `tag`: integer
+ - `reorient`: boolean
 """
 function addCurveLoop(curveTags, tag = -1, reorient = false)
     ierr = Ref{Cint}()
@@ -4002,6 +4926,10 @@ Add curve loops in the built-in CAD representation based on the curves
 `curveTags`. Return the `tags` of found curve loops, if any.
 
 Return `tags`.
+
+Argument types:
+ - `curveTags`: vector of integers
+ - `tags`: vector of integers
 """
 function addCurveLoops(curveTags)
     api_tags_ = Ref{Ptr{Cint}}()
@@ -4025,7 +4953,11 @@ additional curve loop define holes. If `tag` is positive, set the tag
 explicitly; otherwise a new tag is selected automatically. Return the tag of the
 surface.
 
-Return an integer value.
+Return an integer.
+
+Argument types:
+ - `wireTags`: vector of integers
+ - `tag`: integer
 """
 function addPlaneSurface(wireTags, tag = -1)
     ierr = Ref{Cint}()
@@ -4046,7 +4978,12 @@ is supported; this curve loop should be composed by 3 or 4 curves only. If `tag`
 is positive, set the tag explicitly; otherwise a new tag is selected
 automatically. Return the tag of the surface.
 
-Return an integer value.
+Return an integer.
+
+Argument types:
+ - `wireTags`: vector of integers
+ - `tag`: integer
+ - `sphereCenterTag`: integer
 """
 function addSurfaceFilling(wireTags, tag = -1, sphereCenterTag = -1)
     ierr = Ref{Cint}()
@@ -4065,7 +5002,11 @@ Add a surface loop (a closed shell) formed by `surfaceTags` in the built-in CAD
 representation.  If `tag` is positive, set the tag explicitly; otherwise a new
 tag is selected automatically. Return the tag of the shell.
 
-Return an integer value.
+Return an integer.
+
+Argument types:
+ - `surfaceTags`: vector of integers
+ - `tag`: integer
 """
 function addSurfaceLoop(surfaceTags, tag = -1)
     ierr = Ref{Cint}()
@@ -4086,7 +5027,11 @@ additional surface loop define holes. If `tag` is positive, set the tag
 explicitly; otherwise a new tag is selected automatically. Return the tag of the
 volume.
 
-Return an integer value.
+Return an integer.
+
+Argument types:
+ - `shellTags`: vector of integers
+ - `tag`: integer
 """
 function addVolume(shellTags, tag = -1)
     ierr = Ref{Cint}()
@@ -4108,7 +5053,13 @@ coordinates of the center, followed by the radius), or "Parametric" (where
 coordinates. If `tag` is positive, set the tag of the geometry explicitly;
 otherwise a new tag is selected automatically. Return the tag of the geometry.
 
-Return an integer value.
+Return an integer.
+
+Argument types:
+ - `geometry`: string
+ - `numbers`: vector of doubles
+ - `strings`: vector of strings
+ - `tag`: integer
 """
 function addGeometry(geometry, numbers = Cdouble[], strings = [], tag = -1)
     ierr = Ref{Cint}()
@@ -4129,7 +5080,15 @@ that point. If `tag` is positive, set the tag explicitly; otherwise a new tag is
 selected automatically. Return the tag of the point. For surface geometries,
 only the `x` and `y` coordinates are used.
 
-Return an integer value.
+Return an integer.
+
+Argument types:
+ - `geometryTag`: integer
+ - `x`: double
+ - `y`: double
+ - `z`: double
+ - `meshSize`: double
+ - `tag`: integer
 """
 function addPointOnGeometry(geometryTag, x, y, z = 0., meshSize = 0., tag = -1)
     ierr = Ref{Cint}()
@@ -4144,14 +5103,25 @@ const add_point_on_geometry = addPointOnGeometry
 """
     gmsh.model.geo.extrude(dimTags, dx, dy, dz, numElements = Cint[], heights = Cdouble[], recombine = false)
 
-Extrude the entities `dimTags` in the built-in CAD representation, using a
-translation along (`dx`, `dy`, `dz`). Return extruded entities in `outDimTags`.
-If `numElements` is not empty, also extrude the mesh: the entries in
-`numElements` give the number of elements in each layer. If `height` is not
-empty, it provides the (cumulative) height of the different layers, normalized
-to 1. If `recombine` is set, recombine the mesh in the layers.
+Extrude the entities `dimTags` (given as a vector of (dim, tag) pairs) in the
+built-in CAD representation, using a translation along (`dx`, `dy`, `dz`).
+Return extruded entities in `outDimTags`. If the `numElements` vector is not
+empty, also extrude the mesh: the entries in `numElements` give the number of
+elements in each layer. If the `height` vector is not empty, it provides the
+(cumulative) height of the different layers, normalized to 1. If `recombine` is
+set, recombine the mesh in the layers.
 
 Return `outDimTags`.
+
+Argument types:
+ - `dimTags`: vector of pairs of integers
+ - `dx`: double
+ - `dy`: double
+ - `dz`: double
+ - `outDimTags`: vector of pairs of integers
+ - `numElements`: vector of integers
+ - `heights`: vector of doubles
+ - `recombine`: boolean
 """
 function extrude(dimTags, dx, dy, dz, numElements = Cint[], heights = Cdouble[], recombine = false)
     api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
@@ -4171,16 +5141,31 @@ end
 """
     gmsh.model.geo.revolve(dimTags, x, y, z, ax, ay, az, angle, numElements = Cint[], heights = Cdouble[], recombine = false)
 
-Extrude the entities `dimTags` in the built-in CAD representation, using a
-rotation of `angle` radians around the axis of revolution defined by the point
-(`x`, `y`, `z`) and the direction (`ax`, `ay`, `az`). The angle should be
-strictly smaller than Pi. Return extruded entities in `outDimTags`. If
-`numElements` is not empty, also extrude the mesh: the entries in `numElements`
-give the number of elements in each layer. If `height` is not empty, it provides
-the (cumulative) height of the different layers, normalized to 1. If `recombine`
-is set, recombine the mesh in the layers.
+Extrude the entities `dimTags` (given as a vector of (dim, tag) pairs) in the
+built-in CAD representation, using a rotation of `angle` radians around the axis
+of revolution defined by the point (`x`, `y`, `z`) and the direction (`ax`,
+`ay`, `az`). The angle should be strictly smaller than Pi. Return extruded
+entities in `outDimTags`. If the `numElements` vector is not empty, also extrude
+the mesh: the entries in `numElements` give the number of elements in each
+layer. If the `height` vector is not empty, it provides the (cumulative) height
+of the different layers, normalized to 1. If `recombine` is set, recombine the
+mesh in the layers.
 
 Return `outDimTags`.
+
+Argument types:
+ - `dimTags`: vector of pairs of integers
+ - `x`: double
+ - `y`: double
+ - `z`: double
+ - `ax`: double
+ - `ay`: double
+ - `az`: double
+ - `angle`: double
+ - `outDimTags`: vector of pairs of integers
+ - `numElements`: vector of integers
+ - `heights`: vector of doubles
+ - `recombine`: boolean
 """
 function revolve(dimTags, x, y, z, ax, ay, az, angle, numElements = Cint[], heights = Cdouble[], recombine = false)
     api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
@@ -4200,17 +5185,35 @@ end
 """
     gmsh.model.geo.twist(dimTags, x, y, z, dx, dy, dz, ax, ay, az, angle, numElements = Cint[], heights = Cdouble[], recombine = false)
 
-Extrude the entities `dimTags` in the built-in CAD representation, using a
-combined translation and rotation of `angle` radians, along (`dx`, `dy`, `dz`)
-and around the axis of revolution defined by the point (`x`, `y`, `z`) and the
-direction (`ax`, `ay`, `az`). The angle should be strictly smaller than Pi.
-Return extruded entities in `outDimTags`. If `numElements` is not empty, also
-extrude the mesh: the entries in `numElements` give the number of elements in
-each layer. If `height` is not empty, it provides the (cumulative) height of the
+Extrude the entities `dimTags` (given as a vector of (dim, tag) pairs) in the
+built-in CAD representation, using a combined translation and rotation of
+`angle` radians, along (`dx`, `dy`, `dz`) and around the axis of revolution
+defined by the point (`x`, `y`, `z`) and the direction (`ax`, `ay`, `az`). The
+angle should be strictly smaller than Pi. Return extruded entities in
+`outDimTags`. If the `numElements` vector is not empty, also extrude the mesh:
+the entries in `numElements` give the number of elements in each layer. If the
+`height` vector is not empty, it provides the (cumulative) height of the
 different layers, normalized to 1. If `recombine` is set, recombine the mesh in
 the layers.
 
 Return `outDimTags`.
+
+Argument types:
+ - `dimTags`: vector of pairs of integers
+ - `x`: double
+ - `y`: double
+ - `z`: double
+ - `dx`: double
+ - `dy`: double
+ - `dz`: double
+ - `ax`: double
+ - `ay`: double
+ - `az`: double
+ - `angle`: double
+ - `outDimTags`: vector of pairs of integers
+ - `numElements`: vector of integers
+ - `heights`: vector of doubles
+ - `recombine`: boolean
 """
 function twist(dimTags, x, y, z, dx, dy, dz, ax, ay, az, angle, numElements = Cint[], heights = Cdouble[], recombine = false)
     api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
@@ -4230,17 +5233,27 @@ end
 """
     gmsh.model.geo.extrudeBoundaryLayer(dimTags, numElements = [1], heights = Cdouble[], recombine = false, second = false, viewIndex = -1)
 
-Extrude the entities `dimTags` in the built-in CAD representation along the
-normals of the mesh, creating discrete boundary layer entities. Return extruded
-entities in `outDimTags`. The entries in `numElements` give the number of
-elements in each layer. If `height` is not empty, it provides the (cumulative)
-height of the different layers. If `recombine` is set, recombine the mesh in the
-layers. A second boundary layer can be created from the same entities if
-`second` is set. If `viewIndex` is >= 0, use the corresponding view to either
-specify the normals (if the view contains a vector field) or scale the normals
-(if the view is scalar).
+Extrude the entities `dimTags` (given as a vector of (dim, tag) pairs) in the
+built-in CAD representation along the normals of the mesh, creating discrete
+boundary layer entities. Return extruded entities in `outDimTags`. The entries
+in `numElements` give the number of elements in each layer. If the `height`
+vector is not empty, it provides the (cumulative) height of the different
+layers. If `recombine` is set, recombine the mesh in the layers. A second
+boundary layer can be created from the same entities if `second` is set. If
+`viewIndex` is >= 0, use the corresponding view to either specify the normals
+(if the view contains a vector field) or scale the normals (if the view is
+scalar).
 
 Return `outDimTags`.
+
+Argument types:
+ - `dimTags`: vector of pairs of integers
+ - `outDimTags`: vector of pairs of integers
+ - `numElements`: vector of integers
+ - `heights`: vector of doubles
+ - `recombine`: boolean
+ - `second`: boolean
+ - `viewIndex`: integer
 """
 function extrudeBoundaryLayer(dimTags, numElements = [1], heights = Cdouble[], recombine = false, second = false, viewIndex = -1)
     api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
@@ -4261,8 +5274,14 @@ const extrude_boundary_layer = extrudeBoundaryLayer
 """
     gmsh.model.geo.translate(dimTags, dx, dy, dz)
 
-Translate the entities `dimTags` in the built-in CAD representation along (`dx`,
-`dy`, `dz`).
+Translate the entities `dimTags` (given as a vector of (dim, tag) pairs) in the
+built-in CAD representation along (`dx`, `dy`, `dz`).
+
+Argument types:
+ - `dimTags`: vector of pairs of integers
+ - `dx`: double
+ - `dy`: double
+ - `dz`: double
 """
 function translate(dimTags, dx, dy, dz)
     api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
@@ -4278,9 +5297,19 @@ end
 """
     gmsh.model.geo.rotate(dimTags, x, y, z, ax, ay, az, angle)
 
-Rotate the entities `dimTags` in the built-in CAD representation by `angle`
-radians around the axis of revolution defined by the point (`x`, `y`, `z`) and
-the direction (`ax`, `ay`, `az`).
+Rotate the entities `dimTags` (given as a vector of (dim, tag) pairs) in the
+built-in CAD representation by `angle` radians around the axis of revolution
+defined by the point (`x`, `y`, `z`) and the direction (`ax`, `ay`, `az`).
+
+Argument types:
+ - `dimTags`: vector of pairs of integers
+ - `x`: double
+ - `y`: double
+ - `z`: double
+ - `ax`: double
+ - `ay`: double
+ - `az`: double
+ - `angle`: double
 """
 function rotate(dimTags, x, y, z, ax, ay, az, angle)
     api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
@@ -4296,9 +5325,19 @@ end
 """
     gmsh.model.geo.dilate(dimTags, x, y, z, a, b, c)
 
-Scale the entities `dimTag` in the built-in CAD representation by factors `a`,
-`b` and `c` along the three coordinate axes; use (`x`, `y`, `z`) as the center
-of the homothetic transformation.
+Scale the entities `dimTags` (given as a vector of (dim, tag) pairs) in the
+built-in CAD representation by factors `a`, `b` and `c` along the three
+coordinate axes; use (`x`, `y`, `z`) as the center of the homothetic
+transformation.
+
+Argument types:
+ - `dimTags`: vector of pairs of integers
+ - `x`: double
+ - `y`: double
+ - `z`: double
+ - `a`: double
+ - `b`: double
+ - `c`: double
 """
 function dilate(dimTags, x, y, z, a, b, c)
     api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
@@ -4314,8 +5353,16 @@ end
 """
     gmsh.model.geo.mirror(dimTags, a, b, c, d)
 
-Mirror the entities `dimTag` in the built-in CAD representation, with respect to
-the plane of equation `a` * x + `b` * y + `c` * z + `d` = 0.
+Mirror the entities `dimTags` (given as a vector of (dim, tag) pairs) in the
+built-in CAD representation, with respect to the plane of equation `a` * x + `b`
+* y + `c` * z + `d` = 0.
+
+Argument types:
+ - `dimTags`: vector of pairs of integers
+ - `a`: double
+ - `b`: double
+ - `c`: double
+ - `d`: double
 """
 function mirror(dimTags, a, b, c, d)
     api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
@@ -4331,9 +5378,17 @@ end
 """
     gmsh.model.geo.symmetrize(dimTags, a, b, c, d)
 
-Mirror the entities `dimTag` in the built-in CAD representation, with respect to
-the plane of equation `a` * x + `b` * y + `c` * z + `d` = 0. (This is a synonym
-for `mirror`, which will be deprecated in a future release.)
+Mirror the entities `dimTags` (given as a vector of (dim, tag) pairs) in the
+built-in CAD representation, with respect to the plane of equation `a` * x + `b`
+* y + `c` * z + `d` = 0. (This is a synonym for `mirror`, which will be
+deprecated in a future release.)
+
+Argument types:
+ - `dimTags`: vector of pairs of integers
+ - `a`: double
+ - `b`: double
+ - `c`: double
+ - `d`: double
 """
 function symmetrize(dimTags, a, b, c, d)
     api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
@@ -4349,10 +5404,14 @@ end
 """
     gmsh.model.geo.copy(dimTags)
 
-Copy the entities `dimTags` in the built-in CAD representation; the new entities
-are returned in `outDimTags`.
+Copy the entities `dimTags` (given as a vector of (dim, tag) pairs) in the
+built-in CAD representation; the new entities are returned in `outDimTags`.
 
 Return `outDimTags`.
+
+Argument types:
+ - `dimTags`: vector of pairs of integers
+ - `outDimTags`: vector of pairs of integers
 """
 function copy(dimTags)
     api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
@@ -4372,9 +5431,14 @@ end
 """
     gmsh.model.geo.remove(dimTags, recursive = false)
 
-Remove the entities `dimTags` in the built-in CAD representation, provided that
-they are not on the boundary of higher-dimensional entities. If `recursive` is
-true, remove all the entities on their boundaries, down to dimension 0.
+Remove the entities `dimTags` (given as a vector of (dim, tag) pairs) in the
+built-in CAD representation, provided that they are not on the boundary of
+higher-dimensional entities. If `recursive` is true, remove all the entities on
+their boundaries, down to dimension 0.
+
+Argument types:
+ - `dimTags`: vector of pairs of integers
+ - `recursive`: boolean
 """
 function remove(dimTags, recursive = false)
     api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
@@ -4412,6 +5476,11 @@ splines and b-splines. Return the tag(s) `curveTags` of the newly created
 curve(s).
 
 Return `curveTags`.
+
+Argument types:
+ - `tag`: integer
+ - `pointTags`: vector of integers
+ - `curveTags`: vector of integers
 """
 function splitCurve(tag, pointTags)
     api_curveTags_ = Ref{Ptr{Cint}}()
@@ -4432,7 +5501,10 @@ const split_curve = splitCurve
 Get the maximum tag of entities of dimension `dim` in the built-in CAD
 representation.
 
-Return an integer value.
+Return an integer.
+
+Argument types:
+ - `dim`: integer
 """
 function getMaxTag(dim)
     ierr = Ref{Cint}()
@@ -4449,6 +5521,10 @@ const get_max_tag = getMaxTag
 
 Set the maximum tag `maxTag` for entities of dimension `dim` in the built-in CAD
 representation.
+
+Argument types:
+ - `dim`: integer
+ - `maxTag`: integer
 """
 function setMaxTag(dim, maxTag)
     ierr = Ref{Cint}()
@@ -4468,7 +5544,13 @@ in the built-in CAD representation. Return the tag of the physical group, equal
 to `tag` if `tag` is positive, or a new tag if `tag` < 0. Set the name of the
 physical group if `name` is not empty.
 
-Return an integer value.
+Return an integer.
+
+Argument types:
+ - `dim`: integer
+ - `tags`: vector of integers
+ - `tag`: integer
+ - `name`: string
 """
 function addPhysicalGroup(dim, tags, tag = -1, name = "")
     ierr = Ref{Cint}()
@@ -4483,8 +5565,11 @@ const add_physical_group = addPhysicalGroup
 """
     gmsh.model.geo.removePhysicalGroups(dimTags = Tuple{Cint,Cint}[])
 
-Remove the physical groups `dimTags` from the built-in CAD representation. If
-`dimTags` is empty, remove all groups.
+Remove the physical groups `dimTags` (given as a vector of (dim, tag) pairs)
+from the built-in CAD representation. If `dimTags` is empty, remove all groups.
+
+Argument types:
+ - `dimTags`: vector of pairs of integers
 """
 function removePhysicalGroups(dimTags = Tuple{Cint,Cint}[])
     api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
@@ -4528,8 +5613,13 @@ import ....gmsh
 """
     gmsh.model.geo.mesh.setSize(dimTags, size)
 
-Set a mesh size constraint on the entities `dimTags` in the built-in CAD kernel
-representation. Currently only entities of dimension 0 (points) are handled.
+Set a mesh size constraint on the entities `dimTags` (given as a vector of (dim,
+tag) pairs) in the built-in CAD kernel representation. Currently only entities
+of dimension 0 (points) are handled.
+
+Argument types:
+ - `dimTags`: vector of pairs of integers
+ - `size`: double
 """
 function setSize(dimTags, size)
     api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
@@ -4550,6 +5640,12 @@ Set a transfinite meshing constraint on the curve `tag` in the built-in CAD
 kernel representation, with `numNodes` nodes distributed according to `meshType`
 and `coef`. Currently supported types are "Progression" (geometrical progression
 with power `coef`) and "Bump" (refinement toward both extremities of the curve).
+
+Argument types:
+ - `tag`: integer
+ - `nPoints`: integer
+ - `meshType`: string
+ - `coef`: double
 """
 function setTransfiniteCurve(tag, nPoints, meshType = "Progression", coef = 1.)
     ierr = Ref{Cint}()
@@ -4571,6 +5667,11 @@ when the surface is not flagged as recombined: currently supported values are
 to specify the (3 or 4) corners of the transfinite interpolation explicitly;
 specifying the corners explicitly is mandatory if the surface has more that 3 or
 4 points on its boundary.
+
+Argument types:
+ - `tag`: integer
+ - `arrangement`: string
+ - `cornerTags`: vector of integers
 """
 function setTransfiniteSurface(tag, arrangement = "Left", cornerTags = Cint[])
     ierr = Ref{Cint}()
@@ -4588,6 +5689,10 @@ const set_transfinite_surface = setTransfiniteSurface
 Set a transfinite meshing constraint on the surface `tag` in the built-in CAD
 kernel representation. `cornerTags` can be used to specify the (6 or 8) corners
 of the transfinite interpolation explicitly.
+
+Argument types:
+ - `tag`: integer
+ - `cornerTags`: vector of integers
 """
 function setTransfiniteVolume(tag, cornerTags = Cint[])
     ierr = Ref{Cint}()
@@ -4606,6 +5711,11 @@ Set a recombination meshing constraint on the entity of dimension `dim` and tag
 `tag` in the built-in CAD kernel representation. Currently only entities of
 dimension 2 (to recombine triangles into quadrangles) are supported; `angle`
 specifies the threshold angle for the simple recombination algorithm.
+
+Argument types:
+ - `dim`: integer
+ - `tag`: integer
+ - `angle`: double
 """
 function setRecombine(dim, tag, angle = 45.)
     ierr = Ref{Cint}()
@@ -4623,6 +5733,11 @@ const set_recombine = setRecombine
 Set a smoothing meshing constraint on the entity of dimension `dim` and tag
 `tag` in the built-in CAD kernel representation. `val` iterations of a Laplace
 smoother are applied.
+
+Argument types:
+ - `dim`: integer
+ - `tag`: integer
+ - `val`: integer
 """
 function setSmoothing(dim, tag, val)
     ierr = Ref{Cint}()
@@ -4642,6 +5757,11 @@ in the built-in CAD kernel representation. If `val` is true, the mesh
 orientation will be reversed with respect to the natural mesh orientation (i.e.
 the orientation consistent with the orientation of the geometry). If `val` is
 false, the mesh is left as-is.
+
+Argument types:
+ - `dim`: integer
+ - `tag`: integer
+ - `val`: boolean
 """
 function setReverse(dim, tag, val = true)
     ierr = Ref{Cint}()
@@ -4658,6 +5778,11 @@ const set_reverse = setReverse
 
 Set the meshing algorithm on the entity of dimension `dim` and tag `tag` in the
 built-in CAD kernel representation. Currently only supported for `dim` == 2.
+
+Argument types:
+ - `dim`: integer
+ - `tag`: integer
+ - `val`: integer
 """
 function setAlgorithm(dim, tag, val)
     ierr = Ref{Cint}()
@@ -4675,6 +5800,11 @@ const set_algorithm = setAlgorithm
 Force the mesh size to be extended from the boundary, or not, for the entity of
 dimension `dim` and tag `tag` in the built-in CAD kernel representation.
 Currently only supported for `dim` == 2.
+
+Argument types:
+ - `dim`: integer
+ - `tag`: integer
+ - `val`: integer
 """
 function setSizeFromBoundary(dim, tag, val)
     ierr = Ref{Cint}()
@@ -4709,7 +5839,14 @@ automatically. Return the tag of the point. (Note that the point will be added
 in the current model only after `synchronize` is called. This behavior holds for
 all the entities added in the occ module.)
 
-Return an integer value.
+Return an integer.
+
+Argument types:
+ - `x`: double
+ - `y`: double
+ - `z`: double
+ - `meshSize`: double
+ - `tag`: integer
 """
 function addPoint(x, y, z, meshSize = 0., tag = -1)
     ierr = Ref{Cint}()
@@ -4729,7 +5866,12 @@ two points with tags `startTag` and `endTag`. If `tag` is positive, set the tag
 explicitly; otherwise a new tag is selected automatically. Return the tag of the
 line.
 
-Return an integer value.
+Return an integer.
+
+Argument types:
+ - `startTag`: integer
+ - `endTag`: integer
+ - `tag`: integer
 """
 function addLine(startTag, endTag, tag = -1)
     ierr = Ref{Cint}()
@@ -4749,7 +5891,13 @@ with tags `startTag` and `endTag`, with center `centerTag`. If `tag` is
 positive, set the tag explicitly; otherwise a new tag is selected automatically.
 Return the tag of the circle arc.
 
-Return an integer value.
+Return an integer.
+
+Argument types:
+ - `startTag`: integer
+ - `centerTag`: integer
+ - `endTag`: integer
+ - `tag`: integer
 """
 function addCircleArc(startTag, centerTag, endTag, tag = -1)
     ierr = Ref{Cint}()
@@ -4772,7 +5920,18 @@ use it as the normal to the circle plane (z-axis). If a vector `xAxis` of size 3
 is provided in addition to `zAxis`, use it to define the x-axis. Return the tag
 of the circle.
 
-Return an integer value.
+Return an integer.
+
+Argument types:
+ - `x`: double
+ - `y`: double
+ - `z`: double
+ - `r`: double
+ - `tag`: integer
+ - `angle1`: double
+ - `angle2`: double
+ - `zAxis`: vector of doubles
+ - `xAxis`: vector of doubles
 """
 function addCircle(x, y, z, r, tag = -1, angle1 = 0., angle2 = 2*pi, zAxis = Cdouble[], xAxis = Cdouble[])
     ierr = Ref{Cint}()
@@ -4794,7 +5953,14 @@ selected automatically. Return the tag of the ellipse arc. Note that OpenCASCADE
 does not allow creating ellipse arcs with the major radius smaller than the
 minor radius.
 
-Return an integer value.
+Return an integer.
+
+Argument types:
+ - `startTag`: integer
+ - `centerTag`: integer
+ - `majorTag`: integer
+ - `endTag`: integer
+ - `tag`: integer
 """
 function addEllipseArc(startTag, centerTag, majorTag, endTag, tag = -1)
     ierr = Ref{Cint}()
@@ -4818,7 +5984,19 @@ use it as the normal to the ellipse plane (z-axis). If a vector `xAxis` of size
 3 is provided in addition to `zAxis`, use it to define the x-axis. Return the
 tag of the ellipse.
 
-Return an integer value.
+Return an integer.
+
+Argument types:
+ - `x`: double
+ - `y`: double
+ - `z`: double
+ - `r1`: double
+ - `r2`: double
+ - `tag`: integer
+ - `angle1`: double
+ - `angle2`: double
+ - `zAxis`: vector of doubles
+ - `xAxis`: vector of doubles
 """
 function addEllipse(x, y, z, r1, r2, tag = -1, angle1 = 0., angle2 = 2*pi, zAxis = Cdouble[], xAxis = Cdouble[])
     ierr = Ref{Cint}()
@@ -4838,7 +6016,11 @@ through the points `pointTags`. If `tag` is positive, set the tag explicitly;
 otherwise a new tag is selected automatically. Create a periodic curve if the
 first and last points are the same. Return the tag of the spline curve.
 
-Return an integer value.
+Return an integer.
+
+Argument types:
+ - `pointTags`: vector of integers
+ - `tag`: integer
 """
 function addSpline(pointTags, tag = -1)
     ierr = Ref{Cint}()
@@ -4860,7 +6042,15 @@ positive, set the tag explicitly; otherwise a new tag is selected automatically.
 Create a periodic curve if the first and last points are the same. Return the
 tag of the b-spline curve.
 
-Return an integer value.
+Return an integer.
+
+Argument types:
+ - `pointTags`: vector of integers
+ - `tag`: integer
+ - `degree`: integer
+ - `weights`: vector of doubles
+ - `knots`: vector of doubles
+ - `multiplicities`: vector of integers
 """
 function addBSpline(pointTags, tag = -1, degree = 3, weights = Cdouble[], knots = Cdouble[], multiplicities = Cint[])
     ierr = Ref{Cint}()
@@ -4879,7 +6069,11 @@ Add a Bezier curve in the OpenCASCADE CAD representation, with `pointTags`
 control points. If `tag` is positive, set the tag explicitly; otherwise a new
 tag is selected automatically. Return the tag of the Bezier curve.
 
-Return an integer value.
+Return an integer.
+
+Argument types:
+ - `pointTags`: vector of integers
+ - `tag`: integer
 """
 function addBezier(pointTags, tag = -1)
     ierr = Ref{Cint}()
@@ -4900,7 +6094,12 @@ share geometrically identical (but topologically different) points. If `tag` is
 positive, set the tag explicitly; otherwise a new tag is selected automatically.
 Return the tag of the wire.
 
-Return an integer value.
+Return an integer.
+
+Argument types:
+ - `curveTags`: vector of integers
+ - `tag`: integer
+ - `checkClosed`: boolean
 """
 function addWire(curveTags, tag = -1, checkClosed = false)
     ierr = Ref{Cint}()
@@ -4924,7 +6123,11 @@ of curves that share geometrically identical (but topologically different)
 points. If `tag` is positive, set the tag explicitly; otherwise a new tag is
 selected automatically. Return the tag of the curve loop.
 
-Return an integer value.
+Return an integer.
+
+Argument types:
+ - `curveTags`: vector of integers
+ - `tag`: integer
 """
 function addCurveLoop(curveTags, tag = -1)
     ierr = Ref{Cint}()
@@ -4945,7 +6148,16 @@ Add a rectangle in the OpenCASCADE CAD representation, with lower left corner at
 automatically. Round the corners if `roundedRadius` is nonzero. Return the tag
 of the rectangle.
 
-Return an integer value.
+Return an integer.
+
+Argument types:
+ - `x`: double
+ - `y`: double
+ - `z`: double
+ - `dx`: double
+ - `dy`: double
+ - `tag`: integer
+ - `roundedRadius`: double
 """
 function addRectangle(x, y, z, dx, dy, tag = -1, roundedRadius = 0.)
     ierr = Ref{Cint}()
@@ -4967,7 +6179,17 @@ automatically. If a vector `zAxis` of size 3 is provided, use it as the normal
 to the disk (z-axis). If a vector `xAxis` of size 3 is provided in addition to
 `zAxis`, use it to define the x-axis. Return the tag of the disk.
 
-Return an integer value.
+Return an integer.
+
+Argument types:
+ - `xc`: double
+ - `yc`: double
+ - `zc`: double
+ - `rx`: double
+ - `ry`: double
+ - `tag`: integer
+ - `zAxis`: vector of doubles
+ - `xAxis`: vector of doubles
 """
 function addDisk(xc, yc, zc, rx, ry, tag = -1, zAxis = Cdouble[], xAxis = Cdouble[])
     ierr = Ref{Cint}()
@@ -4988,7 +6210,11 @@ exterior contour; additional curve loop define holes. If `tag` is positive, set
 the tag explicitly; otherwise a new tag is selected automatically. Return the
 tag of the surface.
 
-Return an integer value.
+Return an integer.
+
+Argument types:
+ - `wireTags`: vector of integers
+ - `tag`: integer
 """
 function addPlaneSurface(wireTags, tag = -1)
     ierr = Ref{Cint}()
@@ -5021,7 +6247,22 @@ maximum difference of curvature allowed between the surface and the constraint),
 surface can have) and, `maxSegments` (the largest number of segments which the
 filling surface can have).
 
-Return an integer value.
+Return an integer.
+
+Argument types:
+ - `wireTag`: integer
+ - `tag`: integer
+ - `pointTags`: vector of integers
+ - `degree`: integer
+ - `numPointsOnCurves`: integer
+ - `numIter`: integer
+ - `anisotropic`: boolean
+ - `tol2d`: double
+ - `tol3d`: double
+ - `tolAng`: double
+ - `tolCurv`: double
+ - `maxDegree`: integer
+ - `maxSegments`: integer
 """
 function addSurfaceFilling(wireTag, tag = -1, pointTags = Cint[], degree = 3, numPointsOnCurves = 15, numIter = 2, anisotropic = false, tol2d = 0.00001, tol3d = 0.0001, tolAng = 0.01, tolCurv = 0.1, maxDegree = 8, maxSegments = 9)
     ierr = Ref{Cint}()
@@ -5044,7 +6285,12 @@ creates a rounded patch with less depth than "Curved". If `tag` is positive, set
 the tag explicitly; otherwise a new tag is selected automatically. Return the
 tag of the surface.
 
-Return an integer value.
+Return an integer.
+
+Argument types:
+ - `wireTag`: integer
+ - `tag`: integer
+ - `type`: string
 """
 function addBSplineFilling(wireTag, tag = -1, type = "")
     ierr = Ref{Cint}()
@@ -5067,7 +6313,12 @@ flattest patch, "Curved" (the default) creates the most rounded patch, and
 positive, set the tag explicitly; otherwise a new tag is selected automatically.
 Return the tag of the surface.
 
-Return an integer value.
+Return an integer.
+
+Argument types:
+ - `wireTag`: integer
+ - `tag`: integer
+ - `type`: string
 """
 function addBezierFilling(wireTag, tag = -1, type = "")
     ierr = Ref{Cint}()
@@ -5094,7 +6345,21 @@ curves and project them on the b-spline surface; otherwise consider the wire
 curves as defined in the parametric space of the surface. Return the tag of the
 b-spline surface.
 
-Return an integer value.
+Return an integer.
+
+Argument types:
+ - `pointTags`: vector of integers
+ - `numPointsU`: integer
+ - `tag`: integer
+ - `degreeU`: integer
+ - `degreeV`: integer
+ - `weights`: vector of doubles
+ - `knotsU`: vector of doubles
+ - `knotsV`: vector of doubles
+ - `multiplicitiesU`: vector of integers
+ - `multiplicitiesV`: vector of integers
+ - `wireTags`: vector of integers
+ - `wire3D`: boolean
 """
 function addBSplineSurface(pointTags, numPointsU, tag = -1, degreeU = 3, degreeV = 3, weights = Cdouble[], knotsU = Cdouble[], knotsV = Cdouble[], multiplicitiesU = Cint[], multiplicitiesV = Cint[], wireTags = Cint[], wire3D = false)
     ierr = Ref{Cint}()
@@ -5118,7 +6383,14 @@ define holes. If `wire3D` is set, consider wire curves as 3D curves and project
 them on the Bezier surface; otherwise consider the wire curves as defined in the
 parametric space of the surface. Return the tag of the Bezier surface.
 
-Return an integer value.
+Return an integer.
+
+Argument types:
+ - `pointTags`: vector of integers
+ - `numPointsU`: integer
+ - `tag`: integer
+ - `wireTags`: vector of integers
+ - `wire3D`: boolean
 """
 function addBezierSurface(pointTags, numPointsU, tag = -1, wireTags = Cint[], wire3D = false)
     ierr = Ref{Cint}()
@@ -5140,7 +6412,13 @@ the surface; otherwise consider the wire curves as defined in the parametric
 space of the surface. If `tag` is positive, set the tag explicitly; otherwise a
 new tag is selected automatically. Return the tag of the trimmed surface.
 
-Return an integer value.
+Return an integer.
+
+Argument types:
+ - `surfaceTag`: integer
+ - `wireTags`: vector of integers
+ - `wire3D`: boolean
+ - `tag`: integer
 """
 function addTrimmedSurface(surfaceTag, wireTags = Cint[], wire3D = false, tag = -1)
     ierr = Ref{Cint}()
@@ -5161,7 +6439,12 @@ otherwise a new tag is selected automatically. Return the tag of the surface
 loop. Setting `sewing` allows one to build a shell made of surfaces that share
 geometrically identical (but topologically different) curves.
 
-Return an integer value.
+Return an integer.
+
+Argument types:
+ - `surfaceTags`: vector of integers
+ - `tag`: integer
+ - `sewing`: boolean
 """
 function addSurfaceLoop(surfaceTags, tag = -1, sewing = false)
     ierr = Ref{Cint}()
@@ -5182,7 +6465,11 @@ boundary; additional surface loop define holes. If `tag` is positive, set the
 tag explicitly; otherwise a new tag is selected automatically. Return the tag of
 the volume.
 
-Return an integer value.
+Return an integer.
+
+Argument types:
+ - `shellTags`: vector of integers
+ - `tag`: integer
 """
 function addVolume(shellTags, tag = -1)
     ierr = Ref{Cint}()
@@ -5204,7 +6491,17 @@ azimuthal opening (from 0 to 2*Pi). If `tag` is positive, set the tag
 explicitly; otherwise a new tag is selected automatically. Return the tag of the
 sphere.
 
-Return an integer value.
+Return an integer.
+
+Argument types:
+ - `xc`: double
+ - `yc`: double
+ - `zc`: double
+ - `radius`: double
+ - `tag`: integer
+ - `angle1`: double
+ - `angle2`: double
+ - `angle3`: double
 """
 function addSphere(xc, yc, zc, radius, tag = -1, angle1 = -pi/2, angle2 = pi/2, angle3 = 2*pi)
     ierr = Ref{Cint}()
@@ -5224,7 +6521,16 @@ point (`x`, `y`, `z`) and the extents along the x-, y- and z-axes. If `tag` is
 positive, set the tag explicitly; otherwise a new tag is selected automatically.
 Return the tag of the box.
 
-Return an integer value.
+Return an integer.
+
+Argument types:
+ - `x`: double
+ - `y`: double
+ - `z`: double
+ - `dx`: double
+ - `dy`: double
+ - `dz`: double
+ - `tag`: integer
 """
 function addBox(x, y, z, dx, dy, dz, tag = -1)
     ierr = Ref{Cint}()
@@ -5246,7 +6552,18 @@ argument defines the angular opening (from 0 to 2*Pi). If `tag` is positive, set
 the tag explicitly; otherwise a new tag is selected automatically. Return the
 tag of the cylinder.
 
-Return an integer value.
+Return an integer.
+
+Argument types:
+ - `x`: double
+ - `y`: double
+ - `z`: double
+ - `dx`: double
+ - `dy`: double
+ - `dz`: double
+ - `r`: double
+ - `tag`: integer
+ - `angle`: double
 """
 function addCylinder(x, y, z, dx, dy, dz, r, tag = -1, angle = 2*pi)
     ierr = Ref{Cint}()
@@ -5268,7 +6585,19 @@ Add a cone in the OpenCASCADE CAD representation, defined by the center (`x`,
 otherwise a new tag is selected automatically. `angle` defines the optional
 angular opening (from 0 to 2*Pi). Return the tag of the cone.
 
-Return an integer value.
+Return an integer.
+
+Argument types:
+ - `x`: double
+ - `y`: double
+ - `z`: double
+ - `dx`: double
+ - `dy`: double
+ - `dz`: double
+ - `r1`: double
+ - `r2`: double
+ - `tag`: integer
+ - `angle`: double
 """
 function addCone(x, y, z, dx, dy, dz, r1, r2, tag = -1, angle = 2*pi)
     ierr = Ref{Cint}()
@@ -5290,7 +6619,18 @@ new tag is selected automatically. The optional argument `ltx` defines the top
 extent along the x-axis. If a vector `zAxis` of size 3 is provided, use it to
 define the z-axis. Return the tag of the wedge.
 
-Return an integer value.
+Return an integer.
+
+Argument types:
+ - `x`: double
+ - `y`: double
+ - `z`: double
+ - `dx`: double
+ - `dy`: double
+ - `dz`: double
+ - `tag`: integer
+ - `ltx`: double
+ - `zAxis`: vector of doubles
 """
 function addWedge(x, y, z, dx, dy, dz, tag = -1, ltx = 0., zAxis = Cdouble[])
     ierr = Ref{Cint}()
@@ -5311,7 +6651,17 @@ explicitly; otherwise a new tag is selected automatically. The optional argument
 `angle` defines the angular opening (from 0 to 2*Pi). If a vector `zAxis` of
 size 3 is provided, use it to define the z-axis. Return the tag of the torus.
 
-Return an integer value.
+Return an integer.
+
+Argument types:
+ - `x`: double
+ - `y`: double
+ - `z`: double
+ - `r1`: double
+ - `r2`: double
+ - `tag`: integer
+ - `angle`: double
+ - `zAxis`: vector of doubles
 """
 function addTorus(x, y, z, r1, r2, tag = -1, angle = 2*pi, zAxis = Cdouble[])
     ierr = Ref{Cint}()
@@ -5329,16 +6679,27 @@ const add_torus = addTorus
 Add a volume (if the optional argument `makeSolid` is set) or surfaces in the
 OpenCASCADE CAD representation, defined through the open or closed wires
 `wireTags`. If `tag` is positive, set the tag explicitly; otherwise a new tag is
-selected automatically. The new entities are returned in `outDimTags`. If the
-optional argument `makeRuled` is set, the surfaces created on the boundary are
-forced to be ruled surfaces. If `maxDegree` is positive, set the maximal degree
-of resulting surface. The optional argument `continuity` allows to specify the
-continuity of the resulting shape ("C0", "G1", "C1", "G2", "C2", "C3", "CN").
-The optional argument `parametrization` sets the parametrization type
-("ChordLength", "Centripetal", "IsoParametric"). The optional argument
-`smoothing` determines if smoothing is applied.
+selected automatically. The new entities are returned in `outDimTags` as a
+vector of (dim, tag) pairs. If the optional argument `makeRuled` is set, the
+surfaces created on the boundary are forced to be ruled surfaces. If `maxDegree`
+is positive, set the maximal degree of resulting surface. The optional argument
+`continuity` allows to specify the continuity of the resulting shape ("C0",
+"G1", "C1", "G2", "C2", "C3", "CN"). The optional argument `parametrization`
+sets the parametrization type ("ChordLength", "Centripetal", "IsoParametric").
+The optional argument `smoothing` determines if smoothing is applied.
 
 Return `outDimTags`.
+
+Argument types:
+ - `wireTags`: vector of integers
+ - `outDimTags`: vector of pairs of integers
+ - `tag`: integer
+ - `makeSolid`: boolean
+ - `makeRuled`: boolean
+ - `maxDegree`: integer
+ - `continuity`: string
+ - `parametrization`: string
+ - `smoothing`: boolean
 """
 function addThruSections(wireTags, tag = -1, makeSolid = true, makeRuled = false, maxDegree = -1, continuity = "", parametrization = "", smoothing = false)
     api_outDimTags_ = Ref{Ptr{Cint}}()
@@ -5364,6 +6725,13 @@ become the walls of the hollowed solid, with thickness `offset`. If `tag` is
 positive, set the tag explicitly; otherwise a new tag is selected automatically.
 
 Return `outDimTags`.
+
+Argument types:
+ - `volumeTag`: integer
+ - `excludeSurfaceTags`: vector of integers
+ - `offset`: double
+ - `outDimTags`: vector of pairs of integers
+ - `tag`: integer
 """
 function addThickSolid(volumeTag, excludeSurfaceTags, offset, tag = -1)
     api_outDimTags_ = Ref{Ptr{Cint}}()
@@ -5382,14 +6750,25 @@ const add_thick_solid = addThickSolid
 """
     gmsh.model.occ.extrude(dimTags, dx, dy, dz, numElements = Cint[], heights = Cdouble[], recombine = false)
 
-Extrude the entities `dimTags` in the OpenCASCADE CAD representation, using a
-translation along (`dx`, `dy`, `dz`). Return extruded entities in `outDimTags`.
-If `numElements` is not empty, also extrude the mesh: the entries in
-`numElements` give the number of elements in each layer. If `height` is not
-empty, it provides the (cumulative) height of the different layers, normalized
-to 1. If `recombine` is set, recombine the mesh in the layers.
+Extrude the entities `dimTags` (given as a vector of (dim, tag) pairs) in the
+OpenCASCADE CAD representation, using a translation along (`dx`, `dy`, `dz`).
+Return extruded entities in `outDimTags`. If the `numElements` vector is not
+empty, also extrude the mesh: the entries in `numElements` give the number of
+elements in each layer. If the `height` vector is not empty, it provides the
+(cumulative) height of the different layers, normalized to 1. If `recombine` is
+set, recombine the mesh in the layers.
 
 Return `outDimTags`.
+
+Argument types:
+ - `dimTags`: vector of pairs of integers
+ - `dx`: double
+ - `dy`: double
+ - `dz`: double
+ - `outDimTags`: vector of pairs of integers
+ - `numElements`: vector of integers
+ - `heights`: vector of doubles
+ - `recombine`: boolean
 """
 function extrude(dimTags, dx, dy, dz, numElements = Cint[], heights = Cdouble[], recombine = false)
     api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
@@ -5409,16 +6788,31 @@ end
 """
     gmsh.model.occ.revolve(dimTags, x, y, z, ax, ay, az, angle, numElements = Cint[], heights = Cdouble[], recombine = false)
 
-Extrude the entities `dimTags` in the OpenCASCADE CAD representation, using a
-rotation of `angle` radians around the axis of revolution defined by the point
-(`x`, `y`, `z`) and the direction (`ax`, `ay`, `az`). Return extruded entities
-in `outDimTags`. If `numElements` is not empty, also extrude the mesh: the
-entries in `numElements` give the number of elements in each layer. If `height`
-is not empty, it provides the (cumulative) height of the different layers,
-normalized to 1. When the mesh is extruded the angle should be strictly smaller
-than 2*Pi. If `recombine` is set, recombine the mesh in the layers.
+Extrude the entities `dimTags` (given as a vector of (dim, tag) pairs) in the
+OpenCASCADE CAD representation, using a rotation of `angle` radians around the
+axis of revolution defined by the point (`x`, `y`, `z`) and the direction (`ax`,
+`ay`, `az`). Return extruded entities in `outDimTags`. If the `numElements`
+vector is not empty, also extrude the mesh: the entries in `numElements` give
+the number of elements in each layer. If the `height` vector is not empty, it
+provides the (cumulative) height of the different layers, normalized to 1. When
+the mesh is extruded the angle should be strictly smaller than 2*Pi. If
+`recombine` is set, recombine the mesh in the layers.
 
 Return `outDimTags`.
+
+Argument types:
+ - `dimTags`: vector of pairs of integers
+ - `x`: double
+ - `y`: double
+ - `z`: double
+ - `ax`: double
+ - `ay`: double
+ - `az`: double
+ - `angle`: double
+ - `outDimTags`: vector of pairs of integers
+ - `numElements`: vector of integers
+ - `heights`: vector of doubles
+ - `recombine`: boolean
 """
 function revolve(dimTags, x, y, z, ax, ay, az, angle, numElements = Cint[], heights = Cdouble[], recombine = false)
     api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
@@ -5439,13 +6833,20 @@ end
     gmsh.model.occ.addPipe(dimTags, wireTag, trihedron = "")
 
 Add a pipe in the OpenCASCADE CAD representation, by extruding the entities
-`dimTags` along the wire `wireTag`. The type of sweep can be specified with
-`trihedron` (possible values: "DiscreteTrihedron", "CorrectedFrenet", "Fixed",
-"Frenet", "ConstantNormal", "Darboux", "GuideAC", "GuidePlan",
-"GuideACWithContact", "GuidePlanWithContact"). If `trihedron` is not provided,
-"DiscreteTrihedron" is assumed. Return the pipe in `outDimTags`.
+`dimTags` (given as a vector of (dim, tag) pairs) along the wire `wireTag`. The
+type of sweep can be specified with `trihedron` (possible values:
+"DiscreteTrihedron", "CorrectedFrenet", "Fixed", "Frenet", "ConstantNormal",
+"Darboux", "GuideAC", "GuidePlan", "GuideACWithContact",
+"GuidePlanWithContact"). If `trihedron` is not provided, "DiscreteTrihedron" is
+assumed. Return the pipe in `outDimTags`.
 
 Return `outDimTags`.
+
+Argument types:
+ - `dimTags`: vector of pairs of integers
+ - `wireTag`: integer
+ - `outDimTags`: vector of pairs of integers
+ - `trihedron`: string
 """
 function addPipe(dimTags, wireTag, trihedron = "")
     api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
@@ -5470,9 +6871,17 @@ Fillet the volumes `volumeTags` on the curves `curveTags` with radii `radii`.
 The `radii` vector can either contain a single radius, as many radii as
 `curveTags`, or twice as many as `curveTags` (in which case different radii are
 provided for the begin and end points of the curves). Return the filleted
-entities in `outDimTags`. Remove the original volume if `removeVolume` is set.
+entities in `outDimTags` as a vector of (dim, tag) pairs. Remove the original
+volume if `removeVolume` is set.
 
 Return `outDimTags`.
+
+Argument types:
+ - `volumeTags`: vector of integers
+ - `curveTags`: vector of integers
+ - `radii`: vector of doubles
+ - `outDimTags`: vector of pairs of integers
+ - `removeVolume`: boolean
 """
 function fillet(volumeTags, curveTags, radii, removeVolume = true)
     api_outDimTags_ = Ref{Ptr{Cint}}()
@@ -5499,6 +6908,14 @@ the first in each pair is measured on the corresponding surface in
 entities in `outDimTags`. Remove the original volume if `removeVolume` is set.
 
 Return `outDimTags`.
+
+Argument types:
+ - `volumeTags`: vector of integers
+ - `curveTags`: vector of integers
+ - `surfaceTags`: vector of integers
+ - `distances`: vector of doubles
+ - `outDimTags`: vector of pairs of integers
+ - `removeVolume`: boolean
 """
 function chamfer(volumeTags, curveTags, surfaceTags, distances, removeVolume = true)
     api_outDimTags_ = Ref{Ptr{Cint}}()
@@ -5517,12 +6934,22 @@ end
     gmsh.model.occ.fuse(objectDimTags, toolDimTags, tag = -1, removeObject = true, removeTool = true)
 
 Compute the boolean union (the fusion) of the entities `objectDimTags` and
-`toolDimTags` in the OpenCASCADE CAD representation. Return the resulting
-entities in `outDimTags`. If `tag` is positive, try to set the tag explicitly
-(only valid if the boolean operation results in a single entity). Remove the
-object if `removeObject` is set. Remove the tool if `removeTool` is set.
+`toolDimTags` (vectors of (dim, tag) pairs) in the OpenCASCADE CAD
+representation. Return the resulting entities in `outDimTags`. If `tag` is
+positive, try to set the tag explicitly (only valid if the boolean operation
+results in a single entity). Remove the object if `removeObject` is set. Remove
+the tool if `removeTool` is set.
 
 Return `outDimTags`, `outDimTagsMap`.
+
+Argument types:
+ - `objectDimTags`: vector of pairs of integers
+ - `toolDimTags`: vector of pairs of integers
+ - `outDimTags`: vector of pairs of integers
+ - `outDimTagsMap`: vector of vectors of pairs of integers
+ - `tag`: integer
+ - `removeObject`: boolean
+ - `removeTool`: boolean
 """
 function fuse(objectDimTags, toolDimTags, tag = -1, removeObject = true, removeTool = true)
     api_objectDimTags_ = collect(Cint, Iterators.flatten(objectDimTags))
@@ -5556,13 +6983,22 @@ end
     gmsh.model.occ.intersect(objectDimTags, toolDimTags, tag = -1, removeObject = true, removeTool = true)
 
 Compute the boolean intersection (the common parts) of the entities
-`objectDimTags` and `toolDimTags` in the OpenCASCADE CAD representation. Return
-the resulting entities in `outDimTags`. If `tag` is positive, try to set the tag
-explicitly (only valid if the boolean operation results in a single entity).
-Remove the object if `removeObject` is set. Remove the tool if `removeTool` is
-set.
+`objectDimTags` and `toolDimTags` (vectors of (dim, tag) pairs) in the
+OpenCASCADE CAD representation. Return the resulting entities in `outDimTags`.
+If `tag` is positive, try to set the tag explicitly (only valid if the boolean
+operation results in a single entity). Remove the object if `removeObject` is
+set. Remove the tool if `removeTool` is set.
 
 Return `outDimTags`, `outDimTagsMap`.
+
+Argument types:
+ - `objectDimTags`: vector of pairs of integers
+ - `toolDimTags`: vector of pairs of integers
+ - `outDimTags`: vector of pairs of integers
+ - `outDimTagsMap`: vector of vectors of pairs of integers
+ - `tag`: integer
+ - `removeObject`: boolean
+ - `removeTool`: boolean
 """
 function intersect(objectDimTags, toolDimTags, tag = -1, removeObject = true, removeTool = true)
     api_objectDimTags_ = collect(Cint, Iterators.flatten(objectDimTags))
@@ -5596,12 +7032,22 @@ end
     gmsh.model.occ.cut(objectDimTags, toolDimTags, tag = -1, removeObject = true, removeTool = true)
 
 Compute the boolean difference between the entities `objectDimTags` and
-`toolDimTags` in the OpenCASCADE CAD representation. Return the resulting
-entities in `outDimTags`. If `tag` is positive, try to set the tag explicitly
-(only valid if the boolean operation results in a single entity). Remove the
-object if `removeObject` is set. Remove the tool if `removeTool` is set.
+`toolDimTags` (given as vectors of (dim, tag) pairs) in the OpenCASCADE CAD
+representation. Return the resulting entities in `outDimTags`. If `tag` is
+positive, try to set the tag explicitly (only valid if the boolean operation
+results in a single entity). Remove the object if `removeObject` is set. Remove
+the tool if `removeTool` is set.
 
 Return `outDimTags`, `outDimTagsMap`.
+
+Argument types:
+ - `objectDimTags`: vector of pairs of integers
+ - `toolDimTags`: vector of pairs of integers
+ - `outDimTags`: vector of pairs of integers
+ - `outDimTagsMap`: vector of vectors of pairs of integers
+ - `tag`: integer
+ - `removeObject`: boolean
+ - `removeTool`: boolean
 """
 function cut(objectDimTags, toolDimTags, tag = -1, removeObject = true, removeTool = true)
     api_objectDimTags_ = collect(Cint, Iterators.flatten(objectDimTags))
@@ -5635,16 +7081,25 @@ end
     gmsh.model.occ.fragment(objectDimTags, toolDimTags, tag = -1, removeObject = true, removeTool = true)
 
 Compute the boolean fragments (general fuse) resulting from the intersection of
-the entities `objectDimTags` and `toolDimTags` in the OpenCASCADE CAD
-representation, making all iterfaces conformal. When applied to entities of
-different dimensions, the lower dimensional entities will be automatically
-embedded in the higher dimensional entities if they are not on their boundary.
-Return the resulting entities in `outDimTags`. If `tag` is positive, try to set
-the tag explicitly (only valid if the boolean operation results in a single
-entity). Remove the object if `removeObject` is set. Remove the tool if
-`removeTool` is set.
+the entities `objectDimTags` and `toolDimTags` (given as vectors of (dim, tag)
+pairs) in the OpenCASCADE CAD representation, making all iterfaces conformal.
+When applied to entities of different dimensions, the lower dimensional entities
+will be automatically embedded in the higher dimensional entities if they are
+not on their boundary. Return the resulting entities in `outDimTags`. If `tag`
+is positive, try to set the tag explicitly (only valid if the boolean operation
+results in a single entity). Remove the object if `removeObject` is set. Remove
+the tool if `removeTool` is set.
 
 Return `outDimTags`, `outDimTagsMap`.
+
+Argument types:
+ - `objectDimTags`: vector of pairs of integers
+ - `toolDimTags`: vector of pairs of integers
+ - `outDimTags`: vector of pairs of integers
+ - `outDimTagsMap`: vector of vectors of pairs of integers
+ - `tag`: integer
+ - `removeObject`: boolean
+ - `removeTool`: boolean
 """
 function fragment(objectDimTags, toolDimTags, tag = -1, removeObject = true, removeTool = true)
     api_objectDimTags_ = collect(Cint, Iterators.flatten(objectDimTags))
@@ -5677,8 +7132,14 @@ end
 """
     gmsh.model.occ.translate(dimTags, dx, dy, dz)
 
-Translate the entities `dimTags` in the OpenCASCADE CAD representation along
-(`dx`, `dy`, `dz`).
+Translate the entities `dimTags` (given as a vector of (dim, tag) pairs) in the
+OpenCASCADE CAD representation along (`dx`, `dy`, `dz`).
+
+Argument types:
+ - `dimTags`: vector of pairs of integers
+ - `dx`: double
+ - `dy`: double
+ - `dz`: double
 """
 function translate(dimTags, dx, dy, dz)
     api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
@@ -5694,9 +7155,19 @@ end
 """
     gmsh.model.occ.rotate(dimTags, x, y, z, ax, ay, az, angle)
 
-Rotate the entities `dimTags` in the OpenCASCADE CAD representation by `angle`
-radians around the axis of revolution defined by the point (`x`, `y`, `z`) and
-the direction (`ax`, `ay`, `az`).
+Rotate the entities `dimTags` (given as a vector of (dim, tag) pairs) in the
+OpenCASCADE CAD representation by `angle` radians around the axis of revolution
+defined by the point (`x`, `y`, `z`) and the direction (`ax`, `ay`, `az`).
+
+Argument types:
+ - `dimTags`: vector of pairs of integers
+ - `x`: double
+ - `y`: double
+ - `z`: double
+ - `ax`: double
+ - `ay`: double
+ - `az`: double
+ - `angle`: double
 """
 function rotate(dimTags, x, y, z, ax, ay, az, angle)
     api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
@@ -5712,9 +7183,19 @@ end
 """
     gmsh.model.occ.dilate(dimTags, x, y, z, a, b, c)
 
-Scale the entities `dimTags` in the OpenCASCADE CAD representation by factors
-`a`, `b` and `c` along the three coordinate axes; use (`x`, `y`, `z`) as the
-center of the homothetic transformation.
+Scale the entities `dimTags` (given as a vector of (dim, tag) pairs) in the
+OpenCASCADE CAD representation by factors `a`, `b` and `c` along the three
+coordinate axes; use (`x`, `y`, `z`) as the center of the homothetic
+transformation.
+
+Argument types:
+ - `dimTags`: vector of pairs of integers
+ - `x`: double
+ - `y`: double
+ - `z`: double
+ - `a`: double
+ - `b`: double
+ - `c`: double
 """
 function dilate(dimTags, x, y, z, a, b, c)
     api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
@@ -5730,8 +7211,16 @@ end
 """
     gmsh.model.occ.mirror(dimTags, a, b, c, d)
 
-Mirror the entities `dimTags` in the OpenCASCADE CAD representation, with
-respect to the plane of equation `a` * x + `b` * y + `c` * z + `d` = 0.
+Mirror the entities `dimTags` (given as a vector of (dim, tag) pairs) in the
+OpenCASCADE CAD representation, with respect to the plane of equation `a` * x +
+`b` * y + `c` * z + `d` = 0.
+
+Argument types:
+ - `dimTags`: vector of pairs of integers
+ - `a`: double
+ - `b`: double
+ - `c`: double
+ - `d`: double
 """
 function mirror(dimTags, a, b, c, d)
     api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
@@ -5747,9 +7236,16 @@ end
 """
     gmsh.model.occ.symmetrize(dimTags, a, b, c, d)
 
-Mirror the entities `dimTags` in the OpenCASCADE CAD representation, with
-respect to the plane of equation `a` * x + `b` * y + `c` * z + `d` = 0. (This is
-a deprecated synonym for `mirror`.)
+Mirror the entities `dimTags` (given as a vector of (dim, tag) pairs) in the
+OpenCASCADE CAD representation, with respect to the plane of equation `a` * x +
+`b` * y + `c` * z + `d` = 0. (This is a deprecated synonym for `mirror`.)
+
+Argument types:
+ - `dimTags`: vector of pairs of integers
+ - `a`: double
+ - `b`: double
+ - `c`: double
+ - `d`: double
 """
 function symmetrize(dimTags, a, b, c, d)
     api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
@@ -5767,7 +7263,12 @@ end
 
 Apply a general affine transformation matrix `affineTransform` (16 entries of a
 4x4 matrix, by row; only the 12 first can be provided for convenience) to the
-entities `dimTags` in the OpenCASCADE CAD representation.
+entities `dimTags` (given as a vector of (dim, tag) pairs) in the OpenCASCADE
+CAD representation.
+
+Argument types:
+ - `dimTags`: vector of pairs of integers
+ - `affineTransform`: vector of doubles
 """
 function affineTransform(dimTags, affineTransform)
     api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
@@ -5788,6 +7289,10 @@ Copy the entities `dimTags` in the OpenCASCADE CAD representation; the new
 entities are returned in `outDimTags`.
 
 Return `outDimTags`.
+
+Argument types:
+ - `dimTags`: vector of pairs of integers
+ - `outDimTags`: vector of pairs of integers
 """
 function copy(dimTags)
     api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
@@ -5807,9 +7312,14 @@ end
 """
     gmsh.model.occ.remove(dimTags, recursive = false)
 
-Remove the entities `dimTags` in the OpenCASCADE CAD representation, provided
-that they are not on the boundary of higher-dimensional entities. If `recursive`
-is true, remove all the entities on their boundaries, down to dimension 0.
+Remove the entities `dimTags` (given as a vector of (dim, tag) pairs) in the
+OpenCASCADE CAD representation, provided that they are not on the boundary of
+higher-dimensional entities. If `recursive` is true, remove all the entities on
+their boundaries, down to dimension 0.
+
+Argument types:
+ - `dimTags`: vector of pairs of integers
+ - `recursive`: boolean
 """
 function remove(dimTags, recursive = false)
     api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
@@ -5842,11 +7352,21 @@ const remove_all_duplicates = removeAllDuplicates
 """
     gmsh.model.occ.healShapes(dimTags = Tuple{Cint,Cint}[], tolerance = 1e-8, fixDegenerated = true, fixSmallEdges = true, fixSmallFaces = true, sewFaces = true, makeSolids = true)
 
-Apply various healing procedures to the entities `dimTags` (or to all the
-entities in the model if `dimTags` is empty) in the OpenCASCADE CAD
-representation. Return the healed entities in `outDimTags`.
+Apply various healing procedures to the entities `dimTags` (given as a vector of
+(dim, tag) pairs), or to all the entities in the model if `dimTags` is empty, in
+the OpenCASCADE CAD representation. Return the healed entities in `outDimTags`.
 
 Return `outDimTags`.
+
+Argument types:
+ - `outDimTags`: vector of pairs of integers
+ - `dimTags`: vector of pairs of integers
+ - `tolerance`: double
+ - `fixDegenerated`: boolean
+ - `fixSmallEdges`: boolean
+ - `fixSmallFaces`: boolean
+ - `sewFaces`: boolean
+ - `makeSolids`: boolean
 """
 function healShapes(dimTags = Tuple{Cint,Cint}[], tolerance = 1e-8, fixDegenerated = true, fixSmallEdges = true, fixSmallFaces = true, sewFaces = true, makeSolids = true)
     api_outDimTags_ = Ref{Ptr{Cint}}()
@@ -5868,6 +7388,9 @@ const heal_shapes = healShapes
     gmsh.model.occ.convertToNURBS(dimTags)
 
 Convert the entities `dimTags` to NURBS.
+
+Argument types:
+ - `dimTags`: vector of pairs of integers
 """
 function convertToNURBS(dimTags)
     api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
@@ -5885,12 +7408,19 @@ const convert_to_nurbs = convertToNURBS
     gmsh.model.occ.importShapes(fileName, highestDimOnly = true, format = "")
 
 Import BREP, STEP or IGES shapes from the file `fileName` in the OpenCASCADE CAD
-representation. The imported entities are returned in `outDimTags`. If the
-optional argument `highestDimOnly` is set, only import the highest dimensional
-entities in the file. The optional argument `format` can be used to force the
-format of the file (currently "brep", "step" or "iges").
+representation. The imported entities are returned in `outDimTags`, as a vector
+of (dim, tag) pairs. If the optional argument `highestDimOnly` is set, only
+import the highest dimensional entities in the file. The optional argument
+`format` can be used to force the format of the file (currently "brep", "step"
+or "iges").
 
 Return `outDimTags`.
+
+Argument types:
+ - `fileName`: string
+ - `outDimTags`: vector of pairs of integers
+ - `highestDimOnly`: boolean
+ - `format`: string
 """
 function importShapes(fileName, highestDimOnly = true, format = "")
     api_outDimTags_ = Ref{Ptr{Cint}}()
@@ -5911,14 +7441,19 @@ const import_shapes = importShapes
 
 Imports an OpenCASCADE `shape` by providing a pointer to a native OpenCASCADE
 `TopoDS_Shape` object (passed as a pointer to void). The imported entities are
-returned in `outDimTags`. If the optional argument `highestDimOnly` is set, only
-import the highest dimensional entities in `shape`. In Python, this function can
-be used for integration with PythonOCC, in which the SwigPyObject pointer of
-`TopoDS_Shape` must be passed as an int to `shape`, i.e., `shape =
-int(pythonocc_shape.this)`. Warning: this function is unsafe, as providing an
-invalid pointer will lead to undefined behavior.
+returned in `outDimTags` as a vector of (dim, tag) pairs. If the optional
+argument `highestDimOnly` is set, only import the highest dimensional entities
+in `shape`. In Python, this function can be used for integration with PythonOCC,
+in which the SwigPyObject pointer of `TopoDS_Shape` must be passed as an int to
+`shape`, i.e., `shape = int(pythonocc_shape.this)`. Warning: this function is
+unsafe, as providing an invalid pointer will lead to undefined behavior.
 
 Return `outDimTags`.
+
+Argument types:
+ - `shape`: pointer
+ - `outDimTags`: vector of pairs of integers
+ - `highestDimOnly`: boolean
 """
 function importShapesNativePointer(shape, highestDimOnly = true)
     api_outDimTags_ = Ref{Ptr{Cint}}()
@@ -5939,9 +7474,13 @@ const import_shapes_native_pointer = importShapesNativePointer
 
 Get all the OpenCASCADE entities. If `dim` is >= 0, return only the entities of
 the specified dimension (e.g. points if `dim` == 0). The entities are returned
-as a vector of (dim, tag) integer pairs.
+as a vector of (dim, tag) pairs.
 
 Return `dimTags`.
+
+Argument types:
+ - `dimTags`: vector of pairs of integers
+ - `dim`: integer
 """
 function getEntities(dim = -1)
     api_dimTags_ = Ref{Ptr{Cint}}()
@@ -5965,6 +7504,16 @@ Get the OpenCASCADE entities in the bounding box defined by the two points
 only the entities of the specified dimension (e.g. points if `dim` == 0).
 
 Return `tags`.
+
+Argument types:
+ - `xmin`: double
+ - `ymin`: double
+ - `zmin`: double
+ - `xmax`: double
+ - `ymax`: double
+ - `zmax`: double
+ - `tags`: vector of pairs of integers
+ - `dim`: integer
 """
 function getEntitiesInBoundingBox(xmin, ymin, zmin, xmax, ymax, zmax, dim = -1)
     api_tags_ = Ref{Ptr{Cint}}()
@@ -5987,6 +7536,16 @@ Get the bounding box (`xmin`, `ymin`, `zmin`), (`xmax`, `ymax`, `zmax`) of the
 OpenCASCADE entity of dimension `dim` and tag `tag`.
 
 Return `xmin`, `ymin`, `zmin`, `xmax`, `ymax`, `zmax`.
+
+Argument types:
+ - `dim`: integer
+ - `tag`: integer
+ - `xmin`: double
+ - `ymin`: double
+ - `zmin`: double
+ - `xmax`: double
+ - `ymax`: double
+ - `zmax`: double
 """
 function getBoundingBox(dim, tag)
     api_xmin_ = Ref{Cdouble}()
@@ -6012,6 +7571,11 @@ Get the tags `curveLoopTags` of the curve loops making up the surface of tag
 loop.
 
 Return `curveLoopTags`, `curveTags`.
+
+Argument types:
+ - `surfaceTag`: integer
+ - `curveLoopTags`: vector of integers
+ - `curveTags`: vector of vectors of integers
 """
 function getCurveLoops(surfaceTag)
     api_curveLoopTags_ = Ref{Ptr{Cint}}()
@@ -6040,6 +7604,11 @@ Get the tags `surfaceLoopTags` of the surface loops making up the volume of tag
 surface loop.
 
 Return `surfaceLoopTags`, `surfaceTags`.
+
+Argument types:
+ - `volumeTag`: integer
+ - `surfaceLoopTags`: vector of integers
+ - `surfaceTags`: vector of vectors of integers
 """
 function getSurfaceLoops(volumeTag)
     api_surfaceLoopTags_ = Ref{Ptr{Cint}}()
@@ -6066,6 +7635,11 @@ const get_surface_loops = getSurfaceLoops
 Get the mass of the OpenCASCADE entity of dimension `dim` and tag `tag`.
 
 Return `mass`.
+
+Argument types:
+ - `dim`: integer
+ - `tag`: integer
+ - `mass`: double
 """
 function getMass(dim, tag)
     api_mass_ = Ref{Cdouble}()
@@ -6085,6 +7659,13 @@ Get the center of mass of the OpenCASCADE entity of dimension `dim` and tag
 `tag`.
 
 Return `x`, `y`, `z`.
+
+Argument types:
+ - `dim`: integer
+ - `tag`: integer
+ - `x`: double
+ - `y`: double
+ - `z`: double
 """
 function getCenterOfMass(dim, tag)
     api_x_ = Ref{Cdouble}()
@@ -6106,6 +7687,11 @@ Get the matrix of inertia (by row) of the OpenCASCADE entity of dimension `dim`
 and tag `tag`.
 
 Return `mat`.
+
+Argument types:
+ - `dim`: integer
+ - `tag`: integer
+ - `mat`: vector of doubles
 """
 function getMatrixOfInertia(dim, tag)
     api_mat_ = Ref{Ptr{Cdouble}}()
@@ -6126,7 +7712,10 @@ const get_matrix_of_inertia = getMatrixOfInertia
 Get the maximum tag of entities of dimension `dim` in the OpenCASCADE CAD
 representation.
 
-Return an integer value.
+Return an integer.
+
+Argument types:
+ - `dim`: integer
 """
 function getMaxTag(dim)
     ierr = Ref{Cint}()
@@ -6143,6 +7732,10 @@ const get_max_tag = getMaxTag
 
 Set the maximum tag `maxTag` for entities of dimension `dim` in the OpenCASCADE
 CAD representation.
+
+Argument types:
+ - `dim`: integer
+ - `maxTag`: integer
 """
 function setMaxTag(dim, maxTag)
     ierr = Ref{Cint}()
@@ -6184,8 +7777,13 @@ import ....gmsh
 """
     gmsh.model.occ.mesh.setSize(dimTags, size)
 
-Set a mesh size constraint on the entities `dimTags` in the OpenCASCADE CAD
-representation. Currently only entities of dimension 0 (points) are handled.
+Set a mesh size constraint on the entities `dimTags` (given as a vector of (dim,
+tag) pairs) in the OpenCASCADE CAD representation. Currently only entities of
+dimension 0 (points) are handled.
+
+Argument types:
+ - `dimTags`: vector of pairs of integers
+ - `size`: double
 """
 function setSize(dimTags, size)
     api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
@@ -6221,7 +7819,11 @@ Add a new post-processing view, with name `name`. If `tag` is positive use it
 (and remove the view with that tag if it already exists), otherwise associate a
 new tag. Return the view tag.
 
-Return an integer value.
+Return an integer.
+
+Argument types:
+ - `name`: string
+ - `tag`: integer
 """
 function add(name, tag = -1)
     ierr = Ref{Cint}()
@@ -6236,6 +7838,9 @@ end
     gmsh.view.remove(tag)
 
 Remove the view with tag `tag`.
+
+Argument types:
+ - `tag`: integer
 """
 function remove(tag)
     ierr = Ref{Cint}()
@@ -6253,7 +7858,10 @@ Get the index of the view with tag `tag` in the list of currently loaded views.
 This dynamic index (it can change when views are removed) is used to access view
 options.
 
-Return an integer value.
+Return an integer.
+
+Argument types:
+ - `tag`: integer
 """
 function getIndex(tag)
     ierr = Ref{Cint}()
@@ -6271,6 +7879,9 @@ const get_index = getIndex
 Get the tags of all views.
 
 Return `tags`.
+
+Argument types:
+ - `tags`: vector of integers
 """
 function getTags()
     api_tags_ = Ref{Ptr{Cint}}()
@@ -6300,6 +7911,17 @@ The optional `time` argument associate a time value with the data.
 vector data, etc.) per entity; if negative, it is automatically inferred (when
 possible) from the input data. `partition` allows one to specify data in several
 sub-sets.
+
+Argument types:
+ - `tag`: integer
+ - `step`: integer
+ - `modelName`: string
+ - `dataType`: string
+ - `tags`: vector of sizes
+ - `data`: vector of vectors of doubles
+ - `time`: double
+ - `numComponents`: integer
+ - `partition`: integer
 """
 function addModelData(tag, step, modelName, dataType, tags, data, time = 0., numComponents = -1, partition = 0)
     api_data_n_ = [ length(data[i]) for i in 1:length(data) ]
@@ -6320,6 +7942,17 @@ arguments have the same meaning as in `addModelData`, except that `data` is
 supposed to be homogeneous and is thus flattened in a single vector. For data
 types that can lead to different data sizes per tag (like "ElementNodeData"),
 the data should be padded.
+
+Argument types:
+ - `tag`: integer
+ - `step`: integer
+ - `modelName`: string
+ - `dataType`: string
+ - `tags`: vector of sizes
+ - `data`: vector of doubles
+ - `time`: double
+ - `numComponents`: integer
+ - `partition`: integer
 """
 function addHomogeneousModelData(tag, step, modelName, dataType, tags, data, time = 0., numComponents = -1, partition = 0)
     ierr = Ref{Cint}()
@@ -6339,6 +7972,15 @@ Get model-based post-processing data from the view with tag `tag` at step
 `tags`, as well as the `dataType` and the number of components `numComponents`.
 
 Return `dataType`, `tags`, `data`, `time`, `numComponents`.
+
+Argument types:
+ - `tag`: integer
+ - `step`: integer
+ - `dataType`: string
+ - `tags`: vector of sizes
+ - `data`: vector of vectors of doubles
+ - `time`: double
+ - `numComponents`: integer
 """
 function getModelData(tag, step)
     api_dataType_ = Ref{Ptr{Cchar}}()
@@ -6372,6 +8014,15 @@ that `data` is returned flattened in a single vector, with the appropriate
 padding if necessary.
 
 Return `dataType`, `tags`, `data`, `time`, `numComponents`.
+
+Argument types:
+ - `tag`: integer
+ - `step`: integer
+ - `dataType`: string
+ - `tags`: vector of sizes
+ - `data`: vector of doubles
+ - `time`: double
+ - `numComponents`: integer
 """
 function getHomogeneousModelData(tag, step)
     api_dataType_ = Ref{Ptr{Cchar}}()
@@ -6406,6 +8057,12 @@ gives the number of elements in the data. `data` contains the data for the
 `numEle` elements, concatenated, with node coordinates followed by values per
 node, repeated for each step: [e1x1, ..., e1xn, e1y1, ..., e1yn, e1z1, ...,
 e1zn, e1v1..., e1vN, e2x1, ...].
+
+Argument types:
+ - `tag`: integer
+ - `dataType`: string
+ - `numEle`: integer
+ - `data`: vector of doubles
 """
 function addListData(tag, dataType, numEle, data)
     ierr = Ref{Cint}()
@@ -6425,6 +8082,12 @@ types `dataTypes`, the number of elements `numElements` for each data type and
 the `data` for each data type.
 
 Return `dataType`, `numElements`, `data`.
+
+Argument types:
+ - `tag`: integer
+ - `dataType`: vector of strings
+ - `numElements`: vector of integers
+ - `data`: vector of vectors of doubles
 """
 function getListData(tag)
     api_dataType_ = Ref{Ptr{Ptr{Cchar}}}()
@@ -6464,6 +8127,12 @@ BoldOblique", "Symbol", "ZapfDingbats", "Screen"), "FontSize" and "Align"
 (possible values: "Left" or "BottomLeft", "Center" or "BottomCenter", "Right" or
 "BottomRight", "TopLeft", "TopCenter", "TopRight", "CenterLeft", "CenterCenter",
 "CenterRight").
+
+Argument types:
+ - `tag`: integer
+ - `coord`: vector of doubles
+ - `data`: vector of strings
+ - `style`: vector of strings
 """
 function addListDataString(tag, coord, data, style = [])
     ierr = Ref{Cint}()
@@ -6483,6 +8152,13 @@ if `dim` = 3) from the view with tag `tag`. Return the coordinates in `coord`,
 the strings in `data` and the styles in `style`.
 
 Return `coord`, `data`, `style`.
+
+Argument types:
+ - `tag`: integer
+ - `dim`: integer
+ - `coord`: vector of doubles
+ - `data`: vector of strings
+ - `style`: vector of strings
 """
 function getListDataStrings(tag, dim)
     api_coord_ = Ref{Ptr{Cdouble}}()
@@ -6518,6 +8194,16 @@ x `d`) and the `exp` matrix (of size `d` x 3) are stored as vectors, by row. If
 `dGeo` is positive, use `coefGeo` and `expGeo` to define the interpolation of
 the x, y, z coordinates of the element in terms of the u, v, w coordinates, in
 exactly the same way. If `d` < 0, remove the interpolation matrices.
+
+Argument types:
+ - `tag`: integer
+ - `type`: string
+ - `d`: integer
+ - `coef`: vector of doubles
+ - `exp`: vector of doubles
+ - `dGeo`: integer
+ - `coefGeo`: vector of doubles
+ - `expGeo`: vector of doubles
 """
 function setInterpolationMatrices(tag, type, d, coef, exp, dGeo = 0, coefGeo = Cdouble[], expGeo = Cdouble[])
     ierr = Ref{Cint}()
@@ -6537,7 +8223,12 @@ Add a post-processing view as an `alias` of the reference view with tag
 `tag` is positive use it (and remove the view with that tag if it already
 exists), otherwise associate a new tag. Return the view tag.
 
-Return an integer value.
+Return an integer.
+
+Argument types:
+ - `refTag`: integer
+ - `copyOptions`: boolean
+ - `tag`: integer
 """
 function addAlias(refTag, copyOptions = false, tag = -1)
     ierr = Ref{Cint}()
@@ -6556,6 +8247,12 @@ Combine elements (if `what` == "elements") or steps (if `what` == "steps") of
 all views (`how` == "all"), all visible views (`how` == "visible") or all views
 having the same name (`how` == "name"). Remove original views if `remove` is
 set.
+
+Argument types:
+ - `what`: string
+ - `how`: string
+ - `remove`: boolean
+ - `copyOptions`: boolean
 """
 function combine(what, how, remove = true, copyOptions = true)
     ierr = Ref{Cint}()
@@ -6569,32 +8266,48 @@ end
 """
     gmsh.view.probe(tag, x, y, z, step = -1, numComp = -1, gradient = false, distanceMax = 0., xElemCoord = Cdouble[], yElemCoord = Cdouble[], zElemCoord = Cdouble[], dim = -1)
 
-Probe the view `tag` for its `value` at point (`x`, `y`, `z`). If no match is
+Probe the view `tag` for its `values` at point (`x`, `y`, `z`). If no match is
 found, `value` is returned empty. Return only the value at step `step` is `step`
 is positive. Return only values with `numComp` if `numComp` is positive. Return
-the gradient of the `value` if `gradient` is set. If `distanceMax` is zero, only
-return a result if an exact match inside an element in the view is found; if
-`distanceMax` is positive and an exact match is not found, return the value at
-the closest node if it is closer than `distanceMax`; if `distanceMax` is
+the gradient of the `values` if `gradient` is set. If `distanceMax` is zero,
+only return a result if an exact match inside an element in the view is found;
+if `distanceMax` is positive and an exact match is not found, return the value
+at the closest node if it is closer than `distanceMax`; if `distanceMax` is
 negative and an exact match is not found, always return the value at the closest
 node. The distance to the match is returned in `distance`. Return the result
 from the element described by its coordinates if `xElementCoord`,
 `yElementCoord` and `zElementCoord` are provided. If `dim` is >= 0, return only
 matches from elements of the specified dimension.
 
-Return `value`, `distance`.
+Return `values`, `distance`.
+
+Argument types:
+ - `tag`: integer
+ - `x`: double
+ - `y`: double
+ - `z`: double
+ - `values`: vector of doubles
+ - `distance`: double
+ - `step`: integer
+ - `numComp`: integer
+ - `gradient`: boolean
+ - `distanceMax`: double
+ - `xElemCoord`: vector of doubles
+ - `yElemCoord`: vector of doubles
+ - `zElemCoord`: vector of doubles
+ - `dim`: integer
 """
 function probe(tag, x, y, z, step = -1, numComp = -1, gradient = false, distanceMax = 0., xElemCoord = Cdouble[], yElemCoord = Cdouble[], zElemCoord = Cdouble[], dim = -1)
-    api_value_ = Ref{Ptr{Cdouble}}()
-    api_value_n_ = Ref{Csize_t}()
+    api_values_ = Ref{Ptr{Cdouble}}()
+    api_values_n_ = Ref{Csize_t}()
     api_distance_ = Ref{Cdouble}()
     ierr = Ref{Cint}()
     ccall((:gmshViewProbe, gmsh.lib), Cvoid,
           (Cint, Cdouble, Cdouble, Cdouble, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cdouble}, Cint, Cint, Cint, Cdouble, Ptr{Cdouble}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Cdouble}, Csize_t, Cint, Ptr{Cint}),
-          tag, x, y, z, api_value_, api_value_n_, api_distance_, step, numComp, gradient, distanceMax, convert(Vector{Cdouble}, xElemCoord), length(xElemCoord), convert(Vector{Cdouble}, yElemCoord), length(yElemCoord), convert(Vector{Cdouble}, zElemCoord), length(zElemCoord), dim, ierr)
+          tag, x, y, z, api_values_, api_values_n_, api_distance_, step, numComp, gradient, distanceMax, convert(Vector{Cdouble}, xElemCoord), length(xElemCoord), convert(Vector{Cdouble}, yElemCoord), length(yElemCoord), convert(Vector{Cdouble}, zElemCoord), length(zElemCoord), dim, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    value = unsafe_wrap(Array, api_value_[], api_value_n_[], own = true)
-    return value, api_distance_[]
+    values = unsafe_wrap(Array, api_values_[], api_values_n_[], own = true)
+    return values, api_distance_[]
 end
 
 """
@@ -6602,6 +8315,11 @@ end
 
 Write the view to a file `fileName`. The export format is determined by the file
 extension. Append to the file if `append` is set.
+
+Argument types:
+ - `tag`: integer
+ - `fileName`: string
+ - `append`: boolean
 """
 function write(tag, fileName, append = false)
     ierr = Ref{Cint}()
@@ -6617,6 +8335,11 @@ end
 
 Set the global visibility of the view `tag` per window to `value`, where
 `windowIndex` identifies the window in the window list.
+
+Argument types:
+ - `tag`: integer
+ - `value`: integer
+ - `windowIndex`: integer
 """
 function setVisibilityPerWindow(tag, value, windowIndex = 0)
     ierr = Ref{Cint}()
@@ -6641,6 +8364,11 @@ import ...gmsh
     gmsh.view.option.setNumber(tag, name, value)
 
 Set the numerical option `name` to value `value` for the view with tag `tag`.
+
+Argument types:
+ - `tag`: integer
+ - `name`: string
+ - `value`: double
 """
 function setNumber(tag, name, value)
     ierr = Ref{Cint}()
@@ -6658,6 +8386,11 @@ const set_number = setNumber
 Get the `value` of the numerical option `name` for the view with tag `tag`.
 
 Return `value`.
+
+Argument types:
+ - `tag`: integer
+ - `name`: string
+ - `value`: double
 """
 function getNumber(tag, name)
     api_value_ = Ref{Cdouble}()
@@ -6674,6 +8407,11 @@ const get_number = getNumber
     gmsh.view.option.setString(tag, name, value)
 
 Set the string option `name` to value `value` for the view with tag `tag`.
+
+Argument types:
+ - `tag`: integer
+ - `name`: string
+ - `value`: string
 """
 function setString(tag, name, value)
     ierr = Ref{Cint}()
@@ -6691,6 +8429,11 @@ const set_string = setString
 Get the `value` of the string option `name` for the view with tag `tag`.
 
 Return `value`.
+
+Argument types:
+ - `tag`: integer
+ - `name`: string
+ - `value`: string
 """
 function getString(tag, name)
     api_value_ = Ref{Ptr{Cchar}}()
@@ -6710,6 +8453,14 @@ const get_string = getString
 Set the color option `name` to the RGBA value (`r`, `g`, `b`, `a`) for the view
 with tag `tag`, where where `r`, `g`, `b` and `a` should be integers between 0
 and 255.
+
+Argument types:
+ - `tag`: integer
+ - `name`: string
+ - `r`: integer
+ - `g`: integer
+ - `b`: integer
+ - `a`: integer
 """
 function setColor(tag, name, r, g, b, a = 255)
     ierr = Ref{Cint}()
@@ -6728,6 +8479,14 @@ Get the `r`, `g`, `b`, `a` value of the color option `name` for the view with
 tag `tag`.
 
 Return `r`, `g`, `b`, `a`.
+
+Argument types:
+ - `tag`: integer
+ - `name`: string
+ - `r`: integer
+ - `g`: integer
+ - `b`: integer
+ - `a`: integer
 """
 function getColor(tag, name)
     api_r_ = Ref{Cint}()
@@ -6747,6 +8506,10 @@ const get_color = getColor
     gmsh.view.option.copy(refTag, tag)
 
 Copy the options from the view with tag `refTag` to the view with tag `tag`.
+
+Argument types:
+ - `refTag`: integer
+ - `tag`: integer
 """
 function copy(refTag, tag)
     ierr = Ref{Cint}()
@@ -6774,6 +8537,11 @@ import ..gmsh
     gmsh.plugin.setNumber(name, option, value)
 
 Set the numerical option `option` to the value `value` for plugin `name`.
+
+Argument types:
+ - `name`: string
+ - `option`: string
+ - `value`: double
 """
 function setNumber(name, option, value)
     ierr = Ref{Cint}()
@@ -6789,6 +8557,11 @@ const set_number = setNumber
     gmsh.plugin.setString(name, option, value)
 
 Set the string option `option` to the value `value` for plugin `name`.
+
+Argument types:
+ - `name`: string
+ - `option`: string
+ - `value`: string
 """
 function setString(name, option, value)
     ierr = Ref{Cint}()
@@ -6805,7 +8578,10 @@ const set_string = setString
 
 Run the plugin `name`. Return the tag of the created view (if any).
 
-Return an integer value.
+Return an integer.
+
+Argument types:
+ - `name`: string
 """
 function run(name)
     ierr = Ref{Cint}()
@@ -6886,6 +8662,9 @@ end
 Wait at most `time` seconds for user interface events and return. If `time` < 0,
 wait indefinitely. First automatically create the user interface if it has not
 yet been initialized. Can only be called in the main thread.
+
+Argument types:
+ - `time`: double
 """
 function wait(time = -1.)
     ierr = Ref{Cint}()
@@ -6918,6 +8697,9 @@ end
 
 Awake the main user interface thread and process pending events, and optionally
 perform an action (currently the only `action` allowed is "update").
+
+Argument types:
+ - `action`: string
 """
 function awake(action = "")
     ierr = Ref{Cint}()
@@ -6977,7 +8759,7 @@ end
 
 Check if the user interface is available (e.g. to detect if it has been closed).
 
-Return an integer value.
+Return an integer.
 """
 function isAvailable()
     ierr = Ref{Cint}()
@@ -6992,10 +8774,15 @@ const is_available = isAvailable
 """
     gmsh.fltk.selectEntities(dim = -1)
 
-Select entities in the user interface. If `dim` is >= 0, return only the
-entities of the specified dimension (e.g. points if `dim` == 0).
+Select entities in the user interface. Return the selected entities as a vector
+of (dim, tag) pairs. If `dim` is >= 0, return only the entities of the specified
+dimension (e.g. points if `dim` == 0).
 
-Return an integer value, `dimTags`.
+Return an integer, `dimTags`.
+
+Argument types:
+ - `dimTags`: vector of pairs of integers
+ - `dim`: integer
 """
 function selectEntities(dim = -1)
     api_dimTags_ = Ref{Ptr{Cint}}()
@@ -7016,7 +8803,10 @@ const select_entities = selectEntities
 
 Select elements in the user interface.
 
-Return an integer value, `elementTags`.
+Return an integer, `elementTags`.
+
+Argument types:
+ - `elementTags`: vector of sizes
 """
 function selectElements()
     api_elementTags_ = Ref{Ptr{Csize_t}}()
@@ -7036,7 +8826,10 @@ const select_elements = selectElements
 
 Select views in the user interface.
 
-Return an integer value, `viewTags`.
+Return an integer, `viewTags`.
+
+Argument types:
+ - `viewTags`: vector of integers
 """
 function selectViews()
     api_viewTags_ = Ref{Ptr{Cint}}()
@@ -7056,6 +8849,10 @@ const select_views = selectViews
 
 Split the current window horizontally (if `how` = "h") or vertically (if `how` =
 "v"), using ratio `ratio`. If `how` = "u", restore a single window.
+
+Argument types:
+ - `how`: string
+ - `ratio`: double
 """
 function splitCurrentWindow(how = "v", ratio = 0.5)
     ierr = Ref{Cint}()
@@ -7073,6 +8870,9 @@ const split_current_window = splitCurrentWindow
 Set the current window by speficying its index (starting at 0) in the list of
 all windows. When new windows are created by splits, new windows are appended at
 the end of the list.
+
+Argument types:
+ - `windowIndex`: integer
 """
 function setCurrentWindow(windowIndex = 0)
     ierr = Ref{Cint}()
@@ -7089,6 +8889,10 @@ const set_current_window = setCurrentWindow
 
 Set a status message in the current window. If `graphics` is set, display the
 message inside the graphic window instead of the status bar.
+
+Argument types:
+ - `message`: string
+ - `graphics`: boolean
 """
 function setStatusMessage(message, graphics = false)
     ierr = Ref{Cint}()
@@ -7104,6 +8908,10 @@ const set_status_message = setStatusMessage
     gmsh.fltk.showContextWindow(dim, tag)
 
 Show context window for the entity of dimension `dim` and tag `tag`.
+
+Argument types:
+ - `dim`: integer
+ - `tag`: integer
 """
 function showContextWindow(dim, tag)
     ierr = Ref{Cint}()
@@ -7119,6 +8927,9 @@ const show_context_window = showContextWindow
     gmsh.fltk.openTreeItem(name)
 
 Open the `name` item in the menu tree.
+
+Argument types:
+ - `name`: string
 """
 function openTreeItem(name)
     ierr = Ref{Cint}()
@@ -7134,6 +8945,9 @@ const open_tree_item = openTreeItem
     gmsh.fltk.closeTreeItem(name)
 
 Close the `name` item in the menu tree.
+
+Argument types:
+ - `name`: string
 """
 function closeTreeItem(name)
     ierr = Ref{Cint}()
@@ -7163,6 +8977,10 @@ Get the names of the variables in the Gmsh parser matching the `search` regular
 expression. If `search` is empty, return all the names.
 
 Return `names`.
+
+Argument types:
+ - `names`: vector of strings
+ - `search`: string
 """
 function getNames(search = "")
     api_names_ = Ref{Ptr{Ptr{Cchar}}}()
@@ -7183,6 +9001,10 @@ const get_names = getNames
 
 Set the value of the number variable `name` in the Gmsh parser. Create the
 variable if it does not exist; update the value if the variable exists.
+
+Argument types:
+ - `name`: string
+ - `value`: vector of doubles
 """
 function setNumber(name, value)
     ierr = Ref{Cint}()
@@ -7199,6 +9021,10 @@ const set_number = setNumber
 
 Set the value of the string variable `name` in the Gmsh parser. Create the
 variable if it does not exist; update the value if the variable exists.
+
+Argument types:
+ - `name`: string
+ - `value`: vector of strings
 """
 function setString(name, value)
     ierr = Ref{Cint}()
@@ -7217,6 +9043,10 @@ Get the value of the number variable `name` from the Gmsh parser. Return an
 empty vector if the variable does not exist.
 
 Return `value`.
+
+Argument types:
+ - `name`: string
+ - `value`: vector of doubles
 """
 function getNumber(name)
     api_value_ = Ref{Ptr{Cdouble}}()
@@ -7238,6 +9068,10 @@ Get the value of the string variable `name` from the Gmsh parser. Return an
 empty vector if the variable does not exist.
 
 Return `value`.
+
+Argument types:
+ - `name`: string
+ - `value`: vector of strings
 """
 function getString(name)
     api_value_ = Ref{Ptr{Ptr{Cchar}}}()
@@ -7258,6 +9092,9 @@ const get_string = getString
 
 Clear all the Gmsh parser variables, or remove a single variable if `name` is
 given.
+
+Argument types:
+ - `name`: string
 """
 function clear(name = "")
     ierr = Ref{Cint}()
@@ -7272,6 +9109,9 @@ end
     gmsh.parser.parse(fileName)
 
 Parse the file `fileName` with the Gmsh parser.
+
+Argument types:
+ - `fileName`: string
 """
 function parse(fileName)
     ierr = Ref{Cint}()
@@ -7297,6 +9137,10 @@ import ..gmsh
     gmsh.onelab.set(data, format = "json")
 
 Set one or more parameters in the ONELAB database, encoded in `format`.
+
+Argument types:
+ - `data`: string
+ - `format`: string
 """
 function set(data, format = "json")
     ierr = Ref{Cint}()
@@ -7314,6 +9158,11 @@ Get all the parameters (or a single one if `name` is specified) from the ONELAB
 database, encoded in `format`.
 
 Return `data`.
+
+Argument types:
+ - `data`: string
+ - `name`: string
+ - `format`: string
 """
 function get(name = "", format = "json")
     api_data_ = Ref{Ptr{Cchar}}()
@@ -7333,6 +9182,10 @@ Get the names of the parameters in the ONELAB database matching the `search`
 regular expression. If `search` is empty, return all the names.
 
 Return `names`.
+
+Argument types:
+ - `names`: vector of strings
+ - `search`: string
 """
 function getNames(search = "")
     api_names_ = Ref{Ptr{Ptr{Cchar}}}()
@@ -7353,6 +9206,10 @@ const get_names = getNames
 
 Set the value of the number parameter `name` in the ONELAB database. Create the
 parameter if it does not exist; update the value if the parameter exists.
+
+Argument types:
+ - `name`: string
+ - `value`: vector of doubles
 """
 function setNumber(name, value)
     ierr = Ref{Cint}()
@@ -7369,6 +9226,10 @@ const set_number = setNumber
 
 Set the value of the string parameter `name` in the ONELAB database. Create the
 parameter if it does not exist; update the value if the parameter exists.
+
+Argument types:
+ - `name`: string
+ - `value`: vector of strings
 """
 function setString(name, value)
     ierr = Ref{Cint}()
@@ -7387,6 +9248,10 @@ Get the value of the number parameter `name` from the ONELAB database. Return an
 empty vector if the parameter does not exist.
 
 Return `value`.
+
+Argument types:
+ - `name`: string
+ - `value`: vector of doubles
 """
 function getNumber(name)
     api_value_ = Ref{Ptr{Cdouble}}()
@@ -7408,6 +9273,10 @@ Get the value of the string parameter `name` from the ONELAB database. Return an
 empty vector if the parameter does not exist.
 
 Return `value`.
+
+Argument types:
+ - `name`: string
+ - `value`: vector of strings
 """
 function getString(name)
     api_value_ = Ref{Ptr{Ptr{Cchar}}}()
@@ -7429,7 +9298,10 @@ const get_string = getString
 Check if any parameters in the ONELAB database used by the client `name` have
 been changed.
 
-Return an integer value.
+Return an integer.
+
+Argument types:
+ - `name`: string
 """
 function getChanged(name)
     ierr = Ref{Cint}()
@@ -7446,6 +9318,10 @@ const get_changed = getChanged
 
 Set the changed flag to value `value` for all the parameters in the ONELAB
 database used by the client `name`.
+
+Argument types:
+ - `name`: string
+ - `value`: integer
 """
 function setChanged(name, value)
     ierr = Ref{Cint}()
@@ -7461,6 +9337,9 @@ const set_changed = setChanged
     gmsh.onelab.clear(name = "")
 
 Clear the ONELAB database, or remove a single parameter if `name` is given.
+
+Argument types:
+ - `name`: string
 """
 function clear(name = "")
     ierr = Ref{Cint}()
@@ -7477,6 +9356,10 @@ end
 Run a ONELAB client. If `name` is provided, create a new ONELAB client with name
 `name` and executes `command`. If not, try to run a client that might be linked
 to the processed input files.
+
+Argument types:
+ - `name`: string
+ - `command`: string
 """
 function run(name = "", command = "")
     ierr = Ref{Cint}()
@@ -7502,6 +9385,10 @@ import ..gmsh
     gmsh.logger.write(message, level = "info")
 
 Write a `message`. `level` can be "info", "warning" or "error".
+
+Argument types:
+ - `message`: string
+ - `level`: string
 """
 function write(message, level = "info")
     ierr = Ref{Cint}()
@@ -7532,6 +9419,9 @@ end
 Get logged messages.
 
 Return `log`.
+
+Argument types:
+ - `log`: vector of strings
 """
 function get()
     api_log_ = Ref{Ptr{Ptr{Cchar}}}()
@@ -7565,7 +9455,7 @@ end
 
 Return wall clock time.
 
-Return a floating point value.
+Return a double.
 """
 function getWallTime()
     ierr = Ref{Cint}()
@@ -7582,7 +9472,7 @@ const get_wall_time = getWallTime
 
 Return CPU time.
 
-Return a floating point value.
+Return a double.
 """
 function getCpuTime()
     ierr = Ref{Cint}()
@@ -7600,6 +9490,9 @@ const get_cpu_time = getCpuTime
 Return last error message, if any.
 
 Return `error`.
+
+Argument types:
+ - `error`: string
 """
 function getLastError()
     api_error_ = Ref{Ptr{Cchar}}()

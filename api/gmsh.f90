@@ -1318,7 +1318,7 @@ module gmsh
 
   !> Get all the entities in the current model. If `dim' is >= 0, return only
   !! the entities of the specified dimension (e.g. points if `dim' == 0). The
-  !! entities are returned as a vector of (dim, tag) integer pairs.
+  !! entities are returned as a vector of (dim, tag) pairs.
   subroutine gmshModelGetEntities(dimTags, &
                                   dim, &
                                   ierr)
@@ -1406,7 +1406,7 @@ module gmsh
 
   !> Get all the physical groups in the current model. If `dim' is >= 0, return
   !! only the entities of the specified dimension (e.g. physical points if `dim'
-  !! == 0). The entities are returned as a vector of (dim, tag) integer pairs.
+  !! == 0). The entities are returned as a vector of (dim, tag) pairs.
   subroutine gmshModelGetPhysicalGroups(dimTags, &
                                         dim, &
                                         ierr)
@@ -1549,8 +1549,8 @@ module gmsh
                                 ierr_=ierr)
   end function gmshModelAddPhysicalGroup
 
-  !> Remove the physical groups `dimTags' from the current model. If `dimTags'
-  !! is empty, remove all groups.
+  !> Remove the physical groups `dimTags' (given as a vector of (dim, tag)
+  !! pairs) from the current model. If `dimTags' is empty, remove all groups.
   subroutine gmshModelRemovePhysicalGroups(dimTags, &
                                            ierr)
     interface
@@ -1674,12 +1674,13 @@ module gmsh
          ierr_=ierr)
   end subroutine gmshModelSetTag
 
-  !> Get the boundary of the model entities `dimTags'. Return in `outDimTags'
-  !! the boundary of the individual entities (if `combined' is false) or the
-  !! boundary of the combined geometrical shape formed by all input entities (if
-  !! `combined' is true). Return tags multiplied by the sign of the boundary
-  !! entity if `oriented' is true. Apply the boundary operator recursively down
-  !! to dimension 0 (i.e. to points) if `recursive' is true.
+  !> Get the boundary of the model entities `dimTags', given as a vector of
+  !! (dim, tag) pairs. Return in `outDimTags' the boundary of the individual
+  !! entities (if `combined' is false) or the boundary of the combined
+  !! geometrical shape formed by all input entities (if `combined' is true).
+  !! Return tags multiplied by the sign of the boundary entity if `oriented' is
+  !! true. Apply the boundary operator recursively down to dimension 0 (i.e. to
+  !! points) if `recursive' is true.
   subroutine gmshModelGetBoundary(dimTags, &
                                   outDimTags, &
                                   combined, &
@@ -1947,10 +1948,10 @@ module gmsh
                                  ierr_=ierr)
   end function gmshModelAddDiscreteEntity
 
-  !> Remove the entities `dimTags' of the current model, provided that they are
-  !! not on the boundary of (or embedded in) higher-dimensional entities. If
-  !! `recursive' is true, remove all the entities on their boundaries, down to
-  !! dimension 0.
+  !> Remove the entities `dimTags' (given as a vector of (dim, tag) pairs) of
+  !! the current model, provided that they are not on the boundary of (or
+  !! embedded in) higher-dimensional entities. If `recursive' is true, remove
+  !! all the entities on their boundaries, down to dimension 0.
   subroutine gmshModelRemoveEntities(dimTags, &
                                      recursive, &
                                      ierr)
@@ -2112,9 +2113,9 @@ module gmsh
   !! at the parametric coordinates `parametricCoord'. Only valid for `dim' equal
   !! to 0 (with empty `parametricCoord'), 1 (with `parametricCoord' containing
   !! parametric coordinates on the curve) or 2 (with `parametricCoord'
-  !! containing pairs of u, v parametric coordinates on the surface,
-  !! concatenated: [p1u, p1v, p2u, ...]). Return triplets of x, y, z coordinates
-  !! in `coord', concatenated: [p1x, p1y, p1z, p2x, ...].
+  !! containing u, v parametric coordinates on the surface, concatenated: [p1u,
+  !! p1v, p2u, ...]). Return x, y, z coordinates in `coord', concatenated: [p1x,
+  !! p1y, p1z, p2x, ...].
   subroutine gmshModelGetValue(dim, &
                                tag, &
                                parametricCoord, &
@@ -2160,12 +2161,12 @@ module gmsh
   !> Evaluate the derivative of the parametrization of the entity of dimension
   !! `dim' and tag `tag' at the parametric coordinates `parametricCoord'. Only
   !! valid for `dim' equal to 1 (with `parametricCoord' containing parametric
-  !! coordinates on the curve) or 2 (with `parametricCoord' containing pairs of
-  !! u, v parametric coordinates on the surface, concatenated: [p1u, p1v, p2u,
-  !! ...]). For `dim' equal to 1 return the x, y, z components of the derivative
-  !! with respect to u [d1ux, d1uy, d1uz, d2ux, ...]; for `dim' equal to 2
-  !! return the x, y, z components of the derivative with respect to u and v:
-  !! [d1ux, d1uy, d1uz, d1vx, d1vy, d1vz, d2ux, ...].
+  !! coordinates on the curve) or 2 (with `parametricCoord' containing u, v
+  !! parametric coordinates on the surface, concatenated: [p1u, p1v, p2u, ...]).
+  !! For `dim' equal to 1 return the x, y, z components of the derivative with
+  !! respect to u [d1ux, d1uy, d1uz, d2ux, ...]; for `dim' equal to 2 return the
+  !! x, y, z components of the derivative with respect to u and v: [d1ux, d1uy,
+  !! d1uz, d1vx, d1vy, d1vz, d2ux, ...].
   subroutine gmshModelGetDerivative(dim, &
                                     tag, &
                                     parametricCoord, &
@@ -2212,13 +2213,13 @@ module gmsh
   !! dimension `dim' and tag `tag' at the parametric coordinates
   !! `parametricCoord'. Only valid for `dim' equal to 1 (with `parametricCoord'
   !! containing parametric coordinates on the curve) or 2 (with
-  !! `parametricCoord' containing pairs of u, v parametric coordinates on the
-  !! surface, concatenated: [p1u, p1v, p2u, ...]). For `dim' equal to 1 return
-  !! the x, y, z components of the second derivative with respect to u [d1uux,
-  !! d1uuy, d1uuz, d2uux, ...]; for `dim' equal to 2 return the x, y, z
-  !! components of the second derivative with respect to u and v, and the mixed
-  !! derivative with respect to u and v: [d1uux, d1uuy, d1uuz, d1vvx, d1vvy,
-  !! d1vvz, d1uvx, d1uvy, d1uvz, d2uux, ...].
+  !! `parametricCoord' containing u, v parametric coordinates on the surface,
+  !! concatenated: [p1u, p1v, p2u, ...]). For `dim' equal to 1 return the x, y,
+  !! z components of the second derivative with respect to u [d1uux, d1uuy,
+  !! d1uuz, d2uux, ...]; for `dim' equal to 2 return the x, y, z components of
+  !! the second derivative with respect to u and v, and the mixed derivative
+  !! with respect to u and v: [d1uux, d1uuy, d1uuz, d1vvx, d1vvy, d1vvz, d1uvx,
+  !! d1uvy, d1uvz, d2uux, ...].
   subroutine gmshModelGetSecondDerivative(dim, &
                                           tag, &
                                           parametricCoord, &
@@ -2264,8 +2265,8 @@ module gmsh
   !> Evaluate the (maximum) curvature of the entity of dimension `dim' and tag
   !! `tag' at the parametric coordinates `parametricCoord'. Only valid for `dim'
   !! equal to 1 (with `parametricCoord' containing parametric coordinates on the
-  !! curve) or 2 (with `parametricCoord' containing pairs of u, v parametric
-  !! coordinates on the surface, concatenated: [p1u, p1v, p2u, ...]).
+  !! curve) or 2 (with `parametricCoord' containing u, v parametric coordinates
+  !! on the surface, concatenated: [p1u, p1v, p2u, ...]).
   subroutine gmshModelGetCurvature(dim, &
                                    tag, &
                                    parametricCoord, &
@@ -2386,9 +2387,9 @@ module gmsh
   end subroutine gmshModelGetPrincipalCurvatures
 
   !> Get the normal to the surface with tag `tag' at the parametric coordinates
-  !! `parametricCoord'. `parametricCoord' are given by pairs of u and v
+  !! `parametricCoord'. The `parametricCoord' vector should contain u and v
   !! coordinates, concatenated: [p1u, p1v, p2u, ...]. `normals' are returned as
-  !! triplets of x, y, z components, concatenated: [n1x, n1y, n1z, n2x, ...].
+  !! a vector of x, y, z components, concatenated: [n1x, n1y, n1z, n2x, ...].
   subroutine gmshModelGetNormal(tag, &
                                 parametricCoord, &
                                 normals, &
@@ -2427,11 +2428,11 @@ module gmsh
   end subroutine gmshModelGetNormal
 
   !> Get the parametric coordinates `parametricCoord' for the points `coord' on
-  !! the entity of dimension `dim' and tag `tag'. `coord' are given as triplets
-  !! of x, y, z coordinates, concatenated: [p1x, p1y, p1z, p2x, ...].
-  !! `parametricCoord' returns the parametric coordinates t on the curve (if
-  !! `dim' = 1) or pairs of u and v coordinates concatenated on the surface (if
-  !! `dim' = 2), i.e. [p1t, p2t, ...] or [p1u, p1v, p2u, ...].
+  !! the entity of dimension `dim' and tag `tag'. `coord' are given as x, y, z
+  !! coordinates, concatenated: [p1x, p1y, p1z, p2x, ...]. `parametricCoord'
+  !! returns the parametric coordinates t on the curve (if `dim' = 1) or u and v
+  !! coordinates concatenated on the surface (if `dim' = 2), i.e. [p1t, p2t,
+  !! ...] or [p1u, p1v, p2u, ...].
   subroutine gmshModelGetParametrization(dim, &
                                          tag, &
                                          coord, &
@@ -2566,11 +2567,10 @@ module gmsh
 
   !> Get the points `closestCoord' on the entity of dimension `dim' and tag
   !! `tag' to the points `coord', by orthogonal projection. `coord' and
-  !! `closestCoord' are given as triplets of x, y, z coordinates, concatenated:
-  !! [p1x, p1y, p1z, p2x, ...]. `parametricCoord' returns the parametric
-  !! coordinates t on the curve (if `dim' = 1) or pairs of u and v coordinates
-  !! concatenated on the surface (if `dim' = 2), i.e. [p1t, p2t, ...] or [p1u,
-  !! p1v, p2u, ...].
+  !! `closestCoord' are given as x, y, z coordinates, concatenated: [p1x, p1y,
+  !! p1z, p2x, ...]. `parametricCoord' returns the parametric coordinates t on
+  !! the curve (if `dim' = 1) or u and v coordinates concatenated on the surface
+  !! (if `dim' = 2), i.e. [p1t, p2t, ...] or [p1u, p1v, p2u, ...].
   subroutine gmshModelGetClosestPoint(dim, &
                                       tag, &
                                       coord, &
@@ -2683,8 +2683,9 @@ module gmsh
       api_surfaceParametricCoord_n_)
   end subroutine gmshModelReparametrizeOnSurface
 
-  !> Set the visibility of the model entities `dimTags' to `value'. Apply the
-  !! visibility setting recursively if `recursive' is true.
+  !> Set the visibility of the model entities `dimTags' (given as a vector of
+  !! (dim, tag) pairs) to `value'. Apply the visibility setting recursively if
+  !! `recursive' is true.
   subroutine gmshModelSetVisibility(dimTags, &
                                     value, &
                                     recursive, &
@@ -2767,9 +2768,10 @@ module gmsh
          ierr_=ierr)
   end subroutine gmshModelSetVisibilityPerWindow
 
-  !> Set the color of the model entities `dimTags' to the RGBA value (`r', `g',
-  !! `b', `a'), where `r', `g', `b' and `a' should be integers between 0 and
-  !! 255. Apply the color setting recursively if `recursive' is true.
+  !> Set the color of the model entities `dimTags' (given as a vector of (dim,
+  !! tag) pairs) to the RGBA value (`r', `g', `b', `a'), where `r', `g', `b' and
+  !! `a' should be integers between 0 and 255. Apply the color setting
+  !! recursively if `recursive' is true.
   subroutine gmshModelSetColor(dimTags, &
                                r, &
                                g, &
@@ -2916,64 +2918,64 @@ module gmsh
       api_names_n_)
   end subroutine gmshModelGetAttributeNames
 
-  !> Get the value of the attribute with name `name'.
+  !> Get the values of the attribute with name `name'.
   subroutine gmshModelGetAttribute(name, &
-                                   value, &
+                                   values, &
                                    ierr)
     interface
     subroutine C_API(name, &
-                     api_value_, &
-                     api_value_n_, &
+                     api_values_, &
+                     api_values_n_, &
                      ierr_) &
       bind(C, name="gmshModelGetAttribute")
       use, intrinsic :: iso_c_binding
       character(len=1, kind=c_char), dimension(*), intent(in) :: name
-      type(c_ptr), intent(out) :: api_value_
-      integer(c_size_t), intent(out) :: api_value_n_
+      type(c_ptr), intent(out) :: api_values_
+      integer(c_size_t), intent(out) :: api_values_n_
       integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     character(len=*), intent(in) :: name
-    character(len=GMSH_API_MAX_STR_LEN), dimension(:), allocatable, intent(out) :: value
+    character(len=GMSH_API_MAX_STR_LEN), dimension(:), allocatable, intent(out) :: values
     integer(c_int), intent(out), optional :: ierr
-    type(c_ptr) :: api_value_
-    integer(c_size_t) :: api_value_n_
+    type(c_ptr) :: api_values_
+    integer(c_size_t) :: api_values_n_
     call C_API(name=istring_(name), &
-         api_value_=api_value_, &
-         api_value_n_=api_value_n_, &
+         api_values_=api_values_, &
+         api_values_n_=api_values_n_, &
          ierr_=ierr)
-    value = ovectorstring_(api_value_, &
-      api_value_n_)
+    values = ovectorstring_(api_values_, &
+      api_values_n_)
   end subroutine gmshModelGetAttribute
 
-  !> Set the value of the attribute with name `name'.
+  !> Set the values of the attribute with name `name'.
   subroutine gmshModelSetAttribute(name, &
-                                   value, &
+                                   values, &
                                    ierr)
     interface
     subroutine C_API(name, &
-                     api_value_, &
-                     api_value_n_, &
+                     api_values_, &
+                     api_values_n_, &
                      ierr_) &
       bind(C, name="gmshModelSetAttribute")
       use, intrinsic :: iso_c_binding
       character(len=1, kind=c_char), dimension(*), intent(in) :: name
-      type(c_ptr), dimension(*) :: api_value_
-      integer(c_size_t), value, intent(in) :: api_value_n_
+      type(c_ptr), dimension(*) :: api_values_
+      integer(c_size_t), value, intent(in) :: api_values_n_
       integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     character(len=*), intent(in) :: name
-    character(len=*), dimension(:), intent(in) :: value
+    character(len=*), dimension(:), intent(in) :: values
     integer(c_int), intent(out), optional :: ierr
-    character(len=GMSH_API_MAX_STR_LEN, kind=c_char), allocatable :: api_value_strs(:)
-    type(c_ptr), allocatable :: api_value_(:)
-    call ivectorstring_(value, &
-      api_value_strs, &
-      api_value_)
+    character(len=GMSH_API_MAX_STR_LEN, kind=c_char), allocatable :: api_values_strs(:)
+    type(c_ptr), allocatable :: api_values_(:)
+    call ivectorstring_(values, &
+      api_values_strs, &
+      api_values_)
     call C_API(name=istring_(name), &
-         api_value_=api_value_, &
-         api_value_n_=size_gmsh_str(value), &
+         api_values_=api_values_, &
+         api_values_n_=size_gmsh_str(values), &
          ierr_=ierr)
   end subroutine gmshModelSetAttribute
 
@@ -3069,8 +3071,8 @@ module gmsh
   !! for Laplace smoothing, "Relocate2D" and "Relocate3D" for node relocation,
   !! "QuadQuasiStructured" for quad mesh optimization, "UntangleMeshGeometry"
   !! for untangling). If `force' is set apply the optimization also to discrete
-  !! entities. If `dimTags' is given, only apply the optimizer to the given
-  !! entities.
+  !! entities. If `dimTags' (given as a vector of (dim, tag) pairs) is given,
+  !! only apply the optimizer to the given entities.
   subroutine gmshModelMeshOptimize(method, &
                                    force, &
                                    niter, &
@@ -3150,8 +3152,9 @@ module gmsh
          ierr_=ierr)
   end subroutine gmshModelMeshSetOrder
 
-  !> Get the last entities (if any) where a meshing error occurred. Currently
-  !! only populated by the new 3D meshing algorithms.
+  !> Get the last entities `dimTags' (given as a vector of (dim, tag) pairs), if
+  !! any where a meshing error occurred. Currently only populated by the new 3D
+  !! meshing algorithms.
   subroutine gmshModelMeshGetLastEntityError(dimTags, &
                                              ierr)
     interface
@@ -3176,8 +3179,8 @@ module gmsh
       api_dimTags_n_)
   end subroutine gmshModelMeshGetLastEntityError
 
-  !> Get the last nodes (if any) where a meshing error occurred. Currently only
-  !! populated by the new 3D meshing algorithms.
+  !> Get the last node tags `nodeTags', if any, where a meshing error occurred.
+  !! Currently only populated by the new 3D meshing algorithms.
   subroutine gmshModelMeshGetLastNodeError(nodeTags, &
                                            ierr)
     interface
@@ -3203,9 +3206,10 @@ module gmsh
   end subroutine gmshModelMeshGetLastNodeError
 
   !> Clear the mesh, i.e. delete all the nodes and elements, for the entities
-  !! `dimTags'. If `dimTags' is empty, clear the whole mesh. Note that the mesh
-  !! of an entity can only be cleared if this entity is not on the boundary of
-  !! another entity with a non-empty mesh.
+  !! `dimTags', given as a vector of (dim, tag) pairs. If `dimTags' is empty,
+  !! clear the whole mesh. Note that the mesh of an entity can only be cleared
+  !! if this entity is not on the boundary of another entity with a non-empty
+  !! mesh.
   subroutine gmshModelMeshClear(dimTags, &
                                 ierr)
     interface
@@ -3226,9 +3230,9 @@ module gmsh
          ierr_=ierr)
   end subroutine gmshModelMeshClear
 
-  !> Reverse the orientation of the elements in the entities `dimTags'. If
-  !! `dimTags' is empty, reverse the orientation of the elements in the whole
-  !! mesh.
+  !> Reverse the orientation of the elements in the entities `dimTags', given as
+  !! a vector of (dim, tag) pairs. If `dimTags' is empty, reverse the
+  !! orientation of the elements in the whole mesh.
   subroutine gmshModelMeshReverse(dimTags, &
                                   ierr)
     interface
@@ -3251,8 +3255,9 @@ module gmsh
 
   !> Apply the affine transformation `affineTransform' (16 entries of a 4x4
   !! matrix, by row; only the 12 first can be provided for convenience) to the
-  !! coordinates of the nodes classified on the entities `dimTags'. If `dimTags'
-  !! is empty, transform all the nodes in the mesh.
+  !! coordinates of the nodes classified on the entities `dimTags', given as a
+  !! vector of (dim, tag) pairs. If `dimTags' is empty, transform all the nodes
+  !! in the mesh.
   subroutine gmshModelMeshAffineTransform(affineTransform, &
                                           dimTags, &
                                           ierr)
@@ -4555,12 +4560,12 @@ module gmsh
 
   !> Get the Jacobians of all the elements of type `elementType' classified on
   !! the entity of tag `tag', at the G evaluation points `localCoord' given as
-  !! concatenated triplets of coordinates in the reference element [g1u, g1v,
-  !! g1w, ..., gGu, gGv, gGw]. Data is returned by element, with elements in the
-  !! same order as in `getElements' and `getElementsByType'. `jacobians'
-  !! contains for each element the 9 entries of the 3x3 Jacobian matrix at each
-  !! evaluation point. The matrix is returned by column: [e1g1Jxu, e1g1Jyu,
-  !! e1g1Jzu, e1g1Jxv, ..., e1g1Jzw, e1g2Jxu, ..., e1gGJzw, e2g1Jxu, ...], with
+  !! concatenated u, v, w coordinates in the reference element [g1u, g1v, g1w,
+  !! ..., gGu, gGv, gGw]. Data is returned by element, with elements in the same
+  !! order as in `getElements' and `getElementsByType'. `jacobians' contains for
+  !! each element the 9 entries of the 3x3 Jacobian matrix at each evaluation
+  !! point. The matrix is returned by column: [e1g1Jxu, e1g1Jyu, e1g1Jzu,
+  !! e1g1Jxv, ..., e1g1Jzw, e1g2Jxu, ..., e1gGJzw, e2g1Jxu, ...], with
   !! Jxu=dx/du, Jyu=dy/du, etc. `determinants' contains for each element the
   !! determinant of the Jacobian matrix at each evaluation point: [e1g1, e1g2,
   !! ... e1gG, e2g1, ...]. `coord' contains for each element the x, y, z
@@ -4724,7 +4729,7 @@ module gmsh
   end subroutine gmshModelMeshPreallocateJacobians
 
   !> Get the Jacobian for a single element `elementTag', at the G evaluation
-  !! points `localCoord' given as concatenated triplets of coordinates in the
+  !! points `localCoord' given as concatenated u, v, w coordinates in the
   !! reference element [g1u, g1v, g1w, ..., gGu, gGv, gGw]. `jacobians' contains
   !! the 9 entries of the 3x3 Jacobian matrix at each evaluation point. The
   !! matrix is returned by column: [e1g1Jxu, e1g1Jyu, e1g1Jzu, e1g1Jxv, ...,
@@ -4796,14 +4801,14 @@ module gmsh
   end subroutine gmshModelMeshGetJacobian
 
   !> Get the basis functions of the element of type `elementType' at the
-  !! evaluation points `localCoord' (given as concatenated triplets of
-  !! coordinates in the reference element [g1u, g1v, g1w, ..., gGu, gGv, gGw]),
-  !! for the function space `functionSpaceType'. Currently supported function
-  !! spaces include "Lagrange" and "GradLagrange" for isoparametric Lagrange
-  !! basis functions and their gradient in the u, v, w coordinates of the
-  !! reference element; "LagrangeN" and "GradLagrangeN", with N = 1, 2, ..., for
-  !! N-th order Lagrange basis functions; "H1LegendreN" and "GradH1LegendreN",
-  !! with N = 1, 2, ..., for N-th order hierarchical H1 Legendre functions;
+  !! evaluation points `localCoord' (given as concatenated u, v, w coordinates
+  !! in the reference element [g1u, g1v, g1w, ..., gGu, gGv, gGw]), for the
+  !! function space `functionSpaceType'. Currently supported function spaces
+  !! include "Lagrange" and "GradLagrange" for isoparametric Lagrange basis
+  !! functions and their gradient in the u, v, w coordinates of the reference
+  !! element; "LagrangeN" and "GradLagrangeN", with N = 1, 2, ..., for N-th
+  !! order Lagrange basis functions; "H1LegendreN" and "GradH1LegendreN", with N
+  !! = 1, 2, ..., for N-th order hierarchical H1 Legendre functions;
   !! "HcurlLegendreN" and "CurlHcurlLegendreN", with N = 1, 2, ..., for N-th
   !! order curl-conforming basis functions. `numComponents' returns the number C
   !! of components of a basis function (e.g. 1 for scalar functions and 3 for
@@ -4813,8 +4818,8 @@ module gmsh
   !! == 3. For basis functions that depend on the orientation of the elements,
   !! all values for the first orientation are returned first, followed by values
   !! for the second, etc. `numOrientations' returns the overall number of
-  !! orientations. If `wantedOrientations' is not empty, only return the values
-  !! for the desired orientation indices.
+  !! orientations. If the `wantedOrientations' vector is not empty, only return
+  !! the values for the desired orientation indices.
   subroutine gmshModelMeshGetBasisFunctions(elementType, &
                                             localCoord, &
                                             functionSpaceType, &
@@ -5072,10 +5077,10 @@ module gmsh
   end subroutine gmshModelMeshGetEdges
 
   !> Get the global unique mesh face identifiers `faceTags' and orientations
-  !! `faceOrientations' for an input list of node tag triplets (if `faceType' ==
-  !! 3) or quadruplets (if `faceType' == 4) defining these faces, concatenated
-  !! in the vector `nodeTags'. Mesh faces are created e.g. by `createFaces()',
-  !! `getKeys()' or `addFaces()'.
+  !! `faceOrientations' for an input list of a multiple of three (if `faceType'
+  !! == 3) or four (if `faceType' == 4) node tags defining these faces,
+  !! concatenated in the vector `nodeTags'. Mesh faces are created e.g. by
+  !! `createFaces()', `getKeys()' or `addFaces()'.
   subroutine gmshModelMeshGetFaces(faceType, &
                                    nodeTags, &
                                    faceTags, &
@@ -5125,7 +5130,8 @@ module gmsh
       api_faceOrientations_n_)
   end subroutine gmshModelMeshGetFaces
 
-  !> Create unique mesh edges for the entities `dimTags'.
+  !> Create unique mesh edges for the entities `dimTags', given as a vector of
+  !! (dim, tag) pairs.
   subroutine gmshModelMeshCreateEdges(dimTags, &
                                       ierr)
     interface
@@ -5146,7 +5152,8 @@ module gmsh
          ierr_=ierr)
   end subroutine gmshModelMeshCreateEdges
 
-  !> Create unique mesh faces for the entities `dimTags'.
+  !> Create unique mesh faces for the entities `dimTags', given as a vector of
+  !! (dim, tag) pairs.
   subroutine gmshModelMeshCreateFaces(dimTags, &
                                       ierr)
     interface
@@ -5802,8 +5809,9 @@ module gmsh
       api_partitions_n_)
   end subroutine gmshModelMeshGetGhostElements
 
-  !> Set a mesh size constraint on the model entities `dimTags'. Currently only
-  !! entities of dimension 0 (points) are handled.
+  !> Set a mesh size constraint on the model entities `dimTags', given as a
+  !! vector of (dim, tag) pairs. Currently only entities of dimension 0 (points)
+  !! are handled.
   subroutine gmshModelMeshSetSize(dimTags, &
                                   size, &
                                   ierr)
@@ -5830,8 +5838,9 @@ module gmsh
   end subroutine gmshModelMeshSetSize
 
   !> Get the mesh size constraints (if any) associated with the model entities
-  !! `dimTags'. A zero entry in the output `sizes' vector indicates that no size
-  !! constraint is specified on the corresponding entity.
+  !! `dimTags', given as a vector of (dim, tag) pairs. A zero entry in the
+  !! output `sizes' vector indicates that no size constraint is specified on the
+  !! corresponding entity.
   subroutine gmshModelMeshGetSizes(dimTags, &
                                    sizes, &
                                    ierr)
@@ -6045,14 +6054,14 @@ module gmsh
          ierr_=ierr)
   end subroutine gmshModelMeshSetTransfiniteVolume
 
-  !> Set transfinite meshing constraints on the model entities in `dimTag'.
-  !! Transfinite meshing constraints are added to the curves of the quadrangular
-  !! surfaces and to the faces of 6-sided volumes. Quadragular faces with a
-  !! corner angle superior to `cornerAngle' (in radians) are ignored. The number
-  !! of points is automatically determined from the sizing constraints. If
-  !! `dimTag' is empty, the constraints are applied to all entities in the
-  !! model. If `recombine' is true, the recombine flag is automatically set on
-  !! the transfinite surfaces.
+  !> Set transfinite meshing constraints on the model entities in `dimTags',
+  !! given as a vector of (dim, tag) pairs. Transfinite meshing constraints are
+  !! added to the curves of the quadrangular surfaces and to the faces of
+  !! 6-sided volumes. Quadragular faces with a corner angle superior to
+  !! `cornerAngle' (in radians) are ignored. The number of points is
+  !! automatically determined from the sizing constraints. If `dimTag' is empty,
+  !! the constraints are applied to all entities in the model. If `recombine' is
+  !! true, the recombine flag is automatically set on the transfinite surfaces.
   subroutine gmshModelMeshSetTransfiniteAutomatic(dimTags, &
                                                   cornerAngle, &
                                                   recombine, &
@@ -6283,8 +6292,9 @@ module gmsh
          ierr_=ierr)
   end subroutine gmshModelMeshSetOutwardOrientation
 
-  !> Remove all meshing constraints from the model entities `dimTags'. If
-  !! `dimTags' is empty, remove all constraings.
+  !> Remove all meshing constraints from the model entities `dimTags', given as
+  !! a vector of (dim, tag) pairs. If `dimTags' is empty, remove all
+  !! constraings.
   subroutine gmshModelMeshRemoveConstraints(dimTags, &
                                             ierr)
     interface
@@ -6349,9 +6359,9 @@ module gmsh
          ierr_=ierr)
   end subroutine gmshModelMeshEmbed
 
-  !> Remove embedded entities from the model entities `dimTags'. if `dim' is >=
-  !! 0, only remove embedded entities of the given dimension (e.g. embedded
-  !! points if `dim' == 0).
+  !> Remove embedded entities from the model entities `dimTags', given as a
+  !! vector of (dim, tag) pairs. if `dim' is >= 0, only remove embedded entities
+  !! of the given dimension (e.g. embedded points if `dim' == 0).
   subroutine gmshModelMeshRemoveEmbedded(dimTags, &
                                          dim, &
                                          ierr)
@@ -6414,7 +6424,7 @@ module gmsh
   end subroutine gmshModelMeshGetEmbedded
 
   !> Reorder the elements of type `elementType' classified on the entity of tag
-  !! `tag' according to `ordering'.
+  !! `tag' according to the `ordering' vector.
   subroutine gmshModelMeshReorderElements(elementType, &
                                           tag, &
                                           ordering, &
@@ -6761,7 +6771,8 @@ module gmsh
   end subroutine gmshModelMeshImportStl
 
   !> Get the `tags' of any duplicate nodes in the mesh of the entities
-  !! `dimTags'. If `dimTags' is empty, consider the whole mesh.
+  !! `dimTags', given as a vector of (dim, tag) pairs. If `dimTags' is empty,
+  !! consider the whole mesh.
   subroutine gmshModelMeshGetDuplicateNodes(tags, &
                                             dimTags, &
                                             ierr)
@@ -6794,8 +6805,8 @@ module gmsh
       api_tags_n_)
   end subroutine gmshModelMeshGetDuplicateNodes
 
-  !> Remove duplicate nodes in the mesh of the entities `dimTags'. If `dimTags'
-  !! is empty, consider the whole mesh.
+  !> Remove duplicate nodes in the mesh of the entities `dimTags', given as a
+  !! vector of (dim, tag) pairs. If `dimTags' is empty, consider the whole mesh.
   subroutine gmshModelMeshRemoveDuplicateNodes(dimTags, &
                                                ierr)
     interface
@@ -6817,8 +6828,8 @@ module gmsh
   end subroutine gmshModelMeshRemoveDuplicateNodes
 
   !> Remove duplicate elements (defined by the same nodes, in the same entity)
-  !! in the mesh of the entities `dimTags'. If `dimTags' is empty, consider the
-  !! whole mesh.
+  !! in the mesh of the entities `dimTags', given as a vector of (dim, tag)
+  !! pairs. If `dimTags' is empty, consider the whole mesh.
   subroutine gmshModelMeshRemoveDuplicateElements(dimTags, &
                                                   ierr)
     interface
@@ -6934,11 +6945,11 @@ module gmsh
          ierr_=ierr)
   end subroutine gmshModelMeshClassifySurfaces
 
-  !> Create a geometry for the discrete entities `dimTags' (represented solely
-  !! by a mesh, without an underlying CAD description), i.e. create a
-  !! parametrization for discrete curves and surfaces, assuming that each can be
-  !! parametrized with a single map. If `dimTags' is empty, create a geometry
-  !! for all the discrete entities.
+  !> Create a geometry for the discrete entities `dimTags' (given as a vector of
+  !! (dim, tag) pairs) represented solely by a mesh (without an underlying CAD
+  !! description), i.e. create a parametrization for discrete curves and
+  !! surfaces, assuming that each can be parametrized with a single map. If
+  !! `dimTags' is empty, create a geometry for all the discrete entities.
   subroutine gmshModelMeshCreateGeometry(dimTags, &
                                          ierr)
     interface
@@ -7053,7 +7064,8 @@ module gmsh
   end subroutine gmshModelMeshClearHomologyRequests
 
   !> Perform the (co)homology computations requested by addHomologyRequest().
-  !! The newly created physical groups are returned in `dimTags'.
+  !! The newly created physical groups are returned in `dimTags' as a vector of
+  !! (dim, tag) pairs.
   subroutine gmshModelMeshComputeHomology(dimTags, &
                                           ierr)
     interface
@@ -7140,9 +7152,9 @@ module gmsh
       api_tri_n_)
   end subroutine gmshModelMeshTriangulate
 
-  !> Tetrahedralize the points given in the `coord' vector as triplets of x, y,
-  !! z coordinates, and return the node tags (with numbering starting at 1) of
-  !! the resulting tetrahedra in `tetra'.
+  !> Tetrahedralize the points given in the `coord' vector as x, y, z
+  !! coordinates, concatenated, and return the node tags (with numbering
+  !! starting at 1) of the resulting tetrahedra in `tetra'.
   subroutine gmshModelMeshTetrahedralize(coord, &
                                          tetra, &
                                          ierr)
@@ -7380,70 +7392,70 @@ module gmsh
          ierr_=ierr)
   end subroutine gmshModelMeshFieldGetString
 
-  !> Set the numerical list option `option' to value `value' for field `tag'.
+  !> Set the numerical list option `option' to value `values' for field `tag'.
   subroutine gmshModelMeshFieldSetNumbers(tag, &
                                           option, &
-                                          value, &
+                                          values, &
                                           ierr)
     interface
     subroutine C_API(tag, &
                      option, &
-                     api_value_, &
-                     api_value_n_, &
+                     api_values_, &
+                     api_values_n_, &
                      ierr_) &
       bind(C, name="gmshModelMeshFieldSetNumbers")
       use, intrinsic :: iso_c_binding
       integer(c_int), value, intent(in) :: tag
       character(len=1, kind=c_char), dimension(*), intent(in) :: option
-      real(c_double), dimension(*) :: api_value_
-      integer(c_size_t), value, intent(in) :: api_value_n_
+      real(c_double), dimension(*) :: api_values_
+      integer(c_size_t), value, intent(in) :: api_values_n_
       integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     integer, intent(in) :: tag
     character(len=*), intent(in) :: option
-    real(c_double), dimension(:), intent(in) :: value
+    real(c_double), dimension(:), intent(in) :: values
     integer(c_int), intent(out), optional :: ierr
     call C_API(tag=int(tag, c_int), &
          option=istring_(option), &
-         api_value_=value, &
-         api_value_n_=size_gmsh_double(value), &
+         api_values_=values, &
+         api_values_n_=size_gmsh_double(values), &
          ierr_=ierr)
   end subroutine gmshModelMeshFieldSetNumbers
 
   !> Get the value of the numerical list option `option' for field `tag'.
   subroutine gmshModelMeshFieldGetNumbers(tag, &
                                           option, &
-                                          value, &
+                                          values, &
                                           ierr)
     interface
     subroutine C_API(tag, &
                      option, &
-                     api_value_, &
-                     api_value_n_, &
+                     api_values_, &
+                     api_values_n_, &
                      ierr_) &
       bind(C, name="gmshModelMeshFieldGetNumbers")
       use, intrinsic :: iso_c_binding
       integer(c_int), value, intent(in) :: tag
       character(len=1, kind=c_char), dimension(*), intent(in) :: option
-      type(c_ptr), intent(out) :: api_value_
-      integer(c_size_t) :: api_value_n_
+      type(c_ptr), intent(out) :: api_values_
+      integer(c_size_t) :: api_values_n_
       integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     integer, intent(in) :: tag
     character(len=*), intent(in) :: option
-    real(c_double), dimension(:), allocatable, intent(out) :: value
+    real(c_double), dimension(:), allocatable, intent(out) :: values
     integer(c_int), intent(out), optional :: ierr
-    type(c_ptr) :: api_value_
-    integer(c_size_t) :: api_value_n_
+    type(c_ptr) :: api_values_
+    integer(c_size_t) :: api_values_n_
     call C_API(tag=int(tag, c_int), &
          option=istring_(option), &
-         api_value_=api_value_, &
-         api_value_n_=api_value_n_, &
+         api_values_=api_values_, &
+         api_values_n_=api_values_n_, &
          ierr_=ierr)
-    value = ovectordouble_(api_value_, &
-      api_value_n_)
+    values = ovectordouble_(api_values_, &
+      api_values_n_)
   end subroutine gmshModelMeshFieldGetNumbers
 
   !> Set the field `tag' as the background mesh size field.
@@ -8179,13 +8191,13 @@ module gmsh
                                      ierr_=ierr)
   end function gmshModelGeoAddPointOnGeometry
 
-  !> Extrude the entities `dimTags' in the built-in CAD representation, using a
-  !! translation along (`dx', `dy', `dz'). Return extruded entities in
-  !! `outDimTags'. If `numElements' is not empty, also extrude the mesh: the
-  !! entries in `numElements' give the number of elements in each layer. If
-  !! `height' is not empty, it provides the (cumulative) height of the different
-  !! layers, normalized to 1. If `recombine' is set, recombine the mesh in the
-  !! layers.
+  !> Extrude the entities `dimTags' (given as a vector of (dim, tag) pairs) in
+  !! the built-in CAD representation, using a translation along (`dx', `dy',
+  !! `dz'). Return extruded entities in `outDimTags'. If the `numElements'
+  !! vector is not empty, also extrude the mesh: the entries in `numElements'
+  !! give the number of elements in each layer. If the `height' vector is not
+  !! empty, it provides the (cumulative) height of the different layers,
+  !! normalized to 1. If `recombine' is set, recombine the mesh in the layers.
   subroutine gmshModelGeoExtrude(dimTags, &
                                  dx, &
                                  dy, &
@@ -8254,15 +8266,15 @@ module gmsh
       api_outDimTags_n_)
   end subroutine gmshModelGeoExtrude
 
-  !> Extrude the entities `dimTags' in the built-in CAD representation, using a
-  !! rotation of `angle' radians around the axis of revolution defined by the
-  !! point (`x', `y', `z') and the direction (`ax', `ay', `az'). The angle
-  !! should be strictly smaller than Pi. Return extruded entities in
-  !! `outDimTags'. If `numElements' is not empty, also extrude the mesh: the
-  !! entries in `numElements' give the number of elements in each layer. If
-  !! `height' is not empty, it provides the (cumulative) height of the different
-  !! layers, normalized to 1. If `recombine' is set, recombine the mesh in the
-  !! layers.
+  !> Extrude the entities `dimTags' (given as a vector of (dim, tag) pairs) in
+  !! the built-in CAD representation, using a rotation of `angle' radians around
+  !! the axis of revolution defined by the point (`x', `y', `z') and the
+  !! direction (`ax', `ay', `az'). The angle should be strictly smaller than Pi.
+  !! Return extruded entities in `outDimTags'. If the `numElements' vector is
+  !! not empty, also extrude the mesh: the entries in `numElements' give the
+  !! number of elements in each layer. If the `height' vector is not empty, it
+  !! provides the (cumulative) height of the different layers, normalized to 1.
+  !! If `recombine' is set, recombine the mesh in the layers.
   subroutine gmshModelGeoRevolve(dimTags, &
                                  x, &
                                  y, &
@@ -8351,13 +8363,14 @@ module gmsh
       api_outDimTags_n_)
   end subroutine gmshModelGeoRevolve
 
-  !> Extrude the entities `dimTags' in the built-in CAD representation, using a
-  !! combined translation and rotation of `angle' radians, along (`dx', `dy',
-  !! `dz') and around the axis of revolution defined by the point (`x', `y',
-  !! `z') and the direction (`ax', `ay', `az'). The angle should be strictly
-  !! smaller than Pi. Return extruded entities in `outDimTags'. If `numElements'
-  !! is not empty, also extrude the mesh: the entries in `numElements' give the
-  !! number of elements in each layer. If `height' is not empty, it provides the
+  !> Extrude the entities `dimTags' (given as a vector of (dim, tag) pairs) in
+  !! the built-in CAD representation, using a combined translation and rotation
+  !! of `angle' radians, along (`dx', `dy', `dz') and around the axis of
+  !! revolution defined by the point (`x', `y', `z') and the direction (`ax',
+  !! `ay', `az'). The angle should be strictly smaller than Pi. Return extruded
+  !! entities in `outDimTags'. If the `numElements' vector is not empty, also
+  !! extrude the mesh: the entries in `numElements' give the number of elements
+  !! in each layer. If the `height' vector is not empty, it provides the
   !! (cumulative) height of the different layers, normalized to 1. If
   !! `recombine' is set, recombine the mesh in the layers.
   subroutine gmshModelGeoTwist(dimTags, &
@@ -8463,15 +8476,16 @@ module gmsh
       api_outDimTags_n_)
   end subroutine gmshModelGeoTwist
 
-  !> Extrude the entities `dimTags' in the built-in CAD representation along the
-  !! normals of the mesh, creating discrete boundary layer entities. Return
-  !! extruded entities in `outDimTags'. The entries in `numElements' give the
-  !! number of elements in each layer. If `height' is not empty, it provides the
-  !! (cumulative) height of the different layers. If `recombine' is set,
-  !! recombine the mesh in the layers. A second boundary layer can be created
-  !! from the same entities if `second' is set. If `viewIndex' is >= 0, use the
-  !! corresponding view to either specify the normals (if the view contains a
-  !! vector field) or scale the normals (if the view is scalar).
+  !> Extrude the entities `dimTags' (given as a vector of (dim, tag) pairs) in
+  !! the built-in CAD representation along the normals of the mesh, creating
+  !! discrete boundary layer entities. Return extruded entities in `outDimTags'.
+  !! The entries in `numElements' give the number of elements in each layer. If
+  !! the `height' vector is not empty, it provides the (cumulative) height of
+  !! the different layers. If `recombine' is set, recombine the mesh in the
+  !! layers. A second boundary layer can be created from the same entities if
+  !! `second' is set. If `viewIndex' is >= 0, use the corresponding view to
+  !! either specify the normals (if the view contains a vector field) or scale
+  !! the normals (if the view is scalar).
   subroutine gmshModelGeoExtrudeBoundaryLayer(dimTags, &
                                               outDimTags, &
                                               numElements, &
@@ -8535,8 +8549,8 @@ module gmsh
       api_outDimTags_n_)
   end subroutine gmshModelGeoExtrudeBoundaryLayer
 
-  !> Translate the entities `dimTags' in the built-in CAD representation along
-  !! (`dx', `dy', `dz').
+  !> Translate the entities `dimTags' (given as a vector of (dim, tag) pairs) in
+  !! the built-in CAD representation along (`dx', `dy', `dz').
   subroutine gmshModelGeoTranslate(dimTags, &
                                    dx, &
                                    dy, &
@@ -8572,9 +8586,10 @@ module gmsh
          ierr_=ierr)
   end subroutine gmshModelGeoTranslate
 
-  !> Rotate the entities `dimTags' in the built-in CAD representation by `angle'
-  !! radians around the axis of revolution defined by the point (`x', `y', `z')
-  !! and the direction (`ax', `ay', `az').
+  !> Rotate the entities `dimTags' (given as a vector of (dim, tag) pairs) in
+  !! the built-in CAD representation by `angle' radians around the axis of
+  !! revolution defined by the point (`x', `y', `z') and the direction (`ax',
+  !! `ay', `az').
   subroutine gmshModelGeoRotate(dimTags, &
                                 x, &
                                 y, &
@@ -8630,9 +8645,10 @@ module gmsh
          ierr_=ierr)
   end subroutine gmshModelGeoRotate
 
-  !> Scale the entities `dimTag' in the built-in CAD representation by factors
-  !! `a', `b' and `c' along the three coordinate axes; use (`x', `y', `z') as
-  !! the center of the homothetic transformation.
+  !> Scale the entities `dimTags' (given as a vector of (dim, tag) pairs) in the
+  !! built-in CAD representation by factors `a', `b' and `c' along the three
+  !! coordinate axes; use (`x', `y', `z') as the center of the homothetic
+  !! transformation.
   subroutine gmshModelGeoDilate(dimTags, &
                                 x, &
                                 y, &
@@ -8683,8 +8699,9 @@ module gmsh
          ierr_=ierr)
   end subroutine gmshModelGeoDilate
 
-  !> Mirror the entities `dimTag' in the built-in CAD representation, with
-  !! respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' = 0.
+  !> Mirror the entities `dimTags' (given as a vector of (dim, tag) pairs) in
+  !! the built-in CAD representation, with respect to the plane of equation `a'
+  !! * x + `b' * y + `c' * z + `d' = 0.
   subroutine gmshModelGeoMirror(dimTags, &
                                 a, &
                                 b, &
@@ -8725,10 +8742,10 @@ module gmsh
          ierr_=ierr)
   end subroutine gmshModelGeoMirror
 
-  !> Mirror the entities `dimTag' in the built-in CAD representation, with
-  !! respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' = 0.
-  !! (This is a synonym for `mirror', which will be deprecated in a future
-  !! release.)
+  !> Mirror the entities `dimTags' (given as a vector of (dim, tag) pairs) in
+  !! the built-in CAD representation, with respect to the plane of equation `a'
+  !! * x + `b' * y + `c' * z + `d' = 0. (This is a synonym for `mirror', which
+  !! will be deprecated in a future release.)
   subroutine gmshModelGeoSymmetrize(dimTags, &
                                     a, &
                                     b, &
@@ -8769,8 +8786,8 @@ module gmsh
          ierr_=ierr)
   end subroutine gmshModelGeoSymmetrize
 
-  !> Copy the entities `dimTags' in the built-in CAD representation; the new
-  !! entities are returned in `outDimTags'.
+  !> Copy the entities `dimTags' (given as a vector of (dim, tag) pairs) in the
+  !! built-in CAD representation; the new entities are returned in `outDimTags'.
   subroutine gmshModelGeoCopy(dimTags, &
                               outDimTags, &
                               ierr)
@@ -8803,10 +8820,10 @@ module gmsh
       api_outDimTags_n_)
   end subroutine gmshModelGeoCopy
 
-  !> Remove the entities `dimTags' in the built-in CAD representation, provided
-  !! that they are not on the boundary of higher-dimensional entities. If
-  !! `recursive' is true, remove all the entities on their boundaries, down to
-  !! dimension 0.
+  !> Remove the entities `dimTags' (given as a vector of (dim, tag) pairs) in
+  !! the built-in CAD representation, provided that they are not on the boundary
+  !! of higher-dimensional entities. If `recursive' is true, remove all the
+  !! entities on their boundaries, down to dimension 0.
   subroutine gmshModelGeoRemove(dimTags, &
                                 recursive, &
                                 ierr)
@@ -8973,8 +8990,9 @@ module gmsh
                                    ierr_=ierr)
   end function gmshModelGeoAddPhysicalGroup
 
-  !> Remove the physical groups `dimTags' from the built-in CAD representation.
-  !! If `dimTags' is empty, remove all groups.
+  !> Remove the physical groups `dimTags' (given as a vector of (dim, tag)
+  !! pairs) from the built-in CAD representation. If `dimTags' is empty, remove
+  !! all groups.
   subroutine gmshModelGeoRemovePhysicalGroups(dimTags, &
                                               ierr)
     interface
@@ -9013,9 +9031,9 @@ module gmsh
     call C_API(ierr_=ierr)
   end subroutine gmshModelGeoSynchronize
 
-  !> Set a mesh size constraint on the entities `dimTags' in the built-in CAD
-  !! kernel representation. Currently only entities of dimension 0 (points) are
-  !! handled.
+  !> Set a mesh size constraint on the entities `dimTags' (given as a vector of
+  !! (dim, tag) pairs) in the built-in CAD kernel representation. Currently only
+  !! entities of dimension 0 (points) are handled.
   subroutine gmshModelGeoMeshSetSize(dimTags, &
                                      size, &
                                      ierr)
@@ -10787,14 +10805,14 @@ module gmsh
   !! the OpenCASCADE CAD representation, defined through the open or closed
   !! wires `wireTags'. If `tag' is positive, set the tag explicitly; otherwise a
   !! new tag is selected automatically. The new entities are returned in
-  !! `outDimTags'. If the optional argument `makeRuled' is set, the surfaces
-  !! created on the boundary are forced to be ruled surfaces. If `maxDegree' is
-  !! positive, set the maximal degree of resulting surface. The optional
-  !! argument `continuity' allows to specify the continuity of the resulting
-  !! shape ("C0", "G1", "C1", "G2", "C2", "C3", "CN"). The optional argument
-  !! `parametrization' sets the parametrization type ("ChordLength",
-  !! "Centripetal", "IsoParametric"). The optional argument `smoothing'
-  !! determines if smoothing is applied.
+  !! `outDimTags' as a vector of (dim, tag) pairs. If the optional argument
+  !! `makeRuled' is set, the surfaces created on the boundary are forced to be
+  !! ruled surfaces. If `maxDegree' is positive, set the maximal degree of
+  !! resulting surface. The optional argument `continuity' allows to specify the
+  !! continuity of the resulting shape ("C0", "G1", "C1", "G2", "C2", "C3",
+  !! "CN"). The optional argument `parametrization' sets the parametrization
+  !! type ("ChordLength", "Centripetal", "IsoParametric"). The optional argument
+  !! `smoothing' determines if smoothing is applied.
   subroutine gmshModelOccAddThruSections(wireTags, &
                                          outDimTags, &
                                          tag, &
@@ -10915,13 +10933,13 @@ module gmsh
       api_outDimTags_n_)
   end subroutine gmshModelOccAddThickSolid
 
-  !> Extrude the entities `dimTags' in the OpenCASCADE CAD representation, using
-  !! a translation along (`dx', `dy', `dz'). Return extruded entities in
-  !! `outDimTags'. If `numElements' is not empty, also extrude the mesh: the
-  !! entries in `numElements' give the number of elements in each layer. If
-  !! `height' is not empty, it provides the (cumulative) height of the different
-  !! layers, normalized to 1. If `recombine' is set, recombine the mesh in the
-  !! layers.
+  !> Extrude the entities `dimTags' (given as a vector of (dim, tag) pairs) in
+  !! the OpenCASCADE CAD representation, using a translation along (`dx', `dy',
+  !! `dz'). Return extruded entities in `outDimTags'. If the `numElements'
+  !! vector is not empty, also extrude the mesh: the entries in `numElements'
+  !! give the number of elements in each layer. If the `height' vector is not
+  !! empty, it provides the (cumulative) height of the different layers,
+  !! normalized to 1. If `recombine' is set, recombine the mesh in the layers.
   subroutine gmshModelOccExtrude(dimTags, &
                                  dx, &
                                  dy, &
@@ -10990,15 +11008,16 @@ module gmsh
       api_outDimTags_n_)
   end subroutine gmshModelOccExtrude
 
-  !> Extrude the entities `dimTags' in the OpenCASCADE CAD representation, using
-  !! a rotation of `angle' radians around the axis of revolution defined by the
-  !! point (`x', `y', `z') and the direction (`ax', `ay', `az'). Return extruded
-  !! entities in `outDimTags'. If `numElements' is not empty, also extrude the
-  !! mesh: the entries in `numElements' give the number of elements in each
-  !! layer. If `height' is not empty, it provides the (cumulative) height of the
-  !! different layers, normalized to 1. When the mesh is extruded the angle
-  !! should be strictly smaller than 2*Pi. If `recombine' is set, recombine the
-  !! mesh in the layers.
+  !> Extrude the entities `dimTags' (given as a vector of (dim, tag) pairs) in
+  !! the OpenCASCADE CAD representation, using a rotation of `angle' radians
+  !! around the axis of revolution defined by the point (`x', `y', `z') and the
+  !! direction (`ax', `ay', `az'). Return extruded entities in `outDimTags'. If
+  !! the `numElements' vector is not empty, also extrude the mesh: the entries
+  !! in `numElements' give the number of elements in each layer. If the `height'
+  !! vector is not empty, it provides the (cumulative) height of the different
+  !! layers, normalized to 1. When the mesh is extruded the angle should be
+  !! strictly smaller than 2*Pi. If `recombine' is set, recombine the mesh in
+  !! the layers.
   subroutine gmshModelOccRevolve(dimTags, &
                                  x, &
                                  y, &
@@ -11088,11 +11107,12 @@ module gmsh
   end subroutine gmshModelOccRevolve
 
   !> Add a pipe in the OpenCASCADE CAD representation, by extruding the entities
-  !! `dimTags' along the wire `wireTag'. The type of sweep can be specified with
-  !! `trihedron' (possible values: "DiscreteTrihedron", "CorrectedFrenet",
-  !! "Fixed", "Frenet", "ConstantNormal", "Darboux", "GuideAC", "GuidePlan",
-  !! "GuideACWithContact", "GuidePlanWithContact"). If `trihedron' is not
-  !! provided, "DiscreteTrihedron" is assumed. Return the pipe in `outDimTags'.
+  !! `dimTags' (given as a vector of (dim, tag) pairs) along the wire `wireTag'.
+  !! The type of sweep can be specified with `trihedron' (possible values:
+  !! "DiscreteTrihedron", "CorrectedFrenet", "Fixed", "Frenet",
+  !! "ConstantNormal", "Darboux", "GuideAC", "GuidePlan", "GuideACWithContact",
+  !! "GuidePlanWithContact"). If `trihedron' is not provided,
+  !! "DiscreteTrihedron" is assumed. Return the pipe in `outDimTags'.
   subroutine gmshModelOccAddPipe(dimTags, &
                                  wireTag, &
                                  outDimTags, &
@@ -11139,8 +11159,8 @@ module gmsh
   !! `radii'. The `radii' vector can either contain a single radius, as many
   !! radii as `curveTags', or twice as many as `curveTags' (in which case
   !! different radii are provided for the begin and end points of the curves).
-  !! Return the filleted entities in `outDimTags'. Remove the original volume if
-  !! `removeVolume' is set.
+  !! Return the filleted entities in `outDimTags' as a vector of (dim, tag)
+  !! pairs. Remove the original volume if `removeVolume' is set.
   subroutine gmshModelOccFillet(volumeTags, &
                                 curveTags, &
                                 radii, &
@@ -11264,11 +11284,11 @@ module gmsh
   end subroutine gmshModelOccChamfer
 
   !> Compute the boolean union (the fusion) of the entities `objectDimTags' and
-  !! `toolDimTags' in the OpenCASCADE CAD representation. Return the resulting
-  !! entities in `outDimTags'. If `tag' is positive, try to set the tag
-  !! explicitly (only valid if the boolean operation results in a single
-  !! entity). Remove the object if `removeObject' is set. Remove the tool if
-  !! `removeTool' is set.
+  !! `toolDimTags' (vectors of (dim, tag) pairs) in the OpenCASCADE CAD
+  !! representation. Return the resulting entities in `outDimTags'. If `tag' is
+  !! positive, try to set the tag explicitly (only valid if the boolean
+  !! operation results in a single entity). Remove the object if `removeObject'
+  !! is set. Remove the tool if `removeTool' is set.
   subroutine gmshModelOccFuse(objectDimTags, &
                               toolDimTags, &
                               outDimTags, &
@@ -11345,11 +11365,11 @@ module gmsh
   end subroutine gmshModelOccFuse
 
   !> Compute the boolean intersection (the common parts) of the entities
-  !! `objectDimTags' and `toolDimTags' in the OpenCASCADE CAD representation.
-  !! Return the resulting entities in `outDimTags'. If `tag' is positive, try to
-  !! set the tag explicitly (only valid if the boolean operation results in a
-  !! single entity). Remove the object if `removeObject' is set. Remove the tool
-  !! if `removeTool' is set.
+  !! `objectDimTags' and `toolDimTags' (vectors of (dim, tag) pairs) in the
+  !! OpenCASCADE CAD representation. Return the resulting entities in
+  !! `outDimTags'. If `tag' is positive, try to set the tag explicitly (only
+  !! valid if the boolean operation results in a single entity). Remove the
+  !! object if `removeObject' is set. Remove the tool if `removeTool' is set.
   subroutine gmshModelOccIntersect(objectDimTags, &
                                    toolDimTags, &
                                    outDimTags, &
@@ -11426,11 +11446,11 @@ module gmsh
   end subroutine gmshModelOccIntersect
 
   !> Compute the boolean difference between the entities `objectDimTags' and
-  !! `toolDimTags' in the OpenCASCADE CAD representation. Return the resulting
-  !! entities in `outDimTags'. If `tag' is positive, try to set the tag
-  !! explicitly (only valid if the boolean operation results in a single
-  !! entity). Remove the object if `removeObject' is set. Remove the tool if
-  !! `removeTool' is set.
+  !! `toolDimTags' (given as vectors of (dim, tag) pairs) in the OpenCASCADE CAD
+  !! representation. Return the resulting entities in `outDimTags'. If `tag' is
+  !! positive, try to set the tag explicitly (only valid if the boolean
+  !! operation results in a single entity). Remove the object if `removeObject'
+  !! is set. Remove the tool if `removeTool' is set.
   subroutine gmshModelOccCut(objectDimTags, &
                              toolDimTags, &
                              outDimTags, &
@@ -11507,14 +11527,15 @@ module gmsh
   end subroutine gmshModelOccCut
 
   !> Compute the boolean fragments (general fuse) resulting from the
-  !! intersection of the entities `objectDimTags' and `toolDimTags' in the
-  !! OpenCASCADE CAD representation, making all iterfaces conformal. When
-  !! applied to entities of different dimensions, the lower dimensional entities
-  !! will be automatically embedded in the higher dimensional entities if they
-  !! are not on their boundary. Return the resulting entities in `outDimTags'.
-  !! If `tag' is positive, try to set the tag explicitly (only valid if the
-  !! boolean operation results in a single entity). Remove the object if
-  !! `removeObject' is set. Remove the tool if `removeTool' is set.
+  !! intersection of the entities `objectDimTags' and `toolDimTags' (given as
+  !! vectors of (dim, tag) pairs) in the OpenCASCADE CAD representation, making
+  !! all iterfaces conformal. When applied to entities of different dimensions,
+  !! the lower dimensional entities will be automatically embedded in the higher
+  !! dimensional entities if they are not on their boundary. Return the
+  !! resulting entities in `outDimTags'. If `tag' is positive, try to set the
+  !! tag explicitly (only valid if the boolean operation results in a single
+  !! entity). Remove the object if `removeObject' is set. Remove the tool if
+  !! `removeTool' is set.
   subroutine gmshModelOccFragment(objectDimTags, &
                                   toolDimTags, &
                                   outDimTags, &
@@ -11590,8 +11611,8 @@ module gmsh
       outDimTagsMap_n)
   end subroutine gmshModelOccFragment
 
-  !> Translate the entities `dimTags' in the OpenCASCADE CAD representation
-  !! along (`dx', `dy', `dz').
+  !> Translate the entities `dimTags' (given as a vector of (dim, tag) pairs) in
+  !! the OpenCASCADE CAD representation along (`dx', `dy', `dz').
   subroutine gmshModelOccTranslate(dimTags, &
                                    dx, &
                                    dy, &
@@ -11627,9 +11648,10 @@ module gmsh
          ierr_=ierr)
   end subroutine gmshModelOccTranslate
 
-  !> Rotate the entities `dimTags' in the OpenCASCADE CAD representation by
-  !! `angle' radians around the axis of revolution defined by the point (`x',
-  !! `y', `z') and the direction (`ax', `ay', `az').
+  !> Rotate the entities `dimTags' (given as a vector of (dim, tag) pairs) in
+  !! the OpenCASCADE CAD representation by `angle' radians around the axis of
+  !! revolution defined by the point (`x', `y', `z') and the direction (`ax',
+  !! `ay', `az').
   subroutine gmshModelOccRotate(dimTags, &
                                 x, &
                                 y, &
@@ -11685,9 +11707,10 @@ module gmsh
          ierr_=ierr)
   end subroutine gmshModelOccRotate
 
-  !> Scale the entities `dimTags' in the OpenCASCADE CAD representation by
-  !! factors `a', `b' and `c' along the three coordinate axes; use (`x', `y',
-  !! `z') as the center of the homothetic transformation.
+  !> Scale the entities `dimTags' (given as a vector of (dim, tag) pairs) in the
+  !! OpenCASCADE CAD representation by factors `a', `b' and `c' along the three
+  !! coordinate axes; use (`x', `y', `z') as the center of the homothetic
+  !! transformation.
   subroutine gmshModelOccDilate(dimTags, &
                                 x, &
                                 y, &
@@ -11738,8 +11761,9 @@ module gmsh
          ierr_=ierr)
   end subroutine gmshModelOccDilate
 
-  !> Mirror the entities `dimTags' in the OpenCASCADE CAD representation, with
-  !! respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' = 0.
+  !> Mirror the entities `dimTags' (given as a vector of (dim, tag) pairs) in
+  !! the OpenCASCADE CAD representation, with respect to the plane of equation
+  !! `a' * x + `b' * y + `c' * z + `d' = 0.
   subroutine gmshModelOccMirror(dimTags, &
                                 a, &
                                 b, &
@@ -11780,9 +11804,10 @@ module gmsh
          ierr_=ierr)
   end subroutine gmshModelOccMirror
 
-  !> Mirror the entities `dimTags' in the OpenCASCADE CAD representation, with
-  !! respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' = 0.
-  !! (This is a deprecated synonym for `mirror'.)
+  !> Mirror the entities `dimTags' (given as a vector of (dim, tag) pairs) in
+  !! the OpenCASCADE CAD representation, with respect to the plane of equation
+  !! `a' * x + `b' * y + `c' * z + `d' = 0. (This is a deprecated synonym for
+  !! `mirror'.)
   subroutine gmshModelOccSymmetrize(dimTags, &
                                     a, &
                                     b, &
@@ -11825,7 +11850,8 @@ module gmsh
 
   !> Apply a general affine transformation matrix `affineTransform' (16 entries
   !! of a 4x4 matrix, by row; only the 12 first can be provided for convenience)
-  !! to the entities `dimTags' in the OpenCASCADE CAD representation.
+  !! to the entities `dimTags' (given as a vector of (dim, tag) pairs) in the
+  !! OpenCASCADE CAD representation.
   subroutine gmshModelOccAffineTransform(dimTags, &
                                          affineTransform, &
                                          ierr)
@@ -11888,10 +11914,10 @@ module gmsh
       api_outDimTags_n_)
   end subroutine gmshModelOccCopy
 
-  !> Remove the entities `dimTags' in the OpenCASCADE CAD representation,
-  !! provided that they are not on the boundary of higher-dimensional entities.
-  !! If `recursive' is true, remove all the entities on their boundaries, down
-  !! to dimension 0.
+  !> Remove the entities `dimTags' (given as a vector of (dim, tag) pairs) in
+  !! the OpenCASCADE CAD representation, provided that they are not on the
+  !! boundary of higher-dimensional entities. If `recursive' is true, remove all
+  !! the entities on their boundaries, down to dimension 0.
   subroutine gmshModelOccRemove(dimTags, &
                                 recursive, &
                                 ierr)
@@ -11932,9 +11958,10 @@ module gmsh
     call C_API(ierr_=ierr)
   end subroutine gmshModelOccRemoveAllDuplicates
 
-  !> Apply various healing procedures to the entities `dimTags' (or to all the
-  !! entities in the model if `dimTags' is empty) in the OpenCASCADE CAD
-  !! representation. Return the healed entities in `outDimTags'.
+  !> Apply various healing procedures to the entities `dimTags' (given as a
+  !! vector of (dim, tag) pairs), or to all the entities in the model if
+  !! `dimTags' is empty, in the OpenCASCADE CAD representation. Return the
+  !! healed entities in `outDimTags'.
   subroutine gmshModelOccHealShapes(outDimTags, &
                                     dimTags, &
                                     tolerance, &
@@ -12020,10 +12047,10 @@ module gmsh
 
   !> Import BREP, STEP or IGES shapes from the file `fileName' in the
   !! OpenCASCADE CAD representation. The imported entities are returned in
-  !! `outDimTags'. If the optional argument `highestDimOnly' is set, only import
-  !! the highest dimensional entities in the file. The optional argument
-  !! `format' can be used to force the format of the file (currently "brep",
-  !! "step" or "iges").
+  !! `outDimTags', as a vector of (dim, tag) pairs. If the optional argument
+  !! `highestDimOnly' is set, only import the highest dimensional entities in
+  !! the file. The optional argument `format' can be used to force the format of
+  !! the file (currently "brep", "step" or "iges").
   subroutine gmshModelOccImportShapes(fileName, &
                                       outDimTags, &
                                       highestDimOnly, &
@@ -12065,13 +12092,13 @@ module gmsh
 
   !> Imports an OpenCASCADE `shape' by providing a pointer to a native
   !! OpenCASCADE `TopoDS_Shape' object (passed as a pointer to void). The
-  !! imported entities are returned in `outDimTags'. If the optional argument
-  !! `highestDimOnly' is set, only import the highest dimensional entities in
-  !! `shape'. In Python, this function can be used for integration with
-  !! PythonOCC, in which the SwigPyObject pointer of `TopoDS_Shape' must be
-  !! passed as an int to `shape', i.e., `shape = int(pythonocc_shape.this)'.
-  !! Warning: this function is unsafe, as providing an invalid pointer will lead
-  !! to undefined behavior.
+  !! imported entities are returned in `outDimTags' as a vector of (dim, tag)
+  !! pairs. If the optional argument `highestDimOnly' is set, only import the
+  !! highest dimensional entities in `shape'. In Python, this function can be
+  !! used for integration with PythonOCC, in which the SwigPyObject pointer of
+  !! `TopoDS_Shape' must be passed as an int to `shape', i.e., `shape =
+  !! int(pythonocc_shape.this)'. Warning: this function is unsafe, as providing
+  !! an invalid pointer will lead to undefined behavior.
   subroutine gmshModelOccImportShapesNativePointer(shape, &
                                                    outDimTags, &
                                                    highestDimOnly, &
@@ -12108,7 +12135,7 @@ module gmsh
 
   !> Get all the OpenCASCADE entities. If `dim' is >= 0, return only the
   !! entities of the specified dimension (e.g. points if `dim' == 0). The
-  !! entities are returned as a vector of (dim, tag) integer pairs.
+  !! entities are returned as a vector of (dim, tag) pairs.
   subroutine gmshModelOccGetEntities(dimTags, &
                                      dim, &
                                      ierr)
@@ -12525,9 +12552,9 @@ module gmsh
     call C_API(ierr_=ierr)
   end subroutine gmshModelOccSynchronize
 
-  !> Set a mesh size constraint on the entities `dimTags' in the OpenCASCADE CAD
-  !! representation. Currently only entities of dimension 0 (points) are
-  !! handled.
+  !> Set a mesh size constraint on the entities `dimTags' (given as a vector of
+  !! (dim, tag) pairs) in the OpenCASCADE CAD representation. Currently only
+  !! entities of dimension 0 (points) are handled.
   subroutine gmshModelOccMeshSetSize(dimTags, &
                                      size, &
                                      ierr)
@@ -13317,10 +13344,10 @@ module gmsh
          ierr_=ierr)
   end subroutine gmshViewCombine
 
-  !> Probe the view `tag' for its `value' at point (`x', `y', `z'). If no match
+  !> Probe the view `tag' for its `values' at point (`x', `y', `z'). If no match
   !! is found, `value' is returned empty. Return only the value at step `step'
   !! is `step' is positive. Return only values with `numComp' if `numComp' is
-  !! positive. Return the gradient of the `value' if `gradient' is set. If
+  !! positive. Return the gradient of the `values' if `gradient' is set. If
   !! `distanceMax' is zero, only return a result if an exact match inside an
   !! element in the view is found; if `distanceMax' is positive and an exact
   !! match is not found, return the value at the closest node if it is closer
@@ -13334,7 +13361,7 @@ module gmsh
                            x, &
                            y, &
                            z, &
-                           value, &
+                           values, &
                            distance, &
                            step, &
                            numComp, &
@@ -13350,8 +13377,8 @@ module gmsh
                      x, &
                      y, &
                      z, &
-                     api_value_, &
-                     api_value_n_, &
+                     api_values_, &
+                     api_values_n_, &
                      distance, &
                      step, &
                      numComp, &
@@ -13371,8 +13398,8 @@ module gmsh
       real(c_double), value, intent(in) :: x
       real(c_double), value, intent(in) :: y
       real(c_double), value, intent(in) :: z
-      type(c_ptr), intent(out) :: api_value_
-      integer(c_size_t) :: api_value_n_
+      type(c_ptr), intent(out) :: api_values_
+      integer(c_size_t) :: api_values_n_
       real(c_double) :: distance
       integer(c_int), value, intent(in) :: step
       integer(c_int), value, intent(in) :: numComp
@@ -13392,7 +13419,7 @@ module gmsh
     real(c_double), intent(in) :: x
     real(c_double), intent(in) :: y
     real(c_double), intent(in) :: z
-    real(c_double), dimension(:), allocatable, intent(out) :: value
+    real(c_double), dimension(:), allocatable, intent(out) :: values
     real(c_double) :: distance
     integer, intent(in), optional :: step
     integer, intent(in), optional :: numComp
@@ -13403,14 +13430,14 @@ module gmsh
     real(c_double), dimension(:), intent(in), optional :: zElemCoord
     integer, intent(in), optional :: dim
     integer(c_int), intent(out), optional :: ierr
-    type(c_ptr) :: api_value_
-    integer(c_size_t) :: api_value_n_
+    type(c_ptr) :: api_values_
+    integer(c_size_t) :: api_values_n_
     call C_API(tag=int(tag, c_int), &
          x=real(x, c_double), &
          y=real(y, c_double), &
          z=real(z, c_double), &
-         api_value_=api_value_, &
-         api_value_n_=api_value_n_, &
+         api_values_=api_values_, &
+         api_values_n_=api_values_n_, &
          distance=distance, &
          step=optval_c_int(-1, step), &
          numComp=optval_c_int(-1, numComp), &
@@ -13424,8 +13451,8 @@ module gmsh
          api_zElemCoord_n_=size_gmsh_double(zElemCoord), &
          dim=optval_c_int(-1, dim), &
          ierr_=ierr)
-    value = ovectordouble_(api_value_, &
-      api_value_n_)
+    values = ovectordouble_(api_values_, &
+      api_values_n_)
   end subroutine gmshViewProbe
 
   !> Write the view to a file `fileName'. The export format is determined by the
@@ -13942,8 +13969,9 @@ module gmsh
     gmshFltkIsAvailable = C_API(ierr_=ierr)
   end function gmshFltkIsAvailable
 
-  !> Select entities in the user interface. If `dim' is >= 0, return only the
-  !! entities of the specified dimension (e.g. points if `dim' == 0).
+  !> Select entities in the user interface. Return the selected entities as a
+  !! vector of (dim, tag) pairs. If `dim' is >= 0, return only the entities of
+  !! the specified dimension (e.g. points if `dim' == 0).
   function gmshFltkSelectEntities(dimTags, &
                                   dim, &
                                   ierr)
