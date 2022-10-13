@@ -685,14 +685,14 @@ namespace gmsh { // Top-level functions
 
       // gmsh::model::mesh::getLastEntityError
       //
-      // Get the last entities `dimTags' (given as a vector of (dim, tag) pairs),
-      // if any where a meshing error occurred. Currently only populated by the new
-      // 3D meshing algorithms.
+      // Get the last entities `dimTags' (as a vector of (dim, tag) pairs) where a
+      // meshing error occurred. Currently only populated by the new 3D meshing
+      // algorithms.
       GMSH_API void getLastEntityError(gmsh::vectorpair & dimTags);
 
       // gmsh::model::mesh::getLastNodeError
       //
-      // Get the last node tags `nodeTags', if any, where a meshing error occurred.
+      // Get the last node tags `nodeTags' where a meshing error occurred.
       // Currently only populated by the new 3D meshing algorithms.
       GMSH_API void getLastNodeError(std::vector<std::size_t> & nodeTags);
 
@@ -1497,7 +1497,9 @@ namespace gmsh { // Top-level functions
       // gmsh::model::mesh::setAlgorithm
       //
       // Set the meshing algorithm on the model entity of dimension `dim' and tag
-      // `tag'. Currently only supported for `dim' == 2.
+      // `tag'. Supported values are those of the `Mesh.Algorithm' option, as
+      // listed in the Gmsh reference manual. Currently only supported for `dim' ==
+      // 2.
       GMSH_API void setAlgorithm(const int dim,
                                  const int tag,
                                  const int val);

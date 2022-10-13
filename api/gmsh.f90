@@ -3152,9 +3152,9 @@ module gmsh
          ierr_=ierr)
   end subroutine gmshModelMeshSetOrder
 
-  !> Get the last entities `dimTags' (given as a vector of (dim, tag) pairs), if
-  !! any where a meshing error occurred. Currently only populated by the new 3D
-  !! meshing algorithms.
+  !> Get the last entities `dimTags' (as a vector of (dim, tag) pairs) where a
+  !! meshing error occurred. Currently only populated by the new 3D meshing
+  !! algorithms.
   subroutine gmshModelMeshGetLastEntityError(dimTags, &
                                              ierr)
     interface
@@ -3179,8 +3179,8 @@ module gmsh
       api_dimTags_n_)
   end subroutine gmshModelMeshGetLastEntityError
 
-  !> Get the last node tags `nodeTags', if any, where a meshing error occurred.
-  !! Currently only populated by the new 3D meshing algorithms.
+  !> Get the last node tags `nodeTags' where a meshing error occurred. Currently
+  !! only populated by the new 3D meshing algorithms.
   subroutine gmshModelMeshGetLastNodeError(nodeTags, &
                                            ierr)
     interface
@@ -6185,7 +6185,8 @@ module gmsh
   end subroutine gmshModelMeshSetReverse
 
   !> Set the meshing algorithm on the model entity of dimension `dim' and tag
-  !! `tag'. Currently only supported for `dim' == 2.
+  !! `tag'. Supported values are those of the `Mesh.Algorithm' option, as listed
+  !! in the Gmsh reference manual. Currently only supported for `dim' == 2.
   subroutine gmshModelMeshSetAlgorithm(dim, &
                                        tag, &
                                        val, &

@@ -1775,8 +1775,8 @@ const set_order = setOrder
 """
     gmsh.model.mesh.getLastEntityError()
 
-Get the last entities `dimTags` (given as a vector of (dim, tag) pairs), if any
-where a meshing error occurred. Currently only populated by the new 3D meshing
+Get the last entities `dimTags` (as a vector of (dim, tag) pairs) where a
+meshing error occurred. Currently only populated by the new 3D meshing
 algorithms.
 
 Return `dimTags`.
@@ -1801,8 +1801,8 @@ const get_last_entity_error = getLastEntityError
 """
     gmsh.model.mesh.getLastNodeError()
 
-Get the last node tags `nodeTags`, if any, where a meshing error occurred.
-Currently only populated by the new 3D meshing algorithms.
+Get the last node tags `nodeTags` where a meshing error occurred. Currently only
+populated by the new 3D meshing algorithms.
 
 Return `nodeTags`.
 
@@ -3633,7 +3633,8 @@ const set_reverse = setReverse
     gmsh.model.mesh.setAlgorithm(dim, tag, val)
 
 Set the meshing algorithm on the model entity of dimension `dim` and tag `tag`.
-Currently only supported for `dim` == 2.
+Supported values are those of the `Mesh.Algorithm` option, as listed in the Gmsh
+reference manual. Currently only supported for `dim` == 2.
 
 Types:
  - `dim`: integer

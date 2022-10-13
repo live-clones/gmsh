@@ -583,14 +583,14 @@ GMSH_API void gmshModelMeshRefine(int * ierr);
 GMSH_API void gmshModelMeshSetOrder(const int order,
                                     int * ierr);
 
-/* Get the last entities `dimTags' (given as a vector of (dim, tag) pairs), if
- * any where a meshing error occurred. Currently only populated by the new 3D
- * meshing algorithms. */
+/* Get the last entities `dimTags' (as a vector of (dim, tag) pairs) where a
+ * meshing error occurred. Currently only populated by the new 3D meshing
+ * algorithms. */
 GMSH_API void gmshModelMeshGetLastEntityError(int ** dimTags, size_t * dimTags_n,
                                               int * ierr);
 
-/* Get the last node tags `nodeTags', if any, where a meshing error occurred.
- * Currently only populated by the new 3D meshing algorithms. */
+/* Get the last node tags `nodeTags' where a meshing error occurred. Currently
+ * only populated by the new 3D meshing algorithms. */
 GMSH_API void gmshModelMeshGetLastNodeError(size_t ** nodeTags, size_t * nodeTags_n,
                                             int * ierr);
 
@@ -1321,7 +1321,8 @@ GMSH_API void gmshModelMeshSetReverse(const int dim,
                                       int * ierr);
 
 /* Set the meshing algorithm on the model entity of dimension `dim' and tag
- * `tag'. Currently only supported for `dim' == 2. */
+ * `tag'. Supported values are those of the `Mesh.Algorithm' option, as listed
+ * in the Gmsh reference manual. Currently only supported for `dim' == 2. */
 GMSH_API void gmshModelMeshSetAlgorithm(const int dim,
                                         const int tag,
                                         const int val,

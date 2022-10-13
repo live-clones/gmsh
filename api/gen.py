@@ -273,10 +273,10 @@ mesh.add('refine', doc, None)
 doc = '''Set the order of the elements in the mesh of the current model to `order'.'''
 mesh.add('setOrder', doc, None, iint('order'))
 
-doc = '''Get the last entities `dimTags' (given as a vector of (dim, tag) pairs), if any where a meshing error occurred. Currently only populated by the new 3D meshing algorithms.'''
+doc = '''Get the last entities `dimTags' (as a vector of (dim, tag) pairs) where a meshing error occurred. Currently only populated by the new 3D meshing algorithms.'''
 mesh.add('getLastEntityError', doc, None, ovectorpair('dimTags'))
 
-doc = '''Get the last node tags `nodeTags', if any, where a meshing error occurred. Currently only populated by the new 3D meshing algorithms.'''
+doc = '''Get the last node tags `nodeTags' where a meshing error occurred. Currently only populated by the new 3D meshing algorithms.'''
 mesh.add('getLastNodeError', doc, None, ovectorsize('nodeTags'))
 
 doc = '''Clear the mesh, i.e. delete all the nodes and elements, for the entities `dimTags', given as a vector of (dim, tag) pairs. If `dimTags' is empty, clear the whole mesh. Note that the mesh of an entity can only be cleared if this entity is not on the boundary of another entity with a non-empty mesh.'''
@@ -477,7 +477,7 @@ mesh.add('setSmoothing', doc, None, iint('dim'), iint('tag'), iint('val'))
 doc = '''Set a reverse meshing constraint on the model entity of dimension `dim' and tag `tag'. If `val' is true, the mesh orientation will be reversed with respect to the natural mesh orientation (i.e. the orientation consistent with the orientation of the geometry). If `val' is false, the mesh is left as-is.'''
 mesh.add('setReverse', doc, None, iint('dim'), iint('tag'), ibool('val', 'true', 'True'))
 
-doc = '''Set the meshing algorithm on the model entity of dimension `dim' and tag `tag'. Currently only supported for `dim' == 2.'''
+doc = '''Set the meshing algorithm on the model entity of dimension `dim' and tag `tag'. Supported values are those of the `Mesh.Algorithm' option, as listed in the Gmsh reference manual. Currently only supported for `dim' == 2.'''
 mesh.add('setAlgorithm', doc, None, iint('dim'), iint('tag'), iint('val'))
 
 doc = '''Force the mesh size to be extended from the boundary, or not, for the model entity of dimension `dim' and tag `tag'. Currently only supported for `dim' == 2.'''
