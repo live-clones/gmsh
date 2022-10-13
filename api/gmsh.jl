@@ -39,7 +39,7 @@ Gmsh app, either interactively or in batch mode depending on the command line
 arguments. If `run` is not set, initializing the API sets the options
 "General.AbortOnError" to 2 and "General.Terminal" to 1.
 
-Argument types:
+Types:
  - `argv`: command line arguments
  - `readConfigFiles`: boolean
  - `run`: boolean
@@ -91,7 +91,7 @@ Open a file. Equivalent to the `File->Open` menu in the Gmsh app. Handling of
 the file depends on its extension and/or its contents: opening a file with model
 data will create a new model.
 
-Argument types:
+Types:
  - `fileName`: string
 """
 function open(fileName)
@@ -110,7 +110,7 @@ Merge a file. Equivalent to the `File->Merge` menu in the Gmsh app. Handling of
 the file depends on its extension and/or its contents. Merging a file with model
 data will add the data to the current model.
 
-Argument types:
+Types:
  - `fileName`: string
 """
 function merge(fileName)
@@ -127,7 +127,7 @@ end
 
 Write a file. The export format is determined by the file extension.
 
-Argument types:
+Types:
  - `fileName`: string
 """
 function write(fileName)
@@ -169,7 +169,7 @@ Set a numerical option to `value`. `name` is of the form "Category.Option" or
 "Category[num].Option". Available categories and options are listed in the Gmsh
 reference manual.
 
-Argument types:
+Types:
  - `name`: string
  - `value`: double
 """
@@ -192,7 +192,7 @@ Gmsh reference manual.
 
 Return `value`.
 
-Argument types:
+Types:
  - `name`: string
  - `value`: double
 """
@@ -214,7 +214,7 @@ Set a string option to `value`. `name` is of the form "Category.Option" or
 "Category[num].Option". Available categories and options are listed in the Gmsh
 reference manual.
 
-Argument types:
+Types:
  - `name`: string
  - `value`: string
 """
@@ -237,7 +237,7 @@ reference manual.
 
 Return `value`.
 
-Argument types:
+Types:
  - `name`: string
  - `value`: string
 """
@@ -262,7 +262,7 @@ Set a color option to the RGBA value (`r`, `g`, `b`, `a`), where where `r`, `g`,
 and options are listed in the Gmsh reference manual. For conciseness "Color."
 can be ommitted in `name`.
 
-Argument types:
+Types:
  - `name`: string
  - `r`: integer
  - `g`: integer
@@ -289,7 +289,7 @@ can be ommitted in `name`.
 
 Return `r`, `g`, `b`, `a`.
 
-Argument types:
+Types:
  - `name`: string
  - `r`: integer
  - `g`: integer
@@ -326,7 +326,7 @@ import ..gmsh
 
 Add a new model, with name `name`, and set it as the current model.
 
-Argument types:
+Types:
  - `name`: string
 """
 function add(name)
@@ -359,7 +359,7 @@ List the names of all models.
 
 Return `names`.
 
-Argument types:
+Types:
  - `names`: vector of strings
 """
 function list()
@@ -382,7 +382,7 @@ Get the name of the current model.
 
 Return `name`.
 
-Argument types:
+Types:
  - `name`: string
 """
 function getCurrent()
@@ -403,7 +403,7 @@ const get_current = getCurrent
 Set the current model to the model with name `name`. If several models have the
 same name, select the one that was added first.
 
-Argument types:
+Types:
  - `name`: string
 """
 function setCurrent(name)
@@ -424,7 +424,7 @@ associated when a model is read from a file on disk.
 
 Return `fileName`.
 
-Argument types:
+Types:
  - `fileName`: string
 """
 function getFileName()
@@ -444,7 +444,7 @@ const get_file_name = getFileName
 
 Set the file name associated with the current model.
 
-Argument types:
+Types:
  - `fileName`: string
 """
 function setFileName(fileName)
@@ -466,7 +466,7 @@ are returned as a vector of (dim, tag) pairs.
 
 Return `dimTags`.
 
-Argument types:
+Types:
  - `dimTags`: vector of pairs of integers
  - `dim`: integer
 """
@@ -489,7 +489,7 @@ const get_entities = getEntities
 
 Set the name of the entity of dimension `dim` and tag `tag`.
 
-Argument types:
+Types:
  - `dim`: integer
  - `tag`: integer
  - `name`: string
@@ -511,7 +511,7 @@ Get the name of the entity of dimension `dim` and tag `tag`.
 
 Return `name`.
 
-Argument types:
+Types:
  - `dim`: integer
  - `tag`: integer
  - `name`: string
@@ -537,7 +537,7 @@ The entities are returned as a vector of (dim, tag) pairs.
 
 Return `dimTags`.
 
-Argument types:
+Types:
  - `dimTags`: vector of pairs of integers
  - `dim`: integer
 """
@@ -563,7 +563,7 @@ Get the tags of the model entities making up the physical group of dimension
 
 Return `tags`.
 
-Argument types:
+Types:
  - `dim`: integer
  - `tag`: integer
  - `tags`: vector of integers
@@ -589,7 +589,7 @@ dimension `dim` and tag `tag` belongs.
 
 Return `physicalTags`.
 
-Argument types:
+Types:
  - `dim`: integer
  - `tag`: integer
  - `physicalTags`: vector of integers
@@ -617,7 +617,7 @@ positive, or a new tag if `tag` < 0. Set the name of the physical group if
 
 Return an integer.
 
-Argument types:
+Types:
  - `dim`: integer
  - `tags`: vector of integers
  - `tag`: integer
@@ -639,7 +639,7 @@ const add_physical_group = addPhysicalGroup
 Remove the physical groups `dimTags` (given as a vector of (dim, tag) pairs)
 from the current model. If `dimTags` is empty, remove all groups.
 
-Argument types:
+Types:
  - `dimTags`: vector of pairs of integers
 """
 function removePhysicalGroups(dimTags = Tuple{Cint,Cint}[])
@@ -659,7 +659,7 @@ const remove_physical_groups = removePhysicalGroups
 
 Set the name of the physical group of dimension `dim` and tag `tag`.
 
-Argument types:
+Types:
  - `dim`: integer
  - `tag`: integer
  - `name`: string
@@ -679,7 +679,7 @@ const set_physical_name = setPhysicalName
 
 Remove the physical name `name` from the current model.
 
-Argument types:
+Types:
  - `name`: string
 """
 function removePhysicalName(name)
@@ -699,7 +699,7 @@ Get the name of the physical group of dimension `dim` and tag `tag`.
 
 Return `name`.
 
-Argument types:
+Types:
  - `dim`: integer
  - `tag`: integer
  - `name`: string
@@ -722,7 +722,7 @@ const get_physical_name = getPhysicalName
 Set the tag of the entity of dimension `dim` and tag `tag` to the new value
 `newTag`.
 
-Argument types:
+Types:
  - `dim`: integer
  - `tag`: integer
  - `newTag`: integer
@@ -749,7 +749,7 @@ recursively down to dimension 0 (i.e. to points) if `recursive` is true.
 
 Return `outDimTags`.
 
-Argument types:
+Types:
  - `dimTags`: vector of pairs of integers
  - `outDimTags`: vector of pairs of integers
  - `combined`: boolean
@@ -782,7 +782,7 @@ and tag `tag`. The `upward` vector returns the adjacent entities of dimension
 
 Return `upward`, `downward`.
 
-Argument types:
+Types:
  - `dim`: integer
  - `tag`: integer
  - `upward`: vector of integers
@@ -813,7 +813,7 @@ entities of the specified dimension (e.g. points if `dim` == 0).
 
 Return `tags`.
 
-Argument types:
+Types:
  - `xmin`: double
  - `ymin`: double
  - `zmin`: double
@@ -846,7 +846,7 @@ get the bounding box of the whole model.
 
 Return `xmin`, `ymin`, `zmin`, `xmax`, `ymax`, `zmax`.
 
-Argument types:
+Types:
  - `dim`: integer
  - `tag`: integer
  - `xmin`: double
@@ -900,7 +900,7 @@ the entities on the boundary of the discrete entity, if any. Specifying
 
 Return an integer.
 
-Argument types:
+Types:
  - `dim`: integer
  - `tag`: integer
  - `boundary`: vector of integers
@@ -923,7 +923,7 @@ current model, provided that they are not on the boundary of (or embedded in)
 higher-dimensional entities. If `recursive` is true, remove all the entities on
 their boundaries, down to dimension 0.
 
-Argument types:
+Types:
  - `dimTags`: vector of pairs of integers
  - `recursive`: boolean
 """
@@ -944,7 +944,7 @@ const remove_entities = removeEntities
 
 Remove the entity name `name` from the current model.
 
-Argument types:
+Types:
  - `name`: string
 """
 function removeEntityName(name)
@@ -964,7 +964,7 @@ Get the type of the entity of dimension `dim` and tag `tag`.
 
 Return `entityType`.
 
-Argument types:
+Types:
  - `dim`: integer
  - `tag`: integer
  - `entityType`: string
@@ -990,7 +990,7 @@ In a partitioned model, get the parent of the entity of dimension `dim` and tag
 
 Return `parentDim`, `parentTag`.
 
-Argument types:
+Types:
  - `dim`: integer
  - `tag`: integer
  - `parentDim`: integer
@@ -1033,7 +1033,7 @@ belongs.
 
 Return `partitions`.
 
-Argument types:
+Types:
  - `dim`: integer
  - `tag`: integer
  - `partitions`: vector of integers
@@ -1063,7 +1063,7 @@ Return x, y, z coordinates in `coord`, concatenated: [p1x, p1y, p1z, p2x, ...].
 
 Return `coord`.
 
-Argument types:
+Types:
  - `dim`: integer
  - `tag`: integer
  - `parametricCoord`: vector of doubles
@@ -1096,7 +1096,7 @@ with respect to u and v: [d1ux, d1uy, d1uz, d1vx, d1vy, d1vz, d2ux, ...].
 
 Return `derivatives`.
 
-Argument types:
+Types:
  - `dim`: integer
  - `tag`: integer
  - `parametricCoord`: vector of doubles
@@ -1131,7 +1131,7 @@ d1uvx, d1uvy, d1uvz, d2uux, ...].
 
 Return `derivatives`.
 
-Argument types:
+Types:
  - `dim`: integer
  - `tag`: integer
  - `parametricCoord`: vector of doubles
@@ -1161,7 +1161,7 @@ concatenated: [p1u, p1v, p2u, ...]).
 
 Return `curvatures`.
 
-Argument types:
+Types:
  - `dim`: integer
  - `tag`: integer
  - `parametricCoord`: vector of doubles
@@ -1190,7 +1190,7 @@ concatenated: [p1u, p1v, p2u, ...].
 
 Return `curvatureMax`, `curvatureMin`, `directionMax`, `directionMin`.
 
-Argument types:
+Types:
  - `tag`: integer
  - `parametricCoord`: vector of doubles
  - `curvatureMax`: vector of doubles
@@ -1230,7 +1230,7 @@ vector of x, y, z components, concatenated: [n1x, n1y, n1z, n2x, ...].
 
 Return `normals`.
 
-Argument types:
+Types:
  - `tag`: integer
  - `parametricCoord`: vector of doubles
  - `normals`: vector of doubles
@@ -1260,7 +1260,7 @@ p2u, ...].
 
 Return `parametricCoord`.
 
-Argument types:
+Types:
  - `dim`: integer
  - `tag`: integer
  - `coord`: vector of doubles
@@ -1287,7 +1287,7 @@ dimension `dim` and tag `tag`.
 
 Return `min`, `max`.
 
-Argument types:
+Types:
  - `dim`: integer
  - `tag`: integer
  - `min`: vector of doubles
@@ -1320,7 +1320,7 @@ representation.
 
 Return an integer.
 
-Argument types:
+Types:
  - `dim`: integer
  - `tag`: integer
  - `coord`: vector of doubles
@@ -1348,7 +1348,7 @@ p2t, ...] or [p1u, p1v, p2u, ...].
 
 Return `closestCoord`, `parametricCoord`.
 
-Argument types:
+Types:
  - `dim`: integer
  - `tag`: integer
  - `coord`: vector of doubles
@@ -1383,7 +1383,7 @@ geometrical representation.
 
 Return `surfaceParametricCoord`.
 
-Argument types:
+Types:
  - `dim`: integer
  - `tag`: integer
  - `parametricCoord`: vector of doubles
@@ -1411,7 +1411,7 @@ Set the visibility of the model entities `dimTags` (given as a vector of (dim,
 tag) pairs) to `value`. Apply the visibility setting recursively if `recursive`
 is true.
 
-Argument types:
+Types:
  - `dimTags`: vector of pairs of integers
  - `value`: integer
  - `recursive`: boolean
@@ -1435,7 +1435,7 @@ Get the visibility of the model entity of dimension `dim` and tag `tag`.
 
 Return `value`.
 
-Argument types:
+Types:
  - `dim`: integer
  - `tag`: integer
  - `value`: integer
@@ -1457,7 +1457,7 @@ const get_visibility = getVisibility
 Set the global visibility of the model per window to `value`, where
 `windowIndex` identifies the window in the window list.
 
-Argument types:
+Types:
  - `value`: integer
  - `windowIndex`: integer
 """
@@ -1479,7 +1479,7 @@ pairs) to the RGBA value (`r`, `g`, `b`, `a`), where `r`, `g`, `b` and `a`
 should be integers between 0 and 255. Apply the color setting recursively if
 `recursive` is true.
 
-Argument types:
+Types:
  - `dimTags`: vector of pairs of integers
  - `r`: integer
  - `g`: integer
@@ -1506,7 +1506,7 @@ Get the color of the model entity of dimension `dim` and tag `tag`.
 
 Return `r`, `g`, `b`, `a`.
 
-Argument types:
+Types:
  - `dim`: integer
  - `tag`: integer
  - `r`: integer
@@ -1533,7 +1533,7 @@ const get_color = getColor
 
 Set the `x`, `y`, `z` coordinates of a geometrical point.
 
-Argument types:
+Types:
  - `tag`: integer
  - `x`: double
  - `y`: double
@@ -1556,7 +1556,7 @@ Get the names of any optional attributes stored in the model.
 
 Return `names`.
 
-Argument types:
+Types:
  - `names`: vector of strings
 """
 function getAttributeNames()
@@ -1580,7 +1580,7 @@ Get the values of the attribute with name `name`.
 
 Return `values`.
 
-Argument types:
+Types:
  - `name`: string
  - `values`: vector of strings
 """
@@ -1603,7 +1603,7 @@ const get_attribute = getAttribute
 
 Set the values of the attribute with name `name`.
 
-Argument types:
+Types:
  - `name`: string
  - `values`: vector of strings
 """
@@ -1622,7 +1622,7 @@ const set_attribute = setAttribute
 
 Remove the attribute with name `name`.
 
-Argument types:
+Types:
  - `name`: string
 """
 function removeAttribute(name)
@@ -1649,7 +1649,7 @@ import ...gmsh
 
 Generate a mesh of the current model, up to dimension `dim` (0, 1, 2 or 3).
 
-Argument types:
+Types:
  - `dim`: integer
 """
 function generate(dim = 3)
@@ -1668,7 +1668,7 @@ Partition the mesh of the current model into `numPart` partitions. Optionally,
 `elementTags` and `partitions` can be provided to specify the partition of each
 element explicitly.
 
-Argument types:
+Types:
  - `numPart`: integer
  - `elementTags`: vector of sizes
  - `partitions`: vector of integers
@@ -1709,7 +1709,7 @@ untangling). If `force` is set apply the optimization also to discrete entities.
 If `dimTags` (given as a vector of (dim, tag) pairs) is given, only apply the
 optimizer to the given entities.
 
-Argument types:
+Types:
  - `method`: string
  - `force`: boolean
  - `niter`: integer
@@ -1759,7 +1759,7 @@ end
 
 Set the order of the elements in the mesh of the current model to `order`.
 
-Argument types:
+Types:
  - `order`: integer
 """
 function setOrder(order)
@@ -1781,7 +1781,7 @@ algorithms.
 
 Return `dimTags`.
 
-Argument types:
+Types:
  - `dimTags`: vector of pairs of integers
 """
 function getLastEntityError()
@@ -1806,7 +1806,7 @@ Currently only populated by the new 3D meshing algorithms.
 
 Return `nodeTags`.
 
-Argument types:
+Types:
  - `nodeTags`: vector of sizes
 """
 function getLastNodeError()
@@ -1830,7 +1830,7 @@ Clear the mesh, i.e. delete all the nodes and elements, for the entities
 the whole mesh. Note that the mesh of an entity can only be cleared if this
 entity is not on the boundary of another entity with a non-empty mesh.
 
-Argument types:
+Types:
  - `dimTags`: vector of pairs of integers
 """
 function clear(dimTags = Tuple{Cint,Cint}[])
@@ -1851,7 +1851,7 @@ Reverse the orientation of the elements in the entities `dimTags`, given as a
 vector of (dim, tag) pairs. If `dimTags` is empty, reverse the orientation of
 the elements in the whole mesh.
 
-Argument types:
+Types:
  - `dimTags`: vector of pairs of integers
 """
 function reverse(dimTags = Tuple{Cint,Cint}[])
@@ -1873,7 +1873,7 @@ by row; only the 12 first can be provided for convenience) to the coordinates of
 the nodes classified on the entities `dimTags`, given as a vector of (dim, tag)
 pairs. If `dimTags` is empty, transform all the nodes in the mesh.
 
-Argument types:
+Types:
  - `affineTransform`: vector of doubles
  - `dimTags`: vector of pairs of integers
 """
@@ -1907,7 +1907,7 @@ compute their parametric coordinates).
 
 Return `nodeTags`, `coord`, `parametricCoord`.
 
-Argument types:
+Types:
  - `nodeTags`: vector of sizes
  - `coord`: vector of doubles
  - `parametricCoord`: vector of doubles
@@ -1943,7 +1943,7 @@ type `elementType`. The other arguments are treated as in `getNodes`.
 
 Return `nodeTags`, `coord`, `parametricCoord`.
 
-Argument types:
+Types:
  - `elementType`: integer
  - `nodeTags`: vector of sizes
  - `coord`: vector of doubles
@@ -1981,7 +1981,7 @@ bulk is often preferable.
 
 Return `coord`, `parametricCoord`, `dim`, `tag`.
 
-Argument types:
+Types:
  - `nodeTag`: size
  - `coord`: vector of doubles
  - `parametricCoord`: vector of doubles
@@ -2014,7 +2014,7 @@ Set the coordinates and the parametric coordinates (if any) of the node with tag
 numbering, a map otherwise); for large meshes accessing nodes in bulk is often
 preferable.
 
-Argument types:
+Types:
  - `nodeTag`: size
  - `coord`: vector of doubles
  - `parametricCoord`: vector of doubles
@@ -2034,7 +2034,7 @@ const set_node = setNode
 
 Rebuild the node cache.
 
-Argument types:
+Types:
  - `onlyIfNecessary`: boolean
 """
 function rebuildNodeCache(onlyIfNecessary = true)
@@ -2052,7 +2052,7 @@ const rebuild_node_cache = rebuildNodeCache
 
 Rebuild the element cache.
 
-Argument types:
+Types:
  - `onlyIfNecessary`: boolean
 """
 function rebuildElementCache(onlyIfNecessary = true)
@@ -2075,7 +2075,7 @@ the nodes, concatenated: [n1x, n1y, n1z, n2x, ...].
 
 Return `nodeTags`, `coord`.
 
-Argument types:
+Types:
  - `dim`: integer
  - `tag`: integer
  - `nodeTags`: vector of sizes
@@ -2104,7 +2104,7 @@ Get the maximum tag `maxTag` of a node in the mesh.
 
 Return `maxTag`.
 
-Argument types:
+Types:
  - `maxTag`: size
 """
 function getMaxNodeTag()
@@ -2130,7 +2130,7 @@ parametric coordinates of the nodes, if any. The length of `parametricCoord` can
 be 0 or `dim` times the length of `nodeTags`. If the `nodeTags` vector is empty,
 new tags are automatically assigned to the nodes.
 
-Argument types:
+Types:
  - `dim`: integer
  - `tag`: integer
  - `nodeTags`: vector of sizes
@@ -2173,7 +2173,7 @@ using their parametric coordinates. If `tag` < 0, relocate the nodes for all
 entities of dimension `dim`. If `dim` and `tag` are negative, relocate all the
 nodes in the mesh.
 
-Argument types:
+Types:
  - `dim`: integer
  - `tag`: integer
 """
@@ -2205,7 +2205,7 @@ concatenated: [e1n1, e1n2, ..., e1nN, e2n1, ...].
 
 Return `elementTypes`, `elementTags`, `nodeTags`.
 
-Argument types:
+Types:
  - `elementTypes`: vector of integers
  - `elementTags`: vector of vectors of sizes
  - `nodeTags`: vector of vectors of sizes
@@ -2248,7 +2248,7 @@ often preferable.
 
 Return `elementType`, `nodeTags`, `dim`, `tag`.
 
-Argument types:
+Types:
  - `elementTag`: size
  - `elementType`: integer
  - `nodeTags`: vector of sizes
@@ -2283,7 +2283,7 @@ tolerance to find elements near the search location.
 
 Return `elementTag`, `elementType`, `nodeTags`, `u`, `v`, `w`.
 
-Argument types:
+Types:
  - `x`: double
  - `y`: double
  - `z`: double
@@ -2326,7 +2326,7 @@ a tolerance to find elements near the search location.
 
 Return `elementTags`.
 
-Argument types:
+Types:
  - `x`: double
  - `y`: double
  - `z`: double
@@ -2357,7 +2357,7 @@ otherwise); for large meshes accessing elements in bulk is often preferable.
 
 Return `u`, `v`, `w`.
 
-Argument types:
+Types:
  - `elementTag`: size
  - `x`: double
  - `y`: double
@@ -2388,7 +2388,7 @@ are negative, get all the types in the mesh.
 
 Return `elementTypes`.
 
-Argument types:
+Types:
  - `elementTypes`: vector of integers
  - `dim`: integer
  - `tag`: integer
@@ -2416,7 +2416,7 @@ serendip element type (element without interior nodes).
 
 Return an integer.
 
-Argument types:
+Types:
  - `familyName`: string
  - `order`: integer
  - `serendip`: boolean
@@ -2442,7 +2442,7 @@ primary (first order) nodes (`numPrimaryNodes`).
 
 Return `elementName`, `dim`, `order`, `numNodes`, `localNodeCoord`, `numPrimaryNodes`.
 
-Argument types:
+Types:
  - `elementType`: integer
  - `elementName`: string
  - `dim`: integer
@@ -2484,7 +2484,7 @@ the part of the data indexed by `task`.
 
 Return `elementTags`, `nodeTags`.
 
-Argument types:
+Types:
  - `elementType`: integer
  - `elementTags`: vector of sizes
  - `nodeTags`: vector of sizes
@@ -2515,7 +2515,7 @@ Get the maximum tag `maxTag` of an element in the mesh.
 
 Return `maxTag`.
 
-Argument types:
+Types:
  - `maxTag`: size
 """
 function getMaxElementTag()
@@ -2541,7 +2541,7 @@ compute and return the part of the data indexed by `task`.
 
 Return `elementsQuality`.
 
-Argument types:
+Types:
  - `elementTags`: vector of sizes
  - `elementsQuality`: vector of doubles
  - `qualityName`: string
@@ -2574,7 +2574,7 @@ the number of elements of the given type times the number N of nodes per
 element, that contains the node tags of all the elements of the given type,
 concatenated: [e1n1, e1n2, ..., e1nN, e2n1, ...].
 
-Argument types:
+Types:
  - `dim`: integer
  - `tag`: integer
  - `elementTypes`: vector of integers
@@ -2604,7 +2604,7 @@ the node tags of all the elements, concatenated: [e1n1, e1n2, ..., e1nN, e2n1,
 ...]. If the `elementTag` vector is empty, new tags are automatically assigned
 to the elements.
 
-Argument types:
+Types:
  - `tag`: integer
  - `elementType`: integer
  - `elementTags`: vector of sizes
@@ -2637,7 +2637,7 @@ gGv, gGw]. `weights` contains the associated weights: [g1q, ..., gGq].
 
 Return `localCoord`, `weights`.
 
-Argument types:
+Types:
  - `elementType`: integer
  - `integrationType`: string
  - `localCoord`: vector of doubles
@@ -2678,7 +2678,7 @@ part of the data indexed by `task`.
 
 Return `jacobians`, `determinants`, `coord`.
 
-Argument types:
+Types:
  - `elementType`: integer
  - `localCoord`: vector of doubles
  - `jacobians`: vector of doubles
@@ -2723,7 +2723,7 @@ for large meshes accessing Jacobians in bulk is often preferable.
 
 Return `jacobians`, `determinants`, `coord`.
 
-Argument types:
+Types:
  - `elementTag`: size
  - `localCoord`: vector of doubles
  - `jacobians`: vector of doubles
@@ -2774,7 +2774,7 @@ values for the desired orientation indices.
 
 Return `numComponents`, `basisFunctions`, `numOrientations`.
 
-Argument types:
+Types:
  - `elementType`: integer
  - `localCoord`: vector of doubles
  - `functionSpaceType`: string
@@ -2809,7 +2809,7 @@ functions the call is superfluous as it will return a vector of zeros.
 
 Return `basisFunctionsOrientation`.
 
-Argument types:
+Types:
  - `elementType`: integer
  - `functionSpaceType`: string
  - `basisFunctionsOrientation`: vector of integers
@@ -2837,7 +2837,7 @@ Get the orientation of a single element `elementTag`.
 
 Return `basisFunctionsOrientation`.
 
-Argument types:
+Types:
  - `elementTag`: size
  - `functionSpaceType`: string
  - `basisFunctionsOrientation`: integer
@@ -2861,7 +2861,7 @@ function space named `functionSpaceType`.
 
 Return an integer.
 
-Argument types:
+Types:
  - `elementType`: integer
  - `functionSpaceType`: string
 """
@@ -2887,7 +2887,7 @@ corresponds to the local orientation of edge-based basis functions as well.
 
 Return `edgeTags`, `edgeOrientations`.
 
-Argument types:
+Types:
  - `nodeTags`: vector of sizes
  - `edgeTags`: vector of sizes
  - `edgeOrientations`: vector of integers
@@ -2919,7 +2919,7 @@ or `addFaces()`.
 
 Return `faceTags`, `faceOrientations`.
 
-Argument types:
+Types:
  - `faceType`: integer
  - `nodeTags`: vector of sizes
  - `faceTags`: vector of sizes
@@ -2947,7 +2947,7 @@ const get_faces = getFaces
 Create unique mesh edges for the entities `dimTags`, given as a vector of (dim,
 tag) pairs.
 
-Argument types:
+Types:
  - `dimTags`: vector of pairs of integers
 """
 function createEdges(dimTags = Tuple{Cint,Cint}[])
@@ -2968,7 +2968,7 @@ const create_edges = createEdges
 Create unique mesh faces for the entities `dimTags`, given as a vector of (dim,
 tag) pairs.
 
-Argument types:
+Types:
  - `dimTags`: vector of pairs of integers
 """
 function createFaces(dimTags = Tuple{Cint,Cint}[])
@@ -2992,7 +2992,7 @@ or addEdges().
 
 Return `edgeTags`, `edgeNodes`.
 
-Argument types:
+Types:
  - `edgeTags`: vector of sizes
  - `edgeNodes`: vector of sizes
 """
@@ -3021,7 +3021,7 @@ faces of type `faceType` in the mesh. Mesh faces are created e.g. by
 
 Return `faceTags`, `faceNodes`.
 
-Argument types:
+Types:
  - `faceType`: integer
  - `faceTags`: vector of sizes
  - `faceNodes`: vector of sizes
@@ -3048,7 +3048,7 @@ const get_all_faces = getAllFaces
 Add mesh edges defined by their global unique identifiers `edgeTags` and their
 nodes `edgeNodes`.
 
-Argument types:
+Types:
  - `edgeTags`: vector of sizes
  - `edgeNodes`: vector of sizes
 """
@@ -3068,7 +3068,7 @@ const add_edges = addEdges
 Add mesh faces of type `faceType` defined by their global unique identifiers
 `faceTags` and their nodes `faceNodes`.
 
-Argument types:
+Types:
  - `faceType`: integer
  - `faceTags`: vector of sizes
  - `faceNodes`: vector of sizes
@@ -3095,7 +3095,7 @@ feature and will probably change in a future release.
 
 Return `typeKeys`, `entityKeys`, `coord`.
 
-Argument types:
+Types:
  - `elementType`: integer
  - `functionSpaceType`: string
  - `typeKeys`: vector of integers
@@ -3130,7 +3130,7 @@ Get the pair of keys for a single element `elementTag`.
 
 Return `typeKeys`, `entityKeys`, `coord`.
 
-Argument types:
+Types:
  - `elementTag`: size
  - `functionSpaceType`: string
  - `typeKeys`: vector of integers
@@ -3165,7 +3165,7 @@ named `functionSpaceType`.
 
 Return an integer.
 
-Argument types:
+Types:
  - `elementType`: integer
  - `functionSpaceType`: string
 """
@@ -3192,7 +3192,7 @@ release.
 
 Return `infoKeys`.
 
-Argument types:
+Types:
  - `typeKeys`: vector of integers
  - `entityKeys`: vector of sizes
  - `elementType`: integer
@@ -3225,7 +3225,7 @@ the number of nodes). If `tag` < 0, get the barycenters for all entities. If
 
 Return `barycenters`.
 
-Argument types:
+Types:
  - `elementType`: integer
  - `tag`: integer
  - `fast`: boolean
@@ -3260,7 +3260,7 @@ compute and return the part of the data indexed by `task`.
 
 Return `nodeTags`.
 
-Argument types:
+Types:
  - `elementType`: integer
  - `nodeTags`: vector of sizes
  - `tag`: integer
@@ -3295,7 +3295,7 @@ faces are returned. If `tag` < 0, get the face nodes for all entities. If
 
 Return `nodeTags`.
 
-Argument types:
+Types:
  - `elementType`: integer
  - `faceType`: integer
  - `nodeTags`: vector of sizes
@@ -3325,7 +3325,7 @@ the ghost entity of dimension `dim` and tag `tag`.
 
 Return `elementTags`, `partitions`.
 
-Argument types:
+Types:
  - `dim`: integer
  - `tag`: integer
  - `elementTags`: vector of sizes
@@ -3353,7 +3353,7 @@ const get_ghost_elements = getGhostElements
 Set a mesh size constraint on the model entities `dimTags`, given as a vector of
 (dim, tag) pairs. Currently only entities of dimension 0 (points) are handled.
 
-Argument types:
+Types:
  - `dimTags`: vector of pairs of integers
  - `size`: double
 """
@@ -3379,7 +3379,7 @@ corresponding entity.
 
 Return `sizes`.
 
-Argument types:
+Types:
  - `dimTags`: vector of pairs of integers
  - `sizes`: vector of doubles
 """
@@ -3405,7 +3405,7 @@ Set mesh size constraints at the given parametric points `parametricCoord` on
 the model entity of dimension `dim` and tag `tag`. Currently only entities of
 dimension 1 (lines) are handled.
 
-Argument types:
+Types:
  - `dim`: integer
  - `tag`: integer
  - `parametricCoord`: vector of doubles
@@ -3433,7 +3433,7 @@ mesh size `lc` that would be prescribed if the callback had not been called. The
 callback function should return a double precision number specifying the desired
 mesh size; returning `lc` is equivalent to a no-op.
 
-Argument types:
+Types:
  - `callback`: 
 """
 function setSizeCallback(callback)
@@ -3471,7 +3471,7 @@ distributed according to `meshType` and `coef`. Currently supported types are
 "Progression" (geometrical progression with power `coef`), "Bump" (refinement
 toward both extremities of the curve) and "Beta" (beta law).
 
-Argument types:
+Types:
  - `tag`: integer
  - `numNodes`: integer
  - `meshType`: string
@@ -3497,7 +3497,7 @@ recombined: currently supported values are "Left", "Right", "AlternateLeft" and
 the transfinite interpolation explicitly; specifying the corners explicitly is
 mandatory if the surface has more that 3 or 4 points on its boundary.
 
-Argument types:
+Types:
  - `tag`: integer
  - `arrangement`: string
  - `cornerTags`: vector of integers
@@ -3519,7 +3519,7 @@ Set a transfinite meshing constraint on the surface `tag`. `cornerTags` can be
 used to specify the (6 or 8) corners of the transfinite interpolation
 explicitly.
 
-Argument types:
+Types:
  - `tag`: integer
  - `cornerTags`: vector of integers
 """
@@ -3545,7 +3545,7 @@ constraints. If `dimTag` is empty, the constraints are applied to all entities
 in the model. If `recombine` is true, the recombine flag is automatically set on
 the transfinite surfaces.
 
-Argument types:
+Types:
  - `dimTags`: vector of pairs of integers
  - `cornerAngle`: double
  - `recombine`: boolean
@@ -3570,7 +3570,7 @@ and tag `tag`. Currently only entities of dimension 2 (to recombine triangles
 into quadrangles) are supported; `angle` specifies the threshold angle for the
 simple recombination algorithm..
 
-Argument types:
+Types:
  - `dim`: integer
  - `tag`: integer
  - `angle`: double
@@ -3591,7 +3591,7 @@ const set_recombine = setRecombine
 Set a smoothing meshing constraint on the model entity of dimension `dim` and
 tag `tag`. `val` iterations of a Laplace smoother are applied.
 
-Argument types:
+Types:
  - `dim`: integer
  - `tag`: integer
  - `val`: integer
@@ -3614,7 +3614,7 @@ Set a reverse meshing constraint on the model entity of dimension `dim` and tag
 the natural mesh orientation (i.e. the orientation consistent with the
 orientation of the geometry). If `val` is false, the mesh is left as-is.
 
-Argument types:
+Types:
  - `dim`: integer
  - `tag`: integer
  - `val`: boolean
@@ -3635,7 +3635,7 @@ const set_reverse = setReverse
 Set the meshing algorithm on the model entity of dimension `dim` and tag `tag`.
 Currently only supported for `dim` == 2.
 
-Argument types:
+Types:
  - `dim`: integer
  - `tag`: integer
  - `val`: integer
@@ -3657,7 +3657,7 @@ Force the mesh size to be extended from the boundary, or not, for the model
 entity of dimension `dim` and tag `tag`. Currently only supported for `dim` ==
 2.
 
-Argument types:
+Types:
  - `dim`: integer
  - `tag`: integer
  - `val`: integer
@@ -3679,7 +3679,7 @@ Set a compound meshing constraint on the model entities of dimension `dim` and
 tags `tags`. During meshing, compound entities are treated as a single discrete
 entity, which is automatically reparametrized.
 
-Argument types:
+Types:
  - `dim`: integer
  - `tags`: vector of integers
 """
@@ -3701,7 +3701,7 @@ that all surfaces are oriented with outward pointing normals; and if a mesh
 already exists, reorient it. Currently only available with the OpenCASCADE
 kernel, as it relies on the STL triangulation.
 
-Argument types:
+Types:
  - `tag`: integer
 """
 function setOutwardOrientation(tag)
@@ -3720,7 +3720,7 @@ const set_outward_orientation = setOutwardOrientation
 Remove all meshing constraints from the model entities `dimTags`, given as a
 vector of (dim, tag) pairs. If `dimTags` is empty, remove all constraings.
 
-Argument types:
+Types:
  - `dimTags`: vector of pairs of integers
 """
 function removeConstraints(dimTags = Tuple{Cint,Cint}[])
@@ -3747,7 +3747,7 @@ kernel, if the `fragment` operation is applied to entities of different
 dimensions, the lower dimensional entities will be automatically embedded in the
 higher dimensional entities if they are not on their boundary.
 
-Argument types:
+Types:
  - `dim`: integer
  - `tags`: vector of integers
  - `inDim`: integer
@@ -3769,7 +3769,7 @@ Remove embedded entities from the model entities `dimTags`, given as a vector of
 (dim, tag) pairs. if `dim` is >= 0, only remove embedded entities of the given
 dimension (e.g. embedded points if `dim` == 0).
 
-Argument types:
+Types:
  - `dimTags`: vector of pairs of integers
  - `dim`: integer
 """
@@ -3793,7 +3793,7 @@ tag `tag`.
 
 Return `dimTags`.
 
-Argument types:
+Types:
  - `dim`: integer
  - `tag`: integer
  - `dimTags`: vector of pairs of integers
@@ -3818,7 +3818,7 @@ const get_embedded = getEmbedded
 Reorder the elements of type `elementType` classified on the entity of tag `tag`
 according to the `ordering` vector.
 
-Argument types:
+Types:
  - `elementType`: integer
  - `tag`: integer
  - `ordering`: vector of sizes
@@ -3874,7 +3874,7 @@ assuming the meshes of entities `tags` effectively match the meshes of entities
 `tagsMaster` (useful for structured and extruded meshes). Currently only
 available for @code{dim} == 1 and @code{dim} == 2.
 
-Argument types:
+Types:
  - `dim`: integer
  - `tags`: vector of integers
  - `tagsMaster`: vector of integers
@@ -3898,7 +3898,7 @@ Get master entities `tagsMaster` for the entities of dimension `dim` and tags
 
 Return `tagMaster`.
 
-Argument types:
+Types:
  - `dim`: integer
  - `tags`: vector of integers
  - `tagMaster`: vector of integers
@@ -3926,7 +3926,7 @@ corresponding master node tags `nodeTagsMaster`, and the affine transform
 
 Return `tagMaster`, `nodeTags`, `nodeTagsMaster`, `affineTransform`.
 
-Argument types:
+Types:
  - `dim`: integer
  - `tag`: integer
  - `tagMaster`: integer
@@ -3967,7 +3967,7 @@ for sorting purposes.
 
 Return `tagMaster`, `typeKeys`, `typeKeysMaster`, `entityKeys`, `entityKeysMaster`, `coord`, `coordMaster`.
 
-Argument types:
+Types:
  - `elementType`: integer
  - `functionSpaceType`: string
  - `tag`: integer
@@ -4033,7 +4033,7 @@ mesh.
 
 Return `tags`.
 
-Argument types:
+Types:
  - `tags`: vector of sizes
  - `dimTags`: vector of pairs of integers
 """
@@ -4058,7 +4058,7 @@ const get_duplicate_nodes = getDuplicateNodes
 Remove duplicate nodes in the mesh of the entities `dimTags`, given as a vector
 of (dim, tag) pairs. If `dimTags` is empty, consider the whole mesh.
 
-Argument types:
+Types:
  - `dimTags`: vector of pairs of integers
 """
 function removeDuplicateNodes(dimTags = Tuple{Cint,Cint}[])
@@ -4080,7 +4080,7 @@ Remove duplicate elements (defined by the same nodes, in the same entity) in the
 mesh of the entities `dimTags`, given as a vector of (dim, tag) pairs. If
 `dimTags` is empty, consider the whole mesh.
 
-Argument types:
+Types:
  - `dimTags`: vector of pairs of integers
 """
 function removeDuplicateElements(dimTags = Tuple{Cint,Cint}[])
@@ -4101,7 +4101,7 @@ const remove_duplicate_elements = removeDuplicateElements
 Split (into two triangles) all quadrangles in surface `tag` whose quality is
 lower than `quality`. If `tag` < 0, split quadrangles in all surfaces.
 
-Argument types:
+Types:
  - `quality`: double
  - `tag`: integer
 """
@@ -4120,7 +4120,7 @@ const split_quadrangles = splitQuadrangles
 
 Set the visibility of the elements of tags `elementTags` to `value`.
 
-Argument types:
+Types:
  - `elementTags`: vector of sizes
  - `value`: integer
 """
@@ -4146,7 +4146,7 @@ curves to be split according to `curveAngle`. If `exportDiscrete` is set, clear
 any built-in CAD kernel entities and export the discrete entities in the built-
 in CAD kernel.
 
-Argument types:
+Types:
  - `angle`: double
  - `boundary`: boolean
  - `forReparametrization`: boolean
@@ -4172,7 +4172,7 @@ description), i.e. create a parametrization for discrete curves and surfaces,
 assuming that each can be parametrized with a single map. If `dimTags` is empty,
 create a geometry for all the discrete entities.
 
-Argument types:
+Types:
  - `dimTags`: vector of pairs of integers
 """
 function createGeometry(dimTags = Tuple{Cint,Cint}[])
@@ -4196,7 +4196,7 @@ underlying model). If `makeSimplyConnected` is set, enforce simply connected
 discrete surfaces and volumes. If `exportDiscrete` is set, clear any built-in
 CAD kernel entities and export the discrete entities in the built-in CAD kernel.
 
-Argument types:
+Types:
  - `makeSimplyConnected`: boolean
  - `exportDiscrete`: boolean
 """
@@ -4224,7 +4224,7 @@ Resulting basis representation (co)chains are stored as physical groups in the
 mesh. If the request is added before mesh generation, the computation will be
 performed at the end of the meshing pipeline.
 
-Argument types:
+Types:
  - `type`: string
  - `domainTags`: vector of integers
  - `subdomainTags`: vector of integers
@@ -4264,7 +4264,7 @@ tag) pairs.
 
 Return `dimTags`.
 
-Argument types:
+Types:
  - `dimTags`: vector of pairs of integers
 """
 function computeHomology()
@@ -4289,7 +4289,7 @@ function, the Theta function and cross directions. Return the tags of the views.
 
 Return `viewTags`.
 
-Argument types:
+Types:
  - `viewTags`: vector of integers
 """
 function computeCrossField()
@@ -4314,7 +4314,7 @@ triangles in `tri`.
 
 Return `tri`.
 
-Argument types:
+Types:
  - `coord`: vector of doubles
  - `tri`: vector of sizes
 """
@@ -4339,7 +4339,7 @@ resulting tetrahedra in `tetra`.
 
 Return `tetra`.
 
-Argument types:
+Types:
  - `coord`: vector of doubles
  - `tetra`: vector of sizes
 """
@@ -4373,7 +4373,7 @@ tag.
 
 Return an integer.
 
-Argument types:
+Types:
  - `fieldType`: string
  - `tag`: integer
 """
@@ -4391,7 +4391,7 @@ end
 
 Remove the field with tag `tag`.
 
-Argument types:
+Types:
  - `tag`: integer
 """
 function remove(tag)
@@ -4410,7 +4410,7 @@ Get the list of all fields.
 
 Return `tags`.
 
-Argument types:
+Types:
  - `tags`: vector of integers
 """
 function list()
@@ -4432,7 +4432,7 @@ Get the type `fieldType` of the field with tag `tag`.
 
 Return `fileType`.
 
-Argument types:
+Types:
  - `tag`: integer
  - `fileType`: string
 """
@@ -4453,7 +4453,7 @@ const get_type = getType
 
 Set the numerical option `option` to value `value` for field `tag`.
 
-Argument types:
+Types:
  - `tag`: integer
  - `option`: string
  - `value`: double
@@ -4475,7 +4475,7 @@ Get the value of the numerical option `option` for field `tag`.
 
 Return `value`.
 
-Argument types:
+Types:
  - `tag`: integer
  - `option`: string
  - `value`: double
@@ -4496,7 +4496,7 @@ const get_number = getNumber
 
 Set the string option `option` to value `value` for field `tag`.
 
-Argument types:
+Types:
  - `tag`: integer
  - `option`: string
  - `value`: string
@@ -4518,7 +4518,7 @@ Get the value of the string option `option` for field `tag`.
 
 Return `value`.
 
-Argument types:
+Types:
  - `tag`: integer
  - `option`: string
  - `value`: string
@@ -4540,7 +4540,7 @@ const get_string = getString
 
 Set the numerical list option `option` to value `values` for field `tag`.
 
-Argument types:
+Types:
  - `tag`: integer
  - `option`: string
  - `values`: vector of doubles
@@ -4562,7 +4562,7 @@ Get the value of the numerical list option `option` for field `tag`.
 
 Return `values`.
 
-Argument types:
+Types:
  - `tag`: integer
  - `option`: string
  - `values`: vector of doubles
@@ -4585,7 +4585,7 @@ const get_numbers = getNumbers
 
 Set the field `tag` as the background mesh size field.
 
-Argument types:
+Types:
  - `tag`: integer
 """
 function setAsBackgroundMesh(tag)
@@ -4603,7 +4603,7 @@ const set_as_background_mesh = setAsBackgroundMesh
 
 Set the field `tag` as a boundary layer size field.
 
-Argument types:
+Types:
  - `tag`: integer
 """
 function setAsBoundaryLayer(tag)
@@ -4641,7 +4641,7 @@ all the entities added in the geo module.)
 
 Return an integer.
 
-Argument types:
+Types:
  - `x`: double
  - `y`: double
  - `z`: double
@@ -4668,7 +4668,7 @@ line.
 
 Return an integer.
 
-Argument types:
+Types:
  - `startTag`: integer
  - `endTag`: integer
  - `tag`: integer
@@ -4694,7 +4694,7 @@ the plane of the circle arc. Return the tag of the circle arc.
 
 Return an integer.
 
-Argument types:
+Types:
  - `startTag`: integer
  - `centerTag`: integer
  - `endTag`: integer
@@ -4725,7 +4725,7 @@ ellipse arc.
 
 Return an integer.
 
-Argument types:
+Types:
  - `startTag`: integer
  - `centerTag`: integer
  - `majorTag`: integer
@@ -4755,7 +4755,7 @@ first and last points are the same. Return the tag of the spline curve.
 
 Return an integer.
 
-Argument types:
+Types:
  - `pointTags`: vector of integers
  - `tag`: integer
 """
@@ -4779,7 +4779,7 @@ points are the same. Return the tag of the b-spline curve.
 
 Return an integer.
 
-Argument types:
+Types:
  - `pointTags`: vector of integers
  - `tag`: integer
 """
@@ -4802,7 +4802,7 @@ selected automatically.  Return the tag of the Bezier curve.
 
 Return an integer.
 
-Argument types:
+Types:
  - `pointTags`: vector of integers
  - `tag`: integer
 """
@@ -4826,7 +4826,7 @@ points are the same. Return the tag of the polyline curve.
 
 Return an integer.
 
-Argument types:
+Types:
  - `pointTags`: vector of integers
  - `tag`: integer
 """
@@ -4851,7 +4851,7 @@ tag of the spline.
 
 Return an integer.
 
-Argument types:
+Types:
  - `curveTags`: vector of integers
  - `numIntervals`: integer
  - `tag`: integer
@@ -4876,7 +4876,7 @@ otherwise a new tag is selected automatically. Return the tag of the b-spline.
 
 Return an integer.
 
-Argument types:
+Types:
  - `curveTags`: vector of integers
  - `numIntervals`: integer
  - `tag`: integer
@@ -4904,7 +4904,7 @@ tag of the curve loop.
 
 Return an integer.
 
-Argument types:
+Types:
  - `curveTags`: vector of integers
  - `tag`: integer
  - `reorient`: boolean
@@ -4927,7 +4927,7 @@ Add curve loops in the built-in CAD representation based on the curves
 
 Return `tags`.
 
-Argument types:
+Types:
  - `curveTags`: vector of integers
  - `tags`: vector of integers
 """
@@ -4955,7 +4955,7 @@ surface.
 
 Return an integer.
 
-Argument types:
+Types:
  - `wireTags`: vector of integers
  - `tag`: integer
 """
@@ -4980,7 +4980,7 @@ automatically. Return the tag of the surface.
 
 Return an integer.
 
-Argument types:
+Types:
  - `wireTags`: vector of integers
  - `tag`: integer
  - `sphereCenterTag`: integer
@@ -5004,7 +5004,7 @@ tag is selected automatically. Return the tag of the shell.
 
 Return an integer.
 
-Argument types:
+Types:
  - `surfaceTags`: vector of integers
  - `tag`: integer
 """
@@ -5029,7 +5029,7 @@ volume.
 
 Return an integer.
 
-Argument types:
+Types:
  - `shellTags`: vector of integers
  - `tag`: integer
 """
@@ -5055,7 +5055,7 @@ otherwise a new tag is selected automatically. Return the tag of the geometry.
 
 Return an integer.
 
-Argument types:
+Types:
  - `geometry`: string
  - `numbers`: vector of doubles
  - `strings`: vector of strings
@@ -5082,7 +5082,7 @@ only the `x` and `y` coordinates are used.
 
 Return an integer.
 
-Argument types:
+Types:
  - `geometryTag`: integer
  - `x`: double
  - `y`: double
@@ -5113,7 +5113,7 @@ set, recombine the mesh in the layers.
 
 Return `outDimTags`.
 
-Argument types:
+Types:
  - `dimTags`: vector of pairs of integers
  - `dx`: double
  - `dy`: double
@@ -5153,7 +5153,7 @@ mesh in the layers.
 
 Return `outDimTags`.
 
-Argument types:
+Types:
  - `dimTags`: vector of pairs of integers
  - `x`: double
  - `y`: double
@@ -5198,7 +5198,7 @@ the layers.
 
 Return `outDimTags`.
 
-Argument types:
+Types:
  - `dimTags`: vector of pairs of integers
  - `x`: double
  - `y`: double
@@ -5246,7 +5246,7 @@ scalar).
 
 Return `outDimTags`.
 
-Argument types:
+Types:
  - `dimTags`: vector of pairs of integers
  - `outDimTags`: vector of pairs of integers
  - `numElements`: vector of integers
@@ -5277,7 +5277,7 @@ const extrude_boundary_layer = extrudeBoundaryLayer
 Translate the entities `dimTags` (given as a vector of (dim, tag) pairs) in the
 built-in CAD representation along (`dx`, `dy`, `dz`).
 
-Argument types:
+Types:
  - `dimTags`: vector of pairs of integers
  - `dx`: double
  - `dy`: double
@@ -5301,7 +5301,7 @@ Rotate the entities `dimTags` (given as a vector of (dim, tag) pairs) in the
 built-in CAD representation by `angle` radians around the axis of revolution
 defined by the point (`x`, `y`, `z`) and the direction (`ax`, `ay`, `az`).
 
-Argument types:
+Types:
  - `dimTags`: vector of pairs of integers
  - `x`: double
  - `y`: double
@@ -5330,7 +5330,7 @@ built-in CAD representation by factors `a`, `b` and `c` along the three
 coordinate axes; use (`x`, `y`, `z`) as the center of the homothetic
 transformation.
 
-Argument types:
+Types:
  - `dimTags`: vector of pairs of integers
  - `x`: double
  - `y`: double
@@ -5357,7 +5357,7 @@ Mirror the entities `dimTags` (given as a vector of (dim, tag) pairs) in the
 built-in CAD representation, with respect to the plane of equation `a` * x + `b`
 * y + `c` * z + `d` = 0.
 
-Argument types:
+Types:
  - `dimTags`: vector of pairs of integers
  - `a`: double
  - `b`: double
@@ -5383,7 +5383,7 @@ built-in CAD representation, with respect to the plane of equation `a` * x + `b`
 * y + `c` * z + `d` = 0. (This is a synonym for `mirror`, which will be
 deprecated in a future release.)
 
-Argument types:
+Types:
  - `dimTags`: vector of pairs of integers
  - `a`: double
  - `b`: double
@@ -5409,7 +5409,7 @@ built-in CAD representation; the new entities are returned in `outDimTags`.
 
 Return `outDimTags`.
 
-Argument types:
+Types:
  - `dimTags`: vector of pairs of integers
  - `outDimTags`: vector of pairs of integers
 """
@@ -5436,7 +5436,7 @@ built-in CAD representation, provided that they are not on the boundary of
 higher-dimensional entities. If `recursive` is true, remove all the entities on
 their boundaries, down to dimension 0.
 
-Argument types:
+Types:
  - `dimTags`: vector of pairs of integers
  - `recursive`: boolean
 """
@@ -5477,7 +5477,7 @@ curve(s).
 
 Return `curveTags`.
 
-Argument types:
+Types:
  - `tag`: integer
  - `pointTags`: vector of integers
  - `curveTags`: vector of integers
@@ -5503,7 +5503,7 @@ representation.
 
 Return an integer.
 
-Argument types:
+Types:
  - `dim`: integer
 """
 function getMaxTag(dim)
@@ -5522,7 +5522,7 @@ const get_max_tag = getMaxTag
 Set the maximum tag `maxTag` for entities of dimension `dim` in the built-in CAD
 representation.
 
-Argument types:
+Types:
  - `dim`: integer
  - `maxTag`: integer
 """
@@ -5546,7 +5546,7 @@ physical group if `name` is not empty.
 
 Return an integer.
 
-Argument types:
+Types:
  - `dim`: integer
  - `tags`: vector of integers
  - `tag`: integer
@@ -5568,7 +5568,7 @@ const add_physical_group = addPhysicalGroup
 Remove the physical groups `dimTags` (given as a vector of (dim, tag) pairs)
 from the built-in CAD representation. If `dimTags` is empty, remove all groups.
 
-Argument types:
+Types:
  - `dimTags`: vector of pairs of integers
 """
 function removePhysicalGroups(dimTags = Tuple{Cint,Cint}[])
@@ -5617,7 +5617,7 @@ Set a mesh size constraint on the entities `dimTags` (given as a vector of (dim,
 tag) pairs) in the built-in CAD kernel representation. Currently only entities
 of dimension 0 (points) are handled.
 
-Argument types:
+Types:
  - `dimTags`: vector of pairs of integers
  - `size`: double
 """
@@ -5641,7 +5641,7 @@ kernel representation, with `numNodes` nodes distributed according to `meshType`
 and `coef`. Currently supported types are "Progression" (geometrical progression
 with power `coef`) and "Bump" (refinement toward both extremities of the curve).
 
-Argument types:
+Types:
  - `tag`: integer
  - `nPoints`: integer
  - `meshType`: string
@@ -5668,7 +5668,7 @@ to specify the (3 or 4) corners of the transfinite interpolation explicitly;
 specifying the corners explicitly is mandatory if the surface has more that 3 or
 4 points on its boundary.
 
-Argument types:
+Types:
  - `tag`: integer
  - `arrangement`: string
  - `cornerTags`: vector of integers
@@ -5690,7 +5690,7 @@ Set a transfinite meshing constraint on the surface `tag` in the built-in CAD
 kernel representation. `cornerTags` can be used to specify the (6 or 8) corners
 of the transfinite interpolation explicitly.
 
-Argument types:
+Types:
  - `tag`: integer
  - `cornerTags`: vector of integers
 """
@@ -5712,7 +5712,7 @@ Set a recombination meshing constraint on the entity of dimension `dim` and tag
 dimension 2 (to recombine triangles into quadrangles) are supported; `angle`
 specifies the threshold angle for the simple recombination algorithm.
 
-Argument types:
+Types:
  - `dim`: integer
  - `tag`: integer
  - `angle`: double
@@ -5734,7 +5734,7 @@ Set a smoothing meshing constraint on the entity of dimension `dim` and tag
 `tag` in the built-in CAD kernel representation. `val` iterations of a Laplace
 smoother are applied.
 
-Argument types:
+Types:
  - `dim`: integer
  - `tag`: integer
  - `val`: integer
@@ -5758,7 +5758,7 @@ orientation will be reversed with respect to the natural mesh orientation (i.e.
 the orientation consistent with the orientation of the geometry). If `val` is
 false, the mesh is left as-is.
 
-Argument types:
+Types:
  - `dim`: integer
  - `tag`: integer
  - `val`: boolean
@@ -5779,7 +5779,7 @@ const set_reverse = setReverse
 Set the meshing algorithm on the entity of dimension `dim` and tag `tag` in the
 built-in CAD kernel representation. Currently only supported for `dim` == 2.
 
-Argument types:
+Types:
  - `dim`: integer
  - `tag`: integer
  - `val`: integer
@@ -5801,7 +5801,7 @@ Force the mesh size to be extended from the boundary, or not, for the entity of
 dimension `dim` and tag `tag` in the built-in CAD kernel representation.
 Currently only supported for `dim` == 2.
 
-Argument types:
+Types:
  - `dim`: integer
  - `tag`: integer
  - `val`: integer
@@ -5841,7 +5841,7 @@ all the entities added in the occ module.)
 
 Return an integer.
 
-Argument types:
+Types:
  - `x`: double
  - `y`: double
  - `z`: double
@@ -5868,7 +5868,7 @@ line.
 
 Return an integer.
 
-Argument types:
+Types:
  - `startTag`: integer
  - `endTag`: integer
  - `tag`: integer
@@ -5893,7 +5893,7 @@ Return the tag of the circle arc.
 
 Return an integer.
 
-Argument types:
+Types:
  - `startTag`: integer
  - `centerTag`: integer
  - `endTag`: integer
@@ -5922,7 +5922,7 @@ of the circle.
 
 Return an integer.
 
-Argument types:
+Types:
  - `x`: double
  - `y`: double
  - `z`: double
@@ -5955,7 +5955,7 @@ minor radius.
 
 Return an integer.
 
-Argument types:
+Types:
  - `startTag`: integer
  - `centerTag`: integer
  - `majorTag`: integer
@@ -5986,7 +5986,7 @@ tag of the ellipse.
 
 Return an integer.
 
-Argument types:
+Types:
  - `x`: double
  - `y`: double
  - `z`: double
@@ -6018,7 +6018,7 @@ first and last points are the same. Return the tag of the spline curve.
 
 Return an integer.
 
-Argument types:
+Types:
  - `pointTags`: vector of integers
  - `tag`: integer
 """
@@ -6044,7 +6044,7 @@ tag of the b-spline curve.
 
 Return an integer.
 
-Argument types:
+Types:
  - `pointTags`: vector of integers
  - `tag`: integer
  - `degree`: integer
@@ -6071,7 +6071,7 @@ tag is selected automatically. Return the tag of the Bezier curve.
 
 Return an integer.
 
-Argument types:
+Types:
  - `pointTags`: vector of integers
  - `tag`: integer
 """
@@ -6096,7 +6096,7 @@ Return the tag of the wire.
 
 Return an integer.
 
-Argument types:
+Types:
  - `curveTags`: vector of integers
  - `tag`: integer
  - `checkClosed`: boolean
@@ -6125,7 +6125,7 @@ selected automatically. Return the tag of the curve loop.
 
 Return an integer.
 
-Argument types:
+Types:
  - `curveTags`: vector of integers
  - `tag`: integer
 """
@@ -6150,7 +6150,7 @@ of the rectangle.
 
 Return an integer.
 
-Argument types:
+Types:
  - `x`: double
  - `y`: double
  - `z`: double
@@ -6181,7 +6181,7 @@ to the disk (z-axis). If a vector `xAxis` of size 3 is provided in addition to
 
 Return an integer.
 
-Argument types:
+Types:
  - `xc`: double
  - `yc`: double
  - `zc`: double
@@ -6212,7 +6212,7 @@ tag of the surface.
 
 Return an integer.
 
-Argument types:
+Types:
  - `wireTags`: vector of integers
  - `tag`: integer
 """
@@ -6249,7 +6249,7 @@ filling surface can have).
 
 Return an integer.
 
-Argument types:
+Types:
  - `wireTag`: integer
  - `tag`: integer
  - `pointTags`: vector of integers
@@ -6287,7 +6287,7 @@ tag of the surface.
 
 Return an integer.
 
-Argument types:
+Types:
  - `wireTag`: integer
  - `tag`: integer
  - `type`: string
@@ -6315,7 +6315,7 @@ Return the tag of the surface.
 
 Return an integer.
 
-Argument types:
+Types:
  - `wireTag`: integer
  - `tag`: integer
  - `type`: string
@@ -6347,7 +6347,7 @@ b-spline surface.
 
 Return an integer.
 
-Argument types:
+Types:
  - `pointTags`: vector of integers
  - `numPointsU`: integer
  - `tag`: integer
@@ -6385,7 +6385,7 @@ parametric space of the surface. Return the tag of the Bezier surface.
 
 Return an integer.
 
-Argument types:
+Types:
  - `pointTags`: vector of integers
  - `numPointsU`: integer
  - `tag`: integer
@@ -6414,7 +6414,7 @@ new tag is selected automatically. Return the tag of the trimmed surface.
 
 Return an integer.
 
-Argument types:
+Types:
  - `surfaceTag`: integer
  - `wireTags`: vector of integers
  - `wire3D`: boolean
@@ -6441,7 +6441,7 @@ geometrically identical (but topologically different) curves.
 
 Return an integer.
 
-Argument types:
+Types:
  - `surfaceTags`: vector of integers
  - `tag`: integer
  - `sewing`: boolean
@@ -6467,7 +6467,7 @@ the volume.
 
 Return an integer.
 
-Argument types:
+Types:
  - `shellTags`: vector of integers
  - `tag`: integer
 """
@@ -6493,7 +6493,7 @@ sphere.
 
 Return an integer.
 
-Argument types:
+Types:
  - `xc`: double
  - `yc`: double
  - `zc`: double
@@ -6523,7 +6523,7 @@ Return the tag of the box.
 
 Return an integer.
 
-Argument types:
+Types:
  - `x`: double
  - `y`: double
  - `z`: double
@@ -6554,7 +6554,7 @@ tag of the cylinder.
 
 Return an integer.
 
-Argument types:
+Types:
  - `x`: double
  - `y`: double
  - `z`: double
@@ -6587,7 +6587,7 @@ angular opening (from 0 to 2*Pi). Return the tag of the cone.
 
 Return an integer.
 
-Argument types:
+Types:
  - `x`: double
  - `y`: double
  - `z`: double
@@ -6621,7 +6621,7 @@ define the z-axis. Return the tag of the wedge.
 
 Return an integer.
 
-Argument types:
+Types:
  - `x`: double
  - `y`: double
  - `z`: double
@@ -6653,7 +6653,7 @@ size 3 is provided, use it to define the z-axis. Return the tag of the torus.
 
 Return an integer.
 
-Argument types:
+Types:
  - `x`: double
  - `y`: double
  - `z`: double
@@ -6690,7 +6690,7 @@ The optional argument `smoothing` determines if smoothing is applied.
 
 Return `outDimTags`.
 
-Argument types:
+Types:
  - `wireTags`: vector of integers
  - `outDimTags`: vector of pairs of integers
  - `tag`: integer
@@ -6726,7 +6726,7 @@ positive, set the tag explicitly; otherwise a new tag is selected automatically.
 
 Return `outDimTags`.
 
-Argument types:
+Types:
  - `volumeTag`: integer
  - `excludeSurfaceTags`: vector of integers
  - `offset`: double
@@ -6760,7 +6760,7 @@ set, recombine the mesh in the layers.
 
 Return `outDimTags`.
 
-Argument types:
+Types:
  - `dimTags`: vector of pairs of integers
  - `dx`: double
  - `dy`: double
@@ -6800,7 +6800,7 @@ the mesh is extruded the angle should be strictly smaller than 2*Pi. If
 
 Return `outDimTags`.
 
-Argument types:
+Types:
  - `dimTags`: vector of pairs of integers
  - `x`: double
  - `y`: double
@@ -6842,7 +6842,7 @@ assumed. Return the pipe in `outDimTags`.
 
 Return `outDimTags`.
 
-Argument types:
+Types:
  - `dimTags`: vector of pairs of integers
  - `wireTag`: integer
  - `outDimTags`: vector of pairs of integers
@@ -6876,7 +6876,7 @@ volume if `removeVolume` is set.
 
 Return `outDimTags`.
 
-Argument types:
+Types:
  - `volumeTags`: vector of integers
  - `curveTags`: vector of integers
  - `radii`: vector of doubles
@@ -6909,7 +6909,7 @@ entities in `outDimTags`. Remove the original volume if `removeVolume` is set.
 
 Return `outDimTags`.
 
-Argument types:
+Types:
  - `volumeTags`: vector of integers
  - `curveTags`: vector of integers
  - `surfaceTags`: vector of integers
@@ -6942,7 +6942,7 @@ the tool if `removeTool` is set.
 
 Return `outDimTags`, `outDimTagsMap`.
 
-Argument types:
+Types:
  - `objectDimTags`: vector of pairs of integers
  - `toolDimTags`: vector of pairs of integers
  - `outDimTags`: vector of pairs of integers
@@ -6991,7 +6991,7 @@ set. Remove the tool if `removeTool` is set.
 
 Return `outDimTags`, `outDimTagsMap`.
 
-Argument types:
+Types:
  - `objectDimTags`: vector of pairs of integers
  - `toolDimTags`: vector of pairs of integers
  - `outDimTags`: vector of pairs of integers
@@ -7040,7 +7040,7 @@ the tool if `removeTool` is set.
 
 Return `outDimTags`, `outDimTagsMap`.
 
-Argument types:
+Types:
  - `objectDimTags`: vector of pairs of integers
  - `toolDimTags`: vector of pairs of integers
  - `outDimTags`: vector of pairs of integers
@@ -7092,7 +7092,7 @@ the tool if `removeTool` is set.
 
 Return `outDimTags`, `outDimTagsMap`.
 
-Argument types:
+Types:
  - `objectDimTags`: vector of pairs of integers
  - `toolDimTags`: vector of pairs of integers
  - `outDimTags`: vector of pairs of integers
@@ -7135,7 +7135,7 @@ end
 Translate the entities `dimTags` (given as a vector of (dim, tag) pairs) in the
 OpenCASCADE CAD representation along (`dx`, `dy`, `dz`).
 
-Argument types:
+Types:
  - `dimTags`: vector of pairs of integers
  - `dx`: double
  - `dy`: double
@@ -7159,7 +7159,7 @@ Rotate the entities `dimTags` (given as a vector of (dim, tag) pairs) in the
 OpenCASCADE CAD representation by `angle` radians around the axis of revolution
 defined by the point (`x`, `y`, `z`) and the direction (`ax`, `ay`, `az`).
 
-Argument types:
+Types:
  - `dimTags`: vector of pairs of integers
  - `x`: double
  - `y`: double
@@ -7188,7 +7188,7 @@ OpenCASCADE CAD representation by factors `a`, `b` and `c` along the three
 coordinate axes; use (`x`, `y`, `z`) as the center of the homothetic
 transformation.
 
-Argument types:
+Types:
  - `dimTags`: vector of pairs of integers
  - `x`: double
  - `y`: double
@@ -7215,7 +7215,7 @@ Mirror the entities `dimTags` (given as a vector of (dim, tag) pairs) in the
 OpenCASCADE CAD representation, with respect to the plane of equation `a` * x +
 `b` * y + `c` * z + `d` = 0.
 
-Argument types:
+Types:
  - `dimTags`: vector of pairs of integers
  - `a`: double
  - `b`: double
@@ -7240,7 +7240,7 @@ Mirror the entities `dimTags` (given as a vector of (dim, tag) pairs) in the
 OpenCASCADE CAD representation, with respect to the plane of equation `a` * x +
 `b` * y + `c` * z + `d` = 0. (This is a deprecated synonym for `mirror`.)
 
-Argument types:
+Types:
  - `dimTags`: vector of pairs of integers
  - `a`: double
  - `b`: double
@@ -7266,7 +7266,7 @@ Apply a general affine transformation matrix `affineTransform` (16 entries of a
 entities `dimTags` (given as a vector of (dim, tag) pairs) in the OpenCASCADE
 CAD representation.
 
-Argument types:
+Types:
  - `dimTags`: vector of pairs of integers
  - `affineTransform`: vector of doubles
 """
@@ -7290,7 +7290,7 @@ entities are returned in `outDimTags`.
 
 Return `outDimTags`.
 
-Argument types:
+Types:
  - `dimTags`: vector of pairs of integers
  - `outDimTags`: vector of pairs of integers
 """
@@ -7317,7 +7317,7 @@ OpenCASCADE CAD representation, provided that they are not on the boundary of
 higher-dimensional entities. If `recursive` is true, remove all the entities on
 their boundaries, down to dimension 0.
 
-Argument types:
+Types:
  - `dimTags`: vector of pairs of integers
  - `recursive`: boolean
 """
@@ -7358,7 +7358,7 @@ the OpenCASCADE CAD representation. Return the healed entities in `outDimTags`.
 
 Return `outDimTags`.
 
-Argument types:
+Types:
  - `outDimTags`: vector of pairs of integers
  - `dimTags`: vector of pairs of integers
  - `tolerance`: double
@@ -7389,7 +7389,7 @@ const heal_shapes = healShapes
 
 Convert the entities `dimTags` to NURBS.
 
-Argument types:
+Types:
  - `dimTags`: vector of pairs of integers
 """
 function convertToNURBS(dimTags)
@@ -7416,7 +7416,7 @@ or "iges").
 
 Return `outDimTags`.
 
-Argument types:
+Types:
  - `fileName`: string
  - `outDimTags`: vector of pairs of integers
  - `highestDimOnly`: boolean
@@ -7450,7 +7450,7 @@ unsafe, as providing an invalid pointer will lead to undefined behavior.
 
 Return `outDimTags`.
 
-Argument types:
+Types:
  - `shape`: pointer
  - `outDimTags`: vector of pairs of integers
  - `highestDimOnly`: boolean
@@ -7478,7 +7478,7 @@ as a vector of (dim, tag) pairs.
 
 Return `dimTags`.
 
-Argument types:
+Types:
  - `dimTags`: vector of pairs of integers
  - `dim`: integer
 """
@@ -7505,7 +7505,7 @@ only the entities of the specified dimension (e.g. points if `dim` == 0).
 
 Return `tags`.
 
-Argument types:
+Types:
  - `xmin`: double
  - `ymin`: double
  - `zmin`: double
@@ -7537,7 +7537,7 @@ OpenCASCADE entity of dimension `dim` and tag `tag`.
 
 Return `xmin`, `ymin`, `zmin`, `xmax`, `ymax`, `zmax`.
 
-Argument types:
+Types:
  - `dim`: integer
  - `tag`: integer
  - `xmin`: double
@@ -7572,7 +7572,7 @@ loop.
 
 Return `curveLoopTags`, `curveTags`.
 
-Argument types:
+Types:
  - `surfaceTag`: integer
  - `curveLoopTags`: vector of integers
  - `curveTags`: vector of vectors of integers
@@ -7605,7 +7605,7 @@ surface loop.
 
 Return `surfaceLoopTags`, `surfaceTags`.
 
-Argument types:
+Types:
  - `volumeTag`: integer
  - `surfaceLoopTags`: vector of integers
  - `surfaceTags`: vector of vectors of integers
@@ -7636,7 +7636,7 @@ Get the mass of the OpenCASCADE entity of dimension `dim` and tag `tag`.
 
 Return `mass`.
 
-Argument types:
+Types:
  - `dim`: integer
  - `tag`: integer
  - `mass`: double
@@ -7660,7 +7660,7 @@ Get the center of mass of the OpenCASCADE entity of dimension `dim` and tag
 
 Return `x`, `y`, `z`.
 
-Argument types:
+Types:
  - `dim`: integer
  - `tag`: integer
  - `x`: double
@@ -7688,7 +7688,7 @@ and tag `tag`.
 
 Return `mat`.
 
-Argument types:
+Types:
  - `dim`: integer
  - `tag`: integer
  - `mat`: vector of doubles
@@ -7714,7 +7714,7 @@ representation.
 
 Return an integer.
 
-Argument types:
+Types:
  - `dim`: integer
 """
 function getMaxTag(dim)
@@ -7733,7 +7733,7 @@ const get_max_tag = getMaxTag
 Set the maximum tag `maxTag` for entities of dimension `dim` in the OpenCASCADE
 CAD representation.
 
-Argument types:
+Types:
  - `dim`: integer
  - `maxTag`: integer
 """
@@ -7781,7 +7781,7 @@ Set a mesh size constraint on the entities `dimTags` (given as a vector of (dim,
 tag) pairs) in the OpenCASCADE CAD representation. Currently only entities of
 dimension 0 (points) are handled.
 
-Argument types:
+Types:
  - `dimTags`: vector of pairs of integers
  - `size`: double
 """
@@ -7821,7 +7821,7 @@ new tag. Return the view tag.
 
 Return an integer.
 
-Argument types:
+Types:
  - `name`: string
  - `tag`: integer
 """
@@ -7839,7 +7839,7 @@ end
 
 Remove the view with tag `tag`.
 
-Argument types:
+Types:
  - `tag`: integer
 """
 function remove(tag)
@@ -7860,7 +7860,7 @@ options.
 
 Return an integer.
 
-Argument types:
+Types:
  - `tag`: integer
 """
 function getIndex(tag)
@@ -7880,7 +7880,7 @@ Get the tags of all views.
 
 Return `tags`.
 
-Argument types:
+Types:
  - `tags`: vector of integers
 """
 function getTags()
@@ -7912,7 +7912,7 @@ vector data, etc.) per entity; if negative, it is automatically inferred (when
 possible) from the input data. `partition` allows one to specify data in several
 sub-sets.
 
-Argument types:
+Types:
  - `tag`: integer
  - `step`: integer
  - `modelName`: string
@@ -7943,7 +7943,7 @@ supposed to be homogeneous and is thus flattened in a single vector. For data
 types that can lead to different data sizes per tag (like "ElementNodeData"),
 the data should be padded.
 
-Argument types:
+Types:
  - `tag`: integer
  - `step`: integer
  - `modelName`: string
@@ -7973,7 +7973,7 @@ Get model-based post-processing data from the view with tag `tag` at step
 
 Return `dataType`, `tags`, `data`, `time`, `numComponents`.
 
-Argument types:
+Types:
  - `tag`: integer
  - `step`: integer
  - `dataType`: string
@@ -8015,7 +8015,7 @@ padding if necessary.
 
 Return `dataType`, `tags`, `data`, `time`, `numComponents`.
 
-Argument types:
+Types:
  - `tag`: integer
  - `step`: integer
  - `dataType`: string
@@ -8058,7 +8058,7 @@ gives the number of elements in the data. `data` contains the data for the
 node, repeated for each step: [e1x1, ..., e1xn, e1y1, ..., e1yn, e1z1, ...,
 e1zn, e1v1..., e1vN, e2x1, ...].
 
-Argument types:
+Types:
  - `tag`: integer
  - `dataType`: string
  - `numEle`: integer
@@ -8083,7 +8083,7 @@ the `data` for each data type.
 
 Return `dataType`, `numElements`, `data`.
 
-Argument types:
+Types:
  - `tag`: integer
  - `dataType`: vector of strings
  - `numElements`: vector of integers
@@ -8128,7 +8128,7 @@ BoldOblique", "Symbol", "ZapfDingbats", "Screen"), "FontSize" and "Align"
 "BottomRight", "TopLeft", "TopCenter", "TopRight", "CenterLeft", "CenterCenter",
 "CenterRight").
 
-Argument types:
+Types:
  - `tag`: integer
  - `coord`: vector of doubles
  - `data`: vector of strings
@@ -8153,7 +8153,7 @@ the strings in `data` and the styles in `style`.
 
 Return `coord`, `data`, `style`.
 
-Argument types:
+Types:
  - `tag`: integer
  - `dim`: integer
  - `coord`: vector of doubles
@@ -8195,7 +8195,7 @@ x `d`) and the `exp` matrix (of size `d` x 3) are stored as vectors, by row. If
 the x, y, z coordinates of the element in terms of the u, v, w coordinates, in
 exactly the same way. If `d` < 0, remove the interpolation matrices.
 
-Argument types:
+Types:
  - `tag`: integer
  - `type`: string
  - `d`: integer
@@ -8225,7 +8225,7 @@ exists), otherwise associate a new tag. Return the view tag.
 
 Return an integer.
 
-Argument types:
+Types:
  - `refTag`: integer
  - `copyOptions`: boolean
  - `tag`: integer
@@ -8248,7 +8248,7 @@ all views (`how` == "all"), all visible views (`how` == "visible") or all views
 having the same name (`how` == "name"). Remove original views if `remove` is
 set.
 
-Argument types:
+Types:
  - `what`: string
  - `how`: string
  - `remove`: boolean
@@ -8281,7 +8281,7 @@ matches from elements of the specified dimension.
 
 Return `values`, `distance`.
 
-Argument types:
+Types:
  - `tag`: integer
  - `x`: double
  - `y`: double
@@ -8316,7 +8316,7 @@ end
 Write the view to a file `fileName`. The export format is determined by the file
 extension. Append to the file if `append` is set.
 
-Argument types:
+Types:
  - `tag`: integer
  - `fileName`: string
  - `append`: boolean
@@ -8336,7 +8336,7 @@ end
 Set the global visibility of the view `tag` per window to `value`, where
 `windowIndex` identifies the window in the window list.
 
-Argument types:
+Types:
  - `tag`: integer
  - `value`: integer
  - `windowIndex`: integer
@@ -8365,7 +8365,7 @@ import ...gmsh
 
 Set the numerical option `name` to value `value` for the view with tag `tag`.
 
-Argument types:
+Types:
  - `tag`: integer
  - `name`: string
  - `value`: double
@@ -8387,7 +8387,7 @@ Get the `value` of the numerical option `name` for the view with tag `tag`.
 
 Return `value`.
 
-Argument types:
+Types:
  - `tag`: integer
  - `name`: string
  - `value`: double
@@ -8408,7 +8408,7 @@ const get_number = getNumber
 
 Set the string option `name` to value `value` for the view with tag `tag`.
 
-Argument types:
+Types:
  - `tag`: integer
  - `name`: string
  - `value`: string
@@ -8430,7 +8430,7 @@ Get the `value` of the string option `name` for the view with tag `tag`.
 
 Return `value`.
 
-Argument types:
+Types:
  - `tag`: integer
  - `name`: string
  - `value`: string
@@ -8454,7 +8454,7 @@ Set the color option `name` to the RGBA value (`r`, `g`, `b`, `a`) for the view
 with tag `tag`, where where `r`, `g`, `b` and `a` should be integers between 0
 and 255.
 
-Argument types:
+Types:
  - `tag`: integer
  - `name`: string
  - `r`: integer
@@ -8480,7 +8480,7 @@ tag `tag`.
 
 Return `r`, `g`, `b`, `a`.
 
-Argument types:
+Types:
  - `tag`: integer
  - `name`: string
  - `r`: integer
@@ -8507,7 +8507,7 @@ const get_color = getColor
 
 Copy the options from the view with tag `refTag` to the view with tag `tag`.
 
-Argument types:
+Types:
  - `refTag`: integer
  - `tag`: integer
 """
@@ -8538,7 +8538,7 @@ import ..gmsh
 
 Set the numerical option `option` to the value `value` for plugin `name`.
 
-Argument types:
+Types:
  - `name`: string
  - `option`: string
  - `value`: double
@@ -8558,7 +8558,7 @@ const set_number = setNumber
 
 Set the string option `option` to the value `value` for plugin `name`.
 
-Argument types:
+Types:
  - `name`: string
  - `option`: string
  - `value`: string
@@ -8580,7 +8580,7 @@ Run the plugin `name`. Return the tag of the created view (if any).
 
 Return an integer.
 
-Argument types:
+Types:
  - `name`: string
 """
 function run(name)
@@ -8663,7 +8663,7 @@ Wait at most `time` seconds for user interface events and return. If `time` < 0,
 wait indefinitely. First automatically create the user interface if it has not
 yet been initialized. Can only be called in the main thread.
 
-Argument types:
+Types:
  - `time`: double
 """
 function wait(time = -1.)
@@ -8698,7 +8698,7 @@ end
 Awake the main user interface thread and process pending events, and optionally
 perform an action (currently the only `action` allowed is "update").
 
-Argument types:
+Types:
  - `action`: string
 """
 function awake(action = "")
@@ -8780,7 +8780,7 @@ dimension (e.g. points if `dim` == 0).
 
 Return an integer, `dimTags`.
 
-Argument types:
+Types:
  - `dimTags`: vector of pairs of integers
  - `dim`: integer
 """
@@ -8805,7 +8805,7 @@ Select elements in the user interface.
 
 Return an integer, `elementTags`.
 
-Argument types:
+Types:
  - `elementTags`: vector of sizes
 """
 function selectElements()
@@ -8828,7 +8828,7 @@ Select views in the user interface.
 
 Return an integer, `viewTags`.
 
-Argument types:
+Types:
  - `viewTags`: vector of integers
 """
 function selectViews()
@@ -8850,7 +8850,7 @@ const select_views = selectViews
 Split the current window horizontally (if `how` = "h") or vertically (if `how` =
 "v"), using ratio `ratio`. If `how` = "u", restore a single window.
 
-Argument types:
+Types:
  - `how`: string
  - `ratio`: double
 """
@@ -8871,7 +8871,7 @@ Set the current window by speficying its index (starting at 0) in the list of
 all windows. When new windows are created by splits, new windows are appended at
 the end of the list.
 
-Argument types:
+Types:
  - `windowIndex`: integer
 """
 function setCurrentWindow(windowIndex = 0)
@@ -8890,7 +8890,7 @@ const set_current_window = setCurrentWindow
 Set a status message in the current window. If `graphics` is set, display the
 message inside the graphic window instead of the status bar.
 
-Argument types:
+Types:
  - `message`: string
  - `graphics`: boolean
 """
@@ -8909,7 +8909,7 @@ const set_status_message = setStatusMessage
 
 Show context window for the entity of dimension `dim` and tag `tag`.
 
-Argument types:
+Types:
  - `dim`: integer
  - `tag`: integer
 """
@@ -8928,7 +8928,7 @@ const show_context_window = showContextWindow
 
 Open the `name` item in the menu tree.
 
-Argument types:
+Types:
  - `name`: string
 """
 function openTreeItem(name)
@@ -8946,7 +8946,7 @@ const open_tree_item = openTreeItem
 
 Close the `name` item in the menu tree.
 
-Argument types:
+Types:
  - `name`: string
 """
 function closeTreeItem(name)
@@ -8978,7 +8978,7 @@ expression. If `search` is empty, return all the names.
 
 Return `names`.
 
-Argument types:
+Types:
  - `names`: vector of strings
  - `search`: string
 """
@@ -9002,7 +9002,7 @@ const get_names = getNames
 Set the value of the number variable `name` in the Gmsh parser. Create the
 variable if it does not exist; update the value if the variable exists.
 
-Argument types:
+Types:
  - `name`: string
  - `value`: vector of doubles
 """
@@ -9022,7 +9022,7 @@ const set_number = setNumber
 Set the value of the string variable `name` in the Gmsh parser. Create the
 variable if it does not exist; update the value if the variable exists.
 
-Argument types:
+Types:
  - `name`: string
  - `value`: vector of strings
 """
@@ -9044,7 +9044,7 @@ empty vector if the variable does not exist.
 
 Return `value`.
 
-Argument types:
+Types:
  - `name`: string
  - `value`: vector of doubles
 """
@@ -9069,7 +9069,7 @@ empty vector if the variable does not exist.
 
 Return `value`.
 
-Argument types:
+Types:
  - `name`: string
  - `value`: vector of strings
 """
@@ -9093,7 +9093,7 @@ const get_string = getString
 Clear all the Gmsh parser variables, or remove a single variable if `name` is
 given.
 
-Argument types:
+Types:
  - `name`: string
 """
 function clear(name = "")
@@ -9110,7 +9110,7 @@ end
 
 Parse the file `fileName` with the Gmsh parser.
 
-Argument types:
+Types:
  - `fileName`: string
 """
 function parse(fileName)
@@ -9138,7 +9138,7 @@ import ..gmsh
 
 Set one or more parameters in the ONELAB database, encoded in `format`.
 
-Argument types:
+Types:
  - `data`: string
  - `format`: string
 """
@@ -9159,7 +9159,7 @@ database, encoded in `format`.
 
 Return `data`.
 
-Argument types:
+Types:
  - `data`: string
  - `name`: string
  - `format`: string
@@ -9183,7 +9183,7 @@ regular expression. If `search` is empty, return all the names.
 
 Return `names`.
 
-Argument types:
+Types:
  - `names`: vector of strings
  - `search`: string
 """
@@ -9207,7 +9207,7 @@ const get_names = getNames
 Set the value of the number parameter `name` in the ONELAB database. Create the
 parameter if it does not exist; update the value if the parameter exists.
 
-Argument types:
+Types:
  - `name`: string
  - `value`: vector of doubles
 """
@@ -9227,7 +9227,7 @@ const set_number = setNumber
 Set the value of the string parameter `name` in the ONELAB database. Create the
 parameter if it does not exist; update the value if the parameter exists.
 
-Argument types:
+Types:
  - `name`: string
  - `value`: vector of strings
 """
@@ -9249,7 +9249,7 @@ empty vector if the parameter does not exist.
 
 Return `value`.
 
-Argument types:
+Types:
  - `name`: string
  - `value`: vector of doubles
 """
@@ -9274,7 +9274,7 @@ empty vector if the parameter does not exist.
 
 Return `value`.
 
-Argument types:
+Types:
  - `name`: string
  - `value`: vector of strings
 """
@@ -9300,7 +9300,7 @@ been changed.
 
 Return an integer.
 
-Argument types:
+Types:
  - `name`: string
 """
 function getChanged(name)
@@ -9319,7 +9319,7 @@ const get_changed = getChanged
 Set the changed flag to value `value` for all the parameters in the ONELAB
 database used by the client `name`.
 
-Argument types:
+Types:
  - `name`: string
  - `value`: integer
 """
@@ -9338,7 +9338,7 @@ const set_changed = setChanged
 
 Clear the ONELAB database, or remove a single parameter if `name` is given.
 
-Argument types:
+Types:
  - `name`: string
 """
 function clear(name = "")
@@ -9357,7 +9357,7 @@ Run a ONELAB client. If `name` is provided, create a new ONELAB client with name
 `name` and executes `command`. If not, try to run a client that might be linked
 to the processed input files.
 
-Argument types:
+Types:
  - `name`: string
  - `command`: string
 """
@@ -9386,7 +9386,7 @@ import ..gmsh
 
 Write a `message`. `level` can be "info", "warning" or "error".
 
-Argument types:
+Types:
  - `message`: string
  - `level`: string
 """
@@ -9420,7 +9420,7 @@ Get logged messages.
 
 Return `log`.
 
-Argument types:
+Types:
  - `log`: vector of strings
 """
 function get()
@@ -9491,7 +9491,7 @@ Return last error message, if any.
 
 Return `error`.
 
-Argument types:
+Types:
  - `error`: string
 """
 function getLastError()

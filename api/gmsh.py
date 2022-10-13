@@ -238,7 +238,7 @@ def initialize(argv=[], readConfigFiles=True, run=False):
     the API sets the options "General.AbortOnError" to 2 and "General.Terminal"
     to 1.
 
-    Argument types:
+    Types:
     - `argv': command line arguments
     - `readConfigFiles': boolean
     - `run': boolean
@@ -292,7 +292,7 @@ def open(fileName):
     of the file depends on its extension and/or its contents: opening a file
     with model data will create a new model.
 
-    Argument types:
+    Types:
     - `fileName': string
     """
     ierr = c_int()
@@ -310,7 +310,7 @@ def merge(fileName):
     Handling of the file depends on its extension and/or its contents. Merging
     a file with model data will add the data to the current model.
 
-    Argument types:
+    Types:
     - `fileName': string
     """
     ierr = c_int()
@@ -326,7 +326,7 @@ def write(fileName):
 
     Write a file. The export format is determined by the file extension.
 
-    Argument types:
+    Types:
     - `fileName': string
     """
     ierr = c_int()
@@ -364,7 +364,7 @@ class option:
         or "Category[num].Option". Available categories and options are listed in
         the Gmsh reference manual.
 
-        Argument types:
+        Types:
         - `name': string
         - `value': double
         """
@@ -388,7 +388,7 @@ class option:
 
         Return `value'.
 
-        Argument types:
+        Types:
         - `name': string
         - `value': double
         """
@@ -412,7 +412,7 @@ class option:
         "Category[num].Option". Available categories and options are listed in the
         Gmsh reference manual.
 
-        Argument types:
+        Types:
         - `name': string
         - `value': string
         """
@@ -436,7 +436,7 @@ class option:
 
         Return `value'.
 
-        Argument types:
+        Types:
         - `name': string
         - `value': string
         """
@@ -462,7 +462,7 @@ class option:
         categories and options are listed in the Gmsh reference manual. For
         conciseness "Color." can be ommitted in `name'.
 
-        Argument types:
+        Types:
         - `name': string
         - `r': integer
         - `g': integer
@@ -493,7 +493,7 @@ class option:
 
         Return `r', `g', `b', `a'.
 
-        Argument types:
+        Types:
         - `name': string
         - `r': integer
         - `g': integer
@@ -534,7 +534,7 @@ class model:
 
         Add a new model, with name `name', and set it as the current model.
 
-        Argument types:
+        Types:
         - `name': string
         """
         ierr = c_int()
@@ -566,7 +566,7 @@ class model:
 
         Return `names'.
 
-        Argument types:
+        Types:
         - `names': vector of strings
         """
         api_names_, api_names_n_ = POINTER(POINTER(c_char))(), c_size_t()
@@ -587,7 +587,7 @@ class model:
 
         Return `name'.
 
-        Argument types:
+        Types:
         - `name': string
         """
         api_name_ = c_char_p()
@@ -608,7 +608,7 @@ class model:
         Set the current model to the model with name `name'. If several models have
         the same name, select the one that was added first.
 
-        Argument types:
+        Types:
         - `name': string
         """
         ierr = c_int()
@@ -629,7 +629,7 @@ class model:
 
         Return `fileName'.
 
-        Argument types:
+        Types:
         - `fileName': string
         """
         api_fileName_ = c_char_p()
@@ -649,7 +649,7 @@ class model:
 
         Set the file name associated with the current model.
 
-        Argument types:
+        Types:
         - `fileName': string
         """
         ierr = c_int()
@@ -671,7 +671,7 @@ class model:
 
         Return `dimTags'.
 
-        Argument types:
+        Types:
         - `dimTags': vector of pairs of integers
         - `dim': integer
         """
@@ -693,7 +693,7 @@ class model:
 
         Set the name of the entity of dimension `dim' and tag `tag'.
 
-        Argument types:
+        Types:
         - `dim': integer
         - `tag': integer
         - `name': string
@@ -717,7 +717,7 @@ class model:
 
         Return `name'.
 
-        Argument types:
+        Types:
         - `dim': integer
         - `tag': integer
         - `name': string
@@ -745,7 +745,7 @@ class model:
 
         Return `dimTags'.
 
-        Argument types:
+        Types:
         - `dimTags': vector of pairs of integers
         - `dim': integer
         """
@@ -770,7 +770,7 @@ class model:
 
         Return `tags'.
 
-        Argument types:
+        Types:
         - `dim': integer
         - `tag': integer
         - `tags': vector of integers
@@ -797,7 +797,7 @@ class model:
 
         Return `physicalTags'.
 
-        Argument types:
+        Types:
         - `dim': integer
         - `tag': integer
         - `physicalTags': vector of integers
@@ -826,7 +826,7 @@ class model:
 
         Return an integer.
 
-        Argument types:
+        Types:
         - `dim': integer
         - `tags': vector of integers
         - `tag': integer
@@ -853,7 +853,7 @@ class model:
         Remove the physical groups `dimTags' (given as a vector of (dim, tag)
         pairs) from the current model. If `dimTags' is empty, remove all groups.
 
-        Argument types:
+        Types:
         - `dimTags': vector of pairs of integers
         """
         api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
@@ -872,7 +872,7 @@ class model:
 
         Set the name of the physical group of dimension `dim' and tag `tag'.
 
-        Argument types:
+        Types:
         - `dim': integer
         - `tag': integer
         - `name': string
@@ -894,7 +894,7 @@ class model:
 
         Remove the physical name `name' from the current model.
 
-        Argument types:
+        Types:
         - `name': string
         """
         ierr = c_int()
@@ -914,7 +914,7 @@ class model:
 
         Return `name'.
 
-        Argument types:
+        Types:
         - `dim': integer
         - `tag': integer
         - `name': string
@@ -939,7 +939,7 @@ class model:
         Set the tag of the entity of dimension `dim' and tag `tag' to the new value
         `newTag'.
 
-        Argument types:
+        Types:
         - `dim': integer
         - `tag': integer
         - `newTag': integer
@@ -969,7 +969,7 @@ class model:
 
         Return `outDimTags'.
 
-        Argument types:
+        Types:
         - `dimTags': vector of pairs of integers
         - `outDimTags': vector of pairs of integers
         - `combined': boolean
@@ -1003,7 +1003,7 @@ class model:
 
         Return `upward', `downward'.
 
-        Argument types:
+        Types:
         - `dim': integer
         - `tag': integer
         - `upward': vector of integers
@@ -1037,7 +1037,7 @@ class model:
 
         Return `tags'.
 
-        Argument types:
+        Types:
         - `xmin': double
         - `ymin': double
         - `zmin': double
@@ -1075,7 +1075,7 @@ class model:
 
         Return `xmin', `ymin', `zmin', `xmax', `ymax', `zmax'.
 
-        Argument types:
+        Types:
         - `dim': integer
         - `tag': integer
         - `xmin': double
@@ -1143,7 +1143,7 @@ class model:
 
         Return an integer.
 
-        Argument types:
+        Types:
         - `dim': integer
         - `tag': integer
         - `boundary': vector of integers
@@ -1170,7 +1170,7 @@ class model:
         embedded in) higher-dimensional entities. If `recursive' is true, remove
         all the entities on their boundaries, down to dimension 0.
 
-        Argument types:
+        Types:
         - `dimTags': vector of pairs of integers
         - `recursive': boolean
         """
@@ -1191,7 +1191,7 @@ class model:
 
         Remove the entity name `name' from the current model.
 
-        Argument types:
+        Types:
         - `name': string
         """
         ierr = c_int()
@@ -1211,7 +1211,7 @@ class model:
 
         Return `entityType'.
 
-        Argument types:
+        Types:
         - `dim': integer
         - `tag': integer
         - `entityType': string
@@ -1239,7 +1239,7 @@ class model:
 
         Return `parentDim', `parentTag'.
 
-        Argument types:
+        Types:
         - `dim': integer
         - `tag': integer
         - `parentDim': integer
@@ -1288,7 +1288,7 @@ class model:
 
         Return `partitions'.
 
-        Argument types:
+        Types:
         - `dim': integer
         - `tag': integer
         - `partitions': vector of integers
@@ -1320,7 +1320,7 @@ class model:
 
         Return `coord'.
 
-        Argument types:
+        Types:
         - `dim': integer
         - `tag': integer
         - `parametricCoord': vector of doubles
@@ -1357,7 +1357,7 @@ class model:
 
         Return `derivatives'.
 
-        Argument types:
+        Types:
         - `dim': integer
         - `tag': integer
         - `parametricCoord': vector of doubles
@@ -1396,7 +1396,7 @@ class model:
 
         Return `derivatives'.
 
-        Argument types:
+        Types:
         - `dim': integer
         - `tag': integer
         - `parametricCoord': vector of doubles
@@ -1429,7 +1429,7 @@ class model:
 
         Return `curvatures'.
 
-        Argument types:
+        Types:
         - `dim': integer
         - `tag': integer
         - `parametricCoord': vector of doubles
@@ -1461,7 +1461,7 @@ class model:
 
         Return `curvatureMax', `curvatureMin', `directionMax', `directionMin'.
 
-        Argument types:
+        Types:
         - `tag': integer
         - `parametricCoord': vector of doubles
         - `curvatureMax': vector of doubles
@@ -1504,7 +1504,7 @@ class model:
 
         Return `normals'.
 
-        Argument types:
+        Types:
         - `tag': integer
         - `parametricCoord': vector of doubles
         - `normals': vector of doubles
@@ -1536,7 +1536,7 @@ class model:
 
         Return `parametricCoord'.
 
-        Argument types:
+        Types:
         - `dim': integer
         - `tag': integer
         - `coord': vector of doubles
@@ -1566,7 +1566,7 @@ class model:
 
         Return `min', `max'.
 
-        Argument types:
+        Types:
         - `dim': integer
         - `tag': integer
         - `min': vector of doubles
@@ -1601,7 +1601,7 @@ class model:
 
         Return an integer.
 
-        Argument types:
+        Types:
         - `dim': integer
         - `tag': integer
         - `coord': vector of doubles
@@ -1634,7 +1634,7 @@ class model:
 
         Return `closestCoord', `parametricCoord'.
 
-        Argument types:
+        Types:
         - `dim': integer
         - `tag': integer
         - `coord': vector of doubles
@@ -1673,7 +1673,7 @@ class model:
 
         Return `surfaceParametricCoord'.
 
-        Argument types:
+        Types:
         - `dim': integer
         - `tag': integer
         - `parametricCoord': vector of doubles
@@ -1706,7 +1706,7 @@ class model:
         (dim, tag) pairs) to `value'. Apply the visibility setting recursively if
         `recursive' is true.
 
-        Argument types:
+        Types:
         - `dimTags': vector of pairs of integers
         - `value': integer
         - `recursive': boolean
@@ -1731,7 +1731,7 @@ class model:
 
         Return `value'.
 
-        Argument types:
+        Types:
         - `dim': integer
         - `tag': integer
         - `value': integer
@@ -1756,7 +1756,7 @@ class model:
         Set the global visibility of the model per window to `value', where
         `windowIndex' identifies the window in the window list.
 
-        Argument types:
+        Types:
         - `value': integer
         - `windowIndex': integer
         """
@@ -1779,7 +1779,7 @@ class model:
         `a' should be integers between 0 and 255. Apply the color setting
         recursively if `recursive' is true.
 
-        Argument types:
+        Types:
         - `dimTags': vector of pairs of integers
         - `r': integer
         - `g': integer
@@ -1810,7 +1810,7 @@ class model:
 
         Return `r', `g', `b', `a'.
 
-        Argument types:
+        Types:
         - `dim': integer
         - `tag': integer
         - `r': integer
@@ -1847,7 +1847,7 @@ class model:
 
         Set the `x', `y', `z' coordinates of a geometrical point.
 
-        Argument types:
+        Types:
         - `tag': integer
         - `x': double
         - `y': double
@@ -1873,7 +1873,7 @@ class model:
 
         Return `names'.
 
-        Argument types:
+        Types:
         - `names': vector of strings
         """
         api_names_, api_names_n_ = POINTER(POINTER(c_char))(), c_size_t()
@@ -1895,7 +1895,7 @@ class model:
 
         Return `values'.
 
-        Argument types:
+        Types:
         - `name': string
         - `values': vector of strings
         """
@@ -1917,7 +1917,7 @@ class model:
 
         Set the values of the attribute with name `name'.
 
-        Argument types:
+        Types:
         - `name': string
         - `values': vector of strings
         """
@@ -1938,7 +1938,7 @@ class model:
 
         Remove the attribute with name `name'.
 
-        Argument types:
+        Types:
         - `name': string
         """
         ierr = c_int()
@@ -1962,7 +1962,7 @@ class model:
 
             Generate a mesh of the current model, up to dimension `dim' (0, 1, 2 or 3).
 
-            Argument types:
+            Types:
             - `dim': integer
             """
             ierr = c_int()
@@ -1981,7 +1981,7 @@ class model:
             Optionally, `elementTags' and `partitions' can be provided to specify the
             partition of each element explicitly.
 
-            Argument types:
+            Types:
             - `numPart': integer
             - `elementTags': vector of sizes
             - `partitions': vector of integers
@@ -2025,7 +2025,7 @@ class model:
             entities. If `dimTags' (given as a vector of (dim, tag) pairs) is given,
             only apply the optimizer to the given entities.
 
-            Argument types:
+            Types:
             - `method': string
             - `force': boolean
             - `niter': integer
@@ -2075,7 +2075,7 @@ class model:
 
             Set the order of the elements in the mesh of the current model to `order'.
 
-            Argument types:
+            Types:
             - `order': integer
             """
             ierr = c_int()
@@ -2097,7 +2097,7 @@ class model:
 
             Return `dimTags'.
 
-            Argument types:
+            Types:
             - `dimTags': vector of pairs of integers
             """
             api_dimTags_, api_dimTags_n_ = POINTER(c_int)(), c_size_t()
@@ -2120,7 +2120,7 @@ class model:
 
             Return `nodeTags'.
 
-            Argument types:
+            Types:
             - `nodeTags': vector of sizes
             """
             api_nodeTags_, api_nodeTags_n_ = POINTER(c_size_t)(), c_size_t()
@@ -2144,7 +2144,7 @@ class model:
             if this entity is not on the boundary of another entity with a non-empty
             mesh.
 
-            Argument types:
+            Types:
             - `dimTags': vector of pairs of integers
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
@@ -2164,7 +2164,7 @@ class model:
             a vector of (dim, tag) pairs. If `dimTags' is empty, reverse the
             orientation of the elements in the whole mesh.
 
-            Argument types:
+            Types:
             - `dimTags': vector of pairs of integers
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
@@ -2186,7 +2186,7 @@ class model:
             vector of (dim, tag) pairs. If `dimTags' is empty, transform all the nodes
             in the mesh.
 
-            Argument types:
+            Types:
             - `affineTransform': vector of doubles
             - `dimTags': vector of pairs of integers
             """
@@ -2222,7 +2222,7 @@ class model:
 
             Return `nodeTags', `coord', `parametricCoord'.
 
-            Argument types:
+            Types:
             - `nodeTags': vector of sizes
             - `coord': vector of doubles
             - `parametricCoord': vector of doubles
@@ -2262,7 +2262,7 @@ class model:
 
             Return `nodeTags', `coord', `parametricCoord'.
 
-            Argument types:
+            Types:
             - `elementType': integer
             - `nodeTags': vector of sizes
             - `coord': vector of doubles
@@ -2303,7 +2303,7 @@ class model:
 
             Return `coord', `parametricCoord', `dim', `tag'.
 
-            Argument types:
+            Types:
             - `nodeTag': size
             - `coord': vector of doubles
             - `parametricCoord': vector of doubles
@@ -2341,7 +2341,7 @@ class model:
             of dense node numbering, a map otherwise); for large meshes accessing nodes
             in bulk is often preferable.
 
-            Argument types:
+            Types:
             - `nodeTag': size
             - `coord': vector of doubles
             - `parametricCoord': vector of doubles
@@ -2365,7 +2365,7 @@ class model:
 
             Rebuild the node cache.
 
-            Argument types:
+            Types:
             - `onlyIfNecessary': boolean
             """
             ierr = c_int()
@@ -2383,7 +2383,7 @@ class model:
 
             Rebuild the element cache.
 
-            Argument types:
+            Types:
             - `onlyIfNecessary': boolean
             """
             ierr = c_int()
@@ -2406,7 +2406,7 @@ class model:
 
             Return `nodeTags', `coord'.
 
-            Argument types:
+            Types:
             - `dim': integer
             - `tag': integer
             - `nodeTags': vector of sizes
@@ -2437,7 +2437,7 @@ class model:
 
             Return `maxTag'.
 
-            Argument types:
+            Types:
             - `maxTag': size
             """
             api_maxTag_ = c_size_t()
@@ -2465,7 +2465,7 @@ class model:
             the `nodeTags' vector is empty, new tags are automatically assigned to the
             nodes.
 
-            Argument types:
+            Types:
             - `dim': integer
             - `tag': integer
             - `nodeTags': vector of sizes
@@ -2514,7 +2514,7 @@ class model:
             for all entities of dimension `dim'. If `dim' and `tag' are negative,
             relocate all the nodes in the mesh.
 
-            Argument types:
+            Types:
             - `dim': integer
             - `tag': integer
             """
@@ -2548,7 +2548,7 @@ class model:
 
             Return `elementTypes', `elementTags', `nodeTags'.
 
-            Argument types:
+            Types:
             - `elementTypes': vector of integers
             - `elementTags': vector of vectors of sizes
             - `nodeTags': vector of vectors of sizes
@@ -2587,7 +2587,7 @@ class model:
 
             Return `elementType', `nodeTags', `dim', `tag'.
 
-            Argument types:
+            Types:
             - `elementTag': size
             - `elementType': integer
             - `nodeTags': vector of sizes
@@ -2629,7 +2629,7 @@ class model:
 
             Return `elementTag', `elementType', `nodeTags', `u', `v', `w'.
 
-            Argument types:
+            Types:
             - `x': double
             - `y': double
             - `z': double
@@ -2687,7 +2687,7 @@ class model:
 
             Return `elementTags'.
 
-            Argument types:
+            Types:
             - `x': double
             - `y': double
             - `z': double
@@ -2723,7 +2723,7 @@ class model:
 
             Return `u', `v', `w'.
 
-            Argument types:
+            Types:
             - `elementTag': size
             - `x': double
             - `y': double
@@ -2764,7 +2764,7 @@ class model:
 
             Return `elementTypes'.
 
-            Argument types:
+            Types:
             - `elementTypes': vector of integers
             - `dim': integer
             - `tag': integer
@@ -2793,7 +2793,7 @@ class model:
 
             Return an integer.
 
-            Argument types:
+            Types:
             - `familyName': string
             - `order': integer
             - `serendip': boolean
@@ -2822,7 +2822,7 @@ class model:
 
             Return `elementName', `dim', `order', `numNodes', `localNodeCoord', `numPrimaryNodes'.
 
-            Argument types:
+            Types:
             - `elementType': integer
             - `elementName': string
             - `dim': integer
@@ -2875,7 +2875,7 @@ class model:
 
             Return `elementTags', `nodeTags'.
 
-            Argument types:
+            Types:
             - `elementType': integer
             - `elementTags': vector of sizes
             - `nodeTags': vector of sizes
@@ -2910,7 +2910,7 @@ class model:
 
             Return `maxTag'.
 
-            Argument types:
+            Types:
             - `maxTag': size
             """
             api_maxTag_ = c_size_t()
@@ -2938,7 +2938,7 @@ class model:
 
             Return `elementsQuality'.
 
-            Argument types:
+            Types:
             - `elementTags': vector of sizes
             - `elementsQuality': vector of doubles
             - `qualityName': string
@@ -2976,7 +2976,7 @@ class model:
             elements of the given type, concatenated: [e1n1, e1n2, ..., e1nN, e2n1,
             ...].
 
-            Argument types:
+            Types:
             - `dim': integer
             - `tag': integer
             - `elementTypes': vector of integers
@@ -3011,7 +3011,7 @@ class model:
             ..., e1nN, e2n1, ...]. If the `elementTag' vector is empty, new tags are
             automatically assigned to the elements.
 
-            Argument types:
+            Types:
             - `tag': integer
             - `elementType': integer
             - `elementTags': vector of sizes
@@ -3050,7 +3050,7 @@ class model:
 
             Return `localCoord', `weights'.
 
-            Argument types:
+            Types:
             - `elementType': integer
             - `integrationType': string
             - `localCoord': vector of doubles
@@ -3094,7 +3094,7 @@ class model:
 
             Return `jacobians', `determinants', `coord'.
 
-            Argument types:
+            Types:
             - `elementType': integer
             - `localCoord': vector of doubles
             - `jacobians': vector of doubles
@@ -3146,7 +3146,7 @@ class model:
 
             Return `jacobians', `determinants', `coord'.
 
-            Argument types:
+            Types:
             - `elementTag': size
             - `localCoord': vector of doubles
             - `jacobians': vector of doubles
@@ -3201,7 +3201,7 @@ class model:
 
             Return `numComponents', `basisFunctions', `numOrientations'.
 
-            Argument types:
+            Types:
             - `elementType': integer
             - `localCoord': vector of doubles
             - `functionSpaceType': string
@@ -3247,7 +3247,7 @@ class model:
 
             Return `basisFunctionsOrientation'.
 
-            Argument types:
+            Types:
             - `elementType': integer
             - `functionSpaceType': string
             - `basisFunctionsOrientation': vector of integers
@@ -3279,7 +3279,7 @@ class model:
 
             Return `basisFunctionsOrientation'.
 
-            Argument types:
+            Types:
             - `elementTag': size
             - `functionSpaceType': string
             - `basisFunctionsOrientation': integer
@@ -3306,7 +3306,7 @@ class model:
 
             Return an integer.
 
-            Argument types:
+            Types:
             - `elementType': integer
             - `functionSpaceType': string
             """
@@ -3335,7 +3335,7 @@ class model:
 
             Return `edgeTags', `edgeOrientations'.
 
-            Argument types:
+            Types:
             - `nodeTags': vector of sizes
             - `edgeTags': vector of sizes
             - `edgeOrientations': vector of integers
@@ -3369,7 +3369,7 @@ class model:
 
             Return `faceTags', `faceOrientations'.
 
-            Argument types:
+            Types:
             - `faceType': integer
             - `nodeTags': vector of sizes
             - `faceTags': vector of sizes
@@ -3400,7 +3400,7 @@ class model:
             Create unique mesh edges for the entities `dimTags', given as a vector of
             (dim, tag) pairs.
 
-            Argument types:
+            Types:
             - `dimTags': vector of pairs of integers
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
@@ -3420,7 +3420,7 @@ class model:
             Create unique mesh faces for the entities `dimTags', given as a vector of
             (dim, tag) pairs.
 
-            Argument types:
+            Types:
             - `dimTags': vector of pairs of integers
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
@@ -3443,7 +3443,7 @@ class model:
 
             Return `edgeTags', `edgeNodes'.
 
-            Argument types:
+            Types:
             - `edgeTags': vector of sizes
             - `edgeNodes': vector of sizes
             """
@@ -3472,7 +3472,7 @@ class model:
 
             Return `faceTags', `faceNodes'.
 
-            Argument types:
+            Types:
             - `faceType': integer
             - `faceTags': vector of sizes
             - `faceNodes': vector of sizes
@@ -3500,7 +3500,7 @@ class model:
             Add mesh edges defined by their global unique identifiers `edgeTags' and
             their nodes `edgeNodes'.
 
-            Argument types:
+            Types:
             - `edgeTags': vector of sizes
             - `edgeNodes': vector of sizes
             """
@@ -3523,7 +3523,7 @@ class model:
             Add mesh faces of type `faceType' defined by their global unique
             identifiers `faceTags' and their nodes `faceNodes'.
 
-            Argument types:
+            Types:
             - `faceType': integer
             - `faceTags': vector of sizes
             - `faceNodes': vector of sizes
@@ -3555,7 +3555,7 @@ class model:
 
             Return `typeKeys', `entityKeys', `coord'.
 
-            Argument types:
+            Types:
             - `elementType': integer
             - `functionSpaceType': string
             - `typeKeys': vector of integers
@@ -3594,7 +3594,7 @@ class model:
 
             Return `typeKeys', `entityKeys', `coord'.
 
-            Argument types:
+            Types:
             - `elementTag': size
             - `functionSpaceType': string
             - `typeKeys': vector of integers
@@ -3632,7 +3632,7 @@ class model:
 
             Return an integer.
 
-            Argument types:
+            Types:
             - `elementType': integer
             - `functionSpaceType': string
             """
@@ -3661,7 +3661,7 @@ class model:
 
             Return `infoKeys'.
 
-            Argument types:
+            Types:
             - `typeKeys': vector of integers
             - `entityKeys': vector of sizes
             - `elementType': integer
@@ -3699,7 +3699,7 @@ class model:
 
             Return `barycenters'.
 
-            Argument types:
+            Types:
             - `elementType': integer
             - `tag': integer
             - `fast': boolean
@@ -3740,7 +3740,7 @@ class model:
 
             Return `nodeTags'.
 
-            Argument types:
+            Types:
             - `elementType': integer
             - `nodeTags': vector of sizes
             - `tag': integer
@@ -3780,7 +3780,7 @@ class model:
 
             Return `nodeTags'.
 
-            Argument types:
+            Types:
             - `elementType': integer
             - `faceType': integer
             - `nodeTags': vector of sizes
@@ -3815,7 +3815,7 @@ class model:
 
             Return `elementTags', `partitions'.
 
-            Argument types:
+            Types:
             - `dim': integer
             - `tag': integer
             - `elementTags': vector of sizes
@@ -3846,7 +3846,7 @@ class model:
             vector of (dim, tag) pairs. Currently only entities of dimension 0 (points)
             are handled.
 
-            Argument types:
+            Types:
             - `dimTags': vector of pairs of integers
             - `size': double
             """
@@ -3872,7 +3872,7 @@ class model:
 
             Return `sizes'.
 
-            Argument types:
+            Types:
             - `dimTags': vector of pairs of integers
             - `sizes': vector of doubles
             """
@@ -3897,7 +3897,7 @@ class model:
             on the model entity of dimension `dim' and tag `tag'. Currently only
             entities of dimension 1 (lines) are handled.
 
-            Argument types:
+            Types:
             - `dim': integer
             - `tag': integer
             - `parametricCoord': vector of doubles
@@ -3931,7 +3931,7 @@ class model:
             precision number specifying the desired mesh size; returning `lc' is
             equivalent to a no-op.
 
-            Argument types:
+            Types:
             - `callback': 
             """
             global api_callback_type_
@@ -3970,7 +3970,7 @@ class model:
             types are "Progression" (geometrical progression with power `coef'), "Bump"
             (refinement toward both extremities of the curve) and "Beta" (beta law).
 
-            Argument types:
+            Types:
             - `tag': integer
             - `numNodes': integer
             - `meshType': string
@@ -4000,7 +4000,7 @@ class model:
             specifying the corners explicitly is mandatory if the surface has more that
             3 or 4 points on its boundary.
 
-            Argument types:
+            Types:
             - `tag': integer
             - `arrangement': string
             - `cornerTags': vector of integers
@@ -4025,7 +4025,7 @@ class model:
             be used to specify the (6 or 8) corners of the transfinite interpolation
             explicitly.
 
-            Argument types:
+            Types:
             - `tag': integer
             - `cornerTags': vector of integers
             """
@@ -4053,7 +4053,7 @@ class model:
             the constraints are applied to all entities in the model. If `recombine' is
             true, the recombine flag is automatically set on the transfinite surfaces.
 
-            Argument types:
+            Types:
             - `dimTags': vector of pairs of integers
             - `cornerAngle': double
             - `recombine': boolean
@@ -4079,7 +4079,7 @@ class model:
             triangles into quadrangles) are supported; `angle' specifies the threshold
             angle for the simple recombination algorithm..
 
-            Argument types:
+            Types:
             - `dim': integer
             - `tag': integer
             - `angle': double
@@ -4102,7 +4102,7 @@ class model:
             Set a smoothing meshing constraint on the model entity of dimension `dim'
             and tag `tag'. `val' iterations of a Laplace smoother are applied.
 
-            Argument types:
+            Types:
             - `dim': integer
             - `tag': integer
             - `val': integer
@@ -4128,7 +4128,7 @@ class model:
             with the orientation of the geometry). If `val' is false, the mesh is left
             as-is.
 
-            Argument types:
+            Types:
             - `dim': integer
             - `tag': integer
             - `val': boolean
@@ -4151,7 +4151,7 @@ class model:
             Set the meshing algorithm on the model entity of dimension `dim' and tag
             `tag'. Currently only supported for `dim' == 2.
 
-            Argument types:
+            Types:
             - `dim': integer
             - `tag': integer
             - `val': integer
@@ -4175,7 +4175,7 @@ class model:
             entity of dimension `dim' and tag `tag'. Currently only supported for `dim'
             == 2.
 
-            Argument types:
+            Types:
             - `dim': integer
             - `tag': integer
             - `val': integer
@@ -4199,7 +4199,7 @@ class model:
             and tags `tags'. During meshing, compound entities are treated as a single
             discrete entity, which is automatically reparametrized.
 
-            Argument types:
+            Types:
             - `dim': integer
             - `tags': vector of integers
             """
@@ -4223,7 +4223,7 @@ class model:
             mesh already exists, reorient it. Currently only available with the
             OpenCASCADE kernel, as it relies on the STL triangulation.
 
-            Argument types:
+            Types:
             - `tag': integer
             """
             ierr = c_int()
@@ -4243,7 +4243,7 @@ class model:
             a vector of (dim, tag) pairs. If `dimTags' is empty, remove all
             constraings.
 
-            Argument types:
+            Types:
             - `dimTags': vector of pairs of integers
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
@@ -4270,7 +4270,7 @@ class model:
             will be automatically embedded in the higher dimensional entities if they
             are not on their boundary.
 
-            Argument types:
+            Types:
             - `dim': integer
             - `tags': vector of integers
             - `inDim': integer
@@ -4296,7 +4296,7 @@ class model:
             vector of (dim, tag) pairs. if `dim' is >= 0, only remove embedded entities
             of the given dimension (e.g. embedded points if `dim' == 0).
 
-            Argument types:
+            Types:
             - `dimTags': vector of pairs of integers
             - `dim': integer
             """
@@ -4320,7 +4320,7 @@ class model:
 
             Return `dimTags'.
 
-            Argument types:
+            Types:
             - `dim': integer
             - `tag': integer
             - `dimTags': vector of pairs of integers
@@ -4345,7 +4345,7 @@ class model:
             Reorder the elements of type `elementType' classified on the entity of tag
             `tag' according to the `ordering' vector.
 
-            Argument types:
+            Types:
             - `elementType': integer
             - `tag': integer
             - `ordering': vector of sizes
@@ -4403,7 +4403,7 @@ class model:
             structured and extruded meshes). Currently only available for @code{dim} ==
             1 and @code{dim} == 2.
 
-            Argument types:
+            Types:
             - `dim': integer
             - `tags': vector of integers
             - `tagsMaster': vector of integers
@@ -4433,7 +4433,7 @@ class model:
 
             Return `tagMaster'.
 
-            Argument types:
+            Types:
             - `dim': integer
             - `tags': vector of integers
             - `tagMaster': vector of integers
@@ -4464,7 +4464,7 @@ class model:
 
             Return `tagMaster', `nodeTags', `nodeTagsMaster', `affineTransform'.
 
-            Argument types:
+            Types:
             - `dim': integer
             - `tag': integer
             - `tagMaster': integer
@@ -4510,7 +4510,7 @@ class model:
 
             Return `tagMaster', `typeKeys', `typeKeysMaster', `entityKeys', `entityKeysMaster', `coord', `coordMaster'.
 
-            Argument types:
+            Types:
             - `elementType': integer
             - `functionSpaceType': string
             - `tag': integer
@@ -4581,7 +4581,7 @@ class model:
 
             Return `tags'.
 
-            Argument types:
+            Types:
             - `tags': vector of sizes
             - `dimTags': vector of pairs of integers
             """
@@ -4605,7 +4605,7 @@ class model:
             Remove duplicate nodes in the mesh of the entities `dimTags', given as a
             vector of (dim, tag) pairs. If `dimTags' is empty, consider the whole mesh.
 
-            Argument types:
+            Types:
             - `dimTags': vector of pairs of integers
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
@@ -4626,7 +4626,7 @@ class model:
             in the mesh of the entities `dimTags', given as a vector of (dim, tag)
             pairs. If `dimTags' is empty, consider the whole mesh.
 
-            Argument types:
+            Types:
             - `dimTags': vector of pairs of integers
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
@@ -4646,7 +4646,7 @@ class model:
             Split (into two triangles) all quadrangles in surface `tag' whose quality
             is lower than `quality'. If `tag' < 0, split quadrangles in all surfaces.
 
-            Argument types:
+            Types:
             - `quality': double
             - `tag': integer
             """
@@ -4666,7 +4666,7 @@ class model:
 
             Set the visibility of the elements of tags `elementTags' to `value'.
 
-            Argument types:
+            Types:
             - `elementTags': vector of sizes
             - `value': integer
             """
@@ -4694,7 +4694,7 @@ class model:
             `curveAngle'. If `exportDiscrete' is set, clear any built-in CAD kernel
             entities and export the discrete entities in the built-in CAD kernel.
 
-            Argument types:
+            Types:
             - `angle': double
             - `boundary': boolean
             - `forReparametrization': boolean
@@ -4724,7 +4724,7 @@ class model:
             surfaces, assuming that each can be parametrized with a single map. If
             `dimTags' is empty, create a geometry for all the discrete entities.
 
-            Argument types:
+            Types:
             - `dimTags': vector of pairs of integers
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
@@ -4748,7 +4748,7 @@ class model:
             any built-in CAD kernel entities and export the discrete entities in the
             built-in CAD kernel.
 
-            Argument types:
+            Types:
             - `makeSimplyConnected': boolean
             - `exportDiscrete': boolean
             """
@@ -4778,7 +4778,7 @@ class model:
             added before mesh generation, the computation will be performed at the end
             of the meshing pipeline.
 
-            Argument types:
+            Types:
             - `type': string
             - `domainTags': vector of integers
             - `subdomainTags': vector of integers
@@ -4823,7 +4823,7 @@ class model:
 
             Return `dimTags'.
 
-            Argument types:
+            Types:
             - `dimTags': vector of pairs of integers
             """
             api_dimTags_, api_dimTags_n_ = POINTER(c_int)(), c_size_t()
@@ -4847,7 +4847,7 @@ class model:
 
             Return `viewTags'.
 
-            Argument types:
+            Types:
             - `viewTags': vector of integers
             """
             api_viewTags_, api_viewTags_n_ = POINTER(c_int)(), c_size_t()
@@ -4871,7 +4871,7 @@ class model:
 
             Return `tri'.
 
-            Argument types:
+            Types:
             - `coord': vector of doubles
             - `tri': vector of sizes
             """
@@ -4897,7 +4897,7 @@ class model:
 
             Return `tetra'.
 
-            Argument types:
+            Types:
             - `coord': vector of doubles
             - `tetra': vector of sizes
             """
@@ -4929,7 +4929,7 @@ class model:
 
                 Return an integer.
 
-                Argument types:
+                Types:
                 - `fieldType': string
                 - `tag': integer
                 """
@@ -4949,7 +4949,7 @@ class model:
 
                 Remove the field with tag `tag'.
 
-                Argument types:
+                Types:
                 - `tag': integer
                 """
                 ierr = c_int()
@@ -4968,7 +4968,7 @@ class model:
 
                 Return `tags'.
 
-                Argument types:
+                Types:
                 - `tags': vector of integers
                 """
                 api_tags_, api_tags_n_ = POINTER(c_int)(), c_size_t()
@@ -4989,7 +4989,7 @@ class model:
 
                 Return `fileType'.
 
-                Argument types:
+                Types:
                 - `tag': integer
                 - `fileType': string
                 """
@@ -5011,7 +5011,7 @@ class model:
 
                 Set the numerical option `option' to value `value' for field `tag'.
 
-                Argument types:
+                Types:
                 - `tag': integer
                 - `option': string
                 - `value': double
@@ -5035,7 +5035,7 @@ class model:
 
                 Return `value'.
 
-                Argument types:
+                Types:
                 - `tag': integer
                 - `option': string
                 - `value': double
@@ -5059,7 +5059,7 @@ class model:
 
                 Set the string option `option' to value `value' for field `tag'.
 
-                Argument types:
+                Types:
                 - `tag': integer
                 - `option': string
                 - `value': string
@@ -5083,7 +5083,7 @@ class model:
 
                 Return `value'.
 
-                Argument types:
+                Types:
                 - `tag': integer
                 - `option': string
                 - `value': string
@@ -5107,7 +5107,7 @@ class model:
 
                 Set the numerical list option `option' to value `values' for field `tag'.
 
-                Argument types:
+                Types:
                 - `tag': integer
                 - `option': string
                 - `values': vector of doubles
@@ -5132,7 +5132,7 @@ class model:
 
                 Return `values'.
 
-                Argument types:
+                Types:
                 - `tag': integer
                 - `option': string
                 - `values': vector of doubles
@@ -5156,7 +5156,7 @@ class model:
 
                 Set the field `tag' as the background mesh size field.
 
-                Argument types:
+                Types:
                 - `tag': integer
                 """
                 ierr = c_int()
@@ -5174,7 +5174,7 @@ class model:
 
                 Set the field `tag' as a boundary layer size field.
 
-                Argument types:
+                Types:
                 - `tag': integer
                 """
                 ierr = c_int()
@@ -5205,7 +5205,7 @@ class model:
 
             Return an integer.
 
-            Argument types:
+            Types:
             - `x': double
             - `y': double
             - `z': double
@@ -5237,7 +5237,7 @@ class model:
 
             Return an integer.
 
-            Argument types:
+            Types:
             - `startTag': integer
             - `endTag': integer
             - `tag': integer
@@ -5267,7 +5267,7 @@ class model:
 
             Return an integer.
 
-            Argument types:
+            Types:
             - `startTag': integer
             - `centerTag': integer
             - `endTag': integer
@@ -5305,7 +5305,7 @@ class model:
 
             Return an integer.
 
-            Argument types:
+            Types:
             - `startTag': integer
             - `centerTag': integer
             - `majorTag': integer
@@ -5344,7 +5344,7 @@ class model:
 
             Return an integer.
 
-            Argument types:
+            Types:
             - `pointTags': vector of integers
             - `tag': integer
             """
@@ -5372,7 +5372,7 @@ class model:
 
             Return an integer.
 
-            Argument types:
+            Types:
             - `pointTags': vector of integers
             - `tag': integer
             """
@@ -5398,7 +5398,7 @@ class model:
 
             Return an integer.
 
-            Argument types:
+            Types:
             - `pointTags': vector of integers
             - `tag': integer
             """
@@ -5425,7 +5425,7 @@ class model:
 
             Return an integer.
 
-            Argument types:
+            Types:
             - `pointTags': vector of integers
             - `tag': integer
             """
@@ -5453,7 +5453,7 @@ class model:
 
             Return an integer.
 
-            Argument types:
+            Types:
             - `curveTags': vector of integers
             - `numIntervals': integer
             - `tag': integer
@@ -5483,7 +5483,7 @@ class model:
 
             Return an integer.
 
-            Argument types:
+            Types:
             - `curveTags': vector of integers
             - `numIntervals': integer
             - `tag': integer
@@ -5515,7 +5515,7 @@ class model:
 
             Return an integer.
 
-            Argument types:
+            Types:
             - `curveTags': vector of integers
             - `tag': integer
             - `reorient': boolean
@@ -5542,7 +5542,7 @@ class model:
 
             Return `tags'.
 
-            Argument types:
+            Types:
             - `curveTags': vector of integers
             - `tags': vector of integers
             """
@@ -5571,7 +5571,7 @@ class model:
 
             Return an integer.
 
-            Argument types:
+            Types:
             - `wireTags': vector of integers
             - `tag': integer
             """
@@ -5599,7 +5599,7 @@ class model:
 
             Return an integer.
 
-            Argument types:
+            Types:
             - `wireTags': vector of integers
             - `tag': integer
             - `sphereCenterTag': integer
@@ -5627,7 +5627,7 @@ class model:
 
             Return an integer.
 
-            Argument types:
+            Types:
             - `surfaceTags': vector of integers
             - `tag': integer
             """
@@ -5655,7 +5655,7 @@ class model:
 
             Return an integer.
 
-            Argument types:
+            Types:
             - `shellTags': vector of integers
             - `tag': integer
             """
@@ -5685,7 +5685,7 @@ class model:
 
             Return an integer.
 
-            Argument types:
+            Types:
             - `geometry': string
             - `numbers': vector of doubles
             - `strings': vector of strings
@@ -5718,7 +5718,7 @@ class model:
 
             Return an integer.
 
-            Argument types:
+            Types:
             - `geometryTag': integer
             - `x': double
             - `y': double
@@ -5755,7 +5755,7 @@ class model:
 
             Return `outDimTags'.
 
-            Argument types:
+            Types:
             - `dimTags': vector of pairs of integers
             - `dx': double
             - `dy': double
@@ -5801,7 +5801,7 @@ class model:
 
             Return `outDimTags'.
 
-            Argument types:
+            Types:
             - `dimTags': vector of pairs of integers
             - `x': double
             - `y': double
@@ -5856,7 +5856,7 @@ class model:
 
             Return `outDimTags'.
 
-            Argument types:
+            Types:
             - `dimTags': vector of pairs of integers
             - `x': double
             - `y': double
@@ -5917,7 +5917,7 @@ class model:
 
             Return `outDimTags'.
 
-            Argument types:
+            Types:
             - `dimTags': vector of pairs of integers
             - `outDimTags': vector of pairs of integers
             - `numElements': vector of integers
@@ -5953,7 +5953,7 @@ class model:
             Translate the entities `dimTags' (given as a vector of (dim, tag) pairs) in
             the built-in CAD representation along (`dx', `dy', `dz').
 
-            Argument types:
+            Types:
             - `dimTags': vector of pairs of integers
             - `dx': double
             - `dy': double
@@ -5980,7 +5980,7 @@ class model:
             revolution defined by the point (`x', `y', `z') and the direction (`ax',
             `ay', `az').
 
-            Argument types:
+            Types:
             - `dimTags': vector of pairs of integers
             - `x': double
             - `y': double
@@ -6015,7 +6015,7 @@ class model:
             coordinate axes; use (`x', `y', `z') as the center of the homothetic
             transformation.
 
-            Argument types:
+            Types:
             - `dimTags': vector of pairs of integers
             - `x': double
             - `y': double
@@ -6047,7 +6047,7 @@ class model:
             the built-in CAD representation, with respect to the plane of equation `a'
             * x + `b' * y + `c' * z + `d' = 0.
 
-            Argument types:
+            Types:
             - `dimTags': vector of pairs of integers
             - `a': double
             - `b': double
@@ -6076,7 +6076,7 @@ class model:
             * x + `b' * y + `c' * z + `d' = 0. (This is a synonym for `mirror', which
             will be deprecated in a future release.)
 
-            Argument types:
+            Types:
             - `dimTags': vector of pairs of integers
             - `a': double
             - `b': double
@@ -6105,7 +6105,7 @@ class model:
 
             Return `outDimTags'.
 
-            Argument types:
+            Types:
             - `dimTags': vector of pairs of integers
             - `outDimTags': vector of pairs of integers
             """
@@ -6130,7 +6130,7 @@ class model:
             of higher-dimensional entities. If `recursive' is true, remove all the
             entities on their boundaries, down to dimension 0.
 
-            Argument types:
+            Types:
             - `dimTags': vector of pairs of integers
             - `recursive': boolean
             """
@@ -6170,7 +6170,7 @@ class model:
 
             Return `curveTags'.
 
-            Argument types:
+            Types:
             - `tag': integer
             - `pointTags': vector of integers
             - `curveTags': vector of integers
@@ -6198,7 +6198,7 @@ class model:
 
             Return an integer.
 
-            Argument types:
+            Types:
             - `dim': integer
             """
             ierr = c_int()
@@ -6218,7 +6218,7 @@ class model:
             Set the maximum tag `maxTag' for entities of dimension `dim' in the built-
             in CAD representation.
 
-            Argument types:
+            Types:
             - `dim': integer
             - `maxTag': integer
             """
@@ -6243,7 +6243,7 @@ class model:
 
             Return an integer.
 
-            Argument types:
+            Types:
             - `dim': integer
             - `tags': vector of integers
             - `tag': integer
@@ -6271,7 +6271,7 @@ class model:
             pairs) from the built-in CAD representation. If `dimTags' is empty, remove
             all groups.
 
-            Argument types:
+            Types:
             - `dimTags': vector of pairs of integers
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
@@ -6316,7 +6316,7 @@ class model:
                 (dim, tag) pairs) in the built-in CAD kernel representation. Currently only
                 entities of dimension 0 (points) are handled.
 
-                Argument types:
+                Types:
                 - `dimTags': vector of pairs of integers
                 - `size': double
                 """
@@ -6341,7 +6341,7 @@ class model:
                 (geometrical progression with power `coef') and "Bump" (refinement toward
                 both extremities of the curve).
 
-                Argument types:
+                Types:
                 - `tag': integer
                 - `nPoints': integer
                 - `meshType': string
@@ -6371,7 +6371,7 @@ class model:
                 interpolation explicitly; specifying the corners explicitly is mandatory if
                 the surface has more that 3 or 4 points on its boundary.
 
-                Argument types:
+                Types:
                 - `tag': integer
                 - `arrangement': string
                 - `cornerTags': vector of integers
@@ -6396,7 +6396,7 @@ class model:
                 CAD kernel representation. `cornerTags' can be used to specify the (6 or 8)
                 corners of the transfinite interpolation explicitly.
 
-                Argument types:
+                Types:
                 - `tag': integer
                 - `cornerTags': vector of integers
                 """
@@ -6421,7 +6421,7 @@ class model:
                 supported; `angle' specifies the threshold angle for the simple
                 recombination algorithm.
 
-                Argument types:
+                Types:
                 - `dim': integer
                 - `tag': integer
                 - `angle': double
@@ -6445,7 +6445,7 @@ class model:
                 `tag' in the built-in CAD kernel representation. `val' iterations of a
                 Laplace smoother are applied.
 
-                Argument types:
+                Types:
                 - `dim': integer
                 - `tag': integer
                 - `val': integer
@@ -6471,7 +6471,7 @@ class model:
                 (i.e. the orientation consistent with the orientation of the geometry). If
                 `val' is false, the mesh is left as-is.
 
-                Argument types:
+                Types:
                 - `dim': integer
                 - `tag': integer
                 - `val': boolean
@@ -6495,7 +6495,7 @@ class model:
                 the built-in CAD kernel representation. Currently only supported for `dim'
                 == 2.
 
-                Argument types:
+                Types:
                 - `dim': integer
                 - `tag': integer
                 - `val': integer
@@ -6519,7 +6519,7 @@ class model:
                 entity of dimension `dim' and tag `tag' in the built-in CAD kernel
                 representation. Currently only supported for `dim' == 2.
 
-                Argument types:
+                Types:
                 - `dim': integer
                 - `tag': integer
                 - `val': integer
@@ -6554,7 +6554,7 @@ class model:
 
             Return an integer.
 
-            Argument types:
+            Types:
             - `x': double
             - `y': double
             - `z': double
@@ -6586,7 +6586,7 @@ class model:
 
             Return an integer.
 
-            Argument types:
+            Types:
             - `startTag': integer
             - `endTag': integer
             - `tag': integer
@@ -6614,7 +6614,7 @@ class model:
 
             Return an integer.
 
-            Argument types:
+            Types:
             - `startTag': integer
             - `centerTag': integer
             - `endTag': integer
@@ -6647,7 +6647,7 @@ class model:
 
             Return an integer.
 
-            Argument types:
+            Types:
             - `x': double
             - `y': double
             - `z': double
@@ -6691,7 +6691,7 @@ class model:
 
             Return an integer.
 
-            Argument types:
+            Types:
             - `startTag': integer
             - `centerTag': integer
             - `majorTag': integer
@@ -6727,7 +6727,7 @@ class model:
 
             Return an integer.
 
-            Argument types:
+            Types:
             - `x': double
             - `y': double
             - `z': double
@@ -6772,7 +6772,7 @@ class model:
 
             Return an integer.
 
-            Argument types:
+            Types:
             - `pointTags': vector of integers
             - `tag': integer
             """
@@ -6801,7 +6801,7 @@ class model:
 
             Return an integer.
 
-            Argument types:
+            Types:
             - `pointTags': vector of integers
             - `tag': integer
             - `degree': integer
@@ -6838,7 +6838,7 @@ class model:
 
             Return an integer.
 
-            Argument types:
+            Types:
             - `pointTags': vector of integers
             - `tag': integer
             """
@@ -6866,7 +6866,7 @@ class model:
 
             Return an integer.
 
-            Argument types:
+            Types:
             - `curveTags': vector of integers
             - `tag': integer
             - `checkClosed': boolean
@@ -6900,7 +6900,7 @@ class model:
 
             Return an integer.
 
-            Argument types:
+            Types:
             - `curveTags': vector of integers
             - `tag': integer
             """
@@ -6928,7 +6928,7 @@ class model:
 
             Return an integer.
 
-            Argument types:
+            Types:
             - `x': double
             - `y': double
             - `z': double
@@ -6967,7 +6967,7 @@ class model:
 
             Return an integer.
 
-            Argument types:
+            Types:
             - `xc': double
             - `yc': double
             - `zc': double
@@ -7008,7 +7008,7 @@ class model:
 
             Return an integer.
 
-            Argument types:
+            Types:
             - `wireTags': vector of integers
             - `tag': integer
             """
@@ -7049,7 +7049,7 @@ class model:
 
             Return an integer.
 
-            Argument types:
+            Types:
             - `wireTag': integer
             - `tag': integer
             - `pointTags': vector of integers
@@ -7101,7 +7101,7 @@ class model:
 
             Return an integer.
 
-            Argument types:
+            Types:
             - `wireTag': integer
             - `tag': integer
             - `type': string
@@ -7132,7 +7132,7 @@ class model:
 
             Return an integer.
 
-            Argument types:
+            Types:
             - `wireTag': integer
             - `tag': integer
             - `type': string
@@ -7167,7 +7167,7 @@ class model:
 
             Return an integer.
 
-            Argument types:
+            Types:
             - `pointTags': vector of integers
             - `numPointsU': integer
             - `tag': integer
@@ -7225,7 +7225,7 @@ class model:
 
             Return an integer.
 
-            Argument types:
+            Types:
             - `pointTags': vector of integers
             - `numPointsU': integer
             - `tag': integer
@@ -7262,7 +7262,7 @@ class model:
 
             Return an integer.
 
-            Argument types:
+            Types:
             - `surfaceTag': integer
             - `wireTags': vector of integers
             - `wire3D': boolean
@@ -7294,7 +7294,7 @@ class model:
 
             Return an integer.
 
-            Argument types:
+            Types:
             - `surfaceTags': vector of integers
             - `tag': integer
             - `sewing': boolean
@@ -7324,7 +7324,7 @@ class model:
 
             Return an integer.
 
-            Argument types:
+            Types:
             - `shellTags': vector of integers
             - `tag': integer
             """
@@ -7353,7 +7353,7 @@ class model:
 
             Return an integer.
 
-            Argument types:
+            Types:
             - `xc': double
             - `yc': double
             - `zc': double
@@ -7391,7 +7391,7 @@ class model:
 
             Return an integer.
 
-            Argument types:
+            Types:
             - `x': double
             - `y': double
             - `z': double
@@ -7429,7 +7429,7 @@ class model:
 
             Return an integer.
 
-            Argument types:
+            Types:
             - `x': double
             - `y': double
             - `z': double
@@ -7471,7 +7471,7 @@ class model:
 
             Return an integer.
 
-            Argument types:
+            Types:
             - `x': double
             - `y': double
             - `z': double
@@ -7516,7 +7516,7 @@ class model:
 
             Return an integer.
 
-            Argument types:
+            Types:
             - `x': double
             - `y': double
             - `z': double
@@ -7559,7 +7559,7 @@ class model:
 
             Return an integer.
 
-            Argument types:
+            Types:
             - `x': double
             - `y': double
             - `z': double
@@ -7606,7 +7606,7 @@ class model:
 
             Return `outDimTags'.
 
-            Argument types:
+            Types:
             - `wireTags': vector of integers
             - `outDimTags': vector of pairs of integers
             - `tag': integer
@@ -7650,7 +7650,7 @@ class model:
 
             Return `outDimTags'.
 
-            Argument types:
+            Types:
             - `volumeTag': integer
             - `excludeSurfaceTags': vector of integers
             - `offset': double
@@ -7687,7 +7687,7 @@ class model:
 
             Return `outDimTags'.
 
-            Argument types:
+            Types:
             - `dimTags': vector of pairs of integers
             - `dx': double
             - `dy': double
@@ -7734,7 +7734,7 @@ class model:
 
             Return `outDimTags'.
 
-            Argument types:
+            Types:
             - `dimTags': vector of pairs of integers
             - `x': double
             - `y': double
@@ -7786,7 +7786,7 @@ class model:
 
             Return `outDimTags'.
 
-            Argument types:
+            Types:
             - `dimTags': vector of pairs of integers
             - `wireTag': integer
             - `outDimTags': vector of pairs of integers
@@ -7820,7 +7820,7 @@ class model:
 
             Return `outDimTags'.
 
-            Argument types:
+            Types:
             - `volumeTags': vector of integers
             - `curveTags': vector of integers
             - `radii': vector of doubles
@@ -7859,7 +7859,7 @@ class model:
 
             Return `outDimTags'.
 
-            Argument types:
+            Types:
             - `volumeTags': vector of integers
             - `curveTags': vector of integers
             - `surfaceTags': vector of integers
@@ -7899,7 +7899,7 @@ class model:
 
             Return `outDimTags', `outDimTagsMap'.
 
-            Argument types:
+            Types:
             - `objectDimTags': vector of pairs of integers
             - `toolDimTags': vector of pairs of integers
             - `outDimTags': vector of pairs of integers
@@ -7942,7 +7942,7 @@ class model:
 
             Return `outDimTags', `outDimTagsMap'.
 
-            Argument types:
+            Types:
             - `objectDimTags': vector of pairs of integers
             - `toolDimTags': vector of pairs of integers
             - `outDimTags': vector of pairs of integers
@@ -7985,7 +7985,7 @@ class model:
 
             Return `outDimTags', `outDimTagsMap'.
 
-            Argument types:
+            Types:
             - `objectDimTags': vector of pairs of integers
             - `toolDimTags': vector of pairs of integers
             - `outDimTags': vector of pairs of integers
@@ -8032,7 +8032,7 @@ class model:
 
             Return `outDimTags', `outDimTagsMap'.
 
-            Argument types:
+            Types:
             - `objectDimTags': vector of pairs of integers
             - `toolDimTags': vector of pairs of integers
             - `outDimTags': vector of pairs of integers
@@ -8069,7 +8069,7 @@ class model:
             Translate the entities `dimTags' (given as a vector of (dim, tag) pairs) in
             the OpenCASCADE CAD representation along (`dx', `dy', `dz').
 
-            Argument types:
+            Types:
             - `dimTags': vector of pairs of integers
             - `dx': double
             - `dy': double
@@ -8096,7 +8096,7 @@ class model:
             revolution defined by the point (`x', `y', `z') and the direction (`ax',
             `ay', `az').
 
-            Argument types:
+            Types:
             - `dimTags': vector of pairs of integers
             - `x': double
             - `y': double
@@ -8131,7 +8131,7 @@ class model:
             coordinate axes; use (`x', `y', `z') as the center of the homothetic
             transformation.
 
-            Argument types:
+            Types:
             - `dimTags': vector of pairs of integers
             - `x': double
             - `y': double
@@ -8163,7 +8163,7 @@ class model:
             the OpenCASCADE CAD representation, with respect to the plane of equation
             `a' * x + `b' * y + `c' * z + `d' = 0.
 
-            Argument types:
+            Types:
             - `dimTags': vector of pairs of integers
             - `a': double
             - `b': double
@@ -8192,7 +8192,7 @@ class model:
             `a' * x + `b' * y + `c' * z + `d' = 0. (This is a deprecated synonym for
             `mirror'.)
 
-            Argument types:
+            Types:
             - `dimTags': vector of pairs of integers
             - `a': double
             - `b': double
@@ -8221,7 +8221,7 @@ class model:
             to the entities `dimTags' (given as a vector of (dim, tag) pairs) in the
             OpenCASCADE CAD representation.
 
-            Argument types:
+            Types:
             - `dimTags': vector of pairs of integers
             - `affineTransform': vector of doubles
             """
@@ -8246,7 +8246,7 @@ class model:
 
             Return `outDimTags'.
 
-            Argument types:
+            Types:
             - `dimTags': vector of pairs of integers
             - `outDimTags': vector of pairs of integers
             """
@@ -8271,7 +8271,7 @@ class model:
             boundary of higher-dimensional entities. If `recursive' is true, remove all
             the entities on their boundaries, down to dimension 0.
 
-            Argument types:
+            Types:
             - `dimTags': vector of pairs of integers
             - `recursive': boolean
             """
@@ -8312,7 +8312,7 @@ class model:
 
             Return `outDimTags'.
 
-            Argument types:
+            Types:
             - `outDimTags': vector of pairs of integers
             - `dimTags': vector of pairs of integers
             - `tolerance': double
@@ -8347,7 +8347,7 @@ class model:
 
             Convert the entities `dimTags' to NURBS.
 
-            Argument types:
+            Types:
             - `dimTags': vector of pairs of integers
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
@@ -8373,7 +8373,7 @@ class model:
 
             Return `outDimTags'.
 
-            Argument types:
+            Types:
             - `fileName': string
             - `outDimTags': vector of pairs of integers
             - `highestDimOnly': boolean
@@ -8409,7 +8409,7 @@ class model:
 
             Return `outDimTags'.
 
-            Argument types:
+            Types:
             - `shape': pointer
             - `outDimTags': vector of pairs of integers
             - `highestDimOnly': boolean
@@ -8437,7 +8437,7 @@ class model:
 
             Return `dimTags'.
 
-            Argument types:
+            Types:
             - `dimTags': vector of pairs of integers
             - `dim': integer
             """
@@ -8464,7 +8464,7 @@ class model:
 
             Return `tags'.
 
-            Argument types:
+            Types:
             - `xmin': double
             - `ymin': double
             - `zmin': double
@@ -8501,7 +8501,7 @@ class model:
 
             Return `xmin', `ymin', `zmin', `xmax', `ymax', `zmax'.
 
-            Argument types:
+            Types:
             - `dim': integer
             - `tag': integer
             - `xmin': double
@@ -8550,7 +8550,7 @@ class model:
 
             Return `curveLoopTags', `curveTags'.
 
-            Argument types:
+            Types:
             - `surfaceTag': integer
             - `curveLoopTags': vector of integers
             - `curveTags': vector of vectors of integers
@@ -8581,7 +8581,7 @@ class model:
 
             Return `surfaceLoopTags', `surfaceTags'.
 
-            Argument types:
+            Types:
             - `volumeTag': integer
             - `surfaceLoopTags': vector of integers
             - `surfaceTags': vector of vectors of integers
@@ -8610,7 +8610,7 @@ class model:
 
             Return `mass'.
 
-            Argument types:
+            Types:
             - `dim': integer
             - `tag': integer
             - `mass': double
@@ -8637,7 +8637,7 @@ class model:
 
             Return `x', `y', `z'.
 
-            Argument types:
+            Types:
             - `dim': integer
             - `tag': integer
             - `x': double
@@ -8673,7 +8673,7 @@ class model:
 
             Return `mat'.
 
-            Argument types:
+            Types:
             - `dim': integer
             - `tag': integer
             - `mat': vector of doubles
@@ -8700,7 +8700,7 @@ class model:
 
             Return an integer.
 
-            Argument types:
+            Types:
             - `dim': integer
             """
             ierr = c_int()
@@ -8720,7 +8720,7 @@ class model:
             Set the maximum tag `maxTag' for entities of dimension `dim' in the
             OpenCASCADE CAD representation.
 
-            Argument types:
+            Types:
             - `dim': integer
             - `maxTag': integer
             """
@@ -8766,7 +8766,7 @@ class model:
                 (dim, tag) pairs) in the OpenCASCADE CAD representation. Currently only
                 entities of dimension 0 (points) are handled.
 
-                Argument types:
+                Types:
                 - `dimTags': vector of pairs of integers
                 - `size': double
                 """
@@ -8797,7 +8797,7 @@ class view:
 
         Return an integer.
 
-        Argument types:
+        Types:
         - `name': string
         - `tag': integer
         """
@@ -8817,7 +8817,7 @@ class view:
 
         Remove the view with tag `tag'.
 
-        Argument types:
+        Types:
         - `tag': integer
         """
         ierr = c_int()
@@ -8838,7 +8838,7 @@ class view:
 
         Return an integer.
 
-        Argument types:
+        Types:
         - `tag': integer
         """
         ierr = c_int()
@@ -8859,7 +8859,7 @@ class view:
 
         Return `tags'.
 
-        Argument types:
+        Types:
         - `tags': vector of integers
         """
         api_tags_, api_tags_n_ = POINTER(c_int)(), c_size_t()
@@ -8890,7 +8890,7 @@ class view:
         entity; if negative, it is automatically inferred (when possible) from the
         input data. `partition' allows one to specify data in several sub-sets.
 
-        Argument types:
+        Types:
         - `tag': integer
         - `step': integer
         - `modelName': string
@@ -8930,7 +8930,7 @@ class view:
         vector. For data types that can lead to different data sizes per tag (like
         "ElementNodeData"), the data should be padded.
 
-        Argument types:
+        Types:
         - `tag': integer
         - `step': integer
         - `modelName': string
@@ -8971,7 +8971,7 @@ class view:
 
         Return `dataType', `tags', `data', `time', `numComponents'.
 
-        Argument types:
+        Types:
         - `tag': integer
         - `step': integer
         - `dataType': string
@@ -9017,7 +9017,7 @@ class view:
 
         Return `dataType', `tags', `data', `time', `numComponents'.
 
-        Argument types:
+        Types:
         - `tag': integer
         - `step': integer
         - `dataType': string
@@ -9067,7 +9067,7 @@ class view:
         coordinates followed by values per node, repeated for each step: [e1x1,
         ..., e1xn, e1y1, ..., e1yn, e1z1, ..., e1zn, e1v1..., e1vN, e2x1, ...].
 
-        Argument types:
+        Types:
         - `tag': integer
         - `dataType': string
         - `numEle': integer
@@ -9096,7 +9096,7 @@ class view:
 
         Return `dataType', `numElements', `data'.
 
-        Argument types:
+        Types:
         - `tag': integer
         - `dataType': vector of strings
         - `numElements': vector of integers
@@ -9139,7 +9139,7 @@ class view:
         "Right" or "BottomRight", "TopLeft", "TopCenter", "TopRight", "CenterLeft",
         "CenterCenter", "CenterRight").
 
-        Argument types:
+        Types:
         - `tag': integer
         - `coord': vector of doubles
         - `data': vector of strings
@@ -9170,7 +9170,7 @@ class view:
 
         Return `coord', `data', `style'.
 
-        Argument types:
+        Types:
         - `tag': integer
         - `dim': integer
         - `coord': vector of doubles
@@ -9213,7 +9213,7 @@ class view:
         y, z coordinates of the element in terms of the u, v, w coordinates, in
         exactly the same way. If `d' < 0, remove the interpolation matrices.
 
-        Argument types:
+        Types:
         - `tag': integer
         - `type': string
         - `d': integer
@@ -9254,7 +9254,7 @@ class view:
 
         Return an integer.
 
-        Argument types:
+        Types:
         - `refTag': integer
         - `copyOptions': boolean
         - `tag': integer
@@ -9280,7 +9280,7 @@ class view:
         all views having the same name (`how' == "name"). Remove original views if
         `remove' is set.
 
-        Argument types:
+        Types:
         - `what': string
         - `how': string
         - `remove': boolean
@@ -9317,7 +9317,7 @@ class view:
 
         Return `values', `distance'.
 
-        Argument types:
+        Types:
         - `tag': integer
         - `x': double
         - `y': double
@@ -9369,7 +9369,7 @@ class view:
         Write the view to a file `fileName'. The export format is determined by the
         file extension. Append to the file if `append' is set.
 
-        Argument types:
+        Types:
         - `tag': integer
         - `fileName': string
         - `append': boolean
@@ -9391,7 +9391,7 @@ class view:
         Set the global visibility of the view `tag' per window to `value', where
         `windowIndex' identifies the window in the window list.
 
-        Argument types:
+        Types:
         - `tag': integer
         - `value': integer
         - `windowIndex': integer
@@ -9420,7 +9420,7 @@ class view:
             Set the numerical option `name' to value `value' for the view with tag
             `tag'.
 
-            Argument types:
+            Types:
             - `tag': integer
             - `name': string
             - `value': double
@@ -9444,7 +9444,7 @@ class view:
 
             Return `value'.
 
-            Argument types:
+            Types:
             - `tag': integer
             - `name': string
             - `value': double
@@ -9468,7 +9468,7 @@ class view:
 
             Set the string option `name' to value `value' for the view with tag `tag'.
 
-            Argument types:
+            Types:
             - `tag': integer
             - `name': string
             - `value': string
@@ -9492,7 +9492,7 @@ class view:
 
             Return `value'.
 
-            Argument types:
+            Types:
             - `tag': integer
             - `name': string
             - `value': string
@@ -9518,7 +9518,7 @@ class view:
             view with tag `tag', where where `r', `g', `b' and `a' should be integers
             between 0 and 255.
 
-            Argument types:
+            Types:
             - `tag': integer
             - `name': string
             - `r': integer
@@ -9549,7 +9549,7 @@ class view:
 
             Return `r', `g', `b', `a'.
 
-            Argument types:
+            Types:
             - `tag': integer
             - `name': string
             - `r': integer
@@ -9587,7 +9587,7 @@ class view:
             Copy the options from the view with tag `refTag' to the view with tag
             `tag'.
 
-            Argument types:
+            Types:
             - `refTag': integer
             - `tag': integer
             """
@@ -9612,7 +9612,7 @@ class plugin:
 
         Set the numerical option `option' to the value `value' for plugin `name'.
 
-        Argument types:
+        Types:
         - `name': string
         - `option': string
         - `value': double
@@ -9634,7 +9634,7 @@ class plugin:
 
         Set the string option `option' to the value `value' for plugin `name'.
 
-        Argument types:
+        Types:
         - `name': string
         - `option': string
         - `value': string
@@ -9658,7 +9658,7 @@ class plugin:
 
         Return an integer.
 
-        Argument types:
+        Types:
         - `name': string
         """
         ierr = c_int()
@@ -9733,7 +9733,7 @@ class fltk:
         < 0, wait indefinitely. First automatically create the user interface if it
         has not yet been initialized. Can only be called in the main thread.
 
-        Argument types:
+        Types:
         - `time': double
         """
         ierr = c_int()
@@ -9768,7 +9768,7 @@ class fltk:
         optionally perform an action (currently the only `action' allowed is
         "update").
 
-        Argument types:
+        Types:
         - `action': string
         """
         ierr = c_int()
@@ -9848,7 +9848,7 @@ class fltk:
 
         Return an integer, `dimTags'.
 
-        Argument types:
+        Types:
         - `dimTags': vector of pairs of integers
         - `dim': integer
         """
@@ -9874,7 +9874,7 @@ class fltk:
 
         Return an integer, `elementTags'.
 
-        Argument types:
+        Types:
         - `elementTags': vector of sizes
         """
         api_elementTags_, api_elementTags_n_ = POINTER(c_size_t)(), c_size_t()
@@ -9898,7 +9898,7 @@ class fltk:
 
         Return an integer, `viewTags'.
 
-        Argument types:
+        Types:
         - `viewTags': vector of integers
         """
         api_viewTags_, api_viewTags_n_ = POINTER(c_int)(), c_size_t()
@@ -9921,7 +9921,7 @@ class fltk:
         Split the current window horizontally (if `how' = "h") or vertically (if
         `how' = "v"), using ratio `ratio'. If `how' = "u", restore a single window.
 
-        Argument types:
+        Types:
         - `how': string
         - `ratio': double
         """
@@ -9943,7 +9943,7 @@ class fltk:
         of all windows. When new windows are created by splits, new windows are
         appended at the end of the list.
 
-        Argument types:
+        Types:
         - `windowIndex': integer
         """
         ierr = c_int()
@@ -9962,7 +9962,7 @@ class fltk:
         Set a status message in the current window. If `graphics' is set, display
         the message inside the graphic window instead of the status bar.
 
-        Argument types:
+        Types:
         - `message': string
         - `graphics': boolean
         """
@@ -9982,7 +9982,7 @@ class fltk:
 
         Show context window for the entity of dimension `dim' and tag `tag'.
 
-        Argument types:
+        Types:
         - `dim': integer
         - `tag': integer
         """
@@ -10002,7 +10002,7 @@ class fltk:
 
         Open the `name' item in the menu tree.
 
-        Argument types:
+        Types:
         - `name': string
         """
         ierr = c_int()
@@ -10020,7 +10020,7 @@ class fltk:
 
         Close the `name' item in the menu tree.
 
-        Argument types:
+        Types:
         - `name': string
         """
         ierr = c_int()
@@ -10047,7 +10047,7 @@ class parser:
 
         Return `names'.
 
-        Argument types:
+        Types:
         - `names': vector of strings
         - `search': string
         """
@@ -10070,7 +10070,7 @@ class parser:
         Set the value of the number variable `name' in the Gmsh parser. Create the
         variable if it does not exist; update the value if the variable exists.
 
-        Argument types:
+        Types:
         - `name': string
         - `value': vector of doubles
         """
@@ -10092,7 +10092,7 @@ class parser:
         Set the value of the string variable `name' in the Gmsh parser. Create the
         variable if it does not exist; update the value if the variable exists.
 
-        Argument types:
+        Types:
         - `name': string
         - `value': vector of strings
         """
@@ -10116,7 +10116,7 @@ class parser:
 
         Return `value'.
 
-        Argument types:
+        Types:
         - `name': string
         - `value': vector of doubles
         """
@@ -10141,7 +10141,7 @@ class parser:
 
         Return `value'.
 
-        Argument types:
+        Types:
         - `name': string
         - `value': vector of strings
         """
@@ -10164,7 +10164,7 @@ class parser:
         Clear all the Gmsh parser variables, or remove a single variable if `name'
         is given.
 
-        Argument types:
+        Types:
         - `name': string
         """
         ierr = c_int()
@@ -10181,7 +10181,7 @@ class parser:
 
         Parse the file `fileName' with the Gmsh parser.
 
-        Argument types:
+        Types:
         - `fileName': string
         """
         ierr = c_int()
@@ -10204,7 +10204,7 @@ class onelab:
 
         Set one or more parameters in the ONELAB database, encoded in `format'.
 
-        Argument types:
+        Types:
         - `data': string
         - `format': string
         """
@@ -10226,7 +10226,7 @@ class onelab:
 
         Return `data'.
 
-        Argument types:
+        Types:
         - `data': string
         - `name': string
         - `format': string
@@ -10252,7 +10252,7 @@ class onelab:
 
         Return `names'.
 
-        Argument types:
+        Types:
         - `names': vector of strings
         - `search': string
         """
@@ -10276,7 +10276,7 @@ class onelab:
         the parameter if it does not exist; update the value if the parameter
         exists.
 
-        Argument types:
+        Types:
         - `name': string
         - `value': vector of doubles
         """
@@ -10299,7 +10299,7 @@ class onelab:
         the parameter if it does not exist; update the value if the parameter
         exists.
 
-        Argument types:
+        Types:
         - `name': string
         - `value': vector of strings
         """
@@ -10323,7 +10323,7 @@ class onelab:
 
         Return `value'.
 
-        Argument types:
+        Types:
         - `name': string
         - `value': vector of doubles
         """
@@ -10348,7 +10348,7 @@ class onelab:
 
         Return `value'.
 
-        Argument types:
+        Types:
         - `name': string
         - `value': vector of strings
         """
@@ -10373,7 +10373,7 @@ class onelab:
 
         Return an integer.
 
-        Argument types:
+        Types:
         - `name': string
         """
         ierr = c_int()
@@ -10393,7 +10393,7 @@ class onelab:
         Set the changed flag to value `value' for all the parameters in the ONELAB
         database used by the client `name'.
 
-        Argument types:
+        Types:
         - `name': string
         - `value': integer
         """
@@ -10413,7 +10413,7 @@ class onelab:
 
         Clear the ONELAB database, or remove a single parameter if `name' is given.
 
-        Argument types:
+        Types:
         - `name': string
         """
         ierr = c_int()
@@ -10432,7 +10432,7 @@ class onelab:
         name `name' and executes `command'. If not, try to run a client that might
         be linked to the processed input files.
 
-        Argument types:
+        Types:
         - `name': string
         - `command': string
         """
@@ -10457,7 +10457,7 @@ class logger:
 
         Write a `message'. `level' can be "info", "warning" or "error".
 
-        Argument types:
+        Types:
         - `message': string
         - `level': string
         """
@@ -10491,7 +10491,7 @@ class logger:
 
         Return `log'.
 
-        Argument types:
+        Types:
         - `log': vector of strings
         """
         api_log_, api_log_n_ = POINTER(POINTER(c_char))(), c_size_t()
@@ -10561,7 +10561,7 @@ class logger:
 
         Return `error'.
 
-        Argument types:
+        Types:
         - `error': string
         """
         api_error_ = c_char_p()

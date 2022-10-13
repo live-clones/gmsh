@@ -2193,7 +2193,7 @@ class API:
                                 rtype.texi_type] if rtype else []) +
                               [("`" + a.name + "'") for a in oargs]) + ".\n")
             if args:
-                self.fwrite(f, "\n" + ind + "Argument types:")
+                self.fwrite(f, "\n" + ind + "Types:")
                 for a in args:
                     self.fwrite(f, "\n" + ind + "- `" + a.name + "': " + a.texi_type)
                 self.fwrite(f, "\n")
@@ -2292,7 +2292,7 @@ class API:
                                 rtype.texi_type] if rtype else []) +
                               [("`" + a.name + "`") for a in oargs]) + ".\n")
             if args:
-                self.fwrite(f, "\nArgument types:")
+                self.fwrite(f, "\nTypes:")
                 for a in args:
                     self.fwrite(f, "\n - `" + a.name + "`: " + a.texi_type)
                 self.fwrite(f, "\n")
