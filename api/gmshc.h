@@ -256,9 +256,9 @@ GMSH_API void gmshModelGetBoundary(const int * dimTags, const size_t dimTags_n,
                                    int * ierr);
 
 /* Get the upward and downward adjacencies of the model entity of dimension
- * `dim' and tag `tag'. The `upward' vector returns the adjacent entities of
- * dimension `dim' + 1; the `downward' vector returns the adjacent entities of
- * dimension `dim' - 1. */
+ * `dim' and tag `tag'. The `upward' vector returns the tags of adjacent
+ * entities of dimension `dim' + 1; the `downward' vector returns the tags of
+ * adjacent entities of dimension `dim' - 1. */
 GMSH_API void gmshModelGetAdjacencies(const int dim,
                                       const int tag,
                                       int ** upward, size_t * upward_n,

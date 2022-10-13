@@ -594,9 +594,9 @@ C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/t14.cpp#L88,t14.cpp}, @url{@value{
 
 @item gmsh/model/getAdjacencies
 Get the upward and downward adjacencies of the model entity of dimension
-@code{dim} and tag @code{tag}. The @code{upward} vector returns the adjacent
-entities of dimension @code{dim} + 1; the @code{downward} vector returns the
-adjacent entities of dimension @code{dim} - 1.
+@code{dim} and tag @code{tag}. The @code{upward} vector returns the tags of
+adjacent entities of dimension @code{dim} + 1; the @code{downward} vector
+returns the tags of adjacent entities of dimension @code{dim} - 1.
 
 @table @asis
 @item Input:

@@ -997,9 +997,9 @@ class model:
         gmsh.model.getAdjacencies(dim, tag)
 
         Get the upward and downward adjacencies of the model entity of dimension
-        `dim' and tag `tag'. The `upward' vector returns the adjacent entities of
-        dimension `dim' + 1; the `downward' vector returns the adjacent entities of
-        dimension `dim' - 1.
+        `dim' and tag `tag'. The `upward' vector returns the tags of adjacent
+        entities of dimension `dim' + 1; the `downward' vector returns the tags of
+        adjacent entities of dimension `dim' - 1.
 
         Return `upward', `downward'.
 
