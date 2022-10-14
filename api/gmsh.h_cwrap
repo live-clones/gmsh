@@ -534,14 +534,14 @@ namespace gmsh { // Top-level functions
                                          const double xmax,
                                          const double ymax,
                                          const double zmax,
-                                         gmsh::vectorpair & tags,
+                                         gmsh::vectorpair & dimTags,
                                          const int dim = -1)
     {
       int ierr = 0;
-      int *api_tags_; size_t api_tags_n_;
-      gmshModelGetEntitiesInBoundingBox(xmin, ymin, zmin, xmax, ymax, zmax, &api_tags_, &api_tags_n_, dim, &ierr);
+      int *api_dimTags_; size_t api_dimTags_n_;
+      gmshModelGetEntitiesInBoundingBox(xmin, ymin, zmin, xmax, ymax, zmax, &api_dimTags_, &api_dimTags_n_, dim, &ierr);
       if(ierr) throwLastError();
-      tags.resize(api_tags_n_ / 2); for(size_t i = 0; i < api_tags_n_ / 2; ++i){ tags[i].first = api_tags_[i * 2 + 0]; tags[i].second = api_tags_[i * 2 + 1]; } gmshFree(api_tags_);
+      dimTags.resize(api_dimTags_n_ / 2); for(size_t i = 0; i < api_dimTags_n_ / 2; ++i){ dimTags[i].first = api_dimTags_[i * 2 + 0]; dimTags[i].second = api_dimTags_[i * 2 + 1]; } gmshFree(api_dimTags_);
     }
 
     // Get the bounding box (`xmin', `ymin', `zmin'), (`xmax', `ymax', `zmax') of
@@ -4794,14 +4794,14 @@ namespace gmsh { // Top-level functions
                                            const double xmax,
                                            const double ymax,
                                            const double zmax,
-                                           gmsh::vectorpair & tags,
+                                           gmsh::vectorpair & dimTags,
                                            const int dim = -1)
       {
         int ierr = 0;
-        int *api_tags_; size_t api_tags_n_;
-        gmshModelOccGetEntitiesInBoundingBox(xmin, ymin, zmin, xmax, ymax, zmax, &api_tags_, &api_tags_n_, dim, &ierr);
+        int *api_dimTags_; size_t api_dimTags_n_;
+        gmshModelOccGetEntitiesInBoundingBox(xmin, ymin, zmin, xmax, ymax, zmax, &api_dimTags_, &api_dimTags_n_, dim, &ierr);
         if(ierr) throwLastError();
-        tags.resize(api_tags_n_ / 2); for(size_t i = 0; i < api_tags_n_ / 2; ++i){ tags[i].first = api_tags_[i * 2 + 0]; tags[i].second = api_tags_[i * 2 + 1]; } gmshFree(api_tags_);
+        dimTags.resize(api_dimTags_n_ / 2); for(size_t i = 0; i < api_dimTags_n_ / 2; ++i){ dimTags[i].first = api_dimTags_[i * 2 + 0]; dimTags[i].second = api_dimTags_[i * 2 + 1]; } gmshFree(api_dimTags_);
       }
 
       // Get the bounding box (`xmin', `ymin', `zmin'), (`xmax', `ymax', `zmax') of

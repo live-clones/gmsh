@@ -156,7 +156,7 @@ doc = '''Get the upward and downward adjacencies of the model entity of dimensio
 model.add('getAdjacencies', doc, None, iint('dim'), iint('tag'), ovectorint('upward'), ovectorint('downward'))
 
 doc = '''Get the model entities in the bounding box defined by the two points (`xmin', `ymin', `zmin') and (`xmax', `ymax', `zmax'). If `dim' is >= 0, return only the entities of the specified dimension (e.g. points if `dim' == 0).'''
-model.add('getEntitiesInBoundingBox', doc, None, idouble('xmin'), idouble('ymin'), idouble('zmin'), idouble('xmax'), idouble('ymax'), idouble('zmax'), ovectorpair('tags'), iint('dim', '-1'))
+model.add('getEntitiesInBoundingBox', doc, None, idouble('xmin'), idouble('ymin'), idouble('zmin'), idouble('xmax'), idouble('ymax'), idouble('zmax'), ovectorpair('dimTags'), iint('dim', '-1'))
 
 doc = '''Get the bounding box (`xmin', `ymin', `zmin'), (`xmax', `ymax', `zmax') of the model entity of dimension `dim' and tag `tag'. If `dim' and `tag' are negative, get the bounding box of the whole model.'''
 model.add('getBoundingBox', doc, None, iint('dim'), iint('tag'), odouble('xmin'), odouble('ymin'), odouble('zmin'), odouble('xmax'), odouble('ymax'), odouble('zmax'))
@@ -912,7 +912,7 @@ doc = '''Get all the OpenCASCADE entities. If `dim' is >= 0, return only the ent
 occ.add('getEntities', doc, None, ovectorpair('dimTags'), iint('dim', '-1'))
 
 doc = '''Get the OpenCASCADE entities in the bounding box defined by the two points (`xmin', `ymin', `zmin') and (`xmax', `ymax', `zmax'). If `dim' is >= 0, return only the entities of the specified dimension (e.g. points if `dim' == 0).'''
-occ.add('getEntitiesInBoundingBox', doc, None, idouble('xmin'), idouble('ymin'), idouble('zmin'), idouble('xmax'), idouble('ymax'), idouble('zmax'), ovectorpair('tags'), iint('dim', '-1'))
+occ.add('getEntitiesInBoundingBox', doc, None, idouble('xmin'), idouble('ymin'), idouble('zmin'), idouble('xmax'), idouble('ymax'), idouble('zmax'), ovectorpair('dimTags'), iint('dim', '-1'))
 
 doc = '''Get the bounding box (`xmin', `ymin', `zmin'), (`xmax', `ymax', `zmax') of the OpenCASCADE entity of dimension `dim' and tag `tag'.'''
 occ.add('getBoundingBox', doc, None, iint('dim'), iint('tag'), odouble('xmin'), odouble('ymin'), odouble('zmin'), odouble('xmax'), odouble('ymax'), odouble('zmax'))

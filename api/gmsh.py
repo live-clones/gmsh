@@ -1035,7 +1035,7 @@ class model:
         return only the entities of the specified dimension (e.g. points if `dim'
         == 0).
 
-        Return `tags'.
+        Return `dimTags'.
 
         Types:
         - `xmin': double
@@ -1044,10 +1044,10 @@ class model:
         - `xmax': double
         - `ymax': double
         - `zmax': double
-        - `tags': vector of pairs of integers
+        - `dimTags': vector of pairs of integers
         - `dim': integer
         """
-        api_tags_, api_tags_n_ = POINTER(c_int)(), c_size_t()
+        api_dimTags_, api_dimTags_n_ = POINTER(c_int)(), c_size_t()
         ierr = c_int()
         lib.gmshModelGetEntitiesInBoundingBox(
             c_double(xmin),
@@ -1056,12 +1056,12 @@ class model:
             c_double(xmax),
             c_double(ymax),
             c_double(zmax),
-            byref(api_tags_), byref(api_tags_n_),
+            byref(api_dimTags_), byref(api_dimTags_n_),
             c_int(dim),
             byref(ierr))
         if ierr.value != 0:
             raise Exception(logger.getLastError())
-        return _ovectorpair(api_tags_, api_tags_n_.value)
+        return _ovectorpair(api_dimTags_, api_dimTags_n_.value)
     get_entities_in_bounding_box = getEntitiesInBoundingBox
 
     @staticmethod
@@ -8463,7 +8463,7 @@ class model:
             return only the entities of the specified dimension (e.g. points if `dim'
             == 0).
 
-            Return `tags'.
+            Return `dimTags'.
 
             Types:
             - `xmin': double
@@ -8472,10 +8472,10 @@ class model:
             - `xmax': double
             - `ymax': double
             - `zmax': double
-            - `tags': vector of pairs of integers
+            - `dimTags': vector of pairs of integers
             - `dim': integer
             """
-            api_tags_, api_tags_n_ = POINTER(c_int)(), c_size_t()
+            api_dimTags_, api_dimTags_n_ = POINTER(c_int)(), c_size_t()
             ierr = c_int()
             lib.gmshModelOccGetEntitiesInBoundingBox(
                 c_double(xmin),
@@ -8484,12 +8484,12 @@ class model:
                 c_double(xmax),
                 c_double(ymax),
                 c_double(zmax),
-                byref(api_tags_), byref(api_tags_n_),
+                byref(api_dimTags_), byref(api_dimTags_n_),
                 c_int(dim),
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
-            return _ovectorpair(api_tags_, api_tags_n_.value)
+            return _ovectorpair(api_dimTags_, api_dimTags_n_.value)
         get_entities_in_bounding_box = getEntitiesInBoundingBox
 
         @staticmethod

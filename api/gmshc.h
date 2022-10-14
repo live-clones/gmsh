@@ -275,7 +275,7 @@ GMSH_API void gmshModelGetEntitiesInBoundingBox(const double xmin,
                                                 const double xmax,
                                                 const double ymax,
                                                 const double zmax,
-                                                int ** tags, size_t * tags_n,
+                                                int ** dimTags, size_t * dimTags_n,
                                                 const int dim,
                                                 int * ierr);
 
@@ -2828,7 +2828,7 @@ GMSH_API void gmshModelOccGetEntitiesInBoundingBox(const double xmin,
                                                    const double xmax,
                                                    const double ymax,
                                                    const double zmax,
-                                                   int ** tags, size_t * tags_n,
+                                                   int ** dimTags, size_t * dimTags_n,
                                                    const int dim,
                                                    int * ierr);
 

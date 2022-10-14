@@ -811,7 +811,7 @@ Get the model entities in the bounding box defined by the two points (`xmin`,
 `ymin`, `zmin`) and (`xmax`, `ymax`, `zmax`). If `dim` is >= 0, return only the
 entities of the specified dimension (e.g. points if `dim` == 0).
 
-Return `tags`.
+Return `dimTags`.
 
 Types:
  - `xmin`: double
@@ -820,20 +820,20 @@ Types:
  - `xmax`: double
  - `ymax`: double
  - `zmax`: double
- - `tags`: vector of pairs of integers
+ - `dimTags`: vector of pairs of integers
  - `dim`: integer
 """
 function getEntitiesInBoundingBox(xmin, ymin, zmin, xmax, ymax, zmax, dim = -1)
-    api_tags_ = Ref{Ptr{Cint}}()
-    api_tags_n_ = Ref{Csize_t}()
+    api_dimTags_ = Ref{Ptr{Cint}}()
+    api_dimTags_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelGetEntitiesInBoundingBox, gmsh.lib), Cvoid,
           (Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
-          xmin, ymin, zmin, xmax, ymax, zmax, api_tags_, api_tags_n_, dim, ierr)
+          xmin, ymin, zmin, xmax, ymax, zmax, api_dimTags_, api_dimTags_n_, dim, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    tmp_api_tags_ = unsafe_wrap(Array, api_tags_[], api_tags_n_[], own = true)
-    tags = [ (tmp_api_tags_[i], tmp_api_tags_[i+1]) for i in 1:2:length(tmp_api_tags_) ]
-    return tags
+    tmp_api_dimTags_ = unsafe_wrap(Array, api_dimTags_[], api_dimTags_n_[], own = true)
+    dimTags = [ (tmp_api_dimTags_[i], tmp_api_dimTags_[i+1]) for i in 1:2:length(tmp_api_dimTags_) ]
+    return dimTags
 end
 const get_entities_in_bounding_box = getEntitiesInBoundingBox
 
@@ -7504,7 +7504,7 @@ Get the OpenCASCADE entities in the bounding box defined by the two points
 (`xmin`, `ymin`, `zmin`) and (`xmax`, `ymax`, `zmax`). If `dim` is >= 0, return
 only the entities of the specified dimension (e.g. points if `dim` == 0).
 
-Return `tags`.
+Return `dimTags`.
 
 Types:
  - `xmin`: double
@@ -7513,20 +7513,20 @@ Types:
  - `xmax`: double
  - `ymax`: double
  - `zmax`: double
- - `tags`: vector of pairs of integers
+ - `dimTags`: vector of pairs of integers
  - `dim`: integer
 """
 function getEntitiesInBoundingBox(xmin, ymin, zmin, xmax, ymax, zmax, dim = -1)
-    api_tags_ = Ref{Ptr{Cint}}()
-    api_tags_n_ = Ref{Csize_t}()
+    api_dimTags_ = Ref{Ptr{Cint}}()
+    api_dimTags_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelOccGetEntitiesInBoundingBox, gmsh.lib), Cvoid,
           (Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
-          xmin, ymin, zmin, xmax, ymax, zmax, api_tags_, api_tags_n_, dim, ierr)
+          xmin, ymin, zmin, xmax, ymax, zmax, api_dimTags_, api_dimTags_n_, dim, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    tmp_api_tags_ = unsafe_wrap(Array, api_tags_[], api_tags_n_[], own = true)
-    tags = [ (tmp_api_tags_[i], tmp_api_tags_[i+1]) for i in 1:2:length(tmp_api_tags_) ]
-    return tags
+    tmp_api_dimTags_ = unsafe_wrap(Array, api_dimTags_[], api_dimTags_n_[], own = true)
+    dimTags = [ (tmp_api_dimTags_[i], tmp_api_dimTags_[i+1]) for i in 1:2:length(tmp_api_dimTags_) ]
+    return dimTags
 end
 const get_entities_in_bounding_box = getEntitiesInBoundingBox
 

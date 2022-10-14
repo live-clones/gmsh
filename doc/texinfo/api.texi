@@ -621,7 +621,7 @@ dimension (e.g. points if @code{dim} == 0).
 @item Input:
 @code{xmin} (double), @code{ymin} (double), @code{zmin} (double), @code{xmax} (double), @code{ymax} (double), @code{zmax} (double), @code{dim = -1} (integer)
 @item Output:
-@code{tags} (vector of pairs of integers)
+@code{dimTags} (vector of pairs of integers)
 @item Return:
 -
 @item Language-specific definition:
@@ -5282,7 +5282,7 @@ dimension (e.g. points if @code{dim} == 0).
 @item Input:
 @code{xmin} (double), @code{ymin} (double), @code{zmin} (double), @code{xmax} (double), @code{ymax} (double), @code{zmax} (double), @code{dim = -1} (integer)
 @item Output:
-@code{tags} (vector of pairs of integers)
+@code{dimTags} (vector of pairs of integers)
 @item Return:
 -
 @item Language-specific definition:

@@ -1788,7 +1788,7 @@ module gmsh
                                                xmax, &
                                                ymax, &
                                                zmax, &
-                                               tags, &
+                                               dimTags, &
                                                dim, &
                                                ierr)
     interface
@@ -1798,8 +1798,8 @@ module gmsh
                      xmax, &
                      ymax, &
                      zmax, &
-                     api_tags_, &
-                     api_tags_n_, &
+                     api_dimTags_, &
+                     api_dimTags_n_, &
                      dim, &
                      ierr_) &
       bind(C, name="gmshModelGetEntitiesInBoundingBox")
@@ -1810,8 +1810,8 @@ module gmsh
       real(c_double), value, intent(in) :: xmax
       real(c_double), value, intent(in) :: ymax
       real(c_double), value, intent(in) :: zmax
-      type(c_ptr), intent(out) :: api_tags_
-      integer(c_size_t), intent(out) :: api_tags_n_
+      type(c_ptr), intent(out) :: api_dimTags_
+      integer(c_size_t), intent(out) :: api_dimTags_n_
       integer(c_int), value, intent(in) :: dim
       integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
@@ -1822,23 +1822,23 @@ module gmsh
     real(c_double), intent(in) :: xmax
     real(c_double), intent(in) :: ymax
     real(c_double), intent(in) :: zmax
-    integer(c_int), dimension(:,:), allocatable, intent(out) :: tags
+    integer(c_int), dimension(:,:), allocatable, intent(out) :: dimTags
     integer, intent(in), optional :: dim
     integer(c_int), intent(out), optional :: ierr
-    type(c_ptr) :: api_tags_
-    integer(c_size_t) :: api_tags_n_
+    type(c_ptr) :: api_dimTags_
+    integer(c_size_t) :: api_dimTags_n_
     call C_API(xmin=real(xmin, c_double), &
          ymin=real(ymin, c_double), &
          zmin=real(zmin, c_double), &
          xmax=real(xmax, c_double), &
          ymax=real(ymax, c_double), &
          zmax=real(zmax, c_double), &
-         api_tags_=api_tags_, &
-         api_tags_n_=api_tags_n_, &
+         api_dimTags_=api_dimTags_, &
+         api_dimTags_n_=api_dimTags_n_, &
          dim=optval_c_int(-1, dim), &
          ierr_=ierr)
-    tags = ovectorpair_(api_tags_, &
-      api_tags_n_)
+    dimTags = ovectorpair_(api_dimTags_, &
+      api_dimTags_n_)
   end subroutine gmshModelGetEntitiesInBoundingBox
 
   !> Get the bounding box (`xmin', `ymin', `zmin'), (`xmax', `ymax', `zmax') of
@@ -12176,7 +12176,7 @@ module gmsh
                                                   xmax, &
                                                   ymax, &
                                                   zmax, &
-                                                  tags, &
+                                                  dimTags, &
                                                   dim, &
                                                   ierr)
     interface
@@ -12186,8 +12186,8 @@ module gmsh
                      xmax, &
                      ymax, &
                      zmax, &
-                     api_tags_, &
-                     api_tags_n_, &
+                     api_dimTags_, &
+                     api_dimTags_n_, &
                      dim, &
                      ierr_) &
       bind(C, name="gmshModelOccGetEntitiesInBoundingBox")
@@ -12198,8 +12198,8 @@ module gmsh
       real(c_double), value, intent(in) :: xmax
       real(c_double), value, intent(in) :: ymax
       real(c_double), value, intent(in) :: zmax
-      type(c_ptr), intent(out) :: api_tags_
-      integer(c_size_t), intent(out) :: api_tags_n_
+      type(c_ptr), intent(out) :: api_dimTags_
+      integer(c_size_t), intent(out) :: api_dimTags_n_
       integer(c_int), value, intent(in) :: dim
       integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
@@ -12210,23 +12210,23 @@ module gmsh
     real(c_double), intent(in) :: xmax
     real(c_double), intent(in) :: ymax
     real(c_double), intent(in) :: zmax
-    integer(c_int), dimension(:,:), allocatable, intent(out) :: tags
+    integer(c_int), dimension(:,:), allocatable, intent(out) :: dimTags
     integer, intent(in), optional :: dim
     integer(c_int), intent(out), optional :: ierr
-    type(c_ptr) :: api_tags_
-    integer(c_size_t) :: api_tags_n_
+    type(c_ptr) :: api_dimTags_
+    integer(c_size_t) :: api_dimTags_n_
     call C_API(xmin=real(xmin, c_double), &
          ymin=real(ymin, c_double), &
          zmin=real(zmin, c_double), &
          xmax=real(xmax, c_double), &
          ymax=real(ymax, c_double), &
          zmax=real(zmax, c_double), &
-         api_tags_=api_tags_, &
-         api_tags_n_=api_tags_n_, &
+         api_dimTags_=api_dimTags_, &
+         api_dimTags_n_=api_dimTags_n_, &
          dim=optval_c_int(-1, dim), &
          ierr_=ierr)
-    tags = ovectorpair_(api_tags_, &
-      api_tags_n_)
+    dimTags = ovectorpair_(api_dimTags_, &
+      api_dimTags_n_)
   end subroutine gmshModelOccGetEntitiesInBoundingBox
 
   !> Get the bounding box (`xmin', `ymin', `zmin'), (`xmax', `ymax', `zmax') of

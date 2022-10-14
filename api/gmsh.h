@@ -331,7 +331,7 @@ namespace gmsh { // Top-level functions
                                            const double xmax,
                                            const double ymax,
                                            const double zmax,
-                                           gmsh::vectorpair & tags,
+                                           gmsh::vectorpair & dimTags,
                                            const int dim = -1);
 
     // gmsh::model::getBoundingBox
@@ -3177,7 +3177,7 @@ namespace gmsh { // Top-level functions
                                              const double xmax,
                                              const double ymax,
                                              const double zmax,
-                                             gmsh::vectorpair & tags,
+                                             gmsh::vectorpair & dimTags,
                                              const int dim = -1);
 
       // gmsh::model::occ::getBoundingBox
