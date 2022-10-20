@@ -2743,7 +2743,7 @@ int GModel::removeDuplicateMeshVertices(double tolerance,
       }
     }
     // replace vertices in periodic copies
-    std::map<MVertex *, MVertex *, MVertexPtrLessThan> &corrVtcs = ge->correspondingVertices;
+    std::map<MVertex *, MVertex *> &corrVtcs = ge->correspondingVertices;
     if(corrVtcs.size()) {
       std::map<MVertex *, MVertex *>::iterator cIter;
       for(cIter = duplicates.begin(); cIter != duplicates.end(); ++cIter) {
@@ -2870,8 +2870,8 @@ void GModel::alignPeriodicBoundaries()
         for(int iVtx = 0; iVtx < 2; iVtx++) {
           MVertex *tgtVtx = tgtLine->getVertex(iVtx);
           GEntity *ge = tgtVtx->onWhat();
-          std::map<MVertex *, MVertex *, MVertexPtrLessThan> &geV2v = ge->correspondingVertices;
-          std::map<MVertex *, MVertex *, MVertexPtrLessThan> &v2v = tgt->correspondingVertices;
+          std::map<MVertex *, MVertex *> &geV2v = ge->correspondingVertices;
+          std::map<MVertex *, MVertex *> &v2v = tgt->correspondingVertices;
           auto srcIter = v2v.find(tgtVtx);
           if(srcIter == v2v.end() || !srcIter->second) {
             srcIter = geV2v.find(tgtVtx);
@@ -2945,8 +2945,8 @@ void GModel::alignPeriodicBoundaries()
           MVertex *vtx = tgtElmt->getVertex(iVtx);
           GEntity *ge = vtx->onWhat();
 
-          std::map<MVertex *, MVertex *, MVertexPtrLessThan> &geV2v = ge->correspondingVertices;
-          std::map<MVertex *, MVertex *, MVertexPtrLessThan> &v2v = tgt->correspondingVertices;
+          std::map<MVertex *, MVertex *> &geV2v = ge->correspondingVertices;
+          std::map<MVertex *, MVertex *> &v2v = tgt->correspondingVertices;
 
           auto vIter = v2v.find(vtx);
           if(vIter == v2v.end() || !vIter->second) {

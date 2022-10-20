@@ -69,8 +69,8 @@ void HighOrderMeshPeriodicity::_relocateMasterVertices()
       Msg::Info("Relocating nodes of master surface %i using slave %i",
                 master->tag(), slave->tag());
 
-      std::map<MVertex *, MVertex *, MVertexPtrLessThan> &vertS2M = slave->correspondingVertices;
-      std::map<MVertex *, MVertex *, MVertexPtrLessThan>::iterator vit;
+      std::map<MVertex *, MVertex *> &vertS2M = slave->correspondingVertices;
+      std::map<MVertex *, MVertex *>::iterator vit;
       for(vit = vertS2M.begin(); vit != vertS2M.end(); ++vit) {
         MFaceVertex *v = dynamic_cast<MFaceVertex *>(vit->second);
         if(v && v->onWhat() == master) {
@@ -85,8 +85,7 @@ void HighOrderMeshPeriodicity::_relocateMasterVertices()
         }
       }
 
-      std::map<MVertex *, MVertex *, MVertexPtrLessThan> &pointS2M =
-        slave->correspondingHighOrderVertices;
+      std::map<MVertex *, MVertex *> &pointS2M = slave->correspondingHighOrderVertices;
       for(vit = pointS2M.begin(); vit != pointS2M.end(); ++vit) {
         MFaceVertex *v = dynamic_cast<MFaceVertex *>(vit->second);
         if(v && v->onWhat() == master) {
@@ -127,9 +126,9 @@ void HighOrderMeshPeriodicity::_relocateMasterVertices()
                   se->getBeginVertex() ? se->getBeginVertex()->tag() : -1,
                   se->getEndVertex() ? se->getEndVertex()->tag() : -1);
 
-        std::map<MVertex *, MVertex *, MVertexPtrLessThan>::iterator vit;
+        std::map<MVertex *, MVertex *>::iterator vit;
 
-        std::map<MVertex *, MVertex *, MVertexPtrLessThan> &vertS2M = slave->correspondingVertices;
+        std::map<MVertex *, MVertex *> &vertS2M = slave->correspondingVertices;
         for(vit = vertS2M.begin(); vit != vertS2M.end(); ++vit) {
           MEdgeVertex *v = dynamic_cast<MEdgeVertex *>(vit->second);
           if(v && v->onWhat() == master) {
@@ -137,8 +136,7 @@ void HighOrderMeshPeriodicity::_relocateMasterVertices()
             v->setXYZ(v->x() + gp.x(), v->y() + gp.y(), v->z() + gp.z());
           }
         }
-        std::map<MVertex *, MVertex *, MVertexPtrLessThan> &pointS2M =
-          slave->correspondingHighOrderVertices;
+        std::map<MVertex *, MVertex *> &pointS2M = slave->correspondingHighOrderVertices;
         for(vit = pointS2M.begin(); vit != pointS2M.end(); ++vit) {
           MEdgeVertex *v = dynamic_cast<MEdgeVertex *>(vit->second);
           if(v && v->onWhat() == master) {
@@ -192,9 +190,9 @@ void HighOrderMeshPeriodicity::_copyBackMasterVertices()
       const std::vector<double> &tfo = slave->affineTransform;
       if(tfo.size() < 16) break;
 
-      std::map<MVertex *, MVertex *, MVertexPtrLessThan>::iterator vit;
+      std::map<MVertex *, MVertex *>::iterator vit;
 
-      std::map<MVertex *, MVertex *, MVertexPtrLessThan> &vertS2M = slave->correspondingVertices;
+      std::map<MVertex *, MVertex *> &vertS2M = slave->correspondingVertices;
       for(vit = vertS2M.begin(); vit != vertS2M.end(); ++vit) {
         MFaceVertex *sv = dynamic_cast<MFaceVertex *>(vit->first);
         MFaceVertex *mv = dynamic_cast<MFaceVertex *>(vit->second);
@@ -209,8 +207,7 @@ void HighOrderMeshPeriodicity::_copyBackMasterVertices()
 
       int idx = 0;
 
-      std::map<MVertex *, MVertex *, MVertexPtrLessThan> &pointS2M =
-        slave->correspondingHighOrderVertices;
+      std::map<MVertex *, MVertex *> &pointS2M = slave->correspondingHighOrderVertices;
       for(vit = pointS2M.begin(); vit != pointS2M.end(); ++vit) {
         MFaceVertex *sv = dynamic_cast<MFaceVertex *>(vit->first);
         MFaceVertex *mv = dynamic_cast<MFaceVertex *>(vit->second);
@@ -235,9 +232,9 @@ void HighOrderMeshPeriodicity::_copyBackMasterVertices()
       const std::vector<double> tfo = slave->affineTransform;
       if(tfo.size() < 16) break;
 
-      std::map<MVertex *, MVertex *, MVertexPtrLessThan>::iterator vit;
+      std::map<MVertex *, MVertex *>::iterator vit;
 
-      std::map<MVertex *, MVertex *, MVertexPtrLessThan> &vertS2M = slave->correspondingVertices;
+      std::map<MVertex *, MVertex *> &vertS2M = slave->correspondingVertices;
       for(vit = vertS2M.begin(); vit != vertS2M.end(); ++vit) {
         MEdgeVertex *sv = dynamic_cast<MEdgeVertex *>(vit->first);
         MEdgeVertex *mv = dynamic_cast<MEdgeVertex *>(vit->second);
@@ -255,8 +252,7 @@ void HighOrderMeshPeriodicity::_copyBackMasterVertices()
         }
       }
 
-      std::map<MVertex *, MVertex *, MVertexPtrLessThan> &pointS2M =
-        slave->correspondingHighOrderVertices;
+      std::map<MVertex *, MVertex *> &pointS2M = slave->correspondingHighOrderVertices;
       for(vit = pointS2M.begin(); vit != pointS2M.end(); ++vit) {
         MEdgeVertex *sv = dynamic_cast<MEdgeVertex *>(vit->first);
         MEdgeVertex *mv = dynamic_cast<MEdgeVertex *>(vit->second);

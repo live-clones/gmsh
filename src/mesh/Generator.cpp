@@ -1217,7 +1217,7 @@ static SPoint3 transform(MVertex *vsource, const std::vector<double> &tfo)
 }
 
 static void relocateSlaveVertices(GFace *slave,
-                                  std::map<MVertex *, MVertex *, MVertexPtrLessThan> &vertS2M,
+                                  std::map<MVertex *, MVertex *> &vertS2M,
                                   bool useClosestPoint)
 {
   for(auto vit = vertS2M.begin(); vit != vertS2M.end(); ++vit) {
@@ -1244,7 +1244,7 @@ static void relocateSlaveVertices(GFace *slave,
 }
 
 static void relocateSlaveVertices(GEdge *slave,
-                                  std::map<MVertex *, MVertex *, MVertexPtrLessThan> &vertS2M,
+                                  std::map<MVertex *, MVertex *> &vertS2M,
                                   bool useClosestPoint)
 {
   for(auto vit = vertS2M.begin(); vit != vertS2M.end(); ++vit) {
@@ -1320,8 +1320,8 @@ void FixPeriodicMesh(GModel *m)
     GEdge *src = dynamic_cast<GEdge *>(tgt->getMeshMaster());
 
     if(src != nullptr && src != tgt) {
-      std::map<MVertex *, MVertex *, MVertexPtrLessThan> &v2v = tgt->correspondingVertices;
-      std::map<MVertex *, MVertex *, MVertexPtrLessThan> &p2p = tgt->correspondingHighOrderVertices;
+      std::map<MVertex *, MVertex *> &v2v = tgt->correspondingVertices;
+      std::map<MVertex *, MVertex *> &p2p = tgt->correspondingHighOrderVertices;
       p2p.clear();
 
       Msg::Info("Reconstructing periodicity for curve connection %d - %d",
@@ -1393,8 +1393,8 @@ void FixPeriodicMesh(GModel *m)
       Msg::Info("Reconstructing periodicity for surface connection %d - %d",
                 tgt->tag(), src->tag());
 
-      std::map<MVertex *, MVertex *, MVertexPtrLessThan> &v2v = tgt->correspondingVertices;
-      std::map<MVertex *, MVertex *, MVertexPtrLessThan> &p2p = tgt->correspondingHighOrderVertices;
+      std::map<MVertex *, MVertex *> &v2v = tgt->correspondingVertices;
+      std::map<MVertex *, MVertex *> &p2p = tgt->correspondingHighOrderVertices;
       p2p.clear();
 
       if(tgt->getNumMeshElements() && v2v.empty()) {
