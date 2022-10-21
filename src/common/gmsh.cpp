@@ -6382,12 +6382,22 @@ GMSH_API int gmsh::model::occ::addEllipse(const double x, const double y,
 }
 
 GMSH_API int gmsh::model::occ::addSpline(const std::vector<int> &pointTags,
-                                         const int tag)
+                                         const int tag,
+                                         const std::vector<double> &tangents)
 {
   if(!_checkInit()) return -1;
   _createOcc();
   int outTag = tag;
-  GModel::current()->getOCCInternals()->addSpline(outTag, pointTags);
+  std::vector<SVector3> t;
+  if(tangents.size() % 3) {
+    Msg::Error("Number of entries in tangents should be a multiple of 3");
+  }
+  else if(!tangents.empty()) {
+    for(std::size_t i = 0; i < tangents.size(); i += 3) {
+      t.push_back(SVector3(tangents[i], tangents[i + 1], tangents[i + 2]));
+    }
+  }
+  GModel::current()->getOCCInternals()->addSpline(outTag, pointTags, t);
   return outTag;
 }
 

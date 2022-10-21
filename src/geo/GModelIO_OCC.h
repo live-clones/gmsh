@@ -140,7 +140,8 @@ private:
                    const int degree = -1,
                    const std::vector<double> &weights = std::vector<double>(),
                    const std::vector<double> &knots = std::vector<double>(),
-                   const std::vector<int> &multiplicities = std::vector<int>());
+                   const std::vector<int> &multiplicities = std::vector<int>(),
+                   const std::vector<SVector3> &tangents = std::vector<SVector3>());
 
   // apply extrusion-like operations
   bool _extrudePerDim(int mode, int inDim, const std::vector<int> &inTags,
@@ -212,7 +213,8 @@ public:
                   double angle1, double angle2,
                   const std::vector<double> &N = std::vector<double>(),
                   const std::vector<double> &V = std::vector<double>());
-  bool addSpline(int &tag, const std::vector<int> &pointTags);
+  bool addSpline(int &tag, const std::vector<int> &pointTags,
+                 const std::vector<SVector3> &tangents = std::vector<SVector3>());
   bool addBezier(int &tag, const std::vector<int> &pointTags);
   bool addBSpline(int &tag, const std::vector<int> &pointTags,
                   const int degree = -1,
@@ -517,7 +519,8 @@ public:
   {
     return _error("add ellipse");
   }
-  bool addSpline(int &tag, const std::vector<int> &pointTags)
+  bool addSpline(int &tag, const std::vector<int> &pointTags,
+                 const std::vector<SVector3> &tangents = std::vector<SVector3>())
   {
     return _error("add spline");
   }

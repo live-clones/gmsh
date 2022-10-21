@@ -13,6 +13,14 @@ gmsh.model.occ.addSpline(range(1, 11), 1)
 gmsh.model.occ.addBSpline(range(1, 11), 2)
 gmsh.model.occ.addBezier(range(1, 11), 3)
 
+# with begin/end tangents
+gmsh.model.occ.addSpline(range(1, 11), 4, [0,1,0, 0,1,0])
+
+# with tangents at each point
+gmsh.model.occ.addSpline(range(1, 11), 5,
+                         [1,0,0, 1,0,0, 1,0,0, 1,0,0, 1,0,0,
+                          1,0,0, 1,0,0, 1,0,0, 1,0,0, 1,0,0])
+
 gmsh.model.occ.addPoint(0.2, -1.6, 0, 0.1, 101)
 gmsh.model.occ.addPoint(1.2, -1.6, 0, 0.1, 102)
 gmsh.model.occ.addPoint(1.2, -1.1, 0, 0.1, 103)

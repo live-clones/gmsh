@@ -1255,7 +1255,8 @@ bool OCC_Internals::_addBSpline(int &tag, const std::vector<int> &pointTags,
                                 int mode, const int degree,
                                 const std::vector<double> &weights,
                                 const std::vector<double> &knots,
-                                const std::vector<int> &multiplicities)
+                                const std::vector<int> &multiplicities,
+                                const std::vector<SVector3> &tangents)
 {
   if(tag >= 0 && _tagEdge.IsBound(tag)) {
     Msg::Error("OpenCASCADE curve with tag %d already exists", tag);
@@ -1288,6 +1289,31 @@ bool OCC_Internals::_addBSpline(int &tag, const std::vector<int> &pointTags,
       Handle(TColgp_HArray1OfPnt) p = new TColgp_HArray1OfPnt(1, np);
       for(int i = 1; i <= np; i++) p->SetValue(i, ctrlPoints(i));
       GeomAPI_Interpolate intp(p, periodic, CTX::instance()->geom.tolerance);
+      if(tangents.size() == 2) {
+        gp_Vec t1(tangents[0].x(), tangents[0].y(), tangents[0].z());
+        gp_Vec tN(tangents[1].x(), tangents[1].y(), tangents[1].z());
+        intp.Load(t1, tN);
+      }
+      else if(tangents.size() == pointTags.size()) {
+        TColgp_Array1OfVec Tangents(1, tangents.size());
+        Handle(TColStd_HArray1OfBoolean) TangentFlags =
+          new TColStd_HArray1OfBoolean(1, tangents.size());
+        for(int i = 1; i <= tangents.size(); i++) {
+          gp_Vec t(tangents[i - 1].x(), tangents[i - 1].y(), tangents[i - 1].z());
+          Tangents.SetValue(i, t);
+          if(tangents[i-1].normSq() < 1e-12) {
+            TangentFlags->SetValue(i, Standard_False);
+          }
+          else {
+            TangentFlags->SetValue(i, Standard_True);
+          }
+        }
+        intp.Load(Tangents, TangentFlags);
+      }
+      else if(!tangents.empty()) {
+        Msg::Warning("Wrong number of tangent constraints for spline (%lu != %lu)",
+                     tangents.size(), pointTags.size());
+      }
       intp.Perform();
       if(!intp.IsDone()) {
         Msg::Error("Could not interpolate spline");
@@ -1449,9 +1475,14 @@ bool OCC_Internals::_addBSpline(int &tag, const std::vector<int> &pointTags,
   return true;
 }
 
-bool OCC_Internals::addSpline(int &tag, const std::vector<int> &pointTags)
+bool OCC_Internals::addSpline(int &tag, const std::vector<int> &pointTags,
+                              const std::vector<SVector3> &tangents)
 {
-  return _addBSpline(tag, pointTags, 0);
+  std::vector<double> weights;
+  std::vector<double> knots;
+  std::vector<int> multiplicities;
+  return _addBSpline(tag, pointTags, 0, -1, weights, knots, multiplicities,
+                     tangents);
 }
 
 bool OCC_Internals::addBezier(int &tag, const std::vector<int> &pointTags)

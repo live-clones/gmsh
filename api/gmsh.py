@@ -6761,27 +6761,34 @@ class model:
         add_ellipse = addEllipse
 
         @staticmethod
-        def addSpline(pointTags, tag=-1):
+        def addSpline(pointTags, tag=-1, tangents=[]):
             """
-            gmsh.model.occ.addSpline(pointTags, tag=-1)
+            gmsh.model.occ.addSpline(pointTags, tag=-1, tangents=[])
 
             Add a spline (C2 b-spline) curve in the OpenCASCADE CAD representation,
             going through the points `pointTags'. If `tag' is positive, set the tag
             explicitly; otherwise a new tag is selected automatically. Create a
             periodic curve if the first and last points are the same. Return the tag of
-            the spline curve.
+            the spline curve. If the `tangents' vector contains 6 entries, use them as
+            concatenated x, y, z components of the initial and final tangents of the
+            b-spline; if it contains 3 times as many entries as the number of points,
+            use them as concatenated x, y, z components of the tangents at each point,
+            unless the norm of the tangent is zero.
 
             Return an integer.
 
             Types:
             - `pointTags': vector of integers
             - `tag': integer
+            - `tangents': vector of doubles
             """
             api_pointTags_, api_pointTags_n_ = _ivectorint(pointTags)
+            api_tangents_, api_tangents_n_ = _ivectordouble(tangents)
             ierr = c_int()
             api_result_ = lib.gmshModelOccAddSpline(
                 api_pointTags_, api_pointTags_n_,
                 c_int(tag),
+                api_tangents_, api_tangents_n_,
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())

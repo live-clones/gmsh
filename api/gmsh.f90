@@ -9631,14 +9631,21 @@ module gmsh
   !! going through the points `pointTags'. If `tag' is positive, set the tag
   !! explicitly; otherwise a new tag is selected automatically. Create a
   !! periodic curve if the first and last points are the same. Return the tag of
-  !! the spline curve.
+  !! the spline curve. If the `tangents' vector contains 6 entries, use them as
+  !! concatenated x, y, z components of the initial and final tangents of the
+  !! b-spline; if it contains 3 times as many entries as the number of points,
+  !! use them as concatenated x, y, z components of the tangents at each point,
+  !! unless the norm of the tangent is zero.
   function gmshModelOccAddSpline(pointTags, &
                                  tag, &
+                                 tangents, &
                                  ierr)
     interface
     function C_API(api_pointTags_, &
                    api_pointTags_n_, &
                    tag, &
+                   api_tangents_, &
+                   api_tangents_n_, &
                    ierr_) &
       bind(C, name="gmshModelOccAddSpline")
       use, intrinsic :: iso_c_binding
@@ -9646,16 +9653,21 @@ module gmsh
       integer(c_int), dimension(*) :: api_pointTags_
       integer(c_size_t), value, intent(in) :: api_pointTags_n_
       integer(c_int), value, intent(in) :: tag
+      real(c_double), dimension(*), optional :: api_tangents_
+      integer(c_size_t), value, intent(in) :: api_tangents_n_
       integer(c_int), intent(out), optional :: ierr_
     end function C_API
     end interface
     integer(c_int) :: gmshModelOccAddSpline
     integer(c_int), dimension(:), intent(in) :: pointTags
     integer, intent(in), optional :: tag
+    real(c_double), dimension(:), intent(in), optional :: tangents
     integer(c_int), intent(out), optional :: ierr
     gmshModelOccAddSpline = C_API(api_pointTags_=pointTags, &
                             api_pointTags_n_=size_gmsh_int(pointTags), &
                             tag=optval_c_int(-1, tag), &
+                            api_tangents_=tangents, &
+                            api_tangents_n_=size_gmsh_double(tangents), &
                             ierr_=ierr)
   end function gmshModelOccAddSpline
 

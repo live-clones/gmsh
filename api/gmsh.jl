@@ -6010,24 +6010,30 @@ end
 const add_ellipse = addEllipse
 
 """
-    gmsh.model.occ.addSpline(pointTags, tag = -1)
+    gmsh.model.occ.addSpline(pointTags, tag = -1, tangents = Cdouble[])
 
 Add a spline (C2 b-spline) curve in the OpenCASCADE CAD representation, going
 through the points `pointTags`. If `tag` is positive, set the tag explicitly;
 otherwise a new tag is selected automatically. Create a periodic curve if the
-first and last points are the same. Return the tag of the spline curve.
+first and last points are the same. Return the tag of the spline curve. If the
+`tangents` vector contains 6 entries, use them as concatenated x, y, z
+components of the initial and final tangents of the b-spline; if it contains 3
+times as many entries as the number of points, use them as concatenated x, y, z
+components of the tangents at each point, unless the norm of the tangent is
+zero.
 
 Return an integer.
 
 Types:
  - `pointTags`: vector of integers
  - `tag`: integer
+ - `tangents`: vector of doubles
 """
-function addSpline(pointTags, tag = -1)
+function addSpline(pointTags, tag = -1, tangents = Cdouble[])
     ierr = Ref{Cint}()
     api_result_ = ccall((:gmshModelOccAddSpline, gmsh.lib), Cint,
-          (Ptr{Cint}, Csize_t, Cint, Ptr{Cint}),
-          convert(Vector{Cint}, pointTags), length(pointTags), tag, ierr)
+          (Ptr{Cint}, Csize_t, Cint, Ptr{Cdouble}, Csize_t, Ptr{Cint}),
+          convert(Vector{Cint}, pointTags), length(pointTags), tag, convert(Vector{Cdouble}, tangents), length(tangents), ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_result_
 end

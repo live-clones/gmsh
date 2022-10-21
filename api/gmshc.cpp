@@ -3228,13 +3228,14 @@ GMSH_API int gmshModelOccAddEllipse(const double x, const double y, const double
   return result_api_;
 }
 
-GMSH_API int gmshModelOccAddSpline(const int * pointTags, const size_t pointTags_n, const int tag, int * ierr)
+GMSH_API int gmshModelOccAddSpline(const int * pointTags, const size_t pointTags_n, const int tag, const double * tangents, const size_t tangents_n, int * ierr)
 {
   int result_api_ = 0;
   if(ierr) *ierr = 0;
   try {
     std::vector<int> api_pointTags_(pointTags, pointTags + pointTags_n);
-    result_api_ = gmsh::model::occ::addSpline(api_pointTags_, tag);
+    std::vector<double> api_tangents_(tangents, tangents + tangents_n);
+    result_api_ = gmsh::model::occ::addSpline(api_pointTags_, tag, api_tangents_);
   }
   catch(...){
     if(ierr) *ierr = 1;
