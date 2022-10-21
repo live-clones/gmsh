@@ -1298,10 +1298,10 @@ bool OCC_Internals::_addBSpline(int &tag, const std::vector<int> &pointTags,
         TColgp_Array1OfVec Tangents(1, tangents.size());
         Handle(TColStd_HArray1OfBoolean) TangentFlags =
           new TColStd_HArray1OfBoolean(1, tangents.size());
-        for(int i = 1; i <= tangents.size(); i++) {
+        for(std::size_t i = 1; i <= tangents.size(); i++) {
           gp_Vec t(tangents[i - 1].x(), tangents[i - 1].y(), tangents[i - 1].z());
           Tangents.SetValue(i, t);
-          if(tangents[i-1].normSq() < 1e-12) {
+          if(tangents[i - 1].normSq() < 1e-12) {
             TangentFlags->SetValue(i, Standard_False);
           }
           else {
