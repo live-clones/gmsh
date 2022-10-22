@@ -2646,7 +2646,7 @@ class API:
         def write_module(module, path, node, node_next, node_prev, cpp_data,
                          py_data):
             f.write("@node " + node + ", " + node_next + ", " + node_prev +
-                    ", Gmsh API\n")
+                    ", Gmsh application programming interface\n")
             f.write("@section Namespace @code{" + path + "}: " + module.doc +
                     "\n\n")
             f.write("@ftable @code\n")

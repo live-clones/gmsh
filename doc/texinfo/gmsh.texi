@@ -118,19 +118,18 @@ for Gmsh @value{GMSH-VERSION} (@today{}).
 @menu
 * Obtaining Gmsh::              Where to get your copy of Gmsh
 * Copying conditions::          Terms and conditions of use
-* Overview::                    What is Gmsh?
-* How to read this manual?::    Which parts of this manual should you read (if any)?
+* Reporting a bug::             Where to report issues
+* Overview of Gmsh::            High-level overview of Gmsh
 * Running Gmsh on your system::  How can you run Gmsh on your machine?
-* General tools::               Description of general commands and options
-* Geometry module::             Description of all Geometry commands
-* Mesh module::                 Description of all Mesh commands
-* Solver module::               Description of all Solver commands
-* Post-processing module::      Description of all Post-Processing commands
-* File formats::                Input and output file formats
-* Tutorial::                    A step-by-step tutorial
-* Options::                     List of all available options
+* Gmsh tutorial::               A step-by-step tutorial for both .geo files and the API
+* Gmsh graphical user interface::  Description of Gmsh's GUI
+* Gmsh scripting language::     Description of Gmsh's built-in scripting language (.geo files)
+* Gmsh application programming interface::  Description of Gmsh's multi-language API
+* Gmsh options::                Description of all Gmsh options
+* Gmsh mesh size fields::       Description of all Gmsh mesh size fields
+* Gmsh plugins::                Description of all built-in Gmsh plugins
+* Gmsh file formats::           Description of Gmsh's native file formats
 * Compiling the source code::   Information on how to comile Gmsh from source
-* Gmsh API::                    Gmsh Application Programming Interface
 * Information for developers::  Information for Gmsh developers
 * Frequently asked questions::  The Gmsh FAQ
 * Version history::             Changelog
@@ -169,7 +168,7 @@ about Gmsh development are available on
 @c Copying Conditions
 @c =========================================================================
 
-@node Copying conditions, Overview, Obtaining Gmsh, Top
+@node Copying conditions, Reporting a bug, Obtaining Gmsh, Top
 @unnumbered Copying conditions
 
 @cindex Copyright
@@ -211,11 +210,34 @@ obtain a different license. Please @uref{http://geuz.org, contact us
 directly} for more information.
 
 @c =========================================================================
-@c Overview
+@c Reporting a bug
 @c =========================================================================
 
-@node Overview, How to read this manual?, Copying conditions, Top
-@chapter Overview
+@node Reporting a bug, Overview of Gmsh, Copying conditions, Top
+@unnumbered Reporting a bug
+
+@cindex Issues, reporting
+@cindex Bugs, reporting
+@cindex Reporting bugs
+
+If, after reading this reference manual, you think you have found a bug
+in Gmsh, please file an issue on
+@url{https://gitlab.onelab.info/gmsh/gmsh/issues}. Provide as precise a
+description of the problem as you can, including sample input files that
+produce the bug. Don't forget to mention both the version of Gmsh and
+the version of your operation system (@pxref{Command-line options} to
+see how to get this information).
+
+See @ref{Frequently asked questions}, and the
+@url{https://gitlab.onelab.info/gmsh/gmsh/issues,bug tracking system} to
+see which problems we already know about.
+
+@c =========================================================================
+@c Overview of Gmsh
+@c =========================================================================
+
+@node Overview of Gmsh, Running Gmsh on your system, Reporting a bug, Top
+@chapter Overview of Gmsh
 
 @cindex Introduction
 @cindex Overview
@@ -228,29 +250,29 @@ advanced visualization capabilities.
 Gmsh is built around four modules: geometry, mesh, solver and
 post-processing. All geometrical, mesh, solver and post-processing
 instructions are prescribed either interactively using the graphical
-user interface (GUI) or in text files using Gmsh's own scripting
-language.  Interactive actions generate language bits in the input
-files, and vice versa. A programming API is also available, for
-integrating Gmsh in your own C++, C, Python, Julia or Fortran code: see
-@ref{Gmsh API}. A brief description of the four modules is given
-hereafter.
+user interface (GUI; see @ref{Gmsh graphical user interface}), in text
+files using Gmsh's own scripting language (.geo files; see @ref{Gmsh
+scripting language}, or through the Gmsh application programming
+interface (API; see @ref{Gmsh application programming interface}) in
+C++, C, Python, Julia or Fortran. A brief description of the four
+modules is given hereafter.
 
 @menu
-* Geometry::
-* Mesh::
-* Solver::
-* Post-processing::
+* Geometry module::
+* Mesh module::
+* Solver module::
+* Post-processing module::
 * What Gmsh is pretty good at::
 * and what Gmsh is not so good at::
-* Bug reports::
+* How to read this manual::
 @end menu
 
 @c -------------------------------------------------------------------------
-@c Geometry: model entity creation
+@c Geometry module
 @c -------------------------------------------------------------------------
 
-@node Geometry, Mesh, Overview, Overview
-@section Geometry: model entity creation
+@node Geometry module, Mesh module, Overview of Gmsh, Overview of Gmsh
+@section Geometry module
 
 A model in Gmsh is defined using its Boundary Representation (BRep): a
 volume is bounded by a set of surfaces, a surface is bounded by a series
@@ -279,12 +301,59 @@ operations are performed). Both methodologies can also be
 combined. Finally, groups of model entities (called ``physical
 groups'') can be defined, based on the elementary geometric entities.
 
+Geometries can be constructed in Gmsh using different underlying CAD
+kernels. Selecting the CAD kernel in @code{.geo} files is done with the
+@code{SetFactory} command. In the Gmsh API, the kernel appears
+explicitly in all the relevant functions from the @code{gmsh/model}
+namespace, with @code{geo} or @code{occ} prefixes for the built-in and
+OpenCASCADE kernel, respectively.
+
+The built-in CAD kernel (@code{SetFactory("Built-in")}) provides a
+simple CAD engine based on a bottom-up boundary representation approach:
+you need to first define points (using the @code{Point} command: see
+below), then curves (using @code{Line}, @code{Circle}, @code{Spline},
+@dots{}, commands or by extruding points), then surfaces (using for
+example the @code{Plane Surface} or @code{Surface} commands, or by
+extruding curves), and finally volumes (using the @code{Volume} command
+or by extruding surfaces). The OpenCASCADE kernel
+(@code{SetFactory("OpenCASCADE")}) allows to build models in the same
+bottom-up manner, or by using a constructive solid geometry approach
+where solids are defined first. Boolean operations can then be performed
+to modify them.
+
+These geometrical model entities are also referred to as ``elementary
+entities'' in Gmsh, and are assigned tags (stricly positive global
+identification numbers) when they are created:
+
+@enumerate
+@item each point must possess a unique tag;
+@item each curve must possess a unique tag;
+@item each surface must possess a unique tag;
+@item each volume must possess a unique tag.
+@end enumerate
+
+@noindent Elementary entities can then be manipulated in various
+ways, for example using the @code{Translate}, @code{Rotate},
+@code{Scale} or @code{Symmetry} commands. They can be deleted with the
+@code{Delete} command, provided that no higher-dimension entity
+references them. Zero or negative tags are reserved by the system for
+special uses: do not use them in your scripts.
+
+Groups of elementary entities can also be defined and are called
+``physical'' groups. These physical groups cannot be modified by
+geometry commands: their only purpose is to assemble elementary entities
+into larger groups so that they can be referred to later as single
+entities. As is the case with elementary entities, each physical point,
+physical curve, physical surface or physical volume must be assigned a
+unique tag. See @ref{Elementary entities vs physical groups}, for more
+information about how physical groups affect the way meshes are saved.
+
 @c -------------------------------------------------------------------------
-@c Mesh: finite element mesh generation
+@c Mesh module
 @c -------------------------------------------------------------------------
 
-@node Mesh, Solver, Geometry, Overview
-@section Mesh: finite element mesh generation
+@node Mesh module, Solver module, Geometry module, Overview of Gmsh
+@section Mesh module
 
 A finite element mesh of a model is a tessellation of its geometry by
 simple geometrical elements of various shapes (in Gmsh: lines,
@@ -312,19 +381,290 @@ ensures the conformity of the mesh when, for example, two volumes share
 a common surface. Every meshing step is constrained by a mesh ``size
 field'', which prescribes the desired size of the elements in the
 mesh. This size field can be uniform, specified by values associated
-with points in the geometry, or defined by general ``fields'' (for
-example related to the distance to some boundary, to a arbitrary scalar
-field defined on another mesh, etc.): see @ref{Specifying mesh element
-sizes}. For each meshing step, all structured mesh directives are
+with points in the geometry, or defined by general ``mesh size fields''
+(for example related to the distance to some boundary, to a arbitrary
+scalar field defined on another mesh, etc.): see @ref{Gmsh mesh size
+fields}. For each meshing step, all structured mesh directives are
 executed first, and serve as additional constraints for the unstructured
 parts.
 
+
+Gmsh's mesh module regroups several 1D, 2D and 3D meshing algorithms,
+all producing grids conforming in the sense of finite elements:
+
+@itemize @bullet
+@item
+The 2D @emph{unstructured} algorithms generate triangles and/or
+quadrangles (when recombination commands or options are used). The 3D
+@emph{unstructured} algorithms generate tetrahedra, or tetrahedra and
+pyramids (when the boundary mesh contains quadrangles).
+@item
+The 2D @emph{structured} algorithms (transfinite and extrusion) generate
+triangles by default, but quadrangles can be obtained by using the
+@code{Recombine} commands (see @ref{Structured grids}, and
+@ref{Miscellaneous mesh commands}). The 3D @emph{structured} algorithms
+generate tetrahedra, hexahedra, prisms and pyramids, depending on the
+type of the surface meshes they are based on.
+@end itemize
+
+All meshes can be subdivided to generate fully quadrangular or fully
+hexahedral meshes with the @code{Mesh.SubdivisionAlgorithm} option
+(@pxref{Mesh options}).
+
+@c todo: explain what happens if we have a degenerate geometry (incorrect
+@c holes with surfaces in contact with the exterior shell, intersecting
+@c primitives, etc.)
+
+@menu
+* Choosing the right unstructured algorithm::
+* Specifying mesh element sizes::
+* Elementary entities vs physical groups::
+@end menu
+
+@c .........................................................................
+@c Choosing the right unstructured algorithm
+@c .........................................................................
+
+@node Choosing the right unstructured algorithm, Specifying mesh element sizes, Mesh module, Mesh module
+@subsection Choosing the right unstructured algorithm
+
+Gmsh provides a choice between several 2D and 3D unstructured
+algorithms. Each algorithm has its own advantages and disadvantages.
+
+For all 2D unstructured algorithms a Delaunay mesh that contains all the
+points of the 1D mesh is initially constructed using a
+divide-and-conquer algorithm@footnote{R. A. Dwyer, @emph{A simple
+divide-and-conquer algorithm for computing Delaunay triangulations in
+O(n log n) expected time}, In Proceedings of the second annual symposium
+on computational geometry, Yorktown Heights, 2--4 June 1986.}. Missing
+edges are recovered using edge swaps@footnote{N. P. Weatherill,
+@emph{The integrity of geometrical boundaries in the two-dimensional
+Delaunay triangulation}, Commun. Appl. Numer. Methods 6(2),
+pp. 101--109, 1990.}. After this initial step several algorithms can be
+applied to generate the final mesh:
+
+@itemize
+@item
+The ``MeshAdapt'' algorithm@footnote{C. Geuzaine and J.-F. Remacle,
+@emph{Gmsh: a three-dimensional finite element mesh generator with
+built-in pre- and post-processing facilities}, International Journal for
+Numerical Methods in Engineering 79(11), pp. 1309--1331, 2009.} is based
+on local mesh modifications. This technique makes use of edge swaps,
+splits, and collapses: long edges are split, short edges are collapsed,
+and edges are swapped if a better geometrical configuration is obtained.
+@item
+The ``Delaunay'' algorithm is inspired by the work of the GAMMA team at
+INRIA@footnote{P.-L. George and P. Frey, @emph{Mesh generation}, Hermes,
+Lyon, 2000.}. New points are inserted sequentially at the circumcenter
+of the element that has the largest adimensional circumradius. The mesh
+is then reconnected using an anisotropic Delaunay criterion.
+@item
+The ``Frontal-Delaunay'' algorithm is inspired by the work of
+S. Rebay@footnote{S. Rebay, @emph{Efficient unstructured mesh generation
+by means of Delaunay triangulation and Bowyer-Watson algorithm},
+J. Comput.  Phys. 106, pp. 25--138, 1993.}.
+@item
+Other experimental algorithms with specific features are also
+available. In particular, ``Frontal-Delaunay for
+Quads''@footnote{J.-F. Remacle, F. Henrotte, T. Carrier-Baudouin,
+E. Béchet, E. Marchandise, C. Geuzaine and T. Mouton, @emph{A frontal
+Delaunay quad mesh generator using the Linf norm}, International Journal
+for Numerical Methods in Engineering, 94(5), pp. 494-512, 2013.} is a
+variant of the ``Frontal-Delaunay'' algorithm aiming at generating
+right-angle triangles suitable for recombination; and
+``BAMG''@footnote{F. Hecht, @emph{BAMG: bidimensional anisotropic mesh
+generator}, User Guide, INRIA, Rocquencourt, 1998.} allows to generate
+anisotropic triangulations.
+@end itemize
+
+For very complex curved surfaces the ``MeshAdapt'' algorithm is the most
+robust. When high element quality is important, the ``Frontal-Delaunay''
+algorithm should be tried. For very large meshes of plane surfaces the
+``Delaunay'' algorithm is the fastest; it usually also handles complex
+mesh size fields better than the ``Frontal-Delaunay''.  When the
+``Delaunay'' or ``Frontal-Delaunay'' algorithms fail, ``MeshAdapt'' is
+automatically triggered. The ``Automatic'' algorithm uses ``Delaunay''
+for plane surfaces and ``MeshAdapt'' for all other surfaces.
+
+Several 3D unstructured algorithms are also available:
+
+@itemize
+@item
+The ``Delaunay'' algorithm is split into three separate steps. First, an
+initial mesh of the union of all the volumes in the model is performed,
+without inserting points in the volume. The surface mesh is then
+recovered using H. Si's boundary recovery algorithm Tetgen/BR. Then a
+three-dimensional version of the 2D Delaunay algorithm described above
+is applied to insert points in the volume to respect the mesh size
+constraints.
+@item
+The ``Frontal'' algorithm uses J. Schoeberl's Netgen algorithm
+@footnote{J. Schoeberl, @emph{Netgen, an advancing front 2d/3d-mesh
+generator based on abstract rules}, Comput. Visual. Sci., 1, pp. 41--52,
+1997.}.
+@item
+The ``HXT'' algorithm@footnote{C. Marot, J. Pellerin and J.‐F. Remacle,
+@emph{One machine, one minute, three billion tetrahedra}, International
+Journal for Numerical Methods in Engineering 117.9, pp 967-990, 2019.}
+is a new efficient and parallel reimplementaton of the Delaunay
+algorithm.
+@item
+Other experimental algorithms with specific features are also available.
+In particular, ``MMG3D''@footnote{C. Dobrzynski, @emph{MMG3D: user
+guide}, INRIA, 2012.}  allows to generate anisotropic
+tetrahedralizations.
+@end itemize
+
+The ``Delaunay'' algorithm is currently the most robust and is the only
+one that supports the automatic generation of hybrid meshes with
+pyramids. Embedded model entities and general mesh size fields
+(@pxref{Specifying mesh element sizes}) are currently only supported by
+the ``Delaunay'' and ``HXT'' algorithms.
+
+If your version of Gmsh is compiled with OpenMP support
+(@pxref{Compiling the source code}), most of the meshing steps can be
+performed in parallel:
+@itemize
+@item
+1D and 2D meshing is parallelized using a coarse-grained approach,
+i.e. curves (resp. surfaces) are each meshed sequentially, but several
+curves (resp. surfaces) can be meshed at the same time.
+@item
+3D meshing using HXT is parallelized using a fine-grained approach,
+i.e. the actual meshing procedure for a single volume is done is
+parallel.
+@end itemize
+The number of threads can be controlled with the @code{-nt} flag on the
+command line (@pxref{Command-line options}), or with the
+@code{General.NumThreads}, @code{Mesh.MaxNumThreads1D},
+@code{Mesh.MaxNumThreads2D} and @code{Mesh.MaxNumThreads3D} options (see
+@ref{General options} and @ref{Mesh options}).
+
+@c .........................................................................
+@c Specifying mesh element sizes
+@c .........................................................................
+
+@node Specifying mesh element sizes, Elementary entities vs physical groups, Choosing the right unstructured algorithm, Mesh module
+@subsection Specifying mesh element sizes
+
+@cindex Mesh size
+@cindex Mesh, element size
+@cindex Size, elements
+@cindex Mesh, background
+@cindex Background mesh
+
+There are several  ways to specify the size of the mesh elements for a
+given geometry:
+
+@enumerate
+@item
+First, if the two options @code{Mesh.MeshSizeFromPoints} and
+@code{Mesh.MeshSizeExtendFromBoundary} are set (they are by default; see
+@ref{Mesh options}), you can simply specify desired mesh element
+sizes at the geometrical points of the model. The size of the mesh
+elements will then be computed by interpolating these values inside the
+domain during mesh generation. This might sometimes lead to
+over-refinement in some areas, so that you may have to add ``dummy''
+geometrical entities in the model in order to get the desired element
+sizes or use more advanced methods explained below.
+@item
+Second, if @code{Mesh.MeshSizeFromCurvature} is set to a positive value
+(it is set to 0 by default), the mesh will be adapted with respect to
+the curvature of the model entities, the value giving the target number
+of elements per 2 Pi radians.
+@item
+Next, you can specify a general background mesh size, expressed as a
+combination of mesh size fields (@pxref{Gmsh mesh size fields}):
+@itemize @bullet
+@item
+The @code{Box} field specifies the size of the elements inside and
+outside of a parallelepipedic region.
+@item
+The @code{Distance} field specifies the size of the mesh according to
+the distance to some model entities.
+@item
+The @code{MathEval} field specifies the size of the mesh using an
+explicit mathematical function.
+@item
+The @code{PostView} field specifies an explicit background mesh in the
+form of a scalar post-processing view (see @ref{Post-processing scripting
+commands}, and @ref{Gmsh file formats}) in which the nodal values are the
+target element sizes.  This method is very general but it requires a
+first (usually rough) mesh and a way to compute the target sizes on this
+mesh (usually through an error estimation procedure, in an iterative
+process of mesh adaptation). Warning: only parsed (@file{.pos}) files
+can currently be used as background meshes (@file{.msh} files cannot be
+used, since the mesh used to define the field will be destroyed during
+the meshing process). (Note that you can also load a background mesh
+directly from the command line using the @code{-bgm} option
+(@pxref{Command-line options}), or in the GUI by selecting `Apply as
+background mesh' in the post-processing view option menu.)
+@item
+The @code{Min} field specifies the size as the minimum of the sizes
+computed using other fields.
+@item
+@dots{}
+@end itemize
+@end enumerate
+
+All the aforementioned methods can be used simultaneously, in which case
+the smallest element size is selected at any given point.  Using the
+Gmsh API, the resulting value can be further modified using a C++, C,
+Python, Julia or Fortran mesh size callback function provided via
+@code{gmsh/model/mesh/setSizeCallback} (@pxref{Namespace
+gmsh/model/mesh}). In addition, boundary mesh sizes are interpolated
+inside surfaces and/or volumes depending on the value of
+@code{Mesh.MeshSizeExtendFromBoundary}.
+
+All element sizes are further constrained in the interval [
+@code{Mesh.MeshSizeMin}, @code{Mesh.MeshSizeMax} ] (which can also be
+provided on the command line with @code{-clmin} and @code{-clmax}). The
+resulting value is then finally multiplied by @code{Mesh.MeshSizeFactor}
+(@code{-clscale} on the command line).
+
+Note that when the element size is fully specified by a background mesh
+field, it is thus often desirable to set
+@smallexample
+Mesh.MeshSizeFromPoints = 0;
+Mesh.MeshSizeFromCurvature = 0;
+Mesh.MeshSizeExtendFromBoundary = 0;
+@end smallexample
+to prevent over-refinement inside an entity due to small mesh sizes on
+its boundary.
+
+@c .........................................................................
+@c Elementary entities vs. physical groups
+@c .........................................................................
+
+@node Elementary entities vs physical groups,  , Specifying mesh element sizes, Mesh module
+@subsection Elementary entities vs. physical groups
+
+It is usually convenient to combine elementary geometrical entities into
+more meaningful groups, e.g. to define some mathematical (``domain'',
+``boundary with Neumann condition''), functional (``left wing'',
+``fuselage'') or material (``steel'', ``carbon'') properties.  Such
+grouping is done in Gmsh's geometry module (@pxref{Geometry module})
+through ``physical groups''.
+
+By default in the MSH file format and in most other formats (@pxref{Gmsh
+file formats}), if physical groups are defined, the output mesh only
+contains those elements that belong to at least one physical
+group. (Different mesh file formats treat physical groups in slightly
+different ways, depending on their capability to define groups.)
+
+To save all mesh elements wether or not physical groups are defined, use
+the @code{Mesh.SaveAll} option (@pxref{Mesh options}) or specify
+@code{-save_all} on the command line. In some formats (e.g. MSH2),
+setting @code{Mesh.SaveAll=1} will however discard all physical group
+definitions.
+
+
 @c -------------------------------------------------------------------------
-@c Solver: external solver interface
+@c Solver module
 @c -------------------------------------------------------------------------
 
-@node Solver, Post-processing, Mesh, Overview
-@section Solver: external solver interface
+@node Solver module, Post-processing module, Mesh module, Overview of Gmsh
+@section Solver module
 
 Gmsh implements a ONELAB (@uref{http://onelab.info}) server to exchange
 data with external solvers (called ``clients''). The ONELAB interface
@@ -359,11 +699,11 @@ graphical user interface to control it, are available in
 @url{@value{GITLAB-PREFIX}/examples/api/custom_gui.cpp,custom_gui.cpp}.
 
 @c -------------------------------------------------------------------------
-@c Post-processing: scalar, vector and tensor field visualization
+@c Post-processing module
 @c -------------------------------------------------------------------------
 
-@node Post-processing, What Gmsh is pretty good at, Solver, Overview
-@section Post-processing: scalar, vector and tensor field visualization
+@node Post-processing module, What Gmsh is pretty good at, Solver module, Overview of Gmsh
+@section Post-processing module
 
 Gmsh can load and manipulate multiple post-processing scalar, vector or
 tensor fields along with the geometry and the mesh. Such fields,
@@ -377,13 +717,63 @@ modification, animation, vector graphic output, etc. All the
 post-processing options can be accessed either interactively, through
 the input script files or through the API. Various operations on the
 post-processing data can also be performed through plugins (see
-@ref{Post-processing plugins}).
+@ref{Gmsh plugins}).
+
+Gmsh's post-processing module can handle multiple scalar, vector or
+tensor datasets along with the geometry and the mesh. The datasets can
+be given in several formats: in human-readable ``parsed'' format (these
+are just part of a standard input script, but are usually put in
+separate files with a @file{.pos} extension), in native MSH files (ASCII
+or binary files with @file{.msh} extensions: see @ref{Gmsh file formats}), or
+in standard third-party formats. Datasets can also be directly imported
+using the Gmsh API, in the @code{gmsh/view} module (@pxref{Gmsh application programming interface}).
+
+Once loaded into Gmsh, scalar fields can be displayed as iso-curves,
+iso-surfaces or color maps, whereas vector fields can be represented
+either by three-dimensional arrows or by displacement maps. Tensor
+fields can be displayed as Von-Mises effective stresses, min/max
+eigenvalues, eigenvectors, ellipses or ellipsoids. (To display other
+(combinations of) components, you can use the @code{Force scalar} or
+@code{Force vector} options, or use @code{Plugin(MathEval)}: see
+@ref{Gmsh plugins}.)
+
+In Gmsh's jargon, each dataset, along with the visualization options, is
+called a ``post-processing view'', or simply a ``view''. Each view is
+given a name, and can be manipulated either individually (each view has
+its own button in the GUI and can be referred to by its index in a
+script or in the API) or globally (see the @code{PostProcessing.Link}
+option in @ref{Post-processing options}).
+
+By default, Gmsh treats all post-processing views as three-dimensional
+plots, i.e., draws the scalar, vector and tensor primitives (points, curves,
+triangles, tetrahedra, etc.) in 3D space. But Gmsh can also represent each
+post-processing view containing @emph{scalar points} as two-dimensional
+(``X-Y'') plots, either space- or time-oriented:
+
+@itemize @bullet
+@item
+in a `2D space' plot, the scalar points are taken in the same order as they
+are defined in the post-processing view: the abscissa of the 2D graph is
+the curvilinear abscissa of the curve defined by the point series, and only
+one curve is drawn using the values associated with the points. If several
+time steps are available, each time step generates a new curve;
+@item
+in a `2D time' plot, one curve is drawn for each scalar point in the view
+and the abscissa is the time step.
+@end itemize
+
+Although visualization is usually mostly an interactive task, Gmsh
+exposes all the post-processing commands and options to the user in its
+scripting language and through the API to permit a complete automation
+of the post-processing process (see e.g., @ref{t8}, and
+@ref{t9}).
+
 
 @c -------------------------------------------------------------------------
 @c What Gmsh is pretty good at...
 @c -------------------------------------------------------------------------
 
-@node What Gmsh is pretty good at, and what Gmsh is not so good at, Post-processing, Overview
+@node What Gmsh is pretty good at, and what Gmsh is not so good at, Post-processing module, Overview of Gmsh
 @section What Gmsh is pretty good at @dots{}
 
 Here is a tentative list of what Gmsh does best:
@@ -394,7 +784,7 @@ quickly describe simple and/or ``repetitive'' geometries with the
 built-in scripting language, thanks to user-defined macros, loops,
 conditionals and includes (see @ref{User-defined macros}, @ref{Loops and
 conditionals}, and @ref{General commands}). For more advanced
-geometries, using the Gmsh API (@pxref{Gmsh API}) in the language of
+geometries, using the Gmsh API (@pxref{Gmsh application programming interface}) in the language of
 your choice (C++, C, Python, Julia or Fortran) brings even greater
 flexibility, the only downside being that you need to either compile
 your code (for C++, C and Fortran) or to configure and install an
@@ -404,9 +794,10 @@ process easier;
 @item
 parametrize these geometries. Gmsh's scripting language or the Gmsh API
 enable all commands and command arguments to depend on previous
-calculations (see @ref{Expressions}, @ref{Geometry commands}, and
-@ref{Gmsh API}). Using the OpenCASCADE geometry kernel, Gmsh gives
-access to all usual constructive solid geometry operations;
+calculations (see @ref{Floating point expressions}, @ref{Geometry
+scripting commands}, and @ref{Gmsh application programming
+interface}). Using the OpenCASCADE geometry kernel, Gmsh gives access to
+all usual constructive solid geometry operations;
 @item
 import geometries from other CAD software in standard exchange
 formats. Gmsh uses OpenCASCADE to import such files, including label and
@@ -416,8 +807,8 @@ generate 1D, 2D and 3D simplicial (i.e., using line segments, triangles
 and tetrahedra) finite element meshes (see @ref{Mesh module}), with fine
 control over the element size (@pxref{Specifying mesh element sizes});
 @item
-create simple extruded geometries and meshes (see @ref{Geometry
-commands}, and @ref{Mesh commands}), and allow to automatically couple
+create simple extruded geometries and meshes (see @ref{Geometry scripting
+commands}, and @ref{Mesh scripting commands}), and allow to automatically couple
 such structured meshes with unstructured ones (using a layer of pyramids
 in 3D);
 @item
@@ -433,8 +824,8 @@ visualize and export computational results in a great variety of
 ways. Gmsh can display scalar, vector and tensor datasets, perform
 various operations on the resulting post-processing views
 (@pxref{Post-processing module}), can export plots in many different
-formats (@pxref{General options list}), and can generate complex
-animations (see @ref{General tools}, and @ref{t8});
+formats (@pxref{General options}), and can generate complex
+animations (see @ref{General scripting commands}, and @ref{t8});
 @item
 run on low end machines and/or machines with no graphical
 interface. Gmsh can be compiled with or without the GUI
@@ -446,7 +837,7 @@ configure your preferred options. Gmsh has a large number of
 configuration options that can be set interactively using the GUI,
 scattered inside script files, changed through the API, set in per-user
 configuration files and specified on the command-line (see @ref{Running
-Gmsh on your system} and @ref{Options});
+Gmsh on your system} and @ref{Gmsh options});
 @item
 and do all the above on various platforms (Windows, Mac and Unix), for
 free (@pxref{Copying conditions})!
@@ -456,7 +847,7 @@ free (@pxref{Copying conditions})!
 @c ... and what Gmsh is not so good at
 @c -------------------------------------------------------------------------
 
-@node and what Gmsh is not so good at, Bug reports, What Gmsh is pretty good at, Overview
+@node and what Gmsh is not so good at, How to read this manual, What Gmsh is pretty good at, Overview of Gmsh
 @section @dots{} and what Gmsh is not so good at
 
 Here are some known weaknesses of Gmsh:
@@ -477,33 +868,15 @@ If you have the skills and some free time, feel free to join the
 project: we gladly accept any code contributions (@pxref{Information for
 developers}) to remedy the aforementioned (and all other) shortcomings!
 
+
 @c -------------------------------------------------------------------------
-@c Bug reports
+@c How to read this manual
 @c -------------------------------------------------------------------------
 
-@node Bug reports,  , and what Gmsh is not so good at, Overview
-@section Bug reports
+@node How to read this manual,  , and what Gmsh is not so good at, Overview of Gmsh
+@section How to read this reference manual
 
-@cindex Bugs, reporting
-@cindex Reporting bugs
-
-Please file issues on
-@url{https://gitlab.onelab.info/gmsh/gmsh/issues}. Provide as precise a
-description of the problem as you can, including sample input files that
-produce the bug. Don't forget to mention both the version of Gmsh and
-the version of your operation system (@pxref{Command-line options} to
-see how to get this information).
-
-See @ref{Frequently asked questions}, and the
-@url{https://gitlab.onelab.info/gmsh/gmsh/issues,bug tracking system} to
-see which problems we already know about.
-
-@c =========================================================================
-@c How to read this manual?
-@c =========================================================================
-
-@node How to read this manual?, Running Gmsh on your system, Overview, Top
-@chapter How to read this reference manual?
+TODO rework this section
 
 Gmsh can be used at three levels:
 
@@ -521,7 +894,7 @@ You can skip most of this reference manual if you only want to use Gmsh
 at the first level (i.e., interactively with the GUI). Just read the
 next chapter (@pxref{Running Gmsh on your system}) to learn how to
 launch Gmsh on your system, then go experiment with the GUI and the
-tutorial files (@pxref{Tutorial}) provided in the distribution.
+tutorial files (@pxref{Gmsh tutorial}) provided in the distribution.
 Screencasts that show how to use the GUI are available here:
 @uref{https://gmsh.info/screencasts/}.
 
@@ -533,65 +906,28 @@ parser, and can be given any extension (or no extension at all). By
 convention, Gmsh uses the @file{.geo} extension for geometry scripts,
 and the @file{.pos} extension for parsed post-processing datasets. Once
 you master the tutorial (read the source files: they are heavily
-commented!), start reading chapter @ref{General tools}, then proceed
+commented!), start reading chapter @ref{General scripting commands}, then proceed
 with the next four chapters, which detail the syntax of the geometry,
 mesh, solver and post-processing scripting commands. You will see that
 most of the interactive actions in the GUI have a direct equivalent in
 the scripting language. If you want to use Gmsh as a pre- or
 post-processor for your own software, you will also want to learn about
 the non-scripting input/output files that Gmsh can read/write. In
-addition to Gmsh's native ``MSH'' file format (@pxref{File formats}),
+addition to Gmsh's native ``MSH'' file format (@pxref{Gmsh file formats}),
 Gmsh can read/write many standard mesh files, depending on how it was
 built: check the `File->Export' menu for a list of available formats.
 
 Finally, to use Gmsh at the third level (i.e., to link the Gmsh library
-with your own code), you will need to learn the Gmsh Application
-Programming Interface (API). This API is available in C++, C, Python,
-Julia and Fortran, and is fully documented in @ref{Gmsh API}.
+with your own code), you will need to learn the Gmsh application
+programming interface (API). This API is available in C++, C, Python,
+Julia and Fortran, and is fully documented in @ref{Gmsh application programming interface}.
 
-@c -------------------------------------------------------------------------
-@c Syntactic rules used in the manual
-@c -------------------------------------------------------------------------
-
-@menu
-* Syntactic rules::
-@end menu
-
-@node Syntactic rules,  , How to read this manual?, How to read this manual?
-@section Syntactic rules used in the manual
-
-@cindex Syntax, rules
-@cindex Rules, syntactic
-@cindex Document syntax
-
-Here are the rules we tried to follow when writing this reference
-manual. Note that metasyntactic variable definitions stay valid
-throughout the manual (and not only in the sections where the
-definitions appear).
-
-@enumerate
-@item
-Keywords and literal symbols are printed like @code{this}.
-@item
-Metasyntactic variables (i.e., text bits that are not part of the syntax,
-but stand for other text bits) are printed like @var{this}.
-@item
-A colon (@code{:}) after a metasyntactic variable separates the variable
-from its definition.
-@item
-Optional rules are enclosed in @code{<} @code{>} pairs.
-@item
-Multiple choices are separated by @code{|}.
-@item
-Three dots (@dots{}) indicate a possible (multiple) repetition of the
-preceding rule.
-@end enumerate
 
 @c =========================================================================
 @c Running Gmsh on your system
 @c =========================================================================
 
-@node Running Gmsh on your system, General tools, How to read this manual?, Top
+@node Running Gmsh on your system, Gmsh tutorial, Overview of Gmsh, Top
 @chapter Running Gmsh on your system
 
 @cindex Operating system
@@ -626,7 +962,7 @@ the main Gmsh window, with a tree-like menu on the left, a graphic area
 on the right, and a status bar at the bottom. (You can detach the tree
 menu using `Window->Attach/Detach Menu'.)
 
-To open the first tutorial file (@pxref{Tutorial}), select the
+To open the first tutorial file (@pxref{Gmsh tutorial}), select the
 `File->Open' menu, and choose
 @url{@value{GITLAB-PREFIX}/tutorials/t1.geo,t1.geo}. When
 using a terminal, you can specify the file name directly on the command
@@ -696,7 +1032,7 @@ you can also save the current options in an arbitrary file by choosing
 the `Gmsh options' format in `File->Export'.
 
 For more information about available options (and how to reset them to
-their default values), see @ref{Options}. A full list of options with
+their default values), see @ref{Gmsh options}. A full list of options with
 their current values is also available in the `Help->Current Options'
 menu.
 
@@ -783,39 +1119,699 @@ below.)
 @include shortcuts.texi
 
 @c =========================================================================
-@c General tools
+@c Gmsh tutorial
 @c =========================================================================
 
-@node General tools, Geometry module, Running Gmsh on your system, Top
-@chapter General tools
+@node Gmsh tutorial, Gmsh graphical user interface, Running Gmsh on your system, Top
+@chapter Gmsh tutorial
 
-This chapter describes the general commands and options that can be used
-in Gmsh's script files. By ``general'', we mean ``not specifically
-related to one of the geometry, mesh, solver or post-processing
-modules''. Commands peculiar to these modules will be introduced in
-@ref{Geometry module}, @ref{Mesh module}, @ref{Solver module}, and
-@ref{Post-processing module}, respectively.
+@cindex Examples
+@cindex Tutorial
 
-If you plan to use Gmsh through its API (@pxref{Gmsh API}) instead of
-the built-in scripting language, you can skip this chapter entirely.
+The following tutorials introduce new features gradually, starting with
+@ref{t1}. The corresponding files are available in the
+@url{@value{GITLAB-PREFIX}/tutorials,tutorials}
+directory of the Gmsh distribution. The files starting with @code{t}
+introduce features available both in @code{.geo} scripts and through the
+@ref{Gmsh application programming interface}. The files starting with @code{x} introduce features that
+are only available via the API.
+
+To learn how to run Gmsh on your computer, see @ref{Running Gmsh on your
+system}. Screencasts that show how to use the GUI are available on
+@uref{https://gmsh.info/screencasts/}. To learn how to run the C++, C,
+Python, Julia and Fortran API examples, see the respective
+subdirectories in @url{@value{GITLAB-PREFIX}/tutorials,tutorials}.
+
+@menu
+* t1::                          Geometry basics, elementary entities, physical groups
+* t2::                          Transformations, extruded geometries, volumes
+* t3::                          Extruded meshes, ONELAB parameters, options
+* t4::                          Built-in functions, holes in surfaces, annotations, entity colors
+* t5::                          Mesh sizes, macros, loops, holes in volumes
+* t6::                          Transfinite meshes
+* t7::                          Background meshes
+* t8::                          Post-processing and animations
+* t9::                          Plugins
+* t10::                         Mesh size fields
+* t11::                         Unstructured quadrangular meshes
+* t12::                         Cross-patch meshing with compounds
+* t13::                         Remeshing an STL file without an underlying CAD model
+* t14::                         Homology and cohomology computation
+* t15::                         Embedded points, lines and surfaces
+* t16::                         Constructive Solid Geometry, OpenCASCADE geometry kernel
+* t17::                         Anisotropic background mesh
+* t18::                         Periodic meshes
+* t19::                         Thrusections, fillets, pipes, mesh size from curvature
+* t20::                         STEP import and manipulation, geometry partitioning
+* t21::                         Mesh partitioning
+* x1::                          Geometry and mesh data
+* x2::                          Mesh import, discrete entities, hybrid models, terrain meshing
+* x3::                          Post-processing data import: list-based
+* x4::                          Post-processing data import: model-based
+* x5::                          Additional geometrical data: parametrizations, normals, curvatures
+* x6::                          Additional mesh data: integration points, Jacobians and basis functions
+* x7::                          Additional mesh data: internal edges and faces
+@end menu
+
+@c -------------------------------------------------------------------------
+@c t1
+@c -------------------------------------------------------------------------
+
+@node t1, t2, Gmsh tutorial, Gmsh tutorial
+@section @code{t1}: Geometry basics, elementary entities, physical groups
+
+See
+@url{@value{GITLAB-PREFIX}/tutorials/t1.geo,t1.geo}. Also
+available in C++
+(@url{@value{GITLAB-PREFIX}/tutorials/c++/t1.cpp,t1.cpp}),
+C
+(@url{@value{GITLAB-PREFIX}/tutorials/c/t1.c,t1.c}),
+Python
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t1.py,t1.py}),
+Julia
+(@url{@value{GITLAB-PREFIX}/tutorials/julia/t1.jl,t1.jl})
+and Fortran
+(@url{@value{GITLAB-PREFIX}/tutorials/fortran/t1.f90,t1.f90}).
+
+@smallformat
+@verbatiminclude ../../tutorials/t1.geo
+@end smallformat
+
+@c -------------------------------------------------------------------------
+@c t2
+@c -------------------------------------------------------------------------
+
+@node t2, t3, t1, Gmsh tutorial
+@section @code{t2}: Transformations, extruded geometries, volumes
+
+See
+@url{@value{GITLAB-PREFIX}/tutorials/t2.geo,t2.geo}. Also
+available in C++
+(@url{@value{GITLAB-PREFIX}/tutorials/c++/t2.cpp,t2.cpp}),
+C
+(@url{@value{GITLAB-PREFIX}/tutorials/c/t2.c,t2.c}),
+Python
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t2.py,t2.py}),
+Julia
+(@url{@value{GITLAB-PREFIX}/tutorials/julia/t2.jl,t2.jl})
+and Fortran
+(@url{@value{GITLAB-PREFIX}/tutorials/fortran/t2.f90,t2.f90}).
+
+@smallformat
+@verbatiminclude ../../tutorials/t2.geo
+@end smallformat
+
+@c -------------------------------------------------------------------------
+@c t3
+@c -------------------------------------------------------------------------
+
+@node t3, t4, t2, Gmsh tutorial
+@section @code{t3}: Extruded meshes, ONELAB parameters, options
+
+See
+@url{@value{GITLAB-PREFIX}/tutorials/t3.geo,t3.geo}.
+Also available in C++
+(@url{@value{GITLAB-PREFIX}/tutorials/c++/t3.cpp,t3.cpp}),
+Python
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t3.py,t3.py}),
+Julia
+(@url{@value{GITLAB-PREFIX}/tutorials/julia/t3.jl,t3.jl})
+and Fortran
+(@url{@value{GITLAB-PREFIX}/tutorials/fortran/t3.f90,t3.f90}).
+
+@smallformat
+@verbatiminclude ../../tutorials/t3.geo
+@end smallformat
+
+@c -------------------------------------------------------------------------
+@c t4
+@c -------------------------------------------------------------------------
+
+@node t4, t5, t3, Gmsh tutorial
+@section @code{t4}: Built-in functions, holes in surfaces, annotations, entity colors
+
+See
+@url{@value{GITLAB-PREFIX}/tutorials/t4.geo,t4.geo}.
+Also available in C++
+(@url{@value{GITLAB-PREFIX}/tutorials/c++/t4.cpp,t4.cpp}),
+Python
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t4.py,t4.py}),
+Julia
+(@url{@value{GITLAB-PREFIX}/tutorials/julia/t4.jl,t4.jl})
+and Fortran
+(@url{@value{GITLAB-PREFIX}/tutorials/fortran/t4.f90,t4.f90}).
+
+@smallformat
+@verbatiminclude ../../tutorials/t4.geo
+@end smallformat
+
+@c -------------------------------------------------------------------------
+@c t5
+@c -------------------------------------------------------------------------
+
+@node t5, t6, t4, Gmsh tutorial
+@section @code{t5}: Mesh sizes, macros, loops, holes in volumes
+
+See
+@url{@value{GITLAB-PREFIX}/tutorials/t5.geo,t5.geo}.
+Also available in C++
+(@url{@value{GITLAB-PREFIX}/tutorials/c++/t5.cpp,t5.cpp}),
+Python
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t5.py,t5.py}),
+Julia
+(@url{@value{GITLAB-PREFIX}/tutorials/julia/t5.jl,t5.jl})
+and Fortran
+(@url{@value{GITLAB-PREFIX}/tutorials/fortran/t5.f90,t5.f90}).
+
+@smallformat
+@verbatiminclude ../../tutorials/t5.geo
+@end smallformat
+
+@c -------------------------------------------------------------------------
+@c t6
+@c -------------------------------------------------------------------------
+
+@node t6, t7, t5, Gmsh tutorial
+@section @code{t6}: Transfinite meshes
+
+See
+@url{@value{GITLAB-PREFIX}/tutorials/t6.geo,t6.geo}.
+Also available in C++
+(@url{@value{GITLAB-PREFIX}/tutorials/c++/t6.cpp,t6.cpp}),
+C
+(@url{@value{GITLAB-PREFIX}/tutorials/c/t6.c,t6.c}),
+Python
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t6.py,t6.py})
+and Fortran
+(@url{@value{GITLAB-PREFIX}/tutorials/fortran/t6.f90,t6.f90}).
+
+@smallformat
+@verbatiminclude ../../tutorials/t6.geo
+@end smallformat
+
+@c -------------------------------------------------------------------------
+@c t7
+@c -------------------------------------------------------------------------
+
+@node t7, t8, t6, Gmsh tutorial
+@section @code{t7}: Background meshes
+
+See
+@url{@value{GITLAB-PREFIX}/tutorials/t7.geo,t7.geo}.
+Also available in C++
+(@url{@value{GITLAB-PREFIX}/tutorials/c++/t7.cpp,t7.cpp}),
+Python
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t7.py,t7.py})
+and Fortran
+(@url{@value{GITLAB-PREFIX}/tutorials/fortran/t7.f90,t7.f90}).
+
+@smallformat
+@verbatiminclude ../../tutorials/t7.geo
+@end smallformat
+
+@c -------------------------------------------------------------------------
+@c t8
+@c -------------------------------------------------------------------------
+
+@node t8, t9, t7, Gmsh tutorial
+@section @code{t8}: Post-processing and animations
+
+See
+@url{@value{GITLAB-PREFIX}/tutorials/t8.geo,t8.geo}.
+Also available in C++
+(@url{@value{GITLAB-PREFIX}/tutorials/c++/t8.cpp,t8.cpp}),
+Python
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t8.py,t8.py})
+and Fortran
+(@url{@value{GITLAB-PREFIX}/tutorials/fortran/t8.f90,t8.f90}).
+
+@smallformat
+@verbatiminclude ../../tutorials/t8.geo
+@end smallformat
+
+@c -------------------------------------------------------------------------
+@c t9
+@c -------------------------------------------------------------------------
+
+@node t9, t10, t8, Gmsh tutorial
+@section @code{t9}: Plugins
+
+See
+@url{@value{GITLAB-PREFIX}/tutorials/t9.geo,t9.geo}.
+Also available in C++
+(@url{@value{GITLAB-PREFIX}/tutorials/c++/t9.cpp,t9.cpp}),
+Python
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t9.py,t9.py})
+and Fortran
+(@url{@value{GITLAB-PREFIX}/tutorials/fortran/t9.f90,t9.f90}).
+
+@smallformat
+@verbatiminclude ../../tutorials/t9.geo
+@end smallformat
+
+@c -------------------------------------------------------------------------
+@c t10
+@c -------------------------------------------------------------------------
+
+@node t10, t11, t9, Gmsh tutorial
+@section @code{t10}: Mesh size fields
+
+See
+@url{@value{GITLAB-PREFIX}/tutorials/t10.geo,t10.geo}.
+Also available in C++
+(@url{@value{GITLAB-PREFIX}/tutorials/c++/t10.cpp,t10.cpp}),
+Python
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t10.py,t10.py}),
+Julia
+(@url{@value{GITLAB-PREFIX}/tutorials/julia/t10.jl,t10.jl})
+and Fortran
+(@url{@value{GITLAB-PREFIX}/tutorials/fortran/t10.f90,t10.f90}).
+
+@smallformat
+@verbatiminclude ../../tutorials/t10.geo
+@end smallformat
+
+@c -------------------------------------------------------------------------
+@c t11
+@c -------------------------------------------------------------------------
+
+@node t11, t12, t10, Gmsh tutorial
+@section @code{t11}: Unstructured quadrangular meshes
+
+See
+@url{@value{GITLAB-PREFIX}/tutorials/t11.geo,t11.geo}.
+Also available in C++
+(@url{@value{GITLAB-PREFIX}/tutorials/c++/t11.cpp,t11.cpp}),
+Python
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t11.py,t11.py})
+and Fortran
+(@url{@value{GITLAB-PREFIX}/tutorials/fortran/t11.f90,t11.f90}).
+
+@smallformat
+@verbatiminclude ../../tutorials/t11.geo
+@end smallformat
+
+@c -------------------------------------------------------------------------
+@c t12
+@c -------------------------------------------------------------------------
+
+@node t12, t13, t11, Gmsh tutorial
+@section @code{t12}: Cross-patch meshing with compounds
+
+See
+@url{@value{GITLAB-PREFIX}/tutorials/t12.geo,t12.geo}/
+Also available in C++
+(@url{@value{GITLAB-PREFIX}/tutorials/c++/t12.cpp,t12.cpp}),
+Python
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t12.py,t12.py})
+and Fortran
+(@url{@value{GITLAB-PREFIX}/tutorials/fortran/t12.f90,t12.f90}).
+
+@smallformat
+@verbatiminclude ../../tutorials/t12.geo
+@end smallformat
+
+@c -------------------------------------------------------------------------
+@c t13
+@c -------------------------------------------------------------------------
+
+@node t13, t14, t12, Gmsh tutorial
+@section @code{t13}: Remeshing an STL file without an underlying CAD model
+
+See
+@url{@value{GITLAB-PREFIX}/tutorials/t13.geo,t13.geo}.
+Also available in C++
+(@url{@value{GITLAB-PREFIX}/tutorials/c++/t13.cpp,t13.cpp}),
+Python
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t13.py,t13.py})
+and Fortran
+(@url{@value{GITLAB-PREFIX}/tutorials/fortran/t13.f90,t13.f90}).
+
+@smallformat
+@verbatiminclude ../../tutorials/t13.geo
+@end smallformat
+
+@c -------------------------------------------------------------------------
+@c t14
+@c -------------------------------------------------------------------------
+
+@node t14, t15, t13, Gmsh tutorial
+@section @code{t14}: Homology and cohomology computation
+
+See
+@url{@value{GITLAB-PREFIX}/tutorials/t14.geo,t14.geo}.
+Also available in C++
+(@url{@value{GITLAB-PREFIX}/tutorials/c++/t14.cpp,t14.cpp}),
+Python
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t14.py,t14.py})
+and Fortran
+(@url{@value{GITLAB-PREFIX}/tutorials/fortran/t14.f90,t14.f90}).
+
+@smallformat
+@verbatiminclude ../../tutorials/t14.geo
+@end smallformat
+
+@c -------------------------------------------------------------------------
+@c t15
+@c -------------------------------------------------------------------------
+
+@node t15, t16, t14, Gmsh tutorial
+@section @code{t15}: Embedded points, lines and surfaces
+
+See
+@url{@value{GITLAB-PREFIX}/tutorials/t15.geo,t15.geo}.
+Also available in C++
+(@url{@value{GITLAB-PREFIX}/tutorials/c++/t15.cpp,t15.cpp}),
+Python
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t15.py,t15.py})
+and Fortran
+(@url{@value{GITLAB-PREFIX}/tutorials/fortran/t15.f90,t15.f90}).
+
+@smallformat
+@verbatiminclude ../../tutorials/t15.geo
+@end smallformat
+
+@c -------------------------------------------------------------------------
+@c t16
+@c -------------------------------------------------------------------------
+
+@node t16, t17, t15, Gmsh tutorial
+@section @code{t16}: Constructive Solid Geometry, OpenCASCADE geometry kernel
+
+See
+@url{@value{GITLAB-PREFIX}/tutorials/t16.geo,t16.geo}.
+Also available in C++
+(@url{@value{GITLAB-PREFIX}/tutorials/c++/t16.cpp,t16.cpp}),
+C
+(@url{@value{GITLAB-PREFIX}/tutorials/c/t16.c,t16.c}),
+Python
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t16.py,t16.py}),
+Julia
+(@url{@value{GITLAB-PREFIX}/tutorials/julia/t16.jl,t16.jl})
+and Fortran
+(@url{@value{GITLAB-PREFIX}/tutorials/fortran/t16.f90,t16.f90}).
+
+@smallformat
+@verbatiminclude ../../tutorials/t16.geo
+@end smallformat
+
+@c -------------------------------------------------------------------------
+@c t17
+@c -------------------------------------------------------------------------
+
+@node t17, t18, t16, Gmsh tutorial
+@section @code{t17}: Anisotropic background mesh
+
+See
+@url{@value{GITLAB-PREFIX}/tutorials/t17.geo,t17.geo}.
+Also available in C++
+(@url{@value{GITLAB-PREFIX}/tutorials/c++/t17.cpp,t17.cpp}),
+Python
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t17.py,t17.py})
+and Fortran
+(@url{@value{GITLAB-PREFIX}/tutorials/fortran/t17.f90,t17.f90}).
+
+@smallformat
+@verbatiminclude ../../tutorials/t17.geo
+@end smallformat
+
+@c -------------------------------------------------------------------------
+@c t18
+@c -------------------------------------------------------------------------
+
+@node t18, t19, t17, Gmsh tutorial
+@section @code{t18}: Periodic meshes
+
+See
+@url{@value{GITLAB-PREFIX}/tutorials/t18.geo,t18.geo}.
+Also available in C++
+(@url{@value{GITLAB-PREFIX}/tutorials/c++/t18.cpp,t18.cpp}),
+Python
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t18.py,t18.py})
+and Fortran
+(@url{@value{GITLAB-PREFIX}/tutorials/fortran/t18.f90,t18.f90}).
+
+@smallformat
+@verbatiminclude ../../tutorials/t18.geo
+@end smallformat
+
+@c -------------------------------------------------------------------------
+@c t19
+@c -------------------------------------------------------------------------
+
+@node t19, t20, t18, Gmsh tutorial
+@section @code{t19}: Thrusections, fillets, pipes, mesh size from curvature
+
+See
+@url{@value{GITLAB-PREFIX}/tutorials/t19.geo,t19.geo}.
+Also available in C++
+(@url{@value{GITLAB-PREFIX}/tutorials/c++/t19.cpp,t19.cpp}),
+Python
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t19.py,t19.py})
+and Fortran
+(@url{@value{GITLAB-PREFIX}/tutorials/fortran/t19.f90,t19.f90}).
+
+@smallformat
+@verbatiminclude ../../tutorials/t19.geo
+@end smallformat
+
+@c -------------------------------------------------------------------------
+@c t20
+@c -------------------------------------------------------------------------
+
+@node t20, t21, t19, Gmsh tutorial
+@section @code{t20}: STEP import and manipulation, geometry partitioning
+
+See
+@url{@value{GITLAB-PREFIX}/tutorials/t20.geo,t20.geo}.
+Also available in C++
+(@url{@value{GITLAB-PREFIX}/tutorials/c++/t20.cpp,t20.cpp}),
+Python
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t20.py,t20.py})
+and Fortran
+(@url{@value{GITLAB-PREFIX}/tutorials/fortran/t20.f90,t20.f90}).
+
+@smallformat
+@verbatiminclude ../../tutorials/t20.geo
+@end smallformat
+
+@c -------------------------------------------------------------------------
+@c t21
+@c -------------------------------------------------------------------------
+
+@node t21, x1, t20, Gmsh tutorial
+@section @code{t21}: Mesh partitioning
+
+See
+@url{@value{GITLAB-PREFIX}/tutorials/t21.geo,t21.geo}.
+Also available in C++
+(@url{@value{GITLAB-PREFIX}/tutorials/c++/t21.cpp,t21.cpp}),
+Python
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t21.py,t21.py})
+and Fortran
+(@url{@value{GITLAB-PREFIX}/tutorials/fortran/t21.f90,t21.f90}).
+
+@smallformat
+@verbatiminclude ../../tutorials/t21.geo
+@end smallformat
+
+@c -------------------------------------------------------------------------
+@c x1
+@c -------------------------------------------------------------------------
+
+@node x1, x2, t21, Gmsh tutorial
+@section @code{x1}: Geometry and mesh data
+
+See
+@url{@value{GITLAB-PREFIX}/tutorials/python/x1.py,x1.py}.
+Also available in C++
+(@url{@value{GITLAB-PREFIX}/tutorials/c++/x1.cpp,x1.cpp}).
+
+@smallformat
+@verbatiminclude ../../tutorials/python/x1.py
+@end smallformat
+
+@c -------------------------------------------------------------------------
+@c x2
+@c -------------------------------------------------------------------------
+
+@node x2, x3, x1, Gmsh tutorial
+@section @code{x2}: Mesh import, discrete entities, hybrid models, terrain meshing
+
+See
+@url{@value{GITLAB-PREFIX}/tutorials/python/x2.py,x2.py}.
+Also available in C++
+(@url{@value{GITLAB-PREFIX}/tutorials/c++/x2.cpp,x2.cpp}).
+
+@smallformat
+@verbatiminclude ../../tutorials/python/x2.py
+@end smallformat
+
+@c -------------------------------------------------------------------------
+@c x3
+@c -------------------------------------------------------------------------
+
+@node x3, x4, x2, Gmsh tutorial
+@section @code{x3}: Post-processing data import: list-based
+
+See
+@url{@value{GITLAB-PREFIX}/tutorials/python/x3.py,x3.py}.
+Also available in C++
+(@url{@value{GITLAB-PREFIX}/tutorials/c++/x3.cpp,x3.cpp}).
+
+@smallformat
+@verbatiminclude ../../tutorials/python/x3.py
+@end smallformat
+
+@c -------------------------------------------------------------------------
+@c x4
+@c -------------------------------------------------------------------------
+
+@node x4, x5, x3, Gmsh tutorial
+@section @code{x4}: Post-processing data import: model-based
+
+See
+@url{@value{GITLAB-PREFIX}/tutorials/python/x4.py,x4.py}.
+Also available in C++
+(@url{@value{GITLAB-PREFIX}/tutorials/c++/x4.cpp,x4.cpp}).
+
+@smallformat
+@verbatiminclude ../../tutorials/python/x4.py
+@end smallformat
+
+@c -------------------------------------------------------------------------
+@c x5
+@c -------------------------------------------------------------------------
+
+@node x5, x6, x4, Gmsh tutorial
+@section @code{x5}: Additional geometrical data: parametrizations, normals, curvatures
+
+See
+@url{@value{GITLAB-PREFIX}/tutorials/python/x5.py,x5.py}.
+Also available in C++
+(@url{@value{GITLAB-PREFIX}/tutorials/c++/x5.cpp,x5.cpp}).
+
+@smallformat
+@verbatiminclude ../../tutorials/python/x5.py
+@end smallformat
+
+@c -------------------------------------------------------------------------
+@c x6
+@c -------------------------------------------------------------------------
+
+@node x6, x7, x5, Gmsh tutorial
+@section @code{x6}: Additional mesh data: integration points, Jacobians and basis functions
+
+See
+@url{@value{GITLAB-PREFIX}/tutorials/python/x6.py,x6.py}.
+Also available in C++
+(@url{@value{GITLAB-PREFIX}/tutorials/c++/x6.cpp,x6.cpp}).
+
+@smallformat
+@verbatiminclude ../../tutorials/python/x6.py
+@end smallformat
+
+@c -------------------------------------------------------------------------
+@c x7
+@c -------------------------------------------------------------------------
+
+@node x7,  , x6, Gmsh tutorial
+@section @code{x7}: Additional mesh data: internal edges and faces
+
+See
+@url{@value{GITLAB-PREFIX}/tutorials/python/x7.py,x7.py}.
+Also available in C++
+(@url{@value{GITLAB-PREFIX}/tutorials/c++/x7.cpp,x7.cpp}).
+
+@smallformat
+@verbatiminclude ../../tutorials/python/x7.py
+@end smallformat
+
+@c =========================================================================
+@c Gmsh graphical user interface
+@c =========================================================================
+
+@node Gmsh graphical user interface, Gmsh scripting language, Gmsh tutorial, Top
+@chapter Gmsh graphical user interface
+
+This chapter still needs to be written. In the meantime, you can have a
+look at the following screencasts that show how to use the GUI
+@uref{https://gmsh.info/screencasts/}.
+
+@c =========================================================================
+@c Gmsh scripting language
+@c =========================================================================
+
+@node Gmsh scripting language, Gmsh application programming interface, Gmsh graphical user interface, Top
+@chapter Gmsh scripting language
+
+This chapter describes the scripting commands that can be used in Gmsh's
+script files (.geo files).
+
+Here are the rules we followed when describing the GEO scripting
+language. Note that metasyntactic variable definitions stay valid
+throughout the manual (and not only in the sections where the
+definitions appear).
+
+@enumerate
+@item
+Keywords and literal symbols are printed like @code{this}.
+@item
+Metasyntactic variables (i.e., text bits that are not part of the syntax,
+but stand for other text bits) are printed like @var{this}.
+@item
+A colon (@code{:}) after a metasyntactic variable separates the variable
+from its definition.
+@item
+Optional rules are enclosed in @code{<} @code{>} pairs.
+@item
+Multiple choices are separated by @code{|}.
+@item
+Three dots (@dots{}) indicate a possible (multiple) repetition of the
+preceding rule.
+@end enumerate
+
+Section @ref{General scripting commands} introduces scripting commands
+that are not specifically related to one of the four Gmsh
+modules. Commands specific to the geometry, mesh, solver and
+post-prcessing modules are described in Sections @ref{Geometry scripting
+commands}, @ref{Mesh scripting commands}, @ref{Solver scripting
+commands}, and @ref{Post-processing scripting commands}, respectively.
+
+@menu
+* General scripting commands::
+* Geometry scripting commands::
+* Mesh scripting commands::
+* Solver scripting commands::
+* Post-processing scripting commands::
+@end menu
+
+@c -------------------------------------------------------------------------
+@c General scripting commands
+@c -------------------------------------------------------------------------
+
+@node General scripting commands, Geometry scripting commands, Gmsh scripting language, Gmsh scripting language
+@section General scripting commands
 
 @menu
 * Comments::
-* Expressions::
+* Floating point expressions::
+* Floating point expression lists::
+* String expressions::
+* Color expressions::
 * Operators::
 * Built-in functions::
 * User-defined macros::
 * Loops and conditionals::
 * General commands::
-* General options::
 @end menu
 
-@c -------------------------------------------------------------------------
+@c .........................................................................
 @c Comments
-@c -------------------------------------------------------------------------
+@c .........................................................................
 
-@node Comments, Expressions, General tools, General tools
-@section Comments
+@node Comments, Floating point expressions, General scripting commands, General scripting commands
+@subsection Comments
 
 @cindex Comments
 @cindex File, comments
@@ -836,12 +1832,12 @@ These commands won't have the described effects inside double quotes or
 inside keywords. Also note that `white space' (spaces, tabs, new line
 characters) is ignored inside all expressions.
 
-@c -------------------------------------------------------------------------
-@c Expressions
-@c -------------------------------------------------------------------------
+@c .........................................................................
+@c Floating point expressions
+@c .........................................................................
 
-@node Expressions, Operators, Comments, General tools
-@section Expressions
+@node Floating point expressions, Floating point expression lists, Comments, General scripting commands
+@subsection Floating point expressions
 
 @cindex Expressions, definition
 @cindex Constants
@@ -850,27 +1846,12 @@ The two constant types used in Gmsh scripts are @var{real} and
 @var{string} (there is no integer type).  These types have the same
 meaning and syntax as in the C or C++ programming languages.
 
-@menu
-* Floating point expressions::
-* Character expressions::
-* Color expressions::
-@end menu
-
-@c .........................................................................
-@c Floating point expressions
-@c .........................................................................
-
-@node Floating point expressions, Character expressions, Expressions, Expressions
-@subsection Floating point expressions
-
 @cindex Expressions, floating point
 @cindex Real numbers
 @cindex Numbers, real
-@cindex Floating point numbers
 
 Floating point expressions (or, more simply, ``expressions'') are denoted by
-the metasyntactic variable @var{expression} (remember the definition of the
-syntactic rules in @ref{Syntactic rules}), and are evaluated during the
+the metasyntactic variable @var{expression}, and are evaluated during the
 parsing of the script file:
 
 @example
@@ -927,7 +1908,7 @@ to get the size of a list. The operators @var{operator-unary-left},
 @var{operator-ternary-left} and @var{operator-ternary-right} are defined
 in @ref{Operators}. For the definition of @w{@var{built-in-function}s},
 see @ref{Built-in functions}. The various @w{@var{real-option}s} are
-listed in @ref{Options}.  @code{Find} searches for occurrences of the
+listed in @ref{Gmsh options}.  @code{Find} searches for occurrences of the
 first expression in the second (both of which can be lists).
 @code{StrFind} searches the first @var{char-expression} for any
 occurrence of the second @var{char-expression}. @code{StrCmp} compares
@@ -946,7 +1927,7 @@ returned in non-interactive mode). For example, inserting
 @code{GetValue("Value of parameter alpha?", 5.76)} in an input file will
 query the user for the value of a certain parameter alpha, assuming the
 default value is 5.76. If the option @code{General.NoPopup} is set
-(@pxref{General options list}), no question is asked and the default
+(@pxref{General options}), no question is asked and the default
 value is automatically used.
 
 @code{DefineNumber} allows to define a ONELAB variable in-line. The
@@ -954,6 +1935,13 @@ value is automatically used.
 is followed by the various ONELAB options. See the
 @uref{https://gitlab.onelab.info/doc/tutorials/wikis/ONELAB-syntax-for-Gmsh-and-GetDP,
 ONELAB tutorial wiki} for more information.
+
+@c .........................................................................
+@c Floating point expression lists
+@c .........................................................................
+
+@node Floating point expression lists, String expressions, Floating point expressions, General scripting commands
+@subsection Floating point expression lists
 
 @cindex Expressions, lists
 
@@ -1027,7 +2015,7 @@ elementary entities making up physical groups, and the tags of all
 model. @value{SYNCS}
 
 To see the practical use of such expressions, have a look at the first
-couple of examples in @ref{Tutorial}. Note that, in order to lighten the
+couple of examples in @ref{Gmsh tutorial}. Note that, in order to lighten the
 syntax, you can omit the braces @code{@{@}} enclosing an
 @var{expression-list} if this @var{expression-list} only contains a
 single item. Also note that a braced @var{expression-list} can be
@@ -1049,16 +2037,16 @@ model, while @code{Surface @{ : @}} will get the ids of all existing
 surfaces.
 
 @c .........................................................................
-@c Character expressions
+@c String expressions
 @c .........................................................................
 
-@node Character expressions, Color expressions, Floating point expressions, Expressions
-@subsection Character expressions
+@node String expressions, Color expressions, Floating point expression lists, General scripting commands
+@subsection String expressions
 
 @cindex Expressions, character
 @cindex Strings
 
-Character expressions are defined as:
+String expressions are defined as:
 
 @example
 @var{char-expression}:
@@ -1109,7 +2097,7 @@ file. @code{DirName} returns the directory of a file.  @code{Sprintf} is
 equivalent to the @code{sprintf} C function (where @var{char-expression}
 is a format string that can contain floating point formatting
 characters: @code{%e}, @code{%g}, etc.) The various
-@w{@var{char-option}s} are listed in @ref{Options}. @code{GetEnvThe}
+@w{@var{char-option}s} are listed in @ref{Gmsh options}. @code{GetEnvThe}
 gets the value of an environment variable from the operating
 system. @code{GetString} allows to get a ONELAB string value (the second
 optional argument is the default value returned if the variable does not
@@ -1138,12 +2126,11 @@ List of character expressions are defined as:
   @var{char-expression} <,@dots{}>
 @end example
 
-
 @c .........................................................................
 @c Color expressions
 @c .........................................................................
 
-@node Color expressions,  , Character expressions, Expressions
+@node Color expressions, Operators, String expressions, General scripting commands
 @subsection Color expressions
 
 @cindex Expressions, color
@@ -1170,16 +2157,24 @@ blue components (with values comprised between 0 and 255). The third
 case permits to define colors by using their red, green and blue color
 components as well as their alpha channel. The last case permits to use
 the value of a @var{color-option} as a @var{color-expression}. The
-various @w{@var{color-option}s} are listed in @ref{Options}.
+various @w{@var{color-option}s} are listed in @ref{Gmsh options}.
 
 See @ref{t3}, for an example of the use of color expressions.
 
-@c -------------------------------------------------------------------------
+@c .........................................................................
 @c Operators
-@c -------------------------------------------------------------------------
+@c .........................................................................
 
-@node Operators, Built-in functions, Expressions, General tools
-@section Operators
+@menu
+* Operators::
+* Built-in functions::
+* User-defined macros::
+* Loops and conditionals::
+* General commands::
+@end menu
+
+@node Operators, Built-in functions, Color expressions, General scripting commands
+@subsection Operators
 
 @cindex Operators, definition
 @cindex Unary operators
@@ -1291,12 +2286,12 @@ evaluation:
 @end enumerate
 
 
-@c -------------------------------------------------------------------------
+@c .........................................................................
 @c Built-in functions
-@c -------------------------------------------------------------------------
+@c .........................................................................
 
-@node Built-in functions, User-defined macros, Operators, General tools
-@section Built-in functions
+@node Built-in functions, User-defined macros, Operators, General scripting commands
+@subsection Built-in functions
 
 @cindex Functions, built-in
 @findex @var{build-in-function}
@@ -1390,12 +2385,12 @@ Tangent of @var{expression}.
 Hyperbolic tangent of @var{expression}.
 @end ftable
 
-@c -------------------------------------------------------------------------
+@c .........................................................................
 @c User-defined macros
-@c -------------------------------------------------------------------------
+@c .........................................................................
 
-@node User-defined macros, Loops and conditionals, Built-in functions, General tools
-@section User-defined macros
+@node User-defined macros, Loops and conditionals, Built-in functions, General scripting commands
+@subsection User-defined macros
 
 @cindex Macros, user-defined
 
@@ -1423,12 +2418,12 @@ shortcoming of Gmsh's scripting language is that all variables are
 ``public''. Variables defined inside the body of a macro will thus be
 available outside, too!
 
-@c -------------------------------------------------------------------------
+@c .........................................................................
 @c Loops and conditionals
-@c -------------------------------------------------------------------------
+@c .........................................................................
 
-@node Loops and conditionals, General commands, User-defined macros, General tools
-@section Loops and conditionals
+@node Loops and conditionals, General commands, User-defined macros, General scripting commands
+@subsection Loops and conditionals
 
 @cindex Loops
 @cindex Conditionals
@@ -1489,12 +2484,12 @@ evaluated if none of the @var{expression} of the previous matching codes
 End a matching @code{If} command.
 @end ftable
 
-@c -------------------------------------------------------------------------
+@c .........................................................................
 @c General commands
-@c -------------------------------------------------------------------------
+@c .........................................................................
 
-@node General commands, General options, Loops and conditionals, General tools
-@section General commands
+@node General commands,  , Loops and conditionals, General scripting commands
+@subsection General commands
 
 @cindex General commands
 @cindex Commands, general
@@ -1576,7 +2571,7 @@ the maximum of @code{newp}, @code{newl}, @code{news}, @code{newv},
 @code{newll}, @code{newsl} and all physical group tags@footnote{For
 compatibility purposes, the behavior of @code{newl}, @code{news},
 @code{newv} and @code{newreg} can be modified with the
-@code{Geometry.OldNewReg} option (@pxref{Geometry options list}).}.
+@code{Geometry.OldNewReg} option (@pxref{Geometry options}).}.
 @end ftable
 
 @item @var{string} = @{ @};
@@ -1702,9 +2697,9 @@ terminal. @code{Printf} is equivalent to the @code{printf} C function:
 @var{char-expression} is a format string that can contain formatting
 characters (@code{%f}, @code{%e}, etc.). Note that all
 @w{@var{expression}s} are evaluated as floating point values in Gmsh
-(@pxref{Expressions}), so that only valid floating point formatting
-characters make sense in @var{char-expression}. See @ref{t5}, for an
-example of the use of @code{Printf}.
+(@pxref{Floating point expressions}), so that only valid floating point
+formatting characters make sense in @var{char-expression}. See @ref{t5},
+for an example of the use of @code{Printf}.
 
 @item Printf ( @var{char-expression} , @var{expression-list} ) > @var{char-expression};
 Same as @code{Printf} above, but output the expression in a file.
@@ -1772,7 +2767,7 @@ the views.
 Force the bounding box of the scene to the given @w{@var{expression}s}
 (X min, X max, Y min, Y max, Z min, Z max). Beware that order of the
 coordinates is different than in the @code{BoundingBox} commands for
-model entities: see @ref{Floating point expressions}.
+model entities: see @ref{Floating point expression lists}.
 
 @item Delete Model;
 Delete the current model (all model entities and their associated
@@ -1792,7 +2787,7 @@ Delete the expression @var{string}.
 
 @item Print @var{char-expression};
 Print the graphic window in a file named @var{char-expression}, using
-the current @code{Print.Format} (@pxref{General options list}). If the
+the current @code{Print.Format} (@pxref{General options}). If the
 path in @var{char-expression} is not absolute, @var{char-expression} is
 appended to the path of the current file. @value{SYNC}
 
@@ -1831,99 +2826,21 @@ own.  If the path in @var{char-expression} is not absolute,
 @var{char-expression} is appended to the path of the current file.
 @end ftable
 
-@c -------------------------------------------------------------------------
-@c General options
-@c -------------------------------------------------------------------------
-
-@node General options,  , General commands, General tools
-@section General options
-
-The list of all the general @w{@var{char-option}s},
-@w{@var{real-option}s} and @w{@var{color-option}s} (in that
-order---check the default values to see the actual types) is given in
-@ref{General options list}. Most of these options are accessible in the
-GUI, but not all of them. When running Gmsh interactively, changing an
-option in the script file will modify the option in the GUI in real
-time. This permits for example to resize the graphical window in a
-script, or to interact with animations in the script and in the GUI at
-the same time.
-
-@c =========================================================================
-@c Geometry module
-@c =========================================================================
-
-@node Geometry module, Mesh module, General tools, Top
-@chapter Geometry module
-
-@cindex Geometry, module
-@cindex Module, geometry
-
-Geometries can be constructed in Gmsh using different underlying CAD
-kernels. Selecting the CAD kernel in @code{.geo} files is done with the
-@code{SetFactory} command. In the Gmsh API, the kernel appears
-explicitly in all the relevant functions from the @code{gmsh/model}
-namespace, with @code{geo} or @code{occ} prefixes for the built-in and
-OpenCASCADE kernel, respectively.
-
-The built-in CAD kernel (@code{SetFactory("Built-in")}) provides a
-simple CAD engine based on a bottom-up boundary representation approach:
-you need to first define points (using the @code{Point} command: see
-below), then curves (using @code{Line}, @code{Circle}, @code{Spline},
-@dots{}, commands or by extruding points), then surfaces (using for
-example the @code{Plane Surface} or @code{Surface} commands, or by
-extruding curves), and finally volumes (using the @code{Volume} command
-or by extruding surfaces). The OpenCASCADE kernel
-(@code{SetFactory("OpenCASCADE")}) allows to build models in the same
-bottom-up manner, or by using a constructive solid geometry approach
-where solids are defined first. Boolean operations can then be performed
-to modify them.
-
-These geometrical model entities are also referred to as ``elementary
-entities'' in Gmsh, and are assigned tags (stricly positive global
-identification numbers) when they are created:
-
-@enumerate
-@item each point must possess a unique tag;
-@item each curve must possess a unique tag;
-@item each surface must possess a unique tag;
-@item each volume must possess a unique tag.
-@end enumerate
-
-@noindent Elementary entities can then be manipulated in various
-ways, for example using the @code{Translate}, @code{Rotate},
-@code{Scale} or @code{Symmetry} commands. They can be deleted with the
-@code{Delete} command, provided that no higher-dimension entity
-references them. Zero or negative tags are reserved by the system for
-special uses: do not use them in your scripts.
-
-Groups of elementary entities can also be defined and are called
-``physical'' groups. These physical groups cannot be modified by
-geometry commands: their only purpose is to assemble elementary entities
-into larger groups so that they can be referred to later as single
-entities. As is the case with elementary entities, each physical point,
-physical curve, physical surface or physical volume must be assigned a
-unique tag. See @ref{Mesh module}, for more information about how
-physical groups affect the way meshes are saved.
-
-@menu
-* Geometry commands::
-* Geometry options::
-@end menu
 
 @c -------------------------------------------------------------------------
-@c Geometry commands
+@c Geometry scripting commands
 @c -------------------------------------------------------------------------
 
-@node Geometry commands, Geometry options, Geometry module, Geometry module
-@section Geometry commands
+@node Geometry scripting commands, Mesh scripting commands, General scripting commands, Gmsh scripting language
+@section Geometry scripting commands
 
-@cindex Geometry commands
-@cindex Commands, geometry
+@cindex Geometry, scripting commands
+@cindex Scripting commands, geometry
 
 The next subsections describe all the available geometry commands in the
 scripting language. For the equivalent commands in the Gmsh API, see the
 @code{gmsh/model/geo} and @code{gmsh/model/occ} namespaces in @ref{Gmsh
-API}.
+application programming interface}.
 
 Note that the following general syntax rule is followed for the
 definition of model entities: ``If an @var{expression} defines a new
@@ -1945,7 +2862,7 @@ refers to a previously defined entity, it is enclosed between braces.''
 @c Points
 @c .........................................................................
 
-@node Points, Curves, Geometry commands, Geometry commands
+@node Points, Curves, Geometry scripting commands, Geometry scripting commands
 @subsection Points
 
 @cindex Elementary points
@@ -1979,7 +2896,7 @@ is automatically created).
 @c Curves
 @c .........................................................................
 
-@node Curves, Surfaces, Points, Geometry commands
+@node Curves, Surfaces, Points, Geometry scripting commands
 @subsection Curves
 
 @cindex Elementary curves
@@ -2081,7 +2998,7 @@ elementary curves in the saved mesh file.
 @c Surfaces
 @c .........................................................................
 
-@node Surfaces, Volumes, Curves, Geometry commands
+@node Surfaces, Volumes, Curves, Geometry scripting commands
 @subsection Surfaces
 
 @cindex Elementary surfaces
@@ -2166,7 +3083,7 @@ file.
 @c Volumes
 @c .........................................................................
 
-@node Volumes, Extrusions, Surfaces, Geometry commands
+@node Volumes, Extrusions, Surfaces, Geometry scripting commands
 @subsection Volumes
 
 @cindex Elementary volumes
@@ -2252,7 +3169,7 @@ is automatically created).
 @c Extrusions
 @c .........................................................................
 
-@node Extrusions, Boolean operations, Volumes, Geometry commands
+@node Extrusions, Boolean operations, Volumes, Geometry scripting commands
 @subsection Extrusions
 
 @cindex Extrusion, geometry
@@ -2337,8 +3254,8 @@ surface). @code{Chamfer} is only available with the OpenCASCADE kernel.
   <Physical> Point | Curve | Surface @{ @var{expression-list-or-all} @}; @dots{}
 @end example
 
-As explained in @ref{Floating point expressions}, @var{extrude} can be
-used in an expression, in which case it returns a list of tags. By
+As explained in @ref{Floating point expression lists}, @var{extrude} can
+be used in an expression, in which case it returns a list of tags. By
 default, the list contains the ``top'' of the extruded entity at index 0
 and the extruded entity at index 1, followed by the ``sides'' of the
 extruded entity at indices 2, 3, etc.  For example:
@@ -2355,13 +3272,13 @@ extruded entity at indices 2, 3, etc.  For example:
 
 This behaviour can be changed with the
 @code{Geometry.ExtrudeReturnLateralEntities} option (@pxref{Geometry
-options list}).
+options}).
 
 @c .........................................................................
 @c Boolean operations
 @c .........................................................................
 
-@node Boolean operations, Transformations, Extrusions, Geometry commands
+@node Boolean operations, Transformations, Extrusions, Geometry scripting commands
 @subsection Boolean operations
 
 @cindex Boolean operations, geometry
@@ -2404,12 +3321,11 @@ with
 If @code{Delete} is specified in the @var{boolean-list}, the tool and/or
 the object is deleted.
 
-As explained in @ref{Floating point expressions}, @var{boolean} can be
-used in an expression, in which case it returns the list of
-tags of the highest dimensional entities created by
-the boolean operation.  See
-@url{@value{GITLAB-PREFIX}/examples/boolean/,examples/boolean}
-for examples.
+As explained in @ref{Floating point expression lists}, @var{boolean} can
+be used in an expression, in which case it returns the list of tags of
+the highest dimensional entities created by the boolean operation.  See
+@url{@value{GITLAB-PREFIX}/examples/boolean/,examples/boolean} for
+examples.
 
 An alternative syntax exists for boolean operations, which can be used
 when it is known beforehand that the operation will result in a single
@@ -2438,7 +3354,7 @@ Boolean operations are only available with the OpenCASCADE geometry kernel.
 @c Transformations
 @c .........................................................................
 
-@node Transformations, Miscellaneous geometry commands, Boolean operations, Geometry commands
+@node Transformations, Miscellaneous geometry commands, Boolean operations, Geometry scripting commands
 @subsection Transformations
 
 @cindex Transformations, geometry
@@ -2535,7 +3451,7 @@ lines, splines and BSplines.
 @c Miscellaneous
 @c .........................................................................
 
-@node Miscellaneous geometry commands,  , Transformations, Geometry commands
+@node Miscellaneous geometry commands,  , Transformations, Geometry scripting commands
 @subsection Miscellaneous
 
 Here is a list of all other geometry commands currently available:
@@ -2546,7 +3462,7 @@ Remove all duplicate elementary entities (e.g., points having identical
 coordinates). Note that with the built-in geometry kernel Gmsh executes
 the @code{Coherence} command automatically after each geometrical
 transformation, unless @code{Geometry.AutoCoherence} is set to zero
-(@pxref{Geometry options list}). With the OpenCASCADE geometry kernel,
+(@pxref{Geometry options}). With the OpenCASCADE geometry kernel,
 @code{Coherence} is simply a shortcut for a @code{BooleanFragments}
 operation on all entities, with the @code{Delete} operator applied to
 all operands.
@@ -2602,217 +3518,14 @@ Restore the default planar geometry for the built-in geometry kernel.
 @end ftable
 
 @c -------------------------------------------------------------------------
-@c Geometry options
+@c Mesh scripting commands
 @c -------------------------------------------------------------------------
 
-@node Geometry options,  , Geometry commands, Geometry module
-@section Geometry options
+@node Mesh scripting commands, Solver scripting commands, Geometry scripting commands, Gmsh scripting language
+@section Mesh scripting commands
 
-@cindex Options, geometry
-@cindex Geometry, options
-
-The list of all the options that control the behavior of geometry
-commands, as well as the way model entities are handled in the GUI, is
-given in @ref{Geometry options list}.
-
-@c =========================================================================
-@c Mesh module
-@c =========================================================================
-
-@node Mesh module, Solver module, Geometry module, Top
-@chapter Mesh module
-
-@cindex Mesh, module
-@cindex Module, Mesh
-
-Gmsh's mesh module regroups several 1D, 2D and 3D meshing algorithms,
-all producing grids conforming in the sense of finite elements
-(@pxref{Mesh}):
-
-@itemize @bullet
-@item
-The 2D @emph{unstructured} algorithms generate triangles and/or
-quadrangles (when recombination commands or options are used). The 3D
-@emph{unstructured} algorithms generate tetrahedra, or tetrahedra and
-pyramids (when the boundary mesh contains quadrangles).
-@item
-The 2D @emph{structured} algorithms (transfinite and extrusion) generate
-triangles by default, but quadrangles can be obtained by using the
-@code{Recombine} commands (see @ref{Structured grids}, and
-@ref{Miscellaneous mesh commands}). The 3D @emph{structured} algorithms
-generate tetrahedra, hexahedra, prisms and pyramids, depending on the
-type of the surface meshes they are based on.
-@end itemize
-
-All meshes can be subdivided to generate fully quadrangular or fully
-hexahedral meshes with the @code{Mesh.SubdivisionAlgorithm} option
-(@pxref{Mesh options list}).
-
-@c todo: explain what happens if we have a degenerate geometry (incorrect
-@c holes with surfaces in contact with the exterior shell, intersecting
-@c primitives, etc.)
-
-@menu
-* Choosing the right unstructured algorithm::
-* Elementary entities vs physical groups::
-* Mesh commands::
-* Mesh options::
-@end menu
-
-@c -------------------------------------------------------------------------
-@c Choosing the right unstructured algorithm
-@c -------------------------------------------------------------------------
-
-@node Choosing the right unstructured algorithm, Elementary entities vs physical groups, Mesh module, Mesh module
-@section Choosing the right unstructured algorithm
-
-Gmsh provides a choice between several 2D and 3D unstructured
-algorithms. Each algorithm has its own advantages and disadvantages.
-
-For all 2D unstructured algorithms a Delaunay mesh that contains all the
-points of the 1D mesh is initially constructed using a
-divide-and-conquer algorithm@footnote{R. A. Dwyer, @emph{A simple
-divide-and-conquer algorithm for computing Delaunay triangulations in
-O(n log n) expected time}, In Proceedings of the second annual symposium
-on computational geometry, Yorktown Heights, 2--4 June 1986.}. Missing
-edges are recovered using edge swaps@footnote{N. P. Weatherill,
-@emph{The integrity of geometrical boundaries in the two-dimensional
-Delaunay triangulation}, Commun. Appl. Numer. Methods 6(2),
-pp. 101--109, 1990.}. After this initial step several algorithms can be
-applied to generate the final mesh:
-
-@itemize
-@item
-The ``MeshAdapt'' algorithm@footnote{C. Geuzaine and J.-F. Remacle,
-@emph{Gmsh: a three-dimensional finite element mesh generator with
-built-in pre- and post-processing facilities}, International Journal for
-Numerical Methods in Engineering 79(11), pp. 1309--1331, 2009.} is based
-on local mesh modifications. This technique makes use of edge swaps,
-splits, and collapses: long edges are split, short edges are collapsed,
-and edges are swapped if a better geometrical configuration is obtained.
-@item
-The ``Delaunay'' algorithm is inspired by the work of the GAMMA team at
-INRIA@footnote{P.-L. George and P. Frey, @emph{Mesh generation}, Hermes,
-Lyon, 2000.}. New points are inserted sequentially at the circumcenter
-of the element that has the largest adimensional circumradius. The mesh
-is then reconnected using an anisotropic Delaunay criterion.
-@item
-The ``Frontal-Delaunay'' algorithm is inspired by the work of
-S. Rebay@footnote{S. Rebay, @emph{Efficient unstructured mesh generation
-by means of Delaunay triangulation and Bowyer-Watson algorithm},
-J. Comput.  Phys. 106, pp. 25--138, 1993.}.
-@item
-Other experimental algorithms with specific features are also
-available. In particular, ``Frontal-Delaunay for
-Quads''@footnote{J.-F. Remacle, F. Henrotte, T. Carrier-Baudouin,
-E. Béchet, E. Marchandise, C. Geuzaine and T. Mouton, @emph{A frontal
-Delaunay quad mesh generator using the Linf norm}, International Journal
-for Numerical Methods in Engineering, 94(5), pp. 494-512, 2013.} is a
-variant of the ``Frontal-Delaunay'' algorithm aiming at generating
-right-angle triangles suitable for recombination; and
-``BAMG''@footnote{F. Hecht, @emph{BAMG: bidimensional anisotropic mesh
-generator}, User Guide, INRIA, Rocquencourt, 1998.} allows to generate
-anisotropic triangulations.
-@end itemize
-
-For very complex curved surfaces the ``MeshAdapt'' algorithm is the most
-robust. When high element quality is important, the ``Frontal-Delaunay''
-algorithm should be tried. For very large meshes of plane surfaces the
-``Delaunay'' algorithm is the fastest; it usually also handles complex
-mesh size fields better than the ``Frontal-Delaunay''.  When the
-``Delaunay'' or ``Frontal-Delaunay'' algorithms fail, ``MeshAdapt'' is
-automatically triggered. The ``Automatic'' algorithm uses ``Delaunay''
-for plane surfaces and ``MeshAdapt'' for all other surfaces.
-
-Several 3D unstructured algorithms are also available:
-
-@itemize
-@item
-The ``Delaunay'' algorithm is split into three separate steps. First, an
-initial mesh of the union of all the volumes in the model is performed,
-without inserting points in the volume. The surface mesh is then
-recovered using H. Si's boundary recovery algorithm Tetgen/BR. Then a
-three-dimensional version of the 2D Delaunay algorithm described above
-is applied to insert points in the volume to respect the mesh size
-constraints.
-@item
-The ``Frontal'' algorithm uses J. Schoeberl's Netgen algorithm
-@footnote{J. Schoeberl, @emph{Netgen, an advancing front 2d/3d-mesh
-generator based on abstract rules}, Comput. Visual. Sci., 1, pp. 41--52,
-1997.}.
-@item
-The ``HXT'' algorithm@footnote{C. Marot, J. Pellerin and J.‐F. Remacle,
-@emph{One machine, one minute, three billion tetrahedra}, International
-Journal for Numerical Methods in Engineering 117.9, pp 967-990, 2019.}
-is a new efficient and parallel reimplementaton of the Delaunay
-algorithm.
-@item
-Other experimental algorithms with specific features are also available.
-In particular, ``MMG3D''@footnote{C. Dobrzynski, @emph{MMG3D: user
-guide}, INRIA, 2012.}  allows to generate anisotropic
-tetrahedralizations.
-@end itemize
-
-The ``Delaunay'' algorithm is currently the most robust and is the only
-one that supports the automatic generation of hybrid meshes with
-pyramids. Embedded model entities and the @code{Field} mechanism to
-specify element sizes (@pxref{Specifying mesh element sizes}) are
-currently only supported by the ``Delaunay'' and ``HXT'' algorithms.
-
-If your version of Gmsh is compiled with OpenMP support
-(@pxref{Compiling the source code}), most of the meshing steps can be
-performed in parallel:
-@itemize
-@item
-1D and 2D meshing is parallelized using a coarse-grained approach,
-i.e. curves (resp. surfaces) are each meshed sequentially, but several
-curves (resp. surfaces) can be meshed at the same time.
-@item
-3D meshing using HXT is parallelized using a fine-grained approach,
-i.e. the actual meshing procedure for a single volume is done is
-parallel.
-@end itemize
-The number of threads can be controlled with the @code{-nt} flag on the
-command line (@pxref{Command-line options}), or with the
-@code{General.NumThreads}, @code{Mesh.MaxNumThreads1D},
-@code{Mesh.MaxNumThreads2D} and @code{Mesh.MaxNumThreads3D} options (see
-@ref{General options list} and @ref{Mesh options list}).
-
-@c -------------------------------------------------------------------------
-@c Elementary entities vs. physical groups
-@c -------------------------------------------------------------------------
-
-@node Elementary entities vs physical groups, Mesh commands, Choosing the right unstructured algorithm, Mesh module
-@section Elementary entities vs. physical groups
-
-It is usually convenient to combine elementary geometrical entities into
-more meaningful groups, e.g. to define some mathematical (``domain'',
-``boundary with Neumann condition''), functional (``left wing'',
-``fuselage'') or material (``steel'', ``carbon'') properties.  Such
-grouping is done in Gmsh's geometry module (@pxref{Geometry module})
-through ``physical groups''.
-
-By default in the MSH file format and in most other formats (@pxref{File
-formats}), if physical groups are defined, the output mesh only contains
-those elements that belong to at least one physical group. (Different
-mesh file formats treat physical groups in slightly different ways,
-depending on their capability to define groups.)
-
-To save all mesh elements wether or not physical groups are defined, use
-the @code{Mesh.SaveAll} option (@pxref{Mesh options list}) or specify
-@code{-save_all} on the command line. In some formats (e.g. MSH2),
-setting @code{Mesh.SaveAll=1} will however discard all physical group
-definitions.
-
-@c -------------------------------------------------------------------------
-@c Mesh commands
-@c -------------------------------------------------------------------------
-
-@node Mesh commands, Mesh options, Elementary entities vs physical groups, Mesh module
-@section Mesh commands
-
-@cindex Mesh commands
-@cindex Commands, mesh
+@cindex Mesh, scripting commands
+@cindex Scripting commands, Mesh
 
 The mesh module commands allow to modify the mesh element sizes and
 specify structured grid parameters. Certain mesh ``actions'' (i.e.,
@@ -2821,108 +3534,18 @@ also be specified in the script files but are usually performed either
 in the GUI or on the command line (see @ref{Running Gmsh on your
 system}, and @ref{Command-line options}).
 
-In the Gmsh API, the mesh commands are available in the
-@code{gmsh/model/mesh} module (@pxref{Gmsh API}).
-
 @menu
-* Specifying mesh element sizes::
+* Mesh element sizes::
 * Structured grids::
 * Miscellaneous mesh commands::
 @end menu
 
 @c .........................................................................
-@c Specifying mesh element sizes
+@c Mesh element sizes
 @c .........................................................................
 
-@node Specifying mesh element sizes, Structured grids, Mesh commands, Mesh commands
-@subsection Specifying mesh element sizes
-
-@cindex Mesh size
-@cindex Mesh, element size
-@cindex Size, elements
-@cindex Mesh, background
-@cindex Background mesh
-
-There are several  ways to specify the size of the mesh elements for a
-given geometry:
-
-@enumerate
-@item
-First, if the two options @code{Mesh.MeshSizeFromPoints} and
-@code{Mesh.MeshSizeExtendFromBoundary} are set (they are by default; see
-@ref{Mesh options list}), you can simply specify desired mesh element
-sizes at the geometrical points of the model. The size of the mesh
-elements will then be computed by interpolating these values inside the
-domain during mesh generation. This might sometimes lead to
-over-refinement in some areas, so that you may have to add ``dummy''
-geometrical entities in the model in order to get the desired element
-sizes or use more advanced methods explained below.
-@item
-Second, if @code{Mesh.MeshSizeFromCurvature} is set to a positive value
-(it is set to 0 by default), the mesh will be adapted with respect to
-the curvature of the model entities, the value giving the target number
-of elements per 2 Pi radians.
-@item
-Next, you can specify a general background mesh size, expressed as a
-combination of so-called mesh size fields:
-@itemize @bullet
-@item
-The @code{Box} field specifies the size of the elements inside and
-outside of a parallelepipedic region.
-@item
-The @code{Distance} field specifies the size of the mesh according to
-the distance to some model entities.
-@item
-The @code{MathEval} field specifies the size of the mesh using an
-explicit mathematical function.
-@item
-The @code{PostView} field specifies an explicit background mesh in the
-form of a scalar post-processing view (see @ref{Post-processing
-commands}, and @ref{File formats}) in which the nodal values are the
-target element sizes.  This method is very general but it requires a
-first (usually rough) mesh and a way to compute the target sizes on this
-mesh (usually through an error estimation procedure, in an iterative
-process of mesh adaptation). Warning: only parsed (@file{.pos}) files
-can currently be used as background meshes (@file{.msh} files cannot be
-used, since the mesh used to define the field will be destroyed during
-the meshing process). (Note that you can also load a background mesh
-directly from the command line using the @code{-bgm} option
-(@pxref{Command-line options}), or in the GUI by selecting `Apply as
-background mesh' in the post-processing view option menu.)
-@item
-The @code{Min} field specifies the size as the minimum of the sizes
-computed using other fields.
-@item
-@dots{}
-@end itemize
-The list of available fields with their options is given below. An
-example is available in @ref{t10}.
-@end enumerate
-
-All the aforementioned methods can be used simultaneously, in which case
-the smallest element size is selected at any given point.  Using the
-Gmsh API, the resulting value can be further modified using a C++, C,
-Python, Julia or Fortran mesh size callback function provided via
-@code{gmsh/model/mesh/setSizeCallback} (@pxref{Namespace
-gmsh/model/mesh}). In addition, boundary mesh sizes are interpolated
-inside surfaces and/or volumes depending on the value of
-@code{Mesh.MeshSizeExtendFromBoundary}.
-
-All element sizes are further constrained in the interval [
-@code{Mesh.MeshSizeMin}, @code{Mesh.MeshSizeMax} ] (which can also be
-provided on the command line with @code{-clmin} and @code{-clmax}). The
-resulting value is then finally multiplied by @code{Mesh.MeshSizeFactor}
-(@code{-clscale} on the command line).
-
-Note that when the element size is fully specified by a background mesh
-field, it is thus often desirable to set
-@smallexample
-Mesh.MeshSizeFromPoints = 0;
-Mesh.MeshSizeFromCurvature = 0;
-Mesh.MeshSizeExtendFromBoundary = 0;
-@end smallexample
-to prevent over-refinement inside an entity due to small mesh sizes on
-its boundary.
+@node Mesh element sizes, Structured grids, Mesh scripting commands, Mesh scripting commands
+@subsection Mesh element sizes
 
 Here are the mesh commands that are related to the specification of
 mesh element sizes:
@@ -2943,15 +3566,11 @@ sizes. Only one background field can be given; if you want to combine
 several field, use the @code{Min} or @code{Max} field (see below).
 @end ftable
 
-Here is the list of all available fields with their associated options:
-
-@include opt_fields.texi
-
 @c .........................................................................
 @c Structured grids
 @c .........................................................................
 
-@node Structured grids, Miscellaneous mesh commands, Specifying mesh element sizes, Mesh commands
+@node Structured grids, Miscellaneous mesh commands, Mesh element sizes, Mesh scripting commands
 @subsection Structured grids
 
 @cindex Extrusion, mesh
@@ -3153,7 +3772,7 @@ volumes, TransfQuadTri has no effect on those volumes. @value{SYNC}
 @c Miscellaneous
 @c .........................................................................
 
-@node Miscellaneous mesh commands,  , Structured grids, Mesh commands
+@node Miscellaneous mesh commands,  , Structured grids, Mesh scripting commands
 @subsection Miscellaneous
 
 Here is a list of all other mesh commands currently available:
@@ -3328,7 +3947,7 @@ triangulation. @value{SYNC}
 
 @item Save @var{char-expression};
 Save the current mesh in a file named @var{char-expression}, using the
-current @code{Mesh.Format} (@pxref{Mesh options list}). If the path in
+current @code{Mesh.Format} (@pxref{Mesh options}). If the path in
 @var{char-expression} is not absolute, @var{char-expression} is appended
 to the path of the current file. @value{SYNC}
 
@@ -3355,28 +3974,14 @@ for cohomology spaces instead.
 @end ftable
 
 @c -------------------------------------------------------------------------
-@c Mesh options
+@c Solver scripting commands
 @c -------------------------------------------------------------------------
 
-@node Mesh options,  , Mesh commands, Mesh module
-@section Mesh options
+@node Solver scripting commands, Post-processing scripting commands, Mesh scripting commands, Gmsh scripting language
+@section Solver scripting commands
 
-@cindex Options, mesh
-@cindex Mesh, options
-
-The list of all the options that control the behavior of mesh commands,
-as well as the way meshes are displayed in the GUI, is given in
-@ref{Mesh options list}.
-
-@c =========================================================================
-@c Solver module
-@c =========================================================================
-
-@node Solver module, Post-processing module, Mesh module, Top
-@chapter Solver module
-
-@cindex Solver, module
-@cindex Module, Solver
+@cindex Solver, scripting commands
+@cindex Scripting commands, Solver
 
 Solvers and other external codes can be driven by Gmsh through the
 ONELAB interface (see @url{http://www.onelab.info}), which allows to
@@ -3400,72 +4005,23 @@ examples. A full-featured solver interfaced in this manner is GetDP
 (@uref{https://getdp.info}), a general finite element solver using mixed
 finite elements.
 
-The list of all the solver options is given in @ref{Solver options
-list}.
+The list of all the solver options is given in @ref{Solver options}.
 
-@c =========================================================================
-@c Post-processing module
-@c =========================================================================
+@c -------------------------------------------------------------------------
+@c Post-processing scripting commands
+@c -------------------------------------------------------------------------
 
-@node Post-processing module, File formats, Solver module, Top
-@chapter Post-processing module
+@node Post-processing scripting commands,  , Solver scripting commands, Gmsh scripting language
+@section Post-processing scripting commands
 
-@cindex Post-processing, module
-@cindex Module, Post-processing
+@cindex Post-processing, scripting commands
+@cindex Scripting commands, Post-processing
 @cindex 2D plots
 @cindex 3D plots
 @cindex Plots
 @cindex Graphs
 @cindex Views
 
-Gmsh's post-processing module can handle multiple scalar, vector or
-tensor datasets along with the geometry and the mesh. The datasets can
-be given in several formats: in human-readable ``parsed'' format (these
-are just part of a standard input script, but are usually put in
-separate files with a @file{.pos} extension), in native MSH files (ASCII
-or binary files with @file{.msh} extensions: see @ref{File formats}), or
-in standard third-party formats. Datasets can also be directly imported
-using the Gmsh API, in the @code{gmsh/view} module (@pxref{Gmsh API}).
-
-Once loaded into Gmsh, scalar fields can be displayed as iso-curves,
-iso-surfaces or color maps, whereas vector fields can be represented
-either by three-dimensional arrows or by displacement maps. Tensor
-fields can be displayed as Von-Mises effective stresses, min/max
-eigenvalues, eigenvectors, ellipses or ellipsoids. (To display other
-(combinations of) components, you can use the @code{Force scalar} or
-@code{Force vector} options, or use @code{Plugin(MathEval)}: see
-@ref{Post-processing plugins}.)
-
-In Gmsh's jargon, each dataset, along with the visualization options, is
-called a ``post-processing view'', or simply a ``view''. Each view is
-given a name, and can be manipulated either individually (each view has
-its own button in the GUI and can be referred to by its index in a
-script or in the API) or globally (see the @code{PostProcessing.Link}
-option in @ref{Post-processing options list}).
-
-By default, Gmsh treats all post-processing views as three-dimensional
-plots, i.e., draws the scalar, vector and tensor primitives (points, curves,
-triangles, tetrahedra, etc.) in 3D space. But Gmsh can also represent each
-post-processing view containing @emph{scalar points} as two-dimensional
-(``X-Y'') plots, either space- or time-oriented:
-
-@itemize @bullet
-@item
-in a `2D space' plot, the scalar points are taken in the same order as they
-are defined in the post-processing view: the abscissa of the 2D graph is
-the curvilinear abscissa of the curve defined by the point series, and only
-one curve is drawn using the values associated with the points. If several
-time steps are available, each time step generates a new curve;
-@item
-in a `2D time' plot, one curve is drawn for each scalar point in the view
-and the abscissa is the time step.
-@end itemize
-
-Although visualization is usually mostly an interactive task, Gmsh
-exposes all the post-processing commands and options to the user in its
-scripting language and through the API to permit a complete automation
-of the post-processing process (see e.g., @ref{t8}, and
-@ref{t9}).
 
 The two following sections summarize all available post-processing commands
 and options. Most options apply to both 2D and 3D plots (colormaps,
@@ -3479,27 +4035,7 @@ the native MSH file format are available in the
 @url{@value{GITLAB-PREFIX}/tutorials,tutorials}
 directory of Gmsh's distribution (@file{.pos} and @file{.msh}
 files). The ``parsed'' format is defined in the next section (cf. the
-@code{View} command); the MSH format is defined in @ref{File formats}.
-
-@menu
-* Post-processing commands::
-* Post-processing plugins::
-* Post-processing options::
-@end menu
-
-@c -------------------------------------------------------------------------
-@c Post-processing commands
-@c -------------------------------------------------------------------------
-
-@node Post-processing commands, Post-processing plugins, Post-processing module, Post-processing module
-@section Post-processing commands
-
-@cindex Post-processing commands
-@cindex Commands, post-processing
-
-This section describes the post-processing commands availanble in the
-scripting language. For the equivalent commands in the Gmsh API, see the
-@code{gmsh/view} module in @ref{Gmsh API}.
+@code{View} command); the MSH format is defined in @ref{Gmsh file formats}.
 
 @ftable @code
 @item Alias View[@var{expression}];
@@ -3567,10 +4103,10 @@ background mesh. Note that post-processing view indices start at 0.
 
 @item Plugin (@var{string}) . Run;
 Execute the plugin @var{string}. The list of default plugins is given in
-@ref{Post-processing plugins}.
+@ref{Gmsh plugins}.
 
 @item Plugin (@var{string}) . @var{string} = @var{expression} | @var{char-expression};
-Set an option for a given plugin. See @ref{Post-processing plugins}, for a
+Set an option for a given plugin. See @ref{Gmsh plugins}, for a
 list of default plugins and @ref{t9}, for some examples.
 
 @item Save View[@var{expression}] @var{char-expression};
@@ -3596,7 +4132,7 @@ makes it inefficient if there are many elements in the dataset. Also,
 there is no connectivity information in parsed views and all the
 elements are independent (all fields can be discontinuous), so a lot of
 information can be duplicated. For large datasets, you should thus use
-the mesh-based post-processing file format described in @ref{File
+the mesh-based post-processing file format described in @ref{Gmsh file
 formats}, or use one of the standard formats like MED.
 
 More explicitly, the syntax for a parsed @code{View} is the following
@@ -3756,46 +4292,266 @@ INTERPOLATION_SCHEME
 
 @end ftable
 
+@c =========================================================================
+@c Gmsh application programming interface
+@c =========================================================================
+
+@node Gmsh application programming interface, Gmsh options, Gmsh scripting language, Top
+@chapter Gmsh application programming interface
+
+@cindex API
+@cindex Programming, API
+
+The Gmsh application programming interface (API) allows you to integrate
+the Gmsh library in your own application. By design, the Gmsh API is
+purely functional, and only uses elementary types from the target
+language. Currently supported languages are C++, C, Python and Julia.
+See the @url{@value{GITLAB-PREFIX}/tutorials/c++,tutorials/c++},
+@url{@value{GITLAB-PREFIX}/tutorials/c,tutorials/c},
+@url{@value{GITLAB-PREFIX}/tutorials/python,tutorials/python} and
+@url{@value{GITLAB-PREFIX}/tutorials/julia,tutorials/julia} directories
+from the @ref{Gmsh tutorial} for examples. For other API examples, see the
+@url{@value{GITLAB-PREFIX}/examples/api/,examples/api} directory.
+
+The different versions of the API are generated automatically from the
+master API definition file
+@url{@value{GITLAB-PREFIX}/api/gen.py,api/gen.py}:
+
+@itemize @bullet
+@item C++ API: @url{@value{GITLAB-PREFIX}/api/gmsh.h,gmsh.h}
+@item C API: @url{@value{GITLAB-PREFIX}/api/gmshc.h,gmshc.h}
+@item Python API: @url{@value{GITLAB-PREFIX}/api/gmsh.py,gmsh.py}
+@item Julia API: @url{@value{GITLAB-PREFIX}/api/gmsh.jl,gmsh.jl}
+@end itemize
+
+The additional
+@url{@value{GITLAB-PREFIX}/api/gmsh.h_cwrap,gmsh.h_cwrap}
+header redefines the C++ API in terms of the C API. This is provided as
+a convenience for users of the @url{https://gmsh.info/bin,binary Gmsh
+Software Development Kit (SDK)} whose C++ compiler Application Binary
+Interface (ABI) is not compatible with the ABI of the C++ compiler used
+to create the SDK. To use these C++ bindings of the C API instead of the
+native C++ API, simply rename @code{gmsh.h_cwrap} as @code{gmsh.h}. Note
+that this will lead to (slightly) reduced performance compared to using
+the native Gmsh C++ API, as it entails additional data copies between
+the C++ wrapper, the C API and the native C++ code.
+
+The structure of the API reflects the underlying Gmsh data model (see
+also @ref{Source code structure}):
+@itemize
+@item
+There are two main data containers: @emph{models} (which hold the
+geometrical and the mesh data) and @emph{views} (which hold
+post-processing data). These are manipulated by the API functions in the
+top-level namespaces @code{gmsh/model} and @code{gmsh/view},
+respectively. The other top-level namespaces are @code{gmsh/option}
+(which handles all options), @code{gmsh/plugin} (which handles
+extensions to core Gmsh functionality), @code{gmsh/graphics} (which
+handles drawing), @code{gmsh/fltk} (which handles the graphical user
+interface), @code{gmsh/parser} (which handles the Gmsh parser),
+@code{gmsh/onelab} (which handles ONELAB parameters and communications
+with external codes) and @code{gmsh/logger} (which handles information
+logging).
+@item
+Geometrical data is made of model @emph{entities}, called @emph{points}
+(entities of dimension 0), @emph{curves} (entities of dimension 1),
+@emph{surfaces} (entities of dimension 2) or @emph{volumes} (entities of
+dimension 3). Model entities are stored using a boundary representation:
+a volume is bounded by a set of surfaces, a surface is bounded by a
+series of curves, and a curve is bounded by two end points. Volumes and
+surfaces can also store @emph{embedded} entities of lower dimension, to
+force a subsequent mesh to be conformal to internal features like a
+point in the middle of a surface. Model entities are identified by a
+pair of integers: their dimension @emph{dim} (0, 1, 2 or 3) and their
+@emph{tag}, a strictly positive identification number. @emph{Physical
+groups} are collections of model entities and are also identified by
+their dimension and by a @emph{tag}. Operations which do not directly
+reference a model are performed on the @emph{current} model.
+@item
+Model entities can be either CAD entities (from the built-in @emph{geo}
+kernel or from the OpenCASCADE @emph{occ} kernel) or @emph{discrete}
+entities (defined by a mesh). Operations on CAD entities are performed
+directly within their respective CAD kernels (i.e. using functions from
+the @code{gmsh/model/geo} or @code{gmsh/model/occ} namespaces,
+respectively), as Gmsh does not translate across CAD formats but rather
+directly accesses the native representation. CAD entities must be
+@emph{synchronized} with the model in order to be meshed, or, more
+generally, for functions outside of @code{gmsh/model/geo} or
+@code{gmsh/model/occ} to manipulate them. 1D and 2D meshing algorithms
+use the @emph{parametrization} of the underlying geometrical curve or
+surface to generate the mesh. Discrete entities can be remeshed provided
+that a parametrization is explicitly recomputed for them.
+@item
+Mesh data is made of @emph{elements} (points, lines, triangles,
+quadrangles, tetrahedra, hexahedra, prisms, pyramids, ...), defined by
+an ordered list of their @emph{nodes}. Elements and nodes are identified
+by @emph{tags} (strictly positive identification numbers), and are
+stored (@emph{classified}) in the model entity they discretize. Once
+meshed, a model entity of dimension 0 (a geometrical point) will thus
+contain a mesh element of type point (MSH type 15: cf. @ref{MSH file
+format}), as well as a mesh node. A model curve will contain line
+elements (e.g. of MSH type 1 or 8 for first order or second order
+meshes, respectively) as well as its interior nodes, while its boundary
+nodes will be stored in the bounding model points. A model surface will
+contain triangular and/or quadrangular elements and all the nodes not
+classified on its boundary or on its embedded entities (curves and
+points). A model volume will contain tetrahedra, hexahedra, etc. and all
+the nodes not classified on its boundary or on its embedded entities
+(surfaces, curves and points). This data model allows to easily and
+efficiently handle the creation, modification and destruction of
+conformal meshes. All the mesh-related functions are provided in the
+@code{gmsh/model/mesh} namespace.
+@item
+Post-processing data is made of @emph{views}. Each view is identified by
+a @emph{tag}, and can also be accessed by its @emph{index} (which can
+change when views are sorted, added or deleted). A view stores both
+display @emph{options} and @emph{data}, unless the view is an
+@emph{alias} of another view (in which case it only stores display
+options, and the data points to a reference view).  View data can
+contain several @emph{steps} (e.g. to store time series) and can be
+either linked to one or more models@footnote{Each step can be linked to
+a different model, which allows to have a single time series based on
+multiple (e.g. deforming or moving) meshes.} (@emph{mesh-based} data, as
+stored in MSH files: cf. @ref{MSH file format}) or independent from any
+model (@emph{list-based} data, as stored in parsed POS files:
+cf. @ref{Post-processing scripting commands}). Various @emph{plugins} exist to
+modify and create views.
+@end itemize
+
+All the functions available in the API are given below. See the relevant
+header/module file for the exact definition in each supported language:
+in @url{@value{GITLAB-PREFIX}/api/gmsh.h,C++}
+@code{gmsh/model/geo/addPoint} will lead to a namespaced function
+@code{gmsh::model::geo::addPoint}, while in
+@url{@value{GITLAB-PREFIX}/api/gmsh.py,Python} and
+@url{@value{GITLAB-PREFIX}/api/gmsh.jl,Julia} it will lead to
+@code{gmsh.model.geo.addPoint}, and in
+@url{@value{GITLAB-PREFIX}/api/gmshc.h,C} to
+@code{gmshModelGeoAddPoint}.  In addition to the default ``camelCase''
+function names, the Python and Julia APIs also define ``snake case''
+aliases, i.e. @code{gmsh.model.geo.add_point}, as this is the
+recommended style in these languages.  Output values are passed by
+reference in C++, as pointers in C and directly returned (after the
+return value, if any) in Python and Julia.
+
+@include api.texi
+
+@c =========================================================================
+@c Gmsh options
+@c =========================================================================
+
+@node Gmsh options, Gmsh mesh size fields, Gmsh application programming interface, Top
+@chapter Gmsh options
+
+TODO rework this section; link to tutorial 10, to the expression
+scripting command and to the get/setNumber/string API function.
+
+Most of these options are accessible in the GUI, but not all of
+them. When running Gmsh interactively, changing an option in the script
+file will modify the option in the GUI in real time. This permits for
+example to resize the graphical window in a script, or to interact with
+animations in the script and in the GUI at the same time.
+
+This chapter lists all the available options.  Gmsh's default behavior
+is to save some of these options in a per-user ``session resource'' file
+(cf. ``Saved in: @code{General.SessionFileName}'' in the lists below)
+every time Gmsh is shut down. This permits for example to automatically
+remember the size and location of the windows or which fonts to use. A
+second set of options can be saved (automatically or manually with the
+`File->Save Options As Default' menu) in a per-user ``option'' file
+(cf. ``Saved in: @code{General.OptionsFileName}'' in the lists below),
+automatically loaded by Gmsh every time it starts up. Finally, other
+options are only saved to disk manually, either by explicitly saving an
+option file with `File->Export', or when saving per-model options with
+`File->Save Model Options' (cf. ``Saved in: @code{-}'' in the lists
+below).
+
+To reset all options to their default values, use `Help->Restore All
+Options to Default Settings' or the `Restore all options to default
+settings' button in `Tools->Options->General->Advanced', or erase the
+@code{General.SessionFileName} and @code{General.OptionsFileName} files
+by hand.
+
+All the options can be manipulated through the Gmsh API through the
+@code{gmsh/option} namespace (@pxref{Gmsh application programming interface}).
+
+@c All the included files are generated automatically with `gmsh -doc'
+
+@menu
+* General options::
+* Print options::
+* Geometry options::
+* Mesh options::
+* Solver options::
+* Post-processing options::
+* Post-processing view options::
+@end menu
+
 @c -------------------------------------------------------------------------
-@c Post-processing plugins
+@c General options
 @c -------------------------------------------------------------------------
 
-@node Post-processing plugins, Post-processing options, Post-processing commands, Post-processing module
-@section Post-processing plugins
+@node General options, Print options, Gmsh options, Gmsh options
+@section General options
 
-@cindex Post-processing plugins
-@cindex Plugins, post-processing
+@include opt_general.texi
 
-Post-processing plugins permit to extend the functionality of Gmsh's
-post-processing module. The difference between regular post-processing
-options (@pxref{Post-processing options list}) and post-processing
-plugins is that regular post-processing options only change the way the
-data is displayed, while post-processing plugins either create new
-post-processing views, or modify the data stored in a view (in a
-destructive, non-reversible way).
+@c -------------------------------------------------------------------------
+@c Print options
+@c -------------------------------------------------------------------------
 
-Plugins are available in the GUI by right-clicking on a view button (or
-by clicking on the black arrow next to the view button) and then
-selecting the `Plugin' submenu. In the API, plugins are available in the
-@code{gmsh/plugin} module (@pxref{Gmsh API}).
+@node Print options, Geometry options, General options, Gmsh options
+@section Print options
 
-Here is the list of the plugins that are shipped by default with Gmsh:
+@include opt_print.texi
 
-@include opt_plugin.texi
+@c -------------------------------------------------------------------------
+@c Geometry options
+@c -------------------------------------------------------------------------
+
+@node Geometry options, Mesh options, Print options, Gmsh options
+@section Geometry options
+
+@include opt_geometry.texi
+
+@c -------------------------------------------------------------------------
+@c Mesh options
+@c -------------------------------------------------------------------------
+
+@node Mesh options, Solver options, Geometry options, Gmsh options
+@section Mesh options list
+
+@include opt_mesh.texi
+
+@c -------------------------------------------------------------------------
+@c Solver options
+@c -------------------------------------------------------------------------
+
+@node Solver options, Post-processing options, Mesh options, Gmsh options
+@section Solver options
+
+@include opt_solver.texi
 
 @c -------------------------------------------------------------------------
 @c Post-processing options
 @c -------------------------------------------------------------------------
 
-@node Post-processing options,  , Post-processing plugins, Post-processing module
+@node Post-processing options, Post-processing view options, Solver options, Gmsh options
 @section Post-processing options
 
 @cindex Post-processing, options
 @cindex Options, post-processing
 
-General post-processing option names have the form
-`@code{PostProcessing.@var{string}}'. Options peculiar to post-processing
-views take two forms.
+@include opt_post.texi
+
+@c -------------------------------------------------------------------------
+@c Post-processing view options
+@c -------------------------------------------------------------------------
+
+@node Post-processing view options,  , Post-processing options, Gmsh options
+@section Post-processing view options
+
+Options related to post-processing views take two forms.
 
 @enumerate
 @item options that should apply to all views can be set through
@@ -3805,16 +4561,54 @@ view take the form `@code{View[@var{n}].@var{string}}' (@var{n} = 0, 1, 2,
 @dots{}), @emph{after the @var{n}-th view is loaded}.
 @end enumerate
 
-The list of all post-processing and view options is given in
-@ref{Post-processing options list}.  See @ref{t8}, and @ref{t9}, for
-some examples.
+@include opt_view.texi
+
+@c todo:
+@c @sp 1
+@c The @code{ColorTable} is defined as a list...
 
 @c =========================================================================
-@c File Formats
+@c Gmsh mesh size fields
 @c =========================================================================
 
-@node File formats, Tutorial, Post-processing module, Top
-@chapter File formats
+@node Gmsh mesh size fields, Gmsh plugins, Gmsh options, Top
+@chapter Gmsh mesh size fields
+
+TODO link to tutorial @ref{t10}, to the Field scripting command and to
+athe API function. Refer to mesh module to explain how mesh element sizes
+are computed.
+
+Here is the list of all available fields with their associated options:
+
+@include opt_fields.texi
+
+@c =========================================================================
+@c Gmsh plugins
+@c =========================================================================
+
+@node Gmsh plugins, Gmsh file formats, Gmsh mesh size fields, Top
+@chapter Gmsh plugins
+
+@cindex Post-processing plugins
+@cindex Plugins, post-processing
+
+Gmsh plugins permit to extend the functionality of Gmsh's modules.
+
+Plugins are available in the GUI by right-clicking on a view button (or
+by clicking on the black arrow next to the view button) and then
+selecting the `Plugin' submenu. In the API, plugins are available in the
+@code{gmsh/plugin} module (@pxref{Gmsh application programming interface}).
+
+Here is the list of the plugins that are shipped by default with Gmsh:
+
+@include opt_plugin.texi
+
+@c =========================================================================
+@c Gmsh file formats
+@c =========================================================================
+
+@node Gmsh file formats, Compiling the source code, Gmsh plugins, Top
+@chapter Gmsh file formats
 
 @cindex File formats
 
@@ -3825,7 +4619,7 @@ independent of Gmsh's main version number.
 
 (Remember that for small post-processing datasets you can also use
 human-readable ``parsed'' post-processing views, as described in
-@ref{Post-processing commands}. Such ``parsed'' views do not require an
+@ref{Post-processing scripting commands}. Such ``parsed'' views do not require an
 underlying mesh, and can therefore be easier to use in some
 cases.)
 
@@ -3839,7 +4633,7 @@ cases.)
 @c MSH file format
 @c -------------------------------------------------------------------------
 
-@node MSH file format, Node ordering, File formats, File formats
+@node MSH file format, Node ordering, Gmsh file formats, Gmsh file formats
 @section MSH file format
 
 @cindex Mesh, file format
@@ -3861,7 +4655,7 @@ the boundary representation of the model geometrical entities,
 @code{$Nodes} and @code{$Elements} store mesh data classified on these
 entities, and @code{$NodeData}, @code{$ElementData},
 @code{$ElementNodeData} store post-processing data (views). (See
-@ref{Gmsh API} and @ref{Source code structure} for a more detailed
+@ref{Gmsh application programming interface} and @ref{Source code structure} for a more detailed
 description of the internal Gmsh data model.)
 
 To represent a simple mesh, the minimal sections that should be present
@@ -4209,7 +5003,7 @@ for prisms, 8 for hexahedra, 9 for polygons and 10 for polyhedra.
 is the number of interpolation matrices provided for the given element
 topology. Currently you should provide 2 matrices, i.e., the matrices
 that specify how to interpolate the data (they have the same meaning as
-in @ref{Post-processing commands}). The matrices are specified by 2
+in @ref{Post-processing scripting commands}). The matrices are specified by 2
 integers (@code{numRows} and @code{numColumns}) followed by the values,
 by row.
 @end table
@@ -4282,7 +5076,7 @@ coordinates of the point (instead of the six bounding box values).
 @item
 The @code{entityDim} and @code{entityTag} values have been switched in
 the @code{$Nodes} and @code{$Elements} sections (for consistency with
-the ordering used elsewhere in the file and in the @ref{Gmsh API}).
+the ordering used elsewhere in the file and in the @ref{Gmsh application programming interface}).
 @item
 The minimum and the maximum tag of nodes (resp. elements) have been
 added in the header of the @code{$Nodes} (resp. @code{$Elements})
@@ -4310,7 +5104,7 @@ Node and element tags in @code{$NodeData}, @code{$ElementData} and
 @c Node ordering
 @c -------------------------------------------------------------------------
 
-@node Node ordering, Legacy formats, MSH file format, File formats
+@node Node ordering, Legacy formats, MSH file format, Gmsh file formats
 @section Node ordering
 
 @cindex Nodes, ordering
@@ -4495,7 +5289,7 @@ the node with the lowest index.
 @c Legacy formats
 @c -------------------------------------------------------------------------
 
-@node Legacy formats,  , Node ordering, File formats
+@node Legacy formats,  , Node ordering, Gmsh file formats
 @section Legacy formats
 
 This section describes Gmsh's older native file formats. Future versions
@@ -4693,7 +5487,7 @@ for prisms, 8 for hexahedra, 9 for polygons and 10 for polyhedra.
 is the number of interpolation matrices provided for the element
 topology @var{elm-topology}. Currently you should provide 2 matrices,
 i.e., the matrices that specify how to interpolate the data (they have
-the same meaning as in @ref{Post-processing commands}). The matrices are
+the same meaning as in @ref{Post-processing scripting commands}). The matrices are
 specified by 2 integers (@var{num-rows} and @var{num-columns}) followed
 by the values.
 
@@ -5202,712 +5996,10 @@ after each other in order to form a long array of doubles. The principle is
 the same for all other kinds of values.
 
 @c =========================================================================
-@c Tutorial
-@c =========================================================================
-
-@node Tutorial, Options, File formats, Top
-@appendix Tutorial
-
-@cindex Examples
-@cindex Tutorial
-
-The following tutorials introduce new features gradually, starting with
-@ref{t1}. The corresponding files are available in the
-@url{@value{GITLAB-PREFIX}/tutorials,tutorials}
-directory of the Gmsh distribution. The files starting with @code{t}
-introduce features available both in @code{.geo} scripts and through the
-@ref{Gmsh API}. The files starting with @code{x} introduce features that
-are only available via the API.
-
-To learn how to run Gmsh on your computer, see @ref{Running Gmsh on your
-system}. Screencasts that show how to use the GUI are available on
-@uref{https://gmsh.info/screencasts/}. To learn how to run the C++, C,
-Python, Julia and Fortran API examples, see the respective
-subdirectories in @url{@value{GITLAB-PREFIX}/tutorials,tutorials}.
-
-@menu
-* t1::  Geometry basics, elementary entities, physical groups
-* t2::  Transformations, extruded geometries, volumes
-* t3::  Extruded meshes, ONELAB parameters, options
-* t4::  Built-in functions, holes in surfaces, annotations, entity colors
-* t5::  Mesh sizes, macros, loops, holes in volumes
-* t6::  Transfinite meshes
-* t7::  Background meshes
-* t8::  Post-processing and animations
-* t9::  Plugins
-* t10:: Mesh size fields
-* t11:: Unstructured quadrangular meshes
-* t12:: Cross-patch meshing with compounds
-* t13:: Remeshing an STL file without an underlying CAD model
-* t14:: Homology and cohomology computation
-* t15:: Embedded points, lines and surfaces
-* t16:: Constructive Solid Geometry, OpenCASCADE geometry kernel
-* t17:: Anisotropic background mesh
-* t18:: Periodic meshes
-* t19:: Thrusections, fillets, pipes, mesh size from curvature
-* t20:: STEP import and manipulation, geometry partitioning
-* t21:: Mesh partitioning
-* x1::  Geometry and mesh data
-* x2::  Mesh import, discrete entities, hybrid models, terrain meshing
-* x3::  Post-processing data import: list-based
-* x4::  Post-processing data import: model-based
-* x5::  Additional geometrical data: parametrizations, normals, curvatures
-* x6::  Additional mesh data: integration points, Jacobians and basis functions
-* x7::  Additional mesh data: internal edges and faces
-@end menu
-
-@c -------------------------------------------------------------------------
-@c t1
-@c -------------------------------------------------------------------------
-
-@node t1, t2, Tutorial, Tutorial
-@section @code{t1}: Geometry basics, elementary entities, physical groups
-
-See
-@url{@value{GITLAB-PREFIX}/tutorials/t1.geo,t1.geo}. Also
-available in C++
-(@url{@value{GITLAB-PREFIX}/tutorials/c++/t1.cpp,t1.cpp}),
-C
-(@url{@value{GITLAB-PREFIX}/tutorials/c/t1.c,t1.c}),
-Python
-(@url{@value{GITLAB-PREFIX}/tutorials/python/t1.py,t1.py}),
-Julia
-(@url{@value{GITLAB-PREFIX}/tutorials/julia/t1.jl,t1.jl})
-and Fortran
-(@url{@value{GITLAB-PREFIX}/tutorials/fortran/t1.f90,t1.f90}).
-
-@smallformat
-@verbatiminclude ../../tutorials/t1.geo
-@end smallformat
-
-@c -------------------------------------------------------------------------
-@c t2
-@c -------------------------------------------------------------------------
-
-@node t2, t3, t1, Tutorial
-@section @code{t2}: Transformations, extruded geometries, volumes
-
-See
-@url{@value{GITLAB-PREFIX}/tutorials/t2.geo,t2.geo}. Also
-available in C++
-(@url{@value{GITLAB-PREFIX}/tutorials/c++/t2.cpp,t2.cpp}),
-C
-(@url{@value{GITLAB-PREFIX}/tutorials/c/t2.c,t2.c}),
-Python
-(@url{@value{GITLAB-PREFIX}/tutorials/python/t2.py,t2.py}),
-Julia
-(@url{@value{GITLAB-PREFIX}/tutorials/julia/t2.jl,t2.jl})
-and Fortran
-(@url{@value{GITLAB-PREFIX}/tutorials/fortran/t2.f90,t2.f90}).
-
-@smallformat
-@verbatiminclude ../../tutorials/t2.geo
-@end smallformat
-
-@c -------------------------------------------------------------------------
-@c t3
-@c -------------------------------------------------------------------------
-
-@node t3, t4, t2, Tutorial
-@section @code{t3}: Extruded meshes, ONELAB parameters, options
-
-See
-@url{@value{GITLAB-PREFIX}/tutorials/t3.geo,t3.geo}.
-Also available in C++
-(@url{@value{GITLAB-PREFIX}/tutorials/c++/t3.cpp,t3.cpp}),
-Python
-(@url{@value{GITLAB-PREFIX}/tutorials/python/t3.py,t3.py}),
-Julia
-(@url{@value{GITLAB-PREFIX}/tutorials/julia/t3.jl,t3.jl})
-and Fortran
-(@url{@value{GITLAB-PREFIX}/tutorials/fortran/t3.f90,t3.f90}).
-
-@smallformat
-@verbatiminclude ../../tutorials/t3.geo
-@end smallformat
-
-@c -------------------------------------------------------------------------
-@c t4
-@c -------------------------------------------------------------------------
-
-@node t4, t5, t3, Tutorial
-@section @code{t4}: Built-in functions, holes in surfaces, annotations, entity colors
-
-See
-@url{@value{GITLAB-PREFIX}/tutorials/t4.geo,t4.geo}.
-Also available in C++
-(@url{@value{GITLAB-PREFIX}/tutorials/c++/t4.cpp,t4.cpp}),
-Python
-(@url{@value{GITLAB-PREFIX}/tutorials/python/t4.py,t4.py}),
-Julia
-(@url{@value{GITLAB-PREFIX}/tutorials/julia/t4.jl,t4.jl})
-and Fortran
-(@url{@value{GITLAB-PREFIX}/tutorials/fortran/t4.f90,t4.f90}).
-
-@smallformat
-@verbatiminclude ../../tutorials/t4.geo
-@end smallformat
-
-@c -------------------------------------------------------------------------
-@c t5
-@c -------------------------------------------------------------------------
-
-@node t5, t6, t4, Tutorial
-@section @code{t5}: Mesh sizes, macros, loops, holes in volumes
-
-See
-@url{@value{GITLAB-PREFIX}/tutorials/t5.geo,t5.geo}.
-Also available in C++
-(@url{@value{GITLAB-PREFIX}/tutorials/c++/t5.cpp,t5.cpp}),
-Python
-(@url{@value{GITLAB-PREFIX}/tutorials/python/t5.py,t5.py}),
-Julia
-(@url{@value{GITLAB-PREFIX}/tutorials/julia/t5.jl,t5.jl})
-and Fortran
-(@url{@value{GITLAB-PREFIX}/tutorials/fortran/t5.f90,t5.f90}).
-
-@smallformat
-@verbatiminclude ../../tutorials/t5.geo
-@end smallformat
-
-@c -------------------------------------------------------------------------
-@c t6
-@c -------------------------------------------------------------------------
-
-@node t6, t7, t5, Tutorial
-@section @code{t6}: Transfinite meshes
-
-See
-@url{@value{GITLAB-PREFIX}/tutorials/t6.geo,t6.geo}.
-Also available in C++
-(@url{@value{GITLAB-PREFIX}/tutorials/c++/t6.cpp,t6.cpp}),
-C
-(@url{@value{GITLAB-PREFIX}/tutorials/c/t6.c,t6.c}),
-Python
-(@url{@value{GITLAB-PREFIX}/tutorials/python/t6.py,t6.py})
-and Fortran
-(@url{@value{GITLAB-PREFIX}/tutorials/fortran/t6.f90,t6.f90}).
-
-@smallformat
-@verbatiminclude ../../tutorials/t6.geo
-@end smallformat
-
-@c -------------------------------------------------------------------------
-@c t7
-@c -------------------------------------------------------------------------
-
-@node t7, t8, t6, Tutorial
-@section @code{t7}: Background meshes
-
-See
-@url{@value{GITLAB-PREFIX}/tutorials/t7.geo,t7.geo}.
-Also available in C++
-(@url{@value{GITLAB-PREFIX}/tutorials/c++/t7.cpp,t7.cpp}),
-Python
-(@url{@value{GITLAB-PREFIX}/tutorials/python/t7.py,t7.py})
-and Fortran
-(@url{@value{GITLAB-PREFIX}/tutorials/fortran/t7.f90,t7.f90}).
-
-@smallformat
-@verbatiminclude ../../tutorials/t7.geo
-@end smallformat
-
-@c -------------------------------------------------------------------------
-@c t8
-@c -------------------------------------------------------------------------
-
-@node t8, t9, t7, Tutorial
-@section @code{t8}: Post-processing and animations
-
-See
-@url{@value{GITLAB-PREFIX}/tutorials/t8.geo,t8.geo}.
-Also available in C++
-(@url{@value{GITLAB-PREFIX}/tutorials/c++/t8.cpp,t8.cpp}),
-Python
-(@url{@value{GITLAB-PREFIX}/tutorials/python/t8.py,t8.py})
-and Fortran
-(@url{@value{GITLAB-PREFIX}/tutorials/fortran/t8.f90,t8.f90}).
-
-@smallformat
-@verbatiminclude ../../tutorials/t8.geo
-@end smallformat
-
-@c -------------------------------------------------------------------------
-@c t9
-@c -------------------------------------------------------------------------
-
-@node t9, t10, t8, Tutorial
-@section @code{t9}: Plugins
-
-See
-@url{@value{GITLAB-PREFIX}/tutorials/t9.geo,t9.geo}.
-Also available in C++
-(@url{@value{GITLAB-PREFIX}/tutorials/c++/t9.cpp,t9.cpp}),
-Python
-(@url{@value{GITLAB-PREFIX}/tutorials/python/t9.py,t9.py})
-and Fortran
-(@url{@value{GITLAB-PREFIX}/tutorials/fortran/t9.f90,t9.f90}).
-
-@smallformat
-@verbatiminclude ../../tutorials/t9.geo
-@end smallformat
-
-@c -------------------------------------------------------------------------
-@c t10
-@c -------------------------------------------------------------------------
-
-@node t10, t11, t9, Tutorial
-@section @code{t10}: Mesh size fields
-
-See
-@url{@value{GITLAB-PREFIX}/tutorials/t10.geo,t10.geo}.
-Also available in C++
-(@url{@value{GITLAB-PREFIX}/tutorials/c++/t10.cpp,t10.cpp}),
-Python
-(@url{@value{GITLAB-PREFIX}/tutorials/python/t10.py,t10.py}),
-Julia
-(@url{@value{GITLAB-PREFIX}/tutorials/julia/t10.jl,t10.jl})
-and Fortran
-(@url{@value{GITLAB-PREFIX}/tutorials/fortran/t10.f90,t10.f90}).
-
-@smallformat
-@verbatiminclude ../../tutorials/t10.geo
-@end smallformat
-
-@c -------------------------------------------------------------------------
-@c t11
-@c -------------------------------------------------------------------------
-
-@node t11, t12, t10, Tutorial
-@section @code{t11}: Unstructured quadrangular meshes
-
-See
-@url{@value{GITLAB-PREFIX}/tutorials/t11.geo,t11.geo}.
-Also available in C++
-(@url{@value{GITLAB-PREFIX}/tutorials/c++/t11.cpp,t11.cpp}),
-Python
-(@url{@value{GITLAB-PREFIX}/tutorials/python/t11.py,t11.py})
-and Fortran
-(@url{@value{GITLAB-PREFIX}/tutorials/fortran/t11.f90,t11.f90}).
-
-@smallformat
-@verbatiminclude ../../tutorials/t11.geo
-@end smallformat
-
-@c -------------------------------------------------------------------------
-@c t12
-@c -------------------------------------------------------------------------
-
-@node t12, t13, t11, Tutorial
-@section @code{t12}: Cross-patch meshing with compounds
-
-See
-@url{@value{GITLAB-PREFIX}/tutorials/t12.geo,t12.geo}/
-Also available in C++
-(@url{@value{GITLAB-PREFIX}/tutorials/c++/t12.cpp,t12.cpp}),
-Python
-(@url{@value{GITLAB-PREFIX}/tutorials/python/t12.py,t12.py})
-and Fortran
-(@url{@value{GITLAB-PREFIX}/tutorials/fortran/t12.f90,t12.f90}).
-
-@smallformat
-@verbatiminclude ../../tutorials/t12.geo
-@end smallformat
-
-@c -------------------------------------------------------------------------
-@c t13
-@c -------------------------------------------------------------------------
-
-@node t13, t14, t12, Tutorial
-@section @code{t13}: Remeshing an STL file without an underlying CAD model
-
-See
-@url{@value{GITLAB-PREFIX}/tutorials/t13.geo,t13.geo}.
-Also available in C++
-(@url{@value{GITLAB-PREFIX}/tutorials/c++/t13.cpp,t13.cpp}),
-Python
-(@url{@value{GITLAB-PREFIX}/tutorials/python/t13.py,t13.py})
-and Fortran
-(@url{@value{GITLAB-PREFIX}/tutorials/fortran/t13.f90,t13.f90}).
-
-@smallformat
-@verbatiminclude ../../tutorials/t13.geo
-@end smallformat
-
-@c -------------------------------------------------------------------------
-@c t14
-@c -------------------------------------------------------------------------
-
-@node t14, t15, t13, Tutorial
-@section @code{t14}: Homology and cohomology computation
-
-See
-@url{@value{GITLAB-PREFIX}/tutorials/t14.geo,t14.geo}.
-Also available in C++
-(@url{@value{GITLAB-PREFIX}/tutorials/c++/t14.cpp,t14.cpp}),
-Python
-(@url{@value{GITLAB-PREFIX}/tutorials/python/t14.py,t14.py})
-and Fortran
-(@url{@value{GITLAB-PREFIX}/tutorials/fortran/t14.f90,t14.f90}).
-
-@smallformat
-@verbatiminclude ../../tutorials/t14.geo
-@end smallformat
-
-@c -------------------------------------------------------------------------
-@c t15
-@c -------------------------------------------------------------------------
-
-@node t15, t16, t14, Tutorial
-@section @code{t15}: Embedded points, lines and surfaces
-
-See
-@url{@value{GITLAB-PREFIX}/tutorials/t15.geo,t15.geo}.
-Also available in C++
-(@url{@value{GITLAB-PREFIX}/tutorials/c++/t15.cpp,t15.cpp}),
-Python
-(@url{@value{GITLAB-PREFIX}/tutorials/python/t15.py,t15.py})
-and Fortran
-(@url{@value{GITLAB-PREFIX}/tutorials/fortran/t15.f90,t15.f90}).
-
-@smallformat
-@verbatiminclude ../../tutorials/t15.geo
-@end smallformat
-
-@c -------------------------------------------------------------------------
-@c t16
-@c -------------------------------------------------------------------------
-
-@node t16, t17, t15, Tutorial
-@section @code{t16}: Constructive Solid Geometry, OpenCASCADE geometry kernel
-
-See
-@url{@value{GITLAB-PREFIX}/tutorials/t16.geo,t16.geo}.
-Also available in C++
-(@url{@value{GITLAB-PREFIX}/tutorials/c++/t16.cpp,t16.cpp}),
-C
-(@url{@value{GITLAB-PREFIX}/tutorials/c/t16.c,t16.c}),
-Python
-(@url{@value{GITLAB-PREFIX}/tutorials/python/t16.py,t16.py}),
-Julia
-(@url{@value{GITLAB-PREFIX}/tutorials/julia/t16.jl,t16.jl})
-and Fortran
-(@url{@value{GITLAB-PREFIX}/tutorials/fortran/t16.f90,t16.f90}).
-
-@smallformat
-@verbatiminclude ../../tutorials/t16.geo
-@end smallformat
-
-@c -------------------------------------------------------------------------
-@c t17
-@c -------------------------------------------------------------------------
-
-@node t17, t18, t16, Tutorial
-@section @code{t17}: Anisotropic background mesh
-
-See
-@url{@value{GITLAB-PREFIX}/tutorials/t17.geo,t17.geo}.
-Also available in C++
-(@url{@value{GITLAB-PREFIX}/tutorials/c++/t17.cpp,t17.cpp}),
-Python
-(@url{@value{GITLAB-PREFIX}/tutorials/python/t17.py,t17.py})
-and Fortran
-(@url{@value{GITLAB-PREFIX}/tutorials/fortran/t17.f90,t17.f90}).
-
-@smallformat
-@verbatiminclude ../../tutorials/t17.geo
-@end smallformat
-
-@c -------------------------------------------------------------------------
-@c t18
-@c -------------------------------------------------------------------------
-
-@node t18, t19, t17, Tutorial
-@section @code{t18}: Periodic meshes
-
-See
-@url{@value{GITLAB-PREFIX}/tutorials/t18.geo,t18.geo}.
-Also available in C++
-(@url{@value{GITLAB-PREFIX}/tutorials/c++/t18.cpp,t18.cpp}),
-Python
-(@url{@value{GITLAB-PREFIX}/tutorials/python/t18.py,t18.py})
-and Fortran
-(@url{@value{GITLAB-PREFIX}/tutorials/fortran/t18.f90,t18.f90}).
-
-@smallformat
-@verbatiminclude ../../tutorials/t18.geo
-@end smallformat
-
-@c -------------------------------------------------------------------------
-@c t19
-@c -------------------------------------------------------------------------
-
-@node t19, t20, t18, Tutorial
-@section @code{t19}: Thrusections, fillets, pipes, mesh size from curvature
-
-See
-@url{@value{GITLAB-PREFIX}/tutorials/t19.geo,t19.geo}.
-Also available in C++
-(@url{@value{GITLAB-PREFIX}/tutorials/c++/t19.cpp,t19.cpp}),
-Python
-(@url{@value{GITLAB-PREFIX}/tutorials/python/t19.py,t19.py})
-and Fortran
-(@url{@value{GITLAB-PREFIX}/tutorials/fortran/t19.f90,t19.f90}).
-
-@smallformat
-@verbatiminclude ../../tutorials/t19.geo
-@end smallformat
-
-@c -------------------------------------------------------------------------
-@c t20
-@c -------------------------------------------------------------------------
-
-@node t20, t21, t19, Tutorial
-@section @code{t20}: STEP import and manipulation, geometry partitioning
-
-See
-@url{@value{GITLAB-PREFIX}/tutorials/t20.geo,t20.geo}.
-Also available in C++
-(@url{@value{GITLAB-PREFIX}/tutorials/c++/t20.cpp,t20.cpp}),
-Python
-(@url{@value{GITLAB-PREFIX}/tutorials/python/t20.py,t20.py})
-and Fortran
-(@url{@value{GITLAB-PREFIX}/tutorials/fortran/t20.f90,t20.f90}).
-
-@smallformat
-@verbatiminclude ../../tutorials/t20.geo
-@end smallformat
-
-@c -------------------------------------------------------------------------
-@c t21
-@c -------------------------------------------------------------------------
-
-@node t21, x1, t20, Tutorial
-@section @code{t21}: Mesh partitioning
-
-See
-@url{@value{GITLAB-PREFIX}/tutorials/t21.geo,t21.geo}.
-Also available in C++
-(@url{@value{GITLAB-PREFIX}/tutorials/c++/t21.cpp,t21.cpp}),
-Python
-(@url{@value{GITLAB-PREFIX}/tutorials/python/t21.py,t21.py})
-and Fortran
-(@url{@value{GITLAB-PREFIX}/tutorials/fortran/t21.f90,t21.f90}).
-
-@smallformat
-@verbatiminclude ../../tutorials/t21.geo
-@end smallformat
-
-@c -------------------------------------------------------------------------
-@c x1
-@c -------------------------------------------------------------------------
-
-@node x1, x2, t21, Tutorial
-@section @code{x1}: Geometry and mesh data
-
-See
-@url{@value{GITLAB-PREFIX}/tutorials/python/x1.py,x1.py}.
-Also available in C++
-(@url{@value{GITLAB-PREFIX}/tutorials/c++/x1.cpp,x1.cpp}).
-
-@smallformat
-@verbatiminclude ../../tutorials/python/x1.py
-@end smallformat
-
-@c -------------------------------------------------------------------------
-@c x2
-@c -------------------------------------------------------------------------
-
-@node x2, x3, x1, Tutorial
-@section @code{x2}: Mesh import, discrete entities, hybrid models, terrain meshing
-
-See
-@url{@value{GITLAB-PREFIX}/tutorials/python/x2.py,x2.py}.
-Also available in C++
-(@url{@value{GITLAB-PREFIX}/tutorials/c++/x2.cpp,x2.cpp}).
-
-@smallformat
-@verbatiminclude ../../tutorials/python/x2.py
-@end smallformat
-
-@c -------------------------------------------------------------------------
-@c x3
-@c -------------------------------------------------------------------------
-
-@node x3, x4, x2, Tutorial
-@section @code{x3}: Post-processing data import: list-based
-
-See
-@url{@value{GITLAB-PREFIX}/tutorials/python/x3.py,x3.py}.
-Also available in C++
-(@url{@value{GITLAB-PREFIX}/tutorials/c++/x3.cpp,x3.cpp}).
-
-@smallformat
-@verbatiminclude ../../tutorials/python/x3.py
-@end smallformat
-
-@c -------------------------------------------------------------------------
-@c x4
-@c -------------------------------------------------------------------------
-
-@node x4, x5, x3, Tutorial
-@section @code{x4}: Post-processing data import: model-based
-
-See
-@url{@value{GITLAB-PREFIX}/tutorials/python/x4.py,x4.py}.
-Also available in C++
-(@url{@value{GITLAB-PREFIX}/tutorials/c++/x4.cpp,x4.cpp}).
-
-@smallformat
-@verbatiminclude ../../tutorials/python/x4.py
-@end smallformat
-
-@c -------------------------------------------------------------------------
-@c x5
-@c -------------------------------------------------------------------------
-
-@node x5, x6, x4, Tutorial
-@section @code{x5}: Additional geometrical data: parametrizations, normals, curvatures
-
-See
-@url{@value{GITLAB-PREFIX}/tutorials/python/x5.py,x5.py}.
-Also available in C++
-(@url{@value{GITLAB-PREFIX}/tutorials/c++/x5.cpp,x5.cpp}).
-
-@smallformat
-@verbatiminclude ../../tutorials/python/x5.py
-@end smallformat
-
-@c -------------------------------------------------------------------------
-@c x6
-@c -------------------------------------------------------------------------
-
-@node x6, x7, x5, Tutorial
-@section @code{x6}: Additional mesh data: integration points, Jacobians and basis functions
-
-See
-@url{@value{GITLAB-PREFIX}/tutorials/python/x6.py,x6.py}.
-Also available in C++
-(@url{@value{GITLAB-PREFIX}/tutorials/c++/x6.cpp,x6.cpp}).
-
-@smallformat
-@verbatiminclude ../../tutorials/python/x6.py
-@end smallformat
-
-@c -------------------------------------------------------------------------
-@c x7
-@c -------------------------------------------------------------------------
-
-@node x7,  , x6, Tutorial
-@section @code{x7}: Additional mesh data: internal edges and faces
-
-See
-@url{@value{GITLAB-PREFIX}/tutorials/python/x7.py,x7.py}.
-Also available in C++
-(@url{@value{GITLAB-PREFIX}/tutorials/c++/x7.cpp,x7.cpp}).
-
-@smallformat
-@verbatiminclude ../../tutorials/python/x7.py
-@end smallformat
-
-@c =========================================================================
-@c Options
-@c =========================================================================
-
-@node Options, Compiling the source code, Tutorial, Top
-@appendix Options
-
-This appendix lists all the available options.  Gmsh's default behavior
-is to save some of these options in a per-user ``session resource'' file
-(cf. ``Saved in: @code{General.SessionFileName}'' in the lists below)
-every time Gmsh is shut down. This permits for example to automatically
-remember the size and location of the windows or which fonts to use. A
-second set of options can be saved (automatically or manually with the
-`File->Save Options As Default' menu) in a per-user ``option'' file
-(cf. ``Saved in: @code{General.OptionsFileName}'' in the lists below),
-automatically loaded by Gmsh every time it starts up. Finally, other
-options are only saved to disk manually, either by explicitly saving an
-option file with `File->Export', or when saving per-model options with
-`File->Save Model Options' (cf. ``Saved in: @code{-}'' in the lists
-below).
-
-To reset all options to their default values, use `Help->Restore All
-Options to Default Settings' or the `Restore all options to default
-settings' button in `Tools->Options->General->Advanced', or erase the
-@code{General.SessionFileName} and @code{General.OptionsFileName} files
-by hand.
-
-All the options can be manipulated through the Gmsh API through the
-@code{gmsh/option} namespace (@pxref{Gmsh API}).
-
-@c All the included files are generated automatically with `gmsh -doc'
-
-@menu
-* General options list::
-* Geometry options list::
-* Mesh options list::
-* Solver options list::
-* Post-processing options list::
-@end menu
-
-@c -------------------------------------------------------------------------
-@c General options list
-@c -------------------------------------------------------------------------
-
-@node General options list, Geometry options list, Options, Options
-@section General options list
-
-@include opt_general.texi
-
-@include opt_print.texi
-
-@c -------------------------------------------------------------------------
-@c Geometry options list
-@c -------------------------------------------------------------------------
-
-@node Geometry options list, Mesh options list, General options list, Options
-@section Geometry options list
-
-@include opt_geometry.texi
-
-@c -------------------------------------------------------------------------
-@c Mesh options list
-@c -------------------------------------------------------------------------
-
-@node Mesh options list, Solver options list, Geometry options list, Options
-@section Mesh options list
-
-@include opt_mesh.texi
-
-@c -------------------------------------------------------------------------
-@c Solver options list
-@c -------------------------------------------------------------------------
-
-@node Solver options list, Post-processing options list, Mesh options list, Options
-@section Solver options list
-
-@include opt_solver.texi
-
-@c -------------------------------------------------------------------------
-@c Post-processing options list
-@c -------------------------------------------------------------------------
-
-@node Post-processing options list,  , Solver options list, Options
-@section Post-processing options list
-
-@include opt_post.texi
-
-@include opt_view.texi
-
-@c todo:
-@c @sp 1
-@c The @code{ColorTable} is defined as a list...
-
-@c =========================================================================
 @c Compiling the source code
 @c =========================================================================
 
-@node Compiling the source code, Gmsh API, Options, Top
+@node Compiling the source code, Information for developers, Gmsh file formats, Top
 @appendix Compiling the source code
 
 Stable releases and source snapshots are available from
@@ -5933,13 +6025,16 @@ git pull
 @end enumerate
 
 Once you have the source code, you need to run CMake to configure your
-build (see the
-@url{@value{GITLAB-PREFIX}/README.txt,README.txt}
-file in the top-level source directory for detailed information on how
-to run CMake).
+build (see the @url{@value{GITLAB-PREFIX}/README.txt,README.txt} file in
+the top-level source directory for additional information on how to run
+CMake, as well as the
+@url{https://gitlab.onelab.info/gmsh/gmsh/wikis/Gmsh-compilation,
+Gmsh-compilation wiki page} for more detailed instructions on how to
+compile Gmsh, including the compilation of common dependencies).
 
 Each build can be configured using a series of options, to selectively
-enable optional modules or features. Here is the list of CMake options:
+enable optional modules or features. Here is the list of all the
+Gmsh-specific CMake options:
 
 @table @code
 
@@ -5947,161 +6042,13 @@ enable optional modules or features. Here is the list of CMake options:
 
 @end table
 
-The wiki
-(@uref{https://gitlab.onelab.info/gmsh/gmsh/wikis/Gmsh-compilation})
-contains more detailed instructions on how to compile Gmsh, including
-the compilation of common dependencies.
 
-
-@c =========================================================================
-@c Gmsh API
-@c =========================================================================
-
-@node Gmsh API, Information for developers, Compiling the source code, Top
-@appendix Gmsh API
-
-@cindex API
-@cindex Programming, API
-
-The Gmsh Application Programming Interface (API) allows you to integrate
-the Gmsh library in your own application. By design, the Gmsh API is
-purely functional, and only uses elementary types from the target
-language. Currently supported languages are C++, C, Python and Julia.
-See the @url{@value{GITLAB-PREFIX}/tutorials/c++,tutorials/c++},
-@url{@value{GITLAB-PREFIX}/tutorials/c,tutorials/c},
-@url{@value{GITLAB-PREFIX}/tutorials/python,tutorials/python} and
-@url{@value{GITLAB-PREFIX}/tutorials/julia,tutorials/julia} directories
-from the @ref{Tutorial} for examples. For other API examples, see the
-@url{@value{GITLAB-PREFIX}/examples/api/,examples/api} directory.
-
-The different versions of the API are generated automatically from the
-master API definition file
-@url{@value{GITLAB-PREFIX}/api/gen.py,api/gen.py}:
-
-@itemize @bullet
-@item C++ API: @url{@value{GITLAB-PREFIX}/api/gmsh.h,gmsh.h}
-@item C API: @url{@value{GITLAB-PREFIX}/api/gmshc.h,gmshc.h}
-@item Python API: @url{@value{GITLAB-PREFIX}/api/gmsh.py,gmsh.py}
-@item Julia API: @url{@value{GITLAB-PREFIX}/api/gmsh.jl,gmsh.jl}
-@end itemize
-
-The additional
-@url{@value{GITLAB-PREFIX}/api/gmsh.h_cwrap,gmsh.h_cwrap}
-header redefines the C++ API in terms of the C API. This is provided as
-a convenience for users of the @url{https://gmsh.info/bin,binary Gmsh
-Software Development Kit (SDK)} whose C++ compiler Application Binary
-Interface (ABI) is not compatible with the ABI of the C++ compiler used
-to create the SDK. To use these C++ bindings of the C API instead of the
-native C++ API, simply rename @code{gmsh.h_cwrap} as @code{gmsh.h}. Note
-that this will lead to (slightly) reduced performance compared to using
-the native Gmsh C++ API, as it entails additional data copies between
-the C++ wrapper, the C API and the native C++ code.
-
-The structure of the API reflects the underlying Gmsh data model (see
-also @ref{Source code structure}):
-@itemize
-@item
-There are two main data containers: @emph{models} (which hold the
-geometrical and the mesh data) and @emph{views} (which hold
-post-processing data). These are manipulated by the API functions in the
-top-level namespaces @code{gmsh/model} and @code{gmsh/view},
-respectively. The other top-level namespaces are @code{gmsh/option}
-(which handles all options), @code{gmsh/plugin} (which handles
-extensions to core Gmsh functionality), @code{gmsh/graphics} (which
-handles drawing), @code{gmsh/fltk} (which handles the graphical user
-interface), @code{gmsh/parser} (which handles the Gmsh parser),
-@code{gmsh/onelab} (which handles ONELAB parameters and communications
-with external codes) and @code{gmsh/logger} (which handles information
-logging).
-@item
-Geometrical data is made of model @emph{entities}, called @emph{points}
-(entities of dimension 0), @emph{curves} (entities of dimension 1),
-@emph{surfaces} (entities of dimension 2) or @emph{volumes} (entities of
-dimension 3). Model entities are stored using a boundary representation:
-a volume is bounded by a set of surfaces, a surface is bounded by a
-series of curves, and a curve is bounded by two end points. Volumes and
-surfaces can also store @emph{embedded} entities of lower dimension, to
-force a subsequent mesh to be conformal to internal features like a
-point in the middle of a surface. Model entities are identified by their
-dimension and by a @emph{tag}: a strictly positive identification
-number. @emph{Physical groups} are collections of model entities and are
-identified by their dimension and by a @emph{tag}. Operations which do
-not directly reference a model are performed on the @emph{current}
-model.
-@item
-Model entities can be either CAD entities (from the built-in @emph{geo}
-kernel or from the OpenCASCADE @emph{occ} kernel) or @emph{discrete}
-entities (defined by a mesh). Operations on CAD entities are performed
-directly within their respective CAD kernels (i.e. using functions from
-the @code{gmsh/model/geo} or @code{gmsh/model/occ} namespaces,
-respectively), as Gmsh does not translate across CAD formats but rather
-directly accesses the native representation. CAD entities must be
-@emph{synchronized} with the model in order to be meshed, or, more
-generally, for functions outside of @code{gmsh/model/geo} or
-@code{gmsh/model/occ} to manipulate them. 1D and 2D meshing algorithms
-use the @emph{parametrization} of the underlying geometrical curve or
-surface to generate the mesh. Discrete entities can be remeshed provided
-that a parametrization is explicitly recomputed for them.
-@item
-Mesh data is made of @emph{elements} (points, lines, triangles,
-quadrangles, tetrahedra, hexahedra, prisms, pyramids, ...), defined by
-an ordered list of their @emph{nodes}. Elements and nodes are identified
-by @emph{tags} (strictly positive identification numbers), and are
-stored (@emph{classified}) in the model entity they discretize. Once
-meshed, a model entity of dimension 0 (a geometrical point) will thus
-contain a mesh element of type point (MSH type 15: cf. @ref{MSH file
-format}), as well as a mesh node. A model curve will contain line
-elements (e.g. of MSH type 1 or 8 for first order or second order
-meshes, respectively) as well as its interior nodes, while its boundary
-nodes will be stored in the bounding model points. A model surface will
-contain triangular and/or quadrangular elements and all the nodes not
-classified on its boundary or on its embedded entities (curves and
-points). A model volume will contain tetrahedra, hexahedra, etc. and all
-the nodes not classified on its boundary or on its embedded entities
-(surfaces, curves and points). This data model allows to easily and
-efficiently handle the creation, modification and destruction of
-conformal meshes. All the mesh-related functions are provided in the
-@code{gmsh/model/mesh} namespace.
-@item
-Post-processing data is made of @emph{views}. Each view is identified by
-a @emph{tag}, and can also be accessed by its @emph{index} (which can
-change when views are sorted, added or deleted). A view stores both
-display @emph{options} and @emph{data}, unless the view is an
-@emph{alias} of another view (in which case it only stores display
-options, and the data points to a reference view).  View data can
-contain several @emph{steps} (e.g. to store time series) and can be
-either linked to one or more models@footnote{Each step can be linked to
-a different model, which allows to have a single time series based on
-multiple (e.g. deforming or moving) meshes.} (@emph{mesh-based} data, as
-stored in MSH files: cf. @ref{MSH file format}) or independent from any
-model (@emph{list-based} data, as stored in parsed POS files:
-cf. @ref{Post-processing commands}). Various @emph{plugins} exist to
-modify and create views.
-@end itemize
-
-All the functions available in the API are given below. See the relevant
-header/module file for the exact definition in each supported language:
-in @url{@value{GITLAB-PREFIX}/api/gmsh.h,C++}
-@code{gmsh/model/geo/addPoint} will lead to a namespaced function
-@code{gmsh::model::geo::addPoint}, while in
-@url{@value{GITLAB-PREFIX}/api/gmsh.py,Python} and
-@url{@value{GITLAB-PREFIX}/api/gmsh.jl,Julia} it will lead to
-@code{gmsh.model.geo.addPoint}, and in
-@url{@value{GITLAB-PREFIX}/api/gmshc.h,C} to
-@code{gmshModelGeoAddPoint}.  In addition to the default ``camelCase''
-function names, the Python and Julia APIs also define ``snake case''
-aliases, i.e. @code{gmsh.model.geo.add_point}, as this is the
-recommended style in these languages.  Output values are passed by
-reference in C++, as pointers in C and directly returned (after the
-return value, if any) in Python and Julia.
-
-@include api.texi
 
 @c =========================================================================
 @c Information for developers
 @c =========================================================================
 
-@node Information for developers, Frequently asked questions, Gmsh API, Top
+@node Information for developers, Frequently asked questions, Compiling the source code, Top
 @appendix Information for developers
 
 @cindex Developer, information
@@ -6328,8 +6275,8 @@ In English people tend to pronounce `Gmsh' as ``gee-mesh''.
 
 @item Can I embed 'Gmsh' in my own software?
 
-Yes, using the Gmsh API (@pxref{Gmsh API}). See @ref{Copying conditions}
-for the licensing constraints.
+Yes, using the Gmsh API (@pxref{Gmsh application programming
+interface}). See @ref{Copying conditions} for the licensing constraints.
 
 @item Where can I find more information?
 
