@@ -105,6 +105,18 @@ static HXTStatus getAllSurfaces(std::vector<GRegion *> &regions, HXTMesh *m,
     allSurfacesSet.insert(f.begin(), f.end());
     allSurfacesSet.insert(f_e.begin(), f_e.end());
   }
+
+  // verify that all elements are triangles
+  for (auto const &gf: allSurfacesSet) {
+    if (gf->quadrangles.size() != 0 || gf->polygons.size() != 0) {
+      size_t num = gf->quadrangles.size() + gf->polygons.size();
+      Msg::Error("Surface %d contains %zu elements which are not triangles. "
+                 "The HXT 3D meshing algorithm only supports triangles.",
+                 gf->tag(), num);
+      return HXT_STATUS_ERROR;
+    }
+  }
+
   allSurfaces.insert(allSurfaces.end(), allSurfacesSet.begin(),
                      allSurfacesSet.end());
 
