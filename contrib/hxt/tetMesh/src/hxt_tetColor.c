@@ -114,8 +114,14 @@ HXTStatus hxtMapColorsToBrep(HXTMesh* mesh, uint64_t* tri2TetMap)
   HXT_CHECK( hxtColorMesh(mesh, &numVolumes) );
 
   if(mesh->triangles.color == NULL) {
-    HXT_WARNING("No surface colors => cannot verify BRep !");
+    if(mesh->brep.numVolumes != 0) {
+      return HXT_ERROR_MSG(HXT_STATUS_INPUT_ERROR, "No surface colors => cannot verify BRep !");
+    }
     return HXT_STATUS_OK;
+  }
+
+  if(numVolumes == 0) {
+    return HXT_ERROR_MSG(HXT_STATUS_INPUT_ERROR, "No closed volume");
   }
 
   uint64_t numPairs = 0;
@@ -220,7 +226,7 @@ HXTStatus hxtMapColorsToBrep(HXTMesh* mesh, uint64_t* tri2TetMap)
     HXT_ASSERT(mesh->brep.surfacesPerVolume!=NULL);
 
     if(mesh->brep.numVolumes > numVolumes)
-      return HXT_ERROR_MSG(HXT_STATUS_ERROR, "BRep contains more volumes than there really are !");
+      return HXT_ERROR_MSG(HXT_STATUS_INPUT_ERROR, "BRep contains more volumes than there really are !");
 
     if(mesh->brep.numVolumes < numVolumes)
       HXT_INFO("%u out of %u volumes will be refined", mesh->brep.numVolumes, numVolumes);
@@ -251,7 +257,7 @@ HXTStatus hxtMapColorsToBrep(HXTMesh* mesh, uint64_t* tri2TetMap)
     // error on duplicates
     for(uint64_t i=1; i<numPairsFromBREP; i++) {
       if(pairsFromBREP[i-1] == pairsFromBREP[i])
-        return HXT_ERROR_MSG(HXT_STATUS_ERROR, "Duplicate surface in BRep volume definition");
+        return HXT_ERROR_MSG(HXT_STATUS_INPUT_ERROR, "Duplicate surface in BRep volume definition");
     }
     #endif
 
@@ -304,10 +310,11 @@ HXTStatus hxtMapColorsToBrep(HXTMesh* mesh, uint64_t* tri2TetMap)
     for(uint32_t i=1; i<(numVolumes + mesh->brep.numVolumes); i++) {
       if(compareSortedVolumes(&volumes[i-1], &volumes[i]) == 0) { // volumes are the same
         if(volumes[i-1].isFromOriginalBREP == volumes[i].isFromOriginalBREP) {
-          return HXT_ERROR_MSG(HXT_STATUS_ERROR, "duplicate volume %u and %u in %s Brep "
-                                                 "(volumes should be uniquely defined by the color of "
-                                                 "their bounding surfaces)", volumes[i-1].color, volumes[i].color,
-                                                 volumes[i].isFromOriginalBREP ? "original" : "reconstructed");
+          return HXT_ERROR_MSG(HXT_STATUS_INPUT_ERROR,
+                               "duplicate volume %u and %u in %s Brep "
+                               "(volumes should be uniquely defined by the color of "
+                               "their bounding surfaces)", volumes[i-1].color, volumes[i].color,
+                               volumes[i].isFromOriginalBREP ? "original" : "reconstructed");
         }
         uint32_t original      = volumes[volumes[i].isFromOriginalBREP ? i   : i-1].color;
         uint32_t reconstructed = volumes[volumes[i].isFromOriginalBREP ? i-1 : i  ].color;
@@ -322,7 +329,7 @@ HXTStatus hxtMapColorsToBrep(HXTMesh* mesh, uint64_t* tri2TetMap)
     HXT_CHECK( hxtFree(&volumes) );
 
     if(found != mesh->brep.numVolumes)
-      return HXT_ERROR_MSG(HXT_STATUS_ERROR, "some volumes of the BRep were not found");
+      return HXT_ERROR_MSG(HXT_STATUS_INPUT_ERROR, "some volumes of the BRep were not found");
 
     // we give new number to all the volumes that are not in the BREP.
     uint32_t notMeshedVolume = mesh->brep.numVolumes;
