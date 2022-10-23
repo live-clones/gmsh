@@ -105,7 +105,7 @@ static HXTStatus getAllSurfaces(std::vector<GRegion *> &regions, HXTMesh *m,
     allSurfacesSet.insert(f.begin(), f.end());
     allSurfacesSet.insert(f_e.begin(), f_e.end());
   }
-  allSurfaces.insert(allSurfaces.begin(), allSurfacesSet.begin(),
+  allSurfaces.insert(allSurfaces.end(), allSurfacesSet.begin(),
                      allSurfacesSet.end());
 
   if(!m) return HXT_STATUS_OK;
@@ -153,7 +153,7 @@ static HXTStatus getAllCurves(std::vector<GRegion *> &regions,
     std::vector<GEdge *> const &r_e = regions[i]->embeddedEdges();
     allCurvesSet.insert(r_e.begin(), r_e.end());
   }
-  allCurves.insert(allCurves.begin(), allCurvesSet.begin(), allCurvesSet.end());
+  allCurves.insert(allCurves.end(), allCurvesSet.begin(), allCurvesSet.end());
 
   if(!m) return HXT_STATUS_OK;
 
