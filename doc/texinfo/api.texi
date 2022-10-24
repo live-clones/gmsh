@@ -20,7 +20,7 @@
 * Namespace gmsh/logger::
 @end menu
 
-@node Namespace gmsh, Namespace gmsh/option, , Gmsh API
+@node Namespace gmsh, Namespace gmsh/option, , Gmsh application programming interface
 @section Namespace @code{gmsh}: top-level functions
 
 @ftable @code
@@ -148,7 +148,7 @@ C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/t3.cpp#L20,t3.cpp}, @url{@value{GI
 
 @end ftable
 
-@node Namespace gmsh/option, Namespace gmsh/model, Namespace gmsh, Gmsh API
+@node Namespace gmsh/option, Namespace gmsh/model, Namespace gmsh, Gmsh application programming interface
 @section Namespace @code{gmsh/option}: option handling functions
 
 @ftable @code
@@ -265,7 +265,7 @@ C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/t3.cpp#L97,t3.cpp}), Python (@url{
 
 @end ftable
 
-@node Namespace gmsh/model, Namespace gmsh/model/mesh, Namespace gmsh/option, Gmsh API
+@node Namespace gmsh/model, Namespace gmsh/model/mesh, Namespace gmsh/option, Gmsh application programming interface
 @section Namespace @code{gmsh/model}: model functions
 
 @ftable @code
@@ -1162,7 +1162,7 @@ Remove the attribute with name @code{name}.
 
 @end ftable
 
-@node Namespace gmsh/model/mesh, Namespace gmsh/model/mesh/field, Namespace gmsh/model, Gmsh API
+@node Namespace gmsh/model/mesh, Namespace gmsh/model/mesh/field, Namespace gmsh/model, Gmsh application programming interface
 @section Namespace @code{gmsh/model/mesh}: mesh functions
 
 @ftable @code
@@ -3121,7 +3121,7 @@ Python (@url{@value{GITLAB-PREFIX}/examples/api/raw_tetrahedralization.py#L16,ra
 
 @end ftable
 
-@node Namespace gmsh/model/mesh/field, Namespace gmsh/model/geo, Namespace gmsh/model/mesh, Gmsh API
+@node Namespace gmsh/model/mesh/field, Namespace gmsh/model/geo, Namespace gmsh/model/mesh, Gmsh application programming interface
 @section Namespace @code{gmsh/model/mesh/field}: mesh size field functions
 
 @ftable @code
@@ -3311,7 +3311,7 @@ Python (@url{@value{GITLAB-PREFIX}/examples/api/naca_boundary_layer_2d.py#L132,n
 
 @end ftable
 
-@node Namespace gmsh/model/geo, Namespace gmsh/model/geo/mesh, Namespace gmsh/model/mesh/field, Gmsh API
+@node Namespace gmsh/model/geo, Namespace gmsh/model/geo/mesh, Namespace gmsh/model/mesh/field, Gmsh application programming interface
 @section Namespace @code{gmsh/model/geo}: built-in CAD kernel functions
 
 @ftable @code
@@ -4003,7 +4003,7 @@ C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/t1.cpp#L96,t1.cpp}, @url{@value{GI
 
 @end ftable
 
-@node Namespace gmsh/model/geo/mesh, Namespace gmsh/model/occ, Namespace gmsh/model/geo, Gmsh API
+@node Namespace gmsh/model/geo/mesh, Namespace gmsh/model/occ, Namespace gmsh/model/geo, Gmsh application programming interface
 @section Namespace @code{gmsh/model/geo/mesh}: built-in CAD kernel meshing constraints
 
 @ftable @code
@@ -4171,7 +4171,7 @@ representation. Currently only supported for @code{dim} == 2.
 
 @end ftable
 
-@node Namespace gmsh/model/occ, Namespace gmsh/model/occ/mesh, Namespace gmsh/model/geo/mesh, Gmsh API
+@node Namespace gmsh/model/occ, Namespace gmsh/model/occ/mesh, Namespace gmsh/model/geo/mesh, Gmsh application programming interface
 @section Namespace @code{gmsh/model/occ}: OpenCASCADE CAD kernel functions
 
 @ftable @code
@@ -5442,7 +5442,7 @@ C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/t16.cpp#L84,t16.cpp}, @url{@value{
 
 @end ftable
 
-@node Namespace gmsh/model/occ/mesh, Namespace gmsh/view, Namespace gmsh/model/occ, Gmsh API
+@node Namespace gmsh/model/occ/mesh, Namespace gmsh/view, Namespace gmsh/model/occ, Gmsh application programming interface
 @section Namespace @code{gmsh/model/occ/mesh}: OpenCASCADE CAD kernel meshing constraints
 
 @ftable @code
@@ -5466,7 +5466,7 @@ Python (@url{@value{GITLAB-PREFIX}/examples/api/naca_boundary_layer_3d.py#L89,na
 
 @end ftable
 
-@node Namespace gmsh/view, Namespace gmsh/view/option, Namespace gmsh/model/occ/mesh, Gmsh API
+@node Namespace gmsh/view, Namespace gmsh/view/option, Namespace gmsh/model/occ/mesh, Gmsh application programming interface
 @section Namespace @code{gmsh/view}: post-processing view functions
 
 @ftable @code
@@ -5836,7 +5836,7 @@ where @code{windowIndex} identifies the window in the window list.
 
 @end ftable
 
-@node Namespace gmsh/view/option, Namespace gmsh/plugin, Namespace gmsh/view, Gmsh API
+@node Namespace gmsh/view/option, Namespace gmsh/plugin, Namespace gmsh/view, Gmsh application programming interface
 @section Namespace @code{gmsh/view/option}: view option handling functions
 
 @ftable @code
@@ -5954,7 +5954,7 @@ Copy the options from the view with tag @code{refTag} to the view with tag
 
 @end ftable
 
-@node Namespace gmsh/plugin, Namespace gmsh/graphics, Namespace gmsh/view/option, Gmsh API
+@node Namespace gmsh/plugin, Namespace gmsh/graphics, Namespace gmsh/view/option, Gmsh application programming interface
 @section Namespace @code{gmsh/plugin}: plugin functions
 
 @ftable @code
@@ -6010,7 +6010,7 @@ C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/t9.cpp#L48,t9.cpp}, @url{@value{GI
 
 @end ftable
 
-@node Namespace gmsh/graphics, Namespace gmsh/fltk, Namespace gmsh/plugin, Gmsh API
+@node Namespace gmsh/graphics, Namespace gmsh/fltk, Namespace gmsh/plugin, Gmsh application programming interface
 @section Namespace @code{gmsh/graphics}: graphics functions
 
 @ftable @code
@@ -6032,7 +6032,7 @@ C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/t3.cpp#L129,t3.cpp}, @url{@value{G
 
 @end ftable
 
-@node Namespace gmsh/fltk, Namespace gmsh/parser, Namespace gmsh/graphics, Gmsh API
+@node Namespace gmsh/fltk, Namespace gmsh/parser, Namespace gmsh/graphics, Gmsh application programming interface
 @section Namespace @code{gmsh/fltk}: FLTK graphical user interface functions
 
 @ftable @code
@@ -6336,7 +6336,7 @@ Close the @code{name} item in the menu tree.
 
 @end ftable
 
-@node Namespace gmsh/parser, Namespace gmsh/onelab, Namespace gmsh/fltk, Gmsh API
+@node Namespace gmsh/parser, Namespace gmsh/onelab, Namespace gmsh/fltk, Gmsh application programming interface
 @section Namespace @code{gmsh/parser}: parser functions
 
 @ftable @code
@@ -6446,7 +6446,7 @@ Parse the file @code{fileName} with the Gmsh parser.
 
 @end ftable
 
-@node Namespace gmsh/onelab, Namespace gmsh/logger, Namespace gmsh/parser, Gmsh API
+@node Namespace gmsh/onelab, Namespace gmsh/logger, Namespace gmsh/parser, Gmsh application programming interface
 @section Namespace @code{gmsh/onelab}: ONELAB server functions
 
 @ftable @code
@@ -6635,7 +6635,7 @@ Python (@url{@value{GITLAB-PREFIX}/examples/api/onelab_run.py#L24,onelab_run.py}
 
 @end ftable
 
-@node Namespace gmsh/logger, , Namespace gmsh/onelab, Gmsh API
+@node Namespace gmsh/logger, , Namespace gmsh/onelab, Gmsh application programming interface
 @section Namespace @code{gmsh/logger}: information logging functions
 
 @ftable @code
