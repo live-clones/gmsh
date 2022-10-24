@@ -53,6 +53,9 @@ const char*  hxtGetStatusString(HXTStatus status){
     case HXT_STATUS_FORMAT_ERROR:
       return "wrong format";
       break;
+    case HXT_STATUS_INPUT_ERROR:
+      return "input mesh structure error";
+      break;
     default:
       if(status<=HXT_STATUS_INTERNAL)
         return "internal error was not caught. This should not happen";
