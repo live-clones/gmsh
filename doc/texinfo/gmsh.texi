@@ -4416,16 +4416,17 @@ return value, if any) in Python and Julia.
 @chapter Gmsh options
 
 This chapter lists all the Gmsh options. Options can be specified in
-script files (@pxref{General scripting commands}), using the API
-(@pxref{Namespace gmsh/option}) or on the command line using the
-@code{-setnumber} and @code{-setstring} switches (@pxref{Gmsh
-command-line interface}).  Many options can also be changed
-interactively in the GUI (@pxref{Gmsh graphical user interface}): too
-see which option corresponds to which widget in the GUI, leave your
-mouse on the widget and a tooltip with the option name will appear.
-Note that some options can affect the GUI in real time: loading a script
-file that sets @code{General.GraphicsWidth} for example (@pxref{General
-options}) will change the width of the graphic window at runtime.
+script files (@pxref{General scripting commands}) or using the API
+(@pxref{Namespace gmsh/option}): see @ref{t3} for an example. They can
+also be specified on the command line using the @code{-setnumber} and
+@code{-setstring} switches: see @ref{Gmsh command-line interface}.  Many
+options can also be changed interactively in the GUI (@pxref{Gmsh
+graphical user interface}): to see which option corresponds to which
+widget in the GUI, leave your mouse on the widget and a tooltip with the
+option name will appear.  Note that some options can affect the GUI in
+real time: loading a script file that sets @code{General.GraphicsWidth}
+for example (@pxref{General options}) will change the width of the
+graphic window at runtime.
 
 Gmsh's default behavior is to save some of these options in a per-user
 ``session resource'' file (cf. ``Saved in:
@@ -4577,7 +4578,8 @@ distribution. Plugins are available in the GUI (by right-clicking on a
 view button, or by clicking on the black arrow next to the view button,
 and then selecting the `Plugin' submenu), in the scripting language
 (@pxref{Post-processing scripting commands}) and in the API
-(@pxref{Namespace gmsh/plugin}).
+(@pxref{Namespace gmsh/plugin}).  See @ref{t9} for an example on how to
+use plugins.
 
 @include opt_plugin.texi
 
