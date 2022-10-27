@@ -799,28 +799,27 @@ Fortran) brings even greater flexibility, the only downside being that
 you need to either compile your code (for C++, C and Fortran) or to
 configure and install an interpreter (Python or Julia) in addition to
 Gmsh. A binary Software Development Kit (SDK) is distributed on the Gmsh
-web site to make the process easier;
+web site to make the process easier (@pxref{Installing and running Gmsh
+on your computer});
 @item
 parametrize these geometries. Gmsh's scripting language or the Gmsh API
 enable all commands and command arguments to depend on previous
-calculations (see @ref{Floating point expressions}, @ref{Geometry
-scripting commands}, and @ref{Gmsh application programming
-interface}). Using the OpenCASCADE geometry kernel, Gmsh gives access to
-all the usual constructive solid geometry operations;
+calculations. Using the OpenCASCADE geometry kernel, Gmsh gives access
+to all the usual constructive solid geometry operations (see
+e.g. @ref{t16});
 @item
 import geometries from other CAD software in standard exchange
 formats. Gmsh uses OpenCASCADE to import such files, including label and
-color information from STEP and IGES files;
+color information from STEP and IGES files (see e.g. @ref{t20});
 @item
 generate unstructured 1D, 2D and 3D simplicial (i.e., using line
 segments, triangles and tetrahedra) finite element meshes (see @ref{Mesh
 module}), with fine control over the element size (@pxref{Specifying
 mesh element sizes});
 @item
-create simple extruded geometries and meshes (see @ref{Geometry
-scripting commands}, and @ref{Mesh scripting commands}), and allow to
-automatically couple such structured meshes with unstructured ones
-(using a layer of pyramids in 3D);
+create simple extruded geometries and meshes, and allow to automatically
+couple such structured meshes with unstructured ones (using a layer of
+pyramids in 3D);
 @item
 generate high-order (curved) meshes that conform to the CAD model
 geometry. High-order mesh optimization tools allow to guarantee the
@@ -834,20 +833,17 @@ visualize and export computational results in a great variety of
 ways. Gmsh can display scalar, vector and tensor datasets, perform
 various operations on the resulting post-processing views
 (@pxref{Post-processing module}), can export plots in many different
-formats (@pxref{General options}), and can generate complex animations
-(see @ref{General scripting commands}, and @ref{t8});
+formats, and can generate complex animations (see e.g. @ref{t8});
 @item
 run on low end machines and/or machines with no graphical
 interface. Gmsh can be compiled with or without the GUI
 (@pxref{Compiling the source code}), and all versions can be used either
-interactively or directly from the command line (@pxref{Installing and
-running Gmsh on your computer});
+interactively or directly from the command line;
 @item
 configure your preferred options. Gmsh has a large number of
 configuration options that can be set interactively using the GUI,
 scattered inside script files, changed through the API, set in per-user
-configuration files and specified on the command line (see
-@ref{Installing and running Gmsh on your computer} and @ref{Gmsh
+configuration files and specified on the command line (@pxref{Gmsh
 options});
 @item
 and do all the above on various platforms (Windows, macOS and Linux),
@@ -898,7 +894,7 @@ files (@pxref{Gmsh scripting language}). In addition, the ONELAB
 interface (@pxref{Solver module}) allows to interact with the Gmsh
 application through Unix or TCP/IP sockets.  Binary versions of the Gmsh
 app for Windows, Linux and macOS can be downloaded from
-@url{https://gmsh.info}. Several Linux distributions also ship the Gmsh
+@url{https://gmsh.info/#Download}. Several Linux distributions also ship the Gmsh
 app. See the @ref{Compiling the source code} for instructions on how to
 compile the Gmsh app from source.
 
@@ -908,8 +904,8 @@ using the Gmsh API (@pxref{Gmsh application programming interface}).
 The API is available in C++, C, Python, Julia and Fortran.  A binary
 Software Development Kit (SDK) for Windows, Linux and macOS, that
 contains the dynamic Gmsh library and the associated header and module
-files, can be downloaded from @url{https://gmsh.info}. Python users can
-use
+files, can be downloaded from @url{https://gmsh.info/#Download}. Python
+users can use
 @example
 pip install --upgrade gmsh
 @end example
