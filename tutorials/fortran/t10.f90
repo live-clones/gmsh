@@ -102,7 +102,7 @@ call gmsh%model%mesh%field%setNumber(6, "Thickness", 0.3d0)
 ! complete list. You can also create fields directly in the graphical user
 ! interface by selecting `Define->Size fields' in the `Mesh' module.
 
-! Let's use the minimum of all the fields as the background mesh field:
+! Let's use the minimum of all the fields as the background mesh size field:
 ret = gmsh%model%mesh%field%add("Min", 7)
 call gmsh%model%mesh%field%setNumbers(7, "FieldsList", [2d0, 3d0, 5d0, 6d0])
 
@@ -128,7 +128,7 @@ call gmsh%model%mesh%setSizeCallback(c_funloc(meshSizeCallback))
 ! boundary mesh sizes are interpolated inside surfaces and/or volumes depending
 ! on the value of `Mesh.MeshSizeExtendFromBoundary' (which is set by default).
 !
-! When the element size is fully specified by a background mesh (as it is in
+! When the element size is fully specified by a mesh size field (as it is in
 ! this example), it is thus often desirable to set
 
 call gmsh%option%setNumber("Mesh.MeshSizeExtendFromBoundary", 0d0)
