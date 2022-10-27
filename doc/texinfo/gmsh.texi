@@ -931,13 +931,13 @@ distribution.
 
 The @file{.geo} files are written in Gmsh's built-in scripting language
 (@pxref{Gmsh scripting language}). You can open them directly with the
-Gmsh app: in the graphical user interface (GUI), just go to
-`File->Open', select e.g. the first tutorial (@file{t1.geo}) and choose
-`Open'. On the command line, run
+Gmsh app: in the graphical user interface (GUI; see @ref{Gmsh graphical
+user interface}), just go to `File->Open', select e.g. the first
+tutorial (@file{t1.geo}) and choose `Open'. Or on the command line, run
 @example
 > gmsh t1.geo
 @end example
-which will launch the GUI (@pxref{Gmsh graphical user interface}), or
+which will launch the GUI, or
 @example
 > gmsh t1.geo -2
 @end example
@@ -948,7 +948,7 @@ The @file{c++}, @file{c}, @file{python}, @file{julia} and @file{fortran}
 subdirectories of the @url{@value{GITLAB-PREFIX}/tutorials,tutorials}
 directory contain the C++, C, Python, Julia and Fortran tutorials,
 written using the Gmsh API (@pxref{Gmsh application programming
-interface}) You will need the Gmsh dynamic library and the associated
+interface}). You will need the Gmsh dynamic library and the associated
 header files (for C++ and C) or modules (for Python, Julia and Fortran)
 to run them. Each subdirectory contains additional information on how to
 run the tutorials for each supported language, as well as extended
