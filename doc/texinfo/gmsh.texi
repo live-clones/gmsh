@@ -129,7 +129,7 @@ for Gmsh @value{GMSH-VERSION} (@today{}).
 * Gmsh mesh size fields::       Description of all Gmsh mesh size fields
 * Gmsh plugins::                Description of all built-in Gmsh plugins
 * Gmsh file formats::           Description of Gmsh's native file formats
-* Compiling the source code::   Information on how to comile Gmsh from source
+* Compiling the source code::   Information on how to compile Gmsh from source
 * Information for developers::  Information for Gmsh developers
 * Frequently asked questions::  The Gmsh FAQ
 * Version history::             Changelog
@@ -226,8 +226,7 @@ in Gmsh, please file an issue on
 @url{https://gitlab.onelab.info/gmsh/gmsh/issues}. Provide as precise a
 description of the problem as you can, including sample input files that
 produce the bug. Don't forget to mention both the version of Gmsh and
-your operation system (@pxref{Gmsh command-line interface} to see how to get
-this information).
+your operation system.
 
 See @ref{Frequently asked questions}, and the
 @url{https://gitlab.onelab.info/gmsh/gmsh/issues,bug tracking system} to
@@ -316,7 +315,7 @@ meshes are saved.)
 Both model entities (also referred to as ``elementary entities'') and
 physical groups are uniquely defined by a pair of integers: their
 dimension (0 for points, 1 for curves, 2 for surfaces, 3 for volumes)
-and their @emph{tag}, a stricly positive global identification
+and their @emph{tag}, a strictly positive global identification
 number. Entity and group tags are unique per dimension:
 @enumerate
 @item each point must possess a unique tag;
@@ -327,7 +326,7 @@ number. Entity and group tags are unique per dimension:
 Zero or negative tags are reserved by Gmsh for internal use.
 
 Model entities can be manipulated and transformed in a variety of ways
-within the geomtry module, but operations are always performed directly
+within the geometry module, but operations are always performed directly
 within their respective CAD kernels. As explained above, there is no
 common internal geometrical representation: rather, Gmsh directly
 performs the operations (translation, rotation, intersection, union,
@@ -341,7 +340,7 @@ OpenCASCADE representation.
 The @ref{Gmsh tutorial}, starting with @ref{t1}, is the best place to
 learn how to use the geometry module: it contains examples of increasing
 complexity based on both the built-in and the OpenCASCADE kernel.  Note
-that many features of the geometry module can be used interctively in
+that many features of the geometry module can be used interactively in
 the GUI (@pxref{Gmsh graphical user interface}), which is also a good
 way to learn about both Gmsh's scripting language (@pxref{Gmsh scripting
 language}) and the API (@pxref{Gmsh application programming interface}),
@@ -662,7 +661,7 @@ formats}), as well as in most other mesh formats, if physical groups are
 defined, the output mesh only contains those elements that belong to at
 least one physical group. (Different mesh file formats treat physical
 groups in slightly different ways, depending on their capability to
-define groups.) To save all mesh elements wether or not physical groups
+define groups.) To save all mesh elements whether or not physical groups
 are defined, use the @code{Mesh.SaveAll} option (@pxref{Mesh options})
 or specify @code{-save_all} on the command line. In some formats
 (e.g. MSH2), setting @code{Mesh.SaveAll} will however discard all
@@ -1733,8 +1732,14 @@ end of @file{t1.geo} and running
 @example
 > gmsh t1.geo -parse_and_exit
 @end example
-or further adding @code{Exit;} at the end of the script and openin this
+or further adding @code{Exit;} at the end of the script and opening this
 new file.
+
+Options (@pxref{Gmsh options}) can be set from the command line with the
+@code{-setnumber} and @code{-setstring} switches
+@example
+> gmsh t1.geo -setnumber Mesh.Nodes 1 -setnumber Geometry.SurfaceLabels 1
+@end example
 
 The list of all command-line switches is given hereafter.
 
@@ -1765,7 +1770,7 @@ variables, macros don't take arguments, and the runtime interpretation
 by the parser can penalize performance on large models. Depending on the
 workflow and the application, using the Gmsh API (@pxref{Gmsh
 application programming interface}) can thus sometimes be
-preferrable. The downside of the API is that, while the scripting
+preferable. The downside of the API is that, while the scripting
 language is baked into Gmsh and is thus available directly in the
 standalone Gmsh app, the API requires external dependencies (a C++, C or
 Fortran compiler; or a Python or Julia interpreter).
@@ -2015,7 +2020,7 @@ or get the bounding box of a given entity, with the bounding box
 specified as (X min, Y min, Z min, X max, Y max, Z max). Beware that the
 order of coordinates is different than in the @code{BoundingBox} command
 for the scene: see @ref{Other general commands}. The last cases permit to
-retrieve the mass, the center of mass or the matrix of intertia of an
+retrieve the mass, the center of mass or the matrix of inertia of an
 entity, the coordinates of a given geometry point (@pxref{Points}), the
 elementary entities making up physical groups, and the tags of all
 (physical or elementary) points, curves, surfaces or volumes in the
@@ -2803,7 +2808,7 @@ Execute a (non-blocking) system call.
 
 @item OnelabRun ( @var{string-expression} <, @var{string-expression} > )
 Run a ONELAB client (first argument is the client name, second optional
-arguement is the command line).
+argument is the command line).
 
 @item SetName @var{string-expression};
 Change the name of the current model.
@@ -3638,8 +3643,8 @@ triangles any quadrangles on boundary surfaces shared with tetrahedral
 volumes. (They have no effect for 1D or 2D extrusions.)
 @code{QuadTriNoNewVerts} subdivides any of the region's quad-faced 3D
 elements that touch these boundary triangles into pyramids, prisms, or
-tetrahedra as necessary, all wiothout adding new
-nodes. @code{QuadTriAddVerts} works in a simular way, but subdivides 3D
+tetrahedra as necessary, all without adding new
+nodes. @code{QuadTriAddVerts} works in a similar way, but subdivides 3D
 elements touching the boundary triangles by adding a new node inside
 each element at the node-based centroid. Either method results in a
 structured extrusion with an outer layer of subdivided elements that
@@ -3807,7 +3812,7 @@ matrix given by row (only 12 entries can be provided for convenience).
 @item RefineMesh;
 Refine the current mesh by splitting all elements. If
 @code{Mesh.SecondOrderLinear} is set, the new nodes are inserted by
-linear interpolatinon. Otherwise they are snapped on the actual
+linear interpolation. Otherwise they are snapped on the actual
 geometry. @value{SYNC}
 
 @item OptimizeMesh @var{string-expression};
@@ -3917,10 +3922,10 @@ reparametrized with @code{CreateGeometry}. The last optional argument
 sets an angle threshold to force splitting of the generated curves.
 
 @item RenumberMeshNodes;
-Renumber the node tags in the current mesh in a contiunous sequence.
+Renumber the node tags in the current mesh in a continuous sequence.
 
 @item RenumberMeshElements;
-Renumber the elements tags in the current mesh in a contiunous sequence.
+Renumber the elements tags in the current mesh in a continuous sequence.
 
 @item < Recursive > Color @var{color-expression} @{ <Physical> Point | Curve | Surface | Volume @{ @var{expression-list-or-all} @}; @dots{} @}
 Set the mesh color of the entities in @var{expression-list} to
@@ -3939,7 +3944,7 @@ default value is 45). @value{SYNC}
 Specify the meshing algorithm for the surfaces @var{expression-list}.
 
 @item MeshSizeFromBoundary Surface @{ @var{expression-list} @} = @var{expression};
-Force the mesh size to be extended from the boundary (or not, depening
+Force the mesh size to be extended from the boundary (or not, depending
 on the value of @var{expression}) for the surfaces
 @var{expression-list}.
 
@@ -4200,7 +4205,7 @@ third @var{expression} in 2D text objects.
 
 For both 2D and 3D text objects, the @var{values} can contain an
 arbitrary number of @w{@var{string-expression}s}. If the
-@var{string-expxression} starts with @code{file://}, the remainder of the
+@var{string-expression} starts with @code{file://}, the remainder of the
 string is interpreted as the name of an image file, and the image is
 displayed instead of the string. A format string in the form
 @code{@@wxh} or @code{@@wxh,wx,wy,wz,hx,hy,hz}, where @code{w} and
@@ -4428,8 +4433,8 @@ options}) will change the width of the graphic window at runtime.
 
 Gmsh's default behavior is to save some of these options in a per-user
 ``session resource'' file (cf. ``Saved in:
-@code{General.SessionFileName}'' in the option descripstions below)
-every time Gmsh is shut down. This permits for example to automatically
+@code{General.SessionFileName}'' in the option descriptions below) every
+time Gmsh is shut down. This permits for example to automatically
 remember the size and location of the windows or which fonts to use. A
 second set of options can be saved (automatically or manually with the
 `File->Save Options As Default' menu) in a per-user ``option'' file
@@ -6159,13 +6164,13 @@ on embedded entities are stored in the associated bounding/embedded
 entity.
 
 The post-processing module is based on the concept of views
-(@url{@value{GITLAB-PREFIX}/src/post/PView.h,src/post/PView.h})
-and abstract data containers (derived from
+(@url{@value{GITLAB-PREFIX}/src/post/PView.h,src/post/PView.h}) and
+abstract data containers (derived from
 @url{@value{GITLAB-PREFIX}/src/post/PViewData.h,src/post/PViewData.h}).
 Data can be either mesh-based
 (@url{@value{GITLAB-PREFIX}/src/post/PViewDataGModel.h,src/post/PViewDataGModel.h}),
 in which case the view is linked to one or more models, or list-based
-(@url{@value{GITLAB-PREFIX}/src/post/PViewDataList.h,src/post/PViewDataLis.h}),
+(@url{@value{GITLAB-PREFIX}/src/post/PViewDataList.h,src/post/PViewDataList.h}),
 in which case all the relevant geometrical information is self-contained
 in the view.
 
