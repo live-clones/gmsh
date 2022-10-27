@@ -3,7 +3,8 @@ multiple shapes with OCC; reduced default order for OCC surface filling;
 arbitrary string attributes can now be stored in models and MSH files; new
 Radioss export; added ability to specify spline tangents with OCC; new option
 Mesh.SaveWithoutOrphans to prune orphan entities (e.g. geometrical construction
-points) from MSH4 files; new official macOS ARM builds; small bug fixes.
+points) from MSH4 files; major overhaul of the reference manual; new official
+macOS ARM builds; small bug fixes.
 
 * New API functions: model/getAttributeNames, model/getAttribute,
   model/setAttribute, model/removeAttribute

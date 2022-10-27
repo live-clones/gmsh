@@ -6,9 +6,9 @@
 #
 # -----------------------------------------------------------------------------
 
-# The Python API allows to do much more than what can be done in .geo files. These
-# additional features are introduced gradually in the extended tutorials,
-# starting with `x1.py'.
+# The Python API allows to do much more than what can be done in .geo
+# files. These additional features are introduced gradually in the extended
+# tutorials, starting with `x1.py'.
 
 # In this first extended tutorial, we start by using the API to access basic
 # geometrical and mesh data.
