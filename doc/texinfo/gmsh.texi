@@ -122,7 +122,7 @@ for Gmsh @value{GMSH-VERSION} (@today{}).
 * Overview of Gmsh::            High-level overview of Gmsh
 * Gmsh tutorial::               A step-by-step tutorial for both @file{.geo} files and the API
 * Gmsh graphical user interface::  Description of Gmsh's GUI
-* Gmsh command-line interface::
+* Gmsh command-line interface:: Description of Gmsh's command-line interface
 * Gmsh scripting language::     Description of Gmsh's built-in scripting language (@file{.geo} files)
 * Gmsh application programming interface::  Description of Gmsh's multi-language API
 * Gmsh options::                Description of all Gmsh options
