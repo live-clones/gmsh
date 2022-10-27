@@ -2177,7 +2177,7 @@ See @ref{t3}, for an example of the use of color expressions.
 * Built-in functions::
 * User-defined macros::
 * Loops and conditionals::
-* General commands::
+* Other general commands::
 @end menu
 
 @node Operators, Built-in functions, Color expressions, General scripting commands
