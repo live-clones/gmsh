@@ -189,7 +189,7 @@ public:
   int statPosition[2], ctxPosition[2];
   int pluginPosition[2], pluginSize[2], fieldPosition[2], fieldSize[2];
   int fileChooserPosition[2], extraPosition[2], extraSize[2];
-  // use the system menu bar on Mac OS X?
+  // use the system menu bar on macOS?
   int systemMenuBar;
   // use the native file chooser?
   int nativeFileChooser;

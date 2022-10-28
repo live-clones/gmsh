@@ -1132,7 +1132,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.SystemMenuBar
-Use the system menu bar on Mac OS X?@*
+Use the system menu bar on macOS?@*
 Default value: @code{1}@*
 Saved in: @code{General.SessionFileName}
 

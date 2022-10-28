@@ -14,7 +14,7 @@ integration and levelsets), Jacques Lechelle (DIFFPACK export), Jonathan
 Lambrechts (mesh size fields, solver, Python wrappers), Jozef Vesely (old Tetgen
 integration), Koen Hillewaert (high order elements, generalized periodic
 meshes), Laurent Stainier (eigenvalue solvers, tensor display and help with
-MacOS port), Marc Ume (original list and tree code), Mark van Doesburg (old
+macOS port), Marc Ume (original list and tree code), Mark van Doesburg (old
 OpenCASCADE face connection), Matt Gundry (Plot3d export), Matti Pellikka (cell
 complex and homology solver), Nicolas Tardieu (help with Netgen integration),
 Pascale Noyret (MED mesh IO), Pierre Badel (root finding and minimization), Ruth

@@ -2890,7 +2890,7 @@ static Fl_Menu_Item bar_table[] = {
 
 #if defined(__APPLE__)
 
-// Alternative items for the MacOS system menu bar (removed '&' shortcuts: they
+// Alternative items for the macOS system menu bar (removed '&' shortcuts: they
 // would cause spurious menu items to appear on the menu window; removed
 // File->Quit)
 static Fl_Menu_Item sysbar_table[] = {

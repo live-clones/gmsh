@@ -715,19 +715,7 @@ finite elements.
 @node Post-processing module, What Gmsh is pretty good at, Solver module, Overview of Gmsh
 @section Post-processing module
 
-Gmsh can load and manipulate multiple post-processing scalar, vector or
-tensor fields along with the geometry and the mesh. Such fields,
-together with visualization options, are called ``post-processing
-views'' (or simply ``views''). Scalar views can be represented by
-iso-curves, iso-surfaces or color maps, while vector views can be
-represented by three-dimensional arrows or displacement
-maps. Post-processing functions include section computation, offset,
-elevation, boundary and component extraction, color map and range
-modification, animation, vector graphic output, etc. All the
-post-processing options can be accessed either interactively in the GUI,
-through the input script files or through the API. Various operations on
-the post-processing data can also be performed using plugins (see
-@ref{Gmsh plugins}).
+
 
 The post-processing module can handle multiple scalar, vector or tensor
 datasets along with the geometry and the mesh. The datasets can be given
@@ -745,8 +733,7 @@ either by three-dimensional arrows or by displacement maps. Tensor
 fields can be displayed as Von-Mises effective stresses, min/max
 eigenvalues, eigenvectors, ellipses or ellipsoids. (To display other
 (combinations of) components, you can use the
-@code{View.ForceNumComponents} options -- cf. @ref{Post-processing view
-options}, or use the @code{MathEval} plugin: see @ref{Gmsh plugins}.)
+@code{View.ForceNumComponents} options.)
 
 Each dataset, along with the visualization options, is called a
 ``post-processing view'', or simply a ``view''. Each view is given a
@@ -754,13 +741,20 @@ name, and can be manipulated either individually (each view has its own
 button in the GUI and can be referred to by its index or its unique tag
 in a script or in the API) or globally (see the
 @code{PostProcessing.Link} option in @ref{Post-processing options}).
+Post-processing functions include section computation, offset,
+elevation, boundary and component extraction, color map and range
+modification, animation, vector graphic output, etc.  All the
+post-processing options can be accessed either interactively in the GUI,
+through the input script files or through the API. Various operations on
+the post-processing data can also be performed using plugins (see
+@ref{Gmsh plugins}). This allows to fully automate the post-processing
+process (see e.g., @ref{t8}, and @ref{t9}).
 
 By default, Gmsh treats all post-processing views as three-dimensional
-plots, i.e., draws the scalar, vector and tensor primitives (points, curves,
-triangles, tetrahedra, etc.) in 3D space. But Gmsh can also represent each
-post-processing view containing @emph{scalar points} as two-dimensional
-(``X-Y'') plots, either space- or time-oriented:
-
+plots, i.e., draws the scalar, vector and tensor primitives (points,
+curves, triangles, tetrahedra, etc.) in 3D space. But Gmsh can also
+represent each post-processing view containing @emph{scalar points} as
+two-dimensional (``X-Y'') plots, either space- or time-oriented:
 @itemize @bullet
 @item
 in a `2D space' plot, the scalar points are taken in the same order as they
@@ -769,14 +763,9 @@ the curvilinear abscissa of the curve defined by the point series, and only
 one curve is drawn using the values associated with the points. If several
 time steps are available, each time step generates a new curve;
 @item
-in a `2D time' plot, one curve is drawn for each scalar point in the view
-and the abscissa is the time step.
+in a `2D time' plot, one curve is drawn for each scalar point in the
+view and the abscissa is the time step.
 @end itemize
-
-Although visualization is usually mostly an interactive task, Gmsh
-exposes all the post-processing commands and options to the user in its
-scripting language and through the API to permit a complete automation
-of the post-processing process (see e.g., @ref{t8}, and @ref{t9}).
 
 @c -------------------------------------------------------------------------
 @c What Gmsh is pretty good at...
@@ -925,24 +914,24 @@ how to compile the dynamic Gmsh library from source.
 @cindex Tutorial
 
 The following tutorials introduce new features gradually, starting with
-@ref{t1}. The corresponding files are available in the
-@url{@value{GITLAB-PREFIX}/tutorials,tutorials} directory of the Gmsh
-distribution.
+the first tutorial @code{t1} (@pxref{t1}). The corresponding files are
+available in the @url{@value{GITLAB-PREFIX}/tutorials,tutorials}
+directory of the Gmsh distribution.
 
-The @file{.geo} files are written in Gmsh's built-in scripting language
-(@pxref{Gmsh scripting language}). You can open them directly with the
-Gmsh app: in the graphical user interface (GUI; see @ref{Gmsh graphical
-user interface}), just go to `File->Open', select e.g. the first
-tutorial (@file{t1.geo}) and choose `Open'. Or on the command line, run
+The @file{.geo} files (e.g. @file{t1.geo}) are written in Gmsh's
+built-in scripting language (@pxref{Gmsh scripting language}). You can
+open them directly with the Gmsh app: in the GUI (@pxref{Gmsh graphical
+user interface}), use the `File->Open' menu and select
+e.g. @file{t1.geo}. Or on the command line, run
 @example
 > gmsh t1.geo
 @end example
-which will launch the GUI, or
+which will launch the GUI, or run
 @example
 > gmsh t1.geo -2
 @end example
-to perform 2D meshing in batch mode -- see @ref{Gmsh command-line
-interface} for more information.
+to perform 2D meshing in batch mode (@pxref{Gmsh command-line
+interface}).
 
 The @file{c++}, @file{c}, @file{python}, @file{julia} and @file{fortran}
 subdirectories of the @url{@value{GITLAB-PREFIX}/tutorials,tutorials}
@@ -950,10 +939,19 @@ directory contain the C++, C, Python, Julia and Fortran tutorials,
 written using the Gmsh API (@pxref{Gmsh application programming
 interface}). You will need the Gmsh dynamic library and the associated
 header files (for C++ and C) or modules (for Python, Julia and Fortran)
-to run them. Each subdirectory contains additional information on how to
-run the tutorials for each supported language, as well as extended
-tutorials (starting with @file{x}) introducing features available
-through the API but not available in @file{.geo} files.
+to run them (@pxref{Installing and running Gmsh on your computer}). Each
+subdirectory contains additional information on how to run the tutorials
+for each supported language.
+
+All the tutorials starting with the letter @file{t} are available as
+@file{.geo} scripts and through the API. Extended tutorials, starting
+with the letter @file{x}, introduce features available through the API
+but not available in the scripting language.
+
+Note that besides these tutorials, the Gmsh distribution contains many
+examples written using both the built-in scripting language and the API:
+see @url{@value{GITLAB-PREFIX}/examples,examples} and
+@url{@value{GITLAB-PREFIX}/benchmarks,benchmarks}.
 
 @menu
 * t1::                          Geometry basics, elementary entities, physical groups
@@ -1558,11 +1556,12 @@ double-click on the Gmsh icon, or type
 @end example
 at the shell prompt in a terminal. This will open the main window of the
 Gmsh GUI, with a menu bar on top (except on macOS, where by default the
-menu bar is on the top of the screen), a tree menu on the left (with by
-default contains a `Modules' entry with three children: `Geometry',
-`Mesh' and `Solver'), a graphic area on the right, and a status bar with
-some shortcut buttons at the bottom. (You can detach the tree menu using
-`Window->Attach/Detach Menu'.)
+menu bar is on the top of the screen -- this can be changed with the
+@code{General.SystemMenuBar} option, @ref{General options}), a tree menu
+on the left (with by default contains a `Modules' entry with three
+children: `Geometry', `Mesh' and `Solver'), a graphic area on the right,
+and a status bar with some shortcut buttons at the bottom. (You can
+detach the tree menu using `Window->Attach/Detach Menu'.)
 
 To create a new geometrical model, use the `File->New' menu to create a
 new model file, and choose for example @file{mymodel.geo} as file
@@ -6317,9 +6316,9 @@ tracking database}.
 @enumerate
 @item Which OSes does Gmsh run on?
 
-Gmsh runs on Windows, Mac OS X, Linux and most Unix variants. Gmsh is
-also available as part of the ONELAB package on Android and iOS tablets
-and phones.
+Gmsh runs on Windows, macOS, Linux and most Unix variants. Gmsh is also
+available as part of the ONELAB package on Android and iOS tablets and
+phones.
 
 @item Are there additional requirements to run Gmsh?
 
@@ -6357,10 +6356,9 @@ or @file{GLU32.DLL} libraries, then OpenGL is not properly installed on
 your machine. You can download OpenGL from Microsoft's web site, or
 directly from @url{http://www.opengl.org}.
 
-On Unix try `ldd gmsh' (or `otool -L gmsh' on Mac OS X) to check if all
-the required shared libraries are installed on your system. If not,
-install them. If it still doesn't work, recompile Gmsh from the source
-code.
+On Unix try `ldd gmsh' (or `otool -L gmsh' on macOS) to check if all the
+required shared libraries are installed on your system. If not, install
+them. If it still doesn't work, recompile Gmsh from the source code.
 
 @item Gmsh keeps re-displaying its graphics when other windows partially hide the graphical window.
 

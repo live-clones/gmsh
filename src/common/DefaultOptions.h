@@ -813,7 +813,7 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "Stereo" , opt_general_stereo_mode , 0. ,
     "Use stereo rendering" },
   { F|S, "SystemMenuBar" , opt_general_system_menu_bar , 1. ,
-    "Use the system menu bar on Mac OS X?" },
+    "Use the system menu bar on macOS?" },
 
   { F|O, "Terminal" , opt_general_terminal , 0. ,
     "Should information be printed on the terminal (if available)?" },
