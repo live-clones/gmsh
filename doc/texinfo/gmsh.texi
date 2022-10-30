@@ -715,8 +715,6 @@ finite elements.
 @node Post-processing module, What Gmsh is pretty good at, Solver module, Overview of Gmsh
 @section Post-processing module
 
-
-
 The post-processing module can handle multiple scalar, vector or tensor
 datasets along with the geometry and the mesh. The datasets can be given
 in several formats: in human-readable ``parsed'' format (these are just
@@ -732,8 +730,9 @@ iso-surfaces or color maps, whereas vector fields can be represented
 either by three-dimensional arrows or by displacement maps. Tensor
 fields can be displayed as Von-Mises effective stresses, min/max
 eigenvalues, eigenvectors, ellipses or ellipsoids. (To display other
-(combinations of) components, you can use the
-@code{View.ForceNumComponents} options.)
+combinations of components, you can use the
+@code{View.ForceNumComponents} option -- see @ref{Post-processing
+options}.)
 
 Each dataset, along with the visualization options, is called a
 ``post-processing view'', or simply a ``view''. Each view is given a
@@ -741,14 +740,15 @@ name, and can be manipulated either individually (each view has its own
 button in the GUI and can be referred to by its index or its unique tag
 in a script or in the API) or globally (see the
 @code{PostProcessing.Link} option in @ref{Post-processing options}).
-Post-processing functions include section computation, offset,
-elevation, boundary and component extraction, color map and range
-modification, animation, vector graphic output, etc.  All the
-post-processing options can be accessed either interactively in the GUI,
-through the input script files or through the API. Various operations on
-the post-processing data can also be performed using plugins (see
-@ref{Gmsh plugins}). This allows to fully automate the post-processing
-process (see e.g., @ref{t8}, and @ref{t9}).
+Possible operations on post-processing views include section
+computation, offset, elevation, boundary and component extraction, color
+map and range modification, animation, vector graphic output, etc.
+These operations are either carried out nondestructively through the
+modification of post-processing options, or can lead to the actual
+modification of the view data or the creation of new views when done
+using post-processing plugins (@pxref{Gmsh plugins}). Both can be fully
+automated in scripts or through the API (see e.g., @ref{t8}, and
+@ref{t9}).
 
 By default, Gmsh treats all post-processing views as three-dimensional
 plots, i.e., draws the scalar, vector and tensor primitives (points,
@@ -949,8 +949,8 @@ with the letter @file{x}, introduce features available through the API
 but not available in the scripting language.
 
 Note that besides these tutorials, the Gmsh distribution contains many
-examples written using both the built-in scripting language and the API:
-see @url{@value{GITLAB-PREFIX}/examples,examples} and
+other examples written using both the built-in scripting language and
+the API: see @url{@value{GITLAB-PREFIX}/examples,examples} and
 @url{@value{GITLAB-PREFIX}/benchmarks,benchmarks}.
 
 @menu
@@ -1004,6 +1004,8 @@ Julia
 and Fortran
 (@url{@value{GITLAB-PREFIX}/tutorials/fortran/t1.f90,t1.f90}).
 
+@center@image{images/t1,9cm,}
+
 @format
 @verbatiminclude ../../tutorials/t1.geo
 @end format
@@ -1028,6 +1030,8 @@ Julia
 and Fortran
 (@url{@value{GITLAB-PREFIX}/tutorials/fortran/t2.f90,t2.f90}).
 
+@center@image{images/t2,9cm,}
+
 @format
 @verbatiminclude ../../tutorials/t2.geo
 @end format
@@ -1049,6 +1053,8 @@ Julia
 (@url{@value{GITLAB-PREFIX}/tutorials/julia/t3.jl,t3.jl})
 and Fortran
 (@url{@value{GITLAB-PREFIX}/tutorials/fortran/t3.f90,t3.f90}).
+
+@center@image{images/t3,9cm,}
 
 @format
 @verbatiminclude ../../tutorials/t3.geo
@@ -1072,6 +1078,8 @@ Julia
 and Fortran
 (@url{@value{GITLAB-PREFIX}/tutorials/fortran/t4.f90,t4.f90}).
 
+@center@image{images/t4,9cm,}
+
 @format
 @verbatiminclude ../../tutorials/t4.geo
 @end format
@@ -1093,6 +1101,8 @@ Julia
 (@url{@value{GITLAB-PREFIX}/tutorials/julia/t5.jl,t5.jl})
 and Fortran
 (@url{@value{GITLAB-PREFIX}/tutorials/fortran/t5.f90,t5.f90}).
+
+@center@image{images/t5,9cm,}
 
 @format
 @verbatiminclude ../../tutorials/t5.geo
@@ -1116,6 +1126,8 @@ Python
 and Fortran
 (@url{@value{GITLAB-PREFIX}/tutorials/fortran/t6.f90,t6.f90}).
 
+@center@image{images/t6,9cm,}
+
 @format
 @verbatiminclude ../../tutorials/t6.geo
 @end format
@@ -1135,6 +1147,8 @@ Python
 (@url{@value{GITLAB-PREFIX}/tutorials/python/t7.py,t7.py})
 and Fortran
 (@url{@value{GITLAB-PREFIX}/tutorials/fortran/t7.f90,t7.f90}).
+
+@center@image{images/t7,9cm,}
 
 @format
 @verbatiminclude ../../tutorials/t7.geo
@@ -1156,6 +1170,8 @@ Python
 and Fortran
 (@url{@value{GITLAB-PREFIX}/tutorials/fortran/t8.f90,t8.f90}).
 
+@center@image{images/t8,9cm,}
+
 @format
 @verbatiminclude ../../tutorials/t8.geo
 @end format
@@ -1175,6 +1191,8 @@ Python
 (@url{@value{GITLAB-PREFIX}/tutorials/python/t9.py,t9.py})
 and Fortran
 (@url{@value{GITLAB-PREFIX}/tutorials/fortran/t9.f90,t9.f90}).
+
+@center@image{images/t9,9cm,}
 
 @format
 @verbatiminclude ../../tutorials/t9.geo
@@ -1198,6 +1216,8 @@ Julia
 and Fortran
 (@url{@value{GITLAB-PREFIX}/tutorials/fortran/t10.f90,t10.f90}).
 
+@center@image{images/t10,9cm,}
+
 @format
 @verbatiminclude ../../tutorials/t10.geo
 @end format
@@ -1217,6 +1237,8 @@ Python
 (@url{@value{GITLAB-PREFIX}/tutorials/python/t11.py,t11.py})
 and Fortran
 (@url{@value{GITLAB-PREFIX}/tutorials/fortran/t11.f90,t11.f90}).
+
+@center@image{images/t11,9cm,}
 
 @format
 @verbatiminclude ../../tutorials/t11.geo
@@ -1238,6 +1260,8 @@ Python
 and Fortran
 (@url{@value{GITLAB-PREFIX}/tutorials/fortran/t12.f90,t12.f90}).
 
+@center@image{images/t12,9cm,}
+
 @format
 @verbatiminclude ../../tutorials/t12.geo
 @end format
@@ -1257,6 +1281,8 @@ Python
 (@url{@value{GITLAB-PREFIX}/tutorials/python/t13.py,t13.py})
 and Fortran
 (@url{@value{GITLAB-PREFIX}/tutorials/fortran/t13.f90,t13.f90}).
+
+@center@image{images/t13,9cm,}
 
 @format
 @verbatiminclude ../../tutorials/t13.geo
@@ -1278,6 +1304,8 @@ Python
 and Fortran
 (@url{@value{GITLAB-PREFIX}/tutorials/fortran/t14.f90,t14.f90}).
 
+@center@image{images/t14,9cm,}
+
 @format
 @verbatiminclude ../../tutorials/t14.geo
 @end format
@@ -1297,6 +1325,8 @@ Python
 (@url{@value{GITLAB-PREFIX}/tutorials/python/t15.py,t15.py})
 and Fortran
 (@url{@value{GITLAB-PREFIX}/tutorials/fortran/t15.f90,t15.f90}).
+
+@center@image{images/t15,9cm,}
 
 @format
 @verbatiminclude ../../tutorials/t15.geo
@@ -1322,6 +1352,8 @@ Julia
 and Fortran
 (@url{@value{GITLAB-PREFIX}/tutorials/fortran/t16.f90,t16.f90}).
 
+@center@image{images/t16,9cm,}
+
 @format
 @verbatiminclude ../../tutorials/t16.geo
 @end format
@@ -1341,6 +1373,8 @@ Python
 (@url{@value{GITLAB-PREFIX}/tutorials/python/t17.py,t17.py})
 and Fortran
 (@url{@value{GITLAB-PREFIX}/tutorials/fortran/t17.f90,t17.f90}).
+
+@center@image{images/t17,9cm,}
 
 @format
 @verbatiminclude ../../tutorials/t17.geo
@@ -1362,6 +1396,8 @@ Python
 and Fortran
 (@url{@value{GITLAB-PREFIX}/tutorials/fortran/t18.f90,t18.f90}).
 
+@center@image{images/t18,9cm,}
+
 @format
 @verbatiminclude ../../tutorials/t18.geo
 @end format
@@ -1381,6 +1417,8 @@ Python
 (@url{@value{GITLAB-PREFIX}/tutorials/python/t19.py,t19.py})
 and Fortran
 (@url{@value{GITLAB-PREFIX}/tutorials/fortran/t19.f90,t19.f90}).
+
+@center@image{images/t19,9cm,}
 
 @format
 @verbatiminclude ../../tutorials/t19.geo
@@ -1402,6 +1440,8 @@ Python
 and Fortran
 (@url{@value{GITLAB-PREFIX}/tutorials/fortran/t20.f90,t20.f90}).
 
+@center@image{images/t20,9cm,}
+
 @format
 @verbatiminclude ../../tutorials/t20.geo
 @end format
@@ -1421,6 +1461,8 @@ Python
 (@url{@value{GITLAB-PREFIX}/tutorials/python/t21.py,t21.py})
 and Fortran
 (@url{@value{GITLAB-PREFIX}/tutorials/fortran/t21.f90,t21.f90}).
+
+@center@image{images/t21,9cm,}
 
 @format
 @verbatiminclude ../../tutorials/t21.geo
@@ -1454,6 +1496,8 @@ See
 Also available in C++
 (@url{@value{GITLAB-PREFIX}/tutorials/c++/x2.cpp,x2.cpp}).
 
+@center@image{images/x2,9cm,}
+
 @format
 @verbatiminclude ../../tutorials/python/x2.py
 @end format
@@ -1469,6 +1513,8 @@ See
 @url{@value{GITLAB-PREFIX}/tutorials/python/x3.py,x3.py}.
 Also available in C++
 (@url{@value{GITLAB-PREFIX}/tutorials/c++/x3.cpp,x3.cpp}).
+
+@center@image{images/x3,9cm,}
 
 @format
 @verbatiminclude ../../tutorials/python/x3.py
@@ -1486,6 +1532,8 @@ See
 Also available in C++
 (@url{@value{GITLAB-PREFIX}/tutorials/c++/x4.cpp,x4.cpp}).
 
+@center@image{images/x4,9cm,}
+
 @format
 @verbatiminclude ../../tutorials/python/x4.py
 @end format
@@ -1501,6 +1549,8 @@ See
 @url{@value{GITLAB-PREFIX}/tutorials/python/x5.py,x5.py}.
 Also available in C++
 (@url{@value{GITLAB-PREFIX}/tutorials/c++/x5.cpp,x5.cpp}).
+
+@center@image{images/x5,9cm,}
 
 @format
 @verbatiminclude ../../tutorials/python/x5.py
@@ -1534,6 +1584,8 @@ See
 Also available in C++
 (@url{@value{GITLAB-PREFIX}/tutorials/c++/x7.cpp,x7.cpp}).
 
+@center@image{images/x7,9cm,}
+
 @format
 @verbatiminclude ../../tutorials/python/x7.py
 @end format
@@ -1563,6 +1615,11 @@ children: `Geometry', `Mesh' and `Solver'), a graphic area on the right,
 and a status bar with some shortcut buttons at the bottom. (You can
 detach the tree menu using `Window->Attach/Detach Menu'.)
 
+@iftex
+@sp 1
+@end iftex
+@center@image{images/gui,10cm,}
+
 To create a new geometrical model, use the `File->New' menu to create a
 new model file, and choose for example @file{mymodel.geo} as file
 name. Then in the tree menu, successively open the `Geometry',
@@ -1575,6 +1632,11 @@ coordinates in the context window, select `X', `Y' and `Z freeze' in the
 window. Once you are done, either enter @kbd{e} (see the status message
 on the top of the graphic window) press the `Add' button in the context
 window.
+
+@iftex
+@sp 1
+@end iftex
+@center@image{images/gui_add_rectangle,10cm,}
 
 There is no need to save your geometrical model: when the rectangle was
 added, scripting commands were automatically appended to your model
@@ -1619,6 +1681,20 @@ on the mesh format.  Note that most interactive commands have keyboard
 shortcuts: see @ref{Keyboard shortcuts}, or select `Help->Keyboard and
 Mouse Usage' in the menu. For example, to quickly generate the 2D mesh
 and save a mesh, you can first press @kbd{2}, then @kbd{Ctrl+Shift+s}.
+A double-click in the graphic window will pop up a quick shortcut menu,
+which can be used e.g. to quickly toggle the visibility of some mesh
+entities (like surface faces), reset the viewport, select the rotation
+center, display axes, or access the full module options (from the
+`Tools->Options' menu). The shortcut buttons on the bottom left of the
+status bar can be used to quickly adjust the viewport: `X', `Y', `Z' set
+viewports with the corresponding axis perpendicular to graphic plane;
+the rotation button rotates the view by 90 degrees; and `1:1' resets the
+scale.
+
+@iftex
+@sp 1
+@end iftex
+@center@image{images/gui_mesh,10cm,}
 
 Several files can be loaded simultaneously. When specified on the
 command line, the first one defines the active model (in the same way as
@@ -1664,6 +1740,11 @@ The two next sections describe the mouse actions in the GUI, as well as
 all the predefined keyboard shortcuts. Screencasts explaining how to use
 the Gmsh GUI are available online at the following address:
 @uref{https://gmsh.info/screencasts/}.
+
+@c TODO: add section describing the main windows in the GUI, with a
+@c screenshot for each one: Tools->Options, Tools->Plugins,
+@c Tools->Visibility, Tools->Clipping, Tools->Manipulator,
+@c Tools->Statistics and Tools->Message console
 
 @c -------------------------------------------------------------------------
 @c Mouse actions

@@ -1826,6 +1826,7 @@ foreach(SUBDIR ${EXAMPLES})
 endforeach()
 set(TEX_DIR ${CMAKE_CURRENT_SOURCE_DIR}/doc/texinfo)
 file(GLOB TEX_SRC ${TEX_DIR}/*.texi)
+file(GLOB TEX_IMG ${TEX_DIR}/images/*.png)
 set(TEX_OBJ ${TEX_DIR}/gmsh.aux ${TEX_DIR}/gmsh.cp ${TEX_DIR}/gmsh.cps
     ${TEX_DIR}/gmsh.fn ${TEX_DIR}/gmsh.html ${TEX_DIR}/gmsh.info ${TEX_DIR}/gmsh.ky
     ${TEX_DIR}/gmsh.log ${TEX_DIR}/gmsh.pdf ${TEX_DIR}/gmsh.pg ${TEX_DIR}/gmsh.toc
@@ -1982,12 +1983,12 @@ if(MAKEINFO)
                      ARGS ${TEX_DIR}/gmsh.texi WORKING_DIRECTORY ${TEX_DIR})
   add_custom_target(txt DEPENDS ${TEX_DIR}/gmsh.txt)
   add_custom_command(OUTPUT ${TEX_DIR}/gmsh.html DEPENDS ${TEX_SRC}
-    COMMAND ${MAKEINFO} --html --css-ref=/gmsh.css
-    --no-split --set-customization-variable
-    EXTRA_HEAD='<meta name="viewport" content="width=device-width,initial-scale=1.0">'
+    COMMAND ${MAKEINFO} --html --css-ref=/gmsh.css --no-split
+    --set-customization-variable EXTRA_HEAD='<meta name="viewport" content="width=device-width,initial-scale=1.0"><style type="text/css"><!-- img { width:512px; } --></style>'
     ARGS ${TEX_DIR}/gmsh.texi WORKING_DIRECTORY ${TEX_DIR})
   add_custom_target(html DEPENDS ${TEX_DIR}/gmsh.html)
   install(FILES ${TEX_DIR}/gmsh.html DESTINATION ${GMSH_DOC} OPTIONAL)
+  install(FILES ${TEX_IMG} DESTINATION ${GMSH_DOC}/images OPTIONAL)
 else()
   add_custom_target(html COMMAND ${CMAKE_COMMAND} -E touch ${TEX_DIR}/gmsh.html)
 endif()
@@ -2008,8 +2009,8 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E echo
 if(MAKEINFO AND TEXI2PDF)
   add_custom_target(doc COMMAND ${CMAKE_COMMAND} -E tar zcf
                     ${CMAKE_CURRENT_BINARY_DIR}/gmsh-${GMSH_VERSION}-doc.tgz
-                    CREDITS.txt LICENSE.txt CHANGELOG.txt
-                    doc/gmsh.1 doc/texinfo/gmsh.html doc/texinfo/gmsh.info
+                    CREDITS.txt LICENSE.txt CHANGELOG.txt doc/gmsh.1
+                    doc/texinfo/gmsh.html doc/texinfo/images doc/texinfo/gmsh.info
                     doc/texinfo/gmsh.pdf doc/texinfo/gmsh.txt
                     COMMAND ${CMAKE_COMMAND} -E remove ${TEX_OBJ}
                     DEPENDS ${TEX_DIR}/gmsh.info ${TEX_DIR}/gmsh.txt
