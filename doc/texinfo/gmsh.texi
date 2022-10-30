@@ -883,9 +883,9 @@ files (@pxref{Gmsh scripting language}). In addition, the ONELAB
 interface (@pxref{Solver module}) allows to interact with the Gmsh
 application through Unix or TCP/IP sockets.  Binary versions of the Gmsh
 app for Windows, Linux and macOS can be downloaded from
-@url{https://gmsh.info/#Download}. Several Linux distributions also ship the Gmsh
-app. See the @ref{Compiling the source code} for instructions on how to
-compile the Gmsh app from source.
+@url{https://gmsh.info/#Download}. Several Linux distributions also ship
+the Gmsh app. See @ref{Compiling the source code} for instructions on
+how to compile the Gmsh app from source.
 
 As a library, Gmsh can still be used in the same way as the standalone
 Gmsh app, but in addition it can also be embedded in external codes
@@ -935,18 +935,18 @@ interface}).
 
 The @file{c++}, @file{c}, @file{python}, @file{julia} and @file{fortran}
 subdirectories of the @url{@value{GITLAB-PREFIX}/tutorials,tutorials}
-directory contain the C++, C, Python, Julia and Fortran tutorials,
-written using the Gmsh API (@pxref{Gmsh application programming
-interface}). You will need the Gmsh dynamic library and the associated
-header files (for C++ and C) or modules (for Python, Julia and Fortran)
-to run them (@pxref{Installing and running Gmsh on your computer}). Each
-subdirectory contains additional information on how to run the tutorials
-for each supported language.
+directory contain the C++, C, Python, Julia and Fortran versions of the
+tutorials, written using the Gmsh API (@pxref{Gmsh application
+programming interface}). You will need the Gmsh dynamic library and the
+associated header files (for C++ and C) or modules (for Python, Julia
+and Fortran) to run them (@pxref{Installing and running Gmsh on your
+computer}). Each subdirectory contains additional information on how to
+run the tutorials for each supported language.
 
-All the tutorials starting with the letter @file{t} are available as
-@file{.geo} scripts and through the API. Extended tutorials, starting
-with the letter @file{x}, introduce features available through the API
-but not available in the scripting language.
+All the tutorials starting with the letter @file{t} are available both
+using the scripting language and the API. Extended tutorials, starting
+with the letter @file{x}, introduce features that are only available
+through the API.
 
 Note that besides these tutorials, the Gmsh distribution contains many
 other examples written using both the built-in scripting language and
@@ -2921,7 +2921,8 @@ own.  If the path in @var{string-expression} is not absolute,
 Both the built-in and the OpenCASCADE CAD kernels can be used in the
 scripting language, by specifying @code{SetFactory("Built-in")} or
 @code{SetFactory("OpenCASCADE")}, respectively, before geometrical
-scripting commands.
+scripting commands. If @code{SetFactory} is not specified, the built-in
+kernel is used.
 
 A bottom-up boundary representation approach can be used by first
 defining points (using the @code{Point} command), then curves (using
@@ -4349,11 +4350,10 @@ INTERPOLATION_SCHEME
 @cindex API
 @cindex Programming, API
 
-The Gmsh application programming interface (API) allows you to integrate
-the Gmsh library in your own application. By design, the Gmsh API is
-purely functional, and only uses elementary types from the target
-language. Currently supported languages are C++, C, Python, Julia and
-Fortran.  See the
+The Gmsh application programming interface (API) allows to integrate the
+Gmsh library in external applications written in C++, C, Python, Julia
+or Fortran. By design, the Gmsh API is purely functional, and only uses
+elementary types from the target languages. See the
 @url{@value{GITLAB-PREFIX}/tutorials/c++,tutorials/c++},
 @url{@value{GITLAB-PREFIX}/tutorials/c,tutorials/c},
 @url{@value{GITLAB-PREFIX}/tutorials/python,tutorials/python},
