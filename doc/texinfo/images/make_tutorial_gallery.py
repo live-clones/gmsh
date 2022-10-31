@@ -19,17 +19,25 @@ def screenshot():
     gmsh.fltk.run = fltkrun
     gmsh.fltk.initialize = fltkinit
     gmsh.fltk.isAvailable = fltkavail
-    gmsh.option.setNumber('General.TrackballQuaternion0', 0.193008077261779)
-    gmsh.option.setNumber('General.TrackballQuaternion1', -0.1538019269341084)
-    gmsh.option.setNumber('General.TrackballQuaternion2', -0.141335917749105)
-    gmsh.option.setNumber('General.TrackballQuaternion3', 0.9587059026297291)
+    gmsh.option.setNumber('General.TrackballQuaternion0', 0.25)
+    gmsh.option.setNumber('General.TrackballQuaternion1', -0.1)
+    gmsh.option.setNumber('General.TrackballQuaternion2', -0.2)
+    gmsh.option.setNumber('General.TrackballQuaternion3', 0.9)
     gmsh.option.setNumber('General.Orthographic', 0)
+    if gmsh.option.getNumber('PostProcessing.NbViews') > 0:
+        gmsh.option.setNumber('Mesh.SurfaceFaces', 0)
+        gmsh.option.setNumber('Mesh.ColorCarousel', 0)
+    else:
+        gmsh.option.setNumber('Mesh.SurfaceFaces', 1)
+        gmsh.option.setNumber('Mesh.ColorCarousel', 1)
+    gmsh.option.setNumber('Mesh.SmoothNormals', 1)
+    gmsh.option.setNumber('Mesh.AngleSmoothNormals', 60)
+    gmsh.option.setNumber('Print.Background', 0)
     # 16/9 aspect ratio, width of 512*2 pixels when generated in mac with retina
     # display
     gmsh.option.setNumber('General.GraphicsWidth', 512 +
                           gmsh.option.getNumber('General.MenuWidth'))
     gmsh.option.setNumber('General.GraphicsHeight', 288)
-    gmsh.option.setNumber('Print.Background', 0)
     gmsh.fltk.initialize()
     gmsh.write(tuto + '.png')
     gmsh.fltk.finalize()
