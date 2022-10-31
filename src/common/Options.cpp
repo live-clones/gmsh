@@ -896,9 +896,9 @@ void PrintOptionsDoc()
   }
   {
 #if defined(HAVE_PLUGINS)
-    FILE *file = Fopen("opt_plugin.texi", "w");
+    FILE *file = Fopen("plugins.texi", "w");
     if(!file) {
-      Msg::Error("Unable to open file 'opt_plugin.texi'");
+      Msg::Error("Unable to open file 'plugins.texi'");
       return;
     }
     fprintf(file, "%s@ftable @code\n", warn);
@@ -941,9 +941,9 @@ void PrintOptionsDoc()
 
 #if defined(HAVE_MESH)
   {
-    FILE *file = Fopen("opt_fields.texi", "w");
+    FILE *file = Fopen("fields.texi", "w");
     if(!file) {
-      Msg::Error("Unable to open file 'opt_fields.texi'");
+      Msg::Error("Unable to open file 'fields.texi'");
       return;
     }
     fprintf(file, "%s@ftable @code\n", warn);
@@ -966,7 +966,7 @@ void PrintOptionsDoc()
           std::string val;
           it2->second->getTextRepresentation(val);
           Sanitize_String_Texi(val);
-          fprintf(file, "%s@*\ntype: %s@*\ndefault value: @code{%s}\n",
+          fprintf(file, "%s@*\nType: %s@*\nDefault value: @code{%s}\n",
                   it2->second->getDescription().c_str(),
                   it2->second->getTypeName().c_str(), val.c_str());
         }

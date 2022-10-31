@@ -257,8 +257,9 @@ through the Gmsh application programming interface (API; see @ref{Gmsh
 application programming interface}) in C++, C, Python, Julia or Fortran.
 
 A brief description of the four modules is given hereafter, before an
-overview of what Gmsh does best... and is not so good at, and some
-practical information on how to install and run Gmsh on your computer.
+overview of what Gmsh does best (... and what it is not so good at), and
+some practical information on how to install and run Gmsh on your
+computer.
 
 @menu
 * Geometry module::
@@ -4641,7 +4642,7 @@ element sizes}) or using the API (@pxref{Namespace
 gmsh/model/mesh/field}). See @ref{t10} for an example on how to use
 fields.
 
-@include opt_fields.texi
+@include fields.texi
 
 @c =========================================================================
 @c Gmsh plugins
@@ -4661,7 +4662,7 @@ and then selecting the `Plugin' submenu), in the scripting language
 (@pxref{Namespace gmsh/plugin}).  See @ref{t9} for an example on how to
 use plugins.
 
-@include opt_plugin.texi
+@include plugins.texi
 
 @c =========================================================================
 @c Gmsh file formats
