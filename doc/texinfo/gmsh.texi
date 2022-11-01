@@ -252,7 +252,7 @@ post-processing. Geometry, mesh, solver and post-processing instructions
 are prescribed either using the graphical user interface (GUI; see
 @ref{Gmsh graphical user interface}), on the command line (@pxref{Gmsh
 command-line interface}), in text files using Gmsh's own scripting
-language (@file{.geo} files; see @ref{Gmsh scripting language}, or
+language (@file{.geo} files; see @ref{Gmsh scripting language}), or
 through the Gmsh application programming interface (API; see @ref{Gmsh
 application programming interface}) in C++, C, Python, Julia or Fortran.
 
@@ -1610,8 +1610,8 @@ double-click on the Gmsh icon, or type
 at the shell prompt in a terminal. This will open the main window of the
 Gmsh GUI, with a menu bar on top (except on macOS, where by default the
 menu bar is on the top of the screen -- this can be changed with the
-@code{General.SystemMenuBar} option, @ref{General options}), a tree menu
-on the left (with by default contains a `Modules' entry with three
+@code{General.SystemMenuBar} option, see @ref{General options}), a tree
+menu on the left (with by default contains a `Modules' entry with three
 children: `Geometry', `Mesh' and `Solver'), a graphic area on the right,
 and a status bar with some shortcut buttons at the bottom. (You can
 detach the tree menu using `Window->Attach/Detach Menu'.)
