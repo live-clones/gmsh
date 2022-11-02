@@ -97,10 +97,13 @@ void OCCRegion::_setup()
 SBoundingBox3d OCCRegion::bounds(bool fast)
 {
   if(CTX::instance()->geom.occBoundsUseSTL) {
-    // if a triangulation exist on a shape, OCC will use it to compute more
-    // accurate bounds
     std::vector<GFace *> f = faces();
-    for(std::size_t i = 0; i < f.size(); i++) f[i]->buildSTLTriangulation();
+    SBoundingBox3d bbox;
+    for(std::size_t i = 0; i < f.size(); i++) {
+      f[i]->buildSTLTriangulation();
+      bbox += f[i]->bounds();
+    }
+    return bbox;
   }
 
   Bnd_Box b;
@@ -112,11 +115,6 @@ SBoundingBox3d OCCRegion::bounds(bool fast)
   }
   double xmin, ymin, zmin, xmax, ymax, zmax;
   b.Get(xmin, ymin, zmin, xmax, ymax, zmax);
-
-  if(CTX::instance()->geom.occBoundsUseSTL)
-    model()->getOCCInternals()->fixSTLBounds(xmin, ymin, zmin, xmax, ymax,
-                                             zmax);
-
   SBoundingBox3d bbox(xmin, ymin, zmin, xmax, ymax, zmax);
   return bbox;
 }

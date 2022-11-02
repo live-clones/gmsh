@@ -513,9 +513,13 @@ static inline HXTStatus walking2Cavity(HXTMesh* mesh, HXTPartition* partition, u
   uint64_t nextTet = *curTet;
   HXTVertex* vertices = (HXTVertex*) mesh->vertices.coord;
 
-  /* if nextTet is a ghost triangle, go to the neighbor that is not a ghost triangle */
-  if(mesh->tetrahedra.node[4*nextTet+3]==HXT_GHOST_VERTEX)
-    nextTet = mesh->tetrahedra.neigh[4*nextTet+3]/4;
+  /* if nextTet is a ghost tetrahedron, go to the neighbor that is not a ghost tetrahedron */
+  if (mesh->tetrahedra.node[4*nextTet+3]==HXT_GHOST_VERTEX) {
+    uint64_t neighbor = mesh->tetrahedra.neigh[4*nextTet+3];
+    if (vertexOutOfPartition(vertices, mesh->tetrahedra.node[neighbor], partition->lengthDist, partition->startDist))
+      return HXT_STATUS_CONFLICT;
+    nextTet = neighbor/4;
+  }
 
   double* const vtaCoord = vertices[vta].coord;
   unsigned enteringFace=4;
@@ -1031,7 +1035,7 @@ static HXTStatus insertion(HXT2Sync* shared2sync,
   HXT_CHECK(status);
 
   if(!perfectDelaunay) {
-    int undeleteTet;
+    int undeleteTet = 0;
     if(edgeConstraint) {
       // printf("we have an edge constraint\n");
       HXT_CHECK( respectEdgeConstraint(local, mesh, vta, color, prevDeleted, &undeleteTet) );

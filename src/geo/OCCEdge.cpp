@@ -49,6 +49,8 @@ OCCEdge::OCCEdge(GModel *m, TopoDS_Edge c, int num, GVertex *v1, GVertex *v2)
   _c_rev = _c;
   _c_rev.Reverse();
 
+  _nbpoles = 0;
+
   if(!_curve.IsNull()) {
     // initialize projector, with a little tolerance to converge on the boundary
     // points
@@ -61,6 +63,12 @@ OCCEdge::OCCEdge(GModel *m, TopoDS_Edge c, int num, GVertex *v1, GVertex *v2)
       umax += utol;
     }
     _projector.Init(_curve, umin, umax);
+
+    // keep track of number of poles for drawing
+    if(_curve->DynamicType() == STANDARD_TYPE(Geom_BSplineCurve))
+      _nbpoles = Handle(Geom_BSplineCurve)::DownCast(_curve)->NbPoles();
+    else if(_curve->DynamicType() == STANDARD_TYPE(Geom_BezierCurve))
+      _nbpoles = Handle(Geom_BezierCurve)::DownCast(_curve)->NbPoles();
   }
 }
 
@@ -72,6 +80,21 @@ void OCCEdge::delFace(GFace *f)
 
 SBoundingBox3d OCCEdge::bounds(bool fast)
 {
+  if(CTX::instance()->geom.occBoundsUseSTL && stl_vertices_xyz.size()) {
+    // BRepBndLib can use the STL mesh if available, but unfortunately it
+    // enlarges the box with the mesh deflection tolerance and the shape
+    // tolerance, which makes it hard to get the expected minimal box in simple
+    // cases (e.g. for straight lines), and always leads to boxes that are too
+    // large; so we simply compute the box from the STL vertices. The downside
+    // of this approach is that the bbox might be *smaller* than the actual box
+    // for curved shapes, but this is preferable for us as boxes are mostly used
+    // to find/identify entities
+    SBoundingBox3d bbox;
+    for(std::size_t i = 0; i < stl_vertices_xyz.size(); i++)
+      bbox += stl_vertices_xyz[i];
+    return bbox;
+  }
+
   Bnd_Box b;
   try {
     BRepBndLib::Add(_c, b);
@@ -81,11 +104,6 @@ SBoundingBox3d OCCEdge::bounds(bool fast)
   }
   double xmin, ymin, zmin, xmax, ymax, zmax;
   b.Get(xmin, ymin, zmin, xmax, ymax, zmax);
-
-  if(CTX::instance()->geom.occBoundsUseSTL)
-    model()->getOCCInternals()->fixSTLBounds(xmin, ymin, zmin, xmax, ymax,
-                                             zmax);
-
   SBoundingBox3d bbox(xmin, ymin, zmin, xmax, ymax, zmax);
   return bbox;
 }
@@ -382,10 +400,13 @@ int OCCEdge::minimumMeshSegments() const
 
 int OCCEdge::minimumDrawSegments() const
 {
+  int n = _nbpoles;
+  if(n <= 0) n = GEdge::minimumDrawSegments();
+
   if(geomType() == Line)
-    return GEdge::minimumDrawSegments();
+    return n;
   else
-    return CTX::instance()->geom.numSubEdges * GEdge::minimumDrawSegments();
+    return CTX::instance()->geom.numSubEdges * n;
 }
 
 double OCCEdge::curvature(double par) const

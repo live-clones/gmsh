@@ -1,6 +1,7 @@
 bin*/
 lib*/
 build*/
+install/
 contrib/mobile/frameworks_*
 contrib/3M
 contrib/Parasolid
@@ -11,8 +12,12 @@ doc/doxygen/html
 *~
 *.so
 *.so.*
+*.mod
 *#
 *.pyc
 ## CLion directories
 .idea
 cmake-build-*
+
+# VS Code directories
+.vscode/

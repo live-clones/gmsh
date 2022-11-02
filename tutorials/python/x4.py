@@ -28,7 +28,7 @@ gmsh.model.mesh.addElementsByType(surf, 2, [1, 2], [1, 2, 3, 1, 3, 4])
 
 # We can now create a new model-based view, to which we add 10 steps of
 # node-based data:
-t1 = gmsh.view.add("A model-based view")
+t1 = gmsh.view.add("Continuous")
 for step in range(0, 10):
     gmsh.view.addHomogeneousModelData(
         t1, step, "simple model", "NodeData",
@@ -38,7 +38,7 @@ for step in range(0, 10):
 # Besided node-based data, which result in continuous fields, one can also add
 # general discontinous fields defined at the nodes of each element, using
 # "ElementNodeData":
-t2 = gmsh.view.add("A discontinuous model-based view")
+t2 = gmsh.view.add("Discontinuous")
 for step in range(0, 10):
     gmsh.view.addHomogeneousModelData(
         t2, step, "simple model", "ElementNodeData",

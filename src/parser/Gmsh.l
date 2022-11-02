@@ -204,6 +204,7 @@ GetStringValue          return tGetStringValue;
 GetValue                return tGetValue;
 GmshExecutableName      return tGmshExecutableName;
 
+HealShapes              return tHealShapes;
 Hide                    return tHide;
 Hole                    return tHole;
 Homology                return tHomology;

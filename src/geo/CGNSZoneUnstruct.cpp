@@ -116,8 +116,8 @@ int CGNSZoneUnstruct::readSection(
     // check for compatibility with MIXED element sections
 #if CGNS_VERSION < 4000
   if(sectEltType == CGNS_ENUMV(MIXED)) {
-    Msg::Error("Reading MIXED element sections requires CGNS library version"
-               "4 or superior");
+    Msg::Error("Reading 'MIXED' element sections requires CGNS library "
+               "version >= 4");
     return 0;
   }
 #endif

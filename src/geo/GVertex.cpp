@@ -172,6 +172,17 @@ std::list<GRegion *> GVertex::regions() const
   return ret;
 }
 
+bool GVertex::isOrphan()
+{
+  if(model()->getNumRegions())
+    return regions().empty();
+  else if(model()->getNumFaces())
+    return faces().empty();
+  else if(model()->getNumEdges())
+    return edges().empty();
+  return false;
+}
+
 void GVertex::relocateMeshVertices()
 {
   for(std::size_t i = 0; i < mesh_vertices.size(); i++) {
@@ -186,7 +197,8 @@ void GVertex::addElement(int type, MElement *e)
 {
   switch(type) {
   case TYPE_PNT: addPoint(reinterpret_cast<MPoint *>(e)); break;
-  default: Msg::Error("Trying to add unsupported element in point");
+  default:
+    Msg::Error("Trying to add unsupported element in point %d", tag());
   }
 }
 
@@ -198,7 +210,17 @@ void GVertex::removeElement(int type, MElement *e)
       std::find(points.begin(), points.end(), reinterpret_cast<MPoint *>(e));
     if(it != points.end()) points.erase(it);
   } break;
-  default: Msg::Error("Trying to remove unsupported element in point");
+  default:
+    Msg::Error("Trying to remove unsupported element in point %d", tag());
+  }
+}
+
+void GVertex::removeElements(int type)
+{
+  switch(type) {
+  case TYPE_PNT: points.clear(); break;
+  default:
+    Msg::Error("Trying to remove unsupported elements in point %d", tag());
   }
 }
 

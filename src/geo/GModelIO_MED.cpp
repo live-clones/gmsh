@@ -272,7 +272,7 @@ int GModel::readMED(const std::string &name)
   }
 
   if(MEDfermer(fid) < 0) {
-    Msg::Error("Unable to close file '%s'", (char *)name.c_str());
+    Msg::Error("Unable to close file '%s'", name.c_str());
     return 0;
   }
 
@@ -597,7 +597,7 @@ int GModel::readMED(const std::string &name, int meshIndex)
 #endif
 
   if(MEDfermer(fid) < 0) {
-    Msg::Error("Unable to close file '%s'", (char *)name.c_str());
+    Msg::Error("Unable to close file '%s'", name.c_str());
     return 0;
   }
 
@@ -627,7 +627,7 @@ fillElementsMED(med_int family, std::vector<T *> &elements,
   }
 }
 
-static void writeElementsMED(med_idt &fid, char *meshName,
+static void writeElementsMED(med_idt &fid, const char *meshName,
                              std::vector<med_int> &conn,
                              std::vector<med_int> &fam,
                              std::vector<med_int> &tags,
@@ -675,7 +675,9 @@ int GModel::writeMED(const std::string &name, bool saveAll,
   }
 
   std::string strMeshName = getName();
-  char *meshName = (char *)strMeshName.c_str();
+  if(strMeshName.empty())
+    strMeshName = "untitled";
+  const char *meshName = (char *)strMeshName.c_str();
 
   // Gmsh always writes 3D unstructured meshes
 #if(MED_MAJOR_NUM >= 3)
@@ -737,7 +739,9 @@ int GModel::writeMED(const std::string &name, bool saveAll,
           }
           else
             groupName += tmp;
-          groupName.resize((j + 1) * MED_TAILLE_LNOM, ' ');
+          // if an entity belongs to several groups, pad to multiples of
+          // MED_TAILLE_LNOM lengths
+          if(j) groupName.resize((j + 1) * MED_TAILLE_LNOM, ' ');
         }
 #if(MED_MAJOR_NUM >= 3)
         if(MEDfamilyCr(fid, meshName, familyName.c_str(), (med_int)num,
@@ -863,7 +867,7 @@ int GModel::writeMED(const std::string &name, bool saveAll,
   }
 
   if(MEDfermer(fid) < 0) {
-    Msg::Error("Unable to close file '%s'", (char *)name.c_str());
+    Msg::Error("Unable to close file '%s'", name.c_str());
     return 0;
   }
 

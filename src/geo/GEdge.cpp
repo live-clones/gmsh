@@ -702,6 +702,15 @@ std::list<GRegion *> GEdge::regions() const
   return ret;
 }
 
+bool GEdge::isOrphan()
+{
+  if(model()->getNumRegions())
+    return regions().empty();
+  else if(model()->getNumFaces())
+    return faces().empty();
+  return false;
+}
+
 void GEdge::relocateMeshVertices()
 {
   for(std::size_t i = 0; i < mesh_vertices.size(); i++) {
@@ -767,7 +776,8 @@ void GEdge::addElement(int type, MElement *e)
 {
   switch(type) {
   case TYPE_LIN: addLine(reinterpret_cast<MLine *>(e)); break;
-  default: Msg::Error("Trying to add unsupported element in curve %d", tag());
+  default:
+    Msg::Error("Trying to add unsupported element in curve %d", tag());
   }
 }
 
@@ -781,6 +791,15 @@ void GEdge::removeElement(int type, MElement *e)
   } break;
   default:
     Msg::Error("Trying to remove unsupported element in curve %d", tag());
+  }
+}
+
+void GEdge::removeElements(int type)
+{
+  switch(type) {
+  case TYPE_LIN: lines.clear(); break;
+  default:
+    Msg::Error("Trying to remove unsupported elements in curve %d", tag());
   }
 }
 

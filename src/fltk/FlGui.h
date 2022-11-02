@@ -94,7 +94,7 @@ public:
   static FlGui *instance(int argc = 0, char **argv = nullptr,
                          bool quitShouldExit = true,
                          void (*error_handler)(const char *fmt, ...) = nullptr);
-  // destroy instance
+  // close all windows and destroy instance
   static void destroy();
   // check if the GUI is available
   static bool available();

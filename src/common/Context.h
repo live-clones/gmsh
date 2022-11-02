@@ -29,14 +29,14 @@ struct contextMeshOptions {
   int nbSmoothing, algo2d, algo3d, algoSubdivide, algoSwitchOnFailure;
   int algoRecombine, recombineAll, recombineOptimizeTopology;
   int recombineNodeRepositioning;
-  int recombineMinimumQuality;
+  double recombineMinimumQuality;
   int recombine3DAll, recombine3DLevel, recombine3DConformity;
   int flexibleTransfinite, transfiniteTri, maxRetries;
   int order, secondOrderLinear, secondOrderIncomplete;
   int meshOnlyVisible, meshOnlyEmpty;
   int minCircleNodes, minCurveNodes, minLineNodes;
   int hoOptimize, hoPeriodic, hoNLayers, hoPrimSurfMesh, hoIterMax, hoPassMax;
-  int hoDistCAD, hoSavePeriodic;
+  int hoDistCAD, hoSavePeriodic, hoFixBndNodes;
   double hoThresholdMin, hoThresholdMax, hoPoissonRatio;
   bool hoNewFastCurvingAlgo;
   int hoCurveOuterBL;
@@ -63,7 +63,7 @@ struct contextMeshOptions {
   int unvStrictFormat, stlRemoveDuplicateTriangles, stlOneSolidPerSurface;
   double stlLinearDeflection, stlAngularDeflection;
   bool stlLinearDeflectionRelative;
-  int saveParametric, saveTopology, zoneDefinition;
+  int saveParametric, saveTopology, saveWithoutOrphans, zoneDefinition;
   int saveElementTagType, switchElementTags;
   int cgnsImportIgnoreBC, cgnsImportIgnoreSolution, cgnsImportOrder;
   int cgnsConstructTopology, cgnsExportCPEX0045, cgnsExportStructured;
@@ -97,11 +97,11 @@ struct contextGeometryOptions {
   int autoCoherence;
   int autoExtrude; // FIXME: temporary for auto-extrude testing
   double tolerance, toleranceBoolean, snap[3], transform[3][3], offset[3];
-  int occAutoFix, occAutoEmbed;
+  int occAutoFix, occAutoEmbed, occSafeUnbind;
   int occFixDegenerated, occFixSmallEdges, occFixSmallFaces;
   int occSewFaces, occMakeSolids, occParallel, occBooleanPreserveNumbering;
-  int occBoundsUseSTL, occDisableSTL, occImportLabels, occUnionUnify;
-  int occThruSectionsDegree, occUseGenericClosestPoint;
+  int occBoundsUseSTL, occDisableSTL, occImportLabels, occExportOnlyVisible;
+  int occUnionUnify, occThruSectionsDegree, occUseGenericClosestPoint;
   double occScaling;
   std::string occTargetUnit;
   int copyMeshingMethod, exactExtrusion;
@@ -189,7 +189,7 @@ public:
   int statPosition[2], ctxPosition[2];
   int pluginPosition[2], pluginSize[2], fieldPosition[2], fieldSize[2];
   int fileChooserPosition[2], extraPosition[2], extraSize[2];
-  // use the system menu bar on Mac OS X?
+  // use the system menu bar on macOS?
   int systemMenuBar;
   // use the native file chooser?
   int nativeFileChooser;

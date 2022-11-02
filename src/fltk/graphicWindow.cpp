@@ -338,6 +338,10 @@ static int _save_key(const char *name)
 {
   return keyFileDialog(name, "LSDYNA KEY Options", FORMAT_KEY);
 }
+static int _save_rad(const char *name)
+{
+  return radFileDialog(name, "RADIOSS Block Options", FORMAT_RAD);
+}
 static int _save_celum(const char *name)
 {
   return genericMeshFileDialog(name, "CELUM Options", FORMAT_CELUM, false,
@@ -489,6 +493,7 @@ static int _save_auto(const char *name)
   case FORMAT_DIFF: return _save_diff(name);
   case FORMAT_INP: return _save_inp(name);
   case FORMAT_KEY: return _save_key(name);
+  case FORMAT_RAD: return _save_rad(name);
   case FORMAT_CELUM: return _save_celum(name);
   case FORMAT_SU2: return _save_su2(name);
   case FORMAT_P3D: return _save_p3d(name);
@@ -538,6 +543,7 @@ static void file_export_cb(Fl_Widget *w, void *data)
     {"Mesh - Gmsh MSH\t*.msh", _save_msh},
     {"Mesh - Abaqus INP\t*.inp", _save_inp},
     {"Mesh - LSDYNA KEY\t*.key", _save_key},
+    {"Mesh - RADIOSS BLOCK\t*_0000.rad", _save_rad},
     {"Mesh - CELUM\t*.celum", _save_celum},
 #if defined(HAVE_LIBCGNS)
     {"Mesh - CGNS (Experimental)\t*.cgns", _save_cgns},
@@ -692,20 +698,7 @@ void file_quit_cb(Fl_Widget *w, void *data)
   }
 
   if(FlGui::instance()->quitShouldExit()) { Msg::Exit(0); }
-  else {
-    FlGui::instance()->onelabContext->disableRedraw();
-
-    // hide all windows (in case they are not tracked by FlGui)...
-    std::vector<Fl_Window *> wins;
-    for(Fl_Window *win = Fl::first_window(); win; win = Fl::next_window(win))
-      wins.push_back(win);
-    for(std::size_t i = 0; i < wins.size(); i++) wins[i]->hide();
-
-    // process remaining events
-    FlGui::check();
-    // ... and destroy the GUI
-    FlGui::instance()->destroy();
-  }
+  else { FlGui::destroy(); }
 }
 
 void file_watch_cb(Fl_Widget *w, void *data)
@@ -2639,7 +2632,7 @@ static void mesh_define_transfinite(int dim)
                 Msg::Error("Wrong number of points for mesh constraint");
               break;
             case 3:
-              if(p.size() == 6 + 1 || p.size() == 8 + 1)
+              if((p.size() == 0 + 1 || p.size() == 6 + 1 || p.size() == 8 + 1))
                 scriptSetTransfiniteVolume(p, GModel::current()->getFileName());
               else
                 Msg::Error("Wrong number of points for transfinite volume");
@@ -2897,7 +2890,7 @@ static Fl_Menu_Item bar_table[] = {
 
 #if defined(__APPLE__)
 
-// Alternative items for the MacOS system menu bar (removed '&' shortcuts: they
+// Alternative items for the macOS system menu bar (removed '&' shortcuts: they
 // would cause spurious menu items to appear on the menu window; removed
 // File->Quit)
 static Fl_Menu_Item sysbar_table[] = {
@@ -3823,6 +3816,11 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
 
   int mheight = main ? 2 * BH /* nonzero! */ : 0;
   int glheight = CTX::instance()->glSize[1] - mheight;
+  // make sure glheight is positive
+  if(glheight <= 0) {
+    CTX::instance()->glSize[1] = 600;
+    glheight = CTX::instance()->glSize[1] - mheight;
+  }
   int height = mh + glheight + mheight + sh;
   // make sure height < screen height
   if(height > Fl::h()) {
@@ -3833,6 +3831,11 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
 
   int twidth = (main && !detachedMenu) ? 14 * sw : 0;
   int glwidth = CTX::instance()->glSize[0] - twidth;
+  // make sure glwidth is positive
+  if(glwidth <= 0) {
+    CTX::instance()->glSize[0] = 600;
+    glwidth = CTX::instance()->glSize[0] - twidth;
+  }
   int width = glwidth + twidth;
   // make sure width < screen width
   if(width > Fl::w()) {

@@ -896,9 +896,9 @@ void PrintOptionsDoc()
   }
   {
 #if defined(HAVE_PLUGINS)
-    FILE *file = Fopen("opt_plugin.texi", "w");
+    FILE *file = Fopen("plugins.texi", "w");
     if(!file) {
-      Msg::Error("Unable to open file 'opt_plugin.texi'");
+      Msg::Error("Unable to open file 'plugins.texi'");
       return;
     }
     fprintf(file, "%s@ftable @code\n", warn);
@@ -941,9 +941,9 @@ void PrintOptionsDoc()
 
 #if defined(HAVE_MESH)
   {
-    FILE *file = Fopen("opt_fields.texi", "w");
+    FILE *file = Fopen("fields.texi", "w");
     if(!file) {
-      Msg::Error("Unable to open file 'opt_fields.texi'");
+      Msg::Error("Unable to open file 'fields.texi'");
       return;
     }
     fprintf(file, "%s@ftable @code\n", warn);
@@ -966,7 +966,7 @@ void PrintOptionsDoc()
           std::string val;
           it2->second->getTextRepresentation(val);
           Sanitize_String_Texi(val);
-          fprintf(file, "%s@*\ntype: %s@*\ndefault value: @code{%s}\n",
+          fprintf(file, "%s@*\nType: %s@*\nDefault value: @code{%s}\n",
                   it2->second->getDescription().c_str(),
                   it2->second->getTypeName().c_str(), val.c_str());
         }
@@ -4571,6 +4571,12 @@ double opt_geometry_occ_auto_embed(OPT_ARGS_NUM)
   return CTX::instance()->geom.occAutoEmbed;
 }
 
+double opt_geometry_occ_safe_unbind(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->geom.occSafeUnbind = val ? 1 : 0;
+  return CTX::instance()->geom.occSafeUnbind;
+}
+
 double opt_geometry_occ_auto_fix(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->geom.occAutoFix = val ? 1 : 0;
@@ -4684,6 +4690,12 @@ double opt_geometry_occ_scaling(OPT_ARGS_NUM)
   }
 #endif
   return CTX::instance()->geom.occScaling;
+}
+
+double opt_geometry_occ_export_only_visible(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->geom.occExportOnlyVisible = (int)val;
+  return CTX::instance()->geom.occExportOnlyVisible;
 }
 
 double opt_geometry_occ_import_labels(OPT_ARGS_NUM)
@@ -6261,6 +6273,12 @@ double opt_mesh_ho_max_in_angle(OPT_ARGS_NUM)
   return CTX::instance()->mesh.hoMaxInnerAngle;
 }
 
+double opt_mesh_ho_fix_bnd_nodes(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->mesh.hoFixBndNodes = val;
+  return CTX::instance()->mesh.hoFixBndNodes;
+}
+
 double opt_mesh_second_order_linear(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
@@ -6371,6 +6389,13 @@ double opt_mesh_save_parametric(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->mesh.saveParametric = val ? 1 : 0;
   return CTX::instance()->mesh.saveParametric;
+}
+
+double opt_mesh_save_without_orphans(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->mesh.saveWithoutOrphans = (int)val;
+  return CTX::instance()->mesh.saveWithoutOrphans;
 }
 
 double opt_mesh_save_topology(OPT_ARGS_NUM)

@@ -26,6 +26,11 @@ Length unit to which coordinates from STEP and IGES files are converted to when 
 Default value: @code{""}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Geometry.PipeDefaultTrihedron
+Default trihedron type when creating pipes@*
+Default value: @code{"DiscreteTrihedron"}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Geometry.AutoCoherence
 Should all duplicate entities be automatically removed with the built-in geometry kernel? If Geometry.AutoCoherence = 2, also remove degenerate entities. The option has no effect with the OpenCASCADE kernel@*
 Default value: @code{1}@*
@@ -87,7 +92,7 @@ Default value: @code{5}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.HighlightOrphans
-Highlight orphan and boundary curves and surfaces?@*
+Highlight orphan and boundary entities?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -127,7 +132,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.NumSubEdges
-Number of edge subdivisions between control points when displaying curves@*
+Number of subdivisions (per control point or pole) used to draw curves@*
 Default value: @code{40}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -171,6 +176,11 @@ Fix small faces when importing STEP, IGES and BRep models with the OpenCASCADE k
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Geometry.OCCExportOnlyVisible
+Only consider visible shapes when exporting STEP or BREP models with the OpenCASCADE kernel@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Geometry.OCCImportLabels
 Import labels and colors when importing STEP models with the OpenCASCADE kernel@*
 Default value: @code{1}@*
@@ -183,6 +193,11 @@ Saved in: @code{General.OptionsFileName}
 
 @item Geometry.OCCParallel
 Use multi-threaded OpenCASCADE boolean operators@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Geometry.OCCSafeUnbind
+Revert to safe (i.e. with recursive checks on boundaries) unbinding of entities in boolean operations and geometrical transformations@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 

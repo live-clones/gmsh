@@ -30,7 +30,7 @@ int main(int argc, char **argv)
 
   // We can now create a new model-based view, to which we add 10 steps of
   // node-based data:
-  int t1 = gmsh::view::add("A model-based view");
+  int t1 = gmsh::view::add("Continuous");
   for(int step = 0; step < 10; step++) {
     gmsh::view::addHomogeneousModelData(
       t1, step, "simple model", "NodeData", {1, 2, 3, 4}, // tags of nodes
@@ -40,7 +40,7 @@ int main(int argc, char **argv)
   // Besided node-based data, which result in continuous fields, one can also
   // add general discontinous fields defined at the nodes of each element, using
   // "ElementNodeData":
-  int t2 = gmsh::view::add("A discontinuous model-based view");
+  int t2 = gmsh::view::add("Discontinuous");
   for(int step = 0; step < 10; step++) {
     gmsh::view::addHomogeneousModelData(
       t2, step, "simple model", "ElementNodeData", {1, 2}, // tags of elements

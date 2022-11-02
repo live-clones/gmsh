@@ -220,7 +220,8 @@ public:
 
     return elements;
   }
-  std::vector<GEntity *> createGhostEntities() {
+  std::vector<GEntity *> createGhostEntities()
+  {
     std::vector<GEntity *> ghostEntities(_nparts, (GEntity *)nullptr);
     int elementaryNumber = _model->getMaxElementaryNumber(_dim);
     for(std::size_t i = 1; i <= _nparts; i++) {
@@ -598,7 +599,9 @@ static int partitionGraph(Graph &graph, bool verbose)
     idx_t metisOptions[METIS_NOPTIONS];
     METIS_SetDefaultOptions(metisOptions);
 
-    opt << 8 * sizeof(idx_t) << " bit indices";
+    opt << "npart:" << graph.nparts();
+
+    opt << ", sizeof(idx_t):" << 8 * sizeof(idx_t);
 
     opt << ", ptype:";
     switch(CTX::instance()->mesh.metisAlgorithm) {
@@ -899,6 +902,7 @@ divideNonConnectedEntities(GModel *model, int dim,
                            std::set<GVertex *, GEntityPtrLessThan> &vertices)
 {
   bool ret = false;
+
   // Loop over points
   if(dim < 0 || dim == 0) {
     int elementaryNumber = model->getMaxElementaryNumber(0);
@@ -1022,12 +1026,12 @@ divideNonConnectedEntities(GModel *model, int dim,
             }
             // Move B-Rep
             if(BRepFaces.size() > 0) {
-              std::size_t i = 0;
+              std::size_t j = 0;
               for(auto itBRep = BRepFaces.begin(); itBRep != BRepFaces.end();
                   ++itBRep) {
-                (*itBRep)->setEdge(pedge, oldOrientations[i]);
+                (*itBRep)->setEdge(pedge, oldOrientations[j]);
                 pedge->addFace(*itBRep);
-                i++;
+                j++;
               }
             }
           }
@@ -1118,12 +1122,12 @@ divideNonConnectedEntities(GModel *model, int dim,
             }
             // Move B-Rep
             if(BRepRegions.size() > 0) {
-              std::size_t i = 0;
+              std::size_t j = 0;
               for(auto itBRep = BRepRegions.begin();
                   itBRep != BRepRegions.end(); ++itBRep) {
-                (*itBRep)->setFace(pface, oldOrientations[i]);
+                (*itBRep)->setFace(pface, oldOrientations[j]);
                 pface->addRegion(*itBRep);
-                i++;
+                j++;
               }
             }
           }
@@ -2604,7 +2608,7 @@ int PartitionUsingThisSplit(GModel *model,
   }
   else if(CTX::instance()->mesh.partitionCreateGhostCells) {
     graph.clearDualGraph();
-    graph.createDualGraph(false);
+    graph.createDualGraph(true);
     graph.assignGhostCells();
   }
   elmToPartition.clear();

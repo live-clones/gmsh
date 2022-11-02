@@ -65,6 +65,9 @@ public:
   // returns the parent entity for partitioned entities
   virtual GEntity *getParentEntity() { return nullptr; }
 
+  // is this entity an orphan?
+  virtual bool isOrphan();
+
   // get the geometric type of the vertex
   virtual GeomType geomType() const { return Point; }
 
@@ -119,6 +122,7 @@ public:
   void addPoint(MPoint *p) { points.push_back(p); }
   void addElement(int type, MElement *e);
   void removeElement(int type, MElement *e);
+  void removeElements(int type);
 
   virtual bool reorder(const int elementType,
                        const std::vector<std::size_t> &ordering);

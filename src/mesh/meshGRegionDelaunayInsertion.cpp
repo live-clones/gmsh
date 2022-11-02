@@ -80,7 +80,7 @@ struct edgeContainerB {
   std::size_t _size, _size_obj;
 
   edgeContainerB(std::size_t N = 1000000)
-    : _hash(N), _size(0), _size_obj(sizeof(MEdge))
+    : _hash(N > 0 ? N : 1), _size(0), _size_obj(sizeof(MEdge))
   {
   }
 
@@ -945,6 +945,8 @@ void optimizeMesh(GRegion *gr, const qmTetrahedron::Measures &qm)
   int nbESwap = 0, nbReloc = 0;
   double worstA = 0.0;
 
+  std::set<MTetrahedron*> to_delete;
+
   while(1) {
     std::vector<MTet4 *> newTets;
 
@@ -982,7 +984,7 @@ void optimizeMesh(GRegion *gr, const qmTetrahedron::Measures &qm)
     for(std::size_t i = 0; i < newTets.size(); i++) {
       if(!newTets[i]->isDeleted()) { allTets.push_back(newTets[i]); }
       else {
-        delete newTets[i]->tet();
+        to_delete.insert(newTets[i]->tet());
         delete newTets[i];
       }
     }
@@ -1024,6 +1026,8 @@ void optimizeMesh(GRegion *gr, const qmTetrahedron::Measures &qm)
     if(worstA != 0.0 && worst - worstA < 1.e-6) break;
     worstA = worst;
   }
+
+  for(auto t : to_delete) delete t;
 
   if(illegals.size()) {
     Msg::Warning("%d ill-shaped tets are still in the mesh", illegals.size());
@@ -1350,9 +1354,15 @@ void insertVerticesInRegion(GRegion *gr, int maxIter,
     (*it)->setNeigh(2, nullptr);
     (*it)->setNeigh(3, nullptr);
   }
-  // store all embedded faces
+  // store all embedded edges and faces
   std::set<MFace, MFaceLessThan> allEmbeddedFaces;
-  edgeContainerB allEmbeddedEdges;
+  std::size_t N = 0;
+  for(auto it = gr->model()->firstRegion(); it != gr->model()->lastRegion();
+      ++it) {
+    for(auto e : (*it)->embeddedEdges())
+      N += e->getNumMeshElements();
+  }
+  edgeContainerB allEmbeddedEdges(N);
   for(auto it = gr->model()->firstRegion(); it != gr->model()->lastRegion();
       ++it) {
     createAllEmbeddedFaces((*it), allEmbeddedFaces);

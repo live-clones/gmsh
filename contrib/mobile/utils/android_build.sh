@@ -3,8 +3,8 @@
 appname=Onelab
 enable_occ=1
 enable_simulator=0
-version=2.3.4
-build=58 # must be incremented for each submitted build
+version=2.3.5
+build=60 # must be incremented for each submitted build
 
 while [[ $# -gt 0 ]]; do
   key="$1"
@@ -157,7 +157,13 @@ fi
 # as well as the keystore config in app/build.gradle
 
 check
+
+# old-style APK
 gradle assembleRelease
+
+# new-style APP bundle
+#gradle bundleRelease
+
 check
 
 # to install on the device:

@@ -87,6 +87,9 @@ public:
     return r;
   }
 
+  // is this entity an orphan?
+  virtual bool isOrphan();
+
   // add embedded vertices/edges
   void addEmbeddedVertex(GVertex *v) { embedded_vertices.insert(v); }
   void addEmbeddedEdge(GEdge *e) { embedded_edges.push_back(e); }
@@ -387,6 +390,7 @@ public:
   void addPolygon(MPolygon *p) { polygons.push_back(p); }
   void addElement(int type, MElement *e);
   void removeElement(int type, MElement *e);
+  void removeElements(int type);
 
   // get the boundary layer columns
   BoundaryLayerColumns *getColumns() { return &_columns; }

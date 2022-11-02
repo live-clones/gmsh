@@ -44,8 +44,8 @@ Build Gmsh from the command line
   CMAKE_INSTALL_PREFIX - see below).
 
 * To build the Gmsh app dynamically linked to the shared Gmsh library, which can
-  then also be used by external codes through the C++, C, Python and Julia Gmsh
-  API, run
+  then also be used by external codes through the C++, C, Python, Julia and
+  Fortran Gmsh API, run
 
     cd build
     cmake -DENABLE_BUILD_DYNAMIC=1 ..
@@ -53,7 +53,7 @@ Build Gmsh from the command line
     make install
 
   This will install the Gmsh app and the shared Gmsh library, as well as the C++
-  and C include files and the Python and Julia modules.
+  and C include files, and the Python, Julia and Fortran modules.
 
 * To change build options you can use "ccmake" instead of "cmake", e.g.:
 

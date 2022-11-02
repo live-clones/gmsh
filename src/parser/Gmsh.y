@@ -209,7 +209,7 @@ struct doubleXstring{
 %token tRotate tTranslate tSymmetry tDilate tExtrude tLevelset tAffine
 %token tBooleanUnion tBooleanIntersection tBooleanDifference tBooleanSection
 %token tBooleanFragments tThickSolid
-%token tRecombine tSmoother tSplit tDelete tCoherence
+%token tRecombine tSmoother tSplit tDelete tCoherence tHealShapes
 %token tIntersect tMeshAlgorithm tReverseMesh tMeshSize tMeshSizeFromBoundary
 %token tLayers tScaleLast tHole tAlias tAliasWithOptions tCopyOptions
 %token tQuadTriAddVerts tQuadTriNoNewVerts
@@ -3630,7 +3630,7 @@ Command :
    | tDraw tEND
     {
 #if defined(HAVE_OPENGL)
-      drawContext::global()->draw();
+      drawContext::global()->draw(false); // not rate limited
 #endif
     }
   | tSetChanged tEND
@@ -5241,6 +5241,22 @@ Coherence :
       else
         GModel::current()->getGEOInternals()->mergeVertices(tags);
       List_Delete($4);
+    }
+  | tHealShapes tEND
+    {
+      if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()) {
+        std::vector<std::pair<int, int> > in, out;
+        GModel::current()->getOCCInternals()->healShapes
+          (in, out, CTX::instance()->geom.tolerance,
+           CTX::instance()->geom.occFixDegenerated,
+           CTX::instance()->geom.occFixSmallEdges,
+           CTX::instance()->geom.occFixSmallFaces,
+           CTX::instance()->geom.occSewFaces,
+           CTX::instance()->geom.occMakeSolids);
+      }
+      else {
+        yymsg(0, "HealShapes only available with OpenCASCADE geometry kernel");
+      }
     }
 ;
 
@@ -7282,6 +7298,9 @@ void getAllElementaryTags(int dim, List_T *out)
 
 void getAllPhysicalTags(int dim, List_T *out)
 {
+  if(GModel::current()->getOCCInternals() &&
+     GModel::current()->getOCCInternals()->getChanged())
+    GModel::current()->getOCCInternals()->synchronize(GModel::current());
   if(GModel::current()->getGEOInternals()->getChanged())
     GModel::current()->getGEOInternals()->synchronize(GModel::current());
 

@@ -220,6 +220,9 @@ public:
     return std::vector<GVertex *>();
   }
 
+  // is this entity an orphan?
+  virtual bool isOrphan() { return false; }
+
   // for Python, temporary solution while iterator are not binded
   std::vector<GRegion *> bindingsGetRegions()
   {
@@ -384,6 +387,8 @@ public:
   virtual void addElement(int type, MElement *e) {}
   // remove an element
   virtual void removeElement(int type, MElement *e) {}
+  // remove all elements of a given type
+  virtual void removeElements(int type) {}
 
   // relocate mesh vertices using their parametric coordinates
   virtual void relocateMeshVertices() {}
@@ -398,10 +403,10 @@ public:
   std::vector<double> affineTransform;
 
   // corresponding mesh vertices
-  std::map<MVertex *, MVertex *, MVertexPtrLessThan> correspondingVertices;
+  std::map<MVertex *, MVertex *> correspondingVertices;
 
   // corresponding high order vertices
-  std::map<MVertex *, MVertex *, MVertexPtrLessThan> correspondingHighOrderVertices;
+  std::map<MVertex *, MVertex *> correspondingHighOrderVertices;
 
   // reorder the mesh elements of the given type, according to ordering
   virtual bool reorder(const int elementType,

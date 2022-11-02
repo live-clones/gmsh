@@ -1071,7 +1071,9 @@ int GModel::mesh(int dimension)
     renumberMeshVertices();
     renumberMeshElements();
   }
-  computeHomology(); // must be done after renumbering
+  // must be done after renumbering:
+  std::vector<std::pair<int, int> > newPhysicals;
+  computeHomology(newPhysicals);
   CTX::instance()->mesh.changed = ENT_ALL;
   return true;
 #else
@@ -1642,20 +1644,21 @@ void GModel::renumberMeshVertices()
   }
 #endif
 
-  // check if we will potentially only save a subset of elements, i.e. those
-  // belonging to physical groups
-  bool potentiallySaveSubset = false;
+  // check if we will potentially only save a subset of elements: only those
+  // belonging to physical groups and/or those not being orphans
+  bool saveOnlyPhysicals = false;
   if(!CTX::instance()->mesh.saveAll) {
     for(std::size_t i = 0; i < entities.size(); i++) {
       if(entities[i]->physicals.size()) {
-        potentiallySaveSubset = true;
+        saveOnlyPhysicals = true;
         break;
       }
     }
   }
+  bool pruneOrphans = CTX::instance()->mesh.saveWithoutOrphans;
 
   std::size_t n = CTX::instance()->mesh.firstNodeTag - 1;
-  if(potentiallySaveSubset) {
+  if(saveOnlyPhysicals || pruneOrphans) {
     Msg::Debug("Renumbering for potentially partial mesh save");
     // if we potentially only save a subset of elements, make sure to first
     // renumber the nodes that belong to those elements (so that we end up
@@ -1673,7 +1676,8 @@ void GModel::renumberMeshVertices()
     }
     for(std::size_t i = 0; i < entities.size(); i++) {
       GEntity *ge = entities[i];
-      if(ge->physicals.size()) {
+      if(!((pruneOrphans && ge->isOrphan()) ||
+           (saveOnlyPhysicals && ge->physicals.empty()))) {
         for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
           MElement *e = ge->getMeshElement(j);
           for(std::size_t k = 0; k < e->getNumVertices(); k++) {
@@ -1698,7 +1702,7 @@ void GModel::renumberMeshVertices()
     }
   }
   else {
-    // no physical groups
+    // full save
     for(std::size_t i = 0; i < entities.size(); i++) {
       GEntity *ge = entities[i];
       for(std::size_t j = 0; j < ge->getNumMeshVertices(); j++) {
@@ -1750,23 +1754,25 @@ void GModel::renumberMeshElements()
   }
 #endif
 
-  // check if we will potentially only save a subset of elements, i.e. those
-  // belonging to physical groups
-  bool potentiallySaveSubset = false;
+  // check if we will potentially only save a subset of elements: only those
+  // belonging to physical groups and/or those not being orphans
+  bool saveOnlyPhysicals = false;
   if(!CTX::instance()->mesh.saveAll) {
     for(std::size_t i = 0; i < entities.size(); i++) {
       if(entities[i]->physicals.size()) {
-        potentiallySaveSubset = true;
+        saveOnlyPhysicals = true;
         break;
       }
     }
   }
+  bool pruneOrphans = CTX::instance()->mesh.saveWithoutOrphans;
 
   std::size_t n = CTX::instance()->mesh.firstElementTag - 1;
-  if(potentiallySaveSubset) {
+  if(saveOnlyPhysicals || pruneOrphans) {
     for(std::size_t i = 0; i < entities.size(); i++) {
       GEntity *ge = entities[i];
-      if(ge->physicals.size()) {
+      if(!((pruneOrphans && ge->isOrphan()) ||
+           (saveOnlyPhysicals && ge->physicals.empty()))) {
         for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
           ge->getMeshElement(j)->forceNum(++n);
         }
@@ -1774,7 +1780,8 @@ void GModel::renumberMeshElements()
     }
     for(std::size_t i = 0; i < entities.size(); i++) {
       GEntity *ge = entities[i];
-      if(ge->physicals.empty()) {
+      if(((pruneOrphans && ge->isOrphan()) ||
+          (saveOnlyPhysicals && ge->physicals.empty()))) {
         for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
           ge->getMeshElement(j)->forceNum(++n);
         }
@@ -1782,6 +1789,7 @@ void GModel::renumberMeshElements()
     }
   }
   else {
+    // full save
     for(std::size_t i = 0; i < entities.size(); i++) {
       GEntity *ge = entities[i];
       for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
@@ -2735,7 +2743,7 @@ int GModel::removeDuplicateMeshVertices(double tolerance,
       }
     }
     // replace vertices in periodic copies
-    std::map<MVertex *, MVertex *, MVertexPtrLessThan> &corrVtcs = ge->correspondingVertices;
+    std::map<MVertex *, MVertex *> &corrVtcs = ge->correspondingVertices;
     if(corrVtcs.size()) {
       std::map<MVertex *, MVertex *>::iterator cIter;
       for(cIter = duplicates.begin(); cIter != duplicates.end(); ++cIter) {
@@ -2770,10 +2778,50 @@ int GModel::removeDuplicateMeshVertices(double tolerance,
     to_delete.push_back(it->first);
   for(std::size_t i = 0; i < to_delete.size(); i++) delete to_delete[i];
 
+  if(CTX::instance()->mesh.renumber) {
+    renumberMeshVertices();
+  }
+
   if(num)
     Msg::Info("Removed %d duplicate mesh node%s", num, num > 1 ? "s" : "");
 
   Msg::StatusBar(true, "Done removing duplicate mesh nodes");
+  return num;
+}
+
+int GModel::removeDuplicateMeshElements(const std::vector<GEntity*> &ents)
+{
+  Msg::StatusBar(true, "Removing duplicate mesh elements...");
+
+  // this removes elements that have the same nodes (in the same entity)
+  std::vector<GEntity*> entities(ents);
+  if(entities.empty()) getEntities(entities);
+  int num = 0;
+  for(auto &e : entities) {
+    std::vector<int> types;
+    e->getElementTypes(types);
+    for(auto t : types) {
+      std::set<MElement*, MElementPtrLessThanVertices> uniq;
+      for(std::size_t i = 0; i < e->getNumMeshElementsByType(t); i++) {
+        MElement *ele = e->getMeshElementByType(t, i);
+        uniq.insert(ele);
+      }
+      int diff = e->getNumMeshElementsByType(t) - uniq.size();
+      if(diff > 0) {
+        num += diff;
+        Msg::Info("Removed %d duplicate element%s in entity %d of dimension %d",
+                  diff, diff > 1 ? "s" : "", e->tag(), e->dim());
+        e->removeElements(t);
+        for(auto ele : uniq) e->addElement(t, ele);
+      }
+    }
+  }
+
+  if(CTX::instance()->mesh.renumber) {
+    renumberMeshElements();
+  }
+
+  Msg::StatusBar(true, "Done removing duplicate mesh elements");
   return num;
 }
 
@@ -2822,8 +2870,8 @@ void GModel::alignPeriodicBoundaries()
         for(int iVtx = 0; iVtx < 2; iVtx++) {
           MVertex *tgtVtx = tgtLine->getVertex(iVtx);
           GEntity *ge = tgtVtx->onWhat();
-          std::map<MVertex *, MVertex *, MVertexPtrLessThan> &geV2v = ge->correspondingVertices;
-          std::map<MVertex *, MVertex *, MVertexPtrLessThan> &v2v = tgt->correspondingVertices;
+          std::map<MVertex *, MVertex *> &geV2v = ge->correspondingVertices;
+          std::map<MVertex *, MVertex *> &v2v = tgt->correspondingVertices;
           auto srcIter = v2v.find(tgtVtx);
           if(srcIter == v2v.end() || !srcIter->second) {
             srcIter = geV2v.find(tgtVtx);
@@ -2897,8 +2945,8 @@ void GModel::alignPeriodicBoundaries()
           MVertex *vtx = tgtElmt->getVertex(iVtx);
           GEntity *ge = vtx->onWhat();
 
-          std::map<MVertex *, MVertex *, MVertexPtrLessThan> &geV2v = ge->correspondingVertices;
-          std::map<MVertex *, MVertex *, MVertexPtrLessThan> &v2v = tgt->correspondingVertices;
+          std::map<MVertex *, MVertex *> &geV2v = ge->correspondingVertices;
+          std::map<MVertex *, MVertex *> &v2v = tgt->correspondingVertices;
 
           auto vIter = v2v.find(vtx);
           if(vIter == v2v.end() || !vIter->second) {
@@ -3445,8 +3493,10 @@ void GModel::clearHomologyRequests()
   _homologyRequests.clear();
 }
 
-void GModel::computeHomology()
+void GModel::computeHomology(std::vector<std::pair<int, int> > &newPhysicals)
 {
+  newPhysicals.clear();
+
   if(_homologyRequests.empty()) return;
 
 #if defined(HAVE_KBIPACK)
@@ -3508,14 +3558,16 @@ void GModel::computeHomology()
         homology->findHomologyBasis(dim);
         Msg::Info("Homology space basis chains to save: %s", dims.c_str());
         for(std::size_t i = 0; i < dim.size(); i++) {
-          homology->addChainsToModel(dim.at(i));
+          std::vector<int> p = homology->addChainsToModel(dim.at(i));
+          for(auto t : p) newPhysicals.push_back({dim.at(i), t});
         }
       }
       else if(type == "Cohomology" && !homology->isCohomologyComputed(dim)) {
         homology->findCohomologyBasis(dim);
         Msg::Info("Cohomology space basis cochains to save: %s", dims.c_str());
         for(std::size_t i = 0; i < dim.size(); i++) {
-          homology->addCochainsToModel(dim.at(i));
+          std::vector<int> p = homology->addCochainsToModel(dim.at(i));
+          for(auto t : p) newPhysicals.push_back({dim.at(i), t});
         }
       }
     }

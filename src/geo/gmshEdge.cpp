@@ -159,7 +159,7 @@ int gmshEdge::minimumMeshSegments() const
 int gmshEdge::minimumDrawSegments() const
 {
   int n = List_Nbr(_c->Control_Points) - 1;
-  if(!n) n = GEdge::minimumDrawSegments();
+  if(n <= 0) n = GEdge::minimumDrawSegments();
 
   if(geomType() == Line && !_c->geometry)
     return n;

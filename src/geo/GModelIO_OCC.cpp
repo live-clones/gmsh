@@ -21,7 +21,6 @@
 
 #if defined(HAVE_OCC)
 
-#include <BOPAlgo_Alerts.hxx>
 #include <BRepAlgoAPI_Common.hxx>
 #include <BRepAlgoAPI_Cut.hxx>
 #include <BRepAlgoAPI_Fuse.hxx>
@@ -115,6 +114,10 @@
 #error "Gmsh requires OpenCASCADE >= 6.9"
 #endif
 
+#if OCC_VERSION_HEX > 0x070100
+#include <BOPAlgo_Alerts.hxx>
+#endif
+
 #if OCC_VERSION_HEX > 0x070300
 #include <BRepMesh_IncrementalMesh.hxx>
 #else
@@ -141,9 +144,6 @@
 #include <XCAFDoc_MaterialTool.hxx>
 #include <XCAFDoc_ShapeTool.hxx>
 #endif
-
-// define this to deactive the optimizations introduced in #1240:
-// #define SAFE_UNBIND
 
 // for debugging:
 template <class T>
@@ -1255,7 +1255,8 @@ bool OCC_Internals::_addBSpline(int &tag, const std::vector<int> &pointTags,
                                 int mode, const int degree,
                                 const std::vector<double> &weights,
                                 const std::vector<double> &knots,
-                                const std::vector<int> &multiplicities)
+                                const std::vector<int> &multiplicities,
+                                const std::vector<SVector3> &tangents)
 {
   if(tag >= 0 && _tagEdge.IsBound(tag)) {
     Msg::Error("OpenCASCADE curve with tag %d already exists", tag);
@@ -1288,6 +1289,31 @@ bool OCC_Internals::_addBSpline(int &tag, const std::vector<int> &pointTags,
       Handle(TColgp_HArray1OfPnt) p = new TColgp_HArray1OfPnt(1, np);
       for(int i = 1; i <= np; i++) p->SetValue(i, ctrlPoints(i));
       GeomAPI_Interpolate intp(p, periodic, CTX::instance()->geom.tolerance);
+      if(tangents.size() == 2) {
+        gp_Vec t1(tangents[0].x(), tangents[0].y(), tangents[0].z());
+        gp_Vec tN(tangents[1].x(), tangents[1].y(), tangents[1].z());
+        intp.Load(t1, tN);
+      }
+      else if(tangents.size() == pointTags.size()) {
+        TColgp_Array1OfVec Tangents(1, tangents.size());
+        Handle(TColStd_HArray1OfBoolean) TangentFlags =
+          new TColStd_HArray1OfBoolean(1, tangents.size());
+        for(std::size_t i = 1; i <= tangents.size(); i++) {
+          gp_Vec t(tangents[i - 1].x(), tangents[i - 1].y(), tangents[i - 1].z());
+          Tangents.SetValue(i, t);
+          if(tangents[i - 1].normSq() < 1e-12) {
+            TangentFlags->SetValue(i, Standard_False);
+          }
+          else {
+            TangentFlags->SetValue(i, Standard_True);
+          }
+        }
+        intp.Load(Tangents, TangentFlags);
+      }
+      else if(!tangents.empty()) {
+        Msg::Warning("Wrong number of tangent constraints for spline (%lu != %lu)",
+                     tangents.size(), pointTags.size());
+      }
       intp.Perform();
       if(!intp.IsDone()) {
         Msg::Error("Could not interpolate spline");
@@ -1449,9 +1475,14 @@ bool OCC_Internals::_addBSpline(int &tag, const std::vector<int> &pointTags,
   return true;
 }
 
-bool OCC_Internals::addSpline(int &tag, const std::vector<int> &pointTags)
+bool OCC_Internals::addSpline(int &tag, const std::vector<int> &pointTags,
+                              const std::vector<SVector3> &tangents)
 {
-  return _addBSpline(tag, pointTags, 0);
+  std::vector<double> weights;
+  std::vector<double> knots;
+  std::vector<int> multiplicities;
+  return _addBSpline(tag, pointTags, 0, -1, weights, knots, multiplicities,
+                     tangents);
 }
 
 bool OCC_Internals::addBezier(int &tag, const std::vector<int> &pointTags)
@@ -2809,7 +2840,9 @@ bool OCC_Internals::addWedge(int &tag, double x, double y, double z, double dx,
 
 bool OCC_Internals::addThruSections(
   int tag, const std::vector<int> &wireTags, bool makeSolid, bool makeRuled,
-  std::vector<std::pair<int, int> > &outDimTags, int maxDegree)
+  std::vector<std::pair<int, int> > &outDimTags, int maxDegree,
+  const std::string &continuity, const std::string &parametrization,
+  bool smoothing)
 {
   int dim = makeSolid ? 3 : 2;
   if(tag >= 0 && _isBound(dim, tag)) {
@@ -2824,10 +2857,20 @@ bool OCC_Internals::addThruSections(
   TopoDS_Shape result;
   try {
     BRepOffsetAPI_ThruSections ts(makeSolid, makeRuled);
-    // ts.SetContinuity(GeomAbs_C1);
-    // Available choices:
-    //    GeomAbs_C0, GeomAbs_G1, GeomAbs_C1, GeomAbs_G2, GeomAbs_C2,
-    //    GeomAbs_C3, GeomAbs_CN
+    if(continuity == "C0")
+      ts.SetContinuity(GeomAbs_C0);
+    else if(continuity == "G1")
+      ts.SetContinuity(GeomAbs_G1);
+    else if(continuity == "C1")
+      ts.SetContinuity(GeomAbs_C1);
+    else if(continuity == "G2")
+      ts.SetContinuity(GeomAbs_G2);
+    else if(continuity == "C2")
+      ts.SetContinuity(GeomAbs_C2);
+    else if(continuity == "C3")
+      ts.SetContinuity(GeomAbs_C3);
+    else if(continuity == "CN")
+      ts.SetContinuity(GeomAbs_CN);
 
     // ts.SetCriteriumWeight(1, 1, 1);
 
@@ -2836,11 +2879,15 @@ bool OCC_Internals::addThruSections(
     else if(CTX::instance()->geom.occThruSectionsDegree > 0)
       ts.SetMaxDegree(CTX::instance()->geom.occThruSectionsDegree);
 
-    // ts.SetParType(Approx_ChordLength);
-    // Available choices:
-    //    Approx_ChordLength, Approx_Centripetal, Approx_IsoParametric
+    if(parametrization == "ChordLength")
+      ts.SetParType(Approx_ChordLength);
+    else if(parametrization == "Centripetal")
+      ts.SetParType(Approx_Centripetal);
+    else if(parametrization == "IsoParametric")
+      ts.SetParType(Approx_IsoParametric);
 
-    // ts.SetSmoothing(Standard_True);
+    ts.SetSmoothing(smoothing ? Standard_True : Standard_False);
+
     for(std::size_t i = 0; i < wireTags.size(); i++) {
       if(!_tagWire.IsBound(wireTags[i])) {
         Msg::Error("Unknown OpenCASCADE wire or curve loop with tag %d",
@@ -3635,11 +3682,13 @@ bool OCC_Internals::booleanOperator(
       fragments.SetArguments(objectShapes);
       if(tolerance > 0.0) fragments.SetFuzzyValue(tolerance);
       fragments.Build();
+#if OCC_VERSION_HEX > 0x070100
       if(fragments.HasErrors() &&
          fragments.HasError(STANDARD_TYPE(BOPAlgo_AlertTooFewArguments))) {
         Msg::Warning("Boolean fragments skipped - too few arguments");
         return true;
       }
+#endif
       if(!fragments.IsDone()) {
         Msg::Error("Boolean fragments failed");
         return false;
@@ -3672,11 +3721,12 @@ bool OCC_Internals::booleanOperator(
       if(remove) {
         int d = inDimTags[i].first;
         int t = inDimTags[i].second;
-#ifdef SAFE_UNBIND
-        if(_isBound(d, t)) _unbind(_find(d, t), d, t, true);
-#else
-        if(_isBound(d, t)) _unbindWithoutChecks(_find(d, t));
-#endif
+        if(_isBound(d, t)) {
+          if(CTX::instance()->geom.occSafeUnbind)
+            _unbind(_find(d, t), d, t, true);
+          else
+            _unbindWithoutChecks(_find(d, t));
+        }
       }
     }
     _multiBind(result, tag, outDimTags, (tag >= 0) ? true : false, true,
@@ -3694,11 +3744,12 @@ bool OCC_Internals::booleanOperator(
       int tag = inDimTags[i].second;
       bool remove = (i < numObjects) ? removeObject : removeTool;
       if(mapDeleted[i]) { // deleted
-#ifdef SAFE_UNBIND
-        if(remove) _unbind(mapOriginal[i], dim, tag, true);
-#else
-        if(remove) _unbindWithoutChecks(mapOriginal[i]);
-#endif
+        if(remove) {
+          if(CTX::instance()->geom.occSafeUnbind)
+            _unbind(mapOriginal[i], dim, tag, true);
+          else
+            _unbindWithoutChecks(mapOriginal[i]);
+        }
         Msg::Debug("BOOL (%d,%d) deleted", dim, tag);
       }
       else if(mapModified[i].Extent() == 0) { // not modified
@@ -3960,20 +4011,21 @@ bool OCC_Internals::_transform(
   for(std::size_t i = 0; i < inDimTags.size(); i++) {
     int dim = inDimTags[i].first;
     int tag = inDimTags[i].second;
-#ifdef SAFE_UNBIND
-    // safe, but slow: _unbind() has linear complexity with respect to the number
-    // of entities in the model (due to the dependency checking of upward
-    // adjencencies and the maximum tag update). Using this in a for loop to
-    // translate copies of entities leads to quadratic complexity.
-    _unbind(inShapes[i], dim, tag, true);
-#else
-    // bypass it by unbinding the shape and all its subshapes without checking
-    // dependencies: this is a bit dangerous, as one could translate e.g. the
-    // face of a cube (this is not allowed!) - which will unbind the face of the
-    // cube. But the original face will actually be re-bound (with a warning) at
-    // the next syncronization point, so it's not too bad...
-    _unbindWithoutChecks(inShapes[i]);
-#endif
+    if(CTX::instance()->geom.occSafeUnbind) {
+      // safe, but slow: _unbind() has linear complexity with respect to the number
+      // of entities in the model (due to the dependency checking of upward
+      // adjencencies and the maximum tag update). Using this in a for loop to
+      // translate copies of entities leads to quadratic complexity.
+      _unbind(inShapes[i], dim, tag, true);
+    }
+    else {
+      // bypass it by unbinding the shape and all its subshapes without checking
+      // dependencies: this is a bit dangerous, as one could translate e.g. the
+      // face of a cube (this is not allowed!) - which will unbind the face of
+      // the cube. But the original face will actually be re-bound (with a
+      // warning) at the next syncronization point, so it's not too bad...
+      _unbindWithoutChecks(inShapes[i]);
+    }
     // TODO: it would be even better to code a rebind() function to reuse the
     // tags not only of the shape, but of all the sub-shapes as well
     _bind(outShapes[i], dim, tag, true);
@@ -4073,22 +4125,26 @@ bool OCC_Internals::affine(const std::vector<std::pair<int, int> > &inDimTags,
 bool OCC_Internals::copy(const std::vector<std::pair<int, int> > &inDimTags,
                          std::vector<std::pair<int, int> > &outDimTags)
 {
-  bool ret = true;
+  // build a single compound shape, so that we won't duplicate internal
+  // boundaries
+  BRep_Builder b;
+  TopoDS_Compound c;
+  b.MakeCompound(c);
   for(std::size_t i = 0; i < inDimTags.size(); i++) {
     int dim = inDimTags[i].first;
     int tag = inDimTags[i].second;
     if(!_isBound(dim, tag)) {
       Msg::Error("Unknown OpenCASCADE entity of dimension %d with tag %d", dim,
                  tag);
-      ret = false;
-      continue;
+      return false;
     }
-    TopoDS_Shape result = BRepBuilderAPI_Copy(_find(dim, tag)).Shape();
-    int newtag = getMaxTag(dim) + 1;
-    _bind(result, dim, newtag, true);
-    outDimTags.push_back(std::make_pair(dim, newtag));
+    TopoDS_Shape shape = _find(dim, tag);
+    b.Add(c, shape);
   }
-  return ret;
+
+  TopoDS_Shape result = BRepBuilderAPI_Copy(c).Shape();
+  _multiBind(result, -1, outDimTags, true, true);
+  return true;
 }
 
 bool OCC_Internals::remove(int dim, int tag, bool recursive)
@@ -4302,6 +4358,8 @@ bool OCC_Internals::importShapes(const std::string &fileName,
             split[2] == ".STEP" || split[2] == ".STP") {
       STEPControl_Reader reader;
       setTargetUnit(CTX::instance()->geom.occTargetUnit);
+      Interface_Static::SetIVal("read.step.ideas", 1);
+      Interface_Static::SetIVal("read.step.nonmanifold", 1);
 #if defined(HAVE_OCC_CAF)
       //Interface_Static::SetIVal("read.stepcaf.subshapes.name", 1);
       STEPCAFControl_Reader cafreader;
@@ -4375,7 +4433,7 @@ bool OCC_Internals::importShapes(const TopoDS_Shape *shape, bool highestDimOnly,
 }
 
 bool OCC_Internals::exportShapes(GModel *model, const std::string &fileName,
-                                 const std::string &format)
+                                 const std::string &format, bool onlyVisible)
 {
   // put all top-level OCC shapes from a GModel in a single compound (we use the
   // topology to only consider top-level shapes; otherwise we get duplicates in
@@ -4385,23 +4443,70 @@ bool OCC_Internals::exportShapes(GModel *model, const std::string &fileName,
   b.MakeCompound(c);
   for(auto it = model->firstRegion(); it != model->lastRegion(); it++) {
     GRegion *gr = *it;
-    if(gr->getNativeType() == GEntity::OpenCascadeModel)
+    if(onlyVisible) {
+      if(!gr->getVisibility()) continue;
+    }
+    if(gr->getNativeType() == GEntity::OpenCascadeModel) {
+      Msg::Debug("Adding volume %d to exported compound", gr->tag());
       b.Add(c, *(TopoDS_Solid *)gr->getNativePtr());
+    }
   }
   for(auto it = model->firstFace(); it != model->lastFace(); it++) {
     GFace *gf = *it;
-    if(!gf->numRegions() && gf->getNativeType() == GEntity::OpenCascadeModel)
+    if(onlyVisible) {
+      if(!gf->getVisibility()) continue;
+      auto regions = gf->regions();
+      bool skip = false;
+      for(auto gr : regions) {
+        if(gr->getVisibility()) { skip = true; break; }
+      }
+      if(skip) continue;
+    }
+    else {
+      if(gf->numRegions()) continue;
+    }
+    if(gf->getNativeType() == GEntity::OpenCascadeModel) {
+      Msg::Debug("Adding surface %d to exported compound", gf->tag());
       b.Add(c, *(TopoDS_Face *)gf->getNativePtr());
+    }
   }
   for(auto it = model->firstEdge(); it != model->lastEdge(); it++) {
     GEdge *ge = *it;
-    if(!ge->numFaces() && ge->getNativeType() == GEntity::OpenCascadeModel)
+    if(onlyVisible) {
+      if(!ge->getVisibility()) continue;
+      auto faces = ge->faces();
+      bool skip = false;
+      for(auto gf : faces) {
+        if(gf->getVisibility()) { skip = true; break; }
+      }
+      if(skip) continue;
+    }
+    else {
+      if(ge->numFaces()) continue;
+    }
+    if(ge->getNativeType() == GEntity::OpenCascadeModel) {
+      Msg::Debug("Adding curve %d to exported compound", ge->tag());
       b.Add(c, *(TopoDS_Edge *)ge->getNativePtr());
+    }
   }
   for(auto it = model->firstVertex(); it != model->lastVertex(); it++) {
     GVertex *gv = *it;
-    if(!gv->numEdges() && gv->getNativeType() == GEntity::OpenCascadeModel)
+    if(onlyVisible) {
+      if(!gv->getVisibility()) continue;
+      auto edges = gv->edges();
+      bool skip = false;
+      for(auto ge : edges) {
+        if(ge->getVisibility()) { skip = true; break; }
+      }
+      if(skip) continue;
+    }
+    else {
+      if(gv->numEdges()) continue;
+    }
+    if(gv->getNativeType() == GEntity::OpenCascadeModel) {
+      Msg::Debug("Adding point %d to exported compound", gv->tag());
       b.Add(c, *(TopoDS_Vertex *)gv->getNativePtr());
+    }
   }
 
   std::vector<std::string> split = SplitFileName(fileName);
@@ -4419,7 +4524,7 @@ bool OCC_Internals::exportShapes(GModel *model, const std::string &fileName,
 
       // this does not seem to solve the issue that entities get duplicated when
       // exporting STEP files (see issue #906):
-      // Interface_Static::SetIVal("write.step.nonmanifold", 1);
+      Interface_Static::SetIVal("write.step.nonmanifold", 1);
 
       if(writer.Transfer(c, STEPControl_AsIs) == IFSelect_RetDone) {
         if(writer.Write(occfile.ToCString()) != IFSelect_RetDone) {
@@ -4489,6 +4594,26 @@ bool OCC_Internals::_getBoundingBox(const TopoDS_Shape &shape, double &xmin,
     std::vector<SVector3> normals;
     std::vector<int> triangles;
     _makeSTL(shape, vertices, normals, triangles);
+    // BRepBndLib can use the STL mesh if available, but unfortunately it
+    // enlarges the box with the mesh deflection tolerance and the shape
+    // tolerance, which makes it hard to get the expected minimal box in simple
+    // cases (e.g. for plane surfaces), and always leads to boxes that are too
+    // large; so we simply compute the box from the STL vertices. The downside
+    // of this approach is that the bbox might be *smaller* than the actual box
+    // for curved shapes, but this is preferable for us as boxes are mostly used
+    // to find/identify entities
+    if(vertices.size()) {
+      SBoundingBox3d bbox;
+      for(std::size_t i = 0; i < vertices.size(); i++)
+        bbox += vertices[i];
+      xmin = bbox.min().x();
+      ymin = bbox.min().y();
+      zmin = bbox.min().z();
+      xmax = bbox.max().x();
+      ymax = bbox.max().y();
+      zmax = bbox.max().z();
+      return true;
+    }
   }
   Bnd_Box b;
   try {
@@ -4498,8 +4623,6 @@ bool OCC_Internals::_getBoundingBox(const TopoDS_Shape &shape, double &xmin,
     return false;
   }
   b.Get(xmin, ymin, zmin, xmax, ymax, zmax);
-  if(CTX::instance()->geom.occBoundsUseSTL)
-    fixSTLBounds(xmin, ymin, zmin, xmax, ymax, zmax);
   return true;
 }
 
@@ -4791,7 +4914,9 @@ void OCC_Internals::synchronize(GModel *model)
     _attributes->getLabels(0, vertex, labels);
     if(labels.size()) model->setElementaryName(0, occv->tag(), labels[0]);
     unsigned int col = 0, boundary = 0;
-    if(_attributes->getColor(0, vertex, col, boundary)) { occv->setColor(col); }
+    if(!occv->useColor() && _attributes->getColor(0, vertex, col, boundary)) {
+      occv->setColor(col);
+    }
   }
   for(int i = 1; i <= _emap.Extent(); i++) {
     TopoDS_Edge edge = TopoDS::Edge(_emap(i));
@@ -4815,7 +4940,9 @@ void OCC_Internals::synchronize(GModel *model)
     _attributes->getLabels(1, edge, labels);
     if(labels.size()) model->setElementaryName(1, occe->tag(), labels[0]);
     unsigned int col = 0, boundary = 0;
-    if(_attributes->getColor(1, edge, col, boundary)) { occe->setColor(col); }
+    if(!occe->useColor() && _attributes->getColor(1, edge, col, boundary)) {
+      occe->setColor(col);
+    }
   }
   for(int i = 1; i <= _fmap.Extent(); i++) {
     TopoDS_Face face = TopoDS::Face(_fmap(i));
@@ -4837,12 +4964,11 @@ void OCC_Internals::synchronize(GModel *model)
     _attributes->getLabels(2, face, labels);
     if(labels.size()) model->setElementaryName(2, occf->tag(), labels[0]);
     unsigned int col = 0, boundary = 0;
-    if(_attributes->getColor(2, face, col, boundary)) {
+    if(!occf->useColor() && _attributes->getColor(2, face, col, boundary)) {
       occf->setColor(col);
       if(boundary == 2) {
         std::vector<GEdge *> edges = occf->edges();
         for(std::size_t j = 0; j < edges.size(); j++) {
-          // only if not specified explicitly before
           if(!edges[j]->useColor()) edges[j]->setColor(col);
         }
       }
@@ -4868,19 +4994,17 @@ void OCC_Internals::synchronize(GModel *model)
     _attributes->getLabels(3, region, labels);
     if(labels.size()) model->setElementaryName(3, occr->tag(), labels[0]);
     unsigned int col = 0, boundary = 0;
-    if(_attributes->getColor(3, region, col, boundary)) {
+    if(!occr->useColor() && _attributes->getColor(3, region, col, boundary)) {
       occr->setColor(col);
       if(boundary == 1) {
         std::vector<GFace *> faces = occr->faces();
         for(std::size_t j = 0; j < faces.size(); j++) {
-          // only if not specified explicitly before
           if(!faces[j]->useColor()) faces[j]->setColor(col);
         }
       }
       else if(boundary == 2) {
         std::vector<GEdge *> edges = occr->edges();
         for(std::size_t j = 0; j < edges.size(); j++) {
-          // only if not specified explicitly before
           if(!edges[j]->useColor()) edges[j]->setColor(col);
         }
       }
@@ -5745,28 +5869,6 @@ bool OCC_Internals::makeTorusSTL(double x, double y, double z, double r1,
   return true;
 }
 
-void OCC_Internals::fixSTLBounds(double &xmin, double &ymin, double &zmin,
-                                 double &xmax, double &ymax, double &zmax)
-{
-  // When an STL exists, OCC enlarges the bounding box by the allowed linear
-  // deflection given to BRepMesh_IncrementalMesh. This is "safe", but on simple
-  // polyhedral geometries (a cube!) it will consistently lead to enlarging the
-  // bounding box by twice this value in all directions. Since we use bounds()
-  // mostly for locating entities, it's better to remove the tolerance (with the
-  // risk that the bbox is a bit too small for curved boundaries - but that's
-  // fine)
-  double eps = CTX::instance()->mesh.stlLinearDeflection;
-  // OCC also enlarges the bounding box by Precision::Confusion(): remove it as
-  // well
-  eps += Precision::Confusion();
-  xmin += eps;
-  xmax -= eps;
-  ymin += eps;
-  ymax -= eps;
-  zmin += eps;
-  zmax -= eps;
-}
-
 #endif
 
 void GModel::createOCCInternals()
@@ -5821,7 +5923,8 @@ int GModel::writeOCCBREP(const std::string &fn)
     Msg::Error("No OpenCASCADE model found");
     return 0;
   }
-  _occ_internals->exportShapes(this, fn, "brep");
+  _occ_internals->exportShapes(this, fn, "brep",
+                               CTX::instance()->geom.occExportOnlyVisible);
   return 1;
 }
 
@@ -5831,7 +5934,8 @@ int GModel::writeOCCSTEP(const std::string &fn)
     Msg::Error("No OpenCASCADE model found");
     return 0;
   }
-  _occ_internals->exportShapes(this, fn, "step");
+  _occ_internals->exportShapes(this, fn, "step",
+                               CTX::instance()->geom.occExportOnlyVisible);
   return 1;
 }
 

@@ -75,7 +75,8 @@ private:
   int _readMSH4(const std::string &name);
   int _writeMSH4(const std::string &name, double version, bool binary,
                  bool saveAll, bool saveParametric, double scalingFactor,
-                 bool append, int partitionToSave = 0);
+                 bool append, int partitionToSave = 0,
+                 std::map<GEntity*, SBoundingBox3d> *entityBounds = nullptr);
   int _writePartitionedMSH4(const std::string &baseName, double version,
                             bool binary, bool saveAll, bool saveParametric,
                             double scalingFactor);
@@ -150,6 +151,9 @@ protected:
 
   // the set of all used mesh partition numbers
   std::size_t _numPartitions;
+
+  // additional attributes (e.g. stored in extra sections of MSH files)
+  std::map<std::string, std::vector<std::string> > _attributes;
 
 protected:
   // store the elements given in the map (indexed by elementary region
@@ -625,6 +629,10 @@ public:
                                   const std::vector<GEntity*> &entities =
                                   std::vector<GEntity*>());
 
+  // remove duplicate mesh elements (within an entity)
+  int removeDuplicateMeshElements(const std::vector<GEntity*> &entities =
+                                  std::vector<GEntity*>());
+
   // create a geometry (i.e. a parametrization for curves and surfaces) for the
   // given discrete entities (or all of them if dimTags is empty)
   void createGeometryOfDiscreteEntities(
@@ -699,7 +707,7 @@ public:
                           const std::vector<int> &subdomain,
                           const std::vector<int> &dim);
   void clearHomologyRequests();
-  void computeHomology();
+  void computeHomology(std::vector<std::pair<int, int> > &newPhysicals);
 
   // mesh size callback
   std::function<double(int, int, double, double, double, double)> lcCallback;
@@ -718,6 +726,12 @@ public:
                                         const std::vector<double> &heights,
                                         const bool recombine,
                                         const std::vector<int> &regionTag);
+
+  // get additional attributes
+  std::map<std::string, std::vector<std::string> > &getAttributes()
+  {
+    return _attributes;
+  }
 
   // "automatic" IO based on Gmsh global functions
   void load(const std::string &fileName);
@@ -871,6 +885,10 @@ public:
 
   // LSDYNA
   int writeKEY(const std::string &name, int saveAll = 0,
+               int saveGroupsOfNodes = 0, double scalingFactor = 1.0);
+
+  // RADIOSS
+  int writeRAD(const std::string &name, int saveAll = 0,
                int saveGroupsOfNodes = 0, double scalingFactor = 1.0);
 
   // CELUM

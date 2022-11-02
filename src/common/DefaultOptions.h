@@ -813,7 +813,7 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "Stereo" , opt_general_stereo_mode , 0. ,
     "Use stereo rendering" },
   { F|S, "SystemMenuBar" , opt_general_system_menu_bar , 1. ,
-    "Use the system menu bar on Mac OS X?" },
+    "Use the system menu bar on macOS?" },
 
   { F|O, "Terminal" , opt_general_terminal , 0. ,
     "Should information be printed on the terminal (if available)?" },
@@ -894,7 +894,7 @@ StringXNumber GeometryOptions_Number[] = {
     "Number of control points for splines created during extrusion" },
 
   { F|O, "HighlightOrphans" , opt_geometry_highlight_orphans, 0. ,
-    "Highlight orphan and boundary curves and surfaces?" },
+    "Highlight orphan and boundary entities?" },
 
   { F|O, "LabelType" , opt_geometry_label_type , 0. ,
     "Type of entity label (0: description, 1: elementary entity tag, "
@@ -924,7 +924,7 @@ StringXNumber GeometryOptions_Number[] = {
   { F|O, "Normals" , opt_geometry_normals , 0. ,
     "Display size of normal vectors (in pixels)" },
   { F|O, "NumSubEdges" , opt_geometry_num_sub_edges , 40. ,
-    "Number of edge subdivisions between control points when displaying curves" },
+    "Number of subdivisions (per control point or pole) used to draw curves" },
 
   { F|O, "OCCAutoEmbed" , opt_geometry_occ_auto_embed , 1. ,
     "Automatically embed points, curves and faces in higher dimensional entities if "
@@ -947,6 +947,9 @@ StringXNumber GeometryOptions_Number[] = {
   { F|O, "OCCFixSmallFaces" , opt_geometry_occ_fix_small_faces , 0. ,
     "Fix small faces when importing STEP, IGES and BRep models with the "
     "OpenCASCADE kernel" },
+  { F|O, "OCCExportOnlyVisible" , opt_geometry_occ_export_only_visible , 0. ,
+    "Only consider visible shapes when exporting STEP or BREP models with the "
+    "OpenCASCADE kernel" },
   { F|O, "OCCImportLabels" , opt_geometry_occ_import_labels , 1. ,
     "Import labels and colors when importing STEP models with the OpenCASCADE kernel" },
   { F|O, "OCCMakeSolids" , opt_geometry_occ_make_solids , 0. ,
@@ -954,6 +957,9 @@ StringXNumber GeometryOptions_Number[] = {
     "OpenCASCADE kernel" },
   { F|O, "OCCParallel" , opt_geometry_occ_parallel , 0. ,
     "Use multi-threaded OpenCASCADE boolean operators" },
+  { F|O, "OCCSafeUnbind" , opt_geometry_occ_safe_unbind , 0. ,
+    "Revert to safe (i.e. with recursive checks on boundaries) unbinding of entities "
+    "in boolean operations and geometrical transformations" },
   { F|O, "OCCScaling" , opt_geometry_occ_scaling , 1. ,
     "Scale STEP, IGES and BRep models by the given factor when importing them with the "
     "OpenCASCADE kernel" },
@@ -1162,6 +1168,8 @@ StringXNumber MeshOptions_Number[] = {
 
   { F|O, "HighOrderDistCAD", opt_mesh_ho_dist_cad, 0,
     "Try to optimize distance to CAD in high-order optimizer?"},
+  { F|O, "HighOrderFixBoundaryNodes", opt_mesh_ho_fix_bnd_nodes, 0,
+    "Fix boundary nodes during high-order optimization?"},
   { F|O, "HighOrderIterMax", opt_mesh_ho_iter_max, 100,
     "Maximum number of iterations in high-order optimization pass"},
   { F|O, "HighOrderNumLayers", opt_mesh_ho_nlayers, 6.,
@@ -1205,10 +1213,10 @@ StringXNumber MeshOptions_Number[] = {
     "for the detection of columns in the fast curving algorithm"},
 
   { F|O, "IgnoreParametrization" , opt_mesh_ignore_parametrization, 0. ,
-    "Skip parametrization section when reading meshes in the MSH4 format." },
+    "Skip parametrization section when reading meshes in the MSH4 format" },
   { F|O, "IgnorePeriodicity" , opt_mesh_ignore_periodicity , 1. ,
     "Skip periodic node section and skip periodic boundary alignment step when "
-    "reading meshes in the MSH2 format." },
+    "reading meshes in the MSH2 format" },
 
   { F|O, "LabelSampling" , opt_mesh_label_sampling , 1. ,
     "Label sampling rate (display one label every `LabelSampling' elements)" },
@@ -1338,7 +1346,7 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "Normals" , opt_mesh_normals , 0.0 ,
     "Display size of normal vectors (in pixels)" },
   { F|O, "NumSubEdges" , opt_mesh_num_sub_edges , 2. ,
-    "Number of edge subdivisions when displaying high-order elements" },
+    "Number of edge subdivisions used to draw high-order mesh elements" },
 
   { F|O, "OldInitialDelaunay2D" , opt_mesh_old_initial_delaunay_2d , 0. ,
     "Use old initial 2D Delaunay code" },
@@ -1484,10 +1492,6 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "SaveElementTagType" , opt_mesh_save_element_tag_type , 1. ,
     "Type of the element tag saved in mesh formats that don't support saving "
     "physical or partition ids (1: elementary, 2: physical, 3: partition)" },
-  { F|O, "SaveTopology" , opt_mesh_save_topology, 0. ,
-    "Save model topology in MSH2 output files (this is always saved in MSH3 and above)" },
-  { F|O, "SaveParametric" , opt_mesh_save_parametric , 0. ,
-    "Save parametric coordinates of nodes" },
   { F|O, "SaveGroupsOfElements" , opt_mesh_save_groups_of_elements , 1. ,
     "Save groups of elements for each physical group (for UNV and INP mesh format) "
     "if value is positive; if negative, save groups of elements for physical "
@@ -1504,6 +1508,13 @@ StringXNumber MeshOptions_Number[] = {
     "save surfaces, while -1010 will save volumes and curves); for INP, save "
     "groups of nodes for all entities of dimension dim if the (dim+1)^th least "
     "significant digit of -Mesh.SaveGroupsOfNodes is 2"},
+  { F|O, "SaveParametric" , opt_mesh_save_parametric , 0. ,
+    "Save parametric coordinates of nodes" },
+  { F|O, "SaveWithoutOrphans" , opt_mesh_save_without_orphans , 0. ,
+    "Don't save orphan entities (not connected to any highest dimensional entity "
+    "in the model) in MSH4 files" },
+  { F|O, "SaveTopology" , opt_mesh_save_topology, 0. ,
+    "Save model topology in MSH2 output files (this is always saved in MSH3 and above)" },
   { F|O, "ScalingFactor" , opt_mesh_scaling_factor , 1.0 ,
     "Global scaling factor applied to the saved mesh" },
   { F|O, "SecondOrderIncomplete" , opt_mesh_second_order_incomplete , 0. ,
@@ -1756,23 +1767,23 @@ StringXNumber ViewOptions_Number[] = {
   { F|O, "ColormapSwap" , opt_view_colormap_swap , 0. ,
     "Swap the min/max values in the colormap?" },
   { F|O, "ComponentMap0" , opt_view_component_map0 , 0,
-    "Forced component 0 (if View.ForceComponents > 0)" },
+    "Forced component 0 (if View.ForceNumComponents > 0)" },
   { F|O, "ComponentMap1" , opt_view_component_map1 , 1,
-    "Forced component 1 (if View.ForceComponents > 0)" },
+    "Forced component 1 (if View.ForceNumComponents > 0)" },
   { F|O, "ComponentMap2" , opt_view_component_map2 , 2,
-    "Forced component 2 (if View.ForceComponents > 0)" },
+    "Forced component 2 (if View.ForceNumComponents > 0)" },
   { F|O, "ComponentMap3" , opt_view_component_map3 , 3,
-    "Forced component 3 (if View.ForceComponents > 0)" },
+    "Forced component 3 (if View.ForceNumComponents > 0)" },
   { F|O, "ComponentMap4" , opt_view_component_map4 , 4,
-    "Forced component 4 (if View.ForceComponents > 0)" },
+    "Forced component 4 (if View.ForceNumComponents > 0)" },
   { F|O, "ComponentMap5" , opt_view_component_map5 , 5,
-    "Forced component 5 (if View.ForceComponents > 0)" },
+    "Forced component 5 (if View.ForceNumComponents > 0)" },
   { F|O, "ComponentMap6" , opt_view_component_map6 , 6,
-    "Forced component 6 (if View.ForceComponents > 0)" },
+    "Forced component 6 (if View.ForceNumComponents > 0)" },
   { F|O, "ComponentMap7" , opt_view_component_map7 , 7,
-    "Forced component 7 (if View.ForceComponents > 0)" },
+    "Forced component 7 (if View.ForceNumComponents > 0)" },
   { F|O, "ComponentMap8" , opt_view_component_map8 , 8,
-    "Forced component 8 (if View.ForceComponents > 0)" },
+    "Forced component 8 (if View.ForceNumComponents > 0)" },
   { F,   "CustomAbscissaMax" , opt_view_custom_abscissa_max , 0. ,
     "User-defined maximum abscissa value" },
   { F,   "CustomAbscissaMin" , opt_view_custom_abscissa_min , 0. ,

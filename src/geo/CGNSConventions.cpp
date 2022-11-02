@@ -401,10 +401,9 @@ namespace {
     case TYPE_PRI: pts = generatePointsPriCGNS(order, complete); break;
     case TYPE_PYR: pts = generatePointsPyrCGNS(order, complete); break;
     default:
-      Msg::Error(
-        "%s (%i) : Error CGNS element %s of order %i not yet implemented",
-        __FILE__, __LINE__, ElementType::nameOfParentType(parentType).c_str(),
-        order);
+      Msg::Error("CGNS element %s of order %i not yet implemented",
+                 ElementType::nameOfParentType(parentType).c_str(),
+                 order);
     }
 
     size_t dim = 0;
@@ -452,9 +451,8 @@ namespace {
       fullMatrix<double> ptsCGNS = generatePointsCGNS(parent, order, complete);
       const bool reorderOK = computeReordering(ptsCGNS, nb->points, nodes);
       if(!reorderOK) {
-        Msg::Error("%s (%i) : Error in computation of reordering between Gmsh "
-                   "and CGNS element nodes for MSH type %i",
-                   __FILE__, __LINE__, mshTag);
+        Msg::Error("Could not compute reordering between Gmsh and CGNS element "
+                   "nodes for MSH type %i", mshTag);
       }
       break;
     }
@@ -710,8 +708,8 @@ void msh2CgnsReferenceElement(int mshType, const fullMatrix<double> &mshPts,
     }
     break;
   default:
-    Msg::Error("%s (%i) : Error CGNS element %s not yet implemented", __FILE__,
-               __LINE__, ElementType::nameOfParentType(parentType).c_str());
+    Msg::Error("CGNS element %s not yet implemented",
+               ElementType::nameOfParentType(parentType).c_str());
   }
 }
 

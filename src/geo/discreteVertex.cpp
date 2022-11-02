@@ -18,7 +18,7 @@ discreteVertex::discreteVertex(GModel *m, int num, double x, double y, double z)
   Tree_Add(m->getGEOInternals()->Points, &_v);
 }
 
-discreteVertex::discreteVertex(GModel *m) : GVertex(m, 0)
+discreteVertex::discreteVertex(GModel *m) : GVertex(m, 0), _v(nullptr)
 {
   // used for temporary discrete vertices, that should not lead to the creation
   // of the corresponding entity in GEO internals
@@ -30,9 +30,11 @@ GPoint discreteVertex::point() const { return GPoint(x(), y(), z(), this); }
 
 void discreteVertex::setPosition(GPoint &p)
 {
-  _v->Pos.X = p.x();
-  _v->Pos.Y = p.y();
-  _v->Pos.Z = p.z();
+  if(_v) {
+    _v->Pos.X = p.x();
+    _v->Pos.Y = p.y();
+    _v->Pos.Z = p.z();
+  }
   if(mesh_vertices.size()) {
     mesh_vertices[0]->x() = p.x();
     mesh_vertices[0]->y() = p.y();
@@ -42,15 +44,24 @@ void discreteVertex::setPosition(GPoint &p)
 
 double discreteVertex::x() const
 {
-  return mesh_vertices.size() ? mesh_vertices[0]->x() : _v->Pos.X;
+  if(mesh_vertices.size()) return mesh_vertices[0]->x();
+  if(_v) return _v->Pos.X;
+  Msg::Warning("No coordinate in discrete point %d", tag());
+  return 0.;
 }
 
 double discreteVertex::y() const
 {
-  return mesh_vertices.size() ? mesh_vertices[0]->y() : _v->Pos.Y;
+  if(mesh_vertices.size()) return mesh_vertices[0]->y();
+  if(_v) return _v->Pos.Y;
+  Msg::Warning("No coordinate in discrete point %d", tag());
+  return 0.;
 }
 
 double discreteVertex::z() const
 {
-  return mesh_vertices.size() ? mesh_vertices[0]->z() : _v->Pos.Z;
+  if(mesh_vertices.size()) return mesh_vertices[0]->z();
+  if(_v) return _v->Pos.Z;
+  Msg::Warning("No coordinate in discrete point %d", tag());
+  return 0.;
 }

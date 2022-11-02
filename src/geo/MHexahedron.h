@@ -115,6 +115,7 @@ public:
   virtual const char *getStringForDIFF() const { return "ElmB8n3D"; }
   virtual const char *getStringForINP() const { return "C3D8"; }
   virtual const char *getStringForKEY() const { return "_SOLID"; }
+  virtual const char *getStringForRAD() const { return "/BRICK"; }
   virtual const char *getStringForTOCHNOG() const { return "-hex8"; }
   virtual void reverse()
   {
@@ -321,6 +322,12 @@ public:
                                 13, 9, 16, 18, 19, 17, 10, 12, 14, 15};
     return getVertex(map[num]);
   }
+  virtual MVertex *getVertexRAD(int num)
+  {
+    static const int map[20] = {0,  1, 2,  3,  4,  5,  6,  7,  8,  11,
+                                13, 9, 16, 18, 19, 17, 10, 12, 14, 15};
+    return getVertex(map[num]);
+  }
   virtual MVertex *getVertexDIFF(int num)
   {
     static const int map[20] = {2,  3,  7,  6,  0,  1,  5, 4,  9,  18,
@@ -363,6 +370,7 @@ public:
   virtual const char *getStringForBDF() const { return "CHEXA"; }
   virtual const char *getStringForINP() const { return "C3D20"; }
   virtual const char *getStringForKEY() const { return "_SOLID_H20"; }
+  virtual const char *getStringForRAD() const { return "/BRIC20"; }
   virtual const char *getStringForDIFF() const { return "ElmB20n3D"; }
   virtual void reverse()
   {
@@ -529,6 +537,7 @@ public:
   virtual const char *getStringForDIFF() const { return "ElmB27n3D"; }
   virtual const char *getStringForINP() const { return "C3D27"; }
   virtual const char *getStringForKEY() const { return "_SOLID_H27"; }
+  virtual const char *getStringForRAD() const { return "/BRIC20"; }
   virtual const char *getStringForTOCHNOG() const { return "-hex27"; }
   virtual void reverse()
   {

@@ -13,9 +13,12 @@
 #include "drawContext.h"
 #include "Navigator.h"
 
+#define NEW_TOOLTIPS 1
+
 #if defined(NEW_TOOLTIPS)
 
 #include <FL/Fl_Menu_Window.H>
+#include <FL/Fl_Tooltip.H>
 #include <FL/fl_draw.H>
 
 class tooltipWindow : public Fl_Menu_Window {
@@ -32,11 +35,14 @@ public:
   }
   void draw()
   {
-    draw_box(FL_BORDER_BOX, 0, 0, w(), h(), Fl_Color(175));
-    fl_color(FL_BLACK);
-    fl_font(labelfont(), labelsize());
-    fl_draw(_text, 3, 3, w() - 6, h() - 6,
-            Fl_Align(FL_ALIGN_LEFT | FL_ALIGN_WRAP));
+    draw_box(FL_BORDER_BOX, 0, 0, w(), h(), Fl_Tooltip::color());
+    fl_color(Fl_Tooltip::textcolor());
+    fl_font(Fl_Tooltip::font(), Fl_Tooltip::size());
+    int X = Fl_Tooltip::margin_width();
+    int Y = Fl_Tooltip::margin_height();
+    int W = w() - (Fl_Tooltip::margin_width() * 2);
+    int H = h() - (Fl_Tooltip::margin_height() * 2);
+    fl_draw(_text, X, Y, W, H, Fl_Align(FL_ALIGN_LEFT|FL_ALIGN_WRAP), 0, 1);
   }
   int handle(int e)
   {
@@ -49,12 +55,14 @@ public:
   void value(const std::string &s)
   {
     strncpy(_text, s.c_str(), 1023);
-    // recalc size of window
-    fl_font(labelfont(), labelsize());
-    int W = w(), H = h();
-    fl_measure(_text, W, H, 0);
-    W += 8;
-    size(W, H);
+    _text[1023] = '\n';
+    fl_font(Fl_Tooltip::font(), Fl_Tooltip::size());
+    int ww = Fl_Tooltip::wrap_width();
+    int hh = 0;
+    fl_measure(_text, ww, hh, 1);
+    ww += (Fl_Tooltip::margin_width() * 2);
+    hh += (Fl_Tooltip::margin_height() * 2);
+    size(ww, hh);
     redraw();
   }
 };

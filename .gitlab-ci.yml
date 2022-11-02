@@ -17,7 +17,7 @@ variables:
 # Continuous integration builds for all branches
 # ----------------------------------------------
 
-linux64_ci:
+linux_ci:
   image: onelab/ubuntu20.04
   script:
     - mkdir build
@@ -34,7 +34,7 @@ linux64_ci:
   except:
     - tags
 
-linux64_compatibility_ci:
+linux_compatibility_ci:
   image: onelab/ubuntu20.04
   script:
     - mkdir build
@@ -53,7 +53,7 @@ linux64_compatibility_ci:
   except:
     - tags
 
-windows64_ci:
+windows_ci:
   script:
     - md build
     - cd build
@@ -66,7 +66,7 @@ windows64_ci:
   except:
     - tags
 
-windows64_msvc_ci:
+windows_msvc_ci:
   script:
     - md build
     - cd build
@@ -98,7 +98,7 @@ windows64_msvc_ci:
     - linux64
     - docker
 
-linux64_official_snapshot:
+linux_official_snapshot:
   image: onelab/debian.stretch.64bit
   variables:
     EXTRA_OPTION: "-DCMAKE_EXE_LINKER_FLAGS=-static-libstdc++"
@@ -106,7 +106,7 @@ linux64_official_snapshot:
   except:
     - tags
 
-linux64_official_release:
+linux_official_release:
   image: onelab/debian.stretch.64bit
   variables:
     EXTRA_OPTION: "-DGMSH_RELEASE=1 -DCMAKE_EXE_LINKER_FLAGS=-static-libstdc++"
@@ -114,7 +114,7 @@ linux64_official_release:
   only:
     - /^gmsh_.*$/
 
-linux64-sdk_official_snapshot:
+linux-sdk_official_snapshot:
   image: onelab/debian.stretch.64bit
   variables:
     EXTRA_OPTION: "-DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1"
@@ -124,10 +124,10 @@ linux64-sdk_official_snapshot:
   artifacts:
     paths:
       - build/_CPack_Packages/
-      - build/setup-wheel.py
+      - build/version.txt
     expire_in: 1day
 
-linux64-sdk_official_release:
+linux-sdk_official_release:
   image: onelab/debian.stretch.64bit
   variables:
     EXTRA_OPTION: "-DGMSH_RELEASE=1 -DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1"
@@ -137,11 +137,10 @@ linux64-sdk_official_release:
   artifacts:
     paths:
       - build/_CPack_Packages/
-      - build/setup-wheel.py
       - build/version.txt
     expire_in: 1day
 
-linux64-nox-sdk_official_snapshot:
+linux-nox-sdk_official_snapshot:
   image: onelab/debian.stretch.64bit
   variables:
     EXTRA_OPTION: "-DGMSH_EXTRA_VERSION=-nox -DENABLE_FLTK=0 -DENABLE_OCC_CAF=0 -DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1"
@@ -168,7 +167,7 @@ linux64-nox-sdk_official_snapshot:
     - c:\cygwin64\bin\bash -c "/usr/bin/scp -o StrictHostKeyChecking=no -i /home/geuzaine/.ssh/id_rsa gmsh-*.zip geuzaine@gmsh.info:.wwwgmsh/bin/Windows/"
     - c:\cygwin64\bin\bash -c "/usr/bin/ctest -j 4 --output-on-failure"
 
-windows64_official_snapshot:
+windows_official_snapshot:
   <<: *windows_official
   tags:
     - windows64
@@ -176,7 +175,7 @@ windows64_official_snapshot:
   except:
     - tags
 
-windows64_official_release:
+windows_official_release:
   variables:
     EXTRA_OPTION: "-DGMSH_RELEASE=1"
   <<: *windows_official
@@ -186,7 +185,7 @@ windows64_official_release:
   only:
     - /^gmsh_.*$/
 
-windows64-sdk_official_snapshot:
+windows-sdk_official_snapshot:
   variables:
     EXTRA_OPTION: "-DENABLE_OS_SPECIFIC_INSTALL=0 -DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1"
   <<: *windows_official
@@ -200,7 +199,7 @@ windows64-sdk_official_snapshot:
       - build/_CPack_Packages/
     expire_in: 1day
 
-windows64-sdk_official_release:
+windows-sdk_official_release:
   variables:
     EXTRA_OPTION: "-DGMSH_RELEASE=1 -DENABLE_OS_SPECIFIC_INSTALL=0 -DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1"
   <<: *windows_official
@@ -215,7 +214,7 @@ windows64-sdk_official_release:
     expire_in: 1day
 
 # ------------------------------------------
-# Official MacOS builds (master branch only)
+# Official macOS builds (master branch only)
 # ------------------------------------------
 
 .macos_official: &macos_official
@@ -224,32 +223,38 @@ windows64-sdk_official_release:
   script:
     - mkdir build
     - cd build
-    - /usr/local/bin/cmake -DGMSH_HOST=gmsh.info -DENABLE_CAIRO=0 -DENABLE_OS_SPECIFIC_INSTALL=1 -DENABLE_PETSC=1 -DPETSC_ARCH=real_mumps_seq -DPETSC_DIR=/Users/geuzaine/src/petsc ${EXTRA_OPTION} ..
+    - cmake -DGMSH_HOST=gmsh.info -DENABLE_CAIRO=0 -DENABLE_OS_SPECIFIC_INSTALL=1 -DENABLE_PETSC=1 -DPETSC_ARCH=real_mumps_seq -DPETSC_DIR=/Users/geuzaine/src/petsc ${EXTRA_OPTION} ..
     - make package -j 4
     - PKG=`ls gmsh-*.[dt][ma][gr]*`
     - python3 ../utils/misc/notarize.py --package ${PKG} --username cgeuzaine@ulg.ac.be --primary-bundle-id org.geuz.Gmsh --password "@keychain:Gmsh Notarization"
-    - scp ${PKG} geuzaine@gmsh.info:.wwwgmsh/bin/MacOSX/${PKG/\.tar\.gz/\.tgz}
-    - /usr/local/bin/ctest -j 4 --output-on-failure
+    - scp ${PKG} geuzaine@gmsh.info:.wwwgmsh/bin/macOS/${PKG/\.tar\.gz/\.tgz}
+    - ctest -j 4 --output-on-failure
+
+macosx_official_snapshot:
+  <<: *macos_official
   tags:
     - macos64
     - official
-
-macos64_official_snapshot:
-  <<: *macos_official
   except:
     - tags
 
-macos64_official_release:
+macosx_official_release:
   variables:
     EXTRA_OPTION: "-DGMSH_RELEASE=1"
   <<: *macos_official
+  tags:
+    - macos64
+    - official
   only:
     - /^gmsh_.*$/
 
-macos64-sdk_official_snapshot:
+macosx-sdk_official_snapshot:
   variables:
     EXTRA_OPTION: "-DENABLE_OS_SPECIFIC_INSTALL=0 -DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1"
   <<: *macos_official
+  tags:
+    - macos64
+    - official
   except:
     - tags
   artifacts:
@@ -257,10 +262,59 @@ macos64-sdk_official_snapshot:
       - build/_CPack_Packages/
     expire_in: 1day
 
-macos64-sdk_official_release:
+macosx-sdk_official_release:
   variables:
     EXTRA_OPTION: "-DGMSH_RELEASE=1 -DENABLE_OS_SPECIFIC_INSTALL=0 -DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1"
   <<: *macos_official
+  tags:
+    - macos64
+    - official
+  only:
+    - /^gmsh_.*$/
+  artifacts:
+    paths:
+      - build/_CPack_Packages/
+    expire_in: 1day
+
+macosarm_official_snapshot:
+  <<: *macos_official
+  tags:
+    - macos64arm
+    - official
+  except:
+    - tags
+
+macosarm_official_release:
+  variables:
+    EXTRA_OPTION: "-DGMSH_RELEASE=1"
+  <<: *macos_official
+  tags:
+    - macos64arm
+    - official
+  only:
+    - /^gmsh_.*$/
+
+macosarm-sdk_official_snapshot:
+  variables:
+    EXTRA_OPTION: "-DENABLE_OS_SPECIFIC_INSTALL=0 -DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1"
+  <<: *macos_official
+  tags:
+    - macos64arm
+    - official
+  except:
+    - tags
+  artifacts:
+    paths:
+      - build/_CPack_Packages/
+    expire_in: 1day
+
+macosarm-sdk_official_release:
+  variables:
+    EXTRA_OPTION: "-DGMSH_RELEASE=1 -DENABLE_OS_SPECIFIC_INSTALL=0 -DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1"
+  <<: *macos_official
+  tags:
+    - macos64arm
+    - official
   only:
     - /^gmsh_.*$/
   artifacts:
@@ -371,19 +425,20 @@ pypi_official_snapshot:
     - master@gmsh/gmsh
   <<: *ssh_config
   dependencies:
-    - linux64-sdk_official_snapshot
-    - linux64-nox-sdk_official_snapshot
-    - windows64-sdk_official_snapshot
-    - macos64-sdk_official_snapshot
+    - linux-sdk_official_snapshot
+    - linux-nox-sdk_official_snapshot
+    - windows-sdk_official_snapshot
+    - macosx-sdk_official_snapshot
+    - macosarm-sdk_official_snapshot
   script:
     - cd build
-    - GMSH_SETUP_DIR=../utils/pypi/gmsh-dev GMSH_SDK_DIR=_CPack_Packages/Linux/TGZ/gmsh-git-Linux64-sdk/ python3 setup-wheel.py build bdist_wheel --plat-name manylinux1_x86_64 --universal
-    - GMSH_SETUP_DIR=../utils/pypi/gmsh-nox-dev GMSH_SDK_DIR=_CPack_Packages/Linux/TGZ/gmsh-nox-git-Linux64-sdk/ python3 setup-wheel.py build bdist_wheel --plat-name manylinux1_x86_64 --universal
-    - GMSH_SETUP_DIR=../utils/pypi/gmsh-dev GMSH_SDK_DIR=_CPack_Packages/CYGWIN/ZIP/gmsh-git-Windows64-sdk/ python3 setup-wheel.py build bdist_wheel --plat-name win_amd64 --universal
-    - cp -R _CPack_Packages/Darwin _CPack_Packages/Darwin2
-    - GMSH_SETUP_DIR=../utils/pypi/gmsh-dev GMSH_SDK_DIR=_CPack_Packages/Darwin2/TGZ/gmsh-git-MacOSX-sdk/ python3 setup-wheel.py build bdist_wheel --plat-name macosx_10_15_x86_64 --universal
-    - scp dist/gmsh_dev*.whl geuzaine@gmsh.info:.wwwgmsh/python-packages/gmsh-dev/
-    - scp dist/gmsh_nox_dev*.whl geuzaine@gmsh.info:.wwwgmsh/python-packages/gmsh-nox-dev/
+    - python3 ../utils/pypi/sdktowheel.py _CPack_Packages/Linux/TGZ/gmsh-git-Linux64-sdk/ manylinux1_x86_64
+    - python3 ../utils/pypi/sdktowheel.py _CPack_Packages/Linux/TGZ/gmsh-nox-git-Linux64-sdk/ manylinux1_x86_64
+    - python3 ../utils/pypi/sdktowheel.py _CPack_Packages/CYGWIN/ZIP/gmsh-git-Windows64-sdk/ win_amd64
+    - python3 ../utils/pypi/sdktowheel.py _CPack_Packages/Darwin/TGZ/gmsh-git-MacOSX-sdk/ macosx_10_15_x86_64
+    - python3 ../utils/pypi/sdktowheel.py _CPack_Packages/Darwin/TGZ/gmsh-git-MacOSARM-sdk/ macosx_12_0_arm64
+    - scp gmsh-*.dev1+nox*.whl geuzaine@gmsh.info:.wwwgmsh/python-packages-dev-nox/gmsh/
+    - scp gmsh-*.dev1-*.whl geuzaine@gmsh.info:.wwwgmsh/python-packages-dev/gmsh/
   tags:
     - linux64
     - docker
@@ -397,9 +452,10 @@ pypi_official_release:
     - master@gmsh/gmsh
   <<: *ssh_config
   dependencies:
-    - linux64-sdk_official_release
-    - windows64-sdk_official_release
-    - macos64-sdk_official_release
+    - linux-sdk_official_release
+    - windows-sdk_official_release
+    - macosx-sdk_official_release
+    - macosarm-sdk_official_release
   script:
     - echo "[distutils]" > ~/.pypirc
     - echo "index-servers = pypi" >> ~/.pypirc
@@ -408,15 +464,16 @@ pypi_official_release:
     - echo "password = $PYPI_TOKEN" >> ~/.pypirc
     - cd build
     - VERSION=`cat version.txt`
-    - GMSH_SETUP_DIR=../utils/pypi/gmsh GMSH_SDK_DIR=_CPack_Packages/Linux/TGZ/gmsh-${VERSION}-Linux64-sdk/ python3 setup-wheel.py build bdist_wheel --plat-name manylinux1_x86_64 --universal
-    - GMSH_SETUP_DIR=../utils/pypi/gmsh GMSH_SDK_DIR=_CPack_Packages/CYGWIN/ZIP/gmsh-${VERSION}-Windows64-sdk/ python3 setup-wheel.py build bdist_wheel --plat-name win_amd64 --universal
-    - cp -R _CPack_Packages/Darwin _CPack_Packages/Darwin2
-    - GMSH_SETUP_DIR=../utils/pypi/gmsh GMSH_SDK_DIR=_CPack_Packages/Darwin2/TGZ/gmsh-${VERSION}-MacOSX-sdk/ python3 setup-wheel.py build bdist_wheel --plat-name macosx_10_15_x86_64 --universal
-    - scp dist/gmsh*.whl geuzaine@gmsh.info:.wwwgmsh/python-packages/gmsh/
-    - twine upload dist/*
+    - python3 ../utils/pypi/sdktowheel.py _CPack_Packages/Linux/TGZ/gmsh-${VERSION}-Linux64-sdk/ manylinux1_x86_64
+    - python3 ../utils/pypi/sdktowheel.py _CPack_Packages/CYGWIN/ZIP/gmsh-${VERSION}-Windows64-sdk/ win_amd64
+    - python3 ../utils/pypi/sdktowheel.py _CPack_Packages/Darwin/TGZ/gmsh-${VERSION}-MacOSX-sdk/ macosx_10_15_x86_64
+    - python3 ../utils/pypi/sdktowheel.py _CPack_Packages/Darwin/TGZ/gmsh-${VERSION}-MacOSARM-sdk/ macosx_12_0_arm64
+    - scp gmsh*.whl geuzaine@gmsh.info:.wwwgmsh/python-packages/gmsh/
+    - twine upload gmsh*.whl
     - ssh geuzaine@gmsh.info "cd .wwwgmsh/bin/Linux && rm -f gmsh-stable-Linux64* && ln -s gmsh-${VERSION}-Linux64.tgz gmsh-stable-Linux64.tgz && ln -s gmsh-${VERSION}-Linux64-sdk.tgz gmsh-stable-Linux64-sdk.tgz"
     - ssh geuzaine@gmsh.info "cd .wwwgmsh/bin/Windows && rm -f gmsh-stable-Windows64* && ln -s gmsh-${VERSION}-Windows64.zip gmsh-stable-Windows64.zip && ln -s gmsh-${VERSION}-Windows64-sdk.zip gmsh-stable-Windows64-sdk.zip"
-    - ssh geuzaine@gmsh.info "cd .wwwgmsh/bin/MacOSX && rm -f gmsh-stable-MacOSX* && ln -s gmsh-${VERSION}-MacOSX.dmg gmsh-stable-MacOSX.dmg && ln -s gmsh-${VERSION}-MacOSX-sdk.tgz gmsh-stable-MacOSX-sdk.tgz"
+    - ssh geuzaine@gmsh.info "cd .wwwgmsh/bin/macOS && rm -f gmsh-stable-MacOSX* && ln -s gmsh-${VERSION}-MacOSX.dmg gmsh-stable-MacOSX.dmg && ln -s gmsh-${VERSION}-MacOSX-sdk.tgz gmsh-stable-MacOSX-sdk.tgz"
+    - ssh geuzaine@gmsh.info "cd .wwwgmsh/bin/macOS && rm -f gmsh-stable-MacOSARM* && ln -s gmsh-${VERSION}-MacOSARM.dmg gmsh-stable-MacOSARM.dmg && ln -s gmsh-${VERSION}-MacOSARM-sdk.tgz gmsh-stable-MacOSARM-sdk.tgz"
     - ssh geuzaine@gmsh.info "cd .wwwgmsh/src && rm -f gmsh-stable-source.tgz && ln -s gmsh-${VERSION}-source.tgz gmsh-stable-source.tgz"
   tags:
     - linux64

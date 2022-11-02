@@ -75,6 +75,13 @@ int GFace::getMeshSizeFromBoundary() const
     return CTX::instance()->mesh.lcExtendFromBoundary;
 }
 
+bool GFace::isOrphan()
+{
+  if(model()->getNumRegions())
+    return regions().empty();
+  return false;
+}
+
 int GFace::delEdge(GEdge *edge)
 {
   const auto found = std::find(l_edges.begin(), l_edges.end(), edge);
@@ -1787,7 +1794,7 @@ static void meshCompound(GFace *gf, bool verbose)
 
   std::set<GEdge *, GEntityPtrLessThan> bnd, emb1;
   std::set<GVertex *, GEntityPtrLessThan> emb0;
-  std::vector<int> phys;
+  std::set<int> phys;
   for(std::size_t i = 0; i < gf->compound.size(); i++) {
     auto *c = (GFace *)gf->compound[i];
     df->triangles.insert(df->triangles.end(), c->triangles.begin(),
@@ -1818,7 +1825,7 @@ static void meshCompound(GFace *gf, bool verbose)
     }
     c->compoundSurface = df;
     if(!magic) {
-      phys.insert(phys.end(), c->physicals.begin(), c->physicals.end());
+      phys.insert(c->physicals.begin(), c->physicals.end());
       c->physicals.clear();
     }
   }
@@ -1844,7 +1851,7 @@ static void meshCompound(GFace *gf, bool verbose)
   Field *backgroundField = fields->get(BGTAG);
 
   if(df->createGeometry()) {
-    Msg::Error("Could not create geometry of discrete face %d (check "
+    Msg::Error("Could not create geometry of discrete surface %d (check "
                "orientation of input triangulations)",
                df->tag());
   }
@@ -1869,7 +1876,8 @@ static void meshCompound(GFace *gf, bool verbose)
   }
 
   if(!magic) {
-    df->physicals = phys;
+    df->physicals.clear();
+    df->physicals.insert(df->physicals.end(), phys.begin(), phys.end());
     return;
   }
 
@@ -2441,7 +2449,7 @@ void GFace::setMeshMaster(GFace *master, const std::map<int, int> &edgeCopies)
     }
     else {
       Msg::Error("Only rotations or translations can currently be computed "
-                 "automatically for periodic faces: face %d not meshed",
+                 "automatically for periodic surfaces: surface %d not meshed",
                  tag());
       return;
     }
@@ -2459,7 +2467,8 @@ void GFace::addElement(int type, MElement *e)
   case TYPE_TRI: addTriangle(reinterpret_cast<MTriangle *>(e)); break;
   case TYPE_QUA: addQuadrangle(reinterpret_cast<MQuadrangle *>(e)); break;
   case TYPE_POLYG: addPolygon(reinterpret_cast<MPolygon *>(e)); break;
-  default: Msg::Error("Trying to add unsupported element in face");
+  default:
+    Msg::Error("Trying to add unsupported element in surface %d", tag());
   }
 }
 
@@ -2481,7 +2490,19 @@ void GFace::removeElement(int type, MElement *e)
                         reinterpret_cast<MPolygon *>(e));
     if(it != polygons.end()) polygons.erase(it);
   } break;
-  default: Msg::Error("Trying to remove unsupported element in face");
+  default:
+    Msg::Error("Trying to remove unsupported element in surface %d", tag());
+  }
+}
+
+void GFace::removeElements(int type)
+{
+  switch(type) {
+  case TYPE_TRI: triangles.clear(); break;
+  case TYPE_QUA: quadrangles.clear(); break;
+  case TYPE_POLYG: polygons.clear(); break;
+  default:
+    Msg::Error("Trying to remove unsupported elements in surface %d", tag());
   }
 }
 

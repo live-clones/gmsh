@@ -14,6 +14,7 @@
 #include <cstdint>
 #include <cmath>
 #include <algorithm>
+#include <limits>
 
 /* Gmsh includes */
 #include "GmshMessage.h"
