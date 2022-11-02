@@ -334,20 +334,19 @@ performs the operations (translation, rotation, intersection, union,
 fragments, ...) on the native geometrical representation using each CAD
 kernel's own API.  In the same philosophy, models can be imported in the
 geometry module through each CAD kernel's own import mechanisms. For
-example, by default Gmsh import STEP and IGES files through OpenCASCADE,
-which will lead to the creation of model entities with an internal
-OpenCASCADE representation.
+example, by default Gmsh imports STEP and IGES files through
+OpenCASCADE, which will lead to the creation of model entities with an
+internal OpenCASCADE representation.
 
 The @ref{Gmsh tutorial}, starting with @ref{t1}, is the best place to
 learn how to use the geometry module: it contains examples of increasing
 complexity based on both the built-in and the OpenCASCADE kernel.  Note
 that many features of the geometry module can be used interactively in
 the GUI (@pxref{Gmsh graphical user interface}), which is also a good
-way to learn about both Gmsh's scripting language (@pxref{Gmsh scripting
-language}) and the API (@pxref{Gmsh application programming interface}),
-as actions in the geometry module automatically append the related
-command in the input script file, and can optionally also generate input
-for the languages supported by the API (see the
+way to learn about both Gmsh's scripting language and the API, as
+actions in the geometry module automatically append the related command
+in the input script file, and can optionally also generate input for the
+languages supported by the API (see the
 @code{General.ScriptingLanguages} option; this is still work-in-progress
 as of Gmsh 4.11.)
 
