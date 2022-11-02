@@ -10,6 +10,10 @@
 #include "hxt_mesh.h"
 #include <map>
 
+extern "C" {
+    #include "hxt_tetMesh.h"
+}
+
 class GRegion;
 class MVertex;
 class MTetrahedron;

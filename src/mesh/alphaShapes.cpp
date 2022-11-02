@@ -885,7 +885,7 @@ void createHxtMesh_(const std::string &inputMesh, const std::vector<double>& coo
     .refine = 0,
     .optimize=1,
     .toleranceInitialDelaunay = 0.,
-    .quality.min = 0.35,
+    .quality = {NULL},
     .nodalSizes = {NULL}
 	};
   // HXTTetMeshOptions options = {.verbosity=3, .refine=1, .optimize=1, .quality.min=0.35, .nodalSizes.factor=1.0};
