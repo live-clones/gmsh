@@ -621,9 +621,17 @@ void constrainedAlphaShapes3D_(GModel* m,
 
   // all other fields of the options will be 0 or NULL (standard C behavior)
 	HXTTetMeshOptions options = {
-		.verbosity=2,
+		.defaultThreads = 1,
+    .delaunayThreads = 0,
+    .improveThreads = 0,
+    .reproducible = 0,
+    .verbosity=2,
     .stat=1,
-    .optimize=0
+    .refine = 0,
+    .optimize=0,
+    .toleranceInitialDelaunay = 0.,
+    .quality = {NULL},
+    .nodalSizes = {NULL}
 	};
 
 	// create the empty mesh
@@ -656,10 +664,15 @@ void constrainedAlphaShapes3D_(GModel* m,
 
   HXTDelaunayOptions delOptions = {
     .bbox = &bbox,
+    .nodalSizes = NULL,
     .numVerticesInMesh = nBndPts,
     .insertionFirst = nBndPts,
+    .partitionability = 0,
+    .perfectDelaunay = 0,
     .allowOuterInsertion = 0, // if you set this to one, even vertices that are outside will be inserted
     .verbosity = 2,
+    .reproducible = 0,
+    .delaunayThreads = 0
   };
 
   // HXTTetMeshOptions options2 = {
@@ -862,7 +875,20 @@ void createHxtMesh_(const std::string &inputMesh, const std::vector<double>& coo
   hxtAddNodes(mesh, arr, coord.size()/3);
 
   /* generate and write the tet mesh */
-  HXTTetMeshOptions options = {.verbosity=3, .refine=0, .optimize=1, .quality={.min=0.35}, .nodalSizes={.factor=1.0}};
+  HXTTetMeshOptions options = {
+		.defaultThreads = 1,
+    .delaunayThreads = 0,
+    .improveThreads = 0,
+    .reproducible = 0,
+    .verbosity=2,
+    .stat=1,
+    .refine = 0,
+    .optimize=1,
+    .toleranceInitialDelaunay = 0.,
+    .quality.min = 0.35,
+    .nodalSizes = {NULL}
+	};
+  // HXTTetMeshOptions options = {.verbosity=3, .refine=1, .optimize=1, .quality.min=0.35, .nodalSizes.factor=1.0};
   hxtTetMesh(mesh, &options);
   hxtMeshWriteGmsh( mesh, &outputMesh[0]); // enlever
 
