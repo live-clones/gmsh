@@ -343,7 +343,7 @@ int alphaShapes3D_ (const double threshold,
   
   gmsh::model::mesh::tetrahedralize(pts, tetrahedra);
   
-  const int numPts = (int)(pts.size()/3);
+  const size_t numPts = (int)(pts.size()/3);
   for (size_t i = 0; i < tetrahedra.size(); i++)tetrahedra[i]--;
   std::vector<double> h; 
   double hMean(numPts);
@@ -443,7 +443,6 @@ bool onlyBnd(std::vector<std::size_t> tet, size_t nBndPts){
 
 bool checkBndColor(const size_t *t, std::vector<size_t> &bndColor, const std::vector<size_t> &controlNodeIndices){
   size_t nBnd = 0;
-  size_t nControlNodes = 8;
   for (size_t i = 0; i < 4; i++)
   {
     if (bndColor[t[i]])
@@ -537,7 +536,7 @@ void constrainedAlphaShapes2D_(GModel* m,
   //double hMean;
   if (meanValue < 0) hMean = meanEdgeLength2D(allNodeCoords,tris);
   else hMean = meanValue;
-  int ok = computeTriNeighbors_ (tris, neigh);
+  computeTriNeighbors_ (tris, neigh);
 
   // The alpha-shape
   std::vector<bool> _touched;
@@ -703,9 +702,7 @@ void constrainedAlphaShapes3D_(GModel* m,
   //hxtOptimizeTetrahedra(mesh,&optiOptions);
 
   std::vector<size_t> fluidTets;
-  bool flag;
   for (size_t i=0; i<mesh->tetrahedra.num; i++){
-    flag = false;
     /*
     for (size_t j = 0; j < 4; j++)
     {
