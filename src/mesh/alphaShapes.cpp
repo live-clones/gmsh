@@ -8,8 +8,6 @@
 
 #include <iostream>
 
-
-
 /* compute distance between 2 points -- 3D */
 double twoPointsDistance(const double *p0, const double *p1){
   return sqrt( (p0[0]-p1[0])*(p0[0]-p1[0]) + (p0[1]-p1[1])*(p0[1]-p1[1]) + (p0[2]-p1[2])*(p0[2]-p1[2]));
@@ -128,7 +126,7 @@ void getOrderedFace (const size_t *t, int i, size_t *f){
    f[2] = hi;
 }
 
-/* edge ordereing convetion */
+/* edge ordering convention in 2D */
 static int _edges [3][2] = {{0,1}, {0,2}, {1,2}};
 
 /* order the element edges according to convention */
@@ -172,7 +170,6 @@ int compareTwoInt (const void *a , const void *b){
  * if a face is a boundary face, the value there is tetrahedra.size()
  */
 int computeTetNeighbors_ (const std::vector<size_t> &tetrahedra, std::vector<size_t> &neigh){
-  
   neigh.resize(tetrahedra.size());
   for (size_t i=0;i<neigh.size();i++)neigh[i] = tetrahedra.size();
   
@@ -200,7 +197,6 @@ int computeTetNeighbors_ (const std::vector<size_t> &tetrahedra, std::vector<siz
     size_t *ft0 = &temp[5*(counter++)];
     if (counter == tetrahedra.size())break;
     size_t *ft1 = &temp[5*counter];
-
     if (compareFourInt(ft0,ft1) == 0){
       neigh[4*ft0[3]+ft0[4]] = 4*ft1[3]+ ft1[4];
       neigh[4*ft1[3]+ft1[4]] = 4*ft0[3]+ ft0[4];
@@ -262,9 +258,8 @@ int alphaShapes2D_(const double threshold,
 		 std::vector<std::vector<size_t> > &boundaries,
 		 std::vector<size_t> &neigh){
   
-  
   gmsh::model::mesh::triangulate(pts, triangles);
-  const int numPts = (int)(pts.size()/2);
+  const size_t numPts = (int)(pts.size()/2);
   std::vector<double> h(numPts); 
   double hMean;
   if (nodalSize.size() == 1) {
@@ -889,4 +884,102 @@ void createHxtMesh_(const std::string &inputMesh, const std::vector<double>& coo
   }
 
 
+}
+
+void generateMesh_(const int dim, const int tag, const bool refine, const std::vector<double> &coord, const std::vector<int> &nodeTags){
+  // -----------------  1D ------------------------------
+  if (dim == 1){
+    Msg::Info("generating mesh for edge %d\n",tag);
+    deMeshGEdge killer;
+    GEdge *ge = GModel::current()->getEdgeByTag(tag);
+    if (!ge)return;
+    killer(ge);
+    std::vector<int> index(coord.size(), 0);
+    for (size_t i = 0 ; i != index.size() ; i++) {
+      index[i] = i;
+    }
+    sort(index.begin(), index.end(), [&](const int& a, const int& b) { return (coord[a] < coord[b]);});
+    for (auto t : index){
+      GPoint gp = ge->point(coord[t]);
+      MEdgeVertex *vv = new MEdgeVertex(gp.x(), gp.y(), gp.z(), ge, coord[t], nodeTags[t]);
+      ge->mesh_vertices.push_back(vv);   
+    }
+    int lineCount = 1;
+    for(std::size_t i = 0; i < ge->mesh_vertices.size() + 1; i++) {
+      MVertex *v0 = (i == 0) ? ge->getBeginVertex()->mesh_vertices[0] : ge->mesh_vertices[i - 1];
+      MVertex *v1 = (i == ge->mesh_vertices.size()) ? ge->getEndVertex()->mesh_vertices[0] : ge->mesh_vertices[i];
+      ge->lines.push_back(new MLine(v0, v1));
+      lineCount++;
+    }
+  }
+  // -----------------  2D ------------------------------
+  else if (dim == 2){
+    Msg::Info("generating surface mesh for face %d\n",tag);
+    deMeshGFace killer;
+    GFace *gf = GModel::current()->getFaceByTag(tag);
+    if (!gf)return;
+    killer(gf);
+    std::vector<double> cc = coord;
+    PolyMesh *pm = GFaceInitialMesh(tag, 1, &cc);
+    std::vector<GEdge*> ed = gf->edges();
+    std::map<int,MVertex*> vs;
+    size_t vmax = 0;
+    
+    for (auto e : ed){
+      for (auto l : e->lines){
+        vs[l->getVertex(0)->getNum()] = l->getVertex(0);
+        vs[l->getVertex(1)->getNum()] = l->getVertex(1);
+        if (l->getVertex(0)->getNum() > vmax) vmax=l->getVertex(0)->getNum();
+        if (l->getVertex(1)->getNum() > vmax) vmax=l->getVertex(1)->getNum();
+      }
+    }
+
+    size_t idx = 0;
+    for(size_t i = 4; i < pm->vertices.size() ; i++) {
+      PolyMesh::Vertex *v = pm->vertices[i];
+      if (v->data == -1){
+	      //v->data = ++vmax;
+        v->data = nodeTags[idx];
+        idx++;
+      }
+    }
+    int triCount = 1;
+    for(size_t i = 0; i < pm->faces.size(); i++) {
+      PolyMesh::HalfEdge *he = pm->faces[i]->he;
+      int a = he->v->data;
+      int b = he->next->v->data;
+      int c = he->next->next->v->data;
+      if (a != -1 && b != -1 && c != -1){
+        MVertex *va,*vb,*vc;
+        std::map<int,MVertex*>::iterator ita = vs.find(a);
+        std::map<int,MVertex*>::iterator itb = vs.find(b);
+        std::map<int,MVertex*>::iterator itc = vs.find(c);
+        if (ita != vs.end())va = ita->second;
+        else{
+          GPoint gp = gf->point(he->v->position.x(),he->v->position.y());
+          va = new MFaceVertex (gp.x(),gp.y(),gp.z(),gf,gp.u(),gp.v(),he->v->data);
+          gf->mesh_vertices.push_back(va);
+          vs[a] = va;
+        }
+        if (itb != vs.end())vb = itb->second;
+        else{
+          GPoint gp = gf->point(he->next->v->position.x(),he->next->v->position.y());
+          vb = new MFaceVertex (gp.x(),gp.y(),gp.z(),gf,gp.u(),gp.v(),he->next->v->data);
+          gf->mesh_vertices.push_back(vb);
+          vs[b] = vb;
+        }
+        if (itc != vs.end())vc = itc->second;
+        else{
+          GPoint gp = gf->point(he->next->next->v->position.x(),he->next->next->v->position.y());
+          vc = new MFaceVertex (gp.x(),gp.y(),gp.z(),gf,gp.u(),gp.v(),he->next->next->v->data);
+          gf->mesh_vertices.push_back(vc);
+          vs[c] = vc;
+        }
+	      gf->triangles.push_back(new MTriangle(va,vb,vc));
+        triCount++;
+      }
+    }
+    // pm->print4debug(1);
+    delete pm;
+  }
 }

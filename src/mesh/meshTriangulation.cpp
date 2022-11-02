@@ -860,7 +860,7 @@ PolyMesh *GFaceInitialMesh(int faceTag, int recover,
       }
     }
     //    printf("AAAAAAAAAAAAAAAAA %d\n",recover);
-    pm->print4debug(faceTag+1000);
+    // pm->print4debug(faceTag+1000);
   }
   // color all PolyMesh::Faces
   // the first 4 vertices are "infinite vertices" --> color them with tag -2

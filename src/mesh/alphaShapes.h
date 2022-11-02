@@ -5,9 +5,15 @@
 #include "meshGRegionHxt.h"
 #include "MVertex.h"
 #include "MTetrahedron.h"
+#include "MTriangle.h"
+#include "MLine.h"
 #include "GModel.h"
 #include "Generator.h"
 #include "meshGRegion.h"
+#include "meshGFace.h"
+#include "meshGEdge.h"
+#include "meshPolyMesh.h"
+#include "meshTriangulation.h"
 
 extern "C" {
 #include "hxt_tetMesh.h"
@@ -42,4 +48,7 @@ void constrainedAlphaShapes_(GModel* m,
                             std::vector<size_t> &neigh,
                             double &hMean,
                             const std::vector<int> &controlTags);
+
+void generateMesh_(const int dim, const int tag, const bool refine, const std::vector<double> &coord, const std::vector<int> &nodeTags);
+
 #endif
