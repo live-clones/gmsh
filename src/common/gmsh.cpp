@@ -5474,7 +5474,11 @@ gmsh::model::mesh::computeHomology(vectorpair &dimTags)
 GMSH_API void gmsh::model::mesh::generateMesh(const int dim, const int tag, const bool refine, const std::vector<double> &coord, const std::vector<int> &nodeTags)
 {
   if(!_checkInit()) return;
+#if defined(HAVE_MESH)
   generateMesh_(dim, tag, refine, coord, nodeTags);
+#else
+  Msg::Error("alphaShapes requires the mesh module");
+#endif
 }
 
 GMSH_API void gmsh::model::mesh::triangulate(const std::vector<double> &coord,

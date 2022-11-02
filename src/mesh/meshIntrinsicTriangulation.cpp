@@ -218,7 +218,7 @@ int IntrinsicTriangulation::continuousRienstra (PolyMesh::Vertex *v, double Lmax
       SPoint2 s (0,0) ;
       SPoint2 start (d1,0);
       SPoint2 p1 ;
-      bool ok = intersectTwoCircles (s, start, d2, d3b, p1);
+      intersectTwoCircles (s, start, d2, d3b, p1);
       double dir[2] = {p1.x() - start.x(), p1.y() - start.y()};
       double norm = sqrt(dir[0]*dir[0]+dir[1]*dir[1]);
       SPoint2 p2 (p1.x() + d3a*dir[0]/norm, p1.y() + d3a*dir[1]/norm);
@@ -227,7 +227,7 @@ int IntrinsicTriangulation::continuousRienstra (PolyMesh::Vertex *v, double Lmax
       double d4 = he->next->l();
       double d5 = he->next->next->l();
       //      printf("D's : %g %g %g %g %g %g %g %g\n",d1,d2,d3,d3a,d3b,d3c,d4, d5);
-      ok = intersectTwoCircles (p3, p2, d5, d4, p4);      
+      intersectTwoCircles (p3, p2, d5, d4, p4);      
       //      printf("p2 %g %g p3 %g %g p4 %g %g\n",p2.x(),p2.y(),p3.x(),p3.y(),p4.x(),p4.y());
 
       //      fprintf(f,"ST(%g,%g,0,%g,%g,0,%g,%g,0){2,3,4};\n",p2.x(),p2.y(),p3.x(),p3.y(),p4.x(),p4.y());
@@ -307,6 +307,7 @@ int IntrinsicTriangulation::continuousRienstra (PolyMesh::Vertex *v, double Lmax
   }
   fprintf(f,"};\n");
   fclose(f);
+  return 0;
 }
 
 
