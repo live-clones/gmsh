@@ -24,6 +24,8 @@ def screenshot():
     gmsh.option.setNumber('General.TrackballQuaternion2', -0.2)
     gmsh.option.setNumber('General.TrackballQuaternion3', 0.9)
     gmsh.option.setNumber('General.Orthographic', 0)
+    gmsh.option.setNumber('General.GraphicsFontSize', 12)
+    gmsh.option.setNumber('General.GraphicsFontSizeTitle', 12)
     if gmsh.option.getNumber('PostProcessing.NbViews') > 0:
         gmsh.option.setNumber('Mesh.SurfaceFaces', 0)
         gmsh.option.setNumber('Mesh.ColorCarousel', 0)
