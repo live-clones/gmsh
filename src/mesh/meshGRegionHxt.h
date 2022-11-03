@@ -7,11 +7,11 @@
 #define MESH_GREGION_HXT_H
 
 #include <vector>
-#include "hxt_mesh.h"
+// #include "hxt_mesh.h"
 #include <map>
 
 extern "C" {
-    #include "hxt_tetMesh.h"
+#include "hxt_tetMesh.h"
 }
 
 class GRegion;
