@@ -5546,10 +5546,10 @@ gmsh::model::mesh::alphaShapes( const double threshold,
                                 std::vector<std::vector<std::size_t> > & domains,
                                 std::vector<std::vector<std::size_t> > & boundaries,
                                 std::vector<std::size_t> & neighbors){
-#if defined(HAVE_MESH)
+#if defined(HAVE_MESH) && defined(HAVE_HXT)
   alphaShapes_ (threshold, dim, coord, nodalSize, tetra, domains, boundaries, neighbors);
 #else
-  Msg::Error("alphaShapes requires the mesh module");
+  Msg::Error("alphaShapes requires the mesh and hxt modules");
 #endif
 
 }
@@ -5559,10 +5559,10 @@ gmsh::model::mesh::alphaShapes( const double threshold,
 GMSH_API void
 gmsh::model::mesh::tetNeighbors(const std::vector<std::size_t> &tetra,
 				std::vector<std::size_t> &neigh){
-#if defined(HAVE_MESH)
+#if defined(HAVE_MESH) && defined(HAVE_HXT)
   computeTetNeighbors_ (tetra, neigh);
 #else
-  Msg::Error("alphaShapes requires the mesh module");
+  Msg::Error("alphaShapes requires the mesh and hxt modules");
 #endif  
 }
 

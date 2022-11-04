@@ -608,7 +608,7 @@ void generateMesh3D_(const std::vector<double>& coord, const std::vector<int>& n
 	hxtBboxAdd(&bbox, mesh->vertices.coord, mesh->vertices.num);
 
   uint32_t numNewPts = coord.size()/3;
-  HXTNodeInfo nodeInfo[numNewPts];
+  std::vector<HXTNodeInfo> nodeInfo(numNewPts);
 
   /* add the internal nodes to the mesh */
   mesh->vertices.num += numNewPts;
@@ -632,7 +632,7 @@ void generateMesh3D_(const std::vector<double>& coord, const std::vector<int>& n
   delOptions.verbosity = 2;
 
   /* Generate the tet mesh */
-  hxtDelaunaySteadyVertices(mesh, &delOptions, nodeInfo, numNewPts);
+  hxtDelaunaySteadyVertices(mesh, &delOptions, &nodeInfo[0], numNewPts);
 
   /* ------------------------------------------------------------------ */
 
