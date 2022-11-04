@@ -2,6 +2,8 @@
 #define _ALPHA_SHAPES_H_
 #include <vector>
 
+#include "GmshConfig.h"
+#ifdef HAVE_HXT
 #include "meshGRegionHxt.h"
 #include "MVertex.h"
 #include "MTetrahedron.h"
@@ -50,5 +52,6 @@ void constrainedAlphaShapes_(GModel* m,
                             const std::vector<int> &controlTags);
 
 void generateMesh_(const int dim, const int tag, const bool refine, const std::vector<double> &coord, const std::vector<int> &nodeTags);
+#endif
 
 #endif

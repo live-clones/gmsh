@@ -1,3 +1,5 @@
+#include "GmshConfig.h"
+#ifdef HAVE_HXT
 #include <math.h>
 #include <vector>
 #include <stack>
@@ -590,19 +592,10 @@ void generateMesh3D_(const std::vector<double>& coord, const std::vector<int>& n
   Gmsh2HxtAlpha(regions, mesh, v2c, c2v);
 
   // all other fields of the options will be 0 or NULL (standard C behavior)
-	HXTTetMeshOptions options = {
-		.defaultThreads = 1,
-    .delaunayThreads = 0,
-    .improveThreads = 0,
-    .reproducible = 0,
-    .verbosity=2,
-    .stat=1,
-    .refine = 0,
-    .optimize=0,
-    .toleranceInitialDelaunay = 0.,
-    .quality = {NULL},
-    .nodalSizes = {NULL}
-	};
+  HXTTetMeshOptions options = {};
+  options.defaultThreads = 1;
+  options.verbosity=2;
+  options.stat=1;
 
 	// create the empty mesh
 	hxtTetMesh(mesh, &options);
@@ -632,18 +625,11 @@ void generateMesh3D_(const std::vector<double>& coord, const std::vector<int>& n
     nodeInfo[p].status = HXT_STATUS_TRYAGAIN; // state that we want to insert this point
   }
 
-  HXTDelaunayOptions delOptions = {
-    .bbox = &bbox,
-    .nodalSizes = NULL,
-    .numVerticesInMesh = nBndPts,
-    .insertionFirst = nBndPts,
-    .partitionability = 0,
-    .perfectDelaunay = 0,
-    .allowOuterInsertion = 0, // if you set this to one, even vertices that are outside will be inserted
-    .verbosity = 2,
-    .reproducible = 0,
-    .delaunayThreads = 0
-  };
+  HXTDelaunayOptions delOptions = {};
+  delOptions.bbox = &bbox;
+  delOptions.numVerticesInMesh = nBndPts;
+  delOptions.insertionFirst = nBndPts;
+  delOptions.verbosity = 2;
 
   /* Generate the tet mesh */
   hxtDelaunaySteadyVertices(mesh, &delOptions, nodeInfo, numNewPts);
@@ -883,20 +869,12 @@ void createHxtMesh_(const std::string &inputMesh, const std::vector<double>& coo
   hxtAddNodes(mesh, arr, coord.size()/3);
 
   /* generate and write the tet mesh */
-  HXTTetMeshOptions options = {
-		.defaultThreads = 1,
-    .delaunayThreads = 0,
-    .improveThreads = 0,
-    .reproducible = 0,
-    .verbosity=2,
-    .stat=1,
-    .refine = 0,
-    .optimize=1,
-    .toleranceInitialDelaunay = 0.,
-    .quality = {NULL},
-    .nodalSizes = {NULL}
-	};
-  // HXTTetMeshOptions options = {.verbosity=3, .refine=1, .optimize=1, .quality.min=0.35, .nodalSizes.factor=1.0};
+  HXTTetMeshOptions options = {};
+  options.verbosity=3;
+  options.refine=1;
+  options.optimize=1;
+  options.quality.min=0.35;
+  options.nodalSizes.factor=1.0;
   hxtTetMesh(mesh, &options);
   hxtMeshWriteGmsh( mesh, &outputMesh[0]); // enlever
 
@@ -1021,3 +999,4 @@ void generateMesh_(const int dim, const int tag, const bool refine, const std::v
     generateMesh3D_(coord, nodeTags);
   }
 }
+#endif

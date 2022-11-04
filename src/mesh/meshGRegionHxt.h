@@ -8,10 +8,8 @@
 
 #include <vector>
 #include <map>
+#include "GmshConfig.h"
 
-extern "C" {
-#include "hxt_mesh.h"
-}
 
 class GRegion;
 class MVertex;
@@ -20,11 +18,16 @@ class MTetrahedron;
 int meshGRegionHxt(std::vector<GRegion *> &regions);
 void delaunayMeshIn3DHxt(std::vector<MVertex *> &points,
                          std::vector<MTetrahedron *> &tets);
+#ifdef HAVE_HXT
+extern "C" {
+#include "hxt_mesh.h"
+}
 void Gmsh2HxtAlpha(std::vector<GRegion *> &regions, HXTMesh *m,
                    std::map<MVertex *, uint32_t> &v2c,
                    std::vector<MVertex *> &c2v);
 void Hxt2GmshAlpha(std::vector<GRegion *> &regions, HXTMesh *m,
                           std::map<MVertex *, uint32_t> &v2c,
                           std::vector<MVertex *> &c2v);
+#endif
 
 #endif
