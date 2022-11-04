@@ -864,9 +864,8 @@ void createHxtMesh_(const std::string &inputMesh, const std::vector<double>& coo
   hxtMeshReadGmsh(mesh, cstr); // faire une autre avec géométrie deja loadée (gmsh2hxt) --> GModel::current() if (pas de triangles) : générer maillage 2D
 
   /* add the internal nodes from vector coord */
-  double arr[coord.size()];
-  std::copy(coord.begin(),coord.end(),arr);
-  hxtAddNodes(mesh, arr, coord.size()/3);
+  std::vector<double> arr = coord;
+  hxtAddNodes(mesh, &arr[0], coord.size()/3);
 
   /* generate and write the tet mesh */
   HXTTetMeshOptions options = {};
