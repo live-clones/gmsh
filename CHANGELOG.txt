@@ -1,4 +1,4 @@
-4.11.0 (Work-in-progress): new Fortran API; improved copying ("Duplicata") of
+4.11.0 (November 6, 2022): new Fortran API; improved copying ("Duplicata") of
 multiple shapes with OCC; reduced default order for OCC surface filling;
 arbitrary string attributes can now be stored in models and MSH files; new
 Radioss export; added ability to specify spline tangents with OCC; new option

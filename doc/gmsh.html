@@ -60,34 +60,31 @@ CAO, OpenGL, GL2PS, Gmesh">
 <p>
 Gmsh is an open source 3D finite element mesh generator with a built-in CAD
 engine and post-processor. Its design goal is to provide a fast, light and
-user-friendly meshing tool with parametric input and advanced visualization
-capabilities.  Gmsh is built around four modules: geometry, mesh, solver and
-post-processing. The specification of any input to these modules is done either
-interactively using the graphical user interface, in ASCII text files using
-Gmsh's own scripting language (<code>.geo</code> files), or using the C++, C,
-Python, Julia or Fortran Application Programming Interface (API).
+user-friendly meshing tool with parametric input and flexible visualization
+capabilities.  Gmsh is built
+around <a href="doc/texinfo/gmsh.html#Overview-of-Gmsh">four modules</a>
+(geometry, mesh, solver and post-processing), which can be controlled with
+the <a href="doc/texinfo/gmsh.html#Gmsh-graphical-user-interface">graphical user
+interface</a>, from
+the <a href="doc/texinfo/gmsh.html#Gmsh-command_002dline-interface">command
+line</a>, using text files written in Gmsh's
+own <a href="doc/texinfo/gmsh.html#Gmsh-scripting-language">scripting
+language</a> (<code>.geo</code> files), or through the C++, C, Python, Julia and
+Fortran <a href="doc/texinfo/gmsh.html#Gmsh-application-programming-interface">application
+programming interface</a>.
 </p>
 
 <p>
 See this <a href="doc/course/general_overview.pdf">general presentation</a> for
-a high-level overview of Gmsh and recent developments,
-the <a href="screencasts/">screencasts</a> for a quick tour of Gmsh's graphical
-user interface, and the <a href="doc/texinfo/gmsh.html">reference manual</a> for
-a more thorough overview of
-Gmsh's <a href="doc/texinfo/gmsh.html#Overview-of-Gmsh">capabilities</a>,
-some <a href="doc/texinfo/gmsh.html#Frequently-asked-questions">frequently asked
-questions</a> and the documentation of
-the <a href="doc/texinfo/gmsh.html#Gmsh-application-programming-interface">C++,
-C, Python, Julia and Fortran API</a>.
-</p>
-
-<p>
+a high-level overview of Gmsh and the <a href="doc/texinfo/gmsh.html">reference
+manual</a> for the complete documentation, which includes
+the <a href="doc/texinfo/gmsh.html#Gmsh-tutorial">Gmsh tutorial</a>.
 The <a href="https://gitlab.onelab.info/gmsh/gmsh/">source code repository</a>
-contains many examples written using both the built-in script language and the
-API (see e.g. the
-<a href="https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorials">tutorials</a>
-and the additional
-<a href="https://gitlab.onelab.info/gmsh/gmsh/tree/master/examples">examples</a>).
+contains the
+<a href="https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorials">tutorial
+source files</a> as well as
+many <a href="https://gitlab.onelab.info/gmsh/gmsh/tree/master/benchmarks">other</a>
+<a href="https://gitlab.onelab.info/gmsh/gmsh/tree/master/examples">examples</a>.
 </p>
 
 <h2><a name="Download"></a>Download</h2>
@@ -99,27 +96,30 @@ Public License (GPL)</a>:
 <ul>
   <li>
     <div class="highlight">
-      Current stable release (version 4.10.4, 19 June 2022):
+      Current stable release (version 4.11.0, 6 November 2022):
       <ul>
         <li>Download Gmsh for
-          <a href="bin/Windows/gmsh-4.10.5-Windows64.zip">Windows</a>,
-          <a href="bin/Linux/gmsh-4.10.5-Linux64.tgz">Linux</a> or
-          <a href="bin/macOS/gmsh-4.10.5-MacOSX.dmg">macOS (x86)</a> <a href="#1"><sup>*</sup></a> <!-- or
-          <a href="bin/macOS/gmsh-4.10.5-MacOSARM.dmg">macOS (ARM)</a -->
-        <li>Download the <a href="src/gmsh-4.10.5-source.tgz">source code</a>
+          <a href="bin/Windows/gmsh-4.11.0-Windows64.zip">Windows</a>,
+          <a href="bin/Linux/gmsh-4.11.0-Linux64.tgz">Linux</a>,
+          <a href="bin/macOS/gmsh-4.11.0-MacOSX.dmg">macOS (x86)</a> or
+          <a href="bin/macOS/gmsh-4.11.0-MacOSARM.dmg">macOS (ARM)</a>
+          <a href="#1"><sup>*</sup></a>
+        <li>Download the <a href="src/gmsh-4.11.0-source.tgz">source code</a>
         <li>Download the Software Development Kit (SDK) for
-          <a href="bin/Windows/gmsh-4.10.5-Windows64-sdk.zip">Windows</a>,
-          <a href="bin/Linux/gmsh-4.10.5-Linux64-sdk.tgz">Linux</a> or
-          <a href="bin/macOS/gmsh-4.10.5-MacOSX-sdk.tgz">macOS (x86)</a> <a href="#1"><sup>*</sup></a> <!-- or
-          <a href="bin/macOS/gmsh-4.10.5-MacOSARM-sdk.tgz">macOS (ARM)</a -->
-        <li>Download both Gmsh and the SDK with pip: '<code>pip install --upgrade
-            <a href="https://pypi.org/project/gmsh/">gmsh</a></code>'
+          <a href="bin/Windows/gmsh-4.11.0-Windows64-sdk.zip">Windows</a>,
+          <a href="bin/Linux/gmsh-4.11.0-Linux64-sdk.tgz">Linux</a>,
+          <a href="bin/macOS/gmsh-4.11.0-MacOSX-sdk.tgz">macOS (x86) or
+          <a href="bin/macOS/gmsh-4.11.0-MacOSARM-sdk.tgz">macOS (ARM)</a>
+          </a> <a href="#1"><sup>*</sup></a>
+        <li>Download both Gmsh and the SDK with pip: '<code>pip install
+            --upgrade <a href="https://pypi.org/project/gmsh/">gmsh</a></code>'
       </ul>
     </div>
     <p>
       <em>Make sure to read
-        the <a href="doc/texinfo/gmsh.html#Gmsh-tutorial">tutorials</a> before
-        sending questions or bug reports.</em>
+        the <a href="doc/texinfo/gmsh.html#Gmsh-tutorial">tutorial</a> and the
+        <a href="doc/texinfo/gmsh.html#Frequently-asked-questions">FAQ</a>
+        before sending questions or bug reports.</em>
     </p>
   <li>Development version:
     <ul>
@@ -127,35 +127,37 @@ Public License (GPL)</a>:
         <a href="bin/Windows/gmsh-git-Windows64.zip">Windows</a>,
         <a href="bin/Linux/gmsh-git-Linux64.tgz">Linux</a>,
         <a href="bin/macOS/gmsh-git-MacOSX.dmg">macOS (x86)</a> or
-        <a href="bin/macOS/gmsh-git-MacOSARM.dmg">macOS (ARM)</a> <a href="#1"><sup>*</sup></a>
+        <a href="bin/macOS/gmsh-git-MacOSARM.dmg">macOS (ARM)</a>
+        <a href="#1"><sup>*</sup></a>
       <li>Download the latest automatic <a href="src/gmsh-git-source.tgz">source
         code</a> snapshot
       <li>Download the latest automatic SDK snapshot for
         <a href="bin/Windows/gmsh-git-Windows64-sdk.zip">Windows</a>,
         <a href="bin/Linux/gmsh-git-Linux64-sdk.tgz">Linux</a>,
         <a href="bin/macOS/gmsh-git-MacOSX-sdk.tgz">macOS (x86)</a> or
-        <a href="bin/macOS/gmsh-git-MacOSARM-sdk.tgz">macOS (ARM)</a> <a href="#1"><sup>*</sup></a>
+        <a href="bin/macOS/gmsh-git-MacOSARM-sdk.tgz">macOS (ARM)</a>
+        <a href="#1"><sup>*</sup></a>
       <li>Access the Git repository: '<code>git clone
           <a href="https://gitlab.onelab.info/gmsh/gmsh.git">https://gitlab.onelab.info/gmsh/gmsh.git</a></code>'
       <li>Download the latest automatic snapshot of both Gmsh and the SDK with
-        pip: '<code>pip install -i https://gmsh.info/python-packages-dev --force-reinstall
-        --no-cache-dir gmsh</code>' (on Linux systems without X windows, use
-        <code>python-packages-dev-nox</code> instead of <code>python-packages-dev</code>)
+        pip: '<code>pip install -i https://gmsh.info/python-packages-dev
+        --force-reinstall --no-cache-dir gmsh</code>' (on Linux systems without
+        X windows, use <code>python-packages-dev-nox</code> instead of
+        <code>python-packages-dev</code>)
     </ul>
     <p>
     </p>
-  <li>All versions: <a href="bin/">binaries</a>
-    and <a href="src/">sources</a>
+  <li>All versions: <a href="bin/">binaries</a> and <a href="src/">sources</a>
 </ul>
 
 <p>
 If you use Gmsh please cite the following reference in your work (books,
-articles, reports, etc.): <a href="doc/preprints/gmsh_paper_preprint.pdf">C. Geuzaine and
-J.-F. Remacle. <em>Gmsh: a three-dimensional finite element mesh generator with
-built-in pre- and post-processing facilities</em>. International Journal for
-Numerical Methods in Engineering 79(11), pp. 1309-1331, 2009</a>. You can also
-cite additional references for <a href="#References">specific features and
-algorithms</a>.
+articles, reports, etc.): <a href="doc/preprints/gmsh_paper_preprint.pdf">C.
+Geuzaine and J.-F. Remacle. <em>Gmsh: a three-dimensional finite element mesh
+generator with built-in pre- and post-processing facilities</em>. International
+Journal for Numerical Methods in Engineering 79(11), pp. 1309-1331, 2009</a>.
+You can also cite additional references for <a href="#References">specific
+features and algorithms</a>.
 </p>
 
 <form action="https://www.paypal.com/cgi-bin/webscr" method="post">
@@ -173,9 +175,9 @@ algorithms</a>.
 </form>
 
 <div class="small">
-  <a name="1"><sup>*</sup></a> Binary releases require Windows 10, Linux with
-  glibc &ge; 2.24, macOS (x86 - Intel processors) &ge; 10.15 or macOS (ARM -
-  Apple M-series processors) &ge; 12
+  <a name="1"><sup>*</sup></a> Binary releases require Windows &ge; 10, Linux
+  with glibc &ge; 2.24, macOS (x86 - Intel processors) &ge; 10.15 or macOS (ARM
+  - Apple M-series processors) &ge; 12
 </div>
 
 <h2><a name="Documentation"></a>Documentation</h2>
@@ -256,7 +258,7 @@ for details.
 <h2><a name="Links"></a>Links</h2>
 
 <ul>
-  <li>Gmsh uses <a href="http://www.opencascade.org">OpenCascade</a> for
+  <li>Gmsh uses <a href="http://www.opencascade.org">OpenCASCADE</a> for
     constructive geometry features, and interfaces the optional external mesh
     and mesh adaptation librairies <a href="http://ngsolve.org/">Netgen</a> and
     <a href="https://www.mmgtools.org/">Mmg3d</a>.

@@ -247,14 +247,14 @@ build-in CAD engine and post-processor. Its design goal is to provide a
 fast, light and user-friendly meshing tool with parametric input and
 flexible visualization capabilities.
 
-Gmsh is built around four modules: geometry, mesh, solver and
-post-processing. Geometry, mesh, solver and post-processing instructions
-are prescribed either using the graphical user interface (GUI; see
-@ref{Gmsh graphical user interface}), on the command line (@pxref{Gmsh
-command-line interface}), in text files using Gmsh's own scripting
-language (@file{.geo} files; see @ref{Gmsh scripting language}), or
-through the Gmsh application programming interface (API; see @ref{Gmsh
-application programming interface}) in C++, C, Python, Julia or Fortran.
+Gmsh is built around four modules (geometry, mesh, solver and
+post-processing), which can be controlled with the graphical user
+interface (GUI; see @ref{Gmsh graphical user interface}), from the
+command line (@pxref{Gmsh command-line interface}), using text files
+written in Gmsh's own scripting language (@file{.geo} files; see
+@ref{Gmsh scripting language}), or through the C++, C, Python, Julia and
+Fortran application programming interface (API; see @ref{Gmsh
+application programming interface}).
 
 A brief description of the four modules is given hereafter, before an
 overview of what Gmsh does best (... and what it is not so good at), and
