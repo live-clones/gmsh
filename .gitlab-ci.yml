@@ -85,6 +85,7 @@ windows_msvc_ci:
 .linux_official: &linux_official
   only:
     - master@gmsh/gmsh
+    - fix-mpi-symbols-leak@romin.tomasetti/gmsh
   <<: *ssh_config
   script:
     - mkdir build
@@ -92,11 +93,19 @@ windows_msvc_ci:
     - cmake -DGMSH_HOST=gmsh.info -DENABLE_PETSC=1 -DPETSC_ARCH=real_mumps_seq -DPETSC_DIR=/petsc-3.14.4 ${EXTRA_OPTION} ..
     - make package -j 8
     - PKG=`ls gmsh-*.tar*`
-    - scp ${PKG} geuzaine@gmsh.info:.wwwgmsh/bin/Linux/${PKG/\.tar\.gz/\.tgz}
+    # - scp ${PKG} geuzaine@gmsh.info:.wwwgmsh/bin/Linux/${PKG/\.tar\.gz/\.tgz}
     - ctest -j 8 --output-on-failure
   tags:
     - linux64
     - docker
+
+.linux_sdk_official: &linux_sdk_official
+  script:
+    - !reference [.linux_official, script]
+    # Ensure libgmsh.so exists, and check that it doesn't expose MPI-related symbols.
+    # See also https://gitlab.onelab.info/gmsh/gmsh/-/issues/2173.
+    - test -f libgmsh.so
+    - if objdump -T libgmsh.so | c++filt | grep "MPI_Init" ;then echo "MPI_Init was found. This should not happen."; exit -1;fi
 
 linux_official_snapshot:
   image: onelab/debian.stretch.64bit
@@ -119,6 +128,7 @@ linux-sdk_official_snapshot:
   variables:
     EXTRA_OPTION: "-DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1"
   <<: *linux_official
+  <<: *linux_sdk_official
   except:
     - tags
   artifacts:
@@ -132,6 +142,7 @@ linux-sdk_official_release:
   variables:
     EXTRA_OPTION: "-DGMSH_RELEASE=1 -DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1"
   <<: *linux_official
+  <<: *linux_sdk_official
   only:
     - /^gmsh_.*$/
   artifacts:
