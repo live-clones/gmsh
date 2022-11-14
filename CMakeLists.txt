@@ -1694,10 +1694,18 @@ if(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
   if(WIN32)
     set_target_properties(shared PROPERTIES PREFIX "" IMPORT_PREFIX ""
       IMPORT_SUFFIX ".lib" COMPILE_FLAGS "-DGMSH_DLL -DGMSH_DLL_EXPORT")
-  elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang" AND NOT ENABLE_PRIVATE_API)
-    # hide all symbols by default (if not exporting the private API); symbols to
-    # export should be marked with __attribute__ ((visibility("default")))
-    set_target_properties(shared PROPERTIES COMPILE_FLAGS "-fvisibility=hidden")
+  elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    if(NOT ENABLE_PRIVATE_API)
+      # hide all symbols by default (if not exporting the private API); symbols to
+      # export should be marked with __attribute__ ((visibility("default")))
+      set_target_properties(shared PROPERTIES COMPILE_FLAGS "-fvisibility=hidden")
+    endif()
+    # hide all symbols from static libs linked into the shared Gmsh lib (this is
+    # easier than recompiling all the dependencies with -fvisibility=hidden)
+    if(CMAKE_SYSTEM_NAME MATCHES "Linux")
+      message(STATUS "Excluding symbols from bundled static libraries")
+      list(APPEND LINK_LIBRARIES "-Wl,--exclude-libs,ALL")
+    endif()
   endif()
   target_link_libraries(shared ${LINK_LIBRARIES})
   # don't define LC_RPATH in dylib for development, to not get endless warnings
