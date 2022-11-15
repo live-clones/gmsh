@@ -1703,6 +1703,7 @@ if(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
     # hide all symbols from static libs linked into the shared Gmsh lib (this is
     # easier than recompiling all the dependencies with -fvisibility=hidden)
     if(CMAKE_SYSTEM_NAME MATCHES "Linux")
+      # TODO would be nice to have the equivalent on macOS
       message(STATUS "Excluding symbols from bundled static libraries")
       list(APPEND LINK_LIBRARIES "-Wl,--exclude-libs,ALL")
     endif()
