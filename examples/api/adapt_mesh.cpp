@@ -213,7 +213,7 @@ void getKeysValues(const std::map<std::size_t, double> &f,
 
 int main(int argc, char **argv)
 {
-  std::printf("Usage: %s [intial lc] [target #elements] [dump files]\n",
+  std::printf("Usage: %s [initial lc] [target #elements] [dump files]\n",
               argv[0]);
   double lc = 0.02;
   int N = 10000;
@@ -237,6 +237,7 @@ int main(int argc, char **argv)
   std::vector<std::pair<int, int> > pnts;
   gmsh::model::getBoundary({{2, square}}, pnts, true, true, true);
   gmsh::model::mesh::setSize(pnts, lc);
+  //gmsh::option::setNumber("Mesh.Algorithm", 6); // Frontal
   gmsh::model::mesh::generate(2);
   if(dumpfiles) gmsh::write("mesh.msh");
   myMesh mesh;
@@ -262,6 +263,8 @@ int main(int argc, char **argv)
   int sf_view = gmsh::view::add("mesh size field");
   getKeysValues(sf_ele, keys, values);
   gmsh::view::addModelData(sf_view, 0, "square", "ElementData", keys, values);
+  gmsh::plugin::setNumber("Smooth", "View", gmsh::view::getIndex(sf_view));
+  gmsh::plugin::run("Smooth");
   if(dumpfiles) gmsh::view::write(sf_view, "sf.pos");
 
   // create a new model and mesh it using the size field (to remesh the original
@@ -274,6 +277,7 @@ int main(int argc, char **argv)
   int bg_field = gmsh::model::mesh::field::add("PostView");
   gmsh::model::mesh::field::setNumber(bg_field, "ViewTag", sf_view);
   gmsh::model::mesh::field::setAsBackgroundMesh(bg_field);
+  //gmsh::option::setNumber("Mesh.Algorithm", 2); // Delaunay
   gmsh::model::mesh::generate(2);
   if(dumpfiles) gmsh::write("mesh2.msh");
   myMesh mesh2;
