@@ -2162,18 +2162,21 @@ void mesh_1d_cb(Fl_Widget *w, void *data)
 {
   GModel::current()->mesh(1);
   drawContext::global()->draw();
+  FlGui::instance()->updateStatistics();
 }
 
 void mesh_2d_cb(Fl_Widget *w, void *data)
 {
   GModel::current()->mesh(2);
   drawContext::global()->draw();
+  FlGui::instance()->updateStatistics();
 }
 
 void mesh_3d_cb(Fl_Widget *w, void *data)
 {
   GModel::current()->mesh(3);
   drawContext::global()->draw();
+  FlGui::instance()->updateStatistics();
 }
 
 #if defined(HAVE_MESH)
@@ -2319,6 +2322,7 @@ static void mesh_modify_parts(Fl_Widget *w, void *data,
   CTX::instance()->mesh.changed = ENT_ALL;
   CTX::instance()->pickElements = 0;
   drawContext::global()->draw();
+  FlGui::instance()->updateStatistics();
   Msg::StatusGl("");
 }
 
@@ -2393,6 +2397,7 @@ static void mesh_optimize_cb(Fl_Widget *w, void *data)
   GModel::current()->optimizeMesh("");
   CTX::instance()->lock = 0;
   drawContext::global()->draw();
+  FlGui::instance()->updateStatistics();
 }
 
 static void mesh_optimize_quad_topo_cb(Fl_Widget *w, void *data)
@@ -2401,6 +2406,7 @@ static void mesh_optimize_quad_topo_cb(Fl_Widget *w, void *data)
   GModel::current()->optimizeMesh("QuadQuasiStructured");
   CTX::instance()->lock = 0;
   drawContext::global()->draw();
+  FlGui::instance()->updateStatistics();
 }
 
 static void mesh_untangle_cb(Fl_Widget *w, void *data)
@@ -2409,6 +2415,7 @@ static void mesh_untangle_cb(Fl_Widget *w, void *data)
   GModel::current()->optimizeMesh("UntangleMeshGeometry");
   CTX::instance()->lock = 0;
   drawContext::global()->draw();
+  FlGui::instance()->updateStatistics();
 }
 
 static void mesh_cross_compute_cb(Fl_Widget *w, void *data)
@@ -2425,6 +2432,7 @@ static void mesh_refine_cb(Fl_Widget *w, void *data)
   GModel::current()->refineMesh(CTX::instance()->mesh.secondOrderLinear,
                                 CTX::instance()->mesh.algoSubdivide);
   drawContext::global()->draw();
+  FlGui::instance()->updateStatistics();
 }
 
 static void mesh_smooth_cb(Fl_Widget *w, void *data)
@@ -2437,6 +2445,7 @@ static void mesh_recombine_cb(Fl_Widget *w, void *data)
 {
   GModel::current()->recombineMesh();
   drawContext::global()->draw();
+  FlGui::instance()->updateStatistics();
 }
 
 #if defined(HAVE_NETGEN)
@@ -2450,6 +2459,7 @@ static void mesh_optimize_netgen_cb(Fl_Widget *w, void *data)
   GModel::current()->optimizeMesh("Netgen");
   CTX::instance()->lock = 0;
   drawContext::global()->draw();
+  FlGui::instance()->updateStatistics();
 }
 #endif
 

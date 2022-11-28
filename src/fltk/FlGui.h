@@ -134,6 +134,8 @@ public:
   void updateFields();
   // reset the visibility window
   void resetVisibility();
+  // update the statistics window
+  void updateStatistics(bool qualities = false);
   // store current window positions and sizes in CTX
   void storeCurrentWindowsInfo();
   // get the last opengl window that received an event
