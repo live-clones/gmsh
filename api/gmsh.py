@@ -788,12 +788,12 @@ class model:
     get_entities_for_physical_group = getEntitiesForPhysicalGroup
 
     @staticmethod
-    def getEntitiesForPhysicalGroupName(name):
+    def getEntitiesForPhysicalName(name):
         """
-        gmsh.model.getEntitiesForPhysicalGroupName(name)
+        gmsh.model.getEntitiesForPhysicalName(name)
 
-        Get the tags of the model entities making up the physical group name
-        `name'.
+        Get the model entities (as a vector (dim, tag) pairs) making up the
+        physical group with name `name'.
 
         Return `dimTags'.
 
@@ -803,14 +803,14 @@ class model:
         """
         api_dimTags_, api_dimTags_n_ = POINTER(c_int)(), c_size_t()
         ierr = c_int()
-        lib.gmshModelGetEntitiesForPhysicalGroupName(
+        lib.gmshModelGetEntitiesForPhysicalName(
             c_char_p(name.encode()),
             byref(api_dimTags_), byref(api_dimTags_n_),
             byref(ierr))
         if ierr.value != 0:
             raise Exception(logger.getLastError())
         return _ovectorpair(api_dimTags_, api_dimTags_n_.value)
-    get_entities_for_physical_group_name = getEntitiesForPhysicalGroupName
+    get_entities_for_physical_name = getEntitiesForPhysicalName
 
     @staticmethod
     def getPhysicalGroupsForEntity(dim, tag):

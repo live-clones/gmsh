@@ -582,9 +582,10 @@ end
 const get_entities_for_physical_group = getEntitiesForPhysicalGroup
 
 """
-    gmsh.model.getEntitiesForPhysicalGroupName(name)
+    gmsh.model.getEntitiesForPhysicalName(name)
 
-Get the tags of the model entities making up the physical group name `name`.
+Get the model entities (as a vector (dim, tag) pairs) making up the physical
+group with name `name`.
 
 Return `dimTags`.
 
@@ -592,11 +593,11 @@ Types:
  - `name`: string
  - `dimTags`: vector of pairs of integers
 """
-function getEntitiesForPhysicalGroupName(name)
+function getEntitiesForPhysicalName(name)
     api_dimTags_ = Ref{Ptr{Cint}}()
     api_dimTags_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
-    ccall((:gmshModelGetEntitiesForPhysicalGroupName, gmsh.lib), Cvoid,
+    ccall((:gmshModelGetEntitiesForPhysicalName, gmsh.lib), Cvoid,
           (Ptr{Cchar}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
           name, api_dimTags_, api_dimTags_n_, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
@@ -604,7 +605,7 @@ function getEntitiesForPhysicalGroupName(name)
     dimTags = [ (tmp_api_dimTags_[i], tmp_api_dimTags_[i+1]) for i in 1:2:length(tmp_api_dimTags_) ]
     return dimTags
 end
-const get_entities_for_physical_group_name = getEntitiesForPhysicalGroupName
+const get_entities_for_physical_name = getEntitiesForPhysicalName
 
 """
     gmsh.model.getPhysicalGroupsForEntity(dim, tag)
