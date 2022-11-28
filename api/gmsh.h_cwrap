@@ -6,7 +6,7 @@
 #ifndef GMSH_H
 #define GMSH_H
 
-// This file redefines the Gmsh C++ API in terms of the C API (v4.11.0).
+// This file redefines the Gmsh C++ API in terms of the C API (v4.11.1).
 //
 // This is provided as a convenience for users of the binary Gmsh SDK whose C++
 // compiler ABI is not compatible with the ABI of the C++ compiler used to create
@@ -400,6 +400,17 @@ namespace gmsh { // Top-level functions
       gmshModelGetEntitiesForPhysicalGroup(dim, tag, &api_tags_, &api_tags_n_, &ierr);
       if(ierr) throwLastError();
       tags.assign(api_tags_, api_tags_ + api_tags_n_); gmshFree(api_tags_);
+    }
+
+    // Get the tags of the model entities making up the physical group name `name'.
+    inline void getEntitiesForPhysicalGroupName(const std::string & name,
+                                                gmsh::vectorpair & dimTags)
+    {
+      int ierr = 0;
+      int *api_dimTags_; size_t api_dimTags_n_;
+      gmshModelGetEntitiesForPhysicalGroupName(name.c_str(), &api_dimTags_, &api_dimTags_n_, &ierr);
+      if(ierr) throwLastError();
+      dimTags.resize(api_dimTags_n_ / 2); for(size_t i = 0; i < api_dimTags_n_ / 2; ++i){ dimTags[i].first = api_dimTags_[i * 2 + 0]; dimTags[i].second = api_dimTags_[i * 2 + 1]; } gmshFree(api_dimTags_);
     }
 
     // Get the tags of the physical groups (if any) to which the model entity of

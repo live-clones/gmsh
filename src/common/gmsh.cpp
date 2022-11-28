@@ -426,6 +426,23 @@ GMSH_API void gmsh::model::getEntitiesForPhysicalGroup(const int dim,
   }
 }
 
+GMSH_API void gmsh::model::getEntitiesForPhysicalGroupName(const std::string &name,
+                                                           vectorpair &dimTags)
+{
+  if(!_checkInit()) return;
+  dimTags.clear();
+  std::vector<GEntity *> entities;
+  GModel::current()->getEntitiesForPhysicalGroupName(name, entities);
+  if(entities.size() != 0) {
+    for(std::size_t i = 0; i < entities.size(); ++i) {
+      dimTags.push_back(std::pair<int, int >(entities[i]->dim(), entities[i]->tag()));
+    }
+  }
+  else {
+    Msg::Error("Physical '%s' does not exist", name.c_str());
+  }
+}
+
 GMSH_API void
 gmsh::model::getPhysicalGroupsForEntity(const int dim, const int tag,
                                         std::vector<int> &physicalTags)
