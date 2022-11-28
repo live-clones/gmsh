@@ -388,12 +388,12 @@ GMSH_API void gmshModelGetEntitiesForPhysicalGroup(const int dim, const int tag,
   }
 }
 
-GMSH_API void gmshModelGetEntitiesForPhysicalGroupName(const char * name, int ** dimTags, size_t * dimTags_n, int * ierr)
+GMSH_API void gmshModelGetEntitiesForPhysicalName(const char * name, int ** dimTags, size_t * dimTags_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
     gmsh::vectorpair api_dimTags_;
-    gmsh::model::getEntitiesForPhysicalGroupName(name, api_dimTags_);
+    gmsh::model::getEntitiesForPhysicalName(name, api_dimTags_);
     vectorpair2intptr(api_dimTags_, dimTags, dimTags_n);
   }
   catch(...){

@@ -734,8 +734,8 @@ module gmsh
         gmshModelGetPhysicalGroups
     procedure, nopass :: getEntitiesForPhysicalGroup => &
         gmshModelGetEntitiesForPhysicalGroup
-    procedure, nopass :: getEntitiesForPhysicalGroupName => &
-        gmshModelGetEntitiesForPhysicalGroupName
+    procedure, nopass :: getEntitiesForPhysicalName => &
+        gmshModelGetEntitiesForPhysicalName
     procedure, nopass :: getPhysicalGroupsForEntity => &
         gmshModelGetPhysicalGroupsForEntity
     procedure, nopass :: addPhysicalGroup => &
@@ -1474,17 +1474,17 @@ module gmsh
       api_tags_n_)
   end subroutine gmshModelGetEntitiesForPhysicalGroup
 
-  !> Get the tags of the model entities making up the physical group name
-  !! `name'.
-  subroutine gmshModelGetEntitiesForPhysicalGroupName(name, &
-                                                      dimTags, &
-                                                      ierr)
+  !> Get the model entities (as a vector (dim, tag) pairs) making up the
+  !! physical group with name `name'.
+  subroutine gmshModelGetEntitiesForPhysicalName(name, &
+                                                 dimTags, &
+                                                 ierr)
     interface
     subroutine C_API(name, &
                      api_dimTags_, &
                      api_dimTags_n_, &
                      ierr_) &
-      bind(C, name="gmshModelGetEntitiesForPhysicalGroupName")
+      bind(C, name="gmshModelGetEntitiesForPhysicalName")
       use, intrinsic :: iso_c_binding
       character(len=1, kind=c_char), dimension(*), intent(in) :: name
       type(c_ptr), intent(out) :: api_dimTags_
@@ -1503,7 +1503,7 @@ module gmsh
          ierr_=ierr)
     dimTags = ovectorpair_(api_dimTags_, &
       api_dimTags_n_)
-  end subroutine gmshModelGetEntitiesForPhysicalGroupName
+  end subroutine gmshModelGetEntitiesForPhysicalName
 
   !> Get the tags of the physical groups (if any) to which the model entity of
   !! dimension `dim' and tag `tag' belongs.

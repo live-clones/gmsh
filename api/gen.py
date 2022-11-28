@@ -128,8 +128,8 @@ model.add('getPhysicalGroups', doc, None, ovectorpair('dimTags'), iint('dim', '-
 doc = '''Get the tags of the model entities making up the physical group of dimension `dim' and tag `tag'.'''
 model.add('getEntitiesForPhysicalGroup', doc, None, iint('dim'), iint('tag'), ovectorint('tags'))
 
-doc = '''Get the tags of the model entities making up the physical group name `name'.'''
-model.add('getEntitiesForPhysicalGroupName', doc, None, istring('name'), ovectorpair('dimTags'))
+doc = '''Get the model entities (as a vector (dim, tag) pairs) making up the physical group with name `name'.'''
+model.add('getEntitiesForPhysicalName', doc, None, istring('name'), ovectorpair('dimTags'))
 
 doc = '''Get the tags of the physical groups (if any) to which the model entity of dimension `dim' and tag `tag' belongs.'''
 model.add('getPhysicalGroupsForEntity', doc, None, iint('dim'), iint('tag'), ovectorint('physicalTags'))
