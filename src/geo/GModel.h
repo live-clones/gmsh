@@ -436,6 +436,8 @@ public:
   getPhysicalGroups(std::map<int, std::vector<GEntity *> > groups[4]) const;
   void getPhysicalGroups(int dim,
                          std::map<int, std::vector<GEntity *> > &groups) const;
+  void getEntitiesForPhysicalGroupName(const std::string &name,
+                                       std::vector<GEntity *> &entities) const;
   const std::map<std::pair<int, int>, std::string> &getPhysicalNames() const
   {
     return _physicalNames;

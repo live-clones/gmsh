@@ -196,6 +196,12 @@ GMSH_API void gmshModelGetEntitiesForPhysicalGroup(const int dim,
                                                    int ** tags, size_t * tags_n,
                                                    int * ierr);
 
+/* Get the tags of the model entities making up the physical group name
+ * `name'. */
+GMSH_API void gmshModelGetEntitiesForPhysicalGroupName(const char * name,
+                                                       int ** dimTags, size_t * dimTags_n,
+                                                       int * ierr);
+
 /* Get the tags of the physical groups (if any) to which the model entity of
  * dimension `dim' and tag `tag' belongs. */
 GMSH_API void gmshModelGetPhysicalGroupsForEntity(const int dim,

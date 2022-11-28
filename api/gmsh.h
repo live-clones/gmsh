@@ -241,6 +241,12 @@ namespace gmsh { // Top-level functions
                                               const int tag,
                                               std::vector<int> & tags);
 
+    // gmsh::model::getEntitiesForPhysicalGroupName
+    //
+    // Get the tags of the model entities making up the physical group name `name'.
+    GMSH_API void getEntitiesForPhysicalGroupName(const std::string & name,
+                                                  gmsh::vectorpair & dimTags);
+
     // gmsh::model::getPhysicalGroupsForEntity
     //
     // Get the tags of the physical groups (if any) to which the model entity of

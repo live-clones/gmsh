@@ -890,6 +890,64 @@ void GModel::getPhysicalGroups(
   }
 }
 
+void GModel::getEntitiesForPhysicalGroupName(const std::string &name,
+                                       std::vector<GEntity *> &entities) const
+{
+  entities.clear();
+  std::vector< int > dimTagsPhysical[4];
+  for(auto it = _physicalNames.begin(); it != _physicalNames.end(); ++it) {
+    if(it->second == name) {
+      dimTagsPhysical[it->first.first].push_back(it->first.second);
+    }
+  }
+  if(dimTagsPhysical[0].size()) {
+    for(auto it = vertices.begin(); it != vertices.end(); ++it) {
+      for(std::size_t j = 0; j < (*it)->physicals.size(); j++) {
+        int p = std::abs((*it)->physicals[j]);
+        auto itFind = std::find(dimTagsPhysical[0].begin(), dimTagsPhysical[0].end(), p);
+        if(itFind != dimTagsPhysical[0].end()) {
+          entities.push_back(*it);
+        }
+      }
+    }
+  }
+  if(dimTagsPhysical[1].size()) {
+    for(auto it = edges.begin(); it != edges.end(); ++it) {
+      for(std::size_t j = 0; j < (*it)->physicals.size(); j++) {
+        int p = std::abs((*it)->physicals[j]);
+        auto itFind = std::find(dimTagsPhysical[1].begin(), dimTagsPhysical[1].end(), p);
+        if(itFind != dimTagsPhysical[1].end()) {
+          entities.push_back(*it);
+        }
+      }
+    }
+  }
+  if(dimTagsPhysical[2].size()) {
+    for(auto it = faces.begin(); it != faces.end(); ++it) {
+      for(std::size_t j = 0; j < (*it)->physicals.size(); j++) {
+        int p = std::abs((*it)->physicals[j]);
+        auto itFind = std::find(dimTagsPhysical[2].begin(), dimTagsPhysical[2].end(), p);
+        if(itFind != dimTagsPhysical[2].end()) {
+          entities.push_back(*it);
+        }
+      }
+    }
+  }
+  if(dimTagsPhysical[3].size()) {
+    for(auto it = regions.begin(); it != regions.end(); ++it) {
+      for(std::size_t j = 0; j < (*it)->physicals.size(); j++) {
+        int p = std::abs((*it)->physicals[j]);
+        auto itFind = std::find(dimTagsPhysical[3].begin(), dimTagsPhysical[3].end(), p);
+        if(itFind != dimTagsPhysical[3].end()) {
+          entities.push_back(*it);
+        }
+      }
+    }
+  }
+  std::sort(entities.begin(), entities.end(), GEntityPtrLessThan());
+  std::unique(entities.begin(), entities.end(), GEntityPtrLessThan());
+}
+
 void GModel::addPhysicalGroup(int dim, int tag, const std::vector<int> &tags)
 {
   for(auto t : tags) {

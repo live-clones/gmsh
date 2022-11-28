@@ -402,6 +402,17 @@ namespace gmsh { // Top-level functions
       tags.assign(api_tags_, api_tags_ + api_tags_n_); gmshFree(api_tags_);
     }
 
+    // Get the tags of the model entities making up the physical group name `name'.
+    inline void getEntitiesForPhysicalGroupName(const std::string & name,
+                                                gmsh::vectorpair & dimTags)
+    {
+      int ierr = 0;
+      int *api_dimTags_; size_t api_dimTags_n_;
+      gmshModelGetEntitiesForPhysicalGroupName(name.c_str(), &api_dimTags_, &api_dimTags_n_, &ierr);
+      if(ierr) throwLastError();
+      dimTags.resize(api_dimTags_n_ / 2); for(size_t i = 0; i < api_dimTags_n_ / 2; ++i){ dimTags[i].first = api_dimTags_[i * 2 + 0]; dimTags[i].second = api_dimTags_[i * 2 + 1]; } gmshFree(api_dimTags_);
+    }
+
     // Get the tags of the physical groups (if any) to which the model entity of
     // dimension `dim' and tag `tag' belongs.
     inline void getPhysicalGroupsForEntity(const int dim,
