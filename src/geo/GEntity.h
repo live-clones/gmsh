@@ -189,8 +189,11 @@ public:
   // delete the mesh data
   virtual void deleteMesh() {}
 
-  // delete the vertex arrays, used to to draw the mesh efficiently
+  // delete the mesh vertex arrays, used to to draw the mesh efficiently
   void deleteVertexArrays();
+
+  // delete the geometry vertex arrays, used to to draw the geometry efficiently
+  virtual void deleteGeometryVertexArrays() {}
 
   // spatial dimension of the entity
   virtual int dim() const { return -1; }

@@ -9604,7 +9604,10 @@ unsigned int opt_geometry_color_curves(OPT_ARGS_COL)
 
 unsigned int opt_geometry_color_surfaces(OPT_ARGS_COL)
 {
-  if(action & GMSH_SET) CTX::instance()->color.geom.surface = val;
+  if(action & GMSH_SET) {
+    CTX::instance()->color.geom.surface = val;
+    GModel::current()->deleteGeometryVertexArrays();
+  }
 #if defined(HAVE_FLTK)
   CCC(CTX::instance()->color.geom.surface,
       FlGui::instance()->options->geo.color[2]);

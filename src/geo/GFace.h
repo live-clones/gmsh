@@ -64,6 +64,9 @@ public:
   // delete mesh data
   virtual void deleteMesh();
 
+  // delete the geometry vertex arrays
+  void deleteGeometryVertexArrays();
+
   // add/delete regions that are bounded by the face
   void addRegion(GRegion *r)
   {

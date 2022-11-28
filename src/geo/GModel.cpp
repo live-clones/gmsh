@@ -308,6 +308,18 @@ void GModel::deleteVertexArrays()
     (*it)->deleteVertexArrays();
 }
 
+void GModel::deleteGeometryVertexArrays()
+{
+  for(auto it = firstRegion(); it != lastRegion(); ++it)
+    (*it)->deleteGeometryVertexArrays();
+  for(auto it = firstFace(); it != lastFace(); ++it)
+    (*it)->deleteGeometryVertexArrays();
+  for(auto it = firstEdge(); it != lastEdge(); ++it)
+    (*it)->deleteGeometryVertexArrays();
+  for(auto it = firstVertex(); it != lastVertex(); ++it)
+    (*it)->deleteGeometryVertexArrays();
+}
+
 bool GModel::empty() const
 {
   return vertices.empty() && edges.empty() && faces.empty() && regions.empty();

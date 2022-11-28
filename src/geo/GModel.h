@@ -300,6 +300,8 @@ public:
   void deleteMesh(const std::vector<GEntity *> &entities);
   // delete the vertex arrays used for efficient mesh drawing
   void deleteVertexArrays();
+  // delete the vertex arrays used for efficient geometry drawing
+  void deleteGeometryVertexArrays();
 
   // remove all mesh vertex associations to geometrical entities and remove
   // vertices from geometrical entities, then _associateEntityWithMeshVertices
