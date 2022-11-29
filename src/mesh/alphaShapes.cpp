@@ -1096,3 +1096,5 @@ void constrainedDelaunayRefinement_(const int dim, const int tag,
   //   int a = 0;
   // }
 }
+
+#endif
