@@ -5474,10 +5474,10 @@ gmsh::model::mesh::computeHomology(vectorpair &dimTags)
 GMSH_API void gmsh::model::mesh::generateMesh(const int dim, const int tag, const bool refine, const std::vector<double> &coord, const std::vector<int> &nodeTags)
 {
   if(!_checkInit()) return;
-#if defined(HAVE_MESH)
+#if defined(HAVE_MESH) && defined(HAVE_HXT)
   generateMesh_(dim, tag, refine, coord, nodeTags);
 #else
-  Msg::Error("alphaShapes requires the mesh module");
+  Msg::Error("alphaShapes requires the mesh and hxt modules");
 #endif
 }
 
@@ -5546,10 +5546,10 @@ gmsh::model::mesh::alphaShapes( const double threshold,
                                 std::vector<std::vector<std::size_t> > & domains,
                                 std::vector<std::vector<std::size_t> > & boundaries,
                                 std::vector<std::size_t> & neighbors){
-#if defined(HAVE_MESH)
+#if defined(HAVE_MESH) && defined(HAVE_HXT)
   alphaShapes_ (threshold, dim, coord, nodalSize, tetra, domains, boundaries, neighbors);
 #else
-  Msg::Error("alphaShapes requires the mesh module");
+  Msg::Error("alphaShapes requires the mesh and hxt modules");
 #endif
 
 }
@@ -5559,10 +5559,10 @@ gmsh::model::mesh::alphaShapes( const double threshold,
 GMSH_API void
 gmsh::model::mesh::tetNeighbors(const std::vector<std::size_t> &tetra,
 				std::vector<std::size_t> &neigh){
-#if defined(HAVE_MESH)
+#if defined(HAVE_MESH) && defined(HAVE_HXT)
   computeTetNeighbors_ (tetra, neigh);
 #else
-  Msg::Error("alphaShapes requires the mesh module");
+  Msg::Error("alphaShapes requires the mesh and hxt modules");
 #endif  
 }
 
@@ -5571,10 +5571,10 @@ gmsh::model::mesh::tetNeighbors(const std::vector<std::size_t> &tetra,
 GMSH_API void
 gmsh::model::mesh::createHxtMesh(const std::string &inputMesh, const std::vector<double> & coord, const std::string &outputMesh, std::vector<double> & pts,
                                   std::vector<std::size_t> & tets){
-#if defined(HAVE_MESH)
+#if defined(HAVE_MESH) && defined(HAVE_HXT)
   createHxtMesh_(inputMesh, coord, outputMesh, pts, tets);
 #else
-  Msg::Error("createHxtMesh requires the mesh module");
+  Msg::Error("createHxtMesh requires the mesh and hxt modules");
 #endif  
 }
 
@@ -5591,10 +5591,10 @@ gmsh::model::mesh::alphaShapesConstrained(const int dim,
                                           std::vector<size_t> &neigh, 
                                           double &hMean,
                                           const std::vector<int> &controlTags){
-#if defined(HAVE_MESH)
+#if defined(HAVE_MESH) && defined(HAVE_HXT)
   constrainedAlphaShapes_(GModel::current(), dim, tag, coord, nodeTags, alpha, meanValue, tetrahedra, domains, boundaries, neigh, hMean, controlTags);
 #else
-  Msg::Error("alphaShapesConstrained requires the mesh module");
+  Msg::Error("alphaShapesConstrained requires the mesh and hxt modules");
 #endif  
 }
 
