@@ -51,4 +51,14 @@ void constrainedAlphaShapes_(GModel* m,
 
 void generateMesh_(const int dim, const int tag, const bool refine, const std::vector<double> &coord, const std::vector<int> &nodeTags);
 
+void constrainedDelaunayRefinement_(const int dim, const int tag, 
+                                   const std::vector<double> &coord, 
+                                   const std::vector<size_t> &nodeTags, 
+                                   const std::vector<double> &sizeField, 
+                                   const double minRadius, 
+                                   const std::vector<size_t> &constrainedEdges,
+                                   std::vector<size_t> &newNodeTags, 
+                                   std::vector<double>& newCoords, 
+                                   std::vector<double>& newSizeField);
+
 #endif

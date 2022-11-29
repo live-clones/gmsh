@@ -5,6 +5,7 @@
 #include "alphaShapes.h"
 #include "gmsh.h"
 #include "GmshMessage.h"
+#include "SPoint3.h"
 
 #include <iostream>
 
@@ -1020,4 +1021,101 @@ void generateMesh_(const int dim, const int tag, const bool refine, const std::v
   else if (dim == 3){
     generateMesh3D_(coord, nodeTags);
   }
+}
+
+
+
+// Generate a mesh on entity of dimension dim and tag tag based on pre-defined locations of nodes, with possibly a size field on the nodes.
+// The mesh will be refined if necessary, in order to respect the mesh size field.
+// coord is a vector of size n*3 containing the coordinates of the nodes, nodeTags is a vector of size n containing the tags of the nodes, 
+// and sizeField is a vector of size n containing the maximum size of elements allowed around this node.
+// minRadius is the minimum allowed circumradius of elements in the mesh. An element that has a circumradius which is smaller than this value will 
+// not be refined. constrainedEdges, if defined, is a list of edges that need to be in the mesh. It should be of size m*2, with an edge defined 
+// by its two end nodes.
+// Returns newly added nodes and corresponding size field
+void constrainedDelaunayRefinement_(const int dim, const int tag, 
+                                    const std::vector<double> &coord, 
+                                    const std::vector<size_t> &nodeTags, 
+                                    const std::vector<double> &sizeField, 
+                                    const double minRadius, 
+                                    const std::vector<size_t>& constrainedEdges,
+                                    std::vector<size_t> &newNodeTags, 
+                                    std::vector<double>& newCoords, 
+                                    std::vector<double>& newSizeField){
+  
+  // generateMesh_(dim, tag, 0, coord, nodeTags);
+  std::vector<double> pCoord;
+  gmsh::model::getParametrization(dim, tag, coord, pCoord);
+  
+  GModel *m = GModel::current();
+  if (GModel::current()->getDim() >= dim){
+    std::for_each(m->firstRegion(), m->lastRegion(), deMeshGRegion());
+    std::for_each(m->firstFace(), m->lastFace(), deMeshGFace());
+  }
+
+  if (dim==1){
+    Msg::Info("generating mesh for edge %d\n",tag);
+    deMeshGEdge killer;
+    GEdge *ge = GModel::current()->getEdgeByTag(tag);
+    if (!ge)return;
+    killer(ge);
+    std::vector<int> index(pCoord.size(), 0);
+    for (size_t i = 0 ; i != index.size() ; i++) {
+      index[i] = i;
+    }
+    sort(index.begin(), index.end(), [&](const int& a, const int& b) { return (pCoord[a] < pCoord[b]);});
+
+    MVertex *vLast = ge->getEndVertex()->mesh_vertices[0];
+    size_t maxTag = GModel::current()->getMaxVertexNumber();
+    size_t i = 0;
+    double current_sf = sizeField[0];
+    MVertex *v_current = ge->getBeginVertex()->mesh_vertices[0];
+    GPoint gp_next = ge->point(pCoord[index[0]]);
+    size_t tag_new = nodeTags[index[1]];
+    bool isFromInitialSet = true;
+    MEdgeVertex *v_new;
+    while(i <= index.size()){ // Get the length of the element; if larger than size field at node 0 or node 1, add a node in the middle
+      double sf0 = current_sf;
+      double dist = sqrt(pow(v_current->x()-gp_next.x(),2.) + pow(v_current->y()-gp_next.y(),2.) + pow(v_current->z()-gp_next.z(),2.));
+      if (dist > sf0) { // this means the size field is larger than accepted value, we need to insert a node
+        double xp0; v_current->getParameter(0, xp0);
+        double xp1 = gp_next.u();
+        gp_next = ge->point(0.5*(xp0+xp1));
+        tag_new = maxTag+1;
+        isFromInitialSet = false;
+      }
+      else {
+        if(i == index.size() && isFromInitialSet) break;
+        v_new = new MEdgeVertex(gp_next.x(), gp_next.y(), gp_next.z(), ge, gp_next.u(), tag_new);
+        ge->mesh_vertices.push_back(v_new);  
+        ge->lines.push_back(new MLine(v_current, v_new));
+        v_current = v_new;
+        if (isFromInitialSet) {
+          current_sf = sizeField[i];
+          i += 1;
+        }
+        else {
+          maxTag +=1;
+          newCoords.push_back(gp_next.x()); newCoords.push_back(gp_next.y()); newCoords.push_back(gp_next.z()); 
+          newNodeTags.push_back(tag_new);
+          newSizeField.push_back(current_sf);
+        }
+        gp_next = (i==index.size()) ? GPoint(vLast->point().x(), vLast->point().y(), vLast->point().z(), ge, ge->parFromPoint(vLast->point())) : ge->point(pCoord[index[i]]);
+        tag_new = (i==index.size()) ? 0 : nodeTags[index[i]];
+        isFromInitialSet = true;
+        if (i > index.size()) break;
+      }
+    }
+    MVertex *vFinal = ge->mesh_vertices[ge->mesh_vertices.size()-1];
+    ge->lines.push_back(new MLine(vFinal, vLast));
+
+  }
+  // else if (dim == 2){
+  //   // TODO
+  //   int a = 0;
+  // }
+  // else if (dim == 3){
+  //   // TODO
+  //   int a = 0;
+  // }
 }

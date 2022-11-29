@@ -582,6 +582,9 @@ mesh.add('createHxtMesh', doc, None, istring('inputMesh'), ivectordouble('coord'
 doc = '''Generate a mesh of the array of points `coord', constrained to the surface mesh of the current model. Currently only supported for 3D.'''
 mesh.add('alphaShapesConstrained', doc, None, iint('dim'), iint('tag'), ivectordouble('coord'), ivectorint('nodeTags'), idouble('alpha'), idouble('meanValue'), ovectorsize('tetrahedra'), ovectorvectorsize('domains'), ovectorvectorsize('boundaries'), ovectorsize('neighbors'), odouble('hMean'), ivectorint('controlTags'))
 
+doc = '''Generate a mesh on entity of dimension `dim' and tag `tag' based on pre-defined locations of nodes, with possibly a size field on the nodes. The mesh will be refined if necessary, in order to respect the mesh size field. `coord' is a vector of size n*3 containing the coordinates of the nodes, `nodeTags' is a vector of size n containing the tags of the nodes, and `sizeField' is a vector of size n containing the maximum size of elements allowed around this node. `minRadius' is the minimum allowed circumradius of elements in the mesh. An element that has a circumradius which is smaller than this value will not be refined. `constrainedEdges', if defined, is a list of edges that need to be in the mesh. It should be of size m*2, with an edge defined by its two end nodes. Returns newly added nodes and corresponding size field.'''
+mesh.add('constrainedDelaunayRefinement', doc, None, iint('dim'), iint('tag'), ivectordouble('coord'), ivectorsize('nodeTags'), ivectordouble('sizeField'), idouble('minRadius'), ivectorsize('constrainedEdges'), ovectorsize('newNodeTags'), ovectordouble('newCoords'), ovectordouble('newSizeField'))
+
 ################################################################################
 
 field = mesh.add_module('field', 'mesh size field functions')

@@ -2451,6 +2451,27 @@ GMSH_API void gmshModelMeshAlphaShapesConstrained(const int dim, const int tag, 
   }
 }
 
+GMSH_API void gmshModelMeshConstrainedDelaunayRefinement(const int dim, const int tag, const double * coord, const size_t coord_n, const size_t * nodeTags, const size_t nodeTags_n, const double * sizeField, const size_t sizeField_n, const double minRadius, const size_t * constrainedEdges, const size_t constrainedEdges_n, size_t ** newNodeTags, size_t * newNodeTags_n, double ** newCoords, size_t * newCoords_n, double ** newSizeField, size_t * newSizeField_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<double> api_coord_(coord, coord + coord_n);
+    std::vector<std::size_t> api_nodeTags_(nodeTags, nodeTags + nodeTags_n);
+    std::vector<double> api_sizeField_(sizeField, sizeField + sizeField_n);
+    std::vector<std::size_t> api_constrainedEdges_(constrainedEdges, constrainedEdges + constrainedEdges_n);
+    std::vector<std::size_t> api_newNodeTags_;
+    std::vector<double> api_newCoords_;
+    std::vector<double> api_newSizeField_;
+    gmsh::model::mesh::constrainedDelaunayRefinement(dim, tag, api_coord_, api_nodeTags_, api_sizeField_, minRadius, api_constrainedEdges_, api_newNodeTags_, api_newCoords_, api_newSizeField_);
+    vector2ptr(api_newNodeTags_, newNodeTags, newNodeTags_n);
+    vector2ptr(api_newCoords_, newCoords, newCoords_n);
+    vector2ptr(api_newSizeField_, newSizeField, newSizeField_n);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API int gmshModelMeshFieldAdd(const char * fieldType, const int tag, int * ierr)
 {
   int result_api_ = 0;

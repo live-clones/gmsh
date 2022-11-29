@@ -1851,6 +1851,31 @@ namespace gmsh { // Top-level functions
                                            double & hMean,
                                            const std::vector<int> & controlTags);
 
+      // gmsh::model::mesh::constrainedDelaunayRefinement
+      //
+      // Generate a mesh on entity of dimension `dim' and tag `tag' based on pre-
+      // defined locations of nodes, with possibly a size field on the nodes. The
+      // mesh will be refined if necessary, in order to respect the mesh size
+      // field. `coord' is a vector of size n*3 containing the coordinates of the
+      // nodes, `nodeTags' is a vector of size n containing the tags of the nodes,
+      // and `sizeField' is a vector of size n containing the maximum size of
+      // elements allowed around this node. `minRadius' is the minimum allowed
+      // circumradius of elements in the mesh. An element that has a circumradius
+      // which is smaller than this value will not be refined. `constrainedEdges',
+      // if defined, is a list of edges that need to be in the mesh. It should be
+      // of size m*2, with an edge defined by its two end nodes. Returns newly
+      // added nodes and corresponding size field.
+      GMSH_API void constrainedDelaunayRefinement(const int dim,
+                                                  const int tag,
+                                                  const std::vector<double> & coord,
+                                                  const std::vector<std::size_t> & nodeTags,
+                                                  const std::vector<double> & sizeField,
+                                                  const double minRadius,
+                                                  const std::vector<std::size_t> & constrainedEdges,
+                                                  std::vector<std::size_t> & newNodeTags,
+                                                  std::vector<double> & newCoords,
+                                                  std::vector<double> & newSizeField);
+
       namespace field { // Mesh size field functions
 
         // gmsh::model::mesh::field::add

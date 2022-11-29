@@ -2875,6 +2875,48 @@ namespace gmsh { // Top-level functions
         gmshFree(api_controlTags_);
       }
 
+      // Generate a mesh on entity of dimension `dim' and tag `tag' based on pre-
+      // defined locations of nodes, with possibly a size field on the nodes. The
+      // mesh will be refined if necessary, in order to respect the mesh size
+      // field. `coord' is a vector of size n*3 containing the coordinates of the
+      // nodes, `nodeTags' is a vector of size n containing the tags of the nodes,
+      // and `sizeField' is a vector of size n containing the maximum size of
+      // elements allowed around this node. `minRadius' is the minimum allowed
+      // circumradius of elements in the mesh. An element that has a circumradius
+      // which is smaller than this value will not be refined. `constrainedEdges',
+      // if defined, is a list of edges that need to be in the mesh. It should be
+      // of size m*2, with an edge defined by its two end nodes. Returns newly
+      // added nodes and corresponding size field.
+      inline void constrainedDelaunayRefinement(const int dim,
+                                                const int tag,
+                                                const std::vector<double> & coord,
+                                                const std::vector<std::size_t> & nodeTags,
+                                                const std::vector<double> & sizeField,
+                                                const double minRadius,
+                                                const std::vector<std::size_t> & constrainedEdges,
+                                                std::vector<std::size_t> & newNodeTags,
+                                                std::vector<double> & newCoords,
+                                                std::vector<double> & newSizeField)
+      {
+        int ierr = 0;
+        double *api_coord_; size_t api_coord_n_; vector2ptr(coord, &api_coord_, &api_coord_n_);
+        size_t *api_nodeTags_; size_t api_nodeTags_n_; vector2ptr(nodeTags, &api_nodeTags_, &api_nodeTags_n_);
+        double *api_sizeField_; size_t api_sizeField_n_; vector2ptr(sizeField, &api_sizeField_, &api_sizeField_n_);
+        size_t *api_constrainedEdges_; size_t api_constrainedEdges_n_; vector2ptr(constrainedEdges, &api_constrainedEdges_, &api_constrainedEdges_n_);
+        size_t *api_newNodeTags_; size_t api_newNodeTags_n_;
+        double *api_newCoords_; size_t api_newCoords_n_;
+        double *api_newSizeField_; size_t api_newSizeField_n_;
+        gmshModelMeshConstrainedDelaunayRefinement(dim, tag, api_coord_, api_coord_n_, api_nodeTags_, api_nodeTags_n_, api_sizeField_, api_sizeField_n_, minRadius, api_constrainedEdges_, api_constrainedEdges_n_, &api_newNodeTags_, &api_newNodeTags_n_, &api_newCoords_, &api_newCoords_n_, &api_newSizeField_, &api_newSizeField_n_, &ierr);
+        if(ierr) throwLastError();
+        gmshFree(api_coord_);
+        gmshFree(api_nodeTags_);
+        gmshFree(api_sizeField_);
+        gmshFree(api_constrainedEdges_);
+        newNodeTags.assign(api_newNodeTags_, api_newNodeTags_ + api_newNodeTags_n_); gmshFree(api_newNodeTags_);
+        newCoords.assign(api_newCoords_, api_newCoords_ + api_newCoords_n_); gmshFree(api_newCoords_);
+        newSizeField.assign(api_newSizeField_, api_newSizeField_ + api_newSizeField_n_); gmshFree(api_newSizeField_);
+      }
+
       namespace field { // Mesh size field functions
 
         // Add a new mesh size field of type `fieldType'. If `tag' is positive,
