@@ -159,6 +159,13 @@ void GFace::deleteMesh()
   model()->destroyMeshCaches();
 }
 
+void GFace::deleteGeometryVertexArrays()
+{
+  if(!va_geom_triangles) return;
+  delete va_geom_triangles;
+  va_geom_triangles = nullptr;
+}
+
 std::size_t GFace::getNumMeshElements() const
 {
   return triangles.size() + quadrangles.size() + polygons.size();
@@ -378,6 +385,7 @@ void GFace::setVisibility(char val, bool recursive)
 
 void GFace::setColor(unsigned int val, bool recursive)
 {
+  deleteGeometryVertexArrays();
   GEntity::setColor(val);
   if(recursive) {
     for(auto e : l_edges) e->setColor(val, recursive);

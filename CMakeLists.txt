@@ -108,7 +108,7 @@ opt(ZIPPER "Enable Zip file compression/decompression" OFF)
 
 set(GMSH_MAJOR_VERSION 4)
 set(GMSH_MINOR_VERSION 11)
-set(GMSH_PATCH_VERSION 0)
+set(GMSH_PATCH_VERSION 1)
 if(NOT GMSH_EXTRA_VERSION)
   set(GMSH_EXTRA_VERSION "")
 endif()
@@ -1003,10 +1003,12 @@ if(ENABLE_MED OR ENABLE_CGNS)
     set(HDF5_LIB "${HDF5_C_LIBRARIES}")
     list(APPEND EXTERNAL_INCLUDES ${HDF5_INCLUDE_DIRS})
     if(ENABLE_MED)
-      find_library(MED_LIB medC)
-      if(MED_LIB)
+      find_library(MED_LIB medC HINTS ENV MED3HOME PATH_SUFFIXES lib)
+      find_path(MED_INC "med.h" HINTS ENV MED3HOME PATH_SUFFIXES include)
+      if(MED_LIB AND MED_INC)
         set_config_option(HAVE_MED "Med")
         list(APPEND EXTERNAL_LIBRARIES ${MED_LIB})
+        list(APPEND EXTERNAL_INCLUDES ${MED_INC})
       endif()
     endif()
     if(ENABLE_CGNS)
@@ -1694,10 +1696,19 @@ if(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
   if(WIN32)
     set_target_properties(shared PROPERTIES PREFIX "" IMPORT_PREFIX ""
       IMPORT_SUFFIX ".lib" COMPILE_FLAGS "-DGMSH_DLL -DGMSH_DLL_EXPORT")
-  elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang" AND NOT ENABLE_PRIVATE_API)
-    # hide all symbols by default (if not exporting the private API); symbols to
-    # export should be marked with __attribute__ ((visibility("default")))
-    set_target_properties(shared PROPERTIES COMPILE_FLAGS "-fvisibility=hidden")
+  elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    if(NOT ENABLE_PRIVATE_API)
+      # hide all symbols by default (if not exporting the private API); symbols to
+      # export should be marked with __attribute__ ((visibility("default")))
+      set_target_properties(shared PROPERTIES COMPILE_FLAGS "-fvisibility=hidden")
+    endif()
+    # hide all symbols from static libs linked into the shared Gmsh lib (this is
+    # easier than recompiling all the dependencies with -fvisibility=hidden)
+    if(CMAKE_SYSTEM_NAME MATCHES "Linux")
+      # TODO would be nice to have the equivalent on macOS
+      message(STATUS "Excluding symbols from bundled static libraries")
+      list(APPEND LINK_LIBRARIES "-Wl,--exclude-libs,ALL")
+    endif()
   endif()
   target_link_libraries(shared ${LINK_LIBRARIES})
   # don't define LC_RPATH in dylib for development, to not get endless warnings
@@ -2013,8 +2024,7 @@ if(MAKEINFO AND TEXI2PDF)
                     doc/texinfo/gmsh.html doc/texinfo/images doc/texinfo/gmsh.info
                     doc/texinfo/gmsh.pdf doc/texinfo/gmsh.txt
                     COMMAND ${CMAKE_COMMAND} -E remove ${TEX_OBJ}
-                    DEPENDS ${TEX_DIR}/gmsh.info ${TEX_DIR}/gmsh.txt
-                    ${TEX_DIR}/gmsh.html ${TEX_DIR}/gmsh.pdf
+                    DEPENDS info txt html pdf
                     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 endif()
 

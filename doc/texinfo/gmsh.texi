@@ -247,14 +247,14 @@ build-in CAD engine and post-processor. Its design goal is to provide a
 fast, light and user-friendly meshing tool with parametric input and
 flexible visualization capabilities.
 
-Gmsh is built around four modules: geometry, mesh, solver and
-post-processing. Geometry, mesh, solver and post-processing instructions
-are prescribed either using the graphical user interface (GUI; see
-@ref{Gmsh graphical user interface}), on the command line (@pxref{Gmsh
-command-line interface}), in text files using Gmsh's own scripting
-language (@file{.geo} files; see @ref{Gmsh scripting language}), or
-through the Gmsh application programming interface (API; see @ref{Gmsh
-application programming interface}) in C++, C, Python, Julia or Fortran.
+Gmsh is built around four modules (geometry, mesh, solver and
+post-processing), which can be controlled with the graphical user
+interface (GUI; see @ref{Gmsh graphical user interface}), from the
+command line (@pxref{Gmsh command-line interface}), using text files
+written in Gmsh's own scripting language (@file{.geo} files; see
+@ref{Gmsh scripting language}), or through the C++, C, Python, Julia and
+Fortran application programming interface (API; see @ref{Gmsh
+application programming interface}).
 
 A brief description of the four modules is given hereafter, before an
 overview of what Gmsh does best (... and what it is not so good at), and
@@ -334,20 +334,19 @@ performs the operations (translation, rotation, intersection, union,
 fragments, ...) on the native geometrical representation using each CAD
 kernel's own API.  In the same philosophy, models can be imported in the
 geometry module through each CAD kernel's own import mechanisms. For
-example, by default Gmsh import STEP and IGES files through OpenCASCADE,
-which will lead to the creation of model entities with an internal
-OpenCASCADE representation.
+example, by default Gmsh imports STEP and IGES files through
+OpenCASCADE, which will lead to the creation of model entities with an
+internal OpenCASCADE representation.
 
 The @ref{Gmsh tutorial}, starting with @ref{t1}, is the best place to
 learn how to use the geometry module: it contains examples of increasing
 complexity based on both the built-in and the OpenCASCADE kernel.  Note
 that many features of the geometry module can be used interactively in
 the GUI (@pxref{Gmsh graphical user interface}), which is also a good
-way to learn about both Gmsh's scripting language (@pxref{Gmsh scripting
-language}) and the API (@pxref{Gmsh application programming interface}),
-as actions in the geometry module automatically append the related
-command in the input script file, and can optionally also generate input
-for the languages supported by the API (see the
+way to learn about both Gmsh's scripting language and the API, as
+actions in the geometry module automatically append the related command
+in the input script file, and can optionally also generate input for the
+languages supported by the API (see the
 @code{General.ScriptingLanguages} option; this is still work-in-progress
 as of Gmsh 4.11.)
 
@@ -4783,17 +4782,17 @@ $Entities
   curveTag(int) minX(double) minY(double) minZ(double)
     maxX(double) maxY(double) maxZ(double)
     numPhysicalTags(size_t) physicalTag(int) ...
-    numBoundingPoints(size_t) pointTag(int) ...
+    numBoundingPoints(size_t) pointTag(int; sign encodes orientation) ...
   ...
   surfaceTag(int) minX(double) minY(double) minZ(double)
     maxX(double) maxY(double) maxZ(double)
     numPhysicalTags(size_t) physicalTag(int) ...
-    numBoundingCurves(size_t) curveTag(int) ...
+    numBoundingCurves(size_t) curveTag(int; sign encodes orientation) ...
   ...
   volumeTag(int) minX(double) minY(double) minZ(double)
     maxX(double) maxY(double) maxZ(double)
     numPhysicalTags(size_t) physicalTag(int) ...
-    numBoundngSurfaces(size_t) surfaceTag(int) ...
+    numBoundngSurfaces(size_t) surfaceTag(int; sign encodes orientation) ...
   ...
 $EndEntities
 

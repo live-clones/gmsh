@@ -1141,6 +1141,7 @@ void FlGui::updateViews(bool numberOfViewsHasChanged, bool deleteWidgets)
     fields->loadFieldViewList();
     plugins->resetViewBrowser();
     clipping->resetBrowser();
+    updateStatistics(false);
   }
 }
 
@@ -1155,6 +1156,12 @@ void FlGui::resetVisibility()
 {
   if(visibility->win->shown()) visibility_cb(nullptr, nullptr);
   if(help->options->shown()) help_options_cb(nullptr, nullptr);
+  updateStatistics(false);
+}
+
+void FlGui::updateStatistics(bool qualities)
+{
+  if(stats->win->shown()) stats->compute(qualities);
 }
 
 openglWindow *FlGui::getCurrentOpenglWindow()

@@ -95,7 +95,7 @@ namespace {
 
   // Gambit numbers its faces slightly differently
   static const unsigned GAMBIT_FACE_TET_MAP[4] = {1, 2, 4, 3};
-  static const unsigned GAMBIT_FACE_PYR_MAP[5] = {5, 2, 4, 3, 1};
+  static const unsigned GAMBIT_FACE_PYR_MAP[5] = {2, 5, 3, 4, 1};
   static const unsigned GAMBIT_FACE_PRI_MAP[5] = {4, 5, 1, 3, 2};
   static const unsigned GAMBIT_FACE_HEX_MAP[6] = {5, 1, 4, 2, 3, 6};
 
