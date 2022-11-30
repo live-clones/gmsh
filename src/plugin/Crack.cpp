@@ -375,6 +375,7 @@ PView *GMSH_CrackPlugin::execute(PView *view)
                      "ElementNodeData", GModel::current(), d, 0, 1);
   }
 
+  m->destroyMeshCaches();
   CTX::instance()->mesh.changed = ENT_ALL;
 
   return view;
