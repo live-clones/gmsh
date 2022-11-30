@@ -120,6 +120,7 @@ public:
   virtual int getTypeForVTK() const { return 14; }
   virtual const char *getStringForPOS() const { return "SY"; }
   virtual const char *getStringForBDF() const { return "CPYRAM"; }
+  virtual const char *getStringForINP() const { return "C3D5"; }
   virtual void reverse()
   {
     MVertex *tmp = _v[0];
