@@ -4414,7 +4414,9 @@ surfaces can also store @emph{embedded} entities of lower dimension, to
 force a subsequent mesh to be conformal to internal features like a
 point in the middle of a surface. Model entities are identified by a
 pair of integers: their dimension @emph{dim} (0, 1, 2 or 3) and their
-@emph{tag}, a strictly positive identification number. @emph{Physical
+@emph{tag}, a strictly positive identification number. When dealing with
+multiple geometrical entities of possibly different dimensions, the API
+packs them as a vector of (dim, tag) integer pairs.  @emph{Physical
 groups} are collections of model entities and are also identified by
 their dimension and by a @emph{tag}. Operations which do not directly
 reference a model are performed on the @emph{current} model.
