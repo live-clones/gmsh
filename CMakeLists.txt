@@ -1768,7 +1768,8 @@ if(WIN32 AND NOT MSVC)
 elseif(MSVC)
   set_target_properties(gmsh PROPERTIES LINK_FLAGS "/STACK:16777216 /SAFESEH:NO")
 elseif(APPLE)
-  set_target_properties(gmsh PROPERTIES LINK_FLAGS "-Wl,-no_compact_unwind")
+  # this remove ld warnings with PETSc+MUMPS on recent macOS versions
+  # set_target_properties(gmsh PROPERTIES LINK_FLAGS "-Wl,-no_compact_unwind")
 endif()
 
 # android target
