@@ -259,6 +259,12 @@ public:
     bool reverseMesh;
   } meshAttributes;
 
+  virtual double getMeshSize() const { return meshAttributes.meshSize; }
+  virtual double getMeshSizeFactor() const
+  {
+    return meshAttributes.meshSizeFactor;
+  }
+
   struct {
     mutable GEntity::MeshGenerationStatus status;
   } meshStatistics;
