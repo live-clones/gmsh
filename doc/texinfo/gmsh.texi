@@ -1113,7 +1113,7 @@ and Fortran
 @c -------------------------------------------------------------------------
 
 @node t6, t7, t5, Gmsh tutorial
-@section @code{t6}: Transfinite meshes
+@section @code{t6}: Transfinite meshes, deleting entities
 
 See
 @url{@value{GITLAB-PREFIX}/tutorials/t6.geo,t6.geo}.
@@ -4582,7 +4582,7 @@ on `Restore all options to default settings' button in the
 @c -------------------------------------------------------------------------
 
 @node Mesh options, Solver options, Geometry options, Gmsh options
-@section Mesh options list
+@section Mesh options
 
 @include opt_mesh.texi
 
