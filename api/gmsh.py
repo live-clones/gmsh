@@ -43,6 +43,9 @@ if not os.path.exists(libpath):
 if not os.path.exists(libpath):
     libpath = os.path.join(moduledir, libname)
 if not os.path.exists(libpath):
+    libpath = os.path.join(libpath, 'lib')
+
+if not os.path.exists(libpath):
     if platform.system() == "Windows":
         libpath = find_library("gmsh-4.11")
         if not libpath:
