@@ -1274,19 +1274,20 @@ oldsig = signal.signal(signal.SIGINT, signal.SIG_DFL)
 moduledir = os.path.dirname(os.path.realpath(__file__))
 if platform.system() == "Windows":
     libname = "{7}-{3}.{4}.dll"
-    libdir = os.path.dirname(moduledir)
 elif platform.system() == "Darwin":
     libname = "lib{7}.{3}.{4}.dylib"
-    libdir = os.path.dirname(os.path.dirname(moduledir))
 else:
     libname = "lib{7}.so.{3}.{4}"
-    libdir = os.path.dirname(os.path.dirname(moduledir))
 
-libpath = os.path.join(libdir, libname)
+# check if the library is in the same directory as the module,,,
+libpath = os.path.join(moduledir, libname)
+# ... or in a "Lib" subdirectory
 if not os.path.exists(libpath):
-    libpath = os.path.join(libdir, "Lib", libname)
+    libpath = os.path.join(moduledir, "Lib", libname)
+# ... or in a "lib" subdirectory
 if not os.path.exists(libpath):
-    libpath = os.path.join(moduledir, libname)
+    libpath = os.path.join(moduledir, "lib", libname)
+# ... or use ctype's find_library utility
 if not os.path.exists(libpath):
     if platform.system() == "Windows":
         libpath = find_library("{7}-{3}.{4}")
