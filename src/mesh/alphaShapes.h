@@ -16,6 +16,8 @@
 #include "meshGEdge.h"
 #include "meshPolyMesh.h"
 #include "meshTriangulation.h"
+#include "qualityMeasures.h"
+#include "robustPredicates.h"
 
 extern "C" {
 #include "hxt_tetMesh.h"
@@ -54,14 +56,17 @@ void constrainedAlphaShapes_(GModel* m,
 void generateMesh_(const int dim, const int tag, const bool refine, const std::vector<double> &coord, const std::vector<int> &nodeTags);
 #endif
 
-void constrainedDelaunayRefinement_(const int dim, const int tag, 
-                                   const std::vector<double> &coord, 
-                                   const std::vector<size_t> &nodeTags, 
-                                   const std::vector<double> &sizeField, 
-                                   const double minRadius, 
-                                   const std::vector<size_t> &constrainedEdges,
-                                   std::vector<size_t> &newNodeTags, 
-                                   std::vector<double>& newCoords, 
-                                   std::vector<double>& newSizeField);
+void constrainedDelaunayRefinement_(const int dim, const int tag,
+                                    const std::vector<std::pair<int, int>> &discreteDimTag,
+                                    const std::vector<double> &sizeField, 
+                                    const double minRadius, 
+                                    std::vector<size_t> &newNodeTags, 
+                                    std::vector<double>& newCoords, 
+                                    std::vector<double>& newSizeField);
+
+
+// internal functions, useless for outside
+void getFacesToImprove(PolyMesh* pm, GFace* gf, std::vector<double>& sizeAtNodes, std::map<size_t, size_t>& g2v, std::map<size_t, double>& g2sizeAtNodes, std::vector<size_t>& facesToGrade, std::vector<size_t>& facesToImprove);
+void getFaceVertices(PolyMesh::Face* face, PolyMesh::Vertex* vertices[3]);                          
 
 #endif
