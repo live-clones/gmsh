@@ -1302,7 +1302,7 @@ if not os.path.exists(libpath):
 if not os.path.exists(libpath):
     libpath = os.path.join(parentdir2, "lib", libname)
 
-# ... or use ctype's find_library utility
+# if we couldn't find it, use ctype's find_library utility...
 if not os.path.exists(libpath):
     if platform.system() == "Windows":
         libpath = find_library("{7}-{3}.{4}")
@@ -1311,7 +1311,7 @@ if not os.path.exists(libpath):
     else:
         libpath = find_library("{7}")
 
-# ... or print a warning
+# ... and print a warning if everything failed
 if not os.path.exists(libpath):
     print("Warning: could not find Gmsh library")
 
