@@ -1271,22 +1271,38 @@ from math import pi
 __version__ = {6}_API_VERSION
 
 oldsig = signal.signal(signal.SIGINT, signal.SIG_DFL)
+
 moduledir = os.path.dirname(os.path.realpath(__file__))
+parentdir1 = os.path.dirname(moduledir)
+parentdir2 = os.path.dirname(parentdir1)
+
 if platform.system() == "Windows":
     libname = "{7}-{3}.{4}.dll"
-    libdir = os.path.dirname(moduledir)
 elif platform.system() == "Darwin":
     libname = "lib{7}.{3}.{4}.dylib"
-    libdir = os.path.dirname(os.path.dirname(moduledir))
 else:
     libname = "lib{7}.so.{3}.{4}"
-    libdir = os.path.dirname(os.path.dirname(moduledir))
 
-libpath = os.path.join(libdir, libname)
+# check if the library is in the same directory as the module...
+libpath = os.path.join(moduledir, libname)
+
+# ... or in the parent directory or its lib or Lib subdirectory
 if not os.path.exists(libpath):
-    libpath = os.path.join(libdir, "Lib", libname)
+    libpath = os.path.join(parentdir1, libname)
 if not os.path.exists(libpath):
-    libpath = os.path.join(moduledir, libname)
+    libpath = os.path.join(parentdir1, "lib", libname)
+if not os.path.exists(libpath):
+    libpath = os.path.join(parentdir1, "lib", libname)
+
+# ... or in the parent of the parent directory or its lib or Lib subdirectory
+if not os.path.exists(libpath):
+    libpath = os.path.join(parentdir2, libname)
+if not os.path.exists(libpath):
+    libpath = os.path.join(parentdir2, "lib", libname)
+if not os.path.exists(libpath):
+    libpath = os.path.join(parentdir2, "lib", libname)
+
+# ... or use ctype's find_library utility
 if not os.path.exists(libpath):
     if platform.system() == "Windows":
         libpath = find_library("{7}-{3}.{4}")
@@ -1294,6 +1310,10 @@ if not os.path.exists(libpath):
             libpath = find_library("{7}")
     else:
         libpath = find_library("{7}")
+
+# ... or print a warning
+if not os.path.exists(libpath):
+    print("Warning: could not find Gmsh library")
 
 lib = CDLL(libpath)
 
