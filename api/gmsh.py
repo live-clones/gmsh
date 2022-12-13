@@ -26,7 +26,11 @@ GMSH_API_VERSION_PATCH = 1
 __version__ = GMSH_API_VERSION
 
 oldsig = signal.signal(signal.SIGINT, signal.SIG_DFL)
+
 moduledir = os.path.dirname(os.path.realpath(__file__))
+parentdir1 = os.path.dirname(moduledir)
+parentdir2 = os.path.dirname(parentdir1)
+
 if platform.system() == "Windows":
     libname = "gmsh-4.11.dll"
 elif platform.system() == "Darwin":
@@ -34,14 +38,25 @@ elif platform.system() == "Darwin":
 else:
     libname = "libgmsh.so.4.11"
 
-# check if the library is in the same directory as the module,,,
+# check if the library is in the same directory as the module...
 libpath = os.path.join(moduledir, libname)
-# ... or in a "Lib" subdirectory
+
+# ... or in the parent directory or its lib or Lib subdirectory
 if not os.path.exists(libpath):
-    libpath = os.path.join(moduledir, "Lib", libname)
-# ... or in a "lib" subdirectory
+    libpath = os.path.join(parentdir1, libname)
 if not os.path.exists(libpath):
-    libpath = os.path.join(moduledir, "lib", libname)
+    libpath = os.path.join(parentdir1, "lib", libname)
+if not os.path.exists(libpath):
+    libpath = os.path.join(parentdir1, "lib", libname)
+
+# ... or in the parent of the parent directory or its lib or Lib subdirectory
+if not os.path.exists(libpath):
+    libpath = os.path.join(parentdir2, libname)
+if not os.path.exists(libpath):
+    libpath = os.path.join(parentdir2, "lib", libname)
+if not os.path.exists(libpath):
+    libpath = os.path.join(parentdir2, "lib", libname)
+
 # ... or use ctype's find_library utility
 if not os.path.exists(libpath):
     if platform.system() == "Windows":
@@ -50,6 +65,10 @@ if not os.path.exists(libpath):
             libpath = find_library("gmsh")
     else:
         libpath = find_library("gmsh")
+
+# ... or print a warning
+if not os.path.exists(libpath):
+    print("Warning: could not find Gmsh library")
 
 lib = CDLL(libpath)
 
