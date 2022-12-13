@@ -3838,7 +3838,11 @@ corners of the transfinite interpolation. If no tags are given, the
 transfinite algorithm will try to find the corners automatically. The
 optional argument specifies the way the triangles are oriented when the
 mesh is not recombined. @code{Alternate} is a synonym for
-@code{AlternateRight}. @value{SYNC}
+@code{AlternateRight}. For 3-sided surfaces a specific algorithm can be
+used to generate structured triangular by setting
+@code{Mesh.TransfiniteTri} to 1. Examples can be found in
+@url{@value{GITLAB-PREFIX}/benchmarks/transfinite,benchmarks/transfinite}.
+@value{SYNC}
 
 @item Transfinite Volume @{ @var{expression-list} @} < = @{ @var{expression-list} @} > ;
 Select five- or six-face volumes to be meshed with the 3D transfinite
