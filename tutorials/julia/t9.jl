@@ -1,12 +1,12 @@
 # See the corresponding Python tutorial for detailed comments.
-# Add the path to the t7_bgmesh.pos from the Gmsh tutorials folder before running the script.
+# Add the path to the view3.pos from the Gmsh tutorials folder before running the script.
 # To avoid syntax error when giving the path, use \\ instead of \.
 
 import Gmsh: gmsh
 
 gmsh.initialize()
 
-path = "C:\\Users\\Moturu\\Desktop\\tutorials\\view3.pos"
+path = "< PATH TO GMSH >\\tutorials\\view3.pos"
 gmsh.merge(path)
 
 v = gmsh.view.getTags()
