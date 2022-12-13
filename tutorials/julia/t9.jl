@@ -2,7 +2,7 @@
 # Add the path to the view3.pos from the Gmsh tutorials folder before running the script.
 # To avoid syntax error when giving the path, use \\ instead of \.
 
-import Gmsh: gmsh
+import gmsh
 
 gmsh.initialize()
 
