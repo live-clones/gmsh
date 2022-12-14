@@ -47,7 +47,7 @@ if not os.path.exists(libpath):
 if not os.path.exists(libpath):
     libpath = os.path.join(parentdir1, "lib", libname)
 if not os.path.exists(libpath):
-    libpath = os.path.join(parentdir1, "lib", libname)
+    libpath = os.path.join(parentdir1, "Lib", libname)
 
 # ... or in the parent of the parent directory or its lib or Lib subdirectory
 if not os.path.exists(libpath):
@@ -55,7 +55,7 @@ if not os.path.exists(libpath):
 if not os.path.exists(libpath):
     libpath = os.path.join(parentdir2, "lib", libname)
 if not os.path.exists(libpath):
-    libpath = os.path.join(parentdir2, "lib", libname)
+    libpath = os.path.join(parentdir2, "Lib", libname)
 
 # if we couldn't find it, use ctype's find_library utility...
 if not os.path.exists(libpath):
@@ -68,7 +68,7 @@ if not os.path.exists(libpath):
 
 # ... and print a warning if everything failed
 if not os.path.exists(libpath):
-    print("Warning: could not find Gmsh library")
+    print("Warning: could not find Gmsh shared library " + libname)
 
 lib = CDLL(libpath)
 
