@@ -11,6 +11,19 @@
 # Python types (as well as `numpy' arrays if `numpy' is available). See
 # `tutorials/python' and `examples/api' for tutorials and examples.
 
+"""
+Gmsh is an automatic three-dimensional finite element mesh generator with a
+built-in CAD engine and post-processor. Its design goal is to provide a fast,
+light and user-friendly meshing tool with parametric input and flexible
+visualization capabilities. Gmsh is built around four modules (geometry, mesh,
+solver and post-processing), which can be controlled with the graphical user
+interface, from the command line, using text files written in Gmsh's own
+scripting language (.geo files), or through the C++, C, Python, Julia and
+Fortran application programming interface (API).
+
+This module defined the Gmsh Python API.
+"""
+
 from ctypes import *
 from ctypes.util import find_library
 import signal

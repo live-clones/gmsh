@@ -1256,6 +1256,12 @@ python_header = """# {0}
 # Python types (as well as `numpy' arrays if `numpy' is available). See
 # `tutorials/python' and `examples/api' for tutorials and examples.
 
+\"\"\"
+{8}
+
+This module defined the {2} Python API.
+\"\"\"
+
 from ctypes import *
 from ctypes.util import find_library
 import signal
@@ -1981,7 +1987,8 @@ class API:
         namespace = "gmsh",
         code = "Gmsh",
         copyright = "Gmsh - Copyright (C) 1997-2022 C. Geuzaine, J.-F. Remacle",
-        issues = "https://gitlab.onelab.info/gmsh/gmsh/issues."):
+        issues = "https://gitlab.onelab.info/gmsh/gmsh/issues.",
+        description = "Gmsh is an automatic three-dimensional finite element mesh generator with a built-in CAD engine and post-processor. Its design goal is to provide a fast, light and user-friendly meshing tool with parametric input and flexible visualization capabilities.\nGmsh is built around four modules (geometry, mesh, solver and post-processing), which can be controlled with the graphical user interface, from the command line, using text files written in Gmsh's own scripting language (.geo files), or through the C++, C, Python, Julia and Fortran application programming interface (API)."):
         self.version_major = version_major
         self.version_minor = version_minor
         self.version_patch = version_patch
@@ -1990,6 +1997,7 @@ class API:
         self.code = code
         self.copyright = copyright
         self.issues = issues
+        self.description = description
         self.modules = []
         self.api_lineno = {'cpp': {}, 'c': {}, 'py': {}, 'jl': {}, 'f': {}}
 
@@ -2284,7 +2292,8 @@ class API:
                 f,
                 python_header.format(self.copyright, self.issues, self.code,
                                      self.version_major, self.version_minor,
-                                     self.version_patch, ns.upper(), ns))
+                                     self.version_patch, ns.upper(), ns,
+                                     "\n".join(textwrap.wrap(self.description, 80))))
             for module in self.modules:
                 write_module(f, module, "", "", "")
 
@@ -2363,7 +2372,12 @@ class API:
         def write_module(f, m, c_mpath, jl_mpath, level):
             self.fwrite(f, '\n"""\n    ')
             self.fwrite(f, "module " + jl_mpath + m.name + "\n\n")
-            self.fwrite(f, "\n".join(textwrap.wrap(capi(m.doc), 80)) + "\n")
+            if level == 1:
+                self.fwrite(f, "\n".join(textwrap.wrap(self.description, 80)) + "\n")
+                self.fwrite(f, "\nThis module defines the {0} Julia API.\n".format(
+                    ns.capitalize()))
+            else:
+                self.fwrite(f, "\n".join(textwrap.wrap(capi(m.doc), 80)) + "\n")
             self.fwrite(f, '"""\n')
             self.fwrite(f, "module " + m.name + "\n\n")
             if level == 1:
