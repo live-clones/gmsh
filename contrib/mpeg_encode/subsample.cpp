@@ -98,11 +98,11 @@ LumMotionErrorA(LumBlock currentBlock,
                 int mx,
                 int32 bestSoFar)
 {
-    register int32    diff = 0;	    /* max value of diff is 255*256 = 65280 */
-    register int32 localDiff;
-    register uint8 *macross;
-    register uint8 **prev;
-    register int    fy, fx;
+    int32    diff = 0;	    /* max value of diff is 255*256 = 65280 */
+    int32 localDiff;
+    uint8 *macross;
+    uint8 **prev;
+    int    fy, fx;
     boolean xHalf, yHalf;
 
     xHalf = (ABS(mx) % 2 == 1);
@@ -274,11 +274,11 @@ LumMotionErrorB(LumBlock currentBlock,
                 int mx,
                 int32 bestSoFar)
 {
-    register int32    diff = 0;	    /* max value of diff is 255*256 = 65280 */
-    register int32 localDiff;
-    register uint8 *macross;
-    register uint8 **prev;
-    register int    fy, fx;
+    int32    diff = 0;	    /* max value of diff is 255*256 = 65280 */
+    int32 localDiff;
+    uint8 *macross;
+    uint8 **prev;
+    int    fy, fx;
     boolean xHalf, yHalf;
 
     xHalf = (ABS(mx) % 2 == 1);
@@ -450,11 +450,11 @@ LumMotionErrorC(LumBlock currentBlock,
                 int mx,
                 int32 bestSoFar)
 {
-    register int32    diff = 0;	    /* max value of diff is 255*256 = 65280 */
-    register int32 localDiff;
-    register uint8 *macross;
-    register uint8 **prev;
-    register int    fy, fx;
+    int32    diff = 0;	    /* max value of diff is 255*256 = 65280 */
+    int32 localDiff;
+    uint8 *macross;
+    uint8 **prev;
+    int    fy, fx;
     boolean xHalf, yHalf;
 
     xHalf = (ABS(mx) % 2 == 1);
@@ -626,11 +626,11 @@ LumMotionErrorD(LumBlock currentBlock,
                 int mx,
                 int32 bestSoFar)
 {
-    register int32    diff = 0;	    /* max value of diff is 255*256 = 65280 */
-    register int32 localDiff;
-    register uint8 *macross;
-    register uint8 **prev;
-    register int    fy, fx;
+    int32    diff = 0;	    /* max value of diff is 255*256 = 65280 */
+    int32 localDiff;
+    uint8 *macross;
+    uint8 **prev;
+    int    fy, fx;
     boolean xHalf, yHalf;
 
     xHalf = (ABS(mx) % 2 == 1);
