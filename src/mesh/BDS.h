@@ -148,7 +148,7 @@ public:
   {
     if(_faces.empty()) return;
     _faces.erase(std::remove_if(_faces.begin(), _faces.end(),
-                                std::bind2nd(std::equal_to<BDS_Face *>(), t)),
+                                [t](BDS_Face *ptr){ return ptr == t; }),
                  _faces.end());
   }
   void oppositeof(BDS_Point *oface[2]) const;
