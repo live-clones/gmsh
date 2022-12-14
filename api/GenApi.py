@@ -1259,7 +1259,7 @@ python_header = """# {0}
 \"\"\"
 {8}
 
-This module defined the {2} Python API.
+This module defines the {2} Python API.
 \"\"\"
 
 from ctypes import *

@@ -21,7 +21,7 @@ interface, from the command line, using text files written in Gmsh's own
 scripting language (.geo files), or through the C++, C, Python, Julia and
 Fortran application programming interface (API).
 
-This module defined the Gmsh Python API.
+This module defines the Gmsh Python API.
 """
 
 from ctypes import *
