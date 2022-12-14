@@ -47,7 +47,7 @@ public:
 };
 
 struct partitionEdgePtrLessThan
-  : public std::binary_function<partitionEdge *, partitionEdge *, bool> {
+{
   bool operator()(const partitionEdge *e1, const partitionEdge *e2) const
   {
     if(e1->numPartitions() < e2->numPartitions()) return true;
