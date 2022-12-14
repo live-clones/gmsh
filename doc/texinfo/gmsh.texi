@@ -961,7 +961,7 @@ the API: see @url{@value{GITLAB-PREFIX}/examples,examples} and
 * t5::                          Mesh sizes, macros, loops, holes in volumes
 * t6::                          Transfinite meshes, deleting entities
 * t7::                          Background meshes
-* t8::                          Post-processing and animations
+* t8::                          Post-processing, image export and animations
 * t9::                          Plugins
 * t10::                         Mesh size fields
 * t11::                         Unstructured quadrangular meshes
@@ -1159,7 +1159,7 @@ and Fortran
 @c -------------------------------------------------------------------------
 
 @node t8, t9, t7, Gmsh tutorial
-@section @code{t8}: Post-processing and animations
+@section @code{t8}: Post-processing, image export and animations
 
 See
 @url{@value{GITLAB-PREFIX}/tutorials/t8.geo,t8.geo}.
