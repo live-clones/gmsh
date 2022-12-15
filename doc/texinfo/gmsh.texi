@@ -961,7 +961,7 @@ the API: see @url{@value{GITLAB-PREFIX}/examples,examples} and
 * t5::                          Mesh sizes, macros, loops, holes in volumes
 * t6::                          Transfinite meshes, deleting entities
 * t7::                          Background meshes
-* t8::                          Post-processing and animations
+* t8::                          Post-processing, image export and animations
 * t9::                          Plugins
 * t10::                         Mesh size fields
 * t11::                         Unstructured quadrangular meshes
@@ -1159,7 +1159,7 @@ and Fortran
 @c -------------------------------------------------------------------------
 
 @node t8, t9, t7, Gmsh tutorial
-@section @code{t8}: Post-processing and animations
+@section @code{t8}: Post-processing, image export and animations
 
 See
 @url{@value{GITLAB-PREFIX}/tutorials/t8.geo,t8.geo}.
@@ -3838,7 +3838,11 @@ corners of the transfinite interpolation. If no tags are given, the
 transfinite algorithm will try to find the corners automatically. The
 optional argument specifies the way the triangles are oriented when the
 mesh is not recombined. @code{Alternate} is a synonym for
-@code{AlternateRight}. @value{SYNC}
+@code{AlternateRight}. For 3-sided surfaces a specific algorithm can be
+used to generate structured triangular by setting
+@code{Mesh.TransfiniteTri} to 1. Examples can be found in
+@url{@value{GITLAB-PREFIX}/benchmarks/transfinite,benchmarks/transfinite}.
+@value{SYNC}
 
 @item Transfinite Volume @{ @var{expression-list} @} < = @{ @var{expression-list} @} > ;
 Select five- or six-face volumes to be meshed with the 3D transfinite

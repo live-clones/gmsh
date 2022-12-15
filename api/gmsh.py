@@ -11,6 +11,19 @@
 # Python types (as well as `numpy' arrays if `numpy' is available). See
 # `tutorials/python' and `examples/api' for tutorials and examples.
 
+"""
+Gmsh is an automatic three-dimensional finite element mesh generator with a
+built-in CAD engine and post-processor. Its design goal is to provide a fast,
+light and user-friendly meshing tool with parametric input and flexible
+visualization capabilities. Gmsh is built around four modules (geometry, mesh,
+solver and post-processing), which can be controlled with the graphical user
+interface, from the command line, using text files written in Gmsh's own
+scripting language (.geo files), or through the C++, C, Python, Julia and
+Fortran application programming interface (API).
+
+This module defines the Gmsh Python API.
+"""
+
 from ctypes import *
 from ctypes.util import find_library
 import signal
@@ -47,7 +60,7 @@ if not os.path.exists(libpath):
 if not os.path.exists(libpath):
     libpath = os.path.join(parentdir1, "lib", libname)
 if not os.path.exists(libpath):
-    libpath = os.path.join(parentdir1, "lib", libname)
+    libpath = os.path.join(parentdir1, "Lib", libname)
 
 # ... or in the parent of the parent directory or its lib or Lib subdirectory
 if not os.path.exists(libpath):
@@ -55,9 +68,9 @@ if not os.path.exists(libpath):
 if not os.path.exists(libpath):
     libpath = os.path.join(parentdir2, "lib", libname)
 if not os.path.exists(libpath):
-    libpath = os.path.join(parentdir2, "lib", libname)
+    libpath = os.path.join(parentdir2, "Lib", libname)
 
-# ... or use ctype's find_library utility
+# if we couldn't find it, use ctype's find_library utility...
 if not os.path.exists(libpath):
     if platform.system() == "Windows":
         libpath = find_library("gmsh-4.11")
@@ -66,9 +79,9 @@ if not os.path.exists(libpath):
     else:
         libpath = find_library("gmsh")
 
-# ... or print a warning
+# ... and print a warning if everything failed
 if not os.path.exists(libpath):
-    print("Warning: could not find Gmsh library")
+    print("Warning: could not find Gmsh shared library " + libname)
 
 lib = CDLL(libpath)
 
