@@ -7,7 +7,7 @@
 #include "shapeFunctions.h"
 #include "GmshDefines.h"
 
-StringXNumber CurlOptions_Number[] = {{GMSH_FULLRC, "View", nullptr, -1.}};
+StringXNumber CurlOptions_Number[] = {{GMSH_FULLRC, "View", nullptr, -1.}, {GMSH_FULLRC, "Z-Only", nullptr, -1.}};
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterCurlPlugin() { return new GMSH_CurlPlugin(); }
@@ -18,6 +18,7 @@ std::string GMSH_CurlPlugin::getHelp() const
   return "Plugin(Curl) computes the curl of the field "
          "in the view `View'.\n\n"
          "If `View' < 0, the plugin is run on the current view.\n\n"
+         "If `Z-Only' > 0, a scalar field with the z-component of the curl is created instead of a vector field.\n\n"
          "Plugin(Curl) creates one new list-based view.";
 }
 
@@ -34,6 +35,7 @@ StringXNumber *GMSH_CurlPlugin::getOption(int iopt)
 PView *GMSH_CurlPlugin::execute(PView *v)
 {
   int iView = (int)CurlOptions_Number[0].def;
+  bool zOnly = CurlOptions_Number[1].def > 0;
 
   PView *v1 = getView(iView, v);
   if(!v1) return v;
@@ -56,7 +58,7 @@ PView *GMSH_CurlPlugin::execute(PView *v)
       if(numComp != 3) continue;
       int type = data1->getType(firstNonEmptyStep, ent, ele);
       int numNodes = data1->getNumNodes(firstNonEmptyStep, ent, ele);
-      std::vector<double> *out = data2->incrementList(3, type, numNodes);
+      std::vector<double> *out = data2->incrementList(zOnly ? 1 : 3, type, numNodes);
       if(!out) continue;
       double x[8], y[8], z[8], val[8 * 3];
       for(int nod = 0; nod < numNodes; nod++)
@@ -79,8 +81,10 @@ PView *GMSH_CurlPlugin::execute(PView *v)
           double u, v, w, f[3];
           element->getNode(nod, u, v, w);
           element->interpolateCurl(val, u, v, w, f, 3);
-          out->push_back(f[0]);
-          out->push_back(f[1]);
+          if(!zOnly) {
+            out->push_back(f[0]);
+            out->push_back(f[1]);
+          }
           out->push_back(f[2]);
         }
       }
