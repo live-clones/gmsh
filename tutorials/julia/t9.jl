@@ -1,12 +1,10 @@
 # See the corresponding Python tutorial for detailed comments.
-# Add the path to the view3.pos from the Gmsh tutorials folder before running the script.
-# To avoid syntax error when giving the path, use \\ instead of \.
 
 import gmsh
 
 gmsh.initialize()
 
-path = "< PATH TO GMSH >\\tutorials\\view3.pos"
+path = abspath(joinpath("..","view3.pos"))
 gmsh.merge(path)
 
 v = gmsh.view.getTags()

@@ -1,12 +1,10 @@
 # See the corresponding Python tutorial for detailed comments.
-# Add the path to the t7_bgmesh.pos from the Gmsh tutorials folder before running the script.
-# To avoid syntax error when giving the path, use \\ instead of \.
 
 import gmsh
 
 gmsh.initialize()
 
-path = "<PATH TO GMSH >\\tutorials\\t7_bgmesh.pos"
+path = abspath(joinpath("..","t7_bgmesh.pos"))
 gmsh.merge(path)
 
 gmsh.model.add("t7")
