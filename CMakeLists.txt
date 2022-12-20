@@ -1745,7 +1745,7 @@ else()
 endif()
 target_link_libraries(gmsh ${LINK_LIBRARIES})
 
-# Windows specific linker options
+# OS specific linker options
 if(WIN32 AND NOT MSVC)
   set(FLAGS "-Wl,--stack,16777216 -Wl,--image-base -Wl,0x10000000 -static")
   if(HAVE_FLTK)
@@ -1767,6 +1767,9 @@ if(WIN32 AND NOT MSVC)
   set(CMAKE_EXE_LINK_DYNAMIC_CXX_FLAGS)
 elseif(MSVC)
   set_target_properties(gmsh PROPERTIES LINK_FLAGS "/STACK:16777216 /SAFESEH:NO")
+elseif(APPLE)
+  # this remove ld warnings with PETSc+MUMPS on recent macOS versions
+  # set_target_properties(gmsh PROPERTIES LINK_FLAGS "-Wl,-no_compact_unwind")
 endif()
 
 # android target
@@ -2200,6 +2203,9 @@ if(ENABLE_TESTS AND NOT DISABLE_GMSH_TESTS)
           set(FLAGS "${FLAGS} -mconsole")
         endif()
         set_target_properties(${TEST} PROPERTIES LINK_FLAGS "${FLAGS}")
+      elseif(APPLE)
+        # this remove ld warnings with PETSc+MUMPS on recent macOS versions
+        # set_target_properties(${TEST} PROPERTIES LINK_FLAGS "-Wl,-no_compact_unwind")
       endif()
       add_test(${TEST} ${TEST} -nopopup)
     endforeach()

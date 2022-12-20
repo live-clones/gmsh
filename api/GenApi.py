@@ -1256,6 +1256,12 @@ python_header = """# {0}
 # Python types (as well as `numpy' arrays if `numpy' is available). See
 # `tutorials/python' and `examples/api' for tutorials and examples.
 
+\"\"\"
+{8}
+
+This module defines the {2} Python API.
+\"\"\"
+
 from ctypes import *
 from ctypes.util import find_library
 import signal
@@ -1271,22 +1277,38 @@ from math import pi
 __version__ = {6}_API_VERSION
 
 oldsig = signal.signal(signal.SIGINT, signal.SIG_DFL)
+
 moduledir = os.path.dirname(os.path.realpath(__file__))
+parentdir1 = os.path.dirname(moduledir)
+parentdir2 = os.path.dirname(parentdir1)
+
 if platform.system() == "Windows":
     libname = "{7}-{3}.{4}.dll"
-    libdir = os.path.dirname(moduledir)
 elif platform.system() == "Darwin":
     libname = "lib{7}.{3}.{4}.dylib"
-    libdir = os.path.dirname(os.path.dirname(moduledir))
 else:
     libname = "lib{7}.so.{3}.{4}"
-    libdir = os.path.dirname(os.path.dirname(moduledir))
 
-libpath = os.path.join(libdir, libname)
+# check if the library is in the same directory as the module...
+libpath = os.path.join(moduledir, libname)
+
+# ... or in the parent directory or its lib or Lib subdirectory
 if not os.path.exists(libpath):
-    libpath = os.path.join(libdir, "Lib", libname)
+    libpath = os.path.join(parentdir1, libname)
 if not os.path.exists(libpath):
-    libpath = os.path.join(moduledir, libname)
+    libpath = os.path.join(parentdir1, "lib", libname)
+if not os.path.exists(libpath):
+    libpath = os.path.join(parentdir1, "Lib", libname)
+
+# ... or in the parent of the parent directory or its lib or Lib subdirectory
+if not os.path.exists(libpath):
+    libpath = os.path.join(parentdir2, libname)
+if not os.path.exists(libpath):
+    libpath = os.path.join(parentdir2, "lib", libname)
+if not os.path.exists(libpath):
+    libpath = os.path.join(parentdir2, "Lib", libname)
+
+# if we couldn't find it, use ctype's find_library utility...
 if not os.path.exists(libpath):
     if platform.system() == "Windows":
         libpath = find_library("{7}-{3}.{4}")
@@ -1294,6 +1316,10 @@ if not os.path.exists(libpath):
             libpath = find_library("{7}")
     else:
         libpath = find_library("{7}")
+
+# ... and print a warning if everything failed
+if not os.path.exists(libpath):
+    print("Warning: could not find Gmsh shared library " + libname)
 
 lib = CDLL(libpath)
 
@@ -1961,7 +1987,8 @@ class API:
         namespace = "gmsh",
         code = "Gmsh",
         copyright = "Gmsh - Copyright (C) 1997-2022 C. Geuzaine, J.-F. Remacle",
-        issues = "https://gitlab.onelab.info/gmsh/gmsh/issues."):
+        issues = "https://gitlab.onelab.info/gmsh/gmsh/issues.",
+        description = "Gmsh is an automatic three-dimensional finite element mesh generator with a built-in CAD engine and post-processor. Its design goal is to provide a fast, light and user-friendly meshing tool with parametric input and flexible visualization capabilities.\nGmsh is built around four modules (geometry, mesh, solver and post-processing), which can be controlled with the graphical user interface, from the command line, using text files written in Gmsh's own scripting language (.geo files), or through the C++, C, Python, Julia and Fortran application programming interface (API)."):
         self.version_major = version_major
         self.version_minor = version_minor
         self.version_patch = version_patch
@@ -1970,6 +1997,7 @@ class API:
         self.code = code
         self.copyright = copyright
         self.issues = issues
+        self.description = description
         self.modules = []
         self.api_lineno = {'cpp': {}, 'c': {}, 'py': {}, 'jl': {}, 'f': {}}
 
@@ -2264,7 +2292,8 @@ class API:
                 f,
                 python_header.format(self.copyright, self.issues, self.code,
                                      self.version_major, self.version_minor,
-                                     self.version_patch, ns.upper(), ns))
+                                     self.version_patch, ns.upper(), ns,
+                                     "\n".join(textwrap.wrap(self.description, 80))))
             for module in self.modules:
                 write_module(f, module, "", "", "")
 
@@ -2343,7 +2372,12 @@ class API:
         def write_module(f, m, c_mpath, jl_mpath, level):
             self.fwrite(f, '\n"""\n    ')
             self.fwrite(f, "module " + jl_mpath + m.name + "\n\n")
-            self.fwrite(f, "\n".join(textwrap.wrap(capi(m.doc), 80)) + "\n")
+            if level == 1:
+                self.fwrite(f, "\n".join(textwrap.wrap(self.description, 80)) + "\n")
+                self.fwrite(f, "\nThis module defines the {0} Julia API.\n".format(
+                    ns.capitalize()))
+            else:
+                self.fwrite(f, "\n".join(textwrap.wrap(capi(m.doc), 80)) + "\n")
             self.fwrite(f, '"""\n')
             self.fwrite(f, "module " + m.name + "\n\n")
             if level == 1:

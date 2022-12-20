@@ -959,9 +959,9 @@ the API: see @url{@value{GITLAB-PREFIX}/examples,examples} and
 * t3::                          Extruded meshes, ONELAB parameters, options
 * t4::                          Built-in functions, holes in surfaces, annotations, entity colors
 * t5::                          Mesh sizes, macros, loops, holes in volumes
-* t6::                          Transfinite meshes
+* t6::                          Transfinite meshes, deleting entities
 * t7::                          Background meshes
-* t8::                          Post-processing and animations
+* t8::                          Post-processing, image export and animations
 * t9::                          Plugins
 * t10::                         Mesh size fields
 * t11::                         Unstructured quadrangular meshes
@@ -1113,7 +1113,7 @@ and Fortran
 @c -------------------------------------------------------------------------
 
 @node t6, t7, t5, Gmsh tutorial
-@section @code{t6}: Transfinite meshes
+@section @code{t6}: Transfinite meshes, deleting entities
 
 See
 @url{@value{GITLAB-PREFIX}/tutorials/t6.geo,t6.geo}.
@@ -1159,7 +1159,7 @@ and Fortran
 @c -------------------------------------------------------------------------
 
 @node t8, t9, t7, Gmsh tutorial
-@section @code{t8}: Post-processing and animations
+@section @code{t8}: Post-processing, image export and animations
 
 See
 @url{@value{GITLAB-PREFIX}/tutorials/t8.geo,t8.geo}.
@@ -3838,7 +3838,11 @@ corners of the transfinite interpolation. If no tags are given, the
 transfinite algorithm will try to find the corners automatically. The
 optional argument specifies the way the triangles are oriented when the
 mesh is not recombined. @code{Alternate} is a synonym for
-@code{AlternateRight}. @value{SYNC}
+@code{AlternateRight}. For 3-sided surfaces a specific algorithm can be
+used to generate structured triangular by setting
+@code{Mesh.TransfiniteTri} to 1. Examples can be found in
+@url{@value{GITLAB-PREFIX}/benchmarks/transfinite,benchmarks/transfinite}.
+@value{SYNC}
 
 @item Transfinite Volume @{ @var{expression-list} @} < = @{ @var{expression-list} @} > ;
 Select five- or six-face volumes to be meshed with the 3D transfinite
@@ -4414,7 +4418,9 @@ surfaces can also store @emph{embedded} entities of lower dimension, to
 force a subsequent mesh to be conformal to internal features like a
 point in the middle of a surface. Model entities are identified by a
 pair of integers: their dimension @emph{dim} (0, 1, 2 or 3) and their
-@emph{tag}, a strictly positive identification number. @emph{Physical
+@emph{tag}, a strictly positive identification number. When dealing with
+multiple geometrical entities of possibly different dimensions, the API
+packs them as a vector of (dim, tag) integer pairs.  @emph{Physical
 groups} are collections of model entities and are also identified by
 their dimension and by a @emph{tag}. Operations which do not directly
 reference a model are performed on the @emph{current} model.
@@ -4580,7 +4586,7 @@ on `Restore all options to default settings' button in the
 @c -------------------------------------------------------------------------
 
 @node Mesh options, Solver options, Geometry options, Gmsh options
-@section Mesh options list
+@section Mesh options
 
 @include opt_mesh.texi
 

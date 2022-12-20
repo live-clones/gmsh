@@ -2,7 +2,7 @@
 #
 #  Gmsh Python tutorial 6
 #
-#  Transfinite meshes
+#  Transfinite meshes, deleting entities
 #
 # ------------------------------------------------------------------------------
 

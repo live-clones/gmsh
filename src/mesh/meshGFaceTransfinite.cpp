@@ -11,6 +11,7 @@
 #include <array>
 #include "meshGFace.h"
 #include "meshGEdge.h"
+#include "GModel.h"
 #include "GVertex.h"
 #include "GEdge.h"
 #include "GFace.h"
@@ -244,6 +245,8 @@ int MeshTransfiniteSurface(GFace *gf)
       N[iCorner++] = i;
     }
     SPoint2 param;
+    // reparamMeshVertexOnFace does not provide correct (u,v) coordinates
+    // on degenerated edges
     bool onSeam = !reparamMeshVertexOnFace(v, gf, param);
     U.push_back(param[0]);
     V.push_back(param[1]);
@@ -422,13 +425,15 @@ int MeshTransfiniteSurface(GFace *gf)
         int iP1 = N1 + i;
         int iP2 = N2 + j;
         int iP3 = ((N3 + N2) - i) % m_vertices.size();
+
         double Up, Vp;
         if(gf->geomType() != GEntity::RuledSurface) {
           if(!gf->meshAttributes.transfinite3) {
             Up = TRAN_TRI(U[iP1], U[iP2], U[iP3], UC1, UC2, UC3, u, v);
             Vp = TRAN_TRI(V[iP1], V[iP2], V[iP3], VC1, VC2, VC3, u, v);
           }
-          else {
+          else { // transfinite3
+
             if(j >= i) {
               tab[i][j] = tab[i][H];
               continue;
@@ -438,30 +443,67 @@ int MeshTransfiniteSurface(GFace *gf)
             double v = t;
             int k;
             for(k = 1; k <= H; k++)
-              if(t < lengths_j[k] / L_j && t > lengths_j[k - 1] / L_j) break;
+              if(t <= lengths_j[k] / L_j && t > lengths_j[k - 1] / L_j) break;
 
             double a =
               (t * L_j - lengths_j[k - 1]) / (lengths_j[k] - lengths_j[k - 1]);
+
             double UP2 = u2[k - 1] + a * (u2[k] - u2[k - 1]);
             double VP2 = v2[k - 1] + a * (v2[k] - v2[k - 1]);
             Up = TRAN_TRI(U[iP1], UP2, U[iP3], UC1, UC2, UC3, u, v);
             Vp = TRAN_TRI(V[iP1], VP2, V[iP3], VC1, VC2, VC3, u, v);
-          }
+
+          } // transfinite3
         }
-        else {
-          // FIXME: to get nice meshes we would need to make the u,v
-          // coords match with the (degenerate) coordinates of the
-          // underlying ruled surface; so instead we just interpolate
-          // in real space
-          double xp = TRAN_TRI(m_vertices[iP1]->x(), m_vertices[iP2]->x(),
-                               m_vertices[iP3]->x(), m_vertices[N1]->x(),
-                               m_vertices[N2]->x(), m_vertices[N3]->x(), u, v);
-          double yp = TRAN_TRI(m_vertices[iP1]->y(), m_vertices[iP2]->y(),
-                               m_vertices[iP3]->y(), m_vertices[N1]->y(),
-                               m_vertices[N2]->y(), m_vertices[N3]->y(), u, v);
-          double zp = TRAN_TRI(m_vertices[iP1]->z(), m_vertices[iP2]->z(),
-                               m_vertices[iP3]->z(), m_vertices[N1]->z(),
-                               m_vertices[N2]->z(), m_vertices[N3]->z(), u, v);
+        else { // RuledSurface
+          // FIXME: to get nice meshes we would need to make the u,v coords
+          // match with the (degenerate) coordinates of the underlying ruled
+          // surface; so instead we just interpolate in real space
+          double xp, yp, zp;
+          if(!gf->meshAttributes.transfinite3) {
+            xp = TRAN_TRI(m_vertices[iP1]->x(), m_vertices[iP2]->x(),
+                          m_vertices[iP3]->x(), m_vertices[N1]->x(),
+                          m_vertices[N2]->x(), m_vertices[N3]->x(), u, v);
+            yp = TRAN_TRI(m_vertices[iP1]->y(), m_vertices[iP2]->y(),
+                          m_vertices[iP3]->y(), m_vertices[N1]->y(),
+                          m_vertices[N2]->y(), m_vertices[N3]->y(), u, v);
+            zp = TRAN_TRI(m_vertices[iP1]->z(), m_vertices[iP2]->z(),
+                          m_vertices[iP3]->z(), m_vertices[N1]->z(),
+                          m_vertices[N2]->z(), m_vertices[N3]->z(), u, v);
+          }
+          else {
+            if(j >= i) {
+              tab[i][j] = tab[i][H];
+              continue;
+            }
+            double t = double(j) / double(i);
+            double v = t;
+            int k;
+            for(k = 1; k <= H; k++)
+              if(t <= lengths_j[k] / L_j && t > lengths_j[k - 1] / L_j) break;
+
+            double a =
+              (t * L_j - lengths_j[k - 1]) / (lengths_j[k] - lengths_j[k - 1]);
+            double x_iP2 =
+              m_vertices[N2 + k - 1]->x() +
+              a * (m_vertices[N2 + k]->x() - m_vertices[N2 + k - 1]->x());
+            double y_iP2 =
+              m_vertices[N2 + k - 1]->y() +
+              a * (m_vertices[N2 + k]->y() - m_vertices[N2 + k - 1]->y());
+            double z_iP2 =
+              m_vertices[N2 + k - 1]->z() +
+              a * (m_vertices[N2 + k]->z() - m_vertices[N2 + k - 1]->z());
+
+            xp = TRAN_TRI(m_vertices[iP1]->x(), x_iP2, m_vertices[iP3]->x(),
+                          m_vertices[N1]->x(), m_vertices[N2]->x(),
+                          m_vertices[N3]->x(), u, v);
+            yp = TRAN_TRI(m_vertices[iP1]->y(), y_iP2, m_vertices[iP3]->y(),
+                          m_vertices[N1]->y(), m_vertices[N2]->y(),
+                          m_vertices[N3]->y(), u, v);
+            zp = TRAN_TRI(m_vertices[iP1]->z(), z_iP2, m_vertices[iP3]->z(),
+                          m_vertices[N1]->z(), m_vertices[N2]->z(),
+                          m_vertices[N3]->z(), u, v);
+          }
           // xp,yp,zp can be off the surface so we cannot use parFromPoint
           gf->XYZtoUV(xp, yp, zp, Up, Vp, 1.0, false);
         }
@@ -476,10 +518,14 @@ int MeshTransfiniteSurface(GFace *gf)
   // should we apply the elliptic smoother?
   int numSmooth = 0;
   if(gf->meshAttributes.transfiniteSmoothing < 0 &&
-     CTX::instance()->mesh.nbSmoothing > 1)
-    numSmooth = CTX::instance()->mesh.nbSmoothing;
-  else if(gf->meshAttributes.transfiniteSmoothing > 0)
+     CTX::instance()->mesh.nbSmoothing > 1) {
+    // Mesh.Smoothing is set to 1 by default, but we don't want to apply the
+    // elliptic smoother by default
+    numSmooth = CTX::instance()->mesh.nbSmoothing - 1;
+  }
+  else if(gf->meshAttributes.transfiniteSmoothing > 0) {
     numSmooth = gf->meshAttributes.transfiniteSmoothing;
+  }
 
   if(corners.size() == 4 && numSmooth && !gf->meshAttributes.transfinite3) {
     std::vector<std::vector<double> > u(L + 1), v(L + 1);
@@ -555,6 +601,143 @@ int MeshTransfiniteSurface(GFace *gf)
     }
   }
 
+  // 3-sided face smooting
+  if(corners.size() == 3 && gf->meshAttributes.transfinite3 && numSmooth) {
+    for(int it = 1; it <= numSmooth; ++it) {
+      for(int i = 1; i < L; ++i) {
+        for(int j = 1; j < i; ++j) {
+          MVertex const *v0 = tab[i][j];
+          double Uc, Vc;
+
+          gf->XYZtoUV(v0->x(), v0->y(), v0->z(), Uc, Vc, 1.0, true);
+
+          MVertex const *v1 = tab[i - 1][j - 1];
+          MVertex const *v2 = tab[i - 1][j];
+          MVertex const *v3 = tab[i][j - 1];
+          MVertex const *v4 = tab[i][j + 1];
+          MVertex const *v5 = tab[i + 1][j];
+          MVertex const *v6 = tab[i + 1][j + 1];
+
+          //        calculate elastic forces
+          double fx = v1->x() - v0->x() + v2->x() - v0->x() + v3->x() -
+                      v0->x() + v4->x() - v0->x() + v5->x() - v0->x() +
+                      v6->x() - v0->x();
+          double fy = v1->y() - v0->y() + v2->y() - v0->y() + v3->y() -
+                      v0->y() + v4->y() - v0->y() + v5->y() - v0->y() +
+                      v6->y() - v0->y();
+          double fz = v1->z() - v0->z() + v2->z() - v0->z() + v3->z() -
+                      v0->z() + v4->z() - v0->z() + v5->z() - v0->z() +
+                      v6->z() - v0->z();
+
+          double const eps = 1e-4;
+          GPoint fup = gf->point(SPoint2(Uc + eps, Vc));
+          GPoint fum = gf->point(SPoint2(Uc - eps, Vc));
+          GPoint fvp = gf->point(SPoint2(Uc, Vc + eps));
+          GPoint fvm = gf->point(SPoint2(Uc, Vc - eps));
+
+          double fupx = v1->x() - fup.x() + v2->x() - fup.x() + v3->x() -
+                        fup.x() + v4->x() - fup.x() + v5->x() - fup.x() +
+                        v6->x() - fup.x();
+          double fupy = v1->y() - fup.y() + v2->y() - fup.y() + v3->y() -
+                        fup.y() + v4->y() - fup.y() + v5->y() - fup.y() +
+                        v6->y() - fup.y();
+          double fupz = v1->z() - fup.z() + v2->z() - fup.z() + v3->z() -
+                        fup.z() + v4->z() - fup.z() + v5->z() - fup.z() +
+                        v6->z() - fup.z();
+
+          double fumx = v1->x() - fum.x() + v2->x() - fum.x() + v3->x() -
+                        fum.x() + v4->x() - fum.x() + v5->x() - fum.x() +
+                        v6->x() - fum.x();
+          double fumy = v1->y() - fum.y() + v2->y() - fum.y() + v3->y() -
+                        fum.y() + v4->y() - fum.y() + v5->y() - fum.y() +
+                        v6->y() - fum.y();
+          double fumz = v1->z() - fum.z() + v2->z() - fum.z() + v3->z() -
+                        fum.z() + v4->z() - fum.z() + v5->z() - fum.z() +
+                        v6->z() - fum.z();
+
+          double fvpx = v1->x() - fvp.x() + v2->x() - fvp.x() + v3->x() -
+                        fvp.x() + v4->x() - fvp.x() + v5->x() - fvp.x() +
+                        v6->x() - fvp.x();
+          double fvpy = v1->y() - fvp.y() + v2->y() - fvp.y() + v3->y() -
+                        fvp.y() + v4->y() - fvp.y() + v5->y() - fvp.y() +
+                        v6->y() - fvp.y();
+          double fvpz = v1->z() - fvp.z() + v2->z() - fvp.z() + v3->z() -
+                        fvp.z() + v4->z() - fvp.z() + v5->z() - fvp.z() +
+                        v6->z() - fvp.z();
+
+          double fvmx = v1->x() - fvm.x() + v2->x() - fvm.x() + v3->x() -
+                        fvm.x() + v4->x() - fvm.x() + v5->x() - fvm.x() +
+                        v6->x() - fvm.x();
+          double fvmy = v1->y() - fvm.y() + v2->y() - fvm.y() + v3->y() -
+                        fvm.y() + v4->y() - fvm.y() + v5->y() - fvm.y() +
+                        v6->y() - fvm.y();
+          double fvmz = v1->z() - fvm.z() + v2->z() - fvm.z() + v3->z() -
+                        fvm.z() + v4->z() - fvm.z() + v5->z() - fvm.z() +
+                        v6->z() - fvm.z();
+
+          double dfx_du = (fupx - fumx) / (2.0 * eps); // dF/du
+          double dfy_du = (fupy - fumy) / (2.0 * eps);
+          double dfz_du = (fupz - fumz) / (2.0 * eps);
+
+          double dfx_dv = (fvpx - fvmx) / (2.0 * eps); // dF/dv
+          double dfy_dv = (fvpy - fvmy) / (2.0 * eps);
+          double dfz_dv = (fvpz - fvmz) / (2.0 * eps);
+
+          double ux = (fup.x() - fum.x()) / (2.0 * eps);
+          double uy = (fup.y() - fum.y()) / (2.0 * eps);
+          double uz = (fup.z() - fum.z()) / (2.0 * eps);
+          double a;
+          a = sqrt(pow(ux, 2) + pow(uy, 2) + pow(uz, 2));
+          ux /= a; // u
+          uy /= a;
+          uz /= a;
+
+          double vx = (fvp.x() - fvm.x()) / (2.0 * eps);
+          double vy = (fvp.y() - fvm.y()) / (2.0 * eps);
+          double vz = (fvp.z() - fvm.z()) / (2.0 * eps);
+          a = sqrt(pow(vx, 2) + pow(vy, 2) + pow(vz, 2));
+          vx /= a; // v
+          vy /= a;
+          vz /= a;
+
+          double fu = fx * ux + fy * uy + fz * uz; // Fu = (F,u)
+          double fv = fx * vx + fy * vy + fz * vz; // Fv = (F,v)
+
+          double dfu_du =
+            dfx_du * ux + dfy_du * uy + dfz_du * uz; // dFu/du = (dF/du, u)
+          double dfu_dv =
+            dfx_dv * ux + dfy_dv * uy + dfz_dv * uz; // dFu/dv = (dF/dv, u)
+          double dfv_du =
+            dfx_du * vx + dfy_du * vy + dfz_du * vz; // dFv/du = (dF/du, v)
+          double dfv_dv =
+            dfx_dv * vx + dfy_dv * vy + dfz_dv * vz; // dFv/dv = (dF/dv, v)
+
+          //        solve linear 2x2 equation
+          double a11 = dfu_du;
+          double a12 = dfu_dv;
+          double a21 = dfv_du;
+          double a22 = dfv_dv;
+          double b1 = -fu;
+          double b2 = -fv;
+          double det = a11 * a22 - a12 * a21;
+          double detu = b1 * a22 - a12 * b2;
+          double detv = a11 * b2 - b1 * a21;
+          double du = detu / det;
+          double dv = detv / det;
+          Uc = Uc + du;
+          Vc = Vc + dv;
+
+          //        store x, y, z
+          GPoint fc = gf->point(SPoint2(Uc, Vc));
+          tab[i][j]->x() = fc.x();
+          tab[i][j]->y() = fc.y();
+          tab[i][j]->z() = fc.z();
+        }
+      }
+
+    } // for it
+  }
+
   // create elements
   if(corners.size() == 4) {
     for(int i = 0; i < L; i++) {
@@ -615,21 +798,79 @@ int MeshTransfiniteSurface(GFace *gf)
       }
     }
     else {
+      int ni = 0;
+      bool message = true;
       for(int i = 0; i < L; i++) {
-        int j = i;
-        MVertex *v1 = tab[i][j];
-        MVertex *v2 = tab[i + 1][j];
-        MVertex *v3 = tab[i + 1][j + 1];
-        gf->triangles.push_back(new MTriangle(v1, v2, v3));
-      }
-      for(int i = 1; i < L; i++) {
-        for(int j = 0; j < i; j++) {
+        for(int j = 0; j <= i; j++) {
           MVertex *v1 = tab[i][j];
           MVertex *v2 = tab[i + 1][j];
           MVertex *v3 = tab[i + 1][j + 1];
           MVertex *v4 = tab[i][j + 1];
-          gf->triangles.push_back(new MTriangle(v1, v3, v4));
-          gf->triangles.push_back(new MTriangle(v1, v2, v3));
+          MVertex *v5;
+
+          if(CTX::instance()->mesh.recombineAll ||
+             gf->meshAttributes.recombine) {
+            switch(gf->meshAttributes.transfiniteArrangement) {
+            case 1: // Right (right side tria)
+
+              if(i > 0 && j < i) {
+                gf->quadrangles.push_back(new MQuadrangle(v1, v2, v3, v4));
+              }
+              if(i == j) { gf->triangles.push_back(new MTriangle(v1, v2, v3)); }
+              break;
+
+            case 2: // AlternateRight (side tria <- ->) == Alternate
+            case -2: // AlternateLeft  (side tria <- ->)
+
+              if(i % 2) {
+                if(i > 0 && j < i) {
+                  gf->quadrangles.push_back(new MQuadrangle(v1, v2, v3, v4));
+                }
+                if(i == j) {
+                  gf->triangles.push_back(new MTriangle(v1, v2, v3));
+                }
+              }
+              else {
+                if(j == 0) {
+                  gf->triangles.push_back(new MTriangle(v1, v2, v3));
+                }
+                if(i > 0 && j < i) {
+                  v5 = tab[i + 1][j + 2];
+                  gf->quadrangles.push_back(new MQuadrangle(v1, v3, v5, v4));
+                }
+              }
+              break;
+
+            case -1: // Left (central tria)
+
+              ni = 2 * (i / 4) + (i % 4 ? 1 : 0);
+              if(i > 0 && j < ni) {
+                gf->quadrangles.push_back(new MQuadrangle(v1, v2, v3, v4));
+              }
+              if(j == ni) {
+                gf->triangles.push_back(new MTriangle(v1, v2, v3));
+              }
+              if(i > 0 && j >= ni && j < i) {
+                v5 = tab[i + 1][j + 2];
+                gf->quadrangles.push_back(new MQuadrangle(v1, v3, v5, v4));
+              }
+              break;
+
+            default:
+              if(message) {
+                message = false;
+                Msg::Warning("Surface %d unknown transfiniteArrangement",
+                             gf->tag());
+              }
+
+            } // switch
+          }
+          else {
+            if(i > 0 && j < i) {
+              gf->triangles.push_back(new MTriangle(v1, v3, v4));
+            }
+            gf->triangles.push_back(new MTriangle(v1, v2, v3));
+          }
         }
       }
     }

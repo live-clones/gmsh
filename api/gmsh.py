@@ -11,6 +11,19 @@
 # Python types (as well as `numpy' arrays if `numpy' is available). See
 # `tutorials/python' and `examples/api' for tutorials and examples.
 
+"""
+Gmsh is an automatic three-dimensional finite element mesh generator with a
+built-in CAD engine and post-processor. Its design goal is to provide a fast,
+light and user-friendly meshing tool with parametric input and flexible
+visualization capabilities. Gmsh is built around four modules (geometry, mesh,
+solver and post-processing), which can be controlled with the graphical user
+interface, from the command line, using text files written in Gmsh's own
+scripting language (.geo files), or through the C++, C, Python, Julia and
+Fortran application programming interface (API).
+
+This module defines the Gmsh Python API.
+"""
+
 from ctypes import *
 from ctypes.util import find_library
 import signal
@@ -26,22 +39,38 @@ GMSH_API_VERSION_PATCH = 1
 __version__ = GMSH_API_VERSION
 
 oldsig = signal.signal(signal.SIGINT, signal.SIG_DFL)
+
 moduledir = os.path.dirname(os.path.realpath(__file__))
+parentdir1 = os.path.dirname(moduledir)
+parentdir2 = os.path.dirname(parentdir1)
+
 if platform.system() == "Windows":
     libname = "gmsh-4.11.dll"
-    libdir = os.path.dirname(moduledir)
 elif platform.system() == "Darwin":
     libname = "libgmsh.4.11.dylib"
-    libdir = os.path.dirname(os.path.dirname(moduledir))
 else:
     libname = "libgmsh.so.4.11"
-    libdir = os.path.dirname(os.path.dirname(moduledir))
 
-libpath = os.path.join(libdir, libname)
+# check if the library is in the same directory as the module...
+libpath = os.path.join(moduledir, libname)
+
+# ... or in the parent directory or its lib or Lib subdirectory
 if not os.path.exists(libpath):
-    libpath = os.path.join(libdir, "Lib", libname)
+    libpath = os.path.join(parentdir1, libname)
 if not os.path.exists(libpath):
-    libpath = os.path.join(moduledir, libname)
+    libpath = os.path.join(parentdir1, "lib", libname)
+if not os.path.exists(libpath):
+    libpath = os.path.join(parentdir1, "Lib", libname)
+
+# ... or in the parent of the parent directory or its lib or Lib subdirectory
+if not os.path.exists(libpath):
+    libpath = os.path.join(parentdir2, libname)
+if not os.path.exists(libpath):
+    libpath = os.path.join(parentdir2, "lib", libname)
+if not os.path.exists(libpath):
+    libpath = os.path.join(parentdir2, "Lib", libname)
+
+# if we couldn't find it, use ctype's find_library utility...
 if not os.path.exists(libpath):
     if platform.system() == "Windows":
         libpath = find_library("gmsh-4.11")
@@ -49,6 +78,10 @@ if not os.path.exists(libpath):
             libpath = find_library("gmsh")
     else:
         libpath = find_library("gmsh")
+
+# ... and print a warning if everything failed
+if not os.path.exists(libpath):
+    print("Warning: could not find Gmsh shared library " + libname)
 
 lib = CDLL(libpath)
 
