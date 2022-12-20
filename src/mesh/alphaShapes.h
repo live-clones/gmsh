@@ -57,7 +57,8 @@ void generateMesh_(const int dim, const int tag, const bool refine, const std::v
 #endif
 
 void constrainedDelaunayRefinement_(const int dim, const int tag,
-                                    const std::vector<std::pair<int, int>> &discreteDimTag,
+                                    const std::vector<size_t> &elementTags,
+                                    const std::vector<size_t> &constrainedEdges,
                                     const std::vector<size_t> &nodeTags,
                                     const std::vector<double> &sizeField, 
                                     const double minRadius, 
