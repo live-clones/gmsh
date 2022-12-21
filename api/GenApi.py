@@ -1289,37 +1289,39 @@ elif platform.system() == "Darwin":
 else:
     libname = "lib{7}.so.{3}.{4}"
 
-# check if the library is in the same directory as the module...
-libpath = os.path.join(moduledir, libname)
+# Searching lib in various subfolders
+libpath = None
+possible_libpaths = [os.path.join(moduledir, libname),
+                     os.path.join(moduledir, "lib", libname),
+                     os.path.join(moduledir, "Lib", libname),
+                     # first parent dir
+                     os.path.join(parentdir1, libname),
+                     os.path.join(parentdir1, "lib", libname),
+                     os.path.join(parentdir1, "Lib", libname),
+                     # second parent dir
+                     os.path.join(parentdir2, libname),
+                     os.path.join(parentdir2, "lib", libname),
+                     os.path.join(parentdir2, "Lib", libname)
+                     ]
 
-# ... or in the parent directory or its lib or Lib subdirectory
-if not os.path.exists(libpath):
-    libpath = os.path.join(parentdir1, libname)
-if not os.path.exists(libpath):
-    libpath = os.path.join(parentdir1, "lib", libname)
-if not os.path.exists(libpath):
-    libpath = os.path.join(parentdir1, "Lib", libname)
-
-# ... or in the parent of the parent directory or its lib or Lib subdirectory
-if not os.path.exists(libpath):
-    libpath = os.path.join(parentdir2, libname)
-if not os.path.exists(libpath):
-    libpath = os.path.join(parentdir2, "lib", libname)
-if not os.path.exists(libpath):
-    libpath = os.path.join(parentdir2, "Lib", libname)
+for libpath_to_look in possible_libpaths:
+    if os.path.exists(libpath_to_look):
+        libpath = libpath_to_look
+        break
 
 # if we couldn't find it, use ctype's find_library utility...
-if not os.path.exists(libpath):
+if not libpath:
     if platform.system() == "Windows":
-        libpath = find_library("{7}-{3}.{4}")
+        libpath = find_library("gmsh-4.11")
         if not libpath:
-            libpath = find_library("{7}")
+            libpath = find_library("gmsh")
     else:
-        libpath = find_library("{7}")
+        libpath = find_library("gmsh")
 
 # ... and print a warning if everything failed
-if not os.path.exists(libpath):
+if (not libpath) or (not os.path.exists(libpath)):
     print("Warning: could not find Gmsh shared library " + libname)
+    print("Searched at these locations: " + str(possible_libpaths))
 
 lib = CDLL(libpath)
 
