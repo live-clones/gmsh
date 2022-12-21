@@ -66,9 +66,9 @@ possible_libpaths = [os.path.join(moduledir, libname),
                      os.path.join(parentdir2, "Lib", libname)
                      ]
 
-for libpath_to_search in possible_libpaths:
-    if os.path.exists(libpath_to_search):
-        libpath = libpath_to_search
+for libpath_to_look in possible_libpaths:
+    if os.path.exists(libpath_to_look):
+        libpath = libpath_to_look
         break
 
 # if we couldn't find it, use ctype's find_library utility...
@@ -83,7 +83,7 @@ if not libpath:
 # ... and print a warning if everything failed
 if (not libpath) or (not os.path.exists(libpath)):
     print("Warning: could not find Gmsh shared library " + libname)
-    print(f"Searched at all this locations: {possible_libpaths}")
+    print(f"Searched at these locations: {possible_libpaths}")
 
 lib = CDLL(libpath)
 
