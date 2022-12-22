@@ -1873,6 +1873,17 @@ namespace gmsh { // Top-level functions
                                                   std::vector<double> & newCoords,
                                                   std::vector<double> & newSizeField);
 
+      // gmsh::model::mesh::alphaShape
+      //
+      // alpha shape on the mesh of entity of dimension `dim' and tag `tag'.
+      GMSH_API void alphaShape(const int dim,
+                               const int tag,
+                               const double alpha,
+                               const std::vector<std::size_t> & nodeTags,
+                               const std::vector<double> & sizeAtNodes,
+                               std::vector<std::vector<std::size_t> > & elementTags,
+                               std::vector<std::vector<std::size_t> > & edges);
+
       namespace field { // Mesh size field functions
 
         // gmsh::model::mesh::field::add

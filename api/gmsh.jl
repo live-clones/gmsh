@@ -4606,6 +4606,44 @@ end
 const constrained_delaunay_refinement = constrainedDelaunayRefinement
 
 """
+    gmsh.model.mesh.alphaShape(dim, tag, alpha, nodeTags, sizeAtNodes)
+
+alpha shape on the mesh of entity of dimension `dim` and tag `tag`.
+
+Return `elementTags`, `edges`.
+
+Types:
+ - `dim`: integer
+ - `tag`: integer
+ - `alpha`: double
+ - `nodeTags`: vector of sizes
+ - `sizeAtNodes`: vector of doubles
+ - `elementTags`: vector of vectors of sizes
+ - `edges`: vector of vectors of sizes
+"""
+function alphaShape(dim, tag, alpha, nodeTags, sizeAtNodes)
+    api_elementTags_ = Ref{Ptr{Ptr{Csize_t}}}()
+    api_elementTags_n_ = Ref{Ptr{Csize_t}}()
+    api_elementTags_nn_ = Ref{Csize_t}()
+    api_edges_ = Ref{Ptr{Ptr{Csize_t}}}()
+    api_edges_n_ = Ref{Ptr{Csize_t}}()
+    api_edges_nn_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshAlphaShape, gmsh.lib), Cvoid,
+          (Cint, Cint, Cdouble, Ptr{Csize_t}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Ptr{Ptr{Csize_t}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Csize_t}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cint}),
+          dim, tag, alpha, convert(Vector{Csize_t}, nodeTags), length(nodeTags), convert(Vector{Cdouble}, sizeAtNodes), length(sizeAtNodes), api_elementTags_, api_elementTags_n_, api_elementTags_nn_, api_edges_, api_edges_n_, api_edges_nn_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    tmp_api_elementTags_ = unsafe_wrap(Array, api_elementTags_[], api_elementTags_nn_[], own = true)
+    tmp_api_elementTags_n_ = unsafe_wrap(Array, api_elementTags_n_[], api_elementTags_nn_[], own = true)
+    elementTags = [ unsafe_wrap(Array, tmp_api_elementTags_[i], tmp_api_elementTags_n_[i], own = true) for i in 1:api_elementTags_nn_[] ]
+    tmp_api_edges_ = unsafe_wrap(Array, api_edges_[], api_edges_nn_[], own = true)
+    tmp_api_edges_n_ = unsafe_wrap(Array, api_edges_n_[], api_edges_nn_[], own = true)
+    edges = [ unsafe_wrap(Array, tmp_api_edges_[i], tmp_api_edges_n_[i], own = true) for i in 1:api_edges_nn_[] ]
+    return elementTags, edges
+end
+const alpha_shape = alphaShape
+
+"""
     module gmsh.model.mesh.field
 
 Mesh size field functions

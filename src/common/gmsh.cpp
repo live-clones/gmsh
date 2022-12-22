@@ -5608,6 +5608,16 @@ gmsh::model::mesh::constrainedDelaunayRefinement(const int dim, const int tag, c
 #endif  
 }
 
+GMSH_API void 
+gmsh::model::mesh::alphaShape(const int dim, const int tag, const double alpha, const std::vector<size_t> &nodeTags, const std::vector<double> &sizeAtNodes, std::vector<std::vector<size_t>> &elementTags, std::vector<std::vector<size_t>> &edges)
+{
+#if defined(HAVE_MESH)
+  alphaShape_entity(dim, tag, alpha, nodeTags, sizeAtNodes, elementTags, edges);
+#else
+  Msg::Error("constrainedDelaunayRefinement requires the mesh module");
+#endif  
+}
+
 
 // gmsh::model::mesh::field
 

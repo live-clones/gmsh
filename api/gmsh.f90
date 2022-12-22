@@ -715,6 +715,8 @@ module gmsh
         gmshModelMeshAlphaShapesConstrained
     procedure, nopass :: constrainedDelaunayRefinement => &
         gmshModelMeshConstrainedDelaunayRefinement
+    procedure, nopass :: alphaShape => &
+        gmshModelMeshAlphaShape
   end type gmsh_model_mesh_t
 
   type, public :: gmsh_model_t
@@ -7689,6 +7691,90 @@ module gmsh
     newSizeField = ovectordouble_(api_newSizeField_, &
       api_newSizeField_n_)
   end subroutine gmshModelMeshConstrainedDelaunayRefinement
+
+  !> alpha shape on the mesh of entity of dimension `dim' and tag `tag'.
+  subroutine gmshModelMeshAlphaShape(dim, &
+                                     tag, &
+                                     alpha, &
+                                     nodeTags, &
+                                     sizeAtNodes, &
+                                     elementTags, &
+                                     elementTags_n, &
+                                     edges, &
+                                     edges_n, &
+                                     ierr)
+    interface
+    subroutine C_API(dim, &
+                     tag, &
+                     alpha, &
+                     api_nodeTags_, &
+                     api_nodeTags_n_, &
+                     api_sizeAtNodes_, &
+                     api_sizeAtNodes_n_, &
+                     api_elementTags_, &
+                     api_elementTags_n_, &
+                     api_elementTags_nn_, &
+                     api_edges_, &
+                     api_edges_n_, &
+                     api_edges_nn_, &
+                     ierr_) &
+      bind(C, name="gmshModelMeshAlphaShape")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), value, intent(in) :: dim
+      integer(c_int), value, intent(in) :: tag
+      real(c_double), value, intent(in) :: alpha
+      integer(c_size_t), dimension(*) :: api_nodeTags_
+      integer(c_size_t), value, intent(in) :: api_nodeTags_n_
+      real(c_double), dimension(*) :: api_sizeAtNodes_
+      integer(c_size_t), value, intent(in) :: api_sizeAtNodes_n_
+      type(c_ptr), intent(out) :: api_elementTags_
+      type(c_ptr), intent(out) :: api_elementTags_n_
+      integer(c_size_t), intent(out) :: api_elementTags_nn_
+      type(c_ptr), intent(out) :: api_edges_
+      type(c_ptr), intent(out) :: api_edges_n_
+      integer(c_size_t), intent(out) :: api_edges_nn_
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer, intent(in) :: dim
+    integer, intent(in) :: tag
+    real(c_double), intent(in) :: alpha
+    integer(c_size_t), dimension(:), intent(in) :: nodeTags
+    real(c_double), dimension(:), intent(in) :: sizeAtNodes
+    integer(c_size_t), dimension(:), allocatable, intent(out) :: elementTags
+    integer(c_size_t), dimension(:), allocatable, intent(out) :: elementTags_n
+    integer(c_size_t), dimension(:), allocatable, intent(out) :: edges
+    integer(c_size_t), dimension(:), allocatable, intent(out) :: edges_n
+    integer(c_int), intent(out), optional :: ierr
+    type(c_ptr) :: api_elementTags_, api_elementTags_n_
+    integer(c_size_t) :: api_elementTags_nn_
+    type(c_ptr) :: api_edges_, api_edges_n_
+    integer(c_size_t) :: api_edges_nn_
+    call C_API(dim=int(dim, c_int), &
+         tag=int(tag, c_int), &
+         alpha=real(alpha, c_double), &
+         api_nodeTags_=nodeTags, &
+         api_nodeTags_n_=size_gmsh_size(nodeTags), &
+         api_sizeAtNodes_=sizeAtNodes, &
+         api_sizeAtNodes_n_=size_gmsh_double(sizeAtNodes), &
+         api_elementTags_=api_elementTags_, &
+         api_elementTags_n_=api_elementTags_n_, &
+         api_elementTags_nn_=api_elementTags_nn_, &
+         api_edges_=api_edges_, &
+         api_edges_n_=api_edges_n_, &
+         api_edges_nn_=api_edges_nn_, &
+         ierr_=ierr)
+    call ovectorvectorsize_(api_elementTags_, &
+      api_elementTags_n_, &
+      api_elementTags_nn_, &
+      elementTags, &
+      elementTags_n)
+    call ovectorvectorsize_(api_edges_, &
+      api_edges_n_, &
+      api_edges_nn_, &
+      edges, &
+      edges_n)
+  end subroutine gmshModelMeshAlphaShape
 
   !> Add a new mesh size field of type `fieldType'. If `tag' is positive, assign
   !! the tag explicitly; otherwise a new tag is assigned automatically. Return

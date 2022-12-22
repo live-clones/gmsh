@@ -66,6 +66,8 @@ void constrainedDelaunayRefinement_(const int dim, const int tag,
                                     std::vector<double>& newCoords, 
                                     std::vector<double>& newSizeField);
 
+void alphaShape_entity(const int dim, const int tag, const double alpha, const std::vector<size_t>& nodeTags, const std::vector<double>& sizeAtNodes, std::vector<std::vector<size_t>>& elementTags, std::vector<std::vector<size_t>>& edges);
+
 
 // internal functions, useless for outside
 void getFacesToImprove(PolyMesh* pm, GFace* gf, std::vector<double>& sizeAtNodes, std::map<size_t, size_t>& g2v, std::map<size_t, double>& g2sizeAtNodes, std::vector<size_t>& facesToGrade, std::vector<size_t>& facesToImprove);

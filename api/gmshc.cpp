@@ -2472,6 +2472,23 @@ GMSH_API void gmshModelMeshConstrainedDelaunayRefinement(const int dim, const in
   }
 }
 
+GMSH_API void gmshModelMeshAlphaShape(const int dim, const int tag, const double alpha, const size_t * nodeTags, const size_t nodeTags_n, const double * sizeAtNodes, const size_t sizeAtNodes_n, size_t *** elementTags, size_t ** elementTags_n, size_t *elementTags_nn, size_t *** edges, size_t ** edges_n, size_t *edges_nn, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<std::size_t> api_nodeTags_(nodeTags, nodeTags + nodeTags_n);
+    std::vector<double> api_sizeAtNodes_(sizeAtNodes, sizeAtNodes + sizeAtNodes_n);
+    std::vector<std::vector<std::size_t> > api_elementTags_;
+    std::vector<std::vector<std::size_t> > api_edges_;
+    gmsh::model::mesh::alphaShape(dim, tag, alpha, api_nodeTags_, api_sizeAtNodes_, api_elementTags_, api_edges_);
+    vectorvector2ptrptr(api_elementTags_, elementTags, elementTags_n, elementTags_nn);
+    vectorvector2ptrptr(api_edges_, edges, edges_n, edges_nn);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API int gmshModelMeshFieldAdd(const char * fieldType, const int tag, int * ierr)
 {
   int result_api_ = 0;

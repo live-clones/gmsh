@@ -5216,6 +5216,45 @@ class model:
                 _ovectordouble(api_newSizeField_, api_newSizeField_n_.value))
         constrained_delaunay_refinement = constrainedDelaunayRefinement
 
+        @staticmethod
+        def alphaShape(dim, tag, alpha, nodeTags, sizeAtNodes):
+            """
+            gmsh.model.mesh.alphaShape(dim, tag, alpha, nodeTags, sizeAtNodes)
+
+            alpha shape on the mesh of entity of dimension `dim' and tag `tag'.
+
+            Return `elementTags', `edges'.
+
+            Types:
+            - `dim': integer
+            - `tag': integer
+            - `alpha': double
+            - `nodeTags': vector of sizes
+            - `sizeAtNodes': vector of doubles
+            - `elementTags': vector of vectors of sizes
+            - `edges': vector of vectors of sizes
+            """
+            api_nodeTags_, api_nodeTags_n_ = _ivectorsize(nodeTags)
+            api_sizeAtNodes_, api_sizeAtNodes_n_ = _ivectordouble(sizeAtNodes)
+            api_elementTags_, api_elementTags_n_, api_elementTags_nn_ = POINTER(POINTER(c_size_t))(), POINTER(c_size_t)(), c_size_t()
+            api_edges_, api_edges_n_, api_edges_nn_ = POINTER(POINTER(c_size_t))(), POINTER(c_size_t)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshAlphaShape(
+                c_int(dim),
+                c_int(tag),
+                c_double(alpha),
+                api_nodeTags_, api_nodeTags_n_,
+                api_sizeAtNodes_, api_sizeAtNodes_n_,
+                byref(api_elementTags_), byref(api_elementTags_n_), byref(api_elementTags_nn_),
+                byref(api_edges_), byref(api_edges_n_), byref(api_edges_nn_),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return (
+                _ovectorvectorsize(api_elementTags_, api_elementTags_n_, api_elementTags_nn_),
+                _ovectorvectorsize(api_edges_, api_edges_n_, api_edges_nn_))
+        alpha_shape = alphaShape
+
 
         class field:
             """
