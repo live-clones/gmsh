@@ -1654,6 +1654,8 @@ GMSH_API void gmshModelMeshConstrainedDelaunayRefinement(const int dim,
                                                          size_t ** newNodeTags, size_t * newNodeTags_n,
                                                          double ** newCoords, size_t * newCoords_n,
                                                          double ** newSizeField, size_t * newSizeField_n,
+                                                         size_t ** newConstrainedEdges, size_t * newConstrainedEdges_n,
+                                                         size_t ** newElementsInRefinement, size_t * newElementsInRefinement_n,
                                                          int * ierr);
 
 /* alpha shape on the mesh of entity of dimension `dim' and tag `tag'. */

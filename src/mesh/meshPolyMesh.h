@@ -558,7 +558,7 @@ public:
     hedges.push_back(hemo);
     hedges.push_back(he1);
 
-    Face *f0 = hep->f;
+    Face *f0 = he->f;
     Face *f1 = new Face(hen);
     f1->data = f0->data;
     faces.push_back(f1);

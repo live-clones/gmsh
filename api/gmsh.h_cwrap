@@ -2893,7 +2893,9 @@ namespace gmsh { // Top-level functions
                                                 const double minRadius,
                                                 std::vector<std::size_t> & newNodeTags,
                                                 std::vector<double> & newCoords,
-                                                std::vector<double> & newSizeField)
+                                                std::vector<double> & newSizeField,
+                                                std::vector<std::size_t> & newConstrainedEdges,
+                                                std::vector<std::size_t> & newElementsInRefinement)
       {
         int ierr = 0;
         size_t *api_elementTags_; size_t api_elementTags_n_; vector2ptr(elementTags, &api_elementTags_, &api_elementTags_n_);
@@ -2903,7 +2905,9 @@ namespace gmsh { // Top-level functions
         size_t *api_newNodeTags_; size_t api_newNodeTags_n_;
         double *api_newCoords_; size_t api_newCoords_n_;
         double *api_newSizeField_; size_t api_newSizeField_n_;
-        gmshModelMeshConstrainedDelaunayRefinement(dim, tag, api_elementTags_, api_elementTags_n_, api_constrainedEdges_, api_constrainedEdges_n_, api_nodeTags_, api_nodeTags_n_, api_sizeField_, api_sizeField_n_, minRadius, &api_newNodeTags_, &api_newNodeTags_n_, &api_newCoords_, &api_newCoords_n_, &api_newSizeField_, &api_newSizeField_n_, &ierr);
+        size_t *api_newConstrainedEdges_; size_t api_newConstrainedEdges_n_;
+        size_t *api_newElementsInRefinement_; size_t api_newElementsInRefinement_n_;
+        gmshModelMeshConstrainedDelaunayRefinement(dim, tag, api_elementTags_, api_elementTags_n_, api_constrainedEdges_, api_constrainedEdges_n_, api_nodeTags_, api_nodeTags_n_, api_sizeField_, api_sizeField_n_, minRadius, &api_newNodeTags_, &api_newNodeTags_n_, &api_newCoords_, &api_newCoords_n_, &api_newSizeField_, &api_newSizeField_n_, &api_newConstrainedEdges_, &api_newConstrainedEdges_n_, &api_newElementsInRefinement_, &api_newElementsInRefinement_n_, &ierr);
         if(ierr) throwLastError();
         gmshFree(api_elementTags_);
         gmshFree(api_constrainedEdges_);
@@ -2912,6 +2916,8 @@ namespace gmsh { // Top-level functions
         newNodeTags.assign(api_newNodeTags_, api_newNodeTags_ + api_newNodeTags_n_); gmshFree(api_newNodeTags_);
         newCoords.assign(api_newCoords_, api_newCoords_ + api_newCoords_n_); gmshFree(api_newCoords_);
         newSizeField.assign(api_newSizeField_, api_newSizeField_ + api_newSizeField_n_); gmshFree(api_newSizeField_);
+        newConstrainedEdges.assign(api_newConstrainedEdges_, api_newConstrainedEdges_ + api_newConstrainedEdges_n_); gmshFree(api_newConstrainedEdges_);
+        newElementsInRefinement.assign(api_newElementsInRefinement_, api_newElementsInRefinement_ + api_newElementsInRefinement_n_); gmshFree(api_newElementsInRefinement_);
       }
 
       // alpha shape on the mesh of entity of dimension `dim' and tag `tag'.

@@ -5174,7 +5174,7 @@ class model:
             value will not be refined. Return newly added nodes and corresponding size
             field.
 
-            Return `newNodeTags', `newCoords', `newSizeField'.
+            Return `newNodeTags', `newCoords', `newSizeField', `newConstrainedEdges', `newElementsInRefinement'.
 
             Types:
             - `dim': integer
@@ -5187,6 +5187,8 @@ class model:
             - `newNodeTags': vector of sizes
             - `newCoords': vector of doubles
             - `newSizeField': vector of doubles
+            - `newConstrainedEdges': vector of sizes
+            - `newElementsInRefinement': vector of sizes
             """
             api_elementTags_, api_elementTags_n_ = _ivectorsize(elementTags)
             api_constrainedEdges_, api_constrainedEdges_n_ = _ivectorsize(constrainedEdges)
@@ -5195,6 +5197,8 @@ class model:
             api_newNodeTags_, api_newNodeTags_n_ = POINTER(c_size_t)(), c_size_t()
             api_newCoords_, api_newCoords_n_ = POINTER(c_double)(), c_size_t()
             api_newSizeField_, api_newSizeField_n_ = POINTER(c_double)(), c_size_t()
+            api_newConstrainedEdges_, api_newConstrainedEdges_n_ = POINTER(c_size_t)(), c_size_t()
+            api_newElementsInRefinement_, api_newElementsInRefinement_n_ = POINTER(c_size_t)(), c_size_t()
             ierr = c_int()
             lib.gmshModelMeshConstrainedDelaunayRefinement(
                 c_int(dim),
@@ -5207,13 +5211,17 @@ class model:
                 byref(api_newNodeTags_), byref(api_newNodeTags_n_),
                 byref(api_newCoords_), byref(api_newCoords_n_),
                 byref(api_newSizeField_), byref(api_newSizeField_n_),
+                byref(api_newConstrainedEdges_), byref(api_newConstrainedEdges_n_),
+                byref(api_newElementsInRefinement_), byref(api_newElementsInRefinement_n_),
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return (
                 _ovectorsize(api_newNodeTags_, api_newNodeTags_n_.value),
                 _ovectordouble(api_newCoords_, api_newCoords_n_.value),
-                _ovectordouble(api_newSizeField_, api_newSizeField_n_.value))
+                _ovectordouble(api_newSizeField_, api_newSizeField_n_.value),
+                _ovectorsize(api_newConstrainedEdges_, api_newConstrainedEdges_n_.value),
+                _ovectorsize(api_newElementsInRefinement_, api_newElementsInRefinement_n_.value))
         constrained_delaunay_refinement = constrainedDelaunayRefinement
 
         @staticmethod

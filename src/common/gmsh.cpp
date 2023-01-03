@@ -5599,10 +5599,10 @@ gmsh::model::mesh::alphaShapesConstrained(const int dim,
 }
 
 GMSH_API void 
-gmsh::model::mesh::constrainedDelaunayRefinement(const int dim, const int tag, const std::vector<size_t> &elementTags, const std::vector<size_t> &constrainedEdges, const std::vector<size_t> &nodeTags, const std::vector<double> &sizeField, const double minRadius, std::vector<size_t> &newNodeTags, std::vector<double>& newCoords, std::vector<double>& newSizeField)
+gmsh::model::mesh::constrainedDelaunayRefinement(const int dim, const int tag, const std::vector<size_t> &elementTags, const std::vector<size_t> &constrainedEdges, const std::vector<size_t> &nodeTags, const std::vector<double> &sizeField, const double minRadius, std::vector<size_t> &newNodeTags, std::vector<double>& newCoords, std::vector<double>& newSizeField, std::vector<size_t>& newConstrainedEdges, std::vector<size_t>& newElementsInRefinement)
 {
 #if defined(HAVE_MESH)
-  constrainedDelaunayRefinement_(dim, tag, elementTags, constrainedEdges, nodeTags, sizeField, minRadius, newNodeTags, newCoords, newSizeField);
+  constrainedDelaunayRefinement_(dim, tag, elementTags, constrainedEdges, nodeTags, sizeField, minRadius, newNodeTags, newCoords, newSizeField, newConstrainedEdges, newElementsInRefinement);
 #else
   Msg::Error("constrainedDelaunayRefinement requires the mesh module");
 #endif  
