@@ -1298,6 +1298,18 @@ void delaunayCheck(PolyMesh* pm, std::vector<PolyMesh::HalfEdge* > hes, std::vec
   return false;
  }
 
+ PolyMesh::HalfEdge* getNextEdgeOnFreeSurface(PolyMesh::HalfEdge* he){
+  if (he->data != 0) return nullptr;
+  if (he->next->data == 0) return he->next;
+  PolyMesh::HalfEdge* _he = he->next;
+  do {
+    if (_he->opposite) _he = _he->opposite->next;
+    else return nullptr;
+    if (_he->data == 0) return _he;
+  } while (_he != he);
+  return nullptr;
+ }
+
  void print4debug(PolyMesh* pm, const int debugTag)
   {
     char name[256];
@@ -1345,7 +1357,7 @@ void constrainedDelaunayRefinement_(const int dim, const int tag,
                                     std::vector<size_t> &newNodeTags, 
                                     std::vector<double>& newCoords, 
                                     std::vector<double>& newsizeAtNodes, 
-                                    std::vector<size_t>& newConstrainedEdges, 
+                                    std::vector<std::vector<size_t>>& newConstrainedEdges, 
                                     std::vector<size_t>& newElementsInRefinement){
   // generateMesh_(dim, tag, 0, coord, nodeTags);
   // std::vector<double> pCoord;
@@ -1648,7 +1660,7 @@ void constrainedDelaunayRefinement_(const int dim, const int tag,
         }
       }
     }
-    print4debug(pm, 999);
+    // print4debug(pm, 999);
     
     // Step 5: dump the updated mesh back into gmsh GFace;
 
@@ -1780,10 +1792,19 @@ void constrainedDelaunayRefinement_(const int dim, const int tag,
       newCoords.push_back(pm->vertices[i]->position.z());
       if (!globalSize) newsizeAtNodes.push_back(v2sizeAtNodes[pm->vertices[i]]);
     }
+
+    std::map<PolyMesh::HalfEdge*, bool> he_touched;
     for (auto he : pm->hedges){
-      if (he->f && he->data == 0){
-        newConstrainedEdges.push_back(he->v->data);
-        newConstrainedEdges.push_back(he->next->v->data);
+      if (he->f && he->data == 0 && !he_touched[he]){
+        std::vector<size_t> loop;
+        PolyMesh::HalfEdge* _he = he;
+        do {
+          he_touched[_he] = true;
+          loop.push_back(_he->v->data);
+          loop.push_back(_he->next->v->data);
+          _he = getNextEdgeOnFreeSurface(_he);
+        } while (_he != nullptr && !he_touched[_he] && _he != he);
+        newConstrainedEdges.push_back(loop);
       }
     }
 

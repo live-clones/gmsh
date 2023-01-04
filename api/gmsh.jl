@@ -4585,7 +4585,7 @@ Types:
  - `newNodeTags`: vector of sizes
  - `newCoords`: vector of doubles
  - `newSizeField`: vector of doubles
- - `newConstrainedEdges`: vector of sizes
+ - `newConstrainedEdges`: vector of vectors of sizes
  - `newElementsInRefinement`: vector of sizes
 """
 function constrainedDelaunayRefinement(dim, tag, elementTags, constrainedEdges, nodeTags, sizeField, minRadius)
@@ -4595,19 +4595,22 @@ function constrainedDelaunayRefinement(dim, tag, elementTags, constrainedEdges, 
     api_newCoords_n_ = Ref{Csize_t}()
     api_newSizeField_ = Ref{Ptr{Cdouble}}()
     api_newSizeField_n_ = Ref{Csize_t}()
-    api_newConstrainedEdges_ = Ref{Ptr{Csize_t}}()
-    api_newConstrainedEdges_n_ = Ref{Csize_t}()
+    api_newConstrainedEdges_ = Ref{Ptr{Ptr{Csize_t}}}()
+    api_newConstrainedEdges_n_ = Ref{Ptr{Csize_t}}()
+    api_newConstrainedEdges_nn_ = Ref{Csize_t}()
     api_newElementsInRefinement_ = Ref{Ptr{Csize_t}}()
     api_newElementsInRefinement_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshConstrainedDelaunayRefinement, gmsh.lib), Cvoid,
-          (Cint, Cint, Ptr{Csize_t}, Csize_t, Ptr{Csize_t}, Csize_t, Ptr{Csize_t}, Csize_t, Ptr{Cdouble}, Csize_t, Cdouble, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cint}),
-          dim, tag, convert(Vector{Csize_t}, elementTags), length(elementTags), convert(Vector{Csize_t}, constrainedEdges), length(constrainedEdges), convert(Vector{Csize_t}, nodeTags), length(nodeTags), convert(Vector{Cdouble}, sizeField), length(sizeField), minRadius, api_newNodeTags_, api_newNodeTags_n_, api_newCoords_, api_newCoords_n_, api_newSizeField_, api_newSizeField_n_, api_newConstrainedEdges_, api_newConstrainedEdges_n_, api_newElementsInRefinement_, api_newElementsInRefinement_n_, ierr)
+          (Cint, Cint, Ptr{Csize_t}, Csize_t, Ptr{Csize_t}, Csize_t, Ptr{Csize_t}, Csize_t, Ptr{Cdouble}, Csize_t, Cdouble, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Csize_t}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cint}),
+          dim, tag, convert(Vector{Csize_t}, elementTags), length(elementTags), convert(Vector{Csize_t}, constrainedEdges), length(constrainedEdges), convert(Vector{Csize_t}, nodeTags), length(nodeTags), convert(Vector{Cdouble}, sizeField), length(sizeField), minRadius, api_newNodeTags_, api_newNodeTags_n_, api_newCoords_, api_newCoords_n_, api_newSizeField_, api_newSizeField_n_, api_newConstrainedEdges_, api_newConstrainedEdges_n_, api_newConstrainedEdges_nn_, api_newElementsInRefinement_, api_newElementsInRefinement_n_, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     newNodeTags = unsafe_wrap(Array, api_newNodeTags_[], api_newNodeTags_n_[], own = true)
     newCoords = unsafe_wrap(Array, api_newCoords_[], api_newCoords_n_[], own = true)
     newSizeField = unsafe_wrap(Array, api_newSizeField_[], api_newSizeField_n_[], own = true)
-    newConstrainedEdges = unsafe_wrap(Array, api_newConstrainedEdges_[], api_newConstrainedEdges_n_[], own = true)
+    tmp_api_newConstrainedEdges_ = unsafe_wrap(Array, api_newConstrainedEdges_[], api_newConstrainedEdges_nn_[], own = true)
+    tmp_api_newConstrainedEdges_n_ = unsafe_wrap(Array, api_newConstrainedEdges_n_[], api_newConstrainedEdges_nn_[], own = true)
+    newConstrainedEdges = [ unsafe_wrap(Array, tmp_api_newConstrainedEdges_[i], tmp_api_newConstrainedEdges_n_[i], own = true) for i in 1:api_newConstrainedEdges_nn_[] ]
     newElementsInRefinement = unsafe_wrap(Array, api_newElementsInRefinement_[], api_newElementsInRefinement_n_[], own = true)
     return newNodeTags, newCoords, newSizeField, newConstrainedEdges, newElementsInRefinement
 end

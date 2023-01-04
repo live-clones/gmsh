@@ -5187,7 +5187,7 @@ class model:
             - `newNodeTags': vector of sizes
             - `newCoords': vector of doubles
             - `newSizeField': vector of doubles
-            - `newConstrainedEdges': vector of sizes
+            - `newConstrainedEdges': vector of vectors of sizes
             - `newElementsInRefinement': vector of sizes
             """
             api_elementTags_, api_elementTags_n_ = _ivectorsize(elementTags)
@@ -5197,7 +5197,7 @@ class model:
             api_newNodeTags_, api_newNodeTags_n_ = POINTER(c_size_t)(), c_size_t()
             api_newCoords_, api_newCoords_n_ = POINTER(c_double)(), c_size_t()
             api_newSizeField_, api_newSizeField_n_ = POINTER(c_double)(), c_size_t()
-            api_newConstrainedEdges_, api_newConstrainedEdges_n_ = POINTER(c_size_t)(), c_size_t()
+            api_newConstrainedEdges_, api_newConstrainedEdges_n_, api_newConstrainedEdges_nn_ = POINTER(POINTER(c_size_t))(), POINTER(c_size_t)(), c_size_t()
             api_newElementsInRefinement_, api_newElementsInRefinement_n_ = POINTER(c_size_t)(), c_size_t()
             ierr = c_int()
             lib.gmshModelMeshConstrainedDelaunayRefinement(
@@ -5211,7 +5211,7 @@ class model:
                 byref(api_newNodeTags_), byref(api_newNodeTags_n_),
                 byref(api_newCoords_), byref(api_newCoords_n_),
                 byref(api_newSizeField_), byref(api_newSizeField_n_),
-                byref(api_newConstrainedEdges_), byref(api_newConstrainedEdges_n_),
+                byref(api_newConstrainedEdges_), byref(api_newConstrainedEdges_n_), byref(api_newConstrainedEdges_nn_),
                 byref(api_newElementsInRefinement_), byref(api_newElementsInRefinement_n_),
                 byref(ierr))
             if ierr.value != 0:
@@ -5220,7 +5220,7 @@ class model:
                 _ovectorsize(api_newNodeTags_, api_newNodeTags_n_.value),
                 _ovectordouble(api_newCoords_, api_newCoords_n_.value),
                 _ovectordouble(api_newSizeField_, api_newSizeField_n_.value),
-                _ovectorsize(api_newConstrainedEdges_, api_newConstrainedEdges_n_.value),
+                _ovectorvectorsize(api_newConstrainedEdges_, api_newConstrainedEdges_n_, api_newConstrainedEdges_nn_),
                 _ovectorsize(api_newElementsInRefinement_, api_newElementsInRefinement_n_.value))
         constrained_delaunay_refinement = constrainedDelaunayRefinement
 

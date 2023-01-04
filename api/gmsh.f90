@@ -7608,6 +7608,7 @@ module gmsh
                                                         newCoords, &
                                                         newSizeField, &
                                                         newConstrainedEdges, &
+                                                        newConstrainedEdges_n, &
                                                         newElementsInRefinement, &
                                                         ierr)
     interface
@@ -7630,6 +7631,7 @@ module gmsh
                      api_newSizeField_n_, &
                      api_newConstrainedEdges_, &
                      api_newConstrainedEdges_n_, &
+                     api_newConstrainedEdges_nn_, &
                      api_newElementsInRefinement_, &
                      api_newElementsInRefinement_n_, &
                      ierr_) &
@@ -7653,7 +7655,8 @@ module gmsh
       type(c_ptr), intent(out) :: api_newSizeField_
       integer(c_size_t) :: api_newSizeField_n_
       type(c_ptr), intent(out) :: api_newConstrainedEdges_
-      integer(c_size_t), intent(out) :: api_newConstrainedEdges_n_
+      type(c_ptr), intent(out) :: api_newConstrainedEdges_n_
+      integer(c_size_t), intent(out) :: api_newConstrainedEdges_nn_
       type(c_ptr), intent(out) :: api_newElementsInRefinement_
       integer(c_size_t), intent(out) :: api_newElementsInRefinement_n_
       integer(c_int), intent(out), optional :: ierr_
@@ -7670,6 +7673,7 @@ module gmsh
     real(c_double), dimension(:), allocatable, intent(out) :: newCoords
     real(c_double), dimension(:), allocatable, intent(out) :: newSizeField
     integer(c_size_t), dimension(:), allocatable, intent(out) :: newConstrainedEdges
+    integer(c_size_t), dimension(:), allocatable, intent(out) :: newConstrainedEdges_n
     integer(c_size_t), dimension(:), allocatable, intent(out) :: newElementsInRefinement
     integer(c_int), intent(out), optional :: ierr
     type(c_ptr) :: api_newNodeTags_
@@ -7678,8 +7682,8 @@ module gmsh
     integer(c_size_t) :: api_newCoords_n_
     type(c_ptr) :: api_newSizeField_
     integer(c_size_t) :: api_newSizeField_n_
-    type(c_ptr) :: api_newConstrainedEdges_
-    integer(c_size_t) :: api_newConstrainedEdges_n_
+    type(c_ptr) :: api_newConstrainedEdges_, api_newConstrainedEdges_n_
+    integer(c_size_t) :: api_newConstrainedEdges_nn_
     type(c_ptr) :: api_newElementsInRefinement_
     integer(c_size_t) :: api_newElementsInRefinement_n_
     call C_API(dim=int(dim, c_int), &
@@ -7701,6 +7705,7 @@ module gmsh
          api_newSizeField_n_=api_newSizeField_n_, &
          api_newConstrainedEdges_=api_newConstrainedEdges_, &
          api_newConstrainedEdges_n_=api_newConstrainedEdges_n_, &
+         api_newConstrainedEdges_nn_=api_newConstrainedEdges_nn_, &
          api_newElementsInRefinement_=api_newElementsInRefinement_, &
          api_newElementsInRefinement_n_=api_newElementsInRefinement_n_, &
          ierr_=ierr)
@@ -7710,8 +7715,11 @@ module gmsh
       api_newCoords_n_)
     newSizeField = ovectordouble_(api_newSizeField_, &
       api_newSizeField_n_)
-    newConstrainedEdges = ovectorsize_(api_newConstrainedEdges_, &
-      api_newConstrainedEdges_n_)
+    call ovectorvectorsize_(api_newConstrainedEdges_, &
+      api_newConstrainedEdges_n_, &
+      api_newConstrainedEdges_nn_, &
+      newConstrainedEdges, &
+      newConstrainedEdges_n)
     newElementsInRefinement = ovectorsize_(api_newElementsInRefinement_, &
       api_newElementsInRefinement_n_)
   end subroutine gmshModelMeshConstrainedDelaunayRefinement

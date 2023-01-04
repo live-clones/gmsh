@@ -1872,7 +1872,7 @@ namespace gmsh { // Top-level functions
                                                   std::vector<std::size_t> & newNodeTags,
                                                   std::vector<double> & newCoords,
                                                   std::vector<double> & newSizeField,
-                                                  std::vector<std::size_t> & newConstrainedEdges,
+                                                  std::vector<std::vector<std::size_t> > & newConstrainedEdges,
                                                   std::vector<std::size_t> & newElementsInRefinement);
 
       // gmsh::model::mesh::alphaShape
