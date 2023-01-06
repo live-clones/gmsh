@@ -1794,6 +1794,7 @@ void constrainedDelaunayRefinement_(const int dim, const int tag,
     }
 
     std::map<PolyMesh::HalfEdge*, bool> he_touched;
+    std::vector<size_t> openLoop;
     for (auto he : pm->hedges){
       if (he->f && he->data == 0 && !he_touched[he]){
         std::vector<size_t> loop;
@@ -1804,9 +1805,17 @@ void constrainedDelaunayRefinement_(const int dim, const int tag,
           loop.push_back(_he->next->v->data);
           _he = getNextEdgeOnFreeSurface(_he);
         } while (_he != nullptr && !he_touched[_he] && _he != he);
-        newConstrainedEdges.push_back(loop);
+        if (_he == he)
+          newConstrainedEdges.push_back(loop);
+        else {
+          size_t nf = loop.back();
+          std::vector<size_t>::iterator n_insert;
+          n_insert = find(openLoop.begin(), openLoop.end(), nf);
+          openLoop.insert(n_insert, loop.begin(), loop.end());
+        }
       }
     }
+    newConstrainedEdges.push_back(openLoop);
 
     CTX::instance()->mesh.changed = ENT_ALL;
     delete pm;
