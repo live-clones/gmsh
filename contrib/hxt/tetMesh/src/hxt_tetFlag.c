@@ -21,15 +21,6 @@ static inline uint64_t hashLess(uint64_t a, uint64_t b) {
   return ((a^b)&1)^(a<b);
 }
 
-/* good hash function for non-cryptographic purpose
- * see https://stackoverflow.com/a/12996028 */
-static inline uint64_t hash64(uint64_t x) {
-    x = (x ^ (x >> 30)) * UINT64_C(0xbf58476d1ce4e5b9);
-    x = (x ^ (x >> 27)) * UINT64_C(0x94d049bb133111eb);
-    x = x ^ (x >> 31);
-    return x;
-}
-
 /* just a function such that:
  * if transitiveHashLess(a,b)==true
  * then transitiveHashLess(b,a)==false
