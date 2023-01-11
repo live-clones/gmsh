@@ -30,6 +30,15 @@ HXTStatus hxtTetOrientNodes(HXTMesh* mesh);
 /** verify the consistency of a tetrahedral mesh */
 HXTStatus hxtTetVerify(HXTMesh* mesh);
 
+/** returns a 64 bit hash corresponding to the current state of the mesh */
+uint64_t hxtHashMesh(const HXTMesh* mesh);
+uint64_t hxtHashVertices(const HXTMesh* mesh);
+uint64_t hxtHashTetrahedra(const HXTMesh* mesh);
+uint64_t hxtHashTriangles(const HXTMesh* mesh);
+uint64_t hxtHashLines(const HXTMesh* mesh);
+uint64_t hxtHashPoints(const HXTMesh* mesh);
+uint64_t hxtHashBrep(const HXTMesh* mesh);
+
 /** reorder tetrahedra in a reproducible manner */
 HXTStatus hxtTetReorder(HXTMesh* mesh);
 

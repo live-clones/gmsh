@@ -41,6 +41,7 @@ extern "C" {
 #endif
 #define HXTu64 "I64u"
 #define HXTd64 "I64d"
+#define HXTx64 "I64x"
 #define HXT_LIKELY(exp)   exp
 #define HXT_UNLIKELY(exp) exp
 #define HXT_ASSUME(exp) __assume(exp)
@@ -52,6 +53,7 @@ extern "C" {
 #define hxtDeclareAligned64 __attribute__((aligned(64)))
 #define HXTu64 PRIu64
 #define HXTi64 PRId64
+#define HXTx64 PRIx64
 #define HXT_LIKELY(exp)    __builtin_expect(!!(exp), 1)
 #define HXT_UNLIKELY(exp)  __builtin_expect(!!(exp), 0)
 #ifdef __GNUC__
@@ -250,10 +252,13 @@ static inline HXTStatus hxtAlignedRealloc(void* ptrToPtr, size_t size)
 
   !!!! 1st seed must absolutely be 1 !!!!
 **********************************************************/
-static inline uint32_t hxtReproducibleLCG(uint32_t *seed)
+static inline uint32_t hxtReproducibleLCG(uint32_t *state)
 {
-  *seed = 69621*(*seed)%2147483647;
-  return *seed;
+  uint64_t product = (uint64_t)*state * 48271;
+  uint32_t x = (product & 0x7fffffff) + (product >> 31);
+
+  x = (x & 0x7fffffff) + (x >> 31);
+  return *state = x;
 }
 
 #ifdef __cplusplus
