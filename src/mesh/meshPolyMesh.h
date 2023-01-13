@@ -368,8 +368,6 @@ public:
       bool deletion_accepted = false;
       bool corner = false;
       while (!deletion_accepted && !corner){
-        // Face* _toDel0 = he->f;
-        // Face* _toDel1 = he->opposite->f;
         if (he->data != -1) return -1;
         HalfEdge* _he = he->next->next->opposite;
         Vertex *v0 = he->next->v;
@@ -397,24 +395,6 @@ public:
           }
           if(_t) *_t = _touched;
           deleteVertex(v, _t);
-          // while (_he->next->next->opposite != he) {
-          //   _he->v = v0;
-          //   _he->opposite->next->next->opposite = _he->opposite;
-          //   _he->opposite = _he->opposite->next->next->opposite;
-          //   Vertex* v1 = _he->next->v;
-          //   Vertex* v2 = _he->next->next->v;
-          //   createFace(_he->f, v0, v1, v2, _he, _he->next, _he->next->next);
-          //   _he = _he->next->next->opposite;
-          //   if(_t) {
-          //     _touched.push_back(_he);
-          //     _touched.push_back(_he->next);
-          //     _touched.push_back(_he->next->next);
-          //   }
-          // }
-          // _toDel0->he = nullptr;
-          // _toDel1->he = nullptr;
-          // v->he = nullptr;
-
           deletion_accepted = true;
         }
       }
