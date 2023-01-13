@@ -1,5 +1,4 @@
 # See the corresponding Python tutorial for detailed comments.
-
 import gmsh
 
 gmsh.initialize()
