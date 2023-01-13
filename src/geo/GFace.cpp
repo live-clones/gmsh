@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2022 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -1324,31 +1324,6 @@ bool GFace::buildRepresentationCross(bool force)
 
   Range<double> ubounds = parBounds(0);
   Range<double> vbounds = parBounds(1);
-  // try to compute something better for Gmsh surfaces
-  if(getNativeType() == GmshModel && geomType() == Plane) {
-    SBoundingBox3d bb;
-    std::vector<GEdge *> ed = edges();
-    for(auto it = ed.begin(); it != ed.end(); it++) {
-      GEdge *ge = *it;
-      if(ge->geomType() != DiscreteCurve &&
-         ge->geomType() != BoundaryLayerCurve) {
-        Range<double> t_bounds = ge->parBounds(0);
-        const int N = 5;
-        double t0 = t_bounds.low(), dt = t_bounds.high() - t_bounds.low();
-        for(int i = 0; i < N; i++) {
-          double t = t0 + dt / (double)(N - 1) * i;
-          GPoint p = ge->point(t);
-          SPoint2 uv = parFromPoint(SPoint3(p.x(), p.y(), p.z()));
-          bb += SPoint3(uv.x(), uv.y(), 0.);
-        }
-      }
-    }
-    if(!bb.empty()) {
-      ubounds = Range<double>(bb.min().x(), bb.max().x());
-      vbounds = Range<double>(bb.min().y(), bb.max().y());
-    }
-  }
-
   bool tri = (geomType() == RuledSurface && getNativeType() == GmshModel &&
               edges().size() == 3 && !CTX::instance()->geom.oldRuledSurface);
   double tol = 1e-8;
