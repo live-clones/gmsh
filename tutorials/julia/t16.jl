@@ -23,11 +23,11 @@ gmsh.model.add("t16")
 gmsh.logger.start()
 
 # We first create two cubes:
-gmsh.model.occ.addBox(0,0,0, 1,1,1, 1)
-gmsh.model.occ.addBox(0,0,0, 0.5,0.5,0.5, 2)
+gmsh.model.occ.addBox(0, 0, 0, 1, 1, 1, 1)
+gmsh.model.occ.addBox(0, 0, 0, 0.5, 0.5, 0.5, 2)
 
 # We apply a boolean difference to create the "cube minus one eigth" shape:
-gmsh.model.occ.cut([(3,1)], [(3,2)], 3)
+gmsh.model.occ.cut([(3, 1)], [(3, 2)], 3)
 
 # Boolean operations with OpenCASCADE always create new entities. By default the
 # extra arguments `removeObject' and `removeTool' in `cut()' are set to `True',
@@ -40,7 +40,7 @@ for t in 1:5
     global x, z
     x += 0.166
     z += 0.166
-    gmsh.model.occ.addSphere(x,y,z,r, 3 + t)
+    gmsh.model.occ.addSphere(x, y, z, r, 3 + t)
     t = (3, 3 + t)
     push!(holes, t)
 end
@@ -49,7 +49,7 @@ end
 # want five spherical inclusions, whose mesh should be conformal with the mesh
 # of the cube: we thus use `fragment()', which intersects all volumes in a
 # conformal manner (without creating duplicate interfaces):
-ov, ovv = gmsh.model.occ.fragment([(3,3)], holes)
+ov, ovv = gmsh.model.occ.fragment([(3, 3)], holes)
 
 # ov contains all the generated entities of the same dimension as the input
 # entities:
@@ -60,9 +60,9 @@ end
 
 # ovv contains the parent-child relationships for all the input entities:
 println("before/after fragment relations:")
-#for e in zip(vcat([(3,3)], holes), ovv)
-#    println("parent ", e[0], " -> child ", e[1])
-#end
+for e in zip([(3, 3); holes], ovv)
+    println("parent ", e[1], " -> child ", e[2])
+end
 
 gmsh.model.occ.synchronize()
 
@@ -104,8 +104,8 @@ gmsh.model.mesh.setSize(ov, lcar3);
 
 # Select the corner point by searching for it geometrically:
 eps = 1e-3
-ov = gmsh.model.getEntitiesInBoundingBox(0.5-eps, 0.5-eps, 0.5-eps,
-                                         0.5+eps, 0.5+eps, 0.5+eps, 0)
+ov = gmsh.model.getEntitiesInBoundingBox(0.5 - eps, 0.5 - eps, 0.5 - eps,
+                                         0.5 + eps, 0.5 + eps, 0.5 + eps, 0)
 gmsh.model.mesh.setSize(ov, lcar2)
 
 gmsh.model.mesh.generate(3)
