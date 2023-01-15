@@ -430,7 +430,7 @@ HXTStatus Gmsh2Hxt(std::vector<GRegion *> &regions, HXTMesh *m,
                    std::map<MVertex *, uint32_t> &v2c,
                    std::vector<MVertex *> &c2v)
 {
-  std::set<MVertex *> all;
+  std::set<MVertex *, MVertexPtrLessThan> all;
   std::vector<GFace *> surfaces;
   std::vector<GEdge *> curves;
   std::vector<GVertex *> points;
