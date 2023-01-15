@@ -438,6 +438,115 @@ HXTStatus hxtTetVerify(HXTMesh* mesh)
 }
 
 
+static inline uint64_t hashMemory(const void* memory, size_t size)
+{
+  if (size == 0 || memory == NULL)
+    return 0;
+
+  uint64_t res = hash64(size);
+  const uint64_t* mem_u64 = memory;
+  size_t num_u64 = size / 8;
+
+  #pragma omp parallel for reduction(^:res)
+  for (size_t i = 0; i < num_u64; i++) {
+    res ^= hash64(mem_u64[i] + i * UINT64_C(0xA24BAED4963EE407));
+  }
+
+  size_t i = num_u64 * 8;
+  if (i < size) {
+    const uint8_t* mem_u8 = memory;
+    uint64_t last = 0;
+    for (int shift = 0; i < size; i++) {
+      last += (uint64_t) mem_u8[i] << shift;
+      shift += 8;
+    }
+    res ^= hash64(last + num_u64 * UINT64_C(0xA24BAED4963EE407));
+  }
+
+  return res;
+}
+
+
+uint64_t hxtHashVertices(const HXTMesh* mesh) {
+  uint64_t res = hash64(mesh->vertices.size);
+  res ^= hashMemory(mesh->vertices.coord, sizeof(double) * mesh->vertices.num * 4);
+  return res;
+}
+
+uint64_t hxtHashTetrahedra(const HXTMesh* mesh) {
+  uint64_t res = hash64(mesh->tetrahedra.size);
+  res ^= hashMemory(mesh->tetrahedra.node, sizeof(uint32_t) * mesh->tetrahedra.num * 4);
+  res ^= hashMemory(mesh->tetrahedra.neigh, sizeof(uint64_t) * mesh->tetrahedra.num * 4);
+  res ^= hashMemory(mesh->tetrahedra.color, sizeof(uint32_t) * mesh->tetrahedra.num);
+  res ^= hashMemory(mesh->tetrahedra.flag, sizeof(uint16_t) * mesh->tetrahedra.num);
+  return res;
+}
+
+uint64_t hxtHashTriangles(const HXTMesh* mesh) {
+  uint64_t res = hash64(mesh->triangles.size);
+  res ^= hashMemory(mesh->triangles.node, sizeof(uint32_t) * mesh->triangles.num * 3);
+  res ^= hashMemory(mesh->triangles.color, sizeof(uint32_t) * mesh->triangles.num);
+  return res;
+}
+
+uint64_t hxtHashLines(const HXTMesh* mesh) {
+  uint64_t res = hash64(mesh->lines.size);
+  res ^= hashMemory(mesh->lines.node, sizeof(uint32_t) * mesh->lines.num * 2);
+  res ^= hashMemory(mesh->lines.color, sizeof(uint32_t) * mesh->lines.num);
+  return res;
+}
+
+uint64_t hxtHashPoints(const HXTMesh* mesh) {
+  uint64_t res = hash64(mesh->points.size);
+  res ^= hashMemory(mesh->points.node, sizeof(uint32_t) * mesh->points.num);
+  res ^= hashMemory(mesh->points.color, sizeof(uint32_t) * mesh->points.num);
+  return res;
+}
+
+uint64_t hxtHashBrep(const HXTMesh* mesh) {
+  uint64_t res = hash64(
+    ((uint64_t) mesh->brep.numVolumes * 7) ^
+    ((uint64_t) mesh->brep.numSurfaces * 11) ^
+    ((uint64_t) mesh->brep.numCurves * 13) ^
+    ((uint64_t) mesh->brep.numPoints * 17)
+  );
+  res ^= hashMemory(mesh->brep.numSurfacesPerVolume, sizeof(uint32_t) * mesh->brep.numVolumes);
+  {
+    size_t tot = 0;
+    for (uint32_t i = 0; i < mesh->brep.numVolumes; i++) {
+      tot += mesh->brep.numSurfacesPerVolume[i];
+    }
+    res ^= hashMemory(mesh->brep.surfacesPerVolume, sizeof(uint32_t) * tot);
+  }
+  res ^= hashMemory(mesh->brep.numCurvesPerSurface, sizeof(uint32_t) * mesh->brep.numSurfaces);
+  {
+    size_t tot = 0;
+    for (uint32_t i = 0; i < mesh->brep.numSurfaces; i++) {
+      tot += mesh->brep.numCurvesPerSurface[i];
+    }
+    res ^= hashMemory(mesh->brep.curvesPerSurface, sizeof(uint32_t) * tot);
+  }
+  res ^= hashMemory(mesh->brep.endPointsOfCurves, sizeof(uint32_t) * mesh->brep.numCurves * 2);
+  res ^= hashMemory(mesh->brep.points, sizeof(uint32_t) * mesh->brep.numPoints);
+
+  return res;
+}
+
+
+
+uint64_t hxtHashMesh(const HXTMesh* mesh)
+{
+  /* hash nodes */
+  uint64_t res = hxtHashVertices(mesh);
+  res ^= hxtHashTetrahedra(mesh);
+  res ^= hxtHashTriangles(mesh);
+  res ^= hxtHashLines(mesh);
+  res ^= hxtHashPoints(mesh);
+  res ^= hxtHashBrep(mesh);
+  return res;
+}
+
+
 /***************************************
  * remove ghost tetrahedra from the mesh
  * see header for more information

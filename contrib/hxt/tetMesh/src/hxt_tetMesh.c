@@ -62,6 +62,8 @@ HXTStatus hxtTetMesh(HXTMesh* mesh,
     options->nodalSizes.factor = 1.0;
   }
 
+  HXT_INFO_COND(options->verbosity>0, "Input mesh hash %" HXTx64, hxtHashMesh(mesh));
+
   double t[8]={0};
   t[0] = omp_get_wtime();
 

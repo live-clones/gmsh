@@ -304,13 +304,13 @@ static HXTStatus threadLocals_update(HXTMesh* mesh, HXTBbox* bbox,
   HXTVertex* vertices = (HXTVertex*) mesh->vertices.coord;
   HXTGroup2* badTets = shared->badTets.array;
 
-  double indexShift = (double) hxtReproducibleLCG(seed)/RAND_MAX;
+  double indexShift = hxtLCGf64(seed);
 
   if(changePartitionCurve) {
     double hxtDeclareAligned bboxShift[3];
-    bboxShift[0] = (double) hxtReproducibleLCG(seed)/RAND_MAX;
-    bboxShift[1] = (double) hxtReproducibleLCG(seed)/RAND_MAX;
-    bboxShift[2] = (double) hxtReproducibleLCG(seed)/RAND_MAX;
+    bboxShift[0] = hxtLCGf64(seed);
+    bboxShift[1] = hxtLCGf64(seed);
+    bboxShift[2] = hxtLCGf64(seed);
 
     HXT_CHECK( hxtMoore(bbox, vertices, mesh->vertices.num, bboxShift) );
   }

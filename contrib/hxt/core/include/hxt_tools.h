@@ -41,6 +41,7 @@ extern "C" {
 #endif
 #define HXTu64 "I64u"
 #define HXTd64 "I64d"
+#define HXTx64 "I64x"
 #define HXT_LIKELY(exp)   exp
 #define HXT_UNLIKELY(exp) exp
 #define HXT_ASSUME(exp) __assume(exp)
@@ -52,6 +53,7 @@ extern "C" {
 #define hxtDeclareAligned64 __attribute__((aligned(64)))
 #define HXTu64 PRIu64
 #define HXTi64 PRId64
+#define HXTx64 PRIx64
 #define HXT_LIKELY(exp)    __builtin_expect(!!(exp), 1)
 #define HXT_UNLIKELY(exp)  __builtin_expect(!!(exp), 0)
 #ifdef __GNUC__
@@ -240,20 +242,38 @@ static inline HXTStatus hxtAlignedRealloc(void* ptrToPtr, size_t size)
 
 
 /*********************************************************
-  A way to call rand with a seed to get a reproducible
-  result.
-  For example, we do not call srand() each time we
-  call a reproducible Delaunay, else if someone was calling
-  rand(); Delaunay(); rand(); ...
-  he would always get the same result. We use
-  hxtReproducibleRand() instead
-
-  !!!! 1st seed must absolutely be 1 !!!!
+ Lehmer RNG with prime modulus 2^32−5
+ Preferably seed with 1 first...
 **********************************************************/
-static inline uint32_t hxtReproducibleLCG(uint32_t *seed)
+static inline uint32_t hxtLCGu32(uint32_t *state)
 {
-  *seed = 69621*(*seed)%2147483647;
-  return *seed;
+  return *state = (uint64_t)*state * 279470273u % 0xfffffffb;
+}
+
+
+/* return a double between 0 and 1, uniform distribution with 0 and 1 excluded
+ * indeed, 0 cannot be returned by hxtLCGu32() and
+ * `(double) 0xfffffffa * (1.0 / 4294967296.0)` < 1 */
+static inline double hxtLCGf64(uint32_t *state)
+{
+  return (double) hxtLCGu32(state) * (1.0 / 4294967296.0);
+}
+
+
+/* good hash function for non-cryptographic purpose, 64 bits
+ * from https://stackoverflow.com/a/12996028, posted by Thomas Mueller */
+static inline uint64_t hash64(uint64_t x) {
+    x = (x ^ (x >> 30)) * UINT64_C(0xbf58476d1ce4e5b9);
+    x = (x ^ (x >> 27)) * UINT64_C(0x94d049bb133111eb);
+    return x ^ (x >> 31);
+}
+
+/* good hash function for non-cryptographic purpose, 32 bits
+ * from https://stackoverflow.com/a/12996028, posted by Thomas Mueller */
+static inline uint32_t hash32(uint32_t x) {
+  x = ((x >> 16) ^ x) * 0x45d9f3b;
+  x = ((x >> 16) ^ x) * 0x45d9f3b;
+  return (x >> 16) ^ x;
 }
 
 #ifdef __cplusplus
