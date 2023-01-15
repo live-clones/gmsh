@@ -1,10 +1,21 @@
-# See the corresponding Python tutorial for detailed comments.
+# ------------------------------------------------------------------------------
+#
+#  Gmsh Julia tutorial 11
+#
+#  Unstructured quadrangular meshes
+#
+# ------------------------------------------------------------------------------
 
 import gmsh
 
 gmsh.initialize()
 
 gmsh.model.add("t11")
+
+# We have seen in tutorials `t3.jl' and `t6.jl' that extruded and transfinite
+# meshes can be "recombined" into quads, prisms or hexahedra. Unstructured
+# meshes can be recombined in the same way. Let's define a simple geometry with
+# an analytical mesh size field:
 
 p1 = gmsh.model.geo.addPoint(-1.25, -.5, 0)
 p2 = gmsh.model.geo.addPoint(1.25, -.5, 0)
@@ -26,8 +37,8 @@ field.add("MathEval", 1)
 field.setString(1, "F", "0.01*(1.0+30.*(y-x*x)*(y-x*x) + (1-x)*(1-x))")
 field.setAsBackgroundMesh(1)
 
+# To generate quadrangles instead of triangles, we can simply add
 gmsh.model.mesh.setRecombine(2, pl)
-
 
 # If we'd had several surfaces, we could have used the global option
 # "Mesh.RecombineAll":
@@ -77,6 +88,7 @@ gmsh.model.mesh.generate(2)
 # gmsh.option.setNumber("Mesh.SubdivisionAlgorithm", 1)
 # gmsh.model.mesh.refine()
 
+# Launch the GUI to see the results:
 if !("-nopopup" in ARGS)
     gmsh.fltk.run()
 end

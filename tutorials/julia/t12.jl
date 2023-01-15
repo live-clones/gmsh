@@ -1,4 +1,10 @@
-# See the corresponding Python tutorial for detailed comments.
+# ------------------------------------------------------------------------------
+#
+#  Gmsh Julia tutorial 12
+#
+#  Cross-patch meshing with compounds
+#
+# ------------------------------------------------------------------------------
 
 import gmsh
 
@@ -22,7 +28,7 @@ import gmsh
 # combination of the individual meshes can be reparametrized, i.e. if the shape
 # is "simple enough". If the shape is not amenable to reparametrization, you
 # should create a full mesh of the geometry and first re-classify it to
-# generate patches amenable to reparametrization (see `t13.py').
+# generate patches amenable to reparametrization (see `t13.jl').
 
 # The mesh of the individual entities performed in Step 1. should usually be
 # finer than the desired final mesh; this can be controlled with the
@@ -67,16 +73,22 @@ gmsh.model.geo.addSurfaceFilling([15], 10)
 
 gmsh.model.geo.synchronize()
 
+# Treat curves 2, 3 and 4 as a single curve when meshing (i.e. mesh across
+# points 6 and 7)
 gmsh.model.mesh.setCompound(1, [2, 3, 4])
 
+# Idem with curves 6, 7 and 8
 gmsh.model.mesh.setCompound(1, [6, 7, 8])
 
+# Treat surfaces 1, 5 and 10 as a single surface when meshing (i.e. mesh across
+# curves 9 and 10)
 gmsh.model.mesh.setCompound(2, [1, 5, 10])
 
 gmsh.model.mesh.generate(2)
 
 gmsh.write("t12.msh")
 
+# Launch the GUI to see the results:
 if !("-nopopup" in ARGS)
     gmsh.fltk.run()
 end
