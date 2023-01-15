@@ -297,14 +297,6 @@ HXTStatus hxtNodeInfoSort(HXTNodeInfo*  const __restrict__ array, const uint32_t
 
 
 /*********************************** shuffle functions ***********************************************/
-
-static inline uint32_t fastHash(uint32_t x) {
-  x = ((x >> 16) ^ x) * 0x45d9f3b;
-  x = ((x >> 16) ^ x) * 0x45d9f3b;
-  x = (x >> 16) ^ x;
-  return x;
-}
-
 static inline uint32_t getVertexDist32(HXTVertex* const __restrict__  v, const void* userData)
 {
   HXT_UNUSED(userData);
@@ -321,7 +313,7 @@ static inline uint32_t getNodeInfoDist32(HXTNodeInfo*  const __restrict__ nodeIn
 HXTStatus hxtVerticesShuffle(HXTVertex* const __restrict__ vertices, const uint32_t n){
   #pragma omp parallel for simd
   for (uint32_t i=0; i<n; i++){
-    vertices[i].padding.hilbertDist = fastHash(i);
+    vertices[i].padding.hilbertDist = hash32(i);
   }
 
   HXTSORT32_UNIFORM(HXTVertex, vertices, n, UINT32_MAX, getVertexDist32, NULL);
@@ -332,7 +324,7 @@ HXTStatus hxtVerticesShuffle(HXTVertex* const __restrict__ vertices, const uint3
 HXTStatus hxtNodeInfoShuffle(HXTNodeInfo* const __restrict__ nodeInfo, const uint32_t n){
   #pragma omp parallel for simd
   for (uint32_t i=0; i<n; i++){
-    nodeInfo[i].hilbertDist = fastHash(i);
+    nodeInfo[i].hilbertDist = hash32(i);
   }
 
   HXTSORT32_UNIFORM(HXTNodeInfo, nodeInfo, n, UINT32_MAX, getNodeInfoDist32, NULL);

@@ -542,7 +542,7 @@ static inline HXTStatus walking2Cavity(HXTMesh* mesh, HXTPartition* partition, u
     unsigned index = 4;
     unsigned outside = 0;
     unsigned wantToGoInOtherPartition = 0;
-    unsigned randomU = hxtReproducibleLCG(&seed);
+    unsigned randomU = hxtLCGu32(&seed);
     for (unsigned j=0; j<4; j++)
     {
       unsigned i = (j+randomU)%4;
@@ -1254,10 +1254,10 @@ static HXTStatus parallelDelaunay3D(HXTMesh* mesh,
           defaultMooreCurve = 1;
         }
         else {
-          startShift = (double) hxtReproducibleLCG(&seed)/RAND_MAX;
-          bboxShift[0] = (double) hxtReproducibleLCG(&seed)/RAND_MAX;
-          bboxShift[1] = (double) hxtReproducibleLCG(&seed)/RAND_MAX;
-          bboxShift[2] = (double) hxtReproducibleLCG(&seed)/RAND_MAX;
+          startShift = hxtLCGf64(&seed);
+          bboxShift[0] = hxtLCGf64(&seed);
+          bboxShift[1] = hxtLCGf64(&seed);
+          bboxShift[2] = hxtLCGf64(&seed);
           defaultMooreCurve = 0;
         }
 

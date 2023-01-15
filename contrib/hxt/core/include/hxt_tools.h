@@ -242,23 +242,38 @@ static inline HXTStatus hxtAlignedRealloc(void* ptrToPtr, size_t size)
 
 
 /*********************************************************
-  A way to call rand with a seed to get a reproducible
-  result.
-  For example, we do not call srand() each time we
-  call a reproducible Delaunay, else if someone was calling
-  rand(); Delaunay(); rand(); ...
-  he would always get the same result. We use
-  hxtReproducibleRand() instead
-
-  !!!! 1st seed must absolutely be 1 !!!!
+ Lehmer RNG with prime modulus 2^32−5
+ Preferably seed with 1 first...
 **********************************************************/
-static inline uint32_t hxtReproducibleLCG(uint32_t *state)
+static inline uint32_t hxtLCGu32(uint32_t *state)
 {
-  uint64_t product = (uint64_t)*state * 48271;
-  uint32_t x = (product & 0x7fffffff) + (product >> 31);
+  return *state = (uint64_t)*state * 279470273u % 0xfffffffb;
+}
 
-  x = (x & 0x7fffffff) + (x >> 31);
-  return *state = x;
+
+/* return a double between 0 and 1, uniform distribution with 0 and 1 excluded
+ * indeed, 0 cannot be returned by hxtLCGu32() and
+ * `(double) 0xfffffffa * (1.0 / 4294967296.0)` < 1 */
+static inline double hxtLCGf64(uint32_t *state)
+{
+  return (double) hxtLCGu32(state) * (1.0 / 4294967296.0);
+}
+
+
+/* good hash function for non-cryptographic purpose, 64 bits
+ * from https://stackoverflow.com/a/12996028, posted by Thomas Mueller */
+static inline uint64_t hash64(uint64_t x) {
+    x = (x ^ (x >> 30)) * UINT64_C(0xbf58476d1ce4e5b9);
+    x = (x ^ (x >> 27)) * UINT64_C(0x94d049bb133111eb);
+    return x ^ (x >> 31);
+}
+
+/* good hash function for non-cryptographic purpose, 32 bits
+ * from https://stackoverflow.com/a/12996028, posted by Thomas Mueller */
+static inline uint32_t hash32(uint32_t x) {
+  x = ((x >> 16) ^ x) * 0x45d9f3b;
+  x = ((x >> 16) ^ x) * 0x45d9f3b;
+  return (x >> 16) ^ x;
 }
 
 #ifdef __cplusplus

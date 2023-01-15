@@ -359,20 +359,6 @@ static inline void unsetUnusedFlag(HXTMesh* mesh, uint64_t tet, unsigned id) {
 static inline void resetUnusedFlags(HXTMesh* mesh, uint64_t tet) {
   mesh->tetrahedra.flag[tet] &= ~(HXT_ALL_UNUSED_MASK);
 }
-
-
-
-/* other utility functions */
-
-/* good hash function for non-cryptographic purpose
- * see https://stackoverflow.com/a/12996028 */
-static inline uint64_t hash64(uint64_t x) {
-    x = (x ^ (x >> 30)) * UINT64_C(0xbf58476d1ce4e5b9);
-    x = (x ^ (x >> 27)) * UINT64_C(0x94d049bb133111eb);
-    return x ^ (x >> 31);
-}
-
-
 #ifdef __cplusplus
 }
 #endif
