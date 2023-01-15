@@ -41,16 +41,8 @@ surf = false # Keep only surfaces?
 dx = (xmax - xmin)
 dy = (ymax - ymin)
 dz = (zmax - zmin)
-if (dir == "X")
-    L = dz
-else
-    L = dx
-end
-if (dir == "Y")
-    H = dz
-else
-    H = dy
-end
+L = (dir == "X") ? dz : dx
+H = (dir == "Y") ? dz : dy
 
 # Create the first cutting plane:
 s = []
@@ -60,21 +52,9 @@ if dir == "X"
 elseif dir == "Y"
     gmsh.model.occ.rotate([s[1]], xmin, ymin, zmin, 1, 0, 0, pi/2)
 end
-if (dir == "X")
-    tx = dx / N
-else
-    tx = 0
-end
-if (dir == "Y")
-    ty = dy / N
-else
-    ty = 0
-end
-if (dir == "Z")
-    tz = dz / N
-else
-    tz = 0
-end
+tx = (dir == "X") ? dx / N : 0
+ty = (dir == "Y") ? dy / N : 0
+tz = (dir == "Z") ? dz / N : 0
 gmsh.model.occ.translate([s[1]], tx, ty, tz)
 
 # Create the other cutting planes:
@@ -99,21 +79,9 @@ if surf
     eps = 1e-4
     s = []
     for i in 1:N
-        if (dir == "X")
-            xx = xmin
-        else
-            xx = xmax
-        end
-        if (dir == "Y")
-            yy = ymin
-        else
-            yy = ymax
-        end
-        if (dir == "Z")
-            zz = zmin
-        else
-            zz = zmax
-        end
+        xx = (dir == "X") ? xmin : xmax;
+        yy = (dir == "Y") ? ymin : ymax;
+        zz = (dir == "Z") ? zmin : zmax;
         append!(s, (gmsh.model.getEntitiesInBoundingBox(
             xmin - eps + i * tx, ymin - eps + i * ty, zmin - eps + i * tz,
             xx + eps + i * tx, yy + eps + i * ty, zz + eps + i * tz, 2)))
@@ -123,7 +91,7 @@ if surf
     # won't modify any OpenCASCADE entities later on):
     dels = gmsh.model.getEntities(2)
     for e in s
-        deleteat!(s, findall(x->x==e,s))
+        deleteat!(dels, findall(x->x==e,dels))
     end
     gmsh.model.removeEntities(gmsh.model.getEntities(3))
     gmsh.model.removeEntities(dels)
