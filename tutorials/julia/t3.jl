@@ -48,7 +48,7 @@ function createGeometryAndMesh()
     # only one layer here, with 7 subdivisions). All rotations are specified by
     # an an axis point (-0.1, 0, 0.1), an axis direction (0, 1, 0), and a
     # rotation angle (-Pi/2):
-    ov = gmsh.model.geo.revolve([(2,28)], -0.1,0,0.1, 0,1,0, -pi / 2, [7])
+    ov = gmsh.model.geo.revolve([(2, 28)], -0.1, 0, 0.1, 0, 1, 0, -pi / 2, [7])
 
     # Using the built-in geometry kernel, only rotations with angles < Pi are
     # supported. To do a full turn, you will thus need to apply at least 3
