@@ -118,7 +118,7 @@ gmsh.write("t16.msh")
 
 # Inspect the log:
 log = gmsh.logger.get()
-println("Logger has recorded ", size(log), " lines")
+println("Logger has recorded ", length(log), " lines")
 gmsh.logger.stop()
 
 # Launch the GUI to see the results:
