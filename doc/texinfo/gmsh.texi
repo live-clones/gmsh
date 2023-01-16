@@ -1122,7 +1122,9 @@ Also available in C++
 C
 (@url{@value{GITLAB-PREFIX}/tutorials/c/t6.c,t6.c}),
 Python
-(@url{@value{GITLAB-PREFIX}/tutorials/python/t6.py,t6.py})
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t6.py,t6.py}),
+Julia
+(@url{@value{GITLAB-PREFIX}/tutorials/julia/t6.jl,t6.jl})
 and Fortran
 (@url{@value{GITLAB-PREFIX}/tutorials/fortran/t6.f90,t6.f90}).
 
@@ -1144,7 +1146,9 @@ See
 Also available in C++
 (@url{@value{GITLAB-PREFIX}/tutorials/c++/t7.cpp,t7.cpp}),
 Python
-(@url{@value{GITLAB-PREFIX}/tutorials/python/t7.py,t7.py})
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t7.py,t7.py}),
+Julia
+(@url{@value{GITLAB-PREFIX}/tutorials/julia/t7.jl,t7.jl})
 and Fortran
 (@url{@value{GITLAB-PREFIX}/tutorials/fortran/t7.f90,t7.f90}).
 
@@ -1166,7 +1170,9 @@ See
 Also available in C++
 (@url{@value{GITLAB-PREFIX}/tutorials/c++/t8.cpp,t8.cpp}),
 Python
-(@url{@value{GITLAB-PREFIX}/tutorials/python/t8.py,t8.py})
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t8.py,t8.py}),
+Julia
+(@url{@value{GITLAB-PREFIX}/tutorials/julia/t8.jl,t8.jl})
 and Fortran
 (@url{@value{GITLAB-PREFIX}/tutorials/fortran/t8.f90,t8.f90}).
 
@@ -1188,7 +1194,9 @@ See
 Also available in C++
 (@url{@value{GITLAB-PREFIX}/tutorials/c++/t9.cpp,t9.cpp}),
 Python
-(@url{@value{GITLAB-PREFIX}/tutorials/python/t9.py,t9.py})
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t9.py,t9.py}),
+Julia
+(@url{@value{GITLAB-PREFIX}/tutorials/julia/t9.jl,t9.jl})
 and Fortran
 (@url{@value{GITLAB-PREFIX}/tutorials/fortran/t9.f90,t9.f90}).
 
@@ -1234,7 +1242,9 @@ See
 Also available in C++
 (@url{@value{GITLAB-PREFIX}/tutorials/c++/t11.cpp,t11.cpp}),
 Python
-(@url{@value{GITLAB-PREFIX}/tutorials/python/t11.py,t11.py})
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t11.py,t11.py}),
+Julia
+(@url{@value{GITLAB-PREFIX}/tutorials/julia/t11.jl,t11.jl})
 and Fortran
 (@url{@value{GITLAB-PREFIX}/tutorials/fortran/t11.f90,t11.f90}).
 
@@ -1256,7 +1266,9 @@ See
 Also available in C++
 (@url{@value{GITLAB-PREFIX}/tutorials/c++/t12.cpp,t12.cpp}),
 Python
-(@url{@value{GITLAB-PREFIX}/tutorials/python/t12.py,t12.py})
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t12.py,t12.py}),
+Julia
+(@url{@value{GITLAB-PREFIX}/tutorials/julia/t12.jl,t12.jl})
 and Fortran
 (@url{@value{GITLAB-PREFIX}/tutorials/fortran/t12.f90,t12.f90}).
 
@@ -1278,7 +1290,9 @@ See
 Also available in C++
 (@url{@value{GITLAB-PREFIX}/tutorials/c++/t13.cpp,t13.cpp}),
 Python
-(@url{@value{GITLAB-PREFIX}/tutorials/python/t13.py,t13.py})
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t13.py,t13.py}),
+Julia
+(@url{@value{GITLAB-PREFIX}/tutorials/julia/t13.jl,t13.jl})
 and Fortran
 (@url{@value{GITLAB-PREFIX}/tutorials/fortran/t13.f90,t13.f90}).
 
@@ -1300,7 +1314,9 @@ See
 Also available in C++
 (@url{@value{GITLAB-PREFIX}/tutorials/c++/t14.cpp,t14.cpp}),
 Python
-(@url{@value{GITLAB-PREFIX}/tutorials/python/t14.py,t14.py})
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t14.py,t14.py}),
+Julia
+(@url{@value{GITLAB-PREFIX}/tutorials/julia/t14.jl,t14.jl})
 and Fortran
 (@url{@value{GITLAB-PREFIX}/tutorials/fortran/t14.f90,t14.f90}).
 
@@ -1322,7 +1338,9 @@ See
 Also available in C++
 (@url{@value{GITLAB-PREFIX}/tutorials/c++/t15.cpp,t15.cpp}),
 Python
-(@url{@value{GITLAB-PREFIX}/tutorials/python/t15.py,t15.py})
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t15.py,t15.py}),
+Julia
+(@url{@value{GITLAB-PREFIX}/tutorials/julia/t15.jl,t15.jl})
 and Fortran
 (@url{@value{GITLAB-PREFIX}/tutorials/fortran/t15.f90,t15.f90}).
 
@@ -1370,7 +1388,9 @@ See
 Also available in C++
 (@url{@value{GITLAB-PREFIX}/tutorials/c++/t17.cpp,t17.cpp}),
 Python
-(@url{@value{GITLAB-PREFIX}/tutorials/python/t17.py,t17.py})
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t17.py,t17.py}),
+Julia
+(@url{@value{GITLAB-PREFIX}/tutorials/julia/t17.jl,t17.jl})
 and Fortran
 (@url{@value{GITLAB-PREFIX}/tutorials/fortran/t17.f90,t17.f90}).
 
@@ -1392,7 +1412,9 @@ See
 Also available in C++
 (@url{@value{GITLAB-PREFIX}/tutorials/c++/t18.cpp,t18.cpp}),
 Python
-(@url{@value{GITLAB-PREFIX}/tutorials/python/t18.py,t18.py})
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t18.py,t18.py}),
+Julia
+(@url{@value{GITLAB-PREFIX}/tutorials/julia/t18.jl,t18.jl})
 and Fortran
 (@url{@value{GITLAB-PREFIX}/tutorials/fortran/t18.f90,t18.f90}).
 
@@ -1414,7 +1436,9 @@ See
 Also available in C++
 (@url{@value{GITLAB-PREFIX}/tutorials/c++/t19.cpp,t19.cpp}),
 Python
-(@url{@value{GITLAB-PREFIX}/tutorials/python/t19.py,t19.py})
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t19.py,t19.py}),
+Julia
+(@url{@value{GITLAB-PREFIX}/tutorials/julia/t19.jl,t19.jl})
 and Fortran
 (@url{@value{GITLAB-PREFIX}/tutorials/fortran/t19.f90,t19.f90}).
 
@@ -1436,7 +1460,9 @@ See
 Also available in C++
 (@url{@value{GITLAB-PREFIX}/tutorials/c++/t20.cpp,t20.cpp}),
 Python
-(@url{@value{GITLAB-PREFIX}/tutorials/python/t20.py,t20.py})
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t20.py,t20.py}),
+Julia
+(@url{@value{GITLAB-PREFIX}/tutorials/julia/t20.jl,t20.jl})
 and Fortran
 (@url{@value{GITLAB-PREFIX}/tutorials/fortran/t20.f90,t20.f90}).
 
@@ -1458,7 +1484,9 @@ See
 Also available in C++
 (@url{@value{GITLAB-PREFIX}/tutorials/c++/t21.cpp,t21.cpp}),
 Python
-(@url{@value{GITLAB-PREFIX}/tutorials/python/t21.py,t21.py})
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t21.py,t21.py}),
+Julia
+(@url{@value{GITLAB-PREFIX}/tutorials/julia/t21.jl,t21.jl})
 and Fortran
 (@url{@value{GITLAB-PREFIX}/tutorials/fortran/t21.f90,t21.f90}).
 

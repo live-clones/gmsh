@@ -1,6 +1,6 @@
 # ------------------------------------------------------------------------------
 #
-#  Gmsh Python tutorial 14
+#  Gmsh Julia tutorial 14
 #
 #  Homology and cohomology computation
 #
@@ -11,9 +11,8 @@
 # chains are stored in the mesh as physical groups of Gmsh, one for each chain.
 
 import gmsh
-import sys
 
-gmsh.initialize(sys.argv)
+gmsh.initialize(ARGS)
 
 # Create an example geometry
 gmsh.model.add("t14")
@@ -65,26 +64,30 @@ gmsh.model.geo.synchronize()
 # computation.
 
 # Whole domain
-domain_tag = e[1][1]
+domain_tag = e[2][2]
 domain_physical_tag = 1001
 gmsh.model.addPhysicalGroup(3, [domain_tag], domain_physical_tag,
                             "Whole domain")
 
 # Four "terminals" of the model
-terminal_tags = [e[3][1], e[5][1], e[7][1], e[9][1]]
+terminal_tags = [e[4][2], e[6][2], e[8][2], e[10][2]]
 terminals_physical_tag = 2001
 gmsh.model.addPhysicalGroup(2, terminal_tags, terminals_physical_tag,
                             "Terminals")
 
 # Find domain boundary tags
-boundary_dimtags = gmsh.model.getBoundary([(3, domain_tag)], False)
+boundary_dimtags = gmsh.model.getBoundary([(3, domain_tag)], false)
 boundary_tags = []
 complement_tags = []
-for tag in boundary_dimtags:
-    complement_tags.append(tag[1])
-    boundary_tags.append(tag[1])
-for tag in terminal_tags:
-    complement_tags.remove(tag)
+
+for tag in boundary_dimtags
+    push!(complement_tags, tag[2])
+    push!(boundary_tags, tag[2])
+end
+
+for tag in terminal_tags
+    deleteat!(complement_tags, findall(x -> x == tag, complement_tags))
+end
 
 # Whole domain surface
 boundary_physical_tag = 2002
@@ -127,7 +130,8 @@ gmsh.model.mesh.generate(3)
 gmsh.write("t14.msh")
 
 # Launch the GUI to see the results:
-if '-nopopup' not in sys.argv:
+if !("-nopopup" in ARGS)
     gmsh.fltk.run()
+end
 
 gmsh.finalize()
