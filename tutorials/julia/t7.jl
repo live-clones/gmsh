@@ -14,7 +14,7 @@ import gmsh
 gmsh.initialize()
 
 # Merge a list-based post-processing view containing the target mesh sizes:
-path = abspath(joinpath("..","t7_bgmesh.pos"))
+path = abspath(joinpath(@__DIR__, "..","t7_bgmesh.pos"))
 gmsh.merge(path)
 
 # If the post-processing view was model-based instead of list-based (i.e. if it

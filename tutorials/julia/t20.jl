@@ -17,7 +17,7 @@ gmsh.model.add("t20")
 
 # Load a STEP file (using `importShapes' instead of `merge' allows to directly
 # retrieve the tags of the highest dimensional imported entities):
-path = abspath(joinpath("..","t20_data.step"))
+path = abspath(joinpath(@__DIR__, "..", "t20_data.step"))
 v = gmsh.model.occ.importShapes(path)
 
 # If we had specified
@@ -91,13 +91,12 @@ if surf
     # won't modify any OpenCASCADE entities later on):
     dels = gmsh.model.getEntities(2)
     for e in s
-        deleteat!(dels, findall(x->x==e,dels))
+        deleteat!(dels, findall(x -> x == e, dels))
     end
     gmsh.model.removeEntities(gmsh.model.getEntities(3))
     gmsh.model.removeEntities(dels)
     gmsh.model.removeEntities(gmsh.model.getEntities(1))
     gmsh.model.removeEntities(gmsh.model.getEntities(0))
-
 end
 
 # Finally, let's specify a global mesh size and mesh the partitioned model:

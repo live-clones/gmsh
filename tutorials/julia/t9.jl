@@ -20,7 +20,7 @@ import gmsh
 gmsh.initialize()
 
 # Let us for example include a three-dimensional scalar view:
-path = abspath(joinpath("..","view3.pos"))
+path = abspath(joinpath(@__DIR__, "..","view3.pos"))
 gmsh.merge(path)
 
 v = gmsh.view.getTags()
