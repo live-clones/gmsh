@@ -113,9 +113,9 @@ for i in sxmin:
         xmin2 -= 1
         xmax2 -= 1
         # ...and if they match, we apply the periodicity constraint
-        if (abs(xmin2 - xmin) < eps and abs(xmax2 - xmax) < eps
-                and abs(ymin2 - ymin) < eps and abs(ymax2 - ymax) < eps
-                and abs(zmin2 - zmin) < eps and abs(zmax2 - zmax) < eps):
+        if (abs(xmin2 - xmin) < eps and abs(xmax2 - xmax) < eps and
+            abs(ymin2 - ymin) < eps and abs(ymax2 - ymax) < eps and
+            abs(zmin2 - zmin) < eps and abs(zmax2 - zmax) < eps):
             gmsh.model.mesh.setPeriodic(2, [j[1]], [i[1]], translation)
 
 gmsh.model.mesh.generate(3)
