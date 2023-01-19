@@ -511,6 +511,13 @@ void CreateOutputFile(const std::string &fileName, int format,
       Msg::Error("No suitable CAD data found for STEP export");
     break;
 
+  case FORMAT_IGES:
+    if(GModel::current()->getOCCInternals())
+      GModel::current()->writeOCCIGES(name);
+    else
+      Msg::Error("No suitable CAD data found for IGES export");
+    break;
+
   case FORMAT_NEU:
     GModel::current()->writeNEU
       (name, CTX::instance()->mesh.saveAll, CTX::instance()->mesh.scalingFactor);

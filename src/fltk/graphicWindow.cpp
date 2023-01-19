@@ -306,6 +306,11 @@ static int _save_step(const char *name)
   CreateOutputFile(name, FORMAT_STEP);
   return 1;
 }
+static int _save_iges(const char *name)
+{
+  CreateOutputFile(name, FORMAT_IGES);
+  return 1;
+}
 static int _save_xmt(const char *name)
 {
   CreateOutputFile(name, FORMAT_XMT);
@@ -479,6 +484,7 @@ static int _save_auto(const char *name)
   case FORMAT_GEO: return _save_geo(name);
   case FORMAT_BREP: return _save_brep(name);
   case FORMAT_STEP: return _save_step(name);
+  case FORMAT_IGES: return _save_iges(name);
   case FORMAT_CGNS: return _save_cgns(name);
   case FORMAT_UNV: return _save_unv(name);
   case FORMAT_VTK: return _save_vtk(name);
@@ -539,6 +545,9 @@ static void file_export_cb(Fl_Widget *w, void *data)
 #endif
 #if defined(HAVE_OCC) || defined(HAVE_PARASOLID_STEP)
     {"Geometry - STEP\t*.step", _save_step},
+#endif
+#if defined(HAVE_OCC)
+    {"Geometry - IGES\t*.iges", _save_iges},
 #endif
     {"Mesh - Gmsh MSH\t*.msh", _save_msh},
     {"Mesh - Abaqus INP\t*.inp", _save_inp},

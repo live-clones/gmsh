@@ -4539,6 +4539,25 @@ bool OCC_Internals::exportShapes(GModel *model, const std::string &fileName,
         return false;
       }
     }
+    else if(format == "iges" || split[2] == ".iges" || split[2] == ".igs" ||
+            split[2] == ".IGES" || split[2] == ".IGS") {
+      IGESControl_Writer writer;
+      if(writer.AddShape(c)) {
+        if(writer.Write(occfile.ToCString()) != true) {
+          Msg::Error("Could not create file '%s'", fileName.c_str());
+          return false;
+        }
+      }
+      else {
+        Msg::Error("Could not create IGES data");
+        return false;
+      }
+    }
+    else {
+      Msg::Error("Unknown format to export OpenCASCADE shapes: %s",
+                 format.c_str());
+      return false;
+    }
   } catch(Standard_Failure &err) {
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
     return false;
@@ -5937,6 +5956,17 @@ int GModel::writeOCCSTEP(const std::string &fn)
     return 0;
   }
   _occ_internals->exportShapes(this, fn, "step",
+                               CTX::instance()->geom.occExportOnlyVisible);
+  return 1;
+}
+
+int GModel::writeOCCIGES(const std::string &fn)
+{
+  if(!_occ_internals) {
+    Msg::Error("No OpenCASCADE model found");
+    return 0;
+  }
+  _occ_internals->exportShapes(this, fn, "iges",
                                CTX::instance()->geom.occExportOnlyVisible);
   return 1;
 }
