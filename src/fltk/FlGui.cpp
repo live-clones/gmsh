@@ -742,19 +742,43 @@ int FlGui::testGlobalShortcuts(int event)
     status = 1;
   }
   else if(Fl::test_shortcut('g')) {
-    FlGui::instance()->openModule("Geometry");
+    if(FlGui::instance()->onelab){
+      if(FlGui::instance()->onelab->isTreeItemOpen("0Modules/Geometry")){
+        FlGui::instance()->onelab->closeTreeItem("0Modules/Geometry");
+      } else {
+        FlGui::instance()->onelab->openTreeItem("0Modules/Geometry");
+      }
+    }
     status = 1;
   }
   else if(Fl::test_shortcut('m')) {
-    FlGui::instance()->openModule("Mesh");
+    if(FlGui::instance()->onelab){
+      if(FlGui::instance()->onelab->isTreeItemOpen("0Modules/Mesh")){
+        FlGui::instance()->onelab->closeTreeItem("0Modules/Mesh");
+      } else {
+        FlGui::instance()->onelab->openTreeItem("0Modules/Mesh");
+      }
+    }
     status = 1;
   }
   else if(Fl::test_shortcut('s')) {
-    FlGui::instance()->openModule("Solver");
+    if(FlGui::instance()->onelab){
+      if(FlGui::instance()->onelab->isTreeItemOpen("0Modules/Solver")){
+        FlGui::instance()->onelab->closeTreeItem("0Modules/Solver");
+      } else {
+        FlGui::instance()->onelab->openTreeItem("0Modules/Solver");
+      }
+    }
     status = 1;
   }
   else if(Fl::test_shortcut('p')) {
-    FlGui::instance()->openModule("Post-processing");
+    if(FlGui::instance()->onelab){
+      if(FlGui::instance()->onelab->isTreeItemOpen("0Modules/Post-processing")){
+        FlGui::instance()->onelab->closeTreeItem("0Modules/Post-processing");
+      } else {
+        FlGui::instance()->onelab->openTreeItem("0Modules/Post-processing");
+      }
+    }
     status = 1;
   }
   else if(Fl::test_shortcut('w')) {
