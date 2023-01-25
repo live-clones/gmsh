@@ -30,7 +30,7 @@ gmsh.model.geo.synchronize()
 
 # We merge some post-processing views to work on
 gmsh.merge(abspath(joinpath(@__DIR__, "..", "view1.pos")))
-gmsh.merge(abspath(joinpath(@__DIR__, "..", "view2.pos")))
+gmsh.merge(abspath(joinpath(@__DIR__, "..", "view1.pos")))
 gmsh.merge(abspath(joinpath(@__DIR__, "..", "view4.pos")))  # contains 2 views inside
 
 # Gmsh can read post-processing views in various formats. Here the `view1.pos'
