@@ -742,43 +742,19 @@ int FlGui::testGlobalShortcuts(int event)
     status = 1;
   }
   else if(Fl::test_shortcut('g')) {
-    if(FlGui::instance()->onelab){
-      if(FlGui::instance()->onelab->isTreeItemOpen("0Modules/Geometry")){
-        FlGui::instance()->onelab->closeTreeItem("0Modules/Geometry");
-      } else {
-        FlGui::instance()->onelab->openTreeItem("0Modules/Geometry");
-      }
-    }
+    FlGui::toggleModule("Geometry");
     status = 1;
   }
   else if(Fl::test_shortcut('m')) {
-    if(FlGui::instance()->onelab){
-      if(FlGui::instance()->onelab->isTreeItemOpen("0Modules/Mesh")){
-        FlGui::instance()->onelab->closeTreeItem("0Modules/Mesh");
-      } else {
-        FlGui::instance()->onelab->openTreeItem("0Modules/Mesh");
-      }
-    }
+    FlGui::toggleModule("Mesh");
     status = 1;
   }
   else if(Fl::test_shortcut('s')) {
-    if(FlGui::instance()->onelab){
-      if(FlGui::instance()->onelab->isTreeItemOpen("0Modules/Solver")){
-        FlGui::instance()->onelab->closeTreeItem("0Modules/Solver");
-      } else {
-        FlGui::instance()->onelab->openTreeItem("0Modules/Solver");
-      }
-    }
+    FlGui::toggleModule("Solver");
     status = 1;
   }
   else if(Fl::test_shortcut('p')) {
-    if(FlGui::instance()->onelab){
-      if(FlGui::instance()->onelab->isTreeItemOpen("0Modules/Post-processing")){
-        FlGui::instance()->onelab->closeTreeItem("0Modules/Post-processing");
-      } else {
-        FlGui::instance()->onelab->openTreeItem("0Modules/Post-processing");
-      }
-    }
+    FlGui::toggleModule("Post-processing");
     status = 1;
   }
   else if(Fl::test_shortcut('w')) {
@@ -1559,6 +1535,17 @@ void FlGui::rebuildTree(bool deleteWidgets)
 {
   if(onelab) onelab->rebuildTree(deleteWidgets);
   if(onelabContext) onelabContext->rebuild(deleteWidgets);
+}
+
+void FlGui::toggleModule(const std::string &name)
+{
+  if(FlGui::instance()->onelab){
+    if(FlGui::instance()->onelab->isTreeItemOpen("0Modules/" + name)){
+      FlGui::instance()->onelab->closeTreeItem("0Modules/" + name);
+    } else {
+      FlGui::instance()->onelab->openTreeItem("0Modules/" + name);
+    }
+  }
 }
 
 void FlGui::openModule(const std::string &name)

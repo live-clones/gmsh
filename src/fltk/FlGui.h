@@ -163,6 +163,8 @@ public:
   void saveMessages(const char *fileName);
   // rebuild the tree
   void rebuildTree(bool deleteWidgets);
+  // toggles the module open or closed based on its current state
+  void toggleModule(const std::string &name);
   // open module in tree
   void openModule(const std::string &name);
   // open tree item
