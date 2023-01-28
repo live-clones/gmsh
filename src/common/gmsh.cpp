@@ -4889,10 +4889,10 @@ GMSH_API void gmsh::model::mesh::setTransfiniteAutomatic(
         transfinite = false;
         break;
       }
-      if(transfinite) {
-        gr->meshAttributes.method = MESH_TRANSFINITE;
-        nr += 1;
-      }
+    }
+    if(transfinite) {
+      gr->meshAttributes.method = MESH_TRANSFINITE;
+      nr += 1;
     }
   }
   if(nr > 0)
