@@ -742,19 +742,19 @@ int FlGui::testGlobalShortcuts(int event)
     status = 1;
   }
   else if(Fl::test_shortcut('g')) {
-    FlGui::instance()->openModule("Geometry");
+    FlGui::toggleModule("Geometry");
     status = 1;
   }
   else if(Fl::test_shortcut('m')) {
-    FlGui::instance()->openModule("Mesh");
+    FlGui::toggleModule("Mesh");
     status = 1;
   }
   else if(Fl::test_shortcut('s')) {
-    FlGui::instance()->openModule("Solver");
+    FlGui::toggleModule("Solver");
     status = 1;
   }
   else if(Fl::test_shortcut('p')) {
-    FlGui::instance()->openModule("Post-processing");
+    FlGui::toggleModule("Post-processing");
     status = 1;
   }
   else if(Fl::test_shortcut('w')) {
@@ -1535,6 +1535,17 @@ void FlGui::rebuildTree(bool deleteWidgets)
 {
   if(onelab) onelab->rebuildTree(deleteWidgets);
   if(onelabContext) onelabContext->rebuild(deleteWidgets);
+}
+
+void FlGui::toggleModule(const std::string &name)
+{
+  if(FlGui::instance()->onelab){
+    if(FlGui::instance()->onelab->isTreeItemOpen("0Modules/" + name)){
+      FlGui::instance()->onelab->closeTreeItem("0Modules/" + name);
+    } else {
+      FlGui::instance()->onelab->openTreeItem("0Modules/" + name);
+    }
+  }
 }
 
 void FlGui::openModule(const std::string &name)

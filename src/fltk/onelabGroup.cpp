@@ -1562,6 +1562,16 @@ void onelabGroup::closeTreeItem(const std::string &name)
   }
 }
 
+bool onelabGroup::isTreeItemOpen(const std::string &name) {
+  Fl_Tree_Item *n = _tree->find_item(name.c_str());
+  if (n != NULL) {
+    if(n->is_open()){
+      return true;
+    }
+  }
+  return false;
+}
+
 void onelabGroup::checkForErrors(const std::string &client)
 {
   if(Msg::GetErrorCount() > 0 && !CTX::instance()->expertMode) {
