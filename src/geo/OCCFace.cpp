@@ -104,6 +104,10 @@ void OCCFace::_setup()
       el.getEdges(edges);
       el.recompute(edges);
     }
+    if(!el.check()) {
+      Msg::Error("Could not fix wire in surface %d", tag());
+      el.print();
+    }
 
     for(GEdgeLoop::citer it = el.begin(); it != el.end(); ++it) {
       l_edges.push_back(it->getEdge());
