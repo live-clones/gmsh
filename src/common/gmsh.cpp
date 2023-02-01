@@ -2306,6 +2306,18 @@ GMSH_API void gmsh::model::mesh::getElementQualities(
     else if(qualityName == "volume"){
       elementQualities[k] = e->getVolume();
     }
+    else if(qualityName == "minEdge"){
+      elementQualities[k] = e->minEdge();
+    }
+    else if(qualityName == "maxEdge"){
+      elementQualities[k] = e->maxEdge();
+    }
+    else if(qualityName == "outerRadius"){
+      elementQualities[k] = e->getOuterRadius();
+    }
+    else if(qualityName == "innerRadius"){
+      elementQualities[k] = e->getInnerRadius();
+    }
     else{
       if(k == begin) {
         Msg::Error("Unknown quality name '%s'", qualityName.c_str());
