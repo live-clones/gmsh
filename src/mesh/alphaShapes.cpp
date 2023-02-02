@@ -1003,17 +1003,17 @@ void generateMesh_(const int dim, const int tag, const bool refine, const std::v
   }
 }
 
-static double faceQuality(PolyMesh::HalfEdge *he, GFace *gf)
-{
-  PolyMesh::Vertex *v0 = he->v;
-  PolyMesh::Vertex *v1 = he->next->v;
-  PolyMesh::Vertex *v2 = he->next->next->v;
-  GPoint p0 = gf->point(v0->position.x(), v0->position.y());
-  GPoint p1 = gf->point(v1->position.x(), v1->position.y());
-  GPoint p2 = gf->point(v2->position.x(), v2->position.y());
-  return qmTriangle::gamma(p0.x(), p0.y(), p0.z(), p1.x(), p1.y(), p1.z(),
-                           p2.x(), p2.y(), p2.z());
-}
+// static double faceQuality(PolyMesh::HalfEdge *he, GFace *gf)
+// {
+//   PolyMesh::Vertex *v0 = he->v;
+//   PolyMesh::Vertex *v1 = he->next->v;
+//   PolyMesh::Vertex *v2 = he->next->next->v;
+//   GPoint p0 = gf->point(v0->position.x(), v0->position.y());
+//   GPoint p1 = gf->point(v1->position.x(), v1->position.y());
+//   GPoint p2 = gf->point(v2->position.x(), v2->position.y());
+//   return qmTriangle::gamma(p0.x(), p0.y(), p0.z(), p1.x(), p1.y(), p1.z(),
+//                            p2.x(), p2.y(), p2.z());
+// }
 
 static void faceCircumCenter(PolyMesh::HalfEdge *he, GFace *gf, double *res,
                              double *uv, double* R)
@@ -1198,6 +1198,7 @@ void Walk(PolyMesh::Face *f, double x, double y, PolyMesh::HalfEdge** heCandidat
 
 static int delaunayEdgeCriterionPlaneIsotropic(PolyMesh::HalfEdge *he, void *)
 {
+  if(he->f == nullptr) return -1;
   if(he->opposite == nullptr) return -1;
   if(he->data > -1) return 0;
   PolyMesh::Vertex *v0 = he->v;
@@ -1372,7 +1373,6 @@ void constrainedDelaunayRefinement_(const int dim, const int tag,
                                     std::vector<double>& newsizeAtNodes, 
                                     std::vector<std::vector<size_t>>& newConstrainedEdges, 
                                     std::vector<size_t>& newElementsInRefinement){
-
   if (dim == 2){
     clock_t initial = clock();
     double elapsed;
@@ -1420,7 +1420,7 @@ void constrainedDelaunayRefinement_(const int dim, const int tag,
     }
     clock_t t1 = clock();
     elapsed = double(t1 - t0)/CLOCKS_PER_SEC;
-    printf("loop 1 : %f \n", elapsed);
+    // printf("loop 1 : %f \n", elapsed);
 
     // Get and color the constrained half edges : the ones inside the domain get data 0
     for (size_t ed=0; ed < constrainedEdges.size(); ed+=2){
@@ -1429,7 +1429,6 @@ void constrainedDelaunayRefinement_(const int dim, const int tag,
         PolyMesh::HalfEdge* he = pm->getEdgeWithBnd(v0, v1);
         he->data = 0; //-> bug is here
     }
-    printf("here! \n");
     // also constrain the boundary edges : they get the tag of the bounding edge they belong to
     for (auto he : pm->hedges){
       if (!he->opposite){
@@ -1444,7 +1443,7 @@ void constrainedDelaunayRefinement_(const int dim, const int tag,
     }
     clock_t t2 = clock();
     elapsed = double(t2 - t1)/CLOCKS_PER_SEC;
-    printf("loop 2 : %f \n", elapsed);
+    // printf("loop 2 : %f \n", elapsed);
     
 
     // Map from gmsh node num to size at this node --> to change?
@@ -1471,28 +1470,41 @@ void constrainedDelaunayRefinement_(const int dim, const int tag,
     //                  ^
     //                  |
     // TODO !!! STEP 2 -|
-    // print4debug(pm, 1);
-    // std::vector<PolyMesh::HalfEdge *> heList;
-    // for (auto he : pm->hedges) heList.push_back(he);
-    // std::sort(heList.begin(), heList.end(), he_size());
-    // while (!heList.empty()){
-    //   PolyMesh::HalfEdge *he = *heList.begin();
-    //   heList.erase(heList.begin());
-    //   if (he == nullptr || he->v == nullptr || he->f == nullptr || he->f->data == -1 || he->data > -1 || pm->degree(he->v) < 0 || freeSurfaceCheck(pm, he->v)) continue;
-    //   // printf("degree : %d\n",pm->degree(he->v));
-    //   double d = norm(he->v->position - he->next->v->position);
-    //   double size = 0.5*(i2Size[abs(he->v->data)] + i2Size[abs(he->next->v->data)]);
-    //   // printf("distance : %f, size : %f \n", d, size);
-    //   if (d < 0.2*size){
-    //     std::vector<PolyMesh::HalfEdge *> _nhes;
-    //     std::vector<PolyMesh::HalfEdge* > _t;
-    //     printf("coarsen deletion at (%f, %f) \n", he->v->position.x(), he->v->position.y());
-    //     pm->deleteVertex(he->v, &_nhes);
-    //     delaunayCheck(pm, _nhes, &_t);  
-    //     for (auto _he : _t) heList.push_back(_he);
-    //   }
-    // }
-    // print4debug(pm, 2);
+    std::vector<PolyMesh::HalfEdge *> heList;
+    for (auto he : pm->hedges) heList.push_back(he);
+    int i_delete = 0;
+    while (!heList.empty()){
+      std::sort(heList.begin(), heList.end(), he_size());
+      PolyMesh::HalfEdge *he = *heList.begin();
+      heList.erase(heList.begin());
+      if (he == nullptr || he->v == nullptr || he->f == nullptr || he->f->data == -1 || he->data > -1 || pm->degree(he->v) < 0 || freeSurfaceCheck(pm, he->v)) continue;
+      // printf("degree : %d\n",pm->degree(he->v));
+      double d = norm(he->v->position - he->next->v->position);
+      double size = 0.5*(i2Size[abs(he->v->data)] + i2Size[abs(he->next->v->data)]);
+      // printf("distance : %f, size : %f \n", d, size);
+      if (d < 0.7*size){
+        std::vector<PolyMesh::HalfEdge *> _nhes;
+        std::vector<PolyMesh::HalfEdge* > _t;
+        // printf("coarsen deletion at (%f, %f) \n", he->v->position.x(), he->v->position.y());
+        if (pm->checkHedgeCompatibility(he)){
+          pm->hedgeCollapse(he, &_nhes);
+          delaunayCheck(pm, _nhes, &_t);  
+          for (auto _he : _t) heList.push_back(_he);
+          i_delete++;
+        }
+        // else 
+        //   printf("... did not collapse because incompatible\n");
+      }
+    }
+
+    std::vector<PolyMesh::HalfEdge* > _t;
+    std::vector<PolyMesh::HalfEdge* > hes;
+    for (auto he : pm->hedges){
+      if (he->f)
+        hes.push_back(he);
+    }
+    // copy(pm->hedges.begin(), pm->hedges.end(), back_inserter(hes)); 
+    // delaunayCheck(pm, hes, &_t);  
 
     // The initial mesh has been created; now we need to insert nodes such that the size field is respected.
     
@@ -1522,7 +1534,7 @@ void constrainedDelaunayRefinement_(const int dim, const int tag,
     }
     clock_t t3 = clock();
     elapsed = double(t3 - t2)/CLOCKS_PER_SEC;
-    printf("loop 3 : %f, face info : %f \n", elapsed, timer);
+    // printf("loop 3 : %f, face info : %f \n", elapsed, timer);
 
     size_t newIdx = gm->getMaxVertexNumber()+1;
     size_t addFrom = pm->vertices.size();
@@ -1531,9 +1543,8 @@ void constrainedDelaunayRefinement_(const int dim, const int tag,
     clock_t start = clock();
     elapsed = double(start - initial)/CLOCKS_PER_SEC;
     double fsTime = 0;
-    printf("initalize TIME : %f \n", elapsed);
+    // printf("initalize TIME : %f \n", elapsed);
     while (!_list.empty()){
-      print4debug(pm, newIdx);
       for(auto face_it = _list.begin() ; face_it != _list.end(); face_it++) {
         if (!(*face_it)->he) _list.erase(face_it--);
       }
@@ -1567,7 +1578,7 @@ void constrainedDelaunayRefinement_(const int dim, const int tag,
           if (heCandidate && found){ // this means it is NOT a constrained edge
             pm->split_triangle(-1, gp.u(), gp.v(), 0, heCandidate->f, delaunayEdgeCriterionPlaneIsotropic, gf, &_touched);
             pm->vertices.back()->data = -pm->vertices.size()+1;
-            printf("split triangle \n");
+            // printf("split triangle \n");
           }
           else if (heCandidate && !found && heCandidate->data>-1) {
             SVector3 p0 = heCandidate->v->position;
@@ -1575,7 +1586,7 @@ void constrainedDelaunayRefinement_(const int dim, const int tag,
             const SVector3 pos = (p0+p1)*0.5;
             if ( heCandidate->opposite){
               pm->split_edge(heCandidate, pos, -1);
-              printf("split fs edge\n");
+              // printf("split fs edge\n");
               pm->vertices.back()->data = -pm->vertices.size()+1;
               heCandidate->next->opposite->f->data = heCandidate->f->data;
               heCandidate->data = 0; // constrain them again
@@ -1605,18 +1616,18 @@ void constrainedDelaunayRefinement_(const int dim, const int tag,
               new_hes.push_back(new_bnd_hes[1]->next);
               new_hes.push_back(new_bnd_hes[1]->next->next);
               delaunayCheck(pm, new_hes, &_touched);
-              printf("split boundary edge\n");
+              // printf("split boundary edge\n");
             }
             SVector3 dist = pos-p0;
             std::vector<PolyMesh::Vertex *> closeVertices;
             getVerticesWithinRadius(pm, pm->vertices.back(), dist.norm(), &closeVertices);
             if (closeVertices.size() > 0){
-              _touched.clear();
               for (auto vv : closeVertices){
+                _touched.clear();
                 std::vector<PolyMesh::HalfEdge *> _nhes;
                 if (pm->degree(vv) > 0 && !freeSurfaceCheck(pm, vv)) {
                   // int vIdx = vv->data;
-                  printf("deleted vertex at (%f, %f) \n", vv->position.x(), vv->position.y());
+                  // printf("deleted vertex at (%f, %f) \n", vv->position.x(), vv->position.y());
                   pm->deleteVertex(vv, &_nhes);
                 }
                 delaunayCheck(pm, _nhes, &_touched);  
@@ -1654,7 +1665,7 @@ void constrainedDelaunayRefinement_(const int dim, const int tag,
     }
     clock_t stop = clock();
     elapsed = double(stop - start)/CLOCKS_PER_SEC;
-    printf("time in DELAUNAY loop : %f, time computing face sizes : %f \n", elapsed, fsTime);
+    // printf("time in DELAUNAY loop : %f, time computing face sizes : %f \n", elapsed, fsTime);
     // print4debug(pm, 999);
     
     // Step 5: dump the updated mesh back into gmsh GFace;
@@ -1823,7 +1834,7 @@ void constrainedDelaunayRefinement_(const int dim, const int tag,
     
     stop = clock();
     elapsed = double(stop - start)/CLOCKS_PER_SEC;
-    printf("STEP 5 TIME : %f \n", elapsed);
+    // printf("STEP 5 TIME : %f \n", elapsed);
   }
 
   // }
