@@ -54,7 +54,6 @@ void constrainedAlphaShapes_(GModel* m,
                             const std::vector<int> &controlTags);
 
 void generateMesh_(const int dim, const int tag, const bool refine, const std::vector<double> &coord, const std::vector<int> &nodeTags);
-#endif
 
 void constrainedDelaunayRefinement_(const int dim, const int tag,
                                     const std::vector<size_t> &elementTags,
@@ -70,9 +69,5 @@ void constrainedDelaunayRefinement_(const int dim, const int tag,
 
 void alphaShape_entity(const int dim, const int tag, const double alpha, const std::vector<size_t>& nodeTags, const std::vector<double>& sizeAtNodes, std::vector<std::vector<size_t>>& elementTags, std::vector<std::vector<size_t>>& edges);
 
-
-// internal functions, useless for outside
-void getFacesToImprove(PolyMesh* pm, GFace* gf, std::vector<double>& sizeAtNodes, std::map<size_t, size_t>& g2v, std::map<size_t, double>& g2sizeAtNodes, std::vector<size_t>& facesToGrade, std::vector<size_t>& facesToImprove);
-void getFaceVertices(PolyMesh::Face* face, PolyMesh::Vertex* vertices[3]);                          
-
+#endif
 #endif

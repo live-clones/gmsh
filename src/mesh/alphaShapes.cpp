@@ -1057,7 +1057,7 @@ static double faceSize(PolyMesh::HalfEdge *he, GFace *gf, std::vector<double>& i
 PolyMesh::Vertex* findVertex(PolyMesh* pm, size_t num){
   size_t i = 0;
   while(i < pm->vertices.size()){
-    if (pm->vertices[i]->data == num) return pm->vertices[i];
+    if (pm->vertices[i]->data == (int)num) return pm->vertices[i];
     i+=1;
   }
   return nullptr;
@@ -1374,8 +1374,8 @@ void constrainedDelaunayRefinement_(const int dim, const int tag,
                                     std::vector<std::vector<size_t>>& newConstrainedEdges, 
                                     std::vector<size_t>& newElementsInRefinement){
   if (dim == 2){
-    clock_t initial = clock();
-    double elapsed;
+    // clock_t initial = clock();
+    // double elapsed;
     bool globalSize = sizeAtNodes.size() == 1;
     GModel* gm = GModel::current();
 
@@ -1396,7 +1396,7 @@ void constrainedDelaunayRefinement_(const int dim, const int tag,
       pm->faces[i]->data = -1;
     }
     
-    clock_t t0 = clock();
+    // clock_t t0 = clock();
     // Recognise which are the faces to refine -> data at these faces is the gmsh face tag, else -1
     for (size_t n=0; n<elementTags.size(); n++){
       int etype, dd, tt;
@@ -1418,8 +1418,8 @@ void constrainedDelaunayRefinement_(const int dim, const int tag,
         v2b[ge->mesh_vertices[i]->getNum()] = dt.second;
       }
     }
-    clock_t t1 = clock();
-    elapsed = double(t1 - t0)/CLOCKS_PER_SEC;
+    // clock_t t1 = clock();
+    // elapsed = double(t1 - t0)/CLOCKS_PER_SEC;
     // printf("loop 1 : %f \n", elapsed);
 
     // Get and color the constrained half edges : the ones inside the domain get data 0
@@ -1441,8 +1441,8 @@ void constrainedDelaunayRefinement_(const int dim, const int tag,
         }
       }
     }
-    clock_t t2 = clock();
-    elapsed = double(t2 - t1)/CLOCKS_PER_SEC;
+    // clock_t t2 = clock();
+    // elapsed = double(t2 - t1)/CLOCKS_PER_SEC;
     // printf("loop 2 : %f \n", elapsed);
     
 
@@ -1512,7 +1512,7 @@ void constrainedDelaunayRefinement_(const int dim, const int tag,
     // Step 3: get the elements that do not respect the size or quality constraint
     std::vector<PolyMesh::Face *> _list;
     double _limit = 0.6; // Value to check!
-    double timer = 0.;
+    // double timer = 0.;
     for(auto f : pm->faces) {
       if (f->he && f->data != -1){
         double q;
@@ -1522,27 +1522,27 @@ void constrainedDelaunayRefinement_(const int dim, const int tag,
         faceInfo(f->he, gf, cc, uv, &R, &q);
         double s;
         if (!globalSize){
-          clock_t inter = clock();
+          // clock_t inter = clock();
           s = faceSize(f->he, gf, i2Size);
-          clock_t inter2 = clock();
-          timer += double(inter2 - inter)/CLOCKS_PER_SEC;
+          // clock_t inter2 = clock();
+          // timer += double(inter2 - inter)/CLOCKS_PER_SEC;
         }
         else 
           s = sizeAtNodes[0];
         if((q < _limit || R > s) && R > minRadius) _list.push_back(f);
       }
     }
-    clock_t t3 = clock();
-    elapsed = double(t3 - t2)/CLOCKS_PER_SEC;
+    // clock_t t3 = clock();
+    // elapsed = double(t3 - t2)/CLOCKS_PER_SEC;
     // printf("loop 3 : %f, face info : %f \n", elapsed, timer);
 
     size_t newIdx = gm->getMaxVertexNumber()+1;
     size_t addFrom = pm->vertices.size();
     
     // Step 4: loop over faces to insert nodes where necessary
-    clock_t start = clock();
-    elapsed = double(start - initial)/CLOCKS_PER_SEC;
-    double fsTime = 0;
+    // clock_t start = clock();
+    // elapsed = double(start - initial)/CLOCKS_PER_SEC;
+    // double fsTime = 0;
     // printf("initalize TIME : %f \n", elapsed);
     while (!_list.empty()){
       for(auto face_it = _list.begin() ; face_it != _list.end(); face_it++) {
@@ -1560,10 +1560,10 @@ void constrainedDelaunayRefinement_(const int dim, const int tag,
       faceInfo(f->he, gf, cc, uv, &R, &q);
       double s;
       if (!globalSize){
-        clock_t tim0 = clock();
+        // clock_t tim0 = clock();
         s = faceSize(f->he, gf, i2Size);
-        clock_t tim1 = clock();
-        fsTime += double(tim1 - tim0)/CLOCKS_PER_SEC;
+        // clock_t tim1 = clock();
+        // fsTime += double(tim1 - tim0)/CLOCKS_PER_SEC;
       }
       else 
         s = sizeAtNodes[0];
@@ -1649,10 +1649,10 @@ void constrainedDelaunayRefinement_(const int dim, const int tag,
               faceInfo(pf->he, gf, cc, uv, &R, &q);
               double s;
               if (!globalSize){
-                clock_t tim0 = clock();
+                // clock_t tim0 = clock();
                 s = faceSize(pf->he, gf, i2Size);
-                clock_t tim1 = clock();
-                fsTime += double(tim1 - tim0)/CLOCKS_PER_SEC;
+                // clock_t tim1 = clock();
+                // fsTime += double(tim1 - tim0)/CLOCKS_PER_SEC;
               }
               else 
                 s = sizeAtNodes[0];
@@ -1663,13 +1663,13 @@ void constrainedDelaunayRefinement_(const int dim, const int tag,
         // print4debug(pm, newIdx);
       }
     }
-    clock_t stop = clock();
-    elapsed = double(stop - start)/CLOCKS_PER_SEC;
+    // clock_t stop = clock();
+    // elapsed = double(stop - start)/CLOCKS_PER_SEC;
     // printf("time in DELAUNAY loop : %f, time computing face sizes : %f \n", elapsed, fsTime);
     // print4debug(pm, 999);
     
     // Step 5: dump the updated mesh back into gmsh GFace;
-    start = clock();
+    // start = clock();
     // delete faces
     for(auto t : gf->triangles) delete t;
     gf->triangles.clear();
@@ -1707,9 +1707,9 @@ void constrainedDelaunayRefinement_(const int dim, const int tag,
           if(v[i]->data > 0){
             auto it = news.find(v[i]->data);
             if(it == news.end()){
-              if (v[i]->data == begin_v->getNum())
+              if (v[i]->data == (int)begin_v->getNum())
                 v_gmsh[i] = begin_v;
-              else if (v[i]->data == end_v->getNum())
+              else if (v[i]->data == (int)end_v->getNum())
                 v_gmsh[i] = end_v;
               else {
                 double u = 0;
@@ -1832,8 +1832,8 @@ void constrainedDelaunayRefinement_(const int dim, const int tag,
     gm->rebuildMeshVertexCache();
     gm->rebuildMeshElementCache();
     
-    stop = clock();
-    elapsed = double(stop - start)/CLOCKS_PER_SEC;
+    // stop = clock();
+    // elapsed = double(stop - start)/CLOCKS_PER_SEC;
     // printf("STEP 5 TIME : %f \n", elapsed);
   }
 
@@ -1870,7 +1870,6 @@ void alphaShape_entity(const int dim, const int tag, const double alpha, const s
     pm->faces[i]->data = etFull[i];
   
   std::unordered_map<PolyMesh::Face*, bool> _touched;
-  for (auto it : _touched)it.second = false;
   double hTriangle;
   double uv[2];
   SPoint3 cc;
