@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2022 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -753,8 +753,9 @@ public:
   int readOCCBREP(const std::string &name);
   int readOCCSTEP(const std::string &name);
   int readOCCIGES(const std::string &name);
-  int writeOCCSTEP(const std::string &name);
   int writeOCCBREP(const std::string &name);
+  int writeOCCSTEP(const std::string &name);
+  int writeOCCIGES(const std::string &name);
   int importOCCShape(const void *shape);
   GVertex *getVertexForOCCShape(const void *shape);
   GEdge *getEdgeForOCCShape(const void *shape);

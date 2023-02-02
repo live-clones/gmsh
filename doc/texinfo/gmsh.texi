@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c Gmsh - Copyright (C) 1997-2022 C. Geuzaine, J.-F. Remacle
+@c Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 @c
 @c See the LICENSE.txt file in the Gmsh root directory for license information.
 @c Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -22,7 +22,7 @@
 @c %**starts of header
 @setfilename gmsh.info
 @include version.texi
-@set COPYRIGHT @copyright{} 1997-2022 Christophe Geuzaine, Jean-Fran@,{c}ois Remacle
+@set COPYRIGHT @copyright{} 1997-2023 Christophe Geuzaine, Jean-Fran@,{c}ois Remacle
 @set SYN a synchronization of the CAD model with the internal Gmsh model.
 @set SYNC This operation triggers @value{SYN}
 @set SYNCS These operations all trigger @value{SYN}
@@ -1122,7 +1122,9 @@ Also available in C++
 C
 (@url{@value{GITLAB-PREFIX}/tutorials/c/t6.c,t6.c}),
 Python
-(@url{@value{GITLAB-PREFIX}/tutorials/python/t6.py,t6.py})
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t6.py,t6.py}),
+Julia
+(@url{@value{GITLAB-PREFIX}/tutorials/julia/t6.jl,t6.jl})
 and Fortran
 (@url{@value{GITLAB-PREFIX}/tutorials/fortran/t6.f90,t6.f90}).
 
@@ -1144,7 +1146,9 @@ See
 Also available in C++
 (@url{@value{GITLAB-PREFIX}/tutorials/c++/t7.cpp,t7.cpp}),
 Python
-(@url{@value{GITLAB-PREFIX}/tutorials/python/t7.py,t7.py})
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t7.py,t7.py}),
+Julia
+(@url{@value{GITLAB-PREFIX}/tutorials/julia/t7.jl,t7.jl})
 and Fortran
 (@url{@value{GITLAB-PREFIX}/tutorials/fortran/t7.f90,t7.f90}).
 
@@ -1166,7 +1170,9 @@ See
 Also available in C++
 (@url{@value{GITLAB-PREFIX}/tutorials/c++/t8.cpp,t8.cpp}),
 Python
-(@url{@value{GITLAB-PREFIX}/tutorials/python/t8.py,t8.py})
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t8.py,t8.py}),
+Julia
+(@url{@value{GITLAB-PREFIX}/tutorials/julia/t8.jl,t8.jl})
 and Fortran
 (@url{@value{GITLAB-PREFIX}/tutorials/fortran/t8.f90,t8.f90}).
 
@@ -1188,7 +1194,9 @@ See
 Also available in C++
 (@url{@value{GITLAB-PREFIX}/tutorials/c++/t9.cpp,t9.cpp}),
 Python
-(@url{@value{GITLAB-PREFIX}/tutorials/python/t9.py,t9.py})
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t9.py,t9.py}),
+Julia
+(@url{@value{GITLAB-PREFIX}/tutorials/julia/t9.jl,t9.jl})
 and Fortran
 (@url{@value{GITLAB-PREFIX}/tutorials/fortran/t9.f90,t9.f90}).
 
@@ -1234,7 +1242,9 @@ See
 Also available in C++
 (@url{@value{GITLAB-PREFIX}/tutorials/c++/t11.cpp,t11.cpp}),
 Python
-(@url{@value{GITLAB-PREFIX}/tutorials/python/t11.py,t11.py})
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t11.py,t11.py}),
+Julia
+(@url{@value{GITLAB-PREFIX}/tutorials/julia/t11.jl,t11.jl})
 and Fortran
 (@url{@value{GITLAB-PREFIX}/tutorials/fortran/t11.f90,t11.f90}).
 
@@ -1256,7 +1266,9 @@ See
 Also available in C++
 (@url{@value{GITLAB-PREFIX}/tutorials/c++/t12.cpp,t12.cpp}),
 Python
-(@url{@value{GITLAB-PREFIX}/tutorials/python/t12.py,t12.py})
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t12.py,t12.py}),
+Julia
+(@url{@value{GITLAB-PREFIX}/tutorials/julia/t12.jl,t12.jl})
 and Fortran
 (@url{@value{GITLAB-PREFIX}/tutorials/fortran/t12.f90,t12.f90}).
 
@@ -1278,7 +1290,9 @@ See
 Also available in C++
 (@url{@value{GITLAB-PREFIX}/tutorials/c++/t13.cpp,t13.cpp}),
 Python
-(@url{@value{GITLAB-PREFIX}/tutorials/python/t13.py,t13.py})
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t13.py,t13.py}),
+Julia
+(@url{@value{GITLAB-PREFIX}/tutorials/julia/t13.jl,t13.jl})
 and Fortran
 (@url{@value{GITLAB-PREFIX}/tutorials/fortran/t13.f90,t13.f90}).
 
@@ -1300,7 +1314,9 @@ See
 Also available in C++
 (@url{@value{GITLAB-PREFIX}/tutorials/c++/t14.cpp,t14.cpp}),
 Python
-(@url{@value{GITLAB-PREFIX}/tutorials/python/t14.py,t14.py})
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t14.py,t14.py}),
+Julia
+(@url{@value{GITLAB-PREFIX}/tutorials/julia/t14.jl,t14.jl})
 and Fortran
 (@url{@value{GITLAB-PREFIX}/tutorials/fortran/t14.f90,t14.f90}).
 
@@ -1322,7 +1338,9 @@ See
 Also available in C++
 (@url{@value{GITLAB-PREFIX}/tutorials/c++/t15.cpp,t15.cpp}),
 Python
-(@url{@value{GITLAB-PREFIX}/tutorials/python/t15.py,t15.py})
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t15.py,t15.py}),
+Julia
+(@url{@value{GITLAB-PREFIX}/tutorials/julia/t15.jl,t15.jl})
 and Fortran
 (@url{@value{GITLAB-PREFIX}/tutorials/fortran/t15.f90,t15.f90}).
 
@@ -1370,7 +1388,9 @@ See
 Also available in C++
 (@url{@value{GITLAB-PREFIX}/tutorials/c++/t17.cpp,t17.cpp}),
 Python
-(@url{@value{GITLAB-PREFIX}/tutorials/python/t17.py,t17.py})
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t17.py,t17.py}),
+Julia
+(@url{@value{GITLAB-PREFIX}/tutorials/julia/t17.jl,t17.jl})
 and Fortran
 (@url{@value{GITLAB-PREFIX}/tutorials/fortran/t17.f90,t17.f90}).
 
@@ -1392,7 +1412,9 @@ See
 Also available in C++
 (@url{@value{GITLAB-PREFIX}/tutorials/c++/t18.cpp,t18.cpp}),
 Python
-(@url{@value{GITLAB-PREFIX}/tutorials/python/t18.py,t18.py})
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t18.py,t18.py}),
+Julia
+(@url{@value{GITLAB-PREFIX}/tutorials/julia/t18.jl,t18.jl})
 and Fortran
 (@url{@value{GITLAB-PREFIX}/tutorials/fortran/t18.f90,t18.f90}).
 
@@ -1414,7 +1436,9 @@ See
 Also available in C++
 (@url{@value{GITLAB-PREFIX}/tutorials/c++/t19.cpp,t19.cpp}),
 Python
-(@url{@value{GITLAB-PREFIX}/tutorials/python/t19.py,t19.py})
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t19.py,t19.py}),
+Julia
+(@url{@value{GITLAB-PREFIX}/tutorials/julia/t19.jl,t19.jl})
 and Fortran
 (@url{@value{GITLAB-PREFIX}/tutorials/fortran/t19.f90,t19.f90}).
 
@@ -1436,7 +1460,9 @@ See
 Also available in C++
 (@url{@value{GITLAB-PREFIX}/tutorials/c++/t20.cpp,t20.cpp}),
 Python
-(@url{@value{GITLAB-PREFIX}/tutorials/python/t20.py,t20.py})
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t20.py,t20.py}),
+Julia
+(@url{@value{GITLAB-PREFIX}/tutorials/julia/t20.jl,t20.jl})
 and Fortran
 (@url{@value{GITLAB-PREFIX}/tutorials/fortran/t20.f90,t20.f90}).
 
@@ -1458,7 +1484,9 @@ See
 Also available in C++
 (@url{@value{GITLAB-PREFIX}/tutorials/c++/t21.cpp,t21.cpp}),
 Python
-(@url{@value{GITLAB-PREFIX}/tutorials/python/t21.py,t21.py})
+(@url{@value{GITLAB-PREFIX}/tutorials/python/t21.py,t21.py}),
+Julia
+(@url{@value{GITLAB-PREFIX}/tutorials/julia/t21.jl,t21.jl})
 and Fortran
 (@url{@value{GITLAB-PREFIX}/tutorials/fortran/t21.f90,t21.f90}).
 
@@ -1610,7 +1638,7 @@ at the shell prompt in a terminal. This will open the main window of the
 Gmsh GUI, with a menu bar on top (except on macOS, where by default the
 menu bar is on the top of the screen -- this can be changed with the
 @code{General.SystemMenuBar} option, see @ref{General options}), a tree
-menu on the left (with by default contains a `Modules' entry with three
+menu on the left (which by default contains a `Modules' entry with three
 children: `Geometry', `Mesh' and `Solver'), a graphic area on the right,
 and a status bar with some shortcut buttons at the bottom. (You can
 detach the tree menu using `Window->Attach/Detach Menu'.)
@@ -1627,11 +1655,11 @@ name. Then in the tree menu, successively open the `Geometry',
 `Rectangle'. A context window with parameters will pop up: you can enter
 some parameters in this window (e.g. the width and height of the
 rectangle) and move the mouse to place it on the canvas. If you don't
-want to place the rectangle with the mouse, and simply enter the precise
-coordinates in the context window, select `X', `Y' and `Z freeze' in the
-window. Once you are done, either enter @kbd{e} (see the status message
-on the top of the graphic window) press the `Add' button in the context
-window.
+want to place the rectangle with the mouse, select `X', `Y' and `Z
+freeze' in the window and enter the coordinates manually in the context
+window. Once you are done, either press @kbd{e} (see the status message
+on the top of the graphic window) or click on the `Add' button in the
+context window.
 
 @iftex
 @sp 1
@@ -1646,8 +1674,8 @@ file @file{mymodel.geo}:
 SetFactory("OpenCASCADE");
 Rectangle(1) = @{0, 0, 0, 1, 0.5, 0@};
 @end example
-You can edit this script with any text editor; clicking on the `Edit
-script' menu in the tree menu will use the editor specified by the
+You can edit this script with any text editor; clicking on `Edit script'
+in the tree menu will launch the default text editor specified by the
 @code{General.Editor} option (@pxref{General options}). If you edit the
 script, you should click on `Reload script' in the tree menu to reload
 the modifications in the GUI. The @code{//+} line in the script is a
@@ -1662,9 +1690,8 @@ to define the curves, the surfaces and the volumes interactively.
 To load an existing model instead of creating a model from scratch, use
 the `File->Open' menu. For example, to open the first tutorial
 (@pxref{Gmsh tutorial}), choose
-@url{@value{GITLAB-PREFIX}/tutorials/t1.geo,t1.geo}. When using a
-terminal, you can also specify the file name directly on the command
-line, i.e.:
+@url{@value{GITLAB-PREFIX}/tutorials/t1.geo,t1.geo}. On the terminal,
+you can also specify the file name directly on the command line, i.e.:
 @example
 > gmsh t1.geo
 @end example
@@ -1681,10 +1708,11 @@ on the mesh format.  Note that most interactive commands have keyboard
 shortcuts: see @ref{Keyboard shortcuts}, or select `Help->Keyboard and
 Mouse Usage' in the menu. For example, to quickly generate the 2D mesh
 and save a mesh, you can first press @kbd{2}, then @kbd{Ctrl+Shift+s}.
+
 A double-click in the graphic window will pop up a quick shortcut menu,
-which can be used e.g. to quickly toggle the visibility of some mesh
-entities (like surface faces), reset the viewport, select the rotation
-center, display axes, or access the full module options (from the
+which can be used e.g. to quickly toggle the visibility of mesh entities
+(like surface faces), reset the viewport, select the rotation center,
+display axes, or access the full module options (from the
 `Tools->Options' menu). The shortcut buttons on the bottom left of the
 status bar can be used to quickly adjust the viewport: `X', `Y', `Z' set
 viewports with the corresponding axis perpendicular to graphic plane;
@@ -1698,9 +1726,9 @@ scale.
 
 Several files can be loaded simultaneously. When specified on the
 command line, the first one defines the active model (in the same way as
-using the `File->Open' menu) and the others are `merged' into this
-model. You can merge such files with the `File->Merge' menu. For
-example, to merge the post-processing views contained in the files
+using the `File->Open' menu) and the others are `merged' into this model
+(in the same way as using the the `File->Merge' menu). For example, to
+merge the post-processing views contained in the files
 @url{@value{GITLAB-PREFIX}/tutorials/view1.pos,view1.pos} and
 @url{@value{GITLAB-PREFIX}/tutorials/view5.msh,view5.msh} together with
 the geometry of the first tutorial @ref{t1}, you can type the following
@@ -1709,7 +1737,7 @@ command:
 > gmsh t1.geo view1.pos view5.msh
 @end example
 
-Once one more more post-processing views are available, a
+When one or more more post-processing views are loaded, a
 `Post-Processing' entry in the tree menu appears. With the previous
 command, three views will appear in the tree menu under
 `Post-processing', respectively labeled `A scalar map', `Nodal scalar
@@ -1726,12 +1754,12 @@ create a new option file with the same filename as the active model, but
 with an extra @file{.opt} extension added. The next time you open this
 model, the associated options will be automatically loaded, too.  To
 save the current options as your default preferences for all future Gmsh
-sessions, use the `File->Save Options As Default' menu instead. Finally,
-you can also save the current options in an arbitrary file by choosing
-the `Gmsh options' format in `File->Export'. For more information about
-available options (and how to reset them to their default values), see
-@ref{Gmsh options}. A full list of options with their current values is
-also available in the `Help->Current Options' menu.
+sessions, use the `File->Save Options As Default' menu instead. You can
+also save the current options in an arbitrary file by choosing the `Gmsh
+options' format in `File->Export'. For more information about available
+options (and how to reset them to their default values), see @ref{Gmsh
+options}. A full list of options with their current values is also
+available using the `Help->Current Options' menu.
 
 Finally, note that the GUI can also be run (and modified) using the API:
 see @ref{Namespace gmsh/fltk} for details.
@@ -1803,16 +1831,20 @@ terminal by passing the @code{-2} command-line switch:
 > gmsh t1.geo -2
 @end example
 
-The same effect could be achieved by adding the @code{Mesh 2;} at the
-end of @file{t1.geo} and running
+The same effect could be achieved by adding the @code{Mesh 2;} command
+at the end of @file{t1.geo} and running
 @example
 > gmsh t1.geo -parse_and_exit
 @end example
-or further adding @code{Exit;} at the end of the script and opening this
-new file.
+or further adding the @code{Exit;} command at the end of the script and
+simply opening this new file:
+@example
+> gmsh t1.geo
+@end example
 
-Options (@pxref{Gmsh options}) can be set from the command line with the
-@code{-setnumber} and @code{-setstring} switches
+Note that all numeric and string options (@pxref{Gmsh options}) can be
+set from the command line with the @code{-setnumber} and
+@code{-setstring} switches
 @example
 > gmsh t1.geo -setnumber Mesh.Nodes 1 -setnumber Geometry.SurfaceLabels 1
 @end example
