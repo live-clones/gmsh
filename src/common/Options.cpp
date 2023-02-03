@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2022 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -9604,7 +9604,10 @@ unsigned int opt_geometry_color_curves(OPT_ARGS_COL)
 
 unsigned int opt_geometry_color_surfaces(OPT_ARGS_COL)
 {
-  if(action & GMSH_SET) CTX::instance()->color.geom.surface = val;
+  if(action & GMSH_SET) {
+    CTX::instance()->color.geom.surface = val;
+    GModel::current()->deleteGeometryVertexArrays();
+  }
 #if defined(HAVE_FLTK)
   CCC(CTX::instance()->color.geom.surface,
       FlGui::instance()->options->geo.color[2]);

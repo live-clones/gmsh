@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2022 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -96,6 +96,32 @@ void gmshFace::resetNativePtr(Surface *s)
   // always compute and store the mean plane for plane surfaces (using
   // the bounding vertices)
   if(_s->Typ == MSH_SURF_PLAN) computeMeanPlane();
+
+  // compute parametric bounds for plane surfaces
+  _parBounds[0] = Range<double>(0., 1.);
+  _parBounds[1] = Range<double>(0., 1.);
+  if(_s->Typ == MSH_SURF_PLAN) {
+    SBoundingBox3d bb;
+    for(auto ge: l_edges) {
+      if(ge->geomType() != DiscreteCurve &&
+         ge->geomType() != BoundaryLayerCurve) {
+        Range<double> t_bounds = ge->parBounds(0);
+        const int N = 5;
+        double t0 = t_bounds.low(), dt = t_bounds.high() - t_bounds.low();
+        for(int i = 0; i < N; i++) {
+          double t = t0 + dt / (double)(N - 1) * i;
+          GPoint p = ge->point(t);
+          SPoint2 uv = parFromPoint(SPoint3(p.x(), p.y(), p.z()));
+          bb += SPoint3(uv.x(), uv.y(), 0.);
+        }
+      }
+    }
+    if(!bb.empty()) {
+      _parBounds[0] = Range<double>(bb.min().x(), bb.max().x());
+      _parBounds[1] = Range<double>(bb.min().y(), bb.max().y());
+    }
+  }
+
 }
 
 double gmshFace::getMetricEigenvalue(const SPoint2 &pt)
@@ -129,8 +155,6 @@ void gmshFace::resetMeshAttributes()
   meshAttributes.meshSizeFromBoundary = _s->MeshSizeFromBoundary;
   meshAttributes.transfinite3 = false;
 }
-
-Range<double> gmshFace::parBounds(int i) const { return Range<double>(0, 1); }
 
 SVector3 gmshFace::normal(const SPoint2 &param) const
 {

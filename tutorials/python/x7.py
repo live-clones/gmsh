@@ -101,3 +101,5 @@ faceTags, faceNodes = gmsh.model.mesh.getAllFaces(3)
 # Launch the GUI to see the results:
 if '-nopopup' not in sys.argv:
     gmsh.fltk.run()
+
+gmsh.finalize()

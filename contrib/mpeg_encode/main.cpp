@@ -198,7 +198,7 @@ int
 mpeg_encode_main(int argc, char **argv)
 {
     FILE *ofp = NULL;
-    register int idx;
+    int idx;
     int	    function = ENCODE_FRAMES;
     int	    portNumber = 0;
     char    *hostName = NULL;

@@ -83,19 +83,19 @@
 void
 PNMtoYUV(MpegFrame *frame)
 {
-    register int x, y;
-    register uint8 *dy0, *dy1;
-    register uint8 *dcr, *dcb;
-    register xel *src0, *src1;
-    register int ydivisor, cdivisor;
+    int x, y;
+    uint8 *dy0, *dy1;
+    uint8 *dcr, *dcb;
+    xel *src0, *src1;
+    int ydivisor, cdivisor;
     static boolean  first = TRUE;
     static double  mult299[1024], mult587[1024], mult114[1024];
     static double  mult16874[1024], mult33126[1024], mult5[1024];
     static double mult41869[1024], mult08131[1024];
 
     if ( first ) {
-        register int index;
-	register int maxValue;
+        int index;
+	int maxValue;
 
 	maxValue = frame->rgb_maxval;
 
@@ -250,19 +250,19 @@ PNMtoYUV(MpegFrame *frame)
 void
 PPMtoYUV(MpegFrame *frame)
 {
-    register int x, y;
-    register uint8 *dy0, *dy1;
-    register uint8 *dcr, *dcb;
-    register uint8 *src0, *src1;
-    register int cdivisor;
+    int x, y;
+    uint8 *dy0, *dy1;
+    uint8 *dcr, *dcb;
+    uint8 *src0, *src1;
+    int cdivisor;
     static boolean  first = TRUE;
     static double  mult299[1024], mult587[1024], mult114[1024];
     static double  mult16874[1024], mult33126[1024], mult5[1024];
     static double mult41869[1024], mult08131[1024];
 
     if ( first ) {
-        register int index;
-	register int maxValue;
+        int index;
+	int maxValue;
 
 	maxValue = frame->rgb_maxval;
 

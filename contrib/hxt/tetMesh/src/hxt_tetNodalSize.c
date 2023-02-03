@@ -29,6 +29,9 @@ HXTStatus hxtNodalSizesInit(HXTMesh* mesh, HXTNodalSizes* nodalSizes)
     }
   }
 
+  HXT_ASSERT(mesh->triangles.num == 0 || mesh->triangles.node != NULL);
+  HXT_ASSERT(mesh->triangles.num == 0 || mesh->vertices.num > 0);
+
   for (uint32_t i = 0; i<mesh->triangles.num; i++){
     for (uint32_t j = 0; j<2; j++){
       for (uint32_t k = j+1; k<3; k++){
@@ -56,6 +59,9 @@ HXTStatus hxtNodalSizesInit(HXTMesh* mesh, HXTNodalSizes* nodalSizes)
       }
     }
   }
+
+  HXT_ASSERT(mesh->lines.num == 0 || mesh->lines.node != NULL);
+  HXT_ASSERT(mesh->lines.num == 0 || mesh->vertices.num > 0);
 
   for (uint32_t i = 0; i<mesh->lines.num; i++){
       uint32_t n1 = mesh->lines.node[2*i+0];

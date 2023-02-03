@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2022 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -6,6 +6,7 @@
 #include <vector>
 #include <stack>
 #include <queue>
+#include <random>
 #include "OS.h"
 #include "GmshConfig.h"
 #include "gmshCrossFields.h"
@@ -2658,9 +2659,12 @@ public:
     std::vector<cross2d *> pc;
     for(auto it = C.begin(); it != C.end(); ++it) pc.push_back(&(it->second));
 
+    std::mt19937 generator;
+    generator.seed(0); // zero for some determinism
+
     size_t ITER = 0;
     while(ITER++ < nIterLaplace) {
-      if(ITER % 200 == 0) std::random_shuffle(pc.begin(), pc.end());
+      if(ITER % 200 == 0) std::shuffle(pc.begin(), pc.end(), generator);
       for(size_t i = 0; i < pc.size(); i++) pc[i]->average_init();
       if(ITER % 1000 == 0) Msg::Info("Linear smooth : iter %6lu", ITER);
     }

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2022 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -306,6 +306,18 @@ void GModel::deleteVertexArrays()
     (*it)->deleteVertexArrays();
   for(auto it = firstVertex(); it != lastVertex(); ++it)
     (*it)->deleteVertexArrays();
+}
+
+void GModel::deleteGeometryVertexArrays()
+{
+  for(auto it = firstRegion(); it != lastRegion(); ++it)
+    (*it)->deleteGeometryVertexArrays();
+  for(auto it = firstFace(); it != lastFace(); ++it)
+    (*it)->deleteGeometryVertexArrays();
+  for(auto it = firstEdge(); it != lastEdge(); ++it)
+    (*it)->deleteGeometryVertexArrays();
+  for(auto it = firstVertex(); it != lastVertex(); ++it)
+    (*it)->deleteGeometryVertexArrays();
 }
 
 bool GModel::empty() const

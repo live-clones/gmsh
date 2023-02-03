@@ -359,8 +359,6 @@ static inline void unsetUnusedFlag(HXTMesh* mesh, uint64_t tet, unsigned id) {
 static inline void resetUnusedFlags(HXTMesh* mesh, uint64_t tet) {
   mesh->tetrahedra.flag[tet] &= ~(HXT_ALL_UNUSED_MASK);
 }
-
-
 #ifdef __cplusplus
 }
 #endif

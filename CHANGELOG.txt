@@ -1,4 +1,6 @@
-4.11.1 (Work-in-progress): small bug fixes.
+4.11.2 (Work-in-progress): small bug fixes.
+
+4.11.1 (December 21, 2022): Mesh.TransfiniteTri improvements; small bug fixes.
 
 * New API functions: model/getEntitiesForPhysicalName.
 

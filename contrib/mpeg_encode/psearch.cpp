@@ -276,7 +276,7 @@ PSearchName()
 void
 SetSearchRange(int pixelsP, int pixelsB)
 {
-    register int index;
+    int index;
 
     searchRangeP = 2*pixelsP;	/* +/- 'pixels' pixels */
     searchRangeB = 2*pixelsB;
@@ -345,10 +345,10 @@ PSubSampleSearch(LumBlock currentBlock,
                  int *motionX,
                  int searchRange)
 {
-    register int mx, my;
+    int mx, my;
     int32 diff, bestBestDiff;
     int	    stepSize;
-    register int x;
+    int x;
     int	    bestMY[4], bestMX[4], bestDiff[4];
     int	    leftMY, leftMX;
     int	    rightMY, rightMX;
@@ -501,7 +501,7 @@ PLogarithmicSearch(LumBlock currentBlock,
                    int *motionX,
                    int searchRange)
 {
-    register int mx, my;
+    int mx, my;
     int32 diff, bestDiff;
     int	    stepSize;
     int	    leftMY, leftMX;
@@ -624,7 +624,7 @@ PLocalSearch(LumBlock currentBlock,
              int32 bestSoFar,
              int searchRange)
 {
-    register int mx, my;
+    int mx, my;
     int32 diff, bestDiff;
     int	    stepSize;
     int	    leftMY, leftMX;
@@ -735,8 +735,8 @@ PTwoLevelSearch(LumBlock currentBlock,
                 int32 bestSoFar,
                 int searchRange)
 {
-    register int mx, my;
-    register int   loopInc;
+    int mx, my;
+    int   loopInc;
     int32 diff, bestDiff;
     int	    leftMY, leftMX;
     int	    rightMY, rightMX;
@@ -870,7 +870,7 @@ PTwoLevelSearch(LumBlock currentBlock,
 void
 ShowPMVHistogram(FILE *fpointer)
 {
-    register int x, y;
+    int x, y;
     int	*columnTotals;
     int rowTotal;
 
@@ -914,7 +914,7 @@ ShowPMVHistogram(FILE *fpointer)
 void
 ShowBBMVHistogram(FILE *fpointer)
 {
-    register int x, y;
+    int x, y;
     int	*columnTotals;
     int rowTotal;
 
@@ -960,7 +960,7 @@ ShowBBMVHistogram(FILE *fpointer)
 void
 ShowBFMVHistogram(FILE *fpointer)
 {
-    register int x, y;
+    int x, y;
     int	*columnTotals;
     int rowTotal;
 

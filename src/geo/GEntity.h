@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2022 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -189,8 +189,11 @@ public:
   // delete the mesh data
   virtual void deleteMesh() {}
 
-  // delete the vertex arrays, used to to draw the mesh efficiently
+  // delete the mesh vertex arrays, used to to draw the mesh efficiently
   void deleteVertexArrays();
+
+  // delete the geometry vertex arrays, used to to draw the geometry efficiently
+  virtual void deleteGeometryVertexArrays() {}
 
   // spatial dimension of the entity
   virtual int dim() const { return -1; }

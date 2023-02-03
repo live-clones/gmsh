@@ -2,12 +2,22 @@
 //
 //  Gmsh GEO tutorial 6
 //
-//  Transfinite meshes
+//  Transfinite meshes, deleting entities
 //
 // -----------------------------------------------------------------------------
 
 // Let's use the geometry from the first tutorial as a basis for this one:
-Include "t1.geo";
+lc = 1e-2;
+Point(1) = {0, 0, 0, lc};
+Point(2) = {.1, 0,  0, lc};
+Point(3) = {.1, .3, 0, lc};
+Point(4) = {0,  .3, 0, lc};
+Line(1) = {1, 2};
+Line(2) = {3, 2};
+Line(3) = {3, 4};
+Line(4) = {4, 1};
+Curve Loop(1) = {4, 1, -2, 3};
+Plane Surface(1) = {1};
 
 // Delete the surface and the left line, and replace the line with 3 new ones:
 Delete{ Surface{1}; Curve{4}; }

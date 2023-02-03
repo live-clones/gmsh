@@ -132,10 +132,8 @@ gmsh.view.addListDataString(v, [0, 0.11, 0], ["Hole"],
 # a `@' symbol in the form `widthxheight' (if one of `width' or `height' is
 # zero, natural scaling is used; if both are zero, original image dimensions in
 # pixels are used):
-
 png = os.path.join(os.path.dirname(os.path.abspath(__file__)), os.pardir,
                    't4_image.png')
-
 gmsh.view.addListDataString(v, [0, 0.09, 0], ["file://" + png + "@0.01x0"],
                             ["Align", "Center"])
 

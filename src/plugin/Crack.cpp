@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2022 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -77,7 +77,7 @@ public:
 };
 
 struct MEdgeDataLessThan
-  : public std::binary_function<EdgeData, EdgeData, bool> {
+{
   bool operator()(const EdgeData &e1, const EdgeData &e2) const
   {
     if(e1.edge.getMinVertex() < e2.edge.getMinVertex()) return true;
@@ -375,6 +375,7 @@ PView *GMSH_CrackPlugin::execute(PView *view)
                      "ElementNodeData", GModel::current(), d, 0, 1);
   }
 
+  m->destroyMeshCaches();
   CTX::instance()->mesh.changed = ENT_ALL;
 
   return view;

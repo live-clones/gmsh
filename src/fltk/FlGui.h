@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2022 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -134,6 +134,8 @@ public:
   void updateFields();
   // reset the visibility window
   void resetVisibility();
+  // update the statistics window
+  void updateStatistics(bool qualities = false);
   // store current window positions and sizes in CTX
   void storeCurrentWindowsInfo();
   // get the last opengl window that received an event
@@ -161,6 +163,8 @@ public:
   void saveMessages(const char *fileName);
   // rebuild the tree
   void rebuildTree(bool deleteWidgets);
+  // toggles the module open or closed based on its current state
+  void toggleModule(const std::string &name);
   // open module in tree
   void openModule(const std::string &name);
   // open tree item

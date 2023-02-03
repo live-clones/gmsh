@@ -1,4 +1,4 @@
-# Gmsh - Copyright (C) 1997-2022 C. Geuzaine, J.-F. Remacle
+# Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 #
 # See the LICENSE.txt file in the Gmsh root directory for license information.
 # Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -108,7 +108,7 @@ opt(ZIPPER "Enable Zip file compression/decompression" OFF)
 
 set(GMSH_MAJOR_VERSION 4)
 set(GMSH_MINOR_VERSION 11)
-set(GMSH_PATCH_VERSION 1)
+set(GMSH_PATCH_VERSION 2)
 if(NOT GMSH_EXTRA_VERSION)
   set(GMSH_EXTRA_VERSION "")
 endif()
@@ -1003,10 +1003,12 @@ if(ENABLE_MED OR ENABLE_CGNS)
     set(HDF5_LIB "${HDF5_C_LIBRARIES}")
     list(APPEND EXTERNAL_INCLUDES ${HDF5_INCLUDE_DIRS})
     if(ENABLE_MED)
-      find_library(MED_LIB medC)
-      if(MED_LIB)
+      find_library(MED_LIB medC HINTS ENV MED3HOME PATH_SUFFIXES lib)
+      find_path(MED_INC "med.h" HINTS ENV MED3HOME PATH_SUFFIXES include)
+      if(MED_LIB AND MED_INC)
         set_config_option(HAVE_MED "Med")
         list(APPEND EXTERNAL_LIBRARIES ${MED_LIB})
+        list(APPEND EXTERNAL_INCLUDES ${MED_INC})
       endif()
     endif()
     if(ENABLE_CGNS)
@@ -1743,7 +1745,7 @@ else()
 endif()
 target_link_libraries(gmsh ${LINK_LIBRARIES})
 
-# Windows specific linker options
+# OS specific linker options
 if(WIN32 AND NOT MSVC)
   set(FLAGS "-Wl,--stack,16777216 -Wl,--image-base -Wl,0x10000000 -static")
   if(HAVE_FLTK)
@@ -1765,6 +1767,9 @@ if(WIN32 AND NOT MSVC)
   set(CMAKE_EXE_LINK_DYNAMIC_CXX_FLAGS)
 elseif(MSVC)
   set_target_properties(gmsh PROPERTIES LINK_FLAGS "/STACK:16777216 /SAFESEH:NO")
+elseif(APPLE)
+  # this remove ld warnings with PETSc+MUMPS on recent macOS versions
+  # set_target_properties(gmsh PROPERTIES LINK_FLAGS "-Wl,-no_compact_unwind")
 endif()
 
 # android target
@@ -2198,6 +2203,9 @@ if(ENABLE_TESTS AND NOT DISABLE_GMSH_TESTS)
           set(FLAGS "${FLAGS} -mconsole")
         endif()
         set_target_properties(${TEST} PROPERTIES LINK_FLAGS "${FLAGS}")
+      elseif(APPLE)
+        # this remove ld warnings with PETSc+MUMPS on recent macOS versions
+        # set_target_properties(${TEST} PROPERTIES LINK_FLAGS "-Wl,-no_compact_unwind")
       endif()
       add_test(${TEST} ${TEST} -nopopup)
     endforeach()

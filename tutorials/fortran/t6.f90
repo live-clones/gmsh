@@ -2,7 +2,7 @@
 !
 !  Gmsh Fortran tutorial 6
 !
-!  Transfinite meshes
+!  Transfinite meshes, deleting entities
 !
 ! ------------------------------------------------------------------------------
 
