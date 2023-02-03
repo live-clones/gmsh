@@ -1,4 +1,4 @@
-# Gmsh - Copyright (C) 1997-2022 C. Geuzaine, J.-F. Remacle
+# Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 #
 # See the LICENSE.txt file in the Gmsh root directory for license information.
 # Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -1289,37 +1289,39 @@ elif platform.system() == "Darwin":
 else:
     libname = "lib{7}.so.{3}.{4}"
 
-# check if the library is in the same directory as the module...
-libpath = os.path.join(moduledir, libname)
+# Searching lib in various subfolders
+libpath = None
+possible_libpaths = [os.path.join(moduledir, libname),
+                     os.path.join(moduledir, "lib", libname),
+                     os.path.join(moduledir, "Lib", libname),
+                     # first parent dir
+                     os.path.join(parentdir1, libname),
+                     os.path.join(parentdir1, "lib", libname),
+                     os.path.join(parentdir1, "Lib", libname),
+                     # second parent dir
+                     os.path.join(parentdir2, libname),
+                     os.path.join(parentdir2, "lib", libname),
+                     os.path.join(parentdir2, "Lib", libname)
+                     ]
 
-# ... or in the parent directory or its lib or Lib subdirectory
-if not os.path.exists(libpath):
-    libpath = os.path.join(parentdir1, libname)
-if not os.path.exists(libpath):
-    libpath = os.path.join(parentdir1, "lib", libname)
-if not os.path.exists(libpath):
-    libpath = os.path.join(parentdir1, "Lib", libname)
-
-# ... or in the parent of the parent directory or its lib or Lib subdirectory
-if not os.path.exists(libpath):
-    libpath = os.path.join(parentdir2, libname)
-if not os.path.exists(libpath):
-    libpath = os.path.join(parentdir2, "lib", libname)
-if not os.path.exists(libpath):
-    libpath = os.path.join(parentdir2, "Lib", libname)
+for libpath_to_look in possible_libpaths:
+    if os.path.exists(libpath_to_look):
+        libpath = libpath_to_look
+        break
 
 # if we couldn't find it, use ctype's find_library utility...
-if not os.path.exists(libpath):
+if not libpath:
     if platform.system() == "Windows":
-        libpath = find_library("{7}-{3}.{4}")
+        libpath = find_library("gmsh-4.11")
         if not libpath:
-            libpath = find_library("{7}")
+            libpath = find_library("gmsh")
     else:
-        libpath = find_library("{7}")
+        libpath = find_library("gmsh")
 
 # ... and print a warning if everything failed
-if not os.path.exists(libpath):
+if (not libpath) or (not os.path.exists(libpath)):
     print("Warning: could not find Gmsh shared library " + libname)
+    print("Searched at these locations: " + str(possible_libpaths))
 
 lib = CDLL(libpath)
 
@@ -1986,7 +1988,7 @@ class API:
         version_patch,
         namespace = "gmsh",
         code = "Gmsh",
-        copyright = "Gmsh - Copyright (C) 1997-2022 C. Geuzaine, J.-F. Remacle",
+        copyright = "Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle",
         issues = "https://gitlab.onelab.info/gmsh/gmsh/issues.",
         description = "Gmsh is an automatic three-dimensional finite element mesh generator with a built-in CAD engine and post-processor. Its design goal is to provide a fast, light and user-friendly meshing tool with parametric input and flexible visualization capabilities.\nGmsh is built around four modules (geometry, mesh, solver and post-processing), which can be controlled with the graphical user interface, from the command line, using text files written in Gmsh's own scripting language (.geo files), or through the C++, C, Python, Julia and Fortran application programming interface (API)."):
         self.version_major = version_major

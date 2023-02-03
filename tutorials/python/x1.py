@@ -78,8 +78,8 @@ for e in entities:
     # mesh.
 
     # * Type and name of the entity:
-    type = gmsh.model.getType(e[0], e[1])
-    name = gmsh.model.getEntityName(e[0], e[1])
+    type = gmsh.model.getType(dim, tag)
+    name = gmsh.model.getEntityName(dim, tag)
     if len(name): name += ' '
     print("Entity " + name + str(e) + " of type " + type)
 
@@ -89,7 +89,7 @@ for e in entities:
           " elements")
 
     # * Upward and downward adjacencies:
-    up, down = gmsh.model.getAdjacencies(e[0], e[1])
+    up, down = gmsh.model.getAdjacencies(dim, tag)
     if len(up):
         print(" - Upward adjacencies: " + str(up))
     if len(down):
@@ -106,10 +106,10 @@ for e in entities:
         print(" - Physical groups: " + s)
 
     # * Is the entity a partition entity? If so, what is its parent entity?
-    partitions = gmsh.model.getPartitions(e[0], e[1])
+    partitions = gmsh.model.getPartitions(dim, tag)
     if len(partitions):
         print(" - Partition tags: " + str(partitions) + " - parent entity " +
-              str(gmsh.model.getParent(e[0], e[1])))
+              str(gmsh.model.getParent(dim, tag)))
 
     # * List all types of elements making up the mesh of the entity:
     for t in elemTypes:

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2022 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -281,6 +281,9 @@ void help_options_cb(Fl_Widget *w, void *data)
       else if(tmp == "color")
         d = (void *)"color";
     }
+    if(s0[i].size() > 256)
+      s0[i].resize(256);
+
     if(search.empty()) {
       FlGui::instance()->help->browser->add(s0[i].c_str(), d);
     }
@@ -315,7 +318,7 @@ helpWindow::helpWindow()
     std::ostringstream sstream;
     sstream
       << "<center><h3>Gmsh</h3><br>version " << GetGmshVersion()
-      << "<p>Copyright (C) 1997-2022"
+      << "<p>Copyright (C) 1997-2023"
       << "<br>Christophe Geuzaine and Jean-Francois Remacle"
       << "<p><a href=\"https://gmsh.info/CREDITS.txt\">Credits</a> "
       << "and <a href=\"https://gmsh.info/LICENSE.txt\">licensing "

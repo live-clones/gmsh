@@ -194,7 +194,7 @@ gmsh.model.addPhysicalGroup(3, [186], 10)
 # We could make only part of the model visible to only mesh this subset:
 # ent = gmsh.model.getEntities()
 # gmsh.model.setVisibility(ent, False)
-# gmsh.model.setVisibility([(3, 5(], True, True)
+# gmsh.model.setVisibility([(3, 5)], True, True)
 # gmsh.option.setNumber("Mesh.MeshOnlyVisible", 1)
 
 # Meshing algorithms can changed globally using options:

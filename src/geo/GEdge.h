@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2022 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -58,8 +58,8 @@ public:
   virtual void deleteMesh();
 
   // get the start/end vertices of the edge
-  void setBeginVertex(GVertex *gv) { _v0 = gv; gv->addEdge(this); }
-  void setEndVertex(GVertex *gv) { _v1 = gv; gv->addEdge(this); }
+  void setBeginVertex(GVertex *gv) { _v0 = gv; if(gv) gv->addEdge(this); }
+  void setEndVertex(GVertex *gv) { _v1 = gv; if(gv) gv->addEdge(this); }
   virtual GVertex *getBeginVertex() const { return _v0; }
   virtual GVertex *getEndVertex() const { return _v1; }
   void setVertex(GVertex *const f, const int orientation)
