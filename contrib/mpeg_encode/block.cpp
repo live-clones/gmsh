@@ -143,7 +143,7 @@ extern Block **dct, **dctb, **dctr;
 boolean
 ComputeDiffDCTBlock(Block current, Block dest, Block motionBlock)
 {
-    register int x, y, diff = 0;
+    int x, y, diff = 0;
 
     for ( y = 0; y < 8; y++ ) {
 	for ( x = 0; x < 8; x++ ) {
@@ -256,11 +256,11 @@ ComputeMotionBlock(uint8 **prev,
                    int mx,
                    Block motionBlock)
 {
-    register int   fy, fx;
-    register int   y;
-    register int16 *destPtr;
-    register uint8 *srcPtr;
-    register uint8 *srcPtr2;
+    int   fy, fx;
+    int   y;
+    int16 *destPtr;
+    uint8 *srcPtr;
+    uint8 *srcPtr2;
     boolean xHalf, yHalf;
 
     xHalf = (ABS(mx) % 2 == 1);
@@ -371,9 +371,9 @@ ComputeMotionLumBlock(MpegFrame *prevFrame,
                       int mx,
                       LumBlock motionBlock)
 {
-    register uint8 *across;
-    register int32 *macross;
-    register int y;
+    uint8 *across;
+    int32 *macross;
+    int y;
     uint8 **prev;
     int	    fy, fx;
     boolean xHalf, yHalf;
@@ -461,9 +461,9 @@ LumBlockMAD(LumBlock currentBlock,
             LumBlock motionBlock,
             int32 bestSoFar)
 {
-    register int32   diff = 0;    /* max value of diff is 255*256 = 65280 */
-    register int32 localDiff;
-    register int y, x;
+    int32   diff = 0;    /* max value of diff is 255*256 = 65280 */
+    int32 localDiff;
+    int y, x;
 
     for ( y = 0; y < 16; y++ ) {
 	for ( x = 0; x < 16; x++ ) {
@@ -507,11 +507,11 @@ LumMotionError(LumBlock currentBlock,
                int mx,
                int32 bestSoFar)
 {
-    register int32 adiff = 0,  diff = 0;    /* max value of diff is 255*256 = 65280 */
-    register int32 localDiff;
-    register uint8 *across;
-    register int32 *cacross;
-    register int y;
+    int32 adiff = 0,  diff = 0;    /* max value of diff is 255*256 = 65280 */
+    int32 localDiff;
+    uint8 *across;
+    int32 *cacross;
+    int y;
     uint8 **prev;
     int	    fy, fx;
     boolean xHalf, yHalf;
@@ -716,12 +716,12 @@ LumAddMotionError(LumBlock currentBlock,
                   int mx,
                   int32 bestSoFar)
 {
-    register int32   diff = 0;    /* max value of diff is 255*256 = 65280 */
-    register int32 localDiff;
-    register uint8 *across;
-    register int32 *bacross;
-    register int32 *cacross;
-    register int y;
+    int32   diff = 0;    /* max value of diff is 255*256 = 65280 */
+    int32 localDiff;
+    uint8 *across;
+    int32 *bacross;
+    int32 *cacross;
+    int y;
     uint8 **prev;
     int	    fy, fx;
     boolean xHalf, yHalf;
@@ -944,9 +944,9 @@ BlockToData(uint8 **data,
             int by,
             int bx)
 {
-    register int x, y;
-    register int fy, fx;
-    register int16    blockItem;
+    int x, y;
+    int fy, fx;
+    int16    blockItem;
 
     BLOCK_TO_FRAME_COORD(by, bx, fy, fx);
 
@@ -975,14 +975,14 @@ BlockToData(uint8 **data,
 void
 BlockifyFrame(MpegFrame *framePtr)
 {
-    register int dctx, dcty;
-    register int x, y;
-    register int bx, by;
-    register int fy, fx;
-    register int16  *destPtr;
-    register uint8  *srcPtr;
-    register int16  *destPtr2;
-    register uint8  *srcPtr2;
+    int dctx, dcty;
+    int x, y;
+    int bx, by;
+    int fy, fx;
+    int16  *destPtr;
+    uint8  *srcPtr;
+    int16  *destPtr2;
+    uint8  *srcPtr2;
     Block   *blockPtr;
     Block   *blockPtr2;
 
@@ -1066,10 +1066,10 @@ ComputeSubSampledMotionLumBlock(prevFrame, by, bx, my, mx, motionBlock,
     int startY;
     int startX;
 {
-    register uint8 *across;
-    register int32 *macross;
-    register int32 *lastx;
-    register int y;
+    uint8 *across;
+    int32 *macross;
+    int32 *lastx;
+    int y;
     uint8 **prev;
     int    fy, fx;
     boolean xHalf, yHalf;
@@ -1153,12 +1153,12 @@ LumMotionErrorSubSampled(currentBlock, prevFrame, by, bx, my, mx, startY,
     int startY;
     int startX;
 {
-    register int32    diff = 0;	    /* max value of diff is 255*256 = 65280 */
-    register int32 localDiff;
-    register int32 *cacross;
-    register uint8 *macross;
-    register int32 *lastx;
-    register int y;
+    int32    diff = 0;	    /* max value of diff is 255*256 = 65280 */
+    int32 localDiff;
+    int32 *cacross;
+    uint8 *macross;
+    int32 *lastx;
+    int y;
     uint8 **prev;
     int    fy, fx;
     boolean xHalf, yHalf;

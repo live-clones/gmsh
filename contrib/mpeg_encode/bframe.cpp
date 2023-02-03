@@ -232,7 +232,7 @@ GenBFrame(BitBucket *bb,
     int32    startTime, endTime;
     int lastX, lastY;
     int lastBlockX, lastBlockY;
-    register int ix, iy;
+    int ix, iy;
     LumBlock currentBlock;
     int         fy, fx;
     boolean	make_skip_block;
@@ -972,7 +972,7 @@ ComputeBMotionLumBlock(MpegFrame *prev,
                        LumBlock motionBlock)
 {
     LumBlock	prevBlock, nextBlock;
-    register int	y, x;
+    int	y, x;
 
     switch(mode) {
     case MOTION_FORWARD:
@@ -1052,7 +1052,7 @@ ComputeBMotionBlock(MpegFrame *prev,
                     int type)
 {
     Block	prevBlock, nextBlock;
-    register int	y, x;
+    int	y, x;
 
     switch(mode) {
 	case MOTION_FORWARD:
@@ -1239,7 +1239,7 @@ DoBIntraCode(MpegFrame *current,
 static int
 ComputeBlockColorDiff(Block current, Block motionBlock)
 {
-  register int x, y, diff_total = 0, diff_tmp;
+  int x, y, diff_total = 0, diff_tmp;
   
   for ( y = 0; y < 8; y++ ) {
     for ( x = 0; x < 8; x++ ) {
