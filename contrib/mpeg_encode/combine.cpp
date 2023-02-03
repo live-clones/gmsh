@@ -128,7 +128,7 @@ GOPStoMPEG(int numGOPS,
            char *outputFileName,
            FILE *outputFilePtr)
 {
-    register int ind;
+    int ind;
     BitBucket *bb;
     char    fileName[1024];
     char    inputFileName[1024];
@@ -228,7 +228,7 @@ FramesToMPEG(int numFrames,
              FILE *outputFile,
              boolean parallel)
 {
-    register int ind;
+    int ind;
     BitBucket *bb;
     char    fileName[1024];
     char    inputFileName[1024];
@@ -330,7 +330,7 @@ FramesToMPEG(int numFrames,
 
 	    /* now, output the B-frames */
 	    if ( pastRefNum != -1 ) {
-		register int bNum;
+		int bNum;
 
 		for ( bNum = pastRefNum+1; bNum < futureRefNum; bNum++ ) {
 		    if ( parallel ) {
@@ -419,7 +419,7 @@ FramesToMPEG(int numFrames,
 
 	    /* now, output the B-frames */
 	    if ( pastRefNum != -1 ) {
-		register int bNum;
+		int bNum;
 
 		for ( bNum = pastRefNum+1; bNum < futureRefNum; bNum++ ) {
 		    sprintf(fileName, "%s.frame.%d", outputFileName, bNum);

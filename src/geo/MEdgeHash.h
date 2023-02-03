@@ -9,7 +9,7 @@
 #include "MEdge.h"
 #include "Hash.h"
 
-struct MEdgeHash : public std::unary_function<MEdge, size_t> {
+struct MEdgeHash {
   size_t operator()(const MEdge &e) const
   {
     size_t v[2] = {e.getMinVertex()->getNum(), e.getMaxVertex()->getNum()};

@@ -258,7 +258,7 @@ SetFramePattern(char *pattern)
 void
 ComputeFrameTable()
 {
-    register int index;
+    int index;
     FrameTable	*lastI, *lastIP, *firstB, *secondIP;
     FrameTable	*ptr;
     char typ;

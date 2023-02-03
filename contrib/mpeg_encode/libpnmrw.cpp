@@ -63,7 +63,7 @@ char*
 pm_allocrow(int cols, 
             int size)
 {
-  register char* itrow;
+  char* itrow;
 
   itrow = (char*) malloc( cols * size );
   if ( itrow == (char*) 0 )
@@ -206,7 +206,7 @@ pm_closew(FILE* f)
 static int
 pbm_getc(FILE* file)
 {
-  register int ich;
+  int ich;
 
   ich = getc( file );
   if ( ich == EOF )
@@ -235,7 +235,7 @@ pbm_getc(FILE* file)
 static bit
 pbm_getbit(FILE* file)
 {
-  register int ich;
+  int ich;
 
   do
     {
@@ -280,8 +280,8 @@ pbm_readmagicnumber(FILE* file)
 static int
 pbm_getint(FILE* file)
 {
-  register int ich;
-  register int i;
+  int ich;
+  int i;
 
   do
     {
@@ -327,7 +327,7 @@ pbm_readpbminitrest(FILE* file,
 static int
 pbm_getrawbyte(FILE* file)
 {
-  register int iby;
+  int iby;
 
   iby = getc( file );
   if ( iby == EOF )
@@ -343,9 +343,9 @@ pbm_readpbmrow(FILE* file,
                bit* bitrow,
                int cols, int format)
 {
-  register int col, bitshift, b;
-  register int item;
-  register bit* bP;
+  int col, bitshift, b;
+  int item;
+  bit* bP;
 
   switch ( format )
     {
@@ -400,9 +400,9 @@ pbm_writepbmrowraw(FILE* file,
                    bit* bitrow,
                    int cols)
 {
-  register int col, bitshift;
-  register unsigned char item;
-  register bit* bP;
+  int col, bitshift;
+  unsigned char item;
+  bit* bP;
 
   bitshift = 7;
   item = 0;
@@ -427,8 +427,8 @@ pbm_writepbmrowplain(FILE* file,
                      bit* bitrow,
                      int cols)
 {
-  register int col, charcount;
-  register bit* bP;
+  int col, charcount;
+  bit* bP;
 
   charcount = 0;
   for ( col = 0, bP = bitrow; col < cols; ++col, ++bP )
@@ -486,11 +486,11 @@ pgm_readpgminitrest(FILE* file,
 static int
 pgm_readpgmrow( FILE* file, gray* grayrow, int cols, gray maxval, int format )
 {
-  register int col, val;
-  register gray* gP;
+  int col, val;
+  gray* gP;
   /*
     bit* bitrow;
-    register bit* bP;
+    bit* bP;
     */
 
   switch ( format )
@@ -562,8 +562,8 @@ pgm_writepgmrowplain(FILE* file,
                      int cols,
                      gray maxval)
 {
-  register int col, charcount;
-  register gray* gP;
+  int col, charcount;
+  gray* gP;
 
   charcount = 0;
   for ( col = 0, gP = grayrow; col < cols; ++col, ++gP )
@@ -625,14 +625,14 @@ ppm_readppminitrest(FILE* file,
 static int
   ppm_readppmrow( FILE* file, pixel* pixelrow, int cols, pixval maxval, int format )
 {
-  register int col;
-  register pixel* pP;
-  register int r, g, b;
+  int col;
+  pixel* pP;
+  int r, g, b;
   gray* grayrow;
-  register gray* gP;
+  gray* gP;
   /*
     bit* bitrow;
-    register bit* bP;
+    bit* bP;
     */
 
   switch ( format )
@@ -694,10 +694,10 @@ ppm_writeppmrowraw(FILE* file,
                    int cols,
                    pixval maxval)
 {
-  register int col;
-  register pixel* pP;
+  int col;
+  pixel* pP;
   gray* grayrow;
-  register gray* gP;
+  gray* gP;
 
   grayrow = pgm_allocrow( 3 * cols );
   if ( grayrow == (gray*) 0 )
@@ -723,9 +723,9 @@ ppm_writeppmrowplain(FILE* file,
                      int cols,
                      pixval maxval)
 {
-  register int col, charcount;
-  register pixel* pP;
-  register pixval val;
+  int col, charcount;
+  pixel* pP;
+  pixval val;
 
   charcount = 0;
   for ( col = 0, pP = pixelrow; col < cols; ++col, ++pP )
@@ -818,12 +818,12 @@ pnm_readpnminit(FILE* file,
 int
   pnm_readpnmrow( FILE* file, xel* xelrow, int cols, xelval maxval, int format )
 {
-  register int col;
-  register xel* xP;
+  int col;
+  xel* xP;
   gray* grayrow;
-  register gray* gP;
+  gray* gP;
   bit* bitrow;
-  register bit* bP;
+  bit* bP;
 
   switch ( PNM_FORMAT_TYPE(format) )
     {
@@ -918,12 +918,12 @@ int
 int
   pnm_writepnmrow( FILE* file, xel* xelrow, int cols, xelval maxval, int format, int forceplain )
 {
-  register int col;
-  register xel* xP;
+  int col;
+  xel* xP;
   gray* grayrow;
-  register gray* gP;
+  gray* gP;
   bit* bitrow;
-  register bit* bP;
+  bit* bP;
 
   switch ( PNM_FORMAT_TYPE(format) )
     {
@@ -1044,7 +1044,7 @@ ppm_computecolorhash(pixel** pixels,
                      int* colorsP)
 {
   colorhash_table cht;
-  register pixel* pP;
+  pixel* pP;
   colorhist_list chl;
   int col, row, hash;
 
@@ -1114,8 +1114,8 @@ ppm_addtocolorhash(colorhash_table cht,
                    pixel* colorP,
                    int value)
 {
-  register int hash;
-  register colorhist_list chl;
+  int hash;
+  colorhist_list chl;
 
   chl = (colorhist_list) malloc( sizeof(struct colorhist_list_item) );
   if ( chl == 0 )
@@ -1465,8 +1465,8 @@ void
 void
   pnm_promoteformatrow( xel* xelrow, int cols, xelval maxval, int format, xelval newmaxval, int newformat )
 {
-  register int col;
-  register xel* xP;
+  int col;
+  xel* xP;
 
   if ( ( PNM_FORMAT_TYPE(format) == PPM_TYPE &&
 	( PNM_FORMAT_TYPE(newformat) == PGM_TYPE ||

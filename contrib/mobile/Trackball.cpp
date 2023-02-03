@@ -95,7 +95,7 @@ void vsub(const double *src1, const double *src2, double *dst)
 
 void vcopy(const double *v1, double *v2)
 {
-  /* register */ int i;
+  int i;
   for(i = 0; i < 3; i++) v2[i] = v1[i];
 }
 

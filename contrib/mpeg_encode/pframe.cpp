@@ -232,10 +232,10 @@ GenPFrame(BitBucket *bb,
   int	lastX, lastY;
   int	fy, fx;
   LumBlock currentBlock;
-  register int ix, iy;
+  int ix, iy;
   int	mbAddress;
   int slicePos;
-  register int index;
+  int index;
   float   snr[3], psnr[3];
   int QScale;
   BlockMV *info;
@@ -871,7 +871,7 @@ float
 void
 ComputeHalfPixelData(MpegFrame *frame)
 {
-  register int x, y;
+  int x, y;
 
   /* we add 1 before dividing by 2 because .5 is supposed to be rounded up
    * (see MPEG-1, page D-31)
@@ -1048,8 +1048,8 @@ ZeroMotionSufficient(LumBlock currentBlock,
                      int bx)
 {
     LumBlock	motionBlock;
-    register int    fy, fx;
-    register int    x, y;
+    int    fy, fx;
+    int    x, y;
 
     fy = by*DCTSIZE;
     fx = bx*DCTSIZE;

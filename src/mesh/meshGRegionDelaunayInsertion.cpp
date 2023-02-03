@@ -306,7 +306,7 @@ static void removeFromCavity(std::vector<faceXtet> &shell,
   toRemove.t1->setDeleted(false);
   cavity.erase(
     std::remove_if(cavity.begin(), cavity.end(),
-                   std::bind2nd(std::equal_to<MTet4 *>(), toRemove.t1)));
+                   [toRemove](MTet4 *ptr){ return ptr == toRemove.t1; }));
 
   for(int i = 0; i < 4; i++) {
     faceXtet fxt2(toRemove.t1, i);

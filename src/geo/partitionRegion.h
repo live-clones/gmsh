@@ -45,7 +45,7 @@ public:
 };
 
 struct Less_partitionRegion
-  : public std::binary_function<partitionRegion *, partitionRegion *, bool> {
+{
   bool operator()(const partitionRegion *e1, const partitionRegion *e2) const
   {
     if(e1->numPartitions() < e2->numPartitions()) return true;

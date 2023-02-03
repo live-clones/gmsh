@@ -9,7 +9,7 @@
 #include "MFace.h"
 #include "Hash.h"
 
-struct MFaceHash : public std::unary_function<MFace, size_t> {
+struct MFaceHash {
   size_t operator()(const MFace &f) const
   {
     size_t v[4] = {0, 0, 0, 0};

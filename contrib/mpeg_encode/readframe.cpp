@@ -602,7 +602,7 @@ ReadPPM(MpegFrame *mf,
     char    *inputLine;
     int	    height = 0, width = 0, maxVal=255;
     uint8   junk[4096];
-    register int y;
+    int y;
     int	    state;
     int     safe_read_count;
 
@@ -716,7 +716,7 @@ ReadEYUV(MpegFrame *mf,
          int width,
          int height)
 {
-    register int y;
+    int y;
     uint8   junk[4096];
     int     safe_read_count;
 
@@ -781,7 +781,7 @@ ReadAYUV(MpegFrame *mf,
          int width,
          int height)
 {
-    register int x, y;
+    int x, y;
     struct  YuvLine line1, line2;
     uint8   junk[4096];
     int8    *cbptr, *crptr;
@@ -916,7 +916,7 @@ ReadY(MpegFrame *mf,
       int width,
       int height)
 {
-    register int y;
+    int y;
     uint8   junk[4096];
     int     safe_read_count;
 
@@ -962,8 +962,8 @@ ReadSub4(MpegFrame *mf,
          int width,
          int height)
 {
-    register int y;
-    register int x;
+    int y;
+    int x;
     uint8   buffer[1024];
     int     safe_read_count;
 
@@ -1115,7 +1115,7 @@ DoKillDim(MpegFrame *mf,
 {
   static boolean init_done=FALSE;
   static unsigned char mapper[256];
-  register int i,j;
+  int i,j;
   double slope, intercept;
 
   slope = (kill_dim_end - kill_dim_break*kill_dim_slope)*1.0 /

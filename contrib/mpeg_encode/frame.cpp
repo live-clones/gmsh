@@ -132,7 +132,7 @@ static void
 Resize_Width(MpegFrame *omfrw, MpegFrame *mfrw,
              int in_x, int in_y, int out_x)
 {
-register int y;
+int y;
 int i;
 
 omfrw->orig_y = NULL;
@@ -199,7 +199,7 @@ static  void
 Resize_Height(MpegFrame *omfrh, MpegFrame *mfrh,
               int in_x, int in_y, int out_y)
 {
-register int y; 
+int y; 
 int i;
 
 Fsize_y = out_y;
@@ -414,7 +414,7 @@ double slope,diff;
 void
 Frame_Init()
 {
-    register int idx;
+    int idx;
     int numOfFrames = 0;
 
     GetNumOfFrames(&numOfFrames);
@@ -451,7 +451,7 @@ fprintf (stderr, "%d frames allocated.\n", numOfFrames);
 void
 Frame_Exit()
 {
-    register int idx;
+    int idx;
     int numOfFrames = 0;
 
     GetNumOfFrames(&numOfFrames);
@@ -517,7 +517,7 @@ Frame_New(int id, int type)
 void
 Frame_AllocPPM(MpegFrame *frame)
 {
-    register int y;
+    int y;
 
     if ( frame->ppm_data != NULL ) {	/* already allocated */
 	return;
@@ -591,7 +591,7 @@ Frame_AllocBlocks(MpegFrame *frame)
 void
 Frame_AllocYCC(MpegFrame *frame)
 {
-    register int y;
+    int y;
 
     if ( frame->orig_y != NULL ) {	/* already allocated */
 	return /* nothing */ ;
@@ -645,7 +645,7 @@ Frame_AllocYCC(MpegFrame *frame)
 void
 Frame_AllocHalf(MpegFrame *frame)
 {
-    register int y;
+    int y;
 
     if ( frame->halfX != NULL ) {
         return;
@@ -687,7 +687,7 @@ Frame_AllocHalf(MpegFrame *frame)
 void
 Frame_AllocDecoded(MpegFrame *frame, boolean makeReference)
 {
-    register int y;
+    int y;
 
     if ( frame->decoded_y != NULL) {	/* already allocated */
 	return;
@@ -746,7 +746,7 @@ Frame_AllocDecoded(MpegFrame *frame, boolean makeReference)
 static MpegFrame *
 GetUnusedFrame()
 {
-    register int idx;
+    int idx;
     int numOfFrames;
 
     GetNumOfFrames(&numOfFrames);

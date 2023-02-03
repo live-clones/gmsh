@@ -123,11 +123,11 @@ inline bool operator!=(const MFace &f1, const MFace &f2)
   return false;
 }
 
-struct MFaceEqual : public std::binary_function<MFace, MFace, bool> {
+struct MFaceEqual {
   bool operator()(const MFace &f1, const MFace &f2) const { return (f1 == f2); }
 };
 
-struct MFaceLessThan : public std::binary_function<MFace, MFace, bool> {
+struct MFaceLessThan {
   bool operator()(const MFace &f1, const MFace &f2) const
   {
     if(f1.getNumVertices() != f2.getNumVertices())

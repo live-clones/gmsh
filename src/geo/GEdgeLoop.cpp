@@ -49,7 +49,7 @@ GEdgeSigned nextOne(GEdgeSigned *thisOne, std::list<GEdge *> &wire)
     GEdge *ge = *it;
     if(countInList(possibleChoices, ge) == 2) {
       wire.erase(std::remove_if(wire.begin(), wire.end(),
-                                std::bind2nd(std::equal_to<GEdge *>(), ge)),
+                                [ge](GEdge *ptr){ return ptr == ge; }),
                  wire.end());
       wire.push_back(ge);
       GVertex *v1 = ge->getBeginVertex();
@@ -67,7 +67,7 @@ GEdgeSigned nextOne(GEdgeSigned *thisOne, std::list<GEdge *> &wire)
     GEdge *ge = *it;
     if(ge != thisOne->getEdge()) {
       wire.erase(std::remove_if(wire.begin(), wire.end(),
-                                std::bind2nd(std::equal_to<GEdge *>(), ge)),
+                                [ge](GEdge *ptr){ return ptr == ge; }),
                  wire.end());
       GVertex *v1 = ge->getBeginVertex();
       GVertex *v2 = ge->getEndVertex();

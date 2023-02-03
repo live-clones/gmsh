@@ -77,7 +77,7 @@ public:
 };
 
 struct MEdgeDataLessThan
-  : public std::binary_function<EdgeData, EdgeData, bool> {
+{
   bool operator()(const EdgeData &e1, const EdgeData &e2) const
   {
     if(e1.edge.getMinVertex() < e2.edge.getMinVertex()) return true;

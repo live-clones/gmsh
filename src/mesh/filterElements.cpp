@@ -173,7 +173,7 @@ bool rtree_callback(MElement *e1, void *pe2)
 }
 
 struct Less_Partition
-  : public std::binary_function<MElement *, MElement *, bool> {
+{
   bool operator()(const MElement *f1, const MElement *f2) const
   {
     return f1->getPartition() < f2->getPartition();

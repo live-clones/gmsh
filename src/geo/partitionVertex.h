@@ -45,7 +45,7 @@ public:
 };
 
 struct partitionVertexPtrLessThan
-  : public std::binary_function<partitionVertex *, partitionVertex *, bool> {
+{
   bool operator()(const partitionVertex *e1, const partitionVertex *e2) const
   {
     if(e1->numPartitions() < e2->numPartitions()) return true;

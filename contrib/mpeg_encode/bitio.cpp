@@ -201,8 +201,8 @@ Bitio_Write(BitBucket *bbPtr,
             uint32 bits,
             int nbits)
 {
-    register struct bitBucket *lastPtr, *newPtr;
-    register int delta;
+    struct bitBucket *lastPtr, *newPtr;
+    int delta;
 
     assert(nbits <= 32 && nbits >= 0);
 

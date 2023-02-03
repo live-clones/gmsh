@@ -186,7 +186,7 @@ mpeg_jrevdct_quick(DCTBLOCK data)
   int32 tmp10, tmp11, tmp12, tmp13;
   int32 z1, z2, z3, z4, z5;
   int32 d0, d1, d2, d3, d4, d5, d6, d7;
-  register DCTELEM *dataptr;
+  DCTELEM *dataptr;
   int rowctr;
   SHIFT_TEMPS
    
@@ -206,7 +206,7 @@ mpeg_jrevdct_quick(DCTBLOCK data)
      * row DCT calculations can be simplified this way.
      */
 
-    register int *idataptr = (int*)dataptr;
+    int *idataptr = (int*)dataptr;
     d0 = dataptr[0];
     d1 = dataptr[1];
     if ((d1 == 0) && (idataptr[1] | idataptr[2] | idataptr[3]) == 0) {
@@ -214,7 +214,7 @@ mpeg_jrevdct_quick(DCTBLOCK data)
       if (d0) {
 	  /* Compute a 32 bit value to assign. */
 	  DCTELEM dcval = (DCTELEM) (d0 << PASS1_BITS);
-	  register int v = (dcval & 0xffff) | ((dcval << 16) & 0xffff0000);
+	  int v = (dcval & 0xffff) | ((dcval << 16) & 0xffff0000);
 	  
 	  idataptr[0] = v;
 	  idataptr[1] = v;
