@@ -156,13 +156,14 @@ int GModel::writeNEU(const std::string &name, bool saveAll,
 
   if(lowestId == std::numeric_limits<int>::max()) {
     Msg::Warning("No 3d-physicals");
+    fclose(fp);
     return 1;
   }
 
   unsigned numElements = numTetrahedra + numHexahedra + numPrisms + numPyramids;
 
   unsigned nVertex = indexMeshVertices(saveAll, 0, false);
-  std::vector<unsigned char> vertex_phys(nVertex);
+  std::vector<unsigned char> vertex_phys(nVertex, 0);
   // create association map for vertices and faces
   hashMap<unsigned, std::vector<unsigned> >::_ vertmap;
   for(auto it = firstFace(); it != lastFace(); ++it) {
@@ -170,7 +171,7 @@ int GModel::writeNEU(const std::string &name, bool saveAll,
       for(std::size_t j = 0; j < tri->getNumVertices(); ++j) {
         unsigned numVertex = tri->getVertex(j)->getNum();
         vertmap[numVertex].push_back(tri->getNum());
-        vertex_phys[numVertex] = 1;
+        vertex_phys[numVertex - 1] = 1;
       }
     }
 
@@ -178,7 +179,7 @@ int GModel::writeNEU(const std::string &name, bool saveAll,
       for(std::size_t j = 0; j < quad->getNumVertices(); ++j) {
         unsigned numVertex = quad->getVertex(j)->getNum();
         vertmap[numVertex].push_back(quad->getNum());
-        vertex_phys[numVertex] = 1;
+        vertex_phys[numVertex - 1] = 1;
       }
     }
   }
@@ -197,7 +198,7 @@ int GModel::writeNEU(const std::string &name, bool saveAll,
             ++j) {
           unsigned vertex = (*it)->getMeshElement(i)->getVertex(j)->getNum();
 
-          if(vertex_phys[vertex]) { sum++; }
+          if(vertex_phys[vertex - 1]) { sum++; }
         }
 
         if(sum >= 3) { elem_phys[num - lowestId - 1] = 1; }
@@ -244,8 +245,6 @@ int GModel::writeNEU(const std::string &name, bool saveAll,
       }
     }
   }
-
-  //  return 1;
 
   // populate boundary conditions for tetrahedra given triangle physicals
   IDFaceMap boundaryConditions;
