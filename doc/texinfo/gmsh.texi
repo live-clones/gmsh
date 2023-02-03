@@ -1506,7 +1506,10 @@ and Fortran
 See
 @url{@value{GITLAB-PREFIX}/tutorials/python/x1.py,x1.py}.
 Also available in C++
-(@url{@value{GITLAB-PREFIX}/tutorials/c++/x1.cpp,x1.cpp}).
+(@url{@value{GITLAB-PREFIX}/tutorials/c++/x1.cpp,x1.cpp}) and
+Julia
+(@url{@value{GITLAB-PREFIX}/tutorials/julia/x1.jl,x1.jl}).
+
 
 @format
 @verbatiminclude ../../tutorials/python/x1.py
@@ -1522,7 +1525,9 @@ Also available in C++
 See
 @url{@value{GITLAB-PREFIX}/tutorials/python/x2.py,x2.py}.
 Also available in C++
-(@url{@value{GITLAB-PREFIX}/tutorials/c++/x2.cpp,x2.cpp}).
+(@url{@value{GITLAB-PREFIX}/tutorials/c++/x2.cpp,x2.cpp}) and
+Julia
+(@url{@value{GITLAB-PREFIX}/tutorials/julia/x2.jl,x2.jl}).
 
 @center@image{images/x2,9cm,}
 
@@ -1540,7 +1545,9 @@ Also available in C++
 See
 @url{@value{GITLAB-PREFIX}/tutorials/python/x3.py,x3.py}.
 Also available in C++
-(@url{@value{GITLAB-PREFIX}/tutorials/c++/x3.cpp,x3.cpp}).
+(@url{@value{GITLAB-PREFIX}/tutorials/c++/x3.cpp,x3.cpp}) and
+Julia
+(@url{@value{GITLAB-PREFIX}/tutorials/julia/x3.jl,x3.jl}).
 
 @center@image{images/x3,9cm,}
 
@@ -1558,7 +1565,9 @@ Also available in C++
 See
 @url{@value{GITLAB-PREFIX}/tutorials/python/x4.py,x4.py}.
 Also available in C++
-(@url{@value{GITLAB-PREFIX}/tutorials/c++/x4.cpp,x4.cpp}).
+(@url{@value{GITLAB-PREFIX}/tutorials/c++/x4.cpp,x4.cpp}) and
+Julia
+(@url{@value{GITLAB-PREFIX}/tutorials/julia/x4.jl,x4.jl}).
 
 @center@image{images/x4,9cm,}
 
@@ -1576,7 +1585,9 @@ Also available in C++
 See
 @url{@value{GITLAB-PREFIX}/tutorials/python/x5.py,x5.py}.
 Also available in C++
-(@url{@value{GITLAB-PREFIX}/tutorials/c++/x5.cpp,x5.cpp}).
+(@url{@value{GITLAB-PREFIX}/tutorials/c++/x5.cpp,x5.cpp}) and
+Julia
+(@url{@value{GITLAB-PREFIX}/tutorials/julia/x5.jl,x5.jl}).
 
 @center@image{images/x5,9cm,}
 
@@ -1594,7 +1605,9 @@ Also available in C++
 See
 @url{@value{GITLAB-PREFIX}/tutorials/python/x6.py,x6.py}.
 Also available in C++
-(@url{@value{GITLAB-PREFIX}/tutorials/c++/x6.cpp,x6.cpp}).
+(@url{@value{GITLAB-PREFIX}/tutorials/c++/x6.cpp,x6.cpp}) and
+Julia
+(@url{@value{GITLAB-PREFIX}/tutorials/julia/x6.jl,x6.jl}).
 
 @format
 @verbatiminclude ../../tutorials/python/x6.py
@@ -1610,7 +1623,9 @@ Also available in C++
 See
 @url{@value{GITLAB-PREFIX}/tutorials/python/x7.py,x7.py}.
 Also available in C++
-(@url{@value{GITLAB-PREFIX}/tutorials/c++/x7.cpp,x7.cpp}).
+(@url{@value{GITLAB-PREFIX}/tutorials/c++/x7.cpp,x7.cpp}) and
+Julia
+(@url{@value{GITLAB-PREFIX}/tutorials/julia/x7.jl,x7.jl}).
 
 @center@image{images/x7,9cm,}
 
