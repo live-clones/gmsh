@@ -2814,8 +2814,8 @@ Divide and affect @var{expression} to a real option.
 @item Abort;
 Abort the current script.
 
-@item Exit;
-Exit Gmsh.
+@item Exit < @var{expression} >;
+Exit Gmsh (optionally with level @var{expression} instead of 0).
 
 @item CreateDir @var{string-expression};
 Create the directory @var{string-expression}.

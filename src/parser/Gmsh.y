@@ -3595,6 +3595,10 @@ Command :
     {
       Msg::Exit(0);
     }
+   | tExit FExpr tEND
+    {
+      Msg::Exit((int)$2);
+    }
    | tAbort tEND
     {
       gmsh_yyerrorstate = 999; // this will be checked when yyparse returns
