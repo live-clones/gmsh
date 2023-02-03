@@ -12,11 +12,12 @@ N = 100
 ps = []
 
 # create a bspline surface
-for i in range(N + 1):
-    for j in range(N + 1):
-        ps.append(gmsh.model.occ.addPoint(float(i) / N, float(j) / N,
-                                          0.05 * math.sin(10 * float(i + j) / N)))
-s = gmsh.model.occ.addBSplineSurface(ps, numPointsU=N+1)
+for i in range(N):
+    for j in range(N):
+        ps.append(gmsh.model.occ.addPoint(
+            float(i) / (N - 1), float(j) / (N - 1),
+            0.05 * math.sin(10 * float(i + j) / (N - 1))))
+s = gmsh.model.occ.addBSplineSurface(ps, numPointsU=N)
 
 # create a box
 v = gmsh.model.occ.addBox(0, 0, -0.5, 1, 1, 1)
