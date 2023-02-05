@@ -12,7 +12,7 @@
 
 import gmsh
 
-gmsh.initialize(ARGS)
+gmsh.initialize(append!(["gmsh"], ARGS))
 
 # Create an example geometry
 gmsh.model.add("t14")

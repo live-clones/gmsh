@@ -8,7 +8,7 @@
 
 import gmsh
 
-gmsh.initialize(ARGS)
+gmsh.initialize(append!(["gmsh"], ARGS))
 
 # The API provides access to geometrical data in a CAD kernel agnostic manner.
 

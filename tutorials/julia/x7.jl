@@ -1,6 +1,6 @@
 # -----------------------------------------------------------------------------
 #
-#  Gmsh Python extended tutorial 7
+#  Gmsh Julia extended tutorial 7
 #
 #  Additional mesh data: internal edges and faces
 #
@@ -8,7 +8,7 @@
 
 import gmsh
 
-gmsh.initialize(ARGS)
+gmsh.initialize(append!(["gmsh"], ARGS))
 
 gmsh.model.add("x7")
 
@@ -83,7 +83,7 @@ for i in 1:length(faceTags)
         push!(uniqueFaceTags, faceTags[i])
         push!(tagsForTriangles, faceTags[i] + maxElementTag)
         push!(faceNodesForTriangles,
-              faceNodes[3 * i], faceNodes[3 * i + 1], faceNodes[3 * i + 2])
+              faceNodes[3 * (i - 1) + 1], faceNodes[3 * (i - 1) + 2], faceNodes[3 * (i - 1) + 3])
     end
 end
 elementType2D = gmsh.model.mesh.getElementType("triangle", 1)

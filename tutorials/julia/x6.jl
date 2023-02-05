@@ -8,7 +8,7 @@
 
 import gmsh
 
-gmsh.initialize(ARGS)
+gmsh.initialize(append!(["gmsh"], ARGS))
 
 gmsh.model.add("x6")
 

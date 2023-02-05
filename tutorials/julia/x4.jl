@@ -8,7 +8,7 @@
 
 import gmsh
 
-gmsh.initialize(ARGS)
+gmsh.initialize(append!(["gmsh"], ARGS))
 
 # Contrary to list-based view (see `x3.jl'), model-based views are based on one
 # or more meshes. Compared to list-based views, they are thus linked to one
