@@ -192,7 +192,7 @@ public:
     if(_ll <= 0) return;
     _hh = gf->transfinite_vertices[0].size() - 1;
     if(_hh <= 0) return;
-    Msg::Debug("Face %d: L = %d  H = %d", gf->tag(), _ll, _hh);
+    Msg::Debug("Surface %d: L = %d  H = %d", gf->tag(), _ll, _hh);
 
     // get the corners of the transfinite volume interpolation
     std::vector<MVertex *> s(8);
@@ -247,7 +247,8 @@ public:
         }
       }
     }
-    Msg::Debug("Found face index %d  (permutation = %d)", _index, _permutation);
+    Msg::Debug("Found canonical face index %d  (permutation = %d)", _index,
+               _permutation);
     for(int i = 0; i <= _ll; i++)
       for(int j = 0; j <= _hh; j++)
         _list.push_back(_gf->transfinite_vertices[i][j]);
@@ -283,7 +284,7 @@ public:
     MVertex *v = nullptr;
     if(index >= 0 && index < (int)_list.size()) v = _list[index];
     if(index < 0 || index >= (int)_list.size() || !v) {
-      Msg::Error("Wrong index in transfinite mesh of surface %d: "
+      Msg::Error("Wrong node index in transfinite mesh of surface %d: "
                  "m=%d n=%d M=%d N=%d perm=%d",
                  _gf->tag(), m, n, M, N, _permutation);
       return _list[0];
@@ -347,8 +348,8 @@ int MeshTransfiniteVolume(GRegion *gr)
 
   std::vector<GFace *> faces = gr->faces();
   if(faces.size() != 5 && faces.size() != 6) {
-    Msg::Error(
-      "Transfinite algorithm only available for 5- and 6-face volumes");
+    Msg::Error("Transfinite algorithm only available for volumes bounded by "
+               "5 or 6 surfaces");
     return 0;
   }
 
@@ -357,8 +358,8 @@ int MeshTransfiniteVolume(GRegion *gr)
   const std::vector<GEdge *> &edges = gr->edges();
   for(auto it = edges.begin(); it != edges.end(); it++) {
     if(!(*it)->getBeginVertex() || !(*it)->getEndVertex()) {
-      Msg::Error("Transfinite algorithm cannot be applied with curve %d which "
-                 "has no begin or end point",
+      Msg::Error("Transfinite algorithm cannot be applied to volume with bounding "
+                 "curve %d without begin or end point",
                  (*it)->tag());
       return 0;
     }
@@ -509,10 +510,8 @@ int MeshTransfiniteVolume(GRegion *gr)
   std::set<std::pair<MVertex *, MVertex *> > boundary_diags;
   if(gr->meshAttributes.QuadTri) {
     if(!getTransfiniteBoundaryDiags(gr, &boundary_diags)) {
-      Msg::Error(
-        "In MeshTransfiniteVolume(), getTransfiniteBoundaryDiags() failed. "
-        "Aborting mesh of region %d.",
-        gr->tag());
+      Msg::Error("Could not get surface diagonals during transfinite meshing "
+                 "of volume %d", gr->tag());
       return 0;
     }
   }

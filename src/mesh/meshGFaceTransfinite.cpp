@@ -133,12 +133,14 @@ static void computeEdgeLoops(const GFace *gf,
     }
     else {
       if(it == edges.end()) {
-        Msg::Error("Something wrong in edge loop computation");
+        Msg::Error("Something wrong in boundary mesh of transfinite surface %d",
+                   gf->tag());
         return;
       }
       v_start = ((*ito) == 1) ? (*it)->getBeginVertex() : (*it)->getEndVertex();
       if(v_start != v_end) {
-        Msg::Error("Something wrong in edge loop computation");
+        Msg::Error("Something wrong in boundary mesh of transfinite surface %d",
+                   gf->tag());
         return;
       }
       v_end = ((*ito) != 1) ? (*it)->getBeginVertex() : (*it)->getEndVertex();
@@ -175,8 +177,8 @@ int MeshTransfiniteSurface(GFace *gf)
   const std::vector<GEdge *> &edges = gf->edges();
   for(auto it = edges.begin(); it != edges.end(); it++) {
     if(!(*it)->getBeginVertex() || !(*it)->getEndVertex()) {
-      Msg::Error("Transfinite algorithm cannot be applied with curve %d which "
-                 "has no begin or end point",
+      Msg::Error("Transfinite algorithm cannot be applied to surface with bounding "
+                 "curve %d without begin or end point",
                  (*it)->tag());
       return 0;
     }
@@ -271,8 +273,9 @@ int MeshTransfiniteSurface(GFace *gf)
   if(corners.size() == 4) {
     int Lb = N4 - N3, Hb = m_vertices.size() - N4;
     if(Lb != L || Hb != H) {
-      Msg::Error("Surface %d cannot be meshed using the transfinite algo "
-                 "(divisions %d != %d or %d != %d)",
+      Msg::Error("Surface %d cannot be meshed using the transfinite algorithm "
+                 "(non-matching number of nodes on opposite sides %d != %d or "
+                 "%d != %d)",
                  gf->tag(), Lb, L, Hb, H);
       return 0;
     }
@@ -281,12 +284,13 @@ int MeshTransfiniteSurface(GFace *gf)
     int Lb = m_vertices.size() - N3;
     if(CTX::instance()->mesh.transfiniteTri && Lb == L && H == L) {
       gf->meshAttributes.transfinite3 = true;
-      Msg::Info("Using specific algorithm for 3-sided surface %d", gf->tag());
+      Msg::Info("Using specific transfinite algorithm for 3-sided surface %d",
+                gf->tag());
     }
     else {
       if(Lb != L) {
-        Msg::Error("Surface %d cannot be meshed using the transfinite algo "
-                   "(divisions %d != %d)",
+        Msg::Error("Surface %d cannot be meshed using the transfinite algorithm "
+                   "(non-matching number of nodes on opposite sides %d != %d)",
                    gf->tag(), L, Lb);
         return 0;
       }
@@ -859,7 +863,7 @@ int MeshTransfiniteSurface(GFace *gf)
             default:
               if(message) {
                 message = false;
-                Msg::Warning("Surface %d unknown transfiniteArrangement",
+                Msg::Warning("Unknown transfinite arrangement in surface %d",
                              gf->tag());
               }
 
@@ -969,8 +973,8 @@ bool faceIsValidQuad(GFace *gf, double angle_threshold_rad)
       }
       double agl = angle(t21, t23);
       if(agl > angle_threshold_rad) {
-        Msg::Debug("quadrangular face %i rejected for automatic transfinite "
-                   "because corner angle = %.3f deg > threshold = %.3f deg\n",
+        Msg::Debug("Quadrangular face %i rejected for automatic transfinite "
+                   "because corner angle = %.3f deg > threshold = %.3f deg",
                    gf->tag(), 180. / M_PI * agl,
                    180. / M_PI * angle_threshold_rad);
         return false;
@@ -1070,7 +1074,7 @@ bool MeshSetTransfiniteFacesAutomatic(std::set<GFace *> &candidate_faces,
 
   /* Build the topological chords in quad structure */
   Msg::Debug(
-    "transfinite automatic: building chords from %li quadrangular faces ...",
+    "transfinite automatic: building chords from %li quadrangular faces...",
     faces.size());
   std::vector<std::set<GEdge *> > chords;
   build_chords(faces, chords, maxDiffRel);
