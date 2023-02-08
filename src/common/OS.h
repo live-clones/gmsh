@@ -17,7 +17,7 @@ void CheckResources();
 double Cpu();
 double TotalRam();
 double TimeOfDay();
-long GetMemoryUsage();
+std::size_t GetMemoryUsage();
 int GetProcessId();
 std::string GetExecutableFileName();
 std::string GetAbsolutePath(const std::string &fileName);

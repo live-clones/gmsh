@@ -442,7 +442,7 @@ static int streamIsVT100(FILE *stream)
 std::string Msg::PrintResources(bool printDate, bool printWallTime,
                                 bool printCpu, bool printMem)
 {
-  long mem = GetMemoryUsage();
+  std::size_t mem = GetMemoryUsage();
 
   std::string pdate = "";
   if(printDate){
