@@ -2891,6 +2891,73 @@ namespace gmsh { // Top-level functions
         gmshFree(api_controlTags_);
       }
 
+      // Apply a Delaunay refinement on entity of dimension `dim' and tag `tag'.
+      // `elementTags' contains a vector of the tags of the elements that need to
+      // be refined. `constrainedEdges' is a vector of size m*2 containing the
+      // edges that need to stay in the mesh, in the form of 2 successive nodes.
+      // `sizeField' is a vector containing the size at the nodes referenced by
+      // `nodeTags'. `minRadius' is the minimum allowed circumradius of elements in
+      // the mesh. An element that has a circumradius which is smaller than this
+      // value will not be refined. Return newly added nodes and corresponding size
+      // field.
+      inline void constrainedDelaunayRefinement(const int dim,
+                                                const int tag,
+                                                const std::vector<std::size_t> & elementTags,
+                                                const std::vector<std::size_t> & constrainedEdges,
+                                                const std::vector<std::size_t> & nodeTags,
+                                                const std::vector<double> & sizeField,
+                                                const double minRadius,
+                                                std::vector<std::size_t> & newNodeTags,
+                                                std::vector<double> & newCoords,
+                                                std::vector<double> & newSizeField,
+                                                std::vector<std::vector<std::size_t> > & newConstrainedEdges,
+                                                std::vector<std::size_t> & newElementsInRefinement)
+      {
+        int ierr = 0;
+        size_t *api_elementTags_; size_t api_elementTags_n_; vector2ptr(elementTags, &api_elementTags_, &api_elementTags_n_);
+        size_t *api_constrainedEdges_; size_t api_constrainedEdges_n_; vector2ptr(constrainedEdges, &api_constrainedEdges_, &api_constrainedEdges_n_);
+        size_t *api_nodeTags_; size_t api_nodeTags_n_; vector2ptr(nodeTags, &api_nodeTags_, &api_nodeTags_n_);
+        double *api_sizeField_; size_t api_sizeField_n_; vector2ptr(sizeField, &api_sizeField_, &api_sizeField_n_);
+        size_t *api_newNodeTags_; size_t api_newNodeTags_n_;
+        double *api_newCoords_; size_t api_newCoords_n_;
+        double *api_newSizeField_; size_t api_newSizeField_n_;
+        size_t **api_newConstrainedEdges_; size_t *api_newConstrainedEdges_n_, api_newConstrainedEdges_nn_;
+        size_t *api_newElementsInRefinement_; size_t api_newElementsInRefinement_n_;
+        gmshModelMeshConstrainedDelaunayRefinement(dim, tag, api_elementTags_, api_elementTags_n_, api_constrainedEdges_, api_constrainedEdges_n_, api_nodeTags_, api_nodeTags_n_, api_sizeField_, api_sizeField_n_, minRadius, &api_newNodeTags_, &api_newNodeTags_n_, &api_newCoords_, &api_newCoords_n_, &api_newSizeField_, &api_newSizeField_n_, &api_newConstrainedEdges_, &api_newConstrainedEdges_n_, &api_newConstrainedEdges_nn_, &api_newElementsInRefinement_, &api_newElementsInRefinement_n_, &ierr);
+        if(ierr) throwLastError();
+        gmshFree(api_elementTags_);
+        gmshFree(api_constrainedEdges_);
+        gmshFree(api_nodeTags_);
+        gmshFree(api_sizeField_);
+        newNodeTags.assign(api_newNodeTags_, api_newNodeTags_ + api_newNodeTags_n_); gmshFree(api_newNodeTags_);
+        newCoords.assign(api_newCoords_, api_newCoords_ + api_newCoords_n_); gmshFree(api_newCoords_);
+        newSizeField.assign(api_newSizeField_, api_newSizeField_ + api_newSizeField_n_); gmshFree(api_newSizeField_);
+        newConstrainedEdges.resize(api_newConstrainedEdges_nn_); for(size_t i = 0; i < api_newConstrainedEdges_nn_; ++i){ newConstrainedEdges[i].assign(api_newConstrainedEdges_[i], api_newConstrainedEdges_[i] + api_newConstrainedEdges_n_[i]); gmshFree(api_newConstrainedEdges_[i]); } gmshFree(api_newConstrainedEdges_); gmshFree(api_newConstrainedEdges_n_);
+        newElementsInRefinement.assign(api_newElementsInRefinement_, api_newElementsInRefinement_ + api_newElementsInRefinement_n_); gmshFree(api_newElementsInRefinement_);
+      }
+
+      // alpha shape on the mesh of entity of dimension `dim' and tag `tag'.
+      inline void alphaShape(const int dim,
+                             const int tag,
+                             const double alpha,
+                             const std::vector<std::size_t> & nodeTags,
+                             const std::vector<double> & sizeAtNodes,
+                             std::vector<std::vector<std::size_t> > & elementTags,
+                             std::vector<std::vector<std::size_t> > & edges)
+      {
+        int ierr = 0;
+        size_t *api_nodeTags_; size_t api_nodeTags_n_; vector2ptr(nodeTags, &api_nodeTags_, &api_nodeTags_n_);
+        double *api_sizeAtNodes_; size_t api_sizeAtNodes_n_; vector2ptr(sizeAtNodes, &api_sizeAtNodes_, &api_sizeAtNodes_n_);
+        size_t **api_elementTags_; size_t *api_elementTags_n_, api_elementTags_nn_;
+        size_t **api_edges_; size_t *api_edges_n_, api_edges_nn_;
+        gmshModelMeshAlphaShape(dim, tag, alpha, api_nodeTags_, api_nodeTags_n_, api_sizeAtNodes_, api_sizeAtNodes_n_, &api_elementTags_, &api_elementTags_n_, &api_elementTags_nn_, &api_edges_, &api_edges_n_, &api_edges_nn_, &ierr);
+        if(ierr) throwLastError();
+        gmshFree(api_nodeTags_);
+        gmshFree(api_sizeAtNodes_);
+        elementTags.resize(api_elementTags_nn_); for(size_t i = 0; i < api_elementTags_nn_; ++i){ elementTags[i].assign(api_elementTags_[i], api_elementTags_[i] + api_elementTags_n_[i]); gmshFree(api_elementTags_[i]); } gmshFree(api_elementTags_); gmshFree(api_elementTags_n_);
+        edges.resize(api_edges_nn_); for(size_t i = 0; i < api_edges_nn_; ++i){ edges[i].assign(api_edges_[i], api_edges_[i] + api_edges_n_[i]); gmshFree(api_edges_[i]); } gmshFree(api_edges_); gmshFree(api_edges_n_);
+      }
+
       namespace field { // Mesh size field functions
 
         // Add a new mesh size field of type `fieldType'. If `tag' is positive,

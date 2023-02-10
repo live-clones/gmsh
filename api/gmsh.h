@@ -1862,6 +1862,41 @@ namespace gmsh { // Top-level functions
                                            double & hMean,
                                            const std::vector<int> & controlTags);
 
+      // gmsh::model::mesh::constrainedDelaunayRefinement
+      //
+      // Apply a Delaunay refinement on entity of dimension `dim' and tag `tag'.
+      // `elementTags' contains a vector of the tags of the elements that need to
+      // be refined. `constrainedEdges' is a vector of size m*2 containing the
+      // edges that need to stay in the mesh, in the form of 2 successive nodes.
+      // `sizeField' is a vector containing the size at the nodes referenced by
+      // `nodeTags'. `minRadius' is the minimum allowed circumradius of elements in
+      // the mesh. An element that has a circumradius which is smaller than this
+      // value will not be refined. Return newly added nodes and corresponding size
+      // field.
+      GMSH_API void constrainedDelaunayRefinement(const int dim,
+                                                  const int tag,
+                                                  const std::vector<std::size_t> & elementTags,
+                                                  const std::vector<std::size_t> & constrainedEdges,
+                                                  const std::vector<std::size_t> & nodeTags,
+                                                  const std::vector<double> & sizeField,
+                                                  const double minRadius,
+                                                  std::vector<std::size_t> & newNodeTags,
+                                                  std::vector<double> & newCoords,
+                                                  std::vector<double> & newSizeField,
+                                                  std::vector<std::vector<std::size_t> > & newConstrainedEdges,
+                                                  std::vector<std::size_t> & newElementsInRefinement);
+
+      // gmsh::model::mesh::alphaShape
+      //
+      // alpha shape on the mesh of entity of dimension `dim' and tag `tag'.
+      GMSH_API void alphaShape(const int dim,
+                               const int tag,
+                               const double alpha,
+                               const std::vector<std::size_t> & nodeTags,
+                               const std::vector<double> & sizeAtNodes,
+                               std::vector<std::vector<std::size_t> > & elementTags,
+                               std::vector<std::vector<std::size_t> > & edges);
+
       namespace field { // Mesh size field functions
 
         // gmsh::model::mesh::field::add

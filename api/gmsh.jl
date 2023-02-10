@@ -4352,6 +4352,13 @@ Generate a mesh on one single mode entity of dimension `dim` and of tag `tag`.
 User can give a set of points in parameter coordinates in the `coord` vector.
 Parameter `refine` is set to 1 if additional points must be added by the mesher
 using standard gmsh algorithms.
+
+Types:
+ - `dim`: integer
+ - `tag`: integer
+ - `refine`: boolean
+ - `coord`: vector of doubles
+ - `nodeTags`: vector of integers
 """
 function generateMesh(dim, tag, refine, coord, nodeTags)
     ierr = Ref{Cint}()
@@ -4434,6 +4441,16 @@ of the element (= hElement) is taken and compared to R_circumscribed. Thus, if
 threshold == 1, the alpha criterion becomes R_circumscribed < hElement.
 
 Return `tetra`, `domains`, `boundaries`, `neighbors`.
+
+Types:
+ - `threshold`: double
+ - `dim`: integer
+ - `coord`: vector of doubles
+ - `nodalSize`: vector of doubles
+ - `tetra`: vector of sizes
+ - `domains`: vector of vectors of sizes
+ - `boundaries`: vector of vectors of sizes
+ - `neighbors`: vector of sizes
 """
 function alphaShapes(threshold, dim, coord, nodalSize)
     api_tetra_ = Ref{Ptr{Csize_t}}()
@@ -4474,6 +4491,10 @@ vertices (0,1,2,3), node ids of the faces are respectively (0,1,2), (0,1,3),
 (0,2,3) and (1,2,3)
 
 Return `neighbors`.
+
+Types:
+ - `tetra`: vector of sizes
+ - `neighbors`: vector of sizes
 """
 function tetNeighbors(tetra)
     api_neighbors_ = Ref{Ptr{Csize_t}}()
@@ -4494,6 +4515,13 @@ const tet_neighbors = tetNeighbors
 hxt meshing test.
 
 Return `pts`, `tets`.
+
+Types:
+ - `inputMesh`: string
+ - `coord`: vector of doubles
+ - `outputMesh`: string
+ - `pts`: vector of doubles
+ - `tets`: vector of sizes
 """
 function createHxtMesh(inputMesh, coord, outputMesh)
     api_pts_ = Ref{Ptr{Cdouble}}()
@@ -4518,6 +4546,20 @@ Generate a mesh of the array of points `coord`, constrained to the surface mesh
 of the current model. Currently only supported for 3D.
 
 Return `tetrahedra`, `domains`, `boundaries`, `neighbors`, `hMean`.
+
+Types:
+ - `dim`: integer
+ - `tag`: integer
+ - `coord`: vector of doubles
+ - `nodeTags`: vector of integers
+ - `alpha`: double
+ - `meanValue`: double
+ - `tetrahedra`: vector of sizes
+ - `domains`: vector of vectors of sizes
+ - `boundaries`: vector of vectors of sizes
+ - `neighbors`: vector of sizes
+ - `hMean`: double
+ - `controlTags`: vector of integers
 """
 function alphaShapesConstrained(dim, tag, coord, nodeTags, alpha, meanValue, controlTags)
     api_tetrahedra_ = Ref{Ptr{Csize_t}}()
@@ -4547,6 +4589,100 @@ function alphaShapesConstrained(dim, tag, coord, nodeTags, alpha, meanValue, con
     return tetrahedra, domains, boundaries, neighbors, api_hMean_[]
 end
 const alpha_shapes_constrained = alphaShapesConstrained
+
+"""
+    gmsh.model.mesh.constrainedDelaunayRefinement(dim, tag, elementTags, constrainedEdges, nodeTags, sizeField, minRadius)
+
+Apply a Delaunay refinement on entity of dimension `dim` and tag `tag`.
+`elementTags` contains a vector of the tags of the elements that need to be
+refined. `constrainedEdges` is a vector of size m*2 containing the edges that
+need to stay in the mesh, in the form of 2 successive nodes. `sizeField` is a
+vector containing the size at the nodes referenced by `nodeTags`. `minRadius` is
+the minimum allowed circumradius of elements in the mesh. An element that has a
+circumradius which is smaller than this value will not be refined. Return newly
+added nodes and corresponding size field.
+
+Return `newNodeTags`, `newCoords`, `newSizeField`, `newConstrainedEdges`, `newElementsInRefinement`.
+
+Types:
+ - `dim`: integer
+ - `tag`: integer
+ - `elementTags`: vector of sizes
+ - `constrainedEdges`: vector of sizes
+ - `nodeTags`: vector of sizes
+ - `sizeField`: vector of doubles
+ - `minRadius`: double
+ - `newNodeTags`: vector of sizes
+ - `newCoords`: vector of doubles
+ - `newSizeField`: vector of doubles
+ - `newConstrainedEdges`: vector of vectors of sizes
+ - `newElementsInRefinement`: vector of sizes
+"""
+function constrainedDelaunayRefinement(dim, tag, elementTags, constrainedEdges, nodeTags, sizeField, minRadius)
+    api_newNodeTags_ = Ref{Ptr{Csize_t}}()
+    api_newNodeTags_n_ = Ref{Csize_t}()
+    api_newCoords_ = Ref{Ptr{Cdouble}}()
+    api_newCoords_n_ = Ref{Csize_t}()
+    api_newSizeField_ = Ref{Ptr{Cdouble}}()
+    api_newSizeField_n_ = Ref{Csize_t}()
+    api_newConstrainedEdges_ = Ref{Ptr{Ptr{Csize_t}}}()
+    api_newConstrainedEdges_n_ = Ref{Ptr{Csize_t}}()
+    api_newConstrainedEdges_nn_ = Ref{Csize_t}()
+    api_newElementsInRefinement_ = Ref{Ptr{Csize_t}}()
+    api_newElementsInRefinement_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshConstrainedDelaunayRefinement, gmsh.lib), Cvoid,
+          (Cint, Cint, Ptr{Csize_t}, Csize_t, Ptr{Csize_t}, Csize_t, Ptr{Csize_t}, Csize_t, Ptr{Cdouble}, Csize_t, Cdouble, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Csize_t}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cint}),
+          dim, tag, convert(Vector{Csize_t}, elementTags), length(elementTags), convert(Vector{Csize_t}, constrainedEdges), length(constrainedEdges), convert(Vector{Csize_t}, nodeTags), length(nodeTags), convert(Vector{Cdouble}, sizeField), length(sizeField), minRadius, api_newNodeTags_, api_newNodeTags_n_, api_newCoords_, api_newCoords_n_, api_newSizeField_, api_newSizeField_n_, api_newConstrainedEdges_, api_newConstrainedEdges_n_, api_newConstrainedEdges_nn_, api_newElementsInRefinement_, api_newElementsInRefinement_n_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    newNodeTags = unsafe_wrap(Array, api_newNodeTags_[], api_newNodeTags_n_[], own = true)
+    newCoords = unsafe_wrap(Array, api_newCoords_[], api_newCoords_n_[], own = true)
+    newSizeField = unsafe_wrap(Array, api_newSizeField_[], api_newSizeField_n_[], own = true)
+    tmp_api_newConstrainedEdges_ = unsafe_wrap(Array, api_newConstrainedEdges_[], api_newConstrainedEdges_nn_[], own = true)
+    tmp_api_newConstrainedEdges_n_ = unsafe_wrap(Array, api_newConstrainedEdges_n_[], api_newConstrainedEdges_nn_[], own = true)
+    newConstrainedEdges = [ unsafe_wrap(Array, tmp_api_newConstrainedEdges_[i], tmp_api_newConstrainedEdges_n_[i], own = true) for i in 1:api_newConstrainedEdges_nn_[] ]
+    newElementsInRefinement = unsafe_wrap(Array, api_newElementsInRefinement_[], api_newElementsInRefinement_n_[], own = true)
+    return newNodeTags, newCoords, newSizeField, newConstrainedEdges, newElementsInRefinement
+end
+const constrained_delaunay_refinement = constrainedDelaunayRefinement
+
+"""
+    gmsh.model.mesh.alphaShape(dim, tag, alpha, nodeTags, sizeAtNodes)
+
+alpha shape on the mesh of entity of dimension `dim` and tag `tag`.
+
+Return `elementTags`, `edges`.
+
+Types:
+ - `dim`: integer
+ - `tag`: integer
+ - `alpha`: double
+ - `nodeTags`: vector of sizes
+ - `sizeAtNodes`: vector of doubles
+ - `elementTags`: vector of vectors of sizes
+ - `edges`: vector of vectors of sizes
+"""
+function alphaShape(dim, tag, alpha, nodeTags, sizeAtNodes)
+    api_elementTags_ = Ref{Ptr{Ptr{Csize_t}}}()
+    api_elementTags_n_ = Ref{Ptr{Csize_t}}()
+    api_elementTags_nn_ = Ref{Csize_t}()
+    api_edges_ = Ref{Ptr{Ptr{Csize_t}}}()
+    api_edges_n_ = Ref{Ptr{Csize_t}}()
+    api_edges_nn_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshAlphaShape, gmsh.lib), Cvoid,
+          (Cint, Cint, Cdouble, Ptr{Csize_t}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Ptr{Ptr{Csize_t}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Csize_t}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cint}),
+          dim, tag, alpha, convert(Vector{Csize_t}, nodeTags), length(nodeTags), convert(Vector{Cdouble}, sizeAtNodes), length(sizeAtNodes), api_elementTags_, api_elementTags_n_, api_elementTags_nn_, api_edges_, api_edges_n_, api_edges_nn_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    tmp_api_elementTags_ = unsafe_wrap(Array, api_elementTags_[], api_elementTags_nn_[], own = true)
+    tmp_api_elementTags_n_ = unsafe_wrap(Array, api_elementTags_n_[], api_elementTags_nn_[], own = true)
+    elementTags = [ unsafe_wrap(Array, tmp_api_elementTags_[i], tmp_api_elementTags_n_[i], own = true) for i in 1:api_elementTags_nn_[] ]
+    tmp_api_edges_ = unsafe_wrap(Array, api_edges_[], api_edges_nn_[], own = true)
+    tmp_api_edges_n_ = unsafe_wrap(Array, api_edges_n_[], api_edges_nn_[], own = true)
+    edges = [ unsafe_wrap(Array, tmp_api_edges_[i], tmp_api_edges_n_[i], own = true) for i in 1:api_edges_nn_[] ]
+    return elementTags, edges
+end
+const alpha_shape = alphaShape
 
 """
     module gmsh.model.mesh.field

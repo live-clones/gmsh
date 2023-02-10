@@ -699,10 +699,24 @@ module gmsh
         gmshModelMeshComputeHomology
     procedure, nopass :: computeCrossField => &
         gmshModelMeshComputeCrossField
+    procedure, nopass :: generateMesh => &
+        gmshModelMeshGenerateMesh
     procedure, nopass :: triangulate => &
         gmshModelMeshTriangulate
     procedure, nopass :: tetrahedralize => &
         gmshModelMeshTetrahedralize
+    procedure, nopass :: alphaShapes => &
+        gmshModelMeshAlphaShapes
+    procedure, nopass :: tetNeighbors => &
+        gmshModelMeshTetNeighbors
+    procedure, nopass :: createHxtMesh => &
+        gmshModelMeshCreateHxtMesh
+    procedure, nopass :: alphaShapesConstrained => &
+        gmshModelMeshAlphaShapesConstrained
+    procedure, nopass :: constrainedDelaunayRefinement => &
+        gmshModelMeshConstrainedDelaunayRefinement
+    procedure, nopass :: alphaShape => &
+        gmshModelMeshAlphaShape
   end type gmsh_model_mesh_t
 
   type, public :: gmsh_model_t
@@ -7154,6 +7168,53 @@ module gmsh
       api_viewTags_n_)
   end subroutine gmshModelMeshComputeCrossField
 
+  !> Generate a mesh on one single mode entity of dimension `dim' and of tag
+  !! `tag'. User can give a set of points in parameter coordinates in the
+  !! `coord' vector. Parameter `refine' is set to 1 if additional points must be
+  !! added by the mesher using standard gmsh algorithms.
+  subroutine gmshModelMeshGenerateMesh(dim, &
+                                       tag, &
+                                       refine, &
+                                       coord, &
+                                       nodeTags, &
+                                       ierr)
+    interface
+    subroutine C_API(dim, &
+                     tag, &
+                     refine, &
+                     api_coord_, &
+                     api_coord_n_, &
+                     api_nodeTags_, &
+                     api_nodeTags_n_, &
+                     ierr_) &
+      bind(C, name="gmshModelMeshGenerateMesh")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), value, intent(in) :: dim
+      integer(c_int), value, intent(in) :: tag
+      integer(c_int), value, intent(in) :: refine
+      real(c_double), dimension(*) :: api_coord_
+      integer(c_size_t), value, intent(in) :: api_coord_n_
+      integer(c_int), dimension(*) :: api_nodeTags_
+      integer(c_size_t), value, intent(in) :: api_nodeTags_n_
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer, intent(in) :: dim
+    integer, intent(in) :: tag
+    logical, intent(in) :: refine
+    real(c_double), dimension(:), intent(in) :: coord
+    integer(c_int), dimension(:), intent(in) :: nodeTags
+    integer(c_int), intent(out), optional :: ierr
+    call C_API(dim=int(dim, c_int), &
+         tag=int(tag, c_int), &
+         refine=merge(1_c_int, 0_c_int, refine), &
+         api_coord_=coord, &
+         api_coord_n_=size_gmsh_double(coord), &
+         api_nodeTags_=nodeTags, &
+         api_nodeTags_n_=size_gmsh_int(nodeTags), &
+         ierr_=ierr)
+  end subroutine gmshModelMeshGenerateMesh
+
   !> Triangulate the points given in the `coord' vector as pairs of u, v
   !! coordinates, and return the node tags (with numbering starting at 1) of the
   !! resulting triangles in `tri'.
@@ -7223,6 +7284,565 @@ module gmsh
     tetra = ovectorsize_(api_tetra_, &
       api_tetra_n_)
   end subroutine gmshModelMeshTetrahedralize
+
+  !> Give an alpha shape `threshold', points given in the `coord' vector as
+  !! triplets of x, y, z coordinates, and return the tetrahedra (like
+  !! intetrahedralize), `domains' as vectors of vectors of tetrahedron indices,
+  !! `boundaries' as vectors of vectors of pairs tet/face and `neighbors' as a
+  !! vector of size 4 times the number of tetrahedra giving neighboring ids of
+  !! tetrahedra of a given tetrahedra. When a tetrahedra has no neighbor for its
+  !! ith face, the value is tetrahedra.size. For a tet with vertices (0,1,2,3),
+  !! node ids of the faces are respectively (0,1,2), (0,1,3), (0,2,3) and
+  !! (1,2,3). `nodalSize' is a vector defining the desired alpha criterion at
+  !! each point. It should either be of size 1 : it is then used as a global
+  !! alpha shape criterion : R_circumsribed / nodalSize[0] < threshold. (if
+  !! meanValue < 0,  meanValue is computed as the average minimum edge length of
+  !! each element.). `nodalSize' can also be a vector of size corresponding to
+  !! the number of points : it is then used as a local alpha shape criterion.
+  !! After triangulation, the average of `nodalSize' of each vertex of the
+  !! element (= hElement) is taken and compared to R_circumscribed. Thus, if
+  !! threshold == 1, the alpha criterion becomes R_circumscribed < hElement.
+  subroutine gmshModelMeshAlphaShapes(threshold, &
+                                      dim, &
+                                      coord, &
+                                      nodalSize, &
+                                      tetra, &
+                                      domains, &
+                                      domains_n, &
+                                      boundaries, &
+                                      boundaries_n, &
+                                      neighbors, &
+                                      ierr)
+    interface
+    subroutine C_API(threshold, &
+                     dim, &
+                     api_coord_, &
+                     api_coord_n_, &
+                     api_nodalSize_, &
+                     api_nodalSize_n_, &
+                     api_tetra_, &
+                     api_tetra_n_, &
+                     api_domains_, &
+                     api_domains_n_, &
+                     api_domains_nn_, &
+                     api_boundaries_, &
+                     api_boundaries_n_, &
+                     api_boundaries_nn_, &
+                     api_neighbors_, &
+                     api_neighbors_n_, &
+                     ierr_) &
+      bind(C, name="gmshModelMeshAlphaShapes")
+      use, intrinsic :: iso_c_binding
+      real(c_double), value, intent(in) :: threshold
+      integer(c_int), value, intent(in) :: dim
+      real(c_double), dimension(*) :: api_coord_
+      integer(c_size_t), value, intent(in) :: api_coord_n_
+      real(c_double), dimension(*) :: api_nodalSize_
+      integer(c_size_t), value, intent(in) :: api_nodalSize_n_
+      type(c_ptr), intent(out) :: api_tetra_
+      integer(c_size_t), intent(out) :: api_tetra_n_
+      type(c_ptr), intent(out) :: api_domains_
+      type(c_ptr), intent(out) :: api_domains_n_
+      integer(c_size_t), intent(out) :: api_domains_nn_
+      type(c_ptr), intent(out) :: api_boundaries_
+      type(c_ptr), intent(out) :: api_boundaries_n_
+      integer(c_size_t), intent(out) :: api_boundaries_nn_
+      type(c_ptr), intent(out) :: api_neighbors_
+      integer(c_size_t), intent(out) :: api_neighbors_n_
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    real(c_double), intent(in) :: threshold
+    integer, intent(in) :: dim
+    real(c_double), dimension(:), intent(in) :: coord
+    real(c_double), dimension(:), intent(in) :: nodalSize
+    integer(c_size_t), dimension(:), allocatable, intent(out) :: tetra
+    integer(c_size_t), dimension(:), allocatable, intent(out) :: domains
+    integer(c_size_t), dimension(:), allocatable, intent(out) :: domains_n
+    integer(c_size_t), dimension(:), allocatable, intent(out) :: boundaries
+    integer(c_size_t), dimension(:), allocatable, intent(out) :: boundaries_n
+    integer(c_size_t), dimension(:), allocatable, intent(out) :: neighbors
+    integer(c_int), intent(out), optional :: ierr
+    type(c_ptr) :: api_tetra_
+    integer(c_size_t) :: api_tetra_n_
+    type(c_ptr) :: api_domains_, api_domains_n_
+    integer(c_size_t) :: api_domains_nn_
+    type(c_ptr) :: api_boundaries_, api_boundaries_n_
+    integer(c_size_t) :: api_boundaries_nn_
+    type(c_ptr) :: api_neighbors_
+    integer(c_size_t) :: api_neighbors_n_
+    call C_API(threshold=real(threshold, c_double), &
+         dim=int(dim, c_int), &
+         api_coord_=coord, &
+         api_coord_n_=size_gmsh_double(coord), &
+         api_nodalSize_=nodalSize, &
+         api_nodalSize_n_=size_gmsh_double(nodalSize), &
+         api_tetra_=api_tetra_, &
+         api_tetra_n_=api_tetra_n_, &
+         api_domains_=api_domains_, &
+         api_domains_n_=api_domains_n_, &
+         api_domains_nn_=api_domains_nn_, &
+         api_boundaries_=api_boundaries_, &
+         api_boundaries_n_=api_boundaries_n_, &
+         api_boundaries_nn_=api_boundaries_nn_, &
+         api_neighbors_=api_neighbors_, &
+         api_neighbors_n_=api_neighbors_n_, &
+         ierr_=ierr)
+    tetra = ovectorsize_(api_tetra_, &
+      api_tetra_n_)
+    call ovectorvectorsize_(api_domains_, &
+      api_domains_n_, &
+      api_domains_nn_, &
+      domains, &
+      domains_n)
+    call ovectorvectorsize_(api_boundaries_, &
+      api_boundaries_n_, &
+      api_boundaries_nn_, &
+      boundaries, &
+      boundaries_n)
+    neighbors = ovectorsize_(api_neighbors_, &
+      api_neighbors_n_)
+  end subroutine gmshModelMeshAlphaShapes
+
+  !> Take  the node tags (with numbering starting at 1) of the tetrahedra in
+  !! `tetra' and returns `neighbors' as a vector of size 4 times the number of
+  !! tetrahedra giving neighboring ids of tetrahedra of a given tetrahedra. When
+  !! a tetrahedra has no neighbor for its ith face, the value is
+  !! tetrahedra.size. For a tet with vertices (0,1,2,3), node ids of the faces
+  !! are respectively (0,1,2), (0,1,3), (0,2,3) and (1,2,3)
+  subroutine gmshModelMeshTetNeighbors(tetra, &
+                                       neighbors, &
+                                       ierr)
+    interface
+    subroutine C_API(api_tetra_, &
+                     api_tetra_n_, &
+                     api_neighbors_, &
+                     api_neighbors_n_, &
+                     ierr_) &
+      bind(C, name="gmshModelMeshTetNeighbors")
+      use, intrinsic :: iso_c_binding
+      integer(c_size_t), dimension(*) :: api_tetra_
+      integer(c_size_t), value, intent(in) :: api_tetra_n_
+      type(c_ptr), intent(out) :: api_neighbors_
+      integer(c_size_t), intent(out) :: api_neighbors_n_
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer(c_size_t), dimension(:), intent(in) :: tetra
+    integer(c_size_t), dimension(:), allocatable, intent(out) :: neighbors
+    integer(c_int), intent(out), optional :: ierr
+    type(c_ptr) :: api_neighbors_
+    integer(c_size_t) :: api_neighbors_n_
+    call C_API(api_tetra_=tetra, &
+         api_tetra_n_=size_gmsh_size(tetra), &
+         api_neighbors_=api_neighbors_, &
+         api_neighbors_n_=api_neighbors_n_, &
+         ierr_=ierr)
+    neighbors = ovectorsize_(api_neighbors_, &
+      api_neighbors_n_)
+  end subroutine gmshModelMeshTetNeighbors
+
+  !> hxt meshing test.
+  subroutine gmshModelMeshCreateHxtMesh(inputMesh, &
+                                        coord, &
+                                        outputMesh, &
+                                        pts, &
+                                        tets, &
+                                        ierr)
+    interface
+    subroutine C_API(inputMesh, &
+                     api_coord_, &
+                     api_coord_n_, &
+                     outputMesh, &
+                     api_pts_, &
+                     api_pts_n_, &
+                     api_tets_, &
+                     api_tets_n_, &
+                     ierr_) &
+      bind(C, name="gmshModelMeshCreateHxtMesh")
+      use, intrinsic :: iso_c_binding
+      character(len=1, kind=c_char), dimension(*), intent(in) :: inputMesh
+      real(c_double), dimension(*) :: api_coord_
+      integer(c_size_t), value, intent(in) :: api_coord_n_
+      character(len=1, kind=c_char), dimension(*), intent(in) :: outputMesh
+      type(c_ptr), intent(out) :: api_pts_
+      integer(c_size_t) :: api_pts_n_
+      type(c_ptr), intent(out) :: api_tets_
+      integer(c_size_t), intent(out) :: api_tets_n_
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    character(len=*), intent(in) :: inputMesh
+    real(c_double), dimension(:), intent(in) :: coord
+    character(len=*), intent(in) :: outputMesh
+    real(c_double), dimension(:), allocatable, intent(out) :: pts
+    integer(c_size_t), dimension(:), allocatable, intent(out) :: tets
+    integer(c_int), intent(out), optional :: ierr
+    type(c_ptr) :: api_pts_
+    integer(c_size_t) :: api_pts_n_
+    type(c_ptr) :: api_tets_
+    integer(c_size_t) :: api_tets_n_
+    call C_API(inputMesh=istring_(inputMesh), &
+         api_coord_=coord, &
+         api_coord_n_=size_gmsh_double(coord), &
+         outputMesh=istring_(outputMesh), &
+         api_pts_=api_pts_, &
+         api_pts_n_=api_pts_n_, &
+         api_tets_=api_tets_, &
+         api_tets_n_=api_tets_n_, &
+         ierr_=ierr)
+    pts = ovectordouble_(api_pts_, &
+      api_pts_n_)
+    tets = ovectorsize_(api_tets_, &
+      api_tets_n_)
+  end subroutine gmshModelMeshCreateHxtMesh
+
+  !> Generate a mesh of the array of points `coord', constrained to the surface
+  !! mesh of the current model. Currently only supported for 3D.
+  subroutine gmshModelMeshAlphaShapesConstrained(dim, &
+                                                 tag, &
+                                                 coord, &
+                                                 nodeTags, &
+                                                 alpha, &
+                                                 meanValue, &
+                                                 tetrahedra, &
+                                                 domains, &
+                                                 domains_n, &
+                                                 boundaries, &
+                                                 boundaries_n, &
+                                                 neighbors, &
+                                                 hMean, &
+                                                 controlTags, &
+                                                 ierr)
+    interface
+    subroutine C_API(dim, &
+                     tag, &
+                     api_coord_, &
+                     api_coord_n_, &
+                     api_nodeTags_, &
+                     api_nodeTags_n_, &
+                     alpha, &
+                     meanValue, &
+                     api_tetrahedra_, &
+                     api_tetrahedra_n_, &
+                     api_domains_, &
+                     api_domains_n_, &
+                     api_domains_nn_, &
+                     api_boundaries_, &
+                     api_boundaries_n_, &
+                     api_boundaries_nn_, &
+                     api_neighbors_, &
+                     api_neighbors_n_, &
+                     hMean, &
+                     api_controlTags_, &
+                     api_controlTags_n_, &
+                     ierr_) &
+      bind(C, name="gmshModelMeshAlphaShapesConstrained")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), value, intent(in) :: dim
+      integer(c_int), value, intent(in) :: tag
+      real(c_double), dimension(*) :: api_coord_
+      integer(c_size_t), value, intent(in) :: api_coord_n_
+      integer(c_int), dimension(*) :: api_nodeTags_
+      integer(c_size_t), value, intent(in) :: api_nodeTags_n_
+      real(c_double), value, intent(in) :: alpha
+      real(c_double), value, intent(in) :: meanValue
+      type(c_ptr), intent(out) :: api_tetrahedra_
+      integer(c_size_t), intent(out) :: api_tetrahedra_n_
+      type(c_ptr), intent(out) :: api_domains_
+      type(c_ptr), intent(out) :: api_domains_n_
+      integer(c_size_t), intent(out) :: api_domains_nn_
+      type(c_ptr), intent(out) :: api_boundaries_
+      type(c_ptr), intent(out) :: api_boundaries_n_
+      integer(c_size_t), intent(out) :: api_boundaries_nn_
+      type(c_ptr), intent(out) :: api_neighbors_
+      integer(c_size_t), intent(out) :: api_neighbors_n_
+      real(c_double) :: hMean
+      integer(c_int), dimension(*) :: api_controlTags_
+      integer(c_size_t), value, intent(in) :: api_controlTags_n_
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer, intent(in) :: dim
+    integer, intent(in) :: tag
+    real(c_double), dimension(:), intent(in) :: coord
+    integer(c_int), dimension(:), intent(in) :: nodeTags
+    real(c_double), intent(in) :: alpha
+    real(c_double), intent(in) :: meanValue
+    integer(c_size_t), dimension(:), allocatable, intent(out) :: tetrahedra
+    integer(c_size_t), dimension(:), allocatable, intent(out) :: domains
+    integer(c_size_t), dimension(:), allocatable, intent(out) :: domains_n
+    integer(c_size_t), dimension(:), allocatable, intent(out) :: boundaries
+    integer(c_size_t), dimension(:), allocatable, intent(out) :: boundaries_n
+    integer(c_size_t), dimension(:), allocatable, intent(out) :: neighbors
+    real(c_double) :: hMean
+    integer(c_int), dimension(:), intent(in) :: controlTags
+    integer(c_int), intent(out), optional :: ierr
+    type(c_ptr) :: api_tetrahedra_
+    integer(c_size_t) :: api_tetrahedra_n_
+    type(c_ptr) :: api_domains_, api_domains_n_
+    integer(c_size_t) :: api_domains_nn_
+    type(c_ptr) :: api_boundaries_, api_boundaries_n_
+    integer(c_size_t) :: api_boundaries_nn_
+    type(c_ptr) :: api_neighbors_
+    integer(c_size_t) :: api_neighbors_n_
+    call C_API(dim=int(dim, c_int), &
+         tag=int(tag, c_int), &
+         api_coord_=coord, &
+         api_coord_n_=size_gmsh_double(coord), &
+         api_nodeTags_=nodeTags, &
+         api_nodeTags_n_=size_gmsh_int(nodeTags), &
+         alpha=real(alpha, c_double), &
+         meanValue=real(meanValue, c_double), &
+         api_tetrahedra_=api_tetrahedra_, &
+         api_tetrahedra_n_=api_tetrahedra_n_, &
+         api_domains_=api_domains_, &
+         api_domains_n_=api_domains_n_, &
+         api_domains_nn_=api_domains_nn_, &
+         api_boundaries_=api_boundaries_, &
+         api_boundaries_n_=api_boundaries_n_, &
+         api_boundaries_nn_=api_boundaries_nn_, &
+         api_neighbors_=api_neighbors_, &
+         api_neighbors_n_=api_neighbors_n_, &
+         hMean=hMean, &
+         api_controlTags_=controlTags, &
+         api_controlTags_n_=size_gmsh_int(controlTags), &
+         ierr_=ierr)
+    tetrahedra = ovectorsize_(api_tetrahedra_, &
+      api_tetrahedra_n_)
+    call ovectorvectorsize_(api_domains_, &
+      api_domains_n_, &
+      api_domains_nn_, &
+      domains, &
+      domains_n)
+    call ovectorvectorsize_(api_boundaries_, &
+      api_boundaries_n_, &
+      api_boundaries_nn_, &
+      boundaries, &
+      boundaries_n)
+    neighbors = ovectorsize_(api_neighbors_, &
+      api_neighbors_n_)
+  end subroutine gmshModelMeshAlphaShapesConstrained
+
+  !> Apply a Delaunay refinement on entity of dimension `dim' and tag `tag'.
+  !! `elementTags' contains a vector of the tags of the elements that need to be
+  !! refined. `constrainedEdges' is a vector of size m*2 containing the edges
+  !! that need to stay in the mesh, in the form of 2 successive nodes.
+  !! `sizeField' is a vector containing the size at the nodes referenced by
+  !! `nodeTags'. `minRadius' is the minimum allowed circumradius of elements in
+  !! the mesh. An element that has a circumradius which is smaller than this
+  !! value will not be refined. Return newly added nodes and corresponding size
+  !! field.
+  subroutine gmshModelMeshConstrainedDelaunayRefinement(dim, &
+                                                        tag, &
+                                                        elementTags, &
+                                                        constrainedEdges, &
+                                                        nodeTags, &
+                                                        sizeField, &
+                                                        minRadius, &
+                                                        newNodeTags, &
+                                                        newCoords, &
+                                                        newSizeField, &
+                                                        newConstrainedEdges, &
+                                                        newConstrainedEdges_n, &
+                                                        newElementsInRefinement, &
+                                                        ierr)
+    interface
+    subroutine C_API(dim, &
+                     tag, &
+                     api_elementTags_, &
+                     api_elementTags_n_, &
+                     api_constrainedEdges_, &
+                     api_constrainedEdges_n_, &
+                     api_nodeTags_, &
+                     api_nodeTags_n_, &
+                     api_sizeField_, &
+                     api_sizeField_n_, &
+                     minRadius, &
+                     api_newNodeTags_, &
+                     api_newNodeTags_n_, &
+                     api_newCoords_, &
+                     api_newCoords_n_, &
+                     api_newSizeField_, &
+                     api_newSizeField_n_, &
+                     api_newConstrainedEdges_, &
+                     api_newConstrainedEdges_n_, &
+                     api_newConstrainedEdges_nn_, &
+                     api_newElementsInRefinement_, &
+                     api_newElementsInRefinement_n_, &
+                     ierr_) &
+      bind(C, name="gmshModelMeshConstrainedDelaunayRefinement")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), value, intent(in) :: dim
+      integer(c_int), value, intent(in) :: tag
+      integer(c_size_t), dimension(*) :: api_elementTags_
+      integer(c_size_t), value, intent(in) :: api_elementTags_n_
+      integer(c_size_t), dimension(*) :: api_constrainedEdges_
+      integer(c_size_t), value, intent(in) :: api_constrainedEdges_n_
+      integer(c_size_t), dimension(*) :: api_nodeTags_
+      integer(c_size_t), value, intent(in) :: api_nodeTags_n_
+      real(c_double), dimension(*) :: api_sizeField_
+      integer(c_size_t), value, intent(in) :: api_sizeField_n_
+      real(c_double), value, intent(in) :: minRadius
+      type(c_ptr), intent(out) :: api_newNodeTags_
+      integer(c_size_t), intent(out) :: api_newNodeTags_n_
+      type(c_ptr), intent(out) :: api_newCoords_
+      integer(c_size_t) :: api_newCoords_n_
+      type(c_ptr), intent(out) :: api_newSizeField_
+      integer(c_size_t) :: api_newSizeField_n_
+      type(c_ptr), intent(out) :: api_newConstrainedEdges_
+      type(c_ptr), intent(out) :: api_newConstrainedEdges_n_
+      integer(c_size_t), intent(out) :: api_newConstrainedEdges_nn_
+      type(c_ptr), intent(out) :: api_newElementsInRefinement_
+      integer(c_size_t), intent(out) :: api_newElementsInRefinement_n_
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer, intent(in) :: dim
+    integer, intent(in) :: tag
+    integer(c_size_t), dimension(:), intent(in) :: elementTags
+    integer(c_size_t), dimension(:), intent(in) :: constrainedEdges
+    integer(c_size_t), dimension(:), intent(in) :: nodeTags
+    real(c_double), dimension(:), intent(in) :: sizeField
+    real(c_double), intent(in) :: minRadius
+    integer(c_size_t), dimension(:), allocatable, intent(out) :: newNodeTags
+    real(c_double), dimension(:), allocatable, intent(out) :: newCoords
+    real(c_double), dimension(:), allocatable, intent(out) :: newSizeField
+    integer(c_size_t), dimension(:), allocatable, intent(out) :: newConstrainedEdges
+    integer(c_size_t), dimension(:), allocatable, intent(out) :: newConstrainedEdges_n
+    integer(c_size_t), dimension(:), allocatable, intent(out) :: newElementsInRefinement
+    integer(c_int), intent(out), optional :: ierr
+    type(c_ptr) :: api_newNodeTags_
+    integer(c_size_t) :: api_newNodeTags_n_
+    type(c_ptr) :: api_newCoords_
+    integer(c_size_t) :: api_newCoords_n_
+    type(c_ptr) :: api_newSizeField_
+    integer(c_size_t) :: api_newSizeField_n_
+    type(c_ptr) :: api_newConstrainedEdges_, api_newConstrainedEdges_n_
+    integer(c_size_t) :: api_newConstrainedEdges_nn_
+    type(c_ptr) :: api_newElementsInRefinement_
+    integer(c_size_t) :: api_newElementsInRefinement_n_
+    call C_API(dim=int(dim, c_int), &
+         tag=int(tag, c_int), &
+         api_elementTags_=elementTags, &
+         api_elementTags_n_=size_gmsh_size(elementTags), &
+         api_constrainedEdges_=constrainedEdges, &
+         api_constrainedEdges_n_=size_gmsh_size(constrainedEdges), &
+         api_nodeTags_=nodeTags, &
+         api_nodeTags_n_=size_gmsh_size(nodeTags), &
+         api_sizeField_=sizeField, &
+         api_sizeField_n_=size_gmsh_double(sizeField), &
+         minRadius=real(minRadius, c_double), &
+         api_newNodeTags_=api_newNodeTags_, &
+         api_newNodeTags_n_=api_newNodeTags_n_, &
+         api_newCoords_=api_newCoords_, &
+         api_newCoords_n_=api_newCoords_n_, &
+         api_newSizeField_=api_newSizeField_, &
+         api_newSizeField_n_=api_newSizeField_n_, &
+         api_newConstrainedEdges_=api_newConstrainedEdges_, &
+         api_newConstrainedEdges_n_=api_newConstrainedEdges_n_, &
+         api_newConstrainedEdges_nn_=api_newConstrainedEdges_nn_, &
+         api_newElementsInRefinement_=api_newElementsInRefinement_, &
+         api_newElementsInRefinement_n_=api_newElementsInRefinement_n_, &
+         ierr_=ierr)
+    newNodeTags = ovectorsize_(api_newNodeTags_, &
+      api_newNodeTags_n_)
+    newCoords = ovectordouble_(api_newCoords_, &
+      api_newCoords_n_)
+    newSizeField = ovectordouble_(api_newSizeField_, &
+      api_newSizeField_n_)
+    call ovectorvectorsize_(api_newConstrainedEdges_, &
+      api_newConstrainedEdges_n_, &
+      api_newConstrainedEdges_nn_, &
+      newConstrainedEdges, &
+      newConstrainedEdges_n)
+    newElementsInRefinement = ovectorsize_(api_newElementsInRefinement_, &
+      api_newElementsInRefinement_n_)
+  end subroutine gmshModelMeshConstrainedDelaunayRefinement
+
+  !> alpha shape on the mesh of entity of dimension `dim' and tag `tag'.
+  subroutine gmshModelMeshAlphaShape(dim, &
+                                     tag, &
+                                     alpha, &
+                                     nodeTags, &
+                                     sizeAtNodes, &
+                                     elementTags, &
+                                     elementTags_n, &
+                                     edges, &
+                                     edges_n, &
+                                     ierr)
+    interface
+    subroutine C_API(dim, &
+                     tag, &
+                     alpha, &
+                     api_nodeTags_, &
+                     api_nodeTags_n_, &
+                     api_sizeAtNodes_, &
+                     api_sizeAtNodes_n_, &
+                     api_elementTags_, &
+                     api_elementTags_n_, &
+                     api_elementTags_nn_, &
+                     api_edges_, &
+                     api_edges_n_, &
+                     api_edges_nn_, &
+                     ierr_) &
+      bind(C, name="gmshModelMeshAlphaShape")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), value, intent(in) :: dim
+      integer(c_int), value, intent(in) :: tag
+      real(c_double), value, intent(in) :: alpha
+      integer(c_size_t), dimension(*) :: api_nodeTags_
+      integer(c_size_t), value, intent(in) :: api_nodeTags_n_
+      real(c_double), dimension(*) :: api_sizeAtNodes_
+      integer(c_size_t), value, intent(in) :: api_sizeAtNodes_n_
+      type(c_ptr), intent(out) :: api_elementTags_
+      type(c_ptr), intent(out) :: api_elementTags_n_
+      integer(c_size_t), intent(out) :: api_elementTags_nn_
+      type(c_ptr), intent(out) :: api_edges_
+      type(c_ptr), intent(out) :: api_edges_n_
+      integer(c_size_t), intent(out) :: api_edges_nn_
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer, intent(in) :: dim
+    integer, intent(in) :: tag
+    real(c_double), intent(in) :: alpha
+    integer(c_size_t), dimension(:), intent(in) :: nodeTags
+    real(c_double), dimension(:), intent(in) :: sizeAtNodes
+    integer(c_size_t), dimension(:), allocatable, intent(out) :: elementTags
+    integer(c_size_t), dimension(:), allocatable, intent(out) :: elementTags_n
+    integer(c_size_t), dimension(:), allocatable, intent(out) :: edges
+    integer(c_size_t), dimension(:), allocatable, intent(out) :: edges_n
+    integer(c_int), intent(out), optional :: ierr
+    type(c_ptr) :: api_elementTags_, api_elementTags_n_
+    integer(c_size_t) :: api_elementTags_nn_
+    type(c_ptr) :: api_edges_, api_edges_n_
+    integer(c_size_t) :: api_edges_nn_
+    call C_API(dim=int(dim, c_int), &
+         tag=int(tag, c_int), &
+         alpha=real(alpha, c_double), &
+         api_nodeTags_=nodeTags, &
+         api_nodeTags_n_=size_gmsh_size(nodeTags), &
+         api_sizeAtNodes_=sizeAtNodes, &
+         api_sizeAtNodes_n_=size_gmsh_double(sizeAtNodes), &
+         api_elementTags_=api_elementTags_, &
+         api_elementTags_n_=api_elementTags_n_, &
+         api_elementTags_nn_=api_elementTags_nn_, &
+         api_edges_=api_edges_, &
+         api_edges_n_=api_edges_n_, &
+         api_edges_nn_=api_edges_nn_, &
+         ierr_=ierr)
+    call ovectorvectorsize_(api_elementTags_, &
+      api_elementTags_n_, &
+      api_elementTags_nn_, &
+      elementTags, &
+      elementTags_n)
+    call ovectorvectorsize_(api_edges_, &
+      api_edges_n_, &
+      api_edges_nn_, &
+      edges, &
+      edges_n)
+  end subroutine gmshModelMeshAlphaShape
 
   !> Add a new mesh size field of type `fieldType'. If `tag' is positive, assign
   !! the tag explicitly; otherwise a new tag is assigned automatically. Return

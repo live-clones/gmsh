@@ -1644,6 +1644,39 @@ GMSH_API void gmshModelMeshAlphaShapesConstrained(const int dim,
                                                   const int * controlTags, const size_t controlTags_n,
                                                   int * ierr);
 
+/* Apply a Delaunay refinement on entity of dimension `dim' and tag `tag'.
+ * `elementTags' contains a vector of the tags of the elements that need to be
+ * refined. `constrainedEdges' is a vector of size m*2 containing the edges
+ * that need to stay in the mesh, in the form of 2 successive nodes.
+ * `sizeField' is a vector containing the size at the nodes referenced by
+ * `nodeTags'. `minRadius' is the minimum allowed circumradius of elements in
+ * the mesh. An element that has a circumradius which is smaller than this
+ * value will not be refined. Return newly added nodes and corresponding size
+ * field. */
+GMSH_API void gmshModelMeshConstrainedDelaunayRefinement(const int dim,
+                                                         const int tag,
+                                                         const size_t * elementTags, const size_t elementTags_n,
+                                                         const size_t * constrainedEdges, const size_t constrainedEdges_n,
+                                                         const size_t * nodeTags, const size_t nodeTags_n,
+                                                         const double * sizeField, const size_t sizeField_n,
+                                                         const double minRadius,
+                                                         size_t ** newNodeTags, size_t * newNodeTags_n,
+                                                         double ** newCoords, size_t * newCoords_n,
+                                                         double ** newSizeField, size_t * newSizeField_n,
+                                                         size_t *** newConstrainedEdges, size_t ** newConstrainedEdges_n, size_t *newConstrainedEdges_nn,
+                                                         size_t ** newElementsInRefinement, size_t * newElementsInRefinement_n,
+                                                         int * ierr);
+
+/* alpha shape on the mesh of entity of dimension `dim' and tag `tag'. */
+GMSH_API void gmshModelMeshAlphaShape(const int dim,
+                                      const int tag,
+                                      const double alpha,
+                                      const size_t * nodeTags, const size_t nodeTags_n,
+                                      const double * sizeAtNodes, const size_t sizeAtNodes_n,
+                                      size_t *** elementTags, size_t ** elementTags_n, size_t *elementTags_nn,
+                                      size_t *** edges, size_t ** edges_n, size_t *edges_nn,
+                                      int * ierr);
+
 /* Add a new mesh size field of type `fieldType'. If `tag' is positive, assign
  * the tag explicitly; otherwise a new tag is assigned automatically. Return
  * the field tag. */

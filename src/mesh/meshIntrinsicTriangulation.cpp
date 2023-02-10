@@ -204,8 +204,8 @@ int IntrinsicTriangulation::continuousRienstra (PolyMesh::Vertex *v, double Lmax
       // DEBUG
       SPoint2 s (0,0) ;
       SPoint2 start (d1,0);
-      SPoint2 p1 , wrong;
-      bool ok = intersectTwoCircles (start, s, d3b, d2, p1, wrong);
+      SPoint2 p1 ;
+      intersectTwoCircles (s, start, d2, d3b, p1);
       double dir[2] = {p1.x() - start.x(), p1.y() - start.y()};
       double norm = sqrt(dir[0]*dir[0]+dir[1]*dir[1]);
       SPoint2 p2 (p1.x() + d3a*dir[0]/norm, p1.y() + d3a*dir[1]/norm);
@@ -339,6 +339,7 @@ int IntrinsicTriangulation::continuousRienstra (PolyMesh::Vertex *v, double Lmax
   }
   fprintf(f,"};\n");
   fclose(f);
+  return 0;
 }
 
 
