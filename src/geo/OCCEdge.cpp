@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2022 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -49,6 +49,8 @@ OCCEdge::OCCEdge(GModel *m, TopoDS_Edge c, int num, GVertex *v1, GVertex *v2)
   _c_rev = _c;
   _c_rev.Reverse();
 
+  _nbpoles = 0;
+
   if(!_curve.IsNull()) {
     // initialize projector, with a little tolerance to converge on the boundary
     // points
@@ -61,6 +63,12 @@ OCCEdge::OCCEdge(GModel *m, TopoDS_Edge c, int num, GVertex *v1, GVertex *v2)
       umax += utol;
     }
     _projector.Init(_curve, umin, umax);
+
+    // keep track of number of poles for drawing
+    if(_curve->DynamicType() == STANDARD_TYPE(Geom_BSplineCurve))
+      _nbpoles = Handle(Geom_BSplineCurve)::DownCast(_curve)->NbPoles();
+    else if(_curve->DynamicType() == STANDARD_TYPE(Geom_BezierCurve))
+      _nbpoles = Handle(Geom_BezierCurve)::DownCast(_curve)->NbPoles();
   }
 }
 
@@ -392,10 +400,13 @@ int OCCEdge::minimumMeshSegments() const
 
 int OCCEdge::minimumDrawSegments() const
 {
+  int n = _nbpoles;
+  if(n <= 0) n = GEdge::minimumDrawSegments();
+
   if(geomType() == Line)
-    return GEdge::minimumDrawSegments();
+    return n;
   else
-    return CTX::instance()->geom.numSubEdges * GEdge::minimumDrawSegments();
+    return CTX::instance()->geom.numSubEdges * n;
 }
 
 double OCCEdge::curvature(double par) const

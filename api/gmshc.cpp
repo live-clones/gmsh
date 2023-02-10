@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2022 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -388,6 +388,19 @@ GMSH_API void gmshModelGetEntitiesForPhysicalGroup(const int dim, const int tag,
   }
 }
 
+GMSH_API void gmshModelGetEntitiesForPhysicalName(const char * name, int ** dimTags, size_t * dimTags_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::vectorpair api_dimTags_;
+    gmsh::model::getEntitiesForPhysicalName(name, api_dimTags_);
+    vectorpair2intptr(api_dimTags_, dimTags, dimTags_n);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API void gmshModelGetPhysicalGroupsForEntity(const int dim, const int tag, int ** physicalTags, size_t * physicalTags_n, int * ierr)
 {
   if(ierr) *ierr = 0;
@@ -510,13 +523,13 @@ GMSH_API void gmshModelGetAdjacencies(const int dim, const int tag, int ** upwar
   }
 }
 
-GMSH_API void gmshModelGetEntitiesInBoundingBox(const double xmin, const double ymin, const double zmin, const double xmax, const double ymax, const double zmax, int ** tags, size_t * tags_n, const int dim, int * ierr)
+GMSH_API void gmshModelGetEntitiesInBoundingBox(const double xmin, const double ymin, const double zmin, const double xmax, const double ymax, const double zmax, int ** dimTags, size_t * dimTags_n, const int dim, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    gmsh::vectorpair api_tags_;
-    gmsh::model::getEntitiesInBoundingBox(xmin, ymin, zmin, xmax, ymax, zmax, api_tags_, dim);
-    vectorpair2intptr(api_tags_, tags, tags_n);
+    gmsh::vectorpair api_dimTags_;
+    gmsh::model::getEntitiesInBoundingBox(xmin, ymin, zmin, xmax, ymax, zmax, api_dimTags_, dim);
+    vectorpair2intptr(api_dimTags_, dimTags, dimTags_n);
   }
   catch(...){
     if(ierr) *ierr = 1;
@@ -871,6 +884,55 @@ GMSH_API void gmshModelSetCoordinates(const int tag, const double x, const doubl
   if(ierr) *ierr = 0;
   try {
     gmsh::model::setCoordinates(tag, x, y, z);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelGetAttributeNames(char *** names, size_t * names_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<std::string> api_names_;
+    gmsh::model::getAttributeNames(api_names_);
+    vectorstring2charptrptr(api_names_, names, names_n);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelGetAttribute(const char * name, char *** values, size_t * values_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<std::string> api_values_;
+    gmsh::model::getAttribute(name, api_values_);
+    vectorstring2charptrptr(api_values_, values, values_n);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelSetAttribute(const char * name, const char * const * values, const size_t values_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<std::string> api_values_(values, values + values_n);
+    gmsh::model::setAttribute(name, api_values_);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelRemoveAttribute(const char * name, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::removeAttribute(name);
   }
   catch(...){
     if(ierr) *ierr = 1;
@@ -2412,25 +2474,25 @@ GMSH_API void gmshModelMeshFieldGetString(const int tag, const char * option, ch
   }
 }
 
-GMSH_API void gmshModelMeshFieldSetNumbers(const int tag, const char * option, const double * value, const size_t value_n, int * ierr)
+GMSH_API void gmshModelMeshFieldSetNumbers(const int tag, const char * option, const double * values, const size_t values_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    std::vector<double> api_value_(value, value + value_n);
-    gmsh::model::mesh::field::setNumbers(tag, option, api_value_);
+    std::vector<double> api_values_(values, values + values_n);
+    gmsh::model::mesh::field::setNumbers(tag, option, api_values_);
   }
   catch(...){
     if(ierr) *ierr = 1;
   }
 }
 
-GMSH_API void gmshModelMeshFieldGetNumbers(const int tag, const char * option, double ** value, size_t * value_n, int * ierr)
+GMSH_API void gmshModelMeshFieldGetNumbers(const int tag, const char * option, double ** values, size_t * values_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    std::vector<double> api_value_;
-    gmsh::model::mesh::field::getNumbers(tag, option, api_value_);
-    vector2ptr(api_value_, value, value_n);
+    std::vector<double> api_values_;
+    gmsh::model::mesh::field::getNumbers(tag, option, api_values_);
+    vector2ptr(api_values_, values, values_n);
   }
   catch(...){
     if(ierr) *ierr = 1;
@@ -3179,13 +3241,14 @@ GMSH_API int gmshModelOccAddEllipse(const double x, const double y, const double
   return result_api_;
 }
 
-GMSH_API int gmshModelOccAddSpline(const int * pointTags, const size_t pointTags_n, const int tag, int * ierr)
+GMSH_API int gmshModelOccAddSpline(const int * pointTags, const size_t pointTags_n, const int tag, const double * tangents, const size_t tangents_n, int * ierr)
 {
   int result_api_ = 0;
   if(ierr) *ierr = 0;
   try {
     std::vector<int> api_pointTags_(pointTags, pointTags + pointTags_n);
-    result_api_ = gmsh::model::occ::addSpline(api_pointTags_, tag);
+    std::vector<double> api_tangents_(tangents, tangents + tangents_n);
+    result_api_ = gmsh::model::occ::addSpline(api_pointTags_, tag, api_tangents_);
   }
   catch(...){
     if(ierr) *ierr = 1;
@@ -3925,13 +3988,13 @@ GMSH_API void gmshModelOccGetEntities(int ** dimTags, size_t * dimTags_n, const 
   }
 }
 
-GMSH_API void gmshModelOccGetEntitiesInBoundingBox(const double xmin, const double ymin, const double zmin, const double xmax, const double ymax, const double zmax, int ** tags, size_t * tags_n, const int dim, int * ierr)
+GMSH_API void gmshModelOccGetEntitiesInBoundingBox(const double xmin, const double ymin, const double zmin, const double xmax, const double ymax, const double zmax, int ** dimTags, size_t * dimTags_n, const int dim, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    gmsh::vectorpair api_tags_;
-    gmsh::model::occ::getEntitiesInBoundingBox(xmin, ymin, zmin, xmax, ymax, zmax, api_tags_, dim);
-    vectorpair2intptr(api_tags_, tags, tags_n);
+    gmsh::vectorpair api_dimTags_;
+    gmsh::model::occ::getEntitiesInBoundingBox(xmin, ymin, zmin, xmax, ymax, zmax, api_dimTags_, dim);
+    vectorpair2intptr(api_dimTags_, dimTags, dimTags_n);
   }
   catch(...){
     if(ierr) *ierr = 1;
@@ -4259,16 +4322,16 @@ GMSH_API void gmshViewCombine(const char * what, const char * how, const int rem
   }
 }
 
-GMSH_API void gmshViewProbe(const int tag, const double x, const double y, const double z, double ** value, size_t * value_n, double * distance, const int step, const int numComp, const int gradient, const double distanceMax, const double * xElemCoord, const size_t xElemCoord_n, const double * yElemCoord, const size_t yElemCoord_n, const double * zElemCoord, const size_t zElemCoord_n, const int dim, int * ierr)
+GMSH_API void gmshViewProbe(const int tag, const double x, const double y, const double z, double ** values, size_t * values_n, double * distance, const int step, const int numComp, const int gradient, const double distanceMax, const double * xElemCoord, const size_t xElemCoord_n, const double * yElemCoord, const size_t yElemCoord_n, const double * zElemCoord, const size_t zElemCoord_n, const int dim, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    std::vector<double> api_value_;
+    std::vector<double> api_values_;
     std::vector<double> api_xElemCoord_(xElemCoord, xElemCoord + xElemCoord_n);
     std::vector<double> api_yElemCoord_(yElemCoord, yElemCoord + yElemCoord_n);
     std::vector<double> api_zElemCoord_(zElemCoord, zElemCoord + zElemCoord_n);
-    gmsh::view::probe(tag, x, y, z, api_value_, *distance, step, numComp, gradient, distanceMax, api_xElemCoord_, api_yElemCoord_, api_zElemCoord_, dim);
-    vector2ptr(api_value_, value, value_n);
+    gmsh::view::probe(tag, x, y, z, api_values_, *distance, step, numComp, gradient, distanceMax, api_xElemCoord_, api_yElemCoord_, api_zElemCoord_, dim);
+    vector2ptr(api_values_, values, values_n);
   }
   catch(...){
     if(ierr) *ierr = 1;

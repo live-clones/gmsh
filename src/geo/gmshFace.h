@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2022 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -13,11 +13,12 @@ class Surface;
 class gmshFace : public GFace {
 private:
   Surface *_s;
+  Range<double> _parBounds[2];
 
 public:
   gmshFace(GModel *m, Surface *s);
   virtual ~gmshFace() {}
-  virtual Range<double> parBounds(int i) const;
+  virtual Range<double> parBounds(int i) const { return _parBounds[i]; }
   using GFace::point;
   virtual GPoint point(double par1, double par2) const;
   virtual GPoint closestPoint(const SPoint3 &queryPoint,

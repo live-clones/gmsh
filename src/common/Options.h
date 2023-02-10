@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2022 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -412,6 +412,7 @@ double opt_geometry_occ_union_unify(OPT_ARGS_NUM);
 double opt_geometry_occ_parallel(OPT_ARGS_NUM);
 double opt_geometry_occ_boolean_preserve_numbering(OPT_ARGS_NUM);
 double opt_geometry_occ_scaling(OPT_ARGS_NUM);
+double opt_geometry_occ_export_only_visible(OPT_ARGS_NUM);
 double opt_geometry_occ_import_labels(OPT_ARGS_NUM);
 double opt_geometry_occ_thrusections_degree(OPT_ARGS_NUM);
 double opt_geometry_occ_use_generic_closest_point(OPT_ARGS_NUM);
@@ -584,6 +585,7 @@ double opt_mesh_draw_skin_only(OPT_ARGS_NUM);
 double opt_mesh_save_all(OPT_ARGS_NUM);
 double opt_mesh_save_element_tag_type(OPT_ARGS_NUM);
 double opt_mesh_save_parametric(OPT_ARGS_NUM);
+double opt_mesh_save_without_orphans(OPT_ARGS_NUM);
 double opt_mesh_save_topology(OPT_ARGS_NUM);
 double opt_mesh_read_groups_of_elements(OPT_ARGS_NUM);
 double opt_mesh_save_groups_of_elements(OPT_ARGS_NUM);

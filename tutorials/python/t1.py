@@ -113,7 +113,7 @@ gmsh.model.geo.synchronize()
 # in a single group (with prescribed tag 5); and a physical surface with name
 # "My surface" (with an automatic tag) containing the geometrical surface 1:
 gmsh.model.addPhysicalGroup(1, [1, 2, 4], 5)
-gmsh.model.addPhysicalGroup(2, [1], name = "My surface")
+gmsh.model.addPhysicalGroup(2, [1], name="My surface")
 
 # We can then generate a 2D mesh...
 gmsh.model.mesh.generate(2)

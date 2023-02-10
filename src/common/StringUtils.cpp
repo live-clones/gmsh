@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2022 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -66,7 +66,8 @@ std::string FixWindowsPath(const std::string &in)
 {
 #if defined(__CYGWIN__)
   char tmp[1024];
-  cygwin_conv_to_win32_path(in.c_str(), tmp);
+  //cygwin_conv_to_win32_path(in.c_str(), tmp);
+  cygwin_conv_path(CCP_POSIX_TO_WIN_A, in.c_str(), tmp, 1024);
   return std::string(tmp);
 #else
   return in;

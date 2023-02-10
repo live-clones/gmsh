@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2022 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -45,7 +45,7 @@ public:
 };
 
 struct partitionVertexPtrLessThan
-  : public std::binary_function<partitionVertex *, partitionVertex *, bool> {
+{
   bool operator()(const partitionVertex *e1, const partitionVertex *e2) const
   {
     if(e1->numPartitions() < e2->numPartitions()) return true;

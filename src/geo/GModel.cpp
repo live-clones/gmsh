@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2022 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -306,6 +306,18 @@ void GModel::deleteVertexArrays()
     (*it)->deleteVertexArrays();
   for(auto it = firstVertex(); it != lastVertex(); ++it)
     (*it)->deleteVertexArrays();
+}
+
+void GModel::deleteGeometryVertexArrays()
+{
+  for(auto it = firstRegion(); it != lastRegion(); ++it)
+    (*it)->deleteGeometryVertexArrays();
+  for(auto it = firstFace(); it != lastFace(); ++it)
+    (*it)->deleteGeometryVertexArrays();
+  for(auto it = firstEdge(); it != lastEdge(); ++it)
+    (*it)->deleteGeometryVertexArrays();
+  for(auto it = firstVertex(); it != lastVertex(); ++it)
+    (*it)->deleteGeometryVertexArrays();
 }
 
 bool GModel::empty() const
@@ -876,6 +888,64 @@ void GModel::getPhysicalGroups(
     std::sort(v.begin(), v.end(), GEntityPtrLessThan());
     std::unique(v.begin(), v.end(), GEntityPtrLessThan());
   }
+}
+
+void GModel::getEntitiesForPhysicalName(const std::string &name,
+                                        std::vector<GEntity *> &entities) const
+{
+  entities.clear();
+  std::vector<int> tags[4];
+  for(auto it = _physicalNames.begin(); it != _physicalNames.end(); ++it) {
+    if(it->second == name) {
+      tags[it->first.first].push_back(it->first.second);
+    }
+  }
+  if(tags[0].size()) {
+    for(auto it = vertices.begin(); it != vertices.end(); ++it) {
+      for(std::size_t j = 0; j < (*it)->physicals.size(); j++) {
+        int p = std::abs((*it)->physicals[j]);
+        auto itFind = std::find(tags[0].begin(), tags[0].end(), p);
+        if(itFind != tags[0].end()) {
+          entities.push_back(*it);
+        }
+      }
+    }
+  }
+  if(tags[1].size()) {
+    for(auto it = edges.begin(); it != edges.end(); ++it) {
+      for(std::size_t j = 0; j < (*it)->physicals.size(); j++) {
+        int p = std::abs((*it)->physicals[j]);
+        auto itFind = std::find(tags[1].begin(), tags[1].end(), p);
+        if(itFind != tags[1].end()) {
+          entities.push_back(*it);
+        }
+      }
+    }
+  }
+  if(tags[2].size()) {
+    for(auto it = faces.begin(); it != faces.end(); ++it) {
+      for(std::size_t j = 0; j < (*it)->physicals.size(); j++) {
+        int p = std::abs((*it)->physicals[j]);
+        auto itFind = std::find(tags[2].begin(), tags[2].end(), p);
+        if(itFind != tags[2].end()) {
+          entities.push_back(*it);
+        }
+      }
+    }
+  }
+  if(tags[3].size()) {
+    for(auto it = regions.begin(); it != regions.end(); ++it) {
+      for(std::size_t j = 0; j < (*it)->physicals.size(); j++) {
+        int p = std::abs((*it)->physicals[j]);
+        auto itFind = std::find(tags[3].begin(), tags[3].end(), p);
+        if(itFind != tags[3].end()) {
+          entities.push_back(*it);
+        }
+      }
+    }
+  }
+  std::sort(entities.begin(), entities.end(), GEntityPtrLessThan());
+  std::unique(entities.begin(), entities.end(), GEntityPtrLessThan());
 }
 
 void GModel::addPhysicalGroup(int dim, int tag, const std::vector<int> &tags)
@@ -1644,20 +1714,21 @@ void GModel::renumberMeshVertices()
   }
 #endif
 
-  // check if we will potentially only save a subset of elements, i.e. those
-  // belonging to physical groups
-  bool potentiallySaveSubset = false;
+  // check if we will potentially only save a subset of elements: only those
+  // belonging to physical groups and/or those not being orphans
+  bool saveOnlyPhysicals = false;
   if(!CTX::instance()->mesh.saveAll) {
     for(std::size_t i = 0; i < entities.size(); i++) {
       if(entities[i]->physicals.size()) {
-        potentiallySaveSubset = true;
+        saveOnlyPhysicals = true;
         break;
       }
     }
   }
+  bool pruneOrphans = CTX::instance()->mesh.saveWithoutOrphans;
 
   std::size_t n = CTX::instance()->mesh.firstNodeTag - 1;
-  if(potentiallySaveSubset) {
+  if(saveOnlyPhysicals || pruneOrphans) {
     Msg::Debug("Renumbering for potentially partial mesh save");
     // if we potentially only save a subset of elements, make sure to first
     // renumber the nodes that belong to those elements (so that we end up
@@ -1675,7 +1746,8 @@ void GModel::renumberMeshVertices()
     }
     for(std::size_t i = 0; i < entities.size(); i++) {
       GEntity *ge = entities[i];
-      if(ge->physicals.size()) {
+      if(!((pruneOrphans && ge->isOrphan()) ||
+           (saveOnlyPhysicals && ge->physicals.empty()))) {
         for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
           MElement *e = ge->getMeshElement(j);
           for(std::size_t k = 0; k < e->getNumVertices(); k++) {
@@ -1700,7 +1772,7 @@ void GModel::renumberMeshVertices()
     }
   }
   else {
-    // no physical groups
+    // full save
     for(std::size_t i = 0; i < entities.size(); i++) {
       GEntity *ge = entities[i];
       for(std::size_t j = 0; j < ge->getNumMeshVertices(); j++) {
@@ -1752,23 +1824,25 @@ void GModel::renumberMeshElements()
   }
 #endif
 
-  // check if we will potentially only save a subset of elements, i.e. those
-  // belonging to physical groups
-  bool potentiallySaveSubset = false;
+  // check if we will potentially only save a subset of elements: only those
+  // belonging to physical groups and/or those not being orphans
+  bool saveOnlyPhysicals = false;
   if(!CTX::instance()->mesh.saveAll) {
     for(std::size_t i = 0; i < entities.size(); i++) {
       if(entities[i]->physicals.size()) {
-        potentiallySaveSubset = true;
+        saveOnlyPhysicals = true;
         break;
       }
     }
   }
+  bool pruneOrphans = CTX::instance()->mesh.saveWithoutOrphans;
 
   std::size_t n = CTX::instance()->mesh.firstElementTag - 1;
-  if(potentiallySaveSubset) {
+  if(saveOnlyPhysicals || pruneOrphans) {
     for(std::size_t i = 0; i < entities.size(); i++) {
       GEntity *ge = entities[i];
-      if(ge->physicals.size()) {
+      if(!((pruneOrphans && ge->isOrphan()) ||
+           (saveOnlyPhysicals && ge->physicals.empty()))) {
         for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
           ge->getMeshElement(j)->forceNum(++n);
         }
@@ -1776,7 +1850,8 @@ void GModel::renumberMeshElements()
     }
     for(std::size_t i = 0; i < entities.size(); i++) {
       GEntity *ge = entities[i];
-      if(ge->physicals.empty()) {
+      if(((pruneOrphans && ge->isOrphan()) ||
+          (saveOnlyPhysicals && ge->physicals.empty()))) {
         for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
           ge->getMeshElement(j)->forceNum(++n);
         }
@@ -1784,6 +1859,7 @@ void GModel::renumberMeshElements()
     }
   }
   else {
+    // full save
     for(std::size_t i = 0; i < entities.size(); i++) {
       GEntity *ge = entities[i];
       for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
@@ -2737,7 +2813,7 @@ int GModel::removeDuplicateMeshVertices(double tolerance,
       }
     }
     // replace vertices in periodic copies
-    std::map<MVertex *, MVertex *, MVertexPtrLessThan> &corrVtcs = ge->correspondingVertices;
+    std::map<MVertex *, MVertex *> &corrVtcs = ge->correspondingVertices;
     if(corrVtcs.size()) {
       std::map<MVertex *, MVertex *>::iterator cIter;
       for(cIter = duplicates.begin(); cIter != duplicates.end(); ++cIter) {
@@ -2864,8 +2940,8 @@ void GModel::alignPeriodicBoundaries()
         for(int iVtx = 0; iVtx < 2; iVtx++) {
           MVertex *tgtVtx = tgtLine->getVertex(iVtx);
           GEntity *ge = tgtVtx->onWhat();
-          std::map<MVertex *, MVertex *, MVertexPtrLessThan> &geV2v = ge->correspondingVertices;
-          std::map<MVertex *, MVertex *, MVertexPtrLessThan> &v2v = tgt->correspondingVertices;
+          std::map<MVertex *, MVertex *> &geV2v = ge->correspondingVertices;
+          std::map<MVertex *, MVertex *> &v2v = tgt->correspondingVertices;
           auto srcIter = v2v.find(tgtVtx);
           if(srcIter == v2v.end() || !srcIter->second) {
             srcIter = geV2v.find(tgtVtx);
@@ -2939,8 +3015,8 @@ void GModel::alignPeriodicBoundaries()
           MVertex *vtx = tgtElmt->getVertex(iVtx);
           GEntity *ge = vtx->onWhat();
 
-          std::map<MVertex *, MVertex *, MVertexPtrLessThan> &geV2v = ge->correspondingVertices;
-          std::map<MVertex *, MVertex *, MVertexPtrLessThan> &v2v = tgt->correspondingVertices;
+          std::map<MVertex *, MVertex *> &geV2v = ge->correspondingVertices;
+          std::map<MVertex *, MVertex *> &v2v = tgt->correspondingVertices;
 
           auto vIter = v2v.find(vtx);
           if(vIter == v2v.end() || !vIter->second) {

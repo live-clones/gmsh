@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2022 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -64,6 +64,9 @@ public:
   // delete mesh data
   virtual void deleteMesh();
 
+  // delete the geometry vertex arrays
+  void deleteGeometryVertexArrays();
+
   // add/delete regions that are bounded by the face
   void addRegion(GRegion *r)
   {
@@ -86,6 +89,9 @@ public:
     for(std::size_t i = 0; i < numRegions(); i++) r.push_back(getRegion(i));
     return r;
   }
+
+  // is this entity an orphan?
+  virtual bool isOrphan();
 
   // add embedded vertices/edges
   void addEmbeddedVertex(GVertex *v) { embedded_vertices.insert(v); }

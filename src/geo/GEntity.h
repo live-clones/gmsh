@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2022 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -189,8 +189,11 @@ public:
   // delete the mesh data
   virtual void deleteMesh() {}
 
-  // delete the vertex arrays, used to to draw the mesh efficiently
+  // delete the mesh vertex arrays, used to to draw the mesh efficiently
   void deleteVertexArrays();
+
+  // delete the geometry vertex arrays, used to to draw the geometry efficiently
+  virtual void deleteGeometryVertexArrays() {}
 
   // spatial dimension of the entity
   virtual int dim() const { return -1; }
@@ -219,6 +222,9 @@ public:
   {
     return std::vector<GVertex *>();
   }
+
+  // is this entity an orphan?
+  virtual bool isOrphan() { return false; }
 
   // for Python, temporary solution while iterator are not binded
   std::vector<GRegion *> bindingsGetRegions()
@@ -400,10 +406,10 @@ public:
   std::vector<double> affineTransform;
 
   // corresponding mesh vertices
-  std::map<MVertex *, MVertex *, MVertexPtrLessThan> correspondingVertices;
+  std::map<MVertex *, MVertex *> correspondingVertices;
 
   // corresponding high order vertices
-  std::map<MVertex *, MVertex *, MVertexPtrLessThan> correspondingHighOrderVertices;
+  std::map<MVertex *, MVertex *> correspondingHighOrderVertices;
 
   // reorder the mesh elements of the given type, according to ordering
   virtual bool reorder(const int elementType,

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2022 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -140,7 +140,8 @@ private:
                    const int degree = -1,
                    const std::vector<double> &weights = std::vector<double>(),
                    const std::vector<double> &knots = std::vector<double>(),
-                   const std::vector<int> &multiplicities = std::vector<int>());
+                   const std::vector<int> &multiplicities = std::vector<int>(),
+                   const std::vector<SVector3> &tangents = std::vector<SVector3>());
 
   // apply extrusion-like operations
   bool _extrudePerDim(int mode, int inDim, const std::vector<int> &inTags,
@@ -212,7 +213,8 @@ public:
                   double angle1, double angle2,
                   const std::vector<double> &N = std::vector<double>(),
                   const std::vector<double> &V = std::vector<double>());
-  bool addSpline(int &tag, const std::vector<int> &pointTags);
+  bool addSpline(int &tag, const std::vector<int> &pointTags,
+                 const std::vector<SVector3> &tangents = std::vector<SVector3>());
   bool addBezier(int &tag, const std::vector<int> &pointTags);
   bool addBSpline(int &tag, const std::vector<int> &pointTags,
                   const int degree = -1,
@@ -232,7 +234,7 @@ public:
     const std::vector<int> &pointTags = std::vector<int>(),
     const std::vector<int> &surfaceTags = std::vector<int>(),
     const std::vector<int> &surfaceContinuity = std::vector<int>(),
-    const int degree = 3, const int numPointsOnCurves = 15,
+    const int degree = 2, const int numPointsOnCurves = 15,
     const int numIter = 2, const bool anisotropic = false,
     const double tol2d = 0.00001, const double tol3d = 0.0001,
     const double tolAng = 0.01, const double tolCurv = 0.1,
@@ -393,7 +395,7 @@ public:
 
   // export all bound shapes to file
   bool exportShapes(GModel *model, const std::string &fileName,
-                    const std::string &format = "");
+                    const std::string &format = "", bool onlyVisible = false);
 
   // queries
   bool getEntities(std::vector<std::pair<int, int> > &dimTags, int dim);
@@ -517,7 +519,8 @@ public:
   {
     return _error("add ellipse");
   }
-  bool addSpline(int &tag, const std::vector<int> &pointTags)
+  bool addSpline(int &tag, const std::vector<int> &pointTags,
+                 const std::vector<SVector3> &tangents = std::vector<SVector3>())
   {
     return _error("add spline");
   }
@@ -561,7 +564,7 @@ public:
     const std::vector<int> &pointTags = std::vector<int>(),
     const std::vector<int> &surfaceTags = std::vector<int>(),
     const std::vector<int> &surfaceContinuity = std::vector<int>(),
-    const int degree = 3, const int numPointsOnCurves = 15,
+    const int degree = 2, const int numPointsOnCurves = 15,
     const int numIter = 2, const bool anisotropic = false,
     const double tol2d = 0.00001, const double tol3d = 0.0001,
     const double tolAng = 0.01, const double tolCurv = 0.1,
@@ -799,7 +802,7 @@ public:
   void setMeshSize(int dim, int tag, double size) {}
   void synchronize(GModel *model) {}
   bool exportShapes(GModel *model, const std::string &fileName,
-                    const std::string &format = "")
+                    const std::string &format = "", bool onlyVisible = false)
   {
     return _error("export shape");
   }

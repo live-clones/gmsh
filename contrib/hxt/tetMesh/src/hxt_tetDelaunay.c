@@ -513,9 +513,13 @@ static inline HXTStatus walking2Cavity(HXTMesh* mesh, HXTPartition* partition, u
   uint64_t nextTet = *curTet;
   HXTVertex* vertices = (HXTVertex*) mesh->vertices.coord;
 
-  /* if nextTet is a ghost triangle, go to the neighbor that is not a ghost triangle */
-  if(mesh->tetrahedra.node[4*nextTet+3]==HXT_GHOST_VERTEX)
-    nextTet = mesh->tetrahedra.neigh[4*nextTet+3]/4;
+  /* if nextTet is a ghost tetrahedron, go to the neighbor that is not a ghost tetrahedron */
+  if (mesh->tetrahedra.node[4*nextTet+3]==HXT_GHOST_VERTEX) {
+    uint64_t neighbor = mesh->tetrahedra.neigh[4*nextTet+3];
+    if (vertexOutOfPartition(vertices, mesh->tetrahedra.node[neighbor], partition->lengthDist, partition->startDist))
+      return HXT_STATUS_CONFLICT;
+    nextTet = neighbor/4;
+  }
 
   double* const vtaCoord = vertices[vta].coord;
   unsigned enteringFace=4;
@@ -538,7 +542,7 @@ static inline HXTStatus walking2Cavity(HXTMesh* mesh, HXTPartition* partition, u
     unsigned index = 4;
     unsigned outside = 0;
     unsigned wantToGoInOtherPartition = 0;
-    unsigned randomU = hxtReproducibleLCG(&seed);
+    unsigned randomU = hxtLCGu32(&seed);
     for (unsigned j=0; j<4; j++)
     {
       unsigned i = (j+randomU)%4;
@@ -1250,10 +1254,10 @@ static HXTStatus parallelDelaunay3D(HXTMesh* mesh,
           defaultMooreCurve = 1;
         }
         else {
-          startShift = (double) hxtReproducibleLCG(&seed)/RAND_MAX;
-          bboxShift[0] = (double) hxtReproducibleLCG(&seed)/RAND_MAX;
-          bboxShift[1] = (double) hxtReproducibleLCG(&seed)/RAND_MAX;
-          bboxShift[2] = (double) hxtReproducibleLCG(&seed)/RAND_MAX;
+          startShift = hxtLCGf64(&seed);
+          bboxShift[0] = hxtLCGf64(&seed);
+          bboxShift[1] = hxtLCGf64(&seed);
+          bboxShift[2] = hxtLCGf64(&seed);
           defaultMooreCurve = 0;
         }
 

@@ -81,6 +81,14 @@ public class SplashScreen extends Activity {
       byte[] buffer = new byte[1024];
       ZipEntry ze;
       while((ze = zis.getNextEntry()) != null) {
+        // check for malicious zip files having path traversal characters
+        // ("../") - cf. https://support.google.com/faqs/answer/9294009
+        File f = new File(path, ze.getName());
+        String canonicalPath = f.getCanonicalPath();
+        if (!canonicalPath.startsWith(path)) {
+          Log.d("Models", "Skipping file with path traversal characters");
+          continue;
+        }
         String filename = ze.getName();
         if(ze.isDirectory()) {
           File fmd = new File(path + filename);

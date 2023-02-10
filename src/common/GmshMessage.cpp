@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2022 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -57,6 +57,7 @@
 
 int Msg::_commRank = 0;
 int Msg::_commSize = 1;
+bool Msg::_mpiInit = false;
 int Msg::_verbosity = 5;
 int Msg::_progressMeterStep = 10;
 std::atomic<int> Msg::_progressMeterCurrent(-1);
@@ -128,7 +129,10 @@ void Msg::Initialize(int argc, char **argv)
 #if defined(HAVE_MPI)
   int flag;
   MPI_Initialized(&flag);
-  if(!flag) MPI_Init(&argc, &argv);
+  if(!flag) {
+    MPI_Init(&argc, &argv);
+    _mpiInit = true;
+  }
   MPI_Comm_rank(MPI_COMM_WORLD, &_commRank);
   MPI_Comm_size(MPI_COMM_WORLD, &_commSize);
   MPI_Comm_set_errhandler(MPI_COMM_WORLD, MPI_ERRORS_RETURN);
@@ -208,10 +212,12 @@ void Msg::Finalize()
   //PetscFinalize();
 #endif
 #if defined(HAVE_MPI)
-  int finalized; // Some PETSc versions call MPI_FINALIZE
-  MPI_Finalized(&finalized);
-  if (!finalized)
-    MPI_Finalize();
+  if(_mpiInit) {
+    int finalized;
+    MPI_Finalized(&finalized);
+    if (!finalized)
+      MPI_Finalize();
+  }
 #endif
   FinalizeOnelab();
 }
@@ -436,7 +442,7 @@ static int streamIsVT100(FILE *stream)
 std::string Msg::PrintResources(bool printDate, bool printWallTime,
                                 bool printCpu, bool printMem)
 {
-  long mem = GetMemoryUsage();
+  std::size_t mem = GetMemoryUsage();
 
   std::string pdate = "";
   if(printDate){

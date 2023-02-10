@@ -9,6 +9,7 @@
 import gmsh
 import math
 import sys
+import os
 
 gmsh.initialize()
 
@@ -131,22 +132,23 @@ gmsh.view.addListDataString(v, [0, 0.11, 0], ["Hole"],
 # a `@' symbol in the form `widthxheight' (if one of `width' or `height' is
 # zero, natural scaling is used; if both are zero, original image dimensions in
 # pixels are used):
-gmsh.view.addListDataString(v, [0, 0.09, 0], ["file://../t4_image.png@0.01x0"],
+png = os.path.join(os.path.dirname(os.path.abspath(__file__)), os.pardir,
+                   't4_image.png')
+gmsh.view.addListDataString(v, [0, 0.09, 0], ["file://" + png + "@0.01x0"],
                             ["Align", "Center"])
 
 # The 3D orientation of the image can be specified by proving the direction
 # of the bottom and left edge of the image in model space:
 gmsh.view.addListDataString(v, [-0.01, 0.09, 0],
-                            ["file://../t4_image.png@0.01x0,0,0,1,0,1,0"])
+                            ["file://" + png + "@0.01x0,0,0,1,0,1,0"])
 
 # The image can also be drawn in "billboard" mode, i.e. always parallel to
 # the camera, by using the `#' symbol:
-gmsh.view.addListDataString(v, [0, 0.12, 0],
-                            ["file://../t4_image.png@0.01x0#"],
+gmsh.view.addListDataString(v, [0, 0.12, 0], ["file://" + png + "@0.01x0#"],
                             ["Align", "Center"])
 
 # The size of 2D annotations is given directly in pixels:
-gmsh.view.addListDataString(v, [150, -7], ["file://../t4_image.png@20x0"])
+gmsh.view.addListDataString(v, [150, -7], ["file://" + png + "@20x0"])
 
 # These annotations are handled by a list-based post-processing view. For
 # large post-processing datasets, that contain actual field values defined on

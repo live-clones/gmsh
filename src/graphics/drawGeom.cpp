@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2022 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -97,10 +97,9 @@ public:
     }
 
     if(CTX::instance()->geom.highlightOrphans) {
-      std::vector<GEdge *> const &edges = v->edges();
-      if(edges.size() == 0)
+      if(v->isOrphan())
         glColor4ubv((GLubyte *)&CTX::instance()->color.geom.highlight[0]);
-      else if(edges.size() == 1)
+      else if(v->numEdges() == 1)
         glColor4ubv((GLubyte *)&CTX::instance()->color.geom.highlight[1]);
     }
 
@@ -174,10 +173,9 @@ public:
     }
 
     if(CTX::instance()->geom.highlightOrphans) {
-      std::vector<GFace *> faces = e->faces();
-      if(faces.empty())
+      if(e->isOrphan())
         glColor4ubv((GLubyte *)&CTX::instance()->color.geom.highlight[0]);
-      else if(faces.size() == 1)
+      else if(e->numFaces() == 1)
         glColor4ubv((GLubyte *)&CTX::instance()->color.geom.highlight[1]);
     }
 
@@ -327,6 +325,13 @@ public:
       unsigned int col = f->useColor() ? f->getColor() :
         CTX::instance()->color.geom.surface;
       glColor4ubv((GLubyte *)&col);
+    }
+
+    if(CTX::instance()->geom.highlightOrphans) {
+      if(f->isOrphan())
+        glColor4ubv((GLubyte *)&CTX::instance()->color.geom.highlight[0]);
+      else if(f->numRegions() == 1)
+        glColor4ubv((GLubyte *)&CTX::instance()->color.geom.highlight[1]);
     }
 
     if(CTX::instance()->geom.lightTwoSide)

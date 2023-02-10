@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2022 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -58,6 +58,7 @@
 #define FORMAT_XMT          52
 #define FORMAT_OFF          53
 #define FORMAT_PY           54
+#define FORMAT_RAD          55
 
 // Element types
 #define TYPE_PNT     1

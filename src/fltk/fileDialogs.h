@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2022 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -41,6 +41,7 @@ int stlFileDialog(const char *filename);
 void format_cb(Fl_Widget *widget, void *data);
 int unvinpFileDialog(const char *filename, const char *title, int format);
 int keyFileDialog(const char *filename, const char *title, int format);
+int radFileDialog(const char *filename, const char *title, int format);
 int bdfFileDialog(const char *filename);
 int latexFileDialog(const char *filename);
 int cgnsFileDialog(const char *filename);

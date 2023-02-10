@@ -807,7 +807,7 @@ PrintStartStats(int firstFrame,
                 int lastFrame)
 {
     FILE *fpointer;
-    register int i;
+    int i;
     char    inputFileName[1024];
 
     if ( statFileName[0] == '\0' ) {
@@ -1129,7 +1129,7 @@ PrintEndStats(int inputFrameBits,
               int32 totalBits)
 {
     FILE *fpointer;
-    register int i;
+    int i;
     char    timeText[256];
     float   totalCPU;
 
@@ -1566,7 +1566,7 @@ ReadDecodedRefFrame(MpegFrame *frame,
     FILE    *fpointer;
     char    fileName[256];
     int	width, height;
-    register int y;
+    int y;
 
     width = Fsize_x;
     height = Fsize_y;

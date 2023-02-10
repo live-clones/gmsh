@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2022 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -17,7 +17,7 @@ void CheckResources();
 double Cpu();
 double TotalRam();
 double TimeOfDay();
-long GetMemoryUsage();
+std::size_t GetMemoryUsage();
 int GetProcessId();
 std::string GetExecutableFileName();
 std::string GetAbsolutePath(const std::string &fileName);

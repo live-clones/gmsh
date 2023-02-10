@@ -92,7 +92,7 @@ Default value: @code{5}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.HighlightOrphans
-Highlight orphan and boundary curves and surfaces?@*
+Highlight orphan and boundary entities?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -132,7 +132,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.NumSubEdges
-Number of edge subdivisions between control points when displaying curves@*
+Number of subdivisions (per control point or pole) used to draw curves@*
 Default value: @code{40}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -173,6 +173,11 @@ Saved in: @code{General.OptionsFileName}
 
 @item Geometry.OCCFixSmallFaces
 Fix small faces when importing STEP, IGES and BRep models with the OpenCASCADE kernel@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Geometry.OCCExportOnlyVisible
+Only consider visible shapes when exporting STEP or BREP models with the OpenCASCADE kernel@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 

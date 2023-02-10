@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2022 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -75,7 +75,8 @@ private:
   int _readMSH4(const std::string &name);
   int _writeMSH4(const std::string &name, double version, bool binary,
                  bool saveAll, bool saveParametric, double scalingFactor,
-                 bool append, int partitionToSave = 0);
+                 bool append, int partitionToSave = 0,
+                 std::map<GEntity*, SBoundingBox3d> *entityBounds = nullptr);
   int _writePartitionedMSH4(const std::string &baseName, double version,
                             bool binary, bool saveAll, bool saveParametric,
                             double scalingFactor);
@@ -150,6 +151,9 @@ protected:
 
   // the set of all used mesh partition numbers
   std::size_t _numPartitions;
+
+  // additional attributes (e.g. stored in extra sections of MSH files)
+  std::map<std::string, std::vector<std::string> > _attributes;
 
 protected:
   // store the elements given in the map (indexed by elementary region
@@ -296,6 +300,8 @@ public:
   void deleteMesh(const std::vector<GEntity *> &entities);
   // delete the vertex arrays used for efficient mesh drawing
   void deleteVertexArrays();
+  // delete the vertex arrays used for efficient geometry drawing
+  void deleteGeometryVertexArrays();
 
   // remove all mesh vertex associations to geometrical entities and remove
   // vertices from geometrical entities, then _associateEntityWithMeshVertices
@@ -430,6 +436,8 @@ public:
   getPhysicalGroups(std::map<int, std::vector<GEntity *> > groups[4]) const;
   void getPhysicalGroups(int dim,
                          std::map<int, std::vector<GEntity *> > &groups) const;
+  void getEntitiesForPhysicalName(const std::string &name,
+                                  std::vector<GEntity *> &entities) const;
   const std::map<std::pair<int, int>, std::string> &getPhysicalNames() const
   {
     return _physicalNames;
@@ -723,6 +731,12 @@ public:
                                         const bool recombine,
                                         const std::vector<int> &regionTag);
 
+  // get additional attributes
+  std::map<std::string, std::vector<std::string> > &getAttributes()
+  {
+    return _attributes;
+  }
+
   // "automatic" IO based on Gmsh global functions
   void load(const std::string &fileName);
   void save(const std::string &fileName);
@@ -741,8 +755,9 @@ public:
   int readOCCBREP(const std::string &name);
   int readOCCSTEP(const std::string &name);
   int readOCCIGES(const std::string &name);
-  int writeOCCSTEP(const std::string &name);
   int writeOCCBREP(const std::string &name);
+  int writeOCCSTEP(const std::string &name);
+  int writeOCCIGES(const std::string &name);
   int importOCCShape(const void *shape);
   GVertex *getVertexForOCCShape(const void *shape);
   GEdge *getEdgeForOCCShape(const void *shape);
@@ -875,6 +890,10 @@ public:
 
   // LSDYNA
   int writeKEY(const std::string &name, int saveAll = 0,
+               int saveGroupsOfNodes = 0, double scalingFactor = 1.0);
+
+  // RADIOSS
+  int writeRAD(const std::string &name, int saveAll = 0,
                int saveGroupsOfNodes = 0, double scalingFactor = 1.0);
 
   // CELUM

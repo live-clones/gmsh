@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2022 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -114,6 +114,7 @@ public:
   virtual const char *getStringForDIFF() const { return "ElmB4n2D"; }
   virtual const char *getStringForINP() const { return "CPS4" /*"C2D4"*/; }
   virtual const char *getStringForKEY() const { return "_SHELL"; }
+  virtual const char *getStringForRAD() const { return "/SHELL"; }
   virtual const char *getStringForTOCHNOG() const { return "-quad4"; }
   virtual void getNode(int num, double &u, double &v, double &w) const
   {

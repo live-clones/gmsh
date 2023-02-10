@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2022 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -120,6 +120,7 @@ public:
   virtual int getTypeForVTK() const { return 14; }
   virtual const char *getStringForPOS() const { return "SY"; }
   virtual const char *getStringForBDF() const { return "CPYRAM"; }
+  virtual const char *getStringForINP() const { return "C3D5"; }
   virtual void reverse()
   {
     MVertex *tmp = _v[0];
