@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2022 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -701,7 +701,9 @@ void writeMSHPeriodicNodes(FILE *fp, std::vector<GEntity *> &entities,
         fprintf(fp, "\n");
       }
 
-      std::map<MVertex *, MVertex *, MVertexPtrLessThan> corrVert = g_slave->correspondingVertices;
+      std::map<MVertex *, MVertex *, MVertexPtrLessThan> corrVert;
+      corrVert.insert(g_slave->correspondingVertices.begin(),
+                      g_slave->correspondingVertices.end());
       if(CTX::instance()->mesh.hoSavePeriodic)
         corrVert.insert(g_slave->correspondingHighOrderVertices.begin(),
                         g_slave->correspondingHighOrderVertices.end());

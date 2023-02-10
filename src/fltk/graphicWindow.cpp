@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2022 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -306,6 +306,11 @@ static int _save_step(const char *name)
   CreateOutputFile(name, FORMAT_STEP);
   return 1;
 }
+static int _save_iges(const char *name)
+{
+  CreateOutputFile(name, FORMAT_IGES);
+  return 1;
+}
 static int _save_xmt(const char *name)
 {
   CreateOutputFile(name, FORMAT_XMT);
@@ -337,6 +342,10 @@ static int _save_inp(const char *name)
 static int _save_key(const char *name)
 {
   return keyFileDialog(name, "LSDYNA KEY Options", FORMAT_KEY);
+}
+static int _save_rad(const char *name)
+{
+  return radFileDialog(name, "RADIOSS Block Options", FORMAT_RAD);
 }
 static int _save_celum(const char *name)
 {
@@ -475,6 +484,7 @@ static int _save_auto(const char *name)
   case FORMAT_GEO: return _save_geo(name);
   case FORMAT_BREP: return _save_brep(name);
   case FORMAT_STEP: return _save_step(name);
+  case FORMAT_IGES: return _save_iges(name);
   case FORMAT_CGNS: return _save_cgns(name);
   case FORMAT_UNV: return _save_unv(name);
   case FORMAT_VTK: return _save_vtk(name);
@@ -489,6 +499,7 @@ static int _save_auto(const char *name)
   case FORMAT_DIFF: return _save_diff(name);
   case FORMAT_INP: return _save_inp(name);
   case FORMAT_KEY: return _save_key(name);
+  case FORMAT_RAD: return _save_rad(name);
   case FORMAT_CELUM: return _save_celum(name);
   case FORMAT_SU2: return _save_su2(name);
   case FORMAT_P3D: return _save_p3d(name);
@@ -535,9 +546,13 @@ static void file_export_cb(Fl_Widget *w, void *data)
 #if defined(HAVE_OCC) || defined(HAVE_PARASOLID_STEP)
     {"Geometry - STEP\t*.step", _save_step},
 #endif
+#if defined(HAVE_OCC)
+    {"Geometry - IGES\t*.iges", _save_iges},
+#endif
     {"Mesh - Gmsh MSH\t*.msh", _save_msh},
     {"Mesh - Abaqus INP\t*.inp", _save_inp},
     {"Mesh - LSDYNA KEY\t*.key", _save_key},
+    {"Mesh - RADIOSS BLOCK\t*_0000.rad", _save_rad},
     {"Mesh - CELUM\t*.celum", _save_celum},
 #if defined(HAVE_LIBCGNS)
     {"Mesh - CGNS (Experimental)\t*.cgns", _save_cgns},
@@ -2156,18 +2171,21 @@ void mesh_1d_cb(Fl_Widget *w, void *data)
 {
   GModel::current()->mesh(1);
   drawContext::global()->draw();
+  FlGui::instance()->updateStatistics();
 }
 
 void mesh_2d_cb(Fl_Widget *w, void *data)
 {
   GModel::current()->mesh(2);
   drawContext::global()->draw();
+  FlGui::instance()->updateStatistics();
 }
 
 void mesh_3d_cb(Fl_Widget *w, void *data)
 {
   GModel::current()->mesh(3);
   drawContext::global()->draw();
+  FlGui::instance()->updateStatistics();
 }
 
 #if defined(HAVE_MESH)
@@ -2313,6 +2331,7 @@ static void mesh_modify_parts(Fl_Widget *w, void *data,
   CTX::instance()->mesh.changed = ENT_ALL;
   CTX::instance()->pickElements = 0;
   drawContext::global()->draw();
+  FlGui::instance()->updateStatistics();
   Msg::StatusGl("");
 }
 
@@ -2387,6 +2406,7 @@ static void mesh_optimize_cb(Fl_Widget *w, void *data)
   GModel::current()->optimizeMesh("");
   CTX::instance()->lock = 0;
   drawContext::global()->draw();
+  FlGui::instance()->updateStatistics();
 }
 
 static void mesh_optimize_quad_topo_cb(Fl_Widget *w, void *data)
@@ -2395,6 +2415,7 @@ static void mesh_optimize_quad_topo_cb(Fl_Widget *w, void *data)
   GModel::current()->optimizeMesh("QuadQuasiStructured");
   CTX::instance()->lock = 0;
   drawContext::global()->draw();
+  FlGui::instance()->updateStatistics();
 }
 
 static void mesh_untangle_cb(Fl_Widget *w, void *data)
@@ -2403,6 +2424,7 @@ static void mesh_untangle_cb(Fl_Widget *w, void *data)
   GModel::current()->optimizeMesh("UntangleMeshGeometry");
   CTX::instance()->lock = 0;
   drawContext::global()->draw();
+  FlGui::instance()->updateStatistics();
 }
 
 static void mesh_cross_compute_cb(Fl_Widget *w, void *data)
@@ -2419,6 +2441,7 @@ static void mesh_refine_cb(Fl_Widget *w, void *data)
   GModel::current()->refineMesh(CTX::instance()->mesh.secondOrderLinear,
                                 CTX::instance()->mesh.algoSubdivide);
   drawContext::global()->draw();
+  FlGui::instance()->updateStatistics();
 }
 
 static void mesh_smooth_cb(Fl_Widget *w, void *data)
@@ -2431,6 +2454,7 @@ static void mesh_recombine_cb(Fl_Widget *w, void *data)
 {
   GModel::current()->recombineMesh();
   drawContext::global()->draw();
+  FlGui::instance()->updateStatistics();
 }
 
 #if defined(HAVE_NETGEN)
@@ -2444,6 +2468,7 @@ static void mesh_optimize_netgen_cb(Fl_Widget *w, void *data)
   GModel::current()->optimizeMesh("Netgen");
   CTX::instance()->lock = 0;
   drawContext::global()->draw();
+  FlGui::instance()->updateStatistics();
 }
 #endif
 
@@ -2884,7 +2909,7 @@ static Fl_Menu_Item bar_table[] = {
 
 #if defined(__APPLE__)
 
-// Alternative items for the MacOS system menu bar (removed '&' shortcuts: they
+// Alternative items for the macOS system menu bar (removed '&' shortcuts: they
 // would cause spurious menu items to appear on the menu window; removed
 // File->Quit)
 static Fl_Menu_Item sysbar_table[] = {
@@ -3810,6 +3835,11 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
 
   int mheight = main ? 2 * BH /* nonzero! */ : 0;
   int glheight = CTX::instance()->glSize[1] - mheight;
+  // make sure glheight is positive
+  if(glheight <= 0) {
+    CTX::instance()->glSize[1] = 600;
+    glheight = CTX::instance()->glSize[1] - mheight;
+  }
   int height = mh + glheight + mheight + sh;
   // make sure height < screen height
   if(height > Fl::h()) {
@@ -3820,6 +3850,11 @@ graphicWindow::graphicWindow(bool main, int numTiles, bool detachedMenu)
 
   int twidth = (main && !detachedMenu) ? 14 * sw : 0;
   int glwidth = CTX::instance()->glSize[0] - twidth;
+  // make sure glwidth is positive
+  if(glwidth <= 0) {
+    CTX::instance()->glSize[0] = 600;
+    glwidth = CTX::instance()->glSize[0] - twidth;
+  }
   int width = glwidth + twidth;
   // make sure width < screen width
   if(width > Fl::w()) {

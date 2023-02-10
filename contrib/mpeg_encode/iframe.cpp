@@ -389,8 +389,8 @@ GetIQScale()
 void
 GenIFrame(BitBucket *bb, MpegFrame *current)
 {
-    register int x, y;
-    register int index;
+    int x, y;
+    int index;
     FlatBlock	 fb[6];
     Block 	 dec[6];
     int32 y_dc_pred, cr_dc_pred, cb_dc_pred;
@@ -824,14 +824,14 @@ BlockComputeSNR(MpegFrame *current,
                 float snr[],
                 float psnr[])
 {
-  register int32	tempInt;
-  register int y, x;
+  int32	tempInt;
+  int y, x;
   int32	varDiff[3];
   double	ratio[3];
   double	total[3];
-  register uint8 **origY=current->orig_y, **origCr=current->orig_cr, 
+  uint8 **origY=current->orig_y, **origCr=current->orig_cr, 
   **origCb=current->orig_cb;
-  register uint8 **newY=current->decoded_y, **newCr=current->decoded_cr, 
+  uint8 **newY=current->decoded_y, **newCr=current->decoded_cr, 
   **newCb=current->decoded_cb;
   static int32       **SignalY,  **NoiseY;
   static int32       **SignalCb, **NoiseCb;
@@ -940,7 +940,7 @@ WriteDecodedFrame(MpegFrame *frame)
     FILE    *fpointer;
     char    fileName[256];
     int	width, height;
-    register int y;
+    int y;
 
     /* need to save decoded frame to disk because it might be accessed
        by another process */

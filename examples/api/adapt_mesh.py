@@ -52,7 +52,7 @@ def compute_size_field(nodes, triangles, err, N):
     return triangle_max_edge(x) / ri
 
 
-print("Usage: adapt_mesh [intial lc] [target #elements] [dump files]")
+print("Usage: adapt_mesh [initial lc] [target #elements] [dump files]")
 
 lc = 0.02
 N = 10000
@@ -78,6 +78,7 @@ gmsh.model.occ.synchronize()
 # create intial uniform mesh
 pnts = gmsh.model.getBoundary([(2, square)], True, True, True)
 gmsh.model.mesh.setSize(pnts, lc)
+#gmsh.option.setNumber('Mesh.Algorithm', 6) # Frontal
 gmsh.model.mesh.generate(2)
 if dumpfiles: gmsh.write("mesh.msh")
 mesh = Mesh()
@@ -99,6 +100,8 @@ sf_ele = compute_size_field(mesh.vxyz, mesh.triangles, err_ele, N)
 sf_view = gmsh.view.add("mesh size field")
 gmsh.view.addModelData(sf_view, 0, "square", "ElementData",
                        mesh.triangles_tags, sf_ele[:, None])
+gmsh.plugin.setNumber("Smooth", "View", gmsh.view.getIndex(sf_view))
+gmsh.plugin.run("Smooth")
 if dumpfiles: gmsh.view.write(sf_view, "sf.pos")
 
 # create a new gmsh.model (to remesh the original gmsh.model in-place, the size field
@@ -111,6 +114,7 @@ gmsh.model.occ.synchronize()
 bg_field = gmsh.model.mesh.field.add("PostView")
 gmsh.model.mesh.field.setNumber(bg_field, "ViewTag", sf_view)
 gmsh.model.mesh.field.setAsBackgroundMesh(bg_field)
+#gmsh.option.setNumber('Mesh.Algorithm', 2) # Delaunay
 gmsh.model.mesh.generate(2)
 if dumpfiles: gmsh.write("mesh2.msh")
 mesh2 = Mesh()

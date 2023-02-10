@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2022 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -94,8 +94,10 @@
 #include <TColStd_Array1OfInteger.hxx>
 #include <TColStd_Array1OfReal.hxx>
 #include <TColStd_Array2OfReal.hxx>
+#include <TColStd_HArray1OfBoolean.hxx>
 #include <TColgp_Array1OfPnt.hxx>
 #include <TColgp_Array1OfPnt2d.hxx>
+#include <TColgp_Array1OfVec.hxx>
 #include <TColgp_Array2OfPnt.hxx>
 #include <TColgp_HArray1OfPnt.hxx>
 #include <TopExp.hxx>
@@ -1255,7 +1257,8 @@ bool OCC_Internals::_addBSpline(int &tag, const std::vector<int> &pointTags,
                                 int mode, const int degree,
                                 const std::vector<double> &weights,
                                 const std::vector<double> &knots,
-                                const std::vector<int> &multiplicities)
+                                const std::vector<int> &multiplicities,
+                                const std::vector<SVector3> &tangents)
 {
   if(tag >= 0 && _tagEdge.IsBound(tag)) {
     Msg::Error("OpenCASCADE curve with tag %d already exists", tag);
@@ -1288,6 +1291,31 @@ bool OCC_Internals::_addBSpline(int &tag, const std::vector<int> &pointTags,
       Handle(TColgp_HArray1OfPnt) p = new TColgp_HArray1OfPnt(1, np);
       for(int i = 1; i <= np; i++) p->SetValue(i, ctrlPoints(i));
       GeomAPI_Interpolate intp(p, periodic, CTX::instance()->geom.tolerance);
+      if(tangents.size() == 2) {
+        gp_Vec t1(tangents[0].x(), tangents[0].y(), tangents[0].z());
+        gp_Vec tN(tangents[1].x(), tangents[1].y(), tangents[1].z());
+        intp.Load(t1, tN);
+      }
+      else if(tangents.size() == pointTags.size()) {
+        TColgp_Array1OfVec Tangents(1, tangents.size());
+        Handle(TColStd_HArray1OfBoolean) TangentFlags =
+          new TColStd_HArray1OfBoolean(1, tangents.size());
+        for(std::size_t i = 1; i <= tangents.size(); i++) {
+          gp_Vec t(tangents[i - 1].x(), tangents[i - 1].y(), tangents[i - 1].z());
+          Tangents.SetValue(i, t);
+          if(tangents[i - 1].normSq() < 1e-12) {
+            TangentFlags->SetValue(i, Standard_False);
+          }
+          else {
+            TangentFlags->SetValue(i, Standard_True);
+          }
+        }
+        intp.Load(Tangents, TangentFlags);
+      }
+      else if(!tangents.empty()) {
+        Msg::Warning("Wrong number of tangent constraints for spline (%lu != %lu)",
+                     tangents.size(), pointTags.size());
+      }
       intp.Perform();
       if(!intp.IsDone()) {
         Msg::Error("Could not interpolate spline");
@@ -1449,9 +1477,14 @@ bool OCC_Internals::_addBSpline(int &tag, const std::vector<int> &pointTags,
   return true;
 }
 
-bool OCC_Internals::addSpline(int &tag, const std::vector<int> &pointTags)
+bool OCC_Internals::addSpline(int &tag, const std::vector<int> &pointTags,
+                              const std::vector<SVector3> &tangents)
 {
-  return _addBSpline(tag, pointTags, 0);
+  std::vector<double> weights;
+  std::vector<double> knots;
+  std::vector<int> multiplicities;
+  return _addBSpline(tag, pointTags, 0, -1, weights, knots, multiplicities,
+                     tangents);
 }
 
 bool OCC_Internals::addBezier(int &tag, const std::vector<int> &pointTags)
@@ -4402,7 +4435,7 @@ bool OCC_Internals::importShapes(const TopoDS_Shape *shape, bool highestDimOnly,
 }
 
 bool OCC_Internals::exportShapes(GModel *model, const std::string &fileName,
-                                 const std::string &format)
+                                 const std::string &format, bool onlyVisible)
 {
   // put all top-level OCC shapes from a GModel in a single compound (we use the
   // topology to only consider top-level shapes; otherwise we get duplicates in
@@ -4412,23 +4445,70 @@ bool OCC_Internals::exportShapes(GModel *model, const std::string &fileName,
   b.MakeCompound(c);
   for(auto it = model->firstRegion(); it != model->lastRegion(); it++) {
     GRegion *gr = *it;
-    if(gr->getNativeType() == GEntity::OpenCascadeModel)
+    if(onlyVisible) {
+      if(!gr->getVisibility()) continue;
+    }
+    if(gr->getNativeType() == GEntity::OpenCascadeModel) {
+      Msg::Debug("Adding volume %d to exported compound", gr->tag());
       b.Add(c, *(TopoDS_Solid *)gr->getNativePtr());
+    }
   }
   for(auto it = model->firstFace(); it != model->lastFace(); it++) {
     GFace *gf = *it;
-    if(!gf->numRegions() && gf->getNativeType() == GEntity::OpenCascadeModel)
+    if(onlyVisible) {
+      if(!gf->getVisibility()) continue;
+      auto regions = gf->regions();
+      bool skip = false;
+      for(auto gr : regions) {
+        if(gr->getVisibility()) { skip = true; break; }
+      }
+      if(skip) continue;
+    }
+    else {
+      if(gf->numRegions()) continue;
+    }
+    if(gf->getNativeType() == GEntity::OpenCascadeModel) {
+      Msg::Debug("Adding surface %d to exported compound", gf->tag());
       b.Add(c, *(TopoDS_Face *)gf->getNativePtr());
+    }
   }
   for(auto it = model->firstEdge(); it != model->lastEdge(); it++) {
     GEdge *ge = *it;
-    if(!ge->numFaces() && ge->getNativeType() == GEntity::OpenCascadeModel)
+    if(onlyVisible) {
+      if(!ge->getVisibility()) continue;
+      auto faces = ge->faces();
+      bool skip = false;
+      for(auto gf : faces) {
+        if(gf->getVisibility()) { skip = true; break; }
+      }
+      if(skip) continue;
+    }
+    else {
+      if(ge->numFaces()) continue;
+    }
+    if(ge->getNativeType() == GEntity::OpenCascadeModel) {
+      Msg::Debug("Adding curve %d to exported compound", ge->tag());
       b.Add(c, *(TopoDS_Edge *)ge->getNativePtr());
+    }
   }
   for(auto it = model->firstVertex(); it != model->lastVertex(); it++) {
     GVertex *gv = *it;
-    if(!gv->numEdges() && gv->getNativeType() == GEntity::OpenCascadeModel)
+    if(onlyVisible) {
+      if(!gv->getVisibility()) continue;
+      auto edges = gv->edges();
+      bool skip = false;
+      for(auto ge : edges) {
+        if(ge->getVisibility()) { skip = true; break; }
+      }
+      if(skip) continue;
+    }
+    else {
+      if(gv->numEdges()) continue;
+    }
+    if(gv->getNativeType() == GEntity::OpenCascadeModel) {
+      Msg::Debug("Adding point %d to exported compound", gv->tag());
       b.Add(c, *(TopoDS_Vertex *)gv->getNativePtr());
+    }
   }
 
   std::vector<std::string> split = SplitFileName(fileName);
@@ -4458,6 +4538,25 @@ bool OCC_Internals::exportShapes(GModel *model, const std::string &fileName,
         Msg::Error("Could not create STEP data");
         return false;
       }
+    }
+    else if(format == "iges" || split[2] == ".iges" || split[2] == ".igs" ||
+            split[2] == ".IGES" || split[2] == ".IGS") {
+      IGESControl_Writer writer;
+      if(writer.AddShape(c)) {
+        if(writer.Write(occfile.ToCString()) != true) {
+          Msg::Error("Could not create file '%s'", fileName.c_str());
+          return false;
+        }
+      }
+      else {
+        Msg::Error("Could not create IGES data");
+        return false;
+      }
+    }
+    else {
+      Msg::Error("Unknown format to export OpenCASCADE shapes: %s",
+                 format.c_str());
+      return false;
     }
   } catch(Standard_Failure &err) {
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
@@ -4836,7 +4935,9 @@ void OCC_Internals::synchronize(GModel *model)
     _attributes->getLabels(0, vertex, labels);
     if(labels.size()) model->setElementaryName(0, occv->tag(), labels[0]);
     unsigned int col = 0, boundary = 0;
-    if(_attributes->getColor(0, vertex, col, boundary)) { occv->setColor(col); }
+    if(!occv->useColor() && _attributes->getColor(0, vertex, col, boundary)) {
+      occv->setColor(col);
+    }
   }
   for(int i = 1; i <= _emap.Extent(); i++) {
     TopoDS_Edge edge = TopoDS::Edge(_emap(i));
@@ -4860,7 +4961,9 @@ void OCC_Internals::synchronize(GModel *model)
     _attributes->getLabels(1, edge, labels);
     if(labels.size()) model->setElementaryName(1, occe->tag(), labels[0]);
     unsigned int col = 0, boundary = 0;
-    if(_attributes->getColor(1, edge, col, boundary)) { occe->setColor(col); }
+    if(!occe->useColor() && _attributes->getColor(1, edge, col, boundary)) {
+      occe->setColor(col);
+    }
   }
   for(int i = 1; i <= _fmap.Extent(); i++) {
     TopoDS_Face face = TopoDS::Face(_fmap(i));
@@ -4882,12 +4985,11 @@ void OCC_Internals::synchronize(GModel *model)
     _attributes->getLabels(2, face, labels);
     if(labels.size()) model->setElementaryName(2, occf->tag(), labels[0]);
     unsigned int col = 0, boundary = 0;
-    if(_attributes->getColor(2, face, col, boundary)) {
+    if(!occf->useColor() && _attributes->getColor(2, face, col, boundary)) {
       occf->setColor(col);
       if(boundary == 2) {
         std::vector<GEdge *> edges = occf->edges();
         for(std::size_t j = 0; j < edges.size(); j++) {
-          // only if not specified explicitly before
           if(!edges[j]->useColor()) edges[j]->setColor(col);
         }
       }
@@ -4913,19 +5015,17 @@ void OCC_Internals::synchronize(GModel *model)
     _attributes->getLabels(3, region, labels);
     if(labels.size()) model->setElementaryName(3, occr->tag(), labels[0]);
     unsigned int col = 0, boundary = 0;
-    if(_attributes->getColor(3, region, col, boundary)) {
+    if(!occr->useColor() && _attributes->getColor(3, region, col, boundary)) {
       occr->setColor(col);
       if(boundary == 1) {
         std::vector<GFace *> faces = occr->faces();
         for(std::size_t j = 0; j < faces.size(); j++) {
-          // only if not specified explicitly before
           if(!faces[j]->useColor()) faces[j]->setColor(col);
         }
       }
       else if(boundary == 2) {
         std::vector<GEdge *> edges = occr->edges();
         for(std::size_t j = 0; j < edges.size(); j++) {
-          // only if not specified explicitly before
           if(!edges[j]->useColor()) edges[j]->setColor(col);
         }
       }
@@ -5844,7 +5944,8 @@ int GModel::writeOCCBREP(const std::string &fn)
     Msg::Error("No OpenCASCADE model found");
     return 0;
   }
-  _occ_internals->exportShapes(this, fn, "brep");
+  _occ_internals->exportShapes(this, fn, "brep",
+                               CTX::instance()->geom.occExportOnlyVisible);
   return 1;
 }
 
@@ -5854,7 +5955,19 @@ int GModel::writeOCCSTEP(const std::string &fn)
     Msg::Error("No OpenCASCADE model found");
     return 0;
   }
-  _occ_internals->exportShapes(this, fn, "step");
+  _occ_internals->exportShapes(this, fn, "step",
+                               CTX::instance()->geom.occExportOnlyVisible);
+  return 1;
+}
+
+int GModel::writeOCCIGES(const std::string &fn)
+{
+  if(!_occ_internals) {
+    Msg::Error("No OpenCASCADE model found");
+    return 0;
+  }
+  _occ_internals->exportShapes(this, fn, "iges",
+                               CTX::instance()->geom.occExportOnlyVisible);
   return 1;
 }
 

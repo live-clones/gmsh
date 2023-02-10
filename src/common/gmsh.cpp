@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2022 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -426,6 +426,23 @@ GMSH_API void gmsh::model::getEntitiesForPhysicalGroup(const int dim,
   }
   else {
     Msg::Error("Physical %s does not exist", _getEntityName(dim, tag).c_str());
+  }
+}
+
+GMSH_API void gmsh::model::getEntitiesForPhysicalName(const std::string &name,
+                                                      vectorpair &dimTags)
+{
+  if(!_checkInit()) return;
+  dimTags.clear();
+  std::vector<GEntity *> entities;
+  GModel::current()->getEntitiesForPhysicalName(name, entities);
+  if(entities.size() != 0) {
+    for(std::size_t i = 0; i < entities.size(); ++i) {
+      dimTags.push_back(std::pair<int, int >(entities[i]->dim(), entities[i]->tag()));
+    }
+  }
+  else {
+    Msg::Error("Physical name '%s' does not exist", name.c_str());
   }
 }
 
@@ -1240,6 +1257,34 @@ GMSH_API void gmsh::model::setCoordinates(const int tag, const double x,
   }
   GPoint p(x, y, z);
   gv->setPosition(p);
+}
+
+GMSH_API void gmsh::model::getAttributeNames(std::vector<std::string> &names)
+{
+  if(!_checkInit()) return;
+  names.clear();
+  for(auto a : GModel::current()->getAttributes())
+    names.push_back(a.first);
+}
+
+GMSH_API void gmsh::model::getAttribute(const std::string &name,
+                                        std::vector<std::string> &values)
+{
+  if(!_checkInit()) return;
+  values = GModel::current()->getAttributes()[name];
+}
+
+GMSH_API void gmsh::model::setAttribute(const std::string &name,
+                                        const std::vector<std::string> &values)
+{
+  if(!_checkInit()) return;
+  GModel::current()->getAttributes()[name] = values;
+}
+
+GMSH_API void gmsh::model::removeAttribute(const std::string &name)
+{
+  if(!_checkInit()) return;
+  GModel::current()->getAttributes().erase(name);
 }
 
 // gmsh::model::mesh
@@ -2280,6 +2325,18 @@ GMSH_API void gmsh::model::mesh::getElementQualities(
     }
     else if(qualityName == "volume"){
       elementQualities[k] = e->getVolume();
+    }
+    else if(qualityName == "minEdge"){
+      elementQualities[k] = e->minEdge();
+    }
+    else if(qualityName == "maxEdge"){
+      elementQualities[k] = e->maxEdge();
+    }
+    else if(qualityName == "outerRadius"){
+      elementQualities[k] = e->getOuterRadius();
+    }
+    else if(qualityName == "innerRadius"){
+      elementQualities[k] = e->getInnerRadius();
     }
     else{
       if(k == begin) {
@@ -4864,10 +4921,10 @@ GMSH_API void gmsh::model::mesh::setTransfiniteAutomatic(
         transfinite = false;
         break;
       }
-      if(transfinite) {
-        gr->meshAttributes.method = MESH_TRANSFINITE;
-        nr += 1;
-      }
+    }
+    if(transfinite) {
+      gr->meshAttributes.method = MESH_TRANSFINITE;
+      nr += 1;
     }
   }
   if(nr > 0)
@@ -5820,7 +5877,7 @@ GMSH_API void gmsh::model::mesh::field::getString(const int tag,
 
 GMSH_API void
 gmsh::model::mesh::field::setNumbers(const int tag, const std::string &option,
-                                     const std::vector<double> &value)
+                                     const std::vector<double> &values)
 {
   if(!_checkInit()) return;
 #if defined(HAVE_MESH)
@@ -5828,7 +5885,7 @@ gmsh::model::mesh::field::setNumbers(const int tag, const std::string &option,
   if(!o) return;
   if(o->getType() == FIELD_OPTION_LIST) {
     std::list<int> vl;
-    for(std::size_t i = 0; i < value.size(); i++) vl.push_back((int)value[i]);
+    for(std::size_t i = 0; i < values.size(); i++) vl.push_back((int)values[i]);
     o->list(vl);
   }
   else {
@@ -5836,7 +5893,7 @@ gmsh::model::mesh::field::setNumbers(const int tag, const std::string &option,
       Msg::Warning("Field option '%s' is not a list", option.c_str());
     }
     std::list<double> vl;
-    for(std::size_t i = 0; i < value.size(); i++) vl.push_back(value[i]);
+    for(std::size_t i = 0; i < values.size(); i++) vl.push_back(values[i]);
     o->listdouble(vl);
   }
 #else
@@ -5846,23 +5903,23 @@ gmsh::model::mesh::field::setNumbers(const int tag, const std::string &option,
 
 GMSH_API void
 gmsh::model::mesh::field::getNumbers(const int tag, const std::string &option,
-                                     std::vector<double> &value)
+                                     std::vector<double> &values)
 {
   if(!_checkInit()) return;
-  value.clear();
+  values.clear();
 #if defined(HAVE_MESH)
   FieldOption *o = _getFieldOption(tag, option);
   if(!o) { return; }
   if(o->getType() == FIELD_OPTION_LIST) {
     std::list<int> vl = o->list();
-    for(auto i : vl) value.push_back(i);
+    for(auto i : vl) values.push_back(i);
   }
   else {
     if(o->getType() != FIELD_OPTION_LIST_DOUBLE) {
       Msg::Warning("Field option '%s' is not a list", option.c_str());
     }
     std::list<double> vl = o->listdouble();
-    for(auto d : vl) value.push_back(d);
+    for(auto d : vl) values.push_back(d);
   }
 #else
   Msg::Error("Fields require the mesh module");
@@ -6499,12 +6556,22 @@ GMSH_API int gmsh::model::occ::addEllipse(const double x, const double y,
 }
 
 GMSH_API int gmsh::model::occ::addSpline(const std::vector<int> &pointTags,
-                                         const int tag)
+                                         const int tag,
+                                         const std::vector<double> &tangents)
 {
   if(!_checkInit()) return -1;
   _createOcc();
   int outTag = tag;
-  GModel::current()->getOCCInternals()->addSpline(outTag, pointTags);
+  std::vector<SVector3> t;
+  if(tangents.size() % 3) {
+    Msg::Error("Number of entries in tangents should be a multiple of 3");
+  }
+  else if(!tangents.empty()) {
+    for(std::size_t i = 0; i < tangents.size(); i += 3) {
+      t.push_back(SVector3(tangents[i], tangents[i + 1], tangents[i + 2]));
+    }
+  }
+  GModel::current()->getOCCInternals()->addSpline(outTag, pointTags, t);
   return outTag;
 }
 
@@ -7848,7 +7915,7 @@ GMSH_API void gmsh::view::combine(const std::string &what,
 }
 
 GMSH_API void gmsh::view::probe(const int tag, const double x, const double y,
-                                const double z, std::vector<double> &value,
+                                const double z, std::vector<double> &values,
                                 double &distance, const int step,
                                 const int numComp, const bool gradient,
                                 const double distanceMax,
@@ -7869,7 +7936,7 @@ GMSH_API void gmsh::view::probe(const int tag, const double x, const double y,
     Msg::Error("No data in view %d", tag);
     return;
   }
-  value.clear();
+  values.clear();
   std::vector<double> val(9 * data->getNumTimeSteps() * 3);
   int qn = 0;
   double *qx = nullptr, *qy = nullptr, *qz = nullptr;
@@ -7921,7 +7988,7 @@ GMSH_API void gmsh::view::probe(const int tag, const double x, const double y,
     }
     break;
   }
-  for(int i = 0; i < numVal; i++) value.push_back(val[i]);
+  for(int i = 0; i < numVal; i++) values.push_back(val[i]);
 #else
   Msg::Error("Views require the post-processing module");
 #endif

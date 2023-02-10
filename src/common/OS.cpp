@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2022 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -321,25 +321,25 @@ void SleepInSeconds(double s)
 #endif
 }
 
-static void GetResources(double *s, long *mem)
+static void GetResources(double &s, std::size_t &mem)
 {
 #if defined(WIN32) && !defined(__CYGWIN__)
   FILETIME creation, exit, kernel, user;
   if(GetProcessTimes(GetCurrentProcess(), &creation, &exit, &kernel, &user)) {
-    *s = 1.e-7 * 4294967296. * (double)user.dwHighDateTime +
-         1.e-7 * (double)user.dwLowDateTime;
+    s = 1.e-7 * 4294967296. * (double)user.dwHighDateTime +
+        1.e-7 * (double)user.dwLowDateTime;
   }
   PROCESS_MEMORY_COUNTERS info;
   GetProcessMemoryInfo(GetCurrentProcess(), &info, sizeof(info));
-  *mem = (long)info.PeakWorkingSetSize;
+  mem = (std::size_t)info.PeakWorkingSetSize;
 #else
   static struct rusage r;
   getrusage(RUSAGE_SELF, &r);
-  *s = (double)r.ru_utime.tv_sec + 1.e-6 * (double)r.ru_utime.tv_usec;
+  s = (double)r.ru_utime.tv_sec + 1.e-6 * (double)r.ru_utime.tv_usec;
 #if defined(__APPLE__)
-  *mem = (long)r.ru_maxrss;
+  mem = (std::size_t)r.ru_maxrss;
 #else
-  *mem = (long)(r.ru_maxrss * 1024L);
+  mem = (std::size_t)(r.ru_maxrss * 1024L);
 #endif
 #endif
 }
@@ -365,9 +365,9 @@ void CheckResources()
 
 double Cpu()
 {
-  long mem = 0;
   double s = 0.;
-  GetResources(&s, &mem);
+  std::size_t mem = 0;
+  GetResources(s, mem);
   return s;
 }
 
@@ -403,11 +403,11 @@ double TimeOfDay()
   return std::chrono::duration<double>(t.time_since_epoch()).count();
 }
 
-long GetMemoryUsage()
+std::size_t GetMemoryUsage()
 {
-  long mem = 0;
   double s = 0.;
-  GetResources(&s, &mem);
+  std::size_t mem = 0;
+  GetResources(s, mem);
   return mem;
 }
 

@@ -60,13 +60,6 @@ static inline HXTStatus askForBall(TetLocal* local, uint64_t needed) {
 }
 
 
-static inline uint64_t hash64(uint64_t x) {
-    x = (x ^ (x >> 30)) * UINT64_C(0xbf58476d1ce4e5b9);
-    x = (x ^ (x >> 27)) * UINT64_C(0x94d049bb133111eb);
-    return x ^ (x >> 31);
-}
-
-
 // TODO: it only needs the ball and the deleted... no need to know about the whole tetLocal structure
 HXTStatus reshapeCavityIfNeeded(TetLocal* local, HXTMesh* mesh, const uint32_t vta, uint64_t prevNumDeleted, int undeleteTet);
 HXTStatus respectEdgeConstraint(TetLocal* local, HXTMesh* mesh, const uint32_t vta, const uint32_t color, const uint64_t prevDeleted, int* undeleteTet);

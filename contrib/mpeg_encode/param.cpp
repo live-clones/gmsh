@@ -325,8 +325,8 @@ ReadParamFile(char *fileName,
                                              "INPUT_CONVERT", "INPUT", "BQSCALE", "BASE_FILE_FORMAT",
                                              "SLICES_PER_FRAME", "BSEARCH_ALG", "REFERENCE_FRAME"};
   */
-  register int index;
-  register int row, col;
+  int index;
+  int row, col;
 
   if ( (fpointer = fopen(fileName, "r")) == NULL ) {
     fprintf(stderr, "Error:  Cannot open parameter file:  %s\n", fileName);
@@ -816,7 +816,7 @@ GetNthInputFileName(char *fileName,
 {
   static int	lastN = 0, lastMapN = 0, lastSoFar = 0;
   int	    mapN;
-  register int index;
+  int index;
   int	    soFar;
   int	    loop;
   int	    numPadding;

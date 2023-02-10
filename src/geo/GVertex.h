@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2022 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -64,6 +64,9 @@ public:
 
   // returns the parent entity for partitioned entities
   virtual GEntity *getParentEntity() { return nullptr; }
+
+  // is this entity an orphan?
+  virtual bool isOrphan();
 
   // get the geometric type of the vertex
   virtual GeomType geomType() const { return Point; }

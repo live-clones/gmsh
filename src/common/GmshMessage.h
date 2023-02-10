@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2022 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -32,6 +32,8 @@ class Msg {
 private:
   // current cpu number and total number of cpus
   static int _commRank, _commSize;
+  // did Gmsh initialize MPI?
+  static bool _mpiInit;
   // verbosity level (0: silent except fatal errors, 1: +errors, 2: +warnings,
   // 3: +direct, 4: +info, 5 (=normal): +statusbar, 99: debug)
   static int _verbosity;

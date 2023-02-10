@@ -86,14 +86,18 @@ View "comments" {
   T2(10, -10, 0){ StrCat("Created on ", Today, " with Gmsh") };
 
   // Add a text string in model coordinates centered at (X,Y,Z) = (0, 0.11, 0):
-  T3(0, 0.11, 0, TextAttributes("Align", "Center", "Font", "Helvetica")){ "Hole" };
+  T3(0, 0.11, 0, TextAttributes("Align", "Center", "Font", "Helvetica")){
+    "Hole"
+  };
 
   // If a string starts with `file://', the rest is interpreted as an image
   // file. For 3D annotations, the size in model coordinates can be specified
   // after a `@' symbol in the form `widthxheight' (if one of `width' or
   // `height' is zero, natural scaling is used; if both are zero, original image
   // dimensions in pixels are used):
-  T3(0, 0.09, 0, TextAttributes("Align", "Center")){ "file://t4_image.png@0.01x0" };
+  T3(0, 0.09, 0, TextAttributes("Align", "Center")){
+    "file://t4_image.png@0.01x0"
+  };
 
   // The 3D orientation of the image can be specified by proving the direction
   // of the bottom and left edge of the image in model space:
@@ -101,7 +105,9 @@ View "comments" {
 
   // The image can also be drawn in "billboard" mode, i.e. always parallel to
   // the camera, by using the `#' symbol:
-  T3(0, 0.12, 0, TextAttributes("Align", "Center")){ "file://t4_image.png@0.01x0#" };
+  T3(0, 0.12, 0, TextAttributes("Align", "Center")){
+    "file://t4_image.png@0.01x0#"
+  };
 
   // The size of 2D annotations is given directly in pixels:
   T2(350, -7, 0){ "file://t4_image.png@20x0" };

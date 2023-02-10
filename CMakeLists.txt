@@ -1,4 +1,4 @@
-# Gmsh - Copyright (C) 1997-2022 C. Geuzaine, J.-F. Remacle
+# Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 #
 # See the LICENSE.txt file in the Gmsh root directory for license information.
 # Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -108,7 +108,7 @@ opt(ZIPPER "Enable Zip file compression/decompression" OFF)
 
 set(GMSH_MAJOR_VERSION 4)
 set(GMSH_MINOR_VERSION 11)
-set(GMSH_PATCH_VERSION 0)
+set(GMSH_PATCH_VERSION 2)
 if(NOT GMSH_EXTRA_VERSION)
   set(GMSH_EXTRA_VERSION "")
 endif()
@@ -142,7 +142,7 @@ else()
   set(GMSH_GITLAB_PREFIX "${GMSH_GITLAB_PREFIX}/blob/master")
 endif()
 
-set(GMSH_API api/gmsh.h api/gmshc.h api/gmsh.h_cwrap api/gmshf.h)
+set(GMSH_API api/gmsh.h api/gmshc.h api/gmsh.h_cwrap api/gmsh.f90)
 
 if(ENABLE_PRIVATE_API)
   message(WARNING "The private API is unsupported and undocumented. It is meant "
@@ -202,7 +202,11 @@ if(NOT GMSH_PACKAGER)
 endif()
 
 if(APPLE)
-  set(GMSH_OS "MacOSX")
+  if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "arm64")
+    set(GMSH_OS "MacOSARM")
+  else()
+    set(GMSH_OS "MacOSX")
+  endif()
   # build universal binary
   #SET(CMAKE_OSX_ARCHITECTURES "x86_64;arm64" CACHE STRING "Build architectures for macOS" FORCE)
 elseif(CYGWIN OR MSYS)
@@ -222,7 +226,8 @@ elseif(CYGWIN OR MSYS)
       set(CMAKE_FIND_LIBRARY_SUFFIXES ".a" ".so" ".lib" ".LIB" ".dll" ".DLL" ".dll.a")
     endif()
   endif()
-else()
+endif()
+if(NOT GMSH_OS)
   set(GMSH_OS "${CMAKE_SYSTEM_NAME}")
 endif()
 
@@ -998,10 +1003,12 @@ if(ENABLE_MED OR ENABLE_CGNS)
     set(HDF5_LIB "${HDF5_C_LIBRARIES}")
     list(APPEND EXTERNAL_INCLUDES ${HDF5_INCLUDE_DIRS})
     if(ENABLE_MED)
-      find_library(MED_LIB medC)
-      if(MED_LIB)
+      find_library(MED_LIB medC HINTS ENV MED3HOME PATH_SUFFIXES lib)
+      find_path(MED_INC "med.h" HINTS ENV MED3HOME PATH_SUFFIXES include)
+      if(MED_LIB AND MED_INC)
         set_config_option(HAVE_MED "Med")
         list(APPEND EXTERNAL_LIBRARIES ${MED_LIB})
+        list(APPEND EXTERNAL_INCLUDES ${MED_INC})
       endif()
     endif()
     if(ENABLE_CGNS)
@@ -1564,14 +1571,28 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/common/GmshConfig.h.in
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/common/GmshVersion.h.in
                ${CMAKE_CURRENT_BINARY_DIR}/src/common/GmshVersion.h)
 
-# the texi and pypi version files are modified in the source directory (not
+# the texi version file is modified in the source directory (not
 # ideal for version.texi, but since git tracks the contents of the file this is
 # acceptable as it will only change when the actual version is changed - not for
 # each git hash)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/doc/texinfo/version.texi.in
                ${CMAKE_CURRENT_SOURCE_DIR}/doc/texinfo/version.texi)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/utils/pypi/setup-wheel.py.in
-               ${CMAKE_CURRENT_BINARY_DIR}/setup-wheel.py)
+
+if(ENABLE_BUILD_LIB OR ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
+  if (GMSH_RELEASE)
+    set(GMSH_PYTHON_VERSION ${GMSH_SHORT_VERSION})
+    file(READ ${CMAKE_CURRENT_SOURCE_DIR}/utils/pypi/README.gmsh.rst GMSH_LONG_DESCRIPTION)
+  else()
+    if ("${GMSH_EXTRA_VERSION}" MATCHES "-nox")
+      set(GMSH_PYTHON_VERSION "${GMSH_SHORT_VERSION}.dev1+nox")
+      file(READ ${CMAKE_CURRENT_SOURCE_DIR}/utils/pypi/README.gmsh-nox-dev.rst GMSH_LONG_DESCRIPTION)
+    else ()
+      set(GMSH_PYTHON_VERSION "${GMSH_SHORT_VERSION}.dev1")
+      file(READ ${CMAKE_CURRENT_SOURCE_DIR}/utils/pypi/README.gmsh-dev.rst GMSH_LONG_DESCRIPTION)
+    endif()
+  endif()
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/utils/pypi/METADATA.in ${CMAKE_CURRENT_BINARY_DIR}/METADATA)
+endif()
 
 file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/version.txt ${GMSH_SHORT_VERSION})
 
@@ -1675,10 +1696,19 @@ if(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
   if(WIN32)
     set_target_properties(shared PROPERTIES PREFIX "" IMPORT_PREFIX ""
       IMPORT_SUFFIX ".lib" COMPILE_FLAGS "-DGMSH_DLL -DGMSH_DLL_EXPORT")
-  elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang" AND NOT ENABLE_PRIVATE_API)
-    # hide all symbols by default (if not exporting the private API); symbols to
-    # export should be marked with __attribute__ ((visibility("default")))
-    set_target_properties(shared PROPERTIES COMPILE_FLAGS "-fvisibility=hidden")
+  elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    if(NOT ENABLE_PRIVATE_API)
+      # hide all symbols by default (if not exporting the private API); symbols to
+      # export should be marked with __attribute__ ((visibility("default")))
+      set_target_properties(shared PROPERTIES COMPILE_FLAGS "-fvisibility=hidden")
+    endif()
+    # hide all symbols from static libs linked into the shared Gmsh lib (this is
+    # easier than recompiling all the dependencies with -fvisibility=hidden)
+    if(CMAKE_SYSTEM_NAME MATCHES "Linux")
+      # TODO would be nice to have the equivalent on macOS
+      message(STATUS "Excluding symbols from bundled static libraries")
+      list(APPEND LINK_LIBRARIES "-Wl,--exclude-libs,ALL")
+    endif()
   endif()
   target_link_libraries(shared ${LINK_LIBRARIES})
   # don't define LC_RPATH in dylib for development, to not get endless warnings
@@ -1715,7 +1745,7 @@ else()
 endif()
 target_link_libraries(gmsh ${LINK_LIBRARIES})
 
-# Windows specific linker options
+# OS specific linker options
 if(WIN32 AND NOT MSVC)
   set(FLAGS "-Wl,--stack,16777216 -Wl,--image-base -Wl,0x10000000 -static")
   if(HAVE_FLTK)
@@ -1737,6 +1767,9 @@ if(WIN32 AND NOT MSVC)
   set(CMAKE_EXE_LINK_DYNAMIC_CXX_FLAGS)
 elseif(MSVC)
   set_target_properties(gmsh PROPERTIES LINK_FLAGS "/STACK:16777216 /SAFESEH:NO")
+elseif(APPLE)
+  # this remove ld warnings with PETSc+MUMPS on recent macOS versions
+  # set_target_properties(gmsh PROPERTIES LINK_FLAGS "-Wl,-no_compact_unwind")
 endif()
 
 # android target
@@ -1798,6 +1831,7 @@ file(GLOB TUTORIALS_CPP_FILES ${CMAKE_CURRENT_SOURCE_DIR}/tutorials/c++/?*.*)
 file(GLOB TUTORIALS_C_FILES ${CMAKE_CURRENT_SOURCE_DIR}/tutorials/c/?*.*)
 file(GLOB TUTORIALS_PY_FILES ${CMAKE_CURRENT_SOURCE_DIR}/tutorials/python/?*.*)
 file(GLOB TUTORIALS_JL_FILES ${CMAKE_CURRENT_SOURCE_DIR}/tutorials/julia/?*.*)
+file(GLOB TUTORIALS_F90_FILES ${CMAKE_CURRENT_SOURCE_DIR}/tutorials/fortran/?*.*)
 file(GLOB EXAMPLES ${CMAKE_CURRENT_SOURCE_DIR}/examples/*)
 foreach(SUBDIR ${EXAMPLES})
   if(IS_DIRECTORY ${SUBDIR})
@@ -1806,6 +1840,7 @@ foreach(SUBDIR ${EXAMPLES})
 endforeach()
 set(TEX_DIR ${CMAKE_CURRENT_SOURCE_DIR}/doc/texinfo)
 file(GLOB TEX_SRC ${TEX_DIR}/*.texi)
+file(GLOB TEX_IMG ${TEX_DIR}/images/*.png)
 set(TEX_OBJ ${TEX_DIR}/gmsh.aux ${TEX_DIR}/gmsh.cp ${TEX_DIR}/gmsh.cps
     ${TEX_DIR}/gmsh.fn ${TEX_DIR}/gmsh.html ${TEX_DIR}/gmsh.info ${TEX_DIR}/gmsh.ky
     ${TEX_DIR}/gmsh.log ${TEX_DIR}/gmsh.pdf ${TEX_DIR}/gmsh.pg ${TEX_DIR}/gmsh.toc
@@ -1858,14 +1893,14 @@ if(WIN32)
     unix2dos(TUTORIALS_C_FILES "c")
     unix2dos(TUTORIALS_PY_FILES "python")
     unix2dos(TUTORIALS_JL_FILES "julia")
+    unix2dos(TUTORIALS_F90_FILES "fortran")
     foreach(DIR ${EXAMPLES_DIRS})
       file(GLOB EXAMPLES_FILES ${DIR}/?*.*)
       unix2dos(EXAMPLES_FILES "examples")
     endforeach()
   endif()
 elseif(APPLE AND ENABLE_OS_SPECIFIC_INSTALL)
-  # set these so that the files get installed nicely in the MacOSX
-  # .app bundle
+  # set these so that the files get installed nicely in the macOS .app bundle
   set(GMSH_BIN ../MacOS)
   set(GMSH_LIB ../MacOS)
   set(GMSH_DOC ../../..)
@@ -1897,6 +1932,8 @@ if(ENABLE_BUILD_LIB OR ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
   install(FILES ${GMSH_API} DESTINATION ${GMSH_INC})
   install(FILES ${GMSH_PY} DESTINATION ${GMSH_LIB})
   install(FILES ${GMSH_JL} DESTINATION ${GMSH_LIB})
+  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/METADATA DESTINATION
+                ${GMSH_LIB}/gmsh-${GMSH_PYTHON_VERSION}.dist-info)
   if(ENABLE_PRIVATE_API)
     install(FILES ${GMSH_PRIVATE_API} DESTINATION ${GMSH_INC}/gmsh)
     if(HAVE_CONTRIB_EIGEN) # the private API depends on Eigen
@@ -1917,6 +1954,7 @@ install(FILES ${TUTORIALS_CPP_FILES} DESTINATION ${GMSH_DOC}/tutorials/c++)
 install(FILES ${TUTORIALS_C_FILES} DESTINATION ${GMSH_DOC}/tutorials/c)
 install(FILES ${TUTORIALS_PY_FILES} DESTINATION ${GMSH_DOC}/tutorials/python)
 install(FILES ${TUTORIALS_JL_FILES} DESTINATION ${GMSH_DOC}/tutorials/julia)
+install(FILES ${TUTORIALS_F90_FILES} DESTINATION ${GMSH_DOC}/tutorials/fortran)
 foreach(DIR ${EXAMPLES_DIRS})
   get_filename_component(EXAMPLES_DIR_NAME ${DIR} NAME)
   file(GLOB EXAMPLES_FILES ${DIR}/?*.*)
@@ -1959,12 +1997,12 @@ if(MAKEINFO)
                      ARGS ${TEX_DIR}/gmsh.texi WORKING_DIRECTORY ${TEX_DIR})
   add_custom_target(txt DEPENDS ${TEX_DIR}/gmsh.txt)
   add_custom_command(OUTPUT ${TEX_DIR}/gmsh.html DEPENDS ${TEX_SRC}
-    COMMAND ${MAKEINFO} --html --css-ref=/gmsh.css
-    --no-split --set-customization-variable
-    EXTRA_HEAD='<meta name="viewport" content="width=device-width,initial-scale=1.0">'
+    COMMAND ${MAKEINFO} --html --css-ref=/gmsh.css --no-split
+    --set-customization-variable EXTRA_HEAD='<meta name="viewport" content="width=device-width,initial-scale=1.0"><style type="text/css"><!-- img {  width:66%\; max-width:768px } --></style>'
     ARGS ${TEX_DIR}/gmsh.texi WORKING_DIRECTORY ${TEX_DIR})
   add_custom_target(html DEPENDS ${TEX_DIR}/gmsh.html)
   install(FILES ${TEX_DIR}/gmsh.html DESTINATION ${GMSH_DOC} OPTIONAL)
+  install(FILES ${TEX_IMG} DESTINATION ${GMSH_DOC}/images OPTIONAL)
 else()
   add_custom_target(html COMMAND ${CMAKE_COMMAND} -E touch ${TEX_DIR}/gmsh.html)
 endif()
@@ -1985,12 +2023,11 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E echo
 if(MAKEINFO AND TEXI2PDF)
   add_custom_target(doc COMMAND ${CMAKE_COMMAND} -E tar zcf
                     ${CMAKE_CURRENT_BINARY_DIR}/gmsh-${GMSH_VERSION}-doc.tgz
-                    CREDITS.txt LICENSE.txt CHANGELOG.txt
-                    doc/gmsh.1 doc/texinfo/gmsh.html doc/texinfo/gmsh.info
+                    CREDITS.txt LICENSE.txt CHANGELOG.txt doc/gmsh.1
+                    doc/texinfo/gmsh.html doc/texinfo/images doc/texinfo/gmsh.info
                     doc/texinfo/gmsh.pdf doc/texinfo/gmsh.txt
                     COMMAND ${CMAKE_COMMAND} -E remove ${TEX_OBJ}
-                    DEPENDS ${TEX_DIR}/gmsh.info ${TEX_DIR}/gmsh.txt
-                    ${TEX_DIR}/gmsh.html ${TEX_DIR}/gmsh.pdf
+                    DEPENDS info txt html pdf
                     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 endif()
 
@@ -2166,6 +2203,9 @@ if(ENABLE_TESTS AND NOT DISABLE_GMSH_TESTS)
           set(FLAGS "${FLAGS} -mconsole")
         endif()
         set_target_properties(${TEST} PROPERTIES LINK_FLAGS "${FLAGS}")
+      elseif(APPLE)
+        # this remove ld warnings with PETSc+MUMPS on recent macOS versions
+        # set_target_properties(${TEST} PROPERTIES LINK_FLAGS "-Wl,-no_compact_unwind")
       endif()
       add_test(${TEST} ${TEST} -nopopup)
     endforeach()

@@ -1,7 +1,7 @@
 This is Gmsh, an automatic three-dimensional finite element mesh generator with
 built-in pre- and post-processing facilities.
 
-Gmsh is copyright (C) 1997-2022 C. Geuzaine and J.-F. Remacle, and is
+Gmsh is copyright (C) 1997-2023 C. Geuzaine and J.-F. Remacle, and is
 distributed under the terms of the GNU General Public License, Version 2 or
 later, with an exception to allow for easier linking with external
 libraries. See LICENSE.txt and CREDITS.txt for more information.
@@ -44,8 +44,8 @@ Build Gmsh from the command line
   CMAKE_INSTALL_PREFIX - see below).
 
 * To build the Gmsh app dynamically linked to the shared Gmsh library, which can
-  then also be used by external codes through the C++, C, Python and Julia Gmsh
-  API, run
+  then also be used by external codes through the C++, C, Python, Julia and
+  Fortran Gmsh API, run
 
     cd build
     cmake -DENABLE_BUILD_DYNAMIC=1 ..
@@ -53,7 +53,7 @@ Build Gmsh from the command line
     make install
 
   This will install the Gmsh app and the shared Gmsh library, as well as the C++
-  and C include files and the Python and Julia modules.
+  and C include files, and the Python, Julia and Fortran modules.
 
 * To change build options you can use "ccmake" instead of "cmake", e.g.:
 

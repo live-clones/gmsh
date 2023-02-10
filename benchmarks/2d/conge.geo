@@ -1,4 +1,4 @@
-SetFactory("OpenCASCADE");
+//SetFactory("OpenCASCADE");
 unit = 1.0e0 ;
 
 e1 =  4.5 * unit ;

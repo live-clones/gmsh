@@ -100,8 +100,8 @@ Background Field = 7;
 // boundary mesh sizes are interpolated inside surfaces and/or volumes depending
 // on the value of `Mesh.MeshSizeExtendFromBoundary' (which is set by default).
 //
-// When the element size is fully specified by a background mesh size field (as
-// it is in this example), it is thus often desirable to set
+// When the element size is fully specified by a mesh size field (as it is in
+// this example), it is thus often desirable to set
 
 Mesh.MeshSizeExtendFromBoundary = 0;
 Mesh.MeshSizeFromPoints = 0;

@@ -67,19 +67,17 @@ gmsh.model.geo.synchronize()
 # Whole domain
 domain_tag = e[1][1]
 domain_physical_tag = 1001
-gmsh.model.addPhysicalGroup(dim=3, tags=[domain_tag], tag=domain_physical_tag, name="Whole domain")
+gmsh.model.addPhysicalGroup(3, [domain_tag], domain_physical_tag,
+                            "Whole domain")
 
 # Four "terminals" of the model
 terminal_tags = [e[3][1], e[5][1], e[7][1], e[9][1]]
 terminals_physical_tag = 2001
-gmsh.model.addPhysicalGroup(dim=2,
-                            tags=terminal_tags,
-                            tag=terminals_physical_tag,
-                            name="Terminals")
+gmsh.model.addPhysicalGroup(2, terminal_tags, terminals_physical_tag,
+                            "Terminals")
 
 # Find domain boundary tags
-boundary_dimtags = gmsh.model.getBoundary(dimTags=[(3, domain_tag)],
-                                          oriented=False)
+boundary_dimtags = gmsh.model.getBoundary([(3, domain_tag)], False)
 boundary_tags = []
 complement_tags = []
 for tag in boundary_dimtags:
@@ -90,42 +88,34 @@ for tag in terminal_tags:
 
 # Whole domain surface
 boundary_physical_tag = 2002
-gmsh.model.addPhysicalGroup(dim=2,
-                            tags=boundary_tags,
-                            tag=boundary_physical_tag,
-                            name="Boundary")
+gmsh.model.addPhysicalGroup(2, boundary_tags, boundary_physical_tag,
+                            "Boundary")
 
 # Complement of the domain surface with respect to the four terminals
 complement_physical_tag = 2003
-gmsh.model.addPhysicalGroup(dim=2,
-                            tags=complement_tags,
-                            tag=complement_physical_tag,
-                            name="Complement")
+gmsh.model.addPhysicalGroup(2, complement_tags, complement_physical_tag,
+                            "Complement")
 
 # Find bases for relative homology spaces of the domain modulo the four
 # terminals.
-gmsh.model.mesh.addHomologyRequest("Homology", domainTags=[domain_physical_tag],
-                                   subdomainTags=[terminals_physical_tag],
-                                   dims=[0, 1, 2, 3])
+gmsh.model.mesh.addHomologyRequest("Homology", [domain_physical_tag],
+                                   [terminals_physical_tag], [0, 1, 2, 3])
 
 # Find homology space bases isomorphic to the previous bases: homology spaces
 # modulo the non-terminal domain surface, a.k.a the thin cuts.
-gmsh.model.mesh.addHomologyRequest("Homology", domainTags=[domain_physical_tag],
-                                   subdomainTags=[complement_physical_tag],
-                                   dims=[0, 1, 2, 3])
+gmsh.model.mesh.addHomologyRequest("Homology", [domain_physical_tag],
+                                   [complement_physical_tag], [0, 1, 2, 3])
 
 # Find cohomology space bases isomorphic to the previous bases: cohomology
 # spaces of the domain modulo the four terminals, a.k.a the thick cuts.
-gmsh.model.mesh.addHomologyRequest("Cohomology", domainTags=[domain_physical_tag],
-                                   subdomainTags=[terminals_physical_tag],
-                                   dims=[0, 1, 2, 3])
+gmsh.model.mesh.addHomologyRequest("Cohomology", [domain_physical_tag],
+                                   [terminals_physical_tag], [0, 1, 2, 3])
 
 # more examples
 # gmsh.model.mesh.addHomologyRequest()
-# gmsh.model.mesh.addHomologyRequest("Homology", domainTags=[domain_physical_tag])
-# gmsh.model.mesh.addHomologyRequest("Homology", domainTags=[domain_physical_tag],
-#                                    subdomainTags=[boundary_physical_tag],
-#                                    dims=[0,1,2,3])
+# gmsh.model.mesh.addHomologyRequest("Homology", [domain_physical_tag])
+# gmsh.model.mesh.addHomologyRequest("Homology", [domain_physical_tag],
+#                                    [boundary_physical_tag], [0,1,2,3])
 
 # Generate the mesh and perform the requested homology computations
 gmsh.model.mesh.generate(3)

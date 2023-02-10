@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2022 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -148,7 +148,7 @@ public:
   {
     if(_faces.empty()) return;
     _faces.erase(std::remove_if(_faces.begin(), _faces.end(),
-                                std::bind2nd(std::equal_to<BDS_Face *>(), t)),
+                                [t](BDS_Face *ptr){ return ptr == t; }),
                  _faces.end());
   }
   void oppositeof(BDS_Point *oface[2]) const;

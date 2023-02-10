@@ -40,6 +40,7 @@ typedef enum
   HXT_STATUS_WRITE_ERROR           = -8,
   HXT_STATUS_RANGE_ERROR           = -9,
   HXT_STATUS_FORMAT_ERROR          = -10,
+  HXT_STATUS_INPUT_ERROR           = -11,
 
 
   // INTERNAL Errors (<= HXT_STATUS_INTERNAL) => HXT_CHECK does not give trace message but returns... should be catched internally !

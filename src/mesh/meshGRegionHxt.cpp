@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2021 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -105,7 +105,19 @@ static HXTStatus getAllSurfaces(std::vector<GRegion *> &regions, HXTMesh *m,
     allSurfacesSet.insert(f.begin(), f.end());
     allSurfacesSet.insert(f_e.begin(), f_e.end());
   }
-  allSurfaces.insert(allSurfaces.begin(), allSurfacesSet.begin(),
+
+  // verify that all elements are triangles
+  for (auto const &gf: allSurfacesSet) {
+    if (gf->quadrangles.size() != 0 || gf->polygons.size() != 0) {
+      size_t num = gf->quadrangles.size() + gf->polygons.size();
+      Msg::Error("Surface %d contains %zu elements which are not triangles. "
+                 "The HXT 3D meshing algorithm only supports triangles.",
+                 gf->tag(), num);
+      return HXT_STATUS_ERROR;
+    }
+  }
+
+  allSurfaces.insert(allSurfaces.end(), allSurfacesSet.begin(),
                      allSurfacesSet.end());
 
   if(!m) return HXT_STATUS_OK;
@@ -153,7 +165,7 @@ static HXTStatus getAllCurves(std::vector<GRegion *> &regions,
     std::vector<GEdge *> const &r_e = regions[i]->embeddedEdges();
     allCurvesSet.insert(r_e.begin(), r_e.end());
   }
-  allCurves.insert(allCurves.begin(), allCurvesSet.begin(), allCurvesSet.end());
+  allCurves.insert(allCurves.end(), allCurvesSet.begin(), allCurvesSet.end());
 
   if(!m) return HXT_STATUS_OK;
 
@@ -425,7 +437,7 @@ HXTStatus Gmsh2Hxt(std::vector<GRegion *> &regions, HXTMesh *m,
                    std::map<MVertex *, uint32_t> &v2c,
                    std::vector<MVertex *> &c2v)
 {
-  std::set<MVertex *> all;
+  std::set<MVertex *, MVertexPtrLessThan> all;
   std::vector<GFace *> surfaces;
   std::vector<GEdge *> curves;
   std::vector<GVertex *> points;

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2022 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -742,19 +742,19 @@ int FlGui::testGlobalShortcuts(int event)
     status = 1;
   }
   else if(Fl::test_shortcut('g')) {
-    FlGui::instance()->openModule("Geometry");
+    FlGui::toggleModule("Geometry");
     status = 1;
   }
   else if(Fl::test_shortcut('m')) {
-    FlGui::instance()->openModule("Mesh");
+    FlGui::toggleModule("Mesh");
     status = 1;
   }
   else if(Fl::test_shortcut('s')) {
-    FlGui::instance()->openModule("Solver");
+    FlGui::toggleModule("Solver");
     status = 1;
   }
   else if(Fl::test_shortcut('p')) {
-    FlGui::instance()->openModule("Post-processing");
+    FlGui::toggleModule("Post-processing");
     status = 1;
   }
   else if(Fl::test_shortcut('w')) {
@@ -1141,6 +1141,7 @@ void FlGui::updateViews(bool numberOfViewsHasChanged, bool deleteWidgets)
     fields->loadFieldViewList();
     plugins->resetViewBrowser();
     clipping->resetBrowser();
+    updateStatistics(false);
   }
 }
 
@@ -1155,6 +1156,12 @@ void FlGui::resetVisibility()
 {
   if(visibility->win->shown()) visibility_cb(nullptr, nullptr);
   if(help->options->shown()) help_options_cb(nullptr, nullptr);
+  updateStatistics(false);
+}
+
+void FlGui::updateStatistics(bool qualities)
+{
+  if(stats->win->shown()) stats->compute(qualities);
 }
 
 openglWindow *FlGui::getCurrentOpenglWindow()
@@ -1528,6 +1535,17 @@ void FlGui::rebuildTree(bool deleteWidgets)
 {
   if(onelab) onelab->rebuildTree(deleteWidgets);
   if(onelabContext) onelabContext->rebuild(deleteWidgets);
+}
+
+void FlGui::toggleModule(const std::string &name)
+{
+  if(FlGui::instance()->onelab){
+    if(FlGui::instance()->onelab->isTreeItemOpen("0Modules/" + name)){
+      FlGui::instance()->onelab->closeTreeItem("0Modules/" + name);
+    } else {
+      FlGui::instance()->onelab->openTreeItem("0Modules/" + name);
+    }
+  }
 }
 
 void FlGui::openModule(const std::string &name)

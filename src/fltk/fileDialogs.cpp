@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2022 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -1376,6 +1376,110 @@ int keyFileDialog(const char *name, const char *title, int format)
 
   if(!dialog) {
     dialog = new _keyFileDialog;
+    int h = 3 * WB + 6 * BH, w = 2 * BBB + 3 * WB, y = WB;
+    dialog->window = new Fl_Double_Window(w, h, title);
+    dialog->window->box(GMSH_WINDOW_BOX);
+    dialog->window->set_modal();
+    dialog->c[0] = new Fl_Choice(WB, y, BBB + BBB / 4, BH, "Line");
+    y += BH;
+    dialog->c[0]->menu(beammenu);
+    dialog->c[0]->align(FL_ALIGN_RIGHT);
+    dialog->c[1] = new Fl_Choice(WB, y, BBB + BBB / 4, BH, "Surface");
+    y += BH;
+    dialog->c[1]->menu(shellmenu);
+    dialog->c[1]->align(FL_ALIGN_RIGHT);
+    dialog->c[2] = new Fl_Choice(WB, y, BBB + BBB / 4, BH, "Volume");
+    y += BH;
+    dialog->c[2]->menu(solidmenu);
+    dialog->c[2]->align(FL_ALIGN_RIGHT);
+    dialog->b[0] =
+      new Fl_Check_Button(WB, y, 2 * BBB + WB, BH, "Save groups of elements");
+    dialog->b[0]->tooltip("Mesh.SaveAll");
+    y += BH;
+    dialog->b[0]->type(FL_TOGGLE_BUTTON);
+    dialog->b[1] =
+      new Fl_Check_Button(WB, y, 2 * BBB + WB, BH, "Save groups of nodes");
+    dialog->b[1]->tooltip("Mesh.SaveGroupsOfNodes");
+    y += BH;
+    dialog->b[1]->type(FL_TOGGLE_BUTTON);
+    dialog->ok = new Fl_Return_Button(WB, y + WB, BBB, BH, "OK");
+    dialog->cancel = new Fl_Button(2 * WB + BBB, y + WB, BBB, BH, "Cancel");
+    dialog->window->end();
+    dialog->window->hotspot(dialog->window);
+  }
+
+  dialog->c[0]->value(((int)opt_mesh_save_all(0, GMSH_GET, 0) & 4) ? 1 :
+                      ((int)opt_mesh_save_all(0, GMSH_GET, 0) & 8) ? 2 :
+                                                                     0);
+  dialog->c[1]->value(((int)opt_mesh_save_all(0, GMSH_GET, 0) & 16) ? 1 :
+                      ((int)opt_mesh_save_all(0, GMSH_GET, 0) & 32) ? 2 :
+                                                                      0);
+  dialog->c[2]->value(((int)opt_mesh_save_all(0, GMSH_GET, 0) & 64)  ? 1 :
+                      ((int)opt_mesh_save_all(0, GMSH_GET, 0) & 128) ? 2 :
+                                                                       0);
+  dialog->b[0]->value(
+    (int)opt_mesh_save_groups_of_nodes(0, GMSH_GET, 0) & 2 ? 1 : 0);
+  dialog->b[1]->value(
+    (int)opt_mesh_save_groups_of_nodes(0, GMSH_GET, 0) & 1 ? 1 : 0);
+  dialog->window->show();
+
+  while(dialog->window->shown()) {
+    Fl::wait();
+    for(;;) {
+      Fl_Widget *o = Fl::readqueue();
+      if(!o) break;
+      if(o == dialog->ok) {
+        opt_mesh_save_all(0, GMSH_SET | GMSH_GUI,
+                          dialog->c[0]->value() * 4 +
+                            dialog->c[1]->value() * 16 +
+                            dialog->c[2]->value() * 64);
+        opt_mesh_save_groups_of_nodes(0, GMSH_SET | GMSH_GUI,
+                                      (dialog->b[0]->value() ? 2 : 0) +
+                                        (dialog->b[1]->value() ? 1 : 0));
+        CreateOutputFile(name, format);
+        dialog->window->hide();
+        return 1;
+      }
+      if(o == dialog->window || o == dialog->cancel) {
+        dialog->window->hide();
+        return 0;
+      }
+    }
+  }
+  return 0;
+}
+
+// rad mesh dialog
+
+int radFileDialog(const char *name, const char *title, int format)
+{
+  struct _radFileDialog {
+    Fl_Window *window;
+    Fl_Choice *c[3];
+    Fl_Check_Button *b[2];
+    Fl_Button *ok, *cancel;
+  };
+  static _radFileDialog *dialog = nullptr;
+
+  static Fl_Menu_Item beammenu[] = {{"Physical groups", 0, nullptr, nullptr},
+                                    {"Save all", 0, nullptr, nullptr},
+                                    {"Ignore", 0, nullptr, nullptr},
+                                    {nullptr}};
+
+  static Fl_Menu_Item shellmenu[] = {{"Physical groups", 0, nullptr, nullptr},
+                                     {"Save all", 0, nullptr, nullptr},
+                                     {"Ignore", 0, nullptr, nullptr},
+                                     {nullptr}};
+
+  static Fl_Menu_Item solidmenu[] = {{"Physical groups", 0, nullptr, nullptr},
+                                     {"Save all", 0, nullptr, nullptr},
+                                     {"Ignore", 0, nullptr, nullptr},
+                                     {nullptr}};
+
+  int BBB = BB + 16; // labels too long
+
+  if(!dialog) {
+    dialog = new _radFileDialog;
     int h = 3 * WB + 6 * BH, w = 2 * BBB + 3 * WB, y = WB;
     dialog->window = new Fl_Double_Window(w, h, title);
     dialog->window->box(GMSH_WINDOW_BOX);

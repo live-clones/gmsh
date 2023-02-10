@@ -1,0 +1,26 @@
+Metadata-Version: 2.1
+Name: gmsh
+Version: ${GMSH_PYTHON_VERSION}
+Summary: Gmsh is a three-dimensional finite element mesh generator with built-in pre- and post-processing facilities.
+Home-page: https://gmsh.info
+Maintainer: Christophe Geuzaine
+Maintainer-email: cgeuzaine@uliege.be
+License: GPLv2+
+Keywords: fem,mesh,finite element method,cad
+Platform: Posix
+Platform: Windows
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Intended Audience :: Education
+Classifier: Intended Audience :: Science/Research
+Classifier: License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)
+Classifier: Operating System :: POSIX :: Linux
+Classifier: Operating System :: Microsoft :: Windows
+Classifier: Operating System :: MacOS :: MacOS X
+Classifier: Programming Language :: C
+Classifier: Programming Language :: C++
+Classifier: Programming Language :: Python
+Classifier: Topic :: Scientific/Engineering
+Description-Content-Type: text/x-rst
+
+${GMSH_LONG_DESCRIPTION}
+

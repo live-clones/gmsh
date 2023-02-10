@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2022 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -482,11 +482,12 @@ bool faceSwap(std::vector<MTet4 *> &newTets, MTet4 *t1, int iLocalFace,
   return true;
 }
 
-void buildVertexCavity_recur(MTet4 *t, MVertex *v, std::vector<MTet4 *> &cavity)
+bool buildVertexCavity_recur(MTet4 *t, MVertex *v, std::vector<MTet4 *> &cavity)
 {
   if(t->isDeleted()) {
-    Msg::Error("A deleted triangle is a neighbor of a non deleted triangle");
-    return;
+    Msg::Warning("A deleted tet is a neighbor of a non deleted tet"
+                 " - skipping cavity");
+    return false;
   }
   int iV = -1;
   for(int i = 0; i < 4; i++) {
@@ -496,9 +497,9 @@ void buildVertexCavity_recur(MTet4 *t, MVertex *v, std::vector<MTet4 *> &cavity)
     }
   }
   if(iV == -1) {
-    Msg::Error("Trying to build a cavity of tets for a node that does not "
-               "belong to this tet");
-    return;
+    Msg::Warning("Trying to build a cavity of tets for a node that does not "
+                 "belong to this tet - skipping cavity");
+    return false;
   }
   for(int i = 0; i < 3; i++) {
     MTet4 *neigh = t->getNeigh(vFac[iV][i]);
@@ -512,10 +513,12 @@ void buildVertexCavity_recur(MTet4 *t, MVertex *v, std::vector<MTet4 *> &cavity)
       }
       if(!found) {
         cavity.push_back(neigh);
-        buildVertexCavity_recur(neigh, v, cavity);
+        if(!buildVertexCavity_recur(neigh, v, cavity))
+          return false;
       }
     }
   }
+  return true;
 }
 
 // sliver removal by compound mesh modif postulate : the edge cannot be swopped
@@ -541,7 +544,7 @@ bool collapseVertex(std::vector<MTet4 *> &newTets, MTet4 *t, int iVertex,
   std::vector<MTet4 *> cavity_v;
   std::vector<MTet4 *> outside;
   cavity_v.push_back(t);
-  buildVertexCavity_recur(t, v, cavity_v);
+  if(!buildVertexCavity_recur(t, v, cavity_v)) return false;
 
   std::vector<MTet4 *> toDelete;
   std::vector<MTet4 *> toUpdate;
@@ -628,7 +631,8 @@ bool smoothVertex(MTet4 *t, int iVertex, const qmTetrahedron::Measures &cr)
 
   std::vector<MTet4 *> cavity;
   cavity.push_back(t);
-  buildVertexCavity_recur(t, t->tet()->getVertex(iVertex), cavity);
+  if(!buildVertexCavity_recur(t, t->tet()->getVertex(iVertex), cavity))
+    return false;
 
   double xcg = 0, ycg = 0, zcg = 0;
   double vTot = 0;
@@ -759,7 +763,8 @@ bool smoothVertexOptimize(MTet4 *t, int iVertex,
   vd.ts.push_back(t);
   vd.v = t->tet()->getVertex(iVertex);
   vd.LC = 1.0; // WRONG
-  buildVertexCavity_recur(t, t->tet()->getVertex(iVertex), vd.ts);
+  if(!buildVertexCavity_recur(t, t->tet()->getVertex(iVertex), vd.ts))
+    return false;
 
   double xyzopti[3] = {vd.v->x(), vd.v->y(), vd.v->z()};
 

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2022 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -116,8 +116,8 @@ int CGNSZoneUnstruct::readSection(
     // check for compatibility with MIXED element sections
 #if CGNS_VERSION < 4000
   if(sectEltType == CGNS_ENUMV(MIXED)) {
-    Msg::Error("Reading MIXED element sections requires CGNS library version"
-               "4 or superior");
+    Msg::Error("Reading 'MIXED' element sections requires CGNS library "
+               "version >= 4");
     return 0;
   }
 #endif

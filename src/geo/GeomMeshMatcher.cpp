@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2022 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -620,8 +620,8 @@ static void copy_periodicity(std::vector<Pair<GEType *, GEType *> > &eCor,
       GEType *newSrc = tgtIter->second;
       newTgt->setMeshMaster(newSrc, oldTgt->affineTransform);
 
-      std::map<MVertex *, MVertex *, MVertexPtrLessThan> &oldV2v = oldTgt->correspondingVertices;
-      std::map<MVertex *, MVertex *, MVertexPtrLessThan> &newV2v = newTgt->correspondingVertices;
+      std::map<MVertex *, MVertex *> &oldV2v = oldTgt->correspondingVertices;
+      std::map<MVertex *, MVertex *> &newV2v = newTgt->correspondingVertices;
 
       auto vIter = oldV2v.begin();
       for(; vIter != oldV2v.end(); ++vIter) {

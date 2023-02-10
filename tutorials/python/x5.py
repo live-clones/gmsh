@@ -67,8 +67,12 @@ for e in gmsh.model.getEntities(2):
 # view on points to display the curvatures
 vn = gmsh.view.add("normals")
 gmsh.view.addListData(vn, "VP", len(normals) // 6, normals)
+gmsh.view.option.setNumber(vn, 'ShowScale', 0)
+gmsh.view.option.setNumber(vn, 'ArrowSizeMax', 30)
+gmsh.view.option.setNumber(vn, 'ColormapNumber', 19)
 vc = gmsh.view.add("curvatures")
 gmsh.view.addListData(vc, "SP", len(curvatures) // 4, curvatures)
+gmsh.view.option.setNumber(vc, 'ShowScale', 0)
 
 # We can also retrieve the parametrization bounds of model entities, e.g. of
 # curve 5, and evaluate the parametrization for several parameter values:
