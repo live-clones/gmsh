@@ -21,16 +21,17 @@ int computeTetNeighbors_ (const std::vector<size_t> &tetrahedra, std::vector<siz
 int alphaShapes_ (const double threshold,
 	const int dim,
 	const std::vector<double> &pts,
+    const std::vector<double> &nodalSize,
 	std::vector<size_t> &elements, 
 	std::vector<std::vector<size_t> > &domains,
 	std::vector<std::vector<size_t> > &boundaries,
-	std::vector<size_t> &neigh, 
-	const double meanValue);
+	std::vector<size_t> &neigh);
 
 void createHxtMesh_(const std::string &inputMesh, const std::vector<double>& coord, const std::string &outputMesh, std::vector<double> &pts, std::vector<size_t> &tets);
 
 void constrainedAlphaShapes_(GModel* m, 
                             const int dim, 
+                            const int tag,
                             const std::vector<double>& coord, 
                             const std::vector<int>& nodeTags,
                             const double alpha, 
@@ -39,5 +40,6 @@ void constrainedAlphaShapes_(GModel* m,
                             std::vector<std::vector<size_t> > &domains,
                             std::vector<std::vector<size_t> > &boundaries,
                             std::vector<size_t> &neigh,
+                            double &hMean,
                             const std::vector<int> &controlTags);
 #endif

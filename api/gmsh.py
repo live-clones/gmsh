@@ -4053,9 +4053,9 @@ class model:
             return _ovectorsize(api_tetra_, api_tetra_n_.value)
 
         @staticmethod
-        def alphaShapes(threshold, dim, coord, meanValue=-1.):
+        def alphaShapes(threshold, dim, coord, nodalSize):
             """
-            gmsh.model.mesh.alphaShapes(threshold, dim, coord, meanValue=-1.)
+            gmsh.model.mesh.alphaShapes(threshold, dim, coord, nodalSize)
 
             Give an alpha shape `threshold', points given in the `coord' vector as
             triplets of x, y, z coordinates, and return the tetrahedra (like
@@ -4065,13 +4065,20 @@ class model:
             tetrahedra of a given tetrahedra. When a tetrahedra has no neighbor for its
             ith face, the value is tetrahedra.size. For a tet with vertices (0,1,2,3),
             node ids of the faces are respectively (0,1,2), (0,1,3), (0,2,3) and
-            (1,2,3). `meanValue' is a parameter used in the alpha shape  criterion test
-            : R_circumsribed / meanValue < alpha. if meanValue < 0,  meanValue is
-            computed as the average minimum edge length of each element.
+            (1,2,3). `nodalSize' is a vector defining the desired alpha criterion at
+            each point. It should either be of size 1 : it is then used as a global
+            alpha shape criterion : R_circumsribed / nodalSize[0] < threshold. (if
+            meanValue < 0,  meanValue is computed as the average minimum edge length of
+            each element.). `nodalSize' can also be a vector of size corresponding to
+            the number of points : it is then used as a local alpha shape criterion.
+            After triangulation, the average of `nodalSize' of each vertex of the
+            element (= hElement) is taken and compared to R_circumscribed. Thus, if
+            threshold == 1, the alpha criterion becomes R_circumscribed < hElement.
 
             Return `tetra', `domains', `boundaries', `neighbors'.
             """
             api_coord_, api_coord_n_ = _ivectordouble(coord)
+            api_nodalSize_, api_nodalSize_n_ = _ivectordouble(nodalSize)
             api_tetra_, api_tetra_n_ = POINTER(c_size_t)(), c_size_t()
             api_domains_, api_domains_n_, api_domains_nn_ = POINTER(POINTER(c_size_t))(), POINTER(c_size_t)(), c_size_t()
             api_boundaries_, api_boundaries_n_, api_boundaries_nn_ = POINTER(POINTER(c_size_t))(), POINTER(c_size_t)(), c_size_t()
@@ -4081,11 +4088,11 @@ class model:
                 c_double(threshold),
                 c_int(dim),
                 api_coord_, api_coord_n_,
+                api_nodalSize_, api_nodalSize_n_,
                 byref(api_tetra_), byref(api_tetra_n_),
                 byref(api_domains_), byref(api_domains_n_), byref(api_domains_nn_),
                 byref(api_boundaries_), byref(api_boundaries_n_), byref(api_boundaries_nn_),
                 byref(api_neighbors_), byref(api_neighbors_n_),
-                c_double(meanValue),
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
@@ -4150,14 +4157,14 @@ class model:
         create_hxt_mesh = createHxtMesh
 
         @staticmethod
-        def alphaShapesConstrained(dim, coord, nodeTags, alpha, meanValue, controlTags):
+        def alphaShapesConstrained(dim, tag, coord, nodeTags, alpha, meanValue, controlTags):
             """
-            gmsh.model.mesh.alphaShapesConstrained(dim, coord, nodeTags, alpha, meanValue, controlTags)
+            gmsh.model.mesh.alphaShapesConstrained(dim, tag, coord, nodeTags, alpha, meanValue, controlTags)
 
             Generate a mesh of the array of points `coord', constrained to the surface
             mesh of the current model. Currently only supported for 3D.
 
-            Return `tetrahedra', `domains', `boundaries', `neighbors'.
+            Return `tetrahedra', `domains', `boundaries', `neighbors', `hMean'.
             """
             api_coord_, api_coord_n_ = _ivectordouble(coord)
             api_nodeTags_, api_nodeTags_n_ = _ivectorint(nodeTags)
@@ -4165,10 +4172,12 @@ class model:
             api_domains_, api_domains_n_, api_domains_nn_ = POINTER(POINTER(c_size_t))(), POINTER(c_size_t)(), c_size_t()
             api_boundaries_, api_boundaries_n_, api_boundaries_nn_ = POINTER(POINTER(c_size_t))(), POINTER(c_size_t)(), c_size_t()
             api_neighbors_, api_neighbors_n_ = POINTER(c_size_t)(), c_size_t()
+            api_hMean_ = c_double()
             api_controlTags_, api_controlTags_n_ = _ivectorint(controlTags)
             ierr = c_int()
             lib.gmshModelMeshAlphaShapesConstrained(
                 c_int(dim),
+                c_int(tag),
                 api_coord_, api_coord_n_,
                 api_nodeTags_, api_nodeTags_n_,
                 c_double(alpha),
@@ -4177,6 +4186,7 @@ class model:
                 byref(api_domains_), byref(api_domains_n_), byref(api_domains_nn_),
                 byref(api_boundaries_), byref(api_boundaries_n_), byref(api_boundaries_nn_),
                 byref(api_neighbors_), byref(api_neighbors_n_),
+                byref(api_hMean_),
                 api_controlTags_, api_controlTags_n_,
                 byref(ierr))
             if ierr.value != 0:
@@ -4185,7 +4195,8 @@ class model:
                 _ovectorsize(api_tetrahedra_, api_tetrahedra_n_.value),
                 _ovectorvectorsize(api_domains_, api_domains_n_, api_domains_nn_),
                 _ovectorvectorsize(api_boundaries_, api_boundaries_n_, api_boundaries_nn_),
-                _ovectorsize(api_neighbors_, api_neighbors_n_.value))
+                _ovectorsize(api_neighbors_, api_neighbors_n_.value),
+                api_hMean_.value)
         alpha_shapes_constrained = alphaShapesConstrained
 
 

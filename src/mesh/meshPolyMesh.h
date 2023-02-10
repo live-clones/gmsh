@@ -29,6 +29,33 @@ public:
     SVector3 position;
     PolyMesh::HalfEdge *he; // one incident half edge
     int data;
+
+    inline double gaussianCurvature() const
+    {
+      HalfEdge *_he = he;      
+      do {
+	if(_he->opposite == NULL) break;
+	_he = _he->opposite->next;
+      } while(_he != he);
+
+      double GC = 0.0;
+      // boundary vertex --> add geodesic curvature
+      if (_he != he){
+	SVector3 d2 = _he->d();
+	SVector3 d1 =  he->d();
+	GC += angle(d2,d1);
+      }
+      
+      do {
+	HalfEdge *hep = _he->prev->opposite;
+	if (!hep)break;
+	SVector3 d1 = _he->d();
+	SVector3 d2 = hep->d();
+	GC += angle(d1,d2);
+	_he = hep;	
+      }while(_he != he);
+      return 2*M_PI-GC;
+    }    
   };
 
   class HalfEdge {
@@ -113,7 +140,7 @@ public:
     VertexOnFace _start;
     VertexOnFace _end;
     std::vector<VertexOnEdge> _pts;
-    void print4debug (int id);
+    void print4debug (int id, FILE *f = NULL);
   };
     
   void reset()
@@ -201,7 +228,7 @@ public:
     } while(he != v->he);
     return count;
   }
-
+  
   inline int num_sides(const HalfEdge *he) const
   {
     size_t count = 0;
@@ -589,13 +616,11 @@ public:
     fastMarching(seeds,d);
   }
 
-  void exactGeodesicDistance (const PolyMesh::VertexOnFace &_start, std::map<Vertex*,double> &ls, double d = 1.e22);
-  
-  PolyMesh::Path traceGeodesic (const PolyMesh::VertexOnFace &_v, double theta, double L);  
-  PolyMesh::Path traceGeodesic (const PolyMesh::VertexOnFace &_start, const PolyMesh::VertexOnFace &_end);
-  PolyMesh::Path backTrack (const PolyMesh::VertexOnFace &_start, const PolyMesh::VertexOnFace &_end,
-			    std::map<Vertex*,double> &ls);
-  
+  /* void exactGeodesics (const PolyMesh::VertexOnFace &_start, */
+  /* 		       std::vector<PolyMesh::VertexOnFace> &incident_edges, */
+  /* 		       double proxyDistance, */
+  /* 		       int save_, */
+  /* 		       FILE *f);   */
  };
 
 struct HalfEdgePtrLessThan {
@@ -623,5 +648,7 @@ struct HalfEdgePtrEqual {
     return false;
   }
 };
+
+void print__ (const char *fn, PolyMesh*pm, std::map<PolyMesh::Vertex*,double> &ls);
 
 #endif

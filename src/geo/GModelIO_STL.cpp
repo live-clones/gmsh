@@ -227,10 +227,10 @@ int GModel::readSTL(const std::string &name, double tolerance)
   _storeVerticesInEntities(vertices); // will delete unused vertices
 
   //fixme TEST TEST ----------------------------------
-  bool createGeodesicMesh (GFace *gf);
-  for(std::size_t i = 0; i < points.size(); i++) {
-    createGeodesicMesh(faces[i]);
-  }  
+  //  bool createGeodesicMesh (GFace *gf);
+  //  for(std::size_t i = 0; i < points.size(); i++) {
+  //    createGeodesicMesh(faces[i]);
+  //  }  
   //--------------------------------------------------
   
   fclose(fp);

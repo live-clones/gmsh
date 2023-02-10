@@ -1969,6 +1969,7 @@ static void writeMSH4EntityNodes(GEntity *ge, FILE *fp, bool binary,
                                  double version)
 {
   int parametric = saveParametric;
+
   if(ge->dim() != 1 && ge->dim() != 2)
     parametric = 0; // Gmsh only stores parametric coordinates for dim 1 and 2
 

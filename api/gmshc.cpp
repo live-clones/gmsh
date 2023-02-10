@@ -2329,16 +2329,17 @@ GMSH_API void gmshModelMeshTetrahedralize(const double * coord, const size_t coo
   }
 }
 
-GMSH_API void gmshModelMeshAlphaShapes(const double threshold, const int dim, const double * coord, const size_t coord_n, size_t ** tetra, size_t * tetra_n, size_t *** domains, size_t ** domains_n, size_t *domains_nn, size_t *** boundaries, size_t ** boundaries_n, size_t *boundaries_nn, size_t ** neighbors, size_t * neighbors_n, const double meanValue, int * ierr)
+GMSH_API void gmshModelMeshAlphaShapes(const double threshold, const int dim, const double * coord, const size_t coord_n, const double * nodalSize, const size_t nodalSize_n, size_t ** tetra, size_t * tetra_n, size_t *** domains, size_t ** domains_n, size_t *domains_nn, size_t *** boundaries, size_t ** boundaries_n, size_t *boundaries_nn, size_t ** neighbors, size_t * neighbors_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
     std::vector<double> api_coord_(coord, coord + coord_n);
+    std::vector<double> api_nodalSize_(nodalSize, nodalSize + nodalSize_n);
     std::vector<std::size_t> api_tetra_;
     std::vector<std::vector<std::size_t> > api_domains_;
     std::vector<std::vector<std::size_t> > api_boundaries_;
     std::vector<std::size_t> api_neighbors_;
-    gmsh::model::mesh::alphaShapes(threshold, dim, api_coord_, api_tetra_, api_domains_, api_boundaries_, api_neighbors_, meanValue);
+    gmsh::model::mesh::alphaShapes(threshold, dim, api_coord_, api_nodalSize_, api_tetra_, api_domains_, api_boundaries_, api_neighbors_);
     vector2ptr(api_tetra_, tetra, tetra_n);
     vectorvector2ptrptr(api_domains_, domains, domains_n, domains_nn);
     vectorvector2ptrptr(api_boundaries_, boundaries, boundaries_n, boundaries_nn);
@@ -2379,7 +2380,7 @@ GMSH_API void gmshModelMeshCreateHxtMesh(const char * inputMesh, const double * 
   }
 }
 
-GMSH_API void gmshModelMeshAlphaShapesConstrained(const int dim, const double * coord, const size_t coord_n, const int * nodeTags, const size_t nodeTags_n, const double alpha, const double meanValue, size_t ** tetrahedra, size_t * tetrahedra_n, size_t *** domains, size_t ** domains_n, size_t *domains_nn, size_t *** boundaries, size_t ** boundaries_n, size_t *boundaries_nn, size_t ** neighbors, size_t * neighbors_n, const int * controlTags, const size_t controlTags_n, int * ierr)
+GMSH_API void gmshModelMeshAlphaShapesConstrained(const int dim, const int tag, const double * coord, const size_t coord_n, const int * nodeTags, const size_t nodeTags_n, const double alpha, const double meanValue, size_t ** tetrahedra, size_t * tetrahedra_n, size_t *** domains, size_t ** domains_n, size_t *domains_nn, size_t *** boundaries, size_t ** boundaries_n, size_t *boundaries_nn, size_t ** neighbors, size_t * neighbors_n, double * hMean, const int * controlTags, const size_t controlTags_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
@@ -2390,7 +2391,7 @@ GMSH_API void gmshModelMeshAlphaShapesConstrained(const int dim, const double * 
     std::vector<std::vector<std::size_t> > api_boundaries_;
     std::vector<std::size_t> api_neighbors_;
     std::vector<int> api_controlTags_(controlTags, controlTags + controlTags_n);
-    gmsh::model::mesh::alphaShapesConstrained(dim, api_coord_, api_nodeTags_, alpha, meanValue, api_tetrahedra_, api_domains_, api_boundaries_, api_neighbors_, api_controlTags_);
+    gmsh::model::mesh::alphaShapesConstrained(dim, tag, api_coord_, api_nodeTags_, alpha, meanValue, api_tetrahedra_, api_domains_, api_boundaries_, api_neighbors_, *hMean, api_controlTags_);
     vector2ptr(api_tetrahedra_, tetrahedra, tetrahedra_n);
     vectorvector2ptrptr(api_domains_, domains, domains_n, domains_nn);
     vectorvector2ptrptr(api_boundaries_, boundaries, boundaries_n, boundaries_nn);

@@ -1756,17 +1756,24 @@ namespace gmsh { // Top-level functions
       // tetrahedra of a given tetrahedra. When a tetrahedra has no neighbor for
       // its ith face, the value is tetrahedra.size. For a tet with vertices
       // (0,1,2,3), node ids of the faces are respectively (0,1,2), (0,1,3),
-      // (0,2,3) and (1,2,3). `meanValue' is a parameter used in the alpha shape
-      // criterion test : R_circumsribed / meanValue < alpha. if meanValue < 0,
-      // meanValue is computed as the average minimum edge length of each element.
+      // (0,2,3) and (1,2,3). `nodalSize' is a vector defining the desired alpha
+      // criterion at each point. It should either be of size 1 : it is then used
+      // as a global  alpha shape criterion : R_circumsribed / nodalSize[0] <
+      // threshold. (if meanValue < 0,  meanValue is computed as the average
+      // minimum edge length of each element.). `nodalSize' can also be a vector of
+      // size corresponding to the number of points : it is then used as a local
+      // alpha shape criterion. After triangulation, the average of `nodalSize' of
+      // each vertex of the element (= hElement) is taken and compared to
+      // R_circumscribed. Thus, if threshold == 1, the alpha criterion becomes
+      // R_circumscribed < hElement.
       GMSH_API void alphaShapes(const double threshold,
                                 const int dim,
                                 const std::vector<double> & coord,
+                                const std::vector<double> & nodalSize,
                                 std::vector<std::size_t> & tetra,
                                 std::vector<std::vector<std::size_t> > & domains,
                                 std::vector<std::vector<std::size_t> > & boundaries,
-                                std::vector<std::size_t> & neighbors,
-                                const double meanValue = -1.);
+                                std::vector<std::size_t> & neighbors);
 
       // gmsh::model::mesh::tetNeighbors
       //
@@ -1793,6 +1800,7 @@ namespace gmsh { // Top-level functions
       // Generate a mesh of the array of points `coord', constrained to the surface
       // mesh of the current model. Currently only supported for 3D.
       GMSH_API void alphaShapesConstrained(const int dim,
+                                           const int tag,
                                            const std::vector<double> & coord,
                                            const std::vector<int> & nodeTags,
                                            const double alpha,
@@ -1801,6 +1809,7 @@ namespace gmsh { // Top-level functions
                                            std::vector<std::vector<std::size_t> > & domains,
                                            std::vector<std::vector<std::size_t> > & boundaries,
                                            std::vector<std::size_t> & neighbors,
+                                           double & hMean,
                                            const std::vector<int> & controlTags);
 
       namespace field { // Mesh size field functions

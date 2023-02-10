@@ -5448,22 +5448,27 @@ GMSH_API void gmsh::model::mesh::generateMesh(const int dim, const int tag, cons
   if(!_checkInit()) return;
   // -----------------  1D ------------------------------
   if (dim == 1){
+    Msg::Info("generating mesh for edge %d\n",tag);
     deMeshGEdge killer;
     GEdge *ge = GModel::current()->getEdgeByTag(tag);
     if (!ge)return;
     killer(ge);
-    for (auto t : coord){
-      GPoint gp = ge->point(t);
-      MEdgeVertex *vv = new MEdgeVertex(gp.x(), gp.y(), gp.z(), ge, t);
-      ge->mesh_vertices.push_back(vv);      
+    std::vector<int> index(coord.size(), 0);
+    for (int i = 0 ; i != index.size() ; i++) {
+      index[i] = i;
     }
+    sort(index.begin(), index.end(), [&](const int& a, const int& b) { return (coord[a] < coord[b]);});
+    for (auto t : index){
+      GPoint gp = ge->point(coord[t]);
+      MEdgeVertex *vv = new MEdgeVertex(gp.x(), gp.y(), gp.z(), ge, coord[t], nodeTags[t]);
+      ge->mesh_vertices.push_back(vv);   
+    }
+    int lineCount = 1;
     for(std::size_t i = 0; i < ge->mesh_vertices.size() + 1; i++) {
-      MVertex *v0 = (i == 0) ? ge->getBeginVertex()->mesh_vertices[0] :
-	ge->mesh_vertices[i - 1];
-      MVertex *v1 = (i == ge->mesh_vertices.size()) ?
-	ge->getEndVertex()->mesh_vertices[0] :
-	ge->mesh_vertices[i];
+      MVertex *v0 = (i == 0) ? ge->getBeginVertex()->mesh_vertices[0] : ge->mesh_vertices[i - 1];
+      MVertex *v1 = (i == ge->mesh_vertices.size()) ? ge->getEndVertex()->mesh_vertices[0] : ge->mesh_vertices[i];
       ge->lines.push_back(new MLine(v0, v1));
+      lineCount++;
     }
   }
   // -----------------  2D ------------------------------
@@ -5497,7 +5502,7 @@ GMSH_API void gmsh::model::mesh::generateMesh(const int dim, const int tag, cons
         idx++;
       }
     }
-
+    int triCount = 1;
     for(size_t i = 0; i < pm->faces.size(); i++) {
       PolyMesh::HalfEdge *he = pm->faces[i]->he;
       int a = he->v->data;
@@ -5530,6 +5535,7 @@ GMSH_API void gmsh::model::mesh::generateMesh(const int dim, const int tag, cons
           vs[c] = vc;
         }
 	      gf->triangles.push_back(new MTriangle(va,vb,vc));
+        triCount++;
       }
     }
     pm->print4debug(1);
@@ -5597,13 +5603,13 @@ GMSH_API void
 gmsh::model::mesh::alphaShapes( const double threshold,
                                 const int dim,
                                 const std::vector<double> & coord,
+                                const std::vector<double> & nodalSize,
                                 std::vector<std::size_t> & tetra,
                                 std::vector<std::vector<std::size_t> > & domains,
                                 std::vector<std::vector<std::size_t> > & boundaries,
-                                std::vector<std::size_t> & neighbors,
-                                const double meanValue){
+                                std::vector<std::size_t> & neighbors){
 #if defined(HAVE_MESH)
-  alphaShapes_ (threshold, dim, coord, tetra, domains, boundaries, neighbors, meanValue);
+  alphaShapes_ (threshold, dim, coord, nodalSize, tetra, domains, boundaries, neighbors);
 #else
   Msg::Error("alphaShapes requires the mesh module");
 #endif
@@ -5636,6 +5642,7 @@ gmsh::model::mesh::createHxtMesh(const std::string &inputMesh, const std::vector
 
 GMSH_API void
 gmsh::model::mesh::alphaShapesConstrained(const int dim, 
+                                          const int tag,
                                           const std::vector<double>& coord,
                                           const std::vector<int>& nodeTags,
                                           const double alpha, 
@@ -5644,9 +5651,10 @@ gmsh::model::mesh::alphaShapesConstrained(const int dim,
                                           std::vector<std::vector<size_t> > &domains,
                                           std::vector<std::vector<size_t> > &boundaries,
                                           std::vector<size_t> &neigh, 
+                                          double &hMean,
                                           const std::vector<int> &controlTags){
 #if defined(HAVE_MESH)
-  constrainedAlphaShapes_(GModel::current(), dim, coord, nodeTags, alpha, meanValue, tetrahedra, domains, boundaries, neigh, controlTags);
+  constrainedAlphaShapes_(GModel::current(), dim, tag, coord, nodeTags, alpha, meanValue, tetrahedra, domains, boundaries, neigh, hMean, controlTags);
 #else
   Msg::Error("alphaShapesConstrained requires the mesh module");
 #endif  
