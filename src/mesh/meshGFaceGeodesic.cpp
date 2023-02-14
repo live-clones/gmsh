@@ -7,8 +7,8 @@
 #include "discreteFace.h"
 #include "MVertexRTree.h"
 
-#include "/Users/CODES/geodesic_matlab/src/geodesic_mesh.h"
-#include "/Users/CODES/geodesic_matlab/src/geodesic_algorithm_exact.h" 
+#include "/Users/geuzaine/src/gmsh/contrib/geodesic_matlab/src/geodesic_mesh.h"
+#include "/Users/geuzaine/src/gmsh/contrib/geodesic_matlab/src/geodesic_algorithm_exact.h"
 
 static  PolyMesh* createPolyMesh (GModel *gm, std::map<MVertex*, int> &trianglePositions) {
   const double eps = 1.e-8; //FIXME
@@ -25,7 +25,7 @@ static  PolyMesh* createPolyMesh (GModel *gm, std::map<MVertex*, int> &triangleP
 
   size_t faceCounter = 0;
 
-  for (GModel::fiter fit = gm->firstFace() ; fit != gm->lastFace(); fit++){        
+  for (GModel::fiter fit = gm->firstFace() ; fit != gm->lastFace(); fit++){
 
     std::set<MVertex*> vs;
     for (auto t : (*fit)->triangles){
@@ -34,7 +34,7 @@ static  PolyMesh* createPolyMesh (GModel *gm, std::map<MVertex*, int> &triangleP
       vs.insert(t->getVertex(2));
     }
     discreteFace *df = static_cast<discreteFace*>(*fit);
-    //------------------------------------------------------------- 
+    //-------------------------------------------------------------
     for (auto _v : vs){
       MFaceVertex *vk = dynamic_cast<MFaceVertex*> (_v);
       if (vk){
@@ -45,7 +45,7 @@ static  PolyMesh* createPolyMesh (GModel *gm, std::map<MVertex*, int> &triangleP
 	//	printf("face %d vertex %d param %g %g triangle position %d parametric ? %d\n",
 	//	       df->tag(),vk->getNum(),u,v,tp,vk->getParameter(0,u));
 	trianglePositions[vk] = tp + faceCounter;
-      }      
+      }
       MEdgeVertex *ve = dynamic_cast<MEdgeVertex*> (_v);
       if (ve){
 	GEdge *ge = dynamic_cast<GEdge*> (ve->onWhat());
@@ -57,17 +57,17 @@ static  PolyMesh* createPolyMesh (GModel *gm, std::map<MVertex*, int> &triangleP
 	  int tp = df->trianglePosition(p2.x(),p2.y(), uloc, vloc);
 	  trianglePositions[vk] = tp + faceCounter;
 	}
-      }      
-    }    
-    //------------------------------------------------------------- 
-    for(std::size_t i = 0; i < df->_param.t3d.size(); i++){      
+      }
+    }
+    //-------------------------------------------------------------
+    for(std::size_t i = 0; i < df->_param.t3d.size(); i++){
       for(std::size_t j = 0; j < 3; j++){
 	MVertex *vv = pos.insert(df->_param.t3d[i].getVertex(j));
 	if (!vv) vv = df->_param.t3d[i].getVertex(j);
 	else df->_param.t3d[i].getVertex(j)->setIndex(vv->getIndex());
 	//	else   printf("FOUND face %d t %lu v %lu %p\n",df->tag(),i,j,vv);
 	if (vv->getIndex() == -1){
-	  pm->vertices.push_back(new PolyMesh::Vertex(vv->x(), vv->y(), vv->z(), counter));	
+	  pm->vertices.push_back(new PolyMesh::Vertex(vv->x(), vv->y(), vv->z(), counter));
 	  vv->setIndex(counter++);
 	}
       }
@@ -95,12 +95,12 @@ static  PolyMesh* createPolyMesh (GModel *gm, std::map<MVertex*, int> &triangleP
       }
     }
   }
-  
+
   HalfEdgePtrLessThan compare;
   std::sort(pm->hedges.begin(), pm->hedges.end(), compare);
-  
+
   HalfEdgePtrEqual equal;
-  for(size_t i = 0; i < pm->hedges.size() - 1; i++) {
+  for(int i = 0; i < pm->hedges.size() - 1; i++) {
     PolyMesh::HalfEdge *h0 = pm->hedges[i];
     PolyMesh::HalfEdge *h1 = pm->hedges[i + 1];
     if(equal(h0, h1)) {
@@ -109,7 +109,7 @@ static  PolyMesh* createPolyMesh (GModel *gm, std::map<MVertex*, int> &triangleP
       i++;
     }
   }
-      
+
   return pm;
 }
 
@@ -122,7 +122,7 @@ static PolyMesh* createPolyMesh (discreteFace *df) {
   //  printf("setting %lu indices to -1\n",df->_param.v3d.size());
   for(std::size_t i = 0; i < df->_param.v3d.size(); i++)
     df->_param.v3d[i].setIndex(-1);
-    
+
   printf("unifyning %lu vertices\n",df->_param.v3d.size());
   int counter = 0;
   for(std::size_t i = 0; i < df->_param.t3d.size(); i++){
@@ -131,13 +131,13 @@ static PolyMesh* createPolyMesh (discreteFace *df) {
       if (!vv) vv = df->_param.t3d[i].getVertex(j);
       //      printf("%lu %lu %p\n",i,j,vv);
       if (vv->getIndex() == -1){
-	pm->vertices.push_back(new PolyMesh::Vertex(vv->x(), vv->y(), vv->z(), counter));	
+	pm->vertices.push_back(new PolyMesh::Vertex(vv->x(), vv->y(), vv->z(), counter));
 	vv->setIndex(counter++);
       }
     }
   }
   //  printf("%lu vertices unified\n",pm->vertices.size());
-  
+
   for(std::size_t i = 0; i < df->_param.t3d.size(); i++){
     PolyMesh::HalfEdge *he[3];
     for(std::size_t j = 0; j < 3; j++){
@@ -169,9 +169,9 @@ static PolyMesh* createPolyMesh (discreteFace *df) {
       i++;
     }
   }
-  
+
   return pm;
-  
+
 }
 
 static PolyMesh::VertexOnFace findVertexOnFace (PolyMesh *pm, MVertex *v, int pos){
@@ -220,7 +220,7 @@ static PolyMesh::VertexOnFace findVertexOnFace (PolyMesh *pm, MVertex *v, int po
 	  vof.v = _v;
 	  n++;
 	  //	  printf("vertex %d after %d searches\n",v->getNum(),cc);
-	  if (he)return vof;	
+	  if (he)return vof;
 	}
       }
     }
@@ -239,9 +239,9 @@ static void exactGeodesics (const PolyMesh::VertexOnFace &_start,
 			    geodesic::Mesh &mesh, std::map<PolyMesh::Face*,int> &f2n,
 			    int save_, FILE *f,
 			    std::vector<std::vector<geodesic::SurfacePoint> > &paths){
-  
+
   SVector3 p_start = _start.point();
-  
+
   geodesic::SurfacePoint sp (&mesh.faces()[f2n[_start.he->f]],p_start.x(), p_start.y(), p_start.z(),geodesic::FACE);
   std::vector<geodesic::SurfacePoint> pts = {sp};
 
@@ -251,12 +251,12 @@ static void exactGeodesics (const PolyMesh::VertexOnFace &_start,
     geodesic::SurfacePoint spe (&mesh.faces()[f2n[v.he->f]],p_end.x(), p_end.y(), p_end.z(),geodesic::FACE);
     _stop.push_back(spe);
   }
-  
+
   geodesic::GeodesicAlgorithmExact algorithm(&mesh);
   algorithm.propagate(pts,0,&_stop);
 
   //  printf("Vertex with %lu incident edges\n",incident_edges.size());
-  
+
   for (auto v : incident_edges){
     SVector3 p_end = v.point();
     geodesic::SurfacePoint spe (&mesh.faces()[f2n[v.he->f]],p_end.x(), p_end.y(), p_end.z(),geodesic::FACE);
@@ -287,7 +287,7 @@ static void createGmshDiscreteEdgeRepresentation ( MEdge &ed ,
       printf("v ");
     }
     else if (point_type == geodesic::EDGE){
-      printf("e ");      
+      printf("e ");
     }
     else if (point_type == geodesic::FACE){
       printf("f ");
@@ -315,13 +315,13 @@ int makeMeshGeodesic (PolyMesh *pm, std::set<MEdge,MEdgeLessThan> &ed, int tag,
     gc[v] = v->gaussianCurvature();
     num[v] = v->data;
   }
-  print__ ("GaussianCurvature.pos", pm, gc);    
-  print__ ("Num.pos", pm, num);    
+  print__ ("GaussianCurvature.pos", pm, gc);
+  print__ ("Num.pos", pm, num);
 
-  geodesic::Mesh mesh;  
-  std::map<PolyMesh::Face*,int> f2n;    
+  geodesic::Mesh mesh;
+  std::map<PolyMesh::Face*,int> f2n;
   {
-    std::vector<double> _points;	
+    std::vector<double> _points;
     std::vector<unsigned> _faces;
     int num = 0;
     for (auto v : pm->vertices){
@@ -329,9 +329,9 @@ int makeMeshGeodesic (PolyMesh *pm, std::set<MEdge,MEdgeLessThan> &ed, int tag,
       _points.push_back(v->position.y());
       _points.push_back(v->position.z());
       v->data = num++;
-    }    
+    }
     int nnn = 0;
-    for (auto f : pm->faces){    
+    for (auto f : pm->faces){
       _faces.push_back(f->he->v->data);
       _faces.push_back(f->he->next->v->data);
       _faces.push_back(f->he->next->next->v->data);
@@ -339,7 +339,7 @@ int makeMeshGeodesic (PolyMesh *pm, std::set<MEdge,MEdgeLessThan> &ed, int tag,
     }
     mesh.initialize_mesh_data(_points, _faces);
   }
-  
+
   //  double D = 0.0;
   PolyMesh::VertexOnFace _start;
   int counter = 0;
@@ -359,25 +359,25 @@ int makeMeshGeodesic (PolyMesh *pm, std::set<MEdge,MEdgeLessThan> &ed, int tag,
       auto it1 = trianglePositions->find(v1);
       if (it1 != trianglePositions->end())pos1 = it1->second;
     }
-    if (it == v2p.end())v2p[v0] =  findVertexOnFace (pm, v0, pos0);  
+    if (it == v2p.end())v2p[v0] =  findVertexOnFace (pm, v0, pos0);
     it = v2p.find(v1);
-    if (it == v2p.end())v2p[v1] =  findVertexOnFace (pm, v1, pos1);  
+    if (it == v2p.end())v2p[v1] =  findVertexOnFace (pm, v1, pos1);
   }
 
   Msg::Info("found all %lu vertices",tmp.size());
-  
+
   std::vector<PolyMesh::VertexOnFace> _ends;
   std::vector<MEdge> _endsGmsh;
   std::map<MEdge, std::vector<geodesic::SurfacePoint>, MEdgeLessThan> edgeRepresentation;
 
-  
+
   for (size_t i=0 ; i<tmp.size() ; i++){
     MVertex *v0 = tmp[i].getMinVertex();
     MVertex *v1 = tmp[i].getMaxVertex();
     //    printf("%d --> %d\n",v0->getNum(),v1->getNum());
     PolyMesh::VertexOnFace  _end = v2p[v1];
     //    D = std::max(16*v0->distance(v1),D);
-    
+
     if (i == 0){
       _start = v2p[v0];
       if (_end.he){
@@ -400,9 +400,14 @@ int makeMeshGeodesic (PolyMesh *pm, std::set<MEdge,MEdgeLessThan> &ed, int tag,
 	std::vector<std::vector<geodesic::SurfacePoint> > paths;
 	exactGeodesics (_start, _ends, mesh, f2n, counter++, f, paths);
 	for (size_t kk = 0 ; kk < paths.size() ; kk++){
-	  MEdge me = _endsGmsh[kk];
-	  edgeRepresentation [me] = paths[kk];
-	  createGmshDiscreteEdgeRepresentation (me,paths[kk]);
+          if(kk < _endsGmsh.size()) {
+            MEdge me = _endsGmsh[kk];
+            edgeRepresentation [me] = paths[kk];
+            createGmshDiscreteEdgeRepresentation (me,paths[kk]);
+          }
+          else{
+            printf("oups\n");
+          }
 	}
       }
       _ends.clear();
@@ -423,21 +428,21 @@ int makeMeshGeodesic (PolyMesh *pm, std::set<MEdge,MEdgeLessThan> &ed, int tag,
     createGmshDiscreteEdgeRepresentation (me,paths[kk]);
     edgeRepresentation [me] = paths[kk];
   }
-  
+
   fprintf(f,"};\n");
   fclose(f);
-  return 0;  
+  return 0;
 }
 
 int makeMeshGeodesic (GFace *gf) {
 
   discreteFace *df = static_cast<discreteFace *> (gf);
-  if (!df)return -1;  
+  if (!df)return -1;
   // FIXME
-  //  if (df->tag() != 4)return -1;  
+  //  if (df->tag() != 4)return -1;
 
   printf("creating polymesh for face %d\n",gf->tag());
-  
+
   PolyMesh *pm = createPolyMesh (df);
 
   std::set<MEdge,MEdgeLessThan> ed;
@@ -448,9 +453,9 @@ int makeMeshGeodesic (GFace *gf) {
   }
 
   makeMeshGeodesic (pm, ed, df->tag());
- 
+
   delete pm;
-  return 0;  
+  return 0;
 }
 
 
@@ -466,11 +471,11 @@ int makeMeshGeodesic (GModel *gm) {
       ed.insert(t->getEdge(1));
       ed.insert(t->getEdge(2));
     }
-  }  
+  }
   printf("all done %lu edges\n",ed.size());
   makeMeshGeodesic (pm, ed, 1, &trianglePositions);
   delete pm;
-  return 0;    
+  return 0;
 }
 
 
