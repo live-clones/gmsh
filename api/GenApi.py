@@ -1024,9 +1024,9 @@ cpp_header = """// {0}
 
 namespace {7} {{
 
-  // A geometrical entity in the {3} API is represented by two integers: its
+  // A model entity in the {3} API is represented by two integers: its
   // dimension (dim = 0, 1, 2 or 3) and its tag (its unique, strictly positive
-  // identifier). When dealing with multiple geometrical entities of possibly
+  // identifier). When dealing with multiple model entities of possibly
   // different dimensions, the entities are packed as a vector of (dim, tag)
   // integer pairs.
   typedef std::vector<std::pair<int, int> > vectorpair;
@@ -1168,9 +1168,9 @@ extern \"C\" {{
 
 namespace {7} {{
 
-  // A geometrical entity in the {3} API is represented by two integers: its
+  // A model entity in the {3} API is represented by two integers: its
   // dimension (dim = 0, 1, 2 or 3) and its tag (its unique, strictly positive
-  // identifier). When dealing with multiple geometrical entities of possibly
+  // identifier). When dealing with multiple model entities of possibly
   // different dimensions, the entities are packed as a vector of (dim, tag)
   // integer pairs.
   typedef std::vector<std::pair<int, int> > vectorpair;

@@ -172,9 +172,11 @@ GMSH_API void gmshModelGetFileName(char ** fileName,
 GMSH_API void gmshModelSetFileName(const char * fileName,
                                    int * ierr);
 
-/* Get all the entities in the current model. If `dim' is >= 0, return only
- * the entities of the specified dimension (e.g. points if `dim' == 0). The
- * entities are returned as a vector of (dim, tag) pairs. */
+/* Get all the entities in the current model. A model entity is represented by
+ * two integers: its dimension (dim = 0, 1, 2 or 3) and its tag (its unique,
+ * strictly positive identifier). If `dim' is >= 0, return only the entities
+ * of the specified dimension (e.g. points if `dim' == 0). The entities are
+ * returned as a vector of (dim, tag) pairs. */
 GMSH_API void gmshModelGetEntities(int ** dimTags, size_t * dimTags_n,
                                    const int dim,
                                    int * ierr);

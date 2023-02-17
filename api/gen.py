@@ -113,7 +113,7 @@ model.add('getFileName', doc, None, ostring('fileName'))
 doc = '''Set the file name associated with the current model.'''
 model.add('setFileName', doc, None, istring('fileName'))
 
-doc = '''Get all the entities in the current model. If `dim' is >= 0, return only the entities of the specified dimension (e.g. points if `dim' == 0). The entities are returned as a vector of (dim, tag) pairs.'''
+doc = '''Get all the entities in the current model. A model entity is represented by two integers: its dimension (dim = 0, 1, 2 or 3) and its tag (its unique, strictly positive identifier). If `dim' is >= 0, return only the entities of the specified dimension (e.g. points if `dim' == 0). The entities are returned as a vector of (dim, tag) pairs.'''
 model.add('getEntities', doc, None, ovectorpair('dimTags'), iint('dim', '-1'))
 
 doc = '''Set the name of the entity of dimension `dim' and tag `tag'.'''

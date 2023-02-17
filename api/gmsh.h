@@ -52,9 +52,9 @@
 
 namespace gmsh {
 
-  // A geometrical entity in the Gmsh API is represented by two integers: its
+  // A model entity in the Gmsh API is represented by two integers: its
   // dimension (dim = 0, 1, 2 or 3) and its tag (its unique, strictly positive
-  // identifier). When dealing with multiple geometrical entities of possibly
+  // identifier). When dealing with multiple model entities of possibly
   // different dimensions, the entities are packed as a vector of (dim, tag)
   // integer pairs.
   typedef std::vector<std::pair<int, int> > vectorpair;
@@ -214,9 +214,11 @@ namespace gmsh { // Top-level functions
 
     // gmsh::model::getEntities
     //
-    // Get all the entities in the current model. If `dim' is >= 0, return only the
-    // entities of the specified dimension (e.g. points if `dim' == 0). The
-    // entities are returned as a vector of (dim, tag) pairs.
+    // Get all the entities in the current model. A model entity is represented by
+    // two integers: its dimension (dim = 0, 1, 2 or 3) and its tag (its unique,
+    // strictly positive identifier). If `dim' is >= 0, return only the entities of
+    // the specified dimension (e.g. points if `dim' == 0). The entities are
+    // returned as a vector of (dim, tag) pairs.
     GMSH_API void getEntities(gmsh::vectorpair & dimTags,
                               const int dim = -1);
 
