@@ -226,8 +226,8 @@ windows-sdk_official_release:
     - cmake -DGMSH_HOST=gmsh.info -DENABLE_CAIRO=0 -DENABLE_OS_SPECIFIC_INSTALL=1 -DENABLE_PETSC=1 -DPETSC_ARCH=real_mumps_seq -DPETSC_DIR=/Users/geuzaine/src/petsc ${EXTRA_OPTION} ..
     - make package -j 4
     - PKG=`ls gmsh-*.[dt][ma][gr]*`
-    - xcrun notarytool submit ${PKG} --keychain-profile GmshNotarytoolCredentials --wait
-    - xcrun stapler staple ${PKG}
+    - [[ ${PKG} == *.dmg ]] && xcrun notarytool submit ${PKG} --keychain-profile GmshNotarytoolCredentials --wait
+    - [[ ${PKG} == *.dmg ]] && xcrun stapler staple ${PKG}
     - scp ${PKG} geuzaine@gmsh.info:.wwwgmsh/bin/macOS/${PKG/\.tar\.gz/\.tgz}
     - ctest -j 4 --output-on-failure
 
