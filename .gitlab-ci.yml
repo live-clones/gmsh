@@ -227,6 +227,9 @@ windows-sdk_official_release:
     - make package -j 4
     - PKG=`ls gmsh-*.[dt][ma][gr]*`
     - python3 ../utils/misc/notarize.py --package ${PKG} --username cgeuzaine@ulg.ac.be --primary-bundle-id org.geuz.Gmsh --password "@keychain:Gmsh Notarization"
+    # altool is deprecated: switch to notary tool
+    # - '[[ ${PKG} == *.dmg ]] && xcrun notarytool submit ${PKG} --keychain-profile GmshNotarytoolCredentials --wait'
+    # - '[[ ${PKG} == *.dmg ]] && xcrun stapler staple ${PKG}'
     - scp ${PKG} geuzaine@gmsh.info:.wwwgmsh/bin/macOS/${PKG/\.tar\.gz/\.tgz}
     - ctest -j 4 --output-on-failure
 

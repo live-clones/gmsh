@@ -67,37 +67,35 @@ static void FinishUpBoundingBox()
   for(int i = 0; i < 3; i++)
     range[i] = CTX::instance()->max[i] - CTX::instance()->min[i];
 
-  if(range[0] < CTX::instance()->geom.tolerance &&
-     range[1] < CTX::instance()->geom.tolerance &&
-     range[2] < CTX::instance()->geom.tolerance) {
+  // OCC tolerance is 1e-7
+  double tol = std::max(1e-6, CTX::instance()->geom.tolerance);
+
+  if(range[0] < tol && range[1] < tol && range[2] < tol) {
     CTX::instance()->min[0] -= 1.;
     CTX::instance()->min[1] -= 1.;
     CTX::instance()->max[0] += 1.;
     CTX::instance()->max[1] += 1.;
   }
-  else if(range[0] < CTX::instance()->geom.tolerance &&
-          range[1] < CTX::instance()->geom.tolerance) {
+  else if(range[0] < tol && range[1] < tol) {
     CTX::instance()->min[0] -= range[2];
     CTX::instance()->min[1] -= range[2];
     CTX::instance()->max[0] += range[2];
     CTX::instance()->max[1] += range[2];
   }
-  else if(range[0] < CTX::instance()->geom.tolerance &&
-          range[2] < CTX::instance()->geom.tolerance) {
+  else if(range[0] < tol && range[2] < tol) {
     CTX::instance()->min[0] -= range[1];
     CTX::instance()->max[0] += range[1];
   }
-  else if(range[1] < CTX::instance()->geom.tolerance &&
-          range[2] < CTX::instance()->geom.tolerance) {
+  else if(range[1] < tol && range[2] < tol) {
     CTX::instance()->min[1] -= range[0];
     CTX::instance()->max[1] += range[0];
   }
-  else if(range[0] < CTX::instance()->geom.tolerance) {
+  else if(range[0] < tol) {
     double l = sqrt(SQU(range[1]) + SQU(range[2]));
     CTX::instance()->min[0] -= l;
     CTX::instance()->max[0] += l;
   }
-  else if(range[1] < CTX::instance()->geom.tolerance) {
+  else if(range[1] < tol) {
     double l = sqrt(SQU(range[0]) + SQU(range[2]));
     CTX::instance()->min[1] -= l;
     CTX::instance()->max[1] += l;

@@ -469,9 +469,11 @@ const set_file_name = setFileName
 """
     gmsh.model.getEntities(dim = -1)
 
-Get all the entities in the current model. If `dim` is >= 0, return only the
-entities of the specified dimension (e.g. points if `dim` == 0). The entities
-are returned as a vector of (dim, tag) pairs.
+Get all the entities in the current model. A model entity is represented by two
+integers: its dimension (dim == 0, 1, 2 or 3) and its tag (its unique, strictly
+positive identifier). If `dim` is >= 0, return only the entities of the
+specified dimension (e.g. points if `dim` == 0). The entities are returned as a
+vector of (dim, tag) pairs.
 
 Return `dimTags`.
 
@@ -1290,7 +1292,7 @@ Get the parametric coordinates `parametricCoord` for the points `coord` on the
 entity of dimension `dim` and tag `tag`. `coord` are given as x, y, z
 coordinates, concatenated: [p1x, p1y, p1z, p2x, ...]. `parametricCoord` returns
 the parametric coordinates t on the curve (if `dim` = 1) or u and v coordinates
-concatenated on the surface (if `dim` = 2), i.e. [p1t, p2t, ...] or [p1u, p1v,
+concatenated on the surface (if `dim` == 2), i.e. [p1t, p2t, ...] or [p1u, p1v,
 p2u, ...].
 
 Return `parametricCoord`.
@@ -1377,7 +1379,7 @@ const is_inside = isInside
 Get the points `closestCoord` on the entity of dimension `dim` and tag `tag` to
 the points `coord`, by orthogonal projection. `coord` and `closestCoord` are
 given as x, y, z coordinates, concatenated: [p1x, p1y, p1z, p2x, ...].
-`parametricCoord` returns the parametric coordinates t on the curve (if `dim` =
+`parametricCoord` returns the parametric coordinates t on the curve (if `dim` ==
 1) or u and v coordinates concatenated on the surface (if `dim` = 2), i.e. [p1t,
 p2t, ...] or [p1u, p1v, p2u, ...].
 
@@ -2708,7 +2710,7 @@ gGu, gGv, gGw]. Data is returned by element, with elements in the same order as
 in `getElements` and `getElementsByType`. `jacobians` contains for each element
 the 9 entries of the 3x3 Jacobian matrix at each evaluation point. The matrix is
 returned by column: [e1g1Jxu, e1g1Jyu, e1g1Jzu, e1g1Jxv, ..., e1g1Jzw, e1g2Jxu,
-..., e1gGJzw, e2g1Jxu, ...], with Jxu=dx/du, Jyu=dy/du, etc. `determinants`
+..., e1gGJzw, e2g1Jxu, ...], with Jxu = dx/du, Jyu = dy/du, etc. `determinants`
 contains for each element the determinant of the Jacobian matrix at each
 evaluation point: [e1g1, e1g2, ... e1gG, e2g1, ...]. `coord` contains for each
 element the x, y, z coordinates of the evaluation points. If `tag` < 0, get the
@@ -2754,7 +2756,7 @@ Get the Jacobian for a single element `elementTag`, at the G evaluation points
 [g1u, g1v, g1w, ..., gGu, gGv, gGw]. `jacobians` contains the 9 entries of the
 3x3 Jacobian matrix at each evaluation point. The matrix is returned by column:
 [e1g1Jxu, e1g1Jyu, e1g1Jzu, e1g1Jxv, ..., e1g1Jzw, e1g2Jxu, ..., e1gGJzw,
-e2g1Jxu, ...], with Jxu=dx/du, Jyu=dy/du, etc. `determinants` contains the
+e2g1Jxu, ...], with Jxu = dx/du, Jyu = dy/du, etc. `determinants` contains the
 determinant of the Jacobian matrix at each evaluation point. `coord` contains
 the x, y, z coordinates of the evaluation points. This function relies on an
 internal cache (a vector in case of dense element numbering, a map otherwise);
@@ -8482,9 +8484,9 @@ const add_list_data_string = addListDataString
 """
     gmsh.view.getListDataStrings(tag, dim)
 
-Get list-based post-processing data strings (2D strings if `dim` = 2, 3D strings
-if `dim` = 3) from the view with tag `tag`. Return the coordinates in `coord`,
-the strings in `data` and the styles in `style`.
+Get list-based post-processing data strings (2D strings if `dim` == 2, 3D
+strings if `dim` = 3) from the view with tag `tag`. Return the coordinates in
+`coord`, the strings in `data` and the styles in `style`.
 
 Return `coord`, `data`, `style`.
 
@@ -9182,8 +9184,8 @@ const select_views = selectViews
 """
     gmsh.fltk.splitCurrentWindow(how = "v", ratio = 0.5)
 
-Split the current window horizontally (if `how` = "h") or vertically (if `how` =
-"v"), using ratio `ratio`. If `how` = "u", restore a single window.
+Split the current window horizontally (if `how` == "h") or vertically (if `how`
+== "v"), using ratio `ratio`. If `how` == "u", restore a single window.
 
 Types:
  - `how`: string

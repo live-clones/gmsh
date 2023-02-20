@@ -4243,7 +4243,7 @@ static void setShapeAttributes(OCCAttributesRTree *attributes,
                                  matDensName, matDensValType)) {
       if(!phys.empty()) phys += " & ";
       phys += matName->ToCString();
-      Msg::Info(" - Label & material '%s' (%dD)", phys.c_str());
+      Msg::Info(" - Label & material '%s' (%dD)", phys.c_str(), dim);
     }
     else if(phys.size()) {
       Msg::Info(" - Label '%s' (%dD)", phys.c_str(), dim);
