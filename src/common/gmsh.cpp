@@ -5328,7 +5328,7 @@ GMSH_API void gmsh::model::mesh::getPeriodicKeys(
 
   tagMaster = ge->getMeshMaster()->tag();
   getKeys(elementType, functionSpaceType,
-                     typeKeys, entityKeys, coord, tag, returnCoord);
+          typeKeys, entityKeys, coord, tag, returnCoord);
   typeKeysMaster = typeKeys;
   entityKeysMaster = entityKeys;
   coordMaster = coord;
@@ -5340,29 +5340,34 @@ GMSH_API void gmsh::model::mesh::getPeriodicKeys(
      functionSpaceType == "Lagrange") {
 #pragma omp parallel for num_threads(nthreads)
     for(std::size_t i = 0; i < entityKeys.size(); i++) {
-      MVertex v(0., 0., 0., nullptr, entityKeys[i]);
-      auto mv = ge->correspondingVertices.find(&v);
-      if(mv != ge->correspondingVertices.end()) {
-        entityKeysMaster[i] = mv->second->getNum();
-        if(returnCoord) {
-          coord[3 * i] = mv->second->x();
-          coord[3 * i + 1] = mv->second->y();
-          coord[3 * i + 2] = mv->second->z();
-        }
+      MVertex *v = GModel::current()->getMeshVertexByTag(entityKeys[i]);
+      if(!v) {
+        Msg::Warning("Unknown node %d", entityKeys[i]);
       }
       else {
-        auto mv2 = ge->correspondingHighOrderVertices.find(&v);
-        if(mv2 != ge->correspondingHighOrderVertices.end()) {
-          entityKeysMaster[i] = mv2->second->getNum();
+        auto mv = ge->correspondingVertices.find(v);
+        if(mv != ge->correspondingVertices.end()) {
+          entityKeysMaster[i] = mv->second->getNum();
           if(returnCoord) {
-            coord[3 * i] = mv2->second->x();
-            coord[3 * i + 1] = mv2->second->y();
-            coord[3 * i + 2] = mv2->second->z();
+            coord[3 * i] = mv->second->x();
+            coord[3 * i + 1] = mv->second->y();
+            coord[3 * i + 2] = mv->second->z();
           }
         }
-        else{
-          Msg::Warning("Unknown master node corresponding to node %d",
-                       entityKeys[i]);
+        else {
+          auto mv2 = ge->correspondingHighOrderVertices.find(v);
+          if(mv2 != ge->correspondingHighOrderVertices.end()) {
+            entityKeysMaster[i] = mv2->second->getNum();
+            if(returnCoord) {
+              coord[3 * i] = mv2->second->x();
+              coord[3 * i + 1] = mv2->second->y();
+              coord[3 * i + 2] = mv2->second->z();
+            }
+          }
+          else{
+            Msg::Warning("Unknown master node corresponding to node %d",
+                         entityKeys[i]);
+          }
         }
       }
     }
