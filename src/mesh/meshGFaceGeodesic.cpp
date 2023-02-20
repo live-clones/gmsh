@@ -1,14 +1,14 @@
 #include "GmshConfig.h"
 
-#if defined(HAVE_MESH)
+#if defined(HAVE_MESH) && defined(HAVE_GEODESIC)
 
 #include "meshTriangulation.h"
 #include "GFace.h"
 #include "discreteFace.h"
 #include "MVertexRTree.h"
 
-#include "/Users/geuzaine/src/gmsh/contrib/geodesic_matlab/src/geodesic_mesh.h"
-#include "/Users/geuzaine/src/gmsh/contrib/geodesic_matlab/src/geodesic_algorithm_exact.h"
+#include "geodesic_mesh.h"
+#include "geodesic_algorithm_exact.h"
 
 static  PolyMesh* createPolyMesh (GModel *gm, std::map<MVertex*, int> &trianglePositions) {
   const double eps = 1.e-8; //FIXME
