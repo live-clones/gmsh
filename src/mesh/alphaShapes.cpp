@@ -898,6 +898,36 @@ void createHxtMesh_(const std::string &inputMesh, const std::vector<double>& coo
 
 }
 
+void print4debug(PolyMesh* pm, const int debugTag)
+  {
+    char name[256];
+    sprintf(name, "polyMesh%d.pos", debugTag);
+    FILE *f = fopen(name, "w");
+    fprintf(f, "View \" %s \"{\n", name);
+    for(auto it : pm->faces) {
+      PolyMesh::HalfEdge *he0 = it->he;
+      PolyMesh::HalfEdge *he1 = it->he->next;
+      PolyMesh::HalfEdge *he2 = it->he->next->next;
+      if (it->he)
+        fprintf(f, "ST(%g,%g,0,%g,%g,0,%g,%g,0){%d,%d,%d};\n",
+                he0->v->position.x(), he0->v->position.y(), he1->v->position.x(),
+                he1->v->position.y(), he2->v->position.x(), he2->v->position.y(),
+                it->data, it->data, it->data);
+    }
+    // for(auto it : pm->hedges) {
+    //   PolyMesh::HalfEdge *he = it;
+    //   if(he->opposite && he->f) {
+    //     fprintf(f, "SL(%g,%g,0,%g,%g,0){%d,%d};\n", he->v->position.x(),
+    //             he->v->position.y(), he->opposite->v->position.x(),
+    //             he->opposite->v->position.y(), he->data, he->data);
+    //   }
+    // }
+
+    fprintf(f, "};\n");
+    fclose(f);
+    printf("wrote mesh polyMesh%d.pos\n", debugTag);
+  }
+
 void generateMesh_(const int dim, const int tag, const bool refine, const std::vector<double> &coord, const std::vector<int> &nodeTags){
   // -----------------  1D ------------------------------
   std::vector<double> pCoord;
@@ -936,6 +966,7 @@ void generateMesh_(const int dim, const int tag, const bool refine, const std::v
     killer(gf);
     std::vector<double> cc = pCoord;
     PolyMesh *pm = GFaceInitialMesh(tag, 1, &cc);
+    print4debug(pm, 1000);
     std::vector<GEdge*> ed = gf->edges();
     std::unordered_map<int,MVertex*> vs;
     size_t vmax = 0;
@@ -960,6 +991,7 @@ void generateMesh_(const int dim, const int tag, const bool refine, const std::v
     }
     int triCount = 1;
     for(size_t i = 0; i < pm->faces.size(); i++) {
+      if (pm->faces[i]->data != 1) continue;
       PolyMesh::HalfEdge *he = pm->faces[i]->he;
       int a = he->v->data;
       int b = he->next->v->data;
@@ -1323,36 +1355,6 @@ void delaunayCheck(PolyMesh* pm, std::vector<PolyMesh::HalfEdge* > hes, std::vec
   } while (_he != he);
   return nullptr;
  }
-
- void print4debug(PolyMesh* pm, const int debugTag)
-  {
-    char name[256];
-    sprintf(name, "polyMesh%d.pos", debugTag);
-    FILE *f = fopen(name, "w");
-    fprintf(f, "View \" %s \"{\n", name);
-    for(auto it : pm->faces) {
-      PolyMesh::HalfEdge *he0 = it->he;
-      PolyMesh::HalfEdge *he1 = it->he->next;
-      PolyMesh::HalfEdge *he2 = it->he->next->next;
-      if (it->he)
-        fprintf(f, "ST(%g,%g,0,%g,%g,0,%g,%g,0){%d,%d,%d};\n",
-                he0->v->position.x(), he0->v->position.y(), he1->v->position.x(),
-                he1->v->position.y(), he2->v->position.x(), he2->v->position.y(),
-                it->data, it->data, it->data);
-    }
-    // for(auto it : pm->hedges) {
-    //   PolyMesh::HalfEdge *he = it;
-    //   if(he->opposite && he->f) {
-    //     fprintf(f, "SL(%g,%g,0,%g,%g,0){%d,%d};\n", he->v->position.x(),
-    //             he->v->position.y(), he->opposite->v->position.x(),
-    //             he->opposite->v->position.y(), he->data, he->data);
-    //   }
-    // }
-
-    fprintf(f, "};\n");
-    fclose(f);
-    printf("wrote mesh polyMesh%d.pos\n", debugTag);
-  }
 
 // Generate a mesh on entity of dimension dim and tag tag based on pre-defined locations of nodes, with possibly a size field on the nodes.
 // The mesh will be refined if necessary, in order to respect the mesh size field.
