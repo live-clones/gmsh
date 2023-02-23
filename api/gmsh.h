@@ -1883,7 +1883,8 @@ namespace gmsh { // Top-level functions
       // `nodeTags'. `minRadius' is the minimum allowed circumradius of elements in
       // the mesh. An element that has a circumradius which is smaller than this
       // value will not be refined. Return newly added nodes and corresponding size
-      // field.
+      // field, as well as the updated list of constrained edges and elements
+      // within the refinement.
       GMSH_API void constrainedDelaunayRefinement(const int dim,
                                                   const int tag,
                                                   const std::vector<std::size_t> & elementTags,

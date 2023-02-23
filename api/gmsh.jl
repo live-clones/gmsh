@@ -4602,7 +4602,8 @@ need to stay in the mesh, in the form of 2 successive nodes. `sizeField` is a
 vector containing the size at the nodes referenced by `nodeTags`. `minRadius` is
 the minimum allowed circumradius of elements in the mesh. An element that has a
 circumradius which is smaller than this value will not be refined. Return newly
-added nodes and corresponding size field.
+added nodes and corresponding size field, as well as the updated list of
+constrained edges and elements within the refinement.
 
 Return `newNodeTags`, `newCoords`, `newSizeField`, `newConstrainedEdges`, `newElementsInRefinement`.
 
