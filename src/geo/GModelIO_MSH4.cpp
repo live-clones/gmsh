@@ -1209,7 +1209,7 @@ static bool readMSH4Parametrizations(GModel *const model, FILE *fp, bool binary)
   }
 
   // only report surface parametrizations
-  Msg::Info("%lu parametrizations", nParamF);
+  Msg::Info("%lu parametrization%s", nParamF, nParamF > 1 ? "s" : "");
   Msg::StartProgressMeter(nParamF);
 
   for(std::size_t edge = 0; edge < nParamE; edge++) {
