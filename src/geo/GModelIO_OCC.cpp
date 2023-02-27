@@ -1038,7 +1038,8 @@ bool OCC_Internals::addEllipseArc(int &tag, int startTag, int centerTag,
     else if(!u.IsParallel(x2, 1e-6))
       v = x2 - x2.Dot(u.XYZ()) * u.XYZ();
     else {
-      Msg::Error("The points do not define an ellipse");
+      Msg::Error("Cannot create ellipse arc with start and end point on the "
+                 "major axis");
       return false;
     }
     Standard_Real x1u = Square(x1.Dot(u.XYZ()));
@@ -1046,13 +1047,14 @@ bool OCC_Internals::addEllipseArc(int &tag, int startTag, int centerTag,
     Standard_Real x2u = Square(x2.Dot(u.XYZ()));
     Standard_Real x2v = Square(x2.Dot(v.XYZ()));
     if(IsEqual(x1u, x2u) || IsEqual(x1v, x2v)) {
-      Msg::Error("The points do not define an ellipse");
+      Msg::Error("Cannot create ellipse arc with start and end point symmetric "
+                 "with respect to major or minor axis");
       return false;
     }
     Standard_Real a2 = (x1v * x2u - x1u * x2v) / (x1v - x2v);
     Standard_Real b2 = (x1u * x2v - x1v * x2u) / (x1u - x2u);
     if(a2 <= 0.0 || b2 <= 0.0) {
-      Msg::Error("The points do not define an ellipse");
+      Msg::Error("Invalid radii during creation of ellipse arc");
       return false;
     }
     Standard_Real a; // major radius
