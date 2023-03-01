@@ -1581,10 +1581,14 @@ GMSH_API void gmsh::model::mesh::getNodes(std::vector<std::size_t> &nodeTags,
   else {
     GModel::current()->getEntities(entities, dim);
   }
-  for(std::size_t i = 0; i < entities.size(); i++) {
-    GEntity *ge = entities[i];
-    for(std::size_t j = 0; j < ge->mesh_vertices.size(); j++) {
-      MVertex *v = ge->mesh_vertices[j];
+  std::size_t numNodes = 0;
+  for(auto ge : entities) numNodes += ge->mesh_vertices.size();
+  nodeTags.reserve(numNodes);
+  coord.reserve(numNodes * 3);
+  if(dim > 0 && returnParametricCoord) parametricCoord.reserve(numNodes * dim);
+
+  for(auto ge : entities) {
+    for(auto v : ge->mesh_vertices) {
       nodeTags.push_back(v->getNum());
       coord.push_back(v->x());
       coord.push_back(v->y());
