@@ -319,8 +319,7 @@ GMSH_API void gmsh::model::remove()
 GMSH_API void gmsh::model::list(std::vector<std::string> &names)
 {
   if(!_checkInit()) return;
-  for(std::size_t i = 0; i < GModel::list.size(); i++)
-    names.push_back(GModel::list[i]->getName());
+  for(auto m : GModel::list) names.push_back(m->getName());
 }
 
 GMSH_API void gmsh::model::getCurrent(std::string &name)
@@ -338,8 +337,7 @@ GMSH_API void gmsh::model::setCurrent(const std::string &name)
     return;
   }
   GModel::setCurrent(m);
-  for(std::size_t i = 0; i < GModel::list.size(); i++)
-    GModel::list[i]->setVisibility(0);
+  for(auto m : GModel::list) m->setVisibility(0);
   GModel::current()->setVisibility(1);
   CTX::instance()->mesh.changed = ENT_ALL;
 }
@@ -362,9 +360,8 @@ GMSH_API void gmsh::model::getEntities(vectorpair &dimTags, const int dim)
   dimTags.clear();
   std::vector<GEntity *> entities;
   GModel::current()->getEntities(entities, dim);
-  for(std::size_t i = 0; i < entities.size(); i++)
-    dimTags.push_back(
-      std::make_pair(entities[i]->dim(), entities[i]->tag()));
+  for(auto ge : entities)
+    dimTags.push_back(std::make_pair(ge->dim(), ge->tag()));
 }
 
 GMSH_API void gmsh::model::setEntityName(const int dim, const int tag,
@@ -418,8 +415,7 @@ GMSH_API void gmsh::model::getEntitiesForPhysicalGroup(const int dim,
   GModel::current()->getPhysicalGroups(dim, groups);
   auto it = groups.find(tag);
   if(it != groups.end()) {
-    for(std::size_t j = 0; j < it->second.size(); j++)
-      tags.push_back(it->second[j]->tag());
+    for(auto ge : it->second) tags.push_back(ge->tag());
   }
   else {
     Msg::Error("Physical %s does not exist", _getEntityName(dim, tag).c_str());
@@ -434,8 +430,8 @@ GMSH_API void gmsh::model::getEntitiesForPhysicalName(const std::string &name,
   std::vector<GEntity *> entities;
   GModel::current()->getEntitiesForPhysicalName(name, entities);
   if(entities.size() != 0) {
-    for(std::size_t i = 0; i < entities.size(); ++i) {
-      dimTags.push_back(std::pair<int, int >(entities[i]->dim(), entities[i]->tag()));
+    for(auto ge : entities) {
+      dimTags.push_back(std::pair<int, int >(ge->dim(), ge->tag()));
     }
   }
   else {
@@ -454,10 +450,7 @@ gmsh::model::getPhysicalGroupsForEntity(const int dim, const int tag,
     Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
     return;
   }
-  std::vector<int> phy = ge->getPhysicalEntities();
-  if(phy.empty()) return;
-  physicalTags.resize(phy.size());
-  for(std::size_t i = 0; i < phy.size(); i++) { physicalTags[i] = phy[i]; }
+  physicalTags = ge->getPhysicalEntities();
 }
 
 GMSH_API int gmsh::model::addPhysicalGroup(const int dim,
@@ -591,9 +584,8 @@ GMSH_API void gmsh::model::getEntitiesInBoundingBox(
   SBoundingBox3d box(xmin, ymin, zmin, xmax, ymax, zmax);
   std::vector<GEntity *> entities;
   GModel::current()->getEntitiesInBox(entities, box, dim);
-  for(std::size_t i = 0; i < entities.size(); i++)
-    dimTags.push_back(
-      std::make_pair(entities[i]->dim(), entities[i]->tag()));
+  for(auto ge : entities)
+    dimTags.push_back(std::make_pair(ge->dim(), ge->tag()));
 }
 
 GMSH_API void gmsh::model::getBoundingBox(const int dim, const int tag,
