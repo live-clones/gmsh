@@ -34,14 +34,37 @@
 #include "Patch.h"
 #include "bezierBasis.h"
 #include "nodalBasis.h"
+#include "GModel.h"
 
 Patch::Patch(const std::map<MElement *, GEntity *> &element2entity,
              const std::map<MElement *, GEntity *> &bndEl2Ent,
              const std::set<MElement *> &els, std::set<MVertex *> &toFix,
-             const std::set<MElement *> &bndEls, bool fixBndNodes)
+             const std::set<MElement *> &bndEls, int fixBndNodes)
   : _typeLengthScale(LS_NONE), _invLengthScaleSq(0.)
 {
   _dim = (*els.begin())->getDim();
+
+  // Get all entities that are linked by periodicity constraints
+  std::set<GEntity*> fixBndEntities;
+  if(fixBndNodes == 2) {
+    GModel *m = GModel::current(); // FIXME get model from entities
+    for(auto it = m->firstEdge(); it != m->lastEdge(); ++it) {
+      GEdge *ge = *it;
+      if(ge->getMeshMaster() != ge) {
+        fixBndEntities.insert(ge);
+        fixBndEntities.insert(ge->getMeshMaster());
+      }
+    }
+    for(auto it = m->firstFace(); it != m->lastFace(); ++it) {
+      GFace *gf = *it;
+      if(gf->getMeshMaster() != gf) {
+        fixBndEntities.insert(gf);
+        fixBndEntities.insert(gf->getMeshMaster());
+      }
+    }
+    Msg::Info("Considering %lu entities with periodic constraints",
+              fixBndEntities.size());
+  }
 
   // Initialize elements, vertices, free vertices and element->vertices
   // connectivity
@@ -69,8 +92,16 @@ Patch::Patch(const std::map<MElement *, GEntity *> &element2entity,
       const bool hasParam = ge->haveParametrization();
       int iV = addVert(vert);
       _el2V[iEl].push_back(iV);
-      if((vDim > 0) && (toFix.find(vert) == toFix.end()) &&
-         (!fixBndNodes || vDim == _dim)) { // Free vertex?
+
+      if((vDim == 0) ||
+         (toFix.find(vert) != toFix.end()) ||
+         (fixBndNodes == 1 && vDim < _dim) ||
+         (fixBndNodes == 2 && fixBndEntities.find(ge) != fixBndEntities.end())) {
+        // fixed
+        _el2FV[iEl].push_back(-1);
+      }
+      else {
+        // free to move
         VertexCoord *coord;
         if(vDim == 3)
           coord = new VertexCoordPhys3D();
@@ -88,8 +119,6 @@ Patch::Patch(const std::map<MElement *, GEntity *> &element2entity,
         for(int i = _startPCFV[iFV]; i < _startPCFV[iFV] + vDim; i++)
           _indPCEl[iEl].push_back(i);
       }
-      else
-        _el2FV[iEl].push_back(-1);
     }
   }
 

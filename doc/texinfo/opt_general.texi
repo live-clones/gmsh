@@ -38,7 +38,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item General.BuildInfo
 Gmsh build information (read-only)@*
-Default value: @code{"Version: 4.11.1-git-516d090cd; License: GNU General Public License; Build OS: MacOSX-sdk; Build date: 20221205; Build host: MacBook-Pro-Christophe.local; Build options: 64Bit ALGLIB[contrib] ANN[contrib] Bamg Blas[petsc] Blossom Cairo Cgns DIntegration Dlopen DomHex Eigen[contrib] Fltk GMP Gmm[contrib] Hxt Jpeg Kbipack Lapack[petsc] MathEx[contrib] Med Mesh Metis[contrib] Mmg Mpeg Netgen ONELAB ONELABMetamodel OpenCASCADE OpenCASCADE-CAF OpenGL OpenMP OptHom PETSc Parasolid ParasolidSTEP Parser Plugins Png Post QuadMeshingTools QuadTri Solver TetGen/BR TouchBar Voro++[contrib] WinslowUntangler Zlib; FLTK version: 1.4.0; PETSc version: 3.14.4 (complex arithmtic); OCC version: 7.8.0; MED version: 4.1.0; Packaged by: geuzaine; Web site: https://gmsh.info; Issue tracker: https://gitlab.onelab.info/gmsh/gmsh/issues"}@*
+Default value: @code{"Version: 4.11.2-git-dacd02882; License: GNU General Public License; Build OS: MacOSX-sdk; Build date: 20230220; Build host: eduroam-039c.sophia.inria.fr; Build options: 64Bit ALGLIB[contrib] ANN[contrib] Bamg Blas[petsc] Blossom Cairo Cgns DIntegration Dlopen DomHex Eigen[contrib] Fltk GMP Gmm[contrib] Hxt Jpeg Kbipack Lapack[petsc] MathEx[contrib] Med Mesh Metis[contrib] Mmg Mpeg Netgen ONELAB ONELABMetamodel OpenCASCADE OpenCASCADE-CAF OpenGL OpenMP OptHom PETSc Parasolid ParasolidSTEP Parser Plugins Png Post QuadMeshingTools QuadTri Solver TetGen/BR TouchBar Voro++[contrib] WinslowUntangler Zlib; FLTK version: 1.4.0; PETSc version: 3.18.4 (complex arithmtic); OCC version: 7.8.0; MED version: 4.1.0; Packaged by: geuzaine; Web site: https://gmsh.info; Issue tracker: https://gitlab.onelab.info/gmsh/gmsh/issues"}@*
 Saved in: @code{-}
 
 @item General.BuildOptions
@@ -168,7 +168,7 @@ Saved in: @code{General.SessionFileName}
 
 @item General.Version
 Gmsh version (read-only)@*
-Default value: @code{"4.11.1-git-516d090cd"}@*
+Default value: @code{"4.11.2-git-dacd02882"}@*
 Saved in: @code{-}
 
 @item General.WatchFilePattern

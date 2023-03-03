@@ -45,8 +45,7 @@ struct OptHomParameters {
   double distanceFactor; // filter elements such that no elements further away
                          // than DistanceFactor times the max distance to
                          // straight sided version of an element are optimized
-  bool fixBndNodes; // how jacobians are computed and if points can move on
-                    // boundaries
+  int fixBndNodes; // are points on all (1) or periodic (2) boundaries are fixed
   int strategy; // 0 = connected blobs, 1 = adaptive one-by-one
   int maxAdaptBlob; // Max. nb. of blob adaptation interations
   int
@@ -71,7 +70,7 @@ struct OptHomParameters {
   OptHomParameters()
     : BARRIER_MIN_METRIC(-1.), BARRIER_MIN(0.1), BARRIER_MAX(2.0), weight(1.),
       nbLayers(6), dim(3), itMax(300), optPassMax(50), onlyVisible(true),
-      distanceFactor(12), fixBndNodes(false), strategy(0), maxAdaptBlob(3),
+      distanceFactor(12), fixBndNodes(0), strategy(0), maxAdaptBlob(3),
       adaptBlobLayerFact(2.), adaptBlobDistFact(2.), optPrimSurfMesh(false),
       optCAD(false), optCADWeight(1000.), optCADDistMax(1.e22),
       discrTolerance(1.e-4), lockCurvedBLElts(true), SUCCESS(0), numBlobs(0),

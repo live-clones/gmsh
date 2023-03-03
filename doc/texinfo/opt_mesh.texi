@@ -162,7 +162,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.HighOrderFixBoundaryNodes
-Fix boundary nodes during high-order optimization?@*
+Fix all (1) or periodic (2) boundary nodes during high-order optimization?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 

@@ -43,7 +43,7 @@ public:
   Patch(const std::map<MElement *, GEntity *> &element2entity,
         const std::map<MElement *, GEntity *> &bndEl2Ent,
         const std::set<MElement *> &els, std::set<MVertex *> &toFix,
-        const std::set<MElement *> &bndEls, bool fixBndNodes);
+        const std::set<MElement *> &bndEls, int fixBndNodes);
 
   // Mesh entities and variables
   inline const int &dim() { return _dim; }

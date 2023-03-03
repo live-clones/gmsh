@@ -41,7 +41,7 @@ struct MeshQualOptParameters {
   int maxBarrierUpdates; // Max. number of barrier moves ("runs")
   bool onlyVisible; // If optimization applied to visible entities ONLY
   double distanceFactor; // Distance criterion for patch creation
-  bool fixBndNodes; // If points can move on boundaries
+  int fixBndNodes; // If points on all (1) or periodic (2) boundaries are fixed
   int strategy; // 0 = connected blobs, 1 = adaptive one-by-one
   int maxPatchAdapt; // Max. nb. of patch adaptation iterations (if adaptive)
   int maxLayersAdaptFact; // Growth factor in number of layers for patch
