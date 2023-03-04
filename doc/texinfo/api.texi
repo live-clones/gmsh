@@ -1588,6 +1588,8 @@ negative, relocate all the nodes in the mesh.
 -
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L857,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L738,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L2570,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L2217,Julia}
+@item Examples:
+Python (@url{@value{GITLAB-PREFIX}/examples/api/relocate_nodes.py#L48,relocate_nodes.py})
 @end table
 
 @item gmsh/model/mesh/getElements
@@ -4233,7 +4235,7 @@ integer
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L2433,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2137,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L6644,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5918,Julia}
 @item Examples:
-Python (@url{@value{GITLAB-PREFIX}/examples/api/crack.py#L13,crack.py}, @url{@value{GITLAB-PREFIX}/examples/api/naca_boundary_layer_2d.py#L67,naca_boundary_layer_2d.py}, @url{@value{GITLAB-PREFIX}/examples/api/naca_boundary_layer_3d.py#L70,naca_boundary_layer_3d.py}, @url{@value{GITLAB-PREFIX}/examples/api/stl_to_brep.py#L41,stl_to_brep.py})
+Python (@url{@value{GITLAB-PREFIX}/examples/api/crack.py#L13,crack.py}, @url{@value{GITLAB-PREFIX}/examples/api/naca_boundary_layer_2d.py#L67,naca_boundary_layer_2d.py}, @url{@value{GITLAB-PREFIX}/examples/api/naca_boundary_layer_3d.py#L70,naca_boundary_layer_3d.py}, @url{@value{GITLAB-PREFIX}/examples/api/relocate_nodes.py#L10,relocate_nodes.py}, @url{@value{GITLAB-PREFIX}/examples/api/stl_to_brep.py#L41,stl_to_brep.py})
 @end table
 
 @item gmsh/model/occ/addCircleArc
@@ -4422,7 +4424,7 @@ integer
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L2562,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2257,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L6960,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6180,Julia}
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/t19.cpp#L26,t19.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorials/python/t19.py#L24,t19.py}, @url{@value{GITLAB-PREFIX}/examples/api/naca_boundary_layer_2d.py#L73,naca_boundary_layer_2d.py}, @url{@value{GITLAB-PREFIX}/examples/api/stl_to_brep.py#L46,stl_to_brep.py}, @url{@value{GITLAB-PREFIX}/examples/api/surface_filling.py#L16,surface_filling.py})
+C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/t19.cpp#L26,t19.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorials/python/t19.py#L24,t19.py}, @url{@value{GITLAB-PREFIX}/examples/api/naca_boundary_layer_2d.py#L73,naca_boundary_layer_2d.py}, @url{@value{GITLAB-PREFIX}/examples/api/relocate_nodes.py#L15,relocate_nodes.py}, @url{@value{GITLAB-PREFIX}/examples/api/stl_to_brep.py#L46,stl_to_brep.py}, @url{@value{GITLAB-PREFIX}/examples/api/surface_filling.py#L16,surface_filling.py})
 @end table
 
 @item gmsh/model/occ/addRectangle
@@ -4517,7 +4519,7 @@ integer
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L2629,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2319,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7100,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6315,Julia}
 @item Examples:
-Python (@url{@value{GITLAB-PREFIX}/examples/api/surface_filling.py#L19,surface_filling.py})
+Python (@url{@value{GITLAB-PREFIX}/examples/api/relocate_nodes.py#L21,relocate_nodes.py}, @url{@value{GITLAB-PREFIX}/examples/api/surface_filling.py#L19,surface_filling.py})
 @end table
 
 @item gmsh/model/occ/addBSplineFilling
