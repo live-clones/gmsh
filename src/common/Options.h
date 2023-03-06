@@ -396,6 +396,7 @@ double opt_geometry_curve_width(OPT_ARGS_NUM);
 double opt_geometry_curve_sel_width(OPT_ARGS_NUM);
 double opt_geometry_curve_type(OPT_ARGS_NUM);
 double opt_geometry_surface_type(OPT_ARGS_NUM);
+double opt_geometry_volume_type(OPT_ARGS_NUM);
 double opt_geometry_light(OPT_ARGS_NUM);
 double opt_geometry_light_two_side(OPT_ARGS_NUM);
 double opt_geometry_occ_auto_embed(OPT_ARGS_NUM);

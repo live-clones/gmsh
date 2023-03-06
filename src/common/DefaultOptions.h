@@ -1060,6 +1060,8 @@ StringXNumber GeometryOptions_Number[] = {
     "Display volume labels?" },
   { F|O|D, "VolumeNumbers" , opt_geometry_volume_labels , 0. ,
     "[Deprecated]" },
+  { F|O, "VolumeType" , opt_geometry_volume_type , 0. ,
+    "Volume display type (0: sphere, 1: diamond)" },
 
   { 0, nullptr , nullptr , 0. , nullptr }
 } ;
@@ -2164,7 +2166,7 @@ StringXColor GeometryOptions_Color[] = {
     {128, 128, 128, 255}, {128, 128, 128, 255}, {0, 0, 0, 255}, {128, 128, 128, 255},
     "Normal geometry surface color" },
   { F|O, "Volumes" , opt_geometry_color_volumes ,
-    {255, 255, 0, 255}, {255, 255, 0, 255}, {0, 0, 0, 255}, {255, 255, 0, 255},
+    {200, 200, 0, 255}, {200, 200, 0, 255}, {0, 0, 0, 255}, {200, 200, 0, 255},
     "Normal geometry volume color" },
   { F|O, "Selection" , opt_geometry_color_selection ,
     {255, 0, 0, 255}, {255, 0, 0, 255}, {255, 0, 0, 255}, {255, 0, 0, 255},

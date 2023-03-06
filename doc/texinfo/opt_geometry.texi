@@ -406,6 +406,11 @@ Display volume labels?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Geometry.VolumeType
+Volume display type (0: sphere, 1: diamond)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Geometry.Color.Points
 Normal geometry point color@*
 Default value: @code{@{90,90,90@}}@*
@@ -423,7 +428,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item Geometry.Color.Volumes
 Normal geometry volume color@*
-Default value: @code{@{255,255,0@}}@*
+Default value: @code{@{200,200,0@}}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.Color.Selection

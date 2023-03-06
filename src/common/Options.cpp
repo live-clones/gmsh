@@ -4543,6 +4543,23 @@ double opt_geometry_surface_type(OPT_ARGS_NUM)
   return CTX::instance()->geom.surfaceType;
 }
 
+double opt_geometry_volume_type(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    CTX::instance()->geom.volumeType = (int)val;
+    if(CTX::instance()->geom.volumeType < 0 ||
+       CTX::instance()->geom.volumeType > 1)
+      CTX::instance()->geom.volumeType = 0;
+  }
+#if defined(HAVE_FLTK)
+  if(FlGui::available() && (action & GMSH_GUI)) {
+    FlGui::instance()->options->geo.choice[5]->value(
+      CTX::instance()->geom.volumeType);
+  }
+#endif
+  return CTX::instance()->geom.volumeType;
+}
+
 double opt_geometry_light(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->geom.light = (int)val;

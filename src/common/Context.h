@@ -114,7 +114,7 @@ struct contextGeometryOptions {
   int draw, light, lightTwoSide, points, curves, surfaces, volumes;
   int pointLabels, curveLabels, surfaceLabels, volumeLabels, labelType;
   double pointSize, curveWidth, selectedPointSize, selectedCurveWidth;
-  int pointType, curveType, surfaceType, numSubEdges;
+  int pointType, curveType, surfaceType, volumeType, numSubEdges;
   double normals, tangents, scalingFactor;
   int snapPoints;
   int highlightOrphans, clip, useTransform;
