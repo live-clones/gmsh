@@ -2104,10 +2104,11 @@ class API:
                         fc.write("  return result_api_;\n")
                     fc.write("}\n\n")
                 # *.h_cwrap
-                fcwrap.write(indent + "// " +
-                             ("\n" + indent +
-                              "// ").join(textwrap.wrap(doc, 80 -
-                                                        len(indent))) + "\n")
+                fcwrap.write(
+                    indent + "// " + cpp_namespace + name + "\n" + indent + "//\n")
+                fcwrap.write(
+                    indent + "// " + ("\n" + indent + "// ").join(
+                        textwrap.wrap(doc, 80 - len(indent))) + "\n")
                 rt = rtype.rcpp_type if rtype else "void"
                 fnameapi = indent + "inline " + rt + " " + name + "("
                 fcwrap.write(fnameapi)
