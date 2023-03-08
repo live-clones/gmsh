@@ -1014,16 +1014,17 @@ namespace gmsh { // Top-level functions
       // gmsh::model::mesh::getElementQualities
       //
       // Get the quality `elementQualities' of the elements with tags
-      // `elementTags'. `qualityType' is the requested quality measure: "minSJ" for
-      // the minimal scaled jacobien, "minSICN" for the minimal signed inverted
-      // condition number, "minSIGE" for the signed inverted gradient error,
-      // "gamma" for the ratio of the inscribed to circumcribed sphere radius,
-      // "innerRadius" for the inner radius, "outerRadius" for the outerRadius,
-      // "minIsotropy" for the minimum isotropy measure, "angleShape" for the angle
-      // shape measure, "minEdge" for the minimum straight edge length, "maxEdge"
-      // for the maximum straight edge length, "volume" for the volume. If
-      // `numTasks' > 1, only compute and return the part of the data indexed by
-      // `task'.
+      // `elementTags'. `qualityType' is the requested quality measure: "minDetJac"
+      // and "maxDetJac" for the adaptively computed minimal and maximal Jacobian
+      // determinant, "minSJ" for the sampled minimal scaled jacobien, "minSICN"
+      // for the sampled minimal signed inverted condition number, "minSIGE" for
+      // the sampled signed inverted gradient error, "gamma" for the ratio of the
+      // inscribed to circumcribed sphere radius, "innerRadius" for the inner
+      // radius, "outerRadius" for the outerRadius, "minIsotropy" for the minimum
+      // isotropy measure, "angleShape" for the angle shape measure, "minEdge" for
+      // the minimum straight edge length, "maxEdge" for the maximum straight edge
+      // length, "volume" for the volume. If `numTasks' > 1, only compute and
+      // return the part of the data indexed by `task'.
       GMSH_API void getElementQualities(const std::vector<std::size_t> & elementTags,
                                         std::vector<double> & elementsQuality,
                                         const std::string & qualityName = "minSICN",

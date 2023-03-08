@@ -69,6 +69,7 @@
 #include "meshGRegionDelaunayInsertion.h"
 #include "meshGRegionHxt.h"
 #include "gmshCrossFields.h"
+#include "qualityMeasuresJacobian.h"
 #endif
 
 #if defined(HAVE_POST)
@@ -2331,6 +2332,18 @@ GMSH_API void gmsh::model::mesh::getElementQualities(
     else if(qualityName == "innerRadius"){
       elementQualities[k] = e->getInnerRadius();
     }
+#if defined(HAVE_MESH)
+    else if(qualityName == "minDetJac"){
+      double min, max;
+      jacobianBasedQuality::minMaxJacobianDeterminant(e, min, max);
+      elementQualities[k] = min;
+    }
+    else if(qualityName == "maxDetJac"){
+      double min, max;
+      jacobianBasedQuality::minMaxJacobianDeterminant(e, min, max);
+      elementQualities[k] = max;
+    }
+#endif
     else{
       if(k == begin) {
         Msg::Error("Unknown quality name '%s'", qualityName.c_str());
