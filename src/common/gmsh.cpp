@@ -7486,7 +7486,8 @@ GMSH_API void gmsh::view::addListData(const int tag,
 GMSH_API void gmsh::view::getListData(const int tag,
                                       std::vector<std::string> &dataTypes,
                                       std::vector<int> &numElements,
-                                      std::vector<std::vector<double> > &data)
+                                      std::vector<std::vector<double> > &data,
+                                      bool returnAdaptive)
 {
   if(!_checkInit()) return;
 #if defined(HAVE_POST)
@@ -7495,7 +7496,8 @@ GMSH_API void gmsh::view::getListData(const int tag,
     Msg::Error("Unknown view with tag %d", tag);
     return;
   }
-  PViewDataList *d = dynamic_cast<PViewDataList *>(view->getData());
+  PViewDataList *d =
+    dynamic_cast<PViewDataList *>(view->getData(returnAdaptive));
   if(!d) {
     Msg::Error("View with tag %d does not contain list data", tag);
     return;

@@ -4235,14 +4235,14 @@ GMSH_API void gmshViewAddListData(const int tag, const char * dataType, const in
   }
 }
 
-GMSH_API void gmshViewGetListData(const int tag, char *** dataType, size_t * dataType_n, int ** numElements, size_t * numElements_n, double *** data, size_t ** data_n, size_t *data_nn, int * ierr)
+GMSH_API void gmshViewGetListData(const int tag, char *** dataType, size_t * dataType_n, int ** numElements, size_t * numElements_n, double *** data, size_t ** data_n, size_t *data_nn, const int returnAdaptive, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
     std::vector<std::string> api_dataType_;
     std::vector<int> api_numElements_;
     std::vector<std::vector<double> > api_data_;
-    gmsh::view::getListData(tag, api_dataType_, api_numElements_, api_data_);
+    gmsh::view::getListData(tag, api_dataType_, api_numElements_, api_data_, returnAdaptive);
     vectorstring2charptrptr(api_dataType_, dataType, dataType_n);
     vector2ptr(api_numElements_, numElements, numElements_n);
     vectorvector2ptrptr(api_data_, data, data_n, data_nn);
