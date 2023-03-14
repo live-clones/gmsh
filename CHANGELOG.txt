@@ -1,4 +1,6 @@
-4.12 (Work-in-progress): small enhancements and bug fixes.
+4.12 (Work-in-progress): new high-order mesh optimisation mode for periodic
+meshes; new element qualities available through API; new IGES export; new volume
+glyph; better mesh node visualization; small bug fixes.
 
 * New API functions: model/getEntitiesForPhysicalName.
 

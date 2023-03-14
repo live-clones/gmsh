@@ -4210,24 +4210,25 @@ static void setShapeAttributes(OCCAttributesRTree *attributes,
     phys += TCollection_AsciiString(name).ToCString();
   }
 
-  TopLoc_Location partLoc = loc;
-  Handle(XCAFDoc_Location) l;
-  if(label.FindAttribute(XCAFDoc_Location::GetID(), l)) {
-    if(isRef)
-      partLoc = partLoc * l->Get();
-    else
-      partLoc = l->Get();
-  }
+  TopLoc_Location partLoc = loc * shapeTool->GetLocation(label);
 
   TDF_Label ref;
   if(shapeTool->IsReference(label) && shapeTool->GetReferredShape(label, ref)) {
     setShapeAttributes(attributes, shapeTool, colorTool, materialTool, ref,
                        partLoc, phys, true);
   }
-
-  if(shapeTool->IsSimpleShape(label) && (isRef || shapeTool->IsFree(label))) {
+  else if(shapeTool->IsSimpleShape(label) && (isRef || shapeTool->IsFree(label))) {
     TopoDS_Shape shape = shapeTool->GetShape(label);
     shape.Location(isRef ? loc : partLoc);
+
+#if 0
+    // this is necessary for endcaps.stp (cf. #693), but has a big performance
+    // hit on STEP files with lots of references -- leaving out until we
+    // understand why it's necessary: there should be a better way ;-)
+    if(isRef && !loc.IsIdentity() && loc != shapeTool->GetLocation(label))
+      shapeTool->SetShape(label, shape);
+#endif
+
     int dim =
       (shape.ShapeType() == TopAbs_VERTEX) ? 0 :
       (shape.ShapeType() == TopAbs_EDGE || shape.ShapeType() == TopAbs_WIRE) ?
@@ -4306,7 +4307,7 @@ static void setShapeAttributes(OCCAttributesRTree *attributes,
   else {
     for(TDF_ChildIterator it(label); it.More(); it.Next()) {
       setShapeAttributes(attributes, shapeTool, colorTool, materialTool,
-                         it.Value(), partLoc, phys, isRef);
+                         it.Value(), partLoc, phys, false);
     }
   }
 }
