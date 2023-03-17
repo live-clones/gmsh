@@ -877,8 +877,7 @@ StringXNumber GeometryOptions_Number[] = {
   { F|O, "CurveSelectWidth" , opt_geometry_curve_sel_width , 3. ,
     "Display width of selected curves (in pixels)" },
   { F|O, "CurveType" , opt_geometry_curve_type , 0. ,
-    "Display curves as solid color segments (0), 3D cylinders (1) or tapered "
-    "cylinders (2)" },
+    "Display curves as solid color segments (0) or 3D cylinders (1)" },
   { F|O, "CurveWidth" , opt_geometry_curve_width , 2. ,
     "Display width of lines (in pixels)" },
 
@@ -1856,7 +1855,8 @@ StringXNumber ViewOptions_Number[] = {
   { F|O, "LightTwoSide" , opt_view_light_two_side , 1. ,
     "Light both sides of surfaces (leads to slower rendering)" },
   { F|O, "LineType" , opt_view_line_type , 0. ,
-    "Display lines as solid color segments (0) or 3D cylinders (1)" },
+    "Display lines as solid color segments (0), 3D cylinders (1) or tapered "
+    "cylinders (2)" },
   { F|O, "LineWidth" , opt_view_line_width , 1.0 ,
     "Display width of lines (in pixels)" },
 

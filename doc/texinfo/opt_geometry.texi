@@ -62,7 +62,7 @@ Default value: @code{3}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.CurveType
-Display curves as solid color segments (0), 3D cylinders (1) or tapered cylinders (2)@*
+Display curves as solid color segments (0) or 3D cylinders (1)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
