@@ -343,13 +343,19 @@ if(ENABLE_OPENMP)
         "${CMAKE_CXX_FLAGS} -Xpreprocessor -fopenmp -I/opt/local/include/libomp")
     list(APPEND EXTERNAL_LIBRARIES "-L/opt/local/lib/libomp -lomp")
   elseif(APPLE AND EXISTS "/usr/local/lib/libomp.dylib")
-    # official Apple compiler with homebrew's libomp
+    # official Apple compiler with homebrew's libomp on Intel
+    set_config_option(HAVE_OPENMP "OpenMP[Homebrew]")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Xpreprocessor -fopenmp")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Xpreprocessor -fopenmp")
+    list(APPEND EXTERNAL_LIBRARIES "-L/usr/local/lib -lomp")
+  elseif(APPLE AND EXISTS "/opt/homebrew/opt/libomp")
+    # official Apple compiler with homebrew's libomp on M processors
     set_config_option(HAVE_OPENMP "OpenMP[Homebrew]")
     set(CMAKE_C_FLAGS
-        "${CMAKE_C_FLAGS} -Xpreprocessor -fopenmp")
+        "${CMAKE_C_FLAGS} -Xpreprocessor -fopenmp -I/opt/homebrew/opt/libomp/include")
     set(CMAKE_CXX_FLAGS
-        "${CMAKE_CXX_FLAGS} -Xpreprocessor -fopenmp")
-    list(APPEND EXTERNAL_LIBRARIES "-L/usr/local/lib -lomp")
+        "${CMAKE_CXX_FLAGS} -Xpreprocessor -fopenmp -I/opt/homebrew/opt/libomp/include")
+    list(APPEND EXTERNAL_LIBRARIES "-L/opt/homebrew/opt/libomp/lib -lomp")
   elseif(${CMAKE_SYSTEM_NAME} MATCHES "Linux" AND EXISTS "/usr/local/lib64/libgomp.a")
     # custom static openmp for official linux builds
     set_config_option(HAVE_OPENMP "OpenMP[static]")
