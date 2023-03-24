@@ -118,7 +118,7 @@ namespace gmsh { // Top-level functions
     //
     // Set a numerical option to `value'. `name' is of the form "Category.Option"
     // or "Category[num].Option". Available categories and options are listed in
-    // the Gmsh reference manual.
+    // the "Gmsh options" chapter of the Gmsh reference manual.
     GMSH_API void setNumber(const std::string & name,
                             const double value);
 
@@ -126,7 +126,8 @@ namespace gmsh { // Top-level functions
     //
     // Get the `value' of a numerical option. `name' is of the form
     // "Category.Option" or "Category[num].Option". Available categories and
-    // options are listed in the Gmsh reference manual.
+    // options are listed in the "Gmsh options" chapter of the Gmsh reference
+    // manual.
     GMSH_API void getNumber(const std::string & name,
                             double & value);
 
@@ -134,7 +135,7 @@ namespace gmsh { // Top-level functions
     //
     // Set a string option to `value'. `name' is of the form "Category.Option" or
     // "Category[num].Option". Available categories and options are listed in the
-    // Gmsh reference manual.
+    // "Gmsh options" chapter of the Gmsh reference manual.
     GMSH_API void setString(const std::string & name,
                             const std::string & value);
 
@@ -142,7 +143,7 @@ namespace gmsh { // Top-level functions
     //
     // Get the `value' of a string option. `name' is of the form "Category.Option"
     // or "Category[num].Option". Available categories and options are listed in
-    // the Gmsh reference manual.
+    // the "Gmsh options" chapter of the Gmsh reference manual.
     GMSH_API void getString(const std::string & name,
                             std::string & value);
 
@@ -151,8 +152,8 @@ namespace gmsh { // Top-level functions
     // Set a color option to the RGBA value (`r', `g', `b', `a'), where where `r',
     // `g', `b' and `a' should be integers between 0 and 255. `name' is of the form
     // "Category.Color.Option" or "Category[num].Color.Option". Available
-    // categories and options are listed in the Gmsh reference manual. For
-    // conciseness "Color." can be ommitted in `name'.
+    // categories and options are listed in the "Gmsh options" chapter of the Gmsh
+    // reference manual. For conciseness "Color." can be ommitted in `name'.
     GMSH_API void setColor(const std::string & name,
                            const int r,
                            const int g,
@@ -163,8 +164,8 @@ namespace gmsh { // Top-level functions
     //
     // Get the `r', `g', `b', `a' value of a color option. `name' is of the form
     // "Category.Color.Option" or "Category[num].Color.Option". Available
-    // categories and options are listed in the Gmsh reference manual. For
-    // conciseness "Color." can be ommitted in `name'.
+    // categories and options are listed in the "Gmsh options" chapter of the Gmsh
+    // reference manual. For conciseness "Color." can be ommitted in `name'.
     GMSH_API void getColor(const std::string & name,
                            int & r,
                            int & g,
@@ -236,6 +237,11 @@ namespace gmsh { // Top-level functions
                                 const int tag,
                                 std::string & name);
 
+    // gmsh::model::removeEntityName
+    //
+    // Remove the entity name `name' from the current model.
+    GMSH_API void removeEntityName(const std::string & name);
+
     // gmsh::model::getPhysicalGroups
     //
     // Get all the physical groups in the current model. If `dim' is >= 0, return
@@ -291,17 +297,17 @@ namespace gmsh { // Top-level functions
                                   const int tag,
                                   const std::string & name);
 
-    // gmsh::model::removePhysicalName
-    //
-    // Remove the physical name `name' from the current model.
-    GMSH_API void removePhysicalName(const std::string & name);
-
     // gmsh::model::getPhysicalName
     //
     // Get the name of the physical group of dimension `dim' and tag `tag'.
     GMSH_API void getPhysicalName(const int dim,
                                   const int tag,
                                   std::string & name);
+
+    // gmsh::model::removePhysicalName
+    //
+    // Remove the physical name `name' from the current model.
+    GMSH_API void removePhysicalName(const std::string & name);
 
     // gmsh::model::setTag
     //
@@ -390,11 +396,6 @@ namespace gmsh { // Top-level functions
     // entities on their boundaries, down to dimension 0.
     GMSH_API void removeEntities(const gmsh::vectorpair & dimTags,
                                  const bool recursive = false);
-
-    // gmsh::model::removeEntityName
-    //
-    // Remove the entity name `name' from the current model.
-    GMSH_API void removeEntityName(const std::string & name);
 
     // gmsh::model::getType
     //
@@ -625,10 +626,11 @@ namespace gmsh { // Top-level functions
                                  const double y,
                                  const double z);
 
-    // gmsh::model::getAttributeNames
+    // gmsh::model::setAttribute
     //
-    // Get the names of any optional attributes stored in the model.
-    GMSH_API void getAttributeNames(std::vector<std::string> & names);
+    // Set the values of the attribute with name `name'.
+    GMSH_API void setAttribute(const std::string & name,
+                               const std::vector<std::string> & values);
 
     // gmsh::model::getAttribute
     //
@@ -636,11 +638,10 @@ namespace gmsh { // Top-level functions
     GMSH_API void getAttribute(const std::string & name,
                                std::vector<std::string> & values);
 
-    // gmsh::model::setAttribute
+    // gmsh::model::getAttributeNames
     //
-    // Set the values of the attribute with name `name'.
-    GMSH_API void setAttribute(const std::string & name,
-                               const std::vector<std::string> & values);
+    // Get the names of any optional attributes stored in the model.
+    GMSH_API void getAttributeNames(std::vector<std::string> & names);
 
     // gmsh::model::removeAttribute
     //
@@ -1802,7 +1803,8 @@ namespace gmsh { // Top-level functions
         //
         // Add a new mesh size field of type `fieldType'. If `tag' is positive,
         // assign the tag explicitly; otherwise a new tag is assigned
-        // automatically. Return the field tag.
+        // automatically. Return the field tag. Available field types are listed in
+        // the "Gmsh mesh size fields" chapter of the Gmsh reference manual.
         GMSH_API int add(const std::string & fieldType,
                          const int tag = -1);
 
@@ -3618,6 +3620,8 @@ namespace gmsh { // Top-level functions
     // gmsh::plugin::setNumber
     //
     // Set the numerical option `option' to the value `value' for plugin `name'.
+    // Plugins available in the official Gmsh release are listed in the "Gmsh
+    // plugins" chapter of the Gmsh reference manual.
     GMSH_API void setNumber(const std::string & name,
                             const std::string & option,
                             const double value);
@@ -3625,13 +3629,17 @@ namespace gmsh { // Top-level functions
     // gmsh::plugin::setString
     //
     // Set the string option `option' to the value `value' for plugin `name'.
+    // Plugins available in the official Gmsh release are listed in the "Gmsh
+    // plugins" chapter of the Gmsh reference manual.
     GMSH_API void setString(const std::string & name,
                             const std::string & option,
                             const std::string & value);
 
     // gmsh::plugin::run
     //
-    // Run the plugin `name'. Return the tag of the created view (if any).
+    // Run the plugin `name'. Return the tag of the created view (if any). Plugins
+    // available in the official Gmsh release are listed in the "Gmsh plugins"
+    // chapter of the Gmsh reference manual.
     GMSH_API int run(const std::string & name);
 
   } // namespace plugin

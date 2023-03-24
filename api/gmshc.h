@@ -94,28 +94,29 @@ GMSH_API void gmshClear(int * ierr);
 
 /* Set a numerical option to `value'. `name' is of the form "Category.Option"
  * or "Category[num].Option". Available categories and options are listed in
- * the Gmsh reference manual. */
+ * the "Gmsh options" chapter of the Gmsh reference manual. */
 GMSH_API void gmshOptionSetNumber(const char * name,
                                   const double value,
                                   int * ierr);
 
 /* Get the `value' of a numerical option. `name' is of the form
  * "Category.Option" or "Category[num].Option". Available categories and
- * options are listed in the Gmsh reference manual. */
+ * options are listed in the "Gmsh options" chapter of the Gmsh reference
+ * manual. */
 GMSH_API void gmshOptionGetNumber(const char * name,
                                   double * value,
                                   int * ierr);
 
 /* Set a string option to `value'. `name' is of the form "Category.Option" or
  * "Category[num].Option". Available categories and options are listed in the
- * Gmsh reference manual. */
+ * "Gmsh options" chapter of the Gmsh reference manual. */
 GMSH_API void gmshOptionSetString(const char * name,
                                   const char * value,
                                   int * ierr);
 
 /* Get the `value' of a string option. `name' is of the form "Category.Option"
  * or "Category[num].Option". Available categories and options are listed in
- * the Gmsh reference manual. */
+ * the "Gmsh options" chapter of the Gmsh reference manual. */
 GMSH_API void gmshOptionGetString(const char * name,
                                   char ** value,
                                   int * ierr);
@@ -123,8 +124,8 @@ GMSH_API void gmshOptionGetString(const char * name,
 /* Set a color option to the RGBA value (`r', `g', `b', `a'), where where `r',
  * `g', `b' and `a' should be integers between 0 and 255. `name' is of the
  * form "Category.Color.Option" or "Category[num].Color.Option". Available
- * categories and options are listed in the Gmsh reference manual. For
- * conciseness "Color." can be ommitted in `name'. */
+ * categories and options are listed in the "Gmsh options" chapter of the Gmsh
+ * reference manual. For conciseness "Color." can be ommitted in `name'. */
 GMSH_API void gmshOptionSetColor(const char * name,
                                  const int r,
                                  const int g,
@@ -134,8 +135,8 @@ GMSH_API void gmshOptionSetColor(const char * name,
 
 /* Get the `r', `g', `b', `a' value of a color option. `name' is of the form
  * "Category.Color.Option" or "Category[num].Color.Option". Available
- * categories and options are listed in the Gmsh reference manual. For
- * conciseness "Color." can be ommitted in `name'. */
+ * categories and options are listed in the "Gmsh options" chapter of the Gmsh
+ * reference manual. For conciseness "Color." can be ommitted in `name'. */
 GMSH_API void gmshOptionGetColor(const char * name,
                                  int * r,
                                  int * g,
@@ -193,6 +194,10 @@ GMSH_API void gmshModelGetEntityName(const int dim,
                                      char ** name,
                                      int * ierr);
 
+/* Remove the entity name `name' from the current model. */
+GMSH_API void gmshModelRemoveEntityName(const char * name,
+                                        int * ierr);
+
 /* Get all the physical groups in the current model. If `dim' is >= 0, return
  * only the entities of the specified dimension (e.g. physical points if `dim'
  * == 0). The entities are returned as a vector of (dim, tag) pairs. */
@@ -241,15 +246,15 @@ GMSH_API void gmshModelSetPhysicalName(const int dim,
                                        const char * name,
                                        int * ierr);
 
-/* Remove the physical name `name' from the current model. */
-GMSH_API void gmshModelRemovePhysicalName(const char * name,
-                                          int * ierr);
-
 /* Get the name of the physical group of dimension `dim' and tag `tag'. */
 GMSH_API void gmshModelGetPhysicalName(const int dim,
                                        const int tag,
                                        char ** name,
                                        int * ierr);
+
+/* Remove the physical name `name' from the current model. */
+GMSH_API void gmshModelRemovePhysicalName(const char * name,
+                                          int * ierr);
 
 /* Set the tag of the entity of dimension `dim' and tag `tag' to the new value
  * `newTag'. */
@@ -329,10 +334,6 @@ GMSH_API int gmshModelAddDiscreteEntity(const int dim,
 GMSH_API void gmshModelRemoveEntities(const int * dimTags, const size_t dimTags_n,
                                       const int recursive,
                                       int * ierr);
-
-/* Remove the entity name `name' from the current model. */
-GMSH_API void gmshModelRemoveEntityName(const char * name,
-                                        int * ierr);
 
 /* Get the type of the entity of dimension `dim' and tag `tag'. */
 GMSH_API void gmshModelGetType(const int dim,
@@ -542,19 +543,19 @@ GMSH_API void gmshModelSetCoordinates(const int tag,
                                       const double z,
                                       int * ierr);
 
-/* Get the names of any optional attributes stored in the model. */
-GMSH_API void gmshModelGetAttributeNames(char *** names, size_t * names_n,
-                                         int * ierr);
+/* Set the values of the attribute with name `name'. */
+GMSH_API void gmshModelSetAttribute(const char * name,
+                                    const char * const * values, const size_t values_n,
+                                    int * ierr);
 
 /* Get the values of the attribute with name `name'. */
 GMSH_API void gmshModelGetAttribute(const char * name,
                                     char *** values, size_t * values_n,
                                     int * ierr);
 
-/* Set the values of the attribute with name `name'. */
-GMSH_API void gmshModelSetAttribute(const char * name,
-                                    const char * const * values, const size_t values_n,
-                                    int * ierr);
+/* Get the names of any optional attributes stored in the model. */
+GMSH_API void gmshModelGetAttributeNames(char *** names, size_t * names_n,
+                                         int * ierr);
 
 /* Remove the attribute with name `name'. */
 GMSH_API void gmshModelRemoveAttribute(const char * name,
@@ -1587,7 +1588,8 @@ GMSH_API void gmshModelMeshTetrahedralize(const double * coord, const size_t coo
 
 /* Add a new mesh size field of type `fieldType'. If `tag' is positive, assign
  * the tag explicitly; otherwise a new tag is assigned automatically. Return
- * the field tag. */
+ * the field tag. Available field types are listed in the "Gmsh mesh size
+ * fields" chapter of the Gmsh reference manual. */
 GMSH_API int gmshModelMeshFieldAdd(const char * fieldType,
                                    const int tag,
                                    int * ierr);
@@ -3212,19 +3214,25 @@ GMSH_API void gmshViewOptionCopy(const int refTag,
                                  const int tag,
                                  int * ierr);
 
-/* Set the numerical option `option' to the value `value' for plugin `name'. */
+/* Set the numerical option `option' to the value `value' for plugin `name'.
+ * Plugins available in the official Gmsh release are listed in the "Gmsh
+ * plugins" chapter of the Gmsh reference manual. */
 GMSH_API void gmshPluginSetNumber(const char * name,
                                   const char * option,
                                   const double value,
                                   int * ierr);
 
-/* Set the string option `option' to the value `value' for plugin `name'. */
+/* Set the string option `option' to the value `value' for plugin `name'.
+ * Plugins available in the official Gmsh release are listed in the "Gmsh
+ * plugins" chapter of the Gmsh reference manual. */
 GMSH_API void gmshPluginSetString(const char * name,
                                   const char * option,
                                   const char * value,
                                   int * ierr);
 
-/* Run the plugin `name'. Return the tag of the created view (if any). */
+/* Run the plugin `name'. Return the tag of the created view (if any). Plugins
+ * available in the official Gmsh release are listed in the "Gmsh plugins"
+ * chapter of the Gmsh reference manual. */
 GMSH_API int gmshPluginRun(const char * name,
                            int * ierr);
 

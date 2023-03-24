@@ -70,22 +70,22 @@ gmsh.add('clear', doc, None)
 
 option = gmsh.add_module('option', 'option handling functions')
 
-doc = '''Set a numerical option to `value'. `name' is of the form "Category.Option" or "Category[num].Option". Available categories and options are listed in the Gmsh reference manual.'''
+doc = '''Set a numerical option to `value'. `name' is of the form "Category.Option" or "Category[num].Option". Available categories and options are listed in the "Gmsh options" chapter of the Gmsh reference manual.'''
 option.add('setNumber', doc, None, istring('name'), idouble('value'))
 
-doc = '''Get the `value' of a numerical option. `name' is of the form "Category.Option" or "Category[num].Option". Available categories and options are listed in the Gmsh reference manual.'''
+doc = '''Get the `value' of a numerical option. `name' is of the form "Category.Option" or "Category[num].Option". Available categories and options are listed in the "Gmsh options" chapter of the Gmsh reference manual.'''
 option.add('getNumber', doc, None, istring('name'), odouble('value'))
 
-doc = '''Set a string option to `value'. `name' is of the form "Category.Option" or "Category[num].Option". Available categories and options are listed in the Gmsh reference manual.'''
+doc = '''Set a string option to `value'. `name' is of the form "Category.Option" or "Category[num].Option". Available categories and options are listed in the "Gmsh options" chapter of the Gmsh reference manual.'''
 option.add('setString', doc, None, istring('name'), istring('value'))
 
-doc = '''Get the `value' of a string option. `name' is of the form "Category.Option" or "Category[num].Option". Available categories and options are listed in the Gmsh reference manual.'''
+doc = '''Get the `value' of a string option. `name' is of the form "Category.Option" or "Category[num].Option". Available categories and options are listed in the "Gmsh options" chapter of the Gmsh reference manual.'''
 option.add('getString', doc, None, istring('name'), ostring('value'))
 
-doc = '''Set a color option to the RGBA value (`r', `g', `b', `a'), where where `r', `g', `b' and `a' should be integers between 0 and 255. `name' is of the form "Category.Color.Option" or "Category[num].Color.Option". Available categories and options are listed in the Gmsh reference manual. For conciseness "Color." can be ommitted in `name'.'''
+doc = '''Set a color option to the RGBA value (`r', `g', `b', `a'), where where `r', `g', `b' and `a' should be integers between 0 and 255. `name' is of the form "Category.Color.Option" or "Category[num].Color.Option". Available categories and options are listed in the "Gmsh options" chapter of the Gmsh reference manual. For conciseness "Color." can be ommitted in `name'.'''
 option.add('setColor', doc, None, istring('name'), iint('r'), iint('g'), iint('b'), iint('a', '255'))
 
-doc = '''Get the `r', `g', `b', `a' value of a color option. `name' is of the form "Category.Color.Option" or "Category[num].Color.Option". Available categories and options are listed in the Gmsh reference manual. For conciseness "Color." can be ommitted in `name'.'''
+doc = '''Get the `r', `g', `b', `a' value of a color option. `name' is of the form "Category.Color.Option" or "Category[num].Color.Option". Available categories and options are listed in the "Gmsh options" chapter of the Gmsh reference manual. For conciseness "Color." can be ommitted in `name'.'''
 option.add('getColor', doc, None, istring('name'), oint('r'), oint('g'), oint('b'), oint('a'))
 
 ################################################################################
@@ -122,6 +122,9 @@ model.add('setEntityName', doc, None, iint('dim'), iint('tag'), istring('name'))
 doc = '''Get the name of the entity of dimension `dim' and tag `tag'.'''
 model.add('getEntityName', doc, None, iint('dim'), iint('tag'), ostring('name'))
 
+doc = '''Remove the entity name `name' from the current model.'''
+model.add('removeEntityName', doc, None, istring('name'))
+
 doc = '''Get all the physical groups in the current model. If `dim' is >= 0, return only the entities of the specified dimension (e.g. physical points if `dim' == 0). The entities are returned as a vector of (dim, tag) pairs.'''
 model.add('getPhysicalGroups', doc, None, ovectorpair('dimTags'), iint('dim', '-1'))
 
@@ -143,11 +146,11 @@ model.add('removePhysicalGroups', doc, None, ivectorpair('dimTags', 'gmsh::vecto
 doc = '''Set the name of the physical group of dimension `dim' and tag `tag'.'''
 model.add('setPhysicalName', doc, None, iint('dim'), iint('tag'), istring('name'))
 
-doc = '''Remove the physical name `name' from the current model.'''
-model.add('removePhysicalName', doc, None, istring('name'))
-
 doc = '''Get the name of the physical group of dimension `dim' and tag `tag'.'''
 model.add('getPhysicalName', doc, None, iint('dim'), iint('tag'), ostring('name'))
+
+doc = '''Remove the physical name `name' from the current model.'''
+model.add('removePhysicalName', doc, None, istring('name'))
 
 doc = '''Set the tag of the entity of dimension `dim' and tag `tag' to the new value `newTag'.'''
 model.add('setTag', doc, None, iint('dim'), iint('tag'), iint('newTag'))
@@ -172,9 +175,6 @@ model.add('addDiscreteEntity', doc, oint, iint('dim'), iint('tag', '-1'), ivecto
 
 doc = '''Remove the entities `dimTags' (given as a vector of (dim, tag) pairs) of the current model, provided that they are not on the boundary of (or embedded in) higher-dimensional entities. If `recursive' is true, remove all the entities on their boundaries, down to dimension 0.'''
 model.add('removeEntities', doc, None, ivectorpair('dimTags'), ibool('recursive', 'false', 'False'))
-
-doc = '''Remove the entity name `name' from the current model.'''
-model.add('removeEntityName', doc, None, istring('name'))
 
 doc = '''Get the type of the entity of dimension `dim' and tag `tag'.'''
 model.add('getType', doc, None, iint('dim'), iint('tag'), ostring('entityType'))
@@ -239,14 +239,14 @@ model.add('getColor', doc, None, iint('dim'), iint('tag'), oint('r'), oint('g'),
 doc = '''Set the `x', `y', `z' coordinates of a geometrical point.'''
 model.add('setCoordinates', doc, None, iint('tag'), idouble('x'), idouble('y'), idouble('z'))
 
-doc = '''Get the names of any optional attributes stored in the model.'''
-model.add('getAttributeNames', doc, None, ovectorstring('names'))
+doc = '''Set the values of the attribute with name `name'.'''
+model.add('setAttribute', doc, None, istring('name'), ivectorstring('values'))
 
 doc = '''Get the values of the attribute with name `name'.'''
 model.add('getAttribute', doc, None, istring('name'), ovectorstring('values'))
 
-doc = '''Set the values of the attribute with name `name'.'''
-model.add('setAttribute', doc, None, istring('name'), ivectorstring('values'))
+doc = '''Get the names of any optional attributes stored in the model.'''
+model.add('getAttributeNames', doc, None, ovectorstring('names'))
 
 doc = '''Remove the attribute with name `name'.'''
 model.add('removeAttribute', doc, None, istring('name'))
@@ -574,7 +574,7 @@ mesh.add('tetrahedralize', doc, None, ivectordouble('coord'), ovectorsize('tetra
 
 field = mesh.add_module('field', 'mesh size field functions')
 
-doc = '''Add a new mesh size field of type `fieldType'. If `tag' is positive, assign the tag explicitly; otherwise a new tag is assigned automatically. Return the field tag.'''
+doc = '''Add a new mesh size field of type `fieldType'. If `tag' is positive, assign the tag explicitly; otherwise a new tag is assigned automatically. Return the field tag. Available field types are listed in the "Gmsh mesh size fields" chapter of the Gmsh reference manual.'''
 field.add('add', doc, oint, istring('fieldType'), iint('tag', '-1'))
 
 doc = '''Remove the field with tag `tag'.'''
@@ -1038,13 +1038,13 @@ option.add('copy', doc, None, iint('refTag'), iint('tag'))
 
 plugin = gmsh.add_module('plugin', 'plugin functions')
 
-doc = '''Set the numerical option `option' to the value `value' for plugin `name'.'''
+doc = '''Set the numerical option `option' to the value `value' for plugin `name'. Plugins available in the official Gmsh release are listed in the "Gmsh plugins" chapter of the Gmsh reference manual.'''
 plugin.add('setNumber', doc, None, istring('name'), istring('option'), idouble('value'))
 
-doc = '''Set the string option `option' to the value `value' for plugin `name'.'''
+doc = '''Set the string option `option' to the value `value' for plugin `name'. Plugins available in the official Gmsh release are listed in the "Gmsh plugins" chapter of the Gmsh reference manual.'''
 plugin.add('setString', doc, None, istring('name'), istring('option'), istring('value'))
 
-doc = '''Run the plugin `name'. Return the tag of the created view (if any).'''
+doc = '''Run the plugin `name'. Return the tag of the created view (if any). Plugins available in the official Gmsh release are listed in the "Gmsh plugins" chapter of the Gmsh reference manual.'''
 plugin.add('run', doc, oint, istring('name'))
 
 ################################################################################

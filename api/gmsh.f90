@@ -739,6 +739,8 @@ module gmsh
         gmshModelSetEntityName
     procedure, nopass :: getEntityName => &
         gmshModelGetEntityName
+    procedure, nopass :: removeEntityName => &
+        gmshModelRemoveEntityName
     procedure, nopass :: getPhysicalGroups => &
         gmshModelGetPhysicalGroups
     procedure, nopass :: getEntitiesForPhysicalGroup => &
@@ -753,10 +755,10 @@ module gmsh
         gmshModelRemovePhysicalGroups
     procedure, nopass :: setPhysicalName => &
         gmshModelSetPhysicalName
-    procedure, nopass :: removePhysicalName => &
-        gmshModelRemovePhysicalName
     procedure, nopass :: getPhysicalName => &
         gmshModelGetPhysicalName
+    procedure, nopass :: removePhysicalName => &
+        gmshModelRemovePhysicalName
     procedure, nopass :: setTag => &
         gmshModelSetTag
     procedure, nopass :: getBoundary => &
@@ -773,8 +775,6 @@ module gmsh
         gmshModelAddDiscreteEntity
     procedure, nopass :: removeEntities => &
         gmshModelRemoveEntities
-    procedure, nopass :: removeEntityName => &
-        gmshModelRemoveEntityName
     procedure, nopass :: getType => &
         gmshModelGetType
     procedure, nopass :: getParent => &
@@ -817,12 +817,12 @@ module gmsh
         gmshModelGetColor
     procedure, nopass :: setCoordinates => &
         gmshModelSetCoordinates
-    procedure, nopass :: getAttributeNames => &
-        gmshModelGetAttributeNames
-    procedure, nopass :: getAttribute => &
-        gmshModelGetAttribute
     procedure, nopass :: setAttribute => &
         gmshModelSetAttribute
+    procedure, nopass :: getAttribute => &
+        gmshModelGetAttribute
+    procedure, nopass :: getAttributeNames => &
+        gmshModelGetAttributeNames
     procedure, nopass :: removeAttribute => &
         gmshModelRemoveAttribute
   end type gmsh_model_t
@@ -1016,7 +1016,7 @@ module gmsh
 
   !> Set a numerical option to `value'. `name' is of the form "Category.Option"
   !! or "Category[num].Option". Available categories and options are listed in
-  !! the Gmsh reference manual.
+  !! the "Gmsh options" chapter of the Gmsh reference manual.
   subroutine gmshOptionSetNumber(name, &
                                  value, &
                                  ierr)
@@ -1041,7 +1041,8 @@ module gmsh
 
   !> Get the `value' of a numerical option. `name' is of the form
   !! "Category.Option" or "Category[num].Option". Available categories and
-  !! options are listed in the Gmsh reference manual.
+  !! options are listed in the "Gmsh options" chapter of the Gmsh reference
+  !! manual.
   subroutine gmshOptionGetNumber(name, &
                                  value, &
                                  ierr)
@@ -1066,7 +1067,7 @@ module gmsh
 
   !> Set a string option to `value'. `name' is of the form "Category.Option" or
   !! "Category[num].Option". Available categories and options are listed in the
-  !! Gmsh reference manual.
+  !! "Gmsh options" chapter of the Gmsh reference manual.
   subroutine gmshOptionSetString(name, &
                                  value, &
                                  ierr)
@@ -1091,7 +1092,7 @@ module gmsh
 
   !> Get the `value' of a string option. `name' is of the form "Category.Option"
   !! or "Category[num].Option". Available categories and options are listed in
-  !! the Gmsh reference manual.
+  !! the "Gmsh options" chapter of the Gmsh reference manual.
   subroutine gmshOptionGetString(name, &
                                  value, &
                                  ierr)
@@ -1117,8 +1118,8 @@ module gmsh
   !> Set a color option to the RGBA value (`r', `g', `b', `a'), where where `r',
   !! `g', `b' and `a' should be integers between 0 and 255. `name' is of the
   !! form "Category.Color.Option" or "Category[num].Color.Option". Available
-  !! categories and options are listed in the Gmsh reference manual. For
-  !! conciseness "Color." can be ommitted in `name'.
+  !! categories and options are listed in the "Gmsh options" chapter of the Gmsh
+  !! reference manual. For conciseness "Color." can be ommitted in `name'.
   subroutine gmshOptionSetColor(name, &
                                 r, &
                                 g, &
@@ -1158,8 +1159,8 @@ module gmsh
 
   !> Get the `r', `g', `b', `a' value of a color option. `name' is of the form
   !! "Category.Color.Option" or "Category[num].Color.Option". Available
-  !! categories and options are listed in the Gmsh reference manual. For
-  !! conciseness "Color." can be ommitted in `name'.
+  !! categories and options are listed in the "Gmsh options" chapter of the Gmsh
+  !! reference manual. For conciseness "Color." can be ommitted in `name'.
   subroutine gmshOptionGetColor(name, &
                                 r, &
                                 g, &
@@ -1417,6 +1418,24 @@ module gmsh
          ierr_=ierr)
   end subroutine gmshModelGetEntityName
 
+  !> Remove the entity name `name' from the current model.
+  subroutine gmshModelRemoveEntityName(name, &
+                                       ierr)
+    interface
+    subroutine C_API(name, &
+                     ierr_) &
+      bind(C, name="gmshModelRemoveEntityName")
+      use, intrinsic :: iso_c_binding
+      character(len=1, kind=c_char), dimension(*), intent(in) :: name
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    character(len=*), intent(in) :: name
+    integer(c_int), intent(out), optional :: ierr
+    call C_API(name=istring_(name), &
+         ierr_=ierr)
+  end subroutine gmshModelRemoveEntityName
+
   !> Get all the physical groups in the current model. If `dim' is >= 0, return
   !! only the entities of the specified dimension (e.g. physical points if `dim'
   !! == 0). The entities are returned as a vector of (dim, tag) pairs.
@@ -1643,24 +1662,6 @@ module gmsh
          ierr_=ierr)
   end subroutine gmshModelSetPhysicalName
 
-  !> Remove the physical name `name' from the current model.
-  subroutine gmshModelRemovePhysicalName(name, &
-                                         ierr)
-    interface
-    subroutine C_API(name, &
-                     ierr_) &
-      bind(C, name="gmshModelRemovePhysicalName")
-      use, intrinsic :: iso_c_binding
-      character(len=1, kind=c_char), dimension(*), intent(in) :: name
-      integer(c_int), intent(out), optional :: ierr_
-    end subroutine C_API
-    end interface
-    character(len=*), intent(in) :: name
-    integer(c_int), intent(out), optional :: ierr
-    call C_API(name=istring_(name), &
-         ierr_=ierr)
-  end subroutine gmshModelRemovePhysicalName
-
   !> Get the name of the physical group of dimension `dim' and tag `tag'.
   subroutine gmshModelGetPhysicalName(dim, &
                                       tag, &
@@ -1688,6 +1689,24 @@ module gmsh
          api_name_=name, &
          ierr_=ierr)
   end subroutine gmshModelGetPhysicalName
+
+  !> Remove the physical name `name' from the current model.
+  subroutine gmshModelRemovePhysicalName(name, &
+                                         ierr)
+    interface
+    subroutine C_API(name, &
+                     ierr_) &
+      bind(C, name="gmshModelRemovePhysicalName")
+      use, intrinsic :: iso_c_binding
+      character(len=1, kind=c_char), dimension(*), intent(in) :: name
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    character(len=*), intent(in) :: name
+    integer(c_int), intent(out), optional :: ierr
+    call C_API(name=istring_(name), &
+         ierr_=ierr)
+  end subroutine gmshModelRemovePhysicalName
 
   !> Set the tag of the entity of dimension `dim' and tag `tag' to the new value
   !! `newTag'.
@@ -2020,24 +2039,6 @@ module gmsh
          recursive=optval_c_bool(.false., recursive), &
          ierr_=ierr)
   end subroutine gmshModelRemoveEntities
-
-  !> Remove the entity name `name' from the current model.
-  subroutine gmshModelRemoveEntityName(name, &
-                                       ierr)
-    interface
-    subroutine C_API(name, &
-                     ierr_) &
-      bind(C, name="gmshModelRemoveEntityName")
-      use, intrinsic :: iso_c_binding
-      character(len=1, kind=c_char), dimension(*), intent(in) :: name
-      integer(c_int), intent(out), optional :: ierr_
-    end subroutine C_API
-    end interface
-    character(len=*), intent(in) :: name
-    integer(c_int), intent(out), optional :: ierr
-    call C_API(name=istring_(name), &
-         ierr_=ierr)
-  end subroutine gmshModelRemoveEntityName
 
   !> Get the type of the entity of dimension `dim' and tag `tag'.
   subroutine gmshModelGetType(dim, &
@@ -2937,30 +2938,36 @@ module gmsh
          ierr_=ierr)
   end subroutine gmshModelSetCoordinates
 
-  !> Get the names of any optional attributes stored in the model.
-  subroutine gmshModelGetAttributeNames(names, &
-                                        ierr)
+  !> Set the values of the attribute with name `name'.
+  subroutine gmshModelSetAttribute(name, &
+                                   values, &
+                                   ierr)
     interface
-    subroutine C_API(api_names_, &
-                     api_names_n_, &
+    subroutine C_API(name, &
+                     api_values_, &
+                     api_values_n_, &
                      ierr_) &
-      bind(C, name="gmshModelGetAttributeNames")
+      bind(C, name="gmshModelSetAttribute")
       use, intrinsic :: iso_c_binding
-      type(c_ptr), intent(out) :: api_names_
-      integer(c_size_t), intent(out) :: api_names_n_
+      character(len=1, kind=c_char), dimension(*), intent(in) :: name
+      type(c_ptr), dimension(*) :: api_values_
+      integer(c_size_t), value, intent(in) :: api_values_n_
       integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    character(len=GMSH_API_MAX_STR_LEN), dimension(:), allocatable, intent(out) :: names
+    character(len=*), intent(in) :: name
+    character(len=*), dimension(:), intent(in) :: values
     integer(c_int), intent(out), optional :: ierr
-    type(c_ptr) :: api_names_
-    integer(c_size_t) :: api_names_n_
-    call C_API(api_names_=api_names_, &
-         api_names_n_=api_names_n_, &
+    character(len=GMSH_API_MAX_STR_LEN, kind=c_char), allocatable :: api_values_strs(:)
+    type(c_ptr), allocatable :: api_values_(:)
+    call ivectorstring_(values, &
+      api_values_strs, &
+      api_values_)
+    call C_API(name=istring_(name), &
+         api_values_=api_values_, &
+         api_values_n_=size_gmsh_str(values), &
          ierr_=ierr)
-    names = ovectorstring_(api_names_, &
-      api_names_n_)
-  end subroutine gmshModelGetAttributeNames
+  end subroutine gmshModelSetAttribute
 
   !> Get the values of the attribute with name `name'.
   subroutine gmshModelGetAttribute(name, &
@@ -2992,36 +2999,30 @@ module gmsh
       api_values_n_)
   end subroutine gmshModelGetAttribute
 
-  !> Set the values of the attribute with name `name'.
-  subroutine gmshModelSetAttribute(name, &
-                                   values, &
-                                   ierr)
+  !> Get the names of any optional attributes stored in the model.
+  subroutine gmshModelGetAttributeNames(names, &
+                                        ierr)
     interface
-    subroutine C_API(name, &
-                     api_values_, &
-                     api_values_n_, &
+    subroutine C_API(api_names_, &
+                     api_names_n_, &
                      ierr_) &
-      bind(C, name="gmshModelSetAttribute")
+      bind(C, name="gmshModelGetAttributeNames")
       use, intrinsic :: iso_c_binding
-      character(len=1, kind=c_char), dimension(*), intent(in) :: name
-      type(c_ptr), dimension(*) :: api_values_
-      integer(c_size_t), value, intent(in) :: api_values_n_
+      type(c_ptr), intent(out) :: api_names_
+      integer(c_size_t), intent(out) :: api_names_n_
       integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    character(len=*), intent(in) :: name
-    character(len=*), dimension(:), intent(in) :: values
+    character(len=GMSH_API_MAX_STR_LEN), dimension(:), allocatable, intent(out) :: names
     integer(c_int), intent(out), optional :: ierr
-    character(len=GMSH_API_MAX_STR_LEN, kind=c_char), allocatable :: api_values_strs(:)
-    type(c_ptr), allocatable :: api_values_(:)
-    call ivectorstring_(values, &
-      api_values_strs, &
-      api_values_)
-    call C_API(name=istring_(name), &
-         api_values_=api_values_, &
-         api_values_n_=size_gmsh_str(values), &
+    type(c_ptr) :: api_names_
+    integer(c_size_t) :: api_names_n_
+    call C_API(api_names_=api_names_, &
+         api_names_n_=api_names_n_, &
          ierr_=ierr)
-  end subroutine gmshModelSetAttribute
+    names = ovectorstring_(api_names_, &
+      api_names_n_)
+  end subroutine gmshModelGetAttributeNames
 
   !> Remove the attribute with name `name'.
   subroutine gmshModelRemoveAttribute(name, &
@@ -7239,7 +7240,8 @@ module gmsh
 
   !> Add a new mesh size field of type `fieldType'. If `tag' is positive, assign
   !! the tag explicitly; otherwise a new tag is assigned automatically. Return
-  !! the field tag.
+  !! the field tag. Available field types are listed in the "Gmsh mesh size
+  !! fields" chapter of the Gmsh reference manual.
   function gmshModelMeshFieldAdd(fieldType, &
                                  tag, &
                                  ierr)
@@ -13808,6 +13810,8 @@ module gmsh
   end subroutine gmshViewOptionCopy
 
   !> Set the numerical option `option' to the value `value' for plugin `name'.
+  !! Plugins available in the official Gmsh release are listed in the "Gmsh
+  !! plugins" chapter of the Gmsh reference manual.
   subroutine gmshPluginSetNumber(name, &
                                  option, &
                                  value, &
@@ -13836,6 +13840,8 @@ module gmsh
   end subroutine gmshPluginSetNumber
 
   !> Set the string option `option' to the value `value' for plugin `name'.
+  !! Plugins available in the official Gmsh release are listed in the "Gmsh
+  !! plugins" chapter of the Gmsh reference manual.
   subroutine gmshPluginSetString(name, &
                                  option, &
                                  value, &
@@ -13863,7 +13869,9 @@ module gmsh
          ierr_=ierr)
   end subroutine gmshPluginSetString
 
-  !> Run the plugin `name'. Return the tag of the created view (if any).
+  !> Run the plugin `name'. Return the tag of the created view (if any). Plugins
+  !! available in the official Gmsh release are listed in the "Gmsh plugins"
+  !! chapter of the Gmsh reference manual.
   function gmshPluginRun(name, &
                          ierr)
     interface

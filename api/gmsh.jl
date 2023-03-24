@@ -175,8 +175,8 @@ import ..gmsh
     gmsh.option.setNumber(name, value)
 
 Set a numerical option to `value`. `name` is of the form "Category.Option" or
-"Category[num].Option". Available categories and options are listed in the Gmsh
-reference manual.
+"Category[num].Option". Available categories and options are listed in the "Gmsh
+options" chapter of the Gmsh reference manual.
 
 Types:
  - `name`: string
@@ -197,7 +197,7 @@ const set_number = setNumber
 
 Get the `value` of a numerical option. `name` is of the form "Category.Option"
 or "Category[num].Option". Available categories and options are listed in the
-Gmsh reference manual.
+"Gmsh options" chapter of the Gmsh reference manual.
 
 Return `value`.
 
@@ -220,8 +220,8 @@ const get_number = getNumber
     gmsh.option.setString(name, value)
 
 Set a string option to `value`. `name` is of the form "Category.Option" or
-"Category[num].Option". Available categories and options are listed in the Gmsh
-reference manual.
+"Category[num].Option". Available categories and options are listed in the "Gmsh
+options" chapter of the Gmsh reference manual.
 
 Types:
  - `name`: string
@@ -241,8 +241,8 @@ const set_string = setString
     gmsh.option.getString(name)
 
 Get the `value` of a string option. `name` is of the form "Category.Option" or
-"Category[num].Option". Available categories and options are listed in the Gmsh
-reference manual.
+"Category[num].Option". Available categories and options are listed in the "Gmsh
+options" chapter of the Gmsh reference manual.
 
 Return `value`.
 
@@ -268,8 +268,8 @@ const get_string = getString
 Set a color option to the RGBA value (`r`, `g`, `b`, `a`), where where `r`, `g`,
 `b` and `a` should be integers between 0 and 255. `name` is of the form
 "Category.Color.Option" or "Category[num].Color.Option". Available categories
-and options are listed in the Gmsh reference manual. For conciseness "Color."
-can be ommitted in `name`.
+and options are listed in the "Gmsh options" chapter of the Gmsh reference
+manual. For conciseness "Color." can be ommitted in `name`.
 
 Types:
  - `name`: string
@@ -293,8 +293,8 @@ const set_color = setColor
 
 Get the `r`, `g`, `b`, `a` value of a color option. `name` is of the form
 "Category.Color.Option" or "Category[num].Color.Option". Available categories
-and options are listed in the Gmsh reference manual. For conciseness "Color."
-can be ommitted in `name`.
+and options are listed in the "Gmsh options" chapter of the Gmsh reference
+manual. For conciseness "Color." can be ommitted in `name`.
 
 Return `r`, `g`, `b`, `a`.
 
@@ -540,6 +540,24 @@ end
 const get_entity_name = getEntityName
 
 """
+    gmsh.model.removeEntityName(name)
+
+Remove the entity name `name` from the current model.
+
+Types:
+ - `name`: string
+"""
+function removeEntityName(name)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelRemoveEntityName, gmsh.lib), Cvoid,
+          (Ptr{Cchar}, Ptr{Cint}),
+          name, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+const remove_entity_name = removeEntityName
+
+"""
     gmsh.model.getPhysicalGroups(dim = -1)
 
 Get all the physical groups in the current model. If `dim` is >= 0, return only
@@ -712,24 +730,6 @@ end
 const set_physical_name = setPhysicalName
 
 """
-    gmsh.model.removePhysicalName(name)
-
-Remove the physical name `name` from the current model.
-
-Types:
- - `name`: string
-"""
-function removePhysicalName(name)
-    ierr = Ref{Cint}()
-    ccall((:gmshModelRemovePhysicalName, gmsh.lib), Cvoid,
-          (Ptr{Cchar}, Ptr{Cint}),
-          name, ierr)
-    ierr[] != 0 && error(gmsh.logger.getLastError())
-    return nothing
-end
-const remove_physical_name = removePhysicalName
-
-"""
     gmsh.model.getPhysicalName(dim, tag)
 
 Get the name of the physical group of dimension `dim` and tag `tag`.
@@ -752,6 +752,24 @@ function getPhysicalName(dim, tag)
     return name
 end
 const get_physical_name = getPhysicalName
+
+"""
+    gmsh.model.removePhysicalName(name)
+
+Remove the physical name `name` from the current model.
+
+Types:
+ - `name`: string
+"""
+function removePhysicalName(name)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelRemovePhysicalName, gmsh.lib), Cvoid,
+          (Ptr{Cchar}, Ptr{Cint}),
+          name, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+const remove_physical_name = removePhysicalName
 
 """
     gmsh.model.setTag(dim, tag, newTag)
@@ -975,24 +993,6 @@ function removeEntities(dimTags, recursive = false)
     return nothing
 end
 const remove_entities = removeEntities
-
-"""
-    gmsh.model.removeEntityName(name)
-
-Remove the entity name `name` from the current model.
-
-Types:
- - `name`: string
-"""
-function removeEntityName(name)
-    ierr = Ref{Cint}()
-    ccall((:gmshModelRemoveEntityName, gmsh.lib), Cvoid,
-          (Ptr{Cchar}, Ptr{Cint}),
-          name, ierr)
-    ierr[] != 0 && error(gmsh.logger.getLastError())
-    return nothing
-end
-const remove_entity_name = removeEntityName
 
 """
     gmsh.model.getType(dim, tag)
@@ -1587,28 +1587,23 @@ end
 const set_coordinates = setCoordinates
 
 """
-    gmsh.model.getAttributeNames()
+    gmsh.model.setAttribute(name, values)
 
-Get the names of any optional attributes stored in the model.
-
-Return `names`.
+Set the values of the attribute with name `name`.
 
 Types:
- - `names`: vector of strings
+ - `name`: string
+ - `values`: vector of strings
 """
-function getAttributeNames()
-    api_names_ = Ref{Ptr{Ptr{Cchar}}}()
-    api_names_n_ = Ref{Csize_t}()
+function setAttribute(name, values)
     ierr = Ref{Cint}()
-    ccall((:gmshModelGetAttributeNames, gmsh.lib), Cvoid,
-          (Ptr{Ptr{Ptr{Cchar}}}, Ptr{Csize_t}, Ptr{Cint}),
-          api_names_, api_names_n_, ierr)
+    ccall((:gmshModelSetAttribute, gmsh.lib), Cvoid,
+          (Ptr{Cchar}, Ptr{Ptr{Cchar}}, Csize_t, Ptr{Cint}),
+          name, values, length(values), ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    tmp_api_names_ = unsafe_wrap(Array, api_names_[], api_names_n_[], own = true)
-    names = [unsafe_string(tmp_api_names_[i]) for i in 1:length(tmp_api_names_) ]
-    return names
+    return nothing
 end
-const get_attribute_names = getAttributeNames
+const set_attribute = setAttribute
 
 """
     gmsh.model.getAttribute(name)
@@ -1636,23 +1631,28 @@ end
 const get_attribute = getAttribute
 
 """
-    gmsh.model.setAttribute(name, values)
+    gmsh.model.getAttributeNames()
 
-Set the values of the attribute with name `name`.
+Get the names of any optional attributes stored in the model.
+
+Return `names`.
 
 Types:
- - `name`: string
- - `values`: vector of strings
+ - `names`: vector of strings
 """
-function setAttribute(name, values)
+function getAttributeNames()
+    api_names_ = Ref{Ptr{Ptr{Cchar}}}()
+    api_names_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
-    ccall((:gmshModelSetAttribute, gmsh.lib), Cvoid,
-          (Ptr{Cchar}, Ptr{Ptr{Cchar}}, Csize_t, Ptr{Cint}),
-          name, values, length(values), ierr)
+    ccall((:gmshModelGetAttributeNames, gmsh.lib), Cvoid,
+          (Ptr{Ptr{Ptr{Cchar}}}, Ptr{Csize_t}, Ptr{Cint}),
+          api_names_, api_names_n_, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    return nothing
+    tmp_api_names_ = unsafe_wrap(Array, api_names_[], api_names_n_[], own = true)
+    names = [unsafe_string(tmp_api_names_[i]) for i in 1:length(tmp_api_names_) ]
+    return names
 end
-const set_attribute = setAttribute
+const get_attribute_names = getAttributeNames
 
 """
     gmsh.model.removeAttribute(name)
@@ -4412,7 +4412,8 @@ import ....gmsh
 
 Add a new mesh size field of type `fieldType`. If `tag` is positive, assign the
 tag explicitly; otherwise a new tag is assigned automatically. Return the field
-tag.
+tag. Available field types are listed in the "Gmsh mesh size fields" chapter of
+the Gmsh reference manual.
 
 Return an integer.
 
@@ -8588,6 +8589,8 @@ import ..gmsh
     gmsh.plugin.setNumber(name, option, value)
 
 Set the numerical option `option` to the value `value` for plugin `name`.
+Plugins available in the official Gmsh release are listed in the "Gmsh plugins"
+chapter of the Gmsh reference manual.
 
 Types:
  - `name`: string
@@ -8607,7 +8610,9 @@ const set_number = setNumber
 """
     gmsh.plugin.setString(name, option, value)
 
-Set the string option `option` to the value `value` for plugin `name`.
+Set the string option `option` to the value `value` for plugin `name`. Plugins
+available in the official Gmsh release are listed in the "Gmsh plugins" chapter
+of the Gmsh reference manual.
 
 Types:
  - `name`: string
@@ -8627,7 +8632,9 @@ const set_string = setString
 """
     gmsh.plugin.run(name)
 
-Run the plugin `name`. Return the tag of the created view (if any).
+Run the plugin `name`. Return the tag of the created view (if any). Plugins
+available in the official Gmsh release are listed in the "Gmsh plugins" chapter
+of the Gmsh reference manual.
 
 Return an integer.
 

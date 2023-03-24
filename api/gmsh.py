@@ -397,7 +397,7 @@ class option:
 
         Set a numerical option to `value'. `name' is of the form "Category.Option"
         or "Category[num].Option". Available categories and options are listed in
-        the Gmsh reference manual.
+        the "Gmsh options" chapter of the Gmsh reference manual.
 
         Types:
         - `name': string
@@ -419,7 +419,8 @@ class option:
 
         Get the `value' of a numerical option. `name' is of the form
         "Category.Option" or "Category[num].Option". Available categories and
-        options are listed in the Gmsh reference manual.
+        options are listed in the "Gmsh options" chapter of the Gmsh reference
+        manual.
 
         Return `value'.
 
@@ -445,7 +446,7 @@ class option:
 
         Set a string option to `value'. `name' is of the form "Category.Option" or
         "Category[num].Option". Available categories and options are listed in the
-        Gmsh reference manual.
+        "Gmsh options" chapter of the Gmsh reference manual.
 
         Types:
         - `name': string
@@ -467,7 +468,7 @@ class option:
 
         Get the `value' of a string option. `name' is of the form "Category.Option"
         or "Category[num].Option". Available categories and options are listed in
-        the Gmsh reference manual.
+        the "Gmsh options" chapter of the Gmsh reference manual.
 
         Return `value'.
 
@@ -494,8 +495,8 @@ class option:
         Set a color option to the RGBA value (`r', `g', `b', `a'), where where `r',
         `g', `b' and `a' should be integers between 0 and 255. `name' is of the
         form "Category.Color.Option" or "Category[num].Color.Option". Available
-        categories and options are listed in the Gmsh reference manual. For
-        conciseness "Color." can be ommitted in `name'.
+        categories and options are listed in the "Gmsh options" chapter of the Gmsh
+        reference manual. For conciseness "Color." can be ommitted in `name'.
 
         Types:
         - `name': string
@@ -523,8 +524,8 @@ class option:
 
         Get the `r', `g', `b', `a' value of a color option. `name' is of the form
         "Category.Color.Option" or "Category[num].Color.Option". Available
-        categories and options are listed in the Gmsh reference manual. For
-        conciseness "Color." can be ommitted in `name'.
+        categories and options are listed in the "Gmsh options" chapter of the Gmsh
+        reference manual. For conciseness "Color." can be ommitted in `name'.
 
         Return `r', `g', `b', `a'.
 
@@ -772,6 +773,24 @@ class model:
     get_entity_name = getEntityName
 
     @staticmethod
+    def removeEntityName(name):
+        """
+        gmsh.model.removeEntityName(name)
+
+        Remove the entity name `name' from the current model.
+
+        Types:
+        - `name': string
+        """
+        ierr = c_int()
+        lib.gmshModelRemoveEntityName(
+            c_char_p(name.encode()),
+            byref(ierr))
+        if ierr.value != 0:
+            raise Exception(logger.getLastError())
+    remove_entity_name = removeEntityName
+
+    @staticmethod
     def getPhysicalGroups(dim=-1):
         """
         gmsh.model.getPhysicalGroups(dim=-1)
@@ -950,24 +969,6 @@ class model:
     set_physical_name = setPhysicalName
 
     @staticmethod
-    def removePhysicalName(name):
-        """
-        gmsh.model.removePhysicalName(name)
-
-        Remove the physical name `name' from the current model.
-
-        Types:
-        - `name': string
-        """
-        ierr = c_int()
-        lib.gmshModelRemovePhysicalName(
-            c_char_p(name.encode()),
-            byref(ierr))
-        if ierr.value != 0:
-            raise Exception(logger.getLastError())
-    remove_physical_name = removePhysicalName
-
-    @staticmethod
     def getPhysicalName(dim, tag):
         """
         gmsh.model.getPhysicalName(dim, tag)
@@ -992,6 +993,24 @@ class model:
             raise Exception(logger.getLastError())
         return _ostring(api_name_)
     get_physical_name = getPhysicalName
+
+    @staticmethod
+    def removePhysicalName(name):
+        """
+        gmsh.model.removePhysicalName(name)
+
+        Remove the physical name `name' from the current model.
+
+        Types:
+        - `name': string
+        """
+        ierr = c_int()
+        lib.gmshModelRemovePhysicalName(
+            c_char_p(name.encode()),
+            byref(ierr))
+        if ierr.value != 0:
+            raise Exception(logger.getLastError())
+    remove_physical_name = removePhysicalName
 
     @staticmethod
     def setTag(dim, tag, newTag):
@@ -1245,24 +1264,6 @@ class model:
         if ierr.value != 0:
             raise Exception(logger.getLastError())
     remove_entities = removeEntities
-
-    @staticmethod
-    def removeEntityName(name):
-        """
-        gmsh.model.removeEntityName(name)
-
-        Remove the entity name `name' from the current model.
-
-        Types:
-        - `name': string
-        """
-        ierr = c_int()
-        lib.gmshModelRemoveEntityName(
-            c_char_p(name.encode()),
-            byref(ierr))
-        if ierr.value != 0:
-            raise Exception(logger.getLastError())
-    remove_entity_name = removeEntityName
 
     @staticmethod
     def getType(dim, tag):
@@ -1927,26 +1928,25 @@ class model:
     set_coordinates = setCoordinates
 
     @staticmethod
-    def getAttributeNames():
+    def setAttribute(name, values):
         """
-        gmsh.model.getAttributeNames()
+        gmsh.model.setAttribute(name, values)
 
-        Get the names of any optional attributes stored in the model.
-
-        Return `names'.
+        Set the values of the attribute with name `name'.
 
         Types:
-        - `names': vector of strings
+        - `name': string
+        - `values': vector of strings
         """
-        api_names_, api_names_n_ = POINTER(POINTER(c_char))(), c_size_t()
+        api_values_, api_values_n_ = _ivectorstring(values)
         ierr = c_int()
-        lib.gmshModelGetAttributeNames(
-            byref(api_names_), byref(api_names_n_),
+        lib.gmshModelSetAttribute(
+            c_char_p(name.encode()),
+            api_values_, api_values_n_,
             byref(ierr))
         if ierr.value != 0:
             raise Exception(logger.getLastError())
-        return _ovectorstring(api_names_, api_names_n_.value)
-    get_attribute_names = getAttributeNames
+    set_attribute = setAttribute
 
     @staticmethod
     def getAttribute(name):
@@ -1973,25 +1973,26 @@ class model:
     get_attribute = getAttribute
 
     @staticmethod
-    def setAttribute(name, values):
+    def getAttributeNames():
         """
-        gmsh.model.setAttribute(name, values)
+        gmsh.model.getAttributeNames()
 
-        Set the values of the attribute with name `name'.
+        Get the names of any optional attributes stored in the model.
+
+        Return `names'.
 
         Types:
-        - `name': string
-        - `values': vector of strings
+        - `names': vector of strings
         """
-        api_values_, api_values_n_ = _ivectorstring(values)
+        api_names_, api_names_n_ = POINTER(POINTER(c_char))(), c_size_t()
         ierr = c_int()
-        lib.gmshModelSetAttribute(
-            c_char_p(name.encode()),
-            api_values_, api_values_n_,
+        lib.gmshModelGetAttributeNames(
+            byref(api_names_), byref(api_names_n_),
             byref(ierr))
         if ierr.value != 0:
             raise Exception(logger.getLastError())
-    set_attribute = setAttribute
+        return _ovectorstring(api_names_, api_names_n_.value)
+    get_attribute_names = getAttributeNames
 
     @staticmethod
     def removeAttribute(name):
@@ -4993,7 +4994,8 @@ class model:
 
                 Add a new mesh size field of type `fieldType'. If `tag' is positive, assign
                 the tag explicitly; otherwise a new tag is assigned automatically. Return
-                the field tag.
+                the field tag. Available field types are listed in the "Gmsh mesh size
+                fields" chapter of the Gmsh reference manual.
 
                 Return an integer.
 
@@ -9689,6 +9691,8 @@ class plugin:
         gmsh.plugin.setNumber(name, option, value)
 
         Set the numerical option `option' to the value `value' for plugin `name'.
+        Plugins available in the official Gmsh release are listed in the "Gmsh
+        plugins" chapter of the Gmsh reference manual.
 
         Types:
         - `name': string
@@ -9711,6 +9715,8 @@ class plugin:
         gmsh.plugin.setString(name, option, value)
 
         Set the string option `option' to the value `value' for plugin `name'.
+        Plugins available in the official Gmsh release are listed in the "Gmsh
+        plugins" chapter of the Gmsh reference manual.
 
         Types:
         - `name': string
@@ -9732,7 +9738,9 @@ class plugin:
         """
         gmsh.plugin.run(name)
 
-        Run the plugin `name'. Return the tag of the created view (if any).
+        Run the plugin `name'. Return the tag of the created view (if any). Plugins
+        available in the official Gmsh release are listed in the "Gmsh plugins"
+        chapter of the Gmsh reference manual.
 
         Return an integer.
 

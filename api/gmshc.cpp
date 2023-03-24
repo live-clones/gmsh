@@ -362,6 +362,17 @@ GMSH_API void gmshModelGetEntityName(const int dim, const int tag, char ** name,
   }
 }
 
+GMSH_API void gmshModelRemoveEntityName(const char * name, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::removeEntityName(name);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API void gmshModelGetPhysicalGroups(int ** dimTags, size_t * dimTags_n, const int dim, int * ierr)
 {
   if(ierr) *ierr = 0;
@@ -455,17 +466,6 @@ GMSH_API void gmshModelSetPhysicalName(const int dim, const int tag, const char 
   }
 }
 
-GMSH_API void gmshModelRemovePhysicalName(const char * name, int * ierr)
-{
-  if(ierr) *ierr = 0;
-  try {
-    gmsh::model::removePhysicalName(name);
-  }
-  catch(...){
-    if(ierr) *ierr = 1;
-  }
-}
-
 GMSH_API void gmshModelGetPhysicalName(const int dim, const int tag, char ** name, int * ierr)
 {
   if(ierr) *ierr = 0;
@@ -473,6 +473,17 @@ GMSH_API void gmshModelGetPhysicalName(const int dim, const int tag, char ** nam
     std::string api_name_;
     gmsh::model::getPhysicalName(dim, tag, api_name_);
     *name = strdup(api_name_.c_str());
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelRemovePhysicalName(const char * name, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::removePhysicalName(name);
   }
   catch(...){
     if(ierr) *ierr = 1;
@@ -584,17 +595,6 @@ GMSH_API void gmshModelRemoveEntities(const int * dimTags, const size_t dimTags_
       api_dimTags_[i].second = dimTags[i * 2 + 1];
     }
     gmsh::model::removeEntities(api_dimTags_, recursive);
-  }
-  catch(...){
-    if(ierr) *ierr = 1;
-  }
-}
-
-GMSH_API void gmshModelRemoveEntityName(const char * name, int * ierr)
-{
-  if(ierr) *ierr = 0;
-  try {
-    gmsh::model::removeEntityName(name);
   }
   catch(...){
     if(ierr) *ierr = 1;
@@ -890,13 +890,12 @@ GMSH_API void gmshModelSetCoordinates(const int tag, const double x, const doubl
   }
 }
 
-GMSH_API void gmshModelGetAttributeNames(char *** names, size_t * names_n, int * ierr)
+GMSH_API void gmshModelSetAttribute(const char * name, const char * const * values, const size_t values_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    std::vector<std::string> api_names_;
-    gmsh::model::getAttributeNames(api_names_);
-    vectorstring2charptrptr(api_names_, names, names_n);
+    std::vector<std::string> api_values_(values, values + values_n);
+    gmsh::model::setAttribute(name, api_values_);
   }
   catch(...){
     if(ierr) *ierr = 1;
@@ -916,12 +915,13 @@ GMSH_API void gmshModelGetAttribute(const char * name, char *** values, size_t *
   }
 }
 
-GMSH_API void gmshModelSetAttribute(const char * name, const char * const * values, const size_t values_n, int * ierr)
+GMSH_API void gmshModelGetAttributeNames(char *** names, size_t * names_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    std::vector<std::string> api_values_(values, values + values_n);
-    gmsh::model::setAttribute(name, api_values_);
+    std::vector<std::string> api_names_;
+    gmsh::model::getAttributeNames(api_names_);
+    vectorstring2charptrptr(api_names_, names, names_n);
   }
   catch(...){
     if(ierr) *ierr = 1;
