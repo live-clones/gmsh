@@ -4,7 +4,8 @@ glyph; better mesh node visualization; small bug fixes.
 
 * New API functions: model/getEntitiesForPhysicalName.
 
-* Incompatible API changes: new optional argument to view/getListData
+* Incompatible API changes: new optional argument to view/getListData; new
+  optional "interruptible" argument to gmsh.initialize() in Python
 
 4.11.1 (December 21, 2022): Mesh.TransfiniteTri improvements; small bug fixes.
 

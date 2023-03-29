@@ -1276,8 +1276,6 @@ from math import pi
 
 __version__ = {6}_API_VERSION
 
-oldsig = signal.signal(signal.SIGINT, signal.SIG_DFL)
-
 moduledir = os.path.dirname(os.path.realpath(__file__))
 parentdir1 = os.path.dirname(moduledir)
 parentdir2 = os.path.dirname(parentdir1)
@@ -1338,6 +1336,8 @@ if try_numpy:
         use_numpy = True
     except:
         pass
+
+prev_interrupt_handler = None
 
 # Utility functions, not part of the Gmsh Python API
 
@@ -2211,9 +2211,14 @@ class API:
             if c_mpath != ns:
                 self.fwrite(f, indent + "@staticmethod\n")
             self.flog('py', py_mpath.replace('.', '/') + name)
-            self.fwrite(
-                f, indent + "def " + name + "(" + ", ".join(
-                    (parg(a) for a in iargs)) + "):\n")
+            if c_mpath == ns and name == "initialize": # special case for top-level initialize
+                self.fwrite(
+                    f, indent + "def " + name + "(" + ", ".join(
+                        (parg(a) for a in iargs)) + ", interruptible=True):\n")
+            else:
+                self.fwrite(
+                    f, indent + "def " + name + "(" + ", ".join(
+                        (parg(a) for a in iargs)) + "):\n")
             ind = indent + "    "
             self.fwrite(f, ind + '"""\n')
             self.fwrite(
@@ -2249,10 +2254,15 @@ class API:
                 (",\n" + ind + "    ").join(
                     tuple((a.python_arg
                            for a in args)) + ("byref(ierr)", )) + ")\n")
-            if name == "finalize":  # special case for finalize() function
-                self.fwrite(f, ind + "if oldsig is not None:\n")
-                self.fwrite(
-                    f, ind + "    signal.signal(signal.SIGINT, oldsig)\n")
+            if c_mpath == ns: # special cases for top-level initialize/finalize
+                if name == "initialize":
+                    self.fwrite(f, ind + "if interruptible == True:\n")
+                    self.fwrite(
+                        f, ind + "    prev_interrupt_handler = signal.signal(signal.SIGINT, signal.SIG_DFL)\n")
+                elif name == "finalize":  # special case for finalize()
+                    self.fwrite(f, ind + "if prev_interrupt_handler is not None:\n")
+                    self.fwrite(
+                        f, ind + "    signal.signal(signal.SIGINT, prev_interrupt_handler)\n")
             self.fwrite(f, ind + "if ierr.value != 0:\n")
             if name == "getLastError":  # special case for getLastError() function
                 self.fwrite(

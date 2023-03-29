@@ -38,8 +38,6 @@ GMSH_API_VERSION_PATCH = 0
 
 __version__ = GMSH_API_VERSION
 
-oldsig = signal.signal(signal.SIGINT, signal.SIG_DFL)
-
 moduledir = os.path.dirname(os.path.realpath(__file__))
 parentdir1 = os.path.dirname(moduledir)
 parentdir2 = os.path.dirname(parentdir1)
@@ -100,6 +98,8 @@ if try_numpy:
         use_numpy = True
     except:
         pass
+
+prev_interrupt_handler = None
 
 # Utility functions, not part of the Gmsh Python API
 
@@ -259,7 +259,7 @@ def _iargcargv(o):
 
 # Gmsh Python API begins here
 
-def initialize(argv=[], readConfigFiles=True, run=False):
+def initialize(argv=[], readConfigFiles=True, run=False, interruptible=True):
     """
     gmsh.initialize(argv=[], readConfigFiles=True, run=False)
 
@@ -285,6 +285,8 @@ def initialize(argv=[], readConfigFiles=True, run=False):
         c_int(bool(readConfigFiles)),
         c_int(bool(run)),
         byref(ierr))
+    if interruptible == True:
+        prev_interrupt_handler = signal.signal(signal.SIGINT, signal.SIG_DFL)
     if ierr.value != 0:
         raise Exception(logger.getLastError())
 
@@ -314,8 +316,8 @@ def finalize():
     ierr = c_int()
     lib.gmshFinalize(
         byref(ierr))
-    if oldsig is not None:
-        signal.signal(signal.SIGINT, oldsig)
+    if prev_interrupt_handler is not None:
+        signal.signal(signal.SIGINT, prev_interrupt_handler)
     if ierr.value != 0:
         raise Exception(logger.getLastError())
 
@@ -9805,8 +9807,6 @@ class fltk:
         ierr = c_int()
         lib.gmshFltkFinalize(
             byref(ierr))
-        if oldsig is not None:
-            signal.signal(signal.SIGINT, oldsig)
         if ierr.value != 0:
             raise Exception(logger.getLastError())
 
