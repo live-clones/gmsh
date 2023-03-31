@@ -7924,6 +7924,27 @@ end
 const get_index = getIndex
 
 """
+    gmsh.view.getNumTimeSteps(tag)
+
+Get the number of time steps of the view with tag `tag` in the list of
+currently loaded views.
+
+Return an integer.
+
+Types:
+ - `tag`: integer
+"""
+function getNumTimeSteps(tag)
+    ierr = Ref{Cint}()
+    api_result_ = ccall((:gmshViewGetNumTimeSteps, gmsh.lib), Cint,
+          (Cint, Ptr{Cint}),
+          tag, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return api_result_
+end
+const get_num_time_steps = getNumTimeSteps
+
+"""
     gmsh.view.getTags()
 
 Get the tags of all views.

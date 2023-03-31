@@ -2954,6 +2954,11 @@ GMSH_API void gmshViewRemove(const int tag,
 GMSH_API int gmshViewGetIndex(const int tag,
                               int * ierr);
 
+/* Get the number of time steps of the view with tag `tag' in the list of
+ * currently loaded views. */
+GMSH_API int gmshViewGetNumTimeSteps(const int tag,
+                                     int * ierr);
+
 /* Get the tags of all views. */
 GMSH_API void gmshViewGetTags(int ** tags, size_t * tags_n,
                               int * ierr);

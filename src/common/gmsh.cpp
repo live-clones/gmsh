@@ -7155,6 +7155,11 @@ GMSH_API int gmsh::view::getIndex(const int tag)
 #endif
 }
 
+GMSH_API int gmsh::view::getNumTimeSteps(const int tag)
+{
+  return 0;
+}
+
 GMSH_API void gmsh::view::getTags(std::vector<int> &tags)
 {
   if(!_checkInit()) return;

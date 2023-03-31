@@ -203,6 +203,8 @@ module gmsh
         gmshViewRemove
     procedure, nopass :: getIndex => &
         gmshViewGetIndex
+    procedure, nopass :: getNumTimeSteps => &
+        gmshViewGetNumTimeSteps
     procedure, nopass :: getTags => &
         gmshViewGetTags
     procedure, nopass :: addModelData => &
@@ -12710,6 +12712,27 @@ module gmsh
     gmshViewGetIndex = C_API(tag=int(tag, c_int), &
                        ierr_=ierr)
   end function gmshViewGetIndex
+
+  !> Get the number of time steps of the view with tag `tag' in the list of
+  !! currently loaded views.
+  function gmshViewGetNumTimeSteps(tag, &
+                                   ierr)
+    interface
+    function C_API(tag, &
+                   ierr_) &
+      bind(C, name="gmshViewGetNumTimeSteps")
+      use, intrinsic :: iso_c_binding
+      integer(c_int) :: C_API
+      integer(c_int), value, intent(in) :: tag
+      integer(c_int), intent(out), optional :: ierr_
+    end function C_API
+    end interface
+    integer(c_int) :: gmshViewGetNumTimeSteps
+    integer, intent(in) :: tag
+    integer(c_int), intent(out), optional :: ierr
+    gmshViewGetNumTimeSteps = C_API(tag=int(tag, c_int), &
+                              ierr_=ierr)
+  end function gmshViewGetNumTimeSteps
 
   !> Get the tags of all views.
   subroutine gmshViewGetTags(tags, &

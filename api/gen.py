@@ -964,6 +964,10 @@ view.add('remove', doc, None, iint('tag'))
 doc = '''Get the index of the view with tag `tag' in the list of currently loaded views. This dynamic index (it can change when views are removed) is used to access view options.'''
 view.add('getIndex', doc, oint, iint('tag'))
 
+doc = '''Get the number of time steps of the view with tag `tag' in the list of
+        currently loaded views.'''
+view.add('getNumTimeSteps', doc, oint, iint('tag'))
+
 doc = '''Get the tags of all views.'''
 view.add('getTags', doc, None, ovectorint('tags'))
 
