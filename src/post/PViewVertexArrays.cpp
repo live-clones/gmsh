@@ -1138,7 +1138,7 @@ static void addTensorElement(PView *p, int iEnt, int iEle, int numNodes,
     for(int i = 0; i < numNodes; i++) val[i][0] = ComputeVonMises(val[i]);
     addScalarElement(p, type, xyz, val, pre, numNodes);
   }
-  else if(opt->tensorType == PViewOptions::FrameVector) {
+  else if(opt->tensorType == PViewOptions::FrameVectors) {
     if(opt->glyphLocation == PViewOptions::Vertex) {
 
       double **vval = new double *[numNodes];
