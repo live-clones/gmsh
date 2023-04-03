@@ -8930,6 +8930,28 @@ class view:
     get_index = getIndex
 
     @staticmethod
+    def getNumTimeSteps(tag):
+        """
+        gmsh.view.getNumTimeSteps(tag)
+
+        Get the number of time steps of the view with tag `tag' in the list of
+        currently loaded views.
+
+        Return an integer.
+
+        Types:
+        - `tag': integer
+        """
+        ierr = c_int()
+        api_result_ = lib.gmshViewGetNumTimeSteps(
+            c_int(tag),
+            byref(ierr))
+        if ierr.value != 0:
+            raise Exception(logger.getLastError())
+        return api_result_
+    get_num_time_steps = getNumTimeSteps
+
+    @staticmethod
     def getTags():
         """
         gmsh.view.getTags()

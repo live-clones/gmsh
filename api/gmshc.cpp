@@ -4165,6 +4165,19 @@ GMSH_API int gmshViewGetIndex(const int tag, int * ierr)
   return result_api_;
 }
 
+GMSH_API int gmshViewGetNumTimeSteps(const int tag, int * ierr)
+{
+  int result_api_ = 0;
+  if(ierr) *ierr = 0;
+  try {
+    result_api_ = gmsh::view::getNumTimeSteps(tag);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+  return result_api_;
+}
+
 GMSH_API void gmshViewGetTags(int ** tags, size_t * tags_n, int * ierr)
 {
   if(ierr) *ierr = 0;

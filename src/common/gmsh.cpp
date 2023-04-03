@@ -7155,6 +7155,22 @@ GMSH_API int gmsh::view::getIndex(const int tag)
 #endif
 }
 
+GMSH_API int gmsh::view::getNumTimeSteps(const int tag)
+{
+  if(!_checkInit()) return -1;
+#if defined(HAVE_POST)
+  PView *view = PView::getViewByTag(tag);
+  if(!view) {
+    Msg::Error("Unknown view with tag %d", tag);
+    return -1;
+  }
+  return view->getData()->getNumTimeSteps();
+#else
+  Msg::Error("Views require the post-processing module");
+  return -1;
+#endif
+}
+
 GMSH_API void gmsh::view::getTags(std::vector<int> &tags)
 {
   if(!_checkInit()) return;

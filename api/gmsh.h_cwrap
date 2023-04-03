@@ -5602,6 +5602,18 @@ namespace gmsh { // Top-level functions
       return result_api_;
     }
 
+    // gmsh::view::getNumTimeSteps
+    //
+    // Get the number of time steps of the view with tag `tag' in the list of
+    // currently loaded views.
+    inline int getNumTimeSteps(const int tag)
+    {
+      int ierr = 0;
+      int result_api_ = gmshViewGetNumTimeSteps(tag, &ierr);
+      if(ierr) throwLastError();
+      return result_api_;
+    }
+
     // gmsh::view::getTags
     //
     // Get the tags of all views.
