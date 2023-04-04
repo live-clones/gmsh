@@ -1127,8 +1127,6 @@ static void addTriangle(PView *p, PViewOptions *opt, double *x0, double *x1,
 static void addTensorElement(PView *p, int iEnt, int iEle, int numNodes,
                              int type, double **xyz, double **val, bool pre)
 {
-
-
   PViewOptions *opt = p->getOptions();
   fullMatrix<double> tensor(3, 3);
   fullVector<double> S(3), imS(3);
@@ -1302,7 +1300,6 @@ static void addTensorElement(PView *p, int iEnt, int iEle, int numNodes,
 
 static void addElementsInArrays(PView *p, bool preprocessNormalsOnly)
 {
-
   static int numNodesError = 0, numCompError = 0;
 
   // use adaptive data if available
