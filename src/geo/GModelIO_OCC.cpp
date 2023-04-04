@@ -87,6 +87,7 @@
 #include <STEPControl_Reader.hxx>
 #include <STEPControl_Writer.hxx>
 #include <ShapeBuild_ReShape.hxx>
+#include <ShapeExtend_WireData.hxx>
 #include <ShapeFix_FixSmallFace.hxx>
 #include <ShapeFix_Shape.hxx>
 #include <ShapeFix_Wireframe.hxx>
@@ -1556,11 +1557,14 @@ bool OCC_Internals::addWire(int &tag, const std::vector<int> &curveTags,
   try {
     BRepBuilderAPI_MakeWire w;
     TopoDS_Wire wire;
+    bool reversed = false;
     for(std::size_t i = 0; i < curveTags.size(); i++) {
-      // all curve tags are > 0 for OCC : but to improve compatibility between
-      // GEO and OCC factories, we allow negative tags - and simply ignore the
-      // sign here
+      // all curve tags are > 0 for OCC, and the orientation of the wire is
+      // dictated by the orientation of the first curve in the wire; to improve
+      // compatibility between GEO and OCC factories, if the first curve has a
+      // negative tag, we reverse the wire
       int t = std::abs(curveTags[i]);
+      if(i == 0 && curveTags[i] < 0) reversed = true;
       if(!_tagEdge.IsBound(t)) {
         Msg::Error("Unknown OpenCASCADE curve with tag %d", t);
         return false;
@@ -1579,6 +1583,13 @@ bool OCC_Internals::addWire(int &tag, const std::vector<int> &curveTags,
       return false;
     }
     if(tag < 0) tag = getMaxTag(-1) + 1;
+    if(reversed) {
+      Msg::Debug("Reversing wire %d because its first curve was provided "
+                 "with a negative tag", tag);
+      ShapeExtend_WireData sw(wire);
+      sw.Reverse();
+      wire = sw.Wire();
+    }
     _bind(wire, tag, true);
   } catch(Standard_Failure &err) {
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
