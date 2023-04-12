@@ -855,14 +855,14 @@ bool buildAdditionalPoints2D(GFace *gf)
                   int lc = dc - 1;
                   double s, t, xs, ys, xf, yf;
 
-                  if(DIR == dc && layer > lc) {
+                  if((int)DIR == dc && (int)layer > lc) {
                     double d = bl_depth[layer];
                     double rc = bl_depth[DIR - 1];
                     double r = d - rc;
                     dx = rc + r / sqrt(2.0);
                     dy = dx;
                   }
-                  else if(DIR < dc && layer > lc) {
+                  else if((int)DIR < dc && (int)layer > lc) {
                     double d = bl_depth[layer];
                     double rc = bl_depth[dc - 1];
                     double r = d - rc;
@@ -882,7 +882,7 @@ bool buildAdditionalPoints2D(GFace *gf)
                       dy = rc + r * sin(angle);
                     }
                   }
-                  else if(DIR > dc && layer < lc) {
+                  else if((int)DIR > dc && (int)layer < lc) {
                     double d = bl_depth[DIR - 1];
                     double rc = bl_depth[dc - 1];
                     double r = d - rc;
