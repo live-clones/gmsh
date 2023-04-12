@@ -2,6 +2,9 @@
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+//
+// Contributor(s):
+//   Michael Ermakov (ermakov@ipmnet.ru)
 
 #include <limits>
 #include <sstream>
@@ -86,7 +89,8 @@ static void trueBoundary(GFace *gf, std::vector<SPoint2> &bnd, int debug)
         if(k > 0) {
           if(view_t) {
             fprintf(view_t, "SL(%g,%g,%g,%g,%g,%g){%d,%d};\n", p[k - 1].x(),
-                    p[k - 1].y(), 0.0, p[k].x(), p[k].y(), 0.0,ge->tag(),ge->tag());
+                    p[k - 1].y(), 0.0, p[k].x(), p[k].y(), 0.0, ge->tag(),
+                    ge->tag());
           }
           bnd.push_back(p[k - 1]);
           bnd.push_back(p[k]);
@@ -808,7 +812,8 @@ static void addOrRemove(MVertex *v1, MVertex *v2,
   }
 }
 
-static bool meshGenerator(GFace *, int, bool, int, bool, std::vector<GEdge *> *);
+static bool meshGenerator(GFace *, int, bool, int, bool,
+                          std::vector<GEdge *> *);
 
 static void modifyInitialMeshForBoundaryLayers(
   GFace *gf, std::vector<MQuadrangle *> &blQuads,
@@ -845,6 +850,7 @@ static void modifyInitialMeshForBoundaryLayers(
         const BoundaryLayerData &c2 = ec._c2;
         int N = std::min(c1._column.size(), c2._column.size());
         if(!N) continue;
+
         for(int l = 0; l < N; ++l) {
           MVertex *v11, *v12, *v21, *v22;
           v21 = c1._column[l];
@@ -857,10 +863,12 @@ static void modifyInitialMeshForBoundaryLayers(
             v11 = c1._column[l - 1];
             v12 = c2._column[l - 1];
           }
+
           MQuadrangle *qq = new MQuadrangle(v11, v21, v22, v12);
           qq->setPartition(l + 1);
           myCol.push_back(qq);
           blQuads.push_back(qq);
+
           if(ff2)
             fprintf(ff2,
                     "SQ(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){%d,%d,%d,%d};\n",
@@ -868,6 +876,7 @@ static void modifyInitialMeshForBoundaryLayers(
                     v22->x(), v22->y(), v22->z(), v21->x(), v21->y(), v21->z(),
                     l + 1, l + 1, l + 1, l + 1);
         }
+
         if(c1._column.size() != c2._column.size()) {
           MVertex *v11, *v12, *v;
           v11 = c1._column[N - 1];
@@ -883,6 +892,7 @@ static void modifyInitialMeshForBoundaryLayers(
                     v11->x(), v11->y(), v11->z(), v12->x(), v12->y(), v12->z(),
                     v->x(), v->y(), v->z(), N + 1, N + 1, N + 1);
         }
+
         // int M = std::max(c1._column.size(),c2._column.size());
         for(std::size_t l = 0; l < myCol.size(); l++)
           _columns->_toFirst[myCol[l]] = myCol[0];
@@ -895,54 +905,280 @@ static void modifyInitialMeshForBoundaryLayers(
   for(auto itf = _columns->beginf(); itf != _columns->endf(); ++itf) {
     MVertex *v = itf->first;
     int nbCol = _columns->getNbColumns(v);
+    int fanType = itf->second.type;
 
-    for(int i = 0; i < nbCol - 1; i++) {
-      const BoundaryLayerData &c1 = _columns->getColumn(v, i);
-      const BoundaryLayerData &c2 = _columns->getColumn(v, i + 1);
-      int N = std::min(c1._column.size(), c2._column.size());
-      std::vector<MElement *> myCol;
-      for(int l = 0; l < N; ++l) {
+    if(fanType == -1) { // fan
+
+      for(int i = 0; i < nbCol - 1; i++) {
+        const BoundaryLayerData &c1 = _columns->getColumn(v, i);
+        const BoundaryLayerData &c2 = _columns->getColumn(v, i + 1);
+        int N = std::min(c1._column.size(), c2._column.size());
+        std::vector<MElement *> myCol;
+        for(int l = 0; l < N; ++l) {
+          MVertex *v11, *v12, *v21, *v22;
+          v21 = c1._column[l];
+          v22 = c2._column[l];
+          if(l == 0) {
+            v11 = v;
+            v12 = v;
+          }
+          else {
+            v11 = c1._column[l - 1];
+            v12 = c2._column[l - 1];
+          }
+          if(v11 != v12) {
+            MQuadrangle *qq = new MQuadrangle(v11, v12, v22, v21);
+            qq->setPartition(l + 1);
+            myCol.push_back(qq);
+            blQuads.push_back(qq);
+
+            if(ff2)
+              fprintf(ff2,
+                      "SQ(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){%d,%d,%d,%d};\n",
+                      v11->x(), v11->y(), v11->z(), v12->x(), v12->y(),
+                      v12->z(), v22->x(), v22->y(), v22->z(), v21->x(),
+                      v21->y(), v21->z(), l + 1, l + 1, l + 1, l + 1);
+          }
+          else {
+            MTriangle *qq = new MTriangle(v, v22, v21);
+            qq->setPartition(l + 1);
+            myCol.push_back(qq);
+            blTris.push_back(qq);
+            if(ff2)
+              fprintf(ff2, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%d,%d,%d};\n",
+                      v->x(), v->y(), v->z(), v22->x(), v22->y(), v22->z(),
+                      v21->x(), v21->y(), v21->z(), l + 1, l + 1, l + 1);
+          }
+        }
+        if(myCol.size()) {
+          for(std::size_t l = 0; l < myCol.size(); l++)
+            _columns->_toFirst[myCol[l]] = myCol[0];
+          _columns->_elemColumns[myCol[0]] = myCol;
+        }
+      }
+    }
+    else if(fanType == 1) { // cross
+
+      const BoundaryLayerData &c1 = _columns->getColumn(v, 0);
+      int N = c1._column.size();
+      nbCol = N + 1;
+
+      const BoundaryLayerData &cl = _columns->getColumn(v, nbCol);
+      for(int i = 0; i < nbCol - 1; i++) {
+        const BoundaryLayerData &c1 = _columns->getColumn(v, i);
+        const BoundaryLayerData &c2 = _columns->getColumn(v, i + 1);
+        int N = std::min(c1._column.size(), c2._column.size());
+        std::vector<MElement *> myCol;
         MVertex *v11, *v12, *v21, *v22;
-        v21 = c1._column[l];
-        v22 = c2._column[l];
-        if(l == 0) {
-          v11 = v;
-          v12 = v;
-        }
-        else {
-          v11 = c1._column[l - 1];
-          v12 = c2._column[l - 1];
-        }
-        if(v11 != v12) {
+        for(int l = 0; l < N; ++l) {
+          if(l == 0) {
+            if(i == 0) { v11 = v; }
+            else {
+              v11 = cl._column[i - 1];
+            }
+            v12 = cl._column[i];
+          }
+          else {
+            v11 = v21;
+            v12 = v22;
+          }
+          v21 = c1._column[l];
+          v22 = c2._column[l];
+
           MQuadrangle *qq = new MQuadrangle(v11, v12, v22, v21);
           qq->setPartition(l + 1);
           myCol.push_back(qq);
           blQuads.push_back(qq);
-          if(ff2)
-            fprintf(ff2,
-                    "SQ(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){%d,%d,%d,%d};\n",
-                    v11->x(), v11->y(), v11->z(), v12->x(), v12->y(), v12->z(),
-                    v22->x(), v22->y(), v22->z(), v21->x(), v21->y(), v21->z(),
-                    l + 1, l + 1, l + 1, l + 1);
         }
-        else {
-          MTriangle *qq = new MTriangle(v, v22, v21);
-          qq->setPartition(l + 1);
-          myCol.push_back(qq);
-          blTris.push_back(qq);
-          if(ff2)
-            fprintf(ff2, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%d,%d,%d};\n", v->x(),
-                    v->y(), v->z(), v22->x(), v22->y(), v22->z(), v21->x(),
-                    v21->y(), v21->z(), l + 1, l + 1, l + 1);
+
+        if(myCol.size()) {
+          for(std::size_t l = 0; l < myCol.size(); l++)
+            _columns->_toFirst[myCol[l]] = myCol[0];
+          _columns->_elemColumns[myCol[0]] = myCol;
         }
-      }
-      if(myCol.size()) {
-        for(std::size_t l = 0; l < myCol.size(); l++)
-          _columns->_toFirst[myCol[l]] = myCol[0];
-        _columns->_elemColumns[myCol[0]] = myCol;
       }
     }
-  }
+    else if(fanType == 2) { // mix
+
+      const BoundaryLayerData &c1 = _columns->getColumn(v, 0);
+      int N = c1._column.size();
+      nbCol = N + 1;
+      int cp = (N - 1) / 2 + 1;
+
+      const BoundaryLayerData &cl = _columns->getColumn(v, nbCol);
+      for(int i = 0; i < nbCol - 1; i++) {
+        const BoundaryLayerData &c1 = _columns->getColumn(v, i);
+        const BoundaryLayerData &c2 = _columns->getColumn(v, i + 1);
+        int N = std::min(c1._column.size(), c2._column.size());
+        std::vector<MElement *> myCol;
+        MVertex *v11, *v12, *v21, *v22;
+        for(int l = 0; l < N; ++l) {
+          if(i >= cp && l >= cp) continue;
+
+          if(l == 0) {
+            if(i == 0) { v11 = v; }
+            else {
+              v11 = cl._column[i - 1];
+            }
+            v12 = cl._column[i];
+          }
+          else {
+            v11 = v21;
+            v12 = v22;
+          }
+
+          if(l == cp - 1 && i >= cp) {
+            const BoundaryLayerData &cc = _columns->getColumn(v, cp);
+            v21 = cc._column[i - 1];
+            v22 = cc._column[i];
+          }
+          else {
+            v21 = c1._column[l];
+            v22 = c2._column[l];
+          }
+
+          MQuadrangle *qq = new MQuadrangle(v11, v12, v22, v21);
+          qq->setPartition(l + 1);
+          myCol.push_back(qq);
+          blQuads.push_back(qq);
+        }
+
+        if(myCol.size()) {
+          for(std::size_t l = 0; l < myCol.size(); l++)
+            _columns->_toFirst[myCol[l]] = myCol[0];
+          _columns->_elemColumns[myCol[0]] = myCol;
+        }
+      }
+    }
+    else if(fanType == 3) { // tail
+
+      const int dir_half = nbCol / 2 + 1;
+      const BoundaryLayerData &c1 = _columns->getColumn(v, 0);
+      const int N = c1._column.size();
+      const BoundaryLayerData &cc = _columns->getColumn(v, 1);
+      const int NN = cc._column.size();
+
+      for(int i = 0; i < NN; i++) {
+        std::vector<MElement *> myCol;
+
+        for(int l = 0; l < N; l++) {
+          MVertex *v11, *v12, *v21, *v22;
+          int k = dir_half - l - 1;
+          const BoundaryLayerData &c2 = _columns->getColumn(v, k);
+          const BoundaryLayerData &c3 = _columns->getColumn(v, k - 1);
+
+          if(i == 0) {
+            if(l == 0) { v11 = v; }
+            else {
+              v11 = c1._column[l - 1];
+            }
+            v21 = c1._column[l];
+          }
+          else {
+            v11 = c2._column[i - 1];
+            v21 = c3._column[i - 1];
+          }
+
+          v12 = c2._column[i];
+          v22 = c3._column[i];
+
+          if(v11 != v12) {
+            MQuadrangle *qq = new MQuadrangle(v11, v12, v22, v21);
+            qq->setPartition(l + 1);
+            myCol.push_back(qq);
+            blQuads.push_back(qq);
+            if(ff2)
+              fprintf(ff2,
+                      "SQ(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){%d,%d,%d,%d};\n",
+                      v11->x(), v11->y(), v11->z(), v12->x(), v12->y(),
+                      v12->z(), v22->x(), v22->y(), v22->z(), v21->x(),
+                      v21->y(), v21->z(), l + 1, l + 1, l + 1, l + 1);
+          }
+          else {
+            MTriangle *qq = new MTriangle(v, v22, v21);
+            qq->setPartition(l + 1);
+            myCol.push_back(qq);
+            blTris.push_back(qq);
+            if(ff2)
+              fprintf(ff2, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%d,%d,%d};\n",
+                      v->x(), v->y(), v->z(), v22->x(), v22->y(), v22->z(),
+                      v21->x(), v21->y(), v21->z(), l + 1, l + 1, l + 1);
+          }
+
+        } // l
+
+        if(myCol.size()) {
+          for(std::size_t l = 0; l < myCol.size(); l++)
+            _columns->_toFirst[myCol[l]] = myCol[0];
+          _columns->_elemColumns[myCol[0]] = myCol;
+        }
+
+      } // i
+
+      const BoundaryLayerData &cn = _columns->getColumn(v, nbCol - 1);
+
+      for(int i = 0; i < NN; i++) {
+        std::vector<MElement *> myCol;
+
+        for(int l = 0; l < N; l++) {
+          MVertex *v11, *v12, *v21, *v22;
+
+          int k = dir_half + l - 1;
+
+          const BoundaryLayerData &c2 = _columns->getColumn(v, k);
+          const BoundaryLayerData &c3 = _columns->getColumn(v, k + 1);
+
+          if(i == 0) {
+            if(l == 0) { v11 = v; }
+            else {
+              v11 = cn._column[l - 1];
+            }
+            v21 = cn._column[l];
+          }
+          else {
+            v11 = c2._column[i - 1];
+            v21 = c3._column[i - 1];
+          }
+
+          v12 = c2._column[i];
+          v22 = c3._column[i];
+
+          if(v11 != v12) {
+            MQuadrangle *qq = new MQuadrangle(v11, v12, v22, v21);
+            qq->setPartition(l + 1);
+            myCol.push_back(qq);
+            blQuads.push_back(qq);
+            if(ff2)
+              fprintf(ff2,
+                      "SQ(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){%d,%d,%d,%d};\n",
+                      v11->x(), v11->y(), v11->z(), v12->x(), v12->y(),
+                      v12->z(), v22->x(), v22->y(), v22->z(), v21->x(),
+                      v21->y(), v21->z(), l + 1, l + 1, l + 1, l + 1);
+          }
+          else {
+            MTriangle *qq = new MTriangle(v, v22, v21);
+            qq->setPartition(l + 1);
+            myCol.push_back(qq);
+            blTris.push_back(qq);
+            if(ff2)
+              fprintf(ff2, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%d,%d,%d};\n",
+                      v->x(), v->y(), v->z(), v22->x(), v22->y(), v22->z(),
+                      v21->x(), v21->y(), v21->z(), l + 1, l + 1, l + 1);
+          }
+
+        } // l
+
+        if(myCol.size()) {
+          for(std::size_t l = 0; l < myCol.size(); l++)
+            _columns->_toFirst[myCol[l]] = myCol[0];
+          _columns->_elemColumns[myCol[0]] = myCol;
+        }
+
+      } // i
+
+    } // if
+
+  } // for itf
 
   if(ff2) {
     fprintf(ff2, "};\n");
@@ -1288,7 +1524,7 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
   // use a divide & conquer type algorithm to create a triangulation.
   // We add to the triangulation a box with 4 points that encloses the
   // domain.
-  if(CTX::instance()->mesh.oldInitialDelaunay2D){
+  if(CTX::instance()->mesh.oldInitialDelaunay2D) {
     // compute the bounding box in parametric space
     SVector3 dd(bbox.max(), bbox.min());
     double LC2D = norm(dd);
@@ -1394,8 +1630,7 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
       BDS_Point *p1 = aaa[a];
       BDS_Point *p2 = aaa[b];
       BDS_Point *p3 = aaa[c];
-      if(p1 && p2 && p3)
-        m->add_triangle(p1->iD, p2->iD, p3->iD);
+      if(p1 && p2 && p3) m->add_triangle(p1->iD, p2->iD, p3->iD);
     }
     delete pm;
   }
@@ -1473,13 +1708,11 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
     }
     else {
       auto itr = edgesNotRecovered.begin();
-      int I = 0;
       for(; itr != edgesNotRecovered.end(); ++itr) {
         int p1 = itr->p1;
         int p2 = itr->p2;
         int tag = itr->ge->tag();
         Msg::Error("Edge not recovered: %d %d %d", p1, p2, tag);
-        I++;
       }
     }
 
@@ -1754,9 +1987,9 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
   splitElementsInBoundaryLayerIfNeeded(gf);
 
   if((CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine) &&
-     (onlyInitialMesh != 99) && (CTX::instance()->mesh.algoRecombine <= 1 ||
-                                 CTX::instance()->mesh.algoRecombine == 4)) {
-
+     (onlyInitialMesh != 99) &&
+     (CTX::instance()->mesh.algoRecombine <= 1 ||
+      CTX::instance()->mesh.algoRecombine == 4)) {
     if(CTX::instance()->mesh.algoRecombine == 4) {
       meshGFaceQuadrangulateBipartiteLabelling(gf->tag());
     }
@@ -1807,7 +2040,7 @@ static bool buildConsecutiveListOfVertices(
   //    needed
   std::vector<GEdgeSigned> signedEdges(gel.begin(), gel.end());
   std::vector<SPoint2> coords;
-  std::vector<MVertex*> verts;
+  std::vector<MVertex *> verts;
 
 #if 0 // for debugging - don't remove
   printf("curve loop for surface %d\n", gf->tag());
@@ -1834,12 +2067,11 @@ static bool buildConsecutiveListOfVertices(
 #endif
 
   for(int initial_dir = 0; initial_dir < 2; initial_dir++) {
-
     if(coords.size()) break; // we succeeded with initial_dir == 0
 
     for(std::size_t i = 0; i < signedEdges.size(); i++) {
       std::vector<SPoint2> p, p_alt, p_rev, p_alt_rev;
-      std::vector<MVertex*> v, v_rev;
+      std::vector<MVertex *> v, v_rev;
       GEdge *ge = signedEdges[i].getEdge();
       bool seam = ge->isSeam(gf);
       Range<double> range = ge->parBoundsOnFace(gf);
@@ -1891,7 +2123,7 @@ static bool buildConsecutiveListOfVertices(
           verts = v_rev;
         }
       }
-      else{
+      else {
         // detect which mesh variant to use for the next curve by selecting the
         // mesh that starts with the node at the smallest distance, within the
         // prescribed tolerance
@@ -1910,18 +2142,19 @@ static bool buildConsecutiveListOfVertices(
             verts.pop_back();
             verts.insert(verts.end(), v_rev.begin(), v_rev.end());
           }
-          else{
+          else {
             Msg::Debug("Distances (%g, %g) in parametric space larger than "
                        "tolerance (%g) between end of curve %d and "
-                       "begining of curve %d...", dist1, dist2, tol,
-                       signedEdges[i - 1].getEdge()->tag(), ge->tag());
-            if(initial_dir == 0){
+                       "begining of curve %d...",
+                       dist1, dist2, tol, signedEdges[i - 1].getEdge()->tag(),
+                       ge->tag());
+            if(initial_dir == 0) {
               Msg::Debug("... will try with alternate initial orientation");
               coords.clear();
               verts.clear();
               break;
             }
-            else{
+            else {
               Msg::Debug("... will try with larger tolerance");
               return false;
             }
@@ -1936,19 +2169,22 @@ static bool buildConsecutiveListOfVertices(
             verts.pop_back();
             verts.insert(verts.end(), v.begin(), v.end());
           }
-          else if(dist2 < dist1 && dist2 < dist3 && dist2 < dist4 && dist2 < tol) {
+          else if(dist2 < dist1 && dist2 < dist3 && dist2 < dist4 &&
+                  dist2 < tol) {
             coords.pop_back();
             coords.insert(coords.end(), p_rev.begin(), p_rev.end());
             verts.pop_back();
             verts.insert(verts.end(), v_rev.begin(), v_rev.end());
           }
-          else if(dist3 < dist1 && dist3 < dist2 && dist3 < dist4 && dist3 < tol) {
+          else if(dist3 < dist1 && dist3 < dist2 && dist3 < dist4 &&
+                  dist3 < tol) {
             coords.pop_back();
             coords.insert(coords.end(), p_alt.begin(), p_alt.end());
             verts.pop_back();
             verts.insert(verts.end(), v.begin(), v.end());
           }
-          else if(dist4 < dist1 && dist4 < dist2 && dist4 < dist3 && dist4 < tol) {
+          else if(dist4 < dist1 && dist4 < dist2 && dist4 < dist3 &&
+                  dist4 < tol) {
             coords.pop_back();
             coords.insert(coords.end(), p_alt_rev.begin(), p_alt_rev.end());
             verts.pop_back();
@@ -1957,15 +2193,16 @@ static bool buildConsecutiveListOfVertices(
           else {
             Msg::Debug("Distances (%g, %g, %g, %g) in parametric space larger "
                        "than tolerance (%g) between end of curve %d and "
-                       "begining of seam curve %d...", dist1, dist2, dist3, dist4,
-                       tol, signedEdges[i - 1].getEdge()->tag(), ge->tag());
-            if(initial_dir == 0){
+                       "begining of seam curve %d...",
+                       dist1, dist2, dist3, dist4, tol,
+                       signedEdges[i - 1].getEdge()->tag(), ge->tag());
+            if(initial_dir == 0) {
               Msg::Debug("... will try with alternate initial orientation");
               coords.clear();
               verts.clear();
               break;
             }
-            else{
+            else {
               Msg::Debug("... will try with larger tolerance");
               return false;
             }
@@ -1977,7 +2214,8 @@ static bool buildConsecutiveListOfVertices(
 
   if(verts.size() != coords.size()) {
     Msg::Error("Wrong number of parametric coordinates for boundary nodes "
-               "on surface %d", gf->tag());
+               "on surface %d",
+               gf->tag());
     return false;
   }
   if(verts.empty()) {
@@ -1991,7 +2229,8 @@ static bool buildConsecutiveListOfVertices(
   }
   else {
     Msg::Debug("Distance %g between first and last node in 1D mesh of surface "
-               "%d exceeds tolerance %g", dist, gf->tag(), tol);
+               "%d exceeds tolerance %g",
+               dist, gf->tag(), tol);
     return false;
   }
 
@@ -2037,14 +2276,15 @@ static bool buildConsecutiveListOfVertices(
       pp->g = g;
       bbox += SPoint3(U, V, 0);
     }
-    //printf("node %d coord %g %g\n", here->getNum(), pp->u, pp->v);
+    // printf("node %d coord %g %g\n", here->getNum(), pp->u, pp->v);
     result.push_back(pp);
     recoverMapLocal[pp] = here;
     count++;
   }
 
   Msg::Debug("Succeeded finding consecutive list of nodes on surface "
-             "%d, with tolerance %g", gf->tag(), tol);
+             "%d, with tolerance %g",
+             gf->tag(), tol);
 
   // we're all set!
   recoverMap.insert(recoverMapLocal.begin(), recoverMapLocal.end());
@@ -2820,7 +3060,6 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
   if((CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine) &&
      (CTX::instance()->mesh.algoRecombine <= 1 ||
       CTX::instance()->mesh.algoRecombine == 4)) {
-
     if(CTX::instance()->mesh.algoRecombine == 4) {
       meshGFaceQuadrangulateBipartiteLabelling(gf->tag());
     }
@@ -2976,8 +3215,7 @@ void meshGFace::operator()(GFace *gf, bool print)
   else {
     meshGenerator(gf, 0, repairSelfIntersecting1dMesh,
                   (gf->getMeshingAlgo() == ALGO_2D_INITIAL_ONLY) ? 1 : 0,
-                  (debugSurface >= 0 || debugSurface == -100),
-                  NULL);
+                  (debugSurface >= 0 || debugSurface == -100), NULL);
   }
 
   Msg::Debug("Type %d %d triangles generated, %d internal nodes",
