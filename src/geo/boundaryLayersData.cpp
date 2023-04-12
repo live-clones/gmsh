@@ -68,7 +68,6 @@ edgeColumn BoundaryLayerColumns::getColumns(MVertex *v1, MVertex *v2, int side)
 
   int nbSides = _normals.count(e);
 
-  // if(nbSides != 1)printf("I'm here %d sides\n",nbSides);
   // Standard case, only two extruded columns from the two vertices
   if(N1 == 1 && N2 == 1) return edgeColumn(getColumn(v1, 0), getColumn(v2, 0));
   // one fan on
@@ -218,10 +217,7 @@ static void treat2Connections(GFace *gf, MVertex *_myVert, MEdge &e1, MEdge &e2,
         case 3: fanSize2 = fanSize - 1; break;
         default:
           double frac = fabs(AMAX - AMIN) / M_PI;
-          int n =
-            (int)(frac *
-                    fanSize /*CTX::instance()->mesh.boundaryLayerFanPoints*/
-                  + 0.5);
+          int n = (int)(frac * fanSize + 0.5);
           fanSize2 = fan ? n : 0;
         }
 
@@ -463,8 +459,8 @@ bool buildAdditionalPoints2D(GFace *gf)
       std::vector<MVertex *> columnEndOfBL;
       std::vector<MVertex *> _connections;
       std::vector<SVector3> _dirs;
-      // get all vertices that are connected  to that
-      // vertex among all boundary layer vertices !
+      // get all vertices that are connected to that vertex among all boundary
+      // layer vertices !
 
       bool fan =
         (*it)->onWhat()->dim() == 0 && blf->isFanNode((*it)->onWhat()->tag());
@@ -472,8 +468,8 @@ bool buildAdditionalPoints2D(GFace *gf)
 
       int fanType = 0; // no fan
       if(fan) {
-        int tag = blf->fanSize((*it)->onWhat()->tag());
-        switch(tag) {
+        int t = blf->fanSize((*it)->onWhat()->tag());
+        switch(t) {
         case -1:
           fanType = 1; // cross
           break;
@@ -488,8 +484,7 @@ bool buildAdditionalPoints2D(GFace *gf)
           fanSize = 0;
           break;
         default:
-          if(tag < 0) { // auto
-
+          if(t < 0) { // auto
             fanType = 4;
             fanSize = 0;
           }
@@ -540,9 +535,6 @@ bool buildAdditionalPoints2D(GFace *gf)
             // end of the BL --> let's add a column that correspond to the
             // model edge that lies after the end of teh BL
             if(Ts.size() == 1) {
-              // printf("HERE WE ARE IN FACE %d %d\n",gf->tag(),Ts.size());
-              // printf("Classif dim %d
-              // %d\n",(*it)->onWhat()->dim(),Ts[0]->onWhat()->dim());
               GEdge *ge = dynamic_cast<GEdge *>(Ts[0]->onWhat());
               GVertex *gv = dynamic_cast<GVertex *>((*it)->onWhat());
               if(ge && gv) { addColumnAtTheEndOfTheBL(ge, gv, _columns, blf); }
@@ -585,7 +577,7 @@ bool buildAdditionalPoints2D(GFace *gf)
           }
         }
 
-        // if(_dirs.size() > 1)printf("%d directions\n",_dirs.size());
+        // if(_dirs.size() > 1) printf("%d directions\n",_dirs.size());
 
         // now create the BL points
         for(std::size_t DIR = 0; DIR < _dirs.size(); DIR++) {
@@ -596,15 +588,9 @@ bool buildAdditionalPoints2D(GFace *gf)
           //     = e * (dX/du n_u + dX/dv n_v)   //
           // < ------------------------------- > //
 
-          /*      if (endOfTheBL){
-            printf("%g %g %d %d %g\n", (*it)->x(), (*it)->y(), DIR,
-          (int)_dirs.size(), dot(n, dirEndOfBL));
+          if(endOfTheBL && dot(n, dirEndOfBL) > 0.99) {
+            // end
           }
-          */
-          if(endOfTheBL && dot(n, dirEndOfBL) > .99) {
-            // printf( "coucou c'est moi\n");
-          }
-          // ADD BETA LAW HERE !!!
           else if(blf->betaLaw) {
             MVertex *first = *it;
             double hWall;
@@ -662,7 +648,7 @@ bool buildAdditionalPoints2D(GFace *gf)
       }
       else { // cross, mix, tail
 
-        //      calculate a number of layers in the BL and layers depth
+        // calculate a number of layers in the BL and layers depth
         std::vector<double> bl_depth;
         MVertex *first = *it;
         int nlayers = 0;
@@ -745,9 +731,6 @@ bool buildAdditionalPoints2D(GFace *gf)
             // end of the BL --> let's add a column that correspond to the
             // model edge that lies after the end of teh BL
             if(Ts.size() == 1) {
-              // printf("HERE WE ARE IN FACE %d %d\n",gf->tag(),Ts.size());
-              // printf("Classif dim %d
-              // %d\n",(*it)->onWhat()->dim(),Ts[0]->onWhat()->dim());
               GEdge *ge = dynamic_cast<GEdge *>(Ts[0]->onWhat());
               GVertex *gv = dynamic_cast<GVertex *>((*it)->onWhat());
               if(ge && gv) { addColumnAtTheEndOfTheBL(ge, gv, _columns, blf); }
@@ -792,20 +775,16 @@ bool buildAdditionalPoints2D(GFace *gf)
         // now create the BL points
         SVector3 n1 = _dirs.front();
         SVector3 n2 = _dirs.back();
-
-        double h, x1, y1, x2, y2, x3, y3, D, Dt, t;
-        if(fanType == 1 || fanType == 2) {
-          h = bl_depth[bl_depth.size() - 1];
-          x1 = x0 + h * n1.x();
-          y1 = y0 + h * n1.y();
-          x2 = x0 + h * n2.x();
-          y2 = y0 + h * n2.y();
-          D = n1.y() * n2.x() - n1.x() * n2.y();
-          Dt = -(x2 - x1) * n2.x() - (y2 - y1) * n2.y();
-          t = Dt / D;
-          x3 = x1 - t * n1.y();
-          y3 = y1 + t * n1.x();
-        }
+        double h = bl_depth[bl_depth.size() - 1];
+        double x1 = x0 + h * n1.x();
+        double y1 = y0 + h * n1.y();
+        double x2 = x0 + h * n2.x();
+        double y2 = y0 + h * n2.y();
+        double D = n1.y() * n2.x() - n1.x() * n2.y();
+        double Dt = -(x2 - x1) * n2.x() - (y2 - y1) * n2.y();
+        double t = Dt / D;
+        double x3 = x1 - t * n1.y();
+        double y3 = y1 + t * n1.x();
 
         switch(fanType) {
         case 1: // cross
@@ -815,10 +794,10 @@ bool buildAdditionalPoints2D(GFace *gf)
             std::vector<MVertex *> _column;
 
             if(endOfTheBL && dot(n, dirEndOfBL) > 0.99) {
-              Msg::Info("coucou c'est moi : 1");
+              // end
             }
             else {
-              for(int layer = 0; layer < bl_depth.size(); layer++) {
+              for(std::size_t layer = 0; layer < bl_depth.size(); layer++) {
                 double x, y;
                 if(DIR == 0 || DIR == _dirs.size() - 1) {
                   double L = bl_depth[layer];
@@ -826,10 +805,9 @@ bool buildAdditionalPoints2D(GFace *gf)
                   y = y0 + L * n.y();
                 }
                 else {
-                  //                    x = x0 + bl_depth[layer] * n1.x() +
-                  //                    bl_depth[DIR - 1] * n2.x(); y = y0 +
-                  //                    bl_depth[layer] * n1.y() + bl_depth[DIR
-                  //                    - 1] * n2.y();
+                  // x = x0 + bl_depth[layer] * n1.x() +
+                  // bl_depth[DIR - 1] * n2.x(); y = y0 +
+                  // bl_depth[layer] * n1.y() + bl_depth[DIR - 1] * n2.y();
 
                   double s = bl_depth[layer] / h;
                   double t = bl_depth[DIR - 1] / h;
@@ -862,10 +840,10 @@ bool buildAdditionalPoints2D(GFace *gf)
             std::vector<MVertex *> _column;
 
             if(endOfTheBL && dot(n, dirEndOfBL) > 0.99) {
-              Msg::Info("coucou c'est moi : 1");
+              // end
             }
             else {
-              for(int layer = 0; layer < bl_depth.size(); layer++) {
+              for(std::size_t layer = 0; layer < bl_depth.size(); layer++) {
                 double dx, dy, x, y;
                 if(DIR == 0 || DIR == _dirs.size() - 1) {
                   double L = bl_depth[layer];
@@ -928,9 +906,8 @@ bool buildAdditionalPoints2D(GFace *gf)
                     dx = bl_depth[layer];
                     dy = bl_depth[DIR - 1];
                   }
-                  //                    x = x0 + dx * n1.x() + dy * n2.x();
-                  //                    y = y0 + dx * n1.y() + dy * n2.y();
-
+                  // x = x0 + dx * n1.x() + dy * n2.x();
+                  // y = y0 + dx * n1.y() + dy * n2.y();
                   s = dx / h;
                   t = dy / h;
                   xs = x0 + s * (x1 - x0);
@@ -992,7 +969,7 @@ bool buildAdditionalPoints2D(GFace *gf)
           SPoint2 tc =
             SPoint2(0.5 * (t1.x() + t2.x()), 0.5 * (t1.y() + t2.y()));
 
-          const int dir_half = _dirs.size() / 2;
+          const std::size_t dir_half = _dirs.size() / 2;
 
           for(std::size_t DIR = 0; DIR < _dirs.size(); DIR++) {
             SVector3 n = _dirs[DIR];
