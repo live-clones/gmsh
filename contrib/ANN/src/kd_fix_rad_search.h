@@ -2,7 +2,7 @@
 // File:			kd_fix_rad_search.h
 // Programmer:		Sunil Arya and David Mount
 // Description:		Standard kd-tree fixed-radius kNN search
-// Last modified:	??/??/?? (Version 1.1)
+// Last modified:	05/03/05 (Version 1.1)
 //----------------------------------------------------------------------
 // Copyright (c) 1997-2005 University of Maryland and Sunil Arya and
 // David Mount.  All Rights Reserved.
@@ -18,7 +18,7 @@
 // warranty.
 //----------------------------------------------------------------------
 // History:
-//	Revision 1.1  ??/??/??
+//	Revision 1.1  05/03/05
 //		Initial release
 //----------------------------------------------------------------------
 

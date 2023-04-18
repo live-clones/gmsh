@@ -159,7 +159,7 @@ licensed under the MIT License.
 In addition, this version of Gmsh may contain the following contributed,
 optional codes in the contrib/ directory, each governed by their own license:
 
-* contrib/ANN copyright (C) 1997-2005 University of Maryland and Sunil Arya and
+* contrib/ANN copyright (C) 1997-2010 University of Maryland and Sunil Arya and
   David Mount;
 
 * contrib/gmm copyright (C) 2002-2008 Yves Renard;

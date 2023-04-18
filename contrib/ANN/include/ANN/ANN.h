@@ -1,25 +1,22 @@
 //----------------------------------------------------------------------
 // File:			ANN.h
 // Programmer:		Sunil Arya and David Mount
-// Last modified:	05/03/05 (Release 1.1)
 // Description:		Basic include file for approximate nearest
 //					neighbor searching.
+// Last modified:	01/27/10 (Version 1.1.2)
 //----------------------------------------------------------------------
-// Copyright (c) 1997-2005 University of Maryland and Sunil Arya and
+// Copyright (c) 1997-2010 University of Maryland and Sunil Arya and
 // David Mount.  All Rights Reserved.
-//
-// This software and related documentation is part of the 
-// Approximate Nearest Neighbor Library (ANN).
 // 
-// Permission to use, copy, and distribute this software and its 
-// documentation is hereby granted free of charge, provided that 
-// (1) it is not a component of a commercial product, and 
-// (2) this notice appears in all copies of the software and
-//   related documentation. 
+// This software and related documentation is part of the Approximate
+// Nearest Neighbor Library (ANN).  This software is provided under
+// the provisions of the Lesser GNU Public License (LGPL).  See the
+// file ../ReadMe.txt for further information.
 // 
-// The University of Maryland (U.M.) and the authors make no representations
-// about the suitability or fitness of this software for any purpose.  It is
-// provided "as is" without express or implied warranty.
+// The University of Maryland (U.M.) and the authors make no
+// representations about the suitability or fitness of this software for
+// any purpose.  It is provided "as is" without express or implied
+// warranty.
 //----------------------------------------------------------------------
 // History:
 //	Revision 0.1  03/04/98
@@ -31,6 +28,8 @@
 //		Cleaned up C++ structure for modern compilers
 //	Revision 1.1  05/03/05
 //		Added fixed-radius k-NN searching
+//	Revision 1.1.2  01/27/10
+//		Fixed minor compilation bugs for new versions of gcc
 //----------------------------------------------------------------------
 
 //----------------------------------------------------------------------
@@ -60,7 +59,7 @@
 #ifndef ANN_H
 #define ANN_H
 
-#ifdef WIN33
+#ifdef WIN32
   //----------------------------------------------------------------------
   // For Microsoft Visual C++, externally accessible symbols must be
   // explicitly indicated with DLL_API, which is somewhat like "extern."
@@ -90,8 +89,10 @@
 //  basic includes
 //----------------------------------------------------------------------
 
+#include <cstdlib>			// standard lib includes
 #include <cmath>			// math includes
 #include <iostream>			// I/O streams
+#include <cstring>			// C-style strings
 
 //----------------------------------------------------------------------
 // Limits
@@ -117,10 +118,10 @@
   const double ANN_DBL_MAX = DBL_MAX;
 #endif
 
-#define ANNversion 		"1.0"			// ANN version and information
+#define ANNversion 		"1.1.2"			// ANN version and information
 #define ANNversionCmt	""
 #define ANNcopyright	"David M. Mount and Sunil Arya"
-#define ANNlatestRev	"Mar 1, 2005"
+#define ANNlatestRev	"Jan 27, 2010"
 
 //----------------------------------------------------------------------
 //	ANNbool
