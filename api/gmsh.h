@@ -3031,13 +3031,13 @@ namespace gmsh { // Top-level functions
       // Compute the boolean fragments (general fuse) resulting from the
       // intersection of the entities `objectDimTags' and `toolDimTags' (given as
       // vectors of (dim, tag) pairs) in the OpenCASCADE CAD representation, making
-      // all iterfaces conformal. When applied to entities of different dimensions,
-      // the lower dimensional entities will be automatically embedded in the
-      // higher dimensional entities if they are not on their boundary. Return the
-      // resulting entities in `outDimTags'. If `tag' is positive, try to set the
-      // tag explicitly (only valid if the boolean operation results in a single
-      // entity). Remove the object if `removeObject' is set. Remove the tool if
-      // `removeTool' is set.
+      // all interfaces conformal. When applied to entities of different
+      // dimensions, the lower dimensional entities will be automatically embedded
+      // in the higher dimensional entities if they are not on their boundary.
+      // Return the resulting entities in `outDimTags'. If `tag' is positive, try
+      // to set the tag explicitly (only valid if the boolean operation results in
+      // a single entity). Remove the object if `removeObject' is set. Remove the
+      // tool if `removeTool' is set.
       GMSH_API void fragment(const gmsh::vectorpair & objectDimTags,
                              const gmsh::vectorpair & toolDimTags,
                              gmsh::vectorpair & outDimTags,

@@ -5030,7 +5030,7 @@ C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/t16.cpp#L41,t16.cpp}), Python (@ur
 @item gmsh/model/occ/fragment
 Compute the boolean fragments (general fuse) resulting from the intersection of
 the entities @code{objectDimTags} and @code{toolDimTags} (given as vectors of
-(dim, tag) pairs) in the OpenCASCADE CAD representation, making all iterfaces
+(dim, tag) pairs) in the OpenCASCADE CAD representation, making all interfaces
 conformal. When applied to entities of different dimensions, the lower
 dimensional entities will be automatically embedded in the higher dimensional
 entities if they are not on their boundary. Return the resulting entities in

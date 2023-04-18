@@ -11593,7 +11593,7 @@ module gmsh
   !> Compute the boolean fragments (general fuse) resulting from the
   !! intersection of the entities `objectDimTags' and `toolDimTags' (given as
   !! vectors of (dim, tag) pairs) in the OpenCASCADE CAD representation, making
-  !! all iterfaces conformal. When applied to entities of different dimensions,
+  !! all interfaces conformal. When applied to entities of different dimensions,
   !! the lower dimensional entities will be automatically embedded in the higher
   !! dimensional entities if they are not on their boundary. Return the
   !! resulting entities in `outDimTags'. If `tag' is positive, try to set the
