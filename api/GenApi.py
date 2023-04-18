@@ -503,9 +503,11 @@ def ostring(name, value=None, python_value=None, julia_value=None):
     a.julia_post = name + " = unsafe_string(" + api_name + "[])"
     a.fortran_args = [name]
     a.fortran_types = ["character(len=:), allocatable, intent(out)"]
-    a.fortran_c_api = ["character(kind=c_char), dimension(*)"]
+    a.fortran_c_api = ["type(c_ptr), intent(out)"]
     a.fortran_c_args = [api_name]
-    # TODO: Does this need to be C deallocated?
+    a.fortran_call = f"{api_name}={api_name}"
+    a.fortran_post = f"{name} = ostring_({api_name})"
+    a.fortran_local = [f"type(c_ptr) :: {api_name}"]
     a.texi_type = "string"
     return a
 
@@ -1786,6 +1788,20 @@ fortran_footer = """
   ! ----------------------------------------------------------------------------
   ! Output routines from C to Fortran
   ! ----------------------------------------------------------------------------
+
+
+  function ostring_(cptr) result(v)
+    type(c_ptr), intent(inout) :: cptr
+    character(len=:), allocatable :: v
+    character(len=GMSH_API_MAX_STR_LEN), pointer :: fptr
+    integer(c_size_t) :: i
+    call c_f_pointer(cptr, fptr)
+    do i = 1_c_size_t, GMSH_API_MAX_STR_LEN
+      if (fptr(i:i) == c_null_char) exit
+    end do
+    v = fptr(:i)
+    call gmshFree(cptr)
+  end function ostring_
 
   function ovectorint_(cptr, n) result(v)
     type(c_ptr), intent(inout) :: cptr
