@@ -15163,20 +15163,14 @@ module gmsh
     integer(c_size_t), intent(in) :: n
     character(len=GMSH_API_MAX_STR_LEN), allocatable :: v(:)
 
-    integer(c_size_t) :: i, c, lenstr
+    integer(c_size_t) :: i
     type(c_array_t), pointer :: c_array(:)
-    character(kind=c_char, len=1), pointer :: fptr(:)
+    character(len=GMSH_API_MAX_STR_LEN), pointer :: fptr
 
     call c_f_pointer(cptr, c_array, [n])
     allocate(v(n))
     do i = 1_c_size_t, n
-        call c_f_pointer(c_array(i)%s, fptr, &
-                         [int(GMSH_API_MAX_STR_LEN)])
-        lenstr = cstrlen(fptr)
-        v(i) = ""
-        do c = 1_c_size_t, lenstr
-            v(i)(c:c) = fptr(c)
-        end do
+      v(i) = ostring_(c_array(i)%s)
     end do
     call gmshFree(cptr)
   end function ovectorstring_
@@ -15298,19 +15292,5 @@ module gmsh
     call gmshFree(cptr1)
     call gmshFree(cptr2)
   end subroutine ovectorvectorpair_
-
-  !> Calculates the length of a C string.
-  function cstrlen(carray) result(res)
-    character(kind=c_char, len=1), intent(in) :: carray(:)
-    integer :: res
-    integer :: i
-    do i = 1, size(carray)
-      if (carray(i) == c_null_char) then
-        res = i - 1
-        return
-      end if
-    end do
-    res = i
-  end function cstrlen
 
 end module gmsh
