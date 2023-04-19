@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 //
 // Author: Maxence Reberol
 
@@ -27,7 +27,7 @@ class GlobalBackgroundMesh;
  * @param[in] clampMinWithTriEdges If true, the minimum length is the maximum
  * of the previously computed size (from CAD) and local background mesh triangle size.
  * This option is useful to avoid over-refinement.
- * @param[out] minSize the minimal distance, for each MVertex of GVertex / GEdge 
+ * @param[out] minSize the minimal distance, for each MVertex of GVertex / GEdge
  *
  * @return 0 if success
  */
@@ -39,7 +39,7 @@ int computeMinimalSizeOnCurves(
 /**
  * @brief One way smoothing to get a smooth scalar field where
  *        the gradient is inferior to gradientMax, the output
- *        verify: 
+ *        verify:
  *          v2 = min(v2, v1 + gradientMax * d(x1,v2))
  *        for all edge v1-v2 in the triangles. The propagation is
  *        computed with a Dijkstra-like algorithm.
