@@ -319,7 +319,7 @@ public:
       z = _stereoRadius * (4 * r2 - eta * eta - xi * xi) /
           (4 * r2 + xi * xi + eta * eta);
     }
-    return (*field)(atan2(y, x), asin(z / _stereoRadius), 0);
+    return (*field)(atan2(y, x), asin(z / _stereoRadius), 0, ge);
   }
 };
 
@@ -686,7 +686,7 @@ public:
       Msg::Warning("Unknown Field %i", _inField);
       return MAX_LC;
     }
-    double d = (*field)(x, y, z);
+    double d = (*field)(x, y, z, ge);
     if(_stopAtDistMax && d >= _dMax) return MAX_LC;
     double r = (d - _dMin) / (_dMax - _dMin);
     r = std::max(std::min(r, 1.), 0.);
@@ -744,21 +744,21 @@ public:
     double gx, gy, gz;
     switch(_kind) {
     case 0: /* x */
-      return ((*field)(x + _delta / 2, y, z) - (*field)(x - _delta / 2, y, z)) /
-             _delta;
+      return ((*field)(x + _delta / 2, y, z, ge) -
+              (*field)(x - _delta / 2, y, z, ge)) / _delta;
     case 1: /* y */
-      return ((*field)(x, y + _delta / 2, z) - (*field)(x, y - _delta / 2, z)) /
-             _delta;
+      return ((*field)(x, y + _delta / 2, z, ge) -
+              (*field)(x, y - _delta / 2, z, ge)) / _delta;
     case 2: /* z */
-      return ((*field)(x, y, z + _delta / 2) - (*field)(x, y, z - _delta / 2)) /
-             _delta;
+      return ((*field)(x, y, z + _delta / 2, ge) -
+              (*field)(x, y, z - _delta / 2, ge)) / _delta;
     case 3: /* norm */
-      gx = ((*field)(x + _delta / 2, y, z) - (*field)(x - _delta / 2, y, z)) /
-           _delta;
-      gy = ((*field)(x, y + _delta / 2, z) - (*field)(x, y - _delta / 2, z)) /
-           _delta;
-      gz = ((*field)(x, y, z + _delta / 2) - (*field)(x, y, z - _delta / 2)) /
-           _delta;
+      gx = ((*field)(x + _delta / 2, y, z, ge) -
+            (*field)(x - _delta / 2, y, z, ge)) / _delta;
+      gy = ((*field)(x, y + _delta / 2, z, ge) -
+            (*field)(x, y - _delta / 2, z, ge)) / _delta;
+      gz = ((*field)(x, y, z + _delta / 2, ge) -
+            (*field)(x, y, z - _delta / 2, ge)) / _delta;
       return sqrt(gx * gx + gy * gy + gz * gz);
     default:
       Msg::Error("Field %i: unknown kind (%i) of gradient", this->id, _kind);
@@ -792,11 +792,11 @@ public:
     options["IField"] =
       new FieldOptionInt(_inField, "[Deprecated]", nullptr, true);
   }
-  void grad_norm(Field &f, double x, double y, double z, double *g)
+  void grad_norm(Field &f, double x, double y, double z, double *g, GEntity *ge)
   {
-    g[0] = f(x + _delta / 2, y, z) - f(x - _delta / 2, y, z);
-    g[1] = f(x, y + _delta / 2, z) - f(x, y - _delta / 2, z);
-    g[2] = f(x, y, z + _delta / 2) - f(x, y, z - _delta / 2);
+    g[0] = f(x + _delta / 2, y, z, ge) - f(x - _delta / 2, y, z, ge);
+    g[1] = f(x, y + _delta / 2, z, ge) - f(x, y - _delta / 2, z, ge);
+    g[2] = f(x, y, z + _delta / 2, ge) - f(x, y, z - _delta / 2, ge);
     double n = sqrt(g[0] * g[0] + g[1] * g[1] + g[2] * g[2]);
     g[0] /= n;
     g[1] /= n;
@@ -812,15 +812,14 @@ public:
       return MAX_LC;
     }
     double grad[6][3];
-    grad_norm(*field, x + _delta / 2, y, z, grad[0]);
-    grad_norm(*field, x - _delta / 2, y, z, grad[1]);
-    grad_norm(*field, x, y + _delta / 2, z, grad[2]);
-    grad_norm(*field, x, y - _delta / 2, z, grad[3]);
-    grad_norm(*field, x, y, z + _delta / 2, grad[4]);
-    grad_norm(*field, x, y, z - _delta / 2, grad[5]);
-    return (grad[0][0] - grad[1][0] + grad[2][1] - grad[3][1] + grad[4][2] -
-            grad[5][2]) /
-           _delta;
+    grad_norm(*field, x + _delta / 2, y, z, grad[0], ge);
+    grad_norm(*field, x - _delta / 2, y, z, grad[1], ge);
+    grad_norm(*field, x, y + _delta / 2, z, grad[2], ge);
+    grad_norm(*field, x, y - _delta / 2, z, grad[3], ge);
+    grad_norm(*field, x, y, z + _delta / 2, grad[4], ge);
+    grad_norm(*field, x, y, z - _delta / 2, grad[5], ge);
+    return (grad[0][0] - grad[1][0] + grad[2][1] - grad[3][1] +
+            grad[4][2] - grad[5][2]) / _delta;
   }
 };
 
@@ -861,22 +860,28 @@ public:
       return MAX_LC;
     }
     double mat[3][3], eig[3];
-    mat[1][0] = mat[0][1] = (*field)(x + _delta / 2, y + _delta / 2, z) +
-                            (*field)(x - _delta / 2, y - _delta / 2, z) -
-                            (*field)(x - _delta / 2, y + _delta / 2, z) -
-                            (*field)(x + _delta / 2, y - _delta / 2, z);
-    mat[2][0] = mat[0][2] = (*field)(x + _delta / 2, y, z + _delta / 2) +
-                            (*field)(x - _delta / 2, y, z - _delta / 2) -
-                            (*field)(x - _delta / 2, y, z + _delta / 2) -
-                            (*field)(x + _delta / 2, y, z - _delta / 2);
-    mat[2][1] = mat[1][2] = (*field)(x, y + _delta / 2, z + _delta / 2) +
-                            (*field)(x, y - _delta / 2, z - _delta / 2) -
-                            (*field)(x, y - _delta / 2, z + _delta / 2) -
-                            (*field)(x, y + _delta / 2, z - _delta / 2);
-    double f = (*field)(x, y, z);
-    mat[0][0] = (*field)(x + _delta, y, z) + (*field)(x - _delta, y, z) - 2 * f;
-    mat[1][1] = (*field)(x, y + _delta, z) + (*field)(x, y - _delta, z) - 2 * f;
-    mat[2][2] = (*field)(x, y, z + _delta) + (*field)(x, y, z - _delta) - 2 * f;
+    mat[1][0] = mat[0][1] =
+      (*field)(x + _delta / 2, y + _delta / 2, z, ge) +
+      (*field)(x - _delta / 2, y - _delta / 2, z, ge) -
+      (*field)(x - _delta / 2, y + _delta / 2, z, ge) -
+      (*field)(x + _delta / 2, y - _delta / 2, z, ge);
+    mat[2][0] = mat[0][2] =
+      (*field)(x + _delta / 2, y, z + _delta / 2, ge) +
+      (*field)(x - _delta / 2, y, z - _delta / 2, ge) -
+      (*field)(x - _delta / 2, y, z + _delta / 2, ge) -
+      (*field)(x + _delta / 2, y, z - _delta / 2, ge);
+    mat[2][1] = mat[1][2] =
+      (*field)(x, y + _delta / 2, z + _delta / 2, ge) +
+      (*field)(x, y - _delta / 2, z - _delta / 2, ge) -
+      (*field)(x, y - _delta / 2, z + _delta / 2, ge) -
+      (*field)(x, y + _delta / 2, z - _delta / 2, ge);
+    double f = (*field)(x, y, z, ge);
+    mat[0][0] =
+      (*field)(x + _delta, y, z, ge) + (*field)(x - _delta, y, z, ge) - 2 * f;
+    mat[1][1] =
+      (*field)(x, y + _delta, z, ge) + (*field)(x, y - _delta, z, ge) - 2 * f;
+    mat[2][2] =
+      (*field)(x, y, z + _delta, ge) + (*field)(x, y, z - _delta, ge) - 2 * f;
     eigenvalue(mat, eig);
     return eig[0] / (_delta * _delta);
   }
@@ -918,11 +923,10 @@ public:
       Msg::Warning("Unknown Field %i", _inField);
       return MAX_LC;
     }
-    return ((*field)(x + _delta, y, z) + (*field)(x - _delta, y, z) +
-            (*field)(x, y + _delta, z) + (*field)(x, y - _delta, z) +
-            (*field)(x, y, z + _delta) + (*field)(x, y, z - _delta) -
-            6 * (*field)(x, y, z)) /
-           (_delta * _delta);
+    return ((*field)(x + _delta, y, z, ge) + (*field)(x - _delta, y, z, ge) +
+            (*field)(x, y + _delta, z, ge) + (*field)(x, y - _delta, z, ge) +
+            (*field)(x, y, z + _delta, ge) + (*field)(x, y, z - _delta, ge) -
+            6 * (*field)(x, y, z, ge)) / (_delta * _delta);
   }
 };
 
@@ -964,11 +968,10 @@ public:
       Msg::Warning("Unknown Field %i", _inField);
       return MAX_LC;
     }
-    return ((*field)(x + _delta, y, z) + (*field)(x - _delta, y, z) +
-            (*field)(x, y + _delta, z) + (*field)(x, y - _delta, z) +
-            (*field)(x, y, z + _delta) + (*field)(x, y, z - _delta) +
-            (*field)(x, y, z)) /
-           7;
+    return ((*field)(x + _delta, y, z, ge) + (*field)(x - _delta, y, z, ge) +
+            (*field)(x, y + _delta, z, ge) + (*field)(x, y - _delta, z, ge) +
+            (*field)(x, y, z + _delta, ge) + (*field)(x, y, z - _delta, ge) +
+            (*field)(x, y, z, ge)) / 7;
   }
 };
 
@@ -1023,7 +1026,7 @@ public:
     }
     return true;
   }
-  double evaluate(double x, double y, double z)
+  double evaluate(double x, double y, double z, GEntity *ge)
   {
     if(!_f) return MAX_LC;
     std::vector<double> values(3 + _fields.size()), res(1);
@@ -1034,7 +1037,7 @@ public:
     for(auto it = _fields.begin(); it != _fields.end(); it++) {
       Field *field = GModel::current()->getFields()->get(*it);
       if(field) {
-        values[i++] = (*field)(x, y, z);
+        values[i++] = (*field)(x, y, z, ge);
       }
       else {
         Msg::Warning("Unknown Field %i in MathEval", *it);
@@ -1103,7 +1106,7 @@ public:
     }
     return true;
   }
-  void evaluate(double x, double y, double z, SMetric3 &metr)
+  void evaluate(double x, double y, double z, SMetric3 &metr, GEntity *ge)
   {
     const int index[6][2] = {{0, 0}, {1, 1}, {2, 2}, {0, 1}, {0, 2}, {1, 2}};
     for(int iFunction = 0; iFunction < 6; iFunction++) {
@@ -1119,7 +1122,7 @@ public:
             it != _fields[iFunction].end(); it++) {
           Field *field = GModel::current()->getFields()->get(*it);
           if(field) {
-            values[i++] = (*field)(x, y, z);
+            values[i++] = (*field)(x, y, z, ge);
           }
           else {
             Msg::Warning("Unknown Field %i", *it);
@@ -1159,7 +1162,7 @@ public:
                      _f.c_str());
         updateNeeded = false;
       }
-      ret = _expr.evaluate(x, y, z);
+      ret = _expr.evaluate(x, y, z, ge);
     }
     return ret;
   }
@@ -1228,7 +1231,7 @@ public:
         }
         updateNeeded = false;
       }
-      _expr.evaluate(x, y, z, metr);
+      _expr.evaluate(x, y, z, metr, ge);
     }
   }
   double operator()(double x, double y, double z, GEntity *ge = nullptr)
@@ -1244,7 +1247,7 @@ public:
         }
         updateNeeded = false;
       }
-      _expr.evaluate(x, y, z, metr);
+      _expr.evaluate(x, y, z, metr, ge);
     }
     return metr(0, 0);
   }
@@ -1541,8 +1544,10 @@ public:
       Msg::Warning("Unknown Field %i", _inField);
       return MAX_LC;
     }
-    return (*field)(_expr[0].evaluate(x, y, z), _expr[1].evaluate(x, y, z),
-                    _expr[2].evaluate(x, y, z));
+    return (*field)(_expr[0].evaluate(x, y, z, ge),
+                    _expr[1].evaluate(x, y, z, ge),
+                    _expr[2].evaluate(x, y, z, ge),
+                    ge);
   }
   const char *getName() { return "Param"; }
 };
@@ -1996,21 +2001,21 @@ public:
         std::list<GRegion *> volumes = ge->regions();
         for(auto v : volumes) {
           if(std::find(_volumeTags.begin(), _volumeTags.end(), v->tag()) !=
-             _volumeTags.end()) return (*f)(x, y, z);
+             _volumeTags.end()) return (*f)(x, y, z, ge);
         }
       }
       if(ge->dim() <= 1) {
         std::vector<GFace *> surfaces = ge->faces();
         for(auto s : surfaces) {
           if(std::find(_surfaceTags.begin(), _surfaceTags.end(), s->tag()) !=
-             _surfaceTags.end()) return (*f)(x, y, z);
+             _surfaceTags.end()) return (*f)(x, y, z, ge);
         }
       }
       if(ge->dim() == 0) {
         std::vector<GEdge *> curves = ge->edges();
         for(auto c : curves) {
           if(std::find(_curveTags.begin(), _curveTags.end(), c->tag()) !=
-             _curveTags.end()) return (*f)(x, y, z);
+             _curveTags.end()) return (*f)(x, y, z, ge);
         }
       }
     }
@@ -3238,10 +3243,9 @@ void Field::putOnNewView(int viewTag)
   std::map<int, std::vector<double> > d;
   std::vector<GEntity *> entities;
   GModel::current()->getEntities(entities);
-  for(std::size_t i = 0; i < entities.size(); i++) {
-    for(std::size_t j = 0; j < entities[i]->mesh_vertices.size(); j++) {
-      MVertex *v = entities[i]->mesh_vertices[j];
-      d[v->getNum()].push_back((*this)(v->x(), v->y(), v->z(), entities[i]));
+  for(auto ge : entities) {
+    for(auto v : ge->mesh_vertices) {
+      d[v->getNum()].push_back((*this)(v->x(), v->y(), v->z(), ge));
     }
   }
   std::ostringstream oss;
@@ -3257,12 +3261,13 @@ void Field::putOnView(PView *view, int comp)
 {
   PViewData *data = view->getData();
   for(int ent = 0; ent < data->getNumEntities(0); ent++) {
+    GEntity *ge = data->getEntity(0, ent);
     for(int ele = 0; ele < data->getNumElements(0, ent); ele++) {
       if(data->skipElement(0, ent, ele)) continue;
       for(int nod = 0; nod < data->getNumNodes(0, ent, ele); nod++) {
         double x, y, z;
         data->getNode(0, ent, ele, nod, x, y, z);
-        double val = (*this)(x, y, z);
+        double val = (*this)(x, y, z, ge);
         for(int comp = 0; comp < data->getNumComponents(0, ent, ele); comp++)
           data->setValue(0, ent, ele, nod, comp, val);
       }
