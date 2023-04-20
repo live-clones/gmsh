@@ -3243,10 +3243,9 @@ void Field::putOnNewView(int viewTag)
   std::map<int, std::vector<double> > d;
   std::vector<GEntity *> entities;
   GModel::current()->getEntities(entities);
-  for(std::size_t i = 0; i < entities.size(); i++) {
-    for(std::size_t j = 0; j < entities[i]->mesh_vertices.size(); j++) {
-      MVertex *v = entities[i]->mesh_vertices[j];
-      d[v->getNum()].push_back((*this)(v->x(), v->y(), v->z(), entities[i]));
+  for(auto ge : entities) {
+    for(auto v : ge->mesh_vertices) {
+      d[v->getNum()].push_back((*this)(v->x(), v->y(), v->z(), ge));
     }
   }
   std::ostringstream oss;
@@ -3262,12 +3261,13 @@ void Field::putOnView(PView *view, int comp)
 {
   PViewData *data = view->getData();
   for(int ent = 0; ent < data->getNumEntities(0); ent++) {
+    GEntity *ge = data->getEntity(0, ent);
     for(int ele = 0; ele < data->getNumElements(0, ent); ele++) {
       if(data->skipElement(0, ent, ele)) continue;
       for(int nod = 0; nod < data->getNumNodes(0, ent, ele); nod++) {
         double x, y, z;
         data->getNode(0, ent, ele, nod, x, y, z);
-        double val = (*this)(x, y, z);
+        double val = (*this)(x, y, z, ge);
         for(int comp = 0; comp < data->getNumComponents(0, ent, ele); comp++)
           data->setValue(0, ent, ele, nod, comp, val);
       }
