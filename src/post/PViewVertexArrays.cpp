@@ -1136,7 +1136,25 @@ static void addTensorElement(PView *p, int iEnt, int iEle, int numNodes,
     for(int i = 0; i < numNodes; i++) val[i][0] = ComputeVonMises(val[i]);
     addScalarElement(p, type, xyz, val, pre, numNodes);
   }
+  else if(opt->tensorType == PViewOptions::FrameVectors) {
+    if(opt->glyphLocation == PViewOptions::Vertex) {
 
+      double **vval = new double *[numNodes];
+      for(int j = 0; j < numNodes; j++) vval[j] = new double[3];
+
+      // Plot six vectors to visualize a frame
+      for(int i = 0; i < 3; i++) { // for each branch
+        for(int d = 0; d < 2; d++) { // for each direction
+          for(int j = 0; j < numNodes; j++) { // for each node
+            for(int k = 0; k < 3; k++) { // for each vector component
+              vval[j][k] = (2*d-1) * val[j][3*i+k];
+            }
+          }
+          addVectorElement(p, iEnt, iEle, numNodes, type, xyz, vval, pre);
+        }
+      }
+    }
+  }
   else if(opt->tensorType == PViewOptions::Frame) {
     if(opt->glyphLocation == PViewOptions::Vertex) {
       for(int i = 0; i < numNodes; i++) {
