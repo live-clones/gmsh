@@ -8651,7 +8651,7 @@ double opt_view_tensor_type(OPT_ARGS_NUM)
   GET_VIEWo(0.);
   if(action & GMSH_SET) {
     opt->tensorType = (int)val;
-    if(opt->tensorType > 7 || opt->tensorType < 1) opt->tensorType = 1;
+    if(opt->tensorType > 8 || opt->tensorType < 1) opt->tensorType = 1;
     if(view) view->setChanged(true);
   }
 #if defined(HAVE_FLTK)
