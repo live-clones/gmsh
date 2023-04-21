@@ -1103,16 +1103,18 @@ module gmsh
       bind(C, name="gmshOptionGetString")
       use, intrinsic :: iso_c_binding
       character(len=1, kind=c_char), dimension(*), intent(in) :: name
-      character(kind=c_char), dimension(*) :: api_value_
+      type(c_ptr), intent(out) :: api_value_
       integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     character(len=*), intent(in) :: name
     character(len=:), allocatable, intent(out) :: value
     integer(c_int), intent(out), optional :: ierr
+    type(c_ptr) :: api_value_
     call C_API(name=istring_(name), &
-         api_value_=value, &
+         api_value_=api_value_, &
          ierr_=ierr)
+    value = ostring_(api_value_)
   end subroutine gmshOptionGetString
 
   !> Set a color option to the RGBA value (`r', `g', `b', `a'), where where `r',
@@ -1262,14 +1264,16 @@ module gmsh
                      ierr_) &
       bind(C, name="gmshModelGetCurrent")
       use, intrinsic :: iso_c_binding
-      character(kind=c_char), dimension(*) :: api_name_
+      type(c_ptr), intent(out) :: api_name_
       integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     character(len=:), allocatable, intent(out) :: name
     integer(c_int), intent(out), optional :: ierr
-    call C_API(api_name_=name, &
+    type(c_ptr) :: api_name_
+    call C_API(api_name_=api_name_, &
          ierr_=ierr)
+    name = ostring_(api_name_)
   end subroutine gmshModelGetCurrent
 
   !> Set the current model to the model with name `name'. If several models have
@@ -1300,14 +1304,16 @@ module gmsh
                      ierr_) &
       bind(C, name="gmshModelGetFileName")
       use, intrinsic :: iso_c_binding
-      character(kind=c_char), dimension(*) :: api_fileName_
+      type(c_ptr), intent(out) :: api_fileName_
       integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     character(len=:), allocatable, intent(out) :: fileName
     integer(c_int), intent(out), optional :: ierr
-    call C_API(api_fileName_=fileName, &
+    type(c_ptr) :: api_fileName_
+    call C_API(api_fileName_=api_fileName_, &
          ierr_=ierr)
+    fileName = ostring_(api_fileName_)
   end subroutine gmshModelGetFileName
 
   !> Set the file name associated with the current model.
@@ -1404,7 +1410,7 @@ module gmsh
       use, intrinsic :: iso_c_binding
       integer(c_int), value, intent(in) :: dim
       integer(c_int), value, intent(in) :: tag
-      character(kind=c_char), dimension(*) :: api_name_
+      type(c_ptr), intent(out) :: api_name_
       integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
@@ -1412,10 +1418,12 @@ module gmsh
     integer, intent(in) :: tag
     character(len=:), allocatable, intent(out) :: name
     integer(c_int), intent(out), optional :: ierr
+    type(c_ptr) :: api_name_
     call C_API(dim=int(dim, c_int), &
          tag=int(tag, c_int), &
-         api_name_=name, &
+         api_name_=api_name_, &
          ierr_=ierr)
+    name = ostring_(api_name_)
   end subroutine gmshModelGetEntityName
 
   !> Remove the entity name `name' from the current model.
@@ -1676,7 +1684,7 @@ module gmsh
       use, intrinsic :: iso_c_binding
       integer(c_int), value, intent(in) :: dim
       integer(c_int), value, intent(in) :: tag
-      character(kind=c_char), dimension(*) :: api_name_
+      type(c_ptr), intent(out) :: api_name_
       integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
@@ -1684,10 +1692,12 @@ module gmsh
     integer, intent(in) :: tag
     character(len=:), allocatable, intent(out) :: name
     integer(c_int), intent(out), optional :: ierr
+    type(c_ptr) :: api_name_
     call C_API(dim=int(dim, c_int), &
          tag=int(tag, c_int), &
-         api_name_=name, &
+         api_name_=api_name_, &
          ierr_=ierr)
+    name = ostring_(api_name_)
   end subroutine gmshModelGetPhysicalName
 
   !> Remove the physical name `name' from the current model.
@@ -2054,7 +2064,7 @@ module gmsh
       use, intrinsic :: iso_c_binding
       integer(c_int), value, intent(in) :: dim
       integer(c_int), value, intent(in) :: tag
-      character(kind=c_char), dimension(*) :: api_entityType_
+      type(c_ptr), intent(out) :: api_entityType_
       integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
@@ -2062,10 +2072,12 @@ module gmsh
     integer, intent(in) :: tag
     character(len=:), allocatable, intent(out) :: entityType
     integer(c_int), intent(out), optional :: ierr
+    type(c_ptr) :: api_entityType_
     call C_API(dim=int(dim, c_int), &
          tag=int(tag, c_int), &
-         api_entityType_=entityType, &
+         api_entityType_=api_entityType_, &
          ierr_=ierr)
+    entityType = ostring_(api_entityType_)
   end subroutine gmshModelGetType
 
   !> In a partitioned model, get the parent of the entity of dimension `dim' and
@@ -4190,7 +4202,7 @@ module gmsh
       bind(C, name="gmshModelMeshGetElementProperties")
       use, intrinsic :: iso_c_binding
       integer(c_int), value, intent(in) :: elementType
-      character(kind=c_char), dimension(*) :: api_elementName_
+      type(c_ptr), intent(out) :: api_elementName_
       integer(c_int) :: dim
       integer(c_int) :: order
       integer(c_int) :: numNodes
@@ -4208,10 +4220,11 @@ module gmsh
     real(c_double), dimension(:), allocatable, intent(out) :: localNodeCoord
     integer(c_int) :: numPrimaryNodes
     integer(c_int), intent(out), optional :: ierr
+    type(c_ptr) :: api_elementName_
     type(c_ptr) :: api_localNodeCoord_
     integer(c_size_t) :: api_localNodeCoord_n_
     call C_API(elementType=int(elementType, c_int), &
-         api_elementName_=elementName, &
+         api_elementName_=api_elementName_, &
          dim=dim, &
          order=order, &
          numNodes=numNodes, &
@@ -4219,6 +4232,7 @@ module gmsh
          api_localNodeCoord_n_=api_localNodeCoord_n_, &
          numPrimaryNodes=numPrimaryNodes, &
          ierr_=ierr)
+    elementName = ostring_(api_elementName_)
     localNodeCoord = ovectordouble_(api_localNodeCoord_, &
       api_localNodeCoord_n_)
   end subroutine gmshModelMeshGetElementProperties
@@ -7320,16 +7334,18 @@ module gmsh
       bind(C, name="gmshModelMeshFieldGetType")
       use, intrinsic :: iso_c_binding
       integer(c_int), value, intent(in) :: tag
-      character(kind=c_char), dimension(*) :: api_fileType_
+      type(c_ptr), intent(out) :: api_fileType_
       integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     integer, intent(in) :: tag
     character(len=:), allocatable, intent(out) :: fileType
     integer(c_int), intent(out), optional :: ierr
+    type(c_ptr) :: api_fileType_
     call C_API(tag=int(tag, c_int), &
-         api_fileType_=fileType, &
+         api_fileType_=api_fileType_, &
          ierr_=ierr)
+    fileType = ostring_(api_fileType_)
   end subroutine gmshModelMeshFieldGetType
 
   !> Set the numerical option `option' to value `value' for field `tag'.
@@ -7430,7 +7446,7 @@ module gmsh
       use, intrinsic :: iso_c_binding
       integer(c_int), value, intent(in) :: tag
       character(len=1, kind=c_char), dimension(*), intent(in) :: option
-      character(kind=c_char), dimension(*) :: api_value_
+      type(c_ptr), intent(out) :: api_value_
       integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
@@ -7438,10 +7454,12 @@ module gmsh
     character(len=*), intent(in) :: option
     character(len=:), allocatable, intent(out) :: value
     integer(c_int), intent(out), optional :: ierr
+    type(c_ptr) :: api_value_
     call C_API(tag=int(tag, c_int), &
          option=istring_(option), &
-         api_value_=value, &
+         api_value_=api_value_, &
          ierr_=ierr)
+    value = ostring_(api_value_)
   end subroutine gmshModelMeshFieldGetString
 
   !> Set the numerical list option `option' to value `values' for field `tag'.
@@ -12921,7 +12939,7 @@ module gmsh
       use, intrinsic :: iso_c_binding
       integer(c_int), value, intent(in) :: tag
       integer(c_int), value, intent(in) :: step
-      character(kind=c_char), dimension(*) :: api_dataType_
+      type(c_ptr), intent(out) :: api_dataType_
       type(c_ptr), intent(out) :: api_tags_
       integer(c_size_t), intent(out) :: api_tags_n_
       type(c_ptr), intent(out) :: api_data_
@@ -12941,13 +12959,14 @@ module gmsh
     real(c_double) :: time
     integer(c_int) :: numComponents
     integer(c_int), intent(out), optional :: ierr
+    type(c_ptr) :: api_dataType_
     type(c_ptr) :: api_tags_
     integer(c_size_t) :: api_tags_n_
     type(c_ptr) :: api_data_, api_data_n_
     integer(c_size_t) :: api_data_nn_
     call C_API(tag=int(tag, c_int), &
          step=int(step, c_int), &
-         api_dataType_=dataType, &
+         api_dataType_=api_dataType_, &
          api_tags_=api_tags_, &
          api_tags_n_=api_tags_n_, &
          api_data_=api_data_, &
@@ -12956,6 +12975,7 @@ module gmsh
          time=time, &
          numComponents=numComponents, &
          ierr_=ierr)
+    dataType = ostring_(api_dataType_)
     tags = ovectorsize_(api_tags_, &
       api_tags_n_)
     call ovectorvectordouble_(api_data_, &
@@ -12992,7 +13012,7 @@ module gmsh
       use, intrinsic :: iso_c_binding
       integer(c_int), value, intent(in) :: tag
       integer(c_int), value, intent(in) :: step
-      character(kind=c_char), dimension(*) :: api_dataType_
+      type(c_ptr), intent(out) :: api_dataType_
       type(c_ptr), intent(out) :: api_tags_
       integer(c_size_t), intent(out) :: api_tags_n_
       type(c_ptr), intent(out) :: api_data_
@@ -13010,13 +13030,14 @@ module gmsh
     real(c_double) :: time
     integer(c_int) :: numComponents
     integer(c_int), intent(out), optional :: ierr
+    type(c_ptr) :: api_dataType_
     type(c_ptr) :: api_tags_
     integer(c_size_t) :: api_tags_n_
     type(c_ptr) :: api_data_
     integer(c_size_t) :: api_data_n_
     call C_API(tag=int(tag, c_int), &
          step=int(step, c_int), &
-         api_dataType_=dataType, &
+         api_dataType_=api_dataType_, &
          api_tags_=api_tags_, &
          api_tags_n_=api_tags_n_, &
          api_data_=api_data_, &
@@ -13024,6 +13045,7 @@ module gmsh
          time=time, &
          numComponents=numComponents, &
          ierr_=ierr)
+    dataType = ostring_(api_dataType_)
     tags = ovectorsize_(api_tags_, &
       api_tags_n_)
     data = ovectordouble_(api_data_, &
@@ -13682,7 +13704,7 @@ module gmsh
       use, intrinsic :: iso_c_binding
       integer(c_int), value, intent(in) :: tag
       character(len=1, kind=c_char), dimension(*), intent(in) :: name
-      character(kind=c_char), dimension(*) :: api_value_
+      type(c_ptr), intent(out) :: api_value_
       integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
@@ -13690,10 +13712,12 @@ module gmsh
     character(len=*), intent(in) :: name
     character(len=:), allocatable, intent(out) :: value
     integer(c_int), intent(out), optional :: ierr
+    type(c_ptr) :: api_value_
     call C_API(tag=int(tag, c_int), &
          name=istring_(name), &
-         api_value_=value, &
+         api_value_=api_value_, &
          ierr_=ierr)
+    value = ostring_(api_value_)
   end subroutine gmshViewOptionGetString
 
   !> Set the color option `name' to the RGBA value (`r', `g', `b', `a') for the
@@ -14486,7 +14510,7 @@ module gmsh
                      ierr_) &
       bind(C, name="gmshOnelabGet")
       use, intrinsic :: iso_c_binding
-      character(kind=c_char), dimension(*) :: api_data_
+      type(c_ptr), intent(out) :: api_data_
       character(len=1, kind=c_char), dimension(*), intent(in), optional :: name
       character(len=1, kind=c_char), dimension(*), intent(in), optional :: format
       integer(c_int), intent(out), optional :: ierr_
@@ -14496,10 +14520,12 @@ module gmsh
     character(len=*), intent(in), optional :: name
     character(len=*), intent(in), optional :: format
     integer(c_int), intent(out), optional :: ierr
-    call C_API(api_data_=data, &
+    type(c_ptr) :: api_data_
+    call C_API(api_data_=api_data_, &
          name=istring_(optval_c_str("", name)), &
          format=istring_(optval_c_str("json", format)), &
          ierr_=ierr)
+    data = ostring_(api_data_)
   end subroutine gmshOnelabGet
 
   !> Get the names of the parameters in the ONELAB database matching the
@@ -14856,14 +14882,16 @@ module gmsh
                      ierr_) &
       bind(C, name="gmshLoggerGetLastError")
       use, intrinsic :: iso_c_binding
-      character(kind=c_char), dimension(*) :: api_error_
+      type(c_ptr), intent(out) :: api_error_
       integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     character(len=:), allocatable, intent(out) :: error
     integer(c_int), intent(out), optional :: ierr
-    call C_API(api_error_=error, &
+    type(c_ptr) :: api_error_
+    call C_API(api_error_=api_error_, &
          ierr_=ierr)
+    error = ostring_(api_error_)
   end subroutine gmshLoggerGetLastError
 
   ! ----------------------------------------------------------------------------
@@ -15086,6 +15114,20 @@ module gmsh
   ! Output routines from C to Fortran
   ! ----------------------------------------------------------------------------
 
+
+  function ostring_(cptr) result(v)
+    type(c_ptr), intent(inout) :: cptr
+    character(len=:), allocatable :: v
+    character(len=GMSH_API_MAX_STR_LEN), pointer :: fptr
+    integer(c_size_t) :: i
+    call c_f_pointer(cptr, fptr)
+    do i = 1_c_size_t, GMSH_API_MAX_STR_LEN
+      if (fptr(i:i) == c_null_char) exit
+    end do
+    v = fptr(:i)
+    call gmshFree(cptr)
+  end function ostring_
+
   function ovectorint_(cptr, n) result(v)
     type(c_ptr), intent(inout) :: cptr
     integer(c_size_t), intent(in) :: n
@@ -15121,20 +15163,14 @@ module gmsh
     integer(c_size_t), intent(in) :: n
     character(len=GMSH_API_MAX_STR_LEN), allocatable :: v(:)
 
-    integer(c_size_t) :: i, c, lenstr
+    integer(c_size_t) :: i
     type(c_array_t), pointer :: c_array(:)
-    character(kind=c_char, len=1), pointer :: fptr(:)
+    character(len=GMSH_API_MAX_STR_LEN), pointer :: fptr
 
     call c_f_pointer(cptr, c_array, [n])
     allocate(v(n))
     do i = 1_c_size_t, n
-        call c_f_pointer(c_array(i)%s, fptr, &
-                         [int(GMSH_API_MAX_STR_LEN)])
-        lenstr = cstrlen(fptr)
-        v(i) = ""
-        do c = 1_c_size_t, lenstr
-            v(i)(c:c) = fptr(c)
-        end do
+      v(i) = ostring_(c_array(i)%s)
     end do
     call gmshFree(cptr)
   end function ovectorstring_
@@ -15256,19 +15292,5 @@ module gmsh
     call gmshFree(cptr1)
     call gmshFree(cptr2)
   end subroutine ovectorvectorpair_
-
-  !> Calculates the length of a C string.
-  function cstrlen(carray) result(res)
-    character(kind=c_char, len=1), intent(in) :: carray(:)
-    integer :: res
-    integer :: i
-    do i = 1, size(carray)
-      if (carray(i) == c_null_char) then
-        res = i - 1
-        return
-      end if
-    end do
-    res = i
-  end function cstrlen
 
 end module gmsh
