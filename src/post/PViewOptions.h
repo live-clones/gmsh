@@ -31,7 +31,8 @@ public:
     EigenVectors = 4,
     Ellipse = 5,
     Ellipsoid = 6,
-    Frame = 7
+    Frame = 7,
+    FrameVectors = 8,
   };
   enum GlyphLocation { COG = 1, Vertex = 2 };
   enum RangeType { Default = 1, Custom = 2, PerTimeStep = 3 };

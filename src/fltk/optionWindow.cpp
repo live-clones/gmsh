@@ -3736,7 +3736,8 @@ optionWindow::optionWindow(int deltaFontSize)
         {"Eigenvectors", 0, nullptr, nullptr},
         {"Ellipse", 0, nullptr, nullptr},
         {"Ellipsoid", 0, nullptr, nullptr},
-        {"Frame", 0, nullptr, nullptr},
+        {"Frame (box)", 0, nullptr, nullptr},
+        {"Frame (vectors)", 0, nullptr, nullptr},
         {nullptr}};
       view.choice[4] =
         new Fl_Choice(L + 2 * WB, 2 * WB + 11 * BH, IW, BH, "Tensor display");
