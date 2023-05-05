@@ -2850,24 +2850,6 @@ namespace gmsh { // Top-level functions
         neighbors.assign(api_neighbors_, api_neighbors_ + api_neighbors_n_); gmshFree(api_neighbors_);
       }
 
-      // hxt meshing test.
-      inline void createHxtMesh(const std::string & inputMesh,
-                                const std::vector<double> & coord,
-                                const std::string & outputMesh,
-                                std::vector<double> & pts,
-                                std::vector<std::size_t> & tets)
-      {
-        int ierr = 0;
-        double *api_coord_; size_t api_coord_n_; vector2ptr(coord, &api_coord_, &api_coord_n_);
-        double *api_pts_; size_t api_pts_n_;
-        size_t *api_tets_; size_t api_tets_n_;
-        gmshModelMeshCreateHxtMesh(inputMesh.c_str(), api_coord_, api_coord_n_, outputMesh.c_str(), &api_pts_, &api_pts_n_, &api_tets_, &api_tets_n_, &ierr);
-        if(ierr) throwLastError();
-        gmshFree(api_coord_);
-        pts.assign(api_pts_, api_pts_ + api_pts_n_); gmshFree(api_pts_);
-        tets.assign(api_tets_, api_tets_ + api_tets_n_); gmshFree(api_tets_);
-      }
-
       // Generate a mesh of the array of points `coord', constrained to the surface
       // mesh of the current model. Currently only supported for 3D.
       inline void alphaShapesConstrained(const int dim,

@@ -579,9 +579,6 @@ mesh.add('alphaShapes', doc, None, idouble('threshold'), iint('dim'), ivectordou
 doc = '''Take  the node tags (with numbering starting at 1) of the tetrahedra in `tetra' and returns `neighbors' as a vector of size 4 times the number of tetrahedra giving neighboring ids of tetrahedra of a given tetrahedra. When a tetrahedra has no neighbor for its ith face, the value is tetrahedra.size. For a tet with vertices (0,1,2,3), node ids of the faces are respectively (0,1,2), (0,1,3), (0,2,3) and (1,2,3)'''
 mesh.add('tetNeighbors', doc, None, ivectorsize('tetra'), ovectorsize('neighbors'))
 
-doc = '''hxt meshing test.'''
-mesh.add('createHxtMesh', doc, None, istring('inputMesh'), ivectordouble('coord'), istring('outputMesh'), ovectordouble('pts'), ovectorsize('tets'))
-
 doc = '''Generate a mesh of the array of points `coord', constrained to the surface mesh of the current model. Currently only supported for 3D.'''
 mesh.add('alphaShapesConstrained', doc, None, iint('dim'), iint('tag'), ivectordouble('coord'), ivectorint('nodeTags'), idouble('alpha'), idouble('meanValue'), ovectorsize('tetrahedra'), ovectorvectorsize('domains'), ovectorvectorsize('boundaries'), ovectorsize('neighbors'), odouble('hMean'), ivectorint('controlTags'))
 

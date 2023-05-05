@@ -5101,40 +5101,6 @@ class model:
         tet_neighbors = tetNeighbors
 
         @staticmethod
-        def createHxtMesh(inputMesh, coord, outputMesh):
-            """
-            gmsh.model.mesh.createHxtMesh(inputMesh, coord, outputMesh)
-
-            hxt meshing test.
-
-            Return `pts', `tets'.
-
-            Types:
-            - `inputMesh': string
-            - `coord': vector of doubles
-            - `outputMesh': string
-            - `pts': vector of doubles
-            - `tets': vector of sizes
-            """
-            api_coord_, api_coord_n_ = _ivectordouble(coord)
-            api_pts_, api_pts_n_ = POINTER(c_double)(), c_size_t()
-            api_tets_, api_tets_n_ = POINTER(c_size_t)(), c_size_t()
-            ierr = c_int()
-            lib.gmshModelMeshCreateHxtMesh(
-                c_char_p(inputMesh.encode()),
-                api_coord_, api_coord_n_,
-                c_char_p(outputMesh.encode()),
-                byref(api_pts_), byref(api_pts_n_),
-                byref(api_tets_), byref(api_tets_n_),
-                byref(ierr))
-            if ierr.value != 0:
-                raise Exception(logger.getLastError())
-            return (
-                _ovectordouble(api_pts_, api_pts_n_.value),
-                _ovectorsize(api_tets_, api_tets_n_.value))
-        create_hxt_mesh = createHxtMesh
-
-        @staticmethod
         def alphaShapesConstrained(dim, tag, coord, nodeTags, alpha, meanValue, controlTags):
             """
             gmsh.model.mesh.alphaShapesConstrained(dim, tag, coord, nodeTags, alpha, meanValue, controlTags)

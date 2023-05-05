@@ -718,8 +718,6 @@ module gmsh
         gmshModelMeshAlphaShapes
     procedure, nopass :: tetNeighbors => &
         gmshModelMeshTetNeighbors
-    procedure, nopass :: createHxtMesh => &
-        gmshModelMeshCreateHxtMesh
     procedure, nopass :: alphaShapesConstrained => &
         gmshModelMeshAlphaShapesConstrained
     procedure, nopass :: constrainedDelaunayRefinement => &
@@ -7452,61 +7450,6 @@ module gmsh
     neighbors = ovectorsize_(api_neighbors_, &
       api_neighbors_n_)
   end subroutine gmshModelMeshTetNeighbors
-
-  !> hxt meshing test.
-  subroutine gmshModelMeshCreateHxtMesh(inputMesh, &
-                                        coord, &
-                                        outputMesh, &
-                                        pts, &
-                                        tets, &
-                                        ierr)
-    interface
-    subroutine C_API(inputMesh, &
-                     api_coord_, &
-                     api_coord_n_, &
-                     outputMesh, &
-                     api_pts_, &
-                     api_pts_n_, &
-                     api_tets_, &
-                     api_tets_n_, &
-                     ierr_) &
-      bind(C, name="gmshModelMeshCreateHxtMesh")
-      use, intrinsic :: iso_c_binding
-      character(len=1, kind=c_char), dimension(*), intent(in) :: inputMesh
-      real(c_double), dimension(*) :: api_coord_
-      integer(c_size_t), value, intent(in) :: api_coord_n_
-      character(len=1, kind=c_char), dimension(*), intent(in) :: outputMesh
-      type(c_ptr), intent(out) :: api_pts_
-      integer(c_size_t) :: api_pts_n_
-      type(c_ptr), intent(out) :: api_tets_
-      integer(c_size_t), intent(out) :: api_tets_n_
-      integer(c_int), intent(out), optional :: ierr_
-    end subroutine C_API
-    end interface
-    character(len=*), intent(in) :: inputMesh
-    real(c_double), dimension(:), intent(in) :: coord
-    character(len=*), intent(in) :: outputMesh
-    real(c_double), dimension(:), allocatable, intent(out) :: pts
-    integer(c_size_t), dimension(:), allocatable, intent(out) :: tets
-    integer(c_int), intent(out), optional :: ierr
-    type(c_ptr) :: api_pts_
-    integer(c_size_t) :: api_pts_n_
-    type(c_ptr) :: api_tets_
-    integer(c_size_t) :: api_tets_n_
-    call C_API(inputMesh=istring_(inputMesh), &
-         api_coord_=coord, &
-         api_coord_n_=size_gmsh_double(coord), &
-         outputMesh=istring_(outputMesh), &
-         api_pts_=api_pts_, &
-         api_pts_n_=api_pts_n_, &
-         api_tets_=api_tets_, &
-         api_tets_n_=api_tets_n_, &
-         ierr_=ierr)
-    pts = ovectordouble_(api_pts_, &
-      api_pts_n_)
-    tets = ovectorsize_(api_tets_, &
-      api_tets_n_)
-  end subroutine gmshModelMeshCreateHxtMesh
 
   !> Generate a mesh of the array of points `coord', constrained to the surface
   !! mesh of the current model. Currently only supported for 3D.

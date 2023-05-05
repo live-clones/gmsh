@@ -1631,14 +1631,6 @@ GMSH_API void gmshModelMeshTetNeighbors(const size_t * tetra, const size_t tetra
                                         size_t ** neighbors, size_t * neighbors_n,
                                         int * ierr);
 
-/* hxt meshing test. */
-GMSH_API void gmshModelMeshCreateHxtMesh(const char * inputMesh,
-                                         const double * coord, const size_t coord_n,
-                                         const char * outputMesh,
-                                         double ** pts, size_t * pts_n,
-                                         size_t ** tets, size_t * tets_n,
-                                         int * ierr);
-
 /* Generate a mesh of the array of points `coord', constrained to the surface
  * mesh of the current model. Currently only supported for 3D. */
 GMSH_API void gmshModelMeshAlphaShapesConstrained(const int dim,

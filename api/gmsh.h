@@ -1847,15 +1847,6 @@ namespace gmsh { // Top-level functions
       GMSH_API void tetNeighbors(const std::vector<std::size_t> & tetra,
                                  std::vector<std::size_t> & neighbors);
 
-      // gmsh::model::mesh::createHxtMesh
-      //
-      // hxt meshing test.
-      GMSH_API void createHxtMesh(const std::string & inputMesh,
-                                  const std::vector<double> & coord,
-                                  const std::string & outputMesh,
-                                  std::vector<double> & pts,
-                                  std::vector<std::size_t> & tets);
-
       // gmsh::model::mesh::alphaShapesConstrained
       //
       // Generate a mesh of the array of points `coord', constrained to the surface

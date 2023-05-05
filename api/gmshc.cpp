@@ -2426,22 +2426,6 @@ GMSH_API void gmshModelMeshTetNeighbors(const size_t * tetra, const size_t tetra
   }
 }
 
-GMSH_API void gmshModelMeshCreateHxtMesh(const char * inputMesh, const double * coord, const size_t coord_n, const char * outputMesh, double ** pts, size_t * pts_n, size_t ** tets, size_t * tets_n, int * ierr)
-{
-  if(ierr) *ierr = 0;
-  try {
-    std::vector<double> api_coord_(coord, coord + coord_n);
-    std::vector<double> api_pts_;
-    std::vector<std::size_t> api_tets_;
-    gmsh::model::mesh::createHxtMesh(inputMesh, api_coord_, outputMesh, api_pts_, api_tets_);
-    vector2ptr(api_pts_, pts, pts_n);
-    vector2ptr(api_tets_, tets, tets_n);
-  }
-  catch(...){
-    if(ierr) *ierr = 1;
-  }
-}
-
 GMSH_API void gmshModelMeshAlphaShapesConstrained(const int dim, const int tag, const double * coord, const size_t coord_n, const int * nodeTags, const size_t nodeTags_n, const double alpha, const double meanValue, size_t ** tetrahedra, size_t * tetrahedra_n, size_t *** domains, size_t ** domains_n, size_t *domains_nn, size_t *** boundaries, size_t ** boundaries_n, size_t *boundaries_nn, size_t ** neighbors, size_t * neighbors_n, double * hMean, const int * controlTags, const size_t controlTags_n, int * ierr)
 {
   if(ierr) *ierr = 0;

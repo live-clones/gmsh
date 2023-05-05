@@ -4512,36 +4512,6 @@ end
 const tet_neighbors = tetNeighbors
 
 """
-    gmsh.model.mesh.createHxtMesh(inputMesh, coord, outputMesh)
-
-hxt meshing test.
-
-Return `pts`, `tets`.
-
-Types:
- - `inputMesh`: string
- - `coord`: vector of doubles
- - `outputMesh`: string
- - `pts`: vector of doubles
- - `tets`: vector of sizes
-"""
-function createHxtMesh(inputMesh, coord, outputMesh)
-    api_pts_ = Ref{Ptr{Cdouble}}()
-    api_pts_n_ = Ref{Csize_t}()
-    api_tets_ = Ref{Ptr{Csize_t}}()
-    api_tets_n_ = Ref{Csize_t}()
-    ierr = Ref{Cint}()
-    ccall((:gmshModelMeshCreateHxtMesh, gmsh.lib), Cvoid,
-          (Ptr{Cchar}, Ptr{Cdouble}, Csize_t, Ptr{Cchar}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cint}),
-          inputMesh, convert(Vector{Cdouble}, coord), length(coord), outputMesh, api_pts_, api_pts_n_, api_tets_, api_tets_n_, ierr)
-    ierr[] != 0 && error(gmsh.logger.getLastError())
-    pts = unsafe_wrap(Array, api_pts_[], api_pts_n_[], own = true)
-    tets = unsafe_wrap(Array, api_tets_[], api_tets_n_[], own = true)
-    return pts, tets
-end
-const create_hxt_mesh = createHxtMesh
-
-"""
     gmsh.model.mesh.alphaShapesConstrained(dim, tag, coord, nodeTags, alpha, meanValue, controlTags)
 
 Generate a mesh of the array of points `coord`, constrained to the surface mesh
