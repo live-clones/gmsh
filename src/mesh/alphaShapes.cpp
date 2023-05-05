@@ -966,7 +966,7 @@ void generateMesh_(const int dim, const int tag, const bool refine, const std::v
     killer(gf);
     std::vector<double> cc = pCoord;
     PolyMesh *pm = GFaceInitialMesh(tag, 1, &cc);
-    print4debug(pm, 1000);
+    // print4debug(pm, 1000);
     std::vector<GEdge*> ed = gf->edges();
     std::unordered_map<int,MVertex*> vs;
     size_t vmax = 0;
@@ -1712,17 +1712,6 @@ void constrainedDelaunayRefinement_(const int dim, const int tag,
     for (size_t i=0; i<addFrom; i++)
       pm->vertices[i]->data = i2g[i];
     
-    // // Something like... set max element tag to 0
-    // gm->rebuildMeshVertexCache();
-    // gm->rebuildMeshElementCache();
-    // gm->renumberMeshElements();
-    // gm->destroyMeshCaches();
-    // int num_element = gm->getNumMeshElements();
-    // printf("number of elements : %d \n", num_element);
-    // gm->setMaxElementNumber(num_element+1);
-    // int num_max = gm->getMaxElementNumber();
-    // printf("max element number : %d\n", num_max);
-    
     // 1 -> add bounding edges
     for (auto he : pm->hedges){
       if (!he->f) continue;
@@ -1754,7 +1743,6 @@ void constrainedDelaunayRefinement_(const int dim, const int tag,
                 ge->mesh_vertices.push_back(v_gmsh[i]);
               }
               news[v[i]->data] = v_gmsh[i];
-              // v_gmsh[i] = GModel::current()->getMeshVertexByTag(v[i]->data);
             }
             else
               v_gmsh[i] = it->second;
@@ -1783,11 +1771,9 @@ void constrainedDelaunayRefinement_(const int dim, const int tag,
     // 2 -> add the faces
     newElementsInRefinement.clear();
     for(auto f : pm->faces) {
-      // if (!f->he) continue;
       if (f->he) {
         PolyMesh::Vertex *v[3] = {f->he->v, f->he->next->v, f->he->next->next->v};
         MVertex *v_gmsh[3];
-        // MVertex *v_gmsh_d[3];
         for(int i = 0; i < 3; i++) {
           if(v[i]->data > 0) {
             auto it = news.find(v[i]->data);
@@ -1795,7 +1781,6 @@ void constrainedDelaunayRefinement_(const int dim, const int tag,
               double uv[2] = {0, 0};
               GPoint gp = gf->closestPoint( SPoint3(v[i]->position.x(), v[i]->position.y(), v[i]->position.z()), uv);
               v_gmsh[i] = new MFaceVertex(gp.x(), gp.y(), gp.z(), gf, gp.u(), gp.v(), v[i]->data);
-              // v_gmsh[i] = GModel::current()->getMeshVertexByTag(v[i]->data);
               gf->mesh_vertices.push_back(v_gmsh[i]);
               news[v[i]->data] = v_gmsh[i];
             }
@@ -1887,7 +1872,6 @@ void alphaShape_entity(const int dim, const int tag, const double alpha, const s
   std::unordered_map<int, double> v2sizeAtNodes;
   if (!globalAlpha){
     for (size_t i=0; i<nodeTags.size(); i++){
-      // PolyMesh::Vertex* v0 = findVertex(pm, nodeTags[i]);
       v2sizeAtNodes[nodeTags[i]] = sizeAtNodes[i];
     }
   }
@@ -1910,7 +1894,7 @@ void alphaShape_entity(const int dim, const int tag, const double alpha, const s
       PolyMesh::HalfEdge *h2 = f->he->next->next;
       hTriangle = (v2sizeAtNodes[h0->v->data] + v2sizeAtNodes[h1->v->data] + v2sizeAtNodes[h2->v->data])/3;
       if (abs(hTriangle-minSize)<1e-8){ 
-          hTriangle *= 0.3;
+          hTriangle *= 0.1;
       }
       // printf("size of triangle (%d, %d, %d) is %f\n", h0->v->data, h1->v->data, h2->v->data, hTriangle);
     }
