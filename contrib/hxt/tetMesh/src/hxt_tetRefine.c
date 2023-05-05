@@ -17,7 +17,7 @@ static void markMeshPoints(HXTMesh* mesh)
 {
   #pragma omp parallel for simd
   for(uint32_t i=0; i<mesh->vertices.num; i++) {
-    mesh->vertices.coord[4*i+3] = 1.0;
+    mesh->vertices.coord[4*i+3] = 0.0;
   }
 
   for(uint64_t i=0; i<mesh->triangles.num; i++) {
