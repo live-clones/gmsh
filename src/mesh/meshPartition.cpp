@@ -2238,21 +2238,20 @@ int PartitionFaceMinEdgeLength(GFace *gf, int np, double tol)
   idx_t nvtxs = gf->triangles.size(), ncon = 1, nparts = np, objval;
   std::vector<idx_t> epart(gf->triangles.size());
   real_t ubvec = tol;
-
   while(1){
-    idx_t success =  METIS_PartGraphKway(&nvtxs, &ncon, &xadjncy[0], &adjncy[0], nullptr, nullptr,
-					 &adjncyw[0], &nparts, nullptr, &ubvec, nullptr, &objval,
-					 &epart[0]);
-    
+    METIS_PartGraphKway(&nvtxs, &ncon, &xadjncy[0], &adjncy[0], nullptr, nullptr,
+                        &adjncyw[0], &nparts, nullptr, &ubvec, nullptr, &objval,
+                        &epart[0]);
     bool allTheSame = true;
-    for(size_t i = 0; i < gf->triangles.size()-1; ++i) {
+    for(size_t i = 0; i < gf->triangles.size() - 1; ++i) {
       if(epart[i+1] != epart[i]) allTheSame = false;
     }
-    if (!allTheSame)break;
-    ubvec -= (1.-ubvec)*.5;
-    Msg::Warning ("partitioning face %d with %lu triangles that all have the same partition -- changing tolerance to tolearance %lf\n",gf->tag(),gf->triangles.size(), ubvec);
+    if (!allTheSame) break;
+    ubvec -= (1. - ubvec) * .5;
+    Msg::Warning("Partitioning face %d with %lu triangles that all have the same"
+                 " partition - changing tolerance to %g", gf->tag(),
+                 gf->triangles.size(), ubvec);
   }
-  
   for(size_t i = 0; i < gf->triangles.size(); ++i) {
     gf->triangles[i]->setPartition(epart[i]);
   }
