@@ -118,7 +118,8 @@ namespace gmsh { // Top-level functions
     //
     // Set a numerical option to `value'. `name' is of the form "Category.Option"
     // or "Category[num].Option". Available categories and options are listed in
-    // the "Gmsh options" chapter of the Gmsh reference manual.
+    // the "Gmsh options" chapter of the Gmsh reference manual
+    // (https://gmsh.info/doc/texinfo/gmsh.html#Gmsh-options).
     GMSH_API void setNumber(const std::string & name,
                             const double value);
 
@@ -127,7 +128,7 @@ namespace gmsh { // Top-level functions
     // Get the `value' of a numerical option. `name' is of the form
     // "Category.Option" or "Category[num].Option". Available categories and
     // options are listed in the "Gmsh options" chapter of the Gmsh reference
-    // manual.
+    // manual (https://gmsh.info/doc/texinfo/gmsh.html#Gmsh-options).
     GMSH_API void getNumber(const std::string & name,
                             double & value);
 
@@ -135,7 +136,8 @@ namespace gmsh { // Top-level functions
     //
     // Set a string option to `value'. `name' is of the form "Category.Option" or
     // "Category[num].Option". Available categories and options are listed in the
-    // "Gmsh options" chapter of the Gmsh reference manual.
+    // "Gmsh options" chapter of the Gmsh reference manual
+    // (https://gmsh.info/doc/texinfo/gmsh.html#Gmsh-options).
     GMSH_API void setString(const std::string & name,
                             const std::string & value);
 
@@ -143,7 +145,8 @@ namespace gmsh { // Top-level functions
     //
     // Get the `value' of a string option. `name' is of the form "Category.Option"
     // or "Category[num].Option". Available categories and options are listed in
-    // the "Gmsh options" chapter of the Gmsh reference manual.
+    // the "Gmsh options" chapter of the Gmsh reference manual
+    // (https://gmsh.info/doc/texinfo/gmsh.html#Gmsh-options).
     GMSH_API void getString(const std::string & name,
                             std::string & value);
 
@@ -153,7 +156,8 @@ namespace gmsh { // Top-level functions
     // `g', `b' and `a' should be integers between 0 and 255. `name' is of the form
     // "Category.Color.Option" or "Category[num].Color.Option". Available
     // categories and options are listed in the "Gmsh options" chapter of the Gmsh
-    // reference manual. For conciseness "Color." can be ommitted in `name'.
+    // reference manual (https://gmsh.info/doc/texinfo/gmsh.html#Gmsh-options). For
+    // conciseness "Color." can be ommitted in `name'.
     GMSH_API void setColor(const std::string & name,
                            const int r,
                            const int g,
@@ -165,7 +169,8 @@ namespace gmsh { // Top-level functions
     // Get the `r', `g', `b', `a' value of a color option. `name' is of the form
     // "Category.Color.Option" or "Category[num].Color.Option". Available
     // categories and options are listed in the "Gmsh options" chapter of the Gmsh
-    // reference manual. For conciseness "Color." can be ommitted in `name'.
+    // reference manual (https://gmsh.info/doc/texinfo/gmsh.html#Gmsh-options). For
+    // conciseness "Color." can be ommitted in `name'.
     GMSH_API void getColor(const std::string & name,
                            int & r,
                            int & g,
@@ -1804,7 +1809,8 @@ namespace gmsh { // Top-level functions
         // Add a new mesh size field of type `fieldType'. If `tag' is positive,
         // assign the tag explicitly; otherwise a new tag is assigned
         // automatically. Return the field tag. Available field types are listed in
-        // the "Gmsh mesh size fields" chapter of the Gmsh reference manual.
+        // the "Gmsh mesh size fields" chapter of the Gmsh reference manual
+        // (https://gmsh.info/doc/texinfo/gmsh.html#Gmsh-mesh-size-fields).
         GMSH_API int add(const std::string & fieldType,
                          const int tag = -1);
 
@@ -3621,7 +3627,8 @@ namespace gmsh { // Top-level functions
     //
     // Set the numerical option `option' to the value `value' for plugin `name'.
     // Plugins available in the official Gmsh release are listed in the "Gmsh
-    // plugins" chapter of the Gmsh reference manual.
+    // plugins" chapter of the Gmsh reference manual
+    // (https://gmsh.info/doc/texinfo/gmsh.html#Gmsh-plugins).
     GMSH_API void setNumber(const std::string & name,
                             const std::string & option,
                             const double value);
@@ -3630,7 +3637,8 @@ namespace gmsh { // Top-level functions
     //
     // Set the string option `option' to the value `value' for plugin `name'.
     // Plugins available in the official Gmsh release are listed in the "Gmsh
-    // plugins" chapter of the Gmsh reference manual.
+    // plugins" chapter of the Gmsh reference manual
+    // (https://gmsh.info/doc/texinfo/gmsh.html#Gmsh-plugins).
     GMSH_API void setString(const std::string & name,
                             const std::string & option,
                             const std::string & value);
@@ -3639,7 +3647,8 @@ namespace gmsh { // Top-level functions
     //
     // Run the plugin `name'. Return the tag of the created view (if any). Plugins
     // available in the official Gmsh release are listed in the "Gmsh plugins"
-    // chapter of the Gmsh reference manual.
+    // chapter of the Gmsh reference manual
+    // (https://gmsh.info/doc/texinfo/gmsh.html#Gmsh-plugins).
     GMSH_API int run(const std::string & name);
 
   } // namespace plugin

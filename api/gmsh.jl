@@ -176,7 +176,8 @@ import ..gmsh
 
 Set a numerical option to `value`. `name` is of the form "Category.Option" or
 "Category[num].Option". Available categories and options are listed in the "Gmsh
-options" chapter of the Gmsh reference manual.
+options" chapter of the Gmsh reference manual
+(https://gmsh.info/doc/texinfo/gmsh.html#Gmsh-options).
 
 Types:
  - `name`: string
@@ -197,7 +198,8 @@ const set_number = setNumber
 
 Get the `value` of a numerical option. `name` is of the form "Category.Option"
 or "Category[num].Option". Available categories and options are listed in the
-"Gmsh options" chapter of the Gmsh reference manual.
+"Gmsh options" chapter of the Gmsh reference manual
+(https://gmsh.info/doc/texinfo/gmsh.html#Gmsh-options).
 
 Return `value`.
 
@@ -221,7 +223,8 @@ const get_number = getNumber
 
 Set a string option to `value`. `name` is of the form "Category.Option" or
 "Category[num].Option". Available categories and options are listed in the "Gmsh
-options" chapter of the Gmsh reference manual.
+options" chapter of the Gmsh reference manual
+(https://gmsh.info/doc/texinfo/gmsh.html#Gmsh-options).
 
 Types:
  - `name`: string
@@ -242,7 +245,8 @@ const set_string = setString
 
 Get the `value` of a string option. `name` is of the form "Category.Option" or
 "Category[num].Option". Available categories and options are listed in the "Gmsh
-options" chapter of the Gmsh reference manual.
+options" chapter of the Gmsh reference manual
+(https://gmsh.info/doc/texinfo/gmsh.html#Gmsh-options).
 
 Return `value`.
 
@@ -269,7 +273,8 @@ Set a color option to the RGBA value (`r`, `g`, `b`, `a`), where where `r`, `g`,
 `b` and `a` should be integers between 0 and 255. `name` is of the form
 "Category.Color.Option" or "Category[num].Color.Option". Available categories
 and options are listed in the "Gmsh options" chapter of the Gmsh reference
-manual. For conciseness "Color." can be ommitted in `name`.
+manual (https://gmsh.info/doc/texinfo/gmsh.html#Gmsh-options). For conciseness
+"Color." can be ommitted in `name`.
 
 Types:
  - `name`: string
@@ -294,7 +299,8 @@ const set_color = setColor
 Get the `r`, `g`, `b`, `a` value of a color option. `name` is of the form
 "Category.Color.Option" or "Category[num].Color.Option". Available categories
 and options are listed in the "Gmsh options" chapter of the Gmsh reference
-manual. For conciseness "Color." can be ommitted in `name`.
+manual (https://gmsh.info/doc/texinfo/gmsh.html#Gmsh-options). For conciseness
+"Color." can be ommitted in `name`.
 
 Return `r`, `g`, `b`, `a`.
 
@@ -4413,7 +4419,8 @@ import ....gmsh
 Add a new mesh size field of type `fieldType`. If `tag` is positive, assign the
 tag explicitly; otherwise a new tag is assigned automatically. Return the field
 tag. Available field types are listed in the "Gmsh mesh size fields" chapter of
-the Gmsh reference manual.
+the Gmsh reference manual (https://gmsh.info/doc/texinfo/gmsh.html#Gmsh-mesh-
+size-fields).
 
 Return an integer.
 
@@ -8590,7 +8597,8 @@ import ..gmsh
 
 Set the numerical option `option` to the value `value` for plugin `name`.
 Plugins available in the official Gmsh release are listed in the "Gmsh plugins"
-chapter of the Gmsh reference manual.
+chapter of the Gmsh reference manual
+(https://gmsh.info/doc/texinfo/gmsh.html#Gmsh-plugins).
 
 Types:
  - `name`: string
@@ -8612,7 +8620,8 @@ const set_number = setNumber
 
 Set the string option `option` to the value `value` for plugin `name`. Plugins
 available in the official Gmsh release are listed in the "Gmsh plugins" chapter
-of the Gmsh reference manual.
+of the Gmsh reference manual (https://gmsh.info/doc/texinfo/gmsh.html#Gmsh-
+plugins).
 
 Types:
  - `name`: string
@@ -8634,7 +8643,8 @@ const set_string = setString
 
 Run the plugin `name`. Return the tag of the created view (if any). Plugins
 available in the official Gmsh release are listed in the "Gmsh plugins" chapter
-of the Gmsh reference manual.
+of the Gmsh reference manual (https://gmsh.info/doc/texinfo/gmsh.html#Gmsh-
+plugins).
 
 Return an integer.
 

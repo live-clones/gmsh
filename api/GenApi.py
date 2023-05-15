@@ -2710,7 +2710,10 @@ class API:
                             break
                 f.write("@item " + tfull + "\n")
                 tdoc = doc.replace("`", "@code{").replace("'", "}")
-                f.write("\n".join(textwrap.wrap(tdoc, 80)) + "\n\n")
+                tdoc = re.sub(r'"([a-zA-Z ]+)" chapter of the Gmsh reference manual \((.+)\)',
+                              r'@url{\2,"\1" chapter of the Gmsh reference manual}',
+                              tdoc)
+                f.write(tdoc + "\n\n")
                 f.write("@table @asis\n")
                 iargs = list(a for a in args if not a.out)
                 oargs = list(a for a in args if a.out)
