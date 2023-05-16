@@ -16,6 +16,5 @@ class gmshSurface;
 Vertex InterpolateCurve(Curve *Curve, double u, int derivee);
 Vertex InterpolateSurface(Surface *s, double u, double v, int derivee, int u_v);
 SPoint2 InterpolateCubicSpline(Vertex *v[4], double t, double mat[4][4],
-                               double t1, double t2, gmshSurface *s,
-                               int derivee);
+                               double t1, double t2, gmshSurface *s);
 #endif
