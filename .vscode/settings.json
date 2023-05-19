@@ -89,6 +89,8 @@
         "hash_map": "cpp",
         "stop_token": "cpp",
         "cinttypes": "cpp",
-        "variant": "cpp"
-    }
+        "variant": "cpp",
+        "alignedvector3": "cpp"
+    },
+    "workbench.colorTheme": "Solarized Light"
 }

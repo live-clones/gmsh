@@ -700,9 +700,11 @@ class model:
         """
         gmsh.model.getEntities(dim=-1)
 
-        Get all the entities in the current model. If `dim' is >= 0, return only
-        the entities of the specified dimension (e.g. points if `dim' == 0). The
-        entities are returned as a vector of (dim, tag) pairs.
+        Get all the entities in the current model. A model entity is represented by
+        two integers: its dimension (dim == 0, 1, 2 or 3) and its tag (its unique,
+        strictly positive identifier). If `dim' is >= 0, return only the entities
+        of the specified dimension (e.g. points if `dim' == 0). The entities are
+        returned as a vector of (dim, tag) pairs.
 
         Return `dimTags'.
 
@@ -1591,7 +1593,7 @@ class model:
         the entity of dimension `dim' and tag `tag'. `coord' are given as x, y, z
         coordinates, concatenated: [p1x, p1y, p1z, p2x, ...]. `parametricCoord'
         returns the parametric coordinates t on the curve (if `dim' = 1) or u and v
-        coordinates concatenated on the surface (if `dim' = 2), i.e. [p1t, p2t,
+        coordinates concatenated on the surface (if `dim' == 2), i.e. [p1t, p2t,
         ...] or [p1u, p1v, p2u, ...].
 
         Return `parametricCoord'.
@@ -1689,8 +1691,8 @@ class model:
         `tag' to the points `coord', by orthogonal projection. `coord' and
         `closestCoord' are given as x, y, z coordinates, concatenated: [p1x, p1y,
         p1z, p2x, ...]. `parametricCoord' returns the parametric coordinates t on
-        the curve (if `dim' = 1) or u and v coordinates concatenated on the surface
-        (if `dim' = 2), i.e. [p1t, p2t, ...] or [p1u, p1v, p2u, ...].
+        the curve (if `dim' == 1) or u and v coordinates concatenated on the
+        surface (if `dim' = 2), i.e. [p1t, p2t, ...] or [p1u, p1v, p2u, ...].
 
         Return `closestCoord', `parametricCoord'.
 
@@ -3147,8 +3149,8 @@ class model:
             order as in `getElements' and `getElementsByType'. `jacobians' contains for
             each element the 9 entries of the 3x3 Jacobian matrix at each evaluation
             point. The matrix is returned by column: [e1g1Jxu, e1g1Jyu, e1g1Jzu,
-            e1g1Jxv, ..., e1g1Jzw, e1g2Jxu, ..., e1gGJzw, e2g1Jxu, ...], with
-            Jxu=dx/du, Jyu=dy/du, etc. `determinants' contains for each element the
+            e1g1Jxv, ..., e1g1Jzw, e1g2Jxu, ..., e1gGJzw, e2g1Jxu, ...], with Jxu =
+            dx/du, Jyu = dy/du, etc. `determinants' contains for each element the
             determinant of the Jacobian matrix at each evaluation point: [e1g1, e1g2,
             ... e1gG, e2g1, ...]. `coord' contains for each element the x, y, z
             coordinates of the evaluation points. If `tag' < 0, get the Jacobian data
@@ -3200,9 +3202,9 @@ class model:
             reference element [g1u, g1v, g1w, ..., gGu, gGv, gGw]. `jacobians' contains
             the 9 entries of the 3x3 Jacobian matrix at each evaluation point. The
             matrix is returned by column: [e1g1Jxu, e1g1Jyu, e1g1Jzu, e1g1Jxv, ...,
-            e1g1Jzw, e1g2Jxu, ..., e1gGJzw, e2g1Jxu, ...], with Jxu=dx/du, Jyu=dy/du,
-            etc. `determinants' contains the determinant of the Jacobian matrix at each
-            evaluation point. `coord' contains the x, y, z coordinates of the
+            e1g1Jzw, e1g2Jxu, ..., e1gGJzw, e2g1Jxu, ...], with Jxu = dx/du, Jyu =
+            dy/du, etc. `determinants' contains the determinant of the Jacobian matrix
+            at each evaluation point. `coord' contains the x, y, z coordinates of the
             evaluation points. This function relies on an internal cache (a vector in
             case of dense element numbering, a map otherwise); for large meshes
             accessing Jacobians in bulk is often preferable.
@@ -5099,40 +5101,6 @@ class model:
         tet_neighbors = tetNeighbors
 
         @staticmethod
-        def createHxtMesh(inputMesh, coord, outputMesh):
-            """
-            gmsh.model.mesh.createHxtMesh(inputMesh, coord, outputMesh)
-
-            hxt meshing test.
-
-            Return `pts', `tets'.
-
-            Types:
-            - `inputMesh': string
-            - `coord': vector of doubles
-            - `outputMesh': string
-            - `pts': vector of doubles
-            - `tets': vector of sizes
-            """
-            api_coord_, api_coord_n_ = _ivectordouble(coord)
-            api_pts_, api_pts_n_ = POINTER(c_double)(), c_size_t()
-            api_tets_, api_tets_n_ = POINTER(c_size_t)(), c_size_t()
-            ierr = c_int()
-            lib.gmshModelMeshCreateHxtMesh(
-                c_char_p(inputMesh.encode()),
-                api_coord_, api_coord_n_,
-                c_char_p(outputMesh.encode()),
-                byref(api_pts_), byref(api_pts_n_),
-                byref(api_tets_), byref(api_tets_n_),
-                byref(ierr))
-            if ierr.value != 0:
-                raise Exception(logger.getLastError())
-            return (
-                _ovectordouble(api_pts_, api_pts_n_.value),
-                _ovectorsize(api_tets_, api_tets_n_.value))
-        create_hxt_mesh = createHxtMesh
-
-        @staticmethod
         def alphaShapesConstrained(dim, tag, coord, nodeTags, alpha, meanValue, controlTags):
             """
             gmsh.model.mesh.alphaShapesConstrained(dim, tag, coord, nodeTags, alpha, meanValue, controlTags)
@@ -5202,7 +5170,8 @@ class model:
             `nodeTags'. `minRadius' is the minimum allowed circumradius of elements in
             the mesh. An element that has a circumradius which is smaller than this
             value will not be refined. Return newly added nodes and corresponding size
-            field.
+            field, as well as the updated list of constrained edges and elements within
+            the refinement.
 
             Return `newNodeTags', `newCoords', `newSizeField', `newConstrainedEdges', `newElementsInRefinement'.
 
@@ -9552,7 +9521,7 @@ class view:
         """
         gmsh.view.getListDataStrings(tag, dim)
 
-        Get list-based post-processing data strings (2D strings if `dim' = 2, 3D
+        Get list-based post-processing data strings (2D strings if `dim' == 2, 3D
         strings if `dim' = 3) from the view with tag `tag'. Return the coordinates
         in `coord', the strings in `data' and the styles in `style'.
 
@@ -10306,8 +10275,9 @@ class fltk:
         """
         gmsh.fltk.splitCurrentWindow(how="v", ratio=0.5)
 
-        Split the current window horizontally (if `how' = "h") or vertically (if
-        `how' = "v"), using ratio `ratio'. If `how' = "u", restore a single window.
+        Split the current window horizontally (if `how' == "h") or vertically (if
+        `how' == "v"), using ratio `ratio'. If `how' == "u", restore a single
+        window.
 
         Types:
         - `how': string

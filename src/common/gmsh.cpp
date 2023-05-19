@@ -5595,18 +5595,6 @@ gmsh::model::mesh::tetNeighbors(const std::vector<std::size_t> &tetra,
 #endif  
 }
 
-// gmsh::model::mesh::createHxtMesh
-
-GMSH_API void
-gmsh::model::mesh::createHxtMesh(const std::string &inputMesh, const std::vector<double> & coord, const std::string &outputMesh, std::vector<double> & pts,
-                                  std::vector<std::size_t> & tets){
-#if defined(HAVE_MESH) && defined(HAVE_HXT)
-  createHxtMesh_(inputMesh, coord, outputMesh, pts, tets);
-#else
-  Msg::Error("createHxtMesh requires the mesh and hxt modules");
-#endif  
-}
-
 GMSH_API void
 gmsh::model::mesh::alphaShapesConstrained(const int dim, 
                                           const int tag,

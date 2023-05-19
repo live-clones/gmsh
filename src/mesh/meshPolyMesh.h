@@ -469,7 +469,10 @@ public:
     bool deletion_accepted = false;
     bool corner = false;
     while (!deletion_accepted && !corner){
-      if (he->data != -1) return false;
+      if (he->data != -1){
+        return false;
+      } 
+        
       HalfEdge* _he = he->next->next->opposite;
       Vertex *v0 = he->next->v;
       bool flipped = false;
