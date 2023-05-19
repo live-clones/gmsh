@@ -118,31 +118,28 @@ public:
   std::vector<Face *> faces;
   std::vector<SVector3> high_order_nodes;
 
-  struct VertexOnEdge {
-    PolyMesh::HalfEdge *he; // he in the extrinsic_ mesh
-    double t; // local coordinates of the vertex in that edge
-    SVector3 point  ()const{
-      return he->v->position*(1.-t)+
-	he->next->v->position*t;
-    }
-  };
-  
-  struct VertexOnFace {
+  struct VertexOnSurface {
     PolyMesh::HalfEdge *he; // he->f in the extrinsic_ mesh
-    double u,v; // local coordinates of the vertex in that face
+    double u,v; // local coordinates of the vertex in that face or in an edge of the face
+    short dim;
+    //    size_t tag;
+    VertexOnSurface (short _dim = 2): dim(_dim){}
     SVector3 point () const {
-      return he->v->position*(1.-u-v)+
-      he->next->v->position*u+
-	he->next->next->v->position*v;
+      if (dim == 0)return he->v->position;
+      else if (dim == 1)  return he->v->position*(1.-u)+
+			    he->next->v->position*u;
+      else return he->v->position*(1.-u-v)+
+	     he->next->v->position*u+
+	     he->next->next->v->position*v;
     }
   };
   
-  struct Path {
+  /*  struct Path {
     VertexOnFace _start;
     VertexOnFace _end;
     std::vector<VertexOnEdge> _pts;
     void print4debug (int id, FILE *f = NULL);
-  };
+    };*/
     
   void reset()
   {
@@ -612,6 +609,47 @@ public:
     cleanf();
   }
 
+  // general case
+  inline int split_edge_general (HalfEdge *he0m, const SVector3 &position, int data = -1) {
+    //    printf("coucocu7\n");
+    HalfEdge *he1m = he0m->opposite;
+    //    if(he1m == nullptr) return -1;
+
+    Vertex *mid = new Vertex(position.x(), position.y(), position.z(), data == -1 ? vertices.size() : data);
+    vertices.push_back(mid);
+
+    HalfEdge *hem0 = nullptr;
+    if (he1m) hem0 = new HalfEdge(mid);
+    HalfEdge *hem1 = new HalfEdge(mid);
+
+    mid->he = hem1;
+
+    hem1->f = he0m->f;
+    if (hem0) hem0->f = he0m->opposite->f;    
+    if (hem0) hedges.push_back(hem0);
+    hedges.push_back(hem1);
+    
+    he0m->opposite = hem0;
+    if (hem0) hem0->opposite = he0m;
+    if (he1m) he1m->opposite = hem1;
+    hem1->opposite = he1m;
+
+    // right side
+    hem1->next = he0m->next;
+    he0m->next->prev = hem1;
+    he0m->next = hem1;
+    hem1->prev = he0m;
+
+    // left side
+    if (hem0)hem0->next = he1m->next;
+    if (he1m)he1m->next->prev = hem0;
+    if (he1m)he1m->next = hem0;
+    if (hem0)hem0->prev = he1m;
+    //    printf("coucocu8\n");
+    return 0;
+  }
+
+  // assume a triangular mesh
   inline int split_edge(HalfEdge *he0m, const SVector3 &position, int data)
   {
     HalfEdge *he1m = he0m->opposite;
@@ -882,10 +920,10 @@ public:
 struct HalfEdgePtrLessThan {
   bool operator()(PolyMesh::HalfEdge *l1, PolyMesh::HalfEdge *l2) const
   {
-    PolyMesh::Vertex *l10 = std::min(l1->v, l1->next->v);
-    PolyMesh::Vertex *l11 = std::max(l1->v, l1->next->v);
-    PolyMesh::Vertex *l20 = std::min(l2->v, l2->next->v);
-    PolyMesh::Vertex *l21 = std::max(l2->v, l2->next->v);
+    int /*PolyMesh::Vertex */ l10 = std::min(l1->v->data, l1->next->v->data);
+    int /*PolyMesh::Vertex */ l11 = std::max(l1->v->data, l1->next->v->data);
+    int /*PolyMesh::Vertex */ l20 = std::min(l2->v->data, l2->next->v->data);
+    int /*PolyMesh::Vertex */ l21 = std::max(l2->v->data, l2->next->v->data);
     if(l10 < l20) return true;
     if(l10 > l20) return false;
     if(l11 > l21) return true;

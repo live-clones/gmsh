@@ -85,23 +85,55 @@ static void treattriangle(PolyMesh::Vertex *vi, PolyMesh::Vertex *vj, PolyMesh::
 void print__ (const char *fn, PolyMesh*pm, std::map<PolyMesh::Vertex*,double> &ls){
   FILE *f = fopen(fn,"w");
   fprintf(f,"View\"\"{\n");
+  for (auto he : pm->hedges){
+    PolyMesh::Vertex *v1 = he->v;
+    PolyMesh::Vertex *v2 = he->next->v;
+    if (he->data != -1){
+      fprintf(f,"SL(%g,%g,%g,%g,%g,%g){%d,%d};\n",
+	      v1->position.x(),v1->position.y(),v1->position.z(),
+	      v2->position.x(),v2->position.y(),v2->position.z(),he->data,he->data);
+    }
+  }
   for (auto t : pm->faces){
     PolyMesh::Vertex *v1 = t->he->v;
     PolyMesh::Vertex *v2 = t->he->next->v;
     PolyMesh::Vertex *v3 = t->he->next->next->v;
-    std::map<PolyMesh::Vertex*,double>::iterator it1 = ls.find(v1);
-    std::map<PolyMesh::Vertex*,double>::iterator it2 = ls.find(v2);
-    std::map<PolyMesh::Vertex*,double>::iterator it3 = ls.find(v3);
+    PolyMesh::Vertex *v4 = t->he->next->next->next->v;
 
-    if (it1 != ls.end() && it2 != ls.end() && it3 != ls.end()){
-      double l1 = it1->second;
-      double l2 = it2->second;
-      double l3 = it3->second;
-      fprintf(f,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
+    if (ls.empty()){
+      fprintf(f,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%d,%d,%d};\n",
 	      v1->position.x(),v1->position.y(),v1->position.z(),
 	      v2->position.x(),v2->position.y(),v2->position.z(),
-	      v3->position.x(),v3->position.y(),v3->position.z(),l1,l2,l3);
-    }
+	      v3->position.x(),v3->position.y(),v3->position.z(),t->data,t->data,t->data);
+    }    
+    else{
+      std::map<PolyMesh::Vertex*,double>::iterator it1 = ls.find(v1);
+      std::map<PolyMesh::Vertex*,double>::iterator it2 = ls.find(v2);
+      std::map<PolyMesh::Vertex*,double>::iterator it3 = ls.find(v3);
+      std::map<PolyMesh::Vertex*,double>::iterator it4 = ls.find(v4);
+      
+      if (v4 == v1 && it1 != ls.end() && it2 != ls.end() && it3 != ls.end()){
+	double l1 = it1->second;
+	double l2 = it2->second;
+	double l3 = it3->second;
+	fprintf(f,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
+		v1->position.x(),v1->position.y(),v1->position.z(),
+		v2->position.x(),v2->position.y(),v2->position.z(),
+		v3->position.x(),v3->position.y(),v3->position.z(),l1,l2,l3);
+      }
+      else if (it1 != ls.end() && it2 != ls.end() && it3 != ls.end() && it4 != ls.end()){
+	double l1 = it1->second;
+	double l2 = it2->second;
+	double l3 = it3->second;
+	double l4 = it4->second;
+	fprintf(f,"SQ(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g,%g};\n",
+		v1->position.x(),v1->position.y(),v1->position.z(),
+		v2->position.x(),v2->position.y(),v2->position.z(),
+		v3->position.x(),v3->position.y(),v3->position.z(),
+		v4->position.x(),v4->position.y(),v4->position.z(),
+		l1,l2,l3,l4);
+      }
+    }    
   }
   fprintf(f,"};\n");
   fclose(f);
@@ -299,6 +331,7 @@ void PolyMesh::fastMarching (std::vector<Vertex *> &seeds, std::map<Vertex*,doub
   print__ ("fm.pos", this, ls);
 }
 
+/*
 void PolyMesh::Path::print4debug (int id, FILE *f) {
   
   //  if (_start.he == nullptr)return;
@@ -335,3 +368,4 @@ void PolyMesh::Path::print4debug (int id, FILE *f) {
     fclose(f);
   }
 }
+*/

@@ -6,11 +6,124 @@
 #include "GFace.h"
 #include "discreteFace.h"
 #include "MVertexRTree.h"
+#include "robustPredicates.h"
+#include "Numeric.h"
 
 #include "/Users/CODES/geodesic_matlab/src/geodesic_mesh.h"
 #include "/Users/CODES/geodesic_matlab/src/geodesic_algorithm_exact.h" 
 
-static  PolyMesh* createPolyMesh (GModel *gm, std::map<MVertex*, int> &trianglePositions) {
+struct VertexOnEdge {
+  VertexOnEdge () : v(nullptr) {}
+  PolyMesh::HalfEdge *he; // he in the extrinsic_ mesh
+  double t; // local coordinates of the vertex in that edge
+  size_t tag;
+  MVertex *v;
+  SVector3 point  ()const{
+      return he->v->position*(1.-t)+
+	he->next->v->position*t;
+  }
+};
+
+static PolyMesh* createPolyMesh (PolyMesh *pm,
+				 std::vector<size_t> &t,
+				 std::vector<size_t> &e) {
+  
+  PolyMesh *pm_new = new PolyMesh;
+
+  int cc = 0;
+  for (auto vv : pm->vertices){
+    if (cc++ != vv->data)Msg::Warning("Wrong numbering %d %d",cc,vv->data);
+    pm_new->vertices.push_back(new PolyMesh::Vertex(vv->position.x(), vv->position.y(), vv->position.z(), vv->data));	
+  }
+    
+  for (size_t i=0;i<t.size();i+=3){
+    PolyMesh::HalfEdge *he[3];
+    for(std::size_t j = 0; j < 3; j++){
+      PolyMesh::Vertex *vv = pm_new->vertices[t[i+j]];
+      he[j] = new PolyMesh::HalfEdge(vv);
+      pm_new->hedges.push_back(he[j]);
+      vv->he = he[j];
+    }
+    PolyMesh::Face *ff = new PolyMesh::Face(he[0]);
+    pm_new->faces.push_back(ff);
+    for(int j = 0; j < 3; j++) {
+      he[j]->next = he[(j + 1) % 3];
+      he[j]->prev = he[(j - 1 + 3) % 3];
+      he[j]->f = ff;
+    }
+  }
+
+  HalfEdgePtrLessThan compare;
+  std::sort(pm_new->hedges.begin(), pm_new->hedges.end(), compare);
+  
+  HalfEdgePtrEqual equal;
+  for(size_t i = 0; i < pm_new->hedges.size() - 1; i++) {
+    PolyMesh::HalfEdge *h0 = pm_new->hedges[i];
+    PolyMesh::HalfEdge *h1 = pm_new->hedges[i + 1];
+    if(equal(h0, h1)) {
+      h0->opposite = h1;
+      h1->opposite = h0;
+      i++;
+    }
+  } 
+
+  FILE *f = fopen("test.pos","w");
+  fprintf(f,"View\"\"{\n");
+
+  for (size_t i=0;i<e.size();i+=3){
+    PolyMesh::Vertex *v0 = pm_new->vertices[e[i]];
+    PolyMesh::Vertex *v1 = pm_new->vertices[e[i+1]];
+    PolyMesh::HalfEdge *he01 = pm_new->getEdge(v0,v1);
+    PolyMesh::HalfEdge *he10 = pm_new->getEdge(v1,v0);
+    if (he01){
+      fprintf(f,"SL(%12.5E,%12.5E,%12.5E,%12.5E, %12.5E, %12.5E){%lu,%lu};\n",
+      	     v0->position.x(),v0->position.y(),v0->position.z(),
+	      v1->position.x(),v1->position.y(),v1->position.z(), e[i+2], e[i+2]);
+      he01->data = e[i+2];
+    }
+    else Msg::Debug("Non existing edge -- %d %d",e[i],e[i+1]);
+    if (he10){
+      fprintf(f,"SL(%12.5E,%12.5E,%12.5E,%12.5E, %12.5E, %12.5E){%lu,%lu};\n",
+      	     v0->position.x(),v0->position.y(),v0->position.z(),
+	      v1->position.x(),v1->position.y(),v1->position.z(), e[i+2]+1, e[i+2]+1);
+      he10->data = e[i+2];
+    }
+    else Msg::Debug("Non existing edge -- %d %d",e[i],e[i+1]);
+  }
+  fprintf(f,"};\n");
+  fclose(f);
+
+  int faceTag = 1;
+  for (auto f : pm_new->faces){
+    if (f->data == -1){
+      std::stack<PolyMesh::Face*> _s;
+      _s.push(f);
+      int count = 1;
+      f->data = faceTag;
+      while(!_s.empty()){
+	PolyMesh::Face *_f = _s.top();
+	_s.pop();	  
+	PolyMesh::HalfEdge *he = _f->he;
+	do{
+	  if(he->data == -1 && he->opposite && he->opposite->f->data == -1){
+	    he->opposite->f->data = faceTag;
+	    count ++;
+	    _s.push(he->opposite->f);
+	  }
+	  he = he->next;
+	}while(he != _f->he);	
+      }
+      faceTag++;
+    }
+  }
+
+  Msg::Info("%d isogeometric triangles were generated",faceTag - 1);
+  
+  return pm_new;
+}
+
+
+static  PolyMesh* createPolyMesh (GModel *gm, std::map<MVertex*, int, MVertexPtrLessThan> &trianglePositions) {
   const double eps = 1.e-8; //FIXME
   MVertexRTree pos(eps);
   PolyMesh *pm = new PolyMesh;
@@ -55,9 +168,12 @@ static  PolyMesh* createPolyMesh (GModel *gm, std::map<MVertex*, int> &triangleP
 	  SPoint2 p2 = ge->reparamOnFace(df, epar, 0);
 	  double uloc,vloc;
 	  int tp = df->trianglePosition(p2.x(),p2.y(), uloc, vloc);
-	  trianglePositions[vk] = tp + faceCounter;
+	  trianglePositions[ve] = tp + faceCounter;
 	}
-      }      
+      }
+      if (!ve && !vk){
+	trianglePositions[_v] = -1;
+      }
     }    
     //------------------------------------------------------------- 
     for(std::size_t i = 0; i < df->_param.t3d.size(); i++){      
@@ -174,17 +290,53 @@ static PolyMesh* createPolyMesh (discreteFace *df) {
   
 }
 
-static PolyMesh::VertexOnFace findVertexOnFace (PolyMesh *pm, MVertex *v, int pos){
+static int onBoundary (PolyMesh::VertexOnSurface &vof, double eps, int expectedDim){
+  double u = vof.u;
+  double v = vof.v;
+  if (sqrt(u*u+v*v) < eps){
+    vof.dim = 0;    
+  }
+  else if (sqrt((u-1)*(u-1)+v*v) < eps){
+    vof.dim = 0;
+    vof.he = vof.he->next;
+  }
+  else if (sqrt(u*u+(v-1)*(v-1)) < eps){
+    vof.dim = 0;
+    vof.he = vof.he->next->next;
+  }
+  else if (v < eps){
+    vof.dim = 1;
+    vof.u = u;
+  }
+  else if (1-u-v < eps){
+    vof.dim = 1;
+    vof.he = vof.he->next;
+    vof.u = v;
+  }
+  else if (u < eps){
+    vof.dim = 1;
+    vof.he = vof.he->next->next;
+    vof.u = 1.-v;
+  }
+  if (vof.dim == expectedDim) {
+    if (expectedDim != 2) Msg::Debug ("expected dim %d dim %d\b", expectedDim, vof.dim);
+    return 0;
+  }
+  Msg::Warning ("Expected a surface point classified on dimension %d but dimension is %d local coord (%22.15E,%22.15E,%22.15E)", expectedDim, vof.dim,u,v,1-u-v);
+
+  return -1;
+}
+
+static PolyMesh::VertexOnSurface findVertexOnSurface (PolyMesh *pm, MVertex *v, int pos, bool deb = false){
   SVector3 P(v->x(), v->y(), v->z());
-  PolyMesh::VertexOnFace vof;
+  PolyMesh::VertexOnSurface vof;
   double minvol = 1.e22,_u = 1.e22,_v = 1.e22;
-  const double eps = 1.e-8;
+  const double eps = 1.e-11;
   vof.he = nullptr;
 
   int n = 0;
   size_t SIZE = pm->faces.size();
   if (pos < 0)pos = 0;
-  //  pos = 0;
   for (size_t cc = 0 ; cc < SIZE ; cc ++){
     PolyMesh::Face *f = pm->faces[(cc+pos)%SIZE];
     auto he = f->he;
@@ -209,60 +361,106 @@ static PolyMesh::VertexOnFace findVertexOnFace (PolyMesh *pm, MVertex *v, int po
       double y = (1-_u-_v)*v0->position.y()+_u*v1->position.y()+_v*v2->position.y();
       double z = (1-_u-_v)*v0->position.z()+_u*v1->position.z()+_v*v2->position.z();
       if (_u >= -eps && _v >= -eps && 1-_u-_v >= -eps){
-	//	printf("found an element that is coplanar with point P(%g,%g,%g) uv(%g,%g) P'(%g,%g,%g)\n",
-	//	       v->x(), v->y(), v->z(), _u, _v , x, y, z);
 	double dd = sqrt((x-v->x())*(x-v->x())+
 			 (y-v->y())*(y-v->y())+
 			 (z-v->z())*(z-v->z()));
+
 	if (dd < eps){
 	  vof.he = he;
 	  vof.u = _u;
 	  vof.v = _v;
 	  n++;
-	  //	  printf("vertex %d after %d searches\n",v->getNum(),cc);
 	  if (he)return vof;	
 	}
       }
     }
   }
-  //  vof.he = nullptr;
-  //  vof.u = 0;
-  //  vof.v = 0;
   if (n < 1) printf("N %d MINVOL = %22.15E u = %22.15E v = %22.15E w = %22.15E\n",n,minvol,vof.u,vof.v,1.-vof.u-vof.v);
   return vof;
-
 }
 
 
-static void exactGeodesics (const PolyMesh::VertexOnFace &_start,
-			    std::vector<PolyMesh::VertexOnFace> &incident_edges,
+static geodesic::SurfacePoint getSP (const PolyMesh::VertexOnSurface &_start,
+				     geodesic::face_pointer fp){
+  
+  SVector3 p_start = _start.point();
+  if (_start.dim == 0){
+    for (int i=0; i<3; i++){
+      geodesic::vertex_pointer v0 = fp->adjacent_vertices()[i];
+      double dx = sqrt ((v0->x()-p_start.x())*(v0->x()-p_start.x())+
+			(v0->y()-p_start.y())*(v0->y()-p_start.y())+
+			(v0->z()-p_start.z())*(v0->z()-p_start.z()));
+      if (dx < 1.e-10){
+	geodesic::SurfacePoint sp (v0,p_start.x(), p_start.y(), p_start.z(), geodesic::VERTEX);
+	return sp;
+      }
+    }
+  }
+  if (_start.dim == 1){
+    for (int i=0; i<3; i++){
+      geodesic::edge_pointer edge = fp->adjacent_edges()[i];
+      geodesic::vertex_pointer v0 = edge->adjacent_vertices()[0];
+      geodesic::vertex_pointer v1 = edge->adjacent_vertices()[1];
+      double dx = sqrt ((v0->x()-v1->x())*(v0->x()-v1->x())+
+			(v0->y()-v1->y())*(v0->y()-v1->y())+
+			(v0->z()-v1->z())*(v0->z()-v1->z()));
+      double dx1 = sqrt ((v0->x()-p_start.x())*(v0->x()-p_start.x())+
+			 (v0->y()-p_start.y())*(v0->y()-p_start.y())+
+			 (v0->z()-p_start.z())*(v0->z()-p_start.z()));
+      double dx2 = sqrt ((v1->x()-p_start.x())*(v1->x()-p_start.x())+
+			 (v1->y()-p_start.y())*(v1->y()-p_start.y())+
+			 (v1->z()-p_start.z())*(v1->z()-p_start.z()));
+      if (fabs(dx - dx1 - dx2) < 1.e-10*dx){
+	geodesic::SurfacePoint sp (edge,p_start.x(), p_start.y(), p_start.z(), geodesic::EDGE);
+	return sp;
+      }
+    }
+  }
+  geodesic::SurfacePoint sp (fp,p_start.x(), p_start.y(), p_start.z(), geodesic::FACE);
+  return sp;
+}
+
+static void filterPath (std::vector<geodesic::SurfacePoint> &path, double eps){
+  std::vector<geodesic::SurfacePoint> filtered_path;
+  filtered_path.push_back(path[0]);
+  for (size_t i = 1; i<path.size() ; i++){
+    SVector3 dx  (filtered_path[filtered_path.size() - 1].x() - path[i].x(),
+		  filtered_path[filtered_path.size() - 1].y() - path[i].y(),
+		  filtered_path[filtered_path.size() - 1].z() - path[i].z());
+    if (dx.norm() > eps){
+      filtered_path.push_back(path[i]);
+    }
+  }
+  path = filtered_path;
+}
+  
+static void exactGeodesics (const PolyMesh::VertexOnSurface &_start,
+			    std::vector<PolyMesh::VertexOnSurface> &incident_edges,
 			    geodesic::Mesh &mesh, std::map<PolyMesh::Face*,int> &f2n,
 			    int save_, FILE *f,
 			    std::vector<std::vector<geodesic::SurfacePoint> > &paths){
   
   SVector3 p_start = _start.point();
-  
-  geodesic::SurfacePoint sp (&mesh.faces()[f2n[_start.he->f]],p_start.x(), p_start.y(), p_start.z(),geodesic::FACE);
-  std::vector<geodesic::SurfacePoint> pts = {sp};
+
+  geodesic::face_pointer fp = &mesh.faces()[f2n[_start.he->f]];
+
+  std::vector<geodesic::SurfacePoint> pts = {getSP (_start, fp)};
 
   std::vector<geodesic::SurfacePoint> _stop ;
   for (auto v : incident_edges){
-    SVector3 p_end = v.point();
-    geodesic::SurfacePoint spe (&mesh.faces()[f2n[v.he->f]],p_end.x(), p_end.y(), p_end.z(),geodesic::FACE);
-    _stop.push_back(spe);
+    _stop.push_back(getSP(v,&mesh.faces()[f2n[v.he->f]]));
   }
   
   geodesic::GeodesicAlgorithmExact algorithm(&mesh);
   algorithm.propagate(pts,0,&_stop);
-
-  //  printf("Vertex with %lu incident edges\n",incident_edges.size());
   
   for (auto v : incident_edges){
     SVector3 p_end = v.point();
-    geodesic::SurfacePoint spe (&mesh.faces()[f2n[v.he->f]],p_end.x(), p_end.y(), p_end.z(),geodesic::FACE);
+    geodesic::SurfacePoint spe = getSP(v,&mesh.faces()[f2n[v.he->f]]);
     std::vector<geodesic::SurfacePoint> path;
     algorithm.trace_back(spe, path);
-    if (path.size() > 1){
+    filterPath (path, 1.e-6); // fixme use relative error
+    if (f && path.size() > 1){
       for (size_t i = 0; i< path.size()-1;i++){
 	fprintf(f,"SL(%12.5E,%12.5E,%12.5E,%12.5E,%12.5E,%12.5E){%d,%d};\n",
 		path[i].x(),path[i].y(),path[i].z(),
@@ -276,156 +474,933 @@ static void exactGeodesics (const PolyMesh::VertexOnFace &_start,
   }
 }
 
-static void createGmshDiscreteEdgeRepresentation ( MEdge &ed ,
-						   std::vector<geodesic::SurfacePoint>  &path)
-{
-  printf("edge %lu %lu : ",ed.getVertex(0)->getNum(),ed.getVertex(1)->getNum());
-  for (auto sp : path){
-    auto m_p = sp.base_element();
-    auto point_type = m_p->type();
-    if (point_type == geodesic::VERTEX){
-      printf("v ");
-    }
-    else if (point_type == geodesic::EDGE){
-      printf("e ");      
-    }
-    else if (point_type == geodesic::FACE){
-      printf("f ");
-    }
-  }
-  printf("\n");
+bool compareVertexOnEdge (const VertexOnEdge &v0,
+			  const VertexOnEdge &v1){
+  return v0.t < v1.t;
 }
 
 
+class cutPolyMesh {
+  PolyMesh *pm;
+public :
+  std::map<PolyMesh::HalfEdge *, std::vector<VertexOnEdge> > cuts; 
+  std::map<MVertex*, PolyMesh::Vertex *>  v2v; 
+  std::map<PolyMesh::Face *, std::vector<MVertex *> > fvs; 
+  std::map<MVertex *, std::vector<int> > vtags; 
+  std::map<PolyMesh::Vertex *, std::vector<int> > pvtags; 
+
+  cutPolyMesh (PolyMesh *_pm) : pm(_pm){
+  }
+
+  void addPolyMeshVertexTag(PolyMesh::Vertex * v, int tag){
+    std::map<PolyMesh::Vertex *, std::vector<int> >::iterator it = pvtags.find(v);
+    if (it != pvtags.end()) it->second.push_back(tag);
+    else {
+      std::vector<int> tmp = {tag};
+      pvtags[v] = tmp;
+    }
+  }  
+  
+  void addVertexOnSurface (PolyMesh::Face*f,  MVertex *v){
+    std::map<PolyMesh::Face *, std::vector<MVertex*> >::iterator it = fvs.find(f);
+    if (it != fvs.end()) it->second.push_back(v);
+    else {
+      std::vector<MVertex *> cut = {v};
+      fvs[f] = cut;
+    }
+  }
+
+  void addVertexOnEdge (PolyMesh::VertexOnSurface &vos,  MVertex *v){
+    SVector3 p = vos.point();
+
+    VertexOnEdge voe ; voe.he = vos.he; voe.t = vos.u; voe.tag = -1; voe.v = v;
+    if (vos.he->opposite && voe.he->v->data > voe.he->next->v->data){
+      voe.he = vos.he->opposite;
+      voe.t = 1 - vos.u;
+    }
+    addEdgeCut (voe);
+  }
+
+  void addVertexOnVertex (PolyMesh::VertexOnSurface &vos,  MVertex *v){
+    v2v[v] = vos.he->v;
+  }
+  
+  void addTagToVertex (MVertex *v, int tag) {
+
+    std::map<MVertex*, PolyMesh::Vertex *>::iterator itv2v = v2v.find(v);
+    if (itv2v != v2v.end())addPolyMeshVertexTag (itv2v->second,tag);
 
 
-int makeMeshGeodesic (PolyMesh *pm, std::set<MEdge,MEdgeLessThan> &ed, int tag,
-		      //		      std::map<MEdge,
-		      std::map<MVertex*, int> *trianglePositions = nullptr){
+    std::map<MVertex *, std::vector<int> >::iterator it = vtags.find(v);
+    if (it != vtags.end() && std::find( it->second.begin(),  it->second.end(), tag) ==  it->second.end()) it->second.push_back(tag);
+    else {
+      std::vector<int> vt = {tag};
+      vtags[v] = vt;
+    }
+  }
+
+  void addEdgeCut (const VertexOnEdge &voe){
+    std::map<PolyMesh::HalfEdge *, std::vector<VertexOnEdge> >::iterator it = cuts.find(voe.he);
+    if (it == cuts.end()){
+      std::vector<VertexOnEdge> cut = {voe};
+      cuts[voe.he] = cut;
+    }
+    else it->second.push_back(voe);
+  }
+
+  void stats(){
+    for (auto it : cuts) printf("%d %d --> %lu\n",it.first->v->data,it.first->next->v->data,it.second.size());
+  }
+
+  void addVertexOnEdges (int tag, std::vector<geodesic::SurfacePoint> &p){
+    for (size_t i=1 ; i< p.size()-1 ; i++){
+      geodesic::SurfacePoint _s = p[i];
+      if (_s.type() == geodesic::EDGE){
+	geodesic::Edge* pe = static_cast<geodesic::Edge*> (_s.base_element());
+	geodesic::vertex_pointer v0 = pe->v0();
+	geodesic::vertex_pointer v1 = pe->v1();
+	// only add on edges from MIN to MAX !!!!
+	PolyMesh::HalfEdge *he = pm->getEdge(pm->vertices[std::min(v0->id(),v1->id())],pm->vertices[std::max(v0->id(),v1->id())]);
+	if (!he) he = pm->getEdge(pm->vertices[std::max(v0->id(),v1->id())],pm->vertices[std::min(v0->id(),v1->id())]);
+	if (!he)Msg::Error("%s %d -- FAILURE",__FILE__,__LINE__);
+	SPoint3 p0 (v0->x(),v0->y(),v0->z());
+	SPoint3 p1 (_s.x(),_s.y(),_s.z());
+	SVector3 d = p1 - p0;
+	double l01 = d.norm();
+	double l = he->l();
+	VertexOnEdge voe ; voe.he = he; voe.t = l01/l; voe.tag = tag;
+	addEdgeCut (voe);
+      }
+      else if (_s.type() == geodesic::VERTEX){
+	// saddle point encountered
+	geodesic::Vertex* pv = static_cast<geodesic::Vertex*> (_s.base_element());
+	addPolyMeshVertexTag(pm->vertices[pv->id()], tag);	
+      }
+      else printf("strange in %d --> %d %d for %lu %lu\n",tag,_s.type()==geodesic::FACE, _s.type()==geodesic::VERTEX,i, p.size());
+    }
+  }  
+
+  void printFace (PolyMesh::Face *f, 
+		  std::map<int,int> &ci, const char *c){
+    
+    printf("Printing %s\n",c);
+    PolyMesh::HalfEdge *temp = f->he;
+    printf("LOOP : ");
+    do {
+      std::map<int,int>::iterator itci = ci.find(temp->v->data);
+      int yyy = itci == ci.end() ? -1 : itci->second;
+      printf("(%d,%d) ",temp->v->data,yyy);
+      temp = temp->next;
+    }while (temp != f->he);
+    printf("\n");
+  }
+
+  PolyMesh* cutMesh (){
+
+    // ---  Compute local system of coordinates for every triangle
+    
+    size_t nbFaces = pm->faces.size();    
+    std::vector<SVector3> p0;
+    std::vector<SVector3> t1;
+    std::vector<SVector3> t2;
+    std::vector<SVector3> ns;
+
+    for (size_t i=0;i<nbFaces;i++){
+      PolyMesh::HalfEdge *he = pm->faces[i]->he;
+      p0.push_back(he->v->position);
+      SVector3 _t1 = he->d();
+      SVector3 _t2 = he->next->d();
+      _t1.normalize();
+      SVector3 _n  = crossprod(_t1,_t2);
+      _t2 = crossprod(_n,_t1);
+      _t2.normalize();
+      p0.push_back(he->v->position);
+      t1.push_back(_t1);
+      t2.push_back(_t2);
+      _n.normalize();
+      ns.push_back(_n);
+    }
+
+    //    printf("coucouc3\n");
+
+    
+    FILE *f = fopen ("triangulate.pos","w");
+    fprintf(f,"View \"\"{\n");
+
+    FILE *f2 = fopen ("tags.pos","w");
+    fprintf(f2,"View \"\"{\n");
+
+    // ---  Cut every mesh edge with eventual additional points 
+    
+    for (auto it : cuts){
+     
+      std::vector<VertexOnEdge> vv2 = it.second;
+      std::sort(vv2.begin(),vv2.end(),compareVertexOnEdge);
+      std::vector<VertexOnEdge> vv;
+      std::vector<SVector3> pos;
+
+      for (size_t k = 0 ;k < vv2.size() ; k++) {
+	if (k == 0 || (vv2[k].t - vv[vv.size()-1].t) > 1.e-8){	  
+	  pos.push_back(vv2[k].point());
+	  vv.push_back(vv2[k]);
+	}
+	else {	  
+	  SVector3 P = vv2[k].point();
+	  Msg::Error("skipping on %d %d %22.15E %22.15E %22.15E (tags %d %d) k [%d --> %d] pointer %p",
+		 it.first->v->data,it.first->next->v->data,
+		 P.x(),P.y(),P.z(),
+		 vv2[k].tag,vv[vv.size()-1].tag,k,vv2.size(),vv2[k].v);
+	  fprintf(f,"SP(%22.15E,%22.15E,%22.15E){0};\n",
+		  P.x(),P.y(),P.z());
+	}
+      }
+      //    printf("coucouc221\n");
+
+      fprintf(f,"SL(%22.15E,%22.15E,%22.15E,%22.15E,%22.15E,%22.15E){%d,%d};\n",
+	      it.first->v->position.x(),
+	      it.first->v->position.y(),
+	      it.first->v->position.z(),
+	      it.first->next->v->position.x(),
+	      it.first->next->v->position.y(),
+	      it.first->next->v->position.z(),
+	      it.first->v->data,it.first->next->v->data);   
+      
+      PolyMesh::HalfEdge *he = vv[0].he;      
+      for (size_t k = 0 ;k < vv.size() ; k++){
+	VertexOnEdge voe = vv[k];
+	pm->split_edge_general (he, pos[k]);
+	he = he->next;
+	if (voe.v){
+	  std::map<MVertex *, std::vector<int> >::iterator itvv = vtags.find(voe.v);
+	  if( itvv != vtags.end()){
+	    for (auto tt : itvv->second)addPolyMeshVertexTag(he->v, tt);
+	  }
+	}
+	else
+	  addPolyMeshVertexTag(he->v, voe.tag);	
+      }
+    }
+
+    // ---  Split every face taking into account constrained edges
+    // ---  that belong to geodesic lines
+    
+    std::vector<size_t> tris;
+    std::vector<size_t> bnds;
+
+    for (size_t i=0;i<nbFaces;i++){
+      std::vector<double> coord;
+      std::vector<PolyMesh::Vertex*> pp;
+      PolyMesh::HalfEdge *he = pm->faces[i]->he;
+      do{
+	SVector3 pos = he->v->position;
+	double x = dot (pos-p0[i], t1[i]); 
+	double y = dot (pos-p0[i], t2[i]); 
+	coord.push_back(x);
+	coord.push_back(y);
+	pp.push_back( he->v );
+	he = he->next;
+      }while (he != pm->faces[i]->he);      
+
+      // Want to recover the boundary of the triangle
+      std::vector<size_t> recover_all;
+      for (size_t j=0;j<pp.size();j++){
+	recover_all.push_back(j);
+	recover_all.push_back((j+1)%pp.size());
+      }
+     
+      // There exist internal points on the triangle
+      std::map<PolyMesh::Face *, std::vector<MVertex *> >::iterator it = fvs.find(pm->faces[i]); 
+      if (it != fvs.end()){
+	for (auto v : it->second){
+	  PolyMesh::Vertex *newv = new PolyMesh::Vertex (v->x(),v->y(),v->z(),pm->vertices.size());  
+	  pm->vertices.push_back(newv);
+	  std::map<MVertex *, std::vector<int> >::iterator itt = vtags.find(v);
+	  if (itt != vtags.end()){
+	    pvtags[newv] = itt->second;
+	  }
+
+	  SVector3 pos = newv->position;
+	  double x = dot (pos-p0[i], t1[i]); 
+	  double y = dot (pos-p0[i], t2[i]); 
+	  coord.push_back(x);
+	  coord.push_back(y);
+	  pp.push_back( newv );
+	}
+      }
+
+      // Some other edges should be recovered because they belong to geodesics
+
+      std::vector<size_t> recover;
+      
+      for (size_t j = 0; j<pp.size() ; j++){
+	PolyMesh::Vertex* vj = pp[j];
+	std::map<PolyMesh::Vertex*,std::vector<int> >::iterator itj = pvtags.find(vj);
+	if (itj != pvtags.end()){
+	  for (size_t k = j+1; k<pp.size() ; k++){
+	    PolyMesh::Vertex* vk = pp[k];
+	    std::map<PolyMesh::Vertex*,std::vector<int> >::iterator itk = pvtags.find(vk);
+	    if (itk != pvtags.end()){
+	      for (auto tagj : itj -> second) {
+		if (tagj != -1 && std::find(itk->second.begin(),itk->second.end(),tagj) != itk->second.end()){
+		  recover.push_back(j);
+		  recover.push_back(k);
+		  recover_all.push_back(j);
+		  recover_all.push_back(k);
+		  bnds.push_back(vj->data);
+		  bnds.push_back(vk->data);
+		  bnds.push_back(tagj);
+
+		  fprintf(f2,"SL(%22.15E,%22.15E,%22.15E,%22.15E,%22.15E,%22.15E){%d,%d};\n",
+			  vj->position.x(),vj->position.y(),vj->position.z(),
+			  vk->position.x(),vk->position.y(),vk->position.z(),
+			  tagj,tagj);
+		}
+	      }
+	    }
+	  }
+	}
+      }
+     
+      if (pp.size() >= 3){
+	std::vector<size_t> tri;
+	meshTriangulate2d (coord,tri,recover_all.empty() ? nullptr : &recover_all);
+
+	// verify if orientation is ok (it should be thet case ...)
+	if (1){
+	  for (size_t j=0;j<tri.size(); j+=3){
+	    int n0 = tri[j]-1;
+	    int n1 = tri[j+1]-1;
+	    int n2 = tri[j+2]-1;
+	    PolyMesh::Vertex *j0 = pp[n0];
+	    PolyMesh::Vertex *j1 = pp[n1];
+	    PolyMesh::Vertex *j2 = pp[n2];
+	    SVector3 _t1 = j1->position - j0->position;
+	    SVector3 _t2 = j2->position - j0->position;
+	    SVector3 _n  = crossprod(_t1,_t2);
+	    double area = _n.norm();
+	    _n.normalize();
+	    double ps = dot(_n,ns[i]);
+	    if (area < 1.e-12){
+	      Msg::Warning("prodsca %12.5E %lu area %12.5E",ps,i,area);
+	      for (size_t k = 0; k<pp.size() ; k++){
+		Msg::Warning("pt %lu %12.5E %12.5E %12.5E",k,pp[k]->position.x(),
+			     pp[k]->position.y(),pp[k]->position.z());
+	      }
+	    }
+	    if (ps < 0){
+	      size_t tmp = tri[j];
+	      tri[j] = tri[j+2];
+	      tri[j+2] = tmp;	      
+	    }
+	  }
+	}
+
+	for (size_t j=0;j<tri.size(); j+=3){
+	  int n0 = tri[j]-1;
+	  int n1 = tri[j+1]-1;
+	  int n2 = tri[j+2]-1;
+	  PolyMesh::Vertex *j0 = pp[n0];
+	  PolyMesh::Vertex *j1 = pp[n1];
+	  PolyMesh::Vertex *j2 = pp[n2];
+	  tris.push_back(j0->data);
+	  tris.push_back(j1->data);
+	  tris.push_back(j2->data);
+	  fprintf(f,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%d,%d,%d};\n",
+		  j0->position.x(),j0->position.y(),j0->position.z(),
+		  j1->position.x(),j1->position.y(),j1->position.z(),
+		  j2->position.x(),j2->position.y(),j2->position.z(),
+		  j0->data,j1->data,j2->data);
+	}
+      }
+    }
+    fprintf(f,"};\n");
+    fclose(f);
+    fprintf(f2,"};\n");
+    fclose(f2);
+
+    PolyMesh *pm_new = createPolyMesh (pm, tris, bnds);
+
+    return pm_new;
+  }
+};
+
+static void debug_2 (MVertex *v, PolyMesh::HalfEdge *he, const char *fn){
+  FILE *f = fopen(fn,"w");
+  SVector3 p0 = he->v->position;
+  SVector3 p1 = he->next->v->position;
+  SVector3 p2 = he->next->next->v->position;
+  fprintf(f,"View \"\"{\n");
+  fprintf(f,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){0,1,2};\n",
+	  p0.x(),p0.y(),p0.z(),
+	  p1.x(),p1.y(),p1.z(),
+	  p2.x(),p2.y(),p2.z());
+  fprintf(f,"SP(%g,%g,%g){-1};\n",
+	  v->x(),v->y(),v->z());
+  fprintf(f,"};\n");
+  fclose(f);
+}
+
+
+static void polyMeshToGeodesicMesh (PolyMesh *pm,
+				    geodesic::Mesh &mesh,
+				    std::map<PolyMesh::Face*,int> &f2n ){
+  std::vector<double> _points;	
+  std::vector<unsigned> _faces;
+  int num = 0;
+  for (auto v : pm->vertices){
+    _points.push_back(v->position.x());
+    _points.push_back(v->position.y());
+    _points.push_back(v->position.z());
+    v->data = num++;
+  }    
+  int nnn = 0;
+  for (auto f : pm->faces){    
+    _faces.push_back(f->he->v->data);
+    _faces.push_back(f->he->next->v->data);
+    _faces.push_back(f->he->next->next->v->data);
+    f2n[f] = nnn++;
+  }
+  mesh.initialize_mesh_data(_points, _faces);
+}
+
+geodesic::SurfacePoint MVertexToGeodesicSurfacePoint (MVertex *v,
+						      PolyMesh *pm,
+						      geodesic::Mesh &mesh,
+						      std::map<PolyMesh::Face*,int> &f2n,
+						      int pos){
+  //  printf("----> > %lu %d %lu %g %g %g\n",f2n.size(),pos,pm->faces.size(),v->x(),v->y(),v->z());
+  PolyMesh::VertexOnSurface vof =  findVertexOnSurface (pm, v, pos, true);
+  //  printf("----> > %lu\n",f2n.size());
+  geodesic::SurfacePoint spe = getSP(vof,&mesh.faces()[f2n[vof.he->f]]);
+  //  printf("----> > %lu\n",f2n.size());
+  return spe;
+}
+
+// FOR ARTHUR !!! ------------------------------------------------------------
+class highOrderPolyMesh {
+public:
+  PolyMesh *pm;
+  geodesic::Mesh geoMesh; // geometric mesh
+  std::vector<geodesic::SurfacePoint> points; // points of the IGA 
+  std::map<std::pair<int,int>, std::vector<size_t> > edges; // edge <a b>, triangles  
+  std::map<std::pair<int,int>, std::vector<geodesic::SurfacePoint> > geodesics; // one geodesic per edge 
+  std::vector<int> triangles; // 3 integers per triangle 
+
+  ///  std::map<int, std::map<int,double> > nodalDistances; // points --> distances to mesh vertices
+
+  highOrderPolyMesh (GModel *gm){
+    std::map<MVertex*, int, MVertexPtrLessThan> trianglePositions;
+    pm = createPolyMesh (gm,trianglePositions);
+    std::map<PolyMesh::Face*,int> f2n;
+    polyMeshToGeodesicMesh (pm,geoMesh,f2n);
+    
+    for (auto it = trianglePositions.begin() ; it != trianglePositions.end() ; it++){
+      MVertex *v = it->first;
+      int pos = it->second;
+      geodesic::SurfacePoint gsp = MVertexToGeodesicSurfacePoint (v,pm,geoMesh,f2n,pos);
+      v->setIndex(points.size());
+      points.push_back(gsp);      
+    }
+
+    for (GModel::fiter fit = gm->firstFace() ; fit != gm->lastFace(); fit++){
+      discreteFace *df = static_cast<discreteFace *> (*fit);
+      if (!df) continue;
+      for (auto t : df->triangles){
+	for (size_t i = 0; i< 3 ; i++){
+	  int i0 = t->getVertex(i)->getIndex();
+	  int i1 = t->getVertex((i+1)%3)->getIndex();
+	  std::pair<int,int> p = std::make_pair(std::min(i0,i1),std::max(i0,i1));
+	  std::map<std::pair<int,int>, std::vector<size_t> >::iterator it
+		   = edges.find(p);
+	  if (it == edges.end()){
+	    std::vector<size_t> tmp = {triangles.size()/3};
+	    edges[p] = tmp;
+	  }
+	  else it->second.push_back(triangles.size()/3);
+	}
+	triangles.push_back(t->getVertex(0)->getIndex());
+	triangles.push_back(t->getVertex(1)->getIndex());
+	triangles.push_back(t->getVertex(2)->getIndex());
+      }
+    }
+    int start = (*edges.begin()).first.first;
+    std::vector<geodesic::SurfacePoint> _ends;
+    std::vector<std::pair<int,int> > _pends;
+    for (auto it = edges.begin() ; it != edges.end() ; ++it){
+      auto e = *it;
+      auto next = it; next++;
+      if (e.first.first != start || next == edges.end()){	
+	std::vector<geodesic::SurfacePoint> pts = {points[start]};
+	geodesic::GeodesicAlgorithmExact algorithm(&geoMesh);
+	algorithm.propagate(pts,0,&_ends);
+	for (size_t j=0 ; j < _ends.size() ; j++){
+	  std::vector<geodesic::SurfacePoint> path;
+	  algorithm.trace_back(_ends[j], path);
+	  filterPath (path, 1.e-6); // fixme use relative error
+	  std::pair<int,int> inv = _pends[j];
+	  geodesics [std::make_pair(inv.second,inv.first)] = path;
+	  std::reverse(path.begin(),path.end());
+	  geodesics [_pends[j]] = path;
+	}    
+	start = e.first.first;
+	_ends.clear();
+	_pends.clear();
+	_pends.push_back(e.first);
+	_ends.push_back(points[e.first.second]);
+      }
+      else {
+	_pends.push_back(e.first);
+	_ends.push_back(points[e.first.second]);
+      }
+    }
+    {
+      std::vector<geodesic::SurfacePoint> pts = {points[start]};
+      geodesic::GeodesicAlgorithmExact algorithm(&geoMesh);
+      algorithm.propagate(pts,0,&_ends);
+      for (size_t j=0 ; j < _ends.size() ; j++){
+	std::vector<geodesic::SurfacePoint> path;
+	algorithm.trace_back(_ends[j], path);
+	filterPath (path, 1.e-6); // fixme use relative error
+	std::pair<int,int> inv = _pends[j];
+	geodesics [std::make_pair(inv.second,inv.first)] = path;
+	std::reverse(path.begin(),path.end());
+	geodesics [_pends[j]] = path;
+      }
+    }
+  }
+
+  void createGeodesicPath (int p0, int p1, std::vector<geodesic::SurfacePoint> &path){
+
+    
+    std::pair<int,int> p    = std::make_pair(p0,p1);
+    std::pair<int,int> pinv = std::make_pair(p1,p0);
+    auto it    = geodesics.find(p);
+    auto itinv = geodesics.find(pinv);
+    if (it != geodesics.end()) path = it->second;
+    else if (itinv != geodesics.end()) {
+      path = itinv->second;
+      std::reverse (path.begin(),path.end());
+      geodesics [p] = path;
+    }
+    else {
+      std::vector<geodesic::SurfacePoint> pts0 = {points[p0]};
+      std::vector<geodesic::SurfacePoint> pts1 = {points[p1]};
+      geodesic::GeodesicAlgorithmExact algorithm(&geoMesh);
+      algorithm.propagate(pts0,0,&pts1);
+      algorithm.trace_back(pts1[0], path);
+      filterPath (path, 1.e-6); // fixme use relative error
+      geodesics [pinv] = path;
+      std::reverse (path.begin(),path.end());
+      geodesics [p] = path;
+    }
+  }
+
+  bool intersectGeodesicPath (std::vector<geodesic::SurfacePoint> &p0,
+			      std::vector<geodesic::SurfacePoint> &p1,
+			      SVector3 &intersection){
+    for (size_t i=1 ; i<p0.size(); i++){
+      SVector3 v0 (p0[i-1].x(),p0[i-1].y(),p0[i-1].z());
+      SVector3 v1 (p0[i].x(),p0[i].y(),p0[i].z());
+      for (size_t j=1 ; j<p1.size(); j++){
+	SVector3 w0 (p1[j-1].x(),p1[j-1].y(),p1[j-1].z());
+	SVector3 w1 (p1[j].x(),p1[j].y(),p1[j].z());
+	double ori = robustPredicates::orient3d(v0,v1,w0,w1);
+	SVector3 d1 = v1-v0;
+	SVector3 d2 = w1-w0;
+	SVector3 n = crossprod(d1,d2);
+	if (n.norm() == 0.0)continue;
+	n.normalize();
+	SVector3 A = w0-v0;
+	// FIXME TOLERANCE
+	if (fabs(ori) < 1.e-12){
+	  SVector3 n1 = crossprod(n,d2);
+	  double lambda = dot(A,n1)/dot(d1,n1);
+	  if (lambda >= 0 && lambda <= 1) {
+	    intersection = v0 + lambda * d1;
+	    return true;
+	  }
+	}
+      }
+    }
+    return false;
+  }
+
+  double computeAngle (int p0, int p1, int p2){
+    std::vector<geodesic::SurfacePoint> p10, p12;
+    createGeodesicPath (p1,p0,p10);
+    createGeodesicPath (p1,p2,p12);    
+    SVector3 v10 (p10[1].x() - p10[0].x(), p10[1].y() - p10[0].y(), p10[1].z() - p10[0].z()); 
+    SVector3 v12 (p12[1].x() - p12[0].x(), p12[1].y() - p12[0].y(), p12[1].z() - p12[0].z()); 
+    return angle(v12,v10);    
+  }
+  
+  bool doWeSwap ( int p0, int p1, int p2, int p3 ){
+
+    double a1 = computeAngle (p1, p0, p3);
+    double a2 = computeAngle (p2, p0, p1);
+    double a3 = computeAngle (p3, p2, p0);
+    double a4 = computeAngle (p1, p2, p3);
+    double a5 = computeAngle (p0, p1, p2);
+    double a6 = computeAngle (p3, p1, p0);
+    double a7 = computeAngle (p2, p3, p1);
+    double a8 = computeAngle (p0, p3, p2);
+    
+    std::vector<double> A_before = {a1,a3+a4,a5,a6,a7+a8,a2};
+    std::vector<double> A_after  = {a1+a2,a3,a8,a4,a5+a6,a7};
+
+    std::sort(A_before.begin(),A_before.end());
+    std::sort(A_after.begin(),A_after.end());
+
+    return A_after[0] > A_before[0];
+  }
+
+  int splitTriangle (size_t iTriangle, geodesic::SurfacePoint &sp){ 
+
+    int p3 = (int)points.size();
+    points.push_back(sp);
+    
+    int p0 = triangles [3*iTriangle + 0];
+    int p1 = triangles [3*iTriangle + 1];
+    int p2 = triangles [3*iTriangle + 2];
+
+    std::vector<geodesic::SurfacePoint> p01,p12,p20;
+
+    createGeodesicPath (p0,p1,p01);
+    createGeodesicPath (p1,p2,p12);
+    createGeodesicPath (p2,p0,p20);
+
+    std::vector<geodesic::SurfacePoint> p03,p13,p23;
+
+    createGeodesicPath (p0,p3,p03);
+    createGeodesicPath (p1,p3,p13);
+    createGeodesicPath (p2,p3,p23);
+
+    SVector3 intersection;
+    
+    bool inters_0 = intersectGeodesicPath (p01,p23,intersection);
+    bool inters_1 = intersectGeodesicPath (p12,p03,intersection);
+    bool inters_2 = intersectGeodesicPath (p20,p13,intersection);
+    if (!inters_0 && !inters_1 && !inters_2){
+      std::pair<int,int> e12 = std::make_pair(std::min(p1,p2),std::max(p1,p2));
+      std::pair<int,int> e20 = std::make_pair(std::min(p2,p0),std::max(p2,p0));
+      std::pair<int,int> e03 = std::make_pair(std::min(p0,p3),std::max(p0,p3));
+      std::pair<int,int> e13 = std::make_pair(std::min(p1,p3),std::max(p1,p3));
+      std::pair<int,int> e23 = std::make_pair(std::min(p2,p3),std::max(p2,p3));
+      triangles[3*iTriangle + 2] = p3;
+      size_t iTriangle2 = triangles.size();
+      triangles.push_back(p1);
+      triangles.push_back(p2);
+      triangles.push_back(p3);
+      size_t iTriangle3 = triangles.size();
+      triangles.push_back(p2);
+      triangles.push_back(p0);
+      triangles.push_back(p3);
+      std::vector<size_t> e03_t = {iTriangle,iTriangle3};
+      std::vector<size_t> e13_t = {iTriangle,iTriangle2};
+      std::vector<size_t> e23_t = {iTriangle2,iTriangle3};
+      edges[e03] = e03_t;
+      edges[e13] = e13_t;
+      edges[e23] = e23_t;
+      auto e12_t = edges.find(e12);
+      auto e20_t = edges.find(e20);
+      std::remove (e12_t->second.begin(),e12_t->second.end(),iTriangle);
+      e12_t->second.push_back(iTriangle2);
+      std::remove (e20_t->second.begin(),e20_t->second.end(),iTriangle);
+      e20_t->second.push_back(iTriangle3);
+    }
+    else {
+      
+    }
+  }
+  
+  int swapEdge (const std::pair<int,int> &p01){ // force an edge swap (2 geodesics to compute)
+    auto it01 = edges.find(p01);
+    if (it01 == edges.end()){
+      return -2;
+    }
+    if (it01->second.size() != 2){
+      return -3;
+    }
+    size_t t0 = it01->second[0];
+    size_t t1 = it01->second[1];
+    int p0 = p01.first;
+    int p1 = p01.second;
+    int p2=-1,p3=-1;
+    for (int i=0;i<3;i++){
+      if (triangles [3*t0 + i] != p0 &&
+	  triangles [3*t0 + i] != p1){
+	p2 = triangles [3*t0 + i];
+      }
+      if (triangles [3*t1 + i] != p0 &&
+	  triangles [3*t1 + i] != p1){
+	p3 = triangles [3*t1 + i];
+      }
+    }
+    //    printf("other is %d %d\n",p2,p3);
+    std::vector<geodesic::SurfacePoint> oldPath,newPath;
+    createGeodesicPath (p0,p1,oldPath);
+    createGeodesicPath (p2,p3,newPath);
+    SVector3 intersection;
+    if (  doWeSwap ( p0, p1, p2, p3 ) && intersectGeodesicPath (oldPath, newPath,intersection)){
+      std::pair<int,int> p12 = std::make_pair(std::min(p1,p2),std::max(p1,p2));
+      std::pair<int,int> p03 = std::make_pair(std::min(p0,p3),std::max(p0,p3));
+      std::pair<int,int> p23 = std::make_pair(std::min(p2,p3),std::max(p2,p3));
+      auto it12 = edges.find(p12);
+      auto it03 = edges.find(p03);
+      if (it12 == edges.end())Msg::Error("%d %s",__LINE__,__FILE__);
+      if (it03 == edges.end())Msg::Error("%d %s",__LINE__,__FILE__);
+      it01->second.clear();
+      // change triangle nodes
+      triangles [3*t0 + 0] = p0;
+      triangles [3*t0 + 1] = p2;
+      triangles [3*t0 + 2] = p3;
+      triangles [3*t1 + 0] = p3;
+      triangles [3*t1 + 1] = p2;
+      triangles [3*t1 + 2] = p1;
+      if (it03->second[0] == t1)it03->second[0] = t0;
+      else if (it03->second[1] == t1)it03->second[1] = t0;
+      else Msg::Error("edge %d %d is not in triangle %d %d %d",it03->first.first,it03->first.second,p0,p2,p3);
+      if (it12->second[0] == t0)it12->second[0] = t1;
+      else if (it12->second[1] == t0)it12->second[1] = t1;
+      else Msg::Error("edge %d %d is not in triangle %d %d %d",it12->first.first,it12->first.second,p3,p2,p1);
+      std::vector<size_t> ts = {t0,t1};
+      edges[p23] = ts;
+    }
+    else return -1;
+    return 0;
+  }
+
+  void printGeodesics(const char *fn){
+    FILE *f = fopen (fn,"w");
+    fprintf(f,"View \"\"{\n");
+    
+    for (auto it = geodesics.begin() ; it != geodesics.end() ; ++it){
+      auto ite = edges.find(it->first);
+      if (ite !=edges.end() && ite->second.size()){
+	for (size_t i = 1; i < it->second.size() ; ++i){
+	  fprintf(f,"SL(%g,%g,%g,%g,%g,%g){1,1};\n",it->second[i-1].x(),it->second[i-1].y(),it->second[i-1].z(),
+		  it->second[i].x(),it->second[i].y(),it->second[i].z());	
+	}
+      }
+    }    
+    fprintf(f,"};\n");    
+    fclose (f);
+  }
+  
+  void swapEdges (){
+    printGeodesics("beforeswap.pos");
+    while(1){
+      int count = 0;
+      for (auto it : edges) {
+	if (!swapEdge (it.first))
+	  count++;
+      }
+      printf("%d swaps\n",count);
+      if (count == 0)break;
+    }
+      
+    printGeodesics("afterswap.pos");
+  }
+    
+  geodesic::SurfacePoint circumCenter (int iTriangle, double dist_max = 0){
+    int P[3] = {
+      triangles [3*iTriangle],
+      triangles [3*iTriangle+1],
+      triangles [3*iTriangle+2]};
+
+    std::map<PolyMesh::Vertex*,double> dist[3];
+
+    std::vector<geodesic::SurfacePoint> _END;
+    for (int i=0;i<3;i++){
+      int p1 = P[i];
+      int p2 = P[(i+1)%3];
+      std::pair<int,int> p = std::make_pair(p1,p2);
+      _END.insert(_END.end(),geodesics[p].begin(),geodesics[p].end());
+    }
+
+    for (int i=0;i<3;i++){
+
+      std::vector<geodesic::SurfacePoint> _start = {points[P[i]]};
+      geodesic::GeodesicAlgorithmExact algorithm(&geoMesh);
+      algorithm.propagate(_start,dist_max,&_END);      
+            
+      for (size_t k=0;k<geoMesh.vertices().size(); k++){
+	double d;
+	geodesic::Vertex *v = &geoMesh.vertices()[k];
+	geodesic::SurfacePoint sp (v);
+	algorithm.best_source(sp,d);
+	if (d < 1.e10)dist[i][pm->vertices[k]] = d;
+      }      
+    }
+    geodesic::SurfacePoint  result = geodesic::SurfacePoint (NULL,1.e20,1.e20,1.e20, geodesic::FACE);
+
+    for (size_t k=0;k<pm->faces.size();k++){
+      PolyMesh::Vertex *a =  pm->faces[k]->he->v;
+      PolyMesh::Vertex *b =  pm->faces[k]->he->next->v;
+      PolyMesh::Vertex *c =  pm->faces[k]->he->next->next->v;
+      if (dist[0].find(a) != dist[0].end() &&
+	  dist[0].find(b) != dist[0].end() &&
+	  dist[0].find(c) != dist[0].end() &&
+	  dist[1].find(a) != dist[1].end() &&
+	  dist[1].find(b) != dist[1].end() &&
+	  dist[1].find(c) != dist[1].end() &&
+	  dist[2].find(a) != dist[2].end() &&
+	  dist[2].find(b) != dist[2].end() &&
+	  dist[2].find(c) != dist[2].end() ){
+	double d0a = dist[0][a];
+	double d0b = dist[0][b];
+	double d0c = dist[0][c];
+	double d1a = dist[1][a];
+	double d1b = dist[1][b];
+	double d1c = dist[1][c];
+	double d2a = dist[2][a];
+	double d2b = dist[2][b];
+	double d2c = dist[2][c];
+	double mat[3][3] = {{d0a-d0b,d0a-d0c,1},
+			    {d1a-d1b,d1a-d1c,1},
+			    {d2a-d2b,d2a-d2c,1}};
+	double rhs [3] = {d0a,d1a,d2a}, uvd[3], det;
+	sys3x3(mat,rhs,uvd,&det);
+	if (uvd[0] >= 0 && uvd[1] >= 0 && 1.-uvd[0] -uvd[1] >= 0){
+	  double x = a->position.x()*(1.-uvd[0] -uvd[1]) + b->position.x()*uvd[0] + c->position.x()*uvd[1];
+	  double y = a->position.y()*(1.-uvd[0] -uvd[1]) + b->position.y()*uvd[0] + c->position.y()*uvd[1];
+	  double z = a->position.z()*(1.-uvd[0] -uvd[1]) + b->position.z()*uvd[0] + c->position.z()*uvd[1];
+	  result = geodesic::SurfacePoint (&geoMesh.faces()[k],x,y,z, geodesic::FACE);
+	}
+      }
+    }
+    if (result.x() > 1.e10) return result;
+     
+     char name[256];
+     sprintf(name,"triangle%d.pos",iTriangle);
+     //     print__ (name, pm, dist_);
+     FILE *f = fopen(name,"w");
+     fprintf(f,"View \"P\"{\n");
+     fprintf(f,"SP(%g,%g,%g){%d};\n",result.x(),result.y(),result.z(),iTriangle);
+     fprintf(f,"};\n");
+     fclose(f);
+    // sprintf(name,"triangle%d-0.pos",iTriangle);
+    // print__ (name, pm, dist[0]);
+    // sprintf(name,"triangle%d-1.pos",iTriangle);
+    // print__ (name, pm, dist[1]);
+    // sprintf(name,"triangle%d-2.pos",iTriangle);
+    // print__ (name, pm, dist[2]);
+    
+    return result;
+  }
+  
+  int splitEdge (int iEdge); // force an edge split in its middle (2 geodesics to compute)  
+};
+// END FOR ARTHUR !!! --------------------------------------------------------
+
+int makeMeshGeodesic (PolyMesh *pm, std::set<MEdge,MEdgeLessThan> &ed,
+		      std::map<MVertex*, int,MVertexPtrLessThan> *trianglePositions = nullptr){
+  
+  {// print some stuff
+    std::map<PolyMesh::Vertex*,double> gc;
+    std::map<PolyMesh::Vertex*,double> num;
+    for (auto v : pm->vertices){
+      gc[v] = v->gaussianCurvature();
+      num[v] = v->data;
+    }
+    print__ ("GaussianCurvature.pos", pm, gc);    
+    print__ ("Num.pos", pm, num);    
+  }
 
   char name [245];
   sprintf(name,"Geodesics.pos");
   FILE *f = fopen (name, "w");
   fprintf(f,"View \"Geodesics\" {\n");
-
-
-  std::map<PolyMesh::Vertex*,double> gc;
-  std::map<PolyMesh::Vertex*,double> num;
-  for (auto v : pm->vertices){
-    gc[v] = v->gaussianCurvature();
-    num[v] = v->data;
-  }
-  print__ ("GaussianCurvature.pos", pm, gc);    
-  print__ ("Num.pos", pm, num);    
-
+  
   geodesic::Mesh mesh;  
-  std::map<PolyMesh::Face*,int> f2n;    
-  {
-    std::vector<double> _points;	
-    std::vector<unsigned> _faces;
-    int num = 0;
-    for (auto v : pm->vertices){
-      _points.push_back(v->position.x());
-      _points.push_back(v->position.y());
-      _points.push_back(v->position.z());
-      v->data = num++;
-    }    
-    int nnn = 0;
-    for (auto f : pm->faces){    
-      _faces.push_back(f->he->v->data);
-      _faces.push_back(f->he->next->v->data);
-      _faces.push_back(f->he->next->next->v->data);
-      f2n[f] = nnn++;
-    }
-    mesh.initialize_mesh_data(_points, _faces);
-  }
+  std::map<PolyMesh::Face*,int> f2n;
+  polyMeshToGeodesicMesh (pm, mesh, f2n);
   
   //  double D = 0.0;
-  PolyMesh::VertexOnFace _start;
   int counter = 0;
 
   std::vector<MEdge> tmp;
   tmp.insert(tmp.begin(),ed.begin(),ed.end());
-
-  std::map<MVertex*,PolyMesh::VertexOnFace> v2p;
+  
+  std::map<MVertex*,PolyMesh::VertexOnSurface> v2p;
   for (size_t i=0 ; i<tmp.size() ; i++){
-    MVertex *v0 = tmp[i].getMinVertex();
-    MVertex *v1 = tmp[i].getMaxVertex();
-    std::map<MVertex*,PolyMesh::VertexOnFace>::iterator it = v2p.find(v0);
-    int pos0 = -1, pos1 = -1;
-    if (trianglePositions){
-      auto it0 = trianglePositions->find(v0);
-      if (it0 != trianglePositions->end())pos0 = it0->second;
-      auto it1 = trianglePositions->find(v1);
-      if (it1 != trianglePositions->end())pos1 = it1->second;
+    for (int j=0;j<2;j++){
+      MVertex *v0 = j == 0 ? tmp[i].getMinVertex() : tmp[i].getMaxVertex() ;
+      std::map<MVertex*,PolyMesh::VertexOnSurface>::iterator it = v2p.find(v0);
+      int pos0 = -1;
+      if (trianglePositions){
+	auto it0 = trianglePositions->find(v0);
+	if (it0 != trianglePositions->end())pos0 = it0->second;
+      }
+      if (it == v2p.end()){
+	PolyMesh::VertexOnSurface vof =  findVertexOnSurface (pm, v0, pos0, true);
+	int result = onBoundary (vof, 1.e-10, v0->onWhat()->dim());
+	if (result == -1){
+	  // should be on a boundary and is not
+	  Msg::Error("Point %d classified on (%d %d) should be on the right dimension entity of the background triangulation but is not",
+		     v0->getNum(),v0->onWhat()->tag(),v0->onWhat()->dim());
+	  debug_2 (v0,vof.he,"gasp.pos");
+	}
+	SVector3 v = vof.point();
+	SVector3 d0 (v0->x(),v0->y(),v0->z());
+	SVector3 dist  = v - d0;
+	if (dist.norm() > 1.e-12)printf("error %22.15E\n",dist.norm());
+	v2p[v0] = vof;
+      }
     }
-    if (it == v2p.end())v2p[v0] =  findVertexOnFace (pm, v0, pos0);  
-    it = v2p.find(v1);
-    if (it == v2p.end())v2p[v1] =  findVertexOnFace (pm, v1, pos1);  
   }
 
   Msg::Info("found all %lu vertices",tmp.size());
   
-  std::vector<PolyMesh::VertexOnFace> _ends;
-  std::vector<MEdge> _endsGmsh;
-  std::map<MEdge, std::vector<geodesic::SurfacePoint>, MEdgeLessThan> edgeRepresentation;
+  cutPolyMesh CPM (pm);
 
-  
-  for (size_t i=0 ; i<tmp.size() ; i++){
-    MVertex *v0 = tmp[i].getMinVertex();
-    MVertex *v1 = tmp[i].getMaxVertex();
-    //    printf("%d --> %d\n",v0->getNum(),v1->getNum());
-    PolyMesh::VertexOnFace  _end = v2p[v1];
-    //    D = std::max(16*v0->distance(v1),D);
-    
-    if (i == 0){
-      _start = v2p[v0];
-      if (_end.he){
-	_endsGmsh.push_back(tmp[i]);
-	_ends.push_back(_end);
-      }
-      else
-	Msg::Error ("cannot find a vertex");
-    }
-    else if (i > 0 && v0 == tmp[i-1].getMinVertex()){
-      if (_end.he){
-	_ends.push_back(_end);
-	_endsGmsh.push_back(tmp[i]);
-      }
-      else
-	Msg::Error ("cannot find a vertex");
-    }
-    else {
-      if (_start.he){
-	std::vector<std::vector<geodesic::SurfacePoint> > paths;
-	exactGeodesics (_start, _ends, mesh, f2n, counter++, f, paths);
-	for (size_t kk = 0 ; kk < paths.size() ; kk++){
-	  MEdge me = _endsGmsh[kk];
-	  edgeRepresentation [me] = paths[kk];
-	  createGmshDiscreteEdgeRepresentation (me,paths[kk]);
-	}
-      }
-      _ends.clear();
-      _endsGmsh.clear();
-      if (_end.he)
-	_ends.push_back(_end);
-      else
-	Msg::Error ("cannot find a vertex");
-      _start = v2p[v0];
-      //      D = 0.0;
-    }
+  // store vertices on faces
+  for (auto it : v2p){
+    MVertex *v = it.first;
+    PolyMesh::VertexOnSurface vof = it.second;
+    if (vof.dim == 2)
+      CPM.addVertexOnSurface (vof.he->f, v);
+    else if (vof.dim == 1)
+      CPM.addVertexOnEdge (vof, v);
+    else if (vof.dim == 0)
+      CPM.addVertexOnVertex (vof, v);
   }
 
-  std::vector<std::vector<geodesic::SurfacePoint> > paths;
-  exactGeodesics (_start, _ends, mesh, f2n, counter++, f, paths);
-  for (size_t kk = 0 ; kk < paths.size() ; kk++){
-    MEdge me = _endsGmsh[kk];
-    createGmshDiscreteEdgeRepresentation (me,paths[kk]);
-    edgeRepresentation [me] = paths[kk];
+  size_t gCounter = 0;
+
+  PolyMesh::VertexOnSurface _start;
+
+  size_t i_start = 0;    
+  for (size_t i=1 ; i_start<tmp.size() ; i++){
+    if (tmp[i].getMinVertex() == tmp[i_start].getMinVertex())continue;  
+    std::vector<PolyMesh::VertexOnSurface> _ends;
+    std::vector<MEdge> _endsGmsh;
+    _start = v2p[tmp[i_start].getMinVertex()];
+    for (size_t j=i_start; j<i; j++){
+      MVertex *v1 = tmp[j].getMaxVertex();
+      PolyMesh::VertexOnSurface  _end = v2p[v1];    
+      _endsGmsh.push_back(tmp[j]);
+      _ends.push_back(_end);
+    }
+    std::vector<std::vector<geodesic::SurfacePoint> > paths;
+    exactGeodesics (_start, _ends, mesh, f2n, counter++, f, paths);
+
+    for (size_t kk = 0 ; kk < paths.size() ; kk++){
+      MEdge me = _endsGmsh[kk];
+      CPM.addTagToVertex (me.getVertex(0),gCounter);
+      CPM.addTagToVertex (me.getVertex(1),gCounter);
+      CPM.addVertexOnEdges (gCounter++, paths[kk]);
+    }
+    i_start = i;
   }
-  
+
   fprintf(f,"};\n");
   fclose(f);
+  
+  PolyMesh* pm_new = CPM.cutMesh ();
+  std::map<PolyMesh::Vertex*,double> nothing;
+  print__ ("toto.pos", pm_new, nothing);
+   
   return 0;  
 }
 
@@ -433,10 +1408,6 @@ int makeMeshGeodesic (GFace *gf) {
 
   discreteFace *df = static_cast<discreteFace *> (gf);
   if (!df)return -1;  
-  // FIXME
-  //  if (df->tag() != 4)return -1;  
-
-  printf("creating polymesh for face %d\n",gf->tag());
   
   PolyMesh *pm = createPolyMesh (df);
 
@@ -447,7 +1418,7 @@ int makeMeshGeodesic (GFace *gf) {
     ed.insert(t->getEdge(2));
   }
 
-  makeMeshGeodesic (pm, ed, df->tag());
+  makeMeshGeodesic (pm, ed);
  
   delete pm;
   return 0;  
@@ -455,7 +1426,19 @@ int makeMeshGeodesic (GFace *gf) {
 
 
 int makeMeshGeodesic (GModel *gm) {
-  std::map<MVertex*, int> trianglePositions;
+
+  highOrderPolyMesh hop (gm);
+  hop.swapEdges();    
+
+  /*for (size_t i = 0;i<hop.triangles.size()/3; i++){
+    geodesic::SurfacePoint sp = hop.circumCenter (i);
+    if (sp.x() > 1.e10){
+      printf("could not find circum in %lu\n",i);
+      sp = hop.circumCenter (i,1.e22);
+    }
+    }*/
+  
+  std::map<MVertex*, int, MVertexPtrLessThan> trianglePositions;
   PolyMesh *pm = createPolyMesh (gm,trianglePositions);
   std::set<MEdge,MEdgeLessThan> ed;
   for (GModel::fiter fit = gm->firstFace() ; fit != gm->lastFace(); fit++){
@@ -467,8 +1450,8 @@ int makeMeshGeodesic (GModel *gm) {
       ed.insert(t->getEdge(2));
     }
   }  
-  printf("all done %lu edges\n",ed.size());
-  makeMeshGeodesic (pm, ed, 1, &trianglePositions);
+  //  printf("all done %lu edges\n",ed.size());
+  makeMeshGeodesic (pm, ed, &trianglePositions);
   delete pm;
   return 0;    
 }

@@ -211,7 +211,7 @@ Spline(4) = { 151 ... 200,1};
 Rotate { {1,0,0},{0,0,0},Pi/2 } { Line{1,2,3,4}; }
 Translate {-0.5,0,0} { Line{1,2,3,4}; }
 
-d=4;
+d=1.5;
 Point(1000) = {d,d,0,lc2};
 Point(1001) = {-d,d,0,lc2};
 Point(1002) = {-d,-d,0,lc2};
@@ -253,3 +253,7 @@ Mesh.BoundaryLayerFanElements = 30;
 
 //Mesh.Algorithm = 8; // del for quads
 //Mesh.RecombineAll = 1;
+//+
+Rotate {{0, 0, 1}, {-.3, 0, 0}, -Pi/12} {
+  Curve{1}; Curve{4}; Curve{2}; Curve{3}; 
+}

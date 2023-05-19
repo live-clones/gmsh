@@ -21,7 +21,8 @@ void GFaceDelaunayRefinement(int faceTag);
 int GFace2PolyMesh(int faceTag, PolyMesh **pm);
 int PolyMesh2GFace(PolyMesh *pm, int faceTag);
 int meshTriangulate2d (const std::vector<double> &coord,
-		       std::vector<std::size_t> &tri);
+		       std::vector<std::size_t> &tri,
+		       const std::vector<size_t> *edges_to_recover = 0);
 // apply Delaunay refinement using old algorithms
 // FIXME -- not working yet
 void GFaceDelaunayRefinementOldMesher(int faceTag);

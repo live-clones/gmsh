@@ -456,7 +456,9 @@ static int recover_edge(PolyMesh *pm, PolyMesh::Vertex *v_start,
   if(_list.empty()) { return -1; }
 
   // find all intersections
+  int iter = 0;
   while(1) {
+    if (iter++ > 1000)return -3;
     he = _list.back();
     he = he->opposite;
     if(!he) return -2;
@@ -1015,7 +1017,8 @@ PolyMesh *GFaceInitialMeshAlpha(int faceTag, int recover,
 
 
 int meshTriangulate2d (const std::vector<double> &coord,
-		      std::vector<std::size_t> &tri){
+		       std::vector<std::size_t> &tri,
+		       const std::vector<size_t> *rec){
 
   PolyMesh *pm = new PolyMesh;
 
@@ -1055,11 +1058,52 @@ int meshTriangulate2d (const std::vector<double> &coord,
     if (iter++ > 10)break;
   }
 
+  if (rec){
+    for (size_t i=0;i<rec->size();i+=2){
+      if (recover_edge(pm, pm->vertices[4+(*rec)[i]], pm->vertices[4+(*rec)[i+1]]))
+	Msg::Debug("impossible to recover an edge");
+      else {
+	PolyMesh::HalfEdge *he_ = pm->getEdge (pm->vertices[4+(*rec)[i]], pm->vertices[4+(*rec)[i+1]]);
+	he_->data = -10;
+	he_ = pm->getEdge (pm->vertices[4+(*rec)[i+1]], pm->vertices[4+(*rec)[i]]);
+	he_->data = -10;
+      }	
+    }
+  }
+
+  std::stack<PolyMesh::Face*> _f;
   for (auto t : pm->faces){
     int i0 = t->he->v->data;
     int i1 = t->he->next->v->data;
     int i2 = t->he->next->next->v->data;
-    if (i0 > 0 && i1 > 0 && i2 > 0){
+    if (i0 < 0 || i1 < 0 || i2 < 0){
+      _f.push(t);
+      t->data = -10;
+      break;
+    }  
+  }
+  while (!_f.empty()){
+    PolyMesh::Face *f = _f.top();
+    _f.pop();
+    if (f->he->opposite && f->he->opposite->data == -1 && f->he->opposite->f->data == -1){
+      _f.push(f->he->opposite->f);
+      f->he->opposite->f->data = -10;
+    }
+    if (f->he->next->opposite && f->he->next->opposite->data == -1 && f->he->next->opposite->f->data == -1){
+      _f.push(f->he->next->opposite->f);
+      f->he->next->opposite->f->data = -10;
+    }
+    if (f->he->next->next->opposite && f->he->next->next->opposite->data == -1 && f->he->next->next->opposite->f->data == -1){
+      _f.push(f->he->next->next->opposite->f);
+      f->he->next->next->opposite->f->data = -10;
+    }
+  }
+  
+  for (auto t : pm->faces){
+    int i0 = t->he->v->data;
+    int i1 = t->he->next->v->data;
+    int i2 = t->he->next->next->v->data;
+    if (t->data == -1){//i0 > 0 && i1 > 0 && i2 > 0){
       tri.push_back(i0);
       tri.push_back(i1);
       tri.push_back(i2);
