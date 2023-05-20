@@ -153,7 +153,7 @@ for Gmsh @value{GMSH-VERSION} (@today{}).
 The source code and pre-compiled binary versions of Gmsh (for Windows,
 macOS and Linux) can be downloaded from @uref{https://gmsh.info}.  Gmsh
 packages are also directly available in various Linux and BSD
-distributions (Debian, Ubuntu, FreeBSD, ...).
+distributions (Debian, Fedora, Ubuntu, FreeBSD, ...).
 
 If you use Gmsh, we would appreciate that you mention it in your work by
 citing the following paper: C. Geuzaine and J.-F. Remacle, @emph{Gmsh: a
