@@ -1510,6 +1510,7 @@ Also available in C++
 Julia
 (@url{@value{GITLAB-PREFIX}/tutorials/julia/x1.jl,x1.jl}).
 
+@center@image{images/x1,9cm,}
 
 @format
 @verbatiminclude ../../tutorials/python/x1.py

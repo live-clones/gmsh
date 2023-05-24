@@ -15,17 +15,18 @@
 
 import gmsh
 
-if length(ARGS) < 1
-    println("Usage: julia x1.jl file")
-    exit()
-end
-
 gmsh.initialize()
 
-# You can run this tutorial on any file that Gmsh can read, e.g. a mesh file in
-# the MSH format: `julia t1.jl file.msh'
-
-gmsh.open(ARGS[1])
+if length(ARGS) > 0
+    # If an argument is provided, handle it as a file that Gmsh can read, e.g. a
+    # mesh file in the MSH format (`julia x1.py file.msh')
+    gmsh.open(ARGS[1])
+else
+    # Otherwise, create and mesh a simple geometry
+    gmsh.model.occ.addCone(1, 0, 0, 1, 0, 0, 0.5, 0.1)
+    gmsh.model.occ.synchronize()
+    gmsh.model.mesh.generate()
+end
 
 # Print the model name and dimension:
 println("Model ", gmsh.model.getCurrent(), " (", gmsh.model.getDimension(), "D)")
@@ -126,6 +127,11 @@ for e in entities
         println(" - Element type: ", name, ", order ", order, " (",
                 numv, " nodes in param coord: ", parv, ")")
     end
+end
+
+# Launch the GUI to see the model:
+if !("-nopopup" in ARGS)
+    gmsh.fltk.run()
 end
 
 # We can use this to clear all the model data:
