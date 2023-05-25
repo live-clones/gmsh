@@ -1124,7 +1124,7 @@ StringXNumber MeshOptions_Number[] = {
     "[Deprecated]" },
   { F|O|D, "CharacteristicLengthFromParametricPoints" , opt_mesh_lc_from_parametric_points , 0. ,
     "[Deprecated]"},
-  { F|O|D, "CheckSurfaceNormalValidity" , opt_mesh_check_surface_normal_validity , 1. ,
+  { F|O, "CheckSurfaceNormalValidity" , opt_mesh_check_surface_normal_validity , 1. ,
     "Check surface mesh validity according to the geometry normal"},
   { F,   "Clip" , opt_mesh_clip , 0.,
     "Enable clipping planes? (Plane[i]=2^i, i=0,...,5)" },
