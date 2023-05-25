@@ -5151,6 +5151,14 @@ double opt_mesh_lc_integration_precision(OPT_ARGS_NUM)
   return CTX::instance()->mesh.lcIntegrationPrecision;
 }
 
+double opt_mesh_check_surface_normal_validity(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    CTX::instance()->mesh.checkSurfaceNormalValidity = (int)val;
+  }
+  return CTX::instance()->mesh.checkSurfaceNormalValidity;
+}
+
 double opt_mesh_rand_factor(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {

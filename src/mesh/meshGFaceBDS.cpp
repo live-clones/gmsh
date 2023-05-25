@@ -894,7 +894,8 @@ void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
   int invalid = 0;
 
   // FIXME we might want to be able to disable this
-  if(gf->getNativeType() != GEntity::GmshModel) {
+  if(CTX::instance()->mesh.checkSurfaceNormalValidity &&
+     gf->getNativeType() != GEntity::GmshModel) {
     for(size_t i = 0; i < m.triangles.size(); i++) {
       double val = BDS_Face_Validity(gf, m.triangles[i]);
       invalid += val < 0 ? 1 : 0;
