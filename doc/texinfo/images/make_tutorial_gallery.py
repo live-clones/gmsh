@@ -60,7 +60,7 @@ for i in range(1, 22):
     execfile('../../../tutorials/python/' + tuto + '.py')
     print("done " + tuto)
 
-for i in range(2, 8):
+for i in range(1, 8):
     tuto = 'x' + str(i)
     gmsh.fltk.run = screenshot
     gmsh.fltk.initialize = screenshot
