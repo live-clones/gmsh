@@ -140,7 +140,7 @@ namespace tetgenBR {
 #include "tetgenBR.cxx"
 #undef printf
 
-  bool tetgenmesh::reconstructmesh(void *p)
+  int tetgenmesh::reconstructmesh(void *p, double tol /* unused */)
   {
     GRegion *_gr = ((brdata *)p)->gr;
     splitQuadRecovery *_sqr = ((brdata *)p)->sqr;
@@ -223,7 +223,7 @@ namespace tetgenBR {
 
     delaunayMeshIn3D(_vertices,
                      tets); // will add 8 MVertices at the end of _vertices
-    if(Msg::GetErrorCount()) return false;
+    if(Msg::GetErrorCount()) return 0;
 
     Msg::Debug("Points have been tetrahedralized");
 
@@ -261,7 +261,7 @@ namespace tetgenBR {
       longest = sqrt(x * x + y * y + z * z);
       if(longest == 0.0) {
         Msg::Warning("The point set is trivial");
-        return true;
+        return 1;
       }
 
       // Two identical points are distinguished by 'lengthlimit'.
@@ -1016,7 +1016,7 @@ namespace tetgenBR {
       for(std::size_t i = _vertices.size() - 8; i < _vertices.size(); i++)
         delete _vertices[i];
 
-      return true;
+      return 1;
     }
 
     // Dump the input surface mesh.
@@ -1222,7 +1222,7 @@ namespace tetgenBR {
       m->in = new tetgenBR::tetgenio();
       m->b = new tetgenBR::tetgenbehavior();
       tetgenBR::brdata data = {gr, sqr};
-      ret = m->reconstructmesh((void *)&data);
+      ret = m->reconstructmesh((void *)&data, 0.);
       delete m->in;
       delete m->b;
       delete m;
