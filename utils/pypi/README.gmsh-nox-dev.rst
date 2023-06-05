@@ -25,7 +25,7 @@ After installation you can either run the Gmsh app::
 
 or use the Gmsh Python API::
 
-    $ python -c "import gmsh; gmsh.initialize(); gmsh.fltk.run(); gmsh.finalize()"
+    $ python -c "import gmsh; gmsh.initialize(); print(gmsh.option.getString('General.Version')); gmsh.finalize()"
 
 (Note that the header files for using the C++ and C API are also installed, as
 is the Julia module.)
