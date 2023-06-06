@@ -3111,7 +3111,7 @@ must be added by the mesher using standard gmsh algorithms.
 
 @table @asis
 @item Input:
-@code{dim} (integer), @code{tag} (integer), @code{refine} (boolean), @code{coord} (vector of doubles), @code{nodeTags} (vector of integers)
+@code{dim} (integer), @code{tag} (integer), @code{refine} (boolean), @code{coord} (vector of doubles), @code{nodeTags} (vector of sizes)
 @item Output:
 -
 @item Return:
@@ -3211,7 +3211,7 @@ mesh of the current model. Currently only supported for 3D.
 
 @table @asis
 @item Input:
-@code{dim} (integer), @code{tag} (integer), @code{coord} (vector of doubles), @code{nodeTags} (vector of integers), @code{alpha} (double), @code{meanValue} (double), @code{controlTags} (vector of integers)
+@code{dim} (integer), @code{tag} (integer), @code{coord} (vector of doubles), @code{nodeTags} (vector of sizes), @code{alpha} (double), @code{meanValue} (double), @code{controlTags} (vector of integers)
 @item Output:
 @code{tetrahedra} (vector of sizes), @code{domains} (vector of vectors of sizes), @code{boundaries} (vector of vectors of sizes), @code{neighbors} (vector of sizes), @code{hMean} (double)
 @item Return:

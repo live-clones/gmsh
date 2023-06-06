@@ -565,7 +565,7 @@ doc = '''Compute a cross field for the current mesh. The function creates 3 view
 mesh.add('computeCrossField', doc, None, ovectorint('viewTags'))
 
 doc = '''Generate a mesh on one single mode entity of dimension `dim' and of tag `tag'. User can give a set of points in parameter coordinates in the `coord' vector. Parameter `refine' is set to 1 if additional points must be added by the mesher using standard gmsh algorithms.'''
-mesh.add('generateMesh', doc, None, iint('dim'), iint('tag'), ibool('refine'), ivectordouble('coord'), ivectorint('nodeTags'))
+mesh.add('generateMesh', doc, None, iint('dim'), iint('tag'), ibool('refine'), ivectordouble('coord'), ivectorsize('nodeTags'))
 
 doc = '''Triangulate the points given in the `coord' vector as pairs of u, v coordinates, and return the node tags (with numbering starting at 1) of the resulting triangles in `tri'.'''
 mesh.add('triangulate', doc, None, ivectordouble('coord'), ovectorsize('tri'))
@@ -580,7 +580,7 @@ doc = '''Take  the node tags (with numbering starting at 1) of the tetrahedra in
 mesh.add('tetNeighbors', doc, None, ivectorsize('tetra'), ovectorsize('neighbors'))
 
 doc = '''Generate a mesh of the array of points `coord', constrained to the surface mesh of the current model. Currently only supported for 3D.'''
-mesh.add('alphaShapesConstrained', doc, None, iint('dim'), iint('tag'), ivectordouble('coord'), ivectorint('nodeTags'), idouble('alpha'), idouble('meanValue'), ovectorsize('tetrahedra'), ovectorvectorsize('domains'), ovectorvectorsize('boundaries'), ovectorsize('neighbors'), odouble('hMean'), ivectorint('controlTags'))
+mesh.add('alphaShapesConstrained', doc, None, iint('dim'), iint('tag'), ivectordouble('coord'), ivectorsize('nodeTags'), idouble('alpha'), idouble('meanValue'), ovectorsize('tetrahedra'), ovectorvectorsize('domains'), ovectorvectorsize('boundaries'), ovectorsize('neighbors'), odouble('hMean'), ivectorint('controlTags'))
 
 doc = '''Apply a Delaunay refinement on entity of dimension `dim' and tag `tag'. `elementTags' contains a vector of the tags of the elements that need to be refined. `constrainedEdges' is a vector of size m*2 containing the edges that need to stay in the mesh, in the form of 2 successive nodes. `sizeField' is a vector containing the size at the nodes referenced by `nodeTags'. `minRadius' is the minimum allowed circumradius of elements in the mesh. An element that has a circumradius which is smaller than this value will not be refined. Return newly added nodes and corresponding size field, as well as the updated list of constrained edges and elements within the refinement.'''
 mesh.add('constrainedDelaunayRefinement', doc, None, iint('dim'), iint('tag'), ivectorsize('elementTags'), ivectorsize('constrainedEdges'), ivectorsize('nodeTags'), ivectordouble('sizeField'), idouble('minRadius'), ovectorsize('newNodeTags'), ovectordouble('newCoords'), ovectordouble('newSizeField'), ovectorvectorsize('newConstrainedEdges'), ovectorsize('newElementsInRefinement'))

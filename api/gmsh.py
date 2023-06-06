@@ -4941,10 +4941,10 @@ class model:
             - `tag': integer
             - `refine': boolean
             - `coord': vector of doubles
-            - `nodeTags': vector of integers
+            - `nodeTags': vector of sizes
             """
             api_coord_, api_coord_n_ = _ivectordouble(coord)
-            api_nodeTags_, api_nodeTags_n_ = _ivectorint(nodeTags)
+            api_nodeTags_, api_nodeTags_n_ = _ivectorsize(nodeTags)
             ierr = c_int()
             lib.gmshModelMeshGenerateMesh(
                 c_int(dim),
@@ -5114,7 +5114,7 @@ class model:
             - `dim': integer
             - `tag': integer
             - `coord': vector of doubles
-            - `nodeTags': vector of integers
+            - `nodeTags': vector of sizes
             - `alpha': double
             - `meanValue': double
             - `tetrahedra': vector of sizes
@@ -5125,7 +5125,7 @@ class model:
             - `controlTags': vector of integers
             """
             api_coord_, api_coord_n_ = _ivectordouble(coord)
-            api_nodeTags_, api_nodeTags_n_ = _ivectorint(nodeTags)
+            api_nodeTags_, api_nodeTags_n_ = _ivectorsize(nodeTags)
             api_tetrahedra_, api_tetrahedra_n_ = POINTER(c_size_t)(), c_size_t()
             api_domains_, api_domains_n_, api_domains_nn_ = POINTER(POINTER(c_size_t))(), POINTER(c_size_t)(), c_size_t()
             api_boundaries_, api_boundaries_n_, api_boundaries_nn_ = POINTER(POINTER(c_size_t))(), POINTER(c_size_t)(), c_size_t()

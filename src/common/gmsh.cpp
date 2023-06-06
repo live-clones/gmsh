@@ -5500,7 +5500,7 @@ gmsh::model::mesh::computeHomology(vectorpair &dimTags)
   GModel::current()->computeHomology(dimTags);
 }
 
-GMSH_API void gmsh::model::mesh::generateMesh(const int dim, const int tag, const bool refine, const std::vector<double> &coord, const std::vector<int> &nodeTags)
+GMSH_API void gmsh::model::mesh::generateMesh(const int dim, const int tag, const bool refine, const std::vector<double> &coord, const std::vector<size_t> &nodeTags)
 {
   if(!_checkInit()) return;
 #if defined(HAVE_MESH)
@@ -5599,7 +5599,7 @@ GMSH_API void
 gmsh::model::mesh::alphaShapesConstrained(const int dim, 
                                           const int tag,
                                           const std::vector<double>& coord,
-                                          const std::vector<int>& nodeTags,
+                                          const std::vector<size_t>& nodeTags,
                                           const double alpha, 
                                           const double meanValue, 
                                           std::vector<size_t> &tetrahedra, 
