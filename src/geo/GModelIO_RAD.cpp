@@ -131,24 +131,52 @@ int GModel::writeRAD(const std::string &name, int saveAll,
           for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
             MElement *e = entities[i]->getMeshElement(j);
             if(!n) {
-              const char *str = (e->getDim() == 3) ? "SOLID" :
-                                (e->getDim() == 2) ? "SHELL" :
+              const char *str = (e->getDim() == 3) ? "BRIC" :
+                                (e->getDim() == 2) ? "SH3N" :
                                 (e->getDim() == 1) ? "BEAM" :
                                                      "NODE";
-              fprintf(fp, "*SET_%s_LIST\n$# %s\n%d", str,
-                      physicalName(this, dim, it->first).c_str(), ++setid);
+              fprintf(fp, "/GR%s/%s/%d\n%s", str, str,
+                      ++setid, physicalName(this, dim, it->first).c_str());
             }
             if(!(n % 8))
-              fprintf(fp, "\n%lu", e->getNum());
+              fprintf(fp, "\n%10ld", e->getNum());
             else
-              fprintf(fp, ", %lu", e->getNum());
+              fprintf(fp, "%10ld", e->getNum());
             n++;
           }
         }
         if(n) fprintf(fp, "\n");
+ 
+      }
+    }
+
+    for(int dim = 2; dim <= 2; dim++) {
+      if(saveAll & (0x2 << (2 * dim))) continue; // elements are ignored
+      for(auto it = groups[dim].begin(); it != groups[dim].end(); it++) {
+        std::vector<GEntity *> &entities = it->second;
+        int n = 0;
+        for(std::size_t i = 0; i < entities.size(); i++) {
+          for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
+            MElement *e = entities[i]->getMeshElement(j);
+            if(!n) {
+              const char *str = (e->getDim() == 2) ? "SHEL" :
+                                                     "NODE";                                
+              fprintf(fp, "/GR%s/%s/%d\n%s", str, str,
+                      ++setid, physicalName(this, dim, it->first).c_str());
+            }
+            if(!(n % 8))
+              fprintf(fp, "\n%10ld", e->getNum());
+            else
+              fprintf(fp, "%10ld", e->getNum());
+            n++;
+          }
+        }
+        if(n) fprintf(fp, "\n");
+ 
       }
     }
   }
+
 
   // save node sets for each physical group, for easier load/b.c.
   if(saveGroupsOfNodes & 0x1) {
@@ -163,14 +191,14 @@ int GModel::writeRAD(const std::string &name, int saveAll,
               nodes.insert(e->getVertex(k));
           }
         }
-        fprintf(fp, "*SET_NODE_LIST\n$# %s\n%d",
-                physicalName(this, dim, it->first).c_str(), ++setid);
+        fprintf(fp, "/GRNOD/NODE/%d\n%s",
+                ++setid, physicalName(this, dim, it->first).c_str());
         int n = 0;
         for(auto it2 = nodes.begin(); it2 != nodes.end(); it2++) {
           if(!(n % 8))
-            fprintf(fp, "\n%ld", (*it2)->getIndex());
+            fprintf(fp, "\n%10ld", (*it2)->getIndex());
           else
-            fprintf(fp, ", %ld", (*it2)->getIndex());
+            fprintf(fp, "%10ld", (*it2)->getIndex());
           n++;
         }
         if(n) fprintf(fp, "\n");
@@ -178,7 +206,7 @@ int GModel::writeRAD(const std::string &name, int saveAll,
     }
   }
 
-  fprintf(fp, "/END");
+  fprintf(fp, "\n/END");
   fclose(fp);
   return 1;
 }
