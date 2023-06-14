@@ -3,8 +3,8 @@ FROM amd64/debian:stretch
 ENV DEBIAN_FRONTEND noninteractive
 
 # in preparation for when stretch will not be supported anymore...
-# RUN echo "deb http://archive.debian.org/debian stretch main" > /etc/apt/sources.list
-# RUN echo "deb http://archive.debian.org/debian-security stretch/updates main" >> /etc/apt/sources.list
+RUN echo "deb http://archive.debian.org/debian stretch main" > /etc/apt/sources.list
+RUN echo "deb http://archive.debian.org/debian-security stretch/updates main" >> /etc/apt/sources.list
 
 RUN apt-get -o Acquire::Check-Valid-Until=false update && apt-get install -y git make autoconf python curl wget bzip2 gcc g++ texlive texinfo valgrind libgl1-mesa-dev libxi-dev libxmu-dev libxft-dev libxinerama-dev libxcursor-dev libxfixes-dev mesa-common-dev libglu1-mesa-dev zlib1g-dev cmake emacs-nox && apt-get clean
 

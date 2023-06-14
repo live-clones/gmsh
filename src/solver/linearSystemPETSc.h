@@ -104,7 +104,7 @@ protected:
   Mat _a;
   Vec _b, _x;
   KSP _ksp;
-  int _localRowStart, _localRowEnd, _localSize, _globalSize;
+  PetscInt _localRowStart, _localRowEnd, _localSize, _globalSize;
   sparsityPattern _sparsity;
   void _kspCreate();
   void _assembleMatrixIfNeeded();
