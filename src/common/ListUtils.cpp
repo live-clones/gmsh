@@ -241,7 +241,7 @@ int List_Suppress(List_T *liste, void *data,
   if(ptr == nullptr) return (0);
   liste->n--;
   size_t len = liste->n - (((intptr_t)ptr - (intptr_t)liste->array) / liste->size);
-  if(len > 0) memmove(ptr, ptr + liste->size, len * liste->size);
+  if(len > 0) memmove(ptr, ptr + liste->size, (size_t)len * liste->size);
   return (1);
 }
 
@@ -252,7 +252,7 @@ int List_PSuppress(List_T *liste, int index)
   if(ptr == nullptr) return (0);
   liste->n--;
   size_t len = liste->n - (((intptr_t)ptr - (intptr_t)liste->array) / liste->size);
-  if(len > 0) memmove(ptr, ptr + liste->size, len * liste->size);
+  if(len > 0) memmove(ptr, ptr + liste->size, (size_t)len * liste->size);
   return (1);
 }
 
