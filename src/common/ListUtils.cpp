@@ -79,11 +79,11 @@ void List_Realloc(List_T *liste, int n)
     // liste->nmax = ((n - 1) / liste->incr + 1) * liste->incr;
     // So this is much better
     liste->nmax = n;
-    liste->array = (char *)Malloc(liste->nmax * liste->size);
+    liste->array = (char *)Malloc((size_t)liste->nmax * (size_t)liste->size);
   }
   else if(n > liste->nmax) {
     liste->nmax = ((n - 1) / liste->incr + 1) * liste->incr;
-    liste->array = (char *)Realloc(liste->array, liste->nmax * liste->size);
+    liste->array = (char *)Realloc(liste->array, (size_t)liste->nmax * (size_t)liste->size);
   }
 }
 
