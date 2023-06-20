@@ -2091,9 +2091,8 @@ getAdditionalEntities(std::set<GRegion *, GEntityPtrLessThan> &regions,
     for(std::size_t i = 0; i < (*it)->getNumMeshElements(); i++) {
       for(std::size_t j = 0; j < (*it)->getMeshElement(i)->getNumVertices();
           j++) {
-        if((*it)->getMeshElement(i)->getVertex(j)->onWhat() != (*it)) {
-          GEntity *entity = (*it)->getMeshElement(i)->getVertex(j)->onWhat();
-
+        GEntity *entity = (*it)->getMeshElement(i)->getVertex(j)->onWhat();
+        if(entity && entity != (*it)) {
           switch(entity->dim()) {
           case 0:
             if(vertices.find(static_cast<GVertex *>(entity)) ==
@@ -2132,9 +2131,8 @@ getAdditionalEntities(std::set<GRegion *, GEntityPtrLessThan> &regions,
     for(std::size_t i = 0; i < (*it)->getNumMeshElements(); i++) {
       for(std::size_t j = 0; j < (*it)->getMeshElement(i)->getNumVertices();
           j++) {
-        if((*it)->getMeshElement(i)->getVertex(j)->onWhat() != (*it)) {
-          GEntity *entity = (*it)->getMeshElement(i)->getVertex(j)->onWhat();
-
+        GEntity *entity = (*it)->getMeshElement(i)->getVertex(j)->onWhat();
+        if(entity && entity != (*it)) {
           switch(entity->dim()) {
           case 0:
             if(vertices.find(static_cast<GVertex *>(entity)) ==
@@ -2173,9 +2171,8 @@ getAdditionalEntities(std::set<GRegion *, GEntityPtrLessThan> &regions,
     for(std::size_t i = 0; i < (*it)->getNumMeshElements(); i++) {
       for(std::size_t j = 0; j < (*it)->getMeshElement(i)->getNumVertices();
           j++) {
-        if((*it)->getMeshElement(i)->getVertex(j)->onWhat() != (*it)) {
-          GEntity *entity = (*it)->getMeshElement(i)->getVertex(j)->onWhat();
-
+        GEntity *entity = (*it)->getMeshElement(i)->getVertex(j)->onWhat();
+        if(entity && entity != (*it)) {
           switch(entity->dim()) {
           case 0:
             if(vertices.find(static_cast<GVertex *>(entity)) ==
