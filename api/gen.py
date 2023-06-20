@@ -233,7 +233,7 @@ model.add('setVisibilityPerWindow', doc, None, iint('value'), iint('windowIndex'
 doc = '''Set the color of the model entities `dimTags' (given as a vector of (dim, tag) pairs) to the RGBA value (`r', `g', `b', `a'), where `r', `g', `b' and `a' should be integers between 0 and 255. Apply the color setting recursively if `recursive' is true.'''
 model.add('setColor', doc, None, ivectorpair('dimTags'), iint('r'), iint('g'), iint('b'), iint('a', '255'), ibool('recursive', 'false', 'False'))
 
-doc = '''Get the color of the model entity of dimension `dim' and tag `tag'.'''
+doc = '''Get the color of the model entity of dimension `dim' and tag `tag'. If no color is specified for the entity, return fully transparent blue, i.e. (0, 0, 255, 0).'''
 model.add('getColor', doc, None, iint('dim'), iint('tag'), oint('r'), oint('g'), oint('b'), oint('a'))
 
 doc = '''Set the `x', `y', `z' coordinates of a geometrical point.'''

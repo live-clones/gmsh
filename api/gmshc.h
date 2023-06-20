@@ -532,7 +532,9 @@ GMSH_API void gmshModelSetColor(const int * dimTags, const size_t dimTags_n,
                                 const int recursive,
                                 int * ierr);
 
-/* Get the color of the model entity of dimension `dim' and tag `tag'. */
+/* Get the color of the model entity of dimension `dim' and tag `tag'. If no
+ * color is specified for the entity, return fully transparent blue, i.e. (0,
+ * 0, 255, 0). */
 GMSH_API void gmshModelGetColor(const int dim,
                                 const int tag,
                                 int * r,
