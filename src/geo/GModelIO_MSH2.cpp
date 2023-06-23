@@ -105,7 +105,7 @@ int GModel::_readMSH2(const std::string &name)
     return 0;
   }
 
-  char str[256] = "XXX";
+  char str[256] = "x";
   double version = 1.0;
   bool binary = false, swap = false, postpro = false;
   std::map<int, std::vector<MElement *> > elements[10];
@@ -123,10 +123,10 @@ int GModel::_readMSH2(const std::string &name)
     if(feof(fp)) break;
 
     std::string sectionName(&str[1]);
-    std::string endSectionName = "End" + sectionName;
+    std::string endSectionName = (version < 2) ? "END" : "End" + sectionName;
 
     if(!strncmp(&str[1], "MeshFormat", 10)) {
-      if(!fgets(str, sizeof(str), fp)) {
+      if(!fgets(str, sizeof(str), fp) || feof(fp)) {
         fclose(fp);
         return 0;
       }
