@@ -253,13 +253,14 @@ static Vertex InterpolateUBS(Curve *Curve, double u)
     }
     else {
       k = std::min(iCurve + i, NbControlPoints - 1);
+      if(k < 0) k = 0;
     }
 
     if(k >= 0 && k < NbControlPoints) {
       List_Read(Curve->Control_Points, k, &v[i]);
     }
     else {
-      Msg::Warning("Wrong control point index in bspline");
+      Msg::Warning("Wrong control point index %d in bspline", k);
       Vertex V;
       return V;
     }
