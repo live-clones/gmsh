@@ -1270,10 +1270,10 @@ int GModel::_readMSH4(const std::string &name)
       if(!fgets(str, sizeof(str), fp) || feof(fp)) break;
     }
 
+    if(feof(fp)) break;
+
     std::string sectionName(&str[1]);
     std::string endSectionName = "End" + sectionName;
-
-    if(feof(fp)) break;
 
     if(!strncmp(&str[1], "MeshFormat", 10)) {
       if(!fgets(str, sizeof(str), fp) || feof(fp)) {

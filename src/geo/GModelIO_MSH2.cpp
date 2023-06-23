@@ -122,6 +122,9 @@ int GModel::_readMSH2(const std::string &name)
 
     if(feof(fp)) break;
 
+    std::string sectionName(&str[1]);
+    std::string endSectionName = "End" + sectionName;
+
     if(!strncmp(&str[1], "MeshFormat", 10)) {
       if(!fgets(str, sizeof(str), fp)) {
         fclose(fp);
@@ -622,10 +625,27 @@ int GModel::_readMSH2(const std::string &name)
       postpro = true;
       break;
     }
+    else if(strlen(&str[1]) > 0){
+      sectionName.pop_back();
+      Msg::Info("Storing section $%s as model attribute", sectionName.c_str());
+      std::vector<std::string> section;
+      while(1) {
+        if(!fgets(str, sizeof(str), fp) || feof(fp) ||
+           !strncmp(&str[1], endSectionName.c_str(), endSectionName.size())) {
+          break;
+        }
+        std::string s(str);
+        if(s.back() == '\n') s.pop_back();
+        if(s.back() == '\r') s.pop_back();
+        section.push_back(s);
+      }
+      _attributes[sectionName] = section;
+    }
 
-    do {
-      if(!fgets(str, sizeof(str), fp) || feof(fp)) break;
-    } while(str[0] != '$');
+    while(strncmp(&str[1], endSectionName.c_str(), endSectionName.size())) {
+      if(!fgets(str, sizeof(str), fp) || feof(fp)) { break; }
+    }
+    str[0] = 'a';
   }
 
   // store the elements in their associated elementary entity. If the
@@ -1117,6 +1137,13 @@ int GModel::_writeMSH2(const std::string &name, double version, bool binary,
   }
 
   writeMSHPeriodicNodes(fp, entities, renumberVertices, saveAll);
+
+  // attributes
+  for(auto &a : _attributes) {
+    fprintf(fp, "$%s\n", a.first.c_str());
+    for(auto &s : a.second) fprintf(fp, "%s\n", s.c_str());
+    fprintf(fp, "$End%s\n", a.first.c_str());
+  }
 
   fclose(fp);
 
