@@ -135,6 +135,7 @@ int GModel::_readMSH2(const std::string &name)
         fclose(fp);
         return 0;
       }
+      endSectionName = "End" + sectionName; // version >= 2
       if(format) {
         binary = true;
         Msg::Debug("Mesh is in binary format");
