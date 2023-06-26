@@ -2152,13 +2152,16 @@ GMSH_API int gmshModelOccAddLine(const int startTag,
                                  int * ierr);
 
 /* Add a circle arc in the OpenCASCADE CAD representation, between the two
- * points with tags `startTag' and `endTag', with center `centerTag'. If `tag'
- * is positive, set the tag explicitly; otherwise a new tag is selected
- * automatically. Return the tag of the circle arc. */
+ * points with tags `startTag' and `endTag', with middle point `middleTag'. If
+ * `center' is true, the middle point is the center of the circle; otherwise
+ * the circle goes through the middle point. If `tag' is positive, set the tag
+ * explicitly; otherwise a new tag is selected automatically. Return the tag
+ * of the circle arc. */
 GMSH_API int gmshModelOccAddCircleArc(const int startTag,
-                                      const int centerTag,
+                                      const int middleTag,
                                       const int endTag,
                                       const int tag,
+                                      const int center,
                                       int * ierr);
 
 /* Add a circle of center (`x', `y', `z') and radius `r' in the OpenCASCADE

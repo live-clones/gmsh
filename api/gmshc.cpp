@@ -3185,12 +3185,12 @@ GMSH_API int gmshModelOccAddLine(const int startTag, const int endTag, const int
   return result_api_;
 }
 
-GMSH_API int gmshModelOccAddCircleArc(const int startTag, const int centerTag, const int endTag, const int tag, int * ierr)
+GMSH_API int gmshModelOccAddCircleArc(const int startTag, const int middleTag, const int endTag, const int tag, const int center, int * ierr)
 {
   int result_api_ = 0;
   if(ierr) *ierr = 0;
   try {
-    result_api_ = gmsh::model::occ::addCircleArc(startTag, centerTag, endTag, tag);
+    result_api_ = gmsh::model::occ::addCircleArc(startTag, middleTag, endTag, tag, center);
   }
   catch(...){
     if(ierr) *ierr = 1;

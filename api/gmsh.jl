@@ -5936,26 +5936,28 @@ end
 const add_line = addLine
 
 """
-    gmsh.model.occ.addCircleArc(startTag, centerTag, endTag, tag = -1)
+    gmsh.model.occ.addCircleArc(startTag, middleTag, endTag, tag = -1, center = true)
 
 Add a circle arc in the OpenCASCADE CAD representation, between the two points
-with tags `startTag` and `endTag`, with center `centerTag`. If `tag` is
-positive, set the tag explicitly; otherwise a new tag is selected automatically.
-Return the tag of the circle arc.
+with tags `startTag` and `endTag`, with middle point `middleTag`. If `center` is
+true, the middle point is the center of the circle; otherwise the circle goes
+through the middle point. If `tag` is positive, set the tag explicitly;
+otherwise a new tag is selected automatically. Return the tag of the circle arc.
 
 Return an integer.
 
 Types:
  - `startTag`: integer
- - `centerTag`: integer
+ - `middleTag`: integer
  - `endTag`: integer
  - `tag`: integer
+ - `center`: boolean
 """
-function addCircleArc(startTag, centerTag, endTag, tag = -1)
+function addCircleArc(startTag, middleTag, endTag, tag = -1, center = true)
     ierr = Ref{Cint}()
     api_result_ = ccall((:gmshModelOccAddCircleArc, gmsh.lib), Cint,
-          (Cint, Cint, Cint, Cint, Ptr{Cint}),
-          startTag, centerTag, endTag, tag, ierr)
+          (Cint, Cint, Cint, Cint, Cint, Ptr{Cint}),
+          startTag, middleTag, endTag, tag, center, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_result_
 end

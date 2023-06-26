@@ -202,7 +202,8 @@ public:
                  double meshSize = MAX_LC);
   bool addLine(int &tag, int startTag, int endTag);
   bool addLine(int &tag, const std::vector<int> &pointTags);
-  bool addCircleArc(int &tag, int startTag, int centerTag, int endTag);
+  bool addCircleArc(int &tag, int startTag, int middleTag, int endTag,
+                    bool center = true);
   bool addCircle(int &tag, double x, double y, double z, double r,
                  double angle1, double angle2,
                  const std::vector<double> &N = std::vector<double>(),
@@ -496,7 +497,8 @@ public:
   {
     return _error("add line");
   }
-  bool addCircleArc(int &tag, int startTag, int centerTag, int endTag)
+  bool addCircleArc(int &tag, int startTag, int middleTag, int endTag,
+                    bool center)
   {
     return _error("add circle arc");
   }

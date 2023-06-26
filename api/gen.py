@@ -762,8 +762,8 @@ occ.add('addPoint', doc, oint, idouble('x'), idouble('y'), idouble('z'), idouble
 doc = '''Add a straight line segment in the OpenCASCADE CAD representation, between the two points with tags `startTag' and `endTag'. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the line.'''
 occ.add('addLine', doc, oint, iint('startTag'), iint('endTag'), iint('tag', '-1'))
 
-doc = '''Add a circle arc in the OpenCASCADE CAD representation, between the two points with tags `startTag' and `endTag', with center `centerTag'. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the circle arc.'''
-occ.add('addCircleArc', doc, oint, iint('startTag'), iint('centerTag'), iint('endTag'), iint('tag', '-1'))
+doc = '''Add a circle arc in the OpenCASCADE CAD representation, between the two points with tags `startTag' and `endTag', with middle point `middleTag'. If `center' is true, the middle point is the center of the circle; otherwise the circle goes through the middle point. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the circle arc.'''
+occ.add('addCircleArc', doc, oint, iint('startTag'), iint('middleTag'), iint('endTag'), iint('tag', '-1'), ibool('center', 'true', 'True'))
 
 doc = '''Add a circle of center (`x', `y', `z') and radius `r' in the OpenCASCADE CAD representation. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. If `angle1' and `angle2' are specified, create a circle arc between the two angles. If a vector `zAxis' of size 3 is provided, use it as the normal to the circle plane (z-axis). If a vector `xAxis' of size 3 is provided in addition to `zAxis', use it to define the x-axis. Return the tag of the circle.'''
 occ.add('addCircle', doc, oint, idouble('x'), idouble('y'), idouble('z'), idouble('r'), iint('tag', '-1'), idouble('angle1', '0.'), idouble('angle2', '2*M_PI', '2*pi', '2*pi'), ivectordouble('zAxis', 'std::vector<double>()', '[]', '[]'), ivectordouble('xAxis', 'std::vector<double>()', '[]', '[]'))

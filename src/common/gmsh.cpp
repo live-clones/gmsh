@@ -6368,14 +6368,15 @@ GMSH_API int gmsh::model::occ::addLine(const int startTag, const int endTag,
 }
 
 GMSH_API int gmsh::model::occ::addCircleArc(const int startTag,
-                                            const int centerTag,
-                                            const int endTag, const int tag)
+                                            const int middleTag,
+                                            const int endTag, const int tag,
+                                            const bool center)
 {
   if(!_checkInit()) return -1;
   _createOcc();
   int outTag = tag;
   GModel::current()->getOCCInternals()->addCircleArc(outTag, startTag,
-                                                     centerTag, endTag);
+                                                     middleTag, endTag, center);
   return outTag;
 }
 

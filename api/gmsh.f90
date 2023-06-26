@@ -9472,40 +9472,47 @@ module gmsh
   end function gmshModelOccAddLine
 
   !> Add a circle arc in the OpenCASCADE CAD representation, between the two
-  !! points with tags `startTag' and `endTag', with center `centerTag'. If `tag'
-  !! is positive, set the tag explicitly; otherwise a new tag is selected
-  !! automatically. Return the tag of the circle arc.
+  !! points with tags `startTag' and `endTag', with middle point `middleTag'. If
+  !! `center' is true, the middle point is the center of the circle; otherwise
+  !! the circle goes through the middle point. If `tag' is positive, set the tag
+  !! explicitly; otherwise a new tag is selected automatically. Return the tag
+  !! of the circle arc.
   function gmshModelOccAddCircleArc(startTag, &
-                                    centerTag, &
+                                    middleTag, &
                                     endTag, &
                                     tag, &
+                                    center, &
                                     ierr)
     interface
     function C_API(startTag, &
-                   centerTag, &
+                   middleTag, &
                    endTag, &
                    tag, &
+                   center, &
                    ierr_) &
       bind(C, name="gmshModelOccAddCircleArc")
       use, intrinsic :: iso_c_binding
       integer(c_int) :: C_API
       integer(c_int), value, intent(in) :: startTag
-      integer(c_int), value, intent(in) :: centerTag
+      integer(c_int), value, intent(in) :: middleTag
       integer(c_int), value, intent(in) :: endTag
       integer(c_int), value, intent(in) :: tag
+      integer(c_int), value, intent(in) :: center
       integer(c_int), intent(out), optional :: ierr_
     end function C_API
     end interface
     integer(c_int) :: gmshModelOccAddCircleArc
     integer, intent(in) :: startTag
-    integer, intent(in) :: centerTag
+    integer, intent(in) :: middleTag
     integer, intent(in) :: endTag
     integer, intent(in), optional :: tag
+    logical, intent(in), optional :: center
     integer(c_int), intent(out), optional :: ierr
     gmshModelOccAddCircleArc = C_API(startTag=int(startTag, c_int), &
-                               centerTag=int(centerTag, c_int), &
+                               middleTag=int(middleTag, c_int), &
                                endTag=int(endTag, c_int), &
                                tag=optval_c_int(-1, tag), &
+                               center=optval_c_bool(.true., center), &
                                ierr_=ierr)
   end function gmshModelOccAddCircleArc
 

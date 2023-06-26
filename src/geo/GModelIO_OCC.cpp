@@ -929,8 +929,8 @@ bool OCC_Internals::addLine(int &tag, const std::vector<int> &pointTags)
   return false;
 }
 
-bool OCC_Internals::addCircleArc(int &tag, int startTag, int centerTag,
-                                 int endTag)
+bool OCC_Internals::addCircleArc(int &tag, int startTag, int middleTag,
+                                 int endTag, bool center)
 {
   if(tag >= 0 && _tagEdge.IsBound(tag)) {
     Msg::Error("OpenCASCADE curve with tag %d already exists", tag);
@@ -940,8 +940,8 @@ bool OCC_Internals::addCircleArc(int &tag, int startTag, int centerTag,
     Msg::Error("Unknown OpenCASCADE point with tag %d", startTag);
     return false;
   }
-  if(!_tagVertex.IsBound(centerTag)) {
-    Msg::Error("Unknown OpenCASCADE point with tag %d", centerTag);
+  if(!_tagVertex.IsBound(middleTag)) {
+    Msg::Error("Unknown OpenCASCADE point with tag %d", middleTag);
     return false;
   }
   if(!_tagVertex.IsBound(endTag)) {
@@ -951,12 +951,11 @@ bool OCC_Internals::addCircleArc(int &tag, int startTag, int centerTag,
 
   TopoDS_Edge result;
   TopoDS_Vertex start = TopoDS::Vertex(_tagVertex.Find(startTag));
-  TopoDS_Vertex center = TopoDS::Vertex(_tagVertex.Find(centerTag));
+  TopoDS_Vertex middle = TopoDS::Vertex(_tagVertex.Find(middleTag));
   TopoDS_Vertex end = TopoDS::Vertex(_tagVertex.Find(endTag));
   gp_Pnt aP1 = BRep_Tool::Pnt(start);
-  gp_Pnt aP2 = BRep_Tool::Pnt(center);
+  gp_Pnt aP2 = BRep_Tool::Pnt(middle);
   gp_Pnt aP3 = BRep_Tool::Pnt(end);
-  Standard_Real Radius = aP1.Distance(aP2);
 
   gp_Pln p;
   try {
@@ -969,17 +968,34 @@ bool OCC_Internals::addCircleArc(int &tag, int startTag, int centerTag,
   }
 
   try {
-    gce_MakeCirc MC(aP2, p, Radius);
-    if(!MC.IsDone()) {
-      Msg::Error("Could not build circle");
-      return false;
+    gp_Circ Circ;
+    if(center) {
+      Standard_Real Radius = aP1.Distance(aP2);
+      gce_MakeCirc MC(aP2, p, Radius);
+      if(!MC.IsDone()) {
+        Msg::Error("Could not build circle using two points and center");
+        return false;
+      }
+      Circ = MC.Value();
     }
-    const gp_Circ &Circ = MC.Value();
+    else {
+      gce_MakeCirc MC(aP1, aP2, aP3);
+      if(!MC.IsDone()) {
+        Msg::Error("Could not build circle through three points");
+        return false;
+      }
+      Circ = MC.Value();
+    }
+    Handle(Geom_Circle) C = new Geom_Circle(Circ);
     Standard_Real Alpha1 = ElCLib::Parameter(Circ, aP1);
     Standard_Real Alpha2 = ElCLib::Parameter(Circ, aP3);
-    Handle(Geom_Circle) C = new Geom_Circle(Circ);
+    bool Sense = false;
+    if(!center) {
+      Standard_Real AlphaC = ElCLib::Parameter(Circ, aP2);
+      if(AlphaC > Alpha1 && AlphaC < Alpha2) Sense = true;
+    }
     Handle(Geom_TrimmedCurve) arc =
-      new Geom_TrimmedCurve(C, Alpha1, Alpha2, false);
+      new Geom_TrimmedCurve(C, Alpha1, Alpha2, Sense);
     BRepBuilderAPI_MakeEdge e(arc, start, end);
     e.Build();
     if(!e.IsDone()) {

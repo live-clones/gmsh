@@ -12,3 +12,4 @@ gmsh.initialize()
 gmsh.open('block_with_attribute.msh')
 for attr in gmsh.model.getAttributeNames():
     print('Attribute ' + attr + " = ", gmsh.model.getAttribute(attr))
+gmsh.finalize()

@@ -6683,29 +6683,33 @@ class model:
         add_line = addLine
 
         @staticmethod
-        def addCircleArc(startTag, centerTag, endTag, tag=-1):
+        def addCircleArc(startTag, middleTag, endTag, tag=-1, center=True):
             """
-            gmsh.model.occ.addCircleArc(startTag, centerTag, endTag, tag=-1)
+            gmsh.model.occ.addCircleArc(startTag, middleTag, endTag, tag=-1, center=True)
 
             Add a circle arc in the OpenCASCADE CAD representation, between the two
-            points with tags `startTag' and `endTag', with center `centerTag'. If `tag'
-            is positive, set the tag explicitly; otherwise a new tag is selected
-            automatically. Return the tag of the circle arc.
+            points with tags `startTag' and `endTag', with middle point `middleTag'. If
+            `center' is true, the middle point is the center of the circle; otherwise
+            the circle goes through the middle point. If `tag' is positive, set the tag
+            explicitly; otherwise a new tag is selected automatically. Return the tag
+            of the circle arc.
 
             Return an integer.
 
             Types:
             - `startTag': integer
-            - `centerTag': integer
+            - `middleTag': integer
             - `endTag': integer
             - `tag': integer
+            - `center': boolean
             """
             ierr = c_int()
             api_result_ = lib.gmshModelOccAddCircleArc(
                 c_int(startTag),
-                c_int(centerTag),
+                c_int(middleTag),
                 c_int(endTag),
                 c_int(tag),
+                c_int(bool(center)),
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
