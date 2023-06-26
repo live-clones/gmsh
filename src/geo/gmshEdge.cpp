@@ -413,7 +413,7 @@ void gmshEdge::writeGEO(FILE *fp)
   fprintf(fp, "};\n");
 
   if(meshAttributes.method == MESH_TRANSFINITE) {
-    fprintf(fp, "Transfinite Line {%d} = %d",
+    fprintf(fp, "Transfinite Curve {%d} = %d",
             tag() * (meshAttributes.typeTransfinite > 0 ? 1 : -1),
             meshAttributes.nbPointsTransfinite);
     if(meshAttributes.typeTransfinite) {
