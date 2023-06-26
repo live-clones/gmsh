@@ -498,7 +498,7 @@ public:
     return _error("add line");
   }
   bool addCircleArc(int &tag, int startTag, int middleTag, int endTag,
-                    bool center)
+                    bool center = true)
   {
     return _error("add circle arc");
   }
