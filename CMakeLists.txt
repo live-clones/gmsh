@@ -1774,9 +1774,10 @@ if(WIN32 AND NOT MSVC)
 elseif(MSVC)
   set_target_properties(gmsh PROPERTIES LINK_FLAGS "/STACK:16777216 /SAFESEH:NO")
 elseif(APPLE)
-  # this remove ld warnings with PETSc+MUMPS on recent macOS versions
-  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-no_compact_unwind")
-  set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-no_compact_unwind")
+  # this remove ld warnings with PETSc+MUMPS on recent macOS versions; but
+  # breaks exception handling
+  # set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-no_compact_unwind")
+  # set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-no_compact_unwind")
 endif()
 
 # android target
@@ -2210,9 +2211,6 @@ if(ENABLE_TESTS AND NOT DISABLE_GMSH_TESTS)
           set(FLAGS "${FLAGS} -mconsole")
         endif()
         set_target_properties(${TEST} PROPERTIES LINK_FLAGS "${FLAGS}")
-      elseif(APPLE)
-        # this remove ld warnings with PETSc+MUMPS on recent macOS versions
-        # set_target_properties(${TEST} PROPERTIES LINK_FLAGS "-Wl,-no_compact_unwind")
       endif()
       add_test(${TEST} ${TEST} -nopopup)
     endforeach()
