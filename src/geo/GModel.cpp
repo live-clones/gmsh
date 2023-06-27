@@ -865,7 +865,9 @@ void GModel::getPhysicalGroups(
     for(auto it = group.begin(); it != group.end(); ++it) {
       std::vector<GEntity *> &v = it->second;
       std::sort(v.begin(), v.end(), GEntityPtrLessThan());
-      std::unique(v.begin(), v.end(), GEntityPtrLessThan());
+      if(std::unique(v.begin(), v.end(), GEntityPtrFullEqual()) != v.end())
+        Msg::Debug("removed duplicate entries in physical group (%d, %d)",
+                   dim, it->first);
     }
   }
 }
@@ -886,7 +888,9 @@ void GModel::getPhysicalGroups(
   for(auto it = groups.begin(); it != groups.end(); ++it) {
     std::vector<GEntity *> &v = it->second;
     std::sort(v.begin(), v.end(), GEntityPtrLessThan());
-    std::unique(v.begin(), v.end(), GEntityPtrLessThan());
+    if(std::unique(v.begin(), v.end(), GEntityPtrFullEqual()) != v.end())
+      Msg::Debug("removed duplicate entries in physical group (%d, %d)",
+                 dim, it->first);
   }
 }
 
@@ -945,7 +949,11 @@ void GModel::getEntitiesForPhysicalName(const std::string &name,
     }
   }
   std::sort(entities.begin(), entities.end(), GEntityPtrLessThan());
-  std::unique(entities.begin(), entities.end(), GEntityPtrLessThan());
+  if(std::unique(entities.begin(), entities.end(), GEntityPtrFullEqual()) !=
+     entities.end())
+    Msg::Debug("removed duplicate entries for physical name %s",
+               name.c_str());
+
 }
 
 void GModel::addPhysicalGroup(int dim, int tag, const std::vector<int> &tags)
