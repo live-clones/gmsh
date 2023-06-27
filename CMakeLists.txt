@@ -1775,7 +1775,8 @@ elseif(MSVC)
   set_target_properties(gmsh PROPERTIES LINK_FLAGS "/STACK:16777216 /SAFESEH:NO")
 elseif(APPLE)
   # this remove ld warnings with PETSc+MUMPS on recent macOS versions
-  # set_target_properties(gmsh PROPERTIES LINK_FLAGS "-Wl,-no_compact_unwind")
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-no_compact_unwind")
+  set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-no_compact_unwind")
 endif()
 
 # android target
