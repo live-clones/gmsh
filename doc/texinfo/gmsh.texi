@@ -2903,6 +2903,9 @@ model entities: see @ref{Floating point expressions}.
 Delete the current model (all model entities and their associated
 meshes).
 
+@item Delete Meshes;
+Delete all the meshes in the current model.
+
 @item Delete Physicals;
 Delete all physical groups.
 
