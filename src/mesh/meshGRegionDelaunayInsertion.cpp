@@ -1540,6 +1540,8 @@ void insertVerticesInRegion(GRegion *gr, int maxIter,
     }
   }
 
+  Msg::Info("%d node relocations", nbReloc);
+
   while(1) {
     if(allTets.begin() == allTets.end()) break;
     MTet4 *worst = *allTets.begin();

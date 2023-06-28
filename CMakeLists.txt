@@ -1499,6 +1499,10 @@ if(WALL AND NOT MSVC)
     # FIXME: remove this when GCC behaves more intelligently
     set(WF "${WF} -Wno-attributes")
   endif()
+  check_cxx_compiler_flag("-Wno-unused-but-set-variable" WUNUSED)
+  if(WUNUSED)
+    set(WF "${WF} -Wno-unused-but-set-variable")
+  endif()
   if(WIN32 OR NOT HAVE_64BIT_SIZE_T)
     # FIXME: remove printf family warnings on 32 bit systems and windows
     check_cxx_compiler_flag("-Wno-format" WFORMAT)
