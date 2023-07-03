@@ -9,6 +9,9 @@
 #include "HilbertCurve.h"
 #include <queue>
 
+// RCM routine adapted from GmshFEM - Copyright (C) 2019-2022, A. Royer,
+// E. Béchet, C. Geuzaine, Université de Liège
+
 struct SortClass {
   const size_t *_degree;
   bool operator()(const size_t i, const size_t j)
@@ -97,34 +100,33 @@ static void RCM(std::vector<size_t> &sorted, const size_t *const row,
   }
 }
 
-int meshRenumber_Vertices_RCMK(const std::vector<size_t> &_elements,
+int meshRenumber_Vertices_RCMK(const std::vector<size_t> &elementTags,
                                std::map<size_t, size_t> &permutations)
 {
   GModel *gm = GModel ::current();
   permutations.clear();
 
-  std::vector<size_t> elements;
-  if(_elements.empty()) {
+  std::vector<MElement*> elements;
+  if(elementTags.empty()) {
     std::vector<GEntity *> entities;
     gm->getEntities(entities);
     for(std::size_t i = 0; i < entities.size(); i++) {
       GEntity *ge = entities[i];
       for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
-        MElement *e = ge->getMeshElement(j);
-        elements.push_back(e->getNum());
+        elements.push_back(ge->getMeshElement(j));
       }
     }
   }
-  else
-    elements = _elements;
+  else {
+    for(auto n : elementTags) elements.push_back(gm->getMeshElementByTag(n));
+  }
 
   std::map<MVertex *, size_t> initial_numbering;
   size_t count = 0;
   std::vector<std::pair<size_t, size_t>> coords;
   size_t numbers[1000];
   std::map<std::size_t, MVertex *> inverse_numbering;
-  for(auto n : elements) {
-    MElement *e = gm->getMeshElementByTag(n);
+  for(auto e : elements) {
     for(size_t i = 0; i < e->getNumVertices(); i++) {
       MVertex *v = e->getVertex(i);
       auto it = initial_numbering.find(v);
@@ -170,14 +172,14 @@ int meshRenumber_Vertices_RCMK(const std::vector<size_t> &_elements,
   return 0;
 }
 
-int meshRenumber_Vertices_Hilbert(const std::vector<size_t> &_elements,
+int meshRenumber_Vertices_Hilbert(const std::vector<size_t> &elementTags,
                                   std::map<size_t, size_t> &permutations)
 {
   GModel *gm = GModel ::current();
   permutations.clear();
 
   std::set<MVertex*> allv;
-  if(_elements.empty()) {
+  if(elementTags.empty()) {
     std::vector<GEntity *> entities;
     gm->getEntities(entities);
     for(std::size_t i = 0; i < entities.size(); i++) {
@@ -188,7 +190,7 @@ int meshRenumber_Vertices_Hilbert(const std::vector<size_t> &_elements,
     }
   }
   else {
-    for(auto n : _elements) {
+    for(auto n : elementTags) {
       MElement *e = gm->getMeshElementByTag(n);
       for(std::size_t k = 0; k < e->getNumVertices(); k++) {
         allv.insert(e->getVertex(k));
