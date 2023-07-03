@@ -110,8 +110,7 @@ int meshRenumber_Vertices_RCMK(const std::vector<size_t> &elementTags,
   if(elementTags.empty()) {
     std::vector<GEntity *> entities;
     gm->getEntities(entities);
-    for(std::size_t i = 0; i < entities.size(); i++) {
-      GEntity *ge = entities[i];
+    for(auto ge : entities) {
       for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
         elements.push_back(ge->getMeshElement(j));
       }
@@ -182,8 +181,7 @@ int meshRenumber_Vertices_Hilbert(const std::vector<size_t> &elementTags,
   if(elementTags.empty()) {
     std::vector<GEntity *> entities;
     gm->getEntities(entities);
-    for(std::size_t i = 0; i < entities.size(); i++) {
-      GEntity *ge = entities[i];
+    for(auto ge : entities) {
       for(std::size_t k = 0; k < ge->getNumMeshVertices(); k++) {
         allv.insert(ge->getMeshVertex(k));
       }
@@ -197,6 +195,7 @@ int meshRenumber_Vertices_Hilbert(const std::vector<size_t> &elementTags,
       }
     }
   }
+
   std::vector<MVertex*> v(allv.begin(), allv.end());
   SortHilbert(v);
   for(std::size_t i = 0; i < v.size(); i++) {
