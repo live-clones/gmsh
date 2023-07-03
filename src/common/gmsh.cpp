@@ -5211,7 +5211,7 @@ GMSH_API void gmsh::model::mesh::computeRenumbering(std::vector<std::size_t> &ol
   if(method == "RCMK")
     meshRenumber_Vertices_RCMK(elementTags, remap);
   else if(method == "Hilbert")
-    Msg::Warning("Hilbert renumbering not implemented yet");
+    meshRenumber_Vertices_Hilbert(elementTags, remap);
   else
     Msg::Error("Unknown renumbering method %s", method.c_str());
 #else

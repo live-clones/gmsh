@@ -6,6 +6,7 @@
 #include "meshRenumber.h"
 #include "GModel.h"
 #include "GmshMessage.h"
+#include "HilbertCurve.h"
 #include <queue>
 
 struct SortClass {
@@ -100,6 +101,7 @@ int meshRenumber_Vertices_RCMK(const std::vector<size_t> &_elements,
                                std::map<size_t, size_t> &permutations)
 {
   GModel *gm = GModel ::current();
+  permutations.clear();
 
   std::vector<size_t> elements;
   if(_elements.empty()) {
@@ -163,6 +165,40 @@ int meshRenumber_Vertices_RCMK(const std::vector<size_t> &_elements,
 
   for(auto it : initial_numbering) {
     permutations[it.first->getNum()] = sorted[it.second];
+  }
+
+  return 0;
+}
+
+int meshRenumber_Vertices_Hilbert(const std::vector<size_t> &_elements,
+                                  std::map<size_t, size_t> &permutations)
+{
+  GModel *gm = GModel ::current();
+  permutations.clear();
+
+  std::set<MVertex*> allv;
+  if(_elements.empty()) {
+    std::vector<GEntity *> entities;
+    gm->getEntities(entities);
+    for(std::size_t i = 0; i < entities.size(); i++) {
+      GEntity *ge = entities[i];
+      for(std::size_t k = 0; k < ge->getNumMeshVertices(); k++) {
+        allv.insert(ge->getMeshVertex(k));
+      }
+    }
+  }
+  else {
+    for(auto n : _elements) {
+      MElement *e = gm->getMeshElementByTag(n);
+      for(std::size_t k = 0; k < e->getNumVertices(); k++) {
+        allv.insert(e->getVertex(k));
+      }
+    }
+  }
+  std::vector<MVertex*> v(allv.begin(), allv.end());
+  SortHilbert(v);
+  for(std::size_t i = 0; i < v.size(); i++) {
+    permutations[v[i]->getNum()] = i + 1;
   }
 
   return 0;
