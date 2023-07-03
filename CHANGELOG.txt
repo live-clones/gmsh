@@ -4,11 +4,11 @@ glyph; OCC curve loops can now be oriented based on the sign of the first curve;
 better mesh node visualization; added suppport for model attributes in MSH2
 files; attributes small bug fixes.
 
-* New API functions: model/getEntitiesForPhysicalName.
+* New API functions: model/getEntitiesForPhysicalName; mesh/computeRenumbering.
 
-* Incompatible API changes: new optional argument to occ/addCircleArc and
-  view/getListData; new optional "interruptible" argument to gmsh.initialize()
-  in Python
+* Incompatible API changes: new optional argument to occ/addCircleArc,
+  mesh/renumberNodes and view/getListData; new optional "interruptible" argument
+  to gmsh.initialize() in Python
 
 4.11.1 (December 21, 2022): Mesh.TransfiniteTri improvements; small bug fixes.
 

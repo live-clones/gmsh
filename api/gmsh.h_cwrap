@@ -2760,14 +2760,46 @@ namespace gmsh { // Top-level functions
         gmshFree(api_ordering_);
       }
 
-      // gmsh::model::mesh::renumberNodes
+      // gmsh::model::mesh::computeRenumbering
       //
-      // Renumber the node tags in a continuous sequence.
-      inline void renumberNodes()
+      // Compute a renumbering vector `newTags' corresponding to the input tags
+      // `oldTags' for a given list of element tags `elementTags'. If `elementTags'
+      // is empty, compute the renumbering on the full mesh. If `method' is equal
+      // to "RCMK", compute a node renumering with Reverse Cuthill McKee. If
+      // `method' is equal to "Hilbert", compute a node renumering along a Hilbert
+      // curve. Element renumbering is not available yet.
+      inline void computeRenumbering(std::vector<std::size_t> & oldTags,
+                                     std::vector<std::size_t> & newTags,
+                                     const std::string & method = "RCMK",
+                                     const std::vector<std::size_t> & elementTags = std::vector<std::size_t>())
       {
         int ierr = 0;
-        gmshModelMeshRenumberNodes(&ierr);
+        size_t *api_oldTags_; size_t api_oldTags_n_;
+        size_t *api_newTags_; size_t api_newTags_n_;
+        size_t *api_elementTags_; size_t api_elementTags_n_; vector2ptr(elementTags, &api_elementTags_, &api_elementTags_n_);
+        gmshModelMeshComputeRenumbering(&api_oldTags_, &api_oldTags_n_, &api_newTags_, &api_newTags_n_, method.c_str(), api_elementTags_, api_elementTags_n_, &ierr);
         if(ierr) throwLastError();
+        oldTags.assign(api_oldTags_, api_oldTags_ + api_oldTags_n_); gmshFree(api_oldTags_);
+        newTags.assign(api_newTags_, api_newTags_ + api_newTags_n_); gmshFree(api_newTags_);
+        gmshFree(api_elementTags_);
+      }
+
+      // gmsh::model::mesh::renumberNodes
+      //
+      // Renumber the node tags. If no explicit renumbering is provided through the
+      // `oldTags' and `newTags' vectors, renumber the nodes in a continuous
+      // sequence, taking into account the subset of elements to be saved later on
+      // if the option "Mesh.SaveAll" is not set.
+      inline void renumberNodes(const std::vector<std::size_t> & oldTags = std::vector<std::size_t>(),
+                                const std::vector<std::size_t> & newTags = std::vector<std::size_t>())
+      {
+        int ierr = 0;
+        size_t *api_oldTags_; size_t api_oldTags_n_; vector2ptr(oldTags, &api_oldTags_, &api_oldTags_n_);
+        size_t *api_newTags_; size_t api_newTags_n_; vector2ptr(newTags, &api_newTags_, &api_newTags_n_);
+        gmshModelMeshRenumberNodes(api_oldTags_, api_oldTags_n_, api_newTags_, api_newTags_n_, &ierr);
+        if(ierr) throwLastError();
+        gmshFree(api_oldTags_);
+        gmshFree(api_newTags_);
       }
 
       // gmsh::model::mesh::renumberElements

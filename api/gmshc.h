@@ -1422,8 +1422,25 @@ GMSH_API void gmshModelMeshReorderElements(const int elementType,
                                            const size_t * ordering, const size_t ordering_n,
                                            int * ierr);
 
-/* Renumber the node tags in a continuous sequence. */
-GMSH_API void gmshModelMeshRenumberNodes(int * ierr);
+/* Compute a renumbering vector `newTags' corresponding to the input tags
+ * `oldTags' for a given list of element tags `elementTags'. If `elementTags'
+ * is empty, compute the renumbering on the full mesh. If `method' is equal to
+ * "RCMK", compute a node renumering with Reverse Cuthill McKee. If `method'
+ * is equal to "Hilbert", compute a node renumering along a Hilbert curve.
+ * Element renumbering is not available yet. */
+GMSH_API void gmshModelMeshComputeRenumbering(size_t ** oldTags, size_t * oldTags_n,
+                                              size_t ** newTags, size_t * newTags_n,
+                                              const char * method,
+                                              const size_t * elementTags, const size_t elementTags_n,
+                                              int * ierr);
+
+/* Renumber the node tags. If no explicit renumbering is provided through the
+ * `oldTags' and `newTags' vectors, renumber the nodes in a continuous
+ * sequence, taking into account the subset of elements to be saved later on
+ * if the option "Mesh.SaveAll" is not set. */
+GMSH_API void gmshModelMeshRenumberNodes(const size_t * oldTags, const size_t oldTags_n,
+                                         const size_t * newTags, const size_t newTags_n,
+                                         int * ierr);
 
 /* Renumber the element tags in a continuous sequence. */
 GMSH_API void gmshModelMeshRenumberElements(int * ierr);

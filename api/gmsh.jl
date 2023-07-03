@@ -3884,15 +3884,56 @@ end
 const reorder_elements = reorderElements
 
 """
-    gmsh.model.mesh.renumberNodes()
+    gmsh.model.mesh.computeRenumbering(method = "RCMK", elementTags = Csize_t[])
 
-Renumber the node tags in a continuous sequence.
+Compute a renumbering vector `newTags` corresponding to the input tags `oldTags`
+for a given list of element tags `elementTags`. If `elementTags` is empty,
+compute the renumbering on the full mesh. If `method` is equal to "RCMK",
+compute a node renumering with Reverse Cuthill McKee. If `method` is equal to
+"Hilbert", compute a node renumering along a Hilbert curve. Element renumbering
+is not available yet.
+
+Return `oldTags`, `newTags`.
+
+Types:
+ - `oldTags`: vector of sizes
+ - `newTags`: vector of sizes
+ - `method`: string
+ - `elementTags`: vector of sizes
 """
-function renumberNodes()
+function computeRenumbering(method = "RCMK", elementTags = Csize_t[])
+    api_oldTags_ = Ref{Ptr{Csize_t}}()
+    api_oldTags_n_ = Ref{Csize_t}()
+    api_newTags_ = Ref{Ptr{Csize_t}}()
+    api_newTags_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshComputeRenumbering, gmsh.lib), Cvoid,
+          (Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cchar}, Ptr{Csize_t}, Csize_t, Ptr{Cint}),
+          api_oldTags_, api_oldTags_n_, api_newTags_, api_newTags_n_, method, convert(Vector{Csize_t}, elementTags), length(elementTags), ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    oldTags = unsafe_wrap(Array, api_oldTags_[], api_oldTags_n_[], own = true)
+    newTags = unsafe_wrap(Array, api_newTags_[], api_newTags_n_[], own = true)
+    return oldTags, newTags
+end
+const compute_renumbering = computeRenumbering
+
+"""
+    gmsh.model.mesh.renumberNodes(oldTags = Csize_t[], newTags = Csize_t[])
+
+Renumber the node tags. If no explicit renumbering is provided through the
+`oldTags` and `newTags` vectors, renumber the nodes in a continuous sequence,
+taking into account the subset of elements to be saved later on if the option
+"Mesh.SaveAll" is not set.
+
+Types:
+ - `oldTags`: vector of sizes
+ - `newTags`: vector of sizes
+"""
+function renumberNodes(oldTags = Csize_t[], newTags = Csize_t[])
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshRenumberNodes, gmsh.lib), Cvoid,
-          (Ptr{Cint},),
-          ierr)
+          (Ptr{Csize_t}, Csize_t, Ptr{Csize_t}, Csize_t, Ptr{Cint}),
+          convert(Vector{Csize_t}, oldTags), length(oldTags), convert(Vector{Csize_t}, newTags), length(newTags), ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end

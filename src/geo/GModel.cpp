@@ -1698,30 +1698,47 @@ static void getDependentViewData(GModel *m, PViewDataGModel::DataType type,
 }
 #endif
 
-
-void GModel::renumberMeshVertices()
+void GModel::renumberMeshVertices(const std::map<std::size_t, std::size_t> &mapping)
 {
   destroyMeshCaches();
   setMaxVertexNumber(CTX::instance()->mesh.firstNodeTag - 1);
   std::vector<GEntity *> entities;
   getEntities(entities);
 
+  std::map<MVertex *, std::size_t> old, remap;
+  std::size_t npost = 0;
 #if defined(HAVE_POST)
   // check if any nodal post-processing datasets depend on the model; if so,
   // keep track of the old node numbering
-  std::map<MVertex *, int> old;
   std::vector<stepData<double> *> data;
   getDependentViewData(this, PViewDataGModel::NodeData, data);
-  if(data.size()) {
+  npost = data.size();
+#endif
+
+  std::size_t maxmap = 0;
+  for(auto m : mapping) maxmap = std::max(maxmap, m.second);
+  bool info = true;
+  if(mapping.size() || npost) {
     for(std::size_t i = 0; i < entities.size(); i++) {
       GEntity *ge = entities[i];
       for(std::size_t j = 0; j < ge->getNumMeshVertices(); j++) {
         MVertex *v = ge->getMeshVertex(j);
         old[v] = v->getNum();
+        if(mapping.size()) {
+          auto it = mapping.find(v->getNum());
+          if(it != mapping.end())
+            remap[v] = it->second;
+          else {
+            if(info) {
+              Msg::Info("Mapping does not contain a node tag - incrementing after last provided tag");
+              info = false;
+            }
+            remap[v] = ++maxmap;
+          }
+        }
       }
     }
   }
-#endif
 
   // check if we will potentially only save a subset of elements: only those
   // belonging to physical groups and/or those not being orphans
@@ -1769,14 +1786,14 @@ void GModel::renumberMeshVertices()
       GEntity *ge = entities[i];
       for(std::size_t j = 0; j < ge->getNumMeshVertices(); j++) {
         MVertex *v = ge->getMeshVertex(j);
-        if(v->getNum() == 0) v->forceNum(++n);
+        if(v->getNum() == 0) v->forceNum(remap.empty() ? ++n : remap[v]);
       }
     }
     for(std::size_t i = 0; i < entities.size(); i++) {
       GEntity *ge = entities[i];
       for(std::size_t j = 0; j < ge->getNumMeshVertices(); j++) {
         MVertex *v = ge->getMeshVertex(j);
-        if(v->getNum() == nv + 1) v->forceNum(++n);
+        if(v->getNum() == nv + 1) v->forceNum(remap.empty() ? ++n : remap[v]);
       }
     }
   }
@@ -1785,30 +1802,30 @@ void GModel::renumberMeshVertices()
     for(std::size_t i = 0; i < entities.size(); i++) {
       GEntity *ge = entities[i];
       for(std::size_t j = 0; j < ge->getNumMeshVertices(); j++) {
-        ge->getMeshVertex(j)->forceNum(++n);
+        MVertex *v = ge->getMeshVertex(j);
+        v->forceNum(remap.empty() ? ++n : remap[v]);
       }
     }
   }
 
 #if defined(HAVE_POST)
   // renumber any dependent nodal post-processing datasets
-  if(data.size()) {
-    int n = data.size();
-    Msg::Info("Renumbering nodal model data (%d step%s)", n, n > 1 ? "s" : "");
-    std::map<int, int> remap;
+  if(npost) {
+    Msg::Info("Renumbering nodal model data (%d step%s)", npost, npost > 1 ? "s" : "");
+    std::map<std::size_t, std::size_t> remap2;
     for(std::size_t i = 0; i < entities.size(); i++) {
       GEntity *ge = entities[i];
       for(std::size_t j = 0; j < ge->getNumMeshVertices(); j++) {
         MVertex *v = ge->getMeshVertex(j);
-        remap[old[v]] = v->getNum();
+        remap2[old[v]] = v->getNum();
       }
     }
-    for(auto d : data) { d->renumberData(remap); }
+    for(auto d : data) { d->renumberData(remap2); }
   }
 #endif
 }
 
-void GModel::renumberMeshElements()
+void GModel::renumberMeshElements(const std::map<std::size_t, std::size_t> &mapping)
 {
   destroyMeshCaches();
   setMaxElementNumber(CTX::instance()->mesh.firstElementTag - 1);
@@ -1883,7 +1900,7 @@ void GModel::renumberMeshElements()
     int n = data[0].size() + data[1].size();
     Msg::Info("Renumbering element model data (%d step%s)", n,
               n > 1 ? "s" : "");
-    std::map<int, int> remap;
+    std::map<std::size_t, std::size_t> remap;
     for(std::size_t i = 0; i < entities.size(); i++) {
       GEntity *ge = entities[i];
       for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {

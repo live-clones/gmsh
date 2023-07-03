@@ -670,6 +670,8 @@ module gmsh
         gmshModelMeshGetEmbedded
     procedure, nopass :: reorderElements => &
         gmshModelMeshReorderElements
+    procedure, nopass :: computeRenumbering => &
+        gmshModelMeshComputeRenumbering
     procedure, nopass :: renumberNodes => &
         gmshModelMeshRenumberNodes
     procedure, nopass :: renumberElements => &
@@ -6527,17 +6529,91 @@ module gmsh
          ierr_=ierr)
   end subroutine gmshModelMeshReorderElements
 
-  !> Renumber the node tags in a continuous sequence.
-  subroutine gmshModelMeshRenumberNodes(ierr)
+  !> Compute a renumbering vector `newTags' corresponding to the input tags
+  !! `oldTags' for a given list of element tags `elementTags'. If `elementTags'
+  !! is empty, compute the renumbering on the full mesh. If `method' is equal to
+  !! "RCMK", compute a node renumering with Reverse Cuthill McKee. If `method'
+  !! is equal to "Hilbert", compute a node renumering along a Hilbert curve.
+  !! Element renumbering is not available yet.
+  subroutine gmshModelMeshComputeRenumbering(oldTags, &
+                                             newTags, &
+                                             method, &
+                                             elementTags, &
+                                             ierr)
     interface
-    subroutine C_API(ierr_) &
-      bind(C, name="gmshModelMeshRenumberNodes")
+    subroutine C_API(api_oldTags_, &
+                     api_oldTags_n_, &
+                     api_newTags_, &
+                     api_newTags_n_, &
+                     method, &
+                     api_elementTags_, &
+                     api_elementTags_n_, &
+                     ierr_) &
+      bind(C, name="gmshModelMeshComputeRenumbering")
       use, intrinsic :: iso_c_binding
+      type(c_ptr), intent(out) :: api_oldTags_
+      integer(c_size_t), intent(out) :: api_oldTags_n_
+      type(c_ptr), intent(out) :: api_newTags_
+      integer(c_size_t), intent(out) :: api_newTags_n_
+      character(len=1, kind=c_char), dimension(*), intent(in), optional :: method
+      integer(c_size_t), dimension(*), optional :: api_elementTags_
+      integer(c_size_t), value, intent(in) :: api_elementTags_n_
       integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
+    integer(c_size_t), dimension(:), allocatable, intent(out) :: oldTags
+    integer(c_size_t), dimension(:), allocatable, intent(out) :: newTags
+    character(len=*), intent(in), optional :: method
+    integer(c_size_t), dimension(:), intent(in), optional :: elementTags
     integer(c_int), intent(out), optional :: ierr
-    call C_API(ierr_=ierr)
+    type(c_ptr) :: api_oldTags_
+    integer(c_size_t) :: api_oldTags_n_
+    type(c_ptr) :: api_newTags_
+    integer(c_size_t) :: api_newTags_n_
+    call C_API(api_oldTags_=api_oldTags_, &
+         api_oldTags_n_=api_oldTags_n_, &
+         api_newTags_=api_newTags_, &
+         api_newTags_n_=api_newTags_n_, &
+         method=istring_(optval_c_str("RCMK", method)), &
+         api_elementTags_=elementTags, &
+         api_elementTags_n_=size_gmsh_size(elementTags), &
+         ierr_=ierr)
+    oldTags = ovectorsize_(api_oldTags_, &
+      api_oldTags_n_)
+    newTags = ovectorsize_(api_newTags_, &
+      api_newTags_n_)
+  end subroutine gmshModelMeshComputeRenumbering
+
+  !> Renumber the node tags. If no explicit renumbering is provided through the
+  !! `oldTags' and `newTags' vectors, renumber the nodes in a continuous
+  !! sequence, taking into account the subset of elements to be saved later on
+  !! if the option "Mesh.SaveAll" is not set.
+  subroutine gmshModelMeshRenumberNodes(oldTags, &
+                                        newTags, &
+                                        ierr)
+    interface
+    subroutine C_API(api_oldTags_, &
+                     api_oldTags_n_, &
+                     api_newTags_, &
+                     api_newTags_n_, &
+                     ierr_) &
+      bind(C, name="gmshModelMeshRenumberNodes")
+      use, intrinsic :: iso_c_binding
+      integer(c_size_t), dimension(*), optional :: api_oldTags_
+      integer(c_size_t), value, intent(in) :: api_oldTags_n_
+      integer(c_size_t), dimension(*), optional :: api_newTags_
+      integer(c_size_t), value, intent(in) :: api_newTags_n_
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer(c_size_t), dimension(:), intent(in), optional :: oldTags
+    integer(c_size_t), dimension(:), intent(in), optional :: newTags
+    integer(c_int), intent(out), optional :: ierr
+    call C_API(api_oldTags_=oldTags, &
+         api_oldTags_n_=size_gmsh_size(oldTags), &
+         api_newTags_=newTags, &
+         api_newTags_n_=size_gmsh_size(newTags), &
+         ierr_=ierr)
   end subroutine gmshModelMeshRenumberNodes
 
   !> Renumber the element tags in a continuous sequence.

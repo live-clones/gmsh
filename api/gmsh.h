@@ -1607,10 +1607,27 @@ namespace gmsh { // Top-level functions
                                     const int tag,
                                     const std::vector<std::size_t> & ordering);
 
+      // gmsh::model::mesh::computeRenumbering
+      //
+      // Compute a renumbering vector `newTags' corresponding to the input tags
+      // `oldTags' for a given list of element tags `elementTags'. If `elementTags'
+      // is empty, compute the renumbering on the full mesh. If `method' is equal
+      // to "RCMK", compute a node renumering with Reverse Cuthill McKee. If
+      // `method' is equal to "Hilbert", compute a node renumering along a Hilbert
+      // curve. Element renumbering is not available yet.
+      GMSH_API void computeRenumbering(std::vector<std::size_t> & oldTags,
+                                       std::vector<std::size_t> & newTags,
+                                       const std::string & method = "RCMK",
+                                       const std::vector<std::size_t> & elementTags = std::vector<std::size_t>());
+
       // gmsh::model::mesh::renumberNodes
       //
-      // Renumber the node tags in a continuous sequence.
-      GMSH_API void renumberNodes();
+      // Renumber the node tags. If no explicit renumbering is provided through the
+      // `oldTags' and `newTags' vectors, renumber the nodes in a continuous
+      // sequence, taking into account the subset of elements to be saved later on
+      // if the option "Mesh.SaveAll" is not set.
+      GMSH_API void renumberNodes(const std::vector<std::size_t> & oldTags = std::vector<std::size_t>(),
+                                  const std::vector<std::size_t> & newTags = std::vector<std::size_t>());
 
       // gmsh::model::mesh::renumberElements
       //

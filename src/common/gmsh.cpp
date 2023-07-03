@@ -70,6 +70,7 @@
 #include "meshGRegionHxt.h"
 #include "gmshCrossFields.h"
 #include "qualityMeasuresJacobian.h"
+#include "meshRenumber.h"
 #endif
 
 #if defined(HAVE_POST)
@@ -5200,10 +5201,43 @@ gmsh::model::mesh::reorderElements(const int elementType, const int tag,
   }
 }
 
-GMSH_API void gmsh::model::mesh::renumberNodes()
+GMSH_API void gmsh::model::mesh::computeRenumbering(std::vector<std::size_t> &oldTags,
+                                                    std::vector<std::size_t> &newTags,
+                                                    const std::string &method,
+                                                    const std::vector<std::size_t> &elementTags)
+{
+  std::map<std::size_t, std::size_t> remap;
+#if defined(HAVE_MESH)
+  if(method == "RCMK")
+    meshRenumber_Vertices_RCMK(elementTags, remap);
+  else if(method == "Hilbert")
+    meshRenumber_Vertices_Hilbert(elementTags, remap);
+  else
+    Msg::Error("Unknown renumbering method %s", method.c_str());
+#else
+  Msg::Error("Computing renumbering requires the mesh module");
+#endif
+  oldTags.reserve(remap.size());
+  newTags.reserve(remap.size());
+  for(auto r : remap) {
+    oldTags.push_back(r.first);
+    newTags.push_back(r.second);
+  }
+}
+
+GMSH_API void gmsh::model::mesh::renumberNodes(const std::vector<std::size_t> &oldTags,
+                                               const std::vector<std::size_t> &newTags)
 {
   if(!_checkInit()) return;
-  GModel::current()->renumberMeshVertices();
+
+  if(oldTags.size() != newTags.size()) {
+    Msg::Error("Invalid number of tags for node renumbering: %lu != %lu", oldTags.size(),
+               newTags.size());
+  }
+  std::map<std::size_t, std::size_t> remap;
+  for(std::size_t i = 0; i < oldTags.size(); i++)
+    remap[oldTags[i]] = newTags[i];
+  GModel::current()->renumberMeshVertices(remap);
 }
 
 GMSH_API void gmsh::model::mesh::renumberElements()
@@ -5546,7 +5580,7 @@ GMSH_API void gmsh::model::mesh::triangulate(const std::vector<double> &coord,
   for(std::size_t i = 0; i < verts.size(); i++) delete verts[i];
   for(std::size_t i = 0; i < tris.size(); i++) delete tris[i];
 #else
-  Msg::Error("triangulate requires the mesh module");
+  Msg::Error("Triangulate requires the mesh module");
 #endif
 }
 
@@ -5583,7 +5617,7 @@ gmsh::model::mesh::tetrahedralize(const std::vector<double> &coord,
   for(std::size_t i = 0; i < verts.size(); i++) delete verts[i];
   for(std::size_t i = 0; i < tets.size(); i++) delete tets[i];
 #else
-  Msg::Error("tetrahedralize requires the mesh module");
+  Msg::Error("Tetrahedralize requires the mesh module");
 #endif
 }
 

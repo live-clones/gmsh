@@ -507,8 +507,11 @@ mesh.add('getEmbedded', doc, None, iint('dim'), iint('tag'), ovectorpair('dimTag
 doc = '''Reorder the elements of type `elementType' classified on the entity of tag `tag' according to the `ordering' vector.'''
 mesh.add('reorderElements', doc, None, iint('elementType'), iint('tag'), ivectorsize('ordering'))
 
-doc = '''Renumber the node tags in a continuous sequence.'''
-mesh.add('renumberNodes', doc, None)
+doc = '''Compute a renumbering vector `newTags' corresponding to the input tags `oldTags' for a given list of element tags `elementTags'. If `elementTags' is empty, compute the renumbering on the full mesh. If `method' is equal to "RCMK", compute a node renumering with Reverse Cuthill McKee. If `method' is equal to "Hilbert", compute a node renumering along a Hilbert curve. Element renumbering is not available yet.'''
+mesh.add('computeRenumbering', doc, None, ovectorsize('oldTags'), ovectorsize('newTags'), istring('method', '"RCMK"'), ivectorsize('elementTags', 'std::vector<std::size_t>()', '[]', '[]'))
+
+doc = '''Renumber the node tags. If no explicit renumbering is provided through the `oldTags' and `newTags' vectors, renumber the nodes in a continuous sequence, taking into account the subset of elements to be saved later on if the option "Mesh.SaveAll" is not set.'''
+mesh.add('renumberNodes', doc, None, ivectorsize('oldTags', 'std::vector<std::size_t>()', '[]', '[]'), ivectorsize('newTags', 'std::vector<std::size_t>()', '[]', '[]'))
 
 doc = '''Renumber the element tags in a continuous sequence.'''
 mesh.add('renumberElements', doc, None)
