@@ -2350,12 +2350,12 @@ GMSH_API void gmshModelMeshComputeCrossField(int ** viewTags, size_t * viewTags_
   }
 }
 
-GMSH_API void gmshModelMeshGenerateMesh(const int dim, const int tag, const int refine, const double * coord, const size_t coord_n, const int * nodeTags, const size_t nodeTags_n, int * ierr)
+GMSH_API void gmshModelMeshGenerateMesh(const int dim, const int tag, const int refine, const double * coord, const size_t coord_n, const size_t * nodeTags, const size_t nodeTags_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
     std::vector<double> api_coord_(coord, coord + coord_n);
-    std::vector<int> api_nodeTags_(nodeTags, nodeTags + nodeTags_n);
+    std::vector<std::size_t> api_nodeTags_(nodeTags, nodeTags + nodeTags_n);
     gmsh::model::mesh::generateMesh(dim, tag, refine, api_coord_, api_nodeTags_);
   }
   catch(...){
@@ -2426,12 +2426,12 @@ GMSH_API void gmshModelMeshTetNeighbors(const size_t * tetra, const size_t tetra
   }
 }
 
-GMSH_API void gmshModelMeshAlphaShapesConstrained(const int dim, const int tag, const double * coord, const size_t coord_n, const int * nodeTags, const size_t nodeTags_n, const double alpha, const double meanValue, size_t ** tetrahedra, size_t * tetrahedra_n, size_t *** domains, size_t ** domains_n, size_t *domains_nn, size_t *** boundaries, size_t ** boundaries_n, size_t *boundaries_nn, size_t ** neighbors, size_t * neighbors_n, double * hMean, const int * controlTags, const size_t controlTags_n, int * ierr)
+GMSH_API void gmshModelMeshAlphaShapesConstrained(const int dim, const int tag, const double * coord, const size_t coord_n, const size_t * nodeTags, const size_t nodeTags_n, const double alpha, const double meanValue, size_t ** tetrahedra, size_t * tetrahedra_n, size_t *** domains, size_t ** domains_n, size_t *domains_nn, size_t *** boundaries, size_t ** boundaries_n, size_t *boundaries_nn, size_t ** neighbors, size_t * neighbors_n, double * hMean, const int * controlTags, const size_t controlTags_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
     std::vector<double> api_coord_(coord, coord + coord_n);
-    std::vector<int> api_nodeTags_(nodeTags, nodeTags + nodeTags_n);
+    std::vector<std::size_t> api_nodeTags_(nodeTags, nodeTags + nodeTags_n);
     std::vector<std::size_t> api_tetrahedra_;
     std::vector<std::vector<std::size_t> > api_domains_;
     std::vector<std::vector<std::size_t> > api_boundaries_;

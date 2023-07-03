@@ -2747,11 +2747,11 @@ namespace gmsh { // Top-level functions
                                const int tag,
                                const bool refine,
                                const std::vector<double> & coord,
-                               const std::vector<int> & nodeTags)
+                               const std::vector<std::size_t> & nodeTags)
       {
         int ierr = 0;
         double *api_coord_; size_t api_coord_n_; vector2ptr(coord, &api_coord_, &api_coord_n_);
-        int *api_nodeTags_; size_t api_nodeTags_n_; vector2ptr(nodeTags, &api_nodeTags_, &api_nodeTags_n_);
+        size_t *api_nodeTags_; size_t api_nodeTags_n_; vector2ptr(nodeTags, &api_nodeTags_, &api_nodeTags_n_);
         gmshModelMeshGenerateMesh(dim, tag, (int)refine, api_coord_, api_coord_n_, api_nodeTags_, api_nodeTags_n_, &ierr);
         if(ierr) throwLastError();
         gmshFree(api_coord_);
@@ -2855,7 +2855,7 @@ namespace gmsh { // Top-level functions
       inline void alphaShapesConstrained(const int dim,
                                          const int tag,
                                          const std::vector<double> & coord,
-                                         const std::vector<int> & nodeTags,
+                                         const std::vector<std::size_t> & nodeTags,
                                          const double alpha,
                                          const double meanValue,
                                          std::vector<std::size_t> & tetrahedra,
@@ -2867,7 +2867,7 @@ namespace gmsh { // Top-level functions
       {
         int ierr = 0;
         double *api_coord_; size_t api_coord_n_; vector2ptr(coord, &api_coord_, &api_coord_n_);
-        int *api_nodeTags_; size_t api_nodeTags_n_; vector2ptr(nodeTags, &api_nodeTags_, &api_nodeTags_n_);
+        size_t *api_nodeTags_; size_t api_nodeTags_n_; vector2ptr(nodeTags, &api_nodeTags_, &api_nodeTags_n_);
         size_t *api_tetrahedra_; size_t api_tetrahedra_n_;
         size_t **api_domains_; size_t *api_domains_n_, api_domains_nn_;
         size_t **api_boundaries_; size_t *api_boundaries_n_, api_boundaries_nn_;

@@ -1789,7 +1789,7 @@ namespace gmsh { // Top-level functions
                                  const int tag,
                                  const bool refine,
                                  const std::vector<double> & coord,
-                                 const std::vector<int> & nodeTags);
+                                 const std::vector<std::size_t> & nodeTags);
 
       // gmsh::model::mesh::triangulate
       //
@@ -1854,7 +1854,7 @@ namespace gmsh { // Top-level functions
       GMSH_API void alphaShapesConstrained(const int dim,
                                            const int tag,
                                            const std::vector<double> & coord,
-                                           const std::vector<int> & nodeTags,
+                                           const std::vector<std::size_t> & nodeTags,
                                            const double alpha,
                                            const double meanValue,
                                            std::vector<std::size_t> & tetrahedra,

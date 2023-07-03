@@ -43,7 +43,7 @@ void constrainedAlphaShapes_(GModel* m,
                             const int dim, 
                             const int tag,
                             const std::vector<double>& coord, 
-                            const std::vector<int>& nodeTags,
+                            const std::vector<size_t>& nodeTags,
                             const double alpha, 
                             const double meanValue,
                             std::vector<size_t> &tetrahedra, 
@@ -52,9 +52,8 @@ void constrainedAlphaShapes_(GModel* m,
                             std::vector<size_t> &neigh,
                             double &hMean,
                             const std::vector<int> &controlTags);
-#endif
 
-void generateMesh_(const int dim, const int tag, const bool refine, const std::vector<double> &coord, const std::vector<int> &nodeTags);
+void generateMesh_(const int dim, const int tag, const bool refine, const std::vector<double> &coord, const std::vector<size_t> &nodeTags);
 
 void constrainedDelaunayRefinement_(const int dim, const int tag,
                                     const std::vector<size_t> &elementTags,
@@ -69,5 +68,6 @@ void constrainedDelaunayRefinement_(const int dim, const int tag,
                                     std::vector<size_t>& newElementsInRefinement);
 
 void alphaShape_entity(const int dim, const int tag, const double alpha, const std::vector<size_t>& nodeTags, const std::vector<double>& sizeAtNodes, std::vector<std::vector<size_t>>& elementTags, std::vector<std::vector<size_t>>& edges);
+#endif
 
 #endif

@@ -1577,7 +1577,7 @@ GMSH_API void gmshModelMeshGenerateMesh(const int dim,
                                         const int tag,
                                         const int refine,
                                         const double * coord, const size_t coord_n,
-                                        const int * nodeTags, const size_t nodeTags_n,
+                                        const size_t * nodeTags, const size_t nodeTags_n,
                                         int * ierr);
 
 /* Triangulate the points given in the `coord' vector as pairs of u, v
@@ -1636,7 +1636,7 @@ GMSH_API void gmshModelMeshTetNeighbors(const size_t * tetra, const size_t tetra
 GMSH_API void gmshModelMeshAlphaShapesConstrained(const int dim,
                                                   const int tag,
                                                   const double * coord, const size_t coord_n,
-                                                  const int * nodeTags, const size_t nodeTags_n,
+                                                  const size_t * nodeTags, const size_t nodeTags_n,
                                                   const double alpha,
                                                   const double meanValue,
                                                   size_t ** tetrahedra, size_t * tetrahedra_n,

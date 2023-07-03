@@ -7203,7 +7203,7 @@ module gmsh
       integer(c_int), value, intent(in) :: refine
       real(c_double), dimension(*) :: api_coord_
       integer(c_size_t), value, intent(in) :: api_coord_n_
-      integer(c_int), dimension(*) :: api_nodeTags_
+      integer(c_size_t), dimension(*) :: api_nodeTags_
       integer(c_size_t), value, intent(in) :: api_nodeTags_n_
       integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
@@ -7212,7 +7212,7 @@ module gmsh
     integer, intent(in) :: tag
     logical, intent(in) :: refine
     real(c_double), dimension(:), intent(in) :: coord
-    integer(c_int), dimension(:), intent(in) :: nodeTags
+    integer(c_size_t), dimension(:), intent(in) :: nodeTags
     integer(c_int), intent(out), optional :: ierr
     call C_API(dim=int(dim, c_int), &
          tag=int(tag, c_int), &
@@ -7220,7 +7220,7 @@ module gmsh
          api_coord_=coord, &
          api_coord_n_=size_gmsh_double(coord), &
          api_nodeTags_=nodeTags, &
-         api_nodeTags_n_=size_gmsh_int(nodeTags), &
+         api_nodeTags_n_=size_gmsh_size(nodeTags), &
          ierr_=ierr)
   end subroutine gmshModelMeshGenerateMesh
 
@@ -7497,7 +7497,7 @@ module gmsh
       integer(c_int), value, intent(in) :: tag
       real(c_double), dimension(*) :: api_coord_
       integer(c_size_t), value, intent(in) :: api_coord_n_
-      integer(c_int), dimension(*) :: api_nodeTags_
+      integer(c_size_t), dimension(*) :: api_nodeTags_
       integer(c_size_t), value, intent(in) :: api_nodeTags_n_
       real(c_double), value, intent(in) :: alpha
       real(c_double), value, intent(in) :: meanValue
@@ -7520,7 +7520,7 @@ module gmsh
     integer, intent(in) :: dim
     integer, intent(in) :: tag
     real(c_double), dimension(:), intent(in) :: coord
-    integer(c_int), dimension(:), intent(in) :: nodeTags
+    integer(c_size_t), dimension(:), intent(in) :: nodeTags
     real(c_double), intent(in) :: alpha
     real(c_double), intent(in) :: meanValue
     integer(c_size_t), dimension(:), allocatable, intent(out) :: tetrahedra
@@ -7545,7 +7545,7 @@ module gmsh
          api_coord_=coord, &
          api_coord_n_=size_gmsh_double(coord), &
          api_nodeTags_=nodeTags, &
-         api_nodeTags_n_=size_gmsh_int(nodeTags), &
+         api_nodeTags_n_=size_gmsh_size(nodeTags), &
          alpha=real(alpha, c_double), &
          meanValue=real(meanValue, c_double), &
          api_tetrahedra_=api_tetrahedra_, &

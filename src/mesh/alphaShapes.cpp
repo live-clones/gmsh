@@ -470,7 +470,7 @@ void constrainedAlphaShapes2D_(GModel* m,
                             const int dim, 
                             const int tag,
                             const std::vector<double>& coord,
-                            const std::vector<int>& nodeTags, 
+                            const std::vector<size_t>& nodeTags, 
                             const double alpha, 
                             const double meanValue,
                             std::vector<size_t> &triangles, 
@@ -579,7 +579,7 @@ void constrainedAlphaShapes2D_(GModel* m,
 
 }
 
-void generateMesh3D_(const std::vector<double>& coord, const std::vector<int>& nodeTags){
+void generateMesh3D_(const std::vector<double>& coord, const std::vector<size_t>& nodeTags){
   GModel *m = GModel::current();
   
   /* initialize hxt mesh */
@@ -679,7 +679,7 @@ void generateMesh3D_(const std::vector<double>& coord, const std::vector<int>& n
 void constrainedAlphaShapes3D_(GModel* m,  
                             const int dim,
                             const std::vector<double>& coord, 
-                            const std::vector<int>& nodeTags,           
+                            const std::vector<size_t>& nodeTags,           
                             const double alpha, 
                             const double meanValue,
                             std::vector<size_t> &tetrahedra, 
@@ -832,7 +832,7 @@ void constrainedAlphaShapes_(GModel* m,
                             const int dim, 
                             const int tag,
                             const std::vector<double>& coord,
-                            const std::vector<int>& nodeTags, 
+                            const std::vector<size_t>& nodeTags, 
                             const double alpha, 
                             const double meanValue,
                             std::vector<size_t> &tetrahedra, 
@@ -881,7 +881,7 @@ void print4debug(PolyMesh* pm, const int debugTag)
     printf("wrote mesh polyMesh%d.pos\n", debugTag);
   }
 
-void generateMesh_(const int dim, const int tag, const bool refine, const std::vector<double> &coord, const std::vector<int> &nodeTags){
+void generateMesh_(const int dim, const int tag, const bool refine, const std::vector<double> &coord, const std::vector<size_t> &nodeTags){
   // -----------------  1D ------------------------------
   std::vector<double> pCoord;
   gmsh::model::getParametrization(dim, tag, coord, pCoord);
@@ -1348,6 +1348,10 @@ void constrainedDelaunayRefinement_(const int dim, const int tag,
       }
     }
 
+    for(size_t ed=0; ed<pm->hedges.size(); ed++){
+      printf("data : %lu %d \n", ed, pm->hedges[ed]->data);
+    }
+
     // Get and color the constrained half edges : the ones inside the domain get data 0
     for (size_t ed=0; ed < constrainedEdges.size(); ed+=2){
         PolyMesh::Vertex* v0 = findVertex(pm, constrainedEdges[ed]);
@@ -1355,6 +1359,11 @@ void constrainedDelaunayRefinement_(const int dim, const int tag,
         PolyMesh::HalfEdge* he = pm->getEdgeWithBnd(v0, v1);
         he->data = 0; 
     }
+    
+    for(size_t ed=0; ed<pm->hedges.size(); ed++){
+      printf("data : %lu %d \n", ed, pm->hedges[ed]->data);
+    }
+
     // also constrain the boundary edges : they get the tag of the bounding edge they belong to
     for (auto he : pm->hedges){
       if (!he->opposite){
@@ -1366,7 +1375,6 @@ void constrainedDelaunayRefinement_(const int dim, const int tag,
         }
       }
     }
-
     // Change the data of each vertex to its index in the list, and keep track of the nodetags 
     std::unordered_map<int, double> v2sizeAtNodes;
     std::vector<int> i2g;

@@ -4360,13 +4360,13 @@ Types:
  - `tag`: integer
  - `refine`: boolean
  - `coord`: vector of doubles
- - `nodeTags`: vector of integers
+ - `nodeTags`: vector of sizes
 """
 function generateMesh(dim, tag, refine, coord, nodeTags)
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGenerateMesh, gmsh.lib), Cvoid,
-          (Cint, Cint, Cint, Ptr{Cdouble}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Cint}),
-          dim, tag, refine, convert(Vector{Cdouble}, coord), length(coord), convert(Vector{Cint}, nodeTags), length(nodeTags), ierr)
+          (Cint, Cint, Cint, Ptr{Cdouble}, Csize_t, Ptr{Csize_t}, Csize_t, Ptr{Cint}),
+          dim, tag, refine, convert(Vector{Cdouble}, coord), length(coord), convert(Vector{Csize_t}, nodeTags), length(nodeTags), ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
@@ -4523,7 +4523,7 @@ Types:
  - `dim`: integer
  - `tag`: integer
  - `coord`: vector of doubles
- - `nodeTags`: vector of integers
+ - `nodeTags`: vector of sizes
  - `alpha`: double
  - `meanValue`: double
  - `tetrahedra`: vector of sizes
@@ -4547,8 +4547,8 @@ function alphaShapesConstrained(dim, tag, coord, nodeTags, alpha, meanValue, con
     api_hMean_ = Ref{Cdouble}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshAlphaShapesConstrained, gmsh.lib), Cvoid,
-          (Cint, Cint, Ptr{Cdouble}, Csize_t, Ptr{Cint}, Csize_t, Cdouble, Cdouble, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Csize_t}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Csize_t}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cdouble}, Ptr{Cint}, Csize_t, Ptr{Cint}),
-          dim, tag, convert(Vector{Cdouble}, coord), length(coord), convert(Vector{Cint}, nodeTags), length(nodeTags), alpha, meanValue, api_tetrahedra_, api_tetrahedra_n_, api_domains_, api_domains_n_, api_domains_nn_, api_boundaries_, api_boundaries_n_, api_boundaries_nn_, api_neighbors_, api_neighbors_n_, api_hMean_, convert(Vector{Cint}, controlTags), length(controlTags), ierr)
+          (Cint, Cint, Ptr{Cdouble}, Csize_t, Ptr{Csize_t}, Csize_t, Cdouble, Cdouble, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Csize_t}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Csize_t}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cdouble}, Ptr{Cint}, Csize_t, Ptr{Cint}),
+          dim, tag, convert(Vector{Cdouble}, coord), length(coord), convert(Vector{Csize_t}, nodeTags), length(nodeTags), alpha, meanValue, api_tetrahedra_, api_tetrahedra_n_, api_domains_, api_domains_n_, api_domains_nn_, api_boundaries_, api_boundaries_n_, api_boundaries_nn_, api_neighbors_, api_neighbors_n_, api_hMean_, convert(Vector{Cint}, controlTags), length(controlTags), ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     tetrahedra = unsafe_wrap(Array, api_tetrahedra_[], api_tetrahedra_n_[], own = true)
     tmp_api_domains_ = unsafe_wrap(Array, api_domains_[], api_domains_nn_[], own = true)
