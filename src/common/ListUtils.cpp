@@ -79,11 +79,11 @@ void List_Realloc(List_T *liste, int n)
     // liste->nmax = ((n - 1) / liste->incr + 1) * liste->incr;
     // So this is much better
     liste->nmax = n;
-    liste->array = (char *)Malloc(liste->nmax * liste->size);
+    liste->array = (char *)Malloc((size_t)liste->nmax * liste->size);
   }
   else if(n > liste->nmax) {
     liste->nmax = ((n - 1) / liste->incr + 1) * liste->incr;
-    liste->array = (char *)Realloc(liste->array, liste->nmax * liste->size);
+    liste->array = (char *)Realloc(liste->array, (size_t)liste->nmax * liste->size);
   }
 }
 
@@ -94,7 +94,7 @@ void List_Add(List_T *liste, void *data)
 
   List_Realloc(liste, liste->n);
   liste->isorder = 0;
-  memcpy(&liste->array[(liste->n - 1) * liste->size], data, liste->size);
+  memcpy(&liste->array[(size_t)liste->size * (liste->n - 1)], data, liste->size);
 }
 
 void List_Add(List_T *liste, int data)
@@ -114,7 +114,7 @@ void List_Read(List_T *liste, int index, void *data)
     Msg::Error("Wrong list index (read)");
     index = 0;
   }
-  memcpy(data, &liste->array[index * liste->size], liste->size);
+  memcpy(data, &liste->array[(size_t)index * liste->size], liste->size);
 }
 
 void List_Write(List_T *liste, int index, void *data)
@@ -123,7 +123,7 @@ void List_Write(List_T *liste, int index, void *data)
     Msg::Error("Wrong list index (write)");
   else {
     liste->isorder = 0;
-    memcpy(&liste->array[index * liste->size], data, liste->size);
+    memcpy(&liste->array[(size_t)index * liste->size], data, liste->size);
   }
 }
 
@@ -156,7 +156,7 @@ void *List_Pointer(List_T *liste, int index)
     index = 0;
   }
   liste->isorder = 0;
-  return (&liste->array[index * liste->size]);
+  return (&liste->array[(size_t)index * liste->size]);
 }
 
 void *List_Pointer_NoChange(List_T *liste, int index)
@@ -165,12 +165,12 @@ void *List_Pointer_NoChange(List_T *liste, int index)
     Msg::Error("Wrong list index (pointer)");
     index = 0;
   }
-  return (&liste->array[index * liste->size]);
+  return (&liste->array[(size_t)index * liste->size]);
 }
 
 void *List_Pointer_Fast(List_T *liste, int index)
 {
-  return (&liste->array[index * liste->size]);
+  return (&liste->array[(size_t)index * liste->size]);
 }
 
 void List_Sort(List_T *liste, int (*fcmp)(const void *a, const void *b))
@@ -240,8 +240,8 @@ int List_Suppress(List_T *liste, void *data,
   char *ptr = (char *)List_PQuery(liste, data, fcmp);
   if(ptr == nullptr) return (0);
   liste->n--;
-  int len = liste->n - (((intptr_t)ptr - (intptr_t)liste->array) / liste->size);
-  if(len > 0) memmove(ptr, ptr + liste->size, len * liste->size);
+  size_t len = liste->n - (((intptr_t)ptr - (intptr_t)liste->array) / liste->size);
+  if(len > 0) memmove(ptr, ptr + liste->size, (size_t)len * liste->size);
   return (1);
 }
 
@@ -251,8 +251,8 @@ int List_PSuppress(List_T *liste, int index)
   char *ptr = (char *)List_Pointer_NoChange(liste, index);
   if(ptr == nullptr) return (0);
   liste->n--;
-  int len = liste->n - (((intptr_t)ptr - (intptr_t)liste->array) / liste->size);
-  if(len > 0) memmove(ptr, ptr + liste->size, len * liste->size);
+  size_t len = liste->n - (((intptr_t)ptr - (intptr_t)liste->array) / liste->size);
+  if(len > 0) memmove(ptr, ptr + liste->size, (size_t)len * liste->size);
   return (1);
 }
 
@@ -293,8 +293,8 @@ void List_Copy(List_T *a, List_T *b)
 void List_Remove(List_T *a, int i)
 {
   if(!a) return;
-  memcpy(&a->array[i * a->size], &a->array[(i + 1) * a->size],
-         a->size * (a->n - i - 1));
+  memcpy(&a->array[(size_t)i * a->size], &a->array[(size_t)(i + 1) * a->size],
+         (size_t)a->size * (a->n - i - 1));
   a->n--;
 }
 

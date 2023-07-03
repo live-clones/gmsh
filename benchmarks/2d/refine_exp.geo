@@ -11,7 +11,7 @@ Plane Surface(6) = {5};
 
 // computes the distance to point 1
 Field[1] = Distance;
-Field[1].NodesList = {1};
+Field[1].PointsList = {1};
 
 // computes a function of the value computed by field 1 ("F1")
 Field[2] = MathEval;
@@ -19,4 +19,3 @@ Field[2].F = "Exp(-7*(1-F1))";
 
 // applies field 2 as background mesh
 Background Field = 2;
-

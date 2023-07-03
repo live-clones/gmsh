@@ -15,6 +15,6 @@ Field[1].SizeFar = 0.1;
 Field[1].Size = 0.005;
 Field[1].Thickness = 0.1;
 Field[1].Ratio = 1.4;
-Field[1].NodesList = {8, 9};
+Field[1].PointsList = {8, 9};
 
 BoundaryLayer Field = 1;

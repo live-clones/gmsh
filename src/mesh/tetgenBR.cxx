@@ -17333,7 +17333,7 @@ void tetgenmesh::jettisonnodes()
   point pointloop;
   bool jetflag;
   int oldidx, newidx;
-  int remcount;
+  //int remcount;
 
   if (!b->quiet) {
     printf("Jettisoning redundant points.\n");
@@ -17342,14 +17342,14 @@ void tetgenmesh::jettisonnodes()
   points->traversalinit();
   pointloop = pointtraverse();
   oldidx = newidx = 0; // in->firstnumber;
-  remcount = 0;
+  //remcount = 0;
   while (pointloop != (point) NULL) {
     jetflag = (pointtype(pointloop) == DUPLICATEDVERTEX) ||
       (pointtype(pointloop) == UNUSEDVERTEX);
     if (jetflag) {
       // It is a duplicated or unused point, delete it.
       pointdealloc(pointloop);
-      remcount++;
+      //remcount++;
     } else {
       // Re-index it.
       setpointmark(pointloop, newidx + in->firstnumber);

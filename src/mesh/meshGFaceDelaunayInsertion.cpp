@@ -1048,14 +1048,14 @@ void bowyerWatson(GFace *gf, int MAXPNT,
   }
 
   int ITER = 0;
-  int NBDELETED = 0;
+  //int NBDELETED = 0;
   while(1) {
     MTri3 *worst = *AllTris.begin();
     if(worst->isDeleted()) {
       delete worst->tri();
       delete worst;
       AllTris.erase(AllTris.begin());
-      NBDELETED++;
+      //NBDELETED++;
     }
     else {
       if(ITER++ % 5000 == 0) {
@@ -1319,9 +1319,9 @@ void bowyerWatsonFrontal(GFace *gf, std::map<MVertex *, MVertex *> *equivalence,
 
 
   // insert points
-  int ITERATION = 0;
+  //int ITERATION = 0;
   while(1) {
-    ++ITERATION;
+    //++ITERATION;
     // if(ITERATION % 1 == 0 && Msg::GetVerbosity() == 99){
     //   char name[245];
     //   sprintf(name,"delFrontal_GFace_%d_Layer_%d.pos",gf->tag(),ITERATION);

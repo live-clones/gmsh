@@ -74,6 +74,11 @@ static Fl_Menu_Item menu_surface_display[] = {
   {"Solid", 0, nullptr, nullptr},
   {nullptr}};
 
+static Fl_Menu_Item menu_volume_display[] = {
+  {"Sphere", 0, nullptr, nullptr},
+  {"Diamond", 0, nullptr, nullptr},
+  {nullptr}};
+
 static Fl_Menu_Item menu_axes_mode[] = {{"None", 0, nullptr, nullptr},
                                         {"Simple axes", 0, nullptr, nullptr},
                                         {"Box", 0, nullptr, nullptr},
@@ -505,6 +510,7 @@ static void geometry_options_ok_cb(Fl_Widget *w, void *data)
   opt_geometry_surface_type(0, GMSH_SET, o->geo.choice[2]->value());
   opt_geometry_transform(0, GMSH_SET, o->geo.choice[3]->value());
   opt_geometry_label_type(0, GMSH_SET, o->geo.choice[4]->value());
+  opt_geometry_volume_type(0, GMSH_SET, o->geo.choice[5]->value());
 
 #if defined(HAVE_TOUCHBAR)
   updateTouchBar();
@@ -2347,6 +2353,13 @@ optionWindow::optionWindow(int deltaFontSize)
       geo.choice[2]->align(FL_ALIGN_RIGHT);
       geo.choice[2]->callback(geometry_options_ok_cb);
 
+      geo.choice[5] =
+        new Fl_Choice(L + 2 * WB, 2 * WB + 9 * BH, IW, BH, "Volume display");
+      geo.choice[5]->tooltip("Geometry.VolumeType");
+      geo.choice[5]->menu(menu_volume_display);
+      geo.choice[5]->align(FL_ALIGN_RIGHT);
+      geo.choice[5]->callback(geometry_options_ok_cb);
+
       o->end();
     }
     {
@@ -3723,7 +3736,8 @@ optionWindow::optionWindow(int deltaFontSize)
         {"Eigenvectors", 0, nullptr, nullptr},
         {"Ellipse", 0, nullptr, nullptr},
         {"Ellipsoid", 0, nullptr, nullptr},
-        {"Frame", 0, nullptr, nullptr},
+        {"Frame (box)", 0, nullptr, nullptr},
+        {"Frame (vectors)", 0, nullptr, nullptr},
         {nullptr}};
       view.choice[4] =
         new Fl_Choice(L + 2 * WB, 2 * WB + 11 * BH, IW, BH, "Tensor display");

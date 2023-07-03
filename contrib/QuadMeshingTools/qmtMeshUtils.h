@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 //
 // Author: Maxence Reberol
 
@@ -47,7 +47,7 @@ struct GFaceMeshPatch {
   GFace* gf = nullptr;
   /* bdrVertices are the ordered boundary loops, there is only one
    * if patch is a topological disk */
-  std::vector<std::vector<MVertex*> > bdrVertices; 
+  std::vector<std::vector<MVertex*> > bdrVertices;
   std::vector<MVertex*> intVertices; /* interior free vertices */
   std::vector<MVertex*> embVertices; /* fixed vertices inside patch */
   std::vector<MElement*> elements;
@@ -64,7 +64,7 @@ void sicnQuality(const GFaceMeshPatch& patch, double& sicnMin, double& sicnAvg);
 
 bool patchIsTopologicallyValid(const GFaceMeshPatch& patch);
 
-bool getConnectedComponents(const std::vector<MElement*>& elements, 
+bool getConnectedComponents(const std::vector<MElement*>& elements,
     std::vector<std::vector<MElement*> >& components);
 
 bool setVertexGFaceUV(GFace* gf, MVertex* v, double uv[2]);
@@ -105,7 +105,7 @@ bool fillGFaceInfo(GFace* gf, GFaceInfo& info);
 bool isTopologicalDisk(const GFaceInfo& info);
 bool haveConcaveCorners(const GFaceInfo& info);
 
-bool faceOrderedSideLoops(GFace* gf, const GFaceInfo& info, 
+bool faceOrderedSideLoops(GFace* gf, const GFaceInfo& info,
     std::vector<std::vector<std::vector<std::pair<GEdge*,bool> > > >& loopSideEdgesAndInv);
 
 bool appendCADStatistics(GModel* gm, std::unordered_map<std::string,double>& stats, const std::string& prefix = "CAD_");
@@ -129,7 +129,7 @@ struct GFaceMeshDiff {
   GFaceMeshPatch before;
   GFaceMeshPatch after;
   bool done = false;
-  
+
   /**
    * @brief Update the GFace with the new vertices/elements
    *        and remove/delete the old ones.
@@ -144,7 +144,7 @@ struct GFaceMeshDiff {
    * @brief Destructor, delete/remove the new or old components
    *        depending on the value of the variable done.
    */
-  ~GFaceMeshDiff(); 
+  ~GFaceMeshDiff();
 };
 
 
@@ -162,4 +162,3 @@ struct PatchGeometryBackup {
   PatchGeometryBackup(GFaceMeshPatch& p, bool includeBoundary = false);
   bool restore();
 };
-

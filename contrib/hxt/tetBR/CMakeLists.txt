@@ -22,6 +22,8 @@ set(HXT_TETBR_SRC
     "${CMAKE_CURRENT_SOURCE_DIR}/src/hxt_boundary_recovery.cxx"
     "${CMAKE_CURRENT_SOURCE_DIR}/include/hxt_boundary_recovery.h")
 
+add_definitions(-DHXT_WITHOUT_GMSH)
+
 if(HXT_TETBR_OBJECT_ONLY)
 	add_library(hxt_tetBR OBJECT ${HXT_TETBR_SRC})
 else()

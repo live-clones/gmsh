@@ -32,10 +32,10 @@ Pierre-Alexandre Beaufort (HXT/reparam), Zhidong Han (LSDYNA export), Ismail
 Badia (hierarchical basis functions), Jeremy Theler (X3D export), Thomas
 Toulorge (high order mesh optimizer, new CGNS IO), Max Orok (binary PLY), Marek
 Wojciechowski (PyPi packaging), Maxence Reberol (automatic transfinite, quad
-meshing tools), Michael Ermakov (Gambit export, Fortran API, TransfiniteTri),
-Alex Krasner (X3D export), Giannis Nikiteas (Fortran API), Paul Sharp (Radioss
-export). See comments in the sources for more information. If we forgot to list
-your contributions please send us an email!
+meshing tools), Michael Ermakov (Gambit export, Fortran API, TransfiniteTri,
+boundary layer fans), Alex Krasner (X3D export), Giannis Nikiteas (Fortran API),
+Paul Sharp (Radioss export). See comments in the sources for more
+information. If we forgot to list your contributions please send us an email!
 
 Thanks to the following folks who have contributed by providing fresh ideas on
 theoretical or programming topics, who have sent patches, requests for changes
@@ -60,7 +60,8 @@ Bruens, Luca Verzeroli, Tristan Seidlhofer, Ding Jiaming, Joost Gevaert, Marcus
 Calhoun-Lopez, Michel Zou, Sir Sunsheep, Mariano Forti, Walter Steffe, Nico
 Schloemer, Simon Tournier, Alexandru Dadalau, Thomas Ulrich, Matthias Diener,
 Jamie Border; Kenneth Jansen; Steven Masfaraud; Sai Sumanth Moturu; Arie
-Westland; Andreas Farley; Mahesh Madhav.
+Westland; Andreas Farley; Mahesh Madhav; Zoltan Csati; Christophe Bourcier;
+Mattéo Couplet, Mahesh Madhav.
 
 Special thanks to Bill Spitzak, Michael Sweet, Matthias Melcher, Greg Ercolano
 and others for the Fast Light Tool Kit on which Gmsh's GUI is based. See
@@ -159,7 +160,7 @@ licensed under the MIT License.
 In addition, this version of Gmsh may contain the following contributed,
 optional codes in the contrib/ directory, each governed by their own license:
 
-* contrib/ANN copyright (C) 1997-2005 University of Maryland and Sunil Arya and
+* contrib/ANN copyright (C) 1997-2010 University of Maryland and Sunil Arya and
   David Mount;
 
 * contrib/gmm copyright (C) 2002-2008 Yves Renard;

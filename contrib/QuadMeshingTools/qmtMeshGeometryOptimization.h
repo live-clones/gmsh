@@ -1,13 +1,14 @@
 // Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 //
 // Author: Maxence Reberol
 
 #pragma once
 
 #include <float.h>
+#include <cstdint>
 #include "qmtMeshUtils.h"
 
 class SurfaceProjector;
@@ -36,14 +37,14 @@ struct GeomOptimStats {
  *        maximum principle.
  *        Not always applicable: if no param, if the patch contains a CAD uv singularity
  *
- * @param[in,out] patch The mesh patch to smooth. The new positions and uv are directly updated 
+ * @param[in,out] patch The mesh patch to smooth. The new positions and uv are directly updated
  *                      in the MVertex instances.
  * @param[out] stats Some statistics on the smoothing
  *
  * @return 0 if success
  */
 int patchOptimizeGeometryGlobal(
-    GFaceMeshPatch& patch, 
+    GFaceMeshPatch& patch,
     GeomOptimStats& stats);
 
 /**
@@ -84,7 +85,7 @@ struct GeomOptimOptions {
  *        The patch boundary is fixed.
  *        Require a parametrization on the face.
  *
- * @param[in,out] patch The mesh patch to smooth. The new positions and uv are directly updated 
+ * @param[in,out] patch The mesh patch to smooth. The new positions and uv are directly updated
  *                      in the MVertex instances.
  * @param[in] opt The optimization parameters
  * @param[out] stats Some statistics on the smoothing
@@ -92,7 +93,7 @@ struct GeomOptimOptions {
  * @return true if success
  */
 bool patchOptimizeGeometryWithKernel(
-    GFaceMeshPatch& patch, 
+    GFaceMeshPatch& patch,
     const GeomOptimOptions& opt,
     GeomOptimStats& stats);
 
@@ -155,8 +156,8 @@ class GeometryOptimizer {
     bool initialize(GFaceMeshPatch& patch, SurfaceProjector* sp = nullptr);
 
     bool smoothWithKernel(
-        SmoothingKernel kernelRegular, 
-        SmoothingKernel kernelIrregular, 
+        SmoothingKernel kernelRegular,
+        SmoothingKernel kernelIrregular,
         double timeMax = DBL_MAX,
         int iterMax = 1000,
         double withBackup = false,

@@ -77,6 +77,11 @@ static void scriptAddCommand(const std::string &text,
           Msg::Error("Unable to open file '%s'", newFileName.c_str());
           return;
         }
+        if(ext == ".stp" || ext == ".STP" || ext == ".step" || ext == ".STEP" ||
+           ext == ".igs" || ext == ".IGS" || ext == ".iges" || ext == ".IGES" ||
+           ext == ".brep" || ext == ".BREP") {
+          fprintf(fp, "SetFactory(\"OpenCASCADE\");\n");
+        }
         fprintf(fp, "Merge \"%s\";\n//+\n%s\n", (split[1] + split[2]).c_str(),
                 text.c_str());
         fclose(fp);

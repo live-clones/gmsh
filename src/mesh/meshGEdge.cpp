@@ -223,7 +223,7 @@ struct F_Transfinite {
         break;
       }
       default:
-        Msg::Warning("Unknown case in Transfinite Line mesh");
+        Msg::Warning("Unknown case in Transfinite curve mesh");
         val = 1.;
         break;
       }

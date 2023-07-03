@@ -87,6 +87,7 @@
 #include <STEPControl_Reader.hxx>
 #include <STEPControl_Writer.hxx>
 #include <ShapeBuild_ReShape.hxx>
+#include <ShapeExtend_WireData.hxx>
 #include <ShapeFix_FixSmallFace.hxx>
 #include <ShapeFix_Shape.hxx>
 #include <ShapeFix_Wireframe.hxx>
@@ -928,8 +929,8 @@ bool OCC_Internals::addLine(int &tag, const std::vector<int> &pointTags)
   return false;
 }
 
-bool OCC_Internals::addCircleArc(int &tag, int startTag, int centerTag,
-                                 int endTag)
+bool OCC_Internals::addCircleArc(int &tag, int startTag, int middleTag,
+                                 int endTag, bool center)
 {
   if(tag >= 0 && _tagEdge.IsBound(tag)) {
     Msg::Error("OpenCASCADE curve with tag %d already exists", tag);
@@ -939,8 +940,8 @@ bool OCC_Internals::addCircleArc(int &tag, int startTag, int centerTag,
     Msg::Error("Unknown OpenCASCADE point with tag %d", startTag);
     return false;
   }
-  if(!_tagVertex.IsBound(centerTag)) {
-    Msg::Error("Unknown OpenCASCADE point with tag %d", centerTag);
+  if(!_tagVertex.IsBound(middleTag)) {
+    Msg::Error("Unknown OpenCASCADE point with tag %d", middleTag);
     return false;
   }
   if(!_tagVertex.IsBound(endTag)) {
@@ -950,12 +951,11 @@ bool OCC_Internals::addCircleArc(int &tag, int startTag, int centerTag,
 
   TopoDS_Edge result;
   TopoDS_Vertex start = TopoDS::Vertex(_tagVertex.Find(startTag));
-  TopoDS_Vertex center = TopoDS::Vertex(_tagVertex.Find(centerTag));
+  TopoDS_Vertex middle = TopoDS::Vertex(_tagVertex.Find(middleTag));
   TopoDS_Vertex end = TopoDS::Vertex(_tagVertex.Find(endTag));
   gp_Pnt aP1 = BRep_Tool::Pnt(start);
-  gp_Pnt aP2 = BRep_Tool::Pnt(center);
+  gp_Pnt aP2 = BRep_Tool::Pnt(middle);
   gp_Pnt aP3 = BRep_Tool::Pnt(end);
-  Standard_Real Radius = aP1.Distance(aP2);
 
   gp_Pln p;
   try {
@@ -968,17 +968,34 @@ bool OCC_Internals::addCircleArc(int &tag, int startTag, int centerTag,
   }
 
   try {
-    gce_MakeCirc MC(aP2, p, Radius);
-    if(!MC.IsDone()) {
-      Msg::Error("Could not build circle");
-      return false;
+    gp_Circ Circ;
+    if(center) {
+      Standard_Real Radius = aP1.Distance(aP2);
+      gce_MakeCirc MC(aP2, p, Radius);
+      if(!MC.IsDone()) {
+        Msg::Error("Could not build circle using two points and center");
+        return false;
+      }
+      Circ = MC.Value();
     }
-    const gp_Circ &Circ = MC.Value();
+    else {
+      gce_MakeCirc MC(aP1, aP2, aP3);
+      if(!MC.IsDone()) {
+        Msg::Error("Could not build circle through three points");
+        return false;
+      }
+      Circ = MC.Value();
+    }
+    Handle(Geom_Circle) C = new Geom_Circle(Circ);
     Standard_Real Alpha1 = ElCLib::Parameter(Circ, aP1);
     Standard_Real Alpha2 = ElCLib::Parameter(Circ, aP3);
-    Handle(Geom_Circle) C = new Geom_Circle(Circ);
+    bool Sense = false;
+    if(!center) {
+      Standard_Real AlphaC = ElCLib::Parameter(Circ, aP2);
+      if(AlphaC > Alpha1 && AlphaC < Alpha2) Sense = true;
+    }
     Handle(Geom_TrimmedCurve) arc =
-      new Geom_TrimmedCurve(C, Alpha1, Alpha2, false);
+      new Geom_TrimmedCurve(C, Alpha1, Alpha2, Sense);
     BRepBuilderAPI_MakeEdge e(arc, start, end);
     e.Build();
     if(!e.IsDone()) {
@@ -1038,7 +1055,8 @@ bool OCC_Internals::addEllipseArc(int &tag, int startTag, int centerTag,
     else if(!u.IsParallel(x2, 1e-6))
       v = x2 - x2.Dot(u.XYZ()) * u.XYZ();
     else {
-      Msg::Error("The points do not define an ellipse");
+      Msg::Error("Cannot create ellipse arc with start and end point on the "
+                 "major axis");
       return false;
     }
     Standard_Real x1u = Square(x1.Dot(u.XYZ()));
@@ -1046,13 +1064,14 @@ bool OCC_Internals::addEllipseArc(int &tag, int startTag, int centerTag,
     Standard_Real x2u = Square(x2.Dot(u.XYZ()));
     Standard_Real x2v = Square(x2.Dot(v.XYZ()));
     if(IsEqual(x1u, x2u) || IsEqual(x1v, x2v)) {
-      Msg::Error("The points do not define an ellipse");
+      Msg::Error("Cannot create ellipse arc with start and end point symmetric "
+                 "with respect to major or minor axis");
       return false;
     }
     Standard_Real a2 = (x1v * x2u - x1u * x2v) / (x1v - x2v);
     Standard_Real b2 = (x1u * x2v - x1v * x2u) / (x1u - x2u);
     if(a2 <= 0.0 || b2 <= 0.0) {
-      Msg::Error("The points do not define an ellipse");
+      Msg::Error("Invalid radii during creation of ellipse arc");
       return false;
     }
     Standard_Real a; // major radius
@@ -1554,11 +1573,14 @@ bool OCC_Internals::addWire(int &tag, const std::vector<int> &curveTags,
   try {
     BRepBuilderAPI_MakeWire w;
     TopoDS_Wire wire;
+    bool reversed = false;
     for(std::size_t i = 0; i < curveTags.size(); i++) {
-      // all curve tags are > 0 for OCC : but to improve compatibility between
-      // GEO and OCC factories, we allow negative tags - and simply ignore the
-      // sign here
+      // all curve tags are > 0 for OCC, and the orientation of the wire is
+      // dictated by the orientation of the first curve in the wire; to improve
+      // compatibility between GEO and OCC factories, if the first curve has a
+      // negative tag, we reverse the wire
       int t = std::abs(curveTags[i]);
+      if(i == 0 && curveTags[i] < 0) reversed = true;
       if(!_tagEdge.IsBound(t)) {
         Msg::Error("Unknown OpenCASCADE curve with tag %d", t);
         return false;
@@ -1577,6 +1599,13 @@ bool OCC_Internals::addWire(int &tag, const std::vector<int> &curveTags,
       return false;
     }
     if(tag < 0) tag = getMaxTag(-1) + 1;
+    if(reversed) {
+      Msg::Debug("Reversing wire %d because its first curve was provided "
+                 "with a negative tag", tag);
+      ShapeExtend_WireData sw(wire);
+      sw.Reverse();
+      wire = sw.Wire();
+    }
     _bind(wire, tag, true);
   } catch(Standard_Failure &err) {
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
@@ -4208,24 +4237,25 @@ static void setShapeAttributes(OCCAttributesRTree *attributes,
     phys += TCollection_AsciiString(name).ToCString();
   }
 
-  TopLoc_Location partLoc = loc;
-  Handle(XCAFDoc_Location) l;
-  if(label.FindAttribute(XCAFDoc_Location::GetID(), l)) {
-    if(isRef)
-      partLoc = partLoc * l->Get();
-    else
-      partLoc = l->Get();
-  }
+  TopLoc_Location partLoc = loc * shapeTool->GetLocation(label);
 
   TDF_Label ref;
   if(shapeTool->IsReference(label) && shapeTool->GetReferredShape(label, ref)) {
     setShapeAttributes(attributes, shapeTool, colorTool, materialTool, ref,
                        partLoc, phys, true);
   }
-
-  if(shapeTool->IsSimpleShape(label) && (isRef || shapeTool->IsFree(label))) {
+  else if(shapeTool->IsSimpleShape(label) && (isRef || shapeTool->IsFree(label))) {
     TopoDS_Shape shape = shapeTool->GetShape(label);
     shape.Location(isRef ? loc : partLoc);
+
+#if 0
+    // this is necessary for endcaps.stp (cf. #693), but has a big performance
+    // hit on STEP files with lots of references -- leaving out until we
+    // understand why it's necessary: there should be a better way ;-)
+    if(isRef && !loc.IsIdentity() && loc != shapeTool->GetLocation(label))
+      shapeTool->SetShape(label, shape);
+#endif
+
     int dim =
       (shape.ShapeType() == TopAbs_VERTEX) ? 0 :
       (shape.ShapeType() == TopAbs_EDGE || shape.ShapeType() == TopAbs_WIRE) ?
@@ -4243,7 +4273,7 @@ static void setShapeAttributes(OCCAttributesRTree *attributes,
                                  matDensName, matDensValType)) {
       if(!phys.empty()) phys += " & ";
       phys += matName->ToCString();
-      Msg::Info(" - Label & material '%s' (%dD)", phys.c_str());
+      Msg::Info(" - Label & material '%s' (%dD)", phys.c_str(), dim);
     }
     else if(phys.size()) {
       Msg::Info(" - Label '%s' (%dD)", phys.c_str(), dim);
@@ -4304,7 +4334,7 @@ static void setShapeAttributes(OCCAttributesRTree *attributes,
   else {
     for(TDF_ChildIterator it(label); it.More(); it.Next()) {
       setShapeAttributes(attributes, shapeTool, colorTool, materialTool,
-                         it.Value(), partLoc, phys, isRef);
+                         it.Value(), partLoc, phys, false);
     }
   }
 }

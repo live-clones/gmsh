@@ -124,28 +124,85 @@ int GModel::writeRAD(const std::string &name, int saveAll,
   if(saveGroupsOfNodes & 0x2) {
     for(int dim = 0; dim <= 3; dim++) {
       if(saveAll & (0x2 << (2 * dim))) continue; // elements are ignored
-      for(auto it = groups[dim].begin(); it != groups[dim].end(); it++) {
-        std::vector<GEntity *> &entities = it->second;
-        int n = 0;
-        for(std::size_t i = 0; i < entities.size(); i++) {
-          for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
-            MElement *e = entities[i]->getMeshElement(j);
-            if(!n) {
-              const char *str = (e->getDim() == 3) ? "SOLID" :
-                                (e->getDim() == 2) ? "SHELL" :
-                                (e->getDim() == 1) ? "BEAM" :
-                                                     "NODE";
-              fprintf(fp, "*SET_%s_LIST\n$# %s\n%d", str,
-                      physicalName(this, dim, it->first).c_str(), ++setid);
+      if(dim == 2) { // Handle SH3N elements
+        for(auto it = groups[dim].begin(); it != groups[dim].end(); it++) {
+          std::vector<GEntity *> &entities = it->second;
+          if(entities.empty()) continue; // Skip empty sets
+          int n = 0;
+          for(std::size_t i = 0; i < entities.size(); i++) {
+            for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
+              MElement *e = entities[i]->getMeshElement(j);
+              if(e->getNumVertices() == 3) { // Process only SH3N elements (3 vertices)
+                if(!n) {
+                  fprintf(fp, "/GRSH3N/SH3N/%d\n%s", ++setid, physicalName(this, dim, it->first).c_str());
+                }
+                if(!(n % 8))
+                  fprintf(fp, "\n%10ld", e->getNum());
+                else
+                  fprintf(fp, "%10ld", e->getNum());
+                n++;
+              }
             }
-            if(!(n % 8))
-              fprintf(fp, "\n%lu", e->getNum());
-            else
-              fprintf(fp, ", %lu", e->getNum());
-            n++;
           }
+          if(n) fprintf(fp, "\n");
         }
-        if(n) fprintf(fp, "\n");
+      }
+    }
+  }
+  if(saveGroupsOfNodes & 0x2) {
+    for(int dim = 0; dim <= 3; dim++) {
+      if(saveAll & (0x2 << (2 * dim))) continue; // elements are ignored
+      if(dim == 2) { // Handle SHEL elements
+        for(auto it = groups[dim].begin(); it != groups[dim].end(); it++) {
+          std::vector<GEntity *> &entities = it->second;
+          if(entities.empty()) continue; // Skip empty sets
+          int n = 0;
+          for(std::size_t i = 0; i < entities.size(); i++) {
+            for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
+              MElement *e = entities[i]->getMeshElement(j);
+              if(e->getNumVertices() == 4) { // Process only SHEL elements (4 vertices)
+                if(!n) {
+                  fprintf(fp, "/GRSHEL/SHEL/%d\n%s", ++setid, physicalName(this, dim, it->first).c_str());
+                }
+                if(!(n % 8))
+                  fprintf(fp, "\n%10ld", e->getNum());
+                else
+                  fprintf(fp, "%10ld", e->getNum());
+                n++;
+              }
+            }
+          }
+          if(n) fprintf(fp, "\n");
+        }
+      }
+    }
+  }
+
+  if(saveGroupsOfNodes & 0x2) {
+    for(int dim = 0; dim <= 3; dim++) {
+      if(dim == 3) { // Handle BRIC elements
+        if(saveAll & (0x2 << (2 * dim))) continue; // elements are ignored
+        for(auto it = groups[dim].begin(); it != groups[dim].end(); it++) {
+          std::vector<GEntity *> &entities = it->second;
+          if(entities.empty()) continue; // Skip empty sets
+          int n = 0;
+          for(std::size_t i = 0; i < entities.size(); i++) {
+            for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
+              MElement *e = entities[i]->getMeshElement(j);
+              if(e->getDim() == 3) { // Process only BRIC elements with three dimensions
+                if(!n) {
+                  fprintf(fp, "/GRBRIC/BRIC/%d\n%s", ++setid, physicalName(this, dim, it->first).c_str());
+                }
+                if(!(n % 8))
+                  fprintf(fp, "\n%10ld", e->getNum());
+                else
+                  fprintf(fp, "%10ld", e->getNum());
+                n++;
+              }
+            }
+          }
+          if(n) fprintf(fp, "\n");
+        }
       }
     }
   }
@@ -156,21 +213,25 @@ int GModel::writeRAD(const std::string &name, int saveAll,
       for(auto it = groups[dim].begin(); it != groups[dim].end(); it++) {
         std::set<MVertex *> nodes;
         std::vector<GEntity *> &entities = it->second;
+        bool hasNodes = false; // Flag to track if there are any nodes
         for(std::size_t i = 0; i < entities.size(); i++) {
           for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
             MElement *e = entities[i]->getMeshElement(j);
-            for(std::size_t k = 0; k < e->getNumVertices(); k++)
+            for(std::size_t k = 0; k < e->getNumVertices(); k++) {
               nodes.insert(e->getVertex(k));
+              hasNodes = true;
+            }
           }
         }
-        fprintf(fp, "*SET_NODE_LIST\n$# %s\n%d",
-                physicalName(this, dim, it->first).c_str(), ++setid);
+        if (!hasNodes) continue; // Skip empty sets
+        fprintf(fp, "/GRNOD/NODE/%d\n%s",
+                ++setid, physicalName(this, dim, it->first).c_str());
         int n = 0;
         for(auto it2 = nodes.begin(); it2 != nodes.end(); it2++) {
           if(!(n % 8))
-            fprintf(fp, "\n%ld", (*it2)->getIndex());
+            fprintf(fp, "\n%10ld", (*it2)->getIndex());
           else
-            fprintf(fp, ", %ld", (*it2)->getIndex());
+            fprintf(fp, "%10ld", (*it2)->getIndex());
           n++;
         }
         if(n) fprintf(fp, "\n");

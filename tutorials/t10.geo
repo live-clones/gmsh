@@ -52,7 +52,7 @@ Field[2].DistMax = 0.5;
 // Say we want to modulate the mesh element sizes using a mathematical function
 // of the spatial coordinates. We can do this with the MathEval field:
 Field[3] = MathEval;
-Field[3].F = "Cos(4*3.14*x) * Sin(4*3.14*y) / 10 + 0.101";
+Field[3].F = "cos(4*3.14*x) * sin(4*3.14*y) / 10 + 0.101";
 
 // We could also combine MathEval with values coming from other fields. For
 // example, let's define a `Distance' field around point 1

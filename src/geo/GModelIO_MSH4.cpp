@@ -1209,7 +1209,7 @@ static bool readMSH4Parametrizations(GModel *const model, FILE *fp, bool binary)
   }
 
   // only report surface parametrizations
-  Msg::Info("%lu parametrizations", nParamF);
+  Msg::Info("%lu parametrization%s", nParamF, nParamF > 1 ? "s" : "");
   Msg::StartProgressMeter(nParamF);
 
   for(std::size_t edge = 0; edge < nParamE; edge++) {
@@ -1270,10 +1270,10 @@ int GModel::_readMSH4(const std::string &name)
       if(!fgets(str, sizeof(str), fp) || feof(fp)) break;
     }
 
+    if(feof(fp)) break;
+
     std::string sectionName(&str[1]);
     std::string endSectionName = "End" + sectionName;
-
-    if(feof(fp)) break;
 
     if(!strncmp(&str[1], "MeshFormat", 10)) {
       if(!fgets(str, sizeof(str), fp) || feof(fp)) {
@@ -2005,10 +2005,11 @@ static void writeMSH4EntityNodes(GEntity *ge, FILE *fp, bool binary,
   if(ge->dim() != 1 && ge->dim() != 2)
     parametric = 0; // Gmsh only stores parametric coordinates for dim 1 and 2
 
+  std::size_t numVerts = ge->getNumMeshVertices();
+
   if(binary) {
     int entityDim = ge->dim();
     int entityTag = ge->tag();
-    std::size_t numVerts = ge->getNumMeshVertices();
     fwrite(&entityDim, sizeof(int), 1, fp);
     fwrite(&entityTag, sizeof(int), 1, fp);
     fwrite(&parametric, sizeof(int), 1, fp);
@@ -2020,17 +2021,21 @@ static void writeMSH4EntityNodes(GEntity *ge, FILE *fp, bool binary,
             ge->getNumMeshVertices());
   }
 
-  std::size_t N = ge->getNumMeshVertices();
+  if(!numVerts) {
+    return;
+  }
+
   std::size_t n = 3;
   if(parametric) n += ge->dim();
 
   if(binary) {
-    std::vector<size_t> tags(N);
-    for(std::size_t i = 0; i < N; i++) tags[i] = ge->getMeshVertex(i)->getNum();
-    fwrite(&tags[0], sizeof(std::size_t), N, fp);
-    std::vector<double> coord(n * N);
+    std::vector<size_t> tags(numVerts);
+    for(std::size_t i = 0; i < numVerts; i++)
+      tags[i] = ge->getMeshVertex(i)->getNum();
+    fwrite(&tags[0], sizeof(std::size_t), numVerts, fp);
+    std::vector<double> coord(n * numVerts);
     std::size_t j = 0;
-    for(std::size_t i = 0; i < N; i++) {
+    for(std::size_t i = 0; i < numVerts; i++) {
       MVertex *mv = ge->getMeshVertex(i);
       coord[j++] = mv->x() * scalingFactor;
       coord[j++] = mv->y() * scalingFactor;
@@ -2038,14 +2043,14 @@ static void writeMSH4EntityNodes(GEntity *ge, FILE *fp, bool binary,
       if(n >= 4) mv->getParameter(0, coord[j++]);
       if(n == 5) mv->getParameter(1, coord[j++]);
     }
-    fwrite(&coord[0], sizeof(double), n * N, fp);
+    fwrite(&coord[0], sizeof(double), n * numVerts, fp);
   }
   else {
     if(version >= 4.1) {
-      for(std::size_t i = 0; i < N; i++)
+      for(std::size_t i = 0; i < numVerts; i++)
         fprintf(fp, "%lu\n", ge->getMeshVertex(i)->getNum());
     }
-    for(std::size_t i = 0; i < N; i++) {
+    for(std::size_t i = 0; i < numVerts; i++) {
       MVertex *mv = ge->getMeshVertex(i);
       double x = mv->x() * scalingFactor;
       double y = mv->y() * scalingFactor;
@@ -2086,9 +2091,8 @@ getAdditionalEntities(std::set<GRegion *, GEntityPtrLessThan> &regions,
     for(std::size_t i = 0; i < (*it)->getNumMeshElements(); i++) {
       for(std::size_t j = 0; j < (*it)->getMeshElement(i)->getNumVertices();
           j++) {
-        if((*it)->getMeshElement(i)->getVertex(j)->onWhat() != (*it)) {
-          GEntity *entity = (*it)->getMeshElement(i)->getVertex(j)->onWhat();
-
+        GEntity *entity = (*it)->getMeshElement(i)->getVertex(j)->onWhat();
+        if(entity && entity != (*it)) {
           switch(entity->dim()) {
           case 0:
             if(vertices.find(static_cast<GVertex *>(entity)) ==
@@ -2127,9 +2131,8 @@ getAdditionalEntities(std::set<GRegion *, GEntityPtrLessThan> &regions,
     for(std::size_t i = 0; i < (*it)->getNumMeshElements(); i++) {
       for(std::size_t j = 0; j < (*it)->getMeshElement(i)->getNumVertices();
           j++) {
-        if((*it)->getMeshElement(i)->getVertex(j)->onWhat() != (*it)) {
-          GEntity *entity = (*it)->getMeshElement(i)->getVertex(j)->onWhat();
-
+        GEntity *entity = (*it)->getMeshElement(i)->getVertex(j)->onWhat();
+        if(entity && entity != (*it)) {
           switch(entity->dim()) {
           case 0:
             if(vertices.find(static_cast<GVertex *>(entity)) ==
@@ -2168,9 +2171,8 @@ getAdditionalEntities(std::set<GRegion *, GEntityPtrLessThan> &regions,
     for(std::size_t i = 0; i < (*it)->getNumMeshElements(); i++) {
       for(std::size_t j = 0; j < (*it)->getMeshElement(i)->getNumVertices();
           j++) {
-        if((*it)->getMeshElement(i)->getVertex(j)->onWhat() != (*it)) {
-          GEntity *entity = (*it)->getMeshElement(i)->getVertex(j)->onWhat();
-
+        GEntity *entity = (*it)->getMeshElement(i)->getVertex(j)->onWhat();
+        if(entity && entity != (*it)) {
           switch(entity->dim()) {
           case 0:
             if(vertices.find(static_cast<GVertex *>(entity)) ==

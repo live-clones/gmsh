@@ -152,8 +152,8 @@ public:
                  _faces.end());
   }
   void oppositeof(BDS_Point *oface[2]) const;
-  void computeNeighborhood(BDS_Point *oface[2], BDS_Point *t1[4],
-                           BDS_Point *t2[4]) const;
+  void computeNeighborhood(BDS_Point *t1[4], BDS_Point *t2[4],
+                           BDS_Point *oface[2]) const;
 
 public:
   bool deleted;

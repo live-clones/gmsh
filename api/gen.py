@@ -70,22 +70,22 @@ gmsh.add('clear', doc, None)
 
 option = gmsh.add_module('option', 'option handling functions')
 
-doc = '''Set a numerical option to `value'. `name' is of the form "Category.Option" or "Category[num].Option". Available categories and options are listed in the Gmsh reference manual.'''
+doc = '''Set a numerical option to `value'. `name' is of the form "Category.Option" or "Category[num].Option". Available categories and options are listed in the "Gmsh options" chapter of the Gmsh reference manual (https://gmsh.info/doc/texinfo/gmsh.html#Gmsh-options).'''
 option.add('setNumber', doc, None, istring('name'), idouble('value'))
 
-doc = '''Get the `value' of a numerical option. `name' is of the form "Category.Option" or "Category[num].Option". Available categories and options are listed in the Gmsh reference manual.'''
+doc = '''Get the `value' of a numerical option. `name' is of the form "Category.Option" or "Category[num].Option". Available categories and options are listed in the "Gmsh options" chapter of the Gmsh reference manual (https://gmsh.info/doc/texinfo/gmsh.html#Gmsh-options).'''
 option.add('getNumber', doc, None, istring('name'), odouble('value'))
 
-doc = '''Set a string option to `value'. `name' is of the form "Category.Option" or "Category[num].Option". Available categories and options are listed in the Gmsh reference manual.'''
+doc = '''Set a string option to `value'. `name' is of the form "Category.Option" or "Category[num].Option". Available categories and options are listed in the "Gmsh options" chapter of the Gmsh reference manual (https://gmsh.info/doc/texinfo/gmsh.html#Gmsh-options).'''
 option.add('setString', doc, None, istring('name'), istring('value'))
 
-doc = '''Get the `value' of a string option. `name' is of the form "Category.Option" or "Category[num].Option". Available categories and options are listed in the Gmsh reference manual.'''
+doc = '''Get the `value' of a string option. `name' is of the form "Category.Option" or "Category[num].Option". Available categories and options are listed in the "Gmsh options" chapter of the Gmsh reference manual (https://gmsh.info/doc/texinfo/gmsh.html#Gmsh-options).'''
 option.add('getString', doc, None, istring('name'), ostring('value'))
 
-doc = '''Set a color option to the RGBA value (`r', `g', `b', `a'), where where `r', `g', `b' and `a' should be integers between 0 and 255. `name' is of the form "Category.Color.Option" or "Category[num].Color.Option". Available categories and options are listed in the Gmsh reference manual. For conciseness "Color." can be ommitted in `name'.'''
+doc = '''Set a color option to the RGBA value (`r', `g', `b', `a'), where where `r', `g', `b' and `a' should be integers between 0 and 255. `name' is of the form "Category.Color.Option" or "Category[num].Color.Option". Available categories and options are listed in the "Gmsh options" chapter of the Gmsh reference manual (https://gmsh.info/doc/texinfo/gmsh.html#Gmsh-options). For conciseness "Color." can be ommitted in `name'.'''
 option.add('setColor', doc, None, istring('name'), iint('r'), iint('g'), iint('b'), iint('a', '255'))
 
-doc = '''Get the `r', `g', `b', `a' value of a color option. `name' is of the form "Category.Color.Option" or "Category[num].Color.Option". Available categories and options are listed in the Gmsh reference manual. For conciseness "Color." can be ommitted in `name'.'''
+doc = '''Get the `r', `g', `b', `a' value of a color option. `name' is of the form "Category.Color.Option" or "Category[num].Color.Option". Available categories and options are listed in the "Gmsh options" chapter of the Gmsh reference manual (https://gmsh.info/doc/texinfo/gmsh.html#Gmsh-options). For conciseness "Color." can be ommitted in `name'.'''
 option.add('getColor', doc, None, istring('name'), oint('r'), oint('g'), oint('b'), oint('a'))
 
 ################################################################################
@@ -113,7 +113,7 @@ model.add('getFileName', doc, None, ostring('fileName'))
 doc = '''Set the file name associated with the current model.'''
 model.add('setFileName', doc, None, istring('fileName'))
 
-doc = '''Get all the entities in the current model. If `dim' is >= 0, return only the entities of the specified dimension (e.g. points if `dim' == 0). The entities are returned as a vector of (dim, tag) pairs.'''
+doc = '''Get all the entities in the current model. A model entity is represented by two integers: its dimension (dim == 0, 1, 2 or 3) and its tag (its unique, strictly positive identifier). If `dim' is >= 0, return only the entities of the specified dimension (e.g. points if `dim' == 0). The entities are returned as a vector of (dim, tag) pairs.'''
 model.add('getEntities', doc, None, ovectorpair('dimTags'), iint('dim', '-1'))
 
 doc = '''Set the name of the entity of dimension `dim' and tag `tag'.'''
@@ -121,6 +121,9 @@ model.add('setEntityName', doc, None, iint('dim'), iint('tag'), istring('name'))
 
 doc = '''Get the name of the entity of dimension `dim' and tag `tag'.'''
 model.add('getEntityName', doc, None, iint('dim'), iint('tag'), ostring('name'))
+
+doc = '''Remove the entity name `name' from the current model.'''
+model.add('removeEntityName', doc, None, istring('name'))
 
 doc = '''Get all the physical groups in the current model. If `dim' is >= 0, return only the entities of the specified dimension (e.g. physical points if `dim' == 0). The entities are returned as a vector of (dim, tag) pairs.'''
 model.add('getPhysicalGroups', doc, None, ovectorpair('dimTags'), iint('dim', '-1'))
@@ -143,11 +146,11 @@ model.add('removePhysicalGroups', doc, None, ivectorpair('dimTags', 'gmsh::vecto
 doc = '''Set the name of the physical group of dimension `dim' and tag `tag'.'''
 model.add('setPhysicalName', doc, None, iint('dim'), iint('tag'), istring('name'))
 
-doc = '''Remove the physical name `name' from the current model.'''
-model.add('removePhysicalName', doc, None, istring('name'))
-
 doc = '''Get the name of the physical group of dimension `dim' and tag `tag'.'''
 model.add('getPhysicalName', doc, None, iint('dim'), iint('tag'), ostring('name'))
+
+doc = '''Remove the physical name `name' from the current model.'''
+model.add('removePhysicalName', doc, None, istring('name'))
 
 doc = '''Set the tag of the entity of dimension `dim' and tag `tag' to the new value `newTag'.'''
 model.add('setTag', doc, None, iint('dim'), iint('tag'), iint('newTag'))
@@ -172,9 +175,6 @@ model.add('addDiscreteEntity', doc, oint, iint('dim'), iint('tag', '-1'), ivecto
 
 doc = '''Remove the entities `dimTags' (given as a vector of (dim, tag) pairs) of the current model, provided that they are not on the boundary of (or embedded in) higher-dimensional entities. If `recursive' is true, remove all the entities on their boundaries, down to dimension 0.'''
 model.add('removeEntities', doc, None, ivectorpair('dimTags'), ibool('recursive', 'false', 'False'))
-
-doc = '''Remove the entity name `name' from the current model.'''
-model.add('removeEntityName', doc, None, istring('name'))
 
 doc = '''Get the type of the entity of dimension `dim' and tag `tag'.'''
 model.add('getType', doc, None, iint('dim'), iint('tag'), ostring('entityType'))
@@ -206,7 +206,7 @@ model.add('getPrincipalCurvatures', doc, None, iint('tag'), ivectordouble('param
 doc = '''Get the normal to the surface with tag `tag' at the parametric coordinates `parametricCoord'. The `parametricCoord' vector should contain u and v coordinates, concatenated: [p1u, p1v, p2u, ...]. `normals' are returned as a vector of x, y, z components, concatenated: [n1x, n1y, n1z, n2x, ...].'''
 model.add('getNormal', doc, None, iint('tag'), ivectordouble('parametricCoord'), ovectordouble('normals'))
 
-doc = '''Get the parametric coordinates `parametricCoord' for the points `coord' on the entity of dimension `dim' and tag `tag'. `coord' are given as x, y, z coordinates, concatenated: [p1x, p1y, p1z, p2x, ...]. `parametricCoord' returns the parametric coordinates t on the curve (if `dim' = 1) or u and v coordinates concatenated on the surface (if `dim' = 2), i.e. [p1t, p2t, ...] or [p1u, p1v, p2u, ...].'''
+doc = '''Get the parametric coordinates `parametricCoord' for the points `coord' on the entity of dimension `dim' and tag `tag'. `coord' are given as x, y, z coordinates, concatenated: [p1x, p1y, p1z, p2x, ...]. `parametricCoord' returns the parametric coordinates t on the curve (if `dim' = 1) or u and v coordinates concatenated on the surface (if `dim' == 2), i.e. [p1t, p2t, ...] or [p1u, p1v, p2u, ...].'''
 model.add('getParametrization', doc, None, iint('dim'), iint('tag'), ivectordouble('coord'), ovectordouble('parametricCoord'))
 
 doc = '''Get the `min' and `max' bounds of the parametric coordinates for the entity of dimension `dim' and tag `tag'.'''
@@ -215,7 +215,7 @@ model.add('getParametrizationBounds', doc, None, iint('dim'), iint('tag'), ovect
 doc = '''Check if the coordinates (or the parametric coordinates if `parametric' is set) provided in `coord' correspond to points inside the entity of dimension `dim' and tag `tag', and return the number of points inside. This feature is only available for a subset of entities, depending on the underlying geometrical representation.'''
 model.add('isInside', doc, oint, iint('dim'), iint('tag'), ivectordouble('coord'), ibool('parametric', 'false', 'False'))
 
-doc = '''Get the points `closestCoord' on the entity of dimension `dim' and tag `tag' to the points `coord', by orthogonal projection. `coord' and `closestCoord' are given as x, y, z coordinates, concatenated: [p1x, p1y, p1z, p2x, ...]. `parametricCoord' returns the parametric coordinates t on the curve (if `dim' = 1) or u and v coordinates concatenated on the surface (if `dim' = 2), i.e. [p1t, p2t, ...] or [p1u, p1v, p2u, ...].'''
+doc = '''Get the points `closestCoord' on the entity of dimension `dim' and tag `tag' to the points `coord', by orthogonal projection. `coord' and `closestCoord' are given as x, y, z coordinates, concatenated: [p1x, p1y, p1z, p2x, ...]. `parametricCoord' returns the parametric coordinates t on the curve (if `dim' == 1) or u and v coordinates concatenated on the surface (if `dim' = 2), i.e. [p1t, p2t, ...] or [p1u, p1v, p2u, ...].'''
 model.add('getClosestPoint', doc, None, iint('dim'), iint('tag'), ivectordouble('coord'), ovectordouble('closestCoord'), ovectordouble('parametricCoord'))
 
 doc = '''Reparametrize the boundary entity (point or curve, i.e. with `dim' == 0 or `dim' == 1) of tag `tag' on the surface `surfaceTag'. If `dim' == 1, reparametrize all the points corresponding to the parametric coordinates `parametricCoord'. Multiple matches in case of periodic surfaces can be selected with `which'. This feature is only available for a subset of entities, depending on the underlying geometrical representation.'''
@@ -233,20 +233,20 @@ model.add('setVisibilityPerWindow', doc, None, iint('value'), iint('windowIndex'
 doc = '''Set the color of the model entities `dimTags' (given as a vector of (dim, tag) pairs) to the RGBA value (`r', `g', `b', `a'), where `r', `g', `b' and `a' should be integers between 0 and 255. Apply the color setting recursively if `recursive' is true.'''
 model.add('setColor', doc, None, ivectorpair('dimTags'), iint('r'), iint('g'), iint('b'), iint('a', '255'), ibool('recursive', 'false', 'False'))
 
-doc = '''Get the color of the model entity of dimension `dim' and tag `tag'.'''
+doc = '''Get the color of the model entity of dimension `dim' and tag `tag'. If no color is specified for the entity, return fully transparent blue, i.e. (0, 0, 255, 0).'''
 model.add('getColor', doc, None, iint('dim'), iint('tag'), oint('r'), oint('g'), oint('b'), oint('a'))
 
 doc = '''Set the `x', `y', `z' coordinates of a geometrical point.'''
 model.add('setCoordinates', doc, None, iint('tag'), idouble('x'), idouble('y'), idouble('z'))
 
-doc = '''Get the names of any optional attributes stored in the model.'''
-model.add('getAttributeNames', doc, None, ovectorstring('names'))
+doc = '''Set the values of the attribute with name `name'.'''
+model.add('setAttribute', doc, None, istring('name'), ivectorstring('values'))
 
 doc = '''Get the values of the attribute with name `name'.'''
 model.add('getAttribute', doc, None, istring('name'), ovectorstring('values'))
 
-doc = '''Set the values of the attribute with name `name'.'''
-model.add('setAttribute', doc, None, istring('name'), ivectorstring('values'))
+doc = '''Get the names of any optional attributes stored in the model.'''
+model.add('getAttributeNames', doc, None, ovectorstring('names'))
 
 doc = '''Remove the attribute with name `name'.'''
 model.add('removeAttribute', doc, None, istring('name'))
@@ -357,7 +357,7 @@ mesh.add('getMaxElementTag', doc, None, osize('maxTag'))
 doc = '''Preallocate data before calling `getElementsByType' with `numTasks' > 1. For C and C++ only.'''
 mesh.add_special('preallocateElementsByType', doc, ['onlycc++'], None, iint('elementType'), ibool('elementTag'), ibool('nodeTag'), ovectorsize('elementTags'), ovectorsize('nodeTags'), iint('tag', '-1'))
 
-doc = '''Get the quality `elementQualities' of the elements with tags `elementTags'. `qualityType' is the requested quality measure: "minSJ" for the minimal scaled jacobien, "minSICN" for the minimal signed inverted condition number, "minSIGE" for the signed inverted gradient error, "gamma" for the ratio of the inscribed to circumcribed sphere radius, "innerRadius" for the inner radius, "outerRadius" for the outerRadius, "minIsotropy" for the minimum isotropy measure, "angleShape" for the angle shape measure, "minEdge" for the minimum straight edge length, "maxEdge" for the maximum straight edge length, "volume" for the volume. If `numTasks' > 1, only compute and return the part of the data indexed by `task'.'''
+doc = '''Get the quality `elementQualities' of the elements with tags `elementTags'. `qualityType' is the requested quality measure: "minDetJac" and "maxDetJac" for the adaptively computed minimal and maximal Jacobian determinant, "minSJ" for the sampled minimal scaled jacobien, "minSICN" for the sampled minimal signed inverted condition number, "minSIGE" for the sampled signed inverted gradient error, "gamma" for the ratio of the inscribed to circumcribed sphere radius, "innerRadius" for the inner radius, "outerRadius" for the outerRadius, "minIsotropy" for the minimum isotropy measure, "angleShape" for the angle shape measure, "minEdge" for the minimum straight edge length, "maxEdge" for the maximum straight edge length, "volume" for the volume. If `numTasks' > 1, only compute and return the part of the data indexed by `task'.'''
 mesh.add('getElementQualities', doc, None, ivectorsize('elementTags'), ovectordouble('elementsQuality'), istring('qualityName', '"minSICN"'), isize('task', '0'), isize('numTasks', '1'))
 
 doc = '''Add elements classified on the entity of dimension `dim' and tag `tag'. `types' contains the MSH types of the elements (e.g. `2' for 3-node triangles: see the Gmsh reference manual). `elementTags' is a vector of the same length as `types'; each entry is a vector containing the tags (unique, strictly positive identifiers) of the elements of the corresponding type. `nodeTags' is also a vector of the same length as `types'; each entry is a vector of length equal to the number of elements of the given type times the number N of nodes per element, that contains the node tags of all the elements of the given type, concatenated: [e1n1, e1n2, ..., e1nN, e2n1, ...].'''
@@ -369,13 +369,13 @@ mesh.add('addElementsByType', doc, None, iint('tag'), iint('elementType'), ivect
 doc = '''Get the numerical quadrature information for the given element type `elementType' and integration rule `integrationType', where `integrationType' concatenates the integration rule family name with the desired order (e.g. "Gauss4" for a quadrature suited for integrating 4th order polynomials). The "CompositeGauss" family uses tensor-product rules based the 1D Gauss-Legendre rule; the "Gauss" family uses an economic scheme when available (i.e. with a minimal number of points), and falls back to "CompositeGauss" otherwise. Note that integration points for the "Gauss" family can fall outside of the reference element for high-order rules. `localCoord' contains the u, v, w coordinates of the G integration points in the reference element: [g1u, g1v, g1w, ..., gGu, gGv, gGw]. `weights' contains the associated weights: [g1q, ..., gGq].'''
 mesh.add('getIntegrationPoints', doc, None, iint('elementType'), istring('integrationType'), ovectordouble('localCoord'), ovectordouble('weights'))
 
-doc = '''Get the Jacobians of all the elements of type `elementType' classified on the entity of tag `tag', at the G evaluation points `localCoord' given as concatenated u, v, w coordinates in the reference element [g1u, g1v, g1w, ..., gGu, gGv, gGw]. Data is returned by element, with elements in the same order as in `getElements' and `getElementsByType'. `jacobians' contains for each element the 9 entries of the 3x3 Jacobian matrix at each evaluation point. The matrix is returned by column: [e1g1Jxu, e1g1Jyu, e1g1Jzu, e1g1Jxv, ..., e1g1Jzw, e1g2Jxu, ..., e1gGJzw, e2g1Jxu, ...], with Jxu=dx/du, Jyu=dy/du, etc. `determinants' contains for each element the determinant of the Jacobian matrix at each evaluation point: [e1g1, e1g2, ... e1gG, e2g1, ...]. `coord' contains for each element the x, y, z coordinates of the evaluation points. If `tag' < 0, get the Jacobian data for all entities. If `numTasks' > 1, only compute and return the part of the data indexed by `task'.'''
+doc = '''Get the Jacobians of all the elements of type `elementType' classified on the entity of tag `tag', at the G evaluation points `localCoord' given as concatenated u, v, w coordinates in the reference element [g1u, g1v, g1w, ..., gGu, gGv, gGw]. Data is returned by element, with elements in the same order as in `getElements' and `getElementsByType'. `jacobians' contains for each element the 9 entries of the 3x3 Jacobian matrix at each evaluation point. The matrix is returned by column: [e1g1Jxu, e1g1Jyu, e1g1Jzu, e1g1Jxv, ..., e1g1Jzw, e1g2Jxu, ..., e1gGJzw, e2g1Jxu, ...], with Jxu = dx/du, Jyu = dy/du, etc. `determinants' contains for each element the determinant of the Jacobian matrix at each evaluation point: [e1g1, e1g2, ... e1gG, e2g1, ...]. `coord' contains for each element the x, y, z coordinates of the evaluation points. If `tag' < 0, get the Jacobian data for all entities. If `numTasks' > 1, only compute and return the part of the data indexed by `task'.'''
 mesh.add('getJacobians', doc, None, iint('elementType'), ivectordouble('localCoord'), ovectordouble('jacobians'), ovectordouble('determinants'), ovectordouble('coord'), iint('tag', '-1'), isize('task', '0'), isize('numTasks', '1'))
 
 doc = '''Preallocate data before calling `getJacobians' with `numTasks' > 1. For C and C++ only.'''
 mesh.add_special('preallocateJacobians', doc, ['onlycc++'], None, iint('elementType'), iint('numEvaluationPoints'), ibool('allocateJacobians'), ibool('allocateDeterminants'), ibool('allocateCoord'), ovectordouble('jacobians'), ovectordouble('determinants'), ovectordouble('coord'), iint('tag', '-1'))
 
-doc = '''Get the Jacobian for a single element `elementTag', at the G evaluation points `localCoord' given as concatenated u, v, w coordinates in the reference element [g1u, g1v, g1w, ..., gGu, gGv, gGw]. `jacobians' contains the 9 entries of the 3x3 Jacobian matrix at each evaluation point. The matrix is returned by column: [e1g1Jxu, e1g1Jyu, e1g1Jzu, e1g1Jxv, ..., e1g1Jzw, e1g2Jxu, ..., e1gGJzw, e2g1Jxu, ...], with Jxu=dx/du, Jyu=dy/du, etc. `determinants' contains the determinant of the Jacobian matrix at each evaluation point. `coord' contains the x, y, z coordinates of the evaluation points. This function relies on an internal cache (a vector in case of dense element numbering, a map otherwise); for large meshes accessing Jacobians in bulk is often preferable.'''
+doc = '''Get the Jacobian for a single element `elementTag', at the G evaluation points `localCoord' given as concatenated u, v, w coordinates in the reference element [g1u, g1v, g1w, ..., gGu, gGv, gGw]. `jacobians' contains the 9 entries of the 3x3 Jacobian matrix at each evaluation point. The matrix is returned by column: [e1g1Jxu, e1g1Jyu, e1g1Jzu, e1g1Jxv, ..., e1g1Jzw, e1g2Jxu, ..., e1gGJzw, e2g1Jxu, ...], with Jxu = dx/du, Jyu = dy/du, etc. `determinants' contains the determinant of the Jacobian matrix at each evaluation point. `coord' contains the x, y, z coordinates of the evaluation points. This function relies on an internal cache (a vector in case of dense element numbering, a map otherwise); for large meshes accessing Jacobians in bulk is often preferable.'''
 mesh.add('getJacobian', doc, None, isize('elementTag'), ivectordouble('localCoord'), ovectordouble('jacobians'), ovectordouble('determinants'), ovectordouble('coord'))
 
 doc = '''Get the basis functions of the element of type `elementType' at the evaluation points `localCoord' (given as concatenated u, v, w coordinates in the reference element [g1u, g1v, g1w, ..., gGu, gGv, gGw]), for the function space `functionSpaceType'. Currently supported function spaces include "Lagrange" and "GradLagrange" for isoparametric Lagrange basis functions and their gradient in the u, v, w coordinates of the reference element; "LagrangeN" and "GradLagrangeN", with N = 1, 2, ..., for N-th order Lagrange basis functions; "H1LegendreN" and "GradH1LegendreN", with N = 1, 2, ..., for N-th order hierarchical H1 Legendre functions; "HcurlLegendreN" and "CurlHcurlLegendreN", with N = 1, 2, ..., for N-th order curl-conforming basis functions. `numComponents' returns the number C of components of a basis function (e.g. 1 for scalar functions and 3 for vector functions). `basisFunctions' returns the value of the N basis functions at the evaluation points, i.e. [g1f1, g1f2, ..., g1fN, g2f1, ...] when C == 1 or [g1f1u, g1f1v, g1f1w, g1f2u, ..., g1fNw, g2f1u, ...] when C == 3. For basis functions that depend on the orientation of the elements, all values for the first orientation are returned first, followed by values for the second, etc. `numOrientations' returns the overall number of orientations. If the `wantedOrientations' vector is not empty, only return the values for the desired orientation indices.'''
@@ -574,7 +574,7 @@ mesh.add('tetrahedralize', doc, None, ivectordouble('coord'), ovectorsize('tetra
 
 field = mesh.add_module('field', 'mesh size field functions')
 
-doc = '''Add a new mesh size field of type `fieldType'. If `tag' is positive, assign the tag explicitly; otherwise a new tag is assigned automatically. Return the field tag.'''
+doc = '''Add a new mesh size field of type `fieldType'. If `tag' is positive, assign the tag explicitly; otherwise a new tag is assigned automatically. Return the field tag. Available field types are listed in the "Gmsh mesh size fields" chapter of the Gmsh reference manual (https://gmsh.info/doc/texinfo/gmsh.html#Gmsh-mesh-size-fields).'''
 field.add('add', doc, oint, istring('fieldType'), iint('tag', '-1'))
 
 doc = '''Remove the field with tag `tag'.'''
@@ -762,8 +762,8 @@ occ.add('addPoint', doc, oint, idouble('x'), idouble('y'), idouble('z'), idouble
 doc = '''Add a straight line segment in the OpenCASCADE CAD representation, between the two points with tags `startTag' and `endTag'. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the line.'''
 occ.add('addLine', doc, oint, iint('startTag'), iint('endTag'), iint('tag', '-1'))
 
-doc = '''Add a circle arc in the OpenCASCADE CAD representation, between the two points with tags `startTag' and `endTag', with center `centerTag'. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the circle arc.'''
-occ.add('addCircleArc', doc, oint, iint('startTag'), iint('centerTag'), iint('endTag'), iint('tag', '-1'))
+doc = '''Add a circle arc in the OpenCASCADE CAD representation, between the two points with tags `startTag' and `endTag', with middle point `middleTag'. If `center' is true, the middle point is the center of the circle; otherwise the circle goes through the middle point. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the circle arc.'''
+occ.add('addCircleArc', doc, oint, iint('startTag'), iint('middleTag'), iint('endTag'), iint('tag', '-1'), ibool('center', 'true', 'True'))
 
 doc = '''Add a circle of center (`x', `y', `z') and radius `r' in the OpenCASCADE CAD representation. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. If `angle1' and `angle2' are specified, create a circle arc between the two angles. If a vector `zAxis' of size 3 is provided, use it as the normal to the circle plane (z-axis). If a vector `xAxis' of size 3 is provided in addition to `zAxis', use it to define the x-axis. Return the tag of the circle.'''
 occ.add('addCircle', doc, oint, idouble('x'), idouble('y'), idouble('z'), idouble('r'), iint('tag', '-1'), idouble('angle1', '0.'), idouble('angle2', '2*M_PI', '2*pi', '2*pi'), ivectordouble('zAxis', 'std::vector<double>()', '[]', '[]'), ivectordouble('xAxis', 'std::vector<double>()', '[]', '[]'))
@@ -870,7 +870,7 @@ occ.add('intersect', doc, None, ivectorpair('objectDimTags'), ivectorpair('toolD
 doc = '''Compute the boolean difference between the entities `objectDimTags' and `toolDimTags' (given as vectors of (dim, tag) pairs) in the OpenCASCADE CAD representation. Return the resulting entities in `outDimTags'. If `tag' is positive, try to set the tag explicitly (only valid if the boolean operation results in a single entity). Remove the object if `removeObject' is set. Remove the tool if `removeTool' is set.'''
 occ.add('cut', doc, None, ivectorpair('objectDimTags'), ivectorpair('toolDimTags'), ovectorpair('outDimTags'), ovectorvectorpair('outDimTagsMap'), iint('tag', '-1'), ibool('removeObject', 'true', 'True'), ibool('removeTool', 'true', 'True'))
 
-doc = '''Compute the boolean fragments (general fuse) resulting from the intersection of the entities `objectDimTags' and `toolDimTags' (given as vectors of (dim, tag) pairs) in the OpenCASCADE CAD representation, making all iterfaces conformal. When applied to entities of different dimensions, the lower dimensional entities will be automatically embedded in the higher dimensional entities if they are not on their boundary. Return the resulting entities in `outDimTags'. If `tag' is positive, try to set the tag explicitly (only valid if the boolean operation results in a single entity). Remove the object if `removeObject' is set. Remove the tool if `removeTool' is set.'''
+doc = '''Compute the boolean fragments (general fuse) resulting from the intersection of the entities `objectDimTags' and `toolDimTags' (given as vectors of (dim, tag) pairs) in the OpenCASCADE CAD representation, making all interfaces conformal. When applied to entities of different dimensions, the lower dimensional entities will be automatically embedded in the higher dimensional entities if they are not on their boundary. Return the resulting entities in `outDimTags'. If `tag' is positive, try to set the tag explicitly (only valid if the boolean operation results in a single entity). Remove the object if `removeObject' is set. Remove the tool if `removeTool' is set.'''
 occ.add('fragment', doc, None, ivectorpair('objectDimTags'), ivectorpair('toolDimTags'), ovectorpair('outDimTags'), ovectorvectorpair('outDimTagsMap'), iint('tag', '-1'), ibool('removeObject', 'true', 'True'), ibool('removeTool', 'true', 'True'))
 
 doc = '''Translate the entities `dimTags' (given as a vector of (dim, tag) pairs) in the OpenCASCADE CAD representation along (`dx', `dy', `dz').'''
@@ -982,13 +982,13 @@ view.add('getHomogeneousModelData', doc, None, iint('tag'), iint('step'), ostrin
 doc = '''Add list-based post-processing data to the view with tag `tag'. List-based datasets are independent from any model and any mesh. `dataType' identifies the data by concatenating the field type ("S" for scalar, "V" for vector, "T" for tensor) and the element type ("P" for point, "L" for line, "T" for triangle, "S" for tetrahedron, "I" for prism, "H" for hexaHedron, "Y" for pyramid). For example `dataType' should be "ST" for a scalar field on triangles. `numEle' gives the number of elements in the data. `data' contains the data for the `numEle' elements, concatenated, with node coordinates followed by values per node, repeated for each step: [e1x1, ..., e1xn, e1y1, ..., e1yn, e1z1, ..., e1zn, e1v1..., e1vN, e2x1, ...].'''
 view.add('addListData', doc, None, iint('tag'), istring('dataType'), iint('numEle'), ivectordouble('data'))
 
-doc = '''Get list-based post-processing data from the view with tag `tag'. Return the types `dataTypes', the number of elements `numElements' for each data type and the `data' for each data type.'''
-view.add('getListData', doc, None, iint('tag'), ovectorstring('dataType'), ovectorint('numElements'), ovectorvectordouble('data'))
+doc = '''Get list-based post-processing data from the view with tag `tag'. Return the types `dataTypes', the number of elements `numElements' for each data type and the `data' for each data type. If `returnAdaptive' is set, return the data obtained after adaptive refinement, if available.'''
+view.add('getListData', doc, None, iint('tag'), ovectorstring('dataType'), ovectorint('numElements'), ovectorvectordouble('data'), ibool('returnAdaptive', 'false', 'False'))
 
 doc = '''Add a string to a list-based post-processing view with tag `tag'. If `coord' contains 3 coordinates the string is positioned in the 3D model space ("3D string"); if it contains 2 coordinates it is positioned in the 2D graphics viewport ("2D string"). `data' contains one or more (for multistep views) strings. `style' contains key-value pairs of styling parameters, concatenated. Available keys are "Font" (possible values: "Times-Roman", "Times-Bold", "Times-Italic", "Times-BoldItalic", "Helvetica", "Helvetica-Bold", "Helvetica-Oblique", "Helvetica-BoldOblique", "Courier", "Courier-Bold", "Courier-Oblique", "Courier-BoldOblique", "Symbol", "ZapfDingbats", "Screen"), "FontSize" and "Align" (possible values: "Left" or "BottomLeft", "Center" or "BottomCenter", "Right" or "BottomRight", "TopLeft", "TopCenter", "TopRight", "CenterLeft", "CenterCenter", "CenterRight").'''
 view.add('addListDataString', doc, None, iint('tag'), ivectordouble('coord'), ivectorstring('data'), ivectorstring('style', 'std::vector<std::string>()', '[]', '[]'))
 
-doc = '''Get list-based post-processing data strings (2D strings if `dim' = 2, 3D strings if `dim' = 3) from the view with tag `tag'. Return the coordinates in `coord', the strings in `data' and the styles in `style'.'''
+doc = '''Get list-based post-processing data strings (2D strings if `dim' == 2, 3D strings if `dim' = 3) from the view with tag `tag'. Return the coordinates in `coord', the strings in `data' and the styles in `style'.'''
 view.add('getListDataStrings', doc, None, iint('tag'), iint('dim'), ovectordouble('coord'), ovectorstring('data'), ovectorstring('style'))
 
 doc = '''Set interpolation matrices for the element family `type' ("Line", "Triangle", "Quadrangle", "Tetrahedron", "Hexahedron", "Prism", "Pyramid") in the view `tag'. The approximation of the values over an element is written as a linear combination of `d' basis functions f_i(u, v, w) = sum_(j = 0, ..., `d' - 1) `coef'[i][j] u^`exp'[j][0] v^`exp'[j][1] w^`exp'[j][2], i = 0, ..., `d'-1, with u, v, w the coordinates in the reference element. The `coef' matrix (of size `d' x `d') and the `exp' matrix (of size `d' x 3) are stored as vectors, by row. If `dGeo' is positive, use `coefGeo' and `expGeo' to define the interpolation of the x, y, z coordinates of the element in terms of the u, v, w coordinates, in exactly the same way. If `d' < 0, remove the interpolation matrices.'''
@@ -1038,13 +1038,13 @@ option.add('copy', doc, None, iint('refTag'), iint('tag'))
 
 plugin = gmsh.add_module('plugin', 'plugin functions')
 
-doc = '''Set the numerical option `option' to the value `value' for plugin `name'.'''
+doc = '''Set the numerical option `option' to the value `value' for plugin `name'. Plugins available in the official Gmsh release are listed in the "Gmsh plugins" chapter of the Gmsh reference manual (https://gmsh.info/doc/texinfo/gmsh.html#Gmsh-plugins).'''
 plugin.add('setNumber', doc, None, istring('name'), istring('option'), idouble('value'))
 
-doc = '''Set the string option `option' to the value `value' for plugin `name'.'''
+doc = '''Set the string option `option' to the value `value' for plugin `name'. Plugins available in the official Gmsh release are listed in the "Gmsh plugins" chapter of the Gmsh reference manual (https://gmsh.info/doc/texinfo/gmsh.html#Gmsh-plugins).'''
 plugin.add('setString', doc, None, istring('name'), istring('option'), istring('value'))
 
-doc = '''Run the plugin `name'. Return the tag of the created view (if any).'''
+doc = '''Run the plugin `name'. Return the tag of the created view (if any). Plugins available in the official Gmsh release are listed in the "Gmsh plugins" chapter of the Gmsh reference manual (https://gmsh.info/doc/texinfo/gmsh.html#Gmsh-plugins).'''
 plugin.add('run', doc, oint, istring('name'))
 
 ################################################################################
@@ -1094,7 +1094,7 @@ fltk.add('selectElements', doc, oint, ovectorsize('elementTags'))
 doc = '''Select views in the user interface.'''
 fltk.add('selectViews', doc, oint, ovectorint('viewTags'))
 
-doc = '''Split the current window horizontally (if `how' = "h") or vertically (if `how' = "v"), using ratio `ratio'. If `how' = "u", restore a single window.'''
+doc = '''Split the current window horizontally (if `how' == "h") or vertically (if `how' == "v"), using ratio `ratio'. If `how' == "u", restore a single window.'''
 fltk.add('splitCurrentWindow', doc, None, istring('how', '"v"'), idouble('ratio', '0.5'))
 
 doc = '''Set the current window by speficying its index (starting at 0) in the list of all windows. When new windows are created by splits, new windows are appended at the end of the list.'''

@@ -621,10 +621,10 @@ static bool _tryToCollapseThatVertex2(GFace *gf, std::vector<MElement *> &e1,
   double worst_quality_old = 1.0;
   double worst_quality_new = 1.0;
 
-  int count = 0;
+  //int count = 0;
   for(std::size_t j = 0; j < e.size(); ++j) {
     if(e[j] != q) {
-      count++;
+      //count++;
       worst_quality_old = std::min(worst_quality_old, e[j]->etaShapeMeasure());
       v1->x() = pp.x();
       v1->y() = pp.y();
@@ -686,10 +686,10 @@ static bool _tryToCollapseThatVertex(GFace *gf, std::vector<MElement *> &e1,
   GPoint pp = gf->point(0.5 * (uu1 + uu2), 0.5 * (vv1 + vv2));
   double worst_quality_old = 1.0;
   double worst_quality_new = 1.0;
-  int count = 0;
+  //int count = 0;
   for(std::size_t j = 0; j < e.size(); ++j) {
     if(e[j] != q) {
-      count++;
+      //count++;
       worst_quality_old = std::min(worst_quality_old, e[j]->etaShapeMeasure());
       v1->x() = pp.x();
       v1->y() = pp.y();

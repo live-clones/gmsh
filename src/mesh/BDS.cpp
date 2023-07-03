@@ -22,11 +22,19 @@ static double _cos_N(BDS_Point *_p1, BDS_Point *_p2, BDS_Point *_p3, GFace *gf)
 {
   double n[3];
   normal_triangle(_p1, _p2, _p3, n);
+#if 0
+  // average surface normal at 3 triangle nodes; bad for surface with high
+  // curvature on small area, e.g. U-shaped near a boundary
   SVector3 N1 = gf->normal(SPoint2(_p1->u, _p1->v));
   SVector3 N2 = gf->normal(SPoint2(_p2->u, _p2->v));
   SVector3 N3 = gf->normal(SPoint2(_p3->u, _p3->v));
   SVector3 N = N1 + N2 + N3;
   N.normalize();
+#else // surface normal at triangle barycenter
+  double u = (_p1->u + _p2->u + _p3->u) / 3.;
+  double v = (_p1->v + _p2->v + _p3->v) / 3.;
+  SVector3 N = gf->normal(SPoint2(u, v));
+#endif
   return N.x() * n[0] + N.y() * n[1] + N.z() * n[2];
 }
 
