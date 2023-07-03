@@ -4440,14 +4440,62 @@ class model:
         reorder_elements = reorderElements
 
         @staticmethod
-        def renumberNodes():
+        def computeRenumbering(method="RCMK", elementTags=[]):
             """
-            gmsh.model.mesh.renumberNodes()
+            gmsh.model.mesh.computeRenumbering(method="RCMK", elementTags=[])
 
-            Renumber the node tags in a continuous sequence.
+            Compute a renumbering vector `newTags' corresponding to the input tags
+            `oldTags' for a given list of element tags `elementTags'. If `elementTags'
+            is empty, compute the renumbering on the full mesh. If `method' is equal to
+            "RCMK", compute a node renumering with Reverse Cuthill McKee. If `method'
+            is equal to "Hilbert", compute a node renumering along a Hilbert curve.
+            Element renumbering is not available yet.
+
+            Return `oldTags', `newTags'.
+
+            Types:
+            - `oldTags': vector of sizes
+            - `newTags': vector of sizes
+            - `method': string
+            - `elementTags': vector of sizes
             """
+            api_oldTags_, api_oldTags_n_ = POINTER(c_size_t)(), c_size_t()
+            api_newTags_, api_newTags_n_ = POINTER(c_size_t)(), c_size_t()
+            api_elementTags_, api_elementTags_n_ = _ivectorsize(elementTags)
+            ierr = c_int()
+            lib.gmshModelMeshComputeRenumbering(
+                byref(api_oldTags_), byref(api_oldTags_n_),
+                byref(api_newTags_), byref(api_newTags_n_),
+                c_char_p(method.encode()),
+                api_elementTags_, api_elementTags_n_,
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return (
+                _ovectorsize(api_oldTags_, api_oldTags_n_.value),
+                _ovectorsize(api_newTags_, api_newTags_n_.value))
+        compute_renumbering = computeRenumbering
+
+        @staticmethod
+        def renumberNodes(oldTags=[], newTags=[]):
+            """
+            gmsh.model.mesh.renumberNodes(oldTags=[], newTags=[])
+
+            Renumber the node tags. If no explicit renumbering is provided through the
+            `oldTags' and `newTags' vectors, renumber the nodes in a continuous
+            sequence, taking into account the subset of elements to be saved later on
+            if the option "Mesh.SaveAll" is not set.
+
+            Types:
+            - `oldTags': vector of sizes
+            - `newTags': vector of sizes
+            """
+            api_oldTags_, api_oldTags_n_ = _ivectorsize(oldTags)
+            api_newTags_, api_newTags_n_ = _ivectorsize(newTags)
             ierr = c_int()
             lib.gmshModelMeshRenumberNodes(
+                api_oldTags_, api_oldTags_n_,
+                api_newTags_, api_newTags_n_,
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())

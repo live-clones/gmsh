@@ -5,7 +5,11 @@
 
 #ifndef _MESH_RENUMBER_
 #define _MESH_RENUMBER_
+
 #include <map>
 #include <vector>
-int meshRenumber_Vertices_RCMK (const std::vector<size_t> &elements, std::map<size_t,size_t> &permutations); 
+
+int meshRenumber_Vertices_RCMK(const std::vector<size_t> &elements,
+                               std::map<size_t, size_t> &permutations);
+
 #endif

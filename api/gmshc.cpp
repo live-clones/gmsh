@@ -2087,11 +2087,29 @@ GMSH_API void gmshModelMeshReorderElements(const int elementType, const int tag,
   }
 }
 
-GMSH_API void gmshModelMeshRenumberNodes(int * ierr)
+GMSH_API void gmshModelMeshComputeRenumbering(size_t ** oldTags, size_t * oldTags_n, size_t ** newTags, size_t * newTags_n, const char * method, const size_t * elementTags, const size_t elementTags_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    gmsh::model::mesh::renumberNodes();
+    std::vector<std::size_t> api_oldTags_;
+    std::vector<std::size_t> api_newTags_;
+    std::vector<std::size_t> api_elementTags_(elementTags, elementTags + elementTags_n);
+    gmsh::model::mesh::computeRenumbering(api_oldTags_, api_newTags_, method, api_elementTags_);
+    vector2ptr(api_oldTags_, oldTags, oldTags_n);
+    vector2ptr(api_newTags_, newTags, newTags_n);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelMeshRenumberNodes(const size_t * oldTags, const size_t oldTags_n, const size_t * newTags, const size_t newTags_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<std::size_t> api_oldTags_(oldTags, oldTags + oldTags_n);
+    std::vector<std::size_t> api_newTags_(newTags, newTags + newTags_n);
+    gmsh::model::mesh::renumberNodes(api_oldTags_, api_newTags_);
   }
   catch(...){
     if(ierr) *ierr = 1;

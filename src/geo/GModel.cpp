@@ -1715,6 +1715,9 @@ void GModel::renumberMeshVertices(const std::map<std::size_t, std::size_t> &mapp
   npost = data.size();
 #endif
 
+  std::size_t maxmap = 0;
+  for(auto m : mapping) maxmap = std::max(maxmap, m.second);
+  bool info = true;
   if(mapping.size() || npost) {
     for(std::size_t i = 0; i < entities.size(); i++) {
       GEntity *ge = entities[i];
@@ -1726,7 +1729,11 @@ void GModel::renumberMeshVertices(const std::map<std::size_t, std::size_t> &mapp
           if(it != mapping.end())
             remap[v] = it->second;
           else {
-            Msg::Error("Unknown node tag %lu in provided node tag map", v->getNum());
+            if(info) {
+              Msg::Info("Mapping does not contain a node tag - incrementing after last provided tag");
+              info = false;
+            }
+            remap[v] = ++maxmap;
           }
         }
       }
