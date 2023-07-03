@@ -145,29 +145,25 @@ public:
       _data = 0;
     }
   }
-  void renumberData(const std::map<int, int> &mapping)
+  void renumberData(const std::map<std::size_t, std::size_t> &mapping)
   {
     if(!_data) return;
-    int imax = 0, imin = 0;
+    std::size_t imax = 0, imin = 0;
     for(auto m : mapping) {
       imax = std::max(imax, m.second);
       imin = std::min(imin, m.second);
     }
-    if(imin < 0) {
-      Msg::Warning("Wrong destination index %d in step data renumbering", imin);
-      return;
-    }
     std::vector<Real *> data2(imax + 1, nullptr);
     std::vector<int> mult2(imax + 1, 1);
     for(auto m : mapping) {
-      if(m.first >= 0 && m.first < (int)_data->size()) {
+      if(m.first < _data->size()) {
         data2[m.second] = (*_data)[m.first];
       }
       else {
-        Msg::Warning("Wrong source index %d in step data renumbering", m.first);
+        Msg::Warning("Wrong source index %lu in step data renumbering", m.first);
         return;
       }
-      if(m.first >= 0 && m.first < (int)_mult.size())
+      if(m.first < _mult.size())
         mult2[m.second] = _mult[m.first];
     }
     *_data = data2;

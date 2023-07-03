@@ -289,8 +289,10 @@ public:
 
   // renumber mesh vertices and elements in a continuous sequence (this
   // invalidates the mesh caches)
-  void renumberMeshVertices();
-  void renumberMeshElements();
+  void renumberMeshVertices(const std::map<std::size_t, std::size_t> &mapping =
+                            std::map<std::size_t, std::size_t>());
+  void renumberMeshElements(const std::map<std::size_t, std::size_t> &mapping =
+                            std::map<std::size_t, std::size_t>());
 
   // delete all the mesh-related caches (this must be called when the
   // mesh is changed)
