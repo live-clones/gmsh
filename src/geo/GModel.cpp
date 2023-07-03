@@ -219,11 +219,11 @@ void GModel::destroyMeshCaches()
     _vertexVectorCache.clear();
     std::vector<MVertex *>().swap(_vertexVectorCache);
     _vertexMapCache.clear();
-    std::map<int, MVertex *>().swap(_vertexMapCache);
+    std::map<std::size_t, MVertex *>().swap(_vertexMapCache);
     _elementVectorCache.clear();
     std::vector<std::pair<MElement *, int> >().swap(_elementVectorCache);
     _elementMapCache.clear();
-    std::map<int, std::pair<MElement *, int> >().swap(_elementMapCache);
+    std::map<std::size_t, std::pair<MElement *, int> >().swap(_elementMapCache);
     _elementIndexCache.clear();
     std::map<int, int>().swap(_elementIndexCache);
     if(_elementOctree) {
@@ -1708,14 +1708,13 @@ void GModel::renumberMeshVertices(const std::map<std::size_t, std::size_t> &mapp
   std::map<MVertex *, std::size_t> old, remap;
   std::size_t npost = 0;
 #if defined(HAVE_POST)
-  // check if any nodal post-processing datasets depend on the model; if so,
-  // keep track of the old node numbering
+  // check if any nodal post-processing datasets depend on the model
   std::vector<stepData<double> *> data;
   getDependentViewData(this, PViewDataGModel::NodeData, data);
   npost = data.size();
 #endif
 
-  std::size_t maxmap = 0;
+  std::size_t maxmap = CTX::instance()->mesh.firstNodeTag - 1;
   for(auto m : mapping) maxmap = std::max(maxmap, m.second);
   bool info = true;
   if(mapping.size() || npost) {
@@ -1730,7 +1729,9 @@ void GModel::renumberMeshVertices(const std::map<std::size_t, std::size_t> &mapp
             remap[v] = it->second;
           else {
             if(info) {
-              Msg::Info("Mapping does not contain a node tag - incrementing after last provided tag");
+              Msg::Info("Mapping does not contain a node tag - "
+                        "incrementing after last provided tag (%lu)",
+                        maxmap);
               info = false;
             }
             remap[v] = ++maxmap;
@@ -1811,7 +1812,8 @@ void GModel::renumberMeshVertices(const std::map<std::size_t, std::size_t> &mapp
 #if defined(HAVE_POST)
   // renumber any dependent nodal post-processing datasets
   if(npost) {
-    Msg::Info("Renumbering nodal model data (%d step%s)", npost, npost > 1 ? "s" : "");
+    Msg::Info("Renumbering nodal model data (%d step%s)", npost, npost > 1 ?
+              "s" : "");
     std::map<std::size_t, std::size_t> remap2;
     for(std::size_t i = 0; i < entities.size(); i++) {
       GEntity *ge = entities[i];
@@ -2046,7 +2048,7 @@ void GModel::rebuildMeshElementCache(bool onlyIfNecessary)
   }
 }
 
-MVertex *GModel::getMeshVertexByTag(int n)
+MVertex *GModel::getMeshVertexByTag(std::size_t n)
 {
   if(_vertexVectorCache.empty() && _vertexMapCache.empty()) {
 #pragma omp barrier
@@ -2057,7 +2059,7 @@ MVertex *GModel::getMeshVertexByTag(int n)
     }
   }
 
-  if(n < (int)_vertexVectorCache.size())
+  if(n < _vertexVectorCache.size())
     return _vertexVectorCache[n];
   else
     return _vertexMapCache[n];
@@ -2100,7 +2102,7 @@ void GModel::getMeshVerticesForPhysicalGroup(int dim, int num,
   v.insert(v.begin(), sv.begin(), sv.end());
 }
 
-MElement *GModel::getMeshElementByTag(int n, int &entityTag)
+MElement *GModel::getMeshElementByTag(std::size_t n, int &entityTag)
 {
   if(_elementVectorCache.empty() && _elementMapCache.empty()) {
 #pragma omp barrier
@@ -2112,7 +2114,7 @@ MElement *GModel::getMeshElementByTag(int n, int &entityTag)
   }
 
   std::pair<MElement*, int> ret;
-  if(n < (int)_elementVectorCache.size())
+  if(n < _elementVectorCache.size())
     ret = _elementVectorCache[n];
   else
     ret = _elementMapCache[n];
@@ -2589,7 +2591,7 @@ void GModel::_associateEntityWithMeshVertices()
   }
 }
 
-void GModel::_storeVerticesInEntities(std::map<int, MVertex *> &vertices)
+void GModel::_storeVerticesInEntities(std::map<std::size_t, MVertex *> &vertices)
 {
   auto it = vertices.begin();
   for(; it != vertices.end(); ++it) {
@@ -2804,7 +2806,7 @@ int GModel::removeDuplicateMeshVertices(double tolerance,
   }
 
   MVertexRTree pos(eps);
-  std::map<int, MVertex *> vertices;
+  std::map<std::size_t, MVertex *> vertices;
   std::map<MVertex *, MVertex *> duplicates;
   for(std::size_t i = 0; i < entities.size(); i++) {
     GEntity *ge = entities[i];
@@ -3478,7 +3480,7 @@ GModel *GModel::buildCutGModel(gLevelset *ls, bool cutElem, bool saveTri)
 
   std::map<int, std::vector<MElement *> > elements[11];
   std::map<int, std::map<int, std::string> > physicals[4];
-  std::map<int, MVertex *> vertexMap;
+  std::map<std::size_t, MVertex *> vertexMap;
 
   if(cutElem)
     Msg::Info("Cutting mesh...");

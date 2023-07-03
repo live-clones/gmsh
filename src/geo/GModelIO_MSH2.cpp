@@ -37,7 +37,7 @@ extern void readMSHPeriodicNodes(FILE *fp, GModel *gm);
 extern void writeMSHEntities(FILE *fp, GModel *gm);
 
 static bool getMeshVertices(int num, int *indices,
-                            std::map<int, MVertex *> &map,
+                            std::map<std::size_t, MVertex *> &map,
                             std::vector<MVertex *> &vertices)
 {
   for(int i = 0; i < num; i++) {
@@ -110,7 +110,7 @@ int GModel::_readMSH2(const std::string &name)
   bool binary = false, swap = false, postpro = false;
   std::map<int, std::vector<MElement *> > elements[10];
   std::map<int, std::map<int, std::string> > physicals[4];
-  std::map<int, MVertex *> vertexMap;
+  std::map<std::size_t, MVertex *> vertexMap;
   std::vector<MVertex *> vertexVector;
   int minVertex = 0;
   std::size_t oldNumPartitions = getNumPartitions();
