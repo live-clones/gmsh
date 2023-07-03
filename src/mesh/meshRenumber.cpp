@@ -143,11 +143,11 @@ int meshRenumber_Vertices_RCMK (const std::vector<size_t> &_elements, std::map<s
     aj.push_back(c.second);
   }
 
-  std::vector< size_t > sorted;
+  std::vector< size_t > sorted(count);
   
   RCM (sorted, &ai[0], &aj[0]);
 
-  for (auto it : initial_numbering)permutations[it.second] = sorted[it.second];
+  for (auto it : initial_numbering)permutations[it.first->getNum()] = sorted[it.second];
   
   return 0;
 }
