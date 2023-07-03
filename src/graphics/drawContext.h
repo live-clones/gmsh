@@ -270,7 +270,8 @@ public:
                  int align = 0);
   void drawSphere(double R, double x, double y, double z, int n1, int n2,
                   int light);
-  void drawCube(double x, double y, double z, double val[9], int light);
+  void drawCube(double x, double y, double z, float v0[3], float v1[3],
+		float v2[3], int light);
   void drawEllipsoid(double x, double y, double z, float v0[3], float v1[3],
                      float v2[3], int light);
   void drawEllipse(double x, double y, double z, float v0[3], float v1[3],

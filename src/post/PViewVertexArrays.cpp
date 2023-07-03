@@ -1208,23 +1208,50 @@ static void addTensorElement(PView *p, int iEnt, int iEle, int numNodes,
     }
   }
   else if(opt->tensorType == PViewOptions::Ellipse ||
-          opt->tensorType == PViewOptions::Ellipsoid) {
+          opt->tensorType == PViewOptions::Ellipsoid ||
+	  opt->tensorType == PViewOptions::Frame) {
     if(opt->glyphLocation == PViewOptions::Vertex) {
       double vval[3][4] = {{0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}};
       for(int i = 0; i < numNodes; i++) {
-        for(int j = 0; j < 3; j++) {
-          tensor(j, 0) = val[i][0 + j * 3];
-          tensor(j, 1) = val[i][1 + j * 3];
-          tensor(j, 2) = val[i][2 + j * 3];
-        }
-        tensor.eig(S, imS, leftV, rightV, false);
-        for(int k = 0; k < 3; k++) {
-          vval[k][0] = xyz[i][k];
-          for(int j = 0; j < 3; j++) { vval[k][j + 1] = rightV(k, j) * S(j); }
-        }
-        double lmax = std::max(S(0), std::max(S(1), S(2)));
+	if (opt->tensorType == PViewOptions::Frame) {
+	  SVector3 v0 (val[i][0],val[i][3],val[i][6]);
+	  SVector3 v1 (val[i][1],val[i][4],val[i][7]);
+	  SVector3 v2 (val[i][2],val[i][5],val[i][8]);
+	  S(0) = v0.norm();
+	  S(1) = v1.norm();
+	  S(2) = v2.norm();
+	  for(int k = 0; k < 3; k++) vval[k][0] = xyz[i][k];
+	  vval[0][1] = v0.x();
+	  vval[0][2] = v0.y();
+	  vval[0][3] = v0.z();
+	  vval[1][1] = v1.x();
+	  vval[1][2] = v1.y();
+	  vval[1][3] = v1.z();
+	  vval[2][1] = v2.x();
+	  vval[2][2] = v2.y();
+	  vval[2][3] = v2.z();
+	}
+	else {
+	  for(int j = 0; j < 3; j++) {
+	    tensor(j, 0) = val[i][0 + j * 3];
+	    tensor(j, 1) = val[i][1 + j * 3];
+	    tensor(j, 2) = val[i][2 + j * 3];
+	  }	  
+	  tensor.eig(S, imS, leftV, rightV, false);
+	  for(int k = 0; k < 3; k++) {
+	    vval[k][0] = xyz[i][k];
+	    for(int j = 0; j < 3; j++) { vval[k][j + 1] = rightV(k, j) * S(j); }
+	  }
+	}
+	
+	//	double lmax = std::max(S(0), std::max(S(1), S(2)));
+	//	double lmin = std::min(S(0), std::min(S(1), S(2)));
+	double det = S(0)*S(1)*S(2);
+
+	printf("%12.5E %12.5E %12.5E \n",det,opt->tmpMin, opt->tmpMax);
+	
         unsigned int color = opt->getColor(
-          lmax, opt->tmpMin, opt->tmpMax, false,
+          det, opt->tmpMin, opt->tmpMax, false,
           (opt->intervalsType == PViewOptions::Discrete) ? opt->nbIso : -1);
         unsigned int col[4] = {color, color, color, color};
         p->va_ellipses->add(vval[0], vval[1], vval[2], nullptr, col, nullptr,

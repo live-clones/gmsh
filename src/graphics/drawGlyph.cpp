@@ -313,76 +313,54 @@ void drawContext::drawImage(const std::string &name, double x, double y,
   }
 }
 
-void drawContext::drawCube(double x, double y, double z, double val[9],
-                           int light)
+static void _drawBox()
 {
-  double d0[3] = {val[0], val[1], val[2]};
-  double d1[3] = {val[3], val[4], val[5]};
-  double d2[3] = {val[6], val[7], val[8]};
+  glBegin(GL_QUADS);  
+  // FRONT
+  glVertex3f(-0.5f, -0.5f, 0.5f);
+  glVertex3f( 0.5f, -0.5f, 0.5f);
+  glVertex3f( 0.5f, 0.5f, 0.5f);
+  glVertex3f(-0.5f, 0.5f, 0.5f);
+  // BACK
+  glVertex3f(-0.5f, -0.5f, -0.5f);
+  glVertex3f(-0.5f, 0.5f, -0.5f);
+  glVertex3f( 0.5f, 0.5f, -0.5f);
+  glVertex3f( 0.5f, -0.5f, -0.5f);
+  // LEFT
+  glVertex3f(-0.5f, -0.5f, 0.5f);
+  glVertex3f(-0.5f, 0.5f, 0.5f);
+  glVertex3f(-0.5f, 0.5f, -0.5f);
+  glVertex3f(-0.5f, -0.5f, -0.5f);
+  // RIGHT
+  glVertex3f( 0.5f, -0.5f, -0.5f);
+  glVertex3f( 0.5f, 0.5f, -0.5f);
+  glVertex3f( 0.5f, 0.5f, 0.5f);
+  glVertex3f( 0.5f, -0.5f, 0.5f);
+  // TOP
+  glVertex3f(-0.5f, 0.5f, 0.5f);
+  glVertex3f( 0.5f, 0.5f, 0.5f);
+  glVertex3f( 0.5f, 0.5f, -0.5f);
+  glVertex3f(-0.5f, 0.5f, -0.5f);
+  // BOTTOM
+  glVertex3f(-0.5f, -0.5f, 0.5f);
+  glVertex3f(-0.5f, -0.5f, -0.5f);
+  glVertex3f( 0.5f, -0.5f, -0.5f);
+  glVertex3f( 0.5f, -0.5f, 0.5f);
+  glEnd();
+}
 
-  double x0[3] = {x + d1[0] + d1[0] + d2[0], x + d0[1] + d1[1] + d2[1],
-                  z + d0[2] + d1[2] + d2[2]};
-  double x1[3] = {x - d1[0] + d1[0] + d2[0], x - d0[1] + d1[1] + d2[1],
-                  z - d0[2] + d1[2] + d2[2]};
-  double x2[3] = {x - d1[0] - d1[0] + d2[0], x - d0[1] - d1[1] + d2[1],
-                  z - d0[2] - d1[2] + d2[2]};
-  double x3[3] = {x + d1[0] - d1[0] + d2[0], x + d0[1] - d1[1] + d2[1],
-                  z + d0[2] - d1[2] + d2[2]};
-
-  double x4[3] = {x + d1[0] + d1[0] - d2[0], x + d0[1] + d1[1] - d2[1],
-                  z + d0[2] + d1[2] - d2[2]};
-  double x5[3] = {x - d1[0] + d1[0] - d2[0], x - d0[1] + d1[1] - d2[1],
-                  z - d0[2] + d1[2] - d2[2]};
-  double x6[3] = {x - d1[0] - d1[0] - d2[0], x - d0[1] - d1[1] - d2[1],
-                  z - d0[2] - d1[2] - d2[2]};
-  double x7[3] = {x + d1[0] - d1[0] - d2[0], x + d0[1] - d1[1] - d2[1],
-                  z + d0[2] - d1[2] - d2[2]};
-
+void drawContext::drawCube(double x, double y, double z, float v0[3],
+			   float v1[3], float v2[3], int light)
+{
+ 
   if(light) glEnable(GL_LIGHTING);
   glPushMatrix();
 
-  glBegin(GL_POLYGON);
-  glColor3f(x0[0], x0[1], x0[2]);
-  glColor3f(x1[0], x1[1], x1[2]);
-  glColor3f(x2[0], x2[1], x2[2]);
-  glColor3f(x3[0], x3[1], x3[2]);
-  glEnd();
-
-  glBegin(GL_POLYGON);
-  glColor3f(x4[0], x4[1], x4[2]);
-  glColor3f(x7[0], x7[1], x7[2]);
-  glColor3f(x6[0], x6[1], x6[2]);
-  glColor3f(x5[0], x5[1], x5[2]);
-  glEnd();
-
-  glBegin(GL_POLYGON);
-  glColor3f(x0[0], x0[1], x0[2]);
-  glColor3f(x3[0], x3[1], x3[2]);
-  glColor3f(x7[0], x7[1], x7[2]);
-  glColor3f(x4[0], x4[1], x4[2]);
-  glEnd();
-
-  glBegin(GL_POLYGON);
-  glColor3f(x1[0], x1[1], x1[2]);
-  glColor3f(x5[0], x5[1], x5[2]);
-  glColor3f(x6[0], x6[1], x6[2]);
-  glColor3f(x2[0], x2[1], x2[2]);
-  glEnd();
-
-  glBegin(GL_POLYGON);
-  glColor3f(x0[0], x0[1], x0[2]);
-  glColor3f(x4[0], x4[1], x4[2]);
-  glColor3f(x5[0], x5[1], x5[2]);
-  glColor3f(x1[0], x1[1], x1[2]);
-  glEnd();
-
-  glBegin(GL_POLYGON);
-  glColor3f(x3[0], x3[1], x3[2]);
-  glColor3f(x2[0], x2[1], x2[2]);
-  glColor3f(x6[0], x6[1], x6[2]);
-  glColor3f(x7[0], x7[1], x7[2]);
-  glEnd();
-
+  GLfloat m[16] = {v0[0],      v0[1],      v0[2],      .0f,   v1[0], v1[1],
+                   v1[2],      .0f,        v2[0],      v2[1], v2[2], .0f,
+                   (GLfloat)x, (GLfloat)y, (GLfloat)z, 1.f};
+  glMultMatrixf(m);
+  _drawBox();
   glPopMatrix();
   glDisable(GL_LIGHTING);
 }
@@ -397,6 +375,7 @@ void drawContext::drawSphere(double R, double x, double y, double z, int n1,
   glPopMatrix();
   glDisable(GL_LIGHTING);
 }
+
 
 void drawContext::drawEllipse(double x, double y, double z, float v0[3],
                               float v1[3], int light)

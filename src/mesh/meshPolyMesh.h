@@ -67,7 +67,7 @@ public:
     for(auto it : hedges) delete it;
     for(auto it : faces) delete it;
   }
-
+  
   ~PolyMesh() { reset(); }
 
   void print4debug(const int debugTag)
