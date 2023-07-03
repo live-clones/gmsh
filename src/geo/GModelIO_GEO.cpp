@@ -38,7 +38,7 @@ void GEO_Internals::_allocateAll()
   SurfaceLoops = Tree_Create(sizeof(SurfaceLoop *), CompareSurfaceLoop);
   Volumes = Tree_Create(sizeof(Volume *), CompareVolume);
 
-  PhysicalGroups = List_Create(5, 5, sizeof(PhysicalGroup *));
+  PhysicalGroups = Tree_Create(sizeof(PhysicalGroup *), ComparePhysicalGroup);
   DelPhysicalGroups = List_Create(5, 5, sizeof(PhysicalGroup *));
 
   DelPoints = Tree_Create(sizeof(Vertex *), CompareVertex);
@@ -76,8 +76,8 @@ void GEO_Internals::_freeAll()
   Tree_Action(DelVolumes, FreeVolume);
   Tree_Delete(DelVolumes);
 
-  List_Action(PhysicalGroups, FreePhysicalGroup);
-  List_Delete(PhysicalGroups);
+  Tree_Action(PhysicalGroups, FreePhysicalGroup);
+  Tree_Delete(PhysicalGroups);
   List_Action(DelPhysicalGroups, FreePhysicalGroup);
   List_Delete(DelPhysicalGroups);
 
@@ -991,9 +991,9 @@ bool GEO_Internals::remove(const std::vector<std::pair<int, int> > &dimTags,
 
 void GEO_Internals::resetPhysicalGroups()
 {
-  List_Action(PhysicalGroups, FreePhysicalGroup);
+  Tree_Action(PhysicalGroups, FreePhysicalGroup);
+  Tree_Delete(PhysicalGroups);
   List_Action(DelPhysicalGroups, FreePhysicalGroup);
-  List_Reset(PhysicalGroups);
   _changed = true;
 }
 
@@ -1044,7 +1044,7 @@ bool GEO_Internals::modifyPhysicalGroup(int dim, int tag, int op,
     }
     p = CreatePhysicalGroup(tag, type, tmp);
     List_Delete(tmp);
-    List_Add(PhysicalGroups, &p);
+    Tree_Add(PhysicalGroups, &p);
   }
   else if(op == 1) {
     for(std::size_t i = 0; i < tags.size(); i++) {
@@ -1531,46 +1531,50 @@ void GEO_Internals::synchronize(GModel *model, bool resetMeshAttributes)
   if(!model->getNumMeshElements()) model->removePhysicalGroups();
   // we might want to store physical groups directly in GModel; but I guess this
   // is OK for now:
-  for(int i = 0; i < List_Nbr(PhysicalGroups); i++) {
-    PhysicalGroup *p;
-    List_Read(PhysicalGroups, i, &p);
-    for(int j = 0; j < List_Nbr(p->Entities); j++) {
-      int num;
-      List_Read(p->Entities, j, &num);
-      GEntity *ge = nullptr;
-      const char *name = "";
-      int tag = CTX::instance()->geom.orientedPhysicals ? abs(num) : num;
-      switch(p->Typ) {
-      case MSH_PHYSICAL_POINT:
-        ge = model->getVertexByTag(tag);
-        name = "point";
-        break;
-      case MSH_PHYSICAL_LINE:
-        ge = model->getEdgeByTag(tag);
-        name = "curve";
-        break;
-      case MSH_PHYSICAL_SURFACE:
-        ge = model->getFaceByTag(tag);
-        name = "surface";
-        break;
-      case MSH_PHYSICAL_VOLUME:
-        ge = model->getRegionByTag(tag);
-        name = "volume";
-        break;
-      }
-      if(ge) {
-        int pnum = CTX::instance()->geom.orientedPhysicals ?
-          (gmsh_sign(num) * p->Num) : p->Num;
-        if(std::find(ge->physicals.begin(), ge->physicals.end(), pnum) ==
-           ge->physicals.end()) {
-          ge->physicals.push_back(pnum);
+  if(Tree_Nbr(PhysicalGroups)) {
+    List_T *groups = Tree2List(Curves);
+    for(int i = 0; i < List_Nbr(groups); i++) {
+      PhysicalGroup *p;
+      List_Read(groups, i, &p);
+      for(int j = 0; j < List_Nbr(p->Entities); j++) {
+        int num;
+        List_Read(p->Entities, j, &num);
+        GEntity *ge = nullptr;
+        const char *name = "";
+        int tag = CTX::instance()->geom.orientedPhysicals ? abs(num) : num;
+        switch(p->Typ) {
+        case MSH_PHYSICAL_POINT:
+          ge = model->getVertexByTag(tag);
+          name = "point";
+          break;
+        case MSH_PHYSICAL_LINE:
+          ge = model->getEdgeByTag(tag);
+          name = "curve";
+          break;
+        case MSH_PHYSICAL_SURFACE:
+          ge = model->getFaceByTag(tag);
+          name = "surface";
+          break;
+        case MSH_PHYSICAL_VOLUME:
+          ge = model->getRegionByTag(tag);
+          name = "volume";
+          break;
+        }
+        if(ge) {
+          int pnum = CTX::instance()->geom.orientedPhysicals ?
+            (gmsh_sign(num) * p->Num) : p->Num;
+          if(std::find(ge->physicals.begin(), ge->physicals.end(), pnum) ==
+             ge->physicals.end()) {
+            ge->physicals.push_back(pnum);
+          }
+        }
+        else {
+          Msg::Warning("Skipping unknown %s %d in physical %s %d",
+                       name, tag, name, p->Num);
         }
       }
-      else {
-        Msg::Warning("Skipping unknown %s %d in physical %s %d",
-                     name, tag, name, p->Num);
-      }
     }
+    List_Delete(groups);
   }
 
   // we might want to store mesh compounds directly in GModel; but this is OK
