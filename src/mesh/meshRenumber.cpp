@@ -92,8 +92,22 @@ static void RCM (std::vector< size_t > &sorted, const size_t *const row, const s
   }
 }
 
-int meshRenumber_Vertices_RCMK (const std::vector<size_t> &elements, std::map<size_t,size_t> &permutations){
+int meshRenumber_Vertices_RCMK (const std::vector<size_t> &_elements, std::map<size_t,size_t> &permutations){
   GModel *gm = GModel :: current();
+  
+  std::vector<size_t> elements;
+  if (_elements.empty()){
+    std::vector<GEntity *> entities;
+    gm->getEntities(entities);
+    for(std::size_t i = 0; i < entities.size(); i++) {
+      GEntity *ge = entities[i];
+      for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
+	MElement *e = ge->getMeshElement(j);
+	elements.push_back(e->getNum());
+      }
+    }
+  }
+  else elements=_elements;
 
   std::map<MVertex*, size_t> initial_numbering;
   size_t count = 0;
