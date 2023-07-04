@@ -272,6 +272,8 @@ int meshRenumber_Vertices_Metis(const std::vector<std::size_t> &elementTags,
   int result = METIS_NodeND(&n, xadj, adjncy, nullptr, nullptr, perm, iperm);
 
   if (result != METIS_OK){
+    delete [] perm;
+    delete [] iperm;
     Msg::Warning("RENUMBERING WITH METIS FAILED");
     return -1;
   }
