@@ -20,7 +20,7 @@ static T bandwidth ( std::vector<T> &ai,
   T maxdx = 0;
   for (size_t i=0; i < ai.size()-1 ; i++){
     for (T j= ai[i]; j < ai[i+1] ; j++){
-      T dx = p ? DIFF(p[aj[j]],p[i]) : DIFF(aj[j],i);
+      T dx = p ? DIFF(p[aj[j]],p[i]) : DIFF(aj[j],(T)i);
       if (dx > maxdx)maxdx=dx;
     }
   }
