@@ -3007,6 +3007,21 @@ namespace gmsh { // Top-level functions
         gmshFree(api_elementTags_);
       }
 
+      // gmsh::model::mesh::getVisibility
+      //
+      // Get the visibility of the elements of tags `elementTags'.
+      inline void getVisibility(const std::vector<std::size_t> & elementTags,
+                                std::vector<int> & values)
+      {
+        int ierr = 0;
+        size_t *api_elementTags_; size_t api_elementTags_n_; vector2ptr(elementTags, &api_elementTags_, &api_elementTags_n_);
+        int *api_values_; size_t api_values_n_;
+        gmshModelMeshGetVisibility(api_elementTags_, api_elementTags_n_, &api_values_, &api_values_n_, &ierr);
+        if(ierr) throwLastError();
+        gmshFree(api_elementTags_);
+        values.assign(api_values_, api_values_ + api_values_n_); gmshFree(api_values_);
+      }
+
       // gmsh::model::mesh::classifySurfaces
       //
       // Classify ("color") the surface mesh based on the angle threshold `angle'

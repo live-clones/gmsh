@@ -5483,6 +5483,18 @@ GMSH_API void gmsh::model::mesh::setVisibility(
   }
 }
 
+GMSH_API void gmsh::model::mesh::getVisibility(const std::vector<size_t> &elementTags,
+                                               std::vector<int> &values)
+{
+  if(!_checkInit()) return;
+  values.clear();
+  values.resize(elementTags.size(), 0);
+  for(std::size_t i = 0; i < elementTags.size(); i++) {
+    MElement *e = GModel::current()->getMeshElementByTag(elementTags[i]);
+    if(e) values[i] = e->getVisibility();
+  }
+}
+
 GMSH_API void gmsh::model::mesh::importStl()
 {
   if(!_checkInit()) return;

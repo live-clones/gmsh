@@ -696,6 +696,8 @@ module gmsh
         gmshModelMeshSplitQuadrangles
     procedure, nopass :: setVisibility => &
         gmshModelMeshSetVisibility
+    procedure, nopass :: getVisibility => &
+        gmshModelMeshGetVisibility
     procedure, nopass :: classifySurfaces => &
         gmshModelMeshClassifySurfaces
     procedure, nopass :: createGeometry => &
@@ -7067,6 +7069,39 @@ module gmsh
          value=int(value, c_int), &
          ierr_=ierr)
   end subroutine gmshModelMeshSetVisibility
+
+  !> Get the visibility of the elements of tags `elementTags'.
+  subroutine gmshModelMeshGetVisibility(elementTags, &
+                                        values, &
+                                        ierr)
+    interface
+    subroutine C_API(api_elementTags_, &
+                     api_elementTags_n_, &
+                     api_values_, &
+                     api_values_n_, &
+                     ierr_) &
+      bind(C, name="gmshModelMeshGetVisibility")
+      use, intrinsic :: iso_c_binding
+      integer(c_size_t), dimension(*) :: api_elementTags_
+      integer(c_size_t), value, intent(in) :: api_elementTags_n_
+      type(c_ptr), intent(out) :: api_values_
+      integer(c_size_t), intent(out) :: api_values_n_
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer(c_size_t), dimension(:), intent(in) :: elementTags
+    integer(c_int), dimension(:), allocatable, intent(out) :: values
+    integer(c_int), intent(out), optional :: ierr
+    type(c_ptr) :: api_values_
+    integer(c_size_t) :: api_values_n_
+    call C_API(api_elementTags_=elementTags, &
+         api_elementTags_n_=size_gmsh_size(elementTags), &
+         api_values_=api_values_, &
+         api_values_n_=api_values_n_, &
+         ierr_=ierr)
+    values = ovectorint_(api_values_, &
+      api_values_n_)
+  end subroutine gmshModelMeshGetVisibility
 
   !> Classify ("color") the surface mesh based on the angle threshold `angle'
   !! (in radians), and create new discrete surfaces, curves and points

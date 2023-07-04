@@ -546,6 +546,9 @@ mesh.add('splitQuadrangles', doc, None, idouble('quality', '1.'), iint('tag', '-
 doc = '''Set the visibility of the elements of tags `elementTags' to `value'.'''
 mesh.add('setVisibility', doc, None, ivectorsize('elementTags'), iint('value'))
 
+doc = '''Get the visibility of the elements of tags `elementTags'.'''
+mesh.add('getVisibility', doc, None, ivectorsize('elementTags'), ovectorint('values'))
+
 doc = '''Classify ("color") the surface mesh based on the angle threshold `angle' (in radians), and create new discrete surfaces, curves and points accordingly. If `boundary' is set, also create discrete curves on the boundary if the surface is open. If `forReparametrization' is set, create curves and surfaces that can be reparametrized using a single map. If `curveAngle' is less than Pi, also force curves to be split according to `curveAngle'. If `exportDiscrete' is set, clear any built-in CAD kernel entities and export the discrete entities in the built-in CAD kernel.'''
 mesh.add('classifySurfaces', doc, None, idouble('angle'), ibool('boundary', 'true', 'True'), ibool('forReparametrization', 'false', 'False'), idouble('curveAngle', 'M_PI', 'pi', 'pi'), ibool('exportDiscrete', 'true', 'True'))
 

@@ -4233,6 +4233,30 @@ end
 const set_visibility = setVisibility
 
 """
+    gmsh.model.mesh.getVisibility(elementTags)
+
+Get the visibility of the elements of tags `elementTags`.
+
+Return `values`.
+
+Types:
+ - `elementTags`: vector of sizes
+ - `values`: vector of integers
+"""
+function getVisibility(elementTags)
+    api_values_ = Ref{Ptr{Cint}}()
+    api_values_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshGetVisibility, gmsh.lib), Cvoid,
+          (Ptr{Csize_t}, Csize_t, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
+          convert(Vector{Csize_t}, elementTags), length(elementTags), api_values_, api_values_n_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    values = unsafe_wrap(Array, api_values_[], api_values_n_[], own = true)
+    return values
+end
+const get_visibility = getVisibility
+
+"""
     gmsh.model.mesh.classifySurfaces(angle, boundary = true, forReparametrization = false, curveAngle = pi, exportDiscrete = true)
 
 Classify ("color") the surface mesh based on the angle threshold `angle` (in
