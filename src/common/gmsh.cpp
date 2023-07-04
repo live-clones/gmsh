@@ -5201,10 +5201,11 @@ gmsh::model::mesh::reorderElements(const int elementType, const int tag,
   }
 }
 
-GMSH_API void gmsh::model::mesh::computeRenumbering(std::vector<std::size_t> &oldTags,
-                                                    std::vector<std::size_t> &newTags,
-                                                    const std::string &method,
-                                                    const std::vector<std::size_t> &elementTags)
+GMSH_API void gmsh::model::mesh::computeRenumbering
+  (std::vector<std::size_t> &oldTags,
+   std::vector<std::size_t> &newTags,
+   const std::string &method,
+   const std::vector<std::size_t> &elementTags)
 {
   std::map<std::size_t, std::size_t> remap;
 #if defined(HAVE_MESH)
@@ -5225,14 +5226,15 @@ GMSH_API void gmsh::model::mesh::computeRenumbering(std::vector<std::size_t> &ol
   }
 }
 
-GMSH_API void gmsh::model::mesh::renumberNodes(const std::vector<std::size_t> &oldTags,
-                                               const std::vector<std::size_t> &newTags)
+GMSH_API void gmsh::model::mesh::renumberNodes
+  (const std::vector<std::size_t> &oldTags,
+   const std::vector<std::size_t> &newTags)
 {
   if(!_checkInit()) return;
-
   if(oldTags.size() != newTags.size()) {
-    Msg::Error("Invalid number of tags for node renumbering: %lu != %lu", oldTags.size(),
-               newTags.size());
+    Msg::Error("Invalid number of tags for node renumbering: %lu != %lu",
+               oldTags.size(), newTags.size());
+    return;
   }
   std::map<std::size_t, std::size_t> remap;
   for(std::size_t i = 0; i < oldTags.size(); i++)
@@ -5240,10 +5242,20 @@ GMSH_API void gmsh::model::mesh::renumberNodes(const std::vector<std::size_t> &o
   GModel::current()->renumberMeshVertices(remap);
 }
 
-GMSH_API void gmsh::model::mesh::renumberElements()
+GMSH_API void gmsh::model::mesh::renumberElements
+  (const std::vector<std::size_t> &oldTags,
+   const std::vector<std::size_t> &newTags)
 {
   if(!_checkInit()) return;
-  GModel::current()->renumberMeshElements();
+  if(oldTags.size() != newTags.size()) {
+    Msg::Error("Invalid number of tags for element renumbering: %lu != %lu",
+               oldTags.size(), newTags.size());
+    return;
+  }
+  std::map<std::size_t, std::size_t> remap;
+  for(std::size_t i = 0; i < oldTags.size(); i++)
+    remap[oldTags[i]] = newTags[i];
+  GModel::current()->renumberMeshElements(remap);
 }
 
 GMSH_API void

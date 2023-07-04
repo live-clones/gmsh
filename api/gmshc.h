@@ -1442,8 +1442,14 @@ GMSH_API void gmshModelMeshRenumberNodes(const size_t * oldTags, const size_t ol
                                          const size_t * newTags, const size_t newTags_n,
                                          int * ierr);
 
-/* Renumber the element tags in a continuous sequence. */
-GMSH_API void gmshModelMeshRenumberElements(int * ierr);
+/* Renumber the element tags in a continuous sequence. If no explicit
+ * renumbering is provided through the `oldTags' and `newTags' vectors,
+ * renumber the elements in a continuous sequence, taking into account the
+ * subset of elements to be saved later on if the option "Mesh.SaveAll" is not
+ * set. */
+GMSH_API void gmshModelMeshRenumberElements(const size_t * oldTags, const size_t oldTags_n,
+                                            const size_t * newTags, const size_t newTags_n,
+                                            int * ierr);
 
 /* Set the meshes of the entities of dimension `dim' and tag `tags' as
  * periodic copies of the meshes of entities `tagsMaster', using the affine

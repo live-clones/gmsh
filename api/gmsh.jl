@@ -3940,15 +3940,22 @@ end
 const renumber_nodes = renumberNodes
 
 """
-    gmsh.model.mesh.renumberElements()
+    gmsh.model.mesh.renumberElements(oldTags = Csize_t[], newTags = Csize_t[])
 
-Renumber the element tags in a continuous sequence.
+Renumber the element tags in a continuous sequence. If no explicit renumbering
+is provided through the `oldTags` and `newTags` vectors, renumber the elements
+in a continuous sequence, taking into account the subset of elements to be saved
+later on if the option "Mesh.SaveAll" is not set.
+
+Types:
+ - `oldTags`: vector of sizes
+ - `newTags`: vector of sizes
 """
-function renumberElements()
+function renumberElements(oldTags = Csize_t[], newTags = Csize_t[])
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshRenumberElements, gmsh.lib), Cvoid,
-          (Ptr{Cint},),
-          ierr)
+          (Ptr{Csize_t}, Csize_t, Ptr{Csize_t}, Csize_t, Ptr{Cint}),
+          convert(Vector{Csize_t}, oldTags), length(oldTags), convert(Vector{Csize_t}, newTags), length(newTags), ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end

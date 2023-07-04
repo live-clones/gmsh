@@ -2116,11 +2116,13 @@ GMSH_API void gmshModelMeshRenumberNodes(const size_t * oldTags, const size_t ol
   }
 }
 
-GMSH_API void gmshModelMeshRenumberElements(int * ierr)
+GMSH_API void gmshModelMeshRenumberElements(const size_t * oldTags, const size_t oldTags_n, const size_t * newTags, const size_t newTags_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    gmsh::model::mesh::renumberElements();
+    std::vector<std::size_t> api_oldTags_(oldTags, oldTags + oldTags_n);
+    std::vector<std::size_t> api_newTags_(newTags, newTags + newTags_n);
+    gmsh::model::mesh::renumberElements(api_oldTags_, api_newTags_);
   }
   catch(...){
     if(ierr) *ierr = 1;
