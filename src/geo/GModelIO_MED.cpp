@@ -739,9 +739,10 @@ int GModel::writeMED(const std::string &name, bool saveAll,
           }
           else
             groupName += tmp;
-          // if an entity belongs to several groups, pad to multiples of
-          // MED_TAILLE_LNOM lengths
-          if(j) groupName.resize((j + 1) * MED_TAILLE_LNOM, ' ');
+          // this is not ideal (cf. #2427), as the group names are all 80 char
+          // long, but I don't know how to associate multiple group names to a
+          // family otherwise
+          groupName.resize((j + 1) * MED_TAILLE_LNOM, ' ');
         }
 #if(MED_MAJOR_NUM >= 3)
         if(MEDfamilyCr(fid, meshName, familyName.c_str(), (med_int)num,
