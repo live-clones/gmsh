@@ -3791,7 +3791,10 @@ bool OCC_Internals::booleanOperator(
       }
       else if(mapModified[i].Extent() == 1) { // replaced by single one
         if(remove) {
-          _unbind(mapOriginal[i], dim, tag, true);
+          if(CTX::instance()->geom.occSafeUnbind)
+            _unbind(mapOriginal[i], dim, tag, true);
+          else
+            _unbindWithoutChecks(mapOriginal[i]);
           _bind(mapModified[i].First(), dim, tag, false); // not recursive!
           int t = _find(dim, mapModified[i].First());
           if(tag != t)
@@ -3804,7 +3807,12 @@ bool OCC_Internals::booleanOperator(
         Msg::Debug("BOOL (%d,%d) replaced by 1", dim, tag);
       }
       else {
-        if(remove) _unbind(mapOriginal[i], dim, tag, true);
+        if(remove) {
+          if(CTX::instance()->geom.occSafeUnbind)
+            _unbind(mapOriginal[i], dim, tag, true);
+          else
+            _unbindWithoutChecks(mapOriginal[i]);
+        }
         Msg::Debug("BOOL (%d,%d) other", dim, tag);
       }
     }
