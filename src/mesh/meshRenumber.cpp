@@ -198,7 +198,9 @@ int meshRenumber_Vertices_Hilbert(
   }
 
   std::vector<MVertex *> v(allv.begin(), allv.end());
-  SortHilbert(v);
+  
+  SortHilbert_Without_Brio(v);
+
   for(std::size_t i = 0; i < v.size(); i++) {
     permutations[v[i]->getNum()] = i + 1;
   }
