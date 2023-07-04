@@ -5213,6 +5213,8 @@ GMSH_API void gmsh::model::mesh::computeRenumbering
     meshRenumber_Vertices_RCMK(elementTags, remap);
   else if(method == "Hilbert")
     meshRenumber_Vertices_Hilbert(elementTags, remap);
+  else if(method == "Metis")
+    meshRenumber_Vertices_Metis(elementTags, remap);
   else
     Msg::Error("Unknown renumbering method %s", method.c_str());
 #else

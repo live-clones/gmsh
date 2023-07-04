@@ -7,10 +7,30 @@
 #include "GModel.h"
 #include "GmshMessage.h"
 #include "HilbertCurve.h"
+#include "metis.h"
 #include <queue>
+#include <cmath>
+
+#define DIFF(x,y) (x>y ? x-y : y-x)
+
+template <typename T> 
+static T bandwidth ( std::vector<T> &ai,
+		     std::vector<T> &aj,
+		     T * p=nullptr){
+  T maxdx = 0;
+  for (size_t i=0; i < ai.size()-1 ; i++){
+    for (size_t j= ai[i]; j < ai[i+1] ; j++){
+      T dx = p ? DIFF(p[aj[j]],p[i]) : DIFF(aj[j],i);
+      if (dx > maxdx)maxdx=dx;
+    }
+  }
+  return maxdx;
+}
+
 
 // RCM routine adapted from GmshFEM - Copyright (C) 2019-2022, A. Royer,
 // E. Béchet, C. Geuzaine, Université de Liège
+
 
 struct SortClass {
   const std::size_t *_degree;
@@ -100,12 +120,16 @@ static void RCM(std::vector<std::size_t> &sorted, const std::size_t *const row,
   }
 }
 
-int meshRenumber_Vertices_RCMK(const std::vector<std::size_t> &elementTags,
-                               std::map<std::size_t, std::size_t> &permutations)
-{
-  GModel *gm = GModel ::current();
-  permutations.clear();
-
+template <typename T> 
+static void createVertexToVertexGraph (GModel *gm,
+				       const std::vector<std::size_t> &elementTags,
+				       std::map<MVertex *, std::size_t> &initial_numbering,
+				       std::vector<T> &ai,
+				       std::vector<T> &aj){
+  ai.clear();
+  aj.clear();
+  initial_numbering.clear();
+  
   std::vector<MElement *> elements;
   if(elementTags.empty()) {
     std::vector<GEntity *> entities;
@@ -120,18 +144,15 @@ int meshRenumber_Vertices_RCMK(const std::vector<std::size_t> &elementTags,
     for(auto n : elementTags) elements.push_back(gm->getMeshElementByTag(n));
   }
 
-  std::map<MVertex *, std::size_t> initial_numbering;
   std::size_t count = 0;
-  std::vector<std::pair<std::size_t, std::size_t>> coords;
+  std::vector<std::pair<T, T> > coords;
   std::size_t numbers[1000];
-  std::map<std::size_t, MVertex *> inverse_numbering;
   for(auto e : elements) {
     for(std::size_t i = 0; i < e->getNumVertices(); i++) {
       MVertex *v = e->getVertex(i);
       auto it = initial_numbering.find(v);
       if(it == initial_numbering.end()) {
         numbers[i] = count;
-        inverse_numbering[count] = v;
         initial_numbering[v] = count++;
       }
       else
@@ -139,7 +160,7 @@ int meshRenumber_Vertices_RCMK(const std::vector<std::size_t> &elementTags,
     }
     for(std::size_t i = 0; i < e->getNumVertices(); i++) {
       for(std::size_t j = 0; j < e->getNumVertices(); j++) {
-        coords.push_back(std::make_pair(numbers[i], numbers[j]));
+        if (i != j)coords.push_back(std::make_pair(numbers[i], numbers[j]));
       }
     }
   }
@@ -148,25 +169,42 @@ int meshRenumber_Vertices_RCMK(const std::vector<std::size_t> &elementTags,
   auto last = std::unique(coords.begin(), coords.end());
   coords.erase(last, coords.end());
 
-  std::vector<std::size_t> ai, aj;
   ai.push_back(0);
-  std::size_t line = coords[0].first;
+  T line = coords[0].first;
   for(auto c : coords) {
     if(c.first != line) {
-      ai.push_back(aj.size());
+      ai.push_back((T)aj.size());
       line = c.first;
     }
     aj.push_back(c.second);
   }
-  ai.push_back(aj.size());
+  ai.push_back((T)aj.size());
+}
 
-  std::vector<std::size_t> sorted(count);
+
+int meshRenumber_Vertices_RCMK(const std::vector<std::size_t> &elementTags,
+                               std::map<std::size_t, std::size_t> &permutations)
+{
+  GModel *gm = GModel ::current();
+  permutations.clear();
+
+  std::map<MVertex *, std::size_t> initial_numbering;
+  std::vector<std::size_t> ai,aj;
+  createVertexToVertexGraph (gm, elementTags, initial_numbering, ai, aj);
+
+  int before = bandwidth (ai,aj);
+
+  std::vector<std::size_t> sorted(initial_numbering.size());
 
   RCM(sorted, &ai[0], &aj[0]);
+
+  int after = bandwidth (ai,aj,&sorted[0]);
 
   for(auto it : initial_numbering) {
     permutations[it.first->getNum()] = sorted[it.second];
   }
+
+  Msg::Info("RENUMBERING WITH RCMK : bandwidth goes from %d --> %d",before,after);
 
   return 0;
 }
@@ -207,3 +245,39 @@ int meshRenumber_Vertices_Hilbert(
 
   return 0;
 }
+
+
+int meshRenumber_Vertices_Metis(const std::vector<std::size_t> &elementTags,
+		       std::map<std::size_t, std::size_t> &permutations){
+
+
+  GModel *gm = GModel ::current();
+  permutations.clear();
+
+  std::map<MVertex *, std::size_t> initial_numbering;
+  std::vector<idx_t> ai,aj;
+  createVertexToVertexGraph (gm, elementTags, initial_numbering, ai, aj);
+
+  int before = bandwidth (ai,aj);
+  
+  idx_t n = (idx_t) initial_numbering.size();
+  idx_t *xadj   = &ai[0];
+  idx_t *adjncy = &aj[0];
+  idx_t *perm = new idx_t[n];
+  idx_t *iperm = new idx_t[n];
+  int result = METIS_NodeND(&n, xadj, adjncy, nullptr, nullptr, perm, iperm);
+
+  int after = bandwidth (ai,aj,iperm);
+  
+  Msg::Info("RENUMBERING WITH METIS : bandwidth goes from %d --> %d",before,after);
+  for(auto it : initial_numbering) {
+    permutations[it.first->getNum()] = iperm[it.second]+1;
+  }
+  delete [] perm;
+  delete [] iperm;
+  
+  
+  return 0;
+}
+
+

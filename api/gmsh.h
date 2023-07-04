@@ -1614,7 +1614,8 @@ namespace gmsh { // Top-level functions
       // is empty, compute the renumbering on the full mesh. If `method' is equal
       // to "RCMK", compute a node renumering with Reverse Cuthill McKee. If
       // `method' is equal to "Hilbert", compute a node renumering along a Hilbert
-      // curve. Element renumbering is not available yet.
+      // curve. If `method' is equal to "Metis", compute a node renumering using
+      // Metis. Element renumbering is not available yet.
       GMSH_API void computeRenumbering(std::vector<std::size_t> & oldTags,
                                        std::vector<std::size_t> & newTags,
                                        const std::string & method = "RCMK",

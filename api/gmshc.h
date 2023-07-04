@@ -1426,7 +1426,8 @@ GMSH_API void gmshModelMeshReorderElements(const int elementType,
  * `oldTags' for a given list of element tags `elementTags'. If `elementTags'
  * is empty, compute the renumbering on the full mesh. If `method' is equal to
  * "RCMK", compute a node renumering with Reverse Cuthill McKee. If `method'
- * is equal to "Hilbert", compute a node renumering along a Hilbert curve.
+ * is equal to "Hilbert", compute a node renumering along a Hilbert curve. If
+ * `method' is equal to "Metis", compute a node renumering using Metis.
  * Element renumbering is not available yet. */
 GMSH_API void gmshModelMeshComputeRenumbering(size_t ** oldTags, size_t * oldTags_n,
                                               size_t ** newTags, size_t * newTags_n,
