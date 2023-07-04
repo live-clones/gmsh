@@ -4820,6 +4820,31 @@ class model:
         set_visibility = setVisibility
 
         @staticmethod
+        def getVisibility(elementTags):
+            """
+            gmsh.model.mesh.getVisibility(elementTags)
+
+            Get the visibility of the elements of tags `elementTags'.
+
+            Return `values'.
+
+            Types:
+            - `elementTags': vector of sizes
+            - `values': vector of integers
+            """
+            api_elementTags_, api_elementTags_n_ = _ivectorsize(elementTags)
+            api_values_, api_values_n_ = POINTER(c_int)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshGetVisibility(
+                api_elementTags_, api_elementTags_n_,
+                byref(api_values_), byref(api_values_n_),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return _ovectorint(api_values_, api_values_n_.value)
+        get_visibility = getVisibility
+
+        @staticmethod
         def classifySurfaces(angle, boundary=True, forReparametrization=False, curveAngle=pi, exportDiscrete=True):
             """
             gmsh.model.mesh.classifySurfaces(angle, boundary=True, forReparametrization=False, curveAngle=pi, exportDiscrete=True)

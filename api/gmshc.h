@@ -1538,6 +1538,11 @@ GMSH_API void gmshModelMeshSetVisibility(const size_t * elementTags, const size_
                                          const int value,
                                          int * ierr);
 
+/* Get the visibility of the elements of tags `elementTags'. */
+GMSH_API void gmshModelMeshGetVisibility(const size_t * elementTags, const size_t elementTags_n,
+                                         int ** values, size_t * values_n,
+                                         int * ierr);
+
 /* Classify ("color") the surface mesh based on the angle threshold `angle'
  * (in radians), and create new discrete surfaces, curves and points
  * accordingly. If `boundary' is set, also create discrete curves on the

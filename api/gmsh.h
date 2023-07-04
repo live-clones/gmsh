@@ -1738,6 +1738,12 @@ namespace gmsh { // Top-level functions
       GMSH_API void setVisibility(const std::vector<std::size_t> & elementTags,
                                   const int value);
 
+      // gmsh::model::mesh::getVisibility
+      //
+      // Get the visibility of the elements of tags `elementTags'.
+      GMSH_API void getVisibility(const std::vector<std::size_t> & elementTags,
+                                  std::vector<int> & values);
+
       // gmsh::model::mesh::classifySurfaces
       //
       // Classify ("color") the surface mesh based on the angle threshold `angle'
