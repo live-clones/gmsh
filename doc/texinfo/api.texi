@@ -2337,7 +2337,7 @@ Compute a renumbering vector @code{newTags} corresponding to the input tags @cod
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L1618,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1431,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4443,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L3904,Julia}
 @item Examples:
-Python (@url{@value{GITLAB-PREFIX}/examples/api/renumbering.py#L9,renumbering.py})
+Python (@url{@value{GITLAB-PREFIX}/examples/api/renumbering.py#L13,renumbering.py})
 @end table
 
 @item gmsh/model/mesh/renumberNodes
@@ -2353,7 +2353,7 @@ Renumber the node tags. If no explicit renumbering is provided through the @code
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L1629,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1441,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4480,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L3932,Julia}
 @item Examples:
-Python (@url{@value{GITLAB-PREFIX}/examples/api/renumbering.py#L10,renumbering.py}, @url{@value{GITLAB-PREFIX}/examples/api/view_renumbering.py#L31,view_renumbering.py})
+Python (@url{@value{GITLAB-PREFIX}/examples/api/renumbering.py#L14,renumbering.py}, @url{@value{GITLAB-PREFIX}/examples/api/view_renumbering.py#L31,view_renumbering.py})
 @end table
 
 @item gmsh/model/mesh/renumberElements
