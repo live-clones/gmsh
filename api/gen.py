@@ -513,8 +513,8 @@ mesh.add('computeRenumbering', doc, None, ovectorsize('oldTags'), ovectorsize('n
 doc = '''Renumber the node tags. If no explicit renumbering is provided through the `oldTags' and `newTags' vectors, renumber the nodes in a continuous sequence, taking into account the subset of elements to be saved later on if the option "Mesh.SaveAll" is not set.'''
 mesh.add('renumberNodes', doc, None, ivectorsize('oldTags', 'std::vector<std::size_t>()', '[]', '[]'), ivectorsize('newTags', 'std::vector<std::size_t>()', '[]', '[]'))
 
-doc = '''Renumber the element tags in a continuous sequence.'''
-mesh.add('renumberElements', doc, None)
+doc = '''Renumber the element tags in a continuous sequence. If no explicit renumbering is provided through the `oldTags' and `newTags' vectors, renumber the elements in a continuous sequence, taking into account the subset of elements to be saved later on if the option "Mesh.SaveAll" is not set.'''
+mesh.add('renumberElements', doc, None, ivectorsize('oldTags', 'std::vector<std::size_t>()', '[]', '[]'), ivectorsize('newTags', 'std::vector<std::size_t>()', '[]', '[]'))
 
 doc = '''Set the meshes of the entities of dimension `dim' and tag `tags' as periodic copies of the meshes of entities `tagsMaster', using the affine transformation specified in `affineTransformation' (16 entries of a 4x4 matrix, by row). If used after meshing, generate the periodic node correspondence information assuming the meshes of entities `tags' effectively match the meshes of entities `tagsMaster' (useful for structured and extruded meshes). Currently only available for @code{dim} == 1 and @code{dim} == 2.'''
 mesh.add('setPeriodic', doc, None, iint('dim'), ivectorint('tags'), ivectorint('tagsMaster'), ivectordouble('affineTransform'))

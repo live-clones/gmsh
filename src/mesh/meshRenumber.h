@@ -9,10 +9,10 @@
 #include <map>
 #include <vector>
 
-int meshRenumber_Vertices_RCMK(const std::vector<size_t> &elements,
-                               std::map<size_t, size_t> &permutations);
+int meshRenumber_Vertices_RCMK(const std::vector<std::size_t> &elements,
+                               std::map<std::size_t, std::size_t> &permutations);
 
-int meshRenumber_Vertices_Hilbert(const std::vector<size_t> &elements,
-                                  std::map<size_t, size_t> &permutations);
+int meshRenumber_Vertices_Hilbert(const std::vector<std::size_t> &elements,
+                                  std::map<std::size_t, std::size_t> &permutations);
 
 #endif

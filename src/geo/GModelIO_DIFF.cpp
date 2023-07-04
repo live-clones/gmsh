@@ -10,7 +10,7 @@
 #include "MElement.h"
 
 static bool getMeshVertices(int num, int *indices,
-                            std::map<int, MVertex *> &map,
+                            std::map<std::size_t, MVertex *> &map,
                             std::vector<MVertex *> &vertices)
 {
   for(int i = 0; i < num; i++) {
@@ -50,7 +50,7 @@ int GModel::readDIFF(const std::string &name)
   char str[256] = "XXX";
   std::map<int, std::vector<MElement *> > elements[10];
   std::map<int, std::map<int, std::string> > physicals[4];
-  std::map<int, MVertex *> vertexMap;
+  std::map<std::size_t, MVertex *> vertexMap;
   std::vector<MVertex *> vertexVector;
 
   {

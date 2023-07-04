@@ -4502,14 +4502,26 @@ class model:
         renumber_nodes = renumberNodes
 
         @staticmethod
-        def renumberElements():
+        def renumberElements(oldTags=[], newTags=[]):
             """
-            gmsh.model.mesh.renumberElements()
+            gmsh.model.mesh.renumberElements(oldTags=[], newTags=[])
 
-            Renumber the element tags in a continuous sequence.
+            Renumber the element tags in a continuous sequence. If no explicit
+            renumbering is provided through the `oldTags' and `newTags' vectors,
+            renumber the elements in a continuous sequence, taking into account the
+            subset of elements to be saved later on if the option "Mesh.SaveAll" is not
+            set.
+
+            Types:
+            - `oldTags': vector of sizes
+            - `newTags': vector of sizes
             """
+            api_oldTags_, api_oldTags_n_ = _ivectorsize(oldTags)
+            api_newTags_, api_newTags_n_ = _ivectorsize(newTags)
             ierr = c_int()
             lib.gmshModelMeshRenumberElements(
+                api_oldTags_, api_oldTags_n_,
+                api_newTags_, api_newTags_n_,
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())

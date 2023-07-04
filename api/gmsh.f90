@@ -6616,17 +6616,37 @@ module gmsh
          ierr_=ierr)
   end subroutine gmshModelMeshRenumberNodes
 
-  !> Renumber the element tags in a continuous sequence.
-  subroutine gmshModelMeshRenumberElements(ierr)
+  !> Renumber the element tags in a continuous sequence. If no explicit
+  !! renumbering is provided through the `oldTags' and `newTags' vectors,
+  !! renumber the elements in a continuous sequence, taking into account the
+  !! subset of elements to be saved later on if the option "Mesh.SaveAll" is not
+  !! set.
+  subroutine gmshModelMeshRenumberElements(oldTags, &
+                                           newTags, &
+                                           ierr)
     interface
-    subroutine C_API(ierr_) &
+    subroutine C_API(api_oldTags_, &
+                     api_oldTags_n_, &
+                     api_newTags_, &
+                     api_newTags_n_, &
+                     ierr_) &
       bind(C, name="gmshModelMeshRenumberElements")
       use, intrinsic :: iso_c_binding
+      integer(c_size_t), dimension(*), optional :: api_oldTags_
+      integer(c_size_t), value, intent(in) :: api_oldTags_n_
+      integer(c_size_t), dimension(*), optional :: api_newTags_
+      integer(c_size_t), value, intent(in) :: api_newTags_n_
       integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
+    integer(c_size_t), dimension(:), intent(in), optional :: oldTags
+    integer(c_size_t), dimension(:), intent(in), optional :: newTags
     integer(c_int), intent(out), optional :: ierr
-    call C_API(ierr_=ierr)
+    call C_API(api_oldTags_=oldTags, &
+         api_oldTags_n_=size_gmsh_size(oldTags), &
+         api_newTags_=newTags, &
+         api_newTags_n_=size_gmsh_size(newTags), &
+         ierr_=ierr)
   end subroutine gmshModelMeshRenumberElements
 
   !> Set the meshes of the entities of dimension `dim' and tag `tags' as

@@ -1631,8 +1631,13 @@ namespace gmsh { // Top-level functions
 
       // gmsh::model::mesh::renumberElements
       //
-      // Renumber the element tags in a continuous sequence.
-      GMSH_API void renumberElements();
+      // Renumber the element tags in a continuous sequence. If no explicit
+      // renumbering is provided through the `oldTags' and `newTags' vectors,
+      // renumber the elements in a continuous sequence, taking into account the
+      // subset of elements to be saved later on if the option "Mesh.SaveAll" is
+      // not set.
+      GMSH_API void renumberElements(const std::vector<std::size_t> & oldTags = std::vector<std::size_t>(),
+                                     const std::vector<std::size_t> & newTags = std::vector<std::size_t>());
 
       // gmsh::model::mesh::setPeriodic
       //

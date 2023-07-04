@@ -2,13 +2,13 @@
 meshes; new element qualities available through API; new IGES export; new volume
 glyph; OCC curve loops can now be oriented based on the sign of the first curve;
 better mesh node visualization; added suppport for model attributes in MSH2
-files; attributes small bug fixes.
+files; new mesh renumbering capabilities in the API; small bug fixes.
 
 * New API functions: model/getEntitiesForPhysicalName; mesh/computeRenumbering.
 
 * Incompatible API changes: new optional argument to occ/addCircleArc,
-  mesh/renumberNodes and view/getListData; new optional "interruptible" argument
-  to gmsh.initialize() in Python
+  mesh/renumberNodes, mesh/renumberElements and view/getListData; new optional
+  "interruptible" argument to gmsh.initialize() in Python
 
 4.11.1 (December 21, 2022): Mesh.TransfiniteTri improvements; small bug fixes.
 

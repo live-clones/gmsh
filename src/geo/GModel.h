@@ -99,9 +99,9 @@ protected:
   // vertex and element caches to speed-up direct access by tag (mostly
   // used for post-processing I/O)
   std::vector<MVertex *> _vertexVectorCache;
-  std::map<int, MVertex *> _vertexMapCache;
+  std::map<std::size_t, MVertex *> _vertexMapCache;
   std::vector<std::pair<MElement *, int> > _elementVectorCache;
-  std::map<int, std::pair<MElement *, int> > _elementMapCache;
+  std::map<std::size_t, std::pair<MElement *, int> > _elementMapCache;
   std::map<int, int> _elementIndexCache;
 
   // ghost cell information (stores partitions for each element acting
@@ -170,7 +170,7 @@ protected:
 
   // store the vertices in the geometrical entity they are associated
   // with, and delete those that are not associated with any entity
-  void _storeVerticesInEntities(std::map<int, MVertex *> &vertices);
+  void _storeVerticesInEntities(std::map<std::size_t, MVertex *> &vertices);
   void _storeVerticesInEntities(std::vector<MVertex *> &vertices);
 
   // store the physical tags in the geometrical entities
@@ -541,12 +541,12 @@ public:
                                                  bool strict = true);
 
   // access a mesh element by tag, using the element cache
-  MElement *getMeshElementByTag(int n)
+  MElement *getMeshElementByTag(std::size_t n)
   {
-    int tag;
-    return getMeshElementByTag(n, tag);
+    int entityTag;
+    return getMeshElementByTag(n, entityTag);
   }
-  MElement *getMeshElementByTag(int n, int &entityTag);
+  MElement *getMeshElementByTag(std::size_t n, int &entityTag);
 
   // access temporary mesh element index
   int getMeshElementIndex(MElement *e);
@@ -564,7 +564,7 @@ public:
   void rebuildMeshElementCache(bool onlyIfNecessary = false);
 
   // access a mesh vertex by tag, using the vertex cache
-  MVertex *getMeshVertexByTag(int n);
+  MVertex *getMeshVertexByTag(std::size_t n);
 
   // add a mesh vertex to the global mesh vertex cache
   void addMVertexToVertexCache(MVertex* v);

@@ -2483,7 +2483,7 @@ void MElement::getVerticesIdForMSH(std::vector<int> &verts)
   for(int i = 0; i < n; i++) verts[i] = (int)getVertex(i)->getIndex();
 }
 
-MElement *MElement::copy(std::map<int, MVertex *> &vertexMap,
+MElement *MElement::copy(std::map<std::size_t, MVertex *> &vertexMap,
                          std::map<MElement *, MElement *> &newParents,
                          std::map<MElement *, MElement *> &newDomains)
 {
