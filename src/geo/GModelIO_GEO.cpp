@@ -1532,7 +1532,7 @@ void GEO_Internals::synchronize(GModel *model, bool resetMeshAttributes)
   // we might want to store physical groups directly in GModel; but I guess this
   // is OK for now:
   if(Tree_Nbr(PhysicalGroups)) {
-    List_T *groups = Tree2List(Curves);
+    List_T *groups = Tree2List(PhysicalGroups);
     for(int i = 0; i < List_Nbr(groups); i++) {
       PhysicalGroup *p;
       List_Read(groups, i, &p);
