@@ -124,6 +124,7 @@ template <typename T>
 static void createVertexToVertexGraph (GModel *gm,
 				       const std::vector<std::size_t> &elementTags,
 				       std::map<MVertex *, std::size_t> &initial_numbering,
+				       std::map<std::size_t, MVertex *> &invert_numbering,
 				       std::vector<T> &ai,
 				       std::vector<T> &aj){
   ai.clear();
@@ -153,6 +154,7 @@ static void createVertexToVertexGraph (GModel *gm,
       auto it = initial_numbering.find(v);
       if(it == initial_numbering.end()) {
         numbers[i] = count;
+        invert_numbering[count] = v;
         initial_numbering[v] = count++;
       }
       else
@@ -160,7 +162,7 @@ static void createVertexToVertexGraph (GModel *gm,
     }
     for(std::size_t i = 0; i < e->getNumVertices(); i++) {
       for(std::size_t j = 0; j < e->getNumVertices(); j++) {
-        if (i != j)coords.push_back(std::make_pair(numbers[i], numbers[j]));
+	if (i != j) coords.push_back(std::make_pair(numbers[i], numbers[j]));
       }
     }
   }
@@ -189,8 +191,9 @@ int meshRenumber_Vertices_RCMK(const std::vector<std::size_t> &elementTags,
   permutations.clear();
 
   std::map<MVertex *, std::size_t> initial_numbering;
+  std::map<std::size_t,MVertex *> inverse_numbering;
   std::vector<std::size_t> ai,aj;
-  createVertexToVertexGraph (gm, elementTags, initial_numbering, ai, aj);
+  createVertexToVertexGraph (gm, elementTags, initial_numbering, inverse_numbering, ai, aj);
 
   int before = bandwidth (ai,aj);
 
@@ -255,10 +258,11 @@ int meshRenumber_Vertices_Metis(const std::vector<std::size_t> &elementTags,
   permutations.clear();
 
   std::map<MVertex *, std::size_t> initial_numbering;
+  std::map<std::size_t, MVertex *> invert_numbering;
   std::vector<idx_t> ai,aj;
-  createVertexToVertexGraph (gm, elementTags, initial_numbering, ai, aj);
+  createVertexToVertexGraph (gm, elementTags, initial_numbering, invert_numbering, ai, aj);
 
-  int before = bandwidth (ai,aj);
+  //  int before = bandwidth (ai,aj);
   
   idx_t n = (idx_t) initial_numbering.size();
   idx_t *xadj   = &ai[0];
@@ -267,9 +271,18 @@ int meshRenumber_Vertices_Metis(const std::vector<std::size_t> &elementTags,
   idx_t *iperm = new idx_t[n];
   int result = METIS_NodeND(&n, xadj, adjncy, nullptr, nullptr, perm, iperm);
 
-  int after = bandwidth (ai,aj,iperm);
+  if (result != METIS_OK){
+    Msg::Warning("RENUMBERING WITH METIS FAILED");
+    return -1;
+  }
   
-  Msg::Info("RENUMBERING WITH METIS : bandwidth goes from %d --> %d",before,after);
+  //  printf("%d\n",n);
+  //  for (int i=0;i<n;i++)printf("%d ",invert_numbering[(size_t)perm[i]]->getNum());
+  //  printf("\n");
+  
+  //  int after = bandwidth (ai,aj,perm);
+  
+  Msg::Info("RENUMBERING WITH METIS (Nested Dissection)");
   for(auto it : initial_numbering) {
     permutations[it.first->getNum()] = iperm[it.second]+1;
   }
