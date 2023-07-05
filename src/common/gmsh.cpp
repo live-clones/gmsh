@@ -4268,7 +4268,7 @@ GMSH_API void gmsh::model::mesh::getKeysInformation(
   }
 
   if(typeKeys.size() != entityKeys.size()) {
-    Msg::Error("The size of 'typeKeys' is different of the size of "
+    Msg::Error("The size of 'typeKeys' is different from the size of "
                "'entityKeys' ('%i', '%i')",
                typeKeys.size(), entityKeys.size());
     return;
