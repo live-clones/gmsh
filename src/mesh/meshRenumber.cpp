@@ -6,31 +6,29 @@
 #include "meshRenumber.h"
 #include "GModel.h"
 #include "GmshMessage.h"
+#include "GmshConfig.h"
 #include "HilbertCurve.h"
-#include "metis.h"
 #include <queue>
 #include <cmath>
 
-#define DIFF(x,y) (x>y ? x-y : y-x)
+#if defined(HAVE_METIS)
+#include "metis.h"
+#endif
 
-template <typename T> 
-static T bandwidth ( std::vector<T> &ai,
-		     std::vector<T> &aj,
-		     T * p=nullptr){
+#define DIFF(x, y) (x > y ? x - y : y - x)
+
+template <typename T>
+static T bandwidth(std::vector<T> &ai, std::vector<T> &aj, T *p = nullptr)
+{
   T maxdx = 0;
-  for (size_t i=0; i < ai.size()-1 ; i++){
-    for (T j= ai[i]; j < ai[i+1] ; j++){
-      T dx = p ? DIFF(p[aj[j]],p[i]) : DIFF(aj[j],(T)i);
-      if (dx > maxdx)maxdx=dx;
+  for(size_t i = 0; i < ai.size() - 1; i++) {
+    for(T j = ai[i]; j < ai[i + 1]; j++) {
+      T dx = p ? DIFF(p[aj[j]], p[i]) : DIFF(aj[j], (T)i);
+      if(dx > maxdx) maxdx = dx;
     }
   }
   return maxdx;
 }
-
-
-// RCM routine adapted from GmshFEM - Copyright (C) 2019-2022, A. Royer,
-// E. Béchet, C. Geuzaine, Université de Liège
-
 
 struct SortClass {
   const std::size_t *_degree;
@@ -43,6 +41,9 @@ struct SortClass {
 static void RCM(std::vector<std::size_t> &sorted, const std::size_t *const row,
                 const std::size_t *const indices)
 {
+  // Adapted from GmshFEM - Copyright (C) 2019-2022, A. Royer, E. Béchet,
+  // C. Geuzaine, Université de Liège
+
   std::vector<std::size_t> min; // long long for padding (64bits)
   std::vector<std::size_t> Nmin;
   std::vector<std::size_t> degree;
@@ -120,17 +121,18 @@ static void RCM(std::vector<std::size_t> &sorted, const std::size_t *const row,
   }
 }
 
-template <typename T> 
-static void createVertexToVertexGraph (GModel *gm,
-				       const std::vector<std::size_t> &elementTags,
-				       std::map<MVertex *, std::size_t> &initial_numbering,
-				       std::map<std::size_t, MVertex *> &invert_numbering,
-				       std::vector<T> &ai,
-				       std::vector<T> &aj){
+template <typename T>
+static void
+createVertexToVertexGraph(GModel *gm,
+                          const std::vector<std::size_t> &elementTags,
+                          std::map<MVertex *, std::size_t> &initial_numbering,
+                          std::map<std::size_t, MVertex *> &invert_numbering,
+                          std::vector<T> &ai, std::vector<T> &aj)
+{
   ai.clear();
   aj.clear();
   initial_numbering.clear();
-  
+
   std::vector<MElement *> elements;
   if(elementTags.empty()) {
     std::vector<GEntity *> entities;
@@ -146,7 +148,7 @@ static void createVertexToVertexGraph (GModel *gm,
   }
 
   std::size_t count = 0;
-  std::vector<std::pair<T, T> > coords;
+  std::vector<std::pair<T, T>> coords;
   std::size_t numbers[1000];
   for(auto e : elements) {
     for(std::size_t i = 0; i < e->getNumVertices(); i++) {
@@ -162,7 +164,7 @@ static void createVertexToVertexGraph (GModel *gm,
     }
     for(std::size_t i = 0; i < e->getNumVertices(); i++) {
       for(std::size_t j = 0; j < e->getNumVertices(); j++) {
-	if (i != j) coords.push_back(std::make_pair(numbers[i], numbers[j]));
+        if(i != j) coords.push_back(std::make_pair(numbers[i], numbers[j]));
       }
     }
   }
@@ -183,31 +185,34 @@ static void createVertexToVertexGraph (GModel *gm,
   ai.push_back((T)aj.size());
 }
 
-
 int meshRenumber_Vertices_RCMK(const std::vector<std::size_t> &elementTags,
                                std::map<std::size_t, std::size_t> &permutations)
 {
   GModel *gm = GModel ::current();
   permutations.clear();
 
-  std::map<MVertex *, std::size_t> initial_numbering;
-  std::map<std::size_t,MVertex *> inverse_numbering;
-  std::vector<std::size_t> ai,aj;
-  createVertexToVertexGraph (gm, elementTags, initial_numbering, inverse_numbering, ai, aj);
+  Msg::Info("RCMK renumbering...");
 
-  int before = bandwidth (ai,aj);
+  std::map<MVertex *, std::size_t> initial_numbering;
+  std::map<std::size_t, MVertex *> inverse_numbering;
+  std::vector<std::size_t> ai, aj;
+  createVertexToVertexGraph(gm, elementTags, initial_numbering,
+                            inverse_numbering, ai, aj);
+
+  int before = bandwidth(ai, aj);
 
   std::vector<std::size_t> sorted(initial_numbering.size());
 
   RCM(sorted, &ai[0], &aj[0]);
 
-  int after = bandwidth (ai,aj,&sorted[0]);
+  int after = bandwidth(ai, aj, &sorted[0]);
 
   for(auto it : initial_numbering) {
     permutations[it.first->getNum()] = sorted[it.second];
   }
 
-  Msg::Info("RENUMBERING WITH RCMK : bandwidth goes from %d --> %d",before,after);
+  Msg::Info("Done RCMK renumbering (bandwidth change: %d -> %d)",
+            before, after);
 
   return 0;
 }
@@ -218,6 +223,8 @@ int meshRenumber_Vertices_Hilbert(
 {
   GModel *gm = GModel ::current();
   permutations.clear();
+
+  Msg::Info("Hilbert renumbering...");
 
   std::set<MVertex *> allv;
   if(elementTags.empty()) {
@@ -239,60 +246,62 @@ int meshRenumber_Vertices_Hilbert(
   }
 
   std::vector<MVertex *> v(allv.begin(), allv.end());
-  
+
   SortHilbert_Without_Brio(v);
 
   for(std::size_t i = 0; i < v.size(); i++) {
     permutations[v[i]->getNum()] = i + 1;
   }
 
+  Msg::Info("Done Hilbert renumbering");
+
   return 0;
 }
 
-
-int meshRenumber_Vertices_Metis(const std::vector<std::size_t> &elementTags,
-		       std::map<std::size_t, std::size_t> &permutations){
-
-
+int meshRenumber_Vertices_Metis(
+  const std::vector<std::size_t> &elementTags,
+  std::map<std::size_t, std::size_t> &permutations)
+{
   GModel *gm = GModel ::current();
   permutations.clear();
 
+#if defined(HAVE_METIS)
+
+  Msg::Info("METIS renumbering (nested dissection)...");
+
   std::map<MVertex *, std::size_t> initial_numbering;
   std::map<std::size_t, MVertex *> invert_numbering;
-  std::vector<idx_t> ai,aj;
-  createVertexToVertexGraph (gm, elementTags, initial_numbering, invert_numbering, ai, aj);
+  std::vector<idx_t> ai, aj;
+  createVertexToVertexGraph(gm, elementTags, initial_numbering,
+                            invert_numbering, ai, aj);
 
-  //  int before = bandwidth (ai,aj);
-  
-  idx_t n = (idx_t) initial_numbering.size();
-  idx_t *xadj   = &ai[0];
+  idx_t n = (idx_t)initial_numbering.size();
+  idx_t *xadj = &ai[0];
   idx_t *adjncy = &aj[0];
   idx_t *perm = new idx_t[n];
   idx_t *iperm = new idx_t[n];
   int result = METIS_NodeND(&n, xadj, adjncy, nullptr, nullptr, perm, iperm);
 
-  if (result != METIS_OK){
-    delete [] perm;
-    delete [] iperm;
+  if(result != METIS_OK) {
+    delete[] perm;
+    delete[] iperm;
     Msg::Warning("RENUMBERING WITH METIS FAILED");
     return -1;
   }
-  
-  //  printf("%d\n",n);
-  //  for (int i=0;i<n;i++)printf("%d ",invert_numbering[(size_t)perm[i]]->getNum());
-  //  printf("\n");
-  
-  //  int after = bandwidth (ai,aj,perm);
-  
-  Msg::Info("RENUMBERING WITH METIS (Nested Dissection)");
+
   for(auto it : initial_numbering) {
-    permutations[it.first->getNum()] = iperm[it.second]+1;
+    permutations[it.first->getNum()] = iperm[it.second] + 1;
   }
-  delete [] perm;
-  delete [] iperm;
-  
-  
+  delete[] perm;
+  delete[] iperm;
+
+  Msg::Info("Done METIS renumbering");
+
+#else
+
+  Msg::Error("Gmsh must be compiled with METIS support for METIS renumbering");
+
+#endif
+
   return 0;
 }
-
-
