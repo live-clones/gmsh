@@ -992,7 +992,7 @@ bool GEO_Internals::remove(const std::vector<std::pair<int, int> > &dimTags,
 void GEO_Internals::resetPhysicalGroups()
 {
   Tree_Action(PhysicalGroups, FreePhysicalGroup);
-  Tree_Delete(PhysicalGroups);
+  Tree_Reset(PhysicalGroups);
   List_Action(DelPhysicalGroups, FreePhysicalGroup);
   _changed = true;
 }
