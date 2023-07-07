@@ -7226,13 +7226,17 @@ module gmsh
 
   !> Triangulate the points given in the `coord' vector as pairs of u, v
   !! coordinates, and return the node tags (with numbering starting at 1) of the
-  !! resulting triangles in `tri'.
+  !! resulting triangles in `tri'. If specified, `edges' contains constrained
+  !! edges in the mesh, given as pairs of nodes.
   subroutine gmshModelMeshTriangulate(coord, &
+                                      edges, &
                                       tri, &
                                       ierr)
     interface
     subroutine C_API(api_coord_, &
                      api_coord_n_, &
+                     api_edges_, &
+                     api_edges_n_, &
                      api_tri_, &
                      api_tri_n_, &
                      ierr_) &
@@ -7240,18 +7244,23 @@ module gmsh
       use, intrinsic :: iso_c_binding
       real(c_double), dimension(*) :: api_coord_
       integer(c_size_t), value, intent(in) :: api_coord_n_
+      integer(c_size_t), dimension(*) :: api_edges_
+      integer(c_size_t), value, intent(in) :: api_edges_n_
       type(c_ptr), intent(out) :: api_tri_
       integer(c_size_t), intent(out) :: api_tri_n_
       integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     real(c_double), dimension(:), intent(in) :: coord
+    integer(c_size_t), dimension(:), intent(in) :: edges
     integer(c_size_t), dimension(:), allocatable, intent(out) :: tri
     integer(c_int), intent(out), optional :: ierr
     type(c_ptr) :: api_tri_
     integer(c_size_t) :: api_tri_n_
     call C_API(api_coord_=coord, &
          api_coord_n_=size_gmsh_double(coord), &
+         api_edges_=edges, &
+         api_edges_n_=size_gmsh_size(edges), &
          api_tri_=api_tri_, &
          api_tri_n_=api_tri_n_, &
          ierr_=ierr)

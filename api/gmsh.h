@@ -1795,8 +1795,10 @@ namespace gmsh { // Top-level functions
       //
       // Triangulate the points given in the `coord' vector as pairs of u, v
       // coordinates, and return the node tags (with numbering starting at 1) of
-      // the resulting triangles in `tri'.
+      // the resulting triangles in `tri'. If specified, `edges' contains
+      // constrained edges in the mesh, given as pairs of nodes.
       GMSH_API void triangulate(const std::vector<double> & coord,
+                                const std::vector<std::size_t> & edges,
                                 std::vector<std::size_t> & tri);
 
       // gmsh::model::mesh::tetrahedralize
