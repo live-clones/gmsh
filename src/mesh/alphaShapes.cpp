@@ -1555,6 +1555,7 @@ void constrainedDelaunayRefinement_(const int dim, const int tag,
     for (auto dt : bndDimTags){
       GEdge *ge = GModel::current()->getEdgeByTag(dt.second);
       for (auto l : ge->lines) delete l;
+      for (auto v : ge->mesh_vertices) delete v;
       ge->lines.clear();
       ge->mesh_vertices.clear();
     }
@@ -1701,6 +1702,7 @@ void constrainedDelaunayRefinement_(const int dim, const int tag,
     newConstrainedEdges.push_back(openLoop);
 
     CTX::instance()->mesh.changed = ENT_ALL;
+    pm->clean();
     delete pm;
   }
   else if (dim == 3){
@@ -1802,6 +1804,8 @@ void alphaShape_entity(const int dim, const int tag, const double alpha, const s
       elementTags.push_back(_domain); 
     }
   }
+  pm->clean();
+  delete pm;
 }
 
 
