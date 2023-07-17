@@ -2363,13 +2363,14 @@ GMSH_API void gmshModelMeshGenerateMesh(const int dim, const int tag, const int 
   }
 }
 
-GMSH_API void gmshModelMeshTriangulate(const double * coord, const size_t coord_n, size_t ** tri, size_t * tri_n, int * ierr)
+GMSH_API void gmshModelMeshTriangulate(const double * coord, const size_t coord_n, const size_t * edges, const size_t edges_n, size_t ** tri, size_t * tri_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
     std::vector<double> api_coord_(coord, coord + coord_n);
+    std::vector<std::size_t> api_edges_(edges, edges + edges_n);
     std::vector<std::size_t> api_tri_;
-    gmsh::model::mesh::triangulate(api_coord_, api_tri_);
+    gmsh::model::mesh::triangulate(api_coord_, api_edges_, api_tri_);
     vector2ptr(api_tri_, tri, tri_n);
   }
   catch(...){

@@ -4958,25 +4958,29 @@ class model:
         generate_mesh = generateMesh
 
         @staticmethod
-        def triangulate(coord):
+        def triangulate(coord, edges):
             """
-            gmsh.model.mesh.triangulate(coord)
+            gmsh.model.mesh.triangulate(coord, edges)
 
             Triangulate the points given in the `coord' vector as pairs of u, v
             coordinates, and return the node tags (with numbering starting at 1) of the
-            resulting triangles in `tri'.
+            resulting triangles in `tri'. If specified, `edges' contains constrained
+            edges in the mesh, given as pairs of nodes.
 
             Return `tri'.
 
             Types:
             - `coord': vector of doubles
+            - `edges': vector of sizes
             - `tri': vector of sizes
             """
             api_coord_, api_coord_n_ = _ivectordouble(coord)
+            api_edges_, api_edges_n_ = _ivectorsize(edges)
             api_tri_, api_tri_n_ = POINTER(c_size_t)(), c_size_t()
             ierr = c_int()
             lib.gmshModelMeshTriangulate(
                 api_coord_, api_coord_n_,
+                api_edges_, api_edges_n_,
                 byref(api_tri_), byref(api_tri_n_),
                 byref(ierr))
             if ierr.value != 0:

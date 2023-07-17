@@ -37,7 +37,7 @@ int alphaShapes_ (const double threshold,
 	std::vector<std::vector<size_t> > &boundaries,
 	std::vector<size_t> &neigh);
 
-void createHxtMesh_(const std::string &inputMesh, const std::vector<double>& coord, const std::string &outputMesh, std::vector<double> &pts, std::vector<size_t> &tets);
+#endif
 
 void constrainedAlphaShapes_(GModel* m, 
                             const int dim, 
@@ -68,6 +68,5 @@ void constrainedDelaunayRefinement_(const int dim, const int tag,
                                     std::vector<size_t>& newElementsInRefinement);
 
 void alphaShape_entity(const int dim, const int tag, const double alpha, const std::vector<size_t>& nodeTags, const std::vector<double>& sizeAtNodes, std::vector<std::vector<size_t>>& elementTags, std::vector<std::vector<size_t>>& edges);
-#endif
 
 #endif

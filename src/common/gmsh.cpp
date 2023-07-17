@@ -5511,6 +5511,7 @@ GMSH_API void gmsh::model::mesh::generateMesh(const int dim, const int tag, cons
 }
 
 GMSH_API void gmsh::model::mesh::triangulate(const std::vector<double> &coord,
+                                             const std::vector<std::size_t> & edges,
                                              std::vector<std::size_t> &tri)
 {
   if(!_checkInit()) return;
@@ -5520,7 +5521,7 @@ GMSH_API void gmsh::model::mesh::triangulate(const std::vector<double> &coord,
     return;
   }
 #if defined(HAVE_MESH)
-  meshTriangulate2d(coord,tri);
+  meshTriangulate2d(coord,tri, &edges);
 #else
   Msg::Error("triangulate requires the mesh module");
 #endif

@@ -264,7 +264,8 @@ int alphaShapes2D_(const double threshold,
 		 std::vector<std::vector<size_t> > &boundaries,
 		 std::vector<size_t> &neigh){
   
-  gmsh::model::mesh::triangulate(pts, triangles);
+  std::vector<size_t> edges;
+  gmsh::model::mesh::triangulate(pts, edges, triangles);
   const size_t numPts = (int)(pts.size()/2);
   std::vector<double> h(numPts); 
   double hMean;
@@ -867,14 +868,14 @@ void print4debug(PolyMesh* pm, const int debugTag)
                 he1->v->position.y(), he2->v->position.x(), he2->v->position.y(),
                 it->data, it->data, it->data);
     }
-    // for(auto it : pm->hedges) {
-    //   PolyMesh::HalfEdge *he = it;
-    //   if(he->opposite && he->f) {
-    //     fprintf(f, "SL(%g,%g,0,%g,%g,0){%d,%d};\n", he->v->position.x(),
-    //             he->v->position.y(), he->opposite->v->position.x(),
-    //             he->opposite->v->position.y(), he->data, he->data);
-    //   }
-    // }
+    for(auto it : pm->hedges) {
+      PolyMesh::HalfEdge *he = it;
+      if(he->opposite && he->f) {
+        fprintf(f, "SL(%g,%g,0,%g,%g,0){%d,%d};\n", he->v->position.x(),
+                he->v->position.y(), he->opposite->v->position.x(),
+                he->opposite->v->position.y(), he->data, he->data);
+      }
+    }
 
     fprintf(f, "};\n");
     fclose(f);
@@ -1348,20 +1349,12 @@ void constrainedDelaunayRefinement_(const int dim, const int tag,
       }
     }
 
-    for(size_t ed=0; ed<pm->hedges.size(); ed++){
-      printf("data : %lu %d \n", ed, pm->hedges[ed]->data);
-    }
-
     // Get and color the constrained half edges : the ones inside the domain get data 0
     for (size_t ed=0; ed < constrainedEdges.size(); ed+=2){
         PolyMesh::Vertex* v0 = findVertex(pm, constrainedEdges[ed]);
         PolyMesh::Vertex* v1 = findVertex(pm, constrainedEdges[ed+1]);
         PolyMesh::HalfEdge* he = pm->getEdgeWithBnd(v0, v1);
         he->data = 0; 
-    }
-    
-    for(size_t ed=0; ed<pm->hedges.size(); ed++){
-      printf("data : %lu %d \n", ed, pm->hedges[ed]->data);
     }
 
     // also constrain the boundary edges : they get the tag of the bounding edge they belong to
@@ -1419,7 +1412,6 @@ void constrainedDelaunayRefinement_(const int dim, const int tag,
         hes.push_back(he);
     }
     // The initial mesh has been created; now we need to insert nodes such that the size field is respected.
-
     // Step 3: get the elements that do not respect the size or quality constraint
     std::vector<PolyMesh::Face *> _list;
     double _limit = 0.6; // Value to check!
@@ -1441,6 +1433,7 @@ void constrainedDelaunayRefinement_(const int dim, const int tag,
     }
     size_t newIdx = gm->getMaxVertexNumber()+1;
     size_t addFrom = pm->vertices.size();
+    // print4debug(pm, 1000);
     
     // Step 4: loop over faces to insert nodes where necessary
     while (!_list.empty()){
@@ -1467,7 +1460,7 @@ void constrainedDelaunayRefinement_(const int dim, const int tag,
         GPoint gp = gf->closestPoint(cc, uv);
         if(gp.succeeded()) { // we found it inside the geometrical domain
           PolyMesh::HalfEdge* heCandidate = nullptr;
-          bool found; 
+          bool found;
           Walk(f, gp.u(), gp.v(), &heCandidate, &found);
           // printf(" walk : %d\n", heCandidate->data);
           std::vector<PolyMesh::HalfEdge *> _touched;
@@ -1562,6 +1555,7 @@ void constrainedDelaunayRefinement_(const int dim, const int tag,
     for (auto dt : bndDimTags){
       GEdge *ge = GModel::current()->getEdgeByTag(dt.second);
       for (auto l : ge->lines) delete l;
+      for (auto v : ge->mesh_vertices) delete v;
       ge->lines.clear();
       ge->mesh_vertices.clear();
     }
@@ -1708,6 +1702,7 @@ void constrainedDelaunayRefinement_(const int dim, const int tag,
     newConstrainedEdges.push_back(openLoop);
 
     CTX::instance()->mesh.changed = ENT_ALL;
+    pm->clean();
     delete pm;
   }
   else if (dim == 3){
@@ -1725,12 +1720,24 @@ void alphaShape_entity(const int dim, const int tag, const double alpha, const s
   GModel* gm = GModel::current();
   GFace* gf = gm->getFaceByTag(tag);
 
+
   PolyMesh* pm;
   GFace2PolyMesh(tag, &pm);
   std::unordered_map<int, double> v2sizeAtNodes;
+  std::vector<int> i2g;
+  std::vector<double> i2Size;
+  for (size_t i=0; i<pm->vertices.size(); i++){
+    PolyMesh::Vertex* v = pm->vertices[i];
+    i2g.push_back(v->data);
+    v->data = i;
+  }
   if (!globalAlpha){
     for (size_t i=0; i<nodeTags.size(); i++){
       v2sizeAtNodes[nodeTags[i]] = sizeAtNodes[i];
+    }
+    for (size_t i=0; i<pm->vertices.size(); i++){
+      PolyMesh::Vertex* v = pm->vertices[i];
+      i2Size.push_back(v2sizeAtNodes[i2g[v->data]]);
     }
   }
   // Face data is the element tag -> note : dangerous but it works... (cfr GFace2PolyMesh function)
@@ -1740,24 +1747,18 @@ void alphaShape_entity(const int dim, const int tag, const double alpha, const s
   for (size_t i=0; i<pm->faces.size(); i++)
     pm->faces[i]->data = etFull[i];
   std::unordered_map<PolyMesh::Face*, bool> _touched;
-  double hTriangle;
+  double hTriangle = sizeAtNodes[0];
   double uv[2];
   SPoint3 cc;
   double R;
   for (size_t i = 0; i < pm->faces.size(); i++){
     PolyMesh::Face *f = pm->faces[i];
     if (!globalAlpha){
-      PolyMesh::HalfEdge *h0 = f->he;
-      PolyMesh::HalfEdge *h1 = f->he->next;
-      PolyMesh::HalfEdge *h2 = f->he->next->next;
-      hTriangle = (v2sizeAtNodes[h0->v->data] + v2sizeAtNodes[h1->v->data] + v2sizeAtNodes[h2->v->data])/3;
-      if (abs(hTriangle-minSize)<1e-8){ 
-          hTriangle *= 0.1;
+      hTriangle = faceSize(f->he, gf, i2Size);
+      if (abs(hTriangle-minSize)<1e-5){
+        hTriangle *= 0.1;
       }
-      // printf("size of triangle (%d, %d, %d) is %f\n", h0->v->data, h1->v->data, h2->v->data, hTriangle);
     }
-    else
-      hTriangle = sizeAtNodes[0];
     faceCircumCenter(f->he, gf, cc, uv, &R);
     if (R/hTriangle < alpha && !_touched[f]){
       // printf("triangle is in alpha shape : R = %f, alpha = %f, h = %f\n", R, alpha, hTriangle);
@@ -1779,17 +1780,11 @@ void alphaShape_entity(const int dim, const int tag, const double alpha, const s
           else if (!_touched[_he->opposite->f]){
             PolyMesh::Face *f_neigh = _he->opposite->f;
             if (!globalAlpha){
-              PolyMesh::HalfEdge *_h0 = f_neigh->he;
-              PolyMesh::HalfEdge *_h1 = f_neigh->he->next;
-              PolyMesh::HalfEdge *_h2 = f_neigh->he->next->next;
-              hTriangle = (v2sizeAtNodes[_h0->v->data] + v2sizeAtNodes[_h1->v->data] + v2sizeAtNodes[_h2->v->data])/3;
-              if (abs(hTriangle-minSize)<1e-8){ 
-                  hTriangle *= 0.1;
+              hTriangle = faceSize(f_neigh->he, gf, i2Size);
+              if (abs(hTriangle-minSize)<1e-5){ 
+                hTriangle *= 0.1;
               }
-              // printf("size of triangle (%d, %d, %d) is %f\n", _h0->v->data, _h1->v->data, _h2->v->data, hTriangle);
             }
-            else
-              hTriangle = sizeAtNodes[0];
             faceCircumCenter(f_neigh->he, gf, cc, uv, &R);
             if (R/hTriangle < alpha){
               // printf("triangle is in alpha shape : R = %f, alpha = %f, h = %f\n", R, alpha, hTriangle);
@@ -1798,8 +1793,8 @@ void alphaShape_entity(const int dim, const int tag, const double alpha, const s
               _domain.push_back(f_neigh->data);	    
             }	    
             else {
-              _boundary.push_back(_he->v->data);
-              _boundary.push_back(_he->next->v->data);	      
+              _boundary.push_back(i2g[abs(_he->v->data)]);
+              _boundary.push_back(i2g[abs(_he->next->v->data)]);	      
             }
           }
           _he = _he->next;
@@ -1809,6 +1804,8 @@ void alphaShape_entity(const int dim, const int tag, const double alpha, const s
       elementTags.push_back(_domain); 
     }
   }
+  pm->clean();
+  delete pm;
 }
 
 
