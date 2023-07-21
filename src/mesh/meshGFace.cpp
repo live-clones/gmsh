@@ -312,10 +312,11 @@ public:
     CTX::instance()->mesh.lcFactor /= 2.0;
     bool blossom = (CTX::instance()->mesh.algoRecombine == 3);
     int topo = CTX::instance()->mesh.recombineOptimizeTopology;
-    recombineIntoQuads(_gf, blossom, topo, true, 0.1);
+    int repos = CTX::instance()->mesh.recombineNodeRepositioning;
+    recombineIntoQuads(_gf, blossom, topo, repos, 0.1);
     _subdivide();
     _restore();
-    recombineIntoQuads(_gf, blossom, topo, true, 1.e-3);
+    recombineIntoQuads(_gf, blossom, topo, repos, 1.e-3);
     computeElementShapes(_gf, _gf->meshStatistics.worst_element_shape,
                          _gf->meshStatistics.average_element_shape,
                          _gf->meshStatistics.best_element_shape,
