@@ -956,9 +956,9 @@ StringXNumber GeometryOptions_Number[] = {
     "OpenCASCADE kernel" },
   { F|O, "OCCParallel" , opt_geometry_occ_parallel , 0. ,
     "Use multi-threaded OpenCASCADE boolean operators" },
-  { F|O, "OCCSafeUnbind" , opt_geometry_occ_safe_unbind , 0. ,
-    "Revert to safe (i.e. with recursive checks on boundaries) unbinding of entities "
-    "in boolean operations and geometrical transformations" },
+  { F|O, "OCCFastUnbind" , opt_geometry_occ_fast_unbind , 1. ,
+    "Use fast (i.e. without recursive checks on boundaries) unbinding of entities "
+    "in geometrical transformations (1), as well as in boolean operations (2)" },
   { F|O, "OCCScaling" , opt_geometry_occ_scaling , 1. ,
     "Scale STEP, IGES and BRep models by the given factor when importing them with the "
     "OpenCASCADE kernel" },

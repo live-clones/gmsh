@@ -20,6 +20,14 @@ Tree_T *Tree_Create(int size, int (*fcmp)(const void *a, const void *b))
   return tree;
 }
 
+void Tree_Reset(Tree_T *tree)
+{
+  if(!tree) return;
+  avl_tree *new_root = avl_init_table(tree->root->compar);
+  Free(tree->root);
+  tree->root = new_root;
+}
+
 void Tree_Delete(Tree_T *tree)
 {
   if(!tree) return;

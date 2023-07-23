@@ -28,5 +28,6 @@ int Tree_Suppress(Tree_T *Tree, void *data);
 int Tree_Size(Tree_T *tree);
 void Tree_Action(Tree_T *tree, void (*action)(void *data, void *dummy));
 List_T *Tree2List(Tree_T *pTree);
+void Tree_Reset(Tree_T *tree);
 
 #endif

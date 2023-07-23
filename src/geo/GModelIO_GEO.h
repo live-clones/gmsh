@@ -15,9 +15,10 @@ class Tree_T;
 class GEO_Internals {
 public:
   // this will become private
-  Tree_T *Points, *Curves, *EdgeLoops, *Surfaces, *SurfaceLoops, *Volumes;
+  Tree_T *Points, *Curves, *EdgeLoops, *Surfaces, *SurfaceLoops, *Volumes,
+         *PhysicalGroups;
   Tree_T *DelPoints, *DelCurves, *DelSurfaces, *DelVolumes;
-  List_T *PhysicalGroups, *DelPhysicalGroups;
+  List_T *DelPhysicalGroups;
 
 private:
   std::multimap<int, std::vector<int> > _meshCompounds;

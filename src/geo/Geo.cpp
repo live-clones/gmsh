@@ -758,9 +758,8 @@ PhysicalGroup *FindPhysicalGroup(int num, int type)
   pp = &P;
   pp->Num = num;
   pp->Typ = type;
-  if((ppp = (PhysicalGroup **)List_PQuery(
-        GModel::current()->getGEOInternals()->PhysicalGroups, &pp,
-        ComparePhysicalGroup))) {
+  if((ppp = (PhysicalGroup **)Tree_PQuery(
+        GModel::current()->getGEOInternals()->PhysicalGroups, &pp))) {
     return *ppp;
   }
   return nullptr;
@@ -1104,8 +1103,7 @@ void DeletePhysicalPoint(int num)
 {
   PhysicalGroup *p = FindPhysicalGroup(num, MSH_PHYSICAL_POINT);
   if(p) {
-    List_Suppress(GModel::current()->getGEOInternals()->PhysicalGroups, &p,
-                  ComparePhysicalGroup);
+    Tree_Suppress(GModel::current()->getGEOInternals()->PhysicalGroups, &p);
     List_Add(GModel::current()->getGEOInternals()->DelPhysicalGroups, &p);
   }
   GModel::current()->removePhysicalGroup(0, num);
@@ -1115,8 +1113,7 @@ void DeletePhysicalLine(int num)
 {
   PhysicalGroup *p = FindPhysicalGroup(num, MSH_PHYSICAL_LINE);
   if(p) {
-    List_Suppress(GModel::current()->getGEOInternals()->PhysicalGroups, &p,
-                  ComparePhysicalGroup);
+    Tree_Suppress(GModel::current()->getGEOInternals()->PhysicalGroups, &p);
     List_Add(GModel::current()->getGEOInternals()->DelPhysicalGroups, &p);
   }
   GModel::current()->removePhysicalGroup(1, num);
@@ -1126,8 +1123,7 @@ void DeletePhysicalSurface(int num)
 {
   PhysicalGroup *p = FindPhysicalGroup(num, MSH_PHYSICAL_SURFACE);
   if(p) {
-    List_Suppress(GModel::current()->getGEOInternals()->PhysicalGroups, &p,
-                  ComparePhysicalGroup);
+    Tree_Suppress(GModel::current()->getGEOInternals()->PhysicalGroups, &p);
     List_Add(GModel::current()->getGEOInternals()->DelPhysicalGroups, &p);
   }
   GModel::current()->removePhysicalGroup(2, num);
@@ -1137,8 +1133,7 @@ void DeletePhysicalVolume(int num)
 {
   PhysicalGroup *p = FindPhysicalGroup(num, MSH_PHYSICAL_VOLUME);
   if(p) {
-    List_Suppress(GModel::current()->getGEOInternals()->PhysicalGroups, &p,
-                  ComparePhysicalGroup);
+    Tree_Suppress(GModel::current()->getGEOInternals()->PhysicalGroups, &p);
     List_Add(GModel::current()->getGEOInternals()->DelPhysicalGroups, &p);
   }
   GModel::current()->removePhysicalGroup(3, num);
@@ -1828,10 +1823,10 @@ static void ReplaceDuplicatePointsNew(double tol = -1.)
   List_Delete(tmp);
 
   // replace points in physical groups
-  for(int i = 0;
-      i < List_Nbr(GModel::current()->getGEOInternals()->PhysicalGroups); i++) {
+  tmp = Tree2List(GModel::current()->getGEOInternals()->PhysicalGroups);
+  for(int i = 0; i < List_Nbr(tmp); i++) {
     PhysicalGroup *p;
-    List_Read(GModel::current()->getGEOInternals()->PhysicalGroups, i, &p);
+    List_Read(tmp, i, &p);
     if(p->Typ == MSH_PHYSICAL_POINT) {
       for(int j = 0; j < List_Nbr(p->Entities); j++) {
         int num;
@@ -1843,6 +1838,7 @@ static void ReplaceDuplicatePointsNew(double tol = -1.)
       }
     }
   }
+  List_Delete(tmp);
 
   int start = Tree_Nbr(GModel::current()->getGEOInternals()->Points);
   for(std::size_t i = 0; i < unused.size(); i++) {
@@ -1999,10 +1995,9 @@ static void ReplaceDuplicatePoints(std::map<int, int> *v_report = nullptr)
   List_Delete(All);
 
   // Replace old points in physical groups
-  for(int i = 0;
-      i < List_Nbr(GModel::current()->getGEOInternals()->PhysicalGroups); i++) {
-    PhysicalGroup *p = *(PhysicalGroup **)List_Pointer(
-      GModel::current()->getGEOInternals()->PhysicalGroups, i);
+  All = Tree2List(GModel::current()->getGEOInternals()->PhysicalGroups);
+  for(int i = 0; i < List_Nbr(All); i++) {
+    PhysicalGroup *p = *(PhysicalGroup **)List_Pointer(All, i);
     if(p->Typ == MSH_PHYSICAL_POINT) {
       for(int j = 0; j < List_Nbr(p->Entities); j++) {
         int num;
@@ -2021,6 +2016,7 @@ static void ReplaceDuplicatePoints(std::map<int, int> *v_report = nullptr)
       }
     }
   }
+  List_Delete(All);
 
   List_T *tmp = Tree2List(points2delete);
   for(int i = 0; i < List_Nbr(tmp); i++)
@@ -2173,10 +2169,9 @@ static void ReplaceDuplicateCurves(std::map<int, int> *c_report = nullptr)
   List_Delete(All);
 
   // Replace old curves in physical groups
-  for(int i = 0;
-      i < List_Nbr(GModel::current()->getGEOInternals()->PhysicalGroups); i++) {
-    PhysicalGroup *p = *(PhysicalGroup **)List_Pointer(
-      GModel::current()->getGEOInternals()->PhysicalGroups, i);
+  All = Tree2List(GModel::current()->getGEOInternals()->PhysicalGroups);
+  for(int i = 0; i < List_Nbr(All); i++) {
+    PhysicalGroup *p = *(PhysicalGroup **)List_Pointer(All, i);
     if(p->Typ == MSH_PHYSICAL_LINE) {
       for(int j = 0; j < List_Nbr(p->Entities); j++) {
         int num;
@@ -2192,6 +2187,7 @@ static void ReplaceDuplicateCurves(std::map<int, int> *c_report = nullptr)
       }
     }
   }
+  List_Delete(All);
 
   List_T *tmp = Tree2List(curves2delete);
   for(int i = 0; i < List_Nbr(tmp); i++)
@@ -2476,10 +2472,9 @@ static void ReplaceDuplicateSurfaces(std::map<int, int> *s_report = nullptr)
   List_Delete(All);
 
   // Replace old surfaces in physical groups
-  for(int i = 0;
-      i < List_Nbr(GModel::current()->getGEOInternals()->PhysicalGroups); i++) {
-    PhysicalGroup *p = *(PhysicalGroup **)List_Pointer(
-      GModel::current()->getGEOInternals()->PhysicalGroups, i);
+  All = Tree2List(GModel::current()->getGEOInternals()->PhysicalGroups);
+  for(int i = 0; i < List_Nbr(All); i++) {
+    PhysicalGroup *p = *(PhysicalGroup **)List_Pointer(All, i);
     if(p->Typ == MSH_PHYSICAL_SURFACE) {
       for(int j = 0; j < List_Nbr(p->Entities); j++) {
         int num;
@@ -2494,6 +2489,7 @@ static void ReplaceDuplicateSurfaces(std::map<int, int> *s_report = nullptr)
       }
     }
   }
+  List_Delete(All);
 
   List_T *tmp = Tree2List(surfaces2delete);
   for(int i = 0; i < List_Nbr(tmp); i++)
@@ -3515,10 +3511,9 @@ bool SplitCurve(int line_id, List_T *vertices_id, List_T *curves)
   List_Delete(Surfs);
 
   // replace original curve by the new curves in physical groups
-  for(int i = 0;
-      i < List_Nbr(GModel::current()->getGEOInternals()->PhysicalGroups); i++) {
-    PhysicalGroup *p = *(PhysicalGroup **)List_Pointer(
-      GModel::current()->getGEOInternals()->PhysicalGroups, i);
+  List_T *tmp = Tree2List(GModel::current()->getGEOInternals()->PhysicalGroups);
+  for(int i = 0; i < List_Nbr(tmp); i++) {
+    PhysicalGroup *p = *(PhysicalGroup **)List_Pointer(tmp, i);
     if(p->Typ == MSH_PHYSICAL_LINE) {
       for(int j = 0; j < List_Nbr(p->Entities); j++) {
         int num;
@@ -3531,6 +3526,7 @@ bool SplitCurve(int line_id, List_T *vertices_id, List_T *curves)
       }
     }
   }
+  List_Delete(tmp);
 
   DeleteCurve(c->Num);
   DeleteCurve(-c->Num);
