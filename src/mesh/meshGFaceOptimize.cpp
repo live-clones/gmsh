@@ -771,6 +771,17 @@ static bool _isItAGoodIdeaToMoveThatVertex(GFace *gf,
   return true;
 }
 
+void getAllBoundaryLayerVertices(GFace *gf, std::set<MVertex *> &vs)
+{
+  vs.clear();
+  BoundaryLayerColumns *_columns = gf->getColumns();
+  if(!_columns) return;
+  for(auto it = _columns->_data.begin(); it != _columns->_data.end(); it++) {
+    BoundaryLayerData &data = it->second;
+    for(size_t i = 0; i < data._column.size(); i++) vs.insert(data._column[i]);
+  }
+}
+
 static bool has_none_of(std::set<MVertex *> const &touched, MVertex *const v1,
                         MVertex *const v2, MVertex *const v3, MVertex *const v4)
 {
@@ -809,6 +820,10 @@ static int _removeDiamonds(GFace *const gf)
     touched.insert(gf->triangles[i]->getVertex(1));
     touched.insert(gf->triangles[i]->getVertex(2));
   }
+
+  std::set<MVertex *> vs;
+  getAllBoundaryLayerVertices(gf, vs);
+  touched.insert(vs.begin(), vs.end());
 
   for(std::size_t i = 0; i < gf->quadrangles.size(); i++) {
     MQuadrangle *const q = gf->quadrangles[i];
@@ -961,17 +976,6 @@ static void _relocate(GFace *gf, MVertex *ver,
       }
     }
     FACTOR /= 1.4;
-  }
-}
-
-void getAllBoundaryLayerVertices(GFace *gf, std::set<MVertex *> &vs)
-{
-  vs.clear();
-  BoundaryLayerColumns *_columns = gf->getColumns();
-  if(!_columns) return;
-  for(auto it = _columns->_data.begin(); it != _columns->_data.end(); it++) {
-    BoundaryLayerData &data = it->second;
-    for(size_t i = 0; i < data._column.size(); i++) vs.insert(data._column[i]);
   }
 }
 
@@ -1463,8 +1467,9 @@ void splitElementsInBoundaryLayerIfNeeded(GFace *gf)
     int n = fields->getNumBoundaryLayerFields();
     for(int i = 0; i < n; ++i) {
       Field *bl_field = fields->get(fields->getBoundaryLayerField(i));
-      if(bl_field == nullptr) continue;
+      if(!bl_field) continue;
       BoundaryLayerField *blf = dynamic_cast<BoundaryLayerField *>(bl_field);
+      if(!blf) continue;
       if(blf->iRecombine)
         ++numNoSplit;
       else

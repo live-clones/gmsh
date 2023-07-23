@@ -440,7 +440,7 @@ bool buildAdditionalPoints2D(GFace *gf)
     if(bl_field == nullptr) continue;
     BoundaryLayerField *blf = dynamic_cast<BoundaryLayerField *>(bl_field);
 
-    if(!blf->setupFor2d(gf->tag())) continue;
+    if(!blf || !blf->setupFor2d(gf->tag())) continue;
 
     std::set<MVertex *> _vertices;
     std::set<MEdge, MEdgeLessThan> allEdges;

@@ -20,7 +20,8 @@ if '-nopopup' not in sys.argv:
 
 old, new = gmsh.model.mesh.computeRenumbering('Hilbert')
 gmsh.model.mesh.renumberNodes(old, new)
-gmsh.fltk.run()
+if '-nopopup' not in sys.argv:
+    gmsh.fltk.run()
 
 old, new = gmsh.model.mesh.computeRenumbering('Metis')
 gmsh.model.mesh.renumberNodes(old, new)
