@@ -97,7 +97,7 @@ struct contextGeometryOptions {
   int autoCoherence;
   int autoExtrude; // FIXME: temporary for auto-extrude testing
   double tolerance, toleranceBoolean, snap[3], transform[3][3], offset[3];
-  int occAutoFix, occAutoEmbed, occSafeUnbind;
+  int occAutoFix, occAutoEmbed, occFastUnbind;
   int occFixDegenerated, occFixSmallEdges, occFixSmallFaces;
   int occSewFaces, occMakeSolids, occParallel, occBooleanPreserveNumbering;
   int occBoundsUseSTL, occDisableSTL, occImportLabels, occExportOnlyVisible;
