@@ -15,6 +15,68 @@
 #include "CGNSZoneUnstruct.h"
 #include "CGNSRead.h"
 
+// The CGNS specifications are by design very flexible, which means that the
+// same information can be represented in many different ways in a CGNS file. As
+// a consequence, different CGNS-compatible software packages often interpret
+// CGNS files based on different conventions.
+
+// Unstructured meshes (CGNS{Read,Write}.cpp)
+// ==========================================
+
+// With this in mind and considering the constraints of CGNS, the unstructured
+// CGNS writer in Gmsh is designed to export as much information from Gmsh as
+// possible, without perverting the original purpose of the various CGNS data
+// structures. The most difficult point is the classification of mesh entities
+// on geometrical (CAD) entities. This is the convention used for the
+// unstructured CGNS writer:
+//
+// - One family per geometrical entity, with the name [Letter]_[Number], where
+//   the letter refers to the dimension of the geometrical entity (P for a
+//   point, L for a line/curve, S for a surface and V for a volume), and the
+//   number is the ID identifying uniquely the geometrical entity. If the
+//   geometrical entity has a name ("elementary name"), it is appended:
+//   [Letter]_[Number]_[Name]
+
+// - If physical groups are defined, a nested family name identifies the
+//   physical group: by name if a name is given, or by the physical tag
+//   otherwise. If physical groups are defined, only those geometrical entities
+//   belonging to physical groups are saved, unless Mesh.SaveAll is set.
+//
+// - One BC for each geometrical entity, with the same name as the corresponding
+//   family.
+//
+// - One "Elements" structure for each type of element in each geometric entity.
+//
+// - One zone per mesh partition. Interfaces between partitions are defined by
+//   point lists.
+//
+// Using these conventions we can convey a certain level of topological
+// information across a CGNS-based simulation chain, and we manage in most cases
+// to re-open with Gmsh a CGNS file that it created and find the same
+// information.
+
+// Structured meshes (CGNSWriteStruct.cpp)
+// =======================================
+
+// The structured CGNS writer follows ICEM-like conventions, which are
+// significantly different from those used in the unstructured CGNS writer:
+//
+// - Structured 3D (resp. 2D) meshes contain one zone per volume (resp.
+//   surface) and no zones are created for lower dimensional entities.
+//
+// - All structured volumes (3D) or surfaces (2D) are saved; it is not possible
+//   to only save those belonging to physical groups.
+//
+// - Interfaces between structured zones are defined by point ranges.
+//
+// - Elementary entity tags are encoded in the zone name.
+//
+// - Physical groups for the highest dimensional entities are directly encoded
+//   at the begining of the zone name.
+//
+// - Boundary conditions are created for all zone boundaries, and if physical
+//   groups are defined on boundaries they are also saved as families.
+
 #if defined(HAVE_LIBCGNS)
 
 int GModel::readCGNS(const std::string &name,
