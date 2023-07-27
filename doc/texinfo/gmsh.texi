@@ -6553,6 +6553,12 @@ right button by `100*step'.
 Yes: selecting the content of an input field, or lines in the message
 console (`Tools->Message Console'), copies the selected text to the
 clipboard.
+
+@item Graphical rendering or entity selection is very slow on Linux.
+
+The issue is most probably linked with your graphics card driver. Try
+setting the environment variable @code{LIBGL_ALWAYS_SOFTWARE=true} to
+force software rendering.
 @end enumerate
 
 @c -------------------------------------------------------------------------
