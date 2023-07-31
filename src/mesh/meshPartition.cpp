@@ -532,11 +532,11 @@ static int makeGraph(GModel *model, Graph &graph, int selectDim)
   idx_t numVertex = 0;
 
   if(graph.ne() == 0) {
-    Msg::Error("No mesh elements were found");
+    Msg::Warning("No mesh elements were found");
     return 1;
   }
   if(graph.dim() == 0) {
-    Msg::Error("Cannot partition a point");
+    Msg::Warning("Cannot partition a point");
     return 1;
   }
 
