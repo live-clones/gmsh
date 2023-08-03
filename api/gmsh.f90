@@ -4256,7 +4256,7 @@ module gmsh
   !! this type of element, that contains the node tags of all the elements of
   !! the given type, concatenated: [e1n1, e1n2, ..., e1nN, e2n1, ...]. If
   !! `numTasks' > 1, only compute and return the part of the data indexed by
-  !! `task'.
+  !! `task' (for C++ only, output vectors must be preallocated).
   subroutine gmshModelMeshGetElementsByType(elementType, &
                                             elementTags, &
                                             nodeTags, &
@@ -4332,7 +4332,7 @@ module gmsh
   end subroutine gmshModelMeshGetMaxElementTag
 
   !> Preallocate data before calling `getElementsByType' with `numTasks' > 1.
-  !! For C and C++ only.
+  !! For C++ only.
   subroutine gmshModelMeshPreallocateElementsByType(elementType, &
                                                     elementTag, &
                                                     nodeTag, &
@@ -4400,7 +4400,8 @@ module gmsh
   !! measure, "angleShape" for the angle shape measure, "minEdge" for the
   !! minimum straight edge length, "maxEdge" for the maximum straight edge
   !! length, "volume" for the volume. If `numTasks' > 1, only compute and return
-  !! the part of the data indexed by `task'.
+  !! the part of the data indexed by `task' (for C++ only, output vector must be
+  !! preallocated).
   subroutine gmshModelMeshGetElementQualities(elementTags, &
                                               elementsQuality, &
                                               qualityName, &
@@ -4646,7 +4647,8 @@ module gmsh
   !! ... e1gG, e2g1, ...]. `coord' contains for each element the x, y, z
   !! coordinates of the evaluation points. If `tag' < 0, get the Jacobian data
   !! for all entities. If `numTasks' > 1, only compute and return the part of
-  !! the data indexed by `task'.
+  !! the data indexed by `task' (for C++ only, output vectors must be
+  !! preallocated).
   subroutine gmshModelMeshGetJacobians(elementType, &
                                        localCoord, &
                                        jacobians, &
@@ -4723,8 +4725,8 @@ module gmsh
       api_coord_n_)
   end subroutine gmshModelMeshGetJacobians
 
-  !> Preallocate data before calling `getJacobians' with `numTasks' > 1. For C
-  !! and C++ only.
+  !> Preallocate data before calling `getJacobians' with `numTasks' > 1. For C++
+  !! only.
   subroutine gmshModelMeshPreallocateJacobians(elementType, &
                                                numEvaluationPoints, &
                                                allocateJacobians, &
@@ -4960,7 +4962,9 @@ module gmsh
   !! `getBasisFunctions'. `basisFunctionsOrientation' is a vector giving for
   !! each element the orientation index in the values returned by
   !! `getBasisFunctions'. For Lagrange basis functions the call is superfluous
-  !! as it will return a vector of zeros.
+  !! as it will return a vector of zeros. If `numTasks' > 1, only compute and
+  !! return the part of the data indexed by `task' (for C++ only, output vector
+  !! must be preallocated).
   subroutine gmshModelMeshGetBasisFunctionsOrientation(elementType, &
                                                        functionSpaceType, &
                                                        basisFunctionsOrientation, &
@@ -5065,7 +5069,7 @@ module gmsh
   end function gmshModelMeshGetNumberOfOrientations
 
   !> Preallocate data before calling `getBasisFunctionsOrientation' with
-  !! `numTasks' > 1. For C and C++ only.
+  !! `numTasks' > 1. For C++ only.
   subroutine gmshModelMeshPreallocateBasisFunctionsOrientation(elementType, &
                                                                basisFunctionsOrientation, &
                                                                tag, &
@@ -5625,7 +5629,8 @@ module gmsh
   !! is set, the function returns the sum of the primary node coordinates
   !! (without normalizing by the number of nodes). If `tag' < 0, get the
   !! barycenters for all entities. If `numTasks' > 1, only compute and return
-  !! the part of the data indexed by `task'.
+  !! the part of the data indexed by `task' (for C++ only, output vector must be
+  !! preallocated).
   subroutine gmshModelMeshGetBarycenters(elementType, &
                                          tag, &
                                          fast, &
@@ -5680,8 +5685,8 @@ module gmsh
       api_barycenters_n_)
   end subroutine gmshModelMeshGetBarycenters
 
-  !> Preallocate data before calling `getBarycenters' with `numTasks' > 1. For C
-  !! and C++ only.
+  !> Preallocate data before calling `getBarycenters' with `numTasks' > 1. For
+  !! C++ only.
   subroutine gmshModelMeshPreallocateBarycenters(elementType, &
                                                  barycenters, &
                                                  tag, &
@@ -5723,7 +5728,7 @@ module gmsh
   !! `getElementsByType'. If `primary' is set, only the primary (begin/end)
   !! nodes of the edges are returned. If `tag' < 0, get the edge nodes for all
   !! entities. If `numTasks' > 1, only compute and return the part of the data
-  !! indexed by `task'.
+  !! indexed by `task' (for C++ only, output vector must be preallocated).
   subroutine gmshModelMeshGetElementEdgeNodes(elementType, &
                                               nodeTags, &
                                               tag, &
@@ -5781,7 +5786,7 @@ module gmsh
   !! `getElementsByType'. If `primary' is set, only the primary (corner) nodes
   !! of the faces are returned. If `tag' < 0, get the face nodes for all
   !! entities. If `numTasks' > 1, only compute and return the part of the data
-  !! indexed by `task'.
+  !! indexed by `task' (for C++ only, output vector must be preallocated).
   subroutine gmshModelMeshGetElementFaceNodes(elementType, &
                                               faceType, &
                                               nodeTags, &

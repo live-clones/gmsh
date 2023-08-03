@@ -2524,7 +2524,8 @@ the corresponding type. `nodeTags` is a vector of length equal to the number of
 elements of the given type times the number N of nodes for this type of element,
 that contains the node tags of all the elements of the given type, concatenated:
 [e1n1, e1n2, ..., e1nN, e2n1, ...]. If `numTasks` > 1, only compute and return
-the part of the data indexed by `task`.
+the part of the data indexed by `task` (for C++ only, output vectors must be
+preallocated).
 
 Return `elementTags`, `nodeTags`.
 
@@ -2586,7 +2587,8 @@ error, "gamma" for the ratio of the inscribed to circumcribed sphere radius,
 "minIsotropy" for the minimum isotropy measure, "angleShape" for the angle shape
 measure, "minEdge" for the minimum straight edge length, "maxEdge" for the
 maximum straight edge length, "volume" for the volume. If `numTasks` > 1, only
-compute and return the part of the data indexed by `task`.
+compute and return the part of the data indexed by `task` (for C++ only, output
+vector must be preallocated).
 
 Return `elementsQuality`.
 
@@ -2723,7 +2725,8 @@ contains for each element the determinant of the Jacobian matrix at each
 evaluation point: [e1g1, e1g2, ... e1gG, e2g1, ...]. `coord` contains for each
 element the x, y, z coordinates of the evaluation points. If `tag` < 0, get the
 Jacobian data for all entities. If `numTasks` > 1, only compute and return the
-part of the data indexed by `task`.
+part of the data indexed by `task` (for C++ only, output vectors must be
+preallocated).
 
 Return `jacobians`, `determinants`, `coord`.
 
@@ -2854,7 +2857,9 @@ Get the orientation index of the elements of type `elementType` in the entity of
 tag `tag`. The arguments have the same meaning as in `getBasisFunctions`.
 `basisFunctionsOrientation` is a vector giving for each element the orientation
 index in the values returned by `getBasisFunctions`. For Lagrange basis
-functions the call is superfluous as it will return a vector of zeros.
+functions the call is superfluous as it will return a vector of zeros. If
+`numTasks` > 1, only compute and return the part of the data indexed by `task`
+(for C++ only, output vector must be preallocated).
 
 Return `basisFunctionsOrientation`.
 
@@ -3270,7 +3275,8 @@ entity of tag `tag`. If `primary` is set, only the primary nodes of the elements
 are taken into account for the barycenter calculation. If `fast` is set, the
 function returns the sum of the primary node coordinates (without normalizing by
 the number of nodes). If `tag` < 0, get the barycenters for all entities. If
-`numTasks` > 1, only compute and return the part of the data indexed by `task`.
+`numTasks` > 1, only compute and return the part of the data indexed by `task`
+(for C++ only, output vector must be preallocated).
 
 Return `barycenters`.
 
@@ -3305,7 +3311,8 @@ the elements: [e1a1n1, e1a1n2, e1a2n1, ...]. Data is returned by element, with
 elements in the same order as in `getElements` and `getElementsByType`. If
 `primary` is set, only the primary (begin/end) nodes of the edges are returned.
 If `tag` < 0, get the edge nodes for all entities. If `numTasks` > 1, only
-compute and return the part of the data indexed by `task`.
+compute and return the part of the data indexed by `task` (for C++ only, output
+vector must be preallocated).
 
 Return `nodeTags`.
 
@@ -3340,7 +3347,8 @@ elements: [e1f1n1, ..., e1f1nFaceType, e1f2n1, ...]. Data is returned by
 element, with elements in the same order as in `getElements` and
 `getElementsByType`. If `primary` is set, only the primary (corner) nodes of the
 faces are returned. If `tag` < 0, get the face nodes for all entities. If
-`numTasks` > 1, only compute and return the part of the data indexed by `task`.
+`numTasks` > 1, only compute and return the part of the data indexed by `task`
+(for C++ only, output vector must be preallocated).
 
 Return `nodeTags`.
 

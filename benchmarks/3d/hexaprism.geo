@@ -17,3 +17,4 @@ Line(30) = {3,15};
 Line Loop(31) = {30,29,2};
 Plane Surface(32) = {31};
 Extrude {0.0,0.0,1.0}{ Surface {32}; Layers{1};Recombine; }
+Physical Volume(1) = Volume{:};
