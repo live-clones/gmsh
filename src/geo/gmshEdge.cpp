@@ -202,7 +202,7 @@ SPoint2 gmshEdge::reparamOnFace(const GFace *face, double epar, int dir) const
           k = periodic ? k - NbControlPoints + 1 : NbControlPoints - 1;
         List_Read(_c->Control_Points, k, &v[j]);
       }
-      return InterpolateCubicSpline(v, t, _c->mat, t1, t2, _c->geometry, 0);
+      return InterpolateCubicSpline(v, t, _c->mat, t1, t2, _c->geometry);
     }
     case MSH_SEGM_SPLN: {
       Vertex temp1, temp2;
@@ -236,7 +236,7 @@ SPoint2 gmshEdge::reparamOnFace(const GFace *face, double epar, int dir) const
       else {
         List_Read(_c->Control_Points, i + 2, &v[3]);
       }
-      return InterpolateCubicSpline(v, t, _c->mat, t1, t2, _c->geometry, 0);
+      return InterpolateCubicSpline(v, t, _c->mat, t1, t2, _c->geometry);
     }
     default:
       Msg::Error("Unknown curve type in reparamOnFace");
@@ -413,7 +413,7 @@ void gmshEdge::writeGEO(FILE *fp)
   fprintf(fp, "};\n");
 
   if(meshAttributes.method == MESH_TRANSFINITE) {
-    fprintf(fp, "Transfinite Line {%d} = %d",
+    fprintf(fp, "Transfinite Curve {%d} = %d",
             tag() * (meshAttributes.typeTransfinite > 0 ? 1 : -1),
             meshAttributes.nbPointsTransfinite);
     if(meshAttributes.typeTransfinite) {

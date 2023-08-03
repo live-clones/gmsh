@@ -689,7 +689,7 @@ void assignVariable(const std::string &name, int index, int assignType,
 void assignVariables(const std::string &name, List_T *indices, int assignType,
                      List_T *values);
 void incrementVariable(const std::string &name, int index, double value);
-int printListOfDouble(char *format, List_T *list, char *buffer);
+int printListOfDouble(const char *format, List_T *list, std::string &buffer);
 fullMatrix<double> ListOfListOfDouble2Matrix(List_T *list);
 void ListOfDouble2Vector(List_T *list, std::vector<int> &v);
 void ListOfDouble2Vector(List_T *list, std::vector<double> &v);
@@ -1561,10 +1561,10 @@ static const yytype_uint16 yyrline[] =
     6293,  6300,  6304,  6309,  6323,  6337,  6341,  6345,  6349,  6353,
     6361,  6367,  6376,  6380,  6384,  6392,  6398,  6404,  6408,  6415,
     6423,  6430,  6439,  6443,  6447,  6462,  6476,  6490,  6502,  6518,
-    6527,  6536,  6546,  6557,  6565,  6573,  6577,  6596,  6603,  6609,
-    6615,  6622,  6630,  6629,  6639,  6663,  6665,  6671,  6676,  6678,
-    6683,  6688,  6693,  6695,  6699,  6711,  6725,  6729,  6736,  6744,
-    6752,  6763,  6765,  6768
+    6527,  6536,  6546,  6557,  6565,  6573,  6577,  6595,  6602,  6608,
+    6614,  6621,  6629,  6628,  6638,  6662,  6664,  6670,  6675,  6677,
+    6682,  6687,  6692,  6694,  6698,  6710,  6724,  6728,  6735,  6743,
+    6751,  6762,  6764,  6767
 };
 #endif
 
@@ -7212,14 +7212,14 @@ yyreduce:
   case 32:
 #line 379 "Gmsh.y"
     {
-      char tmpstring[5000];
+      std::string tmpstring;
       int i = printListOfDouble((yyvsp[(3) - (7)].c), (yyvsp[(5) - (7)].l), tmpstring);
       if(i < 0)
 	yymsg(0, "Too few arguments in Printf");
       else if(i > 0)
 	yymsg(0, "%d extra argument%s in Printf", i, (i > 1) ? "s" : "");
       else
-	Msg::Direct(tmpstring);
+	Msg::Direct(tmpstring.c_str());
       Free((yyvsp[(3) - (7)].c));
       List_Delete((yyvsp[(5) - (7)].l));
     ;}
@@ -7228,14 +7228,14 @@ yyreduce:
   case 33:
 #line 392 "Gmsh.y"
     {
-      char tmpstring[5000];
+      std::string tmpstring;
       int i = printListOfDouble((yyvsp[(3) - (7)].c), (yyvsp[(5) - (7)].l), tmpstring);
       if(i < 0)
 	yymsg(1, "Too few arguments in Error");
       else if(i > 0)
 	yymsg(1, "%d extra argument%s in Error", i, (i > 1) ? "s" : "");
       else
-	Msg::Warning(tmpstring);
+	Msg::Warning(tmpstring.c_str());
       Free((yyvsp[(3) - (7)].c));
       List_Delete((yyvsp[(5) - (7)].l));
     ;}
@@ -7244,14 +7244,14 @@ yyreduce:
   case 34:
 #line 405 "Gmsh.y"
     {
-      char tmpstring[5000];
+      std::string tmpstring;
       int i = printListOfDouble((yyvsp[(3) - (7)].c), (yyvsp[(5) - (7)].l), tmpstring);
       if(i < 0)
 	yymsg(0, "Too few arguments in Error");
       else if(i > 0)
 	yymsg(0, "%d extra argument%s in Error", i, (i > 1) ? "s" : "");
       else
-	Msg::Error(tmpstring);
+	Msg::Error(tmpstring.c_str());
       Free((yyvsp[(3) - (7)].c));
       List_Delete((yyvsp[(5) - (7)].l));
     ;}
@@ -7260,7 +7260,7 @@ yyreduce:
   case 35:
 #line 418 "Gmsh.y"
     {
-      char tmpstring[5000];
+      std::string tmpstring;
       int i = printListOfDouble((yyvsp[(3) - (9)].c), (yyvsp[(5) - (9)].l), tmpstring);
       if(i < 0)
 	yymsg(0, "Too few arguments in Printf");
@@ -7273,7 +7273,7 @@ yyreduce:
 	  yymsg(0, "Unable to open file '%s'", tmp.c_str());
 	}
 	else{
-	  fprintf(fp, "%s\n", tmpstring);
+	  fprintf(fp, "%s\n", tmpstring.c_str());
 	  fclose(fp);
 	}
       }
@@ -13712,7 +13712,7 @@ yyreduce:
   case 515:
 #line 5743 "Gmsh.y"
     {
-      memcpy((yyval.v), (yyvsp[(1) - (1)].v), 5*sizeof(double));
+      memcpy((yyval.v), (yyvsp[(1) - (1)].v), 5 * sizeof(double));
     ;}
     break;
 
@@ -14685,7 +14685,7 @@ yyreduce:
       if(i <= 0)
 	strcpy((yyval.c), (yyvsp[(3) - (4)].c));
       else
-	strcpy((yyval.c), &(yyvsp[(3) - (4)].c)[i+1]);
+	strcpy((yyval.c), &(yyvsp[(3) - (4)].c)[i + 1]);
       Free((yyvsp[(3) - (4)].c));
     ;}
     break;
@@ -14807,7 +14807,7 @@ yyreduce:
   case 616:
 #line 6578 "Gmsh.y"
     {
-      char tmpstring[5000];
+      std::string tmpstring;
       int i = printListOfDouble((yyvsp[(3) - (6)].c), (yyvsp[(5) - (6)].l), tmpstring);
       if(i < 0){
 	yymsg(0, "Too few arguments in Sprintf");
@@ -14818,8 +14818,7 @@ yyreduce:
 	(yyval.c) = (yyvsp[(3) - (6)].c);
       }
       else{
-	(yyval.c) = (char*)Malloc((strlen(tmpstring) + 1) * sizeof(char));
-	strcpy((yyval.c), tmpstring);
+	(yyval.c) = strsave((char*)tmpstring.c_str());
 	Free((yyvsp[(3) - (6)].c));
       }
       List_Delete((yyvsp[(5) - (6)].l));
@@ -14827,7 +14826,7 @@ yyreduce:
     break;
 
   case 617:
-#line 6597 "Gmsh.y"
+#line 6596 "Gmsh.y"
     {
       std::string tmp = FixRelativePath(gmsh_yyname, (yyvsp[(3) - (4)].c));
       (yyval.c) = (char*)Malloc((tmp.size() + 1) * sizeof(char));
@@ -14837,7 +14836,7 @@ yyreduce:
     break;
 
   case 618:
-#line 6604 "Gmsh.y"
+#line 6603 "Gmsh.y"
     {
       std::string tmp = SplitFileName(GetAbsolutePath(gmsh_yyname))[0];
       (yyval.c) = (char*)Malloc((tmp.size() + 1) * sizeof(char));
@@ -14846,7 +14845,7 @@ yyreduce:
     break;
 
   case 619:
-#line 6610 "Gmsh.y"
+#line 6609 "Gmsh.y"
     {
       std::string tmp = GetFileNameWithoutPath(gmsh_yyname);
       (yyval.c) = (char*)Malloc((tmp.size() + 1) * sizeof(char));
@@ -14855,7 +14854,7 @@ yyreduce:
     break;
 
   case 620:
-#line 6616 "Gmsh.y"
+#line 6615 "Gmsh.y"
     {
       std::string tmp = SplitFileName((yyvsp[(3) - (4)].c))[0];
       (yyval.c) = (char*)Malloc((tmp.size() + 1) * sizeof(char));
@@ -14865,7 +14864,7 @@ yyreduce:
     break;
 
   case 621:
-#line 6623 "Gmsh.y"
+#line 6622 "Gmsh.y"
     {
       std::string tmp = GetAbsolutePath((yyvsp[(3) - (4)].c));
       (yyval.c) = (char*)Malloc((tmp.size() + 1) * sizeof(char));
@@ -14875,12 +14874,12 @@ yyreduce:
     break;
 
   case 622:
-#line 6630 "Gmsh.y"
+#line 6629 "Gmsh.y"
     { init_options(); ;}
     break;
 
   case 623:
-#line 6632 "Gmsh.y"
+#line 6631 "Gmsh.y"
     {
       std::string val((yyvsp[(3) - (6)].c));
       Msg::ExchangeOnelabParameter("", val, floatOptions, charOptions);
@@ -14891,7 +14890,7 @@ yyreduce:
     break;
 
   case 624:
-#line 6640 "Gmsh.y"
+#line 6639 "Gmsh.y"
     {
       std::string out;
       const std::string * key_struct = nullptr;
@@ -14915,37 +14914,37 @@ yyreduce:
     break;
 
   case 625:
-#line 6664 "Gmsh.y"
+#line 6663 "Gmsh.y"
     { struct_namespace = std::string(""); (yyval.d) = (yyvsp[(2) - (2)].d); ;}
     break;
 
   case 626:
-#line 6666 "Gmsh.y"
+#line 6665 "Gmsh.y"
     { struct_namespace = (yyvsp[(1) - (4)].c); Free((yyvsp[(1) - (4)].c)); (yyval.d) = (yyvsp[(4) - (4)].d); ;}
     break;
 
   case 627:
-#line 6672 "Gmsh.y"
+#line 6671 "Gmsh.y"
     { (yyval.l) = (yyvsp[(3) - (4)].l); ;}
     break;
 
   case 628:
-#line 6677 "Gmsh.y"
+#line 6676 "Gmsh.y"
     { (yyval.l) = (yyvsp[(1) - (1)].l); ;}
     break;
 
   case 629:
-#line 6679 "Gmsh.y"
+#line 6678 "Gmsh.y"
     { (yyval.l) = (yyvsp[(1) - (1)].l); ;}
     break;
 
   case 630:
-#line 6684 "Gmsh.y"
+#line 6683 "Gmsh.y"
     { (yyval.l) = (yyvsp[(2) - (3)].l); ;}
     break;
 
   case 631:
-#line 6689 "Gmsh.y"
+#line 6688 "Gmsh.y"
     {
       (yyval.l) = List_Create(20,20,sizeof(char*));
       List_Add((yyval.l), &((yyvsp[(1) - (1)].c)));
@@ -14953,19 +14952,19 @@ yyreduce:
     break;
 
   case 632:
-#line 6694 "Gmsh.y"
+#line 6693 "Gmsh.y"
     { (yyval.l) = (yyvsp[(1) - (1)].l); ;}
     break;
 
   case 633:
-#line 6696 "Gmsh.y"
+#line 6695 "Gmsh.y"
     {
       List_Add((yyval.l), &((yyvsp[(3) - (3)].c)));
     ;}
     break;
 
   case 634:
-#line 6700 "Gmsh.y"
+#line 6699 "Gmsh.y"
     {
       for(int i = 0; i < List_Nbr((yyvsp[(3) - (3)].l)); i++){
 	char* c;
@@ -14977,7 +14976,7 @@ yyreduce:
     break;
 
   case 635:
-#line 6712 "Gmsh.y"
+#line 6711 "Gmsh.y"
     {
       (yyval.l) = List_Create(20, 20, sizeof(char *));
       if(!gmsh_yystringsymbols.count((yyvsp[(1) - (3)].c)))
@@ -14994,70 +14993,70 @@ yyreduce:
     break;
 
   case 636:
-#line 6726 "Gmsh.y"
+#line 6725 "Gmsh.y"
     {
       (yyval.l) = treat_Struct_FullName_dot_tSTRING_ListOfString(nullptr, (yyvsp[(1) - (5)].c), (yyvsp[(3) - (5)].c));
     ;}
     break;
 
   case 637:
-#line 6730 "Gmsh.y"
+#line 6729 "Gmsh.y"
     {
       (yyval.l) = treat_Struct_FullName_dot_tSTRING_ListOfString((yyvsp[(1) - (7)].c), (yyvsp[(3) - (7)].c), (yyvsp[(5) - (7)].c));
     ;}
     break;
 
   case 638:
-#line 6737 "Gmsh.y"
+#line 6736 "Gmsh.y"
     {
       char tmpstr[256];
       sprintf(tmpstr, "_%d", (int)(yyvsp[(4) - (5)].d));
-      (yyval.c) = (char *)Malloc((strlen((yyvsp[(1) - (5)].c))+strlen(tmpstr)+1)*sizeof(char));
+      (yyval.c) = (char *)Malloc((strlen((yyvsp[(1) - (5)].c))+strlen(tmpstr) + 1) * sizeof(char));
       strcpy((yyval.c), (yyvsp[(1) - (5)].c)); strcat((yyval.c), tmpstr);
       Free((yyvsp[(1) - (5)].c));
     ;}
     break;
 
   case 639:
-#line 6745 "Gmsh.y"
+#line 6744 "Gmsh.y"
     {
       char tmpstr[256];
       sprintf(tmpstr, "_%d", (int)(yyvsp[(4) - (5)].d));
-      (yyval.c) = (char *)Malloc((strlen((yyvsp[(1) - (5)].c))+strlen(tmpstr)+1)*sizeof(char)) ;
+      (yyval.c) = (char *)Malloc((strlen((yyvsp[(1) - (5)].c))+strlen(tmpstr) + 1) * sizeof(char)) ;
       strcpy((yyval.c), (yyvsp[(1) - (5)].c)) ; strcat((yyval.c), tmpstr) ;
       Free((yyvsp[(1) - (5)].c));
     ;}
     break;
 
   case 640:
-#line 6753 "Gmsh.y"
+#line 6752 "Gmsh.y"
     {
       char tmpstr[256];
       sprintf(tmpstr, "_%d", (int)(yyvsp[(7) - (8)].d));
-      (yyval.c) = (char *)Malloc((strlen((yyvsp[(3) - (8)].c))+strlen(tmpstr)+1)*sizeof(char));
+      (yyval.c) = (char *)Malloc((strlen((yyvsp[(3) - (8)].c))+strlen(tmpstr) + 1) * sizeof(char));
       strcpy((yyval.c), (yyvsp[(3) - (8)].c)); strcat((yyval.c), tmpstr);
       Free((yyvsp[(3) - (8)].c));
     ;}
     break;
 
   case 641:
-#line 6764 "Gmsh.y"
+#line 6763 "Gmsh.y"
     { (yyval.c) = (yyvsp[(1) - (1)].c); ;}
     break;
 
   case 642:
-#line 6766 "Gmsh.y"
+#line 6765 "Gmsh.y"
     { (yyval.c) = (yyvsp[(1) - (1)].c); ;}
     break;
 
   case 643:
-#line 6769 "Gmsh.y"
+#line 6768 "Gmsh.y"
     { (yyval.c) = (yyvsp[(3) - (4)].c); ;}
     break;
 
 
 /* Line 1267 of yacc.c.  */
-#line 15061 "Gmsh.tab.cpp"
+#line 15060 "Gmsh.tab.cpp"
       default: break;
     }
   YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
@@ -15271,7 +15270,7 @@ yyreturn:
 }
 
 
-#line 6772 "Gmsh.y"
+#line 6771 "Gmsh.y"
 
 
 void assignVariable(const std::string &name, int index, int assignType,
@@ -15368,38 +15367,40 @@ void incrementVariable(const std::string &name, int index, double value)
   }
 }
 
-int printListOfDouble(char *format, List_T *list, char *buffer)
+int printListOfDouble(const char *format, List_T *list, std::string &buffer)
 {
+  buffer = format;
+
+  int numFormats = 0;
+  for(std::size_t i = 0; i < strlen(format); i++) {
+    if(format[i] == '%') numFormats++;
+  }
+
   // if format does not contain formatting characters, dump the list (useful for
   // quick debugging of lists)
-  int numFormats = 0;
-  for(std::size_t i = 0; i < strlen(format); i++)
-    if(format[i] == '%') numFormats++;
   if(!numFormats){
-    strcpy(buffer, format);
     for(int i = 0; i < List_Nbr(list); i++){
       double d;
       List_Read(list, i, &d);
       char tmp[256];
       sprintf(tmp, " [%d]%g", i, d);
-      strcat(buffer, tmp);
+      buffer += tmp;
     }
     return 0;
   }
 
   char tmp1[256], tmp2[256];
   int j = 0, k = 0;
-  buffer[j] = '\0';
 
   while(j < (int)strlen(format) && format[j] != '%') j++;
-  strncpy(buffer, format, j);
-  buffer[j] = '\0';
+  buffer.resize(j);
+
   for(int i = 0; i < List_Nbr(list); i++){
     k = j;
     j++;
     if(j < (int)strlen(format)){
       if(format[j] == '%'){
-	strcat(buffer, "%");
+	buffer += "%";
 	j++;
       }
       while(j < (int)strlen(format) && format[j] != '%') j++;
@@ -15407,7 +15408,7 @@ int printListOfDouble(char *format, List_T *list, char *buffer)
 	strncpy(tmp1, &(format[k]), j-k);
 	tmp1[j-k] = '\0';
 	sprintf(tmp2, tmp1, *(double*)List_Pointer(list, i));
-	strcat(buffer, tmp2);
+	buffer += tmp2;
       }
     }
     else
@@ -15668,17 +15669,17 @@ void computeAffineTransformation(SPoint3& origin, SPoint3& axis,
 
   tfo.resize(16);
 
-  tfo[0*4+0] = ca + ux * ux * (1. - ca);
-  tfo[0*4+1] = ux * uy * (1. - ca) - uz * sa;
-  tfo[0*4+2] = ux * uz * (1. - ca) + uy * sa;
+  tfo[0 * 4 + 0] = ca + ux * ux * (1. - ca);
+  tfo[0 * 4 + 1] = ux * uy * (1. - ca) - uz * sa;
+  tfo[0 * 4 + 2] = ux * uz * (1. - ca) + uy * sa;
 
-  tfo[1*4+0] = ux * uy * (1. - ca) + uz * sa;
-  tfo[1*4+1] = ca + uy * uy * (1. - ca);
-  tfo[1*4+2] = uy * uz * (1. - ca) - ux * sa;
+  tfo[1 * 4 + 0] = ux * uy * (1. - ca) + uz * sa;
+  tfo[1 * 4 + 1] = ca + uy * uy * (1. - ca);
+  tfo[1 * 4 + 2] = uy * uz * (1. - ca) - ux * sa;
 
-  tfo[2*4+0] = ux * uz * (1. - ca) - uy * sa;
-  tfo[2*4+1] = uy * uz * (1. - ca) + ux * sa;
-  tfo[2*4+2] = ca + uz * uz * (1. - ca);
+  tfo[2 * 4 + 0] = ux * uz * (1. - ca) - uy * sa;
+  tfo[2 * 4 + 1] = uy * uz * (1. - ca) + ux * sa;
+  tfo[2 * 4 + 2] = ca + uz * uz * (1. - ca);
 
   int idx = 0;
   for(size_t i = 0; i < 3; i++,idx++) {
@@ -15687,7 +15688,7 @@ void computeAffineTransformation(SPoint3& origin, SPoint3& axis,
     for(int j = 0; j < 3; j++,idx++) tfo[tIdx] -= tfo[idx] * origin[j];
   }
 
-  for(int i = 0; i < 4; i++) tfo[12+i] = 0;
+  for(int i = 0; i < 4; i++) tfo[12 + i] = 0;
   tfo[15] = 1;
 }
 

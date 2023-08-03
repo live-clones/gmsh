@@ -4543,6 +4543,23 @@ double opt_geometry_surface_type(OPT_ARGS_NUM)
   return CTX::instance()->geom.surfaceType;
 }
 
+double opt_geometry_volume_type(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    CTX::instance()->geom.volumeType = (int)val;
+    if(CTX::instance()->geom.volumeType < 0 ||
+       CTX::instance()->geom.volumeType > 1)
+      CTX::instance()->geom.volumeType = 0;
+  }
+#if defined(HAVE_FLTK)
+  if(FlGui::available() && (action & GMSH_GUI)) {
+    FlGui::instance()->options->geo.choice[5]->value(
+      CTX::instance()->geom.volumeType);
+  }
+#endif
+  return CTX::instance()->geom.volumeType;
+}
+
 double opt_geometry_light(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->geom.light = (int)val;
@@ -5132,6 +5149,14 @@ double opt_mesh_lc_integration_precision(OPT_ARGS_NUM)
     CTX::instance()->mesh.lcIntegrationPrecision = val;
   }
   return CTX::instance()->mesh.lcIntegrationPrecision;
+}
+
+double opt_mesh_check_surface_normal_validity(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    CTX::instance()->mesh.checkSurfaceNormalValidity = (int)val;
+  }
+  return CTX::instance()->mesh.checkSurfaceNormalValidity;
 }
 
 double opt_mesh_rand_factor(OPT_ARGS_NUM)
@@ -8634,7 +8659,7 @@ double opt_view_tensor_type(OPT_ARGS_NUM)
   GET_VIEWo(0.);
   if(action & GMSH_SET) {
     opt->tensorType = (int)val;
-    if(opt->tensorType > 7 || opt->tensorType < 1) opt->tensorType = 1;
+    if(opt->tensorType > 8 || opt->tensorType < 1) opt->tensorType = 1;
     if(view) view->setChanged(true);
   }
 #if defined(HAVE_FLTK)

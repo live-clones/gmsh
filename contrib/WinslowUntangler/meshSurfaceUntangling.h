@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 //
 // Author: Maxence Reberol
 
@@ -45,7 +45,7 @@ bool untangleGFaceMeshConstrained(GFace *gf, int iterMax = 1000,
  * utility function create the necessary inputs from triangles and quads.
  *
  * @param[in] points Point coordinates
- * @param[in] elements Triangles and quads. 
+ * @param[in] elements Triangles and quads.
  * Triangles are detected with elements[i][3] = (uint32_t) -1
  * @param[out] triangles The triangles to optimize, without overlapping when
  * quad subdivided into four corner triangles.

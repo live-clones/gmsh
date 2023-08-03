@@ -80,7 +80,7 @@ void linearSystemPETSc<fullMatrix<double> >::addToRightHandSide(
   int row, const fullMatrix<double> &val, int ith)
 {
   if(!_entriesPreAllocated) preAllocateEntries();
-  int blockSize;
+  PetscInt blockSize;
   _check(MatGetBlockSize(_a, &blockSize));
   for(int ii = 0; ii < blockSize; ii++) {
     PetscInt i = row * blockSize + ii;
@@ -93,10 +93,10 @@ template <>
 void linearSystemPETSc<fullMatrix<double> >::getFromRightHandSide(
   int row, fullMatrix<double> &val) const
 {
-  int blockSize;
+  PetscInt blockSize;
   _check(MatGetBlockSize(_a, &blockSize));
   for(int i = 0; i < blockSize; i++) {
-    int ii = row * blockSize + i;
+    PetscInt ii = row * blockSize + i;
 #ifdef PETSC_USE_COMPLEX
     PetscScalar s;
     VecGetValues(_b, 1, &ii, &s);
@@ -111,7 +111,7 @@ template <>
 void linearSystemPETSc<fullMatrix<double> >::addToSolution(
   int row, const fullMatrix<double> &val)
 {
-  int blockSize;
+  PetscInt blockSize;
   _check(MatGetBlockSize(_a, &blockSize));
   for(int ii = 0; ii < blockSize; ii++) {
     PetscInt i = row * blockSize + ii;
@@ -124,10 +124,10 @@ template <>
 void linearSystemPETSc<fullMatrix<double> >::getFromSolution(
   int row, fullMatrix<double> &val) const
 {
-  int blockSize;
+  PetscInt blockSize;
   _check(MatGetBlockSize(_a, &blockSize));
   for(int i = 0; i < blockSize; i++) {
-    int ii = row * blockSize + i;
+    PetscInt ii = row * blockSize + i;
 #ifdef PETSC_USE_COMPLEX
     PetscScalar s;
     VecGetValues(_x, 1, &ii, &s);

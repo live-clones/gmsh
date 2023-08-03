@@ -1323,7 +1323,7 @@ public:
 
   // Comment: These three functions are implemented directly in:
   // src/mesh/meshGRegionBoundaryRecovery.cpp
-  bool reconstructmesh(void *);
+  int reconstructmesh(void *, double tol);
   void outsurfacemesh(const char *mfilename);
   void outmesh2medit(const char *mfilename);
 

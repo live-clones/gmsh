@@ -81,6 +81,11 @@ Export transfinite meshes as structured CGNS grids@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.CheckSurfaceNormalValidity
+Check surface mesh validity according to the geometry normal@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.Clip
 Enable clipping planes? (Plane[i]=2^i, i=0,...,5)@*
 Default value: @code{0}@*
@@ -162,7 +167,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.HighOrderFixBoundaryNodes
-Fix boundary nodes during high-order optimization?@*
+Fix all (1) or periodic (2) boundary nodes during high-order optimization?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 

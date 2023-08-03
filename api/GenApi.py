@@ -503,9 +503,11 @@ def ostring(name, value=None, python_value=None, julia_value=None):
     a.julia_post = name + " = unsafe_string(" + api_name + "[])"
     a.fortran_args = [name]
     a.fortran_types = ["character(len=:), allocatable, intent(out)"]
-    a.fortran_c_api = ["character(kind=c_char), dimension(*)"]
+    a.fortran_c_api = ["type(c_ptr), intent(out)"]
     a.fortran_c_args = [api_name]
-    # TODO: Does this need to be C deallocated?
+    a.fortran_call = f"{api_name}={api_name}"
+    a.fortran_post = f"{name} = ostring_({api_name})"
+    a.fortran_local = [f"type(c_ptr) :: {api_name}"]
     a.texi_type = "string"
     return a
 
@@ -1276,8 +1278,6 @@ from math import pi
 
 __version__ = {6}_API_VERSION
 
-oldsig = signal.signal(signal.SIGINT, signal.SIG_DFL)
-
 moduledir = os.path.dirname(os.path.realpath(__file__))
 parentdir1 = os.path.dirname(moduledir)
 parentdir2 = os.path.dirname(parentdir1)
@@ -1338,6 +1338,8 @@ if try_numpy:
         use_numpy = True
     except:
         pass
+
+prev_interrupt_handler = None
 
 # Utility functions, not part of the Gmsh Python API
 
@@ -1787,6 +1789,20 @@ fortran_footer = """
   ! Output routines from C to Fortran
   ! ----------------------------------------------------------------------------
 
+
+  function ostring_(cptr) result(v)
+    type(c_ptr), intent(inout) :: cptr
+    character(len=:), allocatable :: v
+    character(len=GMSH_API_MAX_STR_LEN), pointer :: fptr
+    integer(c_size_t) :: i
+    call c_f_pointer(cptr, fptr)
+    do i = 1_c_size_t, GMSH_API_MAX_STR_LEN
+      if (fptr(i:i) == c_null_char) exit
+    end do
+    v = fptr(:i)
+    call gmshFree(cptr)
+  end function ostring_
+
   function ovectorint_(cptr, n) result(v)
     type(c_ptr), intent(inout) :: cptr
     integer(c_size_t), intent(in) :: n
@@ -1822,20 +1838,14 @@ fortran_footer = """
     integer(c_size_t), intent(in) :: n
     character(len=GMSH_API_MAX_STR_LEN), allocatable :: v(:)
 
-    integer(c_size_t) :: i, c, lenstr
+    integer(c_size_t) :: i
     type(c_array_t), pointer :: c_array(:)
-    character(kind=c_char, len=1), pointer :: fptr(:)
+    character(len=GMSH_API_MAX_STR_LEN), pointer :: fptr
 
     call c_f_pointer(cptr, c_array, [n])
     allocate(v(n))
     do i = 1_c_size_t, n
-        call c_f_pointer(c_array(i)%s, fptr, &
-                         [int(GMSH_API_MAX_STR_LEN)])
-        lenstr = cstrlen(fptr)
-        v(i) = ""
-        do c = 1_c_size_t, lenstr
-            v(i)(c:c) = fptr(c)
-        end do
+      v(i) = ostring_(c_array(i)%s)
     end do
     call gmshFree(cptr)
   end function ovectorstring_
@@ -1957,20 +1967,6 @@ fortran_footer = """
     call gmshFree(cptr1)
     call gmshFree(cptr2)
   end subroutine ovectorvectorpair_
-
-  !> Calculates the length of a C string.
-  function cstrlen(carray) result(res)
-    character(kind=c_char, len=1), intent(in) :: carray(:)
-    integer :: res
-    integer :: i
-    do i = 1, size(carray)
-      if (carray(i) == c_null_char) then
-        res = i - 1
-        return
-      end if
-    end do
-    res = i
-  end function cstrlen
 
 end module gmsh
 """
@@ -2104,10 +2100,11 @@ class API:
                         fc.write("  return result_api_;\n")
                     fc.write("}\n\n")
                 # *.h_cwrap
-                fcwrap.write(indent + "// " +
-                             ("\n" + indent +
-                              "// ").join(textwrap.wrap(doc, 80 -
-                                                        len(indent))) + "\n")
+                fcwrap.write(
+                    indent + "// " + cpp_namespace + name + "\n" + indent + "//\n")
+                fcwrap.write(
+                    indent + "// " + ("\n" + indent + "// ").join(
+                        textwrap.wrap(doc, 80 - len(indent))) + "\n")
                 rt = rtype.rcpp_type if rtype else "void"
                 fnameapi = indent + "inline " + rt + " " + name + "("
                 fcwrap.write(fnameapi)
@@ -2210,9 +2207,14 @@ class API:
             if c_mpath != ns:
                 self.fwrite(f, indent + "@staticmethod\n")
             self.flog('py', py_mpath.replace('.', '/') + name)
-            self.fwrite(
-                f, indent + "def " + name + "(" + ", ".join(
-                    (parg(a) for a in iargs)) + "):\n")
+            if c_mpath == ns and name == "initialize": # special case for top-level initialize
+                self.fwrite(
+                    f, indent + "def " + name + "(" + ", ".join(
+                        (parg(a) for a in iargs)) + ", interruptible=True):\n")
+            else:
+                self.fwrite(
+                    f, indent + "def " + name + "(" + ", ".join(
+                        (parg(a) for a in iargs)) + "):\n")
             ind = indent + "    "
             self.fwrite(f, ind + '"""\n')
             self.fwrite(
@@ -2248,10 +2250,15 @@ class API:
                 (",\n" + ind + "    ").join(
                     tuple((a.python_arg
                            for a in args)) + ("byref(ierr)", )) + ")\n")
-            if name == "finalize":  # special case for finalize() function
-                self.fwrite(f, ind + "if oldsig is not None:\n")
-                self.fwrite(
-                    f, ind + "    signal.signal(signal.SIGINT, oldsig)\n")
+            if c_mpath == ns: # special cases for top-level initialize/finalize
+                if name == "initialize":
+                    self.fwrite(f, ind + "if interruptible == True:\n")
+                    self.fwrite(
+                        f, ind + "    prev_interrupt_handler = signal.signal(signal.SIGINT, signal.SIG_DFL)\n")
+                elif name == "finalize":  # special case for finalize()
+                    self.fwrite(f, ind + "if prev_interrupt_handler is not None:\n")
+                    self.fwrite(
+                        f, ind + "    signal.signal(signal.SIGINT, prev_interrupt_handler)\n")
             self.fwrite(f, ind + "if ierr.value != 0:\n")
             if name == "getLastError":  # special case for getLastError() function
                 self.fwrite(
@@ -2703,7 +2710,10 @@ class API:
                             break
                 f.write("@item " + tfull + "\n")
                 tdoc = doc.replace("`", "@code{").replace("'", "}")
-                f.write("\n".join(textwrap.wrap(tdoc, 80)) + "\n\n")
+                tdoc = re.sub(r'"([a-zA-Z ]+)" chapter of the Gmsh reference manual \((.+)\)',
+                              r'@url{\2,"\1" chapter of the Gmsh reference manual}',
+                              tdoc)
+                f.write(tdoc + "\n\n")
                 f.write("@table @asis\n")
                 iargs = list(a for a in args if not a.out)
                 oargs = list(a for a in args if a.out)

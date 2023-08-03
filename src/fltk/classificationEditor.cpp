@@ -283,7 +283,7 @@ static void classify_cb(Fl_Widget *w, void *data)
 
   computeDiscreteCurvatures(GModel::current());
   if(e->toggles[CLASS_TOGGLE_ENSURE_PARAMETRIZABLE_SURFACES]->value())
-    computeEdgeCut(GModel::current(), e->selected->lines, 100000);
+    computeEdgeCut(GModel::current(), e->selected->lines, CTX::instance()->mesh.reparamMaxTriangles);
   computeNonManifoldEdges(GModel::current(), e->selected->lines, true);
   double threshold = e->inputs[CLASS_VALUE_ANGLE]->value() / 180. * M_PI;
   classifyFaces(GModel::current(), threshold);

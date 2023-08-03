@@ -453,6 +453,8 @@ static int recover_edge(PolyMesh *pm, PolyMesh::Vertex *v_start,
     he = he->next->next->opposite;
   } while(he != v_start->he);
 
+  //  printf("coucou2 %lu\n",_list.size());
+
   if(_list.empty()) { return -1; }
 
   // find all intersections
@@ -492,8 +494,10 @@ static int recover_edge(PolyMesh *pm, PolyMesh::Vertex *v_start,
   }
 
   int nbIntersection = _list.size();
-  // printf("%d intersections\n", nbIntersection);
-  // int K = 100;
+  //  printf("%d intersections\n", nbIntersection);
+  int K = 100;
+  int _iter = 0;
+  pm->print4debug(K++);
   while(!_list.empty()) {
     he = *_list.begin();
     _list.erase(_list.begin());
@@ -505,12 +509,14 @@ static int recover_edge(PolyMesh *pm, PolyMesh::Vertex *v_start,
                                       he->opposite->next->next->v);
       // printf("swapping %d %d\n", he->v->data, he->next->v->data);
       pm->swap_edge(he);
-      // pm->print4debug(K++);
+      pm->print4debug(K++);
       if(still_intersect) _list.push_back(he);
     }
     else
       _list.push_back(he);
+    if (_iter ++ > 1000)return -1;
   }
+  //  printf("%d intersections done\n", nbIntersection);
   return nbIntersection;
 }
 
@@ -1055,7 +1061,7 @@ int meshTriangulate2d (const std::vector<double> &coord,
       }    
     }
     if (nbs == 0)break;
-    if (iter++ > 10)break;
+    if (iter++ > 30)break;
   }
 
   if (rec){
@@ -1067,7 +1073,7 @@ int meshTriangulate2d (const std::vector<double> &coord,
 	he_->data = -10;
 	he_ = pm->getEdge (pm->vertices[4+(*rec)[i+1]], pm->vertices[4+(*rec)[i]]);
 	he_->data = -10;
-      }	
+      }
     }
   }
 
@@ -1082,6 +1088,7 @@ int meshTriangulate2d (const std::vector<double> &coord,
       break;
     }  
   }
+
   while (!_f.empty()){
     PolyMesh::Face *f = _f.top();
     _f.pop();
@@ -1103,7 +1110,7 @@ int meshTriangulate2d (const std::vector<double> &coord,
     int i0 = t->he->v->data;
     int i1 = t->he->next->v->data;
     int i2 = t->he->next->next->v->data;
-    if (i0 > 0 && i1 > 0 && i2 > 0){ // (t->data == -1){
+    if (i0 > 0 && i1 > 0 && i2 > 0 && t->data != -10){ // (t->data == -1){
       tri.push_back(i0);
       tri.push_back(i1);
       tri.push_back(i2);

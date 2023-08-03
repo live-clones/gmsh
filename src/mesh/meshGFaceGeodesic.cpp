@@ -37,7 +37,7 @@ static PolyMesh* createPolyMesh (PolyMesh *pm,
   }
 
 
-  printf("argh\n");
+  //  printf("argh\n");
       
   for (size_t i=0;i<t.size();i+=3){
     PolyMesh::HalfEdge *he[3];
@@ -56,12 +56,12 @@ static PolyMesh* createPolyMesh (PolyMesh *pm,
     }
   }
 
-  printf("argh\n");
+  //  printf("argh\n");
   
   HalfEdgePtrLessThan compare;
   std::sort(pm_new->hedges.begin(), pm_new->hedges.end(), compare);
 
-  printf("argh\n");
+  //  printf("argh\n");
   
   HalfEdgePtrEqual equal;
   for(size_t i = 0; i < pm_new->hedges.size() - 1; i++) {
@@ -74,7 +74,7 @@ static PolyMesh* createPolyMesh (PolyMesh *pm,
     }
   } 
 
-  printf("argh\n");
+  //  printf("argh\n");
 
   FILE *f = fopen("test.pos","w");
   fprintf(f,"View\"\"{\n");
@@ -102,7 +102,7 @@ static PolyMesh* createPolyMesh (PolyMesh *pm,
   fprintf(f,"};\n");
   fclose(f);
 
-  printf("argh\n");
+  //  printf("argh\n");
   
   int faceTag = 1;
   for (auto f : pm_new->faces){
@@ -128,7 +128,7 @@ static PolyMesh* createPolyMesh (PolyMesh *pm,
     }
   }
 
-  printf("argh\n");
+  //  printf("argh\n");
 
   Msg::Info("%d isogeometric triangles were generated",faceTag - 1);
   
@@ -664,8 +664,8 @@ public :
       std::vector<VertexOnEdge> vv2 = it.second;
       std::sort(vv2.begin(),vv2.end(),compareVertexOnEdge);
       std::vector<VertexOnEdge> vv;
-      std::vector<SVector3> pos;
-
+      std::vector<SVector3> pos;      
+      
       for (size_t k = 0 ;k < vv2.size() ; k++) {
 	if (k == 0 || (vv2[k].t - vv[vv.size()-1].t) > 1.e-8){	  
 	  pos.push_back(vv2[k].point());
@@ -718,6 +718,8 @@ public :
       std::vector<double> coord;
       std::vector<PolyMesh::Vertex*> pp;
       PolyMesh::HalfEdge *he = pm->faces[i]->he;
+      
+      
       do{
 	SVector3 pos = he->v->position;
 	double x = dot (pos-p0[i], t1[i]); 
@@ -1024,6 +1026,11 @@ private:
 	PolyMesh::HalfEdge *he = pm->getEdge(pm->vertices[std::min(v0->id(),v1->id())],pm->vertices[std::max(v0->id(),v1->id())]);
 	if (!he) he = pm->getEdge(pm->vertices[std::max(v0->id(),v1->id())],pm->vertices[std::min(v0->id(),v1->id())]);
 	if (!he)Msg::Error("%s %d -- FAILURE",__FILE__,__LINE__);
+	if (pm->vertices.size() == 664 || pm->vertices.size() == 655 || pm->vertices.size() == 644 || pm->vertices.size() == 634){
+	  geodesic::SurfacePoint _ss = p[0];
+	  printf("we are on geodesic %d %d and point %lu is on position %lu (%g %g %g) vs (%g %g %g) -- %d vs %d size = %lu\n",
+		 pair.first,pair.second,pm->vertices.size(),i,_s.x(),_s.y(),_s.z(),_ss.x(),_ss.y(),_ss.z(),_s.type(),_ss.type(),p.size());
+	}
 	PolyMesh::Vertex *newv = new PolyMesh::Vertex (_s.x(),_s.y(),_s.z(),pm->vertices.size());  		
 	addVertexOnEdge (he, pm->vertices.size());
 	pm->vertices.push_back(newv);
@@ -1073,11 +1080,11 @@ private:
 	PolyMesh::HalfEdge *he = pm->getEdge(pm->vertices[std::min(v0->id(),v1->id())],pm->vertices[std::max(v0->id(),v1->id())]);
 	if (!he) he = pm->getEdge(pm->vertices[std::max(v0->id(),v1->id())],pm->vertices[std::min(v0->id(),v1->id())]);
 	if (!he)Msg::Error("%s %d -- FAILURE",__FILE__,__LINE__);
-	//	if (pm->vertices.size() == 4999) {
-	//	  printf("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA  argh : %d --- %g %g %g --> %g %g %g\n",i,he->v->position.x(),he->v->position.y(),he->v->position.z(),
-	//		 he->next->v->position.x(),he->next->v->position.y(),he->next->v->position.z());
-	//	  
-	//	}
+	if (pm->vertices.size() == 664 || pm->vertices.size() == 655 || pm->vertices.size() == 644 || pm->vertices.size() == 634) {
+	  printf("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA  argh : %d --- %g %g %g --> %g %g %g\n",i,he->v->position.x(),he->v->position.y(),he->v->position.z(),
+		 he->next->v->position.x(),he->next->v->position.y(),he->next->v->position.z());
+	  
+	}
 	PolyMesh::Vertex *newv = new PolyMesh::Vertex (_s.x(),_s.y(),_s.z(),pm->vertices.size());  		
 	addVertexOnEdge (he, pm->vertices.size());
 	pm->vertices.push_back(newv);
@@ -1133,14 +1140,18 @@ public:
   void printGeodesics(const char *fn){
     FILE *f = fopen (fn,"w");
     fprintf(f,"View \"\"{\n");
-    
+    int count = 1;
     for (auto it = geodesics.begin() ; it != geodesics.end() ; ++it){
       auto ite = edges.find(it->first);
       if (ite !=edges.end() && ite->second.size()){
+	const size_t last = it->second.size() - 1;
+	fprintf(f,"SP(%g,%g,%g){%d};\n",it->second[0].x(),it->second[0].y(),it->second[0].z(),count);	
+	fprintf(f,"SP(%g,%g,%g){%d};\n",it->second[last].x(),it->second[last].y(),it->second[last].z(),count);	
 	for (size_t i = 1; i < it->second.size() ; ++i){
-	  fprintf(f,"SL(%g,%g,%g,%g,%g,%g){1,1};\n",it->second[i-1].x(),it->second[i-1].y(),it->second[i-1].z(),
-		  it->second[i].x(),it->second[i].y(),it->second[i].z());	
+	  fprintf(f,"SL(%g,%g,%g,%g,%g,%g){%d,%d};\n",it->second[i-1].x(),it->second[i-1].y(),it->second[i-1].z(),
+		  it->second[i].x(),it->second[i].y(),it->second[i].z(),count,count);	
 	}
+	count ++;
       }
     }    
     fprintf(f,"};\n");    
@@ -1211,6 +1222,21 @@ highOrderPolyMesh::highOrderPolyMesh (GModel *gm) : maxTag(1) {
       std::vector<geodesic::SurfacePoint> pts = {points[start]};
       geodesic::GeodesicAlgorithmExact algorithm(&geoMesh);
       algorithm.propagate(pts,0,&_ends);
+#if 1
+      std::map<PolyMesh::Vertex*, double> dist;
+      for (size_t k=0;k<geoMesh.vertices().size(); k++){
+	double d;
+	geodesic::Vertex *v = &geoMesh.vertices()[k];
+	geodesic::SurfacePoint sp (v);
+	algorithm.best_source(sp,d);
+	if (d < 1.e10)dist[pm->vertices[k]] = d;
+      }
+      char _name[256];
+      sprintf(_name,"distanceToVertex%d.pos",e.first.first);
+      print__ (_name, pm, dist);
+  
+#endif
+
       for (size_t j=0 ; j < _ends.size() ; j++){
 	std::vector<geodesic::SurfacePoint> path;
 	algorithm.trace_back(_ends[j], path);
@@ -1708,8 +1734,11 @@ PolyMesh* highOrderPolyMesh::cutMesh (){
   
   // ---  Cut every mesh edge with eventual additional points 
 
+  printf("Classifying Geodesic Vertices\n");
   classifyGeodesicVertices ();
+  printf("Classifying Geodesic Vertices Done\n");
   
+  printf("Spliting original mesh using geodesics\n");
   for (auto it : evs){    
     PolyMesh::HalfEdge *he = it.first;      
     std::vector<PolyMesh::Vertex*> vv;
@@ -1726,6 +1755,7 @@ PolyMesh* highOrderPolyMesh::cutMesh (){
       he = he->next;
     }
   }
+  printf("Spliting original mesh using geodesics Done\n");
   
   // ---  Split every face taking into account constrained edges
   // ---  that belong to geodesic lines
@@ -1735,6 +1765,8 @@ PolyMesh* highOrderPolyMesh::cutMesh (){
   
   for (size_t i=0;i<nbFaces;i++){
 
+    //    if (i == 9) printf("face %d\n",i);
+    
     std::vector<double> coord;
     std::vector<PolyMesh::Vertex*> pp;
     PolyMesh::HalfEdge *he = pm->faces[i]->he;
@@ -1742,6 +1774,7 @@ PolyMesh* highOrderPolyMesh::cutMesh (){
       SVector3 pos = he->v->position;
       double x = dot (pos-p0[i], t1[i]); 
       double y = dot (pos-p0[i], t2[i]); 
+      //      if (i == 9)printf("point %d %12.5E %12.5E %12.5E --> %12.5E %12.5E\n",he->v->data,pos.x(),pos.y(),pos.z(),x,y); 
       coord.push_back(x);
       coord.push_back(y);
       pp.push_back( he->v );
@@ -1759,13 +1792,16 @@ PolyMesh* highOrderPolyMesh::cutMesh (){
     
     std::map<PolyMesh::Face *, std::vector<int> >::iterator it = fvs.find(pm->faces[i]); 
     FILE *deb = nullptr;
-    if (it != fvs.end()){
-      //      char name [256];
-      //      sprintf(name,"2d%d.pos",i);
-      //      deb = fopen (name,"w");
-      //      fprintf(deb,"View \"\"{\n");
-      
+    //    if (i == 9) {
+    //      char name [256];
+    //      sprintf(name,"2d%d.pos",i);
+    //      deb = fopen (name,"w");
+    //      fprintf(deb,"View \"\"{\n");
+    //    }
+    if (it != fvs.end()){      
       for (size_t j =0 ; j < it->second.size(); j++){
+	//	if (i == 9)printf("%lu vertices -- internal point %lu = %d\n",
+	//	       pm->vertices.size(), j, it->second[j]);
 	PolyMesh::Vertex *newv = pm->vertices[it->second[j]];
 	SVector3 pos = newv->position;
 	double x = dot (pos-p0[i], t1[i]); 
@@ -1774,11 +1810,11 @@ PolyMesh* highOrderPolyMesh::cutMesh (){
 	coord.push_back(y);
 	pp.push_back( newv );
       }
-      for (size_t j=0;j<coord.size() ; j+=2){
-	if (deb)
-	  fprintf(deb,"SP(%g,%g,%g){1,1,1};\n",
-		  coord[2*j],coord[2*j+1],0.0);
-      }
+    }
+    for (size_t j=0;j<coord.size() ; j+=2){
+      if (deb)
+	fprintf(deb,"SP(%g,%g,%g){1,1,1};\n",
+		coord[2*j],coord[2*j+1],0.0);
     }
     
     // Some other edges should be recovered because they belong to geodesics
@@ -1813,9 +1849,10 @@ PolyMesh* highOrderPolyMesh::cutMesh (){
 	}
       }
     }
-
+    
     if (pp.size() >= 3){
       std::vector<size_t> tri;
+      //      if (i == 9)printf("%lu points recovering %lu edges on triangle %lu\n",pp.size(),recover_all.size(),i);
       meshTriangulate2d (coord,tri,recover_all.empty() ? nullptr : &recover_all);
       
       // verify if orientation is ok (it should be thet case ...)
@@ -1858,7 +1895,7 @@ PolyMesh* highOrderPolyMesh::cutMesh (){
 	tris.push_back(j0->data);
 	tris.push_back(j1->data);
 	tris.push_back(j2->data);
-
+	
 	if (deb)
 	  fprintf(deb,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%d,%d,%d};\n",
 		  coord[2*n0],coord[2*n0+1],0.0,
@@ -1866,11 +1903,12 @@ PolyMesh* highOrderPolyMesh::cutMesh (){
 		  coord[2*n2],coord[2*n2+1],0.0,
 		  j0->data,j1->data,j2->data);
 	
-	fprintf(f,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%d,%d,%d};\n",
+	fprintf(f,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%lu,%lu,%lu};\n",
 		j0->position.x(),j0->position.y(),j0->position.z(),
 		j1->position.x(),j1->position.y(),j1->position.z(),
 		j2->position.x(),j2->position.y(),j2->position.z(),
-		j0->data,j1->data,j2->data);
+		i,i,i);
+	//		j0->data,j1->data,j2->data);
       }
     }
     if (deb){
@@ -2026,6 +2064,7 @@ int makeMeshGeodesic (GFace *gf) {
 
 int makeMeshGeodesic (GModel *gm) {
 
+  Msg::Info("Computing all Geodesics");
   highOrderPolyMesh hop (gm);
   
   //  return 0;
@@ -2044,10 +2083,11 @@ int makeMeshGeodesic (GModel *gm) {
     }
   }
   hop.printGeodesics("beforeall.pos");
-  for (int k=0;k<0;k++){
-    int ns = hop.splitEdges ();
-    printf("nsplits %d\n",ns);
-    if (!ns) break;
+  for (int k=0;k<1;k++){
+    int ns = 0;
+    //    int ns = hop.splitEdges ();
+    //    printf("nsplits %d\n",ns);
+    //    if (!ns) break;
     int iter=0, nswt=0;
     while(1){
       int nsw = hop.swapEdges();
@@ -2059,7 +2099,9 @@ int makeMeshGeodesic (GModel *gm) {
   }
   hop.printGeodesics("afterall.pos");
 
+  printf("Cutting Mesh\n");
   PolyMesh *pm_new = hop.cutMesh();
+  printf("Cutting Mesh Done\n");
   
   std::map<PolyMesh::Vertex*,double> nothing;
   print__ ("toto.pos", pm_new, nothing);

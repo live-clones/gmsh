@@ -34,8 +34,9 @@ struct BoundaryLayerData {
 struct BoundaryLayerFan {
   MEdge _e1, _e2;
   bool sense;
-  BoundaryLayerFan(MEdge e1, MEdge e2, bool s = true)
-    : _e1(e1), _e2(e2), sense(s)
+  int type;
+  BoundaryLayerFan(MEdge e1, MEdge e2, bool s = true, int type = 0)
+    : _e1(e1), _e2(e2), sense(s), type(type)
   {
   }
 };
@@ -88,9 +89,9 @@ public:
   {
     _data.insert(std::make_pair(v, BoundaryLayerData(dir, _column)));
   }
-  inline void addFan(MVertex *v, MEdge e1, MEdge e2, bool s)
+  inline void addFan(MVertex *v, MEdge e1, MEdge e2, bool s, int type)
   {
-    _fans.insert(std::make_pair(v, BoundaryLayerFan(e1, e2, s)));
+    _fans.insert(std::make_pair(v, BoundaryLayerFan(e1, e2, s, type)));
   }
   inline const BoundaryLayerFan *getFan(MVertex *v) const
   {

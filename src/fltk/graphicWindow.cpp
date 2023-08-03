@@ -2483,6 +2483,7 @@ static void mesh_unpartition_cb(Fl_Widget *w, void *data)
     opt_mesh_zone_definition(0, GMSH_SET, 0.);
     opt_mesh_color_carousel(0, GMSH_SET | GMSH_GUI, 1.);
     CTX::instance()->mesh.changed = ENT_ALL;
+    FlGui::instance()->resetVisibility();
     drawContext::global()->draw();
   }
 }

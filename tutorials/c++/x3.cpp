@@ -149,6 +149,9 @@ int main(int argc, char **argv)
   gmsh::view::option::setNumber(t2, "TargetError", 1e-2);
   gmsh::view::option::setNumber(t2, "MaxRecursionLevel", 5);
 
+  // Note that the adapted visualization data can be retrived by setting the
+  // `returnAdaptive' argument to the `gmsh::view::getListData()' function.
+
   // Launch the GUI to see the results:
   std::set<std::string> args(argv, argv + argc);
   if(!args.count("-nopopup")) gmsh::fltk::run();

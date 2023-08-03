@@ -53,9 +53,9 @@ template <class scalar> void linearSystemPETSc<scalar>::_kspCreate()
 template <class scalar>
 int linearSystemPETSc<scalar>::getNumKspIteration() const
 {
-  int n;
+  PetscInt n;
   _check(KSPGetIterationNumber(_ksp, &n));
-  return n;
+  return (int)n;
 }
 
 template <class scalar>
@@ -125,7 +125,7 @@ template <class scalar> void linearSystemPETSc<scalar>::preAllocateEntries()
     return;
   }
   int blockSize = _getBlockSizeFromParameters();
-  std::vector<int> nByRowDiag(_localSize), nByRowOffDiag(_localSize);
+  std::vector<PetscInt> nByRowDiag(_localSize), nByRowOffDiag(_localSize);
   if(_sparsity.getNbRows() == 0) {
     PetscInt prealloc = 300; // 8*27 = 216 for 8 2nd order hexas
     PetscBool set;
@@ -303,7 +303,8 @@ void linearSystemPETSc<double>::getFromRightHandSide(int row,
 template <class scalar>
 void linearSystemPETSc<scalar>::getFromRightHandSide(int row, scalar &val) const
 {
-  _check(VecGetValues(_b, 1, &row, &val));
+  PetscInt r = row;
+  _check(VecGetValues(_b, 1, &r, &val));
 }
 
 template <class scalar>
@@ -343,7 +344,8 @@ void linearSystemPETSc<double>::getFromSolution(int row, double &val) const;
 template <class scalar>
 void linearSystemPETSc<scalar>::getFromSolution(int row, scalar &val) const
 {
-  _check(VecGetValues(_x, 1, &row, &val));
+  PetscInt r = row;
+  _check(VecGetValues(_x, 1, &r, &val));
 }
 
 template <class scalar> void linearSystemPETSc<scalar>::zeroMatrix()

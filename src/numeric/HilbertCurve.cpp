@@ -42,7 +42,7 @@ struct HilbertSort {
          bbox.max().x(), bbox.min().y(), bbox.max().y(), bbox.min().z(),
          bbox.max().z(), 0);
   }
-  void Apply(std::vector<MVertex *> &v)
+  void Apply(std::vector<MVertex *> &v, int threshold = 10)
   {
     for(size_t i = 0; i < v.size(); i++) {
       MVertex *pv = v[i];
@@ -51,7 +51,7 @@ struct HilbertSort {
     bbox *= 1.01;
     MVertex **pv = &v[0];
     int depth = 0; 
-    MultiscaleSortHilbert(pv, (int)v.size(), 10, 0.125, &depth);
+    MultiscaleSortHilbert(pv, (int)v.size(), threshold, 0.125, &depth);
   }
 };
 
@@ -266,6 +266,10 @@ void HilbertSort::Sort(MVertex **vertices, int arraysize, int e, int d,
 void SortHilbert(std::vector<MVertex *> &v)
 {
   HilbertSort h(1000);
-  // HilbertSort h;
   h.Apply(v);
+}
+
+void SortHilbert_Without_Brio(std::vector<MVertex *> &v){
+  HilbertSort h(1000);
+  h.Apply(v,v.size()+1);
 }

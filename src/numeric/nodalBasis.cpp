@@ -471,7 +471,6 @@ namespace ClosureGen {
                                   const fullMatrix<double> &points)
   {
     closure.clear();
-    int clId = 0;
     for(int iRotate = 0; iRotate < 4; iRotate++) {
       for(int iSign = 1; iSign >= -1; iSign -= 2) {
         for(int iFace = 0; iFace < 6; iFace++) {
@@ -496,7 +495,6 @@ namespace ClosureGen {
           }
           closure.push_back(cl);
           closureRef.push_back(0);
-          clId++;
         }
       }
     }

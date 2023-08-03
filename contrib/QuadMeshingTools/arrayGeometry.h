@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 //
 // Author: Maxence Reberol
 
@@ -111,9 +111,9 @@ namespace ArrayGeometry {
     const vec3 pb = pts[(lv+2)%4]-pts[lv];
     const vec3 pc = pts[(lv+3)%4]-pts[lv];
     const double top = std::abs(dot(pa,cross(pb,pc)));
-    const double bot = length(pa)*length(pb)*length(pc) 
-      + dot(pa,pb) * length(pc) 
-      + dot(pb,pc) * length(pb) 
+    const double bot = length(pa)*length(pb)*length(pc)
+      + dot(pa,pb) * length(pc)
+      + dot(pb,pc) * length(pb)
       + dot(pb,pc) * length(pa);
     if (std::abs(bot) < 1.e-14) return 0.;
     double sagl = atan(top/bot);

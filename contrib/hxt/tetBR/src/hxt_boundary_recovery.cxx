@@ -72,9 +72,15 @@ static double orient4d(double*, double *, double *, double *, double *,
 
 #include <cstdio>
 #include <cstring>
+
+#ifdef HXT_WITHOUT_GMSH
+#warning "Using TetgenBR without Gmsh - please note the different licensing terms"
 #include "tetgenBR.h"
 #include "tetgenBR.cxx"
-
+#else
+#include "../../../../src/mesh/tetgenBR.h"
+#include "../../../../src/mesh/tetgenBR.cxx"
+#endif
 
 
 /* just a function such that:

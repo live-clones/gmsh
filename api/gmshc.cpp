@@ -362,6 +362,17 @@ GMSH_API void gmshModelGetEntityName(const int dim, const int tag, char ** name,
   }
 }
 
+GMSH_API void gmshModelRemoveEntityName(const char * name, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::removeEntityName(name);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API void gmshModelGetPhysicalGroups(int ** dimTags, size_t * dimTags_n, const int dim, int * ierr)
 {
   if(ierr) *ierr = 0;
@@ -455,17 +466,6 @@ GMSH_API void gmshModelSetPhysicalName(const int dim, const int tag, const char 
   }
 }
 
-GMSH_API void gmshModelRemovePhysicalName(const char * name, int * ierr)
-{
-  if(ierr) *ierr = 0;
-  try {
-    gmsh::model::removePhysicalName(name);
-  }
-  catch(...){
-    if(ierr) *ierr = 1;
-  }
-}
-
 GMSH_API void gmshModelGetPhysicalName(const int dim, const int tag, char ** name, int * ierr)
 {
   if(ierr) *ierr = 0;
@@ -473,6 +473,17 @@ GMSH_API void gmshModelGetPhysicalName(const int dim, const int tag, char ** nam
     std::string api_name_;
     gmsh::model::getPhysicalName(dim, tag, api_name_);
     *name = strdup(api_name_.c_str());
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelRemovePhysicalName(const char * name, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::removePhysicalName(name);
   }
   catch(...){
     if(ierr) *ierr = 1;
@@ -584,17 +595,6 @@ GMSH_API void gmshModelRemoveEntities(const int * dimTags, const size_t dimTags_
       api_dimTags_[i].second = dimTags[i * 2 + 1];
     }
     gmsh::model::removeEntities(api_dimTags_, recursive);
-  }
-  catch(...){
-    if(ierr) *ierr = 1;
-  }
-}
-
-GMSH_API void gmshModelRemoveEntityName(const char * name, int * ierr)
-{
-  if(ierr) *ierr = 0;
-  try {
-    gmsh::model::removeEntityName(name);
   }
   catch(...){
     if(ierr) *ierr = 1;
@@ -890,13 +890,12 @@ GMSH_API void gmshModelSetCoordinates(const int tag, const double x, const doubl
   }
 }
 
-GMSH_API void gmshModelGetAttributeNames(char *** names, size_t * names_n, int * ierr)
+GMSH_API void gmshModelSetAttribute(const char * name, const char * const * values, const size_t values_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    std::vector<std::string> api_names_;
-    gmsh::model::getAttributeNames(api_names_);
-    vectorstring2charptrptr(api_names_, names, names_n);
+    std::vector<std::string> api_values_(values, values + values_n);
+    gmsh::model::setAttribute(name, api_values_);
   }
   catch(...){
     if(ierr) *ierr = 1;
@@ -916,12 +915,13 @@ GMSH_API void gmshModelGetAttribute(const char * name, char *** values, size_t *
   }
 }
 
-GMSH_API void gmshModelSetAttribute(const char * name, const char * const * values, const size_t values_n, int * ierr)
+GMSH_API void gmshModelGetAttributeNames(char *** names, size_t * names_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    std::vector<std::string> api_values_(values, values + values_n);
-    gmsh::model::setAttribute(name, api_values_);
+    std::vector<std::string> api_names_;
+    gmsh::model::getAttributeNames(api_names_);
+    vectorstring2charptrptr(api_names_, names, names_n);
   }
   catch(...){
     if(ierr) *ierr = 1;
@@ -2087,22 +2087,42 @@ GMSH_API void gmshModelMeshReorderElements(const int elementType, const int tag,
   }
 }
 
-GMSH_API void gmshModelMeshRenumberNodes(int * ierr)
+GMSH_API void gmshModelMeshComputeRenumbering(size_t ** oldTags, size_t * oldTags_n, size_t ** newTags, size_t * newTags_n, const char * method, const size_t * elementTags, const size_t elementTags_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    gmsh::model::mesh::renumberNodes();
+    std::vector<std::size_t> api_oldTags_;
+    std::vector<std::size_t> api_newTags_;
+    std::vector<std::size_t> api_elementTags_(elementTags, elementTags + elementTags_n);
+    gmsh::model::mesh::computeRenumbering(api_oldTags_, api_newTags_, method, api_elementTags_);
+    vector2ptr(api_oldTags_, oldTags, oldTags_n);
+    vector2ptr(api_newTags_, newTags, newTags_n);
   }
   catch(...){
     if(ierr) *ierr = 1;
   }
 }
 
-GMSH_API void gmshModelMeshRenumberElements(int * ierr)
+GMSH_API void gmshModelMeshRenumberNodes(const size_t * oldTags, const size_t oldTags_n, const size_t * newTags, const size_t newTags_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    gmsh::model::mesh::renumberElements();
+    std::vector<std::size_t> api_oldTags_(oldTags, oldTags + oldTags_n);
+    std::vector<std::size_t> api_newTags_(newTags, newTags + newTags_n);
+    gmsh::model::mesh::renumberNodes(api_oldTags_, api_newTags_);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelMeshRenumberElements(const size_t * oldTags, const size_t oldTags_n, const size_t * newTags, const size_t newTags_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<std::size_t> api_oldTags_(oldTags, oldTags + oldTags_n);
+    std::vector<std::size_t> api_newTags_(newTags, newTags + newTags_n);
+    gmsh::model::mesh::renumberElements(api_oldTags_, api_newTags_);
   }
   catch(...){
     if(ierr) *ierr = 1;
@@ -2255,6 +2275,20 @@ GMSH_API void gmshModelMeshSetVisibility(const size_t * elementTags, const size_
   try {
     std::vector<std::size_t> api_elementTags_(elementTags, elementTags + elementTags_n);
     gmsh::model::mesh::setVisibility(api_elementTags_, value);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelMeshGetVisibility(const size_t * elementTags, const size_t elementTags_n, int ** values, size_t * values_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<std::size_t> api_elementTags_(elementTags, elementTags + elementTags_n);
+    std::vector<int> api_values_;
+    gmsh::model::mesh::getVisibility(api_elementTags_, api_values_);
+    vector2ptr(api_values_, values, values_n);
   }
   catch(...){
     if(ierr) *ierr = 1;
@@ -3298,12 +3332,12 @@ GMSH_API int gmshModelOccAddLine(const int startTag, const int endTag, const int
   return result_api_;
 }
 
-GMSH_API int gmshModelOccAddCircleArc(const int startTag, const int centerTag, const int endTag, const int tag, int * ierr)
+GMSH_API int gmshModelOccAddCircleArc(const int startTag, const int middleTag, const int endTag, const int tag, const int center, int * ierr)
 {
   int result_api_ = 0;
   if(ierr) *ierr = 0;
   try {
-    result_api_ = gmsh::model::occ::addCircleArc(startTag, centerTag, endTag, tag);
+    result_api_ = gmsh::model::occ::addCircleArc(startTag, middleTag, endTag, tag, center);
   }
   catch(...){
     if(ierr) *ierr = 1;
@@ -4348,14 +4382,14 @@ GMSH_API void gmshViewAddListData(const int tag, const char * dataType, const in
   }
 }
 
-GMSH_API void gmshViewGetListData(const int tag, char *** dataType, size_t * dataType_n, int ** numElements, size_t * numElements_n, double *** data, size_t ** data_n, size_t *data_nn, int * ierr)
+GMSH_API void gmshViewGetListData(const int tag, char *** dataType, size_t * dataType_n, int ** numElements, size_t * numElements_n, double *** data, size_t ** data_n, size_t *data_nn, const int returnAdaptive, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
     std::vector<std::string> api_dataType_;
     std::vector<int> api_numElements_;
     std::vector<std::vector<double> > api_data_;
-    gmsh::view::getListData(tag, api_dataType_, api_numElements_, api_data_);
+    gmsh::view::getListData(tag, api_dataType_, api_numElements_, api_data_, returnAdaptive);
     vectorstring2charptrptr(api_dataType_, dataType, dataType_n);
     vector2ptr(api_numElements_, numElements, numElements_n);
     vectorvector2ptrptr(api_data_, data, data_n, data_nn);

@@ -72,6 +72,8 @@
 #include "gmshCrossFields.h"
 #include "alphaShapes.h"
 #include "meshTriangulation.h"
+#include "qualityMeasuresJacobian.h"
+#include "meshRenumber.h"
 #endif
 
 #if defined(HAVE_POST)
@@ -322,8 +324,7 @@ GMSH_API void gmsh::model::remove()
 GMSH_API void gmsh::model::list(std::vector<std::string> &names)
 {
   if(!_checkInit()) return;
-  for(std::size_t i = 0; i < GModel::list.size(); i++)
-    names.push_back(GModel::list[i]->getName());
+  for(auto m : GModel::list) names.push_back(m->getName());
 }
 
 GMSH_API void gmsh::model::getCurrent(std::string &name)
@@ -341,8 +342,7 @@ GMSH_API void gmsh::model::setCurrent(const std::string &name)
     return;
   }
   GModel::setCurrent(m);
-  for(std::size_t i = 0; i < GModel::list.size(); i++)
-    GModel::list[i]->setVisibility(0);
+  for(auto m : GModel::list) m->setVisibility(0);
   GModel::current()->setVisibility(1);
   CTX::instance()->mesh.changed = ENT_ALL;
 }
@@ -365,9 +365,8 @@ GMSH_API void gmsh::model::getEntities(vectorpair &dimTags, const int dim)
   dimTags.clear();
   std::vector<GEntity *> entities;
   GModel::current()->getEntities(entities, dim);
-  for(std::size_t i = 0; i < entities.size(); i++)
-    dimTags.push_back(
-      std::make_pair(entities[i]->dim(), entities[i]->tag()));
+  for(auto ge : entities)
+    dimTags.push_back(std::make_pair(ge->dim(), ge->tag()));
 }
 
 GMSH_API void gmsh::model::setEntityName(const int dim, const int tag,
@@ -421,8 +420,7 @@ GMSH_API void gmsh::model::getEntitiesForPhysicalGroup(const int dim,
   GModel::current()->getPhysicalGroups(dim, groups);
   auto it = groups.find(tag);
   if(it != groups.end()) {
-    for(std::size_t j = 0; j < it->second.size(); j++)
-      tags.push_back(it->second[j]->tag());
+    for(auto ge : it->second) tags.push_back(ge->tag());
   }
   else {
     Msg::Error("Physical %s does not exist", _getEntityName(dim, tag).c_str());
@@ -437,8 +435,8 @@ GMSH_API void gmsh::model::getEntitiesForPhysicalName(const std::string &name,
   std::vector<GEntity *> entities;
   GModel::current()->getEntitiesForPhysicalName(name, entities);
   if(entities.size() != 0) {
-    for(std::size_t i = 0; i < entities.size(); ++i) {
-      dimTags.push_back(std::pair<int, int >(entities[i]->dim(), entities[i]->tag()));
+    for(auto ge : entities) {
+      dimTags.push_back(std::pair<int, int >(ge->dim(), ge->tag()));
     }
   }
   else {
@@ -457,10 +455,7 @@ gmsh::model::getPhysicalGroupsForEntity(const int dim, const int tag,
     Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
     return;
   }
-  std::vector<int> phy = ge->getPhysicalEntities();
-  if(phy.empty()) return;
-  physicalTags.resize(phy.size());
-  for(std::size_t i = 0; i < phy.size(); i++) { physicalTags[i] = phy[i]; }
+  physicalTags = ge->getPhysicalEntities();
 }
 
 GMSH_API int gmsh::model::addPhysicalGroup(const int dim,
@@ -594,9 +589,8 @@ GMSH_API void gmsh::model::getEntitiesInBoundingBox(
   SBoundingBox3d box(xmin, ymin, zmin, xmax, ymax, zmax);
   std::vector<GEntity *> entities;
   GModel::current()->getEntitiesInBox(entities, box, dim);
-  for(std::size_t i = 0; i < entities.size(); i++)
-    dimTags.push_back(
-      std::make_pair(entities[i]->dim(), entities[i]->tag()));
+  for(auto ge : entities)
+    dimTags.push_back(std::make_pair(ge->dim(), ge->tag()));
 }
 
 GMSH_API void gmsh::model::getBoundingBox(const int dim, const int tag,
@@ -1584,10 +1578,14 @@ GMSH_API void gmsh::model::mesh::getNodes(std::vector<std::size_t> &nodeTags,
   else {
     GModel::current()->getEntities(entities, dim);
   }
-  for(std::size_t i = 0; i < entities.size(); i++) {
-    GEntity *ge = entities[i];
-    for(std::size_t j = 0; j < ge->mesh_vertices.size(); j++) {
-      MVertex *v = ge->mesh_vertices[j];
+  std::size_t numNodes = 0;
+  for(auto ge : entities) numNodes += ge->mesh_vertices.size();
+  nodeTags.reserve(numNodes);
+  coord.reserve(numNodes * 3);
+  if(dim > 0 && returnParametricCoord) parametricCoord.reserve(numNodes * dim);
+
+  for(auto ge : entities) {
+    for(auto v : ge->mesh_vertices) {
       nodeTags.push_back(v->getNum());
       coord.push_back(v->x());
       coord.push_back(v->y());
@@ -2338,6 +2336,18 @@ GMSH_API void gmsh::model::mesh::getElementQualities(
     else if(qualityName == "innerRadius"){
       elementQualities[k] = e->getInnerRadius();
     }
+#if defined(HAVE_MESH)
+    else if(qualityName == "minDetJac"){
+      double min, max;
+      jacobianBasedQuality::minMaxJacobianDeterminant(e, min, max);
+      elementQualities[k] = min;
+    }
+    else if(qualityName == "maxDetJac"){
+      double min, max;
+      jacobianBasedQuality::minMaxJacobianDeterminant(e, min, max);
+      elementQualities[k] = max;
+    }
+#endif
     else{
       if(k == begin) {
         Msg::Error("Unknown quality name '%s'", qualityName.c_str());
@@ -4261,7 +4271,7 @@ GMSH_API void gmsh::model::mesh::getKeysInformation(
   }
 
   if(typeKeys.size() != entityKeys.size()) {
-    Msg::Error("The size of 'typeKeys' is different of the size of "
+    Msg::Error("The size of 'typeKeys' is different from the size of "
                "'entityKeys' ('%i', '%i')",
                typeKeys.size(), entityKeys.size());
     return;
@@ -5194,16 +5204,63 @@ gmsh::model::mesh::reorderElements(const int elementType, const int tag,
   }
 }
 
-GMSH_API void gmsh::model::mesh::renumberNodes()
+GMSH_API void gmsh::model::mesh::computeRenumbering
+  (std::vector<std::size_t> &oldTags,
+   std::vector<std::size_t> &newTags,
+   const std::string &method,
+   const std::vector<std::size_t> &elementTags)
 {
-  if(!_checkInit()) return;
-  GModel::current()->renumberMeshVertices();
+  std::map<std::size_t, std::size_t> remap;
+#if defined(HAVE_MESH)
+  if(method == "RCMK")
+    meshRenumber_Vertices_RCMK(elementTags, remap);
+  else if(method == "Hilbert")
+    meshRenumber_Vertices_Hilbert(elementTags, remap);
+  else if(method == "Metis")
+    meshRenumber_Vertices_Metis(elementTags, remap);
+  else
+    Msg::Error("Unknown renumbering method %s", method.c_str());
+#else
+  Msg::Error("Computing renumbering requires the mesh module");
+#endif
+  oldTags.reserve(remap.size());
+  newTags.reserve(remap.size());
+  for(auto r : remap) {
+    oldTags.push_back(r.first);
+    newTags.push_back(r.second);
+  }
 }
 
-GMSH_API void gmsh::model::mesh::renumberElements()
+GMSH_API void gmsh::model::mesh::renumberNodes
+  (const std::vector<std::size_t> &oldTags,
+   const std::vector<std::size_t> &newTags)
 {
   if(!_checkInit()) return;
-  GModel::current()->renumberMeshElements();
+  if(oldTags.size() != newTags.size()) {
+    Msg::Error("Invalid number of tags for node renumbering: %lu != %lu",
+               oldTags.size(), newTags.size());
+    return;
+  }
+  std::map<std::size_t, std::size_t> remap;
+  for(std::size_t i = 0; i < oldTags.size(); i++)
+    remap[oldTags[i]] = newTags[i];
+  GModel::current()->renumberMeshVertices(remap);
+}
+
+GMSH_API void gmsh::model::mesh::renumberElements
+  (const std::vector<std::size_t> &oldTags,
+   const std::vector<std::size_t> &newTags)
+{
+  if(!_checkInit()) return;
+  if(oldTags.size() != newTags.size()) {
+    Msg::Error("Invalid number of tags for element renumbering: %lu != %lu",
+               oldTags.size(), newTags.size());
+    return;
+  }
+  std::map<std::size_t, std::size_t> remap;
+  for(std::size_t i = 0; i < oldTags.size(); i++)
+    remap[oldTags[i]] = newTags[i];
+  GModel::current()->renumberMeshElements(remap);
 }
 
 GMSH_API void
@@ -5331,7 +5388,7 @@ GMSH_API void gmsh::model::mesh::getPeriodicKeys(
 
   tagMaster = ge->getMeshMaster()->tag();
   getKeys(elementType, functionSpaceType,
-                     typeKeys, entityKeys, coord, tag, returnCoord);
+          typeKeys, entityKeys, coord, tag, returnCoord);
   typeKeysMaster = typeKeys;
   entityKeysMaster = entityKeys;
   coordMaster = coord;
@@ -5343,29 +5400,34 @@ GMSH_API void gmsh::model::mesh::getPeriodicKeys(
      functionSpaceType == "Lagrange") {
 #pragma omp parallel for num_threads(nthreads)
     for(std::size_t i = 0; i < entityKeys.size(); i++) {
-      MVertex v(0., 0., 0., nullptr, entityKeys[i]);
-      auto mv = ge->correspondingVertices.find(&v);
-      if(mv != ge->correspondingVertices.end()) {
-        entityKeysMaster[i] = mv->second->getNum();
-        if(returnCoord) {
-          coord[3 * i] = mv->second->x();
-          coord[3 * i + 1] = mv->second->y();
-          coord[3 * i + 2] = mv->second->z();
-        }
+      MVertex *v = GModel::current()->getMeshVertexByTag(entityKeys[i]);
+      if(!v) {
+        Msg::Warning("Unknown node %d", entityKeys[i]);
       }
       else {
-        auto mv2 = ge->correspondingHighOrderVertices.find(&v);
-        if(mv2 != ge->correspondingHighOrderVertices.end()) {
-          entityKeysMaster[i] = mv2->second->getNum();
+        auto mv = ge->correspondingVertices.find(v);
+        if(mv != ge->correspondingVertices.end()) {
+          entityKeysMaster[i] = mv->second->getNum();
           if(returnCoord) {
-            coord[3 * i] = mv2->second->x();
-            coord[3 * i + 1] = mv2->second->y();
-            coord[3 * i + 2] = mv2->second->z();
+            coord[3 * i] = mv->second->x();
+            coord[3 * i + 1] = mv->second->y();
+            coord[3 * i + 2] = mv->second->z();
           }
         }
-        else{
-          Msg::Warning("Unknown master node corresponding to node %d",
-                       entityKeys[i]);
+        else {
+          auto mv2 = ge->correspondingHighOrderVertices.find(v);
+          if(mv2 != ge->correspondingHighOrderVertices.end()) {
+            entityKeysMaster[i] = mv2->second->getNum();
+            if(returnCoord) {
+              coord[3 * i] = mv2->second->x();
+              coord[3 * i + 1] = mv2->second->y();
+              coord[3 * i + 2] = mv2->second->z();
+            }
+          }
+          else{
+            Msg::Warning("Unknown master node corresponding to node %d",
+                         entityKeys[i]);
+          }
         }
       }
     }
@@ -5423,6 +5485,18 @@ GMSH_API void gmsh::model::mesh::setVisibility(
   for(auto t : elementTags) {
     MElement *e = GModel::current()->getMeshElementByTag(t);
     if(e) e->setVisibility(value);
+  }
+}
+
+GMSH_API void gmsh::model::mesh::getVisibility(const std::vector<size_t> &elementTags,
+                                               std::vector<int> &values)
+{
+  if(!_checkInit()) return;
+  values.clear();
+  values.resize(elementTags.size(), 0);
+  for(std::size_t i = 0; i < elementTags.size(); i++) {
+    MElement *e = GModel::current()->getMeshElementByTag(elementTags[i]);
+    if(e) values[i] = e->getVisibility();
   }
 }
 
@@ -5523,7 +5597,7 @@ GMSH_API void gmsh::model::mesh::triangulate(const std::vector<double> &coord,
 #if defined(HAVE_MESH)
   meshTriangulate2d(coord,tri, &edges);
 #else
-  Msg::Error("triangulate requires the mesh module");
+  Msg::Error("Triangulate requires the mesh module");
 #endif
 }
 
@@ -5560,7 +5634,7 @@ gmsh::model::mesh::tetrahedralize(const std::vector<double> &coord,
   for(std::size_t i = 0; i < verts.size(); i++) delete verts[i];
   for(std::size_t i = 0; i < tets.size(); i++) delete tets[i];
 #else
-  Msg::Error("tetrahedralize requires the mesh module");
+  Msg::Error("Tetrahedralize requires the mesh module");
 #endif
 }
 
@@ -6418,14 +6492,15 @@ GMSH_API int gmsh::model::occ::addLine(const int startTag, const int endTag,
 }
 
 GMSH_API int gmsh::model::occ::addCircleArc(const int startTag,
-                                            const int centerTag,
-                                            const int endTag, const int tag)
+                                            const int middleTag,
+                                            const int endTag, const int tag,
+                                            const bool center)
 {
   if(!_checkInit()) return -1;
   _createOcc();
   int outTag = tag;
   GModel::current()->getOCCInternals()->addCircleArc(outTag, startTag,
-                                                     centerTag, endTag);
+                                                     middleTag, endTag, center);
   return outTag;
 }
 
@@ -7536,7 +7611,8 @@ GMSH_API void gmsh::view::addListData(const int tag,
 GMSH_API void gmsh::view::getListData(const int tag,
                                       std::vector<std::string> &dataTypes,
                                       std::vector<int> &numElements,
-                                      std::vector<std::vector<double> > &data)
+                                      std::vector<std::vector<double> > &data,
+                                      bool returnAdaptive)
 {
   if(!_checkInit()) return;
 #if defined(HAVE_POST)
@@ -7545,7 +7621,8 @@ GMSH_API void gmsh::view::getListData(const int tag,
     Msg::Error("Unknown view with tag %d", tag);
     return;
   }
-  PViewDataList *d = dynamic_cast<PViewDataList *>(view->getData());
+  PViewDataList *d =
+    dynamic_cast<PViewDataList *>(view->getData(returnAdaptive));
   if(!d) {
     Msg::Error("View with tag %d does not contain list data", tag);
     return;

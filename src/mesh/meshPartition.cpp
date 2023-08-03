@@ -2251,6 +2251,10 @@ int PartitionFaceMinEdgeLength(GFace *gf, int np, double tol)
     Msg::Warning("Partitioning face %d with %lu triangles that all have the same"
                  " partition - changing tolerance to %g", gf->tag(),
                  gf->triangles.size(), ubvec);
+    if(ubvec > CTX::instance()->lc) {
+      Msg::Warning("Tolerance too large - aborting partitioning");
+      break;
+    }
   }
   for(size_t i = 0; i < gf->triangles.size(); ++i) {
     gf->triangles[i]->setPartition(epart[i]);

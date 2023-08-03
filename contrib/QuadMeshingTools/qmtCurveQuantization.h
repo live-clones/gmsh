@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 //
 // Author: Maxence Reberol
 
@@ -15,7 +15,7 @@ class GModel;
  *
  *
  * @brief Determine the number of points on each GEdge
- *        for quad meshing. Try to match the opposite 
+ *        for quad meshing. Try to match the opposite
  *        sides to get regular meshes.
  *        The GEdge meshing properties are changed and
  *        some GEdge are set to transfinite.

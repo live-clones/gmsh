@@ -67,7 +67,7 @@ gmsh.model.mesh.field.setNumber(2, "DistMax", 0.5)
 # of the spatial coordinates. We can do this with the MathEval field:
 gmsh.model.mesh.field.add("MathEval", 3)
 gmsh.model.mesh.field.setString(3, "F",
-                                "Cos(4*3.14*x) * Sin(4*3.14*y) / 10 + 0.101")
+                                "cos(4*3.14*x) * sin(4*3.14*y) / 10 + 0.101")
 
 # We could also combine MathEval with values coming from other fields. For
 # example, let's define a `Distance' field around point 1

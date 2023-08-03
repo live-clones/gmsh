@@ -1,8 +1,8 @@
 //----------------------------------------------------------------------
-//	File:			ANNx.h
-//	Programmer: 	Sunil Arya and David Mount
-//	Last modified:	03/04/98 (Release 0.1)
-//	Description:	Internal include file for ANN
+// File:			ANNx.h
+// Programmer: 		Sunil Arya and David Mount
+// Description:		Internal include file for ANN
+// Last modified:	01/27/10 (Version 1.1.2)
 //
 //	These declarations are of use in manipulating some of
 //	the internal data objects appearing in ANN, but are not
@@ -11,27 +11,26 @@
 //
 //	Typical users of ANN should not need to access this file.
 //----------------------------------------------------------------------
-// Copyright (c) 1997-1998 University of Maryland and Sunil Arya and David
-// Mount.  All Rights Reserved.
+// Copyright (c) 1997-2010 University of Maryland and Sunil Arya and
+// David Mount.  All Rights Reserved.
 // 
-// This software and related documentation is part of the 
-// Approximate Nearest Neighbor Library (ANN).
+// This software and related documentation is part of the Approximate
+// Nearest Neighbor Library (ANN).  This software is provided under
+// the provisions of the Lesser GNU Public License (LGPL).  See the
+// file ../ReadMe.txt for further information.
 // 
-// Permission to use, copy, and distribute this software and its 
-// documentation is hereby granted free of charge, provided that 
-// (1) it is not a component of a commercial product, and 
-// (2) this notice appears in all copies of the software and
-//   related documentation. 
-// 
-// The University of Maryland (U.M.) and the authors make no representations
-// about the suitability or fitness of this software for any purpose.  It is
-// provided "as is" without express or implied warranty.
+// The University of Maryland (U.M.) and the authors make no
+// representations about the suitability or fitness of this software for
+// any purpose.  It is provided "as is" without express or implied
+// warranty.
 //----------------------------------------------------------------------
 //	History:
 //	Revision 0.1  03/04/98
 //	    Initial release
 //	Revision 1.0  04/01/05
 //	    Changed LO, HI, IN, OUT to ANN_LO, ANN_HI, etc.
+//	Revision 1.1.2  01/27/10
+//		Fixed minor compilation bugs for new versions of gcc
 //----------------------------------------------------------------------
 
 #ifndef ANNx_H
@@ -64,7 +63,7 @@ extern int		ANNptsVisited;		// number of pts visited in search
 //----------------------------------------------------------------------
 
 void annError(					// ANN error routine
-	char			*msg,		// error message
+	const char*		msg,		// error message
 	ANNerr			level);		// level of error
 
 void annPrintPt(				// print a point
