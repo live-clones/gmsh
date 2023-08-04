@@ -865,7 +865,7 @@ GMSH_API void gmshModelMeshGetElementProperties(const int elementType,
  * this type of element, that contains the node tags of all the elements of
  * the given type, concatenated: [e1n1, e1n2, ..., e1nN, e2n1, ...]. If
  * `numTasks' > 1, only compute and return the part of the data indexed by
- * `task' (for C++ only, output vectors must be preallocated). */
+ * `task' (for C++ only; output vectors must be preallocated). */
 GMSH_API void gmshModelMeshGetElementsByType(const int elementType,
                                              size_t ** elementTags, size_t * elementTags_n,
                                              size_t ** nodeTags, size_t * nodeTags_n,
@@ -899,7 +899,7 @@ GMSH_API void gmshModelMeshPreallocateElementsByType(const int elementType,
  * measure, "angleShape" for the angle shape measure, "minEdge" for the
  * minimum straight edge length, "maxEdge" for the maximum straight edge
  * length, "volume" for the volume. If `numTasks' > 1, only compute and return
- * the part of the data indexed by `task' (for C++ only, output vector must be
+ * the part of the data indexed by `task' (for C++ only; output vector must be
  * preallocated). */
 GMSH_API void gmshModelMeshGetElementQualities(const size_t * elementTags, const size_t elementTags_n,
                                                double ** elementsQuality, size_t * elementsQuality_n,
@@ -969,7 +969,7 @@ GMSH_API void gmshModelMeshGetIntegrationPoints(const int elementType,
  * ... e1gG, e2g1, ...]. `coord' contains for each element the x, y, z
  * coordinates of the evaluation points. If `tag' < 0, get the Jacobian data
  * for all entities. If `numTasks' > 1, only compute and return the part of
- * the data indexed by `task' (for C++ only, output vectors must be
+ * the data indexed by `task' (for C++ only; output vectors must be
  * preallocated). */
 GMSH_API void gmshModelMeshGetJacobians(const int elementType,
                                         const double * localCoord, const size_t localCoord_n,
@@ -1047,7 +1047,7 @@ GMSH_API void gmshModelMeshGetBasisFunctions(const int elementType,
  * each element the orientation index in the values returned by
  * `getBasisFunctions'. For Lagrange basis functions the call is superfluous
  * as it will return a vector of zeros. If `numTasks' > 1, only compute and
- * return the part of the data indexed by `task' (for C++ only, output vector
+ * return the part of the data indexed by `task' (for C++ only; output vector
  * must be preallocated). */
 GMSH_API void gmshModelMeshGetBasisFunctionsOrientation(const int elementType,
                                                         const char * functionSpaceType,
@@ -1188,7 +1188,7 @@ GMSH_API void gmshModelMeshGetKeysInformation(const int * typeKeys, const size_t
  * is set, the function returns the sum of the primary node coordinates
  * (without normalizing by the number of nodes). If `tag' < 0, get the
  * barycenters for all entities. If `numTasks' > 1, only compute and return
- * the part of the data indexed by `task' (for C++ only, output vector must be
+ * the part of the data indexed by `task' (for C++ only; output vector must be
  * preallocated). */
 GMSH_API void gmshModelMeshGetBarycenters(const int elementType,
                                           const int tag,
@@ -1213,7 +1213,7 @@ GMSH_API void gmshModelMeshPreallocateBarycenters(const int elementType,
  * `getElementsByType'. If `primary' is set, only the primary (begin/end)
  * nodes of the edges are returned. If `tag' < 0, get the edge nodes for all
  * entities. If `numTasks' > 1, only compute and return the part of the data
- * indexed by `task' (for C++ only, output vector must be preallocated). */
+ * indexed by `task' (for C++ only; output vector must be preallocated). */
 GMSH_API void gmshModelMeshGetElementEdgeNodes(const int elementType,
                                                size_t ** nodeTags, size_t * nodeTags_n,
                                                const int tag,
@@ -1230,7 +1230,7 @@ GMSH_API void gmshModelMeshGetElementEdgeNodes(const int elementType,
  * `getElementsByType'. If `primary' is set, only the primary (corner) nodes
  * of the faces are returned. If `tag' < 0, get the face nodes for all
  * entities. If `numTasks' > 1, only compute and return the part of the data
- * indexed by `task' (for C++ only, output vector must be preallocated). */
+ * indexed by `task' (for C++ only; output vector must be preallocated). */
 GMSH_API void gmshModelMeshGetElementFaceNodes(const int elementType,
                                                const int faceType,
                                                size_t ** nodeTags, size_t * nodeTags_n,

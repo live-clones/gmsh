@@ -2943,7 +2943,7 @@ class model:
             this type of element, that contains the node tags of all the elements of
             the given type, concatenated: [e1n1, e1n2, ..., e1nN, e2n1, ...]. If
             `numTasks' > 1, only compute and return the part of the data indexed by
-            `task' (for C++ only, output vectors must be preallocated).
+            `task' (for C++ only; output vectors must be preallocated).
 
             Return `elementTags', `nodeTags'.
 
@@ -3011,7 +3011,7 @@ class model:
             measure, "angleShape" for the angle shape measure, "minEdge" for the
             minimum straight edge length, "maxEdge" for the maximum straight edge
             length, "volume" for the volume. If `numTasks' > 1, only compute and return
-            the part of the data indexed by `task' (for C++ only, output vector must be
+            the part of the data indexed by `task' (for C++ only; output vector must be
             preallocated).
 
             Return `elementsQuality'.
@@ -3168,7 +3168,7 @@ class model:
             ... e1gG, e2g1, ...]. `coord' contains for each element the x, y, z
             coordinates of the evaluation points. If `tag' < 0, get the Jacobian data
             for all entities. If `numTasks' > 1, only compute and return the part of
-            the data indexed by `task' (for C++ only, output vectors must be
+            the data indexed by `task' (for C++ only; output vectors must be
             preallocated).
 
             Return `jacobians', `determinants', `coord'.
@@ -3323,7 +3323,7 @@ class model:
             each element the orientation index in the values returned by
             `getBasisFunctions'. For Lagrange basis functions the call is superfluous
             as it will return a vector of zeros. If `numTasks' > 1, only compute and
-            return the part of the data indexed by `task' (for C++ only, output vector
+            return the part of the data indexed by `task' (for C++ only; output vector
             must be preallocated).
 
             Return `basisFunctionsOrientation'.
@@ -3776,7 +3776,7 @@ class model:
             is set, the function returns the sum of the primary node coordinates
             (without normalizing by the number of nodes). If `tag' < 0, get the
             barycenters for all entities. If `numTasks' > 1, only compute and return
-            the part of the data indexed by `task' (for C++ only, output vector must be
+            the part of the data indexed by `task' (for C++ only; output vector must be
             preallocated).
 
             Return `barycenters'.
@@ -3818,7 +3818,7 @@ class model:
             `getElementsByType'. If `primary' is set, only the primary (begin/end)
             nodes of the edges are returned. If `tag' < 0, get the edge nodes for all
             entities. If `numTasks' > 1, only compute and return the part of the data
-            indexed by `task' (for C++ only, output vector must be preallocated).
+            indexed by `task' (for C++ only; output vector must be preallocated).
 
             Return `nodeTags'.
 
@@ -3858,7 +3858,7 @@ class model:
             `getElementsByType'. If `primary' is set, only the primary (corner) nodes
             of the faces are returned. If `tag' < 0, get the face nodes for all
             entities. If `numTasks' > 1, only compute and return the part of the data
-            indexed by `task' (for C++ only, output vector must be preallocated).
+            indexed by `task' (for C++ only; output vector must be preallocated).
 
             Return `nodeTags'.
 
