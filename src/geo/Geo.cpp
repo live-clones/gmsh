@@ -1720,6 +1720,16 @@ static int CompareTwoSurfaces(const void *a, const void *b)
   if(List_Nbr(s1->GeneratricesByTag) && List_Nbr(s2->GeneratricesByTag))
     return Compare2Lists(s1->GeneratricesByTag, s2->GeneratricesByTag, fcmp_absint);
 
+  // compare boundary layer surfaces using their source extrusion entity, which
+  // is assumed to be unique; this allows one to have 2 distinct boundary layer
+  // surfaces with a single bounding curve
+  if(s1->Typ == MSH_SURF_BND_LAYER && s1->Extrude &&
+     s2->Typ == MSH_SURF_BND_LAYER && s2->Extrude) {
+    int comp =
+      std::abs(s1->Extrude->geo.Source) - std::abs(s2->Extrude->geo.Source);
+    if(comp) return comp;
+  }
+
   return Compare2Lists(s1->Generatrices, s2->Generatrices, CompareAbsCurve);
 }
 
