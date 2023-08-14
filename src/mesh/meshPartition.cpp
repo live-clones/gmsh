@@ -836,6 +836,8 @@ static void fillConnectedElements(
   std::vector<std::set<MElement *, MElementPtrLessThan> > &connectedElements,
   Graph &graph)
 {
+  if(graph.ne() < 2) return;
+
   std::stack<idx_t> elementStack;
   std::set<MElement *, MElementPtrLessThan> elements;
   idx_t startElement = 0;
