@@ -83,6 +83,20 @@ int MQuadrangle::numCommonNodesInDualGraph(const MElement *const other) const
   }
 }
 
+double MQuadrangle::getAngleAtVertex(MVertex *v)
+{
+  if(v == _v[0])
+    return angle3Vertices(_v[3], _v[0], _v[1]);
+  else if(v == _v[1])
+    return angle3Vertices(_v[0], _v[1], _v[2]);
+  else if(v == _v[2])
+    return angle3Vertices(_v[1], _v[2], _v[3]);
+  else if(v == _v[3])
+    return angle3Vertices(_v[2], _v[3], _v[0]);
+  Msg::Warning("Unknown node in quadrangle for angle computation");
+  return 0.;
+}
+
 static void _myGetEdgeRep(MQuadrangle *q, int num, double *x, double *y,
                           double *z, SVector3 *n, int numSubEdges)
 {

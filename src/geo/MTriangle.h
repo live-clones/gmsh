@@ -174,6 +174,7 @@ public:
     return MEdge(_v[eSolin[num][0]], _v[eSolin[num][1]]);
   }
   virtual MFace getFaceSolin(int num) { return getFace(num); }
+  virtual double getAngleAtVertex(MVertex *v);
 };
 
 /*
