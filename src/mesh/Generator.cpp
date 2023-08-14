@@ -293,27 +293,6 @@ void GetStatistics(double stat[50], double quality[3][100], bool visibleOnly)
 #endif
 }
 
-static bool TooManyElements(GModel *m, int dim)
-{
-  if(CTX::instance()->expertMode || !m->getNumVertices()) return false;
-
-  // try to detect obvious mistakes in characteristic lenghts (one of the most
-  // common cause for erroneous bug reports on the mailing list)
-  double sumAllLc = 0.;
-  for(auto it = m->firstVertex(); it != m->lastVertex(); ++it)
-    sumAllLc +=
-      (*it)->prescribedMeshSizeAtVertex() * CTX::instance()->mesh.lcFactor;
-  sumAllLc /= (double)m->getNumVertices();
-  if(!sumAllLc || pow(CTX::instance()->lc / sumAllLc, dim) > 1.e10)
-    return !Msg::GetAnswer(
-      "Your choice of mesh element sizes will likely produce a very\n"
-      "large mesh. Do you really want to continue?\n\n"
-      "(To disable this warning in the future, select `Enable expert mode'\n"
-      "in the option dialog.)",
-      1, "Cancel", "Continue");
-  return false;
-}
-
 static void Mesh0D(GModel *m)
 {
   m->getFields()->initialize();
@@ -344,7 +323,6 @@ static void Mesh1D(GModel *m)
 
   m->getFields()->initialize();
 
-  if(TooManyElements(m, 1)) return;
   Msg::StatusBar(true, "Meshing 1D...");
   double t1 = Cpu(), w1 = TimeOfDay();
 
@@ -485,7 +463,6 @@ static void Mesh2D(GModel *m)
 
   m->getFields()->initialize();
 
-  if(TooManyElements(m, 2)) return;
   Msg::StatusBar(true, "Meshing 2D...");
   double t1 = Cpu(), w1 = TimeOfDay();
 
@@ -834,7 +811,6 @@ static void Mesh3D(GModel *m)
 
   m->getFields()->initialize();
 
-  if(TooManyElements(m, 3)) return;
   Msg::StatusBar(true, "Meshing 3D...");
   double t1 = Cpu(), w1 = TimeOfDay();
 
