@@ -274,8 +274,13 @@ public:
 
   // add a mesh edge or face in the global edge or face map with number "num",
   // or number it (starting at 1) if num == 0
-  std::size_t addMEdge(MEdge &edge, std::size_t num = 0);
-  std::size_t addMFace(MFace &face, std::size_t num = 0);
+  std::size_t addMEdge(MEdge &&edge, std::size_t num = 0);
+  std::size_t addMFace(MFace &&face, std::size_t num = 0);
+
+  // get number of edges or faces
+  std::size_t getNumMEdges() const { return _mapEdgeNum.size(); };
+  std::size_t getNumMFaces() const { return _mapFaceNum.size(); };
+
   // get the edge of face and its global number given mesh nodes (return 0 if
   // the edge or face does not exist in the edge or face map)
   std::size_t getMEdge(MVertex *v0, MVertex *v1, MEdge &edge);

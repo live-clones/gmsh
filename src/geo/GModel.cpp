@@ -1636,7 +1636,7 @@ std::size_t GModel::getNumMeshParentElements() const
   return n;
 }
 
-std::size_t GModel::addMEdge(MEdge &edge, std::size_t num)
+std::size_t GModel::addMEdge(MEdge &&edge, std::size_t num)
 {
   std::pair<MEdge, std::size_t> key(std::move(edge),
                                     num ? num : _mapEdgeNum.size() + 1);
@@ -1658,7 +1658,7 @@ std::size_t GModel::getMEdge(MVertex *v0, MVertex *v1, MEdge &edge)
   }
 }
 
-std::size_t GModel::addMFace(MFace &face, std::size_t num)
+std::size_t GModel::addMFace(MFace &&face, std::size_t num)
 {
   std::pair<MFace, std::size_t> key(std::move(face),
                                     num ? num : _mapFaceNum.size() + 1);

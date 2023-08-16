@@ -362,6 +362,7 @@ GMSH_API void gmsh::model::getEntities(vectorpair &dimTags, const int dim)
   dimTags.clear();
   std::vector<GEntity *> entities;
   GModel::current()->getEntities(entities, dim);
+  dimTags.reserve(entities.size());
   for(auto ge : entities)
     dimTags.push_back(std::make_pair(ge->dim(), ge->tag()));
 }
@@ -3553,7 +3554,7 @@ GMSH_API void gmsh::model::mesh::createEdges(const vectorpair &dimTags)
       MElement *e = ge->getMeshElement(j);
       for(int k = 0; k < e->getNumEdges(); k++) {
         MEdge edge = e->getEdge(k);
-        GModel::current()->addMEdge(edge);
+        GModel::current()->addMEdge(std::move(edge));
       }
     }
   }
@@ -3570,7 +3571,7 @@ GMSH_API void gmsh::model::mesh::createFaces(const vectorpair &dimTags)
       MElement *e = ge->getMeshElement(j);
       for(int k = 0; k < e->getNumFaces(); k++) {
         MFace face = e->getFace(k);
-        GModel::current()->addMFace(face);
+        GModel::current()->addMFace(std::move(face));
       }
     }
   }
@@ -3580,9 +3581,9 @@ GMSH_API void gmsh::model::mesh::getAllEdges(std::vector<std::size_t> &edgeTags,
                                              std::vector<std::size_t> &edgeNodes)
 {
   if(!_checkInit()) return;
-  edgeTags.clear();
-  edgeNodes.clear();
   GModel *m = GModel::current();
+  edgeTags .clear(); edgeTags .reserve(m->getNumMEdges());
+  edgeNodes.clear(); edgeNodes.reserve(m->getNumMEdges() * 2);
   for(auto it = m->firstMEdge(); it != m->lastMEdge(); ++it) {
     edgeTags.push_back(it->second);
     edgeNodes.push_back(it->first.getVertex(0)->getNum());
@@ -3630,7 +3631,7 @@ GMSH_API void gmsh::model::mesh::addEdges(const std::vector<std::size_t> &edgeTa
       }
     }
     MEdge e(v[0], v[1]);
-    m->addMEdge(e, edgeTags[i]);
+    m->addMEdge(std::move(e), edgeTags[i]);
   }
 }
 
@@ -3658,7 +3659,7 @@ GMSH_API void gmsh::model::mesh::addFaces(const int faceType,
       }
     }
     MFace f(v[0], v[1], v[2], v[3]);
-    m->addMFace(f, faceTags[i]);
+    m->addMFace(std::move(f), faceTags[i]);
   }
 }
 
@@ -3854,7 +3855,7 @@ GMSH_API void gmsh::model::mesh::getKeys(
             coordEdge[1] = 0.5 * (v1->y() + v2->y());
             coordEdge[2] = 0.5 * (v1->z() + v2->z());
           }
-          std::size_t edgeGlobalIndice = GModel::current()->addMEdge(edge);
+          std::size_t edgeGlobalIndice = GModel::current()->addMEdge(std::move(edge));
           for(int k = 1; k < const1; k++) {
             typeKeys.push_back(k);
             entityKeys.push_back(edgeGlobalIndice);
@@ -3883,7 +3884,7 @@ GMSH_API void gmsh::model::mesh::getKeys(
             coordFace[1] /= face.getNumVertices();
             coordFace[2] /= face.getNumVertices();
           }
-          std::size_t faceGlobalIndice = GModel::current()->addMFace(face);
+          std::size_t faceGlobalIndice = GModel::current()->addMFace(std::move(face));
           int it2 = const2;
           if(jj >= numberQuadFaces) { it2 = const3; }
           for(int k = const1; k < it2; k++) {
@@ -4080,7 +4081,7 @@ GMSH_API void gmsh::model::mesh::getKeysForElement(
         coordEdge[1] = 0.5 * (v1->y() + v2->y());
         coordEdge[2] = 0.5 * (v1->z() + v2->z());
       }
-      std::size_t edgeGlobalIndice = GModel::current()->addMEdge(edge);
+      std::size_t edgeGlobalIndice = GModel::current()->addMEdge(std::move(edge));
       for(int k = 1; k < const1; k++) {
         typeKeys.push_back(k);
         entityKeys.push_back(edgeGlobalIndice);
@@ -4108,7 +4109,7 @@ GMSH_API void gmsh::model::mesh::getKeysForElement(
         coordFace[1] /= face.getNumVertices();
         coordFace[2] /= face.getNumVertices();
       }
-      std::size_t faceGlobalIndice = GModel::current()->addMFace(face);
+      std::size_t faceGlobalIndice = GModel::current()->addMFace(std::move(face));
       int it2 = const2;
       if(jj >= numberQuadFaces) { it2 = const3; }
       for(int k = const1; k < it2; k++) {
