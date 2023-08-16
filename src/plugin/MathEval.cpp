@@ -17,7 +17,8 @@ StringXNumber MathEvalOptions_Number[] = {
   {GMSH_FULLRC, "OtherTimeStep", nullptr, -1.},
   {GMSH_FULLRC, "OtherView", nullptr, -1.},
   {GMSH_FULLRC, "ForceInterpolation", nullptr, 0.},
-  {GMSH_FULLRC, "PhysicalRegion", nullptr, -1.}};
+  {GMSH_FULLRC, "PhysicalRegion", nullptr, -1.},
+  {GMSH_FULLRC, "Dimension", nullptr, -1.}};
 
 StringXString MathEvalOptions_String[] = {
   {GMSH_FULLRC, "Expression0", nullptr, "Sqrt(v0^2+v1^2+v2^2)"},
@@ -61,7 +62,9 @@ std::string GMSH_MathEvalPlugin::getHelp() const
          "If `View' < 0, the plugin is run on the current view.\n\n"
          "Plugin(MathEval) creates one new view."
          "If `PhysicalRegion' < 0, the plugin is run "
-         "on all physical regions.\n\n"
+         "on all physical regions."
+         "If `Dimension' > 0, only search for elements of the given "
+         "dimension.\n\n"
          "Plugin(MathEval) creates one new list-based view.";
 }
 
@@ -93,6 +96,7 @@ PView *GMSH_MathEvalPlugin::execute(PView *view)
   int iOtherView = (int)MathEvalOptions_Number[3].def;
   int forceInterpolation = (int)MathEvalOptions_Number[4].def;
   int physicalRegion = (int)MathEvalOptions_Number[5].def;
+  int dimension = (int)MathEvalOptions_Number[6].def;
   std::vector<std::string> expr(9);
   for(int i = 0; i < 9; i++) expr[i] = MathEvalOptions_String[i].def;
 
@@ -217,11 +221,14 @@ PView *GMSH_MathEvalPlugin::execute(PView *view)
             if(octree) {
               int qn = forceInterpolation ? numNodes : 0;
               if(!octree->searchScalar(x[nod], y[nod], z[nod], &w[0], step2,
-                                       nullptr, qn, &x[0], &y[0], &z[0]))
+                                       nullptr, qn, &x[0], &y[0], &z[0],
+                                       false, dimension))
                 if(!octree->searchVector(x[nod], y[nod], z[nod], &w[0], step2,
-                                         nullptr, qn, &x[0], &y[0], &z[0]))
+                                         nullptr, qn, &x[0], &y[0], &z[0],
+                                         false, dimension))
                   octree->searchTensor(x[nod], y[nod], z[nod], &w[0], step2,
-                                       nullptr, qn, &x[0], &y[0], &z[0]);
+                                       nullptr, qn, &x[0], &y[0], &z[0],
+                                       false, dimension);
             }
             else
               for(int comp = 0; comp < otherNumComp; comp++)
