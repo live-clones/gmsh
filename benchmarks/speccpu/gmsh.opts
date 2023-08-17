@@ -1,0 +1,2 @@
+General.AbortOnError = 4;
+Mesh.AlgorithmSwitchOnFailure = 1;
