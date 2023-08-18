@@ -304,7 +304,7 @@ helpWindow::helpWindow()
 {
   {
     int width = 28 * FL_NORMAL_SIZE;
-    int height = 19 * BH;
+    int height = 21 * BH;
 
     about = new paletteWindow(width, height,
                               CTX::instance()->nonModalWindows ? true : false,

@@ -23,6 +23,7 @@ set(SRC
     meshGRegionLocalMeshMod.cpp meshGRegionMMG.cpp
   meshGRegionBoundaryLayer.cpp
   meshRelocateVertex.cpp
+  meshRenumber.cpp
   meshTriangulation.cpp
   meshMetric.cpp
   BackgroundMesh.cpp BackgroundMeshTools.cpp

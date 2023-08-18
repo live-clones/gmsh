@@ -1,4 +1,4 @@
-// HighOrderMeshOptimizer - Copyright (C) 2013-2019 UCLouvain-ULiege
+// HighOrderMeshOptimizer - Copyright (C) 2013-2023 UCLouvain-ULiege
 //
 // Permission is hereby granted, free of charge, to any person
 // obtaining a copy of this software and associated documentation
@@ -1299,8 +1299,10 @@ void HighOrderMeshFastCurving(GModel *gm, FastCurvingParameters &p,
     int n = fields->getNumBoundaryLayerFields();
     for(int i = 0; i < n; ++i) {
       Field *bl_field = fields->get(fields->getBoundaryLayerField(i));
-      if(bl_field == nullptr) continue;
-      blFields.push_back(dynamic_cast<BoundaryLayerField *>(bl_field));
+      if(!bl_field) continue;
+      BoundaryLayerField *blf = dynamic_cast<BoundaryLayerField *>(bl_field);
+      if(!blf) continue;
+      blFields.push_back(blf);
     }
   }
 

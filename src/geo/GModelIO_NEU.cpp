@@ -386,7 +386,7 @@ int GModel::writeNEU(const std::string &name, bool saveAll,
           default: break;
           }
 
-          fprintf(fp, "%10d %5d %5d\n", tfp->first - lowestId, gambit_type,
+          fprintf(fp, "%10d%5d%5d\n", tfp->first - lowestId, gambit_type,
                   tfp->second);
         }
       }

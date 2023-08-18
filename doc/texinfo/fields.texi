@@ -72,7 +72,7 @@ Default value: @code{20}
 @item nPointsPerGap
 Number of layers of elements in thin layers@*
 Type: integer@*
-Default value: @code{1}
+Default value: @code{0}
 @item p4estFileToLoad
 p4est file containing the size field@*
 Type: string@*

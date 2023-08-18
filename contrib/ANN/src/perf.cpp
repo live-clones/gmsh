@@ -2,9 +2,9 @@
 // File:			perf.cpp
 // Programmer:		Sunil Arya and David Mount
 // Description:		Methods for performance stats
-// Last modified:	01/04/05 (Version 1.0)
+// Last modified:	01/27/10 (Version 1.1.2)
 //----------------------------------------------------------------------
-// Copyright (c) 1997-2005 University of Maryland and Sunil Arya and
+// Copyright (c) 1997-2010 University of Maryland and Sunil Arya and
 // David Mount.  All Rights Reserved.
 // 
 // This software and related documentation is part of the Approximate
@@ -24,6 +24,8 @@
 //		Changed names to avoid namespace conflicts.
 //		Added flush after printing performance stats to fix bug
 //			in Microsoft Windows version.
+//	Revision 1.1.2  01/27/10
+//		Fixed minor compilation bugs for new versions of gcc
 //----------------------------------------------------------------------
 
 #include <ANN/ANN.h>					// basic ANN includes
@@ -102,7 +104,7 @@ DLL_API void annUpdateStats()				// update stats with current counts
 }
 
 										// print a single statistic
-void print_one_stat(char *title, ANNsampStat s, double div)
+void print_one_stat(const char* title, ANNsampStat s, double div)
 {
 	cout << title << "= [ ";
 	cout.width(9); cout << s.mean()/div			<< " : ";

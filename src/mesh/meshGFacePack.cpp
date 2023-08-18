@@ -8,6 +8,7 @@
 #include <queue>
 #include <map>
 #include <vector>
+#include <cstdint>
 #include "gmsh.h"
 #include "SPoint2.h"
 #include "SVector3.h"

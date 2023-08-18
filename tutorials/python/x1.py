@@ -16,16 +16,17 @@
 import gmsh
 import sys
 
-if len(sys.argv) < 2:
-    print("Usage: " + sys.argv[0] + " file")
-    exit
-
 gmsh.initialize()
 
-# You can run this tutorial on any file that Gmsh can read, e.g. a mesh file in
-# the MSH format: `python t1.py file.msh'
-
-gmsh.open(sys.argv[1])
+if len(sys.argv) > 1:
+    # If an argument is provided, handle it as a file that Gmsh can read, e.g. a
+    # mesh file in the MSH format (`python x1.py file.msh')
+    gmsh.open(sys.argv[1])
+else:
+    # Otherwise, create and mesh a simple geometry
+    gmsh.model.occ.addCone(1, 0, 0, 1, 0, 0, 0.5, 0.1)
+    gmsh.model.occ.synchronize()
+    gmsh.model.mesh.generate()
 
 # Print the model name and dimension:
 print('Model ' + gmsh.model.getCurrent() + ' (' +
@@ -117,6 +118,10 @@ for e in entities:
             t)
         print(" - Element type: " + name + ", order " + str(order) + " (" +
               str(numv) + " nodes in param coord: " + str(parv) + ")")
+
+# Launch the GUI to see the model:
+if '-nopopup' not in sys.argv:
+    gmsh.fltk.run()
 
 # We can use this to clear all the model data:
 gmsh.clear()

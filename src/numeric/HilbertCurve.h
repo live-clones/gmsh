@@ -7,5 +7,6 @@
 #define HILBERT_CURVE
 
 void SortHilbert(std::vector<MVertex *> &);
+void SortHilbert_Without_Brio(std::vector<MVertex *> &v);
 
 #endif

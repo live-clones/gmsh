@@ -45,7 +45,7 @@ private:
   std::vector<MElement *> _elements;
   v2t_cont _adj;
   MElementOctree *_octree;
-  std::map<int, MVertex *> _vertexMap;
+  std::map<std::size_t, MVertex *> _vertexMap;
 
   std::map<MVertex *, double> vals;
   std::map<MVertex *, SVector3> grads;

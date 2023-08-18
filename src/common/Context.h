@@ -25,7 +25,7 @@ struct contextMeshOptions {
   double lcMin, lcMax, toleranceEdgeLength, toleranceInitialDelaunay;
   double anisoMax, smoothRatio;
   int lcFromPoints, lcFromParametricPoints, lcFromCurvature, lcFromCurvatureIso;
-  int lcExtendFromBoundary;
+  int lcExtendFromBoundary, checkSurfaceNormalValidity;
   int nbSmoothing, algo2d, algo3d, algoSubdivide, algoSwitchOnFailure;
   int algoRecombine, recombineAll, recombineOptimizeTopology;
   int recombineNodeRepositioning;
@@ -114,7 +114,7 @@ struct contextGeometryOptions {
   int draw, light, lightTwoSide, points, curves, surfaces, volumes;
   int pointLabels, curveLabels, surfaceLabels, volumeLabels, labelType;
   double pointSize, curveWidth, selectedPointSize, selectedCurveWidth;
-  int pointType, curveType, surfaceType, numSubEdges;
+  int pointType, curveType, surfaceType, volumeType, numSubEdges;
   double normals, tangents, scalingFactor;
   int snapPoints;
   int highlightOrphans, clip, useTransform;

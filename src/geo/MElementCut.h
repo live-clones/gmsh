@@ -539,7 +539,7 @@ public:
 // (points, lines, surfaces and then volumes).
 GModel *buildCutMesh(GModel *gm, gLevelset *ls,
                      std::map<int, std::vector<MElement *> > elements[10],
-                     std::map<int, MVertex *> &vertexMap,
+                     std::map<std::size_t, MVertex *> &vertexMap,
                      std::map<int, std::map<int, std::string> > physicals[4],
                      bool cutElem);
 

@@ -1341,9 +1341,9 @@ inline  TriangleAdjacent FindTriangleAdjacent(Edge &E)
     TriangleAdjacent ta(t,EdgesVertexTriangle[i][0]); // Previous edge
     assert(t && i>=0 && i < 3);
     assert( a == (*t)(i));
-    int k=0;
+    //int k=0;
     do { // turn around vertex in direct sens (trigo)
-      k++;assert(k< 20000);
+      //k++;assert(k< 20000);
       //  in no crack => ta.EdgeVertex(1) == a otherwise ???
       if (ta.EdgeVertex(1) ==  a && ta.EdgeVertex(0) ==  b) return ta; // find
       ta = ta.Adj();
@@ -1362,9 +1362,9 @@ inline Vertex * TheVertex(Vertex * a) // give a unique vertex with smallest numb
     TriangleAdjacent ta(t,EdgesVertexTriangle[i][0]); // Previous edge
     assert(t && i>=0 && i < 3);
     assert( a == (*t)(i));
-    int k=0;
+    //int k=0;
     do { // turn around vertex in direct sens (trigo)
-      k++;assert(k< 20000);
+      //k++;assert(k< 20000);
       //  in no crack => ta.EdgeVertex(1) == a
       if ((rr=ta.EdgeVertex(0)) < r) r = rr;
       ta = ta.Adj();

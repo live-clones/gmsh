@@ -21,6 +21,9 @@ GEntity::GEntity(GModel *m, int t)
     _allElementsVisible(1), _obb(nullptr), va_lines(nullptr),
     va_triangles(nullptr)
 {
+  // default color when none is explicitly specified - don't change this, as it
+  // is documented and used in scripts to detect if explicit colors are set
+  // (cf. useColor() below)
   _color = CTX::instance()->packColor(0, 0, 255, 0);
 }
 

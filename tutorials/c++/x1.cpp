@@ -13,21 +13,25 @@
 // In this first extended tutorial, we start by using the API to access basic
 // geometrical and mesh data.
 
+#include <set>
 #include <iostream>
 #include <gmsh.h>
 
 int main(int argc, char **argv)
 {
-  if(argc < 2) {
-    std::cout << "Usage: " << argv[0] << " file" << std::endl;
-    return 0;
-  }
-
   gmsh::initialize();
 
-  // You can run this tutorial on any file that Gmsh can read, e.g. a mesh file
-  // in the MSH format: `t1.exe file.msh'
-  gmsh::open(argv[1]);
+  if(argc > 1) {
+    // If an argument is provided, handle it as a file that Gmsh can read,
+    // e.g. a mesh file in the MSH format (`x1.exe file.msh')
+    gmsh::open(argv[1]);
+  }
+  else {
+    // Otherwise, create and mesh a simple geometry
+    gmsh::model::occ::addCone(1, 0, 0, 1, 0, 0, 0.5, 0.1);
+    gmsh::model::occ::synchronize();
+    gmsh::model::mesh::generate();
+  }
 
   // Print the model name and dimension:
   std::string name;
@@ -153,6 +157,10 @@ int main(int argc, char **argv)
       std::cout << ")\n";
     }
   }
+
+  // Launch the GUI to see the model:
+  std::set<std::string> args(argv, argv + argc);
+  if(!args.count("-nopopup")) gmsh::fltk::run();
 
   // We can use this to clear all the model data:
   gmsh::clear();

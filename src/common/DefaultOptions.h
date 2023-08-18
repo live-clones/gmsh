@@ -877,8 +877,7 @@ StringXNumber GeometryOptions_Number[] = {
   { F|O, "CurveSelectWidth" , opt_geometry_curve_sel_width , 3. ,
     "Display width of selected curves (in pixels)" },
   { F|O, "CurveType" , opt_geometry_curve_type , 0. ,
-    "Display curves as solid color segments (0), 3D cylinders (1) or tapered "
-    "cylinders (2)" },
+    "Display curves as solid color segments (0) or 3D cylinders (1)" },
   { F|O, "CurveWidth" , opt_geometry_curve_width , 2. ,
     "Display width of lines (in pixels)" },
 
@@ -1060,6 +1059,8 @@ StringXNumber GeometryOptions_Number[] = {
     "Display volume labels?" },
   { F|O|D, "VolumeNumbers" , opt_geometry_volume_labels , 0. ,
     "[Deprecated]" },
+  { F|O, "VolumeType" , opt_geometry_volume_type , 0. ,
+    "Volume display type (0: sphere, 1: diamond)" },
 
   { 0, nullptr , nullptr , 0. , nullptr }
 } ;
@@ -1123,6 +1124,8 @@ StringXNumber MeshOptions_Number[] = {
     "[Deprecated]" },
   { F|O|D, "CharacteristicLengthFromParametricPoints" , opt_mesh_lc_from_parametric_points , 0. ,
     "[Deprecated]"},
+  { F|O, "CheckSurfaceNormalValidity" , opt_mesh_check_surface_normal_validity , 1. ,
+    "Check surface mesh validity according to the geometry normal"},
   { F,   "Clip" , opt_mesh_clip , 0.,
     "Enable clipping planes? (Plane[i]=2^i, i=0,...,5)" },
   { F|O, "ColorCarousel" , opt_mesh_color_carousel , 1. ,
@@ -1169,7 +1172,7 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "HighOrderDistCAD", opt_mesh_ho_dist_cad, 0,
     "Try to optimize distance to CAD in high-order optimizer?"},
   { F|O, "HighOrderFixBoundaryNodes", opt_mesh_ho_fix_bnd_nodes, 0,
-    "Fix boundary nodes during high-order optimization?"},
+    "Fix all (1) or periodic (2) boundary nodes during high-order optimization?"},
   { F|O, "HighOrderIterMax", opt_mesh_ho_iter_max, 100,
     "Maximum number of iterations in high-order optimization pass"},
   { F|O, "HighOrderNumLayers", opt_mesh_ho_nlayers, 6.,
@@ -1854,7 +1857,8 @@ StringXNumber ViewOptions_Number[] = {
   { F|O, "LightTwoSide" , opt_view_light_two_side , 1. ,
     "Light both sides of surfaces (leads to slower rendering)" },
   { F|O, "LineType" , opt_view_line_type , 0. ,
-    "Display lines as solid color segments (0) or 3D cylinders (1)" },
+    "Display lines as solid color segments (0), 3D cylinders (1) or tapered "
+    "cylinders (2)" },
   { F|O, "LineWidth" , opt_view_line_width , 1.0 ,
     "Display width of lines (in pixels)" },
 
@@ -1944,7 +1948,7 @@ StringXNumber ViewOptions_Number[] = {
     "Target representation error for adaptive views" },
   { F|O, "TensorType" , opt_view_tensor_type , 1. ,
     "Tensor display type (1: Von-Mises, 2: maximum eigenvalue, 3: minimum eigenvalue, "
-    "4: eigenvectors, 5: ellipse, 6: ellipsoid, 7: frame)"},
+    "4: eigenvectors, 5: ellipse, 6: ellipsoid, 7: frame (box), 8: frame (vectors))"},
   { F,   "TimeStep" , opt_view_timestep , 0. ,
     "Current time step displayed" },
   { F,   "Time" , opt_view_time , -1. ,
@@ -2164,7 +2168,7 @@ StringXColor GeometryOptions_Color[] = {
     {128, 128, 128, 255}, {128, 128, 128, 255}, {0, 0, 0, 255}, {128, 128, 128, 255},
     "Normal geometry surface color" },
   { F|O, "Volumes" , opt_geometry_color_volumes ,
-    {255, 255, 0, 255}, {255, 255, 0, 255}, {0, 0, 0, 255}, {255, 255, 0, 255},
+    {200, 200, 0, 255}, {200, 200, 0, 255}, {0, 0, 0, 255}, {200, 200, 0, 255},
     "Normal geometry volume color" },
   { F|O, "Selection" , opt_geometry_color_selection ,
     {255, 0, 0, 255}, {255, 0, 0, 255}, {255, 0, 0, 255}, {255, 0, 0, 255},

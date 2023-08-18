@@ -275,8 +275,7 @@ public:
   {
     e->deleteVertexArrays();
     if(!e->getVisibility()) return;
-    e->setAllElementsVisible(CTX::instance()->mesh.lines &&
-                             areAllElementsVisible(e->lines));
+    e->setAllElementsVisible(areAllElementsVisible(e->lines));
 
     if(CTX::instance()->mesh.lines) {
       e->va_lines = new VertexArray(2, _estimateNumLines(e));
@@ -327,9 +326,7 @@ public:
   {
     f->deleteVertexArrays();
     if(!f->getVisibility()) return;
-    f->setAllElementsVisible(CTX::instance()->mesh.triangles &&
-                             areAllElementsVisible(f->triangles) &&
-                             CTX::instance()->mesh.quadrangles &&
+    f->setAllElementsVisible(areAllElementsVisible(f->triangles) &&
                              areAllElementsVisible(f->quadrangles));
 
     bool edg = CTX::instance()->mesh.surfaceEdges;
@@ -413,13 +410,11 @@ public:
   {
     r->deleteVertexArrays();
     if(!r->getVisibility()) return;
-    r->setAllElementsVisible(
-      CTX::instance()->mesh.tetrahedra &&
-      areAllElementsVisible(r->tetrahedra) && CTX::instance()->mesh.hexahedra &&
-      areAllElementsVisible(r->hexahedra) && CTX::instance()->mesh.prisms &&
-      areAllElementsVisible(r->prisms) && CTX::instance()->mesh.pyramids &&
-      areAllElementsVisible(r->pyramids) && CTX::instance()->mesh.trihedra &&
-      areAllElementsVisible(r->trihedra));
+    r->setAllElementsVisible(areAllElementsVisible(r->tetrahedra) &&
+                             areAllElementsVisible(r->hexahedra) &&
+                             areAllElementsVisible(r->prisms) &&
+                             areAllElementsVisible(r->pyramids) &&
+                             areAllElementsVisible(r->trihedra));
 
     bool edg = CTX::instance()->mesh.volumeEdges;
     bool fac = CTX::instance()->mesh.volumeFaces;

@@ -114,7 +114,7 @@ void assignVariable(const std::string &name, int index, int assignType,
 void assignVariables(const std::string &name, List_T *indices, int assignType,
                      List_T *values);
 void incrementVariable(const std::string &name, int index, double value);
-int printListOfDouble(char *format, List_T *list, char *buffer);
+int printListOfDouble(const char *format, List_T *list, std::string &buffer);
 fullMatrix<double> ListOfListOfDouble2Matrix(List_T *list);
 void ListOfDouble2Vector(List_T *list, std::vector<int> &v);
 void ListOfDouble2Vector(List_T *list, std::vector<double> &v);
@@ -377,46 +377,46 @@ Printf :
     }
   | tPrintf '(' StringExprVar ',' RecursiveListOfDouble ')' tEND
     {
-      char tmpstring[5000];
+      std::string tmpstring;
       int i = printListOfDouble($3, $5, tmpstring);
       if(i < 0)
 	yymsg(0, "Too few arguments in Printf");
       else if(i > 0)
 	yymsg(0, "%d extra argument%s in Printf", i, (i > 1) ? "s" : "");
       else
-	Msg::Direct(tmpstring);
+	Msg::Direct(tmpstring.c_str());
       Free($3);
       List_Delete($5);
     }
   | tWarning '(' StringExprVar ',' RecursiveListOfDouble ')' tEND
     {
-      char tmpstring[5000];
+      std::string tmpstring;
       int i = printListOfDouble($3, $5, tmpstring);
       if(i < 0)
 	yymsg(1, "Too few arguments in Error");
       else if(i > 0)
 	yymsg(1, "%d extra argument%s in Error", i, (i > 1) ? "s" : "");
       else
-	Msg::Warning(tmpstring);
+	Msg::Warning(tmpstring.c_str());
       Free($3);
       List_Delete($5);
     }
   | tError '(' StringExprVar ',' RecursiveListOfDouble ')' tEND
     {
-      char tmpstring[5000];
+      std::string tmpstring;
       int i = printListOfDouble($3, $5, tmpstring);
       if(i < 0)
 	yymsg(0, "Too few arguments in Error");
       else if(i > 0)
 	yymsg(0, "%d extra argument%s in Error", i, (i > 1) ? "s" : "");
       else
-	Msg::Error(tmpstring);
+	Msg::Error(tmpstring.c_str());
       Free($3);
       List_Delete($5);
     }
   | tPrintf '(' StringExprVar ',' RecursiveListOfDouble ')' SendToFile StringExprVar tEND
     {
-      char tmpstring[5000];
+      std::string tmpstring;
       int i = printListOfDouble($3, $5, tmpstring);
       if(i < 0)
 	yymsg(0, "Too few arguments in Printf");
@@ -429,7 +429,7 @@ Printf :
 	  yymsg(0, "Unable to open file '%s'", tmp.c_str());
 	}
 	else{
-	  fprintf(fp, "%s\n", tmpstring);
+	  fprintf(fp, "%s\n", tmpstring.c_str());
 	  fclose(fp);
 	}
       }
@@ -5741,7 +5741,7 @@ AppendOrNot :
 VExpr :
     VExpr_Single
     {
-      memcpy($$, $1, 5*sizeof(double));
+      memcpy($$, $1, 5 * sizeof(double));
     }
   | '-' VExpr %prec UNARYPREC
     {
@@ -6484,7 +6484,7 @@ StringExpr :
       if(i <= 0)
 	strcpy($$, $3);
       else
-	strcpy($$, &$3[i+1]);
+	strcpy($$, &$3[i + 1]);
       Free($3);
     }
   | tStrReplace '(' StringExprVar ',' StringExprVar ',' StringExprVar ')'
@@ -6576,7 +6576,7 @@ StringExpr :
     }
   | tSprintf LP StringExprVar ',' RecursiveListOfDouble RP
     {
-      char tmpstring[5000];
+      std::string tmpstring;
       int i = printListOfDouble($3, $5, tmpstring);
       if(i < 0){
 	yymsg(0, "Too few arguments in Sprintf");
@@ -6587,8 +6587,7 @@ StringExpr :
 	$$ = $3;
       }
       else{
-	$$ = (char*)Malloc((strlen(tmpstring) + 1) * sizeof(char));
-	strcpy($$, tmpstring);
+	$$ = strsave((char*)tmpstring.c_str());
 	Free($3);
       }
       List_Delete($5);
@@ -6737,7 +6736,7 @@ StringIndex :
     {
       char tmpstr[256];
       sprintf(tmpstr, "_%d", (int)$4);
-      $$ = (char *)Malloc((strlen($1)+strlen(tmpstr)+1)*sizeof(char));
+      $$ = (char *)Malloc((strlen($1)+strlen(tmpstr) + 1) * sizeof(char));
       strcpy($$, $1); strcat($$, tmpstr);
       Free($1);
     }
@@ -6745,7 +6744,7 @@ StringIndex :
     {
       char tmpstr[256];
       sprintf(tmpstr, "_%d", (int)$4);
-      $$ = (char *)Malloc((strlen($1)+strlen(tmpstr)+1)*sizeof(char)) ;
+      $$ = (char *)Malloc((strlen($1)+strlen(tmpstr) + 1) * sizeof(char)) ;
       strcpy($$, $1) ; strcat($$, tmpstr) ;
       Free($1);
     }
@@ -6753,7 +6752,7 @@ StringIndex :
     {
       char tmpstr[256];
       sprintf(tmpstr, "_%d", (int)$7);
-      $$ = (char *)Malloc((strlen($3)+strlen(tmpstr)+1)*sizeof(char));
+      $$ = (char *)Malloc((strlen($3)+strlen(tmpstr) + 1) * sizeof(char));
       strcpy($$, $3); strcat($$, tmpstr);
       Free($3);
     }
@@ -6865,38 +6864,40 @@ void incrementVariable(const std::string &name, int index, double value)
   }
 }
 
-int printListOfDouble(char *format, List_T *list, char *buffer)
+int printListOfDouble(const char *format, List_T *list, std::string &buffer)
 {
+  buffer = format;
+
+  int numFormats = 0;
+  for(std::size_t i = 0; i < strlen(format); i++) {
+    if(format[i] == '%') numFormats++;
+  }
+
   // if format does not contain formatting characters, dump the list (useful for
   // quick debugging of lists)
-  int numFormats = 0;
-  for(std::size_t i = 0; i < strlen(format); i++)
-    if(format[i] == '%') numFormats++;
   if(!numFormats){
-    strcpy(buffer, format);
     for(int i = 0; i < List_Nbr(list); i++){
       double d;
       List_Read(list, i, &d);
       char tmp[256];
       sprintf(tmp, " [%d]%g", i, d);
-      strcat(buffer, tmp);
+      buffer += tmp;
     }
     return 0;
   }
 
   char tmp1[256], tmp2[256];
   int j = 0, k = 0;
-  buffer[j] = '\0';
 
   while(j < (int)strlen(format) && format[j] != '%') j++;
-  strncpy(buffer, format, j);
-  buffer[j] = '\0';
+  buffer.resize(j);
+
   for(int i = 0; i < List_Nbr(list); i++){
     k = j;
     j++;
     if(j < (int)strlen(format)){
       if(format[j] == '%'){
-	strcat(buffer, "%");
+	buffer += "%";
 	j++;
       }
       while(j < (int)strlen(format) && format[j] != '%') j++;
@@ -6904,7 +6905,7 @@ int printListOfDouble(char *format, List_T *list, char *buffer)
 	strncpy(tmp1, &(format[k]), j-k);
 	tmp1[j-k] = '\0';
 	sprintf(tmp2, tmp1, *(double*)List_Pointer(list, i));
-	strcat(buffer, tmp2);
+	buffer += tmp2;
       }
     }
     else
@@ -7165,17 +7166,17 @@ void computeAffineTransformation(SPoint3& origin, SPoint3& axis,
 
   tfo.resize(16);
 
-  tfo[0*4+0] = ca + ux * ux * (1. - ca);
-  tfo[0*4+1] = ux * uy * (1. - ca) - uz * sa;
-  tfo[0*4+2] = ux * uz * (1. - ca) + uy * sa;
+  tfo[0 * 4 + 0] = ca + ux * ux * (1. - ca);
+  tfo[0 * 4 + 1] = ux * uy * (1. - ca) - uz * sa;
+  tfo[0 * 4 + 2] = ux * uz * (1. - ca) + uy * sa;
 
-  tfo[1*4+0] = ux * uy * (1. - ca) + uz * sa;
-  tfo[1*4+1] = ca + uy * uy * (1. - ca);
-  tfo[1*4+2] = uy * uz * (1. - ca) - ux * sa;
+  tfo[1 * 4 + 0] = ux * uy * (1. - ca) + uz * sa;
+  tfo[1 * 4 + 1] = ca + uy * uy * (1. - ca);
+  tfo[1 * 4 + 2] = uy * uz * (1. - ca) - ux * sa;
 
-  tfo[2*4+0] = ux * uz * (1. - ca) - uy * sa;
-  tfo[2*4+1] = uy * uz * (1. - ca) + ux * sa;
-  tfo[2*4+2] = ca + uz * uz * (1. - ca);
+  tfo[2 * 4 + 0] = ux * uz * (1. - ca) - uy * sa;
+  tfo[2 * 4 + 1] = uy * uz * (1. - ca) + ux * sa;
+  tfo[2 * 4 + 2] = ca + uz * uz * (1. - ca);
 
   int idx = 0;
   for(size_t i = 0; i < 3; i++,idx++) {
@@ -7184,7 +7185,7 @@ void computeAffineTransformation(SPoint3& origin, SPoint3& axis,
     for(int j = 0; j < 3; j++,idx++) tfo[tIdx] -= tfo[idx] * origin[j];
   }
 
-  for(int i = 0; i < 4; i++) tfo[12+i] = 0;
+  for(int i = 0; i < 4; i++) tfo[12 + i] = 0;
   tfo[15] = 1;
 }
 

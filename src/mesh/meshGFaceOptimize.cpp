@@ -621,10 +621,10 @@ static bool _tryToCollapseThatVertex2(GFace *gf, std::vector<MElement *> &e1,
   double worst_quality_old = 1.0;
   double worst_quality_new = 1.0;
 
-  int count = 0;
+  //int count = 0;
   for(std::size_t j = 0; j < e.size(); ++j) {
     if(e[j] != q) {
-      count++;
+      //count++;
       worst_quality_old = std::min(worst_quality_old, e[j]->etaShapeMeasure());
       v1->x() = pp.x();
       v1->y() = pp.y();
@@ -686,10 +686,10 @@ static bool _tryToCollapseThatVertex(GFace *gf, std::vector<MElement *> &e1,
   GPoint pp = gf->point(0.5 * (uu1 + uu2), 0.5 * (vv1 + vv2));
   double worst_quality_old = 1.0;
   double worst_quality_new = 1.0;
-  int count = 0;
+  //int count = 0;
   for(std::size_t j = 0; j < e.size(); ++j) {
     if(e[j] != q) {
-      count++;
+      //count++;
       worst_quality_old = std::min(worst_quality_old, e[j]->etaShapeMeasure());
       v1->x() = pp.x();
       v1->y() = pp.y();
@@ -1463,8 +1463,9 @@ void splitElementsInBoundaryLayerIfNeeded(GFace *gf)
     int n = fields->getNumBoundaryLayerFields();
     for(int i = 0; i < n; ++i) {
       Field *bl_field = fields->get(fields->getBoundaryLayerField(i));
-      if(bl_field == nullptr) continue;
+      if(!bl_field) continue;
       BoundaryLayerField *blf = dynamic_cast<BoundaryLayerField *>(bl_field);
+      if(!blf) continue;
       if(blf->iRecombine)
         ++numNoSplit;
       else

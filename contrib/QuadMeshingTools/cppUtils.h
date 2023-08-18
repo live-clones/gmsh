@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 //
 // Author: Maxence Reberol
 
@@ -24,36 +24,36 @@
 namespace CppUtils {
   using std::size_t;
 
-  template<class T> 
-    inline std::array<T,2> sorted(T v1, T v2) { 
-      if (v1 < v2) { return {v1,v2}; } else { return {v2,v1}; } 
+  template<class T>
+    inline std::array<T,2> sorted(T v1, T v2) {
+      if (v1 < v2) { return {v1,v2}; } else { return {v2,v1}; }
     }
 
-  template<class T> 
-    inline std::array<T,3> sorted(T v1, T v2, T v3) { 
+  template<class T>
+    inline std::array<T,3> sorted(T v1, T v2, T v3) {
       if (v1 > v3) std::swap(v1,v3);
       if (v1 > v2) std::swap(v1,v2);
       if (v2 > v3) std::swap(v2,v3);
       return std::array<T,3>{v1,v2,v3};
     }
 
-  template<class T> 
-    inline T min_value(T v1, T v2, T v3) { 
+  template<class T>
+    inline T min_value(T v1, T v2, T v3) {
       return std::min(v1,std::min(v2,v3));
     }
 
-  template<class T> 
-    inline T min_value(T v1, T v2, T v3, T v4) { 
+  template<class T>
+    inline T min_value(T v1, T v2, T v3, T v4) {
       return std::min(std::min(v1,v2),std::min(v3,v4));
     }
 
-  template<class T> 
-    inline T max_value(T v1, T v2, T v3) { 
+  template<class T>
+    inline T max_value(T v1, T v2, T v3) {
       return std::max(v1,std::max(v2,v3));
     }
 
-  template<class T> 
-    inline T max_value(T v1, T v2, T v3, T v4) { 
+  template<class T>
+    inline T max_value(T v1, T v2, T v3, T v4) {
       return std::max(std::max(v1,v2),std::max(v3,v4));
     }
 
@@ -67,22 +67,22 @@ namespace CppUtils {
     }
 
 
-  template<class T> 
+  template<class T>
   void sort_unique(std::vector<T>& vec) {
       std::sort( vec.begin(), vec.end() );
       vec.erase( std::unique( vec.begin(), vec.end() ), vec.end() );
   }
 
-  template<class T1, class T2> 
+  template<class T1, class T2>
   T2 sort_unique_with_perm(
-        const std::vector<T1>& in, 
+        const std::vector<T1>& in,
         std::vector<T1>& uniques,
         std::vector<T2>& old2new) {
 
       std::vector<T2> ids(in.size());
       for(T2 k = 0; k != in.size(); ++k) ids[k]=k;
 
-      std::sort(ids.begin(), ids.end(), 
+      std::sort(ids.begin(), ids.end(),
           [&in](const T2& a, const T2&b){ return (in[a] < in[b]); }
           );
 
@@ -91,7 +91,7 @@ namespace CppUtils {
       for(T2 k = 0; k != in.size(); ++k) uniques[k]=in[k];
 
       std::sort(uniques.begin(), uniques.end());
-      uniques.erase( std::unique(uniques.begin(), uniques.end()), 
+      uniques.erase( std::unique(uniques.begin(), uniques.end()),
           uniques.end());
       T2 ic = 0; // indice current
       T2 ir = 0; // indice representant
@@ -108,7 +108,7 @@ namespace CppUtils {
       return (T2) uniques.size();
   }
 
-  template<class T> 
+  template<class T>
     void compress(const std::vector<std::vector<T> >& vov,
         std::vector<size_t>& first, std::vector<T>& values) {
       first.resize(vov.size()+1);
@@ -128,7 +128,7 @@ namespace CppUtils {
       values.shrink_to_fit();
     }
 
-  template<class T> 
+  template<class T>
     std::vector<T> intersection(const std::vector<T>& v1, const std::vector<T>& v2) {
       std::vector<T> s1 = v1;
       std::vector<T> s2 = v2;
@@ -139,7 +139,7 @@ namespace CppUtils {
       return s3;
     }
 
-  template<class T> 
+  template<class T>
     std::vector<T> merge(const std::vector<T>& v1, const std::vector<T>& v2) {
       std::vector<T> s1 = v1;
       std::vector<T> s2 = v2;
@@ -151,7 +151,7 @@ namespace CppUtils {
       return s3;
     }
 
-  template<class T> 
+  template<class T>
     std::vector<T> difference(const std::vector<T>& v1, const std::vector<T>& v2) {
       std::vector<T> s1 = v1;
       std::vector<T> s2 = v2;
@@ -162,8 +162,8 @@ namespace CppUtils {
       return s3;
     }
 
-  template<class T1, class T2> 
-    inline std::vector<T2> dynamic_cast_vector(const std::vector<T1>& pointers) { 
+  template<class T1, class T2>
+    inline std::vector<T2> dynamic_cast_vector(const std::vector<T1>& pointers) {
       std::vector<T2> output(pointers.size(),NULL);
       for (size_t i = 0; i < pointers.size(); ++i) {
         output[i] = dynamic_cast<T2>((T1)pointers[i]);
@@ -171,7 +171,7 @@ namespace CppUtils {
       return output;
     }
 
-  template<class T> 
+  template<class T>
     void append(std::vector<T>& v1, const std::vector<T>& v2) {
       v1.insert(v1.end(),v2.begin(),v2.end());
     }
@@ -212,12 +212,12 @@ namespace CppUtils {
 
 
   template<class T1,class T2>
-    std::ostream& operator<<(std::ostream& os, const std::pair<T1,T2>& val) { 
+    std::ostream& operator<<(std::ostream& os, const std::pair<T1,T2>& val) {
       return os << "(" << val.first << "," << val.second << ")";
     }
 
   template<class T,size_t N>
-    std::ostream& operator<<(std::ostream& os, const std::array<T,N>& values) { 
+    std::ostream& operator<<(std::ostream& os, const std::array<T,N>& values) {
       os << "(";
       for (size_t i = 0; i < values.size(); ++i) {
         os << values[i];
@@ -230,7 +230,7 @@ namespace CppUtils {
     }
 
   template<class T>
-    std::ostream& operator<<(std::ostream& os, const std::vector<T>& values) { 
+    std::ostream& operator<<(std::ostream& os, const std::vector<T>& values) {
       os << "[";
       for (size_t i = 0; i < values.size(); ++i) {
         const  T & x = values[i];
@@ -244,7 +244,7 @@ namespace CppUtils {
     }
 
   template<class T>
-    std::ostream& operator<<(std::ostream& os, const std::unordered_set<T>& values) { 
+    std::ostream& operator<<(std::ostream& os, const std::unordered_set<T>& values) {
       os << "{";
       for (const T& v: values) {
         os << v << ", ";
@@ -254,7 +254,7 @@ namespace CppUtils {
     }
 
   template<class T1,class T2>
-    std::ostream& operator<<(std::ostream& os, const std::unordered_map<T1,T2>& values) { 
+    std::ostream& operator<<(std::ostream& os, const std::unordered_map<T1,T2>& values) {
       os << "{";
       for (const auto& kv: values) {
         os << kv.first << ": " << kv.second << ", ";

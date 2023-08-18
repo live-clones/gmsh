@@ -24,21 +24,21 @@ Line Loop(5) = {1,2,3,4};
 Plane Surface(6) = {5};
 
 Field[1] = Distance;
-Field[1].NodesList = {5};
+Field[1].PointsList = {5};
 
 Field[2] = Threshold;
-Field[2].IField = 1;
-Field[2].LcMin = 0.001;
-Field[2].LcMax = 0.005;
+Field[2].InField = 1;
+Field[2].SizeMin = 0.001;
+Field[2].SizeMax = 0.005;
 Field[2].DistMin = 0.05;
 Field[2].DistMax = 0.2;
 Field[2].StopAtDistMax = 1; // don't impose element size outside DistMax
 //Field[2].Sigmoid = 1; // use sigmoid instead of linear interpol
 
 Field[4] = Threshold;
-Field[4].IField = 1;
-Field[4].LcMin = 0.01;
-Field[4].LcMax = 0.1;
+Field[4].InField = 1;
+Field[4].SizeMin = 0.01;
+Field[4].SizeMax = 0.1;
 Field[4].DistMin = 0.2;
 Field[4].DistMax = 0.5;
 

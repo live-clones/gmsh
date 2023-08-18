@@ -433,8 +433,8 @@ pypi_official_snapshot:
     - macosarm-sdk_official_snapshot
   script:
     - cd build
-    - python3 ../utils/pypi/sdktowheel.py _CPack_Packages/Linux/TGZ/gmsh-git-Linux64-sdk/ manylinux1_x86_64
-    - python3 ../utils/pypi/sdktowheel.py _CPack_Packages/Linux/TGZ/gmsh-nox-git-Linux64-sdk/ manylinux1_x86_64
+    - python3 ../utils/pypi/sdktowheel.py _CPack_Packages/Linux/TGZ/gmsh-git-Linux64-sdk/ manylinux_2_24_x86_64
+    - python3 ../utils/pypi/sdktowheel.py _CPack_Packages/Linux/TGZ/gmsh-nox-git-Linux64-sdk/ manylinux_2_24_x86_64
     - python3 ../utils/pypi/sdktowheel.py _CPack_Packages/CYGWIN/ZIP/gmsh-git-Windows64-sdk/ win_amd64
     - python3 ../utils/pypi/sdktowheel.py _CPack_Packages/Darwin/TGZ/gmsh-git-MacOSX-sdk/ macosx_10_15_x86_64
     - python3 ../utils/pypi/sdktowheel.py _CPack_Packages/Darwin/TGZ/gmsh-git-MacOSARM-sdk/ macosx_12_0_arm64
@@ -465,7 +465,7 @@ pypi_official_release:
     - echo "password = $PYPI_TOKEN" >> ~/.pypirc
     - cd build
     - VERSION=`cat version.txt`
-    - python3 ../utils/pypi/sdktowheel.py _CPack_Packages/Linux/TGZ/gmsh-${VERSION}-Linux64-sdk/ manylinux1_x86_64
+    - python3 ../utils/pypi/sdktowheel.py _CPack_Packages/Linux/TGZ/gmsh-${VERSION}-Linux64-sdk/ manylinux_2_24_x86_64
     - python3 ../utils/pypi/sdktowheel.py _CPack_Packages/CYGWIN/ZIP/gmsh-${VERSION}-Windows64-sdk/ win_amd64
     - python3 ../utils/pypi/sdktowheel.py _CPack_Packages/Darwin/TGZ/gmsh-${VERSION}-MacOSX-sdk/ macosx_10_15_x86_64
     - python3 ../utils/pypi/sdktowheel.py _CPack_Packages/Darwin/TGZ/gmsh-${VERSION}-MacOSARM-sdk/ macosx_12_0_arm64

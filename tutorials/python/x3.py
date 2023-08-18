@@ -141,6 +141,9 @@ gmsh.view.option.setNumber(t2, "AdaptVisualizationGrid", 1)
 gmsh.view.option.setNumber(t2, "TargetError", 1e-2)
 gmsh.view.option.setNumber(t2, "MaxRecursionLevel", 5)
 
+# Note that the adapted visualization data can be retrived by setting the
+# `returnAdaptive' argument to the `gmsh.view.getListData()' function.
+
 # Launch the GUI to see the results:
 if '-nopopup' not in sys.argv:
     gmsh.fltk.run()

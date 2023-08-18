@@ -3,8 +3,8 @@
 appname=Onelab
 enable_occ=1
 enable_simulator=0
-version=2.3.5
-build=60 # must be incremented for each submitted build
+version=2.3.6
+build=61 # must be incremented for each submitted build
 
 while [[ $# -gt 0 ]]; do
   key="$1"
@@ -50,7 +50,7 @@ petsc_lib="$frameworks_dir/petsc"
 slepc_lib="$frameworks_dir/slepc"
 occ_lib="$frameworks_dir/occt/lib"
 occ_inc="$frameworks_dir/occt/include/opencascade"
-android_ndk="${HOME}/Library/Android/sdk/ndk-bundle/"
+android_ndk="${HOME}/Library/Android/sdk/ndk/25.2.9519653/"
 android_sdk="${HOME}/Library/Android/sdk/"
 
 if [ "$appname" != "Onelab" ] ; then
@@ -159,7 +159,7 @@ fi
 check
 
 # old-style APK
-gradle assembleRelease
+gradle --warning-mode all assembleRelease
 
 # new-style APP bundle
 #gradle bundleRelease

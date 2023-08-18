@@ -72,7 +72,7 @@ int main(int argc, char **argv)
   // field:
   gmsh::model::mesh::field::add("MathEval", 3);
   gmsh::model::mesh::field::setString(
-    3, "F", "Cos(4*3.14*x) * Sin(4*3.14*y) / 10 + 0.101");
+    3, "F", "cos(4*3.14*x) * sin(4*3.14*y) / 10 + 0.101");
 
   // We could also combine MathEval with values coming from other fields. For
   // example, let's define a `Distance' field around point 1

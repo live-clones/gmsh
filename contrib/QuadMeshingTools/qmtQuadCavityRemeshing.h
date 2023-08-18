@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 //
 // Author: Maxence Reberol
 
@@ -19,7 +19,7 @@ class SurfaceProjector;
  *        The quad patterns must be loaded before (see initQuadPatterns()).
  *
  * @param[in,out] gf The face containing the quad mesh to improve
- * @param[in] singularities Floating list of cross field singularities, specified by 
+ * @param[in] singularities Floating list of cross field singularities, specified by
  *                          their position and their index (-1 for valence 5, +1 for valence 3)
  * @param[in] invertNormalsForQuality The CAD normals are used to compute signed quality.
  *                                    This flag invert invert the CAD normals in the measure.
@@ -91,8 +91,8 @@ std::vector<size_t> getAllLoadedPatterns();
  */
 bool patchIsRemeshableWithQuadPattern(
     const std::vector<size_t>& patternsToCheck,
-    size_t Ncorners, 
-    const std::vector<size_t>& sideSizes, 
+    size_t Ncorners,
+    const std::vector<size_t>& sideSizes,
     std::pair<size_t,int>& patternNoAndRot,
     double& irregularityMeasure);
 
@@ -104,10 +104,10 @@ struct QualityConstraints {
 };
 
 /**
- * @brief Look for the best topological disk quadrangulation remeshing 
+ * @brief Look for the best topological disk quadrangulation remeshing
  *        which match the allowed valence ranges.
  *        Requires that the disk quadrangulation data is initialized, see initDiskQuadrangulations()
- *        The GFace mesh is not changed, the changes are stored in the diff 
+ *        The GFace mesh is not changed, the changes are stored in the diff
  *        which can executed by the caller.
  *
  * @param[in] gf CAD face containing the elements
@@ -116,7 +116,7 @@ struct QualityConstraints {
  *                  patchIsRemeshableWithQuadPattern()
  * @param[in] elements The old elements in the patch, may be empty
  * @param[in] intVertices The old interior vertices in the patch, may empty
- * @param[in] qualityConstraints Constraints on the quality required in the remeshed patch. 
+ * @param[in] qualityConstraints Constraints on the quality required in the remeshed patch.
  *                        Checked after geometry untangling/smoothing.
  * @param[in] invertNormalsForQuality The CAD normals are used to compute signed quality.
  *                                    This flag invert invert the CAD normals in the measure.

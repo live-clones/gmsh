@@ -549,7 +549,7 @@ void HierarchicalBasisHcurlTria::orientOneFace(
           faceIt++;
         }
       }
-      int faceIt2 = 3 * (_pf - 1);
+      //int faceIt2 = 3 * (_pf - 1);
       for(int n1 = 0; n1 < _pf - 2; n1++) {
         double LSub1 = OrthogonalPoly::EvalLegendre(n1, sub1);
         for(int n2 = 0; n2 < _pf - 2 - n1; n2++) {
@@ -558,7 +558,7 @@ void HierarchicalBasisHcurlTria::orientOneFace(
           faceFunctions[faceIt][1] =
             jacob * product * LSub1 * LSub2[n2] * dlambda[2][1];
           faceIt++;
-          faceIt2++;
+          //faceIt2++;
         }
       }
     }

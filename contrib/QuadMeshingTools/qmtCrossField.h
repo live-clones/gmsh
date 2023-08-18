@@ -1,7 +1,7 @@
 // Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 //
 // Author: Maxence Reberol
 
@@ -30,12 +30,12 @@ class GFace;
  * @param[in] N symmetry invariance, N=4 for crosses, N=6 for asterisks
  * @param[in] triangles Triangulation used for the Crouzeix-Raviart computation, must be connected
  * @param[in] lines Boundary conditions (cross aligned, theta angle is 0), must be non-empty
- * @param[out] triEdgeTheta The cross field, one angle (in radians) per triangle edge. 
+ * @param[out] triEdgeTheta The cross field, one angle (in radians) per triangle edge.
  *             It is the relative angle between the edge and one branch of the cross.
  *             i.e.: branch = cos(theta)*edge_tangent+sin(theta)*edge_ortho
- * @param[in] nbDiffusionLevels Number of diffusion levels in the MBO algo. 
+ * @param[in] nbDiffusionLevels Number of diffusion levels in the MBO algo.
  * @param[in] thresholdNormConvergence Converence criteria inside each level
- * @param[in] nbBoundaryExtensionLayer Extend the Dirichlet BCs inside (on X layers) 
+ * @param[in] nbBoundaryExtensionLayer Extend the Dirichlet BCs inside (on X layers)
  *            to push singularities inside the faces.
  * @param[in] verbosity 0: no log (except errors), 1: two lines, 2: one per level, 3+: details
  *
@@ -43,11 +43,11 @@ class GFace;
  */
 int computeCrossFieldWithHeatEquation(
     int N,
-    const std::vector<MTriangle*>& triangles, 
-    const std::vector<MLine*>& lines, 
-    std::vector<std::array<double,3> >& triEdgeTheta, 
-    int nbDiffusionLevels = 5, 
-    double thresholdNormConvergence = 1.e-3, 
+    const std::vector<MTriangle*>& triangles,
+    const std::vector<MLine*>& lines,
+    std::vector<std::array<double,3> >& triEdgeTheta,
+    int nbDiffusionLevels = 5,
+    double thresholdNormConvergence = 1.e-3,
     int nbBoundaryExtensionLayer = 1,
     int verbosity = 1);
 
@@ -66,8 +66,8 @@ int computeCrossFieldWithHeatEquation(
  */
 int computeCrossFieldConformalScaling(
     int N,
-    const std::vector<MTriangle*>& triangles, 
-    const std::vector<std::array<double,3> >& triEdgeTheta, 
+    const std::vector<MTriangle*>& triangles,
+    const std::vector<std::array<double,3> >& triEdgeTheta,
     std::unordered_map<MVertex*,double>& scaling);
 
 
@@ -82,8 +82,8 @@ int computeCrossFieldConformalScaling(
  * @return 0 if success
  */
 int computeQuadSizeMapFromCrossFieldConformalFactor(
-    const std::vector<MTriangle*>& triangles, 
-    std::size_t targetNumberOfQuads, 
+    const std::vector<MTriangle*>& triangles,
+    std::size_t targetNumberOfQuads,
     std::unordered_map<MVertex*,double>& scaling);
 
 
@@ -97,15 +97,15 @@ int computeQuadSizeMapFromCrossFieldConformalFactor(
  * @param[in] triangles Triangulation used to compute cross field and size map
  * @param[in] triEdgeTheta The cross field, one angle per triangle edge, relative to the edge direction
  *                     should be compatible with the result of computeCrossFieldWithHeatEquation()
- * @param[out] triangleDirections The cross field sampled at triangle corners, three vectors 
+ * @param[out] triangleDirections The cross field sampled at triangle corners, three vectors
  *             per triangle (one per corner).  component ordering: [v1x,v1y,v1z,.., v3x,v3y,v3z]
  *
  * @return 0 if success
  */
 int convertToPerTriangleCrossFieldDirections(
     int N,
-    const std::vector<MTriangle*>& triangles, 
-    const std::vector<std::array<double,3> >& triEdgeTheta, 
+    const std::vector<MTriangle*>& triangles,
+    const std::vector<std::array<double,3> >& triEdgeTheta,
     std::vector<std::array<double,9> >& triangleDirections);
 
 /**
@@ -118,16 +118,15 @@ int convertToPerTriangleCrossFieldDirections(
  *                     should be compatible with the result of computeCrossFieldWithHeatEquation()
  * @param[in] addSingularitiesAtAcuteCorners If true, at singularity at corners whose angle is small
  * @param[in] thresholdInDeg Corners are considered acute if inferior to this threshold, e.g. 30 (degrees)
- * @param[out] singularities Cross field singularities, position and index (-1 for valence 5, 
+ * @param[out] singularities Cross field singularities, position and index (-1 for valence 5,
  *                           +1 for valence 3)
  *
  * @return 0 if success
  */
 int detectCrossFieldSingularities(
     int N,
-    const std::vector<MTriangle*>& triangles, 
-    const std::vector<std::array<double,3> >& triEdgeTheta, 
+    const std::vector<MTriangle*>& triangles,
+    const std::vector<std::array<double,3> >& triEdgeTheta,
     bool addSingularitiesAtAcuteCorners,
     double thresholdInDeg,
     std::vector<std::pair<SPoint3,int> >& singularities);
-

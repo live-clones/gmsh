@@ -55,8 +55,8 @@ DefineConstant[ angle = {90, Min 0, Max 120, Step 1,
 //
 // An interesting use of this feature is in conjunction with the `-setnumber
 // name value' command line switch, which defines a variable `name' with value
-// `value'. Calling `gmsh t2.geo -setnumber angle 30' would define `angle'
-// before the `DefineConstant', making `t2.geo' non-parametric
+// `value'. Calling `gmsh t3.geo -setnumber angle 30' would define `angle'
+// before the `DefineConstant', making `t3.geo' non-parametric
 // ("Parameters/Twisting angle" will not be created in the ONELAB database and
 // will not be available for modification in the graphical user interface).
 

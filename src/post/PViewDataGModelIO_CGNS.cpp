@@ -11,7 +11,6 @@
 #include "Numeric.h"
 #include "StringUtils.h"
 #include "OS.h"
-#include "Context.h"
 #include "polynomialBasis.h"
 #include "pyramidalBasis.h"
 #include "BasisFactory.h"

@@ -149,7 +149,7 @@ static void readLineBDF(char *buffer, int format, std::vector<char *> &fields)
 static int readElementBDF(FILE *fp, char *buffer, int keySize, int numVertices,
                           int &num, int &region,
                           std::vector<MVertex *> &vertices,
-                          std::map<int, MVertex *> &vertexMap)
+                          std::map<std::size_t, MVertex *> &vertexMap)
 {
   char buffer2[256], buffer3[256];
   std::vector<char *> fields;
@@ -224,7 +224,7 @@ int GModel::readBDF(const std::string &name)
   }
 
   char buffer[256];
-  std::map<int, MVertex *> vertexMap;
+  std::map<std::size_t, MVertex *> vertexMap;
   std::map<int, std::vector<MElement *> > elements[7];
 
   // nodes can be defined after elements, so parse the file twice

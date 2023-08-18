@@ -504,7 +504,7 @@ public:
   virtual void getVerticesIdForMSH(std::vector<int> &verts);
 
   // copy element and parent if any, vertexMap contains the new vertices
-  virtual MElement *copy(std::map<int, MVertex *> &vertexMap,
+  virtual MElement *copy(std::map<std::size_t, MVertex *> &vertexMap,
                          std::map<MElement *, MElement *> &newParents,
                          std::map<MElement *, MElement *> &newDomains);
 

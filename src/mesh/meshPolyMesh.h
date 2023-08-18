@@ -652,6 +652,43 @@ public:
     return 0;
   }
 
+
+  inline int split_edge_general (HalfEdge *he0m, PolyMesh::Vertex *mid) {
+    //    printf("coucocu7\n");
+    HalfEdge *he1m = he0m->opposite;
+    //    if(he1m == nullptr) return -1;
+
+    HalfEdge *hem0 = nullptr;
+    if (he1m) hem0 = new HalfEdge(mid);
+    HalfEdge *hem1 = new HalfEdge(mid);
+
+    mid->he = hem1;
+
+    hem1->f = he0m->f;
+    if (hem0) hem0->f = he0m->opposite->f;    
+    if (hem0) hedges.push_back(hem0);
+    hedges.push_back(hem1);
+    
+    he0m->opposite = hem0;
+    if (hem0) hem0->opposite = he0m;
+    if (he1m) he1m->opposite = hem1;
+    hem1->opposite = he1m;
+
+    // right side
+    hem1->next = he0m->next;
+    he0m->next->prev = hem1;
+    he0m->next = hem1;
+    hem1->prev = he0m;
+
+    // left side
+    if (hem0)hem0->next = he1m->next;
+    if (he1m)he1m->next->prev = hem0;
+    if (he1m)he1m->next = hem0;
+    if (hem0)hem0->prev = he1m;
+    //    printf("coucocu8\n");
+    return 0;
+  }
+
   // assume a triangular mesh
   inline int split_edge(HalfEdge *he0m, const SVector3 &position, int data)
   {

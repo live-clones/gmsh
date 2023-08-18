@@ -438,29 +438,60 @@ public:
     else
       glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
 
-    if(r->getSelection()){
+    if(r->getSelection()) {
+      glLineWidth((float)CTX::instance()->geom.selectedCurveWidth);
+      gl2psLineWidth((float)(CTX::instance()->geom.selectedCurveWidth *
+                             CTX::instance()->print.epsLineWidthFactor));
       glColor4ubv((GLubyte *)&CTX::instance()->color.geom.selection);
     }
-    else{
+    else {
+      glLineWidth((float)CTX::instance()->geom.curveWidth);
+      gl2psLineWidth((float)(CTX::instance()->geom.curveWidth *
+                             CTX::instance()->print.epsLineWidthFactor));
       unsigned int col = r->useColor() ? r->getColor() :
         CTX::instance()->color.geom.volume;
       glColor4ubv((GLubyte *)&col);
     }
 
     const double size = 8.;
-    double x = 0., y = 0., z = 0.;
+    double x = 0., y = 0., z = 0., d = 0.;
 
     if(CTX::instance()->geom.volumes || CTX::instance()->geom.volumeLabels ||
        r->getSelection() > 1) {
-      SPoint3 p = r->bounds(true).center(); // fast approx if mesh-based
+      SBoundingBox3d bb = r->bounds(true); // fast approx if mesh-based
+      SPoint3 p = bb.center();
       x = p.x();
       y = p.y();
       z = p.z();
+      d = bb.diag() / 50.;
       _ctx->transform(x, y, z);
     }
 
-    if(CTX::instance()->geom.volumes || r->getSelection() > 1)
-      _ctx->drawSphere(size, x, y, z, CTX::instance()->geom.light);
+    if(CTX::instance()->geom.volumes || r->getSelection() > 1) {
+      if(CTX::instance()->geom.volumeType == 0) {
+        _ctx->drawSphere(size, x, y, z, CTX::instance()->geom.light);
+      }
+      else {
+        glBegin(GL_LINE_LOOP);
+        glVertex3d(x + d, y, z);
+        glVertex3d(x, y + d, z);
+        glVertex3d(x - d, y, z);
+        glVertex3d(x, y - d, z);
+        glEnd();
+        glBegin(GL_LINE_LOOP);
+        glVertex3d(x + d, y, z);
+        glVertex3d(x, y, z + d);
+        glVertex3d(x - d, y, z);
+        glVertex3d(x, y, z - d);
+        glEnd();
+        glBegin(GL_LINE_LOOP);
+        glVertex3d(x, y + d, z);
+        glVertex3d(x, y, z + d);
+        glVertex3d(x, y - d, z);
+        glVertex3d(x, y, z - d);
+        glEnd();
+      }
+    }
 
     if(CTX::instance()->geom.volumeLabels || r->getSelection() > 1) {
       double offset =
