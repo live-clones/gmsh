@@ -186,6 +186,7 @@ public:
   {
     return MFace(_v[0], _v[1], _v[3], _v[2]);
   }
+  virtual double getAngleAtVertex(MVertex *v);
 };
 
 /*

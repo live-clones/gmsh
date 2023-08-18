@@ -199,7 +199,7 @@ int meshRenumber_Vertices_RCMK(const std::vector<std::size_t> &elementTags,
   createVertexToVertexGraph(gm, elementTags, initial_numbering,
                             inverse_numbering, ai, aj);
 
-  int before = bandwidth(ai, aj);
+  //  int before = bandwidth(ai, aj);
 
   std::vector<std::size_t> sorted(initial_numbering.size());
 
@@ -211,8 +211,8 @@ int meshRenumber_Vertices_RCMK(const std::vector<std::size_t> &elementTags,
     permutations[it.first->getNum()] = sorted[it.second];
   }
 
-  Msg::Info("Done RCMK renumbering (bandwidth change: %d -> %d)",
-            before, after);
+  Msg::Info("Done RCMK renumbering (bandwidth is now %d)",
+            after);
 
   return 0;
 }

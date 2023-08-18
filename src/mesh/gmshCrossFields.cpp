@@ -948,6 +948,11 @@ void assembleExtraConnexions(dofManager<double> &myAssembler,
   int nConn = 2;
   int groups[2][2] = {{14, 1}, {13, 2}};
 
+  if(G.size() < 2) {
+    Msg::Debug("Less than 2 groupOfCross2d in assembleExtraConnexions");
+    return;
+  }
+
   Dof E(G[0].left[0]->getNum(), Dof::createTypeWithTwoInts(0, 10201020));
 
   for(int i = 0; i < nConn; i++) {

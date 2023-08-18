@@ -130,7 +130,15 @@ int fileChooser(FILE_CHOOSER_TYPE type, const char *message, const char *filter,
   if(split[0].empty()) thepath = std::string("./") + thepath;
 
   if(CTX::instance()->nativeFileChooser) {
-    if(!nfc) nfc = new Fl_Native_File_Chooser();
+    if(!nfc) {
+      nfc = new Fl_Native_File_Chooser();
+      nfc->preset_file(thepath.c_str());
+    }
+    else {
+      std::string name = split[1] + split[2];
+      nfc->preset_file(name.c_str());
+    }
+
     switch(type) {
     case FILE_CHOOSER_MULTI:
       nfc->type(Fl_Native_File_Chooser::BROWSE_MULTI_FILE);
@@ -146,18 +154,6 @@ int fileChooser(FILE_CHOOSER_TYPE type, const char *message, const char *filter,
     nfc->title(message);
     nfc->filter(thefilter);
     nfc->filter_value(thefilterindex);
-
-    static bool first = true;
-    if(first) {
-      // preset the path and the file only the first time in a given
-      // session. Afterwards, always reuse the last directory
-      nfc->preset_file(thepath.c_str());
-      first = false;
-    }
-    else {
-      std::string name = split[1] + split[2];
-      nfc->preset_file(name.c_str());
-    }
 
     int ret = 0;
     switch(nfc->show()) {
@@ -177,9 +173,8 @@ int fileChooser(FILE_CHOOSER_TYPE type, const char *message, const char *filter,
     Fl_File_Chooser::show_label = "Format:";
     Fl_File_Chooser::all_files_label = "All files (*)";
     if(!fc) {
-      fc = new flFileChooser(getenv("PWD") ? "." :
-                                             CTX::instance()->homeDir.c_str(),
-                             thefilter2, Fl_File_Chooser::SINGLE, message);
+      fc = new flFileChooser(thepath.c_str(), thefilter2,
+                             Fl_File_Chooser::SINGLE, message);
       fc->position(CTX::instance()->fileChooserPosition[0],
                    CTX::instance()->fileChooserPosition[1]);
     }
@@ -192,17 +187,6 @@ int fileChooser(FILE_CHOOSER_TYPE type, const char *message, const char *filter,
     fc->label(message);
     fc->filter(thefilter2);
     fc->filter_value(thefilterindex);
-    static bool first = true;
-    if(first) {
-      // preset the path and the file only the first time in a given
-      // session. Afterwards, always reuse the last directory
-      fc->value(thepath.c_str());
-      first = false;
-    }
-    else {
-      std::string name = split[1] + split[2];
-      fc->value(name.c_str());
-    }
     fc->show();
     while(fc->shown()) Fl::wait();
     thefilterindex = fc->filter_value();

@@ -788,7 +788,7 @@ void Msg::Debug(const char *fmt, ...)
 
 void Msg::ProgressMeter(int n, bool log, const char *fmt, ...)
 {
-  if(GetCommRank() || GetVerbosity() < 4) return;
+  if(GetCommRank() || GetThreadNum() || GetVerbosity() < 4) return;
   if(_progressMeterStep <= 0 || _progressMeterStep >= 100) return;
   if(_progressMeterTotal <= 0) return;
 

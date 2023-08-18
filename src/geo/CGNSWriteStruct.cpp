@@ -12,33 +12,6 @@
 #include "CGNSCommon.h"
 #include "CGNSConventions.h"
 
-// The structured CGNS writer follows ICEM-like conventions, which are
-// significantly different from those used in the unstructured CGNS writer:
-//
-// - structured 3D (resp. 2D) meshes contain one zone per volume (resp.
-//   surface) and no zones are created for lower dimensional entities; the
-//   unstructured writer creates a single zone per mesh partition (i.e. a single
-//   zone for non-partitioned meshes)
-//
-// - all structured volumes (3D) or surfaces (2D) are saved; if physical groups
-//   are defined, the unstructured writer only saves entities belonging to
-//   physical groups, unless Mesh.SaveAll is set
-//
-// - interfaces between structured zones are 1-to-1, with point ranges; the
-//   unstructured writer creates interfaces (between partitions) defined by
-//   point lists
-//
-// - elementary entity tags are encoded in the zone name; the unstructured
-//   writer writes elementary entity information as boundary conditions and
-//   family names
-//
-// - physical groups for the highest dimensional entities are directly encoded
-//   at the begining of the zone name; the unstructured writer saves physical
-//   names in families
-//
-// - boundary conditions are created for all zone boundaries, and if physical
-//   groups are defined on boundaries they are also saved as families
-
 #if defined(HAVE_LIBCGNS)
 
 static bool isTransfinite(GFace *gf)

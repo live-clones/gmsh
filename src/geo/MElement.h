@@ -400,6 +400,12 @@ public:
   virtual double getEigenvaluesMetric(double u, double v, double w,
                                       double values[3]) const;
 
+  virtual double getAngleAtVertex(MVertex *v)
+  {
+    Msg::Warning("Angle at element node not coded for this element type");
+    return 0.;
+  }
+
   // get the point in cartesian coordinates corresponding to the point (u,v,w)
   // in parametric coordinates
   virtual void pnt(double u, double v, double w, SPoint3 &p) const;

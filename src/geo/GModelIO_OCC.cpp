@@ -3753,10 +3753,10 @@ bool OCC_Internals::booleanOperator(
         int d = inDimTags[i].first;
         int t = inDimTags[i].second;
         if(_isBound(d, t)) {
-          if(CTX::instance()->geom.occSafeUnbind)
-            _unbind(_find(d, t), d, t, true);
-          else
+          if(CTX::instance()->geom.occFastUnbind == 2)
             _unbindWithoutChecks(_find(d, t));
+          else
+            _unbind(_find(d, t), d, t, true);
         }
       }
     }
@@ -3776,10 +3776,10 @@ bool OCC_Internals::booleanOperator(
       bool remove = (i < numObjects) ? removeObject : removeTool;
       if(mapDeleted[i]) { // deleted
         if(remove) {
-          if(CTX::instance()->geom.occSafeUnbind)
-            _unbind(mapOriginal[i], dim, tag, true);
-          else
+          if(CTX::instance()->geom.occFastUnbind == 2)
             _unbindWithoutChecks(mapOriginal[i]);
+          else
+            _unbind(mapOriginal[i], dim, tag, true);
         }
         Msg::Debug("BOOL (%d,%d) deleted", dim, tag);
       }
@@ -3791,7 +3791,10 @@ bool OCC_Internals::booleanOperator(
       }
       else if(mapModified[i].Extent() == 1) { // replaced by single one
         if(remove) {
-          _unbind(mapOriginal[i], dim, tag, true);
+          if(CTX::instance()->geom.occFastUnbind == 2)
+            _unbindWithoutChecks(mapOriginal[i]);
+          else
+            _unbind(mapOriginal[i], dim, tag, true);
           _bind(mapModified[i].First(), dim, tag, false); // not recursive!
           int t = _find(dim, mapModified[i].First());
           if(tag != t)
@@ -3804,7 +3807,12 @@ bool OCC_Internals::booleanOperator(
         Msg::Debug("BOOL (%d,%d) replaced by 1", dim, tag);
       }
       else {
-        if(remove) _unbind(mapOriginal[i], dim, tag, true);
+        if(remove) {
+          if(CTX::instance()->geom.occFastUnbind)
+            _unbindWithoutChecks(mapOriginal[i]);
+          else
+            _unbind(mapOriginal[i], dim, tag, true);
+        }
         Msg::Debug("BOOL (%d,%d) other", dim, tag);
       }
     }
@@ -4042,20 +4050,21 @@ bool OCC_Internals::_transform(
   for(std::size_t i = 0; i < inDimTags.size(); i++) {
     int dim = inDimTags[i].first;
     int tag = inDimTags[i].second;
-    if(CTX::instance()->geom.occSafeUnbind) {
+    if(CTX::instance()->geom.occFastUnbind) {
+      // bypass safe _unbind checks by unbinding the shape and all its subshapes
+      // without checking dependencies: this is a bit dangerous, as one could
+      // translate e.g. the face of a cube (this is not allowed!) - which will
+      // unbind the face of the cube. But the original face will actually be
+      // re-bound (with a warning) at the next syncronization point, so it's not
+      // too bad...
+      _unbindWithoutChecks(inShapes[i]);
+    }
+    else {
       // safe, but slow: _unbind() has linear complexity with respect to the number
       // of entities in the model (due to the dependency checking of upward
       // adjencencies and the maximum tag update). Using this in a for loop to
       // translate copies of entities leads to quadratic complexity.
       _unbind(inShapes[i], dim, tag, true);
-    }
-    else {
-      // bypass it by unbinding the shape and all its subshapes without checking
-      // dependencies: this is a bit dangerous, as one could translate e.g. the
-      // face of a cube (this is not allowed!) - which will unbind the face of
-      // the cube. But the original face will actually be re-bound (with a
-      // warning) at the next syncronization point, so it's not too bad...
-      _unbindWithoutChecks(inShapes[i]);
     }
     // TODO: it would be even better to code a rebind() function to reuse the
     // tags not only of the shape, but of all the sub-shapes as well

@@ -57,9 +57,7 @@ static void addExtrudeNormals(std::vector<T *> &elements, int invert,
       else {
         std::vector<MVertex *> elem_verts;
         elements[i]->getVertices(elem_verts);
-
         double aveLength = skipScaleCalc ? 1.0 : GetAveEdgeLength(elem_verts);
-
         for(std::size_t j = 0; j < elem_verts.size(); j++) {
           verts.insert(elem_verts[j]);
           // if scaleLastLayer selection, but not doing gouraud, then still
@@ -90,14 +88,21 @@ static void addExtrudeNormals(std::vector<T *> &elements, int invert,
       else if(ele->getDim() == 1) // FIXME: generalize this!
         n = crossprod(ele->getEdge(0).tangent(), SVector3(0., 0., 1.));
       if(invert) n *= -1.;
-      double nn[3] = {n[0], n[1], n[2]};
       if(!ExtrudeParams::calcLayerScaleFactor[index]) {
         for(std::size_t k = 0; k < ele->getNumVertices(); k++) {
           MVertex *v = ele->getVertex(k);
-          ExtrudeParams::normals[index]->add(v->x(), v->y(), v->z(), 3, nn);
+          SVector3 nk = n;
+          if(ele->getDim() == 2) { // scale by angle at vertex
+            double fact = ele->getAngleAtVertex(v) * 2 / M_PI;
+            if(fact > 0) nk *= fact;
+            else Msg::Warning("Ignoring invalid angle scaling %g", fact);
+          }
+          double nnk[3] = {nk[0], nk[1], nk[2]};
+          ExtrudeParams::normals[index]->add(v->x(), v->y(), v->z(), 3, nnk);
         }
       }
       else {
+        double nn[3] = {n[0], n[1], n[2]};
         std::vector<MVertex *> elem_verts;
         double aveLength = 0.0;
         elements[i]->getVertices(elem_verts);

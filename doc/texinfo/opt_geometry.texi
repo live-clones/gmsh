@@ -196,9 +196,9 @@ Use multi-threaded OpenCASCADE boolean operators@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Geometry.OCCSafeUnbind
-Revert to safe (i.e. with recursive checks on boundaries) unbinding of entities in boolean operations and geometrical transformations@*
-Default value: @code{0}@*
+@item Geometry.OCCFastUnbind
+Use fast (i.e. without recursive checks on boundaries) unbinding of entities in geometrical transformations (1), as well as in boolean operations (2)@*
+Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.OCCScaling

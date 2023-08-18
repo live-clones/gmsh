@@ -470,6 +470,10 @@ static MElement *getElement(double P[3], GModel *m, int qn, double *qx,
     if(elements.size()) return elements[0];
   }
   else {
+    // TODO sort the elements by decreasing dimension and return the first match
+    //- this will be consistent with what we do for list-based datasets
+    //
+    // std::vector<MElement *> elements = m->getMeshElementsByCoord(pt, dim);
     SPoint3 uvw;
     return m->getMeshElementByCoord(pt, uvw, dim);
   }

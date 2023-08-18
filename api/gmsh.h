@@ -995,7 +995,7 @@ namespace gmsh { // Top-level functions
       // for this type of element, that contains the node tags of all the elements
       // of the given type, concatenated: [e1n1, e1n2, ..., e1nN, e2n1, ...]. If
       // `numTasks' > 1, only compute and return the part of the data indexed by
-      // `task'.
+      // `task' (for C++ only; output vectors must be preallocated).
       GMSH_API void getElementsByType(const int elementType,
                                       std::vector<std::size_t> & elementTags,
                                       std::vector<std::size_t> & nodeTags,
@@ -1011,7 +1011,7 @@ namespace gmsh { // Top-level functions
       // gmsh::model::mesh::preallocateElementsByType
       //
       // Preallocate data before calling `getElementsByType' with `numTasks' > 1.
-      // For C and C++ only.
+      // For C++ only.
       GMSH_API void preallocateElementsByType(const int elementType,
                                               const bool elementTag,
                                               const bool nodeTag,
@@ -1032,7 +1032,8 @@ namespace gmsh { // Top-level functions
       // isotropy measure, "angleShape" for the angle shape measure, "minEdge" for
       // the minimum straight edge length, "maxEdge" for the maximum straight edge
       // length, "volume" for the volume. If `numTasks' > 1, only compute and
-      // return the part of the data indexed by `task'.
+      // return the part of the data indexed by `task' (for C++ only; output vector
+      // must be preallocated).
       GMSH_API void getElementQualities(const std::vector<std::size_t> & elementTags,
                                         std::vector<double> & elementsQuality,
                                         const std::string & qualityName = "minSICN",
@@ -1105,7 +1106,8 @@ namespace gmsh { // Top-level functions
       // e1g2, ... e1gG, e2g1, ...]. `coord' contains for each element the x, y, z
       // coordinates of the evaluation points. If `tag' < 0, get the Jacobian data
       // for all entities. If `numTasks' > 1, only compute and return the part of
-      // the data indexed by `task'.
+      // the data indexed by `task' (for C++ only; output vectors must be
+      // preallocated).
       GMSH_API void getJacobians(const int elementType,
                                  const std::vector<double> & localCoord,
                                  std::vector<double> & jacobians,
@@ -1117,8 +1119,8 @@ namespace gmsh { // Top-level functions
 
       // gmsh::model::mesh::preallocateJacobians
       //
-      // Preallocate data before calling `getJacobians' with `numTasks' > 1. For C
-      // and C++ only.
+      // Preallocate data before calling `getJacobians' with `numTasks' > 1. For
+      // C++ only.
       GMSH_API void preallocateJacobians(const int elementType,
                                          const int numEvaluationPoints,
                                          const bool allocateJacobians,
@@ -1185,7 +1187,9 @@ namespace gmsh { // Top-level functions
       // `getBasisFunctions'. `basisFunctionsOrientation' is a vector giving for
       // each element the orientation index in the values returned by
       // `getBasisFunctions'. For Lagrange basis functions the call is superfluous
-      // as it will return a vector of zeros.
+      // as it will return a vector of zeros. If `numTasks' > 1, only compute and
+      // return the part of the data indexed by `task' (for C++ only; output vector
+      // must be preallocated).
       GMSH_API void getBasisFunctionsOrientation(const int elementType,
                                                  const std::string & functionSpaceType,
                                                  std::vector<int> & basisFunctionsOrientation,
@@ -1210,7 +1214,7 @@ namespace gmsh { // Top-level functions
       // gmsh::model::mesh::preallocateBasisFunctionsOrientation
       //
       // Preallocate data before calling `getBasisFunctionsOrientation' with
-      // `numTasks' > 1. For C and C++ only.
+      // `numTasks' > 1. For C++ only.
       GMSH_API void preallocateBasisFunctionsOrientation(const int elementType,
                                                          std::vector<int> & basisFunctionsOrientation,
                                                          const int tag = -1);
@@ -1341,7 +1345,8 @@ namespace gmsh { // Top-level functions
       // `fast' is set, the function returns the sum of the primary node
       // coordinates (without normalizing by the number of nodes). If `tag' < 0,
       // get the barycenters for all entities. If `numTasks' > 1, only compute and
-      // return the part of the data indexed by `task'.
+      // return the part of the data indexed by `task' (for C++ only; output vector
+      // must be preallocated).
       GMSH_API void getBarycenters(const int elementType,
                                    const int tag,
                                    const bool fast,
@@ -1353,7 +1358,7 @@ namespace gmsh { // Top-level functions
       // gmsh::model::mesh::preallocateBarycenters
       //
       // Preallocate data before calling `getBarycenters' with `numTasks' > 1. For
-      // C and C++ only.
+      // C++ only.
       GMSH_API void preallocateBarycenters(const int elementType,
                                            std::vector<double> & barycenters,
                                            const int tag = -1);
@@ -1367,7 +1372,7 @@ namespace gmsh { // Top-level functions
       // and `getElementsByType'. If `primary' is set, only the primary (begin/end)
       // nodes of the edges are returned. If `tag' < 0, get the edge nodes for all
       // entities. If `numTasks' > 1, only compute and return the part of the data
-      // indexed by `task'.
+      // indexed by `task' (for C++ only; output vector must be preallocated).
       GMSH_API void getElementEdgeNodes(const int elementType,
                                         std::vector<std::size_t> & nodeTags,
                                         const int tag = -1,
@@ -1385,7 +1390,7 @@ namespace gmsh { // Top-level functions
       // and `getElementsByType'. If `primary' is set, only the primary (corner)
       // nodes of the faces are returned. If `tag' < 0, get the face nodes for all
       // entities. If `numTasks' > 1, only compute and return the part of the data
-      // indexed by `task'.
+      // indexed by `task' (for C++ only; output vector must be preallocated).
       GMSH_API void getElementFaceNodes(const int elementType,
                                         const int faceType,
                                         std::vector<std::size_t> & nodeTags,

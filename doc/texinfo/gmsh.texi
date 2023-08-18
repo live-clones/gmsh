@@ -1004,7 +1004,7 @@ Julia
 and Fortran
 (@url{@value{GITLAB-PREFIX}/tutorials/fortran/t1.f90,t1.f90}).
 
-@center@image{images/t1,9cm,}
+@center@image{images/t1,9cm,,Screenshot of tutorial t1}
 
 @format
 @verbatiminclude ../../tutorials/t1.geo
@@ -1030,7 +1030,7 @@ Julia
 and Fortran
 (@url{@value{GITLAB-PREFIX}/tutorials/fortran/t2.f90,t2.f90}).
 
-@center@image{images/t2,9cm,}
+@center@image{images/t2,9cm,,Screenshot of tutorial t2}
 
 @format
 @verbatiminclude ../../tutorials/t2.geo
@@ -1054,7 +1054,7 @@ Julia
 and Fortran
 (@url{@value{GITLAB-PREFIX}/tutorials/fortran/t3.f90,t3.f90}).
 
-@center@image{images/t3,9cm,}
+@center@image{images/t3,9cm,,Screenshot of tutorial t3}
 
 @format
 @verbatiminclude ../../tutorials/t3.geo
@@ -1078,7 +1078,7 @@ Julia
 and Fortran
 (@url{@value{GITLAB-PREFIX}/tutorials/fortran/t4.f90,t4.f90}).
 
-@center@image{images/t4,9cm,}
+@center@image{images/t4,9cm,,Screenshot of tutorial t4}
 
 @format
 @verbatiminclude ../../tutorials/t4.geo
@@ -1102,7 +1102,7 @@ Julia
 and Fortran
 (@url{@value{GITLAB-PREFIX}/tutorials/fortran/t5.f90,t5.f90}).
 
-@center@image{images/t5,9cm,}
+@center@image{images/t5,9cm,,Screenshot of tutorial t5}
 
 @format
 @verbatiminclude ../../tutorials/t5.geo
@@ -1128,7 +1128,7 @@ Julia
 and Fortran
 (@url{@value{GITLAB-PREFIX}/tutorials/fortran/t6.f90,t6.f90}).
 
-@center@image{images/t6,9cm,}
+@center@image{images/t6,9cm,,Screenshot of tutorial t6}
 
 @format
 @verbatiminclude ../../tutorials/t6.geo
@@ -1152,7 +1152,7 @@ Julia
 and Fortran
 (@url{@value{GITLAB-PREFIX}/tutorials/fortran/t7.f90,t7.f90}).
 
-@center@image{images/t7,9cm,}
+@center@image{images/t7,9cm,,Screenshot of tutorial t7}
 
 @format
 @verbatiminclude ../../tutorials/t7.geo
@@ -1176,7 +1176,7 @@ Julia
 and Fortran
 (@url{@value{GITLAB-PREFIX}/tutorials/fortran/t8.f90,t8.f90}).
 
-@center@image{images/t8,9cm,}
+@center@image{images/t8,9cm,,Screenshot of tutorial t8}
 
 @format
 @verbatiminclude ../../tutorials/t8.geo
@@ -1200,7 +1200,7 @@ Julia
 and Fortran
 (@url{@value{GITLAB-PREFIX}/tutorials/fortran/t9.f90,t9.f90}).
 
-@center@image{images/t9,9cm,}
+@center@image{images/t9,9cm,,Screenshot of tutorial t9}
 
 @format
 @verbatiminclude ../../tutorials/t9.geo
@@ -1224,7 +1224,7 @@ Julia
 and Fortran
 (@url{@value{GITLAB-PREFIX}/tutorials/fortran/t10.f90,t10.f90}).
 
-@center@image{images/t10,9cm,}
+@center@image{images/t10,9cm,,Screenshot of tutorial t10}
 
 @format
 @verbatiminclude ../../tutorials/t10.geo
@@ -1248,7 +1248,7 @@ Julia
 and Fortran
 (@url{@value{GITLAB-PREFIX}/tutorials/fortran/t11.f90,t11.f90}).
 
-@center@image{images/t11,9cm,}
+@center@image{images/t11,9cm,,Screenshot of tutorial t11}
 
 @format
 @verbatiminclude ../../tutorials/t11.geo
@@ -1272,7 +1272,7 @@ Julia
 and Fortran
 (@url{@value{GITLAB-PREFIX}/tutorials/fortran/t12.f90,t12.f90}).
 
-@center@image{images/t12,9cm,}
+@center@image{images/t12,9cm,,Screenshot of tutorial t12}
 
 @format
 @verbatiminclude ../../tutorials/t12.geo
@@ -1296,7 +1296,7 @@ Julia
 and Fortran
 (@url{@value{GITLAB-PREFIX}/tutorials/fortran/t13.f90,t13.f90}).
 
-@center@image{images/t13,9cm,}
+@center@image{images/t13,9cm,,Screenshot of tutorial t13}
 
 @format
 @verbatiminclude ../../tutorials/t13.geo
@@ -1320,7 +1320,7 @@ Julia
 and Fortran
 (@url{@value{GITLAB-PREFIX}/tutorials/fortran/t14.f90,t14.f90}).
 
-@center@image{images/t14,9cm,}
+@center@image{images/t14,9cm,,Screenshot of tutorial t14}
 
 @format
 @verbatiminclude ../../tutorials/t14.geo
@@ -1344,7 +1344,7 @@ Julia
 and Fortran
 (@url{@value{GITLAB-PREFIX}/tutorials/fortran/t15.f90,t15.f90}).
 
-@center@image{images/t15,9cm,}
+@center@image{images/t15,9cm,,Screenshot of tutorial t15}
 
 @format
 @verbatiminclude ../../tutorials/t15.geo
@@ -1370,7 +1370,7 @@ Julia
 and Fortran
 (@url{@value{GITLAB-PREFIX}/tutorials/fortran/t16.f90,t16.f90}).
 
-@center@image{images/t16,9cm,}
+@center@image{images/t16,9cm,,Screenshot of tutorial t16}
 
 @format
 @verbatiminclude ../../tutorials/t16.geo
@@ -1394,7 +1394,7 @@ Julia
 and Fortran
 (@url{@value{GITLAB-PREFIX}/tutorials/fortran/t17.f90,t17.f90}).
 
-@center@image{images/t17,9cm,}
+@center@image{images/t17,9cm,,Screenshot of tutorial t17}
 
 @format
 @verbatiminclude ../../tutorials/t17.geo
@@ -1418,7 +1418,7 @@ Julia
 and Fortran
 (@url{@value{GITLAB-PREFIX}/tutorials/fortran/t18.f90,t18.f90}).
 
-@center@image{images/t18,9cm,}
+@center@image{images/t18,9cm,,Screenshot of tutorial t18}
 
 @format
 @verbatiminclude ../../tutorials/t18.geo
@@ -1442,7 +1442,7 @@ Julia
 and Fortran
 (@url{@value{GITLAB-PREFIX}/tutorials/fortran/t19.f90,t19.f90}).
 
-@center@image{images/t19,9cm,}
+@center@image{images/t19,9cm,,Screenshot of tutorial t19}
 
 @format
 @verbatiminclude ../../tutorials/t19.geo
@@ -1466,7 +1466,7 @@ Julia
 and Fortran
 (@url{@value{GITLAB-PREFIX}/tutorials/fortran/t20.f90,t20.f90}).
 
-@center@image{images/t20,9cm,}
+@center@image{images/t20,9cm,,Screenshot of tutorial t20}
 
 @format
 @verbatiminclude ../../tutorials/t20.geo
@@ -1490,7 +1490,7 @@ Julia
 and Fortran
 (@url{@value{GITLAB-PREFIX}/tutorials/fortran/t21.f90,t21.f90}).
 
-@center@image{images/t21,9cm,}
+@center@image{images/t21,9cm,,Screenshot of tutorial t21}
 
 @format
 @verbatiminclude ../../tutorials/t21.geo
@@ -1510,7 +1510,7 @@ Also available in C++
 Julia
 (@url{@value{GITLAB-PREFIX}/tutorials/julia/x1.jl,x1.jl}).
 
-@center@image{images/x1,9cm,}
+@center@image{images/x1,9cm,,Screenshot of tutorial x1}
 
 @format
 @verbatiminclude ../../tutorials/python/x1.py
@@ -1530,7 +1530,7 @@ Also available in C++
 Julia
 (@url{@value{GITLAB-PREFIX}/tutorials/julia/x2.jl,x2.jl}).
 
-@center@image{images/x2,9cm,}
+@center@image{images/x2,9cm,,Screenshot of tutorial x2}
 
 @format
 @verbatiminclude ../../tutorials/python/x2.py
@@ -1550,7 +1550,7 @@ Also available in C++
 Julia
 (@url{@value{GITLAB-PREFIX}/tutorials/julia/x3.jl,x3.jl}).
 
-@center@image{images/x3,9cm,}
+@center@image{images/x3,9cm,,Screenshot of tutorial x3}
 
 @format
 @verbatiminclude ../../tutorials/python/x3.py
@@ -1570,7 +1570,7 @@ Also available in C++
 Julia
 (@url{@value{GITLAB-PREFIX}/tutorials/julia/x4.jl,x4.jl}).
 
-@center@image{images/x4,9cm,}
+@center@image{images/x4,9cm,,Screenshot of tutorial x4}
 
 @format
 @verbatiminclude ../../tutorials/python/x4.py
@@ -1590,7 +1590,7 @@ Also available in C++
 Julia
 (@url{@value{GITLAB-PREFIX}/tutorials/julia/x5.jl,x5.jl}).
 
-@center@image{images/x5,9cm,}
+@center@image{images/x5,9cm,,Screenshot of tutorial x5}
 
 @format
 @verbatiminclude ../../tutorials/python/x5.py
@@ -1628,7 +1628,7 @@ Also available in C++
 Julia
 (@url{@value{GITLAB-PREFIX}/tutorials/julia/x7.jl,x7.jl}).
 
-@center@image{images/x7,9cm,}
+@center@image{images/x7,9cm,,Screenshot of tutorial x7}
 
 @format
 @verbatiminclude ../../tutorials/python/x7.py
@@ -1662,7 +1662,7 @@ detach the tree menu using `Window->Attach/Detach Menu'.)
 @iftex
 @sp 1
 @end iftex
-@center@image{images/gui,10.5cm,}
+@center@image{images/gui,10.5cm,,Gmsh's graphical user interface (GUI)}
 
 To create a new geometrical model, use the `File->New' menu to create a
 new model file, and choose for example @file{mymodel.geo} as file
@@ -1680,7 +1680,7 @@ context window.
 @iftex
 @sp 1
 @end iftex
-@center@image{images/gui_add_rectangle,10.5cm,}
+@center@image{images/gui_add_rectangle,10.5cm,,Adding a rectangle in the GUI}
 
 There is no need to save your geometrical model: when the rectangle was
 added, scripting commands were automatically appended to your model
@@ -1738,7 +1738,7 @@ scale.
 @iftex
 @sp 1
 @end iftex
-@center@image{images/gui_mesh,10.5cm,}
+@center@image{images/gui_mesh,10.5cm,,Meshing in the GUI}
 
 Several files can be loaded simultaneously. When specified on the
 command line, the first one defines the active model (in the same way as
@@ -6553,6 +6553,12 @@ right button by `100*step'.
 Yes: selecting the content of an input field, or lines in the message
 console (`Tools->Message Console'), copies the selected text to the
 clipboard.
+
+@item Graphical rendering or entity selection is very slow on Linux.
+
+The issue is most probably linked with your graphics card driver. Try
+setting the environment variable @code{LIBGL_ALWAYS_SOFTWARE=true} to
+force software rendering.
 @end enumerate
 
 @c -------------------------------------------------------------------------
