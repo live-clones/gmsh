@@ -1801,6 +1801,12 @@ namespace gmsh { // Top-level functions
                                 const std::vector<std::size_t> & edges,
                                 std::vector<std::size_t> & tri);
 
+      // gmsh::model::mesh::triangulateNodesOnEntity
+      //
+      // Triangulate the nodes (if any) on discrete entity of tag `tag', assuming
+      // there is a boundary.
+      GMSH_API void triangulateNodesOnEntity(const int tag);
+
       // gmsh::model::mesh::tetrahedralize
       //
       // Tetrahedralize the points given in the `coord' vector as x, y, z
@@ -1885,6 +1891,7 @@ namespace gmsh { // Top-level functions
                                                   const std::vector<std::size_t> & nodeTags,
                                                   const std::vector<double> & sizeField,
                                                   const double minRadius,
+                                                  const double minQuality,
                                                   std::vector<std::size_t> & newNodeTags,
                                                   std::vector<double> & newCoords,
                                                   std::vector<double> & newSizeField,

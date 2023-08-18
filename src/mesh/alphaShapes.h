@@ -24,6 +24,8 @@ extern "C" {
 #include "hxt_tetDelaunay.h"
 #include "hxt_tetOpti.h"
 #include "hxt_tetColor.h"
+#include "hxt_tetFlag.h"
+#include "hxt_tetRefine.h"
 }
 
 int computeTetNeighbors_ (const std::vector<size_t> &tetrahedra, std::vector<size_t> &neigh);
@@ -61,6 +63,7 @@ void constrainedDelaunayRefinement_(const int dim, const int tag,
                                     const std::vector<size_t> &nodeTags,
                                     const std::vector<double> &sizeField, 
                                     const double minRadius, 
+                                    const double minQuality,
                                     std::vector<size_t> &newNodeTags, 
                                     std::vector<double>& newCoords, 
                                     std::vector<double>& newSizeField, 

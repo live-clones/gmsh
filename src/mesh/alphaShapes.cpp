@@ -11,6 +11,7 @@
 #include "SPoint3.h"
 
 #include <time.h>
+#include <chrono>
 #include <iostream>
 
 /* compute distance between 2 points -- 3D */
@@ -102,6 +103,7 @@ double meanEdgeLength2D (const std::vector<double> &p, const std::vector<size_t>
 
 /* face ordering convention */
 static int _faces [4][3] = {{0,1,2}, {0,1,3}, {0,2,3}, {1,2,3}};
+static int _outwardFaces [4][3] = {{0,2,1}, {0,1,3}, {0,3,2}, {1,2,3}};
 
 /* order the tet faces according to convention */
 void getOrderedFace (const size_t *t, int i, size_t *f){
@@ -653,7 +655,7 @@ void generateMesh3D_(const std::vector<double>& coord, const std::vector<size_t>
   }
   */
   Hxt2GmshAlpha(regions, mesh, v2c, c2v);
-
+  // gmsh::fltk::run();
   /* reset the vertex indices */
   for (size_t i=nBndPts; i<mesh->vertices.num; i++){
     MVertex* oldv = c2v[i];
@@ -889,6 +891,8 @@ void generateMesh_(const int dim, const int tag, const bool refine, const std::v
   
   if (dim == 1){
     Msg::Info("generating mesh for edge %d\n",tag);
+    std::for_each(GModel::current()->firstRegion(), GModel::current()->lastRegion(), deMeshGRegion());
+    std::for_each(GModel::current()->firstFace(), GModel::current()->lastFace(), deMeshGFace());
     deMeshGEdge killer;
     GEdge *ge = GModel::current()->getEdgeByTag(tag);
     if (!ge)return;
@@ -945,7 +949,7 @@ void generateMesh_(const int dim, const int tag, const bool refine, const std::v
     }
     int triCount = 1;
     for(size_t i = 0; i < pm->faces.size(); i++) {
-      if (pm->faces[i]->data != 1) continue;
+      if (pm->faces[i]->data != tag) continue;
       PolyMesh::HalfEdge *he = pm->faces[i]->he;
       int a = he->v->data;
       int b = he->next->v->data;
@@ -980,7 +984,8 @@ void generateMesh_(const int dim, const int tag, const bool refine, const std::v
         triCount++;
       }
     }
-    // pm->print4debug(1);
+    // gmsh::fltk::run();
+    pm->print4debug(tag);
     delete pm;
   }
   // -----------------  3D ------------------------------
@@ -1301,12 +1306,14 @@ void constrainedDelaunayRefinement_(const int dim, const int tag,
                                     const std::vector<size_t> &nodeTags,
                                     const std::vector<double> &sizeAtNodes, 
                                     const double minRadius, 
+                                    const double minQuality,
                                     std::vector<size_t> &newNodeTags, 
                                     std::vector<double>& newCoords, 
                                     std::vector<double>& newsizeAtNodes, 
                                     std::vector<std::vector<size_t>>& newConstrainedEdges, 
                                     std::vector<size_t>& newElementsInRefinement){
   if (dim == 2){
+    // auto t0 = std::chrono::steady_clock::now(); 
     bool globalSize = sizeAtNodes.size() == 1;
     GModel* gm = GModel::current();
 
@@ -1321,24 +1328,22 @@ void constrainedDelaunayRefinement_(const int dim, const int tag,
     std::vector<size_t> vTags;
     PolyMesh* pm;
     GFace2PolyMesh(tag, &pm);
-
     // Set the data of faces to -1 (is changed afterwards for the faces that we want to be improved.)
-    for (size_t i=0; i<pm->faces.size(); i++){
-      pm->faces[i]->data = -1;
-    }
-    
     // Recognise which are the faces to refine -> data at these faces is the gmsh face tag, else -1
-    for (size_t n=0; n<elementTags.size(); n++){
-      int etype, dd, tt;
-      std::vector<size_t> nt;
-      gmsh::model::mesh::getElement(elementTags[n], etype, nt, dd, tt); // note : not ideal...
-      PolyMesh::Vertex* v0 = findVertex(pm, nt[0]);
-      if (v0 == nullptr) Msg::Error("Invalid element tag %d\n", nt[0]);
-      PolyMesh::Vertex* v1 = findVertex(pm, nt[1]);
-      if (v1 == nullptr) Msg::Error("Invalid element tag %d\n", nt[1]);
-      PolyMesh::HalfEdge* he0 = pm->getEdgeWithBnd(v0, v1);
-      he0->f->data = 1;
+    // auto t0p = std::chrono::steady_clock::now(); 
+    std::vector<size_t> allElements;
+    std::vector<size_t> allElementNodeTags;
+    gmsh::model::mesh::getElementsByType(2, allElements, allElementNodeTags, tag);
+    std::set<size_t> elsSet(elementTags.begin(), elementTags.end());
+    for (size_t i=0; i<pm->faces.size(); i++){
+      if (elsSet.find(allElements[i]) != elsSet.end())
+        pm->faces[i]->data = 1;
+      else
+        pm->faces[i]->data = -1;
     }
+
+    // auto t00p = std::chrono::steady_clock::now(); 
+
     // create a map from vertex to edge tag
     std::unordered_map <size_t, int> v2b;
     for (auto dt : bndDimTags){
@@ -1348,6 +1353,7 @@ void constrainedDelaunayRefinement_(const int dim, const int tag,
         v2b[ge->mesh_vertices[i]->getNum()] = dt.second;
       }
     }
+    // auto t0pp = std::chrono::steady_clock::now(); 
 
     // Get and color the constrained half edges : the ones inside the domain get data 0
     for (size_t ed=0; ed < constrainedEdges.size(); ed+=2){
@@ -1368,6 +1374,7 @@ void constrainedDelaunayRefinement_(const int dim, const int tag,
         }
       }
     }
+    // auto t0ppp = std::chrono::steady_clock::now(); 
     // Change the data of each vertex to its index in the list, and keep track of the nodetags 
     std::unordered_map<int, double> v2sizeAtNodes;
     std::vector<int> i2g;
@@ -1383,15 +1390,21 @@ void constrainedDelaunayRefinement_(const int dim, const int tag,
         v->data = i;
       }
     }
+    // auto t1 = std::chrono::steady_clock::now(); 
 
     // Step 2: coarsen the mesh -> collapse edges that are too small
-    std::vector<PolyMesh::HalfEdge *> heList;
-    for (auto he : pm->hedges) heList.push_back(he);
+    std::vector<PolyMesh::HalfEdge *> heVector;
+    for (auto he : pm->hedges) heVector.push_back(he);
     int i_delete = 0;
-    std::sort(heList.begin(), heList.end(), he_size());
-    while (!heList.empty()){
-      PolyMesh::HalfEdge *he = *heList.begin();
-      heList.erase(heList.begin());
+    std::sort(heVector.begin(), heVector.end(), he_size());
+    std::deque<PolyMesh::HalfEdge *> heQue(heVector.begin(), heVector.end());
+    // double t_ifCheck=0;
+    // double t_if2Check=0;
+    // double t_emptyCheck=0;
+    // auto t2 = std::chrono::steady_clock::now(); 
+    while (!heQue.empty()){
+      PolyMesh::HalfEdge *he = *heQue.begin();
+      heQue.pop_front();
       if (he == nullptr || he->v == nullptr || he->f == nullptr || he->f->data == -1 || he->data > -1 || pm->degree(he->v) < 0 || freeSurfaceCheck(pm, he->v)) continue;
       double d = norm(he->v->position - he->next->v->position);
       double size = 0.5*(i2Size[abs(he->v->data)] + i2Size[abs(he->next->v->data)]);
@@ -1401,20 +1414,23 @@ void constrainedDelaunayRefinement_(const int dim, const int tag,
         if (pm->checkHedgeCompatibility(he)){
           pm->hedgeCollapse(he, &_nhes);
           delaunayCheck(pm, _nhes, &_t);  
-          for (auto _he : _t) heList.push_back(_he);
+          for (auto _he : _t) heQue.push_back(_he);
           i_delete++;
         }
       }
     }
+    
     std::vector<PolyMesh::HalfEdge* > hes;
     for (auto he : pm->hedges){
       if (he->f)
         hes.push_back(he);
     }
+    // auto t3 = std::chrono::steady_clock::now(); 
     // The initial mesh has been created; now we need to insert nodes such that the size field is respected.
     // Step 3: get the elements that do not respect the size or quality constraint
     std::vector<PolyMesh::Face *> _list;
-    double _limit = 0.6; // Value to check!
+    double _limit = minQuality; // Value to check!
+    double _size = .8;
     for(auto f : pm->faces) {
       if (f->he && f->data != -1){
         double q;
@@ -1428,7 +1444,7 @@ void constrainedDelaunayRefinement_(const int dim, const int tag,
         }
         else 
           s = sizeAtNodes[0];
-        if((q < _limit || R > s) && R > minRadius) _list.push_back(f);
+        if((q < _limit || R/s > _size) && R > minRadius) _list.push_back(f);
       }
     }
     size_t newIdx = gm->getMaxVertexNumber()+1;
@@ -1456,7 +1472,7 @@ void constrainedDelaunayRefinement_(const int dim, const int tag,
       }
       else 
         s = sizeAtNodes[0];
-      if((q < _limit || R > s) && (R > minRadius && f->data != -1)){
+      if((q < _limit || R/s > _size) && (R > minRadius && f->data != -1)){
         GPoint gp = gf->closestPoint(cc, uv);
         if(gp.succeeded()) { // we found it inside the geometrical domain
           PolyMesh::HalfEdge* heCandidate = nullptr;
@@ -1539,12 +1555,14 @@ void constrainedDelaunayRefinement_(const int dim, const int tag,
               }
               else 
                 s = sizeAtNodes[0];
-              if((q < _limit || R > s) && (R > minRadius && pf->data != -1)) _list.push_back(pf);
+              if((q < _limit || R/s > _size) && (R > minRadius && pf->data != -1)) _list.push_back(pf);
           }
           newIdx++;
         }
       }
     }
+    // auto t4 = std::chrono::steady_clock::now(); 
+    
 
     // Step 5: dump the updated mesh back into gmsh GFace;
     // delete faces
@@ -1700,112 +1718,339 @@ void constrainedDelaunayRefinement_(const int dim, const int tag,
       }
     }
     newConstrainedEdges.push_back(openLoop);
+    // auto t5 = std::chrono::steady_clock::now(); 
+    
+    // auto durInit1 = std::chrono::duration_cast<std::chrono::milliseconds>(t0p-t0);
+    // auto durInit2 = std::chrono::duration_cast<std::chrono::milliseconds>(t00p-t0p);
+    // auto durInit2p = std::chrono::duration_cast<std::chrono::milliseconds>(t0pp-t00p);
+    // auto durInit3 = std::chrono::duration_cast<std::chrono::milliseconds>(t0ppp-t0pp);
+    // auto durInit4 = std::chrono::duration_cast<std::chrono::milliseconds>(t1-t0ppp);
+    // auto durBefCoar = std::chrono::duration_cast<std::chrono::milliseconds>(t2-t1);
+    // auto durCoar = std::chrono::duration_cast<std::chrono::milliseconds>(t3-t2);
+    // auto durMain = std::chrono::duration_cast<std::chrono::milliseconds>(t4-t3);
+    // auto durRegen = std::chrono::duration_cast<std::chrono::milliseconds>(t5-t4);
+    // auto durTotal = std::chrono::duration_cast<std::chrono::milliseconds>(t5-t0);
+    // printf("initial 1  time : %f percent \n", 100*double(durInit1.count())/double(durTotal.count()) );
+    // printf("initial 2  time : %f percent \n", 100*double(durInit2.count())/double(durTotal.count()) );
+    // printf("initial 2p time : %f percent \n", 100*double(durInit2p.count())/double(durTotal.count()) );
+    // printf("initial 3  time : %f percent \n", 100*double(durInit3.count())/double(durTotal.count()) );
+    // printf("initial 4  time : %f percent \n", 100*double(durInit4.count())/double(durTotal.count()) );
+    // printf("bef coar   time : %f percent \n", 100*double(durBefCoar.count())/double(durTotal.count()) );
+    // printf("coarse     time : %f percent \n", 100*double(durCoar.count())/double(durTotal.count()) );
+    // printf("main       time : %f percent \n", 100*double(durMain.count())/double(durTotal.count()) );
+    // printf("regen      time : %f percent \n", 100*double(durRegen.count())/double(durTotal.count()) );
 
     CTX::instance()->mesh.changed = ENT_ALL;
     pm->clean();
     delete pm;
   }
   else if (dim == 3){
-    // TODO
-    Msg::Error("Constrained Delaunay not implemented for 3D");
+    // 1: Gmsh mesh to hxt
+
+    HXTMesh *mesh;
+    hxtMeshCreate(&mesh);
+
+    std::map<MVertex *, uint32_t> v2c;
+    std::vector<MVertex *> c2v;
+    std::set<GRegion *, GEntityPtrLessThan> rs;
+    rs = GModel::current()->getRegions();
+    std::vector<GRegion *> regions(rs.begin(), rs.end());
+    
+    Gmsh2HxtAlpha(regions, mesh, v2c, c2v);
+    HXTTetMeshOptions options = {};
+    options.defaultThreads = 1;
+    options.verbosity=2;
+    options.stat=1;
+
+    // create the empty mesh
+    hxtTetMesh(mesh, &options);
+
+    uint32_t numBndPts = mesh->vertices.num;
+    std::vector<MVertex *> internalVertices;
+    for (auto r : rs){
+      for (auto n : r->mesh_vertices){
+        internalVertices.push_back(n);
+      }
+    }
+    uint32_t numNewPts = internalVertices.size();
+    std::vector<HXTNodeInfo> nodeInfo(numNewPts);
+
+    /* add the internal nodes to the mesh */
+    mesh->vertices.num += numNewPts;
+    if (mesh->vertices.num > mesh->vertices.size) {
+      hxtAlignedRealloc(&mesh->vertices.coord, sizeof(double) * mesh->vertices.num * 4);
+      mesh->vertices.size = mesh->vertices.num;
+    }
+    c2v.resize(mesh->vertices.num);
+    for (size_t p = 0; p < numNewPts; p++) {
+      uint32_t nodeIndex = p + numBndPts;
+      mesh->vertices.coord[4 * nodeIndex + 0] = internalVertices[p]->x();
+      mesh->vertices.coord[4 * nodeIndex + 1] = internalVertices[p]->y();
+      mesh->vertices.coord[4 * nodeIndex + 2] = internalVertices[p]->z();
+      nodeInfo[p].node = nodeIndex;
+      nodeInfo[p].status = HXT_STATUS_TRYAGAIN; // state that the point must be inserted
+      v2c[internalVertices[p]] = nodeIndex;
+      c2v[nodeIndex] = internalVertices[p];
+    }
+
+    /* TODO : Find the constrained faces and constrain them, then refine if necessary.  */
+    // A START ...
+    // size_t numFaces = constrainedEdges.size()/3;
+    
+    // hxtAlignedRealloc(mesh->triangles.node, sizeof(uint32_t) * 3 * numFaces);
+    // for(size_t j = 0; j < numFaces; j+=3) {
+    //   for(size_t i = 0; i < gf->triangles.size(); i++) {
+    //     m->triangles.node[3 * index + 0] = v2c[gf->triangles[i]->getVertex(0)];
+    //     m->triangles.node[3 * index + 1] = v2c[gf->triangles[i]->getVertex(1)];
+    //     m->triangles.node[3 * index + 2] = v2c[gf->triangles[i]->getVertex(2)];
+    //     m->triangles.color[index] = gf->tag();
+    //     index++;
+    //   }
+    // }
+
+    /* add tetrahedra (or generate the initial mesh ...) */
+    HXTBbox bbox;
+    hxtBboxInit(&bbox);
+    hxtBboxAdd(&bbox, mesh->vertices.coord, mesh->vertices.num);
+    HXTDelaunayOptions delOptions = {};
+    delOptions.verbosity = 2;
+    delOptions.bbox = &bbox;
+    delOptions.numVerticesInMesh = numBndPts;
+    delOptions.insertionFirst = numBndPts;
+    hxtDelaunaySteadyVertices(mesh, &delOptions, &nodeInfo[0], numNewPts);
+    
+    // 2: Recognize which elements can and must be refined (their color is set to 1, else 0)
+    // idea : take barycenter of tet, and then get the element by coordinates --> then check if that element is in the gmsh fluid elements
+    // TODO : some bugs here, with memory ... 
+    std::set<size_t> setFlel(elementTags.begin(), elementTags.end());
+    for (uint64_t i=0; i<mesh->tetrahedra.num; i++){
+      // printf("element color : %d \n", mesh->tetrahedra.color[i]);
+      // if (mesh->tetrahedra.color[i] != HXT_COLOR_OUT){
+      if (mesh->tetrahedra.color[i]<=mesh->brep.numVolumes && mesh->tetrahedra.color[i]>=0){
+        double* c0 = &mesh->vertices.coord[4 * mesh->tetrahedra.node[4*i+0]];
+        double* c1 = &mesh->vertices.coord[4 * mesh->tetrahedra.node[4*i+1]];
+        double* c2 = &mesh->vertices.coord[4 * mesh->tetrahedra.node[4*i+2]];
+        double* c3 = &mesh->vertices.coord[4 * mesh->tetrahedra.node[4*i+3]];
+        double cB[3] = {0.,0.,0.};
+        for (size_t dim=0; dim<3; dim++){
+          cB[dim] = (c0[dim]+c1[dim]+c2[dim]+c3[dim])/4.;
+          // printf("cB tet %d, dim %d : %f \n", i, dim, cB[dim]);
+        }
+        SPoint3 xyz(cB[0], cB[1], cB[2]), uvw;
+        MElement *e = GModel::current()->getMeshElementByCoord(xyz, uvw, 3, true);
+        if (std::find(setFlel.begin(), setFlel.end(), e->getNum()) == setFlel.end()) // this means it should not be refined (outside of alpha-shape)!
+          setProcessedFlag(mesh, i);
+        else 
+          unsetProcessedFlag(mesh, i);
+          // mesh->tetrahedra.flag[i] = 7; // cfr HXT_PROCESSED_MASK
+      }
+      else 
+          setProcessedFlag(mesh, i);
+    }
+
+    // 3: Insert nodes/adapt Delaunay (using Hxt)
+    HXTNodalSizes nodalSizes = {
+      .array = NULL,
+      // .callback = options->nodalSizes.callback,
+      // .userData = options->nodalSizes.userData,
+      .min = minRadius,
+      .max = 10*minRadius,
+      .factor = 1.,
+      .enabled = 1  // only enabled for the refine step
+    };
+
+    // uint32_t numVerticesConstrained = mesh->vertices.num;
+
+    hxtNodalSizesInit(mesh, &nodalSizes);
+    delOptions.nodalSizes = &nodalSizes;
+
+    for (size_t i=0; i<nodeTags.size(); i++){
+      MVertex* vert = GModel::current()->getMeshVertexByTag(nodeTags[i]);
+      nodalSizes.array[v2c[vert]] = sizeAtNodes[i];
+    }
+    delOptions.nodalSizes = &nodalSizes;
+    delOptions.verbosity = 2;
+    delOptions.insertionFirst = mesh->vertices.num;
+    hxtRefineTetrahedra(mesh, &delOptions);
+    std::for_each(GModel::current()->firstRegion(), GModel::current()->lastRegion(), deMeshGRegion());
+    Hxt2GmshAlpha(regions, mesh, v2c, c2v);
+    // gmsh::fltk::run();
+    /* reset the vertex indices */
+    // for (size_t i=numBndPts; i<mesh->vertices.num; i++){
+    //   MVertex* oldv = c2v[i];
+    //   if(nodeTags.size()){
+    //     oldv->forceNum(nodeTags[i-numBndPts]);
+    //   }
+    // }
+    hxtMeshDelete(&mesh);
   }
 }
 
 void alphaShape_entity(const int dim, const int tag, const double alpha, const std::vector<size_t>& nodeTags, const std::vector<double>& sizeAtNodes, std::vector<std::vector<size_t>>& elementTags, std::vector<std::vector<size_t>>& edges){
-  // Currently only for 2D
-  bool globalAlpha = sizeAtNodes.size() == 1;
-  auto it_min = min_element(sizeAtNodes.begin(), sizeAtNodes.end()); // to restrict elements even more if all the nodes have minimum size field
-  double minSize = *it_min;
+  if (dim == 2){
+    bool globalAlpha = sizeAtNodes.size() == 1;
+    // auto it_min = min_element(sizeAtNodes.begin(), sizeAtNodes.end()); // to restrict elements even more if all the nodes have minimum size field
+    // double minSize = *it_min;
 
-  GModel* gm = GModel::current();
-  GFace* gf = gm->getFaceByTag(tag);
+    GModel* gm = GModel::current();
+    GFace* gf = gm->getFaceByTag(tag);
 
 
-  PolyMesh* pm;
-  GFace2PolyMesh(tag, &pm);
-  std::unordered_map<int, double> v2sizeAtNodes;
-  std::vector<int> i2g;
-  std::vector<double> i2Size;
-  for (size_t i=0; i<pm->vertices.size(); i++){
-    PolyMesh::Vertex* v = pm->vertices[i];
-    i2g.push_back(v->data);
-    v->data = i;
-  }
-  if (!globalAlpha){
-    for (size_t i=0; i<nodeTags.size(); i++){
-      v2sizeAtNodes[nodeTags[i]] = sizeAtNodes[i];
-    }
+    PolyMesh* pm;
+    GFace2PolyMesh(tag, &pm);
+    std::unordered_map<int, double> v2sizeAtNodes;
+    std::vector<int> i2g;
+    std::vector<double> i2Size;
     for (size_t i=0; i<pm->vertices.size(); i++){
       PolyMesh::Vertex* v = pm->vertices[i];
-      i2Size.push_back(v2sizeAtNodes[i2g[v->data]]);
+      i2g.push_back(v->data);
+      v->data = i;
     }
-  }
-  // Face data is the element tag -> note : dangerous but it works... (cfr GFace2PolyMesh function)
-  std::vector<size_t> etFull;
-  std::vector<size_t> ntFull;
-  gmsh::model::mesh::getElementsByType(2, etFull, ntFull, tag);
-  for (size_t i=0; i<pm->faces.size(); i++)
-    pm->faces[i]->data = etFull[i];
-  std::unordered_map<PolyMesh::Face*, bool> _touched;
-  double hTriangle = sizeAtNodes[0];
-  double uv[2];
-  SPoint3 cc;
-  double R;
-  for (size_t i = 0; i < pm->faces.size(); i++){
-    PolyMesh::Face *f = pm->faces[i];
     if (!globalAlpha){
-      hTriangle = faceSize(f->he, gf, i2Size);
-      if (abs(hTriangle-minSize)<1e-5){
-        hTriangle *= 0.1;
+      for (size_t i=0; i<nodeTags.size(); i++){
+        v2sizeAtNodes[nodeTags[i]] = sizeAtNodes[i];
+      }
+      for (size_t i=0; i<pm->vertices.size(); i++){
+        PolyMesh::Vertex* v = pm->vertices[i];
+        i2Size.push_back(v2sizeAtNodes[i2g[v->data]]);
       }
     }
-    faceCircumCenter(f->he, gf, cc, uv, &R);
-    if (R/hTriangle < alpha && !_touched[f]){
-      // printf("triangle is in alpha shape : R = %f, alpha = %f, h = %f\n", R, alpha, hTriangle);
-      std::stack<PolyMesh::Face *> _s;
-      std::vector<size_t> _domain;
-      std::vector<size_t> _boundary;
-      _s.push(f);
-      _touched[f] = true;
-      _domain.push_back(f->data);
-      while(!_s.empty()){
-        PolyMesh::Face* _f = _s.top();
-        _s.pop();
-        PolyMesh::HalfEdge *_he = _f->he;
-        do {
-          if (_he->opposite == nullptr){
-            // _boundary.push_back(_he->v->data);
-            // _boundary.push_back(_he->next->v->data);
-          }
-          else if (!_touched[_he->opposite->f]){
-            PolyMesh::Face *f_neigh = _he->opposite->f;
-            if (!globalAlpha){
-              hTriangle = faceSize(f_neigh->he, gf, i2Size);
-              if (abs(hTriangle-minSize)<1e-5){ 
-                hTriangle *= 0.1;
+    // Face data is the element tag -> note : dangerous but it works... (cfr GFace2PolyMesh function)
+    std::vector<size_t> etFull;
+    std::vector<size_t> ntFull;
+    gmsh::model::mesh::getElementsByType(2, etFull, ntFull, tag);
+    for (size_t i=0; i<pm->faces.size(); i++)
+      pm->faces[i]->data = etFull[i];
+    std::unordered_map<PolyMesh::Face*, bool> _touched;
+    double hTriangle = sizeAtNodes[0];
+    double uv[2];
+    SPoint3 cc;
+    double R;
+    for (size_t i = 0; i < pm->faces.size(); i++){
+      PolyMesh::Face *f = pm->faces[i];
+      if (!globalAlpha){
+        hTriangle = faceSize(f->he, gf, i2Size);
+        // if (abs(hTriangle-minSize)<1e-6){
+        //   hTriangle *= 0.5;
+        // }
+      }
+      faceCircumCenter(f->he, gf, cc, uv, &R);
+      if (R/hTriangle < alpha && !_touched[f]){
+        // printf("triangle is in alpha shape : R = %f, alpha = %f, h = %f\n", R, alpha, hTriangle);
+        std::stack<PolyMesh::Face *> _s;
+        std::vector<size_t> _domain;
+        std::vector<size_t> _boundary;
+        _s.push(f);
+        _touched[f] = true;
+        _domain.push_back(f->data);
+        while(!_s.empty()){
+          PolyMesh::Face* _f = _s.top();
+          _s.pop();
+          PolyMesh::HalfEdge *_he = _f->he;
+          do {
+            if (_he->opposite == nullptr){
+              // _boundary.push_back(_he->v->data);
+              // _boundary.push_back(_he->next->v->data);
+            }
+            else if (!_touched[_he->opposite->f]){
+              PolyMesh::Face *f_neigh = _he->opposite->f;
+              if (!globalAlpha){
+                hTriangle = faceSize(f_neigh->he, gf, i2Size);
+                // if (abs(hTriangle-minSize)<1e-6){ 
+                //   hTriangle *= 0.5;
+                // }
+              }
+              faceCircumCenter(f_neigh->he, gf, cc, uv, &R);
+              if (R/hTriangle < alpha){
+                // printf("triangle is in alpha shape : R = %f, alpha = %f, h = %f\n", R, alpha, hTriangle);
+                _s.push(f_neigh);
+                _touched[f_neigh] = true;
+                _domain.push_back(f_neigh->data);	    
+              }	    
+              else {
+                _boundary.push_back(i2g[abs(_he->v->data)]);
+                _boundary.push_back(i2g[abs(_he->next->v->data)]);	      
               }
             }
-            faceCircumCenter(f_neigh->he, gf, cc, uv, &R);
-            if (R/hTriangle < alpha){
-              // printf("triangle is in alpha shape : R = %f, alpha = %f, h = %f\n", R, alpha, hTriangle);
-              _s.push(f_neigh);
-              _touched[f_neigh] = true;
-              _domain.push_back(f_neigh->data);	    
-            }	    
-            else {
-              _boundary.push_back(i2g[abs(_he->v->data)]);
-              _boundary.push_back(i2g[abs(_he->next->v->data)]);	      
-            }
-          }
-          _he = _he->next;
-        }while (_he != _f->he);
+            _he = _he->next;
+          }while (_he != _f->he);
+        }
+        edges.push_back(_boundary);
+        elementTags.push_back(_domain); 
       }
-      edges.push_back(_boundary);
-      elementTags.push_back(_domain); 
+    }
+    pm->clean();
+    delete pm;
+  }
+  else if (dim == 3){
+    bool globalAlpha = sizeAtNodes.size() == 1;
+    // GModel* gm = GModel::current();
+    // GRegion* gr = gm->getRegionByTag(tag);
+
+    std::vector<size_t> etFull, ntFull, nTags;
+    std::vector<double> coords, pCoords;
+    gmsh::model::mesh::getElementsByType(4, etFull, ntFull, tag);
+    gmsh::model::mesh::getNodes(nTags, coords, pCoords, dim, tag, true, false);
+    std::unordered_map<size_t, size_t> t2i;
+    std::vector<double> nodeSize(nodeTags.size());
+    size_t i=0;
+    for (auto t : nTags) t2i[t] = i++;
+    i=0;
+    for (auto t : nodeTags) nodeSize[t2i[t]] = sizeAtNodes[i++];
+    double hTet = sizeAtNodes[0];
+    SPoint3 cc;
+    // double R;
+    std::vector<size_t> neigh;
+    std::vector<size_t> tetrahedra(ntFull.size());
+    i=0;
+    for (auto n : ntFull) tetrahedra[i++] = t2i[n];
+    computeTetNeighbors_ (tetrahedra, neigh);
+    std::vector<bool> _touched;
+    _touched.resize(tetrahedra.size()/4);
+    for (size_t i=0;i<_touched.size();i++)_touched[i] = false;
+    std::vector<std::vector<size_t>> boundaries;
+    for (size_t i = 0; i < tetrahedra.size(); i+=4){
+      size_t *t = &tetrahedra[i];
+      if (!globalAlpha) hTet = (nodeSize[t[0]] + nodeSize[t[1]] + nodeSize[t[2]] + nodeSize[t[3]])/4; 
+      if (alphaShape(t, coords, hTet) < alpha && _touched[i/4] == false){
+        std::stack<size_t> _s;
+        std::vector<size_t> _domain;
+        std::vector<size_t> _boundary;
+        _s.push(i/4);
+        _touched[i/4] = true;
+        _domain.push_back(etFull[i/4]);
+        while(!_s.empty()){
+          size_t t = _s.top();
+          _s.pop();
+          for (int j=0;j<4;j++){
+            size_t tj = neigh[(4*t+j)]/4;
+            if (tj*4 == tetrahedra.size()){
+              _boundary.push_back(t);
+              _boundary.push_back(j);
+            }
+            else if (!_touched[tj]){
+              size_t *t_neigh = &tetrahedra[4*tj];
+              if (!globalAlpha) hTet = (nodeSize[t_neigh[0]] + nodeSize[t_neigh[1]] + nodeSize[t_neigh[2]] + nodeSize[t_neigh[3]])/4; 
+              if (alphaShape(t_neigh, coords, hTet) < alpha){
+                _s.push(tj);
+                _touched[tj] = true;
+                _domain.push_back(etFull[tj]);	    
+              }	    
+              else {
+                _boundary.push_back(nTags[tetrahedra[4*t+_outwardFaces[j][0]]]);
+                _boundary.push_back(nTags[tetrahedra[4*t+_outwardFaces[j][1]]]);
+                _boundary.push_back(nTags[tetrahedra[4*t+_outwardFaces[j][2]]]);
+              }
+            }
+          }	  
+        }
+        edges.push_back(_boundary);
+        elementTags.push_back(_domain);
+      }
     }
   }
-  pm->clean();
-  delete pm;
+  else
+    Msg::Error("Dimension error.");
 }
 
 

@@ -5527,6 +5527,15 @@ GMSH_API void gmsh::model::mesh::triangulate(const std::vector<double> &coord,
 #endif
 }
 
+GMSH_API void gmsh::model::mesh::triangulateNodesOnEntity(const int tag)
+{
+#if defined(HAVE_MESH)
+  triangulateEntity(tag);
+#else
+  Msg::Error("triangulate requires the mesh module");
+#endif
+}
+
 GMSH_API void
 gmsh::model::mesh::tetrahedralize(const std::vector<double> &coord,
                                   std::vector<std::size_t> &tetra)
@@ -5617,10 +5626,10 @@ gmsh::model::mesh::alphaShapesConstrained(const int dim,
 }
 
 GMSH_API void 
-gmsh::model::mesh::constrainedDelaunayRefinement(const int dim, const int tag, const std::vector<size_t> &elementTags, const std::vector<size_t> &constrainedEdges, const std::vector<size_t> &nodeTags, const std::vector<double> &sizeField, const double minRadius, std::vector<size_t> &newNodeTags, std::vector<double>& newCoords, std::vector<double>& newSizeField, std::vector<std::vector<size_t>>& newConstrainedEdges, std::vector<size_t>& newElementsInRefinement)
+gmsh::model::mesh::constrainedDelaunayRefinement(const int dim, const int tag, const std::vector<size_t> &elementTags, const std::vector<size_t> &constrainedEdges, const std::vector<size_t> &nodeTags, const std::vector<double> &sizeField, const double minRadius, const double minQuality, std::vector<size_t> &newNodeTags, std::vector<double>& newCoords, std::vector<double>& newSizeField, std::vector<std::vector<size_t>>& newConstrainedEdges, std::vector<size_t>& newElementsInRefinement)
 {
 #if defined(HAVE_MESH) 
-  constrainedDelaunayRefinement_(dim, tag, elementTags, constrainedEdges, nodeTags, sizeField, minRadius, newNodeTags, newCoords, newSizeField, newConstrainedEdges, newElementsInRefinement);
+  constrainedDelaunayRefinement_(dim, tag, elementTags, constrainedEdges, nodeTags, sizeField, minRadius, minQuality, newNodeTags, newCoords, newSizeField, newConstrainedEdges, newElementsInRefinement);
 #else
   Msg::Error("constrainedDelaunayRefinement requires the mesh module");
 #endif  

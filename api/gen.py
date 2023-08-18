@@ -570,6 +570,9 @@ mesh.add('generateMesh', doc, None, iint('dim'), iint('tag'), ibool('refine'), i
 doc = '''Triangulate the points given in the `coord' vector as pairs of u, v coordinates, and return the node tags (with numbering starting at 1) of the resulting triangles in `tri'. If specified, `edges' contains constrained edges in the mesh, given as pairs of nodes.'''
 mesh.add('triangulate', doc, None, ivectordouble('coord'), ivectorsize('edges'), ovectorsize('tri'))
 
+doc = '''Triangulate the nodes (if any) on discrete entity of tag `tag', assuming there is a boundary.'''
+mesh.add('triangulateNodesOnEntity', doc, None, iint('tag'))
+
 doc = '''Tetrahedralize the points given in the `coord' vector as x, y, z coordinates, concatenated, and return the node tags (with numbering starting at 1) of the resulting tetrahedra in `tetra'.'''
 mesh.add('tetrahedralize', doc, None, ivectordouble('coord'), ovectorsize('tetra'))
 
@@ -583,7 +586,7 @@ doc = '''Generate a mesh of the array of points `coord', constrained to the surf
 mesh.add('alphaShapesConstrained', doc, None, iint('dim'), iint('tag'), ivectordouble('coord'), ivectorsize('nodeTags'), idouble('alpha'), idouble('meanValue'), ovectorsize('tetrahedra'), ovectorvectorsize('domains'), ovectorvectorsize('boundaries'), ovectorsize('neighbors'), odouble('hMean'), ivectorint('controlTags'))
 
 doc = '''Apply a Delaunay refinement on entity of dimension `dim' and tag `tag'. `elementTags' contains a vector of the tags of the elements that need to be refined. `constrainedEdges' is a vector of size m*2 containing the edges that need to stay in the mesh, in the form of 2 successive nodes. `sizeField' is a vector containing the size at the nodes referenced by `nodeTags'. `minRadius' is the minimum allowed circumradius of elements in the mesh. An element that has a circumradius which is smaller than this value will not be refined. Return newly added nodes and corresponding size field, as well as the updated list of constrained edges and elements within the refinement.'''
-mesh.add('constrainedDelaunayRefinement', doc, None, iint('dim'), iint('tag'), ivectorsize('elementTags'), ivectorsize('constrainedEdges'), ivectorsize('nodeTags'), ivectordouble('sizeField'), idouble('minRadius'), ovectorsize('newNodeTags'), ovectordouble('newCoords'), ovectordouble('newSizeField'), ovectorvectorsize('newConstrainedEdges'), ovectorsize('newElementsInRefinement'))
+mesh.add('constrainedDelaunayRefinement', doc, None, iint('dim'), iint('tag'), ivectorsize('elementTags'), ivectorsize('constrainedEdges'), ivectorsize('nodeTags'), ivectordouble('sizeField'), idouble('minRadius'), idouble('minQuality'), ovectorsize('newNodeTags'), ovectordouble('newCoords'), ovectordouble('newSizeField'), ovectorvectorsize('newConstrainedEdges'), ovectorsize('newElementsInRefinement'))
 
 doc = '''alpha shape on the mesh of entity of dimension `dim' and tag `tag'.'''
 mesh.add('alphaShape', doc, None, iint('dim'), iint('tag'), idouble('alpha'), ivectorsize('nodeTags'), ivectordouble('sizeAtNodes'), ovectorvectorsize('elementTags'), ovectorvectorsize('edges'))

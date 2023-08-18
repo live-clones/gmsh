@@ -4988,6 +4988,25 @@ class model:
             return _ovectorsize(api_tri_, api_tri_n_.value)
 
         @staticmethod
+        def triangulateNodesOnEntity(tag):
+            """
+            gmsh.model.mesh.triangulateNodesOnEntity(tag)
+
+            Triangulate the nodes (if any) on discrete entity of tag `tag', assuming
+            there is a boundary.
+
+            Types:
+            - `tag': integer
+            """
+            ierr = c_int()
+            lib.gmshModelMeshTriangulateNodesOnEntity(
+                c_int(tag),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+        triangulate_nodes_on_entity = triangulateNodesOnEntity
+
+        @staticmethod
         def tetrahedralize(coord):
             """
             gmsh.model.mesh.tetrahedralize(coord)
@@ -5162,9 +5181,9 @@ class model:
         alpha_shapes_constrained = alphaShapesConstrained
 
         @staticmethod
-        def constrainedDelaunayRefinement(dim, tag, elementTags, constrainedEdges, nodeTags, sizeField, minRadius):
+        def constrainedDelaunayRefinement(dim, tag, elementTags, constrainedEdges, nodeTags, sizeField, minRadius, minQuality):
             """
-            gmsh.model.mesh.constrainedDelaunayRefinement(dim, tag, elementTags, constrainedEdges, nodeTags, sizeField, minRadius)
+            gmsh.model.mesh.constrainedDelaunayRefinement(dim, tag, elementTags, constrainedEdges, nodeTags, sizeField, minRadius, minQuality)
 
             Apply a Delaunay refinement on entity of dimension `dim' and tag `tag'.
             `elementTags' contains a vector of the tags of the elements that need to be
@@ -5187,6 +5206,7 @@ class model:
             - `nodeTags': vector of sizes
             - `sizeField': vector of doubles
             - `minRadius': double
+            - `minQuality': double
             - `newNodeTags': vector of sizes
             - `newCoords': vector of doubles
             - `newSizeField': vector of doubles
@@ -5211,6 +5231,7 @@ class model:
                 api_nodeTags_, api_nodeTags_n_,
                 api_sizeField_, api_sizeField_n_,
                 c_double(minRadius),
+                c_double(minQuality),
                 byref(api_newNodeTags_), byref(api_newNodeTags_n_),
                 byref(api_newCoords_), byref(api_newCoords_n_),
                 byref(api_newSizeField_), byref(api_newSizeField_n_),

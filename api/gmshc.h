@@ -1589,6 +1589,11 @@ GMSH_API void gmshModelMeshTriangulate(const double * coord, const size_t coord_
                                        size_t ** tri, size_t * tri_n,
                                        int * ierr);
 
+/* Triangulate the nodes (if any) on discrete entity of tag `tag', assuming
+ * there is a boundary. */
+GMSH_API void gmshModelMeshTriangulateNodesOnEntity(const int tag,
+                                                    int * ierr);
+
 /* Tetrahedralize the points given in the `coord' vector as x, y, z
  * coordinates, concatenated, and return the node tags (with numbering
  * starting at 1) of the resulting tetrahedra in `tetra'. */
@@ -1666,6 +1671,7 @@ GMSH_API void gmshModelMeshConstrainedDelaunayRefinement(const int dim,
                                                          const size_t * nodeTags, const size_t nodeTags_n,
                                                          const double * sizeField, const size_t sizeField_n,
                                                          const double minRadius,
+                                                         const double minQuality,
                                                          size_t ** newNodeTags, size_t * newNodeTags_n,
                                                          double ** newCoords, size_t * newCoords_n,
                                                          double ** newSizeField, size_t * newSizeField_n,

@@ -4400,6 +4400,25 @@ function triangulate(coord, edges)
 end
 
 """
+    gmsh.model.mesh.triangulateNodesOnEntity(tag)
+
+Triangulate the nodes (if any) on discrete entity of tag `tag`, assuming there
+is a boundary.
+
+Types:
+ - `tag`: integer
+"""
+function triangulateNodesOnEntity(tag)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshTriangulateNodesOnEntity, gmsh.lib), Cvoid,
+          (Cint, Ptr{Cint}),
+          tag, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+const triangulate_nodes_on_entity = triangulateNodesOnEntity
+
+"""
     gmsh.model.mesh.tetrahedralize(coord)
 
 Tetrahedralize the points given in the `coord` vector as x, y, z coordinates,
@@ -4565,7 +4584,7 @@ end
 const alpha_shapes_constrained = alphaShapesConstrained
 
 """
-    gmsh.model.mesh.constrainedDelaunayRefinement(dim, tag, elementTags, constrainedEdges, nodeTags, sizeField, minRadius)
+    gmsh.model.mesh.constrainedDelaunayRefinement(dim, tag, elementTags, constrainedEdges, nodeTags, sizeField, minRadius, minQuality)
 
 Apply a Delaunay refinement on entity of dimension `dim` and tag `tag`.
 `elementTags` contains a vector of the tags of the elements that need to be
@@ -4587,13 +4606,14 @@ Types:
  - `nodeTags`: vector of sizes
  - `sizeField`: vector of doubles
  - `minRadius`: double
+ - `minQuality`: double
  - `newNodeTags`: vector of sizes
  - `newCoords`: vector of doubles
  - `newSizeField`: vector of doubles
  - `newConstrainedEdges`: vector of vectors of sizes
  - `newElementsInRefinement`: vector of sizes
 """
-function constrainedDelaunayRefinement(dim, tag, elementTags, constrainedEdges, nodeTags, sizeField, minRadius)
+function constrainedDelaunayRefinement(dim, tag, elementTags, constrainedEdges, nodeTags, sizeField, minRadius, minQuality)
     api_newNodeTags_ = Ref{Ptr{Csize_t}}()
     api_newNodeTags_n_ = Ref{Csize_t}()
     api_newCoords_ = Ref{Ptr{Cdouble}}()
@@ -4607,8 +4627,8 @@ function constrainedDelaunayRefinement(dim, tag, elementTags, constrainedEdges, 
     api_newElementsInRefinement_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshConstrainedDelaunayRefinement, gmsh.lib), Cvoid,
-          (Cint, Cint, Ptr{Csize_t}, Csize_t, Ptr{Csize_t}, Csize_t, Ptr{Csize_t}, Csize_t, Ptr{Cdouble}, Csize_t, Cdouble, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Csize_t}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cint}),
-          dim, tag, convert(Vector{Csize_t}, elementTags), length(elementTags), convert(Vector{Csize_t}, constrainedEdges), length(constrainedEdges), convert(Vector{Csize_t}, nodeTags), length(nodeTags), convert(Vector{Cdouble}, sizeField), length(sizeField), minRadius, api_newNodeTags_, api_newNodeTags_n_, api_newCoords_, api_newCoords_n_, api_newSizeField_, api_newSizeField_n_, api_newConstrainedEdges_, api_newConstrainedEdges_n_, api_newConstrainedEdges_nn_, api_newElementsInRefinement_, api_newElementsInRefinement_n_, ierr)
+          (Cint, Cint, Ptr{Csize_t}, Csize_t, Ptr{Csize_t}, Csize_t, Ptr{Csize_t}, Csize_t, Ptr{Cdouble}, Csize_t, Cdouble, Cdouble, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Csize_t}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cint}),
+          dim, tag, convert(Vector{Csize_t}, elementTags), length(elementTags), convert(Vector{Csize_t}, constrainedEdges), length(constrainedEdges), convert(Vector{Csize_t}, nodeTags), length(nodeTags), convert(Vector{Cdouble}, sizeField), length(sizeField), minRadius, minQuality, api_newNodeTags_, api_newNodeTags_n_, api_newCoords_, api_newCoords_n_, api_newSizeField_, api_newSizeField_n_, api_newConstrainedEdges_, api_newConstrainedEdges_n_, api_newConstrainedEdges_nn_, api_newElementsInRefinement_, api_newElementsInRefinement_n_, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     newNodeTags = unsafe_wrap(Array, api_newNodeTags_[], api_newNodeTags_n_[], own = true)
     newCoords = unsafe_wrap(Array, api_newCoords_[], api_newCoords_n_[], own = true)

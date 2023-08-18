@@ -712,6 +712,8 @@ module gmsh
         gmshModelMeshGenerateMesh
     procedure, nopass :: triangulate => &
         gmshModelMeshTriangulate
+    procedure, nopass :: triangulateNodesOnEntity => &
+        gmshModelMeshTriangulateNodesOnEntity
     procedure, nopass :: tetrahedralize => &
         gmshModelMeshTetrahedralize
     procedure, nopass :: alphaShapes => &
@@ -7268,6 +7270,25 @@ module gmsh
       api_tri_n_)
   end subroutine gmshModelMeshTriangulate
 
+  !> Triangulate the nodes (if any) on discrete entity of tag `tag', assuming
+  !! there is a boundary.
+  subroutine gmshModelMeshTriangulateNodesOnEntity(tag, &
+                                                   ierr)
+    interface
+    subroutine C_API(tag, &
+                     ierr_) &
+      bind(C, name="gmshModelMeshTriangulateNodesOnEntity")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), value, intent(in) :: tag
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer, intent(in) :: tag
+    integer(c_int), intent(out), optional :: ierr
+    call C_API(tag=int(tag, c_int), &
+         ierr_=ierr)
+  end subroutine gmshModelMeshTriangulateNodesOnEntity
+
   !> Tetrahedralize the points given in the `coord' vector as x, y, z
   !! coordinates, concatenated, and return the node tags (with numbering
   !! starting at 1) of the resulting tetrahedra in `tetra'.
@@ -7604,6 +7625,7 @@ module gmsh
                                                         nodeTags, &
                                                         sizeField, &
                                                         minRadius, &
+                                                        minQuality, &
                                                         newNodeTags, &
                                                         newCoords, &
                                                         newSizeField, &
@@ -7623,6 +7645,7 @@ module gmsh
                      api_sizeField_, &
                      api_sizeField_n_, &
                      minRadius, &
+                     minQuality, &
                      api_newNodeTags_, &
                      api_newNodeTags_n_, &
                      api_newCoords_, &
@@ -7648,6 +7671,7 @@ module gmsh
       real(c_double), dimension(*) :: api_sizeField_
       integer(c_size_t), value, intent(in) :: api_sizeField_n_
       real(c_double), value, intent(in) :: minRadius
+      real(c_double), value, intent(in) :: minQuality
       type(c_ptr), intent(out) :: api_newNodeTags_
       integer(c_size_t), intent(out) :: api_newNodeTags_n_
       type(c_ptr), intent(out) :: api_newCoords_
@@ -7669,6 +7693,7 @@ module gmsh
     integer(c_size_t), dimension(:), intent(in) :: nodeTags
     real(c_double), dimension(:), intent(in) :: sizeField
     real(c_double), intent(in) :: minRadius
+    real(c_double), intent(in) :: minQuality
     integer(c_size_t), dimension(:), allocatable, intent(out) :: newNodeTags
     real(c_double), dimension(:), allocatable, intent(out) :: newCoords
     real(c_double), dimension(:), allocatable, intent(out) :: newSizeField
@@ -7697,6 +7722,7 @@ module gmsh
          api_sizeField_=sizeField, &
          api_sizeField_n_=size_gmsh_double(sizeField), &
          minRadius=real(minRadius, c_double), &
+         minQuality=real(minQuality, c_double), &
          api_newNodeTags_=api_newNodeTags_, &
          api_newNodeTags_n_=api_newNodeTags_n_, &
          api_newCoords_=api_newCoords_, &

@@ -2777,6 +2777,15 @@ namespace gmsh { // Top-level functions
         tri.assign(api_tri_, api_tri_ + api_tri_n_); gmshFree(api_tri_);
       }
 
+      // Triangulate the nodes (if any) on discrete entity of tag `tag', assuming
+      // there is a boundary.
+      inline void triangulateNodesOnEntity(const int tag)
+      {
+        int ierr = 0;
+        gmshModelMeshTriangulateNodesOnEntity(tag, &ierr);
+        if(ierr) throwLastError();
+      }
+
       // Tetrahedralize the points given in the `coord' vector as x, y, z
       // coordinates, concatenated, and return the node tags (with numbering
       // starting at 1) of the resulting tetrahedra in `tetra'.
@@ -2905,6 +2914,7 @@ namespace gmsh { // Top-level functions
                                                 const std::vector<std::size_t> & nodeTags,
                                                 const std::vector<double> & sizeField,
                                                 const double minRadius,
+                                                const double minQuality,
                                                 std::vector<std::size_t> & newNodeTags,
                                                 std::vector<double> & newCoords,
                                                 std::vector<double> & newSizeField,
@@ -2921,7 +2931,7 @@ namespace gmsh { // Top-level functions
         double *api_newSizeField_; size_t api_newSizeField_n_;
         size_t **api_newConstrainedEdges_; size_t *api_newConstrainedEdges_n_, api_newConstrainedEdges_nn_;
         size_t *api_newElementsInRefinement_; size_t api_newElementsInRefinement_n_;
-        gmshModelMeshConstrainedDelaunayRefinement(dim, tag, api_elementTags_, api_elementTags_n_, api_constrainedEdges_, api_constrainedEdges_n_, api_nodeTags_, api_nodeTags_n_, api_sizeField_, api_sizeField_n_, minRadius, &api_newNodeTags_, &api_newNodeTags_n_, &api_newCoords_, &api_newCoords_n_, &api_newSizeField_, &api_newSizeField_n_, &api_newConstrainedEdges_, &api_newConstrainedEdges_n_, &api_newConstrainedEdges_nn_, &api_newElementsInRefinement_, &api_newElementsInRefinement_n_, &ierr);
+        gmshModelMeshConstrainedDelaunayRefinement(dim, tag, api_elementTags_, api_elementTags_n_, api_constrainedEdges_, api_constrainedEdges_n_, api_nodeTags_, api_nodeTags_n_, api_sizeField_, api_sizeField_n_, minRadius, minQuality, &api_newNodeTags_, &api_newNodeTags_n_, &api_newCoords_, &api_newCoords_n_, &api_newSizeField_, &api_newSizeField_n_, &api_newConstrainedEdges_, &api_newConstrainedEdges_n_, &api_newConstrainedEdges_nn_, &api_newElementsInRefinement_, &api_newElementsInRefinement_n_, &ierr);
         if(ierr) throwLastError();
         gmshFree(api_elementTags_);
         gmshFree(api_constrainedEdges_);

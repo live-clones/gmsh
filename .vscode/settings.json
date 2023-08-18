@@ -90,7 +90,8 @@
         "stop_token": "cpp",
         "cinttypes": "cpp",
         "variant": "cpp",
-        "alignedvector3": "cpp"
+        "alignedvector3": "cpp",
+        "math.h": "c"
     },
     "workbench.colorTheme": "Solarized Light"
 }

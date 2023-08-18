@@ -2378,6 +2378,17 @@ GMSH_API void gmshModelMeshTriangulate(const double * coord, const size_t coord_
   }
 }
 
+GMSH_API void gmshModelMeshTriangulateNodesOnEntity(const int tag, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::mesh::triangulateNodesOnEntity(tag);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API void gmshModelMeshTetrahedralize(const double * coord, const size_t coord_n, size_t ** tetra, size_t * tetra_n, int * ierr)
 {
   if(ierr) *ierr = 0;
@@ -2449,7 +2460,7 @@ GMSH_API void gmshModelMeshAlphaShapesConstrained(const int dim, const int tag, 
   }
 }
 
-GMSH_API void gmshModelMeshConstrainedDelaunayRefinement(const int dim, const int tag, const size_t * elementTags, const size_t elementTags_n, const size_t * constrainedEdges, const size_t constrainedEdges_n, const size_t * nodeTags, const size_t nodeTags_n, const double * sizeField, const size_t sizeField_n, const double minRadius, size_t ** newNodeTags, size_t * newNodeTags_n, double ** newCoords, size_t * newCoords_n, double ** newSizeField, size_t * newSizeField_n, size_t *** newConstrainedEdges, size_t ** newConstrainedEdges_n, size_t *newConstrainedEdges_nn, size_t ** newElementsInRefinement, size_t * newElementsInRefinement_n, int * ierr)
+GMSH_API void gmshModelMeshConstrainedDelaunayRefinement(const int dim, const int tag, const size_t * elementTags, const size_t elementTags_n, const size_t * constrainedEdges, const size_t constrainedEdges_n, const size_t * nodeTags, const size_t nodeTags_n, const double * sizeField, const size_t sizeField_n, const double minRadius, const double minQuality, size_t ** newNodeTags, size_t * newNodeTags_n, double ** newCoords, size_t * newCoords_n, double ** newSizeField, size_t * newSizeField_n, size_t *** newConstrainedEdges, size_t ** newConstrainedEdges_n, size_t *newConstrainedEdges_nn, size_t ** newElementsInRefinement, size_t * newElementsInRefinement_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
@@ -2462,7 +2473,7 @@ GMSH_API void gmshModelMeshConstrainedDelaunayRefinement(const int dim, const in
     std::vector<double> api_newSizeField_;
     std::vector<std::vector<std::size_t> > api_newConstrainedEdges_;
     std::vector<std::size_t> api_newElementsInRefinement_;
-    gmsh::model::mesh::constrainedDelaunayRefinement(dim, tag, api_elementTags_, api_constrainedEdges_, api_nodeTags_, api_sizeField_, minRadius, api_newNodeTags_, api_newCoords_, api_newSizeField_, api_newConstrainedEdges_, api_newElementsInRefinement_);
+    gmsh::model::mesh::constrainedDelaunayRefinement(dim, tag, api_elementTags_, api_constrainedEdges_, api_nodeTags_, api_sizeField_, minRadius, minQuality, api_newNodeTags_, api_newCoords_, api_newSizeField_, api_newConstrainedEdges_, api_newElementsInRefinement_);
     vector2ptr(api_newNodeTags_, newNodeTags, newNodeTags_n);
     vector2ptr(api_newCoords_, newCoords, newCoords_n);
     vector2ptr(api_newSizeField_, newSizeField, newSizeField_n);
