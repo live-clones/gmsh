@@ -657,6 +657,13 @@ void GFace::computeMeanPlane()
         for(std::size_t i = 0; i < e->mesh_vertices.size(); i++)
           pts.push_back(e->mesh_vertices[i]->point());
       }
+      else if(e->geomType() == GEntity::DiscreteCurve ||
+              e->geomType() == GEntity::BoundaryLayerCurve) {
+        if(e->getBeginVertex()) {
+          GPoint p1 = e->getBeginVertex()->point();
+          pts.push_back(SPoint3(p1.x(), p1.y(), p1.z()));
+        }
+      }
       else {
         Range<double> b = e->parBounds(0);
         GPoint p1 = e->point(b.low() + 0.333 * (b.high() - b.low()));
