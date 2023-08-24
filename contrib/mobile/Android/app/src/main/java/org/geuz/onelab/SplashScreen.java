@@ -86,8 +86,9 @@ public class SplashScreen extends Activity {
         File f = new File(path, ze.getName());
         String canonicalPath = f.getCanonicalPath();
         if (!canonicalPath.startsWith(path)) {
-          Log.d("Models", "Skipping file with path traversal characters");
-          continue;
+          Log.d("Models", "Warning file with path traversal characters? Check this!");
+          //Log.d("Models", "Skipping file with path traversal characters");
+          //continue;
         }
         String filename = ze.getName();
         if(ze.isDirectory()) {
