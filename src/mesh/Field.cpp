@@ -2797,7 +2797,7 @@ BoundaryLayerField::BoundaryLayerField()
                         &updateNeeded);
   options["FanPointsSizesList"] = new FieldOptionList(
     _fanSizes,
-    "Number of elements in the fan for each fan node. "
+    "Number of elements in the fan for each fan point. "
     "If not present default value Mesh.BoundaryLayerFanElements",
     &updateNeeded);
   options["PointsList"] = new FieldOptionList(
