@@ -73,7 +73,7 @@ benchmark is appended to a file with the same name as the .geo script, with the
   gmsh spec.geo -option gmsh.opts -nt 0 -clscale 0.05 -algo del2d -algo hxt -cpu -
 
   # choi.geo:
-  # 1D, 2D and 3D unstructured mesh: complex model
+  # 1D, 2D and 3D unstructured mesh, complex model
   gmsh choi.geo -option gmsh.opts -nt 0 -cpu -
 
   # TieAnchor520.geo
