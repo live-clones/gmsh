@@ -26,7 +26,9 @@ with the user behavior and flow of 3D-meshing in general; since the resulting
 mesh model is used downstream in 3D workspaces and only needs to be sufficiently
 dense for CAD work, and not necessarily exact.
 
-Here are the current cmdlines used for reference benchmarks:
+Here are the current cmdlines used for reference benchmarks. The result of the
+benchmark is appended to a file with the same name as the .geo script, with the
+.geo extension changed to ".val".
 
 * refrate (single threaded, within 1.8GB memory footprint):
 

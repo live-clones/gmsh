@@ -10341,14 +10341,14 @@ Mesh.Algorithm = 6;
 Mesh.MeshSizeFactor = 0.2;
 //Mesh.ElementOrder = 2;
 Mesh 2;
-file1 = "spec.val";
 n = 5.7e5;
+file = StrCat(StrPrefix(StrRelative(General.FileName)), ".val");
 Printf("Number of tri elements is %g (estimated %g)", Mesh.NbTriangles, n);
 If ( Fabs(Mesh.NbTriangles - n) / Mesh.NbTriangles > 0.2 )
-  Printf("Error: Number of tri elements is %g (estimated %g), outside of range", Mesh.NbTriangles, n) >> file1;
+  Printf("Error: Number of tri elements is %g (estimated %g), outside of range", Mesh.NbTriangles, n) >> file;
   Error("Number of tri elements is %g (estimated %g), outside of range", Mesh.NbTriangles, n);
 Else
-  Printf("Successful Verification of requested %g elements", n) >> file1;
+  Printf("Successful Verification of requested %g elements", n) >> file;
 EndIf
 
 // ********** End SPEC validation **********
