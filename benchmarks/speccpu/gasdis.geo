@@ -214,3 +214,21 @@ Plane Surface(625) = {624};
 
 Surface Loop(628) = {571,569,567,-440,-445,-405,-400,395,425,-420,-410,385,621,-380,-415,455,573,353,-333,308,619,-323,318,348,-343,358,-328,-368,373,582,575,-579,-236,241,-246,-266,-256,231,617,-251,281,296,-291,-590,164,-169,-189,-179,154,615,-174,204,219,-214,592,-594,-82,87,-92,-112,-102,77,613,-97,127,142,-137,604,47,-49,-57,-53,43,-611,-51,63,69,-67,-608,71,-65,-41,-55,-45,61,602,-600,-132,147,-107,-72,606,59,122,-596,224,-209,-149,-184,-598,117,-159,199,-586,-588,194,301,-286,-584,-226,-261,276,-581,378,-363,-303,-338,271,-313,450,435,-390,430,-559,563,565,-561,527,-522,-482,-477,472,502,-497,-487,462,623,-457,-517,532,-492,512,-467,507,-625};
 Volume(629) = {628};
+
+// ********** Begin SPEC validation **********
+
+Mesh.MeshSizeFactor = 0.9;
+Mesh.Algorithm = 5; // del2d
+Mesh.Algorithm3D = 10; // hxt
+Mesh 3;
+file1 = "spec.val";
+n = 4.5e6;
+Printf("Number of tet elements is %g (estimated %g)", Mesh.NbTetrahedra, n);
+If ( Fabs(Mesh.NbTetrahedra - n) / Mesh.NbTetrahedra > 0.2 )
+  Printf("Error: Number of tet elements is %g (estimated %g), outside of range", Mesh.NbTetrahedra, n) >> file1;
+  Error("Number of tet elements is %g (estimated %g), outside of range", Mesh.NbTetrahedra, n);
+Else
+  Printf("Successful Verification of requested %g elements", n) >> file1;
+EndIf
+
+// ********** End SPEC validation **********

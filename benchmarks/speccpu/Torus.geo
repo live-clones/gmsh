@@ -14,3 +14,21 @@ Plane Surface(6) = {5};
 
 Extrude { {0.0,1,0}, {0,0.0,0.0}, 1*3.14159} { Surface{6}; }
 //Recombine Surface {6, 27, 23, 15, 19, 28};
+
+// ********** Begin SPEC validation **********
+
+Mesh.MeshSizeFactor = 0.3;
+Mesh.Algorithm = 5; // del2d
+Mesh.Algorithm3D = 10; // hxt
+Mesh 3;
+file1 = "spec.val";
+n = 3.3e6;
+Printf("Number of tet elements is %g (estimated %g)", Mesh.NbTetrahedra, n);
+If ( Fabs(Mesh.NbTetrahedra - n) / Mesh.NbTetrahedra > 0.2 )
+  Printf("Error: Number of tet elements is %g (estimated %g), outside of range", Mesh.NbTetrahedra, n) >> file1;
+  Error("Number of tet elements is %g (estimated %g), outside of range", Mesh.NbTetrahedra, n);
+Else
+  Printf("Successful Verification of requested %g elements", n) >> file1;
+EndIf
+
+// ********** End SPEC validation **********
