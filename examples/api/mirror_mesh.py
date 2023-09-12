@@ -29,7 +29,7 @@ def transform(m, offset_entity, offset_node, offset_element, tx, ty, tz):
     for e in sorted(m):
         gmsh.model.addDiscreteEntity(
             e[0], e[1] + offset_entity,
-            [(abs(b[1]) + offset_entity) * math.copysign(1, b[1]) for b in m[e][0]])
+            [(abs(b[1]) + offset_entity) * int(math.copysign(1, b[1])) for b in m[e][0]])
         coord = []
         for i in range(0, len(m[e][1][1]), 3):
             x = m[e][1][1][i] * tx
@@ -39,10 +39,10 @@ def transform(m, offset_entity, offset_node, offset_element, tx, ty, tz):
             coord.append(y)
             coord.append(z)
         gmsh.model.mesh.addNodes(e[0], e[1] + offset_entity,
-                                 m[e][1][0] + offset_node, coord)
+                                 [n + offset_node for n in m[e][1][0]], coord)
         gmsh.model.mesh.addElements(e[0], e[1] + offset_entity, m[e][2][0],
-                                    [t + offset_element for t in m[e][2][1]],
-                                    [n + offset_node for n in m[e][2][2]])
+                                    [[t + offset_element for t in typ] for typ in m[e][2][1]],
+                                    [[n + offset_node for n in typ] for typ in m[e][2][2]])
         if (tx * ty * tz) < 0: # reverse the orientation
             gmsh.model.mesh.reverse([(e[0], e[1] + offset_entity)])
 
