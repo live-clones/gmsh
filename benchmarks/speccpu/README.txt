@@ -41,7 +41,7 @@ benchmark is appended to a file with the same name as the .geo script, with the
   # 1D, 2D and 3D unstructured mesh, single volume, few curved surfaces
   gmsh Torus.geo -option gmsh.opts -nt 1 -cpu -
 
-  gasdis.geo
+  # gasdis.geo
   # 1D, 2D and 3D unstructured mesh, single volume, many curved surfaces
   gmsh gasdis.geo -option gmsh.opts -nt 1 -cpu -
 
