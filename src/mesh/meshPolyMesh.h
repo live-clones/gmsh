@@ -163,6 +163,7 @@ public:
     std::map<HalfEdge *,HalfEdge *> hs;
     for ( auto h : p.hedges){
       HalfEdge *newh = new HalfEdge (vs[h->v]);
+      newh->v->he = newh;
       newh->data = h->data;
       hs[h] = newh;
       hedges.push_back(newh);
@@ -228,7 +229,7 @@ public:
   }
 
   inline void vertexNeighbors(const Vertex* v, std::vector<Vertex* >* vertexNeighbors=NULL, bool* onBoundary=NULL){
-    if(onBoundary) *onBoundary = true;
+    if(onBoundary) *onBoundary = false;
     HalfEdge* bndHe = nullptr;
     std::vector<Vertex* > vs;
     HalfEdge* he = v->he;
@@ -283,12 +284,14 @@ public:
 
   inline HalfEdge *getEdge(Vertex *v0, Vertex *v1)
   {
+    int iter = 0;
     HalfEdge *he = v0->he;
     do {
       if(he->next->v == v1) return he;
       he = he->opposite;
       if(he == NULL) return NULL;
       he = he->next;
+      if (iter++ >100)return NULL;
     } while(he != v0->he);
     return NULL;
   }
@@ -333,6 +336,13 @@ public:
     f->he = he0;
   }
 
+  bool deleteVertexAndRemeshCavity (PolyMesh::Vertex *v, std::vector<std::vector<Vertex*> > &triangles);
+  bool deleteVertexAndRemeshCavity2 (PolyMesh::Vertex *v, std::vector<std::vector<Vertex*> > &triangles);
+  void createTriangle(Vertex *v0, Vertex *v1, Vertex *v2);
+  void deleteFace(PolyMesh::Face* f);
+  void deleteHalfEdge (PolyMesh::HalfEdge* he);
+  void deleteIsolatedVertex (PolyMesh::Vertex* he);
+  
   // swap without asking questions
   //
   //         he1
@@ -950,11 +960,8 @@ public:
     fastMarching(seeds,d);
   }
 
-  /* void exactGeodesics (const PolyMesh::VertexOnFace &_start, */
-  /* 		       std::vector<PolyMesh::VertexOnFace> &incident_edges, */
-  /* 		       double proxyDistance, */
-  /* 		       int save_, */
-  /* 		       FILE *f);   */
+  int decimate (double d);
+  
  };
 
 struct HalfEdgePtrLessThan {

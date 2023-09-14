@@ -331,6 +331,466 @@ void PolyMesh::fastMarching (std::vector<Vertex *> &seeds, std::map<Vertex*,doub
   print__ ("fm.pos", this, ls);
 }
 
+/// DECIMATION OF TRIANGLE MESHES
+// Will Schroeder et al. -- 1992 -- Computer Graphics
+
+int PolyMesh::decimate (double thresholdDistance){
+
+  Msg::Info("Decimating a surface with %8lu vertices (threshold distance %12.5E)",vertices.size(),thresholdDistance);
+
+  size_t nbRemove = 0;
+  for (auto v : vertices) {
+    std::vector<Vertex* > neigh;
+    bool onBoundary = false;
+    vertexNeighbors (v, &neigh,&onBoundary);
+    if (onBoundary)continue;
+    SVector3 nrm (0,0,0);
+    SVector3 cog (0,0,0);
+    double sumai = 0;
+    for (size_t i=0;i<neigh.size();i++){
+      Vertex *v0 = neigh[i];
+      Vertex *v1 = neigh[(i+1)%3];
+      SVector3 t1 = v1->position - v->position;
+      SVector3 t0 = v0->position - v->position;
+      SVector3 ni = crossprod (t1,t0);
+      double ai = ni.norm();
+      sumai += ai;
+      cog += (v0->position*ai);
+      nrm += ni;
+    }
+    cog *= (1./sumai);
+    nrm.normalize();
+    double d = fabs(dot(nrm, v->position - cog));
+
+    //    printf("vertex %d distance %12.5E\n",v->data,d);
+    
+    if (d > thresholdDistance) continue;
+    std::stack<std::vector<Vertex*> > loops;
+    std::vector<std::vector<Vertex*> > triangles;
+    loops.push (neigh);
+    
+    bool remove_vertex = true;
+    
+    while (!loops.empty()){
+      std::vector<Vertex*> loop = loops.top();
+      //      printf("total size %lu loop size %lu loop :",loops.size(),loop.size());
+      //      for (auto aaa : loop)printf("%d ",aaa->data);
+      //      printf("\n");
+      loops.pop();
+      if (loop.size() == 3){
+	std::reverse(loop.begin(),loop.end());
+	triangles.push_back(loop);
+      }
+      else { // split the loop
+	int best_start = -1;
+	int best_end   = -1;
+	double best_aspect_ratio = -1.0; 
+	for (size_t _start = 0 ; _start < loop.size() ; _start ++){
+	  for (size_t end = _start+2 ; end < _start + loop.size() - 1 ; end++){
+	    size_t _end = end %  loop.size();
+	    
+	    
+	    // only consider split edge once
+	    if (_start < _end){
+	      Vertex *vi = loop[_start];
+	      Vertex *vj = loop[_end];
+	      
+	      //	      printf("CUTTING WITH %d %d\n",vi->data,vj->data);
+	      
+	      SVector3 t = vj->position - vi->position;
+	      double L = t.norm();
+	      t.normalize();
+	      SVector3 b = crossprod (t,nrm);
+	      double aspect_ratio = 1.e22;
+	      bool sign_consistency = true;
+	      double firstDist;
+	      for (size_t j=_start+1 ; j < _end ; j++){
+		Vertex *vk = loop[j%loop.size()];
+		SVector3 tik = vk->position - vi->position;
+		double dist = dot (b,tik);
+		//	printf("side 1 vertex %d dist %g\n",vk->data,dist);
+		if (j == _start+1)firstDist = dist;
+		else if (dist*firstDist < 0)sign_consistency = false;
+		aspect_ratio = std::min ( aspect_ratio , fabs(dist)/L);
+	      }
+	      firstDist = -firstDist;
+	      for (size_t j=_end+1 ; j < _start+loop.size(); j++){
+		Vertex *vk = loop[j%loop.size()];
+		SVector3 tik = vk->position - vi->position;
+		double dist = dot (b,tik);
+		//		printf("side 2 vertex %d dist %g\n",vk->data,dist);
+		//		if (j == _end+1)firstDist = dist;
+		if (dist*firstDist < 0)sign_consistency = false;
+		aspect_ratio = std::min ( aspect_ratio , fabs(dist)/L);				
+	      }
+	      //	      printf("considering %d %d -- %g %g %g AR %12.5E\n",vi->data,vj->data,_end,b.x(),b.y(),b.z(),aspect_ratio);
+	      if (!sign_consistency)continue;
+	      if (aspect_ratio < 0.1)continue;
+	      if (aspect_ratio > best_aspect_ratio){
+		best_aspect_ratio = aspect_ratio;
+		best_start = _start;
+		best_end = _end;
+	      }
+	    }
+	  }
+	}
+	if (best_start >= 0){
+	  std::vector<Vertex*> newLoop;
+	  for (size_t i = best_start ; i < best_end+1 ; i++)newLoop.push_back(loop[i%loop.size()]);
+	  loops.push(newLoop);
+	  newLoop.clear();
+	  for (size_t i = best_end ; i < best_start + loop.size()+1 ; i++)newLoop.push_back(loop[i%loop.size()]);
+	  loops.push(newLoop);
+	}
+	else  {
+	  remove_vertex = false;
+	  break;
+	}
+      }
+    }
+    
+    // impossible to unrefine that pattern so continue
+    
+    if (!remove_vertex)continue;
+    
+    if (deleteVertexAndRemeshCavity2 (v,triangles)){
+      v->he = nullptr;
+      nbRemove++;
+    }
+  }
+
+  if (nbRemove == 0)return 0;
+  
+  {
+    std::vector<Vertex*> new_v;
+    for (auto v : vertices){
+      if (v->he == nullptr){delete v;}
+      else new_v.push_back(v);
+    }
+    vertices = new_v;
+    std::vector<HalfEdge*> new_edges;
+    for (auto e : hedges){
+      if (e->v == nullptr){delete e;}
+      else new_edges.push_back(e);
+    }
+    hedges = new_edges;
+    std::vector<Face*> new_faces;
+    for (auto f : faces){
+      if (f->he == nullptr){delete f;}//delete f;
+      else new_faces.push_back(f);
+    }
+    faces = new_faces;      
+  }
+  
+  Msg::Debug("Pass done -- %8lu vertices removed \n",nbRemove);
+  
+  return nbRemove;
+}
+
+
+/*void PolyMesh::deleteIsolatedVertex (PolyMesh::Vertex* he){
+  auto it = std::find(vertices.begin(), vertices.end(), he);
+  if (it != vertices.end()) vertices.erase(it);
+  delete he;
+}
+*/
+
+/*
+void PolyMesh::deleteHalfEdge (PolyMesh::HalfEdge* he){
+  //  printf("%p %p\n",he,he->v);
+  //  printf("deleting half edge %d %d\n",he->v->data,he->next->v->data);
+  auto it = std::find(hedges.begin(), hedges.end(), he);
+  if (it != hedges.end()) hedges.erase(it);
+  if (he->opposite) {
+    //    printf("vertex %d  has currently edge %d %d --> %d %d\n",he->v->data,
+    //	   he->v->he->v->data,he->v->he->next->v->data,
+    //	   he->opposite->next->v->data,
+    //	   he->opposite->next->next->v->data);
+    he->v->he = he->opposite->next;
+    he->opposite->opposite = nullptr;
+  }
+  delete he;
+}
+
+
+void PolyMesh::deleteFace (PolyMesh::Face* f){
+  HalfEdge* he0 = f->he;
+  HalfEdge* he1 = he0->next;
+  HalfEdge* he2 = he1->next;
+  //  printf("deleting triangle %d %d %d\n",he0->v->data,he1->v->data,he2->v->data);
+  deleteHalfEdge (he0);
+  deleteHalfEdge (he1);
+  deleteHalfEdge (he2);
+  auto it = std::find(faces.begin(), faces.end(), f);
+  if (it != faces.end()) faces.erase(it);
+  delete f;
+  return;
+}
+
+
+// A bousiller
+PolyMesh::HalfEdge * getEdgeBad (PolyMesh *pm, PolyMesh::Vertex *v0, PolyMesh::Vertex *v1){
+  //  PolyMesh::HalfEdge *he = pm->getEdge(v0,v1);
+  //  if (he)return he;
+  for (auto h : pm->hedges){
+    if (h->v == v0 && h->next->v == v1)return h;
+  }
+  return nullptr;
+}
+*/
+// A refaire
+
+bool PolyMesh::deleteVertexAndRemeshCavity2 (Vertex *toDelete,
+					    std::vector<std::vector<Vertex*> > &triangles){
+
+
+  HalfEdge* he = toDelete->he;
+  std::vector<Face*> old_faces;
+  std::vector<HalfEdge*> bnd;
+  std::vector<HalfEdge*> old_inner;
+  do {
+    old_faces.push_back(he->f);
+    bnd.push_back(he->next);
+    old_inner.push_back(he);
+    if (he->opposite == NULL) return false; // for now no boundary considered
+    else {
+      he = he->opposite->next;
+    }
+  } while(he != toDelete->he);
+
+  // If one of the new inner edges exist outside the cavity --> topological change --> exit
+  // If one of the new triangles exist outside the cavity --> topological change --> exit
+
+  //  for (auto t : triangles){
+  //    auto temp = t[0];
+  //    t[0] = t[2];
+  //    t[2] = temp;
+  //  }
+  
+  //  for (auto e : bnd)printf("(%d,%d)",e->v->data,e->next->v->data);
+  //  printf("\n");
+  
+  for (auto t : triangles){
+    Vertex* v0 = t[0] ;
+    Vertex* v1 = t[1] ;
+    Vertex* v2 = t[2] ;
+    HalfEdge *h10 = getEdge (v1,v0);
+    HalfEdge *h21 = getEdge (v2,v1);
+    HalfEdge *h02 = getEdge (v0,v2);
+    if (h10 && h21 && h02 &&
+	h10->f == h21->f &&
+	h10->f == h02->f){
+      Msg::Debug("Vertex %d Cannot Be Removed -- Topological Obstruction (creation of a non manifold face %d %d %d)",toDelete->data,v0->data,v1->data,v2->data);
+      return false;
+    }
+  }
+
+  
+  for (auto t : triangles){
+    Vertex* v0 = t[0] ;
+    Vertex* v1 = t[1] ;
+    Vertex* v2 = t[2] ;
+    
+    HalfEdge *h01 = getEdge (v0,v1);
+    HalfEdge *h12 = getEdge (v1,v2);
+    HalfEdge *h20 = getEdge (v2,v0);
+    /*
+    printf("%d %d %d %p %p %p %d %d %d %d %d %d\n",
+	   v0->data,v1->data,v2->data,
+	   h01,h12,h20,
+	   std::find(old_inner.begin(), old_inner.end(), h01) == old_inner.end(),
+	   std::find(old_inner.begin(), old_inner.end(), h12) == old_inner.end(),
+	   std::find(old_inner.begin(), old_inner.end(), h20) == old_inner.end(),
+	   std::find(bnd.begin(), bnd.end(), h01) == bnd.end(),
+	   std::find(bnd.begin(), bnd.end(), h12) == bnd.end(),
+	   std::find(bnd.begin(), bnd.end(), h20) == bnd.end());
+    */
+    
+    if (h01 &&
+	std::find(old_inner.begin(), old_inner.end(), h01) == old_inner.end() &&
+	std::find(bnd.begin(), bnd.end(), h01) == bnd.end()){
+      Msg::Debug("Vertex %d Cannot Be Removed -- Topological Obstruction (creation of a non manifold edge %d %d)",toDelete->data,v0->data,v1->data);
+      return false;
+    }
+    if (h12 &&
+	std::find(old_inner.begin(), old_inner.end(), h12) == old_inner.end() &&
+	std::find(bnd.begin(), bnd.end(), h12) == bnd.end()){
+      Msg::Debug("Vertex Cannot Be Removed -- Topological Obstruction (creation of a non manifold edge %d %d)",toDelete->data,v1->data,v2->data);
+      return false;
+    }
+    if (h20 &&
+	std::find(old_inner.begin(), old_inner.end(), h20) == old_inner.end() &&
+	std::find(bnd.begin(), bnd.end(), h20) == bnd.end()){
+      Msg::Debug("Vertex Cannot Be Removed -- Topological Obstruction (creation of a non manifold edge %d %d)",toDelete->data,v2->data,v0->data);
+      return false;
+    }
+  }
+
+  //  printf("replacing a cavity %lu by %lu (%lu %lu)\n",old_faces.size(),triangles.size(), old_inner.size(), bnd.size());  
+
+  // now it works
+
+  std::vector<HalfEdge*> new_edges;
+  std::vector<HalfEdge*> new_inner;
+
+  for (auto t : triangles){
+    for(size_t i=0;i<3;i++){
+      HalfEdge *he = getEdge (t[i],t[(i+1)%3]);
+      if (std::find(bnd.begin(), bnd.end(), he) == bnd.end()) {
+	he = new PolyMesh::HalfEdge(t[i]);
+	new_inner.push_back(he);
+      }      
+      new_edges.push_back(he);
+    }
+  }  
+
+  std::vector<Face*> new_faces;
+  for(size_t i=0;i<new_edges.size();i+=3){
+    auto hev0 = new_edges[i];
+    auto hev1 = new_edges[i+1];
+    auto hev2 = new_edges[i+2];
+    hev0->next = hev1;
+    hev1->next = hev2;
+    hev2->next = hev0;
+    hev0->prev = hev2;
+    hev1->prev = hev0;
+    hev2->prev = hev1;
+    PolyMesh::Face *f = new PolyMesh::Face (hev0);
+    hev0->f = f;
+    hev1->f = f;
+    hev2->f = f;
+    hev0->v->he = hev0;
+    hev1->v->he = hev1;
+    hev2->v->he = hev2;
+    new_faces.push_back(f);
+  }
+  
+  for(size_t i=0;i<new_inner.size();i++){
+    for(size_t j=i+1;j<new_inner.size();j++){
+      HalfEdge *h0 = new_inner[i];
+      HalfEdge *h1 = new_inner[j];
+      if (h0->v == h1->next->v &&
+	  h1->v == h0->next->v){
+	h1->opposite = h0;
+	h0->opposite = h1;
+      }
+    }
+  }
+
+  for (auto f : old_faces){
+    f->he = nullptr;
+  }
+  for (auto e : old_inner){
+    e->v = nullptr;
+  }
+  for (auto f : new_faces){
+  //    printf("%p %p %p -- %p %p %p \n",f->he,f->he->next,f->he->next->next,
+  //	   f->he->opposite,f->he->next->opposite,f->he->next->next->opposite);
+    faces.push_back(f);
+  }
+  for (auto e : new_inner)hedges.push_back(e);
+  //  printf("%d done\n",toDelete->data);
+  return true;  
+}
+
+/*
+void PolyMesh::createTriangle (PolyMesh::Vertex *v0, PolyMesh::Vertex *v1 , PolyMesh::Vertex *v2 ){
+  //  printf("creating triangle %d %d %d\n",v0->data,v1->data,v2->data);
+  HalfEdge *hev0 = new PolyMesh::HalfEdge(v0);
+  HalfEdge *hev1 = new PolyMesh::HalfEdge(v1);
+  HalfEdge *hev2 = new PolyMesh::HalfEdge(v2);
+  hedges.push_back(hev0);
+  hedges.push_back(hev1);
+  hedges.push_back(hev2);
+  hev0->next = hev1;
+  hev1->next = hev2;
+  hev2->next = hev0;
+  hev0->prev = hev2;
+  hev1->prev = hev0;
+  hev2->prev = hev1;
+  HalfEdge *op0 = getEdgeBad(this,v1,v0);
+  if (op0){op0->opposite = hev0;hev0->opposite = op0; }
+//  else printf ("1 %d %d NOT connevcted\n",v1->data,v0->data);
+  HalfEdge *op1 = getEdgeBad(this,v2,v1);
+  if (op1){op1->opposite = hev1;hev1->opposite = op1; }
+  //  else printf ("2 %d %d NOT connevcted\n",v2->data,v1->data);
+  HalfEdge *op2 = getEdgeBad(this,v0,v2);
+  if (op2){op2->opposite = hev2;hev2->opposite = op2; }
+  //  else printf ("3 %d %d NOT connevcted\n",v0->data,v2->data);
+  PolyMesh::Face *f = new PolyMesh::Face (hev0);
+  v0->he = hev0;
+  v1->he = hev1;
+  v2->he = hev2;
+  hev0->f = f;
+  hev1->f = f;
+  hev2->f = f;
+  faces.push_back(f);
+  }
+
+
+static int poincare (const std::vector<std::vector<PolyMesh::Vertex*> > &triangles){
+  std::set<std::pair<int,int> > edges;
+  std::set<int> vertices;
+  for (size_t i=0 ;i < triangles.size() ; i++){
+    int v0 = triangles[i][0]->data;
+    int v1 = triangles[i][1]->data;
+    int v2 = triangles[i][2]->data;
+
+    for (size_t j=i+1 ;j < triangles.size() ; j++){
+      int w0 = triangles[j][0]->data;
+      int w1 = triangles[j][1]->data;
+      int w2 = triangles[j][2]->data;
+      if ((v0 == w0 || v0 == w1 || v0 == w2) &&
+	  (v1 == w0 || v1 == w1 || v1 == w2) &&
+	  (v2 == w0 || v2 == w1 || v2 == w2))return 1200;
+    }
+  }
+  for (auto t : triangles){
+    for (size_t i=0;i<3 ;i++){
+      vertices.insert(t[i]->data);
+      int v0 = t[i]->data;
+      int v1 = t[(i+1)%3]->data;
+      vertices.insert(v0);
+      edges.insert(std::make_pair(std::min(v0,v1),std::max(v0,v1)));
+    }
+  }
+  return triangles.size() - edges.size() + vertices.size();
+}
+
+
+
+bool PolyMesh::deleteVertexAndRemeshCavity (PolyMesh::Vertex *v, std::vector<std::vector<Vertex*> > &triangles) {
+  HalfEdge* he = v->he;
+  HalfEdge* bndHe = nullptr;
+  std::vector<Face*> faces;
+  std::vector<std::vector<Vertex*> > old_triangles;
+  do {
+    faces.push_back(he->f);
+    std::vector<Vertex*> t = {he->v, he->next->v, he->next->next->v};
+    old_triangles.push_back(t);
+    if (he->opposite == NULL) bndHe = he;
+    else {
+      he = he->opposite->next;
+    }
+  } while(he != v->he && bndHe == nullptr);
+
+
+  for (auto t : triangles){
+    HalfEdge * he0 = getEdgeBad (this, t[1], t[0]);
+    HalfEdge * he1 = getEdgeBad (this, t[2], t[1]);
+    HalfEdge * he2 = getEdgeBad (this, t[0], t[2]);
+    if (he0 && he1 && he2 && he0->f == he1->f && he0->f == he2->f && std::find(faces.begin(), faces.end(), he0->f) == faces.end())return false;  
+  }    
+  //  printf("poincare : %d %d\n",poincare(triangles),poincare (old_triangles));
+  
+  if (poincare(triangles) != poincare (old_triangles))return false;
+  
+  for (auto f : faces) deleteFace(f);
+  for (auto t : triangles) createTriangle(t[0],t[1],t[2]);
+  return true;
+}
+*/
+
 /*
 void PolyMesh::Path::print4debug (int id, FILE *f) {
   
