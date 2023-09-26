@@ -349,7 +349,26 @@ namespace IFF{
     std::vector<std::pair<std::vector<Vertex *>, int>> cstPotBC = _getConstantPotBC(crossLifting, cutMesh);
     std::cout << "n bc const: " << cstPotBC.size() << std::endl;
     DoublePotential *funcPot = new DoublePotential();
-    Solver solver(cutMesh.m_pTriangles, 2, funcPot);
+    //Remove singular triangles from potential computation
+    std::vector<Triangle *> computTri;
+    if(m_ignoreSingularTriangles){
+      for(Triangle *t: cutMesh.m_pTriangles){
+	bool isSing = false;
+	for(Triangle *ts: m_singularTriangles){
+	  if(ts->getTag() == t->getTag()){
+	    isSing = true;
+	    break;
+	  }
+	}
+	if(!isSing)
+	  computTri.push_back(t);
+      }
+    }
+    else{
+      computTri = cutMesh.m_pTriangles;
+    }
+    // Solver solver(cutMesh.m_pTriangles, 2, funcPot);
+    Solver solver(computTri, 2, funcPot);
 
     // Solve for first potential
     std::map<Vertex*, std::vector<double>> doubleCrossLifting;
@@ -364,7 +383,8 @@ namespace IFF{
 	  doubleCrossLifting[kv.first][3*k + l] = kv.second[l];
       }
 
-    solver.m_nodeData = doubleCrossLifting;
+    // solver.m_nodeData = doubleCrossLifting;
+    solver.setNodeData(doubleCrossLifting);
     //Fix one value to zero for each potential
     Vertex *v = cutMesh.m_pVertices[0];
     for(size_t k=0; k<2; k++){
@@ -373,24 +393,26 @@ namespace IFF{
       std::vector<double> valDirichlet{0.0};
       solver.addBCDirichlet(dirichletBC, valDirichlet);
     }
-    //Constant value on boundary for both potentials
-    for(auto &vectVpotInd: cstPotBC){
-      for(size_t k=1; k<vectVpotInd.first.size(); k++){
-	std::vector<std::vector<double>> mat;
-	mat.resize(1);
-	mat[0].resize(2, 0.0);
-	mat[0][0] = 1.0;
-	mat[0][1] = -1.0;
-	std::vector<double> vect{0.0};
-	std::vector<std::pair<Vertex *, int>> pairVertexField{std::make_pair(vectVpotInd.first[0], vectVpotInd.second), std::make_pair(vectVpotInd.first[k], vectVpotInd.second)};
-	solver.addBCLinearCombination(mat, vect, pairVertexField);
+    if(m_forceSeamless){
+      //Constant value on boundary for both potentials
+      for(auto &vectVpotInd: cstPotBC){
+	for(size_t k=1; k<vectVpotInd.first.size(); k++){
+	  std::vector<std::vector<double>> mat;
+	  mat.resize(1);
+	  mat[0].resize(2, 0.0);
+	  mat[0][0] = 1.0;
+	  mat[0][1] = -1.0;
+	  std::vector<double> vect{0.0};
+	  std::vector<std::pair<Vertex *, int>> pairVertexField{std::make_pair(vectVpotInd.first[0], vectVpotInd.second), std::make_pair(vectVpotInd.first[k], vectVpotInd.second)};
+	  solver.addBCLinearCombination(mat, vect, pairVertexField);
+	}
       }
+  
+      //Compatibility conditions at cutgraph
+      std::cout << "BC compatibility" << std::endl;
+      _addCGcompatibilityConditions(solver, cutMesh, crossLifting);
     }
-  
-    //Compatibility conditions at cutgraph
-    std::cout << "BC compatibility" << std::endl;
-    _addCGcompatibilityConditions(solver, cutMesh, crossLifting);
-  
+    
     //Solve problem
     std::cout << "Solve potentials" << std::endl;
     std::map<Vertex *, std::vector<double>> pots;
@@ -419,10 +441,12 @@ namespace IFF{
     m_potV.clear();
     for(size_t k=0; k<m_mesh->m_pTriangles.size(); k++){
       Triangle *t = cutMesh.m_pTriangles[k];
-      std::vector<double> potUtri{vectPotU[t->getVertex(0)->getIndex()], vectPotU[t->getVertex(1)->getIndex()], vectPotU[t->getVertex(2)->getIndex()]};
-      std::vector<double> potVtri{vectPotV[t->getVertex(0)->getIndex()], vectPotV[t->getVertex(1)->getIndex()], vectPotV[t->getVertex(2)->getIndex()]};
-      m_potU[m_mesh->m_pTriangles[k]] = potUtri;
-      m_potV[m_mesh->m_pTriangles[k]] = potVtri;
+      if(std::find(computTri.begin(), computTri.end(), t) != computTri.end()){
+	std::vector<double> potUtri{vectPotU[t->getVertex(0)->getIndex()], vectPotU[t->getVertex(1)->getIndex()], vectPotU[t->getVertex(2)->getIndex()]};
+	std::vector<double> potVtri{vectPotV[t->getVertex(0)->getIndex()], vectPotV[t->getVertex(1)->getIndex()], vectPotV[t->getVertex(2)->getIndex()]};
+	m_potU[m_mesh->m_pTriangles[k]] = potUtri;
+	m_potV[m_mesh->m_pTriangles[k]] = potVtri;
+      }
     }
     //DBG
     std::cout << "size crosslifting: " << crossLifting[0].size() << std::endl;

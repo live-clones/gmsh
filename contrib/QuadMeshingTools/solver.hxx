@@ -49,11 +49,13 @@ namespace IFF{
     double m_lbfgsXPrec;
     std::vector<Line*> m_lines;
     std::vector<Triangle*> m_triangles;
+    std::map<Vertex *, bool> m_isVertexUsed;
 
     void addBCNeumann(std::vector<std::pair<Line *, int>> &pairLineField, std::vector<double> valBC);
     void addBCDirichlet(std::vector<std::pair<Vertex *, int>> &pairVertexField, std::vector<double> valBC);
     void addBCLinearCombination(std::vector<std::vector<double>> &mat, std::vector<double> &vect, std::vector<std::pair<Vertex *, int>> &pairVertexField);
     void clearBC(){m_linearBC.clear(); m_nLagMult = 0;}
+    void setNodeData(const std::map<Vertex*, std::vector<double>> &nodeData);
     size_t getNVertices(){return m_nVertices;}
     size_t getNDof(){return m_nDof;}
     size_t getNLagMult(){return m_nLagMult;}

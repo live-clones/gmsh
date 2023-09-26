@@ -206,7 +206,7 @@ namespace IFF{
 
   class CrossField2D{
   public:
-    CrossField2D(Mesh *m, std::map<Vertex *, Cross2D> &cf): m_mesh(m), m_crossfield(cf){}
+    CrossField2D(Mesh *m, std::map<Vertex *, Cross2D> &cf): m_mesh(m), m_crossfield(cf), m_ignoreSingularTriangles(1){}
     ~CrossField2D(){}
 
     Mesh * m_mesh;
@@ -216,6 +216,8 @@ namespace IFF{
     std::vector<Vertex *> m_verticesSingularTriangles;
     std::map<Triangle* , std::vector<double>> m_potU;
     std::map<Triangle* , std::vector<double>> m_potV;
+    int m_ignoreSingularTriangles;
+    int m_forceSeamless;
 
     double m_rangePotU[2];
     double m_rangePotV[2];

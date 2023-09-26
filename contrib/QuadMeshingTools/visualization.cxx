@@ -123,7 +123,8 @@ namespace IFF{
       }
       gmsh::view::option::setNumber(tagView, "IntervalsType", 1);
       gmsh::view::option::setNumber(tagView, "NbIso", nbIso);
-      gmsh::view::option::setNumber(tagView, "LineType", 1);
+      gmsh::view::option::setNumber(tagView, "ColormapNumber", 0);
+      // gmsh::view::option::setNumber(tagView, "LineType", 1);
       gmsh::view::option::setNumber(tagView, "LineWidth", 3);
       gmsh::view::option::setNumber(tagView, "Visible", visible);
       gmsh::view::option::setNumber(tagView, "RangeType", 2);

@@ -22,8 +22,10 @@ namespace IFF{
 	vert->setIndex(-1);
 
     for(auto &tri: m_triangles)
-      for(auto &vert: tri->m_vertices)
+      for(auto &vert: tri->m_vertices){
 	vert->setIndex(-1);
+	m_isVertexUsed[vert] = true;
+      }
 
     m_nVertices = 0;
     for(auto &line: m_lines)
@@ -46,35 +48,63 @@ namespace IFF{
   }
 
   void Solver::addBCNeumann(std::vector<std::pair<Line *, int>> &pairLineField, std::vector<double> val){
-    gmsh::logger::write("Neumann boundary conditions not implemented yet", "error");
+    gmsh::logger::write("IFF::SOLVER: Neumann boundary conditions not implemented yet", "error");
   }
 
   void Solver::addBCDirichlet(std::vector<std::pair<Vertex *, int>> &pairVertexField, std::vector<double> valBC){
-    for(size_t k=0; k<pairVertexField.size(); k++){
-      std::vector<std::vector<double>> mat;
-      mat.resize(1); mat[0].resize(1); mat[0][0] = 1.0;
-      std::vector<double> vect;
-      vect.resize(1); vect[0] = valBC[k];
-      std::vector<std::pair<Vertex *, int>> pairVF;
-      pairVF.resize(1, pairVertexField[k]);
-      addBCLinearCombination(mat, vect, pairVF);
+    bool validConstraint = true;
+    for(auto &vf: pairVertexField)
+      if(!m_isVertexUsed[vf.first]){
+	validConstraint = false;
+	break;
+      }
+    if(validConstraint){
+      for(size_t k=0; k<pairVertexField.size(); k++){
+	std::vector<std::vector<double>> mat;
+	mat.resize(1); mat[0].resize(1); mat[0][0] = 1.0;
+	std::vector<double> vect;
+	vect.resize(1); vect[0] = valBC[k];
+	std::vector<std::pair<Vertex *, int>> pairVF;
+	pairVF.resize(1, pairVertexField[k]);
+	addBCLinearCombination(mat, vect, pairVF);
+      }
+    }
+    else{
+      gmsh::logger::write("IFF::SOLVER: Imposed dirichlet boundary condition involves a vertex not present in the triangulation set. Constraint ignored", "warning");
     }
   }
 
   void Solver::addBCLinearCombination(std::vector<std::vector<double>> &mat, std::vector<double> &vect, std::vector<std::pair<Vertex *, int>> &pairVertexField){
-    LinearBC bc;
-    m_linearBC.push_back(bc);
-    m_linearBC[m_linearBC.size()-1].mat = mat;
-    m_linearBC[m_linearBC.size()-1].vect = vect;
-    std::vector<size_t> dofIndices;
-    dofIndices.reserve(vect.size());
+    bool validConstraint = true;
     for(auto &vf: pairVertexField)
-      dofIndices.push_back(_getIndex(vf));
-    m_linearBC[m_linearBC.size()-1].dofIndices = dofIndices;
+      if(!m_isVertexUsed[vf.first]){
+	validConstraint = false;
+	break;
+      }
+    if(validConstraint){
+      LinearBC bc;
+      m_linearBC.push_back(bc);
+      m_linearBC[m_linearBC.size()-1].mat = mat;
+      m_linearBC[m_linearBC.size()-1].vect = vect;
+      std::vector<size_t> dofIndices;
+      dofIndices.reserve(vect.size());
+      for(auto &vf: pairVertexField)
+	dofIndices.push_back(_getIndex(vf));
+      m_linearBC[m_linearBC.size()-1].dofIndices = dofIndices;
   
-    m_nLagMult += vect.size();
+      m_nLagMult += vect.size();
+    }
+    else{
+      gmsh::logger::write("IFF::SOLVER: Imposed linear constraint involves a vertex not present in the triangulation set. Constraint ignored", "warning");
+    }
   }
 
+  void Solver::setNodeData(const std::map<Vertex*, std::vector<double>> &nodeData){
+    for(const auto &kv: nodeData)
+      if(m_isVertexUsed[kv.first])
+	m_nodeData[kv.first] = kv.second;
+  }
+  
   void Solver::solve(std::map<Vertex *, std::vector<double>> &mapSolution){
     std::vector<std::vector<std::vector<double>>> localMat;
     std::vector<std::vector<double>> localRhs;
