@@ -1604,6 +1604,12 @@ if(ENABLE_BUILD_LIB OR ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/utils/pypi/METADATA.in ${CMAKE_CURRENT_BINARY_DIR}/METADATA)
 endif()
 
+if(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/utils/misc/gmsh.pc.in ${CMAKE_CURRENT_BINARY_DIR}/gmsh.pc.in  @ONLY)
+  file(GENERATE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/gmsh.pc INPUT ${CMAKE_CURRENT_BINARY_DIR}/gmsh.pc.in)
+  set(PC_FILE ${CMAKE_CURRENT_BINARY_DIR}/gmsh.pc)
+endif()
+
 file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/version.txt ${GMSH_SHORT_VERSION})
 
 # process cmake environment variables so we can append them to the -I include
@@ -1935,6 +1941,7 @@ if(ENABLE_BUILD_LIB)
 endif()
 if(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
   install(TARGETS shared DESTINATION ${GMSH_LIB} OPTIONAL)
+  install(FILES ${PC_FILE} DESTINATION ${GMSH_LIB}/pkgconfig)
 endif()
 
 if(ENABLE_ONELAB AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/onelab)

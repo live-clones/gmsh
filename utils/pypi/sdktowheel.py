@@ -37,6 +37,7 @@ with tempfile.TemporaryDirectory() as wheel_dir:
     data_dir = os.path.join(wheel_dir, f'gmsh-{version}.data')
 
     os.makedirs(os.path.join(data_dir, 'data', 'lib'))
+    os.makedirs(os.path.join(data_dir, 'data', 'lib', 'pkgconfig'))
     os.makedirs(os.path.join(data_dir, 'scripts'))
     os.makedirs(os.path.join(wheel_dir, dist_info_dir))
 
@@ -65,6 +66,9 @@ with tempfile.TemporaryDirectory() as wheel_dir:
     else :
         print('library not found')
         exit(1)
+
+    shutil.copy(os.path.join(sdk_dir, 'lib', 'pkgconfig', 'gmsh.pc'),
+                os.path.join(data_dir, 'data', 'lib', 'pkgconfig', 'gmsh.pc'))
 
     shutil.copy(os.path.join(sdk_dir, 'lib', 'gmsh.jl'),
                 os.path.join(data_dir, 'data', 'lib'))
