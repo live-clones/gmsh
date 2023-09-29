@@ -152,37 +152,7 @@ public:
   PolyMesh() {
   }
   // copy constructor
-  PolyMesh(const PolyMesh &p) {
-    std::map<Vertex *,Vertex *> vs;
-    for ( auto v : p.vertices){
-      Vertex *newv = new Vertex (v->position.x(),v->position.y(),v->position.z());
-      newv->data = v->data;
-      vs[v] = newv;
-      vertices.push_back(newv);
-    }
-    std::map<HalfEdge *,HalfEdge *> hs;
-    for ( auto h : p.hedges){
-      HalfEdge *newh = new HalfEdge (vs[h->v]);
-      newh->v->he = newh;
-      newh->data = h->data;
-      hs[h] = newh;
-      hedges.push_back(newh);
-    }
-    std::map<Face *,Face *> fs;
-    for ( auto f : p.faces){
-      Face *newf = new Face (hs[f->he]);
-      newf->data = f->data;
-      fs[f] = newf;
-      faces.push_back(newf);
-    }
-    for ( auto h : p.hedges){
-      HalfEdge * he = hs[h];
-      he->next = h->next == nullptr ? nullptr :  hs[h->next];
-      he->prev = h->prev == nullptr ? nullptr :  hs[h->prev];
-      he->opposite = h->opposite == nullptr ? nullptr :  hs[h->opposite];
-      he->f = h->f == nullptr ? nullptr : fs[h->f];
-    }        
-  }  
+  PolyMesh(const PolyMesh &p);
   
   ~PolyMesh() { reset(); }
 
@@ -220,6 +190,7 @@ public:
     HalfEdge *he = v->he;
     size_t count = 0;
     do {
+      //      printf("%p %p %p\n",he->v, he->next->v, he->next->next->v);
       he = he->opposite;
       if(he == NULL) return -1;
       he = he->next;
@@ -241,6 +212,8 @@ public:
         if (he != v->he) vs.push_back(he->next->v);
       }
     } while(he != v->he && bndHe == nullptr);
+
+    
     if (bndHe){ // we are dealing with a boundary vertex; we're going to loop over the hes in the other direction
       if(onBoundary) *onBoundary = true;
       vs.clear();
@@ -282,16 +255,28 @@ public:
     return n;
   }
 
+  inline HalfEdge *getEdgeReverse(Vertex *v0, Vertex *v1, HalfEdge *end){
+    HalfEdge *he = v0->he;
+    do {
+      if(he->next->v == v1) return he;
+      he = he->prev->opposite;
+      if(he == NULL) return NULL;
+    } while(he != v0->he);
+    return NULL;
+    
+  }
+
+  
   inline HalfEdge *getEdge(Vertex *v0, Vertex *v1)
   {
-    int iter = 0;
+    //    int iter = 0;
     HalfEdge *he = v0->he;
     do {
       if(he->next->v == v1) return he;
       he = he->opposite;
-      if(he == NULL) return NULL;
+      if(he == NULL) return getEdgeReverse(v0,v1,he);
       he = he->next;
-      if (iter++ >100)return NULL;
+      //      if (iter++ >10000)return NULL;
     } while(he != v0->he);
     return NULL;
   }
@@ -960,7 +945,11 @@ public:
     fastMarching(seeds,d);
   }
 
-  int decimate (double d);
+  int decimate (double d,
+		std::map<Vertex*,SVector3> *cogs = nullptr,
+		std::map<Vertex*,SVector3> *nrms = nullptr);
+  void computeNormalsAndCentersOfGravity (std::map<PolyMesh::Vertex*,SVector3> &cogs,
+					  std::map<PolyMesh::Vertex*,SVector3> &nrms);
   
  };
 

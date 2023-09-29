@@ -255,16 +255,6 @@ int GFace2PolyMesh(int faceTag, PolyMesh **pm)
         he[j]->next = he[(j + 1) % nNod];
         he[j]->prev = he[(j - 1 + nNod) % nNod];
         he[j]->f = ff;
-        //	size_t n0 = v[j]->data;
-        //	size_t n1 = v[(j+1)%nNod]->data;
-        //	std::pair<size_t, size_t> pj =
-        //	  std::make_pair(std::min(n0,n1),std::max(n0,n1));
-        //	auto itj = opposites.find(pj);
-        //	if(itj == opposites.end()) opposites[pj] = he[j];
-        //	else {
-        //	  he[j]->opposite = itj->second;
-        //	  itj->second->opposite = he[j];
-        //	}
       }
     }
   }
@@ -279,6 +269,14 @@ int GFace2PolyMesh(int faceTag, PolyMesh **pm)
     if(equal(h0, h1)) {
       h0->opposite = h1;
       h1->opposite = h0;
+      if (i+2 != (*pm)->hedges.size()){
+	PolyMesh::HalfEdge *h2 = (*pm)->hedges[i + 2];
+	if(equal(h0, h2)){
+	  Msg::Warning("Non Manifold Mesh cannot be encoded in a half edge data structure (edge %d %d is there at least three times)",
+		       h0->v->data,h0->next->v->data);
+	}
+      }
+
       i++;
     }
   }

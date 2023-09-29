@@ -12,6 +12,42 @@
 //#include "/Users/CODES/geodesic_matlab/src/geodesic_mesh.h"
 //#include "/Users/CODES/geodesic_matlab/src/geodesic_algorithm_exact.h" 
 
+PolyMesh::PolyMesh(const PolyMesh &p) {
+  std::map<Vertex *,Vertex *> vs;
+  for ( auto v : p.vertices){
+    Vertex *newv = new Vertex (v->position.x(),v->position.y(),v->position.z());
+    newv->data = v->data;
+    vs[v] = newv;
+    vertices.push_back(newv);
+  }
+
+  std::map<HalfEdge *,HalfEdge *> hs;
+  for ( auto h : p.hedges){
+    HalfEdge *newh = new HalfEdge (vs[h->v]);
+    newh->v->he = newh;
+    newh->data = h->data;
+    hs[h] = newh;
+    hedges.push_back(newh);
+  }
+
+  std::map<Face *,Face *> fs;
+  for ( auto f : p.faces){
+    Face *newf = new Face (hs[f->he]);
+    newf->data = f->data;
+    fs[f] = newf;
+    faces.push_back(newf);
+  }
+
+  for ( auto h : p.hedges){
+    HalfEdge * he = hs[h];
+    he->next = h->next == nullptr ? nullptr :  hs[h->next];
+    he->prev = h->prev == nullptr ? nullptr :  hs[h->prev];
+    he->opposite = h->opposite == nullptr ? nullptr :  hs[h->opposite];
+    he->f = h->f == nullptr ? nullptr : fs[h->f];
+  }        
+}  
+
+
 static void update(double lsit, PolyMesh::Vertex *vi, std::map<PolyMesh::Vertex*, double> &ls,
 		   std::set<std::pair<double, PolyMesh::Vertex *> > & front) {
   std::pair<double, PolyMesh::Vertex *> pp = std::make_pair(ls[vi], vi);
@@ -86,54 +122,58 @@ void print__ (const char *fn, PolyMesh*pm, std::map<PolyMesh::Vertex*,double> &l
   FILE *f = fopen(fn,"w");
   fprintf(f,"View\"\"{\n");
   for (auto he : pm->hedges){
-    PolyMesh::Vertex *v1 = he->v;
-    PolyMesh::Vertex *v2 = he->next->v;
-    if (he->data != -1){
-      fprintf(f,"SL(%g,%g,%g,%g,%g,%g){%d,%d};\n",
-	      v1->position.x(),v1->position.y(),v1->position.z(),
-	      v2->position.x(),v2->position.y(),v2->position.z(),he->data,he->data);
+    if (he->v){
+      PolyMesh::Vertex *v1 = he->v;
+      PolyMesh::Vertex *v2 = he->next->v;
+      if (he->data != -1){
+	fprintf(f,"SL(%g,%g,%g,%g,%g,%g){%d,%d};\n",
+		v1->position.x(),v1->position.y(),v1->position.z(),
+		v2->position.x(),v2->position.y(),v2->position.z(),he->data,he->data);
+      }
     }
   }
   for (auto t : pm->faces){
-    PolyMesh::Vertex *v1 = t->he->v;
-    PolyMesh::Vertex *v2 = t->he->next->v;
-    PolyMesh::Vertex *v3 = t->he->next->next->v;
-    PolyMesh::Vertex *v4 = t->he->next->next->next->v;
+    if (t->he){
+      PolyMesh::Vertex *v1 = t->he->v;
+      PolyMesh::Vertex *v2 = t->he->next->v;
+      PolyMesh::Vertex *v3 = t->he->next->next->v;
+      PolyMesh::Vertex *v4 = t->he->next->next->next->v;
 
-    if (ls.empty()){
-      fprintf(f,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%d,%d,%d};\n",
-	      v1->position.x(),v1->position.y(),v1->position.z(),
-	      v2->position.x(),v2->position.y(),v2->position.z(),
-	      v3->position.x(),v3->position.y(),v3->position.z(),t->data,t->data,t->data);
-    }    
-    else{
-      std::map<PolyMesh::Vertex*,double>::iterator it1 = ls.find(v1);
-      std::map<PolyMesh::Vertex*,double>::iterator it2 = ls.find(v2);
-      std::map<PolyMesh::Vertex*,double>::iterator it3 = ls.find(v3);
-      std::map<PolyMesh::Vertex*,double>::iterator it4 = ls.find(v4);
-      
-      if (v4 == v1 && it1 != ls.end() && it2 != ls.end() && it3 != ls.end()){
-	double l1 = it1->second;
-	double l2 = it2->second;
-	double l3 = it3->second;
-	fprintf(f,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
+      if (ls.empty()){
+	fprintf(f,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%d,%d,%d};\n",
 		v1->position.x(),v1->position.y(),v1->position.z(),
 		v2->position.x(),v2->position.y(),v2->position.z(),
-		v3->position.x(),v3->position.y(),v3->position.z(),l1,l2,l3);
-      }
-      else if (it1 != ls.end() && it2 != ls.end() && it3 != ls.end() && it4 != ls.end()){
-	double l1 = it1->second;
-	double l2 = it2->second;
-	double l3 = it3->second;
-	double l4 = it4->second;
-	fprintf(f,"SQ(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g,%g};\n",
-		v1->position.x(),v1->position.y(),v1->position.z(),
-		v2->position.x(),v2->position.y(),v2->position.z(),
-		v3->position.x(),v3->position.y(),v3->position.z(),
-		v4->position.x(),v4->position.y(),v4->position.z(),
-		l1,l2,l3,l4);
-      }
-    }    
+		v3->position.x(),v3->position.y(),v3->position.z(),t->data,t->data,t->data);
+      }    
+      else{
+	std::map<PolyMesh::Vertex*,double>::iterator it1 = ls.find(v1);
+	std::map<PolyMesh::Vertex*,double>::iterator it2 = ls.find(v2);
+	std::map<PolyMesh::Vertex*,double>::iterator it3 = ls.find(v3);
+	std::map<PolyMesh::Vertex*,double>::iterator it4 = ls.find(v4);
+	
+	if (v4 == v1 && it1 != ls.end() && it2 != ls.end() && it3 != ls.end()){
+	  double l1 = it1->second;
+	  double l2 = it2->second;
+	  double l3 = it3->second;
+	  fprintf(f,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
+		  v1->position.x(),v1->position.y(),v1->position.z(),
+		  v2->position.x(),v2->position.y(),v2->position.z(),
+		  v3->position.x(),v3->position.y(),v3->position.z(),l1,l2,l3);
+	}
+	else if (it1 != ls.end() && it2 != ls.end() && it3 != ls.end() && it4 != ls.end()){
+	  double l1 = it1->second;
+	  double l2 = it2->second;
+	  double l3 = it3->second;
+	  double l4 = it4->second;
+	  fprintf(f,"SQ(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g,%g};\n",
+		  v1->position.x(),v1->position.y(),v1->position.z(),
+		  v2->position.x(),v2->position.y(),v2->position.z(),
+		  v3->position.x(),v3->position.y(),v3->position.z(),
+		  v4->position.x(),v4->position.y(),v4->position.z(),
+		  l1,l2,l3,l4);
+	}
+      }    
+    }
   }
   fprintf(f,"};\n");
   fclose(f);
@@ -281,7 +321,6 @@ void print__ (const char *fn, PolyMesh*pm, std::map<PolyMesh::Vertex*,double> &l
 //   }
 // }
 
-
 void PolyMesh::fastMarching (std::vector<Vertex *> &seeds, std::map<Vertex*,double> &ls)
 {
   double t1 = Cpu();
@@ -334,11 +373,8 @@ void PolyMesh::fastMarching (std::vector<Vertex *> &seeds, std::map<Vertex*,doub
 /// DECIMATION OF TRIANGLE MESHES
 // Will Schroeder et al. -- 1992 -- Computer Graphics
 
-int PolyMesh::decimate (double thresholdDistance){
-
-  Msg::Info("Decimating a surface with %8lu vertices (threshold distance %12.5E)",vertices.size(),thresholdDistance);
-
-  size_t nbRemove = 0;
+void PolyMesh::computeNormalsAndCentersOfGravity (std::map<PolyMesh::Vertex*,SVector3> &cogs,
+						  std::map<PolyMesh::Vertex*,SVector3> &nrms){
   for (auto v : vertices) {
     std::vector<Vertex* > neigh;
     bool onBoundary = false;
@@ -360,9 +396,61 @@ int PolyMesh::decimate (double thresholdDistance){
     }
     cog *= (1./sumai);
     nrm.normalize();
+    cogs[v] = cog;
+    nrms[v] = nrm;
+  }
+}
+
+
+int PolyMesh::decimate (double thresholdDistance,
+			std::map<Vertex*,SVector3> *cogs,
+			std::map<Vertex*,SVector3> *nrms){
+
+
+
+  Msg::Info("Decimating a surface with %8lu vertices (threshold distance %12.5E)",vertices.size(),thresholdDistance);
+
+  size_t nbRemove = 0;
+  size_t nbProcessed = 0;
+  
+  for (auto v : vertices) {
+
+    nbProcessed++;
+    
+    std::vector<Vertex* > neigh;
+    bool onBoundary = false;
+    vertexNeighbors (v, &neigh,&onBoundary);
+
+    if (onBoundary)continue;
+
+    //    printf("%d (%d) ",v->data,onBoundary);
+    //    for (auto nsa : neigh) printf("%d ",nsa->data);
+    //    printf("\n");
+
+    SVector3 nrm (0,0,0);
+    SVector3 cog (0,0,0);
+    if (nrms && cogs){
+      cog = (*cogs)[v];
+      nrm = (*nrms)[v];
+    }
+    else{
+      double sumai = 0;
+      for (size_t i=0;i<neigh.size();i++){
+	Vertex *v0 = neigh[i];
+	Vertex *v1 = neigh[(i+1)%neigh.size()];
+	SVector3 t1 = v1->position - v->position;
+	SVector3 t0 = v0->position - v->position;
+	SVector3 ni = crossprod (t1,t0);
+	double ai = ni.norm();
+	sumai += ai;
+	cog += (v0->position*ai);
+	nrm += ni;
+      }
+      cog *= (1./sumai);
+      nrm.normalize();
+    }
     double d = fabs(dot(nrm, v->position - cog));
 
-    //    printf("vertex %d distance %12.5E\n",v->data,d);
     
     if (d > thresholdDistance) continue;
     std::stack<std::vector<Vertex*> > loops;
@@ -373,9 +461,9 @@ int PolyMesh::decimate (double thresholdDistance){
     
     while (!loops.empty()){
       std::vector<Vertex*> loop = loops.top();
-      //      printf("total size %lu loop size %lu loop :",loops.size(),loop.size());
-      //      for (auto aaa : loop)printf("%d ",aaa->data);
-      //      printf("\n");
+      //      //            printf("total size %lu loop size %lu loop :",loops.size(),loop.size());
+      //            for (auto aaa : loop)printf("%d ",aaa->data);
+      //            printf("\n");
       loops.pop();
       if (loop.size() == 3){
 	std::reverse(loop.begin(),loop.end());
@@ -452,11 +540,24 @@ int PolyMesh::decimate (double thresholdDistance){
     // impossible to unrefine that pattern so continue
     
     if (!remove_vertex)continue;
+
+    //    if (triangles.size() == 2)
     
     if (deleteVertexAndRemeshCavity2 (v,triangles)){
+      //      printf("%d remeshed with %lu triangles\n",v->data,triangles.size());
       v->he = nullptr;
       nbRemove++;
+      if (nbProcessed % 100000 == 0){
+	Msg::Info("vertex %ld / %lu -- %lu processed -- %lu removed\n",v->data,vertices.size(),nbProcessed,nbRemove);
+      }
+      if (v->data == 2322 && 0){	
+	std::map<PolyMesh::Vertex*,double> nothing;
+	char name[123];
+	sprintf(name,"x%d.pos",v->data);
+	print__ (name, this, nothing);
+      }
     }
+    //    if (triangles.size() == 2)printf("%d remeshing with %lu triangles done\n",v->data,triangles.size());
   }
 
   if (nbRemove == 0)return 0;
@@ -542,22 +643,25 @@ PolyMesh::HalfEdge * getEdgeBad (PolyMesh *pm, PolyMesh::Vertex *v0, PolyMesh::V
 
 bool PolyMesh::deleteVertexAndRemeshCavity2 (Vertex *toDelete,
 					    std::vector<std::vector<Vertex*> > &triangles){
-
-
   HalfEdge* he = toDelete->he;
   std::vector<Face*> old_faces;
   std::vector<HalfEdge*> bnd;
   std::vector<HalfEdge*> old_inner;
+  //  printf("starting with edge %d %d\n",he->v->data,he->next->v->data);
   do {
     old_faces.push_back(he->f);
     bnd.push_back(he->next);
+    //    printf("boundary added %d %d\n",he->next->v->data,he->next->next->v->data);
     old_inner.push_back(he);
+    if (he->opposite)old_inner.push_back(he->opposite);
+    //        printf("inner added %d %d\n",he->v->data,he->next->v->data);
     if (he->opposite == NULL) return false; // for now no boundary considered
     else {
       he = he->opposite->next;
     }
   } while(he != toDelete->he);
 
+  
   // If one of the new inner edges exist outside the cavity --> topological change --> exit
   // If one of the new triangles exist outside the cavity --> topological change --> exit
 
@@ -567,16 +671,21 @@ bool PolyMesh::deleteVertexAndRemeshCavity2 (Vertex *toDelete,
   //    t[2] = temp;
   //  }
   
-  //  for (auto e : bnd)printf("(%d,%d)",e->v->data,e->next->v->data);
-  //  printf("\n");
+  //      for (auto e : bnd)printf("(%d,%d)",e->v->data,e->next->v->data);
+  //      printf("\n");
   
   for (auto t : triangles){
     Vertex* v0 = t[0] ;
     Vertex* v1 = t[1] ;
     Vertex* v2 = t[2] ;
+
+    if (!v0->he || !v1->he || !v2->he)return false;
+
     HalfEdge *h10 = getEdge (v1,v0);
     HalfEdge *h21 = getEdge (v2,v1);
     HalfEdge *h02 = getEdge (v0,v2);
+
+
     if (h10 && h21 && h02 &&
 	h10->f == h21->f &&
 	h10->f == h02->f){
@@ -638,12 +747,17 @@ bool PolyMesh::deleteVertexAndRemeshCavity2 (Vertex *toDelete,
       HalfEdge *he = getEdge (t[i],t[(i+1)%3]);
       if (std::find(bnd.begin(), bnd.end(), he) == bnd.end()) {
 	he = new PolyMesh::HalfEdge(t[i]);
+	//	printf("creating new edge %d %d\n",t[i]->data,t[(i+1)%3]->data);
 	new_inner.push_back(he);
       }      
       new_edges.push_back(he);
     }
-  }  
+  }
 
+  //  printf("creating %lu new edges\n",new_edges.size());
+  
+  //if (new_inner.size()/2 != bnd.size() - 3)printf("aaaaaaargh %lu %lu\n",new_inner.size(),bnd.size());
+  
   std::vector<Face*> new_faces;
   for(size_t i=0;i<new_edges.size();i+=3){
     auto hev0 = new_edges[i];
@@ -684,8 +798,8 @@ bool PolyMesh::deleteVertexAndRemeshCavity2 (Vertex *toDelete,
     e->v = nullptr;
   }
   for (auto f : new_faces){
-  //    printf("%p %p %p -- %p %p %p \n",f->he,f->he->next,f->he->next->next,
-  //	   f->he->opposite,f->he->next->opposite,f->he->next->next->opposite);
+    //    printf("%d %d %d -- %p %p %p \n",f->he->v->data,f->he->next->v->data,f->he->next->next->v->data,
+    //	   f->he->opposite,f->he->next->opposite,f->he->next->next->opposite);
     faces.push_back(f);
   }
   for (auto e : new_inner)hedges.push_back(e);
