@@ -870,6 +870,28 @@ public:
 	}	
       }
 
+      Msg::Info("%lu edge invalid -- instersecing with all");
+      for (auto e_invalid : eds){
+	std::vector<geodesic::SurfacePoint> pe_invalid;
+	createGeodesicPath (e_invalid.first,e_invalid.first,pe_invalid);
+	for (auto it : edges) {
+	  auto e = it.first;
+	  int start = e.first;
+	  int end = e.second;
+	  if (e_invalid.first != start &&
+	      e_invalid.first != end &&
+	      e_invalid.second != start&&
+	      e_invalid.second != end){
+	    std::vector<geodesic::SurfacePoint> pe;
+	    createGeodesicPath (start, end,pe);
+	    SVector3 intersection;
+	    bool result = intersectGeodesicPath (pe_invalid, pe, &intersection);
+	    if (result)Msg::Warning ("edge %d %d is invalid",start, end);
+	  }
+	}
+      }
+
+      
       std::sort(eds_o.begin(),eds_o.end());
       Msg::Info("%d invalid edges among %lu (%lu geodesics to be computed)",
 		nbInValid,edges.size(),eds_o.size());
@@ -1004,7 +1026,12 @@ void highOrderPolyMesh::createGeodesicsInParallel (std::vector<int> &__rows,
     SVector3 dir2 (g.second[1].x()-g.second[0].x(),
 		   g.second[1].y()-g.second[0].y(),
 		   g.second[1].z()-g.second[0].z());
-    
+    if (dot(dir, dir2) > 0)
+      Msg::Debug("geodesic beween %7d %7d -- sp %12.5E\n",
+		 start, end, dot(dir, dir2));
+    else 
+      Msg::Warning("geodesic beween %7d %7d -- sp %12.5E\n",
+		 start, end, dot(dir, dir2));
   }
   
   
