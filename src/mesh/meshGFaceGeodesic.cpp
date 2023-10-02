@@ -2756,6 +2756,10 @@ PolyMesh::HalfEdge(vv); pm->hedges.push_back(he[j]); vv->he = he[j];
 
 #else
 
-int makeMeshGeodesic(GModel *gm);
+int makeMeshGeodesic(GModel *gm)
+{
+  Msg::Error("Geodesic meshing not available");
+  return 0;
+}
 
 #endif
