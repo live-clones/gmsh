@@ -1,15 +1,15 @@
 #include "GmshConfig.h"
-
-#if defined(HAVE_MESH) && defined(HAVE_GEODESIC)
-
 #include "OS.h"
 #include "Context.h"
-#include "meshTriangulation.h"
 #include "GFace.h"
 #include "discreteFace.h"
 #include "MVertexRTree.h"
-#include "robustPredicates.h"
 #include "Numeric.h"
+#include "robustPredicates.h"
+
+#if defined(HAVE_MESH) && defined(HAVE_GEODESIC)
+
+#include "meshTriangulation.h"
 
 #include "geodesic_mesh.h"
 #include "geodesic_algorithm_exact.h"
@@ -2753,5 +2753,9 @@ PolyMesh::HalfEdge(vv); pm->hedges.push_back(he[j]); vv->he = he[j];
 }
 
 */
+
+#else
+
+int makeMeshGeodesic(GModel *gm);
 
 #endif
