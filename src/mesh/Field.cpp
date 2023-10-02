@@ -1154,6 +1154,10 @@ public:
   double operator()(double x, double y, double z, GEntity *ge = nullptr)
   {
     double ret = 0;
+    // the critical section is necessary for multi-threaded meshing, as the
+    // evaluator is not thread-safe; this should be fixed as it makes the
+    // MathEvalField not reentrant (i.e. a MathEval field cannot reference
+    // another MathEval field)
 #pragma omp critical
     {
       if(updateNeeded) {
@@ -2793,7 +2797,7 @@ BoundaryLayerField::BoundaryLayerField()
                         &updateNeeded);
   options["FanPointsSizesList"] = new FieldOptionList(
     _fanSizes,
-    "Number of elements in the fan for each fan node. "
+    "Number of elements in the fan for each fan point. "
     "If not present default value Mesh.BoundaryLayerFanElements",
     &updateNeeded);
   options["PointsList"] = new FieldOptionList(

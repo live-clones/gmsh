@@ -10305,7 +10305,7 @@ Physical Surface(488) = {487};
 
 // SHORE PROXIMITY FUNCTION: MEDITERRANEAN SEA
 Field[1] = Distance;
-Field [1].CurvesList  = {427, 426, 430, 433, 437, 436, 441, 440, 445, 451, 457, 458, 484, 485, 459, 464, 463, 469, 365, 366, 372, 374, 373, 378, 377, 385, 383, 389, 390, 392, 391, 397, 396, 475, 480, 406, 412, 411, 415, 410, 419, 418, 482, 483, 422, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 70, 72, 73, 74, 75, 76, 78, 79, 85, 88, 92, 97, 99, 101, 103, 109, 111, 125, 126, 134, 135, 136, 137, 139, 149, 151, 158, 167, 174, 175, 177, 178, 180, 185, 191, 200, 204, 205, 207, 211, 215, 216, 220, 229, 231, 235, 241, 244, 251, 252, 253, 269, 272, 280, 283, 285, 286, 292, 311, 486};
+Field [1].CurvesList  = {427, 426, 430, 433, 437, 436, 441, 440, 445, 451, 457, 458, 484, 485, 459, 464, 463, 469, 365, 366, 372, 374, 373, 378, 377, 385, 383, 389, 390, 392, 391, 397, 396, 475, 480, 406, 412, 411, 415, 410, 419, 418, 482, 483, 422, 2, 3, 4, 8, 9, 10, 11, 12, 13, 14, 16, 17, 18, 19, 20, 21, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 70, 72, 73, 74, 75, 76, 78, 79, 85, 88, 92, 97, 99, 101, 103, 109, 111, 125, 126, 134, 135, 136, 137, 139, 149, 151, 167, 174, 175, 177, 178, 185, 200, 204, 205, 207, 211, 215, 216, 220, 229, 231, 244, 251, 252, 253, 269, 272, 280, 283, 285, 286, 292, 311};
 Field[1].Sampling = 500;
 
 Field[2] = Threshold;
@@ -10315,7 +10315,6 @@ Field[2].InField = 1;
 Field[2].SizeMax = 50000;
 Field[2].SizeMin = 18000;
 Field[2].StopAtDistMax = 1;
-
 
 // SHORE PROXIMITY FUNCTION: ADRIATIC SEA
 Field[3] = Distance;
@@ -10336,3 +10335,20 @@ Field[5].FieldsList = {2,4};
 Background Field = 5;
 Mesh.MeshSizeExtendFromBoundary = 0;
 Mesh.Algorithm = 6;
+
+// ********** Begin SPEC validation **********
+
+Mesh.MeshSizeFactor = 0.2;
+//Mesh.ElementOrder = 2;
+Mesh 2;
+n = 5.7e5;
+file = StrCat(StrPrefix(StrRelative(General.FileName)), ".val");
+Printf("Number of tri elements is %g (estimated %g)", Mesh.NbTriangles, n);
+If ( Fabs(Mesh.NbTriangles - n) / Mesh.NbTriangles > 0.2 )
+  Printf("Error: Number of tri elements is %g (estimated %g), outside of range", Mesh.NbTriangles, n) >> file;
+  Error("Number of tri elements is %g (estimated %g), outside of range", Mesh.NbTriangles, n);
+Else
+  Printf("Successful Verification of requested %g elements", n) >> file;
+EndIf
+
+// ********** End SPEC validation **********

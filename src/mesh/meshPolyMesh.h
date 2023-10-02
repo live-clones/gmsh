@@ -33,30 +33,30 @@ public:
 
     inline double gaussianCurvature() const
     {
-      HalfEdge *_he = he;      
+      HalfEdge *_he = he;
       do {
-	if(_he->opposite == NULL) break;
-	_he = _he->opposite->next;
+        if(_he->opposite == NULL) break;
+        _he = _he->opposite->next;
       } while(_he != he);
 
       double GC = 0.0;
       // boundary vertex --> add geodesic curvature
-      if (_he != he){
-	SVector3 d2 = _he->d();
-	SVector3 d1 =  he->d();
-	GC += angle(d2,d1);
+      if(_he != he) {
+        SVector3 d2 = _he->d();
+        SVector3 d1 = he->d();
+        GC += angle(d2, d1);
       }
-      
+
       do {
-	HalfEdge *hep = _he->prev->opposite;
-	if (!hep)break;
-	SVector3 d1 = _he->d();
-	SVector3 d2 = hep->d();
-	GC += angle(d1,d2);
-	_he = hep;	
-      }while(_he != he);
-      return 2*M_PI-GC;
-    }    
+        HalfEdge *hep = _he->prev->opposite;
+        if(!hep) break;
+        SVector3 d1 = _he->d();
+        SVector3 d2 = hep->d();
+        GC += angle(d1, d2);
+        _he = hep;
+      } while(_he != he);
+      return 2 * M_PI - GC;
+    }
   };
 
   class HalfEdge {
@@ -89,7 +89,8 @@ public:
     Face(HalfEdge *e) : he(e), data(-1) {}
     HalfEdge *he; // one half edge of the face
     int data;
-    SVector3 grad (double v1, double v2, double v3){
+    SVector3 grad(double v1, double v2, double v3)
+    {
       SVector3 p1 = he->v->position;
       SVector3 p2 = he->next->v->position;
       SVector3 p3 = he->next->next->v->position;
@@ -97,22 +98,23 @@ public:
       SVector3 d2 = p3 - p1;
       SVector3 d3 = crossprod(d1, d2);
       d3.normalize();
-      double J[3][3] = {{d1.x(),d1.y(),d1.z()},
-			{d2.x(),d2.y(),d2.z()},
-			{d3.x(),d3.y(),d3.z()}};
-      double g[3], rhs[3] = {v2-v1,v3-v1,0.0};
+      double J[3][3] = {{d1.x(), d1.y(), d1.z()},
+                        {d2.x(), d2.y(), d2.z()},
+                        {d3.x(), d3.y(), d3.z()}};
+      double g[3], rhs[3] = {v2 - v1, v3 - v1, 0.0};
       double det;
-      sys3x3 (J, rhs, g, &det);
-      return SVector3(g[0],g[1],g[2]);
+      sys3x3(J, rhs, g, &det);
+      return SVector3(g[0], g[1], g[2]);
     }
-    SVector3 cog() const {
+    SVector3 cog() const
+    {
       SVector3 p1 = he->v->position;
       SVector3 p2 = he->next->v->position;
       SVector3 p3 = he->next->next->v->position;
-      return (p1 + p2 + p3) * (1./3.);
+      return (p1 + p2 + p3) * (1. / 3.);
     }
   };
-  
+
   std::vector<Vertex *> vertices;
   std::vector<HalfEdge *> hedges;
   std::vector<Face *> faces;
@@ -120,27 +122,30 @@ public:
 
   struct VertexOnSurface {
     PolyMesh::HalfEdge *he; // he->f in the extrinsic_ mesh
-    double u,v; // local coordinates of the vertex in that face or in an edge of the face
+    double u, v; // local coordinates of the vertex in that face or in an edge
+                 // of the face
     short dim;
     //    size_t tag;
-    VertexOnSurface (short _dim = 2): dim(_dim){}
-    SVector3 point () const {
-      if (dim == 0)return he->v->position;
-      else if (dim == 1)  return he->v->position*(1.-u)+
-			    he->next->v->position*u;
-      else return he->v->position*(1.-u-v)+
-	     he->next->v->position*u+
-	     he->next->next->v->position*v;
+    VertexOnSurface(short _dim = 2) : dim(_dim) {}
+    SVector3 point() const
+    {
+      if(dim == 0)
+        return he->v->position;
+      else if(dim == 1)
+        return he->v->position * (1. - u) + he->next->v->position * u;
+      else
+        return he->v->position * (1. - u - v) + he->next->v->position * u +
+               he->next->next->v->position * v;
     }
   };
-  
+
   /*  struct Path {
     VertexOnFace _start;
     VertexOnFace _end;
     std::vector<VertexOnEdge> _pts;
     void print4debug (int id, FILE *f = NULL);
     };*/
-    
+
   void reset()
   {
     for(auto it : vertices) delete it;
@@ -149,11 +154,10 @@ public:
   }
 
   // constructor that does nothing
-  PolyMesh() {
-  }
+  PolyMesh() {}
   // copy constructor
   PolyMesh(const PolyMesh &p);
-  
+
   ~PolyMesh() { reset(); }
 
   void print4debug(const int debugTag)
@@ -199,22 +203,26 @@ public:
     return count;
   }
 
-  inline void vertexNeighbors(const Vertex* v, std::vector<Vertex* >* vertexNeighbors=NULL, bool* onBoundary=NULL){
+  inline void vertexNeighbors(const Vertex *v,
+                              std::vector<Vertex *> *vertexNeighbors = NULL,
+                              bool *onBoundary = NULL)
+  {
     if(onBoundary) *onBoundary = false;
-    HalfEdge* bndHe = nullptr;
-    std::vector<Vertex* > vs;
-    HalfEdge* he = v->he;
+    HalfEdge *bndHe = nullptr;
+    std::vector<Vertex *> vs;
+    HalfEdge *he = v->he;
     vs.push_back(he->next->v);
     do {
-      if (he->opposite == NULL) bndHe = he;
+      if(he->opposite == NULL)
+        bndHe = he;
       else {
         he = he->opposite->next;
-        if (he != v->he) vs.push_back(he->next->v);
+        if(he != v->he) vs.push_back(he->next->v);
       }
     } while(he != v->he && bndHe == nullptr);
 
-    
-    if (bndHe){ // we are dealing with a boundary vertex; we're going to loop over the hes in the other direction
+    if(bndHe) { // we are dealing with a boundary vertex; we're going to loop
+                // over the hes in the other direction
       if(onBoundary) *onBoundary = true;
       vs.clear();
       he = bndHe;
@@ -255,7 +263,8 @@ public:
     return n;
   }
 
-  inline HalfEdge *getEdgeReverse(Vertex *v0, Vertex *v1, HalfEdge *end){
+  inline HalfEdge *getEdgeReverse(Vertex *v0, Vertex *v1, HalfEdge *end)
+  {
     HalfEdge *he = v0->he;
     do {
       if(he->next->v == v1) return he;
@@ -263,10 +272,8 @@ public:
       if(he == NULL) return NULL;
     } while(he != v0->he);
     return NULL;
-    
   }
 
-  
   inline HalfEdge *getEdge(Vertex *v0, Vertex *v1)
   {
     //    int iter = 0;
@@ -274,7 +281,7 @@ public:
     do {
       if(he->next->v == v1) return he;
       he = he->opposite;
-      if(he == NULL) return getEdgeReverse(v0,v1,he);
+      if(he == NULL) return getEdgeReverse(v0, v1, he);
       he = he->next;
       //      if (iter++ >10000)return NULL;
     } while(he != v0->he);
@@ -283,15 +290,18 @@ public:
 
   inline HalfEdge *getEdgeWithBnd(Vertex *v0, Vertex *v1)
   {
-    HalfEdge* bndHe = nullptr;
-    std::vector<Vertex* > vs;
-    HalfEdge* he = v0->he;
+    HalfEdge *bndHe = nullptr;
+    std::vector<Vertex *> vs;
+    HalfEdge *he = v0->he;
     do {
       if(he->next->v == v1) return he;
-      if (he->opposite == NULL) bndHe = he;
-      else he = he->opposite->next;
+      if(he->opposite == NULL)
+        bndHe = he;
+      else
+        he = he->opposite->next;
     } while(he != v0->he && bndHe == nullptr);
-    if (bndHe){ // we are dealing with a boundary vertex; we're going to loop over the hes in the other direction
+    if(bndHe) { // we are dealing with a boundary vertex; we're going to loop
+                // over the hes in the other direction
       he = bndHe;
       do {
         if(he->next->v == v1) return he;
@@ -321,13 +331,17 @@ public:
     f->he = he0;
   }
 
-  bool deleteVertexAndRemeshCavity (PolyMesh::Vertex *v, std::vector<std::vector<Vertex*> > &triangles);
-  bool deleteVertexAndRemeshCavity2 (PolyMesh::Vertex *v, std::vector<std::vector<Vertex*> > &triangles);
+  bool
+  deleteVertexAndRemeshCavity(PolyMesh::Vertex *v,
+                              std::vector<std::vector<Vertex *>> &triangles);
+  bool
+  deleteVertexAndRemeshCavity2(PolyMesh::Vertex *v,
+                               std::vector<std::vector<Vertex *>> &triangles);
   void createTriangle(Vertex *v0, Vertex *v1, Vertex *v2);
-  void deleteFace(PolyMesh::Face* f);
-  void deleteHalfEdge (PolyMesh::HalfEdge* he);
-  void deleteIsolatedVertex (PolyMesh::Vertex* he);
-  
+  void deleteFace(PolyMesh::Face *f);
+  void deleteHalfEdge(PolyMesh::HalfEdge *he);
+  void deleteIsolatedVertex(PolyMesh::Vertex *he);
+
   // swap without asking questions
   //
   //         he1
@@ -400,36 +414,37 @@ public:
     return 0;
   }
 
-  inline int hedgeCollapse(HalfEdge* he, std::vector<HalfEdge *> *_t = NULL){
-    Vertex* v_a = he->opposite->next->next->v;
-    Vertex* v_b = he->next->next->v;
-    Vertex* v_c = he->opposite->v;
-    Vertex* v_d = he->v;
-    HalfEdge* heo = he->opposite;
-    HalfEdge* he_ca = heo->next->next->opposite;
-    HalfEdge* he_bc = he->next->opposite;
-    HalfEdge* he_ad = heo->next->opposite;
-    HalfEdge* he_db = he->next->next->opposite;
+  inline int hedgeCollapse(HalfEdge *he, std::vector<HalfEdge *> *_t = NULL)
+  {
+    Vertex *v_a = he->opposite->next->next->v;
+    Vertex *v_b = he->next->next->v;
+    Vertex *v_c = he->opposite->v;
+    Vertex *v_d = he->v;
+    HalfEdge *heo = he->opposite;
+    HalfEdge *he_ca = heo->next->next->opposite;
+    HalfEdge *he_bc = he->next->opposite;
+    HalfEdge *he_ad = heo->next->opposite;
+    HalfEdge *he_db = he->next->next->opposite;
     // change incident vertex
-    HalfEdge* _he = he;
-    std::vector<HalfEdge*> touched; 
+    HalfEdge *_he = he;
+    std::vector<HalfEdge *> touched;
     do {
       _he->v = v_c;
       _he = _he->opposite->next;
       touched.push_back(_he);
       touched.push_back(_he->next);
       touched.push_back(_he->next->next);
-    } while (_he != he);
+    } while(_he != he);
     v_d->he = nullptr;
-    
+
     // update external vertices
     v_a->he = he_ad;
     v_b->he = he_bc;
-    
+
     // delete 2 adjacent faces
     he->f->he = nullptr;
     heo->f->he = nullptr;
-    
+
     he->f = nullptr;
     he->next->f = nullptr;
     he->next->next->f = nullptr;
@@ -438,19 +453,17 @@ public:
     heo->next->next->f = nullptr;
 
     // set opposite of hedges
-    if (he_ca != nullptr){
-      he_ca->opposite = he_ad;
-    }
+    if(he_ca != nullptr) { he_ca->opposite = he_ad; }
     he_ad->opposite = he_ca;
     he_ad->data = heo->next->next->data;
-    if (he_bc != nullptr){
-      he_bc->opposite = he_db;
-    }
+    if(he_bc != nullptr) { he_bc->opposite = he_db; }
     he_db->opposite = he_bc;
     he_db->data = he->next->data;
     // create new faces
-    createFace(he_ad->f, v_a, v_c, he_ad->next->next->v, he_ad, he_ad->next, he_ad->next->next);
-    createFace(he_db->f, v_c, v_b, he_db->next->next->v, he_db, he_db->next, he_db->next->next);
+    createFace(he_ad->f, v_a, v_c, he_ad->next->next->v, he_ad, he_ad->next,
+               he_ad->next->next);
+    createFace(he_db->f, v_c, v_b, he_db->next->next->v, he_db, he_db->next,
+               he_db->next->next);
 
     touched.push_back(he_ad->next->next);
     touched.push_back(he_db->next);
@@ -460,31 +473,31 @@ public:
     return 0;
   }
 
-  inline int checkHedgeCompatibility(HalfEdge* he){
+  inline int checkHedgeCompatibility(HalfEdge *he)
+  {
     bool deletion_accepted = false;
     bool corner = false;
-    while (!deletion_accepted && !corner){
-      if (he->data != -1){
-        return false;
-      } 
-        
-      HalfEdge* _he = he->next->next->opposite;
+    while(!deletion_accepted && !corner) {
+      if(he->data != -1) { return false; }
+
+      HalfEdge *_he = he->next->next->opposite;
       Vertex *v0 = he->next->v;
       bool flipped = false;
-      if (!_he) corner = true;
-      while (!flipped && _he->next->next->opposite != he && !corner) {
+      if(!_he) corner = true;
+      while(!flipped && _he->next->next->opposite != he && !corner) {
         Vertex *v1 = _he->next->v;
         Vertex *v2 = _he->next->next->v;
-        double s = robustPredicates::orient2d(v0->position, v1->position, v2->position);
-        if (s <= 0) flipped = true;
+        double s =
+          robustPredicates::orient2d(v0->position, v1->position, v2->position);
+        if(s <= 0) flipped = true;
         _he = _he->next->next->opposite;
-        if (_he == nullptr) corner = true;
+        if(_he == nullptr) corner = true;
       }
-      if (flipped || corner){
+      if(flipped || corner) {
         // he = he->next->next->opposite;
         return false;
       }
-      else if (!flipped && !corner){
+      else if(!flipped && !corner) {
         // we found a good edge! we can adapt the big mesh
         deletion_accepted = true;
         return true;
@@ -493,16 +506,17 @@ public:
     return false;
   }
 
-  inline int deleteVertex(Vertex* v, std::vector<HalfEdge *> *_t = NULL){
+  inline int deleteVertex(Vertex *v, std::vector<HalfEdge *> *_t = NULL)
+  {
     std::vector<HalfEdge *> _touched;
-    if (degree(v) == 3){
-      HalfEdge* he = v->he;
-      HalfEdge* he0 = he->next;
-      HalfEdge* he1 = he0->next->opposite->next;
-      HalfEdge* he2 = he1->next->opposite->next;
-      Vertex* v0 = he0->v;
-      Vertex* v1 = he1->v;
-      Vertex* v2 = he2->v;
+    if(degree(v) == 3) {
+      HalfEdge *he = v->he;
+      HalfEdge *he0 = he->next;
+      HalfEdge *he1 = he0->next->opposite->next;
+      HalfEdge *he2 = he1->next->opposite->next;
+      Vertex *v0 = he0->v;
+      Vertex *v1 = he1->v;
+      Vertex *v2 = he2->v;
       do {
         he->f = nullptr;
         he->opposite->f = nullptr;
@@ -518,38 +532,37 @@ public:
       he2->f = he0->f;
       createFace(he0->f, v0, v1, v2, he0, he1, he2);
       if(_t) {
-        for (auto he : *_t) _touched.push_back(he);
+        for(auto he : *_t) _touched.push_back(he);
         _touched.push_back(he0);
         _touched.push_back(he1);
         _touched.push_back(he2);
       }
     }
     else {
-      HalfEdge* he = v->he;
+      HalfEdge *he = v->he;
       bool deletion_accepted = false;
       bool corner = false;
-      while (!deletion_accepted && !corner){
-        if (he->data != -1) return -1;
-        HalfEdge* _he = he->next->next->opposite;
+      while(!deletion_accepted && !corner) {
+        if(he->data != -1) return -1;
+        HalfEdge *_he = he->next->next->opposite;
         Vertex *v0 = he->next->v;
         bool flipped = false;
-        if (!_he) corner = true;
-        while (!flipped && _he != he && !corner) {
+        if(!_he) corner = true;
+        while(!flipped && _he != he && !corner) {
           Vertex *v1 = _he->next->v;
           Vertex *v2 = _he->next->next->v;
-          double s = robustPredicates::orient2d(v0->position, v1->position, v2->position);
-          if (s < 0) flipped = true;
+          double s = robustPredicates::orient2d(v0->position, v1->position,
+                                                v2->position);
+          if(s < 0) flipped = true;
           _he = _he->next->next->opposite;
-          if (_he == nullptr) corner = true;
+          if(_he == nullptr) corner = true;
         }
-        if (flipped){
-          he = he->next->next->opposite;
-        }
-        else if (!flipped && !corner){
+        if(flipped) { he = he->next->next->opposite; }
+        else if(!flipped && !corner) {
           // we found a good edge! we can adapt the big mesh
           _he = he->next->next->opposite;
-          while (degree(v) > 3) {
-            HalfEdge* _heNext = _he->next->next->opposite;
+          while(degree(v) > 3) {
+            HalfEdge *_heNext = _he->next->next->opposite;
             swap_edge(_he);
             _touched.push_back(_he);
             _he = _heNext;
@@ -608,28 +621,31 @@ public:
   }
 
   // general case
-  inline int split_edge_general (HalfEdge *he0m, const SVector3 &position, int data = -1) {
+  inline int split_edge_general(HalfEdge *he0m, const SVector3 &position,
+                                int data = -1)
+  {
     //    printf("coucocu7\n");
     HalfEdge *he1m = he0m->opposite;
     //    if(he1m == nullptr) return -1;
 
-    Vertex *mid = new Vertex(position.x(), position.y(), position.z(), data == -1 ? vertices.size() : data);
+    Vertex *mid = new Vertex(position.x(), position.y(), position.z(),
+                             data == -1 ? vertices.size() : data);
     vertices.push_back(mid);
 
     HalfEdge *hem0 = nullptr;
-    if (he1m) hem0 = new HalfEdge(mid);
+    if(he1m) hem0 = new HalfEdge(mid);
     HalfEdge *hem1 = new HalfEdge(mid);
 
     mid->he = hem1;
 
     hem1->f = he0m->f;
-    if (hem0) hem0->f = he0m->opposite->f;    
-    if (hem0) hedges.push_back(hem0);
+    if(hem0) hem0->f = he0m->opposite->f;
+    if(hem0) hedges.push_back(hem0);
     hedges.push_back(hem1);
-    
+
     he0m->opposite = hem0;
-    if (hem0) hem0->opposite = he0m;
-    if (he1m) he1m->opposite = hem1;
+    if(hem0) hem0->opposite = he0m;
+    if(he1m) he1m->opposite = hem1;
     hem1->opposite = he1m;
 
     // right side
@@ -639,34 +655,34 @@ public:
     hem1->prev = he0m;
 
     // left side
-    if (hem0)hem0->next = he1m->next;
-    if (he1m)he1m->next->prev = hem0;
-    if (he1m)he1m->next = hem0;
-    if (hem0)hem0->prev = he1m;
+    if(hem0) hem0->next = he1m->next;
+    if(he1m) he1m->next->prev = hem0;
+    if(he1m) he1m->next = hem0;
+    if(hem0) hem0->prev = he1m;
     //    printf("coucocu8\n");
     return 0;
   }
 
-
-  inline int split_edge_general (HalfEdge *he0m, PolyMesh::Vertex *mid) {
+  inline int split_edge_general(HalfEdge *he0m, PolyMesh::Vertex *mid)
+  {
     //    printf("coucocu7\n");
     HalfEdge *he1m = he0m->opposite;
     //    if(he1m == nullptr) return -1;
 
     HalfEdge *hem0 = nullptr;
-    if (he1m) hem0 = new HalfEdge(mid);
+    if(he1m) hem0 = new HalfEdge(mid);
     HalfEdge *hem1 = new HalfEdge(mid);
 
     mid->he = hem1;
 
     hem1->f = he0m->f;
-    if (hem0) hem0->f = he0m->opposite->f;    
-    if (hem0) hedges.push_back(hem0);
+    if(hem0) hem0->f = he0m->opposite->f;
+    if(hem0) hedges.push_back(hem0);
     hedges.push_back(hem1);
-    
+
     he0m->opposite = hem0;
-    if (hem0) hem0->opposite = he0m;
-    if (he1m) he1m->opposite = hem1;
+    if(hem0) hem0->opposite = he0m;
+    if(he1m) he1m->opposite = hem1;
     hem1->opposite = he1m;
 
     // right side
@@ -676,10 +692,10 @@ public:
     hem1->prev = he0m;
 
     // left side
-    if (hem0)hem0->next = he1m->next;
-    if (he1m)he1m->next->prev = hem0;
-    if (he1m)he1m->next = hem0;
-    if (hem0)hem0->prev = he1m;
+    if(hem0) hem0->next = he1m->next;
+    if(he1m) he1m->next->prev = hem0;
+    if(he1m) he1m->next = hem0;
+    if(hem0) hem0->prev = he1m;
     //    printf("coucocu8\n");
     return 0;
   }
@@ -744,23 +760,25 @@ public:
     return 0;
   }
 
-  inline int split_boundary_edge(HalfEdge *he, const SVector3 &position, int data, std::vector<HalfEdge *> *new_bnd_hes = NULL)
+  inline int split_boundary_edge(HalfEdge *he, const SVector3 &position,
+                                 int data,
+                                 std::vector<HalfEdge *> *new_bnd_hes = NULL)
   {
-    if (he->opposite != nullptr) return -1;
-    
-    Vertex* v0 = he->v;
-    Vertex* v1 = he->next->v;
-    Vertex* v2 = he->next->next->v;
+    if(he->opposite != nullptr) return -1;
+
+    Vertex *v0 = he->v;
+    Vertex *v1 = he->next->v;
+    Vertex *v2 = he->next->next->v;
 
     Vertex *mid = new Vertex(position.x(), position.y(), position.z(), data);
     vertices.push_back(mid);
 
-    HalfEdge* hen = he->next;
-    HalfEdge* hep = he->next->next;
+    HalfEdge *hen = he->next;
+    HalfEdge *hep = he->next->next;
 
-    HalfEdge* hem = new HalfEdge(mid);
-    HalfEdge* hemo = new HalfEdge(v2);
-    HalfEdge* he1 = new HalfEdge(mid);
+    HalfEdge *hem = new HalfEdge(mid);
+    HalfEdge *hemo = new HalfEdge(v2);
+    HalfEdge *he1 = new HalfEdge(mid);
 
     he->next = hem;
     hem->next = hep;
@@ -772,7 +790,7 @@ public:
 
     hem->opposite = hemo;
     hemo->opposite = hem;
-    
+
     hedges.push_back(hem);
     hedges.push_back(hemo);
     hedges.push_back(he1);
@@ -939,19 +957,21 @@ public:
     }
     return 0;
   }
-  void fastMarching (std::vector<Vertex *> &seeds, std::map<Vertex*,double> &d);
-  void fastMarching (Vertex *v, std::map<Vertex*,double> &d){
-    std::vector<Vertex *> seeds; seeds.push_back(v);
-    fastMarching(seeds,d);
+  void fastMarching(std::vector<Vertex *> &seeds,
+                    std::map<Vertex *, double> &d);
+  void fastMarching(Vertex *v, std::map<Vertex *, double> &d)
+  {
+    std::vector<Vertex *> seeds;
+    seeds.push_back(v);
+    fastMarching(seeds, d);
   }
 
-  int decimate (double d,
-		std::map<Vertex*,SVector3> *cogs = nullptr,
-		std::map<Vertex*,SVector3> *nrms = nullptr);
-  void computeNormalsAndCentersOfGravity (std::map<PolyMesh::Vertex*,SVector3> &cogs,
-					  std::map<PolyMesh::Vertex*,SVector3> &nrms);
-  
- };
+  int decimate(double d, std::map<Vertex *, SVector3> *cogs = nullptr,
+               std::map<Vertex *, SVector3> *nrms = nullptr);
+  void computeNormalsAndCentersOfGravity(
+    std::map<PolyMesh::Vertex *, SVector3> &cogs,
+    std::map<PolyMesh::Vertex *, SVector3> &nrms);
+};
 
 struct HalfEdgePtrLessThan {
   bool operator()(PolyMesh::HalfEdge *l1, PolyMesh::HalfEdge *l2) const
@@ -979,6 +999,7 @@ struct HalfEdgePtrEqual {
   }
 };
 
-void print__ (const char *fn, PolyMesh*pm, std::map<PolyMesh::Vertex*,double> &ls);
+void print__(const char *fn, PolyMesh *pm,
+             std::map<PolyMesh::Vertex *, double> &ls);
 
 #endif

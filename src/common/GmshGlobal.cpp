@@ -44,8 +44,9 @@ typedef unsigned long intptr_t;
 #if defined(HAVE_MESH)
 #include "Field.h"
 #include "meshPartition.h"
-//#include "gmshCrossFields.h"
+#include "gmshCrossFields.h"
 #include "automaticMeshSizeField.h"
+#include "meshGFaceGeodesic.h" // FIXME TEST
 #endif
 
 #if defined(HAVE_PLUGINS)
@@ -350,17 +351,16 @@ int GmshBatch()
     else if(CTX::instance()->batch == 9) {
       GModel::current()->computeSizeField();
     }
-    else if(CTX::instance()->batch == 69) {
-      int makeMeshGeodesic (GModel *gm);
-      //      for (GModel::fiter fit = GModel::current()->firstFace() ; fit !=  GModel::current()->lastFace() ; ++fit)
-      makeMeshGeodesic (GModel::current());
-      
-      //      std::vector<int> tags;
-      //      computeCrossField(GModel::current(), tags);
-      //      GoodbyeMessage();
-      //      CTX::instance()->batch = 0;
+    else if(CTX::instance()->batch == 69) { // FIXME TEST
+      std::vector<int> tags;
+      computeCrossField(GModel::current(), tags);
+      GoodbyeMessage();
+      CTX::instance()->batch = 0;
       // still a bug in allocation somewhere
-      //      exit(0);
+      exit(0);
+    }
+    else if(CTX::instance()->batch == 70) { // FIXME TEST
+      makeMeshGeodesic (GModel::current());
     }
 #endif
   }

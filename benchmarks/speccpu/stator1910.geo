@@ -15850,3 +15850,21 @@ Surface Loop(599) = {17852, 8, 17989, 17993, 17997, 17919};
 Volume(599) = {599};
 Surface Loop(600) = {17874, 10, 17935, 18015, 18019, 18023};
 Volume(600) = {600};
+
+// ********** Begin SPEC validation **********
+
+Mesh.MeshSizeFactor = 0.2;
+Mesh.Algorithm = 5; // del2d
+Mesh.Algorithm3D = 10; // hxt
+Mesh 3;
+n = 1e6;
+file = StrCat(StrPrefix(StrRelative(General.FileName)), ".val");
+Printf("Number of tet elements is %g (estimated %g)", Mesh.NbTetrahedra, n);
+If ( Fabs(Mesh.NbTetrahedra - n) / Mesh.NbTetrahedra > 0.2 )
+  Printf("Error: Number of tet elements is %g (estimated %g), outside of range", Mesh.NbTetrahedra, n) >> file;
+  Error("Number of tet elements is %g (estimated %g), outside of range", Mesh.NbTetrahedra, n);
+Else
+  Printf("Successful Verification of requested %g elements", n) >> file;
+EndIf
+
+// ********** End SPEC validation **********
