@@ -20,6 +20,7 @@
 #cmakedefine HAVE_DOMHEX
 #cmakedefine HAVE_EIGEN
 #cmakedefine HAVE_FLTK
+#cmakedefine HAVE_GEODESIC
 #cmakedefine HAVE_GEOMETRYCENTRAL
 #cmakedefine HAVE_GMM
 #cmakedefine HAVE_GMP

@@ -26,10 +26,7 @@
 #include "geometrycentral/surface/vertex_position_geometry.h"
 #endif
 
-discreteFace::param::~param()
-{
-  clear();
-}
+discreteFace::param::~param() { clear(); }
 
 void discreteFace::param::clear()
 {
@@ -676,8 +673,8 @@ void discreteFace::_createGeometryFromSTL()
       MAX[2] = std::max(MAX[2], _param.t3d[j].getVertex(k)->z());
       MIN[2] = std::min(MIN[2], _param.t3d[j].getVertex(k)->z());
     }
-    _param.rtree3dData.push_back
-      (new std::pair<MTriangle *, MTriangle *>(&_param.t3d[j], &_param.t2d[j]));
+    _param.rtree3dData.push_back(
+      new std::pair<MTriangle *, MTriangle *>(&_param.t3d[j], &_param.t2d[j]));
     _param.rtree3d.Insert(MIN, MAX, _param.rtree3dData.back());
   }
   _param.oct = new MElementOctree(temp);

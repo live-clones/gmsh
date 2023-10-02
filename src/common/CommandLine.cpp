@@ -524,6 +524,10 @@ static bool GetMeshOption(const std::vector<std::string> &argv,
     CTX::instance()->batch = 69;
     i++;
   }
+  else if(argv[i] == "-geodesic") {
+    CTX::instance()->batch = 70;
+    i++;
+  }
   else if(argv[i] == "-part") {
     i++;
     if(i < argv.size()) {

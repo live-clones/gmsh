@@ -16,7 +16,7 @@
 class MElementOctree;
 
 class discreteFace : public GFace {
-private:
+public:
   class param {
   public:
     MElementOctree *oct;

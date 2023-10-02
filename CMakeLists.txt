@@ -50,6 +50,7 @@ opt(DINTEGRATION "Enable discrete integration (needed for levelsets)" ${DEFAULT}
 opt(DOMHEX "Enable experimental DOMHEX code" ${DEFAULT})
 opt(EIGEN "Enable Eigen for linear algebra (instead of Blas/Lapack)" ON)
 opt(FLTK "Enable FLTK graphical user interface (requires mesh/post)" ${DEFAULT})
+opt(GEODESIC "Enable geodic code (requires mesh)" ${DEFAULT})
 opt(GEOMETRYCENTRAL "Enable geometry-central library (experimental)" ${DEFAULT})
 opt(GETDP "Enable GetDP solver (linked as a library, experimental)" ${DEFAULT})
 opt(GMM "Enable GMM linear solvers (simple alternative to PETSc)" ${DEFAULT})
@@ -1000,6 +1001,12 @@ if(HAVE_MESH)
     set_config_option(HAVE_WINSLOWUNTANGLER "WinslowUntangler")
     add_subdirectory(contrib/WinslowUntangler)
     include_directories(BEFORE contrib/WinslowUntangler)
+  endif()
+
+  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/geodesic_matlab
+     AND ENABLE_GEODESIC)
+    set_config_option(HAVE_GEODESIC "Geodesic")
+    include_directories(BEFORE contrib/geodesic_matlab/src)
   endif()
 endif()
 
