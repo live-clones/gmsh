@@ -1262,7 +1262,7 @@ void delaunayTriangulation(const int numThreads, const int nptsatonce,
     _temp[v->getNum()] = mv;
   }
 
-  robustPredicates::exactinit(1, maxx, maxy, maxz);
+  robustPredicates::exactinit(maxx, maxy, maxz);
 
   Vert *box[8];
   delaunayTriangulation(numThreads, nptsatonce, _vertices, box, allocator);
