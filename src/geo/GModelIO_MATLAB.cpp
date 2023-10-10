@@ -74,12 +74,12 @@ int GModel::writeMATLAB(const std::string &name, bool binary, bool saveAll,
   // sequence
   int numVertices = indexMeshVertices(saveAll);
 
-  fprintf(fp, "\%\%  Matlab mesh\n");
-  fprintf(fp, "\%\% %s, Created by Gmsh\n", getName().c_str());
+  fprintf(fp, "%%%% Matlab mesh\n");
+  fprintf(fp, "%%%% %s, Created by Gmsh\n", getName().c_str());
   if(binary)
-    fprintf(fp, "\%\% BINARY\n");
+    fprintf(fp, "%%%% BINARY\n");
   else
-    fprintf(fp, "\%\% ASCII\n");
+    fprintf(fp, "%%%% ASCII\n");
 
   // get all the entities in the model
   std::vector<GEntity *> entities;
@@ -95,7 +95,7 @@ int GModel::writeMATLAB(const std::string &name, bool binary, bool saveAll,
                                                    scalingFactor);
     fprintf(fp, "];\n");
     // triangles
-    fprintf(fp, "\%\%\n");
+    fprintf(fp, "%%%%\n");
     fprintf(fp, "gTri=[\n");
     for(std::size_t i = 0; i < entities.size(); i++) {
       if(saveAll)
