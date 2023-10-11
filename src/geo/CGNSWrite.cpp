@@ -90,8 +90,7 @@ namespace {
     ossEnt << "_" << ge->tag();
     entityName = model->getElementaryName(ge->dim(), ge->tag());
     if(!entityName.empty()) ossEnt << "_" << entityName;
-    entityName = ossEnt.str();
-    entityName = cgnsString(entityName);
+    entityName = cgnsString(ossEnt.str());
   }
 
 } // anonymous namespace
@@ -651,7 +650,7 @@ int writeGeomEntities(std::map<GEntity *, std::string> &geomEntities,
       if(physName == "") {
         std::ostringstream oss;
         oss << physTag;
-        physName = oss.str();
+        physName = cgnsString(oss.str());
       }
 
       // write to family name
