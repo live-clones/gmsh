@@ -101,13 +101,13 @@ RUN cd ${SLEPC_DIR} && ./configure && make
 # MED
 # -----------------------
 
-RUN curl -L -O http://files.salome-platform.org/Salome/other/med-4.1.0.tar.gz && tar zxf med-4.1.0.tar.gz && cd med-4.1.0 && LIBS=-ldl ./configure --with-hdf5=/usr/local --enable-build-static --disable-shared --disable-python --disable-fortran --disable-tests --with-med_int=long && make -i install && cd .. && rm -rf med-4.1.0.tar.gz med-4.1.0
+RUN curl -L -O https://src.fedoraproject.org/lookaside/pkgs/med/med-4.1.0.tar.gz/sha512/94d07663c2f6a3cd497f54b480c3d742476d2a25172feb567980c9e75d49f4661aa2c6aaf570470938265997154e348bc1608065b86d42afda52d4e6361fedf8/med-4.1.0.tar.gz && tar zxf med-4.1.0.tar.gz && cd med-4.1.0 && LIBS=-ldl ./configure --with-hdf5=/usr/local --enable-build-static --disable-shared --disable-python --disable-fortran --disable-tests --with-med_int=long && make -i install && cd .. && rm -rf med-4.1.0.tar.gz med-4.1.0
 
 # -----------------------
 # OpenCASCADE
 # -----------------------
 
-RUN curl -L -o occt.tgz "http://git.dev.opencascade.org/gitweb/?p=occt.git;a=snapshot;h=refs/tags/V7_6_1;sf=tgz" && tar xf occt.tgz && cd occt-* && mkdir build && cd build && CXXFLAGS="-fPIC -DIGNORE_NO_ATOMICS" cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_LIBRARY_TYPE=Static -DBUILD_MODULE_Draw=0 -DBUILD_MODULE_Visualization=0 -DBUILD_MODULE_ApplicationFramework=0 .. && make -j 4 && make install && cd ../.. && rm -rf occt.tgz occt-*
+RUN curl -L -o occt.tgz "http://git.dev.opencascade.org/gitweb/?p=occt.git;a=snapshot;h=refs/tags/V7_7_2;sf=tgz" && tar xf occt.tgz && cd occt-* && mkdir build && cd build && CXXFLAGS="-fPIC -DIGNORE_NO_ATOMICS" cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_LIBRARY_TYPE=Static -DBUILD_MODULE_Draw=0 -DBUILD_MODULE_Visualization=0 -DBUILD_MODULE_ApplicationFramework=0 .. && make -i -j 4 install && cd ../.. && rm -rf occt.tgz occt-*
 
 # -----------------------
 # FLTK
