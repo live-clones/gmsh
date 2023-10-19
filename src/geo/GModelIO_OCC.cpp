@@ -669,7 +669,7 @@ void OCC_Internals::_unbindWithoutChecks(TopoDS_Shape shape)
 void OCC_Internals::_unbind()
 {
   for(int i = 0; i < 6; i++)
-    _maxTag[i] = _maxTag[i] = CTX::instance()->geom.firstEntityTag - 1;
+    _maxTag[i] = CTX::instance()->geom.firstEntityTag - 1;
 
   TopTools_DataMapIteratorOfDataMapOfIntegerShape exp;
   exp.Initialize(_tagVertex);
