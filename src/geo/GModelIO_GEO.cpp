@@ -89,12 +89,23 @@ void GEO_Internals::_freeAll()
 void GEO_Internals::setMaxTag(int dim, int val)
 {
   switch(dim) {
+#if 0
+  // this is "right" (so that we always obey Geometry.FirstEntityTag) but breaks
+  // backward compatibility
   case 0: _maxPointNum = std::max(_maxPointNum, val); break;
   case 1: _maxLineNum = std::max(_maxLineNum, val); break;
   case -1: _maxLineLoopNum = std::max(_maxLineLoopNum, val); break;
   case 2: _maxSurfaceNum = std::max(_maxSurfaceNum, val); break;
   case -2: _maxSurfaceLoopNum = std::max(_maxSurfaceLoopNum, val); break;
   case 3: _maxVolumeNum = std::max(_maxVolumeNum, val); break;
+#else
+  case 0: _maxPointNum = val; break;
+  case 1: _maxLineNum = val; break;
+  case -1: _maxLineLoopNum = val; break;
+  case 2: _maxSurfaceNum = val; break;
+  case -2: _maxSurfaceLoopNum = val; break;
+  case 3: _maxVolumeNum = val; break;
+#endif
   }
 }
 
