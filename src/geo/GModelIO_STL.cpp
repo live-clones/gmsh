@@ -107,6 +107,7 @@ int GModel::readSTL(const std::string &name, double tolerance)
     while(!feof(fp)) {
       char header[80];
       if(!fread(header, sizeof(char), 80, fp)) break;
+      header[79] = '\0';
       unsigned int nfacets = 0;
       size_t ret = fread(&nfacets, sizeof(unsigned int), 1, fp);
       bool swap = false;

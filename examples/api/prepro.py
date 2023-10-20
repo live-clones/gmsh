@@ -199,8 +199,12 @@ def checkForEvent():
         # user clicked on "Some action"
         gmsh.onelab.setString("ONELAB/Action", [""])
         gmsh.fltk.setStatusMessage(
-            "Please select an entity (or press 'q' to quit)", True)
-        r, ent = gmsh.fltk.selectEntities()
+            "Please select one or more curves (or press 'q' to quit)", True)
+        while 1:
+            r, ent = gmsh.fltk.selectEntities(dim=1)
+            print("select returned", r)
+            print("selected curves", ent)
+            if r == 0: break
         if gmsh.fltk.isAvailable() == 0: return 0
         if r and len(ent):
             gmsh.fltk.showContextWindow(ent[0][0], ent[0][1])

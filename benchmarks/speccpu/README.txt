@@ -27,56 +27,9 @@ resulting mesh is used downstream in simulation workflows that only require suff
 dense meshes depending on the underlying physical/mathematical models to solve, but not
 on exact element counts.
 
-Here are the current cmdlines used for reference benchmarks. The result of each
-benchmark is appended to a file with the same name as the .geo script, with the
-.geo extension changed to ".val".
+The current command lines used for reference benchmarks are provided in the
 
-* refrate (single threaded, within 1.8GB memory footprint):
+> run_spec.sh
 
-  # spec.geo:
-  # 1D, 2D and 3D unstructured mesh, simple cubes with plane surfaces
-  gmsh spec.geo -option gmsh.opts -clscale 0.2 -nt 1 -algo front2d -algo del3d -cpu -
-  gmsh spec.geo -option gmsh.opts -clscale 0.17 -nt 1 -algo del2d -algo hxt -cpu -
-
-  # Torus.geo:
-  # 1D, 2D and 3D unstructured mesh, single volume, few curved surfaces
-  gmsh Torus.geo -option gmsh.opts -nt 1 -cpu -
-
-  # gasdis.geo
-  # 1D, 2D and 3D unstructured mesh, single volume, many curved surfaces
-  gmsh gasdis.geo -option gmsh.opts -nt 1 -cpu -
-
-  # p19.geo:
-  # 1D, 2D and 3D unstructured mesh, multiple volumes, curved surfaces
-  gmsh p19.geo -option gmsh.opts -nt 1 -cpu -
-
-  # stator1920.geo:
-  # 1D, 2D and 3D unstructured mesh, many volumes, high-order
-  gmsh stator1920.geo -option gmsh.opts -nt 1 -cpu -
-
-  # geom8du.geo:
-  # 1D, 2D and 3D unstructured mesh, multiscale geometry
-  gmsh geom8du.geo -option gmsh.opts -nt 1 -cpu -
-
-  # projection.geo:
-  # 1D and 2D structured and unstructured mesh, twisted surface
-  gmsh projection.geo -option gmsh.opts -nt 1 -cpu -
-
-  # mediterranean.geo:
-  # 1D and 2D unstructured mesh, multiscale curved surface
-  gmsh mediterranean.geo -option gmsh.opts -nt 1 -cpu -
-
-* refspeed (multi threaded, within 64GB memory footprint)
-
-  # spec.geo:
-  # 1D, 2D and 3D unstructured mesh, simple cubes with plane surfaces
-  gmsh spec.geo -option gmsh.opts -nt 0 -clscale 0.05 -algo front2d -algo hxt -cpu -
-  gmsh spec.geo -option gmsh.opts -nt 0 -clscale 0.05 -algo del2d -algo hxt -cpu -
-
-  # choi.geo:
-  # 1D, 2D and 3D unstructured mesh, complex model
-  gmsh choi.geo -option gmsh.opts -nt 0 -cpu -
-
-  # TieAnchor520.geo
-  # 1D and 2D unstructured mesh, many surfaces
-  gmsh TieAnchor520.geo -option gmsh.opts -nt 0 -cpu -
+script. The result of each benchmark is appended to a file with the same name as
+the .geo script, with the .geo extension changed to ".val".
