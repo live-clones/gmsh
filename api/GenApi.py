@@ -1283,11 +1283,11 @@ parentdir1 = os.path.dirname(moduledir)
 parentdir2 = os.path.dirname(parentdir1)
 
 if platform.system() == "Windows":
-    libname = "{7}-{3}.{4}.dll"
+    libname = "{7}-{3}.{4}.{5}.dll"
 elif platform.system() == "Darwin":
-    libname = "lib{7}.{3}.{4}.dylib"
+    libname = "lib{7}.{3}.{4}.{5}.dylib"
 else:
-    libname = "lib{7}.so.{3}.{4}"
+    libname = "lib{7}.so.{3}.{4}.{5}"
 
 # Searching lib in various subfolders
 libpath = None

@@ -31,7 +31,7 @@ version = match.group(2)
 
 wheel_name = "-".join([name, version ,'py2.py3', 'none', plat_name])
 
-libversion = ".".join(version.split(".")[:2])
+libversion = ".".join(version.split(".")[:3])
 
 with tempfile.TemporaryDirectory() as wheel_dir:
     data_dir = os.path.join(wheel_dir, f'gmsh-{version}.data')

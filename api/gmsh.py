@@ -43,11 +43,11 @@ parentdir1 = os.path.dirname(moduledir)
 parentdir2 = os.path.dirname(parentdir1)
 
 if platform.system() == "Windows":
-    libname = "gmsh-4.12.dll"
+    libname = "gmsh-4.12.0.dll"
 elif platform.system() == "Darwin":
-    libname = "libgmsh.4.12.dylib"
+    libname = "libgmsh.4.12.0.dylib"
 else:
-    libname = "libgmsh.so.4.12"
+    libname = "libgmsh.so.4.12.0"
 
 # Searching lib in various subfolders
 libpath = None
