@@ -153,7 +153,7 @@ Tags of points in the geometric model for which a fan is created@*
 Type: list@*
 Default value: @code{@{@}}
 @item FanPointsSizesList
-Number of elements in the fan for each fan node. If not present default value Mesh.BoundaryLayerFanElements@*
+Number of elements in the fan for each fan point. If not present default value Mesh.BoundaryLayerFanElements@*
 Type: list@*
 Default value: @code{@{@}}
 @item IntersectMetrics

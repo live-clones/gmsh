@@ -91,6 +91,16 @@ Number of control points for splines created during extrusion@*
 Default value: @code{5}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Geometry.FirstEntityTag
+First tag (>= 1) of entities when creating a model@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Geometry.FirstPhysicalTag
+First tag (>= 1) of physicall groups when creating a model@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Geometry.HighlightOrphans
 Highlight orphan and boundary entities?@*
 Default value: @code{0}@*
