@@ -30,7 +30,8 @@ void GEO_Internals::_allocateAll()
 {
   int t = CTX::instance()->geom.firstEntityTag;
   _maxPointNum = _maxLineNum = _maxLineLoopNum = _maxSurfaceNum = t - 1;
-  _maxSurfaceLoopNum = _maxVolumeNum = _maxPhysicalNum = t - 1;
+  _maxSurfaceLoopNum = _maxVolumeNum = t - 1;
+  _maxPhysicalNum = CTX::instance()->geom.firstPhysicalTag - 1;
 
   Points = Tree_Create(sizeof(Vertex *), CompareVertex);
   Curves = Tree_Create(sizeof(Curve *), CompareCurve);
@@ -54,7 +55,8 @@ void GEO_Internals::_freeAll()
 {
   int t = CTX::instance()->geom.firstEntityTag;
   _maxPointNum = _maxLineNum = _maxLineLoopNum = _maxSurfaceNum = t - 1;
-  _maxSurfaceLoopNum = _maxVolumeNum = _maxPhysicalNum = t - 1;
+  _maxSurfaceLoopNum = _maxVolumeNum = t - 1;
+  _maxPhysicalNum = CTX::instance()->geom.firstPhysicalTag - 1;
 
   Tree_Action(Points, FreeVertex);
   Tree_Delete(Points);

@@ -4311,6 +4311,14 @@ double opt_geometry_first_entity_tag(OPT_ARGS_NUM)
   return CTX::instance()->geom.firstEntityTag;
 }
 
+double opt_geometry_first_physical_tag(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    CTX::instance()->geom.firstPhysicalTag = (val > 1) ? (int)val : 1;
+  }
+  return CTX::instance()->geom.firstPhysicalTag;
+}
+
 double opt_geometry_highlight_orphans(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->geom.highlightOrphans = (int)val;
