@@ -892,6 +892,11 @@ StringXNumber GeometryOptions_Number[] = {
   { F|O, "ExtrudeSplinePoints" , opt_geometry_extrude_spline_points, 5. ,
     "Number of control points for splines created during extrusion" },
 
+  { F|O, "FirstEntityTag" , opt_geometry_first_entity_tag , 1. ,
+    "First tag (>= 1) of entities when creating a model" },
+  { F|O, "FirstPhysicalTag" , opt_geometry_first_physical_tag , 1. ,
+    "First tag (>= 1) of physicall groups when creating a model" },
+
   { F|O, "HighlightOrphans" , opt_geometry_highlight_orphans, 0. ,
     "Highlight orphan and boundary entities?" },
 
