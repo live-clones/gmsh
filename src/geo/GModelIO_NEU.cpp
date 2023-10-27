@@ -609,7 +609,7 @@ int GModel::readNEU(const std::string &name)
       return 0;
     }
     char phys_name[80] = "XXX";
-    if(sscanf(str, "%s ", &phys_name) != 1) {
+    if(sscanf(str, "%s ", phys_name) != 1) {
       fclose(fp);
       return 0;
     }
