@@ -417,6 +417,9 @@ int MergeFile(const std::string &fileName, bool errorIfMissing,
   else if(ext == ".bdf" || ext == ".BDF" || ext == ".nas" || ext == ".NAS") {
     status = GModel::current()->readBDF(fileName);
   }
+  else if (ext == ".neu" || ext == ".NEU") {
+    status=GModel::current()->readNEU(fileName);
+  }
   else if(ext == ".dat" || ext == ".DAT") {
     if(!strncmp(header, "BEGIN ACTRAN", 12))
       status = GModel::current()->readACTRAN(fileName);

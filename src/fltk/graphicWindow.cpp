@@ -137,6 +137,7 @@ static const char *input_formats =
 #endif
   "Mesh - INRIA Medit\t*.mesh\n"
   "Mesh - Nastran Bulk Data File\t*.{bdf,nas}\n"
+  "Mesh - GAMBIT Neutral File\t*.neu\n"
   "Mesh - Object File Format\t*.off\n"
   "Mesh - Plot3D Structured Mesh\t*.p3d\n"
   "Mesh - STL Surface\t*.stl\n"
