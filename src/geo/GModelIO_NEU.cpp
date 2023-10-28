@@ -10,6 +10,7 @@
 #include <iterator>
 #include <limits>
 #include <unordered_map>
+#include <cstring>
 #include "GModel.h"
 #include "OS.h"
 #include "MTriangle.h"
