@@ -738,7 +738,7 @@ int GModel::readNEU(const std::string &name)
       }
 
       std::vector<MVertex *> vertices;
-      for(int i = 0; i < sub.size(); i++)
+      for(std::size_t i = 0; i < sub.size(); i++)
         vertices.push_back(elementVector[num - 1]->getVertex(sub[i]));
       if(sub.size() == 3)
         elements[TYPE_TRI][reg].push_back(new MTriangle(vertices));
