@@ -5605,7 +5605,7 @@ GMSH_API void gmsh::model::mesh::triangulate(const std::vector<double> &coord,
 GMSH_API void gmsh::model::mesh::triangulateNodesOnEntity(const int tag)
 {
 #if defined(HAVE_MESH)
-  triangulateEntity(tag);
+  //  triangulateEntity(tag);
 #else
   Msg::Error("triangulate requires the mesh module");
 #endif

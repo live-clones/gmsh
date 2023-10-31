@@ -1,5 +1,5 @@
 #ifndef _MESHGFACEGEODESIC_H_
 #define _MESHGFACEGEODESIC_H_
-class GFace;
-bool createGeodesicMesh (GFace *gf);
+class GModel;
+int makeMeshGeodesic(GModel *gm);
 #endif

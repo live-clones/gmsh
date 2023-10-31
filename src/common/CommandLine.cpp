@@ -520,12 +520,12 @@ static bool GetMeshOption(const std::vector<std::string> &argv,
       if(exitOnError) Msg::Exit(1);
     }
   }
-  //  else if(argv[i] == "-quadlayout") {
-  //    CTX::instance()->batch = 69;
-  //    i++;
-  //  }
-  else if(argv[i] == "-geodesic") {
+  else if(argv[i] == "-quadlayout") {
     CTX::instance()->batch = 69;
+    i++;
+  }
+  else if(argv[i] == "-geodesic") {
+    CTX::instance()->batch = 70;
     i++;
   }
   else if(argv[i] == "-part") {

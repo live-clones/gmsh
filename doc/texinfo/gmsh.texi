@@ -393,18 +393,19 @@ a surface will be forced to be faces of tetrahedra in the final 3D mesh
 only if the surface is part of the boundary of a volume, or if that
 surface has been explicitly embedded in the volume. This automatically
 ensures the conformity of the mesh when, for example, two volumes share
-a common surface. Every meshing step is constrained by a @emph{mesh size
-field}, which prescribes the desired size of the elements in the
-mesh. This size field can be uniform, specified by values associated
-with points in the geometry, or defined by general mesh size fields (for
-example related to the distance to some boundary, to a arbitrary scalar
-field defined on another mesh, etc.): see @ref{Gmsh mesh size
-fields}. For each meshing step, all structured mesh directives are
-executed first, and serve as additional constraints for the unstructured
-parts. (The generation and handling of conformal meshes has important
-consequences on how meshes are stored internally in Gmsh, and how they
-are accessed through the API: see @ref{Gmsh application programming
-interface}.)
+a common surface. Mesh elements are oriented according to the
+geometrical orientation of the underlying entity.  Every meshing step is
+constrained by a @emph{mesh size field}, which prescribes the desired
+size of the elements in the mesh. This size field can be uniform,
+specified by values associated with points in the geometry, or defined
+by general mesh size fields (for example related to the distance to some
+boundary, to a arbitrary scalar field defined on another mesh, etc.):
+see @ref{Gmsh mesh size fields}. For each meshing step, all structured
+mesh directives are executed first, and serve as additional constraints
+for the unstructured parts. (The generation and handling of conformal
+meshes has important consequences on how meshes are stored internally in
+Gmsh, and how they are accessed through the API: see @ref{Gmsh
+application programming interface}.)
 
 Gmsh's mesh module regroups several 1D, 2D and 3D meshing algorithms:
 

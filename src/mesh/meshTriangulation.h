@@ -15,8 +15,8 @@
 PolyMesh *GFaceInitialMesh(int faceTag, int recover = 0,
                            std::vector<double> *additional = nullptr);
 PolyMesh *GFaceInitialMeshAlpha(int faceTag, int recover,
-                           std::vector<double> *additional, 
-                           std::vector<size_t> &IND);
+                                std::vector<double> *additional,
+                                std::vector<size_t> &IND);
 void GFaceDelaunayRefinement(int faceTag);
 int GFace2PolyMesh(int faceTag, PolyMesh **pm);
 int PolyMesh2GFace(PolyMesh *pm, int faceTag);

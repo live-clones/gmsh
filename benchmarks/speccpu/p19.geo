@@ -105,3 +105,21 @@ Coherence;
 
 Extrude {0,0,hcav-hg}{ Surface {126}; }
 Coherence;
+
+// ********** Begin SPEC validation **********
+
+Mesh.MeshSizeFactor = 0.1;
+Mesh.Algorithm = 5; // del2d
+Mesh.Algorithm3D = 10; // hxt
+Mesh 3;
+n = 6.3e6;
+file = StrCat(StrPrefix(StrRelative(General.FileName)), ".val");
+Printf("Number of tet elements is %g (estimated %g)", Mesh.NbTetrahedra, n);
+If ( Fabs(Mesh.NbTetrahedra - n) / Mesh.NbTetrahedra > 0.2 )
+  Printf("Error: Number of tet elements is %g (estimated %g), outside of range", Mesh.NbTetrahedra, n) >> file;
+  Error("Number of tet elements is %g (estimated %g), outside of range", Mesh.NbTetrahedra, n);
+Else
+  Printf("Successful Verification of requested %g elements", n) >> file;
+EndIf
+
+// ********** End SPEC validation **********
