@@ -5390,6 +5390,46 @@ class model:
                 _ovectorvectorsize(api_edges_, api_edges_n_, api_edges_nn_))
         alpha_shape = alphaShape
 
+        @staticmethod
+        def performAlphaShapeAndRefine(nodeTags, coord, nodesDimTags, refine, sizeAtNodes, alpha, hMean, surfaceTag, volumeTag):
+            """
+            gmsh.model.mesh.performAlphaShapeAndRefine(nodeTags, coord, nodesDimTags, refine, sizeAtNodes, alpha, hMean, surfaceTag, volumeTag)
+
+            From an initial empty 3D surface mesh, insert new nodes into the volume.
+            Tetrahedralize these nodes, and determine the alphashape of the mesh. If
+            refine is set, refine the tetrahedra to match the size field.
+
+            Types:
+            - `nodeTags': vector of sizes
+            - `coord': vector of doubles
+            - `nodesDimTags': vector of integers
+            - `refine': integer
+            - `sizeAtNodes': vector of doubles
+            - `alpha': double
+            - `hMean': double
+            - `surfaceTag': integer
+            - `volumeTag': integer
+            """
+            api_nodeTags_, api_nodeTags_n_ = _ivectorsize(nodeTags)
+            api_coord_, api_coord_n_ = _ivectordouble(coord)
+            api_nodesDimTags_, api_nodesDimTags_n_ = _ivectorint(nodesDimTags)
+            api_sizeAtNodes_, api_sizeAtNodes_n_ = _ivectordouble(sizeAtNodes)
+            ierr = c_int()
+            lib.gmshModelMeshPerformAlphaShapeAndRefine(
+                api_nodeTags_, api_nodeTags_n_,
+                api_coord_, api_coord_n_,
+                api_nodesDimTags_, api_nodesDimTags_n_,
+                c_int(refine),
+                api_sizeAtNodes_, api_sizeAtNodes_n_,
+                c_double(alpha),
+                c_double(hMean),
+                c_int(surfaceTag),
+                c_int(volumeTag),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+        perform_alpha_shape_and_refine = performAlphaShapeAndRefine
+
 
         class field:
             """

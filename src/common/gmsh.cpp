@@ -5720,6 +5720,17 @@ gmsh::model::mesh::alphaShape(const int dim, const int tag, const double alpha, 
 #endif  
 }
 
+GMSH_API void
+gmsh::model::mesh::performAlphaShapeAndRefine(const std::vector<size_t>& nodeTags, const std::vector<double>& coord, const std::vector<int>& nodesDimTags, const int refine, const std::vector<double>& sizeAtNodes, const double alpha, const double hMean, const int surfaceTag, const int volumeTag)
+{
+#if defined(HAVE_MESH) && defined(HAVE_HXT)
+  performAlphaShapeAndRefine_(nodeTags, coord, nodesDimTags, refine, sizeAtNodes, alpha, hMean, surfaceTag, volumeTag);
+#else 
+  Msg::Error("performAlphaShapeAndRefine requires the mesh and hxt modules");
+#endif
+}
+
+
 
 // gmsh::model::mesh::field
 

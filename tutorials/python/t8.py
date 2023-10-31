@@ -158,7 +158,7 @@ for num in range(1, 4):
 
             # gmsh.write("t8-{}.gif".format(num2))
             # gmsh.write("t8-{}.ppm".format(num2))
-            # gmsh.write("t8-{}.jpg".format(num2))
+            gmsh.write("t8-{}.jpg".format(num2))
             pass
 
     if num == 3:

@@ -1733,6 +1733,20 @@ GMSH_API void gmshModelMeshAlphaShape(const int dim,
                                       size_t *** edges, size_t ** edges_n, size_t *edges_nn,
                                       int * ierr);
 
+/* From an initial empty 3D surface mesh, insert new nodes into the volume.
+ * Tetrahedralize these nodes, and determine the alphashape of the mesh. If
+ * refine is set, refine the tetrahedra to match the size field. */
+GMSH_API void gmshModelMeshPerformAlphaShapeAndRefine(const size_t * nodeTags, const size_t nodeTags_n,
+                                                      const double * coord, const size_t coord_n,
+                                                      const int * nodesDimTags, const size_t nodesDimTags_n,
+                                                      const int refine,
+                                                      const double * sizeAtNodes, const size_t sizeAtNodes_n,
+                                                      const double alpha,
+                                                      const double hMean,
+                                                      const int surfaceTag,
+                                                      const int volumeTag,
+                                                      int * ierr);
+
 /* Add a new mesh size field of type `fieldType'. If `tag' is positive, assign
  * the tag explicitly; otherwise a new tag is assigned automatically. Return
  * the field tag. Available field types are listed in the "Gmsh mesh size

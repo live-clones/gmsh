@@ -597,6 +597,11 @@ mesh.add('constrainedDelaunayRefinement', doc, None, iint('dim'), iint('tag'), i
 doc = '''alpha shape on the mesh of entity of dimension `dim' and tag `tag'.'''
 mesh.add('alphaShape', doc, None, iint('dim'), iint('tag'), idouble('alpha'), ivectorsize('nodeTags'), ivectordouble('sizeAtNodes'), ovectorvectorsize('elementTags'), ovectorvectorsize('edges'))
 
+doc = '''From an initial empty 3D surface mesh, insert new nodes into the volume. Tetrahedralize these nodes, and determine the alphashape of the mesh. If refine is set, refine the tetrahedra to match the size field.'''
+mesh.add('performAlphaShapeAndRefine', doc, None, ivectorsize('nodeTags'), ivectordouble('coord'), ivectorint('nodesDimTags'), iint("refine"), ivectordouble('sizeAtNodes'), idouble('alpha'), idouble('hMean'), iint('surfaceTag'), iint('volumeTag'))
+
+
+
 ################################################################################
 
 field = mesh.add_module('field', 'mesh size field functions')

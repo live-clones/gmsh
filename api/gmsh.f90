@@ -730,6 +730,8 @@ module gmsh
         gmshModelMeshConstrainedDelaunayRefinement
     procedure, nopass :: alphaShape => &
         gmshModelMeshAlphaShape
+    procedure, nopass :: performAlphaShapeAndRefine => &
+        gmshModelMeshPerformAlphaShapeAndRefine
   end type gmsh_model_mesh_t
 
   type, public :: gmsh_model_t
@@ -7994,6 +7996,78 @@ module gmsh
       edges, &
       edges_n)
   end subroutine gmshModelMeshAlphaShape
+
+  !> From an initial empty 3D surface mesh, insert new nodes into the volume.
+  !! Tetrahedralize these nodes, and determine the alphashape of the mesh. If
+  !! refine is set, refine the tetrahedra to match the size field.
+  subroutine gmshModelMeshPerformAlphaShapeAndRefine(nodeTags, &
+                                                     coord, &
+                                                     nodesDimTags, &
+                                                     refine, &
+                                                     sizeAtNodes, &
+                                                     alpha, &
+                                                     hMean, &
+                                                     surfaceTag, &
+                                                     volumeTag, &
+                                                     ierr)
+    interface
+    subroutine C_API(api_nodeTags_, &
+                     api_nodeTags_n_, &
+                     api_coord_, &
+                     api_coord_n_, &
+                     api_nodesDimTags_, &
+                     api_nodesDimTags_n_, &
+                     refine, &
+                     api_sizeAtNodes_, &
+                     api_sizeAtNodes_n_, &
+                     alpha, &
+                     hMean, &
+                     surfaceTag, &
+                     volumeTag, &
+                     ierr_) &
+      bind(C, name="gmshModelMeshPerformAlphaShapeAndRefine")
+      use, intrinsic :: iso_c_binding
+      integer(c_size_t), dimension(*) :: api_nodeTags_
+      integer(c_size_t), value, intent(in) :: api_nodeTags_n_
+      real(c_double), dimension(*) :: api_coord_
+      integer(c_size_t), value, intent(in) :: api_coord_n_
+      integer(c_int), dimension(*) :: api_nodesDimTags_
+      integer(c_size_t), value, intent(in) :: api_nodesDimTags_n_
+      integer(c_int), value, intent(in) :: refine
+      real(c_double), dimension(*) :: api_sizeAtNodes_
+      integer(c_size_t), value, intent(in) :: api_sizeAtNodes_n_
+      real(c_double), value, intent(in) :: alpha
+      real(c_double), value, intent(in) :: hMean
+      integer(c_int), value, intent(in) :: surfaceTag
+      integer(c_int), value, intent(in) :: volumeTag
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer(c_size_t), dimension(:), intent(in) :: nodeTags
+    real(c_double), dimension(:), intent(in) :: coord
+    integer(c_int), dimension(:), intent(in) :: nodesDimTags
+    integer, intent(in) :: refine
+    real(c_double), dimension(:), intent(in) :: sizeAtNodes
+    real(c_double), intent(in) :: alpha
+    real(c_double), intent(in) :: hMean
+    integer, intent(in) :: surfaceTag
+    integer, intent(in) :: volumeTag
+    integer(c_int), intent(out), optional :: ierr
+    call C_API(api_nodeTags_=nodeTags, &
+         api_nodeTags_n_=size_gmsh_size(nodeTags), &
+         api_coord_=coord, &
+         api_coord_n_=size_gmsh_double(coord), &
+         api_nodesDimTags_=nodesDimTags, &
+         api_nodesDimTags_n_=size_gmsh_int(nodesDimTags), &
+         refine=int(refine, c_int), &
+         api_sizeAtNodes_=sizeAtNodes, &
+         api_sizeAtNodes_n_=size_gmsh_double(sizeAtNodes), &
+         alpha=real(alpha, c_double), &
+         hMean=real(hMean, c_double), &
+         surfaceTag=int(surfaceTag, c_int), &
+         volumeTag=int(volumeTag, c_int), &
+         ierr_=ierr)
+  end subroutine gmshModelMeshPerformAlphaShapeAndRefine
 
   !> Add a new mesh size field of type `fieldType'. If `tag' is positive, assign
   !! the tag explicitly; otherwise a new tag is assigned automatically. Return

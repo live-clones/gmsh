@@ -655,7 +655,7 @@ void generateMesh3D_(const std::vector<double>& coord, const std::vector<size_t>
   }
   */
   Hxt2GmshAlpha(regions, mesh, v2c, c2v);
-  // gmsh::fltk::run();
+
   /* reset the vertex indices */
   for (size_t i=nBndPts; i<mesh->vertices.num; i++){
     MVertex* oldv = c2v[i];
@@ -677,6 +677,230 @@ void generateMesh3D_(const std::vector<double>& coord, const std::vector<size_t>
 
  
   //int meshDim = m->getMeshStatus(false); 
+}
+
+// nodeTags :      all the nodes in the mesh (including boundary nodes)
+// coords :        coordinates of all the nodes
+// sizeAtNodes :   mesh size at each node
+// nodesDimTags :  the entity (dim,tag) to which each node belongs
+void performAlphaShapeAndRefine_(const std::vector<size_t>& nodeTags, const std::vector<double>& coord, const std::vector<int>& nodesDimTags, const int refine, const std::vector<double>& sizeAtNodes, const double alpha, const double hMean, const int surfaceTag, const int volumeTag){
+  auto t0 = std::chrono::high_resolution_clock::now();
+
+  GModel *m = GModel::current();
+  
+  /* initialize hxt mesh */
+  HXTMesh *mesh;
+  hxtMeshCreate(&mesh);
+
+  /* set the gmsh surface mesh to hxt format */
+  std::map<MVertex *, uint32_t> v2c;
+  std::vector<MVertex *> c2v;
+  std::set<GRegion *, GEntityPtrLessThan> rs;
+  rs = m->getRegions();
+  std::vector<GRegion *> regions(rs.begin(), rs.end());
+  std::for_each(m->firstRegion(), m->lastRegion(), deMeshGRegion());
+  Gmsh2HxtAlpha(regions, mesh, v2c, c2v);
+
+  // a map from vertex node tag to index in nodeTags
+  std::map<size_t, size_t> g2i;
+  for(size_t i=0; i<nodeTags.size(); i++){
+    g2i.insert(std::pair<size_t, size_t>(nodeTags[i], i));
+  }
+  // an array from nodeTags to hxt node index and vice versa
+  std::vector<int> nodeTags2hxt(nodeTags.size());
+  std::vector<int> hxt2nodeTags(nodeTags.size());
+
+  for (int i=0; i<mesh->vertices.num; i++){
+    hxt2nodeTags[i] = g2i[c2v[i]->getNum()];
+  }  
+
+  // all other fields of the options will be 0 or NULL (standard C behavior)
+  HXTTetMeshOptions options = {};
+  options.defaultThreads = 2;
+  options.verbosity=2;
+  options.stat=1;
+
+	// create the empty mesh
+	hxtTetMesh(mesh, &options);
+
+  uint32_t nBndPts = mesh->vertices.num;
+
+  // create the bounding box of the mesh
+	HXTBbox bbox;
+	hxtBboxInit(&bbox);
+	hxtBboxAdd(&bbox, mesh->vertices.coord, mesh->vertices.num);
+
+
+  // only add to mesh the internal coords (because the others are already in...)
+  std::vector<double> internalCoords;
+  std::vector<size_t> internalNodeTags;
+  for (size_t i=0; i<nodeTags.size(); i++){
+    if (nodesDimTags[2*i+0] == 3){
+      internalCoords.push_back(coord[3*i+0]);
+      internalCoords.push_back(coord[3*i+1]);
+      internalCoords.push_back(coord[3*i+2]);
+      internalNodeTags.push_back(nodeTags[i]);
+    }
+  }
+
+  uint32_t numNewPts = internalCoords.size()/3;
+  std::vector<HXTNodeInfo> nodeInfo(numNewPts);
+
+  /* add the internal nodes to the mesh */
+  mesh->vertices.num += numNewPts;
+	if (mesh->vertices.num > mesh->vertices.size) {
+		hxtAlignedRealloc(&mesh->vertices.coord, sizeof(double) * mesh->vertices.num * 4);
+		mesh->vertices.size = mesh->vertices.num;
+	}
+  for (size_t p = 0; p < numNewPts; p++) {
+    uint32_t nodeIndex = p + nBndPts;
+    for (int dim = 0; dim < 3; dim++) {
+      mesh->vertices.coord[4 * nodeIndex + dim] = internalCoords[3*p+dim];
+    }
+    hxt2nodeTags[nodeIndex] = g2i[internalNodeTags[p]];
+    nodeInfo[p].node = nodeIndex;
+    nodeInfo[p].status = HXT_STATUS_TRYAGAIN; // state that we want to insert this point
+  }
+
+  HXTDelaunayOptions delOptions = {};
+  delOptions.bbox = &bbox;
+  delOptions.numVerticesInMesh = nBndPts;
+  delOptions.insertionFirst = nBndPts;
+  delOptions.verbosity = 2;
+  delOptions.allowOuterInsertion = 0;
+
+  /* Generate the tet mesh */
+  hxtDelaunaySteadyVertices(mesh, &delOptions, &nodeInfo[0], numNewPts);
+  
+  auto t1 = std::chrono::high_resolution_clock::now();
+  
+  printf("meshed 3D\n");
+
+
+  HXTNodalSizes nodalSizes = {
+      .array = NULL,
+      // .callback = options->nodalSizes.callback,
+      // .userData = options->nodalSizes.userData,
+      .min = .2*.07, 
+      .max = .05,  
+      .factor = 1.,
+      .enabled = 0  // only enabled for the refine step
+    };
+
+  hxtNodalSizesInit(mesh, &nodalSizes);
+  if (mesh->vertices.num == sizeAtNodes.size()){
+    for (size_t i=0; i<mesh->vertices.num; i++){
+      nodalSizes.array[i] = sizeAtNodes[hxt2nodeTags[i]];
+    }
+  }
+  else {
+    HXT_WARNING("sizeAtNodes size (%lu) is not equal to mesh->vertices.num (%d) ! \n", sizeAtNodes.size(), mesh->vertices.num);
+  }
+  delOptions.nodalSizes = &nodalSizes;
+
+  printf("number of vertices in mesh : %d \n", mesh->vertices.num);
+
+  HXTAlphaShapeOptions alphaShapeOptions = {
+      .colorOut = 1,
+      .colorIn = volumeTag,
+      .colorBoundary = surfaceTag,
+      .tetrahedra = NULL,
+      .n_tetrahedra = 0,
+      .alpha = alpha,
+      .hMean = hMean
+  };
+
+  hxtAlphaShape(mesh, &delOptions, &alphaShapeOptions);
+  printf("done with alpha shape : there are %d facets and %llu tets in the alpha shape \n", alphaShapeOptions.n_boundaryFacets, alphaShapeOptions.n_tetrahedra);
+  auto t2 = std::chrono::high_resolution_clock::now();
+    
+  if (alphaShapeOptions.n_tetrahedra == 0){
+    HXT_ERROR_MSG(HXT_STATUS_FAILED, "No tetrahedra in alpha shape, exiting \n");
+    return;
+  }
+  // Add alpha shape facets into the mesh
+  uint32_t startFrom = mesh->triangles.num;
+  mesh->triangles.num += alphaShapeOptions.n_boundaryFacets;
+  if (mesh->triangles.num > mesh->triangles.size){
+    hxtAlignedRealloc(&mesh->triangles.node, sizeof(uint32_t) * mesh->triangles.num * 3);
+    hxtAlignedRealloc(&mesh->triangles.color, sizeof(uint32_t) * mesh->triangles.num);
+    mesh->triangles.size = mesh->triangles.num;
+  }
+  for (int i=0; i<alphaShapeOptions.n_boundaryFacets; i++){
+    mesh->triangles.node[3*(startFrom+i)+0] = alphaShapeOptions.boundaryFacets[3*i+0];
+    mesh->triangles.node[3*(startFrom+i)+1] = alphaShapeOptions.boundaryFacets[3*i+1];
+    mesh->triangles.node[3*(startFrom+i)+2] = alphaShapeOptions.boundaryFacets[3*i+2];
+    mesh->triangles.color[startFrom+i] = alphaShapeOptions.colorBoundary;
+  }
+  // hxtMeshWriteGmsh(mesh, "beforeRefinement.msh");
+  std::__1::chrono::steady_clock::time_point t3, t3Bis, t4;
+  if (refine == 1){
+    printf("refining in alpha shape \n");
+
+    hxtRefineSurfaceTriangulation(mesh, &delOptions, &alphaShapeOptions);
+    t3 = std::chrono::high_resolution_clock::now();
+    printf("done with surface triangulation refinement\n");
+
+    // A new alpha shape to redefine the internal elements --> not ideal (but a work around ...)
+    hxtAlphaShape(mesh, &delOptions, &alphaShapeOptions);
+
+    t3Bis = std::chrono::high_resolution_clock::now();
+    // hxtMeshWriteGmsh(mesh, "newAlphaShape.msh");
+
+    // hxtRefineTetrahedraInAlphaShapeSequential(mesh, &delOptions, &alphaShapeOptions);
+    delOptions.nodalSizes->enabled = 1;
+    hxtAlphaShapeNodeInsertion(mesh, &delOptions, &alphaShapeOptions);
+    // hxtMeshWriteGmsh(mesh, "afterNodeInsertion.msh");
+    t4 = std::chrono::high_resolution_clock::now();
+  }
+
+  for (int i=0; i<mesh->tetrahedra.num; i++){
+    if (mesh->tetrahedra.color[i] != HXT_COLOR_OUT)
+      mesh->tetrahedra.color[i] = 0;
+  }
+  Hxt2GmshAlpha(regions, mesh, v2c, c2v);
+
+  std::vector<size_t> alphaTriTags, alphaTriNodeTags, alphaTetTags, alphaTetNodeTags;
+  for (int i=0; i<alphaShapeOptions.n_boundaryFacets; i++){
+    alphaTriTags.push_back(i+1);
+    for (int j=0; j<3; j++)
+      alphaTriNodeTags.push_back(c2v[alphaShapeOptions.boundaryFacets[3*i+j]]->getNum());
+  }
+  for (int i=0; i<alphaShapeOptions.n_tetrahedra; i++){
+    alphaTetTags.push_back(i+1);
+    uint64_t tetIndex = alphaShapeOptions.tetrahedra[i];
+    for (int j=0; j<4; j++) 
+      alphaTetNodeTags.push_back(c2v[mesh->tetrahedra.node[4*tetIndex+j]]->getNum());
+  }
+  gmsh::model::mesh::addElementsByType(surfaceTag, 2, alphaTriTags, alphaTriNodeTags);
+  gmsh::model::mesh::addElementsByType(volumeTag,  4, alphaTetTags, alphaTetNodeTags);
+  auto t5 = std::chrono::high_resolution_clock::now();
+
+  hxtMeshDelete(&mesh);
+  std::chrono::duration<double, std::milli> time_mesh3D = t1-t0;
+  double durMesh3D = time_mesh3D.count();
+  std::chrono::duration<double, std::milli> time_alphaShape = t2-t1;
+  double durAlphaShape = time_alphaShape.count();
+  std::chrono::duration<double, std::milli> time_surfaceRefine = t3-t2;
+  double durSurfaceRefine = time_surfaceRefine.count();
+  std::chrono::duration<double, std::milli> time_alphaShape2 = t3Bis-t3;
+  double durAlphaShape2= time_alphaShape2.count();
+  std::chrono::duration<double, std::milli> time_volumeRefine = t4-t3;
+  double durVolumeRefine = time_volumeRefine.count();
+  std::chrono::duration<double, std::milli> time_backGmsh = t5-t4;
+  double durBackGmsh = time_backGmsh.count();
+  std::chrono::duration<double, std::milli> time_total = t5-t0;
+  double durTotal = time_total.count();
+  
+  printf("Mesh 3D time        : %f percent \n", 100*durMesh3D/durTotal);
+  printf("Alpha shape time    : %f percent \n", 100*durAlphaShape/durTotal);
+  printf("Refine Surface time : %f percent \n", 100*durSurfaceRefine/durTotal);
+  printf("Alpha shape 2 time  : %f percent \n", 100*durAlphaShape2/durTotal);
+  printf("Refine Volume  time : %f percent \n", 100*durVolumeRefine/durTotal);
+  printf("Back to Gmsh time   : %f percent \n", 100*durBackGmsh/durTotal);
+  printf("Total               : %f percent \n", 100*(durMesh3D+durAlphaShape+durAlphaShape2+durSurfaceRefine+durVolumeRefine+durBackGmsh)/durTotal);
+  
+
 }
 
 void constrainedAlphaShapes3D_(GModel* m,  
@@ -985,7 +1209,7 @@ void generateMesh_(const int dim, const int tag, const bool refine, const std::v
       }
     }
     // gmsh::fltk::run();
-    pm->print4debug(tag);
+    // pm->print4debug(tag);
     delete pm;
   }
   // -----------------  3D ------------------------------
@@ -1211,7 +1435,7 @@ struct he_size
   {
     double d0 = norm(he0->v->position - he0->next->v->position);
     double d1 = norm(he1->v->position - he1->next->v->position);
-    return (d0 > d1);
+    return (d0 < d1);
   }
 };
 
@@ -1316,7 +1540,7 @@ void constrainedDelaunayRefinement_(const int dim, const int tag,
     // auto t0 = std::chrono::steady_clock::now(); 
     bool globalSize = sizeAtNodes.size() == 1;
     GModel* gm = GModel::current();
-
+    double surfaceConstraint = 0.5;
     GFace* gf = gm->getFaceByTag(tag);
     std::vector<std::pair<int, int> > bndDimTags;
     std::pair<int, int> dimTag = {dim, tag};
@@ -1425,12 +1649,16 @@ void constrainedDelaunayRefinement_(const int dim, const int tag,
       if (he->f)
         hes.push_back(he);
     }
+
+    auto it_min = min_element(sizeAtNodes.begin(), sizeAtNodes.end()); // to restrict elements even more if all the nodes have minimum size field
+    double minSize = *it_min;
+
     // auto t3 = std::chrono::steady_clock::now(); 
     // The initial mesh has been created; now we need to insert nodes such that the size field is respected.
     // Step 3: get the elements that do not respect the size or quality constraint
     std::vector<PolyMesh::Face *> _list;
     double _limit = minQuality; // Value to check!
-    double _size = .8;
+    double _size = 1.;
     for(auto f : pm->faces) {
       if (f->he && f->data != -1){
         double q;
@@ -1441,6 +1669,9 @@ void constrainedDelaunayRefinement_(const int dim, const int tag,
         double s;
         if (!globalSize){
           s = faceSize(f->he, gf, i2Size);
+          if (abs(s-minSize)/minSize < 1e-2){
+            s *= surfaceConstraint;
+          }
         }
         else 
           s = sizeAtNodes[0];
@@ -1450,7 +1681,9 @@ void constrainedDelaunayRefinement_(const int dim, const int tag,
     size_t newIdx = gm->getMaxVertexNumber()+1;
     size_t addFrom = pm->vertices.size();
     // print4debug(pm, 1000);
-    
+
+
+
     // Step 4: loop over faces to insert nodes where necessary
     while (!_list.empty()){
       for(auto face_it = _list.begin() ; face_it != _list.end(); face_it++) {
@@ -1465,10 +1698,13 @@ void constrainedDelaunayRefinement_(const int dim, const int tag,
       double uv[2];
       SPoint3 cc;
       double R;
-      faceInfo(f->he, gf, cc, uv, &R, &q);
+      faceInfo(f->he, gf, cc, uv, &R, &q); // NB : q = 2*rho / R
       double s;
       if (!globalSize){
         s = faceSize(f->he, gf, i2Size);
+        if (abs(s-minSize)/minSize < 1e-2){
+          s *= surfaceConstraint;
+        }
       }
       else 
         s = sizeAtNodes[0];
@@ -1477,6 +1713,7 @@ void constrainedDelaunayRefinement_(const int dim, const int tag,
         if(gp.succeeded()) { // we found it inside the geometrical domain
           PolyMesh::HalfEdge* heCandidate = nullptr;
           bool found;
+          // print4debug(pm, newIdx+1000);
           Walk(f, gp.u(), gp.v(), &heCandidate, &found);
           // printf(" walk : %d\n", heCandidate->data);
           std::vector<PolyMesh::HalfEdge *> _touched;
@@ -1503,6 +1740,7 @@ void constrainedDelaunayRefinement_(const int dim, const int tag,
               new_hes.push_back(heCandidate->next->opposite);
               new_hes.push_back(heCandidate->next->opposite->next);
               new_hes.push_back(heCandidate->next->opposite->next->next);
+
               delaunayCheck(pm, new_hes, &_touched);
             }
             else { // the circumcenter is outside of the geometrical domain -> we need to add a node on the boundary
@@ -1521,6 +1759,7 @@ void constrainedDelaunayRefinement_(const int dim, const int tag,
               new_hes.push_back(new_bnd_hes[1]->next);
               new_hes.push_back(new_bnd_hes[1]->next->next);
               delaunayCheck(pm, new_hes, &_touched);
+              
             }
             SVector3 dist = pos-p0;
             std::vector<PolyMesh::Vertex *> closeVertices;
@@ -1552,6 +1791,9 @@ void constrainedDelaunayRefinement_(const int dim, const int tag,
               double s;
               if (!globalSize){
                 s = faceSize(pf->he, gf, i2Size);
+                if (abs(s-minSize)/minSize < 1e-2){
+                  s *= surfaceConstraint;
+                }
               }
               else 
                 s = sizeAtNodes[0];
@@ -1751,14 +1993,19 @@ void constrainedDelaunayRefinement_(const int dim, const int tag,
     hxtMeshCreate(&mesh);
 
     std::map<MVertex *, uint32_t> v2c;
+    std::map<size_t, uint32_t> vTag2c;
     std::vector<MVertex *> c2v;
     std::set<GRegion *, GEntityPtrLessThan> rs;
     rs = GModel::current()->getRegions();
     std::vector<GRegion *> regions(rs.begin(), rs.end());
     
     Gmsh2HxtAlpha(regions, mesh, v2c, c2v);
+    for (uint32_t i=0; i<c2v.size(); i++){
+      vTag2c[c2v[i]->getNum()] = i;
+    }
+
     HXTTetMeshOptions options = {};
-    options.defaultThreads = 1;
+    options.defaultThreads = 8;
     options.verbosity=2;
     options.stat=1;
 
@@ -1791,22 +2038,28 @@ void constrainedDelaunayRefinement_(const int dim, const int tag,
       nodeInfo[p].status = HXT_STATUS_TRYAGAIN; // state that the point must be inserted
       v2c[internalVertices[p]] = nodeIndex;
       c2v[nodeIndex] = internalVertices[p];
+      vTag2c[c2v[nodeIndex]->getNum()] = nodeIndex;
     }
+
 
     /* TODO : Find the constrained faces and constrain them, then refine if necessary.  */
     // A START ...
-    // size_t numFaces = constrainedEdges.size()/3;
+    size_t numFaces = constrainedEdges.size()/3;
     
-    // hxtAlignedRealloc(mesh->triangles.node, sizeof(uint32_t) * 3 * numFaces);
-    // for(size_t j = 0; j < numFaces; j+=3) {
-    //   for(size_t i = 0; i < gf->triangles.size(); i++) {
-    //     m->triangles.node[3 * index + 0] = v2c[gf->triangles[i]->getVertex(0)];
-    //     m->triangles.node[3 * index + 1] = v2c[gf->triangles[i]->getVertex(1)];
-    //     m->triangles.node[3 * index + 2] = v2c[gf->triangles[i]->getVertex(2)];
-    //     m->triangles.color[index] = gf->tag();
-    //     index++;
-    //   }
-    // }
+    size_t startFrom = mesh->triangles.num;
+    mesh->triangles.num += (uint32_t)numFaces;
+    mesh->triangles.size = mesh->triangles.num;
+    uint32_t facesColor = tag+1;
+    hxtAlignedRealloc(&mesh->triangles.node, sizeof(uint32_t) * 3 * mesh->triangles.num);
+    hxtAlignedRealloc(&mesh->triangles.color, sizeof(uint32_t) * mesh->triangles.num);
+    for (size_t f=0; f<numFaces; f++){
+      size_t f_index = startFrom + f;
+      mesh->triangles.node[3 * f_index + 0] = vTag2c[constrainedEdges[3*f+0]];
+      mesh->triangles.node[3 * f_index + 1] = vTag2c[constrainedEdges[3*f+1]];
+      mesh->triangles.node[3 * f_index + 2] = vTag2c[constrainedEdges[3*f+2]];
+    // printf("face : %lu, %lu, %lu \n", vTag2c[constrainedEdges[3*i+0]], vTag2c[constrainedEdges[3*i+1]], vTag2c[constrainedEdges[3*i+2]]);
+      mesh->triangles.color[f_index] = facesColor;
+    }
 
     /* add tetrahedra (or generate the initial mesh ...) */
     HXTBbox bbox;
@@ -1819,9 +2072,12 @@ void constrainedDelaunayRefinement_(const int dim, const int tag,
     delOptions.insertionFirst = numBndPts;
     hxtDelaunaySteadyVertices(mesh, &delOptions, &nodeInfo[0], numNewPts);
     
+    // Hxt2GmshAlpha(regions, mesh, v2c, c2v);
+    // gmsh::fltk::run(); exit(0);
+    // printf("there now are %lu faces in the mesh and %lu tetrahedra \n", mesh->triangles.num, mesh->tetrahedra.num);
+    // printf("number of tets in alpha shape : %lu \n", elementTags.size());
     // 2: Recognize which elements can and must be refined (their color is set to 1, else 0)
     // idea : take barycenter of tet, and then get the element by coordinates --> then check if that element is in the gmsh fluid elements
-    // TODO : some bugs here, with memory ... 
     std::set<size_t> setFlel(elementTags.begin(), elementTags.end());
     for (uint64_t i=0; i<mesh->tetrahedra.num; i++){
       // printf("element color : %d \n", mesh->tetrahedra.color[i]);
@@ -1838,11 +2094,15 @@ void constrainedDelaunayRefinement_(const int dim, const int tag,
         }
         SPoint3 xyz(cB[0], cB[1], cB[2]), uvw;
         MElement *e = GModel::current()->getMeshElementByCoord(xyz, uvw, 3, true);
-        if (std::find(setFlel.begin(), setFlel.end(), e->getNum()) == setFlel.end()) // this means it should not be refined (outside of alpha-shape)!
+        if (std::find(setFlel.begin(), setFlel.end(), e->getNum()) == setFlel.end()){ // this means it should not be refined (outside of alpha-shape)!
           setProcessedFlag(mesh, i);
-        else 
-          unsetProcessedFlag(mesh, i);
+          // mesh->tetrahedra.color[i] = HXT_COLOR_OUT;
+        }
+        else {
+          mesh->tetrahedra.color[i] = 4;
+          // unsetProcessedFlag(mesh, i);
           // mesh->tetrahedra.flag[i] = 7; // cfr HXT_PROCESSED_MASK
+        }
       }
       else 
           setProcessedFlag(mesh, i);
@@ -1860,6 +2120,9 @@ void constrainedDelaunayRefinement_(const int dim, const int tag,
     };
 
     // uint32_t numVerticesConstrained = mesh->vertices.num;
+    for (size_t t=0; t<mesh->tetrahedra.num; t++){
+      printf("tet color : %d \n", mesh->tetrahedra.color[t]);
+    }
 
     hxtNodalSizesInit(mesh, &nodalSizes);
     delOptions.nodalSizes = &nodalSizes;
@@ -1871,10 +2134,16 @@ void constrainedDelaunayRefinement_(const int dim, const int tag,
     delOptions.nodalSizes = &nodalSizes;
     delOptions.verbosity = 2;
     delOptions.insertionFirst = mesh->vertices.num;
-    hxtRefineTetrahedra(mesh, &delOptions);
+    delOptions.numVerticesInMesh = mesh->vertices.num;
+    // hxtRefineColoredTetrahedra(mesh, &delOptions, 4);
     std::for_each(GModel::current()->firstRegion(), GModel::current()->lastRegion(), deMeshGRegion());
+    for (size_t t=0; t<mesh->tetrahedra.num; t++){
+      // printf("new tet color : %d \n", mesh->tetrahedra.color[t]);
+      if (mesh->tetrahedra.color[t] != HXT_COLOR_OUT && mesh->tetrahedra.color[t] >= 0) 
+        mesh->tetrahedra.color[t] = 0;
+    }
     Hxt2GmshAlpha(regions, mesh, v2c, c2v);
-    // gmsh::fltk::run();
+    gmsh::fltk::run();
     /* reset the vertex indices */
     // for (size_t i=numBndPts; i<mesh->vertices.num; i++){
     //   MVertex* oldv = c2v[i];
@@ -1889,12 +2158,13 @@ void constrainedDelaunayRefinement_(const int dim, const int tag,
 void alphaShape_entity(const int dim, const int tag, const double alpha, const std::vector<size_t>& nodeTags, const std::vector<double>& sizeAtNodes, std::vector<std::vector<size_t>>& elementTags, std::vector<std::vector<size_t>>& edges){
   if (dim == 2){
     bool globalAlpha = sizeAtNodes.size() == 1;
-    // auto it_min = min_element(sizeAtNodes.begin(), sizeAtNodes.end()); // to restrict elements even more if all the nodes have minimum size field
-    // double minSize = *it_min;
+    auto it_min = min_element(sizeAtNodes.begin(), sizeAtNodes.end()); // to restrict elements even more if all the nodes have minimum size field
+    double minSize = *it_min;
 
     GModel* gm = GModel::current();
     GFace* gf = gm->getFaceByTag(tag);
 
+    double surfaceConstraint = 0.5;
 
     PolyMesh* pm;
     GFace2PolyMesh(tag, &pm);
@@ -1930,9 +2200,9 @@ void alphaShape_entity(const int dim, const int tag, const double alpha, const s
       PolyMesh::Face *f = pm->faces[i];
       if (!globalAlpha){
         hTriangle = faceSize(f->he, gf, i2Size);
-        // if (abs(hTriangle-minSize)<1e-6){
-        //   hTriangle *= 0.5;
-        // }
+        if (abs(hTriangle-minSize)/minSize < 1e-2){
+          hTriangle *= surfaceConstraint;
+        }
       }
       faceCircumCenter(f->he, gf, cc, uv, &R);
       if (R/hTriangle < alpha && !_touched[f]){
@@ -1956,9 +2226,9 @@ void alphaShape_entity(const int dim, const int tag, const double alpha, const s
               PolyMesh::Face *f_neigh = _he->opposite->f;
               if (!globalAlpha){
                 hTriangle = faceSize(f_neigh->he, gf, i2Size);
-                // if (abs(hTriangle-minSize)<1e-6){ 
-                //   hTriangle *= 0.5;
-                // }
+                if (abs(hTriangle-minSize)/minSize<1e-2){ 
+                  hTriangle *= surfaceConstraint;
+                }
               }
               faceCircumCenter(f_neigh->he, gf, cc, uv, &R);
               if (R/hTriangle < alpha){

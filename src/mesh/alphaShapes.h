@@ -26,6 +26,7 @@ extern "C" {
 #include "hxt_tetColor.h"
 #include "hxt_tetFlag.h"
 #include "hxt_tetRefine.h"
+#include "hxt_alphashape.h"
 }
 
 int computeTetNeighbors_ (const std::vector<size_t> &tetrahedra, std::vector<size_t> &neigh);
@@ -71,5 +72,7 @@ void constrainedDelaunayRefinement_(const int dim, const int tag,
                                     std::vector<size_t>& newElementsInRefinement);
 
 void alphaShape_entity(const int dim, const int tag, const double alpha, const std::vector<size_t>& nodeTags, const std::vector<double>& sizeAtNodes, std::vector<std::vector<size_t>>& elementTags, std::vector<std::vector<size_t>>& edges);
+
+void performAlphaShapeAndRefine_(const std::vector<size_t>& nodeTags, const std::vector<double>& coord, const std::vector<int>& nodesDimTags, const int refine, const std::vector<double>& sizeAtNodes, const double alpha, const double hMean, const int surfaceTag, const int volumeTag);
 
 #endif

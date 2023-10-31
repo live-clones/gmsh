@@ -497,7 +497,7 @@ static int recover_edge(PolyMesh *pm, PolyMesh::Vertex *v_start,
   //  printf("%d intersections\n", nbIntersection);
   int K = 100;
   int _iter = 0;
-  pm->print4debug(K++);
+  // pm->print4debug(K++);
   while(!_list.empty()) {
     he = *_list.begin();
     _list.erase(_list.begin());
@@ -509,7 +509,7 @@ static int recover_edge(PolyMesh *pm, PolyMesh::Vertex *v_start,
                                       he->opposite->next->next->v);
       // printf("swapping %d %d\n", he->v->data, he->next->v->data);
       pm->swap_edge(he);
-      pm->print4debug(K++);
+      // pm->print4debug(K++);
       if(still_intersect) _list.push_back(he);
     }
     else
@@ -1121,4 +1121,109 @@ int meshTriangulate2d (const std::vector<double> &coord,
   delete pm;
   
   return 0;  
+}
+
+int triangulateEntity(const int tag){
+  GFace* df = (GFace*)GModel::current()->getEntityByTag(2, tag);
+  std::vector<GEdge*> edges = df->edges();
+  std::vector<MVertex*> boundaryNodes;
+  for (auto e : edges){
+    for (auto n : e->mesh_vertices){
+      // printf("%lu \n", n->getNum());
+      boundaryNodes.push_back(n);
+    }
+  }
+
+  PolyMesh *pm = new PolyMesh;
+  SBoundingBox3d bb;
+  for(auto n : boundaryNodes) {
+    printf("adding boundary point : %f, %f, %f \n", n->x(), n->y(), n->z());
+    bb += SPoint3(n->x(), n->y(), n->z());
+  }
+  bb *= 1.1;
+  pm->initialize_rectangle(bb.min().x(), bb.max().x(), bb.min().y(),
+                           bb.max().y());
+  
+  PolyMesh::Face *f = pm->faces[0];
+  for (auto n : boundaryNodes){
+    // find face in which lies n
+    double x = n->x();
+    double y = n->y();
+    f = Walk(f, x,y);
+    // split f and then swap edges to recover delaunayness
+    pm->split_triangle(-1, x, y, 0, f, delaunayEdgeCriterionPlaneIsotropic,
+		       nullptr);
+    pm->vertices[pm->vertices.size() - 1]->data = n->getNum();
+  }
+  for (auto n : df->mesh_vertices){
+    double x = n->x();
+    double y = n->y();
+    // find face in which lies x,y
+    f = Walk(f, x, y);
+    // split f and then swap edges to recover delaunayness
+    pm->split_triangle(-1, x, y, 0, f, delaunayEdgeCriterionPlaneIsotropic,
+		       nullptr);
+    pm->vertices[pm->vertices.size() - 1]->data = n->getNum();
+  }
+  
+  int iter=0;
+ 
+  while(1){  // WHY ?
+    int nbs =0;
+    for (auto he : pm->hedges){
+      if (he->opposite && (he->v->data == -1 || he->opposite->v->data == -1)){
+	      if(intersect(he->v, he->next->v, he->next->next->v, he->opposite->next->next->v)) {
+	        pm->swap_edge(he);
+	        nbs++;
+	      }
+      }    
+    }
+    if (nbs == 0)break;
+    if (iter++ > 10)break;
+  }
+
+  // for (size_t i=0;i<rec->size();i+=2){
+  //   if (recover_edge(pm, pm->vertices[4+(*rec)[i]], pm->vertices[4+(*rec)[i+1]]))
+	//     Msg::Debug("impossible to recover an edge");
+  //   else {
+  //     PolyMesh::HalfEdge *he_ = pm->getEdge (pm->vertices[4+(*rec)[i]], pm->vertices[4+(*rec)[i+1]]);
+  //     he_->data = -10;
+  //     he_ = pm->getEdge (pm->vertices[4+(*rec)[i+1]], pm->vertices[4+(*rec)[i]]);
+  //     he_->data = -10;
+  //   }	
+  // }
+  std::vector<size_t> tri;
+  for (auto t : pm->faces){
+    int i0 = t->he->v->data;
+    int i1 = t->he->next->v->data;
+    int i2 = t->he->next->next->v->data;
+    if (i0 > 0 && i1 > 0 && i2 > 0){ // (t->data == -1){
+      tri.push_back(i0);
+      tri.push_back(i2);
+      tri.push_back(i1);
+    }
+  }
+  size_t numEle = tri.size()/3;
+  size_t numNodesPerEle = 3;
+  std::vector<MElement *> elements(numEle);
+  std::vector<MVertex *> nodes(numNodesPerEle);
+  for(std::size_t j = 0; j < numEle; j++) {
+    std::size_t etag = 0; // 0 = automatic tag
+    MElementFactory f;
+    for(std::size_t k = 0; k < numNodesPerEle; k++) {
+      std::size_t vtag = tri[numNodesPerEle * j + k];
+      // this will rebuild the node cache if necessary
+      nodes[k] = GModel::current()->getMeshVertexByTag(vtag);
+      if(!nodes[k]) {
+        Msg::Error("Unknown node %d", vtag);
+        return 0;
+      }
+    }
+    elements[j] = f.create(2, nodes, etag);
+  }
+  for (auto n : df->triangles) delete n;
+  df->triangles.clear();
+  for(std::size_t i = 0; i < elements.size(); i++)
+    df->triangles.push_back(static_cast<MTriangle *>(elements[i]));
+  return 0;
 }

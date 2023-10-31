@@ -1952,6 +1952,21 @@ namespace gmsh { // Top-level functions
                                std::vector<std::vector<std::size_t> > & elementTags,
                                std::vector<std::vector<std::size_t> > & edges);
 
+      // gmsh::model::mesh::performAlphaShapeAndRefine
+      //
+      // From an initial empty 3D surface mesh, insert new nodes into the volume.
+      // Tetrahedralize these nodes, and determine the alphashape of the mesh. If
+      // refine is set, refine the tetrahedra to match the size field.
+      GMSH_API void performAlphaShapeAndRefine(const std::vector<std::size_t> & nodeTags,
+                                               const std::vector<double> & coord,
+                                               const std::vector<int> & nodesDimTags,
+                                               const int refine,
+                                               const std::vector<double> & sizeAtNodes,
+                                               const double alpha,
+                                               const double hMean,
+                                               const int surfaceTag,
+                                               const int volumeTag);
+
       namespace field { // Mesh size field functions
 
         // gmsh::model::mesh::field::add

@@ -44,6 +44,7 @@ endif()
 target_include_directories(hxt_core PUBLIC include)
 target_compile_features(hxt_core PRIVATE c_std_99)
 
+message("OPEN MP IN HXT YESSS")
 if(HXT_ENABLE_OPENMP)
   find_package(OpenMP 4)
   if(OpenMP_C_FOUND)

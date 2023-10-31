@@ -4769,6 +4769,34 @@ end
 const alpha_shape = alphaShape
 
 """
+    gmsh.model.mesh.performAlphaShapeAndRefine(nodeTags, coord, nodesDimTags, refine, sizeAtNodes, alpha, hMean, surfaceTag, volumeTag)
+
+From an initial empty 3D surface mesh, insert new nodes into the volume.
+Tetrahedralize these nodes, and determine the alphashape of the mesh. If refine
+is set, refine the tetrahedra to match the size field.
+
+Types:
+ - `nodeTags`: vector of sizes
+ - `coord`: vector of doubles
+ - `nodesDimTags`: vector of integers
+ - `refine`: integer
+ - `sizeAtNodes`: vector of doubles
+ - `alpha`: double
+ - `hMean`: double
+ - `surfaceTag`: integer
+ - `volumeTag`: integer
+"""
+function performAlphaShapeAndRefine(nodeTags, coord, nodesDimTags, refine, sizeAtNodes, alpha, hMean, surfaceTag, volumeTag)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshPerformAlphaShapeAndRefine, gmsh.lib), Cvoid,
+          (Ptr{Csize_t}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Cint}, Csize_t, Cint, Ptr{Cdouble}, Csize_t, Cdouble, Cdouble, Cint, Cint, Ptr{Cint}),
+          convert(Vector{Csize_t}, nodeTags), length(nodeTags), convert(Vector{Cdouble}, coord), length(coord), convert(Vector{Cint}, nodesDimTags), length(nodesDimTags), refine, convert(Vector{Cdouble}, sizeAtNodes), length(sizeAtNodes), alpha, hMean, surfaceTag, volumeTag, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+const perform_alpha_shape_and_refine = performAlphaShapeAndRefine
+
+"""
     module gmsh.model.mesh.field
 
 Mesh size field functions

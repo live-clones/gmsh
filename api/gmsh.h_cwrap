@@ -3190,7 +3190,8 @@ namespace gmsh { // Top-level functions
         tri.assign(api_tri_, api_tri_ + api_tri_n_); gmshFree(api_tri_);
       }
 
-<<<<<<< HEAD
+      // gmsh::model::mesh::triangulateNodesOnEntity
+      //
       // Triangulate the nodes (if any) on discrete entity of tag `tag', assuming
       // there is a boundary.
       inline void triangulateNodesOnEntity(const int tag)
@@ -3200,10 +3201,8 @@ namespace gmsh { // Top-level functions
         if(ierr) throwLastError();
       }
 
-=======
       // gmsh::model::mesh::tetrahedralize
       //
->>>>>>> f951771e1460f4c7b088d7d38223c95d2f093808
       // Tetrahedralize the points given in the `coord' vector as x, y, z
       // coordinates, concatenated, and return the node tags (with numbering
       // starting at 1) of the resulting tetrahedra in `tetra'.
@@ -3392,6 +3391,34 @@ namespace gmsh { // Top-level functions
         gmshFree(api_sizeAtNodes_);
         elementTags.resize(api_elementTags_nn_); for(size_t i = 0; i < api_elementTags_nn_; ++i){ elementTags[i].assign(api_elementTags_[i], api_elementTags_[i] + api_elementTags_n_[i]); gmshFree(api_elementTags_[i]); } gmshFree(api_elementTags_); gmshFree(api_elementTags_n_);
         edges.resize(api_edges_nn_); for(size_t i = 0; i < api_edges_nn_; ++i){ edges[i].assign(api_edges_[i], api_edges_[i] + api_edges_n_[i]); gmshFree(api_edges_[i]); } gmshFree(api_edges_); gmshFree(api_edges_n_);
+      }
+
+      // gmsh::model::mesh::performAlphaShapeAndRefine
+      //
+      // From an initial empty 3D surface mesh, insert new nodes into the volume.
+      // Tetrahedralize these nodes, and determine the alphashape of the mesh. If
+      // refine is set, refine the tetrahedra to match the size field.
+      inline void performAlphaShapeAndRefine(const std::vector<std::size_t> & nodeTags,
+                                             const std::vector<double> & coord,
+                                             const std::vector<int> & nodesDimTags,
+                                             const int refine,
+                                             const std::vector<double> & sizeAtNodes,
+                                             const double alpha,
+                                             const double hMean,
+                                             const int surfaceTag,
+                                             const int volumeTag)
+      {
+        int ierr = 0;
+        size_t *api_nodeTags_; size_t api_nodeTags_n_; vector2ptr(nodeTags, &api_nodeTags_, &api_nodeTags_n_);
+        double *api_coord_; size_t api_coord_n_; vector2ptr(coord, &api_coord_, &api_coord_n_);
+        int *api_nodesDimTags_; size_t api_nodesDimTags_n_; vector2ptr(nodesDimTags, &api_nodesDimTags_, &api_nodesDimTags_n_);
+        double *api_sizeAtNodes_; size_t api_sizeAtNodes_n_; vector2ptr(sizeAtNodes, &api_sizeAtNodes_, &api_sizeAtNodes_n_);
+        gmshModelMeshPerformAlphaShapeAndRefine(api_nodeTags_, api_nodeTags_n_, api_coord_, api_coord_n_, api_nodesDimTags_, api_nodesDimTags_n_, refine, api_sizeAtNodes_, api_sizeAtNodes_n_, alpha, hMean, surfaceTag, volumeTag, &ierr);
+        if(ierr) throwLastError();
+        gmshFree(api_nodeTags_);
+        gmshFree(api_coord_);
+        gmshFree(api_nodesDimTags_);
+        gmshFree(api_sizeAtNodes_);
       }
 
       namespace field { // Mesh size field functions

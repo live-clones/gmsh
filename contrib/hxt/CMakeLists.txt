@@ -138,6 +138,27 @@ list(APPEND HXT_INC_DIRS
      contrib/hxt/tetMesh/src
      contrib/hxt/tetMesh/include)
 
+#################################################################################
+# HXT alphashape
+#################################################################################
+set(SRC
+     hxt_alphaUtils.c
+     hxt_alphaUtils.h
+     hxt_alphashape.c
+     hxt_alphaShapeForPolymesh.cpp
+     hxt_alphaShapeForPolymesh.h
+   )
+
+set(INC
+    hxt_alphashape.h
+   )
+
+
+append_gmsh_src(contrib/hxt/alphashape/src "${SRC}")
+append_gmsh_src(contrib/hxt/alphashape/include "${INC}")
+list(APPEND HXT_INC_DIRS
+     contrib/hxt/alphashape/src
+     contrib/hxt/alphashape/include)
 
 #################################################################################
 # propagate HXT_INC_DIRS to parent CMakeLists
