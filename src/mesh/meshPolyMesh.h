@@ -205,15 +205,22 @@ public:
     std::vector<Vertex* > vs;
     HalfEdge* he = v->he;
     vs.push_back(he->next->v);
+    int iter = 0;
     do {
       if (he->opposite == NULL) bndHe = he;
       else {
         he = he->opposite->next;
         if (he != v->he) vs.push_back(he->next->v);
       }
+      if (iter > 100000){
+	printf("vertex %d neighbor %d \n",v->data,he->next->v->data);
+      }
+      if (iter++ > 100020){
+	return;
+      }
     } while(he != v->he && bndHe == nullptr);
 
-    
+    iter = 0;
     if (bndHe){ // we are dealing with a boundary vertex; we're going to loop over the hes in the other direction
       if(onBoundary) *onBoundary = true;
       vs.clear();
@@ -221,6 +228,14 @@ public:
       vs.push_back(he->next->v);
       do {
         he = he->next->next;
+
+	if (iter > 100000){
+	  printf("vertex %d neighbor %d \n",v->data,he->next->v->data);
+	}
+	if (iter++ > 100020){
+	  return;
+	}
+
         vs.push_back(he->v);
         he = he->opposite;
       } while(he != nullptr);
@@ -256,12 +271,17 @@ public:
   }
 
   inline HalfEdge *getEdgeReverse(Vertex *v0, Vertex *v1, HalfEdge *end){
-    HalfEdge *he = v0->he;
+    //    printf("coucou1 %p %p %p\n",v0,v1,end->v);
+    HalfEdge *he = end;
+    if (!he)return NULL;
     do {
+      if (he->next == NULL)return NULL;
       if(he->next->v == v1) return he;
+      if (he->prev == NULL)return NULL;
       he = he->prev->opposite;
       if(he == NULL) return NULL;
-    } while(he != v0->he);
+    } while(he != end);
+    //    printf("coucou2\n");
     return NULL;
     
   }
@@ -272,9 +292,15 @@ public:
     //    int iter = 0;
     HalfEdge *he = v0->he;
     do {
+      if (he==NULL)return NULL;
+      if (he->next==NULL)return NULL;
       if(he->next->v == v1) return he;
+      if(he->opposite == NULL) {
+	he =getEdgeReverse(v0,v1,he);
+	//	printf("%p\n",he);
+	return he;
+      }
       he = he->opposite;
-      if(he == NULL) return getEdgeReverse(v0,v1,he);
       he = he->next;
       //      if (iter++ >10000)return NULL;
     } while(he != v0->he);

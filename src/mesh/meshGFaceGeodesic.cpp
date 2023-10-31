@@ -14,6 +14,8 @@
 #include "geodesic_mesh.h"
 #include "geodesic_algorithm_exact.h"
 
+#include "graphColoringGreedy.h"
+
 PolyMesh* createPolyMesh (const std::vector<double> &p,
 			  const std::vector<size_t> &t,
 			  const std::vector<size_t> &e = {},
@@ -27,6 +29,10 @@ PolyMesh* createPolyMesh (const std::vector<double> &p,
   }
   
   for (size_t i=0;i<t.size();i+=3){
+    if (t[i] == t[i+1] || t[i] == t[i+2] || t[i+1] == t[i+2]){
+      Msg::Warning("triangle %d %d %d singular",t[i],t[i+1],t[i+2]);
+      continue;
+    }
     PolyMesh::HalfEdge *he[3];
     for(std::size_t j = 0; j < 3; j++){
       PolyMesh::Vertex *vv = pm_new->vertices[t[i+j]];
@@ -54,8 +60,23 @@ PolyMesh* createPolyMesh (const std::vector<double> &p,
       h0->opposite = h1;
       h1->opposite = h0;
       i++;
+      while (1){
+	if (i+1 <  pm_new->hedges.size()){
+	  PolyMesh::HalfEdge *h2 = pm_new->hedges[i + 1];
+	  if (equal(h0, h2)){
+	    h0->v->he = h0;
+	    h1->v->he = h1;
+	    Msg::Warning ("Non Manifold Triangulation edge %d %d appears more than 2 times!!",h0->v->data,h0->next->v->data);
+	    i++;
+	  }
+	  else break;
+	}
+	else break;
+      }
     }
-  } 
+  }
+
+  //  printf("coucou\n");
 
   FILE *f = fopen("test.pos","w");
   fprintf(f,"View\"\"{\n");
@@ -520,6 +541,19 @@ public:
   // detect intersecting geodesic @ saddle_points
   std::map<int, int> _saddle;
 
+  // just for fun
+  std::vector<int> computeColoring (){
+    geeksforgeeks::Graph g (triangles.size()/3);
+    for (auto it : edges){
+      if (it.second.size() == 2){
+	g.addEdge (it.second[0],it.second[1]);
+      }
+    }
+    std::vector<int> result(triangles.size()/3);
+    g.greedyColoring(result);
+    return result;
+  }
+  
 private:
 
   void createGeodesicsInParallel (std::vector<int> &__rows,
@@ -614,14 +648,16 @@ private:
     double ori103 = computeBoxProduct (p1,p0,p3);
 
     if (ori012 > 0 && ori103 > 0 && onlyMisoriented)return false;
-    
+
     double ori032 = computeBoxProduct (p0,p3,p2);
     double ori231 = computeBoxProduct (p2,p3,p1);
+    
     if (ori012 < 0 || ori103 < 0){
       if (ori032 > 0 && ori231 > 0){
 	printf("FORCING SWAP (creating 2 positive elements) %d %d %d %d : %g %g --> %g %g\n",p0,p1,p2,p3,ori012,ori103,ori032,ori231);
 	return true;
       }
+      else return false;
     }
     if (ori032 < 0 || ori231 < 0)return false;
     if (onlyMisoriented) return false;
@@ -798,7 +834,7 @@ public:
   // MAIN FUNCTIONS ---- 
   highOrderPolyMesh (GModel *gm);
   PolyMesh *cutMesh ();  
-  void createGeodesicPath (int p0, int p1, std::vector<geodesic::SurfacePoint> &path);
+  bool createGeodesicPath (int p0, int p1, std::vector<geodesic::SurfacePoint> &path);
   bool intersectGeodesicPath (std::vector<geodesic::SurfacePoint> &p0,
 			      std::vector<geodesic::SurfacePoint> &p1,
 			      SVector3 &intersection);
@@ -820,9 +856,10 @@ public:
     for (auto it = geodesics.begin() ; it != geodesics.end() ; ++it){
       auto ite = edges.find(it->first);
       if (ite !=edges.end() && ite->second.size()){
+		
 	const size_t last = it->second.size() - 1;
-	fprintf(f,"SP(%g,%g,%g){%d};\n",it->second[0].x(),it->second[0].y(),it->second[0].z(),count);	
-	fprintf(f,"SP(%g,%g,%g){%d};\n",it->second[last].x(),it->second[last].y(),it->second[last].z(),count);	
+	fprintf(f,"SP(%g,%g,%g){%d};\n",it->second[0].x(),it->second[0].y(),it->second[0].z(),it->first.first);	
+	fprintf(f,"SP(%g,%g,%g){%d};\n",it->second[last].x(),it->second[last].y(),it->second[last].z(),it->first.second);	
 	for (size_t i = 1; i < it->second.size() ; ++i){
 	  fprintf(f,"SL(%g,%g,%g,%g,%g,%g){%d,%d};\n",it->second[i-1].x(),it->second[i-1].y(),it->second[i-1].z(),
 		  it->second[i].x(),it->second[i].y(),it->second[i].z(),ite->second[0],ite->second[0]);	
@@ -854,47 +891,58 @@ public:
       std::vector<std::pair<int,int> > eds_o;
       int nbInValid=0;
       for (auto it : edges) {
-	std::pair<int,int> opposite = std::make_pair(-1,-1);
-	swapEdge (it.first,onlyMisoriented, &opposite);
-	if (opposite.second >=0){
-	  std::pair<int,int> opp = std::make_pair(
-			    std::min(opposite.first,opposite.second),
-			    std::max(opposite.first,opposite.second));
-	  bool v = edgeValid (it.first.first,it.first.second,
-			      opposite.first, opposite.second);
-	  if (!onlyMisoriented || !v) {
-	    eds_o.push_back(opp);
-	    eds.push_back(it.first);
+	if (it.second.size() > 1){
+	  std::pair<int,int> opposite = std::make_pair(-1,-1);
+	  swapEdge (it.first,onlyMisoriented, &opposite);
+	  std::pair<int,int> opp = std::make_pair(std::min(opposite.first,opposite.second),
+						  std::max(opposite.first,opposite.second));
+	  if (opposite.second >=0){
+	    if (!onlyMisoriented){
+	      eds_o.push_back(opp);
+	      eds.push_back(it.first);
+	    }
+	    else {
+	      bool v = edgeValid (it.first.first,it.first.second,
+				  opposite.first, opposite.second);
+	      if (!v) {
+		eds_o.push_back(opp);
+		eds.push_back(it.first);
+	      }	      
+	      if (!v)nbInValid ++;
+	    }
 	  }
-	  if (!v)nbInValid ++;
-	}	
+	}
       }
-
-      Msg::Info("%lu edge invalid -- instersecing with all");
+      /*
+      Msg::Info("%lu edge invalid -- instersecing with all",eds.size());
       for (auto e_invalid : eds){
+	int start_i = e_invalid.first;
+	int end_i = e_invalid.second;
+	Msg::Info("invalid -- %d %d",start_i, end_i);
 	std::vector<geodesic::SurfacePoint> pe_invalid;
-	createGeodesicPath (e_invalid.first,e_invalid.first,pe_invalid);
+	createGeodesicPath (start_i, end_i,pe_invalid);
 	for (auto it : edges) {
 	  auto e = it.first;
 	  int start = e.first;
 	  int end = e.second;
-	  if (e_invalid.first != start &&
-	      e_invalid.first != end &&
-	      e_invalid.second != start&&
-	      e_invalid.second != end){
+	  if (it.second.size() == 2 &&
+	      start_i != start &&
+	      start_i != end &&
+	      end_i != start&&
+	      end_i != end){
 	    std::vector<geodesic::SurfacePoint> pe;
 	    createGeodesicPath (start, end,pe);
 	    SVector3 intersection;
-	    bool result = intersectGeodesicPath (pe_invalid, pe, &intersection);
-	    if (result)Msg::Warning ("edge %d %d is invalid",start, end);
+	    bool result = intersectGeodesicPath (pe_invalid, pe, intersection);
+	    if (result)Msg::Warning ("intersection  %d %d X %d %d",
+				     start, end, start_i, end_i);
 	  }
 	}
       }
-
+      */
       
       std::sort(eds_o.begin(),eds_o.end());
-      Msg::Info("%d invalid edges among %lu (%lu geodesics to be computed)",
-		nbInValid,edges.size(),eds_o.size());
+      Msg::Info("%lu geodesics to be computed",eds_o.size());
       
       // -- OMP PARALLELISATION --- change map to CSR 
       std::vector<int> __rows;
@@ -916,6 +964,7 @@ public:
       
       for (auto it : eds) count += (swapEdge (it, onlyMisoriented,nullptr) == 0 ? 1 : 0);
       if (count == 0)break;
+      Msg::Info("Swapping Edges -- iter %d -- %d swaps",iter,count);
       if (++iter >= niter)break;
       countTot += count;
     }
@@ -994,9 +1043,14 @@ void highOrderPolyMesh::createGeodesicsInParallel (std::vector<int> &__rows,
     std::vector<geodesic::SurfacePoint> pts_end;
     std::vector<std::pair<int,int> > pairs;
     for (size_t j=start; j<end;j++){
-      pts_end.push_back(points[__columns[j]]);
-      pairs.push_back(std::make_pair(__rows[i],__columns[j]));
+      auto p = std::make_pair(__rows[i],__columns[j]);
+      if (geodesics.find(p) == geodesics.end()){
+	pts_end.push_back(points[__columns[j]]);
+	pairs.push_back(p);
+      }
     }
+    if (pairs.empty())continue;
+
     geodesic::GeodesicAlgorithmExact algorithm(&geoMesh);
     algorithm.propagate(pts_start,0,&pts_end);
     for (size_t j=0; j<pts_end.size();j++){
@@ -1017,6 +1071,7 @@ void highOrderPolyMesh::createGeodesicsInParallel (std::vector<int> &__rows,
 
   for (auto g : __geodesics) geodesics.insert(g.begin(), g.end());
 
+  /*
   for (auto g : geodesics){
     int start = g.first.first;
     int end   = g.first.second;
@@ -1033,7 +1088,7 @@ void highOrderPolyMesh::createGeodesicsInParallel (std::vector<int> &__rows,
       Msg::Warning("geodesic beween %7d %7d -- sp %12.5E\n",
 		 start, end, dot(dir, dir2));
   }
-  
+  */  
   
   double t2 = TimeOfDay();
 
@@ -1055,11 +1110,12 @@ highOrderPolyMesh::highOrderPolyMesh (GModel *gm) : maxTag(1) {
     GFace2PolyMesh((*gm->firstFace())->tag(), &pm);
   }
   Msg::Info("Creating a Polymesh done -- %lu faces ",pm->faces.size());
-  
-  //  pm->decimate (CTX::instance()->mesh.lcMin);
 
-  //  std::map<PolyMesh::Vertex*,double> nothing;
-  //  print__ ("decimated_orig.pos", pm, nothing);
+  if (CTX::instance()->mesh.lcMin < 100){
+    pm->decimate (CTX::instance()->mesh.lcMin);    
+    std::map<PolyMesh::Vertex*,double> nothing;
+    print__ ("decimated_orig.pos", pm, nothing);
+  }
   
   polyMeshToGeodesicMesh (pm,geoMesh,f2n);
   
@@ -1172,18 +1228,23 @@ highOrderPolyMesh::highOrderPolyMesh (GModel *gm) : maxTag(1) {
 // END CONSTRUCTOR
 
 // CREATE GEODESIC PATH
-void highOrderPolyMesh::createGeodesicPath (int p0, int p1, std::vector<geodesic::SurfacePoint> &path){    
+bool highOrderPolyMesh::createGeodesicPath (int p0, int p1, std::vector<geodesic::SurfacePoint> &path){    
   std::pair<int,int> p    = std::make_pair(p0,p1);
   std::pair<int,int> pinv = std::make_pair(p1,p0);
   auto it    = geodesics.find(p);
   auto itinv = geodesics.find(pinv);
-  if (it != geodesics.end()) path = it->second;
+  if (it != geodesics.end()) {
+    path = it->second;
+    return false;
+  }
   else if (itinv != geodesics.end()) {
     path = itinv->second;
     std::reverse (path.begin(),path.end());
     geodesics [p] = path;
+    return false;
   }
   else {
+    //    printf("geodesic %d %d must be computed\n",p0,p1);
     std::vector<geodesic::SurfacePoint> pts0 = {points[p0]};
     std::vector<geodesic::SurfacePoint> pts1 = {points[p1]};
     geodesic::GeodesicAlgorithmExact algorithm(&geoMesh);
@@ -1197,6 +1258,7 @@ void highOrderPolyMesh::createGeodesicPath (int p0, int p1, std::vector<geodesic
     geodesics [pinv] = path;
     std::reverse (path.begin(),path.end());
     geodesics [p] = path;
+    return true;
   }
 }
 // END CREATE GEODESIC PATH
@@ -1924,46 +1986,60 @@ int makeMeshGeodesic (GModel *gm) {
   Msg::Info("Creating a Geodesic Mesh");
 
   highOrderPolyMesh hop (gm);
-
+  
+  std::vector<int> coloring = hop.computeColoring ();
+  
   hop.printGeodesics("geodesics.pos");
 
+  for (int i=0;i<hop.triangles.size()/3;i++){
+    double ori1 = hop.computeBoxProduct(hop.triangles[3*i+0],hop.triangles[3*i+1],hop.triangles[3*i+2]);
+    double ori2 = hop.computeBoxProduct(hop.triangles[3*i+1],hop.triangles[3*i+2],hop.triangles[3*i+0]);
+    double ori3 = hop.computeBoxProduct(hop.triangles[3*i+2],hop.triangles[3*i+0],hop.triangles[3*i+1]);
+    if (ori1 < 0 || ori2 < 0 || ori3 < 0) {
+      printf("Before swap Triangle %6d --> %12.5E  %12.5E  %12.5E  \n",i,ori1,ori2,ori3);
+    }
+  }
+  
   Msg::Info("Swapping Edges");
 
-  hop.swapEdges(1,1);
+  hop.swapEdges(8,1);
 
   Msg::Info("Swapping Edges Done");
 
   hop.printGeodesics("geodesics_swapped.pos");
+
+  hop.swapEdges(2,0);
   
+  //  hop.printGeodesics("geodesics_improved.pos");
+
   if (0){
     size_t NN = hop.triangles.size()/3;
     for (int i=0;i<NN;i++){
       std::vector<geodesic::SurfacePoint> sp = hop.circumCenter (i);
       if (sp.empty())sp = hop.circumCenter (i,1.e22);
       if (!sp.empty())hop.splitTriangle (i, sp[0]);
-      char fn[245];
-      sprintf(fn,"Split%d.pos",i);
-      hop.printGeodesics(fn);
+      //      char fn[245];
+      //      sprintf(fn,"Split%d.pos",i);
+      //      hop.printGeodesics(fn);
     }
+    hop.printGeodesics("geodesics_after_del.pos");
   }
-
-  //  hop.printGeodesics("beforeall.pos");
 
   for (int k=0;k<0;k++){
     //    int ns = 0;
-    int ns = hop.splitEdges (.3);
+    int ns = hop.splitEdges (4);
     //    printf("nsplits %d\n",ns);
     int iter=0, nswt=0;
     while(1){
-      int nsw = hop.swapEdges();
+      int nsw = hop.swapEdges(1,0);
       nswt += nsw;
       if (!nsw)break;
-      if (iter++ > 10)break;
+      if (iter++ > 2)break;
     }
     if (!ns) break;
     printf("%d splits %d swaps\n",ns,nswt);
   }
-  //  hop.printGeodesics("afterall.pos");
+  hop.printGeodesics("afterall.pos");
 
 
   Msg::Info("Checking orientation");
@@ -2002,8 +2078,8 @@ int makeMeshGeodesic (GModel *gm) {
   
   {
     PolyMesh *pm_new = hop.cutMesh();
-    
     std::map<PolyMesh::Vertex*,double> nothing;
+    for (auto t : pm_new->faces)t->data = coloring[t->data];
     print__ ("toto.pos", pm_new, nothing);
   }
   return 0;

@@ -263,23 +263,47 @@ int GFace2PolyMesh(int faceTag, PolyMesh **pm)
   std::sort((*pm)->hedges.begin(), (*pm)->hedges.end(), compare);
 
   HalfEdgePtrEqual equal;
+
+  std::vector<PolyMesh::Face*> toRemove;
+
   for(size_t i = 0; i < (*pm)->hedges.size() - 1; i++) {
     PolyMesh::HalfEdge *h0 = (*pm)->hedges[i];
     PolyMesh::HalfEdge *h1 = (*pm)->hedges[i + 1];
     if(equal(h0, h1)) {
       h0->opposite = h1;
       h1->opposite = h0;
-      if (i+2 != (*pm)->hedges.size()){
+      while (1){
+	if (i+2 == (*pm)->hedges.size())break;
 	PolyMesh::HalfEdge *h2 = (*pm)->hedges[i + 2];
 	if(equal(h0, h2)){
-	  Msg::Warning("Non Manifold Mesh cannot be encoded in a half edge data structure (edge %d %d is there at least three times)",
+	  Msg::Warning("Non Manifold Mesh cannot be encoded in a half edge data structure (edge %d %d) -- removing a face",
 		       h0->v->data,h0->next->v->data);
+	  toRemove.push_back(h2->f);
+	  i++;
 	}
+	else break;
       }
-
       i++;
     }
   }
+
+  //  printf("%lu %lu -->",(*pm)->hedges.size(),(*pm)->faces.size());
+  
+  for (auto f : toRemove){
+    if (f->he->opposite)f->he->opposite->opposite = nullptr;
+    if (f->he->next->opposite)f->he->next->opposite->opposite = nullptr;
+    if (f->he->next->next->opposite)f->he->next->next->opposite->opposite = nullptr;
+    (*pm)->hedges.erase(std::find((*pm)->hedges.begin(),(*pm)->hedges.end(), f->he));
+    (*pm)->hedges.erase(std::find((*pm)->hedges.begin(),(*pm)->hedges.end(), f->he->next));
+    (*pm)->hedges.erase(std::find((*pm)->hedges.begin(),(*pm)->hedges.end(), f->he->next->next));
+    (*pm)->faces.erase(std::find((*pm)->faces.begin(),(*pm)->faces.end(), f));
+  }
+  for(size_t i = 0; i < (*pm)->hedges.size(); i++) {
+    PolyMesh::HalfEdge *h0 = (*pm)->hedges[i];
+    h0->v->he = h0;
+  }
+  //  printf(" %lu %lu\n",(*pm)->hedges.size(),(*pm)->faces.size());
+  
   return 0;
 }
 

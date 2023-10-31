@@ -143,7 +143,9 @@ void print__ (const char *fn, PolyMesh*pm, std::map<PolyMesh::Vertex*,double> &l
 	fprintf(f,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%d,%d,%d};\n",
 		v1->position.x(),v1->position.y(),v1->position.z(),
 		v2->position.x(),v2->position.y(),v2->position.z(),
-		v3->position.x(),v3->position.y(),v3->position.z(),t->data,t->data,t->data);
+		v3->position.x(),v3->position.y(),v3->position.z(),
+		//		v1->data,v2->data,v3->data,
+		t->data,t->data,t->data);
       }    
       else{
 	std::map<PolyMesh::Vertex*,double>::iterator it1 = ls.find(v1);
@@ -421,11 +423,13 @@ int PolyMesh::decimate (double thresholdDistance,
     bool onBoundary = false;
     vertexNeighbors (v, &neigh,&onBoundary);
 
-    if (onBoundary)continue;
 
-    //    printf("%d (%d) ",v->data,onBoundary);
-    //    for (auto nsa : neigh) printf("%d ",nsa->data);
-    //    printf("\n");
+    if (onBoundary)continue;
+    if (neigh.empty())continue;
+
+    //        printf("%d (%d) ",v->data,onBoundary);
+    //            for (auto nsa : neigh) printf("%p ",nsa);
+    //            printf("\n");
 
     SVector3 nrm (0,0,0);
     SVector3 cog (0,0,0);
@@ -538,10 +542,18 @@ int PolyMesh::decimate (double thresholdDistance,
     }
     
     // impossible to unrefine that pattern so continue
-    
+
     if (!remove_vertex)continue;
 
     //    if (triangles.size() == 2)
+    //    if (v->data > 42800){	
+    //      std::map<PolyMesh::Vertex*,double> nothing;
+    //      char name[123];
+    //      sprintf(name,"x%d.pos",v->data);
+    //      print__ (name, this, nothing);
+    //    }
+    
+
     
     if (deleteVertexAndRemeshCavity2 (v,triangles)){
       //      printf("%d remeshed with %lu triangles\n",v->data,triangles.size());
@@ -549,12 +561,6 @@ int PolyMesh::decimate (double thresholdDistance,
       nbRemove++;
       if (nbProcessed % 100000 == 0){
 	Msg::Info("vertex %ld / %lu -- %lu processed -- %lu removed\n",v->data,vertices.size(),nbProcessed,nbRemove);
-      }
-      if (v->data == 2322 && 0){	
-	std::map<PolyMesh::Vertex*,double> nothing;
-	char name[123];
-	sprintf(name,"x%d.pos",v->data);
-	print__ (name, this, nothing);
       }
     }
     //    if (triangles.size() == 2)printf("%d remeshing with %lu triangles done\n",v->data,triangles.size());
