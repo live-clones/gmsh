@@ -262,13 +262,13 @@ int meshRenumber_Vertices_Metis(
   const std::vector<std::size_t> &elementTags,
   std::map<std::size_t, std::size_t> &permutations)
 {
-  GModel *gm = GModel ::current();
   permutations.clear();
 
 #if defined(HAVE_METIS)
 
   Msg::Info("METIS renumbering (nested dissection)...");
 
+  GModel *gm = GModel ::current();
   std::map<MVertex *, std::size_t> initial_numbering;
   std::map<std::size_t, MVertex *> invert_numbering;
   std::vector<idx_t> ai, aj;

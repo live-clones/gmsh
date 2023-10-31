@@ -1,15 +1,13 @@
-
 Merge "hybrid_part.msh";
 CreateTopology;
 CreateGeometry;
 
-lc = 1e-2;
-Point(1) = {0, 0, 0, lc};
-Point(4) = {0, .3, 0, lc} ;
+Point(5) = {.3, 0, 0};
+Point(6) = {.3,  .3, 0} ;
 
-Line(1) = {1,11} ;
-Line(3) = {14,4} ;
-Line(4) = {4,1} ;
+Line(5) = {2,5};
+Line(6) = {5,6};
+Line(7) = {6,3};
 
-Line Loop(5) = {-4,-1,14,-3} ;
-Plane Surface(6) = {5} ;
+Line Loop(2) = {5, 6, 7, -2} ;
+Plane Surface(2) = {2} ;

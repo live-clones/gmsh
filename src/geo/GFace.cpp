@@ -583,8 +583,7 @@ void GFace::computeMeanPlane()
     // one. If this fails, we fallback to the classical (SVD-based) algorithm.
     std::vector<GEdge *> const &edg = edges();
     for(auto e : edg) {
-      if(e->geomType() == GEntity::DiscreteCurve ||
-         e->geomType() == GEntity::BoundaryLayerCurve) {
+      if(!e->haveParametrization()) {
         pts.clear();
         break;
       }
@@ -656,6 +655,12 @@ void GFace::computeMeanPlane()
       if(e->mesh_vertices.size() > 1) {
         for(std::size_t i = 0; i < e->mesh_vertices.size(); i++)
           pts.push_back(e->mesh_vertices[i]->point());
+      }
+      else if(!e->haveParametrization()) {
+        if(e->getBeginVertex()) {
+          GPoint p1 = e->getBeginVertex()->point();
+          pts.push_back(SPoint3(p1.x(), p1.y(), p1.z()));
+        }
       }
       else {
         Range<double> b = e->parBounds(0);
@@ -1313,8 +1318,7 @@ bool GFace::buildRepresentationCross(bool force)
       return true;
   }
 
-  if(geomType() == DiscreteSurface || geomType() == BoundaryLayerSurface) {
-    // TODO if the surface has been reparametrized
+  if(!haveParametrization()) { // cannot do it, add a dummy point
     if(cross[0].empty()) {
       cross[0].push_back(std::vector<SPoint3>());
       cross[0][0].push_back(bounds().center());

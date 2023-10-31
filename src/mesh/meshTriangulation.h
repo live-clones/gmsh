@@ -15,14 +15,14 @@
 PolyMesh *GFaceInitialMesh(int faceTag, int recover = 0,
                            std::vector<double> *additional = nullptr);
 PolyMesh *GFaceInitialMeshAlpha(int faceTag, int recover,
-                           std::vector<double> *additional, 
-                           std::vector<size_t> &IND);
+                                std::vector<double> *additional,
+                                std::vector<size_t> &IND);
 void GFaceDelaunayRefinement(int faceTag);
 int GFace2PolyMesh(int faceTag, PolyMesh **pm);
 int PolyMesh2GFace(PolyMesh *pm, int faceTag);
-int meshTriangulate2d (const std::vector<double> &coord,
-		       std::vector<std::size_t> &tri,
-		       const std::vector<size_t> *edges_to_recover = 0);
+int meshTriangulate2d(const std::vector<double> &coord,
+                      std::vector<std::size_t> &tri,
+                      const std::vector<size_t> *edges_to_recover = 0);
 // apply Delaunay refinement using old algorithms
 // FIXME -- not working yet
 void GFaceDelaunayRefinementOldMesher(int faceTag);

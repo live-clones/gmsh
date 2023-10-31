@@ -1,11 +1,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="org.geuz.onelab"
           android:versionName="2.3.6"
           android:versionCode="61"
           android:installLocation="auto" >
 
   <uses-sdk android:minSdkVersion="16"
-            android:targetSdkVersion="29" />
+            android:targetSdkVersion="33" />
   <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
   <uses-permission android:name="android.permission.VIBRATE"/>
   <uses-feature android:glEsVersion="0x00010000" android:required="true" />
@@ -18,7 +17,7 @@
     <activity android:name=".SplashScreen"
               android:label="@string/title_activity_main"
               android:theme="@android:style/Theme.NoTitleBar.Fullscreen"
-              android:exported="false">
+              android:exported="true">
       <intent-filter>
         <action android:name="android.intent.action.MAIN" />
         <category android:name="android.intent.category.LAUNCHER" />

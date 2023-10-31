@@ -3207,7 +3207,8 @@ int optimizeTopologyWithCavityRemeshing(GModel *gm)
   appendQuadMeshStatistics(gm, stats, "Mesh_");
   printStatistics(stats, "Quad mesh after cavity remeshing:");
 
-  writeStatistics(stats, "quadqs_statistics.json");
+  if(Msg::GetVerbosity() > 5)
+    writeStatistics(stats, "quadqs_statistics.json");
 
   if(PARANO_VALIDITY) {
     errorAndAbortIfInvalidVertexInModel(gm,
