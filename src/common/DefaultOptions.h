@@ -1219,6 +1219,8 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "HighOrderMaxInnerAngle", opt_mesh_ho_max_in_angle, 3.1415927*30./180.,
     "Maximum angle between edges/faces within layers of BL triangles/tets "
     "for the detection of columns in the fast curving algorithm"},
+  { F|O, "HighOrderSkipQualityCheck", opt_mesh_ho_skip_quality_check, 0.,
+    "Skip element quality check after high-order mesh generation"},
 
   { F|O, "IgnoreParametrization" , opt_mesh_ignore_parametrization, 0. ,
     "Skip parametrization section when reading meshes in the MSH4 format" },

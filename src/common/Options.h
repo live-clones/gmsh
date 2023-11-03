@@ -575,6 +575,7 @@ double opt_mesh_ho_max_rho(OPT_ARGS_NUM);
 double opt_mesh_ho_max_angle(OPT_ARGS_NUM);
 double opt_mesh_ho_max_in_angle(OPT_ARGS_NUM);
 double opt_mesh_ho_fix_bnd_nodes(OPT_ARGS_NUM);
+double opt_mesh_ho_skip_quality_check(OPT_ARGS_NUM);
 double opt_mesh_second_order_linear(OPT_ARGS_NUM);
 double opt_mesh_second_order_incomplete(OPT_ARGS_NUM);
 double opt_mesh_cgns_import_order(OPT_ARGS_NUM);

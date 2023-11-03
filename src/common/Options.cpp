@@ -6320,6 +6320,12 @@ double opt_mesh_ho_fix_bnd_nodes(OPT_ARGS_NUM)
   return CTX::instance()->mesh.hoFixBndNodes;
 }
 
+double opt_mesh_ho_skip_quality_check(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->mesh.hoSkipQualityCheck = val;
+  return CTX::instance()->mesh.hoSkipQualityCheck;
+}
+
 double opt_mesh_second_order_linear(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
