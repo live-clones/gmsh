@@ -13,9 +13,6 @@
 #include "MTrihedron.h"
 #include "meshGRegion.h"
 
-#if defined(HAVE_HXT)
-#include "hxt_combine_cpp_api.h"
-
 static void buildUniqueFaces(GRegion *gr, std::map<MFace, GRegion*, MFaceLessThan> &bnd)
 {
   for(std::size_t i = 0; i < gr->getNumMeshElements(); i++) {
@@ -30,6 +27,10 @@ static void buildUniqueFaces(GRegion *gr, std::map<MFace, GRegion*, MFaceLessTha
     }
   }
 }
+
+#if defined(HAVE_HXT)
+#include "hxt_combine_cpp_api.h"
+
 
 static void createMeshStore (GRegion *gr, HXTCombine::MeshStore &ms,
 			     std::map<MVertex *, uint32_t> &v2c,
