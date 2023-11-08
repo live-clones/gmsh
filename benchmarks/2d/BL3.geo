@@ -34,7 +34,7 @@ Field[1].Size = 0.001;
 Field[1].Ratio = 1.4;
 Field[1].Thickness = .35;
 Field[1].FanPointsList = {14};
-Field[1].PointsList = {15, 16};
+//Field[1].PointsList = {15, 16};
 BoundaryLayer Field = 1;
 
 MeshSize{:} = 0.1;

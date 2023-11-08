@@ -13,6 +13,39 @@
 
 
 #################################################################################
+# HXT combine (Identifying combinations of tetrahedra into hexahedra: a vertex based strategy)
+#################################################################################
+set(SRC
+    algorithms.cpp
+    candidate_cell.cpp
+    compute_candidate_cells.cpp
+    hxt_combine_c_api.cpp
+    hxt_combine_cpp_api.cpp
+    tet_mesh.cpp
+    hxt_quality.cpp
+    cell_types.cpp
+    algorithms.h
+    basic_types.h
+    bvh_tree.h
+    candidate_cell.h
+    cell_types.h
+    combine_quality.h
+    compute_candidate_cells.h
+    hxt_combine_c_api.h
+    hxt_combine_cell.h
+    hxt_combine_cpp_api.h
+    tet_mesh.h
+    hxt_quality.h
+    expansion.h
+   )
+
+append_gmsh_src(contrib/hxt/Combine/src "${SRC}")
+#append_gmsh_src(contrib/hxt/Combine/include "${INC}")
+list(APPEND HXT_INC_DIRS
+     contrib/hxt/Combine/src)
+
+
+#################################################################################
 # HXT core
 #################################################################################
 set(SRC

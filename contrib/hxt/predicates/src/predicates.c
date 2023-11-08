@@ -113,12 +113,6 @@
 /*                                                                           */
 /*****************************************************************************/
 
-#ifdef _MSC_VER
-#ifndef __restrict__
-#define __restrict__ __restrict
-#endif
-#endif
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -128,6 +122,8 @@
 #ifdef LINUX
 #include <fpu_control.h>
 #endif /* LINUX */
+
+#include "hxt_tools.h"
 
 /* On some machines, the exact arithmetic routines might be defeated by the  */
 /*   use of internal extended precision floating-point registers.  Sometimes */
@@ -176,6 +172,10 @@
 #define Fast_Two_Sum(a, b, x, y) \
   x = (REAL) (a + b); \
   Fast_Two_Sum_Tail(a, b, x, y)
+
+#define Fast_Two_Diff_Tail(a, b, x, y) \
+  bvirt = a - x; \
+  y = bvirt - b
 
 #define Two_Sum_Tail(a, b, x, y) \
   bvirt = (REAL) (x - a); \
@@ -228,6 +228,16 @@
   err3 = err2 - (ahi * blo); \
   y = (alo * blo) - err3
 
+/* Two_Product_2Presplit() is Two_Product() where both of the inputs have    */
+/*   already been split.  Avoids redundant splitting.                        */
+
+#define Two_Product_2Presplit(a, ahi, alo, b, bhi, blo, x, y) \
+  x = (REAL) (a * b); \
+  err1 = x - (ahi * bhi); \
+  err2 = err1 - (alo * bhi); \
+  err3 = err2 - (ahi * blo); \
+  y = (alo * blo) - err3
+
 /* Square() can be done more quickly than Two_Product().                     */
 
 #define Square_Tail(a, x, y) \
@@ -259,6 +269,10 @@
   Two_One_Diff(a1, a0, b0, _j, _0, x0); \
   Two_One_Diff(_j, _0, b1, x3, x2, x1)
 
+#define Four_One_Sum(a3, a2, a1, a0, b, x4, x3, x2, x1, x0) \
+  Two_One_Sum(a1, a0, b , _j, x1, x0); \
+  Two_One_Sum(a3, a2, _j, x4, x3, x2)
+
 #define Two_One_Product(a1, a0, b, x3, x2, x1, x0) \
   Split(b, bhi, blo); \
   Two_Product_Presplit(a0, b, bhi, blo, _i, x0); \
@@ -266,6 +280,44 @@
   Two_Sum(_i, _0, _k, x1); \
   Fast_Two_Sum(_j, _k, x3, x2)
 
+
+#define Two_Two_Product(a1, a0, b1, b0, x7, x6, x5, x4, x3, x2, x1, x0) \
+  Split(a0, a0hi, a0lo); \
+  Split(b0, bhi, blo); \
+  Two_Product_2Presplit(a0, a0hi, a0lo, b0, bhi, blo, _i, x0); \
+  Split(a1, a1hi, a1lo); \
+  Two_Product_2Presplit(a1, a1hi, a1lo, b0, bhi, blo, _j, _0); \
+  Two_Sum(_i, _0, _k, _1); \
+  Fast_Two_Sum(_j, _k, _l, _2); \
+  Split(b1, bhi, blo); \
+  Two_Product_2Presplit(a0, a0hi, a0lo, b1, bhi, blo, _i, _0); \
+  Two_Sum(_1, _0, _k, x1); \
+  Two_Sum(_2, _k, _j, _1); \
+  Two_Sum(_l, _j, _m, _2); \
+  Two_Product_2Presplit(a1, a1hi, a1lo, b1, bhi, blo, _j, _0); \
+  Two_Sum(_i, _0, _n, _0); \
+  Two_Sum(_1, _0, _i, x2); \
+  Two_Sum(_2, _i, _k, _1); \
+  Two_Sum(_m, _k, _l, _2); \
+  Two_Sum(_j, _n, _k, _0); \
+  Two_Sum(_1, _0, _j, x3); \
+  Two_Sum(_2, _j, _i, _1); \
+  Two_Sum(_l, _i, _m, _2); \
+  Two_Sum(_1, _k, _i, x4); \
+  Two_Sum(_2, _i, _k, x5); \
+  Two_Sum(_m, _k, x7, x6)
+
+/* An expansion of length two can be squared more quickly than finding the   */
+/*   product of two different expansions of length two, and the result is    */
+/*   guaranteed to have no more than six (rather than eight) components.     */
+
+#define Two_Square(a1, a0, x5, x4, x3, x2, x1, x0) \
+  Square(a0, _j, x0); \
+  _0 = a0 + a0; \
+  Two_Product(a1, _0, _k, _1); \
+  Two_One_Sum(_k, _1, _j, _l, _2, x1); \
+  Square(a1, _j, _1); \
+  Two_Two_Sum(_j, _1, _l, _2, x5, x4, x3, x2)
 
 /* splitter = 2^ceiling(p / 2) + 1.  Used to split floats in half.           */
 REAL splitter;
@@ -388,6 +440,166 @@ void exactinit(REAL maxx, REAL maxy, REAL maxz)
   ispstaticfilter = 1.2466136531027298e-13 * maxx * maxy * maxz * (maxz * maxz);
 }
 
+/*****************************************************************************/
+/*                                                                           */
+/*  grow_expansion()   Add a scalar to an expansion.                         */
+/*                                                                           */
+/*  Sets h = e + b.  See the long version of my paper for details.           */
+/*                                                                           */
+/*  Maintains the nonoverlapping property.  If round-to-even is used (as     */
+/*  with IEEE 754), maintains the strongly nonoverlapping and nonadjacent    */
+/*  properties as well.  (That is, if e has one of these properties, so      */
+/*  will h.)                                                                 */
+/*                                                                           */
+/*****************************************************************************/
+
+int grow_expansion(int elen,
+                  const REAL* const __restrict__ e,
+                  REAL b,
+                  REAL* const __restrict__ h)
+/* e and h can be the same. */
+{
+  REAL Q;
+  INEXACT REAL Qnew;
+  int eindex;
+  REAL enow;
+  INEXACT REAL bvirt;
+  REAL avirt, bround, around;
+
+  Q = b;
+  for (eindex = 0; eindex < elen; eindex++) {
+    enow = e[eindex];
+    Two_Sum(Q, enow, Qnew, h[eindex]);
+    Q = Qnew;
+  }
+  h[eindex] = Q;
+  return eindex + 1;
+}
+
+/*****************************************************************************/
+/*                                                                           */
+/*  grow_expansion_zeroelim()   Add a scalar to an expansion, eliminating    */
+/*                              zero components from the output expansion.   */
+/*                                                                           */
+/*  Sets h = e + b.  See the long version of my paper for details.           */
+/*                                                                           */
+/*  Maintains the nonoverlapping property.  If round-to-even is used (as     */
+/*  with IEEE 754), maintains the strongly nonoverlapping and nonadjacent    */
+/*  properties as well.  (That is, if e has one of these properties, so      */
+/*  will h.)                                                                 */
+/*                                                                           */
+/*****************************************************************************/
+
+int grow_expansion_zeroelim(int elen,
+                            const REAL* const __restrict__ e,
+                            REAL b,
+                            REAL* const __restrict__ h)
+/* e and h can be the same. */
+{
+  REAL Q, hh;
+  INEXACT REAL Qnew;
+  int eindex, hindex;
+  REAL enow;
+  INEXACT REAL bvirt;
+  REAL avirt, bround, around;
+
+  hindex = 0;
+  Q = b;
+  for (eindex = 0; eindex < elen; eindex++) {
+    enow = e[eindex];
+    Two_Sum(Q, enow, Qnew, hh);
+    Q = Qnew;
+    if (hh != 0.0) {
+      h[hindex++] = hh;
+    }
+  }
+  if ((Q != 0.0) || (hindex == 0)) {
+    h[hindex++] = Q;
+  }
+  return hindex;
+}
+
+/*****************************************************************************/
+/*                                                                           */
+/*  fast_expansion_sum()   Sum two expansions.                               */
+/*                                                                           */
+/*  Sets h = e + f.  See the long version of my paper for details.           */
+/*                                                                           */
+/*  If round-to-even is used (as with IEEE 754), maintains the strongly      */
+/*  nonoverlapping property.  (That is, if e is strongly nonoverlapping, h   */
+/*  will be also.)  Does NOT maintain the nonoverlapping or nonadjacent      */
+/*  properties.                                                              */
+/*                                                                           */
+/*****************************************************************************/
+
+int fast_expansion_sum(int elen,
+                       const REAL* const __restrict__ e,
+                       int flen,
+                       const REAL* const __restrict__ f,
+                       REAL* const __restrict__ h)
+/* h cannot be e or f. */
+{
+  REAL Q;
+  INEXACT REAL Qnew;
+  INEXACT REAL bvirt;
+  REAL avirt, bround, around;
+  int eindex, findex, hindex;
+  REAL enow, fnow;
+
+  enow = e[0];
+  fnow = f[0];
+  eindex = findex = 0;
+  if ((fnow > enow) == (fnow > -enow)) {
+    Q = enow;
+    ++eindex;
+  } else {
+    Q = fnow;
+    ++findex;
+  }
+  hindex = 0;
+  if ((eindex < elen) && (findex < flen)) {
+    enow = e[eindex];
+    fnow = f[findex];
+    if ((fnow > enow) == (fnow > -enow)) {
+      Fast_Two_Sum(enow, Q, Qnew, h[0]);
+      ++eindex;
+    } else {
+      Fast_Two_Sum(fnow, Q, Qnew, h[0]);
+      ++findex;
+    }
+    Q = Qnew;
+    hindex = 1;
+    while ((eindex < elen) && (findex < flen)) {
+      enow = e[eindex];
+      fnow = f[findex];
+      if ((fnow > enow) == (fnow > -enow)) {
+        Two_Sum(Q, enow, Qnew, h[hindex]);
+        ++eindex;
+      } else {
+        Two_Sum(Q, fnow, Qnew, h[hindex]);
+        ++findex;
+      }
+      Q = Qnew;
+      hindex++;
+    }
+  }
+  while (eindex < elen) {
+    enow = e[eindex];
+    Two_Sum(Q, enow, Qnew, h[hindex]);
+    ++eindex;
+    Q = Qnew;
+    hindex++;
+  }
+  while (findex < flen) {
+    fnow = f[findex];
+    Two_Sum(Q, fnow, Qnew, h[hindex]);
+    ++findex;
+    Q = Qnew;
+    hindex++;
+  }
+  h[hindex] = Q;
+  return hindex + 1;
+}
 
 /*****************************************************************************/
 /*                                                                           */
@@ -403,11 +615,11 @@ void exactinit(REAL maxx, REAL maxy, REAL maxz)
 /*                                                                           */
 /*****************************************************************************/
 
-static int fast_expansion_sum_zeroelim(const int elen,
-                                       const REAL* const __restrict__ e,
-                                       const int flen,
-                                       const REAL* const __restrict__ f,
-                                       REAL* const __restrict__ h)
+int fast_expansion_sum_zeroelim(const int elen,
+                                const REAL* const __restrict__ e,
+                                const int flen,
+                                const REAL* const __restrict__ f,
+                                REAL* const __restrict__ h)
 /* h cannot be e or f. */
 {
   REAL Q;
@@ -492,6 +704,52 @@ static int fast_expansion_sum_zeroelim(const int elen,
   return hindex;
 }
 
+/*****************************************************************************/
+/*                                                                           */
+/*  scale_expansion()   Multiply an expansion by a scalar.                   */
+/*                                                                           */
+/*  Sets h = be.  See either version of my paper for details.                */
+/*                                                                           */
+/*  Maintains the nonoverlapping property.  If round-to-even is used (as     */
+/*  with IEEE 754), maintains the strongly nonoverlapping and nonadjacent    */
+/*  properties as well.  (That is, if e has one of these properties, so      */
+/*  will h.)                                                                 */
+/*                                                                           */
+/*****************************************************************************/
+
+int scale_expansion(int elen,
+                    const REAL* const __restrict__ e,
+                    REAL b,
+                    REAL* const __restrict__ h)
+/* e and h cannot be the same. */
+{
+  INEXACT REAL Q;
+  INEXACT REAL sum;
+  INEXACT REAL product1;
+  REAL product0;
+  int eindex, hindex;
+  REAL enow;
+  INEXACT REAL bvirt;
+  REAL avirt, bround, around;
+  INEXACT REAL c;
+  INEXACT REAL abig;
+  REAL ahi, alo, bhi, blo;
+  REAL err1, err2, err3;
+
+  Split(b, bhi, blo);
+  Two_Product_Presplit(e[0], b, bhi, blo, Q, h[0]);
+  hindex = 1;
+  for (eindex = 1; eindex < elen; eindex++) {
+    enow = e[eindex];
+    Two_Product_Presplit(enow, b, bhi, blo, product1, product0);
+    Two_Sum(Q, product0, sum, h[hindex]);
+    hindex++;
+    Two_Sum(product1, sum, Q, h[hindex]);
+    hindex++;
+  }
+  h[hindex] = Q;
+  return elen + elen;
+}
 
 /*****************************************************************************/
 /*                                                                           */
@@ -508,10 +766,10 @@ static int fast_expansion_sum_zeroelim(const int elen,
 /*                                                                           */
 /*****************************************************************************/
 
-static int scale_expansion_zeroelim(const int elen,
-                                    const REAL* const __restrict__ e,
-                                    const REAL b,
-                                    REAL* const __restrict__ h)
+int scale_expansion_zeroelim(const int elen,
+                             const REAL* const __restrict__ e,
+                             const REAL b,
+                             REAL* const __restrict__ h)
 /* e and h cannot be the same. */
 {
   INEXACT REAL Q, sum;

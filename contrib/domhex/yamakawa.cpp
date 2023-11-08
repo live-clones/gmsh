@@ -615,7 +615,7 @@ void Recombinator::execute()
 {
   GModel *model = GModel::current();
   // Backup the current mesh
-  model->writeMSH("beforeyamakawa.msh");
+  //  model->writeMSH("beforeyamakawa.msh");
 
   for(GModel::riter region_itr = model->firstRegion();
       region_itr != model->lastRegion(); region_itr++) {
