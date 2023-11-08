@@ -15,6 +15,7 @@ extern "C" {
 
 #include <stdlib.h>
 #include <stdarg.h>
+#include <stdint.h>
 
 
 /* HEXTREME FUNCTIONS ONLY RETURN A STATUS (except hxtGetMessageString)*/
